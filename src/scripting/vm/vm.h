@@ -45,6 +45,8 @@
 #include "scripting/backend/scopebarrier.h"
 
 class DObject;
+union VMOP;
+class VMScriptFunction;
 
 extern FMemArena ClassDataAllocator;
 
@@ -104,6 +106,7 @@ public:
 
 // This must be a separate function because the VC compiler would otherwise allocate memory on the stack for every separate instance of the exception object that may get thrown.
 void ThrowAbortException(EVMAbortException reason, const char *moreinfo, ...);
+void ThrowAbortException(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const char *moreinfo, ...);
 
 struct VMReturn
 {

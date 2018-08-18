@@ -80,17 +80,16 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 			sfunc->JitFunc = JitCompile(sfunc);
 			sfunc->JitCompiled = true;
 		}
-		if (sfunc->JitFunc) {
-			try {
-				return sfunc->JitFunc(stack, &reg, ret, numret);
-			}
-			catch (CVMAbortException &err)
+		if (sfunc->JitFunc)
+		{
+			JitExceptionInfo exceptInfo;
+			exceptInfo.reason = -1;
+			int result = sfunc->JitFunc(stack, &reg, ret, numret, &exceptInfo);
+			if (exceptInfo.reason != -1)
 			{
-				err.MaybePrintMessage();
-				err.stacktrace.AppendFormat("Called from %s at %s, line %d\n", sfunc->PrintableName.GetChars(), sfunc->SourceFileName.GetChars(), sfunc->PCToLine(sfunc->pcOnJitAbort));
-				// PrintParameters(reg.param + f->NumParam - B, B);
-				throw;
+				ThrowAbortException(sfunc, exceptInfo.pcOnJitAbort, (EVMAbortException)exceptInfo.reason, nullptr);
 			}
+			return result;
 		}
 	}
 

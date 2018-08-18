@@ -292,22 +292,6 @@ static int64_t ToMemAddress(const void *d)
 	return (int64_t)(ptrdiff_t)d;
 }
 
-void setPCOnAbort(VMScriptFunction *sfunc, VMOP* pc) {
-	sfunc->pcOnJitAbort = pc;
-}
-
-void emitAbortExceptionCall(asmjit::X86Compiler& cc, VMScriptFunction* sfunc, const VMOP* pc, EVMAbortException reason, const char* moreinfo) {
-	using namespace asmjit;
-
-	CCFuncCall* setPCCall = cc.call(imm_ptr((void*)setPCOnAbort), FuncSignature2<void, VMScriptFunction*, VMOP*>(CallConv::kIdHost));
-	setPCCall->setArg(0, imm_ptr(sfunc));
-	setPCCall->setArg(1, imm_ptr(pc));
-
-	CCFuncCall* throwAbortCall = cc.call(imm_ptr((void*)ThrowAbortException), FuncSignatureT<void, int, const char*>(CallConv::kIdHost));
-	throwAbortCall->setArg(0, imm(reason));
-	throwAbortCall->setArg(1, imm_ptr(moreinfo));
-}
-
 static void CallSqrt(asmjit::X86Compiler& cc, const asmjit::X86Xmm &a, const asmjit::X86Xmm &b)
 {
 	using namespace asmjit;
@@ -315,6 +299,43 @@ static void CallSqrt(asmjit::X86Compiler& cc, const asmjit::X86Xmm &a, const asm
 	auto call = cc.call(ToMemAddress(static_cast<FuncPtr>(g_sqrt)), FuncSignature1<void, double>());
 	call->setRet(0, a);
 	call->setArg(0, b);
+}
+
+static void EmitThrowException(asmjit::X86Compiler& cc, asmjit::X86Gp exceptInfo, const VMOP* pc, EVMAbortException reason)
+{
+	using namespace asmjit;
+
+	// Update JitExceptionInfo struct
+	cc.mov(x86::dword_ptr(exceptInfo, 0 * 4), (int32_t)reason);
+	#ifdef ASMJIT_ARCH_X64
+	cc.mov(x86::qword_ptr(exceptInfo, 4 * 4), ToMemAddress(pc));
+	#else
+	cc.mov(x86::dword_ptr(exceptInfo, 4 * 4), ToMemAddress(pc));
+	#endif
+
+	// Return from function
+	X86Gp vReg = cc.newInt32();
+	cc.mov(vReg, 0);
+	cc.ret(vReg);
+}
+
+static void EmitThrowException(asmjit::X86Compiler& cc, asmjit::X86Gp exceptInfo, const VMOP* pc, EVMAbortException reason, asmjit::X86Gp arg1)
+{
+	using namespace asmjit;
+
+	// Update JitExceptionInfo struct
+	cc.mov(x86::dword_ptr(exceptInfo, 0 * 4), (int32_t)reason);
+	cc.mov(x86::dword_ptr(exceptInfo, 1 * 4), arg1);
+	#ifdef ASMJIT_ARCH_X64
+	cc.mov(x86::qword_ptr(exceptInfo, 4 * 4), ToMemAddress(pc));
+	#else
+	cc.mov(x86::dword_ptr(exceptInfo, 4 * 4), ToMemAddress(pc));
+	#endif
+
+	// Return from function
+	X86Gp vReg = cc.newInt32();
+	cc.mov(vReg, 0);
+	cc.ret(vReg);
 }
 
 JitFuncPtr JitCompile(VMScriptFunction *sfunc)
@@ -345,12 +366,14 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 		X86Gp vmregs = cc.newIntPtr("vmregs"); // void *vmregs
 		X86Gp ret = cc.newIntPtr("ret"); // VMReturn *ret
 		X86Gp numret = cc.newInt32("numret"); // int numret
+		X86Gp exceptInfo = cc.newIntPtr("exceptinfo"); // JitExceptionInfo *exceptInfo
 
-		cc.addFunc(FuncSignature4<int, void *, void *, void *, int>());
+		cc.addFunc(FuncSignature5<int, void *, void *, void *, int, void *>());
 		cc.setArg(0, stack);
 		cc.setArg(1, vmregs);
 		cc.setArg(2, ret);
 		cc.setArg(3, numret);
+		cc.setArg(4, exceptInfo);
 
 		const int *konstd = sfunc->KonstD;
 		const double *konstf = sfunc->KonstF;
@@ -929,7 +952,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				cc.mov(regD[A], tmp0);
 
 				cc.bind(label);
-				emitAbortExceptionCall(cc, sfunc, pc, X_DIVISION_BY_ZERO, nullptr);
+				EmitThrowException(cc, exceptInfo, pc, X_DIVISION_BY_ZERO);
 				break;
 			}
 			case OP_DIV_RK:

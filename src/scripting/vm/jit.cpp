@@ -292,6 +292,22 @@ static int64_t ToMemAddress(const void *d)
 	return (int64_t)(ptrdiff_t)d;
 }
 
+void setPCOnAbort(VMScriptFunction *sfunc, VMOP* pc) {
+	sfunc->pcOnJitAbort = pc;
+}
+
+void emitAbortExceptionCall(asmjit::X86Compiler& cc, VMScriptFunction* sfunc, const VMOP* pc, EVMAbortException reason, const char* moreinfo) {
+	using namespace asmjit;
+
+	CCFuncCall* setPCCall = cc.call(imm_ptr((void*)setPCOnAbort), FuncSignature2<void, VMScriptFunction*, VMOP*>(CallConv::kIdHost));
+	setPCCall->setArg(0, imm_ptr(sfunc));
+	setPCCall->setArg(1, imm_ptr(pc));
+
+	CCFuncCall* throwAbortCall = cc.call(imm_ptr((void*)ThrowAbortException), FuncSignatureT<void, int, const char*>(CallConv::kIdHost));
+	throwAbortCall->setArg(0, imm(reason));
+	throwAbortCall->setArg(1, imm_ptr(moreinfo));
+}
+
 static void CallSqrt(asmjit::X86Compiler& cc, const asmjit::X86Xmm &a, const asmjit::X86Xmm &b)
 {
 	using namespace asmjit;
@@ -902,10 +918,18 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			{
 				auto tmp0 = cc.newInt32();
 				auto tmp1 = cc.newInt32();
+				auto label = cc.newLabel();
+
+				cc.test(regD[C], regD[C]);
+				cc.je(label);
+
 				cc.mov(tmp0, regD[B]);
 				cc.cdq(tmp1, tmp0);
 				cc.idiv(tmp1, tmp0, regD[C]);
 				cc.mov(regD[A], tmp0);
+
+				cc.bind(label);
+				emitAbortExceptionCall(cc, sfunc, pc, X_DIVISION_BY_ZERO, nullptr);
 				break;
 			}
 			case OP_DIV_RK:

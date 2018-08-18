@@ -296,7 +296,7 @@ static void CallSqrt(asmjit::X86Compiler& cc, const asmjit::X86Xmm &a, const asm
 {
 	using namespace asmjit;
 	typedef double(*FuncPtr)(double);
-	auto call = cc.call(ToMemAddress(static_cast<FuncPtr>(g_sqrt)), FuncSignature1<void, double>());
+	auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>(g_sqrt))), FuncSignature1<void, double>());
 	call->setRet(0, a);
 	call->setArg(0, b);
 }

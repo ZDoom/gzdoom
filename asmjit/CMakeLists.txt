@@ -12,8 +12,14 @@ add_definitions(-DASMJIT_STATIC)
 if(MSVC)
     set(CMAKE_DEBUG_POSTFIX "d")
     add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 endif()
+
+if(APPLE)
+	# Suppress stdlib.h:334:6: warning: pointer is missing a nullability type specifier (_Nonnull, _Nullable, or _Null_unspecified)
+	add_definitions(-Wno-nullability-completeness)
+endif()
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(ASMJIT_PUBLIC_HDRS
     asmjit/arm.h

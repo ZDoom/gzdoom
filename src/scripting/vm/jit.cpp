@@ -19,11 +19,11 @@ public:
 
 	const char* what() const noexcept override
 	{
-		return message.c_str();
+		return message.GetChars();
 	}
 
 	asmjit::Error error;
-	std::string message;
+	FString message;
 };
 
 class ThrowingErrorHandler : public asmjit::ErrorHandler
@@ -268,6 +268,11 @@ void emitComparisonOpcode(asmjit::X86Compiler& cc, const TArray<asmjit::Label>& 
 	cc.jmp(labels[i + 2 + JMPOFS(pc + 1)]);
 }
 
+static int64_t ToMemAddress(const void *d)
+{
+	return (int64_t)(ptrdiff_t)d;
+}
+
 JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 {
 #if 0 // For debugging
@@ -390,7 +395,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			case OP_LKF: // load float constant
 				{
 					auto tmp = cc.newIntPtr ();
-					cc.mov (tmp, (ptrdiff_t)&(konstf[BC]));
+					cc.mov (tmp, ToMemAddress(konstf + BC));
 					cc.movsd (regF[a], x86::qword_ptr (tmp));
 				}
 				break;
@@ -401,12 +406,12 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				cc.mov(regA[a], (int64_t) konsta[BC].v);
 				break;
 			case OP_LK_R: // load integer constant indexed
-				cc.mov(regD[a], x86::ptr((ptrdiff_t)konstd, regD[B], 2, C * 4));
+				cc.mov(regD[a], x86::ptr(ToMemAddress(konstd), regD[B], 2, C * 4));
 				break;
 			case OP_LKF_R: // load float constant indexed
 				{
 					auto tmp = cc.newIntPtr();
-					cc.mov(tmp, (ptrdiff_t)&(konstf[BC]));
+					cc.mov(tmp, ToMemAddress(konstf + BC));
 					cc.movsd(regF[a], x86::qword_ptr(tmp, regD[B], 3, C * 8));
 				}
 				break;
@@ -887,7 +892,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				auto konstTmp = cc.newIntPtr();
 				cc.mov(tmp0, regD[B]);
 				cc.cdq(tmp1, tmp0);
-				cc.mov(konstTmp, reinterpret_cast<ptrdiff_t>(&konstd[C]));
+				cc.mov(konstTmp, ToMemAddress(&konstd[C]));
 				cc.idiv(tmp1, tmp0, x86::ptr(konstTmp));
 				cc.mov(regD[A], tmp0);
 				break;
@@ -919,7 +924,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				auto konstTmp = cc.newIntPtr();
 				cc.mov(tmp0, regD[B]);
 				cc.mov(tmp1, 0);
-				cc.mov(konstTmp, reinterpret_cast<ptrdiff_t>(&konstd[C]));
+				cc.mov(konstTmp, ToMemAddress(&konstd[C]));
 				cc.div(tmp1, tmp0, x86::ptr(konstTmp));
 				cc.mov(regD[A], tmp0);
 				break;
@@ -951,7 +956,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				auto konstTmp = cc.newIntPtr();
 				cc.mov(tmp0, regD[B]);
 				cc.cdq(tmp1, tmp0);
-				cc.mov(konstTmp, reinterpret_cast<ptrdiff_t>(&konstd[C]));
+				cc.mov(konstTmp, ToMemAddress(&konstd[C]));
 				cc.idiv(tmp1, tmp0, x86::ptr(konstTmp));
 				cc.mov(regD[A], tmp1);
 				break;
@@ -983,7 +988,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				auto konstTmp = cc.newIntPtr();
 				cc.mov(tmp0, regD[B]);
 				cc.mov(tmp1, 0);
-				cc.mov(konstTmp, reinterpret_cast<ptrdiff_t>(&konstd[C]));
+				cc.mov(konstTmp, ToMemAddress(&konstd[C]));
 				cc.div(tmp1, tmp0, x86::ptr(konstTmp));
 				cc.mov(regD[A], tmp1);
 				break;
@@ -1031,7 +1036,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				auto tmp0 = cc.newXmmSs();
 				auto tmp1 = cc.newXmmSs();
 				auto konstTmp = cc.newIntPtr();
-				cc.mov(konstTmp, reinterpret_cast<ptrdiff_t>(&konstd[C]));
+				cc.mov(konstTmp, ToMemAddress(&konstd[C]));
 				cc.movd(tmp0, regD[B]);
 				cc.movss(tmp1, x86::dword_ptr(konstTmp));
 				cc.pminsd(tmp0, tmp1);
@@ -1053,7 +1058,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				auto tmp0 = cc.newXmmSs();
 				auto tmp1 = cc.newXmmSs();
 				auto konstTmp = cc.newIntPtr();
-				cc.mov(konstTmp, reinterpret_cast<ptrdiff_t>(&konstd[C]));
+				cc.mov(konstTmp, ToMemAddress(&konstd[C]));
 				cc.movd(tmp0, regD[B]);
 				cc.movss(tmp1, x86::dword_ptr(konstTmp));
 				cc.pmaxsd(tmp0, tmp1);
@@ -1126,7 +1131,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			{
 				auto compLambda = [&](X86Gp& result) {
 					auto tmp = cc.newIntPtr();
-					cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstd[B])));
+					cc.mov(tmp, ToMemAddress(&konstd[B]));
 					cc.cmp(x86::ptr(tmp), regD[C]);
 					cc.setl(result);
 				};
@@ -1158,7 +1163,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			{
 				auto compLambda = [&](X86Gp& result) {
 					auto tmp = cc.newIntPtr();
-					cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstd[B])));
+					cc.mov(tmp, ToMemAddress(&konstd[B]));
 					cc.cmp(x86::ptr(tmp), regD[C]);
 					cc.setle(result);
 				};
@@ -1190,7 +1195,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			{
 				auto compLambda = [&](X86Gp& result) {
 					auto tmp = cc.newIntPtr();
-					cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstd[B])));
+					cc.mov(tmp, ToMemAddress(&konstd[B]));
 					cc.cmp(x86::ptr(tmp), regD[C]);
 					cc.setb(result);
 				};
@@ -1222,7 +1227,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			{
 				auto compLambda = [&](X86Gp& result) {
 					auto tmp = cc.newIntPtr();
-					cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstd[C])));
+					cc.mov(tmp, ToMemAddress(&konstd[C]));
 					cc.cmp(x86::ptr(tmp), regD[B]);
 					cc.setbe(result);
 				};
@@ -1240,7 +1245,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			{
 				auto tmp = cc.newIntPtr();
 				cc.movsd(regF[a], regF[B]);
-				cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+				cc.mov(tmp, ToMemAddress(&konstf[C]));
 				cc.addsd(regF[a], x86::qword_ptr(tmp));
 				break;
 			}
@@ -1252,14 +1257,14 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			{
 				auto tmp = cc.newIntPtr();
 				cc.movsd(regF[a], regF[B]);
-				cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+				cc.mov(tmp, ToMemAddress(&konstf[C]));
 				cc.subsd(regF[a], x86::qword_ptr(tmp));
 				break;
 			}
 			case OP_SUBF_KR:
 			{
 				auto tmp = cc.newIntPtr();
-				cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+				cc.mov(tmp, ToMemAddress(&konstf[C]));
 				cc.movsd(regF[a], x86::qword_ptr(tmp));
 				cc.subsd(regF[a], regF[B]);
 				break;
@@ -1272,7 +1277,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			{
 				auto tmp = cc.newIntPtr();
 				cc.movsd(regF[a], regF[B]);
-				cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+				cc.mov(tmp, ToMemAddress(&konstf[C]));
 				cc.mulsd(regF[a], x86::qword_ptr(tmp));
 				break;
 			}
@@ -1284,14 +1289,14 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			{
 				auto tmp = cc.newIntPtr();
 				cc.movsd(regF[a], regF[B]);
-				cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+				cc.mov(tmp, ToMemAddress(&konstf[C]));
 				cc.divsd(regF[a], x86::qword_ptr(tmp));
 				break;
 			}
 			case OP_DIVF_KR:
 			{
 				auto tmp = cc.newIntPtr();
-				cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+				cc.mov(tmp, ToMemAddress(&konstf[C]));
 				cc.movsd(regF[a], x86::qword_ptr(tmp));
 				cc.divsd(regF[a], regF[B]);
 				break;
@@ -1351,7 +1356,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 					if (!approx) {
 						auto konstTmp = cc.newIntPtr();
 						auto parityTmp = cc.newInt32();
-						cc.mov(konstTmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+						cc.mov(konstTmp, ToMemAddress(&konstf[C]));
 
 						cc.ucomisd(regF[B], x86::qword_ptr(konstTmp));
 						cc.sete(result);
@@ -1370,7 +1375,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 						auto epsilon = cc.newDoubleConst(kConstScopeLocal, VM_EPSILON);
 						auto epsilonXmm = cc.newXmmSd();
 
-						cc.mov(konstTmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+						cc.mov(konstTmp, ToMemAddress(&konstf[C]));
 
 						cc.movsd(subTmp, regF[B]);
 						cc.subsd(subTmp, x86::qword_ptr(konstTmp));
@@ -1402,7 +1407,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				auto compLambda = [&](X86Gp& result) {
 					auto constTmp = cc.newIntPtr();
 					auto xmmTmp = cc.newXmmSd();
-					cc.mov(constTmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+					cc.mov(constTmp, ToMemAddress(&konstf[C]));
 					cc.movsd(xmmTmp, x86::qword_ptr(constTmp));
 
 					cc.ucomisd(xmmTmp, regF[B]);
@@ -1417,7 +1422,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			{
 				auto compLambda = [&](X86Gp& result) {
 					auto tmp = cc.newIntPtr();
-					cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[B])));
+					cc.mov(tmp, ToMemAddress(&konstf[B]));
 
 					cc.ucomisd(regF[C], x86::qword_ptr(tmp));
 					cc.seta(result);
@@ -1443,7 +1448,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				auto compLambda = [&](X86Gp& result) {
 					auto constTmp = cc.newIntPtr();
 					auto xmmTmp = cc.newXmmSd();
-					cc.mov(constTmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+					cc.mov(constTmp, ToMemAddress(&konstf[C]));
 					cc.movsd(xmmTmp, x86::qword_ptr(constTmp));
 
 					cc.ucomisd(xmmTmp, regF[B]);
@@ -1458,7 +1463,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			{
 				auto compLambda = [&](X86Gp& result) {
 					auto tmp = cc.newIntPtr();
-					cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[B])));
+					cc.mov(tmp, ToMemAddress(&konstf[B]));
 
 					cc.ucomisd(regF[C], x86::qword_ptr(tmp));
 					cc.setae(result);
@@ -1510,7 +1515,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				auto tmp = cc.newIntPtr();
 				cc.movsd(regF[a], regF[B]);
 				cc.movsd(regF[a + 1], regF[B + 1]);
-				cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+				cc.mov(tmp, ToMemAddress(&konstf[C]));
 				cc.mulsd(regF[a], x86::qword_ptr(tmp));
 				cc.mulsd(regF[a + 1], x86::qword_ptr(tmp));
 				break;
@@ -1526,7 +1531,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				auto tmp = cc.newIntPtr();
 				cc.movsd(regF[a], regF[B]);
 				cc.movsd(regF[a + 1], regF[B + 1]);
-				cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+				cc.mov(tmp, ToMemAddress(&konstf[C]));
 				cc.divsd(regF[a], x86::qword_ptr(tmp));
 				cc.divsd(regF[a + 1], x86::qword_ptr(tmp));
 				break;
@@ -1627,7 +1632,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				cc.movsd(regF[a], regF[B]);
 				cc.movsd(regF[a + 1], regF[B + 1]);
 				cc.movsd(regF[a + 2], regF[B + 2]);
-				cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+				cc.mov(tmp, ToMemAddress(&konstf[C]));
 				cc.mulsd(regF[a], x86::qword_ptr(tmp));
 				cc.mulsd(regF[a + 1], x86::qword_ptr(tmp));
 				cc.mulsd(regF[a + 2], x86::qword_ptr(tmp));
@@ -1647,7 +1652,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				cc.movsd(regF[a], regF[B]);
 				cc.movsd(regF[a + 1], regF[B + 1]);
 				cc.movsd(regF[a + 2], regF[B + 2]);
-				cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+				cc.mov(tmp, ToMemAddress(&konstf[C]));
 				cc.divsd(regF[a], x86::qword_ptr(tmp));
 				cc.divsd(regF[a + 1], x86::qword_ptr(tmp));
 				cc.divsd(regF[a + 2], x86::qword_ptr(tmp));

@@ -40,6 +40,7 @@
 #include "templates.h"
 #include "vmintern.h"
 #include "types.h"
+#include "jit.h"
 
 cycle_t VMCycles[10];
 int VMCalls[10];
@@ -77,6 +78,12 @@ VMScriptFunction::VMScriptFunction(FName name)
 
 VMScriptFunction::~VMScriptFunction()
 {
+	if (JitFunc)
+	{
+		JitCleanUp(this);
+		JitFunc = nullptr;
+	}
+
 	if (Code != NULL)
 	{
 		if (KonstS != NULL)

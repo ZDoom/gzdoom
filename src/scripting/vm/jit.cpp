@@ -35,7 +35,26 @@ public:
 	}
 };
 
-static asmjit::JitRuntime jit;
+static asmjit::JitRuntime *jit;
+static int jitRefCount = 0;
+
+asmjit::JitRuntime *JitGetRuntime()
+{
+	if (!jit)
+		jit = new asmjit::JitRuntime;
+	jitRefCount++;
+	return jit;
+}
+
+void JitCleanUp(VMScriptFunction *func)
+{
+	jitRefCount--;
+	if (jitRefCount == 0)
+	{
+		delete jit;
+		jit = nullptr;
+	}
+}
 
 #define A				(pc[0].a)
 #define B				(pc[0].b)
@@ -286,10 +305,12 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 	using namespace asmjit;
 	try
 	{
+		auto *jit = JitGetRuntime();
+
 		ThrowingErrorHandler errorHandler;
 		//FileLogger logger(stdout);
 		CodeHolder code;
-		code.init(jit.getCodeInfo());
+		code.init(jit->getCodeInfo());
 		code.setErrorHandler(&errorHandler);
 		//code.setLogger(&logger);
 
@@ -1723,7 +1744,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 		cc.finalize();
 
 		JitFuncPtr fn = nullptr;
-		Error err = jit.add(&fn, &code);
+		Error err = jit->add(&fn, &code);
 		if (err)
 			I_FatalError("JitRuntime::add failed: %d", err);
 		return fn;

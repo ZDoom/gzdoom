@@ -300,7 +300,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 		X86Gp ret = cc.newIntPtr("ret"); // VMReturn *ret
 		X86Gp numret = cc.newInt32("numret"); // int numret
 
-		cc.addFunc(FuncSignature4<int, void/*VMFrameStack*/ *, void *, void/*VMReturn*/ *, int>());
+		cc.addFunc(FuncSignature4<int, void *, void *, void *, int>());
 		cc.setArg(0, stack);
 		cc.setArg(1, vmregs);
 		cc.setArg(2, ret);
@@ -385,7 +385,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				cc.nop ();
 				break;
 
-				// Load constants.
+			// Load constants.
 			case OP_LI: // load immediate signed 16-bit constant
 				cc.mov (regD[a], BCs);
 				break;
@@ -399,9 +399,9 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 					cc.movsd (regF[a], x86::qword_ptr (tmp));
 				}
 				break;
-			case OP_LKS: // load string constant
+			//case OP_LKS: // load string constant
 				//cc.mov(regS[a], konsts[BC]);
-				break;
+				//break;
 			case OP_LKP: // load pointer constant
 				cc.mov(regA[a], (int64_t) konsta[BC].v);
 				break;
@@ -422,10 +422,9 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				//cc.mov(b, regD[B] + C);
 				//cc.mov(regA[a], konsta[b].v);
 				break;
-			case OP_LFP: // load frame pointer
-			case OP_META: // load a class's meta data address
-			case OP_CLSS: // load a class's descriptor address
-				break;
+			//case OP_LFP: // load frame pointer
+			//case OP_META: // load a class's meta data address
+			//case OP_CLSS: // load a class's descriptor address
 
 			// Load from memory. rA = *(rB + rkC)
 			case OP_LB: // load byte
@@ -484,13 +483,12 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				NULL_POINTER_CHECK (PB, RC, X_READ_NIL);
 				cc.movsd (regF[a], x86::qword_ptr (PB, RC));
 				break;
-			case OP_LS: // load string
-			case OP_LS_R:
-			case OP_LO: // load object
-			case OP_LO_R:
-			case OP_LP: // load pointer
-			case OP_LP_R:
-				break;
+			//case OP_LS: // load string
+			//case OP_LS_R:
+			//case OP_LO: // load object
+			//case OP_LO_R:
+			//case OP_LP: // load pointer
+			//case OP_LP_R:
 			case OP_LV2: // load vector2
 				NULL_POINTER_CHECK(PB, KC, X_READ_NIL);
 				{
@@ -533,11 +531,10 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 					cc.movsd(regF[a+2], x86::qword_ptr(tmp, 16));
 				}
 				break;
-			case OP_LCS: // load string from char ptr.
-			case OP_LCS_R:
-				break;
-			case OP_LBIT: // rA = !!(*rB & C)  -- *rB is a byte
-				/*NULL_POINTER_CHECK (PB, 0, X_READ_NIL);
+			//case OP_LCS: // load string from char ptr.
+			//case OP_LCS_R:
+			/*case OP_LBIT: // rA = !!(*rB & C)  -- *rB is a byte
+				NULL_POINTER_CHECK (PB, 0, X_READ_NIL);
 				{
 					auto tmp = cc.newInt8 ();
 					cc.mov (regD[a], PB);
@@ -545,8 +542,8 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 					cc.test (regD[a], regD[a]);
 					cc.sete (tmp);
 					cc.movzx (regD[a], tmp);
-				}*/
-				break;
+				}
+				break;*/
 
 			// Store instructions. *(rA + rkC) = rB
 			case OP_SB: // store byte
@@ -589,12 +586,12 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				NULL_POINTER_CHECK (PB, RC, X_WRITE_NIL);
 				cc.movsd(x86::qword_ptr(PA, RC), regF[B]);
 				break;
-			case OP_SS: // store string
-			case OP_SS_R:
-			case OP_SO: // store object pointer with write barrier (only needed for non thinkers and non types)
-			case OP_SO_R:
-			case OP_SP: // store pointer
-			case OP_SP_R:
+			//case OP_SS: // store string
+			//case OP_SS_R:
+			//case OP_SO: // store object pointer with write barrier (only needed for non thinkers and non types)
+			//case OP_SO_R:
+			//case OP_SP: // store pointer
+			//case OP_SP_R:
 			case OP_SV2: // store vector2
 				NULL_POINTER_CHECK (PB, KC, X_WRITE_NIL);
 				{
@@ -637,8 +634,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 					cc.movsd(x86::qword_ptr(tmp, 16), regF[B+2]);
 				}
 				break;
-			case OP_SBIT: // *rA |= C if rB is true, *rA &= ~C otherwise
-				break;
+			//case OP_SBIT: // *rA |= C if rB is true, *rA &= ~C otherwise
 
 			// Move instructions.
 			case OP_MOVE: // dA = dB
@@ -647,7 +643,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			case OP_MOVEF: // fA = fB
 				cc.movsd(regF[a], regF[B]);
 				break;
-			case OP_MOVES: // sA = sB
+			//case OP_MOVES: // sA = sB
 			case OP_MOVEA: // aA = aB
 				break;
 			case OP_MOVEV2: // fA = fB (2 elements)
@@ -661,28 +657,27 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				cc.movsd(regF[a + 1], regF[b + 1]);
 				cc.movsd(regF[a + 2], regF[b + 2]);
 				break;
-			case OP_CAST: // xA = xB, conversion specified by C
-			case OP_CASTB: // xA = !!xB, type specified by C
-			case OP_DYNCAST_R: // aA = dyn_cast<aC>(aB);
-			case OP_DYNCAST_K: // aA = dyn_cast<aKC>(aB);
-			case OP_DYNCASTC_R: // aA = dyn_cast<aC>(aB); for class types
-			case OP_DYNCASTC_K: // aA = dyn_cast<aKC>(aB);
-				break;
+			//case OP_CAST: // xA = xB, conversion specified by C
+			//case OP_CASTB: // xA = !!xB, type specified by C
+			//case OP_DYNCAST_R: // aA = dyn_cast<aC>(aB);
+			//case OP_DYNCAST_K: // aA = dyn_cast<aKC>(aB);
+			//case OP_DYNCASTC_R: // aA = dyn_cast<aC>(aB); for class types
+			//case OP_DYNCASTC_K: // aA = dyn_cast<aKC>(aB);
 
 			// Control flow.
-			case OP_TEST: // if (dA != BC) then pc++
-			case OP_TESTN: // if (dA != -BC) then pc++
-			case OP_JMP: // pc += ABC		-- The ABC fields contain a signed 24-bit offset.
-			case OP_IJMP: // pc += dA + BC	-- BC is a signed offset. The target instruction must be a JMP.
-			case OP_PARAM: // push parameter encoded in BC for function call (B=regtype, C=regnum)
-			case OP_PARAMI: // push immediate, signed integer for function call
-			case OP_CALL: // Call function pkA with parameter count B and expected result count C
-			case OP_CALL_K:
-			case OP_VTBL: // dereferences a virtual method table.
-			case OP_SCOPE: // Scope check at runtime.
-			case OP_TAIL: // Call+Ret in a single instruction
-			case OP_TAIL_K:
-			case OP_RESULT: // Result should go in register encoded in BC (in caller, after CALL)
+			//case OP_TEST: // if (dA != BC) then pc++
+			//case OP_TESTN: // if (dA != -BC) then pc++
+			//case OP_JMP: // pc += ABC		-- The ABC fields contain a signed 24-bit offset.
+			//case OP_IJMP: // pc += dA + BC	-- BC is a signed offset. The target instruction must be a JMP.
+			//case OP_PARAM: // push parameter encoded in BC for function call (B=regtype, C=regnum)
+			//case OP_PARAMI: // push immediate, signed integer for function call
+			//case OP_CALL: // Call function pkA with parameter count B and expected result count C
+			//case OP_CALL_K:
+			//case OP_VTBL: // dereferences a virtual method table.
+			//case OP_SCOPE: // Scope check at runtime.
+			//case OP_TAIL: // Call+Ret in a single instruction
+			//case OP_TAIL_K:
+			//case OP_RESULT: // Result should go in register encoded in BC (in caller, after CALL)
 			case OP_RET: // Copy value from register encoded in BC to return value A, possibly returning
 				if (B == REGT_NIL)
 				{
@@ -805,19 +800,17 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				}
 				break;
 
-			case OP_NEW:
-			case OP_NEW_K:
-			case OP_THROW: // A == 0: Throw exception object pB, A == 1: Throw exception object pkB, A >= 2: Throw VM exception of type BC
-			case OP_BOUND: // if rA < 0 or rA >= BC, throw exception
-			case OP_BOUND_K: // if rA < 0 or rA >= const[BC], throw exception
-			case OP_BOUND_R: // if rA < 0 or rA >= rB, throw exception
-				break;
+			//case OP_NEW:
+			//case OP_NEW_K:
+			//case OP_THROW: // A == 0: Throw exception object pB, A == 1: Throw exception object pkB, A >= 2: Throw VM exception of type BC
+			//case OP_BOUND: // if rA < 0 or rA >= BC, throw exception
+			//case OP_BOUND_K: // if rA < 0 or rA >= const[BC], throw exception
+			//case OP_BOUND_R: // if rA < 0 or rA >= rB, throw exception
 
 			// String instructions.
-			case OP_CONCAT: // sA = sB..sC
-			case OP_LENS: // dA = sB.Length
-			case OP_CMPS: // if ((skB op skC) != (A & 1)) then pc++
-				break;
+			//case OP_CONCAT: // sA = sB..sC
+			//case OP_LENS: // dA = sB.Length
+			//case OP_CMPS: // if ((skB op skC) != (A & 1)) then pc++
 
 			// Integer math.
 			case OP_SLL_RR: // dA = dkB << diC
@@ -1301,18 +1294,18 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				cc.divsd(regF[a], regF[B]);
 				break;
 			}
-			case OP_MODF_RR: // fA = fkB % fkC
-			case OP_MODF_RK:
-			case OP_MODF_KR:
-			case OP_POWF_RR: // fA = fkB ** fkC
-			case OP_POWF_RK:
-			case OP_POWF_KR:
-			case OP_MINF_RR: // fA = min(fB),fkC)
-			case OP_MINF_RK:
-			case OP_MAXF_RR: // fA = max(fB),fkC)
-			case OP_MAXF_RK:
-			case OP_ATAN2: // fA = atan2(fB,fC), result is in degrees
-			case OP_FLOP: // fA = f(fB), where function is selected by C
+			//case OP_MODF_RR: // fA = fkB % fkC
+			//case OP_MODF_RK:
+			//case OP_MODF_KR:
+			//case OP_POWF_RR: // fA = fkB ** fkC
+			//case OP_POWF_RK:
+			//case OP_POWF_KR:
+			//case OP_MINF_RR: // fA = min(fB),fkC)
+			//case OP_MINF_RK:
+			//case OP_MAXF_RR: // fA = max(fB),fkC)
+			//case OP_MAXF_RK:
+			//case OP_ATAN2: // fA = atan2(fB,fC), result is in degrees
+			//case OP_FLOP: // fA = f(fB), where function is selected by C
 			case OP_EQF_R: // if ((fB == fkC) != (A & 1)) then pc++
 			{
 				auto compLambda = [&](X86Gp& result) {
@@ -1473,7 +1466,6 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 
 				break;
 			}
-				break;
 
 			// Vector math. (2D)
 			case OP_NEGV2: // vA = -vB
@@ -1547,9 +1539,8 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				cc.sqrtsd(regF[a], regF[a]);
 				break;
 			}
-			case OP_EQV2_R: // if ((vB == vkC) != A) then pc++ (inexact if A & 32)
-			case OP_EQV2_K: // this will never be used.
-				break;
+			//case OP_EQV2_R: // if ((vB == vkC) != A) then pc++ (inexact if A & 32)
+			//case OP_EQV2_K: // this will never be used.
 
 			// Vector math. (3D)
 			case OP_NEGV3: // vA = -vB
@@ -1672,9 +1663,8 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				cc.sqrtsd(regF[a], regF[a]);
 				break;
 			}
-			case OP_EQV3_R: // if ((vB == vkC) != A) then pc++ (inexact if A & 32)
-			case OP_EQV3_K: // this will never be used.
-				break;
+			//case OP_EQV3_R: // if ((vB == vkC) != A) then pc++ (inexact if A & 32)
+			//case OP_EQV3_K: // this will never be used.
 
 			// Pointer math.
 			case OP_ADDA_RR: // pA = pB + dkC
@@ -1724,9 +1714,8 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				break;
 			}
 
-			case OP_EQA_R: // if ((pB == pkC) != A) then pc++
-			case OP_EQA_K:
-				break;
+			//case OP_EQA_R: // if ((pB == pkC) != A) then pc++
+			//case OP_EQA_K:
 			}
 		}
 

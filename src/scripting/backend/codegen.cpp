@@ -2482,7 +2482,7 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 		}
 		else if (Base->IsDynamicArray())
 		{
-			ScriptPosition.Message(MSG_ERROR, "Cannot assign dymanic arrays, use Copy() or Move() function instead");
+			ScriptPosition.Message(MSG_ERROR, "Cannot assign dynamic arrays, use Copy() or Move() function instead");
 			delete this;
 			return nullptr;
 		}

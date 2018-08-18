@@ -681,6 +681,7 @@ public:
 		sprites
 	};
 
+
 	struct splane
 	{
 		FTransform xform;
@@ -691,19 +692,49 @@ public:
 		PalEntry GlowColor;
 		float GlowHeight;
 		FTextureID Texture;
+		int ubIndexPlane;	// index in uniform buffer for plane data
+		int ubIndexMatrix;	// index in uniform buffer for texture matrix data
 	};
 
+	splane planes[2];	// never write directly to this. Always use the access functions!
 
-	splane planes[2];
+	enum
+	{
+		INV_FLOORPLANE = 1,
+		INV_CEILINGPLANE = 2,
+		INV_FLOORMATRIX = 4,
+		INV_CEILINGMATRIX = 8
+	};
+
+	int invalidflags;
+
+	void InvalidateMatrix(int pos)
+	{
+		invalidflags |= pos == sector_t::ceiling ? INV_CEILINGMATRIX : INV_FLOORMATRIX;
+	}
+
+	void InvalidatePlane(int pos)
+	{
+		invalidflags |= pos == sector_t::ceiling ? INV_CEILINGPLANE : INV_FLOORPLANE;
+	}
 
 	void SetXOffset(int pos, double o)
 	{
-		planes[pos].xform.xOffs = o;
+		auto &dest = planes[pos].xform.xOffs;
+		if (o != dest)
+		{
+			dest = o;
+			InvalidateMatrix(pos);
+		}
 	}
 
 	void AddXOffset(int pos, double o)
 	{
-		planes[pos].xform.xOffs += o;
+		if (o != 0)
+		{
+			planes[pos].xform.xOffs += o;
+			InvalidateMatrix(pos);
+		}
 	}
 
 	double GetXOffset(int pos) const
@@ -713,12 +744,21 @@ public:
 
 	void SetYOffset(int pos, double o)
 	{
-		planes[pos].xform.yOffs = o;
+		auto &dest = planes[pos].xform.yOffs;
+		if (o != dest)
+		{
+			dest = o;
+			InvalidateMatrix(pos);
+		}
 	}
 
 	void AddYOffset(int pos, double o)
 	{
-		planes[pos].xform.yOffs += o;
+		if (o != 0)
+		{
+			planes[pos].xform.yOffs += o;
+			InvalidateMatrix(pos);
+		}
 	}
 
 	double GetYOffset(int pos, bool addbase = true) const
@@ -735,7 +775,12 @@ public:
 
 	void SetXScale(int pos, double o)
 	{
-		planes[pos].xform.xScale = o;
+		auto &dest = planes[pos].xform.xScale;
+		if (o != dest)
+		{
+			dest = o;
+			InvalidateMatrix(pos);
+		}
 	}
 
 	double GetXScale(int pos) const
@@ -745,7 +790,12 @@ public:
 
 	void SetYScale(int pos, double o)
 	{
-		planes[pos].xform.yScale = o;
+		auto &dest = planes[pos].xform.yScale;
+		if (o != dest)
+		{
+			dest = o;
+			InvalidateMatrix(pos);
+		}
 	}
 
 	double GetYScale(int pos) const
@@ -755,7 +805,12 @@ public:
 
 	void SetAngle(int pos, DAngle o)
 	{
-		planes[pos].xform.Angle = o;
+		auto &dest = planes[pos].xform.Angle;
+		if (o != dest)
+		{
+			dest = o;
+			InvalidateMatrix(pos);
+		}
 	}
 
 	DAngle GetAngle(int pos, bool addbase = true) const
@@ -774,6 +829,7 @@ public:
 	{
 		planes[pos].xform.baseyOffs = y;
 		planes[pos].xform.baseAngle = o;
+		InvalidateMatrix(pos);
 	}
 
 	void SetAlpha(int pos, double o)
@@ -843,6 +899,7 @@ public:
 		FTextureID old = planes[pos].Texture;
 		planes[pos].Texture = tex;
 		if (floorclip && pos == floor && tex != old) AdjustFloorClip();
+		if (tex != old) InvalidateMatrix(pos);
 	}
 
 	double GetPlaneTexZ(int pos) const
@@ -853,11 +910,13 @@ public:
 	void SetPlaneTexZQuick(int pos, double val)	// For the *FakeFlat functions which do not need to have the overlap checked.
 	{
 		planes[pos].TexZ = val;
+		InvalidatePlane(pos);
 	}
 
 	void SetPlaneTexZ(int pos, double val, bool dirtify = false)	// This mainly gets used by init code. The only place where it must set the vertex to dirty is the interpolation code.
 	{
 		planes[pos].TexZ = val;
+		InvalidatePlane(pos);
 		if (dirtify) SetAllVerticesDirty();
 		CheckOverlap();
 	}
@@ -865,6 +924,7 @@ public:
 	void ChangePlaneTexZ(int pos, double val)
 	{
 		planes[pos].TexZ += val;
+		InvalidatePlane(pos);
 		SetAllVerticesDirty();
 		CheckOverlap();
 	}

@@ -4700,12 +4700,12 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 	if (floor)
 	{
 		actor->Sector->NextLowestFloorAt(actor->X(), actor->Y(), actor->Z(), 0, actor->MaxStepHeight, &resultsec, &resffloor);
-		secpic = resffloor ? *resffloor->top.texture : resultsec->planes[sector_t::floor].Texture;
+		secpic = resffloor ? *resffloor->top.texture : resultsec->GetTexture(sector_t::floor);
 	}
 	else
 	{
 		actor->Sector->NextHighestCeilingAt(actor->X(), actor->Y(), actor->Z(), actor->Top(), 0, &resultsec, &resffloor);
-		secpic = resffloor ? *resffloor->bottom.texture : resultsec->planes[sector_t::ceiling].Texture;
+		secpic = resffloor ? *resffloor->bottom.texture : resultsec->GetTexture(sector_t::ceiling);
 	}
 	return tex == TexMan[secpic];
 }
@@ -6776,8 +6776,8 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			int s;
 			while ((s = it.Next()) >= 0)
 			{
-				level.sectors[s].planes[which].GlowColor = color;
-				level.sectors[s].planes[which].GlowHeight = height;
+				level.sectors[s].SetGlowColor(which, color);
+				level.sectors[s].SetGlowHeight(which, height);
 			}
 			break;
 		}

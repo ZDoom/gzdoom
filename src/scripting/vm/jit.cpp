@@ -292,6 +292,15 @@ static int64_t ToMemAddress(const void *d)
 	return (int64_t)(ptrdiff_t)d;
 }
 
+static void CallSqrt(asmjit::X86Compiler& cc, const asmjit::X86Xmm &a, const asmjit::X86Xmm &b)
+{
+	using namespace asmjit;
+	typedef double(*FuncPtr)(double);
+	auto call = cc.call(ToMemAddress(static_cast<FuncPtr>(g_sqrt)), FuncSignature1<void, double>());
+	call->setRet(0, a);
+	call->setArg(0, b);
+}
+
 JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 {
 #if 0 // For debugging
@@ -1557,7 +1566,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				cc.movsd(tmp, regF[B + 1]);
 				cc.mulsd(tmp, regF[B + 1]);
 				cc.addsd(regF[a], tmp);
-				cc.sqrtsd(regF[a], regF[a]);
+				CallSqrt(cc, regF[a], regF[a]);
 				break;
 			}
 			//case OP_EQV2_R: // if ((vB == vkC) != A) then pc++ (inexact if A & 32)
@@ -1681,7 +1690,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				cc.movsd(tmp, regF[B + 2]);
 				cc.mulsd(tmp, regF[B + 2]);
 				cc.addsd(regF[a], tmp);
-				cc.sqrtsd(regF[a], regF[a]);
+				CallSqrt(cc, regF[a], regF[a]);
 				break;
 			}
 			//case OP_EQV3_R: // if ((vB == vkC) != A) then pc++ (inexact if A & 32)

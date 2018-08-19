@@ -121,7 +121,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "uniform int uFogEnabled;\n";
 	i_data += "uniform int uLightIndex;\n";	
 	i_data += "uniform int uTexMatrixIndex;\n";		// 53
-	i_data += "uniform vec2 uSpecularMaterial;\n";	
 
 	// textures
 	i_data += "uniform sampler2D tex;\n";
@@ -330,7 +329,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muSplitBottomPlane.Init(hShader, "uSplitBottomPlane");
 	muSplitTopPlane.Init(hShader, "uSplitTopPlane");
 	muAlphaThreshold.Init(hShader, "uAlphaThreshold");
-	muSpecularMaterial.Init(hShader, "uSpecularMaterial");
 	muTexMatrixIndex.Init(hShader, "uTexMatrixIndex");
 	muTimer.Init(hShader, "timer");
 
@@ -351,6 +349,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 	tempindex = glGetUniformBlockIndex(hShader, "ModelUBO");
 	if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, MODELBUF_BINDINGPOINT);
+
+	tempindex = glGetUniformBlockIndex(hShader, "CustomUniforms");
+	if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, CUSTOM_BINDINGPOINT);
 
 	glUseProgram(hShader);
 

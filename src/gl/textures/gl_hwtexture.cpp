@@ -31,6 +31,8 @@
 #include "c_cvars.h"
 #include "r_data/colormaps.h"
 #include "hwrenderer/textures/hw_material.h"
+#include "hwrenderer/data/uniformbuffer.h"
+#include "hwrenderer/data/shaderuniforms.h"
 
 #include "gl_load/gl_interface.h"
 #include "hwrenderer/utility/hw_cvars.h"
@@ -346,6 +348,9 @@ void FHardwareTexture::Clean(bool all)
 	if (all)
 	{
 		glDefTex.Delete();
+
+		// Note: Must be updated if reference counted later.
+		if (mCustomUniforms) delete mCustomUniforms;
 	}
 	for(unsigned int i=0;i<glTex_Translated.Size();i++)
 	{
@@ -557,9 +562,21 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 			return false;
 		}
 		delete[] buffer;
+
+		// Todo: Custom uniforms need proper setup on the source side. Currently specular is the only type which uses some.
+		// This should be generalized into a real feature and identical buffers folded together, although this requires reference counting on the buffers.
+		if (mCustomUniforms == nullptr && texunit == 0 && tex->Specular && tex->Normal)
+		{
+			float data[2] = { tex->Glossiness, tex->SpecularLevel };
+			mCustomUniforms = screen->CreateUniformBuffer(sizeof(data), true);
+			mCustomUniforms->SetData(data);
+		}
 	}
 	if (tex->bHasCanvas) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
 	GLRenderer->mSamplerManager->Bind(texunit, clampmode, 255);
+
+	// Todo: This should be a bit smarter if the feature is extended.
+	if (mCustomUniforms != nullptr && texunit == 0) mCustomUniforms->Bind(CUSTOM_BINDINGPOINT);
 	return true;
 }
 

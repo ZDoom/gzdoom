@@ -1,3 +1,9 @@
+// This needs to be done better later, but for now this place will have to do.
+
+layout(std140) uniform CustomUniforms
+{
+	vec2 uSpecularMaterial;
+};
 
 Material ProcessMaterial()
 {

@@ -84,7 +84,8 @@ public:
 	uint8_t *MapBuffer();
 
 	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const FString &name) = delete;
-	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name);
+	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name) override;
+
 	unsigned int GetTextureHandle(int translation);
 
 	void Clean(bool all);

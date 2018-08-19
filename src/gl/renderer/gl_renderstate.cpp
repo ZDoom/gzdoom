@@ -80,8 +80,6 @@ void FRenderState::Reset()
 	mLightParms[0] = mLightParms[1] = mLightParms[2] = 0.0f;
 	mLightParms[3] = -1.f;
 	mSpecialEffect = EFF_NONE;
-	mGlossiness = 0.0f;
-	mSpecularLevel = 0.0f;
 	mShaderTimer = 0.0f;
 	mTexMatrixIndex = 0;
 	ClearClipSplit();
@@ -165,7 +163,6 @@ bool FRenderState::ApplyShader()
 	activeShader->muAlphaThreshold.Set(mAlphaThreshold);
 	activeShader->muLightIndex.Set(-1);
 	activeShader->muClipSplit.Set(mClipSplit);
-	activeShader->muSpecularMaterial.Set(mGlossiness, mSpecularLevel);
 	activeShader->muTexMatrixIndex.Set(GLRenderer->mTextureMatrices->Bind(mTexMatrixIndex));
 
 	if (mGlowEnabled)
@@ -281,8 +278,7 @@ void FRenderState::SetMaterial(FMaterial *mat, int clampmode, int translation, i
 	}
 	mEffectState = overrideshader >= 0 ? overrideshader : mat->mShaderIndex;
 	mShaderTimer = mat->tex->shaderspeed;
-	SetSpecular(mat->tex->Glossiness, mat->tex->SpecularLevel);
-
+	
 	auto tex = mat->tex;
 	if (tex->UseType == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;
 	if (tex->bHasCanvas) clampmode = CLAMP_CAMTEX;

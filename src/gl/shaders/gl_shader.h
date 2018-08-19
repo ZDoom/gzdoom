@@ -258,7 +258,6 @@ class FShader
 	FUniform4f muSplitBottomPlane;
 	FUniform4f muSplitTopPlane;
 	FBufferedUniform1f muAlphaThreshold;
-	FBufferedUniform2f muSpecularMaterial;
 	FBufferedUniform1f muTimer;
 	FBufferedUniform1i muTexMatrixIndex;
 	

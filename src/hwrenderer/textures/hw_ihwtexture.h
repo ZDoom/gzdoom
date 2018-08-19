@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include "tarray.h"
+#include "hwrenderer/data/uniformbuffer.h"
 
 typedef TMap<int, bool> SpriteHits;
 class FTexture;
@@ -15,11 +16,15 @@ public:
 	};
 
 public:
+	IUniformBuffer *mCustomUniforms = nullptr;
 
 
 public:
 	IHardwareTexture() {}
-	virtual ~IHardwareTexture() {}
+	virtual ~IHardwareTexture()
+	{
+		if (mCustomUniforms) delete mCustomUniforms;
+	}
 
 	virtual void AllocateBuffer(int w, int h, int texelsize) = 0;
 	virtual uint8_t *MapBuffer() = 0;

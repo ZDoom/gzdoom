@@ -91,7 +91,6 @@ class FRenderState
 	float mAlphaThreshold;
 	int mBlendEquation;
 	bool mLastDepthClamp;
-	float mGlossiness, mSpecularLevel;
 	float mShaderTimer;
 	int mTexMatrixIndex;
 
@@ -315,12 +314,6 @@ public:
 	void SetObjectColor2(PalEntry pe)
 	{
 		mObjectColor2 = pe;
-	}
-
-	void SetSpecular(float glossiness, float specularLevel)
-	{
-		mGlossiness = glossiness;
-		mSpecularLevel = specularLevel;
 	}
 
 	void SetFog(PalEntry c, float d)

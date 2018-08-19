@@ -74,6 +74,9 @@ private:
 	void OnDisconnect(NetNode &node, const NetPacket &packet);
 	void OnTic(NetNode &node, NetPacket &packet);
 
+	void CmdSpawnPlayer(NetNode &node, int player);
+	void FullUpdate(NetNode &node);
+
 	std::unique_ptr<doomcom_t> mComm;
 	NetNode mNodes[MAXNETNODES];
 	int mNodeForPlayer[MAXPLAYERS];

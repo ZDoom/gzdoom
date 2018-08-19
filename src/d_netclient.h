@@ -54,6 +54,7 @@ private:
 	void OnConnectResponse(NetPacket &packet);
 	void OnDisconnect(const NetPacket &packet);
 	void OnTic(NetPacket &packet);
+	void OnSpawnPlayer(NetPacket &packet);
 
 	std::unique_ptr<doomcom_t> mComm;
 	int mServerNode = -1;

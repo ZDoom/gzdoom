@@ -268,6 +268,8 @@ void NetServer::OnConnectRequest(NetNode &node, const NetPacket &packet)
 		mComm->PacketSend(response);
 
 		node.Status = NodeStatus::InGame;
+
+		FullUpdate ( node );
 	}
 	else // Server is full.
 	{
@@ -314,5 +316,34 @@ void NetServer::OnTic(NetNode &node, NetPacket &packet)
 	{
 		node.Status = NodeStatus::Closed;
 		mComm->Close(packet.node);
+	}
+}
+
+void NetServer::CmdSpawnPlayer(NetNode &node, int player)
+{
+	// TODO: This shouldn't be one packet per command.
+	NetPacket packet;
+	packet.node = &node-mNodes;
+	NetCommand cmd ( NetPacketType::SpawnPlayer );
+	cmd.addByte ( player );
+	cmd.addFloat ( static_cast<float> ( players[player].mo->X() ) );
+	cmd.addFloat ( static_cast<float> ( players[player].mo->Y() ) );
+	cmd.addFloat ( static_cast<float> ( players[player].mo->Z() ) );
+	cmd.addShort ( players[player].mo->syncdata.NetID );
+	cmd.writeCommandToPacket ( packet );
+
+	mComm->PacketSend(packet);
+}
+
+void NetServer::FullUpdate(NetNode &node)
+{
+	// Inform the client about all players already in the game.
+	for ( int i = 0; i < MAXPLAYERNAME; ++i )
+	{
+		if ( i == node.Player )
+			continue;
+
+		if ( playeringame[i] == true )
+			CmdSpawnPlayer(node, i);
 	}
 }

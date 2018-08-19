@@ -15,7 +15,8 @@ enum class NetPacketType
 	ConnectRequest,
 	ConnectResponse,
 	Disconnect,
-	Tic
+	Tic,
+	SpawnPlayer
 };
 
 class AActor;

@@ -66,6 +66,10 @@
 #include "events.h"
 #include "i_time.h"
 
+extern IDList<AActor> g_NetIDList;
+
+CVAR( Int, cl_showspawnnames, 0, CVAR_ARCHIVE )
+
 NetClient::NetClient(FString server)
 {
 	Printf("Connecting to %s..\n", server.GetChars());
@@ -87,6 +91,11 @@ void NetClient::Update()
 {
 	while (true)
 	{
+		// [BB] Don't check net packets while we are supposed to load a map.
+		// This way the commands from the full update will not be parsed before we loaded the map.
+		if ( ( gameaction == ga_newgame ) || ( gameaction == ga_newgame2 ) )
+			return;
+
 		NetPacket packet;
 		mComm->PacketGet(packet);
 		if (packet.node == -1)
@@ -118,6 +127,7 @@ void NetClient::Update()
 				case NetPacketType::ConnectResponse: OnConnectResponse(packet); break;
 				case NetPacketType::Disconnect: OnDisconnect(packet); break;
 				case NetPacketType::Tic: OnTic(packet); break;
+				case NetPacketType::SpawnPlayer: OnSpawnPlayer(packet); break;
 				}
 			}
 			break;
@@ -288,5 +298,41 @@ void NetClient::OnTic(NetPacket &packet)
 		players[consoleplayer].mo->SetXYZ(x, y, z);
 		players[consoleplayer].mo->Angles.Yaw = yaw;
 		players[consoleplayer].mo->Angles.Pitch = pitch;
+	}
+}
+
+void NetClient::OnSpawnPlayer(NetPacket &packet)
+{
+	int player = packet.stream.ReadByte();
+	const float x = packet.stream.ReadFloat();
+	const float y = packet.stream.ReadFloat();
+	const float z = packet.stream.ReadFloat();
+	const int16_t netID = packet.stream.ReadShort();
+
+	AActor *oldNetActor = g_NetIDList.findPointerByID ( netID );
+
+	// If there's already an actor with this net ID, destroy it.
+	if ( oldNetActor != NULL )
+	{
+		oldNetActor->Destroy( );
+		g_NetIDList.freeID ( netID );
+	}
+
+	// This player is now in the game.
+	playeringame[player] = true;
+	player_t p = players[player];
+
+	if ( cl_showspawnnames )
+		Printf ( "Spawning player %d at %f,%f,%f (id %d)\n", player, x, y, z, netID );
+
+	DVector3 spawn ( x, y, z );
+
+	p.mo = static_cast<APlayerPawn *>(Spawn (p.cls, spawn, NO_REPLACE));
+
+	if ( p.mo )
+	{
+		// Set the network ID.
+		p.mo->syncdata.NetID = netID;
+		g_NetIDList.useID ( netID, p.mo );
 	}
 }

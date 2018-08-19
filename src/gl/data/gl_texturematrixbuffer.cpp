@@ -65,9 +65,6 @@ GLTextureMatrixBuffer::GLTextureMatrixBuffer()
 	mUploadIndex = 2;
 	Allocate();
 	mLastMappedIndex = UINT_MAX;
-	
-	// Initialize the identity rotation.
-	Map();
 }
 
 GLTextureMatrixBuffer::~GLTextureMatrixBuffer()

@@ -437,7 +437,7 @@ public:
 		}
 	}
 
-	bool CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) const;
+	bool CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp, bool copy = false) const;
 	inline double ZatPoint(const AActor *ac) const;
 
 };
@@ -685,10 +685,10 @@ public:
 	struct splane
 	{
 		FTransform xform;
-		int Flags;
-		int Light;
 		double alpha;
 		double TexZ;
+		int Flags;
+		int Light;
 		PalEntry GlowColor;
 		float GlowHeight;
 		FTextureID Texture;
@@ -708,8 +708,8 @@ public:
 	void InvalidatePlane(int pos)
 	{
 		// negate the buffer index to mark it as invalid.
-		auto & p = planes[pos].ubIndexPlane;
-		if (p > 0) p = -p;
+		//auto & p = planes[pos].ubIndexPlane;
+		//if (p > 0) p = -p;
 	}
 
 	void SetXOffset(int pos, double o)
@@ -923,6 +923,22 @@ public:
 		CheckOverlap();
 	}
 
+	void CopySecPlaneInfo(int pos, sector_t *src, int srcpos, sector_t *org, int vbopos)
+	{
+		SetSecPlane(pos, src->GetSecPlane(srcpos));
+		if (pos != srcpos) GetSecPlane(pos).FlipVert();
+		iboindex[pos] = org->iboindex[vbopos];
+		vboheight[pos] = src->vboheight[srcpos];
+		SetPlaneTexZQuick(pos, src->GetPlaneTexZ(srcpos));
+	}
+
+	void CopyTextureInfo(int pos, sector_t *src, int srcpos)
+	{
+		planes[pos].xform = src->planes[srcpos].xform;
+		planes[pos].ubIndexMatrix = src->planes[srcpos].ubIndexMatrix;
+		planes[pos].Texture = src->planes[srcpos].Texture;
+	}
+
 	static inline short ClampLight(int level)
 	{
 		return (short)clamp(level, SHRT_MIN, SHRT_MAX);
@@ -941,6 +957,12 @@ public:
 	int GetLightLevel() const
 	{
 		return lightlevel;
+	}
+
+	void SetSecPlane(int pos, const secplane_t &other)
+	{
+		if (pos == floor) floorplane = other;
+		else ceilingplane = other;
 	}
 
 	secplane_t &GetSecPlane(int pos)

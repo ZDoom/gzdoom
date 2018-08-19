@@ -2276,7 +2276,7 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 //
 //===========================================================================
 
-bool secplane_t::CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) const
+bool secplane_t::CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp, bool copyit) const
 {
 	bool copy = false;
 
@@ -2298,7 +2298,7 @@ bool secplane_t::CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) cons
 		copy = true;
 	}
 
-	if (copy)
+	if (copy && copyit)
 	{
 		*dest = *this;
 	}

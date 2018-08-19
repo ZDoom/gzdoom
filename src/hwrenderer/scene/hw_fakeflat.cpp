@@ -191,6 +191,7 @@ area_t hw_CheckViewArea(vertex_t *v1, vertex_t *v2, sector_t *frontsector, secto
 //==========================================================================
 sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back)
 {
+	return sec;
 	if (!sec->GetHeightSec() || sec->heightsec==sec) 
 	{
 		// check for backsectors with the ceiling lower than the floor. These will create
@@ -223,21 +224,15 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 	int diffTex = (sec->heightsec->MoreFlags & SECMF_CLIPFAKEPLANES);
 	sector_t * s = sec->heightsec;
 	
-#if 0
-	*dest=*sec;	// This will invoke the copy operator which isn't really needed here. Memcpy is faster.
-#else
 	memcpy(dest, sec, sizeof(sector_t));
-#endif
 
 	// Replace floor and ceiling height with control sector's heights.
 	if (diffTex)
 	{
-		if (s->floorplane.CopyPlaneIfValid (&dest->floorplane, &sec->ceilingplane))
+		if (s->floorplane.CopyPlaneIfValid (&dest->floorplane, &sec->ceilingplane, false))
 		{
-			dest->SetTexture(sector_t::floor, s->GetTexture(sector_t::floor), false);
-			dest->SetPlaneTexZQuick(sector_t::floor, s->GetPlaneTexZ(sector_t::floor));
-			dest->iboindex[sector_t::floor] = sec->iboindex[sector_t::vbo_fakefloor];
-			dest->vboheight[sector_t::floor] = s->vboheight[sector_t::floor];
+			dest->CopySecPlaneInfo(sector_t::floor, s, sector_t::floor, sec, sector_t::vbo_fakefloor);
+			dest->CopyTextureInfo(sector_t::floor, s, sector_t::floor);
 		}
 		else if (s->MoreFlags & SECMF_FAKEFLOORONLY)
 		{
@@ -259,49 +254,31 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 	}
 	else
 	{
-		dest->SetPlaneTexZQuick(sector_t::floor, s->GetPlaneTexZ(sector_t::floor));
-		dest->floorplane   = s->floorplane;
-
-		dest->iboindex[sector_t::floor] = sec->iboindex[sector_t::vbo_fakefloor];
-		dest->vboheight[sector_t::floor] = s->vboheight[sector_t::floor];
+		dest->CopySecPlaneInfo(sector_t::floor, s, sector_t::floor, sec, sector_t::vbo_fakefloor);
 	}
 
 	if (!(s->MoreFlags&SECMF_FAKEFLOORONLY))
 	{
 		if (diffTex)
 		{
-			if (s->ceilingplane.CopyPlaneIfValid (&dest->ceilingplane, &sec->floorplane))
+			// This clips to the actual floor plane and inverts the texture rules.
+			if (s->ceilingplane.CopyPlaneIfValid (&dest->ceilingplane, &sec->floorplane, false))
 			{
-				dest->SetTexture(sector_t::ceiling, s->GetTexture(sector_t::ceiling), false);
-				dest->SetPlaneTexZQuick(sector_t::ceiling, s->GetPlaneTexZ(sector_t::ceiling));
-				dest->iboindex[sector_t::ceiling] = sec->iboindex[sector_t::vbo_fakeceiling];
-				dest->vboheight[sector_t::ceiling] = s->vboheight[sector_t::ceiling];
+				dest->CopySecPlaneInfo(sector_t::ceiling, s, sector_t::ceiling, sec, sector_t::vbo_fakeceiling);
+				dest->CopyTextureInfo(sector_t::ceiling, s, sector_t::ceiling);
 			}
 		}
 		else
 		{
-			dest->ceilingplane  = s->ceilingplane;
-			dest->SetPlaneTexZQuick(sector_t::ceiling, s->GetPlaneTexZ(sector_t::ceiling));
-			dest->iboindex[sector_t::ceiling] = sec->iboindex[sector_t::vbo_fakeceiling];
-			dest->vboheight[sector_t::ceiling] = s->vboheight[sector_t::ceiling];
+			dest->CopySecPlaneInfo(sector_t::ceiling, s, sector_t::ceiling, sec, sector_t::vbo_fakeceiling);
 		}
 	}
 
 	if (in_area==area_below)
 	{
 		dest->CopyColors(s);
-		dest->SetPlaneTexZQuick(sector_t::floor, sec->GetPlaneTexZ(sector_t::floor));
-		dest->SetPlaneTexZQuick(sector_t::ceiling, s->GetPlaneTexZ(sector_t::floor));
-		dest->floorplane=sec->floorplane;
-		dest->ceilingplane=s->floorplane;
-		dest->ceilingplane.FlipVert();
-
-		dest->iboindex[sector_t::floor] = sec->iboindex[sector_t::floor];
-		dest->vboheight[sector_t::floor] = sec->vboheight[sector_t::floor];
-
-		dest->iboindex[sector_t::ceiling] = sec->iboindex[sector_t::vbo_fakefloor];
-		dest->vboheight[sector_t::ceiling] = s->vboheight[sector_t::floor];
-
+		dest->CopySecPlaneInfo(sector_t::floor, sec, sector_t::floor, sec, sector_t::floor);
+		dest->CopySecPlaneInfo(sector_t::ceiling, s, sector_t::floor, sec, sector_t::vbo_fakefloor);
 		dest->ClearPortal(sector_t::ceiling);
 
 		if (!(s->MoreFlags & SECMF_NOFAKELIGHT))
@@ -311,24 +288,15 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 
 		if (!back)
 		{
-			dest->SetTexture(sector_t::floor, diffTex ? sec->GetTexture(sector_t::floor) : s->GetTexture(sector_t::floor), false);
-			dest->planes[sector_t::floor].xform = s->planes[sector_t::floor].xform;
-
-			//dest->ceilingplane		= s->floorplane;
+			dest->CopyTextureInfo(sector_t::floor, diffTex? sec : s, sector_t::floor);
 			
 			if (s->GetTexture(sector_t::ceiling) == skyflatnum) 
 			{
-				dest->SetTexture(sector_t::ceiling, dest->GetTexture(sector_t::floor), false);
-				//dest->floorplane			= dest->ceilingplane;
-				//dest->floorplane.FlipVert ();
-				//dest->floorplane.ChangeHeight (+1);
-				dest->planes[sector_t::ceiling].xform = dest->planes[sector_t::floor].xform;
-
+				dest->CopyTextureInfo(sector_t::ceiling, dest, sector_t::floor);
 			} 
 			else 
 			{
-				dest->SetTexture(sector_t::ceiling, diffTex ? s->GetTexture(sector_t::floor) : s->GetTexture(sector_t::ceiling), false);
-				dest->planes[sector_t::ceiling].xform = s->planes[sector_t::ceiling].xform;
+				dest->CopyTextureInfo(sector_t::ceiling, s, diffTex? sector_t::floor : sector_t::ceiling);
 			}
 			
 			if (!(s->MoreFlags & SECMF_NOFAKELIGHT))
@@ -343,18 +311,8 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 	else if (in_area == area_above)
 	{
 		dest->CopyColors(s);
-		dest->SetPlaneTexZQuick(sector_t::ceiling, sec->GetPlaneTexZ(sector_t::ceiling));
-		dest->SetPlaneTexZQuick(sector_t::floor, s->GetPlaneTexZ(sector_t::ceiling));
-		dest->ceilingplane = sec->ceilingplane;
-		dest->floorplane = s->ceilingplane;
-		dest->floorplane.FlipVert();
-
-		dest->iboindex[sector_t::floor] = sec->iboindex[sector_t::vbo_fakeceiling];
-		dest->vboheight[sector_t::floor] = s->vboheight[sector_t::ceiling];
-
-		dest->iboindex[sector_t::ceiling] = sec->iboindex[sector_t::ceiling];
-		dest->vboheight[sector_t::ceiling] = sec->vboheight[sector_t::ceiling];
-
+		dest->CopySecPlaneInfo(sector_t::ceiling, sec, sector_t::ceiling, sec, sector_t::ceiling);
+		dest->CopySecPlaneInfo(sector_t::floor, s, sector_t::ceiling, sec, sector_t::vbo_fakeceiling);
 		dest->ClearPortal(sector_t::floor);
 
 		if (!(s->MoreFlags & SECMF_NOFAKELIGHT))
@@ -364,14 +322,15 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 
 		if (!back)
 		{
-			dest->SetTexture(sector_t::ceiling, diffTex ? sec->GetTexture(sector_t::ceiling) : s->GetTexture(sector_t::ceiling), false);
-			dest->SetTexture(sector_t::floor, s->GetTexture(sector_t::ceiling), false);
-			dest->planes[sector_t::ceiling].xform = dest->planes[sector_t::floor].xform = s->planes[sector_t::ceiling].xform;
+			dest->CopyTextureInfo(sector_t::ceiling, diffTex? sec : s, sector_t::ceiling);
 			
 			if (s->GetTexture(sector_t::floor) != skyflatnum)
 			{
-				dest->SetTexture(sector_t::floor, s->GetTexture(sector_t::floor), false);
-				dest->planes[sector_t::floor].xform = s->planes[sector_t::floor].xform;
+				dest->CopyTextureInfo(sector_t::floor, s, sector_t::floor);
+			}
+			else
+			{
+				dest->CopyTextureInfo(sector_t::floor, s, sector_t::ceiling);
 			}
 			
 			if (!(s->MoreFlags & SECMF_NOFAKELIGHT))

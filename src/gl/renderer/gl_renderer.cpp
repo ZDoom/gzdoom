@@ -50,6 +50,7 @@
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
+#include "hwrenderer/utility/hw_vrmodes.h"
 #include "hwrenderer/postprocessing/hw_presentshader.h"
 #include "hwrenderer/postprocessing/hw_present3dRowshader.h"
 #include "hwrenderer/postprocessing/hw_shadowmapshader.h"
@@ -422,7 +423,8 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 {
 	twoD.Clock();
 	FGLDebug::PushGroup("Draw2D");
-	mBuffers->BindCurrentFB();
+	if (VRMode::GetVRMode(true)->mEyeCount == 1)
+		mBuffers->BindCurrentFB();
 	const auto &mScreenViewport = screen->mScreenViewport;
 	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 

@@ -37,7 +37,7 @@ class FCustomPostProcessShaders;
 class SWSceneDrawer;
 class GLViewpointBuffer;
 class GLModelBuffer;
-class GLTextureMatrixBuffer;
+class GLDynamicUniformBuffer;
 struct FRenderViewpoint;
 #define NOQUEUE nullptr	// just some token to be used as a placeholder
 
@@ -83,7 +83,7 @@ public:
 	FLightBuffer *mLights = nullptr;
 	GLViewpointBuffer *mViewpoints = nullptr;
 	GLModelBuffer *mModelMatrix = nullptr;
-	GLTextureMatrixBuffer *mTextureMatrices = nullptr;
+	GLDynamicUniformBuffer *mTextureMatrices = nullptr;
 	SWSceneDrawer *swdrawer = nullptr;
 
 	FPortalSceneState mPortalState;

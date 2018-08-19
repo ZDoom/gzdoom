@@ -43,7 +43,7 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/dynlights/gl_lightbuffer.h"
-#include "gl/data/gl_texturematrixbuffer.h"
+#include "gl/data/gl_dynamicuniformbuffer.h"
 
 bool FShader::Load(const char * name, const char * vert_prog_lump, const char * frag_prog_lump, const char * proc_prog_lump, const char * light_fragprog, const char * defines)
 {
@@ -172,9 +172,10 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	unsigned int lightbuffertype = GLRenderer->mLights->GetBufferType();
 	unsigned int lightbuffersize = GLRenderer->mLights->GetBlockSize();
 	unsigned int tmatbuffersize = GLRenderer->mTextureMatrices->GetBlockSize();
+	// All dynamic buffers must have the same type.
 	if (lightbuffertype == GL_UNIFORM_BUFFER)
 	{
-		vp_comb.Format("#version 330 core\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
+		vp_comb.Format("#version 330 core\n#define NUM_UBO_LIGHTS %d\n#define NUM_TEXMATRICES %d\n", lightbuffersize, tmatbuffersize);
 	}
 	else
 	{

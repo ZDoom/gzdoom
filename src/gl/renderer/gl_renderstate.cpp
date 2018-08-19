@@ -37,7 +37,7 @@
 #include "gl/dynlights//gl_lightbuffer.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/textures/gl_hwtexture.h"
-#include "gl/data/gl_texturematrixbuffer.h"
+#include "gl/data/gl_dynamicuniformbuffer.h"
 
 void gl_SetTextureMode(int type);
 

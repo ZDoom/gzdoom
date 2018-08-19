@@ -20,25 +20,27 @@
 //--------------------------------------------------------------------------
 //
 /*
-** gl_viewpointbuffer.cpp
-** Buffer data maintenance for per viewpoint uniform data
+** gl_dynamicuniformbuffer.cpp
+** Buffer class for semi-static map data (i.e. the size is constant, but content may change occasionally)
 **
 **/
 
 #include "gl_load/gl_system.h"
 #include "gl_load/gl_interface.h"
 #include "hwrenderer/data/shaderuniforms.h"
-#include "gl_texturematrixbuffer.h"
+#include "gl_dynamicuniformbuffer.h"
 #include "templates.h"
-#include "g_levellocals.h"
-#include "r_data/matrix.h"
 
-static const int INITIAL_SECTOR_COUNT = 1024;
-static const int ADDITIONAL_ENTRIES = 50;	// for skyboxes
-
-GLTextureMatrixBuffer::GLTextureMatrixBuffer()
+GLDynamicUniformBuffer::GLDynamicUniformBuffer(int bindingpoint, unsigned int elementsize, unsigned int reserved, unsigned forstreaming, void (*staticinitfunc)(char *buffer))
 {
-	mSectorCount = INITIAL_SECTOR_COUNT;
+	mElementCount = reserved + forstreaming;
+	mReservedCount = reserved;
+	mStreamCount = forstreaming;
+	mElementSize = elementsize;
+	mLastBoundIndex = UINT_MAX;
+	mBufferId = 0;
+	mUploadIndex = reserved;
+	mStaticInitFunc = staticinitfunc;
 	
 	if (gl.flags & RFL_SHADER_STORAGE_BUFFER && !strstr(gl.vendorstring, "Intel"))
 	{
@@ -49,30 +51,26 @@ GLTextureMatrixBuffer::GLTextureMatrixBuffer()
 	else
 	{
 		mBufferType = GL_UNIFORM_BUFFER;
-		// A matrix is always 64 bytes.
-		if (gl.maxuniformblock % sizeof(VSMatrix) == 0)
+		if (gl.maxuniformblock % elementsize == 0)
 		{
 			mBlockAlign = gl.maxuniformblock;
 		}
 		else 
 		{
-			mBlockAlign = gl.uniformblockalignment;	// this should really never happen.
+			mBlockAlign = gl.uniformblockalignment;
 		}
-		mBlockSize = mBlockAlign / sizeof(VSMatrix);
+		mBlockSize = mBlockAlign / elementsize;
 	}
 	
-	mBufferId = 0;
-	mUploadIndex = 2;
 	Allocate();
-	mLastMappedIndex = UINT_MAX;
 }
 
-GLTextureMatrixBuffer::~GLTextureMatrixBuffer()
+GLDynamicUniformBuffer::~GLDynamicUniformBuffer()
 {
 	Unload();
 }
 
-void GLTextureMatrixBuffer::Unload()
+void GLDynamicUniformBuffer::Unload()
 {
 	if (mBufferId != 0)
 	{
@@ -84,19 +82,18 @@ void GLTextureMatrixBuffer::Unload()
 	mBufferId = 0;
 }
 
-void GLTextureMatrixBuffer::Allocate()
+void GLDynamicUniformBuffer::Allocate()
 {
 	Unload();
 	
-	mBufferSize = mSectorCount * 2 + ADDITIONAL_ENTRIES;
-	mByteSize = mBufferSize * sizeof(VSMatrix);
+	mByteSize = mElementCount * mElementSize;
 	glGenBuffers(1, &mBufferId);
 	glBindBufferBase(mBufferType, TEXMATRIX_BINDINGPOINT, mBufferId);
 	glBindBuffer(mBufferType, mBufferId);
 	if (gl.buffermethod == BM_PERSISTENT)
 	{
 		glBufferStorage(mBufferType, mByteSize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-		mBufferPointer = (VSMatrix*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+		mBufferPointer = (char*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		mPersistent = true;
 	}
 	else
@@ -105,44 +102,33 @@ void GLTextureMatrixBuffer::Allocate()
 		mBufferPointer = nullptr;
 		mPersistent = false;
 	}
-	Map();
-	// Index #0 is the identity matrix.
-	// Index #1 is a y-flip matrix for camera textures.
-	VSMatrix mat;
-	mat.loadIdentity();
-	mBufferPointer[0] = mat;
-	mat.scale(1.f, -1.f, 1.f);
-	mat.translate(0.f, 1.f, 0.0f);
-	mBufferPointer[1] = mat;
-	Unmap();
+	if (mStaticInitFunc != nullptr)
+	{
+		Map();
+		mStaticInitFunc(mBufferPointer);
+		Unmap();
+	}
 }
 
-void GLTextureMatrixBuffer::ValidateSize(int numsectors)
+void GLDynamicUniformBuffer::ValidateSize(int newnumelements)	// that is 'new elements plus the reserved items'
 {
-	if (mSectorCount < numsectors)
+	if (mElementCount < newnumelements)
 	{
-		mSectorCount = MAX<unsigned>(mSectorCount*2, numsectors);
+		mElementCount = newnumelements;
 		Allocate();
 	}
-	// Mark all indices as uninitialized.
-	int tmindex = -ADDITIONAL_ENTRIES;
-	for (auto &sec : level.sectors)
-	{
-		sec.planes[sector_t::floor].ubIndexMatrix = tmindex--;
-		sec.planes[sector_t::ceiling].ubIndexMatrix = tmindex--;
-	}
 }
 
-void GLTextureMatrixBuffer::Map()
+void GLDynamicUniformBuffer::Map()
 {
 	if (!mPersistent)
 	{
 		glBindBuffer(mBufferType, mBufferId);
-		mBufferPointer = (VSMatrix*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT);
+		mBufferPointer = (char*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT);
 	}
 }
 
-void GLTextureMatrixBuffer::Unmap()
+void GLDynamicUniformBuffer::Unmap()
 {
 	if (!mPersistent && mBufferPointer)
 	{
@@ -152,38 +138,36 @@ void GLTextureMatrixBuffer::Unmap()
 	}
 }
 
-int GLTextureMatrixBuffer::Upload(const VSMatrix &mat, int index)
+int GLDynamicUniformBuffer::Upload(const void *data, int index, unsigned int count)
 {
 	assert(mBufferPointer != nullptr);	// May only be called when the buffer is mapped.
 	if (mBufferPointer == nullptr) return 0;
 	
-	if (index == -1) // dynamic case for sky domes.
+	if (index == -1) // dynamic case. Currently only used by the texture matrix for the sky domes.
 	{
-		// The dynamic case for sky domes uses a simple circular buffer. 48 sky domes in a single map are highly unlikely and due to the serial nature of portal rendering
-		// even then has little chance on stomping on data still in flight.
-		// This can only happen in non-multithreaded parts right now so no synchronization is needed here.
+		if (mStreamCount == 0) return 0;	// don't do this!
 		index = mUploadIndex++;
-		if (index >= 50)
+		if (index >= mReservedCount + mStreamCount)
 		{
-			index = 2;
+			index = mReservedCount;
 		}
 	}
 	
-	mBufferPointer[index] = mat;
+	memcpy(mBufferPointer + index * mElementSize, data, count * mElementSize);
 	return index;
 }
 
 // When this gets called we already have ruled out the case where rebinding is not needed.
-int  GLTextureMatrixBuffer::DoBind(unsigned int index)
+int  GLDynamicUniformBuffer::DoBind(unsigned int index)
 {
-	unsigned int offset = (index*sizeof(VSMatrix) / mBlockAlign) * mBlockAlign;
+	unsigned int offset = ((index*mElementSize) / mBlockAlign) * mBlockAlign;
 
-	if (offset != mLastMappedIndex)
+	if (offset != mLastBoundIndex)
 	{
-		mLastMappedIndex = offset;
+		mLastBoundIndex = offset;
 		glBindBufferRange(GL_UNIFORM_BUFFER, TEXMATRIX_BINDINGPOINT, mBufferId, offset, MIN(mBlockAlign, mByteSize - offset));
 	}
-	return index - (offset/sizeof(VSMatrix));
+	return index - offset / mElementSize;
 }
 
 

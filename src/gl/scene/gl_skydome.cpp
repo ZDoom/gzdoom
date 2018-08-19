@@ -32,7 +32,7 @@
 #include "gl_load/gl_interface.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/data/gl_modelbuffer.h"
-#include "gl/data/gl_texturematrixbuffer.h"
+#include "gl/data/gl_dynamicuniformbuffer.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
@@ -132,7 +132,7 @@ void RenderDome(FMaterial * tex, float x_offset, float y_offset, bool mirror, in
 		GLRenderer->mModelMatrix->Unmap();
 		GLRenderer->mModelMatrix->Bind(ndx);
 		GLRenderer->mTextureMatrices->Map();
-		gl_RenderState.SetTexMatrixIndex(GLRenderer->mTextureMatrices->Upload(texturematrix, -1));
+		gl_RenderState.SetTexMatrixIndex(GLRenderer->mTextureMatrices->Upload(&texturematrix, -1, 1));
 		GLRenderer->mTextureMatrices->Unmap();
 	}
 

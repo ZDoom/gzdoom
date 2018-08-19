@@ -58,7 +58,7 @@
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/data/gl_viewpointbuffer.h"
 #include "gl/data/gl_modelbuffer.h"
-#include "gl/data/gl_texturematrixbuffer.h"
+#include "gl/data/gl_dynamicuniformbuffer.h"
 #include "r_videoscale.h"
 
 EXTERN_CVAR(Int, screenblocks)
@@ -107,7 +107,14 @@ void FGLRenderer::Initialize(int width, int height)
 	mLights = new FLightBuffer();
 	mViewpoints = new GLViewpointBuffer;
 	mModelMatrix = new GLModelBuffer;
-	mTextureMatrices = new GLTextureMatrixBuffer;
+	mTextureMatrices = new GLDynamicUniformBuffer(TEXMATRIX_BINDINGPOINT, sizeof(VSMatrix), 2, 50, [](char *buffer) {
+		VSMatrix mat[2];
+		mat[0].loadIdentity();
+		mat[1].loadIdentity();
+		mat[1].scale(1.f, -1.f, 1.f);
+		mat[1].translate(0.f, 1.f, 0.0f);
+		memcpy(buffer, mat, sizeof(mat));
+	});
 	gl_RenderState.SetVertexBuffer(mVBO);
 	mFBID = 0;
 	mOldFBID = 0;
@@ -164,7 +171,15 @@ void FGLRenderer::ResetSWScene()
 void FGLRenderer::SetupLevel()
 {
 	mVBO->CreateVBO();
-	mTextureMatrices->ValidateSize(level.sectors.Size());
+	mTextureMatrices->ValidateSize(level.sectors.Size()*2);
+	// Mark all indices as uninitialized.
+	int tmindex = -(int)mTextureMatrices->DynamicStart();
+
+	for (auto &sec : level.sectors)
+	{
+		sec.planes[sector_t::floor].ubIndexMatrix = tmindex--;
+		sec.planes[sector_t::ceiling].ubIndexMatrix = tmindex--;
+	}
 }
 
 //===========================================================================

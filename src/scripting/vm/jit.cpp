@@ -196,7 +196,7 @@ private:
 			//EMIT_OP(SCOPE);
 			//EMIT_OP(TAIL);
 			//EMIT_OP(TAIL_K);
-			//EMIT_OP(RESULT);
+			EMIT_OP(RESULT);
 			EMIT_OP(RET);
 			EMIT_OP(RETI);
 			//EMIT_OP(NEW);
@@ -284,8 +284,8 @@ private:
 			// EMIT_OP(MINF_RK);
 			// EMIT_OP(MAXF_RR);
 			// EMIT_OP(MAXF_RK);
-			// EMIT_OP(ATAN2);
-			// EMIT_OP(FLOP);
+			EMIT_OP(ATAN2);
+			EMIT_OP(FLOP);
 			EMIT_OP(EQF_R);
 			EMIT_OP(EQF_K);
 			EMIT_OP(LTF_RR);
@@ -799,7 +799,13 @@ private:
 	//void EmitSCOPE() {} // Scope check at runtime.
 	//void EmitTAIL() {} // Call+Ret in a single instruction
 	//void EmitTAIL_K() {}
-	//void EmitRESULT() {} // Result should go in register encoded in BC (in caller, after CALL)
+
+	void EmitRESULT()
+	{
+		// This instruction is just a placeholder to indicate where a return
+		// value should be stored. It does nothing on its own and should not
+		// be executed.
+	}
 
 	void EmitRET()
 	{
@@ -1537,8 +1543,84 @@ private:
 	// void EmitMINF_RK() { }
 	// void EmitMAXF_RR() { } // fA = max(fB),fkC)
 	// void EmitMAXF_RK() { }
-	// void EmitATAN2() { } // fA = atan2(fB,fC), result is in degrees
-	// void EmitFLOP() { } // fA = f(fB), where function is selected by C
+	
+	void EmitATAN2()
+	{
+		using namespace asmjit;
+		typedef double(*FuncPtr)(double, double);
+		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>(g_atan2))), FuncSignature2<double, double, double>());
+		call->setRet(0, regF[a]);
+		call->setArg(0, regF[B]);
+		call->setArg(1, regF[C]);
+
+		static const double constant = 180 / M_PI;
+		auto tmp = cc.newIntPtr();
+		cc.mov(tmp, ToMemAddress(&constant));
+		cc.mulsd(regF[a], asmjit::x86::qword_ptr(tmp));
+	}
+
+	void EmitFLOP()
+	{
+		if (C == FLOP_NEG)
+		{
+			cc.xorpd(regF[a], regF[a]);
+			cc.subsd(regF[a], regF[B]);
+		}
+		else
+		{
+			auto v = cc.newXmm();
+			cc.movsd(v, regF[B]);
+
+			if (C == FLOP_TAN_DEG)
+			{
+				static const double constant = M_PI / 180;
+				auto tmp = cc.newIntPtr();
+				cc.mov(tmp, ToMemAddress(&constant));
+				cc.mulsd(v, asmjit::x86::qword_ptr(tmp));
+			}
+
+			typedef double(*FuncPtr)(double);
+			FuncPtr func = nullptr;
+			switch (C)
+			{
+			default: I_FatalError("Unknown OP_FLOP subfunction");
+			case FLOP_ABS:		func = fabs; break;
+			case FLOP_EXP:		func = g_exp; break;
+			case FLOP_LOG:		func = g_log; break;
+			case FLOP_LOG10:	func = g_log10; break;
+			case FLOP_SQRT:		func = g_sqrt; break;
+			case FLOP_CEIL:		func = ceil; break;
+			case FLOP_FLOOR:	func = floor; break;
+			case FLOP_ACOS:		func = g_acos; break;
+			case FLOP_ASIN:		func = g_asin; break;
+			case FLOP_ATAN:		func = g_atan; break;
+			case FLOP_COS:		func = g_cos; break;
+			case FLOP_SIN:		func = g_sin; break;
+			case FLOP_TAN:		func = g_tan; break;
+			case FLOP_ACOS_DEG:	func = g_acos; break;
+			case FLOP_ASIN_DEG:	func = g_asin; break;
+			case FLOP_ATAN_DEG:	func = g_atan; break;
+			case FLOP_COS_DEG:	func = g_cosdeg; break;
+			case FLOP_SIN_DEG:	func = g_sindeg; break;
+			case FLOP_TAN_DEG:	func = g_tan; break;
+			case FLOP_COSH:		func = g_cosh; break;
+			case FLOP_SINH:		func = g_sinh; break;
+			case FLOP_TANH:		func = g_tanh; break;
+			}
+
+			auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(func)), asmjit::FuncSignature1<double, double>());
+			call->setRet(0, regF[a]);
+			call->setArg(0, v);
+
+			if (C == FLOP_ACOS_DEG || C == FLOP_ASIN_DEG || C == FLOP_ATAN_DEG)
+			{
+				static const double constant = 180 / M_PI;
+				auto tmp = cc.newIntPtr();
+				cc.mov(tmp, ToMemAddress(&constant));
+				cc.mulsd(regF[a], asmjit::x86::qword_ptr(tmp));
+			}
+		}
+	}
 
 	void EmitEQF_R()
 	{

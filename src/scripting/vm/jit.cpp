@@ -1,6 +1,7 @@
 
 #include "jit.h"
 #include "i_system.h"
+#include "types.h"
 
 // To do: get cmake to define these..
 #define ASMJIT_BUILD_EMBED
@@ -174,18 +175,18 @@ private:
 			EMIT_OP(MOVE);
 			EMIT_OP(MOVEF);
 			// EMIT_OP(MOVES);
-			// EMIT_OP(MOVEA);
+			EMIT_OP(MOVEA);
 			EMIT_OP(MOVEV2);
 			EMIT_OP(MOVEV3);
 			//EMIT_OP(CAST);
 			//EMIT_OP(CASTB);
-			//EMIT_OP(DYNCAST_R);
-			//EMIT_OP(DYNCAST_K);
-			//EMIT_OP(DYNCASTC_R);
-			//EMIT_OP(DYNCASTC_K);
-			//EMIT_OP(TEST);
-			//EMIT_OP(TESTN);
-			//EMIT_OP(JMP);
+			EMIT_OP(DYNCAST_R);
+			EMIT_OP(DYNCAST_K);
+			EMIT_OP(DYNCASTC_R);
+			EMIT_OP(DYNCASTC_K);
+			EMIT_OP(TEST);
+			EMIT_OP(TESTN);
+			EMIT_OP(JMP);
 			//EMIT_OP(IJMP);
 			//EMIT_OP(PARAM);
 			//EMIT_OP(PARAMI);
@@ -689,7 +690,11 @@ private:
 	}
 
 	// void EmitMOVES() {} // sA = sB
-	// void EmitMOVEA() {} // aA = aB
+
+	void EmitMOVEA()
+	{
+		cc.mov(regA[a], regA[B]);
+	}
 
 	void EmitMOVEV2()
 	{
@@ -708,16 +713,83 @@ private:
 
 	//void EmitCAST() {} // xA = xB, conversion specified by C
 	//void EmitCASTB() {} // xA = !!xB, type specified by C
-	//void EmitDYNCAST_R() {} // aA = dyn_cast<aC>(aB);
-	//void EmitDYNCAST_K() {} // aA = dyn_cast<aKC>(aB);
-	//void EmitDYNCASTC_R() {} // aA = dyn_cast<aC>(aB); for class types
-	//void EmitDYNCASTC_K() {} // aA = dyn_cast<aKC>(aB);
+
+	void EmitDYNCAST_R()
+	{
+		using namespace asmjit;
+		typedef DObject*(*FuncPtr)(DObject*, PClass*);
+		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](DObject *obj, PClass *cls) -> DObject* {
+			return (obj && obj->IsKindOf(cls)) ? obj : nullptr;
+		}))), FuncSignature2<void*, void*, void*>());
+		call->setRet(0, regA[a]);
+		call->setArg(0, regA[B]);
+		call->setArg(1, regA[C]);
+	}
+
+	void EmitDYNCAST_K()
+	{
+		using namespace asmjit;
+		auto c = cc.newIntPtr();
+		cc.mov(c, ToMemAddress(konsta[C].o));
+		typedef DObject*(*FuncPtr)(DObject*, PClass*);
+		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](DObject *obj, PClass *cls) -> DObject* {
+			return (obj && obj->IsKindOf(cls)) ? obj : nullptr;
+		}))), FuncSignature2<void*, void*, void*>());
+		call->setRet(0, regA[a]);
+		call->setArg(0, regA[B]);
+		call->setArg(1, c);
+	}
+
+	void EmitDYNCASTC_R()
+	{
+		using namespace asmjit;
+		typedef PClass*(*FuncPtr)(PClass*, PClass*);
+		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](PClass *cls1, PClass *cls2) -> PClass* {
+			return (cls1 && cls1->IsDescendantOf(cls2)) ? cls1 : nullptr;
+		}))), FuncSignature2<void*, void*, void*>());
+		call->setRet(0, regA[a]);
+		call->setArg(0, regA[B]);
+		call->setArg(1, regA[C]);
+	}
+
+	void EmitDYNCASTC_K()
+	{
+		using namespace asmjit;
+		auto c = cc.newIntPtr();
+		cc.mov(c, ToMemAddress(konsta[C].o));
+		typedef PClass*(*FuncPtr)(PClass*, PClass*);
+		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](PClass *cls1, PClass *cls2) -> PClass* {
+			return (cls1 && cls1->IsDescendantOf(cls2)) ? cls1 : nullptr;
+		}))), FuncSignature2<void*, void*, void*>());
+		call->setRet(0, regA[a]);
+		call->setArg(0, regA[B]);
+		call->setArg(1, c);
+	}
 
 	// Control flow.
 
-	//void EmitTEST() {} // if (dA != BC) then pc++
-	//void EmitTESTN() {} // if (dA != -BC) then pc++
-	//void EmitJMP() {} // pc += ABC		-- The ABC fields contain a signed 24-bit offset.
+	void EmitTEST()
+	{
+		int i = (int)(ptrdiff_t)(pc - sfunc->Code);
+		cc.cmp(regD[a], BC);
+		cc.jne(labels[i + 1]);
+	}
+	
+	void EmitTESTN()
+	{
+		int bc = BC;
+		int i = (int)(ptrdiff_t)(pc - sfunc->Code);
+		cc.cmp(regD[a], -bc);
+		cc.jne(labels[i + 1]);
+	}
+
+	void EmitJMP()
+	{
+		auto dest = pc + JMPOFS(pc) + 1;
+		int i = (int)(ptrdiff_t)(dest - sfunc->Code);
+		cc.jmp(labels[i]);
+	}
+
 	//void EmitIJMP() {} // pc += dA + BC	-- BC is a signed offset. The target instruction must be a JMP.
 	//void EmitPARAM() {} // push parameter encoded in BC for function call (B=regtype, C=regnum)
 	//void EmitPARAMI() {} // push immediate, signed integer for function call

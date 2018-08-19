@@ -462,7 +462,7 @@ class UDMFParser : public UDMFParserBase
 	TArray<vertex_t> ParsedVertices;
 	TArray<UDMFScroll> UDMFScrollers;
 
-	FDynamicColormap	*fogMap, *normMap;
+	FDynamicColormap	*fogMap = nullptr, *normMap = nullptr;
 	FMissingTextureTracker &missingTex;
 
 public:
@@ -470,7 +470,6 @@ public:
 		: missingTex(missing)
 	{
 		linemap.Clear();
-		fogMap = normMap = NULL;
 	}
 
   void ReadUserKey(FUDMFKey &ukey) {
@@ -1357,11 +1356,11 @@ public:
 		// Brand new UDMF scroller properties
 		double scroll_ceil_x = 0;
 		double scroll_ceil_y = 0;
-		FName scroll_ceil_type;
+		FName scroll_ceil_type = NAME_None;
 
 		double scroll_floor_x = 0;
 		double scroll_floor_y = 0;
-		FName scroll_floor_type;
+		FName scroll_floor_type = NAME_None;
 
 
 		memset(sec, 0, sizeof(*sec));

@@ -569,9 +569,8 @@ DEFINE_PROPERTY(painchance, ZI, Actor)
 	}
 	else
 	{
-		FName painType;
-		if (!stricmp(str, "Normal")) painType = NAME_None;
-		else painType=str;
+		FName painType = NAME_None;
+		if (stricmp(str, "Normal")) painType = str;
 
 		info->SetPainChance(painType, id);
 	}
@@ -897,15 +896,14 @@ DEFINE_PROPERTY(damagefactor, ZF, Actor)
 	PROP_STRING_PARM(str, 0);
 	PROP_DOUBLE_PARM(id, 1);
 
-	if (str == NULL)
+	if (str == nullptr)
 	{
 		defaults->DamageFactor = id;
 	}
 	else
 	{
-		FName dmgType;
-		if (!stricmp(str, "Normal")) dmgType = NAME_None;
-		else dmgType=str;
+		FName dmgType = NAME_None;
+		if (stricmp(str, "Normal")) dmgType = str;
 
 		info->SetDamageFactor(dmgType, id);
 	}

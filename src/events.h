@@ -69,6 +69,9 @@ bool E_Responder(const event_t* ev); // splits events into InputProcess and UiPr
 // this executes on console/net events.
 void E_Console(int player, FString name, int arg1, int arg2, int arg3, bool manual);
 
+// called when looking up the replacement for an actor class
+bool E_CheckReplacement(PClassActor* replacee, PClassActor** replacement);
+
 // send networked event. unified function.
 bool E_SendNetworkEvent(FString name, int arg1, int arg2, int arg3, bool manual);
 
@@ -166,6 +169,9 @@ public:
 	
 	// 
 	void ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3, bool manual);
+
+	//
+	void CheckReplacement(PClassActor* replacee, PClassActor** replacement, bool* final);
 };
 class DEventHandler : public DStaticEventHandler
 {
@@ -198,7 +204,7 @@ struct FWorldEvent
 	AActor* Inflictor = nullptr; // can be null - for damagemobj
 	AActor* DamageSource = nullptr; // can be null
 	int Damage = 0;
-	FName DamageType;
+	FName DamageType = NAME_None;
 	int DamageFlags = 0;
 	DAngle DamageAngle;
 	// for line(pre)activated
@@ -260,6 +266,13 @@ struct FConsoleEvent
 	int Args[3];
 	//
 	bool IsManual;
+};
+
+struct FReplaceEvent
+{
+	PClassActor* Replacee;
+	PClassActor* Replacement;
+	bool IsFinal;
 };
 
 #endif

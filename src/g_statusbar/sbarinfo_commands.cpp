@@ -667,7 +667,7 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 		Operator	conditionalOperator[2];
 		FString		inventoryItem[2];
 		int			armorType[2];
-		FName		keySpecies[2];
+		FName		keySpecies[2] = { NAME_None, NAME_None };
 };
 
 ////////////////////////////////////////////////////////////////////////////////

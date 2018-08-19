@@ -1593,10 +1593,8 @@ PClassPointer *NewClassPointer(PClass *restrict)
 //==========================================================================
 
 PEnum::PEnum(FName name, PTypeBase *outer)
-: PInt(4, false)
+: PInt(4, false), Outer(outer), EnumName(name)
 {
-	EnumName = name;
-	Outer = outer;
 	Flags |= TYPE_IntNotInt;
 	mDescriptiveName.Format("Enum<%s>", name.GetChars());
 }

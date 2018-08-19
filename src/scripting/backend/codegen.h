@@ -369,7 +369,7 @@ public:
 class FxIdentifier : public FxExpression
 {
 public:
-	FName Identifier;
+	FName Identifier = NAME_None;
 	bool noglobal = false;
 
 	FxIdentifier(FName i, const FScriptPosition &p);

@@ -101,12 +101,11 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 	FExtraInfo extra;
 	PClassActor *type;
 	PClassActor *parent;
-	FName typeName;
 
 	parent = (def == DEF_Pickup) ? PClass::FindActor("FakeInventory") : RUNTIME_CLASS(AActor);
 
 	sc.MustGetString();
-	typeName = FName(sc.String);
+	FName typeName = FName(sc.String);
 	type = DecoDerivedClass(FScriptPosition(sc), parent, typeName);
 	ResetBaggage(&bag, parent);
 	bag.Namespace = ns;

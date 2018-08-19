@@ -2171,13 +2171,9 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 	// Set bounce state
 	if (BounceFlags & BOUNCE_UseBounceState)
 	{
-		FName names[2];
-		FState *bouncestate;
-
-		names[0] = NAME_Bounce;
-		names[1] = plane.fC() < 0 ? NAME_Ceiling : NAME_Floor;
-		bouncestate = FindState(2, names);
-		if (bouncestate != NULL)
+		FName names[2] = { NAME_Bounce, plane.fC() < 0 ? NAME_Ceiling : NAME_Floor };
+		FState *bouncestate = FindState(2, names);
+		if (bouncestate != nullptr)
 		{
 			SetState(bouncestate);
 		}

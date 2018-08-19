@@ -280,6 +280,7 @@ void DoomComImpl::PacketGet(NetPacket &packet)
 			Close(i);
 			packet.node = i;
 			packet.size = 0;
+			packet.stream.pbStreamEnd = packet.stream.pbStream;
 			return;
 		}
 	}
@@ -302,6 +303,7 @@ void DoomComImpl::PacketGet(NetPacket &packet)
 				Close(node);
 				packet.node = node;
 				packet.size = 0;
+				packet.stream.pbStreamEnd = packet.stream.pbStream;
 				return;
 			}
 			else if (err != WSAEWOULDBLOCK)
@@ -312,6 +314,7 @@ void DoomComImpl::PacketGet(NetPacket &packet)
 			{
 				packet.node = -1;
 				packet.size = 0;
+				packet.stream.pbStreamEnd = packet.stream.pbStream;
 				return;
 			}
 		}
@@ -340,6 +343,7 @@ void DoomComImpl::PacketGet(NetPacket &packet)
 
 			packet.node = node;
 			packet.size = (short)size;
+			packet.stream.pbStreamEnd = packet.stream.pbStream + packet.size;
 			return;
 		}
 	}

@@ -103,14 +103,24 @@ void NetClient::Update()
 		}
 		else
 		{
-			NetPacketType type = (NetPacketType)packet.stream.ReadByte();
-			switch (type)
+			if (packet.stream.ReadByte () != 0)
 			{
-			default: OnClose(packet); break;
-			case NetPacketType::ConnectResponse: OnConnectResponse(packet); break;
-			case NetPacketType::Disconnect: OnDisconnect(packet); break;
-			case NetPacketType::Tic: OnTic(packet); break;
+				Printf ("Error parsing packet. Unexpected header.\n");
+				break;
 			}
+
+			while ( packet.stream.IsAtEnd() == false )
+			{
+				NetPacketType type = (NetPacketType)packet.stream.ReadByte();
+				switch (type)
+				{
+				default: OnClose(packet); break;
+				case NetPacketType::ConnectResponse: OnConnectResponse(packet); break;
+				case NetPacketType::Disconnect: OnDisconnect(packet); break;
+				case NetPacketType::Tic: OnTic(packet); break;
+				}
+			}
+			break;
 		}
 
 		if (mStatus == NodeStatus::Closed)
@@ -226,9 +236,6 @@ void NetClient::OnClose(const NetPacket &packet)
 
 void NetClient::OnConnectResponse(NetPacket &packet)
 {
-	if (packet.size != 3)
-		return;
-
 	int version = packet.stream.ReadByte(); // Protocol version
 	if (version == 1)
 	{
@@ -269,9 +276,6 @@ void NetClient::OnDisconnect(const NetPacket &packet)
 
 void NetClient::OnTic(NetPacket &packet)
 {
-	if (packet.size != 2 + sizeof(float) * 5)
-		return;
-
 	int tic = packet.stream.ReadByte();
 	float x = packet.stream.ReadFloat();
 	float y = packet.stream.ReadFloat();

@@ -91,14 +91,24 @@ void NetServer::Update()
 		}
 		else
 		{
-			NetPacketType type = (NetPacketType)packet.stream.ReadByte();
-			switch (type)
+			if (packet.stream.ReadByte () != 0)
 			{
-			default: OnClose(node, packet); break;
-			case NetPacketType::ConnectRequest: OnConnectRequest(node, packet); break;
-			case NetPacketType::Disconnect: OnDisconnect(node, packet); break;
-			case NetPacketType::Tic: OnTic(node, packet); break;
+				Printf ("Error parsing packet. Unexpected header.\n");
+				break;
 			}
+
+			while ( packet.stream.IsAtEnd() == false )
+			{
+				NetPacketType type = (NetPacketType)packet.stream.ReadByte();
+				switch (type)
+				{
+				default: OnClose(node, packet); break;
+				case NetPacketType::ConnectRequest: OnConnectRequest(node, packet); break;
+				case NetPacketType::Disconnect: OnDisconnect(node, packet); break;
+				case NetPacketType::Tic: OnTic(node, packet); break;
+				}
+			}
+			break;
 		}
 	}
 }
@@ -297,9 +307,6 @@ void NetServer::OnTic(NetNode &node, NetPacket &packet)
 {
 	if (node.Status == NodeStatus::InGame)
 	{
-		if (packet.size != 2 + sizeof(usercmd_t))
-			return;
-
 		/* gametic */ packet.stream.ReadByte();
 		packet.stream.ReadBuffer ( &mCurrentInput[node.Player].ucmd, sizeof(usercmd_t));
 	}

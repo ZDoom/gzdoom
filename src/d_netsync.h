@@ -80,6 +80,8 @@ struct BYTESTREAM_s
 
 	void WriteHeader( int Byte );
 
+	bool IsAtEnd() const;
+
 	// Pointer to our stream of data.
 	uint8_t		*pbStream;
 

@@ -326,6 +326,13 @@ void BYTESTREAM_s::WriteHeader( int Byte )
 
 //*****************************************************************************
 //
+bool BYTESTREAM_s::IsAtEnd() const
+{
+	return ( this->pbStream >= this->pbStreamEnd );
+}
+
+//*****************************************************************************
+//
 void BYTESTREAM_s::WriteBit( bool bit )
 {
 	// Add a bit to this byte
@@ -669,6 +676,13 @@ void NetCommand::writeCommandToStream ( BYTESTREAM_s &ByteStream ) const
 //
 void NetCommand::writeCommandToPacket ( NetPacket &response ) const
 {
+	// The packet is empty, let it start with a header.
+	if ( response.size == 0 )
+	{
+ 		response.stream.WriteByte ( 0 ); // Header
+		response.size = 1;
+	}
+
 	const int size = _buffer.CalcSize();
 	memcpy( response.data + response.size, _buffer.pbData, _buffer.CalcSize() );
 	response.size += _buffer.CalcSize();

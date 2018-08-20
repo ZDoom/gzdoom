@@ -112,6 +112,7 @@ void GLDynamicUniformBuffer::Allocate()
 
 void GLDynamicUniformBuffer::ValidateSize(int newnumelements)	// that is 'new elements plus the reserved items'
 {
+	newnumelements += DynamicStart();
 	if (mElementCount < newnumelements)
 	{
 		mElementCount = newnumelements;

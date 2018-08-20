@@ -178,8 +178,11 @@ void FGLRenderer::SetupLevel()
 
 	for (auto &sec : level.sectors)
 	{
-		sec.planes[sector_t::floor].ubIndexMatrix = tmindex--;
-		sec.planes[sector_t::ceiling].ubIndexMatrix = tmindex--;
+		sec.ubIndexMatrix[sector_t::floor] = tmindex--;
+		sec.ubIndexMatrix[sector_t::ceiling] = tmindex--;
+
+		sec.planes[sector_t::floor].pUbIndexMatrix = &sec.ubIndexMatrix[sector_t::floor];
+		sec.planes[sector_t::ceiling].pUbIndexMatrix = &sec.ubIndexMatrix[sector_t::ceiling];
 	}
 }
 

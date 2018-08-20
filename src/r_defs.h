@@ -692,16 +692,18 @@ public:
 		PalEntry GlowColor;
 		float GlowHeight;
 		FTextureID Texture;
-		int ubIndexPlane;	// index in uniform buffer for plane data
-		int ubIndexMatrix;	// index in uniform buffer for texture matrix data
+		int *pUbIndexMatrix;	// tracked by address so that copies can reach the real variable when updating.
 	};
 
 	splane planes[2];
 
+	//int ubIndexPlane;	// index in uniform buffer for plane data
+	int ubIndexMatrix[2];		// index in uniform buffer for texture matrix data
+
 	void InvalidateMatrix(int pos)
 	{
 		// negate the buffer index to mark it as invalid.
-		auto & p = planes[pos].ubIndexMatrix;
+		auto & p = ubIndexMatrix[pos];
 		if (p > 0) p = -p;
 	}
 
@@ -935,7 +937,7 @@ public:
 	void CopyTextureInfo(int pos, sector_t *src, int srcpos)
 	{
 		planes[pos].xform = src->planes[srcpos].xform;
-		planes[pos].ubIndexMatrix = src->planes[srcpos].ubIndexMatrix;
+		planes[pos].pUbIndexMatrix = src->planes[srcpos].pUbIndexMatrix;
 		planes[pos].Texture = src->planes[srcpos].Texture;
 	}
 

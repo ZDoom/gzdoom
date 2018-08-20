@@ -454,10 +454,6 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 
 	if (sector->validcount != validcount)
 	{
-		if (sector->Index() == 62)
-		{
-			int a = 0;
-		}
 		mVBO->CheckUpdate(sector);
 	}
 

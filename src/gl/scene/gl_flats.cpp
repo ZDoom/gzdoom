@@ -210,6 +210,10 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 	gl_RenderState.SetNormal(plane.plane.Normal().X, plane.plane.Normal().Z, plane.plane.Normal().Y);
 	GLRenderer->mModelMatrix->Bind(0);
 
+	if (flat->sector->sectornum == 546)
+	{
+		int a = 0;
+	}
 	switch (pass)
 	{
 	case GLPASS_ALL:	// Single-pass rendering
@@ -219,7 +223,7 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 			gl_RenderState.SetObjectColor(flat->FlatColor | 0xff000000);
 		if (flat->sector->special != GLSector_Skybox)
 		{
-			gl_RenderState.SetTexMatrixIndex(flat->plane.ubIndexMatrix);
+			gl_RenderState.SetTexMatrixIndex(*flat->plane.pUbIndexMatrix);
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
 			DrawSubsectors(flat, pass, false);
 		}
@@ -251,7 +255,7 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 		{
 			if (!flat->gltexture->tex->GetTranslucency()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
 			else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
-			gl_RenderState.SetTexMatrixIndex(flat->plane.ubIndexMatrix);
+			gl_RenderState.SetTexMatrixIndex(*flat->plane.pUbIndexMatrix);
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
 			DrawSubsectors(flat, pass, true);
 		}

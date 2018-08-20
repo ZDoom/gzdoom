@@ -223,15 +223,15 @@ void GLFlat::Process(HWDrawInfo *di, sector_t * model, int whichplane, bool fog)
 			lightlevel=255;
 		}
 
-		if (plane.ubIndexMatrix < 0)
+		auto &ndx = *plane.pUbIndexMatrix;
+		if (ndx < 0)
 		{
 			// Need to recalculate the texture matrix.
 			// (Note that theoretically two threads can do this at the same time, but since they'd create the same data this isn't critical.)
 			VSMatrix mat;
-			plane.ubIndexMatrix = -plane.ubIndexMatrix;
-			model->planes[whichplane].ubIndexMatrix = plane.ubIndexMatrix;
+			ndx = -ndx;
 			hw_SetPlaneTextureRotation(&plane, gltexture, mat);
-			di->UploadTextureMatrix(mat, plane.ubIndexMatrix);
+			di->UploadTextureMatrix(mat, ndx);
 		}
 	}
 	else 

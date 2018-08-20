@@ -2043,6 +2043,30 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, Vec3Diff)
 	ACTION_RETURN_VEC3(VecDiff(DVector3(x1, y1, z1), DVector3(x2, y2, z2)));
 }
 
+DEFINE_ACTION_FUNCTION(FLevelLocals, SphericalCoords)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(viewpointX);
+	PARAM_FLOAT(viewpointY);
+	PARAM_FLOAT(viewpointZ);
+	PARAM_FLOAT(targetX);
+	PARAM_FLOAT(targetY);
+	PARAM_FLOAT(targetZ);
+	PARAM_ANGLE_DEF(viewYaw);
+	PARAM_ANGLE_DEF(viewPitch);
+	PARAM_BOOL_DEF(absolute);
+
+	DVector3 viewpoint(viewpointX, viewpointY, viewpointZ);
+	DVector3 target(targetX, targetY, targetZ);
+	auto vecTo = absolute ? target - viewpoint : VecDiff(viewpoint, target);
+
+	ACTION_RETURN_VEC3(DVector3(
+		deltaangle(vecTo.Angle(), viewYaw).Degrees,
+		deltaangle(-vecTo.Pitch(), viewPitch).Degrees,
+		vecTo.Length()
+	));
+}
+
 DEFINE_ACTION_FUNCTION(FLevelLocals, Vec2Offset)
 {
 	PARAM_PROLOGUE;

@@ -2275,6 +2275,7 @@ VIDMNU_RESPRESET		= "Choose Resolution Preset";
 VIDMNU_RESPRESETTTL		= "Custom Resolution Presets";
 VIDMNU_RESPRESETHEAD	= "Preset Resolution Modes";
 VIDMNU_ASPECT43			= "4:3 Aspect";
+VIDMNU_ASPECT54			= "5:4 Aspect";
 VIDMNU_ASPECT169		= "16:9 Aspect";
 VIDMNU_ASPECT1610		= "16:10 Aspect";
 

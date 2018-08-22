@@ -50,108 +50,108 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	static char buffer[10000];
 	FString error;
 
-	FString i_data = R"(
-		precision highp int;
-		precision highp float;
+	const char *i_data = R"(
+	precision highp int;
+	precision highp float;
 
-		// This must match the HWViewpointUniforms struct
-		layout(std140) uniform ViewpointUBO {
-			mat4 ProjectionMatrix;
-			mat4 ViewMatrix;
-			mat4 NormalViewMatrix;
+	// This must match the HWViewpointUniforms struct
+	layout(std140) uniform ViewpointUBO {
+		mat4 ProjectionMatrix;
+		mat4 ViewMatrix;
+		mat4 NormalViewMatrix;
 
-			vec4 uCameraPos;
-			vec4 uClipLine;
+		vec4 uCameraPos;
+		vec4 uClipLine;
 
-			float uGlobVis;
-			int uPalLightLevels;	
-			int uViewHeight;
-			float uClipHeight;
-			float uClipHeightDirection;
-		};
+		float uGlobVis;
+		int uPalLightLevels;	
+		int uViewHeight;
+		float uClipHeight;
+		float uClipHeightDirection;
+	};
 
-		layout(std140) uniform ModelUBO {
-			mat4 ModelMatrix;
-			mat4 NormalModelMatrix;
-			#define uInterpolationFactor NormalModelMatrix[3][3]
-		};
+	layout(std140) uniform ModelUBO {
+		mat4 ModelMatrix;
+		mat4 NormalModelMatrix;
+		#define uInterpolationFactor NormalModelMatrix[3][3]
+	};
 		
 
-	#ifdef USE_SHADER_STORAGE
-		layout(std430, binding = 1) buffer LightBufferSSO
-		{
-		    vec4 lights[];
-		};
+#ifdef USE_SHADER_STORAGE
+	layout(std430, binding = 1) buffer LightBufferSSO
+	{
+		vec4 lights[];
+	};
 
-		layout(std430, binding = 5) buffer TexMatrixSSO
-		{
-			mat4 TextureMatrices[];
-		};
-	#else
-		uniform LightBufferUBO
-		{
-		    vec4 lights[NUM_UBO_LIGHTS];
-		};
+	layout(std430, binding = 5) buffer TexMatrixSSO
+	{
+		mat4 TextureMatrices[];
+	};
+#else
+	uniform LightBufferUBO
+	{
+		vec4 lights[NUM_UBO_LIGHTS];
+	};
 
-		uniform TexMatrixUBO
-		{
-			mat4 TextureMatrices[NUM_TEXMATRICES];
-		};
-	#endif
+	uniform TexMatrixUBO
+	{
+		mat4 TextureMatrices[NUM_TEXMATRICES];
+	};
+#endif
 
-	)";
+	layout(std140) uniform AttributeUBO {
+		vec4 uLightColor;
+		vec4 uObjectColor;
+		vec4 uObjectColor2;
+		vec4 uGlowTopPlane;
+		vec4 uGlowTopColor;
+		vec4 uGlowBottomPlane;
+		vec4 uGlowBottomColor;
+		vec4 uSplitTopPlane;
+		vec4 uSplitBottomPlane;
+		vec4 uFogColor;
+		vec4 uDynLightColor;
+		vec4 uLightAttr;	
+		vec2 uClipSplit;
+		float uLightLevel;
+		float uFogDensity;
+		float uLightFactor;
+		float uLightDist;
+		float uDesaturationFactor;
+		float timer;
+		float uAlphaThreshold;
+		int uTextureMode;
+		int uFogEnabled;
+		int uLightIndex;
+		int uTexMatrixIndex;
+		int uNormalIsLight;
+	};
 
-	// Base
-	i_data += "uniform vec4 uObjectColor;\n";
-	i_data += "uniform vec4 uObjectColor2;\n";
-	i_data += "uniform vec4 uGlowTopPlane;\n";
-	i_data += "uniform vec4 uGlowTopColor;\n";	// 16
-	i_data += "uniform vec4 uGlowBottomPlane;\n";
-	i_data += "uniform vec4 uGlowBottomColor;\n";
-	i_data += "uniform vec4 uSplitTopPlane;\n";
-	i_data += "uniform vec4 uSplitBottomPlane;\n";	// 32
-	i_data += "uniform vec4 uFogColor;\n";
-	i_data += "uniform vec4 uDynLightColor;\n";
-	i_data += "uniform vec4 uLightAttr;\n";	
-	i_data += "uniform vec2 uClipSplit;\n";
-	i_data += "uniform float uDesaturationFactor;\n";
-	i_data += "uniform float timer;\n";				// 48
-	i_data += "uniform float uAlphaThreshold;\n";
-	i_data += "uniform int uTextureMode;\n";
-	i_data += "uniform int uFogEnabled;\n";
-	i_data += "uniform int uLightIndex;\n";	
-	i_data += "uniform int uTexMatrixIndex;\n";		// 53
+// textures
+uniform sampler2D tex;
+uniform sampler2D ShadowMap;
+uniform sampler2D texture2;
+uniform sampler2D texture3;
+uniform sampler2D texture4;
+uniform sampler2D texture5;
+uniform sampler2D texture6;
 
-	// textures
-	i_data += "uniform sampler2D tex;\n";
-	i_data += "uniform sampler2D ShadowMap;\n";
-	i_data += "uniform sampler2D texture2;\n";
-	i_data += "uniform sampler2D texture3;\n";
-	i_data += "uniform sampler2D texture4;\n";
-	i_data += "uniform sampler2D texture5;\n";
-	i_data += "uniform sampler2D texture6;\n";
+// material types
+#if defined(SPECULAR)
+#define normaltexture texture2
+#define speculartexture texture3
+#define brighttexture texture4
+#elif defined(PBR)
+#define normaltexture texture2
+#define metallictexture texture3
+#define roughnesstexture texture4
+#define aotexture texture5
+#define brighttexture texture6
+#else
+#define brighttexture texture2
+#endif
+)";
 
-	// timer data
-
-	i_data += "#define uLightLevel uLightAttr.a\n";
-	i_data += "#define uFogDensity uLightAttr.b\n";
-	i_data += "#define uLightFactor uLightAttr.g\n";
-	i_data += "#define uLightDist uLightAttr.r\n";
-
-	// material types
-	i_data += "#if defined(SPECULAR)\n";
-	i_data += "#define normaltexture texture2\n";
-	i_data += "#define speculartexture texture3\n";
-	i_data += "#define brighttexture texture4\n";
-	i_data += "#elif defined(PBR)\n";
-	i_data += "#define normaltexture texture2\n";
-	i_data += "#define metallictexture texture3\n";
-	i_data += "#define roughnesstexture texture4\n";
-	i_data += "#define aotexture texture5\n";
-	i_data += "#define brighttexture texture6\n";
-	i_data += "#else\n";
-	i_data += "#define brighttexture texture2\n";
-	i_data += "#endif\n";
 
 	int vp_lump = Wads.CheckNumForFullName(vert_prog_lump, 0);
 	if (vp_lump == -1) I_Error("Unable to load '%s'", vert_prog_lump);
@@ -191,7 +191,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		vp_comb << "#define SUPPORTS_SHADOWMAPS\n";
 	}
 
-	vp_comb << defines << i_data.GetChars();
+	vp_comb << defines << i_data;
 	FString fp_comb = vp_comb;
 
 	vp_comb << "#line 1\n";

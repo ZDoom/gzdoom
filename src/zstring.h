@@ -214,6 +214,12 @@ public:
 	long LastIndexOfAny (const FString &charset, long endIndex) const;
 	long LastIndexOfAny (const char *charset, long endIndex) const;
 
+	long RIndexOf (const FString &substr) const;
+	long RIndexOf (const FString &substr, long endIndex) const;
+	long RIndexOf (const char *substr) const;
+	long RIndexOf (const char *substr, long endIndex) const;
+	long RIndexOf (const char *substr, long endIndex, size_t substrlen) const;
+
 	void ToUpper ();
 	void ToLower ();
 	void SwapCase ();
@@ -463,4 +469,3 @@ template<> struct THashTraits<FString>
 	// Compares two keys, returning zero if they are the same.
 	int Compare(const FString &left, const FString &right) { return left.Compare(right); }
 };
-

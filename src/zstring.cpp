@@ -596,6 +596,43 @@ long FString::LastIndexOfAny (const char *charset, long endIndex) const
 	return -1;
 }
 
+long FString::RIndexOf (const FString &substr) const
+{
+	return RIndexOf(substr.Chars, Len() - substr.Len(), substr.Len());
+}
+
+long FString::RIndexOf (const FString &substr, long endIndex) const
+{
+	return RIndexOf(substr.Chars, endIndex, substr.Len());
+}
+
+long FString::RIndexOf (const char *substr) const
+{
+	return RIndexOf(substr, Len() - strlen(substr), strlen(substr));
+}
+
+long FString::RIndexOf (const char *substr, long endIndex) const
+{
+	return RIndexOf(substr, endIndex, strlen(substr));
+}
+
+long FString::RIndexOf (const char *substr, long endIndex, size_t substrlen) const
+{
+	if ((size_t)endIndex + substrlen > Len())
+	{
+		endIndex = Len() - substrlen;
+	}
+	while (endIndex >= 0)
+	{
+		if (strncmp (substr, Chars + endIndex, substrlen) == 0)
+		{
+			return endIndex;
+		}
+		endIndex--;
+	}
+	return -1;
+}
+
 void FString::ToUpper ()
 {
 	LockBuffer();
@@ -1003,7 +1040,7 @@ void FString::Substitute (const char *oldstr, const char *newstr, size_t oldstrl
 
 bool FString::IsInt () const
 {
-	// String must match: [whitespace] [{+ | –}] [0 [{ x | X }]] [digits] [whitespace]
+	// String must match: [whitespace] [{+ | ï¿½}] [0 [{ x | X }]] [digits] [whitespace]
 
 /* This state machine is based on a simplification of re2c's output for this input:
 digits		= [0-9];

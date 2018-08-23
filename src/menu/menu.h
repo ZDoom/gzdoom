@@ -336,6 +336,7 @@ void M_Init (void);
 void M_CreateMenus();
 void M_ActivateMenu(DMenu *menu);
 void M_ClearMenus ();
+void M_PreviousMenu ();
 void M_ParseMenuDefs();
 void M_StartupSkillMenu(FGameStartup *gs);
 void M_StartControlPanel (bool makeSound);

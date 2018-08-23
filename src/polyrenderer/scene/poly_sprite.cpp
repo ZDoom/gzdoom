@@ -147,8 +147,8 @@ void RenderPolySprite::Render(PolyRenderThread *thread, AActor *thing, subsector
 		vertices[i].y = (float)p.Y;
 		vertices[i].z = (float)(posZ + spriteHeight * offsets[i].second);
 		vertices[i].w = 1.0f;
-		vertices[i].u = (float)(offsets[i].first * tex->Scale.X);
-		vertices[i].v = (float)((1.0f - offsets[i].second) * tex->Scale.Y);
+		vertices[i].u = (float)offsets[i].first;
+		vertices[i].v = (float)(1.0f - offsets[i].second);
 		if (flipTextureX)
 			vertices[i].u = 1.0f - vertices[i].u;
 	}

@@ -69,7 +69,12 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 	float pitch = 0;
 	float roll = 0;
 	double rotateOffset = 0;
-	float angle = actor->Angles.Yaw.Degrees;
+	DRotator angles;
+	if (actor->renderflags & RF_INTERPOLATEANGLES) // [Nash] use interpolated angles
+		angles = actor->InterpolatedAngles(ticFrac);
+	else
+		angles = actor->Angles;
+	float angle = angles.Yaw.Degrees;
 
 	// [BB] Workaround for the missing pitch information.
 	if ((smf->flags & MDL_PITCHFROMMOMENTUM))
@@ -110,11 +115,11 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 	// If both flags MDL_USEACTORPITCH and MDL_PITCHFROMMOMENTUM are set, the pitch sums up the actor pitch and the velocity vector pitch.
 	if (smf->flags & MDL_USEACTORPITCH)
 	{
-		double d = actor->Angles.Pitch.Degrees;
+		double d = angles.Pitch.Degrees;
 		if (smf->flags & MDL_BADROTATION) pitch += d;
 		else pitch -= d;
 	}
-	if (smf->flags & MDL_USEACTORROLL) roll += actor->Angles.Roll.Degrees;
+	if (smf->flags & MDL_USEACTORROLL) roll += angles.Roll.Degrees;
 
 	VSMatrix objectToWorldMatrix;
 	objectToWorldMatrix.loadIdentity();
@@ -124,13 +129,6 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 
 	// [Nash] take SpriteRotation into account
 	angle += actor->SpriteRotation.Degrees;
-
-	if (actor->renderflags & RF_INTERPOLATEANGLES)
-	{
-		// [Nash] use interpolated angles
-		DRotator Angles = actor->InterpolatedAngles(ticFrac);
-		angle = Angles.Yaw.Degrees;
-	}
 
 	// Applying model transformations:
 	// 1) Applying actor angle, pitch and roll to the model

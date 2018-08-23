@@ -65,6 +65,7 @@
 #include "vm.h"
 #include "r_videoscale.h"
 #include "i_time.h"
+#include "version.h"
 
 EXTERN_CVAR(Bool, cl_capfps)
 
@@ -884,11 +885,18 @@ CUSTOM_CVAR(Bool, fullscreen, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 	setmodeneeded = true;
 }
 
+CUSTOM_CVAR(Bool, vid_hdr, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	Printf("This won't take effect until " GAMENAME " is restarted.\n");
+}
+
 CCMD(vid_listadapters)
 {
 	if (Video != NULL)
 		Video->DumpAdapters();
 }
+
+bool vid_hdr_active = false;
 
 DEFINE_GLOBAL(SmallFont)
 DEFINE_GLOBAL(SmallFont2)

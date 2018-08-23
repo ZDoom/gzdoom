@@ -47,6 +47,8 @@
 #include "gl/textures/gl_hwtexture.h"
 #include "r_videoscale.h"
 
+extern bool vid_hdr_active;
+
 void FGLRenderer::RenderScreenQuad()
 {
 	mVBO->BindVBO();
@@ -223,6 +225,12 @@ void FGLRenderer::DrawPresentTexture(const IntRect &box, bool applyGamma)
 		mPresentShader->Uniforms->Brightness = clamp<float>(vid_brightness, -0.8f, 0.8f);
 		mPresentShader->Uniforms->Saturation = clamp<float>(vid_saturation, -15.0f, 15.f);
 		mPresentShader->Uniforms->GrayFormula = static_cast<int>(gl_satformula);
+	}
+	if (vid_hdr_active && framebuffer->IsFullscreen())
+	{
+		// Full screen exclusive mode treats a rgba16f frame buffer as linear.
+		// It probably will eventually in desktop mode too, but the DWM doesn't seem to support that.
+		mPresentShader->Uniforms->InvGamma *= 2.2f;
 	}
 	mPresentShader->Uniforms->Scale = { screen->mScreenViewport.width / (float)mBuffers->GetWidth(), screen->mScreenViewport.height / (float)mBuffers->GetHeight() };
 	mPresentShader->Uniforms.Set();

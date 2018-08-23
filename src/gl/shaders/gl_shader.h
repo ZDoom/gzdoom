@@ -241,32 +241,6 @@ class FShader
 	unsigned int hFragProg;
 	FName mName;
 
-	FBufferedUniform1f muDesaturation;
-	FBufferedUniform1i muFogEnabled;
-	FBufferedUniform1i muTextureMode;
-	FBufferedUniform4f muLightParms;
-	FBufferedUniform2f muClipSplit;
-	FBufferedUniform1i muLightIndex;
-	FBufferedUniformPE muFogColor;
-	FBufferedUniform4f muDynLightColor;
-	FBufferedUniformPE muObjectColor;
-	FBufferedUniformPE muObjectColor2;
-	FUniform4f muGlowBottomColor;
-	FUniform4f muGlowTopColor;
-	FUniform4f muGlowBottomPlane;
-	FUniform4f muGlowTopPlane;
-	FUniform4f muSplitBottomPlane;
-	FUniform4f muSplitTopPlane;
-	FBufferedUniform1f muAlphaThreshold;
-	FBufferedUniform1f muTimer;
-	FBufferedUniform1i muTexMatrixIndex;
-	
-	int lights_index;
-
-private:
-	int currentglowstate = 0;
-	int currentsplitstate = 0;
-
 public:
 	FShader(const char *name)
 		: mName(name)
@@ -277,10 +251,6 @@ public:
 	~FShader();
 
 	bool Load(const char * name, const char * vert_prog_lump, const char * fragprog, const char * fragprog2, const char * light_fragprog, const char *defines);
-
-	void SetColormapColor(float r, float g, float b, float r1, float g1, float b1);
-	void SetGlowParams(float *topcolors, float topheight, float *bottomcolors, float bottomheight);
-	void SetLightRange(int start, int end, int forceadd);
 
 	bool Bind();
 	unsigned int GetHandle() const { return hShader; }

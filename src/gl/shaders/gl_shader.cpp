@@ -313,28 +313,6 @@ uniform sampler2D texture6;
 	}
 
 
-	muDesaturation.Init(hShader, "uDesaturationFactor");
-	muFogEnabled.Init(hShader, "uFogEnabled");
-	muTextureMode.Init(hShader, "uTextureMode");
-	muLightParms.Init(hShader, "uLightAttr");
-	muClipSplit.Init(hShader, "uClipSplit");
-	muLightIndex.Init(hShader, "uLightIndex");
-	muFogColor.Init(hShader, "uFogColor");
-	muDynLightColor.Init(hShader, "uDynLightColor");
-	muObjectColor.Init(hShader, "uObjectColor");
-	muObjectColor2.Init(hShader, "uObjectColor2");
-	muGlowBottomColor.Init(hShader, "uGlowBottomColor");
-	muGlowTopColor.Init(hShader, "uGlowTopColor");
-	muGlowBottomPlane.Init(hShader, "uGlowBottomPlane");
-	muGlowTopPlane.Init(hShader, "uGlowTopPlane");
-	muSplitBottomPlane.Init(hShader, "uSplitBottomPlane");
-	muSplitTopPlane.Init(hShader, "uSplitTopPlane");
-	muAlphaThreshold.Init(hShader, "uAlphaThreshold");
-	muTexMatrixIndex.Init(hShader, "uTexMatrixIndex");
-	muTimer.Init(hShader, "timer");
-
-	lights_index = glGetUniformLocation(hShader, "lights");
-
 	int tempindex;
 	if (lightbuffertype == GL_UNIFORM_BUFFER)
 	{
@@ -353,6 +331,9 @@ uniform sampler2D texture6;
 
 	tempindex = glGetUniformBlockIndex(hShader, "CustomUniforms");
 	if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, CUSTOM_BINDINGPOINT);
+
+	tempindex = glGetUniformBlockIndex(hShader, "AttributeUBO");
+	if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, ATTRIBUTE_BINDINGPOINT);
 
 	glUseProgram(hShader);
 

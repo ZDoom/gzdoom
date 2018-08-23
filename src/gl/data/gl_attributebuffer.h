@@ -33,6 +33,30 @@ struct AttributeBufferData
 	int uTexMatrixIndex;
 	int uNormaIsLight;
 	
+	void SetDefaults()
+	{
+		/*
+		mFogColor.d = -1;
+		mTextureMode = -1;
+		mDesaturation = 0;
+		mAlphaThreshold = 0.5f;
+		mObjectColor = 0xffffffff;
+		mObjectColor2 = 0;
+		mSoftLight = 0;
+		mLightParms[0] = mLightParms[1] = mLightParms[2] = 0.0f;
+		mLightParms[3] = -1.f;
+		mShaderTimer = 0.0f;
+		mTexMatrixIndex = 0;
+		mColor.Set(1.0f, 1.0f, 1.0f, 1.0f);
+		mGlowTop.Set(0.0f, 0.0f, 0.0f, 0.0f);
+		mGlowBottom.Set(0.0f, 0.0f, 0.0f, 0.0f);
+		mGlowTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
+		mGlowBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
+		mSplitTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
+		mSplitBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
+		mDynColor.Set(0.0f, 0.0f, 0.0f, 0.0f);
+		*/
+	}
 };
 
 
@@ -71,7 +95,7 @@ public:
 		if (!mIndexed && index != mLastMappedIndex)
 		{
 			mLastMappedIndex = index;
-			glBindBufferRange(mBufferType, AttributeBUF_BINDINGPOINT, mBufferId, index * mBlockAlign, mBlockAlign);
+			glBindBufferRange(mBufferType, ATTRIBUTE_BINDINGPOINT, mBufferId, index * mBlockAlign, mBlockAlign);
 		}
 		return index;
 	}

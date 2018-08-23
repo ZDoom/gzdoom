@@ -45,6 +45,15 @@ public:
 	{
 		return mReservedCount + mStreamCount;
 	}
+	
+    int ShaderIndex(unsigned int index) const
+    {
+        if (mBlockAlign == 0) return index;
+        // This must match the math in BindUBO.
+		unsigned int offset = ((index*mElementSize) / mBlockAlign) * mBlockAlign;
+		return int(index - offset / mElementSize);
+    }
+	
 
 };
 

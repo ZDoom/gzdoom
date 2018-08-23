@@ -32,6 +32,7 @@
 #include "r_defs.h"
 #include "r_data/r_translate.h"
 #include "g_levellocals.h"
+#include "gl/data/gl_attributebuffer.h"
 
 class FVertexBuffer;
 class FShader;
@@ -74,45 +75,23 @@ enum EPassType
 
 class FRenderState
 {
-	friend void gl_SetTextureMode(int type);
+	AttributeBufferData mAttributes;
+
 	bool mTextureEnabled;
 	uint8_t mFogEnabled;
 	bool mGlowEnabled;
 	bool mSplitEnabled;
 	bool mBrightmapEnabled;
-	bool mColorMask[4];
-	bool currentColorMask[4];
 	int mSpecialEffect;
-	int mTextureMode;
-	int mDesaturation;
-	int mSoftLight;
-	float mLightParms[4];
 	int mSrcBlend, mDstBlend;
-	float mAlphaThreshold;
 	int mBlendEquation;
 	bool mLastDepthClamp;
-	float mShaderTimer;
-	int mTexMatrixIndex;
 
 	FVertexBuffer *mVertexBuffer, *mCurrentVertexBuffer;
 	FStateVec4 mNormal;
-	FStateVec4 mColor;
-	FStateVec4 mGlowTop, mGlowBottom;
-	FStateVec4 mGlowTopPlane, mGlowBottomPlane;
-	FStateVec4 mSplitTopPlane, mSplitBottomPlane;
-	PalEntry mFogColor;
-	PalEntry mObjectColor;
-	PalEntry mObjectColor2;
-	FStateVec4 mDynColor;
-	float mClipSplit[2];
 
 	int mEffectState;
 	int mTempTM = TM_MODULATE;
-
-	float stAlphaThreshold;
-	int stSrcBlend, stDstBlend;
-	bool stAlphaTest;
-	int stBlendEquation;
 
 	FShader *activeShader;
 
@@ -130,9 +109,6 @@ class FRenderState
 
 public:
 
-	VSMatrix mModelMatrix;
-	VSMatrix mTextureMatrix;
-
 	FRenderState()
 	{
 		Reset();
@@ -148,8 +124,11 @@ public:
 	void SetMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader, bool alphatexture);
 
 	void Apply();
-	void ApplyColorMask();
-	void ApplyLightIndex(int index);
+
+	void FRenderState::SetLightIndex(int index)
+	{
+		mAttributes.uLightIndex = index;
+	}
 
 	void SetVertexBuffer(FVertexBuffer *vb)
 	{
@@ -174,58 +153,36 @@ public:
 
 	void SetColor(float r, float g, float b, float a = 1.f, int desat = 0)
 	{
-		mColor.Set(r, g, b, a);
-		mDesaturation = desat;
+		mAttributes.uLightColor = { r, g, b, a };
+		mAttributes.uDesaturationFactor = desat / 255.f;
 	}
 
 	void SetColor(PalEntry pe, int desat = 0)
 	{
-		mColor.Set(pe.r/255.f, pe.g/255.f, pe.b/255.f, pe.a/255.f);
-		mDesaturation = desat;
+		mAttributes.uLightColor = { pe.r / 255.f, pe.g / 255.f, pe.b / 255.f, pe.a / 255.f };
+		mAttributes.uDesaturationFactor = desat / 255.f;
 	}
 
 	void SetColorAlpha(PalEntry pe, float alpha = 1.f, int desat = 0)
 	{
-		mColor.Set(pe.r/255.f, pe.g/255.f, pe.b/255.f, alpha);
-		mDesaturation = desat;
+		mAttributes.uLightColor = { pe.r / 255.f, pe.g / 255.f, pe.b / 255.f, alpha };
+		mAttributes.uDesaturationFactor = desat / 255.f;
 	}
 
 	void ResetColor()
 	{
-		mColor.Set(1,1,1,1);
-		mDesaturation = 0;
-	}
-
-	void GetColorMask(bool& r, bool &g, bool& b, bool& a) const
-	{
-		r = mColorMask[0];
-		g = mColorMask[1];
-		b = mColorMask[2];
-		a = mColorMask[3];
-	}
-
-	void SetColorMask(bool r, bool g, bool b, bool a)
-	{
-		mColorMask[0] = r;
-		mColorMask[1] = g;
-		mColorMask[2] = b;
-		mColorMask[3] = a;
-	}
-
-	void ResetColorMask()
-	{
-		for (int i = 0; i < 4; ++i)
-			mColorMask[i] = true;
+		mAttributes.uLightColor = { 1.f, 1.f, 1.f, 1.f };
+		mAttributes.uDesaturationFactor = 0.f;
 	}
 
 	void SetTextureMode(int mode)
 	{
-		mTextureMode = mode;
+		mAttributes.uTextureMode = mode;
 	}
 
 	int GetTextureMode()
 	{
-		return mTextureMode;
+		return mAttributes.uTextureMode;
 	}
 
 	void EnableTexture(bool on)
@@ -258,6 +215,8 @@ public:
 		}
 		else
 		{
+			mAttributes.uSplitTopPlane.Zero();
+			mAttributes.uSplitBottomPlane.Zero();
 			glDisable(GL_CLIP_DISTANCE3);
 			glDisable(GL_CLIP_DISTANCE4);
 		}
@@ -270,90 +229,101 @@ public:
 
 	void SetTexMatrixIndex(int index)
 	{
-		mTexMatrixIndex = index;
+		mAttributes.uTexMatrixIndex = index;
 	}
 
 	void SetGlowParams(float *t, float *b)
 	{
-		mGlowTop.Set(t[0], t[1], t[2], t[3]);
-		mGlowBottom.Set(b[0], b[1], b[2], b[3]);
+		mAttributes.uGlowTopColor = { t[0], t[1], t[2], t[3] };
+		mAttributes.uGlowBottomColor = { b[0], b[1], b[2], b[3] };
 	}
 
 	void SetSoftLightLevel(int llevel)
 	{
-		if (level.lightmode == 8) mLightParms[3] = llevel / 255.f;
-		else mLightParms[3] = -1.f;
+		if (level.lightmode == 8) mAttributes.uLightLevel = llevel / 255.f;
+		else mAttributes.uLightLevel = -1.f;
 	}
 
 	void SetGlowPlanes(const secplane_t &top, const secplane_t &bottom)
 	{
 		DVector3 tn = top.Normal();
 		DVector3 bn = bottom.Normal();
-		mGlowTopPlane.Set(tn.X, tn.Y, 1. / tn.Z, top.fD());
-		mGlowBottomPlane.Set(bn.X, bn.Y, 1. / bn.Z, bottom.fD());
+		mAttributes.uGlowTopPlane = { (float)tn.X, (float)tn.Y, 1.f / (float)tn.Z, (float)top.fD() };
+		mAttributes.uGlowBottomPlane = { (float)bn.X, (float)bn.Y, 1.f / (float)bn.Z, (float)bottom.fD() };
 	}
 
 	void SetSplitPlanes(const secplane_t &top, const secplane_t &bottom)
 	{
 		DVector3 tn = top.Normal();
 		DVector3 bn = bottom.Normal();
-		mSplitTopPlane.Set(tn.X, tn.Y, 1. / tn.Z, top.fD());
-		mSplitBottomPlane.Set(bn.X, bn.Y, 1. / bn.Z, bottom.fD());
+		mAttributes.uSplitTopPlane = { (float)tn.X, (float)tn.Y, 1.f / (float)tn.Z, (float)top.fD() };
+		mAttributes.uSplitBottomPlane = { (float)bn.X, (float)bn.Y, 1.f / (float)bn.Z, (float)bottom.fD() };
 	}
 
 	void SetDynLight(float r, float g, float b)
 	{
-		mDynColor.Set(r, g, b, 0);
+		mAttributes.uDynLightColor = { r, g, b, 0 };
 	}
 
 	void SetObjectColor(PalEntry pe)
 	{
-		mObjectColor = pe;
+		mAttributes.uObjectColor = { pe.r/255.f, pe.g/255.f, pe.b/255.f, 1.f };
+	}
+
+	void SetObjectColor(float r, float g, float b)
+	{
+		mAttributes.uObjectColor = { r, g, b, 1 };
 	}
 
 	void SetObjectColor2(PalEntry pe)
 	{
-		mObjectColor2 = pe;
+		mAttributes.uObjectColor2 = { pe.r / 255.f, pe.g / 255.f, pe.b / 255.f, 1.f };
 	}
 
-	void SetFog(PalEntry c, float d)
+	void SetFog(PalEntry pe, float d)
 	{
 		const float LOG2E = 1.442692f;	// = 1/log(2)
-		mFogColor = c;
-		if (d >= 0.0f) mLightParms[2] = d * (-LOG2E / 64000.f);
+		mAttributes.uFogColor = { pe.r / 255.f, pe.g / 255.f, pe.b / 255.f, 1.f };
+		if (d >= 0.0f) mAttributes.uFogDensity = d * (-LOG2E / 64000.f);
 	}
 
 	void SetLightParms(float f, float d)
 	{
-		mLightParms[1] = f;
-		mLightParms[0] = d;
+		mAttributes.uLightFactor = f;
+		mAttributes.uLightDist = d;
 	}
 
-	PalEntry GetFogColor() const
+	FVector4 GetFogColor() const
 	{
-		return mFogColor;
+		return mAttributes.uFogColor;
+	}
+
+	void SetFogColor(const FVector4 &c)
+	{
+		mAttributes.uFogColor = c;
 	}
 
 	void SetClipSplit(float bottom, float top)
 	{
-		mClipSplit[0] = bottom;
-		mClipSplit[1] = top;
+		mAttributes.uClipSplit[0] = bottom;
+		mAttributes.uClipSplit[1] = top;
 	}
 
 	void SetClipSplit(float *vals)
 	{
-		memcpy(mClipSplit, vals, 2 * sizeof(float));
+		mAttributes.uClipSplit = { vals[0], vals[1] };
 	}
 
 	void GetClipSplit(float *out)
 	{
-		memcpy(out, mClipSplit, 2 * sizeof(float));
+		out[0] = mAttributes.uClipSplit.X;
+		out[1] = mAttributes.uClipSplit.Y;
 	}
 
 	void ClearClipSplit()
 	{
-		mClipSplit[0] = -1000000.f;
-		mClipSplit[1] = 1000000.f;
+		mAttributes.uClipSplit[0] = -1000000.f;
+		mAttributes.uClipSplit[1] = 1000000.f;
 	}
 
 	void BlendFunc(int src, int dst)
@@ -371,8 +341,8 @@ public:
 
 	void AlphaFunc(int func, float thresh)
 	{
-		if (func == GL_GREATER) mAlphaThreshold = thresh;
-		else mAlphaThreshold = thresh - 0.001f;
+		if (func == GL_GREATER) mAttributes.uAlphaThreshold = thresh;
+		else mAttributes.uAlphaThreshold = thresh - 0.001f;
 	}
 
 	void BlendEquation(int eq)
@@ -422,16 +392,6 @@ public:
 	{
 		return mPassType == GBUFFER_PASS ? 3 : 1;
 	}
-
-	/*
-	void SetPlaneTextureRotation(GLSectorPlane *plane, FMaterial *texture)
-	{
-		if (hw_SetPlaneTextureRotation(plane, texture, mTextureMatrix))
-		{
-			EnableTextureMatrix(true);
-		}
-	}
-	*/
 
 };
 

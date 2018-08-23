@@ -39,8 +39,6 @@
 #include "gl/textures/gl_hwtexture.h"
 #include "gl/data/gl_dynamicuniformbuffer.h"
 
-void gl_SetTextureMode(int type);
-
 FRenderState gl_RenderState;
 
 CVAR(Bool, gl_direct_state_change, true, 0)
@@ -64,44 +62,17 @@ void FRenderState::Reset()
 {
 	mTextureEnabled = true;
 	mSplitEnabled = mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
-	mColorMask[0] = mColorMask[1] = mColorMask[2] = mColorMask[3] = true;
-	currentColorMask[0] = currentColorMask[1] = currentColorMask[2] = currentColorMask[3] = true;
-	mFogColor.d = -1;
-	mTextureMode = -1;
-	mDesaturation = 0;
 	mSrcBlend = GL_SRC_ALPHA;
 	mDstBlend = GL_ONE_MINUS_SRC_ALPHA;
-	mAlphaThreshold = 0.5f;
 	mBlendEquation = GL_FUNC_ADD;
-	mObjectColor = 0xffffffff;
-	mObjectColor2 = 0;
 	mVertexBuffer = mCurrentVertexBuffer = NULL;
-	mSoftLight = 0;
-	mLightParms[0] = mLightParms[1] = mLightParms[2] = 0.0f;
-	mLightParms[3] = -1.f;
 	mSpecialEffect = EFF_NONE;
-	mShaderTimer = 0.0f;
-	mTexMatrixIndex = 0;
 	ClearClipSplit();
 
-	stSrcBlend = stDstBlend = -1;
-	stBlendEquation = -1;
-	stAlphaThreshold = -1.f;
-	stAlphaTest = 0;
 	mLastDepthClamp = true;
 
-	mColor.Set(1.0f, 1.0f, 1.0f, 1.0f);
-	mGlowTop.Set(0.0f, 0.0f, 0.0f, 0.0f);
-	mGlowBottom.Set(0.0f, 0.0f, 0.0f, 0.0f);
-	mGlowTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
-	mGlowBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
-	mSplitTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
-	mSplitBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
-	mDynColor.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mEffectState = 0;
 	activeShader = nullptr;
-	mModelMatrix.loadIdentity();
-	mTextureMatrix.loadIdentity();
 	mPassType = NORMAL_PASS;
 }
 
@@ -126,7 +97,7 @@ bool FRenderState::ApplyShader()
 	}
 	else
 	{
-		activeShader = GLRenderer->mShaderManager->Get(mTextureEnabled ? mEffectState : SHADER_NoTexture, mAlphaThreshold >= 0.f, mPassType);
+		activeShader = GLRenderer->mShaderManager->Get(mTextureEnabled ? mEffectState : SHADER_NoTexture, mAttributes.uAlphaThreshold >= 0.f, mPassType);
 		activeShader->Bind();
 	}
 
@@ -138,7 +109,7 @@ bool FRenderState::ApplyShader()
 		{
 			fogset = -3;	// 2D rendering with 'foggy' overlay.
 		}
-		else if ((mFogColor & 0xffffff) == 0)
+		else if (mAttributes.uFogColor.XYZ().isZero())
 		{
 			fogset = gl_fogmode;
 		}
@@ -147,55 +118,12 @@ bool FRenderState::ApplyShader()
 			fogset = -gl_fogmode;
 		}
 	}
+	mAttributes.uFogEnabled = fogset;
 
-	glVertexAttrib4fv(VATTR_COLOR, mColor.vec);
 	glVertexAttrib4fv(VATTR_NORMAL, mNormal.vec);
 
-	activeShader->muDesaturation.Set(mDesaturation / 255.f);
-	activeShader->muFogEnabled.Set(fogset);
-	activeShader->muTextureMode.Set(mTextureMode == TM_MODULATE && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode);
-	activeShader->muLightParms.Set(mLightParms);
-	activeShader->muFogColor.Set(mFogColor);
-	activeShader->muObjectColor.Set(mObjectColor);
-	activeShader->muObjectColor2.Set(mObjectColor2);
-	activeShader->muDynLightColor.Set(mDynColor.vec);
-	activeShader->muTimer.Set((double)(screen->FrameTime - firstFrame) * (double)mShaderTimer / 1000.);
-	activeShader->muAlphaThreshold.Set(mAlphaThreshold);
-	activeShader->muLightIndex.Set(-1);
-	activeShader->muClipSplit.Set(mClipSplit);
-	activeShader->muTexMatrixIndex.Set(GLRenderer->mTextureMatrices->Bind(mTexMatrixIndex));
 
-	if (mGlowEnabled)
-	{
-		activeShader->muGlowTopColor.Set(mGlowTop.vec);
-		activeShader->muGlowBottomColor.Set(mGlowBottom.vec);
-		activeShader->currentglowstate = 1;
-	}
-	else if (activeShader->currentglowstate)
-	{
-		// if glowing is on, disable it.
-		activeShader->muGlowTopColor.Set(nulvec);
-		activeShader->muGlowBottomColor.Set(nulvec);
-		activeShader->currentglowstate = 0;
-	}
-	if (mGlowEnabled || mObjectColor2.a != 0)
-	{
-		activeShader->muGlowTopPlane.Set(mGlowTopPlane.vec);
-		activeShader->muGlowBottomPlane.Set(mGlowBottomPlane.vec);
-	}
-
-	if (mSplitEnabled)
-	{
-		activeShader->muSplitTopPlane.Set(mSplitTopPlane.vec);
-		activeShader->muSplitBottomPlane.Set(mSplitBottomPlane.vec);
-		activeShader->currentsplitstate = 1;
-	}
-	else if (activeShader->currentsplitstate)
-	{
-		activeShader->muSplitTopPlane.Set(nulvec);
-		activeShader->muSplitBottomPlane.Set(nulvec);
-		activeShader->currentsplitstate = 0;
-	}
+	if (!mGlowEnabled) mAttributes.uGlowTopColor.W = mAttributes.uGlowBottomColor.W = 0.f;
 	return true;
 }
 
@@ -208,23 +136,6 @@ bool FRenderState::ApplyShader()
 
 void FRenderState::Apply()
 {
-	if (!gl_direct_state_change)
-	{
-		if (mSrcBlend != stSrcBlend || mDstBlend != stDstBlend)
-		{
-			stSrcBlend = mSrcBlend;
-			stDstBlend = mDstBlend;
-			glBlendFunc(mSrcBlend, mDstBlend);
-		}
-		if (mBlendEquation != stBlendEquation)
-		{
-			stBlendEquation = mBlendEquation;
-			glBlendEquation(mBlendEquation);
-		}
-	}
-
-	//ApplyColorMask(); I don't think this is needed.
-
 	if (mVertexBuffer != mCurrentVertexBuffer)
 	{
 		if (mVertexBuffer == NULL) glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -232,32 +143,6 @@ void FRenderState::Apply()
 		mCurrentVertexBuffer = mVertexBuffer;
 	}
 	ApplyShader();
-}
-
-
-
-void FRenderState::ApplyColorMask()
-{
-	if ((mColorMask[0] != currentColorMask[0]) ||
-		(mColorMask[1] != currentColorMask[1]) ||
-		(mColorMask[2] != currentColorMask[2]) ||
-		(mColorMask[3] != currentColorMask[3]))
-	{
-		glColorMask(mColorMask[0], mColorMask[1], mColorMask[2], mColorMask[3]);
-		currentColorMask[0] = mColorMask[0];
-		currentColorMask[1] = mColorMask[1];
-		currentColorMask[2] = mColorMask[2];
-		currentColorMask[3] = mColorMask[3];
-	}
-}
-
-void FRenderState::ApplyLightIndex(int index)
-{
-	if (index > -1 && GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
-	{
-		index = GLRenderer->mLights->BindUBO(index);
-	}
-	activeShader->muLightIndex.Set(index);
 }
 
 //===========================================================================
@@ -277,7 +162,7 @@ void FRenderState::SetMaterial(FMaterial *mat, int clampmode, int translation, i
 		mTempTM = TM_MODULATE;
 	}
 	mEffectState = overrideshader >= 0 ? overrideshader : mat->mShaderIndex;
-	mShaderTimer = mat->tex->shaderspeed;
+	mAttributes.timer = mat->tex->shaderspeed;
 	
 	auto tex = mat->tex;
 	if (tex->UseType == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;

@@ -1048,6 +1048,7 @@ set (PCH_SOURCES
 	gl/data/gl_viewpointbuffer.cpp
 	gl/data/gl_modelbuffer.cpp
 	gl/data/gl_dynamicuniformbuffer.cpp
+	gl/data/gl_attributebuffer.cpp
 	gl/dynlights/gl_lightbuffer.cpp
 	gl/dynlights/gl_shadowmap.cpp
 	gl/models/gl_models.cpp

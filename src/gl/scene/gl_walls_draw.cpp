@@ -51,8 +51,8 @@ EXTERN_CVAR(Bool, gl_seamless)
 void FDrawInfo::RenderWall(GLWall *wall, int textured)
 {
 	assert(wall->vertcount > 0);
+	gl_RenderState.SetLightIndex(wall->dynlightindex);
 	gl_RenderState.Apply();
-	gl_RenderState.ApplyLightIndex(wall->dynlightindex);
 	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, wall->vertindex, wall->vertcount);
 	vertexcount += wall->vertcount;
 }
@@ -468,7 +468,7 @@ void FDrawInfo::DrawDecal(GLDecal *gldecal)
 
 	SetColor(gldecal->lightlevel, gldecal->rellight, gldecal->Colormap, gldecal->alpha);
 	// for additively drawn decals we must temporarily set the fog color to black.
-	PalEntry fc = gl_RenderState.GetFogColor();
+	auto fc = gl_RenderState.GetFogColor();
 	if (decal->RenderStyle.BlendOp == STYLEOP_Add && decal->RenderStyle.DestAlpha == STYLEALPHA_One)
 	{
 		gl_RenderState.SetFog(0, -1);
@@ -513,8 +513,8 @@ void FDrawInfo::DrawDecal(GLDecal *gldecal)
 
 	rendered_decals++;
 	gl_RenderState.SetTextureMode(TM_MODULATE);
-	gl_RenderState.SetObjectColor(0xffffffff);
-	gl_RenderState.SetFog(fc, -1);
+	gl_RenderState.SetObjectColor(1, 1, 1);
+	gl_RenderState.SetFogColor(fc);
 	gl_RenderState.SetDynLight(0, 0, 0);
 }
 

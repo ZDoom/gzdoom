@@ -30,6 +30,9 @@
 #include "hwrenderer/data/shaderuniforms.h"
 #include "gl_Attributebuffer.h"
 #include "r_data/matrix.h"
+#include "gl/renderer//gl_renderer.h"
+#include "gl/dynlights/gl_lightbuffer.h"
+#include "gl/data/gl_dynamicuniformbuffer.h"
 
 static const int INITIAL_BUFFER_SIZE = 20000;	// sufficient for Frozen Time
 
@@ -58,7 +61,7 @@ GLAttributeBuffer::~GLAttributeBuffer()
 void GLAttributeBuffer::Allocate()
 {
 	glGenBuffers(1, &mBufferId);
-	glBindBufferBase(mBufferType, AttributeBUF_BINDINGPOINT, mBufferId);
+	glBindBufferBase(mBufferType, ATTRIBUTE_BINDINGPOINT, mBufferId);
 	glBindBuffer(mBufferType, mBufferId);	// Note: Some older AMD drivers don't do that in glBindBufferBase, as they should.
 	if (gl.buffermethod == BM_PERSISTENT)
 	{
@@ -154,6 +157,15 @@ int GLAttributeBuffer::Upload(AttributeBufferData *attr)
 	
 	auto writeptr = (AttributeBufferData *) (((char*)mBufferPointer) + mBlockAlign * ui);
 	*writeptr = *attr;
+
+	// Fix indices for uniform buffer mode.
+	if (GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
+	{
+		if (attr->uLightIndex > -1) writeptr->uLightIndex = GLRenderer->mLights->ShaderIndex(attr->uLightIndex);
+		writeptr->uTexMatrixIndex = GLRenderer->mTextureMatrices->ShaderIndex(attr->uTexMatrixIndex);
+	}
+	
+	
 	return ui;
 }
 

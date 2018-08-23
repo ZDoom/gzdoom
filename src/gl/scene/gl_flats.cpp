@@ -63,7 +63,6 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool istrans)
 	gl_RenderState.Apply();
 	auto iboindex = flat->iboindex;
 
-	gl_RenderState.ApplyLightIndex(flat->dynlightindex);
 
 	if (vcount > 0)
 	{
@@ -102,7 +101,8 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool istrans)
 
 		while (node)
 		{
-			gl_RenderState.ApplyLightIndex(node->lightindex);
+			gl_RenderState.SetLightIndex(node->lightindex);
+			gl_RenderState.Apply();
 			auto num = node->sub->numlines;
 			flatvertices += num;
 			flatprimitives++;
@@ -116,7 +116,8 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool istrans)
 			GetFloodFloorSegs(flat->sector->sectornum) :
 			GetFloodCeilingSegs(flat->sector->sectornum);
 
-		gl_RenderState.ApplyLightIndex(flat->dynlightindex);
+		gl_RenderState.SetLightIndex(flat->dynlightindex);
+		gl_RenderState.Apply();
 		while (fnode)
 		{
 			flatvertices += 12;
@@ -221,6 +222,8 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 		SetFog(flat->lightlevel, rel, &flat->Colormap, false);
 		if (!flat->gltexture->tex->isFullbright())
 			gl_RenderState.SetObjectColor(flat->FlatColor | 0xff000000);
+
+		gl_RenderState.SetLightIndex(flat->dynlightindex);
 		if (flat->sector->special != GLSector_Skybox)
 		{
 			gl_RenderState.SetTexMatrixIndex(*flat->plane.pUbIndexMatrix);
@@ -230,7 +233,6 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 		else
 		{
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_XY, 0, -1, false);
-			gl_RenderState.ApplyLightIndex(flat->dynlightindex);
 			glDrawArrays(GL_TRIANGLE_FAN, flat->iboindex, 4);
 			flatvertices += 4;
 			flatprimitives++;

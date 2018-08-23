@@ -92,11 +92,7 @@ public:
 	void CheckSize();
 	int Bind(unsigned int index)
 	{
-		if (!mIndexed && index != mLastMappedIndex)
-		{
-			mLastMappedIndex = index;
-			glBindBufferRange(mBufferType, ATTRIBUTE_BINDINGPOINT, mBufferId, index * mBlockAlign, mBlockAlign);
-		}
+		glBindBufferRange(mBufferType, ATTRIBUTE_BINDINGPOINT, mBufferId, index * mBlockAlign, mBlockAlign);
 		return index;
 	}
 

@@ -38,6 +38,7 @@ class SWSceneDrawer;
 class GLViewpointBuffer;
 class GLModelBuffer;
 class GLDynamicUniformBuffer;
+class GLAttributeBuffer;
 struct FRenderViewpoint;
 #define NOQUEUE nullptr	// just some token to be used as a placeholder
 
@@ -84,6 +85,7 @@ public:
 	GLViewpointBuffer *mViewpoints = nullptr;
 	GLModelBuffer *mModelMatrix = nullptr;
 	GLDynamicUniformBuffer *mTextureMatrices = nullptr;
+	GLAttributeBuffer *mAttributes = nullptr;
 	SWSceneDrawer *swdrawer = nullptr;
 
 	FPortalSceneState mPortalState;

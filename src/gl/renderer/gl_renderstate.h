@@ -37,23 +37,8 @@
 class FVertexBuffer;
 class FShader;
 struct GLSectorPlane;
-extern TArray<VSMatrix> gl_MatrixStack;
 
 EXTERN_CVAR(Bool, gl_direct_state_change)
-
-struct FStateVec4
-{
-	float vec[4];
-
-	void Set(float r, float g, float b, float a)
-	{
-		vec[0] = r;
-		vec[1] = g;
-		vec[2] = b;
-		vec[3] = a;
-	}
-};
-
 
 enum EEffect
 {
@@ -88,7 +73,7 @@ class FRenderState
 	bool mLastDepthClamp;
 
 	FVertexBuffer *mVertexBuffer, *mCurrentVertexBuffer;
-	FStateVec4 mNormal;
+	FVector4 mNormal;
 
 	int mEffectState;
 	int mTempTM = TM_MODULATE;
@@ -143,12 +128,12 @@ public:
 
 	void SetNormal(FVector3 norm)
 	{
-		mNormal.Set(norm.X, norm.Y, norm.Z, 0.f);
+		mNormal = { norm.X, norm.Y, norm.Z, 0 };
 	}
 
 	void SetNormal(float x, float y, float z)
 	{
-		mNormal.Set(x, y, z, 0.f);
+		mNormal = { x, y, z, 0 };
 	}
 
 	void SetColor(float r, float g, float b, float a = 1.f, int desat = 0)

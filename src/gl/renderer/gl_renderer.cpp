@@ -59,6 +59,7 @@
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/data/gl_viewpointbuffer.h"
 #include "gl/data/gl_modelbuffer.h"
+#include "gl/data/gl_attributebuffer.h"
 #include "gl/data/gl_dynamicuniformbuffer.h"
 #include "r_videoscale.h"
 
@@ -108,6 +109,7 @@ void FGLRenderer::Initialize(int width, int height)
 	mLights = new FLightBuffer();
 	mViewpoints = new GLViewpointBuffer;
 	mModelMatrix = new GLModelBuffer;
+	mAttributes = new GLAttributeBuffer;
 	mTextureMatrices = new GLDynamicUniformBuffer(TEXMATRIX_BINDINGPOINT, sizeof(VSMatrix), 2, 50, [](char *buffer) {
 		VSMatrix mat[2];
 		mat[0].loadIdentity();
@@ -137,6 +139,7 @@ FGLRenderer::~FGLRenderer()
 	if (mLights != nullptr) delete mLights;
 	if (mViewpoints != nullptr) delete mViewpoints;
 	if (mModelMatrix != nullptr) delete mModelMatrix;
+	if (mAttributes != nullptr) delete mAttributes;
 	if (mTextureMatrices != nullptr) delete mTextureMatrices;
 	if (mFBID != 0) glDeleteFramebuffers(1, &mFBID);
 	if (mVAOID != 0)
@@ -225,6 +228,8 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 {
 	gl_RenderState.SetVertexBuffer(mVBO);
 	mVBO->Reset();
+	mAttributes->Clear();
+	mModelMatrix->Clear();
 	sector_t *retsec;
 
 	if (!V_IsHardwareRenderer())

@@ -45,12 +45,6 @@ CVAR(Bool, gl_direct_state_change, true, 0)
 
 
 static VSMatrix identityMatrix(1);
-TArray<VSMatrix> gl_MatrixStack;
-
-static void matrixToGL(const VSMatrix &mat, int loc)
-{
-	glUniformMatrix4fv(loc, 1, false, (float*)&mat);
-}
 
 //==========================================================================
 //
@@ -119,11 +113,19 @@ bool FRenderState::ApplyShader()
 		}
 	}
 	mAttributes.uFogEnabled = fogset;
-
-	glVertexAttrib4fv(VATTR_NORMAL, mNormal.vec);
-
-
 	if (!mGlowEnabled) mAttributes.uGlowTopColor.W = mAttributes.uGlowBottomColor.W = 0.f;
+
+	if (GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
+	{
+		GLRenderer->mLights->BindUBO(mAttributes.uLightIndex);
+		GLRenderer->mTextureMatrices->Bind(mAttributes.uTexMatrixIndex);
+	}
+	auto index = GLRenderer->mAttributes->Upload(&mAttributes);
+ 	GLRenderer->mAttributes->Bind(index);
+
+	glVertexAttrib4fv(VATTR_NORMAL, &mNormal.X);
+
+
 	return true;
 }
 

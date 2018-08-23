@@ -407,11 +407,11 @@ class Actor : Thinker native
 	// Functions
 
 	// 'parked' global functions.
-	native static double deltaangle(double ang1, double ang2);
-	native static double absangle(double ang1, double ang2);
-	native static Vector2 AngleToVector(double angle, double length = 1);
-	native static Vector2 RotateVector(Vector2 vec, double angle);
-	native static double Normalize180(double ang);
+	native clearscope static double deltaangle(double ang1, double ang2);
+	native clearscope static double absangle(double ang1, double ang2);
+	native clearscope static Vector2 AngleToVector(double angle, double length = 1);
+	native clearscope static Vector2 RotateVector(Vector2 vec, double angle);
+	native clearscope static double Normalize180(double ang);
 	
 
 	bool IsPointerEqual(int ptr_select1, int ptr_select2)
@@ -419,7 +419,7 @@ class Actor : Thinker native
 		return GetPointer(ptr_select1) == GetPointer(ptr_select2);
 	}
 	
-	static double BobSin(double fb)
+	clearscope static double BobSin(double fb)
 	{
 		return sin(fb * (180./32)) * 8;
 	}
@@ -547,7 +547,7 @@ class Actor : Thinker native
 	native static class<Actor> GetReplacement(class<Actor> cls);
 	native static class<Actor> GetReplacee(class<Actor> cls);
 	native static int GetSpriteIndex(name sprt);
-	native static double GetDefaultSpeed(class<Actor> type);
+	native clearscope static double GetDefaultSpeed(class<Actor> type);
 	native static class<Actor> GetSpawnableType(int spawnnum);
 	native static int ApplyDamageFactors(class<Inventory> itemcls, Name damagetype, int damage, int defdamage);
 	native void RemoveFromHash();
@@ -667,7 +667,7 @@ class Actor : Thinker native
 	native void RandomChaseDir();
 	native bool CheckMissileRange();
 	native bool SetState(state st, bool nofunction = false);
-	native state FindState(statelabel st, bool exact = false);
+	clearscope native state FindState(statelabel st, bool exact = false) const;
 	bool SetStateLabel(statelabel st, bool nofunction = false) { return SetState(FindState(st), nofunction); }
 	native action state ResolveState(statelabel st);	// this one, unlike FindState, is context aware.
 	native void LinkToWorld(LinkContext ctx = null);
@@ -689,7 +689,7 @@ class Actor : Thinker native
 	native clearscope bool isFriend(Actor other) const;
 	native clearscope bool isHostile(Actor other) const;
 	native void AdjustFloorClip();
-	native DropItem GetDropItems();
+	native clearscope DropItem GetDropItems() const;
 	native void CopyFriendliness (Actor other, bool changeTarget, bool resetHealth = true);
 	native bool LookForMonsters();
 	native bool LookForTid(bool allaround, LookExParams params = null);

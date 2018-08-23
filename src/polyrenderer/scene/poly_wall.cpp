@@ -60,7 +60,7 @@ bool RenderPolyWall::RenderLine(PolyRenderThread *thread, seg_t *line, sector_t 
 		linePortals.push_back(std::unique_ptr<PolyDrawLinePortal>(new PolyDrawLinePortal(line->linedef)));
 		polyportal = linePortals.back().get();
 	}
-	else if (line->linedef && line->linedef->isVisualPortal())
+	else if (line->linedef && line->linedef->isVisualPortal() && line->sidedef == line->linedef->sidedef[0])
 	{
 		if (portalEnterLine == line->linedef)
 		{

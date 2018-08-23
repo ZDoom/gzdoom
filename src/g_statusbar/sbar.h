@@ -252,7 +252,7 @@ struct FMugShotState
 	unsigned int Position;
 	int Time;
 	int Random;
-	FName State;
+	FName State = NAME_None;
 	TArray<FMugShotFrame> Frames;
 
 	FMugShotState(FName name);

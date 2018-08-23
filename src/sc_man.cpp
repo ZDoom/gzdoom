@@ -211,7 +211,6 @@ FScanner &FScanner::operator=(const FScanner &other)
 	TokenType = other.TokenType;
 	Number = other.Number;
 	Float = other.Float;
-	Name = other.Name;
 	Line = other.Line;
 	End = other.End;
 	Crossed = other.Crossed;
@@ -619,11 +618,7 @@ bool FScanner::GetToken ()
 {
 	if (ScanString (true))
 	{
-		if (TokenType == TK_NameConst)
-		{
-			Name = FName(String);
-		}
-		else if (TokenType == TK_IntConst)
+		if (TokenType == TK_IntConst)
 		{
 			char *stopper;
 			// Check for unsigned

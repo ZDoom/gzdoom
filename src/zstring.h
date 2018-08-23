@@ -454,7 +454,6 @@ namespace StringFormat
 inline FName::FName(const FString &text) { Index = NameData.FindName (text.GetChars(), text.Len(), false); }
 inline FName::FName(const FString &text, bool noCreate) { Index = NameData.FindName (text.GetChars(), text.Len(), noCreate); }
 inline FName &FName::operator = (const FString &text) { Index = NameData.FindName (text.GetChars(), text.Len(), false); return *this; }
-inline FName &FNameNoInit::operator = (const FString &text) { Index = NameData.FindName (text.GetChars(), text.Len(), false); return *this; }
 
 // Hash FStrings on their contents. (used by TMap)
 extern unsigned int SuperFastHash (const char *data, size_t len);

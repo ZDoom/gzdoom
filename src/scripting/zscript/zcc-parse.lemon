@@ -390,6 +390,7 @@ struct_body(X) ::= struct_body(A) struct_member(B).		{ X = A; /*X-overwrites-A*/
 struct_member(X) ::= declarator(A).						{ X = A; /*X-overwrites-A*/ }
 struct_member(X) ::= enum_def(A).						{ X = A; /*X-overwrites-A*/ }
 struct_member(X) ::= const_def(A).						{ X = A; /*X-overwrites-A*/ }
+struct_member(X) ::= staticarray_statement(A).			{ X = A; /*X-overwrites-A*/ }
 
 /*----- Constant Definition ------*/
 /* Like UnrealScript, a constant's type is implied by its value's type. */

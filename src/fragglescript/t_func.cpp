@@ -2885,44 +2885,64 @@ void FParser::SF_MoveCamera(void)
 		}
 
 		double targetheight = floatvalue(t_argv[2]);
+		double movespeed = floatvalue(t_argv[3]);
 		DVector3 campos = cam->Pos();
 		DVector3 targpos = DVector3(target->Pos(), targetheight);
+		DVector3 movement = targpos - campos;
+		double movelen = movement.Length();
+
+		bool finishedmove = false;
+		bool finishedangle = false;
+
+		cam->radius = 1 / 8192.;
+		cam->Height = 1 / 8192.;
+
 		if (campos != targpos)
 		{
-			DVector3 movement = targpos - campos;
-			double movelen = movement.Length();
-			double movespeed = floatvalue(t_argv[3]);
 			DVector3 movepos;
-			bool finished = (movespeed >= movelen);
-			if (finished) movepos = targpos;
+			finishedmove = (movespeed >= movelen);
+			if (finishedmove) movepos = targpos;
 			else movepos = campos + movement.Resized(movespeed);
+			cam->SetOrigin(movepos, true);
+		}
+		else finishedmove = true;
 
-			DAngle targetangle = floatvalue(t_argv[4]);
+		DAngle targetangle = DAngle(floatvalue(t_argv[4])).Normalized360();
+		if (cam->Angles.Yaw != targetangle)
+		{
 			DAngle anglespeed = floatvalue(t_argv[5]);
+			DAngle anglenow = targetangle;
+			const DAngle diffangle = deltaangle(cam->Angles.Yaw, targetangle);
 
 			if (movespeed > 0 && anglespeed == 0.)
 			{
-				if (!finished)
+				if (!finishedmove)
 				{
-					const DAngle diffangle = targetangle - cam->Angles.Yaw;
-					targetangle = cam->Angles.Yaw + diffangle * movespeed / movelen;
+					anglenow = cam->Angles.Yaw + diffangle * movespeed / movelen;
 				}
+				else finishedangle = true;
 			}
 			else
 			{
-				targetangle = cam->Angles.Yaw + anglespeed;
+				if (diffangle > 0)
+				{
+					anglenow = (cam->Angles.Yaw + anglespeed).Normalized360();
+				}
+				else
+				{
+					anglenow = (cam->Angles.Yaw - anglespeed).Normalized360();
+				}
+				const DAngle diffangle2 = deltaangle(anglenow, targetangle);
+				if (diffangle.Degrees * diffangle2.Degrees <= 0)
+				{
+					anglenow = targetangle;
+					finishedangle = true;
+				}
 			}
-
-			cam->radius = 1 / 8192.;
-			cam->Height = 1 / 8192.;
-			cam->SetOrigin(movepos, true);
-			cam->SetAngle(targetangle, false);
-			t_return.value.i = 1;
+			cam->SetAngle(anglenow, false);
 		}
-		else
-		{
-			t_return.value.i = 0;
-		}
+		else finishedangle = true;
+		t_return.value.i = !(finishedmove & finishedangle);
 		t_return.type = svt_int;
 	}
 }

@@ -182,25 +182,22 @@ void SexMessage (const char *from, char *to, int gender, const char *victim, con
 //
 void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgflags, FName MeansOfDeath)
 {
-	FName mod;
 	FString ret;
-	const char *message;
-	const char *messagename;
 	char gendermessage[1024];
 
 	// No obituaries for non-players, voodoo dolls or when not wanted
-	if (self->player == NULL || self->player->mo != self || !show_obituaries)
+	if (self->player == nullptr || self->player->mo != self || !show_obituaries)
 		return;
 
 	// Treat voodoo dolls as unknown deaths
 	if (inflictor && inflictor->player && inflictor->player->mo != inflictor)
 		MeansOfDeath = NAME_None;
 
-	mod = MeansOfDeath;
-	message = NULL;
-	messagename = NULL;
+	FName mod = MeansOfDeath;
+	const char *message = nullptr;
+	const char *messagename = nullptr;
 
-	if (attacker == NULL || attacker->player != NULL)
+	if (attacker == nullptr || attacker->player != nullptr)
 	{
 		if (mod == NAME_Telefrag)
 		{

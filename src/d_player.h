@@ -141,7 +141,7 @@ public:
 	double		SideMove1, SideMove2;
 	FTextureID	ScoreIcon;
 	int			SpawnMask;
-	FNameNoInit	MorphWeapon;
+	FName	MorphWeapon;
 	double		AttackZOffset;			// attack height, relative to player center
 	double		UseRange;				// [NS] Distance at which player can +use
 	double		AirCapacity;			// Multiplier for air supply underwater.
@@ -155,10 +155,10 @@ public:
 	double		ViewBob;
 
 	// Former class properties that were moved into the object to get rid of the meta class.
-	FNameNoInit SoundClass;		// Sound class
-	FNameNoInit Face;			// Doom status bar face (when used)
-	FNameNoInit Portrait;
-	FNameNoInit Slot[10];
+	FName SoundClass;		// Sound class
+	FName Face;			// Doom status bar face (when used)
+	FName Portrait;
+	FName Slot[10];
 	double HexenArmor[5];
 	uint8_t ColorRangeStart;	// Skin color range
 	uint8_t ColorRangeEnd;
@@ -372,7 +372,7 @@ void WriteUserInfo(FSerializer &arc, userinfo_t &info);
 class player_t
 {
 public:
-	player_t();
+	player_t() = default;
 	~player_t();
 	player_t &operator= (const player_t &p);
 
@@ -384,117 +384,117 @@ public:
 	void SetLogText (const char *text);
 	void SendPitchLimits() const;
 
-	APlayerPawn	*mo;
-	uint8_t		playerstate;
-	ticcmd_t	cmd;
+	APlayerPawn	*mo = nullptr;
+	uint8_t		playerstate = 0;
+	ticcmd_t	cmd = {};
 	usercmd_t	original_cmd;
 	uint32_t		original_oldbuttons;
 
 	userinfo_t	userinfo;				// [RH] who is this?
 	
-	PClassActor *cls;				// class of associated PlayerPawn
+	PClassActor *cls = nullptr;				// class of associated PlayerPawn
 
-	float		DesiredFOV;				// desired field of vision
-	float		FOV;					// current field of vision
-	double		viewz;					// focal origin above r.z
-	double		viewheight;				// base height above floor for viewz
-	double		deltaviewheight;		// squat speed.
-	double		bob;					// bounded/scaled total velocity
+	float		DesiredFOV = 0;				// desired field of vision
+	float		FOV = 0;					// current field of vision
+	double		viewz = 0;					// focal origin above r.z
+	double		viewheight = 0;				// base height above floor for viewz
+	double		deltaviewheight = 0;		// squat speed.
+	double		bob = 0;					// bounded/scaled total velocity
 
 	// killough 10/98: used for realistic bobbing (i.e. not simply overall speed)
 	// mo->velx and mo->vely represent true velocity experienced by player.
 	// This only represents the thrust that the player applies himself.
 	// This avoids anomalies with such things as Boom ice and conveyors.
-	DVector2 Vel;
+	DVector2 Vel = { 0,0 };
 
-	bool		centering;
-	uint8_t		turnticks;
+	bool		centering = false;
+	uint8_t		turnticks = 0;
 
 
-	bool		attackdown;
-	bool		usedown;
-	uint32_t		oldbuttons;
-	int			health;					// only used between levels, mo->health
+	bool		attackdown = false;
+	bool		usedown = false;
+	uint32_t	oldbuttons = false;
+	int			health = 0;					// only used between levels, mo->health
 										// is used during levels
 
-	int			inventorytics;
-	uint8_t		CurrentPlayerClass;		// class # for this player instance
+	int			inventorytics = 0;
+	uint8_t		CurrentPlayerClass = 0;		// class # for this player instance
 
-	int			frags[MAXPLAYERS];		// kills of other players
-	int			fragcount;				// [RH] Cumulative frags for this player
-	int			lastkilltime;			// [RH] For multikills
-	uint8_t		multicount;
-	uint8_t		spreecount;				// [RH] Keep track of killing sprees
-	uint16_t		WeaponState;
+	int			frags[MAXPLAYERS] = {};		// kills of other players
+	int			fragcount = 0;				// [RH] Cumulative frags for this player
+	int			lastkilltime = 0;			// [RH] For multikills
+	uint8_t		multicount = 0;
+	uint8_t		spreecount = 0;				// [RH] Keep track of killing sprees
+	uint16_t	WeaponState = 0;
 
-	AWeapon	   *ReadyWeapon;
-	AWeapon	   *PendingWeapon;			// WP_NOCHANGE if not changing
-	TObjPtr<DPSprite*> psprites; // view sprites (gun, etc)
+	AWeapon	   *ReadyWeapon = nullptr;
+	AWeapon	   *PendingWeapon = nullptr;			// WP_NOCHANGE if not changing
+	TObjPtr<DPSprite*> psprites = nullptr; // view sprites (gun, etc)
 
-	int			cheats;					// bit flags
-	int			timefreezer;			// Player has an active time freezer
-	short		refire;					// refired shots are less accurate
-	short		inconsistant;
-	bool		waiting;
-	int			killcount, itemcount, secretcount;		// for intermission
-	int			damagecount, bonuscount;// for screen flashing
-	int			hazardcount;			// for delayed Strife damage
-	int			hazardinterval;			// Frequency of damage infliction
-	FName		hazardtype;				// Damage type of last hazardous damage encounter.
-	int			poisoncount;			// screen flash for poison damage
-	FName		poisontype;				// type of poison damage to apply
-	FName		poisonpaintype;			// type of Pain state to enter for poison damage
-	TObjPtr<AActor*>		poisoner;		// NULL for non-player actors
-	TObjPtr<AActor*>		attacker;		// who did damage (NULL for floors)
-	int			extralight;				// so gun flashes light up areas
-	short		fixedcolormap;			// can be set to REDCOLORMAP, etc.
-	short		fixedlightlevel;
-	int			morphTics;				// player is a chicken/pig if > 0
-	PClassActor *MorphedPlayerClass;		// [MH] (for SBARINFO) class # for this player instance when morphed
-	int			MorphStyle;				// which effects to apply for this player instance when morphed
-	PClassActor *MorphExitFlash;		// flash to apply when demorphing (cache of value given to P_MorphPlayer)
-	TObjPtr<AWeapon*>	PremorphWeapon;		// ready weapon before morphing
-	int			chickenPeck;			// chicken peck countdown
-	int			jumpTics;				// delay the next jump for a moment
-	bool		onground;				// Identifies if this player is on the ground or other object
+	int			cheats = 0;					// bit flags
+	int			timefreezer = 0;			// Player has an active time freezer
+	short		refire = 0;					// refired shots are less accurate
+	short		inconsistant = 0;
+	bool		waiting = 0;
+	int			killcount = 0, itemcount = 0, secretcount = 0;		// for intermission
+	int			damagecount = 0, bonuscount = 0;// for screen flashing
+	int			hazardcount = 0;			// for delayed Strife damage
+	int			hazardinterval = 0;			// Frequency of damage infliction
+	FName		hazardtype = NAME_None;				// Damage type of last hazardous damage encounter.
+	int			poisoncount = 0;			// screen flash for poison damage
+	FName		poisontype = NAME_None;				// type of poison damage to apply
+	FName		poisonpaintype = NAME_None;			// type of Pain state to enter for poison damage
+	TObjPtr<AActor*>		poisoner = nullptr;		// NULL for non-player actors
+	TObjPtr<AActor*>		attacker = nullptr;		// who did damage (NULL for floors)
+	int			extralight = 0;				// so gun flashes light up areas
+	short		fixedcolormap = 0;			// can be set to REDCOLORMAP, etc.
+	short		fixedlightlevel = 0;
+	int			morphTics = 0;				// player is a chicken/pig if > 0
+	PClassActor *MorphedPlayerClass = nullptr;		// [MH] (for SBARINFO) class # for this player instance when morphed
+	int			MorphStyle = 0;				// which effects to apply for this player instance when morphed
+	PClassActor *MorphExitFlash = nullptr;		// flash to apply when demorphing (cache of value given to P_MorphPlayer)
+	TObjPtr<AWeapon*>	PremorphWeapon = nullptr;		// ready weapon before morphing
+	int			chickenPeck = 0;			// chicken peck countdown
+	int			jumpTics = 0;				// delay the next jump for a moment
+	bool		onground = 0;				// Identifies if this player is on the ground or other object
 
-	int			respawn_time;			// [RH] delay respawning until this tic
-	TObjPtr<AActor*>		camera;			// [RH] Whose eyes this player sees through
+	int			respawn_time = 0;			// [RH] delay respawning until this tic
+	TObjPtr<AActor*>	camera = nullptr;			// [RH] Whose eyes this player sees through
 
-	int			air_finished;			// [RH] Time when you start drowning
+	int			air_finished = 0;			// [RH] Time when you start drowning
 
-	FName		LastDamageType;			// [RH] For damage-specific pain and death sounds
+	FName		LastDamageType = NAME_None;			// [RH] For damage-specific pain and death sounds
 
-	TObjPtr<AActor*> MUSINFOactor;		// For MUSINFO purposes
-	int8_t		MUSINFOtics;
+	TObjPtr<AActor*> MUSINFOactor = nullptr;		// For MUSINFO purposes
+	int8_t		MUSINFOtics = 0;
 
-	bool		settings_controller;	// Player can control game settings.
-	int8_t		crouching;
-	int8_t		crouchdir;
+	bool		settings_controller = false;	// Player can control game settings.
+	int8_t		crouching = 0;
+	int8_t		crouchdir = 0;
 
 	//Added by MC:
-	TObjPtr<DBot*> Bot;
+	TObjPtr<DBot*> Bot = nullptr;
 
-	float		BlendR;		// [RH] Final blending values
-	float		BlendG;
-	float		BlendB;
-	float		BlendA;
+	float		BlendR = 0;		// [RH] Final blending values
+	float		BlendG = 0;
+	float		BlendB = 0;
+	float		BlendA = 0;
 
 	FString		LogText;	// [RH] Log for Strife
 
-	DAngle			MinPitch;	// Viewpitch limits (negative is up, positive is down)
-	DAngle			MaxPitch;
+	DAngle			MinPitch = 0.;	// Viewpitch limits (negative is up, positive is down)
+	DAngle			MaxPitch = 0.;
 
-	double crouchfactor;
-	double crouchoffset;
-	double crouchviewdelta;
+	double crouchfactor = 0;
+	double crouchoffset = 0;
+	double crouchviewdelta = 0;
 
 	FWeaponSlots weapons;
 
 	// [CW] I moved these here for multiplayer conversation support.
-	TObjPtr<AActor*> ConversationNPC, ConversationPC;
-	DAngle ConversationNPCAngle;
-	bool ConversationFaceTalker;
+	TObjPtr<AActor*> ConversationNPC = nullptr, ConversationPC = nullptr;
+	DAngle ConversationNPCAngle = 0.;
+	bool ConversationFaceTalker = false;
 
 	double GetDeltaViewHeight() const
 	{

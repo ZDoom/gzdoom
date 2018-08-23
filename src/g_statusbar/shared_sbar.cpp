@@ -319,7 +319,7 @@ void ST_CreateStatusBar(bool bTitleLevel)
 	}
 	if (StatusBar == nullptr)
 	{
-		FName defname;
+		FName defname = NAME_None;
 
 		if (gameinfo.gametype & GAME_DoomChex) defname = "DoomStatusBar";
 		else if (gameinfo.gametype == GAME_Heretic) defname = "HereticStatusBar";

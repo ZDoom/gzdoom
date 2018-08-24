@@ -277,13 +277,13 @@ private:
 			// EMIT_OP(MODF_RR);
 			// EMIT_OP(MODF_RK);
 			// EMIT_OP(MODF_KR);
-			// EMIT_OP(POWF_RR);
-			// EMIT_OP(POWF_RK);
-			// EMIT_OP(POWF_KR);
-			// EMIT_OP(MINF_RR);
-			// EMIT_OP(MINF_RK);
-			// EMIT_OP(MAXF_RR);
-			// EMIT_OP(MAXF_RK);
+			EMIT_OP(POWF_RR);
+			EMIT_OP(POWF_RK);
+			EMIT_OP(POWF_KR);
+			EMIT_OP(MINF_RR);
+			EMIT_OP(MINF_RK);
+			EMIT_OP(MAXF_RR);
+			EMIT_OP(MAXF_RK);
 			EMIT_OP(ATAN2);
 			EMIT_OP(FLOP);
 			EMIT_OP(EQF_R);
@@ -1038,8 +1038,10 @@ private:
 		auto tmp0 = cc.newInt32();
 		auto tmp1 = cc.newInt32();
 		auto label = cc.newLabel();
+		auto zero = cc.newInt32();
 
-		cc.test(regD[C], regD[C]);
+		cc.xor_(zero, zero);
+		cc.test(regD[C], zero);
 		cc.jne(label);
 
 		EmitThrowException(X_DIVISION_BY_ZERO);
@@ -1072,8 +1074,10 @@ private:
 		auto tmp0 = cc.newInt32();
 		auto tmp1 = cc.newInt32();
 		auto label = cc.newLabel();
+		auto zero = cc.newInt32();
 
-		cc.test(regD[C], regD[C]);
+		cc.xor_(zero, zero);
+		cc.test(regD[C], zero);
 		cc.jne(label);
 
 		EmitThrowException(X_DIVISION_BY_ZERO);
@@ -1090,8 +1094,10 @@ private:
 		auto tmp0 = cc.newInt32();
 		auto tmp1 = cc.newInt32();
 		auto label = cc.newLabel();
+		auto zero = cc.newInt32();
 
-		cc.test(regD[C], regD[C]);
+		cc.xor_(zero, zero);
+		cc.test(regD[C], zero);
 		cc.jne(label);
 
 		EmitThrowException(X_DIVISION_BY_ZERO);
@@ -1124,8 +1130,10 @@ private:
 		auto tmp0 = cc.newInt32();
 		auto tmp1 = cc.newInt32();
 		auto label = cc.newLabel();
+		auto zero = cc.newInt32();
 
-		cc.test(regD[C], regD[C]);
+		cc.xor_(zero, zero);
+		cc.test(regD[C], zero);
 		cc.jne(label);
 
 		EmitThrowException(X_DIVISION_BY_ZERO);
@@ -1142,8 +1150,10 @@ private:
 		auto tmp0 = cc.newInt32();
 		auto tmp1 = cc.newInt32();
 		auto label = cc.newLabel();
+		auto zero = cc.newInt32();
 
-		cc.test(regD[C], regD[C]);
+		cc.xor_(zero, zero);
+		cc.test(regD[C], zero);
 		cc.jne(label);
 
 		EmitThrowException(X_DIVISION_BY_ZERO);
@@ -1176,8 +1186,10 @@ private:
 		auto tmp0 = cc.newInt32();
 		auto tmp1 = cc.newInt32();
 		auto label = cc.newLabel();
+		auto zero = cc.newInt32();
 
-		cc.test(regD[C], regD[C]);
+		cc.xor_(zero, zero);
+		cc.test(regD[C], zero);
 		cc.jne(label);
 
 		EmitThrowException(X_DIVISION_BY_ZERO);
@@ -1194,8 +1206,10 @@ private:
 		auto tmp0 = cc.newInt32();
 		auto tmp1 = cc.newInt32();
 		auto label = cc.newLabel();
+		auto zero = cc.newInt32();
 
-		cc.test(regD[C], regD[C]);
+		cc.xor_(zero, zero);
+		cc.test(regD[C], zero);
 		cc.jne(label);
 
 		EmitThrowException(X_DIVISION_BY_ZERO);
@@ -1228,8 +1242,10 @@ private:
 		auto tmp0 = cc.newInt32();
 		auto tmp1 = cc.newInt32();
 		auto label = cc.newLabel();
+		auto zero = cc.newInt32();
 
-		cc.test(regD[C], regD[C]);
+		cc.xor_(zero, zero);
+		cc.test(regD[C], zero);
 		cc.jne(label);
 
 		EmitThrowException(X_DIVISION_BY_ZERO);
@@ -1513,36 +1529,115 @@ private:
 
 	void EmitDIVF_RR()
 	{
+		auto label = cc.newLabel();
+
+		auto zero = cc.newXmm();
+		cc.xorpd(zero, zero);
+		cc.ptest(regF[C], zero);
+		cc.jne(label);
+
+		EmitThrowException(X_DIVISION_BY_ZERO);
+
+		cc.bind(label);
+
 		cc.movsd(regF[a], regF[B]);
 		cc.divsd(regF[a], regF[C]);
 	}
 
 	void EmitDIVF_RK()
 	{
-		auto tmp = cc.newIntPtr();
-		cc.movsd(regF[a], regF[B]);
-		cc.mov(tmp, ToMemAddress(&konstf[C]));
-		cc.divsd(regF[a], asmjit::x86::qword_ptr(tmp));
+		if (konstf[C] == 0.)
+		{
+			EmitThrowException(X_DIVISION_BY_ZERO);
+		}
+		else
+		{
+			auto tmp = cc.newIntPtr();
+			cc.movsd(regF[a], regF[B]);
+			cc.mov(tmp, ToMemAddress(&konstf[C]));
+			cc.divsd(regF[a], asmjit::x86::qword_ptr(tmp));
+		}
 	}
 
 	void EmitDIVF_KR()
 	{
 		auto tmp = cc.newIntPtr();
-		cc.mov(tmp, ToMemAddress(&konstf[C]));
+		cc.mov(tmp, ToMemAddress(&konstf[B]));
 		cc.movsd(regF[a], asmjit::x86::qword_ptr(tmp));
-		cc.divsd(regF[a], regF[B]);
+		cc.divsd(regF[a], regF[C]);
 	}
 
 	// void EmitMODF_RR() { } // fA = fkB % fkC
 	// void EmitMODF_RK() { }
 	// void EmitMODF_KR() { }
-	// void EmitPOWF_RR() { } // fA = fkB ** fkC
-	// void EmitPOWF_RK() { }
-	// void EmitPOWF_KR() { }
-	// void EmitMINF_RR() { } // fA = min(fB),fkC)
-	// void EmitMINF_RK() { }
-	// void EmitMAXF_RR() { } // fA = max(fB),fkC)
-	// void EmitMAXF_RK() { }
+
+	void EmitPOWF_RR()
+	{
+		using namespace asmjit;
+		typedef double(*FuncPtr)(double, double);
+		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>(g_pow))), FuncSignature2<double, double, double>());
+		call->setRet(0, regF[a]);
+		call->setArg(0, regF[B]);
+		call->setArg(1, regF[C]);
+	}
+
+	void EmitPOWF_RK()
+	{
+		auto tmp = cc.newIntPtr();
+		auto tmp2 = cc.newXmm();
+		cc.mov(tmp, ToMemAddress(&konstf[C]));
+		cc.movsd(tmp2, asmjit::x86::qword_ptr(tmp));
+
+		using namespace asmjit;
+		typedef double(*FuncPtr)(double, double);
+		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>(g_pow))), FuncSignature2<double, double, double>());
+		call->setRet(0, regF[a]);
+		call->setArg(0, regF[B]);
+		call->setArg(1, tmp2);
+	}
+
+	void EmitPOWF_KR()
+	{
+		auto tmp = cc.newIntPtr();
+		auto tmp2 = cc.newXmm();
+		cc.mov(tmp, ToMemAddress(&konstf[B]));
+		cc.movsd(tmp2, asmjit::x86::qword_ptr(tmp));
+
+		using namespace asmjit;
+		typedef double(*FuncPtr)(double, double);
+		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>(g_pow))), FuncSignature2<double, double, double>());
+		call->setRet(0, regF[a]);
+		call->setArg(0, tmp2);
+		call->setArg(1, regF[C]);
+	}
+
+	void EmitMINF_RR()
+	{
+		cc.movsd(regF[a], regF[B]);
+		cc.minsd(regF[a], regF[C]);
+	}
+
+	void EmitMINF_RK()
+	{
+		auto tmp = cc.newIntPtr();
+		cc.mov(tmp, ToMemAddress(&konstf[C]));
+		cc.movsd(regF[a], asmjit::x86::qword_ptr(tmp));
+		cc.minsd(regF[a], regF[B]);
+	}
+	
+	void EmitMAXF_RR()
+	{
+		cc.movsd(regF[a], regF[B]);
+		cc.maxsd(regF[a], regF[C]);
+	}
+
+	void EmitMAXF_RK()
+	{
+		auto tmp = cc.newIntPtr();
+		cc.mov(tmp, ToMemAddress(&konstf[C]));
+		cc.movsd(regF[a], asmjit::x86::qword_ptr(tmp));
+		cc.maxsd(regF[a], regF[B]);
+	}
 	
 	void EmitATAN2()
 	{
@@ -1563,8 +1658,11 @@ private:
 	{
 		if (C == FLOP_NEG)
 		{
-			cc.xorpd(regF[a], regF[a]);
-			cc.subsd(regF[a], regF[B]);
+			auto mask = cc.newDoubleConst(asmjit::kConstScopeLocal, -0.0);
+			auto maskXmm = cc.newXmmSd();
+			cc.movsd(maskXmm, mask);
+			cc.movsd(regF[a], regF[B]);
+			cc.xorpd(regF[a], maskXmm);
 		}
 		else
 		{
@@ -1773,10 +1871,13 @@ private:
 
 	void EmitNEGV2()
 	{
-		cc.xorpd(regF[a], regF[a]);
-		cc.xorpd(regF[a + 1], regF[a + 1]);
-		cc.subsd(regF[a], regF[B]);
-		cc.subsd(regF[a + 1], regF[B + 1]);
+		auto mask = cc.newDoubleConst(asmjit::kConstScopeLocal, -0.0);
+		auto maskXmm = cc.newXmmSd();
+		cc.movsd(maskXmm, mask);
+		cc.movsd(regF[a], regF[B]);
+		cc.xorpd(regF[a], maskXmm);
+		cc.movsd(regF[a + 1], regF[B + 1]);
+		cc.xorpd(regF[a + 1], maskXmm);
 	}
 
 	void EmitADDV2_RR()
@@ -1859,12 +1960,15 @@ private:
 
 	void EmitNEGV3()
 	{
-		cc.xorpd(regF[a], regF[a]);
-		cc.xorpd(regF[a + 1], regF[a + 1]);
-		cc.xorpd(regF[a + 2], regF[a + 2]);
-		cc.subsd(regF[a], regF[B]);
-		cc.subsd(regF[a + 1], regF[B + 1]);
-		cc.subsd(regF[a + 2], regF[B + 2]);
+		auto mask = cc.newDoubleConst(asmjit::kConstScopeLocal, -0.0);
+		auto maskXmm = cc.newXmmSd();
+		cc.movsd(maskXmm, mask);
+		cc.movsd(regF[a], regF[B]);
+		cc.xorpd(regF[a], maskXmm);
+		cc.movsd(regF[a + 1], regF[B + 1]);
+		cc.xorpd(regF[a + 1], maskXmm);
+		cc.movsd(regF[a + 2], regF[B + 2]);
+		cc.xorpd(regF[a + 2], maskXmm);
 	}
 
 	void EmitADDV3_RR()

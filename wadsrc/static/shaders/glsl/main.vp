@@ -43,7 +43,7 @@ void main()
 
 	vec4 eyeCoordPos = ViewMatrix * worldcoord;
 
-	vColor = uLightColor;
+	vColor = uLightIsAttr != 0? aColor : uLightColor;
 
 	#ifndef SIMPLE
 		pixelpos.xyz = worldcoord.xyz;

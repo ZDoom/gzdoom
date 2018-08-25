@@ -54,6 +54,7 @@ static VSMatrix identityMatrix(1);
 
 void FRenderState::Reset()
 {
+	mAttributes.SetDefaults();
 	mTextureEnabled = true;
 	mSplitEnabled = mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
 	mSrcBlend = GL_SRC_ALPHA;

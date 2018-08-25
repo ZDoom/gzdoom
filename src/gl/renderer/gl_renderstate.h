@@ -207,6 +207,11 @@ public:
 		}
 	}
 
+	void SetLightIsAttr(bool on)
+	{
+		mAttributes.uLightIsAttr = on;
+	}
+
 	void EnableBrightmap(bool on)
 	{
 		mBrightmapEnabled = on;

@@ -31,31 +31,28 @@ struct AttributeBufferData
 	int uFogEnabled;
 	int uLightIndex;	
 	int uTexMatrixIndex;
-	int uNormaIsLight;
+	int uLightIsAttr;
 	
 	void SetDefaults()
 	{
-		/*
-		mFogColor.d = -1;
-		mTextureMode = -1;
-		mDesaturation = 0;
-		mAlphaThreshold = 0.5f;
-		mObjectColor = 0xffffffff;
-		mObjectColor2 = 0;
-		mSoftLight = 0;
-		mLightParms[0] = mLightParms[1] = mLightParms[2] = 0.0f;
-		mLightParms[3] = -1.f;
-		mShaderTimer = 0.0f;
-		mTexMatrixIndex = 0;
-		mColor.Set(1.0f, 1.0f, 1.0f, 1.0f);
-		mGlowTop.Set(0.0f, 0.0f, 0.0f, 0.0f);
-		mGlowBottom.Set(0.0f, 0.0f, 0.0f, 0.0f);
-		mGlowTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
-		mGlowBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
-		mSplitTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
-		mSplitBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
-		mDynColor.Set(0.0f, 0.0f, 0.0f, 0.0f);
-		*/
+		uObjectColor =
+		uLightColor = { 1.f, 1.f,1.f,1.f };
+		uObjectColor2.Zero();
+		uDynLightColor.Zero();
+		uGlowTopPlane.Zero();
+		uGlowBottomPlane.Zero();
+		uGlowTopColor.Zero();
+		uGlowBottomColor.Zero();
+		uSplitTopPlane.Zero();
+		uSplitBottomPlane.Zero();
+		uTextureMode = -1;
+		uDesaturationFactor = 0;
+		uAlphaThreshold = 0.5f;
+		uLightLevel = -1;
+		uFogDensity = uLightFactor = uLightDist = 0;
+		timer = 0.0f;
+		uTexMatrixIndex = 0;
+		uLightIsAttr = 0;
 	}
 };
 

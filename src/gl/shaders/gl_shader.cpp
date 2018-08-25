@@ -111,7 +111,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		vec4 uSplitBottomPlane;
 		vec4 uFogColor;
 		vec4 uDynLightColor;
-		vec4 uLightAttr;	
 		vec2 uClipSplit;
 		float uLightLevel;
 		float uFogDensity;
@@ -124,7 +123,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		int uFogEnabled;
 		int uLightIndex;
 		int uTexMatrixIndex;
-		int uNormalIsLight;
+		int uLightIsAttr;
 	};
 
 // textures

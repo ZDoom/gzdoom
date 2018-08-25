@@ -479,6 +479,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	vb->UploadData(&vertices[0], vertices.Size(), &indices[0], indices.Size());
 	gl_RenderState.SetVertexBuffer(vb);
 	gl_RenderState.EnableFog(false);
+	gl_RenderState.SetLightIsAttr(true);
 
 	for(auto &cmd : commands)
 	{
@@ -576,6 +577,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 	gl_RenderState.EnableFog(false);
 	gl_RenderState.ResetColor();
+	gl_RenderState.SetLightIsAttr(false);
 	gl_RenderState.Apply();
 	delete vb;
 	FGLDebug::PopGroup();

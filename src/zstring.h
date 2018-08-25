@@ -201,24 +201,21 @@ public:
 	long IndexOfAny (const FString &charset, long startIndex=0) const;
 	long IndexOfAny (const char *charset, long startIndex=0) const;
 
-	long LastIndexOf (const FString &substr) const;
-	long LastIndexOf (const char *substr) const;
+	// This is only kept for backwards compatibility with old ZScript versions that used this function and depend on its bug.
 	long LastIndexOf (char subchar) const;
-	long LastIndexOf (const FString &substr, long endIndex) const;
-	long LastIndexOf (const char *substr, long endIndex) const;
+	long LastIndexOfBroken (const FString &substr, long endIndex) const;
 	long LastIndexOf (char subchar, long endIndex) const;
-	long LastIndexOf (const char *substr, long endIndex, size_t substrlen) const;
 
 	long LastIndexOfAny (const FString &charset) const;
 	long LastIndexOfAny (const char *charset) const;
 	long LastIndexOfAny (const FString &charset, long endIndex) const;
 	long LastIndexOfAny (const char *charset, long endIndex) const;
 
-	long RIndexOf (const FString &substr) const;
-	long RIndexOf (const FString &substr, long endIndex) const;
-	long RIndexOf (const char *substr) const;
-	long RIndexOf (const char *substr, long endIndex) const;
-	long RIndexOf (const char *substr, long endIndex, size_t substrlen) const;
+	long LastIndexOf (const FString &substr) const;
+	long LastIndexOf (const FString &substr, long endIndex) const;
+	long LastIndexOf (const char *substr) const;
+	long LastIndexOf (const char *substr, long endIndex) const;
+	long LastIndexOf (const char *substr, long endIndex, size_t substrlen) const;
 
 	void ToUpper ();
 	void ToLower ();

@@ -507,29 +507,9 @@ long FString::IndexOfAny (const char *charset, long startIndex) const
 	return long(brk - Chars);
 }
 
-long FString::LastIndexOf (const FString &substr) const
-{
-	return LastIndexOf (substr.Chars, long(Len()), substr.Len());
-}
-
-long FString::LastIndexOf (const char *substr) const
-{
-	return LastIndexOf (substr, long(Len()), strlen(substr));
-}
-
 long FString::LastIndexOf (char subchar) const
 {
 	return LastIndexOf (subchar, long(Len()));
-}
-
-long FString::LastIndexOf (const FString &substr, long endIndex) const
-{
-	return LastIndexOf (substr.Chars, endIndex, substr.Len());
-}
-
-long FString::LastIndexOf (const char *substr, long endIndex) const
-{
-	return LastIndexOf (substr, endIndex, strlen(substr));
 }
 
 long FString::LastIndexOf (char subchar, long endIndex) const
@@ -548,8 +528,10 @@ long FString::LastIndexOf (char subchar, long endIndex) const
 	return -1;
 }
 
-long FString::LastIndexOf (const char *substr, long endIndex, size_t substrlen) const
+long FString::LastIndexOfBroken (const FString &_substr, long endIndex) const
 {
+	const char *substr = _substr.GetChars();
+	size_t substrlen = _substr.Len();
 	if ((size_t)endIndex > Len())
 	{
 		endIndex = long(Len());
@@ -596,27 +578,27 @@ long FString::LastIndexOfAny (const char *charset, long endIndex) const
 	return -1;
 }
 
-long FString::RIndexOf (const FString &substr) const
+long FString::LastIndexOf (const FString &substr) const
 {
-	return RIndexOf(substr.Chars, Len() - substr.Len(), substr.Len());
+	return LastIndexOf(substr.Chars, Len() - substr.Len(), substr.Len());
 }
 
-long FString::RIndexOf (const FString &substr, long endIndex) const
+long FString::LastIndexOf (const FString &substr, long endIndex) const
 {
-	return RIndexOf(substr.Chars, endIndex, substr.Len());
+	return LastIndexOf(substr.Chars, endIndex, substr.Len());
 }
 
-long FString::RIndexOf (const char *substr) const
+long FString::LastIndexOf (const char *substr) const
 {
-	return RIndexOf(substr, Len() - strlen(substr), strlen(substr));
+	return LastIndexOf(substr, Len() - strlen(substr), strlen(substr));
 }
 
-long FString::RIndexOf (const char *substr, long endIndex) const
+long FString::LastIndexOf (const char *substr, long endIndex) const
 {
-	return RIndexOf(substr, endIndex, strlen(substr));
+	return LastIndexOf(substr, endIndex, strlen(substr));
 }
 
-long FString::RIndexOf (const char *substr, long endIndex, size_t substrlen) const
+long FString::LastIndexOf (const char *substr, long endIndex, size_t substrlen) const
 {
 	if ((size_t)endIndex + substrlen > Len())
 	{

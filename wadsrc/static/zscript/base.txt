@@ -815,7 +815,7 @@ struct StringStruct native
 	native int CharCodeAt(int pos) const;
 	native String Filter();
 	native int IndexOf(String substr, int startIndex = 0) const;
-	deprecated("3.5") native int LastIndexOf(String substr, int endIndex = 2147483647) const;
+	deprecated("3.5.1") native int LastIndexOf(String substr, int endIndex = 2147483647) const;
 	native int RightIndexOf(String substr, int endIndex = 2147483647) const;
 	native void ToUpper();
 	native void ToLower();

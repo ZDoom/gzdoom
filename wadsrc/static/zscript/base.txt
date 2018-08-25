@@ -816,7 +816,7 @@ struct StringStruct native
 	native String Filter();
 	native int IndexOf(String substr, int startIndex = 0) const;
 	deprecated("3.5") native int LastIndexOf(String substr, int endIndex = 2147483647) const;
-	native int RIndexOf(String substr, int endIndex = 2147483647) const;
+	native int RightIndexOf(String substr, int endIndex = 2147483647) const;
 	native void ToUpper();
 	native void ToLower();
 	native int ToInt(int base = 0) const;

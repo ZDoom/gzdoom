@@ -1273,7 +1273,7 @@ DEFINE_ACTION_FUNCTION(FStringStruct, LastIndexOf)
 	ACTION_RETURN_INT(self->LastIndexOf(substr, endIndex));
 }
 
-DEFINE_ACTION_FUNCTION(FStringStruct, RIndexOf)
+DEFINE_ACTION_FUNCTION(FStringStruct, RightIndexOf)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
 	PARAM_STRING(substr);

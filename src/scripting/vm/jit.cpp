@@ -88,14 +88,29 @@ public:
 				if (B != REGT_NIL)
 				{
 					int regtype = B;
-					int regnum = C;
-					switch (regtype & REGT_TYPE)
-					{
-					case REGT_STRING:
-					case REGT_POINTER:
+					if ((regtype & REGT_TYPE) == REGT_STRING)
 						return false;
-					}
 				}
+			}
+			else if (sfunc->Code[i].op == OP_CAST)
+			{
+				auto pc = sfunc->Code + i;
+				switch (C)
+				{
+				case CAST_I2F:
+				case CAST_U2F:
+				case CAST_F2I:
+				case CAST_F2U:
+					break;
+				default:
+					return false;
+				}
+			}
+			else if (sfunc->Code[i].op == OP_CASTB)
+			{
+				auto pc = sfunc->Code + i;
+				if (C == CASTB_S)
+					return false;
 			}
 		}
 		return true;
@@ -178,8 +193,8 @@ private:
 			EMIT_OP(MOVEA);
 			EMIT_OP(MOVEV2);
 			EMIT_OP(MOVEV3);
-			//EMIT_OP(CAST);
-			//EMIT_OP(CASTB);
+			EMIT_OP(CAST);
+			EMIT_OP(CASTB);
 			EMIT_OP(DYNCAST_R);
 			EMIT_OP(DYNCAST_K);
 			EMIT_OP(DYNCASTC_R);
@@ -711,8 +726,121 @@ private:
 		cc.movsd(regF[a + 2], regF[b + 2]);
 	}
 
-	//void EmitCAST() {} // xA = xB, conversion specified by C
-	//void EmitCASTB() {} // xA = !!xB, type specified by C
+	void EmitCAST()
+	{
+		int b = B;
+		switch (C)
+		{
+		case CAST_I2F:
+			cc.cvtsi2sd(regF[a], regD[b]);
+			break;
+		case CAST_U2F:
+		{
+			auto tmp = cc.newInt64();
+			cc.xor_(tmp, tmp);
+			cc.mov(tmp.r32(), regD[b]);
+			cc.cvtsi2sd(regF[a], tmp);
+			break;
+		}
+		case CAST_F2I:
+			cc.cvttsd2si(regD[a], regF[b]);
+			break;
+		case CAST_F2U:
+		{
+			auto tmp = cc.newInt64();
+			cc.cvttsd2si(tmp, regF[b]);
+			cc.mov(regD[a], tmp.r32());
+			break;
+		}
+		/*case CAST_I2S:
+			reg.s[a].Format("%d", reg.d[b]);
+			break;
+		case CAST_U2S:
+			reg.s[a].Format("%u", reg.d[b]);
+			break;
+		case CAST_F2S:
+			reg.s[a].Format("%.5f", reg.f[b]);	// keep this small. For more precise conversion there should be a conversion function.
+			break;
+		case CAST_V22S:
+			reg.s[a].Format("(%.5f, %.5f)", reg.f[b], reg.f[b + 1]);
+			break;
+		case CAST_V32S:
+			reg.s[a].Format("(%.5f, %.5f, %.5f)", reg.f[b], reg.f[b + 1], reg.f[b + 2]);
+			break;
+		case CAST_P2S:
+		{
+			if (reg.a[b] == nullptr) reg.s[a] = "null";
+			else reg.s[a].Format("%p", reg.a[b]);
+			break;
+		}
+		case CAST_S2I:
+			reg.d[a] = (VM_SWORD)reg.s[b].ToLong();
+			break;
+		case CAST_S2F:
+			reg.f[a] = reg.s[b].ToDouble();
+			break;
+		case CAST_S2N:
+			reg.d[a] = reg.s[b].Len() == 0 ? FName(NAME_None) : FName(reg.s[b]);
+			break;
+		case CAST_N2S:
+		{
+			FName name = FName(ENamedName(reg.d[b]));
+			reg.s[a] = name.IsValidName() ? name.GetChars() : "";
+			break;
+		}
+		case CAST_S2Co:
+			reg.d[a] = V_GetColor(NULL, reg.s[b]);
+			break;
+		case CAST_Co2S:
+			reg.s[a].Format("%02x %02x %02x", PalEntry(reg.d[b]).r, PalEntry(reg.d[b]).g, PalEntry(reg.d[b]).b);
+			break;
+		case CAST_S2So:
+			reg.d[a] = FSoundID(reg.s[b]);
+			break;
+		case CAST_So2S:
+			reg.s[a] = S_sfx[reg.d[b]].name;
+			break;
+		case CAST_SID2S:
+			reg.s[a] = unsigned(reg.d[b]) >= sprites.Size() ? "TNT1" : sprites[reg.d[b]].name;
+			break;
+		case CAST_TID2S:
+		{
+			auto tex = TexMan[*(FTextureID*)&(reg.d[b])];
+			reg.s[a] = tex == nullptr ? "(null)" : tex->Name.GetChars();
+			break;
+		}*/
+		default:
+			assert(0);
+		}
+	}
+
+	void EmitCASTB()
+	{
+		if (C == CASTB_I)
+		{
+			cc.mov(regD[a], regD[B]);
+			cc.shr(regD[a], 31);
+		}
+		else if (C == CASTB_F)
+		{
+			auto zero = cc.newXmm();
+			auto one = cc.newInt32();
+			cc.xorpd(zero, zero);
+			cc.mov(one, 1);
+			cc.ucomisd(regF[a], zero);
+			cc.setp(regD[a]);
+			cc.cmovne(regD[a], one);
+		}
+		else if (C == CASTB_A)
+		{
+			cc.test(regA[a], regA[a]);
+			cc.setne(regD[a]);
+		}
+		else
+		{
+			//reg.d[a] = reg.s[B].Len() > 0;
+		}
+	}
 
 	void EmitDYNCAST_R()
 	{
@@ -889,7 +1017,19 @@ private:
 				}
 				break;
 			case REGT_STRING:
+				break;
 			case REGT_POINTER:
+				#ifdef ASMJIT_ARCH_X64
+				if (regtype & REGT_KONST)
+					cc.mov(x86::qword_ptr(location), ToMemAddress(konsta[regnum].v));
+				else
+					cc.mov(x86::qword_ptr(location), regA[regnum]);
+				#else
+				if (regtype & REGT_KONST)
+					cc.mov(x86::dword_ptr(location), ToMemAddress(konsta[regnum].v));
+				else
+					cc.mov(x86::dword_ptr(location), regA[regnum]);
+				#endif
 				break;
 			}
 
@@ -1038,10 +1178,8 @@ private:
 		auto tmp0 = cc.newInt32();
 		auto tmp1 = cc.newInt32();
 		auto label = cc.newLabel();
-		auto zero = cc.newInt32();
 
-		cc.xor_(zero, zero);
-		cc.test(regD[C], zero);
+		cc.test(regD[C], regD[C]);
 		cc.jne(label);
 
 		EmitThrowException(X_DIVISION_BY_ZERO);
@@ -1074,10 +1212,8 @@ private:
 		auto tmp0 = cc.newInt32();
 		auto tmp1 = cc.newInt32();
 		auto label = cc.newLabel();
-		auto zero = cc.newInt32();
 
-		cc.xor_(zero, zero);
-		cc.test(regD[C], zero);
+		cc.test(regD[C], regD[C]);
 		cc.jne(label);
 
 		EmitThrowException(X_DIVISION_BY_ZERO);
@@ -1094,10 +1230,8 @@ private:
 		auto tmp0 = cc.newInt32();
 		auto tmp1 = cc.newInt32();
 		auto label = cc.newLabel();
-		auto zero = cc.newInt32();
 
-		cc.xor_(zero, zero);
-		cc.test(regD[C], zero);
+		cc.test(regD[C], regD[C]);
 		cc.jne(label);
 
 		EmitThrowException(X_DIVISION_BY_ZERO);
@@ -1130,10 +1264,8 @@ private:
 		auto tmp0 = cc.newInt32();
 		auto tmp1 = cc.newInt32();
 		auto label = cc.newLabel();
-		auto zero = cc.newInt32();
 
-		cc.xor_(zero, zero);
-		cc.test(regD[C], zero);
+		cc.test(regD[C], regD[C]);
 		cc.jne(label);
 
 		EmitThrowException(X_DIVISION_BY_ZERO);
@@ -1150,10 +1282,8 @@ private:
 		auto tmp0 = cc.newInt32();
 		auto tmp1 = cc.newInt32();
 		auto label = cc.newLabel();
-		auto zero = cc.newInt32();
 
-		cc.xor_(zero, zero);
-		cc.test(regD[C], zero);
+		cc.test(regD[C], regD[C]);
 		cc.jne(label);
 
 		EmitThrowException(X_DIVISION_BY_ZERO);
@@ -1186,10 +1316,8 @@ private:
 		auto tmp0 = cc.newInt32();
 		auto tmp1 = cc.newInt32();
 		auto label = cc.newLabel();
-		auto zero = cc.newInt32();
 
-		cc.xor_(zero, zero);
-		cc.test(regD[C], zero);
+		cc.test(regD[C], regD[C]);
 		cc.jne(label);
 
 		EmitThrowException(X_DIVISION_BY_ZERO);
@@ -1206,10 +1334,8 @@ private:
 		auto tmp0 = cc.newInt32();
 		auto tmp1 = cc.newInt32();
 		auto label = cc.newLabel();
-		auto zero = cc.newInt32();
 
-		cc.xor_(zero, zero);
-		cc.test(regD[C], zero);
+		cc.test(regD[C], regD[C]);
 		cc.jne(label);
 
 		EmitThrowException(X_DIVISION_BY_ZERO);
@@ -1242,10 +1368,8 @@ private:
 		auto tmp0 = cc.newInt32();
 		auto tmp1 = cc.newInt32();
 		auto label = cc.newLabel();
-		auto zero = cc.newInt32();
 
-		cc.xor_(zero, zero);
-		cc.test(regD[C], zero);
+		cc.test(regD[C], regD[C]);
 		cc.jne(label);
 
 		EmitThrowException(X_DIVISION_BY_ZERO);
@@ -1531,9 +1655,7 @@ private:
 	{
 		auto label = cc.newLabel();
 
-		auto zero = cc.newXmm();
-		cc.xorpd(zero, zero);
-		cc.ptest(regF[C], zero);
+		cc.ptest(regF[C], regF[C]);
 		cc.jne(label);
 
 		EmitThrowException(X_DIVISION_BY_ZERO);

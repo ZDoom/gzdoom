@@ -158,8 +158,8 @@ void FDrawInfo::RenderTexturedWall(GLWall *wall, int rflags)
 		}
 		SetFog(255, 0, nullptr, false);
 	}
-	gl_RenderState.SetObjectColor(wall->seg->frontsector->SpecialColors[sector_t::walltop] | 0xff000000);
-	gl_RenderState.SetObjectColor2(wall->seg->frontsector->SpecialColors[sector_t::wallbottom] | 0xff000000);
+	gl_RenderState.SetObjectColor(wall->seg->frontsector->SpecialColors[sector_t::walltop]);
+	gl_RenderState.SetObjectColor2(wall->seg->frontsector->SpecialColors[sector_t::wallbottom]);
 
 	float absalpha = fabsf(wall->alpha);
 	if (wall->lightlist == nullptr)
@@ -197,7 +197,7 @@ void FDrawInfo::RenderTexturedWall(GLWall *wall, int rflags)
 		gl_RenderState.EnableSplit(false);
 	}
 	gl_RenderState.SetObjectColor(0xffffffff);
-	gl_RenderState.SetObjectColor2(0);
+	gl_RenderState.ClearObjectColor2();
 	gl_RenderState.SetTextureMode(tmode);
 	gl_RenderState.EnableGlow(false);
 }

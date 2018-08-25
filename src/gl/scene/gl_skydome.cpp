@@ -275,10 +275,12 @@ void GLSkyPortal::DrawContents(HWDrawInfo *di)
 
 			gl_RenderState.EnableTexture(false);
 			gl_RenderState.SetObjectColor(FadeColor);
+			gl_RenderState.SetLightIsAttr(true);
 			gl_RenderState.Apply();
 			glDrawArrays(GL_TRIANGLES, 0, 12);
 			gl_RenderState.EnableTexture(true);
 			gl_RenderState.SetObjectColor(0xffffffff);
+			gl_RenderState.SetLightIsAttr(false);
 		}
 	}
 	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);

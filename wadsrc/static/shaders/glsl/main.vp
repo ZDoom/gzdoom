@@ -54,7 +54,7 @@ void main()
 		glowdist.x = topatpoint - worldcoord.y;
 		glowdist.y = worldcoord.y - bottomatpoint;
 		glowdist.z = clamp(glowdist.x / (topatpoint - bottomatpoint), 0.0, 1.0);
-		
+
 		if (uSplitBottomPlane.z != 0.0)
 		{
 			gl_ClipDistance[3] = -((uSplitTopPlane.w + uSplitTopPlane.x * worldcoord.x + uSplitTopPlane.y * worldcoord.z) * uSplitTopPlane.z) - worldcoord.y;

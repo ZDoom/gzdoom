@@ -564,7 +564,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 
 		}
 		gl_RenderState.SetObjectColor(0xffffffff);
-		gl_RenderState.SetObjectColor2(0);
+		gl_RenderState.ClearObjectColor2();
 		gl_RenderState.SetTexMatrixIndex(0);
 	}
 	glDisable(GL_SCISSOR_TEST);

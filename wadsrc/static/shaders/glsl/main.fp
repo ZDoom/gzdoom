@@ -383,6 +383,7 @@ vec4 getLightColor(Material material, float fogdist, float fogfactor)
 	{
 		color.rgb += desaturate(uGlowBottomColor * (1.0 - glowdist.y / uGlowBottomColor.a)).rgb;
 	}
+
 	color = min(color, 1.0);
 
 	//

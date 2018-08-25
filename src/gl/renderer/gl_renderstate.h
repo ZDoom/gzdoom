@@ -270,6 +270,11 @@ public:
 		mAttributes.uObjectColor2 = { pe.r / 255.f, pe.g / 255.f, pe.b / 255.f, 1.f };
 	}
 
+	void ClearObjectColor2()
+	{
+		mAttributes.uObjectColor2.W = 0;
+	}
+
 	void SetFog(PalEntry pe, float d)
 	{
 		const float LOG2E = 1.442692f;	// = 1/log(2)

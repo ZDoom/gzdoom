@@ -103,7 +103,7 @@ enum
 
 struct PalEntry
 {
-	PalEntry () {}
+	PalEntry() = default;
 	PalEntry (uint32_t argb) { d = argb; }
 	operator uint32_t () const { return d; }
 	void SetRGB(PalEntry other)
@@ -146,6 +146,7 @@ struct PalEntry
 	{
 		return (d & 0xffffff) == 0xffffff;
 	}
+	PalEntry &operator= (const PalEntry &other) = default;
 	PalEntry &operator= (uint32_t other) { d = other; return *this; }
 	PalEntry InverseColor() const { PalEntry nc; nc.a = a; nc.r = 255 - r; nc.g = 255 - g; nc.b = 255 - b; return nc; }
 #ifdef __BIG_ENDIAN__
@@ -205,7 +206,7 @@ class FTextureID
 	friend void R_InitSpriteDefs();
 
 public:
-	FTextureID() throw() {}
+	FTextureID() = default;
 	bool isNull() const { return texnum == 0; }
 	bool isValid() const { return texnum > 0; }
 	bool Exists() const { return texnum >= 0; }

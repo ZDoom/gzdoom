@@ -114,15 +114,8 @@ public:
 	{
 		ID = S_FindSound(name.GetChars());
 	}
-	FSoundID(const FSoundID &other)
-	{
-		ID = other.ID;
-	}
-	FSoundID &operator=(const FSoundID &other)
-	{
-		ID = other.ID;
-		return *this;
-	}
+	FSoundID(const FSoundID &other) = default;
+	FSoundID &operator=(const FSoundID &other) = default;
 	FSoundID &operator=(const char *name)
 	{
 		ID = S_FindSound(name);
@@ -168,19 +161,7 @@ class FSoundIDNoInit : public FSoundID
 {
 public:
 	FSoundIDNoInit() : FSoundID(NoInit) {}
-
-	FSoundID &operator=(const FSoundID &other)
-	{
-		return FSoundID::operator=(other);
-	}
-	FSoundID &operator=(const char *name)
-	{
-		return FSoundID::operator=(name);
-	}
-	FSoundID &operator=(const FString &name)
-	{
-		return FSoundID::operator=(name);
-	}
+	using FSoundID::operator=;
 };
 
 extern FRolloffInfo S_Rolloff;

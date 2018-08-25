@@ -57,12 +57,6 @@ public:
 class cycle_t
 {
 public:
-	cycle_t &operator= (const cycle_t &o)
-	{
-		Sec = o.Sec;
-		return *this;
-	}
-
 	void Reset()
 	{
 		Sec = 0;
@@ -153,12 +147,6 @@ inline uint64_t rdtsc()
 class cycle_t
 {
 public:
-	cycle_t &operator= (const cycle_t &o)
-	{
-		Counter = o.Counter;
-		return *this;
-	}
-
 	void Reset()
 	{
 		Counter = 0;

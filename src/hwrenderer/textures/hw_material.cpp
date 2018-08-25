@@ -319,7 +319,6 @@ void FMaterial::SetSpriteRect()
 
 bool FMaterial::TrimBorders(uint16_t *rect)
 {
-	PalEntry col;
 	int w;
 	int h;
 

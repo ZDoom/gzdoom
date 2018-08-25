@@ -580,7 +580,7 @@ long FString::LastIndexOfAny (const char *charset, long endIndex) const
 
 long FString::LastIndexOf (const FString &substr) const
 {
-	return LastIndexOf(substr.Chars, Len() - substr.Len(), substr.Len());
+	return LastIndexOf(substr.Chars, long(Len() - substr.Len()), substr.Len());
 }
 
 long FString::LastIndexOf (const FString &substr, long endIndex) const
@@ -590,7 +590,7 @@ long FString::LastIndexOf (const FString &substr, long endIndex) const
 
 long FString::LastIndexOf (const char *substr) const
 {
-	return LastIndexOf(substr, Len() - strlen(substr), strlen(substr));
+	return LastIndexOf(substr, long(Len() - strlen(substr)), strlen(substr));
 }
 
 long FString::LastIndexOf (const char *substr, long endIndex) const
@@ -602,7 +602,7 @@ long FString::LastIndexOf (const char *substr, long endIndex, size_t substrlen) 
 {
 	if ((size_t)endIndex + substrlen > Len())
 	{
-		endIndex = Len() - substrlen;
+		endIndex = long(Len() - substrlen);
 	}
 	while (endIndex >= 0)
 	{

@@ -93,7 +93,6 @@ struct AttributeBufferData
 	FVector4 uSplitBottomPlane;
 	FVector4 uFogColor;
 	FVector4 uDynLightColor;
-	FVector2 uClipSplit;
 	float uLightLevel;
 	float uFogDensity;
 	float uLightFactor;
@@ -127,10 +126,6 @@ struct AttributeBufferData
 		uTimer = 0.0f;
 		uTexMatrixIndex = 0;
 		uLightIsAttr = 0;
-
-		uClipSplit[0] = -1000000.f;
-		uClipSplit[1] = 1000000.f;
-
 	}
 
 	void SetTimer(float factor)

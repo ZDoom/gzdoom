@@ -111,7 +111,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		vec4 uSplitBottomPlane;
 		vec4 uFogColor;
 		vec4 uDynLightColor;
-		vec2 uClipSplit;
 		float uLightLevel;
 		float uFogDensity;
 		float uLightFactor;
@@ -149,8 +148,12 @@ uniform sampler2D texture6;
 #else
 #define brighttexture texture2
 #endif
-)";
 
+	uniform vec2 uClipSplit;
+
+)";
+	// uClipSplit cannot be part of the buffer because it is dynamically calculated in the render loop.
+	// For Vulkan this one needs to be a push constant.
 
 	int vp_lump = Wads.CheckNumForFullName(vert_prog_lump, 0);
 	if (vp_lump == -1) I_Error("Unable to load '%s'", vert_prog_lump);
@@ -333,6 +336,8 @@ uniform sampler2D texture6;
 
 	tempindex = glGetUniformBlockIndex(hShader, "AttributeUBO");
 	if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, ATTRIBUTE_BINDINGPOINT);
+
+	muClipSplit.Init(hShader, "uClipSplit");
 
 	glUseProgram(hShader);
 

@@ -109,6 +109,7 @@ bool FRenderState::ApplyShader(int attrindex, bool alphateston)
 				fogset = -gl_fogmode;
 			}
 		}
+		activeShader->muClipSplit.Set(&uClipSplit.X);
 		mAttributes.uFogEnabled = fogset;
 		if (!mGlowEnabled) mAttributes.uGlowTopColor.W = mAttributes.uGlowBottomColor.W = 0.f;
 		attrindex = GLRenderer->mAttributes->Upload(&mAttributes);

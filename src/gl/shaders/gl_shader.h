@@ -241,6 +241,8 @@ class FShader
 	unsigned int hFragProg;
 	FName mName;
 
+	FBufferedUniform2f muClipSplit;
+
 public:
 	FShader(const char *name)
 		: mName(name)

@@ -71,6 +71,7 @@ class FRenderState
 	int mSrcBlend, mDstBlend;
 	int mBlendEquation;
 	bool mLastDepthClamp;
+	FVector2 uClipSplit;
 
 	FVertexBuffer *mVertexBuffer, *mCurrentVertexBuffer;
 	FVector4 mNormal;
@@ -292,25 +293,25 @@ public:
 
 	void SetClipSplit(float bottom, float top)
 	{
-		mAttributes.uClipSplit[0] = bottom;
-		mAttributes.uClipSplit[1] = top;
+		uClipSplit[0] = bottom;
+		uClipSplit[1] = top;
 	}
 
 	void SetClipSplit(float *vals)
 	{
-		mAttributes.uClipSplit = { vals[0], vals[1] };
+		uClipSplit = { vals[0], vals[1] };
 	}
 
 	void GetClipSplit(float *out)
 	{
-		out[0] = mAttributes.uClipSplit.X;
-		out[1] = mAttributes.uClipSplit.Y;
+		out[0] = uClipSplit.X;
+		out[1] = uClipSplit.Y;
 	}
 
 	void ClearClipSplit()
 	{
-		mAttributes.uClipSplit[0] = -1000000.f;
-		mAttributes.uClipSplit[1] = 1000000.f;
+		uClipSplit[0] = -1000000.f;
+		uClipSplit[1] = 1000000.f;
 	}
 
 	void BlendFunc(int src, int dst)

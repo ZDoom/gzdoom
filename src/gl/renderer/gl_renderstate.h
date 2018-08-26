@@ -110,7 +110,7 @@ public:
 
 	void Apply();
 
-	void FRenderState::SetLightIndex(int index)
+	void SetLightIndex(int index)
 	{
 		mAttributes.uLightIndex = index;
 	}

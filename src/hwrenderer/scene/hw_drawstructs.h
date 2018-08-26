@@ -127,6 +127,10 @@ struct AttributeBufferData
 		uTimer = 0.0f;
 		uTexMatrixIndex = 0;
 		uLightIsAttr = 0;
+
+		uClipSplit[0] = -1000000.f;
+		uClipSplit[1] = 1000000.f;
+
 	}
 
 	void SetTimer(float factor)

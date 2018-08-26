@@ -43,6 +43,12 @@
 	cc.mov(out, tmp); \
 }
 
+static const char *OpNames[NUM_OPS] =
+{
+#define xx(op, name, mode, alt, kreg, ktype)	#op
+#include "vmops.h"
+};
+
 class JitCompiler
 {
 public:
@@ -62,6 +68,10 @@ public:
 			a = pc->a;
 
 			cc.bind(labels[i]);
+
+			FString lineinfo;
+			lineinfo.Format("; %s(line %d): %02x%02x%02x%02x %s", sfunc->Name.GetChars(), sfunc->PCToLine(pc), pc->op, pc->a, pc->b, pc->c, OpNames[op]);
+			cc.comment(lineinfo.GetChars(), lineinfo.Len());
 
 			EmitFuncPtr opcodeFunc = GetOpcodeEmitFunc(op);
 			if (!opcodeFunc)
@@ -217,9 +227,9 @@ private:
 			//EMIT_OP(NEW);
 			//EMIT_OP(NEW_K);
 			//EMIT_OP(THROW);
-			//EMIT_OP(BOUND);
-			//EMIT_OP(BOUND_K);
-			//EMIT_OP(BOUND_R);
+			EMIT_OP(BOUND);
+			EMIT_OP(BOUND_K);
+			EMIT_OP(BOUND_R);
 			//EMIT_OP(CONCAT);
 			//EMIT_OP(LENS);
 			//EMIT_OP(CMPS);
@@ -1076,9 +1086,48 @@ private:
 	//void EmitNEW() {}
 	//void EmitNEW_K() {}
 	//void EmitTHROW() {} // A == 0: Throw exception object pB, A == 1: Throw exception object pkB, A >= 2: Throw VM exception of type BC
-	//void EmitBOUND() {} // if rA < 0 or rA >= BC, throw exception
-	//void EmitBOUND_K() {} // if rA < 0 or rA >= const[BC], throw exception
-	//void EmitBOUND_R() {} // if rA < 0 or rA >= rB, throw exception
+
+	void EmitBOUND()
+	{
+		auto label1 = cc.newLabel();
+		auto label2 = cc.newLabel();
+		cc.cmp(regD[a], (int)BC);
+		cc.jl(label1);
+		EmitThrowException(X_ARRAY_OUT_OF_BOUNDS); // "Max.index = %u, current index = %u\n", BC, reg.d[a]
+		cc.bind(label1);
+		cc.cmp(regD[a], (int)0);
+		cc.jge(label2);
+		EmitThrowException(X_ARRAY_OUT_OF_BOUNDS); // "Negative current index = %i\n", reg.d[a]
+		cc.bind(label2);
+	}
+
+	void EmitBOUND_K()
+	{
+		auto label1 = cc.newLabel();
+		auto label2 = cc.newLabel();
+		cc.cmp(regD[a], (int)konstd[BC]);
+		cc.jl(label1);
+		EmitThrowException(X_ARRAY_OUT_OF_BOUNDS); // "Max.index = %u, current index = %u\n", konstd[BC], reg.d[a]
+		cc.bind(label1);
+		cc.cmp(regD[a], (int)0);
+		cc.jge(label2);
+		EmitThrowException(X_ARRAY_OUT_OF_BOUNDS); // "Negative current index = %i\n", reg.d[a]
+		cc.bind(label2);
+	}
+
+	void EmitBOUND_R()
+	{
+		auto label1 = cc.newLabel();
+		auto label2 = cc.newLabel();
+		cc.cmp(regD[a], regD[B]);
+		cc.jl(label1);
+		EmitThrowException(X_ARRAY_OUT_OF_BOUNDS); // "Max.index = %u, current index = %u\n", reg.d[B], reg.d[a]
+		cc.bind(label1);
+		cc.cmp(regD[a], (int)0);
+		cc.jge(label2);
+		EmitThrowException(X_ARRAY_OUT_OF_BOUNDS); // "Negative current index = %i\n", reg.d[a]
+		cc.bind(label2);
+	}
 
 	// String instructions.
 
@@ -2228,7 +2277,9 @@ private:
 		cc.cmp(tmp, 0);
 		cc.je(label);
 
-		cc.add(tmp, regD[C]);
+		auto tmpptr = cc.newIntPtr();
+		cc.mov(tmpptr, regD[C]);
+		cc.add(tmp, tmpptr);
 
 		cc.bind(label);
 		cc.mov(regA[a], tmp);
@@ -2295,7 +2346,9 @@ private:
 			cc.mov(initreg, x86::ptr(vmregs, 0));
 			for (int i = 0; i < sfunc->NumRegD; i++)
 			{
-				regD[i] = cc.newInt32();
+				FString regname;
+				regname.Format("regD%d", i);
+				regD[i] = cc.newInt32(regname.GetChars());
 				cc.mov(regD[i], x86::dword_ptr(initreg, i * 4));
 			}
 		}
@@ -2304,7 +2357,9 @@ private:
 			cc.mov(initreg, x86::ptr(vmregs, sizeof(void*)));
 			for (int i = 0; i < sfunc->NumRegF; i++)
 			{
-				regF[i] = cc.newXmmSd ();
+				FString regname;
+				regname.Format("regF%d", i);
+				regF[i] = cc.newXmmSd(regname.GetChars());
 				cc.movsd(regF[i], x86::qword_ptr(initreg, i * 8));
 			}
 		}
@@ -2313,7 +2368,9 @@ private:
 			cc.mov(initreg, x86::ptr(vmregs, sizeof(void*) * 2));
 			for (int i = 0; i < sfunc->NumRegS; i++)
 			{
-				regS[i] = cc.newGpd();
+				FString regname;
+				regname.Format("regS%d", i);
+				regS[i] = cc.newGpd(regname.GetChars());
 			}
 		}*/
 		if (sfunc->NumRegA > 0)
@@ -2321,7 +2378,9 @@ private:
 			cc.mov(initreg, x86::ptr(vmregs, sizeof(void*) * 3));
 			for (int i = 0; i < sfunc->NumRegA; i++)
 			{
-				regA[i] = cc.newIntPtr();
+				FString regname;
+				regname.Format("regA%d", i);
+				regA[i] = cc.newIntPtr(regname.GetChars());
 				cc.mov(regA[i], x86::ptr(initreg, i * 4));
 			}
 		}
@@ -2485,16 +2544,16 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 #endif
 
 	using namespace asmjit;
+	StringLogger logger;
 	try
 	{
 		auto *jit = JitGetRuntime();
 
 		ThrowingErrorHandler errorHandler;
-		//FileLogger logger(stdout);
 		CodeHolder code;
 		code.init(jit->getCodeInfo());
 		code.setErrorHandler(&errorHandler);
-		//code.setLogger(&logger);
+		code.setLogger(&logger);
 
 		JitCompiler compiler(&code, sfunc);
 		compiler.Codegen();
@@ -2507,7 +2566,23 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 	}
 	catch (const std::exception &e)
 	{
-		I_FatalError("Unexpected JIT error: %s", e.what());
+		// Write line by line since I_FatalError seems to cut off long strings
+		const char *pos = logger.getString();
+		const char *end = pos;
+		while (*end)
+		{
+			if (*end == '\n')
+			{
+				FString substr(pos, (int)(ptrdiff_t)(end - pos));
+				Printf("%s\n", substr.GetChars());
+				pos = end + 1;
+			}
+			end++;
+		}
+		if (pos != end)
+			Printf("%s\n", pos);
+
+		I_FatalError("Unexpected JIT error: %s\n", e.what());
 		return nullptr;
 	}
 }

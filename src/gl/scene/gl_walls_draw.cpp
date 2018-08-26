@@ -51,8 +51,7 @@ EXTERN_CVAR(Bool, gl_seamless)
 void FDrawInfo::RenderWall(GLWall *wall, int textured)
 {
 	assert(wall->vertcount > 0);
-	gl_RenderState.SetLightIndex(wall->dynlightindex);
-	gl_RenderState.Apply();
+	gl_RenderState.Apply(wall->attrindex, wall->alphateston);
 	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, wall->vertindex, wall->vertcount);
 	vertexcount += wall->vertcount;
 }
@@ -67,8 +66,6 @@ void FDrawInfo::RenderFogBoundary(GLWall *wall)
 {
 	if (gl_fogmode && !isFullbrightScene())
 	{
-		int rel = wall->rellight + getExtraLight();
-		SetFog(wall->lightlevel, rel, &wall->Colormap, false);
 		gl_RenderState.EnableDrawBuffers(1);
 		gl_RenderState.SetEffect(EFF_FOGBOUNDARY);
 		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
@@ -95,8 +92,6 @@ void FDrawInfo::RenderMirrorSurface(GLWall *wall)
 	// Use sphere mapping for this
 	gl_RenderState.SetEffect(EFF_SPHEREMAP);
 
-	SetColor(wall->lightlevel, 0, wall->Colormap ,0.1f);
-	SetFog(wall->lightlevel, 0, &wall->Colormap, true);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
 	gl_RenderState.AlphaFunc(GL_GREATER,0);
 	glDepthFunc(GL_LEQUAL);
@@ -139,67 +134,8 @@ void FDrawInfo::RenderMirrorSurface(GLWall *wall)
 
 void FDrawInfo::RenderTexturedWall(GLWall *wall, int rflags)
 {
-	int tmode = gl_RenderState.GetTextureMode();
-	int rel = wall->rellight + getExtraLight();
-
-	if (wall->flags & GLWall::GLWF_GLOW)
-	{
-		gl_RenderState.EnableGlow(true);
-		gl_RenderState.SetGlowParams(wall->topglowcolor, wall->bottomglowcolor);
-	}
-	gl_RenderState.SetGlowPlanes(wall->topplane, wall->bottomplane);
 	gl_RenderState.SetMaterial(wall->gltexture, wall->flags & 3, 0, -1, false);
-
-	if (wall->type == RENDERWALL_M2SNF)
-	{
-		if (wall->flags & GLWall::GLWF_CLAMPY)
-		{
-			if (tmode == TM_MODULATE) gl_RenderState.SetTextureMode(TM_CLAMPY);
-		}
-		SetFog(255, 0, nullptr, false);
-	}
-	gl_RenderState.SetObjectColor(wall->seg->frontsector->SpecialColors[sector_t::walltop]);
-	gl_RenderState.SetObjectColor2(wall->seg->frontsector->SpecialColors[sector_t::wallbottom]);
-
-	float absalpha = fabsf(wall->alpha);
-	if (wall->lightlist == nullptr)
-	{
-		if (wall->type != RENDERWALL_M2SNF) SetFog(wall->lightlevel, rel, &wall->Colormap, wall->RenderStyle == STYLE_Add);
-		SetColor(wall->lightlevel, rel, wall->Colormap, absalpha);
-		RenderWall(wall, rflags);
-	}
-	else
-	{
-		gl_RenderState.EnableSplit(true);
-
-		for (unsigned i = 0; i < wall->lightlist->Size(); i++)
-		{
-			secplane_t &lowplane = i == (*wall->lightlist).Size() - 1 ? wall->bottomplane : (*wall->lightlist)[i + 1].plane;
-			// this must use the exact same calculation method as GLWall::Process etc.
-			float low1 = lowplane.ZatPoint(wall->vertexes[0]);
-			float low2 = lowplane.ZatPoint(wall->vertexes[1]);
-
-			if (low1 < wall->ztop[0] || low2 < wall->ztop[1])
-			{
-				int thisll = (*wall->lightlist)[i].caster != NULL ? hw_ClampLight(*(*wall->lightlist)[i].p_lightlevel) : wall->lightlevel;
-				FColormap thiscm;
-				thiscm.FadeColor = wall->Colormap.FadeColor;
-				thiscm.FogDensity = wall->Colormap.FogDensity;
-				thiscm.CopyFrom3DLight(&(*wall->lightlist)[i]);
-				SetColor(thisll, rel, thiscm, absalpha);
-				if (wall->type != RENDERWALL_M2SNF) SetFog(thisll, rel, &thiscm, wall->RenderStyle == STYLE_Add);
-				gl_RenderState.SetSplitPlanes((*wall->lightlist)[i].plane, lowplane);
-				RenderWall(wall, rflags);
-			}
-			if (low1 <= wall->zbottom[0] && low2 <= wall->zbottom[1]) break;
-		}
-
-		gl_RenderState.EnableSplit(false);
-	}
-	gl_RenderState.SetObjectColor(0xffffffff);
-	gl_RenderState.ClearObjectColor2();
-	gl_RenderState.SetTextureMode(tmode);
-	gl_RenderState.EnableGlow(false);
+	RenderWall(wall, rflags);
 }
 
 //==========================================================================
@@ -220,9 +156,6 @@ void FDrawInfo::RenderTranslucentWall(GLWall *wall)
 	}
 	else
 	{
-		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
-		SetColor(wall->lightlevel, 0, wall->Colormap, fabsf(wall->alpha));
-		SetFog(wall->lightlevel, 0, &wall->Colormap, wall->RenderStyle == STYLE_Add);
 		gl_RenderState.EnableTexture(false);
 		RenderWall(wall, GLWall::RWF_NOSPLIT);
 		gl_RenderState.EnableTexture(true);
@@ -271,17 +204,16 @@ void FDrawInfo::DrawWall(GLWall *wall, int pass)
 //
 //==========================================================================
 
-void FDrawInfo::AddWall(GLWall *wall)
+void FDrawInfo::AddWall(GLWall *wall, AttributeBufferData &attr)
 {
+	int list;
 	if (wall->flags & GLWall::GLWF_TRANSLUCENT)
 	{
-		auto newwall = drawlists[GLDL_TRANSLUCENT].NewWall();
-		*newwall = *wall;
+		list = wall->type == RENDERWALL_MIRRORSURFACE ? GLDL_TRANSLUCENTBORDER : GLDL_TRANSLUCENT;
 	}
 	else
 	{
 		bool masked = GLWall::passflag[wall->type] == 1 ? false : (wall->gltexture && wall->gltexture->isMasked());
-		int list;
 
 		if ((wall->flags & GLWall::GLWF_SKYHACK && wall->type == RENDERWALL_M2S))
 		{
@@ -291,32 +223,17 @@ void FDrawInfo::AddWall(GLWall *wall)
 		{
 			list = masked ? GLDL_MASKEDWALLS : GLDL_PLAINWALLS;
 		}
-		auto newwall = drawlists[list].NewWall();
-		*newwall = *wall;
 	}
-}
+	// Texture mode depends on the render list. This needs to go to the backend independent side later.
+	auto tm = attr.uTextureMode;
+	if (list == GLDL_PLAINWALLS) attr.uTextureMode = TM_OPAQUE;
+	else if (attr.uTextureMode < TM_MODULATE) attr.uTextureMode = TM_MODULATE;
+	wall->attrindex = GLRenderer->mAttributes->Upload(&attr);
+	attr.uTextureMode = tm;
 
-//==========================================================================
-//
-// 
-//
-//==========================================================================
+	auto newwall = drawlists[list].NewWall();
+	*newwall = *wall;
 
-void FDrawInfo::AddMirrorSurface(GLWall *w)
-{
-	w->type = RENDERWALL_MIRRORSURFACE;
-	auto newwall = drawlists[GLDL_TRANSLUCENTBORDER].NewWall();
-	*newwall = *w;
-
-	// Invalidate vertices to allow setting of texture coordinates
-	newwall->vertcount = 0;
-
-	FVector3 v = newwall->glseg.Normal();
-	auto tcs = newwall->tcs;
-	tcs[GLWall::LOLFT].u = tcs[GLWall::LORGT].u = tcs[GLWall::UPLFT].u = tcs[GLWall::UPRGT].u = v.X;
-	tcs[GLWall::LOLFT].v = tcs[GLWall::LORGT].v = tcs[GLWall::UPLFT].v = tcs[GLWall::UPRGT].v = v.Z;
-	newwall->MakeVertices(this, false);
-	newwall->ProcessDecals(this);
 }
 
 //==========================================================================
@@ -394,11 +311,6 @@ void FDrawInfo::AddPortal(GLWall *wall, int ptype)
 			Portals.Push(portal);
 		}
 		portal->AddLine(wall);
-		if (gl_mirror_envmap)
-		{
-			// draw a reflective layer over the mirror
-			AddMirrorSurface(wall);
-		}
 		break;
 
 	case PORTALTYPE_LINETOLINE:
@@ -558,7 +470,7 @@ void FDrawInfo::DrawDecals()
 //==========================================================================
 void FDrawInfo::DrawDecalsForMirror(GLWall *wall)
 {
-	SetFog(wall->lightlevel, wall->rellight + getExtraLight(), &wall->Colormap, false);
+	//SetFog(wall->lightlevel, wall->rellight + getExtraLight(), &wall->Colormap, false);
 	for (auto gldecal : decals[1])
 	{
 		if (gldecal->decal->Side == wall->seg->sidedef)

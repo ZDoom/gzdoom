@@ -39,6 +39,7 @@
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_vrmodes.h"
 #include "gl/data/gl_vertexbuffer.h"
+#include "gl/data/gl_modelbuffer.h"
 #include "gl/data/gl_uniformbuffer.h"
 #include "gl/models/gl_models.h"
 #include "gl/shaders/gl_shaderprogram.h"
@@ -171,6 +172,10 @@ void OpenGLFrameBuffer::Update()
 		V_OutputResized(clientWidth, clientHeight);
 		GLRenderer->mVBO->OutputResized(clientWidth, clientHeight);
 	}
+
+	GLRenderer->mVBO->Reset();
+	GLRenderer->mAttributes->Clear();
+	GLRenderer->mModelMatrix->Clear();
 }
 
 //===========================================================================

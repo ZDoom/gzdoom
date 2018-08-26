@@ -36,7 +36,7 @@
 #include "hwrenderer/utility/hw_lighting.h"
 #include "hwrenderer/data/flatvertices.h"
 
-void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &normal)
+void GLWall::ProcessDecal(WallAttributeInfo &wri, HWDrawInfo *di, DBaseDecal *decal, const FVector3 &normal)
 {
 	line_t * line = seg->linedef;
 	side_t * side = seg->sidedef;
@@ -239,11 +239,11 @@ void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 	}
 	else
 	{
-		gldecal->lightlevel = lightlevel;
-		gldecal->rellight = rellight + getExtraLight();
+		gldecal->lightlevel = wri.lightlevel;
+		gldecal->rellight = wri.rellight + getExtraLight();
 	}
 
-	gldecal->Colormap = Colormap;
+	gldecal->Colormap = wri.Colormap;
 
 	if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
 	{
@@ -252,9 +252,9 @@ void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 
 	gldecal->alpha = decal->Alpha;
 	gldecal->zcenter = zpos - decalheight * 0.5f;
-	gldecal->bottomplane = bottomplane;
+	gldecal->bottomplane = *wri.bottomplane;
 	gldecal->Normal = normal;
-	gldecal->lightlist = lightlist;
+	gldecal->lightlist = wri.lightlist;
 	memcpy(gldecal->dv, dv, sizeof(dv));
 	
 	auto verts = di->AllocVertices(4);
@@ -271,7 +271,7 @@ void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 //
 //
 //==========================================================================
-void GLWall::ProcessDecals(HWDrawInfo *di)
+void GLWall::ProcessDecals(WallAttributeInfo &wri, HWDrawInfo *di)
 {
 	if (seg->sidedef != nullptr)
 	{
@@ -281,7 +281,7 @@ void GLWall::ProcessDecals(HWDrawInfo *di)
 			auto normal = glseg.Normal();	// calculate the normal only once per wall because it requires a square root.
 			while (decal)
 			{
-				ProcessDecal(di, decal, normal);
+				ProcessDecal(wri, di, decal, normal);
 				decal = decal->WallNext;
 			}
 		}

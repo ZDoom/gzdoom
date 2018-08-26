@@ -77,52 +77,49 @@ void FRenderState::Reset()
 //
 //==========================================================================
 
-bool FRenderState::ApplyShader()
+bool FRenderState::ApplyShader(int attrindex, bool alphateston)
 {
-	static uint64_t firstFrame = 0;
-	// if firstFrame is not yet initialized, initialize it to current time
-	// if we're going to overflow a float (after ~4.6 hours, or 24 bits), re-init to regain precision
-	if ((firstFrame == 0) || (screen->FrameTime - firstFrame >= 1<<24) || level.ShaderStartTime >= firstFrame)
-		firstFrame = screen->FrameTime;
-
-	static const float nulvec[] = { 0.f, 0.f, 0.f, 0.f };
 	if (mSpecialEffect > EFF_NONE)
 	{
 		activeShader = GLRenderer->mShaderManager->BindEffect(mSpecialEffect, mPassType);
 	}
 	else
 	{
-		activeShader = GLRenderer->mShaderManager->Get(mTextureEnabled ? mEffectState : SHADER_NoTexture, mAttributes.uAlphaThreshold >= 0.f, mPassType);
+		if (attrindex == -1) alphateston = mAttributes.uAlphaThreshold >= 0.f;
+		activeShader = GLRenderer->mShaderManager->Get(mTextureEnabled ? mEffectState : SHADER_NoTexture, alphateston, mPassType);
 		activeShader->Bind();
 	}
 
-	int fogset = 0;
-
-	if (mFogEnabled)
+	if (attrindex < 0)
 	{
-		if (mFogEnabled == 2)
+		int fogset = 0;
+
+		if (mFogEnabled)
 		{
-			fogset = -3;	// 2D rendering with 'foggy' overlay.
+			if (mFogEnabled == 2)
+			{
+				fogset = -3;	// 2D rendering with 'foggy' overlay.
+			}
+			else if (mAttributes.uFogColor.XYZ().isZero())
+			{
+				fogset = gl_fogmode;
+			}
+			else
+			{
+				fogset = -gl_fogmode;
+			}
 		}
-		else if (mAttributes.uFogColor.XYZ().isZero())
-		{
-			fogset = gl_fogmode;
-		}
-		else
-		{
-			fogset = -gl_fogmode;
-		}
+		mAttributes.uFogEnabled = fogset;
+		if (!mGlowEnabled) mAttributes.uGlowTopColor.W = mAttributes.uGlowBottomColor.W = 0.f;
+		attrindex = GLRenderer->mAttributes->Upload(&mAttributes);
 	}
-	mAttributes.uFogEnabled = fogset;
-	if (!mGlowEnabled) mAttributes.uGlowTopColor.W = mAttributes.uGlowBottomColor.W = 0.f;
 
 	if (GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
 	{
 		GLRenderer->mLights->BindUBO(mAttributes.uLightIndex);
 		GLRenderer->mTextureMatrices->Bind(mAttributes.uTexMatrixIndex);
 	}
-	auto index = GLRenderer->mAttributes->Upload(&mAttributes);
- 	GLRenderer->mAttributes->Bind(index);
+ 	GLRenderer->mAttributes->Bind(attrindex);
 
 	glVertexAttrib4fv(VATTR_NORMAL, &mNormal.X);
 
@@ -137,7 +134,7 @@ bool FRenderState::ApplyShader()
 //
 //==========================================================================
 
-void FRenderState::Apply()
+void FRenderState::Apply(int attrindex, bool alphateston)
 {
 	if (mVertexBuffer != mCurrentVertexBuffer)
 	{
@@ -145,7 +142,7 @@ void FRenderState::Apply()
 		else mVertexBuffer->BindVBO();
 		mCurrentVertexBuffer = mVertexBuffer;
 	}
-	ApplyShader();
+	ApplyShader(attrindex, alphateston);
 }
 
 //===========================================================================
@@ -165,7 +162,6 @@ void FRenderState::SetMaterial(FMaterial *mat, int clampmode, int translation, i
 		mTempTM = TM_MODULATE;
 	}
 	mEffectState = overrideshader >= 0 ? overrideshader : mat->mShaderIndex;
-	mAttributes.timer = mat->tex->shaderspeed;
 	
 	auto tex = mat->tex;
 	if (tex->UseType == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;

@@ -735,7 +735,7 @@ void D_Display ()
 	}
 
 	{
-		screen->FrameTime = I_msTimeFS();
+		screen->UpdateFrameTime();
 		TexMan.UpdateAnimations(screen->FrameTime);
 		R_UpdateSky(screen->FrameTime);
 		screen->BeginFrame();

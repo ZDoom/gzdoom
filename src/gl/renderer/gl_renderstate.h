@@ -83,7 +83,7 @@ class FRenderState
 	EPassType mPassType = NORMAL_PASS;
 	int mNumDrawBuffers = 1;
 
-	bool ApplyShader();
+	bool ApplyShader(int attrindex, bool alphateston);
 
 	// Texture binding state
 	FMaterial *lastMaterial = nullptr;
@@ -108,7 +108,7 @@ public:
 
 	void SetMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader, bool alphatexture);
 
-	void Apply();
+	void Apply(int attrindex = -1, bool alphateston = true);
 
 	void SetLightIndex(int index)
 	{
@@ -232,14 +232,6 @@ public:
 	{
 		if (level.lightmode == 8) mAttributes.uLightLevel = llevel / 255.f;
 		else mAttributes.uLightLevel = -1.f;
-	}
-
-	void SetGlowPlanes(const secplane_t &top, const secplane_t &bottom)
-	{
-		DVector3 tn = top.Normal();
-		DVector3 bn = bottom.Normal();
-		mAttributes.uGlowTopPlane = { (float)tn.X, (float)tn.Y, 1.f / (float)tn.Z, (float)top.fD() };
-		mAttributes.uGlowBottomPlane = { (float)bn.X, (float)bn.Y, 1.f / (float)bn.Z, (float)bottom.fD() };
 	}
 
 	void SetSplitPlanes(const secplane_t &top, const secplane_t &bottom)

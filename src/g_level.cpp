@@ -1942,6 +1942,13 @@ void FLevelLocals::Tick ()
 	{
 		memset (&Scrolls[0], 0, sizeof(Scrolls[0])*Scrolls.Size());
 	}
+
+	// if firstFrame is not yet initialized, initialize it to current time
+	// if we're going to overflow a float (after ~4.6 hours, or 24 bits), re-init to regain precision
+	if ((firstFrame == 0) || (screen->FrameTime - firstFrame >= 1 << 24) || ShaderStartTime >= firstFrame)
+		firstFrame = screen->FrameTime;
+
+
 }
 
 //==========================================================================

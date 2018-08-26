@@ -48,6 +48,8 @@ struct FLevelLocals
 	void SetInterMusic(const char *nextmap);
 	void SetMusicVolume(float v);
 
+	uint64_t firstFrame;
+
 	uint8_t		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
 	int			time;			// time in the hub
 	int			maptime;		// time in the map

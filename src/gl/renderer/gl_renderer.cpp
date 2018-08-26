@@ -227,9 +227,6 @@ void FGLRenderer::EndOffscreen()
 sector_t *FGLRenderer::RenderView(player_t* player)
 {
 	gl_RenderState.SetVertexBuffer(mVBO);
-	mVBO->Reset();
-	mAttributes->Clear();
-	mModelMatrix->Clear();
 	sector_t *retsec;
 
 	if (!V_IsHardwareRenderer())

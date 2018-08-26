@@ -544,6 +544,9 @@ public:
 
 	// The original size of the framebuffer as selected in the video menu.
 	uint64_t FrameTime = 0;
+	uint64_t FirstFrame = 0;
+
+	void UpdateFrameTime();
 
 protected:
 	void DrawRateStuff ();

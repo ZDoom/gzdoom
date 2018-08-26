@@ -41,8 +41,7 @@ struct FDrawInfo : public HWDrawInfo
 	
 	void ApplyVPUniforms() override;
 
-	void AddWall(GLWall *wall) override;
-    void AddMirrorSurface(GLWall *w) override;
+	void AddWall(GLWall *wall, AttributeBufferData &attr) override;
 	GLDecal *AddDecal(bool onmirror) override;
 	void AddPortal(GLWall *w, int portaltype) override;
 	void AddFlat(GLFlat *flat, bool fog) override;

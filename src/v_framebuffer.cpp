@@ -48,6 +48,7 @@
 #include "vm.h"
 #include "r_videoscale.h"
 #include "i_time.h"
+#include "g_levellocals.h"
 
 
 CVAR(Bool, gl_scale_viewport, true, CVAR_ARCHIVE);
@@ -297,6 +298,15 @@ void DFrameBuffer::GetFlash(PalEntry &rgb, int &amount)
 	amount = Flash.a;
 }
 
+void DFrameBuffer::UpdateFrameTime()
+{
+	FrameTime = I_msTimeFS();
+
+	// if firstFrame is not yet initialized, initialize it to current time
+	// if we're going to overflow a float (after ~4.6 hours, or 24 bits), re-init to regain precision
+	if ((FirstFrame == 0) || (FrameTime - FirstFrame >= 1 << 24) || level.ShaderStartTime >= FirstFrame)
+		FirstFrame = FrameTime;
+}
 
 //==========================================================================
 //

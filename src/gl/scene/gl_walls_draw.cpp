@@ -68,7 +68,6 @@ void FDrawInfo::RenderFogBoundary(GLWall *wall)
 	{
 		gl_RenderState.EnableDrawBuffers(1);
 		gl_RenderState.SetEffect(EFF_FOGBOUNDARY);
-		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(-1.0f, -128.0f);
 		RenderWall(wall, GLWall::RWF_BLANK);
@@ -93,7 +92,6 @@ void FDrawInfo::RenderMirrorSurface(GLWall *wall)
 	gl_RenderState.SetEffect(EFF_SPHEREMAP);
 
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
-	gl_RenderState.AlphaFunc(GL_GREATER,0);
 	glDepthFunc(GL_LEQUAL);
 
 	FMaterial * pat=FMaterial::ValidateTexture(TexMan.mirrorTexture, false, false);
@@ -106,7 +104,6 @@ void FDrawInfo::RenderMirrorSurface(GLWall *wall)
 
 	// Restore the defaults for the translucent pass
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
 	glDepthFunc(GL_LESS);
 
 	// This is drawn in the translucent pass which is done after the decal pass
@@ -148,8 +145,6 @@ void FDrawInfo::RenderTranslucentWall(GLWall *wall)
 {
 	if (wall->gltexture)
 	{
-		if (!wall->gltexture->tex->GetTranslucency()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
-		else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 		if (wall->RenderStyle == STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
 		RenderTexturedWall(wall, GLWall::RWF_TEXTURED | GLWall::RWF_NOSPLIT);
 		if (wall->RenderStyle == STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

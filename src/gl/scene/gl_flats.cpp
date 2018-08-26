@@ -233,6 +233,7 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 		else
 		{
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_XY, 0, -1, false);
+			gl_RenderState.Apply();
 			glDrawArrays(GL_TRIANGLE_FAN, flat->iboindex, 4);
 			flatvertices += 4;
 			flatprimitives++;

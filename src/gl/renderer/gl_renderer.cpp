@@ -480,6 +480,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	gl_RenderState.SetVertexBuffer(vb);
 	gl_RenderState.EnableFog(false);
 	gl_RenderState.SetLightIsAttr(true);
+	gl_RenderState.SetLightIndex(-1);
 
 	for(auto &cmd : commands)
 	{

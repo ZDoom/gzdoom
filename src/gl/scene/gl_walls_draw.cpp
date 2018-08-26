@@ -448,8 +448,10 @@ void FDrawInfo::DrawDecal(GLDecal *gldecal)
 		float out[3];
 		decal->GetXY(decal->Side, x, y);
 		GetDynSpriteLight(nullptr, x, y, gldecal->zcenter, decal->Side->lighthead, decal->Side->sector->PortalGroup, out);
+
 		gl_RenderState.SetDynLight(out[0], out[1], out[2]);
 	}
+	gl_RenderState.SetLightIndex(-1);
 
 	// alpha color only has an effect when using an alpha texture.
 	if (decal->RenderStyle.Flags & STYLEF_RedIsAlpha)

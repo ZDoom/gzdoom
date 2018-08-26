@@ -246,9 +246,10 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 		GLRenderer->mModelMatrix->Bind(sprite->modelindex);
 		if (!sprite->modelframe)
 		{
+			gl_RenderState.SetLightIndex(-1);
+			gl_RenderState.SetNormal(0, 0, 0);
 			gl_RenderState.Apply();
 
-			gl_RenderState.SetNormal(0, 0, 0);
             
 			if (sprite->polyoffset)
 			{

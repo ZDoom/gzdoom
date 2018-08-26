@@ -72,6 +72,7 @@ void FDrawInfo::DrawPSprite (HUDSprite *huds)
 		float thresh = (huds->tex->tex->GetTranslucency() || huds->OverrideShader != -1) ? 0.f : gl_mask_sprite_threshold;
 		gl_RenderState.AlphaFunc(GL_GEQUAL, thresh);
 		gl_RenderState.SetMaterial(huds->tex, CLAMP_XY_NOMIP, 0, huds->OverrideShader, !!(huds->RenderStyle.Flags & STYLEF_RedIsAlpha));
+		gl_RenderState.SetLightIndex(-1);
 		gl_RenderState.Apply();
 		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, huds->mx, 4);
 	}

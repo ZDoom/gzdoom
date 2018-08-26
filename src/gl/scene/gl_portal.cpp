@@ -69,6 +69,7 @@ void GLPortal::ClearScreen(HWDrawInfo *di)
 
 	GLRenderer->mViewpoints->Set2D(SCREENWIDTH, SCREENHEIGHT);
 	gl_RenderState.SetColor(0, 0, 0);
+	gl_RenderState.SetLightIndex(-1);
 	gl_RenderState.Apply();
 
 	glDisable(GL_MULTISAMPLE);
@@ -97,6 +98,7 @@ void GLPortal::DrawPortalStencil(int pass)
 			mPrimIndices[i * 2 + 1] = lines[i].vertcount;
 		}
 	}
+	gl_RenderState.SetLightIndex(-1);
 	gl_RenderState.Apply();
 	for (unsigned int i = 0; i < mPrimIndices.Size(); i += 2)
 	{
@@ -140,6 +142,7 @@ bool GLPortal::Start(bool usestencil, bool doquery, HWDrawInfo *outer_di, HWDraw
 			gl_RenderState.SetEffect(EFF_STENCIL);
 			gl_RenderState.EnableTexture(false);
 			gl_RenderState.ResetColor();
+			gl_RenderState.SetLightIndex(-1);
 			glDepthFunc(GL_LESS);
 			gl_RenderState.Apply();
 
@@ -247,6 +250,7 @@ void GLPortal::End(HWDrawInfo *di, bool usestencil)
 		gl_RenderState.SetEffect(EFF_NONE);
 		gl_RenderState.ResetColor();
 		gl_RenderState.EnableTexture(false);
+		gl_RenderState.SetLightIndex(-1);
 		gl_RenderState.Apply();
 
 		if (needdepth)
@@ -306,6 +310,7 @@ void GLPortal::End(HWDrawInfo *di, bool usestencil)
 		gl_RenderState.EnableTexture(false);
 		gl_RenderState.BlendFunc(GL_ONE, GL_ZERO);
 		gl_RenderState.BlendEquation(GL_FUNC_ADD);
+		gl_RenderState.SetLightIndex(-1);
 		gl_RenderState.Apply();
 		DrawPortalStencil(STP_DepthRestore);
 		gl_RenderState.SetEffect(EFF_NONE);
@@ -431,6 +436,7 @@ void GLHorizonPortal::DrawContents(HWDrawInfo *hwdi)
 	gl_RenderState.SetTexMatrixIndex(*sp->pUbIndexMatrix);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
+	gl_RenderState.SetLightIndex(-1);
 	gl_RenderState.Apply();
 
 

@@ -776,8 +776,8 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 				{
 					DVector2 disp = level.Displacements.getOffset(pgroup, poly->CenterSubsector->sector->PortalGroup);
 					CalcPolyobjSoundOrg(listenpos + disp, poly, *pos);
-					pos->X += (float)disp.X;
-					pos->Z += (float)disp.Y;
+					pos->X -= (float)disp.X;
+					pos->Z -= (float)disp.Y;
 				}
 				break;
 			}

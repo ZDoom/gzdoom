@@ -961,8 +961,6 @@ PalEntry FTexture::averageColor(const uint32_t *data, int size, int maxout)
 
 PalEntry FTexture::GetSkyCapColor(bool bottom)
 {
-	PalEntry col;
-
 	if (!bSWSkyColorDone)
 	{
 		bSWSkyColorDone = true;

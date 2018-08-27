@@ -46,7 +46,7 @@ class FString;
 class FName
 {
 public:
-	FName() = default;// : Index(0) {}
+	FName() = default;
 	FName (const char *text) { Index = NameData.FindName (text, false); }
 	FName (const char *text, bool noCreate) { Index = NameData.FindName (text, noCreate); }
 	FName (const char *text, size_t textlen, bool noCreate) { Index = NameData.FindName (text, textlen, noCreate); }
@@ -63,7 +63,7 @@ public:
 
 	FName &operator = (const char *text) { Index = NameData.FindName (text, false); return *this; }
 	FName &operator = (const FString &text);
-	FName &operator = (const FName &other) { Index = other.Index; return *this; }
+	FName &operator = (const FName &other) = default;
 	FName &operator = (ENamedName index) { Index = index; return *this; }
 
 	int SetName (const char *text, bool noCreate=false) { return Index = NameData.FindName (text, noCreate); }

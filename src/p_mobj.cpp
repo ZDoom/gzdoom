@@ -2345,7 +2345,6 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 {
 	static int pushtime = 0;
 	bool bForceSlide = !scroll.isZero();
-	DAngle Angle;
 	DVector2 ptry;
 	player_t *player;
 	DVector2 move;

@@ -306,7 +306,7 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 		{
 			if (sec.Lines.Size() != 3) continue;	// only works with triangular sectors
 
-			DVector3 vt1, vt2, vt3, cross;
+			DVector3 vt1, vt2, vt3;
 			DVector3 vec1, vec2;
 			int vi1, vi2, vi3;
 

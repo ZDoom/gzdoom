@@ -54,7 +54,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	precision highp int;
 	precision highp float;
 
-	// This must match the HWViewpointUniforms struct
 	layout(std140) uniform ViewpointUBO {
 		mat4 ProjectionMatrix;
 		mat4 ViewMatrix;

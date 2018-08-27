@@ -52,6 +52,7 @@ struct FDrawInfo : public HWDrawInfo
 	int UploadLights(FDynLightData &data) override;
 	int UploadModelMatrix(VSMatrix &data, float ifactor) override;
 	int UploadTextureMatrix(const VSMatrix &data, int bufferindex) override;
+	int UploadAttributes(AttributeBufferData &attr) override;
 
 	void DrawDecal(GLDecal *gldecal);
 	void DrawDecals();

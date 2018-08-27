@@ -274,6 +274,11 @@ int FDrawInfo::UploadTextureMatrix(const VSMatrix &data, int bufferindex)
 	return GLRenderer->mTextureMatrices->Upload(&data, bufferindex, 1);
 }
 
+int FDrawInfo::UploadAttributes(AttributeBufferData &attr)
+{
+	return GLRenderer->mAttributes->Upload(&attr);
+}
+
 bool FDrawInfo::SetDepthClamp(bool on)
 {
 	return gl_RenderState.SetDepthClamp(on);

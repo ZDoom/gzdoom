@@ -26,6 +26,8 @@ struct FDynLightData;
 class VSMatrix;
 struct FSpriteModelFrame;
 struct particle_t;
+struct DecalVertex;
+struct GLDecal;
 enum area_t : int;
 
 enum
@@ -142,6 +144,7 @@ struct AttributeBufferData
 
 	void SetTextureMode(FRenderStyle style, bool drawopaque)
 	{
+		uTextureMode = drawopaque ? TM_OPAQUE : TM_MODULATE;
 		if (style.Flags & STYLEF_RedIsAlpha)
 		{
 			uTextureMode = TM_REDTOALPHA;
@@ -154,7 +157,6 @@ struct AttributeBufferData
 		{
 			uTextureMode = TM_INVERSE;
 		}
-		uTextureMode = drawopaque ? TM_OPAQUE : TM_MODULATE;
 	}
 
 	//==========================================================================
@@ -485,7 +487,8 @@ public:
 					  float fch1, float fch2, float ffh1, float ffh2,
 					  float bch1, float bch2, float bfh1, float bfh2);
 
-    void ProcessDecal(WallAttributeInfo &wri, HWDrawInfo *di, DBaseDecal *decal, const FVector3 &normal);
+	void SetDecalAttributes(WallAttributeInfo &wri, HWDrawInfo *di, GLDecal *decal, DecalVertex *dv);
+	void ProcessDecal(WallAttributeInfo &wri, HWDrawInfo *di, DBaseDecal *decal, const FVector3 &normal);
     void ProcessDecals(WallAttributeInfo &wri, HWDrawInfo *di);
 
 	int CreateVertices(FFlatVertex *&ptr, bool nosplit);
@@ -650,18 +653,9 @@ struct DecalVertex
 struct GLDecal
 {
 	FMaterial *gltexture;
-	TArray<lightlist_t> *lightlist;
 	DBaseDecal *decal;
-	DecalVertex dv[4];
-	float zcenter;
 	unsigned int vertindex;
-
-	FRenderStyle renderstyle;
-	int lightlevel;
-	int rellight;
-	float alpha;
-	FColormap Colormap;
-	secplane_t bottomplane;
+	unsigned int attrindex;
 	FVector3 Normal;
 
 };

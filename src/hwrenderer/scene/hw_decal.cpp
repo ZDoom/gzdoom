@@ -36,6 +36,100 @@
 #include "hwrenderer/utility/hw_lighting.h"
 #include "hwrenderer/data/flatvertices.h"
 
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+void GLWall::SetDecalAttributes(WallAttributeInfo &wri, HWDrawInfo *di, GLDecal *gldecal, DecalVertex *dv)
+{
+	auto decal = gldecal->decal;
+
+	// alpha color only has an effect when using an alpha texture.
+	if (decal->RenderStyle.Flags & STYLEF_RedIsAlpha)
+	{
+		wri.attrBuffer.SetObjectColor(decal->AlphaColor);
+	}
+	wri.attrBuffer.SetTextureMode(decal->RenderStyle, false);
+
+
+	// If srcalpha is one it looks better with a higher alpha threshold
+	if (decal->RenderStyle.SrcAlpha == STYLEALPHA_One) wri.attrBuffer.AlphaFunc(ALPHA_GEQUAL, gl_mask_sprite_threshold);
+	else wri.attrBuffer.AlphaFunc(ALPHA_GREATER, 0.f);
+
+	int lightlevel, rellight;
+	if (decal->RenderFlags & RF_FULLBRIGHT)
+	{
+		lightlevel = 255;
+		rellight = 0;
+	}
+	else
+	{
+		lightlevel = wri.lightlevel;
+		rellight = wri.rellight + getExtraLight();
+	}
+
+	auto Colormap = wri.Colormap;
+
+	if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
+	{
+		Colormap.Decolorize();
+	}
+
+	wri.attrBuffer.SetColor(lightlevel, rellight, di->isFullbrightScene(), Colormap, wri.alpha);
+	// for additively drawn decals we must temporarily set the fog color to black.
+	auto fc = wri.attrBuffer.uFogColor;
+	if (decal->RenderStyle.BlendOp == STYLEOP_Add && decal->RenderStyle.DestAlpha == STYLEALPHA_One)
+	{
+		wri.attrBuffer.SetFog(0, -1);
+	}
+
+	if (wri.lightlist != nullptr)
+	{
+		auto &lightlist = *wri.lightlist;
+
+		for (unsigned k = 0; k < lightlist.Size(); k++)
+		{
+			secplane_t &lowplane = k == lightlist.Size() - 1 ? *wri.bottomplane : lightlist[k + 1].plane;
+
+			float low1 = lowplane.ZatPoint(dv[1].x, dv[1].y);
+			float low2 = lowplane.ZatPoint(dv[2].x, dv[2].y);
+
+			if (low1 < dv[1].z || low2 < dv[2].z)
+			{
+				int thisll = lightlist[k].caster != nullptr ? hw_ClampLight(*lightlist[k].p_lightlevel) : wri.lightlevel;
+				FColormap thiscm;
+				thiscm.FadeColor = Colormap.FadeColor;
+				thiscm.CopyFrom3DLight(&lightlist[k]);
+				if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) thiscm.Decolorize();
+				wri.attrBuffer.SetColor(thisll, rellight, di->isFullbrightScene(), thiscm, wri.alpha);
+				wri.attrBuffer.SetFog(thisll, rellight, di->isFullbrightScene(), &thiscm, false);
+				wri.attrBuffer.SetSplitPlanes(lightlist[k].plane, lowplane);
+			}
+			if (low1 <= dv[0].z && low2 <= dv[3].z) break;
+		}
+		wri.attrBuffer.DisableSplitPlanes();
+		auto copydecal = di->AddDecal(type == RENDERWALL_MIRRORSURFACE);
+		*copydecal = *gldecal;
+		copydecal->attrindex = di->UploadAttributes(wri.attrBuffer);
+	}
+	else
+	{
+		gldecal->attrindex = di->UploadAttributes(wri.attrBuffer);
+	}
+
+	wri.attrBuffer.uTextureMode = TM_MODULATE;
+	wri.attrBuffer.SetObjectColor(1, 1, 1);
+	wri.attrBuffer.uFogColor = fc;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void GLWall::ProcessDecal(WallAttributeInfo &wri, HWDrawInfo *di, DBaseDecal *decal, const FVector3 &normal)
 {
 	line_t * line = seg->linedef;
@@ -228,34 +322,20 @@ void GLWall::ProcessDecal(WallAttributeInfo &wri, HWDrawInfo *di, DBaseDecal *de
 		for (i = 0; i < 4; i++) dv[i].v = vb - dv[i].v;
 	}
 
-	GLDecal *gldecal = di->AddDecal(type == RENDERWALL_MIRRORSURFACE);
-	gldecal->gltexture = tex;
-	gldecal->decal = decal;
-
-	if (decal->RenderFlags & RF_FULLBRIGHT)
+	GLDecal *gldecal, gldecalbuffer;
+	if (wri.lightlist)
 	{
-		gldecal->lightlevel = 255;
-		gldecal->rellight = 0;
+		// This will get split up so do not write directly to the destination buffer.
+		gldecal = &gldecalbuffer;
 	}
 	else
 	{
-		gldecal->lightlevel = wri.lightlevel;
-		gldecal->rellight = wri.rellight + getExtraLight();
+		gldecal = di->AddDecal(type == RENDERWALL_MIRRORSURFACE);
 	}
 
-	gldecal->Colormap = wri.Colormap;
-
-	if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
-	{
-		gldecal->Colormap.Decolorize();
-	}
-
-	gldecal->alpha = decal->Alpha;
-	gldecal->zcenter = zpos - decalheight * 0.5f;
-	gldecal->bottomplane = *wri.bottomplane;
+	gldecal->gltexture = tex;
+	gldecal->decal = decal;
 	gldecal->Normal = normal;
-	gldecal->lightlist = wri.lightlist;
-	memcpy(gldecal->dv, dv, sizeof(dv));
 	
 	auto verts = di->AllocVertices(4);
 	gldecal->vertindex = verts.second;
@@ -278,10 +358,13 @@ void GLWall::ProcessDecals(WallAttributeInfo &wri, HWDrawInfo *di)
 		DBaseDecal *decal = seg->sidedef->AttachedDecals;
 		if (decal)
 		{
+			auto mywri = wri;	// we need a local copy for this so that the wall's data doesn't get overwritten
+
+			mywri.attrBuffer.SetFog(wri.lightlevel, wri.rellight, di->isFullbrightScene(), &wri.Colormap, false);
 			auto normal = glseg.Normal();	// calculate the normal only once per wall because it requires a square root.
 			while (decal)
 			{
-				ProcessDecal(wri, di, decal, normal);
+				ProcessDecal(mywri, di, decal, normal);
 				decal = decal->WallNext;
 			}
 		}

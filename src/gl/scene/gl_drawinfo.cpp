@@ -37,6 +37,7 @@
 
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/data/gl_modelbuffer.h"
+#include "gl/data/gl_attributebuffer.h"
 #include "gl/data/gl_dynamicuniformbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "hwrenderer/scene/hw_clipper.h"
@@ -272,6 +273,11 @@ int FDrawInfo::UploadModelMatrix(VSMatrix &data, float ifactor)
 int FDrawInfo::UploadTextureMatrix(const VSMatrix &data, int bufferindex)
 {
 	return GLRenderer->mTextureMatrices->Upload(&data, bufferindex, 1);
+}
+
+int FDrawInfo::UploadAttributes(AttributeBufferData &attr)
+{
+	return GLRenderer->mAttributes->Upload(&attr);
 }
 
 bool FDrawInfo::SetDepthClamp(bool on)

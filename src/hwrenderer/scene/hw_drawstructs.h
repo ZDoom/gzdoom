@@ -36,6 +36,7 @@ enum
 
 enum TexMode
 {
+    TM_UNDEFINED = -1,
 	TM_MODULATE = 0,	// (r, g, b, a)
 	TM_MASK,			// (1, 1, 1, a)
 	TM_OPAQUE,			// (r, g, b, 1)

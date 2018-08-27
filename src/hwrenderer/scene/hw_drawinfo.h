@@ -26,6 +26,21 @@ class IRenderQueue;
 class HWScenePortalBase;
 struct AttributeBufferData;
 
+enum DrawListType
+{
+	GLDL_PLAINWALLS,
+	GLDL_PLAINFLATS,
+	GLDL_MASKEDWALLS,
+	GLDL_MASKEDFLATS,
+	GLDL_MASKEDWALLSOFS,
+	GLDL_MODELS,
+	
+	GLDL_TRANSLUCENT,
+	GLDL_TRANSLUCENTBORDER,
+	
+	GLDL_TYPES,
+};
+
 //==========================================================================
 //
 // these are used to link faked planes due to missing textures to a sector
@@ -278,7 +293,7 @@ public:
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs);
     virtual void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) = 0;
     
-    virtual void AddWall(GLWall *w, AttributeBufferData &attr) = 0;
+    virtual void AddWall(GLWall *w, int list) = 0;
 	virtual void AddPortal(GLWall *w, int portaltype) = 0;
 	virtual void AddFlat(GLFlat *flat, bool fog) = 0;
 	virtual void AddSprite(GLSprite *sprite, bool translucent) = 0;
@@ -287,6 +302,7 @@ public:
 	virtual int UploadLights(FDynLightData &data) = 0;
 	virtual int UploadModelMatrix(VSMatrix &data, float ifactor) = 0;
 	virtual int UploadTextureMatrix(const VSMatrix &data, int bufferindex) = 0;
+	virtual int UploadAttributes(AttributeBufferData &data) = 0;
 	virtual void ApplyVPUniforms() = 0;
 	virtual bool SetDepthClamp(bool on) = 0;
 

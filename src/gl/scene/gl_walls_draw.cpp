@@ -350,7 +350,7 @@ void FDrawInfo::DrawDecal(GLDecal *gldecal)
 	gl_SetRenderStyle(decal->RenderStyle, false, false);
 	gl_RenderState.SetMaterial(tex, CLAMP_XY, decal->Translation, 0, !!(decal->RenderStyle.Flags & STYLEF_RedIsAlpha));
 	gl_RenderState.SetNormal(gldecal->Normal);
-	gl_RenderState.Apply(gldecal->attrindex, false);
+	gl_RenderState.Apply(gldecal->attrindex, true);
 	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, gldecal->vertindex, 4);
 	rendered_decals++;
 }

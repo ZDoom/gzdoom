@@ -77,7 +77,7 @@ void GLWall::SetDecalAttributes(WallAttributeInfo &wri, HWDrawInfo *di, GLDecal 
 		Colormap.Decolorize();
 	}
 
-	wri.attrBuffer.SetColor(lightlevel, rellight, di->isFullbrightScene(), Colormap, wri.alpha);
+	wri.attrBuffer.SetColor(lightlevel, rellight, di->isFullbrightScene(), Colormap, decal->Alpha);
 	// for additively drawn decals we must temporarily set the fog color to black.
 	auto fc = wri.attrBuffer.uFogColor;
 	if (decal->RenderStyle.BlendOp == STYLEOP_Add && decal->RenderStyle.DestAlpha == STYLEALPHA_One)
@@ -344,6 +344,7 @@ void GLWall::ProcessDecal(WallAttributeInfo &wri, HWDrawInfo *di, DBaseDecal *de
 	{
 		verts.first[i].Set(dv[i].x, dv[i].z, dv[i].y, dv[i].u, dv[i].v);
 	}
+	SetDecalAttributes(wri, di, gldecal, dv);
 }
 
 //==========================================================================

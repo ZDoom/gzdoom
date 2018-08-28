@@ -420,7 +420,7 @@ static unsigned FindModel(const char * path, const char * modelfile)
 	FMemLump lumpd = Wads.ReadLump(lump);
 	char * buffer = (char*)lumpd.GetMem();
 
-	if ( (size_t)fullname.IndexOf("_d.3d") == fullname.Len()-5 )
+	if ( (size_t)fullname.LastIndexOf("_d.3d") == fullname.Len()-5 )
 	{
 		FString anivfile = fullname.GetChars();
 		anivfile.Substitute("_d.3d","_a.3d");
@@ -429,7 +429,7 @@ static unsigned FindModel(const char * path, const char * modelfile)
 			model = new FUE1Model;
 		}
 	}
-	else if ( (size_t)fullname.IndexOf("_a.3d") == fullname.Len()-5 )
+	else if ( (size_t)fullname.LastIndexOf("_a.3d") == fullname.Len()-5 )
 	{
 		FString datafile = fullname.GetChars();
 		datafile.Substitute("_a.3d","_d.3d");
@@ -438,8 +438,8 @@ static unsigned FindModel(const char * path, const char * modelfile)
 			model = new FUE1Model;
 		}
 	}
-	else if ( (size_t)fullname.LastIndexOf(".obj") == fullname.Len() - 1 )
-	{ // LastIndexOf works differently than it does in JavaScript
+	else if ( (size_t)fullname.LastIndexOf(".obj") == fullname.Len() - 4 )
+	{
 		model = new FOBJModel;
 	}
 	else if (!memcmp(buffer, "DMDM", 4))

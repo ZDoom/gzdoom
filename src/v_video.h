@@ -456,6 +456,11 @@ public:
 	// Returns true if Begin2D has been called and 2D drawing is now active
 	bool HasBegun2D() { return isIn2D; }
 
+	// This is overridable in case Vulkan does it differently.
+	virtual bool RenderTextureIsFlipped() const
+	{
+		return true;
+	}
 
 	// Report a game restart
 	void InitPalette();

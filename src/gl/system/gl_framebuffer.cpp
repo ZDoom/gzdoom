@@ -152,7 +152,6 @@ void OpenGLFrameBuffer::Update()
 	twoD.Reset();
 	Flush3D.Reset();
 
-	DrawRateStuff();
 	Flush3D.Clock();
 	GLRenderer->Flush();
 	Flush3D.Unclock();
@@ -176,6 +175,25 @@ void OpenGLFrameBuffer::Update()
 	GLRenderer->mVBO->Reset();
 	GLRenderer->mAttributes->Clear();
 	GLRenderer->mModelMatrix->Clear();
+}
+
+//===========================================================================
+//
+// These must be overridden so that old OpenGL can map/unmap the attribute buffer
+// for 2D.
+//
+//===========================================================================
+
+void OpenGLFrameBuffer::Begin2D()
+{
+	Super::Begin2D();
+	GLRenderer->mAttributes->Map();
+}
+
+void OpenGLFrameBuffer::End2D()
+{
+	GLRenderer->mAttributes->Unmap();
+	Super::End2D();
 }
 
 //===========================================================================

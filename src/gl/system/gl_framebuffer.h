@@ -20,7 +20,9 @@ public:
 	~OpenGLFrameBuffer();
 
 	void InitializeState();
-	void Update();
+    void Begin2D() override;
+    void End2D() override;
+	void Update() override;
 
 	// Color correction
 	void SetGamma();

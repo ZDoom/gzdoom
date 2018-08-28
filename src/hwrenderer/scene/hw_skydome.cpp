@@ -433,11 +433,10 @@ FSkyBufferInfo FSkyDomeCreator::PrepareContents(HWDrawInfo *di, GLSkyInfo *origi
 		if (::level.skyfog>0 && !di->isFullbrightScene()  && (origin->fadecolor & 0xffffff) != 0)
 		{
 			PalEntry FadeColor = origin->fadecolor;
-			FadeColor.a = clamp<int>(::level.skyfog, 0, 255);
 			work.uTextureMode = TM_OPAQUE;
 			work.uAlphaThreshold = -0.01;
 			work.uLightIsAttr = false;
-			work.SetColorAlpha(FadeColor);
+			work.SetColorAlpha(FadeColor, clamp<int>(::level.skyfog, 0, 255)/255.f);
 			di->UploadAttributes(work);
 			flags |= SKYMODE_FOGLAYER;
 		}

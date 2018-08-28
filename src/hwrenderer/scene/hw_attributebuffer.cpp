@@ -41,6 +41,7 @@ void AttributeBufferData::CreateDefaultEntries(std::function<void(AttributeBuffe
     
     // Default settings for elements without any attributes (e.g. stencil planes)
     SetDefaults();
+	SetColorAlpha(0, 1);
     uTextureMode = TM_MODULATE;
     callback(*this);
     
@@ -51,17 +52,13 @@ void AttributeBufferData::CreateDefaultEntries(std::function<void(AttributeBuffe
     uLightIsAttr = true;
     uLightIndex = -1;
     uAlphaThreshold = -0.01f;
+	SetColorAlpha(0xffffff, 1);
 
     for(int i=0;i<TM_COUNT;i++)
     {
         uTextureMode = TM_MODULATE+i;
         callback(*this);
     }
-    
-    // And one with a flipping texture matrix for camera textures
-    uTextureMode = TM_OPAQUE;
-    uTexMatrixIndex = 1;
-    callback(*this);
 }
 
 //==========================================================================

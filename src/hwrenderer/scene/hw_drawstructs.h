@@ -89,7 +89,7 @@ struct AttributeBufferData
 {
     enum EDefaultAttribute
     {
-        DefaultIndex,
+        StencilIndex,
         TextureModeFor2DIndex,
         MaxDefaultIndex = TextureModeFor2DIndex + TM_COUNT
     };

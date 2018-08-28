@@ -68,9 +68,8 @@ void GLPortal::ClearScreen(HWDrawInfo *di)
 	bool multi = !!glIsEnabled(GL_MULTISAMPLE);
 
 	GLRenderer->mViewpoints->Set2D(SCREENWIDTH, SCREENHEIGHT);
-	gl_RenderState.SetColor(0, 0, 0);
-	gl_RenderState.SetLightIndex(-1);
-	gl_RenderState.Apply();
+	gl_RenderState.EnableTexture(false);
+	gl_RenderState.Apply(AttributeBufferData::StencilIndex, false);
 
 	glDisable(GL_MULTISAMPLE);
 	glDisable(GL_DEPTH_TEST);
@@ -98,8 +97,7 @@ void GLPortal::DrawPortalStencil(int pass)
 			mPrimIndices[i * 2 + 1] = lines[i].vertcount;
 		}
 	}
-	gl_RenderState.SetLightIndex(-1);
-	gl_RenderState.Apply();
+	gl_RenderState.Apply(AttributeBufferData::StencilIndex, false);
 	for (unsigned int i = 0; i < mPrimIndices.Size(); i += 2)
 	{
 		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, mPrimIndices[i], mPrimIndices[i + 1]);
@@ -141,10 +139,7 @@ bool GLPortal::Start(bool usestencil, bool doquery, HWDrawInfo *outer_di, HWDraw
 			glColorMask(0,0,0,0);						// don't write to the graphics buffer
 			gl_RenderState.SetEffect(EFF_STENCIL);
 			gl_RenderState.EnableTexture(false);
-			gl_RenderState.ResetColor();
-			gl_RenderState.SetLightIndex(-1);
 			glDepthFunc(GL_LESS);
-			gl_RenderState.Apply();
 
 			if (NeedDepthBuffer())
 			{
@@ -248,10 +243,7 @@ void GLPortal::End(HWDrawInfo *di, bool usestencil)
 
 		glColorMask(0, 0, 0, 0);						// no graphics
 		gl_RenderState.SetEffect(EFF_NONE);
-		gl_RenderState.ResetColor();
 		gl_RenderState.EnableTexture(false);
-		gl_RenderState.SetLightIndex(-1);
-		gl_RenderState.Apply();
 
 		if (needdepth)
 		{
@@ -310,8 +302,6 @@ void GLPortal::End(HWDrawInfo *di, bool usestencil)
 		gl_RenderState.EnableTexture(false);
 		gl_RenderState.BlendFunc(GL_ONE, GL_ZERO);
 		gl_RenderState.BlendEquation(GL_FUNC_ADD);
-		gl_RenderState.SetLightIndex(-1);
-		gl_RenderState.Apply();
 		DrawPortalStencil(STP_DepthRestore);
 		gl_RenderState.SetEffect(EFF_NONE);
 		gl_RenderState.EnableTexture(true);

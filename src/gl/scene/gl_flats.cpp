@@ -153,7 +153,7 @@ void FDrawInfo::SetupFloodStencil(int vindex)
 	// Create stencil 
 	gl_RenderState.SetEffect(EFF_STENCIL);
 	gl_RenderState.EnableTexture(false);
-	gl_RenderState.Apply();
+	gl_RenderState.Apply(AttributeBufferData::StencilIndex, false);
 
 	glStencilFunc(GL_EQUAL, recursion, ~0);		// create stencil
 	glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);		// increment stencil of valid pixels
@@ -181,9 +181,8 @@ void FDrawInfo::ClearFloodStencil(int vindex)
 
 	gl_RenderState.SetEffect(EFF_STENCIL);
 	gl_RenderState.EnableTexture(false);
-	gl_RenderState.Apply();
+	gl_RenderState.Apply(AttributeBufferData::StencilIndex, false);
 	glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
-	// Use revertible color mask, to avoid stomping on anaglyph 3D state
 	glColorMask(0, 0, 0, 0);						// don't write to the graphics buffer
 
 	glDrawArrays(GL_TRIANGLE_FAN, vindex, 4);

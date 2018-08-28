@@ -312,6 +312,10 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 	u2 = parms.srcx + parms.srcwidth;
 	v2 = parms.srcy + parms.srcheight;
 
+	// Camera textures are flipped upside down when being retrieved from OpenGL. This is only relevant when the software renderer is inactive.
+	if (img->bHasCanvas && vid_rendermode == 4 && screen->RenderTextureIsFlipped())
+		parms.flipY = !parms.flipY;
+
 	if (parms.flipX) 
 		std::swap(u1, u2);
 

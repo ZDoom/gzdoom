@@ -122,6 +122,7 @@ struct AttributeBufferData
 		uObjectColor =
 			uLightColor = { 1.f, 1.f,1.f,1.f };
 		uObjectColor2.Zero();
+		uFogColor.Zero();
 		uDynLightColor.Zero();
 		uGlowTopPlane.Zero();
 		uGlowBottomPlane.Zero();
@@ -129,13 +130,15 @@ struct AttributeBufferData
 		uGlowBottomColor.Zero();
 		uSplitTopPlane.Zero();
 		uSplitBottomPlane.Zero();
-		uTextureMode = -1;
+		uTextureMode = TM_UNDEFINED;
 		uDesaturationFactor = 0;
 		uAlphaThreshold = 0.5f;
 		uLightLevel = -1;
 		uFogDensity = uLightFactor = uLightDist = 0;
+		uLightIndex = -1;
 		uTexMatrixIndex = 0;
 		uLightIsAttr = 0;
+		uFogEnabled = 0;
 	}
 
 	//==========================================================================

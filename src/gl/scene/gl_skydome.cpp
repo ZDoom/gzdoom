@@ -213,7 +213,6 @@ void GLSkyPortal::DrawContents(HWDrawInfo *di)
 	di->SetupView(0, 0, 0, !!(mState->MirrorFlag & 1), !!(mState->PlaneMirrorFlag & 1));
 
 	gl_RenderState.SetVertexBuffer(GLRenderer->mSkyVBO);
-	gl_RenderState.SetTexMatrixIndex(indices.mTextureMatrixIndex);
 	GLRenderer->mModelMatrix->Bind(indices.mModelMatrixIndex);
 	if (indices.mFlags == 0)
 	{
@@ -226,7 +225,6 @@ void GLSkyPortal::DrawContents(HWDrawInfo *di)
 
 		if (indices.mFlags & FSkyVertexBuffer::SKYMODE_SECONDLAYER)
 		{
-			gl_RenderState.SetTexMatrixIndex(indices.mTextureMatrixIndex+1);
 			GLRenderer->mModelMatrix->Bind(indices.mModelMatrixIndex+1);
 			RenderDome(origin->texture[1], origin->x_offset[1], origin->y_offset, false, FSkyVertexBuffer::SKYMODE_SECONDLAYER, indices.mAttributeIndex);
 			indices.mAttributeIndex++;

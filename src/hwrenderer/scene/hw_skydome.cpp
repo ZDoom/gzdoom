@@ -351,15 +351,15 @@ int FSkyDomeCreator::CreateAttributesForDome(AttributeBufferData &work, HWDrawIn
 //
 //-----------------------------------------------------------------------------
 
-std::tuple<int, int, int> FSkyDomeCreator::PrepareDome(AttributeBufferData &work, HWDrawInfo *di, FMaterial * tex, float x_offset, float y_offset, bool mirror, int mode)
+std::tuple<int, int> FSkyDomeCreator::PrepareDome(AttributeBufferData &work, HWDrawInfo *di, FMaterial * tex, float x_offset, float y_offset, bool mirror, int mode)
 {
 	VSMatrix modelmatrix, texturematrix;
 
 	SetupMatrices(tex, x_offset, y_offset, mirror, mode, modelmatrix, texturematrix);
 	int mmindex = di->UploadModelMatrix(modelmatrix, 0);
-	int txindex = di->UploadTextureMatrix(texturematrix, -1);
+	work.uTexMatrixIndex = di->UploadTextureMatrix(texturematrix, -1);
 	int atindex = CreateAttributesForDome(work, di, tex, mode);
-	return std::make_tuple(mmindex, txindex, atindex);
+	return std::make_tuple(mmindex, atindex);
 }
 
 
@@ -369,11 +369,9 @@ std::tuple<int, int, int> FSkyDomeCreator::PrepareDome(AttributeBufferData &work
 //
 //-----------------------------------------------------------------------------
 
-std::tuple<int, int, int> FSkyDomeCreator::PrepareBox(AttributeBufferData &work, HWDrawInfo *di,FTextureID texno, FMaterial * gltex, float x_offset, bool sky2)
+std::tuple<int, int> FSkyDomeCreator::PrepareBox(AttributeBufferData &work, HWDrawInfo *di,FTextureID texno, FMaterial * gltex, float x_offset, bool sky2)
 {
 	FSkyBox * sb = static_cast<FSkyBox*>(gltex->tex);
-	int faces;
-	FMaterial * tex;
 
 	VSMatrix modelmatrix(0);
 	if (!sky2)
@@ -383,7 +381,7 @@ std::tuple<int, int, int> FSkyDomeCreator::PrepareBox(AttributeBufferData &work,
 
 	int mmindex = di->UploadModelMatrix(modelmatrix, 0);
 	int atindex = di->UploadAttributes(work);
-	return std::make_tuple(mmindex, 0, atindex);
+	return std::make_tuple(mmindex, atindex);
 }
 
 //-----------------------------------------------------------------------------
@@ -402,11 +400,11 @@ FSkyBufferInfo FSkyDomeCreator::PrepareContents(HWDrawInfo *di, GLSkyInfo *origi
 
 	work.uLightIsAttr = true;
 	work.uTextureMode = TM_OPAQUE;
-	work.uAlphaThreshold = -0.01;
+	work.uAlphaThreshold = -0.01f;
 
 	int flags = 0;
 
-	std::tuple<int, int, int> bufferindices;
+	std::tuple<int, int> bufferindices;
 
 	if (origin->texture[0] && origin->texture[0]->tex->bSkybox)
 	{
@@ -431,13 +429,13 @@ FSkyBufferInfo FSkyDomeCreator::PrepareContents(HWDrawInfo *di, GLSkyInfo *origi
 		{
 			PalEntry FadeColor = origin->fadecolor;
 			work.uTextureMode = TM_OPAQUE;
-			work.uAlphaThreshold = -0.01;
+			work.uAlphaThreshold = -0.01f;
 			work.uLightIsAttr = false;
 			work.SetColorAlpha(FadeColor, clamp<int>(::level.skyfog, 0, 255)/255.f);
 			di->UploadAttributes(work);
 			flags |= SKYMODE_FOGLAYER;
 		}
 	}
-	return { std::get<0>(bufferindices), std::get<1>(bufferindices), std::get<2>(bufferindices), flags };
+	return { std::get<0>(bufferindices), std::get<1>(bufferindices), flags };
 }
 

@@ -38,7 +38,6 @@ struct FSkyVertex
 struct FSkyBufferInfo
 {
 	int mModelMatrixIndex;
-	int mTextureMatrixIndex;
 	int mAttributeIndex;
 	int mFlags;
 };
@@ -76,8 +75,8 @@ public:
 	virtual ~FSkyDomeCreator();
 	void SetupMatrices(FMaterial *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelmatrix, VSMatrix &textureMatrix);
 	int CreateAttributesForDome(AttributeBufferData &work, HWDrawInfo *di, FMaterial *tex, int mode);
-	std::tuple<int, int, int> PrepareDome(AttributeBufferData &work, HWDrawInfo *di, FMaterial * tex, float x_offset, float y_offset, bool mirror, int mode);
-	std::tuple<int, int, int> PrepareBox(AttributeBufferData &work, HWDrawInfo *di,FTextureID texno, FMaterial * gltex, float x_offset, bool sky2);
+	std::tuple<int, int> PrepareDome(AttributeBufferData &work, HWDrawInfo *di, FMaterial * tex, float x_offset, float y_offset, bool mirror, int mode);
+	std::tuple<int, int> PrepareBox(AttributeBufferData &work, HWDrawInfo *di,FTextureID texno, FMaterial * gltex, float x_offset, bool sky2);
 	FSkyBufferInfo PrepareContents(HWDrawInfo *di, GLSkyInfo *origin);
 
 

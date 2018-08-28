@@ -99,7 +99,6 @@ struct AttributeBufferData
 	float uLightFactor;
 	float uLightDist;
 	float uDesaturationFactor;
-	float uTimer;
 	float uAlphaThreshold;
 	int uTextureMode;
 	int uFogEnabled;
@@ -124,20 +123,9 @@ struct AttributeBufferData
 		uAlphaThreshold = 0.5f;
 		uLightLevel = -1;
 		uFogDensity = uLightFactor = uLightDist = 0;
-		uTimer = 0.0f;
 		uTexMatrixIndex = 0;
 		uLightIsAttr = 0;
 	}
-
-	void SetTimer(float factor)
-	{
-		uTimer = float((double)(screen->FrameTime - screen->FirstFrame) * (double)factor / 1000.);
-	}
-
-    void SetTimer(FTexture *tex)
-    {
-        SetTimer(tex->shaderspeed);
-    }
 
 	//==========================================================================
 	//

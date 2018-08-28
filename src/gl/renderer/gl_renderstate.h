@@ -72,6 +72,7 @@ class FRenderState
 	int mBlendEquation;
 	bool mLastDepthClamp;
 	FVector2 uClipSplit;
+    float uTimer;
 
 	FVertexBuffer *mVertexBuffer, *mCurrentVertexBuffer;
 	FVector4 mNormal;

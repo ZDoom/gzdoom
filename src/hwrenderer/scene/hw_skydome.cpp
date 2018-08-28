@@ -339,7 +339,6 @@ int FSkyDomeCreator::CreateAttributesForDome(AttributeBufferData &work, HWDrawIn
 		di->UploadAttributes(work);
 	}
 	work.SetObjectColor(1,1,1);
-	work.SetTimer(tex->tex);
 	int n = di->UploadAttributes(work);
 	return index == -1? n: index;
 }
@@ -381,8 +380,6 @@ std::tuple<int, int, int> FSkyDomeCreator::PrepareBox(AttributeBufferData &work,
 		modelmatrix.rotate(-180.0f + x_offset, level.info->skyrotatevector.X, level.info->skyrotatevector.Z, level.info->skyrotatevector.Y);
 	else
 		modelmatrix.rotate(-180.0f + x_offset, level.info->skyrotatevector2.X, level.info->skyrotatevector2.Z, level.info->skyrotatevector2.Y);
-
-	work.SetTimer(gltex->tex);
 
 	int mmindex = di->UploadModelMatrix(modelmatrix, 0);
 	int atindex = di->UploadAttributes(work);

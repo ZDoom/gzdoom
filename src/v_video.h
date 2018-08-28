@@ -47,6 +47,7 @@
 
 struct sector_t;
 class IShaderProgram;
+class FTexture;
 
 enum EHWCaps
 {
@@ -202,6 +203,7 @@ enum
 	DTA_SrcWidth,
 	DTA_SrcHeight,
 	DTA_LegacyRenderStyle,	// takes an old-style STYLE_* constant instead of an FRenderStyle
+	DTA_Burn,				// activates the burn shader for this element
 
 };
 
@@ -258,6 +260,7 @@ struct DrawParms
 	bool virtBottom;
 	double srcx, srcy;
 	double srcwidth, srcheight;
+	bool burn;
 };
 
 struct Va_List
@@ -438,10 +441,17 @@ public:
     virtual IUniformBuffer *CreateUniformBuffer(size_t size, bool staticuse = false) { return nullptr; }
 	virtual IShaderProgram *CreateShaderProgram() { return nullptr; }
 
-	// Begin 2D drawing operations.
-	// Returns true if hardware-accelerated 2D has been entered, false if not.
-	void Begin2D(bool copy3d) { isIn2D = true; }
-	void End2D() { isIn2D = false; }
+	// Begin/End 2D drawing operations.
+	virtual void Begin2D() { isIn2D = true; }
+	virtual void End2D() { isIn2D = false; }
+
+	void End2DAndUpdate()
+	{
+		DrawRateStuff();
+		End2D();
+		Update();
+	}
+
 
 	// Returns true if Begin2D has been called and 2D drawing is now active
 	bool HasBegun2D() { return isIn2D; }
@@ -457,8 +467,8 @@ public:
 	virtual sector_t *RenderView(player_t *player) { return nullptr;  }
 
 	// Screen wiping
-	virtual bool WipeStartScreen(int type);
-	virtual void WipeEndScreen();
+	virtual FTexture *WipeStartScreen();
+	virtual FTexture *WipeEndScreen();
 	virtual bool WipeDo(int ticks);
 	virtual void WipeCleanup();
 
@@ -547,8 +557,6 @@ public:
 	uint64_t FirstFrame = 0;
 
 	void UpdateFrameTime();
-
-protected:
 	void DrawRateStuff ();
 
 private:

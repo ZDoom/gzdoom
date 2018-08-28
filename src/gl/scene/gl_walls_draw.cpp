@@ -199,33 +199,8 @@ void FDrawInfo::DrawWall(GLWall *wall, int pass)
 //
 //==========================================================================
 
-void FDrawInfo::AddWall(GLWall *wall, AttributeBufferData &attr)
+void FDrawInfo::AddWall(GLWall *wall, int list)
 {
-	int list;
-	if (wall->flags & GLWall::GLWF_TRANSLUCENT)
-	{
-		list = wall->type == RENDERWALL_MIRRORSURFACE ? GLDL_TRANSLUCENTBORDER : GLDL_TRANSLUCENT;
-	}
-	else
-	{
-		bool masked = GLWall::passflag[wall->type] == 1 ? false : (wall->gltexture && wall->gltexture->isMasked());
-
-		if ((wall->flags & GLWall::GLWF_SKYHACK && wall->type == RENDERWALL_M2S))
-		{
-			list = GLDL_MASKEDWALLSOFS;
-		}
-		else
-		{
-			list = masked ? GLDL_MASKEDWALLS : GLDL_PLAINWALLS;
-		}
-	}
-	// Texture mode depends on the render list. This needs to go to the backend independent side later.
-	auto tm = attr.uTextureMode;
-	if (list == GLDL_PLAINWALLS) attr.uTextureMode = TM_OPAQUE;
-	else if (attr.uTextureMode < TM_MODULATE) attr.uTextureMode = TM_MODULATE;
-	wall->attrindex = GLRenderer->mAttributes->Upload(&attr);
-	attr.uTextureMode = tm;
-
 	auto newwall = drawlists[list].NewWall();
 	*newwall = *wall;
 

@@ -10,20 +10,6 @@
 #pragma warning(disable:4244)
 #endif
 
-enum DrawListType
-{
-	GLDL_PLAINWALLS,
-	GLDL_PLAINFLATS,
-	GLDL_MASKEDWALLS,
-	GLDL_MASKEDFLATS,
-	GLDL_MASKEDWALLSOFS,
-	GLDL_MODELS,
-	
-	GLDL_TRANSLUCENT,
-	GLDL_TRANSLUCENTBORDER,
-	
-	GLDL_TYPES,
-};
 
 enum Drawpasses
 {
@@ -41,7 +27,7 @@ struct FDrawInfo : public HWDrawInfo
 	
 	void ApplyVPUniforms() override;
 
-	void AddWall(GLWall *wall, AttributeBufferData &attr) override;
+	void AddWall(GLWall *wall, int list) override;
 	GLDecal *AddDecal(bool onmirror) override;
 	void AddPortal(GLWall *w, int portaltype) override;
 	void AddFlat(GLFlat *flat, bool fog) override;
@@ -53,6 +39,7 @@ struct FDrawInfo : public HWDrawInfo
 	int UploadModelMatrix(VSMatrix &data, float ifactor) override;
 	int UploadTextureMatrix(const VSMatrix &data, int bufferindex) override;
 	int UploadAttributes(AttributeBufferData &attr) override;
+
 
 	void DrawDecal(GLDecal *gldecal);
 	void DrawDecals();

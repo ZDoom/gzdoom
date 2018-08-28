@@ -115,7 +115,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		float uLightFactor;
 		float uLightDist;
 		float uDesaturationFactor;
-		float timer;
 		float uAlphaThreshold;
 		int uTextureMode;
 		int uFogEnabled;
@@ -149,6 +148,7 @@ uniform sampler2D texture6;
 #endif
 
 	uniform vec2 uClipSplit;
+	uniform float timer;
 
 )";
 	// uClipSplit cannot be part of the buffer because it is dynamically calculated in the render loop.
@@ -337,6 +337,7 @@ uniform sampler2D texture6;
 	if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, ATTRIBUTE_BINDINGPOINT);
 
 	muClipSplit.Init(hShader, "uClipSplit");
+	muTimer.Init(hShader,"timer");
 
 	glUseProgram(hShader);
 

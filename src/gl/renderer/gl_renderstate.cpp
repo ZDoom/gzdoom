@@ -110,6 +110,7 @@ bool FRenderState::ApplyShader(int attrindex, bool alphateston)
 			}
 		}
 		activeShader->muClipSplit.Set(&uClipSplit.X);
+        activeShader->muTimer.Set(uTimer);
 		mAttributes.uFogEnabled = fogset;
 		if (!mGlowEnabled) mAttributes.uGlowTopColor.W = mAttributes.uGlowBottomColor.W = 0.f;
 		attrindex = GLRenderer->mAttributes->Upload(&mAttributes);
@@ -163,6 +164,9 @@ void FRenderState::SetMaterial(FMaterial *mat, int clampmode, int translation, i
 		mTempTM = TM_MODULATE;
 	}
 	mEffectState = overrideshader >= 0 ? overrideshader : mat->mShaderIndex;
+    
+    uTimer = float((double)(screen->FrameTime - screen->FirstFrame) * (double)mat->tex->shaderspeed / 1000.);
+
 	
 	auto tex = mat->tex;
 	if (tex->UseType == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;

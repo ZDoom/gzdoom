@@ -37,6 +37,7 @@
 
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/data/gl_modelbuffer.h"
+#include "gl/data/gl_attributebuffer.h"
 #include "gl/data/gl_dynamicuniformbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "hwrenderer/scene/hw_clipper.h"

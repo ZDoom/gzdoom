@@ -4,6 +4,9 @@
 #include "r_data/matrix.h"
 
 class FMaterial;
+struct AttributeBufferData;
+struct GLSkyInfo;
+struct HWDrawInfo;
 
 struct FSkyVertex
 {
@@ -32,6 +35,14 @@ struct FSkyVertex
 
 };
 
+struct FSkyBufferInfo
+{
+	int mModelMatrixIndex;
+	int mTextureMatrixIndex;
+	int mAttributeIndex;
+	int mFlags;
+};
+
 class FSkyDomeCreator
 {
 public:
@@ -40,9 +51,9 @@ public:
 
 	enum
 	{
-		SKYMODE_MAINLAYER = 0,
-		SKYMODE_SECONDLAYER = 1,
-		SKYMODE_FOGLAYER = 2
+		SKYMODE_MAINLAYER = 1,
+		SKYMODE_SECONDLAYER = 2,
+		SKYMODE_FOGLAYER = 4
 	};
 
 protected:
@@ -60,10 +71,15 @@ protected:
 	void CreateDome();
 
 public:
-
+	
 	FSkyDomeCreator();
 	virtual ~FSkyDomeCreator();
 	void SetupMatrices(FMaterial *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelmatrix, VSMatrix &textureMatrix);
+	int CreateAttributesForDome(AttributeBufferData &work, HWDrawInfo *di, FMaterial *tex, int mode);
+	std::tuple<int, int, int> PrepareDome(AttributeBufferData &work, HWDrawInfo *di, FMaterial * tex, float x_offset, float y_offset, bool mirror, int mode);
+	std::tuple<int, int, int> PrepareBox(AttributeBufferData &work, HWDrawInfo *di,FTextureID texno, FMaterial * gltex, float x_offset, bool sky2);
+	FSkyBufferInfo PrepareContents(HWDrawInfo *di, GLSkyInfo *origin);
+
 
 	int FaceStart(int i)
 	{

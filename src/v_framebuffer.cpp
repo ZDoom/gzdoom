@@ -330,9 +330,9 @@ void DFrameBuffer::SetVSync (bool vsync)
 //
 //==========================================================================
 
-bool DFrameBuffer::WipeStartScreen(int type)
+FTexture *DFrameBuffer::WipeStartScreen()
 {
-	return false;
+	return nullptr;
 }
 
 //==========================================================================
@@ -344,8 +344,9 @@ bool DFrameBuffer::WipeStartScreen(int type)
 //
 //==========================================================================
 
-void DFrameBuffer::WipeEndScreen()
+FTexture *DFrameBuffer::WipeEndScreen()
 {
+    return nullptr;
 }
 
 //==========================================================================

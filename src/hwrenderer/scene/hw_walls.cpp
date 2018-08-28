@@ -50,7 +50,7 @@
 void GLWall::PostWall(WallAttributeInfo &wri, HWDrawInfo *di)
 {
 	assert(vertcount > 0);
-
+	
 	if (gltexture)
 	{
 		if (passflag[type] == 1)
@@ -71,7 +71,34 @@ void GLWall::PostWall(WallAttributeInfo &wri, HWDrawInfo *di)
 		alphateston = false;
 	}
 	wri.attrBuffer.uLightIndex = wri.dynlightindex;
-	di->AddWall(this, wri.attrBuffer);
+	
+	int list;
+	if (flags & GLWall::GLWF_TRANSLUCENT)
+	{
+		list = type == RENDERWALL_MIRRORSURFACE ? GLDL_TRANSLUCENTBORDER : GLDL_TRANSLUCENT;
+	}
+	else
+	{
+		bool masked = passflag[type] == 1 ? false : (gltexture && gltexture->isMasked());
+		
+		if ((flags & GLWF_SKYHACK && type == RENDERWALL_M2S))
+		{
+			list = GLDL_MASKEDWALLSOFS;
+		}
+		else
+		{
+			list = masked ? GLDL_MASKEDWALLS : GLDL_PLAINWALLS;
+		}
+	}
+	// Texture mode depends on the render list.
+	auto tm = wri.attrBuffer.uTextureMode;
+	if (list == GLDL_PLAINWALLS) wri.attrBuffer.uTextureMode = TM_OPAQUE;
+	else if (wri.attrBuffer.uTextureMode == TM_UNDEFINED) wri.attrBuffer.uTextureMode = TM_MODULATE;
+	attrindex = di->UploadAttributes(wri.attrBuffer);
+	wri.attrBuffer.uTextureMode = tm;
+
+
+	di->AddWall(this, list);
 }
 
 //==========================================================================

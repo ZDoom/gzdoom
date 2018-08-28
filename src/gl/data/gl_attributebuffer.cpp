@@ -48,6 +48,15 @@ GLAttributeBuffer::GLAttributeBuffer()
 	Allocate();
 	Clear();
 	mLastMappedIndex = UINT_MAX;
+	
+	// Set up the default attribute settings.
+	Map();
+	AttributeBufferData attr;
+	attr.CreateDefaultEntries([=](AttributeBufferData &attr)
+	{
+		mReserved = this->Upload(&attr);
+	});
+	Unmap();
 }
 
 GLAttributeBuffer::~GLAttributeBuffer()
@@ -171,8 +180,7 @@ int GLAttributeBuffer::Upload(AttributeBufferData *attr)
 
 void GLAttributeBuffer::Clear()
 {
-	// Index 0 is reserved for the identity rotation.
-	mUploadIndex = 0;
+	mUploadIndex = mReserved;
 }
 
 

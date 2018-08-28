@@ -23,6 +23,7 @@ class GLAttributeBuffer
 	void * mBufferPointer;
 
 	unsigned int mBlockSize;
+    unsigned int mReserved;
 
 	TArray<AttributeBufferData> mBufferedData;
 	std::mutex mBufferMutex;

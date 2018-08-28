@@ -242,6 +242,7 @@ class FShader
 	FName mName;
 
 	FBufferedUniform2f muClipSplit;
+    FBufferedUniform1f muTimer;
 
 public:
 	FShader(const char *name)

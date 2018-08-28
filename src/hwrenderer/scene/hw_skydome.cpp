@@ -63,7 +63,10 @@
 
 #include "textures/skyboxtexture.h"
 #include "hwrenderer/textures/hw_material.h"
+#include "hwrenderer/scene/hw_drawstructs.h"
+#include "hwrenderer/scene/hw_drawinfo.h"
 #include "hw_skydome.h"
+#include "hw_portal.h"
 
 //-----------------------------------------------------------------------------
 //
@@ -311,3 +314,130 @@ void FSkyDomeCreator::SetupMatrices(FMaterial *tex, float x_offset, float y_offs
 	textureMatrix.scale(mirror ? -xscale : xscale, yscale, 1.f);
 	textureMatrix.translate(1.f, y_offset / texh, 1.f);
 }
+
+//-----------------------------------------------------------------------------
+//
+// This creates 3 (for the main layer) or 1 (for the overlay)
+// attribute buffers and uploads them to the UBO.
+//
+//-----------------------------------------------------------------------------
+
+int FSkyDomeCreator::CreateAttributesForDome(AttributeBufferData &work, HWDrawInfo *di, FMaterial *tex, int mode)
+{
+	int rc = mRows + 1;
+	int index = -1;
+
+	// The caps only get drawn for the main layer but not for the overlay.
+	if (mode == SKYMODE_MAINLAYER)
+	{
+		PalEntry pe = tex->tex->GetSkyCapColor(false);
+		work.SetObjectColor(pe);
+		index = di->UploadAttributes(work);
+
+		pe = tex->tex->GetSkyCapColor(true);
+		work.SetObjectColor(pe);
+		di->UploadAttributes(work);
+	}
+	work.SetObjectColor(1,1,1);
+	int n = di->UploadAttributes(work);
+	return index == -1? n: index;
+}
+
+
+//-----------------------------------------------------------------------------
+//
+// Prepares all uniform data for a sky dome. Must be called with all buffers mapped.
+// Returns 3 buffer indices
+//
+//-----------------------------------------------------------------------------
+
+std::tuple<int, int, int> FSkyDomeCreator::PrepareDome(AttributeBufferData &work, HWDrawInfo *di, FMaterial * tex, float x_offset, float y_offset, bool mirror, int mode)
+{
+	VSMatrix modelmatrix, texturematrix;
+
+	SetupMatrices(tex, x_offset, y_offset, mirror, mode, modelmatrix, texturematrix);
+	int mmindex = di->UploadModelMatrix(modelmatrix, 0);
+	int txindex = di->UploadTextureMatrix(texturematrix, -1);
+	int atindex = CreateAttributesForDome(work, di, tex, mode);
+	return std::make_tuple(mmindex, txindex, atindex);
+}
+
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+std::tuple<int, int, int> FSkyDomeCreator::PrepareBox(AttributeBufferData &work, HWDrawInfo *di,FTextureID texno, FMaterial * gltex, float x_offset, bool sky2)
+{
+	FSkyBox * sb = static_cast<FSkyBox*>(gltex->tex);
+	int faces;
+	FMaterial * tex;
+
+	VSMatrix modelmatrix(0);
+	if (!sky2)
+		modelmatrix.rotate(-180.0f + x_offset, level.info->skyrotatevector.X, level.info->skyrotatevector.Z, level.info->skyrotatevector.Y);
+	else
+		modelmatrix.rotate(-180.0f + x_offset, level.info->skyrotatevector2.X, level.info->skyrotatevector2.Z, level.info->skyrotatevector2.Y);
+
+	int mmindex = di->UploadModelMatrix(modelmatrix, 0);
+	int atindex = di->UploadAttributes(work);
+	return std::make_tuple(mmindex, 0, atindex);
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+FSkyBufferInfo FSkyDomeCreator::PrepareContents(HWDrawInfo *di, GLSkyInfo *origin)
+{
+	AttributeBufferData work;
+
+	work.SetDefaults();
+
+	bool drawBoth = false;
+	auto &vp = di->Viewpoint;
+
+	work.uLightIsAttr = true;
+	work.uTextureMode = TM_OPAQUE;
+	work.uAlphaThreshold = -0.01;
+
+	int flags = 0;
+
+	std::tuple<int, int, int> bufferindices;
+
+	if (origin->texture[0] && origin->texture[0]->tex->bSkybox)
+	{
+		bufferindices = PrepareBox(work, di, origin->skytexno1, origin->texture[0], origin->x_offset[0], origin->sky2);
+	}
+	else
+	{
+		if (origin->texture[0]==origin->texture[1] && origin->doublesky) origin->doublesky=false;
+		flags |= SKYMODE_MAINLAYER;
+
+		bufferindices = PrepareDome(work, di, origin->texture[0], origin->x_offset[0], origin->y_offset, origin->mirrored, SKYMODE_MAINLAYER);
+
+		if (origin->doublesky)
+		{
+			work.uTextureMode = TM_MODULATE;
+			work.uAlphaThreshold = 0.f;
+			PrepareDome(work, di, origin->texture[1], origin->x_offset[1], origin->y_offset, false, SKYMODE_SECONDLAYER);
+			flags |= SKYMODE_SECONDLAYER;
+		}
+
+		if (::level.skyfog>0 && !di->isFullbrightScene()  && (origin->fadecolor & 0xffffff) != 0)
+		{
+			PalEntry FadeColor = origin->fadecolor;
+			work.uTextureMode = TM_OPAQUE;
+			work.uAlphaThreshold = -0.01;
+			work.uLightIsAttr = false;
+			work.SetColorAlpha(FadeColor, clamp<int>(::level.skyfog, 0, 255)/255.f);
+			di->UploadAttributes(work);
+			flags |= SKYMODE_FOGLAYER;
+		}
+	}
+	return { std::get<0>(bufferindices), std::get<1>(bufferindices), std::get<2>(bufferindices), flags };
+}
+

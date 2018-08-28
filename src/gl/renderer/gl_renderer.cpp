@@ -434,6 +434,14 @@ public:
 
 CVAR(Bool, gl_aalines, false, CVAR_ARCHIVE)
 
+// Rather than adding remapping code, let's enforce that the constants here are equal.
+static_assert(int(F2DDrawer::DTM_Normal) == int(TM_MODULATE), "DTM_Normal != TM_MODULATE");
+static_assert(int(F2DDrawer::DTM_Opaque) == int(TM_OPAQUE), "DTM_Opaque != TM_OPAQUE");
+static_assert(int(F2DDrawer::DTM_Invert) == int(TM_INVERSE), "DTM_Invert != TM_INVERSE");
+static_assert(int(F2DDrawer::DTM_InvertOpaque) == int(TM_INVERTOPAQUE), "DTM_InvertOpaque != TM_INVERTOPAQUE");
+static_assert(int(F2DDrawer::DTM_Stencil) == int(TM_MASK), "DTM_Stencil != TM_MASK");
+static_assert(int(F2DDrawer::DTM_AlphaTexture) == int(TM_REDTOALPHA), "DTM_AlphaTexture != TM_REDTOALPHA");
+
 void FGLRenderer::Draw2D(F2DDrawer *drawer)
 {
 	twoD.Clock();
@@ -475,9 +483,10 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	auto vb = new F2DVertexBuffer;
 	vb->UploadData(&vertices[0], vertices.Size(), &indices[0], indices.Size());
 	gl_RenderState.SetVertexBuffer(vb);
-	gl_RenderState.EnableFog(false);
+	gl_RenderState.EnableFog(2);
 	gl_RenderState.SetLightIsAttr(true);
 	gl_RenderState.SetLightIndex(-1);
+    gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 
 	for(auto &cmd : commands)
 	{
@@ -491,15 +500,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		gl_RenderState.BlendEquation(be); 
 		gl_RenderState.BlendFunc(sb, db);
 		gl_RenderState.EnableBrightmap(!(cmd.mRenderStyle.Flags & STYLEF_ColorIsFixed));
-		gl_RenderState.EnableFog(2);	// Special 2D mode 'fog'.
 
-		// Rather than adding remapping code, let's enforce that the constants here are equal.
-		static_assert(int(F2DDrawer::DTM_Normal) == int(TM_MODULATE), "DTM_Normal != TM_MODULATE");
-		static_assert(int(F2DDrawer::DTM_Opaque) == int(TM_OPAQUE), "DTM_Opaque != TM_OPAQUE");
-		static_assert(int(F2DDrawer::DTM_Invert) == int(TM_INVERSE), "DTM_Invert != TM_INVERSE");
-		static_assert(int(F2DDrawer::DTM_InvertOpaque) == int(TM_INVERTOPAQUE), "DTM_InvertOpaque != TM_INVERTOPAQUE");
-		static_assert(int(F2DDrawer::DTM_Stencil) == int(TM_MASK), "DTM_Stencil != TM_MASK");
-		static_assert(int(F2DDrawer::DTM_AlphaTexture) == int(TM_REDTOALPHA), "DTM_AlphaTexture != TM_REDTOALPHA");
 		gl_RenderState.SetTextureMode(cmd.mDrawMode);
 		if (cmd.mFlags & F2DDrawer::DTF_Scissor)
 		{
@@ -523,7 +524,6 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		gl_RenderState.SetFog(cmd.mColor1, 0);
 		gl_RenderState.SetColor(1, 1, 1, 1, cmd.mDesaturate); 
 
-		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 
 		if (cmd.mTexture != nullptr)
 		{

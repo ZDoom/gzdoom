@@ -299,9 +299,9 @@ private:
 			EMIT_OP(DIVF_RR);
 			EMIT_OP(DIVF_RK);
 			EMIT_OP(DIVF_KR);
-			// EMIT_OP(MODF_RR);
-			// EMIT_OP(MODF_RK);
-			// EMIT_OP(MODF_KR);
+			EMIT_OP(MODF_RR);
+			EMIT_OP(MODF_RK);
+			EMIT_OP(MODF_KR);
 			EMIT_OP(POWF_RR);
 			EMIT_OP(POWF_RK);
 			EMIT_OP(POWF_KR);
@@ -1738,9 +1738,69 @@ private:
 		cc.divsd(regF[a], regF[C]);
 	}
 
-	// void EmitMODF_RR() { } // fA = fkB % fkC
-	// void EmitMODF_RK() { }
-	// void EmitMODF_KR() { }
+	void EmitMODF_RR()
+	{
+		using namespace asmjit;
+		typedef double(*FuncPtr)(double, double);
+
+		auto label = cc.newLabel();
+		cc.ptest(regF[C], regF[C]);
+		cc.jne(label);
+		EmitThrowException(X_DIVISION_BY_ZERO);
+		cc.bind(label);
+
+		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](double a, double b) -> double
+		{
+			return a - floor(a / b) * b;
+		}))), FuncSignature2<double, double, double>());
+		call->setRet(0, regF[a]);
+		call->setArg(0, regF[B]);
+		call->setArg(1, regF[C]);
+	}
+
+	void EmitMODF_RK()
+	{
+		using namespace asmjit;
+		typedef double(*FuncPtr)(double, double);
+
+		auto label = cc.newLabel();
+		cc.ptest(regF[C], regF[C]);
+		cc.jne(label);
+		EmitThrowException(X_DIVISION_BY_ZERO);
+		cc.bind(label);
+
+		auto tmp = cc.newXmm();
+		cc.movsd(tmp, x86::ptr(ToMemAddress(&konstf[C])));
+
+		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](double a, double b) -> double {
+			return a - floor(a / b) * b;
+		}))), FuncSignature2<double, double, double>());
+		call->setRet(0, regF[a]);
+		call->setArg(0, regF[B]);
+		call->setArg(1, tmp);
+	}
+
+	void EmitMODF_KR()
+	{
+		using namespace asmjit;
+		typedef double(*FuncPtr)(double, double);
+
+		auto label = cc.newLabel();
+		cc.ptest(regF[C], regF[C]);
+		cc.jne(label);
+		EmitThrowException(X_DIVISION_BY_ZERO);
+		cc.bind(label);
+
+		auto tmp = cc.newXmm();
+		cc.movsd(tmp, x86::ptr(ToMemAddress(&konstf[B])));
+
+		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](double a, double b) -> double {
+			return a - floor(a / b) * b;
+		}))), FuncSignature2<double, double, double>());
+		call->setRet(0, regF[a]);
+		call->setArg(0, tmp);
+		call->setArg(1, regF[C]);
+	}
 
 	void EmitPOWF_RR()
 	{

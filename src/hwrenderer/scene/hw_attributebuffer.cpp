@@ -31,6 +31,33 @@
 #include "p_local.h"
 #include "r_sky.h"
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+void AttributeBufferData::CreateDefaultEntries(std::function<void(AttributeBufferData&)> callback)
+{
+    
+    // Default settings for elements without any attributes (e.g. stencil planes)
+    SetDefaults();
+    uTextureMode = TM_MODULATE;
+    callback(*this);
+    
+    // 2D settings, one for each of the existing texture modes. These will cover 99.9% of all 2D draw operations,
+    // that is all except special colormaps, color overlays or desturation which are all extremely rare.
+
+    uFogEnabled = 3;
+    uLightIsAttr = true;
+    uLightIndex = -1;
+    uAlphaThreshold = -0.01f;
+
+    for(int i=0;i<TM_COUNT;i++)
+    {
+        uTextureMode = TM_MODULATE+i;
+        callback(*this);
+    }
+}
 
 //==========================================================================
 //

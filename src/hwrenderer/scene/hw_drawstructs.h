@@ -4,6 +4,7 @@
 // One wall segment in the draw list
 //
 //==========================================================================
+#include <functional>
 #include "r_defs.h"
 #include "r_data/renderstyle.h"
 #include "textures/textures.h"
@@ -45,6 +46,7 @@ enum TexMode
 	TM_CLAMPY,			// (r, g, b, (t >= 0.0 && t <= 1.0)? a:0)
 	TM_INVERTOPAQUE,	// (1-r, 1-g, 1-b, 1)
 	TM_FOGLAYER,		// (renders a fog layer in the shape of the active texture)
+    TM_COUNT,           // Terminator. Not a valid index.
 	TM_FIXEDCOLORMAP = TM_FOGLAYER,	// repurposes the objectcolor uniforms to render a fixed colormap range. (Same constant because they cannot be used in the same context.
 };
 
@@ -83,6 +85,13 @@ enum PortalTypes
 
 struct AttributeBufferData
 {
+    enum EDefaultAttribute
+    {
+        DefaultIndex,
+        TextureModeFor2DIndex,
+        MaxDefaultIndex = TextureModeFor2DIndex + TM_COUNT
+    };
+    
 	FVector4 uLightColor;
 	FVector4 uObjectColor;
 	FVector4 uObjectColor2;
@@ -247,6 +256,7 @@ struct AttributeBufferData
 		else uAlphaThreshold = thresh - 0.001f;
 	}
 
+    void CreateDefaultEntries(std::function<void(AttributeBufferData&)> callback);
 	void SetColor(int sectorlightlevel, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon = false);
 	void SetShaderLight(float level, float olight);
 	void SetFog(int lightlevel, int rellight, bool fullbright, const FColormap *cmap, bool isadditive);

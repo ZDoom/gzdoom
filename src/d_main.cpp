@@ -733,112 +733,99 @@ void D_Display ()
 	{
 		wipe = false;
 	}
-
+	
+	screen->FrameTime = I_msTimeFS();
+	TexMan.UpdateAnimations(screen->FrameTime);
+	R_UpdateSky(screen->FrameTime);
+	screen->BeginFrame();
+	screen->ClearClipRect();
+	if ((gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL) && gametic != 0)
 	{
-		screen->FrameTime = I_msTimeFS();
-		TexMan.UpdateAnimations(screen->FrameTime);
-		R_UpdateSky(screen->FrameTime);
-		screen->BeginFrame();
-		screen->ClearClipRect();
+		// [ZZ] execute event hook that we just started the frame
+		//E_RenderFrame();
+		//
+		
+		// Check for the presence of dynamic lights at the start of the frame once.
+		if ((gl_lights && vid_rendermode == 4) || (r_dynlights && vid_rendermode != 4))
+		{
+			TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
+			level.HasDynamicLights = !!it.Next();
+		}
+		else level.HasDynamicLights = false;	// lights are off so effectively we have none.
+		
+		viewsec = screen->RenderView(&players[consoleplayer]);
+		screen->Begin2D();
+		screen->DrawBlend(viewsec);
+		if (automapactive)
+		{
+			AM_Drawer (hud_althud? viewheight : StatusBar->GetTopOfStatusbar());
+		}
+		if (!automapactive || viewactive)
+		{
+			screen->RefreshViewBorder ();
+		}
+		
+		// for timing the statusbar code.
+		//cycle_t stb;
+		//stb.Reset();
+		//stb.Clock();
+		if (hud_althud && viewheight == SCREENHEIGHT && screenblocks > 10)
+		{
+			StatusBar->DrawBottomStuff (HUD_AltHud);
+			if (DrawFSHUD || automapactive) DrawHUD();
+			if (players[consoleplayer].camera && players[consoleplayer].camera->player && !automapactive)
+			{
+				StatusBar->DrawCrosshair();
+			}
+			StatusBar->CallDraw (HUD_AltHud, vp.TicFrac);
+			StatusBar->DrawTopStuff (HUD_AltHud);
+		}
+		else if (viewheight == SCREENHEIGHT && viewactive && screenblocks > 10)
+		{
+			EHudState state = DrawFSHUD ? HUD_Fullscreen : HUD_None;
+			StatusBar->DrawBottomStuff (state);
+			StatusBar->CallDraw (state, vp.TicFrac);
+			StatusBar->DrawTopStuff (state);
+		}
+		else
+		{
+			StatusBar->DrawBottomStuff (HUD_StatusBar);
+			StatusBar->CallDraw (HUD_StatusBar, vp.TicFrac);
+			StatusBar->DrawTopStuff (HUD_StatusBar);
+		}
+		//stb.Unclock();
+		//Printf("Stbar = %f\n", stb.TimeMS());
+	}
+	else
+	{
+		screen->Begin2D();
 		switch (gamestate)
 		{
-		case GS_FULLCONSOLE:
-			screen->Begin2D(false);
-			C_DrawConsole ();
-			M_Drawer ();
-			screen->End2D();
-			screen->Update ();
-			return;
-
-		case GS_LEVEL:
-		case GS_TITLELEVEL:
-			if (!gametic)
-			{
-				screen->Begin2D(false);
+			case GS_FULLCONSOLE:
+				screen->Begin2D();
+				C_DrawConsole ();
+				M_Drawer ();
+				screen->End2DAndUpdate ();
+				return;
+				
+			case GS_INTERMISSION:
+				WI_Drawer ();
 				break;
-			}
-
-			// [ZZ] execute event hook that we just started the frame
-			//E_RenderFrame();
-			//
-
-			// Check for the presence of dynamic lights at the start of the frame once.
-			if ((gl_lights && vid_rendermode == 4) || (r_dynlights && vid_rendermode != 4))
-			{
-				TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
-				level.HasDynamicLights = !!it.Next();
-			}
-			else level.HasDynamicLights = false;	// lights are off so effectively we have none.
-
-			viewsec = screen->RenderView(&players[consoleplayer]);
-			screen->Begin2D(false);
-			screen->DrawBlend(viewsec);
-			// returns with 2S mode set.
-			if (automapactive)
-			{
-				AM_Drawer (hud_althud? viewheight : StatusBar->GetTopOfStatusbar());
-			}
-			if (!automapactive || viewactive)
-			{
-				screen->RefreshViewBorder ();
-			}
-
-			// for timing the statusbar code.
-			//cycle_t stb;
-			//stb.Reset();
-			//stb.Clock();
-			if (hud_althud && viewheight == SCREENHEIGHT && screenblocks > 10)
-			{
-				StatusBar->DrawBottomStuff (HUD_AltHud);
-				if (DrawFSHUD || automapactive) DrawHUD();
-				if (players[consoleplayer].camera && players[consoleplayer].camera->player && !automapactive)
-				{
-					StatusBar->DrawCrosshair();
-				}
-				StatusBar->CallDraw (HUD_AltHud, vp.TicFrac);
-				StatusBar->DrawTopStuff (HUD_AltHud);
-			}
-			else 
-			if (viewheight == SCREENHEIGHT && viewactive && screenblocks > 10)
-			{
-				EHudState state = DrawFSHUD ? HUD_Fullscreen : HUD_None;
-				StatusBar->DrawBottomStuff (state);
-				StatusBar->CallDraw (state, vp.TicFrac);
-				StatusBar->DrawTopStuff (state);
-			}
-			else
-			{
-				StatusBar->DrawBottomStuff (HUD_StatusBar);
-				StatusBar->CallDraw (HUD_StatusBar, vp.TicFrac);
-				StatusBar->DrawTopStuff (HUD_StatusBar);
-			}
-			//stb.Unclock();
-			//Printf("Stbar = %f\n", stb.TimeMS());
-			CT_Drawer ();
-			break;
-
-		case GS_INTERMISSION:
-			screen->Begin2D(false);
-			WI_Drawer ();
-			CT_Drawer ();
-			break;
-
-		case GS_FINALE:
-			screen->Begin2D(false);
-			F_Drawer ();
-			CT_Drawer ();
-			break;
-
-		case GS_DEMOSCREEN:
-			screen->Begin2D(false);
-			D_PageDrawer ();
-			CT_Drawer ();
-			break;
-
-		default:
-			break;
+				
+			case GS_FINALE:
+				F_Drawer ();
+				break;
+				
+			case GS_DEMOSCREEN:
+				D_PageDrawer ();
+				break;
+				
+			default:
+				break;
 		}
 	}
+	CT_Drawer ();
+
 	// draw pause pic
 	if ((paused || pauseext) && menuactive == MENU_Off)
 	{
@@ -887,7 +874,7 @@ void D_Display ()
 		C_DrawConsole ();	// draw console
 		M_Drawer ();			// menu is drawn even on top of everything
 		FStat::PrintStat ();
-		screen->Update ();		// page flip or blit buffer
+		screen->End2DAndUpdate ();
 	}
 	else
 	{
@@ -897,6 +884,7 @@ void D_Display ()
 
 		GSnd->SetSfxPaused(true, 1);
 		I_FreezeTime(true);
+		screen->End2D();
 		screen->WipeEndScreen ();
 
 		wipestart = I_msTime();
@@ -912,16 +900,16 @@ void D_Display ()
 			} while (diff < 1);
 			wipestart = nowtime;
 			done = screen->WipeDo (1);
+			screen->Begin2D();
 			C_DrawConsole ();	// console and
 			M_Drawer ();			// menu are drawn even on top of wipes
-			screen->Update ();		// page flip or blit buffer
+			screen->End2DAndUpdate ();
 			NetUpdate ();			// [RH] not sure this is needed anymore
 		} while (!done);
 		screen->WipeCleanup();
 		I_FreezeTime(false);
 		GSnd->SetSfxPaused(false, 1);
 	}
-	screen->End2D();
 	cycles.Unclock();
 	FrameCycles = cycles;
 }

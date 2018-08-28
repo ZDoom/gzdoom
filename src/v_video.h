@@ -441,10 +441,17 @@ public:
     virtual IUniformBuffer *CreateUniformBuffer(size_t size, bool staticuse = false) { return nullptr; }
 	virtual IShaderProgram *CreateShaderProgram() { return nullptr; }
 
-	// Begin 2D drawing operations.
-	// Returns true if hardware-accelerated 2D has been entered, false if not.
-	void Begin2D(bool copy3d) { isIn2D = true; }
+	// Begin/End 2D drawing operations.
+	void Begin2D() { isIn2D = true; }
 	void End2D() { isIn2D = false; }
+
+	void End2DAndUpdate()
+	{
+		DrawRateStuff();
+		End2D();
+		Update();
+	}
+
 
 	// Returns true if Begin2D has been called and 2D drawing is now active
 	bool HasBegun2D() { return isIn2D; }

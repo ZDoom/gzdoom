@@ -151,7 +151,6 @@ void OpenGLFrameBuffer::Update()
 	twoD.Reset();
 	Flush3D.Reset();
 
-	DrawRateStuff();
 	Flush3D.Clock();
 	GLRenderer->Flush();
 	Flush3D.Unclock();

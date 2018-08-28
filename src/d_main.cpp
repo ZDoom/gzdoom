@@ -889,11 +889,11 @@ void D_Display ()
 		screen->End2D();
 		auto wipend = screen->WipeEndScreen ();
 		auto wiper = Wiper::Create(wipe_type);
+		wiper->SetTextures(wipe, wipend);
 
 		wipestart = I_msTime();
 		NetUpdate();		// send out any new accumulation
 
-		/*
 		do
 		{
 			do
@@ -903,14 +903,13 @@ void D_Display ()
 				diff = (nowtime - wipestart) * 40 / 1000;	// Using 35 here feels too slow.
 			} while (diff < 1);
 			wipestart = nowtime;
-			done = screen->WipeDo (1);
 			screen->Begin2D();
+			done = wiper->Run(1);
 			C_DrawConsole ();	// console and
 			M_Drawer ();			// menu are drawn even on top of wipes
 			screen->End2DAndUpdate ();
 			NetUpdate ();			// [RH] not sure this is needed anymore
 		} while (!done);
-		*/
 		delete wiper;
 		I_FreezeTime(false);
 		GSnd->SetSfxPaused(false, 1);

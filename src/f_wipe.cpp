@@ -168,7 +168,6 @@ private:
 class Wiper_Burn : public Wiper
 {
 public:
-	Wiper_Burn();
 	~Wiper_Burn();
 	bool Run(int ticks) override;
 	void SetTextures(FTexture *startscreen, FTexture *endscreen) override;

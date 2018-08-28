@@ -274,7 +274,7 @@ Wiper_Melt::Wiper_Melt()
 bool Wiper_Melt::Run(int ticks)
 {
 	bool done;
-	screen->DrawTexture(endScreen, 0, 0, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_Color, PalEntry(255, 255, 0, 0), TAG_DONE);
+	screen->DrawTexture(endScreen, 0, 0, DTA_FlipY, screen->RenderTextureIsFlipped(), TAG_DONE);
 	
 	// Copy the old screen in vertical strips on top of the new one.
 	while (ticks--)
@@ -311,15 +311,15 @@ bool Wiper_Melt::Run(int ticks)
 				
 				int w = startScreen->GetWidth();
 				int h = startScreen->GetHeight();
-				dpt.x = i * h / WIDTH;
+				dpt.x = i * w / WIDTH;
 				dpt.y = MAX(0, y[i] * h / HEIGHT);
 				rect.left = dpt.x;
 				rect.top = 0;
 				rect.right = (i + 1) * w / WIDTH;
-				rect.bottom = w - dpt.y;
+				rect.bottom = h - dpt.y;
 				if (rect.bottom > rect.top)
 				{
-					screen->DrawTexture(startScreen, 0, rect.top, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_ClipLeft, rect.left, DTA_ClipRight, rect.right, TAG_DONE);
+					screen->DrawTexture(startScreen, 0, dpt.y, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_ClipLeft, rect.left, DTA_ClipRight, rect.right, TAG_DONE);
 				}
 			}
 		}

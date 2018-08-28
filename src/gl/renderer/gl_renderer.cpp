@@ -428,12 +428,6 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	const auto &mScreenViewport = screen->mScreenViewport;
 	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 
-	HWViewpointUniforms matrices;
-	matrices.SetDefaults();
-	matrices.mProjectionMatrix.ortho(0, screen->GetWidth(), screen->GetHeight(), 0, -1.0f, 1.0f);
-	matrices.CalcDependencies();
-	GLRenderer->mShaderManager->ApplyMatrices(&matrices, NORMAL_PASS);
-
 	glDisable(GL_DEPTH_TEST);
 
 	// Korshun: ENABLE AUTOMAP ANTIALIASING!!!
@@ -530,6 +524,10 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 				gl_RenderState.mTextureMatrix.translate(0.f, 1.f, 0.0f);
 				gl_RenderState.EnableTextureMatrix(true);
 			}
+			if (cmd.mFlags & F2DDrawer::DTF_Burn)
+			{
+				gl_RenderState.SetEffect(EFF_BURN);
+			}
 		}
 		else
 		{
@@ -555,6 +553,8 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		gl_RenderState.SetObjectColor(0xffffffff);
 		gl_RenderState.SetObjectColor2(0);
 		gl_RenderState.EnableTextureMatrix(false);
+		gl_RenderState.SetEffect(EFF_NONE);
+
 	}
 	glDisable(GL_SCISSOR_TEST);
 

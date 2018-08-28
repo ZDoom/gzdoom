@@ -242,6 +242,7 @@ bool F2DDrawer::SetStyle(FTexture *tex, DrawParms &parms, PalEntry &vertexcolor,
 		else if (quad.mDrawMode == DTM_Invert) quad.mDrawMode = DTM_InvertOpaque;
 	}
 	quad.mRenderStyle = parms.style;	// this  contains the blend mode and blend equation settings.
+    if (parms.burn) quad.mFlags |= DTF_Burn;
 	return true;
 }
 

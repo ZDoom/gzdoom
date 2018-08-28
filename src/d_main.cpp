@@ -638,7 +638,8 @@ CVAR(Bool, vid_activeinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 void D_Display ()
 {
-	bool wipe;
+	FTexture *wipe;
+	int wipe_type;
 	sector_t *viewsec;
 
 	if (nodrawers || screen == NULL)
@@ -703,35 +704,36 @@ void D_Display ()
 	if (NoWipe)
 	{
 		NoWipe--;
-		wipe = false;
+		wipe = nullptr;
 		wipegamestate = gamestate;
 	}
 	// No wipes when in a stereo3D VR mode
 	else if (gamestate != wipegamestate && gamestate != GS_FULLCONSOLE && gamestate != GS_TITLELEVEL && (vr_mode == 0 || vid_rendermode != 4))
 	{ // save the current screen if about to wipe
+		wipe = screen->WipeStartScreen ();
 		switch (wipegamestate)
 		{
 		default:
-			wipe = screen->WipeStartScreen (wipetype);
+			wipe_type = wipetype;
 			break;
 
 		case GS_FORCEWIPEFADE:
-			wipe = screen->WipeStartScreen (wipe_Fade);
+			wipe_type = wipe_Fade;
 			break;
 
 		case GS_FORCEWIPEBURN:
-			wipe = screen->WipeStartScreen (wipe_Burn);
+			wipe_type =wipe_Burn;
 			break;
 
 		case GS_FORCEWIPEMELT:
-			wipe = screen->WipeStartScreen (wipe_Melt);
+			wipe_type = wipe_Melt;
 			break;
 		}
 		wipegamestate = gamestate;
 	}
 	else
 	{
-		wipe = false;
+		wipe = nullptr;
 	}
 	
 	screen->FrameTime = I_msTimeFS();
@@ -885,7 +887,7 @@ void D_Display ()
 		GSnd->SetSfxPaused(true, 1);
 		I_FreezeTime(true);
 		screen->End2D();
-		screen->WipeEndScreen ();
+		auto wipend = screen->WipeEndScreen ();
 
 		wipestart = I_msTime();
 		NetUpdate();		// send out any new accumulation

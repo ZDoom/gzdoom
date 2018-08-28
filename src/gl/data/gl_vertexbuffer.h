@@ -201,7 +201,7 @@ class FSkyVertexBuffer : public FVertexBuffer, public FSkyDomeCreator
 public:
 
 	FSkyVertexBuffer();
-	void RenderDome(FMaterial *tex, int mode);
+	void RenderDome(FMaterial *tex, int mode, int atindex);
 	void BindVBO();
 };
 

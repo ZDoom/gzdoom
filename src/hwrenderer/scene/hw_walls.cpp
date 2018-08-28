@@ -53,7 +53,7 @@ void GLWall::PostWall(WallAttributeInfo &wri, HWDrawInfo *di)
 	
 	if (gltexture)
 	{
-		wri.attrBuffer.SetTimer(gltexture->tex->shaderspeed);
+		wri.attrBuffer.SetTimer(gltexture->tex);
 		if (!gltexture->tex->GetTranslucency() || !(flags & GLWF_TRANSLUCENT)) wri.attrBuffer.AlphaFunc(ALPHA_GEQUAL, gl_mask_threshold);
 		else wri.attrBuffer.AlphaFunc(ALPHA_GEQUAL, 0.f);
 		alphateston = wri.attrBuffer.uAlphaThreshold >= 0.f;

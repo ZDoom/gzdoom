@@ -132,8 +132,12 @@ struct AttributeBufferData
 	void SetTimer(float factor)
 	{
 		uTimer = float((double)(screen->FrameTime - screen->FirstFrame) * (double)factor / 1000.);
-
 	}
+
+    void SetTimer(FTexture *tex)
+    {
+        SetTimer(tex->shaderspeed);
+    }
 
 	//==========================================================================
 	//

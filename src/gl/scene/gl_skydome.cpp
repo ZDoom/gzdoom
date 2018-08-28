@@ -83,27 +83,23 @@ inline void FSkyVertexBuffer::RenderRow(int prim, int row)
 //
 //-----------------------------------------------------------------------------
 
-void FSkyVertexBuffer::RenderDome(FMaterial *tex, int mode)
+void FSkyVertexBuffer::RenderDome(FMaterial *tex, int mode, int atindex)
 {
 	int rc = mRows + 1;
 
 	// The caps only get drawn for the main layer but not for the overlay.
 	if (mode == SKYMODE_MAINLAYER && tex != NULL)
 	{
-		PalEntry pe = tex->tex->GetSkyCapColor(false);
-		gl_RenderState.SetObjectColor(pe);
 		gl_RenderState.EnableTexture(false);
-		gl_RenderState.Apply();
+		gl_RenderState.Apply(atindex, false);
 		RenderRow(GL_TRIANGLE_FAN, 0);
 
-		pe = tex->tex->GetSkyCapColor(true);
-		gl_RenderState.SetObjectColor(pe);
-		gl_RenderState.Apply();
+		gl_RenderState.Apply(atindex+1, false);
 		RenderRow(GL_TRIANGLE_FAN, rc);
 		gl_RenderState.EnableTexture(true);
+		atindex += 2;
 	}
-	gl_RenderState.SetObjectColor(0xffffffff);
-	gl_RenderState.Apply();
+	gl_RenderState.Apply(atindex, mode == SKYMODE_SECONDLAYER);
 	for (int i = 1; i <= mRows; i++)
 	{
 		RenderRow(GL_TRIANGLE_STRIP, i);
@@ -118,25 +114,11 @@ void FSkyVertexBuffer::RenderDome(FMaterial *tex, int mode)
 //
 //-----------------------------------------------------------------------------
 
-void RenderDome(FMaterial * tex, float x_offset, float y_offset, bool mirror, int mode)
+void RenderDome(FMaterial * tex, float x_offset, float y_offset, bool mirror, int mode, int atindex)
 {
 	int mmindex = 0;
-	if (tex)
-	{
-		gl_RenderState.SetMaterial(tex, CLAMP_NONE, 0, -1, false);
-
-		VSMatrix modelmatrix, texturematrix;
-		GLRenderer->mSkyVBO->SetupMatrices(tex, x_offset, y_offset, mirror, mode, modelmatrix, texturematrix);
-		GLRenderer->mModelMatrix->Map();
-		auto ndx = GLRenderer->mModelMatrix->Upload(&modelmatrix, 0);
-		GLRenderer->mModelMatrix->Unmap();
-		GLRenderer->mModelMatrix->Bind(ndx);
-		GLRenderer->mTextureMatrices->Map();
-		gl_RenderState.SetTexMatrixIndex(GLRenderer->mTextureMatrices->Upload(&texturematrix, -1, 1));
-		GLRenderer->mTextureMatrices->Unmap();
-	}
-
-	GLRenderer->mSkyVBO->RenderDome(tex, mode);
+	gl_RenderState.SetMaterial(tex, CLAMP_NONE, 0, -1, false);
+	GLRenderer->mSkyVBO->RenderDome(tex, mode, atindex);
 	gl_RenderState.SetTexMatrixIndex(0);
 	GLRenderer->mModelMatrix->Bind(0);
 }
@@ -148,50 +130,38 @@ void RenderDome(FMaterial * tex, float x_offset, float y_offset, bool mirror, in
 //
 //-----------------------------------------------------------------------------
 
-static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool sky2)
+static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool sky2, int atindex)
 {
 	FSkyBox * sb = static_cast<FSkyBox*>(gltex->tex);
 	int faces;
 	FMaterial * tex;
 
-	GLRenderer->mModelMatrix->Map();
-
-	VSMatrix modelmatrix(0);
-	if (!sky2)
-		modelmatrix.rotate(-180.0f + x_offset, level.info->skyrotatevector.X, level.info->skyrotatevector.Z, level.info->skyrotatevector.Y);
-	else
-		modelmatrix.rotate(-180.0f + x_offset, level.info->skyrotatevector2.X, level.info->skyrotatevector2.Z, level.info->skyrotatevector2.Y);
-
-	auto ndx = GLRenderer->mModelMatrix->Upload(&modelmatrix, 0);
-	GLRenderer->mModelMatrix->Unmap();
-	GLRenderer->mModelMatrix->Bind(ndx);
-
-	if (sb->faces[5]) 
+	if (sb->faces[5])
 	{
 		faces=4;
 
 		// north
 		tex = FMaterial::ValidateTexture(sb->faces[0], false);
 		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
-		gl_RenderState.Apply();
+		gl_RenderState.Apply(atindex, false);
 		glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(0), 4);
 
 		// east
 		tex = FMaterial::ValidateTexture(sb->faces[1], false);
 		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
-		gl_RenderState.Apply();
+		gl_RenderState.Apply(atindex, false);
 		glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(1), 4);
 
 		// south
 		tex = FMaterial::ValidateTexture(sb->faces[2], false);
 		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
-		gl_RenderState.Apply();
+		gl_RenderState.Apply(atindex, false);
 		glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(2), 4);
 
 		// west
 		tex = FMaterial::ValidateTexture(sb->faces[3], false);
 		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
-		gl_RenderState.Apply();
+		gl_RenderState.Apply(atindex, false);
 		glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(3), 4);
 	}
 	else 
@@ -199,20 +169,20 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 		faces=1;
 		tex = FMaterial::ValidateTexture(sb->faces[0], false);
 		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
-		gl_RenderState.Apply();
+		gl_RenderState.Apply(atindex, false);
 		glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(-1), 10);
 	}
 
 	// top
 	tex = FMaterial::ValidateTexture(sb->faces[faces], false);
 	gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
-	gl_RenderState.Apply();
+	gl_RenderState.Apply(atindex, false);
 	glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(sb->fliptop? 6:5), 4);
 
 	// bottom
 	tex = FMaterial::ValidateTexture(sb->faces[faces+1], false);
 	gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
-	gl_RenderState.Apply();
+	gl_RenderState.Apply(atindex, false);
 	glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(4), 4);
 
 	GLRenderer->mModelMatrix->Bind(0);
@@ -225,22 +195,17 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 //-----------------------------------------------------------------------------
 void GLSkyPortal::DrawContents(HWDrawInfo *di)
 {
+	GLRenderer->mTextureMatrices->Map();
+	GLRenderer->mModelMatrix->Map();
+	GLRenderer->mAttributes->Map();
+	FSkyBufferInfo indices = GLRenderer->mSkyVBO->PrepareContents(di, origin);
+	GLRenderer->mTextureMatrices->Unmap();
+	GLRenderer->mModelMatrix->Unmap();
+	GLRenderer->mAttributes->Unmap();
+	
 	bool drawBoth = false;
 	auto &vp = di->Viewpoint;
 
-	// We have no use for Doom lighting special handling here, so disable it for this function.
-	int oldlightmode = ::level.lightmode;
-	if (::level.lightmode == 8)
-	{
-		::level.lightmode = 2;
-		gl_RenderState.SetSoftLightLevel(-1);
-	}
-
-
-	gl_RenderState.SetLightIsAttr(true);
-	gl_RenderState.ResetColor();
-	gl_RenderState.EnableFog(false);
-	gl_RenderState.SetLightIndex(-1);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	bool oldClamp = gl_RenderState.SetDepthClamp(true);
@@ -248,44 +213,39 @@ void GLSkyPortal::DrawContents(HWDrawInfo *di)
 	di->SetupView(0, 0, 0, !!(mState->MirrorFlag & 1), !!(mState->PlaneMirrorFlag & 1));
 
 	gl_RenderState.SetVertexBuffer(GLRenderer->mSkyVBO);
-	if (origin->texture[0] && origin->texture[0]->tex->bSkybox)
+	gl_RenderState.SetTexMatrixIndex(indices.mTextureMatrixIndex);
+	GLRenderer->mModelMatrix->Bind(indices.mModelMatrixIndex);
+	if (indices.mFlags == 0)
 	{
-		RenderBox(origin->skytexno1, origin->texture[0], origin->x_offset[0], origin->sky2);
+		RenderBox(origin->skytexno1, origin->texture[0], origin->x_offset[0], origin->sky2, indices.mAttributeIndex);
 	}
 	else
 	{
-		if (origin->texture[0]==origin->texture[1] && origin->doublesky) origin->doublesky=false;	
+		RenderDome(origin->texture[0], origin->x_offset[0], origin->y_offset, origin->mirrored, FSkyVertexBuffer::SKYMODE_MAINLAYER, indices.mAttributeIndex);
+		indices.mAttributeIndex+=3;
 
-		if (origin->texture[0])
+		if (indices.mFlags & FSkyVertexBuffer::SKYMODE_SECONDLAYER)
 		{
-			gl_RenderState.SetTextureMode(TM_OPAQUE);
-			RenderDome(origin->texture[0], origin->x_offset[0], origin->y_offset, origin->mirrored, FSkyVertexBuffer::SKYMODE_MAINLAYER);
-			gl_RenderState.SetTextureMode(TM_MODULATE);
+			gl_RenderState.SetTexMatrixIndex(indices.mTextureMatrixIndex+1);
+			GLRenderer->mModelMatrix->Bind(indices.mModelMatrixIndex+1);
+			RenderDome(origin->texture[1], origin->x_offset[1], origin->y_offset, false, FSkyVertexBuffer::SKYMODE_SECONDLAYER, indices.mAttributeIndex);
+			indices.mAttributeIndex++;
 		}
-		
-		gl_RenderState.AlphaFunc(GL_GREATER, 0.f);
-		
-		if (origin->doublesky && origin->texture[1])
+		if (indices.mFlags & FSkyVertexBuffer::SKYMODE_FOGLAYER)
 		{
-			RenderDome(origin->texture[1], origin->x_offset[1], origin->y_offset, false, FSkyVertexBuffer::SKYMODE_SECONDLAYER);
-		}
-
-		if (::level.skyfog>0 && !di->isFullbrightScene()  && (origin->fadecolor & 0xffffff) != 0)
-		{
-			PalEntry FadeColor = origin->fadecolor;
-			FadeColor.a = clamp<int>(::level.skyfog, 0, 255);
+			GLRenderer->mModelMatrix->Bind(0);
 
 			gl_RenderState.EnableTexture(false);
-			gl_RenderState.SetObjectColor(FadeColor);
-			gl_RenderState.Apply();
+			gl_RenderState.Apply(indices.mAttributeIndex, false);
 			glDrawArrays(GL_TRIANGLES, 0, 12);
 			gl_RenderState.EnableTexture(true);
 			gl_RenderState.SetObjectColor(0xffffffff);
 		}
 	}
+	gl_RenderState.SetTexMatrixIndex(0);
+	GLRenderer->mModelMatrix->Bind(0);
+
 	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
-	::level.lightmode = oldlightmode;
 	gl_RenderState.SetDepthClamp(oldClamp);
-	gl_RenderState.SetLightIsAttr(false);
 }
 

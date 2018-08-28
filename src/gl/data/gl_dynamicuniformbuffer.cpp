@@ -113,7 +113,7 @@ void GLDynamicUniformBuffer::Allocate()
 void GLDynamicUniformBuffer::ValidateSize(int newnumelements)	// that is 'new elements plus the reserved items'
 {
 	newnumelements += DynamicStart();
-	if (mElementCount < newnumelements)
+	if (mElementCount < (unsigned)newnumelements)
 	{
 		mElementCount = newnumelements;
 		Allocate();
@@ -148,7 +148,7 @@ int GLDynamicUniformBuffer::Upload(const void *data, int index, unsigned int cou
 	{
 		if (mStreamCount == 0) return 0;	// don't do this!
 		index = mUploadIndex++;
-		if (index >= mReservedCount + mStreamCount)
+		if ((unsigned)index >= mReservedCount + mStreamCount)
 		{
 			index = mReservedCount;
 		}

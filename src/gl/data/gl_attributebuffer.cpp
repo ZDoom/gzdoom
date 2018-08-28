@@ -45,6 +45,7 @@ GLAttributeBuffer::GLAttributeBuffer()
 	
 	mBlockAlign = mBufferType == GL_UNIFORM_BUFFER? ((sizeof(AttributeBufferData) / gl.uniformblockalignment) + 1) * gl.uniformblockalignment : sizeof(AttributeBufferData);
 	mByteSize = mBufferSize * mBlockAlign;
+	mReserved = 0;
 	Allocate();
 	Clear();
 	mLastMappedIndex = UINT_MAX;
@@ -54,7 +55,7 @@ GLAttributeBuffer::GLAttributeBuffer()
 	AttributeBufferData attr;
 	attr.CreateDefaultEntries([=](AttributeBufferData &attr)
 	{
-		mReserved = this->Upload(&attr);
+		mReserved = this->Upload(&attr) + 1;
 	});
 	Unmap();
 }

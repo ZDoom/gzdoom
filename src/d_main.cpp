@@ -888,10 +888,12 @@ void D_Display ()
 		I_FreezeTime(true);
 		screen->End2D();
 		auto wipend = screen->WipeEndScreen ();
+		auto wiper = Wiper::Create(wipe_type);
 
 		wipestart = I_msTime();
 		NetUpdate();		// send out any new accumulation
 
+		/*
 		do
 		{
 			do
@@ -908,7 +910,8 @@ void D_Display ()
 			screen->End2DAndUpdate ();
 			NetUpdate ();			// [RH] not sure this is needed anymore
 		} while (!done);
-		screen->WipeCleanup();
+		*/
+		delete wiper;
 		I_FreezeTime(false);
 		GSnd->SetSfxPaused(false, 1);
 	}

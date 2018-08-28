@@ -472,8 +472,6 @@ public:
 	// Screen wiping
 	virtual FTexture *WipeStartScreen();
 	virtual FTexture *WipeEndScreen();
-	virtual bool WipeDo(int ticks);
-	virtual void WipeCleanup();
 
 	virtual void PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D) { if (afterBloomDrawEndScene2D) afterBloomDrawEndScene2D(); }
 

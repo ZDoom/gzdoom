@@ -341,31 +341,6 @@ FTexture *DFrameBuffer::WipeEndScreen()
 
 //==========================================================================
 //
-// DFrameBuffer :: WipeDo
-//
-// Draws one frame of a screenwipe. Should be called no more than 35
-// times per second. If called less than that, ticks indicates how many
-// ticks have passed since the last call.
-//
-//==========================================================================
-
-bool DFrameBuffer::WipeDo(int ticks)
-{
-	return false;
-}
-
-//==========================================================================
-//
-// DFrameBuffer :: WipeCleanup
-//
-//==========================================================================
-
-void DFrameBuffer::WipeCleanup()
-{
-}
-
-//==========================================================================
-//
 // DFrameBuffer :: InitPalette
 //
 //==========================================================================

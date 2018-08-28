@@ -539,6 +539,10 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 			{
 				gl_RenderState.SetTexMatrixIndex(1);
 			}
+			if (cmd.mFlags & F2DDrawer::DTF_Burn)
+			{
+				gl_RenderState.SetEffect(EFF_BURN);
+			}
 		}
 		else
 		{
@@ -564,6 +568,8 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		gl_RenderState.SetObjectColor(0xffffffff);
 		gl_RenderState.ClearObjectColor2();
 		gl_RenderState.SetTexMatrixIndex(0);
+		gl_RenderState.SetEffect(EFF_NONE);
+
 	}
 	glDisable(GL_SCISSOR_TEST);
 

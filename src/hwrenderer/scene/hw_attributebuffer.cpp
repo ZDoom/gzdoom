@@ -57,6 +57,11 @@ void AttributeBufferData::CreateDefaultEntries(std::function<void(AttributeBuffe
         uTextureMode = TM_MODULATE+i;
         callback(*this);
     }
+    
+    // And one with a flipping texture matrix for camera textures
+    uTextureMode = TM_OPAQUE;
+    uTexMatrixIndex = 1;
+    callback(*this);
 }
 
 //==========================================================================

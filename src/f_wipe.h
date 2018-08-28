@@ -26,19 +26,9 @@
 #ifndef __F_WIPE_H__
 #define __F_WIPE_H__
 
-//
-//						 SCREEN WIPE PACKAGE
-//
+#include "stdint.h"
 
-#if 0
-bool wipe_StartScreen (int type);
-void wipe_EndScreen (void);
-bool wipe_ScreenWipe (int ticks);
-void wipe_Cleanup ();
-
-// The buffer must have an additional 5 rows not included in height
-// to use for a seeding area.
-#endif
+class FTexture;
 int wipe_CalcBurn(uint8_t *buffer, int width, int height, int density);
 
 enum
@@ -49,5 +39,22 @@ enum
 	wipe_Fade,			// crossfade from old to new
 	wipe_NUMWIPES
 };
+
+class Wiper
+{
+protected:
+	FTexture *startScreen = nullptr, *endScreen = nullptr;
+public:
+	virtual ~Wiper();
+	virtual bool Run(int ticks) = 0;
+	virtual void SetTextures(FTexture *startscreen, FTexture *endscreen)
+	{
+		startScreen = startscreen;
+		endScreen = endscreen;
+	}
+	
+	static Wiper *Create(int type);
+};
+
 
 #endif

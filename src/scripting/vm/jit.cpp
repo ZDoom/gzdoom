@@ -1214,12 +1214,12 @@ private:
 
 	void EmitMUL_RR()
 	{
-		BINARY_OP_INT(mul, regD[a], regD[B], regD[C]);
+		BINARY_OP_INT(imul, regD[a], regD[B], regD[C]);
 	}
 
 	void EmitMUL_RK()
 	{
-		BINARY_OP_INT(mul, regD[a], regD[B], konstd[C]);
+		BINARY_OP_INT(imul, regD[a], regD[B], konstd[C]);
 	}
 
 	void EmitDIV_RR()

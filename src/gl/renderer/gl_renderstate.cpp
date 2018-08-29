@@ -117,11 +117,6 @@ bool FRenderState::ApplyShader(int attrindex, bool alphateston)
 	activeShader->muClipSplit.Set(&uClipSplit.X);
 	activeShader->muTimer.Set(uTimer);
 
-	if (GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
-	{
-		GLRenderer->mLights->BindUBO(mAttributes.uLightIndex);
-		GLRenderer->mTextureMatrices->Bind(mAttributes.uTexMatrixIndex);
-	}
  	if (attrindex != INT_MAX) GLRenderer->mAttributes->Bind(attrindex);
 
 	glVertexAttrib4fv(VATTR_NORMAL, &mNormal.X);

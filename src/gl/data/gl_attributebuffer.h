@@ -26,6 +26,7 @@ class GLAttributeBuffer
     unsigned int mReserved;
 
 	TArray<AttributeBufferData> mBufferedData;
+	TArray<std::pair<int, int> > mUBOIndices;	// Hack stuff for old hardware.
 	std::mutex mBufferMutex;
 
 	void Allocate();
@@ -40,11 +41,8 @@ public:
 	void Unmap();
 	int Upload(AttributeBufferData *attrs);
 	void CheckSize();
-	int Bind(unsigned int index)
-	{
-		glBindBufferRange(mBufferType, ATTRIBUTE_BINDINGPOINT, mBufferId, index * mBlockAlign, mBlockAlign);
-		return index;
-	}
+	int Bind(unsigned int index);
+	void AdjustForUBO(AttributeBufferData *attrs, int li, int ti);
 
 };
 

@@ -56,6 +56,8 @@ GLAttributeBuffer::GLAttributeBuffer()
 	attr.CreateDefaultEntries([=](AttributeBufferData &attr)
 	{
 		mReserved = this->Upload(&attr) + 1;
+		if (mBufferType == GL_UNIFORM_BUFFER)
+			mUBOIndices.Push(std::make_pair(-1, -1));
 	});
 	Unmap();
 }
@@ -84,6 +86,11 @@ void GLAttributeBuffer::Allocate()
 		glBufferData(mBufferType, mByteSize, NULL, GL_DYNAMIC_DRAW);
 		mBufferPointer = nullptr;
 		mPersistent = false;
+	}
+	if (mBufferType == GL_UNIFORM_BUFFER)
+	{
+		mUBOIndices.Resize(mBufferSize);
+		mUBOIndices.Clear();
 	}
 }
 
@@ -148,6 +155,17 @@ void GLAttributeBuffer::Unmap()
 	if (mUploadIndex >= mBufferSize) CheckSize();
 }
 
+void GLAttributeBuffer::AdjustForUBO(AttributeBufferData *writeptr, int uLightIndex, int uTexMatrixIndex)
+{
+	// Fix indices for uniform buffer mode.
+	if (GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
+	{
+		mUBOIndices.Push(std::make_pair(uLightIndex, uTexMatrixIndex));
+		if (uLightIndex > -1) writeptr->uLightIndex = GLRenderer->mLights->ShaderIndex(uLightIndex);
+		writeptr->uTexMatrixIndex = GLRenderer->mTextureMatrices->ShaderIndex(uTexMatrixIndex);
+	}
+}
+
 int GLAttributeBuffer::Upload(AttributeBufferData *attr)
 {
 	assert(mBufferPointer != nullptr);	// May only be called when the buffer is mapped.
@@ -162,26 +180,33 @@ int GLAttributeBuffer::Upload(AttributeBufferData *attr)
 		std::lock_guard<std::mutex> lock(mBufferMutex);
 		auto ndx = mBufferedData.Size();
 		mBufferedData.Push(*attr);
+		AdjustForUBO(&mBufferedData.Last(), attr->uLightIndex, attr->uTexMatrixIndex);
 		return mBufferSize + ndx;
 	}
 	
 	auto writeptr = (AttributeBufferData *) (((char*)mBufferPointer) + mBlockAlign * ui);
 	*writeptr = *attr;
-
-	// Fix indices for uniform buffer mode.
-	if (GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
-	{
-		if (attr->uLightIndex > -1) writeptr->uLightIndex = GLRenderer->mLights->ShaderIndex(attr->uLightIndex);
-		writeptr->uTexMatrixIndex = GLRenderer->mTextureMatrices->ShaderIndex(attr->uTexMatrixIndex);
-	}
-	
-	
+	AdjustForUBO(writeptr, attr->uLightIndex, attr->uTexMatrixIndex);
 	return ui;
 }
 
 void GLAttributeBuffer::Clear()
 {
 	mUploadIndex = mReserved;
+	mUBOIndices.Resize(mReserved);
 }
 
 
+int GLAttributeBuffer::Bind(unsigned int index)
+{
+	// Here, uniform buffer mode also needs to do some special stuff.
+	if (GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
+	{
+		auto indices = mUBOIndices[index];
+		GLRenderer->mLights->BindUBO(indices.first);
+		GLRenderer->mTextureMatrices->Bind(indices.second);
+	}
+
+	glBindBufferRange(mBufferType, ATTRIBUTE_BINDINGPOINT, mBufferId, index * mBlockAlign, mBlockAlign);
+	return index;
+}

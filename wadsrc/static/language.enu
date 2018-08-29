@@ -2820,6 +2820,8 @@ GLPREFMNU_DITHER				= "Dither output";
 GLPREFMNU_PALTONEMAPORDER		= "Tonemap Palette Order";
 GLPREFMNU_PALTONEMAPPOWER		= "Tonemap Palette Exponent";
 GLPREFMNU_SWLMBANDED			= "Banded SW Lightmode";
+GLPREFMNU_VRIPD					= "Distance Between Your Eyes";
+GLPREFMNU_VRSCREENDIST			= "Distance From Your Screen";
 
 // Option Values
 OPTVAL_SMART 				= "Smart";

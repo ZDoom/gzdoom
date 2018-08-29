@@ -56,7 +56,7 @@ void FDrawInfo::DrawPSprite (HUDSprite *huds)
 	{
 		SetColor(huds->lightlevel, 0, huds->cm, huds->alpha, true);
 	}
-	gl_SetRenderStyle(huds->RenderStyle, false, false);
+	gl_SetRenderStyle(huds->RenderStyle);
 	gl_RenderState.SetObjectColor(huds->ObjectColor);
 	gl_RenderState.SetDynLight(huds->dynrgb[0], huds->dynrgb[1], huds->dynrgb[2]);
 	gl_RenderState.EnableBrightmap(!(huds->RenderStyle.Flags & STYLEF_ColorIsFixed));
@@ -64,7 +64,8 @@ void FDrawInfo::DrawPSprite (HUDSprite *huds)
 	if (huds->mframe)
 	{
 		gl_RenderState.AlphaFunc(GL_GEQUAL, 0);
-        FGLModelRenderer renderer(this, huds->lightindex);
+		gl_RenderState.SetLightIndex(huds->lightindex);
+        FGLModelRenderer renderer(this);
         renderer.RenderHUDModel(huds->mframe, huds->weapon, huds->modelmirrored);
 	}
 	else

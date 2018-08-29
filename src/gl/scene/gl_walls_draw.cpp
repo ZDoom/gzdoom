@@ -322,7 +322,7 @@ void FDrawInfo::DrawDecal(GLDecal *gldecal)
 	auto decal = gldecal->decal;
 	auto tex = gldecal->gltexture;
 	
-	gl_SetRenderStyle(decal->RenderStyle, false, false);
+	gl_SetRenderStyle(decal->RenderStyle);
 	gl_RenderState.SetMaterial(tex, CLAMP_XY, decal->Translation, 0, !!(decal->RenderStyle.Flags & STYLEF_RedIsAlpha));
 	gl_RenderState.SetNormal(gldecal->Normal);
 	gl_RenderState.Apply(gldecal->attrindex, true);

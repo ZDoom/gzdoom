@@ -100,6 +100,6 @@ struct FDrawInfo : public HWDrawInfo
 };
 
 
-void gl_SetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblending);
+void gl_SetRenderStyle(FRenderStyle style);
 
 #endif

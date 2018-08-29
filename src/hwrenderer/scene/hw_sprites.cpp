@@ -69,6 +69,183 @@ EXTERN_CVAR(Float, transsouls)
 //
 //==========================================================================
 
+void GLSprite::SetAttributes(AttributeBufferData &attr, HWDrawInfo *di)
+{
+	bool additivefog = false;
+	int rel = fullbright ? 0 : getExtraLight();
+	auto &vp = di->Viewpoint;
+
+	foglayer = false;
+	if (translucentpass)
+	{
+		// The translucent pass requires special setup for the various modes.
+		attr.SetTextureMode(RenderStyle, false);
+
+		if (hw_styleflags == STYLEHW_NoAlphaTest)
+		{
+			attr.AlphaFunc(ALPHA_GEQUAL, 0.f);
+			alphateston = false;
+		}
+		else
+		{
+			attr.AlphaFunc(ALPHA_GEQUAL, gl_mask_sprite_threshold);
+			alphateston = true;
+		}
+
+		if (RenderStyle.BlendOp == STYLEOP_Shadow)
+		{
+			float fuzzalpha = 0.44f;
+			float minalpha = 0.1f;
+
+			// fog + fuzz don't work well without some fiddling with the alpha value!
+			if (!Colormap.FadeColor.isBlack())
+			{
+				float dist = Dist2(vp.Pos.X, vp.Pos.Y, x, y);
+				int fogd = hw_GetFogDensity(lightlevel, Colormap.FadeColor, Colormap.FogDensity);
+
+				// this value was determined by trial and error and is scale dependent!
+				float factor = 0.05f + exp(-fogd * dist / 62500.f);
+				fuzzalpha *= factor;
+				minalpha *= factor;
+			}
+
+			attr.AlphaFunc(ALPHA_GEQUAL, gl_mask_sprite_threshold);
+			alphateston = true;
+
+			attr.SetColorAlpha(0.2f, 0.2f, 0.2f, fuzzalpha, Colormap.Desaturation);
+			additivefog = true;
+			lightlist = nullptr;	// the fuzz effect does not use the sector's light level so splitting is not needed.
+		}
+		else if (RenderStyle.BlendOp == STYLEOP_Add && RenderStyle.DestAlpha == STYLEALPHA_One)
+		{
+			additivefog = true;
+		}
+	}
+	else if (modelframe == nullptr)
+	{
+		attr.SetTextureMode(RenderStyle, false);
+		polyoffset = true;
+	}
+	if (RenderStyle.BlendOp != STYLEOP_Shadow)
+	{
+		if (level.HasDynamicLights && !di->isFullbrightScene() && !fullbright)
+		{
+			if (dynlightindex == -1)	// only set if we got no light buffer index. This covers all cases where sprite lighting is used.
+			{
+				float out[3];
+				di->GetDynSpriteLight(gl_light_sprites ? actor : nullptr, gl_light_particles ? particle : nullptr, out);
+				attr.SetDynLightColor(out[0], out[1], out[2]);
+			}
+		}
+		sector_t *cursec = actor ? actor->Sector : particle ? particle->subsector->sector : nullptr;
+		if (cursec != nullptr)
+		{
+			const PalEntry finalcol = fullbright
+				? ThingColor
+				: ThingColor.Modulate(cursec->SpecialColors[sector_t::sprites]);
+
+			attr.SetObjectColor(finalcol);
+		}
+		attr.SetColor(lightlevel, rel, di->isFullbrightScene(), Colormap, trans);
+	}
+
+
+	if (Colormap.FadeColor.isBlack()) foglevel = lightlevel;
+
+	if (RenderStyle.Flags & STYLEF_FadeToBlack)
+	{
+		Colormap.FadeColor = 0;
+		additivefog = true;
+	}
+
+	if (RenderStyle.BlendOp == STYLEOP_RevSub || RenderStyle.BlendOp == STYLEOP_Sub)
+	{
+		if (!modelframe)
+		{
+			// non-black fog with subtractive style needs special treatment
+			if (!Colormap.FadeColor.isBlack())
+			{
+				foglayer = true;
+				// Due to the two-layer approach we need to force an alpha test that lets everything pass
+				attr.AlphaFunc(ALPHA_GREATER, 0);
+			}
+		}
+		else RenderStyle.BlendOp = STYLEOP_Fuzz;	// subtractive with models is not going to work.
+	}
+
+	if (!foglayer) attr.SetFog(foglevel, rel, di->isFullbrightScene(), &Colormap, additivefog);
+	else
+	{
+		attr.uFogEnabled = 0;
+		attr.SetFog(0, 0);
+	}
+
+	unsigned int iter = lightlist ? lightlist->Size() : 1;
+	bool clipping = false;
+	if ((lightlist || topclip != LARGE_VALUE || bottomclip != -LARGE_VALUE) && !di->isFullbrightScene())
+	{
+		clipping = true;
+	}
+	attr.uLightIndex = dynlightindex;
+
+	secplane_t bottomp = { { 0, 0, -1. }, bottomclip };
+	secplane_t topp = { { 0, 0, -1. }, topclip };
+	for (unsigned i = 0; i < iter; i++)
+	{
+		if (lightlist)
+		{
+			// set up the light slice
+			secplane_t *topplane = i == 0 ? &topp : &(*lightlist)[i].plane;
+			secplane_t *lowplane = i == (*lightlist).Size() - 1 ? &bottomp : &(*lightlist)[i + 1].plane;
+
+			int thislight = (*lightlist)[i].caster != nullptr ? hw_ClampLight(*(*lightlist)[i].p_lightlevel) : lightlevel;
+			int thisll = actor == nullptr ? thislight : (uint8_t)actor->Sector->CheckSpriteGlow(thislight, actor->InterpolatedPosition(vp.TicFrac));
+
+			FColormap thiscm;
+			thiscm.CopyFog(Colormap);
+			thiscm.CopyFrom3DLight(&(*lightlist)[i]);
+			if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
+			{
+				thiscm.Decolorize();
+			}
+
+			attr.SetColor(thisll, rel, false, thiscm, trans);
+			if (!foglayer)
+			{
+				attr.SetFog(thislight, rel, false, &thiscm, additivefog);
+			}
+			attr.SetSplitPlanes(*topplane, *lowplane);
+		}
+		else if (clipping)
+		{
+			attr.SetSplitPlanes(topp, bottomp);
+		}
+
+		attrindex = di->UploadAttributes(attr);
+		di->AddSprite(this, translucentpass);
+
+		if (foglayer)
+		{
+			// If we get here we know that we have colored fog and no fixed colormap.
+			attr.SetFog(foglevel, rel, false, &Colormap, additivefog);
+			attr.uTextureMode = TM_FOGLAYER;
+			di->UploadAttributes(attr);	// will be drawn by the same command as the main sprite.
+			attr.uTextureMode = TM_MODULATE;
+		}
+	}
+	attr.DisableSplitPlanes();
+	attr.uTextureMode = TM_MODULATE;
+	attr.SetObjectColor(1, 1, 1);
+	attr.SetDynLightColor(0, 0, 0);
+}
+
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 bool GLSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 {
 	const auto &HWAngles = di->Viewpoint.HWAngles;
@@ -244,7 +421,17 @@ inline void GLSprite::PutSprite(HWDrawInfo *di, bool translucent)
 		vp[3].Set(v[3][0], v[3][1], v[3][2], ur, vb);
 	}
 
-	di->AddSprite(this, translucent);
+	translucentpass = (translucent || actor == nullptr || (!modelframe && (actor->renderflags & RF_SPRITETYPEMASK) != RF_WALLSPRITE));
+
+	// change fullbright additive sprites to use color based translucency.
+	if (translucentpass && trans > 1.f - FLT_EPSILON && gl_usecolorblending && !di->isFullbrightScene() && actor && fullbright && gltexture && !gltexture->tex->GetTranslucency()
+			&& RenderStyle.SrcAlpha == STYLEALPHA_Src && RenderStyle.DestAlpha == STYLEALPHA_One && RenderStyle.BlendOp == STYLEOP_Add)
+	{
+		RenderStyle.SrcAlpha = STYLEALPHA_SrcCol;
+	}
+	AttributeBufferData attr;
+	attr.SetDefaults();
+	SetAttributes(attr, di);
 }
 
 //==========================================================================

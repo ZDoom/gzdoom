@@ -41,12 +41,11 @@
 //==========================================================================
 //
 // Sets render state to draw the given render style
-// includes: Texture mode, blend equation and blend mode
+// includes: blend equation and blend mode
 //
 //==========================================================================
 
-void gl_GetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblending,
-					   int *tm, int *sb, int *db, int *be)
+void gl_GetRenderStyle(FRenderStyle style, int *sb, int *db, int *be)
 {
 	static int blendstyles[] = { GL_ZERO, GL_ONE, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR,  };
 	static int renderops[] = { 0, GL_FUNC_ADD, GL_FUNC_SUBTRACT, GL_FUNC_REVERSE_SUBTRACT, -1, -1, -1, -1, 
@@ -55,20 +54,6 @@ void gl_GetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblend
 	int srcblend = blendstyles[style.SrcAlpha%STYLEALPHA_MAX];
 	int dstblend = blendstyles[style.DestAlpha%STYLEALPHA_MAX];
 	int blendequation = renderops[style.BlendOp&15];
-	int texturemode = drawopaque? TM_OPAQUE : TM_MODULATE;
-
-	if (style.Flags & STYLEF_RedIsAlpha)
-	{
-		texturemode = TM_REDTOALPHA;
-	}
-	else if (style.Flags & STYLEF_ColorIsFixed)
-	{
-		texturemode = TM_MASK;
-	}
-	else if (style.Flags & STYLEF_InvertSource)
-	{
-		texturemode = TM_INVERSE;
-	}
 
 	if (blendequation == -1)
 	{
@@ -77,12 +62,6 @@ void gl_GetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblend
 		blendequation = GL_FUNC_ADD;
 	}
 
-	if (allowcolorblending && srcblend == GL_SRC_ALPHA && dstblend == GL_ONE && blendequation == GL_FUNC_ADD)
-	{
-		srcblend = GL_SRC_COLOR;
-	}
-
-	*tm = texturemode;
 	*be = blendequation;
 	*sb = srcblend;
 	*db = dstblend;

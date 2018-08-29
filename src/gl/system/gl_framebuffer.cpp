@@ -368,9 +368,9 @@ void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 	gl_RenderState.SetMaterial(mat, CLAMP_NONE, translation, false, false);
 }
 
-FModelRenderer *OpenGLFrameBuffer::CreateModelRenderer(int mli) 
+FModelRenderer *OpenGLFrameBuffer::CreateModelRenderer() 
 {
-	return new FGLModelRenderer(nullptr, mli);
+	return new FGLModelRenderer(nullptr);
 }
 
 IUniformBuffer *OpenGLFrameBuffer::CreateUniformBuffer(size_t size, bool staticuse)

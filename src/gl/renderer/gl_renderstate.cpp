@@ -109,19 +109,20 @@ bool FRenderState::ApplyShader(int attrindex, bool alphateston)
 				fogset = -gl_fogmode;
 			}
 		}
-		activeShader->muClipSplit.Set(&uClipSplit.X);
-        activeShader->muTimer.Set(uTimer);
 		mAttributes.uFogEnabled = fogset;
 		if (!mGlowEnabled) mAttributes.uGlowTopColor.W = mAttributes.uGlowBottomColor.W = 0.f;
 		attrindex = GLRenderer->mAttributes->Upload(&mAttributes);
 	}
+
+	activeShader->muClipSplit.Set(&uClipSplit.X);
+	activeShader->muTimer.Set(uTimer);
 
 	if (GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
 	{
 		GLRenderer->mLights->BindUBO(mAttributes.uLightIndex);
 		GLRenderer->mTextureMatrices->Bind(mAttributes.uTexMatrixIndex);
 	}
- 	GLRenderer->mAttributes->Bind(attrindex);
+ 	if (attrindex != INT_MAX) GLRenderer->mAttributes->Bind(attrindex);
 
 	glVertexAttrib4fv(VATTR_NORMAL, &mNormal.X);
 

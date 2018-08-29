@@ -33,10 +33,9 @@ struct FDrawInfo;
 
 class FGLModelRenderer : public FModelRenderer
 {
-	int modellightindex = -1;
 	FDrawInfo *di;
 public:
-	FGLModelRenderer(FDrawInfo *d, int mli) : modellightindex(mli), di(d)
+	FGLModelRenderer(FDrawInfo *d) : di(d)
 	{}
 	ModelRendererType GetType() const override { return GLModelRendererType; }
 	void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix *objectToWorldMatrix, bool mirrored) override;

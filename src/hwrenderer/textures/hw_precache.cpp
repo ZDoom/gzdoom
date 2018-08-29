@@ -207,7 +207,7 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		}
 
 		// cache all used models
-		FModelRenderer *renderer = screen->CreateModelRenderer(-1);
+		FModelRenderer *renderer = screen->CreateModelRenderer();
 		for (unsigned i = 0; i < Models.Size(); i++)
 		{
 			if (modellist[i]) 

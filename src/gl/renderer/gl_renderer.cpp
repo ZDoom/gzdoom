@@ -492,11 +492,9 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	{
 
 		int gltrans = -1;
-		int tm, sb, db, be;
-		// The texture mode being returned here cannot be used, because the higher level code 
-		// already manipulated the data so that some cases will not be handled correctly.
-		// Since we already get a proper mode from the calling code this doesn't really matter.
-		gl_GetRenderStyle(cmd.mRenderStyle, false, false, &tm, &sb, &db, &be);
+		int sb, db, be;
+
+		gl_GetRenderStyle(cmd.mRenderStyle, &sb, &db, &be);
 		gl_RenderState.BlendEquation(be); 
 		gl_RenderState.BlendFunc(sb, db);
 		gl_RenderState.EnableBrightmap(!(cmd.mRenderStyle.Flags & STYLEF_ColorIsFixed));

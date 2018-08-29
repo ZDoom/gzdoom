@@ -202,6 +202,12 @@ struct AttributeBufferData
 		uDesaturationFactor = desat / 255.f;
 	}
 
+	void SetColorAlpha(float r, float g, float b, float alpha, int desat = 0)
+	{
+		uLightColor = { r, g, b, alpha };
+		uDesaturationFactor = desat / 255.f;
+	}
+
 	void SetSoftLightLevel(int llevel)
 	{
 		if (level.lightmode == 8) uLightLevel = llevel / 255.f;
@@ -219,6 +225,11 @@ struct AttributeBufferData
 	{
 		uLightFactor = f;
 		uLightDist = d;
+	}
+
+	void SetDynLightColor(float r, float g, float b)
+	{
+		uDynLightColor = { r, g, b, 1 };
 	}
 
 	void SetObjectColor(float r, float g, float b)
@@ -621,9 +632,13 @@ public:
 	int dynlightindex;
 	int vertexindex;
 	int modelindex;
+	int attrindex;
 	bool modelmirrored;
+	bool translucentpass;
+	bool alphateston;
+	bool foglayer;
 
-	void SplitSprite(HWDrawInfo *di, sector_t * frontsector, bool translucent);
+	void SetAttributes(AttributeBufferData &attr, HWDrawInfo *di);
 	void PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingpos, float spriteheight);
 	bool CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp);
 

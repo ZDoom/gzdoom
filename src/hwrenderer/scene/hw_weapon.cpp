@@ -50,6 +50,41 @@ EXTERN_CVAR(Bool, r_deathcamera)
 
 //==========================================================================
 //
+// R_DrawPSprite
+//
+//==========================================================================
+
+void HUDSprite::SetAttributes(HWDrawInfo *di)
+{
+	AttributeBufferData attr;
+	attr.SetDefaults();
+	if (RenderStyle.BlendOp == STYLEOP_Shadow)
+	{
+		attr.SetColorAlpha(0.2f, 0.2f, 0.2f, 0.33f, cm.Desaturation);
+	}
+	else
+	{
+		attr.SetColor(lightlevel, 0, di->isFullbrightScene(), cm, alpha, true);
+	}
+	attr.SetObjectColor(ObjectColor);
+	attr.SetDynLightColor(dynrgb[0], dynrgb[1], dynrgb[2]);
+
+	if (mframe)
+	{
+		attr.AlphaFunc(ALPHA_GEQUAL, 0);
+		attr.uLightIndex = lightindex;
+	}
+	else
+	{
+		float thresh = (tex->tex->GetTranslucency() || OverrideShader != -1) ? 0.f : gl_mask_sprite_threshold;
+		attr.AlphaFunc(ALPHA_GEQUAL, thresh);
+	}
+	attrindex = di->UploadAttributes(attr);
+}
+
+
+//==========================================================================
+//
 //
 //
 //==========================================================================
@@ -496,6 +531,7 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 			if (!hudsprite.GetWeaponRect(this, psp, spos.X, spos.Y, player)) continue;
 			hudsprite.modelindex = 0;
 		}
+		hudsprite.SetAttributes(this);
 		AddHUDSprite(&hudsprite);
 	}
 	level.lightmode = oldlightmode;
@@ -543,6 +579,7 @@ void HWDrawInfo::PrepareTargeterSprites()
 			hudsprite.weapon = psp;
 			if (hudsprite.GetWeaponRect(this, psp, psp->x, psp->y, player))
 			{
+				hudsprite.SetAttributes(this);
 				AddHUDSprite(&hudsprite);
 			}
 		}

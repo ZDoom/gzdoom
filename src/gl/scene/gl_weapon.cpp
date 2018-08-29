@@ -48,39 +48,21 @@
 
 void FDrawInfo::DrawPSprite (HUDSprite *huds)
 {
-	if (huds->RenderStyle.BlendOp == STYLEOP_Shadow)
-	{
-		gl_RenderState.SetColor(0.2f, 0.2f, 0.2f, 0.33f, huds->cm.Desaturation);
-	}
-	else
-	{
-		SetColor(huds->lightlevel, 0, huds->cm, huds->alpha, true);
-	}
 	gl_SetRenderStyle(huds->RenderStyle);
-	gl_RenderState.SetObjectColor(huds->ObjectColor);
-	gl_RenderState.SetDynLight(huds->dynrgb[0], huds->dynrgb[1], huds->dynrgb[2]);
 	gl_RenderState.EnableBrightmap(!(huds->RenderStyle.Flags & STYLEF_ColorIsFixed));
 
 	if (huds->mframe)
 	{
-		gl_RenderState.AlphaFunc(GL_GEQUAL, 0);
-		gl_RenderState.SetLightIndex(huds->lightindex);
+		gl_RenderState.Apply(huds->attrindex, false);
         FGLModelRenderer renderer(this);
         renderer.RenderHUDModel(huds->mframe, huds->weapon, huds->modelmirrored);
 	}
 	else
 	{
-		float thresh = (huds->tex->tex->GetTranslucency() || huds->OverrideShader != -1) ? 0.f : gl_mask_sprite_threshold;
-		gl_RenderState.AlphaFunc(GL_GEQUAL, thresh);
 		gl_RenderState.SetMaterial(huds->tex, CLAMP_XY_NOMIP, 0, huds->OverrideShader, !!(huds->RenderStyle.Flags & STYLEF_RedIsAlpha));
-		gl_RenderState.SetLightIndex(-1);
-		gl_RenderState.Apply();
+		gl_RenderState.Apply(huds->attrindex, true);
 		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, huds->mx, 4);
 	}
-
-	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
-	gl_RenderState.SetObjectColor(0xffffffff);
-	gl_RenderState.SetDynLight(0, 0, 0);
 	gl_RenderState.EnableBrightmap(false);
 }
 

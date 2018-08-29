@@ -650,6 +650,17 @@ struct LevelLocals native
 	native readonly int outsidefogdensity;
 	native readonly int skyfog;
 	native readonly float pixelstretch;
+	native readonly bool map07special;
+	native readonly bool bruiserspecial;
+	native readonly bool cyborgspecial;
+	native readonly bool spiderspecial;
+	native readonly bool headspecial;
+	native readonly bool minotaurspecial;
+	native readonly bool sorcerer2special;
+	native readonly bool speckillmonsters;
+	native readonly bool speclowerfloor;
+	native readonly bool speclowerfloortohighest;
+	native readonly bool specopendoor;
 // level_info_t *info cannot be done yet.
 
 	native String GetUDMFString(int type, int index, Name key);

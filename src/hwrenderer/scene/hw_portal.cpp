@@ -648,10 +648,12 @@ void GLHorizonInfo::CalcBuffers(HWDrawInfo *di, unsigned *vb, unsigned *vc, int 
 	*vc = vcount;
 	*vb = verts.second;
 	auto ptr = verts.first;
-	for (float x = -32768 + vx; x<32768 + vx; x += 4096)
+	for (int xx = -32768; xx < 32768; xx += 4096)
 	{
-		for (float y = -32768 + vy; y<32768 + vy; y += 4096)
+		float x = xx + vx;
+		for (int yy = -32768; yy < 32768; yy += 4096)
 		{
+			float y = yy + vy;
 			ptr->Set(x, z, y, x / 64, -y / 64);
 			ptr++;
 			ptr->Set(x + 4096, z, y, x / 64 + 64, -y / 64);

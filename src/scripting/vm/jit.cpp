@@ -70,7 +70,7 @@ public:
 			cc.bind(labels[i]);
 
 			FString lineinfo;
-			lineinfo.Format("; %s(line %d): %02x%02x%02x%02x %s", sfunc->Name.GetChars(), sfunc->PCToLine(pc), pc->op, pc->a, pc->b, pc->c, OpNames[op]);
+			lineinfo.Format("; %s(line %d): %02x%02x%02x%02x %s", sfunc->PrintableName.GetChars(), sfunc->PCToLine(pc), pc->op, pc->a, pc->b, pc->c, OpNames[op]);
 			cc.comment(lineinfo.GetChars(), lineinfo.Len());
 
 			EmitFuncPtr opcodeFunc = GetOpcodeEmitFunc(op);
@@ -2377,6 +2377,10 @@ private:
 	{
 		using namespace asmjit;
 
+		FString funcname;
+		funcname.Format("Function: %1", sfunc->PrintableName.GetChars());
+		cc.comment(funcname.GetChars(), funcname.Len());
+
 		stack = cc.newIntPtr("stack"); // VMFrameStack *stack
 		vmregs = cc.newIntPtr("vmregs"); // void *vmregs
 		ret = cc.newIntPtr("ret"); // VMReturn *ret
@@ -2593,9 +2597,30 @@ void JitCleanUp(VMScriptFunction *func)
 	}
 }
 
+static void OutputJitLog(const asmjit::StringLogger &logger)
+{
+	// Write line by line since I_FatalError seems to cut off long strings
+	const char *pos = logger.getString();
+	const char *end = pos;
+	while (*end)
+	{
+		if (*end == '\n')
+		{
+			FString substr(pos, (int)(ptrdiff_t)(end - pos));
+			Printf("%s\n", substr.GetChars());
+			pos = end + 1;
+		}
+		end++;
+	}
+	if (pos != end)
+		Printf("%s\n", pos);
+}
+
+//#define DEBUG_JIT
+
 JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 {
-#if 0 // For debugging
+#if defined(DEBUG_JIT)
 	if (strcmp(sfunc->Name.GetChars(), "EmptyFunction") != 0)
 		return nullptr;
 #else
@@ -2622,26 +2647,16 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 		Error err = jit->add(&fn, &code);
 		if (err)
 			I_FatalError("JitRuntime::add failed: %d", err);
+
+#if defined(DEBUG_JIT)
+		OutputJitLog(logger);
+#endif
+
 		return fn;
 	}
 	catch (const std::exception &e)
 	{
-		// Write line by line since I_FatalError seems to cut off long strings
-		const char *pos = logger.getString();
-		const char *end = pos;
-		while (*end)
-		{
-			if (*end == '\n')
-			{
-				FString substr(pos, (int)(ptrdiff_t)(end - pos));
-				Printf("%s\n", substr.GetChars());
-				pos = end + 1;
-			}
-			end++;
-		}
-		if (pos != end)
-			Printf("%s\n", pos);
-
+		OutputJitLog(logger);
 		I_FatalError("Unexpected JIT error: %s\n", e.what());
 		return nullptr;
 	}

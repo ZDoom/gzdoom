@@ -110,6 +110,7 @@ void GLFlat::BuildAttributes(AttributeBufferData &attr, HWDrawInfo *di, bool iso
 		attr.uTexMatrixIndex = *plane.pUbIndexMatrix;
 		attr.uLightIndex = dynlightindex;
 
+		attr.uTextureMode = isopaque? TM_OPAQUE : TM_MODULATE;
 		if (!isopaque && !gltexture->tex->GetTranslucency())
 		{
 			attr.AlphaFunc(ALPHA_GEQUAL, gl_mask_threshold);
@@ -269,7 +270,7 @@ inline void GLFlat::PutFlat(HWDrawInfo *di, bool fog)
 
 	AttributeBufferData attr;
 	attr.SetDefaults();
-	BuildAttributes(attr, di, false);
+	BuildAttributes(attr, di, list == GLDL_PLAINFLATS);
 
 	di->AddFlat(this, list);
 }

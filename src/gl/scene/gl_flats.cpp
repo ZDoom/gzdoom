@@ -79,7 +79,6 @@ void FDrawInfo::SetupFloodStencil(int vindex)
 	glDepthMask(false);
 	gl_RenderState.EnableTexture(true);
 	gl_RenderState.SetEffect(EFF_NONE);
-	gl_RenderState.Apply();
 }
 
 void FDrawInfo::ClearFloodStencil(int vindex)
@@ -169,8 +168,7 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass)
 			GetFloodFloorSegs(flat->sector->sectornum) :
 			GetFloodCeilingSegs(flat->sector->sectornum);
 
-		gl_RenderState.SetLightIndex(flat->dynlightindex);
-		gl_RenderState.Apply();
+		gl_RenderState.Apply(flat->attrindex, flat->alphateston);
 		while (fnode)
 		{
 			flatvertices += 12;
@@ -212,8 +210,8 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 
 	if (flat->sector->special == GLSector_Skybox)
 	{
-		gl_RenderState.SetMaterial(flat->gltexture, CLAMP_XY, 0, -1, false);
-		gl_RenderState.Apply();
+		gl_RenderState.SetMaterial(flat->gltexture, CLAMP_XY, 0, -1);
+		gl_RenderState.Apply(flat->attrindex, flat->alphateston);
 		glDrawArrays(GL_TRIANGLE_FAN, flat->iboindex, 4);
 		flatvertices += 4;
 		flatprimitives++;
@@ -222,7 +220,7 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 	{
 		if (flat->gltexture)
 		{
-			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
+			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1);
 		}
 		else
 		{

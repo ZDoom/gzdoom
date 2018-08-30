@@ -94,7 +94,7 @@ void FDrawInfo::RenderMirrorSurface(GLWall *wall)
 	glDepthFunc(GL_LEQUAL);
 
 	FMaterial * pat=FMaterial::ValidateTexture(TexMan.mirrorTexture, false, false);
-	gl_RenderState.SetMaterial(pat, CLAMP_NONE, 0, -1, false);
+	gl_RenderState.SetMaterial(pat, CLAMP_NONE, 0, -1);
 
 	wall->flags &= ~GLWall::GLWF_GLOW;
 	RenderWall(wall, GLWall::RWF_BLANK);
@@ -117,7 +117,6 @@ void FDrawInfo::RenderMirrorSurface(GLWall *wall)
 		glDepthMask(true);
 		glPolygonOffset(0.0f, 0.0f);
 		glDisable(GL_POLYGON_OFFSET_FILL);
-		gl_RenderState.SetTextureMode(TM_MODULATE);
 		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 }
@@ -130,7 +129,7 @@ void FDrawInfo::RenderMirrorSurface(GLWall *wall)
 
 void FDrawInfo::RenderTexturedWall(GLWall *wall, int rflags)
 {
-	gl_RenderState.SetMaterial(wall->gltexture, wall->flags & 3, 0, -1, false);
+	gl_RenderState.SetMaterial(wall->gltexture, wall->flags & 3, 0, -1);
 	RenderWall(wall, rflags);
 }
 
@@ -322,7 +321,7 @@ void FDrawInfo::DrawDecal(GLDecal *gldecal)
 	auto tex = gldecal->gltexture;
 	
 	gl_SetRenderStyle(decal->RenderStyle);
-	gl_RenderState.SetMaterial(tex, CLAMP_XY, decal->Translation, 0, !!(decal->RenderStyle.Flags & STYLEF_RedIsAlpha));
+	gl_RenderState.SetMaterial(tex, CLAMP_XY, decal->Translation, 0);
 	gl_RenderState.SetNormal(gldecal->Normal);
 	gl_RenderState.Apply(gldecal->attrindex, true);
 	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, gldecal->vertindex, 4);

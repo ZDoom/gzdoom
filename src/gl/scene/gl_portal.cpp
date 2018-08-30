@@ -294,7 +294,6 @@ void GLPortal::End(HWDrawInfo *di, bool usestencil)
 		// This draws a valid z-buffer into the stencil's contents to ensure it
 		// doesn't get overwritten by the level's geometry.
 
-		gl_RenderState.ResetColor();
 		glDepthFunc(GL_LEQUAL);
 		glDepthRange(0, 1);
 		glColorMask(0, 0, 0, 1); // mark portal in alpha channel but don't touch color
@@ -352,7 +351,7 @@ void GLHorizonPortal::DrawContents(HWDrawInfo *hwdi)
 	}
 	di->SetCameraPos(vp.Pos);
 
-	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
+	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1);
 
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
 	gl_RenderState.Apply(attrindex, false);

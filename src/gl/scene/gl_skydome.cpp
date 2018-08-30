@@ -116,9 +116,8 @@ void FSkyVertexBuffer::RenderDome(FMaterial *tex, int mode, int atindex)
 void RenderDome(FMaterial * tex, float x_offset, float y_offset, bool mirror, int mode, int atindex)
 {
 	int mmindex = 0;
-	gl_RenderState.SetMaterial(tex, CLAMP_NONE, 0, -1, false);
+	gl_RenderState.SetMaterial(tex, CLAMP_NONE, 0, -1);
 	GLRenderer->mSkyVBO->RenderDome(tex, mode, atindex);
-	gl_RenderState.SetTexMatrixIndex(0);
 	GLRenderer->mModelMatrix->Bind(0);
 }
 
@@ -141,25 +140,25 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 
 		// north
 		tex = FMaterial::ValidateTexture(sb->faces[0], false);
-		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
+		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1);
 		gl_RenderState.Apply(atindex, false);
 		glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(0), 4);
 
 		// east
 		tex = FMaterial::ValidateTexture(sb->faces[1], false);
-		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
+		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1);
 		gl_RenderState.Apply(atindex, false);
 		glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(1), 4);
 
 		// south
 		tex = FMaterial::ValidateTexture(sb->faces[2], false);
-		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
+		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1);
 		gl_RenderState.Apply(atindex, false);
 		glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(2), 4);
 
 		// west
 		tex = FMaterial::ValidateTexture(sb->faces[3], false);
-		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
+		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1);
 		gl_RenderState.Apply(atindex, false);
 		glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(3), 4);
 	}
@@ -167,20 +166,20 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 	{
 		faces=1;
 		tex = FMaterial::ValidateTexture(sb->faces[0], false);
-		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
+		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1);
 		gl_RenderState.Apply(atindex, false);
 		glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(-1), 10);
 	}
 
 	// top
 	tex = FMaterial::ValidateTexture(sb->faces[faces], false);
-	gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
+	gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1);
 	gl_RenderState.Apply(atindex, false);
 	glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(sb->fliptop? 6:5), 4);
 
 	// bottom
 	tex = FMaterial::ValidateTexture(sb->faces[faces+1], false);
-	gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
+	gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1);
 	gl_RenderState.Apply(atindex, false);
 	glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(4), 4);
 
@@ -205,7 +204,6 @@ void GLSkyPortal::DrawContents(HWDrawInfo *di)
 	bool drawBoth = false;
 	auto &vp = di->Viewpoint;
 
-	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	bool oldClamp = gl_RenderState.SetDepthClamp(true);
 
@@ -236,10 +234,8 @@ void GLSkyPortal::DrawContents(HWDrawInfo *di)
 			gl_RenderState.Apply(indices.mAttributeIndex, false);
 			glDrawArrays(GL_TRIANGLES, 0, 12);
 			gl_RenderState.EnableTexture(true);
-			gl_RenderState.SetObjectColor(0xffffffff);
 		}
 	}
-	gl_RenderState.SetTexMatrixIndex(0);
 	GLRenderer->mModelMatrix->Bind(0);
 
 	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);

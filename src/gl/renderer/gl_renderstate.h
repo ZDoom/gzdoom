@@ -60,8 +60,6 @@ enum EPassType
 
 class FRenderState
 {
-	AttributeBufferData mAttributes;
-
 	bool mTextureEnabled;
 	uint8_t mFogEnabled;
 	bool mGlowEnabled;
@@ -108,14 +106,9 @@ public:
 		lastMaterial = nullptr;
 	}
 
-	void SetMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader, bool alphatexture);
+	void SetMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader);
 
-	void Apply(int attrindex = -1, bool alphateston = true);
-
-	void SetLightIndex(int index)
-	{
-		mAttributes.uLightIndex = index;
-	}
+	void Apply(int attrindex = INT_MAX, bool alphateston = true);
 
 	void SetVertexBuffer(FVertexBuffer *vb)
 	{
@@ -138,6 +131,7 @@ public:
 		mNormal = { x, y, z, 0 };
 	}
 
+	/*
 	void SetColor(float r, float g, float b, float a = 1.f, int desat = 0)
 	{
 		mAttributes.uLightColor = { r, g, b, a };
@@ -171,6 +165,7 @@ public:
 	{
 		return mAttributes.uTextureMode;
 	}
+	*/
 
 	void EnableTexture(bool on)
 	{
@@ -202,94 +197,14 @@ public:
 		}
 		else
 		{
-			mAttributes.uSplitTopPlane.Zero();
-			mAttributes.uSplitBottomPlane.Zero();
 			glDisable(GL_CLIP_DISTANCE3);
 			glDisable(GL_CLIP_DISTANCE4);
 		}
 	}
 
-	void SetLightIsAttr(bool on)
-	{
-		mAttributes.uLightIsAttr = on;
-	}
-
 	void EnableBrightmap(bool on)
 	{
 		mBrightmapEnabled = on;
-	}
-
-	void SetTexMatrixIndex(int index)
-	{
-		mAttributes.uTexMatrixIndex = index;
-	}
-
-	void SetGlowParams(float *t, float *b)
-	{
-		mAttributes.uGlowTopColor = { t[0], t[1], t[2], t[3] };
-		mAttributes.uGlowBottomColor = { b[0], b[1], b[2], b[3] };
-	}
-
-	void SetSoftLightLevel(int llevel)
-	{
-		if (level.lightmode == 8) mAttributes.uLightLevel = llevel / 255.f;
-		else mAttributes.uLightLevel = -1.f;
-	}
-
-	void SetSplitPlanes(const secplane_t &top, const secplane_t &bottom)
-	{
-		DVector3 tn = top.Normal();
-		DVector3 bn = bottom.Normal();
-		mAttributes.uSplitTopPlane = { (float)tn.X, (float)tn.Y, 1.f / (float)tn.Z, (float)top.fD() };
-		mAttributes.uSplitBottomPlane = { (float)bn.X, (float)bn.Y, 1.f / (float)bn.Z, (float)bottom.fD() };
-	}
-
-	void SetDynLight(float r, float g, float b)
-	{
-		mAttributes.uDynLightColor = { r, g, b, 0 };
-	}
-
-	void SetObjectColor(PalEntry pe)
-	{
-		mAttributes.uObjectColor = { pe.r/255.f, pe.g/255.f, pe.b/255.f, 1.f };
-	}
-
-	void SetObjectColor(float r, float g, float b)
-	{
-		mAttributes.uObjectColor = { r, g, b, 1 };
-	}
-
-	void SetObjectColor2(PalEntry pe)
-	{
-		mAttributes.uObjectColor2 = { pe.r / 255.f, pe.g / 255.f, pe.b / 255.f, 1.f };
-	}
-
-	void ClearObjectColor2()
-	{
-		mAttributes.uObjectColor2.W = 0;
-	}
-
-	void SetFog(PalEntry pe, float d)
-	{
-		const float LOG2E = 1.442692f;	// = 1/log(2)
-		mAttributes.uFogColor = { pe.r / 255.f, pe.g / 255.f, pe.b / 255.f, 1.f };
-		if (d >= 0.0f) mAttributes.uFogDensity = d * (-LOG2E / 64000.f);
-	}
-
-	void SetLightParms(float f, float d)
-	{
-		mAttributes.uLightFactor = f;
-		mAttributes.uLightDist = d;
-	}
-
-	FVector4 GetFogColor() const
-	{
-		return mAttributes.uFogColor;
-	}
-
-	void SetFogColor(const FVector4 &c)
-	{
-		mAttributes.uFogColor = c;
 	}
 
 	void SetClipSplit(float bottom, float top)
@@ -326,12 +241,6 @@ public:
 		{
 			glBlendFunc(src, dst);
 		}
-	}
-
-	void AlphaFunc(int func, float thresh)
-	{
-		if (func == GL_GREATER) mAttributes.uAlphaThreshold = thresh;
-		else mAttributes.uAlphaThreshold = thresh - 0.001f;
 	}
 
 	void BlendEquation(int eq)

@@ -354,7 +354,6 @@ void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, i
     FRenderViewpoint savevp;
     sector_t *viewsector = RenderViewpoint(savevp, players[consoleplayer].camera, &bounds, r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
     glDisable(GL_STENCIL_TEST);
-    gl_RenderState.SetSoftLightLevel(-1);
     CopyToBackbuffer(&bounds, false);
     
     // strictly speaking not needed as the glReadPixels should block until the scene is rendered, but this is to safeguard against shitty drivers
@@ -481,12 +480,10 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		std::swap(v.color0.r, v.color0.b);
 	}
 	auto vb = new F2DVertexBuffer;
+
 	vb->UploadData(&vertices[0], vertices.Size(), &indices[0], indices.Size());
 	gl_RenderState.SetVertexBuffer(vb);
 	gl_RenderState.EnableFog(2);
-	gl_RenderState.SetLightIsAttr(true);
-	gl_RenderState.SetLightIndex(-1);
-    gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 
 	for(auto &cmd : commands)
 	{
@@ -499,7 +496,6 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		gl_RenderState.BlendFunc(sb, db);
 		gl_RenderState.EnableBrightmap(!(cmd.mRenderStyle.Flags & STYLEF_ColorIsFixed));
 
-		gl_RenderState.SetTextureMode(cmd.mDrawMode);
 		if (cmd.mFlags & F2DDrawer::DTF_Scissor)
 		{
 			glEnable(GL_SCISSOR_TEST);
@@ -513,14 +509,26 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		}
 		else glDisable(GL_SCISSOR_TEST);
 
-		if (cmd.mSpecialColormap[0].a != 0)
+		int attrindex = cmd.mDrawMode + AttributeBufferData::TextureModeFor2DIndex;
+		// A few settings still require a new attribute buffer
+		if (cmd.mSpecialColormap[0].a != 0 || cmd.mColor1 != 0 || cmd.mDesaturate != 0)
 		{
-			gl_RenderState.SetTextureMode(TM_FIXEDCOLORMAP);
-			gl_RenderState.SetObjectColor(cmd.mSpecialColormap[0]);
-			gl_RenderState.SetObjectColor2(cmd.mSpecialColormap[1]);
+			AttributeBufferData attr;
+			attr.SetDefaults();
+			attr.uTextureMode = cmd.mDrawMode;
+
+			if (cmd.mSpecialColormap[0].a != 0)
+			{
+				attr.uTextureMode = TM_FIXEDCOLORMAP;
+				attr.SetObjectColor(cmd.mSpecialColormap[0]);
+				attr.SetObjectColor2(cmd.mSpecialColormap[1]);
+			}
+			attr.SetFog(cmd.mColor1, 0);
+			attr.uDesaturationFactor = cmd.mDesaturate;
+			GLRenderer->mAttributes->Map();
+			attrindex = GLRenderer->mAttributes->Upload(&attr);
+			GLRenderer->mAttributes->Unmap();
 		}
-		gl_RenderState.SetFog(cmd.mColor1, 0);
-		gl_RenderState.SetColor(1, 1, 1, 1, cmd.mDesaturate); 
 
 
 		if (cmd.mTexture != nullptr)
@@ -529,7 +537,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 			if (mat == nullptr) continue;
 
 			if (gltrans == -1 && cmd.mTranslation != nullptr) gltrans = cmd.mTranslation->GetUniqueIndex();
-			gl_RenderState.SetMaterial(mat, cmd.mFlags & F2DDrawer::DTF_Wrap ? CLAMP_NONE : CLAMP_XY_NOMIP, -gltrans, -1, cmd.mDrawMode == F2DDrawer::DTM_AlphaTexture);
+			gl_RenderState.SetMaterial(mat, cmd.mFlags & F2DDrawer::DTF_Wrap ? CLAMP_NONE : CLAMP_XY_NOMIP, -gltrans, -1);
 			gl_RenderState.EnableTexture(true);
 
 			if (cmd.mFlags & F2DDrawer::DTF_Burn)
@@ -558,9 +566,6 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 			break;
 
 		}
-		gl_RenderState.SetObjectColor(0xffffffff);
-		gl_RenderState.ClearObjectColor2();
-		gl_RenderState.SetTexMatrixIndex(0);
 		gl_RenderState.SetEffect(EFF_NONE);
 
 	}
@@ -571,10 +576,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	gl_RenderState.SetVertexBuffer(mVBO);
 	gl_RenderState.EnableTexture(true);
 	gl_RenderState.EnableBrightmap(true);
-	gl_RenderState.SetTextureMode(TM_MODULATE);
 	gl_RenderState.EnableFog(false);
-	gl_RenderState.ResetColor();
-	gl_RenderState.SetLightIsAttr(false);
 	gl_RenderState.Apply();
 	delete vb;
 	FGLDebug::PopGroup();

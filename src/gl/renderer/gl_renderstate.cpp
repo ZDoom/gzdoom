@@ -54,7 +54,6 @@ static VSMatrix identityMatrix(1);
 
 void FRenderState::Reset()
 {
-	mAttributes.SetDefaults();
 	mTextureEnabled = true;
 	mSplitEnabled = mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
 	mSrcBlend = GL_SRC_ALPHA;
@@ -85,33 +84,8 @@ bool FRenderState::ApplyShader(int attrindex, bool alphateston)
 	}
 	else
 	{
-		if (attrindex == -1) alphateston = mAttributes.uAlphaThreshold >= 0.f;
 		activeShader = GLRenderer->mShaderManager->Get(mTextureEnabled ? mEffectState : SHADER_NoTexture, alphateston, mPassType);
 		activeShader->Bind();
-	}
-
-	if (attrindex < 0)
-	{
-		int fogset = 0;
-
-		if (mFogEnabled)
-		{
-			if (mFogEnabled == 2)
-			{
-				fogset = -3;	// 2D rendering with 'foggy' overlay.
-			}
-			else if (mAttributes.uFogColor.XYZ().isZero())
-			{
-				fogset = gl_fogmode;
-			}
-			else
-			{
-				fogset = -gl_fogmode;
-			}
-		}
-		mAttributes.uFogEnabled = fogset;
-		if (!mGlowEnabled) mAttributes.uGlowTopColor.W = mAttributes.uGlowBottomColor.W = 0.f;
-		attrindex = GLRenderer->mAttributes->Upload(&mAttributes);
 	}
 
 	activeShader->muClipSplit.Set(&uClipSplit.X);
@@ -149,7 +123,7 @@ void FRenderState::Apply(int attrindex, bool alphateston)
 //
 //===========================================================================
 
-void FRenderState::SetMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader, bool alphatexture)
+void FRenderState::SetMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader)
 {
 	if (mat->tex->bHasCanvas)
 	{

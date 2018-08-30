@@ -58,7 +58,7 @@ void FDrawInfo::DrawPSprite (HUDSprite *huds)
 	}
 	else
 	{
-		gl_RenderState.SetMaterial(huds->tex, CLAMP_XY_NOMIP, 0, huds->OverrideShader, !!(huds->RenderStyle.Flags & STYLEF_RedIsAlpha));
+		gl_RenderState.SetMaterial(huds->tex, CLAMP_XY_NOMIP, 0, huds->OverrideShader);
 		gl_RenderState.Apply(huds->attrindex, true);
 		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, huds->mx, 4);
 	}

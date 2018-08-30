@@ -2409,7 +2409,7 @@ private:
 				FString regname;
 				regname.Format("regD%d", i);
 				regD[i] = cc.newInt32(regname.GetChars());
-				cc.mov(regD[i], x86::dword_ptr(initreg, i * 4));
+				cc.mov(regD[i], x86::dword_ptr(initreg, i * sizeof(int32_t)));
 			}
 		}
 		if (sfunc->NumRegF > 0)
@@ -2420,7 +2420,7 @@ private:
 				FString regname;
 				regname.Format("regF%d", i);
 				regF[i] = cc.newXmmSd(regname.GetChars());
-				cc.movsd(regF[i], x86::qword_ptr(initreg, i * 8));
+				cc.movsd(regF[i], x86::qword_ptr(initreg, i * sizeof(double)));
 			}
 		}
 		/*if (sfunc->NumRegS > 0)
@@ -2441,7 +2441,7 @@ private:
 				FString regname;
 				regname.Format("regA%d", i);
 				regA[i] = cc.newIntPtr(regname.GetChars());
-				cc.mov(regA[i], x86::ptr(initreg, i * 4));
+				cc.mov(regA[i], x86::ptr(initreg, i * sizeof(void*)));
 			}
 		}
 

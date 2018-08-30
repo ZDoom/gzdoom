@@ -1681,9 +1681,9 @@ private:
 	void EmitSUBF_KR()
 	{
 		auto tmp = cc.newIntPtr();
-		cc.mov(tmp, ToMemAddress(&konstf[C]));
+		cc.mov(tmp, ToMemAddress(&konstf[B]));
 		cc.movsd(regF[a], asmjit::x86::qword_ptr(tmp));
-		cc.subsd(regF[a], regF[B]);
+		cc.subsd(regF[a], regF[C]);
 	}
 
 	void EmitMULF_RR()

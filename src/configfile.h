@@ -35,6 +35,7 @@
 #define __CONFIGFILE_H__
 
 #include <stdio.h>
+#include "files.h"
 #include "zstring.h"
 
 class FConfigFile
@@ -73,7 +74,7 @@ public:
 	bool WriteConfigFile () const;
 
 protected:
-	virtual void WriteCommentHeader (FILE *file) const;
+	virtual void WriteCommentHeader (FileWriter *file) const;
 
 	virtual char *ReadLine (char *string, int n, void *file) const;
 	bool ReadConfig (void *file);

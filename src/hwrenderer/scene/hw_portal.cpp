@@ -30,6 +30,8 @@
 #include "p_maputl.h"
 #include "hw_portal.h"
 #include "hw_clipper.h"
+#include "hwrenderer/data/flatvertices.h"
+#include "hwrenderer/utility/hw_lighting.h"
 #include "actor.h"
 #include "g_levellocals.h"
 
@@ -626,3 +628,91 @@ void HWPlaneMirrorPortal::Shutdown(HWDrawInfo *di)
 }
 
 const char *HWPlaneMirrorPortal::GetName() { return origin->fC() < 0? "Planemirror ceiling" : "Planemirror floor"; }
+
+
+void GLHorizonInfo::CalcBuffers(HWDrawInfo *di, unsigned *vb, unsigned *vc, int *ai)
+{
+	// create the vertex data for this horizon portal.
+	GLSectorPlane * sp = &plane;
+	auto &vp = di->Viewpoint;
+	const float vx = vp.Pos.X;
+	const float vy = vp.Pos.Y;
+	const float vz = vp.Pos.Z;
+	const float z = sp->Texheight;
+	const float tz = (z - vz);
+
+	// Draw to some far away boundary
+	// This is not drawn as larger strips because it causes visual glitches.
+	int vcount = 16 * 16 * 4;
+	auto verts = di->AllocVertices(vcount + 10);
+	*vc = vcount;
+	*vb = verts.second;
+	auto ptr = verts.first;
+	for (float x = -32768 + vx; x<32768 + vx; x += 4096)
+	{
+		for (float y = -32768 + vy; y<32768 + vy; y += 4096)
+		{
+			ptr->Set(x, z, y, x / 64, -y / 64);
+			ptr++;
+			ptr->Set(x + 4096, z, y, x / 64 + 64, -y / 64);
+			ptr++;
+			ptr->Set(x, z, y + 4096, x / 64, -y / 64 - 64);
+			ptr++;
+			ptr->Set(x + 4096, z, y + 4096, x / 64 + 64, -y / 64 - 64);
+			ptr++;
+		}
+	}
+
+	// fill the gap between the polygon and the true horizon
+	// Since I can't draw into infinity there can always be a
+	// small gap
+	ptr->Set(-32768 + vx, z, -32768 + vy, 512.f, 0);
+	ptr++;
+	ptr->Set(-32768 + vx, vz, -32768 + vy, 512.f, tz);
+	ptr++;
+	ptr->Set(-32768 + vx, z, 32768 + vy, -512.f, 0);
+	ptr++;
+	ptr->Set(-32768 + vx, vz, 32768 + vy, -512.f, tz);
+	ptr++;
+	ptr->Set(32768 + vx, z, 32768 + vy, 512.f, 0);
+	ptr++;
+	ptr->Set(32768 + vx, vz, 32768 + vy, 512.f, tz);
+	ptr++;
+	ptr->Set(32768 + vx, z, -32768 + vy, -512.f, 0);
+	ptr++;
+	ptr->Set(32768 + vx, vz, -32768 + vy, -512.f, tz);
+	ptr++;
+	ptr->Set(-32768 + vx, z, -32768 + vy, 512.f, 0);
+	ptr++;
+	ptr->Set(-32768 + vx, vz, -32768 + vy, 512.f, tz);
+	ptr++;
+
+	AttributeBufferData attr;
+	attr.SetDefaults();
+
+	auto gltexture = FMaterial::ValidateTexture(sp->texture, false, true);
+	if (gltexture == nullptr)
+	{
+		*ai = -1;
+		return;
+	}
+
+	if (gltexture->tex->isFullbright())
+	{
+		// glowing textures are always drawn full bright without color
+		attr.SetColor(255, 0, true, colormap, 1.f);
+		attr.SetFog(255, 0, true, &colormap, false);
+	}
+	else
+	{
+		int rel = getExtraLight();
+		attr.SetColor(lightlevel, rel, di->isFullbrightScene(), colormap, 1.0f);
+		attr.SetFog(lightlevel, rel, di->isFullbrightScene(), &colormap, false);
+	}
+
+	attr.SetObjectColor(specialcolor);
+	attr.uTextureMode = TM_OPAQUE;
+	attr.uTexMatrixIndex = *sp->pUbIndexMatrix;
+	attr.AlphaFunc(ALPHA_GEQUAL, 0.f);
+	*ai = di->UploadAttributes(attr);
+}

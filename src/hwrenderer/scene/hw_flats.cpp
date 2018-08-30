@@ -91,6 +91,52 @@ bool hw_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * glte
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+void GLFlat::BuildAttributes(AttributeBufferData &attr, HWDrawInfo *di, bool isopaque)
+{
+	int rel = getExtraLight();
+
+	attr.SetColor(lightlevel, rel, di->isFullbrightScene(), Colormap, alpha);
+	attr.SetFog(lightlevel, rel, di->isFullbrightScene(), &Colormap, false);
+
+	if (!gltexture || !gltexture->tex->isFullbright())
+		attr.SetObjectColor(FlatColor);
+
+	if (gltexture)
+	{
+		attr.uTexMatrixIndex = *plane.pUbIndexMatrix;
+		attr.uLightIndex = dynlightindex;
+
+		if (!isopaque && !gltexture->tex->GetTranslucency())
+		{
+			attr.AlphaFunc(ALPHA_GEQUAL, gl_mask_threshold);
+			alphateston = true;
+		}
+		else
+		{
+			attr.AlphaFunc(ALPHA_GEQUAL, 0.f);
+			alphateston = false;
+		}
+	}
+	else
+	{
+		attr.uLightIndex = -1;
+		attr.AlphaFunc(ALPHA_GEQUAL, 0.f);
+		alphateston = false;
+	}
+	attrindex = di->UploadAttributes(attr);
+
+	attr.SetObjectColor(1, 1, 1);
+	attr.uTexMatrixIndex = 0;
+}
+
+
+
+//==========================================================================
+//
 // special handling for skyboxes which need texture clamping.
 // This will find the bounding rectangle of the sector and just
 // draw one single polygon filling that rectangle with a clamped
@@ -192,7 +238,40 @@ inline void GLFlat::PutFlat(HWDrawInfo *di, bool fog)
 	{
 		SetupLights(di, sector->lighthead, lightdata, sector->PortalGroup);
 	}
-	di->AddFlat(this, fog);
+
+	int list;
+
+	if (renderstyle != STYLE_Translucent || alpha < 1.f - FLT_EPSILON || fog || gltexture == nullptr)
+	{
+		// translucent 3D floors go into the regular translucent list, translucent portals go into the translucent border list.
+		list = (renderflags&SSRF_RENDER3DPLANES) ? GLDL_TRANSLUCENT : GLDL_TRANSLUCENTBORDER;
+	}
+	else if (gltexture->tex->GetTranslucency())
+	{
+		if (stack)
+		{
+			list = GLDL_TRANSLUCENTBORDER;
+		}
+		else if ((renderflags&SSRF_RENDER3DPLANES) && !plane.plane.isSlope())
+		{
+			list = GLDL_TRANSLUCENT;
+		}
+		else
+		{
+			list = GLDL_PLAINFLATS;
+		}
+	}
+	else
+	{
+		bool masked = gltexture->isMasked() && ((renderflags&SSRF_RENDER3DPLANES) || stack);
+		list = masked ? GLDL_MASKEDFLATS : GLDL_PLAINFLATS;
+	}
+
+	AttributeBufferData attr;
+	attr.SetDefaults();
+	BuildAttributes(attr, di, false);
+
+	di->AddFlat(this, list);
 }
 
 //==========================================================================

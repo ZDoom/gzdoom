@@ -40,7 +40,6 @@
 #include "gl_load/gl_interface.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/dynlights/gl_lightbuffer.h"
@@ -48,98 +47,6 @@
 #include "gl/data/gl_modelbuffer.h"
 
 
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool istrans)
-{
-	int dli = flat->dynlightindex;
-	auto vcount = flat->sector->ibocount;
-
-	gl_RenderState.Apply();
-	auto iboindex = flat->iboindex;
-
-
-	if (vcount > 0)
-	{
-		drawcalls.Clock();
-		glDrawElements(GL_TRIANGLES, vcount, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + iboindex);
-		drawcalls.Unclock();
-		flatvertices += vcount;
-		flatprimitives++;
-	}
-	else
-	{
-		int index = iboindex;
-		for (int i = 0; i < flat->sector->subsectorcount; i++)
-		{
-			subsector_t * sub = flat->sector->subsectors[i];
-			if (sub->numlines <= 2) continue;
-
-			if (ss_renderflags[sub->Index()] & flat->renderflags || istrans)
-			{
-				drawcalls.Clock();
-				glDrawElements(GL_TRIANGLES, (sub->numlines - 2) * 3, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + index);
-				drawcalls.Unclock();
-				flatvertices += sub->numlines;
-				flatprimitives++;
-			}
-			index += (sub->numlines - 2) * 3;
-		}
-	}
-
-	if (!(flat->renderflags&SSRF_RENDER3DPLANES))
-	{
-		// Draw the subsectors assigned to it due to missing textures
-		gl_subsectorrendernode * node = (flat->renderflags&SSRF_RENDERFLOOR)?
-			GetOtherFloorPlanes(flat->sector->sectornum) :
-			GetOtherCeilingPlanes(flat->sector->sectornum);
-
-		while (node)
-		{
-			gl_RenderState.SetLightIndex(node->lightindex);
-			gl_RenderState.Apply();
-			auto num = node->sub->numlines;
-			flatvertices += num;
-			flatprimitives++;
-			glDrawArrays(GL_TRIANGLE_FAN, node->vertexindex, num);
-			node = node->next;
-		}
-		// Flood gaps with the back side's ceiling/floor texture
-		// This requires a stencil because the projected plane interferes with
-		// the depth buffer
-		gl_floodrendernode * fnode = (flat->renderflags&SSRF_RENDERFLOOR) ?
-			GetFloodFloorSegs(flat->sector->sectornum) :
-			GetFloodCeilingSegs(flat->sector->sectornum);
-
-		gl_RenderState.SetLightIndex(flat->dynlightindex);
-		gl_RenderState.Apply();
-		while (fnode)
-		{
-			flatvertices += 12;
-			flatprimitives+=3;
-
-			// Push bleeding floor/ceiling textures back a little in the z-buffer
-			// so they don't interfere with overlapping mid textures.
-			glEnable(GL_POLYGON_OFFSET_FILL);
-			glPolygonOffset(1.0f, 128.0f);
-
-			SetupFloodStencil(fnode->vertexindex);
-			glDrawArrays(GL_TRIANGLE_FAN, fnode->vertexindex + 4, 4);
-			ClearFloodStencil(fnode->vertexindex);
-
-			glPolygonOffset(0.0f, 0.0f);
-			glDisable(GL_POLYGON_OFFSET_FILL);
-
-			fnode = fnode->next;
-		}
-
-	}
-}
 
 //==========================================================================
 //
@@ -157,7 +64,7 @@ void FDrawInfo::SetupFloodStencil(int vindex)
 
 	glStencilFunc(GL_EQUAL, recursion, ~0);		// create stencil
 	glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);		// increment stencil of valid pixels
-												
+
 	glColorMask(0, 0, 0, 0);						// don't write to the graphics buffer
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(true);
@@ -202,10 +109,97 @@ void FDrawInfo::ClearFloodStencil(int vindex)
 //
 //
 //==========================================================================
+
+void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass)
+{
+	int dli = flat->dynlightindex;
+	auto vcount = flat->sector->ibocount;
+
+	gl_RenderState.Apply(flat->attrindex, flat->alphateston);
+
+	if (vcount > 0)
+	{
+		drawcalls.Clock();
+		glDrawElements(GL_TRIANGLES, vcount, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + flat->iboindex);
+		drawcalls.Unclock();
+		flatvertices += vcount;
+		flatprimitives++;
+	}
+	else
+	{
+		int index = flat->iboindex;
+		for (int i = 0; i < flat->sector->subsectorcount; i++)
+		{
+			subsector_t * sub = flat->sector->subsectors[i];
+			if (sub->numlines <= 2) continue;
+
+			if (ss_renderflags[sub->Index()] & flat->renderflags)
+			{
+				drawcalls.Clock();
+				glDrawElements(GL_TRIANGLES, (sub->numlines - 2) * 3, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + index);
+				drawcalls.Unclock();
+				flatvertices += sub->numlines;
+				flatprimitives++;
+			}
+			index += (sub->numlines - 2) * 3;
+		}
+	}
+
+	if (!(flat->renderflags&SSRF_RENDER3DPLANES))
+	{
+		// Draw the subsectors assigned to it due to missing textures
+		gl_subsectorrendernode * node = (flat->renderflags&SSRF_RENDERFLOOR)?
+			GetOtherFloorPlanes(flat->sector->sectornum) :
+			GetOtherCeilingPlanes(flat->sector->sectornum);
+
+		while (node)
+		{
+			//gl_RenderState.SetLightIndex(node->lightindex);
+			//gl_RenderState.Apply();
+			auto num = node->sub->numlines;
+			flatvertices += num;
+			flatprimitives++;
+			glDrawArrays(GL_TRIANGLE_FAN, node->vertexindex, num);
+			node = node->next;
+		}
+		// Flood gaps with the back side's ceiling/floor texture
+		// This requires a stencil because the projected plane interferes with
+		// the depth buffer
+		gl_floodrendernode * fnode = (flat->renderflags&SSRF_RENDERFLOOR) ?
+			GetFloodFloorSegs(flat->sector->sectornum) :
+			GetFloodCeilingSegs(flat->sector->sectornum);
+
+		gl_RenderState.SetLightIndex(flat->dynlightindex);
+		gl_RenderState.Apply();
+		while (fnode)
+		{
+			flatvertices += 12;
+			flatprimitives+=3;
+
+			// Push bleeding floor/ceiling textures back a little in the z-buffer
+			// so they don't interfere with overlapping mid textures.
+			glEnable(GL_POLYGON_OFFSET_FILL);
+			glPolygonOffset(1.0f, 128.0f);
+
+			SetupFloodStencil(fnode->vertexindex);
+			glDrawArrays(GL_TRIANGLE_FAN, fnode->vertexindex + 4, 4);
+			ClearFloodStencil(fnode->vertexindex);
+
+			glPolygonOffset(0.0f, 0.0f);
+			glDisable(GL_POLYGON_OFFSET_FILL);
+
+			fnode = fnode->next;
+		}
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has meaning for GLPASS_LIGHTSONLY
 {
-	int rel = getExtraLight();
-
 	auto &plane = flat->plane;
 	gl_RenderState.SetNormal(plane.plane.Normal().X, plane.plane.Normal().Z, plane.plane.Normal().Y);
 	GLRenderer->mModelMatrix->Bind(0);
@@ -214,58 +208,31 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 	{
 		int a = 0;
 	}
-	switch (pass)
-	{
-	case GLPASS_ALL:	// Single-pass rendering
-		SetColor(flat->lightlevel, rel, flat->Colormap,1.0f);
-		SetFog(flat->lightlevel, rel, &flat->Colormap, false);
-		if (!flat->gltexture->tex->isFullbright())
-			gl_RenderState.SetObjectColor(flat->FlatColor | 0xff000000);
+	if (flat->renderstyle == STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-		gl_RenderState.SetLightIndex(flat->dynlightindex);
-		if (flat->sector->special != GLSector_Skybox)
+	if (flat->sector->special == GLSector_Skybox)
+	{
+		gl_RenderState.SetMaterial(flat->gltexture, CLAMP_XY, 0, -1, false);
+		gl_RenderState.Apply();
+		glDrawArrays(GL_TRIANGLE_FAN, flat->iboindex, 4);
+		flatvertices += 4;
+		flatprimitives++;
+	}
+	else
+	{
+		if (flat->gltexture)
 		{
-			gl_RenderState.SetTexMatrixIndex(*flat->plane.pUbIndexMatrix);
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
-			DrawSubsectors(flat, pass, false);
 		}
 		else
 		{
-			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_XY, 0, -1, false);
-			gl_RenderState.Apply();
-			glDrawArrays(GL_TRIANGLE_FAN, flat->iboindex, 4);
-			flatvertices += 4;
-			flatprimitives++;
-		}
-		gl_RenderState.SetObjectColor(0xffffffff);
-		break;
-
-	case GLPASS_TRANSLUCENT:
-		if (flat->renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE);
-		SetColor(flat->lightlevel, rel, flat->Colormap, flat->alpha);
-		SetFog(flat->lightlevel, rel, &flat->Colormap, false);
-		if (!flat->gltexture || !flat->gltexture->tex->isFullbright())
-			gl_RenderState.SetObjectColor(flat->FlatColor | 0xff000000);
-		if (!flat->gltexture)
-		{
-			gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 			gl_RenderState.EnableTexture(false);
-			DrawSubsectors(flat, pass, true);
-			gl_RenderState.EnableTexture(true);
 		}
-		else 
-		{
-			if (!flat->gltexture->tex->GetTranslucency()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
-			else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
-			gl_RenderState.SetTexMatrixIndex(*flat->plane.pUbIndexMatrix);
-			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
-			DrawSubsectors(flat, pass, true);
-		}
-		if (flat->renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		gl_RenderState.SetObjectColor(0xffffffff);
-		break;
+		DrawSubsectors(flat, pass);
+		gl_RenderState.EnableTexture(true);
 	}
-	gl_RenderState.SetTexMatrixIndex(0);
+
+	if (flat->renderstyle == STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 //==========================================================================
@@ -277,35 +244,8 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 //
 //==========================================================================
 
-void FDrawInfo::AddFlat(GLFlat *flat, bool fog)
+void FDrawInfo::AddFlat(GLFlat *flat, int list)
 {
-	int list;
-
-	if (flat->renderstyle != STYLE_Translucent || flat->alpha < 1.f - FLT_EPSILON || fog || flat->gltexture == nullptr)
-	{
-		// translucent 3D floors go into the regular translucent list, translucent portals go into the translucent border list.
-		list = (flat->renderflags&SSRF_RENDER3DPLANES) ? GLDL_TRANSLUCENT : GLDL_TRANSLUCENTBORDER;
-	}
-	else if (flat->gltexture->tex->GetTranslucency())
-	{
-		if (flat->stack)
-		{
-			list = GLDL_TRANSLUCENTBORDER;
-		}
-		else if ((flat->renderflags&SSRF_RENDER3DPLANES) && !flat->plane.plane.isSlope())
-		{
-			list = GLDL_TRANSLUCENT;
-		}
-		else
-		{
-			list = GLDL_PLAINFLATS;
-		}
-	}
-	else
-	{
-		bool masked = flat->gltexture->isMasked() && ((flat->renderflags&SSRF_RENDER3DPLANES) || flat->stack);
-		list = masked ? GLDL_MASKEDFLATS : GLDL_PLAINFLATS;
-	}
 	auto newflat = drawlists[list].NewFlat();
 	*newflat = *flat;
 }

@@ -52,6 +52,7 @@ struct gl_subsectorrendernode
 	subsector_t *				sub;
 	int							lightindex;
 	int							vertexindex;
+	int							attrindex;
 };
 
 struct gl_floodrendernode
@@ -292,10 +293,11 @@ public:
 
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs);
     virtual void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) = 0;
-    
+	void HandleRenderHacks();
+
     virtual void AddWall(GLWall *w, int list) = 0;
 	virtual void AddPortal(GLWall *w, int portaltype) = 0;
-	virtual void AddFlat(GLFlat *flat, bool fog) = 0;
+	virtual void AddFlat(GLFlat *flat, int list) = 0;
 	virtual void AddSprite(GLSprite *sprite, bool translucent) = 0;
 	virtual void AddHUDSprite(HUDSprite *huds) = 0;
 

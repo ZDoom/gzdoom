@@ -1364,3 +1364,10 @@ void HWDrawInfo::ProcessSectorStacks(area_t in_area)
 	CeilingStacks.Clear();
 }
 
+void HWDrawInfo::HandleRenderHacks()
+{
+	HandleMissingTextures(in_area);	// Missing upper/lower textures
+	HandleHackedSubsectors();	// open sector hacks for deep water
+	ProcessSectorStacks(in_area);		// merge visplanes of sector stacks
+	PrepareUnhandledMissingTextures();
+}

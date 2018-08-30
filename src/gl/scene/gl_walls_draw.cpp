@@ -30,7 +30,6 @@
 
 #include "gl_load/gl_interface.h"
 #include "hwrenderer/utility/hw_cvars.h"
-#include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/data/gl_vertexbuffer.h"
@@ -227,7 +226,7 @@ void FDrawInfo::AddPortal(GLWall *wall, int ptype)
 		portal = FindPortal(wall->horizon);
 		if (!portal)
 		{
-			portal = new GLHorizonPortal(&pstate, wall->horizon, Viewpoint);
+			portal = new GLHorizonPortal(this, &pstate, wall->horizon, Viewpoint);
 			Portals.Push(portal);
 		}
 		portal->AddLine(wall);
@@ -238,7 +237,7 @@ void FDrawInfo::AddPortal(GLWall *wall, int ptype)
 		if (!portal)
 		{
 			// either a regular skybox or an Eternity-style horizon
-			if (wall->secportal->mType != PORTS_SKYVIEWPOINT) portal = new GLEEHorizonPortal(&pstate, wall->secportal);
+			if (wall->secportal->mType != PORTS_SKYVIEWPOINT) portal = new GLEEHorizonPortal(this, &pstate, wall->secportal);
 			else
 			{
 				portal = new GLScenePortal(&pstate, new HWSkyboxPortal(wall->secportal));

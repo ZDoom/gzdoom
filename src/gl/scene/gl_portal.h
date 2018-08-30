@@ -129,6 +129,7 @@ struct GLHorizonPortal : public GLPortal
 	GLHorizonInfo * origin;
 	unsigned int voffset;
 	unsigned int vcount;
+	int attrindex;
 	friend struct GLEEHorizonPortal;
 
 protected:
@@ -140,12 +141,16 @@ protected:
 
 public:
 	
-	GLHorizonPortal(FPortalSceneState *state, GLHorizonInfo * pt, FRenderViewpoint &vp, bool local = false);
+	GLHorizonPortal(HWDrawInfo *di, FPortalSceneState *state, GLHorizonInfo * pt, FRenderViewpoint &vp, bool local = false);
 };
 
 struct GLEEHorizonPortal : public GLPortal
 {
 	FSectorPortal * portal;
+	GLHorizonInfo horz[2];
+	unsigned voffset[2];
+	unsigned vcount[2];
+	int attrs[2];
 
 protected:
 	virtual void DrawContents(HWDrawInfo *di);
@@ -156,11 +161,7 @@ protected:
 
 public:
 	
-	GLEEHorizonPortal(FPortalSceneState *state, FSectorPortal *pt) : GLPortal(state)
-	{
-		portal=pt;
-	}
-
+	GLEEHorizonPortal(HWDrawInfo *di, FPortalSceneState *state, FSectorPortal *pt);
 };
 
 #endif

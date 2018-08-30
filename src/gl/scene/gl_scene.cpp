@@ -46,7 +46,6 @@
 #include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_debug.h"
 #include "hwrenderer/utility/hw_cvars.h"
-#include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/data/gl_vertexbuffer.h"
@@ -126,12 +125,8 @@ void FDrawInfo::CreateScene()
 	// And now the crappy hacks that have to be done to avoid rendering anomalies.
 	// These cannot be multithreaded when the time comes because all these depend
 	// on the global 'validcount' variable.
-
-	HandleMissingTextures(in_area);	// Missing upper/lower textures
-	HandleHackedSubsectors();	// open sector hacks for deep water
-	ProcessSectorStacks(in_area);		// merge visplanes of sector stacks
-	PrepareUnhandledMissingTextures();
-
+	HandleRenderHacks();
+	
 	GLRenderer->mModelMatrix->Unmap();
 	GLRenderer->mLights->Finish();
 	GLRenderer->mVBO->Unmap();

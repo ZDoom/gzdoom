@@ -1,7 +1,6 @@
 #ifndef __GL_DRAWINFO_H
 #define __GL_DRAWINFO_H
 
-#include "gl/renderer/gl_lightdata.h"
 #include "hwrenderer/scene/hw_drawlist.h"
 #include "hwrenderer/scene/hw_weapon.h"
 #include "hwrenderer/scene/hw_viewpointuniforms.h"
@@ -30,7 +29,7 @@ struct FDrawInfo : public HWDrawInfo
 	void AddWall(GLWall *wall, int list) override;
 	GLDecal *AddDecal(bool onmirror) override;
 	void AddPortal(GLWall *w, int portaltype) override;
-	void AddFlat(GLFlat *flat, bool fog) override;
+	void AddFlat(GLFlat *flat, int list) override;
 	void AddSprite(GLSprite *sprite, bool translucent) override;
 	void AddHUDSprite(HUDSprite *huds) override;
 
@@ -62,7 +61,7 @@ struct FDrawInfo : public HWDrawInfo
 
 	// Flat drawer
 	void DrawFlat(GLFlat *flat, int pass, bool trans) override;	// trans only has meaning for GLPASS_LIGHTSONLY
-	void DrawSubsectors(GLFlat *flat, int pass, bool istrans);
+	void DrawSubsectors(GLFlat *flat, int pass);
 
 	// Sprite drawer
 	void DrawSprite(GLSprite *sprite, int pass);
@@ -86,17 +85,6 @@ struct FDrawInfo : public HWDrawInfo
 
 	static FDrawInfo *StartDrawInfo(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
 	FDrawInfo *EndDrawInfo();
-	
-	void SetColor(int light, int rellight, const FColormap &cm, float alpha, bool weapon = false)
-	{
-		gl_SetColor(light, rellight, isFullbrightScene(), cm, alpha, weapon);
-	}
-
-	void SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isadditive)
-	{
-		gl_SetFog(lightlevel, rellight, isFullbrightScene(), cmap, isadditive);
-	}
-
 };
 
 

@@ -33,6 +33,8 @@ struct GLHorizonInfo
 	int lightlevel;
 	FColormap colormap;
 	PalEntry specialcolor;
+
+	void CalcBuffers(HWDrawInfo *di, unsigned *vbuffer, unsigned *vcount, int *attr);
 };
 
 struct FPortalSceneState;

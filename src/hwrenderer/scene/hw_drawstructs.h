@@ -559,10 +559,14 @@ public:
 	int lightlevel;
 	bool stack;
 	bool ceiling;
+	bool alphateston;
 	uint8_t renderflags;
 	int iboindex;
+	int attrindex;
 
 	int dynlightindex;
+
+	void BuildAttributes(AttributeBufferData &attr, HWDrawInfo *di, bool trans);
 
 	void CreateSkyboxVertices(FFlatVertex *buffer);
 	void SetupLights(HWDrawInfo *di, FLightNode *head, FDynLightData &lightdata, int portalgroup);

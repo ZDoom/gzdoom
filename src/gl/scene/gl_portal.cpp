@@ -36,11 +36,11 @@
 #include "g_levellocals.h"
 
 #include "gl_load/gl_interface.h"
-#include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "hwrenderer/scene/hw_clipper.h"
+#include "hwrenderer/utility/hw_lighting.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/data/gl_viewpointbuffer.h"
 
@@ -322,63 +322,11 @@ void GLPortal::End(HWDrawInfo *di, bool usestencil)
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-GLHorizonPortal::GLHorizonPortal(FPortalSceneState *s, GLHorizonInfo * pt, FRenderViewpoint &vp, bool local)
+GLHorizonPortal::GLHorizonPortal(HWDrawInfo *di, FPortalSceneState *s, GLHorizonInfo * pt, FRenderViewpoint &vp, bool local)
 	: GLPortal(s, local)
 {
 	origin = pt;
-
-	// create the vertex data for this horizon portal.
-	GLSectorPlane * sp = &origin->plane;
-	const float vx = vp.Pos.X;
-	const float vy = vp.Pos.Y;
-	const float vz = vp.Pos.Z;
-	const float z = sp->Texheight;
-	const float tz = (z - vz);
-
-	// Draw to some far away boundary
-	// This is not drawn as larger strips because it causes visual glitches.
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	for (float x = -32768 + vx; x<32768 + vx; x += 4096)
-	{
-		for (float y = -32768 + vy; y<32768 + vy; y += 4096)
-		{
-			ptr->Set(x, z, y, x / 64, -y / 64);
-			ptr++;
-			ptr->Set(x + 4096, z, y, x / 64 + 64, -y / 64);
-			ptr++;
-			ptr->Set(x, z, y + 4096, x / 64, -y / 64 - 64);
-			ptr++;
-			ptr->Set(x + 4096, z, y + 4096, x / 64 + 64, -y / 64 - 64);
-			ptr++;
-		}
-	}
-
-	// fill the gap between the polygon and the true horizon
-	// Since I can't draw into infinity there can always be a
-	// small gap
-	ptr->Set(-32768 + vx, z, -32768 + vy, 512.f, 0);
-	ptr++;
-	ptr->Set(-32768 + vx, vz, -32768 + vy, 512.f, tz);
-	ptr++;
-	ptr->Set(-32768 + vx, z, 32768 + vy, -512.f, 0);
-	ptr++;
-	ptr->Set(-32768 + vx, vz, 32768 + vy, -512.f, tz);
-	ptr++;
-	ptr->Set(32768 + vx, z, 32768 + vy, 512.f, 0);
-	ptr++;
-	ptr->Set(32768 + vx, vz, 32768 + vy, 512.f, tz);
-	ptr++;
-	ptr->Set(32768 + vx, z, -32768 + vy, -512.f, 0);
-	ptr++;
-	ptr->Set(32768 + vx, vz, -32768 + vy, -512.f, tz);
-	ptr++;
-	ptr->Set(-32768 + vx, z, -32768 + vy, 512.f, 0);
-	ptr++;
-	ptr->Set(-32768 + vx, vz, -32768 + vy, 512.f, tz);
-	ptr++;
-
-	vcount = GLRenderer->mVBO->GetCount(ptr, &voffset) - 10;
-
+	if (!local) pt->CalcBuffers(di, &voffset, &vcount, &attrindex);
 }
 
 //-----------------------------------------------------------------------------
@@ -404,29 +352,10 @@ void GLHorizonPortal::DrawContents(HWDrawInfo *hwdi)
 	}
 	di->SetCameraPos(vp.Pos);
 
-
-	if (gltexture && gltexture->tex->isFullbright())
-	{
-		// glowing textures are always drawn full bright without color
-		di->SetColor(255, 0, origin->colormap, 1.f);
-		di->SetFog(255, 0, &origin->colormap, false);
-	}
-	else 
-	{
-		int rel = getExtraLight();
-		di->SetColor(origin->lightlevel, rel, origin->colormap, 1.0f);
-		di->SetFog(origin->lightlevel, rel, &origin->colormap, false);
-	}
-
-
 	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
-	gl_RenderState.SetObjectColor(origin->specialcolor);
 
-	gl_RenderState.SetTexMatrixIndex(*sp->pUbIndexMatrix);
-	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
-	gl_RenderState.SetLightIndex(-1);
-	gl_RenderState.Apply();
+	gl_RenderState.Apply(attrindex, false);
 
 
 	for (unsigned i = 0; i < vcount; i += 4)
@@ -434,8 +363,6 @@ void GLHorizonPortal::DrawContents(HWDrawInfo *hwdi)
 		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, voffset + i, 4);
 	}
 	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, voffset + vcount, 10);
-
-	gl_RenderState.SetTexMatrixIndex(0);
 }
 
 
@@ -452,6 +379,34 @@ void GLHorizonPortal::DrawContents(HWDrawInfo *hwdi)
 //
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
+
+GLEEHorizonPortal::GLEEHorizonPortal(HWDrawInfo *di, FPortalSceneState *state, FSectorPortal *pt) : GLPortal(state)
+{
+	portal = pt;
+	sector_t *sector = portal->mOrigin;
+	auto &vp = di->Viewpoint;
+
+	horz[0].plane.GetFromSector(sector, sector_t::ceiling);
+	horz[0].lightlevel = hw_ClampLight(sector->GetCeilingLight());
+	horz[0].colormap = sector->Colormap;
+	horz[0].specialcolor = 0xffffffff;
+	if (portal->mType == PORTS_PLANE)
+	{
+		horz[0].plane.Texheight = vp.Pos.Z + fabs(horz[0].plane.Texheight);
+	}
+	horz[0].CalcBuffers(di, &voffset[0], &vcount[0], &attrs[0]);
+
+	horz[1].plane.GetFromSector(sector, sector_t::floor);
+	horz[1].lightlevel = hw_ClampLight(sector->GetFloorLight());
+	horz[1].colormap = sector->Colormap;
+	horz[1].specialcolor = 0xffffffff;
+	if (portal->mType == PORTS_PLANE)
+	{
+		horz[1].plane.Texheight = vp.Pos.Z - fabs(horz[1].plane.Texheight);
+	}
+	horz[1].CalcBuffers(di, &voffset[1], &vcount[1], &attrs[1]);
+
+}
 
 //-----------------------------------------------------------------------------
 //
@@ -473,30 +428,19 @@ void GLEEHorizonPortal::DrawContents(HWDrawInfo *di)
 	}
 	if (sector->GetTexture(sector_t::ceiling) != skyflatnum)
 	{
-		GLHorizonInfo horz;
-		horz.plane.GetFromSector(sector, sector_t::ceiling);
-		horz.lightlevel = hw_ClampLight(sector->GetCeilingLight());
-		horz.colormap = sector->Colormap;
-		horz.specialcolor = 0xffffffff;
-		if (portal->mType == PORTS_PLANE)
-		{
-			horz.plane.Texheight = vp.Pos.Z + fabs(horz.plane.Texheight);
-		}
-		GLHorizonPortal ceil(mState, &horz, di->Viewpoint, true);
+		GLHorizonPortal ceil(di, mState, &horz[0], di->Viewpoint, true);
+		ceil.vcount = vcount[0];
+		ceil.voffset = voffset[0];
+		ceil.attrindex = attrs[0];
 		ceil.DrawContents(di);
 	}
 	if (sector->GetTexture(sector_t::floor) != skyflatnum)
 	{
-		GLHorizonInfo horz;
-		horz.plane.GetFromSector(sector, sector_t::floor);
-		horz.lightlevel = hw_ClampLight(sector->GetFloorLight());
-		horz.colormap = sector->Colormap;
-		horz.specialcolor = 0xffffffff;
-		if (portal->mType == PORTS_PLANE)
-		{
-			horz.plane.Texheight = vp.Pos.Z - fabs(horz.plane.Texheight);
-		}
-		GLHorizonPortal floor(mState, &horz, di->Viewpoint, true);
+		GLHorizonPortal floor(di, mState, &horz[1], di->Viewpoint, true);
+		floor.vcount = vcount[1];
+		floor.voffset = voffset[1];
+		floor.attrindex = attrs[1];
+		floor.DrawContents(di);
 		floor.DrawContents(di);
 	}
 }

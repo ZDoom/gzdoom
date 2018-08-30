@@ -149,6 +149,7 @@ public:
 	
 		
 	void AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t color);
+	void AddThickLine(int x1, int y1, int x2, int y2, double thickness, uint32_t color);
 	void AddPixel(int x1, int y1, int palcolor, uint32_t color);
 
 	void Clear();

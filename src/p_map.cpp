@@ -3718,6 +3718,22 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 				}
 			}
 		}
+		if (mo->BounceFlags & BOUNCE_UseBounceState)
+		{
+			FName names[] = { NAME_Bounce, NAME_Actor, NAME_Creature };
+			FState *bouncestate;
+			int count = 2;
+			
+			if ((BlockingMobj->flags & MF_SHOOTABLE) && !(BlockingMobj->flags & MF_NOBLOOD))
+			{
+				count = 3;
+			}
+			bouncestate = mo->FindState(count, names);
+			if (bouncestate != NULL)
+			{
+				mo->SetState(bouncestate);
+			}
+		}
 		return true;
 	}
 	return false;

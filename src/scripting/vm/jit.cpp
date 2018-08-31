@@ -34,7 +34,6 @@
 #define ASSERTKS(x)		assert(sfunc != NULL && (unsigned)(x) < sfunc->NumKonstS)
 
 // [pbeta] TODO: VM aborts
-#define NULL_POINTER_CHECK(a,o,x) 
 #define BINARY_OP_INT(op,out,r,l) \
 { \
 	auto tmp = cc.newInt32(); \
@@ -145,10 +144,10 @@ private:
 			EMIT_OP(LK_R);
 			EMIT_OP(LKF_R);
 			// EMIT_OP(LKS_R);
-			// EMIT_OP(LKP_R);
+			EMIT_OP(LKP_R);
 			// EMIT_OP(LFP);
-			// EMIT_OP(META);
-			// EMIT_OP(CLSS);
+			EMIT_OP(META);
+			EMIT_OP(CLSS);
 			EMIT_OP(LB);
 			EMIT_OP(LB_R);
 			EMIT_OP(LH);
@@ -165,10 +164,10 @@ private:
 			EMIT_OP(LDP_R);
 			// EMIT_OP(LS);
 			// EMIT_OP(LS_R);
-			// EMIT_OP(LO);
-			// EMIT_OP(LO_R);
-			// EMIT_OP(LP);
-			// EMIT_OP(LP_R);
+			EMIT_OP(LO);
+			EMIT_OP(LO_R);
+			EMIT_OP(LP);
+			EMIT_OP(LP_R);
 			EMIT_OP(LV2);
 			EMIT_OP(LV2_R);
 			EMIT_OP(LV3);
@@ -188,10 +187,10 @@ private:
 			EMIT_OP(SDP_R);
 			//EMIT_OP(SS);
 			//EMIT_OP(SS_R);
-			//EMIT_OP(SO);
-			//EMIT_OP(SO_R);
-			//EMIT_OP(SP);
-			//EMIT_OP(SP_R);
+			EMIT_OP(SO);
+			EMIT_OP(SO_R);
+			EMIT_OP(SP);
+			EMIT_OP(SP_R);
 			EMIT_OP(SV2);
 			EMIT_OP(SV2_R);
 			EMIT_OP(SV3);
@@ -386,122 +385,146 @@ private:
 
 	void EmitLK_R()
 	{
-		cc.mov(regD[a], asmjit::x86::ptr(ToMemAddress(konstd), regD[B], 2, C * 4));
+		cc.mov(regD[a], asmjit::x86::ptr(ToMemAddress(konstd), regD[B], 2, C * sizeof(int32_t)));
 	}
 
 	void EmitLKF_R()
 	{
 		auto tmp = cc.newIntPtr();
 		cc.mov(tmp, ToMemAddress(konstf + BC));
-		cc.movsd(regF[a], asmjit::x86::qword_ptr(tmp, regD[B], 3, C * 8));
+		cc.movsd(regF[a], asmjit::x86::qword_ptr(tmp, regD[B], 3, C * sizeof(double)));
 	}
 
-	/*void EmitLKS_R() // load string constant indexed
+	//void EmitLKS_R() { } // load string constant indexed
+
+	void EmitLKP_R()
 	{
-		//cc.mov(regS[a], konsts[regD[B] + C]);
+		cc.mov(regA[a], asmjit::x86::ptr(ToMemAddress(konsta), regD[B], 2, C * sizeof(void*)));
 	}
 
-	void EmitLKP_R() // load pointer constant indexed
-	{
-		//cc.mov(b, regD[B] + C);
-		//cc.mov(regA[a], konsta[b].v);
-	}
-
-	void EmitLFP() // load frame pointer
-	{
-	}
-
-	void EmitMETA() // load a class's meta data address
-	{
-	}
-
-	void EmitCLSS() // load a class's descriptor address
+	/*void EmitLFP() // load frame pointer
 	{
 	}*/
+
+	void EmitMETA()
+	{
+		typedef void*(*FuncPtr)(void*);
+
+		auto label = cc.newLabel();
+		cc.test(regA[B], regA[B]);
+		cc.jne(label);
+		EmitThrowException(X_READ_NIL);
+		cc.bind(label);
+
+		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](void *o) -> void*
+		{
+			return static_cast<DObject*>(o)->GetClass();
+		}))), asmjit::FuncSignature1<void*, void*>());
+		call->setRet(0, regA[a]);
+		call->setArg(0, regA[B]);
+	}
+
+	void EmitCLSS()
+	{
+		typedef void*(*FuncPtr)(void*);
+
+		auto label = cc.newLabel();
+		cc.test(regA[B], regA[B]);
+		cc.jne(label);
+		EmitThrowException(X_READ_NIL);
+		cc.bind(label);
+
+		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](void *o) -> void*
+		{
+			return static_cast<DObject*>(o)->GetClass()->Meta;
+		}))), asmjit::FuncSignature1<void*, void*>());
+		call->setRet(0, regA[a]);
+		call->setArg(0, regA[B]);
+	}
 
 	// Load from memory. rA = *(rB + rkC)
 
 	void EmitLB()
 	{
-		NULL_POINTER_CHECK(PB, KC, X_READ_NIL);
+		EmitNullPointerThrow(B, X_READ_NIL);
 		cc.movsx(regD[a], asmjit::x86::byte_ptr(PB, KC));
 	}
 
 	void EmitLB_R()
 	{
-		NULL_POINTER_CHECK(PB, RC, X_READ_NIL);
+		EmitNullPointerThrow(B, X_READ_NIL);
 		cc.movsx(regD[a], asmjit::x86::byte_ptr(PB, RC));
 	}
 
 	void EmitLH()
 	{
-		NULL_POINTER_CHECK(PB, KC, X_READ_NIL);
+		EmitNullPointerThrow(B, X_READ_NIL);
 		cc.movsx(regD[a], asmjit::x86::word_ptr(PB, KC));
 	}
 
 	void EmitLH_R()
 	{
-		NULL_POINTER_CHECK(PB, RC, X_READ_NIL);
+		EmitNullPointerThrow(B, X_READ_NIL);
 		cc.movsx(regD[a], asmjit::x86::word_ptr(PB, RC));
 	}
 
 	void EmitLW()
 	{
-		NULL_POINTER_CHECK(PB, KC, X_READ_NIL);
+		EmitNullPointerThrow(B, X_READ_NIL);
 		cc.mov(regD[a], asmjit::x86::dword_ptr(PB, KC));
 	}
 
 	void EmitLW_R()
 	{
-		NULL_POINTER_CHECK(PB, RC, X_READ_NIL);
+		EmitNullPointerThrow(B, X_READ_NIL);
 		cc.mov(regD[a], asmjit::x86::dword_ptr(PB, RC));
 	}
 
 	void EmitLBU()
 	{
-		NULL_POINTER_CHECK(PB, KC, X_READ_NIL);
+		EmitNullPointerThrow(B, X_READ_NIL);
 		cc.mov(regD[a], asmjit::x86::byte_ptr(PB, KC));
 	}
 
 	void EmitLBU_R()
 	{
-		NULL_POINTER_CHECK(PB, RC, X_READ_NIL);
+		EmitNullPointerThrow(B, X_READ_NIL);
 		cc.mov(regD[a], asmjit::x86::byte_ptr(PB, RC));
 	}
 
 	void EmitLHU()
 	{
-		NULL_POINTER_CHECK(PB, KC, X_READ_NIL);
+		EmitNullPointerThrow(B, X_READ_NIL);
 		cc.mov(regD[a], asmjit::x86::word_ptr(PB, KC));
 	}
 
 	void EmitLHU_R()
 	{
-		NULL_POINTER_CHECK(PB, RC, X_READ_NIL);
+		EmitNullPointerThrow(B, X_READ_NIL);
 		cc.mov(regD[a], asmjit::x86::word_ptr(PB, RC));
 	}
 
 	void EmitLSP()
 	{
-		NULL_POINTER_CHECK(PB, KC, X_READ_NIL);
+		EmitNullPointerThrow(B, X_READ_NIL);
 		cc.movss(regF[a], asmjit::x86::dword_ptr(PB, KC));
 	}
 
 	void EmitLSP_R()
 	{
-		NULL_POINTER_CHECK(PB, RC, X_READ_NIL);
+		EmitNullPointerThrow(B, X_READ_NIL);
 		cc.movss(regF[a], asmjit::x86::dword_ptr(PB, RC));
 	}
 
 	void EmitLDP()
 	{
-		NULL_POINTER_CHECK(PB, KC, X_READ_NIL);
+		EmitNullPointerThrow(B, X_READ_NIL);
 		cc.movsd(regF[a], asmjit::x86::qword_ptr(PB, KC));
 	}
 
 	void EmitLDP_R()
 	{
-		NULL_POINTER_CHECK(PB, RC, X_READ_NIL);
+		EmitNullPointerThrow(B, X_READ_NIL);
 		cc.movsd(regF[a], asmjit::x86::qword_ptr(PB, RC));
 	}
 
@@ -511,27 +534,57 @@ private:
 
 	void EmitLS_R()
 	{
-	}
+	}*/
 
-	void EmitLO() // load object
+	void EmitLO()
 	{
+		EmitNullPointerThrow(B, X_READ_NIL);
+
+		auto ptr = cc.newIntPtr();
+		cc.mov(ptr, asmjit::x86::ptr(PB, KC));
+
+		typedef void*(*FuncPtr)(void*);
+		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](void *ptr) -> void*
+		{
+			DObject *p = static_cast<DObject *>(ptr);
+			return GC::ReadBarrier(p);
+		}))), asmjit::FuncSignature1<void*, void*>());
+		call->setRet(0, regA[a]);
+		call->setArg(0, ptr);
 	}
 
 	void EmitLO_R()
 	{
+		EmitNullPointerThrow(B, X_READ_NIL);
+
+		auto ptr = cc.newIntPtr();
+		cc.mov(ptr, asmjit::x86::ptr(PB, RC));
+
+		typedef void*(*FuncPtr)(void*);
+		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](void *ptr) -> void*
+		{
+			DObject *p = static_cast<DObject *>(ptr);
+			return GC::ReadBarrier(p);
+		}))), asmjit::FuncSignature1<void*, void*>());
+		call->setRet(0, regA[a]);
+		call->setArg(0, ptr);
 	}
 
-	void EmitLP() // load pointer
+	void EmitLP()
 	{
+		EmitNullPointerThrow(B, X_READ_NIL);
+		cc.mov(regA[a], asmjit::x86::ptr(PB, KC));
 	}
 
 	void EmitLP_R()
 	{
-	}*/
+		EmitNullPointerThrow(B, X_READ_NIL);
+		cc.mov(regA[a], asmjit::x86::ptr(PB, RC));
+	}
 
 	void EmitLV2()
 	{
-		NULL_POINTER_CHECK(PB, KC, X_READ_NIL);
+		EmitNullPointerThrow(B, X_READ_NIL);
 		auto tmp = cc.newIntPtr();
 		cc.mov(tmp, PB);
 		cc.add(tmp, KC);
@@ -541,7 +594,7 @@ private:
 
 	void EmitLV2_R()
 	{
-		NULL_POINTER_CHECK(PB, RC, X_READ_NIL);
+		EmitNullPointerThrow(B, X_READ_NIL);
 		auto tmp = cc.newIntPtr();
 		cc.mov(tmp, PB);
 		cc.add(tmp, RC);
@@ -551,7 +604,7 @@ private:
 
 	void EmitLV3()
 	{
-		NULL_POINTER_CHECK(PB, KC, X_READ_NIL);
+		EmitNullPointerThrow(B, X_READ_NIL);
 		auto tmp = cc.newIntPtr();
 		cc.mov(tmp, PB);
 		cc.add(tmp, KC);
@@ -562,7 +615,7 @@ private:
 
 	void EmitLV3_R()
 	{
-		NULL_POINTER_CHECK(PB, RC, X_READ_NIL);
+		EmitNullPointerThrow(B, X_READ_NIL);
 		auto tmp = cc.newIntPtr();
 		cc.mov(tmp, PB);
 		cc.add(tmp, RC);
@@ -581,7 +634,7 @@ private:
 
 	void EmitLBIT() // rA = !!(*rB & C)  -- *rB is a byte
 	{
-		NULL_POINTER_CHECK(PB, 0, X_READ_NIL);
+		EmitNullPointerThrow(B, X_READ_NIL);
 		auto tmp = cc.newInt8();
 		cc.mov(regD[a], PB);
 		cc.and_(regD[a], C);
@@ -594,74 +647,98 @@ private:
 
 	void EmitSB()
 	{
-		NULL_POINTER_CHECK(PA, KC, X_WRITE_NIL);
+		EmitNullPointerThrow(A, X_WRITE_NIL);
 		cc.mov(asmjit::x86::byte_ptr(PA, KC), regD[B].r8Lo());
 	}
 
 	void EmitSB_R()
 	{
-		NULL_POINTER_CHECK(PA, RC, X_WRITE_NIL);
+		EmitNullPointerThrow(A, X_WRITE_NIL);
 		cc.mov(asmjit::x86::byte_ptr(PA, RC), regD[B].r8Lo());
 	}
 
 	void EmitSH()
 	{
-		NULL_POINTER_CHECK(PA, KC, X_WRITE_NIL);
+		EmitNullPointerThrow(A, X_WRITE_NIL);
 		cc.mov(asmjit::x86::word_ptr(PA, KC), regD[B].r16());
 	}
 
 	void EmitSH_R()
 	{
-		NULL_POINTER_CHECK(PA, RC, X_WRITE_NIL);
+		EmitNullPointerThrow(A, X_WRITE_NIL);
 		cc.mov(asmjit::x86::word_ptr(PA, RC), regD[B].r16());
 	}
 
 	void EmitSW()
 	{
-		NULL_POINTER_CHECK(PA, KC, X_WRITE_NIL);
+		EmitNullPointerThrow(A, X_WRITE_NIL);
 		cc.mov(asmjit::x86::dword_ptr(PA, KC), regD[B]);
 	}
 
 	void EmitSW_R()
 	{
-		NULL_POINTER_CHECK(PA, RC, X_WRITE_NIL);
+		EmitNullPointerThrow(A, X_WRITE_NIL);
 		cc.mov(asmjit::x86::dword_ptr(PA, RC), regD[B]);
 	}
 
 	void EmitSSP()
 	{
-		NULL_POINTER_CHECK(PB, KC, X_WRITE_NIL);
+		EmitNullPointerThrow(A, X_WRITE_NIL);
 		cc.movss(asmjit::x86::dword_ptr(PA, KC), regF[B]);
 	}
 
 	void EmitSSP_R()
 	{
-		NULL_POINTER_CHECK(PB, RC, X_WRITE_NIL);
+		EmitNullPointerThrow(A, X_WRITE_NIL);
 		cc.movss(asmjit::x86::dword_ptr(PA, RC), regF[B]);
 	}
 
 	void EmitSDP()
 	{
-		NULL_POINTER_CHECK(PB, KC, X_WRITE_NIL);
+		EmitNullPointerThrow(A, X_WRITE_NIL);
 		cc.movsd(asmjit::x86::qword_ptr(PA, KC), regF[B]);
 	}
 
 	void EmitSDP_R()
 	{
-		NULL_POINTER_CHECK(PB, RC, X_WRITE_NIL);
+		EmitNullPointerThrow(A, X_WRITE_NIL);
 		cc.movsd(asmjit::x86::qword_ptr(PA, RC), regF[B]);
 	}
 
 	//void EmitSS() {} // store string
 	//void EmitSS_R() {}
-	//void EmitSO() {} // store object pointer with write barrier (only needed for non thinkers and non types)
-	//void EmitSO_R() {}
-	//void EmitSP() {} // store pointer
-	//void EmitSP_R() {}
+
+	void EmitSO()
+	{
+		cc.mov(asmjit::x86::ptr(PA, KC), regA[B]);
+
+		typedef void(*FuncPtr)(DObject*);
+		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>(GC::WriteBarrier))), asmjit::FuncSignature1<void, void*>());
+		call->setArg(0, regA[B]);
+	}
+
+	void EmitSO_R()
+	{
+		cc.mov(asmjit::x86::ptr(PA, RC), regA[B]);
+
+		typedef void(*FuncPtr)(DObject*);
+		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>(GC::WriteBarrier))), asmjit::FuncSignature1<void, void*>());
+		call->setArg(0, regA[B]);
+	}
+
+	void EmitSP()
+	{
+		cc.mov(asmjit::x86::ptr(PA, KC), regA[B]);
+	}
+
+	void EmitSP_R()
+	{
+		cc.mov(asmjit::x86::ptr(PA, RC), regA[B]);
+	}
 
 	void EmitSV2()
 	{
-		NULL_POINTER_CHECK(PB, KC, X_WRITE_NIL);
+		EmitNullPointerThrow(B, X_WRITE_NIL);
 		auto tmp = cc.newIntPtr();
 		cc.mov(tmp, PB);
 		cc.add(tmp, KC);
@@ -671,7 +748,7 @@ private:
 
 	void EmitSV2_R()
 	{
-		NULL_POINTER_CHECK(PB, RC, X_WRITE_NIL);
+		EmitNullPointerThrow(B, X_WRITE_NIL);
 		auto tmp = cc.newIntPtr();
 		cc.mov(tmp, PB);
 		cc.add(tmp, RC);
@@ -681,7 +758,7 @@ private:
 
 	void EmitSV3()
 	{
-		NULL_POINTER_CHECK(PB, KC, X_WRITE_NIL);
+		EmitNullPointerThrow(B, X_WRITE_NIL);
 		auto tmp = cc.newIntPtr();
 		cc.mov(tmp, PB);
 		cc.add(tmp, KC);
@@ -692,7 +769,7 @@ private:
 
 	void EmitSV3_R()
 	{
-		NULL_POINTER_CHECK(PB, RC, X_WRITE_NIL);
+		EmitNullPointerThrow(B, X_WRITE_NIL);
 		auto tmp = cc.newIntPtr();
 		cc.mov(tmp, PB);
 		cc.add(tmp, RC);
@@ -2486,6 +2563,15 @@ private:
 		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>(g_sqrt))), FuncSignature1<double, double>());
 		call->setRet(0, a);
 		call->setArg(0, b);
+	}
+
+	void EmitNullPointerThrow(int index, EVMAbortException reason)
+	{
+		auto label = cc.newLabel();
+		cc.test(regA[index], regA[index]);
+		cc.jne(label);
+		EmitThrowException(reason);
+		cc.bind(label);
 	}
 
 	void EmitThrowException(EVMAbortException reason)

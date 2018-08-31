@@ -34,7 +34,7 @@ QUITMSG10 = "Tirez vous de là et retournez\nà vos programmes ennuyeux.";
 QUITMSG11 = "Si j'étais votre patron, je vous\n collerai un Deathmatch dans la minute!";
 QUITMSG12 = "Regardez l'ami. Vous partez maintenant\net vous pouvez oublier votre score!";
 QUITMSG13 = "Allez, partez. Quand vous reviendrez\nje vous attendrai avec une batte.";
-QUITMSG14 = "Vous êtes chanceux que je ne vous \ncolle pas une parce que vous pensez partir.";
+QUITMSG14 = "Vous êtes chanceux que je ne vous en \ncolle pas une parce que vous pensez partir.";
 
 // Quit Strife messages
 QUITMSG15 = "Où allez vous?\nQue va devenir la rébellion?";
@@ -206,7 +206,7 @@ HUSTR_23 = "NIVEAU 23: Une Tonne-eau de plaisir";
 HUSTR_24 = "NIVEAU 24: Le Gouffre";
 HUSTR_25 = "NIVEAU 25: Chutes de Sang";
 HUSTR_26 = "NIVEAU 26: Les Mines Abandonnées";
-HUSTR_27 = "NIVEAU 27: Monstrueuse Résiden,ce";
+HUSTR_27 = "NIVEAU 27: Monstrueuse Résidence";
 HUSTR_28 = "NIVEAU 28: Le Monde Spirituel";
 HUSTR_29 = "NIVEAU 29: La Limite";
 HUSTR_30 = "NIVEAU 30: L'Icône du Péché";
@@ -257,7 +257,7 @@ PHUSTR_26 = "NIVEAU 26: Bunker";
 PHUSTR_27 = "NIVEAU 27: Anti-Christ";
 PHUSTR_28 = "NIVEAU 28: Les Egouts";
 PHUSTR_29 = "NIVEAU 29: Odysée de Bruits";
-PHUSTR_30 = "NIVEAU 30: La Porte des Enferts";
+PHUSTR_30 = "NIVEAU 30: La Porte des Enfers";
 PHUSTR_31 = "NIVEAU 31: Cyber-Antre";
 PHUSTR_32 = "NIVEAU 32: GO 2 IT";
 
@@ -348,10 +348,10 @@ TXT_DEFAULTPICKUPMSG = "Quelque chose récupéré.";
 //  F_Finale.C
 //
 E1TEXT =
-  "APRES AVOIR VAINCU LES GROS MECHANTS\n"
+  "APRES AVOIR VAINCU CES SALES PESTES\n"
   "ET NETTOYE LA BASE LUNAIRE, VOUS AVEZ\n"
   "GAGNE, NON? PAS VRAI? OU EST DONC VOTRE\n"
-  " RECOMPENSE ET VOTRE BILLET DE\n"
+  "RECOMPENSE ET VOTRE BILLET DE\n"
   "RETOUR? QU'EST-QUE CA VEUT DIRE? CE"
   "N'EST PAS LA FIN ESPEREE!\n"
   "\n"
@@ -381,7 +381,7 @@ E2TEXT =
   "LA SURFACE DE L'ENFER.\n"
   "\n"
   "VOICI MAINTENANT LE CHAPITRE FINAL DE\n"
-  "DOOM! -- L'ENFER.";
+  "DOOM! -- INFERNO.";
   
 E3TEXT =
   "LE DEMON ARACHNEEN ET REPUGNANT\n"
@@ -399,28 +399,28 @@ E3TEXT =
   "VOUS VOUS DEMANDEZ CE QUI S'EST PASSE\n"
   "SUR TERRE PENDANT QUE VOUS AVEZ\n"
   "COMBATTU LE DEMON. HEUREUSEMENT,\n"
-  "AUCUN GERME DU MAL N'A FRANCHI\n"
+  "QU'AUCUN GERME DU MAL N'A FRANCHI\n"
   "CETTE PORTE AVEC VOUS...";
 
 E4TEXT =
-	"l'araignee cerveau doit avoir envoye\n"
-	"ses legions de creatures de l' enfer \n"
+	"l'araignee cerveau doit avoir envoyé\n"
+	"ses légions de créatures de l'enfer \n"
 	"avant votre confrontation finale avec\n"
-	"cette terrible bete de l'enfer.\n"
+	"cette terrible bête infernale.\n"
 	"Mais vous avancez et mettez de suite\n"
 	"la damnation eternelle et souffrances\n"
-	"a la meute comme un hero le fairait\n"
-	"face de quelque chose de si malefique.\n"
-	"D'ailleurs,quelqu'un va devoir payer \n"
-	"pour ce qui est arrive a margherite, \n"
+	"a la meute comme un héros le fairait\n"
+	"face à quelque chose de si maléfique.\n"
+	"D'ailleurs, quelqu'un va devoir payer \n"
+	"pour ce qui est arrivé a Daisy, \n"
 	"votre lapin domestique.\n"
 	"\n"
 	"mais maintenant, vous voyez devant vous \n"
 	"encore plus de nouvelles souffrances \n"
-	"potencielles et de chairs broyees\n"
-	"comme une horde de demons devunus \n"
-	"vindicatifs parmi nos villes.\n\n"
-	"prochain arret,l'enfer sur terre!";
+	"potentielles et de chairs broyees\n"
+	"comme une horde de demons déversant \n"
+	"la mort parmi nos villes.\n\n"
+	"prochain arrêt, l'enfer sur terre!";
  
 // after level 6, put this:
   
@@ -479,7 +479,7 @@ C4TEXT =
   "TAILLE INCROYABLE S'EFFONDRE DEVANT\n"
   "VOUS LORSQUE VOUS TIREZ UNE SALVE DE\n"
   "ROQUETTES DANS SON CERVEAU. LE MONSTRE\n"
-  "SE RATATINE, SES MEMBRES DECHIQUETES\n"
+  "S'ECRASE, SES MEMBRES DECHIQUETES\n"
   "SE REPANDANT SUR DES CENTAINES DE\n"
   "KILOMETRES A LA SURFACE DE L'ENFER.\n"
   "\n"
@@ -508,151 +508,170 @@ C6TEXT =
   "MIEUX DE FONCER DANS CELUI-LA!\n";
 
 P1TEXT =
-	"Vous jubilez sur la carcass brulante \n"
-	"du Guardien. Avec sa mort, vous avez \n"
-	"arrache l'accelerateur des griffes \n"
-	"fetides de l'enfer. Vous vous reposez \n"
-	"et regardez aux alentours de l'endroit. \n"
-	"Mince! Il etait suppose qu'il y ait\n"
-	"au mois un prototype fonctionnant, \n"
-	"mais vous ne le voyez pas. les demons \n"
-	"l'on surement pris. \n\n"
-	"Vous devez trouver le prototype ,ou \n"
-	"tous vos combats auront ete vains. \n"
-	"continez a avancer, vous battre, tuer. \n"
-	"Oh oui ,a vivre ,aussi.";
+	"Vous jubilez sur la carcasse brûlante \n"
+	"du Gardien. Avec sa mort, vous avez \n"
+	"arraché l'accélerateur des griffes \n"
+	"fétides de l'enfer. Vous vous reposez \n"
+	"et regardez aux alentours du lieu. \n"
+	"Mince! Il était supposé qu'il y ait\n"
+	"au mois un prototype en fonctionnement, \n"
+	"mais vous ne le trouvez pas. les démons \n"
+	"l'on sûrement pris avec eux. \n\n"
+	"Vous devez trouver le prototype, ou \n"
+	"tous vos combats auront été vains. \n"
+	"continez à avancer, à vous battre, à tuer. \n"
+	"Oh oui, à vivre, aussi.";
 P2TEXT =
-	"Meme le labyrinthe mortifere des \n"
-	"archi-infames ne vous arreta pas,\n"
-	"et vous arrivez au prototype     \n"
-	"d'accelerateur qui est proche   \n"
-	"desactive efficacement et pour toujours.\n"
+	"Même le labyrinthe mortifère des \n"
+	"arche-viles ne vous a pas arrêté,\n"
+	"et vous obtenez le prototype     \n"
+	"d'accelerateur et parvenez à le   \n"
+	"désactiver efficacement et pour toujours.\n"
 	"\n"
-	"Vous etes doue pour ces choses la.";
+	"Vous êtes doué pour ces choses là.";
 P3TEXT =
-	"Vous vous etes fraye votre chemin a \n"
+	"Vous vous êtes frayé votre chemin à \n"
 	"travers le coeur d'une ruche de \n"
 	"diables. Il est temps pour une mission\n"
 	"de recherche et destruction visant le \n"
-	"guardien de la porte ,avec sa \n"
-	"progeniture repugnante descendant en \n"
+	"gardien de la porte, avec sa \n"
+	"progéniture répugnante descendant en \n"
 	"cascade sur terre. Oui ,il est cruel. \n"
 	"Mais vous savez qui est pire!\n\n"
-	"Sourriant malefiquement, vous verifiez \n"
-	"l'equipement et vous vous preparez a\n"
+	"Souriant malicieusement, vous vérifiez \n"
+	"l'equipement et vous vous préparez a\n"
 	"faire voir a ce fumier un petit enfer\n"
-	"fait de votre propre main!";
+	"fait de vos propres mains!";
 P4TEXT =
-	"La face malefique du gardien de la porte \n"
-	"est eparpillee aux alentours. Comme son \n"
-	"corps en lambeaux vacille ,un portail \n"
-	"inverse se forme et aspire les eclat du \n"
-	"dernier prototype d'accelerateur, sans \n"
+	"La face maléfique du gardien de la porte \n"
+	"est éparpillee aux alentours. Comme son \n"
+	"corps en lambeaux vacille, un portail \n"
+	"inverse se forme et aspire les éclats du \n"
+	"dernier prototype d'accélerateur, sans \n"
 	"parler des quelques demons restants.\n"
-	"Vous avez termine. L'enfer a fini de\n"
-	"liberer des mort-vivants au lieu de \n"
+	"Vous avez gagné. L'enfer a fini de\n"
+	"libérer des mort-vivants au lieu de \n"
 	"gens bien vivants.\n"
 	"Souvenez vous de dire a vos enfants de\n"
 	"mettre un lance-roquette dans votre\n"
 	"cercueil. Si vous allez en enfer,\n"
 	"quand vous serez mort, vous en aurez \n"
-	"besoin ,pour un nettoyage definitif...";
+	"besoin, pour un nettoyage définitif...";
 P5TEXT =
-	"Vous avez trouver notre second niveau\n"
+	"Vous avez trouvé le deuxième niveau\n"
 	"le plus difficile que nous avons.\n"
-	"J'espere que vous avez sauvegarde\n"
-	"au deux precendants.\n"
-	"Sinon, soyez prets a mourrir souvent.\n"
-	"Pour maitre marine seulement.";
+	"J'espère que vous avez sauvegardé\n"
+	"lors du précédant...\n"
+	"Sinon, soyez prêt a mourir souvent.\n"
+	"Pour les pros seulement.";
 P6TEXT =
-	"peut etre, vous demandiez vous quel\n"
-	"ETAIT le niveau le plus dure, que nous\n"
-	"avions prepare pour vous? Maintenant,\n"
+	"Alors, vous vous demandiez quel\n"
+	"était le niveau le plus dur que nous\n"
+	"avions préparé pour vous? Maintenant,\n"
 	"vous savez. Nul n'en sortira vivant.\n";
 	
 T1TEXT =
-	"Vous vous etes fraye un chemin vers la\n"
-	"sortie des labos experimentaux infestes.\n"
-	"Il semble que l'UAC les a encore vides. \n"
-	"Avec leur chiffres d'affaires eleve,\n"
-	"ca doit etre dur pour la pauvre vieille\n"
-	"UAC d' acheter des societes \n"
-	"d'assurance vie ,de nos jours...\n"
+	"Vous vous êtes frayé un chemin vers la\n"
+	"sortie des labos expérimentaux infestés.\n"
+	"Il semble que l'UAC les a encore vidés. \n"
+	"Avec leur chiffres d'affaires élevé,\n"
+	"ca doit etre dûr pour la pauvre vieille\n"
+	"UAC d'acheter des societes \n"
+	"d'assurance vie de nos jours...\n"
 	"\n"
 	"Vous avez devant vous le complexe \n"
-	"militaire ,cela grouille d'horreurs \n"
-	"morbides pres a vous enfoncer leur dents.\n"
-	"Avec un peu de chance ,le complexe a \n"
-	"encore quelques munitions de guerre,\n"
+	"militaire, cela grouille d'horreurs \n"
+	"morbides prètes a vous estropier.\n"
+	"Avec un peu de chance, le complexe a \n"
+	"encore quelques munitions de guerre\n"
 	"reposant autour.";
 T2TEXT =
 	"Vous entendez le grincement d'une grosse\n"
-	"machinerie devant.Vous esperez surement\n"
+	"machinerie devant. Vous esperez surement\n"
 	"qu'ils ne sont pas en train de fabriquer\n"
 	"de nouvelles creatures de l'enfer,\n"
-	"mais vous etes pret a balayer tout\n"
+	"mais vous etes prêt a balayer tout\n"
 	"un troupeau si vous le deviez.\n"
-	"Ils pourraient etre en train de preparer\n"
-	"un festin de sang ,mais vous vous sentez\n"
+	"Ils pourraient etre en train de préparer\n"
+	"un festin de sang, mais vous vous sentez\n"
 	"pareil a deux milliers de fous dans le \n"
-	"corps d'un seul et meme tueur\n"
+	"corps d'un seul et même tueur.\n"
 	"\n"
-	"Vous ne pensez pas tomber si facilement.";
+	"Vous ne pensez pas mourir si facilement.";
 T3TEXT =
 	"La vue s'ouvrant devant vous semble \n"
-	"sacrement ,diablement ,familiere.\n"
-	"Les odeurs familieres, trop -- comme\n"
-	"des excrements frits. Vous n'aimiez \n"
+	"sacrément, diablement familière.\n"
+	"Les odeurs familières, trop -- comme\n"
+	"des excrèments frits. Vous n'aimiez \n"
 	"pas cet endroit avant, et vous etes \n"
-	"terriblement sur de ne pas envisager\n"
+	"terriblement sûr de ne pas envisager\n"
 	"l'aimer maintenant.\n"
-	"Plus vous pensiez a cette idee ,\n"
-	"plus vous sombriez dans la folie.\n"
-	"Saisissant votre arme ,un sourrire\n"
-	"malefique apparait sur votre visage.\n"
-	"Il est temps de prendre quelques noms.";
+	"Plus vous pensiez a cette idée,\n"
+	"plus vous sombrez dans la folie.\n"
+	"Saisissant votre arme, un sourrire\n"
+	"maléfique apparait sur votre visage.\n"
+	"Il est l'heure de buter du démon....";
 T4TEXT =
 	"Tout a coup, tout est silencieux ,\n"
 	"d'un horizon a l'autre.\n"
-	"L'echo agonisant de l'enfer s'estompe,\n"
+	"L'écho agonisant de l'enfer s'estompe,\n"
 	"le ciel cauchemardeque tourne au bleu,\n"
 	"les tas de cadavres de monstres \n"
-	"commencent a s'evaporer avec une puanteur\n"
-	"nauseabonde qui remplissait l'air.\n"
-	"Doux jesus ,peut etre l'avez vous fait.\n"
-	"Avez vous reellement gagne?\n\n"
+	"commencent a s'évaporer avec une puanteur\n"
+	"nauséabonde qui remplit l'air.\n"
+	"Doux jésus, peut être l'avez vous fait.\n"
+	"Avez vous réellement gagné?\n\n"
 	"quelque chose gronde au loin.\n"
-	"une lumiere bleue a commence a luire\n"
-	"dans le crane defonce du demon\n"
+	"une lumière bleue a commence a luire\n"
+	"dans le crâne défonce du démon\n"
 	"cracheur.";
 T5TEXT =
 	"Maintenant quoi? Cela semble \n"
-	"completement different.\n"
-	"Une Sorte de lottissement du\n"
-	"roi Tut.\n"
-	"Bon, rien ne peut-etre pire\n"
+	"complètement different.\n"
+	"Une sorte de lotissement au\n"
+	"bon vieux Toutankhamon.\n"
+	"Bon, rien ne peut être pire\n"
 	"que d'habitude. N'est-ce pas?\n" 
-	"Ou peut etre est ce mieux\n"
+	"Ou peut être est ce mieux\n"
 	"de laisser dormir les dieux,\n"
-	"la ou ils reposent\n"
+	"la ou ils reposent..\n"
 T6TEXT =
-	"Vous avez besoin de vacances.\n"
-	"Vous avez eclates les entrailles\n"
-	"de l'enfer et pour sur vous etes \n"
-	"pres pour une pause.\n"
-	"Vous marmonner a vous meme:\n"
-	"peut-etre quelqu'un pourrait botter\n"
+	"Vous aviez besoin de vacances.\n"
+	"Vous avez éclaté les entrailles\n"
+	"de l'enfer et pour sûr vous êtes \n"
+	"prét pour une pause.\n"
+	"Vous marmonnez à vous même:\n"
+	"Peut-etre quelqu'un pourrait botter\n"
 	"le cul de l'enfer a votre place,\n"
 	"la prochaine fois.\n"
-	"Une ville tranquille reside devant, \n"
+	"Une ville tranquille réside devant, \n"
 	"avec le flot paisible de l'eau,\n"
 	"les batiments pittoresques, et\n"
-	"probablement plus de creatures\n" 
+	"probablement plus de créatures\n" 
 	"de l'enfer.\n"
 	"Quand vous descendez au dehors du \n"
 	"transport, vous entendez le bruit \n"
 	"du sabot d'acier d'un \n"
-	"demon-cybernetique.";
+	"Cyberdémon.";
+	
+NERVETEXT =
+	"Quelqu'un avait décidé de foutre le bordel\n"
+	"sur votre lieu de vacances préféré: L'Enfer.\n"
+	"Un cyberdémon à la noix avait décidé d'en\n"
+	"faire son parc d'attraction, et la terre\n"
+	"son petit guichet.\n"
+	"\n"
+	"Cet abruti méchanique ne s'attendait pas\n"
+	"à ce que vous visitiez son chantier,\n"
+	"rien de mieux qu'un stand de tir plein de\n"
+	"démons pour faire chauffer l'ambiance..\n"
+	"\n"
+	"Maintenant que le cadavre croulant du démon\n"
+	"résonne en s'écrasant au sol, ses gémissements\n"
+	"d'agonie se déversent de son visage\n"
+	"que vous avez laissé en charpie.\n"
+	"\n"
+	"Le manège est fermé!\n";
 
 
 //
@@ -709,7 +728,7 @@ TXT_FRAGLIMIT = "Limite de frags atteinte.";
 TXT_TIMELIMIT = "Limite de temps atteinte.";
 
 // Spree messages
-SPREEKILLSELF = "%o était en pleine folie meurtrière que %g ne se bute!";
+SPREEKILLSELF = "%o était en pleine folie meurtrière avant que %g ne se bute!";
 SPREEOVER = "La folie meurtrière de %o à été terminée par %!k";
 SPREE5 = "%k est en folie meurtrière!";
 SPREE10 = "%k est en plein massacre!";
@@ -732,7 +751,7 @@ OB_EXIT = "%o a tenté de partir.";
 OB_WATER = "%o ne sait pas nager.";
 OB_SLIME = "%o a muté.";
 OB_LAVA = "%o a fondu.";
-OB_BARREL = "%o a sauté.";
+OB_BARREL = "%o s'est pété la face.";
 OB_SPLASH = "%o s'est tenu au mauvais endroit.";
 OB_R_SPLASH = "%o aurait dû garder ses distances.";
 OB_ROCKET = "%o aurait dû garder ses distances.";
@@ -788,7 +807,7 @@ OB_IRONLICH = "%o a été dévasté par une Liche de Fer.";
 OB_IRONLICHHIT = "%o a fait ami-ami avec une Liche de Fer.";
 OB_BONEKNIGHT = "%o s'est pris la hache d'un guerrier mort-vivant.";
 OB_BONEKNIGHTHIT = "%o s'est fait pourfendre par un guerrier mort-vivant.";
-OB_MINOTAUR = "%o was blasted into cinders by a Maulotaur.";
+OB_MINOTAUR = "%o s'est fait incinérer par un Massetaure.";
 OB_MINOTAURHIT = "%o s'est fait éclater par un Massetaure.";
 OB_MUMMY = "%o a été défoncé par un golem.";
 OB_MUMMYLEADER = "%o s'est fait percer les tympans par un nitrogolem.";
@@ -796,7 +815,7 @@ OB_SNAKE = "%o s est fait secouer par un ophidien.";
 OB_WIZARD = "%o a été maudit par un sorcier.";
 OB_WIZARDHIT = "%o a été palpé par un sorcier.";
 
-OB_FIREDEMON = "%o a gouté au feu d'un Afrit.";
+OB_FIREDEMON = "%o a goûté au feu d'un Afrit.";
 OB_DEMON1 = "%o a été brûlé par un Serpent.";
 OB_DEMON2 = "%o a été empoisonné par un Serpent.";
 OB_ETTIN = "%o a été réduit en purée par un Ettin.";
@@ -818,10 +837,10 @@ OB_HERESIARCH = "%o s'est fait rouler les os par l'Hérésiarche.";
 
 OB_ACOLYTE = "%o a souffert d'une bavure policière.";
 OB_MACIL = "%o n'aurait jamais du se rebeller contre Macil.";
-OB_REBEL = "%o a été abattu par un Rebel.";
+OB_REBEL = "%o a été abattu par un rebelle.";
 OB_BEGGAR = "%o a été battu a mort par un pauvre.";
 OB_PEASANT = "%o n'aurait jamais du chercher des noises a un civil.";
-OB_ALIENSPECTRE = "%o a été terrasse par le Spectre.";
+OB_ALIENSPECTRE = "%o a été terrassé par le Spectre.";
 OB_ENTITY = "%o a senti le courroux du Seul Dieu.";
 OB_LOREMASTER = "%o n'a pu échapper a l'emprise du Maître des Traditions.";
 OB_PROGRAMMER = "%o a été effacé par le Programmeur.";
@@ -882,14 +901,14 @@ OB_MPCWEAPWRAITHVERGE = "%o wa été purifié par la Verge Phantasmale de %k.";
 OB_MPMWEAPWAND = "%o s'est pris un rayon saphirique en trop de la part de %k."; 
 OB_MPMWEAPFROST = "%o s'est fait transformer en glaçon par %k."; 
 OB_MPMWEAPLIGHTNING = "%o a reçu un sacré coup de jus de la part de %k."; 
-OB_MPMWEAPBLOODSCOURGE = "%o s'est fait effacer de l'univers par la Menace Sanglante de %k.";
+OB_MPMWEAPBLOODSCOURGE = "%o s'est fait effacer de l'univers par le Fléau Sanglant de %k.";
 
 OB_MPPUNCHDAGGER = "%o s'est fait planter un lame dans le dos de la part de %k."; 
 OB_MPELECTRICBOLT = "%o s'est fait clouer au mur par %k."; 
 OB_MPPOISONBOLT = "%o a recu une dose létale de la colère de %k."; 
 OB_MPASSAULTGUN = "%o s'est fait couvrir de trous par le fusil d'assaut de %k."; 
 OB_MPMINIMISSILELAUNCHER = "%o a avalé le missile de %k."; 
-OB_MPSTRIFEGRENADE = "%o a été mis sens dessus dessous pa la grenade explosive de %k."; 
+OB_MPSTRIFEGRENADE = "%o a été mis sens dessus dessous par la grenade explosive de %k."; 
 OB_MPPHOSPHOROUSGRENADE = "%o s'est permis une pyroclave dans les flammes phosphoriques de %k."; 
 OB_MPFLAMETHROWER = "%o est passé au barbecue de %k."; 
 OB_MPMAULER1 = "%o s'est fait électrocuter par %k.";
@@ -897,7 +916,7 @@ OB_MPMAULER = "%o à été vicieusement vaporisé par %k.";
 OB_MPSIGIL = "%o s'est prosterné face à la toute puissance du Sigil de %k.";
 
 // Same as OB_MPTELEFRAG, but shown when a monster telefrags you
-OB_MONTELEFRAG = "%o a été telefrague.";
+OB_MONTELEFRAG = "%o a été telefragué.";
 
 OB_DEFAULT = "%o est mort.";
 OB_FRIENDLY1 = "%k a tué un de ses équipiers.";
@@ -905,21 +924,12 @@ OB_FRIENDLY2 = "%k vérifie ses lunettes.";
 OB_FRIENDLY3 = "%k marque un point pour l'autre équipe.";
 OB_FRIENDLY4 = "%k a perdu un autre ami.";
 
-SAVEGAMENAME = "zdoomsv";
-STARTUP1 = "";
-STARTUP2 = "";
-STARTUP3 = "";
-STARTUP4 = "";
-STARTUP5 = "";
 
 SCORE_ITEMS = "OBJETS";
-SCORE_BONUS = "BONUS";
 SCORE_COLOR = "COULEUR";
-SCORE_SECRET = "SECRET";
 SCORE_NAME = "NOM";
 SCORE_DELAY = "DELAI(ms)";
 SCORE_KILLS = "VICTIMES";
-SCORE_FRAGS = "FRAGS";
 SCORE_DEATHS = "MORTS";
 SCORE_MISSED = "RATES";
 SCORE_TOTAL = "TOTAL";
@@ -971,7 +981,7 @@ TAG_ARTITORCH = "Torche";
 TAG_CWEAPMACE = "Masse de Pénitence";
 TAG_CWEAPSTAFF = "Sceptre du Serpent";
 TAG_CWEAPFLAME = "Tempête de Feu";
-TAG_CWEAPWRAITHVERGE = "Bâton du Courroux";
+TAG_CWEAPWRAITHVERGE = "Verge Phantasmale";
 TAG_FWEAPFIST = "Gantelets à Pointes";
 TAG_FWEAPAXE = "Hache de Timon";
 TAG_FWEAPHAMMER = "Marteau de la Rétribution";
@@ -1033,7 +1043,7 @@ TAG_SIGIL = "SIGIL";
 TAG_COIN = "Pièce";
 TAG_MEDPATCH = "Pansement";
 TAG_MEDICALKIT = "Kit Médical";
-TAG_SURGERYKIT = "Kit de Chirurgie";	// "full_health" in the Teaser
+TAG_SURGERYKIT = "Kit de Chirurgie";
 TAG_BELDINSRING = "Anneau";
 TAG_OFFERINGCHALICE = "Calice d'Obole";
 TAG_EAR = "Oreille";
@@ -1059,20 +1069,20 @@ TAG_TELEPORTERBEACON = "Balise de téléportation";
 TAG_METALARMOR = "Armure en Métal";
 TAG_LEATHER = "Armure en Cuir";
 TAG_HEGRENADES = "Grenades Explosives";
-TAG_PHGRENADES = "Grenades Incendiaires";	// "Fire-Grenade_Rounds" in the Teaser
-TAG_CLIPOFBULLETS = "Chargeur d'Assaut";	// "bullets" in the Teaser
+TAG_PHGRENADES = "Grenades Incendiaires";
+TAG_CLIPOFBULLETS = "Chargeur d'Assaut";
 TAG_BOXOFBULLETS = "Bôite de Munitions";
-TAG_MINIMISSILES = "Mini-Missiles";	//"rocket" in the Teaser
-TAG_CRATEOFMISSILES = "Caisse de Mini-Missiles";	//"box_of_rockets" in the Teaser
+TAG_MINIMISSILES = "Mini-Missiles";
+TAG_CRATEOFMISSILES = "Caisse de Mini-Missiles";
 TAG_ENERGYPOD = "Cellule Energétique";
 TAG_ENERGYPACK = "Pack Energétique";
-TAG_POISONBOLTS = "Carreaux Empoisonnés";	// "poison_arrows" in the Teaser
-TAG_ELECTRICBOLTS = "Carreaux Electriques";	// "electric_arrows" in the Teaser
-TAG_AMMOSATCHEL = "Sacoche à munitions";	// "Back_pack" in the Teaser
+TAG_POISONBOLTS = "Carreaux Empoisonnés";
+TAG_ELECTRICBOLTS = "Carreaux Electriques";
+TAG_AMMOSATCHEL = "Sacoche à munitions";
 
-// Item tags: Strife keys
+
 TAG_BASEKEY = "Clé de la base";
-TAG_GOVSKEY = "Clé du Gouverneur";	// "Rebel_Key" in the Teaser
+TAG_GOVSKEY = "Clé du Gouverneur";
 TAG_PASSCARD = "Passe";
 TAG_IDBADGE = "Badge d'Identification";
 TAG_PRISONKEY = "Clé de la Prison";
@@ -1091,13 +1101,12 @@ TAG_BRASSKEY = "Clé en Bronze";
 TAG_REDCRYSTALKEY = "Clé de Cristal Rouge";
 TAG_BLUECRYSTALKEY = "Clé de Crisal Bleu";
 TAG_CHAPELKEY = "Clé de la Chapelle";
-TAG_CATACOMBKEY = "Clé des Catacombes";	// "Tunnel_Key" in the Teaser
+TAG_CATACOMBKEY = "Clé des Catacombes";
 TAG_SECURITYKEY = "Clé de la Sécurité";
-TAG_COREKEY = "Clé du Réacteur";	// "New_Key1" in the Teaser
-TAG_MAULERKEY = "Clé du Broyeur";	// "New_Key2" in the Teaser
-TAG_FACTORYKEY = "Clé de l'Usine";	// "New_Key3" in the Teaser
-TAG_MINEKEY = "Clé de la Mine";	// "New_Key4" in the Teaser
-TAG_NEWKEY5 = "New Key5";
+TAG_COREKEY = "Clé du Réacteur";
+TAG_MAULERKEY = "Clé du Broyeur";
+TAG_FACTORYKEY = "Clé de l'Usine";
+TAG_MINEKEY = "Clé de la Mine";
 TAG_ORACLEPASS = "Passe de l'Oracle";
 
 // Item tags: misc Strife stuff
@@ -1105,9 +1114,6 @@ TAG_10GOLD = "10 Pièces";
 TAG_25GOLD = "25 Pièces";
 TAG_50GOLD = "50 Pièces";
 TAG_300GOLD = "300 Pièces";
-TAG_QUEST4 = "quest4";
-TAG_QUEST5 = "quest5";
-TAG_QUEST6 = "quest4";
 
 // Item tags: Strife NPCs
 TAG_ACOLYTE = "Acolyte";
@@ -1130,7 +1136,7 @@ TAG_SPORK = "Super Fourchette";
 TAG_MINIZORCHER = "Mini Zorcheur";
 TAG_LARGEZORCHER = "Zorcheur Large";
 TAG_SUPERLARGEZORCHER = "Zorcheur Extra-large";
-TAG_RAPIDZORCHER = "Zorcheur";
+TAG_RAPIDZORCHER = "Zorcheur Rapide";
 TAG_ZORCHPROPULSOR = "Propulseur de Zorch";
 TAG_PHASINGZORCHER = "Zorcheur à Phase";
 TAG_LAZDEVICE = "ZZL";
@@ -1138,113 +1144,113 @@ TAG_LAZDEVICE = "ZZL";
 
 // Heretic strings
 HE1TEXT =
-		"avec la destruction des sangsues\n"
-		"de fer et leur seides, les derniers\n"
-		"des mort-vivants furent nettoye de\n"
-		"cette face de l'existence.\n\n"
-		"ces creatures durent venir de \n"
-		"quelquepart, bien que,vous eutes le\n"
-		"soupcon sournois que l ardent\n"
-		"portail de l'enfer put conduire\n"
+		"Avec la destruction des liches\n"
+		"de fer et leur serviteurs, les derniers\n"
+		"mort-vivants furent eliminés de\n"
+		"cette plaine de l'existence.\n\n"
+		"ces créatures doivent venir de \n"
+		"quelque part, bien que vous ayez\n"
+		"un soupçon que ce portail\n"
+		"ardent de l'enfer puisse conduire\n"
 		"dans leur dimension.\n\n"
-		"pour etre sur que beaucoup de\n"
-		"mort-vivants ou pire ne viennent\n"
-		"par son biais, vous dutes scelle le\n"
-		"portail de l enfer de l'autre cote.\n"
-		"bien sur cela veut dire que vous\n"
-		"eutes pu rester coince dans un monde\n"
-		"tres hostile, mais personne n'a\n"
-		"jamais dis qu'etre un heretic eut\n"
-		"ete facile!";
+		"pour etre sûr qu'aucun des\n"
+		"mort-vivants ou pire ne suivent\n"
+		"ce chemin, vous scemllez dûment le\n"
+		"portail de l'autre côté.\n"
+		"Bien sur cela veut dire que vous\n"
+		"auriez pû rester coincé dans un monde\n"
+		"très hostile, mais personne n'a\n"
+		"jamais dit qu'être un hérétique\n"
+		"soit facile!";
 HE2TEXT =
-		"les puissants massotaures eurent \n"
-		"prouve ne pas vous correspondre,\n"
-		"et leurs cadavres vaporeux glissant sur\n"
-		"le sol, vous sentites l effroyable\n"
-		"satisfaction qu ils furent\n"
-		"detruit.\n\n"
-		"les passerelles qu'ils garderent\n"
-		"furent ouvertes, revelant ce que vous\n"
-		"esperates etre le chemin du retour.\n"
-		"mais au fur et a mesure que vous \n"
-		"avancates ,un rire moqueur sonna a\n"
-		"vos oreilles.\n\n"
-		"etait ce quelqu'autre force controlant\n"
-		"les massotaures? eusse t'elles pu etre\n"
-		"plus atroces les creatures dans\n"
-		"cette porte? le balayage d'un dome\n"
-		"de crystal\n"
-		"depasse ou le ciel aurait du etre\n"
-		"ce ne fut pas de bon augure....";
+		"les puissants massetaures ont fini par\n"
+		"prouver qu'il n'étaient pas votre égal,\n"
+		"et leurs cadavres fumants étalés sur\n"
+		"le sol, vous sentez l'infernale\n"
+		"satisfaction de les avoir complètement\n"
+		"détruits.\n\n"
+		"la passage qu'ils gardaient\n"
+		"s'ouvrit, révélant ce que vous\n"
+		"espérez être le chemin du retour.\n"
+		"Mais au fur et a mesure que vous \n"
+		"avancez, un rire moqueur sonne\n"
+		"à vos oreilles.\n\n"
+		"était-ce quelque autre force contrôlant\n"
+		"les massetaures? Ait elle pû être\n"
+		"plus atroce que les créatures de\n"
+		"ce portail? La forme d'un dôme\n"
+		"de cristal dépasse de\n"
+		"l'horizon, couvrant le ciel,\n"
+		"ce n'est pas de bon augure....";
 HE3TEXT =
-		"la mort de d'sparil a liberes\n"
+		"la mort de d'sparil a liberé\n"
 		"les liens magiques liant\n"
-		"les creatures de cette face,\n"
-            "leurs cri en mourrant surpasserent\n"
-		"ses propres cris d agonie.\n\n"
+		"les créatures de ce monde,\n"
+        "leurs cris d'agonie surpassant\n"
+		"ses propres hurlements.\n\n"
 		"votre serment de vengeance rempli,\n"
-		"vous entrate dans le portail pour\n"
-		"votre monde, moments insignifiants\n"
-		"avant que la coupole ne volasse en \neclats.\n"
-		"mais si le pouvoir de d'sparil\n"
-		"fut rompu a jamais, pourquoi ne pas\n"
-		"ne pas vous sentir en securite?\n"
-		"fut ce son dernier cri\n"
-		"celui qui resonna comme une\n"
-		"malediction? une invoquation? vous\n"
-		"ne putes en etre sur vraiment, mais\n"
-		"il s'eut put n'etre qu un cri.\n\n"
-		"puis de nouveau, que devenirent\n"
-		"les autres serpents coureurs?";
+		"vous pénétrez dans le portail vers\n"
+		"votre monde, un court moment\n"
+		"avant que la coupole vole en éclats.\n"
+		"Mais avec le pouvoir de d'sparil\n"
+		"rompu a jamais, pourquoi vous ne\n"
+		"pouvez pas vous sentir en sécurite?\n"
+		"Serai-çe à cause de son dernier cri\n"
+		"celui qui résonna comme une\n"
+		"malédiction? une invocation? vous\n"
+		"ne pouvez pas en être sûr, mais\n"
+		"ce n'est peut être qu un cri.\n\n"
+		"De plus, qu'adviendrat-il\n"
+		"des autres chevaucheurs de serpent?";
 HE4TEXT =
-		"vous crutes pouvoir retourner dans\n"
+		"vous aviez cru pouvoir retourner dans\n"
 		"votre monde apres que d'sparil\n"
-            "trepassa , mais son acte\n"
+        "ne trépasse, mais son acte\n"
 		"final fut de vous bannir dans sa\n"
-		"propre dimension. ici vous entrates\n"
-		" dans des restes effondres de terres\n"
-		"conquisent par d'sparil. vous eutes\n"
+		"propre dimension. Ici vous errez\n"
+		"dans les territoires ruinés des\n"
+		"conquêtes de d'sparil. vous êtes\n"
 		"le dernier gardien de ces terres,\n"
-		"mais a ce moment vous vous tenites\n"
+		"mais a ce moment vous vous tenez\n"
 		"devant le bastion de d'sparil."
-            "jusqua ce moment vous n'eutes \n"
+        "jusqu'à ce moment vous n'aviez\n"
 		"aucun doute sur votre capacite\n"
-		"d affronter tout ce que vous pouviez\n"
-		"rencontrer,mais derriere ce portail\n"
-		"git le coeur profond du mal\n"
+		"à affronter tout ce que vous pouviez\n"
+		"rencontrer, mais derrière ce portail\n"
+		"gît le coeur du mal profond\n"
 		"qui envahit votre monde. d'sparil\n"
-		"eut pu etre mort,mais le puit ou\n"
-		"il fut ne demeura. maintenant vous\n"
-		"dutes entrer dans ce puit dans l'espoir\n"
-		"de trouver une sortie.et quelque part,\n"
+		"peut être mort, mais le puis d'où\n"
+		"il est sorti ne l'est pas. Maintenant\n"
+		"vous devez y entrer dans l'espoir\n"
+		"de trouver une sortie, quelque part,\n"
 		"dans la plus sombre partie du\n"
-            "royaume de d'sparil,\n"
-		"sa garde personnelle attendit votre\n"
-		"arrivee ...";
+        "royaume de d'sparil,\n"
+		"Sa garde personnelle attend votre\n"
+		"arrivée ...";
 HE5TEXT =
-		"des que le massotaure final eu mugit\n"
-		"son agonie mortelle, vous realisates que\n"
-		"vous n'eutes jamais ete aussi proche de\n"
-		"votre propre destruction.meme le \n"
+		"dès que le massetaure final eu mugit\n"
+		"son râle d'agonie, vous réalisez que\n"
+		"vous n'avez jamais été aussi proche de\n"
+		"votre propre mort. Même le \n"
 		"combat contre d'sparil et ses\n" 
 		"disciples n'eut ete a ce point \n"
-		"desespere. souriant, quand vous \n"
-		"regardates fixement le portail s'ouvrir \n"
-		"devant vous ,vous demandant s'il menait \n"
-		"chez vous,ou si il ouvrait sur une\n"
-		"innimaginable horreur. vous vous \n"
-		"demandates si vous eutes la force d'y aller,\n"
+		"éreintant. Souriant, vous \n"
+		"regardez fixement le portail s'ouvrir \n"
+		"devant vous, vous demandant s'il mêne\n"
+		"chez vous, où si il ouvre sur une\n"
+		"horreur inimaginable. Vous n'êtes \n"
+		"pas sûr d'avoir la force d'y aller,\n"
 		"si rien d'autre que souffrance\n"
-		"et mort vous eurent attendu.\n"
-		"mais que putes vous faire d'autre, si\n"
-		"la volonte de vous battre s'eut enfuie?\n"
-		"putes vous,vous meme vous forcer a \n"
-		"continuer face a un tel desespoir? \n"
-		"eutes vous le courage? vous trouvates,\n"
-		"a la fin ,ce ne fut pas dans votre nature\n"
-		"de vous rendre sans un combat. les yeux\n"
-		"larges ,vous partates rencontrer votre\n"
-		"destinee.";
+		"et mort ne vous y attendent.\n"
+		"mais que faire d'autre, si la\n"
+		"volonté de vous battre disparaît?\n"
+		"Comment voulez-vous vous forcer à\n"
+		"continuer face a un tel désespoir? \n"
+		"En avez vous le courage? Vous pensez,\n"
+		"a la fin que ce n'est pas dans votre nature\n"
+		"de vous rendre sans combattre. les yeux\n"
+		"larges, vous partez rencontrer votre\n"
+		"destinée.";
 
 // EPISODE 1 - LA CITE DES DAMNES
 HHUSTR_E1M1 = "LES DOCKS";
@@ -1352,7 +1358,7 @@ TXT_WPNSKULLROD = "BATON INFERNAL";
 TXT_WPNPHOENIXROD = "BATON INFERNAL";
 TXT_WPNGAUNTLETS = "GANTELETS DU NECROMANCIEN";
 
-TXT_NEEDBLUEKEY = "CETTE PORTE NESCESSITE UNE CLE BLEU POUR S'OUVRIR";
+TXT_NEEDBLUEKEY = "CETTE PORTE NESCESSITE UNE CLE BLEUE POUR S'OUVRIR";
 TXT_NEEDGREENKEY = "CETTE PORTE NESCESSITE UNE CLE VERTE POUR S'OUVRIR";
 TXT_NEEDYELLOWKEY = "CETTE PORTE NESCESSITE UNE CLE JAUNE POUR S'OUVRIR";
 
@@ -1367,7 +1373,6 @@ TXT_CHEATIDKFA = "TRICHEUR - TU NE MERITE PAS D'ARMES!";
 TXT_CHEATTICKERON = "COMPTEUR ALLUME";
 TXT_CHEATTICKEROFF = "COMPTER ETEINT";
 TXT_CHEATARTIFACTS3 = "VOUS L'AVEZ";
-TXT_MIDASTOUCH = "YOU GOT THE MIDAS TOUCH, BABY!";
 TXT_GOTSTUFF = "Voilà ton équipement!";
 TXT_FREEZEON = "Temps arrêté.";
 TXT_FREEZEOFF = "Le temps reprend son cours..";
@@ -1385,6 +1390,19 @@ TXT_IMTIME = "TEMPS";
 
 RAVENQUITMSG = "ETES VOUS SUR DE VOULOIR QUITTER?";
 
+FN_CHICKEN = "Poulet";
+FN_BEAST = "Dragon-garou";
+FN_CLINK = "Sabregriffe";
+FN_DSPARIL = "D'Sparil";
+FN_HERETICIMP = "Gargouille";
+FN_IRONLICH = "Liche de Fer";
+FN_BONEKNIGHT = "Guerrier Mort-Vivant";
+FN_MINOTAUR = "Massetaure";
+FN_MUMMY = "Golem";
+FN_MUMMYLEADER = "Nitrogolem";
+FN_SNAKE = "Ophidien";
+FN_WIZARD = "Magicien";
+
 // Hexen strings
 
 // Mana
@@ -1400,7 +1418,7 @@ TXT_KEY_CAVE = "CLE DE LA CAVE";
 TXT_KEY_AXE = "CLE DE LA HACHE";
 TXT_KEY_FIRE = "CLE DU FEU";
 TXT_KEY_EMERALD = "CLE D'EMERAUDE";
-TXT_KEY_DUNGEON = "CLE DU DONGEON";
+TXT_KEY_DUNGEON = "CLE DU DONJON";
 TXT_KEY_SILVER = "CLE D'ARGENT";
 TXT_KEY_RUSTED = "CLE ROUILLEE";
 TXT_KEY_HORN = "CLE CORNE";
@@ -1412,10 +1430,10 @@ TXT_NEED_KEY_CAVE = "Vous avez besoin de la CLE DE LA CAVE";
 TXT_NEED_KEY_AXE = "Vous avez besoin de la CLE DE LA HACHE";
 TXT_NEED_KEY_FIRE = "Vous avez besoin de la CLE DU FEU";
 TXT_NEED_KEY_EMERALD = "Vous avez besoin de la CLE D'EMERAUDE";
-TXT_NEED_KEY_DUNGEON = "Vous avez besoin de la CLE DU DONGEON";
+TXT_NEED_KEY_DUNGEON = "Vous avez besoin de la CLE DU DONJON";
 TXT_NEED_KEY_SILVER = "Vous avez besoin de la CLE D'ARGENT";
 TXT_NEED_KEY_RUSTED = "Vous avez besoin de la CLE ROUILLEE";
-TXT_NEED_KEY_HORN = "Vous avez besoin de la CLE ROUILLEE";
+TXT_NEED_KEY_HORN = "Vous avez besoin de la CLE CORNE";
 TXT_NEED_KEY_SWAMP = "Vous avez besoin de la CLE DES MARECAGES";
 TXT_NEED_KEY_CASTLE = "Vous avez besoin de la CLE DU CHATEAU";
 
@@ -1464,13 +1482,13 @@ TXT_WEAPON_F3 = "MARTEAU DE LA RETRIBUTION";
 TXT_WEAPON_F4 = "QUIETUS ASSEMBLE";
 TXT_WEAPON_C2 = "SCEPTRE DU SERPENT";
 TXT_WEAPON_C3 = "TEMPETE DE FEU";
-TXT_WEAPON_C4 = "BATON DU COURROUX ASSEMBLE";
+TXT_WEAPON_C4 = "VERGE PHANTASMALE ASSEMBLE";
 TXT_WEAPON_M2 = "ECLATS DE GIVRE";
 TXT_WEAPON_M3 = "FOUDRE MORTELLE";
 TXT_WEAPON_M4 = "FLEAU SANGLANT ASSEMBLE";
 TXT_WEAPONPIECE = "Une piece d'arme! C'est votre jour de chance!";
 TXT_QUIETUS_PIECE = "SEGMENT DE QUIETUS";
-TXT_WRAITHVERGE_PIECE = "SEGMENT DU BATON DU COURROUX";
+TXT_WRAITHVERGE_PIECE = "SEGMENT DE LA VERGE PHANTASMALE";
 TXT_BLOODSCOURGE_PIECE = "SEGMENT DU FLEAU SANGLANT";
 
 // Strife locks
@@ -1488,6 +1506,8 @@ TXT_NEED_SILVERKEY = "Vous avez besoin de la clé en argent.";
 TXT_NEED_BRASSKEY = "Vous avez besoin de la clé en bronze.";
 TXT_NEED_REDCRYSTAL = "Vous avez besoin du cristal rouge.";
 TXT_NEED_BLUECRYSTAL = "Vous avez besoin du cristal bleu.";
+TXT_RETAIL_ONLY = "CETTE ZONE N'EST ACCESSIBLE QUE DANS LA VERSION COMPLETE DE STRIFE";
+TXT_DOES_NOT_WORK = "Cela ne semble pas fonctionner.";
 
 
 // Strife Quest messages
@@ -1599,8 +1619,8 @@ TXT_RANDOM_REBEL_03 = "On couvre tes arrières, t'inquiète pas.";
 TXT_RANDOM_REBEL_04 = "Ne vous approchez pas trop des gros robots. Ils brûleront jusqu'à l'os!";
 TXT_RANDOM_REBEL_05 = "Le jour de gloire arrivera bientôt, et ceux qui s'opposeront a nous seront écrasés!";
 TXT_RANDOM_REBEL_06 = "Ne vous reposez pas sur vos lauriers. Du travail nous attend encore.";
-TXT_RANDOM_REBEL_07 = "Macil nous dis que tu es notre nouvel espoir. Garde ca à l'esprit.";
-TXT_RANDOM_REBEL_08 = "Une fois que nous nous serons débarassés de ces charlatans, nous serons capable de rebatir le monde tel qu'il devrait être.";
+TXT_RANDOM_REBEL_07 = "Macil nous dit que tu es notre nouvel espoir. Garde ca à l'esprit.";
+TXT_RANDOM_REBEL_08 = "Une fois que nous nous serons débarassés de ces charlatans, nous serons capable de rebâtir le monde tel qu'il devrait être.";
 TXT_RANDOM_REBEL_09 = "Souviens-toi, tu ne te bas pas seulement pour toi, mais pour tous le monde ici et ailleurs.";
 TXT_RANDOM_REBEL_10 = "Aussi longtemps qu'un de nous est vivant, nous vaincrons.";
 
@@ -1619,14 +1639,14 @@ TXT_RANDOM_BEGGAR_01 = "L'aumône pour les pauvres?";
 TXT_RANDOM_BEGGAR_02 = "Tu regarde qui, habitant de la surface?";
 TXT_RANDOM_BEGGAR_03 = "Aurais-tu de la nourriture en trop sur toi?";
 TXT_RANDOM_BEGGAR_04 = "Vous, les gens de la surface, vous ne comprendrez jamais.";
-TXT_RANDOM_BEGGAR_05 = "Ha, les gardes ne nous trouveront jamaiss, ces idios ne savent même pas que l'on existe!";
+TXT_RANDOM_BEGGAR_05 = "Ha, les gardes ne nous trouveront jamais, ces idiots ne savent même pas qu'on existe!";
 TXT_RANDOM_BEGGAR_06 = "Un jour, tous sauf les membres de l'ordre seront forcés de nous rejoindre.";
-TXT_RANDOM_BEGGAR_07 = "Amuse toi à nous regarder autant que tu veus, mais tu sais que ceci sera aussi ton sort un jour.";
-TXT_RANDOM_BEGGAR_08 = "Il n'y rien de plus barbant qu'un type de la surface et son attitude!";
+TXT_RANDOM_BEGGAR_07 = "Moque nous si tu veux, mais tu sais que ceci sera aussi ton sort un jour.";
+TXT_RANDOM_BEGGAR_08 = "Il n'y rien de plus barbant qu'un type de la surface et son orgeuil!";
 TXT_RANDOM_BEGGAR_09 = "L'ordre se débarrassera de vos soldats pathétiques.";
 TXT_RANDOM_BEGGAR_10 = "Prend guarde a toi, habitant de la surface. Nous connaîssons nos ennemis!";
 
-TXT_RANDOM_PGUARD_01 = "Nous sommes les mains du destin. Apprendre notre colere est l'égal de trouver l'oubli!";
+TXT_RANDOM_PGUARD_01 = "Nous sommes les mains du destin. Apprendre notre colère est l'égal de trouver l'oubli!";
 TXT_RANDOM_PGUARD_02 = "L'ordre nettoira le monde des faibles et corrompus!";
 TXT_RANDOM_PGUARD_03 = "Obéissez à la volonté de vos maîtres!";
 TXT_RANDOM_PGUARD_04 = "Longue vie aux membres de l'Ordre!";
@@ -1687,7 +1707,7 @@ MNU_DEMESNE			= "LE DOMAINE STAGNANT";
 
 MNU_WETNURSE		= "VOUS AVEZ BESOIN D'UNE NOURRICE";
 MNU_YELLOWBELLIES	= "UN TROUILLARD-TU-EST";
-MNU_BRINGEST		= "AMMENEZ LES MOI!";
+MNU_BRINGEST		= "AMENEZ LES MOI!";
 MNU_SMITE			= "TU EST UN MAITRE-MEURTRIER";
 MNU_BLACKPLAGUE		= "LA PESTE NOIRE ME POSSEDE";
 
@@ -1721,7 +1741,6 @@ MNU_WARRIOR			= "GUERRIER";
                                     
 MNU_ALTARBOY		= "ENFANT DE CHOEUR";
 MNU_PRIEST			= "PRETRE";
-MNU_CARDINAL		= "CARDINAL";
 MNU_POPE			= "PAPE";
                                     
 MNU_APPRENTICE		= "APPRENTI";
@@ -1754,7 +1773,7 @@ OPTMNU_CHANGERENDER			= "Changer de Moteur de Rendu";
 OPTMNU_DEFAULTS				= "Réinitialiser les paramètres";
 OPTMNU_RESETTOSAVED			= "Recharger dernière config.";
 OPTMNU_CONSOLE				= "Ouvrir la console";
-
+OPTMNU_REVERB				= "Editeur environement de révérb.";
 // Controls Menu
 
 CNTRLMNU_TITLE					= "MODIFIER CONTROLES";
@@ -1821,7 +1840,7 @@ CNTRLMNU_OTHER					= "Autres";
 CNTRLMNU_AUTOMAP				= "Activer Carte";
 CNTRLMNU_CHASECAM				= "Caméra 3ième personne";
 CNTRLMNU_COOPSPY				= "Espionner Coéquiper";
-CNTRLMNU_SCREENSHOT				= "Capture d'Ecran";
+CNTRLMNU_SCREENSHOT				= "Capture d'écran";
 CNTRLMNU_CONSOLE				= "Ouvrir Console";
 CNTRLMNU_POPUPS					= "Popups de Strife";
 CNTRLMNU_MISSION				= "Objectifs de Mission";
@@ -1836,7 +1855,7 @@ MOUSEMNU_MOUSEINMENU		= "Activer Souris dans les Menus";
 MOUSEMNU_SHOWBACKBUTTON		= "Afficher le bouton retour";
 MOUSEMNU_CURSOR				= "Curseur";
 MOUSEMNU_SENSITIVITY		= "Sensibilité générale";
-MOUSEMNU_NOPRESCALE			= "Prescaling movement souris";
+MOUSEMNU_NOPRESCALE			= "Prescaling mouvement souris";
 MOUSEMNU_SMOOTHMOUSE		= "Lissage Souris";
 MOUSEMNU_TURNSPEED			= "Vitesse pour tourner";
 MOUSEMNU_MOUSELOOKSPEED		= "Vitesse Vue Souris";
@@ -1985,7 +2004,7 @@ MISCMNU_QUERYIWAD				= "Afficher la séléction d'IWAD";
 MISCMNU_ALLCHEATS				= "Activer cheats de tous les jeux";
 MISCMNU_ENABLEAUTOSAVES			= "Activer Sauvegardes auto";
 MISCMNU_AUTOSAVECOUNT			= "Total de sauvegardes auto";
-MISCMNU_SAVELOADCONFIRMATION  = "Confirmation C/S";
+MISCMNU_SAVELOADCONFIRMATION  	= "Confirmation C/S";
 MISCMNU_DEHLOAD					= "Charger fichiers *.deh/*.bex";
 MISCMNU_CACHENODES				= "Mise en cache des nodes";
 MISCMNU_CACHETIME				= "Limite cache des nodes";
@@ -2119,7 +2138,7 @@ GMPLYMNU_ALLOWSPYING		= "Autoriser espionnage";
 GMPLYMNU_CHASECAM			= "Cheat caméra 3ième personne";
 GMPLYMNU_DONTCHECKAMMO		= "Vérifier munitions pour changement arme";
 GMPLYMNU_KILLBOSSSPAWNS		= "Tuer L'Icône tue tous ses monstres";
-GMPLYMNU_NOCOUNTENDMONSTER	= "Ennemis dans secteur de sortie comptent";
+GMPLYMNU_NOCOUNTENDMONSTER	= "Ennemis du secteur sortie comptés";
 GMPLYMNU_DEATHMATCH			= "Options Deathmatch";
 GMPLYMNU_WEAPONSSTAY		= "Armes restent au sol quand récupérées";
 GMPLYMNU_ALLOWPOWERUPS		= "Autoriser powerups";
@@ -2149,21 +2168,21 @@ GMPLYMNU_SPAWNWHEREDIED		= "Réapparaitre sur lieu de mort";
 CMPTMNU_TITLE				= "OPTIONS COMPATIBILITE";
 CMPTMNU_MODE				= "Mode de compatibilité";
 CMPTMNU_ACTORBEHAVIOR		= "Comportement des Acteurs";
-CMPTMNU_CORPSEGIBS			= "Monstres écrasés peuvent être ressucités";
-CMPTMNU_NOBLOCKFRIENDS		= "Monstres amicaux ne sont pas bloqués";
-CMPTMNU_LIMITPAIN			= "Limite sur les âmes des élémentaires";
-CMPTMNU_MBFMONSTERMOVE		= "Mouvement monstre affecté par les effets";
+CMPTMNU_CORPSEGIBS			= "Monstres écrasés résucitables";
+CMPTMNU_NOBLOCKFRIENDS		= "Monstres amicaux non bloqués";
+CMPTMNU_LIMITPAIN			= "Limiter âmes des élémentaires";
+CMPTMNU_MBFMONSTERMOVE		= "Mouvement monstre affecté par effets";
 CMPTMNU_CROSSDROPOFF		= "Monstres ne passent pas les corniches";
 CMPTMNU_DROPOFF				= "Monstres bloqués par les corniches";
 CMPTMNU_INVISIBILITY		= "Monstres voient joueurs invisibles";
 CMPTMNU_MINOTAUR			= "Pas de feu de Massetaur sur l'eau";
-CMPTMNU_NOTOSSDROPS			= "OBjets lâchés sont direct au sol";
+CMPTMNU_NOTOSSDROPS			= "Objets lâchés direct au sol";
 CMPTMNU_DEHACKEDBEHAVIOR	= "Comportement DeHackEd";
 CMPTMNU_DEHHEALTH			= "Niveaux de santé DEH comme Doom2.EXE";
 CMPTMNU_MUSHROOM			= "Vitesse A_Mushroom originale pour DEH";
 CMPTMNU_MAPACTIONBEHAVIOR	= "Comportement Niveau/Actions";
 CMPTMNU_USEBLOCKING			= "Toute ligne d'action bloque <utiliser>";
-CMPTMNU_ANYBOSSDEATH		= "N'importe quel boss peut activer actions boss";
+CMPTMNU_ANYBOSSDEATH		= "N'importe quel boss active actions boss";
 CMPTMNU_NODOORLIGHT			= "Pas d'effet de lumière BOOM sur portes";
 CMPTMNU_LIGHT				= "Trouver prochaine texture comme DOOM";
 CMPTMNU_SHORTTEX			= "Trouver plus petite texture comme Doom";
@@ -2200,7 +2219,7 @@ SNDMNU_SFXVOLUME		= "Volume des Sons";
 SNDMNU_MENUVOLUME		= "Volume du Menu";
 SNDMNU_MUSICVOLUME		= "Volume Musique";
 SNDMNU_MIDIDEVICE		= "Sortie MIDI";
-SNDMNU_BACKGROUND		= "Sons activé en arrière plan";
+SNDMNU_BACKGROUND		= "Son activé en arrière plan";
 SNDMNU_UNDERWATERREVERB	= "Reverbération sous l'eau";
 SNDMNU_RANDOMIZEPITCHES	= "Tons sonores aléatoires";
 SNDMNU_CHANNELS			= "Canaux sonores";
@@ -2218,7 +2237,7 @@ OPENALMNU_RESAMPLER			= "Resampler";
 
 // Advanced Sound Options
 ADVSNDMNU_TITLE				= "OPTIONS SONORES AVANCEES";
-ADVSNDMNU_SAMPLERATE		= "Sample rate";
+ADVSNDMNU_SAMPLERATE		= "Cadence de Sampling";
 ADVSNDMNU_HRTF				= "HRTF";
 ADVSNDMNU_OPLSYNTHESIS		= "Synthèse OPL";
 ADVSNDMNU_OPLNUMCHIPS		= "Puces OPL émulées";
@@ -2229,18 +2248,24 @@ ADVSNDMNU_GUSCONFIG			= "Fichier Config. GUS";
 ADVSNDMNU_MIDIVOICES		= "Voix MIDI";
 ADVSNDMNU_DMXGUS			= "Lire fichiers DMXGUS";
 ADVSNDMNU_GUSMEMSIZE		= "Taille mémoire GUS";
-ADVSNDMNU_FLUIDSYNTH		= "FluidSynth";
-ADVSNDMNU_FLUIDPATCHSET		= "Patchset";
-ADVSNDMNU_FLUIDGAIN			= "Gain";
-ADVSNDMNU_REVERB			= "Reverb";
-ADVSNDMNU_CHORUS			= "Chorus";
-ADVSNDMNU_TIMIDITY			= "Timidity++";
 ADVSNDMNU_TIMIDITYEXE		= "Chemin exécutable";
 ADVSNDMNU_TIMIDITYCONFIG	= "Fichier de config. TiMidity";
 ADVSNDMNU_TIMIDITYVOLUME	= "Volume Relatif";
-ADVSNDMNU_WILDMIDI			= "WildMidi";
 ADVSNDMNU_WILDMIDICONFIG	= "Fichier config. WildMidi";
 ADVSNDMNU_SELCONFIG			= "Sélectionner configuration";
+ADVSNDMNU_ADVRESAMPLING		= "Resampling Avancé";
+ADVSNDMNU_OPLBANK			= "Banque OPL";
+ADVSNDMNU_ADLOPLCORES		= "Coeur Emulateur OPL";
+ADVSNDMNU_RUNPCMRATE		= "Emulateur utilise cadence PCM";
+ADVSNDMNU_ADLNUMCHIPS		= "Puces OPL émulées";
+ADVSNDMNU_VLMODEL			= "Modèle de Volume";
+ADVSNDMNU_OPNNUMCHIPS		= "Puces OPN émulées";
+
+// ADLMIDI's volume models
+ADLVLMODEL_AUTO				= "Auto (Utiliser paramètre banque)";
+ADLVLMODEL_GENERIC			= "Générique";
+ADLVLMODEL_NATIVE			= "OPL Natif";
+
 
 // Module Replayer Options
 MODMNU_TITLE			= "OPTIONS LECTEUR MODULES";
@@ -2248,7 +2273,6 @@ MODMNU_REPLAYERENGINE	= "Moteur de lecture";
 MODMNU_MASTERVOLUME		= "Volume maître";
 MODMNU_QUALITY			= "Qualité";
 MODMNU_VOLUMERAMPING	= "Rampe du volume";
-MODMNU_CHIPOMATIC		= "Chip-o-matic";
 
 // Renderer Options
 RNDMNU_TITLE			= "SELECTION MOTEUR RENDU";
@@ -2259,6 +2283,7 @@ RNDMNU_CANVAS			= "Canvas Software";
 
 // Video Options
 VIDMNU_TITLE			= "MODE VIDEO";
+IDMNU_RENDERMODE		= "Mode de Rendu";
 VIDMNU_FULLSCREEN		= "Plein écran";
 VIDMNU_HIDPI			= "Support Retina/HiDPI ";
 VIDMNU_BRDLSS			= "Mode fenêtré sans bordures";
@@ -2271,6 +2296,16 @@ VIDMNU_SCALEFACTOR		= "Facteur d'échelle";
 VIDMNU_ENTERTEXT		= "Appuyez sur ENTREE pour choisir un mode";
 VIDMNU_TESTTEXT1		= "Appuyez sur T pour tester ce mode pendant 5 secondes.";
 VIDMNU_TESTTEXT2		= "Veuillez attendre 5 secondes...";
+
+VIDMNU_USELINEAR		= "Mise à l'échelle Linéaire (Plein écran)";
+VIDMNU_CUSTOMRES		= "Résolution Personalisée";
+VIDMNU_CUSTOMX			= "Largeur Personalisée";
+VIDMNU_CUSTOMY			= "Hauteur Personalisée";
+VIDMNU_APPLYW			= "Appliquer Changements (Fenêtre)";
+VIDMNU_APPLYFS			= "Appliquer Changements (Plein écran)";
+VIDMNU_RESPRESET		= "Choisir paramètre personalisé";
+VIDMNU_RESPRESETTTL		= "Résolutions Personalisée";
+VIDMNU_RESPRESETHEAD	= "Choisir mode de Résolution";
 
 // Network Options
 NETMNU_TITLE					= "OPTIONS RESEAU";
@@ -2405,6 +2440,33 @@ OPTVAL_VTAZDOOM				= "Auto (ZDoom Préféré)";
 OPTVAL_VTAVANILLA			= "Auto (Vanilla Préféré)";
 OPTVAL_SCALENEAREST			= "Mise à l'échelle (Proche Voisin)";
 OPTVAL_SCALELINEAR			= "Mise à l'échelle (Linéaire)";
+OPTVAL_LINEAR				= "Linéaire";
+OPTVAL_CUBIC				= "Cubique";
+OPTVAL_BLEP					= "Step limité par bande";
+OPTVAL_LINEARSLOW			= "Linéaire (Lent)";
+OPTVAL_BLAM					= "Linéaire limité par bande";
+OPTVAL_CUBICSLOW			= "Cubique (Lent)";
+OPTVAL_NOTEONOFFONLY		= "Note on/off seulement";
+OPTVAL_FULLRAMPING			= "Rampe complète";
+OPTVAL_ALLUNACKNOWLEDGED	= "Tout non-acknowledged";
+OPTVAL_ERRORS				= "Erreurs";
+OPTVAL_WARNINGS				= "Avertissements";
+OPTVAL_EVERYTHING			= "Tout";
+OPTVAL_FULLSCREENONLY		= "Plein écran seulement";
+OPTVAL_HWPOLY				= "Accéléré par OpenGL";
+OPTVAL_SWDOOM				= "Rendu Software Doom";
+OPTVAL_SWDOOMTC				= "Rendu Software Couleurs Réeles";
+OPTVAL_SWPOLY				= "Rendu Softpoly";
+OPTVAL_SWPOLYTC				= "Softpoly Couleurs Réeles";
+OPTVAL_DEDICATED			= "Hautes Performances";
+OPTVAL_INTEGRATED			= "Economie d'Energie";
+OPTVAL_VTFZDOOM				= "ZDoom (Forcé)";
+OPTVAL_VTFVANILLA			= "Vanilla (Forcé)";
+OPTVAL_VTAZDOOM				= "Auto (ZDoom Préféré)";
+OPTVAL_VTAVANILLA			= "Auto (Vanilla Préféré)";
+OPTVAL_SCALENEAREST			= "Mis à l'échelle (Proche Voisin)";
+OPTVAL_SCALELINEAR			= "Mis à l'échelle (Linéaire)";
+
 
 // Colors
 C_BRICK					= "\cabrique";

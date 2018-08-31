@@ -549,7 +549,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		{
 			gl_RenderState.EnableTexture(false);
 		}
-		gl_RenderState.Apply();
+		gl_RenderState.Apply(attrindex, true);
 
 		switch (cmd.mType)
 		{

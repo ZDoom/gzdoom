@@ -50,7 +50,6 @@ void AttributeBufferData::CreateDefaultEntries(std::function<void(AttributeBuffe
 
     uFogEnabled = 3;
     uLightIsAttr = true;
-    uLightIndex = -1;
     uAlphaThreshold = -0.01f;
 	SetColorAlpha(0xffffff, 1);
 

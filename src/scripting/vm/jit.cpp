@@ -2626,7 +2626,7 @@ private:
 	void EmitEQV3_R()
 	{
 		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
-			if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for EQV2_R.\n");
+			if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for EQV3_R.\n");
 
 			auto parityTmp = cc.newInt32();
 			auto result1Tmp = cc.newInt32();
@@ -2656,7 +2656,7 @@ private:
 	
 	void EmitEQV3_K()
 	{
-		I_FatalError("EQV2_K is not used.");
+		I_FatalError("EQV3_K is not used.");
 	}
 
 	// Pointer math.

@@ -304,8 +304,8 @@ private:
 			EMIT_OP(DIVVF2_RR);
 			EMIT_OP(DIVVF2_RK);
 			EMIT_OP(LENV2);
-			// EMIT_OP(EQV2_R);
-			// EMIT_OP(EQV2_K);
+			EMIT_OP(EQV2_R);
+			EMIT_OP(EQV2_K);
 			EMIT_OP(NEGV3);
 			EMIT_OP(ADDV3_RR);
 			EMIT_OP(SUBV3_RR);
@@ -316,8 +316,8 @@ private:
 			EMIT_OP(DIVVF3_RR);
 			EMIT_OP(DIVVF3_RK);
 			EMIT_OP(LENV3);
-			// EMIT_OP(EQV3_R);
-			// EMIT_OP(EQV3_K);
+			EMIT_OP(EQV3_R);
+			EMIT_OP(EQV3_K);
 			EMIT_OP(ADDA_RR);
 			EMIT_OP(ADDA_RK);
 			EMIT_OP(SUBA);
@@ -2266,6 +2266,8 @@ private:
 	void EmitLTF_RR()
 	{
 		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+			if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LTF_RR.\n");
+
 			cc.ucomisd(regF[C], regF[B]);
 			cc.seta(result);
 			cc.and_(result, 1);
@@ -2275,6 +2277,8 @@ private:
 	void EmitLTF_RK()
 	{
 		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+			if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LTF_RK.\n");
+
 			auto constTmp = cc.newIntPtr();
 			auto xmmTmp = cc.newXmmSd();
 			cc.mov(constTmp, ToMemAddress(&konstf[C]));
@@ -2289,6 +2293,8 @@ private:
 	void EmitLTF_KR()
 	{
 		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+			if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LTF_KR.\n");
+
 			auto tmp = cc.newIntPtr();
 			cc.mov(tmp, ToMemAddress(&konstf[B]));
 
@@ -2301,6 +2307,8 @@ private:
 	void EmitLEF_RR()
 	{
 		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+			if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LEF_RR.\n");
+
 			cc.ucomisd(regF[C], regF[B]);
 			cc.setae(result);
 			cc.and_(result, 1);
@@ -2310,6 +2318,8 @@ private:
 	void EmitLEF_RK()
 	{
 		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+			if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LEF_RK.\n");
+
 			auto constTmp = cc.newIntPtr();
 			auto xmmTmp = cc.newXmmSd();
 			cc.mov(constTmp, ToMemAddress(&konstf[C]));
@@ -2324,6 +2334,8 @@ private:
 	void EmitLEF_KR()
 	{
 		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+			if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LEF_KR.\n");
+
 			auto tmp = cc.newIntPtr();
 			cc.mov(tmp, ToMemAddress(&konstf[B]));
 
@@ -2429,8 +2441,33 @@ private:
 		CallSqrt(regF[A], regF[A]);
 	}
 
-	// void EmitEQV2_R() { } // if ((vB == vkC) != A) then pc++ (inexact if A & 32)
-	// void EmitEQV2_K() { } // this will never be used.
+	void EmitEQV2_R()
+	{
+		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+			if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for EQV2_R.\n");
+
+			auto parityTmp = cc.newInt32();
+			auto result1Tmp = cc.newInt32();
+			cc.ucomisd(regF[B], regF[C]);
+			cc.sete(result);
+			cc.setnp(parityTmp);
+			cc.and_(result, parityTmp);
+			cc.and_(result, 1);
+
+			cc.ucomisd(regF[B + 1], regF[C + 1]);
+			cc.sete(result1Tmp);
+			cc.setnp(parityTmp);
+			cc.and_(result1Tmp, parityTmp);
+			cc.and_(result1Tmp, 1);
+
+			cc.and_(result, result1Tmp);
+		});
+	}
+
+	void EmitEQV2_K()
+	{
+		I_FatalError("EQV2_K is not used.");
+	}
 
 	// Vector math. (3D)
 
@@ -2586,8 +2623,41 @@ private:
 		CallSqrt(regF[A], regF[A]);
 	}
 
-	// void EmitEQV3_R() { } // if ((vB == vkC) != A) then pc++ (inexact if A & 32)
-	// void EmitEQV3_K() { } // this will never be used.
+	void EmitEQV3_R()
+	{
+		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+			if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for EQV3_R.\n");
+
+			auto parityTmp = cc.newInt32();
+			auto result1Tmp = cc.newInt32();
+			cc.ucomisd(regF[B], regF[C]);
+			cc.sete(result);
+			cc.setnp(parityTmp);
+			cc.and_(result, parityTmp);
+			cc.and_(result, 1);
+
+			cc.ucomisd(regF[B + 1], regF[C + 1]);
+			cc.sete(result1Tmp);
+			cc.setnp(parityTmp);
+			cc.and_(result1Tmp, parityTmp);
+			cc.and_(result1Tmp, 1);
+
+			cc.and_(result, result1Tmp);
+
+			cc.ucomisd(regF[B + 2], regF[C + 2]);
+			cc.sete(result1Tmp);
+			cc.setnp(parityTmp);
+			cc.and_(result1Tmp, parityTmp);
+			cc.and_(result1Tmp, 1);
+
+			cc.and_(result, result1Tmp);
+		});
+	}
+	
+	void EmitEQV3_K()
+	{
+		I_FatalError("EQV3_K is not used.");
+	}
 
 	// Pointer math.
 

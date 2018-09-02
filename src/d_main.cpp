@@ -638,7 +638,7 @@ CVAR(Bool, vid_activeinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 void D_Display ()
 {
-	FTexture *wipe;
+	FTexture *wipe = nullptr;
 	int wipe_type;
 	sector_t *viewsec;
 
@@ -870,6 +870,8 @@ void D_Display ()
 
 	if (!wipe || NoWipe < 0 || wipe_type == wipe_None)
 	{
+		if (wipe != nullptr) delete wipe;
+		wipe = nullptr;
 		NetUpdate ();			// send out any new accumulation
 		// normal update
 		// draw ZScript UI stuff

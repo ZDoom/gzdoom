@@ -228,7 +228,6 @@ int LevelAABBTree::GenerateTreeNode(int *lines, int num_lines, const FVector2 *c
 	// Try sort at longest axis, then if that fails then the other one.
 	// We place the sorted lines into work_buffer and then move the result back to the lines list when done.
 	int left_count, right_count;
-	FVector2 axis;
 	for (int attempt = 0; attempt < 2; attempt++)
 	{
 		// Find the sort plane for axis

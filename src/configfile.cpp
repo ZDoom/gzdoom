@@ -38,6 +38,7 @@
 
 #include "doomtype.h"
 #include "configfile.h"
+#include "files.h"
 #include "m_random.h"
 
 #define READBUFFERSIZE	256
@@ -601,17 +602,16 @@ FConfigFile::FConfigEntry *FConfigFile::NewConfigEntry (
 
 void FConfigFile::LoadConfigFile ()
 {
-	FILE *file = fopen (PathName, "r");
+	FileReader file;
 	bool succ;
 
 	FileExisted = false;
-	if (file == NULL)
+	if (!file.OpenFile (PathName))
 	{
 		return;
 	}
 
-	succ = ReadConfig (file);
-	fclose (file);
+	succ = ReadConfig (&file);
 	FileExisted = succ;
 }
 
@@ -787,7 +787,7 @@ FConfigFile::FConfigEntry *FConfigFile::ReadMultiLineValue(void *file, FConfigSe
 
 char *FConfigFile::ReadLine (char *string, int n, void *file) const
 {
-	return fgets (string, n, (FILE *)file);
+	return ((FileReader *)file)->Gets (string, n);
 }
 
 //====================================================================
@@ -805,7 +805,7 @@ bool FConfigFile::WriteConfigFile () const
 		return true;
 	}
 
-	FILE *file = fopen (PathName, "w");
+	FileWriter *file = FileWriter::Open (PathName);
 	FConfigSection *section;
 	FConfigEntry *entry;
 
@@ -820,27 +820,27 @@ bool FConfigFile::WriteConfigFile () const
 		entry = section->RootEntry;
 		if (section->Note.IsNotEmpty())
 		{
-			fputs (section->Note.GetChars(), file);
+			file->Write (section->Note.GetChars(), section->Note.Len());
 		}
-		fprintf (file, "[%s]\n", section->SectionName.GetChars());
+		file->Printf ("[%s]\n", section->SectionName.GetChars());
 		while (entry != NULL)
 		{
 			if (strpbrk(entry->Value, "\r\n") == NULL)
 			{ // Single-line value
-				fprintf (file, "%s=%s\n", entry->Key, entry->Value);
+				file->Printf ("%s=%s\n", entry->Key, entry->Value);
 			}
 			else
 			{ // Multi-line value
 				const char *endtag = GenerateEndTag(entry->Value);
-				fprintf (file, "%s=<<<%s\n%s\n>>>%s\n", entry->Key,
+				file->Printf ("%s=<<<%s\n%s\n>>>%s\n", entry->Key,
 					endtag, entry->Value, endtag);
 			}
 			entry = entry->Next;
 		}
 		section = section->Next;
-		fputs ("\n", file);
+		file->Write ("\n", 1);
 	}
-	fclose (file);
+	delete file;
 	return true;
 }
 
@@ -890,7 +890,7 @@ const char *FConfigFile::GenerateEndTag(const char *value)
 //
 //====================================================================
 
-void FConfigFile::WriteCommentHeader (FILE *file) const
+void FConfigFile::WriteCommentHeader (FileWriter *file) const
 {
 }
 

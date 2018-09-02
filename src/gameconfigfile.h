@@ -58,7 +58,7 @@ public:
 	void ReadNetVars ();
 
 protected:
-	void WriteCommentHeader (FILE *file) const;
+	void WriteCommentHeader (FileWriter *file) const;
 	void CreateStandardAutoExec (const char *section, bool start);
 
 private:

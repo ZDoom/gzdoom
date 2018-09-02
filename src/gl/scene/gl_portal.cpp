@@ -399,7 +399,6 @@ void GLHorizonPortal::DrawContents(HWDrawInfo *hwdi)
 	Clocker c(PortalAll);
 
 	FMaterial * gltexture;
-	PalEntry color;
 	player_t * player=&players[consoleplayer];
 	GLSectorPlane * sp = &origin->plane;
 	auto &vp = di->Viewpoint;

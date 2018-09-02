@@ -167,22 +167,19 @@ class TObjPtr
 		DObject *o;
 	};
 public:
-	TObjPtr() throw()
-	{
-	}
+	TObjPtr() = default;
+	TObjPtr(const TObjPtr<T> &q) = default;
+
 	TObjPtr(T q) throw()
 		: pp(q)
 	{
 	}
-	TObjPtr(const TObjPtr<T> &q) throw()
-		: pp(q.pp)
+	T operator=(T q)
 	{
+		pp = q;
+		return *this;
 	}
-	T operator=(T q) throw()
-	{
-		return pp = q;
-		// The caller must now perform a write barrier.
-	}
+
 	operator T() throw()
 	{
 		return GC::ReadBarrier(pp);

@@ -468,7 +468,7 @@ public:
 	TObjPtr<AActor*> MUSINFOactor = nullptr;		// For MUSINFO purposes
 	int8_t		MUSINFOtics = 0;
 
-	bool		settings_controller = false;	// Player can control game settings.
+	bool		settings_controller = true;	// Player can control game settings.
 	int8_t		crouching = 0;
 	int8_t		crouchdir = 0;
 

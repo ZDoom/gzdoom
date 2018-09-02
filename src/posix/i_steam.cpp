@@ -153,13 +153,13 @@ static struct SteamAppInfo
 	const int AppID;
 } AppInfo[] =
 {
-	/*{"doom 2/base", 2300},
-	{"final doom/base", 2290},
-	{"heretic shadow of the serpent riders/base", 2390},
-	{"hexen/base", 2360},
-	{"hexen deathkings of the dark citadel/base", 2370},
-	{"ultimate doom/base", 2280},
-	{"DOOM 3 BFG Edition/base/wads", 208200},*/
+	{"Doom 2/base", 2300},
+	{"Final Doom/base", 2290},
+	{"Heretic Shadow of the Serpent Riders/base", 2390},
+	{"Hexen/base", 2360},
+	{"Hexen Deathkings of the Dark Citadel/base", 2370},
+	{"Ultimate Doom/base", 2280},
+	{"DOOM 3 BFG Edition/base/wads", 208200},
 	{"Strife", 317040}
 };
 
@@ -190,7 +190,13 @@ TArray<FString> I_GetSteamPath()
 	if(home != NULL && *home != '\0')
 	{
 		FString regPath;
-		regPath.Format("%s/.local/share/Steam/config/config.vdf", home);
+		regPath.Format("%s/.steam/config/config.vdf", home);
+		// [BL] The config seems to have moved from the more modern .local to
+		// .steam at some point. Not sure if it's just my setup so I guess we
+		// can fall back on it?
+		if(!FileExists(regPath))
+			regPath.Format("%s/.local/share/Steam/config/config.vdf", home);
+
 		try
 		{
 			SteamInstallFolders = ParseSteamRegistry(regPath);

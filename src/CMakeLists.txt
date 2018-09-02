@@ -1154,6 +1154,7 @@ set (PCH_SOURCES
 	r_data/models/models_md2.cpp
 	r_data/models/models_voxel.cpp
 	r_data/models/models_ue1.cpp
+	r_data/models/models_obj.cpp
 	scripting/symbols.cpp
 	scripting/types.cpp
 	scripting/thingdef.cpp

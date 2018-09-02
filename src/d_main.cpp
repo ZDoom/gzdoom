@@ -868,7 +868,7 @@ void D_Display ()
 		GSnd->DrawWaveDebug(snd_drawoutput);
 	}
 
-	if (!wipe || NoWipe < 0)
+	if (!wipe || NoWipe < 0 || wipe_type == wipe_None)
 	{
 		NetUpdate ();			// send out any new accumulation
 		// normal update

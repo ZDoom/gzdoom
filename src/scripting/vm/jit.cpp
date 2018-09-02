@@ -174,7 +174,7 @@ private:
 			EMIT_OP(LV3_R);
 			//EMIT_OP(LCS);
 			//EMIT_OP(LCS_R);
-			//EMIT_OP(LBIT);
+			EMIT_OP(LBIT);
 			EMIT_OP(SB);
 			EMIT_OP(SB_R);
 			EMIT_OP(SH);
@@ -195,7 +195,7 @@ private:
 			EMIT_OP(SV2_R);
 			EMIT_OP(SV3);
 			EMIT_OP(SV3_R);
-			// EMIT_OP(SBIT);
+			EMIT_OP(SBIT);
 			EMIT_OP(MOVE);
 			EMIT_OP(MOVEF);
 			// EMIT_OP(MOVES);
@@ -216,16 +216,16 @@ private:
 			//EMIT_OP(PARAMI);
 			//EMIT_OP(CALL);
 			//EMIT_OP(CALL_K);
-			//EMIT_OP(VTBL);
-			//EMIT_OP(SCOPE);
+			EMIT_OP(VTBL);
+			EMIT_OP(SCOPE);
 			//EMIT_OP(TAIL);
 			//EMIT_OP(TAIL_K);
 			EMIT_OP(RESULT);
 			EMIT_OP(RET);
 			EMIT_OP(RETI);
-			//EMIT_OP(NEW);
-			//EMIT_OP(NEW_K);
-			//EMIT_OP(THROW);
+			EMIT_OP(NEW);
+			EMIT_OP(NEW_K);
+			EMIT_OP(THROW);
 			EMIT_OP(BOUND);
 			EMIT_OP(BOUND_K);
 			EMIT_OP(BOUND_R);
@@ -344,8 +344,8 @@ private:
 			EMIT_OP(ADDA_RR);
 			EMIT_OP(ADDA_RK);
 			EMIT_OP(SUBA);
-			// EMIT_OP(EQA_R);
-			// EMIT_OP(EQA_K);
+			EMIT_OP(EQA_R);
+			EMIT_OP(EQA_K);
 		}
 	}
 
@@ -630,18 +630,16 @@ private:
 
 	void EmitLCS_R()
 	{
-	}
+	}*/
 
-	void EmitLBIT() // rA = !!(*rB & C)  -- *rB is a byte
+	void EmitLBIT()
 	{
 		EmitNullPointerThrow(B, X_READ_NIL);
-		auto tmp = cc.newInt8();
-		cc.mov(regD[a], PB);
+		cc.movsx(regD[a], asmjit::x86::byte_ptr(PB));
 		cc.and_(regD[a], C);
-		cc.test(regD[a], regD[a]);
-		cc.sete(tmp);
-		cc.movzx(regD[a], tmp);
-	}*/
+		cc.cmp(regD[a], 0);
+		cc.setne(regD[a]);
+	}
 
 	// Store instructions. *(rA + rkC) = rB
 
@@ -778,7 +776,19 @@ private:
 		cc.movsd(asmjit::x86::qword_ptr(tmp, 16), regF[B + 2]);
 	}
 
-	// void EmitSBIT() {} // *rA |= C if rB is true, *rA &= ~C otherwise
+	void EmitSBIT()
+	{
+		EmitNullPointerThrow(B, X_WRITE_NIL);
+		auto tmp1 = cc.newInt32();
+		auto tmp2 = cc.newInt32();
+		cc.mov(tmp1, asmjit::x86::byte_ptr(PA));
+		cc.mov(tmp2, tmp1);
+		cc.or_(tmp1, (int)C);
+		cc.and_(tmp2, ~(int)C);
+		cc.test(regD[B], regD[B]);
+		cc.cmove(tmp1, tmp2);
+		cc.mov(asmjit::x86::byte_ptr(PA), tmp1);
+	}
 
 	// Move instructions.
 
@@ -1010,8 +1020,64 @@ private:
 	//void EmitPARAMI() {} // push immediate, signed integer for function call
 	//void EmitCALL() {} // Call function pkA with parameter count B and expected result count C
 	//void EmitCALL_K() {}
-	//void EmitVTBL() {} // dereferences a virtual method table.
-	//void EmitSCOPE() {} // Scope check at runtime.
+
+	void EmitVTBL()
+	{
+		auto notnull = cc.newLabel();
+		cc.test(regA[B], regA[B]);
+		cc.jnz(notnull);
+		EmitThrowException(X_READ_NIL);
+		cc.bind(notnull);
+
+		auto result = cc.newInt32();
+		typedef VMFunction*(*FuncPtr)(DObject*, int);
+		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](DObject *o, int c) -> VMFunction* {
+			auto p = o->GetClass();
+			assert(c < (int)p->Virtuals.Size());
+			return p->Virtuals[c];
+		}))), asmjit::FuncSignature2<void*, void*, int>());
+		call->setRet(0, result);
+		call->setArg(0, regA[a]);
+		call->setArg(1, asmjit::Imm(C));
+	}
+
+	void EmitSCOPE()
+	{
+		auto notnull = cc.newLabel();
+		cc.test(regA[a], regA[a]);
+		cc.jnz(notnull);
+		EmitThrowException(X_READ_NIL);
+		cc.bind(notnull);
+
+		auto f = cc.newIntPtr();
+		cc.mov(f, ToMemAddress(konsta[C].v));
+
+		auto result = cc.newInt32();
+		typedef int(*FuncPtr)(DObject*, VMFunction*, int);
+		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](DObject *o, VMFunction *f, int b) -> int {
+			try
+			{
+				FScopeBarrier::ValidateCall(o->GetClass(), f, b - 1);
+				return 1;
+			}
+			catch (const CVMAbortException &)
+			{
+				// To do: pass along the exception info
+				return 0;
+			}
+		}))), asmjit::FuncSignature3<int, void*, void*, int>());
+		call->setRet(0, result);
+		call->setArg(0, regA[a]);
+		call->setArg(1, f);
+		call->setArg(2, asmjit::Imm(B));
+
+		auto notzero = cc.newLabel();
+		cc.test(result, result);
+		cc.jnz(notzero);
+		EmitThrowException(X_OTHER);
+		cc.bind(notzero);
+	}
+
 	//void EmitTAIL() {} // Call+Ret in a single instruction
 	//void EmitTAIL_K() {}
 
@@ -1160,9 +1226,98 @@ private:
 			cc.ret(numret);
 	}
 
-	//void EmitNEW() {}
-	//void EmitNEW_K() {}
-	//void EmitTHROW() {} // A == 0: Throw exception object pB, A == 1: Throw exception object pkB, A >= 2: Throw VM exception of type BC
+	void EmitNEW()
+	{
+		auto result = cc.newIntPtr();
+		typedef DObject*(*FuncPtr)(PClass*, int);
+		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](PClass *cls, int c) -> DObject* {
+			try
+			{
+				if (!cls->ConstructNative)
+				{
+					ThrowAbortException(X_OTHER, "Class %s requires native construction", cls->TypeName.GetChars());
+				}
+				else if (cls->bAbstract)
+				{
+					ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
+				}
+				else if (cls->IsDescendantOf(NAME_Actor)) // Creating actors here must be outright prohibited
+				{
+					ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
+				}
+
+				// [ZZ] validate readonly and between scope construction
+				if (c) FScopeBarrier::ValidateNew(cls, c - 1);
+				return cls->CreateNew();
+			}
+			catch (const CVMAbortException &)
+			{
+				// To do: pass along the exception info
+				return nullptr;
+			}
+		}))), asmjit::FuncSignature2<void*, void*, int>());
+		call->setRet(0, result);
+		call->setArg(0, regA[B]);
+		call->setArg(1, asmjit::Imm(C));
+
+		auto notnull = cc.newLabel();
+		cc.test(result, result);
+		cc.jnz(notnull);
+		EmitThrowException(X_OTHER);
+		cc.bind(notnull);
+		cc.mov(regA[a], result);
+	}
+
+	void EmitNEW_K()
+	{
+		PClass *cls = (PClass*)konsta[B].v;
+		if (!cls->ConstructNative)
+		{
+			EmitThrowException(X_OTHER); // "Class %s requires native construction", cls->TypeName.GetChars()
+		}
+		else if (cls->bAbstract)
+		{
+			EmitThrowException(X_OTHER); // "Cannot instantiate abstract class %s", cls->TypeName.GetChars()
+		}
+		else if (cls->IsDescendantOf(NAME_Actor)) // Creating actors here must be outright prohibited
+		{
+			EmitThrowException(X_OTHER); // "Cannot create actors with 'new'"
+		}
+		else
+		{
+			auto result = cc.newIntPtr();
+			auto regcls = cc.newIntPtr();
+			cc.mov(regcls, ToMemAddress(konsta[B].v));
+			typedef DObject*(*FuncPtr)(PClass*, int);
+			auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](PClass *cls, int c) -> DObject* {
+				try
+				{
+					if (c) FScopeBarrier::ValidateNew(cls, c - 1);
+					return cls->CreateNew();
+				}
+				catch (const CVMAbortException &)
+				{
+					// To do: pass along the exception info
+					return nullptr;
+				}
+			}))), asmjit::FuncSignature2<void*, void*, int>());
+			call->setRet(0, result);
+			call->setArg(0, regcls);
+			call->setArg(1, asmjit::Imm(C));
+
+			auto notnull = cc.newLabel();
+			cc.test(result, result);
+			cc.jnz(notnull);
+			EmitThrowException(X_OTHER);
+			cc.bind(notnull);
+			cc.mov(regA[a], result);
+		}
+	}
+
+	void EmitTHROW()
+	{
+		EmitThrowException(EVMAbortException(BC));
+	}
 
 	void EmitBOUND()
 	{
@@ -2447,8 +2602,23 @@ private:
 		cc.mov(regA[a], tmp);
 	}
 
-	// void EmitEQA_R() { } // if ((pB == pkC) != A) then pc++
-	// void EmitEQA_K() { }
+	void EmitEQA_R()
+	{
+		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+			cc.cmp(regA[B], regA[C]);
+			cc.sete(result);
+		});
+	}
+
+	void EmitEQA_K()
+	{
+		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+			auto tmp = cc.newIntPtr();
+			cc.mov(tmp, ToMemAddress(konsta[C].v));
+			cc.cmp(regA[B], tmp);
+			cc.sete(result);
+		});
+	}
 
 	void Setup()
 	{

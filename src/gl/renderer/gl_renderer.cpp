@@ -135,6 +135,7 @@ FGLRenderer::~FGLRenderer()
 
 	if (swdrawer) delete swdrawer;
 	if (mBuffers) delete mBuffers;
+	if (mSaveBuffers) delete mSaveBuffers;
 	if (mPresentShader) delete mPresentShader;
 	if (mPresent3dCheckerShader) delete mPresent3dCheckerShader;
 	if (mPresent3dColumnShader) delete mPresent3dColumnShader;
@@ -221,6 +222,7 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 		P_FindParticleSubsectors();
 
 		mLights->Clear();
+		mViewpoints->Clear();
 
 		// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
 		bool saved_niv = NoInterpolateView;
@@ -322,7 +324,8 @@ void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, i
     gl_RenderState.SetVertexBuffer(mVBO);
     mVBO->Reset();
     mLights->Clear();
-    
+	mViewpoints->Clear();
+
     // This shouldn't overwrite the global viewpoint even for a short time.
     FRenderViewpoint savevp;
     sector_t *viewsector = RenderViewpoint(savevp, players[consoleplayer].camera, &bounds, r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);

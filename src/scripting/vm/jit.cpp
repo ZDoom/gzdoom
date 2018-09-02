@@ -2334,7 +2334,7 @@ private:
 	void EmitLEF_KR()
 	{
 		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
-			if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LTF_KR.\n");
+			if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LEF_KR.\n");
 
 			auto tmp = cc.newIntPtr();
 			cc.mov(tmp, ToMemAddress(&konstf[B]));

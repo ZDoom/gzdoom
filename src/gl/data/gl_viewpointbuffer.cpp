@@ -144,6 +144,7 @@ void GLViewpointBuffer::Set2D(int width, int height)
 		HWViewpointUniforms matrices;
 		matrices.SetDefaults();
 		matrices.mProjectionMatrix.ortho(0, width, height, 0, -1.0f, 1.0f);
+		matrices.mFogEnabled = 3;
 		matrices.CalcDependencies();
 		Map();
 		memcpy(mBufferPointer, &matrices, sizeof(matrices));

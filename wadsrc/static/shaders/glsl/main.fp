@@ -358,7 +358,7 @@ vec4 getLightColor(Material material, float fogdist, float fogfactor)
 		float newlightlevel = 1.0 - R_DoomLightingEquation(uLightLevel);
 		color.rgb *= newlightlevel;
 	}
-	else if (uFogEnabled > 0)
+	else if (uFogColor.rgb == vec3(0.0))
 	{
 		// brightening around the player for light mode 2
 		if (fogdist < uLightDist)
@@ -421,7 +421,7 @@ vec3 AmbientOcclusionColor()
 	//
 	// calculate fog factor
 	//
-	if (uFogEnabled == -1) 
+	if (uFogEnabled == 1) 
 	{
 		fogdist = pixelpos.w;
 	}
@@ -449,17 +449,17 @@ void main()
 	if (frag.a <= uAlphaThreshold) discard;
 #endif
 
-	if (uFogEnabled != -3)	// check for special 2D 'fog' mode.
+	if (uFogEnabled != 3)	// check for special 2D 'fog' mode.
 	{
 		float fogdist = 0.0;
-		float fogfactor = 0.0;
+		float fogfactor = 1.0;
 		
 		//
 		// calculate fog factor
 		//
-		if (uFogEnabled != 0)
+		if (uFogEnabled != 0 && uFogDensity != 0)
 		{
-			if (uFogEnabled == 1 || uFogEnabled == -1) 
+			if (uFogEnabled == 1) 
 			{
 				fogdist = pixelpos.w;
 			}
@@ -476,7 +476,7 @@ void main()
 			//
 			// colored fog
 			//
-			if (uFogEnabled < 0) 
+			if (uFogColor.rgb != vec3(0.0)) 
 			{
 				frag = applyFog(frag, fogfactor);
 			}
@@ -494,7 +494,7 @@ void main()
 			vec4 cm = (uObjectColor + gray * (uObjectColor2 - uObjectColor)) * 2;
 			frag = vec4(clamp(cm.rgb, 0.0, 1.0), frag.a);
 		}
-			frag = frag * ProcessLight(material, vColor);
+		frag = frag * ProcessLight(material, vColor);
 		frag.rgb = frag.rgb + uFogColor.rgb;
 	}
 	FragColor = frag;

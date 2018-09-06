@@ -375,6 +375,7 @@ void FDrawInfo::DrawEndScene2D(sector_t * viewsector)
 	HWViewpointUniforms vp = VPUniforms;
 	vp.mViewMatrix.loadIdentity();
 	vp.mProjectionMatrix = vrmode->GetHUDSpriteProjection();
+	vp.mFogEnabled = 0;
 	GLRenderer->mViewpoints->SetViewpoint(&vp);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_MULTISAMPLE);

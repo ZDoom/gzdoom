@@ -15,7 +15,7 @@ void main()
 	//
 	// calculate fog factor
 	//
-	if (uFogEnabled == -1) 
+	if (uFogEnabled == 1) 
 	{
 		fogdist = pixelpos.w;
 	}

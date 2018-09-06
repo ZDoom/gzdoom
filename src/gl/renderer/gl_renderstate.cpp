@@ -119,7 +119,7 @@ bool FRenderState::ApplyShader()
 	static uint64_t firstFrame = 0;
 	// if firstFrame is not yet initialized, initialize it to current time
 	// if we're going to overflow a float (after ~4.6 hours, or 24 bits), re-init to regain precision
-	if ((firstFrame == 0) || (screen->FrameTime - firstFrame >= 1<<24) || level.ShaderStartTime >= firstFrame)
+	if ((firstFrame == 0) || (screen->FrameTime - firstFrame >= 1 << 24) || level.ShaderStartTime >= firstFrame)
 		firstFrame = screen->FrameTime;
 
 	static const float nulvec[] = { 0.f, 0.f, 0.f, 0.f };
@@ -133,31 +133,15 @@ bool FRenderState::ApplyShader()
 		activeShader->Bind();
 	}
 
-	int fogset = 0;
-
-	if (mFogEnabled)
-	{
-		if (mFogEnabled == 2)
-		{
-			fogset = -3;	// 2D rendering with 'foggy' overlay.
-		}
-		else if ((mFogColor & 0xffffff) == 0)
-		{
-			fogset = gl_fogmode;
-		}
-		else
-		{
-			fogset = -gl_fogmode;
-		}
-	}
-
 	glVertexAttrib4fv(VATTR_COLOR, mColor.vec);
 	glVertexAttrib4fv(VATTR_NORMAL, mNormal.vec);
 
 	activeShader->muDesaturation.Set(mDesaturation / 255.f);
-	activeShader->muFogEnabled.Set(fogset);
 	activeShader->muTextureMode.Set(mTextureMode == TM_MODULATE && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode);
+	float fds = mLightParms[2];
+	if (!mFogEnabled) mLightParms[2] = 0;
 	activeShader->muLightParms.Set(mLightParms);
+	mLightParms[2] = fds;
 	activeShader->muFogColor.Set(mFogColor);
 	activeShader->muObjectColor.Set(mObjectColor);
 	activeShader->muObjectColor2.Set(mObjectColor2);

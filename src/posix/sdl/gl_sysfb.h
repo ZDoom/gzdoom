@@ -52,11 +52,7 @@ protected:
 
 	static const int MIN_WIDTH = 320;
 	static const int MIN_HEIGHT = 200;
-
-	typedef DECLSPEC int SDLCALL (*SDL_GetWindowBordersSizePtr)(SDL_Window *, int *, int *, int *, int *);
-
-	SDL_GetWindowBordersSizePtr SDL_GetWindowBordersSize_;
-	void *sdl_lib;
 };
 
 #endif // __POSIX_SDL_GL_SYSFB_H__
+

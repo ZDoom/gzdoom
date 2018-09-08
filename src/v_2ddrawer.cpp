@@ -428,6 +428,7 @@ void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 	// is necessary in order to best reproduce Doom's original lighting.
 	double fadelevel;
 
+	// The hardware renderer's light modes 0, 1 and 4 use a linear light scale which must be used here as well. Otherwise the automap gets too dark.
 	if (vid_rendermode != 4 || (level.lightmode >= 2 && level.lightmode != 4))
 	{
 		double map = (NUMCOLORMAPS * 2.) - ((lightlevel + 12) * (NUMCOLORMAPS / 128.));

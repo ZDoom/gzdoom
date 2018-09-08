@@ -290,9 +290,9 @@ public:
 		mGlowBottom.Set(b[0], b[1], b[2], b[3]);
 	}
 
-	void SetSoftLightLevel(int llevel)
+	void SetSoftLightLevel(int llevel, int blendfactor = 0)
 	{
-		if (level.lightmode == 8) mLightParms[3] = llevel / 255.f;
+		if (level.lightmode == 8 && blendfactor == 0) mLightParms[3] = llevel / 255.f;
 		else mLightParms[3] = -1.f;
 	}
 

@@ -2812,16 +2812,18 @@ private:
 		int i = (int)(ptrdiff_t)(pc - sfunc->Code);
 
 		auto tmp = cc.newInt32();
-
+		cc.xor_(tmp, tmp);
 		compFunc(tmp);
 
 		bool check = static_cast<bool>(A & CMP_CHECK);
 
-		cc.test(tmp, tmp);
-		if (check) cc.je(labels[i + 2]);
-		else       cc.jne(labels[i + 2]);
+		auto jmplabel = labels[i + 2 + JMPOFS(pc + 1)];
 
-		cc.jmp(labels[i + 2 + JMPOFS(pc + 1)]);
+		cc.test(tmp, tmp);
+		if (check) cc.je(jmplabel);
+		else       cc.jne(jmplabel);
+
+		pc++; // This instruction uses two instruction slots - skip the next one
 	}
 
 	static int64_t ToMemAddress(const void *d)

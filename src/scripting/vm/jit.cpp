@@ -393,7 +393,7 @@ private:
 
 		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](void *o) -> void*
 		{
-			return static_cast<DObject*>(o)->GetClass();
+			return static_cast<DObject*>(o)->GetClass()->Meta;
 		}))), asmjit::FuncSignature1<void*, void*>());
 		call->setRet(0, regA[A]);
 		call->setArg(0, regA[B]);
@@ -411,7 +411,7 @@ private:
 
 		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](void *o) -> void*
 		{
-			return static_cast<DObject*>(o)->GetClass()->Meta;
+			return static_cast<DObject*>(o)->GetClass();
 		}))), asmjit::FuncSignature1<void*, void*>());
 		call->setRet(0, regA[A]);
 		call->setArg(0, regA[B]);
@@ -3049,7 +3049,7 @@ static void OutputJitLog(const asmjit::StringLogger &logger)
 		Printf("%s\n", pos);
 }
 
-#define DEBUG_JIT
+//#define DEBUG_JIT
 
 JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 {
@@ -3061,7 +3061,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 		return nullptr;
 #endif
 
-	Printf("Jitting function: %s\n", sfunc->PrintableName.GetChars());
+	//Printf("Jitting function: %s\n", sfunc->PrintableName.GetChars());
 
 	using namespace asmjit;
 	StringLogger logger;

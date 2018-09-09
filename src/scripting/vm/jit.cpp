@@ -458,25 +458,25 @@ private:
 	void EmitLBU()
 	{
 		EmitNullPointerThrow(B, X_READ_NIL);
-		cc.mov(regD[A], asmjit::x86::byte_ptr(regA[B], konstd[C]));
+		cc.movzx(regD[A], asmjit::x86::byte_ptr(regA[B], konstd[C]));
 	}
 
 	void EmitLBU_R()
 	{
 		EmitNullPointerThrow(B, X_READ_NIL);
-		cc.mov(regD[A], asmjit::x86::byte_ptr(regA[B], regD[C]));
+		cc.movzx(regD[A].r8Lo(), asmjit::x86::byte_ptr(regA[B], regD[C]));
 	}
 
 	void EmitLHU()
 	{
 		EmitNullPointerThrow(B, X_READ_NIL);
-		cc.mov(regD[A], asmjit::x86::word_ptr(regA[B], konstd[C]));
+		cc.movzx(regD[A].r16(), asmjit::x86::word_ptr(regA[B], konstd[C]));
 	}
 
 	void EmitLHU_R()
 	{
 		EmitNullPointerThrow(B, X_READ_NIL);
-		cc.mov(regD[A], asmjit::x86::word_ptr(regA[B], regD[C]));
+		cc.movzx(regD[A].r16(), asmjit::x86::word_ptr(regA[B], regD[C]));
 	}
 
 	void EmitLSP()
@@ -3054,7 +3054,7 @@ static void OutputJitLog(const asmjit::StringLogger &logger)
 JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 {
 #if defined(DEBUG_JIT)
-	if (strcmp(sfunc->Name.GetChars(), "CanPickup") != 0)
+	if (strcmp(sfunc->PrintableName.GetChars(), "Key.ShouldStay") != 0)
 		return nullptr;
 #else
 	if (!JitCompiler::CanJit(sfunc))

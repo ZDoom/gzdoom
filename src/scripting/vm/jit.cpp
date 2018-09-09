@@ -37,10 +37,11 @@ public:
 
 		Setup();
 
-		int size = sfunc->CodeSize;
-		for (int i = 0; i < size; i++)
+		pc = sfunc->Code;
+		auto end = pc + sfunc->CodeSize;
+		while (pc != end)
 		{
-			pc = sfunc->Code + i;
+			int i = (int)(ptrdiff_t)(pc - sfunc->Code);
 			op = pc->op;
 
 			cc.bind(labels[i]);
@@ -53,6 +54,8 @@ public:
 			if (!opcodeFunc)
 				I_FatalError("JIT error: Unknown VM opcode %d\n", op);
 			(this->*opcodeFunc)();
+
+			pc++;
 		}
 
 		cc.endFunc();
@@ -956,7 +959,7 @@ private:
 	{
 		int i = (int)(ptrdiff_t)(pc - sfunc->Code);
 		cc.cmp(regD[A], BC);
-		cc.jne(labels[i + 1]);
+		cc.jne(labels[i + 2]);
 	}
 	
 	void EmitTESTN()
@@ -964,7 +967,7 @@ private:
 		int bc = BC;
 		int i = (int)(ptrdiff_t)(pc - sfunc->Code);
 		cc.cmp(regD[A], -bc);
-		cc.jne(labels[i + 1]);
+		cc.jne(labels[i + 2]);
 	}
 
 	void EmitJMP()
@@ -2728,7 +2731,7 @@ private:
 		using namespace asmjit;
 
 		FString funcname;
-		funcname.Format("Function: %1", sfunc->PrintableName.GetChars());
+		funcname.Format("Function: %s", sfunc->PrintableName.GetChars());
 		cc.comment(funcname.GetChars(), funcname.Len());
 
 		stack = cc.newIntPtr("stack"); // VMFrameStack *stack
@@ -2820,8 +2823,8 @@ private:
 		auto jmplabel = labels[i + 2 + JMPOFS(pc + 1)];
 
 		cc.test(tmp, tmp);
-		if (check) cc.je(jmplabel);
-		else       cc.jne(jmplabel);
+		if (check) cc.jne(jmplabel);
+		else       cc.je(jmplabel);
 
 		pc++; // This instruction uses two instruction slots - skip the next one
 	}
@@ -3046,17 +3049,19 @@ static void OutputJitLog(const asmjit::StringLogger &logger)
 		Printf("%s\n", pos);
 }
 
-//#define DEBUG_JIT
+#define DEBUG_JIT
 
 JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 {
 #if defined(DEBUG_JIT)
-	if (strcmp(sfunc->Name.GetChars(), "EmptyFunction") != 0)
+	if (strcmp(sfunc->Name.GetChars(), "CanPickup") != 0)
 		return nullptr;
 #else
 	if (!JitCompiler::CanJit(sfunc))
 		return nullptr;
 #endif
+
+	Printf("Jitting function: %s\n", sfunc->PrintableName.GetChars());
 
 	using namespace asmjit;
 	StringLogger logger;

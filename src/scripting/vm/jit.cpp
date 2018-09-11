@@ -2,6 +2,7 @@
 #include "jit.h"
 #include "i_system.h"
 #include "types.h"
+#include "stats.h"
 
 // To do: get cmake to define these..
 #define ASMJIT_BUILD_EMBED
@@ -10,6 +11,9 @@
 #include <asmjit/asmjit.h>
 #include <asmjit/x86.h>
 #include <functional>
+
+extern cycle_t VMCycles[10];
+extern int VMCalls[10];
 
 #define A				(pc[0].a)
 #define B				(pc[0].b)
@@ -111,6 +115,11 @@ public:
 					break;
 				}
 			}
+			else if (sfunc->Code[i].op == OP_RESULT)
+			{
+				if ((B & REGT_TYPE) == REGT_STRING)
+					return false;
+			}
 		}
 		return true;
 	}
@@ -204,8 +213,8 @@ private:
 			//EMIT_OP(IJMP);
 			EMIT_OP(PARAM);
 			EMIT_OP(PARAMI);
-			//EMIT_OP(CALL);
-			//EMIT_OP(CALL_K);
+			EMIT_OP(CALL);
+			EMIT_OP(CALL_K);
 			EMIT_OP(VTBL);
 			EMIT_OP(SCOPE);
 			//EMIT_OP(TAIL);
@@ -1092,8 +1101,198 @@ private:
 		cc.mov(asmjit::x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_INT);
 	}
 
-	//void EmitCALL() {} // Call function pkA with parameter count B and expected result count C
-	//void EmitCALL_K() {}
+	void EmitCALL()
+	{
+		EmitDoCall(regA[A]);
+	}
+
+	void EmitCALL_K()
+	{
+		auto ptr = cc.newIntPtr();
+		cc.mov(ptr, ToMemAddress(konsta[A].o));
+		EmitDoCall(ptr);
+	}
+
+	void EmitDoCall(asmjit::X86Gp ptr)
+	{
+		using namespace asmjit;
+
+		if (NumParam != B)
+			I_FatalError("OP_CALL parameter count does not match the number of preceding OP_PARAM instructions");
+		NumParam = 0;
+
+		FillReturns(pc + 1, C);
+
+		auto result = cc.newInt32();
+		auto call = cc.call(ToMemAddress(&JitCompiler::DoCall), FuncSignature7<int, void*, void*, int, int, void*, void*, void*>());
+		call->setRet(0, result);
+		call->setArg(0, stack);
+		call->setArg(1, ptr);
+		call->setArg(2, asmjit::Imm(B));
+		call->setArg(3, asmjit::Imm(C));
+		call->setArg(4, params);
+		call->setArg(5, callReturns);
+		call->setArg(6, exceptInfo);
+
+		auto noexception = cc.newLabel();
+		auto exceptResult = cc.newInt32();
+		cc.mov(exceptResult, x86::dword_ptr(exceptInfo, 0 * 4));
+		cc.cmp(exceptResult, (int)-1);
+		cc.je(noexception);
+		X86Gp vReg = cc.newInt32();
+		cc.mov(vReg, 0);
+		cc.ret(vReg);
+		cc.bind(noexception);
+
+		LoadReturns(pc - B, B, true);
+		LoadReturns(pc + 1, C, false);
+	}
+
+	void LoadReturns(const VMOP *retval, int numret, const VMOP *argval, int numarg)
+	{
+		// Put the stored returns back into asmjit virtual registers:
+
+		// Put any inout arguments back into asmjit virtual registers:
+		for (int i = 0; i < numarg; ++i)
+		{
+			int type = argval[i].b;
+			int regnum = argval[i].c;
+		}
+	}
+
+	void LoadReturns(const VMOP *retval, int numret, bool inout)
+	{
+		for (int i = 0; i < numret; ++i)
+		{
+			if (!inout && retval[i].op != OP_RESULT)
+				I_FatalError("Expected OP_RESULT to follow OP_CALL\n");
+			else if (inout && retval[i].op != OP_PARAMI)
+				continue;
+			else if (inout && retval[i].op != OP_PARAM)
+				I_FatalError("Expected OP_PARAM to precede OP_CALL\n");
+
+			int type = retval[i].b;
+			int regnum = retval[i].c;
+
+			if (inout && !(type & REGT_ADDROF))
+				continue;
+
+			switch (type & REGT_TYPE)
+			{
+			case REGT_INT:
+				cc.mov(regD[regnum], asmjit::x86::dword_ptr(frameD, regnum * sizeof(int32_t)));
+				break;
+			case REGT_FLOAT:
+				cc.movsd(regF[regnum], asmjit::x86::qword_ptr(frameF, regnum * sizeof(double)));
+				break;
+			/*case REGT_STRING:
+				break;*/
+			case REGT_POINTER:
+				cc.mov(regA[regnum], asmjit::x86::ptr(frameA, regnum * sizeof(void*)));
+				break;
+			default:
+				I_FatalError("Unknown OP_RESULT type encountered in LoadReturns\n");
+				break;
+			}
+		}
+	}
+
+	void FillReturns(const VMOP *retval, int numret)
+	{
+		using namespace asmjit;
+
+		for (int i = 0; i < numret; ++i)
+		{
+			if (retval[i].op != OP_RESULT)
+			{
+				I_FatalError("Expected OP_RESULT to follow OP_CALL\n");
+			}
+
+			int type = retval[i].b;
+			int regnum = retval[i].c;
+
+			if (type & REGT_KONST)
+			{
+				I_FatalError("OP_RESULT with REGT_KONST is not allowed\n");
+			}
+
+			auto regPtr = cc.newIntPtr();
+
+			switch (type & REGT_TYPE)
+			{
+			case REGT_INT:
+				cc.mov(regPtr, frameD);
+				cc.add(regPtr, regnum * sizeof(int32_t));
+				break;
+			case REGT_FLOAT:
+				cc.mov(regPtr, frameF);
+				cc.add(regPtr, regnum * sizeof(double));
+				break;
+			/*case REGT_STRING:
+				cc.mov(regPtr, frameS);
+				cc.add(regPtr, regnum * sizeof(FString));
+				break;*/
+			case REGT_POINTER:
+				cc.mov(regPtr, frameA);
+				cc.add(regPtr, regnum * sizeof(void*));
+				break;
+			default:
+				I_FatalError("Unknown OP_RESULT type encountered in FillReturns\n");
+				break;
+			}
+
+			cc.mov(x86::ptr(callReturns, i * sizeof(VMReturn) + offsetof(VMReturn, Location)), regPtr);
+			cc.mov(x86::byte_ptr(callReturns, i * sizeof(VMReturn) + offsetof(VMReturn, RegType)), type);
+		}
+	}
+
+	static int DoCall(VMFrameStack *stack, VMFunction *call, int b, int c, VMValue *param, VMReturn *returns, JitExceptionInfo *exceptinfo)
+	{
+		try
+		{
+			int numret;
+			if (call->VarFlags & VARF_Native)
+			{
+				try
+				{
+					VMCycles[0].Unclock();
+					numret = static_cast<VMNativeFunction *>(call)->NativeCall(param, call->DefaultArgs, b, returns, c);
+					VMCycles[0].Clock();
+				}
+				catch (CVMAbortException &err)
+				{
+					err.MaybePrintMessage();
+					err.stacktrace.AppendFormat("Called from %s\n", call->PrintableName.GetChars());
+					throw;
+				}
+			}
+			else
+			{
+				VMCalls[0]++;
+				VMScriptFunction *script = static_cast<VMScriptFunction *>(call);
+				VMFrame *newf = stack->AllocFrame(script);
+				VMFillParams(param, newf, b);
+				try
+				{
+					numret = VMExec(stack, script->Code, returns, c);
+				}
+				catch (...)
+				{
+					stack->PopFrame();
+					throw;
+				}
+				stack->PopFrame();
+			}
+
+			return numret;
+		}
+		catch (...)
+		{
+			// To do: store full exception in exceptinfo
+			exceptinfo->reason = X_OTHER;
+			return 0;
+		}
+	}
 
 	void EmitVTBL()
 	{
@@ -2921,6 +3120,10 @@ private:
 		cc.setArg(3, numret);
 		cc.setArg(4, exceptInfo);
 
+		auto stack = cc.newStack(sizeof(VMReturn) * MAX_RETURNS, alignof(VMReturn));
+		callReturns = cc.newIntPtr("callReturns");
+		cc.lea(callReturns, stack);
+
 		konstd = sfunc->KonstD;
 		konstf = sfunc->KonstF;
 		konsts = sfunc->KonstS;
@@ -3148,6 +3351,7 @@ private:
 	asmjit::X86Gp frameA;
 	asmjit::X86Gp params;
 	int NumParam = 0; // Actually part of vmframe (f->NumParam), but we are going to assume that the backend never reuses parameters
+	asmjit::X86Gp callReturns;
 
 	const int *konstd;
 	const double *konstf;

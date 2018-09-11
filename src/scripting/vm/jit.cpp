@@ -1874,121 +1874,135 @@ private:
 
 	void EmitEQ_R()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			cc.cmp(regD[B], regD[C]);
-			cc.sete(result);
+			if (check) cc.je(fail);
+			else       cc.jne(fail);
 		});
 	}
 
 	void EmitEQ_K()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			cc.cmp(regD[B], konstd[C]);
-			cc.sete(result);
+			if (check) cc.je(fail);
+			else       cc.jne(fail);
 		});
 	}
 
 	void EmitLT_RR()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			cc.cmp(regD[B], regD[C]);
-			cc.setl(result);
+			if (check) cc.jl(fail);
+			else       cc.jnl(fail);
 		});
 	}
 
 	void EmitLT_RK()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			cc.cmp(regD[B], konstd[C]);
-			cc.setl(result);
+			if (check) cc.jl(fail);
+			else       cc.jnl(fail);
 		});
 	}
 
 	void EmitLT_KR()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			auto tmp = cc.newIntPtr();
 			cc.mov(tmp, ToMemAddress(&konstd[B]));
 			cc.cmp(asmjit::x86::ptr(tmp), regD[C]);
-			cc.setl(result);
+			if (check) cc.jl(fail);
+			else       cc.jnl(fail);
 		});
 	}
 
 	void EmitLE_RR()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			cc.cmp(regD[B], regD[C]);
-			cc.setle(result);
+			if (check) cc.jle(fail);
+			else       cc.jnle(fail);
 		});
 	}
 
 	void EmitLE_RK()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			cc.cmp(regD[B], konstd[C]);
-			cc.setle(result);
+			if (check) cc.jle(fail);
+			else       cc.jnle(fail);
 		});
 	}
 
 	void EmitLE_KR()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			auto tmp = cc.newIntPtr();
 			cc.mov(tmp, ToMemAddress(&konstd[B]));
 			cc.cmp(asmjit::x86::ptr(tmp), regD[C]);
-			cc.setle(result);
+			if (check) cc.jle(fail);
+			else       cc.jnle(fail);
 		});
 	}
 
 	void EmitLTU_RR()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			cc.cmp(regD[B], regD[C]);
-			cc.setb(result);
+			if (check) cc.jb(fail);
+			else       cc.jnb(fail);
 		});
 	}
 
 	void EmitLTU_RK()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			cc.cmp(regD[B], konstd[C]);
-			cc.setb(result);
+			if (check) cc.jb(fail);
+			else       cc.jnb(fail);
 		});
 	}
 
 	void EmitLTU_KR()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			auto tmp = cc.newIntPtr();
 			cc.mov(tmp, ToMemAddress(&konstd[B]));
 			cc.cmp(asmjit::x86::ptr(tmp), regD[C]);
-			cc.setb(result);
+			if (check) cc.jb(fail);
+			else       cc.jnb(fail);
 		});
 	}
 
 	void EmitLEU_RR()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			cc.cmp(regD[B], regD[C]);
-			cc.setbe(result);
+			if (check) cc.jbe(fail);
+			else       cc.jnbe(fail);
 		});
 	}
 
 	void EmitLEU_RK()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			cc.cmp(regD[B], konstd[C]);
-			cc.setbe(result);
+			if (check) cc.jbe(fail);
+			else       cc.jnbe(fail);
 		});
 	}
 
 	void EmitLEU_KR()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			auto tmp = cc.newIntPtr();
-			cc.mov(tmp, ToMemAddress(&konstd[C]));
-			cc.cmp(asmjit::x86::ptr(tmp), regD[B]);
-			cc.setbe(result);
+			cc.mov(tmp, ToMemAddress(&konstd[B]));
+			cc.cmp(asmjit::x86::ptr(tmp), regD[C]);
+			if (check) cc.jbe(fail);
+			else       cc.jnbe(fail);
 		});
 	}
 
@@ -2303,16 +2317,19 @@ private:
 
 	void EmitEQF_R()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			bool approx = static_cast<bool>(A & CMP_APPROX);
 			if (!approx)
 			{
-				auto tmp = cc.newInt32();
 				cc.ucomisd(regF[B], regF[C]);
-				cc.sete(result);
-				cc.setnp(tmp);
-				cc.and_(result, tmp);
-				cc.and_(result, 1);
+				if (check) {
+					cc.jp(success);
+					cc.je(fail);
+				}
+				else {
+					cc.jp(fail);
+					cc.jne(fail);
+				}
 			}
 			else
 			{
@@ -2331,8 +2348,9 @@ private:
 				cc.andpd(tmp, absMaskXmm);
 				cc.movsd(epsilonXmm, epsilon);
 				cc.ucomisd(epsilonXmm, tmp);
-				cc.seta(result);
-				cc.and_(result, 1);
+
+				if (check) cc.ja(fail);
+				else       cc.jna(fail);
 			}
 		});
 	}
@@ -2340,18 +2358,20 @@ private:
 	void EmitEQF_K()
 	{
 		using namespace asmjit;
-		EmitComparisonOpcode([&](X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			bool approx = static_cast<bool>(A & CMP_APPROX);
 			if (!approx) {
 				auto konstTmp = cc.newIntPtr();
-				auto parityTmp = cc.newInt32();
 				cc.mov(konstTmp, ToMemAddress(&konstf[C]));
-
 				cc.ucomisd(regF[B], x86::qword_ptr(konstTmp));
-				cc.sete(result);
-				cc.setnp(parityTmp);
-				cc.and_(result, parityTmp);
-				cc.and_(result, 1);
+				if (check) {
+					cc.jp(success);
+					cc.je(fail);
+				}
+				else {
+					cc.jp(fail);
+					cc.jne(fail);
+				}
 			}
 			else {
 				auto konstTmp = cc.newIntPtr();
@@ -2372,26 +2392,27 @@ private:
 				cc.andpd(subTmp, absMaskXmm);
 				cc.movsd(epsilonXmm, epsilon);
 				cc.ucomisd(epsilonXmm, subTmp);
-				cc.seta(result);
-				cc.and_(result, 1);
+
+				if (check) cc.ja(fail);
+				else       cc.jna(fail);
 			}
 		});
 	}
 
 	void EmitLTF_RR()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LTF_RR.\n");
 
 			cc.ucomisd(regF[C], regF[B]);
-			cc.seta(result);
-			cc.and_(result, 1);
+			if (check) cc.ja(fail);
+			else       cc.jna(fail);
 		});
 	}
 
 	void EmitLTF_RK()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LTF_RK.\n");
 
 			auto constTmp = cc.newIntPtr();
@@ -2400,39 +2421,39 @@ private:
 			cc.movsd(xmmTmp, asmjit::x86::qword_ptr(constTmp));
 
 			cc.ucomisd(xmmTmp, regF[B]);
-			cc.seta(result);
-			cc.and_(result, 1);
+			if (check) cc.ja(fail);
+			else       cc.jna(fail);
 		});
 	}
 
 	void EmitLTF_KR()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LTF_KR.\n");
 
 			auto tmp = cc.newIntPtr();
 			cc.mov(tmp, ToMemAddress(&konstf[B]));
 
 			cc.ucomisd(regF[C], asmjit::x86::qword_ptr(tmp));
-			cc.seta(result);
-			cc.and_(result, 1);
+			if (check) cc.ja(fail);
+			else       cc.jna(fail);
 		});
 	}
 
 	void EmitLEF_RR()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LEF_RR.\n");
 
 			cc.ucomisd(regF[C], regF[B]);
-			cc.setae(result);
-			cc.and_(result, 1);
+			if (check) cc.jae(fail);
+			else       cc.jnae(fail);
 		});
 	}
 
 	void EmitLEF_RK()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LEF_RK.\n");
 
 			auto constTmp = cc.newIntPtr();
@@ -2441,22 +2462,22 @@ private:
 			cc.movsd(xmmTmp, asmjit::x86::qword_ptr(constTmp));
 
 			cc.ucomisd(xmmTmp, regF[B]);
-			cc.setae(result);
-			cc.and_(result, 1);
+			if (check) cc.jae(fail);
+			else       cc.jnae(fail);
 		});
 	}
 
 	void EmitLEF_KR()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LEF_KR.\n");
 
 			auto tmp = cc.newIntPtr();
 			cc.mov(tmp, ToMemAddress(&konstf[B]));
 
 			cc.ucomisd(regF[C], asmjit::x86::qword_ptr(tmp));
-			cc.setae(result);
-			cc.and_(result, 1);
+			if (check) cc.jae(fail);
+			else       cc.jnae(fail);
 		});
 	}
 
@@ -2558,24 +2579,28 @@ private:
 
 	void EmitEQV2_R()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for EQV2_R.\n");
 
-			auto parityTmp = cc.newInt32();
-			auto result1Tmp = cc.newInt32();
 			cc.ucomisd(regF[B], regF[C]);
-			cc.sete(result);
-			cc.setnp(parityTmp);
-			cc.and_(result, parityTmp);
-			cc.and_(result, 1);
+			if (check) {
+				cc.jp(success);
+				cc.jne(success);
+			}
+			else {
+				cc.jp(fail);
+				cc.jne(fail);
+			}
 
 			cc.ucomisd(regF[B + 1], regF[C + 1]);
-			cc.sete(result1Tmp);
-			cc.setnp(parityTmp);
-			cc.and_(result1Tmp, parityTmp);
-			cc.and_(result1Tmp, 1);
-
-			cc.and_(result, result1Tmp);
+			if (check) {
+				cc.jp(success);
+				cc.je(fail);
+			}
+			else {
+				cc.jp(fail);
+				cc.jne(fail);
+			}
 		});
 	}
 
@@ -2740,32 +2765,38 @@ private:
 
 	void EmitEQV3_R()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for EQV3_R.\n");
 
-			auto parityTmp = cc.newInt32();
-			auto result1Tmp = cc.newInt32();
 			cc.ucomisd(regF[B], regF[C]);
-			cc.sete(result);
-			cc.setnp(parityTmp);
-			cc.and_(result, parityTmp);
-			cc.and_(result, 1);
+			if (check) {
+				cc.jp(success);
+				cc.jne(success);
+			}
+			else {
+				cc.jp(fail);
+				cc.jne(fail);
+			}
 
 			cc.ucomisd(regF[B + 1], regF[C + 1]);
-			cc.sete(result1Tmp);
-			cc.setnp(parityTmp);
-			cc.and_(result1Tmp, parityTmp);
-			cc.and_(result1Tmp, 1);
-
-			cc.and_(result, result1Tmp);
+			if (check) {
+				cc.jp(success);
+				cc.jne(success);
+			}
+			else {
+				cc.jp(fail);
+				cc.jne(fail);
+			}
 
 			cc.ucomisd(regF[B + 2], regF[C + 2]);
-			cc.sete(result1Tmp);
-			cc.setnp(parityTmp);
-			cc.and_(result1Tmp, parityTmp);
-			cc.and_(result1Tmp, 1);
-
-			cc.and_(result, result1Tmp);
+			if (check) {
+				cc.jp(success);
+				cc.je(fail);
+			}
+			else {
+				cc.jp(fail);
+				cc.jne(fail);
+			}
 		});
 	}
 	
@@ -2822,19 +2853,21 @@ private:
 
 	void EmitEQA_R()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			cc.cmp(regA[B], regA[C]);
-			cc.sete(result);
+			if (check) cc.je(fail);
+			else       cc.jne(fail);
 		});
 	}
 
 	void EmitEQA_K()
 	{
-		EmitComparisonOpcode([&](asmjit::X86Gp& result) {
+		EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 			auto tmp = cc.newIntPtr();
 			cc.mov(tmp, ToMemAddress(konsta[C].v));
 			cc.cmp(regA[B], tmp);
-			cc.sete(result);
+			if (check) cc.je(fail);
+			else       cc.jne(fail);
 		});
 	}
 
@@ -2926,24 +2959,19 @@ private:
 	}
 
 	template <typename Func>
-	void EmitComparisonOpcode(Func compFunc)
+	void EmitComparisonOpcode(Func jmpFunc)
 	{
 		using namespace asmjit;
 
 		int i = (int)(ptrdiff_t)(pc - sfunc->Code);
 
-		auto tmp = cc.newInt32();
-		cc.xor_(tmp, tmp);
-		compFunc(tmp);
+		auto successLabel = cc.newLabel();
 
-		bool check = static_cast<bool>(A & CMP_CHECK);
+		auto failLabel = labels[i + 2 + JMPOFS(pc + 1)];
 
-		auto jmplabel = labels[i + 2 + JMPOFS(pc + 1)];
+		jmpFunc(static_cast<bool>(A & CMP_CHECK), failLabel, successLabel);
 
-		cc.test(tmp, tmp);
-		if (check) cc.jne(jmplabel);
-		else       cc.je(jmplabel);
-
+		cc.bind(successLabel);
 		pc++; // This instruction uses two instruction slots - skip the next one
 	}
 

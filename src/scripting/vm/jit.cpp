@@ -105,6 +105,9 @@ public:
 			}
 			else if (sfunc->Code[i].op == OP_PARAM)
 			{
+				if (!!(B & REGT_MULTIREG3) || !!(B & REGT_MULTIREG2))
+					return false;
+
 				switch (B)
 				{
 				case REGT_STRING:
@@ -117,6 +120,9 @@ public:
 			}
 			else if (sfunc->Code[i].op == OP_RESULT)
 			{
+				if (!!(B & REGT_MULTIREG3) || !!(B & REGT_MULTIREG2))
+					return false;
+
 				if ((B & REGT_TYPE) == REGT_STRING)
 					return false;
 			}
@@ -213,7 +219,7 @@ private:
 			//EMIT_OP(IJMP);
 			EMIT_OP(PARAM);
 			EMIT_OP(PARAMI);
-			EMIT_OP(CALL);
+			//EMIT_OP(CALL);
 			EMIT_OP(CALL_K);
 			EMIT_OP(VTBL);
 			EMIT_OP(SCOPE);
@@ -1003,6 +1009,7 @@ private:
 		using namespace asmjit;
 
 		int index = NumParam++;
+		ParamOpcodes.Push(pc);
 
 		X86Gp stackPtr, tmp;
 		X86Xmm tmp2;
@@ -1021,8 +1028,6 @@ private:
 			stackPtr = cc.newIntPtr();
 			cc.mov(stackPtr, frameD);
 			cc.add(stackPtr, C * sizeof(int32_t));
-			cc.mov(x86::dword_ptr(stackPtr), regD[C]);
-
 			cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, a)), stackPtr);
 			cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
 			break;
@@ -1041,13 +1046,13 @@ private:
 			stackPtr = cc.newIntPtr();
 			cc.mov(stackPtr, frameA);
 			cc.add(stackPtr, C * sizeof(void*));
-			cc.mov(x86::ptr(stackPtr), regA[C]);
-
 			cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, a)), stackPtr);
 			cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
 			break;
 		case REGT_POINTER | REGT_KONST:
-			cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, a)), ToMemAddress(konsta[C].v));
+			tmp = cc.newIntPtr();
+			cc.mov(tmp, ToMemAddress(konsta[C].v));
+			cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, a)), tmp);
 			cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
 			break;
 		case REGT_FLOAT:
@@ -1058,6 +1063,7 @@ private:
 			cc.movsd(x86::qword_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, f)), regF[C]);
 			cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_FLOAT);
 			index = NumParam++;
+			ParamOpcodes.Push(pc);
 			cc.movsd(x86::qword_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, f)), regF[C + 1]);
 			cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_FLOAT);
 			break;
@@ -1065,9 +1071,11 @@ private:
 			cc.movsd(x86::qword_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, f)), regF[C]);
 			cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_FLOAT);
 			index = NumParam++;
+			ParamOpcodes.Push(pc);
 			cc.movsd(x86::qword_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, f)), regF[C + 1]);
 			cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_FLOAT);
 			index = NumParam++;
+			ParamOpcodes.Push(pc);
 			cc.movsd(x86::qword_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, f)), regF[C + 2]);
 			cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_FLOAT);
 			break;
@@ -1075,8 +1083,6 @@ private:
 			stackPtr = cc.newIntPtr();
 			cc.mov(stackPtr, frameF);
 			cc.add(stackPtr, C * sizeof(double));
-			cc.movsd(x86::qword_ptr(stackPtr), regF[C]);
-
 			cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, a)), stackPtr);
 			cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
 			break;
@@ -1092,11 +1098,13 @@ private:
 			I_FatalError("Unknown REGT value passed to EmitPARAM\n");
 			break;
 		}
+
 	}
 
 	void EmitPARAMI()
 	{
 		int index = NumParam++;
+		ParamOpcodes.Push(pc);
 		cc.mov(asmjit::x86::dword_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, i)), (int)ABCs);
 		cc.mov(asmjit::x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_INT);
 	}
@@ -1117,11 +1125,23 @@ private:
 	{
 		using namespace asmjit;
 
-		if (NumParam != B)
+		if (NumParam < B)
 			I_FatalError("OP_CALL parameter count does not match the number of preceding OP_PARAM instructions");
-		NumParam = 0;
 
+		StoreInOuts(B);
 		FillReturns(pc + 1, C);
+
+		X86Gp paramsptr;
+		if (B != NumParam)
+		{
+			paramsptr = cc.newIntPtr();
+			cc.mov(paramsptr, params);
+			cc.add(paramsptr, (NumParam - B) * sizeof(VMValue));
+		}
+		else
+		{
+			paramsptr = params;
+		}
 
 		auto result = cc.newInt32();
 		auto call = cc.call(ToMemAddress(&JitCompiler::DoCall), FuncSignature7<int, void*, void*, int, int, void*, void*, void*>());
@@ -1130,7 +1150,7 @@ private:
 		call->setArg(1, ptr);
 		call->setArg(2, asmjit::Imm(B));
 		call->setArg(3, asmjit::Imm(C));
-		call->setArg(4, params);
+		call->setArg(4, paramsptr);
 		call->setArg(5, callReturns);
 		call->setArg(6, exceptInfo);
 
@@ -1146,17 +1166,43 @@ private:
 
 		LoadReturns(pc - B, B, true);
 		LoadReturns(pc + 1, C, false);
+
+		NumParam -= B;
+		ParamOpcodes.Resize(ParamOpcodes.Size() - B);
 	}
 
-	void LoadReturns(const VMOP *retval, int numret, const VMOP *argval, int numarg)
+	void StoreInOuts(int b)
 	{
-		// Put the stored returns back into asmjit virtual registers:
+		using namespace asmjit;
 
-		// Put any inout arguments back into asmjit virtual registers:
-		for (int i = 0; i < numarg; ++i)
+		for (unsigned int i = ParamOpcodes.Size() - b; i < ParamOpcodes.Size(); i++)
 		{
-			int type = argval[i].b;
-			int regnum = argval[i].c;
+			asmjit::X86Gp stackPtr;
+			switch (ParamOpcodes[i]->b)
+			{
+			case REGT_INT | REGT_ADDROF:
+				stackPtr = cc.newIntPtr();
+				cc.mov(stackPtr, frameD);
+				cc.add(stackPtr, C * sizeof(int32_t));
+				cc.mov(x86::dword_ptr(stackPtr), regD[C]);
+				break;
+			//case REGT_STRING | REGT_ADDROF:
+			//	break;
+			case REGT_POINTER | REGT_ADDROF:
+				stackPtr = cc.newIntPtr();
+				cc.mov(stackPtr, frameA);
+				cc.add(stackPtr, C * sizeof(void*));
+				cc.mov(x86::ptr(stackPtr), regA[C]);
+				break;
+			case REGT_FLOAT | REGT_ADDROF:
+				stackPtr = cc.newIntPtr();
+				cc.mov(stackPtr, frameF);
+				cc.add(stackPtr, C * sizeof(double));
+				cc.movsd(x86::qword_ptr(stackPtr), regF[C]);
+				break;
+			default:
+				break;
+			}
 		}
 	}
 
@@ -3350,7 +3396,8 @@ private:
 	asmjit::X86Gp frameF;
 	asmjit::X86Gp frameA;
 	asmjit::X86Gp params;
-	int NumParam = 0; // Actually part of vmframe (f->NumParam), but we are going to assume that the backend never reuses parameters
+	int NumParam = 0; // Actually part of vmframe (f->NumParam), but nobody seems to read that?
+	TArray<const VMOP *> ParamOpcodes;
 	asmjit::X86Gp callReturns;
 
 	const int *konstd;

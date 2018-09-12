@@ -144,11 +144,11 @@ private:
 			EMIT_OP(LI);
 			EMIT_OP(LK);
 			EMIT_OP(LKF);
-			// EMIT_OP(LKS);
+			EMIT_OP(LKS);
 			EMIT_OP(LKP);
 			EMIT_OP(LK_R);
 			EMIT_OP(LKF_R);
-			// EMIT_OP(LKS_R);
+			//EMIT_OP(LKS_R);
 			EMIT_OP(LKP_R);
 			// EMIT_OP(LFP);
 			EMIT_OP(META);
@@ -167,8 +167,8 @@ private:
 			EMIT_OP(LSP_R);
 			EMIT_OP(LDP);
 			EMIT_OP(LDP_R);
-			// EMIT_OP(LS);
-			// EMIT_OP(LS_R);
+			EMIT_OP(LS);
+			EMIT_OP(LS_R);
 			EMIT_OP(LO);
 			EMIT_OP(LO_R);
 			EMIT_OP(LP);
@@ -177,7 +177,7 @@ private:
 			EMIT_OP(LV2_R);
 			EMIT_OP(LV3);
 			EMIT_OP(LV3_R);
-			//EMIT_OP(LCS);
+			EMIT_OP(LCS);
 			//EMIT_OP(LCS_R);
 			EMIT_OP(LBIT);
 			EMIT_OP(SB);
@@ -190,7 +190,7 @@ private:
 			EMIT_OP(SSP_R);
 			EMIT_OP(SDP);
 			EMIT_OP(SDP_R);
-			//EMIT_OP(SS);
+			EMIT_OP(SS);
 			//EMIT_OP(SS_R);
 			EMIT_OP(SO);
 			EMIT_OP(SO_R);
@@ -378,7 +378,15 @@ private:
 		cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
 	}
 
-	//void EmitLKS() { } // load string constant
+	void EmitLKS() {
+		auto loadLambda = [] (FString* to, FString* from) -> void {
+			*to = *from;
+		};
+		auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*)>(loadLambda))),
+		                    asmjit::FuncSignature2<void, FString*, FString*>(asmjit::CallConv::kIdHostCDecl));
+		call->setArg(0, regS[A]);
+		call->setArg(1, asmjit::imm(ToMemAddress(konsts + BC)));
+	}
 
 	void EmitLKP()
 	{
@@ -397,7 +405,7 @@ private:
 		cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp, regD[B], 3, C * sizeof(double)));
 	}
 
-	//void EmitLKS_R() { } // load string constant indexed
+	//void EmitLKS_R() { }
 
 	void EmitLKP_R()
 	{
@@ -528,8 +536,35 @@ private:
 		cc.movsd(regF[A], asmjit::x86::qword_ptr(regA[B], regD[C]));
 	}
 
-	//void EmitLS() { } // load string
-	//void EmitLS_R() { }
+	void EmitLS() {
+		EmitNullPointerThrow(B, X_READ_NIL);
+		auto ptr = cc.newIntPtr();
+		cc.mov(ptr, regA[B]);
+		cc.add(ptr, konstd[C]);
+		auto loadLambda = [](FString* to, FString* from) -> void {
+			*to = *from;
+		};
+		auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*)>(loadLambda))),
+			asmjit::FuncSignature2<void, FString*, FString*>(asmjit::CallConv::kIdHostCDecl));
+		call->setArg(0, regS[A]);
+		call->setArg(1, ptr);
+	}
+
+	void EmitLS_R() {
+		EmitNullPointerThrow(B, X_READ_NIL);
+		auto ptr = cc.newIntPtr();
+		cc.mov(ptr, regA[B]);
+		auto tmp = cc.newIntPtr();
+		cc.mov(tmp, regD[C]);
+		cc.add(ptr, tmp);
+		auto loadLambda = [](FString* to, FString* from) -> void {
+			*to = *from;
+		};
+		auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*)>(loadLambda))),
+			asmjit::FuncSignature2<void, FString*, FString*>(asmjit::CallConv::kIdHostCDecl));
+		call->setArg(0, regS[A]);
+		call->setArg(1, ptr);
+	}
 
 	void EmitLO()
 	{
@@ -619,7 +654,20 @@ private:
 		cc.movsd(regF[A + 2], asmjit::x86::qword_ptr(tmp, 16));
 	}
 
-	//void EmitLCS() { } // load string from char ptr.
+	void EmitLCS() {
+		EmitNullPointerThrow(B, X_READ_NIL);
+		auto ptr = cc.newIntPtr();
+		cc.mov(ptr, regA[B]);
+		cc.add(ptr, konstd[C]);
+		auto loadLambda = [](FString* to, char** from) -> void {
+			*to = *from;
+		};
+		auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, char**)>(loadLambda))),
+			asmjit::FuncSignature2<void, FString*, char**>(asmjit::CallConv::kIdHostCDecl));
+		call->setArg(0, regS[A]);
+		call->setArg(1, ptr);
+	}
+
 	//void EmitLCS_R() { }
 
 	void EmitLBIT()
@@ -693,8 +741,37 @@ private:
 		cc.movsd(asmjit::x86::qword_ptr(regA[A], regD[C]), regF[B]);
 	}
 
-	//void EmitSS() {} // store string
-	//void EmitSS_R() {}
+	void EmitSS()
+	{
+		EmitNullPointerThrow(B, X_WRITE_NIL);
+		auto ptr = cc.newIntPtr();
+		cc.mov(ptr, regA[A]);
+		cc.add(ptr, konstd[C]);
+		auto loadLambda = [](FString* to, FString* from) -> void {
+			*to = *from;
+		};
+		auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*)>(loadLambda))),
+			asmjit::FuncSignature2<void, FString*, FString*>(asmjit::CallConv::kIdHostCDecl));
+		call->setArg(0, ptr);
+		call->setArg(1, regS[B]);
+	}
+	
+	void EmitSS_R()
+	{
+		EmitNullPointerThrow(B, X_WRITE_NIL);
+		auto ptr = cc.newIntPtr();
+		cc.mov(ptr, regA[A]);
+		auto tmp = cc.newIntPtr();
+		cc.mov(tmp, regD[C]);
+		cc.add(ptr, tmp);
+		auto loadLambda = [](FString* to, FString* from) -> void {
+			*to = *from;
+		};
+		auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*)>(loadLambda))),
+			asmjit::FuncSignature2<void, FString*, FString*>(asmjit::CallConv::kIdHostCDecl));
+		call->setArg(0, ptr);
+		call->setArg(1, regS[B]);
+	}
 
 	void EmitSO()
 	{
@@ -3178,16 +3255,16 @@ private:
 		regD.Resize(sfunc->NumRegD);
 		regF.Resize(sfunc->NumRegF);
 		regA.Resize(sfunc->NumRegA);
-		//regS.Resize(sfunc->NumRegS);
+		regS.Resize(sfunc->NumRegS);
 
 		frameD = cc.newIntPtr();
 		frameF = cc.newIntPtr();
-		//frameS = cc.newIntPtr();
+		frameS = cc.newIntPtr();
 		frameA = cc.newIntPtr();
 		params = cc.newIntPtr();
 		cc.mov(frameD, x86::ptr(vmregs, offsetof(VMRegisters, d)));
 		cc.mov(frameF, x86::ptr(vmregs, offsetof(VMRegisters, f)));
-		//cc.mov(frameS, x86::ptr(vmregs, offsetof(VMRegisters, s)));
+		cc.mov(frameS, x86::ptr(vmregs, offsetof(VMRegisters, s)));
 		cc.mov(frameA, x86::ptr(vmregs, offsetof(VMRegisters, a)));
 		cc.mov(params, x86::ptr(vmregs, offsetof(VMRegisters, param)));
 
@@ -3211,15 +3288,17 @@ private:
 				cc.movsd(regF[i], x86::qword_ptr(frameF, i * sizeof(double)));
 			}
 		}
-		/*if (sfunc->NumRegS > 0)
+		if (sfunc->NumRegS > 0)
 		{
 			for (int i = 0; i < sfunc->NumRegS; i++)
 			{
 				FString regname;
 				regname.Format("regS%d", i);
-				regS[i] = cc.newGpd(regname.GetChars());
+				regS[i] = cc.newIntPtr(regname.GetChars());
+				cc.mov(regS[i], frameS);
+				if (i * sizeof(FString) != 0) cc.add(regS[i], i * sizeof(FString));
 			}
-		}*/
+		}
 		if (sfunc->NumRegA > 0)
 		{
 			for (int i = 0; i < sfunc->NumRegA; i++)
@@ -3394,6 +3473,7 @@ private:
 
 	asmjit::X86Gp frameD;
 	asmjit::X86Gp frameF;
+	asmjit::X86Gp frameS;
 	asmjit::X86Gp frameA;
 	asmjit::X86Gp params;
 	int NumParam = 0; // Actually part of vmframe (f->NumParam), but nobody seems to read that?
@@ -3408,7 +3488,7 @@ private:
 	TArray<asmjit::X86Gp> regD;
 	TArray<asmjit::X86Xmm> regF;
 	TArray<asmjit::X86Gp> regA;
-	//TArray<asmjit::X86Gp> regS;
+	TArray<asmjit::X86Gp> regS;
 
 	TArray<asmjit::Label> labels;
 

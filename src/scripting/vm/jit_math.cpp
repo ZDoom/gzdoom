@@ -6,17 +6,71 @@
 
 void JitCompiler::EmitCONCAT()
 {
-	I_FatalError("EmitCONCAT not implemented\n");
+	auto rc = CheckRegS(C, A);
+	auto concatLambda = [](FString* to, FString* first, FString* second) -> void {
+		*to = *first + *second;
+	};
+	auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*, FString*)>(concatLambda))),
+		asmjit::FuncSignature3<void, FString*, FString*, FString*>(asmjit::CallConv::kIdHostCDecl));
+	call->setArg(0, regS[A]);
+	call->setArg(1, regS[B]);
+	call->setArg(2, rc);
 }
 
 void JitCompiler::EmitLENS()
 {
-	I_FatalError("EmitLENS not implemented\n");
+	auto lenLambda = [](FString* str) -> int {
+		return static_cast<int>(str->Len());
+	};
+	auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<int(*)(FString*)>(lenLambda))),
+		asmjit::FuncSignature1<int, FString*>(asmjit::CallConv::kIdHostCDecl));
+	call->setRet(0, regD[A]);
+	call->setArg(0, regS[B]);
 }
 
 void JitCompiler::EmitCMPS()
 {
-	I_FatalError("EmitCMPS not implemented\n");
+	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
+		auto compareNoCaseLambda = [](FString* first, FString* second) -> int {
+			return first->CompareNoCase(*second);
+		};
+		auto compareLambda = [](FString* first, FString* second) -> int {
+			return first->Compare(*second);
+		};
+
+		auto call =
+			static_cast<bool>(A & CMP_APPROX) ?
+			cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<int(*)(FString*, FString*)>(compareNoCaseLambda))),
+				asmjit::FuncSignature2<int, FString*, FString*>(asmjit::CallConv::kIdHostCDecl)) :
+			cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<int(*)(FString*, FString*)>(compareLambda))),
+				asmjit::FuncSignature2<int, FString*, FString*>(asmjit::CallConv::kIdHostCDecl));
+
+		auto result = cc.newInt32();
+		call->setRet(0, result);
+
+		if (static_cast<bool>(A & CMP_BK)) call->setArg(0, asmjit::imm_ptr(&konsts[B]));
+		else                               call->setArg(0, regS[B]);
+
+		if (static_cast<bool>(A & CMP_CK)) call->setArg(1, asmjit::imm_ptr(&konsts[C]));
+		else                               call->setArg(1, regS[C]);
+
+		int method = A & CMP_METHOD_MASK;
+		if (method == CMP_EQ) {
+			cc.test(result, result);
+			if (check) cc.jz(fail);
+			else       cc.jnz(fail);
+		}
+		else if (method == CMP_LT) {
+			cc.cmp(result, 0);
+			if (check) cc.jl(fail);
+			else       cc.jnl(fail);
+		}
+		else {
+			cc.cmp(result, 0);
+			if (check) cc.jle(fail);
+			else       cc.jnle(fail);
+		}
+	});
 }
 
 /////////////////////////////////////////////////////////////////////////////

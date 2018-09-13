@@ -154,14 +154,10 @@ bool JitCompiler::CanJit(VMScriptFunction *sfunc)
 		case OP_LFP:
 		case OP_LCS_R:
 		case OP_SS_R:
-		case OP_MOVES:
 		case OP_IJMP:
 		case OP_CALL: // this one is implemented but crashes currently
 		case OP_TAIL:
 		case OP_TAIL_K:
-		case OP_CONCAT:
-		case OP_LENS:
-		case OP_CMPS:
 			return false;
 		}
 
@@ -413,6 +409,20 @@ asmjit::X86Xmm JitCompiler::CheckRegF(int r0, int r1, int r2, int r3)
 	{
 		auto copy = cc.newXmm();
 		cc.movsd(copy, regF[r0]);
+		return copy;
+	}
+}
+
+asmjit::X86Gp JitCompiler::CheckRegS(int r0, int r1)
+{
+	if (r0 != r1)
+	{
+		return regS[r0];
+	}
+	else
+	{
+		auto copy = cc.newIntPtr();
+		cc.mov(copy, regS[r0]);
 		return copy;
 	}
 }

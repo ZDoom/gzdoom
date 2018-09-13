@@ -12,7 +12,13 @@ void JitCompiler::EmitMOVEF()
 
 void JitCompiler::EmitMOVES()
 {
-	I_FatalError("EmitMOVES not implemented\n");
+	auto loadLambda = [](FString* to, FString* from) -> void {
+		*to = *from;
+	};
+	auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*)>(loadLambda))),
+		asmjit::FuncSignature2<void, FString*, FString*>(asmjit::CallConv::kIdHostCDecl));
+	call->setArg(0, regS[A]);
+	call->setArg(1, regS[B]);
 }
 
 void JitCompiler::EmitMOVEA()

@@ -40,6 +40,7 @@
 #include "configfile.h"
 #include "files.h"
 #include "m_random.h"
+#include "vm.h"
 
 #define READBUFFERSIZE	256
 
@@ -621,11 +622,15 @@ void FConfigFile::LoadConfigFile ()
 //
 //====================================================================
 
-bool FConfigFile::ReadConfig (void *file)
+bool FConfigFile::ReadConfig (void *file, bool clear)
 {
 	char readbuf[READBUFFERSIZE];
 	FConfigSection *section = NULL;
-	ClearConfig ();
+
+	if (clear)
+	{
+		ClearConfig ();
+	}
 
 	while (ReadLine (readbuf, READBUFFERSIZE, file) != NULL)
 	{
@@ -719,8 +724,16 @@ bool FConfigFile::ReadConfig (void *file)
 							break;
 						}
 					}
-					
-					NewConfigEntry (section, key.GetChars(), value.GetChars());
+
+					FConfigEntry *entry = FindEntry (section, key);
+					if (entry == NULL)
+					{
+						NewConfigEntry (section, key, value);
+					}
+					else
+					{
+						entry->SetValue (value);
+					}
 				}
 				else
 				{
@@ -776,7 +789,17 @@ FConfigFile::FConfigEntry *FConfigFile::ReadMultiLineValue(void *file, FConfigSe
 		// Append this line to the value.
 		value << readbuf;
 	}
-	return NewConfigEntry(section, key, value);
+
+	FConfigEntry *entry = FindEntry (section, key);
+	if (entry == NULL)
+	{
+		NewConfigEntry (section, key, value);
+	}
+	else
+	{
+		entry->SetValue (value);
+	}
+	return entry;
 }
 
 //====================================================================
@@ -968,4 +991,51 @@ void FConfigFile::SetSectionNote(FConfigSection *section, const char *note)
 		}
 		section->Note = note;
 	}
+}
+
+IMPLEMENT_CLASS(DINIParser, false, false)
+
+DINIParser::DINIParser ()
+: DObject()
+{
+	OkayToWrite = false;
+}
+
+bool DINIParser::Read (void *file, bool clear)
+{
+	return ReadConfig(file, clear);
+}
+
+DEFINE_ACTION_FUNCTION(DINIParser, Read)
+{
+	PARAM_SELF_PROLOGUE(DINIParser);
+	PARAM_STRING(data);
+	PARAM_BOOL_DEF(clear);
+	if (data.IsEmpty ())
+	{
+		ACTION_RETURN_BOOL(false);
+	}
+	FileReader file;
+	file.OpenMemory (data.GetChars(), data.Len());
+	ACTION_RETURN_BOOL(self->Read (&file, clear));
+}
+
+DEFINE_ACTION_FUNCTION(DINIParser, Get)
+{
+	PARAM_SELF_PROLOGUE(DINIParser);
+	PARAM_STRING(section);
+	PARAM_STRING(key);
+	bool succ = self->SetSection (section);
+	if (succ)
+	{
+		ACTION_RETURN_STRING(self->GetValueForKey (key));
+	}
+	ACTION_RETURN_STRING("");
+}
+
+DEFINE_ACTION_FUNCTION(DINIParser, Clear)
+{
+	PARAM_SELF_PROLOGUE(DINIParser);
+	self->ClearConfig ();
+	return 0;
 }

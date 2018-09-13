@@ -35,6 +35,7 @@
 #define __CONFIGFILE_H__
 
 #include <stdio.h>
+#include "dobject.h"
 #include "files.h"
 #include "zstring.h"
 
@@ -77,7 +78,7 @@ protected:
 	virtual void WriteCommentHeader (FileWriter *file) const;
 
 	virtual char *ReadLine (char *string, int n, void *file) const;
-	bool ReadConfig (void *file);
+	bool ReadConfig (void *file, bool clear=true);
 	static const char *GenerateEndTag(const char *value);
 	void RenameSection(const char *oldname, const char *newname) const;
 
@@ -127,6 +128,15 @@ public:
 
 	void GetPosition (Position &pos) const;
 	void SetPosition (const Position &pos);
+};
+
+class DINIParser: public DObject, public FConfigFile
+{
+	DECLARE_CLASS(DINIParser, DObject)
+public:
+	DINIParser();
+
+	bool Read (void *file, bool clear);
 };
 
 #endif //__CONFIGFILE_H__

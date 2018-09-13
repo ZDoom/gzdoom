@@ -24,13 +24,6 @@ extern int VMCalls[10];
 #define ABCs			(pc[0].i24)
 #define JMPOFS(x)		((x)->i24)
 
-static const char *OpNames[NUM_OPS] =
-{
-#define xx(op, name, mode, alt, kreg, ktype)	#op
-#include "vmops.h"
-#undef xx
-};
-
 class JitCompiler
 {
 public:
@@ -46,14 +39,14 @@ private:
 	#include "vmops.h"
 	#undef xx
 
+	void Setup();
 	void EmitOpcode();
+
 	void EmitDoCall(asmjit::X86Gp ptr);
 	void StoreInOuts(int b);
 	void LoadReturns(const VMOP *retval, int numret, bool inout);
 	void FillReturns(const VMOP *retval, int numret);
 	static int DoCall(VMFrameStack *stack, VMFunction *call, int b, int c, VMValue *param, VMReturn *returns, JitExceptionInfo *exceptinfo);
-
-	void Setup();
 
 	template <typename Func>
 	void EmitComparisonOpcode(Func jmpFunc)

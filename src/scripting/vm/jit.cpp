@@ -92,10 +92,15 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 
 /////////////////////////////////////////////////////////////////////////////
 
+static const char *OpNames[NUM_OPS] =
+{
+#define xx(op, name, mode, alt, kreg, ktype)	#op
+#include "vmops.h"
+#undef xx
+};
+
 void JitCompiler::Codegen()
 {
-	using namespace asmjit;
-
 	Setup();
 
 	pc = sfunc->Code;

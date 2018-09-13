@@ -730,6 +730,13 @@ struct F3DFloor native
 {
 }
 
+class INIParser : Object native
+{
+	native bool Read(string data, bool clear = false);
+	native string Get(string section, string key) const;
+	native void Clear();
+}
+
 struct Wads
 {
 	enum WadNamespace

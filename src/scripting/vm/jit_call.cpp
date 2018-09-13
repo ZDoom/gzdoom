@@ -24,7 +24,7 @@ void JitCompiler::EmitPARAM()
 	case REGT_INT | REGT_ADDROF:
 		stackPtr = cc.newIntPtr();
 		cc.mov(stackPtr, frameD);
-		cc.add(stackPtr, C * sizeof(int32_t));
+		cc.add(stackPtr, (int)(C * sizeof(int32_t)));
 		cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, a)), stackPtr);
 		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
 		break;
@@ -42,7 +42,7 @@ void JitCompiler::EmitPARAM()
 	case REGT_POINTER | REGT_ADDROF:
 		stackPtr = cc.newIntPtr();
 		cc.mov(stackPtr, frameA);
-		cc.add(stackPtr, C * sizeof(void*));
+		cc.add(stackPtr, (int)(C * sizeof(void*)));
 		cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, a)), stackPtr);
 		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
 		break;
@@ -79,7 +79,7 @@ void JitCompiler::EmitPARAM()
 	case REGT_FLOAT | REGT_ADDROF:
 		stackPtr = cc.newIntPtr();
 		cc.mov(stackPtr, frameF);
-		cc.add(stackPtr, C * sizeof(double));
+		cc.add(stackPtr, (int)(C * sizeof(double)));
 		cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, a)), stackPtr);
 		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
 		break;
@@ -150,7 +150,7 @@ void JitCompiler::EmitDoCall(asmjit::X86Gp ptr)
 	{
 		paramsptr = cc.newIntPtr();
 		cc.mov(paramsptr, params);
-		cc.add(paramsptr, (NumParam - B) * sizeof(VMValue));
+		cc.add(paramsptr, (int)((NumParam - B) * sizeof(VMValue)));
 	}
 	else
 	{
@@ -158,7 +158,7 @@ void JitCompiler::EmitDoCall(asmjit::X86Gp ptr)
 	}
 
 	auto result = cc.newInt32();
-	auto call = cc.call(ToMemAddress(&JitCompiler::DoCall), FuncSignature7<int, void*, void*, int, int, void*, void*, void*>());
+	auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(&JitCompiler::DoCall)), FuncSignature7<int, void*, void*, int, int, void*, void*, void*>());
 	call->setRet(0, result);
 	call->setArg(0, stack);
 	call->setArg(1, ptr);
@@ -197,7 +197,7 @@ void JitCompiler::StoreInOuts(int b)
 		case REGT_INT | REGT_ADDROF:
 			stackPtr = cc.newIntPtr();
 			cc.mov(stackPtr, frameD);
-			cc.add(stackPtr, C * sizeof(int32_t));
+			cc.add(stackPtr, (int)(C * sizeof(int32_t)));
 			cc.mov(x86::dword_ptr(stackPtr), regD[C]);
 			break;
 		//case REGT_STRING | REGT_ADDROF:
@@ -205,13 +205,13 @@ void JitCompiler::StoreInOuts(int b)
 		case REGT_POINTER | REGT_ADDROF:
 			stackPtr = cc.newIntPtr();
 			cc.mov(stackPtr, frameA);
-			cc.add(stackPtr, C * sizeof(void*));
+			cc.add(stackPtr, (int)(C * sizeof(void*)));
 			cc.mov(x86::ptr(stackPtr), regA[C]);
 			break;
 		case REGT_FLOAT | REGT_ADDROF:
 			stackPtr = cc.newIntPtr();
 			cc.mov(stackPtr, frameF);
-			cc.add(stackPtr, C * sizeof(double));
+			cc.add(stackPtr, (int)(C * sizeof(double)));
 			cc.movsd(x86::qword_ptr(stackPtr), regF[C]);
 			break;
 		default:
@@ -282,11 +282,11 @@ void JitCompiler::FillReturns(const VMOP *retval, int numret)
 		{
 		case REGT_INT:
 			cc.mov(regPtr, frameD);
-			cc.add(regPtr, regnum * sizeof(int32_t));
+			cc.add(regPtr, (int)(regnum * sizeof(int32_t)));
 			break;
 		case REGT_FLOAT:
 			cc.mov(regPtr, frameF);
-			cc.add(regPtr, regnum * sizeof(double));
+			cc.add(regPtr, (int)(regnum * sizeof(double)));
 			break;
 		/*case REGT_STRING:
 			cc.mov(regPtr, frameS);
@@ -294,7 +294,7 @@ void JitCompiler::FillReturns(const VMOP *retval, int numret)
 			break;*/
 		case REGT_POINTER:
 			cc.mov(regPtr, frameA);
-			cc.add(regPtr, regnum * sizeof(void*));
+			cc.add(regPtr, (int)(regnum * sizeof(void*)));
 			break;
 		default:
 			I_FatalError("Unknown OP_RESULT type encountered in FillReturns\n");

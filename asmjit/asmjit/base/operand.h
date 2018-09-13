@@ -14,7 +14,9 @@
 // [Api-Begin]
 #include "../asmjit_apibegin.h"
 
+#ifdef _MSC_VER
 #pragma warning(disable: 4804) // warning C4804: '~': unsafe use of type 'bool' in operation
+#endif
 
 namespace asmjit {
 

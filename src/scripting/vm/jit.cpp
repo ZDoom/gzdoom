@@ -292,7 +292,7 @@ void JitCompiler::Setup()
 			regname.Format("regS%d", i);
 			regS[i] = cc.newIntPtr(regname.GetChars());
 			cc.mov(regS[i], frameS);
-			if (i * sizeof(FString) != 0) cc.add(regS[i], i * sizeof(FString));
+			if (i != 0) cc.add(regS[i], (int)(i * sizeof(FString)));
 		}
 	}
 	if (sfunc->NumRegA > 0)

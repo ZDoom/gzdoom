@@ -42,7 +42,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 #if COMPGOTO
 	static const void * const ops[256] =
 	{
-#define xx(op,sym,mode,alt,kreg,ktype) &&op
+#define xx(op,sym,mode,alt,kreg,ktype) &&op,
 #include "vmops.h"
 	};
 #endif

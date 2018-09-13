@@ -106,6 +106,13 @@ void JitCompiler::EmitPARAMI()
 	cc.mov(asmjit::x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_INT);
 }
 
+void JitCompiler::EmitRESULT()
+{
+	// This instruction is just a placeholder to indicate where a return
+	// value should be stored. It does nothing on its own and should not
+	// be executed.
+}
+
 void JitCompiler::EmitCALL()
 {
 	EmitDoCall(regA[A]);

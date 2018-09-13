@@ -85,13 +85,6 @@ void JitCompiler::EmitSCOPE()
 	cc.bind(notzero);
 }
 
-void JitCompiler::EmitRESULT()
-{
-	// This instruction is just a placeholder to indicate where a return
-	// value should be stored. It does nothing on its own and should not
-	// be executed.
-}
-
 void JitCompiler::EmitRET()
 {
 	using namespace asmjit;

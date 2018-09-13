@@ -63,7 +63,7 @@ void JitCompiler::EmitSDP_R()
 
 void JitCompiler::EmitSS()
 {
-	EmitNullPointerThrow(B, X_WRITE_NIL);
+	EmitNullPointerThrow(A, X_WRITE_NIL);
 	auto ptr = cc.newIntPtr();
 	cc.mov(ptr, regA[A]);
 	cc.add(ptr, konstd[C]);
@@ -78,7 +78,7 @@ void JitCompiler::EmitSS()
 	
 void JitCompiler::EmitSS_R()
 {
-	EmitNullPointerThrow(B, X_WRITE_NIL);
+	EmitNullPointerThrow(A, X_WRITE_NIL);
 	auto ptr = cc.newIntPtr();
 	cc.mov(ptr, regA[A]);
 	auto tmp = cc.newIntPtr();

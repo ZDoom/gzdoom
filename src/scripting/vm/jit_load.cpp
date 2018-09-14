@@ -42,7 +42,7 @@ void JitCompiler::EmitLK_R()
 void JitCompiler::EmitLKF_R()
 {
 	auto tmp = cc.newIntPtr();
-	cc.mov(tmp, ToMemAddress(konstf + BC));
+	cc.mov(tmp, ToMemAddress(konstf));
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp, regD[B], 3, C * sizeof(double)));
 }
 

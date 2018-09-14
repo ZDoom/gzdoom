@@ -168,7 +168,20 @@ void JitCompiler::EmitRET()
 			}
 			break;
 		case REGT_STRING:
+		{
+			auto setRetStringLamdba = [](VMReturn* ret, FString* str) -> void {
+				ret->SetString(*str);
+			};
+			auto ptr = cc.newIntPtr();
+			cc.mov(ptr, ret);
+			cc.add(ptr, retnum * sizeof(VMReturn));
+			auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(VMReturn*, FString*)>(setRetStringLamdba))),
+				asmjit::FuncSignature2<void, VMReturn*, FString*>(asmjit::CallConv::kIdHostCDecl));
+			call->setArg(0, ptr);
+			if (regtype & REGT_KONST) call->setArg(1, asmjit::imm_ptr(&konsts[regnum]));
+			else                      call->setArg(1, regS[regnum]);
 			break;
+		}
 		case REGT_POINTER:
 			#ifdef ASMJIT_ARCH_X64
 			if (regtype & REGT_KONST)

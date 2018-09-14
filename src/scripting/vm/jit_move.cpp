@@ -12,10 +12,7 @@ void JitCompiler::EmitMOVEF()
 
 void JitCompiler::EmitMOVES()
 {
-	auto loadLambda = [](FString* to, FString* from) -> void {
-		*to = *from;
-	};
-	auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*)>(loadLambda))),
+	auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*)>(CallAssignString))),
 		asmjit::FuncSignature2<void, FString*, FString*>(asmjit::CallConv::kIdHostCDecl));
 	call->setArg(0, regS[A]);
 	call->setArg(1, regS[B]);

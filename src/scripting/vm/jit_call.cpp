@@ -33,40 +33,19 @@ void JitCompiler::EmitPARAM()
 		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_INT);
 		break;
 	case REGT_STRING:
-	{
-		auto setStringLambda = [](VMValue* val, FString* str) -> void {
-			::new(val) VMValue(str);
-		};
-		auto ptr = cc.newIntPtr();
-		cc.mov(ptr, params);
-		cc.add(ptr, index * sizeof(VMValue));
-		auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(VMValue*, FString*)>(setStringLambda))),
-			asmjit::FuncSignature2<void, VMValue*, FString*>(asmjit::CallConv::kIdHostCDecl));
-		call->setArg(0, ptr);
-		call->setArg(1, regS[C]);
+		cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, sp)), regS[C]);
+		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_STRING);
 		break;
-	}
 	case REGT_STRING | REGT_ADDROF:
-		stackPtr = cc.newIntPtr();
-		cc.mov(stackPtr, frameS);
-		cc.add(stackPtr, C * sizeof(FString));
-		cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, a)), stackPtr);
+		cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, a)), regS[C]);
 		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
 		break;
 	case REGT_STRING | REGT_KONST:
-	{
-		auto setStringLambda = [](VMValue* val, FString* str) -> void {
-			::new(val) VMValue(str);
-		};
-		auto ptr = cc.newIntPtr();
-		cc.mov(ptr, params);
-		cc.add(ptr, index * sizeof(VMValue));
-		auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(VMValue*, FString*)>(setStringLambda))),
-			asmjit::FuncSignature2<void, VMValue*, FString*>(asmjit::CallConv::kIdHostCDecl));
-		call->setArg(0, ptr);
-		call->setArg(1, asmjit::imm_ptr(&konsts[C]));
+		tmp = cc.newIntPtr();
+		cc.mov(tmp, ToMemAddress(&konsts[C]));
+		cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, sp)), tmp);
+		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_STRING);
 		break;
-	}
 	case REGT_POINTER:
 		cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, a)), regA[C]);
 		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
@@ -232,8 +211,9 @@ void JitCompiler::StoreInOuts(int b)
 			cc.add(stackPtr, (int)(C * sizeof(int32_t)));
 			cc.mov(x86::dword_ptr(stackPtr), regD[C]);
 			break;
-		//case REGT_STRING | REGT_ADDROF:
-		//	break;
+		case REGT_STRING | REGT_ADDROF:
+			// We don't have to do anything in this case. String values are never moved to virtual registers.
+			break;
 		case REGT_POINTER | REGT_ADDROF:
 			stackPtr = cc.newIntPtr();
 			cc.mov(stackPtr, frameA);
@@ -278,8 +258,7 @@ void JitCompiler::LoadReturns(const VMOP *retval, int numret, bool inout)
 			cc.movsd(regF[regnum], asmjit::x86::qword_ptr(frameF, regnum * sizeof(double)));
 			break;
 		case REGT_STRING:
-			cc.mov(regS[regnum], frameS);
-			cc.add(regS[regnum], regnum * sizeof(FString));
+			// We don't have to do anything in this case. String values are never moved to virtual registers.
 			break;
 		case REGT_POINTER:
 			cc.mov(regA[regnum], asmjit::x86::ptr(frameA, regnum * sizeof(void*)));
@@ -324,7 +303,7 @@ void JitCompiler::FillReturns(const VMOP *retval, int numret)
 			break;
 		case REGT_STRING:
 			cc.mov(regPtr, frameS);
-			cc.add(regPtr, regnum * sizeof(FString));
+			cc.add(regPtr, (int)(regnum * sizeof(FString)));
 			break;
 		case REGT_POINTER:
 			cc.mov(regPtr, frameA);

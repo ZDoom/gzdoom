@@ -164,14 +164,7 @@ bool JitCompiler::CanJit(VMScriptFunction *sfunc)
 		// Partially implemented functions:
 
 		auto pc = sfunc->Code + i;
-		if (sfunc->Code[i].op == OP_RET)
-		{
-			if (B != REGT_NIL)
-			{
-				int regtype = B;
-			}
-		}
-		else if (sfunc->Code[i].op == OP_CAST)
+		if (sfunc->Code[i].op == OP_CAST)
 		{
 			switch (C)
 			{
@@ -193,12 +186,6 @@ bool JitCompiler::CanJit(VMScriptFunction *sfunc)
 		{
 			if (!!(B & REGT_MULTIREG3) || !!(B & REGT_MULTIREG2))
 				return false;
-
-			switch (B)
-			{
-			default:
-				break;
-			}
 		}
 		else if (sfunc->Code[i].op == OP_RESULT)
 		{

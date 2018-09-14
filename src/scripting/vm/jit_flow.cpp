@@ -174,7 +174,7 @@ void JitCompiler::EmitRET()
 			};
 			auto ptr = cc.newIntPtr();
 			cc.mov(ptr, ret);
-			cc.add(ptr, retnum * sizeof(VMReturn));
+			cc.add(ptr, (int)(retnum * sizeof(VMReturn)));
 			auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(VMReturn*, FString*)>(setRetStringLamdba))),
 				asmjit::FuncSignature2<void, VMReturn*, FString*>(asmjit::CallConv::kIdHostCDecl));
 			call->setArg(0, ptr);

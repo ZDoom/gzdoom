@@ -56,7 +56,7 @@ void JitCompiler::EmitLKS_R()
 	static_assert(sizeof(FString) == 8, "sizeof(FString) needs to be 8");
 	cc.shl(offset, 3);
 #else
-	static_assert(sizeof(FString) == 8, "sizeof(FString) needs to be 4");
+	static_assert(sizeof(FString) == 4, "sizeof(FString) needs to be 4");
 	cc.shl(offset, 2);
 #endif
 	cc.add(ptr, offset);

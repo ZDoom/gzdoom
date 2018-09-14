@@ -10291,8 +10291,13 @@ FxWhileLoop::~FxWhileLoop()
 FxExpression *FxWhileLoop::DoResolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
-	SAFE_RESOLVE(Condition, ctx);
+	SAFE_RESOLVE_OPT(Condition, ctx);
 	SAFE_RESOLVE_OPT(Code, ctx);
+
+	if (Condition == nullptr)
+	{
+		Condition = new FxConstant(true, ScriptPosition);
+	}
 
 	if (Condition->ValueType != TypeBool)
 	{

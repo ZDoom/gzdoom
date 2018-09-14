@@ -46,7 +46,7 @@ glcycle_t RenderWall,SetupWall,ClipWall;
 glcycle_t RenderFlat,SetupFlat;
 glcycle_t RenderSprite,SetupSprite;
 glcycle_t All, Finish, PortalAll, Bsp;
-glcycle_t ProcessAll;
+glcycle_t ProcessAll, PostProcess;
 glcycle_t RenderAll;
 glcycle_t Dirty;
 glcycle_t drawcalls;
@@ -64,6 +64,7 @@ void ResetProfilingData()
 	PortalAll.Reset();
 	RenderAll.Reset();
 	ProcessAll.Reset();
+	PostProcess.Reset();
 	RenderWall.Reset();
 	SetupWall.Reset();
 	ClipWall.Reset();
@@ -94,13 +95,13 @@ static void AppendRenderTimes(FString &str)
 		"F: Render=%2.3f, Setup=%2.3f\n"
 		"S: Render=%2.3f, Setup=%2.3f\n"
 		"2D: %2.3f Finish3D: %2.3f\n"
-		"All=%2.3f, Render=%2.3f, Setup=%2.3f, Portal=%2.3f, Drawcalls=%2.3f, Finish=%2.3f\n",
+		"All=%2.3f, Render=%2.3f, Setup=%2.3f, Portal=%2.3f, Drawcalls=%2.3f, Postprocess=%2.3f, Finish=%2.3f\n",
 		bsp, clipwall,
 		RenderWall.TimeMS(), setupwall, 
 		RenderFlat.TimeMS(), SetupFlat.TimeMS(),
 		RenderSprite.TimeMS(), SetupSprite.TimeMS(), 
 		twoD.TimeMS(), Flush3D.TimeMS() - twoD.TimeMS(),
-		All.TimeMS() + Finish.TimeMS(), RenderAll.TimeMS(),	ProcessAll.TimeMS(), PortalAll.TimeMS(), drawcalls.TimeMS(), Finish.TimeMS());
+		All.TimeMS() + Finish.TimeMS(), RenderAll.TimeMS(),	ProcessAll.TimeMS(), PortalAll.TimeMS(), drawcalls.TimeMS(), PostProcess.TimeMS(), Finish.TimeMS());
 }
 
 static void AppendRenderStats(FString &out)

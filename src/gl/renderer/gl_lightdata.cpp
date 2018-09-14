@@ -103,10 +103,10 @@ void gl_SetColor(int sectorlightlevel, int rellight, bool fullbright, const FCol
 	}
 	else
 	{
-		int hwlightlevel = hw_CalcLightLevel(sectorlightlevel, rellight, weapon);
+		int hwlightlevel = hw_CalcLightLevel(sectorlightlevel, rellight, weapon, cm.BlendFactor);
 		PalEntry pe = hw_CalcLightColor(hwlightlevel, cm.LightColor, cm.BlendFactor);
 		gl_RenderState.SetColorAlpha(pe, alpha, cm.Desaturation);
-		gl_RenderState.SetSoftLightLevel(hw_ClampLight(sectorlightlevel + rellight));
+		gl_RenderState.SetSoftLightLevel(hw_ClampLight(sectorlightlevel + rellight), cm.BlendFactor);
 	}
 }
 
@@ -163,7 +163,7 @@ void gl_SetFog(int lightlevel, int rellight, bool fullbright, const FColormap *c
 	else if (cmap != NULL && !fullbright)
 	{
 		fogcolor = cmap->FadeColor;
-		fogdensity = hw_GetFogDensity(lightlevel, fogcolor, cmap->FogDensity);
+		fogdensity = hw_GetFogDensity(lightlevel, fogcolor, cmap->FogDensity, cmap->BlendFactor);
 		fogcolor.a=0;
 	}
 	else
@@ -184,9 +184,9 @@ void gl_SetFog(int lightlevel, int rellight, bool fullbright, const FColormap *c
 	}
 	else
 	{
-		if (level.lightmode == 2 && fogcolor == 0)
+		if ((level.lightmode == 2 || (level.lightmode == 8 && cmap->BlendFactor > 0)) && fogcolor == 0)
 		{
-			float light = hw_CalcLightLevel(lightlevel, rellight, false);
+			float light = hw_CalcLightLevel(lightlevel, rellight, false, cmap->BlendFactor);
 			gl_SetShaderLight(light, lightlevel);
 		}
 		else
@@ -205,7 +205,7 @@ void gl_SetFog(int lightlevel, int rellight, bool fullbright, const FColormap *c
 		gl_RenderState.SetFog(fogcolor, fogdensity);
 
 		// Korshun: fullbright fog like in software renderer.
-		if (level.lightmode == 8 && level.brightfog && fogdensity != 0 && fogcolor != 0)
+		if (level.lightmode == 8 && cmap->BlendFactor == 0 && level.brightfog && fogdensity != 0 && fogcolor != 0)
 		{
 			gl_RenderState.SetSoftLightLevel(255);
 		}

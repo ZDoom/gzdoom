@@ -47,6 +47,7 @@
 
 struct sector_t;
 class IShaderProgram;
+class FTexture;
 
 enum EHWCaps
 {
@@ -205,6 +206,7 @@ enum
 	DTA_SrcWidth,
 	DTA_SrcHeight,
 	DTA_LegacyRenderStyle,	// takes an old-style STYLE_* constant instead of an FRenderStyle
+	DTA_Burn,				// activates the burn shader for this element
 
 };
 
@@ -261,6 +263,7 @@ struct DrawParms
 	bool virtBottom;
 	double srcx, srcy;
 	double srcwidth, srcheight;
+	bool burn;
 };
 
 struct Va_List
@@ -441,14 +444,26 @@ public:
     virtual IUniformBuffer *CreateUniformBuffer(size_t size, bool staticuse = false) { return nullptr; }
 	virtual IShaderProgram *CreateShaderProgram() { return nullptr; }
 
-	// Begin 2D drawing operations.
-	// Returns true if hardware-accelerated 2D has been entered, false if not.
-	void Begin2D(bool copy3d) { isIn2D = true; }
+	// Begin/End 2D drawing operations.
+	void Begin2D() { isIn2D = true; }
 	void End2D() { isIn2D = false; }
+
+	void End2DAndUpdate()
+	{
+		DrawRateStuff();
+		End2D();
+		Update();
+	}
+
 
 	// Returns true if Begin2D has been called and 2D drawing is now active
 	bool HasBegun2D() { return isIn2D; }
 
+	// This is overridable in case Vulkan does it differently.
+	virtual bool RenderTextureIsFlipped() const
+	{
+		return true;
+	}
 
 	// Report a game restart
 	void InitPalette();
@@ -460,10 +475,8 @@ public:
 	virtual sector_t *RenderView(player_t *player) { return nullptr;  }
 
 	// Screen wiping
-	virtual bool WipeStartScreen(int type);
-	virtual void WipeEndScreen();
-	virtual bool WipeDo(int ticks);
-	virtual void WipeCleanup();
+	virtual FTexture *WipeStartScreen();
+	virtual FTexture *WipeEndScreen();
 
 	virtual void PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D) { if (afterBloomDrawEndScene2D) afterBloomDrawEndScene2D(); }
 

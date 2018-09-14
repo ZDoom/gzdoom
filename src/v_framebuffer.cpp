@@ -320,9 +320,9 @@ void DFrameBuffer::SetVSync (bool vsync)
 //
 //==========================================================================
 
-bool DFrameBuffer::WipeStartScreen(int type)
+FTexture *DFrameBuffer::WipeStartScreen()
 {
-	return false;
+	return nullptr;
 }
 
 //==========================================================================
@@ -334,33 +334,9 @@ bool DFrameBuffer::WipeStartScreen(int type)
 //
 //==========================================================================
 
-void DFrameBuffer::WipeEndScreen()
+FTexture *DFrameBuffer::WipeEndScreen()
 {
-}
-
-//==========================================================================
-//
-// DFrameBuffer :: WipeDo
-//
-// Draws one frame of a screenwipe. Should be called no more than 35
-// times per second. If called less than that, ticks indicates how many
-// ticks have passed since the last call.
-//
-//==========================================================================
-
-bool DFrameBuffer::WipeDo(int ticks)
-{
-	return false;
-}
-
-//==========================================================================
-//
-// DFrameBuffer :: WipeCleanup
-//
-//==========================================================================
-
-void DFrameBuffer::WipeCleanup()
-{
+    return nullptr;
 }
 
 //==========================================================================

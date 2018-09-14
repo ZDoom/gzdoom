@@ -57,6 +57,7 @@
 #include "gl/shaders/gl_postprocessshaderinstance.h"
 #include "gl/textures/gl_samplers.h"
 #include "gl/dynlights/gl_lightbuffer.h"
+#include "gl/data/gl_viewpointbuffer.h"
 #include "r_videoscale.h"
 
 EXTERN_CVAR(Int, screenblocks)
@@ -79,21 +80,6 @@ extern bool NoInterpolateView;
 FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb) 
 {
 	framebuffer = fb;
-	mMirrorCount = 0;
-	mPlaneMirrorCount = 0;
-	mVBO = nullptr;
-	mSkyVBO = nullptr;
-	mShaderManager = nullptr;
-	mLights = nullptr;
-	mBuffers = nullptr;
-	mScreenBuffers = nullptr;
-	mSaveBuffers = nullptr;
-	mPresentShader = nullptr;
-	mPresent3dCheckerShader = nullptr;
-	mPresent3dColumnShader = nullptr;
-	mPresent3dRowShader = nullptr;
-	mShadowMapShader = nullptr;
-	mCustomPostProcessShaders = nullptr;
 }
 
 void FGLRenderer::Initialize(int width, int height)
@@ -118,6 +104,7 @@ void FGLRenderer::Initialize(int width, int height)
 	mVBO = new FFlatVertexBuffer(width, height);
 	mSkyVBO = new FSkyVertexBuffer;
 	mLights = new FLightBuffer();
+	mViewpoints = new GLViewpointBuffer;
 	gl_RenderState.SetVertexBuffer(mVBO);
 	mFBID = 0;
 	mOldFBID = 0;
@@ -132,11 +119,12 @@ FGLRenderer::~FGLRenderer()
 	FlushModels();
 	AActor::DeleteAllAttachedLights();
 	FMaterial::FlushAll();
-	if (mShaderManager != NULL) delete mShaderManager;
-	if (mSamplerManager != NULL) delete mSamplerManager;
-	if (mVBO != NULL) delete mVBO;
-	if (mSkyVBO != NULL) delete mSkyVBO;
-	if (mLights != NULL) delete mLights;
+	if (mShaderManager != nullptr) delete mShaderManager;
+	if (mSamplerManager != nullptr) delete mSamplerManager;
+	if (mVBO != nullptr) delete mVBO;
+	if (mSkyVBO != nullptr) delete mSkyVBO;
+	if (mLights != nullptr) delete mLights;
+	if (mViewpoints != nullptr) delete mViewpoints;
 	if (mFBID != 0) glDeleteFramebuffers(1, &mFBID);
 	if (mVAOID != 0)
 	{
@@ -147,6 +135,7 @@ FGLRenderer::~FGLRenderer()
 
 	if (swdrawer) delete swdrawer;
 	if (mBuffers) delete mBuffers;
+	if (mSaveBuffers) delete mSaveBuffers;
 	if (mPresentShader) delete mPresentShader;
 	if (mPresent3dCheckerShader) delete mPresent3dCheckerShader;
 	if (mPresent3dColumnShader) delete mPresent3dColumnShader;
@@ -233,6 +222,7 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 		P_FindParticleSubsectors();
 
 		mLights->Clear();
+		mViewpoints->Clear();
 
 		// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
 		bool saved_niv = NoInterpolateView;
@@ -334,7 +324,8 @@ void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, i
     gl_RenderState.SetVertexBuffer(mVBO);
     mVBO->Reset();
     mLights->Clear();
-    
+	mViewpoints->Clear();
+
     // This shouldn't overwrite the global viewpoint even for a short time.
     FRenderViewpoint savevp;
     sector_t *viewsector = RenderViewpoint(savevp, players[consoleplayer].camera, &bounds, r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
@@ -427,12 +418,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		mBuffers->BindCurrentFB();
 	const auto &mScreenViewport = screen->mScreenViewport;
 	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
-
-	HWViewpointUniforms matrices;
-	matrices.SetDefaults();
-	matrices.mProjectionMatrix.ortho(0, screen->GetWidth(), screen->GetHeight(), 0, -1.0f, 1.0f);
-	matrices.CalcDependencies();
-	GLRenderer->mShaderManager->ApplyMatrices(&matrices, NORMAL_PASS);
+	GLRenderer->mViewpoints->Set2D(screen->GetWidth(), screen->GetHeight());
 
 	glDisable(GL_DEPTH_TEST);
 
@@ -530,6 +516,10 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 				gl_RenderState.mTextureMatrix.translate(0.f, 1.f, 0.0f);
 				gl_RenderState.EnableTextureMatrix(true);
 			}
+			if (cmd.mFlags & F2DDrawer::DTF_Burn)
+			{
+				gl_RenderState.SetEffect(EFF_BURN);
+			}
 		}
 		else
 		{
@@ -555,6 +545,8 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		gl_RenderState.SetObjectColor(0xffffffff);
 		gl_RenderState.SetObjectColor2(0);
 		gl_RenderState.EnableTextureMatrix(false);
+		gl_RenderState.SetEffect(EFF_NONE);
+
 	}
 	glDisable(GL_SCISSOR_TEST);
 

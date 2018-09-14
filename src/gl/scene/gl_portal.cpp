@@ -42,6 +42,7 @@
 #include "gl/data/gl_vertexbuffer.h"
 #include "hwrenderer/scene/hw_clipper.h"
 #include "gl/scene/gl_portal.h"
+#include "gl/data/gl_viewpointbuffer.h"
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -66,9 +67,7 @@ void GLPortal::ClearScreen(HWDrawInfo *di)
 {
 	bool multi = !!glIsEnabled(GL_MULTISAMPLE);
 
-	di->VPUniforms.mViewMatrix.loadIdentity();
-	di->VPUniforms.mProjectionMatrix.ortho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1.0f, 1.0f);
-	di->ApplyVPUniforms();
+	GLRenderer->mViewpoints->Set2D(SCREENWIDTH, SCREENHEIGHT);
 	gl_RenderState.SetColor(0, 0, 0);
 	gl_RenderState.Apply();
 
@@ -236,7 +235,7 @@ void GLPortal::End(HWDrawInfo *di, bool usestencil)
 	Clocker c(PortalAll);
 
 	di = static_cast<FDrawInfo*>(di)->EndDrawInfo();
-	di->ApplyVPUniforms();
+	GLRenderer->mViewpoints->Bind(static_cast<FDrawInfo*>(di)->vpIndex);
 	if (usestencil)
 	{
 		auto &vp = di->Viewpoint;
@@ -295,7 +294,6 @@ void GLPortal::End(HWDrawInfo *di, bool usestencil)
 
 		// Restore the old view
 		if (vp.camera != nullptr) vp.camera->renderflags = (vp.camera->renderflags & ~RF_MAYBEINVISIBLE) | savedvisibility;
-		di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(mState->MirrorFlag & 1), !!(mState->PlaneMirrorFlag & 1));
 
 		// This draws a valid z-buffer into the stencil's contents to ensure it
 		// doesn't get overwritten by the level's geometry.
@@ -345,10 +343,12 @@ GLHorizonPortal::GLHorizonPortal(FPortalSceneState *s, GLHorizonInfo * pt, FRend
 	// Draw to some far away boundary
 	// This is not drawn as larger strips because it causes visual glitches.
 	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	for (float x = -32768 + vx; x<32768 + vx; x += 4096)
+	for (int xx = -32768; xx < 32768; xx += 4096)
 	{
-		for (float y = -32768 + vy; y<32768 + vy; y += 4096)
+		float x = xx + vx;
+		for (int yy = -32768; yy < 32768; yy += 4096)
 		{
+			float y = yy + vy;
 			ptr->Set(x, z, y, x / 64, -y / 64);
 			ptr++;
 			ptr->Set(x + 4096, z, y, x / 64 + 64, -y / 64);

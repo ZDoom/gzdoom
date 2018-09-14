@@ -113,7 +113,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 			if (!sprite->Colormap.FadeColor.isBlack())
 			{
 				float dist=Dist2(vp.Pos.X, vp.Pos.Y, sprite->x, sprite->y);
-				int fogd = hw_GetFogDensity(sprite->lightlevel, sprite->Colormap.FadeColor, sprite->Colormap.FogDensity);
+				int fogd = hw_GetFogDensity(sprite->lightlevel, sprite->Colormap.FadeColor, sprite->Colormap.FogDensity, sprite->Colormap.BlendFactor);
 
 				// this value was determined by trial and error and is scale dependent!
 				float factor = 0.05f + exp(-fogd*dist / 62500.f);

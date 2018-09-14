@@ -87,6 +87,10 @@ void main()
 	{
 		gl_ClipDistance[0] = -( (worldcoord.z - uClipLine.y) * uClipLine.z + (uClipLine.x - worldcoord.x) * uClipLine.w ) + 1.0/32768.0;	// allow a tiny bit of imprecisions for colinear linedefs.
 	}
+	else
+	{
+		gl_ClipDistance[0] = 1;
+	}
 
 	// clip planes used for translucency splitting
 	gl_ClipDistance[1] = worldcoord.y - uClipSplit.x;

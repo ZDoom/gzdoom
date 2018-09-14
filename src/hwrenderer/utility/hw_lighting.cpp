@@ -82,13 +82,15 @@ CUSTOM_CVAR(Int,gl_fogmode,1,CVAR_ARCHIVE|CVAR_NOINITCALL)
 //
 //==========================================================================
 
-int hw_CalcLightLevel(int lightlevel, int rellight, bool weapon)
+int hw_CalcLightLevel(int lightlevel, int rellight, bool weapon, int blendfactor)
 {
 	int light;
 
 	if (lightlevel == 0) return 0;
 
-	if ((level.lightmode & 2) && lightlevel < 192 && !weapon) 
+	bool darklightmode = (level.lightmode & 2) || (level.lightmode == 8 && blendfactor > 0);
+
+	if (darklightmode && lightlevel < 192 && !weapon) 
 	{
 		if (lightlevel > 100)
 		{
@@ -126,12 +128,13 @@ PalEntry hw_CalcLightColor(int light, PalEntry pe, int blendfactor)
 {
 	int r,g,b;
 
-	if (level.lightmode == 8)
+	if (blendfactor == 0)
 	{
-		return pe;
-	}
-	else if (blendfactor == 0)
-	{
+		if (level.lightmode == 8)
+		{
+			return pe;
+		}
+
 		r = pe.r * light / 255;
 		g = pe.g * light / 255;
 		b = pe.b * light / 255;
@@ -167,11 +170,14 @@ PalEntry hw_CalcLightColor(int light, PalEntry pe, int blendfactor)
 //
 //==========================================================================
 
-float hw_GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity)
+float hw_GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity, int blendfactor)
 {
 	float density;
 
-	if (level.lightmode & 4)
+	int lightmode = level.lightmode;
+	if (lightmode == 8 && blendfactor > 0) lightmode = 2;	// The blendfactor feature does not work with software-style lighting.
+
+	if (lightmode & 4)
 	{
 		// uses approximations of Legacy's default settings.
 		density = level.fogdensity ? (float)level.fogdensity : 18;
@@ -184,7 +190,7 @@ float hw_GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity)
 	else if ((fogcolor.d & 0xffffff) == 0)
 	{
 		// case 2: black fog
-		if (level.lightmode != 8 && !(level.flags3 & LEVEL3_NOLIGHTFADE))
+		if ((lightmode != 8 || blendfactor > 0) && !(level.flags3 & LEVEL3_NOLIGHTFADE))
 		{
 			density = distfogtable[level.lightmode != 0][hw_ClampLight(lightlevel)];
 		}

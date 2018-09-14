@@ -73,7 +73,7 @@ class LevelCompatibility play
 				AddSectorTag(35, 15);
 				for(int i=605; i<609;i++)
 				{
-					SetLineActivation(i, SPAC_PCross);
+					SetLineActivation(i, SPAC_Cross);
 					SetLineSpecial(i, Door_Open, 15, 64);
 				}
 				break;
@@ -187,7 +187,7 @@ class LevelCompatibility play
 				ClearSectorTags(197);
 				AddSectorTag(197, 8);
 				SetLineSpecial(1279, Floor_LowerToLowest, 8, 32);
-				SetLineActivation(1240, SPAC_PCross);
+				SetLineActivation(1240, SPAC_Cross);
 				SetLineSpecial(1240, Floor_LowerToLowest, 38, 32);
 				break;
 			}

@@ -190,7 +190,7 @@ static WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &po
 			if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) l.cm.ClearColor();
 		}
 
-		l.lightlevel = hw_CalcLightLevel(l.lightlevel, getExtraLight(), true);
+		l.lightlevel = hw_CalcLightLevel(l.lightlevel, getExtraLight(), true, 0);
 
 		if (level.lightmode == 8 || l.lightlevel < 92)
 		{

@@ -36,15 +36,14 @@ void JitCompiler::EmitVTBL()
 	EmitThrowException(X_READ_NIL);
 	cc.bind(notnull);
 
-	auto result = cc.newInt32();
 	typedef VMFunction*(*FuncPtr)(DObject*, int);
 	auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](DObject *o, int c) -> VMFunction* {
 		auto p = o->GetClass();
 		assert(c < (int)p->Virtuals.Size());
 		return p->Virtuals[c];
 	}))), asmjit::FuncSignature2<void*, void*, int>());
-	call->setRet(0, result);
-	call->setArg(0, regA[A]);
+	call->setRet(0, regA[A]);
+	call->setArg(0, regA[B]);
 	call->setArg(1, asmjit::Imm(C));
 }
 

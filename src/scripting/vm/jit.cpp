@@ -155,7 +155,6 @@ bool JitCompiler::CanJit(VMScriptFunction *sfunc)
 		case OP_LCS_R:
 		case OP_SS_R:
 		case OP_IJMP:
-		case OP_CALL: // this one is implemented but crashes currently
 		case OP_TAIL:
 		case OP_TAIL_K:
 			return false;

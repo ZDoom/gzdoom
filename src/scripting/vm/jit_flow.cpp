@@ -104,8 +104,8 @@ void JitCompiler::EmitRET()
 		Label L_endif = cc.newLabel();
 
 		cc.mov(reg_retnum, retnum);
-		cc.test(reg_retnum, numret);
-		cc.jg(L_endif);
+		cc.cmp(reg_retnum, numret);
+		cc.jge(L_endif);
 
 		cc.mov(location, x86::ptr(ret, retnum * sizeof(VMReturn)));
 
@@ -221,8 +221,8 @@ void JitCompiler::EmitRETI()
 	Label L_endif = cc.newLabel();
 
 	cc.mov(reg_retnum, retnum);
-	cc.test(reg_retnum, numret);
-	cc.jg(L_endif);
+	cc.cmp(reg_retnum, numret);
+	cc.jge(L_endif);
 
 	cc.mov(location, x86::ptr(ret, retnum * sizeof(VMReturn)));
 	cc.mov(x86::dword_ptr(location), BCs);

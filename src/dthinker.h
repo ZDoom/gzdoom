@@ -57,6 +57,7 @@ struct FThinkerList
 	DThinker *GetHead() const;
 	DThinker *GetTail() const;
 	bool IsEmpty() const;
+	int Length() const;
 
 	DThinker *Sentinel;
 };
@@ -87,6 +88,7 @@ public:
 	}
 	static void SerializeThinkers(FSerializer &arc, bool keepPlayers);
 	static void MarkRoots();
+	static int StatSize(int statnum);
 
 	static DThinker *FirstThinker (int statnum);
 	static bool bSerialOverride;

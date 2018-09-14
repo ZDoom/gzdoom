@@ -128,6 +128,29 @@ bool FThinkerList::IsEmpty() const
 	return Sentinel == NULL || Sentinel->NextThinker == NULL;
 }
 
+
+int FThinkerList::Length() const
+{
+	int i = 0;
+
+	if (! (this->IsEmpty ()))
+	{
+		DThinker *node = this->GetHead();
+
+		if (node == NULL)
+		{
+			return 0;
+		}
+
+		while (node != this->Sentinel)
+		{
+			i++;
+			node = node->NextThinker;
+		}
+	}
+
+	return i;
+}
 //==========================================================================
 //
 //
@@ -733,6 +756,36 @@ int DThinker::ProfileThinkers(FThinkerList *list, FThinkerList *dest)
 		node = NextToThink;
 	}
 	return count;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+int DThinker::StatSize(int statnum)
+{
+	return DThinker::FreshThinkers[statnum].Length() + DThinker::Thinkers[statnum].Length();
+}
+
+DEFINE_ACTION_FUNCTION(DThinker, GetStatSize)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT_DEF(statnum);
+	if (statnum == MAX_STATNUM + 1)
+	{
+		int size = 0;
+		for (int i = STAT_INFO; i < MAX_STATNUM; i++)
+		{
+			size += DThinker::StatSize(i);
+		}
+		ACTION_RETURN_INT(size);
+	}
+	else
+	{
+		ACTION_RETURN_INT(DThinker::StatSize(statnum));
+	}
 }
 
 //==========================================================================

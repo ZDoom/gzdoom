@@ -72,6 +72,10 @@ private:
 
 	void CallSqrt(const asmjit::X86Xmm &a, const asmjit::X86Xmm &b);
 
+	static void CallAssignString(FString* to, FString* from) {
+		*to = *from;
+	}
+
 	void EmitNullPointerThrow(int index, EVMAbortException reason);
 	void EmitThrowException(EVMAbortException reason);
 	void EmitThrowException(EVMAbortException reason, asmjit::X86Gp arg1);

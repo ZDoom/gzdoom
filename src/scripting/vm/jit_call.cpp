@@ -32,9 +32,41 @@ void JitCompiler::EmitPARAM()
 		cc.mov(x86::dword_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, i)), konstd[C]);
 		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_INT);
 		break;
-	//case REGT_STRING:
-	//case REGT_STRING | REGT_ADDROF:
-	//case REGT_STRING | REGT_KONST:
+	case REGT_STRING:
+	{
+		auto setStringLambda = [](VMValue* val, FString* str) -> void {
+			::new(val) VMValue(str);
+		};
+		auto ptr = cc.newIntPtr();
+		cc.mov(ptr, params);
+		cc.add(ptr, index * sizeof(VMValue));
+		auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(VMValue*, FString*)>(setStringLambda))),
+			asmjit::FuncSignature2<void, VMValue*, FString*>(asmjit::CallConv::kIdHostCDecl));
+		call->setArg(0, ptr);
+		call->setArg(1, regS[C]);
+		break;
+	}
+	case REGT_STRING | REGT_ADDROF:
+		stackPtr = cc.newIntPtr();
+		cc.mov(stackPtr, frameS);
+		cc.add(stackPtr, C * sizeof(FString));
+		cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, a)), stackPtr);
+		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
+		break;
+	case REGT_STRING | REGT_KONST:
+	{
+		auto setStringLambda = [](VMValue* val, FString* str) -> void {
+			::new(val) VMValue(str);
+		};
+		auto ptr = cc.newIntPtr();
+		cc.mov(ptr, params);
+		cc.add(ptr, index * sizeof(VMValue));
+		auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(VMValue*, FString*)>(setStringLambda))),
+			asmjit::FuncSignature2<void, VMValue*, FString*>(asmjit::CallConv::kIdHostCDecl));
+		call->setArg(0, ptr);
+		call->setArg(1, asmjit::imm_ptr(&konsts[C]));
+		break;
+	}
 	case REGT_POINTER:
 		cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, a)), regA[C]);
 		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
@@ -245,8 +277,10 @@ void JitCompiler::LoadReturns(const VMOP *retval, int numret, bool inout)
 		case REGT_FLOAT:
 			cc.movsd(regF[regnum], asmjit::x86::qword_ptr(frameF, regnum * sizeof(double)));
 			break;
-		/*case REGT_STRING:
-			break;*/
+		case REGT_STRING:
+			cc.mov(regS[regnum], frameS);
+			cc.add(regS[regnum], regnum * sizeof(FString));
+			break;
 		case REGT_POINTER:
 			cc.mov(regA[regnum], asmjit::x86::ptr(frameA, regnum * sizeof(void*)));
 			break;
@@ -288,10 +322,10 @@ void JitCompiler::FillReturns(const VMOP *retval, int numret)
 			cc.mov(regPtr, frameF);
 			cc.add(regPtr, (int)(regnum * sizeof(double)));
 			break;
-		/*case REGT_STRING:
+		case REGT_STRING:
 			cc.mov(regPtr, frameS);
 			cc.add(regPtr, regnum * sizeof(FString));
-			break;*/
+			break;
 		case REGT_POINTER:
 			cc.mov(regPtr, frameA);
 			cc.add(regPtr, (int)(regnum * sizeof(void*)));

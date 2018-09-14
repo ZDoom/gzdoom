@@ -23,10 +23,7 @@ void JitCompiler::EmitLKF()
 
 void JitCompiler::EmitLKS()
 {
-	auto loadLambda = [] (FString* to, FString* from) -> void {
-		*to = *from;
-	};
-	auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*)>(loadLambda))),
+	auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*)>(CallAssignString))),
 		                asmjit::FuncSignature2<void, FString*, FString*>(asmjit::CallConv::kIdHostCDecl));
 	call->setArg(0, regS[A]);
 	call->setArg(1, asmjit::imm(ToMemAddress(konsts + BC)));
@@ -193,10 +190,7 @@ void JitCompiler::EmitLS()
 	auto ptr = cc.newIntPtr();
 	cc.mov(ptr, regA[B]);
 	cc.add(ptr, konstd[C]);
-	auto loadLambda = [](FString* to, FString* from) -> void {
-		*to = *from;
-	};
-	auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*)>(loadLambda))),
+	auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*)>(CallAssignString))),
 		asmjit::FuncSignature2<void, FString*, FString*>(asmjit::CallConv::kIdHostCDecl));
 	call->setArg(0, regS[A]);
 	call->setArg(1, ptr);
@@ -210,10 +204,7 @@ void JitCompiler::EmitLS_R()
 	auto tmp = cc.newIntPtr();
 	cc.mov(tmp, regD[C]);
 	cc.add(ptr, tmp);
-	auto loadLambda = [](FString* to, FString* from) -> void {
-		*to = *from;
-	};
-	auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*)>(loadLambda))),
+	auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*)>(CallAssignString))),
 		asmjit::FuncSignature2<void, FString*, FString*>(asmjit::CallConv::kIdHostCDecl));
 	call->setArg(0, regS[A]);
 	call->setArg(1, ptr);

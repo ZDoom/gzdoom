@@ -169,8 +169,6 @@ bool JitCompiler::CanJit(VMScriptFunction *sfunc)
 			if (B != REGT_NIL)
 			{
 				int regtype = B;
-				if ((regtype & REGT_TYPE) == REGT_STRING)
-					return false;
 			}
 		}
 		else if (sfunc->Code[i].op == OP_CAST)
@@ -198,10 +196,6 @@ bool JitCompiler::CanJit(VMScriptFunction *sfunc)
 
 			switch (B)
 			{
-			case REGT_STRING:
-			case REGT_STRING | REGT_ADDROF:
-			case REGT_STRING | REGT_KONST:
-				return false;
 			default:
 				break;
 			}
@@ -209,9 +203,6 @@ bool JitCompiler::CanJit(VMScriptFunction *sfunc)
 		else if (sfunc->Code[i].op == OP_RESULT)
 		{
 			if (!!(B & REGT_MULTIREG3) || !!(B & REGT_MULTIREG2))
-				return false;
-
-			if ((B & REGT_TYPE) == REGT_STRING)
 				return false;
 		}
 	}

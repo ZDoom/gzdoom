@@ -51,7 +51,7 @@ void JitCompiler::EmitLKF_R()
 void JitCompiler::EmitLKS_R()
 {
 	auto ptr = cc.newIntPtr();
-	cc.mov(ptr, ToMemAddress(konsts));
+	cc.mov(ptr, ToMemAddress(konsts + C));
 	auto offset = cc.newIntPtr();
 	cc.mov(offset, regD[B]);
 #ifdef ASMJIT_ARCH_X64
@@ -72,7 +72,13 @@ void JitCompiler::EmitLKP_R()
 {
 	auto base = cc.newIntPtr();
 	cc.mov(base, ToMemAddress(konsta + C));
+#ifdef ASMJIT_ARCH_X64
+	static_assert(sizeof(FVoidObj) == 8, "sizeof(FVoidObj) needs to be 8");
+	cc.mov(regA[A], asmjit::x86::ptr(base, regD[B], 3));
+#else
+	static_assert(sizeof(FVoidObj) == 4, "sizeof(FVoidObj) needs to be 4");
 	cc.mov(regA[A], asmjit::x86::ptr(base, regD[B], 2));
+#endif
 }
 
 void JitCompiler::EmitLFP()

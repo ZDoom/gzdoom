@@ -36,14 +36,14 @@ void JitCompiler::EmitLKP()
 
 void JitCompiler::EmitLK_R()
 {
-	cc.mov(regD[A], asmjit::x86::ptr(ToMemAddress(konstd), regD[B], 2, C * sizeof(int32_t)));
+	cc.mov(regD[A], asmjit::x86::ptr(ToMemAddress(konstd + C), regD[B], 2));
 }
 
 void JitCompiler::EmitLKF_R()
 {
 	auto tmp = cc.newIntPtr();
-	cc.mov(tmp, ToMemAddress(konstf));
-	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp, regD[B], 3, C * sizeof(double)));
+	cc.mov(tmp, ToMemAddress(konstf + C));
+	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp, regD[B], 3));
 }
 
 void JitCompiler::EmitLKS_R()
@@ -68,7 +68,7 @@ void JitCompiler::EmitLKS_R()
 
 void JitCompiler::EmitLKP_R()
 {
-	cc.mov(regA[A], asmjit::x86::ptr(ToMemAddress(konsta), regD[B], 2, C * sizeof(void*)));
+	cc.mov(regA[A], asmjit::x86::ptr(ToMemAddress(konsta + C), regD[B], 2));
 }
 
 void JitCompiler::EmitLFP()

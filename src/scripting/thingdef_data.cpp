@@ -1281,6 +1281,198 @@ DEFINE_ACTION_FUNCTION(FStringStruct, RightIndexOf)
 	ACTION_RETURN_INT(self->LastIndexOf(substr, endIndex));
 }
 
+DEFINE_ACTION_FUNCTION(FStringStruct, IsSpace)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT_DEF(pos);
+	int slen = (int)self->Len();
+	if (pos >= slen)
+		ACTION_RETURN_BOOL(false);
+	else
+	{
+		const unsigned char *chars = (unsigned char*)self->GetChars ();
+		if (pos < 0)
+		{
+			for (int i = 0; i < slen; i++)
+			{
+				if (!isspace (chars[i])){
+					ACTION_RETURN_BOOL(false);
+				}
+			}
+			ACTION_RETURN_BOOL(true);
+		}
+		ACTION_RETURN_BOOL(isspace (chars[pos]));
+	}
+}
+
+DEFINE_ACTION_FUNCTION(FStringStruct, IsDigit)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT_DEF(pos);
+	int slen = (int)self->Len();
+	if (pos >= slen)
+		ACTION_RETURN_BOOL(false);
+	else
+	{
+		const unsigned char *chars = (unsigned char*)self->GetChars ();
+		if (pos < 0)
+		{
+			for (int i = 0; i < slen; i++)
+			{
+				if (!isdigit (chars[i])){
+					ACTION_RETURN_BOOL(false);
+				}
+			}
+			ACTION_RETURN_BOOL(true);
+		}
+		ACTION_RETURN_BOOL(isdigit (chars[pos]));
+	}
+}
+
+DEFINE_ACTION_FUNCTION(FStringStruct, IsUpper)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT_DEF(pos);
+	int slen = (int)self->Len();
+	if (pos >= slen)
+		ACTION_RETURN_BOOL(false);
+	else
+	{
+		const unsigned char *chars = (unsigned char*)self->GetChars ();
+		if (pos < 0)
+		{
+			for (int i = 0; i < slen; i++)
+			{
+				if (!isupper (chars[i])){
+					ACTION_RETURN_BOOL(false);
+				}
+			}
+			ACTION_RETURN_BOOL(true);
+		}
+		ACTION_RETURN_BOOL(isupper (chars[pos]));
+	}
+}
+
+DEFINE_ACTION_FUNCTION(FStringStruct, IsLower)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT_DEF(pos);
+	int slen = (int)self->Len();
+	if (pos >= slen)
+		ACTION_RETURN_BOOL(false);
+	else
+	{
+		const unsigned char *chars = (unsigned char*)self->GetChars ();
+		if (pos < 0)
+		{
+			for (int i = 0; i < slen; i++)
+			{
+				if (!islower (chars[i])){
+					ACTION_RETURN_BOOL(false);
+				}
+			}
+			ACTION_RETURN_BOOL(true);
+		}
+		ACTION_RETURN_BOOL(islower (chars[pos]));
+	}
+}
+
+DEFINE_ACTION_FUNCTION(FStringStruct, IsAlpha)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT_DEF(pos);
+	int slen = (int)self->Len();
+	if (pos >= slen)
+		ACTION_RETURN_BOOL(false);
+	else
+	{
+		const unsigned char *chars = (unsigned char*)self->GetChars ();
+		if (pos < 0)
+		{
+			for (int i = 0; i < slen; i++)
+			{
+				if (!isalpha (chars[i])){
+					ACTION_RETURN_BOOL(false);
+				}
+			}
+			ACTION_RETURN_BOOL(true);
+		}
+		ACTION_RETURN_BOOL(isalpha (chars[pos]));
+	}
+}
+
+DEFINE_ACTION_FUNCTION(FStringStruct, IsAlnum)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT_DEF(pos);
+	int slen = (int)self->Len();
+	if (pos >= slen)
+		ACTION_RETURN_BOOL(false);
+	else
+	{
+		const unsigned char *chars = (unsigned char*)self->GetChars ();
+		if (pos < 0)
+		{
+			for (int i = 0; i < slen; i++)
+			{
+				if (!isalnum (chars[i])){
+					ACTION_RETURN_BOOL(false);
+				}
+			}
+			ACTION_RETURN_BOOL(true);
+		}
+		ACTION_RETURN_BOOL(isalnum (chars[pos]));
+	}
+}
+
+DEFINE_ACTION_FUNCTION(FStringStruct, IsPunct)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT_DEF(pos);
+	int slen = (int)self->Len();
+	if (pos >= slen)
+		ACTION_RETURN_BOOL(false);
+	else
+	{
+		const unsigned char *chars = (unsigned char*)self->GetChars ();
+		if (pos < 0)
+		{
+			for (int i = 0; i < slen; i++)
+			{
+				if (!ispunct (chars[i])){
+					ACTION_RETURN_BOOL(false);
+				}
+			}
+			ACTION_RETURN_BOOL(true);
+		}
+		ACTION_RETURN_BOOL(ispunct (chars[pos]));
+	}
+}
+
+DEFINE_ACTION_FUNCTION(FStringStruct, IsPrint)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT_DEF(pos);
+	int slen = (int)self->Len();
+	if (pos >= slen)
+		ACTION_RETURN_BOOL(false);
+	else
+	{
+		const unsigned char *chars = (unsigned char*)self->GetChars ();
+		if (pos < 0)
+		{
+			for (int i = 0; i < slen; i++)
+			{
+				if (!isprint (chars[i])){
+					ACTION_RETURN_BOOL(false);
+				}
+			}
+			ACTION_RETURN_BOOL(true);
+		}
+		ACTION_RETURN_BOOL(isprint (chars[pos]));
+	}
+}
+
 DEFINE_ACTION_FUNCTION(FStringStruct, ToUpper)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);

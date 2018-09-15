@@ -48,7 +48,22 @@ void JitCompiler::EmitLKF_R()
 
 void JitCompiler::EmitLKS_R()
 {
-	I_FatalError("EmitLKS_R not implemented\n");
+	auto ptr = cc.newIntPtr();
+	cc.mov(ptr, ToMemAddress(konsts));
+	auto offset = cc.newIntPtr();
+	cc.mov(offset, regD[B]);
+#ifdef ASMJIT_ARCH_X64
+	static_assert(sizeof(FString) == 8, "sizeof(FString) needs to be 8");
+	cc.shl(offset, 3);
+#else
+	static_assert(sizeof(FString) == 4, "sizeof(FString) needs to be 4");
+	cc.shl(offset, 2);
+#endif
+	cc.add(ptr, offset);
+	auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*)>(CallAssignString))),
+		asmjit::FuncSignature2<void, FString*, FString*>(asmjit::CallConv::kIdHostCDecl));
+	call->setArg(0, regS[A]);
+	call->setArg(1, ptr);
 }
 
 void JitCompiler::EmitLKP_R()
@@ -315,7 +330,19 @@ void JitCompiler::EmitLCS()
 
 void JitCompiler::EmitLCS_R()
 {
-	I_FatalError("EmitLCS_R not implemented\n");
+	EmitNullPointerThrow(B, X_READ_NIL);
+	auto ptr = cc.newIntPtr();
+	cc.mov(ptr, regA[B]);
+	auto tmp = cc.newIntPtr();
+	cc.mov(tmp, regD[C]);
+	cc.add(ptr, tmp);
+	auto loadLambda = [](FString* to, char** from) -> void {
+		*to = *from;
+	};
+	auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, char**)>(loadLambda))),
+		asmjit::FuncSignature2<void, FString*, char**>(asmjit::CallConv::kIdHostCDecl));
+	call->setArg(0, regS[A]);
+	call->setArg(1, ptr);
 }
 
 void JitCompiler::EmitLBIT()

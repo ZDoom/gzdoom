@@ -150,10 +150,7 @@ bool JitCompiler::CanJit(VMScriptFunction *sfunc)
 		{
 		default:
 			break;
-		case OP_LKS_R:
 		case OP_LFP:
-		case OP_LCS_R:
-		case OP_SS_R:
 		case OP_IJMP:
 		case OP_TAIL:
 		case OP_TAIL_K:

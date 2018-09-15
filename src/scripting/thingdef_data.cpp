@@ -1281,6 +1281,193 @@ DEFINE_ACTION_FUNCTION(FStringStruct, RightIndexOf)
 	ACTION_RETURN_INT(self->LastIndexOf(substr, endIndex));
 }
 
+DEFINE_ACTION_FUNCTION(FStringStruct, IsWhitespace)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT_DEF(pos);
+	int slen = (int)self->Len();
+	if (pos >= slen)
+		ACTION_RETURN_BOOL(false);
+	else
+	{
+		int charCode;
+		if (pos < 0)
+		{
+			for (int i = 0; i < slen; i++)
+			{
+				charCode = (int)(*self)[i];
+				if (32 < charCode && charCode != 127){
+					ACTION_RETURN_BOOL(false);
+				}
+			}
+			ACTION_RETURN_BOOL(true);
+		}
+		else
+		{
+			charCode = (int)(*self)[pos];
+			ACTION_RETURN_BOOL(charCode <= 32 || charCode == 127);
+		}
+	}
+}
+
+DEFINE_ACTION_FUNCTION(FStringStruct, IsDigit)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT_DEF(pos);
+	int slen = (int)self->Len();
+	if (slen <= pos)
+		ACTION_RETURN_BOOL(false);
+	else
+	{
+		int charCode;
+		if (pos < 0)
+		{
+			for (int i = 0; i < slen; i++)
+			{
+				charCode = (int)(*self)[i];
+				if (charCode < 48 || 57 < charCode){
+					ACTION_RETURN_BOOL(false);
+				}
+			}
+			ACTION_RETURN_BOOL(true);
+		}
+		else
+		{
+			charCode = (int)(*self)[pos];
+			ACTION_RETURN_BOOL(48 <= charCode && charCode <= 57);
+		}
+	}
+}
+
+DEFINE_ACTION_FUNCTION(FStringStruct, IsUpper)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT_DEF(pos);
+	int slen = (int)self->Len();
+	if (pos >= slen)
+		ACTION_RETURN_BOOL(false);
+	else
+	{
+		int charCode;
+		if (pos < 0)
+		{
+			for (int i = 0; i < slen; i++)
+			{
+				charCode = (int)(*self)[i];
+				if (charCode < 65 || 90 < charCode){
+					ACTION_RETURN_BOOL(false);
+				}
+			}
+			ACTION_RETURN_BOOL(true);
+		}
+		else
+		{
+			charCode = (int)(*self)[pos];
+			ACTION_RETURN_BOOL(65 <= charCode && charCode <= 90);
+		}
+	}
+}
+
+DEFINE_ACTION_FUNCTION(FStringStruct, IsLower)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT_DEF(pos);
+	int slen = (int)self->Len();
+	if (pos >= slen)
+		ACTION_RETURN_BOOL(false);
+	else
+	{
+		int charCode;
+		if (pos < 0)
+		{
+			for (int i = 0; i < slen; i++)
+			{
+				charCode = (int)(*self)[i];
+				if (charCode < 97 || 122 < charCode){
+					ACTION_RETURN_BOOL(false);
+				}
+			}
+			ACTION_RETURN_BOOL(true);
+		}
+		else
+		{
+			charCode = (int)(*self)[pos];
+			ACTION_RETURN_BOOL(97 <= charCode && charCode <= 122);
+		}
+	}
+}
+
+DEFINE_ACTION_FUNCTION(FStringStruct, IsLetter)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT_DEF(pos);
+	int slen = (int)self->Len();
+	if (pos >= slen)
+		ACTION_RETURN_BOOL(false);
+	else
+	{
+		int charCode;
+		if (pos < 0)
+		{
+			for (int i = 0; i < slen; i++)
+			{
+				charCode = (int)(*self)[i];
+				if ( (charCode < 97 || 122 < charCode)
+					&& (charCode < 65 || 90 < charCode))
+				{
+					ACTION_RETURN_BOOL(false);
+				}
+			}
+			ACTION_RETURN_BOOL(true);
+		}
+		else
+		{
+			charCode = (int)(*self)[pos];
+			ACTION_RETURN_BOOL(
+				(97 <= charCode && charCode <= 122)
+				|| (65 <= charCode && charCode <= 90)
+			);
+		}
+	}
+}
+
+DEFINE_ACTION_FUNCTION(FStringStruct, IsPunctuation)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT_DEF(pos);
+	int slen = (int)self->Len();
+	if (pos >= slen)
+		ACTION_RETURN_BOOL(false);
+	else
+	{
+		int charCode;
+		if (pos < 0)
+		{
+			for (int i = 0; i < slen; i++)
+			{
+				charCode = (int)(*self)[i];
+				if ( (charCode <= 32 && charCode != 127)
+					|| (97 <= charCode && charCode <= 122)
+					|| (65 <= charCode && charCode <= 90))
+				{
+					ACTION_RETURN_BOOL(false);
+				}
+			}
+			ACTION_RETURN_BOOL(true);
+		}
+		else
+		{
+			charCode = (int)(*self)[pos];
+			ACTION_RETURN_BOOL(
+				(33<=charCode && charCode<=47)
+				|| (58<=charCode && charCode<=64)
+				|| (91<=charCode && charCode<=96)
+				|| (123<=charCode && charCode<=126)
+			);
+		}
+	}
+}
+
 DEFINE_ACTION_FUNCTION(FStringStruct, ToUpper)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);

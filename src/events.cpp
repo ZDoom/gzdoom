@@ -515,6 +515,14 @@ bool E_CheckReplacement( PClassActor *replacee, PClassActor **replacement )
 	return final;
 }
 
+void E_NewGame()
+{
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	{
+		handler->NewGame();
+	}
+}
+
 // normal event loopers (non-special, argument-less)
 DEFINE_EVENT_LOOPER(RenderFrame)
 DEFINE_EVENT_LOOPER(WorldLightning)
@@ -667,6 +675,8 @@ DEFINE_EMPTY_HANDLER(DStaticEventHandler, ConsoleProcess);
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, NetworkProcess);
 
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, CheckReplacement);
+
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, NewGame)
 
 // ===========================================
 //
@@ -1151,6 +1161,18 @@ void DStaticEventHandler::CheckReplacement( PClassActor *replacee, PClassActor *
 		if ( e.Replacement != replacee ) // prevent infinite recursion
 			*replacement = e.Replacement;
 		*final = e.IsFinal;
+	}
+}
+
+void DStaticEventHandler::NewGame()
+{
+	IFVIRTUAL(DStaticEventHandler, NewGame)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_NewGame_VMPtr)
+			return;
+		VMValue params[1] = { (DStaticEventHandler*)this };
+		VMCall(func, params, 1, nullptr, 0);
 	}
 }
 

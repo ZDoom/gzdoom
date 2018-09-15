@@ -54,7 +54,7 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
 			}
 			if (nlpos == -1)
 			{
-				nlpos = objBuf.Len();
+				nlpos = (long)objBuf.Len();
 			}
 			FString lineStr(objBuf.GetChars() + bpos, nlpos - bpos);
 			mtlUsages.Push(lineStr);
@@ -72,7 +72,7 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
 			nlpos = objBuf.IndexOf('\n', bpos);
 			if (nlpos == -1)
 			{
-				nlpos = objBuf.Len();
+				nlpos = (long)objBuf.Len();
 			}
 			memcpy(wObjBuf + bpos, mtlUsages[i].GetChars(), nlpos - bpos);
 		}
@@ -384,10 +384,10 @@ void FOBJModel::BuildVertexBuffer(FModelRenderer *renderer)
 				{
 					// https://www.khronos.org/opengl/wiki/Calculating_a_Surface_Normal
 					// Find other sides of triangle
-					int nextSidx = side + 2;
+					auto nextSidx = side + 2;
 					if (nextSidx >= 3) nextSidx -= 3;
 
-					int lastSidx = side + 1;
+					auto lastSidx = side + 1;
 					if (lastSidx >= 3) lastSidx -= 3;
 
 					OBJFaceSide &nextSide = surfaces[i].tris[j].sides[nextSidx];

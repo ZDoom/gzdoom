@@ -912,7 +912,22 @@ public:
 		DVector2 otherpos = absolute ? other->Pos() : other->PosRelative(this);
 		return VecToAngle(otherpos - Pos() + DVector2(oxofs, oyofs));
 	}
+	
+	DAngle PitchTo(AActor *other)
+	{
+		DVector3 otherpos = this->Pos() - other->Pos();
+		double dist = this->Distance3D(other);
+		if (dist > 0)
+		{
+			return asin(otherpos.Z / dist) * 180/ 3.1415926;
+		}
 
+		else
+		{
+			return 0.;
+		}
+	}
+	
 	DVector2 Vec2To(AActor *other) const
 	{
 		return other->PosRelative(this) - Pos();

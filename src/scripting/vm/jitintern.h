@@ -65,9 +65,9 @@ private:
 		pc++; // This instruction uses two instruction slots - skip the next one
 	}
 
-	static int64_t ToMemAddress(const void *d)
+	static uint64_t ToMemAddress(const void *d)
 	{
-		return (int64_t)(ptrdiff_t)d;
+		return (uint64_t)(ptrdiff_t)d;
 	}
 
 	void CallSqrt(const asmjit::X86Xmm &a, const asmjit::X86Xmm &b);

@@ -50,18 +50,16 @@ void JitCompiler::EmitLKF_R()
 
 void JitCompiler::EmitLKS_R()
 {
+	auto base = cc.newIntPtr();
+	cc.mov(base, ToMemAddress(konsts + C));
 	auto ptr = cc.newIntPtr();
-	cc.mov(ptr, ToMemAddress(konsts + C));
-	auto offset = cc.newIntPtr();
-	cc.mov(offset, regD[B]);
 #ifdef ASMJIT_ARCH_X64
 	static_assert(sizeof(FString) == 8, "sizeof(FString) needs to be 8");
-	cc.shl(offset, 3);
+	cc.lea(ptr, asmjit::x86::ptr(base, regD[B], 3));
 #else
 	static_assert(sizeof(FString) == 4, "sizeof(FString) needs to be 4");
-	cc.shl(offset, 2);
+	cc.lea(ptr, asmjit::x86::ptr(base, regD[B], 2));
 #endif
-	cc.add(ptr, offset);
 	auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*)>(CallAssignString))),
 		asmjit::FuncSignature2<void, FString*, FString*>(asmjit::CallConv::kIdHostCDecl));
 	call->setArg(0, regS[A]);
@@ -213,8 +211,7 @@ void JitCompiler::EmitLS()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
 	auto ptr = cc.newIntPtr();
-	cc.mov(ptr, regA[B]);
-	cc.add(ptr, konstd[C]);
+	cc.lea(ptr, asmjit::x86::ptr(regA[B], konstd[C]));
 	auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*)>(CallAssignString))),
 		asmjit::FuncSignature2<void, FString*, FString*>(asmjit::CallConv::kIdHostCDecl));
 	call->setArg(0, regS[A]);
@@ -225,10 +222,7 @@ void JitCompiler::EmitLS_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
 	auto ptr = cc.newIntPtr();
-	cc.mov(ptr, regA[B]);
-	auto tmp = cc.newIntPtr();
-	cc.mov(tmp, regD[C]);
-	cc.add(ptr, tmp);
+	cc.lea(ptr, asmjit::x86::ptr(regA[B], regD[C]));
 	auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*)>(CallAssignString))),
 		asmjit::FuncSignature2<void, FString*, FString*>(asmjit::CallConv::kIdHostCDecl));
 	call->setArg(0, regS[A]);
@@ -327,8 +321,7 @@ void JitCompiler::EmitLCS()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
 	auto ptr = cc.newIntPtr();
-	cc.mov(ptr, regA[B]);
-	cc.add(ptr, konstd[C]);
+	cc.lea(ptr, asmjit::x86::ptr(regA[B], konstd[C]));
 	auto loadLambda = [](FString* to, char** from) -> void {
 		*to = *from;
 	};
@@ -342,10 +335,7 @@ void JitCompiler::EmitLCS_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
 	auto ptr = cc.newIntPtr();
-	cc.mov(ptr, regA[B]);
-	auto tmp = cc.newIntPtr();
-	cc.mov(tmp, regD[C]);
-	cc.add(ptr, tmp);
+	cc.lea(ptr, asmjit::x86::ptr(regA[B], regD[C]));
 	auto loadLambda = [](FString* to, char** from) -> void {
 		*to = *from;
 	};

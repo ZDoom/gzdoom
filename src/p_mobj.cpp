@@ -8233,6 +8233,13 @@ DEFINE_ACTION_FUNCTION(AActor, AngleTo)
 	ACTION_RETURN_FLOAT(self->AngleTo(targ, absolute).Degrees);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, PitchTo)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(targ, AActor);
+	ACTION_RETURN_FLOAT(self->PitchTo(targ).Degrees);
+}
+
 DEFINE_ACTION_FUNCTION(AActor, AngleToVector)
 {
 	PARAM_PROLOGUE;

@@ -942,6 +942,8 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		arc.ReadObjects(hubload);
 	}
 
+	arc("multiplayer", multiplayer);
+
 	arc("level.flags", level.flags)
 		("level.flags2", level.flags2)
 		("level.fadeto", level.fadeto)

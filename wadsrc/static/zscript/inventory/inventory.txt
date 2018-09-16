@@ -906,7 +906,17 @@ class Inventory : Actor native
 		return item;
 	}
 
-	
+
+	//===========================================================================
+	//
+	// AInventory :: OnDrop
+	//
+	// Called by AActor::DropInventory. Allows items to modify how they behave
+	// after being dropped.
+	//
+	//===========================================================================
+
+	virtual void OnDrop (Actor dropper) {}
 }
 
 //===========================================================================

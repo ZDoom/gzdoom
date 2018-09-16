@@ -1158,6 +1158,14 @@ AInventory *AActor::DropInventory (AInventory *item, int amt)
 	drop->Vel += Vel;
 	drop->flags &= ~MF_NOGRAVITY;	// Don't float
 	drop->ClearCounters();	// do not count for statistics again
+	{
+		// [MK] call OnDrop so item can change its drop behaviour
+		IFVIRTUALPTR(drop, AInventory, OnDrop)
+		{
+			VMValue params[] = { drop, this };
+			VMCall(func, params, 2, nullptr, 0);
+		}
+	}
 	return drop;
 }
 

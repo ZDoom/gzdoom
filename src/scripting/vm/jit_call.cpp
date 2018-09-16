@@ -189,8 +189,8 @@ void JitCompiler::EmitDoCall(asmjit::X86Gp ptr)
 	cc.ret(vReg);
 	cc.bind(noexception);
 
-	LoadReturns(pc - B, B, true);
-	LoadReturns(pc + 1, C, false);
+	LoadInOuts(B);
+	LoadReturns(pc + 1, C);
 
 	NumParam -= B;
 	ParamOpcodes.Resize(ParamOpcodes.Size() - B);
@@ -232,41 +232,51 @@ void JitCompiler::StoreInOuts(int b)
 	}
 }
 
-void JitCompiler::LoadReturns(const VMOP *retval, int numret, bool inout)
+void JitCompiler::LoadInOuts(int b)
+{
+	for (unsigned int i = ParamOpcodes.Size() - b; i < ParamOpcodes.Size(); i++)
+	{
+		const VMOP &param = *ParamOpcodes[i];
+		if (param.op == OP_PARAM && (param.b & REGT_ADDROF))
+		{
+			LoadCallResult(param);
+		}
+	}
+}
+
+void JitCompiler::LoadReturns(const VMOP *retval, int numret)
 {
 	for (int i = 0; i < numret; ++i)
 	{
-		if (!inout && retval[i].op != OP_RESULT)
+		if (retval[i].op != OP_RESULT)
 			I_FatalError("Expected OP_RESULT to follow OP_CALL\n");
-		else if (inout && retval[i].op != OP_PARAMI)
-			continue;
-		else if (inout && retval[i].op != OP_PARAM)
-			I_FatalError("Expected OP_PARAM to precede OP_CALL\n");
 
-		int type = retval[i].b;
-		int regnum = retval[i].c;
+		LoadCallResult(retval[i]);
+	}
+}
 
-		if (inout && !(type & REGT_ADDROF))
-			continue;
+void JitCompiler::LoadCallResult(const VMOP &opdata)
+{
+	int type = opdata.b;
+	int regnum = opdata.c;
 
-		switch (type & REGT_TYPE)
-		{
-		case REGT_INT:
-			cc.mov(regD[regnum], asmjit::x86::dword_ptr(frameD, regnum * sizeof(int32_t)));
-			break;
-		case REGT_FLOAT:
-			cc.movsd(regF[regnum], asmjit::x86::qword_ptr(frameF, regnum * sizeof(double)));
-			break;
-		case REGT_STRING:
-			// We don't have to do anything in this case. String values are never moved to virtual registers.
-			break;
-		case REGT_POINTER:
-			cc.mov(regA[regnum], asmjit::x86::ptr(frameA, regnum * sizeof(void*)));
-			break;
-		default:
-			I_FatalError("Unknown OP_RESULT type encountered in LoadReturns\n");
-			break;
-		}
+	switch (type & REGT_TYPE)
+	{
+	case REGT_INT:
+		cc.mov(regD[regnum], asmjit::x86::dword_ptr(frameD, regnum * sizeof(int32_t)));
+		break;
+	case REGT_FLOAT:
+		cc.movsd(regF[regnum], asmjit::x86::qword_ptr(frameF, regnum * sizeof(double)));
+		break;
+	case REGT_STRING:
+		// We don't have to do anything in this case. String values are never moved to virtual registers.
+		break;
+	case REGT_POINTER:
+		cc.mov(regA[regnum], asmjit::x86::ptr(frameA, regnum * sizeof(void*)));
+		break;
+	default:
+		I_FatalError("Unknown OP_RESULT/OP_PARAM type encountered in LoadCallResult\n");
+		break;
 	}
 }
 

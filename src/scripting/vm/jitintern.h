@@ -44,8 +44,10 @@ private:
 
 	void EmitDoCall(asmjit::X86Gp ptr);
 	void StoreInOuts(int b);
-	void LoadReturns(const VMOP *retval, int numret, bool inout);
+	void LoadInOuts(int b);
+	void LoadReturns(const VMOP *retval, int numret);
 	void FillReturns(const VMOP *retval, int numret);
+	void LoadCallResult(const VMOP &opdata);
 	static int DoCall(VMFrameStack *stack, VMFunction *call, int b, int c, VMValue *param, VMReturn *returns, JitExceptionInfo *exceptinfo);
 
 	template <typename Func>

@@ -23,6 +23,7 @@
 #pragma once
 
 #include <memory>
+#include "dobject.h"
 
 template<typename Type> class Vec4;
 template<typename Type> class Vec3;
@@ -123,6 +124,9 @@ public:
 	static Mat4f SwapYZ();
 	static Mat4f Perspective(float fovy, float aspect, float near, float far, Handedness handedness, ClipZRange clipZ);
 	static Mat4f Frustum(float left, float right, float bottom, float top, float near, float far, Handedness handedness, ClipZRange clipZ);
+	static Mat4f WorldToView(DVector3 pos, DRotator angles);
+	static Mat4f WorldToClip(Mat4f worldToView, DAngle fov, double aspect);
+	static DVector2 ClipToViewport(DVector3 pos, bool useScreenblocks);
 
 	Vec4f operator*(const Vec4f &v) const;
 	Mat4f operator*(const Mat4f &m) const;
@@ -145,4 +149,22 @@ public:
 	Mat3f operator*(const Mat3f &m) const;
 
 	float Matrix[9];
+};
+
+class DMatrix4: public DObject, public Mat4f
+{
+	DECLARE_CLASS(DMatrix4, DObject)
+public:
+	DMatrix4()
+	: DObject()
+	{
+	}
+
+	DMatrix4(const Mat4f ref)
+	: DObject()
+	{
+		memcpy(Matrix, ref.Matrix, sizeof(ref.Matrix));
+	}
+
+	void Serialize(FSerializer &arc);
 };

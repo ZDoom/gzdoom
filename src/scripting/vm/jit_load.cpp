@@ -81,7 +81,7 @@ void JitCompiler::EmitLKP_R()
 
 void JitCompiler::EmitLFP()
 {
-	I_FatalError("EmitLFP not implemented\n");
+	cc.lea(regA[A], asmjit::x86::ptr(vmframe, offsetExtra));
 }
 
 void JitCompiler::EmitMETA()

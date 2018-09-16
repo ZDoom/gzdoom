@@ -150,7 +150,6 @@ bool JitCompiler::CanJit(VMScriptFunction *sfunc)
 		{
 		default:
 			break;
-		case OP_LFP:
 		case OP_IJMP:
 		case OP_TAIL:
 		case OP_TAIL_K:
@@ -237,15 +236,17 @@ void JitCompiler::Setup()
 	int offsetS = offsetF + (int)(sfunc->NumRegF * sizeof(double));
 	int offsetA = offsetS + (int)(sfunc->NumRegS * sizeof(FString));
 	int offsetD = offsetA + (int)(sfunc->NumRegA * sizeof(void*));
+	offsetExtra = (offsetD + (int)(sfunc->NumRegD * sizeof(int32_t)) + 15) & ~15;
 
-	auto vmregs = cc.newIntPtr();
-	cc.mov(vmregs, x86::ptr(stack)); // stack->Blocks
-	cc.mov(vmregs, x86::ptr(vmregs, VMFrameStack::OffsetLastFrame())); // Blocks->LastFrame
-	cc.lea(params, x86::ptr(vmregs, offsetParams));
-	cc.lea(frameF, x86::ptr(vmregs, offsetF));
-	cc.lea(frameS, x86::ptr(vmregs, offsetS));
-	cc.lea(frameA, x86::ptr(vmregs, offsetA));
-	cc.lea(frameD, x86::ptr(vmregs, offsetD));
+	vmframe = cc.newIntPtr();
+	cc.mov(vmframe, x86::ptr(stack)); // stack->Blocks
+	cc.mov(vmframe, x86::ptr(vmframe, VMFrameStack::OffsetLastFrame())); // Blocks->LastFrame
+
+	cc.lea(params, x86::ptr(vmframe, offsetParams));
+	cc.lea(frameF, x86::ptr(vmframe, offsetF));
+	cc.lea(frameS, x86::ptr(vmframe, offsetS));
+	cc.lea(frameA, x86::ptr(vmframe, offsetA));
+	cc.lea(frameD, x86::ptr(vmframe, offsetD));
 
 	for (int i = 0; i < sfunc->NumRegD; i++)
 	{

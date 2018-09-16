@@ -95,6 +95,8 @@ private:
 	asmjit::X86Gp numret;
 	asmjit::X86Gp exceptInfo;
 
+	int offsetExtra;
+	asmjit::X86Gp vmframe;
 	asmjit::X86Gp frameD;
 	asmjit::X86Gp frameF;
 	asmjit::X86Gp frameS;

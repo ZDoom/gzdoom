@@ -139,9 +139,9 @@ bool GLFlat::SetupLights(int pass, FLightNode * node, FDynLightData &lightdata, 
 {
 	Plane p;
 
+	lightdata.Clear();
 	if (renderstyle == STYLE_Add && !level.lightadditivesurfaces) return false;	// no lights on additively blended surfaces.
 
-	lightdata.Clear();
 	while (node)
 	{
 		ADynamicLight * light = node->lightsource;

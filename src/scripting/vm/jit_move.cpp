@@ -147,7 +147,13 @@ void JitCompiler::EmitCASTB()
 	}
 	else
 	{
-		//reg.d[A] = reg.s[B].Len() > 0;
+		using namespace asmjit;
+		typedef int(*FuncPtr)(FString*);
+		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](FString *s) -> int {
+			return s->Len() > 0;
+		}))), FuncSignature1<int, void*>());
+		call->setRet(0, regD[A]);
+		call->setArg(0, regS[B]);
 	}
 }
 

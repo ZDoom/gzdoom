@@ -172,11 +172,6 @@ bool JitCompiler::CanJit(VMScriptFunction *sfunc)
 				return false;
 			}
 		}
-		else if (sfunc->Code[i].op == OP_CASTB)
-		{
-			if (C == CASTB_S)
-				return false;
-		}
 		else if (sfunc->Code[i].op == OP_PARAM)
 		{
 			if (!!(B & REGT_MULTIREG3) || !!(B & REGT_MULTIREG2))

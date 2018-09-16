@@ -159,20 +159,7 @@ bool JitCompiler::CanJit(VMScriptFunction *sfunc)
 		// Partially implemented functions:
 
 		auto pc = sfunc->Code + i;
-		if (sfunc->Code[i].op == OP_CAST)
-		{
-			switch (C)
-			{
-			case CAST_I2F:
-			case CAST_U2F:
-			case CAST_F2I:
-			case CAST_F2U:
-				break;
-			default:
-				return false;
-			}
-		}
-		else if (sfunc->Code[i].op == OP_PARAM)
+		if (sfunc->Code[i].op == OP_PARAM)
 		{
 			if (!!(B & REGT_MULTIREG3) || !!(B & REGT_MULTIREG2))
 				return false;

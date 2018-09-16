@@ -91,7 +91,6 @@ private:
 	VMScriptFunction *sfunc;
 
 	asmjit::X86Gp stack;
-	asmjit::X86Gp vmregs;
 	asmjit::X86Gp ret;
 	asmjit::X86Gp numret;
 	asmjit::X86Gp exceptInfo;

@@ -50,7 +50,6 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 	//int try_depth = 0;
 	VMFrame *f = stack->TopFrame();
 	VMScriptFunction *sfunc;
-	const VMRegisters reg(f);
 	const int *konstd;
 	const double *konstf;
 	const FString *konsts;
@@ -84,7 +83,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		{
 			JitExceptionInfo exceptInfo;
 			exceptInfo.reason = -1;
-			int result = sfunc->JitFunc(stack, &reg, ret, numret, &exceptInfo);
+			int result = sfunc->JitFunc(stack, ret, numret, &exceptInfo);
 			if (exceptInfo.reason != -1)
 			{
 				ThrowAbortException(sfunc, exceptInfo.pcOnJitAbort, (EVMAbortException)exceptInfo.reason, nullptr);
@@ -92,6 +91,8 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 			return result;
 		}
 	}
+
+	const VMRegisters reg(f);
 
 	void *ptr;
 	double fb, fc;

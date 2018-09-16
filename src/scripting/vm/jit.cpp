@@ -201,21 +201,19 @@ void JitCompiler::Setup()
 	cc.comment(funcname.GetChars(), funcname.Len());
 
 	stack = cc.newIntPtr("stack"); // VMFrameStack *stack
-	vmregs = cc.newIntPtr("vmregs"); // VMRegisters *vmregs
 	ret = cc.newIntPtr("ret"); // VMReturn *ret
 	numret = cc.newInt32("numret"); // int numret
 	exceptInfo = cc.newIntPtr("exceptinfo"); // JitExceptionInfo *exceptInfo
 
-	cc.addFunc(FuncSignature5<int, void *, void *, void *, int, void *>());
+	cc.addFunc(FuncSignature4<int, void *, void *, int, void *>());
 	cc.setArg(0, stack);
-	cc.setArg(1, vmregs);
-	cc.setArg(2, ret);
-	cc.setArg(3, numret);
-	cc.setArg(4, exceptInfo);
+	cc.setArg(1, ret);
+	cc.setArg(2, numret);
+	cc.setArg(3, exceptInfo);
 
-	auto stack = cc.newStack(sizeof(VMReturn) * MAX_RETURNS, alignof(VMReturn));
+	auto stackalloc = cc.newStack(sizeof(VMReturn) * MAX_RETURNS, alignof(VMReturn));
 	callReturns = cc.newIntPtr("callReturns");
-	cc.lea(callReturns, stack);
+	cc.lea(callReturns, stackalloc);
 
 	konstd = sfunc->KonstD;
 	konstf = sfunc->KonstF;
@@ -232,51 +230,53 @@ void JitCompiler::Setup()
 	frameS = cc.newIntPtr();
 	frameA = cc.newIntPtr();
 	params = cc.newIntPtr();
-	cc.mov(frameD, x86::ptr(vmregs, offsetof(VMRegisters, d)));
-	cc.mov(frameF, x86::ptr(vmregs, offsetof(VMRegisters, f)));
-	cc.mov(frameS, x86::ptr(vmregs, offsetof(VMRegisters, s)));
-	cc.mov(frameA, x86::ptr(vmregs, offsetof(VMRegisters, a)));
-	cc.mov(params, x86::ptr(vmregs, offsetof(VMRegisters, param)));
 
-	if (sfunc->NumRegD > 0)
+	// the VM version reads this from the stack, but it is constant data
+	int offsetParams = ((int)sizeof(VMFrame) + 15) & ~15;
+	int offsetF = offsetParams + (int)(sfunc->MaxParam * sizeof(VMValue));
+	int offsetS = offsetF + (int)(sfunc->NumRegF * sizeof(double));
+	int offsetA = offsetS + (int)(sfunc->NumRegS * sizeof(FString));
+	int offsetD = offsetA + (int)(sfunc->NumRegA * sizeof(void*));
+
+	auto vmregs = cc.newIntPtr();
+	cc.mov(vmregs, x86::ptr(stack)); // stack->Blocks
+	cc.mov(vmregs, x86::ptr(vmregs, VMFrameStack::OffsetLastFrame())); // Blocks->LastFrame
+	cc.lea(params, x86::ptr(vmregs, offsetParams));
+	cc.lea(frameF, x86::ptr(vmregs, offsetF));
+	cc.lea(frameS, x86::ptr(vmregs, offsetS));
+	cc.lea(frameA, x86::ptr(vmregs, offsetA));
+	cc.lea(frameD, x86::ptr(vmregs, offsetD));
+
+	for (int i = 0; i < sfunc->NumRegD; i++)
 	{
-		for (int i = 0; i < sfunc->NumRegD; i++)
-		{
-			FString regname;
-			regname.Format("regD%d", i);
-			regD[i] = cc.newInt32(regname.GetChars());
-			cc.mov(regD[i], x86::dword_ptr(frameD, i * sizeof(int32_t)));
-		}
+		FString regname;
+		regname.Format("regD%d", i);
+		regD[i] = cc.newInt32(regname.GetChars());
+		cc.mov(regD[i], x86::dword_ptr(frameD, i * sizeof(int32_t)));
 	}
-	if (sfunc->NumRegF > 0)
+
+	for (int i = 0; i < sfunc->NumRegF; i++)
 	{
-		for (int i = 0; i < sfunc->NumRegF; i++)
-		{
-			FString regname;
-			regname.Format("regF%d", i);
-			regF[i] = cc.newXmmSd(regname.GetChars());
-			cc.movsd(regF[i], x86::qword_ptr(frameF, i * sizeof(double)));
-		}
+		FString regname;
+		regname.Format("regF%d", i);
+		regF[i] = cc.newXmmSd(regname.GetChars());
+		cc.movsd(regF[i], x86::qword_ptr(frameF, i * sizeof(double)));
 	}
-	if (sfunc->NumRegS > 0)
+
+	for (int i = 0; i < sfunc->NumRegS; i++)
 	{
-		for (int i = 0; i < sfunc->NumRegS; i++)
-		{
-			FString regname;
-			regname.Format("regS%d", i);
-			regS[i] = cc.newIntPtr(regname.GetChars());
-			cc.lea(regS[i], x86::ptr(frameS, i * sizeof(FString)));
-		}
+		FString regname;
+		regname.Format("regS%d", i);
+		regS[i] = cc.newIntPtr(regname.GetChars());
+		cc.lea(regS[i], x86::ptr(frameS, i * sizeof(FString)));
 	}
-	if (sfunc->NumRegA > 0)
+
+	for (int i = 0; i < sfunc->NumRegA; i++)
 	{
-		for (int i = 0; i < sfunc->NumRegA; i++)
-		{
-			FString regname;
-			regname.Format("regA%d", i);
-			regA[i] = cc.newIntPtr(regname.GetChars());
-			cc.mov(regA[i], x86::ptr(frameA, i * sizeof(void*)));
-		}
+		FString regname;
+		regname.Format("regA%d", i);
+		regA[i] = cc.newIntPtr(regname.GetChars());
+		cc.mov(regA[i], x86::ptr(frameA, i * sizeof(void*)));
 	}
 
 	int size = sfunc->CodeSize;

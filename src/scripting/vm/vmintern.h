@@ -356,6 +356,7 @@ public:
 		assert(Blocks != NULL && Blocks->LastFrame != NULL);
 		return Blocks->LastFrame;
 	}
+	static int OffsetLastFrame() { return (int)(ptrdiff_t)offsetof(BlockHeader, LastFrame); }
 private:
 	enum { BLOCK_SIZE = 4096 };		// Default block size
 	struct BlockHeader
@@ -444,7 +445,7 @@ struct JitExceptionInfo
 	VMOP* pcOnJitAbort;
 };
 
-typedef int(*JitFuncPtr)(VMFrameStack *stack, const void *vmregs, VMReturn *ret, int numret, JitExceptionInfo *exceptInfo);
+typedef int(*JitFuncPtr)(VMFrameStack *stack, VMReturn *ret, int numret, JitExceptionInfo *exceptInfo);
 
 class VMScriptFunction : public VMFunction
 {

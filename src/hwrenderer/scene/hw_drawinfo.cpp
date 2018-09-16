@@ -280,6 +280,5 @@ void HWViewpointUniforms::SetDefaults()
 	mGlobVis = (float)R_GetGlobVis(r_viewwindow, r_visibility) / 32.f;
 	mPalLightLevels = static_cast<int>(gl_bandedswlight) | (static_cast<int>(gl_fogmode) << 8);
 	mClipLine.X = -10000000.0f;
-	mFogEnabled = gl_fogmode;
 
 }

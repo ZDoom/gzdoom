@@ -24,6 +24,9 @@
 #include "gpu_types.h"
 #include "doomtype.h"
 #include <cmath>
+#include "dobject.h"
+#include "vm.h"
+#include "serializer.h"
 
 Mat4f Mat4f::Null()
 {
@@ -268,4 +271,149 @@ Vec3f Mat3f::operator*(const Vec3f &v) const
 	result.Y = Matrix[0 * 3 + 1] * v.X + Matrix[1 * 3 + 1] * v.Y + Matrix[2 * 3 + 1] * v.Z;
 	result.Z = Matrix[0 * 3 + 2] * v.X + Matrix[1 * 3 + 2] * v.Y + Matrix[2 * 3 + 2] * v.Z;
 	return result;
+}
+
+//=============================================================================
+//
+// ZScript Export
+//
+//=============================================================================
+IMPLEMENT_CLASS(DMatrix4, false, false)
+
+void DMatrix4::Serialize(FSerializer &arc)
+{
+	Super::Serialize (arc);
+	arc.Array("values", Matrix, 16);
+}
+/////////////////////////////////////////////////////////////////////////////
+
+DEFINE_ACTION_FUNCTION(DMatrix4, Empty)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_OBJECT(Create<DMatrix4> (Mat4f::Null ()));
+}
+
+DEFINE_ACTION_FUNCTION(DMatrix4, Identity)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_OBJECT(Create<DMatrix4> (Mat4f::Identity ()));
+}
+
+DEFINE_ACTION_FUNCTION(DMatrix4, AngleAxis)
+{
+	PARAM_PROLOGUE;
+	PARAM_ANGLE(angle);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+
+	ACTION_RETURN_OBJECT(Create<DMatrix4> (Mat4f::Rotate(angle.Radians(), x, y, z)));
+}
+
+DEFINE_ACTION_FUNCTION(DMatrix4, Transpose)
+{
+	PARAM_SELF_PROLOGUE(DMatrix4);
+	ACTION_RETURN_OBJECT(Create<DMatrix4> (Mat4f::Transpose (*self)));
+}
+
+DEFINE_ACTION_FUNCTION(DMatrix4, Translate)
+{
+	PARAM_SELF_PROLOGUE(DMatrix4);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	ACTION_RETURN_OBJECT(Create<DMatrix4> (*self * Mat4f::Translate (x, y, z)));
+}
+
+DEFINE_ACTION_FUNCTION(DMatrix4, Scale)
+{
+	PARAM_SELF_PROLOGUE(DMatrix4);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	ACTION_RETURN_OBJECT(Create<DMatrix4> (*self * Mat4f::Scale (x, y, z)));
+}
+
+DEFINE_ACTION_FUNCTION(DMatrix4, Rotate)
+{
+	PARAM_SELF_PROLOGUE(DMatrix4);
+	PARAM_ANGLE(angle);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+
+	ACTION_RETURN_OBJECT(Create<DMatrix4> (*self * Mat4f::Rotate (angle.Radians(), x, y, z)));
+}
+
+DEFINE_ACTION_FUNCTION(DMatrix4, SwapYZ)
+{
+	PARAM_SELF_PROLOGUE(DMatrix4);
+	ACTION_RETURN_OBJECT(Create<DMatrix4> (*self * Mat4f::SwapYZ ()));
+}
+
+DEFINE_ACTION_FUNCTION(DMatrix4, Perspective)
+{
+	PARAM_SELF_PROLOGUE(DMatrix4);
+	PARAM_FLOAT(fovy);
+	PARAM_FLOAT(aspect);
+	PARAM_FLOAT(near);
+	PARAM_FLOAT(far);
+	ACTION_RETURN_OBJECT(Create<DMatrix4> (*self * Mat4f::Perspective (fovy, aspect, near, far, Handedness::Right, ClipZRange::NegativePositiveW)));
+}
+
+DEFINE_ACTION_FUNCTION(DMatrix4, Frustum)
+{
+	PARAM_SELF_PROLOGUE(DMatrix4);
+	PARAM_FLOAT(left);
+	PARAM_FLOAT(right);
+	PARAM_FLOAT(bottom);
+	PARAM_FLOAT(top);
+	PARAM_FLOAT(near);
+	PARAM_FLOAT(far);
+	ACTION_RETURN_OBJECT(Create<DMatrix4> (*self * Mat4f::Frustum (left, right, bottom, top, near, far, Handedness::Right, ClipZRange::NegativePositiveW)));
+}
+
+DEFINE_ACTION_FUNCTION(DMatrix4, Multiply)
+{
+	PARAM_SELF_PROLOGUE(DMatrix4);
+	PARAM_OBJECT(matrix, DMatrix4);
+	ACTION_RETURN_OBJECT(Create<DMatrix4> (*self * *matrix));
+}
+
+DEFINE_ACTION_FUNCTION(DMatrix4, MultiplyPoint)
+{
+	PARAM_SELF_PROLOGUE(DMatrix4);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	Vec4f result = *self * Vec4f(x, y, z, 1);
+	ACTION_RETURN_VEC3(DVector3 (result.X , result.Y, result.Z) / result.W);
+}
+
+DEFINE_ACTION_FUNCTION(DMatrix4, MultiplyVector)
+{
+	PARAM_SELF_PROLOGUE(DMatrix4);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	Vec4f result = *self * Vec4f(x, y, z, 0);
+	ACTION_RETURN_VEC3(DVector3 (result.X, result.Y, result.Z) / result.W);
+}
+
+DEFINE_ACTION_FUNCTION(DMatrix4, Set)
+{
+	PARAM_SELF_PROLOGUE(DMatrix4);
+	PARAM_INT(row);
+	PARAM_INT(column);
+	PARAM_FLOAT(value);
+	self->Matrix[row + column * 4] = value;
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DMatrix4, Get)
+{
+	PARAM_SELF_PROLOGUE(DMatrix4);
+	PARAM_INT(row);
+	PARAM_INT(column);
+	ACTION_RETURN_FLOAT(self->Matrix[row + column * 4]);
 }

@@ -39,6 +39,7 @@
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/r_swcolormaps.h"
+#include "vm.h"
 
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Float, r_visibility)
@@ -219,37 +220,125 @@ void PolyRenderer::SetSceneViewport()
 
 PolyPortalViewpoint PolyRenderer::SetupPerspectiveMatrix(bool mirror)
 {
-	// We have to scale the pitch to account for the pixel stretching, because the playsim doesn't know about this and treats it as 1:1.
-	double radPitch = Viewpoint.Angles.Pitch.Normalized180().Radians();
-	double angx = cos(radPitch);
-	double angy = sin(radPitch) * level.info->pixelstretch;
-	double alen = sqrt(angx*angx + angy*angy);
-	float adjustedPitch = (float)asin(angy / alen);
-	float adjustedViewAngle = (float)(Viewpoint.Angles.Yaw - 90).Radians();
-
-	float ratio = Viewwindow.WidescreenRatio;
-	float fovratio = (Viewwindow.WidescreenRatio >= 1.3f) ? 1.333333f : ratio;
-
-	float fovy = (float)(2 * DAngle::ToDegrees(atan(tan(Viewpoint.FieldOfView.Radians() / 2) / fovratio)).Degrees);
-
 	PolyPortalViewpoint portalViewpoint;
 
-	portalViewpoint.WorldToView =
-		Mat4f::Rotate((float)Viewpoint.Angles.Roll.Radians(), 0.0f, 0.0f, 1.0f) *
-		Mat4f::Rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
-		Mat4f::Rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
-		Mat4f::Scale(1.0f, level.info->pixelstretch, 1.0f) *
-		Mat4f::SwapYZ() *
-		Mat4f::Translate((float)-Viewpoint.Pos.X, (float)-Viewpoint.Pos.Y, (float)-Viewpoint.Pos.Z);
+	portalViewpoint.WorldToView = Mat4f::WorldToView (Viewpoint.Pos, Viewpoint.Angles);
 
 	portalViewpoint.Mirror = mirror;
 
 	if (mirror)
 		portalViewpoint.WorldToView = Mat4f::Scale(-1.0f, 1.0f, 1.0f) * portalViewpoint.WorldToView;
 
-	portalViewpoint.WorldToClip = Mat4f::Perspective(fovy, ratio, 5.0f, 65535.0f, Handedness::Right, ClipZRange::NegativePositiveW) * portalViewpoint.WorldToView;
+	portalViewpoint.WorldToClip = Mat4f::WorldToClip (portalViewpoint.WorldToView, Viewpoint.FieldOfView, Viewwindow.WidescreenRatio);
 
 	return portalViewpoint;
+}
+
+Mat4f Mat4f::WorldToView(DVector3 pos, DRotator angles)
+{
+	double radPitch = angles.Pitch.Normalized180().Radians();
+	double angx = cos(radPitch);
+	double angy = sin(radPitch) * level.info->pixelstretch;
+	double alen = sqrt(angx*angx + angy*angy);
+	float adjustedPitch = (float)asin(angy / alen);
+	float adjustedViewAngle = (float)(angles.Yaw - 90).Radians();
+
+	return Mat4f::Rotate((float)angles.Roll.Radians(), 0.0f, 0.0f, 1.0f) *
+		Mat4f::Rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
+		Mat4f::Rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
+		Mat4f::Scale(1.0f, level.info->pixelstretch, 1.0f) *
+		Mat4f::SwapYZ() *
+		Mat4f::Translate((float)-pos.X, (float)-pos.Y, (float)-pos.Z);
+}
+
+Mat4f Mat4f::WorldToClip(Mat4f worldToView, DAngle fov, double aspect)
+{
+	float fovratio = (aspect >= 1.3f) ? 1.333333f : aspect;
+	float fovy = (float)(2 * DAngle::ToDegrees(atan(tan(DAngle(fov).Radians() / 2) / fovratio)).Degrees);
+
+	return Mat4f::Perspective(fovy, aspect, 5.0f, 65535.0f, Handedness::Right, ClipZRange::NegativePositiveW) * worldToView;
+}
+
+DVector2 Mat4f::ClipToViewport(DVector3 pos, bool useScreenblocks)
+{
+	int height;
+	DVector2 finalPos = DVector2 (0, 0);
+	if (useScreenblocks)
+	{
+		if (screenblocks >= 10)
+			height = SCREENHEIGHT;
+		else
+			height = (screenblocks * SCREENHEIGHT / 10) & ~7;
+
+		int bottom = SCREENHEIGHT - (height + viewwindowy - ((height - viewheight) / 2));
+		finalPos += DVector2 (viewwindowx, SCREENHEIGHT - bottom - height);
+	}
+	else
+		height = screen->GetHeight ();
+	return finalPos + DVector2 ((pos.X + 1) * screen->GetWidth () / 2, (1 - pos.Y) * height / 2);
+}
+
+DEFINE_ACTION_FUNCTION(DMatrix4, WorldToView)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_ANGLE(yaw);
+	PARAM_ANGLE(pitch);
+	PARAM_ANGLE(roll);
+
+	DRotator angles;
+	angles.Yaw = yaw;
+	angles.Pitch = pitch;
+	angles.Roll = roll;
+
+	ACTION_RETURN_OBJECT(Create<DMatrix4> (Mat4f::WorldToView(DVector3 (x, y, z), angles)));
+}
+
+DEFINE_ACTION_FUNCTION(DMatrix4, WorldToClip)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_ANGLE(yaw);
+	PARAM_ANGLE(pitch);
+	PARAM_ANGLE(roll);
+	PARAM_ANGLE(fov);
+
+	DRotator angles;
+	angles.Yaw = yaw;
+	angles.Pitch = pitch;
+	angles.Roll = roll;
+
+	ACTION_RETURN_OBJECT(Create<DMatrix4> (Mat4f::WorldToClip (Mat4f::WorldToView (DVector3 (x, y, z), angles), fov, ActiveRatio(screen->GetWidth(), screen->GetHeight(), nullptr))));
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, ClipToScreen)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_BOOL_DEF(useScreenblocks);
+	ACTION_RETURN_VEC2(Mat4f::ClipToViewport(DVector3 (x, y, z), useScreenblocks));
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, ProjectToScreen)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+
+	DVector3 playerPos = players[consoleplayer].mo->Pos();
+	playerPos.Z = players[consoleplayer].viewz;
+
+	Vec4f res = Mat4f::WorldToClip(Mat4f::WorldToView (playerPos, players[consoleplayer].mo->Angles), players[consoleplayer].FOV,
+		ActiveRatio(screen->GetWidth(), screen->GetHeight(), nullptr)) * Vec4f (x, y, z, 1);
+
+	ACTION_RETURN_VEC2(Mat4f::ClipToViewport(DVector3 (res.X, res.Y, res.Z) / res.W, true));
 }
 
 cycle_t PolyCullCycles, PolyOpaqueCycles, PolyMaskedCycles, PolyDrawerWaitCycles;

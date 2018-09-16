@@ -181,6 +181,28 @@ class Shape2D : Object native
 	native void PushTriangle( int a, int b, int c );
 }
 
+class Matrix4 : Object native
+{
+	native static Matrix4 Empty();
+	native static Matrix4 Identity();
+	native static Matrix4 AngleAxis(double angle, Vector3 axis);
+	native static Matrix4 WorldToView(Vector3 camPos, double yaw, double pitch, double roll);
+	native static Matrix4 WorldToClip(Vector3 camPos, double yaw, double pitch, double roll, double fov);
+
+	native void Set(uint row, uint column, double value);
+	native double Get(uint row, uint column) const;
+	native Matrix4 Transpose() const;
+	native Matrix4 Translate(Vector3 offset) const;
+	native Matrix4 Scale(Vector3 scale) const;
+	native Matrix4 Rotate(double angle, Vector3 axis) const;
+	native Matrix4 SwapYZ() const;
+	native Matrix4 Perspective(double fovy, double aspect, double near, double far) const;
+	native Matrix4 Frustum(double left, double right, double bottom, double top, double near, double far) const;
+	native Matrix4 Multiply(Matrix4 matrix) const;
+	native Vector3 MultiplyPoint(Vector3 point) const;
+	native Vector3 MultiplyVector(Vector3 vector) const;
+}
+
 struct Screen native
 {
 	native static Color PaletteColor(int index);
@@ -202,8 +224,9 @@ struct Screen native
 	native static void ClearClipRect();
 	native static int, int, int, int GetClipRect();
 	native static int, int, int, int GetViewWindow();
-	
-	
+	native static Vector2 ClipToScreen(Vector3 pos, bool useScreenblocks = true);
+	native static Vector2 ProjectToScreen(Vector3 pos);
+
 	// This is a leftover of the abandoned Inventory.DrawPowerup method.
 	deprecated("2.5") static ui void DrawHUDTexture(TextureID tex, double x, double y)
 	{

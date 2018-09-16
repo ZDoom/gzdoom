@@ -169,7 +169,7 @@ void CheckBench()
 		AppendRenderTimes(compose);
 		AppendLightStats(compose);
 		//AppendMissingTextureStats(compose);
-		compose.AppendFormat("%llu fps\n\n", screen->GetLastFPS());
+		compose.AppendFormat("%llu fps\n\n", (unsigned long long)screen->GetLastFPS());
 
 		FILE *f = fopen("benchmarks.txt", "at");
 		if (f != NULL)

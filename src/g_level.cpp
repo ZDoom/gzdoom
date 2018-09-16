@@ -527,6 +527,10 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		gamestate = GS_LEVEL;
 	}
 	G_DoLoadLevel (0, false);
+	if(!savegamerestore)
+	{
+		E_NewGame();
+	}
 }
 
 //

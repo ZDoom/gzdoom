@@ -25,7 +25,27 @@ void JitCompiler::EmitJMP()
 
 void JitCompiler::EmitIJMP()
 {
-	I_FatalError("EmitIJMP not implemented\n");
+	// This uses the whole function as potential jump targets. Can the range be reduced?
+
+	int i = (int)(ptrdiff_t)(pc - sfunc->Code);
+	auto val = cc.newInt32();
+	cc.mov(val, regD[A]);
+	cc.add(val, i + (int)BCs + 1);
+
+	int size = sfunc->CodeSize;
+	for (i = 0; i < size; i++)
+	{
+		if (sfunc->Code[i].op == OP_JMP)
+		{
+			int target = i + JMPOFS(&sfunc->Code[i]) + 1;
+
+			cc.cmp(val, i);
+			cc.je(labels[target]);
+		}
+	}
+
+	// This should never happen. It means we are jumping to something that is not a JMP instruction!
+	EmitThrowException(X_OTHER);
 }
 
 void JitCompiler::EmitVTBL()

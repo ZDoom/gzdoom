@@ -144,11 +144,6 @@ bool JitCompiler::CanJit(VMScriptFunction *sfunc)
 	int size = sfunc->CodeSize;
 	for (int i = 0; i < size; i++)
 	{
-		// Functions not implemented at all yet:
-
-		if (sfunc->Code[i].op == OP_IJMP)
-			return false;
-
 		// Partially implemented functions:
 
 		auto pc = sfunc->Code + i;

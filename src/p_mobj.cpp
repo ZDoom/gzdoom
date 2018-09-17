@@ -7785,6 +7785,13 @@ void AActor::Revive()
 	E_WorldThingRevived(this);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Revive)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->Revive();
+	return 0;
+}
+
 int AActor::GetGibHealth() const
 {
 	IFVIRTUAL(AActor, GetGibHealth)

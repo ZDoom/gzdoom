@@ -4551,7 +4551,30 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseSiblings)
 	}
 	return 0;
 }
- 
+
+//===========================================================================
+//
+// A_RaiseSelf
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION(AActor, A_RaiseSelf)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT_DEF(flags);
+	ACTION_RETURN_BOOL(P_Thing_Raise(self, NULL, (flags & RF_NOCHECKPOSITION)));
+}
+
+//===========================================================================
+//
+// CanRaise
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION(AActor, CanRaise)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(P_Thing_CanRaise(self));
+}
+
 //===========================================================================
 //
 // A_MonsterRefire

@@ -66,8 +66,7 @@ void JitCompiler::EmitSS()
 	EmitNullPointerThrow(A, X_WRITE_NIL);
 	auto ptr = cc.newIntPtr();
 	cc.lea(ptr, asmjit::x86::ptr(regA[A], konstd[C]));
-	auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*)>(CallAssignString))),
-		asmjit::FuncSignature2<void, FString*, FString*>(asmjit::CallConv::kIdHostCDecl));
+	auto call = CreateCall<void, FString*, FString*>(&JitCompiler::CallAssignString);
 	call->setArg(0, ptr);
 	call->setArg(1, regS[B]);
 }
@@ -77,8 +76,7 @@ void JitCompiler::EmitSS_R()
 	EmitNullPointerThrow(A, X_WRITE_NIL);
 	auto ptr = cc.newIntPtr();
 	cc.lea(ptr, asmjit::x86::ptr(regA[A], regD[C]));
-	auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*)>(CallAssignString))),
-		asmjit::FuncSignature2<void, FString*, FString*>(asmjit::CallConv::kIdHostCDecl));
+	auto call = CreateCall<void, FString*, FString*>(&JitCompiler::CallAssignString);
 	call->setArg(0, ptr);
 	call->setArg(1, regS[B]);
 }
@@ -88,7 +86,7 @@ void JitCompiler::EmitSO()
 	cc.mov(asmjit::x86::ptr(regA[A], konstd[C]), regA[B]);
 
 	typedef void(*FuncPtr)(DObject*);
-	auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>(GC::WriteBarrier))), asmjit::FuncSignature1<void, void*>());
+	auto call = CreateCall<void, DObject*>(static_cast<FuncPtr>(GC::WriteBarrier));
 	call->setArg(0, regA[B]);
 }
 
@@ -97,7 +95,7 @@ void JitCompiler::EmitSO_R()
 	cc.mov(asmjit::x86::ptr(regA[A], regD[C]), regA[B]);
 
 	typedef void(*FuncPtr)(DObject*);
-	auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>(GC::WriteBarrier))), asmjit::FuncSignature1<void, void*>());
+	auto call = CreateCall<void, DObject*>(static_cast<FuncPtr>(GC::WriteBarrier));
 	call->setArg(0, regA[B]);
 }
 

@@ -170,12 +170,12 @@ void JitCompiler::EmitDoCall(asmjit::X86Gp ptr)
 	}
 
 	auto result = cc.newInt32();
-	auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(&JitCompiler::DoCall)), FuncSignature7<int, void*, void*, int, int, void*, void*, void*>());
+	auto call = CreateCall<int, VMFrameStack*, VMFunction*, int, int, VMValue*, VMReturn*, JitExceptionInfo*>(&JitCompiler::DoCall);
 	call->setRet(0, result);
 	call->setArg(0, stack);
 	call->setArg(1, ptr);
-	call->setArg(2, asmjit::Imm(B));
-	call->setArg(3, asmjit::Imm(C));
+	call->setArg(2, Imm(B));
+	call->setArg(3, Imm(C));
 	call->setArg(4, paramsptr);
 	call->setArg(5, callReturns);
 	call->setArg(6, exceptInfo);
@@ -223,11 +223,11 @@ void JitCompiler::EmitDoTail(asmjit::X86Gp ptr)
 	}
 
 	auto result = cc.newInt32();
-	auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(&JitCompiler::DoCall)), FuncSignature7<int, void*, void*, int, int, void*, void*, void*>());
+	auto call = CreateCall<int, VMFrameStack*, VMFunction*, int, int, VMValue*, VMReturn*, JitExceptionInfo*>(&JitCompiler::DoCall);
 	call->setRet(0, result);
 	call->setArg(0, stack);
 	call->setArg(1, ptr);
-	call->setArg(2, asmjit::Imm(B));
+	call->setArg(2, Imm(B));
 	call->setArg(3, numret);
 	call->setArg(4, paramsptr);
 	call->setArg(5, ret);

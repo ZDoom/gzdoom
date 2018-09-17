@@ -7,11 +7,9 @@
 void JitCompiler::EmitCONCAT()
 {
 	auto rc = CheckRegS(C, A);
-	auto concatLambda = [](FString* to, FString* first, FString* second) -> void {
+	auto call = CreateCall<void, FString*, FString*, FString*>([](FString* to, FString* first, FString* second) {
 		*to = *first + *second;
-	};
-	auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(FString*, FString*, FString*)>(concatLambda))),
-		asmjit::FuncSignature3<void, FString*, FString*, FString*>(asmjit::CallConv::kIdHostCDecl));
+	});
 	call->setArg(0, regS[A]);
 	call->setArg(1, regS[B]);
 	call->setArg(2, rc);
@@ -19,11 +17,9 @@ void JitCompiler::EmitCONCAT()
 
 void JitCompiler::EmitLENS()
 {
-	auto lenLambda = [](FString* str) -> int {
+	auto call = CreateCall<int, FString*>([](FString* str) -> int {
 		return static_cast<int>(str->Len());
-	};
-	auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<int(*)(FString*)>(lenLambda))),
-		asmjit::FuncSignature1<int, FString*>(asmjit::CallConv::kIdHostCDecl));
+	});
 	call->setRet(0, regD[A]);
 	call->setArg(0, regS[B]);
 }
@@ -38,12 +34,9 @@ void JitCompiler::EmitCMPS()
 			return first->Compare(*second);
 		};
 
-		auto call =
-			static_cast<bool>(A & CMP_APPROX) ?
-			cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<int(*)(FString*, FString*)>(compareNoCaseLambda))),
-				asmjit::FuncSignature2<int, FString*, FString*>(asmjit::CallConv::kIdHostCDecl)) :
-			cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<int(*)(FString*, FString*)>(compareLambda))),
-				asmjit::FuncSignature2<int, FString*, FString*>(asmjit::CallConv::kIdHostCDecl));
+		auto call = static_cast<bool>(A & CMP_APPROX) ?
+			CreateCall<int, FString*, FString*>(compareNoCaseLambda) :
+			CreateCall<int, FString*, FString*>(compareLambda);
 
 		auto result = cc.newInt32();
 		call->setRet(0, result);
@@ -758,19 +751,16 @@ void JitCompiler::EmitDIVF_KR()
 
 void JitCompiler::EmitMODF_RR()
 {
-	using namespace asmjit;
-	typedef double(*FuncPtr)(double, double);
-
 	auto label = cc.newLabel();
 	cc.ptest(regF[C], regF[C]);
 	cc.jne(label);
 	EmitThrowException(X_DIVISION_BY_ZERO);
 	cc.bind(label);
 
-	auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](double a, double b) -> double
+	auto call = CreateCall<double, double, double>([](double a, double b) -> double
 	{
 		return a - floor(a / b) * b;
-	}))), FuncSignature2<double, double, double>());
+	});
 	call->setRet(0, regF[A]);
 	call->setArg(0, regF[B]);
 	call->setArg(1, regF[C]);
@@ -778,9 +768,6 @@ void JitCompiler::EmitMODF_RR()
 
 void JitCompiler::EmitMODF_RK()
 {
-	using namespace asmjit;
-	typedef double(*FuncPtr)(double, double);
-
 	auto label = cc.newLabel();
 	cc.ptest(regF[C], regF[C]);
 	cc.jne(label);
@@ -788,11 +775,11 @@ void JitCompiler::EmitMODF_RK()
 	cc.bind(label);
 
 	auto tmp = cc.newXmm();
-	cc.movsd(tmp, x86::ptr(ToMemAddress(&konstf[C])));
+	cc.movsd(tmp, asmjit::x86::ptr(ToMemAddress(&konstf[C])));
 
-	auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](double a, double b) -> double {
+	auto call = CreateCall<double, double, double>([](double a, double b) -> double {
 		return a - floor(a / b) * b;
-	}))), FuncSignature2<double, double, double>());
+	});
 	call->setRet(0, regF[A]);
 	call->setArg(0, regF[B]);
 	call->setArg(1, tmp);
@@ -801,7 +788,6 @@ void JitCompiler::EmitMODF_RK()
 void JitCompiler::EmitMODF_KR()
 {
 	using namespace asmjit;
-	typedef double(*FuncPtr)(double, double);
 
 	auto label = cc.newLabel();
 	cc.ptest(regF[C], regF[C]);
@@ -812,9 +798,9 @@ void JitCompiler::EmitMODF_KR()
 	auto tmp = cc.newXmm();
 	cc.movsd(tmp, x86::ptr(ToMemAddress(&konstf[B])));
 
-	auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](double a, double b) -> double {
+	auto call = CreateCall<double, double, double>([](double a, double b) -> double {
 		return a - floor(a / b) * b;
-	}))), FuncSignature2<double, double, double>());
+	});
 	call->setRet(0, regF[A]);
 	call->setArg(0, tmp);
 	call->setArg(1, regF[C]);
@@ -822,9 +808,7 @@ void JitCompiler::EmitMODF_KR()
 
 void JitCompiler::EmitPOWF_RR()
 {
-	using namespace asmjit;
-	typedef double(*FuncPtr)(double, double);
-	auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>(g_pow))), FuncSignature2<double, double, double>());
+	auto call = CreateCall<double, double, double>(g_pow);
 	call->setRet(0, regF[A]);
 	call->setArg(0, regF[B]);
 	call->setArg(1, regF[C]);
@@ -837,9 +821,7 @@ void JitCompiler::EmitPOWF_RK()
 	cc.mov(tmp, ToMemAddress(&konstf[C]));
 	cc.movsd(tmp2, asmjit::x86::qword_ptr(tmp));
 
-	using namespace asmjit;
-	typedef double(*FuncPtr)(double, double);
-	auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>(g_pow))), FuncSignature2<double, double, double>());
+	auto call = CreateCall<double, double, double>(g_pow);
 	call->setRet(0, regF[A]);
 	call->setArg(0, regF[B]);
 	call->setArg(1, tmp2);
@@ -852,9 +834,7 @@ void JitCompiler::EmitPOWF_KR()
 	cc.mov(tmp, ToMemAddress(&konstf[B]));
 	cc.movsd(tmp2, asmjit::x86::qword_ptr(tmp));
 
-	using namespace asmjit;
-	typedef double(*FuncPtr)(double, double);
-	auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>(g_pow))), FuncSignature2<double, double, double>());
+	auto call = CreateCall<double, double, double>(g_pow);
 	call->setRet(0, regF[A]);
 	call->setArg(0, tmp2);
 	call->setArg(1, regF[C]);
@@ -896,9 +876,7 @@ void JitCompiler::EmitMAXF_RK()
 	
 void JitCompiler::EmitATAN2()
 {
-	using namespace asmjit;
-	typedef double(*FuncPtr)(double, double);
-	auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>(g_atan2))), FuncSignature2<double, double, double>());
+	auto call = CreateCall<double, double, double>(g_atan2);
 	call->setRet(0, regF[A]);
 	call->setArg(0, regF[B]);
 	call->setArg(1, regF[C]);
@@ -962,7 +940,7 @@ void JitCompiler::EmitFLOP()
 		case FLOP_TANH:		func = g_tanh; break;
 		}
 
-		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(func)), asmjit::FuncSignature1<double, double>());
+		auto call = CreateCall<double, double>(func);
 		call->setRet(0, regF[A]);
 		call->setArg(0, v);
 
@@ -1537,9 +1515,7 @@ void JitCompiler::EmitEQA_K()
 
 void JitCompiler::CallSqrt(const asmjit::X86Xmm &a, const asmjit::X86Xmm &b)
 {
-	using namespace asmjit;
-	typedef double(*FuncPtr)(double);
-	auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>(g_sqrt))), FuncSignature1<double, double>());
+	auto call = CreateCall<double, double>(g_sqrt);
 	call->setRet(0, a);
 	call->setArg(0, b);
 }

@@ -36,12 +36,11 @@ void JitCompiler::EmitVTBL()
 	EmitThrowException(X_READ_NIL);
 	cc.bind(notnull);
 
-	typedef VMFunction*(*FuncPtr)(DObject*, int);
-	auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](DObject *o, int c) -> VMFunction* {
+	auto call = CreateCall<VMFunction*, DObject*, int>([](DObject *o, int c) -> VMFunction* {
 		auto p = o->GetClass();
 		assert(c < (int)p->Virtuals.Size());
 		return p->Virtuals[c];
-	}))), asmjit::FuncSignature2<void*, void*, int>());
+	});
 	call->setRet(0, regA[A]);
 	call->setArg(0, regA[B]);
 	call->setArg(1, asmjit::Imm(C));
@@ -60,7 +59,7 @@ void JitCompiler::EmitSCOPE()
 
 	auto result = cc.newInt32();
 	typedef int(*FuncPtr)(DObject*, VMFunction*, int);
-	auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](DObject *o, VMFunction *f, int b) -> int {
+	auto call = CreateCall<int, DObject*, VMFunction*, int>([](DObject *o, VMFunction *f, int b) -> int {
 		try
 		{
 			FScopeBarrier::ValidateCall(o->GetClass(), f, b - 1);
@@ -71,7 +70,7 @@ void JitCompiler::EmitSCOPE()
 			// To do: pass along the exception info
 			return 0;
 		}
-	}))), asmjit::FuncSignature3<int, void*, void*, int>());
+	});
 	call->setRet(0, result);
 	call->setArg(0, regA[A]);
 	call->setArg(1, f);
@@ -168,14 +167,12 @@ void JitCompiler::EmitRET()
 			break;
 		case REGT_STRING:
 		{
-			auto setRetStringLamdba = [](VMReturn* ret, FString* str) -> void {
-				ret->SetString(*str);
-			};
 			auto ptr = cc.newIntPtr();
 			cc.mov(ptr, ret);
 			cc.add(ptr, (int)(retnum * sizeof(VMReturn)));
-			auto call = cc.call(ToMemAddress(reinterpret_cast<void*>(static_cast<void(*)(VMReturn*, FString*)>(setRetStringLamdba))),
-				asmjit::FuncSignature2<void, VMReturn*, FString*>(asmjit::CallConv::kIdHostCDecl));
+			auto call = CreateCall<void, VMReturn*, FString*>([](VMReturn* ret, FString* str) -> void {
+				ret->SetString(*str);
+			});
 			call->setArg(0, ptr);
 			if (regtype & REGT_KONST) call->setArg(1, asmjit::imm_ptr(&konsts[regnum]));
 			else                      call->setArg(1, regS[regnum]);
@@ -240,8 +237,7 @@ void JitCompiler::EmitRETI()
 void JitCompiler::EmitNEW()
 {
 	auto result = cc.newIntPtr();
-	typedef DObject*(*FuncPtr)(PClass*, int);
-	auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](PClass *cls, int c) -> DObject* {
+	auto call = CreateCall<DObject*, PClass*, int>([](PClass *cls, int c) -> DObject* {
 		try
 		{
 			if (!cls->ConstructNative)
@@ -266,7 +262,7 @@ void JitCompiler::EmitNEW()
 			// To do: pass along the exception info
 			return nullptr;
 		}
-	}))), asmjit::FuncSignature2<void*, void*, int>());
+	});
 	call->setRet(0, result);
 	call->setArg(0, regA[B]);
 	call->setArg(1, asmjit::Imm(C));
@@ -299,8 +295,7 @@ void JitCompiler::EmitNEW_K()
 		auto result = cc.newIntPtr();
 		auto regcls = cc.newIntPtr();
 		cc.mov(regcls, ToMemAddress(konsta[B].v));
-		typedef DObject*(*FuncPtr)(PClass*, int);
-		auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(static_cast<FuncPtr>([](PClass *cls, int c) -> DObject* {
+		auto call = CreateCall<DObject*, PClass*, int>([](PClass *cls, int c) -> DObject* {
 			try
 			{
 				if (c) FScopeBarrier::ValidateNew(cls, c - 1);
@@ -311,7 +306,7 @@ void JitCompiler::EmitNEW_K()
 				// To do: pass along the exception info
 				return nullptr;
 			}
-		}))), asmjit::FuncSignature2<void*, void*, int>());
+		});
 		call->setRet(0, result);
 		call->setArg(0, regcls);
 		call->setArg(1, asmjit::Imm(C));

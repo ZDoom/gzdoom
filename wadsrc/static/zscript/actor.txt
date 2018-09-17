@@ -1018,6 +1018,7 @@ class Actor : Thinker native
 	native void A_Chase(statelabel melee = null, statelabel missile = null, int flags = 0);
 	native void A_Scream();
 	native void A_VileChase();
+	native bool A_CheckForResurrection();
 	native void A_BossDeath();
 	native void A_Detonate();
 	bool A_CallSpecial(int special, int arg1=0, int arg2=0, int arg3=0, int arg4=0, int arg5=0)
@@ -1075,6 +1076,9 @@ class Actor : Thinker native
 	native void A_RaiseMaster(int flags = 0);
 	native void A_RaiseChildren(int flags = 0);
 	native void A_RaiseSiblings(int flags = 0);
+	native bool A_RaiseSelf(int flags = 0);
+	native bool CanRaise();
+	native void Revive();
 	action native bool, Actor A_ThrowGrenade(class<Actor> itemtype, double zheight = 0, double xyvel = 0, double zvel = 0, bool useammo = true);
 	native void A_Weave(int xspeed, int yspeed, double xdist, double ydist);
 	native bool A_Morph(class<Actor> type, int duration = 0, int flags = 0, class<Actor> enter_flash = null, class<Actor> exit_flash = null);

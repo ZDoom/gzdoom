@@ -146,15 +146,8 @@ bool JitCompiler::CanJit(VMScriptFunction *sfunc)
 	{
 		// Functions not implemented at all yet:
 
-		switch (sfunc->Code[i].op)
-		{
-		default:
-			break;
-		case OP_IJMP:
-		case OP_TAIL:
-		case OP_TAIL_K:
+		if (sfunc->Code[i].op == OP_IJMP)
 			return false;
-		}
 
 		// Partially implemented functions:
 

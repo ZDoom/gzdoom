@@ -138,12 +138,14 @@ void JitCompiler::EmitCALL_K()
 
 void JitCompiler::EmitTAIL()
 {
-	I_FatalError("EmitTAIL not implemented\n");
+	EmitDoTail(regA[A]);
 }
 
 void JitCompiler::EmitTAIL_K()
 {
-	I_FatalError("EmitTAIL_K not implemented\n");
+	auto ptr = cc.newIntPtr();
+	cc.mov(ptr, ToMemAddress(konsta[A].o));
+	EmitDoTail(ptr);
 }
 
 void JitCompiler::EmitDoCall(asmjit::X86Gp ptr)
@@ -160,8 +162,7 @@ void JitCompiler::EmitDoCall(asmjit::X86Gp ptr)
 	if (B != NumParam)
 	{
 		paramsptr = cc.newIntPtr();
-		cc.mov(paramsptr, params);
-		cc.add(paramsptr, (int)((NumParam - B) * sizeof(VMValue)));
+		cc.lea(paramsptr, x86::ptr(params, (int)((NumParam - B) * sizeof(VMValue))));
 	}
 	else
 	{
@@ -191,6 +192,48 @@ void JitCompiler::EmitDoCall(asmjit::X86Gp ptr)
 
 	LoadInOuts(B);
 	LoadReturns(pc + 1, C);
+
+	NumParam -= B;
+	ParamOpcodes.Resize(ParamOpcodes.Size() - B);
+}
+
+void JitCompiler::EmitDoTail(asmjit::X86Gp ptr)
+{
+	// Whereas the CALL instruction uses its third operand to specify how many return values
+	// it expects, TAIL ignores its third operand and uses whatever was passed to this Exec call.
+
+	// Note: this is not a true tail call, but then again, it isn't in the vmexec implementation either..
+
+	using namespace asmjit;
+
+	if (NumParam < B)
+		I_FatalError("OP_TAIL parameter count does not match the number of preceding OP_PARAM instructions");
+
+	StoreInOuts(B); // Is REGT_ADDROF even allowed for (true) tail calls?
+
+	X86Gp paramsptr;
+	if (B != NumParam)
+	{
+		paramsptr = cc.newIntPtr();
+		cc.lea(paramsptr, x86::ptr(params, (int)((NumParam - B) * sizeof(VMValue))));
+	}
+	else
+	{
+		paramsptr = params;
+	}
+
+	auto result = cc.newInt32();
+	auto call = cc.call(ToMemAddress(reinterpret_cast<const void*>(&JitCompiler::DoCall)), FuncSignature7<int, void*, void*, int, int, void*, void*, void*>());
+	call->setRet(0, result);
+	call->setArg(0, stack);
+	call->setArg(1, ptr);
+	call->setArg(2, asmjit::Imm(B));
+	call->setArg(3, numret);
+	call->setArg(4, paramsptr);
+	call->setArg(5, ret);
+	call->setArg(6, exceptInfo);
+
+	cc.ret(result);
 
 	NumParam -= B;
 	ParamOpcodes.Resize(ParamOpcodes.Size() - B);

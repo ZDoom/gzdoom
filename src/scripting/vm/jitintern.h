@@ -43,6 +43,7 @@ private:
 	void EmitOpcode();
 
 	void EmitDoCall(asmjit::X86Gp ptr);
+	void EmitDoTail(asmjit::X86Gp ptr);
 	void StoreInOuts(int b);
 	void LoadInOuts(int b);
 	void LoadReturns(const VMOP *retval, int numret);

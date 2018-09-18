@@ -17,7 +17,7 @@ void JitCompiler::EmitLK()
 void JitCompiler::EmitLKF()
 {
 	auto base = cc.newIntPtr();
-	cc.mov(base, ToMemAddress(konstf + BC));
+	cc.mov(base, asmjit::imm_ptr(konstf + BC));
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(base));
 }
 
@@ -25,7 +25,7 @@ void JitCompiler::EmitLKS()
 {
 	auto call = CreateCall<void, FString*, FString*>(&JitCompiler::CallAssignString);
 	call->setArg(0, regS[A]);
-	call->setArg(1, asmjit::imm(ToMemAddress(konsts + BC)));
+	call->setArg(1, asmjit::imm_ptr(konsts + BC));
 }
 
 void JitCompiler::EmitLKP()
@@ -36,21 +36,21 @@ void JitCompiler::EmitLKP()
 void JitCompiler::EmitLK_R()
 {
 	auto base = cc.newIntPtr();
-	cc.mov(base, ToMemAddress(konstd + C));
+	cc.mov(base, asmjit::imm_ptr(konstd + C));
 	cc.mov(regD[A], asmjit::x86::ptr(base, regD[B], 2));
 }
 
 void JitCompiler::EmitLKF_R()
 {
 	auto base = cc.newIntPtr();
-	cc.mov(base, ToMemAddress(konstf + C));
+	cc.mov(base, asmjit::imm_ptr(konstf + C));
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(base, regD[B], 3));
 }
 
 void JitCompiler::EmitLKS_R()
 {
 	auto base = cc.newIntPtr();
-	cc.mov(base, ToMemAddress(konsts + C));
+	cc.mov(base, asmjit::imm_ptr(konsts + C));
 	auto ptr = cc.newIntPtr();
 #ifdef ASMJIT_ARCH_64BIT
 	static_assert(sizeof(FString) == 8, "sizeof(FString) needs to be 8");
@@ -67,7 +67,7 @@ void JitCompiler::EmitLKS_R()
 void JitCompiler::EmitLKP_R()
 {
 	auto base = cc.newIntPtr();
-	cc.mov(base, ToMemAddress(konsta + C));
+	cc.mov(base, asmjit::imm_ptr(konsta + C));
 #ifdef ASMJIT_ARCH_64BIT
 	static_assert(sizeof(FVoidObj) == 8, "sizeof(FVoidObj) needs to be 8");
 	cc.mov(regA[A], asmjit::x86::ptr(base, regD[B], 3));

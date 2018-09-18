@@ -221,7 +221,7 @@ void JitCompiler::EmitDIV_RK()
 		auto konstTmp = cc.newIntPtr();
 		cc.mov(tmp0, regD[B]);
 		cc.cdq(tmp1, tmp0);
-		cc.mov(konstTmp, ToMemAddress(&konstd[C]));
+		cc.mov(konstTmp, asmjit::imm_ptr(&konstd[C]));
 		cc.idiv(tmp1, tmp0, asmjit::x86::ptr(konstTmp));
 		cc.mov(regD[A], tmp0);
 	}
@@ -273,7 +273,7 @@ void JitCompiler::EmitDIVU_RK()
 		auto konstTmp = cc.newIntPtr();
 		cc.mov(tmp0, regD[B]);
 		cc.mov(tmp1, 0);
-		cc.mov(konstTmp, ToMemAddress(&konstd[C]));
+		cc.mov(konstTmp, asmjit::imm_ptr(&konstd[C]));
 		cc.div(tmp1, tmp0, asmjit::x86::ptr(konstTmp));
 		cc.mov(regD[A], tmp0);
 	}
@@ -325,7 +325,7 @@ void JitCompiler::EmitMOD_RK()
 		auto konstTmp = cc.newIntPtr();
 		cc.mov(tmp0, regD[B]);
 		cc.cdq(tmp1, tmp0);
-		cc.mov(konstTmp, ToMemAddress(&konstd[C]));
+		cc.mov(konstTmp, asmjit::imm_ptr(&konstd[C]));
 		cc.idiv(tmp1, tmp0, asmjit::x86::ptr(konstTmp));
 		cc.mov(regD[A], tmp1);
 	}
@@ -377,7 +377,7 @@ void JitCompiler::EmitMODU_RK()
 		auto konstTmp = cc.newIntPtr();
 		cc.mov(tmp0, regD[B]);
 		cc.mov(tmp1, 0);
-		cc.mov(konstTmp, ToMemAddress(&konstd[C]));
+		cc.mov(konstTmp, asmjit::imm_ptr(&konstd[C]));
 		cc.div(tmp1, tmp0, asmjit::x86::ptr(konstTmp));
 		cc.mov(regD[A], tmp1);
 	}
@@ -462,7 +462,7 @@ void JitCompiler::EmitMIN_RK()
 	auto tmp0 = cc.newXmmSs();
 	auto tmp1 = cc.newXmmSs();
 	auto konstTmp = cc.newIntPtr();
-	cc.mov(konstTmp, ToMemAddress(&konstd[C]));
+	cc.mov(konstTmp, asmjit::imm_ptr(&konstd[C]));
 	cc.movd(tmp0, regD[B]);
 	cc.movss(tmp1, asmjit::x86::dword_ptr(konstTmp));
 	cc.pminsd(tmp0, tmp1);
@@ -484,7 +484,7 @@ void JitCompiler::EmitMAX_RK()
 	auto tmp0 = cc.newXmmSs();
 	auto tmp1 = cc.newXmmSs();
 	auto konstTmp = cc.newIntPtr();
-	cc.mov(konstTmp, ToMemAddress(&konstd[C]));
+	cc.mov(konstTmp, asmjit::imm_ptr(&konstd[C]));
 	cc.movd(tmp0, regD[B]);
 	cc.movss(tmp1, asmjit::x86::dword_ptr(konstTmp));
 	cc.pmaxsd(tmp0, tmp1);
@@ -556,7 +556,7 @@ void JitCompiler::EmitLT_KR()
 {
 	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 		auto tmp = cc.newIntPtr();
-		cc.mov(tmp, ToMemAddress(&konstd[B]));
+		cc.mov(tmp, asmjit::imm_ptr(&konstd[B]));
 		cc.cmp(asmjit::x86::ptr(tmp), regD[C]);
 		if (check) cc.jl(fail);
 		else       cc.jnl(fail);
@@ -585,7 +585,7 @@ void JitCompiler::EmitLE_KR()
 {
 	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 		auto tmp = cc.newIntPtr();
-		cc.mov(tmp, ToMemAddress(&konstd[B]));
+		cc.mov(tmp, asmjit::imm_ptr(&konstd[B]));
 		cc.cmp(asmjit::x86::ptr(tmp), regD[C]);
 		if (check) cc.jle(fail);
 		else       cc.jnle(fail);
@@ -614,7 +614,7 @@ void JitCompiler::EmitLTU_KR()
 {
 	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 		auto tmp = cc.newIntPtr();
-		cc.mov(tmp, ToMemAddress(&konstd[B]));
+		cc.mov(tmp, asmjit::imm_ptr(&konstd[B]));
 		cc.cmp(asmjit::x86::ptr(tmp), regD[C]);
 		if (check) cc.jb(fail);
 		else       cc.jnb(fail);
@@ -643,7 +643,7 @@ void JitCompiler::EmitLEU_KR()
 {
 	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 		auto tmp = cc.newIntPtr();
-		cc.mov(tmp, ToMemAddress(&konstd[B]));
+		cc.mov(tmp, asmjit::imm_ptr(&konstd[B]));
 		cc.cmp(asmjit::x86::ptr(tmp), regD[C]);
 		if (check) cc.jbe(fail);
 		else       cc.jnbe(fail);
@@ -666,7 +666,7 @@ void JitCompiler::EmitADDF_RK()
 	auto tmp = cc.newIntPtr();
 	if (A != B)
 		cc.movsd(regF[A], regF[B]);
-	cc.mov(tmp, ToMemAddress(&konstf[C]));
+	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
 	cc.addsd(regF[A], asmjit::x86::qword_ptr(tmp));
 }
 
@@ -683,7 +683,7 @@ void JitCompiler::EmitSUBF_RK()
 	auto tmp = cc.newIntPtr();
 	if (A != B)
 		cc.movsd(regF[A], regF[B]);
-	cc.mov(tmp, ToMemAddress(&konstf[C]));
+	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
 	cc.subsd(regF[A], asmjit::x86::qword_ptr(tmp));
 }
 
@@ -691,7 +691,7 @@ void JitCompiler::EmitSUBF_KR()
 {
 	auto rc = CheckRegF(C, A);
 	auto tmp = cc.newIntPtr();
-	cc.mov(tmp, ToMemAddress(&konstf[B]));
+	cc.mov(tmp, asmjit::imm_ptr(&konstf[B]));
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
 	cc.subsd(regF[A], rc);
 }
@@ -709,7 +709,7 @@ void JitCompiler::EmitMULF_RK()
 	auto tmp = cc.newIntPtr();
 	if (A != B)
 		cc.movsd(regF[A], regF[B]);
-	cc.mov(tmp, ToMemAddress(&konstf[C]));
+	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
 	cc.mulsd(regF[A], asmjit::x86::qword_ptr(tmp));
 }
 
@@ -735,7 +735,7 @@ void JitCompiler::EmitDIVF_RK()
 	{
 		auto tmp = cc.newIntPtr();
 		cc.movsd(regF[A], regF[B]);
-		cc.mov(tmp, ToMemAddress(&konstf[C]));
+		cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
 		cc.divsd(regF[A], asmjit::x86::qword_ptr(tmp));
 	}
 }
@@ -744,7 +744,7 @@ void JitCompiler::EmitDIVF_KR()
 {
 	auto rc = CheckRegF(C, A);
 	auto tmp = cc.newIntPtr();
-	cc.mov(tmp, ToMemAddress(&konstf[B]));
+	cc.mov(tmp, asmjit::imm_ptr(&konstf[B]));
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
 	cc.divsd(regF[A], rc);
 }
@@ -818,7 +818,7 @@ void JitCompiler::EmitPOWF_RK()
 {
 	auto tmp = cc.newIntPtr();
 	auto tmp2 = cc.newXmm();
-	cc.mov(tmp, ToMemAddress(&konstf[C]));
+	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
 	cc.movsd(tmp2, asmjit::x86::qword_ptr(tmp));
 
 	auto call = CreateCall<double, double, double>(g_pow);
@@ -831,7 +831,7 @@ void JitCompiler::EmitPOWF_KR()
 {
 	auto tmp = cc.newIntPtr();
 	auto tmp2 = cc.newXmm();
-	cc.mov(tmp, ToMemAddress(&konstf[B]));
+	cc.mov(tmp, asmjit::imm_ptr(&konstf[B]));
 	cc.movsd(tmp2, asmjit::x86::qword_ptr(tmp));
 
 	auto call = CreateCall<double, double, double>(g_pow);
@@ -852,7 +852,7 @@ void JitCompiler::EmitMINF_RK()
 {
 	auto rb = CheckRegF(B, A);
 	auto tmp = cc.newIntPtr();
-	cc.mov(tmp, ToMemAddress(&konstf[C]));
+	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
 	cc.minsd(regF[A], rb);
 }
@@ -869,7 +869,7 @@ void JitCompiler::EmitMAXF_RK()
 {
 	auto rb = CheckRegF(B, A);
 	auto tmp = cc.newIntPtr();
-	cc.mov(tmp, ToMemAddress(&konstf[C]));
+	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
 	cc.maxsd(regF[A], rb);
 }
@@ -883,7 +883,7 @@ void JitCompiler::EmitATAN2()
 
 	static const double constant = 180 / M_PI;
 	auto tmp = cc.newIntPtr();
-	cc.mov(tmp, ToMemAddress(&constant));
+	cc.mov(tmp, asmjit::imm_ptr(&constant));
 	cc.mulsd(regF[A], asmjit::x86::qword_ptr(tmp));
 }
 
@@ -907,7 +907,7 @@ void JitCompiler::EmitFLOP()
 		{
 			static const double constant = M_PI / 180;
 			auto tmp = cc.newIntPtr();
-			cc.mov(tmp, ToMemAddress(&constant));
+			cc.mov(tmp, asmjit::imm_ptr(&constant));
 			cc.mulsd(v, asmjit::x86::qword_ptr(tmp));
 		}
 
@@ -948,7 +948,7 @@ void JitCompiler::EmitFLOP()
 		{
 			static const double constant = 180 / M_PI;
 			auto tmp = cc.newIntPtr();
-			cc.mov(tmp, ToMemAddress(&constant));
+			cc.mov(tmp, asmjit::imm_ptr(&constant));
 			cc.mulsd(regF[A], asmjit::x86::qword_ptr(tmp));
 		}
 	}
@@ -1001,7 +1001,7 @@ void JitCompiler::EmitEQF_K()
 		bool approx = static_cast<bool>(A & CMP_APPROX);
 		if (!approx) {
 			auto konstTmp = cc.newIntPtr();
-			cc.mov(konstTmp, ToMemAddress(&konstf[C]));
+			cc.mov(konstTmp, asmjit::imm_ptr(&konstf[C]));
 			cc.ucomisd(regF[B], x86::qword_ptr(konstTmp));
 			if (check) {
 				cc.jp(success);
@@ -1023,7 +1023,7 @@ void JitCompiler::EmitEQF_K()
 			auto epsilon = cc.newDoubleConst(kConstScopeLocal, VM_EPSILON);
 			auto epsilonXmm = cc.newXmmSd();
 
-			cc.mov(konstTmp, ToMemAddress(&konstf[C]));
+			cc.mov(konstTmp, asmjit::imm_ptr(&konstf[C]));
 
 			cc.movsd(subTmp, regF[B]);
 			cc.subsd(subTmp, x86::qword_ptr(konstTmp));
@@ -1056,7 +1056,7 @@ void JitCompiler::EmitLTF_RK()
 
 		auto constTmp = cc.newIntPtr();
 		auto xmmTmp = cc.newXmmSd();
-		cc.mov(constTmp, ToMemAddress(&konstf[C]));
+		cc.mov(constTmp, asmjit::imm_ptr(&konstf[C]));
 		cc.movsd(xmmTmp, asmjit::x86::qword_ptr(constTmp));
 
 		cc.ucomisd(xmmTmp, regF[B]);
@@ -1071,7 +1071,7 @@ void JitCompiler::EmitLTF_KR()
 		if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LTF_KR.\n");
 
 		auto tmp = cc.newIntPtr();
-		cc.mov(tmp, ToMemAddress(&konstf[B]));
+		cc.mov(tmp, asmjit::imm_ptr(&konstf[B]));
 
 		cc.ucomisd(regF[C], asmjit::x86::qword_ptr(tmp));
 		if (check) cc.ja(fail);
@@ -1097,7 +1097,7 @@ void JitCompiler::EmitLEF_RK()
 
 		auto constTmp = cc.newIntPtr();
 		auto xmmTmp = cc.newXmmSd();
-		cc.mov(constTmp, ToMemAddress(&konstf[C]));
+		cc.mov(constTmp, asmjit::imm_ptr(&konstf[C]));
 		cc.movsd(xmmTmp, asmjit::x86::qword_ptr(constTmp));
 
 		cc.ucomisd(xmmTmp, regF[B]);
@@ -1112,7 +1112,7 @@ void JitCompiler::EmitLEF_KR()
 		if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LEF_KR.\n");
 
 		auto tmp = cc.newIntPtr();
-		cc.mov(tmp, ToMemAddress(&konstf[B]));
+		cc.mov(tmp, asmjit::imm_ptr(&konstf[B]));
 
 		cc.ucomisd(regF[C], asmjit::x86::qword_ptr(tmp));
 		if (check) cc.jae(fail);
@@ -1180,7 +1180,7 @@ void JitCompiler::EmitMULVF2_RK()
 	auto tmp = cc.newIntPtr();
 	cc.movsd(regF[A], regF[B]);
 	cc.movsd(regF[A + 1], regF[B + 1]);
-	cc.mov(tmp, ToMemAddress(&konstf[C]));
+	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
 	cc.mulsd(regF[A], asmjit::x86::qword_ptr(tmp));
 	cc.mulsd(regF[A + 1], asmjit::x86::qword_ptr(tmp));
 }
@@ -1199,7 +1199,7 @@ void JitCompiler::EmitDIVVF2_RK()
 	auto tmp = cc.newIntPtr();
 	cc.movsd(regF[A], regF[B]);
 	cc.movsd(regF[A + 1], regF[B + 1]);
-	cc.mov(tmp, ToMemAddress(&konstf[C]));
+	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
 	cc.divsd(regF[A], asmjit::x86::qword_ptr(tmp));
 	cc.divsd(regF[A + 1], asmjit::x86::qword_ptr(tmp));
 }
@@ -1359,7 +1359,7 @@ void JitCompiler::EmitMULVF3_RK()
 	cc.movsd(regF[A], regF[B]);
 	cc.movsd(regF[A + 1], regF[B + 1]);
 	cc.movsd(regF[A + 2], regF[B + 2]);
-	cc.mov(tmp, ToMemAddress(&konstf[C]));
+	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
 	cc.mulsd(regF[A], asmjit::x86::qword_ptr(tmp));
 	cc.mulsd(regF[A + 1], asmjit::x86::qword_ptr(tmp));
 	cc.mulsd(regF[A + 2], asmjit::x86::qword_ptr(tmp));
@@ -1382,7 +1382,7 @@ void JitCompiler::EmitDIVVF3_RK()
 	cc.movsd(regF[A], regF[B]);
 	cc.movsd(regF[A + 1], regF[B + 1]);
 	cc.movsd(regF[A + 2], regF[B + 2]);
-	cc.mov(tmp, ToMemAddress(&konstf[C]));
+	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
 	cc.divsd(regF[A], asmjit::x86::qword_ptr(tmp));
 	cc.divsd(regF[A + 1], asmjit::x86::qword_ptr(tmp));
 	cc.divsd(regF[A + 2], asmjit::x86::qword_ptr(tmp));
@@ -1506,7 +1506,7 @@ void JitCompiler::EmitEQA_K()
 {
 	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
 		auto tmp = cc.newIntPtr();
-		cc.mov(tmp, ToMemAddress(konsta[C].v));
+		cc.mov(tmp, asmjit::imm_ptr(konsta[C].v));
 		cc.cmp(regA[B], tmp);
 		if (check) cc.je(fail);
 		else       cc.jne(fail);

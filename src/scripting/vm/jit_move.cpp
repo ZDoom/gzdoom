@@ -193,7 +193,7 @@ void JitCompiler::EmitDYNCAST_R()
 void JitCompiler::EmitDYNCAST_K()
 {
 	auto c = cc.newIntPtr();
-	cc.mov(c, ToMemAddress(konsta[C].o));
+	cc.mov(c, asmjit::imm_ptr(konsta[C].o));
 	auto call = CreateCall<DObject*, DObject*, PClass*>([](DObject *obj, PClass *cls) -> DObject* {
 		return (obj && obj->IsKindOf(cls)) ? obj : nullptr;
 	});
@@ -216,7 +216,7 @@ void JitCompiler::EmitDYNCASTC_K()
 {
 	using namespace asmjit;
 	auto c = cc.newIntPtr();
-	cc.mov(c, ToMemAddress(konsta[C].o));
+	cc.mov(c, asmjit::imm_ptr(konsta[C].o));
 	typedef PClass*(*FuncPtr)(PClass*, PClass*);
 	auto call = CreateCall<PClass*, PClass*, PClass*>([](PClass *cls1, PClass *cls2) -> PClass* {
 		return (cls1 && cls1->IsDescendantOf(cls2)) ? cls1 : nullptr;

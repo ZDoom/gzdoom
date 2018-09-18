@@ -42,7 +42,7 @@ void JitCompiler::EmitPARAM()
 		break;
 	case REGT_STRING | REGT_KONST:
 		tmp = cc.newIntPtr();
-		cc.mov(tmp, ToMemAddress(&konsts[C]));
+		cc.mov(tmp, asmjit::imm_ptr(&konsts[C]));
 		cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, sp)), tmp);
 		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_STRING);
 		break;
@@ -59,7 +59,7 @@ void JitCompiler::EmitPARAM()
 		break;
 	case REGT_POINTER | REGT_KONST:
 		tmp = cc.newIntPtr();
-		cc.mov(tmp, ToMemAddress(konsta[C].v));
+		cc.mov(tmp, asmjit::imm_ptr(konsta[C].v));
 		cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, a)), tmp);
 		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
 		break;
@@ -97,7 +97,7 @@ void JitCompiler::EmitPARAM()
 	case REGT_FLOAT | REGT_KONST:
 		tmp = cc.newIntPtr();
 		tmp2 = cc.newXmmSd();
-		cc.mov(tmp, ToMemAddress(konstf + C));
+		cc.mov(tmp, asmjit::imm_ptr(konstf + C));
 		cc.movsd(tmp2, asmjit::x86::qword_ptr(tmp));
 		cc.movsd(x86::qword_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, f)), tmp2);
 		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_FLOAT);
@@ -132,7 +132,7 @@ void JitCompiler::EmitCALL()
 void JitCompiler::EmitCALL_K()
 {
 	auto ptr = cc.newIntPtr();
-	cc.mov(ptr, ToMemAddress(konsta[A].o));
+	cc.mov(ptr, asmjit::imm_ptr(konsta[A].o));
 	EmitDoCall(ptr);
 }
 
@@ -144,7 +144,7 @@ void JitCompiler::EmitTAIL()
 void JitCompiler::EmitTAIL_K()
 {
 	auto ptr = cc.newIntPtr();
-	cc.mov(ptr, ToMemAddress(konsta[A].o));
+	cc.mov(ptr, asmjit::imm_ptr(konsta[A].o));
 	EmitDoTail(ptr);
 }
 

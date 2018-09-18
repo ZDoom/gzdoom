@@ -75,7 +75,7 @@ void JitCompiler::EmitSCOPE()
 	cc.bind(notnull);
 
 	auto f = cc.newIntPtr();
-	cc.mov(f, ToMemAddress(konsta[C].v));
+	cc.mov(f, asmjit::imm_ptr(konsta[C].v));
 
 	auto result = cc.newInt32();
 	typedef int(*FuncPtr)(DObject*, VMFunction*, int);
@@ -201,12 +201,12 @@ void JitCompiler::EmitRET()
 		case REGT_POINTER:
 			#ifdef ASMJIT_ARCH_64BIT
 			if (regtype & REGT_KONST)
-				cc.mov(x86::qword_ptr(location), ToMemAddress(konsta[regnum].v));
+				cc.mov(x86::qword_ptr(location), asmjit::imm_ptr(konsta[regnum].v));
 			else
 				cc.mov(x86::qword_ptr(location), regA[regnum]);
 			#else
 			if (regtype & REGT_KONST)
-				cc.mov(x86::dword_ptr(location), ToMemAddress(konsta[regnum].v));
+				cc.mov(x86::dword_ptr(location), asmjit::imm_ptr(konsta[regnum].v));
 			else
 				cc.mov(x86::dword_ptr(location), regA[regnum]);
 			#endif
@@ -314,7 +314,7 @@ void JitCompiler::EmitNEW_K()
 	{
 		auto result = cc.newIntPtr();
 		auto regcls = cc.newIntPtr();
-		cc.mov(regcls, ToMemAddress(konsta[B].v));
+		cc.mov(regcls, asmjit::imm_ptr(konsta[B].v));
 		auto call = CreateCall<DObject*, PClass*, int>([](PClass *cls, int c) -> DObject* {
 			try
 			{

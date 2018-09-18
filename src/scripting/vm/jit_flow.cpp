@@ -199,7 +199,7 @@ void JitCompiler::EmitRET()
 			break;
 		}
 		case REGT_POINTER:
-			#ifdef ASMJIT_ARCH_X64
+			#ifdef ASMJIT_ARCH_64BIT
 			if (regtype & REGT_KONST)
 				cc.mov(x86::qword_ptr(location), ToMemAddress(konsta[regnum].v));
 			else

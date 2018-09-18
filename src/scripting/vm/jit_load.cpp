@@ -52,7 +52,7 @@ void JitCompiler::EmitLKS_R()
 	auto base = cc.newIntPtr();
 	cc.mov(base, ToMemAddress(konsts + C));
 	auto ptr = cc.newIntPtr();
-#ifdef ASMJIT_ARCH_X64
+#ifdef ASMJIT_ARCH_64BIT
 	static_assert(sizeof(FString) == 8, "sizeof(FString) needs to be 8");
 	cc.lea(ptr, asmjit::x86::ptr(base, regD[B], 3));
 #else
@@ -68,7 +68,7 @@ void JitCompiler::EmitLKP_R()
 {
 	auto base = cc.newIntPtr();
 	cc.mov(base, ToMemAddress(konsta + C));
-#ifdef ASMJIT_ARCH_X64
+#ifdef ASMJIT_ARCH_64BIT
 	static_assert(sizeof(FVoidObj) == 8, "sizeof(FVoidObj) needs to be 8");
 	cc.mov(regA[A], asmjit::x86::ptr(base, regD[B], 3));
 #else

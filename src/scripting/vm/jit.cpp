@@ -270,7 +270,7 @@ void JitCompiler::EmitThrowException(EVMAbortException reason)
 
 	// Update JitExceptionInfo struct
 	cc.mov(x86::dword_ptr(exceptInfo, 0 * 4), (int32_t)reason);
-#ifdef ASMJIT_ARCH_X64
+#ifdef ASMJIT_ARCH_64BIT
 	cc.mov(x86::qword_ptr(exceptInfo, 4 * 4), ToMemAddress(pc));
 #else
 	cc.mov(x86::dword_ptr(exceptInfo, 4 * 4), ToMemAddress(pc));
@@ -289,7 +289,7 @@ void JitCompiler::EmitThrowException(EVMAbortException reason, asmjit::X86Gp arg
 	// Update JitExceptionInfo struct
 	cc.mov(x86::dword_ptr(exceptInfo, 0 * 4), (int32_t)reason);
 	cc.mov(x86::dword_ptr(exceptInfo, 1 * 4), arg1);
-#ifdef ASMJIT_ARCH_X64
+#ifdef ASMJIT_ARCH_64BIT
 	cc.mov(x86::qword_ptr(exceptInfo, 4 * 4), ToMemAddress(pc));
 #else
 	cc.mov(x86::dword_ptr(exceptInfo, 4 * 4), ToMemAddress(pc));

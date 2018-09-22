@@ -379,9 +379,9 @@ void FOBJModel::BuildVertexBuffer(FModelRenderer *renderer)
 
 	FModelVertex *vertptr = vbuf->LockVertexBuffer(vbufsize);
 
-	for (size_t i = 0; i < surfaces.Size(); i++)
+	for (unsigned int i = 0; i < surfaces.Size(); i++)
 	{
-		for (size_t j = 0; j < surfaces[i].numTris; j++)
+		for (unsigned int j = 0; j < surfaces[i].numTris; j++)
 		{
 			for (size_t side = 0; side < 3; side++)
 			{
@@ -506,9 +506,9 @@ void FOBJModel::TriangulateQuad(const OBJFace &quad, OBJFace *tris)
 void FOBJModel::AddVertFaces() {
 	// Initialize and populate vertFaces - this array stores references to triangles per vertex
 	vertFaces = new TArray<OBJTriRef>[verts.Size()];
-	for (size_t i = 0; i < surfaces.Size(); i++)
+	for (unsigned int i = 0; i < surfaces.Size(); i++)
 	{
-		for (size_t j = 0; j < surfaces[i].numTris; j++)
+		for (unsigned int j = 0; j < surfaces[i].numTris; j++)
 		{
 			OBJTriRef otr = OBJTriRef(i, j);
 			for (size_t k = 0; k < surfaces[i].tris[j].sideCount; k++)
@@ -599,7 +599,7 @@ FVector3 FOBJModel::CalculateNormalSmooth(unsigned int vidx, unsigned int smooth
 			vNormal += fNormal;
 		}
 	}
-	vNormal /= connectedFaces;
+	vNormal /= (float)connectedFaces;
 	return vNormal;
 }
 

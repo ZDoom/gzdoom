@@ -147,7 +147,7 @@ float R_DoomLightingEquation(float light)
 		lightscale = shade - vis;
 
 	// Result is the normalized colormap index (0 bright .. 1 dark)
-	return clamp(lightscale, 0.0, 31.0 / 32.0);
+	return clamp(lightscale, 1.0 - light, 31.0 / 32.0);
 }
 
 //===========================================================================

@@ -47,7 +47,7 @@
 
 CUSTOM_CVAR(Int, gl_texture_hqresize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	if (self < 0 || self > 16)
+	if (self < 0 || self > 19)
 	{
 		self = 0;
 	}
@@ -187,6 +187,30 @@ static void scale4x ( uint32_t* inputBuffer, uint32_t* outputBuffer, int inWidth
 	delete[] buffer2x;
 }
 
+#define DEFINENORMALSCALER(NAME, SIZE) \
+static void NAME ( uint32_t* inputBuffer, uint32_t* outputBuffer, int inWidth, int inHeight ) \
+{ \
+	const int width = SIZE * inWidth; \
+	const int height = SIZE * inHeight; \
+\
+	for ( int i = 0; i < inWidth; ++i ) \
+	{ \
+		for ( int j = 0; j < inHeight; ++j ) \
+		{ \
+			const uint32_t E = inputBuffer[ i     +inWidth*j    ]; \
+			for ( int k = 0; k < SIZE; k++ ) \
+			{ \
+				for ( int l = 0; l < SIZE; l++ ) \
+				{ \
+					outputBuffer[SIZE*i+k + width*(SIZE*j+l)] = E; \
+				} \
+			} \
+		} \
+	} \
+}
+DEFINENORMALSCALER(normal2x, 2)
+DEFINENORMALSCALER(normal3x, 3)
+DEFINENORMALSCALER(normal4x, 4)
 
 static unsigned char *scaleNxHelper( void (*scaleNxFunction) ( uint32_t* , uint32_t* , int , int),
 							  const int N,
@@ -390,7 +414,12 @@ unsigned char *FTexture::CreateUpsampledTextureBuffer (unsigned char *inputBuffe
 		case 14:
 		case 15:
 			return xbrzHelper(xbrzOldScale, type - 11, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-			
+		case 16:
+			return scaleNxHelper( &normal2x, 2, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+		case 17:
+			return scaleNxHelper( &normal3x, 3, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+		case 18:
+			return scaleNxHelper( &normal4x, 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
 		}
 	}
 	return inputBuffer;

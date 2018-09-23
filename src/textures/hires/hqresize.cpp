@@ -187,31 +187,6 @@ static void scale4x ( uint32_t* inputBuffer, uint32_t* outputBuffer, int inWidth
 	delete[] buffer2x;
 }
 
-#define DEFINENORMALSCALER(NAME, SIZE) \
-static void NAME ( uint32_t* inputBuffer, uint32_t* outputBuffer, int inWidth, int inHeight ) \
-{ \
-	const int width = SIZE * inWidth; \
-	const int height = SIZE * inHeight; \
-\
-	for ( int i = 0; i < inWidth; ++i ) \
-	{ \
-		for ( int j = 0; j < inHeight; ++j ) \
-		{ \
-			const uint32_t E = inputBuffer[ i     +inWidth*j    ]; \
-			for ( int k = 0; k < SIZE; k++ ) \
-			{ \
-				for ( int l = 0; l < SIZE; l++ ) \
-				{ \
-					outputBuffer[SIZE*i+k + width*(SIZE*j+l)] = E; \
-				} \
-			} \
-		} \
-	} \
-}
-DEFINENORMALSCALER(normal2x, 2)
-DEFINENORMALSCALER(normal3x, 3)
-DEFINENORMALSCALER(normal4x, 4)
-
 static unsigned char *scaleNxHelper( void (*scaleNxFunction) ( uint32_t* , uint32_t* , int , int),
 							  const int N,
 							  unsigned char *inputBuffer,
@@ -225,6 +200,44 @@ static unsigned char *scaleNxHelper( void (*scaleNxFunction) ( uint32_t* , uint3
 	unsigned char * newBuffer = new unsigned char[outWidth*outHeight*4];
 
 	scaleNxFunction ( reinterpret_cast<uint32_t*> ( inputBuffer ), reinterpret_cast<uint32_t*> ( newBuffer ), inWidth, inHeight );
+	delete[] inputBuffer;
+	return newBuffer;
+}
+
+static void normalNx ( uint32_t* inputBuffer, uint32_t* outputBuffer, int inWidth, int inHeight, int size )
+{
+	const int width = size * inWidth;
+	const int height = size * inHeight;
+
+	for ( int i = 0; i < inWidth; ++i )
+	{
+		for ( int j = 0; j < inHeight; ++j )
+		{
+			const uint32_t E = inputBuffer[ i     +inWidth*j    ];
+			for ( int k = 0; k < size; k++ )
+			{
+				for ( int l = 0; l < size; l++ )
+				{
+					outputBuffer[size*i+k + width*(size*j+l)] = E;
+				}
+			}
+		}
+	}
+}
+
+static unsigned char *normalNxHelper( void (normalNxFunction) ( uint32_t* , uint32_t* , int , int, int),
+							  const int N,
+							  unsigned char *inputBuffer,
+							  const int inWidth,
+							  const int inHeight,
+							  int &outWidth,
+							  int &outHeight )
+{
+	outWidth = N * inWidth;
+	outHeight = N *inHeight;
+	unsigned char * newBuffer = new unsigned char[outWidth*outHeight*4];
+
+	normalNxFunction ( reinterpret_cast<uint32_t*> ( inputBuffer ), reinterpret_cast<uint32_t*> ( newBuffer ), inWidth, inHeight, N );
 	delete[] inputBuffer;
 	return newBuffer;
 }
@@ -415,11 +428,11 @@ unsigned char *FTexture::CreateUpsampledTextureBuffer (unsigned char *inputBuffe
 		case 15:
 			return xbrzHelper(xbrzOldScale, type - 11, inputBuffer, inWidth, inHeight, outWidth, outHeight );
 		case 16:
-			return scaleNxHelper( &normal2x, 2, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+			return normalNxHelper( &normalNx, 2, inputBuffer, inWidth, inHeight, outWidth, outHeight );
 		case 17:
-			return scaleNxHelper( &normal3x, 3, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+			return normalNxHelper( &normalNx, 3, inputBuffer, inWidth, inHeight, outWidth, outHeight );
 		case 18:
-			return scaleNxHelper( &normal4x, 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+			return normalNxHelper( &normalNx, 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
 		}
 	}
 	return inputBuffer;

@@ -438,6 +438,7 @@ PClassActor *PClassActor::GetReplacement(bool lookskill)
 	}
 	// The Replacement field is temporarily NULLed to prevent
 	// potential infinite recursion.
+	PClassActor *oldrep = ActorInfo()->Replacement;
 	ActorInfo()->Replacement = nullptr;
 	PClassActor *rep = Replacement;
 	// Handle skill-based replacement here. It has precedence on DECORATE replacement
@@ -451,7 +452,7 @@ PClassActor *PClassActor::GetReplacement(bool lookskill)
 	// Skill replacements are not recursive, contrarily to DECORATE replacements
 	rep = rep->GetReplacement(false);
 	// Reset the temporarily NULLed field
-	ActorInfo()->Replacement = Replacement;
+	ActorInfo()->Replacement = oldrep;
 	return rep;
 }
 

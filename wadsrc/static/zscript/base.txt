@@ -1,5 +1,6 @@
 struct _ native	// These are the global variables, the struct is only here to avoid extending the parser for this.
 {
+	native readonly Array<class> AllClasses;
 	native readonly Array<class<Actor> > AllActorClasses;
 	native readonly Array<@PlayerClass> PlayerClasses;
 	native readonly Array<@PlayerSkin> PlayerSkins;

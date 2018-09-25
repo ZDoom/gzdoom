@@ -47,7 +47,7 @@
 
 CUSTOM_CVAR(Int, gl_texture_hqresize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	if (self < 0 || self > 16)
+	if (self < 0 || self > 19)
 	{
 		self = 0;
 	}
@@ -285,13 +285,13 @@ static unsigned char *xbrzHelper( void (*xbrzFunction) ( size_t, const uint32_t*
 		parallel_for(inHeight, thresholdHeight, [=](int sliceY)
 		{
 			xbrzFunction(N, reinterpret_cast<uint32_t*>(inputBuffer), reinterpret_cast<uint32_t*>(newBuffer),
-				inWidth, inHeight, xbrz::ARGB, xbrz::ScalerCfg(), sliceY, sliceY + thresholdHeight);
+				inWidth, inHeight, xbrz::ColorFormat::ARGB, xbrz::ScalerCfg(), sliceY, sliceY + thresholdHeight);
 		});
 	}
 	else
 	{
 		xbrzFunction(N, reinterpret_cast<uint32_t*>(inputBuffer), reinterpret_cast<uint32_t*>(newBuffer),
-			inWidth, inHeight, xbrz::ARGB, xbrz::ScalerCfg(), 0, std::numeric_limits<int>::max());
+			inWidth, inHeight, xbrz::ColorFormat::ARGB, xbrz::ScalerCfg(), 0, std::numeric_limits<int>::max());
 	}
 
 	delete[] inputBuffer;
@@ -389,8 +389,13 @@ unsigned char *FTexture::CreateUpsampledTextureBuffer (unsigned char *inputBuffe
 		case 13:
 		case 14:
 		case 15:
+		case 16:
+		case 17:
 			return xbrzHelper(xbrzOldScale, type - 11, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-			
+
+		case 18:
+		case 19:
+			return xbrzHelper(xbrz::scale, type - 13, inputBuffer, inWidth, inHeight, outWidth, outHeight);
 		}
 	}
 	return inputBuffer;

@@ -2165,6 +2165,9 @@ OptionValue "HqResizeModes"
    15, "$OPTVAL_OLD_4XBRZ"
    16, "$OPTVAL_OLD_5XBRZ"
    17, "$OPTVAL_OLD_6XBRZ"
+   20, "$OPTVAL_NORMAL2X"
+   21, "$OPTVAL_NORMAL3X"
+   22, "$OPTVAL_NORMAL4X"
 }
 
 OptionValue "HqResizeModesNoMMX"

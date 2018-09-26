@@ -574,10 +574,10 @@ void F2DDrawer::AddColorOnlyQuad(int x1, int y1, int w, int h, PalEntry color, F
 //
 //==========================================================================
 
-void F2DDrawer::AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t color)
+void F2DDrawer::AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t color, uint8_t alpha)
 {
 	PalEntry p = color ? (PalEntry)color : GPalette.BaseColors[palcolor];
-	p.a = 255;
+	p.a = alpha;
 
 	RenderCommand dg;
 
@@ -596,9 +596,10 @@ void F2DDrawer::AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t c
 //
 //==========================================================================
 
-void F2DDrawer::AddThickLine(int x1, int y1, int x2, int y2, double thickness, uint32_t color)
+void F2DDrawer::AddThickLine(int x1, int y1, int x2, int y2, double thickness, uint32_t color, uint8_t alpha)
 {
 	PalEntry p = (PalEntry)color;
+	p.a = alpha;
 
 	DVector2 point0(x1, y1);
 	DVector2 point1(x2, y2);

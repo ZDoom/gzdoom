@@ -574,6 +574,7 @@ class GLTextureGLOptions : OptionMenu
 				case 7:
 				case 10:
 				case 13:
+				case 20:
 					multiplier = 4;
 					break;
 				case 2:
@@ -581,6 +582,7 @@ class GLTextureGLOptions : OptionMenu
 				case 8:
 				case 11:
 				case 14:
+				case 21:
 					multiplier = 9;
 					break;
 				case 3:
@@ -588,6 +590,7 @@ class GLTextureGLOptions : OptionMenu
 				case 9:
 				case 12:
 				case 15:
+				case 22:
 					multiplier = 16;
 					break;
 				case 16:

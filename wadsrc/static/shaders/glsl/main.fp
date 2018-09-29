@@ -218,9 +218,6 @@ float sampleShadowmapLinear(vec2 dir, float v)
 #define PCF_FILTER_STEP_COUNT 3
 #define PCF_COUNT (PCF_FILTER_STEP_COUNT * 2 + 1)
 
-// #define USE_LINEAR_SHADOW_FILTER
-#define USE_PCF_SHADOW_FILTER 1
-
 float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
 {
 	if (shadowIndex >= 1024.0)
@@ -235,23 +232,27 @@ float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
 
 	vec2 dir = ray / length;
 
-#if defined(USE_LINEAR_SHADOW_FILTER)
-	ray -= dir * 6.0; // Shadow acne margin
-	return sampleShadowmapLinear(ray, v);
-#elif defined(USE_PCF_SHADOW_FILTER)
-	ray -= dir * 2.0; // Shadow acne margin
-	dir = dir * min(length / 50.0, 1.0); // avoid sampling behind light
-
-	vec2 normal = vec2(-dir.y, dir.x);
-	vec2 bias = dir * 10.0;
-
-	float sum = 0.0;
-	for (float x = -PCF_FILTER_STEP_COUNT; x <= PCF_FILTER_STEP_COUNT; x++)
+	if (uShadowmapFilter == 0)
 	{
-		sum += sampleShadowmap(ray + normal * x - bias * abs(x), v);
+		ray -= dir * 2.0; // Shadow acne margin
+		return sampleShadowmapLinear(ray, v);
 	}
-	return sum / PCF_COUNT;
-#else // nearest shadow filter
+	else
+	{
+		ray -= dir * 2.0; // Shadow acne margin
+		dir = dir * min(length / 50.0, 1.0); // avoid sampling behind light
+
+		vec2 normal = vec2(-dir.y, dir.x);
+		vec2 bias = dir * 10.0;
+
+		float sum = 0.0;
+		for (float x = -PCF_FILTER_STEP_COUNT; x <= PCF_FILTER_STEP_COUNT; x++)
+		{
+			sum += sampleShadowmap(ray + normal * x - bias * abs(x), v);
+		}
+		return sum / PCF_COUNT;
+	}
+#if 0 // nearest shadow filter (not used)
 	ray -= dir * 6.0; // Shadow acne margin
 	return sampleShadowmap(ray, v);
 #endif

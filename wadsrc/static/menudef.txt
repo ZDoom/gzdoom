@@ -2225,6 +2225,13 @@ OptionValue ShadowMapQuality
 	1024, "1024"
 }
 
+OptionValue ShadowMapFilter
+{
+	0, "$OPTVAL_LINEAR"
+	1, "PCF"
+}
+
+
 OptionMenu "GLTextureGLOptions" protected
 {
 	Title "$GLTEXMNU_TITLE"
@@ -2259,6 +2266,7 @@ OptionMenu "GLLightOptions" protected
 	Option "$GLLIGHTMNU_LIGHTPARTICLES",		gl_light_particles,		"YesNo"
 	Option "$GLLIGHTMNU_LIGHTSHADOWMAP",		gl_light_shadowmap,		"YesNo"
 	Option "$GLLIGHTMNU_LIGHTSHADOWMAPQUALITY", gl_shadowmap_quality,	"ShadowMapQuality"
+	Option "$GLLIGHTMNU_LIGHTSHADOWMAPFILTER", 	gl_shadowmap_filter,	"ShadowMapFilter"
 }
 
 OptionMenu "OpenGLOptions" protected

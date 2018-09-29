@@ -2787,6 +2787,7 @@ GLLIGHTMNU_LIGHTSPRITES				= "Lights affect sprites";
 GLLIGHTMNU_LIGHTPARTICLES			= "Lights affect particles";
 GLLIGHTMNU_LIGHTSHADOWMAP			= "Light shadowmaps";
 GLLIGHTMNU_LIGHTSHADOWMAPQUALITY	= "Shadowmap quality";
+GLLIGHTMNU_LIGHTSHADOWMAPFILTER		= "Shadowmap filter";
 
 // OpenGL Preferences
 GLPREFMNU_TITLE 				= "OPENGL PREFERENCES";

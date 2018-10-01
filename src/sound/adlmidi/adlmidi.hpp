@@ -24,9 +24,11 @@
 #ifndef ADLMIDI_HPP
 #define ADLMIDI_HPP
 
+#include "adlmidi.h"
+
 struct ADL_MIDIPlayer;
 
-class AdlInstrumentTester
+class ADLMIDI_DECLSPEC AdlInstrumentTester
 {
     struct Impl;
     Impl *P;

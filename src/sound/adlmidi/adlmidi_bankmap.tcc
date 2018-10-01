@@ -37,7 +37,7 @@ template <class T>
 inline size_t BasicBankMap<T>::hash(key_type key)
 {
     // disregard the 0 high bit in LSB
-    key = (key & 127) | ((key >> 8) << 7);
+    key = key_type(key & 127) | key_type((key >> 8) << 7);
     // take low part as hash value
     return key & (hash_buckets - 1);
 }

@@ -22,542 +22,203 @@
  */
 
 #include "opnmidi_private.hpp"
-
-#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
-#   ifndef OPNMIDI_DISABLE_MUS_SUPPORT
-#       include "opnmidi_mus2mid.h"
-#   endif
-#   ifndef OPNMIDI_DISABLE_XMI_SUPPORT
-#       include "opnmidi_xmi2mid.h"
-#   endif
-#endif //OPNMIDI_DISABLE_MIDI_SEQUENCER
-
-uint64_t OPNMIDIplay::ReadBEint(const void *buffer, size_t nbytes)
-{
-    uint64_t result = 0;
-    const unsigned char *data = reinterpret_cast<const unsigned char *>(buffer);
-
-    for(unsigned n = 0; n < nbytes; ++n)
-        result = (result << 8) + data[n];
-
-    return result;
-}
-
-uint64_t OPNMIDIplay::ReadLEint(const void *buffer, size_t nbytes)
-{
-    uint64_t result = 0;
-    const unsigned char *data = reinterpret_cast<const unsigned char *>(buffer);
-
-    for(unsigned n = 0; n < nbytes; ++n)
-        result = result + static_cast<uint64_t>(data[n] << (n * 8));
-
-    return result;
-}
-
-//uint64_t OPNMIDIplay::ReadVarLenEx(size_t tk, bool &ok)
-//{
-//    uint64_t result = 0;
-//    ok = false;
-
-//    for(;;)
-//    {
-//        if(tk >= TrackData.size())
-//            return 1;
-
-//        if(tk >= CurrentPosition.track.size())
-//            return 2;
-
-//        size_t ptr = CurrentPosition.track[tk].ptr;
-
-//        if(ptr >= TrackData[tk].size())
-//            return 3;
-
-//        unsigned char byte = TrackData[tk][CurrentPosition.track[tk].ptr++];
-//        result = (result << 7) + (byte & 0x7F);
-
-//        if(!(byte & 0x80)) break;
-//    }
-
-//    ok = true;
-//    return result;
-//}
+#include "opnmidi_cvt.hpp"
+#include "wopn/wopn_file.h"
 
 bool OPNMIDIplay::LoadBank(const std::string &filename)
 {
-    fileReader file;
+    FileAndMemReader file;
     file.openFile(filename.c_str());
     return LoadBank(file);
 }
 
 bool OPNMIDIplay::LoadBank(const void *data, size_t size)
 {
-    fileReader file;
+    FileAndMemReader file;
     file.openData(data, (size_t)size);
     return LoadBank(file);
 }
 
-size_t readU16BE(OPNMIDIplay::fileReader &fr, uint16_t &out)
+void cvt_OPNI_to_FMIns(opnInstMeta2 &ins, const OPN2_Instrument &in)
 {
-    uint8_t arr[2];
-    size_t ret = fr.read(arr, 1, 2);
-    out = arr[1];
-    out |= ((arr[0] << 8) & 0xFF00);
-    return ret;
+    return cvt_generic_to_FMIns(ins, in);
 }
 
-size_t readS16BE(OPNMIDIplay::fileReader &fr, int16_t &out)
+void cvt_FMIns_to_OPNI(OPN2_Instrument &ins, const opnInstMeta2 &in)
 {
-    uint8_t arr[2];
-    size_t ret = fr.read(arr, 1, 2);
-    out = *reinterpret_cast<signed char *>(&arr[0]);
-    out *= 1 << 8;
-    out |= arr[1];
-    return ret;
+    cvt_FMIns_to_generic(ins, in);
 }
 
-int16_t toSint16BE(uint8_t *arr)
+bool OPNMIDIplay::LoadBank(FileAndMemReader &fr)
 {
-    int16_t num = *reinterpret_cast<const int8_t *>(&arr[0]);
-    num *= 1 << 8;
-    num |= arr[1];
-    return num;
-}
-
-static uint16_t toUint16LE(const uint8_t *arr)
-{
-    uint16_t num = arr[0];
-    num |= ((arr[1] << 8) & 0xFF00);
-    return num;
-}
-
-static uint16_t toUint16BE(const uint8_t *arr)
-{
-    uint16_t num = arr[1];
-    num |= ((arr[0] << 8) & 0xFF00);
-    return num;
-}
-
-
-static const char *wopn2_magic1 = "WOPN2-BANK\0";
-static const char *wopn2_magic2 = "WOPN2-B2NK\0";
-
-#define WOPL_INST_SIZE_V1 65
-#define WOPL_INST_SIZE_V2 69
-
-static const uint16_t latest_version = 2;
-
-bool OPNMIDIplay::LoadBank(OPNMIDIplay::fileReader &fr)
-{
+    int err = 0;
+    WOPNFile *wopn = NULL;
+    char *raw_file_data = NULL;
     size_t  fsize;
-    ADL_UNUSED(fsize);
     if(!fr.isValid())
     {
-        errorStringOut = "Can't load bank file: Invalid data stream!";
+        errorStringOut = "Custom bank: Invalid data stream!";
         return false;
     }
 
-    char magic[32];
-    std::memset(magic, 0, 32);
-    uint16_t version = 1;
-
-    uint16_t count_melodic_banks     = 1;
-    uint16_t count_percussive_banks   = 1;
-
-    if(fr.read(magic, 1, 11) != 11)
+    // Read complete bank file into the memory
+    fsize = fr.fileSize();
+    fr.seek(0, FileAndMemReader::SET);
+    // Allocate necessary memory block
+    raw_file_data = (char*)malloc(fsize);
+    if(!raw_file_data)
     {
-        errorStringOut = "Can't load bank file: Can't read magic number!";
+        errorStringOut = "Custom bank: Out of memory before of read!";
         return false;
     }
+    fr.read(raw_file_data, 1, fsize);
 
-    bool is1 = std::strncmp(magic, wopn2_magic1, 11) == 0;
-    bool is2 = std::strncmp(magic, wopn2_magic2, 11) == 0;
+    // Parse bank file from the memory
+    wopn = WOPN_LoadBankFromMem((void*)raw_file_data, fsize, &err);
+    //Free the buffer no more needed
+    free(raw_file_data);
 
-    if(!is1 && !is2)
+    // Check for any erros
+    if(!wopn)
     {
-        errorStringOut = "Can't load bank file: Invalid magic number!";
-        return false;
-    }
-
-    if(is2)
-    {
-        uint8_t ver[2];
-        if(fr.read(ver, 1, 2) != 2)
+        switch(err)
         {
-            errorStringOut = "Can't load bank file: Can't read version number!";
+        case WOPN_ERR_BAD_MAGIC:
+            errorStringOut = "Custom bank: Invalid magic!";
+            return false;
+        case WOPN_ERR_UNEXPECTED_ENDING:
+            errorStringOut = "Custom bank: Unexpected ending!";
+            return false;
+        case WOPN_ERR_INVALID_BANKS_COUNT:
+            errorStringOut = "Custom bank: Invalid banks count!";
+            return false;
+        case WOPN_ERR_NEWER_VERSION:
+            errorStringOut = "Custom bank: Version is newer than supported by this library!";
+            return false;
+        case WOPN_ERR_OUT_OF_MEMORY:
+            errorStringOut = "Custom bank: Out of memory!";
+            return false;
+        default:
+            errorStringOut = "Custom bank: Unknown error!";
             return false;
         }
-        version = toUint16LE(ver);
-        if(version < 2 || version > latest_version)
+    }
+
+    m_synth.m_insBankSetup.volumeModel = wopn->volume_model;
+    m_synth.m_insBankSetup.lfoEnable = (wopn->lfo_freq & 8) != 0;
+    m_synth.m_insBankSetup.lfoFrequency = wopn->lfo_freq & 7;
+    m_setup.VolumeModel = OPNMIDI_VolumeModel_AUTO;
+    m_setup.lfoEnable = -1;
+    m_setup.lfoFrequency = -1;
+
+    m_synth.m_insBanks.clear();
+
+    uint16_t slots_counts[2] = {wopn->banks_count_melodic, wopn->banks_count_percussion};
+    WOPNBank *slots_src_ins[2] = { wopn->banks_melodic, wopn->banks_percussive };
+
+    for(size_t ss = 0; ss < 2; ss++)
+    {
+        for(size_t i = 0; i < slots_counts[ss]; i++)
         {
-            errorStringOut = "Can't load bank file: unsupported WOPN version!";
-            return false;
-        }
-    }
-
-    opn.cleanInstrumentBanks();
-    if((readU16BE(fr, count_melodic_banks) != 2) || (readU16BE(fr, count_percussive_banks) != 2))
-    {
-        errorStringOut = "Can't load bank file: Can't read count of banks!";
-        return false;
-    }
-
-    if((count_melodic_banks < 1) || (count_percussive_banks < 1))
-    {
-        errorStringOut = "Custom bank: Too few banks in this file!";
-        return false;
-    }
-
-    if(fr.read(&opn.regLFO, 1, 1) != 1)
-    {
-        errorStringOut = "Can't load bank file: Can't read LFO registry state!";
-        return false;
-    }
-
-    opn.cleanInstrumentBanks();
-
-    std::vector<OPN2::Bank *> banks;
-    banks.reserve(count_melodic_banks + count_percussive_banks);
-
-    if(version >= 2)//Read bank meta-entries
-    {
-        for(uint16_t i = 0; i < count_melodic_banks; i++)
-        {
-            uint8_t bank_meta[34];
-            if(fr.read(bank_meta, 1, 34) != 34)
+            size_t bankno = (slots_src_ins[ss][i].bank_midi_msb * 256) +
+                            (slots_src_ins[ss][i].bank_midi_lsb) +
+                            (ss ? size_t(OPN2::PercussionTag) : 0);
+            OPN2::Bank &bank = m_synth.m_insBanks[bankno];
+            for(int j = 0; j < 128; j++)
             {
-                opn.cleanInstrumentBanks();
-                errorStringOut = "Custom bank: Fail to read melodic bank meta-data!";
-                return false;
+                opnInstMeta2 &ins = bank.ins[j];
+                std::memset(&ins, 0, sizeof(opnInstMeta2));
+                WOPNInstrument &inIns = slots_src_ins[ss][i].ins[j];
+                cvt_generic_to_FMIns(ins, inIns);
             }
-            uint16_t bankno = uint16_t(bank_meta[33]) * 256 + uint16_t(bank_meta[32]);
-            OPN2::Bank &bank = opn.dynamic_banks[bankno];
-            //strncpy(bank.name, char_p(bank_meta), 32);
-            banks.push_back(&bank);
         }
-
-        for(uint16_t i = 0; i < count_percussive_banks; i++)
-        {
-            uint8_t bank_meta[34];
-            if(fr.read(bank_meta, 1, 34) != 34)
-            {
-                opn.cleanInstrumentBanks();
-                errorStringOut = "Custom bank: Fail to read percussion bank meta-data!";
-                return false;
-            }
-            uint16_t bankno = uint16_t(bank_meta[33]) * 256 + uint16_t(bank_meta[32]) + OPN2::PercussionTag;
-            OPN2::Bank &bank = opn.dynamic_banks[bankno];
-            //strncpy(bank.name, char_p(bank_meta), 32);
-            banks.push_back(&bank);
-        }
-    }
-
-    size_t total = 128 * opn.dynamic_banks.size();
-
-    for(size_t i = 0; i < total; i++)
-    {
-        opnInstMeta2 &meta = banks[i / 128]->ins[i % 128];
-        opnInstData &data = meta.opn[0];
-        uint8_t idata[WOPL_INST_SIZE_V2];
-
-        size_t readSize = version >= 2 ? WOPL_INST_SIZE_V2 : WOPL_INST_SIZE_V1;
-        if(fr.read(idata, 1, readSize) != readSize)
-        {
-            opn.cleanInstrumentBanks();
-            errorStringOut = "Can't load bank file: Failed to read instrument data";
-            return false;
-        }
-        data.finetune = toSint16BE(idata + 32);
-        //Percussion instrument note number or a "fixed note sound"
-        meta.tone  = idata[34];
-        data.fbalg = idata[35];
-        data.lfosens = idata[36];
-        for(size_t op = 0; op < 4; op++)
-        {
-            size_t off = 37 + op * 7;
-            std::memcpy(data.OPS[op].data, idata + off, 7);
-        }
-
-        meta.flags = 0;
-        if(version >= 2)
-        {
-            meta.ms_sound_kon   = toUint16BE(idata + 65);
-            meta.ms_sound_koff  = toUint16BE(idata + 67);
-            if((meta.ms_sound_kon == 0) && (meta.ms_sound_koff == 0))
-                meta.flags |= opnInstMeta::Flag_NoSound;
-        }
-        else
-        {
-            meta.ms_sound_kon   = 1000;
-            meta.ms_sound_koff  = 500;
-        }
-
-        meta.opn[1] = meta.opn[0];
-
-        /* Junk, delete later */
-        meta.fine_tune      = 0.0;
-        /* Junk, delete later */
     }
 
     applySetup();
+
+    WOPN_Free(wopn);
 
     return true;
 }
 
 #ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
+
+bool OPNMIDIplay::LoadMIDI_pre()
+{
+    if(m_synth.m_insBanks.empty())
+    {
+        errorStringOut = "Bank is not set! Please load any instruments bank by using of adl_openBankFile() or adl_openBankData() functions!";
+        return false;
+    }
+
+    /**** Set all properties BEFORE starting of actial file reading! ****/
+    resetMIDI();
+    applySetup();
+
+    return true;
+}
+
+bool OPNMIDIplay::LoadMIDI_post()
+{
+    MidiSequencer::FileFormat format = m_sequencer.getFormat();
+    if(format == MidiSequencer::Format_CMF)
+    {
+        errorStringOut = "OPNMIDI doesn't supports CMF, use ADLMIDI to play this file!";
+        /* As joke, why not to try implemented the converter of patches from OPL3 into OPN2? */
+        return false;
+    }
+    else if(format == MidiSequencer::Format_RSXX)
+    {
+        m_synth.m_musicMode     = OPN2::MODE_RSXX;
+        m_synth.m_volumeScale   = OPN2::VOLUME_Generic;
+        m_synth.m_numChips = 2;
+    }
+    else if(format == MidiSequencer::Format_IMF)
+    {
+        errorStringOut = "OPNMIDI doesn't supports IMF, use ADLMIDI to play this file!";
+        /* Same as for CMF */
+        return false;
+    }
+
+    m_setup.tick_skip_samples_delay = 0;
+    m_synth.reset(m_setup.emulator, m_setup.PCM_RATE, this); // Reset OPN2 chip
+    m_chipChannels.clear();
+    m_chipChannels.resize(m_synth.m_numChannels);
+
+    return true;
+}
+
+
 bool OPNMIDIplay::LoadMIDI(const std::string &filename)
 {
-    fileReader file;
+    FileAndMemReader file;
     file.openFile(filename.c_str());
-    if(!LoadMIDI(file))
+    if(!LoadMIDI_pre())
+        return false;
+    if(!m_sequencer.loadMIDI(file))
+    {
+        errorStringOut = m_sequencer.getErrorString();
+        return false;
+    }
+    if(!LoadMIDI_post())
         return false;
     return true;
 }
 
 bool OPNMIDIplay::LoadMIDI(const void *data, size_t size)
 {
-    fileReader file;
+    FileAndMemReader file;
     file.openData(data, size);
-    return LoadMIDI(file);
-}
-
-bool OPNMIDIplay::LoadMIDI(OPNMIDIplay::fileReader &fr)
-{
-    size_t  fsize;
-    ADL_UNUSED(fsize);
-    //! Temp buffer for conversion
-    AdlMIDI_CPtr<uint8_t> cvt_buf;
-    errorString.clear();
-
-    if(opn.dynamic_banks.empty())
+    if(!LoadMIDI_pre())
+        return false;
+    if(!m_sequencer.loadMIDI(file))
     {
-        errorStringOut = "Bank is not set! Please load any instruments bank by using of adl_openBankFile() or adl_openBankData() functions!";
+        errorStringOut = m_sequencer.getErrorString();
         return false;
     }
-
-    if(!fr.isValid())
-    {
-        errorStringOut = "Invalid data stream!\n";
-        #ifndef _WIN32
-        errorStringOut += std::strerror(errno);
-        #endif
+    if(!LoadMIDI_post())
         return false;
-    }
-
-    /**** Set all properties BEFORE starting of actial file reading! ****/
-    applySetup();
-
-    atEnd            = false;
-    loopStart        = true;
-    invalidLoop      = false;
-
-    bool is_GMF     = false; // GMD/MUS files (ScummVM)
-    bool is_RSXX    = false; // RSXX, such as Cartooners
-
-    const size_t HeaderSize = 4 + 4 + 2 + 2 + 2; // 14
-    char HeaderBuf[HeaderSize] = "";
-    size_t DeltaTicks = 192, TrackCount = 1;
-
-riffskip:
-    fsize = fr.read(HeaderBuf, 1, HeaderSize);
-
-    if(std::memcmp(HeaderBuf, "RIFF", 4) == 0)
-    {
-        fr.seek(6l, SEEK_CUR);
-        goto riffskip;
-    }
-
-    if(std::memcmp(HeaderBuf, "GMF\x1", 4) == 0)
-    {
-        // GMD/MUS files (ScummVM)
-        fr.seek(7 - static_cast<long>(HeaderSize), SEEK_CUR);
-        is_GMF = true;
-    }
-
-    #ifndef OPNMIDI_DISABLE_MUS_SUPPORT
-    else if(std::memcmp(HeaderBuf, "MUS\x1A", 4) == 0)
-    {
-        // MUS/DMX files (Doom)
-        fr.seek(0, SEEK_END);
-        size_t mus_len = fr.tell();
-        fr.seek(0, SEEK_SET);
-        uint8_t *mus = (uint8_t *)malloc(mus_len);
-        if(!mus)
-        {
-            errorStringOut = "Out of memory!";
-            return false;
-        }
-        fr.read(mus, 1, mus_len);
-        //Close source stream
-        fr.close();
-
-        uint8_t *mid = NULL;
-        uint32_t mid_len = 0;
-        int m2mret = OpnMidi_mus2midi(mus, static_cast<uint32_t>(mus_len),
-                                      &mid, &mid_len, 0);
-        if(mus) free(mus);
-        if(m2mret < 0)
-        {
-            errorStringOut = "Invalid MUS/DMX data format!";
-            return false;
-        }
-        cvt_buf.reset(mid);
-        //Open converted MIDI file
-        fr.openData(mid, static_cast<size_t>(mid_len));
-        //Re-Read header again!
-        goto riffskip;
-    }
-    #endif //OPNMIDI_DISABLE_MUS_SUPPORT
-
-    #ifndef OPNMIDI_DISABLE_XMI_SUPPORT
-    else if(std::memcmp(HeaderBuf, "FORM", 4) == 0)
-    {
-        if(std::memcmp(HeaderBuf + 8, "XDIR", 4) != 0)
-        {
-            fr.close();
-            errorStringOut = fr._fileName + ": Invalid format\n";
-            return false;
-        }
-
-        fr.seek(0, SEEK_END);
-        size_t mus_len = fr.tell();
-        fr.seek(0, SEEK_SET);
-        uint8_t *mus = (uint8_t*)malloc(mus_len);
-        if(!mus)
-        {
-            errorStringOut = "Out of memory!";
-            return false;
-        }
-        fr.read(mus, 1, mus_len);
-        //Close source stream
-        fr.close();
-
-        uint8_t *mid = NULL;
-        uint32_t mid_len = 0;
-        int m2mret = OpnMidi_xmi2midi(mus, static_cast<uint32_t>(mus_len),
-                                      &mid, &mid_len, XMIDI_CONVERT_NOCONVERSION);
-        if(mus) free(mus);
-        if(m2mret < 0)
-        {
-            errorStringOut = "Invalid XMI data format!";
-            return false;
-        }
-        cvt_buf.reset(mid);
-        //Open converted MIDI file
-        fr.openData(mid, static_cast<size_t>(mid_len));
-        //Re-Read header again!
-        goto riffskip;
-    }
-    #endif //OPNMIDI_DISABLE_XMI_SUPPORT
-
-    else
-    {
-        // Try to identify RSXX format
-        if(HeaderBuf[0] == 0x7D)
-        {
-            fr.seek(0x6D, SEEK_SET);
-            fr.read(HeaderBuf, 6, 1);
-            if(std::memcmp(HeaderBuf, "rsxx}u", 6) == 0)
-            {
-                is_RSXX = true;
-                fr.seek(0x7D, SEEK_SET);
-                TrackCount = 1;
-                DeltaTicks = 60;
-                //opl.CartoonersVolumes = true;
-                opn.m_musicMode = OPN2::MODE_RSXX;
-                opn.m_volumeScale = OPN2::VOLUME_CMF;
-            }
-        }
-
-        if(!is_RSXX)
-        {
-            if(std::memcmp(HeaderBuf, "MThd\0\0\0\6", 8) != 0)
-            {
-                fr.close();
-                errorStringOut = fr._fileName + ": Invalid format, Header signature is unknown!\n";
-                return false;
-            }
-
-            /*size_t  Fmt =      ReadBEint(HeaderBuf + 8,  2);*/
-            TrackCount = (size_t)ReadBEint(HeaderBuf + 10, 2);
-            DeltaTicks = (size_t)ReadBEint(HeaderBuf + 12, 2);
-        }
-    }
-
-    TrackData.clear();
-    TrackData.resize(TrackCount, std::vector<uint8_t>());
-    InvDeltaTicks = fraction<uint64_t>(1, 1000000l * static_cast<uint64_t>(DeltaTicks));
-    Tempo         = fraction<uint64_t>(1,            static_cast<uint64_t>(DeltaTicks) * 2);
-    static const unsigned char EndTag[4] = {0xFF, 0x2F, 0x00, 0x00};
-    size_t totalGotten = 0;
-
-    for(size_t tk = 0; tk < TrackCount; ++tk)
-    {
-        // Read track header
-        size_t TrackLength;
-        {
-            if(is_GMF || is_RSXX) // Take the rest of the file
-            {
-                size_t pos = fr.tell();
-                fr.seek(0, SEEK_END);
-                TrackLength = fr.tell() - pos;
-                fr.seek(static_cast<long>(pos), SEEK_SET);
-            }
-            else
-            {
-                fsize = fr.read(HeaderBuf, 1, 8);
-                if(std::memcmp(HeaderBuf, "MTrk", 4) != 0)
-                {
-                    fr.close();
-                    errorStringOut = fr._fileName + ": Invalid format, MTrk signature is not found!\n";
-                    return false;
-                }
-                TrackLength = (size_t)ReadBEint(HeaderBuf + 4, 4);
-            }
-
-            // Read track data
-            TrackData[tk].resize(TrackLength);
-            fsize = fr.read(&TrackData[tk][0], 1, TrackLength);
-            totalGotten += fsize;
-
-            if(is_GMF/*|| is_MUS*/) // Note: CMF does include the track end tag.
-                TrackData[tk].insert(TrackData[tk].end(), EndTag + 0, EndTag + 4);
-            if(is_RSXX)//Finalize raw track data with a zero
-                TrackData[tk].push_back(0);
-
-            //bool ok = false;
-            //// Read next event time
-            //uint64_t tkDelay = ReadVarLenEx(tk, ok);
-            //if(ok)
-            //    CurrentPosition.track[tk].delay = tkDelay;
-            //else
-            //{
-            //    std::stringstream msg;
-            //    msg << fr._fileName << ": invalid variable length in the track " << tk << "! (error code " << tkDelay << ")";
-            //    OPN2MIDI_ErrorString = msg.str();
-            //    return false;
-            //}
-        }
-    }
-
-    for(size_t tk = 0; tk < TrackCount; ++tk)
-        totalGotten += TrackData[tk].size();
-
-    if(totalGotten == 0)
-    {
-        errorStringOut = fr._fileName + ": Empty track data";
-        return false;
-    }
-
-    //Build new MIDI events table
-    if(!buildTrackData())
-    {
-        errorStringOut = fr._fileName + ": MIDI data parsing error has occouped!\n" + errorString;
-        return false;
-    }
-
-    opn.Reset(m_setup.emulator, m_setup.PCM_RATE); // Reset OPN2 chip
-    ch.clear();
-    ch.resize(opn.NumChannels);
     return true;
 }
+
 #endif //OPNMIDI_DISABLE_MIDI_SEQUENCER

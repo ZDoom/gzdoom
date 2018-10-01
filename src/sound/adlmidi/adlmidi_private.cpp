@@ -27,53 +27,58 @@ std::string ADLMIDI_ErrorString;
 
 // Generator callback on audio rate ticks
 
+#if defined(ADLMIDI_AUDIO_TICK_HANDLER)
 void adl_audioTickHandler(void *instance, uint32_t chipId, uint32_t rate)
 {
     reinterpret_cast<MIDIplay *>(instance)->AudioTick(chipId, rate);
 }
+#endif
 
-int adlRefreshNumCards(ADL_MIDIPlayer *device)
+int adlCalculateFourOpChannels(MIDIplay *play, bool silent)
 {
-    unsigned n_fourop[2] = {0, 0}, n_total[2] = {0, 0};
-    MIDIplay *play = reinterpret_cast<MIDIplay *>(device->adl_midiPlayer);
+    size_t n_fourop[2] = {0, 0}, n_total[2] = {0, 0};
 
     //Automatically calculate how much 4-operator channels is necessary
-    if(play->opl.AdlBank == ~0u)
+#ifndef DISABLE_EMBEDDED_BANKS
+    if(play->m_synth.m_embeddedBank == OPL3::CustomBankTag)
+#endif
     {
         //For custom bank
-        OPL3::BankMap::iterator it = play->opl.dynamic_banks.begin();
-        OPL3::BankMap::iterator end = play->opl.dynamic_banks.end();
+        OPL3::BankMap::iterator it = play->m_synth.m_insBanks.begin();
+        OPL3::BankMap::iterator end = play->m_synth.m_insBanks.end();
         for(; it != end; ++it)
         {
-            uint16_t bank = it->first;
-            unsigned div = (bank & OPL3::PercussionTag) ? 1 : 0;
-            for(unsigned i = 0; i < 128; ++i)
+            size_t bank = it->first;
+            size_t div = (bank & OPL3::PercussionTag) ? 1 : 0;
+            for(size_t i = 0; i < 128; ++i)
             {
                 adlinsdata2 &ins = it->second.ins[i];
                 if(ins.flags & adlinsdata::Flag_NoSound)
                     continue;
-                if((ins.adl[0] != ins.adl[1]) && ((ins.flags & adlinsdata::Flag_Pseudo4op) == 0))
+                if((ins.flags & adlinsdata::Flag_Real4op) != 0)
                     ++n_fourop[div];
                 ++n_total[div];
             }
         }
     }
+#ifndef DISABLE_EMBEDDED_BANKS
     else
     {
         //For embedded bank
-        for(unsigned a = 0; a < 256; ++a)
+        for(size_t  a = 0; a < 256; ++a)
         {
-            unsigned insno = banks[play->m_setup.AdlBank][a];
+            size_t insno = banks[play->m_setup.bankId][a];
             if(insno == 198)
                 continue;
             ++n_total[a / 128];
-            adlinsdata2 ins(adlins[insno]);
-            if(ins.flags & adlinsdata::Flag_Real4op)
+            adlinsdata2 ins = adlinsdata2::from_adldata(::adlins[insno]);
+            if((ins.flags & adlinsdata::Flag_Real4op) != 0)
                 ++n_fourop[a / 128];
         }
     }
+#endif
 
-    unsigned numFourOps = 0;
+    size_t numFourOps = 0;
 
     // All 2ops (no 4ops)
     if((n_fourop[0] == 0) && (n_fourop[1] == 0))
@@ -94,7 +99,10 @@ int adlRefreshNumCards(ADL_MIDIPlayer *device)
         : (play->m_setup.NumCards == 1 ? 1 : play->m_setup.NumCards * 4);
 */
 
-    play->opl.NumFourOps = play->m_setup.NumFourOps = (numFourOps * play->m_setup.NumCards);
+    play->m_synth.m_numFourOps = static_cast<unsigned>(numFourOps * play->m_synth.m_numChips);
+    // Update channel categories and set up four-operator channels
+    if(!silent)
+        play->m_synth.updateChannelCategories();
 
     return 0;
 }

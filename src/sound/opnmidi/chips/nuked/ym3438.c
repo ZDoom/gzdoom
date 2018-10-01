@@ -1,19 +1,19 @@
 /*
  * Copyright (C) 2017 Alexey Khokholov (Nuke.YKT)
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
+ * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  *
  *  Nuked OPN2(Yamaha YM3438) emulator.
@@ -214,6 +214,32 @@ static const Bit32u fm_algorithm[4][6][8] = {
         { 0, 0, 1, 0, 0, 0, 0, 0 }, /* Last operator */
         { 1, 1, 1, 1, 1, 1, 1, 1 }  /* Out           */
     }
+};
+
+/*
+ * Pan law table
+ */
+
+static const Bit16u panlawtable[] =
+{
+    65535, 65529, 65514, 65489, 65454, 65409, 65354, 65289,
+    65214, 65129, 65034, 64929, 64814, 64689, 64554, 64410,
+    64255, 64091, 63917, 63733, 63540, 63336, 63123, 62901,
+    62668, 62426, 62175, 61914, 61644, 61364, 61075, 60776,
+    60468, 60151, 59825, 59489, 59145, 58791, 58428, 58057,
+    57676, 57287, 56889, 56482, 56067, 55643, 55211, 54770,
+    54320, 53863, 53397, 52923, 52441, 51951, 51453, 50947,
+    50433, 49912, 49383, 48846, 48302, 47750, 47191,
+    46340, /* Center left */
+    46340, /* Center right */
+    45472, 44885, 44291, 43690, 43083, 42469, 41848, 41221,
+    40588, 39948, 39303, 38651, 37994, 37330, 36661, 35986,
+    35306, 34621, 33930, 33234, 32533, 31827, 31116, 30400,
+    29680, 28955, 28225, 27492, 26754, 26012, 25266, 24516,
+    23762, 23005, 22244, 21480, 20713, 19942, 19169, 18392,
+    17613, 16831, 16046, 15259, 14469, 13678, 12884, 12088,
+    11291, 10492, 9691, 8888, 8085, 7280, 6473, 5666,
+    4858, 4050, 3240, 2431, 1620, 810, 0
 };
 
 static Bit32u chip_type = ym3438_type_discrete;
@@ -1204,6 +1230,8 @@ void OPN2_Reset(ym3438_t *chip, Bit32u rate, Bit32u clock)
     {
         chip->pan_l[i] = 1;
         chip->pan_r[i] = 1;
+        chip->pan_volume_l[i] = 46340;
+        chip->pan_volume_r[i] = 46340;
     }
 
     if (rate != 0)
@@ -1426,6 +1454,13 @@ Bit8u OPN2_Read(ym3438_t *chip, Bit32u port)
     return 0;
 }
 
+
+void OPN2_WritePan(ym3438_t *chip, Bit32u channel, Bit8u data)
+{
+    chip->pan_volume_l[channel] = panlawtable[data & 0x7F];
+    chip->pan_volume_r[channel] = panlawtable[0x7F - (data & 0x7F)];
+}
+
 void OPN2_WriteBuffered(ym3438_t *chip, Bit32u port, Bit8u data)
 {
     Bit64u time1, time2;
@@ -1466,6 +1501,7 @@ void OPN2_Generate(ym3438_t *chip, Bit16s *buf)
     Bit32u i;
     Bit16s buffer[2];
     Bit32u mute;
+    Bit32s channel = -1;
 
     buf[0] = 0;
     buf[1] = 0;
@@ -1476,21 +1512,27 @@ void OPN2_Generate(ym3438_t *chip, Bit16s *buf)
         {
         case 0: /* Ch 2 */
             mute = chip->mute[1];
+            channel = 1;
             break;
         case 1: /* Ch 6, DAC */
             mute = chip->mute[5 + chip->dacen];
+            channel = 5;
             break;
         case 2: /* Ch 4 */
             mute = chip->mute[3];
+            channel = 3;
             break;
         case 3: /* Ch 1 */
             mute = chip->mute[0];
+            channel = 0;
             break;
         case 4: /* Ch 5 */
             mute = chip->mute[4];
+            channel = 4;
             break;
         case 5: /* Ch 3 */
             mute = chip->mute[2];
+            channel = 2;
             break;
         default:
             mute = 0;
@@ -1499,6 +1541,11 @@ void OPN2_Generate(ym3438_t *chip, Bit16s *buf)
         OPN2_Clock(chip, buffer);
         if (!mute)
         {
+            if (channel >= 0)
+            {
+                buffer[0] = buffer[0] * chip->pan_volume_l[channel] / 65535;
+                buffer[1] = buffer[1] * chip->pan_volume_r[channel] / 65535;
+            }
             buf[0] += buffer[0];
             buf[1] += buffer[1];
         }

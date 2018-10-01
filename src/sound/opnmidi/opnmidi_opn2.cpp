@@ -48,23 +48,60 @@
 #include "chips/gx_opn2.h"
 #endif
 
+static const unsigned opn2_emulatorSupport = 0
+#ifndef OPNMIDI_DISABLE_NUKED_EMULATOR
+    | (1u << OPNMIDI_EMU_NUKED)
+#endif
+#ifndef OPNMIDI_DISABLE_MAME_EMULATOR
+    | (1u << OPNMIDI_EMU_MAME)
+#endif
+#ifndef OPNMIDI_DISABLE_GENS_EMULATOR
+    | (1u << OPNMIDI_EMU_GENS)
+#endif
+#ifndef OPNMIDI_DISABLE_GX_EMULATOR
+    | (1u << OPNMIDI_EMU_GX)
+#endif
+;
 
-static const uint8_t NoteChannels[6] = { 0, 1, 2, 4, 5, 6 };
-
-static inline void getOpnChannel(uint32_t   in_channel,
-                                 unsigned   &out_card,
-                                 uint8_t    &out_port,
-                                 uint8_t    &out_ch)
+//! Check emulator availability
+bool opn2_isEmulatorAvailable(int emulator)
 {
-    out_card    = in_channel / 6;
-    uint8_t ch4 = in_channel % 6;
-    out_port = ((ch4 < 3) ? 0 : 1);
-    out_ch = ch4 % 3;
+    return (opn2_emulatorSupport & (1u << (unsigned)emulator)) != 0;
 }
 
-void OPN2::cleanInstrumentBanks()
+//! Find highest emulator
+int opn2_getHighestEmulator()
 {
-    dynamic_banks.clear();
+    int emu = -1;
+    for(unsigned m = opn2_emulatorSupport; m > 0; m >>= 1)
+        ++emu;
+    return emu;
+}
+
+//! Find lowest emulator
+int opn2_getLowestEmulator()
+{
+    int emu = -1;
+    unsigned m = opn2_emulatorSupport;
+    if(m > 0)
+    {
+        for(emu = 0; (m & 1) == 0; m >>= 1)
+            ++emu;
+    }
+    return emu;
+}
+
+static const uint32_t g_noteChannelsMap[6] = { 0, 1, 2, 4, 5, 6 };
+
+static inline void getOpnChannel(size_t     in_channel,
+                                 size_t     &out_chip,
+                                 uint8_t    &out_port,
+                                 uint32_t   &out_ch)
+{
+    out_chip    = in_channel / 6;
+    size_t ch4 = in_channel % 6;
+    out_port = ((ch4 < 3) ? 0 : 1);
+    out_ch = static_cast<uint32_t>(ch4 % 3);
 }
 
 static opnInstMeta2 makeEmptyInstrument()
@@ -75,71 +112,128 @@ static opnInstMeta2 makeEmptyInstrument()
     return ins;
 }
 
-const opnInstMeta2 OPN2::emptyInstrument = makeEmptyInstrument();
+const opnInstMeta2 OPN2::m_emptyInstrument = makeEmptyInstrument();
 
 OPN2::OPN2() :
-    regLFO(0),
-    NumCards(1),
+    m_regLFOSetup(0),
+    m_numChips(1),
+    m_scaleModulators(false),
+    m_runAtPcmRate(false),
+    m_softPanning(false),
     m_musicMode(MODE_MIDI),
-    m_volumeScale(VOLUME_Generic)
+    m_volumeScale(VOLUME_Generic),
+    m_lfoEnable(false),
+    m_lfoFrequency(0)
 {
+    m_insBankSetup.volumeModel = OPN2::VOLUME_Generic;
+    m_insBankSetup.lfoEnable = false;
+    m_insBankSetup.lfoFrequency = 0;
+
     // Initialize blank instruments banks
-    cleanInstrumentBanks();
+    m_insBanks.clear();
 }
 
 OPN2::~OPN2()
 {
-    ClearChips();
+    clearChips();
 }
 
-void OPN2::PokeO(size_t card, uint8_t port, uint8_t index, uint8_t value)
+bool OPN2::setupLocked()
 {
-    cardsOP2[card]->writeReg(port, index, value);
+    return (m_musicMode == MODE_CMF ||
+            m_musicMode == MODE_IMF ||
+            m_musicMode == MODE_RSXX);
 }
 
-void OPN2::NoteOff(size_t c)
+void OPN2::writeReg(size_t chip, uint8_t port, uint8_t index, uint8_t value)
 {
-    unsigned    card;
-    uint8_t     port, cc;
-    uint8_t     ch4 = c % 6;
-    getOpnChannel(uint16_t(c), card, port, cc);
-    PokeO(card, 0, 0x28, NoteChannels[ch4]);
+    m_chips[chip]->writeReg(port, index, value);
 }
 
-void OPN2::NoteOn(unsigned c, double hertz) // Hertz range: 0..131071
+void OPN2::writeRegI(size_t chip, uint8_t port, uint32_t index, uint32_t value)
 {
-    unsigned    card;
-    uint8_t     port, cc;
-    uint8_t     ch4 = c % 6;
-    getOpnChannel(uint16_t(c), card, port, cc);
+    m_chips[chip]->writeReg(port, static_cast<uint8_t>(index), static_cast<uint8_t>(value));
+}
 
-    uint16_t x2 = 0x0000;
+void OPN2::writePan(size_t chip, uint32_t index, uint32_t value)
+{
+    m_chips[chip]->writePan(static_cast<uint16_t>(index), static_cast<uint8_t>(value));
+}
 
-    if(hertz < 0 || hertz > 262143) // Avoid infinite loop
+void OPN2::noteOff(size_t c)
+{
+    size_t      chip;
+    uint8_t     port;
+    uint32_t    cc;
+    size_t      ch4 = c % 6;
+    getOpnChannel(c, chip, port, cc);
+    writeRegI(chip, 0, 0x28, g_noteChannelsMap[ch4]);
+}
+
+void OPN2::noteOn(size_t c, double hertz) // Hertz range: 0..131071
+{
+    size_t      chip;
+    uint8_t     port;
+    uint32_t    cc;
+    size_t      ch4 = c % 6;
+    getOpnChannel(c, chip, port, cc);
+
+    if(hertz < 0) // Avoid infinite loop
         return;
 
-    while((hertz >= 1023.75) && (x2 < 0x3800))
+    uint32_t octave = 0, ftone = 0, mul_offset = 0;
+    const opnInstData &adli = m_insCache[c];
+
+    //Basic range until max of octaves reaching
+    while((hertz >= 1023.75) && (octave < 0x3800))
     {
         hertz /= 2.0;    // Calculate octave
-        x2 += 0x800;
+        octave += 0x800;
+    }
+    //Extended range, rely on frequency multiplication increment
+    while(hertz >= 2036.75)
+    {
+        hertz /= 2.0;    // Calculate octave
+        mul_offset++;
+    }
+    ftone = octave + static_cast<uint32_t>(hertz + 0.5);
+
+    for(size_t op = 0; op < 4; op++)
+    {
+        uint32_t reg = adli.OPS[op].data[0];
+        uint16_t address = static_cast<uint16_t>(0x30 + (op * 4) + cc);
+        if(mul_offset > 0) // Increase frequency multiplication value
+        {
+            uint32_t dt  = reg & 0xF0;
+            uint32_t mul = reg & 0x0F;
+            if((mul + mul_offset) > 0x0F)
+            {
+                mul_offset = 0;
+                mul = 0x0F;
+            }
+            writeRegI(chip, port, address, uint8_t(dt | (mul + mul_offset)));
+        }
+        else
+        {
+            writeRegI(chip, port, address, uint8_t(reg));
+        }
     }
 
-    x2 += static_cast<uint32_t>(hertz + 0.5);
-    PokeO(card, port, 0xA4 + cc, (x2>>8) & 0xFF);//Set frequency and octave
-    PokeO(card, port, 0xA0 + cc,  x2 & 0xFF);
-    PokeO(card, 0, 0x28, 0xF0 + NoteChannels[ch4]);
-    pit[c] = static_cast<uint8_t>(x2 >> 8);
+    writeRegI(chip, port, 0xA4 + cc, (ftone>>8) & 0xFF);//Set frequency and octave
+    writeRegI(chip, port, 0xA0 + cc, ftone & 0xFF);
+    writeRegI(chip, 0, 0x28, 0xF0 + g_noteChannelsMap[ch4]);
 }
 
-void OPN2::Touch_Real(unsigned c, unsigned volume, uint8_t brightness)
+void OPN2::touchNote(size_t c, uint8_t volume, uint8_t brightness)
 {
     if(volume > 127) volume = 127;
 
-    unsigned    card;
-    uint8_t     port, cc;
-    getOpnChannel(c, card, port, cc);
+    size_t      chip;
+    uint8_t     port;
+    uint32_t    cc;
+    getOpnChannel(c, chip, port, cc);
 
-    const opnInstData &adli = ins[c];
+    const opnInstData &adli = m_insCache[c];
 
     uint8_t op_vol[4] =
     {
@@ -170,16 +264,16 @@ void OPN2::Touch_Real(unsigned c, unsigned volume, uint8_t brightness)
     uint8_t alg = adli.fbalg & 0x07;
     for(uint8_t op = 0; op < 4; op++)
     {
-        bool do_op = alg_do[alg][op] || ScaleModulators;
-        uint8_t x = op_vol[op];
-        uint8_t vol_res = do_op ? uint8_t(127 - (volume * (127 - (x&127)))/127) : x;
+        bool do_op = alg_do[alg][op] || m_scaleModulators;
+        uint32_t x = op_vol[op];
+        uint32_t vol_res = do_op ? (127 - (static_cast<uint32_t>(volume) * (127 - (x & 127)))/127) : x;
         if(brightness != 127)
         {
-            brightness = static_cast<uint8_t>(::round(127.0 * ::sqrt((static_cast<double>(brightness)) * (1.0 / 127.0))));
+            brightness = static_cast<uint32_t>(::round(127.0 * ::sqrt((static_cast<double>(brightness)) * (1.0 / 127.0))));
             if(!do_op)
-                vol_res = uint8_t(127 - (brightness * (127 - (uint32_t(vol_res) & 127))) / 127);
+                vol_res = (127 - (brightness * (127 - (static_cast<uint32_t>(vol_res) & 127))) / 127);
         }
-        PokeO(card, port, 0x40 + cc + (4 * op), vol_res);
+        writeRegI(chip, port, 0x40 + cc + (4 * op), vol_res);
     }
     // Correct formula (ST3, AdPlug):
     //   63-((63-(instrvol))/63)*chanvol
@@ -189,57 +283,68 @@ void OPN2::Touch_Real(unsigned c, unsigned volume, uint8_t brightness)
     //   63 + chanvol * (instrvol / 63.0 - 1)
 }
 
-void OPN2::Patch(uint16_t c, const opnInstData &adli)
+void OPN2::setPatch(size_t c, const opnInstData &instrument)
 {
-    unsigned    card;
-    uint8_t     port, cc;
-    getOpnChannel(uint16_t(c), card, port, cc);
-    ins[c] = adli;
-    #if 1 //Reg1-Op1, Reg1-Op2, Reg1-Op3, Reg1-Op4,....
+    size_t      chip;
+    uint8_t     port;
+    uint32_t    cc;
+    getOpnChannel(c, chip, port, cc);
+    m_insCache[c] = instrument;
     for(uint8_t d = 0; d < 7; d++)
     {
         for(uint8_t op = 0; op < 4; op++)
-            PokeO(card, port, 0x30 + (0x10 * d) + (op * 4) + cc, adli.OPS[op].data[d]);
+            writeRegI(chip, port, 0x30 + (0x10 * d) + (op * 4) + cc, instrument.OPS[op].data[d]);
     }
-    #else //Reg1-Op1, Reg2-Op1, Reg3-Op1, Reg4-Op1,....
-    for(uint8_t op = 0; op < 4; op++)
-    {
-        PokeO(card, port, 0x30 + (op * 4) + cc, adli.OPS[op].data[0]);
-        PokeO(card, port, 0x40 + (op * 4) + cc, adli.OPS[op].data[1]);
-        PokeO(card, port, 0x50 + (op * 4) + cc, adli.OPS[op].data[2]);
-        PokeO(card, port, 0x60 + (op * 4) + cc, adli.OPS[op].data[3]);
-        PokeO(card, port, 0x70 + (op * 4) + cc, adli.OPS[op].data[4]);
-        PokeO(card, port, 0x80 + (op * 4) + cc, adli.OPS[op].data[5]);
-        PokeO(card, port, 0x90 + (op * 4) + cc, adli.OPS[op].data[6]);
-    }
-    #endif
 
-    PokeO(card, port, 0xB0 + cc, adli.fbalg);//Feedback/Algorithm
-    regBD[c] = (regBD[c] & 0xC0) | (adli.lfosens & 0x3F);
-    PokeO(card, port, 0xB4 + cc, regBD[c]);//Panorame and LFO bits
+    writeRegI(chip, port, 0xB0 + cc, instrument.fbalg);//Feedback/Algorithm
+    m_regLFOSens[c] = (m_regLFOSens[c] & 0xC0) | (instrument.lfosens & 0x3F);
+    writeRegI(chip, port, 0xB4 + cc, m_regLFOSens[c]);//Panorame and LFO bits
 }
 
-void OPN2::Pan(unsigned c, unsigned value)
+void OPN2::setPan(size_t c, uint8_t value)
 {
-    unsigned    card;
-    uint8_t     port, cc;
-    getOpnChannel(uint16_t(c), card, port, cc);
-    const opnInstData &adli = ins[c];
-    uint8_t val = (value & 0xC0) | (adli.lfosens & 0x3F);
-    regBD[c] = val;
-    PokeO(card, port, 0xB4 + cc, val);
+    size_t      chip;
+    uint8_t     port;
+    uint32_t    cc;
+    getOpnChannel(c, chip, port, cc);
+    const opnInstData &adli = m_insCache[c];
+    uint8_t val = 0;
+    if(m_softPanning)
+    {
+        val = (OPN_PANNING_BOTH & 0xC0) | (adli.lfosens & 0x3F);
+        writePan(chip, c % 6, value);
+        writeRegI(chip, port, 0xB4 + cc, val);
+    }
+    else
+    {
+        int panning = 0;
+        if(value  < 64 + 32) panning |= OPN_PANNING_LEFT;
+        if(value >= 64 - 32) panning |= OPN_PANNING_RIGHT;
+        val = (panning & 0xC0) | (adli.lfosens & 0x3F);
+        writePan(chip, c % 6, 64);
+        writeRegI(chip, port, 0xB4 + cc, val);
+    }
+    m_regLFOSens[c] = val;
 }
 
-void OPN2::Silence() // Silence all OPL channels.
+void OPN2::silenceAll() // Silence all OPL channels.
 {
-    for(unsigned c = 0; c < NumChannels; ++c)
+    for(size_t c = 0; c < m_numChannels; ++c)
     {
-        NoteOff(c);
-        Touch_Real(c, 0);
+        noteOff(c);
+        touchNote(c, 0);
     }
 }
 
-void OPN2::ChangeVolumeRangesModel(OPNMIDI_VolumeModels volumeModel)
+void OPN2::commitLFOSetup()
+{
+    uint8_t regLFOSetup = (m_lfoEnable ? 8 : 0) | (m_lfoFrequency & 7);
+    m_regLFOSetup = regLFOSetup;
+    for(size_t chip = 0; chip < m_numChips; ++chip)
+        writeReg(chip, 0, 0x22, regLFOSetup);
+}
+
+void OPN2::setVolumeScaleModel(OPNMIDI_VolumeModels volumeModel)
 {
     switch(volumeModel)
     {
@@ -250,8 +355,8 @@ void OPN2::ChangeVolumeRangesModel(OPNMIDI_VolumeModels volumeModel)
         m_volumeScale = OPN2::VOLUME_Generic;
         break;
 
-    case OPNMIDI_VolumeModel_CMF:
-        m_volumeScale = OPN2::VOLUME_CMF;
+    case OPNMIDI_VolumeModel_NativeOPN2:
+        m_volumeScale = OPN2::VOLUME_NATIVE;
         break;
 
     case OPNMIDI_VolumeModel_DMX:
@@ -268,70 +373,101 @@ void OPN2::ChangeVolumeRangesModel(OPNMIDI_VolumeModels volumeModel)
     }
 }
 
-void OPN2::ClearChips()
+OPNMIDI_VolumeModels OPN2::getVolumeScaleModel()
 {
-    for(size_t i = 0; i < cardsOP2.size(); i++)
-        cardsOP2[i].reset(NULL);
-    cardsOP2.clear();
+    switch(m_volumeScale)
+    {
+    default:
+    case OPN2::VOLUME_Generic:
+        return OPNMIDI_VolumeModel_Generic;
+    case OPN2::VOLUME_NATIVE:
+        return OPNMIDI_VolumeModel_NativeOPN2;
+    case OPN2::VOLUME_DMX:
+        return OPNMIDI_VolumeModel_DMX;
+    case OPN2::VOLUME_APOGEE:
+        return OPNMIDI_VolumeModel_APOGEE;
+    case OPN2::VOLUME_9X:
+        return OPNMIDI_VolumeModel_9X;
+    }
 }
 
-void OPN2::Reset(int emulator, unsigned long PCM_RATE)
+void OPN2::clearChips()
 {
-    ClearChips();
-    ins.clear();
-    pit.clear();
-    regBD.clear();
-    cardsOP2.resize(NumCards, AdlMIDI_SPtr<OPNChipBase>());
+    for(size_t i = 0; i < m_chips.size(); i++)
+        m_chips[i].reset(NULL);
+    m_chips.clear();
+}
 
-    for(size_t i = 0; i < cardsOP2.size(); i++)
+void OPN2::reset(int emulator, unsigned long PCM_RATE, void *audioTickHandler)
+{
+#if !defined(ADLMIDI_AUDIO_TICK_HANDLER)
+    ADL_UNUSED(audioTickHandler);
+#endif
+    clearChips();
+    m_insCache.clear();
+    m_regLFOSens.clear();
+    m_chips.resize(m_numChips, AdlMIDI_SPtr<OPNChipBase>());
+
+    for(size_t i = 0; i < m_chips.size(); i++)
     {
+        OPNChipBase *chip;
+
         switch(emulator)
         {
         default:
+            assert(false);
+            abort();
 #ifndef OPNMIDI_DISABLE_MAME_EMULATOR
         case OPNMIDI_EMU_MAME:
-            cardsOP2[i].reset(new MameOPN2());
+            chip = new MameOPN2;
             break;
 #endif
 #ifndef OPNMIDI_DISABLE_NUKED_EMULATOR
         case OPNMIDI_EMU_NUKED:
-            cardsOP2[i].reset(new NukedOPN2());
+            chip = new NukedOPN2;
             break;
 #endif
 #ifndef OPNMIDI_DISABLE_GENS_EMULATOR
         case OPNMIDI_EMU_GENS:
-            cardsOP2[i].reset(new GensOPN2());
+            chip = new GensOPN2;
             break;
 #endif
 #ifndef OPNMIDI_DISABLE_GX_EMULATOR
         case OPNMIDI_EMU_GX:
-            cardsOP2[i].reset(new GXOPN2());
+            chip = new GXOPN2;
             break;
 #endif
         }
-        cardsOP2[i]->setRate((uint32_t)PCM_RATE, 7670454);
-        if(runAtPcmRate)
-            cardsOP2[i]->setRunningAtPcmRate(true);
+        m_chips[i].reset(chip);
+        chip->setChipId((uint32_t)i);
+        chip->setRate((uint32_t)PCM_RATE, 7670454);
+        if(m_runAtPcmRate)
+            chip->setRunningAtPcmRate(true);
+#if defined(ADLMIDI_AUDIO_TICK_HANDLER)
+        chip->setAudioTickHandlerInstance(audioTickHandler);
+#endif
     }
 
-    NumChannels = NumCards * 6;
-    ins.resize(NumChannels,   emptyInstrument.opn[0]);
-    pit.resize(NumChannels,   0);
-    regBD.resize(NumChannels,    0);
+    m_numChannels = m_numChips * 6;
+    m_insCache.resize(m_numChannels,   m_emptyInstrument.opn[0]);
+    m_regLFOSens.resize(m_numChannels,    0);
 
-    for(unsigned card = 0; card < NumCards; ++card)
+    uint8_t regLFOSetup = (m_lfoEnable ? 8 : 0) | (m_lfoFrequency & 7);
+    m_regLFOSetup = regLFOSetup;
+
+    for(size_t card = 0; card < m_numChips; ++card)
     {
-        PokeO(card, 0, 0x22, regLFO);//push current LFO state
-        PokeO(card, 0, 0x27, 0x00);  //set Channel 3 normal mode
-        PokeO(card, 0, 0x2B, 0x00);  //Disable DAC
+        writeReg(card, 0, 0x22, regLFOSetup);//push current LFO state
+        writeReg(card, 0, 0x27, 0x00);  //set Channel 3 normal mode
+        writeReg(card, 0, 0x2B, 0x00);  //Disable DAC
         //Shut up all channels
-        PokeO(card, 0, 0x28, 0x00 ); //Note Off 0 channel
-        PokeO(card, 0, 0x28, 0x01 ); //Note Off 1 channel
-        PokeO(card, 0, 0x28, 0x02 ); //Note Off 2 channel
-        PokeO(card, 0, 0x28, 0x04 ); //Note Off 3 channel
-        PokeO(card, 0, 0x28, 0x05 ); //Note Off 4 channel
-        PokeO(card, 0, 0x28, 0x06 ); //Note Off 5 channel
+        writeReg(card, 0, 0x28, 0x00 ); //Note Off 0 channel
+        writeReg(card, 0, 0x28, 0x01 ); //Note Off 1 channel
+        writeReg(card, 0, 0x28, 0x02 ); //Note Off 2 channel
+        writeReg(card, 0, 0x28, 0x04 ); //Note Off 3 channel
+        writeReg(card, 0, 0x28, 0x05 ); //Note Off 4 channel
+        writeReg(card, 0, 0x28, 0x06 ); //Note Off 5 channel
     }
 
-    Silence();
+    silenceAll();
 }

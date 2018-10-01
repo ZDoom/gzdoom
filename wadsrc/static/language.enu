@@ -2224,6 +2224,10 @@ ADVSNDMNU_RUNPCMRATE		= "Run emulator at PCM rate";
 ADVSNDMNU_ADLNUMCHIPS		= "Number of emulated OPL chips";
 ADVSNDMNU_VLMODEL			= "Volume model";
 ADVSNDMNU_OPNNUMCHIPS		= "Number of emulated OPN chips";
+ADVSNDMNU_ADLCUSTOMBANK 	= "Use custom WOPL bank";
+ADVSNDMNU_OPLBANKFILE       = "WOPL Bank file";
+ADVSNDMNU_OPNCUSTOMBANK 	= "Use custom WOPN bank";
+ADVSNDMNU_OPNBANKFILE       = "WOPN Bank file";
 
 // ADLMIDI's emulation cores
 

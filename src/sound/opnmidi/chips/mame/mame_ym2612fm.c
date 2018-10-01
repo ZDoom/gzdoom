@@ -136,6 +136,7 @@
 #include <stdlib.h>
 #include <string.h>	/* for memset */
 #include <stddef.h>	/* for NULL */
+#include <assert.h>
 #include <math.h>
 #include "mamedef.h"
 #include "mame_ym2612fm.h"
@@ -543,6 +544,33 @@ static FILE *sample[1];
 #endif
 
 
+/*
+ * Pan law table
+ */
+
+static const UINT16 panlawtable[] =
+{
+    65535, 65529, 65514, 65489, 65454, 65409, 65354, 65289,
+    65214, 65129, 65034, 64929, 64814, 64689, 64554, 64410,
+    64255, 64091, 63917, 63733, 63540, 63336, 63123, 62901,
+    62668, 62426, 62175, 61914, 61644, 61364, 61075, 60776,
+    60468, 60151, 59825, 59489, 59145, 58791, 58428, 58057,
+    57676, 57287, 56889, 56482, 56067, 55643, 55211, 54770,
+    54320, 53863, 53397, 52923, 52441, 51951, 51453, 50947,
+    50433, 49912, 49383, 48846, 48302, 47750, 47191,
+    46340, /* Center left */
+    46340, /* Center right */
+    45472, 44885, 44291, 43690, 43083, 42469, 41848, 41221,
+    40588, 39948, 39303, 38651, 37994, 37330, 36661, 35986,
+    35306, 34621, 33930, 33234, 32533, 31827, 31116, 30400,
+    29680, 28955, 28225, 27492, 26754, 26012, 25266, 24516,
+    23762, 23005, 22244, 21480, 20713, 19942, 19169, 18392,
+    17613, 16831, 16046, 15259, 14469, 13678, 12884, 12088,
+    11291, 10492, 9691, 8888, 8085, 7280, 6473, 5666,
+    4858, 4050, 3240, 2431, 1620, 810, 0
+};
+
+
 /* struct describing a single operator (SLOT) */
 typedef struct
 {
@@ -608,6 +636,9 @@ typedef struct
 	UINT8	kcode;		/* key code:                        */
 	UINT32	block_fnum;	/* current blk/fnum value for this slot (can be different betweeen slots of one channel in 3slot mode) */
 	UINT8	Muted;
+
+	INT32	pan_volume_l;
+	INT32	pan_volume_r;
 } FM_CH;
 
 
@@ -2457,34 +2488,40 @@ void ym2612_generate_one_native(void *chip, FMSAMPLE buffer[])
 	if (out_fm[5] > 8192) out_fm[5] = 8192;
 	else if (out_fm[5] < -8192) out_fm[5] = -8192;
 
+#define PANLAW_L(ch, chpan) (((out_fm[ch]>>0) * cch[ch].pan_volume_l / 65535) & OPN->pan[chpan]);
+#define PANLAW_R(ch, chpan) (((out_fm[ch]>>0) * cch[ch].pan_volume_r / 65535) & OPN->pan[chpan]);
+
 	/* 6-channels mixing  */
-	lt  = ((out_fm[0]>>0) & OPN->pan[0]);
-	rt  = ((out_fm[0]>>0) & OPN->pan[1]);
-	lt += ((out_fm[1]>>0) & OPN->pan[2]);
-	rt += ((out_fm[1]>>0) & OPN->pan[3]);
-	lt += ((out_fm[2]>>0) & OPN->pan[4]);
-	rt += ((out_fm[2]>>0) & OPN->pan[5]);
-	lt += ((out_fm[3]>>0) & OPN->pan[6]);
-	rt += ((out_fm[3]>>0) & OPN->pan[7]);
+	lt  = PANLAW_L(0, 0);
+	rt  = PANLAW_R(0, 1);
+	lt += PANLAW_L(1, 2);
+	rt += PANLAW_R(1, 3);
+	lt += PANLAW_L(2, 4);
+	rt += PANLAW_R(2, 5);
+	lt += PANLAW_L(3, 6);
+	rt += PANLAW_R(3, 7);
 	if (! F2612->dac_test)
 	{
-		lt += ((out_fm[4]>>0) & OPN->pan[8]);
-		rt += ((out_fm[4]>>0) & OPN->pan[9]);
+		lt += PANLAW_L(4, 8);
+		rt += PANLAW_R(4, 9);
 	}
 	else
 	{
 		lt += dacout;
-		lt += dacout;
+		rt += dacout;
 	}
-	lt += ((out_fm[5]>>0) & OPN->pan[10]);
-	rt += ((out_fm[5]>>0) & OPN->pan[11]);
+	lt += PANLAW_L(5, 10);
+	rt += PANLAW_R(5, 11);
+
+#undef PANLAW_L
+#undef PANLAW_R
 
 	/* Limit( lt, MAXOUT, MINOUT ); */
 	/* Limit( rt, MAXOUT, MINOUT ); */
 
-	#ifdef SAVE_SAMPLE
-		SAVE_ALL_CHANNELS
-	#endif
+#ifdef SAVE_SAMPLE
+	SAVE_ALL_CHANNELS
+#endif
 
 	/* buffering */
 	if (F2612->WaveOutMode & 0x01)
@@ -2587,6 +2624,7 @@ void * ym2612_init(void *param, int clock, int rate,
 			   FM_TIMERHANDLER timer_handler,FM_IRQHANDLER IRQHandler)
 {
 	YM2612 *F2612;
+	int i = 0;
 
 	if (clock <= 0 || rate <= 0)
 		return NULL; /* Forbid zero clock and sample rate */
@@ -2624,6 +2662,13 @@ void * ym2612_init(void *param, int clock, int rate,
 		F2612->WaveOutMode = 0x01;
 	else
 		F2612->WaveOutMode = 0x03;
+
+	for (i = 0; i < 6; i++)
+	{
+		F2612->CH[i].pan_volume_l = 46340;
+		F2612->CH[i].pan_volume_r = 46340;
+	}
+
 	/*hFile = fopen("YM2612.log", "wt");
 	fprintf(hFile, "Clock: %d, Sample Rate: %d\n", clock, rate);
 	fprintf(hFile, "Sample\tCh 0\tCh 1\tCh 2\tCh 3\tCh 4\tCh 5\n");
@@ -2784,6 +2829,14 @@ int ym2612_write(void *chip, int a, UINT8 v)
 		break;
 	}
 	return F2612->OPN.ST.irq;
+}
+
+void ym2612_write_pan(void *chip, int c, unsigned char v)
+{
+	YM2612 *F2612 = (YM2612 *)chip;
+	assert((c >= 0) && (c < 6));
+	F2612->CH[c].pan_volume_l = panlawtable[v & 0x7F];
+	F2612->CH[c].pan_volume_r = panlawtable[0x7F - (v & 0x7F)];
 }
 
 UINT8 ym2612_read(void *chip,int a)

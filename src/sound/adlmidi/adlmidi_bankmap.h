@@ -40,7 +40,7 @@ template <class T>
 class BasicBankMap
 {
 public:
-    typedef uint16_t key_type;  /* the bank identifier */
+    typedef size_t key_type;  /* the bank identifier */
     typedef T mapped_type;
     typedef std::pair<key_type, T> value_type;
 
@@ -74,7 +74,7 @@ private:
     enum
     {
         hash_bits = 8, /* worst case # of collisions: 128^2/2^hash_bits */
-        hash_buckets = 1 << hash_bits,
+        hash_buckets = 1 << hash_bits
     };
 
 public:

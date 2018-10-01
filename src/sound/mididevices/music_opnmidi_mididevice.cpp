@@ -38,6 +38,7 @@
 #include "w_wad.h"
 #include "i_system.h"
 #include "opnmidi/opnmidi.h"
+#include "i_soundfont.h"
 
 enum
 {
@@ -74,6 +75,14 @@ CUSTOM_CVAR(Bool, opn_run_at_pcm_rate, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	}
 }
 
+CUSTOM_CVAR(Bool, opn_fullpan, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
 CUSTOM_CVAR(Bool, opn_use_custom_bank, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
@@ -102,25 +111,21 @@ OPNMIDIDevice::OPNMIDIDevice(const char *args)
 	Renderer = opn2_init(44100);	// todo: make it configurable
 	if (Renderer != nullptr)
 	{
+		if (!LoadCustomBank(opn_custom_bank))
+		{
+			int lump = Wads.CheckNumForFullName("xg.wopn");
+			if (lump < 0)
+			{
+				I_Error("No OPN bank found");
+			}
+			FMemLump data = Wads.ReadLump(lump);
+			opn2_openBankData(Renderer, data.GetMem(), (long)data.GetSize());
+		}
+
 		opn2_switchEmulator(Renderer, (int)opn_emulator_id);
 		opn2_setRunAtPcmRate(Renderer, (int)opn_run_at_pcm_rate);
-// todo: Implement handling of external or in-resources WOPN bank files and load
-/*
-		if(opn_use_custom_bank)
-		{
-			opn2_openBankFile(Renderer, (char*)opn_bank_file);
-			opn2_openBankData(Renderer, (char*)opn_bank, (long)size);
-		}
-		else
- */
-		int lump = Wads.CheckNumForFullName("xg.wopn");
-		if (lump < 0)
-		{
-			I_Error("No OPN bank found");
-		}
-		FMemLump data = Wads.ReadLump(lump);
-		opn2_openBankData(Renderer, data.GetMem(), (long)data.GetSize());
 		opn2_setNumChips(Renderer, opn_chips_count);
+		opn2_setSoftPanEnabled(Renderer, (int)opn_fullpan);
 	}
 }
 
@@ -137,6 +142,27 @@ OPNMIDIDevice::~OPNMIDIDevice()
 	{
 		opn2_close(Renderer);
 	}
+}
+
+//==========================================================================
+//
+// OPNMIDIDevice :: LoadCustomBank
+//
+// Loads a custom WOPN bank for libOPNMIDI. Returns 1 when bank has been
+// loaded, otherwise, returns 0 when custom banks are disabled or failed
+//
+//==========================================================================
+
+
+int OPNMIDIDevice::LoadCustomBank(const char *bankfile)
+{
+	if(!opn_use_custom_bank)
+		return 0;
+	auto info = sfmanager.FindSoundFont(bankfile, SF_WOPN);
+	if(info == nullptr)
+		return 0;
+	bankfile = info->mFilename.GetChars();
+	return (opn2_openBankFile(Renderer, bankfile) == 0);
 }
 
 //==========================================================================

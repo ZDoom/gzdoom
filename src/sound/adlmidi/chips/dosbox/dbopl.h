@@ -75,13 +75,13 @@ typedef enum {
 	sm3AMAM,
 	sm6Start,
 	sm2Percussion,
-	sm3Percussion,
+	sm3Percussion
 } SynthMode;
 
 //Shifts for the values contained in chandata variable
 enum {
 	SHIFT_KSLBASE = 16,
-	SHIFT_KEYCODE = 24,
+	SHIFT_KEYCODE = 24
 };
 
 struct Operator {
@@ -91,7 +91,7 @@ public:
 		MASK_KSR = 0x10,
 		MASK_SUSTAIN = 0x20,
 		MASK_VIBRATO = 0x40,
-		MASK_TREMOLO = 0x80,
+		MASK_TREMOLO = 0x80
 	};
 
 	typedef enum {
@@ -99,7 +99,7 @@ public:
 		RELEASE,
 		SUSTAIN,
 		DECAY,
-		ATTACK,
+		ATTACK
 	} State;
 
 	VolumeHandler volHandler;
@@ -192,6 +192,9 @@ struct Channel {
 	Bit8s maskLeft;		//Sign extended values for both channel's panning
 	Bit8s maskRight;
 
+	Bit16u panLeft; // Extended behavior, scale values for soft panning
+	Bit16u panRight;
+
 	//Forward the channel data to the operators of the channel
 	void SetChanData( const Chip* chip, Bit32u data );
 	//Change in the chandata, check for new values and if we have to forward to operators
@@ -200,6 +203,8 @@ struct Channel {
 	void WriteA0( const Chip* chip, Bit8u val );
 	void WriteB0( const Chip* chip, Bit8u val );
 	void WriteC0( const Chip* chip, Bit8u val );
+
+	void WritePan( Bit8u val );
 
 	//call this for the first channel
 	template< bool opl3Mode >
@@ -222,11 +227,11 @@ struct Chip {
 	Bit32u noiseValue;
 
 	//Frequency scales for the different multiplications
-	Bit32u freqMul[16];
+	const Bit32u *freqMul/*[16]*/;
 	//Rates for decay and release for rate of this chip
-	Bit32u linearRates[76];
+	const Bit32u *linearRates/*[76]*/;
 	//Best match attack rates for the rate of this chip
-	Bit32u attackRates[76];
+	const Bit32u *attackRates/*[76]*/;
 
 	//18 channels with 2 operators each
 	Channel chan[18];
@@ -271,6 +276,7 @@ struct Chip {
 
 struct Handler {
 	DBOPL::Chip chip;
+	void WritePan( Bit32u port, Bit8u val );
 	Bit32u WriteAddr( Bit32u port, Bit8u val );
 	void WriteReg( Bit32u addr, Bit8u val );
 	void GenerateArr(Bit32s *out, Bitu *samples);

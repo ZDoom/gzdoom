@@ -1,3 +1,23 @@
+/*
+ * Interfaces over Yamaha OPN2 (YM2612) chip emulators
+ *
+ * Copyright (C) 2017-2018 Vitaly Novichkov (Wohlstand)
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ */
+
 #ifndef ONP_CHIP_BASE_H
 #define ONP_CHIP_BASE_H
 
@@ -13,24 +33,39 @@
 class VResampler;
 #endif
 
+#if defined(OPNMIDI_AUDIO_TICK_HANDLER)
+extern void opn2_audioTickHandler(void *instance, uint32_t chipId, uint32_t rate);
+#endif
+
 class OPNChipBase
 {
 public:
     enum { nativeRate = 53267 };
 protected:
+    uint32_t m_id;
     uint32_t m_rate;
     uint32_t m_clock;
 public:
     OPNChipBase();
     virtual ~OPNChipBase();
 
+    uint32_t chipId() const { return m_id; }
+    void setChipId(uint32_t id) { m_id = id; }
+
     virtual bool canRunAtPcmRate() const = 0;
     virtual bool isRunningAtPcmRate() const = 0;
     virtual bool setRunningAtPcmRate(bool r) = 0;
+#if defined(OPNMIDI_AUDIO_TICK_HANDLER)
+    virtual void setAudioTickHandlerInstance(void *instance) = 0;
+#endif
 
     virtual void setRate(uint32_t rate, uint32_t clock) = 0;
+    virtual uint32_t effectiveRate() const = 0;
     virtual void reset() = 0;
     virtual void writeReg(uint32_t port, uint16_t addr, uint8_t data) = 0;
+
+    // extended
+    virtual void writePan(uint16_t addr, uint8_t data) { (void)addr; (void)data; }
 
     virtual void nativePreGenerate() = 0;
     virtual void nativePostGenerate() = 0;
@@ -58,8 +93,12 @@ public:
 
     bool isRunningAtPcmRate() const override;
     bool setRunningAtPcmRate(bool r) override;
+#if defined(OPNMIDI_AUDIO_TICK_HANDLER)
+    void setAudioTickHandlerInstance(void *instance);
+#endif
 
     virtual void setRate(uint32_t rate, uint32_t clock) override;
+    uint32_t effectiveRate() const override;
     virtual void reset() override;
     void generate(int16_t *output, size_t frames) override;
     void generateAndMix(int16_t *output, size_t frames) override;
@@ -67,6 +106,10 @@ public:
     void generateAndMix32(int32_t *output, size_t frames) override;
 private:
     bool m_runningAtPcmRate;
+#if defined(OPNMIDI_AUDIO_TICK_HANDLER)
+    void *m_audioTickHandlerInstance;
+#endif
+    void nativeTick(int16_t *frame);
     void setupResampler(uint32_t rate);
     void resetResampler();
     void resampledGenerate(int32_t *output);

@@ -1691,6 +1691,17 @@ OptionMenu ADLBankMenu protected
 	Title "$ADVSNDMNU_OPLBANK"
 }
 
+OptionMenu ADLMIDICustomBanksMenu protected
+{
+	Title "$ADVSNDMNU_OPLBANKFILE"
+}
+
+OptionMenu OPNMIDICustomBanksMenu protected
+{
+	Title "$ADVSNDMNU_OPNBANKFILE"
+}
+
+
 /*=======================================
  *
  * Module Replayer Options Menu
@@ -1840,11 +1851,16 @@ OptionMenu ModReplayerOptions protected
  OptionMenu ADLOptions protected
  {
 	Title "$ADVSNDMNU_ADLMIDI"
-	LabeledSubmenu "$ADVSNDMNU_OPLBANK", "adl_bank", "ADLBankMenu"
 	Option "$ADVSNDMNU_OPLCORES",		 "adl_emulator_id", "ADLOplCores"
 	Option "$ADVSNDMNU_RUNPCMRATE",		 "adl_run_at_pcm_rate", "OnOff"
 	Slider "$ADVSNDMNU_ADLNUMCHIPS", 	 "adl_chips_count", 1, 32, 1, 0
+	Option "$ADVSNDMNU_OPLFULLPAN", 	 "adl_fullpan", "OnOff"
 	Option "$ADVSNDMNU_VLMODEL",		 "adl_volume_model", "AdlVolumeModels"
+	StaticText ""
+	LabeledSubmenu "$ADVSNDMNU_OPLBANK", "adl_bank", "ADLBankMenu"
+	StaticText ""
+	Option "$ADVSNDMNU_ADLCUSTOMBANK", 	 "adl_use_custom_bank", "OnOff"
+	LabeledSubmenu "$ADVSNDMNU_OPLBANKFILE", "adl_custom_bank", "ADLMIDICustomBanksMenu"
  }
 
  OptionMenu OPNOptions protected
@@ -1853,6 +1869,10 @@ OptionMenu ModReplayerOptions protected
 	Option "$ADVSNDMNU_OPNCORES",		 "opn_emulator_id", "OpnCores"
 	Option "$ADVSNDMNU_RUNPCMRATE",		 "opn_run_at_pcm_rate", "OnOff"
 	Slider "$ADVSNDMNU_OPNNUMCHIPS", 	 "opn_chips_count", 1, 32, 1, 0
+	Option "$ADVSNDMNU_OPLFULLPAN", 	 "opn_fullpan", "OnOff"
+	StaticText ""
+	Option "$ADVSNDMNU_OPNCUSTOMBANK", 	 "opn_use_custom_bank", "OnOff"
+	LabeledSubmenu "$ADVSNDMNU_OPNBANKFILE", "opn_custom_bank", "OPNMIDICustomBanksMenu"
  }
 
 /*=======================================
@@ -1944,7 +1964,7 @@ OptionMenu VideoModeMenu protected
 OptionMenu CustomResolutionMenu protected
 {
 	Title "$VIDMNU_RESPRESETTTL"
-	
+
 	StaticText "$VIDMNU_RESPRESETHEAD"
 	StaticText ""
 	StaticText "$VIDMNU_ASPECT43"
@@ -2250,7 +2270,7 @@ OptionMenu "GLTextureGLOptions" protected
 	Option "$GLTEXMNU_TEXFILTER",		gl_texture_filter,				"FilterModes"
 	Option "$GLTEXMNU_ANISOTROPIC",		gl_texture_filter_anisotropic,	"Anisotropy"
 	Option "$GLTEXMNU_ENABLEHIRES",		gl_texture_usehires,			"YesNo"
-	
+
 	ifOption(MMX)
 	{
 		Option "$GLTEXMNU_HQRESIZE",		gl_texture_hqresize,			"HqResizeModes"

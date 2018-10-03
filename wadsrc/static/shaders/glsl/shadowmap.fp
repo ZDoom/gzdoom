@@ -140,12 +140,13 @@ void main()
 	if (radius > 0.0)
 	{
 		vec2 pixelpos;
-		switch (int(gl_FragCoord.x) / int(ShadowmapQuality/4.0))
+		float u = gl_FragCoord.x / ShadowmapQuality * 4.0;
+		switch (int(u))
 		{
-		case 0: pixelpos = vec2((gl_FragCoord.x - float(ShadowmapQuality/8.0)) / float(ShadowmapQuality/8.0), 1.0); break;
-		case 1: pixelpos = vec2(1.0, (gl_FragCoord.x - float(ShadowmapQuality/4.0 + ShadowmapQuality/8.0)) / float(ShadowmapQuality/8.0)); break;
-		case 2: pixelpos = vec2(-(gl_FragCoord.x - float(ShadowmapQuality/2.0 + ShadowmapQuality/8.0)) / float(ShadowmapQuality/8.0), -1.0); break;
-		case 3: pixelpos = vec2(-1.0, -(gl_FragCoord.x - float(ShadowmapQuality*3.0/4.0 + ShadowmapQuality/8.0)) / float(ShadowmapQuality/8.0)); break;
+		case 0: pixelpos = vec2(u * 2.0 - 1.0, 1.0); break;
+		case 1: pixelpos = vec2(1.0, 1.0 - (u - 1.0) * 2.0); break;
+		case 2: pixelpos = vec2(1.0 - (u - 2.0) * 2.0, -1.0); break;
+		case 3: pixelpos = vec2(-1.0, (u - 3.0) * 2.0 - 1.0); break;
 		}
 		pixelpos = lightpos + pixelpos * radius;
 

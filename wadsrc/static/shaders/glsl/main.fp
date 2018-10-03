@@ -162,17 +162,19 @@ float shadowDirToU(vec2 dir)
 {
 	if (abs(dir.x) > abs(dir.y))
 	{
+		float v = dir.y / dir.x * 0.125;
 		if (dir.x >= 0.0)
-			return dir.y / dir.x * 0.125 + (0.25 + 0.125);
+			return (0.25 + 0.125) - v;
 		else
-			return dir.y / dir.x * 0.125 + (0.75 + 0.125);
+			return (0.75 + 0.125) - v;
 	}
 	else
 	{
+		float v = dir.x / dir.y * 0.125;
 		if (dir.y >= 0.0)
-			return dir.x / dir.y * 0.125 + 0.125;
+			return 0.125 + v;
 		else
-			return dir.x / dir.y * 0.125 + (0.50 + 0.125);
+			return (0.50 + 0.125) + v;
 	}
 }
 

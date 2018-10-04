@@ -160,21 +160,21 @@ float R_DoomLightingEquation(float light)
 
 float shadowDirToU(vec2 dir)
 {
-	if (abs(dir.x) > abs(dir.y))
+	if (abs(dir.y) > abs(dir.x))
 	{
-		float v = dir.y / dir.x * 0.125;
-		if (dir.x >= 0.0)
-			return (0.25 + 0.125) - v;
+		float x = dir.x / dir.y * 0.125;
+		if (dir.y >= 0.0)
+			return 0.125 + x;
 		else
-			return (0.75 + 0.125) - v;
+			return (0.50 + 0.125) + x;
 	}
 	else
 	{
-		float v = dir.x / dir.y * 0.125;
-		if (dir.y >= 0.0)
-			return 0.125 + v;
+		float y = dir.y / dir.x * 0.125;
+		if (dir.x >= 0.0)
+			return (0.25 + 0.125) - y;
 		else
-			return (0.50 + 0.125) + v;
+			return (0.75 + 0.125) - y;
 	}
 }
 
@@ -182,7 +182,7 @@ float sampleShadowmap(vec2 dir, float v)
 {
 	float u = shadowDirToU(dir);
 	float dist2 = dot(dir, dir);
-	return texture(ShadowMap, vec2(u, v)).x > dist2 ? 1.0 : 0.0;
+	return step(dist2, texture(ShadowMap, vec2(u, v)).x);
 }
 
 float sampleShadowmapLinear(vec2 dir, float v)
@@ -211,6 +211,40 @@ float sampleShadowmapLinear(vec2 dir, float v)
 	return mix(step(dist2, depth0), step(dist2, depth1), t);
 }
 
+vec2 shadowmapAdjustedRay(vec4 lightpos)
+{
+	vec3 planePoint = pixelpos.xyz - lightpos.xyz;
+
+	if (dot(planePoint.xz, planePoint.xz) < 1.0)
+		return planePoint.xz * 0.5;
+
+	vec3 ray = normalize(planePoint);
+
+	vec2 isize = textureSize(ShadowMap, 0);
+	float scale = float(isize.x) * 0.25;
+
+	// Snap to shadow map texel grid
+	if (abs(ray.z) > abs(ray.x))
+	{
+		ray.y = ray.y / abs(ray.z);
+		ray.x = ray.x / abs(ray.z);
+		ray.x = (floor((ray.x + 1.0) * 0.5 * scale) + 0.5) / scale * 2.0 - 1.0;
+		ray.z = sign(ray.z);
+	}
+	else
+	{
+		ray.y = ray.y / abs(ray.x);
+		ray.z = ray.z / abs(ray.x);
+		ray.z = (floor((ray.z + 1.0) * 0.5 * scale) + 0.5) / scale * 2.0 - 1.0;
+		ray.x = sign(ray.x);
+	}
+
+	float bias = 1.0;
+	float negD = dot(vWorldNormal.xyz, planePoint);
+	float t = negD / dot(vWorldNormal.xyz, ray) - bias;
+	return ray.xz * t;
+}
+
 //===========================================================================
 //
 // Check if light is in shadow using Percentage Closer Filtering (PCF)
@@ -224,22 +258,20 @@ float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
 
 	float v = (shadowIndex + 0.5) / 1024.0;
 
-	vec2 ray = pixelpos.xz - lightpos.xz;
-	float length = length(ray);
-	if (length < 3.0)
-		return 1.0;
-
-	vec2 dir = ray / length;
+	vec2 ray = shadowmapAdjustedRay(lightpos);
 
 	if (uShadowmapFilter <= 0)
 	{
-		ray -= dir * 2.0; // Shadow acne margin
-		return sampleShadowmapLinear(ray, v);
+		return sampleShadowmap(ray, v);
+		//return sampleShadowmapLinear(ray, v);
 	}
 	else
 	{
-		ray -= dir * 2.0; // Shadow acne margin
-		dir = dir * min(length / 50.0, 1.0); // avoid sampling behind light
+		float length = length(ray);
+		if (length < 3.0)
+			return 1.0;
+
+		vec2 dir = ray / length * min(length / 50.0, 1.0); // avoid sampling behind light
 
 		vec2 normal = vec2(-dir.y, dir.x);
 		vec2 bias = dir * 10.0;
@@ -253,10 +285,6 @@ float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
 		}
 		return sum / uShadowmapFilter;
 	}
-#if 0 // nearest shadow filter (not used)
-	ray -= dir * 6.0; // Shadow acne margin
-	return sampleShadowmap(ray, v);
-#endif
 }
 
 float shadowAttenuation(vec4 lightpos, float lightcolorA)

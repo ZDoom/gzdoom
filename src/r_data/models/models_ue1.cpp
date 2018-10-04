@@ -129,7 +129,7 @@ void FUE1Model::LoadGeometry()
 			FVector3 dir[2];
 			dir[0] = verts[Poly.V[1]+numVerts*j].Pos-verts[Poly.V[0]+numVerts*j].Pos;
 			dir[1] = verts[Poly.V[2]+numVerts*j].Pos-verts[Poly.V[0]+numVerts*j].Pos;
-			Poly.Normals.Push(dir[0]^dir[1]);
+			Poly.Normals.Push((dir[0]^dir[1]).Unit());
 		}
 		// push
 		polys.Push(Poly);

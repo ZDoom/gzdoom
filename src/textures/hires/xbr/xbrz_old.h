@@ -11,18 +11,13 @@
 // * If you modify this file, you may extend this exception to your version   *
 // * of the file, but you are not obligated to do so. If you do not wish to   *
 // * do so, delete this exception statement from your version.                *
-// *                                                                          *
-// * An explicit permission was granted to use xBRZ in combination with ZDoom *
-// * and derived projects as long as it is used for non-commercial purposes.  *
-// *                                                                          *
-// * Backported to C++98 by Alexey Lysiuk                                     *
 // ****************************************************************************
 
 #ifndef __XBRZ_OLD_HEADER_INCLUDED__
 #define __XBRZ_OLD_HEADER_INCLUDED__
 
 #include <cstddef> //size_t
-#include <stdint.h> //uint32_t
+#include <cstdint> //uint32_t
 #include <limits>
 #include "xbrz_config_old.h"
 

@@ -26,6 +26,7 @@
 
 #include <string.h>
 #include <stdint.h>
+#include <cstring>
 
 #pragma pack(push, 1)
 #define ADLDATA_BYTE_COMPARABLE(T)                      \
@@ -34,32 +35,32 @@
     inline bool operator!=(const T &a, const T &b)      \
     { return !operator==(a, b); }
 
-extern const struct adldata
+struct adldata
 {
     uint32_t    modulator_E862, carrier_E862;  // See below
     uint8_t     modulator_40, carrier_40; // KSL/attenuation settings
     uint8_t     feedconn; // Feedback/connection bits for the channel
 
     int8_t      finetune;
-} adl[];
+};
 ADLDATA_BYTE_COMPARABLE(struct adldata)
-enum { adlDefaultNumber = 189 };
 
-extern const struct adlinsdata
+struct adlinsdata
 {
     enum { Flag_Pseudo4op = 0x01, Flag_NoSound = 0x02, Flag_Real4op = 0x04 };
+
+    enum { Flag_RM_BassDrum  = 0x08, Flag_RM_Snare = 0x10, Flag_RM_TomTom = 0x18,
+           Flag_RM_Cymbal = 0x20, Flag_RM_HiHat = 0x28, Mask_RhythmMode = 0x38 };
 
     uint16_t    adlno1, adlno2;
     uint8_t     tone;
     uint8_t     flags;
     uint16_t    ms_sound_kon;  // Number of milliseconds it produces sound;
     uint16_t    ms_sound_koff;
+    int8_t      midi_velocity_offset;
     double      voice2_fine_tune;
-} adlins[];
+};
 ADLDATA_BYTE_COMPARABLE(struct adlinsdata)
-int maxAdlBanks();
-extern const unsigned short banks[][256];
-extern const char* const banknames[];
 
 enum { adlNoteOnMaxTime = 40000 };
 
@@ -73,9 +74,9 @@ struct adlinsdata2
     uint8_t     flags;
     uint16_t    ms_sound_kon;  // Number of milliseconds it produces sound;
     uint16_t    ms_sound_koff;
+    int8_t      midi_velocity_offset;
     double      voice2_fine_tune;
-    adlinsdata2() {}
-    explicit adlinsdata2(const adlinsdata &d);
+    static adlinsdata2 from_adldata(const adlinsdata &d);
 };
 ADLDATA_BYTE_COMPARABLE(struct adlinsdata2)
 
@@ -85,25 +86,43 @@ ADLDATA_BYTE_COMPARABLE(struct adlinsdata2)
 /**
  * @brief Bank global setup
  */
-extern const struct AdlBankSetup
+struct AdlBankSetup
 {
     int     volumeModel;
     bool    deepTremolo;
     bool    deepVibrato;
     bool    adLibPercussions;
     bool    scaleModulators;
-} adlbanksetup[];
+};
+
+#ifndef DISABLE_EMBEDDED_BANKS
+int maxAdlBanks();
+extern const adldata adl[];
+extern const adlinsdata adlins[];
+extern const unsigned short banks[][256];
+extern const char* const banknames[];
+extern const AdlBankSetup adlbanksetup[];
+#endif
 
 /**
  * @brief Conversion of storage formats
  */
-inline adlinsdata2::adlinsdata2(const adlinsdata &d)
-    : tone(d.tone), flags(d.flags),
-      ms_sound_kon(d.ms_sound_kon), ms_sound_koff(d.ms_sound_koff),
-      voice2_fine_tune(d.voice2_fine_tune)
+inline adlinsdata2 adlinsdata2::from_adldata(const adlinsdata &d)
 {
-    adl[0] = ::adl[d.adlno1];
-    adl[1] = ::adl[d.adlno2];
+    adlinsdata2 ins;
+    ins.tone = d.tone;
+    ins.flags = d.flags;
+    ins.ms_sound_kon = d.ms_sound_kon;
+    ins.ms_sound_koff = d.ms_sound_koff;
+    ins.midi_velocity_offset = d.midi_velocity_offset;
+    ins.voice2_fine_tune = d.voice2_fine_tune;
+#ifdef DISABLE_EMBEDDED_BANKS
+    std::memset(ins.adl, 0, sizeof(adldata) * 2);
+#else
+    ins.adl[0] = ::adl[d.adlno1];
+    ins.adl[1] = ::adl[d.adlno2];
+#endif
+    return ins;
 }
 
 /**

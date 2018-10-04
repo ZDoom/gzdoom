@@ -7,7 +7,9 @@
 enum
 {
     SF_SF2 = 1,
-    SF_GUS = 2
+    SF_GUS = 2,
+    SF_WOPL = 4,
+    SF_WOPN = 8
 };
 
 struct FSoundFontInfo

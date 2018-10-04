@@ -148,8 +148,9 @@ void ym2612_generate_one_native(void *chip, FMSAMPLE buffer[2]);
 
 /* void ym2612_post_generate(void *chip, int length); */
 
-int ym2612_write(void *chip, int a,unsigned char v);
-unsigned char ym2612_read(void *chip,int a);
+int ym2612_write(void *chip, int a, unsigned char v);
+void ym2612_write_pan(void *chip, int c, unsigned char v);
+unsigned char ym2612_read(void *chip, int a);
 int ym2612_timer_over(void *chip, int c );
 void ym2612_postload(void *chip);
 

@@ -25,7 +25,7 @@
 
 // Mapping from MIDI volume level to OPL level value.
 
-static const uint32_t DMX_volume_mapping_table[] =
+static const uint_fast32_t DMX_volume_mapping_table[128] =
 {
     0,  1,  3,  5,  6,  8,  10, 11,
     13, 14, 16, 17, 19, 20, 22, 23,
@@ -43,26 +43,9 @@ static const uint32_t DMX_volume_mapping_table[] =
     116, 117, 117, 118, 118, 119, 119, 120,
     120, 121, 121, 122, 122, 123, 123, 123,
     124, 124, 125, 125, 126, 126, 127, 127,
-    //Protection entries to avoid crash if value more than 127
-    127, 127, 127, 127, 127, 127, 127, 127,
-    127, 127, 127, 127, 127, 127, 127, 127,
-    127, 127, 127, 127, 127, 127, 127, 127,
-    127, 127, 127, 127, 127, 127, 127, 127,
-    127, 127, 127, 127, 127, 127, 127, 127,
-    127, 127, 127, 127, 127, 127, 127, 127,
-    127, 127, 127, 127, 127, 127, 127, 127,
-    127, 127, 127, 127, 127, 127, 127, 127,
-    127, 127, 127, 127, 127, 127, 127, 127,
-    127, 127, 127, 127, 127, 127, 127, 127,
-    127, 127, 127, 127, 127, 127, 127, 127,
-    127, 127, 127, 127, 127, 127, 127, 127,
-    127, 127, 127, 127, 127, 127, 127, 127,
-    127, 127, 127, 127, 127, 127, 127, 127,
-    127, 127, 127, 127, 127, 127, 127, 127,
-    127, 127, 127, 127, 127, 127, 127, 127,
 };
 
-static const uint8_t W9X_volume_mapping_table[32] =
+static const uint_fast32_t W9X_volume_mapping_table[32] =
 {
     63, 63, 40, 36, 32, 28, 23, 21,
     19, 17, 15, 14, 13, 12, 11, 10,
@@ -70,609 +53,46 @@ static const uint8_t W9X_volume_mapping_table[32] =
     3,  3,  2,  2,  1,  1,  0,  0
 };
 
+enum { MasterVolumeDefault = 127 };
+
 inline bool isXgPercChannel(uint8_t msb, uint8_t lsb)
 {
     return (msb == 0x7E || msb == 0x7F) && (lsb == 0);
 }
 
-void OPNMIDIplay::OpnChannel::AddAge(int64_t ms)
+void OPNMIDIplay::OpnChannel::addAge(int64_t us)
 {
-    const int64_t neg = static_cast<int64_t>(-0x1FFFFFFFl);
+    const int64_t neg = 1000 * static_cast<int64_t>(-0x1FFFFFFFl);
     if(users_empty())
-        koff_time_until_neglible =
-            std::max(int64_t(koff_time_until_neglible - ms), neg);
+    {
+        koff_time_until_neglible_us = std::max(koff_time_until_neglible_us - us, neg);
+        if(koff_time_until_neglible_us < 0)
+            koff_time_until_neglible_us = 0;
+    }
     else
     {
-        koff_time_until_neglible = 0;
-
+        koff_time_until_neglible_us = 0;
         for(LocationData *i = users_first; i; i = i->next)
         {
             if(!i->fixed_sustain)
-                i->kon_time_until_neglible = std::max(i->kon_time_until_neglible - ms, neg);
-            i->vibdelay += ms;
+                i->kon_time_until_neglible_us = std::max(i->kon_time_until_neglible_us - us, neg);
+            i->vibdelay_us += us;
         }
     }
 }
-
-#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
-
-OPNMIDIplay::MidiEvent::MidiEvent() :
-    type(T_UNKNOWN),
-    subtype(T_UNKNOWN),
-    channel(0),
-    isValid(1),
-    absPosition(0)
-{}
-
-
-OPNMIDIplay::MidiTrackRow::MidiTrackRow() :
-    time(0.0),
-    delay(0),
-    absPos(0),
-    timeDelay(0.0)
-{}
-
-void OPNMIDIplay::MidiTrackRow::reset()
-{
-    time = 0.0;
-    delay = 0;
-    absPos = 0;
-    timeDelay = 0.0;
-    events.clear();
-}
-
-void OPNMIDIplay::MidiTrackRow::sortEvents(bool *noteStates)
-{
-    typedef std::vector<MidiEvent> EvtArr;
-    EvtArr metas;
-    EvtArr noteOffs;
-    EvtArr controllers;
-    EvtArr anyOther;
-
-    metas.reserve(events.size());
-    noteOffs.reserve(events.size());
-    controllers.reserve(events.size());
-    anyOther.reserve(events.size());
-
-    for(size_t i = 0; i < events.size(); i++)
-    {
-        if(events[i].type == MidiEvent::T_NOTEOFF)
-            noteOffs.push_back(events[i]);
-        else if((events[i].type == MidiEvent::T_CTRLCHANGE)
-                || (events[i].type == MidiEvent::T_PATCHCHANGE)
-                || (events[i].type == MidiEvent::T_WHEEL)
-                || (events[i].type == MidiEvent::T_CHANAFTTOUCH))
-        {
-            controllers.push_back(events[i]);
-        }
-        else if((events[i].type == MidiEvent::T_SPECIAL) && (events[i].subtype == MidiEvent::ST_MARKER))
-            metas.push_back(events[i]);
-        else
-            anyOther.push_back(events[i]);
-    }
-
-    /*
-     * If Note-Off and it's Note-On is on the same row - move this damned note off down!
-     */
-    if(noteStates)
-    {
-        std::set<size_t> markAsOn;
-        for(size_t i = 0; i < anyOther.size(); i++)
-        {
-            const MidiEvent e = anyOther[i];
-            if(e.type == MidiEvent::T_NOTEON)
-            {
-                const size_t note_i = (e.channel * 255) + (e.data[0] & 0x7F);
-                //Check, was previously note is on or off
-                bool wasOn = noteStates[note_i];
-                markAsOn.insert(note_i);
-                // Detect zero-length notes are following previously pressed note
-                int noteOffsOnSameNote = 0;
-                for(EvtArr::iterator j = noteOffs.begin(); j != noteOffs.end();)
-                {
-                    //If note was off, and note-off on same row with note-on - move it down!
-                    if(
-                        ((*j).channel == e.channel) &&
-                        ((*j).data[0] == e.data[0])
-                    )
-                    {
-                        //If note is already off OR more than one note-off on same row and same note
-                        if(!wasOn || (noteOffsOnSameNote != 0))
-                        {
-                            anyOther.push_back(*j);
-                            j = noteOffs.erase(j);
-                            markAsOn.erase(note_i);
-                            continue;
-                        } else {
-                            //When same row has many note-offs on same row
-                            //that means a zero-length note follows previous note
-                            //it must be shuted down
-                            noteOffsOnSameNote++;
-                        }
-                    }
-                    j++;
-                }
-            }
-        }
-
-        //Mark other notes as released
-        for(EvtArr::iterator j = noteOffs.begin(); j != noteOffs.end(); j++)
-        {
-            size_t note_i = (j->channel * 255) + (j->data[0] & 0x7F);
-            noteStates[note_i] = false;
-        }
-
-        for(std::set<size_t>::iterator j = markAsOn.begin(); j != markAsOn.end(); j++)
-            noteStates[*j] = true;
-
-    }
-    /***********************************************************************************/
-
-    events.clear();
-    events.insert(events.end(), noteOffs.begin(), noteOffs.end());
-    events.insert(events.end(), metas.begin(), metas.end());
-    events.insert(events.end(), controllers.begin(), controllers.end());
-    events.insert(events.end(), anyOther.begin(), anyOther.end());
-}
-#endif //OPNMIDI_DISABLE_MIDI_SEQUENCER
-
-#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
-bool OPNMIDIplay::buildTrackData()
-{
-    fullSongTimeLength = 0.0;
-    loopStartTime = -1.0;
-    loopEndTime = -1.0;
-    musTitle.clear();
-    musCopyright.clear();
-    musTrackTitles.clear();
-    musMarkers.clear();
-    caugh_missing_instruments.clear();
-    caugh_missing_banks_melodic.clear();
-    caugh_missing_banks_percussion.clear();
-    trackDataNew.clear();
-    const size_t    trackCount = TrackData.size();
-    trackDataNew.resize(trackCount, MidiTrackQueue());
-
-    invalidLoop = false;
-    bool gotLoopStart = false, gotLoopEnd = false, gotLoopEventInThisRow = false;
-    //! Tick position of loop start tag
-    uint64_t loopStartTicks = 0;
-    //! Tick position of loop end tag
-    uint64_t loopEndTicks = 0;
-    //! Full length of song in ticks
-    uint64_t ticksSongLength = 0;
-    //! Cache for error message strign
-    char error[150];
-
-    CurrentPositionNew.track.clear();
-    CurrentPositionNew.track.resize(trackCount);
-
-    //! Caches note on/off states.
-    bool noteStates[16 * 255];
-    /* This is required to carefully detect zero-length notes           *
-     * and avoid a move of "note-off" event over "note-on" while sort.  *
-     * Otherwise, after sort those notes will play infinite sound       */
-
-    //Tempo change events
-    std::vector<MidiEvent> tempos;
-
-    /*
-     * TODO: Make this be safer for memory in case of broken input data
-     * which may cause going away of available track data (and then give a crash!)
-     *
-     * POST: Check this more carefully for possible vulnuabilities are can crash this
-     */
-    for(size_t tk = 0; tk < trackCount; ++tk)
-    {
-        uint64_t abs_position = 0;
-        int status = 0;
-        MidiEvent event;
-        bool ok = false;
-        uint8_t *end      = TrackData[tk].data() + TrackData[tk].size();
-        uint8_t *trackPtr = TrackData[tk].data();
-        std::memset(noteStates, 0, sizeof(noteStates));
-
-        //Time delay that follows the first event in the track
-        {
-            MidiTrackRow evtPos;
-            if(opn.m_musicMode == OPN2::MODE_RSXX)
-                ok = true;
-            else
-                evtPos.delay = ReadVarLenEx(&trackPtr, end, ok);
-            if(!ok)
-            {
-                int len = snprintf(error, 150, "buildTrackData: Can't read variable-length value at begin of track %d.\n", (int)tk);
-                if((len > 0) && (len < 150))
-                    errorString += std::string(error, (size_t)len);
-                return false;
-            }
-
-            //HACK: Begin every track with "Reset all controllers" event to avoid controllers state break came from end of song
-            for(uint8_t chan = 0; chan < 16; chan++)
-            {
-                MidiEvent event;
-                event.type = MidiEvent::T_CTRLCHANGE;
-                event.channel = chan;
-                event.data.push_back(121);
-                event.data.push_back(0);
-                evtPos.events.push_back(event);
-            }
-
-            evtPos.absPos = abs_position;
-            abs_position += evtPos.delay;
-            trackDataNew[tk].push_back(evtPos);
-        }
-
-        MidiTrackRow evtPos;
-        do
-        {
-            event = parseEvent(&trackPtr, end, status);
-            if(!event.isValid)
-            {
-                int len = snprintf(error, 150, "buildTrackData: Fail to parse event in the track %d.\n", (int)tk);
-                if((len > 0) && (len < 150))
-                    errorString += std::string(error, (size_t)len);
-                return false;
-            }
-
-            evtPos.events.push_back(event);
-            if(event.type == MidiEvent::T_SPECIAL)
-            {
-                if(event.subtype == MidiEvent::ST_TEMPOCHANGE)
-                {
-                    event.absPosition = abs_position;
-                    tempos.push_back(event);
-                }
-                else if(!invalidLoop && (event.subtype == MidiEvent::ST_LOOPSTART))
-                {
-                    /*
-                     * loopStart is invalid when:
-                     * - starts together with loopEnd
-                     * - appears more than one time in same MIDI file
-                     */
-                    if(gotLoopStart || gotLoopEventInThisRow)
-                        invalidLoop = true;
-                    else
-                    {
-                        gotLoopStart = true;
-                        loopStartTicks = abs_position;
-                    }
-                    //In this row we got loop event, register this!
-                    gotLoopEventInThisRow = true;
-                }
-                else if(!invalidLoop && (event.subtype == MidiEvent::ST_LOOPEND))
-                {
-                    /*
-                     * loopEnd is invalid when:
-                     * - starts before loopStart
-                     * - starts together with loopStart
-                     * - appars more than one time in same MIDI file
-                     */
-                    if(gotLoopEnd || gotLoopEventInThisRow)
-                        invalidLoop = true;
-                    else
-                    {
-                        gotLoopEnd = true;
-                        loopEndTicks = abs_position;
-                    }
-                    //In this row we got loop event, register this!
-                    gotLoopEventInThisRow = true;
-                }
-            }
-
-            if(event.subtype != MidiEvent::ST_ENDTRACK)//Don't try to read delta after EndOfTrack event!
-            {
-                evtPos.delay = ReadVarLenEx(&trackPtr, end, ok);
-                if(!ok)
-                {
-                    /* End of track has been reached! However, there is no EOT event presented */
-                    event.type = MidiEvent::T_SPECIAL;
-                    event.subtype = MidiEvent::ST_ENDTRACK;
-                }
-            }
-
-            if((evtPos.delay > 0) || (event.subtype == MidiEvent::ST_ENDTRACK))
-            {
-                evtPos.absPos = abs_position;
-                abs_position += evtPos.delay;
-                evtPos.sortEvents(noteStates);
-                trackDataNew[tk].push_back(evtPos);
-                evtPos.reset();
-                gotLoopEventInThisRow = false;
-            }
-        }
-        while((trackPtr <= end) && (event.subtype != MidiEvent::ST_ENDTRACK));
-
-        if(ticksSongLength < abs_position)
-            ticksSongLength = abs_position;
-        //Set the chain of events begin
-        if(trackDataNew[tk].size() > 0)
-            CurrentPositionNew.track[tk].pos = trackDataNew[tk].begin();
-    }
-
-    if(gotLoopStart && !gotLoopEnd)
-    {
-        gotLoopEnd = true;
-        loopEndTicks = ticksSongLength;
-    }
-
-    //loopStart must be located before loopEnd!
-    if(loopStartTicks >= loopEndTicks)
-        invalidLoop = true;
-
-    /********************************************************************************/
-    //Calculate time basing on collected tempo events
-    /********************************************************************************/
-    for(size_t tk = 0; tk < trackCount; ++tk)
-    {
-        fraction<uint64_t> currentTempo = Tempo;
-        double  time = 0.0;
-        uint64_t abs_position = 0;
-        size_t tempo_change_index = 0;
-        MidiTrackQueue &track = trackDataNew[tk];
-        if(track.empty())
-            continue;//Empty track is useless!
-
-        #ifdef DEBUG_TIME_CALCULATION
-        std::fprintf(stdout, "\n============Track %" PRIuPTR "=============\n", tk);
-        std::fflush(stdout);
-        #endif
-
-        MidiTrackRow *posPrev = &(*(track.begin()));//First element
-        for(MidiTrackQueue::iterator it = track.begin(); it != track.end(); it++)
-        {
-            #ifdef DEBUG_TIME_CALCULATION
-            bool tempoChanged = false;
-            #endif
-            MidiTrackRow &pos = *it;
-            if((posPrev != &pos) &&  //Skip first event
-               (!tempos.empty()) && //Only when in-track tempo events are available
-               (tempo_change_index < tempos.size())
-              )
-            {
-                // If tempo event is going between of current and previous event
-                if(tempos[tempo_change_index].absPosition <= pos.absPos)
-                {
-                    //Stop points: begin point and tempo change points are before end point
-                    std::vector<TempoChangePoint> points;
-                    fraction<uint64_t> t;
-                    TempoChangePoint firstPoint = {posPrev->absPos, currentTempo};
-                    points.push_back(firstPoint);
-
-                    //Collect tempo change points between previous and current events
-                    do
-                    {
-                        TempoChangePoint tempoMarker;
-                        MidiEvent &tempoPoint = tempos[tempo_change_index];
-                        tempoMarker.absPos = tempoPoint.absPosition;
-                        tempoMarker.tempo = InvDeltaTicks * fraction<uint64_t>(ReadBEint(tempoPoint.data.data(), tempoPoint.data.size()));
-                        points.push_back(tempoMarker);
-                        tempo_change_index++;
-                    }
-                    while((tempo_change_index < tempos.size()) &&
-                          (tempos[tempo_change_index].absPosition <= pos.absPos));
-
-                    // Re-calculate time delay of previous event
-                    time -= posPrev->timeDelay;
-                    posPrev->timeDelay = 0.0;
-
-                    for(size_t i = 0, j = 1; j < points.size(); i++, j++)
-                    {
-                        /* If one or more tempo events are appears between of two events,
-                         * calculate delays between each tempo point, begin and end */
-                        uint64_t midDelay = 0;
-                        //Delay between points
-                        midDelay  = points[j].absPos - points[i].absPos;
-                        //Time delay between points
-                        t = midDelay * currentTempo;
-                        posPrev->timeDelay += t.value();
-
-                        //Apply next tempo
-                        currentTempo = points[j].tempo;
-                        #ifdef DEBUG_TIME_CALCULATION
-                        tempoChanged = true;
-                        #endif
-                    }
-                    //Then calculate time between last tempo change point and end point
-                    TempoChangePoint tailTempo = points.back();
-                    uint64_t postDelay = pos.absPos - tailTempo.absPos;
-                    t = postDelay * currentTempo;
-                    posPrev->timeDelay += t.value();
-
-                    //Store Common time delay
-                    posPrev->time = time;
-                    time += posPrev->timeDelay;
-                }
-            }
-
-            fraction<uint64_t> t = pos.delay * currentTempo;
-            pos.timeDelay = t.value();
-            pos.time = time;
-            time += pos.timeDelay;
-
-            //Capture markers after time value calculation
-            for(size_t i = 0; i < pos.events.size(); i++)
-            {
-                MidiEvent &e = pos.events[i];
-                if((e.type == MidiEvent::T_SPECIAL) && (e.subtype == MidiEvent::ST_MARKER))
-                {
-                    MIDI_MarkerEntry marker;
-                    marker.label = std::string((char *)e.data.data(), e.data.size());
-                    marker.pos_ticks = pos.absPos;
-                    marker.pos_time = pos.time;
-                    musMarkers.push_back(marker);
-                }
-            }
-
-            //Capture loop points time positions
-            if(!invalidLoop)
-            {
-                // Set loop points times
-                if(loopStartTicks == pos.absPos)
-                    loopStartTime = pos.time;
-                else if(loopEndTicks == pos.absPos)
-                    loopEndTime = pos.time;
-            }
-
-            #ifdef DEBUG_TIME_CALCULATION
-            std::fprintf(stdout, "= %10" PRId64 " = %10f%s\n", pos.absPos, pos.time, tempoChanged ? " <----TEMPO CHANGED" : "");
-            std::fflush(stdout);
-            #endif
-
-            abs_position += pos.delay;
-            posPrev = &pos;
-        }
-
-        if(time > fullSongTimeLength)
-            fullSongTimeLength = time;
-    }
-
-    fullSongTimeLength += postSongWaitDelay;
-    //Set begin of the music
-    trackBeginPositionNew = CurrentPositionNew;
-    //Initial loop position will begin at begin of track until passing of the loop point
-    LoopBeginPositionNew  = CurrentPositionNew;
-
-    /********************************************************************************/
-    //Resolve "hell of all times" of too short drum notes:
-    //move too short percussion note-offs far far away as possible
-    /********************************************************************************/
-    #if 1 //Use this to record WAVEs for comparison before/after implementing of this
-    if(opn.m_musicMode == OPN2::MODE_MIDI)//Percussion fix is needed for MIDI only, not for IMF/RSXX or CMF
-    {
-        //! Minimal real time in seconds
-#define DRUM_NOTE_MIN_TIME  0.03
-        //! Minimal ticks count
-#define DRUM_NOTE_MIN_TICKS 15
-        struct NoteState
-        {
-            double       delay;
-            uint64_t     delayTicks;
-            bool         isOn;
-            char         ___pad[7];
-        } drNotes[255];
-        uint16_t banks[16];
-
-        for(size_t tk = 0; tk < trackCount; ++tk)
-        {
-            std::memset(drNotes, 0, sizeof(drNotes));
-            std::memset(banks, 0, sizeof(banks));
-            MidiTrackQueue &track = trackDataNew[tk];
-            if(track.empty())
-                continue;//Empty track is useless!
-
-            for(MidiTrackQueue::iterator it = track.begin(); it != track.end(); it++)
-            {
-                MidiTrackRow &pos = *it;
-
-                for(ssize_t e = 0; e < (ssize_t)pos.events.size(); e++)
-                {
-                    MidiEvent *et = &pos.events[(size_t)e];
-
-                    /* Set MSB/LSB bank */
-                    if(et->type == MidiEvent::T_CTRLCHANGE)
-                    {
-                        uint8_t ctrlno = et->data[0];
-                        uint8_t value =  et->data[1];
-                        switch(ctrlno)
-                        {
-                        case 0: // Set bank msb (GM bank)
-                            banks[et->channel] = uint16_t(uint16_t(value) << 8) | uint16_t(banks[et->channel] & 0x00FF);
-                            break;
-                        case 32: // Set bank lsb (XG bank)
-                            banks[et->channel] = (banks[et->channel] & 0xFF00) | (uint16_t(value) & 0x00FF);
-                            break;
-                        }
-                        continue;
-                    }
-
-                    bool percussion = (et->channel == 9) ||
-                            banks[et->channel] == 0x7E00 || //XG SFX1/SFX2 channel (16128 signed decimal)
-                            banks[et->channel] == 0x7F00;   //XG Percussion channel (16256 signed decimal)
-                    if(!percussion)
-                        continue;
-
-                    if(et->type == MidiEvent::T_NOTEON)
-                    {
-                        uint8_t     note = et->data[0] & 0x7F;
-                        NoteState   &ns = drNotes[note];
-                        ns.isOn = true;
-                        ns.delay = 0.0;
-                        ns.delayTicks = 0;
-                    }
-                    else if(et->type == MidiEvent::T_NOTEOFF)
-                    {
-                        uint8_t note = et->data[0] & 0x7F;
-                        NoteState &ns = drNotes[note];
-                        if(ns.isOn)
-                        {
-                            ns.isOn = false;
-                            if(ns.delayTicks < DRUM_NOTE_MIN_TICKS || ns.delay < DRUM_NOTE_MIN_TIME)//If note is too short
-                            {
-                                //Move it into next event position if that possible
-                                for(MidiTrackQueue::iterator itNext = it;
-                                    itNext != track.end();
-                                    itNext++)
-                                {
-                                    MidiTrackRow &posN = *itNext;
-                                    if(ns.delayTicks > DRUM_NOTE_MIN_TICKS && ns.delay > DRUM_NOTE_MIN_TIME)
-                                    {
-                                        //Put note-off into begin of next event list
-                                        posN.events.insert(posN.events.begin(), pos.events[(size_t)e]);
-                                        //Renive this event from a current row
-                                        pos.events.erase(pos.events.begin() + (int)e);
-                                        e--;
-                                        break;
-                                    }
-                                    ns.delay += posN.timeDelay;
-                                    ns.delayTicks += posN.delay;
-                                }
-                            }
-                            ns.delay = 0.0;
-                            ns.delayTicks = 0;
-                        }
-                    }
-                }
-
-                //Append time delays to sustaining notes
-                for(size_t no = 0; no < 128; no++)
-                {
-                    NoteState &ns = drNotes[no];
-                    if(ns.isOn)
-                    {
-                        ns.delay        += pos.timeDelay;
-                        ns.delayTicks   += pos.delay;
-                    }
-                }
-            }
-        }
-#undef DRUM_NOTE_MIN_TIME
-#undef DRUM_NOTE_MIN_TICKS
-    }
-    #endif
-
-    return true;
-}
-#endif //OPNMIDI_DISABLE_MIDI_SEQUENCER
-
 
 OPNMIDIplay::OPNMIDIplay(unsigned long sampleRate) :
+    m_masterVolume(MasterVolumeDefault),
+    m_sysExDeviceId(0),
+    m_synthMode(Mode_XG),
     m_arpeggioCounter(0)
-#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
-    , fullSongTimeLength(0.0),
-    postSongWaitDelay(1.0),
-    loopStartTime(-1.0),
-    loopEndTime(-1.0),
-    tempoMultiplier(1.0),
-    atEnd(false),
-    loopStart(false),
-    loopEnd(false),
-    invalidLoop(false)
+#if defined(ADLMIDI_AUDIO_TICK_HANDLER)
+    , m_audioTickCounter(0)
 #endif
 {
-    devices.clear();
+    m_midiDevices.clear();
 
-    m_setup.emulator = OPNMIDI_EMU_MAME;
+    m_setup.emulator = opn2_getLowestEmulator();
     m_setup.runAtPcmRate = false;
 
     m_setup.PCM_RATE = sampleRate;
@@ -680,245 +100,117 @@ OPNMIDIplay::OPNMIDIplay(unsigned long sampleRate) :
     m_setup.maxdelay = 512.0 / (double)m_setup.PCM_RATE;
 
     m_setup.OpnBank    = 0;
-    m_setup.NumCards   = 2;
+    m_setup.numChips   = 2;
     m_setup.LogarithmicVolumes  = false;
     m_setup.VolumeModel = OPNMIDI_VolumeModel_AUTO;
+    m_setup.lfoEnable = -1;
+    m_setup.lfoFrequency = -1;
     //m_setup.SkipForward = 0;
-    m_setup.loopingIsEnabled = false;
     m_setup.ScaleModulators     = 0;
     m_setup.fullRangeBrightnessCC74 = false;
     m_setup.delay = 0.0;
     m_setup.carry = 0.0;
     m_setup.tick_skip_samples_delay = 0;
 
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
+    initSequencerInterface();
+#endif
+    resetMIDI();
     applySetup();
-    ChooseDevice("none");
     realTime_ResetState();
 }
 
 void OPNMIDIplay::applySetup()
 {
+    m_synth.m_musicMode             = OPN2::MODE_MIDI;
+
     m_setup.tick_skip_samples_delay = 0;
 
-    opn.ScaleModulators         = (m_setup.ScaleModulators != 0);
-    opn.runAtPcmRate            = m_setup.runAtPcmRate;
-    opn.m_musicMode             = OPN2::MODE_MIDI;
+    m_synth.m_runAtPcmRate            = m_setup.runAtPcmRate;
+
+    m_synth.m_scaleModulators         = (m_setup.ScaleModulators != 0);
+
     if(m_setup.LogarithmicVolumes != 0)
-        opn.ChangeVolumeRangesModel(OPNMIDI_VolumeModel_CMF);
+        m_synth.setVolumeScaleModel(OPNMIDI_VolumeModel_NativeOPN2);
     else
-        opn.ChangeVolumeRangesModel(static_cast<OPNMIDI_VolumeModels>(m_setup.VolumeModel));
+        m_synth.setVolumeScaleModel(static_cast<OPNMIDI_VolumeModels>(m_setup.VolumeModel));
+
     if(m_setup.VolumeModel == OPNMIDI_VolumeModel_AUTO)
-        opn.m_volumeScale = OPN2::VOLUME_Generic;
+        m_synth.m_volumeScale = (OPN2::VolumesScale)m_synth.m_insBankSetup.volumeModel;
 
-    opn.NumCards    = m_setup.NumCards;
+    m_synth.m_numChips    = m_setup.numChips;
 
-    opn.Reset(m_setup.emulator, m_setup.PCM_RATE);
-    ch.clear();
-    ch.resize(opn.NumChannels, OpnChannel());
+    if(m_setup.lfoEnable < 0)
+        m_synth.m_lfoEnable = (m_synth.m_insBankSetup.lfoEnable != 0);
+    else
+        m_synth.m_lfoEnable = (m_setup.lfoEnable != 0);
+
+    if(m_setup.lfoFrequency < 0)
+        m_synth.m_lfoFrequency = m_synth.m_insBankSetup.lfoFrequency;
+    else
+        m_synth.m_lfoFrequency = m_setup.lfoFrequency;
+
+    m_synth.reset(m_setup.emulator, m_setup.PCM_RATE, this);
+    m_chipChannels.clear();
+    m_chipChannels.resize(m_synth.m_numChannels, OpnChannel());
 
     // Reset the arpeggio counter
     m_arpeggioCounter = 0;
 }
 
-uint64_t OPNMIDIplay::ReadVarLen(uint8_t **ptr)
+void OPNMIDIplay::partialReset()
 {
-    uint64_t result = 0;
-    for(;;)
-    {
-        uint8_t byte = *((*ptr)++);
-        result = (result << 7) + (byte & 0x7F);
-        if(!(byte & 0x80))
-            break;
-    }
-    return result;
+    realTime_panic();
+    m_setup.tick_skip_samples_delay = 0;
+    m_synth.m_runAtPcmRate = m_setup.runAtPcmRate;
+    m_synth.reset(m_setup.emulator, m_setup.PCM_RATE, this);
+    m_chipChannels.clear();
+    m_chipChannels.resize(m_synth.m_numChannels);
 }
 
-uint64_t OPNMIDIplay::ReadVarLenEx(uint8_t **ptr, uint8_t *end, bool &ok)
+void OPNMIDIplay::resetMIDI()
 {
-    uint64_t result = 0;
-    ok = false;
+    m_masterVolume = MasterVolumeDefault;
+    m_sysExDeviceId = 0;
+    m_synthMode = Mode_XG;
+    m_arpeggioCounter = 0;
 
-    for(;;)
-    {
-        if(*ptr >= end)
-            return 2;
-        unsigned char byte = *((*ptr)++);
-        result = (result << 7) + (byte & 0x7F);
-        if(!(byte & 0x80))
-            break;
-    }
+    m_midiChannels.clear();
+    m_midiChannels.resize(16, MIDIchannel());
 
-    ok = true;
-    return result;
+    caugh_missing_instruments.clear();
+    caugh_missing_banks_melodic.clear();
+    caugh_missing_banks_percussion.clear();
 }
 
-#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
-double OPNMIDIplay::Tick(double s, double granularity)
+void OPNMIDIplay::TickIterators(double s)
 {
-    s *= tempoMultiplier;
-    #ifdef ENABLE_BEGIN_SILENCE_SKIPPING
-    if(CurrentPositionNew.began)
-    #endif
-        CurrentPositionNew.wait -= s;
-    CurrentPositionNew.absTimePosition += s;
-
-    int antiFreezeCounter = 10000;//Limit 10000 loops to avoid freezing
-    while((CurrentPositionNew.wait <= granularity * 0.5) && (antiFreezeCounter > 0))
-    {
-        //std::fprintf(stderr, "wait = %g...\n", CurrentPosition.wait);
-        if(!ProcessEventsNew())
-            break;
-        if(CurrentPositionNew.wait <= 0.0)
-            antiFreezeCounter--;
-    }
-
-    if(antiFreezeCounter <= 0)
-        CurrentPositionNew.wait += 1.0;/* Add extra 1 second when over 10000 events
-                                           with zero delay are been detected */
-
-    for(uint16_t c = 0; c < opn.NumChannels; ++c)
-        ch[c].AddAge(static_cast<int64_t>(s * 1000.0));
-
-    UpdateVibrato(s);
-    UpdateArpeggio(s);
-
-    if(CurrentPositionNew.wait < 0.0)//Avoid negative delay value!
-        return 0.0;
-
-    return CurrentPositionNew.wait;
+    for(uint16_t c = 0; c < m_synth.m_numChannels; ++c)
+        m_chipChannels[c].addAge(static_cast<int64_t>(s * 1e6));
+    updateVibrato(s);
+    updateArpeggio(s);
+#if !defined(ADLMIDI_AUDIO_TICK_HANDLER)
+    updateGlide(s);
+#endif
 }
-#endif //OPNMIDI_DISABLE_MIDI_SEQUENCER
-
-void OPNMIDIplay::TickIteratos(double s)
-{
-    for(uint16_t c = 0; c < opn.NumChannels; ++c)
-        ch[c].AddAge(static_cast<int64_t>(s * 1000.0));
-    UpdateVibrato(s);
-    UpdateArpeggio(s);
-}
-
-#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
-void OPNMIDIplay::seek(double seconds)
-{
-    if(seconds < 0.0)
-        return;//Seeking negative position is forbidden! :-P
-    const double granularity = m_setup.mindelay,
-                 granualityHalf = granularity * 0.5,
-                 s = seconds;//m_setup.delay < m_setup.maxdelay ? m_setup.delay : m_setup.maxdelay;
-
-    /* Attempt to go away out of song end must rewind position to begin */
-    if(seconds > fullSongTimeLength)
-    {
-        rewind();
-        return;
-    }
-
-    bool loopFlagState = m_setup.loopingIsEnabled;
-    // Turn loop pooints off because it causes wrong position rememberin on a quick seek
-    m_setup.loopingIsEnabled = false;
-
-    /*
-     * Seeking search is similar to regular ticking, except of next things:
-     * - We don't processsing arpeggio and vibrato
-     * - To keep correctness of the state after seek, begin every search from begin
-     * - All sustaining notes must be killed
-     * - Ignore Note-On events
-     */
-    rewind();
-
-    /*
-     * Set "loop Start" to false to prevent overwrite of loopStart position with
-     * seek destinition position
-     *
-     * TODO: Detect & set loopStart position on load time to don't break loop while seeking
-     */
-    loopStart   = false;
-
-    while((CurrentPositionNew.absTimePosition < seconds) &&
-          (CurrentPositionNew.absTimePosition < fullSongTimeLength))
-    {
-        CurrentPositionNew.wait -= s;
-        CurrentPositionNew.absTimePosition += s;
-        int antiFreezeCounter = 10000;//Limit 10000 loops to avoid freezing
-        double dstWait = CurrentPositionNew.wait + granualityHalf;
-        while((CurrentPositionNew.wait <= granualityHalf)/*&& (antiFreezeCounter > 0)*/)
-        {
-            //std::fprintf(stderr, "wait = %g...\n", CurrentPosition.wait);
-            if(!ProcessEventsNew(true))
-                break;
-            //Avoid freeze because of no waiting increasing in more than 10000 cycles
-            if(CurrentPositionNew.wait <= dstWait)
-                antiFreezeCounter--;
-            else
-            {
-                dstWait = CurrentPositionNew.wait + granualityHalf;
-                antiFreezeCounter = 10000;
-            }
-        }
-        if(antiFreezeCounter <= 0)
-            CurrentPositionNew.wait += 1.0;/* Add extra 1 second when over 10000 events
-                                               with zero delay are been detected */
-    }
-
-    if(CurrentPositionNew.wait < 0.0)
-        CurrentPositionNew.wait = 0.0;
-
-    m_setup.loopingIsEnabled = loopFlagState;
-    m_setup.delay = CurrentPositionNew.wait;
-    m_setup.carry = 0.0;
-}
-
-double OPNMIDIplay::tell()
-{
-    return CurrentPositionNew.absTimePosition;
-}
-
-double OPNMIDIplay::timeLength()
-{
-    return fullSongTimeLength;
-}
-
-double OPNMIDIplay::getLoopStart()
-{
-    return loopStartTime;
-}
-
-double OPNMIDIplay::getLoopEnd()
-{
-    return loopEndTime;
-}
-
-void OPNMIDIplay::rewind()
-{
-    Panic();
-    KillSustainingNotes(-1, -1);
-    CurrentPositionNew   = trackBeginPositionNew;
-    atEnd            = false;
-    loopStart        = true;
-    loopEnd          = false;
-    //invalidLoop      = false;//No more needed here as this flag is set on load time
-}
-
-void OPNMIDIplay::setTempo(double tempo)
-{
-    tempoMultiplier = tempo;
-}
-#endif //OPNMIDI_DISABLE_MIDI_SEQUENCER
 
 void OPNMIDIplay::realTime_ResetState()
 {
-    for(size_t ch = 0; ch < Ch.size(); ch++)
+    for(size_t ch = 0; ch < m_midiChannels.size(); ch++)
     {
-        MIDIchannel &chan = Ch[ch];
+        MIDIchannel &chan = m_midiChannels[ch];
         chan.resetAllControllers();
-        chan.volume = (opn.m_musicMode == OPN2::MODE_RSXX) ? 127 : 100;
+        chan.volume = (m_synth.m_musicMode == OPN2::MODE_RSXX) ? 127 : 100;
         chan.vibpos = 0.0;
         chan.lastlrpn = 0;
         chan.lastmrpn = 0;
         chan.nrpn = false;
-        NoteUpdate_All(uint16_t(ch), Upd_All);
-        NoteUpdate_All(uint16_t(ch), Upd_Off);
+        if((m_synthMode & Mode_GS) != 0)// Reset custom drum channels on GS
+            chan.is_xg_percussion = false;
+        noteUpdateAll(uint16_t(ch), Upd_All);
+        noteUpdateAll(uint16_t(ch), Upd_Off);
     }
+    m_masterVolume = MasterVolumeDefault;
 }
 
 bool OPNMIDIplay::realTime_NoteOn(uint8_t channel, uint8_t note, uint8_t velocity)
@@ -926,20 +218,23 @@ bool OPNMIDIplay::realTime_NoteOn(uint8_t channel, uint8_t note, uint8_t velocit
     if(note >= 127)
         note = 127;
 
-    if((opn.m_musicMode == OPN2::MODE_RSXX) && (velocity != 0))
+    if((m_synth.m_musicMode == OPN2::MODE_RSXX) && (velocity != 0))
     {
         // Check if this is just a note after-touch
-        MIDIchannel::activenoteiterator i = Ch[channel].activenotes_find(note);
+        MIDIchannel::activenoteiterator i = m_midiChannels[channel].activenotes_find(note);
         if(i)
         {
+            const int veloffset = i->ains->midi_velocity_offset;
+            velocity = (uint8_t)std::min(127, std::max(1, (int)velocity + veloffset));
             i->vol = velocity;
-            NoteUpdate(channel, i, Upd_Volume);
+            noteUpdate(channel, i, Upd_Volume);
             return false;
         }
     }
 
-    channel = channel % 16;
-    NoteOff(channel, note);
+    if(static_cast<size_t>(channel) > m_midiChannels.size())
+        channel = channel % 16;
+    noteOff(channel, note);
     // On Note on, Keyoff the note first, just in case keyoff
     // was omitted; this fixes Dance of sugar-plum fairy
     // by Microsoft. Now that we've done a Keyoff,
@@ -948,54 +243,62 @@ bool OPNMIDIplay::realTime_NoteOn(uint8_t channel, uint8_t note, uint8_t velocit
     if(velocity == 0)
         return false;
 
-    MIDIchannel &midiChan = Ch[channel];
+    MIDIchannel &midiChan = m_midiChannels[channel];
 
     size_t midiins = midiChan.patch;
-    bool isPercussion = (channel  % 16 == 9);
-    bool isXgPercussion = false;
+    bool isPercussion = (channel % 16 == 9) || midiChan.is_xg_percussion;
 
-    uint16_t bank = 0;
+    size_t bank = 0;
     if(midiChan.bank_msb || midiChan.bank_lsb)
     {
-        bank = (uint16_t(midiChan.bank_msb) * 256) + uint16_t(midiChan.bank_lsb);
-        //0x7E00 - XG SFX1/SFX2 channel (16128 signed decimal)
-        //0x7F00 - XG Percussion channel (16256 signed decimal)
-        if(bank == 0x7E00 || bank == 0x7F00)
-        {
-            //Let XG SFX1/SFX2 bank will have LSB==1 (128...255 range in WOPN file)
-            //Let XG Percussion bank will use (0...127 range in WOPN file)
-            bank = (uint16_t)midiins + ((bank == 0x7E00) ? 128 : 0); // MIDI instrument defines the patch
-            midiins = note; // Percussion instrument
-            isXgPercussion = true;
-            isPercussion = false;
-        }
+        if((m_synthMode & Mode_GS) != 0) //in GS mode ignore LSB
+            bank = (midiChan.bank_msb * 256);
+        else
+            bank = (midiChan.bank_msb * 256) + midiChan.bank_lsb;
     }
 
     if(isPercussion)
     {
-        bank = (uint16_t)midiins; // MIDI instrument defines the patch
+        // == XG bank numbers ==
+        // 0x7E00 - XG "SFX Kits" SFX1/SFX2 channel (16128 signed decimal)
+        // 0x7F00 - XG "Drum Kits" Percussion channel (16256 signed decimal)
+
+        // MIDI instrument defines the patch:
+        if((m_synthMode & Mode_XG) != 0)
+        {
+            // Let XG SFX1/SFX2 bank will go in 128...255 range of LSB in WOPN file)
+            // Let XG Percussion bank will use (0...127 LSB range in WOPN file)
+
+            // Choose: SFX or Drum Kits
+            bank = midiins + ((bank == 0x7E00) ? 128 : 0);
+        }
+        else
+        {
+            bank = midiins;
+        }
         midiins = note; // Percussion instrument
     }
-    if(isPercussion || isXgPercussion)
+
+    if(isPercussion)
         bank += OPN2::PercussionTag;
 
-    const opnInstMeta2 *ains = &OPN2::emptyInstrument;
+    const opnInstMeta2 *ains = &OPN2::m_emptyInstrument;
 
     //Set bank bank
     const OPN2::Bank *bnk = NULL;
     if((bank & ~(uint16_t)OPN2::PercussionTag) > 0)
     {
-        OPN2::BankMap::iterator b = opn.dynamic_banks.find(bank);
-        if(b != opn.dynamic_banks.end())
+        OPN2::BankMap::iterator b = m_synth.m_insBanks.find(bank);
+        if(b != m_synth.m_insBanks.end())
             bnk = &b->second;
 
         if(bnk)
             ains = &bnk->ins[midiins];
         else if(hooks.onDebugMessage)
         {
-            std::set<uint16_t> &missing = (isPercussion || isXgPercussion) ?
+            std::set<size_t> &missing = (isPercussion) ?
                                           caugh_missing_banks_percussion : caugh_missing_banks_melodic;
-            const char *text = (isPercussion || isXgPercussion) ?
+            const char *text = (isPercussion) ?
                                "percussion" : "melodic";
             if(missing.insert(bank).second)
                 hooks.onDebugMessage(hooks.onDebugMessage_userData, "[%i] Playing missing %s MIDI bank %i (patch %i)", channel, text, bank, midiins);
@@ -1004,25 +307,19 @@ bool OPNMIDIplay::realTime_NoteOn(uint8_t channel, uint8_t note, uint8_t velocit
     //Or fall back to first bank
     if(ains->flags & opnInstMeta::Flag_NoSound)
     {
-        OPN2::BankMap::iterator b = opn.dynamic_banks.find(bank & OPN2::PercussionTag);
-        if(b != opn.dynamic_banks.end())
+        OPN2::BankMap::iterator b = m_synth.m_insBanks.find(bank & OPN2::PercussionTag);
+        if(b != m_synth.m_insBanks.end())
             bnk = &b->second;
 
         if(bnk)
             ains = &bnk->ins[midiins];
     }
 
-    /*
-        if(MidCh%16 == 9 || (midiins != 32 && midiins != 46 && midiins != 48 && midiins != 50))
-            break; // HACK
-        if(midiins == 46) vol = (vol*7)/10;          // HACK
-        if(midiins == 48 || midiins == 50) vol /= 4; // HACK
-        */
-    //if(midiins == 56) vol = vol*6/10; // HACK
+    const int veloffset = ains->midi_velocity_offset;
+    velocity = (uint8_t)std::min(127, std::max(1, (int)velocity + veloffset));
 
-    int16_t tone = note;
-
-    if(!isPercussion && !isXgPercussion && (bank > 0)) // For non-zero banks
+    int32_t tone = note;
+    if(!isPercussion && (bank > 0)) // For non-zero banks
     {
         if(ains->flags & opnInstMeta::Flag_NoSound)
         {
@@ -1030,7 +327,7 @@ bool OPNMIDIplay::realTime_NoteOn(uint8_t channel, uint8_t note, uint8_t velocit
             {
                 if(!caugh_missing_instruments.count(static_cast<uint8_t>(midiins)))
                 {
-                    hooks.onDebugMessage(hooks.onDebugMessage_userData, "[%i] Caugh a blank instrument %i (offset %i) in the MIDI bank %u", channel, midiChan.patch, midiins, bank);
+                    hooks.onDebugMessage(hooks.onDebugMessage_userData, "[%i] Caught a blank instrument %i (offset %i) in the MIDI bank %u", channel, midiChan.patch, midiins, bank);
                     caugh_missing_instruments.insert(static_cast<uint8_t>(midiins));
                 }
             }
@@ -1057,13 +354,28 @@ bool OPNMIDIplay::realTime_NoteOn(uint8_t channel, uint8_t note, uint8_t velocit
     //bool pseudo_4op = ains.flags & opnInstMeta::Flag_Pseudo8op;
     //if((opn.AdlPercussionMode == 1) && PercussionMap[midiins & 0xFF]) i[1] = i[0];
 
+    bool isBlankNote = (ains->flags & opnInstMeta::Flag_NoSound) != 0;
+
     if(hooks.onDebugMessage)
     {
-        if(!caugh_missing_instruments.count(static_cast<uint8_t>(midiins)) && (ains->flags & opnInstMeta::Flag_NoSound))
+        if(!caugh_missing_instruments.count(static_cast<uint8_t>(midiins)) && isBlankNote)
         {
             hooks.onDebugMessage(hooks.onDebugMessage_userData, "[%i] Playing missing instrument %i", channel, midiins);
             caugh_missing_instruments.insert(static_cast<uint8_t>(midiins));
         }
+    }
+
+    if(isBlankNote)
+    {
+        // Don't even try to play the blank instrument! But, insert the dummy note.
+        std::pair<MIDIchannel::activenoteiterator, bool>
+        dummy = midiChan.activenotes_insert(note);
+        dummy.first->isBlank = true;
+        dummy.first->ains = NULL;
+        dummy.first->chip_channels_count = 0;
+        // Record the last note on MIDI channel as source of portamento
+        midiChan.portamentoSource = static_cast<int8_t>(note);
+        return false;
     }
 
     // Allocate AdLib channel (the physical sound channel for the note)
@@ -1082,7 +394,7 @@ bool OPNMIDIplay::realTime_NoteOn(uint8_t channel, uint8_t note, uint8_t velocit
         int32_t c = -1;
         int32_t bs = -0x7FFFFFFFl;
 
-        for(size_t a = 0; a < (size_t)opn.NumChannels; ++a)
+        for(size_t a = 0; a < (size_t)m_synth.m_numChannels; ++a)
         {
             if(ccount == 1 && static_cast<int32_t>(a) == adlchannel[0]) continue;
             // ^ Don't use the same channel for primary&secondary
@@ -1101,7 +413,7 @@ bool OPNMIDIplay::realTime_NoteOn(uint8_t channel, uint8_t note, uint8_t velocit
             //    if(opn.four_op_category[a] != expected_mode)
             //        continue;
             //}
-            int64_t s = CalculateAdlChannelGoodness(a, voices[ccount], channel);
+            int64_t s = calculateChipChannelGoodness(a, voices[ccount]);
             if(s > bs)
             {
                 bs = (int32_t)s;    // Best candidate wins
@@ -1118,7 +430,7 @@ bool OPNMIDIplay::realTime_NoteOn(uint8_t channel, uint8_t note, uint8_t velocit
             continue; // Could not play this note. Ignore it.
         }
 
-        PrepareAdlChannelForNewNote(static_cast<size_t>(c), voices[ccount]);
+        prepareChipChannelForNewNote(static_cast<size_t>(c), voices[ccount]);
         adlchannel[ccount] = c;
     }
 
@@ -1131,15 +443,38 @@ bool OPNMIDIplay::realTime_NoteOn(uint8_t channel, uint8_t note, uint8_t velocit
     //if(hooks.onDebugMessage)
     //    hooks.onDebugMessage(hooks.onDebugMessage_userData, "i1=%d:%d, i2=%d:%d", i[0],adlchannel[0], i[1],adlchannel[1]);
 
+    if(midiChan.softPedal) // Apply Soft Pedal level reducing
+        velocity = static_cast<uint8_t>(std::floor(static_cast<float>(velocity) * 0.8f));
+
     // Allocate active note for MIDI channel
     std::pair<MIDIchannel::activenoteiterator, bool>
     ir = midiChan.activenotes_insert(note);
     ir.first->vol     = velocity;
     ir.first->vibrato = midiChan.noteAftertouch[note];
-    ir.first->tone    = tone;
+    ir.first->noteTone = static_cast<int16_t>(tone);
+    ir.first->currentTone = tone;
+    ir.first->glideRate = HUGE_VAL;
     ir.first->midiins = midiins;
+    ir.first->isPercussion = isPercussion;
+    ir.first->isBlank = isBlankNote;
     ir.first->ains = ains;
     ir.first->chip_channels_count = 0;
+
+    int8_t currentPortamentoSource = midiChan.portamentoSource;
+    double currentPortamentoRate = midiChan.portamentoRate;
+    bool portamentoEnable =
+        midiChan.portamentoEnable && currentPortamentoRate != HUGE_VAL && !isPercussion;
+    // Record the last note on MIDI channel as source of portamento
+    midiChan.portamentoSource = static_cast<int8_t>(note);
+    // midiChan.portamentoSource = portamentoEnable ? (int8_t)note : (int8_t)-1;
+
+    // Enable gliding on portamento note
+    if (portamentoEnable && currentPortamentoSource >= 0)
+    {
+        ir.first->currentTone = currentPortamentoSource;
+        ir.first->glideRate = currentPortamentoRate;
+        ++midiChan.gliding_note_count;
+    }
 
     for(unsigned ccount = 0; ccount < MIDIchannel::NoteInfo::MaxNumPhysChans; ++ccount)
     {
@@ -1149,21 +484,34 @@ bool OPNMIDIplay::realTime_NoteOn(uint8_t channel, uint8_t note, uint8_t velocit
         uint16_t chipChan = static_cast<uint16_t>(adlchannel[ccount]);
         ir.first->phys_ensure_find_or_create(chipChan)->assign(voices[ccount]);
     }
-    NoteUpdate(channel, ir.first, Upd_All | Upd_Patch);
+
+    noteUpdate(channel, ir.first, Upd_All | Upd_Patch);
+
+    for(unsigned ccount = 0; ccount < MIDIchannel::NoteInfo::MaxNumPhysChans; ++ccount)
+    {
+        int32_t c = adlchannel[ccount];
+        if(c < 0)
+            continue;
+        m_chipChannels[c].recent_ins = voices[ccount];
+        m_chipChannels[c].addAge(0);
+    }
+
     return true;
 }
 
 void OPNMIDIplay::realTime_NoteOff(uint8_t channel, uint8_t note)
 {
-    channel = channel % 16;
-    NoteOff(channel, note);
+    if(static_cast<size_t>(channel) > m_midiChannels.size())
+        channel = channel % 16;
+    noteOff(channel, note);
 }
 
 void OPNMIDIplay::realTime_NoteAfterTouch(uint8_t channel, uint8_t note, uint8_t atVal)
 {
-    channel = channel % 16;
-    MIDIchannel &chan = Ch[channel];
-    MIDIchannel::activenoteiterator i = Ch[channel].activenotes_find(note);
+    if(static_cast<size_t>(channel) > m_midiChannels.size())
+        channel = channel % 16;
+    MIDIchannel &chan = m_midiChannels[channel];
+    MIDIchannel::activenoteiterator i = m_midiChannels[channel].activenotes_find(note);
     if(i)
     {
         i->vibrato = atVal;
@@ -1182,86 +530,99 @@ void OPNMIDIplay::realTime_NoteAfterTouch(uint8_t channel, uint8_t note, uint8_t
 
 void OPNMIDIplay::realTime_ChannelAfterTouch(uint8_t channel, uint8_t atVal)
 {
-    channel = channel % 16;
-    Ch[channel].aftertouch = atVal;
+    if(static_cast<size_t>(channel) > m_midiChannels.size())
+        channel = channel % 16;
+    m_midiChannels[channel].aftertouch = atVal;
 }
 
 void OPNMIDIplay::realTime_Controller(uint8_t channel, uint8_t type, uint8_t value)
 {
-    channel = channel % 16;
+    if(static_cast<size_t>(channel) > m_midiChannels.size())
+        channel = channel % 16;
     switch(type)
     {
     case 1: // Adjust vibrato
         //UI.PrintLn("%u:vibrato %d", MidCh,value);
-        Ch[channel].vibrato = value;
+        m_midiChannels[channel].vibrato = value;
         break;
 
     case 0: // Set bank msb (GM bank)
-        Ch[channel].bank_msb = value;
-        Ch[channel].is_xg_percussion = isXgPercChannel(Ch[channel].bank_msb, Ch[channel].bank_lsb);
+        m_midiChannels[channel].bank_msb = value;
+        if((m_synthMode & Mode_GS) == 0)// Don't use XG drums on GS synth mode
+            m_midiChannels[channel].is_xg_percussion = isXgPercChannel(m_midiChannels[channel].bank_msb, m_midiChannels[channel].bank_lsb);
         break;
 
     case 32: // Set bank lsb (XG bank)
-        Ch[channel].bank_lsb = value;
-        Ch[channel].is_xg_percussion = isXgPercChannel(Ch[channel].bank_msb, Ch[channel].bank_lsb);
+        m_midiChannels[channel].bank_lsb = value;
+        if((m_synthMode & Mode_GS) == 0)// Don't use XG drums on GS synth mode
+            m_midiChannels[channel].is_xg_percussion = isXgPercChannel(m_midiChannels[channel].bank_msb, m_midiChannels[channel].bank_lsb);
         break;
 
     case 5: // Set portamento msb
-        Ch[channel].portamento = static_cast<uint16_t>((Ch[channel].portamento & 0x7F) | (value << 7));
-        //UpdatePortamento(MidCh);
+        m_midiChannels[channel].portamento = static_cast<uint16_t>((m_midiChannels[channel].portamento & 0x007F) | (value << 7));
+        updatePortamento(channel);
         break;
 
     case 37: // Set portamento lsb
-        Ch[channel].portamento = (Ch[channel].portamento & 0x3F80) | (value);
-        //UpdatePortamento(MidCh);
+        m_midiChannels[channel].portamento = static_cast<uint16_t>((m_midiChannels[channel].portamento & 0x3F80) | (value));
+        updatePortamento(channel);
         break;
 
     case 65: // Enable/disable portamento
-        // value >= 64 ? enabled : disabled
-        //UpdatePortamento(MidCh);
+        m_midiChannels[channel].portamentoEnable = value >= 64;
+        updatePortamento(channel);
         break;
 
     case 7: // Change volume
-        Ch[channel].volume = value;
-        NoteUpdate_All(channel, Upd_Volume);
+        m_midiChannels[channel].volume = value;
+        noteUpdateAll(channel, Upd_Volume);
         break;
 
     case 74: // Change brightness
-        Ch[channel].brightness = value;
-        NoteUpdate_All(channel, Upd_Volume);
+        m_midiChannels[channel].brightness = value;
+        noteUpdateAll(channel, Upd_Volume);
         break;
 
     case 64: // Enable/disable sustain
-        Ch[channel].sustain = value;
-        if(!value) KillSustainingNotes(channel);
+        m_midiChannels[channel].sustain = (value >= 64);
+        if(!m_midiChannels[channel].sustain)
+            killSustainingNotes(channel, -1, OpnChannel::LocationData::Sustain_Pedal);
+        break;
+
+    case 66: // Enable/disable sostenuto
+        if(value >= 64) //Find notes and mark them as sostenutoed
+            markSostenutoNotes(channel);
+        else
+            killSustainingNotes(channel, -1, OpnChannel::LocationData::Sustain_Sostenuto);
+        break;
+
+    case 67: // Enable/disable soft-pedal
+        m_midiChannels[channel].softPedal = (value >= 64);
         break;
 
     case 11: // Change expression (another volume factor)
-        Ch[channel].expression = value;
-        NoteUpdate_All(channel, Upd_Volume);
+        m_midiChannels[channel].expression = value;
+        noteUpdateAll(channel, Upd_Volume);
         break;
 
     case 10: // Change panning
-        Ch[channel].panning = 0x00;
-        if(value  < 64 + 32) Ch[channel].panning |= OPN_PANNING_LEFT;
-        if(value >= 64 - 32) Ch[channel].panning |= OPN_PANNING_RIGHT;
-        NoteUpdate_All(channel, Upd_Pan);
+        m_midiChannels[channel].panning = value;
+        noteUpdateAll(channel, Upd_Pan);
         break;
 
     case 121: // Reset all controllers
-        Ch[channel].resetAllControllers();
-        //UpdatePortamento(MidCh);
-        NoteUpdate_All(channel, Upd_Pan + Upd_Volume + Upd_Pitch);
+        m_midiChannels[channel].resetAllControllers();
+        noteUpdateAll(channel, Upd_Pan + Upd_Volume + Upd_Pitch);
         // Kill all sustained notes
-        KillSustainingNotes(channel);
+        killSustainingNotes(channel, -1, OpnChannel::LocationData::Sustain_ANY);
         break;
 
     case 120: // All sounds off
-        NoteUpdate_All(channel, Upd_OffMute);
+        noteUpdateAll(channel, Upd_OffMute);
         break;
 
     case 123: // All notes off
-        NoteUpdate_All(channel, Upd_Off);
+        noteUpdateAll(channel, Upd_Off);
         break;
 
     case 91:
@@ -1280,34 +641,34 @@ void OPNMIDIplay::realTime_Controller(uint8_t channel, uint8_t type, uint8_t val
         break; // Phaser effect depth. We don't do.
 
     case 98:
-        Ch[channel].lastlrpn = value;
-        Ch[channel].nrpn = true;
+        m_midiChannels[channel].lastlrpn = value;
+        m_midiChannels[channel].nrpn = true;
         break;
 
     case 99:
-        Ch[channel].lastmrpn = value;
-        Ch[channel].nrpn = true;
+        m_midiChannels[channel].lastmrpn = value;
+        m_midiChannels[channel].nrpn = true;
         break;
 
     case 100:
-        Ch[channel].lastlrpn = value;
-        Ch[channel].nrpn = false;
+        m_midiChannels[channel].lastlrpn = value;
+        m_midiChannels[channel].nrpn = false;
         break;
 
     case 101:
-        Ch[channel].lastmrpn = value;
-        Ch[channel].nrpn = false;
+        m_midiChannels[channel].lastmrpn = value;
+        m_midiChannels[channel].nrpn = false;
         break;
 
     case 113:
         break; // Related to pitch-bender, used by missimp.mid in Duke3D
 
     case  6:
-        SetRPN(channel, value, true);
+        setRPN(channel, value, true);
         break;
 
     case 38:
-        SetRPN(channel, value, false);
+        setRPN(channel, value, false);
         break;
 
     //case 103:
@@ -1322,63 +683,328 @@ void OPNMIDIplay::realTime_Controller(uint8_t channel, uint8_t type, uint8_t val
 
 void OPNMIDIplay::realTime_PatchChange(uint8_t channel, uint8_t patch)
 {
-    channel = channel % 16;
-    Ch[channel].patch = patch;
+    if(static_cast<size_t>(channel) > m_midiChannels.size())
+        channel = channel % 16;
+    m_midiChannels[channel].patch = patch;
 }
 
 void OPNMIDIplay::realTime_PitchBend(uint8_t channel, uint16_t pitch)
 {
-    channel = channel % 16;
-    Ch[channel].bend = int(pitch) - 8192;
-    NoteUpdate_All(channel, Upd_Pitch);
+    if(static_cast<size_t>(channel) > m_midiChannels.size())
+        channel = channel % 16;
+    m_midiChannels[channel].bend = int(pitch) - 8192;
+    noteUpdateAll(channel, Upd_Pitch);
 }
 
 void OPNMIDIplay::realTime_PitchBend(uint8_t channel, uint8_t msb, uint8_t lsb)
 {
-    channel = channel % 16;
-    Ch[channel].bend = int(lsb) + int(msb) * 128 - 8192;
-    NoteUpdate_All(channel, Upd_Pitch);
+    if(static_cast<size_t>(channel) > m_midiChannels.size())
+        channel = channel % 16;
+    m_midiChannels[channel].bend = int(lsb) + int(msb) * 128 - 8192;
+    noteUpdateAll(channel, Upd_Pitch);
 }
 
 void OPNMIDIplay::realTime_BankChangeLSB(uint8_t channel, uint8_t lsb)
 {
-    channel = channel % 16;
-    Ch[channel].bank_lsb = lsb;
+    if(static_cast<size_t>(channel) > m_midiChannels.size())
+        channel = channel % 16;
+    m_midiChannels[channel].bank_lsb = lsb;
 }
 
 void OPNMIDIplay::realTime_BankChangeMSB(uint8_t channel, uint8_t msb)
 {
-    channel = channel % 16;
-    Ch[channel].bank_msb = msb;
+    if(static_cast<size_t>(channel) > m_midiChannels.size())
+        channel = channel % 16;
+    m_midiChannels[channel].bank_msb = msb;
 }
 
 void OPNMIDIplay::realTime_BankChange(uint8_t channel, uint16_t bank)
 {
-    channel = channel % 16;
-    Ch[channel].bank_lsb = uint8_t(bank & 0xFF);
-    Ch[channel].bank_msb = uint8_t((bank >> 8) & 0xFF);
+    if(static_cast<size_t>(channel) > m_midiChannels.size())
+        channel = channel % 16;
+    m_midiChannels[channel].bank_lsb = uint8_t(bank & 0xFF);
+    m_midiChannels[channel].bank_msb = uint8_t((bank >> 8) & 0xFF);
+}
+
+void OPNMIDIplay::setDeviceId(uint8_t id)
+{
+    m_sysExDeviceId = id;
+}
+
+bool OPNMIDIplay::realTime_SysEx(const uint8_t *msg, size_t size)
+{
+    if(size < 4 || msg[0] != 0xF0 || msg[size - 1] != 0xF7)
+        return false;
+
+    unsigned manufacturer = msg[1];
+    unsigned dev = msg[2];
+    msg += 3;
+    size -= 4;
+
+    switch(manufacturer)
+    {
+    default:
+        break;
+    case Manufacturer_UniversalNonRealtime:
+    case Manufacturer_UniversalRealtime:
+        return doUniversalSysEx(
+            dev, manufacturer == Manufacturer_UniversalRealtime, msg, size);
+    case Manufacturer_Roland:
+        return doRolandSysEx(dev, msg, size);
+    case Manufacturer_Yamaha:
+        return doYamahaSysEx(dev, msg, size);
+    }
+
+    return false;
+}
+
+bool OPNMIDIplay::doUniversalSysEx(unsigned dev, bool realtime, const uint8_t *data, size_t size)
+{
+    bool devicematch = dev == 0x7F || dev == m_sysExDeviceId;
+    if(size < 2 || !devicematch)
+        return false;
+
+    unsigned address =
+        (((unsigned)data[0] & 0x7F) << 8) |
+        (((unsigned)data[1] & 0x7F));
+    data += 2;
+    size -= 2;
+
+    switch(((unsigned)realtime << 16) | address)
+    {
+        case (0 << 16) | 0x0901: // GM System On
+            if(hooks.onDebugMessage)
+                hooks.onDebugMessage(hooks.onDebugMessage_userData, "SysEx: GM System On");
+            m_synthMode = Mode_GM;
+            realTime_ResetState();
+            return true;
+        case (0 << 16) | 0x0902: // GM System Off
+            if(hooks.onDebugMessage)
+                hooks.onDebugMessage(hooks.onDebugMessage_userData, "SysEx: GM System Off");
+            m_synthMode = Mode_XG;//TODO: TEMPORARY, make something RIGHT
+            realTime_ResetState();
+            return true;
+        case (1 << 16) | 0x0401: // MIDI Master Volume
+            if(size != 2)
+                break;
+            unsigned volume =
+                (((unsigned)data[0] & 0x7F)) |
+                (((unsigned)data[1] & 0x7F) << 7);
+            m_masterVolume = static_cast<uint8_t>(volume >> 7);
+            for(size_t ch = 0; ch < m_midiChannels.size(); ch++)
+                noteUpdateAll(uint16_t(ch), Upd_Volume);
+            return true;
+    }
+
+    return false;
+}
+
+bool OPNMIDIplay::doRolandSysEx(unsigned dev, const uint8_t *data, size_t size)
+{
+    bool devicematch = dev == 0x7F || (dev & 0x0F) == m_sysExDeviceId;
+    if(size < 6 || !devicematch)
+        return false;
+
+    unsigned model = data[0] & 0x7F;
+    unsigned mode = data[1] & 0x7F;
+    unsigned checksum = data[size - 1] & 0x7F;
+    data += 2;
+    size -= 3;
+
+#if !defined(OPNMIDI_SKIP_ROLAND_CHECKSUM)
+    {
+        unsigned checkvalue = 0;
+        for(size_t i = 0; i < size; ++i)
+            checkvalue += data[i] & 0x7F;
+        checkvalue = (128 - (checkvalue & 127)) & 127;
+        if(checkvalue != checksum)
+        {
+            if(hooks.onDebugMessage)
+                hooks.onDebugMessage(hooks.onDebugMessage_userData, "SysEx: Caught invalid roland SysEx message!");
+            return false;
+        }
+    }
+#endif
+
+    unsigned address =
+        (((unsigned)data[0] & 0x7F) << 16) |
+        (((unsigned)data[1] & 0x7F) << 8)  |
+        (((unsigned)data[2] & 0x7F));
+    unsigned target_channel = 0;
+
+    /* F0 41 10 42 12 40 00 7F 00 41 F7 */
+
+    if((address & 0xFFF0FF) == 0x401015) // Turn channel 1 into percussion
+    {
+        address = 0x401015;
+        target_channel = data[1] & 0x0F;
+    }
+
+    data += 3;
+    size -= 3;
+
+    if(mode != RolandMode_Send) // don't have MIDI-Out reply ability
+        return false;
+
+    // Mode Set
+    // F0 {41 10 42 12} {40 00 7F} {00 41} F7
+
+    // Custom drum channels
+    // F0 {41 10 42 12} {40 1<ch> 15} {<state> <sum>} F7
+
+    switch((model << 24) | address)
+    {
+    case (RolandModel_GS << 24) | 0x00007F: // System Mode Set
+    {
+        if(size != 1 || (dev & 0xF0) != 0x10)
+            break;
+        unsigned mode = data[0] & 0x7F;
+        ADL_UNUSED(mode);//TODO: Hook this correctly!
+        if(hooks.onDebugMessage)
+            hooks.onDebugMessage(hooks.onDebugMessage_userData, "SysEx: Caught Roland System Mode Set: %02X", mode);
+        m_synthMode = Mode_GS;
+        realTime_ResetState();
+        return true;
+    }
+    case (RolandModel_GS << 24) | 0x40007F: // Mode Set
+    {
+        if(size != 1 || (dev & 0xF0) != 0x10)
+            break;
+        unsigned value = data[0] & 0x7F;
+        ADL_UNUSED(value);//TODO: Hook this correctly!
+        if(hooks.onDebugMessage)
+            hooks.onDebugMessage(hooks.onDebugMessage_userData, "SysEx: Caught Roland Mode Set: %02X", value);
+        m_synthMode = Mode_GS;
+        realTime_ResetState();
+        return true;
+    }
+    case (RolandModel_GS << 24) | 0x401015: // Percussion channel
+    {
+        if(size != 1 || (dev & 0xF0) != 0x10)
+            break;
+        if(m_midiChannels.size() < 16)
+            break;
+        unsigned value = data[0] & 0x7F;
+        const uint8_t channels_map[16] =
+        {
+            9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15
+        };
+        if(hooks.onDebugMessage)
+            hooks.onDebugMessage(hooks.onDebugMessage_userData,
+                                 "SysEx: Caught Roland Percussion set: %02X on channel %u (from %X)",
+                                 value, channels_map[target_channel], target_channel);
+        m_midiChannels[channels_map[target_channel]].is_xg_percussion = ((value == 0x01)) || ((value == 0x02));
+        return true;
+    }
+    }
+
+    return false;
+}
+
+bool OPNMIDIplay::doYamahaSysEx(unsigned dev, const uint8_t *data, size_t size)
+{
+    bool devicematch = dev == 0x7F || (dev & 0x0F) == m_sysExDeviceId;
+    if(size < 1 || !devicematch)
+        return false;
+
+    unsigned model = data[0] & 0x7F;
+    ++data;
+    --size;
+
+    switch((model << 8) | (dev & 0xF0))
+    {
+    case (YamahaModel_XG << 8) | 0x10:  // parameter change
+    {
+        if(size < 3)
+            break;
+
+        unsigned address =
+            (((unsigned)data[0] & 0x7F) << 16) |
+            (((unsigned)data[1] & 0x7F) << 8)  |
+            (((unsigned)data[2] & 0x7F));
+        data += 3;
+        size -= 3;
+
+        switch(address)
+        {
+        case 0x00007E:  // XG System On
+            if(size != 1)
+                break;
+            unsigned value = data[0] & 0x7F;
+            ADL_UNUSED(value);//TODO: Hook this correctly!
+            if(hooks.onDebugMessage)
+                hooks.onDebugMessage(hooks.onDebugMessage_userData, "SysEx: Caught Yamaha XG System On: %02X", value);
+            m_synthMode = Mode_XG;
+            realTime_ResetState();
+            return true;
+        }
+
+        break;
+    }
+    }
+
+    return false;
 }
 
 void OPNMIDIplay::realTime_panic()
 {
-    Panic();
-    KillSustainingNotes(-1, -1);
+    panic();
+    killSustainingNotes(-1, -1, OpnChannel::LocationData::Sustain_ANY);
 }
 
+void OPNMIDIplay::realTime_deviceSwitch(size_t track, const char *data, size_t length)
+{
+    const std::string indata(data, length);
+    m_currentMidiDevice[track] = chooseDevice(indata);
+}
 
-void OPNMIDIplay::NoteUpdate(uint16_t MidCh,
+size_t OPNMIDIplay::realTime_currentDevice(size_t track)
+{
+    if(m_currentMidiDevice.empty())
+        return 0;
+    return m_currentMidiDevice[track];
+}
+
+#if defined(ADLMIDI_AUDIO_TICK_HANDLER)
+void OPNMIDIplay::AudioTick(uint32_t chipId, uint32_t rate)
+{
+    if(chipId != 0)  // do first chip ticks only
+        return;
+
+    uint32_t tickNumber = m_audioTickCounter++;
+    double timeDelta = 1.0 / rate;
+
+    enum { portamentoInterval = 32 }; // for efficiency, set rate limit on pitch updates
+
+    if(tickNumber % portamentoInterval == 0)
+    {
+        double portamentoDelta = timeDelta * portamentoInterval;
+        UpdateGlide(portamentoDelta);
+    }
+}
+#endif
+
+void OPNMIDIplay::noteUpdate(size_t midCh,
                           OPNMIDIplay::MIDIchannel::activenoteiterator i,
                           unsigned props_mask,
                           int32_t select_adlchn)
 {
     MIDIchannel::NoteInfo &info = *i;
-    const int16_t tone    = info.tone;
+    const int16_t noteTone    = info.noteTone;
+    const double currentTone    = info.currentTone;
     const uint8_t vol     = info.vol;
     const size_t midiins = info.midiins;
     const opnInstMeta2 &ains = *info.ains;
     OpnChannel::Location my_loc;
-    my_loc.MidCh = MidCh;
+    my_loc.MidCh = static_cast<uint16_t>(midCh);
     my_loc.note  = info.note;
+
+    if(info.isBlank)
+    {
+        if(props_mask & Upd_Off)
+            m_midiChannels[midCh].activenotes_erase(i);
+        return;
+    }
 
     for(unsigned ccount = 0, ctotal = info.chip_channels_count; ccount < ctotal; ccount++)
     {
@@ -1389,13 +1015,13 @@ void OPNMIDIplay::NoteUpdate(uint16_t MidCh,
 
         if(props_mask & Upd_Patch)
         {
-            opn.Patch(c, ins.ains);
-            OpnChannel::LocationData *d = ch[c].users_find_or_create(my_loc);
+            m_synth.setPatch(c, ins.ains);
+            OpnChannel::LocationData *d = m_chipChannels[c].users_find_or_create(my_loc);
             if(d) {  // inserts if necessary
-                d->sustained = false;
-                d->vibdelay  = 0;
+                d->sustained = OpnChannel::LocationData::Sustain_None;
+                d->vibdelay_us  = 0;
                 d->fixed_sustain = (ains.ms_sound_kon == static_cast<uint16_t>(opnNoteOnMaxTime));
-                d->kon_time_until_neglible = ains.ms_sound_kon;
+                d->kon_time_until_neglible_us = 1000 * ains.ms_sound_kon;
                 d->ins       = ins;
             }
         }
@@ -1411,25 +1037,27 @@ void OPNMIDIplay::NoteUpdate(uint16_t MidCh,
 
         if(props_mask & Upd_Off) // note off
         {
-            if(Ch[MidCh].sustain == 0)
+            if(m_midiChannels[midCh].sustain == 0)
             {
-                OpnChannel::LocationData *k = ch[c].users_find(my_loc);
-
-                if(k)
-                    ch[c].users_erase(k);
+                OpnChannel::LocationData *k = m_chipChannels[c].users_find(my_loc);
+                bool do_erase_user = (k && ((k->sustained & OpnChannel::LocationData::Sustain_Sostenuto) == 0));
+                if(do_erase_user)
+                    m_chipChannels[c].users_erase(k);
 
                 if(hooks.onNote)
-                    hooks.onNote(hooks.onNote_userData, c, tone, (int)midiins, 0, 0.0);
+                    hooks.onNote(hooks.onNote_userData, c, noteTone, (int)midiins, 0, 0.0);
 
-                if(ch[c].users_empty())
+                if(do_erase_user && m_chipChannels[c].users_empty())
                 {
-                    opn.NoteOff(c);
+                    m_synth.noteOff(c);
                     if(props_mask & Upd_Mute) // Mute the note
                     {
-                        opn.Touch_Real(c, 0);
-                        ch[c].koff_time_until_neglible = 0;
-                    } else {
-                        ch[c].koff_time_until_neglible = ains.ms_sound_koff;
+                        m_synth.touchNote(c, 0);
+                        m_chipChannels[c].koff_time_until_neglible_us = 0;
+                    }
+                    else
+                    {
+                        m_chipChannels[c].koff_time_until_neglible_us = 1000 * int64_t(ains.ms_sound_koff);
                     }
                 }
             }
@@ -1437,11 +1065,11 @@ void OPNMIDIplay::NoteUpdate(uint16_t MidCh,
             {
                 // Sustain: Forget about the note, but don't key it off.
                 //          Also will avoid overwriting it very soon.
-                OpnChannel::LocationData *d = ch[c].users_find_or_create(my_loc);
+                OpnChannel::LocationData *d = m_chipChannels[c].users_find_or_create(my_loc);
                 if(d)
-                    d->sustained = true; // note: not erased!
+                    d->sustained |= OpnChannel::LocationData::Sustain_Pedal; // note: not erased!
                 if(hooks.onNote)
-                    hooks.onNote(hooks.onNote_userData, c, tone, (int)midiins, -1, 0.0);
+                    hooks.onNote(hooks.onNote_userData, c, noteTone, (int)midiins, -1, 0.0);
             }
 
             info.phys_erase_at(&ins);  // decrements channel count
@@ -1450,13 +1078,13 @@ void OPNMIDIplay::NoteUpdate(uint16_t MidCh,
         }
 
         if(props_mask & Upd_Pan)
-            opn.Pan(c, Ch[MidCh].panning);
+            m_synth.setPan(c, m_midiChannels[midCh].panning);
 
         if(props_mask & Upd_Volume)
         {
-            uint32_t volume;
-            bool is_percussion = (MidCh == 9) || Ch[MidCh].is_xg_percussion;
-            uint8_t brightness = is_percussion ? 127 : Ch[MidCh].brightness;
+            uint_fast32_t volume;
+            bool is_percussion = (midCh == 9) || m_midiChannels[midCh].is_xg_percussion;
+            uint_fast32_t brightness = is_percussion ? 127 : m_midiChannels[midCh].brightness;
 
             if(!m_setup.fullRangeBrightnessCC74)
             {
@@ -1467,11 +1095,12 @@ void OPNMIDIplay::NoteUpdate(uint16_t MidCh,
                     brightness *= 2;
             }
 
-            switch(opn.m_volumeScale)
+            switch(m_synth.m_volumeScale)
             {
+            default:
             case OPN2::VOLUME_Generic:
             {
-                volume = vol * Ch[MidCh].volume * Ch[MidCh].expression;
+                volume = vol * m_masterVolume * m_midiChannels[midCh].volume * m_midiChannels[midCh].expression;
                 /* If the channel has arpeggio, the effective volume of
                      * *this* instrument is actually lower due to timesharing.
                      * To compensate, add extra volume that corresponds to the
@@ -1482,77 +1111,78 @@ void OPNMIDIplay::NoteUpdate(uint16_t MidCh,
                 //volume = (int)(volume * std::sqrt( (double) ch[c].users.size() ));
 
                 // The formula below: SOLVE(V=127^3 * 2^( (A-63.49999) / 8), A)
-                volume = volume > 8725 ? static_cast<uint32_t>((std::log(static_cast<double>(volume)) * (11.541561) + (0.5 - 104.22845)) * 2.0) : 0;
+                volume = volume > (8725 * 127) ? static_cast<uint_fast32_t>((std::log(static_cast<double>(volume)) * 11.541560327111707 - 1.601379199767093e+02) * 2.0) : 0;
                 // The incorrect formula below: SOLVE(V=127^3 * (2^(A/63)-1), A)
                 //opl.Touch_Real(c, volume>11210 ? 91.61112 * std::log(4.8819E-7*volume + 1.0)+0.5 : 0);
-
-                opn.Touch_Real(c, volume, brightness);
             }
             break;
 
-            case OPN2::VOLUME_CMF:
+            case OPN2::VOLUME_NATIVE:
             {
-                volume = vol * Ch[MidCh].volume * Ch[MidCh].expression;
-                volume = volume * 127 / (2048383/*127 * 127 * 127*/);
-                opn.Touch_Real(c, volume, brightness);
+                volume = vol * m_midiChannels[midCh].volume * m_midiChannels[midCh].expression;
+                //volume = volume * m_masterVolume / (127 * 127 * 127) / 2;
+                volume = (volume * m_masterVolume) / 4096766;
             }
             break;
 
             case OPN2::VOLUME_DMX:
             {
-                volume = 2 * ((Ch[MidCh].volume * Ch[MidCh].expression) * 127 / 16129) + 1;
+                volume = 2 * (m_midiChannels[midCh].volume * m_midiChannels[midCh].expression * m_masterVolume / 16129) + 1;
                 //volume = 2 * (Ch[MidCh].volume) + 1;
-                volume = (DMX_volume_mapping_table[vol] * volume) >> 9;
-                opn.Touch_Real(c, volume, brightness);
+                volume = (DMX_volume_mapping_table[(vol < 128) ? vol : 127] * volume) >> 9;
+                if(volume > 0)
+                    volume += 64;//OPN has 0~127 range. As 0...63 is almost full silence, but at 64 to 127 is very closed to OPL3, just add 64.
             }
             break;
 
             case OPN2::VOLUME_APOGEE:
             {
-                volume = ((Ch[MidCh].volume * Ch[MidCh].expression) * 127 / 16129);
+                volume = (m_midiChannels[midCh].volume * m_midiChannels[midCh].expression * m_masterVolume / 16129);
                 volume = ((64 * (vol + 0x80)) * volume) >> 15;
                 //volume = ((63 * (vol + 0x80)) * Ch[MidCh].volume) >> 15;
-                volume *= 2;//OPN has 0~127 range
-                opn.Touch_Real(c, volume, brightness);
+                if(volume > 0)
+                    volume += 64;//OPN has 0~127 range. As 0...63 is almost full silence, but at 64 to 127 is very closed to OPL3, just add 64.
             }
             break;
 
             case OPN2::VOLUME_9X:
             {
                 //volume = 63 - W9X_volume_mapping_table[(((vol * Ch[MidCh].volume /** Ch[MidCh].expression*/) * 127 / 16129 /*2048383*/) >> 2)];
-                volume = 63 - W9X_volume_mapping_table[(((vol * Ch[MidCh].volume * Ch[MidCh].expression) * 127 / 2048383) >> 2)];
+                volume = 63 - W9X_volume_mapping_table[((vol * m_midiChannels[midCh].volume * m_midiChannels[midCh].expression * m_masterVolume / 2048383) >> 2)];
                 //volume = W9X_volume_mapping_table[vol >> 2] + volume;
-                volume *= 2;//OPN has 0~127 range
-                opn.Touch_Real(c, volume, brightness);
+                if(volume > 0)
+                    volume += 64;//OPN has 0~127 range. As 0...63 is almost full silence, but at 64 to 127 is very closed to OPL3, just add 64.
             }
             break;
             }
 
+            m_synth.touchNote(c, static_cast<uint8_t>(volume), static_cast<uint8_t>(brightness));
+
             /* DEBUG ONLY!!!
-                    static uint32_t max = 0;
+            static uint32_t max = 0;
 
-                    if(volume == 0)
-                        max = 0;
+            if(volume == 0)
+                max = 0;
 
-                    if(volume > max)
-                        max = volume;
+            if(volume > max)
+                max = volume;
 
-                    printf("%d\n", max);
-                    fflush(stdout);
-                    */
+            printf("%d\n", max);
+            fflush(stdout);
+            */
         }
 
         if(props_mask & Upd_Pitch)
         {
-            OpnChannel::LocationData *d = ch[c].users_find(my_loc);
+            OpnChannel::LocationData *d = m_chipChannels[c].users_find(my_loc);
 
             // Don't bend a sustained note
-            if(!d || !d->sustained)
+            if(!d || (d->sustained == OpnChannel::LocationData::Sustain_None))
             {
-                double midibend = Ch[MidCh].bend * Ch[MidCh].bendsense;
+                double midibend = m_midiChannels[midCh].bend * m_midiChannels[midCh].bendsense;
                 double bend = midibend + ins.ains.finetune;
                 double phase = 0.0;
-                uint8_t vibrato = std::max(Ch[MidCh].vibrato, Ch[MidCh].aftertouch);
+                uint8_t vibrato = std::max(m_midiChannels[midCh].vibrato, m_midiChannels[midCh].aftertouch);
                 vibrato = std::max(vibrato, i->vibrato);
 
                 if((ains.flags & opnInstMeta::Flag_Pseudo8op) && ins.ains == ains.opn[1])
@@ -1560,349 +1190,35 @@ void OPNMIDIplay::NoteUpdate(uint16_t MidCh,
                     phase = ains.fine_tune;//0.125; // Detune the note slightly (this is what Doom does)
                 }
 
-                if(vibrato && (!d || d->vibdelay >= Ch[MidCh].vibdelay))
-                    bend += static_cast<double>(vibrato) * Ch[MidCh].vibdepth * std::sin(Ch[MidCh].vibpos);
+                if(vibrato && (!d || d->vibdelay_us >= m_midiChannels[midCh].vibdelay_us))
+                    bend += static_cast<double>(vibrato) * m_midiChannels[midCh].vibdepth * std::sin(m_midiChannels[midCh].vibpos);
 
 #define BEND_COEFFICIENT 321.88557
-                opn.NoteOn(c, BEND_COEFFICIENT * std::exp(0.057762265 * (static_cast<double>(tone) + bend + phase)));
+                m_synth.noteOn(c, BEND_COEFFICIENT * std::exp(0.057762265 * (currentTone + bend + phase)));
 #undef BEND_COEFFICIENT
                 if(hooks.onNote)
-                    hooks.onNote(hooks.onNote_userData, c, tone, (int)midiins, vol, midibend);
+                    hooks.onNote(hooks.onNote_userData, c, noteTone, (int)midiins, vol, midibend);
             }
         }
     }
 
     if(info.chip_channels_count == 0)
-        Ch[MidCh].activenotes_erase(i);
+    {
+        if(i->glideRate != HUGE_VAL)
+            --m_midiChannels[midCh].gliding_note_count;
+        m_midiChannels[midCh].activenotes_erase(i);
+    }
 }
 
-#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
-bool OPNMIDIplay::ProcessEventsNew(bool isSeek)
+void OPNMIDIplay::noteUpdateAll(size_t midCh, unsigned props_mask)
 {
-    if(CurrentPositionNew.track.size() == 0)
-        atEnd = true;//No MIDI track data to play
-    if(atEnd)
-        return false;//No more events in the queue
-
-    loopEnd = false;
-    const size_t        TrackCount = CurrentPositionNew.track.size();
-    const PositionNew   RowBeginPosition(CurrentPositionNew);
-
-    #ifdef DEBUG_TIME_CALCULATION
-    double maxTime = 0.0;
-    #endif
-
-    for(size_t tk = 0; tk < TrackCount; ++tk)
+    for(MIDIchannel::activenoteiterator
+        i = m_midiChannels[midCh].activenotes_begin(); i;)
     {
-        PositionNew::TrackInfo &track = CurrentPositionNew.track[tk];
-        if((track.status >= 0) && (track.delay <= 0))
-        {
-            //Check is an end of track has been reached
-            if(track.pos == trackDataNew[tk].end())
-            {
-                track.status = -1;
-                break;
-            }
-
-            // Handle event
-            for(size_t i = 0; i < track.pos->events.size(); i++)
-            {
-                const MidiEvent &evt = track.pos->events[i];
-                #ifdef ENABLE_BEGIN_SILENCE_SKIPPING
-                if(!CurrentPositionNew.began && (evt.type == MidiEvent::T_NOTEON))
-                    CurrentPositionNew.began = true;
-                #endif
-                if(isSeek && (evt.type == MidiEvent::T_NOTEON))
-                    continue;
-                HandleEvent(tk, evt, track.status);
-                if(loopEnd)
-                    break;//Stop event handling on catching loopEnd event!
-            }
-
-            #ifdef DEBUG_TIME_CALCULATION
-            if(maxTime < track.pos->time)
-                maxTime = track.pos->time;
-            #endif
-            // Read next event time (unless the track just ended)
-            if(track.status >= 0)
-            {
-                track.delay += track.pos->delay;
-                track.pos++;
-            }
-        }
+        MIDIchannel::activenoteiterator j(i++);
+        noteUpdate(midCh, j, props_mask);
     }
-
-    #ifdef DEBUG_TIME_CALCULATION
-    std::fprintf(stdout, "                              \r");
-    std::fprintf(stdout, "Time: %10f; Audio: %10f\r", maxTime, CurrentPositionNew.absTimePosition);
-    std::fflush(stdout);
-    #endif
-
-    // Find shortest delay from all track
-    uint64_t shortest = 0;
-    bool     shortest_no = true;
-
-    for(size_t tk = 0; tk < TrackCount; ++tk)
-    {
-        PositionNew::TrackInfo &track = CurrentPositionNew.track[tk];
-        if((track.status >= 0) && (shortest_no || track.delay < shortest))
-        {
-            shortest = track.delay;
-            shortest_no = false;
-        }
-    }
-
-    //if(shortest > 0) UI.PrintLn("shortest: %ld", shortest);
-
-    // Schedule the next playevent to be processed after that delay
-    for(size_t tk = 0; tk < TrackCount; ++tk)
-        CurrentPositionNew.track[tk].delay -= shortest;
-
-    fraction<uint64_t> t = shortest * Tempo;
-
-    #ifdef ENABLE_BEGIN_SILENCE_SKIPPING
-    if(CurrentPositionNew.began)
-    #endif
-        CurrentPositionNew.wait += t.value();
-
-    //if(shortest > 0) UI.PrintLn("Delay %ld (%g)", shortest, (double)t.valuel());
-    if(loopStart)
-    {
-        LoopBeginPositionNew = RowBeginPosition;
-        loopStart = false;
-    }
-
-    if(shortest_no || loopEnd)
-    {
-        //Loop if song end or loop end point has reached
-        loopEnd         = false;
-        shortest = 0;
-        if(!m_setup.loopingIsEnabled)
-        {
-            atEnd = true; //Don't handle events anymore
-            CurrentPositionNew.wait += postSongWaitDelay;//One second delay until stop playing
-            return true;//We have caugh end here!
-        }
-        CurrentPositionNew = LoopBeginPositionNew;
-    }
-
-    return true;//Has events in queue
 }
-#endif //OPNMIDI_DISABLE_MIDI_SEQUENCER
-
-#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
-OPNMIDIplay::MidiEvent OPNMIDIplay::parseEvent(uint8_t **pptr, uint8_t *end, int &status)
-{
-    uint8_t *&ptr = *pptr;
-    OPNMIDIplay::MidiEvent evt;
-
-    if(ptr + 1 > end)
-    {
-        //When track doesn't ends on the middle of event data, it's must be fine
-        evt.type = MidiEvent::T_SPECIAL;
-        evt.subtype = MidiEvent::ST_ENDTRACK;
-        return evt;
-    }
-
-    unsigned char byte = *(ptr++);
-    bool ok = false;
-
-    if(byte == MidiEvent::T_SYSEX || byte == MidiEvent::T_SYSEX2)// Ignore SysEx
-    {
-        uint64_t length = ReadVarLenEx(pptr, end, ok);
-        if(!ok || (ptr + length > end))
-        {
-            errorString += "parseEvent: Can't read SysEx event - Unexpected end of track data.\n";
-            evt.isValid = 0;
-            return evt;
-        }
-        ptr += (size_t)length;
-        return evt;
-    }
-
-    if(byte == MidiEvent::T_SPECIAL)
-    {
-        // Special event FF
-        uint8_t  evtype = *(ptr++);
-        uint64_t length = ReadVarLenEx(pptr, end, ok);
-        if(!ok || (ptr + length > end))
-        {
-            errorString += "parseEvent: Can't read Special event - Unexpected end of track data.\n";
-            evt.isValid = 0;
-            return evt;
-        }
-        std::string data(length ? (const char *)ptr : 0, (size_t)length);
-        ptr += (size_t)length;
-
-        evt.type = byte;
-        evt.subtype = evtype;
-        evt.data.insert(evt.data.begin(), data.begin(), data.end());
-
-#if 0 /* Print all tempo events */
-        if(evt.subtype == MidiEvent::ST_TEMPOCHANGE)
-        {
-            if(hooks.onDebugMessage)
-                hooks.onDebugMessage(hooks.onDebugMessage_userData, "Temp Change: %02X%02X%02X", evt.data[0], evt.data[1], evt.data[2]);
-        }
-#endif
-
-        /* TODO: Store those meta-strings separately and give ability to read them
-         * by external functions (to display song title and copyright in the player) */
-        if(evt.subtype == MidiEvent::ST_COPYRIGHT)
-        {
-            if(musCopyright.empty())
-            {
-                musCopyright = std::string((const char *)evt.data.data(), evt.data.size());
-                if(hooks.onDebugMessage)
-                    hooks.onDebugMessage(hooks.onDebugMessage_userData, "Music copyright: %s", musCopyright.c_str());
-            }
-            else if(hooks.onDebugMessage)
-            {
-                std::string str((const char *)evt.data.data(), evt.data.size());
-                hooks.onDebugMessage(hooks.onDebugMessage_userData, "Extra copyright event: %s", str.c_str());
-            }
-        }
-        else if(evt.subtype == MidiEvent::ST_SQTRKTITLE)
-        {
-            if(musTitle.empty())
-            {
-                musTitle = std::string((const char *)evt.data.data(), evt.data.size());
-                if(hooks.onDebugMessage)
-                    hooks.onDebugMessage(hooks.onDebugMessage_userData, "Music title: %s", musTitle.c_str());
-            }
-            else if(hooks.onDebugMessage)
-            {
-                //TODO: Store track titles and associate them with each track and make API to retreive them
-                std::string str((const char *)evt.data.data(), evt.data.size());
-                musTrackTitles.push_back(str);
-                hooks.onDebugMessage(hooks.onDebugMessage_userData, "Track title: %s", str.c_str());
-            }
-        }
-        else if(evt.subtype == MidiEvent::ST_INSTRTITLE)
-        {
-            if(hooks.onDebugMessage)
-            {
-                std::string str((const char *)evt.data.data(), evt.data.size());
-                hooks.onDebugMessage(hooks.onDebugMessage_userData, "Instrument: %s", str.c_str());
-            }
-        }
-        else if(evt.subtype == MidiEvent::ST_MARKER)
-        {
-            //To lower
-            for(size_t i = 0; i < data.size(); i++)
-            {
-                if(data[i] <= 'Z' && data[i] >= 'A')
-                    data[i] = data[i] - ('Z' - 'z');
-            }
-
-            if(data == "loopstart")
-            {
-                //Return a custom Loop Start event instead of Marker
-                evt.subtype = MidiEvent::ST_LOOPSTART;
-                evt.data.clear();//Data is not needed
-                return evt;
-            }
-
-            if(data == "loopend")
-            {
-                //Return a custom Loop End event instead of Marker
-                evt.subtype = MidiEvent::ST_LOOPEND;
-                evt.data.clear();//Data is not needed
-                return evt;
-            }
-        }
-
-        if(evtype == MidiEvent::ST_ENDTRACK)
-            status = -1;//Finalize track
-
-        return evt;
-    }
-
-    // Any normal event (80..EF)
-    if(byte < 0x80)
-    {
-        byte = static_cast<uint8_t>(status | 0x80);
-        ptr--;
-    }
-
-    //Sys Com Song Select(Song #) [0-127]
-    if(byte == MidiEvent::T_SYSCOMSNGSEL)
-    {
-        if(ptr + 1 > end)
-        {
-            errorString += "parseEvent: Can't read System Command Song Select event - Unexpected end of track data.\n";
-            evt.isValid = 0;
-            return evt;
-        }
-        evt.type = byte;
-        evt.data.push_back(*(ptr++));
-        return evt;
-    }
-
-    //Sys Com Song Position Pntr [LSB, MSB]
-    if(byte == MidiEvent::T_SYSCOMSPOSPTR)
-    {
-        if(ptr + 2 > end)
-        {
-            errorString += "parseEvent: Can't read System Command Position Pointer event - Unexpected end of track data.\n";
-            evt.isValid = 0;
-            return evt;
-        }
-        evt.type = byte;
-        evt.data.push_back(*(ptr++));
-        evt.data.push_back(*(ptr++));
-        return evt;
-    }
-
-    uint8_t midCh = byte & 0x0F, evType = (byte >> 4) & 0x0F;
-    status = byte;
-    evt.channel = midCh;
-    evt.type = evType;
-
-    switch(evType)
-    {
-    case MidiEvent::T_NOTEOFF://2 byte length
-    case MidiEvent::T_NOTEON:
-    case MidiEvent::T_NOTETOUCH:
-    case MidiEvent::T_CTRLCHANGE:
-    case MidiEvent::T_WHEEL:
-        if(ptr + 2 > end)
-        {
-            errorString += "parseEvent: Can't read regular 2-byte event - Unexpected end of track data.\n";
-            evt.isValid = 0;
-            return evt;
-        }
-
-        evt.data.push_back(*(ptr++));
-        evt.data.push_back(*(ptr++));
-
-        if((evType == MidiEvent::T_NOTEON) && (evt.data[1] == 0))
-            evt.type = MidiEvent::T_NOTEOFF; // Note ON with zero velocity is Note OFF!
-        //111'th loopStart controller (RPG Maker and others)
-        else if((evType == MidiEvent::T_CTRLCHANGE) && (evt.data[0] == 111))
-        {
-            //Change event type to custom Loop Start event and clear data
-            evt.type = MidiEvent::T_SPECIAL;
-            evt.subtype = MidiEvent::ST_LOOPSTART;
-            evt.data.clear();
-        }
-
-        return evt;
-    case MidiEvent::T_PATCHCHANGE://1 byte length
-    case MidiEvent::T_CHANAFTTOUCH:
-        if(ptr + 1 > end)
-        {
-            errorString += "parseEvent: Can't read regular 1-byte event - Unexpected end of track data.\n";
-            evt.isValid = 0;
-            return evt;
-        }
-        evt.data.push_back(*(ptr++));
-        return evt;
-    }
-
-    return evt;
-}
-#endif //OPNMIDI_DISABLE_MIDI_SEQUENCER
 
 const std::string &OPNMIDIplay::getErrorString()
 {
@@ -1914,182 +1230,33 @@ void OPNMIDIplay::setErrorString(const std::string &err)
     errorStringOut = err;
 }
 
-#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
-void OPNMIDIplay::HandleEvent(size_t tk, const OPNMIDIplay::MidiEvent &evt, int &status)
+int64_t OPNMIDIplay::calculateChipChannelGoodness(size_t c, const MIDIchannel::NoteInfo::Phys &ins) const
 {
-    if(hooks.onEvent)
+    const OpnChannel &chan = m_chipChannels[c];
+    int64_t koff_ms = chan.koff_time_until_neglible_us / 1000;
+    int64_t s = -koff_ms;
+
+    // Rate channel with a releasing note
+    if(s < 0 && chan.users_empty())
     {
-        hooks.onEvent(hooks.onEvent_userData,
-                      evt.type,
-                      evt.subtype,
-                      evt.channel,
-                      evt.data.data(),
-                      evt.data.size());
+        s -= 40000;
+        // If it's same instrument, better chance to get it when no free channels
+        if(chan.recent_ins == ins)
+            s = (m_synth.m_musicMode == OPN2::MODE_CMF) ? 0 : -koff_ms;
+        return s;
     }
-
-    if(evt.type == MidiEvent::T_SYSEX || evt.type == MidiEvent::T_SYSEX2) // Ignore SysEx
-    {
-        //std::string data( length?(const char*) &TrackData[tk][CurrentPosition.track[tk].ptr]:0, length );
-        //UI.PrintLn("SysEx %02X: %u bytes", byte, length/*, data.c_str()*/);
-        return;
-    }
-
-    if(evt.type == MidiEvent::T_SPECIAL)
-    {
-        // Special event FF
-        uint8_t  evtype = evt.subtype;
-        uint64_t length = (uint64_t)evt.data.size();
-        std::string data(length ? (const char *)evt.data.data() : 0, (size_t)length);
-
-        if(evtype == MidiEvent::ST_ENDTRACK)//End Of Track
-        {
-            status = -1;
-            return;
-        }
-
-        if(evtype == MidiEvent::ST_TEMPOCHANGE)//Tempo change
-        {
-            Tempo = InvDeltaTicks * fraction<uint64_t>(ReadBEint(evt.data.data(), evt.data.size()));
-            return;
-        }
-
-        if(evtype == MidiEvent::ST_MARKER)//Meta event
-        {
-            //Do nothing! :-P
-            return;
-        }
-
-        if(evtype == MidiEvent::ST_DEVICESWITCH)
-        {
-            current_device[tk] = ChooseDevice(data);
-            return;
-        }
-
-        //if(evtype >= 1 && evtype <= 6)
-        //    UI.PrintLn("Meta %d: %s", evtype, data.c_str());
-
-        //Turn on Loop handling when loop is enabled
-        if(m_setup.loopingIsEnabled && !invalidLoop)
-        {
-            if(evtype == MidiEvent::ST_LOOPSTART) // Special non-spec ADLMIDI special for IMF playback: Direct poke to AdLib
-            {
-                loopStart = true;
-                return;
-            }
-
-            if(evtype == MidiEvent::ST_LOOPEND) // Special non-spec ADLMIDI special for IMF playback: Direct poke to AdLib
-            {
-                loopEnd = true;
-                return;
-            }
-        }
-
-        //if(evtype == MidiEvent::ST_RAWOPL) // Special non-spec ADLMIDI special for IMF playback: Direct poke to AdLib
-        //{
-        //    uint8_t i = static_cast<uint8_t>(data[0]), v = static_cast<uint8_t>(data[1]);
-        //    if((i & 0xF0) == 0xC0)
-        //        v |= 0x30;
-        //    //std::printf("OPL poke %02X, %02X\n", i, v);
-        //    //std::fflush(stdout);
-        //    opl.PokeN(0, i, v);
-        //    return;
-        //}
-
-        return;
-    }
-
-    // Any normal event (80..EF)
-    //    if(evt.type < 0x80)
-    //    {
-    //        byte = static_cast<uint8_t>(CurrentPosition.track[tk].status | 0x80);
-    //        CurrentPosition.track[tk].ptr--;
-    //    }
-
-    if(evt.type == MidiEvent::T_SYSCOMSNGSEL ||
-       evt.type == MidiEvent::T_SYSCOMSPOSPTR)
-        return;
-
-    /*UI.PrintLn("@%X Track %u: %02X %02X",
-                CurrentPosition.track[tk].ptr-1, (unsigned)tk, byte,
-                TrackData[tk][CurrentPosition.track[tk].ptr]);*/
-    uint8_t  midCh = evt.channel;//byte & 0x0F, EvType = byte >> 4;
-    midCh += (uint8_t)current_device[tk];
-    status = evt.type;
-
-    switch(evt.type)
-    {
-    case MidiEvent::T_NOTEOFF: // Note off
-    {
-        uint8_t note = evt.data[0];
-        realTime_NoteOff(midCh, note);
-        break;
-    }
-
-    case MidiEvent::T_NOTEON: // Note on
-    {
-        uint8_t note = evt.data[0];
-        uint8_t vol  = evt.data[1];
-        /*if(*/ realTime_NoteOn(midCh, note, vol); /*)*/
-        //CurrentPosition.began  = true;
-        break;
-    }
-
-    case MidiEvent::T_NOTETOUCH: // Note touch
-    {
-        uint8_t note = evt.data[0];
-        uint8_t vol =  evt.data[1];
-        realTime_NoteAfterTouch(midCh, note, vol);
-        break;
-    }
-
-    case MidiEvent::T_CTRLCHANGE: // Controller change
-    {
-        uint8_t ctrlno = evt.data[0];
-        uint8_t value =  evt.data[1];
-        realTime_Controller(midCh, ctrlno, value);
-        break;
-    }
-
-    case MidiEvent::T_PATCHCHANGE: // Patch change
-        realTime_PatchChange(midCh, evt.data[0]);
-        break;
-
-    case MidiEvent::T_CHANAFTTOUCH: // Channel after-touch
-    {
-        // TODO: Verify, is this correct action?
-        uint8_t vol = evt.data[0];
-        realTime_ChannelAfterTouch(midCh, vol);
-        break;
-    }
-
-    case MidiEvent::T_WHEEL: // Wheel/pitch bend
-    {
-        uint8_t a = evt.data[0];
-        uint8_t b = evt.data[1];
-        realTime_PitchBend(midCh, b, a);
-        break;
-    }
-    }
-}
-#endif //OPNMIDI_DISABLE_MIDI_SEQUENCER
-
-int64_t OPNMIDIplay::CalculateAdlChannelGoodness(size_t c, const MIDIchannel::NoteInfo::Phys &ins, uint16_t) const
-{
-    int64_t s = -ch[c].koff_time_until_neglible;
 
     // Same midi-instrument = some stability
-    //if(c == MidCh) s += 4;
-    for (OpnChannel::LocationData *j = ch[c].users_first; j; j = j->next)
+    for(OpnChannel::LocationData *j = chan.users_first; j; j = j->next)
     {
-        s -= 4000;
+        s -= 4000000;
 
-        if(!j->sustained)
-            s -= j->kon_time_until_neglible;
-        else
-            s -= (j->kon_time_until_neglible / 2);
+        int64_t kon_ms = j->kon_time_until_neglible_us / 1000;
+        s -= (j->sustained == OpnChannel::LocationData::Sustain_None) ?
+            kon_ms : (kon_ms / 2);
 
         MIDIchannel::activenoteiterator
-        k = const_cast<MIDIchannel &>(Ch[j->loc.MidCh]).activenotes_find(j->loc.note);
+        k = const_cast<MIDIchannel &>(m_midiChannels[j->loc.MidCh]).activenotes_find(j->loc.note);
 
         if(k)
         {
@@ -2098,21 +1265,13 @@ int64_t OPNMIDIplay::CalculateAdlChannelGoodness(size_t c, const MIDIchannel::No
             {
                 s += 300;
                 // Arpeggio candidate = even better
-                if(j->vibdelay < 70
-                   || j->kon_time_until_neglible > 20000)
-                    s += 0;
+                if(j->vibdelay_us < 70000
+                   || j->kon_time_until_neglible_us > 20000000)
+                    s += 10;
             }
 
             // Percussion is inferior to melody
-            s += 50 * (int64_t)(k->midiins / 128);
-            /*
-                    if(k->second.midiins >= 25
-                    && k->second.midiins < 40
-                    && j->second.ins != ins)
-                    {
-                        s -= 14000; // HACK: Don't clobber the bass or the guitar
-                    }
-                    */
+            s += k->isPercussion ? 50 : 0;
         }
 
         // If there is another channel to which this note
@@ -2129,8 +1288,8 @@ int64_t OPNMIDIplay::CalculateAdlChannelGoodness(size_t c, const MIDIchannel::No
 
 //            for(OpnChannel::LocationData *m = ch[c2].users_first; m; m = m->next)
 //            {
-//                if(m->sustained)       continue;
-//                if(m->vibdelay >= 200) continue;
+//                if(m->sustained != OpnChannel::LocationData::Sustain_None) continue;
+//                if(m->vibdelay >= 200000) continue;
 //                if(m->ins != j->second.ins) continue;
 //                n_evacuation_stations += 1;
 //            }
@@ -2143,12 +1302,12 @@ int64_t OPNMIDIplay::CalculateAdlChannelGoodness(size_t c, const MIDIchannel::No
 }
 
 
-void OPNMIDIplay::PrepareAdlChannelForNewNote(size_t c, const MIDIchannel::NoteInfo::Phys &ins)
+void OPNMIDIplay::prepareChipChannelForNewNote(size_t c, const MIDIchannel::NoteInfo::Phys &ins)
 {
-    if(ch[c].users_empty()) return; // Nothing to do
+    if(m_chipChannels[c].users_empty()) return; // Nothing to do
 
     //bool doing_arpeggio = false;
-    for(OpnChannel::LocationData *jnext = ch[c].users_first; jnext;)
+    for(OpnChannel::LocationData *jnext = m_chipChannels[c].users_first; jnext;)
     {
         OpnChannel::LocationData *j = jnext;
         jnext = jnext->next;
@@ -2158,11 +1317,11 @@ void OPNMIDIplay::PrepareAdlChannelForNewNote(size_t c, const MIDIchannel::NoteI
             // Collision: Kill old note,
             // UNLESS we're going to do arpeggio
             MIDIchannel::activenoteiterator i
-            (Ch[j->loc.MidCh].activenotes_ensure_find(j->loc.note));
+            (m_midiChannels[j->loc.MidCh].activenotes_ensure_find(j->loc.note));
 
             // Check if we can do arpeggio.
-            if((j->vibdelay < 70
-                || j->kon_time_until_neglible > 20000)
+            if((j->vibdelay_us < 70000
+                || j->kon_time_until_neglible_us > 20000000)
                && j->ins == ins)
             {
                 // Do arpeggio together with this note.
@@ -2170,7 +1329,7 @@ void OPNMIDIplay::PrepareAdlChannelForNewNote(size_t c, const MIDIchannel::NoteI
                 continue;
             }
 
-            KillOrEvacuate(c, j, i);
+            killOrEvacuate(c, j, i);
             // ^ will also erase j from ch[c].users.
         }
     }
@@ -2178,62 +1337,64 @@ void OPNMIDIplay::PrepareAdlChannelForNewNote(size_t c, const MIDIchannel::NoteI
     // Kill all sustained notes on this channel
     // Don't keep them for arpeggio, because arpeggio requires
     // an intact "activenotes" record. This is a design flaw.
-    KillSustainingNotes(-1, static_cast<int32_t>(c));
+    killSustainingNotes(-1, static_cast<int32_t>(c), OpnChannel::LocationData::Sustain_ANY);
 
     // Keyoff the channel so that it can be retriggered,
     // unless the new note will be introduced as just an arpeggio.
-    if(ch[c].users_empty())
-        opn.NoteOff(c);
+    if(m_chipChannels[c].users_empty())
+        m_synth.noteOff(c);
 }
 
-void OPNMIDIplay::KillOrEvacuate(size_t from_channel,
+void OPNMIDIplay::killOrEvacuate(size_t from_channel,
                                  OpnChannel::LocationData *j,
                                  OPNMIDIplay::MIDIchannel::activenoteiterator i)
 {
+    uint32_t maxChannels = OPN_MAX_CHIPS * 6;
+
     // Before killing the note, check if it can be
     // evacuated to another channel as an arpeggio
     // instrument. This helps if e.g. all channels
     // are full of strings and we want to do percussion.
     // FIXME: This does not care about four-op entanglements.
-    for(uint32_t c = 0; c < opn.NumChannels; ++c)
+    for(uint32_t c = 0; c < m_synth.m_numChannels; ++c)
     {
         uint16_t cs = static_cast<uint16_t>(c);
 
-        if(c > std::numeric_limits<uint32_t>::max())
+        if(c >= maxChannels)
             break;
         if(c == from_channel)
             continue;
         //if(opn.four_op_category[c] != opn.four_op_category[from_channel])
         //    continue;
 
-        OpnChannel &adlch = ch[c];
+        OpnChannel &adlch = m_chipChannels[c];
         if(adlch.users_size == OpnChannel::users_max)
             continue;  // no room for more arpeggio on channel
 
         for(OpnChannel::LocationData *m = adlch.users_first; m; m = m->next)
         {
-            if(m->vibdelay >= 200
-               && m->kon_time_until_neglible < 10000) continue;
+            if(m->vibdelay_us >= 200000
+               && m->kon_time_until_neglible_us < 10000000) continue;
             if(m->ins != j->ins)
                 continue;
             if(hooks.onNote)
             {
                 hooks.onNote(hooks.onNote_userData,
                              (int)from_channel,
-                             i->tone,
+                             i->noteTone,
                              (int)i->midiins, 0, 0.0);
                 hooks.onNote(hooks.onNote_userData,
                              (int)c,
-                             i->tone,
+                             i->noteTone,
                              (int)i->midiins,
                              i->vol, 0.0);
             }
 
             i->phys_erase(static_cast<uint16_t>(from_channel));
             i->phys_ensure_find_or_create(cs)->assign(j->ins);
-            if(!ch[cs].users_insert(*j))
+            if(!m_chipChannels[cs].users_insert(*j))
                 assert(false);
-            ch[from_channel].users_erase(j);
+            m_chipChannels[from_channel].users_erase(j);
             return;
         }
     }
@@ -2246,24 +1407,24 @@ void OPNMIDIplay::KillOrEvacuate(size_t from_channel,
                 ins
                 );*/
     // Kill it
-    NoteUpdate(j->loc.MidCh,
+    noteUpdate(j->loc.MidCh,
                i,
                Upd_Off,
                static_cast<int32_t>(from_channel));
 }
 
-void OPNMIDIplay::Panic()
+void OPNMIDIplay::panic()
 {
-    for(uint8_t chan = 0; chan < Ch.size(); chan++)
+    for(uint8_t chan = 0; chan < m_midiChannels.size(); chan++)
     {
         for(uint8_t note = 0; note < 128; note++)
             realTime_NoteOff(chan, note);
     }
 }
 
-void OPNMIDIplay::KillSustainingNotes(int32_t MidCh, int32_t this_adlchn)
+void OPNMIDIplay::killSustainingNotes(int32_t midCh, int32_t this_adlchn, uint32_t sustain_type)
 {
-    uint32_t first = 0, last = opn.NumChannels;
+    uint32_t first = 0, last = m_synth.m_numChannels;
 
     if(this_adlchn >= 0)
     {
@@ -2271,57 +1432,87 @@ void OPNMIDIplay::KillSustainingNotes(int32_t MidCh, int32_t this_adlchn)
         last = first + 1;
     }
 
-    for(unsigned c = first; c < last; ++c)
+    for(uint32_t c = first; c < last; ++c)
     {
-        if(ch[c].users_empty()) continue; // Nothing to do
+        if(m_chipChannels[c].users_empty())
+            continue; // Nothing to do
 
-        for(OpnChannel::LocationData *jnext = ch[c].users_first; jnext;)
+        for(OpnChannel::LocationData *jnext = m_chipChannels[c].users_first; jnext;)
         {
             OpnChannel::LocationData *j = jnext;
             jnext = jnext->next;
 
-            if((MidCh < 0 || j->loc.MidCh == MidCh)
-               && j->sustained)
+            if((midCh < 0 || j->loc.MidCh == midCh)
+               && ((j->sustained & sustain_type) != 0))
             {
                 int midiins = '?';
                 if(hooks.onNote)
                     hooks.onNote(hooks.onNote_userData, (int)c, j->loc.note, midiins, 0, 0.0);
-                ch[c].users_erase(j);
+                j->sustained &= ~sustain_type;
+                if(j->sustained == OpnChannel::LocationData::Sustain_None)
+                    m_chipChannels[c].users_erase(j);//Remove only when note is clean from any holders
             }
         }
 
         // Keyoff the channel, if there are no users left.
-        if(ch[c].users_empty())
-            opn.NoteOff(c);
+        if(m_chipChannels[c].users_empty())
+            m_synth.noteOff(c);
     }
 }
 
-void OPNMIDIplay::SetRPN(unsigned MidCh, unsigned value, bool MSB)
+void OPNMIDIplay::markSostenutoNotes(int32_t midCh)
 {
-    bool nrpn = Ch[MidCh].nrpn;
-    unsigned addr = Ch[MidCh].lastmrpn * 0x100 + Ch[MidCh].lastlrpn;
+    uint32_t first = 0, last = m_synth.m_numChannels;
+    for(uint32_t c = first; c < last; ++c)
+    {
+        if(m_chipChannels[c].users_empty())
+            continue; // Nothing to do
+
+        for(OpnChannel::LocationData *jnext = m_chipChannels[c].users_first; jnext;)
+        {
+            OpnChannel::LocationData *j = jnext;
+            jnext = jnext->next;
+            if((j->loc.MidCh == midCh) && (j->sustained == OpnChannel::LocationData::Sustain_None))
+                j->sustained |= OpnChannel::LocationData::Sustain_Sostenuto;
+        }
+    }
+}
+
+void OPNMIDIplay::setRPN(size_t midCh, unsigned value, bool MSB)
+{
+    bool nrpn = m_midiChannels[midCh].nrpn;
+    unsigned addr = m_midiChannels[midCh].lastmrpn * 0x100 + m_midiChannels[midCh].lastlrpn;
 
     switch(addr + nrpn * 0x10000 + MSB * 0x20000)
     {
     case 0x0000 + 0*0x10000 + 1*0x20000: // Pitch-bender sensitivity
-        Ch[MidCh].bendsense_msb = value;
-        Ch[MidCh].updateBendSensitivity();
+        m_midiChannels[midCh].bendsense_msb = value;
+        m_midiChannels[midCh].updateBendSensitivity();
         break;
     case 0x0000 + 0*0x10000 + 0*0x20000: // Pitch-bender sensitivity LSB
-        Ch[MidCh].bendsense_lsb = value;
-        Ch[MidCh].updateBendSensitivity();
+        m_midiChannels[midCh].bendsense_lsb = value;
+        m_midiChannels[midCh].updateBendSensitivity();
         break;
     case 0x0108 + 1*0x10000 + 1*0x20000: // Vibrato speed
-        if(value == 64)      Ch[MidCh].vibspeed = 1.0;
-        else if(value < 100) Ch[MidCh].vibspeed = 1.0 / (1.6e-2 * (value ? value : 1));
-        else                 Ch[MidCh].vibspeed = 1.0 / (0.051153846 * value - 3.4965385);
-        Ch[MidCh].vibspeed *= 2 * 3.141592653 * 5.0;
+        if((m_synthMode & Mode_XG) != 0) // Vibrato speed
+        {
+            if(value == 64)      m_midiChannels[midCh].vibspeed = 1.0;
+            else if(value < 100) m_midiChannels[midCh].vibspeed = 1.0 / (1.6e-2 * (value ? value : 1));
+            else                 m_midiChannels[midCh].vibspeed = 1.0 / (0.051153846 * value - 3.4965385);
+            m_midiChannels[midCh].vibspeed *= 2 * 3.141592653 * 5.0;
+        }
         break;
-    case 0x0109 + 1*0x10000 + 1*0x20000: // Vibrato depth
-        Ch[MidCh].vibdepth = ((value - 64) * 0.15) * 0.01;
+    case 0x0109 + 1*0x10000 + 1*0x20000:
+        if((m_synthMode & Mode_XG) != 0) // Vibrato depth
+        {
+            m_midiChannels[midCh].vibdepth = (((int)value - 64) * 0.15) * 0.01;
+        }
         break;
-    case 0x010A + 1*0x10000 + 1*0x20000: // Vibrato delay in millisecons
-        Ch[MidCh].vibdelay = value ? int64_t(0.2092 * std::exp(0.0795 * (double)value)) : 0;
+    case 0x010A + 1*0x10000 + 1*0x20000:
+        if((m_synthMode & Mode_XG) != 0) // Vibrato delay in millisecons
+        {
+            m_midiChannels[midCh].vibdelay_us = value ? int64_t(209.2 * std::exp(0.0795 * (double)value)) : 0;
+        }
         break;
     default:/* UI.PrintLn("%s %04X <- %d (%cSB) (ch %u)",
                 "NRPN"+!nrpn, addr, value, "LM"[MSB], MidCh);*/
@@ -2329,67 +1520,56 @@ void OPNMIDIplay::SetRPN(unsigned MidCh, unsigned value, bool MSB)
     }
 }
 
-//void MIDIplay::UpdatePortamento(unsigned MidCh)
-//{
-//    // mt = 2^(portamento/2048) * (1.0 / 5000.0)
-//    /*
-//    double mt = std::exp(0.00033845077 * Ch[MidCh].portamento);
-//    NoteUpdate_All(MidCh, Upd_Pitch);
-//    */
-//    //UI.PrintLn("Portamento %u: %u (unimplemented)", MidCh, Ch[MidCh].portamento);
-//}
-
-void OPNMIDIplay::NoteUpdate_All(uint16_t MidCh, unsigned props_mask)
+void OPNMIDIplay::updatePortamento(size_t midCh)
 {
-    for(MIDIchannel::activenoteiterator
-        i = Ch[MidCh].activenotes_begin(); i;)
-    {
-        MIDIchannel::activenoteiterator j(i++);
-        NoteUpdate(MidCh, j, props_mask);
-    }
+    double rate = HUGE_VAL;
+    uint16_t midival = m_midiChannels[midCh].portamento;
+    if(m_midiChannels[midCh].portamentoEnable && midival > 0)
+        rate = 350.0 * std::pow(2.0, -0.062 * (1.0 / 128) * midival);
+    m_midiChannels[midCh].portamentoRate = rate;
 }
 
-void OPNMIDIplay::NoteOff(uint16_t MidCh, uint8_t note)
+void OPNMIDIplay::noteOff(size_t midCh, uint8_t note)
 {
     MIDIchannel::activenoteiterator
-    i = Ch[MidCh].activenotes_find(note);
+    i = m_midiChannels[midCh].activenotes_find(note);
 
     if(i)
-        NoteUpdate(MidCh, i, Upd_Off);
+        noteUpdate(midCh, i, Upd_Off);
 }
 
 
-void OPNMIDIplay::UpdateVibrato(double amount)
+void OPNMIDIplay::updateVibrato(double amount)
 {
-    for(size_t a = 0, b = Ch.size(); a < b; ++a)
+    for(size_t a = 0, b = m_midiChannels.size(); a < b; ++a)
     {
-        if(Ch[a].hasVibrato() && !Ch[a].activenotes_empty())
+        if(m_midiChannels[a].hasVibrato() && !m_midiChannels[a].activenotes_empty())
         {
-            NoteUpdate_All(static_cast<uint16_t>(a), Upd_Pitch);
-            Ch[a].vibpos += amount * Ch[a].vibspeed;
+            noteUpdateAll(static_cast<uint16_t>(a), Upd_Pitch);
+            m_midiChannels[a].vibpos += amount * m_midiChannels[a].vibspeed;
         }
         else
-            Ch[a].vibpos = 0.0;
+            m_midiChannels[a].vibpos = 0.0;
     }
 }
 
 
 
 
-uint64_t OPNMIDIplay::ChooseDevice(const std::string &name)
+size_t OPNMIDIplay::chooseDevice(const std::string &name)
 {
-    std::map<std::string, uint64_t>::iterator i = devices.find(name);
+    std::map<std::string, size_t>::iterator i = m_midiDevices.find(name);
 
-    if(i != devices.end())
+    if(i != m_midiDevices.end())
         return i->second;
 
-    size_t n = devices.size() * 16;
-    devices.insert(std::make_pair(name, n));
-    Ch.resize(n + 16);
+    size_t n = m_midiDevices.size() * 16;
+    m_midiDevices.insert(std::make_pair(name, n));
+    m_midiChannels.resize(n + 16);
     return n;
 }
 
-void OPNMIDIplay::UpdateArpeggio(double) // amount = amount of time passed
+void OPNMIDIplay::updateArpeggio(double) // amount = amount of time passed
 {
     // If there is an adlib channel that has multiple notes
     // simulated on the same channel, arpeggio them.
@@ -2415,17 +1595,17 @@ void OPNMIDIplay::UpdateArpeggio(double) // amount = amount of time passed
 
     ++m_arpeggioCounter;
 
-    for(uint32_t c = 0; c < opn.NumChannels; ++c)
+    for(uint32_t c = 0; c < m_synth.m_numChannels; ++c)
     {
 retry_arpeggio:
         if(c > uint32_t(std::numeric_limits<int32_t>::max()))
             break;
 
-        size_t n_users = ch[c].users_size;
+        size_t n_users = m_chipChannels[c].users_size;
 
         if(n_users > 1)
         {
-            OpnChannel::LocationData *i = ch[c].users_first;
+            OpnChannel::LocationData *i = m_chipChannels[c].users_first;
             size_t rate_reduction = 3;
 
             if(n_users >= 3)
@@ -2438,21 +1618,21 @@ retry_arpeggio:
                      n = 0; n < count; ++n)
                 i = i->next;
 
-            if(i->sustained == false)
+            if(i->sustained == OpnChannel::LocationData::Sustain_None)
             {
-                if(i->kon_time_until_neglible <= 0l)
+                if(i->kon_time_until_neglible_us <= 0)
                 {
-                    NoteUpdate(
+                    noteUpdate(
                         i->loc.MidCh,
-                        Ch[ i->loc.MidCh ].activenotes_ensure_find(i->loc.note),
+                        m_midiChannels[ i->loc.MidCh ].activenotes_ensure_find(i->loc.note),
                         Upd_Off,
                         static_cast<int32_t>(c));
                     goto retry_arpeggio;
                 }
 
-                NoteUpdate(
+                noteUpdate(
                     i->loc.MidCh,
-                    Ch[ i->loc.MidCh ].activenotes_ensure_find(i->loc.note),
+                    m_midiChannels[ i->loc.MidCh ].activenotes_ensure_find(i->loc.note),
                     Upd_Pitch | Upd_Volume | Upd_Pan,
                     static_cast<int32_t>(c));
             }
@@ -2460,6 +1640,76 @@ retry_arpeggio:
     }
 }
 
+void OPNMIDIplay::updateGlide(double amount)
+{
+    size_t num_channels = m_midiChannels.size();
+
+    for(size_t channel = 0; channel < num_channels; ++channel)
+    {
+        MIDIchannel &midiChan = m_midiChannels[channel];
+        if(midiChan.gliding_note_count == 0)
+            continue;
+
+        for(MIDIchannel::activenoteiterator it = midiChan.activenotes_begin();
+            it; ++it)
+        {
+            double finalTone = it->noteTone;
+            double previousTone = it->currentTone;
+
+            bool directionUp = previousTone < finalTone;
+            double toneIncr = amount * (directionUp ? +it->glideRate : -it->glideRate);
+
+            double currentTone = previousTone + toneIncr;
+            bool glideFinished = !(directionUp ? (currentTone < finalTone) : (currentTone > finalTone));
+            currentTone = glideFinished ? finalTone : currentTone;
+
+            if(currentTone != previousTone)
+            {
+                it->currentTone = currentTone;
+                noteUpdate(static_cast<uint16_t>(channel), it, Upd_Pitch);
+            }
+        }
+    }
+}
+
+void OPNMIDIplay::describeChannels(char *str, char *attr, size_t size)
+{
+    if (!str || size <= 0)
+        return;
+
+    OPN2 &synth = m_synth;
+    uint32_t numChannels = synth.m_numChannels;
+
+    uint32_t index = 0;
+    while(index < numChannels && index < size - 1)
+    {
+        const OpnChannel &adlChannel = m_chipChannels[index];
+
+        OpnChannel::LocationData *loc = adlChannel.users_first;
+        if(!loc)  // off
+        {
+            str[index] = '-';
+        }
+        else if(loc->next)  // arpeggio
+        {
+            str[index] = '@';
+        }
+        else  // on
+        {
+            str[index] = '+';
+        }
+
+        uint8_t attribute = 0;
+        if (loc)  // 4-bit color index of MIDI channel
+            attribute |= (uint8_t)(loc->loc.MidCh & 0xF);
+
+        attr[index] = (char)attribute;
+        ++index;
+    }
+
+    str[index] = 0;
+    attr[index] = 0;
+}
 
 /* TODO */
 

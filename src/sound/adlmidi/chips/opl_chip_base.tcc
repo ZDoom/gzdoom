@@ -236,8 +236,8 @@ void OPLChipBaseT<T>::resampledGenerate(int32_t *output)
         rsm->out_count = 1;
         rsm->out_data = f_out;
     }
-    output[0] = std::lround(f_out[0]);
-    output[1] = std::lround(f_out[1]);
+    output[0] = static_cast<int32_t>(std::lround(f_out[0]));
+    output[1] = static_cast<int32_t>(std::lround(f_out[1]));
 }
 #else
 template <class T>

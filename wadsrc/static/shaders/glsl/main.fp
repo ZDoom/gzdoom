@@ -178,47 +178,26 @@ float shadowDirToU(vec2 dir)
 	}
 }
 
-float sampleShadowmap(vec2 dir, float v)
+vec2 shadowUToDir(float u)
 {
-	float u = shadowDirToU(dir);
-	float dist2 = dot(dir, dir);
-	return step(dist2, texture(ShadowMap, vec2(u, v)).x);
+	u *= 4.0;
+	vec2 raydir;
+	switch (int(u))
+	{
+	case 0: raydir = vec2(u * 2.0 - 1.0, 1.0); break;
+	case 1: raydir = vec2(1.0, 1.0 - (u - 1.0) * 2.0); break;
+	case 2: raydir = vec2(1.0 - (u - 2.0) * 2.0, -1.0); break;
+	case 3: raydir = vec2(-1.0, (u - 3.0) * 2.0 - 1.0); break;
+	}
+	return raydir;
 }
 
-float sampleShadowmapLinear(vec2 dir, float v)
+float sampleShadowmap(vec3 planePoint, float v)
 {
-	float u = shadowDirToU(dir);
-	float dist2 = dot(dir, dir);
+	float bias = 1.0;
+	float negD = dot(vWorldNormal.xyz, planePoint);
 
-	vec2 isize = textureSize(ShadowMap, 0);
-	vec2 size = vec2(isize);
-
-	vec2 fetchPos = vec2(u, v) * size - vec2(0.5, 0.0);
-	if (fetchPos.x < 0.0)
-		fetchPos.x += size.x;
-
-	ivec2 ifetchPos = ivec2(fetchPos);
-	int y = ifetchPos.y;
-
-	float t = fract(fetchPos.x);
-	int x0 = ifetchPos.x;
-	int x1 = ifetchPos.x + 1;
-	if (x1 == isize.x)
-		x1 = 0;
-
-	float depth0 = texelFetch(ShadowMap, ivec2(x0, y), 0).x;
-	float depth1 = texelFetch(ShadowMap, ivec2(x1, y), 0).x;
-	return mix(step(dist2, depth0), step(dist2, depth1), t);
-}
-
-vec2 shadowmapAdjustedRay(vec4 lightpos)
-{
-	vec3 planePoint = pixelpos.xyz - lightpos.xyz;
-
-	if (dot(planePoint.xz, planePoint.xz) < 1.0)
-		return planePoint.xz * 0.5;
-
-	vec3 ray = normalize(planePoint);
+	vec3 ray = planePoint;
 
 	vec2 isize = textureSize(ShadowMap, 0);
 	float scale = float(isize.x) * 0.25;
@@ -239,51 +218,70 @@ vec2 shadowmapAdjustedRay(vec4 lightpos)
 		ray.x = sign(ray.x);
 	}
 
-	float bias = 1.0;
-	float negD = dot(vWorldNormal.xyz, planePoint);
 	float t = negD / dot(vWorldNormal.xyz, ray) - bias;
-	return ray.xz * t;
+	vec2 dir = ray.xz * t;
+
+	float u = shadowDirToU(dir);
+	float dist2 = dot(dir, dir);
+	return step(dist2, texture(ShadowMap, vec2(u, v)).x);
 }
 
-//===========================================================================
-//
-// Check if light is in shadow using Percentage Closer Filtering (PCF)
-//
-//===========================================================================
+float sampleShadowmapPCF(vec3 planePoint, float v)
+{
+	float bias = 1.0;
+	float negD = dot(vWorldNormal.xyz, planePoint);
+
+	vec3 ray = planePoint;
+
+	if (abs(ray.z) > abs(ray.x))
+		ray.y = ray.y / abs(ray.z);
+	else
+		ray.y = ray.y / abs(ray.x);
+
+	vec2 isize = textureSize(ShadowMap, 0);
+	float scale = float(isize.x);
+	float texelPos = floor(shadowDirToU(ray.xz) * scale);
+
+	float sum = 0.0;
+	float step_count = uShadowmapFilter;
+		
+	texelPos -= step_count + 0.5;
+	for (float x = -step_count; x <= step_count; x++)
+	{
+		float u = texelPos / scale;
+		vec2 dir = shadowUToDir(u);
+
+		ray.x = dir.x;
+		ray.z = dir.y;
+		float t = negD / dot(vWorldNormal.xyz, ray) - bias;
+		dir = ray.xz * t;
+
+		float dist2 = dot(dir, dir);
+		sum += step(dist2, texture(ShadowMap, vec2(u, v)).x);
+		texelPos++;
+	}
+	return sum / (uShadowmapFilter * 2.0 + 1.0);
+}
 
 float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
 {
 	if (shadowIndex >= 1024.0)
 		return 1.0; // No shadowmap available for this light
 
-	float v = (shadowIndex + 0.5) / 1024.0;
+	vec3 planePoint = pixelpos.xyz - lightpos.xyz;
 
-	vec2 ray = shadowmapAdjustedRay(lightpos);
+	if (dot(planePoint.xz, planePoint.xz) < 1.0)
+		return 1.0; // Light is too close
+
+	float v = (shadowIndex + 0.5) / 1024.0;
 
 	if (uShadowmapFilter <= 0)
 	{
-		return sampleShadowmap(ray, v);
-		//return sampleShadowmapLinear(ray, v);
+		return sampleShadowmap(planePoint, v);
 	}
 	else
 	{
-		float length = length(ray);
-		if (length < 3.0)
-			return 1.0;
-
-		vec2 dir = ray / length * min(length / 50.0, 1.0); // avoid sampling behind light
-
-		vec2 normal = vec2(-dir.y, dir.x);
-		vec2 bias = dir * 10.0;
-
-		float sum = 0.0;
-		float step_count = ((uShadowmapFilter - 1) / 2.);
-		
-		for (float x = -step_count; x <= step_count; x++)
-		{
-			sum += sampleShadowmap(ray + normal * x /*- bias * abs(x)*/, v);
-		}
-		return sum / uShadowmapFilter;
+		return sampleShadowmapPCF(planePoint, v);
 	}
 }
 

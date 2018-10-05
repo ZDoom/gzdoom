@@ -595,10 +595,12 @@ class GLTextureGLOptions : OptionMenu
 					break;
 				case 16:
 				case 18:
+				case 23:
 					multiplier = 25;
 					break;
 				case 17:
 				case 19:
+				case 24:
 					multiplier = 36;
 					break;
 				}

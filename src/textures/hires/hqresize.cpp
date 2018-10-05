@@ -47,7 +47,7 @@
 
 CUSTOM_CVAR(Int, gl_texture_hqresize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	if (self < 0 || self > 22)
+	if (self < 0 || self > 24)
 	{
 		self = 0;
 	}
@@ -439,6 +439,10 @@ unsigned char *FTexture::CreateUpsampledTextureBuffer (unsigned char *inputBuffe
 			return normalNxHelper( &normalNx, 3, inputBuffer, inWidth, inHeight, outWidth, outHeight );
 		case 22:
 			return normalNxHelper( &normalNx, 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+		case 23:
+			return normalNxHelper( &normalNx, 5, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+		case 24:
+			return normalNxHelper( &normalNx, 6, inputBuffer, inWidth, inHeight, outWidth, outHeight );
 		}
 	}
 	return inputBuffer;

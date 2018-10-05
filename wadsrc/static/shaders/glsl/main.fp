@@ -248,7 +248,7 @@ float sampleShadowmapPCF(vec3 planePoint, float v)
 	texelPos -= step_count + 0.5;
 	for (float x = -step_count; x <= step_count; x++)
 	{
-		float u = texelPos / scale;
+		float u = fract(texelPos / scale);
 		vec2 dir = shadowUToDir(u);
 
 		ray.x = dir.x;

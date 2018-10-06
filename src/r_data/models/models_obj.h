@@ -30,6 +30,8 @@ class FOBJModel : public FModel
 {
 private:
 	const char *newSideSep = "$"; // OBJ side separator is /, which is parsed as a line comment by FScanner if two of them are next to each other.
+	bool hasMissingNormals;
+	bool hasSmoothGroups;
 
 	enum class FaceElement
 	{
@@ -38,6 +40,14 @@ private:
 		VNormalIndex
 	};
 
+	struct OBJTriRef
+	{
+		unsigned int surf;
+		unsigned int tri;
+		OBJTriRef(): surf(0), tri(0) {}
+		OBJTriRef(unsigned int surf, unsigned int tri): surf(surf), tri(tri) {}
+		bool operator== (OBJTriRef other) { return surf == other.surf && tri == other.tri; }
+	};
 	struct OBJFaceSide
 	{
 		int vertref;
@@ -47,7 +57,9 @@ private:
 	struct OBJFace
 	{
 		unsigned int sideCount;
+		unsigned int smoothGroup;
 		OBJFaceSide sides[4];
+		OBJFace(): sideCount(0), smoothGroup(0) {}
 	};
 	struct OBJSurface // 1 surface per 'usemtl'
 	{
@@ -66,16 +78,21 @@ private:
 	TArray<OBJFace> faces;
 	TArray<OBJSurface> surfaces;
 	FScanner sc;
+	TArray<OBJTriRef>* vertFaces;
 
+	int ResolveIndex(int origIndex, FaceElement el);
 	template<typename T, size_t L> void ParseVector(TArray<T> &array);
 	bool ParseFaceSide(const FString &side, OBJFace &face, int sidx);
 	void ConstructSurfaceTris(OBJSurface &surf);
-	int ResolveIndex(int origIndex, FaceElement el);
+	void AddVertFaces();
 	void TriangulateQuad(const OBJFace &quad, OBJFace *tris);
 	FVector3 RealignVector(FVector3 vecToRealign);
 	FVector2 FixUV(FVector2 vecToRealign);
+	FVector3 CalculateNormalFlat(unsigned int surfIdx, unsigned int triIdx);
+	FVector3 CalculateNormalFlat(OBJTriRef otr);
+	FVector3 CalculateNormalSmooth(unsigned int vidx, unsigned int smoothGroup);
 public:
-	FOBJModel() {}
+	FOBJModel(): hasMissingNormals(false), hasSmoothGroups(false), vertFaces(nullptr) {}
 	~FOBJModel();
 	bool Load(const char* fn, int lumpnum, const char* buffer, int length) override;
 	int FindFrame(const char* name) override;

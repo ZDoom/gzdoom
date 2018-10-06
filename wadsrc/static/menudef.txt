@@ -2261,7 +2261,9 @@ OptionValue ShadowMapQuality
 OptionValue ShadowMapFilter
 {
 	0, "$OPTVAL_NEAREST"
-	1, "$OPTVAL_PCF"
+	1, "$OPTVAL_PCF_LOW"
+	2, "$OPTVAL_PCF_MEDIUM"
+	3, "$OPTVAL_PCF_HIGH"
 }
 
 

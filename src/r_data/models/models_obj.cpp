@@ -101,8 +101,9 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
 
 	FTextureID curMtl = FNullTextureID();
 	OBJSurface *curSurface = nullptr;
-	int aggSurfFaceCount = 0;
-	int curSurfFaceCount = 0;
+	unsigned int aggSurfFaceCount = 0;
+	unsigned int curSurfFaceCount = 0;
+	unsigned int curSmoothGroup = 0;
 
 	while(sc.GetString())
 	{
@@ -186,8 +187,24 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
 					sc.UnGet(); // No 4th side, move back
 				}
 			}
+			face.smoothGroup = curSmoothGroup;
 			faces.Push(face);
 			curSurfFaceCount += 1;
+		}
+		else if (sc.Compare("s"))
+		{
+			sc.MustGetString();
+			if (sc.Compare("off"))
+			{
+				curSmoothGroup = 0;
+			}
+			else
+			{
+				sc.UnGet();
+				sc.MustGetNumber();
+				curSmoothGroup = sc.Number;
+				hasSmoothGroups = hasSmoothGroups || curSmoothGroup > 0;
+			}
 		}
 	}
 	sc.Close();
@@ -277,11 +294,13 @@ bool FOBJModel::ParseFaceSide(const FString &sideStr, OBJFace &face, int sidx)
 			else
 			{
 				side.normref = -1;
+				hasMissingNormals = true;
 			}
 		}
 		else
 		{
 			side.normref = -1;
+			hasMissingNormals = true;
 		}
 	}
 	else
@@ -289,6 +308,7 @@ bool FOBJModel::ParseFaceSide(const FString &sideStr, OBJFace &face, int sidx)
 		origIdx = atoi(sideStr.GetChars());
 		side.vertref = ResolveIndex(origIdx, FaceElement::VertexIndex);
 		side.normref = -1;
+		hasMissingNormals = true;
 		side.uvref = -1;
 	}
 	face.sides[sidx] = side;
@@ -348,15 +368,20 @@ void FOBJModel::BuildVertexBuffer(FModelRenderer *renderer)
 		surfaces[i].vbStart = vbufsize;
 		vbufsize += surfaces[i].numTris * 3;
 	}
+	// Initialize/populate vertFaces
+	if (hasMissingNormals && hasSmoothGroups)
+	{
+		AddVertFaces();
+	}
 
 	auto vbuf = renderer->CreateVertexBuffer(false,true);
 	SetVertexBuffer(renderer, vbuf);
 
 	FModelVertex *vertptr = vbuf->LockVertexBuffer(vbufsize);
 
-	for (size_t i = 0; i < surfaces.Size(); i++)
+	for (unsigned int i = 0; i < surfaces.Size(); i++)
 	{
-		for (size_t j = 0; j < surfaces[i].numTris; j++)
+		for (unsigned int j = 0; j < surfaces[i].numTris; j++)
 		{
 			for (size_t side = 0; side < 3; side++)
 			{
@@ -372,38 +397,39 @@ void FOBJModel::BuildVertexBuffer(FModelRenderer *renderer)
 
 				FVector3 curVvec = RealignVector(verts[vidx]);
 				FVector2 curUvec = FixUV(uvs[uvidx]);
-				FVector3 *nvec = nullptr;
+				FVector3 nvec;
 
 				mdv->Set(curVvec.X, curVvec.Y, curVvec.Z, curUvec.X, curUvec.Y);
 
 				if (nidx >= 0 && (unsigned int)nidx < norms.Size())
 				{
-					nvec = new FVector3(RealignVector(norms[nidx]));
+					nvec = RealignVector(norms[nidx]);
 				}
 				else
 				{
-					// https://www.khronos.org/opengl/wiki/Calculating_a_Surface_Normal
-					// Find other sides of triangle
-					auto nextSidx = side + 2;
-					if (nextSidx >= 3) nextSidx -= 3;
-
-					auto lastSidx = side + 1;
-					if (lastSidx >= 3) lastSidx -= 3;
-
-					OBJFaceSide &nextSide = surfaces[i].tris[j].sides[nextSidx];
-					OBJFaceSide &lastSide = surfaces[i].tris[j].sides[lastSidx];
-
-					// Cross-multiply the U-vector and V-vector
-					FVector3 uvec = RealignVector(verts[nextSide.vertref]) - curVvec;
-					FVector3 vvec = RealignVector(verts[lastSide.vertref]) - curVvec;
-
-					nvec = new FVector3(uvec ^ vvec);
+					if (surfaces[i].tris[j].smoothGroup == 0)
+					{
+						nvec = CalculateNormalFlat(i, j);
+					}
+					else
+					{
+						nvec = CalculateNormalSmooth(vidx, surfaces[i].tris[j].smoothGroup);
+					}
 				}
-				mdv->SetNormal(nvec->X, nvec->Y, nvec->Z);
-				delete nvec;
+				mdv->SetNormal(nvec.X, nvec.Y, nvec.Z);
 			}
 		}
 		delete[] surfaces[i].tris;
+	}
+
+	// Destroy vertFaces
+	if (hasMissingNormals && hasSmoothGroups)
+	{
+		for (size_t i = 0; i < verts.Size(); i++)
+		{
+			vertFaces[i].Clear();
+		}
+		delete[] vertFaces;
 	}
 	vbuf->UnlockVertexBuffer();
 }
@@ -432,6 +458,7 @@ void FOBJModel::ConstructSurfaceTris(OBJSurface &surf)
 		surf.tris[triIdx].sideCount = 3;
 		if (faces[i].sideCount == 3)
 		{
+			surf.tris[triIdx].smoothGroup = faces[i].smoothGroup;
 			memcpy(surf.tris[triIdx].sides, faces[i].sides, sizeof(OBJFaceSide) * 3);
 		}
 		else if (faces[i].sideCount == 4) // Triangulate face
@@ -443,6 +470,7 @@ void FOBJModel::ConstructSurfaceTris(OBJSurface &surf)
 			delete[] triangulated;
 			triIdx += 1; // Filling out two faces
 		}
+		DPrintf(DMSG_SPAMMY, "Smooth group: %d\n", surf.tris[triIdx].smoothGroup);
 	}
 }
 
@@ -455,7 +483,9 @@ void FOBJModel::ConstructSurfaceTris(OBJSurface &surf)
 void FOBJModel::TriangulateQuad(const OBJFace &quad, OBJFace *tris)
 {
 	tris[0].sideCount = 3;
+	tris[0].smoothGroup = quad.smoothGroup;
 	tris[1].sideCount = 3;
+	tris[1].smoothGroup = quad.smoothGroup;
 
 	int tsidx[2][3] = {{0, 1, 3}, {1, 2, 3}};
 
@@ -466,6 +496,26 @@ void FOBJModel::TriangulateQuad(const OBJFace &quad, OBJFace *tris)
 			tris[j].sides[i].vertref = quad.sides[tsidx[j][i]].vertref;
 			tris[j].sides[i].uvref = quad.sides[tsidx[j][i]].uvref;
 			tris[j].sides[i].normref = quad.sides[tsidx[j][i]].normref;
+		}
+	}
+}
+
+/**
+ * Add the vertices of all surfaces' triangles to the array of vertex->triangle references
+ */
+void FOBJModel::AddVertFaces() {
+	// Initialize and populate vertFaces - this array stores references to triangles per vertex
+	vertFaces = new TArray<OBJTriRef>[verts.Size()];
+	for (unsigned int i = 0; i < surfaces.Size(); i++)
+	{
+		for (unsigned int j = 0; j < surfaces[i].numTris; j++)
+		{
+			OBJTriRef otr = OBJTriRef(i, j);
+			for (size_t k = 0; k < surfaces[i].tris[j].sideCount; k++)
+			{
+				int vidx = surfaces[i].tris[j].sides[k].vertref;
+				vertFaces[vidx].Push(otr);
+			}
 		}
 	}
 }
@@ -492,6 +542,65 @@ inline FVector2 FOBJModel::FixUV(FVector2 vecToRealign)
 {
 	vecToRealign.Y *= -1;
 	return vecToRealign;
+}
+
+/**
+ * Calculate the surface normal for a triangle
+ *
+ * @param surfIdx The surface index
+ * @param triIdx The triangle Index
+ * @return The surface normal vector
+ */
+FVector3 FOBJModel::CalculateNormalFlat(unsigned int surfIdx, unsigned int triIdx)
+{
+	// https://www.khronos.org/opengl/wiki/Calculating_a_Surface_Normal
+	int curVert = surfaces[surfIdx].tris[triIdx].sides[0].vertref;
+	int nextVert = surfaces[surfIdx].tris[triIdx].sides[2].vertref;
+	int lastVert = surfaces[surfIdx].tris[triIdx].sides[1].vertref;
+
+	// Cross-multiply the U-vector and V-vector
+	FVector3 curVvec = RealignVector(verts[curVert]);
+	FVector3 uvec = RealignVector(verts[nextVert]) - curVvec;
+	FVector3 vvec = RealignVector(verts[lastVert]) - curVvec;
+
+	return uvec ^ vvec;
+}
+
+/**
+ * Calculate the surface normal for a triangle
+ *
+ * @param otr A reference to the surface, and a triangle within that surface, as an OBJTriRef
+ * @return The surface normal vector
+ */
+FVector3 FOBJModel::CalculateNormalFlat(OBJTriRef otr)
+{
+	return CalculateNormalFlat(otr.surf, otr.tri);
+}
+
+/**
+ * Calculate the normal of a vertex in a specific smooth group
+ *
+ * @param vidx The index of the vertex in the array of vertices
+ * @param smoothGroup The smooth group number
+ */
+FVector3 FOBJModel::CalculateNormalSmooth(unsigned int vidx, unsigned int smoothGroup)
+{
+	unsigned int connectedFaces = 0;
+	TArray<OBJTriRef>& vTris = vertFaces[vidx];
+
+	FVector3 vNormal(0,0,0);
+	for (size_t face = 0; face < vTris.Size(); face++)
+	{
+		OBJFace& tri = surfaces[vTris[face].surf].tris[vTris[face].tri];
+		if (tri.smoothGroup == smoothGroup)
+		{
+			FVector3 fNormal = CalculateNormalFlat(vTris[face]);
+			connectedFaces += 1;
+			vNormal += fNormal;
+		}
+	}
+	vNormal /= (float)connectedFaces;
+	return vNormal;
 }
 
 /**

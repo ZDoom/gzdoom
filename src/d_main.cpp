@@ -883,7 +883,6 @@ void D_Display ()
 
 	if (!wipe || NoWipe < 0 || wipe_type == wipe_None)
 	{
-		NetUpdate ();
 		// normal update
 		// draw ZScript UI stuff
 		C_DrawConsole ();	// draw console

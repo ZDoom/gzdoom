@@ -3,6 +3,7 @@
 // Copyright 1993-1996 id Software
 // Copyright 1999-2016 Randy Heit
 // Copyright 2002-2016 Christoph Oelckers
+// Copyright 2018 Magnus Norddahl
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,141 +18,109 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/
 //
-//-----------------------------------------------------------------------------
-//
-// DESCRIPTION:
-//		Networking stuff.
-//
-//-----------------------------------------------------------------------------
 
-
-#ifndef __D_NET__
-#define __D_NET__
+#pragma once
 
 #include "doomtype.h"
 #include "doomdef.h"
 #include "d_protocol.h"
+#include "i_net.h"
+#include <memory>
 
-
-//
-// Network play related stuff.
-// There is a data struct that stores network
-//	communication related stuff, and another
-//	one that defines the actual packets to
-//	be transmitted.
-//
-
-#define DOOMCOM_ID		0x12345678l
 #define MAXNETNODES		8	// max computers in a game
 #define BACKUPTICS		36	// number of tics to remember
 #define MAXTICDUP		5
 #define LOCALCMDTICS	(BACKUPTICS*MAXTICDUP)
 
-
-#ifdef DJGPP
-// The DOS drivers provide a pretty skimpy buffer.
-// Probably not enough.
-#define MAX_MSGLEN		(BACKUPTICS*10)
-#else
-#define MAX_MSGLEN		14000
-#endif
-
-#define CMD_SEND	1
-#define CMD_GET		2
-
-//
-// Network packet data.
-//
-struct doomcom_t
-{
-	uint32_t	id;				// should be DOOMCOM_ID
-	int16_t	intnum;			// DOOM executes an int to execute commands
-
-// communication between DOOM and the driver
-	int16_t	command;		// CMD_SEND or CMD_GET
-	int16_t	remotenode;		// dest for send, set by get (-1 = no packet).
-	int16_t	datalength;		// bytes in doomdata to be sent
-
-// info common to all nodes
-	int16_t	numnodes;		// console is always node 0.
-	int16_t	ticdup;			// 1 = no duplication, 2-5 = dup for slow nets
-#ifdef DJGPP
-	int16_t	pad[5];			// keep things aligned for DOS drivers
-#endif
-
-// info specific to this node
-	int16_t	consoleplayer;
-	int16_t	numplayers;
-#ifdef DJGPP
-	int16_t	angleoffset;	// does not work, but needed to preserve
-	int16_t	drone;			// alignment for DOS drivers
-#endif
-
-// packet data to be sent
-	uint8_t	data[MAX_MSGLEN];
-	
-};
-
-
 class FDynamicBuffer
 {
 public:
-	FDynamicBuffer ();
-	~FDynamicBuffer ();
+	FDynamicBuffer();
+	FDynamicBuffer(const FDynamicBuffer &src);
+	~FDynamicBuffer();
 
-	void SetData (const uint8_t *data, int len);
-	uint8_t *GetData (int *len = NULL);
+	FDynamicBuffer &operator=(const FDynamicBuffer &src);
+
+	void Clear() { SetData(nullptr, 0); }
+	void SetData(const uint8_t *data, int len);
+	void AppendData(const uint8_t *data, int len);
+
+	uint8_t *GetData() { return m_Len ? m_Data : nullptr; }
+	const uint8_t *GetData() const { return m_Len ? m_Data : nullptr; }
+	int GetSize() const { return m_Len; }
 
 private:
-	uint8_t *m_Data;
-	int m_Len, m_BufferLen;
+	uint8_t *m_Data = nullptr;
+	int m_Len = 0;
+	int m_BufferLen = 0;
 };
 
-extern FDynamicBuffer NetSpecs[MAXPLAYERS][BACKUPTICS];
+class Network
+{
+public:
+	virtual ~Network() { }
 
-// Create any new ticcmds and broadcast to other players.
-void NetUpdate (void);
+	// Check for incoming packets
+	virtual void Update() = 0;
 
-// Broadcasts special packets to other players
-//	to notify of game exit
-void D_QuitNetGame (void);
+	// Set current tic for reading and writing
+	virtual void SetCurrentTic(int receivetic, int sendtic) = 0;
 
-//? how many ticks to run?
-void TryRunTics (void);
+	// Send any pending outgoing data
+	virtual void EndCurrentTic() = 0;
 
-//Use for checking to see if the netgame has stalled
-void Net_CheckLastReceived(int);
+	// Retrieve data about the current tic
+	virtual int GetSendTick() const = 0;
+	virtual ticcmd_t GetPlayerInput(int player) const = 0;
+	virtual ticcmd_t GetSentInput(int tic) const = 0;
 
-// [RH] Functions for making and using special "ticcmds"
-void Net_NewMakeTic ();
-void Net_WriteByte (uint8_t);
-void Net_WriteWord (short);
-void Net_WriteLong (int);
-void Net_WriteFloat (float);
-void Net_WriteString (const char *);
-void Net_WriteBytes (const uint8_t *, int len);
+	// Run network commands for the current tic
+	virtual void RunCommands(int player) = 0;
+
+	// Write outgoing data for the current tic
+	virtual void WriteLocalInput(ticcmd_t cmd) = 0;
+	virtual void WriteBotInput(int player, const ticcmd_t &cmd) = 0;
+	virtual void WriteBytes(const uint8_t *block, int len) = 0;
+	void WriteByte(uint8_t it);
+	void WriteWord(short it);
+	void WriteLong(int it);
+	void WriteFloat(float it);
+	void WriteString(const char *it);
+
+	// Statistics
+	virtual int GetPing(int player) const = 0;
+	virtual int GetServerPing() const = 0;
+	int GetHighPingThreshold() const;
+
+	// CCMDs
+	virtual void ListPingTimes() = 0;
+	virtual void Network_Controller(int playernum, bool add) = 0;
+
+	// Old init/deinit stuff
+	void Startup() { }
+	void Net_ClearBuffers() { }
+	void D_QuitNetGame() { }
+
+	// Demo recording
+	size_t CopySpecData(int player, uint8_t *dest, size_t dest_size) { return 0; }
+
+	// Obsolete; only needed for p2p
+	bool IsInconsistent(int player, int16_t checkvalue) const { return false; }
+	void SetConsistency(int player, int16_t checkvalue) { }
+	int16_t GetConsoleConsistency() const { return 0; }
+
+	// Should probably be removed.
+	int ticdup = 1;
+};
+
+extern std::unique_ptr<Network> network;
+extern std::unique_ptr<Network> netconnect;
 
 void Net_DoCommand (int type, uint8_t **stream, int player);
 void Net_SkipCommand (int type, uint8_t **stream);
+void Net_RunCommands (FDynamicBuffer &buffer, int player);
 
-void Net_ClearBuffers ();
-
-
-// Netgame stuff (buffers and pointers, i.e. indices).
-
-// This is the interface to the packet driver, a separate program
-// in DOS, but just an abstraction here.
-extern	doomcom_t		doomcom;
-
-extern	struct ticcmd_t	localcmds[LOCALCMDTICS];
-
-extern	int 			maketic;
-extern	int 			nettics[MAXNETNODES];
-extern	int				netdelay[MAXNETNODES][BACKUPTICS];
-extern	int 			nodeforplayer[MAXPLAYERS];
-
-extern	ticcmd_t		netcmds[MAXPLAYERS][BACKUPTICS];
-extern	int 			ticdup;
+// Old packet format. Kept for reference. Should be removed or updated once the c/s migration is complete.
 
 // [RH]
 // New generic packet structure:
@@ -167,7 +136,7 @@ extern	int 			ticdup;
 //     - The first player's consolenum is not included in this list, because it always matches the sender
 //
 // For each tic:
-//  Two bytes with consistancy check, followed by tic data
+//  Two bytes with consistency check, followed by tic data
 //
 // Setup packets are different, and are described just before D_ArbitrateNetStart().
 
@@ -183,4 +152,14 @@ extern	int 			ticdup;
 #define NCMD_1TICS				0x01		// packet contains 1 tic
 #define NCMD_0TICS				0x00		// packet contains 0 tics
 
-#endif
+enum
+{
+	PRE_CONNECT,			// Sent from guest to host for initial connection
+	PRE_KEEPALIVE,
+	PRE_DISCONNECT,			// Sent from guest that aborts the game
+	PRE_ALLHERE,			// Sent from host to guest when everybody has connected
+	PRE_CONACK,				// Sent from host to guest to acknowledge PRE_CONNECT receipt
+	PRE_ALLFULL,			// Sent from host to an unwanted guest
+	PRE_ALLHEREACK,			// Sent from guest to host to acknowledge PRE_ALLHEREACK receipt
+	PRE_GO					// Sent from host to guest to continue game startup
+};

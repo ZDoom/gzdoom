@@ -128,8 +128,6 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	PolyMaskedCycles.Reset();
 	PolyDrawerWaitCycles.Reset();
 
-	NetUpdate();
-	
 	DontMapLines = dontmaplines;
 	
 	R_SetupFrame(Viewpoint, Viewwindow, actor);
@@ -187,8 +185,6 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	if (Viewpoint.camera)
 		Viewpoint.camera->renderflags = savedflags;
 	interpolator.RestoreInterpolations ();
-	
-	NetUpdate();
 }
 
 void PolyRenderer::RenderRemainingPlayerSprites()

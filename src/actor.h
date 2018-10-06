@@ -48,6 +48,8 @@
 #include "tflags.h"
 #include "portal.h"
 
+#include "d_netsync.h"
+
 struct subsector_t;
 struct FBlockNode;
 struct FPortalGroupArray;
@@ -637,6 +639,9 @@ public:
 	AActor (const AActor &other) throw();
 	AActor &operator= (const AActor &other);
 	~AActor ();
+
+	NetSyncData	syncdata;
+	NetSyncData	synccompare;
 
 	virtual void Finalize(FStateDefinitions &statedef);
 	virtual void OnDestroy() override;

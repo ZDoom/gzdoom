@@ -141,7 +141,6 @@ int sys_ostype = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static ticcmd_t emptycmd;
 static bool HasExited;
 
 static WadStuff *WadList;
@@ -163,20 +162,6 @@ void I_Tactile(int on, int off, int total)
 {
   // UNUSED.
   on = off = total = 0;
-}
-
-//==========================================================================
-//
-// I_BaseTiccmd
-//
-// Returns an empty ticcmd. I have no idea why this should be system-
-// specific.
-//
-//==========================================================================
-
-ticcmd_t *I_BaseTiccmd()
-{
-	return &emptycmd;
 }
 
 //==========================================================================

@@ -3,13 +3,23 @@
 
 #include "vectors.h"
 #include "r_data/renderstyle.h"
-#include "d_netserver.h"
 
 // Maximum size of the packets sent out by the server.
 #define	MAX_UDP_PACKET				8192
 
 // This is the longest possible string we can pass over the network.
 #define	MAX_NETWORK_STRING			2048
+
+enum class NetPacketType
+{
+	ConnectRequest,
+	ConnectResponse,
+	Disconnect,
+	Tic,
+	SpawnPlayer
+};
+
+class AActor;
 
 struct NetSyncData {
 	DVector3		Pos;
@@ -49,6 +59,30 @@ struct BYTESTREAM_s
 	BYTESTREAM_s();
 	void EnsureBitSpace( int bits, bool writing );
 
+	int	ReadByte();
+	int ReadShort();
+	int	ReadLong();
+	float ReadFloat();
+	const char* ReadString();
+	bool ReadBit();
+	int ReadVariable();
+	int ReadShortByte( int bits );
+	void ReadBuffer( void* buffer, size_t length );
+
+	void WriteByte( int Byte );
+	void WriteShort( int Short );
+	void WriteLong( int Long );
+	void WriteFloat( float Float );
+	void WriteString( const char *pszString );
+	void WriteBit( bool bit );
+	void WriteVariable( int value );
+	void WriteShortByte( int value, int bits );
+	void WriteBuffer( const void *pvBuffer, int nLength );
+
+	void WriteHeader( int Byte );
+
+	bool IsAtEnd() const;
+
 	// Pointer to our stream of data.
 	uint8_t		*pbStream;
 
@@ -58,6 +92,8 @@ struct BYTESTREAM_s
 
 	uint8_t		*bitBuffer;
 	int			bitShift;
+
+	void AdvancePointer( const int NumBytes, const bool OutboundTraffic );
 };
 
 //*****************************************************************************
@@ -97,6 +133,8 @@ struct NETBUFFER_s
 	int				WriteTo( BYTESTREAM_s &ByteStream ) const;
 };
 
+struct NetPacket;
+
 /**
  * \author Benjamin Berkels
  */
@@ -118,6 +156,7 @@ public:
 	void addBit ( const bool value );
 	void addVariable ( const int value );
 	void addShortByte ( int value, int bits );
+	void addBuffer ( const void *pvBuffer, int nLength );
 	void writeCommandToStream ( BYTESTREAM_s &ByteStream ) const;
 	void writeCommandToPacket ( NetPacket &response ) const;
 	bool isUnreliable() const;

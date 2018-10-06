@@ -66,6 +66,10 @@
 #include "events.h"
 #include "i_time.h"
 
+extern IDList<AActor> g_NetIDList;
+
+CVAR( Int, cl_showspawnnames, 0, CVAR_ARCHIVE )
+
 NetClient::NetClient(FString server)
 {
 	Printf("Connecting to %s..\n", server.GetChars());
@@ -76,8 +80,10 @@ NetClient::NetClient(FString server)
 
 	NetPacket packet;
 	packet.node = mServerNode;
-	packet.size = 1;
-	packet[0] = (uint8_t)NetPacketType::ConnectRequest;
+
+	NetCommand cmd ( NetPacketType::ConnectRequest );
+	cmd.writeCommandToPacket ( packet );
+
 	mComm->PacketSend(packet);
 }
 
@@ -85,6 +91,11 @@ void NetClient::Update()
 {
 	while (true)
 	{
+		// [BB] Don't check net packets while we are supposed to load a map.
+		// This way the commands from the full update will not be parsed before we loaded the map.
+		if ( ( gameaction == ga_newgame ) || ( gameaction == ga_newgame2 ) )
+			return;
+
 		NetPacket packet;
 		mComm->PacketGet(packet);
 		if (packet.node == -1)
@@ -101,14 +112,25 @@ void NetClient::Update()
 		}
 		else
 		{
-			NetPacketType type = (NetPacketType)packet[0];
-			switch (type)
+			if (packet.stream.ReadByte () != 0)
 			{
-			default: OnClose(packet); break;
-			case NetPacketType::ConnectResponse: OnConnectResponse(packet); break;
-			case NetPacketType::Disconnect: OnDisconnect(packet); break;
-			case NetPacketType::Tic: OnTic(packet); break;
+				Printf ("Error parsing packet. Unexpected header.\n");
+				break;
 			}
+
+			while ( packet.stream.IsAtEnd() == false )
+			{
+				NetPacketType type = (NetPacketType)packet.stream.ReadByte();
+				switch (type)
+				{
+				default: OnClose(packet); break;
+				case NetPacketType::ConnectResponse: OnConnectResponse(packet); break;
+				case NetPacketType::Disconnect: OnDisconnect(packet); break;
+				case NetPacketType::Tic: OnTic(packet); break;
+				case NetPacketType::SpawnPlayer: OnSpawnPlayer(packet); break;
+				}
+			}
+			break;
 		}
 
 		if (mStatus == NodeStatus::Closed)
@@ -137,10 +159,12 @@ void NetClient::EndCurrentTic()
 {
 	NetPacket packet;
 	packet.node = mServerNode;
-	packet.size = 2 + sizeof(usercmd_t);
-	packet[0] = (uint8_t)NetPacketType::Tic;
-	packet[1] = 0; // target gametic
-	memcpy(&packet[2], &mCurrentInput[consoleplayer].ucmd, sizeof(usercmd_t));
+
+	NetCommand cmd ( NetPacketType::Tic );
+	cmd.addByte ( 0 ); // target gametic
+	cmd.addBuffer ( &mCurrentInput[consoleplayer].ucmd, sizeof(usercmd_t) );
+	cmd.writeCommandToPacket ( packet );
+
 	mComm->PacketSend(packet);
 
 	mCurrentCommands = mSendCommands;
@@ -220,17 +244,15 @@ void NetClient::OnClose(const NetPacket &packet)
 	}
 }
 
-void NetClient::OnConnectResponse(const NetPacket &packet)
+void NetClient::OnConnectResponse(NetPacket &packet)
 {
-	if (packet.size != 3)
-		return;
-
-	int version = packet[1]; // Protocol version
+	int version = packet.stream.ReadByte(); // Protocol version
 	if (version == 1)
 	{
-		if (packet[2] != 255) // Join accepted
+		int playernum = packet.stream.ReadByte();
+		if (playernum != 255) // Join accepted
 		{
-			mPlayer = packet[2];
+			mPlayer = playernum;
 			mStatus = NodeStatus::InGame;
 
 			G_InitClientNetGame(mPlayer, "e1m1");
@@ -262,22 +284,55 @@ void NetClient::OnDisconnect(const NetPacket &packet)
 	mStatus = NodeStatus::Closed;
 }
 
-void NetClient::OnTic(const NetPacket &packet)
+void NetClient::OnTic(NetPacket &packet)
 {
-	if (packet.size != 2 + sizeof(float) * 5)
-		return;
-
-	int tic = packet[1];
-	float x = *(float*)&packet[2];
-	float y = *(float*)&packet[6];
-	float z = *(float*)&packet[10];
-	float yaw = *(float*)&packet[14];
-	float pitch = *(float*)&packet[18];
+	int tic = packet.stream.ReadByte();
+	float x = packet.stream.ReadFloat();
+	float y = packet.stream.ReadFloat();
+	float z = packet.stream.ReadFloat();
+	float yaw = packet.stream.ReadFloat();
+	float pitch = packet.stream.ReadFloat();
 
 	if (playeringame[consoleplayer] && players[consoleplayer].mo)
 	{
 		players[consoleplayer].mo->SetXYZ(x, y, z);
 		players[consoleplayer].mo->Angles.Yaw = yaw;
 		players[consoleplayer].mo->Angles.Pitch = pitch;
+	}
+}
+
+void NetClient::OnSpawnPlayer(NetPacket &packet)
+{
+	int player = packet.stream.ReadByte();
+	const float x = packet.stream.ReadFloat();
+	const float y = packet.stream.ReadFloat();
+	const float z = packet.stream.ReadFloat();
+	const int16_t netID = packet.stream.ReadShort();
+
+	AActor *oldNetActor = g_NetIDList.findPointerByID ( netID );
+
+	// If there's already an actor with this net ID, destroy it.
+	if ( oldNetActor != NULL )
+	{
+		oldNetActor->Destroy( );
+		g_NetIDList.freeID ( netID );
+	}
+
+	// This player is now in the game.
+	playeringame[player] = true;
+	player_t p = players[player];
+
+	if ( cl_showspawnnames )
+		Printf ( "Spawning player %d at %f,%f,%f (id %d)\n", player, x, y, z, netID );
+
+	DVector3 spawn ( x, y, z );
+
+	p.mo = static_cast<APlayerPawn *>(Spawn (p.cls, spawn, NO_REPLACE));
+
+	if ( p.mo )
+	{
+		// Set the network ID.
+		p.mo->syncdata.NetID = netID;
+		g_NetIDList.useID ( netID, p.mo );
 	}
 }

@@ -2,13 +2,21 @@
 #pragma once
 
 #include <memory>
+#include "d_netsync.h"
 
 #define MAX_MSGLEN 14000
 #define DOOMPORT 5029
 
 struct NetPacket
 {
-	NetPacket() { memset(data, 0, sizeof(data)); }
+	NetPacket()
+	{
+		memset(data, 0, sizeof(data));
+		stream.pbStream = data;
+		stream.bitBuffer = NULL;
+		stream.bitShift = -1;
+		stream.pbStreamEnd = stream.pbStream + sizeof(data);
+	}
 
 	// packet data to be sent
 	uint8_t	data[MAX_MSGLEN];
@@ -21,6 +29,8 @@ struct NetPacket
 
 	uint8_t &operator[](int i) { return data[i]; }
 	const uint8_t &operator[](int i) const { return data[i]; }
+
+	BYTESTREAM_s stream;
 };
 
 // Network packet data.

@@ -49,9 +49,6 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 #if defined(DEBUG_JIT)
 	if (strcmp(sfunc->PrintableName.GetChars(), "StatusScreen.drawNum") != 0)
 		return nullptr;
-#else
-	if (!JitCompiler::CanJit(sfunc))
-		return nullptr;
 #endif
 
 	//Printf("Jitting function: %s\n", sfunc->PrintableName.GetChars());
@@ -139,28 +136,6 @@ void JitCompiler::EmitOpcode()
 		I_FatalError("JIT error: Unknown VM opcode %d\n", op);
 		break;
 	}
-}
-
-bool JitCompiler::CanJit(VMScriptFunction *sfunc)
-{
-	int size = sfunc->CodeSize;
-	for (int i = 0; i < size; i++)
-	{
-		// Partially implemented functions:
-
-		auto pc = sfunc->Code + i;
-		if (sfunc->Code[i].op == OP_PARAM)
-		{
-			if (!!(B & REGT_MULTIREG3) || !!(B & REGT_MULTIREG2))
-				return false;
-		}
-		else if (sfunc->Code[i].op == OP_RESULT)
-		{
-			if (!!(B & REGT_MULTIREG3) || !!(B & REGT_MULTIREG2))
-				return false;
-		}
-	}
-	return true;
 }
 
 void JitCompiler::Setup()

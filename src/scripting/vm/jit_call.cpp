@@ -260,6 +260,18 @@ void JitCompiler::StoreInOuts(int b)
 			cc.mov(stackPtr, frameF);
 			cc.add(stackPtr, (int)(C * sizeof(double)));
 			cc.movsd(x86::qword_ptr(stackPtr), regF[C]);
+
+			// When passing the address to a float we don't know if the receiving function will treat it as float, vec2 or vec3.
+			if ((unsigned int)C + 1 < regF.Size())
+			{
+				cc.add(stackPtr, (int)sizeof(double));
+				cc.movsd(x86::qword_ptr(stackPtr), regF[C + 1]);
+			}
+			if ((unsigned int)C + 2 < regF.Size())
+			{
+				cc.add(stackPtr, (int)sizeof(double));
+				cc.movsd(x86::qword_ptr(stackPtr), regF[C + 2]);
+			}
 			break;
 		default:
 			break;
@@ -274,7 +286,7 @@ void JitCompiler::LoadInOuts(int b)
 		const VMOP &param = *ParamOpcodes[i];
 		if (param.op == OP_PARAM && (param.b & REGT_ADDROF))
 		{
-			LoadCallResult(param);
+			LoadCallResult(param, true);
 		}
 	}
 }
@@ -286,11 +298,11 @@ void JitCompiler::LoadReturns(const VMOP *retval, int numret)
 		if (retval[i].op != OP_RESULT)
 			I_FatalError("Expected OP_RESULT to follow OP_CALL\n");
 
-		LoadCallResult(retval[i]);
+		LoadCallResult(retval[i], false);
 	}
 }
 
-void JitCompiler::LoadCallResult(const VMOP &opdata)
+void JitCompiler::LoadCallResult(const VMOP &opdata, bool addrof)
 {
 	int type = opdata.b;
 	int regnum = opdata.c;
@@ -302,6 +314,23 @@ void JitCompiler::LoadCallResult(const VMOP &opdata)
 		break;
 	case REGT_FLOAT:
 		cc.movsd(regF[regnum], asmjit::x86::qword_ptr(frameF, regnum * sizeof(double)));
+		if (addrof)
+		{
+			// When passing the address to a float we don't know if the receiving function will treat it as float, vec2 or vec3.
+			if ((unsigned int)regnum + 1 < regF.Size())
+				cc.movsd(regF[regnum + 1], asmjit::x86::qword_ptr(frameF, (regnum + 1) * sizeof(double)));
+			if ((unsigned int)regnum + 2 < regF.Size())
+				cc.movsd(regF[regnum + 2], asmjit::x86::qword_ptr(frameF, (regnum + 2) * sizeof(double)));
+		}
+		else if (type & REGT_MULTIREG2)
+		{
+			cc.movsd(regF[regnum + 1], asmjit::x86::qword_ptr(frameF, (regnum + 1) * sizeof(double)));
+		}
+		else if (type & REGT_MULTIREG3)
+		{
+			cc.movsd(regF[regnum + 1], asmjit::x86::qword_ptr(frameF, (regnum + 1) * sizeof(double)));
+			cc.movsd(regF[regnum + 2], asmjit::x86::qword_ptr(frameF, (regnum + 2) * sizeof(double)));
+		}
 		break;
 	case REGT_STRING:
 		// We don't have to do anything in this case. String values are never moved to virtual registers.

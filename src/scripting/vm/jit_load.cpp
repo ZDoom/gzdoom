@@ -90,9 +90,11 @@ void JitCompiler::EmitMETA()
 	EmitThrowException(X_READ_NIL);
 	cc.bind(label);
 
+	auto result = cc.newIntPtr();
 	auto call = CreateCall<uint8_t*, DObject*>([](DObject *o) { return o->GetClass()->Meta; });
-	call->setRet(0, regA[A]);
+	call->setRet(0, result);
 	call->setArg(0, regA[B]);
+	cc.mov(regA[A], result);
 }
 
 void JitCompiler::EmitCLSS()
@@ -103,9 +105,11 @@ void JitCompiler::EmitCLSS()
 	EmitThrowException(X_READ_NIL);
 	cc.bind(label);
 
+	auto result = cc.newIntPtr();
 	auto call = CreateCall<PClass*, DObject*>([](DObject *o) { return o->GetClass(); });
-	call->setRet(0, regA[A]);
+	call->setRet(0, result);
 	call->setArg(0, regA[B]);
+	cc.mov(regA[A], result);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -222,9 +226,11 @@ void JitCompiler::EmitLO()
 	auto ptr = cc.newIntPtr();
 	cc.mov(ptr, asmjit::x86::ptr(regA[B], konstd[C]));
 
+	auto result = cc.newIntPtr();
 	auto call = CreateCall<DObject*,DObject*>([](DObject *p) { return GC::ReadBarrier(p); });
-	call->setRet(0, regA[A]);
+	call->setRet(0, result);
 	call->setArg(0, ptr);
+	cc.mov(regA[A], result);
 }
 
 void JitCompiler::EmitLO_R()
@@ -234,9 +240,11 @@ void JitCompiler::EmitLO_R()
 	auto ptr = cc.newIntPtr();
 	cc.mov(ptr, asmjit::x86::ptr(regA[B], regD[C]));
 
+	auto result = cc.newIntPtr();
 	auto call = CreateCall<DObject*, DObject*>([](DObject *p) { return GC::ReadBarrier(p); });
-	call->setRet(0, regA[A]);
+	call->setRet(0, result);
 	call->setArg(0, ptr);
+	cc.mov(regA[A], result);
 }
 
 void JitCompiler::EmitLP()

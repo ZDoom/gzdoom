@@ -40,7 +40,8 @@ void JitCompiler::EmitMOVEV3()
 
 void JitCompiler::EmitCAST()
 {
-	asmjit::X86Gp tmp;
+	asmjit::X86Gp tmp, resultD;
+	asmjit::X86Xmm resultF;
 	asmjit::CCFuncCall *call = nullptr;
 
 	switch (C)
@@ -96,19 +97,25 @@ void JitCompiler::EmitCAST()
 		call->setArg(1, regA[B]);
 		break;
 	case CAST_S2I:
+		resultD = cc.newInt32();
 		call = CreateCall<int, FString*>([](FString *b) -> int { return (VM_SWORD)b->ToLong(); });
-		call->setRet(0, regD[A]);
+		call->setRet(0, resultD);
 		call->setArg(0, regS[B]);
+		cc.mov(regD[A], resultD);
 		break;
 	case CAST_S2F:
+		resultF = cc.newXmmSd();
 		call = CreateCall<double, FString*>([](FString *b) -> double { return b->ToDouble(); });
-		call->setRet(0, regF[A]);
+		call->setRet(0, resultF);
 		call->setArg(0, regS[B]);
+		cc.movsd(regF[A], resultF);
 		break;
 	case CAST_S2N:
+		resultD = cc.newInt32();
 		call = CreateCall<int, FString*>([](FString *b) -> int { return b->Len() == 0 ? FName(NAME_None) : FName(*b); });
-		call->setRet(0, regD[A]);
+		call->setRet(0, resultD);
 		call->setArg(0, regS[B]);
+		cc.mov(regD[A], resultD);
 		break;
 	case CAST_N2S:
 		call = CreateCall<void, FString*, int>([](FString *a, int b) { FName name = FName(ENamedName(b)); *a = name.IsValidName() ? name.GetChars() : ""; });
@@ -116,9 +123,11 @@ void JitCompiler::EmitCAST()
 		call->setArg(1, regD[B]);
 		break;
 	case CAST_S2Co:
+		resultD = cc.newInt32();
 		call = CreateCall<int, FString*>([](FString *b) -> int { return V_GetColor(nullptr, *b); });
-		call->setRet(0, regD[A]);
+		call->setRet(0, resultD);
 		call->setArg(0, regS[B]);
+		cc.mov(regD[A], resultD);
 		break;
 	case CAST_Co2S:
 		call = CreateCall<void, FString*, int>([](FString *a, int b) { PalEntry c(b); a->Format("%02x %02x %02x", c.r, c.g, c.b); });
@@ -126,9 +135,11 @@ void JitCompiler::EmitCAST()
 		call->setArg(1, regD[B]);
 		break;
 	case CAST_S2So:
+		resultD = cc.newInt32();
 		call = CreateCall<int, FString*>([](FString *b) -> int { return FSoundID(*b); });
-		call->setRet(0, regD[A]);
+		call->setRet(0, resultD);
 		call->setArg(0, regS[B]);
+		cc.mov(regD[A], resultD);
 		break;
 	case CAST_So2S:
 		call = CreateCall<void, FString*, int>([](FString *a, int b) { *a = S_sfx[b].name; });
@@ -174,54 +185,64 @@ void JitCompiler::EmitCASTB()
 	}
 	else
 	{
+		auto result = cc.newInt32();
 		auto call = CreateCall<int, FString*>([](FString *s) -> int { return s->Len() > 0; });
-		call->setRet(0, regD[A]);
+		call->setRet(0, result);
 		call->setArg(0, regS[B]);
+		cc.mov(regD[A], result);
 	}
 }
 
 void JitCompiler::EmitDYNCAST_R()
 {
+	auto result = cc.newIntPtr();
 	auto call = CreateCall<DObject*, DObject*, PClass*>([](DObject *obj, PClass *cls) -> DObject* {
 		return (obj && obj->IsKindOf(cls)) ? obj : nullptr;
 	});
-	call->setRet(0, regA[A]);
+	call->setRet(0, result);
 	call->setArg(0, regA[B]);
 	call->setArg(1, regA[C]);
+	cc.mov(regA[A], result);
 }
 
 void JitCompiler::EmitDYNCAST_K()
 {
+	auto result = cc.newIntPtr();
 	auto c = cc.newIntPtr();
 	cc.mov(c, asmjit::imm_ptr(konsta[C].o));
 	auto call = CreateCall<DObject*, DObject*, PClass*>([](DObject *obj, PClass *cls) -> DObject* {
 		return (obj && obj->IsKindOf(cls)) ? obj : nullptr;
 	});
-	call->setRet(0, regA[A]);
+	call->setRet(0, result);
 	call->setArg(0, regA[B]);
 	call->setArg(1, c);
+	cc.mov(regA[A], result);
 }
 
 void JitCompiler::EmitDYNCASTC_R()
 {
+	auto result = cc.newIntPtr();
 	auto call = CreateCall<PClass*, PClass*, PClass*>([](PClass *cls1, PClass *cls2) -> PClass* {
 		return (cls1 && cls1->IsDescendantOf(cls2)) ? cls1 : nullptr;
 	});
-	call->setRet(0, regA[A]);
+	call->setRet(0, result);
 	call->setArg(0, regA[B]);
 	call->setArg(1, regA[C]);
+	cc.mov(regA[A], result);
 }
 
 void JitCompiler::EmitDYNCASTC_K()
 {
 	using namespace asmjit;
+	auto result = cc.newIntPtr();
 	auto c = cc.newIntPtr();
 	cc.mov(c, asmjit::imm_ptr(konsta[C].o));
 	typedef PClass*(*FuncPtr)(PClass*, PClass*);
 	auto call = CreateCall<PClass*, PClass*, PClass*>([](PClass *cls1, PClass *cls2) -> PClass* {
 		return (cls1 && cls1->IsDescendantOf(cls2)) ? cls1 : nullptr;
 	});
-	call->setRet(0, regA[A]);
+	call->setRet(0, result);
 	call->setArg(0, regA[B]);
 	call->setArg(1, c);
+	cc.mov(regA[A], result);
 }

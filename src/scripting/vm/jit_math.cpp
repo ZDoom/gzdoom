@@ -17,11 +17,13 @@ void JitCompiler::EmitCONCAT()
 
 void JitCompiler::EmitLENS()
 {
+	auto result = cc.newInt32();
 	auto call = CreateCall<int, FString*>([](FString* str) -> int {
 		return static_cast<int>(str->Len());
 	});
-	call->setRet(0, regD[A]);
+	call->setRet(0, result);
 	call->setArg(0, regS[B]);
+	cc.mov(regD[A], result);
 }
 
 void JitCompiler::EmitCMPS()
@@ -757,13 +759,15 @@ void JitCompiler::EmitMODF_RR()
 	EmitThrowException(X_DIVISION_BY_ZERO);
 	cc.bind(label);
 
+	auto result = cc.newXmmSd();
 	auto call = CreateCall<double, double, double>([](double a, double b) -> double
 	{
 		return a - floor(a / b) * b;
 	});
-	call->setRet(0, regF[A]);
+	call->setRet(0, result);
 	call->setArg(0, regF[B]);
 	call->setArg(1, regF[C]);
+	cc.movsd(regF[A], result);
 }
 
 void JitCompiler::EmitMODF_RK()
@@ -777,12 +781,14 @@ void JitCompiler::EmitMODF_RK()
 	auto tmp = cc.newXmm();
 	cc.movsd(tmp, asmjit::x86::ptr(ToMemAddress(&konstf[C])));
 
+	auto result = cc.newXmmSd();
 	auto call = CreateCall<double, double, double>([](double a, double b) -> double {
 		return a - floor(a / b) * b;
 	});
-	call->setRet(0, regF[A]);
+	call->setRet(0, result);
 	call->setArg(0, regF[B]);
 	call->setArg(1, tmp);
+	cc.movsd(regF[A], result);
 }
 
 void JitCompiler::EmitMODF_KR()
@@ -798,20 +804,24 @@ void JitCompiler::EmitMODF_KR()
 	auto tmp = cc.newXmm();
 	cc.movsd(tmp, x86::ptr(ToMemAddress(&konstf[B])));
 
+	auto result = cc.newXmmSd();
 	auto call = CreateCall<double, double, double>([](double a, double b) -> double {
 		return a - floor(a / b) * b;
 	});
-	call->setRet(0, regF[A]);
+	call->setRet(0, result);
 	call->setArg(0, tmp);
 	call->setArg(1, regF[C]);
+	cc.movsd(regF[A], result);
 }
 
 void JitCompiler::EmitPOWF_RR()
 {
+	auto result = cc.newXmmSd();
 	auto call = CreateCall<double, double, double>(g_pow);
-	call->setRet(0, regF[A]);
+	call->setRet(0, result);
 	call->setArg(0, regF[B]);
 	call->setArg(1, regF[C]);
+	cc.movsd(regF[A], result);
 }
 
 void JitCompiler::EmitPOWF_RK()
@@ -821,10 +831,12 @@ void JitCompiler::EmitPOWF_RK()
 	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
 	cc.movsd(tmp2, asmjit::x86::qword_ptr(tmp));
 
+	auto result = cc.newXmmSd();
 	auto call = CreateCall<double, double, double>(g_pow);
-	call->setRet(0, regF[A]);
+	call->setRet(0, result);
 	call->setArg(0, regF[B]);
 	call->setArg(1, tmp2);
+	cc.movsd(regF[A], result);
 }
 
 void JitCompiler::EmitPOWF_KR()
@@ -834,10 +846,12 @@ void JitCompiler::EmitPOWF_KR()
 	cc.mov(tmp, asmjit::imm_ptr(&konstf[B]));
 	cc.movsd(tmp2, asmjit::x86::qword_ptr(tmp));
 
+	auto result = cc.newXmmSd();
 	auto call = CreateCall<double, double, double>(g_pow);
-	call->setRet(0, regF[A]);
+	call->setRet(0, result);
 	call->setArg(0, tmp2);
 	call->setArg(1, regF[C]);
+	cc.movsd(regF[A], result);
 }
 
 void JitCompiler::EmitMINF_RR()
@@ -876,10 +890,12 @@ void JitCompiler::EmitMAXF_RK()
 	
 void JitCompiler::EmitATAN2()
 {
+	auto result = cc.newXmmSd();
 	auto call = CreateCall<double, double, double>(g_atan2);
-	call->setRet(0, regF[A]);
+	call->setRet(0, result);
 	call->setArg(0, regF[B]);
 	call->setArg(1, regF[C]);
+	cc.movsd(regF[A], result);
 
 	static const double constant = 180 / M_PI;
 	auto tmp = cc.newIntPtr();
@@ -940,9 +956,11 @@ void JitCompiler::EmitFLOP()
 		case FLOP_TANH:		func = g_tanh; break;
 		}
 
+		auto result = cc.newXmmSd();
 		auto call = CreateCall<double, double>(func);
-		call->setRet(0, regF[A]);
+		call->setRet(0, result);
 		call->setArg(0, v);
+		cc.movsd(regF[A], result);
 
 		if (C == FLOP_ACOS_DEG || C == FLOP_ASIN_DEG || C == FLOP_ATAN_DEG)
 		{
@@ -1515,7 +1533,9 @@ void JitCompiler::EmitEQA_K()
 
 void JitCompiler::CallSqrt(const asmjit::X86Xmm &a, const asmjit::X86Xmm &b)
 {
+	auto result = cc.newXmmSd();
 	auto call = CreateCall<double, double>(g_sqrt);
-	call->setRet(0, a);
+	call->setRet(0, result);
 	call->setArg(0, b);
+	cc.movsd(a, result);
 }

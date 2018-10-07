@@ -47,7 +47,7 @@ static void OutputJitLog(const asmjit::StringLogger &logger)
 JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 {
 #if defined(DEBUG_JIT)
-	if (strcmp(sfunc->PrintableName.GetChars(), "Key.ShouldStay") != 0)
+	if (strcmp(sfunc->PrintableName.GetChars(), "StatusScreen.drawNum") != 0)
 		return nullptr;
 #else
 	if (!JitCompiler::CanJit(sfunc))

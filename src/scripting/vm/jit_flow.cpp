@@ -56,14 +56,16 @@ void JitCompiler::EmitVTBL()
 	EmitThrowException(X_READ_NIL);
 	cc.bind(notnull);
 
+	auto result = cc.newIntPtr();
 	auto call = CreateCall<VMFunction*, DObject*, int>([](DObject *o, int c) -> VMFunction* {
 		auto p = o->GetClass();
 		assert(c < (int)p->Virtuals.Size());
 		return p->Virtuals[c];
 	});
-	call->setRet(0, regA[A]);
+	call->setRet(0, result);
 	call->setArg(0, regA[B]);
 	call->setArg(1, asmjit::Imm(C));
+	cc.mov(regA[A], result);
 }
 
 void JitCompiler::EmitSCOPE()

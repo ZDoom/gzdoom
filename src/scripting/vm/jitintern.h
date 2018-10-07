@@ -131,6 +131,7 @@ private:
 	void EmitNullPointerThrow(int index, EVMAbortException reason);
 	void EmitThrowException(EVMAbortException reason);
 	void EmitThrowException(EVMAbortException reason, asmjit::X86Gp arg1);
+	void EmitCheckForException();
 
 	asmjit::X86Gp CheckRegD(int r0, int r1);
 	asmjit::X86Xmm CheckRegF(int r0, int r1);

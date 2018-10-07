@@ -79,30 +79,24 @@ void JitCompiler::EmitSCOPE()
 	auto f = newTempIntPtr();
 	cc.mov(f, asmjit::imm_ptr(konsta[C].v));
 
-	auto result = newResultInt32();
 	typedef int(*FuncPtr)(DObject*, VMFunction*, int);
-	auto call = CreateCall<int, DObject*, VMFunction*, int>([](DObject *o, VMFunction *f, int b) -> int {
+	auto call = CreateCall<void, DObject*, VMFunction*, int, JitExceptionInfo *>([](DObject *o, VMFunction *f, int b, JitExceptionInfo *exceptinfo) {
 		try
 		{
 			FScopeBarrier::ValidateCall(o->GetClass(), f, b - 1);
-			return 1;
 		}
-		catch (const CVMAbortException &)
+		catch (...)
 		{
-			// To do: pass along the exception info
-			return 0;
+			exceptinfo->reason = X_OTHER;
+			exceptinfo->cppException = std::current_exception();
 		}
 	});
-	call->setRet(0, result);
 	call->setArg(0, regA[A]);
 	call->setArg(1, f);
 	call->setArg(2, asmjit::Imm(B));
+	call->setArg(3, exceptInfo);
 
-	auto notzero = cc.newLabel();
-	cc.test(result, result);
-	cc.jnz(notzero);
-	EmitThrowException(X_OTHER);
-	cc.bind(notzero);
+	EmitCheckForException();
 }
 
 void JitCompiler::EmitRET()
@@ -259,7 +253,7 @@ void JitCompiler::EmitRETI()
 void JitCompiler::EmitNEW()
 {
 	auto result = newResultIntPtr();
-	auto call = CreateCall<DObject*, PClass*, int>([](PClass *cls, int c) -> DObject* {
+	auto call = CreateCall<DObject*, PClass*, int, JitExceptionInfo *>([](PClass *cls, int c, JitExceptionInfo *exceptinfo) -> DObject* {
 		try
 		{
 			if (!cls->ConstructNative)
@@ -279,21 +273,20 @@ void JitCompiler::EmitNEW()
 			if (c) FScopeBarrier::ValidateNew(cls, c - 1);
 			return cls->CreateNew();
 		}
-		catch (const CVMAbortException &)
+		catch (...)
 		{
-			// To do: pass along the exception info
+			exceptinfo->reason = X_OTHER;
+			exceptinfo->cppException = std::current_exception();
 			return nullptr;
 		}
 	});
 	call->setRet(0, result);
 	call->setArg(0, regA[B]);
 	call->setArg(1, asmjit::Imm(C));
+	call->setArg(2, exceptInfo);
 
-	auto notnull = cc.newLabel();
-	cc.test(result, result);
-	cc.jnz(notnull);
-	EmitThrowException(X_OTHER);
-	cc.bind(notnull);
+	EmitCheckForException();
+
 	cc.mov(regA[A], result);
 }
 
@@ -317,27 +310,26 @@ void JitCompiler::EmitNEW_K()
 		auto result = newResultIntPtr();
 		auto regcls = newTempIntPtr();
 		cc.mov(regcls, asmjit::imm_ptr(konsta[B].v));
-		auto call = CreateCall<DObject*, PClass*, int>([](PClass *cls, int c) -> DObject* {
+		auto call = CreateCall<DObject*, PClass*, int, JitExceptionInfo *>([](PClass *cls, int c, JitExceptionInfo *exceptinfo) -> DObject* {
 			try
 			{
 				if (c) FScopeBarrier::ValidateNew(cls, c - 1);
 				return cls->CreateNew();
 			}
-			catch (const CVMAbortException &)
+			catch (...)
 			{
-				// To do: pass along the exception info
+				exceptinfo->reason = X_OTHER;
+				exceptinfo->cppException = std::current_exception();
 				return nullptr;
 			}
 		});
 		call->setRet(0, result);
 		call->setArg(0, regcls);
 		call->setArg(1, asmjit::Imm(C));
+		call->setArg(2, exceptInfo);
 
-		auto notnull = cc.newLabel();
-		cc.test(result, result);
-		cc.jnz(notnull);
-		EmitThrowException(X_OTHER);
-		cc.bind(notnull);
+		EmitCheckForException();
+
 		cc.mov(regA[A], result);
 	}
 }

@@ -180,15 +180,7 @@ void JitCompiler::EmitDoCall(asmjit::X86Gp ptr)
 	call->setArg(5, callReturns);
 	call->setArg(6, exceptInfo);
 
-	auto noexception = cc.newLabel();
-	auto exceptResult = newTempInt32();
-	cc.mov(exceptResult, x86::dword_ptr(exceptInfo, 0 * 4));
-	cc.cmp(exceptResult, (int)-1);
-	cc.je(noexception);
-	X86Gp vReg = newTempInt32();
-	cc.mov(vReg, 0);
-	cc.ret(vReg);
-	cc.bind(noexception);
+	EmitCheckForException();
 
 	LoadInOuts(B);
 	LoadReturns(pc + 1, C);
@@ -414,8 +406,8 @@ int JitCompiler::DoCall(VMFrameStack *stack, VMFunction *call, int b, int c, VMV
 	}
 	catch (...)
 	{
-		// To do: store full exception in exceptinfo
 		exceptinfo->reason = X_OTHER;
+		exceptinfo->cppException = std::current_exception();
 		return 0;
 	}
 }

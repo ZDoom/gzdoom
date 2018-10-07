@@ -86,7 +86,10 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 			int result = sfunc->JitFunc(stack, ret, numret, &exceptInfo);
 			if (exceptInfo.reason != -1)
 			{
-				ThrowAbortException(sfunc, exceptInfo.pcOnJitAbort, (EVMAbortException)exceptInfo.reason, nullptr);
+				if (exceptInfo.cppException)
+					std::rethrow_exception(exceptInfo.cppException);
+				else
+					ThrowAbortException(sfunc, exceptInfo.pcOnJitAbort, (EVMAbortException)exceptInfo.reason, nullptr);
 			}
 			return result;
 		}

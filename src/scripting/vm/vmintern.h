@@ -443,6 +443,7 @@ struct JitExceptionInfo
 	int32_t reason; // EVMAbortException
 	int32_t args[3];
 	VMOP* pcOnJitAbort;
+	std::exception_ptr cppException;
 };
 
 typedef int(*JitFuncPtr)(VMFrameStack *stack, VMReturn *ret, int numret, JitExceptionInfo *exceptInfo);

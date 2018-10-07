@@ -303,6 +303,19 @@ void JitCompiler::EmitThrowException(EVMAbortException reason, asmjit::X86Gp arg
 	cc.ret(vReg);
 }
 
+void JitCompiler::EmitCheckForException()
+{
+	auto noexception = cc.newLabel();
+	auto exceptResult = newTempInt32();
+	cc.mov(exceptResult, asmjit::x86::dword_ptr(exceptInfo, 0 * 4));
+	cc.cmp(exceptResult, (int)-1);
+	cc.je(noexception);
+	asmjit::X86Gp vReg = newTempInt32();
+	cc.mov(vReg, 0);
+	cc.ret(vReg);
+	cc.bind(noexception);
+}
+
 asmjit::X86Gp JitCompiler::CheckRegD(int r0, int r1)
 {
 	if (r0 != r1)

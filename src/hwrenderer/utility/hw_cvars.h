@@ -69,3 +69,5 @@ EXTERN_CVAR(Bool, gl_billboard_faces_camera)
 EXTERN_CVAR(Bool, gl_billboard_particles)
 EXTERN_CVAR(Int, gl_enhanced_nv_stealth)
 EXTERN_CVAR(Int, gl_fuzztype)
+
+EXTERN_CVAR(Int, gl_shadowmap_filter)

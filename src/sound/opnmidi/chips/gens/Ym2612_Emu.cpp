@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
+﻿// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 // Based on Gens 2.10 ym2612.c
 
@@ -96,6 +96,8 @@ struct channel_t
 	int KC[4];              // Key Code = valeur fonction de la frequence (voir KSR pour les slots, KSR = KC >> KSR_S)
 	slot_t SLOT[4]; // four slot.operators = les 4 slots de la voie
 	int FFlag;              // Frequency step recalculation flag
+	int PANVolumeL;         // Left PCM output channel volume
+	int PANVolumeR;         // Right PCM output  channel volume
 };
 
 struct state_t
@@ -253,6 +255,32 @@ static const unsigned char LFO_FMS_TAB [8] =
 	LFO_FMS_BASE * 12, LFO_FMS_BASE * 24
 };
 
+
+/*
+ * Pan law table
+ */
+static const unsigned short panlawtable[] =
+{
+	65535, 65529, 65514, 65489, 65454, 65409, 65354, 65289,
+	65214, 65129, 65034, 64929, 64814, 64689, 64554, 64410,
+	64255, 64091, 63917, 63733, 63540, 63336, 63123, 62901,
+	62668, 62426, 62175, 61914, 61644, 61364, 61075, 60776,
+	60468, 60151, 59825, 59489, 59145, 58791, 58428, 58057,
+	57676, 57287, 56889, 56482, 56067, 55643, 55211, 54770,
+	54320, 53863, 53397, 52923, 52441, 51951, 51453, 50947,
+	50433, 49912, 49383, 48846, 48302, 47750, 47191,
+	46340, /* Center left */
+	46340, /* Center right */
+	45472, 44885, 44291, 43690, 43083, 42469, 41848, 41221,
+	40588, 39948, 39303, 38651, 37994, 37330, 36661, 35986,
+	35306, 34621, 33930, 33234, 32533, 31827, 31116, 30400,
+	29680, 28955, 28225, 27492, 26754, 26012, 25266, 24516,
+	23762, 23005, 22244, 21480, 20713, 19942, 19169, 18392,
+	17613, 16831, 16046, 15259, 14469, 13678, 12884, 12088,
+	11291, 10492, 9691, 8888, 8085, 7280, 6473, 5666,
+	4858, 4050, 3240, 2431, 1620, 810, 0
+};
+
 inline void YM2612_Special_Update() { }
 
 struct Ym2612_Impl
@@ -273,6 +301,7 @@ struct Ym2612_Impl
 	void reset();
 	void write0( int addr, int data );
 	void write1( int addr, int data );
+	void write_pan(int channel, int data );
 	void run_timer( int );
 	void run( int pair_count, Ym2612_Emu::sample_t* );
 };
@@ -880,6 +909,12 @@ inline void Ym2612_Impl::write1( int opn_addr, int data )
 	}
 }
 
+void Ym2612_Impl::write_pan( int channel, int data )
+{
+	YM2612.CHANNEL[channel].PANVolumeL = panlawtable[data & 0x7F];
+	YM2612.CHANNEL[channel].PANVolumeR = panlawtable[0x7F - (data & 0x7F)];
+}
+
 void Ym2612_Emu::reset()
 {
 	impl->reset();
@@ -909,6 +944,9 @@ void Ym2612_Impl::reset()
 		ch.FB = 31;
 		ch.FMS = 0;
 		ch.AMS = 0;
+
+		ch.PANVolumeL = 46340;
+		ch.PANVolumeR = 46340;
 
 		for ( int j = 0 ;j < 4 ; j++ )
 		{
@@ -957,6 +995,11 @@ void Ym2612_Emu::write0( int addr, int data )
 void Ym2612_Emu::write1( int addr, int data )
 {
 	impl->write1( addr, data );
+}
+
+void Ym2612_Emu::write_pan(int channel, int data)
+{
+	impl->write_pan( channel, data );
 }
 
 void Ym2612_Emu::mute_voices( int mask ) { impl->mute_mask = mask; }
@@ -1166,10 +1209,10 @@ void ym2612_update_chan<algo>::func( tables_t& g, channel_t& ch,
 		in1 += (ch.SLOT [S1].Finc * freq_LFO) >> (LFO_FMS_LBITS - 1);
 		in2 += (ch.SLOT [S2].Finc * freq_LFO) >> (LFO_FMS_LBITS - 1);
 		in3 += (ch.SLOT [S3].Finc * freq_LFO) >> (LFO_FMS_LBITS - 1);
-		
-		int t0 = buf [0] + (CH_OUTd & ch.LEFT);
-		int t1 = buf [1] + (CH_OUTd & ch.RIGHT);
-		
+
+		int t0 = buf [0] + ((CH_OUTd * ch.PANVolumeL / 65535) & ch.LEFT);
+		int t1 = buf [1] + ((CH_OUTd * ch.PANVolumeR / 65535) & ch.RIGHT);
+
 		update_envelope( ch.SLOT [0] );
 		update_envelope( ch.SLOT [1] );
 		update_envelope( ch.SLOT [2] );

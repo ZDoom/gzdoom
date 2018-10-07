@@ -265,6 +265,7 @@ public:
 	bool mMouseCapture;
 	bool mBackbuttonSelected;
 	bool DontDim;
+	static int InMenu;
 
 	DMenu(DMenu *parent = NULL);
 	bool TranslateKeyboardEvents();

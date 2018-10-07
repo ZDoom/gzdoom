@@ -400,7 +400,7 @@ class StatusScreen abstract play version("2.5")
 	//
 	//====================================================================
 
-	void End ()
+	virtual void End ()
 	{
 		CurState = LeavingIntermission;
 

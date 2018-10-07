@@ -1,19 +1,19 @@
 /*
  * Copyright (C) 2017 Alexey Khokholov (Nuke.YKT)
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
+ * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  *
  *  Nuked OPN2(Yamaha YM3438) emulator.
@@ -213,6 +213,9 @@ typedef struct
     Bit32s oldsamples[2];
     Bit32s samples[2];
 
+    Bit32u pan_volume_l[6];
+    Bit32u pan_volume_r[6];
+
     Bit64u writebuf_samplecnt;
     Bit32u writebuf_cur;
     Bit32u writebuf_last;
@@ -231,6 +234,7 @@ Bit32u OPN2_ReadIRQPin(ym3438_t *chip);
 Bit8u OPN2_Read(ym3438_t *chip, Bit32u port);
 
 /*EXTRA*/
+void OPN2_WritePan(ym3438_t *chip, Bit32u channel, Bit8u data);
 void OPN2_WriteBuffered(ym3438_t *chip, Bit32u port, Bit8u data);
 void OPN2_Generate(ym3438_t *chip, Bit16s *buf);
 void OPN2_GenerateResampled(ym3438_t *chip, Bit16s *buf);

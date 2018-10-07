@@ -89,7 +89,7 @@ private:
 	{
 		int V[3];
 		FVector2 C[3];
-		FVector3 Normal;
+		TArray<FVector3> Normals;
 	};
 	struct UE1Group
 	{

@@ -89,7 +89,7 @@ extend class Actor
 		if (victim.bTouchy)
 		{ // Touchy objects die when blasted
 			victim.bArmed = false; // Disarm
-			victim.DamageMobj(self, self, victim.health, 'Melee', DMG_FORCED);
+			victim.DamageMobj(self, self, victim.health, 'Melee', DMG_FORCED|DMG_EXPLOSION);
 		}
 	}
 	

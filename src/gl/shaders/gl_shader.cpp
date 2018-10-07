@@ -68,8 +68,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			int uViewHeight;		// Software fuzz scaling
 			float uClipHeight;
 			float uClipHeightDirection;
-			int uFogEnabled;
-
+			int uShadowmapFilter;
 		};
 	)";
 	
@@ -100,6 +99,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "#define uFogDensity uLightAttr.b\n";
 	i_data += "#define uLightFactor uLightAttr.g\n";
 	i_data += "#define uLightDist uLightAttr.r\n";
+	i_data += "uniform int uFogEnabled;\n";
 
 	// dynamic lights
 	i_data += "uniform int uLightIndex;\n";
@@ -331,6 +331,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 
 	muDesaturation.Init(hShader, "uDesaturationFactor");
+	muFogEnabled.Init(hShader, "uFogEnabled");
 	muTextureMode.Init(hShader, "uTextureMode");
 	muLightParms.Init(hShader, "uLightAttr");
 	muClipSplit.Init(hShader, "uClipSplit");

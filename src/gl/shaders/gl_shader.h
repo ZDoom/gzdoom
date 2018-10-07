@@ -242,6 +242,7 @@ class FShader
 	FName mName;
 
 	FBufferedUniform1f muDesaturation;
+	FBufferedUniform1i muFogEnabled;
 	FBufferedUniform1i muTextureMode;
 	FBufferedUniform4f muLightParms;
 	FBufferedUniform2f muClipSplit;

@@ -4754,11 +4754,18 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 
 				// We must pass the unreplaced puff type here 
 				puff = P_SpawnPuff(t1, pufftype, bleedpos, trace.SrcAngleFromTarget, trace.SrcAngleFromTarget - 90, 2, puffFlags | PF_HITTHING, trace.Actor);
-
-				if (nointeract)
-				{
-					return puff;
-				}
+			}
+			if (victim != NULL)
+			{
+				victim->linetarget = trace.Actor;
+				victim->attackAngleFromSource = trace.SrcAngleFromTarget;
+				// With arbitrary portals this cannot be calculated so using the actual attack angle is the only option.
+				victim->angleFromSource = trace.unlinked ? victim->attackAngleFromSource : t1->AngleTo(trace.Actor);
+				victim->unlinked = trace.unlinked;
+			}
+			if (nointeract)
+			{
+				return puff;
 			}
 
 			// Allow puffs to inflict poison damage, so that hitscans can poison, too.
@@ -4833,14 +4840,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 					P_TraceBleed(newdam > 0 ? newdam : damage, trace.HitPos, trace.Actor, trace.SrcAngleFromTarget, pitch);
 				}
 			}
-			if (victim != NULL)
-			{
-				victim->linetarget = trace.Actor;
-				victim->attackAngleFromSource = trace.SrcAngleFromTarget;
-				// With arbitrary portals this cannot be calculated so using the actual attack angle is the only option.
-				victim->angleFromSource = trace.unlinked? victim->attackAngleFromSource : t1->AngleTo(trace.Actor);
-				victim->unlinked = trace.unlinked;
-			}
+			
 		}
 		if (trace.Crossed3DWater || trace.CrossedWater)
 		{
@@ -6177,7 +6177,7 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 				{
 					//[MC] Don't count actors saved by buddha if already at 1 health.
 					int prehealth = thing->health;
-					newdam = P_DamageMobj(thing, bombspot, bombsource, damage, bombmod);
+					newdam = P_DamageMobj(thing, bombspot, bombsource, damage, bombmod, DMG_EXPLOSION);
 					if (thing->health < prehealth)	count++;
 				}
 				else if (thing->player == NULL && (!(flags & RADF_NOIMPACTDAMAGE) && !(thing->flags7 & MF7_DONTTHRUST)))
@@ -6229,7 +6229,7 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 			{ // OK to damage; target is in direct path
 				//[MC] Don't count actors saved by buddha if already at 1 health.
 				int prehealth = thing->health;
-				int newdam = P_DamageMobj(thing, bombspot, bombsource, damage, bombmod);
+				int newdam = P_DamageMobj(thing, bombspot, bombsource, damage, bombmod, DMG_EXPLOSION);
 				P_TraceBleed(newdam > 0 ? newdam : damage, thing, bombspot);
 				if (thing->health < prehealth)	count++;
 			}

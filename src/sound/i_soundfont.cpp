@@ -302,6 +302,16 @@ void FSoundFontManager::ProcessOneFile(const FString &fn)
 			FSoundFontInfo sft = { fb, fbe, fn, SF_SF2 };
 			soundfonts.Push(sft);
 		}
+		if (!memcmp(head, "WOPL3-BANK\0", 11))
+		{
+			FSoundFontInfo sft = { fb, fbe, fn, SF_WOPL };
+			soundfonts.Push(sft);
+		}
+		if (!memcmp(head, "WOPN2-BANK\0", 11) || !memcmp(head, "WOPN2-B2NK\0", 11))
+		{
+			FSoundFontInfo sft = { fb, fbe, fn, SF_WOPN };
+			soundfonts.Push(sft);
+		}
 		else if (!memcmp(head, "PK", 2))
 		{
 			auto zip = FResourceFile::OpenResourceFile(fn, true);
@@ -333,19 +343,18 @@ void FSoundFontManager::CollectSoundfonts()
 {
 	findstate_t c_file;
 	void *file;
-	
-	
+
 	if (GameConfig != NULL && GameConfig->SetSection ("SoundfontSearch.Directories"))
 	{
 		const char *key;
 		const char *value;
-		
+
 		while (GameConfig->NextInSection (key, value))
 		{
 			if (stricmp (key, "Path") == 0)
 			{
 				FString dir;
-				
+
 				dir = NicePath(value);
 				FixPathSeperator(dir);
 				if (dir.IsNotEmpty())

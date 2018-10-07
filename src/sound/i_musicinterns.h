@@ -331,6 +331,9 @@ protected:
 	void HandleEvent(int status, int parm1, int parm2);
 	void HandleLongEvent(const uint8_t *data, int len);
 	void ComputeOutput(float *buffer, int len);
+
+private:
+	int LoadCustomBank(const char *bankfile);
 };
 
 
@@ -341,14 +344,17 @@ public:
 	OPNMIDIDevice(const char *args);
 	~OPNMIDIDevice();
 
+
 	int Open(MidiCallback, void *userdata);
 	int GetDeviceType() const override { return MDEV_OPN; }
 
 protected:
-
 	void HandleEvent(int status, int parm1, int parm2);
 	void HandleLongEvent(const uint8_t *data, int len);
 	void ComputeOutput(float *buffer, int len);
+
+private:
+	int LoadCustomBank(const char *bankfile);
 };
 
 

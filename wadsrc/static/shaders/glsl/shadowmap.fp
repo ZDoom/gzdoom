@@ -2,20 +2,22 @@
 in vec2 TexCoord;
 layout(location=0) out vec4 FragColor;
 
+// A node in an AABB binary tree with lines stored in the leaf nodes
 struct GPUNode
 {
-	vec2 aabb_min;
-	vec2 aabb_max;
-	int left;
-	int right;
-	int line_index;
-	int padding;
+	vec2 aabb_min;  // Min xy values for the axis-aligned box containing the node and its subtree
+	vec2 aabb_max;  // Max xy values
+	int left;       // Left subnode index
+	int right;      // Right subnode index
+	int line_index; // Line index if it is a leaf node, otherwise -1
+	int padding;    // Unused - maintains 16 byte alignment
 };
 
+// 2D line segment, referenced by leaf nodes
 struct GPULine
 {
-	vec2 pos;
-	vec2 delta;
+	vec2 pos;       // Line start position
+	vec2 delta;     // Line end position - line start position
 };
 
 layout(std430, binding = 2) buffer LightNodes
@@ -33,6 +35,7 @@ layout(std430, binding = 4) buffer LightList
 	vec4 lights[];
 };
 
+// Overlap test between line segment and axis-aligned bounding box. Returns true if they overlap.
 bool overlapRayAABB(vec2 ray_start2d, vec2 ray_end2d, vec2 aabb_min2d, vec2 aabb_max2d)
 {
 	// To do: simplify test to use a 2D test
@@ -60,6 +63,8 @@ bool overlapRayAABB(vec2 ray_start2d, vec2 ray_end2d, vec2 aabb_min2d, vec2 aabb
 	return true; // overlap;
 }
 
+// Intersection test between two line segments.
+// Returns the intersection point as a value between 0-1 on the ray line segment. 1.0 if there was no hit.
 float intersectRayLine(vec2 ray_start, vec2 ray_end, int line_index, vec2 raydelta, float rayd, float raydist2)
 {
 	const float epsilon = 0.0000001;
@@ -82,11 +87,14 @@ float intersectRayLine(vec2 ray_start, vec2 ray_end, int line_index, vec2 raydel
 	return 1.0;
 }
 
+// Returns true if an AABB tree node is a leaf node. Leaf nodes contains a line.
 bool isLeaf(int node_index)
 {
 	return nodes[node_index].line_index != -1;
 }
 
+// Perform ray intersection test between the ray line segment and all the lines in the AABB binary tree.
+// Returns the intersection point as a value between 0-1 on the ray line segment. 1.0 if there was no hit.
 float rayTest(vec2 ray_start, vec2 ray_end)
 {
 	vec2 raydelta = ray_end - ray_start;
@@ -97,6 +105,9 @@ float rayTest(vec2 ray_start, vec2 ray_end)
 		return 1.0;
 
 	float t = 1.0;
+
+	// Walk the AABB binary tree searching for nodes touching the ray line segment's AABB box.
+	// When it reaches a leaf node, use a line segment intersection test to see if we got a hit.
 
 	int stack[16];
 	int stack_pos = 1;
@@ -131,6 +142,8 @@ float rayTest(vec2 ray_start, vec2 ray_end)
 
 void main()
 {
+	// Find the light that belongs to this texel in the shadowmap texture we output to:
+
 	int lightIndex = int(gl_FragCoord.y);
 
 	vec4 light = lights[lightIndex];
@@ -139,17 +152,32 @@ void main()
 
 	if (radius > 0.0)
 	{
-		vec2 pixelpos;
-		switch (int(gl_FragCoord.x) / int(ShadowmapQuality/4.0))
+		// We found an active light. Calculate the ray direction for the texel.
+		//
+		// The texels are laid out so that there are four projections:
+		//
+		// * top-left to top-right
+		// * top-right to bottom-right
+		// * bottom-right to bottom-left
+		// * bottom-left to top-left
+		//
+		vec2 raydir;
+		float u = gl_FragCoord.x / ShadowmapQuality * 4.0;
+		switch (int(u))
 		{
-		case 0: pixelpos = vec2((gl_FragCoord.x - float(ShadowmapQuality/8.0)) / float(ShadowmapQuality/8.0), 1.0); break;
-		case 1: pixelpos = vec2(1.0, (gl_FragCoord.x - float(ShadowmapQuality/4.0 + ShadowmapQuality/8.0)) / float(ShadowmapQuality/8.0)); break;
-		case 2: pixelpos = vec2(-(gl_FragCoord.x - float(ShadowmapQuality/2.0 + ShadowmapQuality/8.0)) / float(ShadowmapQuality/8.0), -1.0); break;
-		case 3: pixelpos = vec2(-1.0, -(gl_FragCoord.x - float(ShadowmapQuality*3.0/4.0 + ShadowmapQuality/8.0)) / float(ShadowmapQuality/8.0)); break;
+		case 0: raydir = vec2(u * 2.0 - 1.0, 1.0); break;
+		case 1: raydir = vec2(1.0, 1.0 - (u - 1.0) * 2.0); break;
+		case 2: raydir = vec2(1.0 - (u - 2.0) * 2.0, -1.0); break;
+		case 3: raydir = vec2(-1.0, (u - 3.0) * 2.0 - 1.0); break;
 		}
-		pixelpos = lightpos + pixelpos * radius;
 
+		// Find the position for the ray starting at the light position and travelling until light contribution is zero:
+		vec2 pixelpos = lightpos + raydir * radius;
+
+		// Check if we hit any line between the light and the end position:
 		float t = rayTest(lightpos, pixelpos);
+
+		// Calculate the square distance for the hit, if any:
 		vec2 delta = (pixelpos - lightpos) * t;
 		float dist2 = dot(delta, delta);
 

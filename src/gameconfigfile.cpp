@@ -136,17 +136,27 @@ FGameConfigFile::FGameConfigFile ()
 		SetSection("SoundfontSearch.Directories", true);
 #ifdef __APPLE__
 		SetValueForKey("Path", user_docs + "/soundfonts", true);
+		SetValueForKey("Path", user_docs + "/fm_banks", true);
 		SetValueForKey("Path", user_app_support + "/soundfonts", true);
+		SetValueForKey("Path", user_app_support + "/fm_banks", true);
 		SetValueForKey("Path", "$PROGDIR/soundfonts", true);
+		SetValueForKey("Path", "$PROGDIR/fm_banks", true);
 		SetValueForKey("Path", local_app_support + "/soundfonts", true);
+		SetValueForKey("Path", local_app_support + "/fm_banks", true);
 #elif !defined(__unix__)
 		SetValueForKey("Path", "$PROGDIR/soundfonts", true);
+		SetValueForKey("Path", "$PROGDIR/fm_banks", true);
 #else
 		SetValueForKey("Path", "$HOME/" GAME_DIR "/soundfonts", true);
+		SetValueForKey("Path", "$HOME/" GAME_DIR "/fm_banks", true);
 		SetValueForKey("Path", "/usr/local/share/doom/soundfonts", true);
+		SetValueForKey("Path", "/usr/local/share/doom/fm_banks", true);
 		SetValueForKey("Path", "/usr/local/share/games/doom/soundfonts", true);
+		SetValueForKey("Path", "/usr/local/share/games/doom/fm_banks", true);
 		SetValueForKey("Path", "/usr/share/doom/soundfonts", true);
+		SetValueForKey("Path", "/usr/share/doom/fm_banks", true);
 		SetValueForKey("Path", "/usr/share/games/doom/soundfonts", true);
+		SetValueForKey("Path", "/usr/share/games/doom/fm_banks", true);
 #endif
 	}
 

@@ -36,6 +36,7 @@
 
 #include "i_musicinterns.h"
 #include "adlmidi/adlmidi.h"
+#include "i_soundfont.h"
 
 enum
 {
@@ -71,6 +72,15 @@ CUSTOM_CVAR(Bool, adl_run_at_pcm_rate, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 		MIDIDeviceChanged(-1, true);
 	}
 }
+
+CUSTOM_CVAR(Bool, adl_fullpan, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_ADL)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
 
 CUSTOM_CVAR(Int, adl_bank, 14, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
@@ -118,18 +128,11 @@ ADLMIDIDevice::ADLMIDIDevice(const char *args)
 	{
 		adl_switchEmulator(Renderer, (int)adl_emulator_id);
 		adl_setRunAtPcmRate(Renderer, (int)adl_run_at_pcm_rate);
-// todo: Implement handling of external or in-resources WOPL bank files and load
-/*
-		if(adl_use_custom_bank)
-		{
-			adl_openBankFile(Renderer, (char*)adl_bank_file);
-			adl_openBankData(Renderer, (char*)adl_bank, (unsigned long)size);
-		}
-		else
-*/
+		if(!LoadCustomBank(adl_custom_bank))
 			adl_setBank(Renderer, (int)adl_bank);
 		adl_setNumChips(Renderer, (int)adl_chips_count);
 		adl_setVolumeRangeModel(Renderer, (int)adl_volume_model);
+		adl_setSoftPanEnabled(Renderer, (int)adl_fullpan);
 	}
 }
 
@@ -147,6 +150,27 @@ ADLMIDIDevice::~ADLMIDIDevice()
 		adl_close(Renderer);
 	}
 }
+
+//==========================================================================
+//
+// ADLMIDIDevice :: LoadCustomBank
+//
+// Loads a custom WOPL bank for libADLMIDI. Returns 1 when bank has been
+// loaded, otherwise, returns 0 when custom banks are disabled or failed
+//
+//==========================================================================
+
+int ADLMIDIDevice::LoadCustomBank(const char *bankfile)
+{
+	if(!adl_use_custom_bank)
+		return 0;
+	auto info = sfmanager.FindSoundFont(bankfile, SF_WOPL);
+	if(info == nullptr)
+		return 0;
+	bankfile = info->mFilename.GetChars();
+	return (adl_openBankFile(Renderer, bankfile) == 0);
+}
+
 
 //==========================================================================
 //

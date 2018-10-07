@@ -52,13 +52,10 @@ void JitCompiler::EmitLKS_R()
 	auto base = newTempIntPtr();
 	cc.mov(base, asmjit::imm_ptr(konsts + C));
 	auto ptr = newTempIntPtr();
-#ifdef ASMJIT_ARCH_64BIT
-	static_assert(sizeof(FString) == 8, "sizeof(FString) needs to be 8");
-	cc.lea(ptr, asmjit::x86::ptr(base, regD[B], 3));
-#else
-	static_assert(sizeof(FString) == 4, "sizeof(FString) needs to be 4");
-	cc.lea(ptr, asmjit::x86::ptr(base, regD[B], 2));
-#endif
+	if (cc.is64Bit())
+		cc.lea(ptr, asmjit::x86::ptr(base, regD[B], 3));
+	else
+		cc.lea(ptr, asmjit::x86::ptr(base, regD[B], 2));
 	auto call = CreateCall<void, FString*, FString*>(&JitCompiler::CallAssignString);
 	call->setArg(0, regS[A]);
 	call->setArg(1, ptr);
@@ -68,13 +65,10 @@ void JitCompiler::EmitLKP_R()
 {
 	auto base = newTempIntPtr();
 	cc.mov(base, asmjit::imm_ptr(konsta + C));
-#ifdef ASMJIT_ARCH_64BIT
-	static_assert(sizeof(FVoidObj) == 8, "sizeof(FVoidObj) needs to be 8");
-	cc.mov(regA[A], asmjit::x86::ptr(base, regD[B], 3));
-#else
-	static_assert(sizeof(FVoidObj) == 4, "sizeof(FVoidObj) needs to be 4");
-	cc.mov(regA[A], asmjit::x86::ptr(base, regD[B], 2));
-#endif
+	if (cc.is64Bit())
+		cc.mov(regA[A], asmjit::x86::ptr(base, regD[B], 3));
+	else
+		cc.mov(regA[A], asmjit::x86::ptr(base, regD[B], 2));
 }
 
 void JitCompiler::EmitLFP()

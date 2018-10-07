@@ -272,11 +272,10 @@ void JitCompiler::EmitThrowException(EVMAbortException reason)
 
 	// Update JitExceptionInfo struct
 	cc.mov(x86::dword_ptr(exceptInfo, 0 * 4), (int32_t)reason);
-#ifdef ASMJIT_ARCH_64BIT
-	cc.mov(x86::qword_ptr(exceptInfo, 4 * 4), imm_ptr(pc));
-#else
-	cc.mov(x86::dword_ptr(exceptInfo, 4 * 4), imm_ptr(pc));
-#endif
+	if (cc.is64Bit())
+		cc.mov(x86::qword_ptr(exceptInfo, 4 * 4), imm_ptr(pc));
+	else
+		cc.mov(x86::dword_ptr(exceptInfo, 4 * 4), imm_ptr(pc));
 
 	// Return from function
 	X86Gp vReg = newTempInt32();
@@ -291,11 +290,10 @@ void JitCompiler::EmitThrowException(EVMAbortException reason, asmjit::X86Gp arg
 	// Update JitExceptionInfo struct
 	cc.mov(x86::dword_ptr(exceptInfo, 0 * 4), (int32_t)reason);
 	cc.mov(x86::dword_ptr(exceptInfo, 1 * 4), arg1);
-#ifdef ASMJIT_ARCH_64BIT
-	cc.mov(x86::qword_ptr(exceptInfo, 4 * 4), imm_ptr(pc));
-#else
-	cc.mov(x86::dword_ptr(exceptInfo, 4 * 4), imm_ptr(pc));
-#endif
+	if (cc.is64Bit())
+		cc.mov(x86::qword_ptr(exceptInfo, 4 * 4), imm_ptr(pc));
+	else
+		cc.mov(x86::dword_ptr(exceptInfo, 4 * 4), imm_ptr(pc));
 
 	// Return from function
 	X86Gp vReg = newTempInt32();

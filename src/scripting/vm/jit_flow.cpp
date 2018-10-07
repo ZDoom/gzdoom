@@ -195,17 +195,20 @@ void JitCompiler::EmitRET()
 			break;
 		}
 		case REGT_POINTER:
-			#ifdef ASMJIT_ARCH_64BIT
-			if (regtype & REGT_KONST)
-				cc.mov(x86::qword_ptr(location), asmjit::imm_ptr(konsta[regnum].v));
+			if (cc.is64Bit())
+			{
+				if (regtype & REGT_KONST)
+					cc.mov(x86::qword_ptr(location), asmjit::imm_ptr(konsta[regnum].v));
+				else
+					cc.mov(x86::qword_ptr(location), regA[regnum]);
+			}
 			else
-				cc.mov(x86::qword_ptr(location), regA[regnum]);
-			#else
-			if (regtype & REGT_KONST)
-				cc.mov(x86::dword_ptr(location), asmjit::imm_ptr(konsta[regnum].v));
-			else
-				cc.mov(x86::dword_ptr(location), regA[regnum]);
-			#endif
+			{
+				if (regtype & REGT_KONST)
+					cc.mov(x86::dword_ptr(location), asmjit::imm_ptr(konsta[regnum].v));
+				else
+					cc.mov(x86::dword_ptr(location), regA[regnum]);
+			}
 			break;
 		}
 

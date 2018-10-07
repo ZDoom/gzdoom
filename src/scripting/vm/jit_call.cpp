@@ -22,7 +22,7 @@ void JitCompiler::EmitPARAM()
 		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_INT);
 		break;
 	case REGT_INT | REGT_ADDROF:
-		stackPtr = cc.newIntPtr();
+		stackPtr = newTempIntPtr();
 		cc.mov(stackPtr, frameD);
 		cc.add(stackPtr, (int)(C * sizeof(int32_t)));
 		cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, a)), stackPtr);
@@ -41,7 +41,7 @@ void JitCompiler::EmitPARAM()
 		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
 		break;
 	case REGT_STRING | REGT_KONST:
-		tmp = cc.newIntPtr();
+		tmp = newTempIntPtr();
 		cc.mov(tmp, asmjit::imm_ptr(&konsts[C]));
 		cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, sp)), tmp);
 		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_STRING);
@@ -51,14 +51,14 @@ void JitCompiler::EmitPARAM()
 		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
 		break;
 	case REGT_POINTER | REGT_ADDROF:
-		stackPtr = cc.newIntPtr();
+		stackPtr = newTempIntPtr();
 		cc.mov(stackPtr, frameA);
 		cc.add(stackPtr, (int)(C * sizeof(void*)));
 		cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, a)), stackPtr);
 		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
 		break;
 	case REGT_POINTER | REGT_KONST:
-		tmp = cc.newIntPtr();
+		tmp = newTempIntPtr();
 		cc.mov(tmp, asmjit::imm_ptr(konsta[C].v));
 		cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, a)), tmp);
 		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
@@ -88,15 +88,15 @@ void JitCompiler::EmitPARAM()
 		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_FLOAT);
 		break;
 	case REGT_FLOAT | REGT_ADDROF:
-		stackPtr = cc.newIntPtr();
+		stackPtr = newTempIntPtr();
 		cc.mov(stackPtr, frameF);
 		cc.add(stackPtr, (int)(C * sizeof(double)));
 		cc.mov(x86::ptr(params, index * sizeof(VMValue) + offsetof(VMValue, a)), stackPtr);
 		cc.mov(x86::byte_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
 		break;
 	case REGT_FLOAT | REGT_KONST:
-		tmp = cc.newIntPtr();
-		tmp2 = cc.newXmmSd();
+		tmp = newTempIntPtr();
+		tmp2 = newTempXmmSd();
 		cc.mov(tmp, asmjit::imm_ptr(konstf + C));
 		cc.movsd(tmp2, asmjit::x86::qword_ptr(tmp));
 		cc.movsd(x86::qword_ptr(params, index * sizeof(VMValue) + offsetof(VMValue, f)), tmp2);
@@ -131,7 +131,7 @@ void JitCompiler::EmitCALL()
 
 void JitCompiler::EmitCALL_K()
 {
-	auto ptr = cc.newIntPtr();
+	auto ptr = newTempIntPtr();
 	cc.mov(ptr, asmjit::imm_ptr(konsta[A].o));
 	EmitDoCall(ptr);
 }
@@ -143,7 +143,7 @@ void JitCompiler::EmitTAIL()
 
 void JitCompiler::EmitTAIL_K()
 {
-	auto ptr = cc.newIntPtr();
+	auto ptr = newTempIntPtr();
 	cc.mov(ptr, asmjit::imm_ptr(konsta[A].o));
 	EmitDoTail(ptr);
 }
@@ -161,7 +161,7 @@ void JitCompiler::EmitDoCall(asmjit::X86Gp ptr)
 	X86Gp paramsptr;
 	if (B != NumParam)
 	{
-		paramsptr = cc.newIntPtr();
+		paramsptr = newTempIntPtr();
 		cc.lea(paramsptr, x86::ptr(params, (int)((NumParam - B) * sizeof(VMValue))));
 	}
 	else
@@ -169,7 +169,7 @@ void JitCompiler::EmitDoCall(asmjit::X86Gp ptr)
 		paramsptr = params;
 	}
 
-	auto result = cc.newInt32();
+	auto result = newResultInt32();
 	auto call = CreateCall<int, VMFrameStack*, VMFunction*, int, int, VMValue*, VMReturn*, JitExceptionInfo*>(&JitCompiler::DoCall);
 	call->setRet(0, result);
 	call->setArg(0, stack);
@@ -181,11 +181,11 @@ void JitCompiler::EmitDoCall(asmjit::X86Gp ptr)
 	call->setArg(6, exceptInfo);
 
 	auto noexception = cc.newLabel();
-	auto exceptResult = cc.newInt32();
+	auto exceptResult = newTempInt32();
 	cc.mov(exceptResult, x86::dword_ptr(exceptInfo, 0 * 4));
 	cc.cmp(exceptResult, (int)-1);
 	cc.je(noexception);
-	X86Gp vReg = cc.newInt32();
+	X86Gp vReg = newTempInt32();
 	cc.mov(vReg, 0);
 	cc.ret(vReg);
 	cc.bind(noexception);
@@ -214,7 +214,7 @@ void JitCompiler::EmitDoTail(asmjit::X86Gp ptr)
 	X86Gp paramsptr;
 	if (B != NumParam)
 	{
-		paramsptr = cc.newIntPtr();
+		paramsptr = newTempIntPtr();
 		cc.lea(paramsptr, x86::ptr(params, (int)((NumParam - B) * sizeof(VMValue))));
 	}
 	else
@@ -222,7 +222,7 @@ void JitCompiler::EmitDoTail(asmjit::X86Gp ptr)
 		paramsptr = params;
 	}
 
-	auto result = cc.newInt32();
+	auto result = newResultInt32();
 	auto call = CreateCall<int, VMFrameStack*, VMFunction*, int, int, VMValue*, VMReturn*, JitExceptionInfo*>(&JitCompiler::DoCall);
 	call->setRet(0, result);
 	call->setArg(0, stack);
@@ -249,7 +249,7 @@ void JitCompiler::StoreInOuts(int b)
 		switch (ParamOpcodes[i]->b)
 		{
 		case REGT_INT | REGT_ADDROF:
-			stackPtr = cc.newIntPtr();
+			stackPtr = newTempIntPtr();
 			cc.mov(stackPtr, frameD);
 			cc.add(stackPtr, (int)(C * sizeof(int32_t)));
 			cc.mov(x86::dword_ptr(stackPtr), regD[C]);
@@ -258,13 +258,13 @@ void JitCompiler::StoreInOuts(int b)
 			// We don't have to do anything in this case. String values are never moved to virtual registers.
 			break;
 		case REGT_POINTER | REGT_ADDROF:
-			stackPtr = cc.newIntPtr();
+			stackPtr = newTempIntPtr();
 			cc.mov(stackPtr, frameA);
 			cc.add(stackPtr, (int)(C * sizeof(void*)));
 			cc.mov(x86::ptr(stackPtr), regA[C]);
 			break;
 		case REGT_FLOAT | REGT_ADDROF:
-			stackPtr = cc.newIntPtr();
+			stackPtr = newTempIntPtr();
 			cc.mov(stackPtr, frameF);
 			cc.add(stackPtr, (int)(C * sizeof(double)));
 			cc.movsd(x86::qword_ptr(stackPtr), regF[C]);
@@ -342,7 +342,7 @@ void JitCompiler::FillReturns(const VMOP *retval, int numret)
 			I_FatalError("OP_RESULT with REGT_KONST is not allowed\n");
 		}
 
-		auto regPtr = cc.newIntPtr();
+		auto regPtr = newTempIntPtr();
 
 		switch (type & REGT_TYPE)
 		{

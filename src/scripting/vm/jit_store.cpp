@@ -64,7 +64,7 @@ void JitCompiler::EmitSDP_R()
 void JitCompiler::EmitSS()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	auto ptr = cc.newIntPtr();
+	auto ptr = newTempIntPtr();
 	cc.lea(ptr, asmjit::x86::ptr(regA[A], konstd[C]));
 	auto call = CreateCall<void, FString*, FString*>(&JitCompiler::CallAssignString);
 	call->setArg(0, ptr);
@@ -74,7 +74,7 @@ void JitCompiler::EmitSS()
 void JitCompiler::EmitSS_R()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	auto ptr = cc.newIntPtr();
+	auto ptr = newTempIntPtr();
 	cc.lea(ptr, asmjit::x86::ptr(regA[A], regD[C]));
 	auto call = CreateCall<void, FString*, FString*>(&JitCompiler::CallAssignString);
 	call->setArg(0, ptr);
@@ -112,7 +112,7 @@ void JitCompiler::EmitSP_R()
 void JitCompiler::EmitSV2()
 {
 	EmitNullPointerThrow(B, X_WRITE_NIL);
-	auto tmp = cc.newIntPtr();
+	auto tmp = newTempIntPtr();
 	cc.mov(tmp, regA[B]);
 	cc.add(tmp, konstd[C]);
 	cc.movsd(asmjit::x86::qword_ptr(tmp), regF[B]);
@@ -122,7 +122,7 @@ void JitCompiler::EmitSV2()
 void JitCompiler::EmitSV2_R()
 {
 	EmitNullPointerThrow(B, X_WRITE_NIL);
-	auto tmp = cc.newIntPtr();
+	auto tmp = newTempIntPtr();
 	cc.mov(tmp, regA[B]);
 	cc.add(tmp, regD[C]);
 	cc.movsd(asmjit::x86::qword_ptr(tmp), regF[B]);
@@ -132,7 +132,7 @@ void JitCompiler::EmitSV2_R()
 void JitCompiler::EmitSV3()
 {
 	EmitNullPointerThrow(B, X_WRITE_NIL);
-	auto tmp = cc.newIntPtr();
+	auto tmp = newTempIntPtr();
 	cc.mov(tmp, regA[B]);
 	cc.add(tmp, konstd[C]);
 	cc.movsd(asmjit::x86::qword_ptr(tmp), regF[B]);
@@ -143,7 +143,7 @@ void JitCompiler::EmitSV3()
 void JitCompiler::EmitSV3_R()
 {
 	EmitNullPointerThrow(B, X_WRITE_NIL);
-	auto tmp = cc.newIntPtr();
+	auto tmp = newTempIntPtr();
 	cc.mov(tmp, regA[B]);
 	cc.add(tmp, regD[C]);
 	cc.movsd(asmjit::x86::qword_ptr(tmp), regF[B]);
@@ -154,8 +154,8 @@ void JitCompiler::EmitSV3_R()
 void JitCompiler::EmitSBIT()
 {
 	EmitNullPointerThrow(B, X_WRITE_NIL);
-	auto tmp1 = cc.newInt32();
-	auto tmp2 = cc.newInt32();
+	auto tmp1 = newTempInt32();
+	auto tmp2 = newTempInt32();
 	cc.mov(tmp1, asmjit::x86::byte_ptr(regA[A]));
 	cc.mov(tmp2, tmp1);
 	cc.or_(tmp1, (int)C);

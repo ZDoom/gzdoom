@@ -112,6 +112,8 @@ void JitCompiler::Codegen()
 
 		cc.bind(labels[i]);
 
+		ResetTemp();
+
 		FString lineinfo;
 		lineinfo.Format("; %s(line %d): %02x%02x%02x%02x %s", sfunc->PrintableName.GetChars(), sfunc->PCToLine(pc), pc->op, pc->a, pc->b, pc->c, OpNames[op]);
 		cc.comment(lineinfo.GetChars(), lineinfo.Len());
@@ -277,7 +279,7 @@ void JitCompiler::EmitThrowException(EVMAbortException reason)
 #endif
 
 	// Return from function
-	X86Gp vReg = cc.newInt32();
+	X86Gp vReg = newTempInt32();
 	cc.mov(vReg, 0);
 	cc.ret(vReg);
 }
@@ -296,7 +298,7 @@ void JitCompiler::EmitThrowException(EVMAbortException reason, asmjit::X86Gp arg
 #endif
 
 	// Return from function
-	X86Gp vReg = cc.newInt32();
+	X86Gp vReg = newTempInt32();
 	cc.mov(vReg, 0);
 	cc.ret(vReg);
 }
@@ -309,7 +311,7 @@ asmjit::X86Gp JitCompiler::CheckRegD(int r0, int r1)
 	}
 	else
 	{
-		auto copy = cc.newInt32();
+		auto copy = newTempInt32();
 		cc.mov(copy, regD[r0]);
 		return copy;
 	}
@@ -323,7 +325,7 @@ asmjit::X86Xmm JitCompiler::CheckRegF(int r0, int r1)
 	}
 	else
 	{
-		auto copy = cc.newXmm();
+		auto copy = newTempXmmSd();
 		cc.movsd(copy, regF[r0]);
 		return copy;
 	}
@@ -337,7 +339,7 @@ asmjit::X86Xmm JitCompiler::CheckRegF(int r0, int r1, int r2)
 	}
 	else
 	{
-		auto copy = cc.newXmm();
+		auto copy = newTempXmmSd();
 		cc.movsd(copy, regF[r0]);
 		return copy;
 	}
@@ -351,7 +353,7 @@ asmjit::X86Xmm JitCompiler::CheckRegF(int r0, int r1, int r2, int r3)
 	}
 	else
 	{
-		auto copy = cc.newXmm();
+		auto copy = newTempXmmSd();
 		cc.movsd(copy, regF[r0]);
 		return copy;
 	}
@@ -365,7 +367,7 @@ asmjit::X86Gp JitCompiler::CheckRegS(int r0, int r1)
 	}
 	else
 	{
-		auto copy = cc.newIntPtr();
+		auto copy = newTempIntPtr();
 		cc.mov(copy, regS[r0]);
 		return copy;
 	}
@@ -379,7 +381,7 @@ asmjit::X86Gp JitCompiler::CheckRegA(int r0, int r1)
 	}
 	else
 	{
-		auto copy = cc.newIntPtr();
+		auto copy = newTempIntPtr();
 		cc.mov(copy, regA[r0]);
 		return copy;
 	}

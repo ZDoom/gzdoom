@@ -50,7 +50,7 @@ void JitCompiler::EmitCAST()
 		cc.cvtsi2sd(regF[A], regD[B]);
 		break;
 	case CAST_U2F:
-		tmp = cc.newInt64();
+		tmp = newTempInt64();
 		cc.xor_(tmp, tmp);
 		cc.mov(tmp.r32(), regD[B]);
 		cc.cvtsi2sd(regF[A], tmp);
@@ -59,7 +59,7 @@ void JitCompiler::EmitCAST()
 		cc.cvttsd2si(regD[A], regF[B]);
 		break;
 	case CAST_F2U:
-		tmp = cc.newInt64();
+		tmp = newTempInt64();
 		cc.cvttsd2si(tmp, regF[B]);
 		cc.mov(regD[A], tmp.r32());
 		break;
@@ -97,21 +97,21 @@ void JitCompiler::EmitCAST()
 		call->setArg(1, regA[B]);
 		break;
 	case CAST_S2I:
-		resultD = cc.newInt32();
+		resultD = newResultInt32();
 		call = CreateCall<int, FString*>([](FString *b) -> int { return (VM_SWORD)b->ToLong(); });
 		call->setRet(0, resultD);
 		call->setArg(0, regS[B]);
 		cc.mov(regD[A], resultD);
 		break;
 	case CAST_S2F:
-		resultF = cc.newXmmSd();
+		resultF = newResultXmmSd();
 		call = CreateCall<double, FString*>([](FString *b) -> double { return b->ToDouble(); });
 		call->setRet(0, resultF);
 		call->setArg(0, regS[B]);
 		cc.movsd(regF[A], resultF);
 		break;
 	case CAST_S2N:
-		resultD = cc.newInt32();
+		resultD = newResultInt32();
 		call = CreateCall<int, FString*>([](FString *b) -> int { return b->Len() == 0 ? FName(NAME_None) : FName(*b); });
 		call->setRet(0, resultD);
 		call->setArg(0, regS[B]);
@@ -123,7 +123,7 @@ void JitCompiler::EmitCAST()
 		call->setArg(1, regD[B]);
 		break;
 	case CAST_S2Co:
-		resultD = cc.newInt32();
+		resultD = newResultInt32();
 		call = CreateCall<int, FString*>([](FString *b) -> int { return V_GetColor(nullptr, *b); });
 		call->setRet(0, resultD);
 		call->setArg(0, regS[B]);
@@ -135,7 +135,7 @@ void JitCompiler::EmitCAST()
 		call->setArg(1, regD[B]);
 		break;
 	case CAST_S2So:
-		resultD = cc.newInt32();
+		resultD = newResultInt32();
 		call = CreateCall<int, FString*>([](FString *b) -> int { return FSoundID(*b); });
 		call->setRet(0, resultD);
 		call->setArg(0, regS[B]);
@@ -170,8 +170,8 @@ void JitCompiler::EmitCASTB()
 	}
 	else if (C == CASTB_F)
 	{
-		auto zero = cc.newXmm();
-		auto one = cc.newInt32();
+		auto zero = newTempXmmSd();
+		auto one = newTempInt32();
 		cc.xorpd(zero, zero);
 		cc.mov(one, 1);
 		cc.ucomisd(regF[A], zero);
@@ -185,7 +185,7 @@ void JitCompiler::EmitCASTB()
 	}
 	else
 	{
-		auto result = cc.newInt32();
+		auto result = newResultInt32();
 		auto call = CreateCall<int, FString*>([](FString *s) -> int { return s->Len() > 0; });
 		call->setRet(0, result);
 		call->setArg(0, regS[B]);
@@ -195,7 +195,7 @@ void JitCompiler::EmitCASTB()
 
 void JitCompiler::EmitDYNCAST_R()
 {
-	auto result = cc.newIntPtr();
+	auto result = newResultIntPtr();
 	auto call = CreateCall<DObject*, DObject*, PClass*>([](DObject *obj, PClass *cls) -> DObject* {
 		return (obj && obj->IsKindOf(cls)) ? obj : nullptr;
 	});
@@ -207,8 +207,8 @@ void JitCompiler::EmitDYNCAST_R()
 
 void JitCompiler::EmitDYNCAST_K()
 {
-	auto result = cc.newIntPtr();
-	auto c = cc.newIntPtr();
+	auto result = newResultIntPtr();
+	auto c = newTempIntPtr();
 	cc.mov(c, asmjit::imm_ptr(konsta[C].o));
 	auto call = CreateCall<DObject*, DObject*, PClass*>([](DObject *obj, PClass *cls) -> DObject* {
 		return (obj && obj->IsKindOf(cls)) ? obj : nullptr;
@@ -221,7 +221,7 @@ void JitCompiler::EmitDYNCAST_K()
 
 void JitCompiler::EmitDYNCASTC_R()
 {
-	auto result = cc.newIntPtr();
+	auto result = newResultIntPtr();
 	auto call = CreateCall<PClass*, PClass*, PClass*>([](PClass *cls1, PClass *cls2) -> PClass* {
 		return (cls1 && cls1->IsDescendantOf(cls2)) ? cls1 : nullptr;
 	});
@@ -234,8 +234,8 @@ void JitCompiler::EmitDYNCASTC_R()
 void JitCompiler::EmitDYNCASTC_K()
 {
 	using namespace asmjit;
-	auto result = cc.newIntPtr();
-	auto c = cc.newIntPtr();
+	auto result = newResultIntPtr();
+	auto c = newTempIntPtr();
 	cc.mov(c, asmjit::imm_ptr(konsta[C].o));
 	typedef PClass*(*FuncPtr)(PClass*, PClass*);
 	auto call = CreateCall<PClass*, PClass*, PClass*>([](PClass *cls1, PClass *cls2) -> PClass* {

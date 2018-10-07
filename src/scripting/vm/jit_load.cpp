@@ -16,7 +16,7 @@ void JitCompiler::EmitLK()
 
 void JitCompiler::EmitLKF()
 {
-	auto base = cc.newIntPtr();
+	auto base = newTempIntPtr();
 	cc.mov(base, asmjit::imm_ptr(konstf + BC));
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(base));
 }
@@ -35,23 +35,23 @@ void JitCompiler::EmitLKP()
 
 void JitCompiler::EmitLK_R()
 {
-	auto base = cc.newIntPtr();
+	auto base = newTempIntPtr();
 	cc.mov(base, asmjit::imm_ptr(konstd + C));
 	cc.mov(regD[A], asmjit::x86::ptr(base, regD[B], 2));
 }
 
 void JitCompiler::EmitLKF_R()
 {
-	auto base = cc.newIntPtr();
+	auto base = newTempIntPtr();
 	cc.mov(base, asmjit::imm_ptr(konstf + C));
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(base, regD[B], 3));
 }
 
 void JitCompiler::EmitLKS_R()
 {
-	auto base = cc.newIntPtr();
+	auto base = newTempIntPtr();
 	cc.mov(base, asmjit::imm_ptr(konsts + C));
-	auto ptr = cc.newIntPtr();
+	auto ptr = newTempIntPtr();
 #ifdef ASMJIT_ARCH_64BIT
 	static_assert(sizeof(FString) == 8, "sizeof(FString) needs to be 8");
 	cc.lea(ptr, asmjit::x86::ptr(base, regD[B], 3));
@@ -66,7 +66,7 @@ void JitCompiler::EmitLKS_R()
 
 void JitCompiler::EmitLKP_R()
 {
-	auto base = cc.newIntPtr();
+	auto base = newTempIntPtr();
 	cc.mov(base, asmjit::imm_ptr(konsta + C));
 #ifdef ASMJIT_ARCH_64BIT
 	static_assert(sizeof(FVoidObj) == 8, "sizeof(FVoidObj) needs to be 8");
@@ -90,7 +90,7 @@ void JitCompiler::EmitMETA()
 	EmitThrowException(X_READ_NIL);
 	cc.bind(label);
 
-	auto result = cc.newIntPtr();
+	auto result = newResultIntPtr();
 	auto call = CreateCall<uint8_t*, DObject*>([](DObject *o) { return o->GetClass()->Meta; });
 	call->setRet(0, result);
 	call->setArg(0, regA[B]);
@@ -105,7 +105,7 @@ void JitCompiler::EmitCLSS()
 	EmitThrowException(X_READ_NIL);
 	cc.bind(label);
 
-	auto result = cc.newIntPtr();
+	auto result = newResultIntPtr();
 	auto call = CreateCall<PClass*, DObject*>([](DObject *o) { return o->GetClass(); });
 	call->setRet(0, result);
 	call->setArg(0, regA[B]);
@@ -202,7 +202,7 @@ void JitCompiler::EmitLDP_R()
 void JitCompiler::EmitLS()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	auto ptr = cc.newIntPtr();
+	auto ptr = newTempIntPtr();
 	cc.lea(ptr, asmjit::x86::ptr(regA[B], konstd[C]));
 	auto call = CreateCall<void, FString*, FString*>(&JitCompiler::CallAssignString);
 	call->setArg(0, regS[A]);
@@ -212,7 +212,7 @@ void JitCompiler::EmitLS()
 void JitCompiler::EmitLS_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	auto ptr = cc.newIntPtr();
+	auto ptr = newTempIntPtr();
 	cc.lea(ptr, asmjit::x86::ptr(regA[B], regD[C]));
 	auto call = CreateCall<void, FString*, FString*>(&JitCompiler::CallAssignString);
 	call->setArg(0, regS[A]);
@@ -223,10 +223,10 @@ void JitCompiler::EmitLO()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
 
-	auto ptr = cc.newIntPtr();
+	auto ptr = newTempIntPtr();
 	cc.mov(ptr, asmjit::x86::ptr(regA[B], konstd[C]));
 
-	auto result = cc.newIntPtr();
+	auto result = newResultIntPtr();
 	auto call = CreateCall<DObject*,DObject*>([](DObject *p) { return GC::ReadBarrier(p); });
 	call->setRet(0, result);
 	call->setArg(0, ptr);
@@ -237,10 +237,10 @@ void JitCompiler::EmitLO_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
 
-	auto ptr = cc.newIntPtr();
+	auto ptr = newTempIntPtr();
 	cc.mov(ptr, asmjit::x86::ptr(regA[B], regD[C]));
 
-	auto result = cc.newIntPtr();
+	auto result = newResultIntPtr();
 	auto call = CreateCall<DObject*, DObject*>([](DObject *p) { return GC::ReadBarrier(p); });
 	call->setRet(0, result);
 	call->setArg(0, ptr);
@@ -262,7 +262,7 @@ void JitCompiler::EmitLP_R()
 void JitCompiler::EmitLV2()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	auto tmp = cc.newIntPtr();
+	auto tmp = newTempIntPtr();
 	cc.mov(tmp, regA[B]);
 	cc.add(tmp, konstd[C]);
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
@@ -272,7 +272,7 @@ void JitCompiler::EmitLV2()
 void JitCompiler::EmitLV2_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	auto tmp = cc.newIntPtr();
+	auto tmp = newTempIntPtr();
 	cc.mov(tmp, regA[B]);
 	cc.add(tmp, regD[C]);
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
@@ -282,7 +282,7 @@ void JitCompiler::EmitLV2_R()
 void JitCompiler::EmitLV3()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	auto tmp = cc.newIntPtr();
+	auto tmp = newTempIntPtr();
 	cc.mov(tmp, regA[B]);
 	cc.add(tmp, konstd[C]);
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
@@ -293,7 +293,7 @@ void JitCompiler::EmitLV3()
 void JitCompiler::EmitLV3_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	auto tmp = cc.newIntPtr();
+	auto tmp = newTempIntPtr();
 	cc.mov(tmp, regA[B]);
 	cc.add(tmp, regD[C]);
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
@@ -304,7 +304,7 @@ void JitCompiler::EmitLV3_R()
 void JitCompiler::EmitLCS()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	auto ptr = cc.newIntPtr();
+	auto ptr = newTempIntPtr();
 	cc.lea(ptr, asmjit::x86::ptr(regA[B], konstd[C]));
 	auto call = CreateCall<void, FString*, char**>([](FString* to, char** from) { *to = *from; });
 	call->setArg(0, regS[A]);
@@ -314,7 +314,7 @@ void JitCompiler::EmitLCS()
 void JitCompiler::EmitLCS_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	auto ptr = cc.newIntPtr();
+	auto ptr = newTempIntPtr();
 	cc.lea(ptr, asmjit::x86::ptr(regA[B], regD[C]));
 	auto call = CreateCall<void, FString*, char**>([](FString* to, char** from) { *to = *from; });
 	call->setArg(0, regS[A]);

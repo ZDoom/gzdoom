@@ -28,7 +28,7 @@ void JitCompiler::EmitIJMP()
 	// This uses the whole function as potential jump targets. Can the range be reduced?
 
 	int i = (int)(ptrdiff_t)(pc - sfunc->Code);
-	auto val = cc.newInt32();
+	auto val = newTempInt32();
 	cc.mov(val, regD[A]);
 	cc.add(val, i + (int)BCs + 1);
 
@@ -56,7 +56,7 @@ void JitCompiler::EmitVTBL()
 	EmitThrowException(X_READ_NIL);
 	cc.bind(notnull);
 
-	auto result = cc.newIntPtr();
+	auto result = newResultIntPtr();
 	auto call = CreateCall<VMFunction*, DObject*, int>([](DObject *o, int c) -> VMFunction* {
 		auto p = o->GetClass();
 		assert(c < (int)p->Virtuals.Size());
@@ -76,10 +76,10 @@ void JitCompiler::EmitSCOPE()
 	EmitThrowException(X_READ_NIL);
 	cc.bind(notnull);
 
-	auto f = cc.newIntPtr();
+	auto f = newTempIntPtr();
 	cc.mov(f, asmjit::imm_ptr(konsta[C].v));
 
-	auto result = cc.newInt32();
+	auto result = newResultInt32();
 	typedef int(*FuncPtr)(DObject*, VMFunction*, int);
 	auto call = CreateCall<int, DObject*, VMFunction*, int>([](DObject *o, VMFunction *f, int b) -> int {
 		try
@@ -110,7 +110,7 @@ void JitCompiler::EmitRET()
 	using namespace asmjit;
 	if (B == REGT_NIL)
 	{
-		X86Gp vReg = cc.newInt32();
+		X86Gp vReg = newTempInt32();
 		cc.mov(vReg, 0);
 		cc.ret(vReg);
 	}
@@ -119,8 +119,8 @@ void JitCompiler::EmitRET()
 		int a = A;
 		int retnum = a & ~RET_FINAL;
 
-		X86Gp reg_retnum = cc.newInt32();
-		X86Gp location = cc.newIntPtr();
+		X86Gp reg_retnum = newTempInt32();
+		X86Gp location = newTempIntPtr();
 		Label L_endif = cc.newLabel();
 
 		cc.mov(reg_retnum, retnum);
@@ -142,7 +142,7 @@ void JitCompiler::EmitRET()
 		case REGT_FLOAT:
 			if (regtype & REGT_KONST)
 			{
-				auto tmp = cc.newInt64();
+				auto tmp = newTempInt64();
 				if (regtype & REGT_MULTIREG3)
 				{
 					cc.mov(tmp, (((int64_t *)konstf)[regnum]));
@@ -189,7 +189,7 @@ void JitCompiler::EmitRET()
 			break;
 		case REGT_STRING:
 		{
-			auto ptr = cc.newIntPtr();
+			auto ptr = newTempIntPtr();
 			cc.mov(ptr, ret);
 			cc.add(ptr, (int)(retnum * sizeof(VMReturn)));
 			auto call = CreateCall<void, VMReturn*, FString*>([](VMReturn* ret, FString* str) -> void {
@@ -234,8 +234,8 @@ void JitCompiler::EmitRETI()
 	int a = A;
 	int retnum = a & ~RET_FINAL;
 
-	X86Gp reg_retnum = cc.newInt32();
-	X86Gp location = cc.newIntPtr();
+	X86Gp reg_retnum = newTempInt32();
+	X86Gp location = newTempIntPtr();
 	Label L_endif = cc.newLabel();
 
 	cc.mov(reg_retnum, retnum);
@@ -258,7 +258,7 @@ void JitCompiler::EmitRETI()
 
 void JitCompiler::EmitNEW()
 {
-	auto result = cc.newIntPtr();
+	auto result = newResultIntPtr();
 	auto call = CreateCall<DObject*, PClass*, int>([](PClass *cls, int c) -> DObject* {
 		try
 		{
@@ -314,8 +314,8 @@ void JitCompiler::EmitNEW_K()
 	}
 	else
 	{
-		auto result = cc.newIntPtr();
-		auto regcls = cc.newIntPtr();
+		auto result = newResultIntPtr();
+		auto regcls = newTempIntPtr();
 		cc.mov(regcls, asmjit::imm_ptr(konsta[B].v));
 		auto call = CreateCall<DObject*, PClass*, int>([](PClass *cls, int c) -> DObject* {
 			try

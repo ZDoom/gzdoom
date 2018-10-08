@@ -238,13 +238,14 @@ void JitCompiler::StoreInOuts(int b)
 	for (unsigned int i = ParamOpcodes.Size() - b; i < ParamOpcodes.Size(); i++)
 	{
 		asmjit::X86Gp stackPtr;
+		auto c = ParamOpcodes[i]->c;
 		switch (ParamOpcodes[i]->b)
 		{
 		case REGT_INT | REGT_ADDROF:
 			stackPtr = newTempIntPtr();
 			cc.mov(stackPtr, frameD);
-			cc.add(stackPtr, (int)(C * sizeof(int32_t)));
-			cc.mov(x86::dword_ptr(stackPtr), regD[C]);
+			cc.add(stackPtr, (int)(c * sizeof(int32_t)));
+			cc.mov(x86::dword_ptr(stackPtr), regD[c]);
 			break;
 		case REGT_STRING | REGT_ADDROF:
 			// We don't have to do anything in this case. String values are never moved to virtual registers.
@@ -252,25 +253,25 @@ void JitCompiler::StoreInOuts(int b)
 		case REGT_POINTER | REGT_ADDROF:
 			stackPtr = newTempIntPtr();
 			cc.mov(stackPtr, frameA);
-			cc.add(stackPtr, (int)(C * sizeof(void*)));
-			cc.mov(x86::ptr(stackPtr), regA[C]);
+			cc.add(stackPtr, (int)(c * sizeof(void*)));
+			cc.mov(x86::ptr(stackPtr), regA[c]);
 			break;
 		case REGT_FLOAT | REGT_ADDROF:
 			stackPtr = newTempIntPtr();
 			cc.mov(stackPtr, frameF);
-			cc.add(stackPtr, (int)(C * sizeof(double)));
-			cc.movsd(x86::qword_ptr(stackPtr), regF[C]);
+			cc.add(stackPtr, (int)(c * sizeof(double)));
+			cc.movsd(x86::qword_ptr(stackPtr), regF[c]);
 
 			// When passing the address to a float we don't know if the receiving function will treat it as float, vec2 or vec3.
-			if ((unsigned int)C + 1 < regF.Size())
+			if ((unsigned int)c + 1 < regF.Size())
 			{
 				cc.add(stackPtr, (int)sizeof(double));
-				cc.movsd(x86::qword_ptr(stackPtr), regF[C + 1]);
+				cc.movsd(x86::qword_ptr(stackPtr), regF[c + 1]);
 			}
-			if ((unsigned int)C + 2 < regF.Size())
+			if ((unsigned int)c + 2 < regF.Size())
 			{
 				cc.add(stackPtr, (int)sizeof(double));
-				cc.movsd(x86::qword_ptr(stackPtr), regF[C + 2]);
+				cc.movsd(x86::qword_ptr(stackPtr), regF[c + 2]);
 			}
 			break;
 		default:

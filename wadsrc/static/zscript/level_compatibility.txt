@@ -605,6 +605,28 @@ class LevelCompatibility play
 				}
 				break;
 			}
+			
+			case '57386AEF275684BA06756359B08F4391': // Perdition's Gate MAP03
+			{
+				// Stairs where one sector is too thin to score.
+				SetSectorSpecial(227, 0);
+				break;
+			}
+			
+			case 'F1A9938C4FC3906A582AB7D5088B5F87': // Perdition's Gate MAP12
+			{
+				// Sector unintentionally left as a secret near switch
+				SetSectorSpecial(112, 0);
+				break;
+			}
+			
+			case '5C419E581D9570F44A24163A83032086': // Perdition's Gate MAP27
+			{
+				// Sectors unintentionally left as secrets and cannot be scored
+				SetSectorSpecial(338, 0);
+				SetSectorSpecial(459, 0);
+				break;
+			}
 
 			case 'FCCA97FC851F6473EAA069F74247B317': // pg-raw.wad map31
 			{
@@ -621,8 +643,45 @@ class LevelCompatibility play
 				break;
 			}
 			
-			case '712BB4CFBD0753178CA0C6814BE4C288': // beta version of map12 BTSX_E1 - patch some rendering glitches that are problematic to detect
+			case '5379C080299EB961792B50AD96821543': // Hell to Pay MAP14
 			{
+				// Two secrets are unreachable without jumping and crouching.
+				SetSectorSpecial(82, 0);
+				SetSectorSpecial(83, 0);
+				break;
+			}
+			
+			case '1A1AB6415851B9F17715A0C36412752E': // Hell to Pay MAP24
+			{
+				// Remove Chaingunner far below the map, making 100% kills
+				// impractical.
+				SetThingFlags(70, 0);
+				break;
+			}
+			
+			case 'A7ACB57A2CAF17434D0DFE0FAC0E0480': // Hell to Pay MAP28
+			{
+				// Three Lost Souls placed outside the map for some reason.
+				for(int i=0; i<3; i++)
+				{
+					SetThingFlags(217+i, 0);
+				}
+				break;
+			}
+			
+			case '2F1A18633C30E938B50B6D928C730CB6': // Hell to Pay MAP29
+			{
+				// Three Lost Souls placed outside the map, again...
+				for(int i=0; i<3; i++)
+				{
+					SetThingFlags(239+i, 0);
+				}
+				break;
+			}
+			
+			case '712BB4CFBD0753178CA0C6814BE4C288': // beta version of map12 BTSX_E1
+			{
+				// patch some rendering glitches that are problematic to detect
 				AddSectorTag(545, 32000);
 				AddSectorTag(1618, 32000);
 				SetLineSpecial(2853, Sector_Set3DFloor, 32000, 4);

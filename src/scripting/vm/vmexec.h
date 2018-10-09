@@ -37,7 +37,7 @@
 #error vmexec.h must not be #included outside vmexec.cpp. Use vm.h instead.
 #endif
 
-static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
+static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 {
 #if COMPGOTO
 	static const void * const ops[256] =
@@ -49,51 +49,14 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 	//const VMOP *exception_frames[MAX_TRY_DEPTH];
 	//int try_depth = 0;
 	VMFrame *f = stack->TopFrame();
-	VMScriptFunction *sfunc;
-	const int *konstd;
-	const double *konstf;
-	const FString *konsts;
-	const FVoidObj *konsta;
+	VMScriptFunction *sfunc = static_cast<VMScriptFunction *>(f->Func);
+	const int *konstd = sfunc->KonstD;
+	const double *konstf = sfunc->KonstF;
+	const FString *konsts = sfunc->KonstS;
+	const FVoidObj *konsta = sfunc->KonstA;
+	const VMOP *pc = sfunc->Code;
 
-	if (f->Func != NULL && !(f->Func->VarFlags & VARF_Native))
-	{
-		sfunc = static_cast<VMScriptFunction *>(f->Func);
-		konstd = sfunc->KonstD;
-		konstf = sfunc->KonstF;
-		konsts = sfunc->KonstS;
-		konsta = sfunc->KonstA;
-	}
-	else
-	{
-		sfunc = NULL;
-		konstd = NULL;
-		konstf = NULL;
-		konsts = NULL;
-		konsta = NULL;
-	}
-
-	if (sfunc && sfunc->Code == pc)
-	{
-		if (!sfunc->JitCompiled)
-		{
-			sfunc->JitFunc = JitCompile(sfunc);
-			sfunc->JitCompiled = true;
-		}
-		if (sfunc->JitFunc)
-		{
-			JitExceptionInfo exceptInfo;
-			exceptInfo.reason = -1;
-			int result = sfunc->JitFunc(stack, ret, numret, &exceptInfo);
-			if (exceptInfo.reason != -1)
-			{
-				if (exceptInfo.cppException)
-					std::rethrow_exception(exceptInfo.cppException);
-				else
-					ThrowAbortException(sfunc, exceptInfo.pcOnJitAbort, (EVMAbortException)exceptInfo.reason, nullptr);
-			}
-			return result;
-		}
-	}
+	assert(!(f->Func->VarFlags & VARF_Native) && "Only script functions should ever reach VMExec");
 
 	const VMRegisters reg(f);
 
@@ -748,19 +711,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 			else
 			{
 				VMCalls[0]++;
-				VMScriptFunction *script = static_cast<VMScriptFunction *>(call);
-				VMFrame *newf = stack->AllocFrame(script);
-				VMFillParams(reg.param + f->NumParam - b, newf, b);
-				try
-				{
-					numret = Exec(stack, script->Code, returns, C);
-				}
-				catch(...)
-				{
-					stack->PopFrame();
-					throw;
-				}
-				stack->PopFrame();
+				numret = Exec(static_cast<VMScriptFunction *>(call), reg.param + f->NumParam - b, b, returns, C);
 			}
 			assert(numret == C && "Number of parameters returned differs from what was expected by the caller");
 			f->NumParam -= B;
@@ -802,20 +753,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 			else
 			{ // FIXME: Not a true tail call
 				VMCalls[0]++;
-				VMScriptFunction *script = static_cast<VMScriptFunction *>(call);
-				VMFrame *newf = stack->AllocFrame(script);
-				VMFillParams(reg.param + f->NumParam - B, newf, B);
-				try
-				{
-					numret = Exec(stack, script->Code, ret, numret);
-				}
-				catch(...)
-				{
-					stack->PopFrame();
-					throw;
-				}
-				stack->PopFrame();
-				return numret;
+				return Exec(static_cast<VMScriptFunction *>(call), reg.param + f->NumParam - B, B, ret, numret);
 			}
 		}
 		NEXTOP;
@@ -2104,4 +2042,42 @@ static void SetReturn(const VMRegisters &reg, VMFrame *frame, VMReturn *ret, VM_
 		}
 		break;
 	}
+}
+
+static int Exec(VMScriptFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret)
+{
+	VMFrameStack *stack = &GlobalVMStack;
+	VMFrame *newf = stack->AllocFrame(func);
+	VMFillParams(params, newf, numparams);
+	try
+	{
+		if (!func->JitCompiled)
+		{
+			func->JitFunc = JitCompile(func);
+			func->JitCompiled = true;
+		}
+		if (func->JitFunc)
+		{
+			JitExceptionInfo exceptInfo;
+			exceptInfo.reason = -1;
+			int result = func->JitFunc(stack, ret, numret, &exceptInfo);
+			if (exceptInfo.reason != -1)
+			{
+				if (exceptInfo.cppException)
+					std::rethrow_exception(exceptInfo.cppException);
+				else
+					ThrowAbortException(func, exceptInfo.pcOnJitAbort, (EVMAbortException)exceptInfo.reason, nullptr);
+			}
+			return result;
+		}
+
+		numret = ExecScriptFunc(stack, ret, numret);
+	}
+	catch (...)
+	{
+		stack->PopFrame();
+		throw;
+	}
+	stack->PopFrame();
+	return numret;
 }

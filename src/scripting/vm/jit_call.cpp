@@ -417,19 +417,7 @@ int JitCompiler::DoCall(VMFrameStack *stack, VMFunction *call, int b, int c, VMV
 		else
 		{
 			VMCalls[0]++;
-			VMScriptFunction *script = static_cast<VMScriptFunction *>(call);
-			VMFrame *newf = stack->AllocFrame(script);
-			VMFillParams(param, newf, b);
-			try
-			{
-				numret = VMExec(stack, script->Code, returns, c);
-			}
-			catch (...)
-			{
-				stack->PopFrame();
-				throw;
-			}
-			stack->PopFrame();
+			numret = VMExec(static_cast<VMScriptFunction *>(call), param, b, returns, c);
 		}
 
 		return numret;

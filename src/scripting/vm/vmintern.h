@@ -428,7 +428,7 @@ enum EVMEngine
 };
 
 void VMSelectEngine(EVMEngine engine);
-extern int (*VMExec)(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret);
+extern int (*VMExec)(VMScriptFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret);
 void VMFillParams(VMValue *params, VMFrame *callee, int numparam);
 
 void VMDumpConstants(FILE *out, const VMScriptFunction *func);

@@ -437,8 +437,9 @@ VMFrame *VMFrameStack::PopFrame()
 
 int VMCall(VMFunction *func, VMValue *params, int numparams, VMReturn *results, int numresults/*, VMException **trap*/)
 {
-	bool allocated = false;
+#if 0
 	try
+#endif
 	{	
 		if (func->VarFlags & VARF_Native)
 		{
@@ -463,12 +464,7 @@ int VMCall(VMFunction *func, VMValue *params, int numparams, VMReturn *results, 
 			{
 				VMCycles[0].Clock();
 				VMCalls[0]++;
-				auto &stack = GlobalVMStack;
-				stack.AllocFrame(static_cast<VMScriptFunction *>(func));
-				allocated = true;
-				VMFillParams(params, stack.TopFrame(), numparams);
-				int numret = VMExec(&stack, code, results, numresults);
-				stack.PopFrame();
+				int numret = VMExec(static_cast<VMScriptFunction *>(func), params, numparams, results, numresults);
 				VMCycles[0].Unclock();
 				return numret;
 			}
@@ -477,10 +473,6 @@ int VMCall(VMFunction *func, VMValue *params, int numparams, VMReturn *results, 
 #if 0
 	catch (VMException *exception)
 	{
-		if (allocated)
-		{
-			PopFrame();
-		}
 		if (trap != NULL)
 		{
 			*trap = exception;
@@ -489,14 +481,6 @@ int VMCall(VMFunction *func, VMValue *params, int numparams, VMReturn *results, 
 		throw;
 	}
 #endif
-	catch (...)
-	{
-		if (allocated)
-		{
-			GlobalVMStack.PopFrame();
-		}
-		throw;
-	}
 }
 
 // Exception stuff for the VM is intentionally placed there, because having this in vmexec.cpp would subject it to inlining

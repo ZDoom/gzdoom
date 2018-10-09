@@ -363,7 +363,10 @@ void FMD3Model::RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame
 				surfaceSkin = TexMan(surf->skins[0]);
 			}
 
-			if (!surfaceSkin) return;
+			if (!surfaceSkin)
+			{
+				continue;
+			}
 		}
 
 		renderer->SetMaterial(surfaceSkin, false, translation);

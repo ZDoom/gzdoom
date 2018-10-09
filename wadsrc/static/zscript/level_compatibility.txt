@@ -651,6 +651,20 @@ class LevelCompatibility play
 				break;
 			}
 			
+			case '7837B5334A277F107515D649BCEFB682': // Hell to Pay MAP22
+			{
+				// Four enemies (six if multiplayer) never spawn in the map,
+				// so the lines closest to them should teleport them instead.
+				SetLineSpecial(1835, Teleport, 0, 40);
+				SetLineActivation(1835, SPAC_MCross);
+				SetLineFlags(1835, Line.ML_REPEAT_SPECIAL);
+				
+				SetLineSpecial(1847, Teleport, 0, 40);
+				SetLineActivation(1847, SPAC_MCross);
+				SetLineFlags(1847, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
+			
 			case '1A1AB6415851B9F17715A0C36412752E': // Hell to Pay MAP24
 			{
 				// Remove Chaingunner far below the map, making 100% kills

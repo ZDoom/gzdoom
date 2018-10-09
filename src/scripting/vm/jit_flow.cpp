@@ -104,6 +104,7 @@ void JitCompiler::EmitRET()
 	using namespace asmjit;
 	if (B == REGT_NIL)
 	{
+		EmitPopFrame();
 		X86Gp vReg = newTempInt32();
 		cc.mov(vReg, 0);
 		cc.ret(vReg);
@@ -215,12 +216,16 @@ void JitCompiler::EmitRET()
 		if (a & RET_FINAL)
 		{
 			cc.add(reg_retnum, 1);
+			EmitPopFrame();
 			cc.ret(reg_retnum);
 		}
 
 		cc.bind(L_endif);
 		if (a & RET_FINAL)
+		{
+			EmitPopFrame();
 			cc.ret(numret);
+		}
 	}
 }
 
@@ -245,12 +250,16 @@ void JitCompiler::EmitRETI()
 	if (a & RET_FINAL)
 	{
 		cc.add(reg_retnum, 1);
+		EmitPopFrame();
 		cc.ret(reg_retnum);
 	}
 
 	cc.bind(L_endif);
 	if (a & RET_FINAL)
+	{
+		EmitPopFrame();
 		cc.ret(numret);
+	}
 }
 
 void JitCompiler::EmitNEW()

@@ -226,30 +226,17 @@ int VMScriptFunction::FirstScriptCall(VMScriptFunction *func, VMValue *params, i
 
 int VMScriptFunction::JitCall(VMScriptFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret)
 {
-	VMFrameStack *stack = &GlobalVMStack;
-	VMFrame *newf = stack->AllocFrame(func);
-	VMFillParams(params, newf, numparams);
-	try
+	JitExceptionInfo exceptInfo;
+	exceptInfo.reason = -1;
+	int result = func->JitFunc(params, numparams, ret, numret, &exceptInfo);
+	if (exceptInfo.reason != -1)
 	{
-		JitExceptionInfo exceptInfo;
-		exceptInfo.reason = -1;
-		int result = func->JitFunc(stack, ret, numret, &exceptInfo);
-		if (exceptInfo.reason != -1)
-		{
-			if (exceptInfo.cppException)
-				std::rethrow_exception(exceptInfo.cppException);
-			else
-				ThrowAbortException(func, exceptInfo.pcOnJitAbort, (EVMAbortException)exceptInfo.reason, nullptr);
-		}
-		return result;
+		if (exceptInfo.cppException)
+			std::rethrow_exception(exceptInfo.cppException);
+		else
+			ThrowAbortException(func, exceptInfo.pcOnJitAbort, (EVMAbortException)exceptInfo.reason, nullptr);
 	}
-	catch (...)
-	{
-		stack->PopFrame();
-		throw;
-	}
-	stack->PopFrame();
-	return numret;
+	return result;
 }
 
 //===========================================================================

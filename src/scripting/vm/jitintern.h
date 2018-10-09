@@ -39,6 +39,7 @@ private:
 
 	void Setup();
 	void EmitOpcode();
+	void EmitPopFrame();
 
 	void EmitDoCall(asmjit::X86Gp ptr);
 	void EmitDoTail(asmjit::X86Gp ptr);
@@ -141,10 +142,12 @@ private:
 	asmjit::X86Compiler cc;
 	VMScriptFunction *sfunc;
 
-	asmjit::X86Gp stack;
+	asmjit::X86Gp args;
+	asmjit::X86Gp numargs;
 	asmjit::X86Gp ret;
 	asmjit::X86Gp numret;
 	asmjit::X86Gp exceptInfo;
+	asmjit::X86Gp stack;
 
 	int offsetExtra;
 	asmjit::X86Gp vmframe;

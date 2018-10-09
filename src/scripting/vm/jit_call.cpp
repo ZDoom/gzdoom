@@ -225,6 +225,7 @@ void JitCompiler::EmitDoTail(asmjit::X86Gp ptr)
 	call->setArg(5, ret);
 	call->setArg(6, exceptInfo);
 
+	EmitPopFrame();
 	cc.ret(result);
 
 	NumParam -= B;

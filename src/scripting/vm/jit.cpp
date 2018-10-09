@@ -142,20 +142,24 @@ void JitCompiler::Setup()
 {
 	using namespace asmjit;
 
+	ResetTemp();
+
 	FString funcname;
 	funcname.Format("Function: %s", sfunc->PrintableName.GetChars());
 	cc.comment(funcname.GetChars(), funcname.Len());
 
-	stack = cc.newIntPtr("stack"); // VMFrameStack *stack
+	args = cc.newIntPtr("args"); // VMValue *params
+	numargs = cc.newInt32("numargs"); // int numargs
 	ret = cc.newIntPtr("ret"); // VMReturn *ret
 	numret = cc.newInt32("numret"); // int numret
 	exceptInfo = cc.newIntPtr("exceptinfo"); // JitExceptionInfo *exceptInfo
 
-	cc.addFunc(FuncSignature4<int, void *, void *, int, void *>());
-	cc.setArg(0, stack);
-	cc.setArg(1, ret);
-	cc.setArg(2, numret);
-	cc.setArg(3, exceptInfo);
+	cc.addFunc(FuncSignature5<int, void *, int, void *, int, void *>());
+	cc.setArg(0, args);
+	cc.setArg(1, numargs);
+	cc.setArg(2, ret);
+	cc.setArg(3, numret);
+	cc.setArg(4, exceptInfo);
 
 	auto stackalloc = cc.newStack(sizeof(VMReturn) * MAX_RETURNS, alignof(VMReturn));
 	callReturns = cc.newIntPtr("callReturns");
@@ -184,6 +188,29 @@ void JitCompiler::Setup()
 	int offsetA = offsetS + (int)(sfunc->NumRegS * sizeof(FString));
 	int offsetD = offsetA + (int)(sfunc->NumRegA * sizeof(void*));
 	offsetExtra = (offsetD + (int)(sfunc->NumRegD * sizeof(int32_t)) + 15) & ~15;
+
+	stack = cc.newIntPtr("stack");
+	auto allocFrame = CreateCall<VMFrameStack *, VMScriptFunction *, VMValue *, int, JitExceptionInfo *>([](VMScriptFunction *func, VMValue *args, int numargs, JitExceptionInfo *exceptinfo) -> VMFrameStack* {
+		try
+		{
+			VMFrameStack *stack = &GlobalVMStack;
+			VMFrame *newf = stack->AllocFrame(func);
+			VMFillParams(args, newf, numargs);
+			return stack;
+		}
+		catch (...)
+		{
+			exceptinfo->reason = X_OTHER;
+			exceptinfo->cppException = std::current_exception();
+			return nullptr;
+		}
+	});
+	allocFrame->setRet(0, stack);
+	allocFrame->setArg(0, imm_ptr(sfunc));
+	allocFrame->setArg(1, args);
+	allocFrame->setArg(2, numargs);
+	allocFrame->setArg(3, exceptInfo);
+	EmitCheckForException();
 
 	vmframe = cc.newIntPtr();
 	cc.mov(vmframe, x86::ptr(stack)); // stack->Blocks
@@ -232,6 +259,23 @@ void JitCompiler::Setup()
 	for (int i = 0; i < size; i++) labels[i] = cc.newLabel();
 }
 
+void JitCompiler::EmitPopFrame()
+{
+	auto popFrame = CreateCall<void, VMFrameStack *, JitExceptionInfo *>([](VMFrameStack *stack, JitExceptionInfo *exceptinfo) {
+		try
+		{
+			stack->PopFrame();
+		}
+		catch (...)
+		{
+			exceptinfo->reason = X_OTHER;
+			exceptinfo->cppException = std::current_exception();
+		}
+	});
+	popFrame->setArg(0, stack);
+	popFrame->setArg(1, exceptInfo);
+}
+
 void JitCompiler::EmitNullPointerThrow(int index, EVMAbortException reason)
 {
 	auto label = cc.newLabel();
@@ -253,6 +297,7 @@ void JitCompiler::EmitThrowException(EVMAbortException reason)
 		cc.mov(x86::dword_ptr(exceptInfo, 4 * 4), imm_ptr(pc));
 
 	// Return from function
+	EmitPopFrame();
 	X86Gp vReg = newTempInt32();
 	cc.mov(vReg, 0);
 	cc.ret(vReg);
@@ -271,6 +316,7 @@ void JitCompiler::EmitThrowException(EVMAbortException reason, asmjit::X86Gp arg
 		cc.mov(x86::dword_ptr(exceptInfo, 4 * 4), imm_ptr(pc));
 
 	// Return from function
+	EmitPopFrame();
 	X86Gp vReg = newTempInt32();
 	cc.mov(vReg, 0);
 	cc.ret(vReg);
@@ -283,6 +329,7 @@ void JitCompiler::EmitCheckForException()
 	cc.mov(exceptResult, asmjit::x86::dword_ptr(exceptInfo, 0 * 4));
 	cc.cmp(exceptResult, (int)-1);
 	cc.je(noexception);
+	EmitPopFrame();
 	asmjit::X86Gp vReg = newTempInt32();
 	cc.mov(vReg, 0);
 	cc.ret(vReg);

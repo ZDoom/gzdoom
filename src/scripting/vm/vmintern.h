@@ -478,11 +478,15 @@ public:
 	VM_UBYTE NumArgs;		// Number of arguments this function takes
 	TArray<FTypeAndOffset> SpecialInits;	// list of all contents on the extra stack which require construction and destruction
 
-	bool JitCompiled = false;
-	JitFuncPtr JitFunc = nullptr;
+	int(*ScriptCall)(VMScriptFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret) = &VMScriptFunction::FirstScriptCall;
 
 	void InitExtra(void *addr);
 	void DestroyExtra(void *addr);
 	int AllocExtraStack(PType *type);
 	int PCToLine(const VMOP *pc);
+
+private:
+	static int FirstScriptCall(VMScriptFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret);
+	static int JitCall(VMScriptFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret);
+	JitFuncPtr JitFunc = nullptr;
 };

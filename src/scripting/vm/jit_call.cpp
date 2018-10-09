@@ -417,7 +417,8 @@ int JitCompiler::DoCall(VMFrameStack *stack, VMFunction *call, int b, int c, VMV
 		else
 		{
 			VMCalls[0]++;
-			numret = VMExec(static_cast<VMScriptFunction *>(call), param, b, returns, c);
+			auto sfunc = static_cast<VMScriptFunction *>(call);
+			numret = sfunc->ScriptCall(sfunc, param, b, returns, c);
 		}
 
 		return numret;

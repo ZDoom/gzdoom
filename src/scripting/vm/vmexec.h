@@ -711,7 +711,8 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 			else
 			{
 				VMCalls[0]++;
-				numret = Exec(static_cast<VMScriptFunction *>(call), reg.param + f->NumParam - b, b, returns, C);
+				auto sfunc = static_cast<VMScriptFunction *>(call);
+				numret = sfunc->ScriptCall(sfunc, reg.param + f->NumParam - b, b, returns, C);
 			}
 			assert(numret == C && "Number of parameters returned differs from what was expected by the caller");
 			f->NumParam -= B;
@@ -753,7 +754,8 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 			else
 			{ // FIXME: Not a true tail call
 				VMCalls[0]++;
-				return Exec(static_cast<VMScriptFunction *>(call), reg.param + f->NumParam - B, B, ret, numret);
+				auto sfunc = static_cast<VMScriptFunction *>(call);
+				return sfunc->ScriptCall(sfunc, reg.param + f->NumParam - B, B, ret, numret);
 			}
 		}
 		NEXTOP;
@@ -2051,26 +2053,6 @@ static int Exec(VMScriptFunction *func, VMValue *params, int numparams, VMReturn
 	VMFillParams(params, newf, numparams);
 	try
 	{
-		if (!func->JitCompiled)
-		{
-			func->JitFunc = JitCompile(func);
-			func->JitCompiled = true;
-		}
-		if (func->JitFunc)
-		{
-			JitExceptionInfo exceptInfo;
-			exceptInfo.reason = -1;
-			int result = func->JitFunc(stack, ret, numret, &exceptInfo);
-			if (exceptInfo.reason != -1)
-			{
-				if (exceptInfo.cppException)
-					std::rethrow_exception(exceptInfo.cppException);
-				else
-					ThrowAbortException(func, exceptInfo.pcOnJitAbort, (EVMAbortException)exceptInfo.reason, nullptr);
-			}
-			return result;
-		}
-
 		numret = ExecScriptFunc(stack, ret, numret);
 	}
 	catch (...)

@@ -213,6 +213,45 @@ int VMScriptFunction::PCToLine(const VMOP *pc)
 	return -1;
 }
 
+int VMScriptFunction::FirstScriptCall(VMScriptFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret)
+{
+	func->JitFunc = JitCompile(func);
+	if (func->JitFunc)
+		func->ScriptCall = &VMScriptFunction::JitCall;
+	else
+		func->ScriptCall = VMExec;
+
+	return func->ScriptCall(func, params, numparams, ret, numret);
+}
+
+int VMScriptFunction::JitCall(VMScriptFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret)
+{
+	VMFrameStack *stack = &GlobalVMStack;
+	VMFrame *newf = stack->AllocFrame(func);
+	VMFillParams(params, newf, numparams);
+	try
+	{
+		JitExceptionInfo exceptInfo;
+		exceptInfo.reason = -1;
+		int result = func->JitFunc(stack, ret, numret, &exceptInfo);
+		if (exceptInfo.reason != -1)
+		{
+			if (exceptInfo.cppException)
+				std::rethrow_exception(exceptInfo.cppException);
+			else
+				ThrowAbortException(func, exceptInfo.pcOnJitAbort, (EVMAbortException)exceptInfo.reason, nullptr);
+		}
+		return result;
+	}
+	catch (...)
+	{
+		stack->PopFrame();
+		throw;
+	}
+	stack->PopFrame();
+	return numret;
+}
+
 //===========================================================================
 //
 // VMFrame :: InitRegS
@@ -464,7 +503,8 @@ int VMCall(VMFunction *func, VMValue *params, int numparams, VMReturn *results, 
 			{
 				VMCycles[0].Clock();
 				VMCalls[0]++;
-				int numret = VMExec(static_cast<VMScriptFunction *>(func), params, numparams, results, numresults);
+				auto sfunc = static_cast<VMScriptFunction *>(func);
+				int numret = sfunc->ScriptCall(sfunc, params, numparams, results, numresults);
 				VMCycles[0].Unclock();
 				return numret;
 			}

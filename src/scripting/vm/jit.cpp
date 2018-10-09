@@ -2,6 +2,10 @@
 #include "jit.h"
 #include "jitintern.h"
 
+extern PString *TypeString;
+extern PStruct *TypeVector2;
+extern PStruct *TypeVector3;
+
 static asmjit::JitRuntime *jit;
 static int jitRefCount = 0;
 
@@ -175,6 +179,34 @@ void JitCompiler::Setup()
 	regA.Resize(sfunc->NumRegA);
 	regS.Resize(sfunc->NumRegS);
 
+	for (int i = 0; i < sfunc->NumRegD; i++)
+	{
+		FString regname;
+		regname.Format("regD%d", i);
+		regD[i] = cc.newInt32(regname.GetChars());
+	}
+
+	for (int i = 0; i < sfunc->NumRegF; i++)
+	{
+		FString regname;
+		regname.Format("regF%d", i);
+		regF[i] = cc.newXmmSd(regname.GetChars());
+	}
+
+	for (int i = 0; i < sfunc->NumRegS; i++)
+	{
+		FString regname;
+		regname.Format("regS%d", i);
+		regS[i] = cc.newIntPtr(regname.GetChars());
+	}
+
+	for (int i = 0; i < sfunc->NumRegA; i++)
+	{
+		FString regname;
+		regname.Format("regA%d", i);
+		regA[i] = cc.newIntPtr(regname.GetChars());
+	}
+
 	frameD = cc.newIntPtr();
 	frameF = cc.newIntPtr();
 	frameS = cc.newIntPtr();
@@ -195,9 +227,63 @@ void JitCompiler::Setup()
 	{
 		// This is a simple frame with no constructors or destructors. Allocate it on the stack ourselves.
 
-		//auto vmstack = cc.newStack(offsetExtra + sfunc->ExtraSpace, 16); // To do: fill in params without VMFillParams
 		auto vmstack = cc.newStack(sfunc->StackSize, 16);
 		cc.lea(vmframe, vmstack);
+		cc.lea(params, x86::ptr(vmframe, offsetParams));
+		cc.lea(frameF, x86::ptr(vmframe, offsetF));
+		cc.lea(frameS, x86::ptr(vmframe, offsetS));
+		cc.lea(frameA, x86::ptr(vmframe, offsetA));
+		cc.lea(frameD, x86::ptr(vmframe, offsetD));
+
+		auto slowinit = cc.newLabel();
+		auto endinit = cc.newLabel();
+
+#if 0 // this crashes sometimes
+		cc.cmp(numargs, sfunc->NumArgs);
+		cc.jne(slowinit);
+
+		// Is there a better way to know the type than this?
+		int argsPos = 0;
+		int regd = 0, regf = 0, rega = 0;
+		for (unsigned int i = 0; i < sfunc->Proto->ArgumentTypes.Size(); i++)
+		{
+			const PType *type = sfunc->Proto->ArgumentTypes[i];
+			if (type->isPointer())
+			{
+				cc.mov(regA[rega++], x86::ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, a)));
+			}
+			else if (type->isIntCompatible())
+			{
+				cc.mov(regD[regd++], x86::dword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, i)));
+			}
+			else if (type == TypeVector2)
+			{
+				cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
+				cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
+			}
+			else if (type == TypeVector3)
+			{
+				cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
+				cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
+				cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
+			}
+			else if (type->isFloat())
+			{
+				cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
+			}
+			else if (type == TypeString)
+			{
+				I_FatalError("JIT: Strings are not supported yet for simple frames");
+			}
+		}
+
+		if (sfunc->NumArgs != argsPos || regd > sfunc->NumRegD || regf > sfunc->NumRegF || rega > sfunc->NumRegA)
+			I_FatalError("JIT: sfunc->NumArgs != argsPos || regd > sfunc->NumRegD || regf > sfunc->NumRegF || rega > sfunc->NumRegA");
+
+		cc.jmp(endinit);
+#endif
+		cc.bind(slowinit);
+
 		auto sfuncptr = cc.newIntPtr();
 		cc.mov(sfuncptr, imm_ptr(sfunc));
 		if (cc.is64Bit())
@@ -227,6 +313,20 @@ void JitCompiler::Setup()
 		fillParams->setArg(2, numargs);
 		fillParams->setArg(3, exceptInfo);
 		EmitCheckForException();
+
+		for (int i = 0; i < sfunc->NumRegD; i++)
+			cc.mov(regD[i], x86::dword_ptr(frameD, i * sizeof(int32_t)));
+
+		for (int i = 0; i < sfunc->NumRegF; i++)
+			cc.movsd(regF[i], x86::qword_ptr(frameF, i * sizeof(double)));
+
+		for (int i = 0; i < sfunc->NumRegS; i++)
+			cc.lea(regS[i], x86::ptr(frameS, i * sizeof(FString)));
+
+		for (int i = 0; i < sfunc->NumRegA; i++)
+			cc.mov(regA[i], x86::ptr(frameA, i * sizeof(void*)));
+
+		cc.bind(endinit);
 	}
 	else
 	{
@@ -255,44 +355,24 @@ void JitCompiler::Setup()
 
 		cc.mov(vmframe, x86::ptr(stack)); // stack->Blocks
 		cc.mov(vmframe, x86::ptr(vmframe, VMFrameStack::OffsetLastFrame())); // Blocks->LastFrame
-	}
 
-	cc.lea(params, x86::ptr(vmframe, offsetParams));
-	cc.lea(frameF, x86::ptr(vmframe, offsetF));
-	cc.lea(frameS, x86::ptr(vmframe, offsetS));
-	cc.lea(frameA, x86::ptr(vmframe, offsetA));
-	cc.lea(frameD, x86::ptr(vmframe, offsetD));
+		cc.lea(params, x86::ptr(vmframe, offsetParams));
+		cc.lea(frameF, x86::ptr(vmframe, offsetF));
+		cc.lea(frameS, x86::ptr(vmframe, offsetS));
+		cc.lea(frameA, x86::ptr(vmframe, offsetA));
+		cc.lea(frameD, x86::ptr(vmframe, offsetD));
 
-	for (int i = 0; i < sfunc->NumRegD; i++)
-	{
-		FString regname;
-		regname.Format("regD%d", i);
-		regD[i] = cc.newInt32(regname.GetChars());
-		cc.mov(regD[i], x86::dword_ptr(frameD, i * sizeof(int32_t)));
-	}
+		for (int i = 0; i < sfunc->NumRegD; i++)
+			cc.mov(regD[i], x86::dword_ptr(frameD, i * sizeof(int32_t)));
 
-	for (int i = 0; i < sfunc->NumRegF; i++)
-	{
-		FString regname;
-		regname.Format("regF%d", i);
-		regF[i] = cc.newXmmSd(regname.GetChars());
-		cc.movsd(regF[i], x86::qword_ptr(frameF, i * sizeof(double)));
-	}
+		for (int i = 0; i < sfunc->NumRegF; i++)
+			cc.movsd(regF[i], x86::qword_ptr(frameF, i * sizeof(double)));
 
-	for (int i = 0; i < sfunc->NumRegS; i++)
-	{
-		FString regname;
-		regname.Format("regS%d", i);
-		regS[i] = cc.newIntPtr(regname.GetChars());
-		cc.lea(regS[i], x86::ptr(frameS, i * sizeof(FString)));
-	}
+		for (int i = 0; i < sfunc->NumRegS; i++)
+			cc.lea(regS[i], x86::ptr(frameS, i * sizeof(FString)));
 
-	for (int i = 0; i < sfunc->NumRegA; i++)
-	{
-		FString regname;
-		regname.Format("regA%d", i);
-		regA[i] = cc.newIntPtr(regname.GetChars());
-		cc.mov(regA[i], x86::ptr(frameA, i * sizeof(void*)));
+		for (int i = 0; i < sfunc->NumRegA; i++)
+			cc.mov(regA[i], x86::ptr(frameA, i * sizeof(void*)));
 	}
 
 	int size = sfunc->CodeSize;

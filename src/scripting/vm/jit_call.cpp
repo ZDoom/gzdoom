@@ -170,15 +170,14 @@ void JitCompiler::EmitDoCall(asmjit::X86Gp ptr)
 	}
 
 	auto result = newResultInt32();
-	auto call = CreateCall<int, VMFrameStack*, VMFunction*, int, int, VMValue*, VMReturn*, JitExceptionInfo*>(&JitCompiler::DoCall);
+	auto call = CreateCall<int, VMFunction*, int, int, VMValue*, VMReturn*, JitExceptionInfo*>(&JitCompiler::DoCall);
 	call->setRet(0, result);
-	call->setArg(0, stack);
-	call->setArg(1, ptr);
-	call->setArg(2, Imm(B));
-	call->setArg(3, Imm(C));
-	call->setArg(4, paramsptr);
-	call->setArg(5, callReturns);
-	call->setArg(6, exceptInfo);
+	call->setArg(0, ptr);
+	call->setArg(1, Imm(B));
+	call->setArg(2, Imm(C));
+	call->setArg(3, paramsptr);
+	call->setArg(4, callReturns);
+	call->setArg(5, exceptInfo);
 
 	EmitCheckForException();
 
@@ -215,15 +214,14 @@ void JitCompiler::EmitDoTail(asmjit::X86Gp ptr)
 	}
 
 	auto result = newResultInt32();
-	auto call = CreateCall<int, VMFrameStack*, VMFunction*, int, int, VMValue*, VMReturn*, JitExceptionInfo*>(&JitCompiler::DoCall);
+	auto call = CreateCall<int, VMFunction*, int, int, VMValue*, VMReturn*, JitExceptionInfo*>(&JitCompiler::DoCall);
 	call->setRet(0, result);
-	call->setArg(0, stack);
-	call->setArg(1, ptr);
-	call->setArg(2, Imm(B));
-	call->setArg(3, numret);
-	call->setArg(4, paramsptr);
-	call->setArg(5, ret);
-	call->setArg(6, exceptInfo);
+	call->setArg(0, ptr);
+	call->setArg(1, Imm(B));
+	call->setArg(2, numret);
+	call->setArg(3, paramsptr);
+	call->setArg(4, ret);
+	call->setArg(5, exceptInfo);
 
 	EmitPopFrame();
 	cc.ret(result);
@@ -395,7 +393,7 @@ void JitCompiler::FillReturns(const VMOP *retval, int numret)
 	}
 }
 
-int JitCompiler::DoCall(VMFrameStack *stack, VMFunction *call, int b, int c, VMValue *param, VMReturn *returns, JitExceptionInfo *exceptinfo)
+int JitCompiler::DoCall(VMFunction *call, int b, int c, VMValue *param, VMReturn *returns, JitExceptionInfo *exceptinfo)
 {
 	try
 	{

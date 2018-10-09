@@ -189,32 +189,73 @@ void JitCompiler::Setup()
 	int offsetD = offsetA + (int)(sfunc->NumRegA * sizeof(void*));
 	offsetExtra = (offsetD + (int)(sfunc->NumRegD * sizeof(int32_t)) + 15) & ~15;
 
-	stack = cc.newIntPtr("stack");
-	auto allocFrame = CreateCall<VMFrameStack *, VMScriptFunction *, VMValue *, int, JitExceptionInfo *>([](VMScriptFunction *func, VMValue *args, int numargs, JitExceptionInfo *exceptinfo) -> VMFrameStack* {
-		try
-		{
-			VMFrameStack *stack = &GlobalVMStack;
-			VMFrame *newf = stack->AllocFrame(func);
-			VMFillParams(args, newf, numargs);
-			return stack;
-		}
-		catch (...)
-		{
-			exceptinfo->reason = X_OTHER;
-			exceptinfo->cppException = std::current_exception();
-			return nullptr;
-		}
-	});
-	allocFrame->setRet(0, stack);
-	allocFrame->setArg(0, imm_ptr(sfunc));
-	allocFrame->setArg(1, args);
-	allocFrame->setArg(2, numargs);
-	allocFrame->setArg(3, exceptInfo);
-	EmitCheckForException();
+	vmframe = cc.newIntPtr("vmframe");
 
-	vmframe = cc.newIntPtr();
-	cc.mov(vmframe, x86::ptr(stack)); // stack->Blocks
-	cc.mov(vmframe, x86::ptr(vmframe, VMFrameStack::OffsetLastFrame())); // Blocks->LastFrame
+	if (sfunc->SpecialInits.Size() == 0 && sfunc->NumRegS == 0)
+	{
+		// This is a simple frame with no constructors or destructors. Allocate it on the stack ourselves.
+
+		//auto vmstack = cc.newStack(offsetExtra + sfunc->ExtraSpace, 16); // To do: fill in params without VMFillParams
+		auto vmstack = cc.newStack(sfunc->StackSize, 16);
+		cc.lea(vmframe, vmstack);
+		auto sfuncptr = cc.newIntPtr();
+		cc.mov(sfuncptr, imm_ptr(sfunc));
+		if (cc.is64Bit())
+			cc.mov(x86::qword_ptr(vmframe, offsetof(VMFrame, Func)), sfuncptr);
+		else
+			cc.mov(x86::dword_ptr(vmframe, offsetof(VMFrame, Func)), sfuncptr);
+		cc.mov(x86::byte_ptr(vmframe, offsetof(VMFrame, NumRegD)), sfunc->NumRegD);
+		cc.mov(x86::byte_ptr(vmframe, offsetof(VMFrame, NumRegF)), sfunc->NumRegF);
+		cc.mov(x86::byte_ptr(vmframe, offsetof(VMFrame, NumRegS)), sfunc->NumRegS);
+		cc.mov(x86::byte_ptr(vmframe, offsetof(VMFrame, NumRegA)), sfunc->NumRegA);
+		cc.mov(x86::word_ptr(vmframe, offsetof(VMFrame, MaxParam)), sfunc->MaxParam);
+		cc.mov(x86::word_ptr(vmframe, offsetof(VMFrame, NumParam)), 0);
+
+		auto fillParams = CreateCall<void, VMFrame *, VMValue *, int, JitExceptionInfo *>([](VMFrame *newf, VMValue *args, int numargs, JitExceptionInfo *exceptinfo) {
+			try
+			{
+				VMFillParams(args, newf, numargs);
+			}
+			catch (...)
+			{
+				exceptinfo->reason = X_OTHER;
+				exceptinfo->cppException = std::current_exception();
+			}
+		});
+		fillParams->setArg(0, vmframe);
+		fillParams->setArg(1, args);
+		fillParams->setArg(2, numargs);
+		fillParams->setArg(3, exceptInfo);
+		EmitCheckForException();
+	}
+	else
+	{
+		stack = cc.newIntPtr("stack");
+		auto allocFrame = CreateCall<VMFrameStack *, VMScriptFunction *, VMValue *, int, JitExceptionInfo *>([](VMScriptFunction *func, VMValue *args, int numargs, JitExceptionInfo *exceptinfo) -> VMFrameStack* {
+			try
+			{
+				VMFrameStack *stack = &GlobalVMStack;
+				VMFrame *newf = stack->AllocFrame(func);
+				VMFillParams(args, newf, numargs);
+				return stack;
+			}
+			catch (...)
+			{
+				exceptinfo->reason = X_OTHER;
+				exceptinfo->cppException = std::current_exception();
+				return nullptr;
+			}
+		});
+		allocFrame->setRet(0, stack);
+		allocFrame->setArg(0, imm_ptr(sfunc));
+		allocFrame->setArg(1, args);
+		allocFrame->setArg(2, numargs);
+		allocFrame->setArg(3, exceptInfo);
+		EmitCheckForException();
+
+		cc.mov(vmframe, x86::ptr(stack)); // stack->Blocks
+		cc.mov(vmframe, x86::ptr(vmframe, VMFrameStack::OffsetLastFrame())); // Blocks->LastFrame
+	}
 
 	cc.lea(params, x86::ptr(vmframe, offsetParams));
 	cc.lea(frameF, x86::ptr(vmframe, offsetF));
@@ -261,19 +302,22 @@ void JitCompiler::Setup()
 
 void JitCompiler::EmitPopFrame()
 {
-	auto popFrame = CreateCall<void, VMFrameStack *, JitExceptionInfo *>([](VMFrameStack *stack, JitExceptionInfo *exceptinfo) {
-		try
-		{
-			stack->PopFrame();
-		}
-		catch (...)
-		{
-			exceptinfo->reason = X_OTHER;
-			exceptinfo->cppException = std::current_exception();
-		}
-	});
-	popFrame->setArg(0, stack);
-	popFrame->setArg(1, exceptInfo);
+	if (sfunc->SpecialInits.Size() != 0 || sfunc->NumRegS != 0)
+	{
+		auto popFrame = CreateCall<void, VMFrameStack *, JitExceptionInfo *>([](VMFrameStack *stack, JitExceptionInfo *exceptinfo) {
+			try
+			{
+				stack->PopFrame();
+			}
+			catch (...)
+			{
+				exceptinfo->reason = X_OTHER;
+				exceptinfo->cppException = std::current_exception();
+			}
+		});
+		popFrame->setArg(0, stack);
+		popFrame->setArg(1, exceptInfo);
+	}
 }
 
 void JitCompiler::EmitNullPointerThrow(int index, EVMAbortException reason)

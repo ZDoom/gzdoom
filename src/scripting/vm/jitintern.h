@@ -49,7 +49,7 @@ private:
 	void LoadReturns(const VMOP *retval, int numret);
 	void FillReturns(const VMOP *retval, int numret);
 	void LoadCallResult(const VMOP &opdata, bool addrof);
-	static int DoCall(VMFunction *call, int b, int c, VMValue *param, VMReturn *returns, JitExceptionInfo *exceptinfo);
+	static int DoCall(VMFunction *call, int b, int c, VMValue *param, VMReturn *returns);
 
 	template <typename Func>
 	void EmitComparisonOpcode(Func jmpFunc)
@@ -131,7 +131,6 @@ private:
 	void EmitNullPointerThrow(int index, EVMAbortException reason);
 	void EmitThrowException(EVMAbortException reason);
 	void EmitThrowException(EVMAbortException reason, asmjit::X86Gp arg1);
-	void EmitCheckForException();
 
 	asmjit::X86Gp CheckRegD(int r0, int r1);
 	asmjit::X86Xmm CheckRegF(int r0, int r1);
@@ -147,7 +146,6 @@ private:
 	asmjit::X86Gp numargs;
 	asmjit::X86Gp ret;
 	asmjit::X86Gp numret;
-	asmjit::X86Gp exceptInfo;
 	asmjit::X86Gp stack;
 
 	int offsetExtra;

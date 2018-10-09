@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vm.h"
+#include <csetjmp>
 
 class VMScriptFunction;
 
@@ -440,13 +441,16 @@ typedef std::pair<const class PType *, unsigned> FTypeAndOffset;
 
 struct JitExceptionInfo
 {
-	int32_t reason; // EVMAbortException
-	int32_t args[3];
-	VMOP* pcOnJitAbort;
 	std::exception_ptr cppException;
+	std::jmp_buf sjljbuf;
+	int vmframes = 0;
 };
 
-typedef int(*JitFuncPtr)(VMValue *params, int numparams, VMReturn *ret, int numret, JitExceptionInfo *exceptInfo);
+extern thread_local JitExceptionInfo *CurrentJitExceptInfo;
+
+void VMThrowException(std::exception_ptr cppException);
+
+typedef int(*JitFuncPtr)(VMScriptFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret);
 
 class VMScriptFunction : public VMFunction
 {
@@ -487,6 +491,6 @@ public:
 
 private:
 	static int FirstScriptCall(VMScriptFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret);
-	static int JitCall(VMScriptFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret);
-	JitFuncPtr JitFunc = nullptr;
+
+	bool FunctionJitted = false;
 };

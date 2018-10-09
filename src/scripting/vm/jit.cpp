@@ -152,18 +152,18 @@ void JitCompiler::Setup()
 	funcname.Format("Function: %s", sfunc->PrintableName.GetChars());
 	cc.comment(funcname.GetChars(), funcname.Len());
 
+	auto unusedFunc = cc.newIntPtr("func"); // VMFunction*
 	args = cc.newIntPtr("args"); // VMValue *params
 	numargs = cc.newInt32("numargs"); // int numargs
 	ret = cc.newIntPtr("ret"); // VMReturn *ret
 	numret = cc.newInt32("numret"); // int numret
-	exceptInfo = cc.newIntPtr("exceptinfo"); // JitExceptionInfo *exceptInfo
 
-	cc.addFunc(FuncSignature5<int, void *, int, void *, int, void *>());
-	cc.setArg(0, args);
-	cc.setArg(1, numargs);
-	cc.setArg(2, ret);
-	cc.setArg(3, numret);
-	cc.setArg(4, exceptInfo);
+	cc.addFunc(FuncSignature5<int, VMFunction *, void *, int, void *, int>());
+	cc.setArg(0, unusedFunc);
+	cc.setArg(1, args);
+	cc.setArg(2, numargs);
+	cc.setArg(3, ret);
+	cc.setArg(4, numret);
 
 	auto stackalloc = cc.newStack(sizeof(VMReturn) * MAX_RETURNS, alignof(VMReturn));
 	callReturns = cc.newIntPtr("callReturns");
@@ -297,22 +297,19 @@ void JitCompiler::Setup()
 		cc.mov(x86::word_ptr(vmframe, offsetof(VMFrame, MaxParam)), sfunc->MaxParam);
 		cc.mov(x86::word_ptr(vmframe, offsetof(VMFrame, NumParam)), 0);
 
-		auto fillParams = CreateCall<void, VMFrame *, VMValue *, int, JitExceptionInfo *>([](VMFrame *newf, VMValue *args, int numargs, JitExceptionInfo *exceptinfo) {
+		auto fillParams = CreateCall<void, VMFrame *, VMValue *, int>([](VMFrame *newf, VMValue *args, int numargs) {
 			try
 			{
 				VMFillParams(args, newf, numargs);
 			}
 			catch (...)
 			{
-				exceptinfo->reason = X_OTHER;
-				exceptinfo->cppException = std::current_exception();
+				VMThrowException(std::current_exception());
 			}
 		});
 		fillParams->setArg(0, vmframe);
 		fillParams->setArg(1, args);
 		fillParams->setArg(2, numargs);
-		fillParams->setArg(3, exceptInfo);
-		EmitCheckForException();
 
 		for (int i = 0; i < sfunc->NumRegD; i++)
 			cc.mov(regD[i], x86::dword_ptr(frameD, i * sizeof(int32_t)));
@@ -331,18 +328,18 @@ void JitCompiler::Setup()
 	else
 	{
 		stack = cc.newIntPtr("stack");
-		auto allocFrame = CreateCall<VMFrameStack *, VMScriptFunction *, VMValue *, int, JitExceptionInfo *>([](VMScriptFunction *func, VMValue *args, int numargs, JitExceptionInfo *exceptinfo) -> VMFrameStack* {
+		auto allocFrame = CreateCall<VMFrameStack *, VMScriptFunction *, VMValue *, int>([](VMScriptFunction *func, VMValue *args, int numargs) -> VMFrameStack* {
 			try
 			{
 				VMFrameStack *stack = &GlobalVMStack;
 				VMFrame *newf = stack->AllocFrame(func);
+				CurrentJitExceptInfo->vmframes++;
 				VMFillParams(args, newf, numargs);
 				return stack;
 			}
 			catch (...)
 			{
-				exceptinfo->reason = X_OTHER;
-				exceptinfo->cppException = std::current_exception();
+				VMThrowException(std::current_exception());
 				return nullptr;
 			}
 		});
@@ -350,8 +347,6 @@ void JitCompiler::Setup()
 		allocFrame->setArg(0, imm_ptr(sfunc));
 		allocFrame->setArg(1, args);
 		allocFrame->setArg(2, numargs);
-		allocFrame->setArg(3, exceptInfo);
-		EmitCheckForException();
 
 		cc.mov(vmframe, x86::ptr(stack)); // stack->Blocks
 		cc.mov(vmframe, x86::ptr(vmframe, VMFrameStack::OffsetLastFrame())); // Blocks->LastFrame
@@ -384,19 +379,18 @@ void JitCompiler::EmitPopFrame()
 {
 	if (sfunc->SpecialInits.Size() != 0 || sfunc->NumRegS != 0)
 	{
-		auto popFrame = CreateCall<void, VMFrameStack *, JitExceptionInfo *>([](VMFrameStack *stack, JitExceptionInfo *exceptinfo) {
+		auto popFrame = CreateCall<void, VMFrameStack *>([](VMFrameStack *stack) {
 			try
 			{
 				stack->PopFrame();
+				CurrentJitExceptInfo->vmframes--;
 			}
 			catch (...)
 			{
-				exceptinfo->reason = X_OTHER;
-				exceptinfo->cppException = std::current_exception();
+				VMThrowException(std::current_exception());
 			}
 		});
 		popFrame->setArg(0, stack);
-		popFrame->setArg(1, exceptInfo);
 	}
 }
 
@@ -411,53 +405,25 @@ void JitCompiler::EmitNullPointerThrow(int index, EVMAbortException reason)
 
 void JitCompiler::EmitThrowException(EVMAbortException reason)
 {
-	using namespace asmjit;
-
-	// Update JitExceptionInfo struct
-	cc.mov(x86::dword_ptr(exceptInfo, 0 * 4), (int32_t)reason);
-	if (cc.is64Bit())
-		cc.mov(x86::qword_ptr(exceptInfo, 4 * 4), imm_ptr(pc));
-	else
-		cc.mov(x86::dword_ptr(exceptInfo, 4 * 4), imm_ptr(pc));
-
-	// Return from function
-	EmitPopFrame();
-	X86Gp vReg = newTempInt32();
-	cc.mov(vReg, 0);
-	cc.ret(vReg);
+	auto call = CreateCall<void, VMScriptFunction *, VMOP *, int>([](VMScriptFunction *func, VMOP *line, int r) {
+		try
+		{
+			ThrowAbortException(func, line, (EVMAbortException)r, nullptr);
+		}
+		catch (...)
+		{
+			VMThrowException(std::current_exception());
+		}
+	});
+	call->setArg(0, asmjit::imm_ptr(sfunc));
+	call->setArg(1, asmjit::imm_ptr(pc));
+	call->setArg(2, asmjit::imm(reason));
 }
 
 void JitCompiler::EmitThrowException(EVMAbortException reason, asmjit::X86Gp arg1)
 {
-	using namespace asmjit;
-
-	// Update JitExceptionInfo struct
-	cc.mov(x86::dword_ptr(exceptInfo, 0 * 4), (int32_t)reason);
-	cc.mov(x86::dword_ptr(exceptInfo, 1 * 4), arg1);
-	if (cc.is64Bit())
-		cc.mov(x86::qword_ptr(exceptInfo, 4 * 4), imm_ptr(pc));
-	else
-		cc.mov(x86::dword_ptr(exceptInfo, 4 * 4), imm_ptr(pc));
-
-	// Return from function
-	EmitPopFrame();
-	X86Gp vReg = newTempInt32();
-	cc.mov(vReg, 0);
-	cc.ret(vReg);
-}
-
-void JitCompiler::EmitCheckForException()
-{
-	auto noexception = cc.newLabel();
-	auto exceptResult = newTempInt32();
-	cc.mov(exceptResult, asmjit::x86::dword_ptr(exceptInfo, 0 * 4));
-	cc.cmp(exceptResult, (int)-1);
-	cc.je(noexception);
-	EmitPopFrame();
-	asmjit::X86Gp vReg = newTempInt32();
-	cc.mov(vReg, 0);
-	cc.ret(vReg);
-	cc.bind(noexception);
+	// To do: fix throw message and use arg1
+	EmitThrowException(reason);
 }
 
 asmjit::X86Gp JitCompiler::CheckRegD(int r0, int r1)

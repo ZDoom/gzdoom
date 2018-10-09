@@ -80,23 +80,19 @@ void JitCompiler::EmitSCOPE()
 	cc.mov(f, asmjit::imm_ptr(konsta[C].v));
 
 	typedef int(*FuncPtr)(DObject*, VMFunction*, int);
-	auto call = CreateCall<void, DObject*, VMFunction*, int, JitExceptionInfo *>([](DObject *o, VMFunction *f, int b, JitExceptionInfo *exceptinfo) {
+	auto call = CreateCall<void, DObject*, VMFunction*, int>([](DObject *o, VMFunction *f, int b) {
 		try
 		{
 			FScopeBarrier::ValidateCall(o->GetClass(), f, b - 1);
 		}
 		catch (...)
 		{
-			exceptinfo->reason = X_OTHER;
-			exceptinfo->cppException = std::current_exception();
+			VMThrowException(std::current_exception());
 		}
 	});
 	call->setArg(0, regA[A]);
 	call->setArg(1, f);
 	call->setArg(2, asmjit::Imm(B));
-	call->setArg(3, exceptInfo);
-
-	EmitCheckForException();
 }
 
 void JitCompiler::EmitRET()
@@ -265,7 +261,7 @@ void JitCompiler::EmitRETI()
 void JitCompiler::EmitNEW()
 {
 	auto result = newResultIntPtr();
-	auto call = CreateCall<DObject*, PClass*, int, JitExceptionInfo *>([](PClass *cls, int c, JitExceptionInfo *exceptinfo) -> DObject* {
+	auto call = CreateCall<DObject*, PClass*, int>([](PClass *cls, int c) -> DObject* {
 		try
 		{
 			if (!cls->ConstructNative)
@@ -287,17 +283,13 @@ void JitCompiler::EmitNEW()
 		}
 		catch (...)
 		{
-			exceptinfo->reason = X_OTHER;
-			exceptinfo->cppException = std::current_exception();
+			VMThrowException(std::current_exception());
 			return nullptr;
 		}
 	});
 	call->setRet(0, result);
 	call->setArg(0, regA[B]);
 	call->setArg(1, asmjit::Imm(C));
-	call->setArg(2, exceptInfo);
-
-	EmitCheckForException();
 
 	cc.mov(regA[A], result);
 }
@@ -322,7 +314,7 @@ void JitCompiler::EmitNEW_K()
 		auto result = newResultIntPtr();
 		auto regcls = newTempIntPtr();
 		cc.mov(regcls, asmjit::imm_ptr(konsta[B].v));
-		auto call = CreateCall<DObject*, PClass*, int, JitExceptionInfo *>([](PClass *cls, int c, JitExceptionInfo *exceptinfo) -> DObject* {
+		auto call = CreateCall<DObject*, PClass*, int>([](PClass *cls, int c) -> DObject* {
 			try
 			{
 				if (c) FScopeBarrier::ValidateNew(cls, c - 1);
@@ -330,17 +322,13 @@ void JitCompiler::EmitNEW_K()
 			}
 			catch (...)
 			{
-				exceptinfo->reason = X_OTHER;
-				exceptinfo->cppException = std::current_exception();
+				VMThrowException(std::current_exception());
 				return nullptr;
 			}
 		});
 		call->setRet(0, result);
 		call->setArg(0, regcls);
 		call->setArg(1, asmjit::Imm(C));
-		call->setArg(2, exceptInfo);
-
-		EmitCheckForException();
 
 		cc.mov(regA[A], result);
 	}

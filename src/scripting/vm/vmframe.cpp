@@ -78,10 +78,10 @@ VMScriptFunction::VMScriptFunction(FName name)
 
 VMScriptFunction::~VMScriptFunction()
 {
-	if (JitFunc)
+	if (FunctionJitted)
 	{
 		JitCleanUp(this);
-		JitFunc = nullptr;
+		FunctionJitted = false;
 	}
 
 	if (Code != NULL)
@@ -215,28 +215,13 @@ int VMScriptFunction::PCToLine(const VMOP *pc)
 
 int VMScriptFunction::FirstScriptCall(VMScriptFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret)
 {
-	func->JitFunc = JitCompile(func);
-	if (func->JitFunc)
-		func->ScriptCall = &VMScriptFunction::JitCall;
-	else
+	func->ScriptCall = JitCompile(func);
+	if (!func->ScriptCall)
 		func->ScriptCall = VMExec;
+	else
+		func->FunctionJitted = true;
 
 	return func->ScriptCall(func, params, numparams, ret, numret);
-}
-
-int VMScriptFunction::JitCall(VMScriptFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret)
-{
-	JitExceptionInfo exceptInfo;
-	exceptInfo.reason = -1;
-	int result = func->JitFunc(params, numparams, ret, numret, &exceptInfo);
-	if (exceptInfo.reason != -1)
-	{
-		if (exceptInfo.cppException)
-			std::rethrow_exception(exceptInfo.cppException);
-		else
-			ThrowAbortException(func, exceptInfo.pcOnJitAbort, (EVMAbortException)exceptInfo.reason, nullptr);
-	}
-	return result;
 }
 
 //===========================================================================
@@ -451,6 +436,32 @@ VMFrame *VMFrameStack::PopFrame()
 
 //===========================================================================
 //
+// The jitted code does not implement C++ exception handling.
+// Catch them, longjmp out of the jitted functions, perform vmframe cleanup
+// then rethrow the C++ exception
+//
+//===========================================================================
+
+thread_local JitExceptionInfo *CurrentJitExceptInfo;
+
+void VMThrowException(std::exception_ptr cppException)
+{
+	CurrentJitExceptInfo->cppException = cppException;
+	longjmp(CurrentJitExceptInfo->sjljbuf, 1);
+}
+
+static void VMRethrowException(JitExceptionInfo *exceptInfo)
+{
+	int c = exceptInfo->vmframes;
+	VMFrameStack *stack = &GlobalVMStack;
+	for (int i = 0; i < c; i++)
+		stack->PopFrame();
+
+	std::rethrow_exception(exceptInfo->cppException);
+}
+
+//===========================================================================
+//
 // VMFrameStack :: Call
 //
 // Calls a function, either native or scripted. If an exception occurs while
@@ -490,10 +501,25 @@ int VMCall(VMFunction *func, VMValue *params, int numparams, VMReturn *results, 
 			{
 				VMCycles[0].Clock();
 				VMCalls[0]++;
-				auto sfunc = static_cast<VMScriptFunction *>(func);
-				int numret = sfunc->ScriptCall(sfunc, params, numparams, results, numresults);
-				VMCycles[0].Unclock();
-				return numret;
+
+				JitExceptionInfo *prevExceptInfo = CurrentJitExceptInfo;
+				JitExceptionInfo newExceptInfo;
+				CurrentJitExceptInfo = &newExceptInfo;
+				if (setjmp(CurrentJitExceptInfo->sjljbuf) == 0)
+				{
+					auto sfunc = static_cast<VMScriptFunction *>(func);
+					int numret = sfunc->ScriptCall(sfunc, params, numparams, results, numresults);
+					CurrentJitExceptInfo = prevExceptInfo;
+					VMCycles[0].Unclock();
+					return numret;
+				}
+				else
+				{
+					VMCycles[0].Unclock();
+					auto exceptInfo = CurrentJitExceptInfo;
+					CurrentJitExceptInfo = prevExceptInfo;
+					VMRethrowException(exceptInfo);
+				}
 			}
 		}
 	}

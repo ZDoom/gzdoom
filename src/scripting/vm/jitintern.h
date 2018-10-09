@@ -11,6 +11,7 @@
 #include <asmjit/asmjit.h>
 #include <asmjit/x86.h>
 #include <functional>
+#include <vector>
 
 extern cycle_t VMCycles[10];
 extern int VMCalls[10];

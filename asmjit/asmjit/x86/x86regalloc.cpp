@@ -3341,7 +3341,7 @@ ASMJIT_INLINE void X86CallAlloc::alloc() {
         // allocation tasks by a single 'xchg' instruction, swapping
         // two registers required by the instruction/node or one register
         // required with another non-required.
-        if (C == X86Reg::kKindGp) {
+        if (C == X86Reg::kKindGp && sPhysId != Globals::kInvalidRegId) {
           _context->swapGp(aVReg, bVReg);
 
           aTied->flags |= TiedReg::kRDone;

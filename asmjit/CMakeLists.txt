@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.7)
 
-make_release_only()
+#make_release_only()
 
 project(asmjit C)
 

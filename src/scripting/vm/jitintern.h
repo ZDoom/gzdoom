@@ -42,28 +42,17 @@ private:
 	void EmitOpcode();
 	void EmitPopFrame();
 
-	enum class CallType
-	{
-		Unknown,
-		Script,
-		Native
-	};
-
-	void EmitDoCall(asmjit::X86Gp ptr, CallType calltype);
+	void EmitDoCall(asmjit::X86Gp ptr);
 	void EmitScriptCall(asmjit::X86Gp vmfunc, asmjit::X86Gp paramsptr);
-	void EmitNativeCall(asmjit::X86Gp vmfunc, asmjit::X86Gp paramsptr);
 
-	void EmitDoTail(asmjit::X86Gp ptr, CallType calltype);
+	void EmitDoTail(asmjit::X86Gp ptr);
 	void EmitScriptTailCall(asmjit::X86Gp vmfunc, asmjit::X86Gp result, asmjit::X86Gp paramsptr);
-	void EmitNativeTailCall(asmjit::X86Gp vmfunc, asmjit::X86Gp result, asmjit::X86Gp paramsptr);
 
 	void StoreInOuts(int b);
 	void LoadInOuts(int b);
 	void LoadReturns(const VMOP *retval, int numret);
 	void FillReturns(const VMOP *retval, int numret);
 	void LoadCallResult(const VMOP &opdata, bool addrof);
-
-	static int DoNativeCall(VMFunction *call, int b, int c, VMValue *param, VMReturn *returns);
 
 	template <typename Func>
 	void EmitComparisonOpcode(Func jmpFunc)

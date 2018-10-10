@@ -429,7 +429,7 @@ enum EVMEngine
 };
 
 void VMSelectEngine(EVMEngine engine);
-extern int (*VMExec)(VMScriptFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret);
+extern int (*VMExec)(VMFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret);
 void VMFillParams(VMValue *params, VMFrame *callee, int numparam);
 
 void VMDumpConstants(FILE *out, const VMScriptFunction *func);
@@ -450,7 +450,7 @@ extern thread_local JitExceptionInfo *CurrentJitExceptInfo;
 
 void VMThrowException(std::exception_ptr cppException);
 
-typedef int(*JitFuncPtr)(VMScriptFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret);
+typedef int(*JitFuncPtr)(VMFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret);
 
 class VMScriptFunction : public VMFunction
 {
@@ -482,15 +482,13 @@ public:
 	VM_UBYTE NumArgs;		// Number of arguments this function takes
 	TArray<FTypeAndOffset> SpecialInits;	// list of all contents on the extra stack which require construction and destruction
 
-	int(*ScriptCall)(VMScriptFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret) = &VMScriptFunction::FirstScriptCall;
-
 	void InitExtra(void *addr);
 	void DestroyExtra(void *addr);
 	int AllocExtraStack(PType *type);
 	int PCToLine(const VMOP *pc);
 
 private:
-	static int FirstScriptCall(VMScriptFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret);
+	static int FirstScriptCall(VMFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret);
 
 	bool FunctionJitted = false;
 };

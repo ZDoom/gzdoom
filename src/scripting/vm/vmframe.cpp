@@ -74,6 +74,7 @@ VMScriptFunction::VMScriptFunction(FName name)
 	NumKonstA = 0;
 	MaxParam = 0;
 	NumArgs = 0;
+	ScriptCall = &VMScriptFunction::FirstScriptCall;
 }
 
 VMScriptFunction::~VMScriptFunction()
@@ -213,15 +214,42 @@ int VMScriptFunction::PCToLine(const VMOP *pc)
 	return -1;
 }
 
-int VMScriptFunction::FirstScriptCall(VMScriptFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret)
+int VMScriptFunction::FirstScriptCall(VMFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret)
 {
-	func->ScriptCall = JitCompile(func);
-	if (!func->ScriptCall)
-		func->ScriptCall = VMExec;
+	VMScriptFunction *sfunc = static_cast<VMScriptFunction*>(func);
+	sfunc->ScriptCall = JitCompile(sfunc);
+	if (!sfunc->ScriptCall)
+		sfunc->ScriptCall = VMExec;
 	else
-		func->FunctionJitted = true;
+		sfunc->FunctionJitted = true;
 
 	return func->ScriptCall(func, params, numparams, ret, numret);
+}
+
+int VMNativeFunction::NativeScriptCall(VMFunction *func, VMValue *params, int numparams, VMReturn *returns, int numret)
+{
+	try
+	{
+		assert((call->VarFlags & VARF_Native) && "DoNativeCall must only be called for native functions");
+
+		VMCycles[0].Unclock();
+		numret = static_cast<VMNativeFunction *>(func)->NativeCall(params, func->DefaultArgs, numparams, returns, numret);
+		VMCycles[0].Clock();
+
+		return numret;
+	}
+	catch (CVMAbortException &err)
+	{
+		err.MaybePrintMessage();
+		err.stacktrace.AppendFormat("Called from %s\n", func->PrintableName.GetChars());
+		VMThrowException(std::current_exception());
+		return 0;
+	}
+	catch (...)
+	{
+		VMThrowException(std::current_exception());
+		return 0;
+	}
 }
 
 //===========================================================================
@@ -500,7 +528,6 @@ int VMCall(VMFunction *func, VMValue *params, int numparams, VMReturn *results, 
 			else
 			{
 				VMCycles[0].Clock();
-				VMCalls[0]++;
 
 				JitExceptionInfo *prevExceptInfo = CurrentJitExceptInfo;
 				JitExceptionInfo newExceptInfo;

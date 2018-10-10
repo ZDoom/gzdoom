@@ -250,6 +250,14 @@ void JitCompiler::Setup()
 	for (int i = 0; i < size; i++)
 		labels[i] = cc.newLabel();
 
+	// VMCalls[0]++
+	auto vmcallsptr = newTempIntPtr();
+	auto vmcalls = newTempInt32();
+	cc.mov(vmcallsptr, imm_ptr(VMCalls));
+	cc.mov(vmcalls, x86::dword_ptr(vmcallsptr));
+	cc.add(vmcalls, (int)1);
+	cc.mov(x86::dword_ptr(vmcallsptr), vmcalls);
+
 	frameD = cc.newIntPtr();
 	frameF = cc.newIntPtr();
 	frameS = cc.newIntPtr();

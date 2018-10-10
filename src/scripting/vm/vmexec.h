@@ -710,7 +710,6 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 			}
 			else
 			{
-				VMCalls[0]++;
 				auto sfunc = static_cast<VMScriptFunction *>(call);
 				numret = sfunc->ScriptCall(sfunc, reg.param + f->NumParam - b, b, returns, C);
 			}
@@ -753,7 +752,6 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 			}
 			else
 			{ // FIXME: Not a true tail call
-				VMCalls[0]++;
 				auto sfunc = static_cast<VMScriptFunction *>(call);
 				return sfunc->ScriptCall(sfunc, reg.param + f->NumParam - B, B, ret, numret);
 			}
@@ -2046,10 +2044,11 @@ static void SetReturn(const VMRegisters &reg, VMFrame *frame, VMReturn *ret, VM_
 	}
 }
 
-static int Exec(VMScriptFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret)
+static int Exec(VMFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret)
 {
+	VMCalls[0]++;
 	VMFrameStack *stack = &GlobalVMStack;
-	VMFrame *newf = stack->AllocFrame(func);
+	VMFrame *newf = stack->AllocFrame(static_cast<VMScriptFunction*>(func));
 	VMFillParams(params, newf, numparams);
 	try
 	{

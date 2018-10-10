@@ -126,29 +126,33 @@ void JitCompiler::EmitRESULT()
 
 void JitCompiler::EmitCALL()
 {
-	EmitDoCall(regA[A]);
+	EmitDoCall(regA[A], CallType::Unknown);
 }
 
 void JitCompiler::EmitCALL_K()
 {
+	VMFunction *func = (VMFunction*)konsta[A].o;
+
 	auto ptr = newTempIntPtr();
-	cc.mov(ptr, asmjit::imm_ptr(konsta[A].o));
-	EmitDoCall(ptr);
+	cc.mov(ptr, asmjit::imm_ptr(func));
+	EmitDoCall(ptr, (func->VarFlags & VARF_Native) ? CallType::Native : CallType::Script);
 }
 
 void JitCompiler::EmitTAIL()
 {
-	EmitDoTail(regA[A]);
+	EmitDoTail(regA[A], CallType::Unknown);
 }
 
 void JitCompiler::EmitTAIL_K()
 {
+	VMFunction *func = (VMFunction*)konsta[A].o;
+
 	auto ptr = newTempIntPtr();
-	cc.mov(ptr, asmjit::imm_ptr(konsta[A].o));
-	EmitDoTail(ptr);
+	cc.mov(ptr, asmjit::imm_ptr(func));
+	EmitDoTail(ptr, (func->VarFlags & VARF_Native) ? CallType::Native : CallType::Script);
 }
 
-void JitCompiler::EmitDoCall(asmjit::X86Gp ptr)
+void JitCompiler::EmitDoCall(asmjit::X86Gp vmfunc, CallType calltype)
 {
 	using namespace asmjit;
 
@@ -169,14 +173,28 @@ void JitCompiler::EmitDoCall(asmjit::X86Gp ptr)
 		paramsptr = params;
 	}
 
-	auto result = newResultInt32();
-	auto call = CreateCall<int, VMFunction*, int, int, VMValue*, VMReturn*>(&JitCompiler::DoCall);
-	call->setRet(0, result);
-	call->setArg(0, ptr);
-	call->setArg(1, Imm(B));
-	call->setArg(2, Imm(C));
-	call->setArg(3, paramsptr);
-	call->setArg(4, callReturns);
+	if (calltype == CallType::Script)
+	{
+		EmitScriptCall(vmfunc, paramsptr);
+	}
+	else if (calltype == CallType::Native)
+	{
+		EmitNativeCall(vmfunc, paramsptr);
+	}
+	else
+	{
+		auto nativecall = cc.newLabel();
+		auto endcall = cc.newLabel();
+		auto varflags = newTempInt32();
+		cc.mov(varflags, x86::dword_ptr(vmfunc, offsetof(VMFunction, VarFlags)));
+		cc.test(varflags, (int)VARF_Native);
+		cc.jnz(nativecall);
+		EmitScriptCall(vmfunc, paramsptr);
+		cc.jmp(endcall);
+		cc.bind(nativecall);
+		EmitNativeCall(vmfunc, paramsptr);
+		cc.bind(endcall);
+	}
 
 	LoadInOuts(B);
 	LoadReturns(pc + 1, C);
@@ -185,7 +203,45 @@ void JitCompiler::EmitDoCall(asmjit::X86Gp ptr)
 	ParamOpcodes.Resize(ParamOpcodes.Size() - B);
 }
 
-void JitCompiler::EmitDoTail(asmjit::X86Gp ptr)
+void JitCompiler::EmitScriptCall(asmjit::X86Gp vmfunc, asmjit::X86Gp paramsptr)
+{
+	using namespace asmjit;
+
+	// VMCalls[0]++
+	auto vmcallsptr = newTempIntPtr();
+	auto vmcalls = newTempInt32();
+	cc.mov(vmcallsptr, imm_ptr(VMCalls));
+	cc.mov(vmcalls, x86::dword_ptr(vmcallsptr));
+	cc.add(vmcalls, (int)1);
+	cc.mov(x86::dword_ptr(vmcallsptr), vmcalls);
+
+	auto scriptcall = newTempIntPtr();
+	cc.mov(scriptcall, x86::ptr(vmfunc, offsetof(VMScriptFunction, ScriptCall)));
+
+	auto result = newResultInt32();
+	auto call = cc.call(scriptcall, FuncSignature5<int, VMFunction *, VMValue*, int, VMReturn*, int>());
+	call->setRet(0, result);
+	call->setArg(0, vmfunc);
+	call->setArg(1, paramsptr);
+	call->setArg(2, Imm(B));
+	call->setArg(3, callReturns);
+	call->setArg(4, Imm(C));
+}
+
+void JitCompiler::EmitNativeCall(asmjit::X86Gp vmfunc, asmjit::X86Gp paramsptr)
+{
+	using namespace asmjit;
+	auto result = newResultInt32();
+	auto call = CreateCall<int, VMFunction*, int, int, VMValue*, VMReturn*>(&JitCompiler::DoNativeCall);
+	call->setRet(0, result);
+	call->setArg(0, vmfunc);
+	call->setArg(1, Imm(B));
+	call->setArg(2, Imm(C));
+	call->setArg(3, paramsptr);
+	call->setArg(4, callReturns);
+}
+
+void JitCompiler::EmitDoTail(asmjit::X86Gp vmfunc, CallType calltype)
 {
 	// Whereas the CALL instruction uses its third operand to specify how many return values
 	// it expects, TAIL ignores its third operand and uses whatever was passed to this Exec call.
@@ -211,19 +267,72 @@ void JitCompiler::EmitDoTail(asmjit::X86Gp ptr)
 	}
 
 	auto result = newResultInt32();
-	auto call = CreateCall<int, VMFunction*, int, int, VMValue*, VMReturn*>(&JitCompiler::DoCall);
-	call->setRet(0, result);
-	call->setArg(0, ptr);
-	call->setArg(1, Imm(B));
-	call->setArg(2, numret);
-	call->setArg(3, paramsptr);
-	call->setArg(4, ret);
+
+	if (calltype == CallType::Script)
+	{
+		EmitScriptTailCall(vmfunc, result, paramsptr);
+	}
+	else if (calltype == CallType::Native)
+	{
+		EmitNativeTailCall(vmfunc, result, paramsptr);
+	}
+	else
+	{
+		auto nativecall = cc.newLabel();
+		auto endcall = cc.newLabel();
+		auto varflags = newTempInt32();
+		cc.mov(varflags, x86::dword_ptr(vmfunc, offsetof(VMFunction, VarFlags)));
+		cc.test(varflags, (int)VARF_Native);
+		cc.jnz(nativecall);
+		EmitScriptTailCall(vmfunc, result, paramsptr);
+		cc.jmp(endcall);
+		cc.bind(nativecall);
+		EmitNativeTailCall(vmfunc, result, paramsptr);
+		cc.bind(endcall);
+	}
 
 	EmitPopFrame();
 	cc.ret(result);
 
 	NumParam -= B;
 	ParamOpcodes.Resize(ParamOpcodes.Size() - B);
+}
+
+void JitCompiler::EmitScriptTailCall(asmjit::X86Gp vmfunc, asmjit::X86Gp result, asmjit::X86Gp paramsptr)
+{
+	using namespace asmjit;
+
+	// VMCalls[0]++
+	auto vmcallsptr = newTempIntPtr();
+	auto vmcalls = newTempInt32();
+	cc.mov(vmcallsptr, imm_ptr(VMCalls));
+	cc.mov(vmcalls, x86::dword_ptr(vmcallsptr));
+	cc.add(vmcalls, (int)1);
+	cc.mov(x86::dword_ptr(vmcallsptr), vmcalls);
+
+	auto scriptcall = newTempIntPtr();
+	cc.mov(scriptcall, x86::ptr(vmfunc, offsetof(VMScriptFunction, ScriptCall)));
+
+	auto call = cc.call(scriptcall, FuncSignature5<int, VMFunction *, VMValue*, int, VMReturn*, int>());
+	call->setRet(0, result);
+	call->setArg(0, vmfunc);
+	call->setArg(1, paramsptr);
+	call->setArg(2, Imm(B));
+	call->setArg(3, ret);
+	call->setArg(4, numret);
+}
+
+void JitCompiler::EmitNativeTailCall(asmjit::X86Gp vmfunc, asmjit::X86Gp result, asmjit::X86Gp paramsptr)
+{
+	using namespace asmjit;
+
+	auto call = CreateCall<int, VMFunction*, int, int, VMValue*, VMReturn*>(&JitCompiler::DoNativeCall);
+	call->setRet(0, result);
+	call->setArg(0, vmfunc);
+	call->setArg(1, Imm(B));
+	call->setArg(2, numret);
+	call->setArg(3, paramsptr);
+	call->setArg(4, ret);
 }
 
 void JitCompiler::StoreInOuts(int b)
@@ -389,34 +498,24 @@ void JitCompiler::FillReturns(const VMOP *retval, int numret)
 	}
 }
 
-int JitCompiler::DoCall(VMFunction *call, int b, int c, VMValue *param, VMReturn *returns)
+int JitCompiler::DoNativeCall(VMFunction *call, int b, int c, VMValue *param, VMReturn *returns)
 {
 	try
 	{
-		int numret;
-		if (call->VarFlags & VARF_Native)
-		{
-			try
-			{
-				VMCycles[0].Unclock();
-				numret = static_cast<VMNativeFunction *>(call)->NativeCall(param, call->DefaultArgs, b, returns, c);
-				VMCycles[0].Clock();
-			}
-			catch (CVMAbortException &err)
-			{
-				err.MaybePrintMessage();
-				err.stacktrace.AppendFormat("Called from %s\n", call->PrintableName.GetChars());
-				throw;
-			}
-		}
-		else
-		{
-			VMCalls[0]++;
-			auto sfunc = static_cast<VMScriptFunction *>(call);
-			numret = sfunc->ScriptCall(sfunc, param, b, returns, c);
-		}
+		assert((call->VarFlags & VARF_Native) && "DoNativeCall must only be called for native functions");
+
+		VMCycles[0].Unclock();
+		int numret = static_cast<VMNativeFunction *>(call)->NativeCall(param, call->DefaultArgs, b, returns, c);
+		VMCycles[0].Clock();
 
 		return numret;
+	}
+	catch (CVMAbortException &err)
+	{
+		err.MaybePrintMessage();
+		err.stacktrace.AppendFormat("Called from %s\n", call->PrintableName.GetChars());
+		VMThrowException(std::current_exception());
+		return 0;
 	}
 	catch (...)
 	{

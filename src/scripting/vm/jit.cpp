@@ -91,6 +91,38 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 	}
 }
 
+void JitDumpLog(FILE *file, VMScriptFunction *sfunc)
+{
+	using namespace asmjit;
+	StringLogger logger;
+	try
+	{
+		auto *jit = JitGetRuntime();
+
+		ThrowingErrorHandler errorHandler;
+		CodeHolder code;
+		code.init(jit->getCodeInfo());
+		code.setErrorHandler(&errorHandler);
+		code.setLogger(&logger);
+
+		JitCompiler compiler(&code, sfunc);
+		compiler.Codegen();
+
+		fwrite(logger.getString(), logger.getLength(), 1, file);
+	}
+	catch (const std::exception &e)
+	{
+		fwrite(logger.getString(), logger.getLength(), 1, file);
+
+		FString err;
+		err.Format("Unexpected JIT error: %s\n", e.what());
+		fwrite(err.GetChars(), err.Len(), 1, file);
+		fclose(file);
+
+		I_FatalError("Unexpected JIT error: %s\n", e.what());
+	}
+}
+
 /////////////////////////////////////////////////////////////////////////////
 
 static const char *OpNames[NUM_OPS] =
@@ -111,14 +143,13 @@ void JitCompiler::Codegen()
 		int i = (int)(ptrdiff_t)(pc - sfunc->Code);
 		op = pc->op;
 
-		cc.bind(labels[i]);
-
-		ResetTemp();
-
 		FString lineinfo;
-		lineinfo.Format("; %s(line %d): %02x%02x%02x%02x %s", sfunc->PrintableName.GetChars(), sfunc->PCToLine(pc), pc->op, pc->a, pc->b, pc->c, OpNames[op]);
+		lineinfo.Format("; line %d: %02x%02x%02x%02x %s", sfunc->PCToLine(pc), pc->op, pc->a, pc->b, pc->c, OpNames[op]);
+		cc.comment("", 0);
 		cc.comment(lineinfo.GetChars(), lineinfo.Len());
 
+		cc.bind(labels[i]);
+		ResetTemp();
 		EmitOpcode();
 
 		pc++;
@@ -148,9 +179,16 @@ void JitCompiler::Setup()
 
 	ResetTemp();
 
+	static const char *marks = "=======================================================";
+	cc.comment("", 0);
+	cc.comment(marks, 56);
+
 	FString funcname;
 	funcname.Format("Function: %s", sfunc->PrintableName.GetChars());
 	cc.comment(funcname.GetChars(), funcname.Len());
+
+	cc.comment(marks, 56);
+	cc.comment("", 0);
 
 	auto unusedFunc = cc.newIntPtr("func"); // VMFunction*
 	args = cc.newIntPtr("args"); // VMValue *params
@@ -206,6 +244,11 @@ void JitCompiler::Setup()
 		regname.Format("regA%d", i);
 		regA[i] = cc.newIntPtr(regname.GetChars());
 	}
+
+	int size = sfunc->CodeSize;
+	labels.Resize(size);
+	for (int i = 0; i < size; i++)
+		labels[i] = cc.newLabel();
 
 	frameD = cc.newIntPtr();
 	frameF = cc.newIntPtr();
@@ -369,10 +412,6 @@ void JitCompiler::Setup()
 		for (int i = 0; i < sfunc->NumRegA; i++)
 			cc.mov(regA[i], x86::ptr(frameA, i * sizeof(void*)));
 	}
-
-	int size = sfunc->CodeSize;
-	labels.Resize(size);
-	for (int i = 0; i < size; i++) labels[i] = cc.newLabel();
 }
 
 void JitCompiler::EmitPopFrame()

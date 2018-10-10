@@ -146,6 +146,8 @@ class FFunctionBuildList
 
 	TArray<Item> mItems;
 
+	void DumpJit();
+
 public:
 	VMFunction *AddFunction(PNamespace *curglobals, const VersionInfo &ver, PFunction *func, FxExpression *code, const FString &name, bool fromdecorate, int currentstate, int statecnt, int lumpnum);
 	void Build();

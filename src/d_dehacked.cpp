@@ -66,6 +66,8 @@
 #include "types.h"
 #include "m_argv.h"
 
+void JitDumpLog(FILE *file, VMScriptFunction *func);
+
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO
 CVAR (Int, infighting, 0, CVAR_SERVERINFO)
@@ -821,6 +823,15 @@ void SetDehParams(FState *state, int codepointer)
 			if (dump != nullptr)
 			{
 				DumpFunction(dump, sfunc, sfunc->PrintableName.GetChars(), (int)sfunc->PrintableName.Len());
+			}
+			fclose(dump);
+		}
+		if (Args->CheckParm("-dumpjit"))
+		{
+			FILE *dump = fopen("dumpjit.txt", "a");
+			if (dump != nullptr)
+			{
+				JitDumpLog(dump, sfunc);
 			}
 			fclose(dump);
 		}

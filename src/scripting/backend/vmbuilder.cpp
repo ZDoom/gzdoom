@@ -35,6 +35,7 @@
 #include "vmbuilder.h"
 #include "codegen.h"
 #include "m_argv.h"
+#include "scripting/vm/jit.h"
 
 struct VMRemap
 {
@@ -939,7 +940,22 @@ void FFunctionBuildList::Build()
 		fclose(dump);
 	}
 	FScriptPosition::StrictErrors = false;
+	if (Args->CheckParm("-dumpjit")) DumpJit();
 	mItems.Clear();
 	mItems.ShrinkToFit();
 	FxAlloc.FreeAllBlocks();
+}
+
+void FFunctionBuildList::DumpJit()
+{
+	FILE *dump = fopen("dumpjit.txt", "w");
+	if (dump == nullptr)
+		return;
+
+	for (auto &item : mItems)
+	{
+		JitDumpLog(dump, item.Function);
+	}
+
+	fclose(dump);
 }

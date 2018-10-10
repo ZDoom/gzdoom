@@ -519,6 +519,7 @@ int VMCall(VMFunction *func, VMValue *params, int numparams, VMReturn *results, 
 					auto exceptInfo = CurrentJitExceptInfo;
 					CurrentJitExceptInfo = prevExceptInfo;
 					VMRethrowException(exceptInfo);
+					return 0;
 				}
 			}
 		}

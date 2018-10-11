@@ -230,8 +230,6 @@ int VMNativeFunction::NativeScriptCall(VMFunction *func, VMValue *params, int nu
 {
 	try
 	{
-		assert((call->VarFlags & VARF_Native) && "DoNativeCall must only be called for native functions");
-
 		VMCycles[0].Unclock();
 		numret = static_cast<VMNativeFunction *>(func)->NativeCall(params, func->DefaultArgs, numparams, returns, numret);
 		VMCycles[0].Clock();

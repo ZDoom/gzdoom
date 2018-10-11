@@ -172,13 +172,15 @@ void JitCompiler::EmitLHU_R()
 void JitCompiler::EmitLSP()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.movss(regF[A], asmjit::x86::dword_ptr(regA[B], konstd[C]));
+	cc.xorpd(regF[A], regF[A]);
+	cc.cvtss2sd(regF[A], asmjit::x86::dword_ptr(regA[B], konstd[C]));
 }
 
 void JitCompiler::EmitLSP_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.movss(regF[A], asmjit::x86::dword_ptr(regA[B], regD[C]));
+	cc.xorpd(regF[A], regF[A]);
+	cc.cvtss2sd(regF[A], asmjit::x86::dword_ptr(regA[B], regD[C]));
 }
 
 void JitCompiler::EmitLDP()

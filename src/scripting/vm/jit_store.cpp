@@ -40,13 +40,19 @@ void JitCompiler::EmitSW_R()
 void JitCompiler::EmitSSP()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	cc.movss(asmjit::x86::dword_ptr(regA[A], konstd[C]), regF[B]);
+	auto tmp = newTempXmmSd();
+	cc.xorpd(tmp, tmp);
+	cc.cvtsd2ss(tmp, regF[B]);
+	cc.movss(asmjit::x86::dword_ptr(regA[A], konstd[C]), tmp);
 }
 
 void JitCompiler::EmitSSP_R()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	cc.movss(asmjit::x86::dword_ptr(regA[A], regD[C]), regF[B]);
+	auto tmp = newTempXmmSd();
+	cc.xorpd(tmp, tmp);
+	cc.cvtsd2ss(tmp, regF[B]);
+	cc.movss(asmjit::x86::dword_ptr(regA[A], regD[C]), tmp);
 }
 
 void JitCompiler::EmitSDP()

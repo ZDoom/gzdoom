@@ -165,8 +165,9 @@ void JitCompiler::EmitCASTB()
 {
 	if (C == CASTB_I)
 	{
-		cc.mov(regD[A], regD[B]);
-		cc.shr(regD[A], 31);
+		cc.cmp(regD[B], (int)0);
+		cc.setne(regD[A]);
+		cc.movzx(regD[A], regD[A].r8Lo()); // not sure if this is needed
 	}
 	else if (C == CASTB_F)
 	{
@@ -174,14 +175,16 @@ void JitCompiler::EmitCASTB()
 		auto one = newTempInt32();
 		cc.xorpd(zero, zero);
 		cc.mov(one, 1);
-		cc.ucomisd(regF[A], zero);
+		cc.xor_(regD[A], regD[A]);
+		cc.ucomisd(regF[B], zero);
 		cc.setp(regD[A]);
 		cc.cmovne(regD[A], one);
 	}
 	else if (C == CASTB_A)
 	{
-		cc.test(regA[A], regA[A]);
+		cc.test(regA[B], regA[B]);
 		cc.setne(regD[A]);
+		cc.movzx(regD[A], regD[A].r8Lo()); // not sure if this is needed
 	}
 	else
 	{

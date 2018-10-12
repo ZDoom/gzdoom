@@ -269,11 +269,11 @@ void JitCompiler::Setup()
 	cc.add(vmcalls, (int)1);
 	cc.mov(x86::dword_ptr(vmcallsptr), vmcalls);
 
-	frameD = cc.newIntPtr();
-	frameF = cc.newIntPtr();
-	frameS = cc.newIntPtr();
-	frameA = cc.newIntPtr();
-	params = cc.newIntPtr();
+	frameD = cc.newIntPtr("frameD");
+	frameF = cc.newIntPtr("frameF");
+	frameS = cc.newIntPtr("frameS");
+	frameA = cc.newIntPtr("frameA");
+	params = cc.newIntPtr("params");
 
 	// the VM version reads this from the stack, but it is constant data
 	int offsetParams = ((int)sizeof(VMFrame) + 15) & ~15;

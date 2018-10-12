@@ -164,13 +164,13 @@ private:
 	asmjit::X86Gp numret;
 	asmjit::X86Gp stack;
 
+	int offsetParams;
+	int offsetF;
+	int offsetS;
+	int offsetA;
+	int offsetD;
 	int offsetExtra;
 	asmjit::X86Gp vmframe;
-	asmjit::X86Gp frameD;
-	asmjit::X86Gp frameF;
-	asmjit::X86Gp frameS;
-	asmjit::X86Gp frameA;
-	asmjit::X86Gp params;
 	int NumParam = 0; // Actually part of vmframe (f->NumParam), but nobody seems to read that?
 	TArray<const VMOP *> ParamOpcodes;
 	asmjit::X86Gp callReturns;

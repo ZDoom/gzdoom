@@ -269,18 +269,12 @@ void JitCompiler::Setup()
 	cc.add(vmcalls, (int)1);
 	cc.mov(x86::dword_ptr(vmcallsptr), vmcalls);
 
-	frameD = cc.newIntPtr("frameD");
-	frameF = cc.newIntPtr("frameF");
-	frameS = cc.newIntPtr("frameS");
-	frameA = cc.newIntPtr("frameA");
-	params = cc.newIntPtr("params");
-
 	// the VM version reads this from the stack, but it is constant data
-	int offsetParams = ((int)sizeof(VMFrame) + 15) & ~15;
-	int offsetF = offsetParams + (int)(sfunc->MaxParam * sizeof(VMValue));
-	int offsetS = offsetF + (int)(sfunc->NumRegF * sizeof(double));
-	int offsetA = offsetS + (int)(sfunc->NumRegS * sizeof(FString));
-	int offsetD = offsetA + (int)(sfunc->NumRegA * sizeof(void*));
+	offsetParams = ((int)sizeof(VMFrame) + 15) & ~15;
+	offsetF = offsetParams + (int)(sfunc->MaxParam * sizeof(VMValue));
+	offsetS = offsetF + (int)(sfunc->NumRegF * sizeof(double));
+	offsetA = offsetS + (int)(sfunc->NumRegS * sizeof(FString));
+	offsetD = offsetA + (int)(sfunc->NumRegA * sizeof(void*));
 	offsetExtra = (offsetD + (int)(sfunc->NumRegD * sizeof(int32_t)) + 15) & ~15;
 
 	vmframe = cc.newIntPtr("vmframe");
@@ -291,11 +285,6 @@ void JitCompiler::Setup()
 
 		auto vmstack = cc.newStack(sfunc->StackSize, 16);
 		cc.lea(vmframe, vmstack);
-		cc.lea(params, x86::ptr(vmframe, offsetParams));
-		cc.lea(frameF, x86::ptr(vmframe, offsetF));
-		cc.lea(frameS, x86::ptr(vmframe, offsetS));
-		cc.lea(frameA, x86::ptr(vmframe, offsetA));
-		cc.lea(frameD, x86::ptr(vmframe, offsetD));
 
 		auto slowinit = cc.newLabel();
 		auto endinit = cc.newLabel();
@@ -374,16 +363,16 @@ void JitCompiler::Setup()
 		fillParams->setArg(2, numargs);
 
 		for (int i = 0; i < sfunc->NumRegD; i++)
-			cc.mov(regD[i], x86::dword_ptr(frameD, i * sizeof(int32_t)));
+			cc.mov(regD[i], x86::dword_ptr(vmframe, offsetD + i * sizeof(int32_t)));
 
 		for (int i = 0; i < sfunc->NumRegF; i++)
-			cc.movsd(regF[i], x86::qword_ptr(frameF, i * sizeof(double)));
+			cc.movsd(regF[i], x86::qword_ptr(vmframe, offsetF + i * sizeof(double)));
 
 		for (int i = 0; i < sfunc->NumRegS; i++)
-			cc.lea(regS[i], x86::ptr(frameS, i * sizeof(FString)));
+			cc.lea(regS[i], x86::ptr(vmframe, offsetS + i * sizeof(FString)));
 
 		for (int i = 0; i < sfunc->NumRegA; i++)
-			cc.mov(regA[i], x86::ptr(frameA, i * sizeof(void*)));
+			cc.mov(regA[i], x86::ptr(vmframe, offsetA + i * sizeof(void*)));
 
 		cc.bind(endinit);
 	}
@@ -413,23 +402,17 @@ void JitCompiler::Setup()
 		cc.mov(vmframe, x86::ptr(stack)); // stack->Blocks
 		cc.mov(vmframe, x86::ptr(vmframe, VMFrameStack::OffsetLastFrame())); // Blocks->LastFrame
 
-		cc.lea(params, x86::ptr(vmframe, offsetParams));
-		cc.lea(frameF, x86::ptr(vmframe, offsetF));
-		cc.lea(frameS, x86::ptr(vmframe, offsetS));
-		cc.lea(frameA, x86::ptr(vmframe, offsetA));
-		cc.lea(frameD, x86::ptr(vmframe, offsetD));
-
 		for (int i = 0; i < sfunc->NumRegD; i++)
-			cc.mov(regD[i], x86::dword_ptr(frameD, i * sizeof(int32_t)));
+			cc.mov(regD[i], x86::dword_ptr(vmframe, offsetD + i * sizeof(int32_t)));
 
 		for (int i = 0; i < sfunc->NumRegF; i++)
-			cc.movsd(regF[i], x86::qword_ptr(frameF, i * sizeof(double)));
+			cc.movsd(regF[i], x86::qword_ptr(vmframe, offsetF + i * sizeof(double)));
 
 		for (int i = 0; i < sfunc->NumRegS; i++)
-			cc.lea(regS[i], x86::ptr(frameS, i * sizeof(FString)));
+			cc.lea(regS[i], x86::ptr(vmframe, offsetS + i * sizeof(FString)));
 
 		for (int i = 0; i < sfunc->NumRegA; i++)
-			cc.mov(regA[i], x86::ptr(frameA, i * sizeof(void*)));
+			cc.mov(regA[i], x86::ptr(vmframe, offsetA + i * sizeof(void*)));
 	}
 }
 

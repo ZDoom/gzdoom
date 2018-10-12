@@ -221,7 +221,7 @@ void JitCompiler::Setup()
 	cc.setArg(3, ret);
 	cc.setArg(4, numret);
 
-	auto stackalloc = cc.newStack(sizeof(VMReturn) * MAX_RETURNS, alignof(VMReturn));
+	auto stackalloc = cc.newStack(sizeof(VMReturn) * MAX_RETURNS, alignof(VMReturn), "stackalloc");
 	callReturns = cc.newIntPtr("callReturns");
 	cc.lea(callReturns, stackalloc);
 
@@ -283,7 +283,7 @@ void JitCompiler::Setup()
 	{
 		// This is a simple frame with no constructors or destructors. Allocate it on the stack ourselves.
 
-		auto vmstack = cc.newStack(sfunc->StackSize, 16);
+		auto vmstack = cc.newStack(sfunc->StackSize, 16, "vmstack");
 		cc.lea(vmframe, vmstack);
 
 		auto slowinit = cc.newLabel();
@@ -335,7 +335,7 @@ void JitCompiler::Setup()
 #endif
 		cc.bind(slowinit);
 
-		auto sfuncptr = cc.newIntPtr();
+		auto sfuncptr = newTempIntPtr();
 		cc.mov(sfuncptr, imm_ptr(sfunc));
 		if (cc.is64Bit())
 			cc.mov(x86::qword_ptr(vmframe, offsetof(VMFrame, Func)), sfuncptr);

@@ -175,6 +175,8 @@ void JitCompiler::EmitDoCall(asmjit::X86Gp vmfunc)
 
 	NumParam -= B;
 	ParamOpcodes.Resize(ParamOpcodes.Size() - B);
+
+	pc += C; // Skip RESULTs
 }
 
 void JitCompiler::EmitScriptCall(asmjit::X86Gp vmfunc, asmjit::X86Gp paramsptr)

@@ -40,6 +40,9 @@
 #include <malloc/malloc.h>
 #elif defined(__OpenBSD__)
 #include <stdlib.h>
+#elif defined(__APPLE__)
+#include <stdlib.h>
+#include <malloc.h>
 #else
 #include <malloc.h>
 #endif

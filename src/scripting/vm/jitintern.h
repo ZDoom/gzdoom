@@ -104,6 +104,7 @@ private:
 	template<typename RetType, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
 	asmjit::CCFuncCall *CreateCall(RetType(*func)(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7)) { return cc.call(asmjit::imm_ptr(reinterpret_cast<void*>(static_cast<RetType(*)(P1, P2, P3, P4, P5, P6, P7)>(func))), asmjit::FuncSignature7<RetType, P1, P2, P3, P4, P5, P6, P7>()); }
 
+	FString regname;
 	size_t tmpPosInt32, tmpPosInt64, tmpPosIntPtr, tmpPosXmmSd, tmpPosXmmSs, tmpPosXmmPd, resultPosInt32, resultPosIntPtr, resultPosXmmSd;
 	std::vector<asmjit::X86Gp> regTmpInt32, regTmpInt64, regTmpIntPtr, regResultInt32, regResultIntPtr;
 	std::vector<asmjit::X86Xmm> regTmpXmmSd, regTmpXmmSs, regTmpXmmPd, regResultXmmSd;
@@ -121,16 +122,27 @@ private:
 		resultPosXmmSd = 0;
 	}
 
-	asmjit::X86Gp newTempInt32() { if (tmpPosInt32 == regTmpInt32.size()) regTmpInt32.push_back(cc.newInt32()); return regTmpInt32[tmpPosInt32++]; }
-	asmjit::X86Gp newTempInt64() { if (tmpPosInt64 == regTmpInt64.size()) regTmpInt64.push_back(cc.newInt64()); return regTmpInt64[tmpPosInt64++]; }
-	asmjit::X86Gp newTempIntPtr() { if (tmpPosIntPtr == regTmpIntPtr.size()) regTmpIntPtr.push_back(cc.newIntPtr()); return regTmpIntPtr[tmpPosIntPtr++]; }
-	asmjit::X86Xmm newTempXmmSd() { if (tmpPosXmmSd == regTmpXmmSd.size()) regTmpXmmSd.push_back(cc.newXmmSd()); return regTmpXmmSd[tmpPosXmmSd++]; }
-	asmjit::X86Xmm newTempXmmSs() { if (tmpPosXmmSs == regTmpXmmSs.size()) regTmpXmmSs.push_back(cc.newXmmSs()); return regTmpXmmSs[tmpPosXmmSs++]; }
-	asmjit::X86Xmm newTempXmmPd() { if (tmpPosXmmPd == regTmpXmmPd.size()) regTmpXmmPd.push_back(cc.newXmmPd()); return regTmpXmmPd[tmpPosXmmPd++]; }
+	template<typename T, typename NewFunc>
+	T newTempRegister(std::vector<T> &tmpVector, size_t &tmpPos, const char *name, NewFunc newCallback)
+	{
+		if (tmpPos == tmpVector.size())
+		{
+			regname.Format("%s%d", name, (int)tmpVector.size());
+			tmpVector.push_back(newCallback(regname.GetChars()));
+		}
+		return tmpVector[tmpPos++];
+	}
 
-	asmjit::X86Gp newResultInt32() { if (resultPosInt32 == regResultInt32.size()) regResultInt32.push_back(cc.newInt32()); return regResultInt32[resultPosInt32++]; }
-	asmjit::X86Gp newResultIntPtr() { if (resultPosIntPtr == regResultIntPtr.size()) regResultIntPtr.push_back(cc.newIntPtr()); return regResultIntPtr[resultPosIntPtr++]; }
-	asmjit::X86Xmm newResultXmmSd() { if (resultPosXmmSd == regResultXmmSd.size()) regResultXmmSd.push_back(cc.newXmmSd()); return regResultXmmSd[resultPosXmmSd++]; }
+	asmjit::X86Gp newTempInt32() { return newTempRegister(regTmpInt32, tmpPosInt32, "tmpDword", [&](const char *name) { return cc.newInt32(name); }); }
+	asmjit::X86Gp newTempInt64() { return newTempRegister(regTmpInt64, tmpPosInt64, "tmpQword", [&](const char *name) { return cc.newInt64(name); }); }
+	asmjit::X86Gp newTempIntPtr() { return newTempRegister(regTmpIntPtr, tmpPosIntPtr, "tmpPtr", [&](const char *name) { return cc.newIntPtr(name); }); }
+	asmjit::X86Xmm newTempXmmSd() { return newTempRegister(regTmpXmmSd, tmpPosXmmSd, "tmpXmmSd", [&](const char *name) { return cc.newXmmSd(name); }); }
+	asmjit::X86Xmm newTempXmmSs() { return newTempRegister(regTmpXmmSs, tmpPosXmmSs, "tmpXmmSs", [&](const char *name) { return cc.newXmmSs(name); }); }
+	asmjit::X86Xmm newTempXmmPd() { return newTempRegister(regTmpXmmPd, tmpPosXmmPd, "tmpXmmPd", [&](const char *name) { return cc.newXmmPd(name); }); }
+
+	asmjit::X86Gp newResultInt32() { return newTempRegister(regResultInt32, resultPosInt32, "resultDword", [&](const char *name) { return cc.newInt32(name); }); }
+	asmjit::X86Gp newResultIntPtr() { return newTempRegister(regResultIntPtr, resultPosIntPtr, "resultPtr", [&](const char *name) { return cc.newIntPtr(name); }); }
+	asmjit::X86Xmm newResultXmmSd() { return newTempRegister(regResultXmmSd, resultPosXmmSd, "resultXmmSd", [&](const char *name) { return cc.newXmmSd(name); }); }
 
 	void EmitNullPointerThrow(int index, EVMAbortException reason);
 	void EmitThrowException(EVMAbortException reason);

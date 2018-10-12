@@ -237,28 +237,24 @@ void JitCompiler::Setup()
 
 	for (int i = 0; i < sfunc->NumRegD; i++)
 	{
-		FString regname;
 		regname.Format("regD%d", i);
 		regD[i] = cc.newInt32(regname.GetChars());
 	}
 
 	for (int i = 0; i < sfunc->NumRegF; i++)
 	{
-		FString regname;
 		regname.Format("regF%d", i);
 		regF[i] = cc.newXmmSd(regname.GetChars());
 	}
 
 	for (int i = 0; i < sfunc->NumRegS; i++)
 	{
-		FString regname;
 		regname.Format("regS%d", i);
 		regS[i] = cc.newIntPtr(regname.GetChars());
 	}
 
 	for (int i = 0; i < sfunc->NumRegA; i++)
 	{
-		FString regname;
 		regname.Format("regA%d", i);
 		regA[i] = cc.newIntPtr(regname.GetChars());
 	}

@@ -451,7 +451,7 @@ vec3 AmbientOcclusionColor()
 	//
 	if (uFogEnabled == -1) 
 	{
-		fogdist = pixelpos.w;
+		fogdist = max(16.0, pixelpos.w);
 	}
 	else 
 	{
@@ -489,7 +489,7 @@ void main()
 		{
 			if (uFogEnabled == 1 || uFogEnabled == -1) 
 			{
-				fogdist = pixelpos.w;
+				fogdist = max(16.0, pixelpos.w);
 			}
 			else 
 			{

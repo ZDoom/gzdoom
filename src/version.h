@@ -48,16 +48,16 @@ const char *GetVersionString();
 #ifdef GIT_DESCRIPTION
 #define VERSIONSTR GIT_DESCRIPTION
 #else
-#define VERSIONSTR "3.6pre"
+#define VERSIONSTR "3.7pre"
 #endif
 
 // The version as seen in the Windows resource
-#define RC_FILEVERSION 3,5,9999,0
-#define RC_PRODUCTVERSION 3,5,9999,0
+#define RC_FILEVERSION 3,6,9999,0
+#define RC_PRODUCTVERSION 3,6,9999,0
 #define RC_PRODUCTVERSION2 VERSIONSTR
 // These are for content versioning.
 #define VER_MAJOR 3
-#define VER_MINOR 6
+#define VER_MINOR 7
 #define VER_REVISION 0
 
 // Version identifier for network games.

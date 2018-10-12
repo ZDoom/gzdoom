@@ -179,26 +179,29 @@ class ThrustFloor : Actor
 		while (it.Next())
 		{
 			let targ = it.thing;
-			double blockdist = radius + it.thing.radius;
-			if (abs(targ.pos.x - it.Position.X) >= blockdist || abs(targ.pos.y - it.Position.Y) >= blockdist)
-				continue;
-
-			// Q: Make this z-aware for everything? It never was before.
-			if (targ.pos.z + targ.height < pos.z || targ.pos.z > pos.z + height)
+			if (targ != null)
 			{
-				if (CurSector.PortalGroup != targ.CurSector.PortalGroup)
+				double blockdist = radius + targ.radius;
+				if (abs(targ.pos.x - it.Position.X) >= blockdist || abs(targ.pos.y - it.Position.Y) >= blockdist)
 					continue;
+
+				// Q: Make this z-aware for everything? It never was before.
+				if (targ.pos.z + targ.height < pos.z || targ.pos.z > pos.z + height)
+				{
+					if (CurSector.PortalGroup != targ.CurSector.PortalGroup)
+						continue;
+				}
+
+				if (!targ.bShootable)
+					continue;
+
+				if (targ == self)
+					continue;	// don't clip against self
+
+				int newdam = targ.DamageMobj (self, self, 10001, 'Crush');
+				targ.TraceBleed (newdam > 0 ? newdam : 10001, null);
+				args[1] = 1;	// Mark thrust thing as bloody
 			}
-
-			if (!targ.bShootable)
-				continue;
-
-			if (targ == self)
-				continue;	// don't clip against self
-
-			int newdam = targ.DamageMobj (self, self, 10001, 'Crush');
-			targ.TraceBleed (newdam > 0 ? newdam : 10001, null);
-			args[1] = 1;	// Mark thrust thing as bloody
 		}
 	}
 }

@@ -159,6 +159,7 @@ inline const char *I_FindName(findstate_t *fileinfo)
 #define FA_DIREC	8
 #define FA_ARCH		16
 
+#ifndef __HAIKU__
 static inline char *strlwr(char *str)
 {
 	char *ptr = str;
@@ -169,5 +170,5 @@ static inline char *strlwr(char *str)
 	}
 	return str;
 }
-
+#endif
 #endif

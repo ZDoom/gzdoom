@@ -387,7 +387,7 @@ endif()
 CHECK_CXX_SOURCE_COMPILES("thread_local int i; int main() { i = 0; }"
 	HAVE_THREAD_LOCAL)
 
-if( NOT HAVE_THREAD_LOCAL )
+if( NOT HAVE_THREAD_LOCAL AND NOT HAIKU)
 	message( SEND_ERROR "C++ compiler doesn't support thread_local storage duration specifier" )
 endif()
 

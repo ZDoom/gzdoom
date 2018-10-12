@@ -29,7 +29,6 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <boost/asio.hpp>
-
 using boost::asio::ip::tcp;
 
 #ifdef _WIN32
@@ -164,12 +163,16 @@ extern TDeletingArray<FLightDefaults *> LightDefaults;
 
 boost::asio::io_context io_context;
 tcp::socket gienek_socket(io_context);
+
+tcp::socket* gienek_global_socket;
+
 void Gienek_Init()
 {
 	tcp::resolver resolver(io_context);
     tcp::resolver::results_type endpoints = resolver.resolve("localhost", "daytime");
 
     boost::asio::connect(gienek_socket, endpoints);
+	gienek_global_socket = &gienek_socket;
 }
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------

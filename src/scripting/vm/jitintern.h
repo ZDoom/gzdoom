@@ -39,6 +39,7 @@ private:
 	#undef xx
 
 	void Setup();
+	void BindLabels();
 	void EmitOpcode();
 	void EmitPopFrame();
 
@@ -63,7 +64,7 @@ private:
 
 		auto successLabel = cc.newLabel();
 
-		auto failLabel = labels[i + 2 + JMPOFS(pc + 1)];
+		auto failLabel = GetLabel(i + 2 + JMPOFS(pc + 1));
 
 		jmpFunc(static_cast<bool>(A & CMP_CHECK), failLabel, successLabel);
 
@@ -172,7 +173,25 @@ private:
 	TArray<asmjit::X86Gp> regA;
 	TArray<asmjit::X86Gp> regS;
 
-	TArray<asmjit::Label> labels;
+	struct OpcodeLabel
+	{
+		asmjit::CBNode *cursor = nullptr;
+		asmjit::Label label;
+		bool inUse = false;
+	};
+
+	asmjit::Label GetLabel(size_t pos)
+	{
+		auto &label = labels[pos];
+		if (!label.inUse)
+		{
+			label.label = cc.newLabel();
+			label.inUse = true;
+		}
+		return label.label;
+	}
+
+	TArray<OpcodeLabel> labels;
 
 	const VMOP *pc;
 	VM_UBYTE op;

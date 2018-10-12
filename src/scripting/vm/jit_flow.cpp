@@ -5,7 +5,7 @@ void JitCompiler::EmitTEST()
 {
 	int i = (int)(ptrdiff_t)(pc - sfunc->Code);
 	cc.cmp(regD[A], BC);
-	cc.jne(labels[i + 2]);
+	cc.jne(GetLabel(i + 2));
 }
 	
 void JitCompiler::EmitTESTN()
@@ -13,14 +13,14 @@ void JitCompiler::EmitTESTN()
 	int bc = BC;
 	int i = (int)(ptrdiff_t)(pc - sfunc->Code);
 	cc.cmp(regD[A], -bc);
-	cc.jne(labels[i + 2]);
+	cc.jne(GetLabel(i + 2));
 }
 
 void JitCompiler::EmitJMP()
 {
 	auto dest = pc + JMPOFS(pc) + 1;
 	int i = (int)(ptrdiff_t)(dest - sfunc->Code);
-	cc.jmp(labels[i]);
+	cc.jmp(GetLabel(i));
 }
 
 void JitCompiler::EmitIJMP()
@@ -40,7 +40,7 @@ void JitCompiler::EmitIJMP()
 			int target = i + JMPOFS(&sfunc->Code[i]) + 1;
 
 			cc.cmp(val, i);
-			cc.je(labels[target]);
+			cc.je(GetLabel(target));
 		}
 	}
 

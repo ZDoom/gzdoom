@@ -148,12 +148,14 @@ void JitCompiler::Codegen()
 		cc.comment("", 0);
 		cc.comment(lineinfo.GetChars(), lineinfo.Len());
 
-		cc.bind(labels[i]);
+		labels[i].cursor = cc.getCursor();
 		ResetTemp();
 		EmitOpcode();
 
 		pc++;
 	}
+
+	BindLabels();
 
 	cc.endFunc();
 	cc.finalize();
@@ -171,6 +173,22 @@ void JitCompiler::EmitOpcode()
 		I_FatalError("JIT error: Unknown VM opcode %d\n", op);
 		break;
 	}
+}
+
+void JitCompiler::BindLabels()
+{
+	asmjit::CBNode *cursor = cc.getCursor();
+	unsigned int size = labels.Size();
+	for (unsigned int i = 0; i < size; i++)
+	{
+		const OpcodeLabel &label = labels[i];
+		if (label.inUse)
+		{
+			cc.setCursor(label.cursor);
+			cc.bind(label.label);
+		}
+	}
+	cc.setCursor(cursor);
 }
 
 void JitCompiler::Setup()
@@ -245,10 +263,7 @@ void JitCompiler::Setup()
 		regA[i] = cc.newIntPtr(regname.GetChars());
 	}
 
-	int size = sfunc->CodeSize;
-	labels.Resize(size);
-	for (int i = 0; i < size; i++)
-		labels[i] = cc.newLabel();
+	labels.Resize(sfunc->CodeSize);
 
 	// VMCalls[0]++
 	auto vmcallsptr = newTempIntPtr();

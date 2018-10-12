@@ -1,6 +1,18 @@
 cmake_minimum_required( VERSION 2.8.7 )
 project(GZDoom)
 
+set(BOOST_INCLUDE				$ENV{BOOST_INCLUDE_PATH})
+set(BOOST_LIBS					$ENV{BOOST_LIB_PATH})
+
+message(WARNING "warn")
+message(WARNING ${BOOST_LIBS})
+message(WARNING "warn1")
+link_directories(${BOOST_LIBS})
+
+include_directories(
+	${BOOST_INCLUDE}
+)
+
 if( COMMAND cmake_policy )
 	if( POLICY CMP0011 )
 		cmake_policy( SET CMP0011 NEW )

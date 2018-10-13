@@ -840,6 +840,7 @@ void P_LoadVertexes (MapData * map)
 		int16_t y = fr.ReadInt16();
 
 		// Report vertex to Gienek
+		// TODO: Take care of the network byte order!
 		char buf[5];
 		buf[0] = 'a';
 		memcpy(&buf[1], &x, 2);

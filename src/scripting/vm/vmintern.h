@@ -489,6 +489,4 @@ public:
 
 private:
 	static int FirstScriptCall(VMFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret);
-
-	bool FunctionJitted = false;
 };

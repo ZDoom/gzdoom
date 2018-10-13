@@ -30,7 +30,7 @@ class JitCompiler
 public:
 	JitCompiler(asmjit::CodeHolder *code, VMScriptFunction *sfunc) : cc(code), sfunc(sfunc) { }
 
-	void Codegen();
+	asmjit::CCFunc *Codegen();
 
 private:
 	// Declare EmitXX functions for the opcodes:
@@ -158,6 +158,7 @@ private:
 	asmjit::X86Compiler cc;
 	VMScriptFunction *sfunc;
 
+	asmjit::CCFunc *func = nullptr;
 	asmjit::X86Gp args;
 	asmjit::X86Gp numargs;
 	asmjit::X86Gp ret;

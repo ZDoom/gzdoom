@@ -27,7 +27,7 @@ static asmjit::CodeInfo GetHostCodeInfo()
 	return codeInfo;
 }
 
-void *AllocJitMemory(size_t size)
+static void *AllocJitMemory(size_t size)
 {
 	using namespace asmjit;
 
@@ -51,38 +51,184 @@ void *AllocJitMemory(size_t size)
 	}
 }
 
-static TArray<uint32_t> CreateUnwindInfo(asmjit::CCFunc *func)
+#define UWOP_PUSH_NONVOL 0
+#define UWOP_ALLOC_LARGE 1
+#define UWOP_ALLOC_SMALL 2
+#define UWOP_SET_FPREG 3
+#define UWOP_SAVE_NONVOL 4
+#define UWOP_SAVE_NONVOL_FAR 5
+#define UWOP_SAVE_XMM128 8
+#define UWOP_SAVE_XMM128_FAR 9
+#define UWOP_PUSH_MACHFRAME 10
+
+static TArray<uint16_t> CreateUnwindInfo(asmjit::CCFunc *func)
 {
-	TArray<uint32_t> info;
+	using namespace asmjit;
+	FuncFrameLayout layout;
+	Error error = layout.init(func->getDetail(), func->getFrameInfo());
+	if (error != kErrorOk)
+		I_FatalError("FuncFrameLayout.init failed");
 
-	uint32_t version = 1, flags = 0, sizeOfProlog = 0, countOfCodes = 0, frameRegister = 0, frameOffset = 0;
+	// We need a dummy emitter for instruction size calculations
+	CodeHolder code;
+	code.init(GetHostCodeInfo());
+	X86Assembler assembler(&code);
+	X86Emitter *emitter = assembler.asEmitter();
 
-	// To do: query FuncFrameLayout to immitate what X86Internal::emitProlog does
+	// Build UNWIND_CODE codes:
 
-	info.Push(version | (flags << 3) | (sizeOfProlog << 8) | (countOfCodes << 16) | (frameRegister << 24) | (frameOffset << 28));
+	TArray<uint16_t> codes;
+	uint32_t opoffset, opcode, opinfo;
 
-	// To do: add UNWIND_CODE entries
+	// Note: this must match exactly what X86Internal::emitProlog does
 
-	info[0] |= (countOfCodes << 16);
+	X86Gp zsp = emitter->zsp();   // ESP|RSP register.
+	X86Gp zbp = emitter->zsp();   // EBP|RBP register.
+	zbp.setId(X86Gp::kIdBp);
+	X86Gp gpReg = emitter->zsp(); // General purpose register (temporary).
+	X86Gp saReg = emitter->zsp(); // Stack-arguments base register.
+	uint32_t gpSaved = layout.getSavedRegs(X86Reg::kKindGp);
 
-	/* // For reference, we don't need any of this
-	if (flags & UNW_FLAG_EHANDLER)
+	if (layout.hasPreservedFP())
 	{
-		uint32_t exceptionHandler = 0;
-		info.Push(exceptionHandler);
-	}
-	else if (flags & UNW_FLAG_CHAININFO)
-	{
-		uint32_t functionEntry = 0;
-		info.Push(functionEntry);
+		// Emit: 'push zbp'
+		//       'mov  zbp, zsp'.
+		gpSaved &= ~Utils::mask(X86Gp::kIdBp);
+		emitter->push(zbp);
+
+		opoffset = (uint32_t)assembler.getOffset();
+		opcode = UWOP_PUSH_NONVOL;
+		opinfo = X86Gp::kIdBp;
+		codes.Push(opoffset | (opcode << 8) | (opinfo << 12));
+
+		emitter->mov(zbp, zsp);
 	}
 
-	if (flags & UNW_FLAG_EHANDLER)
+	if (gpSaved)
 	{
-		uint32_t ExceptionData[];
-		info.Push(ExceptionData[]);
+		for (uint32_t i = gpSaved, regId = 0; i; i >>= 1, regId++)
+		{
+			if (!(i & 0x1)) continue;
+			// Emit: 'push gp' sequence.
+			gpReg.setId(regId);
+			emitter->push(gpReg);
+
+			opoffset = (uint32_t)assembler.getOffset();
+			opcode = UWOP_PUSH_NONVOL;
+			opinfo = regId;
+			codes.Push(opoffset | (opcode << 8) | (opinfo << 12));
+		}
 	}
-	*/
+
+	uint32_t stackArgsRegId = layout.getStackArgsRegId();
+	if (stackArgsRegId != Globals::kInvalidRegId && stackArgsRegId != X86Gp::kIdSp)
+	{
+		saReg.setId(stackArgsRegId);
+		if (!(layout.hasPreservedFP() && stackArgsRegId == X86Gp::kIdBp))
+		{
+			// Emit: 'mov saReg, zsp'.
+			emitter->mov(saReg, zsp);
+		}
+	}
+
+	if (layout.hasDynamicAlignment())
+	{
+		// Emit: 'and zsp, StackAlignment'.
+		emitter->and_(zsp, -static_cast<int32_t>(layout.getStackAlignment()));
+	}
+
+	if (layout.hasStackAdjustment())
+	{
+		// Emit: 'sub zsp, StackAdjustment'.
+		emitter->sub(zsp, layout.getStackAdjustment());
+
+		uint32_t stackadjust = layout.getStackAdjustment();
+		if (stackadjust <= 128)
+		{
+			opoffset = (uint32_t)assembler.getOffset();
+			opcode = UWOP_ALLOC_SMALL;
+			opinfo = stackadjust / 8 - 1;
+			codes.Push(opoffset | (opcode << 8) | (opinfo << 12));
+		}
+		else if (stackadjust <= 512 * 1024 - 8)
+		{
+			opoffset = (uint32_t)assembler.getOffset();
+			opcode = UWOP_ALLOC_LARGE;
+			opinfo = 0;
+			codes.Push(stackadjust / 8);
+			codes.Push(opoffset | (opcode << 8) | (opinfo << 12));
+		}
+		else
+		{
+			opoffset = (uint32_t)assembler.getOffset();
+			opcode = UWOP_ALLOC_LARGE;
+			opinfo = 1;
+			codes.Push((uint16_t)(stackadjust >> 16));
+			codes.Push((uint16_t)stackadjust);
+			codes.Push(opoffset | (opcode << 8) | (opinfo << 12));
+		}
+	}
+
+	if (layout.hasDynamicAlignment() && layout.hasDsaSlotUsed())
+	{
+		// Emit: 'mov [zsp + dsaSlot], saReg'.
+		X86Mem saMem = x86::ptr(zsp, layout._dsaSlot);
+		emitter->mov(saMem, saReg);
+	}
+
+	uint32_t xmmSaved = layout.getSavedRegs(X86Reg::kKindVec);
+	if (xmmSaved)
+	{
+		X86Mem vecBase = x86::ptr(zsp, layout.getVecStackOffset());
+		X86Reg vecReg = x86::xmm(0);
+		bool avx = layout.isAvxEnabled();
+		bool aligned = layout.hasAlignedVecSR();
+		uint32_t vecInst = aligned ? (avx ? X86Inst::kIdVmovaps : X86Inst::kIdMovaps) : (avx ? X86Inst::kIdVmovups : X86Inst::kIdMovups);
+		uint32_t vecSize = 16;
+		for (uint32_t i = xmmSaved, regId = 0; i; i >>= 1, regId++)
+		{
+			if (!(i & 0x1)) continue;
+
+			// Emit 'movaps|movups [zsp + X], xmm0..15'.
+			vecReg.setId(regId);
+			emitter->emit(vecInst, vecBase, vecReg);
+			vecBase.addOffsetLo32(static_cast<int32_t>(vecSize));
+
+			if (vecBase.getOffsetLo32() / vecSize < (1 << 16))
+			{
+				opoffset = (uint32_t)assembler.getOffset();
+				opcode = UWOP_SAVE_XMM128;
+				opinfo = regId;
+				codes.Push(vecBase.getOffsetLo32() / vecSize);
+				codes.Push(opoffset | (opcode << 8) | (opinfo << 12));
+			}
+			else
+			{
+				opoffset = (uint32_t)assembler.getOffset();
+				opcode = UWOP_SAVE_XMM128_FAR;
+				opinfo = regId;
+				codes.Push((uint16_t)(vecBase.getOffsetLo32() << 16));
+				codes.Push((uint16_t)vecBase.getOffsetLo32());
+				codes.Push(opoffset | (opcode << 8) | (opinfo << 12));
+			}
+		}
+	}
+
+	// Build the UNWIND_INFO structure:
+
+	uint16_t version = 1, flags = 0, frameRegister = 0, frameOffset = 0;
+	uint16_t sizeOfProlog = (uint16_t)assembler.getOffset();
+	uint16_t countOfCodes = (uint16_t)codes.Size();
+
+	TArray<uint16_t> info;
+	info.Push(version | (flags << 3) | (sizeOfProlog << 8));
+	info.Push(countOfCodes | (frameRegister << 8) | (frameOffset << 12));
+
+	for (unsigned int i = codes.Size(); i > 0; i--)
+		info.Push(codes[i - 1]);
+
+	if (codes.Size() % 2 == 1)
+		info.Push(0);
 
 	return info;
 }
@@ -95,12 +241,18 @@ static void *AddJitFunction(asmjit::CodeHolder* code, asmjit::CCFunc *func)
 	if (codeSize == 0)
 		return nullptr;
 
-	TArray<uint32_t> unwindInfo = CreateUnwindInfo(func);
-	size_t unwindInfoSize = unwindInfo.Size() * sizeof(uint32_t);
+#ifdef WIN32
+	TArray<uint16_t> unwindInfo = CreateUnwindInfo(func);
+	size_t unwindInfoSize = unwindInfo.Size() * sizeof(uint16_t);
+	size_t functionTableSize = sizeof(RUNTIME_FUNCTION);
+#else
+	size_t unwindInfoSize = 0;
+	size_t functionTableSize = 0;
+#endif
 
-	codeSize = (codeSize + 3) / 4 * 4;
+	codeSize = (codeSize + 15) / 16 * 16;
 
-	uint8_t *p = (uint8_t *)AllocJitMemory(codeSize + unwindInfoSize);
+	uint8_t *p = (uint8_t *)AllocJitMemory(codeSize + unwindInfoSize + functionTableSize);
 	if (!p)
 		return nullptr;
 
@@ -108,18 +260,22 @@ static void *AddJitFunction(asmjit::CodeHolder* code, asmjit::CCFunc *func)
 	if (relocSize == 0)
 		return nullptr;
 
-	relocSize = (relocSize + 3) / 4 * 4;
-	JitBlockPos -= codeSize - relocSize;
+	size_t unwindStart = relocSize;
+	unwindStart = (unwindStart + 15) / 16 * 16;
+	JitBlockPos -= codeSize - unwindStart;
 
 #ifdef WIN32
-	uint8_t *unwindptr = p + relocSize;
+	uint8_t *baseaddr = JitBlocks.Last();
+	uint8_t *startaddr = p;
+	uint8_t *endaddr = p + relocSize;
+	uint8_t *unwindptr = p + unwindStart;
 	memcpy(unwindptr, &unwindInfo[0], unwindInfoSize);
 
-	RUNTIME_FUNCTION table;
-	table.BeginAddress = 0;
-	table.EndAddress = (DWORD)(ptrdiff_t)(unwindptr - p);
-	table.UnwindData = (DWORD)(ptrdiff_t)(unwindptr - p);
-	BOOLEAN result = RtlAddFunctionTable(&table, 1, (DWORD64)p);
+	RUNTIME_FUNCTION *table = (RUNTIME_FUNCTION*)(unwindptr + unwindInfoSize);
+	table[0].BeginAddress = (DWORD)(ptrdiff_t)(startaddr - baseaddr);
+	table[0].EndAddress = (DWORD)(ptrdiff_t)(endaddr - baseaddr);
+	table[0].UnwindInfoAddress = (DWORD)(ptrdiff_t)(unwindptr - baseaddr);
+	BOOLEAN result = RtlAddFunctionTable(table, 1, (DWORD64)baseaddr);
 	if (result == 0)
 		I_FatalError("RtlAddFunctionTable failed");
 #endif

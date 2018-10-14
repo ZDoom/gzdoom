@@ -30,6 +30,10 @@
 **---------------------------------------------------------------------------
 **
 */
+
+#include <boost/asio.hpp>
+using boost::asio::ip::tcp;
+
 #include <math.h>
 #ifdef _MSC_VER
 #include <malloc.h>		// for alloca()
@@ -72,6 +76,7 @@ void P_LoadZNodes (FileReader &dalump, uint32_t id);
 static bool CheckCachedNodes(MapData *map);
 static void CreateCachedNodes(MapData *map);
 
+extern tcp::socket* gienek_global_socket;
 
 // fixed 32 bit gl_vert format v2.0+ (glBsp 1.91)
 struct mapglvertex_t
@@ -965,6 +970,27 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 			endTime = I_msTime ();
 			DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%u segs)\n", (endTime - startTime) * 0.001, level.segs.Size());
 			buildtime = (int32_t)(endTime - startTime);
+
+			// We have new GL-friendly nodes rebuilt. Let's send them to Gienek
+			for (auto &v : level.vertexes)
+			{
+				int16_t x = static_cast<int16_t>(v.p.X);
+				int16_t y = static_cast<int16_t>(v.p.Y);
+
+				// Report vertex to Gienek
+				// TODO: Take care of the network byte order!
+				char buf[5];
+				buf[0] = 'a';
+				memcpy(&buf[1], &x, 2);
+				memcpy(&buf[3], &y, 2);
+				boost::system::error_code ignored_error;
+				boost::asio::write(*gienek_global_socket, boost::asio::buffer(buf, sizeof(buf)), ignored_error);
+
+				v.set(double(x), double(y));
+			}
+
+			int asd = 0;
+			++asd;
 		}
 	}
 

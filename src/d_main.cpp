@@ -28,6 +28,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <boost/asio.hpp>
+using boost::asio::ip::tcp;
+
 #ifdef _WIN32
 #include <direct.h>
 #endif
@@ -158,6 +161,19 @@ extern bool M_DemoNoPlay;	// [RH] if true, then skip any demos in the loop
 extern bool insave;
 extern TDeletingArray<FLightDefaults *> LightDefaults;
 
+boost::asio::io_context io_context;
+tcp::socket gienek_socket(io_context);
+
+tcp::socket* gienek_global_socket;
+
+void Gienek_Init()
+{
+	tcp::resolver resolver(io_context);
+    tcp::resolver::results_type endpoints = resolver.resolve("localhost", "daytime");
+
+    boost::asio::connect(gienek_socket, endpoints);
+	gienek_global_socket = &gienek_socket;
+}
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -2509,6 +2525,9 @@ void D_DoomMain (void)
 
 		if (!batchrun) Printf("M_Init: Init menus.\n");
 		M_Init();
+
+		Printf("Gienek_Init: Connecting to Gienek AssAssYn\n");
+		Gienek_Init();
 
 		// clean up the compiler symbols which are not needed any longer.
 		RemoveUnusedSymbols();

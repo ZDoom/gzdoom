@@ -1195,6 +1195,12 @@ AWeapon *APlayerPawn::PickNewWeapon(PClassActor *ammotype)
 	return best;
 }
 
+DEFINE_ACTION_FUNCTION(APlayerPawn, PickNewWeapon)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	PARAM_CLASS(ammo, AActor);
+	ACTION_RETURN_POINTER(self->PickNewWeapon(ammo));
+}
 //===========================================================================
 //
 // APlayerPawn :: GiveDeathmatchInventory

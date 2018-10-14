@@ -594,39 +594,19 @@ size_t VMFunctionBuilder::Emit(int opcode, int opa, int opb, int opc)
 	}
 	if (opc > 255)
 	{
-		if (opcode == OP_PARAM && (opb & REGT_KONST) && opc <= 32767)
+		if (opRemap[opcode].kReg != 4 || opc > 32767)
 		{
-			int regtype = opb & REGT_TYPE;
-			opb = regtype;
-			ExpEmit emit(this, regtype);
-			Emit(opcodes[regtype], emit.RegNum, opc);
-			opc = emit.RegNum;
-			emit.Free(this);
+			I_Error("Register limit exceeded");
 		}
-		else
-		{
-			if (opRemap[opcode].kReg != 4 || opc > 32767)
-			{
-				I_Error("Register limit exceeded");
-			}
-			int regtype = opRemap[opcode].kType;
-			ExpEmit emit(this, regtype);
-			Emit(opcodes[regtype], emit.RegNum, opc);
-			opcode = opRemap[opcode].altOp;
-			opc = emit.RegNum;
-			emit.Free(this);
-		}
+		int regtype = opRemap[opcode].kType;
+		ExpEmit emit(this, regtype);
+		Emit(opcodes[regtype], emit.RegNum, opc);
+		opcode = opRemap[opcode].altOp;
+		opc = emit.RegNum;
+		emit.Free(this);
 	}
 
-	if (opcode == OP_PARAM)
-	{
-		int chg;
-		if (opb & REGT_MULTIREG2) chg = 2;
-		else if (opb&REGT_MULTIREG3) chg = 3;
-		else chg = 1;
-		ParamChange(chg);
-	}
-	else if (opcode == OP_CALL || opcode == OP_CALL_K || opcode == OP_TAIL || opcode == OP_TAIL_K)
+	if (opcode == OP_CALL || opcode == OP_CALL_K || opcode == OP_TAIL || opcode == OP_TAIL_K)
 	{
 		ParamChange(-opb);
 	}
@@ -642,6 +622,16 @@ size_t VMFunctionBuilder::Emit(int opcode, int opa, VM_SHALF opbc)
 {
 	assert(opcode >= 0 && opcode < NUM_OPS);
 	assert(opa >= 0 && opa <= 255);
+
+	if (opcode == OP_PARAM)
+	{
+		int chg;
+		if (opa & REGT_MULTIREG2) chg = 2;
+		else if (opa & REGT_MULTIREG3) chg = 3;
+		else chg = 1;
+		ParamChange(chg);
+	}
+
 	//assert(opbc >= -32768 && opbc <= 32767);	always true due to parameter's width
 	VMOP op;
 	op.op = opcode;
@@ -682,7 +672,7 @@ size_t VMFunctionBuilder::EmitParamInt(int value)
 	}
 	else
 	{
-		return Emit(OP_PARAM, 0, REGT_INT | REGT_KONST, GetConstantInt(value));
+		return Emit(OP_PARAM, REGT_INT | REGT_KONST, GetConstantInt(value));
 	}
 }
 

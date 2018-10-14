@@ -1277,6 +1277,7 @@ class PlayerPawn : Actor native
 	native void CheckUse();
 	native void CheckWeaponButtons();
 	native Weapon BestWeapon(class<Ammo> ammotype);
+	native Weapon PickNewWeapon(class<Ammo> ammotype);
 
 }
 

@@ -4,26 +4,7 @@ class LevelCompatibility play
 	private static void Apply(Name checksum)
 	{
 		switch (checksum)
-		{
-			case 'AB24AE6E2CB13CBDD04600A4D37F9189':   // doom2.wad map02
-			case '1EC0AF1E3985650F0C9000319C599D0C':  // doom2bfg.wad map02
-			{
-				// Missing textures
-				TextureID stone4 = TexMan.CheckForTexture("STONE4", TexMan.Type_Wall);
-				SetWallTextureID(327, Line.front, Side.bottom, stone4);
-				SetWallTextureID(328, Line.front, Side.bottom, stone4);
-				SetWallTextureID(338, Line.front, Side.bottom, stone4);
-				SetWallTextureID(339, Line.front, Side.bottom, stone4);
-				break;
-			}
-			
-			case '66C46385EB1A23D60839D1532522076B':  // doom2.wad map08
-			{
-				// Missing texture
-				SetWallTexture(101, Line.back, Side.top, "BRICK7");
-				break;
-			}
-			
+		{			
 			case 'E2B5D1400279335811C1C1C0B437D9C8': // Deathknights of the Dark Citadel, map54
 			{
 				// This map has two gear boxes which are flagged for player cross
@@ -152,7 +133,7 @@ class LevelCompatibility play
 			case '1E785E841A5247B6223C042EC712EBB3': // TNT: Evilution MAP08
 			{
 				// Missing texture when lowering sector to red keycard
-				SetWallTexture(480, Line.back, Side.Bottom, "METAL2");
+				SetWallTexture(480, Line.back, Side.bottom, "METAL2");
 				break;
 			}
 
@@ -160,6 +141,13 @@ class LevelCompatibility play
 			{
 				// raise up sector with its counterpart so 100% kills becomes possible
 				AddSectorTag(330, 11);
+				break;
+			}
+			
+			case '55C8DA7B531AE47014AD73FFF4687A36': // TNT: Evilution MAP21
+			{
+				// Missing texture that is most likely unintentional
+				SetWallTexture(1138, Line.front, Side.top, "PANEL4");
 				break;
 			}
 
@@ -191,15 +179,82 @@ class LevelCompatibility play
 				SetLineSpecial(1240, Floor_LowerToLowest, 38, 32);
 				break;
 			}
+			
+			case '56D4060662C290791822EDB7225273B7': // Plutonia Experiment MAP08
+			{
+				// Raising ceiling causing a HOM.
+				OffsetSectorPlane(130, Sector.ceiling, 16);
+				break;
+			}
+			
+			case '25A16C30CD10157382C01E5DD9C6604B': // Plutonia Experiment MAP10
+			{
+				// Missing textures
+				SetWallTexture(548, Line.front, Side.bottom, "METAL");
+				SetSectorTexture(71, Sector.ceiling, "FLOOR7_1");
+				SetWallTexture(1010, Line.front, Side.top, "GSTONE1");
+				break;
+			}
 
 			case '1EF7DEAECA03DE03BF363A3193757B5C': // PLUTONIA.wad map11
 			{
 				SetLineSectorRef(41, Line.back, 6);
 				break;
-			}			
+			}
+			
+			case 'B02ACA32AE9630042543037BA630CDE9': // Plutonia Experiment MAP13
+			{
+				// Textures on wrong side at level start.
+				SetWallTexture(107, Line.back, Side.top, "A-BROWN1");
+				SetWallTexture(119, Line.back, Side.top, "A-BROWN1");
+				break;
+			}
+			
+			case '9D84B423D8FD28553DDE23B55F97CF4A': // Plutonia Experiment MAP25
+			{
+				// Missing texture at level exit.
+				SetWallTexture(1152, Line.front, Side.top, "A-BROCK2");
+				break;
+			}
+			
+			case 'ABC4EB5A1535ECCD0061AD14F3547908': // Plutonia Experiment, map26
+			{
+				SetSectorSpecial(156, 0);
+				// Missing textures
+				SetWallTexture(322, Line.front, Side.top, "A-MUD");
+				SetWallTexture(323, Line.front, Side.top, "A-MUD");
+				break;
+			}
+			
+			case 'A2634C462717328CC1AD81E81EE77B08': // Plutonia Experiment MAP28
+			{
+				// Missing textures
+				SetWallTexture(675, Line.front, Side.bottom, "BRICK10");
+				SetWallTexture(676, Line.front, Side.bottom, "BRICK10");
+				SetWallTexture(834, Line.front, Side.bottom, "WOOD8");
+				SetWallTexture(835, Line.front, Side.bottom, "WOOD8");
+				SetWallTexture(2460, Line.front, Side.top, "BIGDOOR7");
+				SetWallTexture(2496, Line.front, Side.top, "BRICK10");
+				
+				// Allow a player to leave the room in deathmatch without
+				// needing another player to activate a switch.
+				SetLineSpecial(1033, Floor_LowerToLowest, 10, 8);
+				SetLineActivation(1033, SPAC_Use);
+				break;
+			}
+			
+			case '850AC6D62F0AC57A4DD7EBC2689AC38E': // Plutonia Experiment MAP29
+			{
+				// Texture applied on bottom instead of top
+				SetWallTexture(2842, Line.front, Side.top, "A-BROCK2");
+				break;
+			}
 			
 			case '279BB50468FE9F5B36C6D821E4902369': // Plutonia Experiment map30
 			{
+				// Missing texture and unpegged gate texture during boss reveal
+				SetWallTexture(730, Line.front, Side.bottom, "ROCKRED1");
+				SetLineFlags(730, 0, Line.ML_DONTPEGBOTTOM);
 				// flag items in deathmatch-only area correctly so that 100% items
 				// are possible in solo
 				SetThingFlags(250, 17);
@@ -208,6 +263,18 @@ class LevelCompatibility play
 				SetThingFlags(253, 17);
 				SetThingFlags(254, 17);
 				SetThingFlags(206, 17);
+				break;
+			}
+			
+			case 'D5F64E02679A81B82006AF34A6A8EAC3': // Plutonia Experiment MAP32
+			{
+				// Missing textures
+				TextureID mosrok = TexMan.CheckForTexture("A-MOSROK", TexMan.Type_Wall);
+				for(int i=0; i<4; i++)
+				{
+					SetWallTextureID(569+i, Line.front, Side.top, MOSROK);
+				}
+				SetWallTexture(805, Line.front, Side.top, "A-BRICK3");
 				break;
 			}
 
@@ -232,6 +299,7 @@ class LevelCompatibility play
 				OffsetSectorPlane(137, Sector.floor, 8);
 				break;
 			}
+			
 			case 'A24FE135D5B6FD427FE27BEF89717A65': // doom.wad e2m2
 			{
 				// missing textures
@@ -239,6 +307,7 @@ class LevelCompatibility play
 				SetWallTexture(1596, Line.back, Side.top, "WOOD1");
 				break;
 			}
+			
 			case '1BC04D646B32D3A3E411DAF3C1A38FF8': // doom.wad e2m4
 			{
 				// missing textures
@@ -248,25 +317,30 @@ class LevelCompatibility play
 				SetWallTexture(1071, Line.front, Side.top, "MARBLE1");
 				break;
 			}
+			
 			case '99C580AD8FABE923CAB485CB7F3C5E5D': // doom.wad e2m5
 			{
 				// missing textures
 				SetWallTexture(590, Line.back, Side.top, "GRAYBIG");
 				SetWallTexture(590, Line.front, Side.bottom, "BROWN1");
+				SetWallTexture(1027, Line.back, Side.top, "SP_HOT1");
 				break;
 			}
+			
 			case '3838AB29292587A7EE3CA71E7040868D': // doom.wad e2m6
 			{
 				// missing texture
 				SetWallTexture(1091, Line.back, Side.top, "compspan");
 				break;
 			}
+			
 			case '8590F489879870C098CD7029C3187159': // doom.wad e2m7
 			{
 				// missing texture
 				SetWallTexture(1286, Line.front, Side.bottom, "SHAWN2");
 				break;
 			}
+			
 			case '8A6399FAAA2E68649D4E4B16642074BE': // doom.wad e2m9
 			{
 				// missing textures
@@ -275,6 +349,7 @@ class LevelCompatibility play
 				SetWallTexture(140, Line.back, Side.top, "GSTONE1");
 				break;
 			}
+			
 			case '2B65CB046EA40D2E44576949381769CA': // Commercial Doom e3m4
 			{
 				// This line is erroneously specified as Door_Raise that monsters
@@ -282,20 +357,53 @@ class LevelCompatibility play
 				// this into a one-shot Door_Open so that it won't close.
 				SetLineSpecial(1069, Door_Open, 0, 16);
 				SetLineFlags(1069, 0, Line.ML_REPEAT_SPECIAL);
+				// Fix HOM error from AASTINKY texture
+				SetWallTexture(470, Line.front, Side.top, "BIGDOOR2");
 				break;
 			}
+			
+			case '100106C75157B7DECB0DCAD2A59C1919': // Doom E3M5
+			{
+				// Replace AASTINKY textures
+				SetWallTexture(833, Line.front, Side.mid, "FIREWALL");
+				SetWallTexture(834, Line.front, Side.mid, "FIREWALL");
+				SetWallTexture(836, Line.front, Side.mid, "FIREWALL");
+				SetWallTexture(839, Line.front, Side.mid, "FIREWALL");
+				// Missing textures at the door leading to the BFG
+				SetWallTexture(1329, Line.back, Side.bottom, "METAL");
+				SetWallTexture(1330, Line.back, Side.bottom, "METAL");
+				break;
+			}
+			
 			case '5AC51CA9F1B57D4538049422A5E37291': // doom.wad e3m7
 			{
-				// missing texture
+				// missing textures
+				SetWallTexture(901, Line.back, Side.bottom, "GSTONE1");
 				SetWallTexture(971, Line.back, Side.top, "SP_HOT1");
 				break;
 			}
+			
+			case 'FE97DCB9E6235FB3C52AE7C143160D73': // Doom E3M9
+			{
+				// Missing texture
+				SetWallTexture(102, Line.back, Side.bottom, "STONE3");
+				break;
+			}
+			
 			case 'DA0C8281AC70EEC31127C228BCD7FE2C': // doom.wad e4m1
 			{
 				// missing texture
 				SetWallTexture(470, Line.front, Side.top, "GSTONE1");
 				break;
 			}
+			
+			case '771092812F38236C9DF2CB06B2D6B24F': // Ultimate Doom E4M2
+			{
+				// Missing texture
+				SetWallTexture(165, Line.back, Side.top, "WOOD5");
+				break;
+			}
+			
 			case 'F6EE16F770AD309D608EA0B1F1E249FC': // Ultimate Doom, e4m3
 			{
 				// Remove unreachable secrets
@@ -322,6 +430,7 @@ class LevelCompatibility play
 				SetSectorSpecial(155, 0);
 				break;
 			}
+			
 			case 'AAECADD4D97970AFF702D86FAFAC7D17': // doom.wad e4m4
 			{
 				// missing textures
@@ -332,11 +441,55 @@ class LevelCompatibility play
 				SetWallTextureID(572, Line.front, Side.top, BROWNHUG);
 				break;
 			}
+			
+			case 'C2E09AB0BDD03925305A48AE935B71CA': // Ultimate Doom E4M5
+			{
+				// Missing textures
+				SetWallTexture(19, Line.back, Side.bottom, "GSTONE1");
+				SetWallTexture(109, Line.back, Side.top, "GSTONE1");
+				SetWallTexture(711, Line.back, Side.bottom, "FIRELAV2");
+				SetWallTexture(713, Line.back, Side.bottom, "FIRELAV2");
+				// Lower ceiling on teleporter to fix HOMs.
+				OffsetSectorPlane(35, Sector.ceiling, -24);
+				break;
+			}
+			
+			case 'CBBFF61A8C231DFFC8E8A2A2BAEB77FF': // Ultimate Doom E4M6
+			{
+				// Textures on wrong side at Yellow Skull room.
+				SetWallTexture(475, Line.back, Side.top, "MARBLE2");
+				SetWallTexture(476, Line.back, Side.top, "MARBLE2");
+				SetWallTexture(479, Line.back, Side.top, "MARBLE2");
+				SetWallTexture(480, Line.back, Side.top, "MARBLE2");
+				SetWallTexture(481, Line.back, Side.top, "MARBLE2");
+				SetWallTexture(482, Line.back, Side.top, "MARBLE2");
+				break;
+			}
+			
 			case '94D4C869A0C02EF4F7375022B36AAE45': // Ultimate Doom, e4m7
 			{
 				// Remove unreachable secrets
 				SetSectorSpecial(263, 0);
 				SetSectorSpecial(264, 0);
+				break;
+			}
+			
+			case '2DC939E508AB8EB68AF79D5B60568711': // Ultimate Doom E4M8
+			{
+				// Missing texture
+				SetWallTexture(425, Line.front, Side.mid, "SP_HOT1");
+				break;
+			}
+			
+			case 'AB24AE6E2CB13CBDD04600A4D37F9189':   // doom2.wad map02
+			case '1EC0AF1E3985650F0C9000319C599D0C':  // doom2bfg.wad map02
+			{
+				// Missing textures
+				TextureID stone4 = TexMan.CheckForTexture("STONE4", TexMan.Type_Wall);
+				SetWallTextureID(327, Line.front, Side.bottom, stone4);
+				SetWallTextureID(328, Line.front, Side.bottom, stone4);
+				SetWallTextureID(338, Line.front, Side.bottom, stone4);
+				SetWallTextureID(339, Line.front, Side.bottom, stone4);
 				break;
 			}
 
@@ -351,7 +504,8 @@ class LevelCompatibility play
 				SetWallTextureID(111, Line.front, Side.top, STONE);
 				SetWallTextureID(127, Line.front, Side.top, STONE);
 				SetWallTextureID(128, Line.front, Side.top, STONE);
-				// remove erroneous blue keycard pickup ambush sector tags (nearby viewing windows, and the lights)
+				// remove erroneous blue keycard pickup ambush sector tags
+				// (nearby viewing windows, and the lights)
 				ClearSectorTags(19);
 				ClearSectorTags(20);
 				ClearSectorTags(23);
@@ -362,38 +516,125 @@ class LevelCompatibility play
 				ClearSectorTags(85);
 				break;
 			}
+			
 			case '9E061AD7FBCD7FAD968C976CB4AA3B9D': // doom2.wad map05
 			{
-				// fix bug with opening westmost door in door hallway - incorrect sector tagging - see doomwiki.org for more info
+				// fix bug with opening westmost door in door hallway
+				// incorrect sector tagging - see doomwiki.org for more info
 				ClearSectorTags(4);
 				ClearSectorTags(153);
+				// Missing textures
+				SetWallTexture(489, Line.back, Side.top, "SUPPORT3");
+				SetWallTexture(560, Line.back, Side.top, "SUPPORT3");
 				break;
 			}
+			
+			case '291F24417FB3DD411339AE82EF9B3597': // Doom II MAP07
+			{
+				// Missing texture at BFG deathmatch spawn.
+				SetWallTexture(168, Line.back, Side.bottom, "BRONZE3");
+				SetLineFlags(168, 0, Line.ML_DONTPEGBOTTOM);
+				break;
+			}
+			
+			case '66C46385EB1A23D60839D1532522076B':  // doom2.wad map08
+			{
+				// Missing texture
+				SetWallTexture(101, Line.back, Side.top, "BRICK7");
+				break;
+			}
+			
+			case 'FBA6547B9FD44E95671A923A066E516F': // Doom II MAP13
+			{
+				// Missing texture
+				SetWallTexture(622, Line.back, Side.top, "BROWNGRN");
+				break;
+			}
+			
 			case '5BDA34DA60C0530794CC1EA2DA017976': // doom2.wad map14
 			{
 				// missing textures
+				SetWallTexture(429, Line.front, Side.top, "BSTONE2");
+				SetWallTexture(430, Line.front, Side.top, "BSTONE2");
+				SetWallTexture(531, Line.front, Side.top, "BSTONE1");
 				SetWallTexture(1259, Line.back, Side.top, "BSTONE2");
 				SetWallTexture(1305, Line.back, Side.top, "BSTONE2");
+				
+				TextureID bstone2 = TexMan.CheckForTexture("BSTONE2", TexMan.Type_Wall);
+				for(int i=0; i<3; i++)
+				{
+					SetWallTextureID(607+i, Line.back, Side.top, BSTONE2);
+				}
+				
+				TextureID tanrock5 = TexMan.CheckForTexture("TANROCK5", TexMan.Type_Wall);
+				for(int i=0; i<7; i++)
+				{
+					SetWallTextureID(786+i, Line.back, Side.top, TANROCK5);
+				}
+				
+				TextureID bstone1 = TexMan.CheckForTexture("BSTONE1", TexMan.Type_Wall);
+				for(int i=0; i<3; i++)
+				{
+					SetWallTextureID(1133+i, Line.back, Side.top, BSTONE1);
+					SetWallTextureID(1137+i, Line.back, Side.top, BSTONE1);
+					SetWallTextureID(1140+i, Line.back, Side.top, BSTONE1);
+				}
+				
+				// Raise floor between lifts to correspond with others.
+				OffsetSectorPlane(106, Sector.floor, 16);
+				break;
 			}
+			
 			case '1A540BA717BF9EC85F8522594C352F2A': // Doom II, map15
 			{
 				SetSectorSpecial(147, 0);
+				// Missing textures
+				SetWallTexture(94, Line.back, Side.top, "METAL");
+				SetWallTexture(95, Line.back, Side.top, "METAL");
+				SetWallTexture(989, Line.back, Side.top, "BRICK10");
 				break;
 			}
+			
+			case '6B60F37B91309DFF1CDF02E5E476210D': // Doom II MAP16
+			{
+				// Missing textures
+				SetWallTexture(162, Line.back, Side.top, "BRICK6");
+				SetWallTexture(303, Line.front, Side.top, "STUCCO");
+				SetWallTexture(304, Line.front, Side.top, "STUCCO");
+				break;
+			}
+			
+			case 'E1CFD5C6E60C3B6C30F8B95FC287E9FE': // Doom II MAP17
+			{
+				// Missing texture
+				SetWallTexture(379, Line.back, Side.top, "METAL2");
+				break;
+			}
+			
 			case '0D491365C1B88B7D1B603890100DD03E': // doom2.wad map18
 			{
 				// missing textures
 				SetWallTexture(451, Line.front, Side.mid, "metal");
 				SetWallTexture(459, Line.front, Side.mid, "metal");
+				SetWallTexture(574, Line.front, Side.top, "grayvine");
 				break;
 			}
+			
 			case 'B5506B1E8F2FC272AD0C77B9E0DF5491': // doom2.wad map19
 			{
 				// missing textures
 				SetWallTexture(355, Line.back, Side.top, "STONE2");
 				SetWallTexture(736, Line.front, Side.top, "SLADWALL");
+				SetWallTexture(1181, Line.back, Side.top, "MARBLE1");
+				
+				TextureID step4 = TexMan.CheckForTexture("STEP4", TexMan.Type_Wall);
+				for(int i=0; i<3; i++)
+				{
+					SetWallTextureID(286+i, Line.back, Side.bottom, STEP4);
+				}
 				break;
 			}
+			
 			case 'EBDAC00E9D25D884B2C8F4B1F0390539': // doom2.wad map21
 			{
 				// push ceiling down in glitchy sectors above the stair switches
@@ -401,12 +642,44 @@ class LevelCompatibility play
 				OffsetSectorPlane(54, Sector.ceiling, -56);
 				break;
 			}
+			
+			case '94893A0DC429A22ADC4B3A73DA537E16': // Doom II MAP25
+			{
+				// Missing texture at bloodfall near level start
+				SetWallTexture(436, Line.back, Side.top, "STONE6");
+				break;
+			}
+			
+			case '1037366026AAB4B0CF11BAB27DB90E4E': // Doom II MAP26
+			{
+				// Missing texture at level exit
+				SetWallTexture(761, Line.back, Side.top, "METAL2");
+				break;
+			}
+			
 			case '110F84DE041052B59307FAF0293E6BC0': // Doom II, map27
 			{
 				SetSectorSpecial(93, 0);
 				SetWallTexture(582, Line.back, Side.top, "ZIMMER3");
 				break;
 			}
+			
+			case '84BB2C8ED2343C91136B87F1832E7CA5': // Doom II MAP28
+			{
+				// Missing textures
+				TextureID ashwall6 = TexMan.CheckForTexture("ASHWALL6", TexMan.Type_Wall);
+				for(int i=0; i<5; i++)
+				{
+					SetWallTextureID(103+i, Line.front, Side.top, ASHWALL6);
+				}
+				SetWallTexture(221, Line.front, Side.bottom, "BFALL1");
+				SetWallTexture(391, Line.front, Side.top, "BIGDOOR5");
+				SetWallTexture(531, Line.back, Side.top, "WOOD8");
+				SetWallTexture(547, Line.back, Side.top, "WOOD8");
+				SetWallTexture(548, Line.back, Side.top, "WOOD8");
+				break;
+			}
+			
 			case '20251EDA21B2F2ECF6FF5B8BBC00B26C': // Doom II, MAP29
 			{
 				// Missing textures on teleporters
@@ -415,10 +688,13 @@ class LevelCompatibility play
 				{
 					SetWallTextureID(405+i, Line.back, Side.bottom, SUPPORT3);
 					SetWallTextureID(516+i, Line.back, Side.bottom, SUPPORT3);
-					SetWallTextureID(524+1, Line.back, Side.bottom, SUPPORT3);
+					SetWallTextureID(524+i, Line.back, Side.bottom, SUPPORT3);
 					SetWallTextureID(1146+i, Line.back, Side.bottom, SUPPORT3);
 					SetWallTextureID(1138+i, Line.back, Side.bottom, SUPPORT3);
 				}
+				// Fix missing textures at switch with Arch-Vile.
+				OffsetSectorPlane(152, Sector.ceiling, -32);
+				SetWallTexture(603, Line.back, Side.top, "WOOD5");
 				break;
 			}
 			
@@ -441,12 +717,6 @@ class LevelCompatibility play
 				break;
 			}
 
-			case 'ABC4EB5A1535ECCD0061AD14F3547908': // Plutonia Experiment, map26
-			{
-				SetSectorSpecial(156, 0);
-				break;
-			}
-
 			case 'FF635FB9A2F076566299910F8C78F707': // nerve.wad, level04
 			{
 				SetSectorSpecial(868, 0);
@@ -463,6 +733,7 @@ class LevelCompatibility play
 				SetWallTextureID(1057, Line.front, Side.top, mossrck1);
 				break;
 			}
+			
 			case 'ADD0FAC41AFB0B3C9B9F3C0006F93805': // heretic.wad e1m3
 			{
 				// Broken door between the hallway that leads to a Torch 
@@ -471,6 +742,7 @@ class LevelCompatibility play
 				OffsetSectorPlane(86, Sector.ceiling, -128);
 				break;
 			}
+			
 			case '916318D8B06DAC2D83424B23E4B66531': // heretic.wad e1m4
 			{
 				// Wrong sector offsets
@@ -493,6 +765,7 @@ class LevelCompatibility play
 				SetWallTextureID(1296, Line.front, Side.bottom, woodwl);
 				break;
 			}
+			
 			case '397A0E17A39542E4E8294E156FAB0502': // heretic.wad e2m2
 			{
 				// Missing green door statues on easy and hard difficulties
@@ -500,6 +773,7 @@ class LevelCompatibility play
 				SetThingSkills(18, 31);
 				break;
 			}
+			
 			case 'CA3773ED313E8899311F3DD0CA195A68': // heretic.wad e3m6
 			{
 				// Quartz flask outside of map
@@ -512,6 +786,7 @@ class LevelCompatibility play
 				SetWallTextureID(370, Line.front, Side.top, mossrck1);
 				break;
 			}
+			
 			case '5E3FCFDE78310BB89F92B1626A47D0AD': // heretic.wad E4M7
 			{
 				// Missing textures

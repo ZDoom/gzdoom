@@ -57,10 +57,6 @@
 **
 */
 
-
-#include <boost/asio.hpp>
-using boost::asio::ip::tcp;
-
 #include <math.h>
 #ifdef _MSC_VER
 #include <malloc.h>		// for alloca()
@@ -111,8 +107,6 @@ using boost::asio::ip::tcp;
 #include "fragglescript/t_fs.h"
 
 #define MISSING_TEXTURE_WARN_LIMIT		20
-
-extern tcp::socket* gienek_global_socket;
 
 void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldvertextable);
 void P_SetSlopes ();
@@ -838,15 +832,6 @@ void P_LoadVertexes (MapData * map)
 	{
 		int16_t x = fr.ReadInt16();
 		int16_t y = fr.ReadInt16();
-
-		// Report vertex to Gienek
-		// TODO: Take care of the network byte order!
-		char buf[5];
-		buf[0] = 'a';
-		memcpy(&buf[1], &x, 2);
-		memcpy(&buf[3], &y, 2);
-		boost::system::error_code ignored_error;
-		boost::asio::write(*gienek_global_socket, boost::asio::buffer(buf, sizeof(buf)), ignored_error);
 
 		v.set(double(x), double(y));
 	}

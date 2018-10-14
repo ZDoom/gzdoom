@@ -207,7 +207,7 @@ static TArray<uint16_t> CreateUnwindInfo(asmjit::CCFunc *func)
 				opoffset = (uint32_t)assembler.getOffset();
 				opcode = UWOP_SAVE_XMM128_FAR;
 				opinfo = regId;
-				codes.Push((uint16_t)(vecBase.getOffsetLo32() << 16));
+				codes.Push((uint16_t)(vecBase.getOffsetLo32() >> 16));
 				codes.Push((uint16_t)vecBase.getOffsetLo32());
 				codes.Push(opoffset | (opcode << 8) | (opinfo << 12));
 			}

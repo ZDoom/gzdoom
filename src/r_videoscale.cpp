@@ -79,17 +79,22 @@ namespace
 
 CUSTOM_CVAR(Float, vid_scalefactor, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
+	setsizeneeded = true;
 	if (self < 0.05 || self > 2.0)
 		self = 1.0;
 }
 
 CUSTOM_CVAR(Int, vid_scalemode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
+	setsizeneeded = true;
 	if (isOutOfBounds(self))
 		self = 0;
 }
 
-CVAR(Bool, vid_cropaspect, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, vid_cropaspect, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	setsizeneeded = true;
+}
 
 bool ViewportLinearScale()
 {

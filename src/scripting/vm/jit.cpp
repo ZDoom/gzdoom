@@ -241,7 +241,7 @@ static void *AddJitFunction(asmjit::CodeHolder* code, asmjit::CCFunc *func)
 	if (codeSize == 0)
 		return nullptr;
 
-#ifdef WIN32
+#ifdef _WIN64
 	TArray<uint16_t> unwindInfo = CreateUnwindInfo(func);
 	size_t unwindInfoSize = unwindInfo.Size() * sizeof(uint16_t);
 	size_t functionTableSize = sizeof(RUNTIME_FUNCTION);
@@ -264,7 +264,7 @@ static void *AddJitFunction(asmjit::CodeHolder* code, asmjit::CCFunc *func)
 	unwindStart = (unwindStart + 15) / 16 * 16;
 	JitBlockPos -= codeSize - unwindStart;
 
-#ifdef WIN32
+#ifdef _WIN64
 	uint8_t *baseaddr = JitBlocks.Last();
 	uint8_t *startaddr = p;
 	uint8_t *endaddr = p + relocSize;

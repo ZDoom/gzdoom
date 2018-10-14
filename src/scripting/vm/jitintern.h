@@ -53,7 +53,7 @@ private:
 	void LoadInOuts(int b);
 	void LoadReturns(const VMOP *retval, int numret);
 	void FillReturns(const VMOP *retval, int numret);
-	void LoadCallResult(const VMOP &opdata, bool addrof);
+	void LoadCallResult(int type, int regnum, bool addrof);
 
 	template <typename Func>
 	void EmitComparisonOpcode(Func jmpFunc)

@@ -11,90 +11,90 @@ void JitCompiler::EmitPARAM()
 	X86Gp stackPtr, tmp;
 	X86Xmm tmp2;
 
-	switch (B)
+	switch (A)
 	{
 	case REGT_NIL:
 		cc.mov(x86::ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, a)), (int64_t)0);
 		cc.mov(x86::byte_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_NIL);
 		break;
 	case REGT_INT:
-		cc.mov(x86::dword_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, i)), regD[C]);
+		cc.mov(x86::dword_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, i)), regD[BC]);
 		cc.mov(x86::byte_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_INT);
 		break;
 	case REGT_INT | REGT_ADDROF:
 		stackPtr = newTempIntPtr();
-		cc.lea(stackPtr, x86::ptr(vmframe, offsetD + (int)(C * sizeof(int32_t))));
+		cc.lea(stackPtr, x86::ptr(vmframe, offsetD + (int)(BC * sizeof(int32_t))));
 		cc.mov(x86::ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, a)), stackPtr);
 		cc.mov(x86::byte_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
 		break;
 	case REGT_INT | REGT_KONST:
-		cc.mov(x86::dword_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, i)), konstd[C]);
+		cc.mov(x86::dword_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, i)), konstd[BC]);
 		cc.mov(x86::byte_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_INT);
 		break;
 	case REGT_STRING:
-		cc.mov(x86::ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, sp)), regS[C]);
+		cc.mov(x86::ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, sp)), regS[BC]);
 		cc.mov(x86::byte_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_STRING);
 		break;
 	case REGT_STRING | REGT_ADDROF:
-		cc.mov(x86::ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, a)), regS[C]);
+		cc.mov(x86::ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, a)), regS[BC]);
 		cc.mov(x86::byte_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
 		break;
 	case REGT_STRING | REGT_KONST:
 		tmp = newTempIntPtr();
-		cc.mov(tmp, asmjit::imm_ptr(&konsts[C]));
+		cc.mov(tmp, asmjit::imm_ptr(&konsts[BC]));
 		cc.mov(x86::ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, sp)), tmp);
 		cc.mov(x86::byte_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_STRING);
 		break;
 	case REGT_POINTER:
-		cc.mov(x86::ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, a)), regA[C]);
+		cc.mov(x86::ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, a)), regA[BC]);
 		cc.mov(x86::byte_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
 		break;
 	case REGT_POINTER | REGT_ADDROF:
 		stackPtr = newTempIntPtr();
-		cc.lea(stackPtr, x86::ptr(vmframe, offsetA + (int)(C * sizeof(void*))));
+		cc.lea(stackPtr, x86::ptr(vmframe, offsetA + (int)(BC * sizeof(void*))));
 		cc.mov(x86::ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, a)), stackPtr);
 		cc.mov(x86::byte_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
 		break;
 	case REGT_POINTER | REGT_KONST:
 		tmp = newTempIntPtr();
-		cc.mov(tmp, asmjit::imm_ptr(konsta[C].v));
+		cc.mov(tmp, asmjit::imm_ptr(konsta[BC].v));
 		cc.mov(x86::ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, a)), tmp);
 		cc.mov(x86::byte_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
 		break;
 	case REGT_FLOAT:
-		cc.movsd(x86::qword_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, f)), regF[C]);
+		cc.movsd(x86::qword_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, f)), regF[BC]);
 		cc.mov(x86::byte_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_FLOAT);
 		break;
 	case REGT_FLOAT | REGT_MULTIREG2:
-		cc.movsd(x86::qword_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, f)), regF[C]);
+		cc.movsd(x86::qword_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, f)), regF[BC]);
 		cc.mov(x86::byte_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_FLOAT);
 		index = NumParam++;
 		ParamOpcodes.Push(pc);
-		cc.movsd(x86::qword_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, f)), regF[C + 1]);
+		cc.movsd(x86::qword_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, f)), regF[BC + 1]);
 		cc.mov(x86::byte_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_FLOAT);
 		break;
 	case REGT_FLOAT | REGT_MULTIREG3:
-		cc.movsd(x86::qword_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, f)), regF[C]);
+		cc.movsd(x86::qword_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, f)), regF[BC]);
 		cc.mov(x86::byte_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_FLOAT);
 		index = NumParam++;
 		ParamOpcodes.Push(pc);
-		cc.movsd(x86::qword_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, f)), regF[C + 1]);
+		cc.movsd(x86::qword_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, f)), regF[BC + 1]);
 		cc.mov(x86::byte_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_FLOAT);
 		index = NumParam++;
 		ParamOpcodes.Push(pc);
-		cc.movsd(x86::qword_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, f)), regF[C + 2]);
+		cc.movsd(x86::qword_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, f)), regF[BC + 2]);
 		cc.mov(x86::byte_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_FLOAT);
 		break;
 	case REGT_FLOAT | REGT_ADDROF:
 		stackPtr = newTempIntPtr();
-		cc.lea(stackPtr, x86::ptr(vmframe, offsetF + (int)(C * sizeof(double))));
+		cc.lea(stackPtr, x86::ptr(vmframe, offsetF + (int)(BC * sizeof(double))));
 		cc.mov(x86::ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, a)), stackPtr);
 		cc.mov(x86::byte_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_POINTER);
 		break;
 	case REGT_FLOAT | REGT_KONST:
 		tmp = newTempIntPtr();
 		tmp2 = newTempXmmSd();
-		cc.mov(tmp, asmjit::imm_ptr(konstf + C));
+		cc.mov(tmp, asmjit::imm_ptr(konstf + BC));
 		cc.movsd(tmp2, asmjit::x86::qword_ptr(tmp));
 		cc.movsd(x86::qword_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, f)), tmp2);
 		cc.mov(x86::byte_ptr(vmframe, offsetParams + index * sizeof(VMValue) + offsetof(VMValue, Type)), (int)REGT_FLOAT);
@@ -236,37 +236,37 @@ void JitCompiler::StoreInOuts(int b)
 	for (unsigned int i = ParamOpcodes.Size() - b; i < ParamOpcodes.Size(); i++)
 	{
 		asmjit::X86Gp stackPtr;
-		auto c = ParamOpcodes[i]->c;
-		switch (ParamOpcodes[i]->b)
+		auto bc = ParamOpcodes[i]->i16u;
+		switch (ParamOpcodes[i]->a)
 		{
 		case REGT_INT | REGT_ADDROF:
 			stackPtr = newTempIntPtr();
-			cc.lea(stackPtr, x86::ptr(vmframe, offsetD + (int)(c * sizeof(int32_t))));
-			cc.mov(x86::dword_ptr(stackPtr), regD[c]);
+			cc.lea(stackPtr, x86::ptr(vmframe, offsetD + (int)(bc * sizeof(int32_t))));
+			cc.mov(x86::dword_ptr(stackPtr), regD[bc]);
 			break;
 		case REGT_STRING | REGT_ADDROF:
 			// We don't have to do anything in this case. String values are never moved to virtual registers.
 			break;
 		case REGT_POINTER | REGT_ADDROF:
 			stackPtr = newTempIntPtr();
-			cc.lea(stackPtr, x86::ptr(vmframe, offsetA + (int)(c * sizeof(void*))));
-			cc.mov(x86::ptr(stackPtr), regA[c]);
+			cc.lea(stackPtr, x86::ptr(vmframe, offsetA + (int)(bc * sizeof(void*))));
+			cc.mov(x86::ptr(stackPtr), regA[bc]);
 			break;
 		case REGT_FLOAT | REGT_ADDROF:
 			stackPtr = newTempIntPtr();
-			cc.lea(stackPtr, x86::ptr(vmframe, offsetF + (int)(c * sizeof(double))));
-			cc.movsd(x86::qword_ptr(stackPtr), regF[c]);
+			cc.lea(stackPtr, x86::ptr(vmframe, offsetF + (int)(bc * sizeof(double))));
+			cc.movsd(x86::qword_ptr(stackPtr), regF[bc]);
 
 			// When passing the address to a float we don't know if the receiving function will treat it as float, vec2 or vec3.
-			if ((unsigned int)c + 1 < regF.Size())
+			if ((unsigned int)bc + 1 < regF.Size())
 			{
 				cc.add(stackPtr, (int)sizeof(double));
-				cc.movsd(x86::qword_ptr(stackPtr), regF[c + 1]);
+				cc.movsd(x86::qword_ptr(stackPtr), regF[bc + 1]);
 			}
-			if ((unsigned int)c + 2 < regF.Size())
+			if ((unsigned int)bc + 2 < regF.Size())
 			{
 				cc.add(stackPtr, (int)sizeof(double));
-				cc.movsd(x86::qword_ptr(stackPtr), regF[c + 2]);
+				cc.movsd(x86::qword_ptr(stackPtr), regF[bc + 2]);
 			}
 			break;
 		default:
@@ -280,9 +280,9 @@ void JitCompiler::LoadInOuts(int b)
 	for (unsigned int i = ParamOpcodes.Size() - b; i < ParamOpcodes.Size(); i++)
 	{
 		const VMOP &param = *ParamOpcodes[i];
-		if (param.op == OP_PARAM && (param.b & REGT_ADDROF))
+		if (param.op == OP_PARAM && (param.a & REGT_ADDROF))
 		{
-			LoadCallResult(param, true);
+			LoadCallResult(param.a, param.i16u, true);
 		}
 	}
 }
@@ -294,15 +294,12 @@ void JitCompiler::LoadReturns(const VMOP *retval, int numret)
 		if (retval[i].op != OP_RESULT)
 			I_FatalError("Expected OP_RESULT to follow OP_CALL\n");
 
-		LoadCallResult(retval[i], false);
+		LoadCallResult(retval[i].b, retval[i].c, false);
 	}
 }
 
-void JitCompiler::LoadCallResult(const VMOP &opdata, bool addrof)
+void JitCompiler::LoadCallResult(int type, int regnum, bool addrof)
 {
-	int type = opdata.b;
-	int regnum = opdata.c;
-
 	switch (type & REGT_TYPE)
 	{
 	case REGT_INT:

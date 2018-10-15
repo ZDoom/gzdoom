@@ -274,7 +274,7 @@ static void *AddJitFunction(asmjit::CodeHolder* code, asmjit::CCFunc *func)
 	RUNTIME_FUNCTION *table = (RUNTIME_FUNCTION*)(unwindptr + unwindInfoSize);
 	table[0].BeginAddress = (DWORD)(ptrdiff_t)(startaddr - baseaddr);
 	table[0].EndAddress = (DWORD)(ptrdiff_t)(endaddr - baseaddr);
-	table[0].UnwindInfoAddress = (DWORD)(ptrdiff_t)(unwindptr - baseaddr);
+	table[0].UnwindData = (DWORD)(ptrdiff_t)(unwindptr - baseaddr);
 	BOOLEAN result = RtlAddFunctionTable(table, 1, (DWORD64)baseaddr);
 	if (result == 0)
 		I_FatalError("RtlAddFunctionTable failed");

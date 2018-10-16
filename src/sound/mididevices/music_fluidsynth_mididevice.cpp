@@ -148,8 +148,11 @@ extern "C" unsigned __stdcall GetSystemDirectoryA(char *lpBuffer, unsigned uSize
 #define FLUID_CHORUS_DEFAULT_LEVEL 2.0f
 #define FLUID_CHORUS_DEFAULT_SPEED 0.3f
 #define FLUID_CHORUS_DEFAULT_DEPTH 8.0f
-#define FLUID_CHORUS_DEFAULT_TYPE FLUID_CHORUS_MOD_SINE
 
+#endif
+
+#ifndef FLUID_CHORUS_DEFAULT_TYPE
+#define FLUID_CHORUS_DEFAULT_TYPE FLUID_CHORUS_MOD_SINE
 #endif
 
 // TYPES -------------------------------------------------------------------

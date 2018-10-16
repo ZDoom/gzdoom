@@ -73,6 +73,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, line_t &line, line_t *
 			("alpha", line.alpha, def->alpha)
 			.Args("args", line.args, def->args, line.special)
 			("portalindex", line.portalindex, def->portalindex)
+			("locknumber", line.locknumber, def->locknumber)
 			// Unless the map loader is changed the sidedef references will not change between map loads so there's no need to save them.
 			//.Array("sides", line.sidedef, 2)
 			.EndObject();

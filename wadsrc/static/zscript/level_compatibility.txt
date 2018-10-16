@@ -514,6 +514,8 @@ class LevelCompatibility play
 				ClearSectorTags(34);
 				ClearSectorTags(83);
 				ClearSectorTags(85);
+				// Visually align floors between crushers
+				SetLineSpecial(3, Transfer_Heights, 14, 6);
 				break;
 			}
 			

@@ -284,7 +284,7 @@ protected:
 	enum { FLUID_FAILED = -1, FLUID_OK = 0 };
 	static TReqProc<FluidSynthModule, fluid_settings_t *(*)()> new_fluid_settings;
 	static TReqProc<FluidSynthModule, fluid_synth_t *(*)(fluid_settings_t *)> new_fluid_synth;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *)> delete_fluid_synth;
+	static TReqProc<FluidSynthModule, void (*)(fluid_synth_t *)> delete_fluid_synth;
 	static TReqProc<FluidSynthModule, void (*)(fluid_settings_t *)> delete_fluid_settings;
 	static TReqProc<FluidSynthModule, int (*)(fluid_settings_t *, const char *, double)> fluid_settings_setnum;
 	static TReqProc<FluidSynthModule, int (*)(fluid_settings_t *, const char *, const char *)> fluid_settings_setstr;

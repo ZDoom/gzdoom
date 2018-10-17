@@ -60,9 +60,9 @@ extern "C" unsigned __stdcall GetSystemDirectoryA(char *lpBuffer, unsigned uSize
 #include <dlfcn.h>
 
 #ifdef __APPLE__
-#define FLUIDSYNTHLIB1	"libfluidsynth.1.dylib"
+#define FLUIDSYNTHLIB1	"libfluidsynth.2.dylib"
 #else // !__APPLE__
-#define FLUIDSYNTHLIB1	"libfluidsynth.so.1"
+#define FLUIDSYNTHLIB1	"libfluidsynth.so.2"
 #endif // __APPLE__
 #endif
 
@@ -78,8 +78,11 @@ extern "C" unsigned __stdcall GetSystemDirectoryA(char *lpBuffer, unsigned uSize
 #define FLUID_CHORUS_DEFAULT_LEVEL 2.0f
 #define FLUID_CHORUS_DEFAULT_SPEED 0.3f
 #define FLUID_CHORUS_DEFAULT_DEPTH 8.0f
-#define FLUID_CHORUS_DEFAULT_TYPE FLUID_CHORUS_MOD_SINE
 
+#endif
+
+#ifndef FLUID_CHORUS_DEFAULT_TYPE
+#define FLUID_CHORUS_DEFAULT_TYPE FLUID_CHORUS_MOD_SINE
 #endif
 
 // TYPES -------------------------------------------------------------------

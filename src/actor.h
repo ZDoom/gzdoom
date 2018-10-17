@@ -915,7 +915,7 @@ public:
 	
 	DAngle PitchTo(AActor *other)
 	{
-		DVector3 otherpos = this->Pos() - other->Pos();
+		DVector3 otherpos = PosRelative(this) - this->Pos();
 		double dist = this->Distance3D(other);
 		if (dist > 0)
 		{

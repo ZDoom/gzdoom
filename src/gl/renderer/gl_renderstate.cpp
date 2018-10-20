@@ -59,24 +59,12 @@ static void matrixToGL(const VSMatrix &mat, int loc)
 
 void FGLRenderState::Reset()
 {
-	mTextureEnabled = true;
-	mSplitEnabled = mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
-	mFogColor.d = -1;
-	mTextureMode = -1;
-	mDesaturation = 0;
+	FRenderState::Reset();
+	mSplitEnabled = false;
 	mSrcBlend = GL_SRC_ALPHA;
 	mDstBlend = GL_ONE_MINUS_SRC_ALPHA;
-	mAlphaThreshold = 0.5f;
 	mBlendEquation = GL_FUNC_ADD;
-	mModelMatrixEnabled = false;
-	mTextureMatrixEnabled = false;
-	mObjectColor = 0xffffffff;
-	mObjectColor2 = 0;
 	mVertexBuffer = mCurrentVertexBuffer = NULL;
-	mSoftLight = 0;
-	mLightParms[0] = mLightParms[1] = mLightParms[2] = 0.0f;
-	mLightParms[3] = -1.f;
-	mSpecialEffect = EFF_NONE;
 	mGlossiness = 0.0f;
 	mSpecularLevel = 0.0f;
 	mShaderTimer = 0.0f;
@@ -84,23 +72,12 @@ void FGLRenderState::Reset()
 
 	stSrcBlend = stDstBlend = -1;
 	stBlendEquation = -1;
-	stAlphaThreshold = -1.f;
 	stAlphaTest = 0;
 	mLastDepthClamp = true;
 	mInterpolationFactor = 0.0f;
 
-	mColor.Set(1.0f, 1.0f, 1.0f, 1.0f);
-	mGlowTop.Set(0.0f, 0.0f, 0.0f, 0.0f);
-	mGlowBottom.Set(0.0f, 0.0f, 0.0f, 0.0f);
-	mGlowTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
-	mGlowBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
-	mSplitTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
-	mSplitBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
-	mDynColor.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mEffectState = 0;
 	activeShader = nullptr;
-	mModelMatrix.loadIdentity();
-	mTextureMatrix.loadIdentity();
 	mPassType = NORMAL_PASS;
 }
 

@@ -69,9 +69,7 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool istrans)
 	gl_RenderState.ApplyLightIndex(flat->dynlightindex);
 	if (vcount > 0 && !ClipLineShouldBeActive())
 	{
-		drawcalls.Clock();
-		glDrawElements(GL_TRIANGLES, vcount, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + iboindex);
-		drawcalls.Unclock();
+		DrawIndexed(DT_Triangles, gl_RenderState, iboindex, vcount);
 		flatvertices += vcount;
 		flatprimitives++;
 	}
@@ -85,8 +83,7 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool istrans)
 
 			if (ss_renderflags[sub->Index()] & flat->renderflags || istrans)
 			{
-				drawcalls.Clock();
-				glDrawElements(GL_TRIANGLES, (sub->numlines - 2) * 3, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + index);
+				DrawIndexed(DT_Triangles, gl_RenderState, index, (sub->numlines - 2) * 3, false);
 				drawcalls.Unclock();
 				flatvertices += sub->numlines;
 				flatprimitives++;
@@ -108,7 +105,7 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool istrans)
 			auto num = node->sub->numlines;
 			flatvertices += num;
 			flatprimitives++;
-			glDrawArrays(GL_TRIANGLE_FAN, node->vertexindex, num);
+			Draw(DT_TriangleFan, gl_RenderState, node->vertexindex, num);
 			node = node->next;
 		}
 		// Flood gaps with the back side's ceiling/floor texture
@@ -130,7 +127,7 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool istrans)
 			glPolygonOffset(1.0f, 128.0f);
 
 			SetupFloodStencil(fnode->vertexindex);
-			glDrawArrays(GL_TRIANGLE_FAN, fnode->vertexindex + 4, 4);
+			Draw(DT_TriangleFan, gl_RenderState, fnode->vertexindex + 4, 4);
 			ClearFloodStencil(fnode->vertexindex);
 
 			glPolygonOffset(0.0f, 0.0f);
@@ -156,21 +153,12 @@ void FDrawInfo::SetupFloodStencil(int vindex)
 	gl_RenderState.EnableTexture(false);
 	gl_RenderState.Apply();
 
-	glStencilFunc(GL_EQUAL, recursion, ~0);		// create stencil
-	glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);		// increment stencil of valid pixels
-												
-	glColorMask(0, 0, 0, 0);						// don't write to the graphics buffer
-	glEnable(GL_DEPTH_TEST);
-	glDepthMask(true);
+	gl_RenderState.SetStencil(0, SOP_Increment, SF_ColorMaskOff);
 
-	glDrawArrays(GL_TRIANGLE_FAN, vindex, 4);
+	Draw(DT_TriangleFan, gl_RenderState, vindex, 4);
 
-	glStencilFunc(GL_EQUAL, recursion + 1, ~0);		// draw sky into stencil
-	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);		// this stage doesn't modify the stencil
+	gl_RenderState.SetStencil(1, SOP_Keep, SF_DepthMaskOff | SF_DepthTestOff);
 
-	glColorMask(1, 1, 1, 1);						// don't write to the graphics buffer
-	glDisable(GL_DEPTH_TEST);
-	glDepthMask(false);
 	gl_RenderState.EnableTexture(true);
 	gl_RenderState.SetEffect(EFF_NONE);
 	gl_RenderState.Apply();
@@ -183,18 +171,13 @@ void FDrawInfo::ClearFloodStencil(int vindex)
 	gl_RenderState.SetEffect(EFF_STENCIL);
 	gl_RenderState.EnableTexture(false);
 	gl_RenderState.Apply();
-	glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
-	// Use revertible color mask, to avoid stomping on anaglyph 3D state
-	glColorMask(0, 0, 0, 0);						// don't write to the graphics buffer
 
-	glDrawArrays(GL_TRIANGLE_FAN, vindex, 4);
+	gl_RenderState.SetStencil(1, SOP_Decrement, SF_ColorMaskOff | SF_DepthMaskOff | SF_DepthTestOff);
+
+	Draw(DT_TriangleFan, gl_RenderState, vindex, 4);
 
 	// restore old stencil op.
-	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-	glStencilFunc(GL_EQUAL, recursion, ~0);
-	glColorMask(1, 1, 1, 1);
-	glEnable(GL_DEPTH_TEST);
-	glDepthMask(true);
+	gl_RenderState.SetStencil(0, SOP_Keep, SF_AllOn);
 	gl_RenderState.EnableTexture(true);
 	gl_RenderState.SetEffect(EFF_NONE);
 }

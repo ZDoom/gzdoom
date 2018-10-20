@@ -273,5 +273,33 @@ bool FDrawInfo::SetDepthClamp(bool on)
 	return gl_RenderState.SetDepthClamp(on);
 }
 
+static int dt2gl[] = { GL_POINTS, GL_LINES, GL_TRIANGLES, GL_TRIANGLE_FAN, GL_TRIANGLE_STRIP };
+
+void FDrawInfo::Draw(EDrawType dt, FRenderState &state, int index, int count, bool apply)
+{
+	assert(&state == &gl_RenderState);
+	if (apply)
+	{
+		gl_RenderState.ApplyMaterial();
+		gl_RenderState.Apply();
+	}
+	drawcalls.Clock();
+	glDrawArrays(dt2gl[dt], index, count);
+	drawcalls.Unclock();
+}
+
+void FDrawInfo::DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply)
+{
+	assert(&state == &gl_RenderState);
+	if (apply)
+	{
+		gl_RenderState.ApplyMaterial();
+		gl_RenderState.Apply();
+	}
+	drawcalls.Clock();
+	glDrawElements(dt2gl[dt], count, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + index);
+	drawcalls.Unclock();
+}
+
 
 

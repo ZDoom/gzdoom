@@ -233,6 +233,14 @@ public:
 		return mPassType == GBUFFER_PASS ? 3 : 1;
 	}
 
+	void ApplyMaterial()
+	{
+		if (mMaterial.mChanged)
+		{
+			SetMaterial(mMaterial.mMaterial, mMaterial.mClampMode, mMaterial.mTranslation, mMaterial.mOverrideShader, false);
+			mMaterial.mChanged = false;
+		}
+	}
 };
 
 extern FGLRenderState gl_RenderState;

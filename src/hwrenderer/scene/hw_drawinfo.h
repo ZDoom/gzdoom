@@ -7,6 +7,14 @@
 #include "hw_viewpointuniforms.h"
 #include "v_video.h"
 
+enum EDrawType
+{
+	DT_Points = 0,
+	DT_Lines = 1,
+	DT_Triangles = 2,
+	DT_TriangleFan = 3,
+	DT_TriangleStrip = 4
+};
 
 struct FSectorPortalGroup;
 struct FLinePortalSpan;
@@ -24,6 +32,7 @@ class IPortal;
 class FFlatVertexGenerator;
 class IRenderQueue;
 class HWScenePortalBase;
+class FRenderState;
 
 //==========================================================================
 //
@@ -295,5 +304,9 @@ public:
 
     virtual GLDecal *AddDecal(bool onmirror) = 0;
 	virtual std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) = 0;
+
+	virtual void Draw(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) = 0;
+	virtual void DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) = 0;
+
 };
 

@@ -38,6 +38,8 @@
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/textures/gl_hwtexture.h"
 
+static int op2gl[] = { GL_KEEP, GL_INCR, GL_DECR };
+
 FGLRenderState gl_RenderState;
 
 CVAR(Bool, gl_direct_state_change, true, 0)
@@ -224,6 +226,22 @@ void FGLRenderState::Apply()
 			stBlendEquation = mBlendEquation;
 			glBlendEquation(mBlendEquation);
 		}
+	}
+
+	if (mStencil.mChanged)
+	{
+		int recursion = GLRenderer->mPortalState.GetRecursion();
+		glStencilFunc(GL_EQUAL, recursion + mStencil.mOffsVal, ~0);		// draw sky into stencil
+		glStencilOp(GL_KEEP, GL_KEEP, op2gl[mStencil.mOperation]);		// this stage doesn't modify the stencil
+
+		bool cmon = !(mStencil.mFlags & SF_ColorMaskOff);
+		glColorMask(cmon, cmon, cmon, cmon);						// don't write to the graphics buffer
+		glDepthMask(!(mStencil.mFlags & SF_DepthMaskOff));
+		if (mStencil.mFlags & SF_DepthTestOff)
+			glDisable(GL_DEPTH_TEST);
+		else
+			glEnable(GL_DEPTH_TEST);
+
 	}
 
 	if (mVertexBuffer != mCurrentVertexBuffer)

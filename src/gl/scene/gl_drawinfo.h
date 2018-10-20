@@ -52,6 +52,9 @@ struct FDrawInfo : public HWDrawInfo
 	std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) override;
 	int UploadLights(FDynLightData &data) override;
 
+	void Draw(EDrawType dt, FRenderState &state, int index, int count, bool apply = true);
+	void DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply = true);
+
 	void DrawDecal(GLDecal *gldecal);
 	void DrawDecals();
 	void DrawDecalsForMirror(GLWall *wall);

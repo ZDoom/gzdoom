@@ -4,6 +4,7 @@
 #include "vectors.h"
 #include "g_levellocals.h"
 #include "r_data/matrix.h"
+#include "hwrenderer/textures/hw_material.h"
 
 struct FColormap;
 
@@ -18,10 +19,25 @@ enum EEffect
 	MAX_EFFECTS
 };
 
-enum
+enum EAlphaFunc
 {
 	Alpha_GEqual = 0,
 	Alpha_Greater = 1
+};
+
+enum EStencilOp
+{
+	SOP_Keep = 0,
+	SOP_Increment = 1,
+	SOP_Decrement = 2
+};
+
+enum EStencilFlags
+{
+	SF_AllOn = 0,
+	SF_ColorMaskOff = 1,
+	SF_DepthMaskOff = 2,
+	SF_DepthTestOff = 4
 };
 
 struct FStateVec4
@@ -34,6 +50,40 @@ struct FStateVec4
 		vec[1] = g;
 		vec[2] = b;
 		vec[3] = a;
+	}
+};
+
+struct FMaterialState
+{
+	FMaterial *mMaterial;
+	int mClampMode;
+	int mTranslation;
+	int mOverrideShader;
+	bool mChanged;
+
+	void Reset()
+	{
+		mMaterial = nullptr;
+		mTranslation = 0;
+		mClampMode = CLAMP_NONE;
+		mOverrideShader = -1;
+		mChanged = false;
+	}
+};
+
+struct FStencilState
+{
+	int mOffsVal;
+	int mOperation;
+	int mFlags;
+	bool mChanged;
+
+	void Reset()
+	{
+		mOffsVal = 0;
+		mOperation = SOP_Keep;
+		mFlags = SF_AllOn;
+		mChanged = false;
 	}
 };
 
@@ -66,6 +116,8 @@ protected:
 	PalEntry mObjectColor2;
 	FStateVec4 mDynColor;
 
+	FMaterialState mMaterial;
+	FStencilState mStencil;
 
 	// fixed function state
 	float mBias[2];
@@ -95,6 +147,7 @@ public:
 		mSpecialEffect = EFF_NONE;
 		mLightIndex = -1;
 		mBiasOn = false;
+		mMaterial.Reset();
 
 		mColor.Set(1.0f, 1.0f, 1.0f, 1.0f);
 		mGlowTop.Set(0.0f, 0.0f, 0.0f, 0.0f);
@@ -281,6 +334,23 @@ public:
 		mBias[0] = 0;
 		mBias[1] = 0;
 		mBiasOn = false;
+	}
+
+	void SetMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader)
+	{
+		mMaterial.mMaterial = mat;
+		mMaterial.mClampMode = clampmode;
+		mMaterial.mTranslation = translation;
+		mMaterial.mOverrideShader = overrideshader;
+		mMaterial.mChanged = true;
+	}
+
+	void SetStencil(int offs, int op, int flags)
+	{
+		mStencil.mOffsVal = offs;
+		mStencil.mOperation = op;
+		mStencil.mFlags = flags;
+		mStencil.mChanged = true;
 	}
 
 	void SetColor(int sectorlightlevel, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon = false);

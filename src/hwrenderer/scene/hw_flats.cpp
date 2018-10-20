@@ -139,6 +139,7 @@ void GLFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &light
 {
 	Plane p;
 
+	lightdata.Clear();
 	if (renderstyle == STYLE_Add && !level.lightadditivesurfaces)
 	{
 		dynlightindex = -1;
@@ -182,14 +183,16 @@ void GLFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &light
 
 inline void GLFlat::PutFlat(HWDrawInfo *di, bool fog)
 {
-
 	if (di->isFullbrightScene())
 	{
 		Colormap.Clear();
 	}
-	else if (level.HasDynamicLights && gltexture != nullptr)
+	else if (!(screen->hwcaps & RFL_BUFFER_STORAGE))
 	{
-		SetupLights(di, sector->lighthead, lightdata, sector->PortalGroup);
+		if (level.HasDynamicLights && gltexture != nullptr)
+		{
+			SetupLights(di, sector->lighthead, lightdata, sector->PortalGroup);
+		}
 	}
 	di->AddFlat(this, fog);
 }

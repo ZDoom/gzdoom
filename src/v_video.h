@@ -57,6 +57,7 @@ enum EHWCaps
 
 	RFL_SHADER_STORAGE_BUFFER = 4,
 	RFL_BUFFER_STORAGE = 8,
+	RFL_NO_LIGHT_PREGENERATE = 16,	// delays dynamic light creation until the render pass. With modern OpenGL this is faster because it can make use of the CPU while the GPU is rendering.
 
 	RFL_NO_CLIP_PLANES = 32,
 

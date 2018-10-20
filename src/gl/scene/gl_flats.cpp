@@ -112,7 +112,14 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 	gl_RenderState.Apply();
 	auto iboindex = flat->iboindex;
 
-	if (processlights) gl_RenderState.ApplyLightIndex(flat->dynlightindex);
+	if (processlights) 
+	{
+		if (screen->hwcaps & RFL_BUFFER_STORAGE)
+		{
+			flat->SetupLights(this, flat->sector->lighthead, lightdata, flat->sector->PortalGroup);
+		}
+		gl_RenderState.ApplyLightIndex(flat->dynlightindex);
+	}
 
 	if (iboindex >= 0)
 	{
@@ -215,13 +222,13 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 		{
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
 			gl_RenderState.SetPlaneTextureRotation(&plane, flat->gltexture);
-			DrawSubsectors(flat, pass, processLights && (gl.lightmethod == LM_DIRECT || flat->dynlightindex > -1), false);
+			DrawSubsectors(flat, pass, processLights, false);
 			gl_RenderState.EnableTextureMatrix(false);
 		}
 		else
 		{
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_XY, 0, -1, false);
-			DrawSkyboxSector(flat, pass, processLights && (gl.lightmethod == LM_DIRECT || flat->dynlightindex > -1));
+			DrawSkyboxSector(flat, pass, processLights);
 		}
 		gl_RenderState.SetObjectColor(0xffffffff);
 		break;

@@ -42,9 +42,6 @@ static int op2gl[] = { GL_KEEP, GL_INCR, GL_DECR };
 
 FGLRenderState gl_RenderState;
 
-CVAR(Bool, gl_direct_state_change, true, 0)
-
-
 static VSMatrix identityMatrix(1);
 TArray<VSMatrix> gl_MatrixStack;
 
@@ -213,19 +210,10 @@ bool FGLRenderState::ApplyShader()
 
 void FGLRenderState::Apply()
 {
-	if (!gl_direct_state_change)
+	if (mRenderStyle != stRenderStyle)
 	{
-		if (mSrcBlend != stSrcBlend || mDstBlend != stDstBlend)
-		{
-			stSrcBlend = mSrcBlend;
-			stDstBlend = mDstBlend;
-			glBlendFunc(mSrcBlend, mDstBlend);
-		}
-		if (mBlendEquation != stBlendEquation)
-		{
-			stBlendEquation = mBlendEquation;
-			glBlendEquation(mBlendEquation);
-		}
+		ApplyBlendMode();
+		stRenderStyle = mRenderStyle;
 	}
 
 	if (mMaterial.mChanged)
@@ -343,4 +331,40 @@ void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translatio
 	}
 }
 
+//==========================================================================
+//
+// Apply blend mode from RenderStyle
+//
+//==========================================================================
 
+void FGLRenderState::ApplyBlendMode()
+{
+	static int blendstyles[] = { GL_ZERO, GL_ONE, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR, };
+	static int renderops[] = { 0, GL_FUNC_ADD, GL_FUNC_SUBTRACT, GL_FUNC_REVERSE_SUBTRACT, -1, -1, -1, -1,
+		-1, -1, -1, -1, -1, -1, -1, -1 };
+
+	int srcblend = blendstyles[mRenderStyle.SrcAlpha%STYLEALPHA_MAX];
+	int dstblend = blendstyles[mRenderStyle.DestAlpha%STYLEALPHA_MAX];
+	int blendequation = renderops[mRenderStyle.BlendOp & 15];
+
+	if (blendequation == -1)	// This was a fuzz style.
+	{
+		srcblend = GL_DST_COLOR;
+		dstblend = GL_ONE_MINUS_SRC_ALPHA;
+		blendequation = GL_FUNC_ADD;
+	}
+
+	// Checks must be disabled until all draw code has been converted.
+	//if (srcblend != stSrcBlend || dstblend != stDstBlend)
+	{
+		stSrcBlend = srcblend;
+		stDstBlend = dstblend;
+		glBlendFunc(srcblend, dstblend);
+	}
+	//if (blendequation != stBlendEquation)
+	{
+		stBlendEquation = blendequation;
+		glBlendEquation(blendequation);
+	}
+
+}

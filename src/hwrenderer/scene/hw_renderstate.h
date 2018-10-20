@@ -129,6 +129,7 @@ protected:
 	PalEntry mObjectColor;
 	PalEntry mObjectColor2;
 	FStateVec4 mDynColor;
+	FRenderStyle mRenderStyle;
 
 	FMaterialState mMaterial;
 	FStencilState mStencil;
@@ -157,6 +158,7 @@ public:
 		mLightParms[3] = -1.f;
 		mSpecialEffect = EFF_NONE;
 		mLightIndex = -1;
+		mRenderStyle = DefaultRenderStyle();
 		mMaterial.Reset();
 		mStencil.Reset();
 		mBias.Reset();
@@ -333,6 +335,15 @@ public:
 		mLightIndex = index;
 	}
 
+	void SetRenderStyle(FRenderStyle rs)
+	{
+		mRenderStyle = rs;
+	}
+
+	void SetRenderStyle(ERenderStyle rs)
+	{
+		mRenderStyle = rs;
+	}
 
 	void SetDepthBias(float a, float b)
 	{

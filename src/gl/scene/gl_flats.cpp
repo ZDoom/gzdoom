@@ -216,7 +216,7 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 		break;
 
 	case GLPASS_TRANSLUCENT:
-		if (flat->renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE);
+		gl_RenderState.SetRenderStyle(flat->renderstyle);
 		SetColor(flat->lightlevel, rel, flat->Colormap, flat->alpha);
 		SetFog(flat->lightlevel, rel, &flat->Colormap, false);
 		if (!flat->gltexture || !flat->gltexture->tex->isFullbright())
@@ -237,7 +237,7 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 			DrawSubsectors(flat, pass, true);
 			gl_RenderState.EnableTextureMatrix(false);
 		}
-		if (flat->renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		gl_RenderState.SetRenderStyle(DefaultRenderStyle());
 		gl_RenderState.SetObjectColor(0xffffffff);
 		break;
 	}

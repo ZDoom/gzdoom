@@ -39,8 +39,6 @@ class FShader;
 struct GLSectorPlane;
 extern TArray<VSMatrix> gl_MatrixStack;
 
-EXTERN_CVAR(Bool, gl_direct_state_change)
-
 enum EPassType
 {
 	NORMAL_PASS,
@@ -67,6 +65,7 @@ class FGLRenderState : public FRenderState
 	int mEffectState;
 	int mTempTM = TM_MODULATE;
 
+	FRenderStyle stRenderStyle;
 	int stSrcBlend, stDstBlend;
 	bool stAlphaTest;
 	int stBlendEquation;
@@ -103,6 +102,7 @@ public:
 
 	void Apply();
 	void ApplyLightIndex(int index);
+	void ApplyBlendMode();
 
 	void SetVertexBuffer(FVertexBuffer *vb)
 	{
@@ -164,27 +164,14 @@ public:
 
 	void BlendFunc(int src, int dst)
 	{
-		if (!gl_direct_state_change)
-		{
-			mSrcBlend = src;
-			mDstBlend = dst;
-		}
-		else
-		{
-			glBlendFunc(src, dst);
-		}
+		glBlendFunc(src, dst);
+		stRenderStyle = LegacyRenderStyles[STYLE_OptFuzzy];	// temporary hack: Set to something that never can get here to invalidate the cache
 	}
 
 	void BlendEquation(int eq)
 	{
-		if (!gl_direct_state_change)
-		{
-			mBlendEquation = eq;
-		}
-		else
-		{
-			glBlendEquation(eq);
-		}
+		glBlendEquation(eq);
+		stRenderStyle = LegacyRenderStyles[STYLE_OptFuzzy];	// temporary hack: Set to something that never can get here to invalidate the cache
 	}
 
 	// This wraps the depth clamp setting because we frequently need to read it which OpenGL is not particularly performant at...

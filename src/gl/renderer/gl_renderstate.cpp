@@ -38,8 +38,6 @@
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/textures/gl_hwtexture.h"
 
-void gl_SetTextureMode(int type);
-
 FGLRenderState gl_RenderState;
 
 CVAR(Bool, gl_direct_state_change, true, 0)
@@ -63,8 +61,6 @@ void FGLRenderState::Reset()
 {
 	mTextureEnabled = true;
 	mSplitEnabled = mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
-	mColorMask[0] = mColorMask[1] = mColorMask[2] = mColorMask[3] = true;
-	currentColorMask[0] = currentColorMask[1] = currentColorMask[2] = currentColorMask[3] = true;
 	mFogColor.d = -1;
 	mTextureMode = -1;
 	mDesaturation = 0;
@@ -253,8 +249,6 @@ void FGLRenderState::Apply()
 		}
 	}
 
-	//ApplyColorMask(); I don't think this is needed.
-
 	if (mVertexBuffer != mCurrentVertexBuffer)
 	{
 		if (mVertexBuffer == NULL) glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -265,21 +259,6 @@ void FGLRenderState::Apply()
 }
 
 
-
-void FGLRenderState::ApplyColorMask()
-{
-	if ((mColorMask[0] != currentColorMask[0]) ||
-		(mColorMask[1] != currentColorMask[1]) ||
-		(mColorMask[2] != currentColorMask[2]) ||
-		(mColorMask[3] != currentColorMask[3]))
-	{
-		glColorMask(mColorMask[0], mColorMask[1], mColorMask[2], mColorMask[3]);
-		currentColorMask[0] = mColorMask[0];
-		currentColorMask[1] = mColorMask[1];
-		currentColorMask[2] = mColorMask[2];
-		currentColorMask[3] = mColorMask[3];
-	}
-}
 
 void FGLRenderState::ApplyLightIndex(int index)
 {

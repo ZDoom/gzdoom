@@ -72,16 +72,17 @@ enum EPassType
 	MAX_PASS_TYPES
 };
 
-class FGLRenderState
+class FRenderState
 {
-	friend void gl_SetTextureMode(int type);
+};
+
+class FGLRenderState : public FRenderState
+{
 	bool mTextureEnabled;
 	uint8_t mFogEnabled;
 	bool mGlowEnabled;
 	bool mSplitEnabled;
 	bool mBrightmapEnabled;
-	bool mColorMask[4];
-	bool currentColorMask[4];
 	int mSpecialEffect;
 	int mTextureMode;
 	int mDesaturation;
@@ -151,7 +152,6 @@ public:
 	void SetMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader, bool alphatexture);
 
 	void Apply();
-	void ApplyColorMask();
 	void ApplyLightIndex(int index);
 
 	void SetVertexBuffer(FVertexBuffer *vb)
@@ -197,28 +197,6 @@ public:
 	{
 		mColor.Set(1,1,1,1);
 		mDesaturation = 0;
-	}
-
-	void GetColorMask(bool& r, bool &g, bool& b, bool& a) const
-	{
-		r = mColorMask[0];
-		g = mColorMask[1];
-		b = mColorMask[2];
-		a = mColorMask[3];
-	}
-
-	void SetColorMask(bool r, bool g, bool b, bool a)
-	{
-		mColorMask[0] = r;
-		mColorMask[1] = g;
-		mColorMask[2] = b;
-		mColorMask[3] = a;
-	}
-
-	void ResetColorMask()
-	{
-		for (int i = 0; i < 4; ++i)
-			mColorMask[i] = true;
 	}
 
 	void SetTextureMode(int mode)

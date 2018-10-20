@@ -107,13 +107,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	// Blinn glossiness and specular level
 	i_data += "uniform vec2 uSpecularMaterial;\n";
 
-	// quad drawer stuff
-	i_data += "#ifdef USE_QUAD_DRAWER\n";
-	i_data += "uniform mat4 uQuadVertices;\n";
-	i_data += "uniform mat4 uQuadTexCoords;\n";
-	i_data += "uniform int uQuadMode;\n";
-	i_data += "#endif\n";
-
 	// matrices
 	i_data += "uniform mat4 ModelMatrix;\n";
 	i_data += "uniform mat4 NormalModelMatrix;\n";
@@ -189,11 +182,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			vp_comb = "#version 400 core\n#extension GL_ARB_shader_storage_buffer_object : require\n#define SHADER_STORAGE_LIGHTS\n";
 		else
 			vp_comb = "#version 430 core\n#define SHADER_STORAGE_LIGHTS\n";
-	}
-
-	if (gl.buffermethod == BM_DEFERRED)
-	{
-		vp_comb << "#define USE_QUAD_DRAWER\n";
 	}
 
 	if (!!(gl.flags & RFL_SHADER_STORAGE_BUFFER))
@@ -355,10 +343,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	fakevb_index = glGetUniformLocation(hShader, "fakeVB");
 	modelmatrix_index = glGetUniformLocation(hShader, "ModelMatrix");
 	texturematrix_index = glGetUniformLocation(hShader, "TextureMatrix");
-	vertexmatrix_index = glGetUniformLocation(hShader, "uQuadVertices");
-	texcoordmatrix_index = glGetUniformLocation(hShader, "uQuadTexCoords");
 	normalmodelmatrix_index = glGetUniformLocation(hShader, "NormalModelMatrix");
-	quadmode_index = glGetUniformLocation(hShader, "uQuadMode");
 
 	if (lightbuffertype == GL_UNIFORM_BUFFER)
 	{
@@ -369,7 +354,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, VIEWPOINT_BINDINGPOINT);
 
 	glUseProgram(hShader);
-	if (quadmode_index > 0) glUniform1i(quadmode_index, 0);
 
 	// set up other texture units (if needed by the shader)
 	for (int i = 2; i<16; i++)

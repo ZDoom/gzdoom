@@ -20,21 +20,8 @@ void main()
 	vec2 parmTexCoord;
 	vec4 parmPosition;
 	
-	#ifndef USE_QUAD_DRAWER
-		parmTexCoord = aTexCoord;
-		parmPosition = aPosition;
-	#else
-		if (uQuadMode == 0)
-		{
-			parmTexCoord = aTexCoord;
-			parmPosition = aPosition;
-		}
-		else
-		{
-			parmPosition = uQuadVertices[int(aPosition.x)];
-			parmTexCoord = uQuadTexCoords[int(aPosition.x)].st;
-		}
-	#endif
+	parmTexCoord = aTexCoord;
+	parmPosition = aPosition;
 	
 	#ifndef SIMPLE
 		vec4 worldcoord = ModelMatrix * mix(parmPosition, aVertex2, uInterpolationFactor);

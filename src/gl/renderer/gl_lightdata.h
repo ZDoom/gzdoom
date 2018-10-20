@@ -10,9 +10,5 @@
 void gl_GetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblending,
 					   int *tm, int *sb, int *db, int *be);
 
-void gl_SetColor(int light, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon=false);
-void gl_SetFog(int lightlevel, int rellight, bool fullbright, const FColormap *cm, bool isadditive);
-
-
 
 #endif

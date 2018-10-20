@@ -3,6 +3,7 @@
 #include "v_palette.h"
 #include "vectors.h"
 #include "g_levellocals.h"
+#include "hw_drawstructs.h"
 #include "r_data/matrix.h"
 #include "hwrenderer/textures/hw_material.h"
 
@@ -134,6 +135,8 @@ protected:
 	FMaterialState mMaterial;
 	FStencilState mStencil;
 	FDepthBiasState mBias;
+
+	void SetShaderLight(float level, float olight);
 
 public:
 	VSMatrix mModelMatrix;
@@ -271,16 +274,16 @@ public:
 	{
 		DVector3 tn = top.Normal();
 		DVector3 bn = bottom.Normal();
-		mGlowTopPlane.Set(tn.X, tn.Y, 1. / tn.Z, top.fD());
-		mGlowBottomPlane.Set(bn.X, bn.Y, 1. / bn.Z, bottom.fD());
+		mGlowTopPlane.Set((float)tn.X, (float)tn.Y, (float)(1. / tn.Z), (float)top.fD());
+		mGlowBottomPlane.Set((float)bn.X, (float)bn.Y, (float)(1. / bn.Z), (float)bottom.fD());
 	}
 
 	void SetSplitPlanes(const secplane_t &top, const secplane_t &bottom)
 	{
 		DVector3 tn = top.Normal();
 		DVector3 bn = bottom.Normal();
-		mSplitTopPlane.Set(tn.X, tn.Y, 1. / tn.Z, top.fD());
-		mSplitBottomPlane.Set(bn.X, bn.Y, 1. / bn.Z, bottom.fD());
+		mSplitTopPlane.Set((float)tn.X, (float)tn.Y, (float)(1. / tn.Z), (float)top.fD());
+		mSplitBottomPlane.Set((float)bn.X, (float)bn.Y, (float)(1. / bn.Z), (float)bottom.fD());
 	}
 
 	void SetDynLight(float r, float g, float b)

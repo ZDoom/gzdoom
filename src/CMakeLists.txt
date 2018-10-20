@@ -841,6 +841,7 @@ set( FASTMATH_SOURCES
 	hwrenderer/scene/hw_flats.cpp
 	hwrenderer/scene/hw_portal.cpp
 	hwrenderer/scene/hw_renderhacks.cpp
+	hwrenderer/scene/hw_renderstate.cpp
 	hwrenderer/scene/hw_sky.cpp
 	hwrenderer/scene/hw_sprites.cpp
 	hwrenderer/scene/hw_spritelight.cpp

@@ -6,6 +6,8 @@
 #include "hwrenderer/scene/hw_weapon.h"
 #include "hwrenderer/scene/hw_viewpointuniforms.h"
 
+#include "gl/renderer/gl_renderstate.h"	// temporary
+
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
 #endif
@@ -104,12 +106,12 @@ struct FDrawInfo : public HWDrawInfo
 	
 	void SetColor(int light, int rellight, const FColormap &cm, float alpha, bool weapon = false)
 	{
-		gl_SetColor(light, rellight, isFullbrightScene(), cm, alpha, weapon);
+		gl_RenderState.SetColor(light, rellight, isFullbrightScene(), cm, alpha, weapon);
 	}
 
 	void SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isadditive)
 	{
-		gl_SetFog(lightlevel, rellight, isFullbrightScene(), cmap, isadditive);
+		gl_RenderState.SetFog(lightlevel, rellight, isFullbrightScene(), cmap, isadditive);
 	}
 
 };

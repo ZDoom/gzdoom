@@ -271,7 +271,7 @@ public:
 
 	GLWall & operator=(const GLWall &other)
 	{
-		memcpy(this, &other, sizeof(GLWall));
+		memcpy((void *)this, &other, sizeof(GLWall));
 		return *this;
 	}
 

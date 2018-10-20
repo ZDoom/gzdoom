@@ -1432,7 +1432,7 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 	unsigned numsectors = lumplen / sizeof(mapsector_t);
 	level.sectors.Alloc(numsectors);
 	auto sectors = &level.sectors[0];
-	memset (sectors, 0, numsectors*sizeof(sector_t));
+	memset ((void *)sectors, 0, numsectors*sizeof(sector_t));
 
 	if (level.flags & LEVEL_SNDSEQTOTALCTRL)
 		defSeqType = 0;
@@ -1715,7 +1715,7 @@ void P_LoadThings (MapData * map)
 		// [RH] Need to translate the spawn flags to Hexen format.
 		short flags = LittleShort(mt->options);
 
-		memset (&mti[i], 0, sizeof(mti[i]));
+		memset ((void *)&mti[i], 0, sizeof(mti[i]));
 
 		mti[i].Gravity = 1;
 		mti[i].Conversation = 0;
@@ -1796,7 +1796,7 @@ void P_LoadThings2 (MapData * map)
 
 	for(int i = 0; i< numthings; i++)
 	{
-		memset (&mti[i], 0, sizeof(mti[i]));
+		memset ((void *)&mti[i], 0, sizeof(mti[i]));
 
 		mti[i].thingid = LittleShort(mth[i].thingid);
 		mti[i].pos.X = LittleShort(mth[i].x);
@@ -4274,7 +4274,7 @@ void P_SetupLevel (const char *lumpname, int position)
 	// Note that we want binary identity here, so assignment is not sufficient because it won't initialize any padding bytes.
 	// Note that none of these structures may contain non POD fields anyway.
 	level.loadsectors.Resize(level.sectors.Size());
-	memcpy(&level.loadsectors[0], &level.sectors[0], level.sectors.Size() * sizeof(level.sectors[0]));
+	memcpy((void *)&level.loadsectors[0], &level.sectors[0], level.sectors.Size() * sizeof(level.sectors[0]));
 	level.loadlines.Resize(level.lines.Size());
 	memcpy(&level.loadlines[0], &level.lines[0], level.lines.Size() * sizeof(level.lines[0]));
 	level.loadsides.Resize(level.sides.Size());

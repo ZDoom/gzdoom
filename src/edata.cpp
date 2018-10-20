@@ -272,7 +272,7 @@ static void parseSector(FScanner &sc)
 {
 	EDSector sec;
 
-	memset(&sec, 0, sizeof(sec));
+	memset((void *)&sec, 0, sizeof(sec));
 	sec.Overlayalpha[sector_t::floor] = sec.Overlayalpha[sector_t::ceiling] = 1.;
 	sec.floorterrain = sec.ceilingterrain = -1;
 

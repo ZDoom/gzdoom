@@ -302,7 +302,7 @@ public:
 			Array[index].~T();
 			if (index < --Count)
 			{
-				memmove (&Array[index], &Array[index+1], sizeof(T)*(Count - index));
+				memmove ((void *)&Array[index], &Array[index+1], sizeof(T)*(Count - index));
 			}
 		}
 	}
@@ -322,7 +322,7 @@ public:
 			Count -= deletecount;
 			if (index < Count)
 			{
-				memmove (&Array[index], &Array[index+deletecount], sizeof(T)*(Count - index));
+				memmove ((void *)&Array[index], &Array[index+deletecount], sizeof(T)*(Count - index));
 			}
 		}
 	}
@@ -344,7 +344,7 @@ public:
 			Resize (Count + 1);
 
 			// Now move items from the index and onward out of the way
-			memmove (&Array[index+1], &Array[index], sizeof(T)*(Count - index - 1));
+			memmove ((void *)&Array[index+1], &Array[index], sizeof(T)*(Count - index - 1));
 
 			// And put the new element in
 			::new ((void *)&Array[index]) T(item);

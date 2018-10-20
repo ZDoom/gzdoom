@@ -1520,7 +1520,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, clearcolorset, I, PlayerPawn)
 	else
 	{
 		FPlayerColorSet color;
-		memset(&color, 0, sizeof(color));
+		memset((void *)&color, 0, sizeof(color));
 		ColorSets.Push(std::make_tuple(info, setnum, color));
 	}
 }

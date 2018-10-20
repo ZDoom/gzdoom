@@ -617,7 +617,7 @@ FISoundChannel *S_GetChannel(void *syschan)
 	else
 	{
 		chan = new FSoundChan;
-		memset(chan, 0, sizeof(*chan));
+		memset((void *)chan, 0, sizeof(*chan));
 	}
 	S_LinkChannel(chan, &Channels);
 	chan->SysChannel = syschan;
@@ -635,7 +635,7 @@ FISoundChannel *S_GetChannel(void *syschan)
 void S_ReturnChannel(FSoundChan *chan)
 {
 	S_UnlinkChannel(chan);
-	memset(chan, 0, sizeof(*chan));
+	memset((void *)chan, 0, sizeof(*chan));
 	S_LinkChannel(chan, &FreeChannels);
 }
 

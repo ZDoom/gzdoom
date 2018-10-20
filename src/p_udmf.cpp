@@ -521,7 +521,7 @@ public:
 	{
 		FString arg0str, arg1str;
 
-		memset(th, 0, sizeof(*th));
+		memset((void *)th, 0, sizeof(*th));
 		th->Gravity = 1;
 		th->RenderStyle = STYLE_Count;
 		th->Alpha = -1;
@@ -1363,7 +1363,7 @@ public:
 		FName scroll_floor_type = NAME_None;
 
 
-		memset(sec, 0, sizeof(*sec));
+		memset((void *)sec, 0, sizeof(*sec));
 		sec->lightlevel = 160;
 		sec->SetXScale(sector_t::floor, 1.);	// [RH] floor and ceiling scaling
 		sec->SetYScale(sector_t::floor, 1.);
@@ -2124,7 +2124,7 @@ public:
 			else if (sc.Compare("sector"))
 			{
 				sector_t sec;
-				memset(&sec, 0, sizeof(sector_t));
+				memset((void *)&sec, 0, sizeof(sector_t));
 				ParseSector(&sec, ParsedSectors.Size());
 				ParsedSectors.Push(sec);
 			}
@@ -2151,11 +2151,11 @@ public:
 
 		// Create the real vertices
 		level.vertexes.Alloc(ParsedVertices.Size());
-		memcpy(&level.vertexes[0], &ParsedVertices[0], level.vertexes.Size() * sizeof(vertex_t));
+		memcpy((void *)&level.vertexes[0], &ParsedVertices[0], level.vertexes.Size() * sizeof(vertex_t));
 
 		// Create the real sectors
 		level.sectors.Alloc(ParsedSectors.Size());
-		memcpy(&level.sectors[0], &ParsedSectors[0], level.sectors.Size() * sizeof(sector_t));
+		memcpy((void *)&level.sectors[0], &ParsedSectors[0], level.sectors.Size() * sizeof(sector_t));
 		level.sectors[0].e = new extsector_t[level.sectors.Size()];
 		for(unsigned i = 0; i < level.sectors.Size(); i++)
 		{

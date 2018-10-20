@@ -596,7 +596,7 @@ struct secspecial_t
 
 	void Clear()
 	{
-		memset(this, 0, sizeof(*this));
+		memset((void *)this, 0, sizeof(*this));
 	}
 };
 

@@ -1965,7 +1965,7 @@ sector_t * AM_FakeFlat(AActor *viewer, sector_t * sec, sector_t * dest)
 	int diffTex = (sec->heightsec->MoreFlags & SECMF_CLIPFAKEPLANES);
 	sector_t * s = sec->heightsec;
 
-	memcpy(dest, sec, sizeof(sector_t));
+	memcpy((void *)dest, sec, sizeof(sector_t));
 
 	// Replace floor height with control sector's heights.
 	// The automap is only interested in the floor so let's skip the ceiling.

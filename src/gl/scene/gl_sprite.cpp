@@ -195,7 +195,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 		gl_RenderState.SetFog(0, 0);
 	}
 
-	if (sprite->gltexture) gl_RenderState.SetMaterial(sprite->gltexture, CLAMP_XY, sprite->translation, sprite->OverrideShader, !!(RenderStyle.Flags & STYLEF_RedIsAlpha));
+	if (sprite->gltexture) gl_RenderState.ApplyMaterial(sprite->gltexture, CLAMP_XY, sprite->translation, sprite->OverrideShader);
 	else if (!sprite->modelframe) gl_RenderState.EnableTexture(false);
 
 		//SetColor(lightlevel, rel, Colormap, trans);

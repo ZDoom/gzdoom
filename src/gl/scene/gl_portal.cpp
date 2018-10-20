@@ -426,7 +426,7 @@ void GLHorizonPortal::DrawContents(HWDrawInfo *hwdi)
 	}
 
 
-	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
+	gl_RenderState.ApplyMaterial(gltexture, CLAMP_NONE, 0, -1);
 	gl_RenderState.SetObjectColor(origin->specialcolor);
 
 	gl_RenderState.SetPlaneTextureRotation(sp, gltexture);

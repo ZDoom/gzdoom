@@ -280,8 +280,8 @@ void FDrawInfo::Draw(EDrawType dt, FRenderState &state, int index, int count, bo
 	assert(&state == &gl_RenderState);
 	if (apply)
 	{
-		gl_RenderState.ApplyMaterial();
 		gl_RenderState.Apply();
+		gl_RenderState.ApplyLightIndex(-2);
 	}
 	drawcalls.Clock();
 	glDrawArrays(dt2gl[dt], index, count);
@@ -293,8 +293,8 @@ void FDrawInfo::DrawIndexed(EDrawType dt, FRenderState &state, int index, int co
 	assert(&state == &gl_RenderState);
 	if (apply)
 	{
-		gl_RenderState.ApplyMaterial();
 		gl_RenderState.Apply();
+		gl_RenderState.ApplyLightIndex(-2);
 	}
 	drawcalls.Clock();
 	glDrawElements(dt2gl[dt], count, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + index);

@@ -123,15 +123,11 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool istrans)
 
 			// Push bleeding floor/ceiling textures back a little in the z-buffer
 			// so they don't interfere with overlapping mid textures.
-			glEnable(GL_POLYGON_OFFSET_FILL);
-			glPolygonOffset(1.0f, 128.0f);
-
+			gl_RenderState.SetDepthBias(1, 128);
 			SetupFloodStencil(fnode->vertexindex);
 			Draw(DT_TriangleFan, gl_RenderState, fnode->vertexindex + 4, 4);
 			ClearFloodStencil(fnode->vertexindex);
-
-			glPolygonOffset(0.0f, 0.0f);
-			glDisable(GL_POLYGON_OFFSET_FILL);
+			gl_RenderState.SetDepthBias(0, 0);
 
 			fnode = fnode->next;
 		}
@@ -203,16 +199,16 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 			gl_RenderState.SetObjectColor(flat->FlatColor | 0xff000000);
 		if (flat->sector->special != GLSector_Skybox)
 		{
-			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
+			gl_RenderState.ApplyMaterial(flat->gltexture, CLAMP_NONE, 0, -1);
 			gl_RenderState.SetPlaneTextureRotation(&plane, flat->gltexture);
 			DrawSubsectors(flat, pass, false);
 			gl_RenderState.EnableTextureMatrix(false);
 		}
 		else
 		{
-			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_XY, 0, -1, false);
-			gl_RenderState.ApplyLightIndex(flat->dynlightindex);
-			glDrawArrays(GL_TRIANGLE_FAN, flat->iboindex, 4);
+			gl_RenderState.ApplyMaterial(flat->gltexture, CLAMP_XY, 0, -1);
+			gl_RenderState.SetLightIndex(flat->dynlightindex);
+			Draw(DT_TriangleFan, gl_RenderState, flat->iboindex, 4);
 			flatvertices += 4;
 			flatprimitives++;
 		}
@@ -236,7 +232,7 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 		{
 			if (!flat->gltexture->tex->GetTranslucency()) gl_RenderState.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
 			else gl_RenderState.AlphaFunc(Alpha_GEqual, 0.f);
-			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
+			gl_RenderState.ApplyMaterial(flat->gltexture, CLAMP_NONE, 0, -1);
 			gl_RenderState.SetPlaneTextureRotation(&plane, flat->gltexture);
 			DrawSubsectors(flat, pass, true);
 			gl_RenderState.EnableTextureMatrix(false);

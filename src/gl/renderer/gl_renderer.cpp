@@ -505,7 +505,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 			if (mat == nullptr) continue;
 
 			if (gltrans == -1 && cmd.mTranslation != nullptr) gltrans = cmd.mTranslation->GetUniqueIndex();
-			gl_RenderState.SetMaterial(mat, cmd.mFlags & F2DDrawer::DTF_Wrap ? CLAMP_NONE : CLAMP_XY_NOMIP, -gltrans, -1, cmd.mDrawMode == F2DDrawer::DTM_AlphaTexture);
+			gl_RenderState.ApplyMaterial(mat, cmd.mFlags & F2DDrawer::DTF_Wrap ? CLAMP_NONE : CLAMP_XY_NOMIP, -gltrans, -1);
 			gl_RenderState.EnableTexture(true);
 
 			// Canvas textures are stored upside down

@@ -228,6 +228,12 @@ void FGLRenderState::Apply()
 		}
 	}
 
+	if (mMaterial.mChanged)
+	{
+		ApplyMaterial(mMaterial.mMaterial, mMaterial.mClampMode, mMaterial.mTranslation, mMaterial.mOverrideShader);
+		mMaterial.mChanged = false;
+	}
+
 	if (mStencil.mChanged)
 	{
 		int recursion = GLRenderer->mPortalState.GetRecursion();
@@ -242,6 +248,21 @@ void FGLRenderState::Apply()
 		else
 			glEnable(GL_DEPTH_TEST);
 
+		mStencil.mChanged = false;
+	}
+
+	if (mBias.mChanged)
+	{
+		if (mBias.mFactor == 0 && mBias.mUnits == 0)
+		{
+			glDisable(GL_POLYGON_OFFSET_FILL);
+		}
+		else
+		{
+			glEnable(GL_POLYGON_OFFSET_FILL);
+		}
+		glPolygonOffset(mBias.mFactor, mBias.mUnits);
+		mBias.mChanged = false;
 	}
 
 	if (mVertexBuffer != mCurrentVertexBuffer)
@@ -257,6 +278,7 @@ void FGLRenderState::Apply()
 
 void FGLRenderState::ApplyLightIndex(int index)
 {
+	if (index == -2) index = mLightIndex;	// temporary workaround so that both old and new code can be handled.
 	if (index > -1 && GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
 	{
 		index = GLRenderer->mLights->BindUBO(index);
@@ -270,7 +292,7 @@ void FGLRenderState::ApplyLightIndex(int index)
 //
 //===========================================================================
 
-void FGLRenderState::SetMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader, bool alphatexture)
+void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader)
 {
 	if (mat->tex->bHasCanvas)
 	{

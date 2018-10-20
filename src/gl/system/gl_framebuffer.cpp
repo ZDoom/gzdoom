@@ -343,7 +343,7 @@ IHardwareTexture *OpenGLFrameBuffer::CreateHardwareTexture(FTexture *tex)
 
 void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 {
-	gl_RenderState.SetMaterial(mat, CLAMP_NONE, translation, false, false);
+	gl_RenderState.ApplyMaterial(mat, CLAMP_NONE, translation, false);
 }
 
 FModelRenderer *OpenGLFrameBuffer::CreateModelRenderer(int mli) 

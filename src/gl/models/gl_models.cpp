@@ -130,7 +130,7 @@ void FGLModelRenderer::SetInterpolation(double inter)
 void FGLModelRenderer::SetMaterial(FTexture *skin, bool clampNoFilter, int translation)
 {
 	FMaterial * tex = FMaterial::ValidateTexture(skin, false);
-	gl_RenderState.SetMaterial(tex, clampNoFilter ? CLAMP_NOFILTER : CLAMP_NONE, translation, -1, false);
+	gl_RenderState.ApplyMaterial(tex, clampNoFilter ? CLAMP_NOFILTER : CLAMP_NONE, translation, -1);
 
 	gl_RenderState.Apply();
 	if (modellightindex != -1) gl_RenderState.ApplyLightIndex(modellightindex);

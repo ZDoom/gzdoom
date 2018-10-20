@@ -87,6 +87,20 @@ struct FStencilState
 	}
 };
 
+struct FDepthBiasState
+{
+	float mFactor;
+	float mUnits;
+	bool mChanged;
+
+	void Reset()
+	{
+		mFactor = 0;
+		mUnits = 0;
+		mChanged = false;
+	}
+};
+
 class FRenderState
 {
 protected:
@@ -118,10 +132,7 @@ protected:
 
 	FMaterialState mMaterial;
 	FStencilState mStencil;
-
-	// fixed function state
-	float mBias[2];
-	bool mBiasOn;
+	FDepthBiasState mBias;
 
 public:
 	VSMatrix mModelMatrix;
@@ -146,8 +157,9 @@ public:
 		mLightParms[3] = -1.f;
 		mSpecialEffect = EFF_NONE;
 		mLightIndex = -1;
-		mBiasOn = false;
 		mMaterial.Reset();
+		mStencil.Reset();
+		mBias.Reset();
 
 		mColor.Set(1.0f, 1.0f, 1.0f, 1.0f);
 		mGlowTop.Set(0.0f, 0.0f, 0.0f, 0.0f);
@@ -324,16 +336,16 @@ public:
 
 	void SetDepthBias(float a, float b)
 	{
-		mBias[0] = a;
-		mBias[1] = b;
-		mBiasOn = true;
+		mBias.mFactor = a;
+		mBias.mUnits = b;
+		mBias.mChanged = true;
 	}
 
 	void ClearDepthBias()
 	{
-		mBias[0] = 0;
-		mBias[1] = 0;
-		mBiasOn = false;
+		mBias.mFactor = 0;
+		mBias.mUnits = 0;
+		mBias.mChanged = true;
 	}
 
 	void SetMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader)

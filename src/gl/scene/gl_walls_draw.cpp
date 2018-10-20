@@ -104,7 +104,7 @@ void FDrawInfo::RenderMirrorSurface(GLWall *wall)
 	glDepthFunc(GL_LEQUAL);
 
 	FMaterial * pat=FMaterial::ValidateTexture(TexMan.mirrorTexture, false, false);
-	gl_RenderState.SetMaterial(pat, CLAMP_NONE, 0, -1, false);
+	gl_RenderState.ApplyMaterial(pat, CLAMP_NONE, 0, -1);
 
 	wall->flags &= ~GLWall::GLWF_GLOW;
 	RenderWall(wall, GLWall::RWF_BLANK);
@@ -151,7 +151,7 @@ void FDrawInfo::RenderTexturedWall(GLWall *wall, int rflags)
 		gl_RenderState.SetGlowParams(wall->topglowcolor, wall->bottomglowcolor);
 	}
 	gl_RenderState.SetGlowPlanes(wall->topplane, wall->bottomplane);
-	gl_RenderState.SetMaterial(wall->gltexture, wall->flags & 3, 0, -1, false);
+	gl_RenderState.ApplyMaterial(wall->gltexture, wall->flags & 3, 0, -1);
 
 	if (wall->type == RENDERWALL_M2SNF)
 	{
@@ -468,7 +468,7 @@ void FDrawInfo::DrawDecal(GLDecal *gldecal)
 	}
 
 	gl_SetRenderStyle(decal->RenderStyle, false, false);
-	gl_RenderState.SetMaterial(tex, CLAMP_XY, decal->Translation, 0, !!(decal->RenderStyle.Flags & STYLEF_RedIsAlpha));
+	gl_RenderState.ApplyMaterial(tex, CLAMP_XY, decal->Translation, -1);
 
 
 	// If srcalpha is one it looks better with a higher alpha threshold

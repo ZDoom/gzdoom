@@ -120,7 +120,7 @@ void RenderDome(FMaterial * tex, float x_offset, float y_offset, bool mirror, in
 {
 	if (tex)
 	{
-		gl_RenderState.SetMaterial(tex, CLAMP_NONE, 0, -1, false);
+		gl_RenderState.ApplyMaterial(tex, CLAMP_NONE, 0, -1);
 		gl_RenderState.EnableModelMatrix(true);
 		gl_RenderState.EnableTextureMatrix(true);
 
@@ -159,25 +159,25 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 
 		// north
 		tex = FMaterial::ValidateTexture(sb->faces[0], false);
-		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
+		gl_RenderState.ApplyMaterial(tex, CLAMP_XY, 0, -1);
 		gl_RenderState.Apply();
 		glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(0), 4);
 
 		// east
 		tex = FMaterial::ValidateTexture(sb->faces[1], false);
-		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
+		gl_RenderState.ApplyMaterial(tex, CLAMP_XY, 0, -1);
 		gl_RenderState.Apply();
 		glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(1), 4);
 
 		// south
 		tex = FMaterial::ValidateTexture(sb->faces[2], false);
-		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
+		gl_RenderState.ApplyMaterial(tex, CLAMP_XY, 0, -1);
 		gl_RenderState.Apply();
 		glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(2), 4);
 
 		// west
 		tex = FMaterial::ValidateTexture(sb->faces[3], false);
-		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
+		gl_RenderState.ApplyMaterial(tex, CLAMP_XY, 0, -1);
 		gl_RenderState.Apply();
 		glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(3), 4);
 	}
@@ -185,20 +185,20 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 	{
 		faces=1;
 		tex = FMaterial::ValidateTexture(sb->faces[0], false);
-		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
+		gl_RenderState.ApplyMaterial(tex, CLAMP_XY, 0, -1);
 		gl_RenderState.Apply();
 		glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(-1), 10);
 	}
 
 	// top
 	tex = FMaterial::ValidateTexture(sb->faces[faces], false);
-	gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
+	gl_RenderState.ApplyMaterial(tex, CLAMP_XY, 0, -1);
 	gl_RenderState.Apply();
 	glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(sb->fliptop? 6:5), 4);
 
 	// bottom
 	tex = FMaterial::ValidateTexture(sb->faces[faces+1], false);
-	gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
+	gl_RenderState.ApplyMaterial(tex, CLAMP_XY, 0, -1);
 	gl_RenderState.Apply();
 	glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(4), 4);
 

@@ -99,7 +99,7 @@ public:
 		lastMaterial = nullptr;
 	}
 
-	void SetMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader, bool alphatexture);
+	void ApplyMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader);
 
 	void Apply();
 	void ApplyLightIndex(int index);
@@ -233,14 +233,6 @@ public:
 		return mPassType == GBUFFER_PASS ? 3 : 1;
 	}
 
-	void ApplyMaterial()
-	{
-		if (mMaterial.mChanged)
-		{
-			SetMaterial(mMaterial.mMaterial, mMaterial.mClampMode, mMaterial.mTranslation, mMaterial.mOverrideShader, false);
-			mMaterial.mChanged = false;
-		}
-	}
 };
 
 extern FGLRenderState gl_RenderState;

@@ -48,7 +48,6 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/models/gl_models.h"
-#include "gl/renderer/gl_quaddrawer.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 
 extern uint32_t r_renderercaps;
@@ -250,18 +249,17 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 			FVector3 v[4];
 			gl_RenderState.SetNormal(0, 0, 0);
             
-			if (sprite->CalculateVertices(this, v, &vp.Pos))
+			if ((gl.flags & RFL_BUFFER_STORAGE) && sprite->vertexindex == -1)
+			{
+				sprite->CreateVertices(this);
+			}
+			if (sprite->polyoffset)
 			{
 				glEnable(GL_POLYGON_OFFSET_FILL);
 				glPolygonOffset(-1.0f, -128.0f);
 			}
-			
-			FQuadDrawer qd;
-			qd.Set(0, v[0][0], v[0][1], v[0][2], sprite->ul, sprite->vt);
-			qd.Set(1, v[1][0], v[1][1], v[1][2], sprite->ur, sprite->vt);
-			qd.Set(2, v[2][0], v[2][1], v[2][2], sprite->ul, sprite->vb);
-			qd.Set(3, v[3][0], v[3][1], v[3][2], sprite->ur, sprite->vb);
-			qd.Render(GL_TRIANGLE_STRIP);
+
+			glDrawArrays(GL_TRIANGLE_STRIP, sprite->vertexindex, 4);
 
 			if (foglayer)
 			{
@@ -271,7 +269,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 				gl_RenderState.BlendEquation(GL_FUNC_ADD);
 				gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 				gl_RenderState.Apply();
-				qd.Render(GL_TRIANGLE_STRIP);
+				glDrawArrays(GL_TRIANGLE_STRIP, sprite->vertexindex, 4);
 				gl_RenderState.SetTextureMode(TM_MODULATE);
 			}
 		}

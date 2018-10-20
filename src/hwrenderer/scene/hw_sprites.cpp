@@ -46,6 +46,7 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_fakeflat.h"
 #include "hwrenderer/scene/hw_portal.h"
+#include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_lighting.h"
@@ -228,9 +229,38 @@ inline void GLSprite::PutSprite(HWDrawInfo *di, bool translucent)
 	else
 		dynlightindex = -1;
 
-
+	vertexindex = -1;
+	if (!(screen->hwcaps & RFL_BUFFER_STORAGE))
+	{
+		CreateVertices(di);
+	}
 	di->AddSprite(this, translucent);
 }
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void GLSprite::CreateVertices(HWDrawInfo *di)
+{
+	if (modelframe == nullptr)
+	{
+		FVector3 v[4];
+		polyoffset = CalculateVertices(di, v, &di->Viewpoint.Pos);
+		auto vert = di->AllocVertices(4);
+		auto vp = vert.first;
+		vertexindex = vert.second;
+
+		vp[0].Set(v[0][0], v[0][1], v[0][2], ul, vt);
+		vp[1].Set(v[1][0], v[1][1], v[1][2], ur, vt);
+		vp[2].Set(v[2][0], v[2][1], v[2][2], ul, vb);
+		vp[3].Set(v[3][0], v[3][1], v[3][2], ur, vb);
+	}
+
+}
+
 
 //==========================================================================
 //

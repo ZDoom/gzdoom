@@ -285,7 +285,6 @@ public:
 	angle_t FrustumAngle();
 
 	virtual void DrawWall(GLWall *wall, int pass) = 0;
-	virtual void DrawFlat(GLFlat *flat, int pass, bool trans) = 0;
 	virtual void DrawSprite(GLSprite *sprite, int pass) = 0;
 
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs);

@@ -25,6 +25,7 @@ struct FDynLightData;
 class VSMatrix;
 struct FSpriteModelFrame;
 struct particle_t;
+class FRenderState;
 enum area_t : int;
 
 enum HWRenderStyle
@@ -321,6 +322,9 @@ public:
 	void SetFrom3DFloor(F3DFloor *rover, bool top, bool underside);
 	void ProcessSector(HWDrawInfo *di, sector_t * frontsector);
 	
+	void DrawSubsectors(HWDrawInfo *di, FRenderState &state);
+	void DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent);
+
 	GLFlat() {}
 
 	GLFlat(const GLFlat &other)

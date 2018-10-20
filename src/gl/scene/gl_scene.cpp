@@ -174,7 +174,7 @@ void FDrawInfo::RenderScene(int recursion)
 	gl_RenderState.EnableTexture(gl_texture);
 	gl_RenderState.EnableBrightmap(true);
 	drawlists[GLDL_PLAINWALLS].DrawWalls(this, pass);
-	drawlists[GLDL_PLAINFLATS].DrawFlats(this, pass);
+	drawlists[GLDL_PLAINFLATS].DrawFlats(this, gl_RenderState, false);
 
 
 	// Part 2: masked geometry. This is set up so that only pixels with alpha>gl_mask_threshold will show
@@ -185,7 +185,7 @@ void FDrawInfo::RenderScene(int recursion)
 	}
 	gl_RenderState.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
 	drawlists[GLDL_MASKEDWALLS].DrawWalls(this, pass);
-	drawlists[GLDL_MASKEDFLATS].DrawFlats(this, pass);
+	drawlists[GLDL_MASKEDFLATS].DrawFlats(this, gl_RenderState, false);
 
 	// Part 3: masked geometry with polygon offset. This list is empty most of the time so only waste time on it when in use.
 	if (drawlists[GLDL_MASKEDWALLSOFS].Size() > 0)
@@ -197,7 +197,7 @@ void FDrawInfo::RenderScene(int recursion)
 		glPolygonOffset(0, 0);
 	}
 
-	drawlists[GLDL_MODELS].Draw(this, pass);
+	drawlists[GLDL_MODELS].Draw(this, gl_RenderState, false, pass);
 
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -232,7 +232,7 @@ void FDrawInfo::RenderTranslucent()
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	gl_RenderState.EnableBrightmap(true);
-	drawlists[GLDL_TRANSLUCENTBORDER].Draw(this, GLPASS_TRANSLUCENT);
+	drawlists[GLDL_TRANSLUCENTBORDER].Draw(this, gl_RenderState, true, GLPASS_TRANSLUCENT);
 	glDepthMask(false);
 	DrawSorted(GLDL_TRANSLUCENT);
 	gl_RenderState.EnableBrightmap(false);

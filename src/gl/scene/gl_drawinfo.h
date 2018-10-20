@@ -76,11 +76,6 @@ struct FDrawInfo : public HWDrawInfo
 	void RenderTexturedWall(GLWall *wall, int rflags);
 	void DrawWall(GLWall *wall, int pass) override;
 
-	// Flat drawer
-	void DrawFlat(GLFlat *flat, int pass, bool trans) override;	// trans only has meaning for GLPASS_LIGHTSONLY
-	void DrawSkyboxSector(GLFlat *flat, int pass);
-	void DrawSubsectors(GLFlat *flat, int pass, bool istrans);
-
 	// Sprite drawer
 	void DrawSprite(GLSprite *sprite, int pass);
 	void DrawPSprite(HUDSprite *huds);

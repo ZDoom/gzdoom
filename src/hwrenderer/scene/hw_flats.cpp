@@ -43,6 +43,7 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "hw_drawstructs.h"
+#include "hw_renderstate.h"
 
 #ifdef _DEBUG
 CVAR(Int, gl_breaksec, -1, 0)
@@ -170,6 +171,167 @@ void GLFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &light
 	}
 
 	dynlightindex = di->UploadLights(lightdata);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
+{
+	auto vcount = sector->ibocount;
+
+	if (screen->BuffersArePersistent())
+	{
+		SetupLights(di, sector->lighthead, lightdata, sector->PortalGroup);
+	}
+	state.SetLightIndex(dynlightindex);
+	if (vcount > 0 && !di->ClipLineShouldBeActive())
+	{
+		di->DrawIndexed(DT_Triangles, state, iboindex, vcount);
+		flatvertices += vcount;
+		flatprimitives++;
+	}
+	else
+	{
+		int index = iboindex;
+		for (int i = 0; i < sector->subsectorcount; i++)
+		{
+			subsector_t * sub = sector->subsectors[i];
+			if (sub->numlines <= 2) continue;
+
+			if (di->ss_renderflags[sub->Index()] & renderflags)
+			{
+				di->DrawIndexed(DT_Triangles, state, index, (sub->numlines - 2) * 3, false);
+				flatvertices += sub->numlines;
+				flatprimitives++;
+			}
+			index += (sub->numlines - 2) * 3;
+		}
+	}
+
+	if (!(renderflags&SSRF_RENDER3DPLANES))
+	{
+		// Draw the subsectors assigned to it due to missing textures
+		gl_subsectorrendernode * node = (renderflags&SSRF_RENDERFLOOR) ?
+			di->GetOtherFloorPlanes(sector->sectornum) :
+			di->GetOtherCeilingPlanes(sector->sectornum);
+
+		while (node)
+		{
+			state.SetLightIndex(node->lightindex);
+			auto num = node->sub->numlines;
+			flatvertices += num;
+			flatprimitives++;
+			di->Draw(DT_TriangleFan, state, node->vertexindex, num);
+			node = node->next;
+		}
+		// Flood gaps with the back side's ceiling/floor texture
+		// This requires a stencil because the projected plane interferes with
+		// the depth buffer
+		gl_floodrendernode * fnode = (renderflags&SSRF_RENDERFLOOR) ?
+			di->GetFloodFloorSegs(sector->sectornum) :
+			di->GetFloodCeilingSegs(sector->sectornum);
+
+		state.SetLightIndex(dynlightindex);
+		while (fnode)
+		{
+			flatvertices += 12;
+			flatprimitives += 3;
+
+			// Push bleeding floor/ceiling textures back a little in the z-buffer
+			// so they don't interfere with overlapping mid textures.
+			state.SetDepthBias(1, 128);
+
+			// Create stencil 
+			state.SetEffect(EFF_STENCIL);
+			state.EnableTexture(false);
+			state.SetStencil(0, SOP_Increment, SF_ColorMaskOff);
+			di->Draw(DT_TriangleFan, state, fnode->vertexindex, 4);
+
+			// Draw projected plane into stencil
+			state.SetStencil(1, SOP_Keep, SF_DepthMaskOff | SF_DepthTestOff);
+			state.EnableTexture(true);
+			state.SetEffect(EFF_NONE);
+			di->Draw(DT_TriangleFan, state, fnode->vertexindex + 4, 4);
+
+			// clear stencil
+			state.SetEffect(EFF_STENCIL);
+			state.EnableTexture(false);
+			state.SetStencil(1, SOP_Decrement, SF_ColorMaskOff | SF_DepthMaskOff | SF_DepthTestOff);
+			di->Draw(DT_TriangleFan, state, fnode->vertexindex, 4);
+
+			// restore old stencil op.
+			state.SetStencil(0, SOP_Keep, SF_AllOn);
+			state.EnableTexture(true);
+			state.SetEffect(EFF_NONE);
+			state.SetDepthBias(0, 0);
+
+			fnode = fnode->next;
+		}
+
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+void GLFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
+{
+	int rel = getExtraLight();
+
+	state.SetNormal(plane.plane.Normal().X, plane.plane.Normal().Z, plane.plane.Normal().Y);
+
+	state.SetColor(lightlevel, rel, di->isFullbrightScene(), Colormap, alpha);
+	state.SetFog(lightlevel, rel, di->isFullbrightScene(), &Colormap, false);
+	if (!gltexture || !gltexture->tex->isFullbright())
+		state.SetObjectColor(FlatColor | 0xff000000);
+
+	if (!translucent)
+	{
+		if (sector->special != GLSector_Skybox)
+		{
+			state.SetMaterial(gltexture, CLAMP_NONE, 0, -1);
+			state.SetPlaneTextureRotation(&plane, gltexture);
+			DrawSubsectors(di, state);
+			state.EnableTextureMatrix(false);
+		}
+		else
+		{
+			state.SetMaterial(gltexture, CLAMP_XY, 0, -1);
+			state.SetLightIndex(dynlightindex);
+			di->Draw(DT_TriangleFan, state, iboindex, 4);
+			flatvertices += 4;
+			flatprimitives++;
+		}
+		state.SetObjectColor(0xffffffff);
+	}
+	else
+	{
+		state.SetRenderStyle(renderstyle);
+		if (!gltexture)
+		{
+			state.AlphaFunc(Alpha_GEqual, 0.f);
+			state.EnableTexture(false);
+			DrawSubsectors(di, state);
+			state.EnableTexture(true);
+		}
+		else
+		{
+			if (!gltexture->tex->GetTranslucency()) state.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
+			else state.AlphaFunc(Alpha_GEqual, 0.f);
+			state.SetMaterial(gltexture, CLAMP_NONE, 0, -1);
+			state.SetPlaneTextureRotation(&plane, gltexture);
+			DrawSubsectors(di, state);
+			state.EnableTextureMatrix(false);
+		}
+		state.SetRenderStyle(DefaultRenderStyle());
+		state.SetObjectColor(0xffffffff);
+	}
 }
 
 //==========================================================================

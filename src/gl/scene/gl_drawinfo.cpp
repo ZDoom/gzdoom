@@ -273,6 +273,12 @@ bool FDrawInfo::SetDepthClamp(bool on)
 	return gl_RenderState.SetDepthClamp(on);
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 static int dt2gl[] = { GL_POINTS, GL_LINES, GL_TRIANGLES, GL_TRIANGLE_FAN, GL_TRIANGLE_STRIP };
 
 void FDrawInfo::Draw(EDrawType dt, FRenderState &state, int index, int count, bool apply)
@@ -302,4 +308,46 @@ void FDrawInfo::DrawIndexed(EDrawType dt, FRenderState &state, int index, int co
 }
 
 
+
+//==========================================================================
+//
+// FDrawInfo::AddFlat
+//
+// Checks texture, lighting and translucency settings and puts this
+// plane in the appropriate render list.
+//
+//==========================================================================
+
+void FDrawInfo::AddFlat(GLFlat *flat, bool fog)
+{
+	int list;
+
+	if (flat->renderstyle != STYLE_Translucent || flat->alpha < 1.f - FLT_EPSILON || fog || flat->gltexture == nullptr)
+	{
+		// translucent 3D floors go into the regular translucent list, translucent portals go into the translucent border list.
+		list = (flat->renderflags&SSRF_RENDER3DPLANES) ? GLDL_TRANSLUCENT : GLDL_TRANSLUCENTBORDER;
+	}
+	else if (flat->gltexture->tex->GetTranslucency())
+	{
+		if (flat->stack)
+		{
+			list = GLDL_TRANSLUCENTBORDER;
+		}
+		else if ((flat->renderflags&SSRF_RENDER3DPLANES) && !flat->plane.plane.isSlope())
+		{
+			list = GLDL_TRANSLUCENT;
+		}
+		else
+		{
+			list = GLDL_PLAINFLATS;
+		}
+	}
+	else
+	{
+		bool masked = flat->gltexture->isMasked() && ((flat->renderflags&SSRF_RENDER3DPLANES) || flat->stack);
+		list = masked ? GLDL_MASKEDFLATS : GLDL_PLAINFLATS;
+	}
+	auto newflat = drawlists[list].NewFlat();
+	*newflat = *flat;
+}
 

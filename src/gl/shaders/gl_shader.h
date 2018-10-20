@@ -234,7 +234,7 @@ public:
 class FShader
 {
 	friend class FShaderCollection;
-	friend class FRenderState;
+	friend class FGLRenderState;
 
 	unsigned int hShader;
 	unsigned int hVertProg;

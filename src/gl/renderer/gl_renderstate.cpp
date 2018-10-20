@@ -40,7 +40,7 @@
 
 void gl_SetTextureMode(int type);
 
-FRenderState gl_RenderState;
+FGLRenderState gl_RenderState;
 
 CVAR(Bool, gl_direct_state_change, true, 0)
 
@@ -59,7 +59,7 @@ static void matrixToGL(const VSMatrix &mat, int loc)
 //
 //==========================================================================
 
-void FRenderState::Reset()
+void FGLRenderState::Reset()
 {
 	mTextureEnabled = true;
 	mSplitEnabled = mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
@@ -114,7 +114,7 @@ void FRenderState::Reset()
 //
 //==========================================================================
 
-bool FRenderState::ApplyShader()
+bool FGLRenderState::ApplyShader()
 {
 	static uint64_t firstFrame = 0;
 	// if firstFrame is not yet initialized, initialize it to current time
@@ -236,7 +236,7 @@ bool FRenderState::ApplyShader()
 //
 //==========================================================================
 
-void FRenderState::Apply()
+void FGLRenderState::Apply()
 {
 	if (!gl_direct_state_change)
 	{
@@ -266,7 +266,7 @@ void FRenderState::Apply()
 
 
 
-void FRenderState::ApplyColorMask()
+void FGLRenderState::ApplyColorMask()
 {
 	if ((mColorMask[0] != currentColorMask[0]) ||
 		(mColorMask[1] != currentColorMask[1]) ||
@@ -281,7 +281,7 @@ void FRenderState::ApplyColorMask()
 	}
 }
 
-void FRenderState::ApplyLightIndex(int index)
+void FGLRenderState::ApplyLightIndex(int index)
 {
 	if (index > -1 && GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
 	{
@@ -296,7 +296,7 @@ void FRenderState::ApplyLightIndex(int index)
 //
 //===========================================================================
 
-void FRenderState::SetMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader, bool alphatexture)
+void FGLRenderState::SetMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader, bool alphatexture)
 {
 	if (mat->tex->bHasCanvas)
 	{
@@ -306,7 +306,7 @@ void FRenderState::SetMaterial(FMaterial *mat, int clampmode, int translation, i
 	{
 		mTempTM = TM_MODULATE;
 	}
-	mEffectState = overrideshader >= 0 ? overrideshader : mat->mShaderIndex;
+	mEffectState = overrideshader >= 0 ? overrideshader : mat->GetShaderIndex();
 	mShaderTimer = mat->tex->shaderspeed;
 	SetSpecular(mat->tex->Glossiness, mat->tex->SpecularLevel);
 

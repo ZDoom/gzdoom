@@ -72,7 +72,7 @@ enum EPassType
 	MAX_PASS_TYPES
 };
 
-class FRenderState
+class FGLRenderState
 {
 	friend void gl_SetTextureMode(int type);
 	bool mTextureEnabled;
@@ -136,7 +136,7 @@ public:
 	VSMatrix mModelMatrix;
 	VSMatrix mTextureMatrix;
 
-	FRenderState()
+	FGLRenderState()
 	{
 		Reset();
 	}
@@ -464,6 +464,6 @@ public:
 
 };
 
-extern FRenderState gl_RenderState;
+extern FGLRenderState gl_RenderState;
 
 #endif

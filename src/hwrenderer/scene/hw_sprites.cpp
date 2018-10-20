@@ -230,7 +230,7 @@ inline void GLSprite::PutSprite(HWDrawInfo *di, bool translucent)
 		dynlightindex = -1;
 
 	vertexindex = -1;
-	if (!(screen->hwcaps & RFL_BUFFER_STORAGE))
+	if (!screen->BuffersArePersistent())
 	{
 		CreateVertices(di);
 	}

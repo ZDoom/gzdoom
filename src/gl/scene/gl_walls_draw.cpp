@@ -239,7 +239,7 @@ void FDrawInfo::RenderTranslucentWall(GLWall *wall)
 //==========================================================================
 void FDrawInfo::DrawWall(GLWall *wall, int pass)
 {
-	if (screen->hwcaps & RFL_BUFFER_STORAGE)
+	if (screen->BuffersArePersistent())
 	{
 		if (level.HasDynamicLights && !isFullbrightScene() && wall->gltexture != nullptr)
 		{

@@ -62,7 +62,7 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool istrans)
 	auto iboindex = flat->iboindex;
 
 
-	if (screen->hwcaps & RFL_BUFFER_STORAGE)
+	if (screen->BuffersArePersistent())
 	{
 		flat->SetupLights(this, flat->sector->lighthead, lightdata, flat->sector->PortalGroup);
 	}

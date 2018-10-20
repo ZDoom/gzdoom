@@ -246,10 +246,9 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 		{
 			gl_RenderState.Apply();
 
-			FVector3 v[4];
 			gl_RenderState.SetNormal(0, 0, 0);
             
-			if ((gl.flags & RFL_BUFFER_STORAGE) && sprite->vertexindex == -1)
+			if (screen->BuffersArePersistent())
 			{
 				sprite->CreateVertices(this);
 			}

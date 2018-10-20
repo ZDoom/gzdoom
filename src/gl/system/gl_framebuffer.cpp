@@ -75,13 +75,8 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, bool fullscreen) :
 	FHardwareTexture::InitGlobalState();
 	gl_RenderState.Reset();
 
-	GLRenderer = new FGLRenderer(this);
+	GLRenderer = nullptr;
 	InitPalette();
-
-	InitializeState();
-	mDebug = std::make_shared<FGLDebug>();
-	mDebug->Update();
-	SetGamma();
 
 	// Move some state to the framebuffer object for easier access.
 	hwcaps = gl.flags;
@@ -90,8 +85,11 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, bool fullscreen) :
 
 OpenGLFrameBuffer::~OpenGLFrameBuffer()
 {
-	delete GLRenderer;
-	GLRenderer = NULL;
+	if (GLRenderer)
+	{
+		delete GLRenderer;
+		GLRenderer = nullptr;
+	}
 }
 
 //==========================================================================
@@ -136,8 +134,12 @@ void OpenGLFrameBuffer::InitializeState()
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	GLRenderer = new FGLRenderer(this);
 	GLRenderer->Initialize(GetWidth(), GetHeight());
 	SetViewportRects(nullptr);
+
+	mDebug = std::make_shared<FGLDebug>();
+	mDebug->Update();
 }
 
 //==========================================================================

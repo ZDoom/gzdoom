@@ -168,7 +168,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	FString vp_comb;
 
 	assert(GLRenderer->mLights != NULL);
-	// On the shader side there is no difference between LM_DEFERRED and LM_DIRECT, it only decides how the buffer is initialized.
+
 	unsigned int lightbuffertype = GLRenderer->mLights->GetBufferType();
 	unsigned int lightbuffersize = GLRenderer->mLights->GetBlockSize();
 	if (lightbuffertype == GL_UNIFORM_BUFFER)
@@ -184,7 +184,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			vp_comb = "#version 430 core\n#define SHADER_STORAGE_LIGHTS\n";
 	}
 
-	if (!!(gl.flags & RFL_SHADER_STORAGE_BUFFER))
+	if (gl.flags & RFL_SHADER_STORAGE_BUFFER)
 	{
 		vp_comb << "#define SUPPORTS_SHADOWMAPS\n";
 	}

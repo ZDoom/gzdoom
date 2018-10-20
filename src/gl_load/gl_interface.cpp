@@ -168,8 +168,6 @@ void gl_LoadExtensions()
 	if (CheckExtension("GL_ARB_texture_compression")) gl.flags |= RFL_TEXTURE_COMPRESSION;
 	if (CheckExtension("GL_EXT_texture_compression_s3tc")) gl.flags |= RFL_TEXTURE_COMPRESSION_S3TC;
 
-	gl.lightmethod = LM_DEFERRED;
-	gl.buffermethod = BM_DEFERRED;
 	if (gl_version < 4.f)
 	{
 #ifdef _WIN32
@@ -192,16 +190,12 @@ void gl_LoadExtensions()
 				gl.flags |= RFL_SHADER_STORAGE_BUFFER;
 			}
 			gl.flags |= RFL_BUFFER_STORAGE;
-			gl.lightmethod = LM_DIRECT;
-			gl.buffermethod = BM_PERSISTENT;
 		}
 	}
 	else
 	{
 		// Assume that everything works without problems on GL 4.5 drivers where these things are core features.
 		gl.flags |= RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE;
-		gl.lightmethod = LM_DIRECT;
-		gl.buffermethod = BM_PERSISTENT;
 	}
 
 	// Mesa implements shader storage only for fragment shaders.
@@ -214,18 +208,6 @@ void gl_LoadExtensions()
 
 	if (gl_version >= 4.3f || CheckExtension("GL_ARB_invalidate_subdata")) gl.flags |= RFL_INVALIDATE_BUFFER;
 	if (gl_version >= 4.3f || CheckExtension("GL_KHR_debug")) gl.flags |= RFL_DEBUG;
-
-	const char *lm = Args->CheckValue("-lightmethod");
-	if (lm != NULL)
-	{
-		if (!stricmp(lm, "deferred") && gl.lightmethod == LM_DIRECT) gl.lightmethod = LM_DEFERRED;
-	}
-
-	lm = Args->CheckValue("-buffermethod");
-	if (lm != NULL)
-	{
-		if (!stricmp(lm, "deferred") && gl.buffermethod == BM_PERSISTENT) gl.buffermethod = BM_DEFERRED;
-	}
 
 	glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &v);
 	gl.maxuniforms = v;

@@ -19,7 +19,7 @@ public:
 	OpenGLFrameBuffer(void *hMonitor, bool fullscreen) ;
 	~OpenGLFrameBuffer();
 
-	void InitializeState();
+	void InitializeState() override;
 	void Update() override;
 
 	// Color correction

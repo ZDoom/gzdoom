@@ -13,6 +13,7 @@ class GLViewpointBuffer
 	unsigned int mByteSize;
 	void * mBufferPointer;
 	TArray<bool> mClipPlaneInfo;
+	bool mPersistent;
 	
 	unsigned int m2DWidth = ~0u, m2DHeight = ~0u;
 

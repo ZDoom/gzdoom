@@ -99,9 +99,10 @@ void FSimpleVertexBuffer::set(FSimpleVertex *verts, int count)
 FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 : FVertexBuffer(true), FFlatVertexGenerator(width, height)
 {
+	mPersistent = screen->BuffersArePersistent();
 	ibo_id = 0;
 	glGenBuffers(1, &ibo_id);
-	if (gl.buffermethod == BM_PERSISTENT)
+	if (mPersistent)
 	{
 		unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
@@ -165,7 +166,7 @@ void FFlatVertexBuffer::BindVBO()
 
 void FFlatVertexBuffer::Map()
 {
-	if (gl.buffermethod == BM_DEFERRED)
+	if (!mPersistent)
 	{
 		unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
@@ -176,7 +177,7 @@ void FFlatVertexBuffer::Map()
 
 void FFlatVertexBuffer::Unmap()
 {
-	if (gl.buffermethod == BM_DEFERRED)
+	if (!mPersistent)
 	{
 		unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);

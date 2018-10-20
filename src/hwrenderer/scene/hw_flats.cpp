@@ -186,7 +186,7 @@ inline void GLFlat::PutFlat(HWDrawInfo *di, bool fog)
 	{
 		Colormap.Clear();
 	}
-	else if (!(screen->hwcaps & RFL_BUFFER_STORAGE))
+	else if (!screen->BuffersArePersistent())
 	{
 		if (level.HasDynamicLights && gltexture != nullptr)
 		{

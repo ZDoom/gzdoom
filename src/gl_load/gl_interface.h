@@ -16,27 +16,12 @@ enum TexMode
 	TM_FIXEDCOLORMAP = TM_FOGLAYER,	// repurposes the objectcolor uniforms to render a fixed colormap range. (Same constant because they cannot be used in the same context.
 };
 
-enum ELightMethod
-{
-	LM_DEFERRED = 1,	// calculate lights up front in a separate pass
-	LM_DIRECT = 2,		// calculate lights on the fly along with the render data
-};
-
-enum EBufferMethod
-{
-	BM_DEFERRED = 1,	// use a temporarily mapped buffer, for GL 3.x core profile
-	BM_PERSISTENT = 2	// use a persistently mapped buffer
-};
-
-
 struct RenderContext
 {
 	unsigned int flags;
 	unsigned int maxuniforms;
 	unsigned int maxuniformblock;
 	unsigned int uniformblockalignment;
-	int lightmethod;
-	int buffermethod;
 	float glslversion;
 	int max_texturesize;
 	char * vendorstring;

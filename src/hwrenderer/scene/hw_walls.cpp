@@ -182,7 +182,7 @@ void GLWall::PutWall(HWDrawInfo *di, bool translucent)
     if (di->isFullbrightScene() || (Colormap.LightColor.isWhite() && lightlevel == 255))
         flags &= ~GLWF_GLOW;
     
-	if (!(screen->hwcaps & RFL_BUFFER_STORAGE))
+	if (!screen->BuffersArePersistent())
 	{
 		if (level.HasDynamicLights && !di->isFullbrightScene() && gltexture != nullptr)
 		{

@@ -19,6 +19,7 @@ class FLightBuffer
 	unsigned int mBufferSize;
 	unsigned int mByteSize;
     unsigned int mMaxUploadSize;
+	bool mPersistentBuffer;
     
     std::mutex mBufferMutex;
     TArray<float> mBufferedData;

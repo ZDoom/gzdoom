@@ -57,7 +57,6 @@ enum EHWCaps
 
 	RFL_SHADER_STORAGE_BUFFER = 4,
 	RFL_BUFFER_STORAGE = 8,
-	RFL_NO_LIGHT_PREGENERATE = 16,	// delays dynamic light creation until the render pass. With modern OpenGL this is faster because it can make use of the CPU while the GPU is rendering.
 
 	RFL_NO_CLIP_PLANES = 32,
 
@@ -373,6 +372,7 @@ public:
 public:
 	DFrameBuffer (int width=1, int height=1);
 	virtual ~DFrameBuffer() {}
+	virtual void InitializeState() = 0;	// For stuff that needs 'screen' set.
 
 	void SetSize(int width, int height);
 	void SetVirtualSize(int width, int height)
@@ -444,6 +444,7 @@ public:
     // Interface to hardware rendering resources
     virtual IUniformBuffer *CreateUniformBuffer(size_t size, bool staticuse = false) { return nullptr; }
 	virtual IShaderProgram *CreateShaderProgram() { return nullptr; }
+	bool BuffersArePersistent() { return !!(hwcaps & RFL_BUFFER_STORAGE); }
 
 	// Begin/End 2D drawing operations.
 	void Begin2D() { isIn2D = true; }

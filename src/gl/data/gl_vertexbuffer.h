@@ -101,6 +101,7 @@ class FFlatVertexBuffer : public FVertexBuffer, public FFlatVertexGenerator
 	std::atomic<unsigned int> mCurIndex;
 	std::mutex mBufferMutex;
 	unsigned int mNumReserved;
+	bool mPersistent;
 
 
 	static const unsigned int BUFFER_SIZE = 2000000;

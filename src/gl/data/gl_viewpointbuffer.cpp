@@ -35,6 +35,7 @@ static const int INITIAL_BUFFER_SIZE = 100;	// 100 viewpoints per frame should n
 
 GLViewpointBuffer::GLViewpointBuffer()
 {
+	mPersistent = screen->BuffersArePersistent();
 	mBufferSize = INITIAL_BUFFER_SIZE;
 	mBlockAlign = ((sizeof(HWViewpointUniforms) / gl.uniformblockalignment) + 1) * gl.uniformblockalignment;
 	mByteSize = mBufferSize * mBlockAlign;
@@ -55,7 +56,7 @@ void GLViewpointBuffer::Allocate()
 	glGenBuffers(1, &mBufferId);
 	glBindBufferBase(GL_UNIFORM_BUFFER, VIEWPOINT_BINDINGPOINT, mBufferId);
 	glBindBuffer(GL_UNIFORM_BUFFER, mBufferId);	// Note: Some older AMD drivers don't do that in glBindBufferBase, as they should.
-	if (gl.flags & RFL_BUFFER_STORAGE)
+	if (mPersistent)
 	{
 		glBufferStorage(GL_UNIFORM_BUFFER, mByteSize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT);
 		mBufferPointer = glMapBufferRange(GL_UNIFORM_BUFFER, 0, mByteSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT);
@@ -93,7 +94,7 @@ void GLViewpointBuffer::CheckSize()
 
 void GLViewpointBuffer::Map()
 {
-	if (!(gl.flags & RFL_BUFFER_STORAGE))
+	if (!mPersistent)
 	{
 		glBindBuffer(GL_UNIFORM_BUFFER, mBufferId);
 		mBufferPointer = (float*)glMapBufferRange(GL_UNIFORM_BUFFER, 0, mByteSize, GL_MAP_WRITE_BIT);
@@ -102,7 +103,7 @@ void GLViewpointBuffer::Map()
 
 void GLViewpointBuffer::Unmap()
 {
-	if (!(gl.flags & RFL_BUFFER_STORAGE))
+	if (!mPersistent)
 	{
 		glBindBuffer(GL_UNIFORM_BUFFER, mBufferId);
 		glUnmapBuffer(GL_UNIFORM_BUFFER);

@@ -244,15 +244,15 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 			gl_RenderState.SetObjectColor(flat->FlatColor | 0xff000000);
 		if (!flat->gltexture)
 		{
-			gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+			gl_RenderState.AlphaFunc(Alpha_GEqual, 0.f);
 			gl_RenderState.EnableTexture(false);
 			DrawSubsectors(flat, pass, true);
 			gl_RenderState.EnableTexture(true);
 		}
 		else 
 		{
-			if (!flat->gltexture->tex->GetTranslucency()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
-			else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+			if (!flat->gltexture->tex->GetTranslucency()) gl_RenderState.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
+			else gl_RenderState.AlphaFunc(Alpha_GEqual, 0.f);
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
 			gl_RenderState.SetPlaneTextureRotation(&plane, flat->gltexture);
 			DrawSubsectors(flat, pass, true);

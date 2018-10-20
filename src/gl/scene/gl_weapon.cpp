@@ -63,20 +63,20 @@ void FDrawInfo::DrawPSprite (HUDSprite *huds)
 
 	if (huds->mframe)
 	{
-		gl_RenderState.AlphaFunc(GL_GEQUAL, 0);
+		gl_RenderState.AlphaFunc(Alpha_GEqual, 0);
         FGLModelRenderer renderer(this, huds->lightindex);
         renderer.RenderHUDModel(huds->weapon, huds->mx, huds->my);
 	}
 	else
 	{
 		float thresh = (huds->tex->tex->GetTranslucency() || huds->OverrideShader != -1) ? 0.f : gl_mask_sprite_threshold;
-		gl_RenderState.AlphaFunc(GL_GEQUAL, thresh);
+		gl_RenderState.AlphaFunc(Alpha_GEqual, thresh);
 		gl_RenderState.SetMaterial(huds->tex, CLAMP_XY_NOMIP, 0, huds->OverrideShader, !!(huds->RenderStyle.Flags & STYLEF_RedIsAlpha));
 		gl_RenderState.Apply();
 		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, huds->mx, 4);
 	}
 
-	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
+	gl_RenderState.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
 	gl_RenderState.SetObjectColor(0xffffffff);
 	gl_RenderState.SetDynLight(0, 0, 0);
 	gl_RenderState.EnableBrightmap(false);

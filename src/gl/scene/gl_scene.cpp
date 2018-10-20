@@ -166,7 +166,7 @@ void FDrawInfo::RenderScene(int recursion)
 
 	// Part 1: solid geometry. This is set up so that there are no transparent parts
 	glDepthFunc(GL_LESS);
-	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+	gl_RenderState.AlphaFunc(Alpha_GEqual, 0.f);
 	glDisable(GL_POLYGON_OFFSET_FILL);
 
 	int pass = GLPASS_ALL;
@@ -183,7 +183,7 @@ void FDrawInfo::RenderScene(int recursion)
 		gl_RenderState.EnableTexture(true);
 		gl_RenderState.SetTextureMode(TM_MASK);
 	}
-	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
+	gl_RenderState.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
 	drawlists[GLDL_MASKEDWALLS].DrawWalls(this, pass);
 	drawlists[GLDL_MASKEDFLATS].DrawFlats(this, pass);
 
@@ -228,7 +228,7 @@ void FDrawInfo::RenderTranslucent()
 	RenderAll.Clock();
 
 	// final pass: translucent stuff
-	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
+	gl_RenderState.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	gl_RenderState.EnableBrightmap(true);
@@ -238,7 +238,7 @@ void FDrawInfo::RenderTranslucent()
 	gl_RenderState.EnableBrightmap(false);
 
 
-	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.5f);
+	gl_RenderState.AlphaFunc(Alpha_GEqual, 0.5f);
 	glDepthMask(true);
 
 	RenderAll.Unclock();

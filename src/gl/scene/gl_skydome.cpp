@@ -226,7 +226,7 @@ void GLSkyPortal::DrawContents(HWDrawInfo *di)
 
 	gl_RenderState.ResetColor();
 	gl_RenderState.EnableFog(false);
-	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+	gl_RenderState.AlphaFunc(Alpha_GEqual, 0.f);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	bool oldClamp = gl_RenderState.SetDepthClamp(true);
 
@@ -248,7 +248,7 @@ void GLSkyPortal::DrawContents(HWDrawInfo *di)
 			gl_RenderState.SetTextureMode(TM_MODULATE);
 		}
 		
-		gl_RenderState.AlphaFunc(GL_GREATER, 0.f);
+		gl_RenderState.AlphaFunc(Alpha_Greater, 0.f);
 		
 		if (origin->doublesky && origin->texture[1])
 		{

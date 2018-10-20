@@ -70,7 +70,7 @@ void FDrawInfo::RenderFogBoundary(GLWall *wall)
 		SetFog(wall->lightlevel, rel, &wall->Colormap, false);
 		gl_RenderState.EnableDrawBuffers(1);
 		gl_RenderState.SetEffect(EFF_FOGBOUNDARY);
-		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+		gl_RenderState.AlphaFunc(Alpha_GEqual, 0.f);
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(-1.0f, -128.0f);
 		RenderWall(wall, GLWall::RWF_BLANK);
@@ -100,7 +100,7 @@ void FDrawInfo::RenderMirrorSurface(GLWall *wall)
 	SetColor(wall->lightlevel, 0, wall->Colormap ,0.1f);
 	SetFog(wall->lightlevel, 0, &wall->Colormap, true);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
-	gl_RenderState.AlphaFunc(GL_GREATER,0);
+	gl_RenderState.AlphaFunc(Alpha_Greater,0);
 	glDepthFunc(GL_LEQUAL);
 
 	FMaterial * pat=FMaterial::ValidateTexture(TexMan.mirrorTexture, false, false);
@@ -114,7 +114,7 @@ void FDrawInfo::RenderMirrorSurface(GLWall *wall)
 
 	// Restore the defaults for the translucent pass
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
+	gl_RenderState.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
 	glDepthFunc(GL_LESS);
 
 	// This is drawn in the translucent pass which is done after the decal pass
@@ -215,15 +215,15 @@ void FDrawInfo::RenderTranslucentWall(GLWall *wall)
 {
 	if (wall->gltexture)
 	{
-		if (!wall->gltexture->tex->GetTranslucency()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
-		else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+		if (!wall->gltexture->tex->GetTranslucency()) gl_RenderState.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
+		else gl_RenderState.AlphaFunc(Alpha_GEqual, 0.f);
 		if (wall->RenderStyle == STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
 		RenderTexturedWall(wall, GLWall::RWF_TEXTURED | GLWall::RWF_NOSPLIT);
 		if (wall->RenderStyle == STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 	else
 	{
-		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+		gl_RenderState.AlphaFunc(Alpha_GEqual, 0.f);
 		SetColor(wall->lightlevel, 0, wall->Colormap, fabsf(wall->alpha));
 		SetFog(wall->lightlevel, 0, &wall->Colormap, wall->RenderStyle == STYLE_Add);
 		gl_RenderState.EnableTexture(false);
@@ -472,8 +472,8 @@ void FDrawInfo::DrawDecal(GLDecal *gldecal)
 
 
 	// If srcalpha is one it looks better with a higher alpha threshold
-	if (decal->RenderStyle.SrcAlpha == STYLEALPHA_One) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
-	else gl_RenderState.AlphaFunc(GL_GREATER, 0.f);
+	if (decal->RenderStyle.SrcAlpha == STYLEALPHA_One) gl_RenderState.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
+	else gl_RenderState.AlphaFunc(Alpha_Greater, 0.f);
 
 
 	SetColor(gldecal->lightlevel, gldecal->rellight, gldecal->Colormap, gldecal->alpha);

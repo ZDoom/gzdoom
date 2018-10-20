@@ -96,11 +96,11 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 
 		if (sprite->hw_styleflags == STYLEHW_NoAlphaTest)
 		{
-			gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+			gl_RenderState.AlphaFunc(Alpha_GEqual, 0.f);
 		}
 		else
 		{
-			gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
+			gl_RenderState.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
 		}
 
 		if (RenderStyle.BlendOp == STYLEOP_Shadow)
@@ -120,7 +120,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 				minalpha*=factor;
 			}
 
-			gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
+			gl_RenderState.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
 			gl_RenderState.SetColor(0.2f,0.2f,0.2f,fuzzalpha, sprite->Colormap.Desaturation);
 			additivefog = true;
 			sprite->lightlist = nullptr;	// the fuzz effect does not use the sector's light level so splitting is not needed.
@@ -182,7 +182,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 			{
 				foglayer = true;
 				// Due to the two-layer approach we need to force an alpha test that lets everything pass
-				gl_RenderState.AlphaFunc(GL_GREATER, 0);
+				gl_RenderState.AlphaFunc(Alpha_Greater, 0);
 			}
 		}
 		else RenderStyle.BlendOp = STYLEOP_Fuzz;	// subtractive with models is not going to work.

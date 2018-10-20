@@ -497,7 +497,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		gl_RenderState.SetFog(cmd.mColor1, 0);
 		gl_RenderState.SetColor(1, 1, 1, 1, cmd.mDesaturate); 
 
-		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+		gl_RenderState.AlphaFunc(Alpha_GEqual, 0.f);
 
 		if (cmd.mTexture != nullptr)
 		{

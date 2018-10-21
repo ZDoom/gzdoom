@@ -294,8 +294,6 @@ public:
 
 	void DrawDecals(FRenderState &state, TArray<GLDecal *> &decals);
 
-	virtual void DrawSprite(GLSprite *sprite, int pass) = 0;
-
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs);
     virtual void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) = 0;
     
@@ -315,6 +313,9 @@ public:
 
 	virtual void Draw(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) = 0;
 	virtual void DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) = 0;
+	virtual void DrawModel(GLSprite *spr, FRenderState &state) = 0;
+
+
 
 	// Immediate render state change commands. These only change infrequently and should not clutter the render state.
 	virtual void SetDepthMask(bool on) = 0;

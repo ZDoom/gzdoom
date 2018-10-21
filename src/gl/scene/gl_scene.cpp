@@ -168,8 +168,6 @@ void FDrawInfo::RenderScene(int recursion)
 	gl_RenderState.AlphaFunc(Alpha_GEqual, 0.f);
 	glDisable(GL_POLYGON_OFFSET_FILL);
 
-	int pass = GLPASS_ALL;
-
 	gl_RenderState.EnableTexture(gl_texture);
 	gl_RenderState.EnableBrightmap(true);
 	drawlists[GLDL_PLAINWALLS].DrawWalls(this, gl_RenderState, false);
@@ -189,7 +187,7 @@ void FDrawInfo::RenderScene(int recursion)
 		gl_RenderState.ClearDepthBias();
 	}
 
-	drawlists[GLDL_MODELS].Draw(this, gl_RenderState, false, pass);
+	drawlists[GLDL_MODELS].Draw(this, gl_RenderState, false);
 
 	gl_RenderState.SetRenderStyle(STYLE_Translucent);
 
@@ -215,7 +213,7 @@ void FDrawInfo::RenderTranslucent()
 	gl_RenderState.SetRenderStyle(STYLE_Translucent);
 
 	gl_RenderState.EnableBrightmap(true);
-	drawlists[GLDL_TRANSLUCENTBORDER].Draw(this, gl_RenderState, true, GLPASS_TRANSLUCENT);
+	drawlists[GLDL_TRANSLUCENTBORDER].Draw(this, gl_RenderState, true);
 	glDepthMask(false);
 	DrawSorted(GLDL_TRANSLUCENT);
 	gl_RenderState.EnableBrightmap(false);

@@ -771,7 +771,7 @@ GLSprite *HWDrawList::NewSprite()
 //
 //
 //==========================================================================
-void HWDrawList::DoDraw(HWDrawInfo *di, FRenderState &state, bool translucent, int pass, int i, bool trans)
+void HWDrawList::DoDraw(HWDrawInfo *di, FRenderState &state, bool translucent, int i)
 {
 	switch(drawitems[i].rendertype)
 	{
@@ -797,7 +797,7 @@ void HWDrawList::DoDraw(HWDrawInfo *di, FRenderState &state, bool translucent, i
 		{
 			GLSprite * s= sprites[drawitems[i].index];
 			RenderSprite.Clock();
-			di->DrawSprite(s, pass);
+			s->DrawSprite(di, state, translucent);
 			RenderSprite.Unclock();
 		}
 		break;
@@ -809,11 +809,11 @@ void HWDrawList::DoDraw(HWDrawInfo *di, FRenderState &state, bool translucent, i
 //
 //
 //==========================================================================
-void HWDrawList::Draw(HWDrawInfo *di, FRenderState &state, bool translucent, int pass, bool trans)
+void HWDrawList::Draw(HWDrawInfo *di, FRenderState &state, bool translucent)
 {
 	for (unsigned i = 0; i < drawitems.Size(); i++)
 	{
-		DoDraw(di, state, translucent, pass, i, trans);
+		DoDraw(di, state, translucent, i);
 	}
 }
 

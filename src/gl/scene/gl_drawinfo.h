@@ -26,11 +26,6 @@ enum DrawListType
 	GLDL_TYPES,
 };
 
-enum Drawpasses
-{
-	GLPASS_ALL,			// Main pass with dynamic lights
-	GLPASS_TRANSLUCENT,	// Draws translucent objects
-};
 
 struct FDrawInfo : public HWDrawInfo
 {
@@ -52,14 +47,14 @@ struct FDrawInfo : public HWDrawInfo
 
 	void Draw(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) override;
 	void DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) override;
+	void DrawModel(GLSprite *spr, FRenderState &state) override;
+
 	void SetDepthMask(bool on) override;
 	void SetDepthFunc(int func) override;
 	void EnableDrawBufferAttachments(bool on) override;
 
 	void StartScene();
 
-	// Sprite drawer
-	void DrawSprite(GLSprite *sprite, int pass);
 	void DrawPSprite(HUDSprite *huds);
 	void DrawPlayerSprites(bool hudModelStep);
 

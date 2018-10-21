@@ -103,8 +103,8 @@ public:
 	SortNode * DoSort(HWDrawInfo *di, SortNode * head);
 	void Sort(HWDrawInfo *di);
 
-	void DoDraw(HWDrawInfo *di, FRenderState &state, bool translucent, int pass, int i, bool trans);
-	void Draw(HWDrawInfo *di, FRenderState &state, bool translucent, int pass, bool trans = false);
+	void DoDraw(HWDrawInfo *di, FRenderState &state, bool translucent, int i);
+	void Draw(HWDrawInfo *di, FRenderState &state, bool translucent);
 	void DrawWalls(HWDrawInfo *di, FRenderState &state, bool translucent);
 	void DrawFlats(HWDrawInfo *di, FRenderState &state, bool translucent);
 	

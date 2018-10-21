@@ -41,6 +41,7 @@
 #include "gl/scene/gl_portal.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/dynlights/gl_lightbuffer.h"
+#include "gl/models/gl_models.h"
 
 class FDrawInfoList
 {
@@ -90,13 +91,13 @@ void FDrawInfo::DoDrawSorted(HWDrawList *dl, SortNode * head)
 		DoDrawSorted(dl, head->left);
 		gl_RenderState.SetClipSplit(clipsplit);
 	}
-	dl->DoDraw(this, gl_RenderState, true, GLPASS_TRANSLUCENT, head->itemindex, true);
+	dl->DoDraw(this, gl_RenderState, true, head->itemindex);
 	if (head->equal)
 	{
 		SortNode * ehead=head->equal;
 		while (ehead)
 		{
-			dl->DoDraw(this, gl_RenderState, true, GLPASS_TRANSLUCENT, ehead->itemindex, true);
+			dl->DoDraw(this, gl_RenderState, true, ehead->itemindex);
 			ehead=ehead->equal;
 		}
 	}
@@ -298,6 +299,12 @@ void FDrawInfo::DrawIndexed(EDrawType dt, FRenderState &state, int index, int co
 	drawcalls.Unclock();
 }
 
+void FDrawInfo::DrawModel(GLSprite *spr, FRenderState &state)
+{
+	FGLModelRenderer renderer(this, spr->dynlightindex);
+	renderer.RenderModel(spr->x, spr->y, spr->z, spr->modelframe, spr->actor, Viewpoint.TicFrac);
+}
+
 void FDrawInfo::SetDepthMask(bool on)
 {
 	glDepthMask(on);
@@ -355,5 +362,28 @@ void FDrawInfo::AddFlat(GLFlat *flat, bool fog)
 	}
 	auto newflat = drawlists[list].NewFlat();
 	*newflat = *flat;
+}
+
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+void FDrawInfo::AddSprite(GLSprite *sprite, bool translucent)
+{
+	int list;
+	// [BB] Allow models to be drawn in the GLDL_TRANSLUCENT pass.
+	if (translucent || sprite->actor == nullptr || (!sprite->modelframe && (sprite->actor->renderflags & RF_SPRITETYPEMASK) != RF_WALLSPRITE))
+	{
+		list = GLDL_TRANSLUCENT;
+	}
+	else
+	{
+		list = GLDL_MODELS;
+	}
+
+	auto newsprt = drawlists[list].NewSprite();
+	*newsprt = *sprite;
 }
 

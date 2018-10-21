@@ -16,6 +16,13 @@ enum EDrawType
 	DT_TriangleStrip = 4
 };
 
+enum EDepthFunc
+{
+	DF_Less,
+	DF_LEqual,
+	DF_Always
+};
+
 struct FSectorPortalGroup;
 struct FLinePortalSpan;
 struct FFlatVertex;
@@ -130,6 +137,7 @@ struct HWDrawInfo
 	FRenderViewpoint Viewpoint;
 	HWViewpointUniforms VPUniforms;	// per-viewpoint uniform state
 	TArray<IPortal *> Portals;
+	TArray<GLDecal *> Decals[2];	// the second slot is for mirrors which get rendered in a separate pass.
 
 	TArray<MissingTextureInfo> MissingUpperTextures;
 	TArray<MissingTextureInfo> MissingLowerTextures;
@@ -286,7 +294,6 @@ public:
 
 	void DrawDecals(FRenderState &state, TArray<GLDecal *> &decals);
 
-	virtual void DrawWall(GLWall *wall, int pass) = 0;
 	virtual void DrawSprite(GLSprite *sprite, int pass) = 0;
 
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs);
@@ -303,7 +310,7 @@ public:
 	virtual void ApplyVPUniforms() = 0;
 	virtual bool SetDepthClamp(bool on) = 0;
 
-    virtual GLDecal *AddDecal(bool onmirror) = 0;
+    GLDecal *AddDecal(bool onmirror);
 	virtual std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) = 0;
 
 	virtual void Draw(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) = 0;
@@ -311,6 +318,7 @@ public:
 
 	// Immediate render state change commands. These only change infrequently and should not clutter the render state.
 	virtual void SetDepthMask(bool on) = 0;
+	virtual void SetDepthFunc(int func) = 0;
 	virtual void EnableDrawBufferAttachments(bool on) = 0;
 
 };

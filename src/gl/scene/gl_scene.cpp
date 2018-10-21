@@ -173,7 +173,7 @@ void FDrawInfo::RenderScene(int recursion)
 
 	gl_RenderState.EnableTexture(gl_texture);
 	gl_RenderState.EnableBrightmap(true);
-	drawlists[GLDL_PLAINWALLS].DrawWalls(this, pass);
+	drawlists[GLDL_PLAINWALLS].DrawWalls(this, gl_RenderState, false);
 	drawlists[GLDL_PLAINFLATS].DrawFlats(this, gl_RenderState, false);
 
 
@@ -184,17 +184,15 @@ void FDrawInfo::RenderScene(int recursion)
 		gl_RenderState.SetTextureMode(TM_STENCIL);
 	}
 	gl_RenderState.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
-	drawlists[GLDL_MASKEDWALLS].DrawWalls(this, pass);
+	drawlists[GLDL_MASKEDWALLS].DrawWalls(this, gl_RenderState, false);
 	drawlists[GLDL_MASKEDFLATS].DrawFlats(this, gl_RenderState, false);
 
 	// Part 3: masked geometry with polygon offset. This list is empty most of the time so only waste time on it when in use.
 	if (drawlists[GLDL_MASKEDWALLSOFS].Size() > 0)
 	{
-		glEnable(GL_POLYGON_OFFSET_FILL);
-		glPolygonOffset(-1.0f, -128.0f);
-		drawlists[GLDL_MASKEDWALLSOFS].DrawWalls(this, pass);
-		glDisable(GL_POLYGON_OFFSET_FILL);
-		glPolygonOffset(0, 0);
+		gl_RenderState.SetDepthBias(-1, -128);
+		drawlists[GLDL_MASKEDWALLSOFS].DrawWalls(this, gl_RenderState, false);
+		gl_RenderState.ClearDepthBias();
 	}
 
 	drawlists[GLDL_MODELS].Draw(this, gl_RenderState, false, pass);
@@ -203,10 +201,8 @@ void FDrawInfo::RenderScene(int recursion)
 
 	// Part 4: Draw decals (not a real pass)
 	glDepthFunc(GL_LEQUAL);
-	glDepthMask(false);
-	DrawDecals(gl_RenderState, decals[0]);
+	DrawDecals(gl_RenderState, Decals[0]);
 
-	glDepthMask(true);
 	RenderAll.Unclock();
 }
 

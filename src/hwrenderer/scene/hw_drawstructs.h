@@ -263,6 +263,13 @@ public:
 
 	int CountVertices();
 
+	void RenderWall(HWDrawInfo *di, FRenderState &state, int textured);
+	void RenderFogBoundary(HWDrawInfo *di, FRenderState &state);
+	void RenderMirrorSurface(HWDrawInfo *di, FRenderState &state);
+	void RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags);
+	void RenderTranslucentWall(HWDrawInfo *di, FRenderState &state);
+	void DrawDecalsForMirror(HWDrawInfo *di, FRenderState &state, TArray<GLDecal *> &decals);
+
 public:
 	GLWall() {}
 
@@ -285,7 +292,7 @@ public:
 		return -((y-glseg.y1)*(glseg.x2-glseg.x1)-(x-glseg.x1)*(glseg.y2-glseg.y1));
 	}
 
-	void DrawDecalsForMirror(HWDrawInfo *di, FRenderState &state, TArray<GLDecal *> &decals);
+	void DrawWall(HWDrawInfo *di, FRenderState &state, bool translucent);
 
 };
 

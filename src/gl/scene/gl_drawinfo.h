@@ -30,7 +30,6 @@ enum DrawListType
 enum Drawpasses
 {
 	GLPASS_ALL,			// Main pass with dynamic lights
-	GLPASS_DECALS,		// Draws a decal
 	GLPASS_TRANSLUCENT,	// Draws translucent objects
 };
 
@@ -38,14 +37,12 @@ struct FDrawInfo : public HWDrawInfo
 {
 	HWDrawList drawlists[GLDL_TYPES];
 	TArray<HUDSprite> hudsprites;	// These may just be stored by value.
-	TArray<GLDecal *> decals[2];	// the second slot is for mirrors which get rendered in a separate pass.
 	int vpIndex;
 	
 	void ApplyVPUniforms() override;
 
 	void AddWall(GLWall *wall) override;
     void AddMirrorSurface(GLWall *w) override;
-	GLDecal *AddDecal(bool onmirror) override;
 	void AddPortal(GLWall *w, int portaltype) override;
 	void AddFlat(GLFlat *flat, bool fog) override;
 	void AddSprite(GLSprite *sprite, bool translucent) override;
@@ -57,17 +54,10 @@ struct FDrawInfo : public HWDrawInfo
 	void Draw(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) override;
 	void DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) override;
 	void SetDepthMask(bool on) override;
+	void SetDepthFunc(int func) override;
 	void EnableDrawBufferAttachments(bool on) override;
 
 	void StartScene();
-
-	// Wall drawer
-	void RenderWall(GLWall *wall, FRenderState &state, int textured);
-	void RenderFogBoundary(GLWall *wall, FRenderState &state);
-	void RenderMirrorSurface(GLWall *wall, FRenderState &state);
-	void RenderTranslucentWall(GLWall *wall, FRenderState &state);
-	void RenderTexturedWall(GLWall *wall, FRenderState &state, int rflags);
-	void DrawWall(GLWall *wall, int pass) override;
 
 	// Sprite drawer
 	void DrawSprite(GLSprite *sprite, int pass);

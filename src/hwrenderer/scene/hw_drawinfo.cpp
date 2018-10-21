@@ -33,6 +33,7 @@
 #include "hw_fakeflat.h"
 #include "hw_drawinfo.h"
 #include "hw_portal.h"
+#include "hw_drawlist.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_cvars.h"
 
@@ -93,6 +94,9 @@ void HWDrawInfo::ClearBuffers()
 	memset(&sectorrenderflags[0], 0, level.sectors.Size() * sizeof(sectorrenderflags[0]));
 	memset(&ss_renderflags[0], 0, level.subsectors.Size() * sizeof(ss_renderflags[0]));
 	memset(&no_renderflags[0], 0, level.nodes.Size() * sizeof(no_renderflags[0]));
+
+	Decals[0].Clear();
+	Decals[1].Clear();
 
 	mClipPortal = nullptr;
 	mCurrentPortal = nullptr;
@@ -282,3 +286,17 @@ void HWViewpointUniforms::SetDefaults()
 	mShadowmapFilter = gl_shadowmap_filter;
 
 }
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+GLDecal *HWDrawInfo::AddDecal(bool onmirror)
+{
+	auto decal = (GLDecal*)RenderDataAllocator.Alloc(sizeof(GLDecal));
+	Decals[onmirror ? 1 : 0].Push(decal);
+	return decal;
+}
+

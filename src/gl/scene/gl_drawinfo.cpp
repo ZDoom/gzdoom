@@ -209,8 +209,6 @@ void FDrawInfo::StartScene()
 	outer = gl_drawinfo;
 	gl_drawinfo = this;
 	for (int i = 0; i < GLDL_TYPES; i++) drawlists[i].Reset();
-	decals[0].Clear();
-	decals[1].Clear();
 	hudsprites.Clear();
 	vpIndex = 0;
 
@@ -254,13 +252,6 @@ std::pair<FFlatVertex *, unsigned int> FDrawInfo::AllocVertices(unsigned int cou
 	unsigned int index = -1;
 	auto p = GLRenderer->mVBO->Alloc(count, &index);
 	return std::make_pair(p, index);
-}
-
-GLDecal *FDrawInfo::AddDecal(bool onmirror)
-{
-	auto decal = (GLDecal*)RenderDataAllocator.Alloc(sizeof(GLDecal));
-	decals[onmirror ? 1 : 0].Push(decal);
-	return decal;
 }
 
 int FDrawInfo::UploadLights(FDynLightData &data)
@@ -310,6 +301,12 @@ void FDrawInfo::DrawIndexed(EDrawType dt, FRenderState &state, int index, int co
 void FDrawInfo::SetDepthMask(bool on)
 {
 	glDepthMask(on);
+}
+
+void FDrawInfo::SetDepthFunc(int func)
+{
+	static int df2gl[] = { GL_LESS, GL_LEQUAL, GL_ALWAYS };
+	glDepthFunc(df2gl[func]);
 }
 
 void FDrawInfo::EnableDrawBufferAttachments(bool on)

@@ -132,6 +132,7 @@ void GLDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 void HWDrawInfo::DrawDecals(FRenderState &state, TArray<GLDecal *> &decals)
 {
 	side_t *wall = nullptr;
+	SetDepthMask(false);
 	state.SetDepthBias(-1, -128);
 	for (auto gldecal : decals)
 	{
@@ -153,6 +154,7 @@ void HWDrawInfo::DrawDecals(FRenderState &state, TArray<GLDecal *> &decals)
 	state.EnableSplit(false);
 	state.ClearDepthBias();
 	state.SetTextureMode(TM_NORMAL);
+	SetDepthMask(true);
 }
 
 //==========================================================================

@@ -105,7 +105,7 @@ public:
 
 	void DoDraw(HWDrawInfo *di, FRenderState &state, bool translucent, int pass, int i, bool trans);
 	void Draw(HWDrawInfo *di, FRenderState &state, bool translucent, int pass, bool trans = false);
-	void DrawWalls(HWDrawInfo *di, int pass);
+	void DrawWalls(HWDrawInfo *di, FRenderState &state, bool translucent);
 	void DrawFlats(HWDrawInfo *di, FRenderState &state, bool translucent);
 	
 	HWDrawList * next;

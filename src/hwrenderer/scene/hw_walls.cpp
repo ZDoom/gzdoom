@@ -38,7 +38,227 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_portal.h"
+#include "hw_renderstate.h"
 
+//==========================================================================
+//
+// General purpose wall rendering function
+// everything goes through here
+//
+//==========================================================================
+
+void GLWall::RenderWall(HWDrawInfo *di, FRenderState &state, int textured)
+{
+	assert(vertcount > 0);
+	state.SetLightIndex(dynlightindex);
+	di->Draw(DT_TriangleFan, state, vertindex, vertcount);
+	vertexcount += vertcount;
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void GLWall::RenderFogBoundary(HWDrawInfo *di, FRenderState &state)
+{
+	if (gl_fogmode && !di->isFullbrightScene())
+	{
+		int rel = rellight + getExtraLight();
+		di->EnableDrawBufferAttachments(false);
+		state.SetFog(lightlevel, rel, false, &Colormap, false);
+		state.SetEffect(EFF_FOGBOUNDARY);
+		state.AlphaFunc(Alpha_GEqual, 0.f);
+		state.SetDepthBias(-1, -128);
+		RenderWall(di, state, GLWall::RWF_BLANK);
+		state.ClearDepthBias();
+		state.SetEffect(EFF_NONE);
+		di->EnableDrawBufferAttachments(true);
+	}
+}
+
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+void GLWall::RenderMirrorSurface(HWDrawInfo *di, FRenderState &state)
+{
+	if (!TexMan.mirrorTexture.isValid()) return;
+
+	di->SetDepthFunc(DF_LEqual);
+
+	// we use texture coordinates and texture matrix to pass the normal stuff to the shader so that the default vertex buffer format can be used as is.
+	state.EnableTextureMatrix(true);
+
+	// Use sphere mapping for this
+	state.SetEffect(EFF_SPHEREMAP);
+	state.SetColor(lightlevel, 0, di->isFullbrightScene(), Colormap, 0.1f);
+	state.SetFog(lightlevel, 0, di->isFullbrightScene(), &Colormap, true);
+	state.SetRenderStyle(STYLE_Add);
+	state.AlphaFunc(Alpha_Greater, 0);
+
+	FMaterial * pat = FMaterial::ValidateTexture(TexMan.mirrorTexture, false, false);
+	state.SetMaterial(pat, CLAMP_NONE, 0, -1);
+
+	flags &= ~GLWall::GLWF_GLOW;
+	RenderWall(di, state, GLWall::RWF_BLANK);
+
+	state.EnableTextureMatrix(false);
+	state.SetEffect(EFF_NONE);
+	state.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
+
+	di->SetDepthFunc(DF_Less);
+
+	// This is drawn in the translucent pass which is done after the decal pass
+	// As a result the decals have to be drawn here, right after the wall they are on,
+	// because the depth buffer won't get set by translucent items.
+	if (seg->sidedef->AttachedDecals)
+	{
+		DrawDecalsForMirror(di, state, di->Decals[1]);
+	}
+	state.SetRenderStyle(STYLE_Translucent);
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void GLWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
+{
+	int tmode = state.GetTextureMode();
+	int rel = rellight + getExtraLight();
+
+	if (flags & GLWall::GLWF_GLOW)
+	{
+		state.EnableGlow(true);
+		state.SetGlowParams(topglowcolor, bottomglowcolor);
+	}
+	state.SetGlowPlanes(topplane, bottomplane);
+	state.SetMaterial(gltexture, flags & 3, 0, -1);
+
+	if (type == RENDERWALL_M2SNF)
+	{
+		if (flags & GLWall::GLWF_CLAMPY)
+		{
+			if (tmode == TM_NORMAL) state.SetTextureMode(TM_CLAMPY);
+		}
+		state.SetFog(255, 0, di->isFullbrightScene(), nullptr, false);
+	}
+	state.SetObjectColor(seg->frontsector->SpecialColors[sector_t::walltop] | 0xff000000);
+	state.SetObjectColor2(seg->frontsector->SpecialColors[sector_t::wallbottom] | 0xff000000);
+
+	float absalpha = fabsf(alpha);
+	if (lightlist == nullptr)
+	{
+		if (type != RENDERWALL_M2SNF) state.SetFog(lightlevel, rel, di->isFullbrightScene(), &Colormap, RenderStyle == STYLE_Add);
+		state.SetColor(lightlevel, rel, di->isFullbrightScene(), Colormap, absalpha);
+		RenderWall(di, state, rflags);
+	}
+	else
+	{
+		state.EnableSplit(true);
+
+		for (unsigned i = 0; i < lightlist->Size(); i++)
+		{
+			secplane_t &lowplane = i == (*lightlist).Size() - 1 ? bottomplane : (*lightlist)[i + 1].plane;
+			// this must use the exact same calculation method as GLWall::Process etc.
+			float low1 = lowplane.ZatPoint(vertexes[0]);
+			float low2 = lowplane.ZatPoint(vertexes[1]);
+
+			if (low1 < ztop[0] || low2 < ztop[1])
+			{
+				int thisll = (*lightlist)[i].caster != NULL ? hw_ClampLight(*(*lightlist)[i].p_lightlevel) : lightlevel;
+				FColormap thiscm;
+				thiscm.FadeColor = Colormap.FadeColor;
+				thiscm.FogDensity = Colormap.FogDensity;
+				thiscm.CopyFrom3DLight(&(*lightlist)[i]);
+				state.SetColor(thisll, rel, false, thiscm, absalpha);
+				if (type != RENDERWALL_M2SNF) state.SetFog(thisll, rel, false, &thiscm, RenderStyle == STYLE_Add);
+				state.SetSplitPlanes((*lightlist)[i].plane, lowplane);
+				RenderWall(di, state, rflags);
+			}
+			if (low1 <= zbottom[0] && low2 <= zbottom[1]) break;
+		}
+
+		state.EnableSplit(false);
+	}
+	state.SetObjectColor(0xffffffff);
+	state.SetObjectColor2(0);
+	state.SetTextureMode(tmode);
+	state.EnableGlow(false);
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void GLWall::RenderTranslucentWall(HWDrawInfo *di, FRenderState &state)
+{
+	state.SetRenderStyle(RenderStyle);
+	if (gltexture)
+	{
+		if (!gltexture->tex->GetTranslucency()) state.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
+		else state.AlphaFunc(Alpha_GEqual, 0.f);
+		RenderTexturedWall(di, state, GLWall::RWF_TEXTURED | GLWall::RWF_NOSPLIT);
+	}
+	else
+	{
+		state.AlphaFunc(Alpha_GEqual, 0.f);
+		state.SetColor(lightlevel, 0, false, Colormap, fabsf(alpha));
+		state.SetFog(lightlevel, 0, false, &Colormap, RenderStyle == STYLE_Add);
+		state.EnableTexture(false);
+		RenderWall(di, state, GLWall::RWF_NOSPLIT);
+		state.EnableTexture(true);
+	}
+	state.SetRenderStyle(STYLE_Translucent);
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+void GLWall::DrawWall(HWDrawInfo *di, FRenderState &state, bool translucent)
+{
+	if (screen->BuffersArePersistent())
+	{
+		if (level.HasDynamicLights && !di->isFullbrightScene() && gltexture != nullptr)
+		{
+			SetupLights(di, lightdata);
+		}
+		MakeVertices(di, !!(flags & GLWall::GLWF_TRANSLUCENT));
+	}
+
+	state.SetNormal(glseg.Normal());
+	if (!translucent)
+	{
+		RenderTexturedWall(di, state, GLWall::RWF_TEXTURED);
+	}
+	else
+	{
+		switch (type)
+		{
+		case RENDERWALL_MIRRORSURFACE:
+			RenderMirrorSurface(di, state);
+			break;
+
+		case RENDERWALL_FOGBOUNDARY:
+			RenderFogBoundary(di, state);
+			break;
+
+		default:
+			RenderTranslucentWall(di, state);
+			break;
+		}
+	}
+}
 
 //==========================================================================
 //

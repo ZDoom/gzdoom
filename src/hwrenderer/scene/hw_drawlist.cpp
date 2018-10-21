@@ -788,7 +788,7 @@ void HWDrawList::DoDraw(HWDrawInfo *di, FRenderState &state, bool translucent, i
 		{
 			GLWall * w= walls[drawitems[i].index];
 			RenderWall.Clock();
-			di->DrawWall(w, pass);
+			w->DrawWall(di, state, translucent);
 			RenderWall.Unclock();
 		}
 		break;
@@ -822,12 +822,12 @@ void HWDrawList::Draw(HWDrawInfo *di, FRenderState &state, bool translucent, int
 //
 //
 //==========================================================================
-void HWDrawList::DrawWalls(HWDrawInfo *di, int pass)
+void HWDrawList::DrawWalls(HWDrawInfo *di, FRenderState &state, bool translucent)
 {
 	RenderWall.Clock();
 	for (auto &item : drawitems)
 	{
-		di->DrawWall(walls[item.index], pass);
+		walls[item.index]->DrawWall(di, state, translucent);
 	}
 	RenderWall.Unclock();
 }

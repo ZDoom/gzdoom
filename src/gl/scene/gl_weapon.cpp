@@ -33,7 +33,6 @@
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/scene/hw_weapon.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
@@ -56,7 +55,8 @@ void FDrawInfo::DrawPSprite (HUDSprite *huds)
 	{
 		SetColor(huds->lightlevel, 0, huds->cm, huds->alpha, true);
 	}
-	gl_SetRenderStyle(huds->RenderStyle, false, false);
+	gl_RenderState.SetRenderStyle(huds->RenderStyle);
+	gl_RenderState.SetTextureMode(huds->RenderStyle);
 	gl_RenderState.SetObjectColor(huds->ObjectColor);
 	gl_RenderState.SetDynLight(huds->dynrgb[0], huds->dynrgb[1], huds->dynrgb[2]);
 	gl_RenderState.EnableBrightmap(!(huds->RenderStyle.Flags & STYLEF_ColorIsFixed));
@@ -76,6 +76,7 @@ void FDrawInfo::DrawPSprite (HUDSprite *huds)
 		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, huds->mx, 4);
 	}
 
+	gl_RenderState.SetTextureMode(TM_NORMAL);
 	gl_RenderState.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
 	gl_RenderState.SetObjectColor(0xffffffff);
 	gl_RenderState.SetDynLight(0, 0, 0);

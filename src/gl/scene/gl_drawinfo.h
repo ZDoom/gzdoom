@@ -1,7 +1,6 @@
 #ifndef __GL_DRAWINFO_H
 #define __GL_DRAWINFO_H
 
-#include "gl/renderer/gl_lightdata.h"
 #include "hwrenderer/scene/hw_drawlist.h"
 #include "hwrenderer/scene/hw_weapon.h"
 #include "hwrenderer/scene/hw_viewpointuniforms.h"

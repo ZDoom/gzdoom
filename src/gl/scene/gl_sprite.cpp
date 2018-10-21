@@ -43,24 +43,14 @@
 #include "gl_load/gl_interface.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
-#include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/models/gl_models.h"
 #include "gl/dynlights/gl_lightbuffer.h"
+#include "hwrenderer/utility/hw_lighting.h"
 
 extern uint32_t r_renderercaps;
-
-void gl_SetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblending)
-{
-	int tm, sb, db, be;
-
-	gl_GetRenderStyle(style, drawopaque, allowcolorblending, &tm, &sb, &db, &be);
-	gl_RenderState.BlendEquation(be);
-	gl_RenderState.BlendFunc(sb, db);
-	gl_RenderState.SetTextureMode(tm);
-}
 
 //==========================================================================
 //
@@ -87,10 +77,16 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 			gl_RenderState.EnableBrightmap(false);
 		}
 
-		gl_SetRenderStyle(RenderStyle, false, 
-			// The rest of the needed checks are done inside gl_SetRenderStyle
-			sprite->trans > 1.f - FLT_EPSILON && gl_usecolorblending && !isFullbrightScene() && sprite->actor &&
-			sprite->fullbright && sprite->gltexture && !sprite->gltexture->tex->GetTranslucency());
+		// Optionally use STYLE_ColorBlend in place of STYLE_Add for fullbright items.
+		if (RenderStyle == LegacyRenderStyles[STYLE_Add] && sprite->trans > 1.f - FLT_EPSILON && 
+			gl_usecolorblending && !isFullbrightScene() && sprite->actor &&
+			sprite->fullbright && sprite->gltexture && !sprite->gltexture->tex->GetTranslucency())
+		{
+			RenderStyle = LegacyRenderStyles[STYLE_ColorBlend];
+		}
+
+		gl_RenderState.SetRenderStyle(RenderStyle);
+		gl_RenderState.SetTextureMode(RenderStyle);
 
 		if (sprite->hw_styleflags == STYLEHW_NoAlphaTest)
 		{
@@ -130,14 +126,9 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 	}
 	else if (sprite->modelframe == nullptr)
 	{
-		int tm, sb, db, be;
-
 		// This still needs to set the texture mode. As blend mode it will always use GL_ONE/GL_ZERO
-		gl_GetRenderStyle(RenderStyle, false, false, &tm, &sb, &db, &be);
-		gl_RenderState.SetTextureMode(tm);
-
-		glEnable(GL_POLYGON_OFFSET_FILL);
-		glPolygonOffset(-1.0f, -128.0f);
+		gl_RenderState.SetTextureMode(RenderStyle);
+		gl_RenderState.SetDepthBias(-1, -128);
 	}
 	if (RenderStyle.BlendOp != STYLEOP_Shadow)
 	{
@@ -252,8 +243,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 			}
 			if (sprite->polyoffset)
 			{
-				glEnable(GL_POLYGON_OFFSET_FILL);
-				glPolygonOffset(-1.0f, -128.0f);
+				gl_RenderState.SetDepthBias(-1, -128);
 			}
 
 			glDrawArrays(GL_TRIANGLE_STRIP, sprite->vertexindex, 4);
@@ -285,19 +275,16 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 	if (pass==GLPASS_TRANSLUCENT)
 	{
 		gl_RenderState.EnableBrightmap(true);
-		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		gl_RenderState.BlendEquation(GL_FUNC_ADD);
+		gl_RenderState.SetRenderStyle(STYLE_Translucent);
 		gl_RenderState.SetTextureMode(TM_NORMAL);
 		if (sprite->actor != nullptr && (sprite->actor->renderflags & RF_SPRITETYPEMASK) == RF_FLATSPRITE)
 		{
-			glPolygonOffset(0.0f, 0.0f);
-			glDisable(GL_POLYGON_OFFSET_FILL);
+			gl_RenderState.ClearDepthBias();
 		}
 	}
 	else if (sprite->modelframe == nullptr)
 	{
-		glPolygonOffset(0.0f, 0.0f);
-		glDisable(GL_POLYGON_OFFSET_FILL);
+		gl_RenderState.ClearDepthBias();
 	}
 
 	gl_RenderState.SetObjectColor(0xffffffff);

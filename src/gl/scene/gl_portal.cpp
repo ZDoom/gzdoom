@@ -36,13 +36,13 @@
 #include "g_levellocals.h"
 
 #include "gl_load/gl_interface.h"
-#include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "hwrenderer/scene/hw_clipper.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/data/gl_viewpointbuffer.h"
+#include "hwrenderer/utility/hw_lighting.h"
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------

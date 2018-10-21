@@ -46,7 +46,6 @@
 #include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_debug.h"
 #include "hwrenderer/utility/hw_cvars.h"
-#include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/data/gl_vertexbuffer.h"
@@ -178,11 +177,6 @@ void FDrawInfo::RenderScene(int recursion)
 
 
 	// Part 2: masked geometry. This is set up so that only pixels with alpha>gl_mask_threshold will show
-	if (!gl_texture) 
-	{
-		gl_RenderState.EnableTexture(true);
-		gl_RenderState.SetTextureMode(TM_STENCIL);
-	}
 	gl_RenderState.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
 	drawlists[GLDL_MASKEDWALLS].DrawWalls(this, gl_RenderState, false);
 	drawlists[GLDL_MASKEDFLATS].DrawFlats(this, gl_RenderState, false);

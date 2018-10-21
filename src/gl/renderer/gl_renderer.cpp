@@ -45,7 +45,6 @@
 #include "gl/scene/gl_portal.h"
 #include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/data/gl_vertexbuffer.h"
@@ -457,13 +456,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	{
 
 		int gltrans = -1;
-		int tm, sb, db, be;
-		// The texture mode being returned here cannot be used, because the higher level code 
-		// already manipulated the data so that some cases will not be handled correctly.
-		// Since we already get a proper mode from the calling code this doesn't really matter.
-		gl_GetRenderStyle(cmd.mRenderStyle, false, false, &tm, &sb, &db, &be);
-		gl_RenderState.BlendEquation(be); 
-		gl_RenderState.BlendFunc(sb, db);
+		gl_RenderState.SetRenderStyle(cmd.mRenderStyle);
 		gl_RenderState.EnableBrightmap(!(cmd.mRenderStyle.Flags & STYLEF_ColorIsFixed));
 		gl_RenderState.EnableFog(2);	// Special 2D mode 'fog'.
 

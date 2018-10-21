@@ -240,8 +240,7 @@ void FGLRenderState::Apply()
 
 	if (mStencil.mChanged)
 	{
-		int recursion = GLRenderer->mPortalState.GetRecursion();
-		glStencilFunc(GL_EQUAL, recursion + mStencil.mOffsVal, ~0);		// draw sky into stencil
+		glStencilFunc(GL_EQUAL, mStencil.mBaseVal + mStencil.mOffsVal, ~0);		// draw sky into stencil
 		glStencilOp(GL_KEEP, GL_KEEP, op2gl[mStencil.mOperation]);		// this stage doesn't modify the stencil
 
 		bool cmon = !(mStencil.mFlags & SF_ColorMaskOff);

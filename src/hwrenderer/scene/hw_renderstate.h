@@ -74,6 +74,7 @@ struct FMaterialState
 
 struct FStencilState
 {
+	int mBaseVal;
 	int mOffsVal;
 	int mOperation;
 	int mFlags;
@@ -81,6 +82,7 @@ struct FStencilState
 
 	void Reset()
 	{
+		mBaseVal = 0;
 		mOffsVal = 0;
 		mOperation = SOP_Keep;
 		mFlags = SF_AllOn;
@@ -401,6 +403,19 @@ public:
 		mStencil.mFlags = flags;
 		mStencil.mChanged = true;
 	}
+
+	void IncStencilValue()
+	{
+		mStencil.mBaseVal++;
+		mStencil.mChanged = true;
+	}
+
+	void DecStencilValue()
+	{
+		mStencil.mBaseVal--;
+		mStencil.mChanged = true;
+	}
+
 
 	void SetColor(int sectorlightlevel, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon = false);
 	void SetFog(int lightlevel, int rellight, bool fullbright, const FColormap *cmap, bool isadditive);

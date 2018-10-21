@@ -79,8 +79,6 @@ public:
 
 struct FPortalSceneState
 {
-	int recursion = 0;
-
 	int MirrorFlag = 0;
 	int PlaneMirrorFlag = 0;
 	int renderdepth = 0;
@@ -99,11 +97,6 @@ struct FPortalSceneState
 		UniqueSkies.Clear();
 		UniqueHorizons.Clear();
 		UniquePlaneMirrors.Clear();
-	}
-
-	int GetRecursion() const
-	{
-		return recursion;
 	}
 
 	bool isMirrored() const

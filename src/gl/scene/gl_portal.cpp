@@ -133,7 +133,7 @@ bool GLPortal::Start(bool usestencil, bool doquery, HWDrawInfo *outer_di, HWDraw
 		}
 	
 		// Create stencil 
-		glStencilFunc(GL_EQUAL, mState->recursion, ~0);		// create stencil
+		glStencilFunc(GL_EQUAL, gl_RenderState.GetStencilCounter(), ~0);		// create stencil
 		glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);		// increment stencil of valid pixels
 		{
 			glColorMask(0,0,0,0);						// don't write to the graphics buffer
@@ -157,7 +157,7 @@ bool GLPortal::Start(bool usestencil, bool doquery, HWDrawInfo *outer_di, HWDraw
 				if (doquery) glEndQuery(GL_SAMPLES_PASSED);
 
 				// Clear Z-buffer
-				glStencilFunc(GL_EQUAL, mState->recursion + 1, ~0);		// draw sky into stencil
+				glStencilFunc(GL_EQUAL, gl_RenderState.GetStencilCounter() + 1, ~0);		// draw sky into stencil
 				glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);		// this stage doesn't modify the stencil
 				glDepthMask(true);							// enable z-buffer again
 				glDepthRange(1, 1);
@@ -179,7 +179,7 @@ bool GLPortal::Start(bool usestencil, bool doquery, HWDrawInfo *outer_di, HWDraw
 				{
 					// restore default stencil op.
 					glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-					glStencilFunc(GL_EQUAL, mState->recursion, ~0);		// draw sky into stencil
+					glStencilFunc(GL_EQUAL, gl_RenderState.GetStencilCounter(), ~0);		// draw sky into stencil
 					return false;
 				}
 			}
@@ -192,7 +192,7 @@ bool GLPortal::Start(bool usestencil, bool doquery, HWDrawInfo *outer_di, HWDraw
 
 				glDepthMask(true);
 				DrawPortalStencil(STP_AllInOne);
-				glStencilFunc(GL_EQUAL, mState->recursion + 1, ~0);		// draw sky into stencil
+				glStencilFunc(GL_EQUAL, gl_RenderState.GetStencilCounter() + 1, ~0);		// draw sky into stencil
 				glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);		// this stage doesn't modify the stencil
 				gl_RenderState.EnableTexture(true);
 				glColorMask(1,1,1,1);
@@ -201,9 +201,7 @@ bool GLPortal::Start(bool usestencil, bool doquery, HWDrawInfo *outer_di, HWDraw
 				glDepthMask(false);							// don't write to Z-buffer!
 			}
 		}
-		mState->recursion++;
-
-
+		gl_RenderState.IncStencilValue();
 	}
 	else
 	{
@@ -265,7 +263,7 @@ void GLPortal::End(HWDrawInfo *di, bool usestencil)
 		glDepthFunc(GL_LEQUAL);
 		glDepthRange(0, 1);
 		glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
-		glStencilFunc(GL_EQUAL, mState->recursion, ~0);		// draw sky into stencil
+		glStencilFunc(GL_EQUAL, gl_RenderState.GetStencilCounter(), ~0);		// draw sky into stencil
 		DrawPortalStencil(STP_DepthRestore);
 		glDepthFunc(GL_LESS);
 
@@ -273,11 +271,11 @@ void GLPortal::End(HWDrawInfo *di, bool usestencil)
 		gl_RenderState.EnableTexture(true);
 		gl_RenderState.SetEffect(EFF_NONE);
 		glColorMask(1, 1, 1, 1);
-		mState->recursion--;
+		gl_RenderState.DecStencilValue();
 
 		// restore old stencil op.
 		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-		glStencilFunc(GL_EQUAL, mState->recursion, ~0);		// draw sky into stencil
+		glStencilFunc(GL_EQUAL, gl_RenderState.GetStencilCounter(), ~0);		// draw sky into stencil
 	}
 	else
 	{

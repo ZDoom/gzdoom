@@ -201,6 +201,12 @@ public:
 		return mPassType == GBUFFER_PASS ? 3 : 1;
 	}
 
+	// Temporary helper.
+	int GetStencilCounter()
+	{
+		return mStencil.mBaseVal;
+	}
+
 };
 
 extern FGLRenderState gl_RenderState;

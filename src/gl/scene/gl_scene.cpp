@@ -203,14 +203,9 @@ void FDrawInfo::RenderScene(int recursion)
 
 	// Part 4: Draw decals (not a real pass)
 	glDepthFunc(GL_LEQUAL);
-	glEnable(GL_POLYGON_OFFSET_FILL);
-	glPolygonOffset(-1.0f, -128.0f);
 	glDepthMask(false);
-	DrawDecals(gl_RenderState);
+	DrawDecals(gl_RenderState, decals[0]);
 
-	gl_RenderState.SetTextureMode(TM_NORMAL);
-	glPolygonOffset(0.0f, 0.0f);
-	glDisable(GL_POLYGON_OFFSET_FILL);
 	glDepthMask(true);
 	RenderAll.Unclock();
 }

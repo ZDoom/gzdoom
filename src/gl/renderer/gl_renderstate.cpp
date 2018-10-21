@@ -52,23 +52,24 @@ static void matrixToGL(const VSMatrix &mat, int loc)
 
 //==========================================================================
 //
-//
+// This only gets called once upon setup.
+// With OpenGL the state is persistent and cannot be cleared, once set up.
 //
 //==========================================================================
 
 void FGLRenderState::Reset()
 {
 	FRenderState::Reset();
-	mSplitEnabled = false;
 	mSrcBlend = GL_SRC_ALPHA;
 	mDstBlend = GL_ONE_MINUS_SRC_ALPHA;
 	mBlendEquation = GL_FUNC_ADD;
-	mVertexBuffer = mCurrentVertexBuffer = NULL;
+	mVertexBuffer = mCurrentVertexBuffer = nullptr;
 	mGlossiness = 0.0f;
 	mSpecularLevel = 0.0f;
 	mShaderTimer = 0.0f;
 	ClearClipSplit();
 
+	stRenderStyle = DefaultRenderStyle();
 	stSrcBlend = stDstBlend = -1;
 	stBlendEquation = -1;
 	stAlphaTest = 0;
@@ -214,6 +215,21 @@ void FGLRenderState::Apply()
 	{
 		ApplyBlendMode();
 		stRenderStyle = mRenderStyle;
+	}
+
+	if (mSplitEnabled != stSplitEnabled)
+	{
+		if (mSplitEnabled)
+		{
+			glEnable(GL_CLIP_DISTANCE3);
+			glEnable(GL_CLIP_DISTANCE4);
+		}
+		else
+		{
+			glDisable(GL_CLIP_DISTANCE3);
+			glDisable(GL_CLIP_DISTANCE4);
+		}
+		stSplitEnabled = mSplitEnabled;
 	}
 
 	if (mMaterial.mChanged)

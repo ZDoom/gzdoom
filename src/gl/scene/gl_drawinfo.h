@@ -57,16 +57,7 @@ struct FDrawInfo : public HWDrawInfo
 	void Draw(EDrawType dt, FRenderState &state, int index, int count, bool apply = true);
 	void DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply = true);
 
-	void DrawDecal(GLDecal *gldecal, FRenderState &state);
-	void DrawDecals(FRenderState &state);
-	void DrawDecalsForMirror(GLWall *wall, FRenderState &state);
-
 	void StartScene();
-	void SetupFloodStencil(int vindex);
-	void ClearFloodStencil(int vindex);
-	void DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, bool ceiling);
-	void FloodUpperGap(seg_t * seg);
-	void FloodLowerGap(seg_t * seg);
 
 	// Wall drawer
 	void RenderWall(GLWall *wall, int textured);

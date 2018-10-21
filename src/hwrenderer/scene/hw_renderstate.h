@@ -111,6 +111,7 @@ protected:
 	uint8_t mBrightmapEnabled : 1;
 	uint8_t mModelMatrixEnabled : 1;
 	uint8_t mTextureMatrixEnabled : 1;
+	uint8_t mSplitEnabled : 1;
 
 	int mLightIndex;
 	int mSpecialEffect;
@@ -154,6 +155,7 @@ public:
 		mAlphaThreshold = 0.5f;
 		mModelMatrixEnabled = false;
 		mTextureMatrixEnabled = false;
+		mSplitEnabled = false;
 		mObjectColor = 0xffffffff;
 		mObjectColor2 = 0;
 		mSoftLight = 0;
@@ -262,6 +264,11 @@ public:
 	void EnableBrightmap(bool on)
 	{
 		mBrightmapEnabled = on;
+	}
+
+	void EnableSplit(bool on)
+	{
+		mSplitEnabled = on;
 	}
 
 	void EnableModelMatrix(bool on)

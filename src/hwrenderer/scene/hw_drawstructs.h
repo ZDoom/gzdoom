@@ -26,6 +26,7 @@ class VSMatrix;
 struct FSpriteModelFrame;
 struct particle_t;
 class FRenderState;
+struct GLDecal;
 enum area_t : int;
 
 enum HWRenderStyle
@@ -284,6 +285,8 @@ public:
 		return -((y-glseg.y1)*(glseg.x2-glseg.x1)-(x-glseg.x1)*(glseg.y2-glseg.y1));
 	}
 
+	void DrawDecalsForMirror(HWDrawInfo *di, FRenderState &state, TArray<GLDecal *> &decals);
+
 };
 
 //==========================================================================
@@ -435,6 +438,8 @@ struct GLDecal
 	FColormap Colormap;
 	secplane_t bottomplane;
 	FVector3 Normal;
+
+	void DrawDecal(HWDrawInfo *di, FRenderState &state);
 
 };
 

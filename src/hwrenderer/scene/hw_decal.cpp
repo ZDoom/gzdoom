@@ -34,7 +34,153 @@
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/utility/hw_lighting.h"
+#include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/data/flatvertices.h"
+#include "hw_renderstate.h"
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void GLDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
+{
+	auto tex = gltexture;
+
+	// calculate dynamic light effect.
+	if (level.HasDynamicLights && !di->isFullbrightScene() && gl_light_sprites)
+	{
+		// Note: This should be replaced with proper shader based lighting.
+		double x, y;
+		float out[3];
+		decal->GetXY(decal->Side, x, y);
+		di->GetDynSpriteLight(nullptr, x, y, zcenter, decal->Side->lighthead, decal->Side->sector->PortalGroup, out);
+		state.SetDynLight(out[0], out[1], out[2]);
+	}
+
+	// alpha color only has an effect when using an alpha texture.
+	if (decal->RenderStyle.Flags & (STYLEF_RedIsAlpha | STYLEF_ColorIsFixed))
+	{
+		state.SetObjectColor(decal->AlphaColor | 0xff000000);
+	}
+
+	state.SetTextureMode(decal->RenderStyle);
+	state.SetRenderStyle(decal->RenderStyle);
+	state.SetMaterial(tex, CLAMP_XY, decal->Translation, -1);
+
+
+	// If srcalpha is one it looks better with a higher alpha threshold
+	if (decal->RenderStyle.SrcAlpha == STYLEALPHA_One) state.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
+	else state.AlphaFunc(Alpha_Greater, 0.f);
+
+
+	state.SetColor(lightlevel, rellight, di->isFullbrightScene(), Colormap, alpha);
+	// for additively drawn decals we must temporarily set the fog color to black.
+	PalEntry fc = state.GetFogColor();
+	if (decal->RenderStyle.BlendOp == STYLEOP_Add && decal->RenderStyle.DestAlpha == STYLEALPHA_One)
+	{
+		state.SetFog(0, -1);
+	}
+
+	state.SetNormal(Normal);
+
+	if (lightlist == nullptr)
+	{
+		di->Draw(DT_TriangleFan, state, vertindex, 4);
+	}
+	else
+	{
+		auto &lightlist = *this->lightlist;
+
+		for (unsigned k = 0; k < lightlist.Size(); k++)
+		{
+			secplane_t &lowplane = k == lightlist.Size() - 1 ? bottomplane : lightlist[k + 1].plane;
+
+			float low1 = lowplane.ZatPoint(dv[1].x, dv[1].y);
+			float low2 = lowplane.ZatPoint(dv[2].x, dv[2].y);
+
+			if (low1 < dv[1].z || low2 < dv[2].z)
+			{
+				int thisll = lightlist[k].caster != nullptr ? hw_ClampLight(*lightlist[k].p_lightlevel) : lightlevel;
+				FColormap thiscm;
+				thiscm.FadeColor = Colormap.FadeColor;
+				thiscm.CopyFrom3DLight(&lightlist[k]);
+				state.SetColor(thisll, rellight, di->isFullbrightScene(), thiscm, alpha);
+				if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) thiscm.Decolorize();
+				state.SetFog(thisll, rellight, di->isFullbrightScene(), &thiscm, false);
+				state.SetSplitPlanes(lightlist[k].plane, lowplane);
+
+				di->Draw(DT_TriangleFan, state, vertindex, 4);
+			}
+			if (low1 <= dv[0].z && low2 <= dv[3].z) break;
+		}
+	}
+
+	rendered_decals++;
+	state.SetTextureMode(TM_NORMAL);
+	state.SetObjectColor(0xffffffff);
+	state.SetFog(fc, -1);
+	state.SetDynLight(0, 0, 0);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+void HWDrawInfo::DrawDecals(FRenderState &state, TArray<GLDecal *> &decals)
+{
+	side_t *wall = nullptr;
+	state.SetDepthBias(-1, -128);
+	for (auto gldecal : decals)
+	{
+		if (gldecal->decal->Side != wall)
+		{
+			wall = gldecal->decal->Side;
+			if (gldecal->lightlist != nullptr)
+			{
+				state.EnableSplit(true);
+			}
+			else
+			{
+				state.EnableSplit(false);
+				state.SetFog(gldecal->lightlevel, gldecal->rellight, isFullbrightScene(), &gldecal->Colormap, false);
+			}
+		}
+		gldecal->DrawDecal(this, state);
+	}
+	state.EnableSplit(false);
+	state.ClearDepthBias();
+	state.SetTextureMode(TM_NORMAL);
+}
+
+//==========================================================================
+//
+// This list will never get long, so this code should be ok.
+//
+//==========================================================================
+
+void GLWall::DrawDecalsForMirror(HWDrawInfo *di, FRenderState &state, TArray<GLDecal *> &decals)
+{
+	state.SetDepthBias(-1, -128);
+	state.SetFog(lightlevel, rellight + getExtraLight(), di->isFullbrightScene(), &Colormap, false);
+	for (auto gldecal : decals)
+	{
+		if (gldecal->decal->Side == seg->sidedef)
+		{
+			gldecal->DrawDecal(di, state);
+		}
+	}
+	state.ClearDepthBias();
+	state.SetTextureMode(TM_NORMAL);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &normal)
 {
@@ -271,6 +417,7 @@ void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 //
 //
 //==========================================================================
+
 void GLWall::ProcessDecals(HWDrawInfo *di)
 {
 	if (seg->sidedef != nullptr)

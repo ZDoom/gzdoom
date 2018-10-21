@@ -49,7 +49,6 @@ enum EPassType
 
 class FGLRenderState : public FRenderState
 {
-	uint8_t mSplitEnabled : 1;
 	uint8_t mLastDepthClamp : 1;
 
 	int mSrcBlend, mDstBlend;
@@ -68,6 +67,7 @@ class FGLRenderState : public FRenderState
 	FRenderStyle stRenderStyle;
 	int stSrcBlend, stDstBlend;
 	bool stAlphaTest;
+	bool stSplitEnabled;
 	int stBlendEquation;
 
 	FShader *activeShader;
@@ -113,25 +113,6 @@ public:
 	{
 		// forces rebinding with the next 'apply' call.
 		mCurrentVertexBuffer = NULL;
-	}
-
-
-	void EnableSplit(bool on)
-	{
-		if (!(gl.flags & RFL_NO_CLIP_PLANES))
-		{
-			mSplitEnabled = on;
-			if (on)
-			{
-				glEnable(GL_CLIP_DISTANCE3);
-				glEnable(GL_CLIP_DISTANCE4);
-			}
-			else
-			{
-				glDisable(GL_CLIP_DISTANCE3);
-				glDisable(GL_CLIP_DISTANCE4);
-			}
-		}
 	}
 
 	void SetSpecular(float glossiness, float specularLevel)

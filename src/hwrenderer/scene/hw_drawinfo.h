@@ -284,6 +284,8 @@ public:
 	void SetupView(float vx, float vy, float vz, bool mirror, bool planemirror);
 	angle_t FrustumAngle();
 
+	void DrawDecals(FRenderState &state, TArray<GLDecal *> &decals);
+
 	virtual void DrawWall(GLWall *wall, int pass) = 0;
 	virtual void DrawSprite(GLSprite *sprite, int pass) = 0;
 

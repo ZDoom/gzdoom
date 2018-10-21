@@ -152,7 +152,7 @@ void FDrawInfo::RenderScene(int recursion)
  	if (!gl_no_skyclear) GLRenderer->mPortalState.RenderFirstSkyPortal(recursion, this);
 
 	gl_RenderState.EnableFog(true);
-	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
+	gl_RenderState.SetRenderStyle(STYLE_Source);
 
 	if (gl_sort_textures)
 	{
@@ -191,7 +191,7 @@ void FDrawInfo::RenderScene(int recursion)
 
 	drawlists[GLDL_MODELS].Draw(this, gl_RenderState, false, pass);
 
-	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	gl_RenderState.SetRenderStyle(STYLE_Translucent);
 
 	// Part 4: Draw decals (not a real pass)
 	glDepthFunc(GL_LEQUAL);
@@ -212,7 +212,7 @@ void FDrawInfo::RenderTranslucent()
 
 	// final pass: translucent stuff
 	gl_RenderState.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
-	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	gl_RenderState.SetRenderStyle(STYLE_Translucent);
 
 	gl_RenderState.EnableBrightmap(true);
 	drawlists[GLDL_TRANSLUCENTBORDER].Draw(this, gl_RenderState, true, GLPASS_TRANSLUCENT);
@@ -315,7 +315,7 @@ void FDrawInfo::EndDrawScene(sector_t * viewsector)
     glViewport(screen->mScreenViewport.left, screen->mScreenViewport.top, screen->mScreenViewport.width, screen->mScreenViewport.height);
 
 	// Restore standard rendering state
-	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	gl_RenderState.SetRenderStyle(STYLE_Translucent);
 	gl_RenderState.ResetColor();
 	gl_RenderState.EnableTexture(true);
 	glDisable(GL_SCISSOR_TEST);
@@ -339,7 +339,7 @@ void FDrawInfo::DrawEndScene2D(sector_t * viewsector)
 	gl_RenderState.SetSoftLightLevel(-1);
 
 	// Restore standard rendering state
-	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	gl_RenderState.SetRenderStyle(STYLE_Translucent);
 	gl_RenderState.ResetColor();
 	gl_RenderState.EnableTexture(true);
 	glDisable(GL_SCISSOR_TEST);

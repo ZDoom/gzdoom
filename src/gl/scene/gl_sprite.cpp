@@ -253,8 +253,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 				// If we get here we know that we have colored fog and no fixed colormap.
 				SetFog(sprite->foglevel, rel, &sprite->Colormap, additivefog);
 				gl_RenderState.SetTextureMode(TM_FOGLAYER);
-				gl_RenderState.BlendEquation(GL_FUNC_ADD);
-				gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				gl_RenderState.SetRenderStyle(STYLE_Translucent);
 				gl_RenderState.Apply();
 				glDrawArrays(GL_TRIANGLE_STRIP, sprite->vertexindex, 4);
 				gl_RenderState.SetTextureMode(TM_NORMAL);

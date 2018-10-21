@@ -226,7 +226,7 @@ void GLSkyPortal::DrawContents(HWDrawInfo *di)
 	gl_RenderState.ResetColor();
 	gl_RenderState.EnableFog(false);
 	gl_RenderState.AlphaFunc(Alpha_GEqual, 0.f);
-	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	gl_RenderState.SetRenderStyle(STYLE_Translucent);
 	bool oldClamp = gl_RenderState.SetDepthClamp(true);
 
 	di->SetupView(0, 0, 0, !!(mState->MirrorFlag & 1), !!(mState->PlaneMirrorFlag & 1));

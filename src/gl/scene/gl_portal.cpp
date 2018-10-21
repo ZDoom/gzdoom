@@ -302,8 +302,7 @@ void GLPortal::End(HWDrawInfo *di, bool usestencil)
 		glColorMask(0, 0, 0, 1); // mark portal in alpha channel but don't touch color
 		gl_RenderState.SetEffect(EFF_STENCIL);
 		gl_RenderState.EnableTexture(false);
-		gl_RenderState.BlendFunc(GL_ONE, GL_ZERO);
-		gl_RenderState.BlendEquation(GL_FUNC_ADD);
+		gl_RenderState.SetRenderStyle(STYLE_Source);
 		gl_RenderState.Apply();
 		DrawPortalStencil(STP_DepthRestore);
 		gl_RenderState.SetEffect(EFF_NONE);
@@ -429,7 +428,7 @@ void GLHorizonPortal::DrawContents(HWDrawInfo *hwdi)
 
 	gl_RenderState.SetPlaneTextureRotation(sp, gltexture);
 	gl_RenderState.AlphaFunc(Alpha_GEqual, 0.f);
-	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
+	gl_RenderState.SetRenderStyle(STYLE_Source);
 	gl_RenderState.Apply();
 
 

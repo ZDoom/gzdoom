@@ -143,18 +143,6 @@ public:
 		mClipSplit[1] = 1000000.f;
 	}
 
-	void BlendFunc(int src, int dst)
-	{
-		glBlendFunc(src, dst);
-		stRenderStyle = LegacyRenderStyles[STYLE_OptFuzzy];	// temporary hack: Set to something that never can get here to invalidate the cache
-	}
-
-	void BlendEquation(int eq)
-	{
-		glBlendEquation(eq);
-		stRenderStyle = LegacyRenderStyles[STYLE_OptFuzzy];	// temporary hack: Set to something that never can get here to invalidate the cache
-	}
-
 	// This wraps the depth clamp setting because we frequently need to read it which OpenGL is not particularly performant at...
 	bool SetDepthClamp(bool on)
 	{

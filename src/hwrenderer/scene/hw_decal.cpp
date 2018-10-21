@@ -163,6 +163,7 @@ void HWDrawInfo::DrawDecals(FRenderState &state, TArray<GLDecal *> &decals)
 
 void GLWall::DrawDecalsForMirror(HWDrawInfo *di, FRenderState &state, TArray<GLDecal *> &decals)
 {
+	di->SetDepthMask(false);
 	state.SetDepthBias(-1, -128);
 	state.SetFog(lightlevel, rellight + getExtraLight(), di->isFullbrightScene(), &Colormap, false);
 	for (auto gldecal : decals)
@@ -174,6 +175,7 @@ void GLWall::DrawDecalsForMirror(HWDrawInfo *di, FRenderState &state, TArray<GLD
 	}
 	state.ClearDepthBias();
 	state.SetTextureMode(TM_NORMAL);
+	di->SetDepthMask(true);
 }
 
 //==========================================================================

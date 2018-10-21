@@ -307,6 +307,15 @@ void FDrawInfo::DrawIndexed(EDrawType dt, FRenderState &state, int index, int co
 	drawcalls.Unclock();
 }
 
+void FDrawInfo::SetDepthMask(bool on)
+{
+	glDepthMask(on);
+}
+
+void FDrawInfo::EnableDrawBufferAttachments(bool on)
+{
+	gl_RenderState.EnableDrawBuffers(on? gl_RenderState.GetPassDrawBufferCount() : 1);
+}
 
 
 //==========================================================================

@@ -54,17 +54,19 @@ struct FDrawInfo : public HWDrawInfo
 	std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) override;
 	int UploadLights(FDynLightData &data) override;
 
-	void Draw(EDrawType dt, FRenderState &state, int index, int count, bool apply = true);
-	void DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply = true);
+	void Draw(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) override;
+	void DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) override;
+	void SetDepthMask(bool on) override;
+	void EnableDrawBufferAttachments(bool on) override;
 
 	void StartScene();
 
 	// Wall drawer
-	void RenderWall(GLWall *wall, int textured);
-	void RenderFogBoundary(GLWall *wall);
-	void RenderMirrorSurface(GLWall *wall);
-	void RenderTranslucentWall(GLWall *wall);
-	void RenderTexturedWall(GLWall *wall, int rflags);
+	void RenderWall(GLWall *wall, FRenderState &state, int textured);
+	void RenderFogBoundary(GLWall *wall, FRenderState &state);
+	void RenderMirrorSurface(GLWall *wall, FRenderState &state);
+	void RenderTranslucentWall(GLWall *wall, FRenderState &state);
+	void RenderTexturedWall(GLWall *wall, FRenderState &state, int rflags);
 	void DrawWall(GLWall *wall, int pass) override;
 
 	// Sprite drawer

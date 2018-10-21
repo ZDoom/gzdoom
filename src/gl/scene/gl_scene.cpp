@@ -214,8 +214,6 @@ void FDrawInfo::RenderScene(int recursion)
 //
 // RenderTranslucent
 //
-// Draws the current draw lists for the non GLSL renderer
-//
 //-----------------------------------------------------------------------------
 
 void FDrawInfo::RenderTranslucent()

@@ -57,9 +57,9 @@ struct FDrawInfo : public HWDrawInfo
 	void Draw(EDrawType dt, FRenderState &state, int index, int count, bool apply = true);
 	void DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply = true);
 
-	void DrawDecal(GLDecal *gldecal);
-	void DrawDecals();
-	void DrawDecalsForMirror(GLWall *wall);
+	void DrawDecal(GLDecal *gldecal, FRenderState &state);
+	void DrawDecals(FRenderState &state);
+	void DrawDecalsForMirror(GLWall *wall, FRenderState &state);
 
 	void StartScene();
 	void SetupFloodStencil(int vindex);

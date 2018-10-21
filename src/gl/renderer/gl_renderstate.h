@@ -63,7 +63,7 @@ class FGLRenderState : public FRenderState
 	float mClipSplit[2];
 
 	int mEffectState;
-	int mTempTM = TM_MODULATE;
+	int mTempTM = TM_NORMAL;
 
 	FRenderStyle stRenderStyle;
 	int stSrcBlend, stDstBlend;

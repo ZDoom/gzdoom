@@ -245,7 +245,7 @@ void GLSkyPortal::DrawContents(HWDrawInfo *di)
 		{
 			gl_RenderState.SetTextureMode(TM_OPAQUE);
 			RenderDome(origin->texture[0], origin->x_offset[0], origin->y_offset, origin->mirrored, FSkyVertexBuffer::SKYMODE_MAINLAYER);
-			gl_RenderState.SetTextureMode(TM_MODULATE);
+			gl_RenderState.SetTextureMode(TM_NORMAL);
 		}
 		
 		gl_RenderState.AlphaFunc(Alpha_Greater, 0.f);

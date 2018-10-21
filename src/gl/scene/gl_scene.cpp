@@ -181,7 +181,7 @@ void FDrawInfo::RenderScene(int recursion)
 	if (!gl_texture) 
 	{
 		gl_RenderState.EnableTexture(true);
-		gl_RenderState.SetTextureMode(TM_MASK);
+		gl_RenderState.SetTextureMode(TM_STENCIL);
 	}
 	gl_RenderState.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
 	drawlists[GLDL_MASKEDWALLS].DrawWalls(this, pass);
@@ -206,9 +206,9 @@ void FDrawInfo::RenderScene(int recursion)
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glPolygonOffset(-1.0f, -128.0f);
 	glDepthMask(false);
-	DrawDecals();
+	DrawDecals(gl_RenderState);
 
-	gl_RenderState.SetTextureMode(TM_MODULATE);
+	gl_RenderState.SetTextureMode(TM_NORMAL);
 	glPolygonOffset(0.0f, 0.0f);
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glDepthMask(true);

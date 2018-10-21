@@ -218,6 +218,22 @@ public:
 		mTextureMode = mode;
 	}
 
+	void SetTextureMode(FRenderStyle style)
+	{
+		if (style.Flags & STYLEF_RedIsAlpha)
+		{
+			mTextureMode = TM_ALPHATEXTURE;
+		}
+		else if (style.Flags & STYLEF_ColorIsFixed)
+		{
+			mTextureMode = TM_STENCIL;
+		}
+		else if (style.Flags & STYLEF_InvertSource)
+		{
+			mTextureMode = TM_INVERSE;
+		}
+	}
+
 	int GetTextureMode()
 	{
 		return mTextureMode;

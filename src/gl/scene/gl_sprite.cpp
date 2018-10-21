@@ -269,7 +269,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 				gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 				gl_RenderState.Apply();
 				glDrawArrays(GL_TRIANGLE_STRIP, sprite->vertexindex, 4);
-				gl_RenderState.SetTextureMode(TM_MODULATE);
+				gl_RenderState.SetTextureMode(TM_NORMAL);
 			}
 		}
 		else
@@ -289,7 +289,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 		gl_RenderState.EnableBrightmap(true);
 		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gl_RenderState.BlendEquation(GL_FUNC_ADD);
-		gl_RenderState.SetTextureMode(TM_MODULATE);
+		gl_RenderState.SetTextureMode(TM_NORMAL);
 		if (sprite->actor != nullptr && (sprite->actor->renderflags & RF_SPRITETYPEMASK) == RF_FLATSPRITE)
 		{
 			glPolygonOffset(0.0f, 0.0f);

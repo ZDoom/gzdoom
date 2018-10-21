@@ -34,6 +34,7 @@
 #ifndef __V_VIDEO_H__
 #define __V_VIDEO_H__
 
+#include <functional>
 #include "doomtype.h"
 #include "vectors.h"
 
@@ -43,7 +44,6 @@
 #include "c_cvars.h"
 #include "v_colortables.h"
 #include "v_2ddrawer.h"
-#include <functional>
 
 struct sector_t;
 class IShaderProgram;
@@ -63,6 +63,7 @@ enum EHWCaps
 	RFL_INVALIDATE_BUFFER = 64,
 	RFL_DEBUG = 128,
 };
+
 
 struct IntRect
 {

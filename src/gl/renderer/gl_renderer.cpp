@@ -468,12 +468,6 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		gl_RenderState.EnableFog(2);	// Special 2D mode 'fog'.
 
 		// Rather than adding remapping code, let's enforce that the constants here are equal.
-		static_assert(int(F2DDrawer::DTM_Normal) == int(TM_MODULATE), "DTM_Normal != TM_MODULATE");
-		static_assert(int(F2DDrawer::DTM_Opaque) == int(TM_OPAQUE), "DTM_Opaque != TM_OPAQUE");
-		static_assert(int(F2DDrawer::DTM_Invert) == int(TM_INVERSE), "DTM_Invert != TM_INVERSE");
-		static_assert(int(F2DDrawer::DTM_InvertOpaque) == int(TM_INVERTOPAQUE), "DTM_InvertOpaque != TM_INVERTOPAQUE");
-		static_assert(int(F2DDrawer::DTM_Stencil) == int(TM_MASK), "DTM_Stencil != TM_MASK");
-		static_assert(int(F2DDrawer::DTM_AlphaTexture) == int(TM_REDTOALPHA), "DTM_AlphaTexture != TM_REDTOALPHA");
 		gl_RenderState.SetTextureMode(cmd.mDrawMode);
 		if (cmd.mFlags & F2DDrawer::DTF_Scissor)
 		{
@@ -555,7 +549,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	gl_RenderState.SetVertexBuffer(mVBO);
 	gl_RenderState.EnableTexture(true);
 	gl_RenderState.EnableBrightmap(true);
-	gl_RenderState.SetTextureMode(TM_MODULATE);
+	gl_RenderState.SetTextureMode(TM_NORMAL);
 	gl_RenderState.EnableFog(false);
 	gl_RenderState.ResetColor();
 	gl_RenderState.Apply();

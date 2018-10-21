@@ -128,7 +128,7 @@ bool FGLRenderState::ApplyShader()
 
 	activeShader->muDesaturation.Set(mDesaturation / 255.f);
 	activeShader->muFogEnabled.Set(fogset);
-	activeShader->muTextureMode.Set(mTextureMode == TM_MODULATE && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode);
+	activeShader->muTextureMode.Set(mTextureMode == TM_NORMAL && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode);
 	activeShader->muLightParms.Set(mLightParms);
 	activeShader->muFogColor.Set(mFogColor);
 	activeShader->muObjectColor.Set(mObjectColor);
@@ -288,7 +288,7 @@ void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translatio
 	}
 	else
 	{
-		mTempTM = TM_MODULATE;
+		mTempTM = TM_NORMAL;
 	}
 	mEffectState = overrideshader >= 0 ? overrideshader : mat->GetShaderIndex();
 	mShaderTimer = mat->tex->shaderspeed;

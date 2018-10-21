@@ -125,11 +125,11 @@ void FDrawInfo::RenderMirrorSurface(GLWall *wall)
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(-1.0f, -128.0f);
 		glDepthMask(false);
-		DrawDecalsForMirror(wall);
+		DrawDecalsForMirror(wall, gl_RenderState);
 		glDepthMask(true);
 		glPolygonOffset(0.0f, 0.0f);
 		glDisable(GL_POLYGON_OFFSET_FILL);
-		gl_RenderState.SetTextureMode(TM_MODULATE);
+		gl_RenderState.SetTextureMode(TM_NORMAL);
 		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 }
@@ -157,7 +157,7 @@ void FDrawInfo::RenderTexturedWall(GLWall *wall, int rflags)
 	{
 		if (wall->flags & GLWall::GLWF_CLAMPY)
 		{
-			if (tmode == TM_MODULATE) gl_RenderState.SetTextureMode(TM_CLAMPY);
+			if (tmode == TM_NORMAL) gl_RenderState.SetTextureMode(TM_CLAMPY);
 		}
 		SetFog(255, 0, nullptr, false);
 	}
@@ -445,7 +445,7 @@ void FDrawInfo::AddPortal(GLWall *wall, int ptype)
 //
 //
 //==========================================================================
-void FDrawInfo::DrawDecal(GLDecal *gldecal)
+void FDrawInfo::DrawDecal(GLDecal *gldecal, FRenderState &state)
 {
 	auto decal = gldecal->decal;
 	auto tex = gldecal->gltexture;
@@ -462,13 +462,14 @@ void FDrawInfo::DrawDecal(GLDecal *gldecal)
 	}
 
 	// alpha color only has an effect when using an alpha texture.
-	if (decal->RenderStyle.Flags & STYLEF_RedIsAlpha)
+	if (decal->RenderStyle.Flags & (STYLEF_RedIsAlpha | STYLEF_ColorIsFixed))
 	{
 		gl_RenderState.SetObjectColor(decal->AlphaColor | 0xff000000);
 	}
 
-	gl_SetRenderStyle(decal->RenderStyle, false, false);
-	gl_RenderState.ApplyMaterial(tex, CLAMP_XY, decal->Translation, -1);
+	gl_RenderState.SetTextureMode(decal->RenderStyle);
+	gl_RenderState.SetRenderStyle(decal->RenderStyle);
+	gl_RenderState.SetMaterial(tex, CLAMP_XY, decal->Translation, -1);
 
 
 	// If srcalpha is one it looks better with a higher alpha threshold
@@ -488,8 +489,7 @@ void FDrawInfo::DrawDecal(GLDecal *gldecal)
 
 	if (gldecal->lightlist == nullptr)
 	{
-		gl_RenderState.Apply();
-		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, gldecal->vertindex, 4);
+		Draw(DT_TriangleFan, gl_RenderState, gldecal->vertindex, 4);
 	}
 	else
 	{
@@ -505,7 +505,7 @@ void FDrawInfo::DrawDecal(GLDecal *gldecal)
 
 			if (low1 < dv[1].z || low2 < dv[2].z)
 			{
-				int thisll = lightlist[k].caster != NULL ? hw_ClampLight(*lightlist[k].p_lightlevel) : gldecal->lightlevel;
+				int thisll = lightlist[k].caster != nullptr ? hw_ClampLight(*lightlist[k].p_lightlevel) : gldecal->lightlevel;
 				FColormap thiscm;
 				thiscm.FadeColor = gldecal->Colormap.FadeColor;
 				thiscm.CopyFrom3DLight(&lightlist[k]);
@@ -514,15 +514,14 @@ void FDrawInfo::DrawDecal(GLDecal *gldecal)
 				SetFog(thisll, gldecal->rellight, &thiscm, false);
 				gl_RenderState.SetSplitPlanes(lightlist[k].plane, lowplane);
 
-				gl_RenderState.Apply();
-				GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, gldecal->vertindex, 4);
+				Draw(DT_TriangleFan, gl_RenderState, gldecal->vertindex, 4);
 			}
 			if (low1 <= dv[0].z && low2 <= dv[3].z) break;
 		}
 	}
 
 	rendered_decals++;
-	gl_RenderState.SetTextureMode(TM_MODULATE);
+	gl_RenderState.SetTextureMode(TM_NORMAL);
 	gl_RenderState.SetObjectColor(0xffffffff);
 	gl_RenderState.SetFog(fc, -1);
 	gl_RenderState.SetDynLight(0, 0, 0);
@@ -533,7 +532,7 @@ void FDrawInfo::DrawDecal(GLDecal *gldecal)
 //
 //
 //==========================================================================
-void FDrawInfo::DrawDecals()
+void FDrawInfo::DrawDecals(FRenderState &state)
 {
 	side_t *wall = nullptr;
 	bool splitting = false;
@@ -554,7 +553,7 @@ void FDrawInfo::DrawDecals()
 				SetFog(gldecal->lightlevel, gldecal->rellight, &gldecal->Colormap, false);
 			}
 		}
-		DrawDecal(gldecal);
+		DrawDecal(gldecal, state);
 	}
 	if (splitting) gl_RenderState.EnableSplit(false);
 }
@@ -564,14 +563,14 @@ void FDrawInfo::DrawDecals()
 // This list will never get long, so this code should be ok.
 //
 //==========================================================================
-void FDrawInfo::DrawDecalsForMirror(GLWall *wall)
+void FDrawInfo::DrawDecalsForMirror(GLWall *wall, FRenderState &state)
 {
 	SetFog(wall->lightlevel, wall->rellight + getExtraLight(), &wall->Colormap, false);
 	for (auto gldecal : decals[1])
 	{
 		if (gldecal->decal->Side == wall->seg->sidedef)
 		{
-			DrawDecal(gldecal);
+			DrawDecal(gldecal, state);
 		}
 	}
 }

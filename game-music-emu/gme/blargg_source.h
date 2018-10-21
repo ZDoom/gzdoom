@@ -18,6 +18,19 @@ all other #include lines. */
 #undef require
 #define require( expr ) assert( expr )
 
+// Use to provide hints to compiler for optimized code layout in situations where we
+// can almost always expect a conditional to go one way or the other.  Should only be
+// used in situations where an unexpected branch is truly exceptional though!
+#undef likely
+#undef unlikely
+#ifdef __GNUC__
+    #define likely( x ) __builtin_expect(x, 1)
+    #define unlikely( x ) __builtin_expect(x, 0)
+#else
+    #define likely( x ) (x)
+    #define unlikely( x ) (x)
+#endif
+
 // Like printf() except output goes to debug log file. Might be defined to do
 // nothing (not even evaluate its arguments).
 // void debug_printf( const char* format, ... );

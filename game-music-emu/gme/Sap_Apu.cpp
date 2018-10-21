@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 
 #include "Sap_Apu.h"
 
@@ -30,7 +30,7 @@ static void gen_poly( blargg_ulong mask, int count, byte* out )
 		{
 			// implemented using "Galios configuration"
 			bits |= (n & 1) << b;
-			n = (n >> 1) ^ (mask & (blargg_ulong)-(blargg_long)(n & 1));
+			n = (n >> 1) ^ (mask & -(n & 1));
 		}
 		while ( b++ < 7 );
 		*out++ = bits;

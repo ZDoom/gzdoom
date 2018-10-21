@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 
 #include "Spc_Emu.h"
 
@@ -228,14 +228,14 @@ struct Spc_File : Gme_Info_
 		{
 			RETURN_ERR( xid6.resize( xid6_size ) );
 			RETURN_ERR( in.skip( xid6_offset - Spc_Emu::header_size ) );
-			RETURN_ERR( in.read( xid6.begin(), (long)xid6.size() ) );
+			RETURN_ERR( in.read( xid6.begin(), xid6.size() ) );
 		}
 		return 0;
 	}
 	
 	blargg_err_t track_info_( track_info_t* out, int ) const
 	{
-		get_spc_info( header, xid6.begin(), (long)xid6.size(), out );
+		get_spc_info( header, xid6.begin(), xid6.size(), out );
 		return 0;
 	}
 };
@@ -244,7 +244,7 @@ static Music_Emu* new_spc_emu () { return BLARGG_NEW Spc_Emu ; }
 static Music_Emu* new_spc_file() { return BLARGG_NEW Spc_File; }
 
 static gme_type_t_ const gme_spc_type_ = { "Super Nintendo", 1, &new_spc_emu, &new_spc_file, "SPC", 0 };
-gme_type_t const gme_spc_type = &gme_spc_type_;
+BLARGG_EXPORT extern gme_type_t const gme_spc_type = &gme_spc_type_;
 
 
 // Setup
@@ -299,6 +299,11 @@ blargg_err_t Spc_Emu::start_track_( int track )
 	RETURN_ERR( apu.load_spc( file_data, file_size ) );
 	filter.set_gain( (int) (gain() * SPC_Filter::gain_unit) );
 	apu.clear_echo();
+	track_info_t spc_info;
+	RETURN_ERR( track_info_( &spc_info, track ) );
+	// Set a default track length, need a non-zero fadeout
+	if ( spc_info.length > 0 )
+		set_fade ( spc_info.length, 50 );
 	return 0;
 }
 

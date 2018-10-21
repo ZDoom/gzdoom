@@ -1,6 +1,6 @@
 // Nintendo Game Boy GBS music file emulator
 
-// Game_Music_Emu 0.6.0
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 #ifndef GBS_EMU_H
 #define GBS_EMU_H
 

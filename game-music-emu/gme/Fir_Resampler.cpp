@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 
 #include "Fir_Resampler.h"
 
@@ -22,10 +22,6 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
 #undef PI
 #define PI 3.1415926535897932384626433832795029
-
-#if _MSC_VER >= 1911
-#pragma float_control(precise, on, push)
-#endif // _MSC_VER >= 1911
 
 static void gen_sinc( double rolloff, int width, double offset, double spacing, double scale,
 		int count, short* out )
@@ -55,10 +51,6 @@ static void gen_sinc( double rolloff, int width, double offset, double spacing, 
 		angle += step;
 	}
 }
-
-#if _MSC_VER >= 1911
-#pragma float_control(pop)
-#endif // _MSC_VER >= 1911
 
 Fir_Resampler_::Fir_Resampler_( int width, sample_t* impulses_ ) :
 	width_( width ),
@@ -164,7 +156,7 @@ int Fir_Resampler_::input_needed( blargg_long output_count ) const
 		output_count -= 2;
 	}
 	
-	long input_extra = (long)(input_count - (write_pos - &buf [(width_ - 1) * stereo]));
+	long input_extra = input_count - (write_pos - &buf [(width_ - 1) * stereo]);
 	if ( input_extra < 0 )
 		input_extra = 0;
 	return input_extra;
@@ -194,8 +186,8 @@ int Fir_Resampler_::avail_( blargg_long input_count ) const
 
 int Fir_Resampler_::skip_input( long count )
 {
-	int remain = int(write_pos - buf.begin());
-	int max_count = int(remain - width_ * stereo);
+	int remain = write_pos - buf.begin();
+	int max_count = remain - width_ * stereo;
 	if ( count > max_count )
 		count = max_count;
 	

@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 
 #include "Ay_Apu.h"
 
@@ -299,7 +299,7 @@ void Ay_Apu::run_until( blip_time_t final_end_time )
 						while ( ntime <= end ) // must advance *past* time to avoid hang
 						{
 							int changed = noise_lfsr + 1;
-							noise_lfsr = ((blargg_ulong)-(blargg_long)(noise_lfsr & 1) & 0x12000) ^ (noise_lfsr >> 1);
+							noise_lfsr = (-(noise_lfsr & 1) & 0x12000) ^ (noise_lfsr >> 1);
 							if ( changed & 2 )
 							{
 								delta = -delta;

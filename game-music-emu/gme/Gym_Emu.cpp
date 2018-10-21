@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 
 #include "Gym_Emu.h"
 
@@ -162,7 +162,7 @@ static Music_Emu* new_gym_emu () { return BLARGG_NEW Gym_Emu ; }
 static Music_Emu* new_gym_file() { return BLARGG_NEW Gym_File; }
 
 static gme_type_t_ const gme_gym_type_ = { "Sega Genesis", 1, &new_gym_emu, &new_gym_file, "GYM", 0 };
-gme_type_t const gme_gym_type = &gme_gym_type_;
+BLARGG_EXPORT extern gme_type_t const gme_gym_type = &gme_gym_type_;
 
 // Setup
 

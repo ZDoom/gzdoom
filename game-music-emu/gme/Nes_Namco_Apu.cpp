@@ -90,7 +90,7 @@ void Nes_Namco_Apu::run_until( blip_time_t nes_end_time )
 		osc.delay = 0;
 		if ( time < end_time )
 		{
-			const BOOST::uint8_t* osc_reg = &reg [i * 8 + 0x40];
+			const uint8_t* osc_reg = &reg [i * 8 + 0x40];
 			if ( !(osc_reg [4] & 0xE0) )
 				continue;
 			

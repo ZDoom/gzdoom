@@ -77,10 +77,6 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, bool fullscreen) :
 
 	GLRenderer = nullptr;
 	InitPalette();
-
-	// Move some state to the framebuffer object for easier access.
-	hwcaps = gl.flags;
-	glslversion = gl.glslversion;
 }
 
 OpenGLFrameBuffer::~OpenGLFrameBuffer()
@@ -111,6 +107,10 @@ void OpenGLFrameBuffer::InitializeState()
 	}
 
 	gl_LoadExtensions();
+
+	// Move some state to the framebuffer object for easier access.
+	hwcaps = gl.flags;
+	glslversion = gl.glslversion;
 
 	if (first)
 	{

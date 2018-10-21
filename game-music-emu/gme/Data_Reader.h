@@ -6,6 +6,10 @@
 
 #include "blargg_common.h"
 
+#ifdef HAVE_ZLIB_H
+#include <zlib.h>
+#endif
+
 // Supports reading and finding out how many bytes are remaining
 class Data_Reader {
 public:
@@ -65,24 +69,38 @@ public:
 	long tell() const;
 	blargg_err_t seek( long );
 private:
-	void* file_;
+	void* file_; // Either FILE* or zlib's gzFile
+#if 0//[ZDOOM:unneeded] def HAVE_ZLIB_H
+	long size_; // TODO: Fix ABI compat
+#endif /* HAVE_ZLIB_H */
 };
 
 // Treats range of memory as a file
 class Mem_File_Reader : public File_Reader {
 public:
 	Mem_File_Reader( const void*, long size );
-	
+#ifdef HAVE_ZLIB_H
+	~Mem_File_Reader( );
+#endif /* HAVE_ZLIB_H */
+
 public:
 	long size() const;
 	long read_avail( void*, long );
 	long tell() const;
 	blargg_err_t seek( long );
 private:
-	const char* const begin;
-	const long size_;
-	long pos;
+#ifdef HAVE_ZLIB_H
+	bool gz_decompress();
+#endif /* HAVE_ZLIB_H */
+
+	const char* m_begin;
+	long m_size;
+	long m_pos;
+#ifdef HAVE_ZLIB_H
+	bool m_ownedPtr = false; // set if we must free m_begin
+#endif /* HAVE_ZLIB_H */
 };
+
 
 // Makes it look like there are only count bytes remaining
 class Subset_Reader : public Data_Reader {
@@ -127,27 +145,5 @@ private:
 	void* const data;
 	long remain_;
 };
-
-#ifdef HAVE_ZLIB_H
-#include <zlib.h>
-
-// Gzip compressed file reader
-class Gzip_File_Reader : public File_Reader {
-public:
-	blargg_err_t open( const char* path );
-	void close();
-	
-public:
-	Gzip_File_Reader();
-	~Gzip_File_Reader();
-	long size() const;
-	long read_avail( void*, long );
-	long tell() const;
-	blargg_err_t seek( long );
-private:
-	gzFile file_;
-	long size_;
-};
-#endif
 
 #endif

@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 
 #include "Gme_File.h"
 
@@ -60,8 +60,8 @@ blargg_err_t Gme_File::load_mem_( byte const* data, long size )
 blargg_err_t Gme_File::load_( Data_Reader& in )
 {
 	RETURN_ERR( file_data.resize( in.remain() ) );
-	RETURN_ERR( in.read( file_data.begin(), (long)file_data.size() ) );
-	return load_mem_( file_data.begin(), (long)file_data.size() );
+	RETURN_ERR( in.read( file_data.begin(), file_data.size() ) );
+	return load_mem_( file_data.begin(), file_data.size() );
 }
 
 // public load functions call this at beginning

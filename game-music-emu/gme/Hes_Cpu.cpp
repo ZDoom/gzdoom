@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 
 #include "Hes_Cpu.h"
 
@@ -39,7 +39,7 @@ int const ram_addr = 0x2000;
 // status flags
 int const st_n = 0x80;
 int const st_v = 0x40;
-//unused: int const st_t = 0x20;
+int const st_t = 0x20;
 int const st_b = 0x10;
 int const st_d = 0x08;
 int const st_i = 0x04;
@@ -87,12 +87,6 @@ void Hes_Cpu::set_mmr( int reg, int bank )
 #define GET_SP()        ((sp - 1) & 0xFF)
 #define PUSH( v )       ((sp = (sp - 1) | 0x100), WRITE_LOW( sp, v ))
 
-// even on x86, using short and unsigned char was slower
-typedef int         fint16;
-typedef unsigned    fuint16;
-typedef unsigned    fuint8;
-typedef blargg_long fint32;
-
 bool Hes_Cpu::run( hes_time_t end_time )
 {
 	bool illegal_encountered = false;
@@ -100,14 +94,14 @@ bool Hes_Cpu::run( hes_time_t end_time )
 	state_t s = this->state_;
 	this->state = &s;
 	// even on x86, using s.time in place of s_time was slower
-	fint16 s_time = s.time;
+	int16_t s_time = s.time;
 	
 	// registers
-	fuint16 pc = r.pc;
-	fuint8 a = r.a;
-	fuint8 x = r.x;
-	fuint8 y = r.y;
-	fuint16 sp;
+	uint16_t pc = r.pc;
+	uint8_t a = r.a;
+	uint8_t x = r.x;
+	uint8_t y = r.y;
+	uint16_t sp;
 	SET_SP( r.sp );
 	
 	#define IS_NEG (nz & 0x8080)
@@ -126,11 +120,11 @@ bool Hes_Cpu::run( hes_time_t end_time )
 		nz |= ~in & st_z;\
 	} while ( 0 )
 	
-	fuint8 status;
-	fuint16 c;  // carry set if (c & 0x100) != 0
-	fuint16 nz; // Z set if (nz & 0xFF) == 0, N set if (nz & 0x8080) != 0
+	uint8_t status;
+	uint16_t c;  // carry set if (c & 0x100) != 0
+	uint16_t nz; // Z set if (nz & 0xFF) == 0, N set if (nz & 0x8080) != 0
 	{
-		fuint8 temp = r.status;
+		uint8_t temp = r.status;
 		SET_STATUS( temp );
 	}
 	
@@ -159,7 +153,7 @@ loop:
 	check( (unsigned) x < 0x100 );
 	
 	uint8_t const* instr = s.code_map [pc >> page_shift];
-	fuint8 opcode;
+	uint8_t opcode;
 	
 	// TODO: eliminate this special case
 	#if BLARGG_NONPORTABLE
@@ -193,7 +187,7 @@ loop:
 		4,7,7,17,2,4,6,7,2,5,4,2,2,5,7,6 // F
 	}; // 0x00 was 8
 	
-	fuint16 data;
+	uint16_t data;
 	data = clock_table [opcode];
 	if ( (s_time += data) >= 0 )
 		goto possibly_out_of_time;
@@ -230,10 +224,10 @@ possibly_out_of_time:
 // TODO: more efficient way to handle negative branch that wraps PC around
 #define BRANCH( cond )\
 {\
-	fint16 offset = (BOOST::int8_t) data;\
+	int16_t offset = (int8_t) data;\
 	pc++;\
 	if ( !(cond) ) goto branch_not_taken;\
-	pc = BOOST::uint16_t (pc + offset);\
+	pc = uint16_t (pc + offset);\
 	goto loop;\
 }
 
@@ -283,7 +277,7 @@ possibly_out_of_time:
 	case 0xCF:
 	case 0xDF:
 	case 0xEF: {
-		fuint16 t = 0x101 * READ_LOW( data );
+		uint16_t t = 0x101 * READ_LOW( data );
 		t ^= 0xFF;
 		pc++;
 		data = GET_MSB();
@@ -311,7 +305,7 @@ possibly_out_of_time:
 		goto branch_taken;
 	
 	case 0x20: { // JSR
-		fuint16 temp = pc + 1;
+		uint16_t temp = pc + 1;
 		pc = GET_ADDR();
 		WRITE_LOW( 0x100 | (sp - 1), temp >> 8 );
 		sp = (sp - 2) | 0x100;
@@ -332,7 +326,7 @@ possibly_out_of_time:
 
 	case 0xBD:{// LDA abs,X
 		PAGE_CROSS_PENALTY( data + x );
-		fuint16 addr = GET_ADDR() + x;
+		uint16_t addr = GET_ADDR() + x;
 		pc += 2;
 		CPU_READ_FAST( this, addr, TIME, nz );
 		a = nz;
@@ -340,7 +334,7 @@ possibly_out_of_time:
 	}
 	
 	case 0x9D:{// STA abs,X
-		fuint16 addr = GET_ADDR() + x;
+		uint16_t addr = GET_ADDR() + x;
 		pc += 2;
 		CPU_WRITE_FAST( this, addr, a, TIME );
 		goto loop;
@@ -354,7 +348,7 @@ possibly_out_of_time:
 		goto loop;
 	
 	case 0xAE:{// LDX abs
-		fuint16 addr = GET_ADDR();
+		uint16_t addr = GET_ADDR();
 		pc += 2;
 		CPU_READ_FAST( this, addr, TIME, nz );
 		x = nz;
@@ -369,7 +363,7 @@ possibly_out_of_time:
 // Load/store
 	
 	{
-		fuint16 addr;
+		uint16_t addr;
 	case 0x91: // STA (ind),Y
 		addr = 0x100 * READ_LOW( uint8_t (data + 1) );
 		addr += READ_LOW( data ) + y;
@@ -395,7 +389,7 @@ possibly_out_of_time:
 	}
 	
 	{
-		fuint16 addr;
+		uint16_t addr;
 	case 0xA1: // LDA (ind,X)
 		data = uint8_t (data + x);
 	case 0xB2: // LDA (ind)
@@ -425,7 +419,7 @@ possibly_out_of_time:
 
 	case 0xBE:{// LDX abs,y
 		PAGE_CROSS_PENALTY( data + y );
-		fuint16 addr = GET_ADDR() + y;
+		uint16_t addr = GET_ADDR() + y;
 		pc += 2;
 		FLUSH_TIME();
 		x = nz = READ( addr );
@@ -449,7 +443,7 @@ possibly_out_of_time:
 	case 0x3C: // BIT abs,x
 		data += x;
 	case 0x2C:{// BIT abs
-		fuint16 addr;
+		uint16_t addr;
 		ADD_PAGE( addr );
 		FLUSH_TIME();
 		nz = READ( addr );
@@ -472,7 +466,7 @@ possibly_out_of_time:
 		goto loop;
 		
 	{
-		fuint16 addr;
+		uint16_t addr;
 		
 	case 0xB3: // TST abs,x
 		addr = GET_MSB() + x;
@@ -505,7 +499,7 @@ possibly_out_of_time:
 		goto loop;
 	
 	{
-		fuint16 addr;
+		uint16_t addr;
 	case 0x0C: // TSB abs
 	case 0x1C: // TRB abs
 		addr = GET_ADDR();
@@ -610,7 +604,7 @@ possibly_out_of_time:
 		data += x;
 		PAGE_CROSS_PENALTY( data );
 	case 0xAC:{// LDY abs
-		fuint16 addr = data + 0x100 * GET_MSB();
+		uint16_t addr = data + 0x100 * GET_MSB();
 		pc += 2;
 		FLUSH_TIME();
 		y = nz = READ( addr );
@@ -619,7 +613,7 @@ possibly_out_of_time:
 	}
 	
 	{
-		fuint8 temp;
+		uint8_t temp;
 	case 0x8C: // STY abs
 		temp = y;
 		goto store_abs;
@@ -627,7 +621,7 @@ possibly_out_of_time:
 	case 0x8E: // STX abs
 		temp = x;
 	store_abs:
-		fuint16 addr = GET_ADDR();
+		uint16_t addr = GET_ADDR();
 		pc += 2;
 		FLUSH_TIME();
 		WRITE( addr, temp );
@@ -638,7 +632,7 @@ possibly_out_of_time:
 // Compare
 
 	case 0xEC:{// CPX abs
-		fuint16 addr = GET_ADDR();
+		uint16_t addr = GET_ADDR();
 		pc++;
 		FLUSH_TIME();
 		data = READ( addr );
@@ -657,7 +651,7 @@ possibly_out_of_time:
 		goto loop;
 	
 	case 0xCC:{// CPY abs
-		fuint16 addr = GET_ADDR();
+		uint16_t addr = GET_ADDR();
 		pc++;
 		FLUSH_TIME();
 		data = READ( addr );
@@ -684,7 +678,7 @@ possibly_out_of_time:
 		data = 0x100 * READ_LOW( uint8_t (data + 1) ) + READ_LOW( data );\
 		goto ptr##op;\
 	case op + 0x0C:{/* (ind),y */\
-		fuint16 temp = READ_LOW( data ) + y;\
+		uint16_t temp = READ_LOW( data ) + y;\
 		PAGE_CROSS_PENALTY( temp );\
 		data = temp + 0x100 * READ_LOW( uint8_t (data + 1) );\
 		goto ptr##op;\
@@ -742,8 +736,8 @@ possibly_out_of_time:
 	adc_imm: {
 		if ( status & st_d )
 			debug_printf( "Decimal mode not supported\n" );
-		fint16 carry = c >> 8 & 1;
-		fint16 ov = (a ^ 0x80) + carry + (BOOST::int8_t) data; // sign-extend
+		int16_t carry = c >> 8 & 1;
+		int16_t ov = (a ^ 0x80) + carry + (int8_t) data; // sign-extend
 		status &= ~st_v;
 		status |= ov >> 2 & 0x40;
 		c = nz = a + data + carry;
@@ -771,7 +765,7 @@ possibly_out_of_time:
 
 	case 0x2A: { // ROL A
 		nz = a << 1;
-		fint16 temp = c >> 8 & 1;
+		int16_t temp = c >> 8 & 1;
 		c = nz;
 		nz |= temp;
 		a = (uint8_t) nz;
@@ -877,7 +871,7 @@ possibly_out_of_time:
 	case 0xD6: // DEC zp,x
 		data = uint8_t (data + x);
 	case 0xC6: // DEC zp
-		nz = (unsigned) -1;
+		nz = (uint16_t) -1;
 	add_nz_zp:
 		nz += READ_LOW( data );
 	write_nz_zp:
@@ -902,7 +896,7 @@ possibly_out_of_time:
 	case 0xCE: // DEC abs
 		data = GET_ADDR();
 	dec_ptr:
-		nz = (unsigned) -1;
+		nz = (uint16_t) -1;
 	inc_common:
 		FLUSH_TIME();
 		nz += READ( data );
@@ -942,7 +936,7 @@ possibly_out_of_time:
 		goto loop;
 	
 	#define SWAP_REGS( r1, r2 ) {\
-		fuint8 t = r1;\
+		uint8_t t = r1;\
 		r1 = r2;\
 		r2 = t;\
 		goto loop;\
@@ -984,7 +978,7 @@ possibly_out_of_time:
 		goto loop;
 		
 	case 0x40:{// RTI
-		fuint8 temp = READ_LOW( sp );
+		uint8_t temp = READ_LOW( sp );
 		pc  = READ_LOW( 0x100 | (sp - 0xFF) );
 		pc |= READ_LOW( 0x100 | (sp - 0xFE) ) * 0x100;
 		sp = (sp - 0xFD) | 0x100;
@@ -1018,8 +1012,8 @@ possibly_out_of_time:
 		goto loop;
 	
 	case 0x28:{// PLP
-		fuint8 temp = POP();
-		fuint8 changed = status ^ temp;
+		uint8_t temp = POP();
+		uint8_t changed = status ^ temp;
 		SET_STATUS( temp );
 		if ( !(changed & st_i) )
 			goto loop; // I flag didn't change
@@ -1030,7 +1024,7 @@ possibly_out_of_time:
 	#undef POP
 	
 	case 0x08: { // PHP
-		fuint8 temp;
+		uint8_t temp;
 		CALC_STATUS( temp );
 		PUSH( temp | st_b );
 		goto loop;
@@ -1039,7 +1033,7 @@ possibly_out_of_time:
 // Flags
 
 	case 0x38: // SEC
-		c = (unsigned) ~0;
+		c = (uint16_t) ~0;
 		goto loop;
 	
 	case 0x18: // CLC
@@ -1107,7 +1101,7 @@ possibly_out_of_time:
 // Special
 	
 	case 0x53:{// TAM
-		fuint8 const bits = data; // avoid using data across function call
+		uint8_t const bits = data; // avoid using data across function call
 		pc++;
 		for ( int i = 0; i < 8; i++ )
 			if ( bits & (1 << i) )
@@ -1131,7 +1125,7 @@ possibly_out_of_time:
 	case 0x03: // ST0
 	case 0x13: // ST1
 	case 0x23:{// ST2
-		fuint16 addr = opcode >> 4;
+		uint16_t addr = opcode >> 4;
 		if ( addr )
 			addr++;
 		pc++;
@@ -1153,7 +1147,7 @@ possibly_out_of_time:
 		goto loop;
 	
 	case 0xF4: { // SET
-		//fuint16 operand = GET_MSB();
+		//uint16_t operand = GET_MSB();
 		debug_printf( "SET not handled\n" );
 		//switch ( data )
 		//{
@@ -1165,10 +1159,10 @@ possibly_out_of_time:
 // Block transfer
 
 	{
-		fuint16 in_alt;
-		fint16 in_inc;
-		fuint16 out_alt;
-		fint16 out_inc;
+		uint16_t in_alt;
+		int16_t in_inc;
+		uint16_t out_alt;
+		int16_t out_inc;
 		
 	case 0xE3: // TIA
 		in_alt  = 0;
@@ -1199,8 +1193,8 @@ possibly_out_of_time:
 		in_alt  = 0;
 		out_alt = 0;
 	bxfer:
-		fuint16 in    = GET_LE16( instr + 0 );
-		fuint16 out   = GET_LE16( instr + 2 );
+		uint16_t in    = GET_LE16( instr + 0 );
+		uint16_t out   = GET_LE16( instr + 2 );
 		int     count = GET_LE16( instr + 4 );
 		if ( !count )
 			count = 0x10000;
@@ -1212,7 +1206,7 @@ possibly_out_of_time:
 		do
 		{
 			// TODO: reads from $0800-$1400 in I/O page return 0 and don't access I/O
-			fuint8 t = READ( in );
+			uint8_t t = READ( in );
 			in += in_inc;
 			in &= 0xFFFF;
 			s.time += 6;
@@ -1232,7 +1226,6 @@ possibly_out_of_time:
 // Illegal
 
 	default:
-		assert( (unsigned) opcode <= 0xFF );
 		debug_printf( "Illegal opcode $%02X at $%04X\n", (int) opcode, (int) pc - 1 );
 		illegal_encountered = true;
 		goto loop;
@@ -1253,7 +1246,7 @@ interrupt:
 		pc = GET_LE16( &READ_PROG( 0xFFF0 ) + result_ );
 		
 		sp = (sp - 3) | 0x100;
-		fuint8 temp;
+		uint8_t temp;
 		CALC_STATUS( temp );
 		if ( result_ == 6 )
 			temp |= st_b;
@@ -1290,7 +1283,7 @@ out_of_time:
 	r.y = y;
 	
 	{
-		fuint8 temp;
+		uint8_t temp;
 		CALC_STATUS( temp );
 		r.status = temp;
 	}

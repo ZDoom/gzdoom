@@ -1,6 +1,6 @@
 // Atari 6502 CPU emulator
 
-// Game_Music_Emu 0.6.0
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 #ifndef SAP_CPU_H
 #define SAP_CPU_H
 
@@ -12,8 +12,6 @@ enum { future_sap_time = INT_MAX / 2 + 1 };
 
 class Sap_Cpu {
 public:
-	typedef BOOST::uint8_t uint8_t;
-	
 	// Clear all registers and keep pointer to 64K memory passed in
 	void reset( void* mem_64k );
 	
@@ -23,12 +21,12 @@ public:
 	
 	// Registers are not updated until run() returns (except I flag in status)
 	struct registers_t {
-		BOOST::uint16_t pc;
-		BOOST::uint8_t a;
-		BOOST::uint8_t x;
-		BOOST::uint8_t y;
-		BOOST::uint8_t status;
-		BOOST::uint8_t sp;
+		uint16_t pc;
+		uint8_t a;
+		uint8_t x;
+		uint8_t y;
+		uint8_t status;
+		uint8_t sp;
 	};
 	registers_t r;
 	

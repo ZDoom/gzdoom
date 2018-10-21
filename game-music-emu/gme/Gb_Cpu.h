@@ -1,7 +1,7 @@
 // Nintendo Game Boy CPU emulator
 // Treats every instruction as taking 4 cycles
 
-// Game_Music_Emu 0.6.0
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 #ifndef GB_CPU_H
 #define GB_CPU_H
 
@@ -13,8 +13,6 @@ typedef unsigned gb_addr_t; // 16-bit CPU address
 class Gb_Cpu {
 	enum { clocks_per_instr = 4 };
 public:
-	typedef BOOST::uint8_t uint8_t;
-	
 	// Clear registers and map all pages to unmapped
 	void reset( void* unmapped = 0 );
 	
@@ -39,7 +37,7 @@ public:
 	
 	struct registers_t : core_regs_t {
 		long pc; // more than 16 bits to allow overflow detection
-		BOOST::uint16_t sp;
+		uint16_t sp;
 	};
 	registers_t r;
 	
@@ -81,7 +79,7 @@ private:
 	void set_code_page( int, uint8_t* );
 };
 
-inline BOOST::uint8_t* Gb_Cpu::get_code( gb_addr_t addr )
+inline uint8_t* Gb_Cpu::get_code( gb_addr_t addr )
 {
 	return state->code_map [addr >> page_shift] + addr
 	#if !BLARGG_NONPORTABLE

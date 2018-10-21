@@ -1,6 +1,6 @@
 // Sunsoft FME-7 sound emulator
 
-// Game_Music_Emu 0.6.0
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 #ifndef NES_FME7_APU_H
 #define NES_FME7_APU_H
 
@@ -10,10 +10,10 @@
 struct fme7_apu_state_t
 {
 	enum { reg_count = 14 };
-	BOOST::uint8_t regs [reg_count];
-	BOOST::uint8_t phases [3]; // 0 or 1
-	BOOST::uint8_t latch;
-	BOOST::uint16_t delays [3]; // a, b, c
+	uint8_t regs [reg_count];
+	uint8_t phases [3]; // 0 or 1
+	uint8_t latch;
+	uint16_t delays [3]; // a, b, c
 };
 
 class Nes_Fme7_Apu : private fme7_apu_state_t {

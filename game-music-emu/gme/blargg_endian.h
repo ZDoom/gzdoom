@@ -123,15 +123,15 @@ inline void set_be32( void* p, blargg_ulong n )
 #if BLARGG_NONPORTABLE
 	// Optimized implementation if byte order is known
 	#if BLARGG_LITTLE_ENDIAN
-		#define GET_LE16( addr )        (*(BOOST::uint16_t*) (addr))
-		#define GET_LE32( addr )        (*(BOOST::uint32_t*) (addr))
-		#define SET_LE16( addr, data )  (void) (*(BOOST::uint16_t*) (addr) = (data))
-		#define SET_LE32( addr, data )  (void) (*(BOOST::uint32_t*) (addr) = (data))
+		#define GET_LE16( addr )        (*(uint16_t*) (addr))
+		#define GET_LE32( addr )        (*(uint32_t*) (addr))
+		#define SET_LE16( addr, data )  (void) (*(uint16_t*) (addr) = (data))
+		#define SET_LE32( addr, data )  (void) (*(uint32_t*) (addr) = (data))
 	#elif BLARGG_BIG_ENDIAN
-		#define GET_BE16( addr )        (*(BOOST::uint16_t*) (addr))
-		#define GET_BE32( addr )        (*(BOOST::uint32_t*) (addr))
-		#define SET_BE16( addr, data )  (void) (*(BOOST::uint16_t*) (addr) = (data))
-		#define SET_BE32( addr, data )  (void) (*(BOOST::uint32_t*) (addr) = (data))
+		#define GET_BE16( addr )        (*(uint16_t*) (addr))
+		#define GET_BE32( addr )        (*(uint32_t*) (addr))
+		#define SET_BE16( addr, data )  (void) (*(uint16_t*) (addr) = (data))
+		#define SET_BE32( addr, data )  (void) (*(uint32_t*) (addr) = (data))
 		
 		#if BLARGG_CPU_POWERPC
 			// PowerPC has special byte-reversed instructions
@@ -172,13 +172,13 @@ inline void set_be32( void* p, blargg_ulong n )
 
 // auto-selecting versions
 
-inline void set_le( BOOST::uint16_t* p, unsigned     n ) { SET_LE16( p, n ); }
-inline void set_le( BOOST::uint32_t* p, blargg_ulong n ) { SET_LE32( p, n ); }
-inline void set_be( BOOST::uint16_t* p, unsigned     n ) { SET_BE16( p, n ); }
-inline void set_be( BOOST::uint32_t* p, blargg_ulong n ) { SET_BE32( p, n ); }
-inline unsigned     get_le( BOOST::uint16_t* p ) { return GET_LE16( p ); }
-inline blargg_ulong get_le( BOOST::uint32_t* p ) { return GET_LE32( p ); }
-inline unsigned     get_be( BOOST::uint16_t* p ) { return GET_BE16( p ); }
-inline blargg_ulong get_be( BOOST::uint32_t* p ) { return GET_BE32( p ); }
+inline void set_le( uint16_t* p, unsigned     n ) { SET_LE16( p, n ); }
+inline void set_le( uint32_t* p, blargg_ulong n ) { SET_LE32( p, n ); }
+inline void set_be( uint16_t* p, unsigned     n ) { SET_BE16( p, n ); }
+inline void set_be( uint32_t* p, blargg_ulong n ) { SET_BE32( p, n ); }
+inline unsigned     get_le( uint16_t* p ) { return GET_LE16( p ); }
+inline blargg_ulong get_le( uint32_t* p ) { return GET_LE32( p ); }
+inline unsigned     get_be( uint16_t* p ) { return GET_BE16( p ); }
+inline blargg_ulong get_be( uint32_t* p ) { return GET_BE32( p ); }
 
 #endif

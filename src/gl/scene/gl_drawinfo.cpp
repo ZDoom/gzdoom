@@ -305,6 +305,13 @@ void FDrawInfo::DrawModel(GLSprite *spr, FRenderState &state)
 	renderer.RenderModel(spr->x, spr->y, spr->z, spr->modelframe, spr->actor, Viewpoint.TicFrac);
 }
 
+void FDrawInfo::DrawHUDModel(HUDSprite *huds, FRenderState &state)
+{
+	FGLModelRenderer renderer(this, huds->lightindex);
+	renderer.RenderHUDModel(huds->weapon, huds->mx, huds->my);
+}
+
+
 void FDrawInfo::SetDepthMask(bool on)
 {
 	glDepthMask(on);

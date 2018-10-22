@@ -822,7 +822,6 @@ set( FASTMATH_SOURCES
 	textures/hires/xbr/xbrz_old.cpp
 	gl/scene/gl_drawinfo.cpp
 	gl/scene/gl_skydome.cpp
-	gl/scene/gl_weapon.cpp
 	gl/scene/gl_scene.cpp
 	gl/scene/gl_portal.cpp
 	gl/scene/gl_walls_draw.cpp

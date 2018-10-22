@@ -6,6 +6,7 @@
 #include "r_utility.h"
 #include "hw_viewpointuniforms.h"
 #include "v_video.h"
+#include "hw_weapon.h"
 
 enum EDrawType
 {
@@ -138,6 +139,7 @@ struct HWDrawInfo
 	HWViewpointUniforms VPUniforms;	// per-viewpoint uniform state
 	TArray<IPortal *> Portals;
 	TArray<GLDecal *> Decals[2];	// the second slot is for mirrors which get rendered in a separate pass.
+	TArray<HUDSprite> hudsprites;	// These may just be stored by value.
 
 	TArray<MissingTextureInfo> MissingUpperTextures;
 	TArray<MissingTextureInfo> MissingLowerTextures;
@@ -191,6 +193,7 @@ private:
 	void DoSubsector(subsector_t * sub);
 	int SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &lightdata, const secplane_t *plane);
 	int CreateOtherPlaneVertices(subsector_t *sub, const secplane_t *plane);
+	void DrawPSprite(HUDSprite *huds, FRenderState &state);
 public:
 
 	gl_subsectorrendernode * GetOtherFloorPlanes(unsigned int sector)
@@ -293,6 +296,7 @@ public:
 	angle_t FrustumAngle();
 
 	void DrawDecals(FRenderState &state, TArray<GLDecal *> &decals);
+	void DrawPlayerSprites(bool hudModelStep, FRenderState &state);
 
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs);
     virtual void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) = 0;
@@ -302,18 +306,19 @@ public:
     virtual void AddMirrorSurface(GLWall *w) = 0;
 	virtual void AddFlat(GLFlat *flat, bool fog) = 0;
 	virtual void AddSprite(GLSprite *sprite, bool translucent) = 0;
-	virtual void AddHUDSprite(HUDSprite *huds) = 0;
 
 	virtual int UploadLights(FDynLightData &data) = 0;
 	virtual void ApplyVPUniforms() = 0;
 	virtual bool SetDepthClamp(bool on) = 0;
 
     GLDecal *AddDecal(bool onmirror);
+
 	virtual std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) = 0;
 
 	virtual void Draw(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) = 0;
 	virtual void DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) = 0;
 	virtual void DrawModel(GLSprite *spr, FRenderState &state) = 0;
+	virtual void DrawHUDModel(HUDSprite *spr, FRenderState &state) = 0;
 
 
 

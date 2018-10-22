@@ -166,7 +166,7 @@ void FDrawInfo::RenderScene(int recursion)
 	// Part 1: solid geometry. This is set up so that there are no transparent parts
 	glDepthFunc(GL_LESS);
 	gl_RenderState.AlphaFunc(Alpha_GEqual, 0.f);
-	glDisable(GL_POLYGON_OFFSET_FILL);
+	gl_RenderState.ClearDepthBias();
 
 	gl_RenderState.EnableTexture(gl_texture);
 	gl_RenderState.EnableBrightmap(true);
@@ -306,7 +306,7 @@ void FDrawInfo::EndDrawScene(sector_t * viewsector)
 	{
 		// [BB] The HUD model should be drawn over everything else already drawn.
 		glClear(GL_DEPTH_BUFFER_BIT);
-		DrawPlayerSprites(true);
+		DrawPlayerSprites(true, gl_RenderState);
 	}
 
 	glDisable(GL_STENCIL_TEST);
@@ -332,7 +332,7 @@ void FDrawInfo::DrawEndScene2D(sector_t * viewsector)
 	glDisable(GL_MULTISAMPLE);
 
 
- 	DrawPlayerSprites(false);
+ 	DrawPlayerSprites(false, gl_RenderState);
 
 	gl_RenderState.SetSoftLightLevel(-1);
 

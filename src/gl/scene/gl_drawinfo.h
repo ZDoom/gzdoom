@@ -30,7 +30,6 @@ enum DrawListType
 struct FDrawInfo : public HWDrawInfo
 {
 	HWDrawList drawlists[GLDL_TYPES];
-	TArray<HUDSprite> hudsprites;	// These may just be stored by value.
 	int vpIndex;
 	
 	void ApplyVPUniforms() override;
@@ -40,7 +39,6 @@ struct FDrawInfo : public HWDrawInfo
 	void AddPortal(GLWall *w, int portaltype) override;
 	void AddFlat(GLFlat *flat, bool fog) override;
 	void AddSprite(GLSprite *sprite, bool translucent) override;
-	void AddHUDSprite(HUDSprite *huds) override;
 
 	std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) override;
 	int UploadLights(FDynLightData &data) override;
@@ -48,15 +46,13 @@ struct FDrawInfo : public HWDrawInfo
 	void Draw(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) override;
 	void DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) override;
 	void DrawModel(GLSprite *spr, FRenderState &state) override;
+	void DrawHUDModel(HUDSprite *spr, FRenderState &state) override;
 
 	void SetDepthMask(bool on) override;
 	void SetDepthFunc(int func) override;
 	void EnableDrawBufferAttachments(bool on) override;
 
 	void StartScene();
-
-	void DrawPSprite(HUDSprite *huds);
-	void DrawPlayerSprites(bool hudModelStep);
 
 	void DoDrawSorted(HWDrawList *dl, SortNode * head);
 	void DrawSorted(int listindex);
@@ -87,8 +83,4 @@ struct FDrawInfo : public HWDrawInfo
 	}
 
 };
-
-
-void gl_SetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblending);
-
 #endif

@@ -41,11 +41,73 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/data/flatvertices.h"
+#include "hw_renderstate.h"
 
 EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, gl_fuzztype)
 EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_deathcamera)
+
+
+//==========================================================================
+//
+// R_DrawPSprite
+//
+//==========================================================================
+
+void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
+{
+	if (huds->RenderStyle.BlendOp == STYLEOP_Shadow)
+	{
+		state.SetColor(0.2f, 0.2f, 0.2f, 0.33f, huds->cm.Desaturation);
+	}
+	else
+	{
+		state.SetColor(huds->lightlevel, 0, isFullbrightScene(), huds->cm, huds->alpha, true);
+	}
+	state.SetRenderStyle(huds->RenderStyle);
+	state.SetTextureMode(huds->RenderStyle);
+	state.SetObjectColor(huds->ObjectColor);
+	state.SetDynLight(huds->dynrgb[0], huds->dynrgb[1], huds->dynrgb[2]);
+	state.EnableBrightmap(!(huds->RenderStyle.Flags & STYLEF_ColorIsFixed));
+
+	if (huds->mframe)
+	{
+		state.AlphaFunc(Alpha_GEqual, 0);
+		DrawHUDModel(huds, state);
+	}
+	else
+	{
+		float thresh = (huds->tex->tex->GetTranslucency() || huds->OverrideShader != -1) ? 0.f : gl_mask_sprite_threshold;
+		state.AlphaFunc(Alpha_GEqual, thresh);
+		state.SetMaterial(huds->tex, CLAMP_XY_NOMIP, 0, huds->OverrideShader);
+		Draw(DT_TriangleStrip, state, huds->mx, 4);
+	}
+
+	state.SetTextureMode(TM_NORMAL);
+	state.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
+	state.SetObjectColor(0xffffffff);
+	state.SetDynLight(0, 0, 0);
+	state.EnableBrightmap(false);
+}
+
+//==========================================================================
+//
+// R_DrawPlayerSprites
+//
+//==========================================================================
+
+void HWDrawInfo::DrawPlayerSprites(bool hudModelStep, FRenderState &state)
+{
+	int oldlightmode = level.lightmode;
+	if (!hudModelStep && level.lightmode == 8) level.lightmode = 2;	// Software lighting cannot handle 2D content so revert to lightmode 2 for that.
+	for (auto &hudsprite : hudsprites)
+	{
+		if ((!!hudsprite.mframe) == hudModelStep)
+			DrawPSprite(&hudsprite, state);
+	}
+	level.lightmode = oldlightmode;
+}
 
 
 //==========================================================================
@@ -490,7 +552,7 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 		{
 			if (!hudsprite.GetWeaponRect(this, psp, spos.X, spos.Y, player)) continue;
 		}
-		AddHUDSprite(&hudsprite);
+		hudsprites.Push(hudsprite);
 	}
 	level.lightmode = oldlightmode;
 	PrepareTargeterSprites();
@@ -537,8 +599,9 @@ void HWDrawInfo::PrepareTargeterSprites()
 			hudsprite.weapon = psp;
 			if (hudsprite.GetWeaponRect(this, psp, psp->x, psp->y, player))
 			{
-				AddHUDSprite(&hudsprite);
+				hudsprites.Push(hudsprite);
 			}
 		}
 	}
 }
+

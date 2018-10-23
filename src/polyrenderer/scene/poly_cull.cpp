@@ -188,7 +188,7 @@ bool PolyCull::IsSolidLine(seg_t *line)
 	if (!line->backsector) return true;
 
 	// Portal
-	if (line->linedef->isVisualPortal() && line->sidedef == line->linedef->sidedef[0]) return true;
+	if (line->linedef && line->linedef->isVisualPortal() && line->sidedef == line->linedef->sidedef[0]) return true;
 
 	double frontCeilingZ1 = line->frontsector->ceilingplane.ZatPoint(line->v1);
 	double frontFloorZ1 = line->frontsector->floorplane.ZatPoint(line->v1);

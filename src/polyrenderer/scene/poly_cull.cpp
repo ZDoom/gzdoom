@@ -164,7 +164,7 @@ void PolyCull::CullSubsector(subsector_t *sub)
 		angle_t angle2 = PointToPseudoAngle(line->v1->fX(), line->v1->fY());
 		angle_t angle1 = PointToPseudoAngle(line->v2->fX(), line->v2->fY());
 		bool lineVisible = !IsSegmentCulled(angle1, angle2);
-		if (lineVisible && IsBackSectorSolid(line))
+		if (lineVisible && IsSolidLine(line))
 		{
 			MarkSegmentCulled(angle1, angle2);
 		}
@@ -182,13 +182,13 @@ void PolyCull::CullSubsector(subsector_t *sub)
 	SubsectorDepths[sub->Index()] = subsectorDepth;
 }
 
-bool PolyCull::IsBackSectorSolid(seg_t *line)
+bool PolyCull::IsSolidLine(seg_t *line)
 {
 	// One-sided
 	if (!line->backsector) return true;
 
 	// Portal
-	if (line->linedef->isVisualPortal() && line->sidedef == line->linedef->sidedef[0]) return false;
+	if (line->linedef->isVisualPortal() && line->sidedef == line->linedef->sidedef[0]) return true;
 
 	double frontCeilingZ1 = line->frontsector->ceilingplane.ZatPoint(line->v1);
 	double frontFloorZ1 = line->frontsector->floorplane.ZatPoint(line->v1);

@@ -29,7 +29,8 @@ enum EStencilFlags
 	SF_AllOn = 0,
 	SF_ColorMaskOff = 1,
 	SF_DepthMaskOff = 2,
-	SF_DepthTestOff = 4
+	SF_DepthTestOff = 4,
+	SF_DepthClear = 8
 };
 
 enum EStencilOp
@@ -332,16 +333,18 @@ public:
 
 	virtual std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) = 0;
 
+	virtual void ClearScreen() = 0;
 	virtual void Draw(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) = 0;
 	virtual void DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) = 0;
 	virtual void DrawModel(GLSprite *spr, FRenderState &state) = 0;
 	virtual void DrawHUDModel(HUDSprite *spr, FRenderState &state) = 0;
-
+	virtual void RenderPortal(IPortal *p, bool usestencil) = 0;
 
 
 	// Immediate render state change commands. These only change infrequently and should not clutter the render state.
 	virtual void SetDepthMask(bool on) = 0;
 	virtual void SetDepthFunc(int func) = 0;
+	virtual void SetDepthRange(float min, float max) = 0;
 	virtual void EnableDrawBufferAttachments(bool on) = 0;
 	virtual void SetStencil(int offs, int op, int flags) = 0;
 	

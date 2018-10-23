@@ -47,9 +47,11 @@ struct FDrawInfo : public HWDrawInfo
 	void DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) override;
 	void DrawModel(GLSprite *spr, FRenderState &state) override;
 	void DrawHUDModel(HUDSprite *spr, FRenderState &state) override;
+	void RenderPortal(IPortal *p, bool stencil) override;
 
 	void SetDepthMask(bool on) override;
 	void SetDepthFunc(int func) override;
+	void SetDepthRange(float min, float max) override;
 	void EnableDrawBufferAttachments(bool on) override;
 	void SetStencil(int offs, int op, int flags) override;
 	
@@ -69,6 +71,7 @@ struct FDrawInfo : public HWDrawInfo
     void EndDrawScene(sector_t * viewsector);
     void DrawEndScene2D(sector_t * viewsector);
 	bool SetDepthClamp(bool on) override;
+	void ClearScreen() override;
 
 	static FDrawInfo *StartDrawInfo(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
 	FDrawInfo *EndDrawInfo();

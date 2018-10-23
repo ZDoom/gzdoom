@@ -53,25 +53,10 @@ public:
 	virtual bool NeedDepthBuffer() { return true; }
 	virtual void DrawContents(HWDrawInfo *di) = 0;
 	virtual void RenderAttached(HWDrawInfo *di) {}
-	virtual bool Start(bool usestencil, bool doquery, HWDrawInfo *outer_di, HWDrawInfo **pDi) = 0;
-	virtual void End(HWDrawInfo *di, bool usestencil) = 0;
 
 	void AddLine(GLWall * l)
 	{
 		lines.Push(*l);
-	}
-
-	void RenderPortal(bool usestencil, bool doquery, HWDrawInfo *outer_di)
-	{
-		// Start may perform an occlusion query. If that returns 0 there
-		// is no need to draw the stencil's contents and there's also no
-		// need to restore the affected area becasue there is none!
-		HWDrawInfo *di;
-		if (Start(usestencil, doquery, outer_di, &di))
-		{
-			DrawContents(di);
-			End(di, usestencil);
-		}
 	}
 
 
@@ -107,16 +92,13 @@ struct FPortalSceneState
 	void StartFrame();
 	bool RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di);
 	void EndFrame(HWDrawInfo *outer_di);
-
-
+	void RenderPortal(IPortal *p, bool usestencil, HWDrawInfo *outer_di);
 };
 
 inline IPortal::IPortal(FPortalSceneState *s, bool local) : mState(s)
 {
 	//if (!local) s->portals.Push(this);
 }
-
-
 
 
 class HWScenePortalBase

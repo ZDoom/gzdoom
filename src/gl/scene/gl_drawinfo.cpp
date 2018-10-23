@@ -40,6 +40,7 @@
 #include "hwrenderer/scene/hw_clipper.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/renderer/gl_renderstate.h"
+#include "gl/data/gl_viewpointbuffer.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/models/gl_models.h"
 
@@ -311,6 +312,18 @@ void FDrawInfo::DrawHUDModel(HUDSprite *huds, FRenderState &state)
 	renderer.RenderHUDModel(huds->weapon, huds->mx, huds->my);
 }
 
+void FDrawInfo::RenderPortal(IPortal *p, bool usestencil)
+{
+	auto gp = static_cast<GLPortal *>(p);
+	gp->SetupStencil(this, gl_RenderState, usestencil);
+	auto new_di = StartDrawInfo(Viewpoint, &VPUniforms);
+	new_di->mCurrentPortal = gp;
+	gp->DrawContents(new_di);
+	new_di->EndDrawInfo();
+	GLRenderer->mViewpoints->Bind(vpIndex);
+	gp->RemoveStencil(this, gl_RenderState, usestencil);
+
+}
 
 void FDrawInfo::SetDepthMask(bool on)
 {
@@ -321,6 +334,11 @@ void FDrawInfo::SetDepthFunc(int func)
 {
 	static int df2gl[] = { GL_LESS, GL_LEQUAL, GL_ALWAYS };
 	glDepthFunc(df2gl[func]);
+}
+
+void FDrawInfo::SetDepthRange(float min, float max)
+{
+	glDepthRange(min, max);
 }
 
 void FDrawInfo::EnableDrawBufferAttachments(bool on)
@@ -342,6 +360,31 @@ void FDrawInfo::SetStencil(int offs, int op, int flags)
 		glDisable(GL_DEPTH_TEST);
 	else
 		glEnable(GL_DEPTH_TEST);
+	if (flags & SF_DepthClear)
+		glClear(GL_DEPTH_BUFFER_BIT);
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+void FDrawInfo::ClearScreen()
+{
+	bool multi = !!glIsEnabled(GL_MULTISAMPLE);
+
+	GLRenderer->mViewpoints->Set2D(SCREENWIDTH, SCREENHEIGHT);
+	gl_RenderState.SetColor(0, 0, 0);
+	gl_RenderState.Apply();
+
+	glDisable(GL_MULTISAMPLE);
+	glDisable(GL_DEPTH_TEST);
+
+	glDrawArrays(GL_TRIANGLE_STRIP, FFlatVertexBuffer::FULLSCREEN_INDEX, 4);
+
+	glEnable(GL_DEPTH_TEST);
+	if (multi) glEnable(GL_MULTISAMPLE);
 }
 
 

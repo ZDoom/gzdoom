@@ -58,11 +58,12 @@ private:
 		STP_DepthRestore,
 		STP_AllInOne
 	};
-	void DrawPortalStencil(int pass);
+	void DrawPortalStencil(HWDrawInfo *di, FRenderState &state, int pass);
 
 	ActorRenderFlags savedvisibility;
 	TArray<unsigned int> mPrimIndices;
 
+public:
 	void SetupStencil(HWDrawInfo *di, FRenderState &state, bool usestencil);
 	void RemoveStencil(HWDrawInfo *di, FRenderState &state, bool usestencil);
 
@@ -70,10 +71,6 @@ protected:
 	int level;
 
 	GLPortal(FPortalSceneState *state, bool local = false) : IPortal(state, local) { }
-
-	bool Start(bool usestencil, bool doquery, HWDrawInfo *outer_di, HWDrawInfo **pDi) override;
-	void End(HWDrawInfo *di, bool usestencil) override;
-	void ClearScreen(HWDrawInfo *di);
 };
 
 class GLScenePortal : public GLPortal
@@ -98,7 +95,7 @@ public:
 			static_cast<FDrawInfo*>(di)->DrawScene(DM_PORTAL);
 			mScene->Shutdown(di);
 		}
-		else ClearScreen(di);
+		else di->ClearScreen();
 	}
 	virtual void RenderAttached(HWDrawInfo *di) { return mScene->RenderAttached(di); }
 };

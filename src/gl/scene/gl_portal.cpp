@@ -54,38 +54,14 @@
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-EXTERN_CVAR(Bool, gl_portals)
-EXTERN_CVAR(Bool, gl_noquery)
 EXTERN_CVAR(Int, r_mirror_recursions)
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-void GLPortal::ClearScreen(HWDrawInfo *di)
-{
-	bool multi = !!glIsEnabled(GL_MULTISAMPLE);
-
-	GLRenderer->mViewpoints->Set2D(SCREENWIDTH, SCREENHEIGHT);
-	gl_RenderState.SetColor(0, 0, 0);
-	gl_RenderState.Apply();
-
-	glDisable(GL_MULTISAMPLE);
-	glDisable(GL_DEPTH_TEST);
-
-	glDrawArrays(GL_TRIANGLE_STRIP, FFlatVertexBuffer::FULLSCREEN_INDEX, 4);
-
-	glEnable(GL_DEPTH_TEST);
-	if (multi) glEnable(GL_MULTISAMPLE);
-}
 
 //-----------------------------------------------------------------------------
 //
 // DrawPortalStencil
 //
 //-----------------------------------------------------------------------------
-void GLPortal::DrawPortalStencil(int pass)
+void GLPortal::DrawPortalStencil(HWDrawInfo *di, FRenderState &state, int pass)
 {
 	if (mPrimIndices.Size() == 0)
 	{
@@ -97,18 +73,17 @@ void GLPortal::DrawPortalStencil(int pass)
 			mPrimIndices[i * 2 + 1] = lines[i].vertcount;
 		}
 	}
-	gl_RenderState.Apply();
 	for (unsigned int i = 0; i < mPrimIndices.Size(); i += 2)
 	{
-		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, mPrimIndices[i], mPrimIndices[i + 1]);
+		di->Draw(DT_TriangleFan, state, mPrimIndices[i], mPrimIndices[i + 1], i==0);
 	}
 	if (NeedCap() && lines.Size() > 1)
 	{
-		if (pass == STP_AllInOne) glDepthMask(false);
-		else if (pass == STP_DepthRestore) glDepthRange(1, 1);
-		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, FFlatVertexBuffer::STENCILTOP_INDEX, 4);
-		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, FFlatVertexBuffer::STENCILBOTTOM_INDEX, 4);
-		if (pass == STP_DepthRestore) glDepthRange(0, 1);
+		// The cap's depth handling needs special treatment so that it won't block further portal caps.
+		if (pass == STP_DepthRestore) di->SetDepthRange(1, 1);
+		di->Draw(DT_TriangleFan, state, FFlatVertexBuffer::STENCILTOP_INDEX, 4);
+		di->Draw(DT_TriangleFan, state, FFlatVertexBuffer::STENCILBOTTOM_INDEX, 4);
+		if (pass == STP_DepthRestore) di->SetDepthRange(0, 1);
 	}
 }
 
@@ -120,58 +95,46 @@ void GLPortal::DrawPortalStencil(int pass)
 
 void GLPortal::SetupStencil(HWDrawInfo *di, FRenderState &state, bool usestencil)
 {
+	Clocker c(PortalAll);
+
+	rendered_portals++;
 	if (usestencil)
 	{
-
 		// Create stencil 
-		glStencilFunc(GL_EQUAL, screen->stencilValue, ~0);		// create stencil
-		glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);		// increment stencil of valid pixels
-		glColorMask(0, 0, 0, 0);						// don't write to the graphics buffer
-		gl_RenderState.SetEffect(EFF_STENCIL);
-		gl_RenderState.EnableTexture(false);
-		gl_RenderState.ResetColor();
-		glDepthFunc(GL_LESS);
-		gl_RenderState.Apply();
+		state.SetEffect(EFF_STENCIL);
+		state.EnableTexture(false);
+		state.ResetColor();
 
 		if (NeedDepthBuffer())
 		{
-			glDepthMask(false);							// don't write to Z-buffer!
-
-			DrawPortalStencil(STP_Stencil);
+			di->SetStencil(0, SOP_Increment, SF_ColorMaskOff | SF_DepthMaskOff);
+			di->SetDepthFunc(DF_Less);
+			DrawPortalStencil(di, state, STP_Stencil);
 
 			// Clear Z-buffer
-			glStencilFunc(GL_EQUAL, screen->stencilValue + 1, ~0);		// draw sky into stencil
-			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);		// this stage doesn't modify the stencil
-			glDepthMask(true);							// enable z-buffer again
-			glDepthRange(1, 1);
-			glDepthFunc(GL_ALWAYS);
-			DrawPortalStencil(STP_DepthClear);
+			di->SetStencil(1, SOP_Keep, SF_ColorMaskOff);
+			di->SetDepthRange(1, 1);
+			di->SetDepthFunc(DF_Always);
+			DrawPortalStencil(di, state, STP_DepthClear);
 
 			// set normal drawing mode
-			gl_RenderState.EnableTexture(true);
-			glDepthFunc(GL_LESS);
-			glColorMask(1, 1, 1, 1);
-			gl_RenderState.SetEffect(EFF_NONE);
-			glDepthRange(0, 1);
-
-			GLuint sampleCount = 1;
+			state.EnableTexture(true);
+			di->SetStencil(1, SOP_Keep, SF_AllOn);
+			di->SetDepthRange(0, 1);
+			di->SetDepthFunc(DF_Less);
+			state.SetEffect(EFF_NONE);
 		}
 		else
 		{
 			// No z-buffer is needed therefore we can skip all the complicated stuff that is involved
-			// No occlusion queries will be done here. For these portals the overhead is far greater
-			// than the benefit.
 			// Note: We must draw the stencil with z-write enabled here because there is no second pass!
+			di->SetStencil(0, SOP_Increment, SF_ColorMaskOff);
+			di->SetDepthFunc(DF_Less);
+			DrawPortalStencil(di, state, STP_AllInOne);
 
-			glDepthMask(true);
-			DrawPortalStencil(STP_AllInOne);
-			glStencilFunc(GL_EQUAL, screen->stencilValue + 1, ~0);		// draw sky into stencil
-			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);		// this stage doesn't modify the stencil
-			gl_RenderState.EnableTexture(true);
-			glColorMask(1, 1, 1, 1);
-			gl_RenderState.SetEffect(EFF_NONE);
-			glDisable(GL_DEPTH_TEST);
-			glDepthMask(false);							// don't write to Z-buffer!
+			di->SetStencil(1, SOP_Keep, SF_DepthTestOff | SF_DepthMaskOff);
+			state.EnableTexture(true);
+			state.SetEffect(EFF_NONE);
 		}
 
 		screen->stencilValue++;
@@ -180,138 +143,65 @@ void GLPortal::SetupStencil(HWDrawInfo *di, FRenderState &state, bool usestencil
 	{
 		if (!NeedDepthBuffer())
 		{
-			glDepthMask(false);
-			glDisable(GL_DEPTH_TEST);
+			di->SetStencil(0, SOP_Keep, SF_DepthTestOff | SF_DepthMaskOff);
 		}
 	}
+
+	// save viewpoint
+	savedvisibility = di->Viewpoint.camera ? di->Viewpoint.camera->renderflags & RF_MAYBEINVISIBLE : ActorRenderFlags::FromInt(0);
 }
 
 void GLPortal::RemoveStencil(HWDrawInfo *di, FRenderState &state, bool usestencil)
 {
+	Clocker c(PortalAll);
 	bool needdepth = NeedDepthBuffer();
+
+	// Restore the old view
+	auto &vp = di->Viewpoint;
+	if (vp.camera != nullptr) vp.camera->renderflags = (vp.camera->renderflags & ~RF_MAYBEINVISIBLE) | savedvisibility;
 
 	if (usestencil)
 	{
-		glColorMask(0, 0, 0, 0);						// no graphics
-		gl_RenderState.SetEffect(EFF_NONE);
-		gl_RenderState.ResetColor();
-		gl_RenderState.EnableTexture(false);
-		gl_RenderState.Apply();
+		state.SetEffect(EFF_NONE);
+		state.ResetColor();
+		state.EnableTexture(false);
 
 		if (needdepth)
 		{
 			// first step: reset the depth buffer to max. depth
-			glDepthRange(1, 1);							// always
-			glDepthFunc(GL_ALWAYS);						// write the farthest depth value
-			DrawPortalStencil(STP_DepthClear);
-		}
-		else
-		{
-			glEnable(GL_DEPTH_TEST);
+			di->SetStencil(0, SOP_Keep, SF_ColorMaskOff);
+			di->SetDepthRange(1, 1);							// always
+			di->SetDepthFunc(DF_Always);						// write the farthest depth value
+			DrawPortalStencil(di, state, STP_DepthClear);
 		}
 
 		// second step: restore the depth buffer to the previous values and reset the stencil
-		glDepthFunc(GL_LEQUAL);
-		glDepthRange(0, 1);
-		glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
-		glStencilFunc(GL_EQUAL, screen->stencilValue, ~0);		// draw sky into stencil
-		DrawPortalStencil(STP_DepthRestore);
-		glDepthFunc(GL_LESS);
+		di->SetStencil(0, SOP_Decrement, SF_ColorMaskOff);
+		di->SetDepthRange(0, 1);
+		di->SetDepthFunc(DF_LEqual);
+		DrawPortalStencil(di, state, STP_DepthRestore);
 
-
-		gl_RenderState.EnableTexture(true);
-		gl_RenderState.SetEffect(EFF_NONE);
-		glColorMask(1, 1, 1, 1);
+		state.EnableTexture(true);
+		state.SetEffect(EFF_NONE);
 		screen->stencilValue--;
-
-		// restore old stencil op.
-		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-		glStencilFunc(GL_EQUAL, screen->stencilValue, ~0);		// draw sky into stencil
 	}
 	else
 	{
-		if (needdepth)
-		{
-			glClear(GL_DEPTH_BUFFER_BIT);
-		}
-		else
-		{
-			glEnable(GL_DEPTH_TEST);
-			glDepthMask(true);
-		}
-		auto &vp = di->Viewpoint;
+		state.ResetColor();
+		state.SetEffect(EFF_STENCIL);
+		state.EnableTexture(false);
+		state.SetRenderStyle(STYLE_Source);
 
-		// Restore the old view
-		if (vp.camera != nullptr) vp.camera->renderflags = (vp.camera->renderflags & ~RF_MAYBEINVISIBLE) | savedvisibility;
+		di->SetStencil(0, SOP_Keep, needdepth? SF_ColorMaskOff | SF_DepthClear : SF_ColorMaskOff);
+		di->SetDepthRange(0, 1);
+		di->SetDepthFunc(DF_LEqual);
+		DrawPortalStencil(di, state, STP_DepthRestore);
 
-		// This draws a valid z-buffer into the stencil's contents to ensure it
-		// doesn't get overwritten by the level's geometry.
-
-		gl_RenderState.ResetColor();
-		glDepthFunc(GL_LEQUAL);
-		glDepthRange(0, 1);
-		glColorMask(0, 0, 0, 1); // mark portal in alpha channel but don't touch color
-		gl_RenderState.SetEffect(EFF_STENCIL);
-		gl_RenderState.EnableTexture(false);
-		gl_RenderState.SetRenderStyle(STYLE_Source);
-		gl_RenderState.Apply();
-		DrawPortalStencil(STP_DepthRestore);
-		gl_RenderState.SetEffect(EFF_NONE);
-		gl_RenderState.EnableTexture(true);
-		glColorMask(1, 1, 1, 1); // mark portal in alpha channel but don't touch color
-
-		glDepthFunc(GL_LESS);
+		state.SetEffect(EFF_NONE);
+		state.EnableTexture(true);
 	}
+	di->SetStencil(0, SOP_Keep, SF_AllOn);
 }
-
-//-----------------------------------------------------------------------------
-//
-// Start
-//
-//-----------------------------------------------------------------------------
-
-bool GLPortal::Start(bool usestencil, bool doquery, HWDrawInfo *outer_di, HWDrawInfo **pDi)
-{
-	*pDi = nullptr;
-	rendered_portals++;
-	Clocker c(PortalAll);
-
-	if (!gl_portals)
-	{
-		return false;
-	}
-
-	SetupStencil(outer_di, gl_RenderState, usestencil);
-
-	*pDi = FDrawInfo::StartDrawInfo(outer_di->Viewpoint, &outer_di->VPUniforms);
-	(*pDi)->mCurrentPortal = this;
-
-	// save viewpoint
-	savedvisibility = outer_di->Viewpoint.camera ? outer_di->Viewpoint.camera->renderflags & RF_MAYBEINVISIBLE : ActorRenderFlags::FromInt(0);
-
-	return true;
-}
-
-
-//-----------------------------------------------------------------------------
-//
-// End
-//
-//-----------------------------------------------------------------------------
-void GLPortal::End(HWDrawInfo *di, bool usestencil)
-{
-	Clocker c(PortalAll);
-
-	di = static_cast<FDrawInfo*>(di)->EndDrawInfo();
-	GLRenderer->mViewpoints->Bind(static_cast<FDrawInfo*>(di)->vpIndex);
-	auto &vp = di->Viewpoint;
-
-	// Restore the old view
-	if (vp.camera != nullptr) vp.camera->renderflags = (vp.camera->renderflags & ~RF_MAYBEINVISIBLE) | savedvisibility;
-
-	RemoveStencil(di, gl_RenderState, usestencil);
-}
-
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -402,7 +292,7 @@ void GLHorizonPortal::DrawContents(HWDrawInfo *hwdi)
 	gltexture=FMaterial::ValidateTexture(sp->texture, false, true);
 	if (!gltexture) 
 	{
-		ClearScreen(di);
+		di->ClearScreen();
 		return;
 	}
 	di->SetCameraPos(vp.Pos);

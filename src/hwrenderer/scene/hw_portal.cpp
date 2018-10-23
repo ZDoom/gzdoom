@@ -34,6 +34,7 @@
 #include "g_levellocals.h"
 
 EXTERN_CVAR(Int, r_mirror_recursions)
+EXTERN_CVAR(Bool, gl_portals)
 
 //-----------------------------------------------------------------------------
 //
@@ -82,20 +83,15 @@ void FPortalSceneState::EndFrame(HWDrawInfo *di)
 		indent += "  ";
 	}
 
-	// Only use occlusion query if there are more than 2 portals. 
-	// Otherwise there's too much overhead.
-	// (And don't forget to consider the separating null pointers!)
-	bool usequery = di->Portals.Size() > 2 + (unsigned)renderdepth;
-
 	while (di->Portals.Pop(p) && p)
 	{
 		if (gl_portalinfo) 
 		{
-			Printf("%sProcessing %s, depth = %d, query = %d\n", indent.GetChars(), p->GetName(), renderdepth, usequery);
+			Printf("%sProcessing %s, depth = %d\n", indent.GetChars(), p->GetName(), renderdepth);
 		}
 		if (p->lines.Size() > 0)
 		{
-			p->RenderPortal(true, usequery, di);
+			RenderPortal(p, true, di);
 		}
 		delete p;
 	}
@@ -146,12 +142,19 @@ bool FPortalSceneState::RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di
 	if (best)
 	{
 		portals.Delete(bestindex);
-		best->RenderPortal(false, false, outer_di);
+		RenderPortal(best, false, outer_di);
 		delete best;
 		return true;
 	}
 	return false;
 }
+
+
+void FPortalSceneState::RenderPortal(IPortal *p, bool usestencil, HWDrawInfo *outer_di)
+{
+	if (gl_portals) outer_di->RenderPortal(p, usestencil);
+}
+
 
 //-----------------------------------------------------------------------------
 //

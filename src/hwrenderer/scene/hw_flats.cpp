@@ -248,26 +248,26 @@ void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 			// Create stencil 
 			state.SetEffect(EFF_STENCIL);
 			state.EnableTexture(false);
-			state.SetStencil(0, SOP_Increment, SF_ColorMaskOff);
+			di->SetStencil(0, SOP_Increment, SF_ColorMaskOff);
 			di->Draw(DT_TriangleFan, state, fnode->vertexindex, 4);
 
 			// Draw projected plane into stencil
-			state.SetStencil(1, SOP_Keep, SF_DepthMaskOff | SF_DepthTestOff);
 			state.EnableTexture(true);
 			state.SetEffect(EFF_NONE);
+			di->SetStencil(1, SOP_Keep, SF_DepthMaskOff | SF_DepthTestOff);
 			di->Draw(DT_TriangleFan, state, fnode->vertexindex + 4, 4);
 
 			// clear stencil
 			state.SetEffect(EFF_STENCIL);
 			state.EnableTexture(false);
-			state.SetStencil(1, SOP_Decrement, SF_ColorMaskOff | SF_DepthMaskOff | SF_DepthTestOff);
+			di->SetStencil(1, SOP_Decrement, SF_ColorMaskOff | SF_DepthMaskOff | SF_DepthTestOff);
 			di->Draw(DT_TriangleFan, state, fnode->vertexindex, 4);
 
 			// restore old stencil op.
-			state.SetStencil(0, SOP_Keep, SF_AllOn);
 			state.EnableTexture(true);
 			state.SetEffect(EFF_NONE);
 			state.SetDepthBias(0, 0);
+			di->SetStencil(0, SOP_Keep, SF_AllOn);
 
 			fnode = fnode->next;
 		}

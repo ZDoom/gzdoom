@@ -117,6 +117,8 @@ inline IPortal::IPortal(FPortalSceneState *s, bool local) : mState(s)
 }
 
 
+
+
 class HWScenePortalBase
 {
 protected:

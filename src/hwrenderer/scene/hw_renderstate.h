@@ -26,21 +26,6 @@ enum EAlphaFunc
 	Alpha_Greater = 1
 };
 
-enum EStencilOp
-{
-	SOP_Keep = 0,
-	SOP_Increment = 1,
-	SOP_Decrement = 2
-};
-
-enum EStencilFlags
-{
-	SF_AllOn = 0,
-	SF_ColorMaskOff = 1,
-	SF_DepthMaskOff = 2,
-	SF_DepthTestOff = 4
-};
-
 struct FStateVec4
 {
 	float vec[4];
@@ -68,24 +53,6 @@ struct FMaterialState
 		mTranslation = 0;
 		mClampMode = CLAMP_NONE;
 		mOverrideShader = -1;
-		mChanged = false;
-	}
-};
-
-struct FStencilState
-{
-	int mBaseVal;
-	int mOffsVal;
-	int mOperation;
-	int mFlags;
-	bool mChanged;
-
-	void Reset()
-	{
-		mBaseVal = 0;
-		mOffsVal = 0;
-		mOperation = SOP_Keep;
-		mFlags = SF_AllOn;
 		mChanged = false;
 	}
 };
@@ -136,7 +103,6 @@ protected:
 	FRenderStyle mRenderStyle;
 
 	FMaterialState mMaterial;
-	FStencilState mStencil;
 	FDepthBiasState mBias;
 
 	void SetShaderLight(float level, float olight);
@@ -167,7 +133,6 @@ public:
 		mLightIndex = -1;
 		mRenderStyle = DefaultRenderStyle();
 		mMaterial.Reset();
-		mStencil.Reset();
 		mBias.Reset();
 
 		mColor.Set(1.0f, 1.0f, 1.0f, 1.0f);
@@ -395,27 +360,6 @@ public:
 		mMaterial.mOverrideShader = overrideshader;
 		mMaterial.mChanged = true;
 	}
-
-	void SetStencil(int offs, int op, int flags)
-	{
-		mStencil.mOffsVal = offs;
-		mStencil.mOperation = op;
-		mStencil.mFlags = flags;
-		mStencil.mChanged = true;
-	}
-
-	void IncStencilValue()
-	{
-		mStencil.mBaseVal++;
-		mStencil.mChanged = true;
-	}
-
-	void DecStencilValue()
-	{
-		mStencil.mBaseVal--;
-		mStencil.mChanged = true;
-	}
-
 
 	void SetColor(int sectorlightlevel, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon = false);
 	void SetFog(int lightlevel, int rellight, bool fullbright, const FColormap *cmap, bool isadditive);

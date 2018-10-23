@@ -63,6 +63,9 @@ private:
 	ActorRenderFlags savedvisibility;
 	TArray<unsigned int> mPrimIndices;
 
+	void SetupStencil(HWDrawInfo *di, FRenderState &state, bool usestencil);
+	void RemoveStencil(HWDrawInfo *di, FRenderState &state, bool usestencil);
+
 protected:
 	int level;
 

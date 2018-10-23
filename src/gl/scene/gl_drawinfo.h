@@ -51,7 +51,8 @@ struct FDrawInfo : public HWDrawInfo
 	void SetDepthMask(bool on) override;
 	void SetDepthFunc(int func) override;
 	void EnableDrawBufferAttachments(bool on) override;
-
+	void SetStencil(int offs, int op, int flags) override;
+	
 	void StartScene();
 
 	void DoDrawSorted(HWDrawList *dl, SortNode * head);

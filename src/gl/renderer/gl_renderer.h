@@ -59,6 +59,7 @@ public:
 	unsigned int mFBID;
 	unsigned int mVAOID;
 	unsigned int PortalQueryObject;
+	unsigned int mStencilValue = 0;
 
 	int mOldFBID;
 

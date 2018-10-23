@@ -328,6 +328,22 @@ void FDrawInfo::EnableDrawBufferAttachments(bool on)
 	gl_RenderState.EnableDrawBuffers(on? gl_RenderState.GetPassDrawBufferCount() : 1);
 }
 
+void FDrawInfo::SetStencil(int offs, int op, int flags)
+{
+	static int op2gl[] = { GL_KEEP, GL_INCR, GL_DECR };
+
+	glStencilFunc(GL_EQUAL, screen->stencilValue + offs, ~0);		// draw sky into stencil
+	glStencilOp(GL_KEEP, GL_KEEP, op2gl[op]);		// this stage doesn't modify the stencil
+
+	bool cmon = !(flags & SF_ColorMaskOff);
+	glColorMask(cmon, cmon, cmon, cmon);						// don't write to the graphics buffer
+	glDepthMask(!(flags & SF_DepthMaskOff));
+	if (flags & SF_DepthTestOff)
+		glDisable(GL_DEPTH_TEST);
+	else
+		glEnable(GL_DEPTH_TEST);
+}
+
 
 //==========================================================================
 //

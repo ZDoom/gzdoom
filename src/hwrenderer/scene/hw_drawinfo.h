@@ -24,6 +24,23 @@ enum EDepthFunc
 	DF_Always
 };
 
+enum EStencilFlags
+{
+	SF_AllOn = 0,
+	SF_ColorMaskOff = 1,
+	SF_DepthMaskOff = 2,
+	SF_DepthTestOff = 4
+};
+
+enum EStencilOp
+{
+	SOP_Keep = 0,
+	SOP_Increment = 1,
+	SOP_Decrement = 2
+};
+
+
+
 struct FSectorPortalGroup;
 struct FLinePortalSpan;
 struct FFlatVertex;
@@ -326,6 +343,8 @@ public:
 	virtual void SetDepthMask(bool on) = 0;
 	virtual void SetDepthFunc(int func) = 0;
 	virtual void EnableDrawBufferAttachments(bool on) = 0;
+	virtual void SetStencil(int offs, int op, int flags) = 0;
+	
 
 };
 

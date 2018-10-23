@@ -364,6 +364,7 @@ public:
 	int hwcaps = 0;
 	float glslversion = 0;			// This is here so that the differences between old OpenGL and new OpenGL/Vulkan can be handled by platform independent code.
 	int instack[2] = { 0,0 };	// this is globally maintained state for portal recursion avoidance.
+	int stencilValue = 0;		// Global stencil test value
 	bool enable_quadbuffered = false;
 
 	IntRect mScreenViewport;

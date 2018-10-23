@@ -38,8 +38,6 @@
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/textures/gl_hwtexture.h"
 
-static int op2gl[] = { GL_KEEP, GL_INCR, GL_DECR };
-
 FGLRenderState gl_RenderState;
 
 static VSMatrix identityMatrix(1);
@@ -60,9 +58,6 @@ static void matrixToGL(const VSMatrix &mat, int loc)
 void FGLRenderState::Reset()
 {
 	FRenderState::Reset();
-	mSrcBlend = GL_SRC_ALPHA;
-	mDstBlend = GL_ONE_MINUS_SRC_ALPHA;
-	mBlendEquation = GL_FUNC_ADD;
 	mVertexBuffer = mCurrentVertexBuffer = nullptr;
 	mGlossiness = 0.0f;
 	mSpecularLevel = 0.0f;
@@ -236,22 +231,6 @@ void FGLRenderState::Apply()
 	{
 		ApplyMaterial(mMaterial.mMaterial, mMaterial.mClampMode, mMaterial.mTranslation, mMaterial.mOverrideShader);
 		mMaterial.mChanged = false;
-	}
-
-	if (mStencil.mChanged)
-	{
-		glStencilFunc(GL_EQUAL, mStencil.mBaseVal + mStencil.mOffsVal, ~0);		// draw sky into stencil
-		glStencilOp(GL_KEEP, GL_KEEP, op2gl[mStencil.mOperation]);		// this stage doesn't modify the stencil
-
-		bool cmon = !(mStencil.mFlags & SF_ColorMaskOff);
-		glColorMask(cmon, cmon, cmon, cmon);						// don't write to the graphics buffer
-		glDepthMask(!(mStencil.mFlags & SF_DepthMaskOff));
-		if (mStencil.mFlags & SF_DepthTestOff)
-			glDisable(GL_DEPTH_TEST);
-		else
-			glEnable(GL_DEPTH_TEST);
-
-		mStencil.mChanged = false;
 	}
 
 	if (mBias.mChanged)

@@ -286,30 +286,8 @@ static TArray<FModelVertex> iBuffer;
 void FModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size)
 {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-	if (vbo_id > 0)
-	{
-		glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame1].x);
-		glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame1].u);
-		glVertexAttribPointer(VATTR_VERTEX2, 3, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame2].x);
-		glVertexAttribPointer(VATTR_NORMAL, 4, GL_INT_2_10_10_10_REV, true, sizeof(FModelVertex), &VMO[frame2].packedNormal);
-	}
-	else if (frame1 == frame2 || size == 0 || gl_RenderState.GetInterpolationFactor() == 0.f)
-	{
-		glVertexPointer(3, GL_FLOAT, sizeof(FModelVertex), &vbo_ptr[frame1].x);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(FModelVertex), &vbo_ptr[frame1].u);
-	}
-	else
-	{
-		// must interpolate
-		iBuffer.Resize(size);
-		glVertexPointer(3, GL_FLOAT, sizeof(FModelVertex), &iBuffer[0].x);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(FModelVertex), &vbo_ptr[frame1].u);
-		float frac = gl_RenderState.GetInterpolationFactor();
-		for (unsigned i = 0; i < size; i++)
-		{
-			iBuffer[i].x = vbo_ptr[frame1 + i].x * (1.f - frac) + vbo_ptr[frame2 + i].x * frac;
-			iBuffer[i].y = vbo_ptr[frame1 + i].y * (1.f - frac) + vbo_ptr[frame2 + i].y * frac;
-			iBuffer[i].z = vbo_ptr[frame1 + i].z * (1.f - frac) + vbo_ptr[frame2 + i].z * frac;
-		}
-	}
+	glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame1].x);
+	glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame1].u);
+	glVertexAttribPointer(VATTR_VERTEX2, 3, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame2].x);
+	glVertexAttribPointer(VATTR_NORMAL, 4, GL_INT_2_10_10_10_REV, true, sizeof(FModelVertex), &VMO[frame2].packedNormal);
 }

@@ -75,7 +75,7 @@ static FString indent;
 
 void FPortalSceneState::EndFrame(HWDrawInfo *di)
 {
-	IPortal * p;
+	HWPortal * p;
 
 	if (gl_portalinfo)
 	{
@@ -115,8 +115,8 @@ void FPortalSceneState::EndFrame(HWDrawInfo *di)
 //-----------------------------------------------------------------------------
 bool FPortalSceneState::RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di)
 {
-	IPortal * p;
-	IPortal * best = nullptr;
+	HWPortal * p;
+	HWPortal * best = nullptr;
 	unsigned bestindex = 0;
 
 	// Find the one with the highest amount of lines.
@@ -150,7 +150,7 @@ bool FPortalSceneState::RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di
 }
 
 
-void FPortalSceneState::RenderPortal(IPortal *p, bool usestencil, HWDrawInfo *outer_di)
+void FPortalSceneState::RenderPortal(HWPortal *p, bool usestencil, HWDrawInfo *outer_di)
 {
 	if (gl_portals) outer_di->RenderPortal(p, usestencil);
 }

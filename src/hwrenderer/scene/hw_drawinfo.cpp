@@ -260,7 +260,7 @@ void HWDrawInfo::SetupView(float vx, float vy, float vz, bool mirror, bool plane
 //
 //-----------------------------------------------------------------------------
 
-IPortal * HWDrawInfo::FindPortal(const void * src)
+HWPortal * HWDrawInfo::FindPortal(const void * src)
 {
 	int i = Portals.Size() - 1;
 

@@ -101,7 +101,7 @@ void FDrawInfo::AddMirrorSurface(GLWall *w)
 void FDrawInfo::AddPortal(GLWall *wall, int ptype)
 {
 	auto &pstate = GLRenderer->mPortalState;
-	IPortal * portal;
+	HWPortal * portal;
 
 	wall->MakeVertices(this, false);
 	switch (ptype)

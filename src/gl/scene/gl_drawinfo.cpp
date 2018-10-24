@@ -312,7 +312,7 @@ void FDrawInfo::DrawHUDModel(HUDSprite *huds, FRenderState &state)
 	renderer.RenderHUDModel(huds->weapon, huds->mx, huds->my);
 }
 
-void FDrawInfo::RenderPortal(IPortal *p, bool usestencil)
+void FDrawInfo::RenderPortal(HWPortal *p, bool usestencil)
 {
 	auto gp = static_cast<GLPortal *>(p);
 	gp->SetupStencil(this, gl_RenderState, usestencil);

@@ -37,15 +37,15 @@ struct GLHorizonInfo
 
 struct FPortalSceneState;
 
-class IPortal
+class HWPortal
 {
 	friend struct FPortalSceneState;
 public:
 	FPortalSceneState * mState;
 	TArray<GLWall> lines;
 
-	IPortal(FPortalSceneState *s, bool local);
-	virtual ~IPortal() {}
+	HWPortal(FPortalSceneState *s, bool local);
+	virtual ~HWPortal() {}
 	virtual void * GetSource() const = 0;	// GetSource MUST be implemented!
 	virtual const char *GetName() = 0;
 	virtual bool IsSky() { return false; }
@@ -92,10 +92,10 @@ struct FPortalSceneState
 	void StartFrame();
 	bool RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di);
 	void EndFrame(HWDrawInfo *outer_di);
-	void RenderPortal(IPortal *p, bool usestencil, HWDrawInfo *outer_di);
+	void RenderPortal(HWPortal *p, bool usestencil, HWDrawInfo *outer_di);
 };
 
-inline IPortal::IPortal(FPortalSceneState *s, bool local) : mState(s)
+inline HWPortal::HWPortal(FPortalSceneState *s, bool local) : mState(s)
 {
 	//if (!local) s->portals.Push(this);
 }
@@ -104,11 +104,11 @@ inline IPortal::IPortal(FPortalSceneState *s, bool local) : mState(s)
 class HWScenePortalBase
 {
 protected:
-	IPortal *mOwner;
+	HWPortal *mOwner;
 public:
 	HWScenePortalBase() {}
 	virtual ~HWScenePortalBase() {}
-	void SetOwner(IPortal *p) { mOwner = p; }
+	void SetOwner(HWPortal *p) { mOwner = p; }
 	void ClearClipper(HWDrawInfo *di, Clipper *clipper);
 
 	virtual int ClipSeg(seg_t *seg, const DVector3 &viewpos) { return PClip_Inside; }

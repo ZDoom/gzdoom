@@ -54,7 +54,7 @@ struct particle_t;
 struct FDynLightData;
 struct HUDSprite;
 class Clipper;
-class IPortal;
+class HWPortal;
 class FFlatVertexGenerator;
 class IRenderQueue;
 class HWScenePortalBase;
@@ -149,13 +149,13 @@ struct HWDrawInfo
 	int FullbrightFlags;
 	std::atomic<int> spriteindex;
 	HWScenePortalBase *mClipPortal;
-	IPortal *mCurrentPortal;
+	HWPortal *mCurrentPortal;
 	//FRotator mAngles;
 	IShadowMap *mShadowMap;
 	Clipper *mClipper;
 	FRenderViewpoint Viewpoint;
 	HWViewpointUniforms VPUniforms;	// per-viewpoint uniform state
-	TArray<IPortal *> Portals;
+	TArray<HWPortal *> Portals;
 	TArray<GLDecal *> Decals[2];	// the second slot is for mirrors which get rendered in a separate pass.
 	TArray<HUDSprite> hudsprites;	// These may just be stored by value.
 
@@ -263,7 +263,7 @@ public:
 		return (screen->hwcaps & RFL_NO_CLIP_PLANES) && VPUniforms.mClipLine.X > -1000000.f;
 	}
 
-	IPortal * FindPortal(const void * src);
+	HWPortal * FindPortal(const void * src);
 	void RenderBSPNode(void *node);
 
 	void ClearBuffers();
@@ -338,7 +338,7 @@ public:
 	virtual void DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) = 0;
 	virtual void DrawModel(GLSprite *spr, FRenderState &state) = 0;
 	virtual void DrawHUDModel(HUDSprite *spr, FRenderState &state) = 0;
-	virtual void RenderPortal(IPortal *p, bool usestencil) = 0;
+	virtual void RenderPortal(HWPortal *p, bool usestencil) = 0;
 
 
 	// Immediate render state change commands. These only change infrequently and should not clutter the render state.

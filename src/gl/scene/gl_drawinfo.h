@@ -47,7 +47,7 @@ struct FDrawInfo : public HWDrawInfo
 	void DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) override;
 	void DrawModel(GLSprite *spr, FRenderState &state) override;
 	void DrawHUDModel(HUDSprite *spr, FRenderState &state) override;
-	void RenderPortal(IPortal *p, bool stencil) override;
+	void RenderPortal(HWPortal *p, bool stencil) override;
 
 	void SetDepthMask(bool on) override;
 	void SetDepthFunc(int func) override;

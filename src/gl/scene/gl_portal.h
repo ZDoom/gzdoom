@@ -46,7 +46,7 @@
 
 struct GLEEHorizonPortal;
 
-class GLPortal : public IPortal
+class GLPortal : public HWPortal
 {
 
 private:
@@ -70,7 +70,7 @@ public:
 protected:
 	int level;
 
-	GLPortal(FPortalSceneState *state, bool local = false) : IPortal(state, local) { }
+	GLPortal(FPortalSceneState *state, bool local = false) : HWPortal(state, local) { }
 };
 
 class GLScenePortal : public GLPortal

@@ -32,6 +32,9 @@
 #include "hw_clipper.h"
 #include "actor.h"
 #include "g_levellocals.h"
+#include "hw_renderstate.h"
+#include "hwrenderer/data/flatvertices.h"
+#include "hwrenderer/utility/hw_clock.h"
 
 EXTERN_CVAR(Int, r_mirror_recursions)
 EXTERN_CVAR(Bool, gl_portals)
@@ -154,6 +157,156 @@ void FPortalSceneState::RenderPortal(HWPortal *p, bool usestencil, HWDrawInfo *o
 {
 	if (gl_portals) outer_di->RenderPortal(p, usestencil);
 }
+
+
+//-----------------------------------------------------------------------------
+//
+// DrawPortalStencil
+//
+//-----------------------------------------------------------------------------
+
+void HWPortal::DrawPortalStencil(HWDrawInfo *di, FRenderState &state, int pass)
+{
+	if (mPrimIndices.Size() == 0)
+	{
+		mPrimIndices.Resize(2 * lines.Size());
+
+		for (unsigned int i = 0; i < lines.Size(); i++)
+		{
+			mPrimIndices[i * 2] = lines[i].vertindex;
+			mPrimIndices[i * 2 + 1] = lines[i].vertcount;
+		}
+	}
+	for (unsigned int i = 0; i < mPrimIndices.Size(); i += 2)
+	{
+		di->Draw(DT_TriangleFan, state, mPrimIndices[i], mPrimIndices[i + 1], i == 0);
+	}
+	if (NeedCap() && lines.Size() > 1)
+	{
+		// The cap's depth handling needs special treatment so that it won't block further portal caps.
+		if (pass == STP_DepthRestore) di->SetDepthRange(1, 1);
+		di->Draw(DT_TriangleFan, state, FFlatVertexGenerator::STENCILTOP_INDEX, 4);
+		di->Draw(DT_TriangleFan, state, FFlatVertexGenerator::STENCILBOTTOM_INDEX, 4);
+		if (pass == STP_DepthRestore) di->SetDepthRange(0, 1);
+	}
+}
+
+//-----------------------------------------------------------------------------
+//
+// Start
+//
+//-----------------------------------------------------------------------------
+
+void HWPortal::SetupStencil(HWDrawInfo *di, FRenderState &state, bool usestencil)
+{
+	Clocker c(PortalAll);
+
+	rendered_portals++;
+	if (usestencil)
+	{
+		// Create stencil 
+		state.SetEffect(EFF_STENCIL);
+		state.EnableTexture(false);
+		state.ResetColor();
+
+		if (NeedDepthBuffer())
+		{
+			di->SetStencil(0, SOP_Increment, SF_ColorMaskOff | SF_DepthMaskOff);
+			di->SetDepthFunc(DF_Less);
+			DrawPortalStencil(di, state, STP_Stencil);
+
+			// Clear Z-buffer
+			di->SetStencil(1, SOP_Keep, SF_ColorMaskOff);
+			di->SetDepthRange(1, 1);
+			di->SetDepthFunc(DF_Always);
+			DrawPortalStencil(di, state, STP_DepthClear);
+
+			// set normal drawing mode
+			state.EnableTexture(true);
+			di->SetStencil(1, SOP_Keep, SF_AllOn);
+			di->SetDepthRange(0, 1);
+			di->SetDepthFunc(DF_Less);
+			state.SetEffect(EFF_NONE);
+		}
+		else
+		{
+			// No z-buffer is needed therefore we can skip all the complicated stuff that is involved
+			// Note: We must draw the stencil with z-write enabled here because there is no second pass!
+			di->SetStencil(0, SOP_Increment, SF_ColorMaskOff);
+			di->SetDepthFunc(DF_Less);
+			DrawPortalStencil(di, state, STP_AllInOne);
+
+			di->SetStencil(1, SOP_Keep, SF_DepthTestOff | SF_DepthMaskOff);
+			state.EnableTexture(true);
+			state.SetEffect(EFF_NONE);
+		}
+
+		screen->stencilValue++;
+	}
+	else
+	{
+		if (!NeedDepthBuffer())
+		{
+			di->SetStencil(0, SOP_Keep, SF_DepthTestOff | SF_DepthMaskOff);
+		}
+	}
+
+	// save viewpoint
+	savedvisibility = di->Viewpoint.camera ? di->Viewpoint.camera->renderflags & RF_MAYBEINVISIBLE : ActorRenderFlags::FromInt(0);
+}
+
+void HWPortal::RemoveStencil(HWDrawInfo *di, FRenderState &state, bool usestencil)
+{
+	Clocker c(PortalAll);
+	bool needdepth = NeedDepthBuffer();
+
+	// Restore the old view
+	auto &vp = di->Viewpoint;
+	if (vp.camera != nullptr) vp.camera->renderflags = (vp.camera->renderflags & ~RF_MAYBEINVISIBLE) | savedvisibility;
+
+	if (usestencil)
+	{
+		state.SetEffect(EFF_NONE);
+		state.ResetColor();
+		state.EnableTexture(false);
+
+		if (needdepth)
+		{
+			// first step: reset the depth buffer to max. depth
+			di->SetStencil(0, SOP_Keep, SF_ColorMaskOff);
+			di->SetDepthRange(1, 1);							// always
+			di->SetDepthFunc(DF_Always);						// write the farthest depth value
+			DrawPortalStencil(di, state, STP_DepthClear);
+		}
+
+		// second step: restore the depth buffer to the previous values and reset the stencil
+		di->SetStencil(0, SOP_Decrement, SF_ColorMaskOff);
+		di->SetDepthRange(0, 1);
+		di->SetDepthFunc(DF_LEqual);
+		DrawPortalStencil(di, state, STP_DepthRestore);
+
+		state.EnableTexture(true);
+		state.SetEffect(EFF_NONE);
+		screen->stencilValue--;
+	}
+	else
+	{
+		state.ResetColor();
+		state.SetEffect(EFF_STENCIL);
+		state.EnableTexture(false);
+		state.SetRenderStyle(STYLE_Source);
+
+		di->SetStencil(0, SOP_Keep, needdepth ? SF_ColorMaskOff | SF_DepthClear : SF_ColorMaskOff);
+		di->SetDepthRange(0, 1);
+		di->SetDepthFunc(DF_LEqual);
+		DrawPortalStencil(di, state, STP_DepthRestore);
+
+		state.SetEffect(EFF_NONE);
+		state.EnableTexture(true);
+	}
+	di->SetStencil(0, SOP_Keep, SF_AllOn);
+}
+
 
 
 //-----------------------------------------------------------------------------

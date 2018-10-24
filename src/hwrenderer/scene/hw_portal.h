@@ -1,6 +1,7 @@
 #pragma once
 
 #include "portal.h"
+#include "actor.h"
 #include "hw_drawinfo.h"
 #include "hw_drawstructs.h"
 #include "hwrenderer/textures/hw_material.h"
@@ -40,11 +41,28 @@ struct FPortalSceneState;
 class HWPortal
 {
 	friend struct FPortalSceneState;
+
+	enum
+	{
+		STP_Stencil,
+		STP_DepthClear,
+		STP_DepthRestore,
+		STP_AllInOne
+	};
+
+	ActorRenderFlags savedvisibility;
+	TArray<unsigned int> mPrimIndices;
+
+	void DrawPortalStencil(HWDrawInfo *di, FRenderState &state, int pass);
+
 public:
 	FPortalSceneState * mState;
 	TArray<GLWall> lines;
 
 	HWPortal(FPortalSceneState *s, bool local);
+	void SetupStencil(HWDrawInfo *di, FRenderState &state, bool usestencil);
+	void RemoveStencil(HWDrawInfo *di, FRenderState &state, bool usestencil);
+
 	virtual ~HWPortal() {}
 	virtual void * GetSource() const = 0;	// GetSource MUST be implemented!
 	virtual const char *GetName() = 0;

@@ -46,38 +46,11 @@
 
 struct GLEEHorizonPortal;
 
-class GLPortal : public HWPortal
-{
-
-private:
-
-	enum
-	{
-		STP_Stencil,
-		STP_DepthClear,
-		STP_DepthRestore,
-		STP_AllInOne
-	};
-	void DrawPortalStencil(HWDrawInfo *di, FRenderState &state, int pass);
-
-	ActorRenderFlags savedvisibility;
-	TArray<unsigned int> mPrimIndices;
-
-public:
-	void SetupStencil(HWDrawInfo *di, FRenderState &state, bool usestencil);
-	void RemoveStencil(HWDrawInfo *di, FRenderState &state, bool usestencil);
-
-protected:
-	int level;
-
-	GLPortal(FPortalSceneState *state, bool local = false) : HWPortal(state, local) { }
-};
-
-class GLScenePortal : public GLPortal
+class GLScenePortal : public HWPortal
 {
 public:
 	HWScenePortalBase *mScene;
-	GLScenePortal(FPortalSceneState *state, HWScenePortalBase *handler) : GLPortal(state)
+	GLScenePortal(FPortalSceneState *state, HWScenePortalBase *handler) : HWPortal(state, false)
 	{
 		mScene = handler;
 		handler->SetOwner(this);
@@ -101,7 +74,7 @@ public:
 };
 
 
-struct GLSkyPortal : public GLPortal
+struct GLSkyPortal : public HWPortal
 {
 	GLSkyInfo * origin;
 	friend struct GLEEHorizonPortal;
@@ -117,14 +90,14 @@ public:
 
 	
 	GLSkyPortal(FPortalSceneState *state, GLSkyInfo *  pt, bool local = false)
-		: GLPortal(state, local)
+		: HWPortal(state, local)
 	{
 		origin=pt;
 	}
 
 };
 
-struct GLHorizonPortal : public GLPortal
+struct GLHorizonPortal : public HWPortal
 {
 	GLHorizonInfo * origin;
 	unsigned int voffset;
@@ -143,7 +116,7 @@ public:
 	GLHorizonPortal(FPortalSceneState *state, GLHorizonInfo * pt, FRenderViewpoint &vp, bool local = false);
 };
 
-struct GLEEHorizonPortal : public GLPortal
+struct GLEEHorizonPortal : public HWPortal
 {
 	FSectorPortal * portal;
 
@@ -156,7 +129,7 @@ protected:
 
 public:
 	
-	GLEEHorizonPortal(FPortalSceneState *state, FSectorPortal *pt) : GLPortal(state)
+	GLEEHorizonPortal(FPortalSceneState *state, FSectorPortal *pt) : HWPortal(state, false)
 	{
 		portal=pt;
 	}

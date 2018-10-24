@@ -314,7 +314,7 @@ void FDrawInfo::DrawHUDModel(HUDSprite *huds, FRenderState &state)
 
 void FDrawInfo::RenderPortal(HWPortal *p, bool usestencil)
 {
-	auto gp = static_cast<GLPortal *>(p);
+	auto gp = static_cast<HWPortal *>(p);
 	gp->SetupStencil(this, gl_RenderState, usestencil);
 	auto new_di = StartDrawInfo(Viewpoint, &VPUniforms);
 	new_di->mCurrentPortal = gp;

@@ -230,7 +230,7 @@ void FDrawInfo::RenderTranslucent()
 //
 // gl_drawscene - this function renders the scene from the current
 // viewpoint, including mirrors and skyboxes and other portals
-// It is assumed that the GLPortal::EndFrame returns with the 
+// It is assumed that the HWPortal::EndFrame returns with the 
 // stencil, z-buffer and the projection matrix intact!
 //
 //-----------------------------------------------------------------------------

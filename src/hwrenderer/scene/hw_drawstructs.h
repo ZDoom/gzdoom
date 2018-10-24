@@ -147,7 +147,7 @@ public:
 	};
 
 	friend struct HWDrawList;
-	friend class GLPortal;
+	friend class HWPortal;
 
 	vertex_t * vertexes[2];				// required for polygon splitting
 	FMaterial *gltexture;

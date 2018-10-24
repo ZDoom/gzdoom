@@ -108,16 +108,6 @@ class FFlatVertexBuffer : public FVertexBuffer, public FFlatVertexGenerator
 	static const unsigned int BUFFER_SIZE_TO_USE = 1999500;
 
 public:
-	enum
-	{
-		QUAD_INDEX = 0,
-		FULLSCREEN_INDEX = 4,
-		PRESENT_INDEX = 8,
-		STENCILTOP_INDEX = 12,
-		STENCILBOTTOM_INDEX = 16,
-
-		NUM_RESERVED = 20
-	};
 
 	FFlatVertexBuffer(int width, int height);
 	~FFlatVertexBuffer();

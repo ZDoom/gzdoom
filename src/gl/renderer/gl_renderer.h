@@ -21,7 +21,7 @@ class FSkyVertexBuffer;
 class OpenGLFrameBuffer;
 struct FDrawInfo;
 class FShaderManager;
-class GLPortal;
+class HWPortal;
 class FLightBuffer;
 class FSamplerManager;
 class DPSprite;

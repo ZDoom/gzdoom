@@ -39,14 +39,6 @@ class GLViewpointBuffer;
 struct FRenderViewpoint;
 #define NOQUEUE nullptr	// just some token to be used as a placeholder
 
-enum
-{
-	DM_MAINVIEW,
-	DM_OFFSCREEN,
-	DM_PORTAL,
-	DM_SKYPORTAL
-};
-
 class FGLRenderer
 {
 public:

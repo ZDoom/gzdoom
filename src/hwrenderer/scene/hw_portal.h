@@ -305,3 +305,32 @@ public:
 
 };
 
+
+class HWScenePortal : public HWPortal
+{
+public:
+	HWScenePortalBase *mScene;
+	HWScenePortal(FPortalSceneState *state, HWScenePortalBase *handler) : HWPortal(state, false)
+	{
+		mScene = handler;
+		handler->SetOwner(this);
+	}
+	~HWScenePortal() { delete mScene; }
+	virtual void * GetSource() const { return mScene->GetSource(); }
+	virtual const char *GetName() { return mScene->GetName(); }
+	virtual bool IsSky() { return mScene->IsSky(); }
+	virtual bool NeedCap() { return true; }
+	virtual bool NeedDepthBuffer() { return true; }
+	virtual void DrawContents(HWDrawInfo *di)
+	{
+		if (mScene->Setup(di, di->mClipper))
+		{
+			di->DrawScene(DM_PORTAL);
+			mScene->Shutdown(di);
+		}
+		else di->ClearScreen();
+	}
+	virtual void RenderAttached(HWDrawInfo *di) { return mScene->RenderAttached(di); }
+};
+
+

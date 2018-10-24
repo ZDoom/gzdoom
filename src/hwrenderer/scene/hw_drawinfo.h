@@ -8,6 +8,15 @@
 #include "v_video.h"
 #include "hw_weapon.h"
 
+enum EDrawMode
+{
+	DM_MAINVIEW,
+	DM_OFFSCREEN,
+	DM_PORTAL,
+	DM_SKYPORTAL
+};
+
+
 enum EDrawType
 {
 	DT_Points = 0,
@@ -339,6 +348,7 @@ public:
 	virtual void DrawModel(GLSprite *spr, FRenderState &state) = 0;
 	virtual void DrawHUDModel(HUDSprite *spr, FRenderState &state) = 0;
 	virtual void RenderPortal(HWPortal *p, bool usestencil) = 0;
+	virtual void DrawScene(int drawmode) = 0;
 
 
 	// Immediate render state change commands. These only change infrequently and should not clutter the render state.

@@ -127,7 +127,7 @@ void FDrawInfo::AddPortal(GLWall *wall, int ptype)
 			if (wall->secportal->mType != PORTS_SKYVIEWPOINT) portal = new GLEEHorizonPortal(&pstate, wall->secportal);
 			else
 			{
-				portal = new GLScenePortal(&pstate, new HWSkyboxPortal(wall->secportal));
+				portal = new HWScenePortal(&pstate, new HWSkyboxPortal(wall->secportal));
 				Portals.Push(portal);
 			}
 		}
@@ -138,7 +138,7 @@ void FDrawInfo::AddPortal(GLWall *wall, int ptype)
 		portal = FindPortal(wall->portal);
 		if (!portal)
 		{
-			portal = new GLScenePortal(&pstate, new HWSectorStackPortal(wall->portal));
+			portal = new HWScenePortal(&pstate, new HWSectorStackPortal(wall->portal));
 			Portals.Push(portal);
 		}
 		portal->AddLine(wall);
@@ -152,7 +152,7 @@ void FDrawInfo::AddPortal(GLWall *wall, int ptype)
 			portal = FindPortal(wall->planemirror);
 			if (!portal)
 			{
-				portal = new GLScenePortal(&pstate, new HWPlaneMirrorPortal(wall->planemirror));
+				portal = new HWScenePortal(&pstate, new HWPlaneMirrorPortal(wall->planemirror));
 				Portals.Push(portal);
 			}
 			portal->AddLine(wall);
@@ -163,7 +163,7 @@ void FDrawInfo::AddPortal(GLWall *wall, int ptype)
 		portal = FindPortal(wall->seg->linedef);
 		if (!portal)
 		{
-			portal = new GLScenePortal(&pstate, new HWMirrorPortal(wall->seg->linedef));
+			portal = new HWScenePortal(&pstate, new HWMirrorPortal(wall->seg->linedef));
 			Portals.Push(portal);
 		}
 		portal->AddLine(wall);
@@ -183,7 +183,7 @@ void FDrawInfo::AddPortal(GLWall *wall, int ptype)
 			{
 				ProcessActorsInPortal(otherside->getPortal()->mGroup, in_area);
 			}
-			portal = new GLScenePortal(&pstate, new HWLineToLinePortal(wall->lineportal));
+			portal = new HWScenePortal(&pstate, new HWLineToLinePortal(wall->lineportal));
 			Portals.Push(portal);
 		}
 		portal->AddLine(wall);

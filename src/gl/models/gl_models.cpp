@@ -64,7 +64,7 @@ void FGLModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, con
 	if (!(actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]) && !(smf->flags & MDL_DONTCULLBACKFACES))
 	{
 		glEnable(GL_CULL_FACE);
-		glFrontFace((mirrored ^ GLRenderer->mPortalState.isMirrored()) ? GL_CCW : GL_CW);
+		glFrontFace((mirrored ^ screen->mPortalState->isMirrored()) ? GL_CCW : GL_CW);
 	}
 
 	gl_RenderState.mModelMatrix = objectToWorldMatrix;
@@ -90,7 +90,7 @@ void FGLModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectTo
 	if (!(actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]))
 	{
 		glEnable(GL_CULL_FACE);
-		glFrontFace((mirrored ^ GLRenderer->mPortalState.isMirrored()) ? GL_CW : GL_CCW);
+		glFrontFace((mirrored ^ screen->mPortalState->isMirrored()) ? GL_CW : GL_CCW);
 	}
 
 	gl_RenderState.mModelMatrix = objectToWorldMatrix;

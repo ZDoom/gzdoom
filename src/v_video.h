@@ -48,6 +48,7 @@
 struct sector_t;
 class IShaderProgram;
 class FTexture;
+struct FPortalSceneState;
 
 enum EHWCaps
 {
@@ -362,10 +363,11 @@ protected:
 
 public:
 	int hwcaps = 0;
-	float glslversion = 0;			// This is here so that the differences between old OpenGL and new OpenGL/Vulkan can be handled by platform independent code.
-	int instack[2] = { 0,0 };	// this is globally maintained state for portal recursion avoidance.
-	int stencilValue = 0;		// Global stencil test value
+	float glslversion = 0;				// This is here so that the differences between old OpenGL and new OpenGL/Vulkan can be handled by platform independent code.
+	int instack[2] = { 0,0 };			// this is globally maintained state for portal recursion avoidance.
+	int stencilValue = 0;				// Global stencil test value
 	bool enable_quadbuffered = false;
+	FPortalSceneState *mPortalState;	// global portal state.
 
 	IntRect mScreenViewport;
 	IntRect mSceneViewport;
@@ -373,7 +375,7 @@ public:
 
 public:
 	DFrameBuffer (int width=1, int height=1);
-	virtual ~DFrameBuffer() {}
+	virtual ~DFrameBuffer();
 	virtual void InitializeState() = 0;	// For stuff that needs 'screen' set.
 
 	void SetSize(int width, int height);

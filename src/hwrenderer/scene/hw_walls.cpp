@@ -427,9 +427,115 @@ void GLWall::PutWall(HWDrawInfo *di, bool translucent)
 	flags &= ~GLWF_TRANSLUCENT;
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 void GLWall::PutPortal(HWDrawInfo *di, int ptype)
 {
-	di->AddPortal(this, ptype);
+	auto pstate = screen->mPortalState;
+	HWPortal * portal;
+
+	MakeVertices(di, false);
+	switch (ptype)
+	{
+		// portals don't go into the draw list.
+		// Instead they are added to the portal manager
+	case PORTALTYPE_HORIZON:
+		horizon = pstate->UniqueHorizons.Get(horizon);
+		portal = di->FindPortal(horizon);
+		if (!portal)
+		{
+			portal = new HWHorizonPortal(pstate, horizon, di->Viewpoint, di);
+			di->Portals.Push(portal);
+		}
+		portal->AddLine(this);
+		break;
+
+	case PORTALTYPE_SKYBOX:
+		portal = di->FindPortal(secportal);
+		if (!portal)
+		{
+			// either a regular skybox or an Eternity-style horizon
+			if (secportal->mType != PORTS_SKYVIEWPOINT) portal = new HWEEHorizonPortal(pstate, secportal, di);
+			else
+			{
+				portal = new HWScenePortal(pstate, new HWSkyboxPortal(secportal));
+				di->Portals.Push(portal);
+			}
+		}
+		portal->AddLine(this);
+		break;
+
+	case PORTALTYPE_SECTORSTACK:
+		portal = di->FindPortal(portal);
+		if (!portal)
+		{
+			portal = new HWScenePortal(pstate, new HWSectorStackPortal(this->portal));
+			di->Portals.Push(portal);
+		}
+		portal->AddLine(this);
+		break;
+
+	case PORTALTYPE_PLANEMIRROR:
+		if (pstate->PlaneMirrorMode * planemirror->fC() <= 0)
+		{
+			//@sync-portal
+			planemirror = pstate->UniquePlaneMirrors.Get(planemirror);
+			portal = di->FindPortal(planemirror);
+			if (!portal)
+			{
+				portal = new HWScenePortal(pstate, new HWPlaneMirrorPortal(planemirror));
+				di->Portals.Push(portal);
+			}
+			portal->AddLine(this);
+		}
+		break;
+
+	case PORTALTYPE_MIRROR:
+		portal = di->FindPortal(seg->linedef);
+		if (!portal)
+		{
+			portal = new HWScenePortal(pstate, new HWMirrorPortal(seg->linedef));
+			di->Portals.Push(portal);
+		}
+		portal->AddLine(this);
+		if (gl_mirror_envmap)
+		{
+			// draw a reflective layer over the mirror
+			di->AddMirrorSurface(this);
+		}
+		break;
+
+	case PORTALTYPE_LINETOLINE:
+		portal = di->FindPortal(lineportal);
+		if (!portal)
+		{
+			line_t *otherside = lineportal->lines[0]->mDestination;
+			if (otherside != nullptr && otherside->portalindex < level.linePortals.Size())
+			{
+				di->ProcessActorsInPortal(otherside->getPortal()->mGroup, di->in_area);
+			}
+			portal = new HWScenePortal(pstate, new HWLineToLinePortal(lineportal));
+			di->Portals.Push(portal);
+		}
+		portal->AddLine(this);
+		break;
+
+	case PORTALTYPE_SKY:
+		sky = pstate->UniqueSkies.Get(sky);
+		portal = di->FindPortal(sky);
+		if (!portal)
+		{
+			portal = new HWSkyPortal(GLRenderer->mSkyVBO, &pstate, sky);
+			di->Portals.Push(portal);
+		}
+		portal->AddLine(this);
+		break;
+	}
+	vertcount = 0;
 }
 
 //==========================================================================

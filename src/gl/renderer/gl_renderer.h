@@ -75,8 +75,6 @@ public:
 	GLViewpointBuffer *mViewpoints = nullptr;
 	SWSceneDrawer *swdrawer = nullptr;
 
-	FPortalSceneState mPortalState;
-
 	float mSceneClearColor[3];
 
 	FGLRenderer(OpenGLFrameBuffer *fb);

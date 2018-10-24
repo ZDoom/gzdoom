@@ -95,7 +95,7 @@ void FDrawInfo::CreateScene()
 	mClipper->SafeAddClipRangeRealAngles(vp.Angles.Yaw.BAMs() + a1, vp.Angles.Yaw.BAMs() - a1);
 
 	// reset the portal manager
-	GLRenderer->mPortalState.StartFrame();
+	screen->mPortalState->StartFrame();
 	PO_LinkToSubsectors();
 
 	ProcessAll.Clock();
@@ -149,7 +149,7 @@ void FDrawInfo::RenderScene(int recursion)
 	RenderAll.Clock();
 
 	glDepthMask(true);
- 	if (!gl_no_skyclear) GLRenderer->mPortalState.RenderFirstSkyPortal(recursion, this);
+ 	if (!gl_no_skyclear) screen->mPortalState->RenderFirstSkyPortal(recursion, this);
 
 	gl_RenderState.EnableFog(true);
 	gl_RenderState.SetRenderStyle(STYLE_Source);
@@ -284,7 +284,7 @@ void FDrawInfo::DrawScene(int drawmode)
 	// Handle all portals after rendering the opaque objects but before
 	// doing all translucent stuff
 	recursion++;
-	GLRenderer->mPortalState.EndFrame(this);
+	screen->mPortalState->EndFrame(this);
 	recursion--;
 	RenderTranslucent();
 }
@@ -352,7 +352,7 @@ void FDrawInfo::DrawEndScene2D(sector_t * viewsector)
 void FDrawInfo::ProcessScene(bool toscreen)
 {
 	iter_dlightf = iter_dlight = draw_dlight = draw_dlightf = 0;
-	GLRenderer->mPortalState.BeginScene();
+	screen->mPortalState->BeginScene();
 
 	int mapsection = R_PointInSubsector(Viewpoint.Pos)->mapsection;
 	CurrentMapSections.Set(mapsection);

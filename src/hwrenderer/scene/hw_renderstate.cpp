@@ -27,6 +27,7 @@
 
 #include "hw_renderstate.h"
 #include "hw_drawstructs.h"
+#include "hw_portal.h"
 #include "hwrenderer/utility/hw_lighting.h"
 #include "hwrenderer/utility/hw_cvars.h"
 
@@ -115,7 +116,7 @@ void FRenderState::SetFog(int lightlevel, int rellight, bool fullbright, const F
 	}
 
 	// Make fog a little denser when inside a skybox
-	//if (GLRenderer->mPortalState.inskybox) fogdensity += fogdensity / 2;
+	if (screen->mPortalState->inskybox) fogdensity += fogdensity / 2;
 
 
 	// no fog in enhanced vision modes!

@@ -48,6 +48,7 @@
 #include "vm.h"
 #include "r_videoscale.h"
 #include "i_time.h"
+#include "hwrenderer/scene/hw_portal.h"
 
 
 CVAR(Bool, gl_scale_viewport, true, CVAR_ARCHIVE);
@@ -172,6 +173,12 @@ DSimpleCanvas::~DSimpleCanvas ()
 DFrameBuffer::DFrameBuffer (int width, int height)
 {
 	SetSize(width, height);
+	mPortalState = new FPortalSceneState;
+}
+
+DFrameBuffer::~DFrameBuffer()
+{
+	delete mPortalState;
 }
 
 void DFrameBuffer::SetSize(int width, int height)

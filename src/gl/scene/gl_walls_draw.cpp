@@ -34,7 +34,6 @@
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
-#include "gl/scene/gl_portal.h"
 
 EXTERN_CVAR(Bool, gl_seamless)
 
@@ -113,7 +112,7 @@ void FDrawInfo::AddPortal(GLWall *wall, int ptype)
 		portal = FindPortal(wall->horizon);
 		if (!portal)
 		{
-			portal = new GLHorizonPortal(&pstate, wall->horizon, Viewpoint);
+			portal = new HWHorizonPortal(&pstate, wall->horizon, Viewpoint, this);
 			Portals.Push(portal);
 		}
 		portal->AddLine(wall);
@@ -124,7 +123,7 @@ void FDrawInfo::AddPortal(GLWall *wall, int ptype)
 		if (!portal)
 		{
 			// either a regular skybox or an Eternity-style horizon
-			if (wall->secportal->mType != PORTS_SKYVIEWPOINT) portal = new GLEEHorizonPortal(&pstate, wall->secportal);
+			if (wall->secportal->mType != PORTS_SKYVIEWPOINT) portal = new HWEEHorizonPortal(&pstate, wall->secportal, this);
 			else
 			{
 				portal = new HWScenePortal(&pstate, new HWSkyboxPortal(wall->secportal));
@@ -194,7 +193,7 @@ void FDrawInfo::AddPortal(GLWall *wall, int ptype)
 		portal = FindPortal(wall->sky);
 		if (!portal) 
 		{
-			portal = new GLSkyPortal(&pstate, wall->sky);
+			portal = new HWSkyPortal(GLRenderer->mSkyVBO, &pstate, wall->sky);
 			Portals.Push(portal);
 		}
 		portal->AddLine(wall);

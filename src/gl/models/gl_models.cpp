@@ -40,7 +40,6 @@
 #include "gl_load/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/scene/gl_drawinfo.h"
-#include "gl/scene/gl_portal.h"
 #include "gl/models/gl_models.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/shaders/gl_shader.h"

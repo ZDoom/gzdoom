@@ -821,9 +821,7 @@ set( FASTMATH_SOURCES
 	textures/hires/xbr/xbrz.cpp
 	textures/hires/xbr/xbrz_old.cpp
 	gl/scene/gl_drawinfo.cpp
-	gl/scene/gl_skydome.cpp
 	gl/scene/gl_scene.cpp
-	gl/scene/gl_portal.cpp
 	gl/scene/gl_walls_draw.cpp
 	gl_load/gl_load.c
 	hwrenderer/postprocessing/hw_postprocess_cvars.cpp
@@ -840,6 +838,7 @@ set( FASTMATH_SOURCES
 	hwrenderer/scene/hw_renderhacks.cpp
 	hwrenderer/scene/hw_renderstate.cpp
 	hwrenderer/scene/hw_sky.cpp
+	hwrenderer/scene/hw_skyportal.cpp
 	hwrenderer/scene/hw_sprites.cpp
 	hwrenderer/scene/hw_spritelight.cpp
 	hwrenderer/scene/hw_walls.cpp

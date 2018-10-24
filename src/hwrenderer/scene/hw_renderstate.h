@@ -364,5 +364,13 @@ public:
 	void SetColor(int sectorlightlevel, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon = false);
 	void SetFog(int lightlevel, int rellight, bool fullbright, const FColormap *cmap, bool isadditive);
 
+	// Temporary helper to get around the lack of hardware independent vertex buffer interface.
+	// This needs to be done better so that abstract interfaces can be passed around between hwrenderer and the backends.
+	enum
+	{
+		VB_Default,
+		VB_Sky
+	};
+	virtual void SetVertexBuffer(int which) = 0;
 };
 

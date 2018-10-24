@@ -6,6 +6,8 @@
 #include "hw_drawstructs.h"
 #include "hwrenderer/textures/hw_material.h"
 
+class FSkyDomeCreator;
+
 struct GLSkyInfo
 {
 	float x_offset[2];
@@ -69,7 +71,7 @@ public:
 	virtual bool IsSky() { return false; }
 	virtual bool NeedCap() { return true; }
 	virtual bool NeedDepthBuffer() { return true; }
-	virtual void DrawContents(HWDrawInfo *di) = 0;
+	virtual void DrawContents(HWDrawInfo *di, FRenderState &state) = 0;
 	virtual void RenderAttached(HWDrawInfo *di) {}
 
 	void AddLine(GLWall * l)
@@ -321,7 +323,7 @@ public:
 	virtual bool IsSky() { return mScene->IsSky(); }
 	virtual bool NeedCap() { return true; }
 	virtual bool NeedDepthBuffer() { return true; }
-	virtual void DrawContents(HWDrawInfo *di)
+	virtual void DrawContents(HWDrawInfo *di, FRenderState &state)
 	{
 		if (mScene->Setup(di, di->mClipper))
 		{
@@ -334,3 +336,71 @@ public:
 };
 
 
+struct HWHorizonPortal : public HWPortal
+{
+	GLHorizonInfo * origin;
+	unsigned int voffset;
+	unsigned int vcount;
+	friend struct HWEEHorizonPortal;
+
+protected:
+	virtual void DrawContents(HWDrawInfo *di, FRenderState &state);
+	virtual void * GetSource() const { return origin; }
+	virtual bool NeedDepthBuffer() { return false; }
+	virtual bool NeedCap() { return false; }
+	virtual const char *GetName();
+
+public:
+
+	HWHorizonPortal(FPortalSceneState *state, GLHorizonInfo * pt, FRenderViewpoint &vp, HWDrawInfo *di, bool local = false);
+};
+
+struct HWEEHorizonPortal : public HWPortal
+{
+	FSectorPortal * portal;
+
+protected:
+	virtual void DrawContents(HWDrawInfo *di, FRenderState &state);
+	virtual void * GetSource() const { return portal; }
+	virtual bool NeedDepthBuffer() { return false; }
+	virtual bool NeedCap() { return false; }
+	virtual const char *GetName();
+
+public:
+
+	HWEEHorizonPortal(FPortalSceneState *state, FSectorPortal *pt, HWDrawInfo *di) : HWPortal(state, false)
+	{
+		portal = pt;
+	}
+
+};
+
+
+struct HWSkyPortal : public HWPortal
+{
+	GLSkyInfo * origin;
+	FSkyDomeCreator *vertexBuffer;
+	friend struct HWEEHorizonPortal;
+
+	void RenderRow(HWDrawInfo *di, FRenderState &state, EDrawType prim, int row, bool apply = true);
+	void RenderBox(HWDrawInfo *di, FRenderState &state, FTextureID texno, FMaterial * gltex, float x_offset, bool sky2);
+	void RenderDome(HWDrawInfo *di, FRenderState &state, FMaterial * tex, float x_offset, float y_offset, bool mirror, int mode);
+
+protected:
+	virtual void DrawContents(HWDrawInfo *di, FRenderState &state);
+	virtual void * GetSource() const { return origin; }
+	virtual bool IsSky() { return true; }
+	virtual bool NeedDepthBuffer() { return false; }
+	virtual const char *GetName();
+
+public:
+
+
+	HWSkyPortal(FSkyDomeCreator *vertexbuffer, FPortalSceneState *state, GLSkyInfo *  pt, bool local = false)
+		: HWPortal(state, local)
+	{
+		origin = pt;
+		vertexBuffer = vertexbuffer;
+	}
+
+};

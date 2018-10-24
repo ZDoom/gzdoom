@@ -186,12 +186,10 @@ public:
 
 class FSkyVertexBuffer : public FVertexBuffer, public FSkyDomeCreator
 {
-	void RenderRow(int prim, int row);
 
 public:
 
 	FSkyVertexBuffer();
-	void RenderDome(FMaterial *tex, int mode);
 	void BindVBO();
 };
 

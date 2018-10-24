@@ -32,8 +32,10 @@ struct FSkyVertex
 
 };
 
+struct HWSkyPortal;
 class FSkyDomeCreator
 {
+	friend struct HWSkyPortal;
 public:
 	static const int SKYHEMI_UPPER = 1;
 	static const int SKYHEMI_LOWER = 2;

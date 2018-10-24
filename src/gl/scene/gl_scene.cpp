@@ -53,8 +53,8 @@
 #include "hwrenderer/scene/hw_clipper.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "gl/scene/gl_drawinfo.h"
-#include "gl/scene/gl_portal.h"
 #include "hwrenderer/utility/hw_vrmodes.h"
+#include "gl/renderer/gl_renderer.h"
 
 //==========================================================================
 //

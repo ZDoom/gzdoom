@@ -186,6 +186,9 @@ public:
 	{
 		return mPassType == GBUFFER_PASS ? 3 : 1;
 	}
+
+
+	void SetVertexBuffer(int which) override;
 };
 
 extern FGLRenderState gl_RenderState;

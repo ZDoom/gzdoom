@@ -30,11 +30,13 @@
 #include "p_maputl.h"
 #include "hw_portal.h"
 #include "hw_clipper.h"
-#include "actor.h"
+#include "d_player.h"
+#include "r_sky.h"
 #include "g_levellocals.h"
 #include "hw_renderstate.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/utility/hw_clock.h"
+#include "hwrenderer/utility/hw_lighting.h"
 
 EXTERN_CVAR(Int, r_mirror_recursions)
 EXTERN_CVAR(Bool, gl_portals)
@@ -782,3 +784,198 @@ void HWPlaneMirrorPortal::Shutdown(HWDrawInfo *di)
 }
 
 const char *HWPlaneMirrorPortal::GetName() { return origin->fC() < 0? "Planemirror ceiling" : "Planemirror floor"; }
+
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//
+//
+// Horizon Portal
+//
+//
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+HWHorizonPortal::HWHorizonPortal(FPortalSceneState *s, GLHorizonInfo * pt, FRenderViewpoint &vp, HWDrawInfo *di, bool local)
+	: HWPortal(s, local)
+{
+	origin = pt;
+
+	// create the vertex data for this horizon portal.
+	GLSectorPlane * sp = &origin->plane;
+	const float vx = vp.Pos.X;
+	const float vy = vp.Pos.Y;
+	const float vz = vp.Pos.Z;
+	const float z = sp->Texheight;
+	const float tz = (z - vz);
+
+	// Draw to some far away boundary
+	// This is not drawn as larger strips because it causes visual glitches.
+	auto verts = di->AllocVertices(256 + 10);
+	auto ptr = verts.first;
+	for (int xx = -32768; xx < 32768; xx += 4096)
+	{
+		float x = xx + vx;
+		for (int yy = -32768; yy < 32768; yy += 4096)
+		{
+			float y = yy + vy;
+			ptr->Set(x, z, y, x / 64, -y / 64);
+			ptr++;
+			ptr->Set(x + 4096, z, y, x / 64 + 64, -y / 64);
+			ptr++;
+			ptr->Set(x, z, y + 4096, x / 64, -y / 64 - 64);
+			ptr++;
+			ptr->Set(x + 4096, z, y + 4096, x / 64 + 64, -y / 64 - 64);
+			ptr++;
+		}
+	}
+
+	// fill the gap between the polygon and the true horizon
+	// Since I can't draw into infinity there can always be a
+	// small gap
+	ptr->Set(-32768 + vx, z, -32768 + vy, 512.f, 0);
+	ptr++;
+	ptr->Set(-32768 + vx, vz, -32768 + vy, 512.f, tz);
+	ptr++;
+	ptr->Set(-32768 + vx, z, 32768 + vy, -512.f, 0);
+	ptr++;
+	ptr->Set(-32768 + vx, vz, 32768 + vy, -512.f, tz);
+	ptr++;
+	ptr->Set(32768 + vx, z, 32768 + vy, 512.f, 0);
+	ptr++;
+	ptr->Set(32768 + vx, vz, 32768 + vy, 512.f, tz);
+	ptr++;
+	ptr->Set(32768 + vx, z, -32768 + vy, -512.f, 0);
+	ptr++;
+	ptr->Set(32768 + vx, vz, -32768 + vy, -512.f, tz);
+	ptr++;
+	ptr->Set(-32768 + vx, z, -32768 + vy, 512.f, 0);
+	ptr++;
+	ptr->Set(-32768 + vx, vz, -32768 + vy, 512.f, tz);
+	ptr++;
+
+	voffset = verts.second;
+	vcount = 256;
+
+}
+
+//-----------------------------------------------------------------------------
+//
+// HWHorizonPortal::DrawContents
+//
+//-----------------------------------------------------------------------------
+void HWHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
+{
+	Clocker c(PortalAll);
+
+	FMaterial * gltexture;
+	player_t * player = &players[consoleplayer];
+	GLSectorPlane * sp = &origin->plane;
+	auto &vp = di->Viewpoint;
+
+	gltexture = FMaterial::ValidateTexture(sp->texture, false, true);
+	if (!gltexture)
+	{
+		di->ClearScreen();
+		return;
+	}
+	di->SetCameraPos(vp.Pos);
+
+
+	if (gltexture && gltexture->tex->isFullbright())
+	{
+		// glowing textures are always drawn full bright without color
+		state.SetColor(255, 0, false, origin->colormap, 1.f);
+		state.SetFog(255, 0, false, &origin->colormap, false);
+	}
+	else
+	{
+		int rel = getExtraLight();
+		state.SetColor(origin->lightlevel, rel, di->isFullbrightScene(), origin->colormap, 1.0f);
+		state.SetFog(origin->lightlevel, rel, di->isFullbrightScene(), &origin->colormap, false);
+	}
+
+
+	state.SetMaterial(gltexture, CLAMP_NONE, 0, -1);
+	state.SetObjectColor(origin->specialcolor);
+
+	state.SetPlaneTextureRotation(sp, gltexture);
+	state.AlphaFunc(Alpha_GEqual, 0.f);
+	state.SetRenderStyle(STYLE_Source);
+
+	for (unsigned i = 0; i < vcount; i += 4)
+	{
+		di->Draw(DT_TriangleStrip, state, voffset + i, 4, i==0);
+	}
+	di->Draw(DT_TriangleStrip, state, voffset + vcount, 10, false);
+
+	state.EnableTextureMatrix(false);
+}
+
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//
+//
+// Eternity-style horizon portal
+//
+// To the rest of the engine these masquerade as a skybox portal
+// Internally they need to draw two horizon or sky portals
+// and will use the respective classes to achieve that.
+//
+//
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+//
+// 
+//
+//-----------------------------------------------------------------------------
+
+void HWEEHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
+{
+	auto &vp = di->Viewpoint;
+	sector_t *sector = portal->mOrigin;
+	if (sector->GetTexture(sector_t::floor) == skyflatnum ||
+		sector->GetTexture(sector_t::ceiling) == skyflatnum)
+	{
+		GLSkyInfo skyinfo;
+		skyinfo.init(sector->sky, 0);
+		//GLSkyPortal sky(mState, &skyinfo, true);
+		//sky.DrawContents(di, state);
+	}
+	if (sector->GetTexture(sector_t::ceiling) != skyflatnum)
+	{
+		GLHorizonInfo horz;
+		horz.plane.GetFromSector(sector, sector_t::ceiling);
+		horz.lightlevel = hw_ClampLight(sector->GetCeilingLight());
+		horz.colormap = sector->Colormap;
+		horz.specialcolor = 0xffffffff;
+		if (portal->mType == PORTS_PLANE)
+		{
+			horz.plane.Texheight = vp.Pos.Z + fabs(horz.plane.Texheight);
+		}
+		HWHorizonPortal ceil(mState, &horz, di->Viewpoint, di, true);
+		ceil.DrawContents(di, state);
+	}
+	if (sector->GetTexture(sector_t::floor) != skyflatnum)
+	{
+		GLHorizonInfo horz;
+		horz.plane.GetFromSector(sector, sector_t::floor);
+		horz.lightlevel = hw_ClampLight(sector->GetFloorLight());
+		horz.colormap = sector->Colormap;
+		horz.specialcolor = 0xffffffff;
+		if (portal->mType == PORTS_PLANE)
+		{
+			horz.plane.Texheight = vp.Pos.Z - fabs(horz.plane.Texheight);
+		}
+		HWHorizonPortal floor(mState, &horz, di->Viewpoint, di, true);
+		floor.DrawContents(di, state);
+	}
+}
+
+const char *HWHorizonPortal::GetName() { return "Horizon"; }
+const char *HWEEHorizonPortal::GetName() { return "EEHorizon"; }
+
+

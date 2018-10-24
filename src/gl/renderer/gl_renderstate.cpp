@@ -362,3 +362,9 @@ void FGLRenderState::ApplyBlendMode()
 	}
 
 }
+
+// Needs to be redone
+void FGLRenderState::SetVertexBuffer(int which)
+{
+	SetVertexBuffer(which == VB_Sky ? (FVertexBuffer*)GLRenderer->mSkyVBO : GLRenderer->mVBO);
+}

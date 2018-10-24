@@ -38,8 +38,8 @@
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "hwrenderer/scene/hw_clipper.h"
-#include "gl/scene/gl_portal.h"
 #include "gl/renderer/gl_renderstate.h"
+#include "gl/renderer/gl_renderer.h"
 #include "gl/data/gl_viewpointbuffer.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/models/gl_models.h"
@@ -318,7 +318,7 @@ void FDrawInfo::RenderPortal(HWPortal *p, bool usestencil)
 	gp->SetupStencil(this, gl_RenderState, usestencil);
 	auto new_di = StartDrawInfo(Viewpoint, &VPUniforms);
 	new_di->mCurrentPortal = gp;
-	gp->DrawContents(new_di);
+	gp->DrawContents(new_di, gl_RenderState);
 	new_di->EndDrawInfo();
 	GLRenderer->mViewpoints->Bind(vpIndex);
 	gp->RemoveStencil(this, gl_RenderState, usestencil);

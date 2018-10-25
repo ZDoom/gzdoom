@@ -588,6 +588,13 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, BeginHUD)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, UpdateScreenGeometry)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	setsizeneeded = true;
+	return 0;
+}
+
 //---------------------------------------------------------------------------
 //
 // PROC AttachToPlayer

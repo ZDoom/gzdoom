@@ -107,7 +107,9 @@ public:
 	void Draw(HWDrawInfo *di, FRenderState &state, bool translucent);
 	void DrawWalls(HWDrawInfo *di, FRenderState &state, bool translucent);
 	void DrawFlats(HWDrawInfo *di, FRenderState &state, bool translucent);
-	
+
+	void DrawSorted(HWDrawInfo *di, FRenderState &state, SortNode * head);
+
 	HWDrawList * next;
 } ;
 

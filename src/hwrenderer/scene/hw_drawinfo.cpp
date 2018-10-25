@@ -33,6 +33,7 @@
 #include "hw_fakeflat.h"
 #include "hw_drawinfo.h"
 #include "hw_portal.h"
+#include "hw_renderstate.h"
 #include "hw_drawlist.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_cvars.h"

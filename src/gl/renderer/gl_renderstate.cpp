@@ -62,7 +62,6 @@ void FGLRenderState::Reset()
 	mGlossiness = 0.0f;
 	mSpecularLevel = 0.0f;
 	mShaderTimer = 0.0f;
-	ClearClipSplit();
 
 	stRenderStyle = DefaultRenderStyle();
 	stSrcBlend = stDstBlend = -1;

@@ -57,7 +57,6 @@ class FGLRenderState : public FRenderState
 	float mInterpolationFactor;
 
 	FVertexBuffer *mVertexBuffer, *mCurrentVertexBuffer;
-	float mClipSplit[2];
 
 	int mEffectState;
 	int mTempTM = TM_NORMAL;
@@ -117,28 +116,6 @@ public:
 	{
 		mGlossiness = glossiness;
 		mSpecularLevel = specularLevel;
-	}
-
-	void SetClipSplit(float bottom, float top)
-	{
-		mClipSplit[0] = bottom;
-		mClipSplit[1] = top;
-	}
-
-	void SetClipSplit(float *vals)
-	{
-		memcpy(mClipSplit, vals, 2 * sizeof(float));
-	}
-
-	void GetClipSplit(float *out)
-	{
-		memcpy(out, mClipSplit, 2 * sizeof(float));
-	}
-
-	void ClearClipSplit()
-	{
-		mClipSplit[0] = -1000000.f;
-		mClipSplit[1] = 1000000.f;
 	}
 
 	// This wraps the depth clamp setting because we frequently need to read it which OpenGL is not particularly performant at...

@@ -90,6 +90,7 @@ protected:
 	float mLightParms[4];
 
 	float mAlphaThreshold;
+	float mClipSplit[2];
 
 	FStateVec4 mNormal;
 	FStateVec4 mColor;
@@ -146,6 +147,7 @@ public:
 
 		mModelMatrix.loadIdentity();
 		mTextureMatrix.loadIdentity();
+		ClearClipSplit();
 	}
 
 	void SetNormal(FVector3 norm)
@@ -360,6 +362,29 @@ public:
 		mMaterial.mOverrideShader = overrideshader;
 		mMaterial.mChanged = true;
 	}
+
+	void SetClipSplit(float bottom, float top)
+	{
+		mClipSplit[0] = bottom;
+		mClipSplit[1] = top;
+	}
+
+	void SetClipSplit(float *vals)
+	{
+		memcpy(mClipSplit, vals, 2 * sizeof(float));
+	}
+
+	void GetClipSplit(float *out)
+	{
+		memcpy(out, mClipSplit, 2 * sizeof(float));
+	}
+
+	void ClearClipSplit()
+	{
+		mClipSplit[0] = -1000000.f;
+		mClipSplit[1] = 1000000.f;
+	}
+
 
 	void SetColor(int sectorlightlevel, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon = false);
 	void SetFog(int lightlevel, int rellight, bool fullbright, const FColormap *cmap, bool isadditive);

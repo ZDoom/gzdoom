@@ -63,66 +63,6 @@ FDrawInfoList di_list;
 //
 //
 //==========================================================================
-void FDrawInfo::DoDrawSorted(HWDrawList *dl, SortNode * head)
-{
-	float clipsplit[2];
-	int relation = 0;
-	float z = 0.f;
-
-	gl_RenderState.GetClipSplit(clipsplit);
-
-	if (dl->drawitems[head->itemindex].rendertype == GLDIT_FLAT)
-	{
-		z = dl->flats[dl->drawitems[head->itemindex].index]->z;
-		relation = z > Viewpoint.Pos.Z ? 1 : -1;
-	}
-
-
-	// left is further away, i.e. for stuff above viewz its z coordinate higher, for stuff below viewz its z coordinate is lower
-	if (head->left) 
-	{
-		if (relation == -1)
-		{
-			gl_RenderState.SetClipSplit(clipsplit[0], z);	// render below: set flat as top clip plane
-		}
-		else if (relation == 1)
-		{
-			gl_RenderState.SetClipSplit(z, clipsplit[1]);	// render above: set flat as bottom clip plane
-		}
-		DoDrawSorted(dl, head->left);
-		gl_RenderState.SetClipSplit(clipsplit);
-	}
-	dl->DoDraw(this, gl_RenderState, true, head->itemindex);
-	if (head->equal)
-	{
-		SortNode * ehead=head->equal;
-		while (ehead)
-		{
-			dl->DoDraw(this, gl_RenderState, true, ehead->itemindex);
-			ehead=ehead->equal;
-		}
-	}
-	// right is closer, i.e. for stuff above viewz its z coordinate is lower, for stuff below viewz its z coordinate is higher
-	if (head->right)
-	{
-		if (relation == 1)
-		{
-			gl_RenderState.SetClipSplit(clipsplit[0], z);	// render below: set flat as top clip plane
-		}
-		else if (relation == -1)
-		{
-			gl_RenderState.SetClipSplit(z, clipsplit[1]);	// render above: set flat as bottom clip plane
-		}
-		DoDrawSorted(dl, head->right);
-		gl_RenderState.SetClipSplit(clipsplit);
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
 void FDrawInfo::DrawSorted(int listindex)
 {
 	HWDrawList *dl = &drawlists[listindex];
@@ -140,7 +80,7 @@ void FDrawInfo::DrawSorted(int listindex)
 		glEnable(GL_CLIP_DISTANCE1);
 		glEnable(GL_CLIP_DISTANCE2);
 	}
-	DoDrawSorted(dl, dl->sorted);
+	dl->DrawSorted(this, gl_RenderState, dl->sorted);
 	if (!(gl.flags & RFL_NO_CLIP_PLANES))
 	{
 		glDisable(GL_CLIP_DISTANCE1);

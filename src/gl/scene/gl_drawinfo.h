@@ -56,7 +56,6 @@ struct FDrawInfo : public HWDrawInfo
 	
 	void StartScene();
 
-	void DoDrawSorted(HWDrawList *dl, SortNode * head);
 	void DrawSorted(int listindex);
 
 	// These two may be moved to the API independent part of the renderer later.

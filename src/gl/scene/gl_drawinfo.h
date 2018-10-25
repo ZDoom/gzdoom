@@ -36,7 +36,6 @@ struct FDrawInfo : public HWDrawInfo
 
 	void AddWall(GLWall *wall) override;
     void AddMirrorSurface(GLWall *w) override;
-	void AddPortal(GLWall *w, int portaltype) override;
 	void AddFlat(GLFlat *flat, bool fog) override;
 	void AddSprite(GLSprite *sprite, bool translucent) override;
 

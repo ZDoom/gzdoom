@@ -39,6 +39,7 @@
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "hw_renderstate.h"
+#include "hw_skydome.h"
 
 //==========================================================================
 //
@@ -470,7 +471,7 @@ void GLWall::PutPortal(HWDrawInfo *di, int ptype)
 		break;
 
 	case PORTALTYPE_SECTORSTACK:
-		portal = di->FindPortal(portal);
+		portal = di->FindPortal(this->portal);
 		if (!portal)
 		{
 			portal = new HWScenePortal(pstate, new HWSectorStackPortal(this->portal));
@@ -529,7 +530,7 @@ void GLWall::PutPortal(HWDrawInfo *di, int ptype)
 		portal = di->FindPortal(sky);
 		if (!portal)
 		{
-			portal = new HWSkyPortal(GLRenderer->mSkyVBO, &pstate, sky);
+			portal = new HWSkyPortal(screen->mSkyData, pstate, sky);
 			di->Portals.Push(portal);
 		}
 		portal->AddLine(this);

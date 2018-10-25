@@ -58,7 +58,6 @@ public:
 	FVertexBuffer(bool wantbuffer = true);
 	virtual ~FVertexBuffer();
 	virtual void BindVBO() = 0;
-	void EnableBufferArrays(int enable, int disable);
 };
 
 struct FSimpleVertex

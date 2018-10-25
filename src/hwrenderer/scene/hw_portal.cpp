@@ -811,7 +811,7 @@ HWHorizonPortal::HWHorizonPortal(FPortalSceneState *s, GLHorizonInfo * pt, FRend
 
 	// Draw to some far away boundary
 	// This is not drawn as larger strips because it causes visual glitches.
-	auto verts = di->AllocVertices(256 + 10);
+	auto verts = di->AllocVertices(1024 + 10);
 	auto ptr = verts.first;
 	for (int xx = -32768; xx < 32768; xx += 4096)
 	{
@@ -855,7 +855,7 @@ HWHorizonPortal::HWHorizonPortal(FPortalSceneState *s, GLHorizonInfo * pt, FRend
 	ptr++;
 
 	voffset = verts.second;
-	vcount = 256;
+	vcount = 1024;
 
 }
 
@@ -905,7 +905,7 @@ void HWHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 
 	for (unsigned i = 0; i < vcount; i += 4)
 	{
-		di->Draw(DT_TriangleStrip, state, voffset + i, 4, i==0);
+		di->Draw(DT_TriangleStrip, state, voffset + i, 4, true);// i == 0);
 	}
 	di->Draw(DT_TriangleStrip, state, voffset + vcount, 10, false);
 

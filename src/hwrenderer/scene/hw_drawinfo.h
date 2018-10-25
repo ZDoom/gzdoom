@@ -329,7 +329,6 @@ public:
     virtual void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) = 0;
     
     virtual void AddWall(GLWall *w) = 0;
-	virtual void AddPortal(GLWall *w, int portaltype) = 0;
     virtual void AddMirrorSurface(GLWall *w) = 0;
 	virtual void AddFlat(GLFlat *flat, bool fog) = 0;
 	virtual void AddSprite(GLSprite *sprite, bool translucent) = 0;

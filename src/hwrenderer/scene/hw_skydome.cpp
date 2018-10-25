@@ -81,11 +81,13 @@ EXTERN_CVAR(Float, skyoffset)
 
 FSkyDomeCreator::FSkyDomeCreator()
 {
+	screen->mSkyData = this;
 	CreateDome();
 }
 
 FSkyDomeCreator::~FSkyDomeCreator()
 {
+	if (screen && screen->mSkyData) screen->mSkyData = nullptr;
 }
 
 //-----------------------------------------------------------------------------

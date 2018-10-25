@@ -91,3 +91,68 @@ void FDrawInfo::AddMirrorSurface(GLWall *w)
 	newwall->ProcessDecals(this);
 }
 
+//==========================================================================
+//
+// FDrawInfo::AddFlat
+//
+// Checks texture, lighting and translucency settings and puts this
+// plane in the appropriate render list.
+//
+//==========================================================================
+
+void FDrawInfo::AddFlat(GLFlat *flat, bool fog)
+{
+	int list;
+
+	if (flat->renderstyle != STYLE_Translucent || flat->alpha < 1.f - FLT_EPSILON || fog || flat->gltexture == nullptr)
+	{
+		// translucent 3D floors go into the regular translucent list, translucent portals go into the translucent border list.
+		list = (flat->renderflags&SSRF_RENDER3DPLANES) ? GLDL_TRANSLUCENT : GLDL_TRANSLUCENTBORDER;
+	}
+	else if (flat->gltexture->tex->GetTranslucency())
+	{
+		if (flat->stack)
+		{
+			list = GLDL_TRANSLUCENTBORDER;
+		}
+		else if ((flat->renderflags&SSRF_RENDER3DPLANES) && !flat->plane.plane.isSlope())
+		{
+			list = GLDL_TRANSLUCENT;
+		}
+		else
+		{
+			list = GLDL_PLAINFLATS;
+		}
+	}
+	else
+	{
+		bool masked = flat->gltexture->isMasked() && ((flat->renderflags&SSRF_RENDER3DPLANES) || flat->stack);
+		list = masked ? GLDL_MASKEDFLATS : GLDL_PLAINFLATS;
+	}
+	auto newflat = drawlists[list].NewFlat();
+	*newflat = *flat;
+}
+
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+void FDrawInfo::AddSprite(GLSprite *sprite, bool translucent)
+{
+	int list;
+	// [BB] Allow models to be drawn in the GLDL_TRANSLUCENT pass.
+	if (translucent || sprite->actor == nullptr || (!sprite->modelframe && (sprite->actor->renderflags & RF_SPRITETYPEMASK) != RF_WALLSPRITE))
+	{
+		list = GLDL_TRANSLUCENT;
+	}
+	else
+	{
+		list = GLDL_MODELS;
+	}
+
+	auto newsprt = drawlists[list].NewSprite();
+	*newsprt = *sprite;
+}
+

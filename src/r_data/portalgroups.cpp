@@ -461,9 +461,8 @@ static void GroupLinePortals()
 
 void InitPortalGroups()
 {
-	if (level.nodes.Size() == 0) return;
-
-	GroupSectorPortals();
+	if (level.nodes.Size() > 0)
+		GroupSectorPortals();
 	GroupLinePortals();
 }
 

@@ -39,7 +39,7 @@
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_vrmodes.h"
 #include "gl/data/gl_uniformbuffer.h"
-#include "gl/models/gl_models.h"
+#include "hwrenderer/models/hw_models.h"
 #include "gl/shaders/gl_shaderprogram.h"
 #include "gl_debug.h"
 #include "r_videoscale.h"

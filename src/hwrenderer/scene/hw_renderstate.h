@@ -399,6 +399,7 @@ public:
 
 	void SetVertexBuffer(IVertexBuffer *vb, int offset0, int offset1)
 	{
+		assert(vb);
 		mVertexBuffer = vb;
 		mVertexOffsets[0] = offset0;
 		mVertexOffsets[1] = offset1;

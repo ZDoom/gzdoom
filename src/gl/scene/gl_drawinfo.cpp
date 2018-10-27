@@ -43,7 +43,7 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/data/gl_viewpointbuffer.h"
 #include "gl/dynlights/gl_lightbuffer.h"
-#include "gl/models/gl_models.h"
+#include "hwrenderer/models/hw_models.h"
 
 class FDrawInfoList
 {
@@ -243,12 +243,14 @@ void FDrawInfo::DrawModel(GLSprite *spr, FRenderState &state)
 {
 	FGLModelRenderer renderer(this, state, spr->dynlightindex);
 	renderer.RenderModel(spr->x, spr->y, spr->z, spr->modelframe, spr->actor, Viewpoint.TicFrac);
+	GLRenderer->mVBO->Bind(state);
 }
 
 void FDrawInfo::DrawHUDModel(HUDSprite *huds, FRenderState &state)
 {
 	FGLModelRenderer renderer(this, state, huds->lightindex);
 	renderer.RenderHUDModel(huds->weapon, huds->mx, huds->my);
+	GLRenderer->mVBO->Bind(state);
 }
 
 void FDrawInfo::RenderPortal(HWPortal *p, bool usestencil)

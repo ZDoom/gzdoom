@@ -277,8 +277,6 @@ void FModelRenderer::RenderFrameModels(const FSpriteModelFrame *smf, const FStat
 				mdl->RenderFrame(this, tex, smf->modelframes[i], smfNext->modelframes[i], inter, translation);
 			else
 				mdl->RenderFrame(this, tex, smf->modelframes[i], smf->modelframes[i], 0.f, translation);
-
-			ResetVertexBuffer();
 		}
 	}
 }

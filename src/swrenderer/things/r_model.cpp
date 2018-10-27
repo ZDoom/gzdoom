@@ -218,10 +218,6 @@ namespace swrenderer
 		return new SWModelVertexBuffer(needindex, singleframe);
 	}
 
-	void SWModelRenderer::ResetVertexBuffer()
-	{
-	}
-
 	VSMatrix SWModelRenderer::GetViewToWorldMatrix()
 	{
 		// Calculate the WorldToView matrix as it would have looked like without yshearing:

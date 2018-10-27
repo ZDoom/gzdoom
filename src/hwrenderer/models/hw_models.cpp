@@ -22,11 +22,10 @@
 /*
 ** gl_models.cpp
 **
-** OpenGL renderer model handling code
+** hardware renderer model handling code
 **
 **/
 
-#include "gl_load/gl_system.h"
 #include "w_wad.h"
 #include "g_game.h"
 #include "doomstat.h"
@@ -39,12 +38,10 @@
 #include "hwrenderer/textures/hw_material.h"
 #include "hwrenderer/data/vertexbuffer.h"
 #include "hwrenderer/data/flatvertices.h"
-
-#include "gl_load/gl_interface.h"
-#include "gl/renderer/gl_renderer.h"
-#include "gl/scene/gl_drawinfo.h"
-#include "gl/models/gl_models.h"
-#include "gl/shaders/gl_shader.h"
+#include "hwrenderer/scene/hw_drawinfo.h"
+#include "hwrenderer/scene/hw_renderstate.h"
+#include "hwrenderer/scene/hw_portal.h"
+#include "hw_models.h"
 
 CVAR(Bool, gl_light_models, true, CVAR_ARCHIVE)
 
@@ -108,11 +105,6 @@ void FGLModelRenderer::EndDrawHUDModel(AActor *actor)
 IModelVertexBuffer *FGLModelRenderer::CreateVertexBuffer(bool needindex, bool singleframe)
 {
 	return new FModelVertexBuffer(needindex, singleframe);
-}
-
-void FGLModelRenderer::ResetVertexBuffer()
-{
-	GLRenderer->mVBO->Bind(state);
 }
 
 void FGLModelRenderer::SetInterpolation(double inter)
@@ -223,9 +215,7 @@ void FModelVertexBuffer::UnlockIndexBuffer()
 
 void FModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size)
 {
-	mIndexFrame[0] = frame1;
-	mIndexFrame[1] = frame2;
-	auto state = static_cast<FGLModelRenderer*>(renderer)->state;
-	state.SetVertexBuffer(mVertexBuffer, mIndexFrame[0], mIndexFrame[1]);
+	auto &state = static_cast<FGLModelRenderer*>(renderer)->state;
+	state.SetVertexBuffer(mVertexBuffer, frame1, frame2);
 	if (mIndexBuffer) state.SetIndexBuffer(mIndexBuffer);
 }

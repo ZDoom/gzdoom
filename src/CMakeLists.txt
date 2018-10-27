@@ -694,6 +694,7 @@ file( GLOB HEADER_FILES
 	polyrenderer/scene/*.h
 	hwrenderer/data/*.h
 	hwrenderer/dynlights/*.h
+	hwrenderer/models/*.h
 	hwrenderer/postprocessing/*.h
 	hwrenderer/scene/*.h
 	hwrenderer/textures/*.h
@@ -1041,7 +1042,6 @@ set (PCH_SOURCES
 	gl/data/gl_viewpointbuffer.cpp
 	gl/dynlights/gl_lightbuffer.cpp
 	gl/dynlights/gl_shadowmap.cpp
-	gl/models/gl_models.cpp
 	gl/renderer/gl_renderer.cpp
 	gl/renderer/gl_renderstate.cpp
 	gl/renderer/gl_renderbuffers.cpp
@@ -1060,6 +1060,7 @@ set (PCH_SOURCES
 	hwrenderer/data/flatvertices.cpp
 	hwrenderer/dynlights/hw_aabbtree.cpp
 	hwrenderer/dynlights/hw_shadowmap.cpp
+	hwrenderer/models/hw_models.cpp
 	hwrenderer/scene/hw_skydome.cpp
 	hwrenderer/postprocessing/hw_postprocess.cpp
 	hwrenderer/postprocessing/hw_postprocess_cvars.cpp
@@ -1418,7 +1419,6 @@ source_group("OpenGL Loader" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl
 source_group("OpenGL Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/.+")
 source_group("OpenGL Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/data/.+")
 source_group("OpenGL Renderer\\Dynamic Lights" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/dynlights/.+")
-source_group("OpenGL Renderer\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/models/.+")
 source_group("OpenGL Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/renderer/.+")
 source_group("OpenGL Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/scene/.+")
 source_group("OpenGL Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/shaders/.+")

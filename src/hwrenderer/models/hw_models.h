@@ -28,12 +28,11 @@
 #include "r_data/models/models.h"
 
 class GLSprite;
-struct FDrawInfo;
+struct HWDrawInfo;
 class FRenderState;
 
 class FModelVertexBuffer : public IModelVertexBuffer
 {
-	int mIndexFrame[2];
 	IVertexBuffer *mVertexBuffer;
 	IIndexBuffer *mIndexBuffer;
 
@@ -55,16 +54,15 @@ class FGLModelRenderer : public FModelRenderer
 {
 	friend class FModelVertexBuffer;
 	int modellightindex = -1;
-	FDrawInfo *di;
+	HWDrawInfo *di;
 	FRenderState &state;
 public:
-	FGLModelRenderer(FDrawInfo *d, FRenderState &st, int mli) : modellightindex(mli), di(d), state(st)
+	FGLModelRenderer(HWDrawInfo *d, FRenderState &st, int mli) : modellightindex(mli), di(d), state(st)
 	{}
 	ModelRendererType GetType() const override { return GLModelRendererType; }
 	void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored) override;
 	void EndDrawModel(AActor *actor, FSpriteModelFrame *smf) override;
 	IModelVertexBuffer *CreateVertexBuffer(bool needindex, bool singleframe) override;
-	void ResetVertexBuffer() override;
 	VSMatrix GetViewToWorldMatrix() override;
 	void BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix, bool mirrored) override;
 	void EndDrawHUDModel(AActor *actor) override;

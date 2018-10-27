@@ -2,7 +2,7 @@
 
 #include "hwrenderer/data/vertexbuffer.h"
 
-class GLVertexBuffer : IVertexBuffer
+class GLVertexBuffer : public IVertexBuffer
 {
 	// If this could use the modern (since GL 4.3) binding system, things would be simpler... :(
 	struct GLVertexBufferAttribute
@@ -22,10 +22,21 @@ class GLVertexBuffer : IVertexBuffer
 public:
 	GLVertexBuffer();
 	~GLVertexBuffer();
-	void SetData(size_t size, void *data, bool staticdata) = 0;
+	void SetData(size_t size, void *data, bool staticdata) override;
 	void SetFormat(int numBindingPoints, int numAttributes, size_t stride, FVertexBufferAttribute *attrs) override;
 	void Bind(size_t *offsets);
 	void Map() override;
 	void Unmap() override;
+};
+
+class GLIndexBuffer : public IIndexBuffer
+{
+	unsigned int ibo_id = 0;
+
+public:
+	GLIndexBuffer();
+	~GLIndexBuffer();
+	void SetData(size_t size, void *data, bool staticdata) override;
+	void Bind();
 };
 

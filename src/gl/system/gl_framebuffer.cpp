@@ -44,6 +44,7 @@
 #include "gl/shaders/gl_shaderprogram.h"
 #include "gl_debug.h"
 #include "r_videoscale.h"
+#include "glsys_vertexbuffer.h"
 
 EXTERN_CVAR (Bool, vid_vsync)
 
@@ -359,6 +360,16 @@ IUniformBuffer *OpenGLFrameBuffer::CreateUniformBuffer(size_t size, bool staticu
 IShaderProgram *OpenGLFrameBuffer::CreateShaderProgram() 
 { 
 	return new FShaderProgram; 
+}
+
+IVertexBuffer *OpenGLFrameBuffer::CreateVertexBuffer()
+{ 
+	return new GLVertexBuffer; 
+}
+
+IIndexBuffer *OpenGLFrameBuffer::CreateIndexBuffer()
+{ 
+	return new GLIndexBuffer; 
 }
 
 

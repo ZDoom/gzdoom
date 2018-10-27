@@ -50,6 +50,8 @@ class IShaderProgram;
 class FTexture;
 struct FPortalSceneState;
 class FSkyDomeCreator;
+class IIndexBuffer;
+class IVertexBuffer;
 
 enum EHWCaps
 {
@@ -450,6 +452,8 @@ public:
     // Interface to hardware rendering resources
     virtual IUniformBuffer *CreateUniformBuffer(size_t size, bool staticuse = false) { return nullptr; }
 	virtual IShaderProgram *CreateShaderProgram() { return nullptr; }
+	virtual IVertexBuffer *CreateVertexBuffer() { return nullptr; }
+	virtual IIndexBuffer *CreateIndexBuffer() { return nullptr; }
 	bool BuffersArePersistent() { return !!(hwcaps & RFL_BUFFER_STORAGE); }
 
 	// Begin/End 2D drawing operations.

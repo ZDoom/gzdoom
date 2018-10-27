@@ -30,7 +30,7 @@
 
 //==========================================================================
 //
-// Create / destroy the VBO
+// Vertex buffer implementation
 //
 //==========================================================================
 
@@ -47,6 +47,7 @@ GLVertexBuffer::~GLVertexBuffer()
 		glUnmapBuffer(GL_ARRAY_BUFFER);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glDeleteBuffers(1, &vbo_id);
+		gl_RenderState.ResetVertexBuffer();
 	}
 }
 
@@ -140,4 +141,42 @@ void GLVertexBuffer::Bind(size_t *offsets)
 		}
 		i++;
 	}
+}
+
+//==========================================================================
+//
+// Index buffer implementation
+//
+//==========================================================================
+
+GLIndexBuffer::GLIndexBuffer()
+{
+	glGenBuffers(1, &ibo_id);
+}
+
+GLIndexBuffer::~GLIndexBuffer()
+{
+	if (ibo_id != 0)
+	{
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
+		glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glDeleteBuffers(1, &ibo_id);
+	}
+}
+
+void GLIndexBuffer::SetData(size_t size, void *data, bool staticdata)
+{
+	if (data != nullptr)
+	{
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, data, staticdata? GL_STATIC_DRAW : GL_STREAM_DRAW);
+	}
+	buffersize = size;
+	gl_RenderState.ResetVertexBuffer();	// This is needed because glBindBuffer overwrites the setting stored in the render state.
+}
+
+void GLIndexBuffer::Bind()
+{
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
 }

@@ -48,3 +48,16 @@ public:
 	void *Memory() { assert(map); return map; }
 };
 
+
+class IIndexBuffer
+{
+protected:
+	// Element size is fixed to 4, thanks to OpenGL requiring this info to be coded into the glDrawElements call.
+	// This mostly prohibits a more flexible buffer setup but GZDoom doesn't use any other format anyway.
+	// Ob Vulkam, element size is a buffer property and of no concern to the drawing functions (as it should be.)
+	size_t buffersize = 0;
+public:
+	virtual ~IIndexBuffer() {}
+	virtual void SetData(size_t size, void *data, bool staticdata = true) = 0;
+};
+

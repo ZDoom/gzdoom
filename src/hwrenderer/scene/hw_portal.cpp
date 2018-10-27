@@ -187,8 +187,8 @@ void HWPortal::DrawPortalStencil(HWDrawInfo *di, FRenderState &state, int pass)
 	{
 		// The cap's depth handling needs special treatment so that it won't block further portal caps.
 		if (pass == STP_DepthRestore) di->SetDepthRange(1, 1);
-		di->Draw(DT_TriangleFan, state, FFlatVertexGenerator::STENCILTOP_INDEX, 4);
-		di->Draw(DT_TriangleFan, state, FFlatVertexGenerator::STENCILBOTTOM_INDEX, 4);
+		di->Draw(DT_TriangleFan, state, FFlatVertexBuffer::STENCILTOP_INDEX, 4);
+		di->Draw(DT_TriangleFan, state, FFlatVertexBuffer::STENCILBOTTOM_INDEX, 4);
 		if (pass == STP_DepthRestore) di->SetDepthRange(0, 1);
 	}
 }

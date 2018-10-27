@@ -86,7 +86,7 @@ public:
 	void EnableColorArray(bool on);
 }; 
 
-class FFlatVertexBuffer : public FFlatVertexGenerator
+class FGLFlatVertexBuffer : public FFlatVertexBuffer
 {
 	IVertexBuffer *mVertexBuffer;
 	IIndexBuffer *mIndexBuffer;
@@ -103,8 +103,8 @@ class FFlatVertexBuffer : public FFlatVertexGenerator
 
 public:
 
-	FFlatVertexBuffer(int width, int height);
-	~FFlatVertexBuffer();
+	FGLFlatVertexBuffer(int width, int height);
+	~FGLFlatVertexBuffer();
 
 	void OutputResized(int width, int height);
 	void Bind(FRenderState &state);

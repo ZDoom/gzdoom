@@ -41,7 +41,7 @@ struct FFlatVertex
 	}
 };
 
-class FFlatVertexGenerator
+class FFlatVertexBuffer
 {
 protected:
 	TArray<FFlatVertex> vbo_shadowdata;
@@ -84,7 +84,7 @@ public:
 		NUM_RESERVED = 20
 	};
 
-	FFlatVertexGenerator(int width, int height);
+	FFlatVertexBuffer(int width, int height);
 
 	void OutputResized(int width, int height);
 

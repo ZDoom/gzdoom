@@ -122,8 +122,8 @@ void FSkyVertexBuffer::BindVBO()
 //
 //==========================================================================
 
-FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
-: FFlatVertexGenerator(width, height)
+FGLFlatVertexBuffer::FGLFlatVertexBuffer(int width, int height)
+: FFlatVertexBuffer(width, height)
 {
 	mVertexBuffer = screen->CreateVertexBuffer();
 	mIndexBuffer = screen->CreateIndexBuffer();
@@ -142,7 +142,7 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 	Copy(0, NUM_RESERVED);
 }
 
-FFlatVertexBuffer::~FFlatVertexBuffer()
+FGLFlatVertexBuffer::~FGLFlatVertexBuffer()
 {
 	delete mIndexBuffer;
 	delete mVertexBuffer;
@@ -150,20 +150,20 @@ FFlatVertexBuffer::~FFlatVertexBuffer()
 	mVertexBuffer = nullptr;
 }
 
-void FFlatVertexBuffer::Copy(int start, int count)
+void FGLFlatVertexBuffer::Copy(int start, int count)
 {
 	Map();
 	memcpy(GetBuffer(start), &vbo_shadowdata[0], count * sizeof(FFlatVertex));
 	Unmap();
 }
 
-void FFlatVertexBuffer::OutputResized(int width, int height)
+void FGLFlatVertexBuffer::OutputResized(int width, int height)
 {
-	FFlatVertexGenerator::OutputResized(width, height);
+	FFlatVertexBuffer::OutputResized(width, height);
 	Copy(4, 4);
 }
 
-void FFlatVertexBuffer::Bind(FRenderState &state)
+void FGLFlatVertexBuffer::Bind(FRenderState &state)
 {
 	state.SetVertexBuffer(mVertexBuffer, 0, 0);
 	state.SetIndexBuffer(mIndexBuffer);
@@ -175,10 +175,10 @@ void FFlatVertexBuffer::Bind(FRenderState &state)
 //
 //==========================================================================
 
-void FFlatVertexBuffer::CreateVBO()
+void FGLFlatVertexBuffer::CreateVBO()
 {
 	vbo_shadowdata.Resize(mNumReserved);
-	FFlatVertexGenerator::CreateVertices();
+	FFlatVertexBuffer::CreateVertices();
 	mCurIndex = mIndex = vbo_shadowdata.Size();
 	Copy(0, mIndex);
 	mIndexBuffer->SetData(ibo_data.Size() * sizeof(uint32_t), &ibo_data[0]);

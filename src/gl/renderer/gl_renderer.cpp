@@ -99,7 +99,7 @@ void FGLRenderer::Initialize(int width, int height)
 	glBindVertexArray(mVAOID);
 	FGLDebug::LabelObject(GL_VERTEX_ARRAY, mVAOID, "FGLRenderer.mVAOID");
 
-	mVBO = new FFlatVertexBuffer(width, height);
+	mVBO = new FGLFlatVertexBuffer(width, height);
 	mSkyVBO = new FSkyVertexBuffer;
 	mLights = new FLightBuffer();
 	mViewpoints = new GLViewpointBuffer;

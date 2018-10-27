@@ -39,7 +39,7 @@
 //
 //==========================================================================
 
-FFlatVertexGenerator::FFlatVertexGenerator(int width, int height)
+FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 {
 	vbo_shadowdata.Resize(NUM_RESERVED);
 
@@ -73,7 +73,7 @@ FFlatVertexGenerator::FFlatVertexGenerator(int width, int height)
 	vbo_shadowdata[19].Set(32767.0f, -32767.0f, -32767.0f, 0, 0);
 }
 
-void FFlatVertexGenerator::OutputResized(int width, int height)
+void FFlatVertexBuffer::OutputResized(int width, int height)
 {
 	vbo_shadowdata[4].Set(0, 0, 0, 0, 0);
 	vbo_shadowdata[5].Set(0, (float)height, 0, 0, 1);
@@ -118,7 +118,7 @@ static F3DFloor *Find3DFloor(sector_t *target, sector_t *model)
 //
 //==========================================================================
 
-int FFlatVertexGenerator::CreateIndexedSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor, int vi, FFlatVertexGenerator::FIndexGenerationInfo &gen)
+int FFlatVertexBuffer::CreateIndexedSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor, int vi, FFlatVertexBuffer::FIndexGenerationInfo &gen)
 {
 	if (sub->numlines < 3) return -1;
 
@@ -144,7 +144,7 @@ int FFlatVertexGenerator::CreateIndexedSubsectorVertices(subsector_t *sub, const
 //
 //==========================================================================
 
-int FFlatVertexGenerator::CreateIndexedSectorVertices(sector_t *sec, const secplane_t &plane, int floor, FFlatVertexGenerator::FIndexGenerationInfo &gen)
+int FFlatVertexBuffer::CreateIndexedSectorVertices(sector_t *sec, const secplane_t &plane, int floor, FFlatVertexBuffer::FIndexGenerationInfo &gen)
 {
 	int rt = ibo_data.Size();
 	int vi = vbo_shadowdata.Reserve(gen.vertices.Size());
@@ -175,7 +175,7 @@ int FFlatVertexGenerator::CreateIndexedSectorVertices(sector_t *sec, const secpl
 //
 //==========================================================================
 
-int FFlatVertexGenerator::CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, TArray<FFlatVertexGenerator::FIndexGenerationInfo> &gen)
+int FFlatVertexBuffer::CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, TArray<FFlatVertexBuffer::FIndexGenerationInfo> &gen)
 {
 	sec->vboindex[h] = vbo_shadowdata.Size();
 	// First calculate the vertices for the sector itself
@@ -221,7 +221,7 @@ int FFlatVertexGenerator::CreateIndexedVertices(int h, sector_t *sec, const secp
 //
 //==========================================================================
 
-void FFlatVertexGenerator::CreateIndexedFlatVertices()
+void FFlatVertexBuffer::CreateIndexedFlatVertices()
 {
 	TArray<FIndexGenerationInfo> gen;
 	gen.Resize(level.sectors.Size());
@@ -270,7 +270,7 @@ void FFlatVertexGenerator::CreateIndexedFlatVertices()
 //
 //==========================================================================
 
-void FFlatVertexGenerator::UpdatePlaneVertices(sector_t *sec, int plane)
+void FFlatVertexBuffer::UpdatePlaneVertices(sector_t *sec, int plane)
 {
 	int startvt = sec->vboindex[plane];
 	int countvt = sec->vbocount[plane];
@@ -291,7 +291,7 @@ void FFlatVertexGenerator::UpdatePlaneVertices(sector_t *sec, int plane)
 //
 //==========================================================================
 
-void FFlatVertexGenerator::CreateVertices()
+void FFlatVertexBuffer::CreateVertices()
 {
 	vbo_shadowdata.Resize(NUM_RESERVED);
 	CreateIndexedFlatVertices();
@@ -303,7 +303,7 @@ void FFlatVertexGenerator::CreateVertices()
 //
 //==========================================================================
 
-void FFlatVertexGenerator::CheckPlanes(sector_t *sector)
+void FFlatVertexBuffer::CheckPlanes(sector_t *sector)
 {
 	if (sector->GetPlaneTexZ(sector_t::ceiling) != sector->vboheight[sector_t::ceiling])
 	{
@@ -324,7 +324,7 @@ void FFlatVertexGenerator::CheckPlanes(sector_t *sector)
 //
 //==========================================================================
 
-void FFlatVertexGenerator::CheckUpdate(sector_t *sector)
+void FFlatVertexBuffer::CheckUpdate(sector_t *sector)
 {
 	CheckPlanes(sector);
 	sector_t *hs = sector->GetHeightSec();

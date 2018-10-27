@@ -60,7 +60,7 @@ void GLVertexBuffer::SetData(size_t size, void *data, bool staticdata)
 	}
 	else
 	{
-		mPersistent = screen->BuffersArePersistent();
+		mPersistent = screen->BuffersArePersistent() && !staticdata;
 		if (mPersistent)
 		{
 			glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
@@ -70,7 +70,7 @@ void GLVertexBuffer::SetData(size_t size, void *data, bool staticdata)
 		else
 		{
 			glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-			glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_STREAM_DRAW);
+			glBufferData(GL_ARRAY_BUFFER, size, NULL, staticdata ? GL_STATIC_DRAW : GL_STREAM_DRAW);
 			map = nullptr;
 		}
 		nomap = false;
@@ -143,6 +143,31 @@ void GLVertexBuffer::Bind(int *offsets)
 	}
 }
 
+//===========================================================================
+//
+//
+//
+//===========================================================================
+
+void *GLVertexBuffer::Lock(unsigned int size)
+{
+	SetData(size, nullptr, true);
+	return glMapBufferRange(GL_ARRAY_BUFFER, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+}
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
+
+void GLVertexBuffer::Unlock()
+{
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+	glUnmapBuffer(GL_ARRAY_BUFFER);
+	gl_RenderState.ResetVertexBuffer();
+}
+
 //==========================================================================
 //
 // Index buffer implementation
@@ -180,3 +205,29 @@ void GLIndexBuffer::Bind()
 {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
 }
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
+
+void *GLIndexBuffer::Lock(unsigned int size)
+{
+	SetData(size, nullptr, true);
+	return glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+}
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
+
+void GLIndexBuffer::Unlock()
+{
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
+	glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+	gl_RenderState.ResetVertexBuffer();
+}
+

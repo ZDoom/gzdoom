@@ -27,6 +27,8 @@ public:
 	void Bind(int *offsets);
 	void Map() override;
 	void Unmap() override;
+	void *Lock(unsigned int size) override;
+	void Unlock() override;
 };
 
 class GLIndexBuffer : public IIndexBuffer
@@ -38,5 +40,7 @@ public:
 	~GLIndexBuffer();
 	void SetData(size_t size, void *data, bool staticdata) override;
 	void Bind();
+	void *Lock(unsigned int size) override;
+	void Unlock() override;
 };
 

@@ -56,7 +56,7 @@ class FGLRenderState : public FRenderState
 
 	float mInterpolationFactor;
 
-	FVertexBuffer *mVertexBuffer, *mCurrentVertexBuffer;
+	FVertexBuffer *mFVertexBuffer, *mCurrentFVertexBuffer;
 
 	int mEffectState;
 	int mTempTM = TM_NORMAL;
@@ -79,6 +79,10 @@ class FGLRenderState : public FRenderState
 	int lastClamp = 0;
 	int lastTranslation = 0;
 	int maxBoundMaterial = -1;
+
+	IVertexBuffer *mCurrentVertexBuffer;
+	int mCurrentVertexOffsets[2];	// one per binding point
+	IIndexBuffer *mCurrentIndexBuffer;
 
 
 public:
@@ -103,13 +107,17 @@ public:
 
 	void SetVertexBuffer(FVertexBuffer *vb)
 	{
-		mVertexBuffer = vb;
+		mFVertexBuffer = vb;
+		mVertexBuffer = nullptr;
+		mIndexBuffer = nullptr;
 	}
 
 	void ResetVertexBuffer()
 	{
 		// forces rebinding with the next 'apply' call.
-		mCurrentVertexBuffer = NULL;
+		mCurrentFVertexBuffer = nullptr;
+		mVertexBuffer = nullptr;
+		mIndexBuffer = nullptr;
 	}
 
 	void SetSpecular(float glossiness, float specularLevel)

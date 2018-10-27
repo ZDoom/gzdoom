@@ -37,6 +37,7 @@
 #include "gl/dynlights//gl_lightbuffer.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/textures/gl_hwtexture.h"
+#include "gl/system/glsys_vertexbuffer.h"
 
 FGLRenderState gl_RenderState;
 
@@ -73,6 +74,11 @@ void FGLRenderState::Reset()
 	mEffectState = 0;
 	activeShader = nullptr;
 	mPassType = NORMAL_PASS;
+
+	mCurrentVertexBuffer = nullptr;
+	mCurrentVertexOffsets[0] = mVertexOffsets[0] = 0;
+	mCurrentIndexBuffer = nullptr;
+
 }
 
 //==========================================================================
@@ -246,11 +252,22 @@ void FGLRenderState::Apply()
 		mBias.mChanged = false;
 	}
 
-	if (mVertexBuffer != mCurrentVertexBuffer)
+	if (mVertexBuffer != nullptr)
 	{
-		if (mVertexBuffer == NULL) glBindBuffer(GL_ARRAY_BUFFER, 0);
-		else mVertexBuffer->BindVBO();
-		mCurrentVertexBuffer = mVertexBuffer;
+		if (mVertexBuffer != mCurrentVertexBuffer || mVertexOffsets[0] != mCurrentVertexOffsets[0] || mVertexOffsets[1] != mCurrentVertexOffsets[1])
+		{
+			assert(mVertexBuffer != nullptr);
+			static_cast<GLVertexBuffer*>(mVertexBuffer)->Bind(mVertexOffsets);
+			mCurrentVertexBuffer = mVertexBuffer;
+			mCurrentVertexOffsets[0] = mVertexOffsets[0];
+			mCurrentVertexOffsets[1] = mVertexOffsets[1];
+		}
+	}
+	else if (mFVertexBuffer != mCurrentFVertexBuffer)
+	{
+		if (mFVertexBuffer == NULL) glBindBuffer(GL_ARRAY_BUFFER, 0);
+		else mFVertexBuffer->BindVBO();
+		mCurrentFVertexBuffer = mFVertexBuffer;
 	}
 	ApplyShader();
 }

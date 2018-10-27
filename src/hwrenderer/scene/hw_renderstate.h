@@ -8,6 +8,8 @@
 #include "hwrenderer/textures/hw_material.h"
 
 struct FColormap;
+class IVertexBuffer;
+class IIndexBuffer;
 
 enum EEffect
 {
@@ -106,6 +108,10 @@ protected:
 	FMaterialState mMaterial;
 	FDepthBiasState mBias;
 
+	IVertexBuffer *mVertexBuffer;
+	int mVertexOffsets[2];	// one per binding point
+	IIndexBuffer *mIndexBuffer;
+
 	void SetShaderLight(float level, float olight);
 
 public:
@@ -135,6 +141,10 @@ public:
 		mRenderStyle = DefaultRenderStyle();
 		mMaterial.Reset();
 		mBias.Reset();
+
+		mVertexBuffer = nullptr;
+		mVertexOffsets[0] = mVertexOffsets[0] = 0;
+		mIndexBuffer = nullptr;
 
 		mColor.Set(1.0f, 1.0f, 1.0f, 1.0f);
 		mGlowTop.Set(0.0f, 0.0f, 0.0f, 0.0f);
@@ -383,6 +393,18 @@ public:
 	{
 		mClipSplit[0] = -1000000.f;
 		mClipSplit[1] = 1000000.f;
+	}
+
+	void SetVertexBuffer(IVertexBuffer *vb, int offset0, int offset1)
+	{
+		mVertexBuffer = vb;
+		mVertexOffsets[0] = offset0;
+		mVertexOffsets[1] = offset1;
+	}
+
+	void SetIndexBuffer(IIndexBuffer *ib)
+	{
+		mIndexBuffer = ib;
 	}
 
 

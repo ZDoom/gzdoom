@@ -122,7 +122,7 @@ void GLVertexBuffer::SetFormat(int numBindingPoints, int numAttributes, size_t s
 	}
 }
 
-void GLVertexBuffer::Bind(size_t *offsets)
+void GLVertexBuffer::Bind(int *offsets)
 {
 	int i = 0;
 

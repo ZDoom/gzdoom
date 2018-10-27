@@ -256,6 +256,7 @@ void FDrawInfo::RenderPortal(HWPortal *p, bool usestencil)
 	gp->SetupStencil(this, gl_RenderState, usestencil);
 	auto new_di = StartDrawInfo(Viewpoint, &VPUniforms);
 	new_di->mCurrentPortal = gp;
+	gl_RenderState.SetLightIndex(-1);
 	gp->DrawContents(new_di, gl_RenderState);
 	new_di->EndDrawInfo();
 	GLRenderer->mViewpoints->Bind(vpIndex);

@@ -276,7 +276,7 @@ void FGLRenderState::ApplyBuffers()
 		}
 		if (mIndexBuffer != mCurrentIndexBuffer)
 		{
-			static_cast<GLIndexBuffer*>(mIndexBuffer)->Bind();
+			if (mIndexBuffer) static_cast<GLIndexBuffer*>(mIndexBuffer)->Bind();
 			mCurrentIndexBuffer = mIndexBuffer;
 		}
 	}

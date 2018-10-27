@@ -95,26 +95,6 @@ public:
 	void BindVBO();
 };
 
-class FModelVertexBuffer : public FVertexBuffer, public IModelVertexBuffer
-{
-	int mIndexFrame[2];
-	FModelVertex *vbo_ptr;
-	uint32_t ibo_id;
-
-public:
-
-	FModelVertexBuffer(bool needindex, bool singleframe);
-	~FModelVertexBuffer();
-
-	FModelVertex *LockVertexBuffer(unsigned int size) override;
-	void UnlockVertexBuffer() override;
-
-	unsigned int *LockIndexBuffer(unsigned int size) override;
-	void UnlockIndexBuffer() override;
-
-	void SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size) override;
-	void BindVBO() override;
-};
 
 #define VSO ((FSkyVertex*)NULL)
 

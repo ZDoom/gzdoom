@@ -35,6 +35,7 @@
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "i_time.h"
+#include "cmdlib.h"
 #include "hwrenderer/textures/hw_material.h"
 
 #include "gl_load/gl_interface.h"
@@ -113,7 +114,7 @@ IModelVertexBuffer *FGLModelRenderer::CreateVertexBuffer(bool needindex, bool si
 
 void FGLModelRenderer::SetVertexBuffer(IModelVertexBuffer *buffer)
 {
-	gl_RenderState.SetVertexBuffer((FModelVertexBuffer*)buffer);
+	static_cast<FModelVertexBuffer*>(buffer)->Bind(gl_RenderState);
 }
 
 void FGLModelRenderer::ResetVertexBuffer()
@@ -146,23 +147,22 @@ void FGLModelRenderer::DrawElements(int numIndices, size_t offset)
 
 //===========================================================================
 //
-// Uses a hardware buffer if either single frame (i.e. no interpolation needed)
-// or shading is available (interpolation is done by the vertex shader)
 //
-// If interpolation has to be done on the CPU side this will fall back
-// to CPU-side arrays.
 //
 //===========================================================================
 
 FModelVertexBuffer::FModelVertexBuffer(bool needindex, bool singleframe)
-	: FVertexBuffer(true)
 {
-	vbo_ptr = nullptr;
-	ibo_id = 0;
-	if (needindex)
-	{
-		glGenBuffers(1, &ibo_id);	// The index buffer can always be a real buffer.
-	}
+	mVertexBuffer = screen->CreateVertexBuffer();
+	mIndexBuffer = needindex ? screen->CreateIndexBuffer() : nullptr;
+
+	static const FVertexBufferAttribute format[] = {
+		{ 0, VATTR_VERTEX, VFmt_Float3, myoffsetof(FModelVertex, x) },
+		{ 0, VATTR_TEXCOORD, VFmt_Float2, myoffsetof(FModelVertex, u) },
+		{ 0, VATTR_NORMAL, VFmt_Packed_A2R10G10B10, myoffsetof(FModelVertex, packedNormal) },
+		{ 0, VATTR_VERTEX2, VFmt_Float3, myoffsetof(FModelVertex, x) }
+	};
+	mVertexBuffer->SetFormat(2, 4, sizeof(FModelVertex), format);
 }
 
 //===========================================================================
@@ -171,15 +171,10 @@ FModelVertexBuffer::FModelVertexBuffer(bool needindex, bool singleframe)
 //
 //===========================================================================
 
-void FModelVertexBuffer::BindVBO()
+void FModelVertexBuffer::Bind(FRenderState &state)
 {
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-	glEnableVertexAttribArray(VATTR_VERTEX);
-	glEnableVertexAttribArray(VATTR_TEXCOORD);
-	glEnableVertexAttribArray(VATTR_VERTEX2);
-	glEnableVertexAttribArray(VATTR_NORMAL);
-	glDisableVertexAttribArray(VATTR_COLOR);
+	state.SetVertexBuffer(mVertexBuffer, mIndexFrame[0], mIndexFrame[1]);
+	if (mIndexBuffer) state.SetIndexBuffer(mIndexBuffer);
 }
 
 //===========================================================================
@@ -190,14 +185,8 @@ void FModelVertexBuffer::BindVBO()
 
 FModelVertexBuffer::~FModelVertexBuffer()
 {
-	if (ibo_id != 0)
-	{
-		glDeleteBuffers(1, &ibo_id);
-	}
-	if (vbo_ptr != nullptr)
-	{
-		delete[] vbo_ptr;
-	}
+	if (mIndexBuffer) delete mIndexBuffer;
+	delete mVertexBuffer;
 }
 
 //===========================================================================
@@ -208,19 +197,7 @@ FModelVertexBuffer::~FModelVertexBuffer()
 
 FModelVertex *FModelVertexBuffer::LockVertexBuffer(unsigned int size)
 {
-	if (vbo_id > 0)
-	{
-		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-		glBufferData(GL_ARRAY_BUFFER, size * sizeof(FModelVertex), nullptr, GL_STATIC_DRAW);
-		return (FModelVertex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, size * sizeof(FModelVertex), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-	}
-	else
-	{
-		if (vbo_ptr != nullptr) delete[] vbo_ptr;
-		vbo_ptr = new FModelVertex[size];
-		memset(vbo_ptr, 0, size * sizeof(FModelVertex));
-		return vbo_ptr;
-	}
+	return static_cast<FModelVertex*>(mVertexBuffer->Lock(size * sizeof(FModelVertex)));
 }
 
 //===========================================================================
@@ -231,11 +208,7 @@ FModelVertex *FModelVertexBuffer::LockVertexBuffer(unsigned int size)
 
 void FModelVertexBuffer::UnlockVertexBuffer()
 {
-	if (vbo_id > 0)
-	{
-		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-		glUnmapBuffer(GL_ARRAY_BUFFER);
-	}
+	mVertexBuffer->Unlock();
 }
 
 //===========================================================================
@@ -246,16 +219,8 @@ void FModelVertexBuffer::UnlockVertexBuffer()
 
 unsigned int *FModelVertexBuffer::LockIndexBuffer(unsigned int size)
 {
-	if (ibo_id != 0)
-	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, size * sizeof(unsigned int), NULL, GL_STATIC_DRAW);
-		return (unsigned int*)glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, size * sizeof(unsigned int), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-	}
-	else
-	{
-		return nullptr;
-	}
+	if (mIndexBuffer) return static_cast<unsigned int*>(mIndexBuffer->Lock(size * sizeof(unsigned int)));
+	else return nullptr;
 }
 
 //===========================================================================
@@ -266,27 +231,18 @@ unsigned int *FModelVertexBuffer::LockIndexBuffer(unsigned int size)
 
 void FModelVertexBuffer::UnlockIndexBuffer()
 {
-	if (ibo_id > 0)
-	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
-		glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
-	}
+	if (mIndexBuffer) mIndexBuffer->Unlock();
 }
 
 
 //===========================================================================
 //
-// Sets up the buffer starts for frame interpolation
-// This must be called after gl_RenderState.Apply!
+//
 //
 //===========================================================================
-static TArray<FModelVertex> iBuffer;
 
 void FModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size)
 {
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-	glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame1].x);
-	glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame1].u);
-	glVertexAttribPointer(VATTR_VERTEX2, 3, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame2].x);
-	glVertexAttribPointer(VATTR_NORMAL, 4, GL_INT_2_10_10_10_REV, true, sizeof(FModelVertex), &VMO[frame2].packedNormal);
+	mIndexFrame[0] = frame1;
+	mIndexFrame[1] = frame2;
 }

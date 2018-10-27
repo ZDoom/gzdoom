@@ -192,11 +192,8 @@ GLIndexBuffer::~GLIndexBuffer()
 
 void GLIndexBuffer::SetData(size_t size, void *data, bool staticdata)
 {
-	if (data != nullptr)
-	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, data, staticdata? GL_STATIC_DRAW : GL_STREAM_DRAW);
-	}
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, data, staticdata? GL_STATIC_DRAW : GL_STREAM_DRAW);
 	buffersize = size;
 	gl_RenderState.ResetVertexBuffer();	// This is needed because glBindBuffer overwrites the setting stored in the render state.
 }

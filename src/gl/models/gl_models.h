@@ -30,6 +30,28 @@
 
 class GLSprite;
 struct FDrawInfo;
+class FRenderState;
+
+class FModelVertexBuffer : public IModelVertexBuffer
+{
+	int mIndexFrame[2];
+	IVertexBuffer *mVertexBuffer;
+	IIndexBuffer *mIndexBuffer;
+
+public:
+
+	FModelVertexBuffer(bool needindex, bool singleframe);
+	~FModelVertexBuffer();
+
+	FModelVertex *LockVertexBuffer(unsigned int size) override;
+	void UnlockVertexBuffer() override;
+
+	unsigned int *LockIndexBuffer(unsigned int size) override;
+	void UnlockIndexBuffer() override;
+
+	void SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size) override;
+	void Bind(FRenderState &state);
+};
 
 class FGLModelRenderer : public FModelRenderer
 {

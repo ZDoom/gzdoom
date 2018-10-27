@@ -70,7 +70,6 @@ void FGLRenderState::Reset()
 	stBlendEquation = -1;
 	stAlphaTest = 0;
 	mLastDepthClamp = true;
-	mInterpolationFactor = 0.0f;
 
 	mEffectState = 0;
 	activeShader = nullptr;

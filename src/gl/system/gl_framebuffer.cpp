@@ -350,7 +350,7 @@ void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 
 FModelRenderer *OpenGLFrameBuffer::CreateModelRenderer(int mli) 
 {
-	return new FGLModelRenderer(nullptr, mli);
+	return new FGLModelRenderer(nullptr, gl_RenderState, mli);
 }
 
 IUniformBuffer *OpenGLFrameBuffer::CreateUniformBuffer(size_t size, bool staticuse)

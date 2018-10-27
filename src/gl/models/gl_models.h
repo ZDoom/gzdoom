@@ -56,8 +56,9 @@ class FGLModelRenderer : public FModelRenderer
 {
 	int modellightindex = -1;
 	FDrawInfo *di;
+	FRenderState &state;
 public:
-	FGLModelRenderer(FDrawInfo *d, int mli) : modellightindex(mli), di(d)
+	FGLModelRenderer(FDrawInfo *d, FRenderState &st, int mli) : modellightindex(mli), di(d), state(st)
 	{}
 	ModelRendererType GetType() const override { return GLModelRendererType; }
 	void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored) override;

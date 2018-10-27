@@ -241,13 +241,13 @@ void FDrawInfo::DrawIndexed(EDrawType dt, FRenderState &state, int index, int co
 
 void FDrawInfo::DrawModel(GLSprite *spr, FRenderState &state)
 {
-	FGLModelRenderer renderer(this, spr->dynlightindex);
+	FGLModelRenderer renderer(this, state, spr->dynlightindex);
 	renderer.RenderModel(spr->x, spr->y, spr->z, spr->modelframe, spr->actor, Viewpoint.TicFrac);
 }
 
 void FDrawInfo::DrawHUDModel(HUDSprite *huds, FRenderState &state)
 {
-	FGLModelRenderer renderer(this, huds->lightindex);
+	FGLModelRenderer renderer(this, state, huds->lightindex);
 	renderer.RenderHUDModel(huds->weapon, huds->mx, huds->my);
 }
 
@@ -303,6 +303,19 @@ void FDrawInfo::SetStencil(int offs, int op, int flags)
 		glEnable(GL_DEPTH_TEST);
 	if (flags & SF_DepthClear)
 		glClear(GL_DEPTH_BUFFER_BIT);
+}
+
+void FDrawInfo::SetCulling(int mode)
+{
+	if (mode != Cull_None)
+	{
+		glEnable(GL_CULL_FACE);
+		glFrontFace(mode == Cull_CCW ? GL_CCW : GL_CW);
+	}
+	else
+	{
+		glDisable(GL_CULL_FACE);
+	}
 }
 
 

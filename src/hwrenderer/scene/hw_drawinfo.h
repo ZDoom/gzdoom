@@ -49,7 +49,12 @@ enum EStencilOp
 	SOP_Decrement = 2
 };
 
-
+enum ECull
+{
+	Cull_None,
+	Cull_CCW,
+	Cull_CW
+};
 
 struct FSectorPortalGroup;
 struct FLinePortalSpan;
@@ -356,7 +361,8 @@ public:
 	virtual void SetDepthRange(float min, float max) = 0;
 	virtual void EnableDrawBufferAttachments(bool on) = 0;
 	virtual void SetStencil(int offs, int op, int flags) = 0;
-	
+	virtual void SetCulling(int mode) = 0;
+
 
 };
 

@@ -53,7 +53,8 @@ struct FDrawInfo : public HWDrawInfo
 	void SetDepthRange(float min, float max) override;
 	void EnableDrawBufferAttachments(bool on) override;
 	void SetStencil(int offs, int op, int flags) override;
-	
+	void SetCulling(int mode) override;
+
 	void StartScene();
 
 	void DrawSorted(int listindex);

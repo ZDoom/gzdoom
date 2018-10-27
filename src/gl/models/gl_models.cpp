@@ -44,7 +44,6 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/models/gl_models.h"
-#include "gl/renderer/gl_renderstate.h"
 #include "gl/shaders/gl_shader.h"
 
 CVAR(Bool, gl_light_models, true, CVAR_ARCHIVE)
@@ -58,55 +57,52 @@ VSMatrix FGLModelRenderer::GetViewToWorldMatrix()
 
 void FGLModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored)
 {
-	glDepthFunc(GL_LEQUAL);
-	gl_RenderState.EnableTexture(true);
+	di->SetDepthFunc(DF_LEqual);
+	state.EnableTexture(true);
 	// [BB] In case the model should be rendered translucent, do back face culling.
 	// This solves a few of the problems caused by the lack of depth sorting.
 	// [Nash] Don't do back face culling if explicitly specified in MODELDEF
 	// TO-DO: Implement proper depth sorting.
-	if (!(actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]) && !(smf->flags & MDL_DONTCULLBACKFACES))
+	if (!(actor->RenderStyle == DefaultRenderStyle()) && !(smf->flags & MDL_DONTCULLBACKFACES))
 	{
-		glEnable(GL_CULL_FACE);
-		glFrontFace((mirrored ^ screen->mPortalState->isMirrored()) ? GL_CCW : GL_CW);
+		di->SetCulling((mirrored ^ screen->mPortalState->isMirrored()) ? Cull_CCW : Cull_CW);
 	}
 
-	gl_RenderState.mModelMatrix = objectToWorldMatrix;
-	gl_RenderState.EnableModelMatrix(true);
+	state.mModelMatrix = objectToWorldMatrix;
+	state.EnableModelMatrix(true);
 }
 
 void FGLModelRenderer::EndDrawModel(AActor *actor, FSpriteModelFrame *smf)
 {
-	gl_RenderState.EnableModelMatrix(false);
-
-	glDepthFunc(GL_LESS);
-	if (!(actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]) && !(smf->flags & MDL_DONTCULLBACKFACES))
-		glDisable(GL_CULL_FACE);
+	state.EnableModelMatrix(false);
+	di->SetDepthFunc(DF_Less);
+	if (!(actor->RenderStyle == DefaultRenderStyle()) && !(smf->flags & MDL_DONTCULLBACKFACES))
+		di->SetCulling(Cull_None);
 }
 
 void FGLModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix, bool mirrored)
 {
-	glDepthFunc(GL_LEQUAL);
+	di->SetDepthFunc(DF_LEqual);
 
 	// [BB] In case the model should be rendered translucent, do back face culling.
 	// This solves a few of the problems caused by the lack of depth sorting.
 	// TO-DO: Implement proper depth sorting.
-	if (!(actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]))
+	if (!(actor->RenderStyle == DefaultRenderStyle()))
 	{
-		glEnable(GL_CULL_FACE);
-		glFrontFace((mirrored ^ screen->mPortalState->isMirrored()) ? GL_CW : GL_CCW);
+		di->SetCulling((mirrored ^ screen->mPortalState->isMirrored()) ? Cull_CW : Cull_CCW);
 	}
 
-	gl_RenderState.mModelMatrix = objectToWorldMatrix;
-	gl_RenderState.EnableModelMatrix(true);
+	state.mModelMatrix = objectToWorldMatrix;
+	state.EnableModelMatrix(true);
 }
 
 void FGLModelRenderer::EndDrawHUDModel(AActor *actor)
 {
-	gl_RenderState.EnableModelMatrix(false);
+	state.EnableModelMatrix(false);
 
-	glDepthFunc(GL_LESS);
-	if (!(actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]))
-		glDisable(GL_CULL_FACE);
+	di->SetDepthFunc(DF_Less);
+	if (!(actor->RenderStyle == DefaultRenderStyle()))
+		di->SetCulling(Cull_None);
 }
 
 IModelVertexBuffer *FGLModelRenderer::CreateVertexBuffer(bool needindex, bool singleframe)
@@ -116,35 +112,34 @@ IModelVertexBuffer *FGLModelRenderer::CreateVertexBuffer(bool needindex, bool si
 
 void FGLModelRenderer::SetVertexBuffer(IModelVertexBuffer *buffer)
 {
-	static_cast<FModelVertexBuffer*>(buffer)->Bind(gl_RenderState);
+	static_cast<FModelVertexBuffer*>(buffer)->Bind(state);
 }
 
 void FGLModelRenderer::ResetVertexBuffer()
 {
-	GLRenderer->mVBO->Bind(gl_RenderState);
+	GLRenderer->mVBO->Bind(state);
 }
 
 void FGLModelRenderer::SetInterpolation(double inter)
 {
-	gl_RenderState.SetInterpolationFactor((float)inter);
+	state.SetInterpolationFactor((float)inter);
 }
 
 void FGLModelRenderer::SetMaterial(FTexture *skin, bool clampNoFilter, int translation)
 {
 	FMaterial * tex = FMaterial::ValidateTexture(skin, false);
-	gl_RenderState.ApplyMaterial(tex, clampNoFilter ? CLAMP_NOFILTER : CLAMP_NONE, translation, -1);
-	/*if (modellightindex != -1)*/ gl_RenderState.SetLightIndex(modellightindex);
-	gl_RenderState.Apply();
+	state.SetMaterial(tex, clampNoFilter ? CLAMP_NOFILTER : CLAMP_NONE, translation, -1);
+	state.SetLightIndex(modellightindex);
 }
 
 void FGLModelRenderer::DrawArrays(int start, int count)
 {
-	glDrawArrays(GL_TRIANGLES, start, count);
+	di->Draw(DT_Triangles, state, start, count);
 }
 
 void FGLModelRenderer::DrawElements(int numIndices, size_t offset)
 {
-	glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, (void*)(intptr_t)offset);
+	di->DrawIndexed(DT_Triangles, state, offset / sizeof(unsigned int), numIndices);
 }
 
 //===========================================================================
@@ -162,7 +157,7 @@ FModelVertexBuffer::FModelVertexBuffer(bool needindex, bool singleframe)
 		{ 0, VATTR_VERTEX, VFmt_Float3, myoffsetof(FModelVertex, x) },
 		{ 0, VATTR_TEXCOORD, VFmt_Float2, myoffsetof(FModelVertex, u) },
 		{ 0, VATTR_NORMAL, VFmt_Packed_A2R10G10B10, myoffsetof(FModelVertex, packedNormal) },
-		{ 0, VATTR_VERTEX2, VFmt_Float3, myoffsetof(FModelVertex, x) }
+		{ 1, VATTR_VERTEX2, VFmt_Float3, myoffsetof(FModelVertex, x) }
 	};
 	mVertexBuffer->SetFormat(2, 4, sizeof(FModelVertex), format);
 }

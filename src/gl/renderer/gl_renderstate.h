@@ -53,8 +53,6 @@ class FGLRenderState : public FRenderState
 	float mGlossiness, mSpecularLevel;
 	float mShaderTimer;
 
-	float mInterpolationFactor;
-
 	int mEffectState;
 	int mTempTM = TM_NORMAL;
 
@@ -125,16 +123,6 @@ public:
 		else glEnable(GL_DEPTH_CLAMP);
 		mLastDepthClamp = on;
 		return res;
-	}
-
-	void SetInterpolationFactor(float fac)
-	{
-		mInterpolationFactor = fac;
-	}
-
-	float GetInterpolationFactor()
-	{
-		return mInterpolationFactor;
 	}
 
 	void SetPassType(EPassType passType)

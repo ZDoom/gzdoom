@@ -93,6 +93,7 @@ protected:
 
 	float mAlphaThreshold;
 	float mClipSplit[2];
+	float mInterpolationFactor;
 
 	FStateVec4 mNormal;
 	FStateVec4 mColor;
@@ -138,6 +139,7 @@ public:
 		mLightParms[3] = -1.f;
 		mSpecialEffect = EFF_NONE;
 		mLightIndex = -1;
+		mInterpolationFactor = 0;
 		mRenderStyle = DefaultRenderStyle();
 		mMaterial.Reset();
 		mBias.Reset();
@@ -405,6 +407,16 @@ public:
 	void SetIndexBuffer(IIndexBuffer *ib)
 	{
 		mIndexBuffer = ib;
+	}
+
+	void SetInterpolationFactor(float fac)
+	{
+		mInterpolationFactor = fac;
+	}
+
+	float GetInterpolationFactor()
+	{
+		return mInterpolationFactor;
 	}
 
 	void SetColor(int sectorlightlevel, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon = false);

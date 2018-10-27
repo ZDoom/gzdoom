@@ -134,6 +134,7 @@ void HWDrawInfo::DrawDecals(FRenderState &state, TArray<GLDecal *> &decals)
 	side_t *wall = nullptr;
 	SetDepthMask(false);
 	state.SetDepthBias(-1, -128);
+	state.SetLightIndex(-1);
 	for (auto gldecal : decals)
 	{
 		if (gldecal->decal->Side != wall)
@@ -167,6 +168,7 @@ void GLWall::DrawDecalsForMirror(HWDrawInfo *di, FRenderState &state, TArray<GLD
 {
 	di->SetDepthMask(false);
 	state.SetDepthBias(-1, -128);
+	state.SetLightIndex(-1);
 	state.SetFog(lightlevel, rellight + getExtraLight(), di->isFullbrightScene(), &Colormap, false);
 	for (auto gldecal : decals)
 	{

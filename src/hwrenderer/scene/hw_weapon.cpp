@@ -65,6 +65,7 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 	{
 		state.SetColor(huds->lightlevel, 0, isFullbrightScene(), huds->cm, huds->alpha, true);
 	}
+	state.SetLightIndex(-1);
 	state.SetRenderStyle(huds->RenderStyle);
 	state.SetTextureMode(huds->RenderStyle);
 	state.SetObjectColor(huds->ObjectColor);

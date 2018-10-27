@@ -252,7 +252,7 @@ void GLSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 			{
 				state.SetDepthBias(-1, -128);
 			}
-
+			state.SetLightIndex(-1);
 			di->Draw(DT_TriangleStrip, state, vertexindex, 4);
 
 			if (foglayer)

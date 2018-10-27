@@ -64,7 +64,7 @@ void HWSkyPortal::RenderDome(HWDrawInfo *di, FRenderState &state, FMaterial * te
 	int rc = vertexBuffer->mRows + 1;
 
 	// The caps only get drawn for the main layer but not for the overlay.
-	if (mode == FSkyDomeCreator::SKYMODE_MAINLAYER && tex != NULL)
+	if (mode == FSkyVertexBuffer::SKYMODE_MAINLAYER && tex != NULL)
 	{
 		PalEntry pe = tex->tex->GetSkyCapColor(false);
 		state.SetObjectColor(pe);
@@ -192,7 +192,7 @@ void HWSkyPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 		if (origin->texture[0])
 		{
 			state.SetTextureMode(TM_OPAQUE);
-			RenderDome(di, state, origin->texture[0], origin->x_offset[0], origin->y_offset, origin->mirrored, FSkyDomeCreator::SKYMODE_MAINLAYER);
+			RenderDome(di, state, origin->texture[0], origin->x_offset[0], origin->y_offset, origin->mirrored, FSkyVertexBuffer::SKYMODE_MAINLAYER);
 			state.SetTextureMode(TM_NORMAL);
 		}
 		
@@ -200,7 +200,7 @@ void HWSkyPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 		
 		if (origin->doublesky && origin->texture[1])
 		{
-			RenderDome(di, state, origin->texture[1], origin->x_offset[1], origin->y_offset, false, FSkyDomeCreator::SKYMODE_SECONDLAYER);
+			RenderDome(di, state, origin->texture[1], origin->x_offset[1], origin->y_offset, false, FSkyVertexBuffer::SKYMODE_SECONDLAYER);
 		}
 
 		if (::level.skyfog>0 && !di->isFullbrightScene()  && (origin->fadecolor & 0xffffff) != 0)

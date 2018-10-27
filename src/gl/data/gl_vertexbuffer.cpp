@@ -91,28 +91,3 @@ void FSimpleVertexBuffer::set(FSimpleVertex *verts, int count)
 	glBufferData(GL_ARRAY_BUFFER, count * sizeof(*verts), verts, GL_STREAM_DRAW);
 }
 
-//-----------------------------------------------------------------------------
-//
-//
-//
-//-----------------------------------------------------------------------------
-
-FSkyVertexBuffer::FSkyVertexBuffer()
-{
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-	glBufferData(GL_ARRAY_BUFFER, mVertices.Size() * sizeof(FSkyVertex), &mVertices[0], GL_STATIC_DRAW);
-}
-
-void FSkyVertexBuffer::BindVBO()
-{
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-	glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FSkyVertex), &VSO->x);
-	glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FSkyVertex), &VSO->u);
-	glVertexAttribPointer(VATTR_COLOR, 4, GL_UNSIGNED_BYTE, true, sizeof(FSkyVertex), &VSO->color);
-	glEnableVertexAttribArray(VATTR_VERTEX);
-	glEnableVertexAttribArray(VATTR_TEXCOORD);
-	glEnableVertexAttribArray(VATTR_COLOR);
-	glDisableVertexAttribArray(VATTR_VERTEX2);
-	glDisableVertexAttribArray(VATTR_NORMAL);
-}
-

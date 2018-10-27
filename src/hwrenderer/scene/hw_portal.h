@@ -6,7 +6,7 @@
 #include "hw_drawstructs.h"
 #include "hwrenderer/textures/hw_material.h"
 
-class FSkyDomeCreator;
+class FSkyVertexBuffer;
 
 struct GLSkyInfo
 {
@@ -379,7 +379,7 @@ public:
 struct HWSkyPortal : public HWPortal
 {
 	GLSkyInfo * origin;
-	FSkyDomeCreator *vertexBuffer;
+	FSkyVertexBuffer *vertexBuffer;
 	friend struct HWEEHorizonPortal;
 
 	void RenderRow(HWDrawInfo *di, FRenderState &state, EDrawType prim, int row, bool apply = true);
@@ -396,7 +396,7 @@ protected:
 public:
 
 
-	HWSkyPortal(FSkyDomeCreator *vertexbuffer, FPortalSceneState *state, GLSkyInfo *  pt, bool local = false)
+	HWSkyPortal(FSkyVertexBuffer *vertexbuffer, FPortalSceneState *state, GLSkyInfo *  pt, bool local = false)
 		: HWPortal(state, local)
 	{
 		origin = pt;

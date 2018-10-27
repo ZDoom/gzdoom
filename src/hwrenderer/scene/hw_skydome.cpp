@@ -23,7 +23,7 @@
 **
 ** Draws the sky.  Loosely based on the JDoom sky and the ZDoomGL 0.66.2 sky.
 **
-** for FSkyDomeCreator::SkyVertex only:
+** for FSkyVertexBuffer::SkyVertex only:
 **---------------------------------------------------------------------------
 ** Copyright 2003 Tim Stump
 ** All rights reserved.
@@ -60,10 +60,13 @@
 #include "r_utility.h"
 #include "g_levellocals.h"
 #include "r_sky.h"
+#include "cmdlib.h"
 
 #include "textures/skyboxtexture.h"
 #include "hwrenderer/textures/hw_material.h"
 #include "hw_skydome.h"
+#include "hw_renderstate.h"
+#include "hwrenderer/data/vertexbuffer.h"
 
 //-----------------------------------------------------------------------------
 //
@@ -79,13 +82,28 @@ EXTERN_CVAR(Float, skyoffset)
 //
 //-----------------------------------------------------------------------------
 
-FSkyDomeCreator::FSkyDomeCreator()
+FSkyVertexBuffer::FSkyVertexBuffer()
 {
 	screen->mSkyData = this;
 	CreateDome();
+	mVertexBuffer = screen->CreateVertexBuffer();
+
+	static const FVertexBufferAttribute format[] = {
+		{ 0, VATTR_VERTEX, VFmt_Float3, myoffsetof(FSkyVertex, x) },
+		{ 0, VATTR_TEXCOORD, VFmt_Float2, myoffsetof(FSkyVertex, u) },
+		{ 0, VATTR_COLOR, VFmt_Byte4, myoffsetof(FSkyVertex, color) }
+	};
+	mVertexBuffer->SetFormat(1, 3, sizeof(FSkyVertex), format);
+	mVertexBuffer->SetData(mVertices.Size() * sizeof(FSkyVertex), &mVertices[0], true);
 }
 
-FSkyDomeCreator::~FSkyDomeCreator()
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+FSkyVertexBuffer::~FSkyVertexBuffer()
 {
 	if (screen && screen->mSkyData) screen->mSkyData = nullptr;
 }
@@ -96,7 +114,18 @@ FSkyDomeCreator::~FSkyDomeCreator()
 //
 //-----------------------------------------------------------------------------
 
-void FSkyDomeCreator::SkyVertex(int r, int c, bool zflip)
+void FSkyVertexBuffer::Bind(FRenderState &state)
+{
+	state.SetVertexBuffer(mVertexBuffer, 0, 0);
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+void FSkyVertexBuffer::SkyVertex(int r, int c, bool zflip)
 {
 	static const FAngle maxSideAngle = 60.f;
 	static const float scale = 10000.;
@@ -140,7 +169,7 @@ void FSkyDomeCreator::SkyVertex(int r, int c, bool zflip)
 //
 //-----------------------------------------------------------------------------
 
-void FSkyDomeCreator::CreateSkyHemisphere(int hemi)
+void FSkyVertexBuffer::CreateSkyHemisphere(int hemi)
 {
 	int r, c;
 	bool zflip = !!(hemi & SKYHEMI_LOWER);
@@ -171,7 +200,7 @@ void FSkyDomeCreator::CreateSkyHemisphere(int hemi)
 //
 //-----------------------------------------------------------------------------
 
-void FSkyDomeCreator::CreateDome()
+void FSkyVertexBuffer::CreateDome()
 {
 	// the first thing we put into the buffer is the fog layer object which is just 4 triangles around the viewpoint.
 
@@ -270,7 +299,7 @@ void FSkyDomeCreator::CreateDome()
 //
 //-----------------------------------------------------------------------------
 
-void FSkyDomeCreator::SetupMatrices(FMaterial *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelMatrix, VSMatrix &textureMatrix)
+void FSkyVertexBuffer::SetupMatrices(FMaterial *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelMatrix, VSMatrix &textureMatrix)
 {
 	int texw = tex->TextureWidth();
 	int texh = tex->TextureHeight();

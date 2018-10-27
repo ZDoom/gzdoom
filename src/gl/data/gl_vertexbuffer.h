@@ -86,16 +86,4 @@ public:
 	void EnableColorArray(bool on);
 }; 
 
-class FSkyVertexBuffer : public FVertexBuffer, public FSkyDomeCreator
-{
-
-public:
-
-	FSkyVertexBuffer();
-	void BindVBO();
-};
-
-
-#define VSO ((FSkyVertex*)NULL)
-
 #endif

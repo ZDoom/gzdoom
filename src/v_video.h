@@ -49,7 +49,7 @@ struct sector_t;
 class IShaderProgram;
 class FTexture;
 struct FPortalSceneState;
-class FSkyDomeCreator;
+class FSkyVertexBuffer;
 class IIndexBuffer;
 class IVertexBuffer;
 
@@ -371,7 +371,7 @@ public:
 	int stencilValue = 0;				// Global stencil test value
 	bool enable_quadbuffered = false;
 	FPortalSceneState *mPortalState;	// global portal state.
-	FSkyDomeCreator *mSkyData;			// we need access to this in the device independent part, but cannot depend on how the renderer manages it internally.
+	FSkyVertexBuffer *mSkyData;			// we need access to this in the device independent part, but cannot depend on how the renderer manages it internally.
 
 	IntRect mScreenViewport;
 	IntRect mSceneViewport;

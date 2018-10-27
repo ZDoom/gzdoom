@@ -143,10 +143,6 @@ IModelVertexBuffer *PolyModelRenderer::CreateVertexBuffer(bool needindex, bool s
 	return new PolyModelVertexBuffer(needindex, singleframe);
 }
 
-void PolyModelRenderer::SetVertexBuffer(IModelVertexBuffer *buffer)
-{
-}
-
 void PolyModelRenderer::ResetVertexBuffer()
 {
 }

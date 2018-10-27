@@ -270,7 +270,6 @@ void FModelRenderer::RenderFrameModels(const FSpriteModelFrame *smf, const FStat
 			FModel * mdl = Models[smf->modelIDs[i]];
 			FTexture *tex = smf->skinIDs[i].isValid() ? TexMan(smf->skinIDs[i]) : nullptr;
 			mdl->BuildVertexBuffer(this);
-			SetVertexBuffer(mdl->GetVertexBuffer(this));
 
 			mdl->PushSpriteMDLFrame(smf, i);
 

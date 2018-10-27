@@ -110,11 +110,6 @@ IModelVertexBuffer *FGLModelRenderer::CreateVertexBuffer(bool needindex, bool si
 	return new FModelVertexBuffer(needindex, singleframe);
 }
 
-void FGLModelRenderer::SetVertexBuffer(IModelVertexBuffer *buffer)
-{
-	static_cast<FModelVertexBuffer*>(buffer)->Bind(state);
-}
-
 void FGLModelRenderer::ResetVertexBuffer()
 {
 	GLRenderer->mVBO->Bind(state);
@@ -160,18 +155,6 @@ FModelVertexBuffer::FModelVertexBuffer(bool needindex, bool singleframe)
 		{ 1, VATTR_VERTEX2, VFmt_Float3, myoffsetof(FModelVertex, x) }
 	};
 	mVertexBuffer->SetFormat(2, 4, sizeof(FModelVertex), format);
-}
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-void FModelVertexBuffer::Bind(FRenderState &state)
-{
-	state.SetVertexBuffer(mVertexBuffer, mIndexFrame[0], mIndexFrame[1]);
-	if (mIndexBuffer) state.SetIndexBuffer(mIndexBuffer);
 }
 
 //===========================================================================
@@ -242,4 +225,7 @@ void FModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame
 {
 	mIndexFrame[0] = frame1;
 	mIndexFrame[1] = frame2;
+	auto state = static_cast<FGLModelRenderer*>(renderer)->state;
+	state.SetVertexBuffer(mVertexBuffer, mIndexFrame[0], mIndexFrame[1]);
+	if (mIndexBuffer) state.SetIndexBuffer(mIndexBuffer);
 }

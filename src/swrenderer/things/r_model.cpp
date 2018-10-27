@@ -218,10 +218,6 @@ namespace swrenderer
 		return new SWModelVertexBuffer(needindex, singleframe);
 	}
 
-	void SWModelRenderer::SetVertexBuffer(IModelVertexBuffer *buffer)
-	{
-	}
-
 	void SWModelRenderer::ResetVertexBuffer()
 	{
 	}

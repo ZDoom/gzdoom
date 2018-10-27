@@ -70,7 +70,6 @@ public:
 
 	virtual IModelVertexBuffer *CreateVertexBuffer(bool needindex, bool singleframe) = 0;
 
-	virtual void SetVertexBuffer(IModelVertexBuffer *buffer) = 0;
 	virtual void ResetVertexBuffer() = 0;
 
 	virtual VSMatrix GetViewToWorldMatrix() = 0;

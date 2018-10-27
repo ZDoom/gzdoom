@@ -41,7 +41,6 @@ public:
 	void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored) override;
 	void EndDrawModel(AActor *actor, FSpriteModelFrame *smf) override;
 	IModelVertexBuffer *CreateVertexBuffer(bool needindex, bool singleframe) override;
-	void SetVertexBuffer(IModelVertexBuffer *buffer) override;
 	void ResetVertexBuffer() override;
 	VSMatrix GetViewToWorldMatrix() override;
 	void BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix, bool mirrored) override;

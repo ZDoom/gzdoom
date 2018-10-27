@@ -39,7 +39,10 @@
 #include "p_local.h"
 #include "serializer.h"
 #include "g_levellocals.h"
+#include "r_data/models/models.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
+#include "hwrenderer/utility/hw_clock.h"
+#include "hwrenderer/data/flatvertices.h"
 
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl_load/gl_interface.h"
@@ -48,7 +51,6 @@
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
-#include "gl/data/gl_vertexbuffer.h"
 #include "gl/data/gl_viewpointbuffer.h"
 #include "hwrenderer/scene/hw_clipper.h"
 #include "hwrenderer/scene/hw_portal.h"

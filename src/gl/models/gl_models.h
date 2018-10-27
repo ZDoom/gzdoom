@@ -23,7 +23,6 @@
 #pragma once
 
 #include "tarray.h"
-#include "gl/data/gl_vertexbuffer.h"
 #include "p_pspr.h"
 #include "r_data/voxels.h"
 #include "r_data/models/models.h"

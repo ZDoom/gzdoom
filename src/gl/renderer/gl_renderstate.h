@@ -34,7 +34,6 @@
 #include "r_data/r_translate.h"
 #include "g_levellocals.h"
 
-class FVertexBuffer;
 class FShader;
 struct GLSectorPlane;
 extern TArray<VSMatrix> gl_MatrixStack;
@@ -55,8 +54,6 @@ class FGLRenderState : public FRenderState
 	float mShaderTimer;
 
 	float mInterpolationFactor;
-
-	FVertexBuffer *mFVertexBuffer, *mCurrentFVertexBuffer;
 
 	int mEffectState;
 	int mTempTM = TM_NORMAL;
@@ -107,17 +104,9 @@ public:
 	void ApplyLightIndex(int index);
 	void ApplyBlendMode();
 
-	void SetVertexBuffer(FVertexBuffer *vb)
-	{
-		mFVertexBuffer = vb;
-		mVertexBuffer = nullptr;
-		mIndexBuffer = nullptr;
-	}
-
 	void ResetVertexBuffer()
 	{
 		// forces rebinding with the next 'apply' call.
-		mCurrentFVertexBuffer = nullptr;
 		mVertexBuffer = nullptr;
 		mIndexBuffer = nullptr;
 	}
@@ -174,8 +163,6 @@ public:
 		return mPassType == GBUFFER_PASS ? 3 : 1;
 	}
 
-
-	void SetVertexBuffer(int which) override;
 };
 
 extern FGLRenderState gl_RenderState;

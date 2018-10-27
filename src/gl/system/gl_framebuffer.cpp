@@ -38,13 +38,14 @@
 #include "gl/textures/gl_samplers.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_vrmodes.h"
-#include "gl/data/gl_vertexbuffer.h"
 #include "gl/data/gl_uniformbuffer.h"
 #include "gl/models/gl_models.h"
 #include "gl/shaders/gl_shaderprogram.h"
 #include "gl_debug.h"
 #include "r_videoscale.h"
 #include "glsys_vertexbuffer.h"
+
+#include "hwrenderer/data/flatvertices.h"
 
 EXTERN_CVAR (Bool, vid_vsync)
 

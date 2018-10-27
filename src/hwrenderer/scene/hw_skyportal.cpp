@@ -180,7 +180,7 @@ void HWSkyPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 
 	di->SetupView(0, 0, 0, !!(mState->MirrorFlag & 1), !!(mState->PlaneMirrorFlag & 1));
 
-	state.SetVertexBuffer(FRenderState::VB_Sky);
+	vertexBuffer->Bind(state);
 	if (origin->texture[0] && origin->texture[0]->tex->bSkybox)
 	{
 		RenderBox(di, state, origin->skytexno1, origin->texture[0], origin->x_offset[0], origin->sky2);
@@ -215,7 +215,6 @@ void HWSkyPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 			state.SetObjectColor(0xffffffff);
 		}
 	}
-	state.SetVertexBuffer(FRenderState::VB_Default);
 	::level.lightmode = oldlightmode;
 	di->SetDepthClamp(oldClamp);
 }

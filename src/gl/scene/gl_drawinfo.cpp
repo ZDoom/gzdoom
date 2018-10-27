@@ -34,8 +34,9 @@
 #include "g_levellocals.h"
 #include "tarray.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
+#include "hwrenderer/data/flatvertices.h"
+#include "hwrenderer/utility/hw_clock.h"
 
-#include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "hwrenderer/scene/hw_clipper.h"
 #include "gl/renderer/gl_renderstate.h"
@@ -259,6 +260,7 @@ void FDrawInfo::RenderPortal(HWPortal *p, bool usestencil)
 	gl_RenderState.SetLightIndex(-1);
 	gp->DrawContents(new_di, gl_RenderState);
 	new_di->EndDrawInfo();
+	GLRenderer->mVBO->Bind(gl_RenderState);
 	GLRenderer->mViewpoints->Bind(vpIndex);
 	gp->RemoveStencil(this, gl_RenderState, usestencil);
 

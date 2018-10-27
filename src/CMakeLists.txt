@@ -1037,7 +1037,6 @@ set (PCH_SOURCES
 	g_statusbar/sbarinfo.cpp
 	g_statusbar/sbar_mugshot.cpp
 	g_statusbar/shared_sbar.cpp
-	gl/data/gl_vertexbuffer.cpp
 	gl/data/gl_uniformbuffer.cpp
 	gl/data/gl_viewpointbuffer.cpp
 	gl/dynlights/gl_lightbuffer.cpp

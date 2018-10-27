@@ -37,6 +37,8 @@
 #include "i_time.h"
 #include "cmdlib.h"
 #include "hwrenderer/textures/hw_material.h"
+#include "hwrenderer/data/vertexbuffer.h"
+#include "hwrenderer/data/flatvertices.h"
 
 #include "gl_load/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"

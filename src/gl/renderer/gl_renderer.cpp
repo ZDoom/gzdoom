@@ -35,6 +35,7 @@
 #include "p_effect.h"
 #include "d_player.h"
 #include "a_dynlight.h"
+#include "cmdlib.h"
 #include "g_game.h"
 #include "swrenderer/r_swscene.h"
 #include "hwrenderer/utility/hw_clock.h"
@@ -46,17 +47,19 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
-#include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "hwrenderer/utility/hw_vrmodes.h"
 #include "hwrenderer/postprocessing/hw_presentshader.h"
 #include "hwrenderer/postprocessing/hw_present3dRowshader.h"
 #include "hwrenderer/postprocessing/hw_shadowmapshader.h"
+#include "hwrenderer/data/flatvertices.h"
+#include "hwrenderer/scene/hw_skydome.h"
 #include "gl/shaders/gl_postprocessshaderinstance.h"
 #include "gl/textures/gl_samplers.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/data/gl_viewpointbuffer.h"
 #include "r_videoscale.h"
+#include "r_data/models/models.h"
 
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Bool, cl_capfps)
@@ -362,41 +365,42 @@ void FGLRenderer::BeginFrame()
 //
 //===========================================================================
 
-class F2DVertexBuffer : public FSimpleVertexBuffer
+class F2DVertexBuffer
 {
-	uint32_t ibo_id;
+	IVertexBuffer *mVertexBuffer;
+	IIndexBuffer *mIndexBuffer;
 
-	// Make sure we can build upon FSimpleVertexBuffer.
-	static_assert(offsetof(FSimpleVertex, x) == offsetof(F2DDrawer::TwoDVertex, x), "x not aligned");
-	static_assert(offsetof(FSimpleVertex, u) == offsetof(F2DDrawer::TwoDVertex, u), "u not aligned");
-	static_assert(offsetof(FSimpleVertex, color) == offsetof(F2DDrawer::TwoDVertex, color0), "color not aligned");
 
 public:
 
 	F2DVertexBuffer()
 	{
-		glGenBuffers(1, &ibo_id);
+		mVertexBuffer = screen->CreateVertexBuffer();
+		mIndexBuffer = screen->CreateIndexBuffer();
+
+		static const FVertexBufferAttribute format[] = {
+			{ 0, VATTR_VERTEX, VFmt_Float3, myoffsetof(F2DDrawer::TwoDVertex, x) },
+			{ 0, VATTR_TEXCOORD, VFmt_Float2, myoffsetof(F2DDrawer::TwoDVertex, u) },
+			{ 0, VATTR_COLOR, VFmt_Byte4, myoffsetof(F2DDrawer::TwoDVertex, color0) }
+		};
+		mVertexBuffer->SetFormat(1, 3, sizeof(FSkyVertex), format);
 	}
 	~F2DVertexBuffer()
 	{
-		if (ibo_id != 0)
-		{
-			glDeleteBuffers(1, &ibo_id);
-		}
+		delete mIndexBuffer;
+		delete mVertexBuffer;
 	}
+
 	void UploadData(F2DDrawer::TwoDVertex *vertices, int vertcount, int *indices, int indexcount)
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-		glBufferData(GL_ARRAY_BUFFER, vertcount * sizeof(vertices[0]), vertices, GL_STREAM_DRAW);
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexcount * sizeof(indices[0]), indices, GL_STREAM_DRAW);
+		mVertexBuffer->SetData(vertcount * sizeof(*vertices), vertices, false);
+		mIndexBuffer->SetData(indexcount * sizeof(unsigned int), indices, false);
 	}
 
-	void BindVBO() override
+	void Bind(FRenderState &state)
 	{
-		FSimpleVertexBuffer::BindVBO();
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
+		state.SetVertexBuffer(mVertexBuffer, 0, 0);
+		state.SetIndexBuffer(mIndexBuffer);
 	}
 };
 
@@ -446,9 +450,9 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		// Change from BGRA to RGBA
 		std::swap(v.color0.r, v.color0.b);
 	}
-	auto vb = new F2DVertexBuffer;
-	vb->UploadData(&vertices[0], vertices.Size(), &indices[0], indices.Size());
-	gl_RenderState.SetVertexBuffer(vb);
+	F2DVertexBuffer vb;
+	vb.UploadData(&vertices[0], vertices.Size(), &indices[0], indices.Size());
+	vb.Bind(gl_RenderState);
 	gl_RenderState.EnableFog(false);
 
 	for(auto &cmd : commands)
@@ -544,7 +548,6 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	gl_RenderState.EnableFog(false);
 	gl_RenderState.ResetColor();
 	gl_RenderState.Apply();
-	delete vb;
 	FGLDebug::PopGroup();
 	twoD.Unclock();
 }

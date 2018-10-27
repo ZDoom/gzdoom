@@ -30,8 +30,9 @@
 #include "r_data/colormaps.h"
 #include "gl_load/gl_system.h"
 #include "gl_load/gl_interface.h"
-#include "gl/data/gl_vertexbuffer.h"
 #include "hwrenderer/utility/hw_cvars.h"
+#include "hwrenderer/data/flatvertices.h"
+#include "hwrenderer/scene/hw_skydome.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/dynlights//gl_lightbuffer.h"
@@ -263,30 +264,18 @@ void FGLRenderState::ApplyState()
 
 void FGLRenderState::ApplyBuffers()
 {
-	if (mVertexBuffer != nullptr)
+	if (mVertexBuffer != mCurrentVertexBuffer || mVertexOffsets[0] != mCurrentVertexOffsets[0] || mVertexOffsets[1] != mCurrentVertexOffsets[1])
 	{
-		if (mVertexBuffer != mCurrentVertexBuffer || mVertexOffsets[0] != mCurrentVertexOffsets[0] || mVertexOffsets[1] != mCurrentVertexOffsets[1])
-		{
-			assert(mVertexBuffer != nullptr);
-			static_cast<GLVertexBuffer*>(mVertexBuffer)->Bind(mVertexOffsets);
-			mCurrentVertexBuffer = mVertexBuffer;
-			mCurrentVertexOffsets[0] = mVertexOffsets[0];
-			mCurrentVertexOffsets[1] = mVertexOffsets[1];
-			mCurrentFVertexBuffer = nullptr;
-		}
-		if (mIndexBuffer != mCurrentIndexBuffer)
-		{
-			if (mIndexBuffer) static_cast<GLIndexBuffer*>(mIndexBuffer)->Bind();
-			mCurrentIndexBuffer = mIndexBuffer;
-		}
+		assert(mVertexBuffer != nullptr);
+		static_cast<GLVertexBuffer*>(mVertexBuffer)->Bind(mVertexOffsets);
+		mCurrentVertexBuffer = mVertexBuffer;
+		mCurrentVertexOffsets[0] = mVertexOffsets[0];
+		mCurrentVertexOffsets[1] = mVertexOffsets[1];
 	}
-	else if (mFVertexBuffer != mCurrentFVertexBuffer)
+	if (mIndexBuffer != mCurrentIndexBuffer)
 	{
-		if (mFVertexBuffer == NULL) glBindBuffer(GL_ARRAY_BUFFER, 0);
-		else mFVertexBuffer->BindVBO();
-		mCurrentFVertexBuffer = mFVertexBuffer;
-		mCurrentVertexBuffer = nullptr;
-		mCurrentIndexBuffer = nullptr;
+		if (mIndexBuffer) static_cast<GLIndexBuffer*>(mIndexBuffer)->Bind();
+		mCurrentIndexBuffer = mIndexBuffer;
 	}
 }
 
@@ -390,11 +379,4 @@ void FGLRenderState::ApplyBlendMode()
 		glBlendEquation(blendequation);
 	}
 
-}
-
-// Needs to be redone
-void FGLRenderState::SetVertexBuffer(int which)
-{
-	if (which == VB_Sky) GLRenderer->mSkyVBO->Bind(*this);
-	else GLRenderer->mVBO->Bind(*this);
 }

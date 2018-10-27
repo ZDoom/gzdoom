@@ -16,7 +16,7 @@
 
 struct particle_t;
 class FCanvasTexture;
-class FGLFlatVertexBuffer;
+class FFlatVertexBuffer;
 class FSkyVertexBuffer;
 class OpenGLFrameBuffer;
 struct FDrawInfo;
@@ -69,7 +69,7 @@ public:
 
 	//FRotator mAngles;
 
-	FGLFlatVertexBuffer *mVBO = nullptr;
+	FFlatVertexBuffer *mVBO = nullptr;
 	FSkyVertexBuffer *mSkyVBO = nullptr;
 	FLightBuffer *mLights = nullptr;
 	GLViewpointBuffer *mViewpoints = nullptr;

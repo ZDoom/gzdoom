@@ -31,6 +31,9 @@
 #include "c_cvars.h"
 #include "g_levellocals.h"
 #include "flatvertices.h"
+#include "cmdlib.h"
+#include "hwrenderer/data/vertexbuffer.h"
+#include "hwrenderer/scene/hw_renderstate.h"
 
 
 //==========================================================================
@@ -71,7 +74,43 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 	vbo_shadowdata[17].Set(-32767.0f, -32767.0f, 32767.0f, 0, 0);
 	vbo_shadowdata[18].Set(32767.0f, -32767.0f, 32767.0f, 0, 0);
 	vbo_shadowdata[19].Set(32767.0f, -32767.0f, -32767.0f, 0, 0);
+
+	mVertexBuffer = screen->CreateVertexBuffer();
+	mIndexBuffer = screen->CreateIndexBuffer();
+
+	unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
+	mVertexBuffer->SetData(bytesize, nullptr, false);
+
+	static const FVertexBufferAttribute format[] = {
+		{ 0, VATTR_VERTEX, VFmt_Float3, myoffsetof(FFlatVertex, x) },
+		{ 0, VATTR_TEXCOORD, VFmt_Float2, myoffsetof(FFlatVertex, u) }
+	};
+	mVertexBuffer->SetFormat(1, 2, sizeof(FFlatVertex), format);
+
+	mIndex = mCurIndex = 0;
+	mNumReserved = NUM_RESERVED;
+	Copy(0, NUM_RESERVED);
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FFlatVertexBuffer::~FFlatVertexBuffer()
+{
+	delete mIndexBuffer;
+	delete mVertexBuffer;
+	mIndexBuffer = nullptr;
+	mVertexBuffer = nullptr;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FFlatVertexBuffer::OutputResized(int width, int height)
 {
@@ -79,6 +118,7 @@ void FFlatVertexBuffer::OutputResized(int width, int height)
 	vbo_shadowdata[5].Set(0, (float)height, 0, 0, 1);
 	vbo_shadowdata[6].Set((float)width, 0, 0, 1, 0);
 	vbo_shadowdata[7].Set((float)width, (float)height, 0, 1, 1);
+	Copy(4, 4);
 }
 
 //==========================================================================
@@ -276,7 +316,7 @@ void FFlatVertexBuffer::UpdatePlaneVertices(sector_t *sec, int plane)
 	int countvt = sec->vbocount[plane];
 	secplane_t &splane = sec->GetSecPlane(plane);
 	FFlatVertex *vt = &vbo_shadowdata[startvt];
-	FFlatVertex *mapvt = &mMap[startvt];
+	FFlatVertex *mapvt = GetBuffer(startvt);
 	for(int i=0; i<countvt; i++, vt++, mapvt++)
 	{
 		vt->z = (float)splane.ZatPoint(vt->x, vt->y);
@@ -331,4 +371,44 @@ void FFlatVertexBuffer::CheckUpdate(sector_t *sector)
 	if (hs != NULL) CheckPlanes(hs);
 	for (unsigned i = 0; i < sector->e->XFloor.ffloors.Size(); i++)
 		CheckPlanes(sector->e->XFloor.ffloors[i]->model);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FFlatVertexBuffer::Copy(int start, int count)
+{
+	Map();
+	memcpy(GetBuffer(start), &vbo_shadowdata[0], count * sizeof(FFlatVertex));
+	Unmap();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FFlatVertexBuffer::Bind(FRenderState &state)
+{
+	state.SetVertexBuffer(mVertexBuffer, 0, 0);
+	state.SetIndexBuffer(mIndexBuffer);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FFlatVertexBuffer::CreateVBO()
+{
+	vbo_shadowdata.Resize(mNumReserved);
+	FFlatVertexBuffer::CreateVertices();
+	mCurIndex = mIndex = vbo_shadowdata.Size();
+	Copy(0, mIndex);
+	mIndexBuffer->SetData(ibo_data.Size() * sizeof(uint32_t), &ibo_data[0]);
 }

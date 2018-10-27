@@ -28,15 +28,6 @@
 
 extern bool gl_shaderactive;
 
-enum
-{
-	VATTR_VERTEX = 0,
-	VATTR_TEXCOORD = 1,
-	VATTR_COLOR = 2,
-	VATTR_VERTEX2 = 3,
-	VATTR_NORMAL = 4
-};
-
 class FShaderCollection;
 struct HWViewpointUniforms;
 

@@ -5,12 +5,12 @@
 // VAOs are mostly useless for this because they lump buffer and binding state together which the model code does not want.
 enum
 {
-	VATTR_VERTEX_BIT,
-	VATTR_TEXCOORD_BIT,
-	VATTR_COLOR_BIT,
-	VATTR_VERTEX2_BIT,
-	VATTR_NORMAL_BIT,
-	VATTR_NORMAL2_BIT,
+	VATTR_VERTEX,
+	VATTR_TEXCOORD,
+	VATTR_COLOR,
+	VATTR_VERTEX2,
+	VATTR_NORMAL,
+	VATTR_NORMAL2,
 	
 	VATTR_MAX
 };

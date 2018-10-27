@@ -319,7 +319,7 @@ void FDrawInfo::ClearScreen()
 	glDisable(GL_MULTISAMPLE);
 	glDisable(GL_DEPTH_TEST);
 
-	glDrawArrays(GL_TRIANGLE_STRIP, FGLFlatVertexBuffer::FULLSCREEN_INDEX, 4);
+	glDrawArrays(GL_TRIANGLE_STRIP, FFlatVertexBuffer::FULLSCREEN_INDEX, 4);
 
 	glEnable(GL_DEPTH_TEST);
 	if (multi) glEnable(GL_MULTISAMPLE);

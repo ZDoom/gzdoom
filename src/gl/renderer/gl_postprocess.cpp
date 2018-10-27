@@ -54,7 +54,7 @@ void FGLRenderer::RenderScreenQuad()
 {
 	mVBO->Bind(gl_RenderState);
 	gl_RenderState.ApplyBuffers();
-	glDrawArrays(GL_TRIANGLE_STRIP, FGLFlatVertexBuffer::PRESENT_INDEX, 4);
+	glDrawArrays(GL_TRIANGLE_STRIP, FFlatVertexBuffer::PRESENT_INDEX, 4);
 }
 
 void FGLRenderer::PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)

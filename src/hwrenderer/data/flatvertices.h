@@ -24,6 +24,11 @@
 #define _HW__VERTEXBUFFER_H
 
 #include "tarray.h"
+#include "hwrenderer/data/vertexbuffer.h"
+#include <atomic>
+#include <mutex>
+
+class FRenderState;
 
 struct FFlatVertex
 {
@@ -43,10 +48,21 @@ struct FFlatVertex
 
 class FFlatVertexBuffer
 {
-protected:
 	TArray<FFlatVertex> vbo_shadowdata;
 	TArray<uint32_t> ibo_data;
-	FFlatVertex *mMap;
+
+	IVertexBuffer *mVertexBuffer;
+	IIndexBuffer *mIndexBuffer;
+
+	unsigned int mIndex;
+	std::atomic<unsigned int> mCurIndex;
+	std::mutex mBufferMutex;
+	unsigned int mNumReserved;
+
+
+	static const unsigned int BUFFER_SIZE = 2000000;
+	static const unsigned int BUFFER_SIZE_TO_USE = 1999500;
+
 
 	// Temporary data for creating an indexed buffer
 	struct FIndexGenerationInfo
@@ -85,8 +101,56 @@ public:
 	};
 
 	FFlatVertexBuffer(int width, int height);
+	~FFlatVertexBuffer();
 
 	void OutputResized(int width, int height);
+	void Bind(FRenderState &state);
+	void CreateVBO();
+	void Copy(int start, int count);
+
+	FFlatVertex *GetBuffer(int index) const
+	{
+		FFlatVertex *ff = (FFlatVertex*)mVertexBuffer->Memory();
+		return &ff[index];
+	}
+
+	FFlatVertex *GetBuffer() const
+	{
+		return GetBuffer(mCurIndex);
+	}
+
+	template<class T>
+	FFlatVertex *Alloc(int num, T *poffset)
+	{
+	again:
+		FFlatVertex *p = GetBuffer();
+		auto index = mCurIndex.fetch_add(num);
+		*poffset = static_cast<T>(index);
+		if (index + num >= BUFFER_SIZE_TO_USE)
+		{
+			std::lock_guard<std::mutex> lock(mBufferMutex);
+			if (mCurIndex >= BUFFER_SIZE_TO_USE)	// retest condition, in case another thread got here first
+				mCurIndex = mIndex;
+
+			if (index >= BUFFER_SIZE_TO_USE) goto again;
+		}
+		return p;
+	}
+
+	void Reset()
+	{
+		mCurIndex = mIndex;
+	}
+
+	void Map()
+	{
+		mVertexBuffer->Map();
+	}
+
+	void Unmap()
+	{
+		mVertexBuffer->Unmap();
+	}
 
 private:
 	int CreateIndexedSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor, int vi, FIndexGenerationInfo &gen);

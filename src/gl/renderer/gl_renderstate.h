@@ -73,6 +73,7 @@ class FGLRenderState : public FRenderState
 	int mNumDrawBuffers = 1;
 
 	bool ApplyShader();
+	void ApplyState();
 
 	// Texture binding state
 	FMaterial *lastMaterial = nullptr;
@@ -102,6 +103,7 @@ public:
 	void ApplyMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader);
 
 	void Apply();
+	void ApplyBuffers();
 	void ApplyLightIndex(int index);
 	void ApplyBlendMode();
 

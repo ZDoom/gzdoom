@@ -199,6 +199,14 @@ bool FGLRenderState::ApplyShader()
 		matrixToGL(identityMatrix, activeShader->modelmatrix_index);
 		matrixToGL(identityMatrix, activeShader->normalmodelmatrix_index);
 	}
+
+	auto index = mLightIndex;
+	if (index > -1 && GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
+	{
+		index = GLRenderer->mLights->BindUBO(index);
+	}
+	activeShader->muLightIndex.Set(index);
+
 	return true;
 }
 
@@ -209,7 +217,7 @@ bool FGLRenderState::ApplyShader()
 //
 //==========================================================================
 
-void FGLRenderState::Apply()
+void FGLRenderState::ApplyState()
 {
 	if (mRenderStyle != stRenderStyle)
 	{
@@ -251,7 +259,10 @@ void FGLRenderState::Apply()
 		glPolygonOffset(mBias.mFactor, mBias.mUnits);
 		mBias.mChanged = false;
 	}
+}
 
+void FGLRenderState::ApplyBuffers()
+{
 	if (mVertexBuffer != nullptr)
 	{
 		if (mVertexBuffer != mCurrentVertexBuffer || mVertexOffsets[0] != mCurrentVertexOffsets[0] || mVertexOffsets[1] != mCurrentVertexOffsets[1])
@@ -261,6 +272,12 @@ void FGLRenderState::Apply()
 			mCurrentVertexBuffer = mVertexBuffer;
 			mCurrentVertexOffsets[0] = mVertexOffsets[0];
 			mCurrentVertexOffsets[1] = mVertexOffsets[1];
+			mCurrentFVertexBuffer = nullptr;
+		}
+		if (mIndexBuffer != mCurrentIndexBuffer)
+		{
+			static_cast<GLIndexBuffer*>(mIndexBuffer)->Bind();
+			mCurrentIndexBuffer = mIndexBuffer;
 		}
 	}
 	else if (mFVertexBuffer != mCurrentFVertexBuffer)
@@ -268,20 +285,16 @@ void FGLRenderState::Apply()
 		if (mFVertexBuffer == NULL) glBindBuffer(GL_ARRAY_BUFFER, 0);
 		else mFVertexBuffer->BindVBO();
 		mCurrentFVertexBuffer = mFVertexBuffer;
+		mCurrentVertexBuffer = nullptr;
+		mCurrentIndexBuffer = nullptr;
 	}
-	ApplyShader();
 }
 
-
-
-void FGLRenderState::ApplyLightIndex(int index)
+void FGLRenderState::Apply()
 {
-	if (index == -2) index = mLightIndex;	// temporary workaround so that both old and new code can be handled.
-	if (index > -1 && GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
-	{
-		index = GLRenderer->mLights->BindUBO(index);
-	}
-	activeShader->muLightIndex.Set(index);
+	ApplyState();
+	ApplyBuffers();
+	ApplyShader();
 }
 
 //===========================================================================
@@ -382,5 +395,6 @@ void FGLRenderState::ApplyBlendMode()
 // Needs to be redone
 void FGLRenderState::SetVertexBuffer(int which)
 {
-	SetVertexBuffer(which == VB_Sky ? (FVertexBuffer*)GLRenderer->mSkyVBO : GLRenderer->mVBO);
+	if (which == VB_Sky) SetVertexBuffer(GLRenderer->mSkyVBO);
+	else GLRenderer->mVBO->Bind(*this);
 }

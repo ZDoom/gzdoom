@@ -102,7 +102,7 @@ void GLVertexBuffer::Unmap()
 	}
 }
 
-void GLVertexBuffer::SetFormat(int numBindingPoints, int numAttributes, size_t stride, FVertexBufferAttribute *attrs)
+void GLVertexBuffer::SetFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs)
 {
 	static int VFmtToGLFmt[] = { GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_UNSIGNED_BYTE, GL_INT_2_10_10_10_REV };
 	static uint8_t VFmtToSize[] = {4, 3, 2, 1, 4, 4};

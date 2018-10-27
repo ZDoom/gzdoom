@@ -39,6 +39,7 @@ struct secplane_t;
 struct subsector_t;
 struct sector_t;
 class FMaterial;
+class FRenderState;
 
 
 
@@ -83,21 +84,22 @@ public:
 	void BindVBO();
 	void set(FSimpleVertex *verts, int count);
 	void EnableColorArray(bool on);
-};
+}; 
 
-class FFlatVertexBuffer : public FVertexBuffer, public FFlatVertexGenerator
+class FFlatVertexBuffer : public FFlatVertexGenerator
 {
-	unsigned int ibo_id;
-	FFlatVertex *map;
+	IVertexBuffer *mVertexBuffer;
+	IIndexBuffer *mIndexBuffer;
+
 	unsigned int mIndex;
 	std::atomic<unsigned int> mCurIndex;
 	std::mutex mBufferMutex;
 	unsigned int mNumReserved;
-	bool mPersistent;
 
 
 	static const unsigned int BUFFER_SIZE = 2000000;
 	static const unsigned int BUFFER_SIZE_TO_USE = 1999500;
+
 
 public:
 
@@ -105,14 +107,19 @@ public:
 	~FFlatVertexBuffer();
 
 	void OutputResized(int width, int height);
-
-	void BindVBO();
-
+	void Bind(FRenderState &state);
 	void CreateVBO();
+	void Copy(int start, int count);
 
-	FFlatVertex *GetBuffer()
+	FFlatVertex *GetBuffer(int index) const
 	{
-		return &map[mCurIndex];
+		FFlatVertex *ff = (FFlatVertex*)mVertexBuffer->Memory();
+		return &ff[index];
+	}
+
+	FFlatVertex *GetBuffer() const
+	{
+		return GetBuffer(mCurIndex);
 	}
 
 	template<class T>
@@ -133,46 +140,22 @@ public:
 		return p;
 	}
 
-	unsigned int GetCount(FFlatVertex *newptr, unsigned int *poffset)
-	{
-		unsigned int newofs = (unsigned int)(newptr - map);
-		unsigned int diff = newofs - mCurIndex;
-		*poffset = mCurIndex;
-		mCurIndex = newofs;
-		if (mCurIndex >= BUFFER_SIZE_TO_USE) mCurIndex = mIndex;
-		return diff;
-	}
-#ifdef __GL_PCH_H	// we need the system includes for this but we cannot include them ourselves without creating #define clashes. The affected files wouldn't try to draw anyway.
-	void RenderArray(unsigned int primtype, unsigned int offset, unsigned int count)
-	{
-		drawcalls.Clock();
-		glDrawArrays(primtype, offset, count);
-		drawcalls.Unclock();
-	}
-
-	void RenderCurrent(FFlatVertex *newptr, unsigned int primtype, unsigned int *poffset = NULL, unsigned int *pcount = NULL)
-	{
-		unsigned int offset;
-		unsigned int count = GetCount(newptr, &offset);
-		RenderArray(primtype, offset, count);
-		if (poffset) *poffset = offset;
-		if (pcount) *pcount = count;
-	}
-
-#endif
-
-	uint32_t *GetIndexPointer() const
-	{
-		return ibo_id == 0 ? &ibo_data[0] : nullptr;
-	}
-
 	void Reset()
 	{
 		mCurIndex = mIndex;
 	}
 
-	void Map();
-	void Unmap();
+	void Map()
+	{
+		mVertexBuffer->Map();
+		mMap = GetBuffer(0);
+	}
+
+	void Unmap()
+	{
+		mMap = nullptr;
+		mVertexBuffer->Unmap();
+	}
 };
 
 

@@ -52,9 +52,9 @@ CVAR(Int, gl_dither_bpc, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 
 void FGLRenderer::RenderScreenQuad()
 {
-	mVBO->BindVBO();
-	gl_RenderState.ResetVertexBuffer();
-	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, FFlatVertexBuffer::PRESENT_INDEX, 4);
+	mVBO->Bind(gl_RenderState);
+	gl_RenderState.ApplyBuffers();
+	glDrawArrays(GL_TRIANGLE_STRIP, FFlatVertexBuffer::PRESENT_INDEX, 4);
 }
 
 void FGLRenderer::PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)

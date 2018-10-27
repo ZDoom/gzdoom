@@ -23,7 +23,7 @@ public:
 	GLVertexBuffer();
 	~GLVertexBuffer();
 	void SetData(size_t size, void *data, bool staticdata) override;
-	void SetFormat(int numBindingPoints, int numAttributes, size_t stride, FVertexBufferAttribute *attrs) override;
+	void SetFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs) override;
 	void Bind(int *offsets);
 	void Map() override;
 	void Unmap() override;

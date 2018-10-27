@@ -42,7 +42,7 @@ protected:
 public:
 	virtual ~IVertexBuffer() {}
 	virtual void SetData(size_t size, void *data, bool staticdata = true) = 0;
-	virtual void SetFormat(int numBindingPoints, int numAttributes, size_t stride, FVertexBufferAttribute *attrs) = 0;
+	virtual void SetFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs) = 0;
 	virtual void Map() {}		// Only needed by old OpenGL but this needs to be in the interface.
 	virtual void Unmap() {}
 	void *Memory() { assert(map); return map; }

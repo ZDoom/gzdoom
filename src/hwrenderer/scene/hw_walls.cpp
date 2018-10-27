@@ -511,6 +511,8 @@ void GLWall::PutPortal(HWDrawInfo *di, int ptype)
 		break;
 
 	case PORTALTYPE_LINETOLINE:
+		if (!lineportal)
+			return;
 		portal = di->FindPortal(lineportal);
 		if (!portal)
 		{

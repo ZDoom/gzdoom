@@ -1055,6 +1055,7 @@ set (PCH_SOURCES
 	gl_load/gl_interface.cpp
 	gl/system/gl_framebuffer.cpp
 	gl/system/gl_debug.cpp
+	gl/system/glsys_vertexbuffer.cpp
 	gl/textures/gl_hwtexture.cpp
 	gl/textures/gl_samplers.cpp
 	hwrenderer/data/flatvertices.cpp

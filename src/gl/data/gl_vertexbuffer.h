@@ -32,6 +32,7 @@
 #include "r_data/models/models.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/scene/hw_skydome.h"
+#include "hwrenderer/data/vertexbuffer.h"
 
 struct vertex_t;
 struct secplane_t;
@@ -39,14 +40,6 @@ struct subsector_t;
 struct sector_t;
 class FMaterial;
 
-enum
-{
-	VATTR_VERTEX_BIT,
-	VATTR_TEXCOORD_BIT,
-	VATTR_COLOR_BIT,
-	VATTR_VERTEX2_BIT,
-	VATTR_NORMAL_BIT
-};
 
 
 class FVertexBuffer

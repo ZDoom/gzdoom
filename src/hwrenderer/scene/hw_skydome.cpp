@@ -66,7 +66,7 @@
 #include "hwrenderer/textures/hw_material.h"
 #include "hw_skydome.h"
 #include "hw_renderstate.h"
-#include "hwrenderer/data/vertexbuffer.h"
+#include "hwrenderer/data/buffers.h"
 
 //-----------------------------------------------------------------------------
 //

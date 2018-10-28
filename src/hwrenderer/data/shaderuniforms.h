@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include "hwrenderer/data/vertexbuffer.h"
+#include "hwrenderer/data/buffers.h"
 #include "v_video.h"
 
 enum

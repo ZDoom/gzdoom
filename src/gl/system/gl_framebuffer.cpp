@@ -42,7 +42,7 @@
 #include "gl/shaders/gl_shaderprogram.h"
 #include "gl_debug.h"
 #include "r_videoscale.h"
-#include "glsys_vertexbuffer.h"
+#include "gl_buffers.h"
 
 #include "hwrenderer/data/flatvertices.h"
 

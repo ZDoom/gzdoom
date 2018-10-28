@@ -24,7 +24,7 @@
 #define _HW__VERTEXBUFFER_H
 
 #include "tarray.h"
-#include "hwrenderer/data/vertexbuffer.h"
+#include "hwrenderer/data/buffers.h"
 #include <atomic>
 #include <mutex>
 

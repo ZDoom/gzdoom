@@ -25,7 +25,7 @@
 **/
 
 #include "gl_load/gl_system.h"
-#include "glsys_vertexbuffer.h"
+#include "gl_buffers.h"
 #include "gl/renderer/gl_renderstate.h"
 
 //==========================================================================

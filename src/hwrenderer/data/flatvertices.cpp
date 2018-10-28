@@ -32,7 +32,7 @@
 #include "g_levellocals.h"
 #include "flatvertices.h"
 #include "cmdlib.h"
-#include "hwrenderer/data/vertexbuffer.h"
+#include "hwrenderer/data/buffers.h"
 #include "hwrenderer/scene/hw_renderstate.h"
 
 

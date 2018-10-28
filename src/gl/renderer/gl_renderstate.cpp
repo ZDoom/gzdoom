@@ -38,7 +38,7 @@
 #include "gl/dynlights//gl_lightbuffer.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/textures/gl_hwtexture.h"
-#include "gl/system/glsys_vertexbuffer.h"
+#include "gl/system/gl_buffers.h"
 
 FGLRenderState gl_RenderState;
 

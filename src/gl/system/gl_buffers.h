@@ -1,6 +1,6 @@
 #pragma once
 
-#include "hwrenderer/data/vertexbuffer.h"
+#include "hwrenderer/data/buffers.h"
 
 #ifdef _MSC_VER
 // silence bogus warning C4250: 'GLVertexBuffer': inherits 'GLBuffer::GLBuffer::SetData' via dominance

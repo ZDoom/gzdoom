@@ -31,7 +31,7 @@
 #include "gl_load/gl_interface.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/dynlights/gl_lightbuffer.h"
+#include "hwrenderer/dynlights/hw_lightbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 
 EXTERN_CVAR(Bool, gl_seamless)

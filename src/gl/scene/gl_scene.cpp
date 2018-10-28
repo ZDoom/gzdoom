@@ -44,7 +44,7 @@
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/data/flatvertices.h"
 
-#include "gl/dynlights/gl_lightbuffer.h"
+#include "hwrenderer/dynlights/hw_lightbuffer.h"
 #include "gl_load/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_debug.h"

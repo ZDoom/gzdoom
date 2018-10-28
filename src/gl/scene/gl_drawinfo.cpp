@@ -42,7 +42,7 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderer.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
-#include "gl/dynlights/gl_lightbuffer.h"
+#include "hwrenderer/dynlights/hw_lightbuffer.h"
 #include "hwrenderer/models/hw_models.h"
 
 class FDrawInfoList

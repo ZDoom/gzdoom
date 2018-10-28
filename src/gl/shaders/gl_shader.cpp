@@ -35,13 +35,13 @@
 #include "hwrenderer/utility/hw_shaderpatcher.h"
 #include "hwrenderer/data/shaderuniforms.h"
 #include "hwrenderer/scene/hw_viewpointuniforms.h"
+#include "hwrenderer/dynlights/hw_lightbuffer.h"
 
 #include "gl_load/gl_interface.h"
 #include "gl/system/gl_debug.h"
 #include "r_data/matrix.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/shaders/gl_shader.h"
-#include "gl/dynlights/gl_lightbuffer.h"
 
 bool FShader::Load(const char * name, const char * vert_prog_lump, const char * frag_prog_lump, const char * proc_prog_lump, const char * light_fragprog, const char * defines)
 {

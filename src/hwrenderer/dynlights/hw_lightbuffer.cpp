@@ -25,7 +25,7 @@
 **
 **/
 
-#include "gl/dynlights/gl_lightbuffer.h"
+#include "hw_lightbuffer.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "hwrenderer/data/shaderuniforms.h"

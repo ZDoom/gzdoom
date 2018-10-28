@@ -35,7 +35,7 @@
 #include "hwrenderer/scene/hw_skydome.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/dynlights//gl_lightbuffer.h"
+#include "hwrenderer/dynlights/hw_lightbuffer.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/textures/gl_hwtexture.h"
 #include "gl/system/gl_buffers.h"

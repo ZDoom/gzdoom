@@ -1037,7 +1037,6 @@ set (PCH_SOURCES
 	g_statusbar/sbarinfo.cpp
 	g_statusbar/sbar_mugshot.cpp
 	g_statusbar/shared_sbar.cpp
-	gl/dynlights/gl_lightbuffer.cpp
 	gl/dynlights/gl_shadowmap.cpp
 	gl/renderer/gl_renderer.cpp
 	gl/renderer/gl_renderstate.cpp
@@ -1058,6 +1057,7 @@ set (PCH_SOURCES
 	hwrenderer/data/hw_viewpointbuffer.cpp
 	hwrenderer/dynlights/hw_aabbtree.cpp
 	hwrenderer/dynlights/hw_shadowmap.cpp
+	hwrenderer/dynlights/hw_lightbuffer.cpp
 	hwrenderer/models/hw_models.cpp
 	hwrenderer/scene/hw_skydome.cpp
 	hwrenderer/postprocessing/hw_postprocess.cpp

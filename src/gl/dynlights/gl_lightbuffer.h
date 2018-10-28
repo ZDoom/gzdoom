@@ -3,15 +3,17 @@
 
 #include "tarray.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
+#include "hwrenderer/data/buffers.h"
 #include <atomic>
 #include <mutex>
 
+class FRenderState;
+
 class FLightBuffer
 {
-	unsigned int mBufferId;
-	float * mBufferPointer;
+	IDataBuffer *mBuffer;
 
-	unsigned int mBufferType;
+	bool mBufferType;
     std::atomic<unsigned int> mIndex;
 	unsigned int mLastMappedIndex;
 	unsigned int mBlockAlign;
@@ -19,10 +21,11 @@ class FLightBuffer
 	unsigned int mBufferSize;
 	unsigned int mByteSize;
     unsigned int mMaxUploadSize;
-	bool mPersistentBuffer;
     
     std::mutex mBufferMutex;
     TArray<float> mBufferedData;
+
+	void CheckSize();
 
 public:
 
@@ -30,13 +33,13 @@ public:
 	~FLightBuffer();
 	void Clear();
 	int UploadLights(FDynLightData &data);
-	void Begin();
-	void Finish();
-    void CheckSize();
-	int BindUBO(unsigned int index);
+	void Map() { mBuffer->Map(); }
+	void Unmap() { mBuffer->Unmap(); if (mBufferedData.Size() > 0) CheckSize(); }
 	unsigned int GetBlockSize() const { return mBlockSize; }
-	unsigned int GetBufferType() const { return mBufferType; }
-    
+	bool GetBufferType() const { return mBufferType; }
+
+	int DoBindUBO(unsigned int index);
+
     int ShaderIndex(unsigned int index) const
     {
         if (mBlockAlign == 0) return index;
@@ -44,6 +47,22 @@ public:
         unsigned int offset = (index / mBlockAlign) * mBlockAlign;
         return int(index-offset);
     }
+
+	// Only relevant for OpenGL, so this does not need access to the render state.
+	int BindUBO(unsigned int index)
+	{
+		if (!mBufferType && index > -1)
+		{
+			index = DoBindUBO(index);
+		}
+		return index;
+	}
+
+	// The parameter is a reminder for Vulkan.
+	void BindBase(FRenderState &state)
+	{
+		mBuffer->BindBase();
+	}
 
 };
 

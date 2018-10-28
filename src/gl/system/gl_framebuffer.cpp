@@ -119,6 +119,8 @@ void OpenGLFrameBuffer::InitializeState()
 	hwcaps = gl.flags;
 	glslversion = gl.glslversion;
 	uniformblockalignment = gl.uniformblockalignment;
+	maxuniformblock = gl.maxuniformblock;
+	gl_vendorstring = gl.vendorstring;
 
 	if (first)
 	{

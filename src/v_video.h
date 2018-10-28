@@ -374,6 +374,8 @@ public:
 	int stencilValue = 0;						// Global stencil test value
 	bool enable_quadbuffered = false;			// Quad-buffered stereo available?
 	unsigned int uniformblockalignment = 256;	// Hardware dependent uniform buffer alignment.
+	unsigned int maxuniformblock = 65536;
+	const char *gl_vendorstring;				// On OpenGL (not Vulkan) we have to account for some issues with Intel.
 	FPortalSceneState *mPortalState;			// global portal state.
 	FSkyVertexBuffer *mSkyData = nullptr;		// the sky vertex buffer
 	FFlatVertexBuffer *mVertexData = nullptr;	// Global vertex data

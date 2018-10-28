@@ -25,8 +25,6 @@
 **
 **/
 
-#include "gl_load/gl_system.h"
-#include "gl/shaders/gl_shader.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
@@ -40,42 +38,30 @@ FLightBuffer::FLightBuffer()
 {
 	int maxNumberOfLights = 40000;
 	
-	mPersistentBuffer = screen->BuffersArePersistent();
 	mBufferSize = maxNumberOfLights * ELEMENTS_PER_LIGHT;
 	mByteSize = mBufferSize * ELEMENT_SIZE;
 	
 	// Hack alert: On Intel's GL driver SSBO's perform quite worse than UBOs.
 	// We only want to disable using SSBOs for lights but not disable the feature entirely.
 	// Note that using an uniform buffer here will limit the number of lights per surface so it isn't done for NVidia and AMD.
-	if (gl.flags & RFL_SHADER_STORAGE_BUFFER && !strstr(gl.vendorstring, "Intel"))
+	if (screen->hwcaps & RFL_SHADER_STORAGE_BUFFER && !strstr(screen->gl_vendorstring, "Intel"))
 	{
-		mBufferType = GL_SHADER_STORAGE_BUFFER;
+		mBufferType = true;
 		mBlockAlign = 0;
 		mBlockSize = mBufferSize;
 		mMaxUploadSize = mBlockSize;
 	}
 	else
 	{
-		mBufferType = GL_UNIFORM_BUFFER;
-		mBlockSize = gl.maxuniformblock / ELEMENT_SIZE;
-		mBlockAlign = gl.uniformblockalignment / ELEMENT_SIZE;
+		mBufferType = false;
+		mBlockSize = screen->maxuniformblock / ELEMENT_SIZE;
+		mBlockAlign = screen->uniformblockalignment / ELEMENT_SIZE;
 		mMaxUploadSize = (mBlockSize - mBlockAlign);
-		mByteSize += gl.maxuniformblock;	// to avoid mapping beyond the end of the buffer.
+		mByteSize += screen->maxuniformblock;	// to avoid mapping beyond the end of the buffer.
 	}
 
-	glGenBuffers(1, &mBufferId);
-	glBindBufferBase(mBufferType, LIGHTBUF_BINDINGPOINT, mBufferId);
-	glBindBuffer(mBufferType, mBufferId);	// Note: Some older AMD drivers don't do that in glBindBufferBase, as they should.
-	if (mPersistentBuffer)
-	{
-		glBufferStorage(mBufferType, mByteSize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-		mBufferPointer = (float*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-	}
-	else
-	{
-		glBufferData(mBufferType, mByteSize, NULL, GL_DYNAMIC_DRAW);
-		mBufferPointer = NULL;
-	}
+	mBuffer = screen->CreateDataBuffer(LIGHTBUF_BINDINGPOINT, mBufferType);
+	mBuffer->SetData(mByteSize, nullptr, false);
 
 	Clear();
 	mLastMappedIndex = UINT_MAX;
@@ -83,8 +69,7 @@ FLightBuffer::FLightBuffer()
 
 FLightBuffer::~FLightBuffer()
 {
-	glBindBuffer(mBufferType, 0);
-	glDeleteBuffers(1, &mBufferId);
+	delete mBuffer;
 }
 
 void FLightBuffer::Clear()
@@ -94,20 +79,7 @@ void FLightBuffer::Clear()
 
 void FLightBuffer::CheckSize()
 {
-	// reallocate the buffer with twice the size
-	unsigned int newbuffer;
-	
-	// first unmap the old buffer
-	glBindBuffer(mBufferType, mBufferId);
-	glUnmapBuffer(mBufferType);
-	
-	// create and bind the new buffer, bind the old one to a copy target (too bad that DSA is not yet supported well enough to omit this crap.)
-	glGenBuffers(1, &newbuffer);
-	glBindBufferBase(mBufferType, LIGHTBUF_BINDINGPOINT, newbuffer);
-	glBindBuffer(mBufferType, newbuffer);	// Note: Some older AMD drivers don't do that in glBindBufferBase, as they should.
-	glBindBuffer(GL_COPY_READ_BUFFER, mBufferId);
-	
-	// create the new buffer's storage (twice as large as the old one)
+	// create the new buffer's storage (at least twice as large as the old one)
 	int oldbytesize = mByteSize;
 	unsigned int bufferbytesize = mBufferedData.Size() * 4;
 	if (bufferbytesize > mByteSize)
@@ -119,27 +91,12 @@ void FLightBuffer::CheckSize()
 		mByteSize *= 2;
 	}
 	mBufferSize = mByteSize / ELEMENT_SIZE;
-
-	if (mPersistentBuffer)
-	{
-		glBufferStorage(mBufferType, mByteSize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-		mBufferPointer = (float*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-	}
-	else
-	{
-		glBufferData(mBufferType, mByteSize, NULL, GL_DYNAMIC_DRAW);
-		mBufferPointer = (float*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT);
-	}
+	mBuffer->Resize(mByteSize);
 	
-	// copy contents and delete the old buffer.
-	glCopyBufferSubData(GL_COPY_READ_BUFFER, mBufferType, 0, 0, mByteSize/2);
-	glBindBuffer(GL_COPY_READ_BUFFER, 0);
-	glDeleteBuffers(1, &mBufferId);
-	mBufferId = newbuffer;
-	Begin();
-	memcpy(mBufferPointer + mBlockSize*4, &mBufferedData[0], bufferbytesize);
+	Map();
+	memcpy(((float*)mBuffer->Memory()) + mBlockSize*4, &mBufferedData[0], bufferbytesize);
 	mBufferedData.Clear();
-	Finish();
+	Unmap();
 }
 
 int FLightBuffer::UploadLights(FDynLightData &data)
@@ -168,6 +125,7 @@ int FLightBuffer::UploadLights(FDynLightData &data)
 		totalsize = size0 + size1 + size2 + 1;
 	}
 
+	float *mBufferPointer = (float*)mBuffer->Memory();
 	assert(mBufferPointer != nullptr);
 	if (mBufferPointer == nullptr) return -1;
 	if (totalsize <= 1) return -1;	// there are no lights
@@ -200,35 +158,15 @@ int FLightBuffer::UploadLights(FDynLightData &data)
 	}
 }
 
-void FLightBuffer::Begin()
+int FLightBuffer::DoBindUBO(unsigned int index)
 {
-	if (!mPersistentBuffer)
-	{
-		glBindBuffer(mBufferType, mBufferId);
-		mBufferPointer = (float*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT);
-	}
-}
-
-void FLightBuffer::Finish()
-{
-	if (!mPersistentBuffer)
-	{
-		glBindBuffer(mBufferType, mBufferId);
-		glUnmapBuffer(mBufferType);
-		mBufferPointer = NULL;
-	}
-	if (mBufferedData.Size() > 0) CheckSize();
-}
-
-int FLightBuffer::BindUBO(unsigned int index)
-{
+	// this function will only get called if a uniform buffer is used. For a shader storage buffer we only need to bind the buffer once at the start.
 	unsigned int offset = (index / mBlockAlign) * mBlockAlign;
 
 	if (offset != mLastMappedIndex)
 	{
-		// this will only get called if a uniform buffer is used. For a shader storage buffer we only need to bind the buffer once at the start to all shader programs
 		mLastMappedIndex = offset;
-		glBindBufferRange(GL_UNIFORM_BUFFER, LIGHTBUF_BINDINGPOINT, mBufferId, offset * ELEMENT_SIZE, mBlockSize * ELEMENT_SIZE);
+		mBuffer->BindRange(offset * ELEMENT_SIZE, mBlockSize * ELEMENT_SIZE);
 	}
 	return (index - offset);
 }

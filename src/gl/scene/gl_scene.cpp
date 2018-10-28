@@ -105,7 +105,7 @@ void FDrawInfo::CreateScene()
 	// clip the scene and fill the drawlists
 	Bsp.Clock();
 	screen->mVertexData->Map();
-	GLRenderer->mLights->Begin();
+	GLRenderer->mLights->Map();
 
 	// Give the DrawInfo the viewpoint in fixed point because that's what the nodes are.
 	viewx = FLOAT2FIXED(vp.Pos.X);
@@ -130,7 +130,7 @@ void FDrawInfo::CreateScene()
 	HandleHackedSubsectors();	// open sector hacks for deep water
 	ProcessSectorStacks(in_area);		// merge visplanes of sector stacks
 	PrepareUnhandledMissingTextures();
-	GLRenderer->mLights->Finish();
+	GLRenderer->mLights->Unmap();
 	screen->mVertexData->Unmap();
 
 	ProcessAll.Unclock();
@@ -153,6 +153,7 @@ void FDrawInfo::RenderScene(int recursion)
 	glDepthMask(true);
  	if (!gl_no_skyclear) screen->mPortalState->RenderFirstSkyPortal(recursion, this);
 
+	GLRenderer->mLights->BindBase(gl_RenderState);	// not needed for OpenGL but necessary for Vulkan command buffers to do it here!
 	gl_RenderState.EnableFog(true);
 	gl_RenderState.SetRenderStyle(STYLE_Source);
 

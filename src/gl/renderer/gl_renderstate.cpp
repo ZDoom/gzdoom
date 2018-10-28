@@ -200,11 +200,7 @@ bool FGLRenderState::ApplyShader()
 		matrixToGL(identityMatrix, activeShader->normalmodelmatrix_index);
 	}
 
-	auto index = mLightIndex;
-	if (index > -1 && GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
-	{
-		index = GLRenderer->mLights->BindUBO(index);
-	}
+	auto index = GLRenderer->mLights->BindUBO(mLightIndex);
 	activeShader->muLightIndex.Set(index);
 
 	return true;

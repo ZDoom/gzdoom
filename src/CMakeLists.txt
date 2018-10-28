@@ -956,6 +956,7 @@ set (PCH_SOURCES
 	p_actionfunctions.cpp
 	p_ceiling.cpp
 	p_conversation.cpp
+	p_destructible.cpp
 	p_doors.cpp
 	p_effect.cpp
 	p_enemy.cpp

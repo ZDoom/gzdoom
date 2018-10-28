@@ -1938,6 +1938,31 @@ bool AActor::Massacre ()
 
 void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target, bool onsky)
 {
+	// [ZZ] line damage callback
+	if (line)
+	{
+		int wside = P_PointOnLineSide(mo->Pos(), line);
+		int oside = !wside;
+		side_t* otherside = line->sidedef[oside];
+		// check if hit upper or lower part
+		if (otherside)
+		{
+			sector_t* othersector = otherside->sector;
+			double otherfloorz = othersector->floorplane.ZatPoint(mo->Pos());
+			double otherceilingz = othersector->ceilingplane.ZatPoint(mo->Pos());
+			double actualz = mo->Pos().Z;
+			if (actualz < otherfloorz && othersector->healthfloor > 0 && P_CheckLinedefVulnerable(line, wside, SECPART_Floor))
+				P_DamageSector(othersector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Floor, mo->Pos());
+			if (actualz > otherceilingz && othersector->healthceiling > 0 && P_CheckLinedefVulnerable(line, wside, SECPART_Ceiling))
+				P_DamageSector(othersector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Ceiling, mo->Pos());
+		}
+		
+		if (line->health > 0 && P_CheckLinedefVulnerable(line, wside))
+		{
+			P_DamageLinedef(line, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, wside, mo->Pos());
+		}
+	}
+
 	if (mo->flags3 & MF3_EXPLOCOUNT)
 	{
 		if (++mo->threshold < mo->DefThreshold)
@@ -2689,30 +2714,50 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 explode:
 				// explode a missile
 				bool onsky = false;
-					if (tm.ceilingline &&
-						tm.ceilingline->backsector &&
-						tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
-						mo->Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint(mo->PosRelative(tm.ceilingline)))
+				if (tm.ceilingline &&
+					tm.ceilingline->backsector &&
+					tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
+					mo->Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint(mo->PosRelative(tm.ceilingline)))
+				{
+					if (!(mo->flags3 & MF3_SKYEXPLODE))
 					{
-						if (!(mo->flags3 & MF3_SKYEXPLODE))
-						{
-							// Hack to prevent missiles exploding against the sky.
-							// Does not handle sky floors.
-							mo->Destroy();
-							return Oldfloorz;
-						}
-						else onsky = true;
+						// Hack to prevent missiles exploding against the sky.
+						// Does not handle sky floors.
+						mo->Destroy();
+						return Oldfloorz;
 					}
-					// [RH] Don't explode on horizon lines.
-					if (mo->BlockingLine != NULL && mo->BlockingLine->special == Line_Horizon)
+					else onsky = true;
+				}
+				// [RH] Don't explode on horizon lines.
+				if (mo->BlockingLine != NULL && mo->BlockingLine->special == Line_Horizon)
+				{
+					if (!(mo->flags3 & MF3_SKYEXPLODE))
 					{
-						if (!(mo->flags3 & MF3_SKYEXPLODE))
-						{
-							mo->Destroy();
-							return Oldfloorz;
-						}
-						else onsky = true;
+						mo->Destroy();
+						return Oldfloorz;
 					}
+					else onsky = true;
+				}
+				if (!mo->BlockingLine && !BlockingMobj) // hit floor or ceiling while XY movement
+				{
+					int hitpart = -1;
+					sector_t* hitsector = nullptr;
+					// check against floor
+					if (tm.floorsector && mo->Z() < tm.floorsector->floorplane.ZatPoint(tm.pos.XY()))
+					{
+						hitpart = SECPART_Floor;
+						hitsector = tm.floorsector;
+						if (hitsector->healthfloor > 0 && P_CheckSectorVulnerable(hitsector, hitpart))
+							P_DamageSector(hitsector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, hitpart, mo->Pos());
+					}
+					if (tm.ceilingsector && mo->Z() + mo->Height > tm.ceilingsector->ceilingplane.ZatPoint(tm.pos.XY()))
+					{
+						hitpart = SECPART_Ceiling;
+						hitsector = tm.ceilingsector;
+						if (hitsector->healthceiling > 0 && P_CheckSectorVulnerable(hitsector, hitpart))
+							P_DamageSector(hitsector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, hitpart, mo->Pos());
+					}
+				}
 				P_ExplodeMissile (mo, mo->BlockingLine, BlockingMobj, onsky);
 				return Oldfloorz;
 			}
@@ -3105,6 +3150,9 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 						else onsky = true;
 					}
 					P_HitFloor (mo);
+					// hit floor: direct damage callback
+					if (mo->Sector->healthfloor > 0 && P_CheckSectorVulnerable(mo->Sector, SECPART_Floor))
+						P_DamageSector(mo->Sector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Floor, mo->Pos());
 					P_ExplodeMissile (mo, NULL, NULL, onsky);
 					return;
 				}
@@ -3208,6 +3256,9 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 					}
 					else onsky = true;
 				}
+				// hit ceiling: direct damage callback
+				if (mo->Sector->healthceiling > 0 && P_CheckSectorVulnerable(mo->Sector, SECPART_Ceiling))
+					P_DamageSector(mo->Sector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Ceiling, mo->Pos());
 				P_ExplodeMissile (mo, NULL, NULL, onsky);
 				return;
 			}

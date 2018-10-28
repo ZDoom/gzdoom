@@ -141,6 +141,11 @@ Note: All <bool> fields default to false unless mentioned otherwise.
                                   // 13: Portal line.
       revealed = <bool>;          // true = line is initially visible on automap.
 
+      health = <int>;             // Amount of hitpoints for this line.
+      healthgroup = <int>;        // ID of destructible object to synchronize hitpoints (optional, default is 0)
+      damagespecial = <bool>;     // This line will call special if having health>0 and receiving damage
+      deathspecial = <bool>;      // This line will call special if health was reduced to 0
+
       * Note about arg0str
 
       For lines with ACS specials (80-86 and 226), if arg0str is present and non-null, it
@@ -248,17 +253,21 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       color_sprites = <int>;          // Material color of sprites in sector. Default is white (0xffffff)
 
 
-      portal_ceil_blocksound = <bool> // ceiling portal blocks sound.
-      portal_ceil_disabled = <bool>   // ceiling portal disabled.
-      portal_ceil_nopass = <bool>     // ceiling portal blocks movement if true.
-      portal_ceil_norender = <bool>   // ceiling portal not rendered.
-      portal_ceil_overlaytype = <string> // defines translucency style, can either be "translucent" or "additive". Default is "translucent".
-      portal_floor_blocksound = <bool> // floor portal blocks sound.
-      portal_floor_disabled = <bool>   // floor portal disabled.
-      portal_floor_nopass = <bool>     // ceiling portal blocks movement if true.
-      portal_floor_norender = <bool>   // ceiling portal not rendered.
-      portal_floor_overlaytype = <string> // defines translucency style, can either be "translucent" or "additive". Default is "translucent".
+      portal_ceil_blocksound = <bool>;     // ceiling portal blocks sound.
+      portal_ceil_disabled = <bool>;       // ceiling portal disabled.
+      portal_ceil_nopass = <bool>;         // ceiling portal blocks movement if true.
+      portal_ceil_norender = <bool>;       // ceiling portal not rendered.
+      portal_ceil_overlaytype = <string>;  // defines translucency style, can either be "translucent" or "additive". Default is "translucent".
+      portal_floor_blocksound = <bool>;    // floor portal blocks sound.
+      portal_floor_disabled = <bool>;      // floor portal disabled.
+      portal_floor_nopass = <bool>;        // ceiling portal blocks movement if true.
+      portal_floor_norender = <bool>;      // ceiling portal not rendered.
+      portal_floor_overlaytype = <string>; // defines translucency style, can either be "translucent" or "additive". Default is "translucent".
 
+      healthfloor = <int>;            // Amount of hitpoints for this sector (includes floor and bottom-outside linedef sides)
+      healthfloorgroup = <int>;       // ID of destructible object to synchronize hitpoints (optional, default is 0)
+      healthceiling = <int>;          // Amount of hitpoints for this sector (includes ceiling and top-outside linedef sides)
+      healthceilinggroup = <int>;     // ID of destructible object to synchronize hitpoints (optional, default is 0)
 
       * Note about dropactors
 

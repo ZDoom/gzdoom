@@ -248,7 +248,6 @@ AActor *P_RoughMonsterSearch (AActor *mo, int distance, bool onlyseekable=false,
 // P_MAP
 //
 
-
 struct spechit_t
 {
 	line_t *line;

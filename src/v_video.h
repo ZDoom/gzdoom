@@ -55,6 +55,7 @@ class IVertexBuffer;
 class IDataBuffer;
 class FFlatVertexBuffer;
 class GLViewpointBuffer;
+class FLightBuffer;
 
 enum EHWCaps
 {
@@ -380,6 +381,7 @@ public:
 	FSkyVertexBuffer *mSkyData = nullptr;		// the sky vertex buffer
 	FFlatVertexBuffer *mVertexData = nullptr;	// Global vertex data
 	GLViewpointBuffer *mViewpoints = nullptr;	// Viewpoint render data.
+	FLightBuffer *mLights = nullptr;			// Dynamic lights
 
 	IntRect mScreenViewport;
 	IntRect mSceneViewport;

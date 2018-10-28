@@ -36,6 +36,7 @@
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "hwrenderer/data/flatvertices.h"
+#include "hwrenderer/dynlights/hw_lightbuffer.h"
 
 sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back);
 
@@ -71,7 +72,7 @@ int HWDrawInfo::SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &light
 			node = node->nextLight;
 		}
 
-		return UploadLights(lightdata);
+		return screen->mLights->UploadLights(lightdata);
 	}
 	else return -1;
 }

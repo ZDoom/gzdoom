@@ -38,6 +38,7 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_portal.h"
+#include "hwrenderer/dynlights/hw_lightbuffer.h"
 #include "hw_renderstate.h"
 #include "hw_skydome.h"
 
@@ -359,7 +360,7 @@ void GLWall::SetupLights(HWDrawInfo *di, FDynLightData &lightdata)
 		}
 		node = node->nextLight;
 	}
-	dynlightindex = di->UploadLights(lightdata);
+	dynlightindex = screen->mLights->UploadLights(lightdata);
 }
 
 

@@ -53,6 +53,7 @@
 #include "hwrenderer/utility/hw_lighting.h"
 #include "hwrenderer/textures/hw_material.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
+#include "hwrenderer/dynlights/hw_lightbuffer.h"
 #include "hw_renderstate.h"
 
 extern TArray<spritedef_t> sprites;
@@ -460,7 +461,7 @@ inline void GLSprite::PutSprite(HWDrawInfo *di, bool translucent)
 	if (modelframe && RenderStyle.BlendOp != STYLEOP_Shadow && gl_light_sprites && level.HasDynamicLights && !di->isFullbrightScene() && !fullbright)
 	{
 		hw_GetDynModelLight(actor, lightdata);
-		dynlightindex = di->UploadLights(lightdata);
+		dynlightindex = screen->mLights->UploadLights(lightdata);
 	}
 	else
 		dynlightindex = -1;

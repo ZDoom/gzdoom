@@ -337,7 +337,6 @@ public:
 	virtual void AddFlat(GLFlat *flat, bool fog) = 0;
 	virtual void AddSprite(GLSprite *sprite, bool translucent) = 0;
 
-	virtual int UploadLights(FDynLightData &data) = 0;
 	virtual void ApplyVPUniforms() = 0;
 	virtual bool SetDepthClamp(bool on) = 0;
 

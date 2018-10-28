@@ -69,7 +69,6 @@ public:
 
 	//FRotator mAngles;
 
-	FLightBuffer *mLights = nullptr;
 	SWSceneDrawer *swdrawer = nullptr;
 
 	float mSceneClearColor[3];

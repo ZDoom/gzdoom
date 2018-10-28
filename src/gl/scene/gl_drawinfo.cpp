@@ -158,11 +158,6 @@ void FDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *ptg, subsector_t *sub)
 	ptl->AddSubsector(sub);
 }
 
-int FDrawInfo::UploadLights(FDynLightData &data)
-{
-	return GLRenderer->mLights->UploadLights(data);
-}
-
 bool FDrawInfo::SetDepthClamp(bool on)
 {
 	return gl_RenderState.SetDepthClamp(on);

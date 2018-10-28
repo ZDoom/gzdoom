@@ -39,8 +39,6 @@ struct FDrawInfo : public HWDrawInfo
 	void AddFlat(GLFlat *flat, bool fog) override;
 	void AddSprite(GLSprite *sprite, bool translucent) override;
 
-	int UploadLights(FDynLightData &data) override;
-
 	void Draw(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) override;
 	void DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) override;
 	void RenderPortal(HWPortal *p, bool stencil) override;

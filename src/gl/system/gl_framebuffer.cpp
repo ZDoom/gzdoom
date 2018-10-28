@@ -41,6 +41,7 @@
 #include "hwrenderer/models/hw_models.h"
 #include "hwrenderer/scene/hw_skydome.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
+#include "hwrenderer/dynlights/hw_lightbuffer.h"
 #include "gl/shaders/gl_shaderprogram.h"
 #include "gl_debug.h"
 #include "r_videoscale.h"
@@ -87,6 +88,7 @@ OpenGLFrameBuffer::~OpenGLFrameBuffer()
 	if (mVertexData != nullptr) delete mVertexData;
 	if (mSkyData != nullptr) delete mSkyData;
 	if (mViewpoints != nullptr) delete mViewpoints;
+	if (mLights != nullptr) delete mLights;
 
 	if (GLRenderer)
 	{
@@ -144,13 +146,15 @@ void OpenGLFrameBuffer::InitializeState()
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	GLRenderer = new FGLRenderer(this);
-	GLRenderer->Initialize(GetWidth(), GetHeight());
 	SetViewportRects(nullptr);
 
 	mVertexData = new FFlatVertexBuffer(GetWidth(), GetHeight());
 	mSkyData = new FSkyVertexBuffer;
 	mViewpoints = new GLViewpointBuffer;
+	mLights = new FLightBuffer();
+
+	GLRenderer = new FGLRenderer(this);
+	GLRenderer->Initialize(GetWidth(), GetHeight());
 
 	mDebug = std::make_shared<FGLDebug>();
 	mDebug->Update();

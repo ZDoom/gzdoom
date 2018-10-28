@@ -166,10 +166,10 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 //
 	FString vp_comb;
 
-	assert(GLRenderer->mLights != NULL);
+	assert(screen->mLights != NULL);
 
-	bool lightbuffertype = GLRenderer->mLights->GetBufferType();
-	unsigned int lightbuffersize = GLRenderer->mLights->GetBlockSize();
+	bool lightbuffertype = screen->mLights->GetBufferType();
+	unsigned int lightbuffersize = screen->mLights->GetBlockSize();
 	if (!lightbuffertype)
 	{
 		vp_comb.Format("#version 330 core\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);

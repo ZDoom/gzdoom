@@ -102,7 +102,6 @@ void FGLRenderer::Initialize(int width, int height)
 	glBindVertexArray(mVAOID);
 	FGLDebug::LabelObject(GL_VERTEX_ARRAY, mVAOID, "FGLRenderer.mVAOID");
 
-	mLights = new FLightBuffer();
 	mFBID = 0;
 	mOldFBID = 0;
 
@@ -117,7 +116,6 @@ FGLRenderer::~FGLRenderer()
 	FMaterial::FlushAll();
 	if (mShaderManager != nullptr) delete mShaderManager;
 	if (mSamplerManager != nullptr) delete mSamplerManager;
-	if (mLights != nullptr) delete mLights;
 	if (mFBID != 0) glDeleteFramebuffers(1, &mFBID);
 	if (mVAOID != 0)
 	{
@@ -209,7 +207,7 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 
 		P_FindParticleSubsectors();
 
-		mLights->Clear();
+		screen->mLights->Clear();
 		screen->mViewpoints->Clear();
 
 		// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
@@ -311,7 +309,7 @@ void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, i
     P_FindParticleSubsectors();    // make sure that all recently spawned particles have a valid subsector.
 	screen->mVertexData->Bind(gl_RenderState);
 	screen->mVertexData->Reset();
-    mLights->Clear();
+    screen->mLights->Clear();
 	screen->mViewpoints->Clear();
 
     // This shouldn't overwrite the global viewpoint even for a short time.

@@ -93,16 +93,15 @@ matrix:
     - os: linux
       compiler: clang
       env:
-        - CLANG_VERSION=6.0
+        - CLANG_VERSION=7
         - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=MinSizeRel -DDYN_OPENAL=NO -DDYN_SNDFILE=NO -DDYN_MPG123=NO -DDYN_FLUIDSYNTH=NO"
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-trusty-6.0
+            - llvm-toolchain-trusty-7
           packages:
-            - clang-6.0
-            - libstdc++-5-dev
+            - clang-7
             - libsdl2-dev
             - libgme-dev
             - libopenal-dev

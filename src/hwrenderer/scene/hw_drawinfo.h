@@ -305,6 +305,9 @@ public:
 	void SetViewArea();
 	int SetFullbrightFlags(player_t *player);
 
+	void RenderScene(FRenderState &state);
+	void RenderTranslucent(FRenderState &state);
+
 	bool DoOneSectorUpper(subsector_t * subsec, float planez, area_t in_area);
 	bool DoOneSectorLower(subsector_t * subsec, float planez, area_t in_area);
 	bool DoFakeBridge(subsector_t * subsec, float planez, area_t in_area);

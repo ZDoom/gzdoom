@@ -37,10 +37,12 @@
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
+#include "hwrenderer/dynlights/hw_lightbuffer.h"
 #include "hw_clipper.h"
 
 EXTERN_CVAR(Float, r_visibility)
 CVAR(Bool, gl_bandedswlight, false, CVAR_ARCHIVE)
+CVAR(Bool, gl_sort_textures, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back);
 
@@ -419,4 +421,96 @@ GLDecal *HWDrawInfo::AddDecal(bool onmirror)
 	Decals[onmirror ? 1 : 0].Push(decal);
 	return decal;
 }
+
+//-----------------------------------------------------------------------------
+//
+// RenderScene
+//
+// Draws the current draw lists for the non GLSL renderer
+//
+//-----------------------------------------------------------------------------
+
+void HWDrawInfo::RenderScene(FRenderState &state)
+{
+	const auto &vp = Viewpoint;
+	RenderAll.Clock();
+
+	state.SetDepthMask(true);
+
+	screen->mLights->BindBase(state);	// not needed for OpenGL but necessary for Vulkan command buffers to do it here!
+	state.EnableFog(true);
+	state.SetRenderStyle(STYLE_Source);
+
+	if (gl_sort_textures)
+	{
+		drawlists[GLDL_PLAINWALLS].SortWalls();
+		drawlists[GLDL_PLAINFLATS].SortFlats();
+		drawlists[GLDL_MASKEDWALLS].SortWalls();
+		drawlists[GLDL_MASKEDFLATS].SortFlats();
+		drawlists[GLDL_MASKEDWALLSOFS].SortWalls();
+	}
+
+	// Part 1: solid geometry. This is set up so that there are no transparent parts
+	state.SetDepthFunc(DF_Less);
+	state.AlphaFunc(Alpha_GEqual, 0.f);
+	state.ClearDepthBias();
+
+	state.EnableTexture(gl_texture);
+	state.EnableBrightmap(true);
+	drawlists[GLDL_PLAINWALLS].DrawWalls(this, state, false);
+	drawlists[GLDL_PLAINFLATS].DrawFlats(this, state, false);
+
+
+	// Part 2: masked geometry. This is set up so that only pixels with alpha>gl_mask_threshold will show
+	state.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
+	drawlists[GLDL_MASKEDWALLS].DrawWalls(this, state, false);
+	drawlists[GLDL_MASKEDFLATS].DrawFlats(this, state, false);
+
+	// Part 3: masked geometry with polygon offset. This list is empty most of the time so only waste time on it when in use.
+	if (drawlists[GLDL_MASKEDWALLSOFS].Size() > 0)
+	{
+		state.SetDepthBias(-1, -128);
+		drawlists[GLDL_MASKEDWALLSOFS].DrawWalls(this, state, false);
+		state.ClearDepthBias();
+	}
+
+	drawlists[GLDL_MODELS].Draw(this, state, false);
+
+	state.SetRenderStyle(STYLE_Translucent);
+
+	// Part 4: Draw decals (not a real pass)
+	state.SetDepthFunc(DF_LEqual);
+	DrawDecals(state, Decals[0]);
+
+	RenderAll.Unclock();
+}
+
+//-----------------------------------------------------------------------------
+//
+// RenderTranslucent
+//
+//-----------------------------------------------------------------------------
+
+void HWDrawInfo::RenderTranslucent(FRenderState &state)
+{
+	RenderAll.Clock();
+
+	// final pass: translucent stuff
+	state.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
+	state.SetRenderStyle(STYLE_Translucent);
+
+	state.EnableBrightmap(true);
+	drawlists[GLDL_TRANSLUCENTBORDER].Draw(this, state, true);
+	state.SetDepthMask(false);
+
+	drawlists[GLDL_TRANSLUCENT].DrawSorted(this, state);
+	state.EnableBrightmap(false);
+
+
+	state.AlphaFunc(Alpha_GEqual, 0.5f);
+	state.SetDepthMask(true);
+
+	RenderAll.Unclock();
+}
+
 

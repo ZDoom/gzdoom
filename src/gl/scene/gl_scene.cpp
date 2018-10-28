@@ -67,7 +67,6 @@ CVAR(Bool, gl_texture, true, 0)
 CVAR(Bool, gl_no_skyclear, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_mask_threshold, 0.5f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_mask_sprite_threshold, 0.5f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR(Bool, gl_sort_textures, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 EXTERN_CVAR (Bool, cl_capfps)
 EXTERN_CVAR (Bool, r_deathcamera)
@@ -132,99 +131,6 @@ void FDrawInfo::CreateScene()
 
 //-----------------------------------------------------------------------------
 //
-// RenderScene
-//
-// Draws the current draw lists for the non GLSL renderer
-//
-//-----------------------------------------------------------------------------
-
-void FDrawInfo::RenderScene(int recursion)
-{
-	const auto &vp = Viewpoint;
-	RenderAll.Clock();
-
-	glDepthMask(true);
- 	if (!gl_no_skyclear) screen->mPortalState->RenderFirstSkyPortal(recursion, this);
-
-	screen->mLights->BindBase(gl_RenderState);	// not needed for OpenGL but necessary for Vulkan command buffers to do it here!
-	gl_RenderState.EnableFog(true);
-	gl_RenderState.SetRenderStyle(STYLE_Source);
-
-	if (gl_sort_textures)
-	{
-		drawlists[GLDL_PLAINWALLS].SortWalls();
-		drawlists[GLDL_PLAINFLATS].SortFlats();
-		drawlists[GLDL_MASKEDWALLS].SortWalls();
-		drawlists[GLDL_MASKEDFLATS].SortFlats();
-		drawlists[GLDL_MASKEDWALLSOFS].SortWalls();
-	}
-
-	// Part 1: solid geometry. This is set up so that there are no transparent parts
-	glDepthFunc(GL_LESS);
-	gl_RenderState.AlphaFunc(Alpha_GEqual, 0.f);
-	gl_RenderState.ClearDepthBias();
-
-	gl_RenderState.EnableTexture(gl_texture);
-	gl_RenderState.EnableBrightmap(true);
-	drawlists[GLDL_PLAINWALLS].DrawWalls(this, gl_RenderState, false);
-	drawlists[GLDL_PLAINFLATS].DrawFlats(this, gl_RenderState, false);
-
-
-	// Part 2: masked geometry. This is set up so that only pixels with alpha>gl_mask_threshold will show
-	gl_RenderState.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
-	drawlists[GLDL_MASKEDWALLS].DrawWalls(this, gl_RenderState, false);
-	drawlists[GLDL_MASKEDFLATS].DrawFlats(this, gl_RenderState, false);
-
-	// Part 3: masked geometry with polygon offset. This list is empty most of the time so only waste time on it when in use.
-	if (drawlists[GLDL_MASKEDWALLSOFS].Size() > 0)
-	{
-		gl_RenderState.SetDepthBias(-1, -128);
-		drawlists[GLDL_MASKEDWALLSOFS].DrawWalls(this, gl_RenderState, false);
-		gl_RenderState.ClearDepthBias();
-	}
-
-	drawlists[GLDL_MODELS].Draw(this, gl_RenderState, false);
-
-	gl_RenderState.SetRenderStyle(STYLE_Translucent);
-
-	// Part 4: Draw decals (not a real pass)
-	glDepthFunc(GL_LEQUAL);
-	DrawDecals(gl_RenderState, Decals[0]);
-
-	RenderAll.Unclock();
-}
-
-//-----------------------------------------------------------------------------
-//
-// RenderTranslucent
-//
-//-----------------------------------------------------------------------------
-
-void FDrawInfo::RenderTranslucent()
-{
-	RenderAll.Clock();
-
-	// final pass: translucent stuff
-	gl_RenderState.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
-	gl_RenderState.SetRenderStyle(STYLE_Translucent);
-
-	gl_RenderState.EnableBrightmap(true);
-	drawlists[GLDL_TRANSLUCENTBORDER].Draw(this, gl_RenderState, true);
-	glDepthMask(false);
-
-	drawlists[GLDL_TRANSLUCENT].DrawSorted(this, gl_RenderState);
-	gl_RenderState.EnableBrightmap(false);
-
-
-	gl_RenderState.AlphaFunc(Alpha_GEqual, 0.5f);
-	glDepthMask(true);
-
-	RenderAll.Unclock();
-}
-
-
-//-----------------------------------------------------------------------------
-//
 // gl_drawscene - this function renders the scene from the current
 // viewpoint, including mirrors and skyboxes and other portals
 // It is assumed that the HWPortal::EndFrame returns with the 
@@ -265,7 +171,10 @@ void FDrawInfo::DrawScene(int drawmode)
 		CreateScene();
 	}
 
-	RenderScene(recursion);
+	glDepthMask(true);
+	if (!gl_no_skyclear) screen->mPortalState->RenderFirstSkyPortal(recursion, this);
+
+	RenderScene(gl_RenderState);
 
 	if (applySSAO && gl_RenderState.GetPassType() == GBUFFER_PASS)
 	{
@@ -283,7 +192,7 @@ void FDrawInfo::DrawScene(int drawmode)
 	recursion++;
 	screen->mPortalState->EndFrame(this);
 	recursion--;
-	RenderTranslucent();
+	RenderTranslucent(gl_RenderState);
 }
 
 //-----------------------------------------------------------------------------

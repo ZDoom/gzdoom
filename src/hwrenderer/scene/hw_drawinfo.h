@@ -184,7 +184,6 @@ struct HWDrawInfo
 	HWScenePortalBase *mClipPortal;
 	HWPortal *mCurrentPortal;
 	//FRotator mAngles;
-	IShadowMap *mShadowMap;
 	Clipper *mClipper;
 	FRenderViewpoint Viewpoint;
 	HWViewpointUniforms VPUniforms;	// per-viewpoint uniform state
@@ -305,6 +304,7 @@ public:
 	void SetViewArea();
 	int SetFullbrightFlags(player_t *player);
 
+	void CreateScene();
 	void RenderScene(FRenderState &state);
 	void RenderTranslucent(FRenderState &state);
 	void RenderPortal(HWPortal *p, FRenderState &state, bool usestencil);

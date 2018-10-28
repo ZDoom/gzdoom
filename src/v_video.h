@@ -44,6 +44,7 @@
 #include "c_cvars.h"
 #include "v_colortables.h"
 #include "v_2ddrawer.h"
+#include "hwrenderer/dynlights/hw_shadowmap.h"
 
 struct sector_t;
 class IShaderProgram;
@@ -383,6 +384,7 @@ public:
 	FFlatVertexBuffer *mVertexData = nullptr;	// Global vertex data
 	GLViewpointBuffer *mViewpoints = nullptr;	// Viewpoint render data.
 	FLightBuffer *mLights = nullptr;			// Dynamic lights
+	IShadowMap mShadowMap;
 
 	IntRect mScreenViewport;
 	IntRect mSceneViewport;

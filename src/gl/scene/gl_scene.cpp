@@ -76,61 +76,6 @@ EXTERN_CVAR (Bool, r_drawvoxels)
 
 //-----------------------------------------------------------------------------
 //
-// CreateScene
-//
-// creates the draw lists for the current scene
-//
-//-----------------------------------------------------------------------------
-
-void FDrawInfo::CreateScene()
-{
-	const auto &vp = Viewpoint;
-	angle_t a1 = FrustumAngle();
-	mClipper->SafeAddClipRangeRealAngles(vp.Angles.Yaw.BAMs() + a1, vp.Angles.Yaw.BAMs() - a1);
-
-	// reset the portal manager
-	screen->mPortalState->StartFrame();
-	PO_LinkToSubsectors();
-
-	ProcessAll.Clock();
-
-	// clip the scene and fill the drawlists
-	Bsp.Clock();
-	screen->mVertexData->Map();
-	screen->mLights->Map();
-
-	// Give the DrawInfo the viewpoint in fixed point because that's what the nodes are.
-	viewx = FLOAT2FIXED(vp.Pos.X);
-	viewy = FLOAT2FIXED(vp.Pos.Y);
-
-	validcount++;	// used for processing sidedefs only once by the renderer.
-	 
-	mShadowMap = &GLRenderer->mShadowMap;
-
-	RenderBSPNode (level.HeadNode());
-	PreparePlayerSprites(vp.sector, in_area);
-
-	// Process all the sprites on the current portal's back side which touch the portal.
-	if (mCurrentPortal != nullptr) mCurrentPortal->RenderAttached(this);
-	Bsp.Unclock();
-
-	// And now the crappy hacks that have to be done to avoid rendering anomalies.
-	// These cannot be multithreaded when the time comes because all these depend
-	// on the global 'validcount' variable.
-
-	HandleMissingTextures(in_area);	// Missing upper/lower textures
-	HandleHackedSubsectors();	// open sector hacks for deep water
-	ProcessSectorStacks(in_area);		// merge visplanes of sector stacks
-	PrepareUnhandledMissingTextures();
-	screen->mLights->Unmap();
-	screen->mVertexData->Unmap();
-
-	ProcessAll.Unclock();
-
-}
-
-//-----------------------------------------------------------------------------
-//
 // gl_drawscene - this function renders the scene from the current
 // viewpoint, including mirrors and skyboxes and other portals
 // It is assumed that the HWPortal::EndFrame returns with the 

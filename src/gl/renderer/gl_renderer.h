@@ -66,8 +66,6 @@ public:
 	FShadowMapShader *mShadowMapShader = nullptr;
 	FCustomPostProcessShaders *mCustomPostProcessShaders = nullptr;
 
-	IShadowMap mShadowMap;
-
 	//FRotator mAngles;
 
 	SWSceneDrawer *swdrawer = nullptr;

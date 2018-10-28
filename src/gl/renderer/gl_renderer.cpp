@@ -186,7 +186,7 @@ void FGLRenderer::EndOffscreen()
 
 void FGLRenderer::UpdateShadowMap()
 {
-	if (mShadowMap.PerformUpdate())
+	if (screen->mShadowMap.PerformUpdate())
 	{
 		FGLDebug::PushGroup("ShadowMap");
 
@@ -206,7 +206,7 @@ void FGLRenderer::UpdateShadowMap()
 
 		mBuffers->BindShadowMapTexture(16);
 		FGLDebug::PopGroup();
-		mShadowMap.FinishUpdate();
+		screen->mShadowMap.FinishUpdate();
 	}
 }
 

@@ -819,7 +819,6 @@ set( FASTMATH_SOURCES
 	textures/hires/hqnx/hq4x.cpp
 	textures/hires/xbr/xbrz.cpp
 	textures/hires/xbr/xbrz_old.cpp
-	gl/scene/gl_drawinfo.cpp
 	gl/scene/gl_scene.cpp
 	gl_load/gl_load.c
 	hwrenderer/postprocessing/hw_postprocess_cvars.cpp

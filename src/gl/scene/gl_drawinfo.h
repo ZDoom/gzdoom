@@ -13,8 +13,6 @@
 
 struct FDrawInfo : public HWDrawInfo
 {
-	void RenderPortal(HWPortal *p, bool stencil) override;
-
     void CreateScene();
     void DrawScene(int drawmode) override;
     void ProcessScene(bool toscreen = false);

@@ -37,6 +37,7 @@
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
+#include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/dynlights/hw_lightbuffer.h"
 #include "hw_clipper.h"
 
@@ -513,4 +514,25 @@ void HWDrawInfo::RenderTranslucent(FRenderState &state)
 	RenderAll.Unclock();
 }
 
+
+//-----------------------------------------------------------------------------
+//
+// RenderTranslucent
+//
+//-----------------------------------------------------------------------------
+
+void HWDrawInfo::RenderPortal(HWPortal *p, FRenderState &state, bool usestencil)
+{
+	auto gp = static_cast<HWPortal *>(p);
+	gp->SetupStencil(this, state, usestencil);
+	auto new_di = StartDrawInfo(Viewpoint, &VPUniforms);
+	new_di->mCurrentPortal = gp;
+	state.SetLightIndex(-1);
+	gp->DrawContents(new_di, state);
+	new_di->EndDrawInfo();
+	screen->mVertexData->Bind(state);
+	screen->mViewpoints->Bind(state, vpIndex);
+	gp->RemoveStencil(this, state, usestencil);
+
+}
 

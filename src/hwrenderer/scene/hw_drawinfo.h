@@ -307,6 +307,7 @@ public:
 
 	void RenderScene(FRenderState &state);
 	void RenderTranslucent(FRenderState &state);
+	void RenderPortal(HWPortal *p, FRenderState &state, bool usestencil);
 
 	bool DoOneSectorUpper(subsector_t * subsec, float planez, area_t in_area);
 	bool DoOneSectorLower(subsector_t * subsec, float planez, area_t in_area);
@@ -365,7 +366,6 @@ public:
 
     GLDecal *AddDecal(bool onmirror);
 
-	virtual void RenderPortal(HWPortal *p, bool usestencil) = 0;
 	virtual void DrawScene(int drawmode) = 0;
 };
 

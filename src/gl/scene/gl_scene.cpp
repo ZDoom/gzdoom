@@ -172,7 +172,7 @@ void FDrawInfo::DrawScene(int drawmode)
 	}
 
 	glDepthMask(true);
-	if (!gl_no_skyclear) screen->mPortalState->RenderFirstSkyPortal(recursion, this);
+	if (!gl_no_skyclear) screen->mPortalState->RenderFirstSkyPortal(recursion, this, gl_RenderState);
 
 	RenderScene(gl_RenderState);
 
@@ -190,7 +190,7 @@ void FDrawInfo::DrawScene(int drawmode)
 	// Handle all portals after rendering the opaque objects but before
 	// doing all translucent stuff
 	recursion++;
-	screen->mPortalState->EndFrame(this);
+	screen->mPortalState->EndFrame(this, gl_RenderState);
 	recursion--;
 	RenderTranslucent(gl_RenderState);
 }

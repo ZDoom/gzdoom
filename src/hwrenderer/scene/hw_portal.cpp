@@ -78,7 +78,7 @@ static FString indent;
 //
 //-----------------------------------------------------------------------------
 
-void FPortalSceneState::EndFrame(HWDrawInfo *di)
+void FPortalSceneState::EndFrame(HWDrawInfo *di, FRenderState &state)
 {
 	HWPortal * p;
 
@@ -96,7 +96,7 @@ void FPortalSceneState::EndFrame(HWDrawInfo *di)
 		}
 		if (p->lines.Size() > 0)
 		{
-			RenderPortal(p, true, di);
+			RenderPortal(p, state, true, di);
 		}
 		delete p;
 	}
@@ -118,7 +118,7 @@ void FPortalSceneState::EndFrame(HWDrawInfo *di)
 // the GPU and there's rarely more than one sky visible at a time.
 //
 //-----------------------------------------------------------------------------
-bool FPortalSceneState::RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di)
+bool FPortalSceneState::RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di, FRenderState &state)
 {
 	HWPortal * p;
 	HWPortal * best = nullptr;
@@ -147,7 +147,7 @@ bool FPortalSceneState::RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di
 	if (best)
 	{
 		portals.Delete(bestindex);
-		RenderPortal(best, false, outer_di);
+		RenderPortal(best, state, false, outer_di);
 		delete best;
 		return true;
 	}
@@ -155,9 +155,9 @@ bool FPortalSceneState::RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di
 }
 
 
-void FPortalSceneState::RenderPortal(HWPortal *p, bool usestencil, HWDrawInfo *outer_di)
+void FPortalSceneState::RenderPortal(HWPortal *p, FRenderState &state, bool usestencil, HWDrawInfo *outer_di)
 {
-	if (gl_portals) outer_di->RenderPortal(p, usestencil);
+	if (gl_portals) outer_di->RenderPortal(p, state, usestencil);
 }
 
 

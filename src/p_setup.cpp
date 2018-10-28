@@ -101,6 +101,7 @@
 #include "edata.h"
 #endif
 #include "events.h"
+#include "p_destructible.h"
 #include "types.h"
 #include "i_time.h"
 #include "scripting/vm/vm.h"
@@ -4124,6 +4125,7 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 	screen->mVertexData->CreateVBO();
 	SWRenderer->SetColormap();	//The SW renderer needs to do some special setup for the level's default colormap.
 	InitPortalGroups();
+	P_InitHealthGroups();
 
 	times[16].Clock();
 	if (reloop) P_LoopSidedefs (false);

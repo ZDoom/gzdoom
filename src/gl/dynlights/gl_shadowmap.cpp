@@ -43,8 +43,7 @@ void FShadowMap::Update()
 
 	UpdateCycles.Clock();
 
-	UploadAABBTree();
-	UploadLights();
+	PerformUpdate();
 
 	FGLDebug::PushGroup("ShadowMap");
 	FGLPostProcessState savedState;
@@ -54,9 +53,6 @@ void FShadowMap::Update()
 	GLRenderer->mShadowMapShader->Bind(NOQUEUE);
 	GLRenderer->mShadowMapShader->Uniforms->ShadowmapQuality = gl_shadowmap_quality;
 	GLRenderer->mShadowMapShader->Uniforms.Set();
-	mLightList->BindBase();
-	mNodesBuffer->BindBase();
-	mLinesBuffer->BindBase();
 
 	glViewport(0, 0, gl_shadowmap_quality, 1024);
 	GLRenderer->RenderScreenQuad();
@@ -69,36 +65,5 @@ void FShadowMap::Update()
 	FGLDebug::PopGroup();
 
 	UpdateCycles.Unclock();
-}
-
-
-void FShadowMap::UploadLights()
-{
-	CollectLights();
-	
-	if (mLightList == nullptr)
-		mLightList = screen->CreateDataBuffer(4, true);
-
-	mLightList->SetData(sizeof(float) * mLights.Size(), &mLights[0]);
-}
-
-
-void FShadowMap::UploadAABBTree()
-{
-	if (!ValidateAABBTree())
-	{
-		mNodesBuffer = screen->CreateDataBuffer(2, true);
-		mNodesBuffer->SetData(sizeof(hwrenderer::AABBTreeNode) * mAABBTree->nodes.Size(), &mAABBTree->nodes[0]);
-
-		mLinesBuffer = screen->CreateDataBuffer(3, true);
-		mLinesBuffer->SetData(sizeof(hwrenderer::AABBTreeLine) * mAABBTree->lines.Size(), &mAABBTree->lines[0]);
-	}
-}
-
-void FShadowMap::Clear()
-{
-	if (mLightList) delete mLightList;
-	if (mNodesBuffer) delete mNodesBuffer;
-	if (mLinesBuffer) delete mLinesBuffer;
 }
 

@@ -7,15 +7,13 @@
 
 class ADynamicLight;
 struct level_info_t;
+class IDataBuffer;
 
 class IShadowMap
 {
 public:
 	IShadowMap() { }
-	virtual ~IShadowMap() { }
-
-	// Release resources
-	virtual void Clear() = 0;
+	virtual ~IShadowMap();
 
 	// Update shadow map texture
 	virtual void Update() = 0;
@@ -33,6 +31,13 @@ public:
 protected:
 	void CollectLights();
 	bool ValidateAABBTree();
+	void PerformUpdate();
+
+	// Upload the AABB-tree to the GPU
+	void UploadAABBTree();
+
+	// Upload light list to the GPU
+	void UploadLights();
 
 	// Working buffer for creating the list of lights. Stored here to avoid allocating memory each frame
 	TArray<float> mLights;
@@ -47,4 +52,12 @@ protected:
 
 	IShadowMap(const IShadowMap &) = delete;
 	IShadowMap &operator=(IShadowMap &) = delete;
+
+	// OpenGL storage buffer with the list of lights in the shadow map texture
+	IDataBuffer *mLightList = nullptr;
+
+	// OpenGL storage buffers for the AABB tree
+	IDataBuffer *mNodesBuffer = nullptr;
+	IDataBuffer *mLinesBuffer = nullptr;
+
 };

@@ -1,7 +1,7 @@
 #ifndef __GL_DRAWINFO_H
 #define __GL_DRAWINFO_H
 
-#include "hwrenderer/scene/hw_drawlist.h"
+#include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_weapon.h"
 #include "hwrenderer/scene/hw_viewpointuniforms.h"
 
@@ -11,29 +11,9 @@
 #pragma warning(disable:4244)
 #endif
 
-enum DrawListType
-{
-	GLDL_PLAINWALLS,
-	GLDL_PLAINFLATS,
-	GLDL_MASKEDWALLS,
-	GLDL_MASKEDFLATS,
-	GLDL_MASKEDWALLSOFS,
-	GLDL_MODELS,
-	
-	GLDL_TRANSLUCENT,
-	GLDL_TRANSLUCENTBORDER,
-	
-	GLDL_TYPES,
-};
-
-
 struct FDrawInfo : public HWDrawInfo
 {
-	HWDrawList drawlists[GLDL_TYPES];
-	int vpIndex;
 	
-	void ApplyVPUniforms() override;
-
 	void AddWall(GLWall *wall) override;
     void AddMirrorSurface(GLWall *w) override;
 	void AddFlat(GLFlat *flat, bool fog) override;

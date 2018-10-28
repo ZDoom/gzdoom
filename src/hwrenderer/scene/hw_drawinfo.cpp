@@ -31,12 +31,12 @@
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "hw_fakeflat.h"
-#include "hw_drawinfo.h"
 #include "hw_portal.h"
 #include "hw_renderstate.h"
-#include "hw_drawlist.h"
+#include "hw_drawinfo.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_cvars.h"
+#include "hwrenderer/data/hw_viewpointbuffer.h"
 
 EXTERN_CVAR(Float, r_visibility)
 CVAR(Bool, gl_bandedswlight, false, CVAR_ARCHIVE)
@@ -252,7 +252,8 @@ void HWDrawInfo::SetupView(float vx, float vy, float vz, bool mirror, bool plane
 	vp.SetViewAngle(r_viewwindow);
 	SetViewMatrix(vp.HWAngles, vx, vy, vz, mirror, planemirror);
 	SetCameraPos(vp.Pos);
-	ApplyVPUniforms();
+	VPUniforms.CalcDependencies();
+	vpIndex = screen->mViewpoints->SetViewpoint(this, &VPUniforms);
 }
 
 //-----------------------------------------------------------------------------

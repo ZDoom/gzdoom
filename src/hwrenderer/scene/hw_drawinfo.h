@@ -7,6 +7,7 @@
 #include "hw_viewpointuniforms.h"
 #include "v_video.h"
 #include "hw_weapon.h"
+#include "hw_drawlist.h"
 
 enum EDrawMode
 {
@@ -115,6 +116,21 @@ enum EPortalClip
 	PClip_Behind,
 };
 
+enum DrawListType
+{
+	GLDL_PLAINWALLS,
+	GLDL_PLAINFLATS,
+	GLDL_MASKEDWALLS,
+	GLDL_MASKEDFLATS,
+	GLDL_MASKEDWALLSOFS,
+	GLDL_MODELS,
+
+	GLDL_TRANSLUCENT,
+	GLDL_TRANSLUCENTBORDER,
+
+	GLDL_TYPES,
+};
+
 
 struct HWDrawInfo
 {
@@ -159,6 +175,9 @@ struct HWDrawInfo
 	bool isNightvision() const { return !!(FullbrightFlags & Nightvision); }
 	bool isStealthVision() const { return !!(FullbrightFlags & StealthVision); }
     
+	HWDrawList drawlists[GLDL_TYPES];
+	int vpIndex;
+
 	HWDrawInfo * outer = nullptr;
 	int FullbrightFlags;
 	std::atomic<int> spriteindex;
@@ -337,7 +356,6 @@ public:
 	virtual void AddFlat(GLFlat *flat, bool fog) = 0;
 	virtual void AddSprite(GLSprite *sprite, bool translucent) = 0;
 
-	virtual void ApplyVPUniforms() = 0;
 	virtual bool SetDepthClamp(bool on) = 0;
 
     GLDecal *AddDecal(bool onmirror);

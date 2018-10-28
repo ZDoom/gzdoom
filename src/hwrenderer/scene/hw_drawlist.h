@@ -1,10 +1,14 @@
 #pragma once
 
-#include "hwrenderer/scene/hw_drawinfo.h"
 #include "memarena.h"
 
 extern FMemArena RenderDataAllocator;
 void ResetRenderDataAllocator();
+struct HWDrawInfo;
+class GLWall;
+class GLFlat;
+class GLSprite;
+class FRenderState;
 
 //==========================================================================
 //

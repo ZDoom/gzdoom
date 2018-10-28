@@ -75,13 +75,6 @@ EXTERN_CVAR (Float, r_visibility)
 EXTERN_CVAR (Bool, r_drawvoxels)
 
 
-void FDrawInfo::ApplyVPUniforms()
-{
-	VPUniforms.CalcDependencies();
-	vpIndex = screen->mViewpoints->SetViewpoint(this, &VPUniforms);
-}
-
-
 //-----------------------------------------------------------------------------
 //
 // CreateScene

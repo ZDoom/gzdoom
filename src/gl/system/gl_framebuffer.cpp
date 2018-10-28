@@ -112,6 +112,7 @@ void OpenGLFrameBuffer::InitializeState()
 	// Move some state to the framebuffer object for easier access.
 	hwcaps = gl.flags;
 	glslversion = gl.glslversion;
+	uniformblockalignment = gl.uniformblockalignment;
 
 	if (first)
 	{

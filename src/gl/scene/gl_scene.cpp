@@ -78,7 +78,7 @@ EXTERN_CVAR (Bool, r_drawvoxels)
 void FDrawInfo::ApplyVPUniforms()
 {
 	VPUniforms.CalcDependencies();
-	vpIndex = GLRenderer->mViewpoints->SetViewpoint(&VPUniforms);
+	vpIndex = GLRenderer->mViewpoints->SetViewpoint(this, &VPUniforms);
 }
 
 
@@ -280,7 +280,7 @@ void FDrawInfo::DrawScene(int drawmode)
 		GLRenderer->mBuffers->BindSceneFB(true);
 		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
 		gl_RenderState.Apply();
-		GLRenderer->mViewpoints->Bind(vpIndex);
+		GLRenderer->mViewpoints->Bind(this, vpIndex);
 	}
 
 	// Handle all portals after rendering the opaque objects but before
@@ -329,7 +329,7 @@ void FDrawInfo::DrawEndScene2D(sector_t * viewsector)
 	HWViewpointUniforms vp = VPUniforms;
 	vp.mViewMatrix.loadIdentity();
 	vp.mProjectionMatrix = vrmode->GetHUDSpriteProjection();
-	GLRenderer->mViewpoints->SetViewpoint(&vp);
+	GLRenderer->mViewpoints->SetViewpoint(this, &vp);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_MULTISAMPLE);
 

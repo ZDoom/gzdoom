@@ -1,37 +1,35 @@
 
 #include "tarray.h"
+#include "hwrenderer/data/buffers.h"
 
 struct HWViewpointUniforms;
+struct HWDrawInfo;
 
 class GLViewpointBuffer
 {
-	unsigned int mBufferId;
+	IDataBuffer *mBuffer;
+
 	unsigned int mBufferSize;
 	unsigned int mBlockAlign;
 	unsigned int mUploadIndex;
 	unsigned int mLastMappedIndex;
 	unsigned int mByteSize;
-	void * mBufferPointer;
 	TArray<bool> mClipPlaneInfo;
-	bool mPersistent;
 	
 	unsigned int m2DWidth = ~0u, m2DHeight = ~0u;
 
 	unsigned int mBlockSize;
 
 	void CheckSize();
-	void Allocate();
 
 public:
 
 	GLViewpointBuffer();
 	~GLViewpointBuffer();
 	void Clear();
-	void Map();
-	void Unmap();
-	int Bind(unsigned int index);
-	void Set2D(int width, int height);
-	int SetViewpoint(HWViewpointUniforms *vp);
+	int Bind(HWDrawInfo *di, unsigned int index);
+	void Set2D(HWDrawInfo *di, int width, int height);
+	int SetViewpoint(HWDrawInfo *di, HWViewpointUniforms *vp);
 	unsigned int GetBlockSize() const { return mBlockSize; }
 };
 

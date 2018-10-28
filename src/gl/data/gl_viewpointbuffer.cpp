@@ -29,17 +29,18 @@
 #include "gl_load/gl_interface.h"
 #include "hwrenderer/data/shaderuniforms.h"
 #include "hwrenderer/scene/hw_viewpointuniforms.h"
+#include "hwrenderer/scene/hw_drawinfo.h"
 #include "gl_viewpointbuffer.h"
 
 static const int INITIAL_BUFFER_SIZE = 100;	// 100 viewpoints per frame should nearly always be enough
 
 GLViewpointBuffer::GLViewpointBuffer()
 {
-	mPersistent = screen->BuffersArePersistent();
 	mBufferSize = INITIAL_BUFFER_SIZE;
-	mBlockAlign = ((sizeof(HWViewpointUniforms) / gl.uniformblockalignment) + 1) * gl.uniformblockalignment;
+	mBlockAlign = ((sizeof(HWViewpointUniforms) / screen->uniformblockalignment) + 1) * screen->uniformblockalignment;
 	mByteSize = mBufferSize * mBlockAlign;
-	Allocate();
+	mBuffer = screen->CreateDataBuffer(VIEWPOINT_BINDINGPOINT, false);
+	mBuffer->SetData(mByteSize, nullptr, false);
 	Clear();
 	mLastMappedIndex = UINT_MAX;
 	mClipPlaneInfo.Push(0);
@@ -47,98 +48,32 @@ GLViewpointBuffer::GLViewpointBuffer()
 
 GLViewpointBuffer::~GLViewpointBuffer()
 {
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
-	glDeleteBuffers(1, &mBufferId);
+	delete mBuffer;
 }
 
-void GLViewpointBuffer::Allocate()
-{
-	glGenBuffers(1, &mBufferId);
-	glBindBufferBase(GL_UNIFORM_BUFFER, VIEWPOINT_BINDINGPOINT, mBufferId);
-	glBindBuffer(GL_UNIFORM_BUFFER, mBufferId);	// Note: Some older AMD drivers don't do that in glBindBufferBase, as they should.
-	if (mPersistent)
-	{
-		glBufferStorage(GL_UNIFORM_BUFFER, mByteSize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT);
-		mBufferPointer = glMapBufferRange(GL_UNIFORM_BUFFER, 0, mByteSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT);
-	}
-	else
-	{
-		glBufferData(GL_UNIFORM_BUFFER, mByteSize, NULL, GL_STATIC_DRAW);
-		mBufferPointer = NULL;
-	}
-}
 
 void GLViewpointBuffer::CheckSize()
 {
 	if (mUploadIndex >= mBufferSize)
 	{
-		// reallocate the buffer with twice the size
-		unsigned int oldbuffer = mBufferId;
-
 		mBufferSize *= 2;
 		mByteSize *= 2;
-		
-		// first unmap the old buffer
-		glBindBuffer(GL_UNIFORM_BUFFER, mBufferId);
-		glUnmapBuffer(GL_UNIFORM_BUFFER);
-		
-		Allocate();
-		glBindBuffer(GL_COPY_READ_BUFFER, oldbuffer);
-
-		// copy contents and delete the old buffer.
-		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_UNIFORM_BUFFER, 0, 0, mByteSize / 2);	// old size is half of the current one.
-		glBindBuffer(GL_COPY_READ_BUFFER, 0);
-		glDeleteBuffers(1, &oldbuffer);
+		mBuffer->Resize(mByteSize);
 	}
 }
 
-void GLViewpointBuffer::Map()
-{
-	if (!mPersistent)
-	{
-		glBindBuffer(GL_UNIFORM_BUFFER, mBufferId);
-		mBufferPointer = (float*)glMapBufferRange(GL_UNIFORM_BUFFER, 0, mByteSize, GL_MAP_WRITE_BIT);
-	}
-}
-
-void GLViewpointBuffer::Unmap()
-{
-	if (!mPersistent)
-	{
-		glBindBuffer(GL_UNIFORM_BUFFER, mBufferId);
-		glUnmapBuffer(GL_UNIFORM_BUFFER);
-		mBufferPointer = nullptr;
-	}
-	else
-	{
-		glMemoryBarrier(GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT);
-	}
-}
-
-int GLViewpointBuffer::Bind(unsigned int index)
+int GLViewpointBuffer::Bind(HWDrawInfo *di, unsigned int index)
 {
 	if (index != mLastMappedIndex)
 	{
 		mLastMappedIndex = index;
-		glBindBufferRange(GL_UNIFORM_BUFFER, VIEWPOINT_BINDINGPOINT, mBufferId, index * mBlockAlign, mBlockAlign);
-
-		// Update the viewpoint-related clip plane setting.
-		if (!(gl.flags & RFL_NO_CLIP_PLANES))
-		{
-			if (mClipPlaneInfo[index])
-			{
-				glEnable(GL_CLIP_DISTANCE0);
-			}
-			else
-			{
-				glDisable(GL_CLIP_DISTANCE0);
-			}
-		}
+		mBuffer->BindRange(index * mBlockAlign, mBlockAlign);
+		di->EnableClipDistance(0, mClipPlaneInfo[index]);
 	}
 	return index;
 }
 
-void GLViewpointBuffer::Set2D(int width, int height)
+void GLViewpointBuffer::Set2D(HWDrawInfo *di, int width, int height)
 {
 	if (width != m2DWidth || height != m2DHeight)
 	{
@@ -146,25 +81,25 @@ void GLViewpointBuffer::Set2D(int width, int height)
 		matrices.SetDefaults();
 		matrices.mProjectionMatrix.ortho(0, width, height, 0, -1.0f, 1.0f);
 		matrices.CalcDependencies();
-		Map();
-		memcpy(mBufferPointer, &matrices, sizeof(matrices));
-		Unmap();
+		mBuffer->Map();
+		memcpy(mBuffer->Memory(), &matrices, sizeof(matrices));
+		mBuffer->Unmap();
 		m2DWidth = width;
 		m2DHeight = height;
 		mLastMappedIndex = -1;
 	}
-	Bind(0);
+	Bind(di, 0);
 }
 
-int GLViewpointBuffer::SetViewpoint(HWViewpointUniforms *vp)
+int GLViewpointBuffer::SetViewpoint(HWDrawInfo *di, HWViewpointUniforms *vp)
 {
 	CheckSize();
-	Map();
-	memcpy(((char*)mBufferPointer) + mUploadIndex * mBlockAlign, vp, sizeof(*vp));
-	Unmap();
+	mBuffer->Map();
+	memcpy(((char*)mBuffer->Memory()) + mUploadIndex * mBlockAlign, vp, sizeof(*vp));
+	mBuffer->Unmap();
 
 	mClipPlaneInfo.Push(vp->mClipHeightDirection != 0.f || vp->mClipLine.X > -10000000.0f);
-	return Bind(mUploadIndex++);
+	return Bind(di, mUploadIndex++);
 }
 
 void GLViewpointBuffer::Clear()

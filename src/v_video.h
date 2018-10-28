@@ -365,13 +365,15 @@ protected:
 	PalEntry SourcePalette[256];		// This is where unpaletted textures get their palette from
 
 public:
-	int hwcaps = 0;
-	float glslversion = 0;				// This is here so that the differences between old OpenGL and new OpenGL/Vulkan can be handled by platform independent code.
-	int instack[2] = { 0,0 };			// this is globally maintained state for portal recursion avoidance.
-	int stencilValue = 0;				// Global stencil test value
-	bool enable_quadbuffered = false;
-	FPortalSceneState *mPortalState;	// global portal state.
-	FSkyVertexBuffer *mSkyData;			// we need access to this in the device independent part, but cannot depend on how the renderer manages it internally.
+	// Hardware render state that needs to be exposed to the API independent part of the renderer. For ease of access this is stored in the base class.
+	int hwcaps = 0;								// Capability flags
+	float glslversion = 0;						// This is here so that the differences between old OpenGL and new OpenGL/Vulkan can be handled by platform independent code.
+	int instack[2] = { 0,0 };					// this is globally maintained state for portal recursion avoidance.
+	int stencilValue = 0;						// Global stencil test value
+	bool enable_quadbuffered = false;			// Quad-buffered stereo available?
+	unsigned int uniformblockalignment = 256;	// Hardware dependent uniform buffer alignment.
+	FPortalSceneState *mPortalState;			// global portal state.
+	FSkyVertexBuffer *mSkyData;					// we need access to this in the device independent part, but cannot depend on how the renderer manages it internally.
 
 	IntRect mScreenViewport;
 	IntRect mSceneViewport;

@@ -263,7 +263,7 @@ void FDrawInfo::RenderPortal(HWPortal *p, bool usestencil)
 	gp->DrawContents(new_di, gl_RenderState);
 	new_di->EndDrawInfo();
 	GLRenderer->mVBO->Bind(gl_RenderState);
-	GLRenderer->mViewpoints->Bind(vpIndex);
+	GLRenderer->mViewpoints->Bind(this, vpIndex);
 	gp->RemoveStencil(this, gl_RenderState, usestencil);
 
 }
@@ -320,6 +320,21 @@ void FDrawInfo::SetCulling(int mode)
 	}
 }
 
+void FDrawInfo::EnableClipDistance(int num, bool state)
+{
+	// Update the viewpoint-related clip plane setting.
+	if (!(gl.flags & RFL_NO_CLIP_PLANES))
+	{
+		if (state)
+		{
+			glEnable(GL_CLIP_DISTANCE0+num);
+		}
+		else
+		{
+			glDisable(GL_CLIP_DISTANCE0+num);
+		}
+	}
+}
 
 //==========================================================================
 //
@@ -330,7 +345,7 @@ void FDrawInfo::ClearScreen()
 {
 	bool multi = !!glIsEnabled(GL_MULTISAMPLE);
 
-	GLRenderer->mViewpoints->Set2D(SCREENWIDTH, SCREENHEIGHT);
+	GLRenderer->mViewpoints->Set2D(this, SCREENWIDTH, SCREENHEIGHT);
 	gl_RenderState.SetColor(0, 0, 0);
 	gl_RenderState.Apply();
 

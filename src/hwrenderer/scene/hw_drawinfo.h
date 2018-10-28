@@ -362,6 +362,7 @@ public:
 	virtual void EnableDrawBufferAttachments(bool on) = 0;
 	virtual void SetStencil(int offs, int op, int flags) = 0;
 	virtual void SetCulling(int mode) = 0;
+	virtual void EnableClipDistance(int num, bool state) = 0;
 
 
 };

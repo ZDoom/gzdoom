@@ -418,9 +418,11 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	FGLDebug::PushGroup("Draw2D");
 	if (VRMode::GetVRMode(true)->mEyeCount == 1)
 		mBuffers->BindCurrentFB();
+
+	FDrawInfo di;	// For access to the virtual interface. This should be placed elsewhere...
 	const auto &mScreenViewport = screen->mScreenViewport;
 	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
-	GLRenderer->mViewpoints->Set2D(screen->GetWidth(), screen->GetHeight());
+	GLRenderer->mViewpoints->Set2D(&di, screen->GetWidth(), screen->GetHeight());
 
 	glDisable(GL_DEPTH_TEST);
 

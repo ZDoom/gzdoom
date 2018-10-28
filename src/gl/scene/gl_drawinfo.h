@@ -54,12 +54,12 @@ struct FDrawInfo : public HWDrawInfo
 	void EnableDrawBufferAttachments(bool on) override;
 	void SetStencil(int offs, int op, int flags) override;
 	void SetCulling(int mode) override;
+	void EnableClipDistance(int num, bool state) override;
 
 	void StartScene();
 
 	void DrawSorted(int listindex);
 
-	// These two may be moved to the API independent part of the renderer later.
 	void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) override;
     
     void CreateScene();
@@ -74,16 +74,5 @@ struct FDrawInfo : public HWDrawInfo
 
 	static FDrawInfo *StartDrawInfo(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
 	FDrawInfo *EndDrawInfo();
-	
-	void SetColor(int light, int rellight, const FColormap &cm, float alpha, bool weapon = false)
-	{
-		gl_RenderState.SetColor(light, rellight, isFullbrightScene(), cm, alpha, weapon);
-	}
-
-	void SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isadditive)
-	{
-		gl_RenderState.SetFog(lightlevel, rellight, isFullbrightScene(), cmap, isadditive);
-	}
-
 };
 #endif

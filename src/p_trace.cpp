@@ -291,7 +291,7 @@ void FTraceInfo::Setup3DFloors()
 
 	if (ff.Size())
 	{
-		memcpy(&DummySector[0], CurSector, sizeof(sector_t));
+		DummySector[0] = *CurSector;
 		CurSector = &DummySector[0];
 		sectorsel = 1;
 
@@ -490,7 +490,7 @@ bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit, bool spec
 		// check for 3D floors first
 		if (entersector->e->XFloor.ffloors.Size())
 		{
-			memcpy(&DummySector[sectorsel], entersector, sizeof(sector_t));
+			DummySector[sectorsel] = *entersector;
 			entersector = &DummySector[sectorsel];
 			sectorsel ^= 1;
 

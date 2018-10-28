@@ -4274,11 +4274,11 @@ void P_SetupLevel (const char *lumpname, int position)
 	// Note that we want binary identity here, so assignment is not sufficient because it won't initialize any padding bytes.
 	// Note that none of these structures may contain non POD fields anyway.
 	level.loadsectors.Resize(level.sectors.Size());
-	memcpy(&level.loadsectors[0], &level.sectors[0], level.sectors.Size() * sizeof(level.sectors[0]));
+	std::copy(&level.sectors[0], &level.sectors[0] + level.sectors.Size(), &level.loadsectors[0]);
 	level.loadlines.Resize(level.lines.Size());
-	memcpy(&level.loadlines[0], &level.lines[0], level.lines.Size() * sizeof(level.lines[0]));
+	std::copy(&level.lines[0], &level.lines[0] + level.lines.Size(), &level.loadlines[0]);
 	level.loadsides.Resize(level.sides.Size());
-	memcpy(&level.loadsides[0], &level.sides[0], level.sides.Size() * sizeof(level.sides[0]));
+	std::copy(&level.sides[0], &level.sides[0] + level.sides.Size(), &level.loadsides[0]);
 }
 
 

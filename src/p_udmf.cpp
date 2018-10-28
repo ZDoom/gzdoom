@@ -2151,11 +2151,11 @@ public:
 
 		// Create the real vertices
 		level.vertexes.Alloc(ParsedVertices.Size());
-		memcpy(&level.vertexes[0], &ParsedVertices[0], level.vertexes.Size() * sizeof(vertex_t));
+		std::copy(&ParsedVertices[0], &ParsedVertices[0] + level.vertexes.Size(), &level.vertexes[0]);
 
 		// Create the real sectors
 		level.sectors.Alloc(ParsedSectors.Size());
-		memcpy(&level.sectors[0], &ParsedSectors[0], level.sectors.Size() * sizeof(sector_t));
+		std::copy(&ParsedSectors[0], &ParsedSectors[0] + level.sectors.Size(), &level.sectors[0]);
 		level.sectors[0].e = new extsector_t[level.sectors.Size()];
 		for(unsigned i = 0; i < level.sectors.Size(); i++)
 		{

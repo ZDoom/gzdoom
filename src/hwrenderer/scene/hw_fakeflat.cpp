@@ -223,11 +223,7 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 	int diffTex = (sec->heightsec->MoreFlags & SECMF_CLIPFAKEPLANES);
 	sector_t * s = sec->heightsec;
 	
-#if 0
-	*dest=*sec;	// This will invoke the copy operator which isn't really needed here. Memcpy is faster.
-#else
-	memcpy(dest, sec, sizeof(sector_t));
-#endif
+	*dest = *sec;
 
 	// Replace floor and ceiling height with control sector's heights.
 	if (diffTex)

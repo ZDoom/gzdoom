@@ -37,6 +37,7 @@ class FCustomPostProcessShaders;
 class SWSceneDrawer;
 class GLViewpointBuffer;
 struct FRenderViewpoint;
+class FPresentShaderBase;
 #define NOQUEUE nullptr	// just some token to be used as a placeholder
 
 class FGLRenderer
@@ -106,6 +107,19 @@ public:
 	void UpdateShadowMap();
 
 	void BindToFrameBuffer(FMaterial *mat);
+
+private:
+
+	bool QuadStereoCheckInitialRenderContextState();
+	void PresentAnaglyph(bool r, bool g, bool b);
+	void PresentSideBySide();
+	void PresentTopBottom();
+	void prepareInterleavedPresent(FPresentShaderBase& shader);
+	void PresentColumnInterleaved();
+	void PresentRowInterleaved();
+	void PresentCheckerInterleaved();
+	void PresentQuadStereo();
+
 };
 
 #include "hwrenderer/scene/hw_fakeflat.h"

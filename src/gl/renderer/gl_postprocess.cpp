@@ -157,7 +157,7 @@ void FGLRenderer::Flush()
 		FGLDebug::PushGroup("PresentEyes");
 		// Note: This here is the ONLY place in the entire engine where the OpenGL dependent parts of the Stereo3D code need to be dealt with.
 		// There's absolutely no need to create a overly complex class hierarchy for just this.
-		GLRenderer->PresentStereo();
+		PresentStereo();
 		FGLDebug::PopGroup();
 	}
 }
@@ -200,7 +200,7 @@ void FGLRenderer::DrawPresentTexture(const IntRect &box, bool applyGamma)
 {
 	glViewport(box.left, box.top, box.width, box.height);
 
-	GLRenderer->mBuffers->BindDitherTexture(1);
+	mBuffers->BindDitherTexture(1);
 
 	glActiveTexture(GL_TEXTURE0);
 	if (ViewportLinearScale())

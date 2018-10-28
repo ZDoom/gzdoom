@@ -51,7 +51,7 @@
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
-#include "gl/data/gl_viewpointbuffer.h"
+#include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "hwrenderer/scene/hw_clipper.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "gl/scene/gl_drawinfo.h"

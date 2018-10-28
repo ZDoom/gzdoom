@@ -57,7 +57,7 @@
 #include "gl/shaders/gl_postprocessshaderinstance.h"
 #include "gl/textures/gl_samplers.h"
 #include "gl/dynlights/gl_lightbuffer.h"
-#include "gl/data/gl_viewpointbuffer.h"
+#include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "r_videoscale.h"
 #include "r_data/models/models.h"
 

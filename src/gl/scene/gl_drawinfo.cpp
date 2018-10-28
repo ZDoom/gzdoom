@@ -41,7 +41,7 @@
 #include "hwrenderer/scene/hw_clipper.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/data/gl_viewpointbuffer.h"
+#include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "hwrenderer/models/hw_models.h"
 

@@ -25,12 +25,10 @@
 **
 **/
 
-#include "gl_load/gl_system.h"
-#include "gl_load/gl_interface.h"
 #include "hwrenderer/data/shaderuniforms.h"
 #include "hwrenderer/scene/hw_viewpointuniforms.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
-#include "gl_viewpointbuffer.h"
+#include "hw_viewpointbuffer.h"
 
 static const int INITIAL_BUFFER_SIZE = 100;	// 100 viewpoints per frame should nearly always be enough
 

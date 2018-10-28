@@ -61,8 +61,73 @@ inline void DeleteLinkedList(T *node)
 	}
 }
 
+
+class FDrawInfoList
+{
+public:
+	TDeletingArray<HWDrawInfo *> mList;
+
+	HWDrawInfo * GetNew();
+	void Release(HWDrawInfo *);
+};
+
+
+FDrawInfoList di_list;
+
+//==========================================================================
+//
+// Try to reuse the lists as often as possible as they contain resources that
+// are expensive to create and delete.
+//
+// Note: If multithreading gets used, this class needs synchronization.
+//
+//==========================================================================
+
+HWDrawInfo *FDrawInfoList::GetNew()
+{
+	if (mList.Size() > 0)
+	{
+		HWDrawInfo *di;
+		mList.Pop(di);
+		return di;
+	}
+	return screen->CreateDrawInfo();
+}
+
+void FDrawInfoList::Release(HWDrawInfo * di)
+{
+	di->ClearBuffers();
+	mList.Push(di);
+}
+
+//==========================================================================
+//
+// Sets up a new drawinfo struct
+//
+//==========================================================================
+
+HWDrawInfo *HWDrawInfo::StartDrawInfo(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms)
+{
+	HWDrawInfo *di = di_list.GetNew();
+	di->StartScene(parentvp, uniforms);
+	return di;
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+static Clipper staticClipper;		// Since all scenes are processed sequentially we only need one clipper.
+static HWDrawInfo * gl_drawinfo;	// This is a linked list of all active DrawInfos and needed to free the memory arena after the last one goes out of scope.
+
 void HWDrawInfo::StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms)
 {
+	staticClipper.Clear();
+	mClipper = &staticClipper;
+
 	Viewpoint = parentvp;
 	if (uniforms)
 	{
@@ -84,7 +149,34 @@ void HWDrawInfo::StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uni
 	if (outer != nullptr) FullbrightFlags = outer->FullbrightFlags;
 	else FullbrightFlags = 0;
 
+	outer = gl_drawinfo;
+	gl_drawinfo = this;
+
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+HWDrawInfo *HWDrawInfo::EndDrawInfo()
+{
+	assert(this == gl_drawinfo);
+	for (int i = 0; i < GLDL_TYPES; i++) drawlists[i].Reset();
+	gl_drawinfo = outer;
+	di_list.Release(this);
+	if (gl_drawinfo == nullptr)
+		ResetRenderDataAllocator();
+	return gl_drawinfo;
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void HWDrawInfo::ClearBuffers()
 {

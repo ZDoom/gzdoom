@@ -43,6 +43,7 @@
 #include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "hwrenderer/dynlights/hw_lightbuffer.h"
 #include "gl/shaders/gl_shaderprogram.h"
+#include "gl/scene/gl_drawinfo.h"
 #include "gl_debug.h"
 #include "r_videoscale.h"
 #include "gl_buffers.h"
@@ -376,6 +377,10 @@ IDataBuffer *OpenGLFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo)
 	return new GLDataBuffer(bindingpoint, ssbo);
 }
 
+HWDrawInfo *OpenGLFrameBuffer::CreateDrawInfo()
+{
+	return new FDrawInfo;
+}
 
 void OpenGLFrameBuffer::TextureFilterChanged()
 {

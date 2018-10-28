@@ -298,8 +298,10 @@ public:
 	HWPortal * FindPortal(const void * src);
 	void RenderBSPNode(void *node);
 
+	static HWDrawInfo *StartDrawInfo(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
 	void StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
 	void ClearBuffers();
+	HWDrawInfo *EndDrawInfo();
 	void SetViewArea();
 	int SetFullbrightFlags(player_t *player);
 

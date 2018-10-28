@@ -35,8 +35,5 @@ struct FDrawInfo : public HWDrawInfo
     void DrawEndScene2D(sector_t * viewsector);
 	bool SetDepthClamp(bool on) override;
 	void ClearScreen() override;
-
-	static FDrawInfo *StartDrawInfo(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
-	FDrawInfo *EndDrawInfo();
 };
 #endif

@@ -416,7 +416,7 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 
 		Set3DViewport();
 
-		FDrawInfo *di = FDrawInfo::StartDrawInfo(mainvp, nullptr);
+		FDrawInfo *di = static_cast<FDrawInfo*>(HWDrawInfo::StartDrawInfo(mainvp, nullptr));
 		auto &vp = di->Viewpoint;
 		di->SetViewArea();
 		auto cm =  di->SetFullbrightFlags(mainview ? vp.camera->player : nullptr);

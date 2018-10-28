@@ -298,6 +298,7 @@ public:
 	HWPortal * FindPortal(const void * src);
 	void RenderBSPNode(void *node);
 
+	void StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
 	void ClearBuffers();
 	void SetViewArea();
 	int SetFullbrightFlags(player_t *player);
@@ -349,7 +350,7 @@ public:
 	void DrawPlayerSprites(bool hudModelStep, FRenderState &state);
 
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs);
-    virtual void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) = 0;
+    void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub);
     
     void AddWall(GLWall *w);
     void AddMirrorSurface(GLWall *w);

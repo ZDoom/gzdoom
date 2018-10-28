@@ -26,10 +26,6 @@ struct FDrawInfo : public HWDrawInfo
 	void SetCulling(int mode) override;
 	void EnableClipDistance(int num, bool state) override;
 
-	void StartScene();
-
-	void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) override;
-    
     void CreateScene();
     void RenderScene(int recursion);
     void RenderTranslucent();

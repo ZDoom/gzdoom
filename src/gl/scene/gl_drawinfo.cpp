@@ -97,36 +97,15 @@ static Clipper staticClipper;
 FDrawInfo *FDrawInfo::StartDrawInfo(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms)
 {
 	FDrawInfo *di=di_list.GetNew();
-	di->mClipper = &staticClipper;
-	di->Viewpoint = parentvp;
-	if (uniforms)
-	{
-		di->VPUniforms = *uniforms;
-		// The clip planes will never be inherited from the parent drawinfo.
-		di->VPUniforms.mClipLine.X = -1000001.f;
-		di->VPUniforms.mClipHeight = 0;
-	}
-	else di->VPUniforms.SetDefaults();
-    di->mClipper->SetViewpoint(di->Viewpoint);
 	staticClipper.Clear();
-	di->StartScene();
+	di->mClipper = &staticClipper;
+
+	di->StartScene(parentvp, uniforms);
+
+	di->outer = gl_drawinfo;
+	gl_drawinfo = di;
+
 	return di;
-}
-
-void FDrawInfo::StartScene()
-{
-	ClearBuffers();
-
-	outer = gl_drawinfo;
-	gl_drawinfo = this;
-	for (int i = 0; i < GLDL_TYPES; i++) drawlists[i].Reset();
-	hudsprites.Clear();
-	vpIndex = 0;
-
-	// Fullbright information needs to be propagated from the main view.
-	if (outer != nullptr) FullbrightFlags = outer->FullbrightFlags;
-	else FullbrightFlags = 0;
-
 }
 
 //==========================================================================
@@ -143,19 +122,6 @@ FDrawInfo *FDrawInfo::EndDrawInfo()
 	if (gl_drawinfo == nullptr) 
 		ResetRenderDataAllocator();
 	return gl_drawinfo;
-}
-
-// Same here for the dependency on the portal.
-void FDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *ptg, subsector_t *sub)
-{
-	auto portal = FindPortal(ptg);
-	if (!portal)
-	{
-		portal = new HWScenePortal(screen->mPortalState, new HWSectorStackPortal(ptg));
-		Portals.Push(portal);
-	}
-	auto ptl = static_cast<HWSectorStackPortal*>(static_cast<HWScenePortal*>(portal)->mScene);
-	ptl->AddSubsector(sub);
 }
 
 bool FDrawInfo::SetDepthClamp(bool on)

@@ -37,6 +37,7 @@
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
+#include "hw_clipper.h"
 
 EXTERN_CVAR(Float, r_visibility)
 CVAR(Bool, gl_bandedswlight, false, CVAR_ARCHIVE)
@@ -58,6 +59,31 @@ inline void DeleteLinkedList(T *node)
 		node = node->next;
 		delete n;
 	}
+}
+
+void HWDrawInfo::StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms)
+{
+	Viewpoint = parentvp;
+	if (uniforms)
+	{
+		VPUniforms = *uniforms;
+		// The clip planes will never be inherited from the parent drawinfo.
+		VPUniforms.mClipLine.X = -1000001.f;
+		VPUniforms.mClipHeight = 0;
+	}
+	else VPUniforms.SetDefaults();
+	mClipper->SetViewpoint(Viewpoint);
+
+	ClearBuffers();
+
+	for (int i = 0; i < GLDL_TYPES; i++) drawlists[i].Reset();
+	hudsprites.Clear();
+	vpIndex = 0;
+
+	// Fullbright information needs to be propagated from the main view.
+	if (outer != nullptr) FullbrightFlags = outer->FullbrightFlags;
+	else FullbrightFlags = 0;
+
 }
 
 void HWDrawInfo::ClearBuffers()

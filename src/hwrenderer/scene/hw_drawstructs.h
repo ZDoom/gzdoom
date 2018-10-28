@@ -262,11 +262,7 @@ public:
 	int CountVertices();
 
 public:
-	GLWall() {}
-
-	GLWall(const GLWall &other) = default;
-
-	GLWall & operator=(const GLWall &other) = default;
+	GLWall() = default;
 
 	void Process(HWDrawInfo *di, seg_t *seg, sector_t *frontsector, sector_t *backsector);
 	void ProcessLowerMiniseg(HWDrawInfo *di, seg_t *seg, sector_t *frontsector, sector_t *backsector);
@@ -317,11 +313,7 @@ public:
 	void SetFrom3DFloor(F3DFloor *rover, bool top, bool underside);
 	void ProcessSector(HWDrawInfo *di, sector_t * frontsector);
 	
-	GLFlat() {}
-
-	GLFlat(const GLFlat &other) = default;
-
-	GLFlat & operator=(const GLFlat &other) = default;
+	GLFlat() = default;
 
 };
 
@@ -374,14 +366,10 @@ public:
 
 public:
 
-	GLSprite() {}
+	GLSprite() = default;
 	void PutSprite(HWDrawInfo *di, bool translucent);
 	void Process(HWDrawInfo *di, AActor* thing,sector_t * sector, area_t in_area, int thruportal = false);
 	void ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *sector);//, int shade, int fakeside)
-
-	GLSprite(const GLSprite &other) = default;
-
-	GLSprite & operator=(const GLSprite &other) = default;
 
 };
 

@@ -67,7 +67,6 @@ public:
 public:
 
 	FSkyVertexBuffer();
-	virtual ~FSkyVertexBuffer();
 	void SetupMatrices(FMaterial *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelmatrix, VSMatrix &textureMatrix);
 	void Bind(FRenderState &state);
 

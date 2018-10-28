@@ -71,22 +71,16 @@ void FDrawInfo::DrawSorted(int listindex)
 
 	if (!dl->sorted)
 	{
-		GLRenderer->mVBO->Map();
+		screen->mVertexData->Map();
 		dl->Sort(this);
-		GLRenderer->mVBO->Unmap();
+		screen->mVertexData->Unmap();
 	}
 	gl_RenderState.ClearClipSplit();
-	if (!(gl.flags & RFL_NO_CLIP_PLANES))
-	{
-		glEnable(GL_CLIP_DISTANCE1);
-		glEnable(GL_CLIP_DISTANCE2);
-	}
+	EnableClipDistance(1, true);
+	EnableClipDistance(2, true);
 	dl->DrawSorted(this, gl_RenderState, dl->sorted);
-	if (!(gl.flags & RFL_NO_CLIP_PLANES))
-	{
-		glDisable(GL_CLIP_DISTANCE1);
-		glDisable(GL_CLIP_DISTANCE2);
-	}
+	EnableClipDistance(1, false);
+	EnableClipDistance(2, false);
 	gl_RenderState.ClearClipSplit();
 }
 
@@ -128,7 +122,6 @@ static Clipper staticClipper;
 FDrawInfo *FDrawInfo::StartDrawInfo(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms)
 {
 	FDrawInfo *di=di_list.GetNew();
-	di->mVBO = GLRenderer->mVBO;
 	di->mClipper = &staticClipper;
 	di->Viewpoint = parentvp;
 	if (uniforms)
@@ -193,7 +186,7 @@ void FDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *ptg, subsector_t *sub)
 std::pair<FFlatVertex *, unsigned int> FDrawInfo::AllocVertices(unsigned int count)
 {
 	unsigned int index = -1;
-	auto p = GLRenderer->mVBO->Alloc(count, &index);
+	auto p = screen->mVertexData->Alloc(count, &index);
 	return std::make_pair(p, index);
 }
 
@@ -243,14 +236,14 @@ void FDrawInfo::DrawModel(GLSprite *spr, FRenderState &state)
 {
 	FGLModelRenderer renderer(this, state, spr->dynlightindex);
 	renderer.RenderModel(spr->x, spr->y, spr->z, spr->modelframe, spr->actor, Viewpoint.TicFrac);
-	GLRenderer->mVBO->Bind(state);
+	screen->mVertexData->Bind(state);
 }
 
 void FDrawInfo::DrawHUDModel(HUDSprite *huds, FRenderState &state)
 {
 	FGLModelRenderer renderer(this, state, huds->lightindex);
 	renderer.RenderHUDModel(huds->weapon, huds->mx, huds->my);
-	GLRenderer->mVBO->Bind(state);
+	screen->mVertexData->Bind(state);
 }
 
 void FDrawInfo::RenderPortal(HWPortal *p, bool usestencil)
@@ -262,8 +255,8 @@ void FDrawInfo::RenderPortal(HWPortal *p, bool usestencil)
 	gl_RenderState.SetLightIndex(-1);
 	gp->DrawContents(new_di, gl_RenderState);
 	new_di->EndDrawInfo();
-	GLRenderer->mVBO->Bind(gl_RenderState);
-	GLRenderer->mViewpoints->Bind(this, vpIndex);
+	screen->mVertexData->Bind(gl_RenderState);
+	screen->mViewpoints->Bind(this, vpIndex);
 	gp->RemoveStencil(this, gl_RenderState, usestencil);
 
 }
@@ -345,7 +338,7 @@ void FDrawInfo::ClearScreen()
 {
 	bool multi = !!glIsEnabled(GL_MULTISAMPLE);
 
-	GLRenderer->mViewpoints->Set2D(this, SCREENWIDTH, SCREENHEIGHT);
+	screen->mViewpoints->Set2D(this, SCREENWIDTH, SCREENHEIGHT);
 	gl_RenderState.SetColor(0, 0, 0);
 	gl_RenderState.Apply();
 

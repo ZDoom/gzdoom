@@ -69,10 +69,7 @@ public:
 
 	//FRotator mAngles;
 
-	FFlatVertexBuffer *mVBO = nullptr;
-	FSkyVertexBuffer *mSkyVBO = nullptr;
 	FLightBuffer *mLights = nullptr;
-	GLViewpointBuffer *mViewpoints = nullptr;
 	SWSceneDrawer *swdrawer = nullptr;
 
 	float mSceneClearColor[3];

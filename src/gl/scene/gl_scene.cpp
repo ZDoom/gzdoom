@@ -78,7 +78,7 @@ EXTERN_CVAR (Bool, r_drawvoxels)
 void FDrawInfo::ApplyVPUniforms()
 {
 	VPUniforms.CalcDependencies();
-	vpIndex = GLRenderer->mViewpoints->SetViewpoint(this, &VPUniforms);
+	vpIndex = screen->mViewpoints->SetViewpoint(this, &VPUniforms);
 }
 
 
@@ -104,7 +104,7 @@ void FDrawInfo::CreateScene()
 
 	// clip the scene and fill the drawlists
 	Bsp.Clock();
-	GLRenderer->mVBO->Map();
+	screen->mVertexData->Map();
 	GLRenderer->mLights->Begin();
 
 	// Give the DrawInfo the viewpoint in fixed point because that's what the nodes are.
@@ -131,7 +131,7 @@ void FDrawInfo::CreateScene()
 	ProcessSectorStacks(in_area);		// merge visplanes of sector stacks
 	PrepareUnhandledMissingTextures();
 	GLRenderer->mLights->Finish();
-	GLRenderer->mVBO->Unmap();
+	screen->mVertexData->Unmap();
 
 	ProcessAll.Unclock();
 
@@ -280,7 +280,7 @@ void FDrawInfo::DrawScene(int drawmode)
 		GLRenderer->mBuffers->BindSceneFB(true);
 		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
 		gl_RenderState.Apply();
-		GLRenderer->mViewpoints->Bind(this, vpIndex);
+		screen->mViewpoints->Bind(this, vpIndex);
 	}
 
 	// Handle all portals after rendering the opaque objects but before
@@ -329,7 +329,7 @@ void FDrawInfo::DrawEndScene2D(sector_t * viewsector)
 	HWViewpointUniforms vp = VPUniforms;
 	vp.mViewMatrix.loadIdentity();
 	vp.mProjectionMatrix = vrmode->GetHUDSpriteProjection();
-	GLRenderer->mViewpoints->SetViewpoint(this, &vp);
+	screen->mViewpoints->SetViewpoint(this, &vp);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_MULTISAMPLE);
 

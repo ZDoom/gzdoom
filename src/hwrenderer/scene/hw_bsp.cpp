@@ -458,7 +458,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 		{
 			int a = 0;
 		}
-		mVBO->CheckUpdate(sector);
+		screen->mVertexData->CheckUpdate(sector);
 	}
 
 	// [RH] Add particles

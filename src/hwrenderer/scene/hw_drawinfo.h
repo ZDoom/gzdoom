@@ -199,7 +199,6 @@ struct HWDrawInfo
 	BitArray CurrentMapSections;	// this cannot be a single number, because a group of portals with the same displacement may link different sections.
 	area_t	in_area;
 	fixed_t viewx, viewy;	// since the nodes are still fixed point, keeping the view position  also fixed point for node traversal is faster.
-	FFlatVertexBuffer *mVBO;	// this class needs access because the sector vertex updating is part of BSP traversal.
 
 
 private:

@@ -84,7 +84,6 @@ EXTERN_CVAR(Float, skyoffset)
 
 FSkyVertexBuffer::FSkyVertexBuffer()
 {
-	screen->mSkyData = this;
 	CreateDome();
 	mVertexBuffer = screen->CreateVertexBuffer();
 
@@ -95,17 +94,6 @@ FSkyVertexBuffer::FSkyVertexBuffer()
 	};
 	mVertexBuffer->SetFormat(1, 3, sizeof(FSkyVertex), format);
 	mVertexBuffer->SetData(mVertices.Size() * sizeof(FSkyVertex), &mVertices[0], true);
-}
-
-//-----------------------------------------------------------------------------
-//
-//
-//
-//-----------------------------------------------------------------------------
-
-FSkyVertexBuffer::~FSkyVertexBuffer()
-{
-	if (screen && screen->mSkyData) screen->mSkyData = nullptr;
 }
 
 //-----------------------------------------------------------------------------

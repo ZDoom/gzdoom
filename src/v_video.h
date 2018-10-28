@@ -53,6 +53,8 @@ class FSkyVertexBuffer;
 class IIndexBuffer;
 class IVertexBuffer;
 class IDataBuffer;
+class FFlatVertexBuffer;
+class GLViewpointBuffer;
 
 enum EHWCaps
 {
@@ -373,7 +375,9 @@ public:
 	bool enable_quadbuffered = false;			// Quad-buffered stereo available?
 	unsigned int uniformblockalignment = 256;	// Hardware dependent uniform buffer alignment.
 	FPortalSceneState *mPortalState;			// global portal state.
-	FSkyVertexBuffer *mSkyData;					// we need access to this in the device independent part, but cannot depend on how the renderer manages it internally.
+	FSkyVertexBuffer *mSkyData = nullptr;		// the sky vertex buffer
+	FFlatVertexBuffer *mVertexData = nullptr;	// Global vertex data
+	GLViewpointBuffer *mViewpoints = nullptr;	// Viewpoint render data.
 
 	IntRect mScreenViewport;
 	IntRect mSceneViewport;
@@ -404,7 +408,7 @@ public:
 	}
 
 	// Make the surface visible.
-	virtual void Update () = 0;
+	virtual void Update ();
 
 	// Return a pointer to 256 palette entries that can be written to.
 	PalEntry *GetPalette ();

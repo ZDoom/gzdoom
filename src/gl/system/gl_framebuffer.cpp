@@ -39,6 +39,8 @@
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_vrmodes.h"
 #include "hwrenderer/models/hw_models.h"
+#include "hwrenderer/scene/hw_skydome.h"
+#include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "gl/shaders/gl_shaderprogram.h"
 #include "gl_debug.h"
 #include "r_videoscale.h"
@@ -82,6 +84,10 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, bool fullscreen) :
 
 OpenGLFrameBuffer::~OpenGLFrameBuffer()
 {
+	if (mVertexData != nullptr) delete mVertexData;
+	if (mSkyData != nullptr) delete mSkyData;
+	if (mViewpoints != nullptr) delete mViewpoints;
+
 	if (GLRenderer)
 	{
 		delete GLRenderer;
@@ -140,6 +146,10 @@ void OpenGLFrameBuffer::InitializeState()
 	GLRenderer->Initialize(GetWidth(), GetHeight());
 	SetViewportRects(nullptr);
 
+	mVertexData = new FFlatVertexBuffer(GetWidth(), GetHeight());
+	mSkyData = new FSkyVertexBuffer;
+	mViewpoints = new GLViewpointBuffer;
+
 	mDebug = std::make_shared<FGLDebug>();
 	mDebug->Update();
 }
@@ -160,20 +170,7 @@ void OpenGLFrameBuffer::Update()
 	Flush3D.Unclock();
 
 	Swap();
-	CheckBench();
-
-	int initialWidth = GetClientWidth();
-	int initialHeight = GetClientHeight();
-	int clientWidth = ViewportScaledWidth(initialWidth, initialHeight);
-	int clientHeight = ViewportScaledHeight(initialWidth, initialHeight);
-	if (clientWidth < 320) clientWidth = 320;
-	if (clientHeight < 200) clientHeight = 200;
-	if (clientWidth > 0 && clientHeight > 0 && (GetWidth() != clientWidth || GetHeight() != clientHeight))
-	{
-		SetVirtualSize(clientWidth, clientHeight);
-		V_OutputResized(clientWidth, clientHeight);
-		GLRenderer->mVBO->OutputResized(clientWidth, clientHeight);
-	}
+	Super::Update();
 }
 
 //===========================================================================

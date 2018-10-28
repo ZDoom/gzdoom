@@ -217,7 +217,8 @@ void FDrawInfo::RenderTranslucent()
 	gl_RenderState.EnableBrightmap(true);
 	drawlists[GLDL_TRANSLUCENTBORDER].Draw(this, gl_RenderState, true);
 	glDepthMask(false);
-	DrawSorted(GLDL_TRANSLUCENT);
+
+	drawlists[GLDL_TRANSLUCENT].DrawSorted(this, gl_RenderState);
 	gl_RenderState.EnableBrightmap(false);
 
 

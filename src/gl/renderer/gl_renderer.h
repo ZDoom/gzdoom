@@ -81,7 +81,6 @@ public:
 
 	void ClearBorders();
 
-	void SetupLevel();
 	void ResetSWScene();
 
 	void PresentStereo();

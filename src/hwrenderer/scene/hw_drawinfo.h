@@ -343,13 +343,9 @@ public:
 
     GLDecal *AddDecal(bool onmirror);
 
-	virtual std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) = 0;
-
 	virtual void ClearScreen() = 0;
 	virtual void Draw(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) = 0;
 	virtual void DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) = 0;
-	virtual void DrawModel(GLSprite *spr, FRenderState &state) = 0;
-	virtual void DrawHUDModel(HUDSprite *spr, FRenderState &state) = 0;
 	virtual void RenderPortal(HWPortal *p, bool usestencil) = 0;
 	virtual void DrawScene(int drawmode) = 0;
 

@@ -109,6 +109,7 @@ public:
 	void DrawFlats(HWDrawInfo *di, FRenderState &state, bool translucent);
 
 	void DrawSorted(HWDrawInfo *di, FRenderState &state, SortNode * head);
+	void DrawSorted(HWDrawInfo *di, FRenderState &state);
 
 	HWDrawList * next;
 } ;

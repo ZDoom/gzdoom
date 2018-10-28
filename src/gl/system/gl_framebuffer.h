@@ -27,7 +27,6 @@ public:
 
 	void CleanForRestart() override;
 	void UpdatePalette() override;
-	void InitForLevel() override;
 	void SetClearColor(int color) override;
 	uint32_t GetCaps() override;
 	void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV) override;

@@ -61,31 +61,6 @@ FDrawInfoList di_list;
 
 //==========================================================================
 //
-//
-//
-//==========================================================================
-void FDrawInfo::DrawSorted(int listindex)
-{
-	HWDrawList *dl = &drawlists[listindex];
-	if (dl->drawitems.Size()==0) return;
-
-	if (!dl->sorted)
-	{
-		screen->mVertexData->Map();
-		dl->Sort(this);
-		screen->mVertexData->Unmap();
-	}
-	gl_RenderState.ClearClipSplit();
-	EnableClipDistance(1, true);
-	EnableClipDistance(2, true);
-	dl->DrawSorted(this, gl_RenderState, dl->sorted);
-	EnableClipDistance(1, false);
-	EnableClipDistance(2, false);
-	gl_RenderState.ClearClipSplit();
-}
-
-//==========================================================================
-//
 // Try to reuse the lists as often as possible as they contain resources that
 // are expensive to create and delete.
 //
@@ -183,13 +158,6 @@ void FDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *ptg, subsector_t *sub)
 	ptl->AddSubsector(sub);
 }
 
-std::pair<FFlatVertex *, unsigned int> FDrawInfo::AllocVertices(unsigned int count)
-{
-	unsigned int index = -1;
-	auto p = screen->mVertexData->Alloc(count, &index);
-	return std::make_pair(p, index);
-}
-
 int FDrawInfo::UploadLights(FDynLightData &data)
 {
 	return GLRenderer->mLights->UploadLights(data);
@@ -230,20 +198,6 @@ void FDrawInfo::DrawIndexed(EDrawType dt, FRenderState &state, int index, int co
 	drawcalls.Clock();
 	glDrawElements(dt2gl[dt], count, GL_UNSIGNED_INT, (void*)(intptr_t)(index * sizeof(uint32_t)));
 	drawcalls.Unclock();
-}
-
-void FDrawInfo::DrawModel(GLSprite *spr, FRenderState &state)
-{
-	FGLModelRenderer renderer(this, state, spr->dynlightindex);
-	renderer.RenderModel(spr->x, spr->y, spr->z, spr->modelframe, spr->actor, Viewpoint.TicFrac);
-	screen->mVertexData->Bind(state);
-}
-
-void FDrawInfo::DrawHUDModel(HUDSprite *huds, FRenderState &state)
-{
-	FGLModelRenderer renderer(this, state, huds->lightindex);
-	renderer.RenderHUDModel(huds->weapon, huds->mx, huds->my);
-	screen->mVertexData->Bind(state);
 }
 
 void FDrawInfo::RenderPortal(HWPortal *p, bool usestencil)

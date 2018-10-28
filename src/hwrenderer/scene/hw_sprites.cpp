@@ -42,6 +42,7 @@
 #include "r_data/models/models.h"
 #include "vectors.h"
 
+#include "hwrenderer/models/hw_models.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_fakeflat.h"
@@ -267,7 +268,9 @@ void GLSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 		}
 		else
 		{
-			di->DrawModel(this, state);
+			FGLModelRenderer renderer(di, state, dynlightindex);
+			renderer.RenderModel(x, y, z, modelframe, actor, di->Viewpoint.TicFrac);
+			screen->mVertexData->Bind(state);
 		}
 	}
 
@@ -482,7 +485,7 @@ void GLSprite::CreateVertices(HWDrawInfo *di)
 	{
 		FVector3 v[4];
 		polyoffset = CalculateVertices(di, v, &di->Viewpoint.Pos);
-		auto vert = di->AllocVertices(4);
+		auto vert = screen->mVertexData->AllocVertices(4);
 		auto vp = vert.first;
 		vertexindex = vert.second;
 

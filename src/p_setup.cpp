@@ -104,6 +104,7 @@
 #include "types.h"
 #include "i_time.h"
 #include "scripting/vm/vm.h"
+#include "hwrenderer/data/flatvertices.h"
 
 #include "fragglescript/t_fs.h"
 
@@ -4115,7 +4116,7 @@ void P_SetupLevel (const char *lumpname, int position)
 
 	// This must be done BEFORE the PolyObj Spawn!!!
 	InitRenderInfo();			// create hardware independent renderer resources for the level.
-	screen->InitForLevel();		// create hardware dependent level resources (e.g. the vertex buffer)
+	screen->mVertexData->CreateVBO();
 	SWRenderer->SetColormap();	//The SW renderer needs to do some special setup for the level's default colormap.
 	InitPortalGroups();
 

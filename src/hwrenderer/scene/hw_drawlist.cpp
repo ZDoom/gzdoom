@@ -32,6 +32,7 @@
 #include "g_levellocals.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_drawlist.h"
+#include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hw_renderstate.h"
 
@@ -906,5 +907,29 @@ void HWDrawList::DrawSorted(HWDrawInfo *di, FRenderState &state, SortNode * head
 		DrawSorted(di, state, head->right);
 		state.SetClipSplit(clipsplit);
 	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+void HWDrawList::DrawSorted(HWDrawInfo *di, FRenderState &state)
+{
+	if (drawitems.Size() == 0) return;
+
+	if (!sorted)
+	{
+		screen->mVertexData->Map();
+		Sort(di);
+		screen->mVertexData->Unmap();
+	}
+	state.ClearClipSplit();
+	di->EnableClipDistance(1, true);
+	di->EnableClipDistance(2, true);
+	DrawSorted(di, state, sorted);
+	di->EnableClipDistance(1, false);
+	di->EnableClipDistance(2, false);
+	state.ClearClipSplit();
 }
 

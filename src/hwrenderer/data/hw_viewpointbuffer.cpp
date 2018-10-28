@@ -77,7 +77,7 @@ void GLViewpointBuffer::Set2D(HWDrawInfo *di, int width, int height)
 	{
 		HWViewpointUniforms matrices;
 		matrices.SetDefaults();
-		matrices.mProjectionMatrix.ortho(0, width, height, 0, -1.0f, 1.0f);
+		matrices.mProjectionMatrix.ortho(0, (float)width, (float)height, 0, -1.0f, 1.0f);
 		matrices.CalcDependencies();
 		mBuffer->Map();
 		memcpy(mBuffer->Memory(), &matrices, sizeof(matrices));

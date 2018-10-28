@@ -84,7 +84,7 @@ int HWDrawInfo::SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &light
 
 int HWDrawInfo::CreateOtherPlaneVertices(subsector_t *sub, const secplane_t *plane)
 {
-	auto alloc = AllocVertices(sub->numlines);
+	auto alloc = screen->mVertexData->AllocVertices(sub->numlines);
 	auto ptr = alloc.first;
 	for (unsigned int k = 0; k < sub->numlines; k++)
 	{
@@ -722,7 +722,7 @@ void HWDrawInfo::PrepareUpperGap(seg_t * seg)
 	ws.z1 = frontz;
 	ws.z2 = backz;
 
-	auto vertices = AllocVertices(8);
+	auto vertices = screen->mVertexData->AllocVertices(8);
 
 	CreateFloodStencilPoly(&ws, vertices.first);
 	CreateFloodPoly(&ws, vertices.first+4, ws.z2, fakebsector, true);
@@ -786,7 +786,7 @@ void HWDrawInfo::PrepareLowerGap(seg_t * seg)
 	ws.z2 = frontz;
 	ws.z1 = backz;
 
-	auto vertices = AllocVertices(8);
+	auto vertices = screen->mVertexData->AllocVertices(8);
 
 	CreateFloodStencilPoly(&ws, vertices.first);
 	CreateFloodPoly(&ws, vertices.first+4, ws.z1, fakebsector, false);

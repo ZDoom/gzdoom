@@ -391,15 +391,6 @@ void OpenGLFrameBuffer::SetViewportRects(IntRect *bounds)
 	}
 }
 
-
-void OpenGLFrameBuffer::InitForLevel()
-{
-	if (GLRenderer != NULL)
-	{
-		GLRenderer->SetupLevel();
-	}
-}
-
 void OpenGLFrameBuffer::UpdatePalette()
 {
 	if (GLRenderer)

@@ -811,7 +811,7 @@ HWHorizonPortal::HWHorizonPortal(FPortalSceneState *s, GLHorizonInfo * pt, FRend
 
 	// Draw to some far away boundary
 	// This is not drawn as larger strips because it causes visual glitches.
-	auto verts = di->AllocVertices(1024 + 10);
+	auto verts = screen->mVertexData->AllocVertices(1024 + 10);
 	auto ptr = verts.first;
 	for (int xx = -32768; xx < 32768; xx += 4096)
 	{

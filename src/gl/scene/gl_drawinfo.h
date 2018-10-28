@@ -39,13 +39,10 @@ struct FDrawInfo : public HWDrawInfo
 	void AddFlat(GLFlat *flat, bool fog) override;
 	void AddSprite(GLSprite *sprite, bool translucent) override;
 
-	std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) override;
 	int UploadLights(FDynLightData &data) override;
 
 	void Draw(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) override;
 	void DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) override;
-	void DrawModel(GLSprite *spr, FRenderState &state) override;
-	void DrawHUDModel(HUDSprite *spr, FRenderState &state) override;
 	void RenderPortal(HWPortal *p, bool stencil) override;
 
 	void SetDepthMask(bool on) override;
@@ -57,8 +54,6 @@ struct FDrawInfo : public HWDrawInfo
 	void EnableClipDistance(int num, bool state) override;
 
 	void StartScene();
-
-	void DrawSorted(int listindex);
 
 	void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) override;
     

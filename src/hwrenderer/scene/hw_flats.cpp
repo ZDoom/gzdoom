@@ -395,7 +395,7 @@ void GLFlat::Process(HWDrawInfo *di, sector_t * model, int whichplane, bool fog)
 	z = plane.plane.ZatPoint(0.f, 0.f);
 	if (sector->special == GLSector_Skybox)
 	{
-		auto vert = di->AllocVertices(4);
+		auto vert = screen->mVertexData->AllocVertices(4);
 		CreateSkyboxVertices(vert.first);
 		iboindex = vert.second;
 	}

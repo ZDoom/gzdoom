@@ -34,6 +34,8 @@
 #include "r_data/models/models.h"
 #include "hw_weapon.h"
 #include "hw_fakeflat.h"
+
+#include "hwrenderer/models/hw_models.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "hwrenderer/textures/hw_material.h"
 #include "hwrenderer/utility/hw_lighting.h"
@@ -75,7 +77,10 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 	if (huds->mframe)
 	{
 		state.AlphaFunc(Alpha_GEqual, 0);
-		DrawHUDModel(huds, state);
+
+		FGLModelRenderer renderer(this, state, huds->lightindex);
+		renderer.RenderHUDModel(huds->weapon, huds->mx, huds->my);
+		screen->mVertexData->Bind(state);
 	}
 	else
 	{
@@ -464,7 +469,7 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 		v2 = tex->GetSpriteVB();
 	}
 
-	auto verts = di->AllocVertices(4);
+	auto verts = screen->mVertexData->AllocVertices(4);
 	mx = verts.second;
 
 	verts.first[0].Set(x1, y1, 0, u1, v1);

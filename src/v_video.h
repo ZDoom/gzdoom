@@ -485,7 +485,6 @@ public:
 
 	// Report a game restart
 	void InitPalette();
-	virtual void InitForLevel() {}
 	virtual void SetClearColor(int color) {}
 	virtual uint32_t GetCaps();
 	virtual void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV);

@@ -409,7 +409,7 @@ void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 	gldecal->lightlist = lightlist;
 	memcpy(gldecal->dv, dv, sizeof(dv));
 	
-	auto verts = di->AllocVertices(4);
+	auto verts = screen->mVertexData->AllocVertices(4);
 	gldecal->vertindex = verts.second;
 	
 	for (i = 0; i < 4; i++)

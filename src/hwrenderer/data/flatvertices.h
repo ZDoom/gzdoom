@@ -56,7 +56,6 @@ class FFlatVertexBuffer
 
 	unsigned int mIndex;
 	std::atomic<unsigned int> mCurIndex;
-	std::mutex mBufferMutex;
 	unsigned int mNumReserved;
 
 
@@ -119,23 +118,7 @@ public:
 		return GetBuffer(mCurIndex);
 	}
 
-	template<class T>
-	FFlatVertex *Alloc(int num, T *poffset)
-	{
-	again:
-		FFlatVertex *p = GetBuffer();
-		auto index = mCurIndex.fetch_add(num);
-		*poffset = static_cast<T>(index);
-		if (index + num >= BUFFER_SIZE_TO_USE)
-		{
-			std::lock_guard<std::mutex> lock(mBufferMutex);
-			if (mCurIndex >= BUFFER_SIZE_TO_USE)	// retest condition, in case another thread got here first
-				mCurIndex = mIndex;
-
-			if (index >= BUFFER_SIZE_TO_USE) goto again;
-		}
-		return p;
-	}
+	std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count);
 
 	void Reset()
 	{

@@ -3,6 +3,8 @@
 
 #include "hwrenderer/dynlights/hw_shadowmap.h"
 
+class IDataBuffer;
+
 class FShadowMap : public IShadowMap
 {
 public:
@@ -22,9 +24,9 @@ private:
 	void UploadLights();
 
 	// OpenGL storage buffer with the list of lights in the shadow map texture
-	int mLightList = 0;
+	IDataBuffer *mLightList = nullptr;
 
 	// OpenGL storage buffers for the AABB tree
-	int mNodesBuffer = 0;
-	int mLinesBuffer = 0;
+	IDataBuffer *mNodesBuffer = nullptr;
+	IDataBuffer *mLinesBuffer = nullptr;
 };

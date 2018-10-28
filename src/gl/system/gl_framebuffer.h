@@ -41,10 +41,10 @@ public:
 	void BeginFrame() override;
 	void SetViewportRects(IntRect *bounds) override;
 	void BlurScene(float amount) override;
-    IUniformBuffer *CreateUniformBuffer(size_t size, bool staticuse = false) override;
-	IShaderProgram *CreateShaderProgram() override;
+    IShaderProgram *CreateShaderProgram() override;
 	IVertexBuffer *CreateVertexBuffer() override;
 	IIndexBuffer *CreateIndexBuffer() override;
+	IDataBuffer *CreateDataBuffer(int bindingpoint, bool ssbo) override;
 
 	// Retrieves a buffer containing image data for a screenshot.
 	// Hint: Pitch can be negative for upside-down images, in which case buffer

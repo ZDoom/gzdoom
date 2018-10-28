@@ -47,6 +47,7 @@ public:
 	virtual void SetData(size_t size, void *data, bool staticdata = true) = 0;
 	virtual void *Lock(unsigned int size) = 0;
 	virtual void Unlock() = 0;
+	virtual void Resize(size_t newsize) = 0;
 	virtual void Map() {}		// Only needed by old OpenGL but this needs to be in the interface.
 	virtual void Unmap() {}
 	void *Memory() { assert(map); return map; }
@@ -67,3 +68,11 @@ class IIndexBuffer : virtual public IBuffer
 	// Ob Vulkam, element size is a buffer property and of no concern to the drawing functions (as it should be.)
 };
 
+class IDataBuffer : virtual public IBuffer
+{
+	// Can be either uniform or shader storage buffer, depending on its needs.
+public:
+	virtual void BindRange(size_t start, size_t length) = 0;
+	virtual void BindBase() = 0;
+
+};

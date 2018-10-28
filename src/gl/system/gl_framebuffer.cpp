@@ -38,7 +38,6 @@
 #include "gl/textures/gl_samplers.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_vrmodes.h"
-#include "gl/data/gl_uniformbuffer.h"
 #include "hwrenderer/models/hw_models.h"
 #include "gl/shaders/gl_shaderprogram.h"
 #include "gl_debug.h"
@@ -353,11 +352,6 @@ FModelRenderer *OpenGLFrameBuffer::CreateModelRenderer(int mli)
 	return new FGLModelRenderer(nullptr, gl_RenderState, mli);
 }
 
-IUniformBuffer *OpenGLFrameBuffer::CreateUniformBuffer(size_t size, bool staticuse)
-{
-    return new GLUniformBuffer(size, staticuse);
-}
-
 IShaderProgram *OpenGLFrameBuffer::CreateShaderProgram() 
 { 
 	return new FShaderProgram; 
@@ -371,6 +365,11 @@ IVertexBuffer *OpenGLFrameBuffer::CreateVertexBuffer()
 IIndexBuffer *OpenGLFrameBuffer::CreateIndexBuffer()
 { 
 	return new GLIndexBuffer; 
+}
+
+IDataBuffer *OpenGLFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo)
+{
+	return new GLDataBuffer(bindingpoint, ssbo);
 }
 
 

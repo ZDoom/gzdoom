@@ -21,7 +21,7 @@ public:
 	GLuint Handle() { return mProgram; }
 	//explicit operator bool() const { return mProgram != 0; }
 
-	std::unique_ptr<IUniformBuffer> Uniforms;
+	std::unique_ptr<IDataBuffer> Uniforms;
 
 private:
 	FShaderProgram(const FShaderProgram &) = delete;

@@ -10,9 +10,9 @@
 
 class GLBuffer : virtual public IBuffer
 {
+protected:
 	const int mUseType;
 	unsigned int mBufferId;
-protected:
 	int mAllocationSize = 0;
 	bool mPersistent = false;
 	bool nomap = true;
@@ -22,6 +22,7 @@ protected:
 	void SetData(size_t size, void *data, bool staticdata) override;
 	void Map() override;
 	void Unmap() override;
+	void Resize(size_t newsize) override;
 	void *Lock(unsigned int size) override;
 	void Unlock() override;
 public:
@@ -54,5 +55,14 @@ class GLIndexBuffer : public IIndexBuffer, public GLBuffer
 {
 public:
 	GLIndexBuffer() : GLBuffer(GL_ELEMENT_ARRAY_BUFFER) {}
+};
+
+class GLDataBuffer : public IDataBuffer, public GLBuffer
+{
+	int mBindingPoint;
+public:
+	GLDataBuffer(int bindingpoint, bool is_ssbo) : GLBuffer(is_ssbo? GL_SHADER_STORAGE_BUFFER : GL_UNIFORM_BUFFER), mBindingPoint(bindingpoint) {}
+	void BindRange(size_t start, size_t length) override;
+	void BindBase() override;
 };
 

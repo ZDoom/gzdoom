@@ -122,6 +122,32 @@ void GLBuffer::Unlock()
 	gl_RenderState.ResetVertexBuffer();
 }
 
+void GLBuffer::Resize(size_t newsize)
+{
+	assert(!nomap);	// only mappable buffers can be resized. 
+	if (newsize > buffersize && !nomap)
+	{
+		// reallocate the buffer with twice the size
+		unsigned int oldbuffer = mBufferId;
+
+		// first unmap the old buffer
+		Bind();
+		glUnmapBuffer(mUseType);
+
+		glGenBuffers(1, &mBufferId);
+		SetData(newsize, nullptr, false);
+		glBindBuffer(GL_COPY_READ_BUFFER, oldbuffer);
+
+		// copy contents and delete the old buffer.
+		glCopyBufferSubData(GL_COPY_READ_BUFFER, mUseType, 0, 0, buffersize);
+		glBindBuffer(GL_COPY_READ_BUFFER, 0);
+		glDeleteBuffers(1, &oldbuffer);
+		buffersize = newsize;
+		gl_RenderState.ResetVertexBuffer();
+	}
+}
+
+
 //===========================================================================
 //
 // Vertex buffer implementation
@@ -171,3 +197,13 @@ void GLVertexBuffer::Bind(int *offsets)
 	}
 }
 
+void GLDataBuffer::BindRange(size_t start, size_t length)
+{
+	if (mUseType == GL_UNIFORM_BUFFER)	// SSBO's cannot be rebound.
+		glBindBufferRange(mUseType, mBindingPoint, mBufferId, start, length);
+}
+
+void GLDataBuffer::BindBase()
+{
+	glBindBufferBase(mUseType, mBindingPoint, mBufferId);
+}

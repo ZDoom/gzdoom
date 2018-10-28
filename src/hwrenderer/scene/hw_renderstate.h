@@ -4,6 +4,7 @@
 #include "vectors.h"
 #include "g_levellocals.h"
 #include "hw_drawstructs.h"
+#include "hw_drawlist.h"
 #include "r_data/matrix.h"
 #include "hwrenderer/textures/hw_material.h"
 
@@ -422,5 +423,23 @@ public:
 
 	void SetColor(int sectorlightlevel, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon = false);
 	void SetFog(int lightlevel, int rellight, bool fullbright, const FColormap *cmap, bool isadditive);
+
+	// API-dependent render interface
+
+	// Draw commands
+	virtual void ClearScreen() = 0;
+	virtual void Draw(int dt, int index, int count, bool apply = true) = 0;
+	virtual void DrawIndexed(int dt, int index, int count, bool apply = true) = 0;
+
+	// Immediate render state change commands. These only change infrequently and should not clutter the render state.
+	virtual bool SetDepthClamp(bool on) = 0;
+	virtual void SetDepthMask(bool on) = 0;
+	virtual void SetDepthFunc(int func) = 0;
+	virtual void SetDepthRange(float min, float max) = 0;
+	virtual void EnableDrawBufferAttachments(bool on) = 0;
+	virtual void SetStencil(int offs, int op, int flags) = 0;
+	virtual void SetCulling(int mode) = 0;
+	virtual void EnableClipDistance(int num, bool state) = 0;
+
 };
 

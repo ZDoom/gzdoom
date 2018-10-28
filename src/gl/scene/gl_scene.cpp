@@ -275,7 +275,7 @@ void FDrawInfo::DrawScene(int drawmode)
 		GLRenderer->mBuffers->BindSceneFB(true);
 		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
 		gl_RenderState.Apply();
-		screen->mViewpoints->Bind(this, vpIndex);
+		screen->mViewpoints->Bind(gl_RenderState, vpIndex);
 	}
 
 	// Handle all portals after rendering the opaque objects but before
@@ -324,7 +324,7 @@ void FDrawInfo::DrawEndScene2D(sector_t * viewsector)
 	HWViewpointUniforms vp = VPUniforms;
 	vp.mViewMatrix.loadIdentity();
 	vp.mProjectionMatrix = vrmode->GetHUDSpriteProjection();
-	screen->mViewpoints->SetViewpoint(this, &vp);
+	screen->mViewpoints->SetViewpoint(gl_RenderState, &vp);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_MULTISAMPLE);
 
@@ -426,7 +426,7 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 		di->VPUniforms.mProjectionMatrix = eye.GetProjection(fov, ratio, fovratio);
 		// Stereo mode specific viewpoint adjustment
 		vp.Pos += eye.GetViewShift(vp.HWAngles.Yaw.Degrees);
-		di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);
+		di->SetupView(gl_RenderState, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);
 
 		di->ProcessScene(toscreen);
 

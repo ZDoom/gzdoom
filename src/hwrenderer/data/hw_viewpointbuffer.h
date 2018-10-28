@@ -3,7 +3,7 @@
 #include "hwrenderer/data/buffers.h"
 
 struct HWViewpointUniforms;
-struct HWDrawInfo;
+class FRenderState;
 
 class GLViewpointBuffer
 {
@@ -27,9 +27,9 @@ public:
 	GLViewpointBuffer();
 	~GLViewpointBuffer();
 	void Clear();
-	int Bind(HWDrawInfo *di, unsigned int index);
-	void Set2D(HWDrawInfo *di, int width, int height);
-	int SetViewpoint(HWDrawInfo *di, HWViewpointUniforms *vp);
+	int Bind(FRenderState &di, unsigned int index);
+	void Set2D(FRenderState &di, int width, int height);
+	int SetViewpoint(FRenderState &di, HWViewpointUniforms *vp);
 	unsigned int GetBlockSize() const { return mBlockSize; }
 };
 

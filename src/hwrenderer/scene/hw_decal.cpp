@@ -87,7 +87,7 @@ void GLDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 
 	if (lightlist == nullptr)
 	{
-		di->Draw(DT_TriangleFan, state, vertindex, 4);
+		state.Draw(DT_TriangleFan, vertindex, 4);
 	}
 	else
 	{
@@ -111,7 +111,7 @@ void GLDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 				state.SetFog(thisll, rellight, di->isFullbrightScene(), &thiscm, false);
 				state.SetSplitPlanes(lightlist[k].plane, lowplane);
 
-				di->Draw(DT_TriangleFan, state, vertindex, 4);
+				state.Draw(DT_TriangleFan, vertindex, 4);
 			}
 			if (low1 <= dv[0].z && low2 <= dv[3].z) break;
 		}
@@ -132,7 +132,7 @@ void GLDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 void HWDrawInfo::DrawDecals(FRenderState &state, TArray<GLDecal *> &decals)
 {
 	side_t *wall = nullptr;
-	SetDepthMask(false);
+	state.SetDepthMask(false);
 	state.SetDepthBias(-1, -128);
 	state.SetLightIndex(-1);
 	for (auto gldecal : decals)
@@ -155,7 +155,7 @@ void HWDrawInfo::DrawDecals(FRenderState &state, TArray<GLDecal *> &decals)
 	state.EnableSplit(false);
 	state.ClearDepthBias();
 	state.SetTextureMode(TM_NORMAL);
-	SetDepthMask(true);
+	state.SetDepthMask(true);
 }
 
 //==========================================================================
@@ -166,7 +166,7 @@ void HWDrawInfo::DrawDecals(FRenderState &state, TArray<GLDecal *> &decals)
 
 void GLWall::DrawDecalsForMirror(HWDrawInfo *di, FRenderState &state, TArray<GLDecal *> &decals)
 {
-	di->SetDepthMask(false);
+	state.SetDepthMask(false);
 	state.SetDepthBias(-1, -128);
 	state.SetLightIndex(-1);
 	state.SetFog(lightlevel, rellight + getExtraLight(), di->isFullbrightScene(), &Colormap, false);
@@ -179,7 +179,7 @@ void GLWall::DrawDecalsForMirror(HWDrawInfo *di, FRenderState &state, TArray<GLD
 	}
 	state.ClearDepthBias();
 	state.SetTextureMode(TM_NORMAL);
-	di->SetDepthMask(true);
+	state.SetDepthMask(true);
 }
 
 //==========================================================================

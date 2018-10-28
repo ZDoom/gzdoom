@@ -364,14 +364,14 @@ void HWDrawInfo::SetViewMatrix(const FRotator &angles, float vx, float vy, float
 // Setup the view rotation matrix for the given viewpoint
 //
 //-----------------------------------------------------------------------------
-void HWDrawInfo::SetupView(float vx, float vy, float vz, bool mirror, bool planemirror)
+void HWDrawInfo::SetupView(FRenderState &state, float vx, float vy, float vz, bool mirror, bool planemirror)
 {
 	auto &vp = Viewpoint;
 	vp.SetViewAngle(r_viewwindow);
 	SetViewMatrix(vp.HWAngles, vx, vy, vz, mirror, planemirror);
 	SetCameraPos(vp.Pos);
 	VPUniforms.CalcDependencies();
-	vpIndex = screen->mViewpoints->SetViewpoint(this, &VPUniforms);
+	vpIndex = screen->mViewpoints->SetViewpoint(state, &VPUniforms);
 }
 
 //-----------------------------------------------------------------------------

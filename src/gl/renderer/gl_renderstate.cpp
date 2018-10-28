@@ -39,6 +39,8 @@
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/textures/gl_hwtexture.h"
 #include "gl/system/gl_buffers.h"
+#include "hwrenderer/utility/hw_clock.h"
+#include "hwrenderer/data/hw_viewpointbuffer.h"
 
 FGLRenderState gl_RenderState;
 
@@ -375,3 +377,144 @@ void FGLRenderState::ApplyBlendMode()
 	}
 
 }
+
+//==========================================================================
+//
+// API dependent draw calls
+//
+//==========================================================================
+
+static int dt2gl[] = { GL_POINTS, GL_LINES, GL_TRIANGLES, GL_TRIANGLE_FAN, GL_TRIANGLE_STRIP };
+
+void FGLRenderState::Draw(int dt, int index, int count, bool apply)
+{
+	assert(this == &gl_RenderState);
+	if (apply)
+	{
+		gl_RenderState.Apply();
+	}
+	drawcalls.Clock();
+	glDrawArrays(dt2gl[dt], index, count);
+	drawcalls.Unclock();
+}
+
+void FGLRenderState::DrawIndexed(int dt, int index, int count, bool apply)
+{
+	assert(this == &gl_RenderState);
+	if (apply)
+	{
+		gl_RenderState.Apply();
+	}
+	drawcalls.Clock();
+	glDrawElements(dt2gl[dt], count, GL_UNSIGNED_INT, (void*)(intptr_t)(index * sizeof(uint32_t)));
+	drawcalls.Unclock();
+}
+
+void FGLRenderState::SetDepthMask(bool on)
+{
+	glDepthMask(on);
+}
+
+void FGLRenderState::SetDepthFunc(int func)
+{
+	static int df2gl[] = { GL_LESS, GL_LEQUAL, GL_ALWAYS };
+	glDepthFunc(df2gl[func]);
+}
+
+void FGLRenderState::SetDepthRange(float min, float max)
+{
+	glDepthRange(min, max);
+}
+
+void FGLRenderState::EnableDrawBufferAttachments(bool on)
+{
+	EnableDrawBuffers(on ? gl_RenderState.GetPassDrawBufferCount() : 1);
+}
+
+void FGLRenderState::SetStencil(int offs, int op, int flags)
+{
+	static int op2gl[] = { GL_KEEP, GL_INCR, GL_DECR };
+
+	glStencilFunc(GL_EQUAL, screen->stencilValue + offs, ~0);		// draw sky into stencil
+	glStencilOp(GL_KEEP, GL_KEEP, op2gl[op]);		// this stage doesn't modify the stencil
+
+	bool cmon = !(flags & SF_ColorMaskOff);
+	glColorMask(cmon, cmon, cmon, cmon);						// don't write to the graphics buffer
+	glDepthMask(!(flags & SF_DepthMaskOff));
+	if (flags & SF_DepthTestOff)
+		glDisable(GL_DEPTH_TEST);
+	else
+		glEnable(GL_DEPTH_TEST);
+	if (flags & SF_DepthClear)
+		glClear(GL_DEPTH_BUFFER_BIT);
+}
+
+void FGLRenderState::SetCulling(int mode)
+{
+	if (mode != Cull_None)
+	{
+		glEnable(GL_CULL_FACE);
+		glFrontFace(mode == Cull_CCW ? GL_CCW : GL_CW);
+	}
+	else
+	{
+		glDisable(GL_CULL_FACE);
+	}
+}
+
+void FGLRenderState::EnableClipDistance(int num, bool state)
+{
+	// Update the viewpoint-related clip plane setting.
+	if (!(gl.flags & RFL_NO_CLIP_PLANES))
+	{
+		if (state)
+		{
+			glEnable(GL_CLIP_DISTANCE0 + num);
+		}
+		else
+		{
+			glDisable(GL_CLIP_DISTANCE0 + num);
+		}
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+void FGLRenderState::ClearScreen()
+{
+	bool multi = !!glIsEnabled(GL_MULTISAMPLE);
+
+	screen->mViewpoints->Set2D(*this, SCREENWIDTH, SCREENHEIGHT);
+	SetColor(0, 0, 0);
+	Apply();
+
+	glDisable(GL_MULTISAMPLE);
+	glDisable(GL_DEPTH_TEST);
+
+	glDrawArrays(GL_TRIANGLE_STRIP, FFlatVertexBuffer::FULLSCREEN_INDEX, 4);
+
+	glEnable(GL_DEPTH_TEST);
+	if (multi) glEnable(GL_MULTISAMPLE);
+}
+
+
+
+//==========================================================================
+//
+// Below are less frequently altrered state settings which do not get
+// buffered by the state object, but set directly instead.
+//
+//==========================================================================
+
+bool FGLRenderState::SetDepthClamp(bool on)
+{
+	bool res = mLastDepthClamp;
+	if (!on) glDisable(GL_DEPTH_CLAMP);
+	else glEnable(GL_DEPTH_CLAMP);
+	mLastDepthClamp = on;
+	return res;
+}
+

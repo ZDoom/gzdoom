@@ -255,7 +255,7 @@ void GLSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 				state.SetDepthBias(-1, -128);
 			}
 			state.SetLightIndex(-1);
-			di->Draw(DT_TriangleStrip, state, vertexindex, 4);
+			state.Draw(DT_TriangleStrip, vertexindex, 4);
 
 			if (foglayer)
 			{
@@ -263,7 +263,7 @@ void GLSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 				state.SetFog(foglevel, rel, false, &Colormap, additivefog);
 				state.SetTextureMode(TM_FOGLAYER);
 				state.SetRenderStyle(STYLE_Translucent);
-				di->Draw(DT_TriangleStrip, state, vertexindex, 4);
+				state.Draw(DT_TriangleStrip, vertexindex, 4);
 				state.SetTextureMode(TM_NORMAL);
 			}
 		}

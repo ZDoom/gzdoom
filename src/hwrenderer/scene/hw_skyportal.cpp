@@ -41,7 +41,7 @@
 
 void HWSkyPortal::RenderRow(HWDrawInfo *di, FRenderState &state, EDrawType prim, int row, bool apply)
 {
-	di->Draw(prim, state, vertexBuffer->mPrimStart[row], vertexBuffer->mPrimStart[row + 1] - vertexBuffer->mPrimStart[row]);
+	state.Draw(prim, vertexBuffer->mPrimStart[row], vertexBuffer->mPrimStart[row + 1] - vertexBuffer->mPrimStart[row]);
 }
 
 //-----------------------------------------------------------------------------
@@ -115,40 +115,40 @@ void HWSkyPortal::RenderBox(HWDrawInfo *di, FRenderState &state, FTextureID texn
 		// north
 		tex = FMaterial::ValidateTexture(sb->faces[0], false);
 		state.SetMaterial(tex, CLAMP_XY, 0, -1);
-		di->Draw(DT_TriangleStrip, state, vertexBuffer->FaceStart(0), 4);
+		state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(0), 4);
 
 		// east
 		tex = FMaterial::ValidateTexture(sb->faces[1], false);
 		state.SetMaterial(tex, CLAMP_XY, 0, -1);
-		di->Draw(DT_TriangleStrip, state, vertexBuffer->FaceStart(1), 4);
+		state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(1), 4);
 
 		// south
 		tex = FMaterial::ValidateTexture(sb->faces[2], false);
 		state.SetMaterial(tex, CLAMP_XY, 0, -1);
-		di->Draw(DT_TriangleStrip, state, vertexBuffer->FaceStart(2), 4);
+		state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(2), 4);
 
 		// west
 		tex = FMaterial::ValidateTexture(sb->faces[3], false);
 		state.SetMaterial(tex, CLAMP_XY, 0, -1);
-		di->Draw(DT_TriangleStrip, state, vertexBuffer->FaceStart(3), 4);
+		state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(3), 4);
 	}
 	else 
 	{
 		faces=1;
 		tex = FMaterial::ValidateTexture(sb->faces[0], false);
 		state.SetMaterial(tex, CLAMP_XY, 0, -1);
-		di->Draw(DT_TriangleStrip, state, vertexBuffer->FaceStart(-1), 10);
+		state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(-1), 10);
 	}
 
 	// top
 	tex = FMaterial::ValidateTexture(sb->faces[faces], false);
 	state.SetMaterial(tex, CLAMP_XY, 0, -1);
-	di->Draw(DT_TriangleStrip, state, vertexBuffer->FaceStart(sb->fliptop ? 6 : 5), 4);
+	state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(sb->fliptop ? 6 : 5), 4);
 
 	// bottom
 	tex = FMaterial::ValidateTexture(sb->faces[faces+1], false);
 	state.SetMaterial(tex, CLAMP_XY, 0, -1);
-	di->Draw(DT_TriangleStrip, state, vertexBuffer->FaceStart(4), 4);
+	state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(4), 4);
 
 	state.EnableModelMatrix(false);
 }
@@ -176,9 +176,9 @@ void HWSkyPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 	state.EnableFog(false);
 	state.AlphaFunc(Alpha_GEqual, 0.f);
 	state.SetRenderStyle(STYLE_Translucent);
-	bool oldClamp = di->SetDepthClamp(true);
+	bool oldClamp = state.SetDepthClamp(true);
 
-	di->SetupView(0, 0, 0, !!(mState->MirrorFlag & 1), !!(mState->PlaneMirrorFlag & 1));
+	di->SetupView(state, 0, 0, 0, !!(mState->MirrorFlag & 1), !!(mState->PlaneMirrorFlag & 1));
 
 	vertexBuffer->Bind(state);
 	if (origin->texture[0] && origin->texture[0]->tex->bSkybox)
@@ -210,13 +210,13 @@ void HWSkyPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 
 			state.EnableTexture(false);
 			state.SetObjectColor(FadeColor);
-			di->Draw(DT_Triangles, state, 0, 12);
+			state.Draw(DT_Triangles, 0, 12);
 			state.EnableTexture(true);
 			state.SetObjectColor(0xffffffff);
 		}
 	}
 	::level.lightmode = oldlightmode;
-	di->SetDepthClamp(oldClamp);
+	state.SetDepthClamp(oldClamp);
 }
 
 const char *HWSkyPortal::GetName() { return "Sky"; }

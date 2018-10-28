@@ -191,7 +191,7 @@ void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 	state.SetLightIndex(dynlightindex);
 	if (vcount > 0 && !di->ClipLineShouldBeActive())
 	{
-		di->DrawIndexed(DT_Triangles, state, iboindex, vcount);
+		state.DrawIndexed(DT_Triangles, iboindex, vcount);
 		flatvertices += vcount;
 		flatprimitives++;
 	}
@@ -205,7 +205,7 @@ void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 
 			if (di->ss_renderflags[sub->Index()] & renderflags)
 			{
-				di->DrawIndexed(DT_Triangles, state, index, (sub->numlines - 2) * 3, false);
+				state.DrawIndexed(DT_Triangles, index, (sub->numlines - 2) * 3, false);
 				flatvertices += sub->numlines;
 				flatprimitives++;
 			}
@@ -226,7 +226,7 @@ void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 			auto num = node->sub->numlines;
 			flatvertices += num;
 			flatprimitives++;
-			di->Draw(DT_TriangleFan, state, node->vertexindex, num);
+			state.Draw(DT_TriangleFan,node->vertexindex, num);
 			node = node->next;
 		}
 		// Flood gaps with the back side's ceiling/floor texture
@@ -249,26 +249,26 @@ void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 			// Create stencil 
 			state.SetEffect(EFF_STENCIL);
 			state.EnableTexture(false);
-			di->SetStencil(0, SOP_Increment, SF_ColorMaskOff);
-			di->Draw(DT_TriangleFan, state, fnode->vertexindex, 4);
+			state.SetStencil(0, SOP_Increment, SF_ColorMaskOff);
+			state.Draw(DT_TriangleFan,fnode->vertexindex, 4);
 
 			// Draw projected plane into stencil
 			state.EnableTexture(true);
 			state.SetEffect(EFF_NONE);
-			di->SetStencil(1, SOP_Keep, SF_DepthMaskOff | SF_DepthTestOff);
-			di->Draw(DT_TriangleFan, state, fnode->vertexindex + 4, 4);
+			state.SetStencil(1, SOP_Keep, SF_DepthMaskOff | SF_DepthTestOff);
+			state.Draw(DT_TriangleFan,fnode->vertexindex + 4, 4);
 
 			// clear stencil
 			state.SetEffect(EFF_STENCIL);
 			state.EnableTexture(false);
-			di->SetStencil(1, SOP_Decrement, SF_ColorMaskOff | SF_DepthMaskOff | SF_DepthTestOff);
-			di->Draw(DT_TriangleFan, state, fnode->vertexindex, 4);
+			state.SetStencil(1, SOP_Decrement, SF_ColorMaskOff | SF_DepthMaskOff | SF_DepthTestOff);
+			state.Draw(DT_TriangleFan,fnode->vertexindex, 4);
 
 			// restore old stencil op.
 			state.EnableTexture(true);
 			state.SetEffect(EFF_NONE);
 			state.SetDepthBias(0, 0);
-			di->SetStencil(0, SOP_Keep, SF_AllOn);
+			state.SetStencil(0, SOP_Keep, SF_AllOn);
 
 			fnode = fnode->next;
 		}
@@ -305,7 +305,7 @@ void GLFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 		{
 			state.SetMaterial(gltexture, CLAMP_XY, 0, -1);
 			state.SetLightIndex(dynlightindex);
-			di->Draw(DT_TriangleFan, state, iboindex, 4);
+			state.Draw(DT_TriangleFan,iboindex, 4);
 			flatvertices += 4;
 			flatprimitives++;
 		}

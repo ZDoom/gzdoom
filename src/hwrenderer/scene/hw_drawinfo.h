@@ -345,7 +345,7 @@ public:
 
 	void UpdateCurrentMapSection();
 	void SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mirror, bool planemirror);
-	void SetupView(float vx, float vy, float vz, bool mirror, bool planemirror);
+	void SetupView(FRenderState &state, float vx, float vy, float vz, bool mirror, bool planemirror);
 	angle_t FrustumAngle();
 
 	void DrawDecals(FRenderState &state, TArray<GLDecal *> &decals);
@@ -359,26 +359,10 @@ public:
 	void AddFlat(GLFlat *flat, bool fog);
 	void AddSprite(GLSprite *sprite, bool translucent);
 
-	virtual bool SetDepthClamp(bool on) = 0;
 
     GLDecal *AddDecal(bool onmirror);
 
-	virtual void ClearScreen() = 0;
-	virtual void Draw(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) = 0;
-	virtual void DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) = 0;
 	virtual void RenderPortal(HWPortal *p, bool usestencil) = 0;
 	virtual void DrawScene(int drawmode) = 0;
-
-
-	// Immediate render state change commands. These only change infrequently and should not clutter the render state.
-	virtual void SetDepthMask(bool on) = 0;
-	virtual void SetDepthFunc(int func) = 0;
-	virtual void SetDepthRange(float min, float max) = 0;
-	virtual void EnableDrawBufferAttachments(bool on) = 0;
-	virtual void SetStencil(int offs, int op, int flags) = 0;
-	virtual void SetCulling(int mode) = 0;
-	virtual void EnableClipDistance(int num, bool state) = 0;
-
-
 };
 

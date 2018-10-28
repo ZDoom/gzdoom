@@ -926,11 +926,11 @@ void HWDrawList::DrawSorted(HWDrawInfo *di, FRenderState &state)
 		screen->mVertexData->Unmap();
 	}
 	state.ClearClipSplit();
-	di->EnableClipDistance(1, true);
-	di->EnableClipDistance(2, true);
+	state.EnableClipDistance(1, true);
+	state.EnableClipDistance(2, true);
 	DrawSorted(di, state, sorted);
-	di->EnableClipDistance(1, false);
-	di->EnableClipDistance(2, false);
+	state.EnableClipDistance(1, false);
+	state.EnableClipDistance(2, false);
 	state.ClearClipSplit();
 }
 

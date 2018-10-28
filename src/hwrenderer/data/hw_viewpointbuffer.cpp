@@ -28,6 +28,7 @@
 #include "hwrenderer/data/shaderuniforms.h"
 #include "hwrenderer/scene/hw_viewpointuniforms.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
+#include "hwrenderer/scene/hw_renderstate.h"
 #include "hw_viewpointbuffer.h"
 
 static const int INITIAL_BUFFER_SIZE = 100;	// 100 viewpoints per frame should nearly always be enough
@@ -60,18 +61,18 @@ void GLViewpointBuffer::CheckSize()
 	}
 }
 
-int GLViewpointBuffer::Bind(HWDrawInfo *di, unsigned int index)
+int GLViewpointBuffer::Bind(FRenderState &di, unsigned int index)
 {
 	if (index != mLastMappedIndex)
 	{
 		mLastMappedIndex = index;
 		mBuffer->BindRange(index * mBlockAlign, mBlockAlign);
-		di->EnableClipDistance(0, mClipPlaneInfo[index]);
+		di.EnableClipDistance(0, mClipPlaneInfo[index]);
 	}
 	return index;
 }
 
-void GLViewpointBuffer::Set2D(HWDrawInfo *di, int width, int height)
+void GLViewpointBuffer::Set2D(FRenderState &di, int width, int height)
 {
 	if (width != m2DWidth || height != m2DHeight)
 	{
@@ -89,7 +90,7 @@ void GLViewpointBuffer::Set2D(HWDrawInfo *di, int width, int height)
 	Bind(di, 0);
 }
 
-int GLViewpointBuffer::SetViewpoint(HWDrawInfo *di, HWViewpointUniforms *vp)
+int GLViewpointBuffer::SetViewpoint(FRenderState &di, HWViewpointUniforms *vp)
 {
 	CheckSize();
 	mBuffer->Map();

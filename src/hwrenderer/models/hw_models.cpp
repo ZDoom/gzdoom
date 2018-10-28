@@ -54,7 +54,7 @@ VSMatrix FGLModelRenderer::GetViewToWorldMatrix()
 
 void FGLModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored)
 {
-	di->SetDepthFunc(DF_LEqual);
+	state.SetDepthFunc(DF_LEqual);
 	state.EnableTexture(true);
 	// [BB] In case the model should be rendered translucent, do back face culling.
 	// This solves a few of the problems caused by the lack of depth sorting.
@@ -62,7 +62,7 @@ void FGLModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, con
 	// TO-DO: Implement proper depth sorting.
 	if (!(actor->RenderStyle == DefaultRenderStyle()) && !(smf->flags & MDL_DONTCULLBACKFACES))
 	{
-		di->SetCulling((mirrored ^ screen->mPortalState->isMirrored()) ? Cull_CCW : Cull_CW);
+		state.SetCulling((mirrored ^ screen->mPortalState->isMirrored()) ? Cull_CCW : Cull_CW);
 	}
 
 	state.mModelMatrix = objectToWorldMatrix;
@@ -72,21 +72,21 @@ void FGLModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, con
 void FGLModelRenderer::EndDrawModel(AActor *actor, FSpriteModelFrame *smf)
 {
 	state.EnableModelMatrix(false);
-	di->SetDepthFunc(DF_Less);
+	state.SetDepthFunc(DF_Less);
 	if (!(actor->RenderStyle == DefaultRenderStyle()) && !(smf->flags & MDL_DONTCULLBACKFACES))
-		di->SetCulling(Cull_None);
+		state.SetCulling(Cull_None);
 }
 
 void FGLModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix, bool mirrored)
 {
-	di->SetDepthFunc(DF_LEqual);
+	state.SetDepthFunc(DF_LEqual);
 
 	// [BB] In case the model should be rendered translucent, do back face culling.
 	// This solves a few of the problems caused by the lack of depth sorting.
 	// TO-DO: Implement proper depth sorting.
 	if (!(actor->RenderStyle == DefaultRenderStyle()))
 	{
-		di->SetCulling((mirrored ^ screen->mPortalState->isMirrored()) ? Cull_CW : Cull_CCW);
+		state.SetCulling((mirrored ^ screen->mPortalState->isMirrored()) ? Cull_CW : Cull_CCW);
 	}
 
 	state.mModelMatrix = objectToWorldMatrix;
@@ -97,9 +97,9 @@ void FGLModelRenderer::EndDrawHUDModel(AActor *actor)
 {
 	state.EnableModelMatrix(false);
 
-	di->SetDepthFunc(DF_Less);
+	state.SetDepthFunc(DF_Less);
 	if (!(actor->RenderStyle == DefaultRenderStyle()))
-		di->SetCulling(Cull_None);
+		state.SetCulling(Cull_None);
 }
 
 IModelVertexBuffer *FGLModelRenderer::CreateVertexBuffer(bool needindex, bool singleframe)
@@ -121,12 +121,12 @@ void FGLModelRenderer::SetMaterial(FTexture *skin, bool clampNoFilter, int trans
 
 void FGLModelRenderer::DrawArrays(int start, int count)
 {
-	di->Draw(DT_Triangles, state, start, count);
+	state.Draw(DT_Triangles, start, count);
 }
 
 void FGLModelRenderer::DrawElements(int numIndices, size_t offset)
 {
-	di->DrawIndexed(DT_Triangles, state, int(offset / sizeof(unsigned int)), numIndices);
+	state.DrawIndexed(DT_Triangles, int(offset / sizeof(unsigned int)), numIndices);
 }
 
 //===========================================================================

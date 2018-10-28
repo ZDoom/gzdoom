@@ -115,16 +115,6 @@ public:
 		mSpecularLevel = specularLevel;
 	}
 
-	// This wraps the depth clamp setting because we frequently need to read it which OpenGL is not particularly performant at...
-	bool SetDepthClamp(bool on)
-	{
-		bool res = mLastDepthClamp;
-		if (!on) glDisable(GL_DEPTH_CLAMP);
-		else glEnable(GL_DEPTH_CLAMP);
-		mLastDepthClamp = on;
-		return res;
-	}
-
 	void SetPassType(EPassType passType)
 	{
 		mPassType = passType;
@@ -150,6 +140,20 @@ public:
 	{
 		return mPassType == GBUFFER_PASS ? 3 : 1;
 	}
+
+	void ClearScreen() override;
+	void Draw(int dt, int index, int count, bool apply = true) override;
+	void DrawIndexed(int dt, int index, int count, bool apply = true) override;
+
+	bool SetDepthClamp(bool on) override;
+	void SetDepthMask(bool on) override;
+	void SetDepthFunc(int func) override;
+	void SetDepthRange(float min, float max) override;
+	void EnableDrawBufferAttachments(bool on) override;
+	void SetStencil(int offs, int op, int flags) override;
+	void SetCulling(int mode) override;
+	void EnableClipDistance(int num, bool state) override;
+
 
 };
 

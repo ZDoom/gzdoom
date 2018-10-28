@@ -19,13 +19,6 @@
 //
 //--------------------------------------------------------------------------
 //
-/*
-** gl_drawinfo.cpp
-** Implements the draw info structure which contains most of the
-** data in a scene and the draw lists - including a very thorough BSP 
-** style sorting algorithm for translucent objects.
-**
-*/
 
 #include "gl_load/gl_system.h"
 #include "r_sky.h"
@@ -35,7 +28,6 @@
 #include "tarray.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/data/flatvertices.h"
-#include "hwrenderer/utility/hw_clock.h"
 
 #include "gl/scene/gl_drawinfo.h"
 #include "hwrenderer/scene/hw_clipper.h"
@@ -44,43 +36,6 @@
 #include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "hwrenderer/dynlights/hw_lightbuffer.h"
 #include "hwrenderer/models/hw_models.h"
-
-bool FDrawInfo::SetDepthClamp(bool on)
-{
-	return gl_RenderState.SetDepthClamp(on);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-static int dt2gl[] = { GL_POINTS, GL_LINES, GL_TRIANGLES, GL_TRIANGLE_FAN, GL_TRIANGLE_STRIP };
-
-void FDrawInfo::Draw(EDrawType dt, FRenderState &state, int index, int count, bool apply)
-{
-	assert(&state == &gl_RenderState);
-	if (apply)
-	{
-		gl_RenderState.Apply();
-	}
-	drawcalls.Clock();
-	glDrawArrays(dt2gl[dt], index, count);
-	drawcalls.Unclock();
-}
-
-void FDrawInfo::DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply)
-{
-	assert(&state == &gl_RenderState);
-	if (apply)
-	{
-		gl_RenderState.Apply();
-	}
-	drawcalls.Clock();
-	glDrawElements(dt2gl[dt], count, GL_UNSIGNED_INT, (void*)(intptr_t)(index * sizeof(uint32_t)));
-	drawcalls.Unclock();
-}
 
 void FDrawInfo::RenderPortal(HWPortal *p, bool usestencil)
 {
@@ -92,99 +47,8 @@ void FDrawInfo::RenderPortal(HWPortal *p, bool usestencil)
 	gp->DrawContents(new_di, gl_RenderState);
 	new_di->EndDrawInfo();
 	screen->mVertexData->Bind(gl_RenderState);
-	screen->mViewpoints->Bind(this, vpIndex);
+	screen->mViewpoints->Bind(gl_RenderState, vpIndex);
 	gp->RemoveStencil(this, gl_RenderState, usestencil);
 
 }
-
-void FDrawInfo::SetDepthMask(bool on)
-{
-	glDepthMask(on);
-}
-
-void FDrawInfo::SetDepthFunc(int func)
-{
-	static int df2gl[] = { GL_LESS, GL_LEQUAL, GL_ALWAYS };
-	glDepthFunc(df2gl[func]);
-}
-
-void FDrawInfo::SetDepthRange(float min, float max)
-{
-	glDepthRange(min, max);
-}
-
-void FDrawInfo::EnableDrawBufferAttachments(bool on)
-{
-	gl_RenderState.EnableDrawBuffers(on? gl_RenderState.GetPassDrawBufferCount() : 1);
-}
-
-void FDrawInfo::SetStencil(int offs, int op, int flags)
-{
-	static int op2gl[] = { GL_KEEP, GL_INCR, GL_DECR };
-
-	glStencilFunc(GL_EQUAL, screen->stencilValue + offs, ~0);		// draw sky into stencil
-	glStencilOp(GL_KEEP, GL_KEEP, op2gl[op]);		// this stage doesn't modify the stencil
-
-	bool cmon = !(flags & SF_ColorMaskOff);
-	glColorMask(cmon, cmon, cmon, cmon);						// don't write to the graphics buffer
-	glDepthMask(!(flags & SF_DepthMaskOff));
-	if (flags & SF_DepthTestOff)
-		glDisable(GL_DEPTH_TEST);
-	else
-		glEnable(GL_DEPTH_TEST);
-	if (flags & SF_DepthClear)
-		glClear(GL_DEPTH_BUFFER_BIT);
-}
-
-void FDrawInfo::SetCulling(int mode)
-{
-	if (mode != Cull_None)
-	{
-		glEnable(GL_CULL_FACE);
-		glFrontFace(mode == Cull_CCW ? GL_CCW : GL_CW);
-	}
-	else
-	{
-		glDisable(GL_CULL_FACE);
-	}
-}
-
-void FDrawInfo::EnableClipDistance(int num, bool state)
-{
-	// Update the viewpoint-related clip plane setting.
-	if (!(gl.flags & RFL_NO_CLIP_PLANES))
-	{
-		if (state)
-		{
-			glEnable(GL_CLIP_DISTANCE0+num);
-		}
-		else
-		{
-			glDisable(GL_CLIP_DISTANCE0+num);
-		}
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-void FDrawInfo::ClearScreen()
-{
-	bool multi = !!glIsEnabled(GL_MULTISAMPLE);
-
-	screen->mViewpoints->Set2D(this, SCREENWIDTH, SCREENHEIGHT);
-	gl_RenderState.SetColor(0, 0, 0);
-	gl_RenderState.Apply();
-
-	glDisable(GL_MULTISAMPLE);
-	glDisable(GL_DEPTH_TEST);
-
-	glDrawArrays(GL_TRIANGLE_STRIP, FFlatVertexBuffer::FULLSCREEN_INDEX, 4);
-
-	glEnable(GL_DEPTH_TEST);
-	if (multi) glEnable(GL_MULTISAMPLE);
-}
-
 

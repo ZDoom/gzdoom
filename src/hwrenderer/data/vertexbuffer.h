@@ -33,35 +33,37 @@ struct FVertexBufferAttribute
 	int offset;
 };
 
-class IVertexBuffer
+class IBuffer
 {
 protected:
 	size_t buffersize = 0;
 	void *map = nullptr;
-	bool nomap = true;
 public:
-	virtual ~IVertexBuffer() {}
+	IBuffer() = default;
+	IBuffer(const IBuffer &) = delete;
+	IBuffer &operator=(const IBuffer &) = delete;
+	virtual ~IBuffer() = default;
+
 	virtual void SetData(size_t size, void *data, bool staticdata = true) = 0;
-	virtual void SetFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs) = 0;
 	virtual void *Lock(unsigned int size) = 0;
 	virtual void Unlock() = 0;
 	virtual void Map() {}		// Only needed by old OpenGL but this needs to be in the interface.
 	virtual void Unmap() {}
 	void *Memory() { assert(map); return map; }
+	size_t Size() { return buffersize; }
 };
 
-
-class IIndexBuffer
+class IVertexBuffer : virtual public IBuffer
 {
-protected:
+public:
+	virtual void SetFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs) = 0;
+};
+
+// This merely exists to have a dedicated type for index buffers to inherit from.
+class IIndexBuffer : virtual public IBuffer
+{
 	// Element size is fixed to 4, thanks to OpenGL requiring this info to be coded into the glDrawElements call.
 	// This mostly prohibits a more flexible buffer setup but GZDoom doesn't use any other format anyway.
 	// Ob Vulkam, element size is a buffer property and of no concern to the drawing functions (as it should be.)
-	size_t buffersize = 0;
-public:
-	virtual ~IIndexBuffer() {}
-	virtual void SetData(size_t size, void *data, bool staticdata = true) = 0;
-	virtual void *Lock(unsigned int size) = 0;
-	virtual void Unlock() = 0;
 };
 

@@ -126,7 +126,7 @@ void FGLModelRenderer::DrawArrays(int start, int count)
 
 void FGLModelRenderer::DrawElements(int numIndices, size_t offset)
 {
-	di->DrawIndexed(DT_Triangles, state, offset / sizeof(unsigned int), numIndices);
+	di->DrawIndexed(DT_Triangles, state, int(offset / sizeof(unsigned int)), numIndices);
 }
 
 //===========================================================================

@@ -30,77 +30,103 @@
 
 //==========================================================================
 //
-// Vertex buffer implementation
+// basic buffer implementation
 //
 //==========================================================================
 
-GLVertexBuffer::GLVertexBuffer()
+GLBuffer::GLBuffer(int usetype)
+	: mUseType(usetype)
 {
-	glGenBuffers(1, &vbo_id);
+	glGenBuffers(1, &mBufferId);
 }
 
-GLVertexBuffer::~GLVertexBuffer()
+GLBuffer::~GLBuffer()
 {
-	if (vbo_id != 0)
+	if (mBufferId != 0)
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-		glUnmapBuffer(GL_ARRAY_BUFFER);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glDeleteBuffers(1, &vbo_id);
-		gl_RenderState.ResetVertexBuffer();
+		glBindBuffer(mUseType, mBufferId);
+		glUnmapBuffer(mUseType);
+		glBindBuffer(mUseType, 0);
+		glDeleteBuffers(1, &mBufferId);
+		gl_RenderState.ResetVertexBuffer();	// force rebinding of buffers on next Apply call.
 	}
 }
 
-void GLVertexBuffer::SetData(size_t size, void *data, bool staticdata)
+void GLBuffer::Bind()
 {
+	glBindBuffer(mUseType, mBufferId);
+}
+
+
+void GLBuffer::SetData(size_t size, void *data, bool staticdata)
+{
+	assert(nomap);	// once it's mappable, it cannot be recreated anymore.
+	Bind();
 	if (data != nullptr)
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-		glBufferData(GL_ARRAY_BUFFER, size, data, staticdata? GL_STATIC_DRAW : GL_STREAM_DRAW);
+		glBufferData(mUseType, size, data, staticdata? GL_STATIC_DRAW : GL_STREAM_DRAW);
 	}
 	else
 	{
 		mPersistent = screen->BuffersArePersistent() && !staticdata;
 		if (mPersistent)
 		{
-			glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-			glBufferStorage(GL_ARRAY_BUFFER, size, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-			map = glMapBufferRange(GL_ARRAY_BUFFER, 0, size, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+			glBufferStorage(mUseType, size, nullptr, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+			map = glMapBufferRange(mUseType, 0, size, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		}
 		else
 		{
-			glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-			glBufferData(GL_ARRAY_BUFFER, size, NULL, staticdata ? GL_STATIC_DRAW : GL_STREAM_DRAW);
+			glBufferData(mUseType, size, nullptr, staticdata ? GL_STATIC_DRAW : GL_STREAM_DRAW);
 			map = nullptr;
 		}
-		nomap = false;
+		if (!staticdata) nomap = false;
 	}
 	buffersize = size;
-	gl_RenderState.ResetVertexBuffer();	// This is needed because glBindBuffer overwrites the setting stored in the render state.
+	gl_RenderState.ResetVertexBuffer();	// force rebinding of buffers on next Apply call.
 }
 
-void GLVertexBuffer::Map()
+void GLBuffer::Map()
 {
-	assert(nomap == false);
-	if (!mPersistent)
+	assert(nomap == false);	// do not allow mapping of static buffers. Vulkan cannot do that so it should be blocked in OpenGL, too.
+	if (!mPersistent && !nomap)
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		Bind();
+		map = (FFlatVertex*)glMapBufferRange(mUseType, 0, buffersize, GL_MAP_WRITE_BIT|GL_MAP_UNSYNCHRONIZED_BIT);
 		gl_RenderState.ResetVertexBuffer();
-		map = (FFlatVertex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, buffersize, GL_MAP_WRITE_BIT|GL_MAP_UNSYNCHRONIZED_BIT);
 	}
 }
 
-void GLVertexBuffer::Unmap()
+void GLBuffer::Unmap()
 {
 	assert(nomap == false);
-	if (!mPersistent)
+	if (!mPersistent && map != nullptr)
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		Bind();
+		glUnmapBuffer(mUseType);
 		gl_RenderState.ResetVertexBuffer();
-		glUnmapBuffer(GL_ARRAY_BUFFER);
 		map = nullptr;
 	}
 }
+
+void *GLBuffer::Lock(unsigned int size)
+{
+	// This initializes this buffer as a static object with no data.
+	SetData(size, nullptr, true);
+	return glMapBufferRange(mUseType, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+}
+
+void GLBuffer::Unlock()
+{
+	Bind();
+	glUnmapBuffer(mUseType);
+	gl_RenderState.ResetVertexBuffer();
+}
+
+//===========================================================================
+//
+// Vertex buffer implementation
+//
+//===========================================================================
 
 void GLVertexBuffer::SetFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs)
 {
@@ -118,6 +144,7 @@ void GLVertexBuffer::SetFormat(int numBindingPoints, int numAttributes, size_t s
 			attrinf.format = VFmtToGLFmt[attrs[i].format];
 			attrinf.size = VFmtToSize[attrs[i].format];
 			attrinf.offset = attrs[i].offset;
+			attrinf.bindingpoint = attrs[i].binding;
 		}
 	}
 }
@@ -126,7 +153,8 @@ void GLVertexBuffer::Bind(int *offsets)
 {
 	int i = 0;
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+	// This is what gets called from RenderState.Apply. It shouldn't be called anywhere else.
+	GLBuffer::Bind();
 	for(auto &attrinf : mAttributeInfo)
 	{
 		if (attrinf.size == 0)
@@ -136,95 +164,10 @@ void GLVertexBuffer::Bind(int *offsets)
 		else
 		{
 			glEnableVertexAttribArray(i);
-			size_t ofs = offsets == nullptr? attrinf.offset : attrinf.offset + mStride * offsets[attrinf.bindingpoint];
+			size_t ofs = offsets == nullptr ? attrinf.offset : attrinf.offset + mStride * offsets[attrinf.bindingpoint];
 			glVertexAttribPointer(i, attrinf.size, attrinf.format, attrinf.format != GL_FLOAT, (GLsizei)mStride, (void*)(intptr_t)ofs);
 		}
 		i++;
 	}
-}
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-void *GLVertexBuffer::Lock(unsigned int size)
-{
-	SetData(size, nullptr, true);
-	return glMapBufferRange(GL_ARRAY_BUFFER, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
-}
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-void GLVertexBuffer::Unlock()
-{
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-	glUnmapBuffer(GL_ARRAY_BUFFER);
-	gl_RenderState.ResetVertexBuffer();
-}
-
-//==========================================================================
-//
-// Index buffer implementation
-//
-//==========================================================================
-
-GLIndexBuffer::GLIndexBuffer()
-{
-	glGenBuffers(1, &ibo_id);
-}
-
-GLIndexBuffer::~GLIndexBuffer()
-{
-	if (ibo_id != 0)
-	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
-		glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		glDeleteBuffers(1, &ibo_id);
-	}
-}
-
-void GLIndexBuffer::SetData(size_t size, void *data, bool staticdata)
-{
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, data, staticdata? GL_STATIC_DRAW : GL_STREAM_DRAW);
-	buffersize = size;
-	gl_RenderState.ResetVertexBuffer();	// This is needed because glBindBuffer overwrites the setting stored in the render state.
-}
-
-void GLIndexBuffer::Bind()
-{
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
-}
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-void *GLIndexBuffer::Lock(unsigned int size)
-{
-	SetData(size, nullptr, true);
-	return glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
-}
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-void GLIndexBuffer::Unlock()
-{
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
-	glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
-	gl_RenderState.ResetVertexBuffer();
 }
 

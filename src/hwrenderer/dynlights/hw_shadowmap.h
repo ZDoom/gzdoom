@@ -15,9 +15,6 @@ public:
 	IShadowMap() { }
 	virtual ~IShadowMap();
 
-	// Update shadow map texture
-	virtual void Update() = 0;
-
 	// Test if a world position is in shadow relative to the specified light and returns false if it is
 	bool ShadowTest(ADynamicLight *light, const DVector3 &pos);
 
@@ -27,11 +24,16 @@ public:
 	static cycle_t UpdateCycles;
 	static int LightsProcessed;
 	static int LightsShadowmapped;
-	
+
+	bool PerformUpdate();
+	void FinishUpdate()
+	{
+		UpdateCycles.Clock();
+	}
+
 protected:
 	void CollectLights();
 	bool ValidateAABBTree();
-	void PerformUpdate();
 
 	// Upload the AABB-tree to the GPU
 	void UploadAABBTree();

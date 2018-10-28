@@ -700,7 +700,6 @@ file( GLOB HEADER_FILES
 	hwrenderer/textures/*.h
 	hwrenderer/utility/*.h
 	gl/*.h
-	gl/dynlights/*.h
 	gl/models/*.h
 	gl/renderer/*.h
 	gl/scene/*.h
@@ -1037,7 +1036,6 @@ set (PCH_SOURCES
 	g_statusbar/sbarinfo.cpp
 	g_statusbar/sbar_mugshot.cpp
 	g_statusbar/shared_sbar.cpp
-	gl/dynlights/gl_shadowmap.cpp
 	gl/renderer/gl_renderer.cpp
 	gl/renderer/gl_renderstate.cpp
 	gl/renderer/gl_renderbuffers.cpp

@@ -162,13 +162,24 @@ bool IShadowMap::ValidateAABBTree()
 	return false;
 }
 
-void IShadowMap::PerformUpdate()
+bool IShadowMap::PerformUpdate()
 {
-	UploadAABBTree();
-	UploadLights();
-	mLightList->BindBase();
-	mNodesBuffer->BindBase();
-	mLinesBuffer->BindBase();
+	UpdateCycles.Reset();
+
+	LightsProcessed = 0;
+	LightsShadowmapped = 0;
+
+	if (IsEnabled())
+	{
+		UpdateCycles.Clock();
+		UploadAABBTree();
+		UploadLights();
+		mLightList->BindBase();
+		mNodesBuffer->BindBase();
+		mLinesBuffer->BindBase();
+		return true;
+	}
+	return false;
 }
 
 void IShadowMap::UploadLights()

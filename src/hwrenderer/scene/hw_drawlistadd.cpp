@@ -20,19 +20,12 @@
 //--------------------------------------------------------------------------
 //
 
-#include "gl_load/gl_system.h"
-#include "p_local.h"
-#include "p_lnspec.h"
-#include "a_sharedglobal.h"
-#include "g_levellocals.h"
-#include "actorinlines.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
-
-#include "gl_load/gl_interface.h"
 #include "hwrenderer/utility/hw_cvars.h"
-#include "gl/renderer/gl_renderer.h"
 #include "hwrenderer/dynlights/hw_lightbuffer.h"
-#include "gl/scene/gl_drawinfo.h"
+#include "hwrenderer/scene/hw_drawstructs.h"
+#include "hwrenderer/scene/hw_drawinfo.h"
+#include "hwrenderer/textures/hw_material.h"
 
 EXTERN_CVAR(Bool, gl_seamless)
 
@@ -42,7 +35,7 @@ EXTERN_CVAR(Bool, gl_seamless)
 //
 //==========================================================================
 
-void FDrawInfo::AddWall(GLWall *wall)
+void HWDrawInfo::AddWall(GLWall *wall)
 {
 	if (wall->flags & GLWall::GLWF_TRANSLUCENT)
 	{
@@ -73,7 +66,7 @@ void FDrawInfo::AddWall(GLWall *wall)
 //
 //==========================================================================
 
-void FDrawInfo::AddMirrorSurface(GLWall *w)
+void HWDrawInfo::AddMirrorSurface(GLWall *w)
 {
 	w->type = RENDERWALL_MIRRORSURFACE;
 	auto newwall = drawlists[GLDL_TRANSLUCENTBORDER].NewWall();
@@ -99,7 +92,7 @@ void FDrawInfo::AddMirrorSurface(GLWall *w)
 //
 //==========================================================================
 
-void FDrawInfo::AddFlat(GLFlat *flat, bool fog)
+void HWDrawInfo::AddFlat(GLFlat *flat, bool fog)
 {
 	int list;
 
@@ -138,7 +131,7 @@ void FDrawInfo::AddFlat(GLFlat *flat, bool fog)
 // 
 //
 //==========================================================================
-void FDrawInfo::AddSprite(GLSprite *sprite, bool translucent)
+void HWDrawInfo::AddSprite(GLSprite *sprite, bool translucent)
 {
 	int list;
 	// [BB] Allow models to be drawn in the GLDL_TRANSLUCENT pass.

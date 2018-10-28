@@ -14,11 +14,6 @@
 struct FDrawInfo : public HWDrawInfo
 {
 	
-	void AddWall(GLWall *wall) override;
-    void AddMirrorSurface(GLWall *w) override;
-	void AddFlat(GLFlat *flat, bool fog) override;
-	void AddSprite(GLSprite *sprite, bool translucent) override;
-
 	void Draw(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) override;
 	void DrawIndexed(EDrawType dt, FRenderState &state, int index, int count, bool apply = true) override;
 	void RenderPortal(HWPortal *p, bool stencil) override;

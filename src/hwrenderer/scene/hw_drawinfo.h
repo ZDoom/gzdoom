@@ -351,10 +351,10 @@ public:
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs);
     virtual void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) = 0;
     
-    virtual void AddWall(GLWall *w) = 0;
-    virtual void AddMirrorSurface(GLWall *w) = 0;
-	virtual void AddFlat(GLFlat *flat, bool fog) = 0;
-	virtual void AddSprite(GLSprite *sprite, bool translucent) = 0;
+    void AddWall(GLWall *w);
+    void AddMirrorSurface(GLWall *w);
+	void AddFlat(GLFlat *flat, bool fog);
+	void AddSprite(GLSprite *sprite, bool translucent);
 
 	virtual bool SetDepthClamp(bool on) = 0;
 

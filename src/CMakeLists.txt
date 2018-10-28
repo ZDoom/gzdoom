@@ -821,7 +821,6 @@ set( FASTMATH_SOURCES
 	textures/hires/xbr/xbrz_old.cpp
 	gl/scene/gl_drawinfo.cpp
 	gl/scene/gl_scene.cpp
-	gl/scene/gl_walls_draw.cpp
 	gl_load/gl_load.c
 	hwrenderer/postprocessing/hw_postprocess_cvars.cpp
 	hwrenderer/postprocessing/hw_postprocessshader.cpp
@@ -831,6 +830,7 @@ set( FASTMATH_SOURCES
 	hwrenderer/scene/hw_decal.cpp
 	hwrenderer/scene/hw_drawinfo.cpp
 	hwrenderer/scene/hw_drawlist.cpp
+	hwrenderer/scene/hw_drawlistadd.cpp
 	hwrenderer/scene/hw_clipper.cpp
 	hwrenderer/scene/hw_flats.cpp
 	hwrenderer/scene/hw_portal.cpp

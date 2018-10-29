@@ -238,7 +238,8 @@ void HWPortal::SetupStencil(HWDrawInfo *di, FRenderState &state, bool usestencil
 			state.SetDepthFunc(DF_Less);
 			DrawPortalStencil(state, STP_AllInOne);
 
-			state.SetStencil(1, SOP_Keep, SF_DepthTestOff | SF_DepthMaskOff);
+			state.SetStencil(1, SOP_Keep, SF_DepthMaskOff);
+			state.EnableDepthTest(false);
 			state.EnableTexture(true);
 			state.SetEffect(EFF_NONE);
 		}
@@ -249,7 +250,8 @@ void HWPortal::SetupStencil(HWDrawInfo *di, FRenderState &state, bool usestencil
 	{
 		if (!NeedDepthBuffer())
 		{
-			state.SetStencil(0, SOP_Keep, SF_DepthTestOff | SF_DepthMaskOff);
+			state.SetStencil(0, SOP_Keep, SF_DepthMaskOff);
+			state.EnableDepthTest(false);
 		}
 	}
 
@@ -266,6 +268,7 @@ void HWPortal::RemoveStencil(HWDrawInfo *di, FRenderState &state, bool usestenci
 	auto &vp = di->Viewpoint;
 	if (vp.camera != nullptr) vp.camera->renderflags = (vp.camera->renderflags & ~RF_MAYBEINVISIBLE) | savedvisibility;
 
+		state.EnableDepthTest(true);
 	if (usestencil)
 	{
 		state.SetEffect(EFF_NONE);
@@ -298,7 +301,8 @@ void HWPortal::RemoveStencil(HWDrawInfo *di, FRenderState &state, bool usestenci
 		state.EnableTexture(false);
 		state.SetRenderStyle(STYLE_Source);
 
-		state.SetStencil(0, SOP_Keep, needdepth ? SF_ColorMaskOff | SF_DepthClear : SF_ColorMaskOff);
+		state.SetStencil(0, SOP_Keep, SF_ColorMaskOff);
+		if (needdepth) state.Clear(CT_Depth);
 		state.SetDepthRange(0, 1);
 		state.SetDepthFunc(DF_LEqual);
 		DrawPortalStencil(state, STP_DepthRestore);

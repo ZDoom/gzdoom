@@ -99,7 +99,6 @@ public:
 
 	void Apply();
 	void ApplyBuffers();
-	void ApplyLightIndex(int index);
 	void ApplyBlendMode();
 
 	void ResetVertexBuffer()

@@ -441,12 +441,6 @@ void FGLRenderState::SetStencil(int offs, int op, int flags)
 	bool cmon = !(flags & SF_ColorMaskOff);
 	glColorMask(cmon, cmon, cmon, cmon);						// don't write to the graphics buffer
 	glDepthMask(!(flags & SF_DepthMaskOff));
-	if (flags & SF_DepthTestOff)
-		glDisable(GL_DEPTH_TEST);
-	else
-		glEnable(GL_DEPTH_TEST);
-	if (flags & SF_DepthClear)
-		glClear(GL_DEPTH_BUFFER_BIT);
 }
 
 void FGLRenderState::SetCulling(int mode)

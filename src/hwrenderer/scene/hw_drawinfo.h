@@ -39,8 +39,6 @@ enum EStencilFlags
 	SF_AllOn = 0,
 	SF_ColorMaskOff = 1,
 	SF_DepthMaskOff = 2,
-	SF_DepthTestOff = 4,
-	SF_DepthClear = 8
 };
 
 enum EStencilOp

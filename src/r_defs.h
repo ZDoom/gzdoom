@@ -588,16 +588,6 @@ struct secspecial_t
 	short damageinterval;	// Interval for damage application
 	short leakydamage;		// chance of leaking through radiation suit
 	int Flags;
-
-	secspecial_t()
-	{
-		Clear();
-	}
-
-	void Clear()
-	{
-		memset(this, 0, sizeof(*this));
-	}
 };
 
 FSerializer &Serialize(FSerializer &arc, const char *key, secspecial_t &spec, secspecial_t *def);

@@ -229,7 +229,7 @@ void DFloor::SetFloorChangeType (sector_t *sec, int change)
 	switch (change & 3)
 	{
 	case 1:
-		m_NewSpecial.Clear();
+		m_NewSpecial = {};
 		m_Type = DFloor::genFloorChg0;
 		break;
 	case 2:
@@ -828,7 +828,7 @@ bool EV_DoDonut (int tag, line_t *line, double pillarspeed, double slimespeed)
 			floor->m_Speed = slimespeed;
 			floor->m_Instant = false;
 			floor->m_Texture = s3->GetTexture(sector_t::floor);
-			floor->m_NewSpecial.Clear();
+			floor->m_NewSpecial = {};
 			height = s3->FindHighestFloorPoint (&spot);
 			floor->m_FloorDestDist = s2->floorplane.PointToDist (spot, height);
 			floor->StartFloorSound ();

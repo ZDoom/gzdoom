@@ -34,6 +34,11 @@
 //
 //==========================================================================
 
+static inline void InvalidateBufferState()
+{
+	gl_RenderState.ResetVertexBuffer();	// force rebinding of buffers on next Apply call.
+}
+
 GLBuffer::GLBuffer(int usetype)
 	: mUseType(usetype)
 {
@@ -48,7 +53,6 @@ GLBuffer::~GLBuffer()
 		glUnmapBuffer(mUseType);
 		glBindBuffer(mUseType, 0);
 		glDeleteBuffers(1, &mBufferId);
-		gl_RenderState.ResetVertexBuffer();	// force rebinding of buffers on next Apply call.
 	}
 }
 
@@ -82,7 +86,7 @@ void GLBuffer::SetData(size_t size, void *data, bool staticdata)
 		if (!staticdata) nomap = false;
 	}
 	buffersize = size;
-	gl_RenderState.ResetVertexBuffer();	// force rebinding of buffers on next Apply call.
+	InvalidateBufferState();
 }
 
 void GLBuffer::Map()
@@ -92,7 +96,7 @@ void GLBuffer::Map()
 	{
 		Bind();
 		map = (FFlatVertex*)glMapBufferRange(mUseType, 0, buffersize, GL_MAP_WRITE_BIT|GL_MAP_UNSYNCHRONIZED_BIT);
-		gl_RenderState.ResetVertexBuffer();
+		InvalidateBufferState();
 	}
 }
 
@@ -103,7 +107,7 @@ void GLBuffer::Unmap()
 	{
 		Bind();
 		glUnmapBuffer(mUseType);
-		gl_RenderState.ResetVertexBuffer();
+		InvalidateBufferState();
 		map = nullptr;
 	}
 }
@@ -119,7 +123,7 @@ void GLBuffer::Unlock()
 {
 	Bind();
 	glUnmapBuffer(mUseType);
-	gl_RenderState.ResetVertexBuffer();
+	InvalidateBufferState();
 }
 
 void GLBuffer::Resize(size_t newsize)
@@ -143,7 +147,7 @@ void GLBuffer::Resize(size_t newsize)
 		glBindBuffer(GL_COPY_READ_BUFFER, 0);
 		glDeleteBuffers(1, &oldbuffer);
 		buffersize = newsize;
-		gl_RenderState.ResetVertexBuffer();
+		InvalidateBufferState();
 	}
 }
 

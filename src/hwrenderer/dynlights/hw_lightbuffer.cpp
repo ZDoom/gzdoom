@@ -36,7 +36,7 @@ static const int ELEMENT_SIZE = (4*sizeof(float));
 
 FLightBuffer::FLightBuffer()
 {
-	int maxNumberOfLights = 40000;
+	int maxNumberOfLights = 80000;
 	
 	mBufferSize = maxNumberOfLights * ELEMENTS_PER_LIGHT;
 	mByteSize = mBufferSize * ELEMENT_SIZE;
@@ -75,28 +75,6 @@ FLightBuffer::~FLightBuffer()
 void FLightBuffer::Clear()
 {
 	mIndex = 0;
-}
-
-void FLightBuffer::CheckSize()
-{
-	// create the new buffer's storage (at least twice as large as the old one)
-	int oldbytesize = mByteSize;
-	unsigned int bufferbytesize = mBufferedData.Size() * 4;
-	if (bufferbytesize > mByteSize)
-	{
-		mByteSize += bufferbytesize;
-	}
-	else
-	{
-		mByteSize *= 2;
-	}
-	mBufferSize = mByteSize / ELEMENT_SIZE;
-	mBuffer->Resize(mByteSize);
-	
-	Map();
-	memcpy(((float*)mBuffer->Memory()) + mBlockSize*4, &mBufferedData[0], bufferbytesize);
-	mBufferedData.Clear();
-	Unmap();
 }
 
 int FLightBuffer::UploadLights(FDynLightData &data)
@@ -145,16 +123,7 @@ int FLightBuffer::UploadLights(FDynLightData &data)
 	}
 	else
 	{
-		// The buffered data always starts at the old buffer's end to avoid more extensive synchronization.
-		std::lock_guard<std::mutex> lock(mBufferMutex);
-		auto index = mBufferedData.Reserve(totalsize);
-		float *copyptr =&mBufferedData[index];
-		// The copy operation must be inside the mutexed block of code here!
-		memcpy(&copyptr[0], parmcnt, ELEMENT_SIZE);
-		memcpy(&copyptr[4], &data.arrays[0][0], size0 * ELEMENT_SIZE);
-		memcpy(&copyptr[4 + 4*size0], &data.arrays[1][0], size1 * ELEMENT_SIZE);
-		memcpy(&copyptr[4 + 4*(size0 + size1)], &data.arrays[2][0], size2 * ELEMENT_SIZE);
-		return mBufferSize + index;
+		return -1;	// Buffer is full. Since it is being used live at the point of the upload we cannot do much here but to abort.
 	}
 }
 

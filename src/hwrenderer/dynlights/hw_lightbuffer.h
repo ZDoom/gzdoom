@@ -22,9 +22,6 @@ class FLightBuffer
 	unsigned int mByteSize;
     unsigned int mMaxUploadSize;
     
-    std::mutex mBufferMutex;
-    TArray<float> mBufferedData;
-
 	void CheckSize();
 
 public:
@@ -34,7 +31,7 @@ public:
 	void Clear();
 	int UploadLights(FDynLightData &data);
 	void Map() { mBuffer->Map(); }
-	void Unmap() { mBuffer->Unmap(); if (mBufferedData.Size() > 0) CheckSize(); }
+	void Unmap() { mBuffer->Unmap(); }
 	unsigned int GetBlockSize() const { return mBlockSize; }
 	bool GetBufferType() const { return mBufferType; }
 

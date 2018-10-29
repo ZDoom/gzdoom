@@ -184,7 +184,7 @@ void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 {
 	auto vcount = sector->ibocount;
 
-	if (screen->BuffersArePersistent())
+	if (level.HasDynamicLights && screen->BuffersArePersistent())
 	{
 		SetupLights(di, sector->lighthead, lightdata, sector->PortalGroup);
 	}

@@ -148,7 +148,6 @@ void FDrawInfo::DrawScene(int drawmode)
 
 void FDrawInfo::ProcessScene(bool toscreen)
 {
-	iter_dlightf = iter_dlight = draw_dlight = draw_dlightf = 0;
 	screen->mPortalState->BeginScene();
 
 	int mapsection = R_PointInSubsector(Viewpoint.Pos)->mapsection;

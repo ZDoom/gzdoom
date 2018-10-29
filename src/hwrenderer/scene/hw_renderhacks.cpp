@@ -69,7 +69,7 @@ int HWDrawInfo::SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &light
 			iter_dlightf++;
 
 			p.Set(plane->Normal(), plane->fD());
-			lightdata.GetLight(sub->sector->PortalGroup, p, light, true);
+			draw_dlightf += lightdata.GetLight(sub->sector->PortalGroup, p, light, true);
 			node = node->nextLight;
 		}
 

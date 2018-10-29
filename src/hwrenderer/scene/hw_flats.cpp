@@ -167,7 +167,7 @@ void GLFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &light
 		}
 
 		p.Set(plane.plane.Normal(), plane.plane.fD());
-		lightdata.GetLight(portalgroup, p, light, false);
+		draw_dlightf += lightdata.GetLight(portalgroup, p, light, false);
 		node = node->nextLight;
 	}
 

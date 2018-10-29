@@ -229,6 +229,8 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 	}
 	else
 	{
+		iter_dlightf = iter_dlight = draw_dlight = draw_dlightf = 0;
+
 		checkBenchActive();
 
 		// reset statistics counters

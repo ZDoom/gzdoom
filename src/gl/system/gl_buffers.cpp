@@ -28,6 +28,9 @@
 #include "gl_buffers.h"
 #include "gl/renderer/gl_renderstate.h"
 
+namespace OpenGLRenderer
+{
+
 //==========================================================================
 //
 // basic buffer implementation
@@ -210,4 +213,6 @@ void GLDataBuffer::BindRange(size_t start, size_t length)
 void GLDataBuffer::BindBase()
 {
 	glBindBufferBase(mUseType, mBindingPoint, mBufferId);
+}
+
 }

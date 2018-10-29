@@ -66,6 +66,9 @@ EXTERN_CVAR(Bool, cl_capfps)
 
 extern bool NoInterpolateView;
 
+namespace OpenGLRenderer
+{
+
 //===========================================================================
 // 
 // Renderer interface
@@ -378,3 +381,4 @@ void FGLRenderer::BeginFrame()
 	mSaveBuffers->Setup(SAVEPICWIDTH, SAVEPICHEIGHT, SAVEPICWIDTH, SAVEPICHEIGHT);
 }
 
+}

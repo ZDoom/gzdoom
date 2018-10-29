@@ -39,6 +39,9 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/textures/gl_samplers.h"
 
+namespace OpenGLRenderer
+{
+
 
 TexFilter_s TexFilter[]={
 	{GL_NEAREST,					GL_NEAREST,		false},
@@ -464,3 +467,4 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 	return true;
 }
 
+}

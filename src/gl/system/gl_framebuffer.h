@@ -5,8 +5,10 @@
 
 #include <memory>
 
+namespace OpenGLRenderer
+{
+
 class FHardwareTexture;
-class FSimpleVertexBuffer;
 class FGLDebug;
 
 class OpenGLFrameBuffer : public SystemGLFrameBuffer
@@ -66,5 +68,6 @@ private:
 	int camtexcount = 0;
 };
 
+}
 
 #endif //__GL_FRAMEBUFFER

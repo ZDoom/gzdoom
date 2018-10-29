@@ -5,6 +5,9 @@
 #include "gl_shader.h"
 #include "hwrenderer/postprocessing/hw_shaderprogram.h"
 
+namespace OpenGLRenderer
+{
+
 class FShaderProgram : public IShaderProgram
 {
 public:
@@ -37,3 +40,5 @@ private:
 	GLuint mShaders[NumShaderTypes];
 	TArray<std::pair<FString, int>> samplerstobind;
 };
+
+}

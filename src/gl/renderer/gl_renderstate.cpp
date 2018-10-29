@@ -42,6 +42,9 @@
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
 
+namespace OpenGLRenderer
+{
+
 FGLRenderState gl_RenderState;
 
 static VSMatrix identityMatrix(1);
@@ -575,3 +578,4 @@ bool FGLRenderState::SetDepthClamp(bool on)
 	return res;
 }
 
+}

@@ -6,6 +6,7 @@
 #include "vectors.h"
 #include "r_renderer.h"
 #include "r_data/matrix.h"
+#include "gl/renderer/gl_renderbuffers.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "hwrenderer/dynlights/hw_shadowmap.h"
 #include <functional>
@@ -18,11 +19,9 @@ struct particle_t;
 class FCanvasTexture;
 class FFlatVertexBuffer;
 class FSkyVertexBuffer;
-class OpenGLFrameBuffer;
 class FShaderManager;
 class HWPortal;
 class FLightBuffer;
-class FSamplerManager;
 class DPSprite;
 class FGLRenderBuffers;
 class FPresentShader;
@@ -32,11 +31,17 @@ class FPresent3DRowShader;
 class FGL2DDrawer;
 class FHardwareTexture;
 class FShadowMapShader;
-class FCustomPostProcessShaders;
 class SWSceneDrawer;
 class GLViewpointBuffer;
 struct FRenderViewpoint;
 class FPresentShaderBase;
+
+namespace OpenGLRenderer
+{
+	class FSamplerManager;
+	class FCustomPostProcessShaders;
+	class OpenGLFrameBuffer;
+
 #define NOQUEUE nullptr	// just some token to be used as a placeholder
 
 class FGLRenderer
@@ -129,4 +134,5 @@ struct TexFilter_s
 
 extern FGLRenderer *GLRenderer;
 
+}
 #endif

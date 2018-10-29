@@ -28,8 +28,11 @@
 
 extern bool gl_shaderactive;
 
-class FShaderCollection;
 struct HWViewpointUniforms;
+
+namespace OpenGLRenderer
+{
+	class FShaderCollection;
 
 //==========================================================================
 //
@@ -341,5 +344,6 @@ public:
 	}
 };
 
+}
 #endif
 

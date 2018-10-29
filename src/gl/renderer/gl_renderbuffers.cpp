@@ -38,6 +38,9 @@
 
 CVAR(Int, gl_multisample, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
+namespace OpenGLRenderer
+{
+
 //==========================================================================
 //
 // Initialize render buffers and textures used in rendering passes
@@ -985,4 +988,6 @@ void FGLRenderBuffers::RenderEffect(const FString &name)
 	glViewport(screen->mScreenViewport.left, screen->mScreenViewport.top, screen->mScreenViewport.width, screen->mScreenViewport.height);
 
 	FGLDebug::PopGroup();
+}
+
 }

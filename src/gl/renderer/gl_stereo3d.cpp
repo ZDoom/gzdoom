@@ -31,6 +31,7 @@
 #include "hwrenderer/utility/hw_vrmodes.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/renderer/gl_postprocessstate.h"
+#include "gl/system/gl_framebuffer.h"
 #include "hwrenderer/postprocessing/hw_presentshader.h"
 #include "hwrenderer/postprocessing/hw_present3dRowshader.h"
 
@@ -40,6 +41,9 @@ EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
 EXTERN_CVAR(Int, gl_satformula)
 EXTERN_CVAR(Int, gl_dither_bpc)
+
+namespace OpenGLRenderer
+{
 
 //==========================================================================
 //
@@ -364,3 +368,4 @@ void FGLRenderer::PresentStereo()
 	}
 }
 
+}

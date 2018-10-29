@@ -16,6 +16,9 @@
 class FCanvasTexture;
 class AActor;
 
+namespace OpenGLRenderer
+{
+
 
 // For error catching while changing parameters.
 enum EInvalid
@@ -90,4 +93,5 @@ public:
 	void CleanUnused(SpriteHits &usedtranslations);
 };
 
+}
 #endif

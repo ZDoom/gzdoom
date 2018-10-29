@@ -5,6 +5,10 @@
 
 struct PostProcessShader;
 
+namespace OpenGLRenderer
+{
+
+
 class PostProcessShaderInstance
 {
 public:
@@ -40,3 +44,6 @@ private:
 	FCustomPostProcessShaders(const FCustomPostProcessShaders &) = delete;
 	FCustomPostProcessShaders &operator=(const FCustomPostProcessShaders &) = delete;
 };
+
+
+}

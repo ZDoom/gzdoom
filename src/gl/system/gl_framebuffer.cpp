@@ -50,8 +50,8 @@
 #include "hwrenderer/data/flatvertices.h"
 
 EXTERN_CVAR (Bool, vid_vsync)
-
-FGLRenderer *GLRenderer;
+EXTERN_CVAR(Bool, r_drawvoxels)
+EXTERN_CVAR(Int, gl_tonemap)
 
 void gl_LoadExtensions();
 void gl_PrintStartupLog();
@@ -63,6 +63,10 @@ CUSTOM_CVAR(Int, vid_hwgamma, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITC
 	if (self < 0 || self > 2) self = 2;
 	if (screen != nullptr) screen->SetGamma();
 }
+
+namespace OpenGLRenderer
+{
+	FGLRenderer *GLRenderer;
 
 //==========================================================================
 //
@@ -234,9 +238,6 @@ sector_t *OpenGLFrameBuffer::RenderView(player_t *player)
 // 
 //
 //===========================================================================
-
-EXTERN_CVAR(Bool, r_drawvoxels)
-EXTERN_CVAR(Int, gl_tonemap)
 
 uint32_t OpenGLFrameBuffer::GetCaps()
 {
@@ -537,3 +538,4 @@ FTexture *OpenGLFrameBuffer::WipeEndScreen()
 	return tex;
 }
 
+}

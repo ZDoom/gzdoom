@@ -35,13 +35,16 @@
 
 CUSTOM_CVAR(Int, gl_debug_level, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	if (!FGLDebug::HasDebugApi())
+	if (!OpenGLRenderer::FGLDebug::HasDebugApi())
 	{
 		Printf("No OpenGL debug support detected.\n");
 	}
 }
 
 CVAR(Bool, gl_debug_breakpoint, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+
+namespace OpenGLRenderer
+{
 
 namespace
 {
@@ -367,4 +370,6 @@ FString FGLDebug::SeverityToString(GLenum severity)
 	default: s.Format("%d", (int)severity);
 	}
 	return s;
+}
+
 }

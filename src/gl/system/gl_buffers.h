@@ -8,6 +8,9 @@
 #pragma warning(disable:4250) 
 #endif
 
+namespace OpenGLRenderer
+{
+
 class GLBuffer : virtual public IBuffer
 {
 protected:
@@ -66,3 +69,4 @@ public:
 	void BindBase() override;
 };
 
+}

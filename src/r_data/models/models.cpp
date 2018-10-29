@@ -48,7 +48,7 @@
 #endif
 
 CVAR(Bool, gl_interpolate_model_frames, true, CVAR_ARCHIVE)
-EXTERN_CVAR(Bool, r_drawvoxels)
+EXTERN_CVAR (Bool, r_drawvoxels)
 
 extern TDeletingArray<FVoxel *> Voxels;
 extern TDeletingArray<FVoxelDef *> VoxelDefs;

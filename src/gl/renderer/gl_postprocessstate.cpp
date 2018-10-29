@@ -30,6 +30,9 @@
 #include "gl_load/gl_interface.h"
 #include "gl/renderer/gl_postprocessstate.h"
 
+namespace OpenGLRenderer
+{
+
 //-----------------------------------------------------------------------------
 //
 // Saves state modified by post processing shaders
@@ -132,4 +135,6 @@ FGLPostProcessState::~FGLPostProcessState()
 	}
 
 	glActiveTexture(activeTex);
+}
+
 }

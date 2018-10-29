@@ -43,7 +43,6 @@
 #include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "hwrenderer/dynlights/hw_lightbuffer.h"
 #include "gl/shaders/gl_shaderprogram.h"
-#include "gl/scene/gl_drawinfo.h"
 #include "gl_debug.h"
 #include "r_videoscale.h"
 #include "gl_buffers.h"

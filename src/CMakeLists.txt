@@ -819,7 +819,6 @@ set( FASTMATH_SOURCES
 	textures/hires/hqnx/hq4x.cpp
 	textures/hires/xbr/xbrz.cpp
 	textures/hires/xbr/xbrz_old.cpp
-	gl/scene/gl_scene.cpp
 	gl_load/gl_load.c
 	hwrenderer/postprocessing/hw_postprocess_cvars.cpp
 	hwrenderer/postprocessing/hw_postprocessshader.cpp
@@ -829,12 +828,10 @@ set( FASTMATH_SOURCES
 	hwrenderer/scene/hw_decal.cpp
 	hwrenderer/scene/hw_drawinfo.cpp
 	hwrenderer/scene/hw_drawlist.cpp
-	hwrenderer/scene/hw_drawlistadd.cpp
 	hwrenderer/scene/hw_clipper.cpp
 	hwrenderer/scene/hw_flats.cpp
 	hwrenderer/scene/hw_portal.cpp
 	hwrenderer/scene/hw_renderhacks.cpp
-	hwrenderer/scene/hw_renderstate.cpp
 	hwrenderer/scene/hw_sky.cpp
 	hwrenderer/scene/hw_skyportal.cpp
 	hwrenderer/scene/hw_sprites.cpp
@@ -1041,6 +1038,7 @@ set (PCH_SOURCES
 	gl/renderer/gl_postprocess.cpp
 	gl/renderer/gl_postprocessstate.cpp
 	gl/renderer/gl_stereo3d.cpp
+	gl/renderer/gl_scene.cpp
 	gl/shaders/gl_shader.cpp
 	gl/shaders/gl_shaderprogram.cpp
 	gl/shaders/gl_postprocessshader.cpp
@@ -1057,6 +1055,8 @@ set (PCH_SOURCES
 	hwrenderer/dynlights/hw_lightbuffer.cpp
 	hwrenderer/models/hw_models.cpp
 	hwrenderer/scene/hw_skydome.cpp
+	hwrenderer/scene/hw_drawlistadd.cpp
+	hwrenderer/scene/hw_renderstate.cpp
 	hwrenderer/postprocessing/hw_postprocess.cpp
 	hwrenderer/postprocessing/hw_postprocess_cvars.cpp
 	hwrenderer/postprocessing/hw_postprocessshader.cpp

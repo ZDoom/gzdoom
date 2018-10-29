@@ -35,11 +35,13 @@
 #include "hw_renderstate.h"
 #include "hw_drawinfo.h"
 #include "po_man.h"
+#include "r_data/models/models.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/dynlights/hw_lightbuffer.h"
+#include "hwrenderer/utility/hw_vrmodes.h"
 #include "hw_clipper.h"
 
 EXTERN_CVAR(Float, r_visibility)
@@ -588,5 +590,58 @@ void HWDrawInfo::RenderPortal(HWPortal *p, FRenderState &state, bool usestencil)
 	screen->mViewpoints->Bind(state, vpIndex);
 	gp->RemoveStencil(this, state, usestencil);
 
+}
+
+//-----------------------------------------------------------------------------
+//
+// Draws player sprites and color blend
+//
+//-----------------------------------------------------------------------------
+
+
+void HWDrawInfo::EndDrawScene(sector_t * viewsector, FRenderState &state)
+{
+	state.EnableFog(false);
+
+	// [BB] HUD models need to be rendered here. 
+	const bool renderHUDModel = IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
+	if (renderHUDModel)
+	{
+		// [BB] The HUD model should be drawn over everything else already drawn.
+		state.Clear(CT_Depth);
+		DrawPlayerSprites(true, state);
+	}
+
+	state.EnableStencil(false);
+	state.SetViewport(screen->mScreenViewport.left, screen->mScreenViewport.top, screen->mScreenViewport.width, screen->mScreenViewport.height);
+
+	// Restore standard rendering state
+	state.SetRenderStyle(STYLE_Translucent);
+	state.ResetColor();
+	state.EnableTexture(true);
+	state.SetScissor(0, 0, -1, -1);
+}
+
+void HWDrawInfo::DrawEndScene2D(sector_t * viewsector, FRenderState &state)
+{
+	const bool renderHUDModel = IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
+	auto vrmode = VRMode::GetVRMode(true);
+
+	HWViewpointUniforms vp = VPUniforms;
+	vp.mViewMatrix.loadIdentity();
+	vp.mProjectionMatrix = vrmode->GetHUDSpriteProjection();
+	screen->mViewpoints->SetViewpoint(state, &vp);
+	state.EnableDepthTest(false);
+	state.EnableMultisampling(false);
+
+	DrawPlayerSprites(false, state);
+
+	state.SetSoftLightLevel(-1);
+
+	// Restore standard rendering state
+	state.SetRenderStyle(STYLE_Translucent);
+	state.ResetColor();
+	state.EnableTexture(true);
+	state.SetScissor(0, 0, -1, -1);
 }
 

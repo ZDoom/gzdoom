@@ -142,60 +142,6 @@ void FDrawInfo::DrawScene(int drawmode)
 
 //-----------------------------------------------------------------------------
 //
-// Draws player sprites and color blend
-//
-//-----------------------------------------------------------------------------
-
-
-void FDrawInfo::EndDrawScene(sector_t * viewsector)
-{
-	gl_RenderState.EnableFog(false);
-
-	// [BB] HUD models need to be rendered here. 
-	const bool renderHUDModel = IsHUDModelForPlayerAvailable( players[consoleplayer].camera->player );
-	if ( renderHUDModel )
-	{
-		// [BB] The HUD model should be drawn over everything else already drawn.
-		glClear(GL_DEPTH_BUFFER_BIT);
-		DrawPlayerSprites(true, gl_RenderState);
-	}
-
-	glDisable(GL_STENCIL_TEST);
-    glViewport(screen->mScreenViewport.left, screen->mScreenViewport.top, screen->mScreenViewport.width, screen->mScreenViewport.height);
-
-	// Restore standard rendering state
-	gl_RenderState.SetRenderStyle(STYLE_Translucent);
-	gl_RenderState.ResetColor();
-	gl_RenderState.EnableTexture(true);
-	glDisable(GL_SCISSOR_TEST);
-}
-
-void FDrawInfo::DrawEndScene2D(sector_t * viewsector)
-{
-	const bool renderHUDModel = IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
-	auto vrmode = VRMode::GetVRMode(true);
-
-	HWViewpointUniforms vp = VPUniforms;
-	vp.mViewMatrix.loadIdentity();
-	vp.mProjectionMatrix = vrmode->GetHUDSpriteProjection();
-	screen->mViewpoints->SetViewpoint(gl_RenderState, &vp);
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_MULTISAMPLE);
-
-
- 	DrawPlayerSprites(false, gl_RenderState);
-
-	gl_RenderState.SetSoftLightLevel(-1);
-
-	// Restore standard rendering state
-	gl_RenderState.SetRenderStyle(STYLE_Translucent);
-	gl_RenderState.ResetColor();
-	gl_RenderState.EnableTexture(true);
-	glDisable(GL_SCISSOR_TEST);
-}
-
-//-----------------------------------------------------------------------------
-//
 // R_RenderView - renders one view - either the screen or a camera texture
 //
 //-----------------------------------------------------------------------------
@@ -287,7 +233,7 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 		if (mainview)
 		{
 			PostProcess.Clock();
-			if (toscreen) di->EndDrawScene(mainvp.sector); // do not call this for camera textures.
+			if (toscreen) di->EndDrawScene(mainvp.sector, gl_RenderState); // do not call this for camera textures.
 
 			if (gl_RenderState.GetPassType() == GBUFFER_PASS) // Turn off ssao draw buffers
 			{
@@ -299,7 +245,7 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 
 			FGLDebug::PopGroup(); // MainView
 
-			PostProcessScene(cm, [&]() { di->DrawEndScene2D(mainvp.sector); });
+			PostProcessScene(cm, [&]() { di->DrawEndScene2D(mainvp.sector, gl_RenderState); });
 			PostProcess.Unclock();
 		}
 		di->EndDrawInfo();

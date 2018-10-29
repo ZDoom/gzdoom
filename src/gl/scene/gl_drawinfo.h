@@ -15,7 +15,5 @@ struct FDrawInfo : public HWDrawInfo
 {
     void DrawScene(int drawmode) override;
     void ProcessScene(bool toscreen = false);
-    void EndDrawScene(sector_t * viewsector);
-    void DrawEndScene2D(sector_t * viewsector);
 };
 #endif

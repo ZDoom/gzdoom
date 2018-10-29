@@ -12,7 +12,14 @@ struct FColormap;
 class IVertexBuffer;
 class IIndexBuffer;
 
-enum EEffect
+enum EClearTarget
+{
+	CT_Depth,
+	CT_Stencil,
+	CT_Color
+};
+
+enum ERenderEffect
 {
 	EFF_NONE = -1,
 	EFF_FOGBOUNDARY,
@@ -440,6 +447,13 @@ public:
 	virtual void SetStencil(int offs, int op, int flags) = 0;
 	virtual void SetCulling(int mode) = 0;
 	virtual void EnableClipDistance(int num, bool state) = 0;
+	virtual void Clear(int targets) = 0;
+	virtual void EnableStencil(bool on) = 0;
+	virtual void SetScissor(int x, int y, int w, int h) = 0;
+	virtual void SetViewport(int x, int y, int w, int h) = 0;
+	virtual void EnableDepthTest(bool on) = 0;
+	virtual void EnableMultisampling(bool on) = 0;
+
 
 };
 

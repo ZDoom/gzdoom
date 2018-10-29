@@ -153,6 +153,12 @@ public:
 	void SetStencil(int offs, int op, int flags) override;
 	void SetCulling(int mode) override;
 	void EnableClipDistance(int num, bool state) override;
+	void Clear(int targets) override;
+	void EnableStencil(bool on) override;
+	void SetScissor(int x, int y, int w, int h) override;
+	void SetViewport(int x, int y, int w, int h) override;
+	void EnableDepthTest(bool on) override;
+	void EnableMultisampling(bool on) override;
 
 
 };

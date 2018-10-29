@@ -478,6 +478,82 @@ void FGLRenderState::EnableClipDistance(int num, bool state)
 	}
 }
 
+void FGLRenderState::Clear(int targets)
+{
+	// This always clears to default values.
+	int gltarget = 0;
+	if (targets & CT_Depth)
+	{
+		gltarget |= GL_DEPTH_BUFFER_BIT;
+		glClearDepth(1);
+	}
+	if (targets & CT_Stencil)
+	{
+		gltarget |= GL_STENCIL_BUFFER_BIT;
+		glClearStencil(0);
+	}
+	if (targets & CT_Color)
+	{
+		gltarget |= GL_COLOR_BUFFER_BIT;
+		glClearColor(screen->mSceneClearColor[0], screen->mSceneClearColor[1], screen->mSceneClearColor[2], screen->mSceneClearColor[3]);
+	}
+	glClear(gltarget);
+}
+
+void FGLRenderState::EnableStencil(bool on)
+{
+	if (on)
+	{
+		glEnable(GL_STENCIL_TEST);
+	}
+	else
+	{
+		glDisable(GL_STENCIL_TEST);
+	}
+}
+
+void FGLRenderState::SetScissor(int x, int y, int w, int h)
+{
+	if (w > -1)
+	{
+		glEnable(GL_SCISSOR_TEST);
+		glScissor(x, y, w, h);
+	}
+	else
+	{
+		glDisable(GL_SCISSOR_TEST);
+	}
+}
+
+void FGLRenderState::SetViewport(int x, int y, int w, int h)
+{
+	glViewport(x, y, w, h);
+}
+
+void FGLRenderState::EnableDepthTest(bool on)
+{
+	if (on)
+	{
+		glEnable(GL_DEPTH_TEST);
+	}
+	else
+	{
+		glDisable(GL_DEPTH_TEST);
+	}
+}
+
+void FGLRenderState::EnableMultisampling(bool on)
+{
+	if (on)
+	{
+		glEnable(GL_MULTISAMPLE);
+	}
+	else
+	{
+		glDisable(GL_MULTISAMPLE);
+	}
+}
+
 //==========================================================================
 //
 //

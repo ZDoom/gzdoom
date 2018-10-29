@@ -499,28 +499,6 @@ void OpenGLFrameBuffer::PostProcessScene(int fixedcm, const std::function<void()
 
 //==========================================================================
 //
-// This is just a wrapper around the hardware texture being extracted below so that it can be passed to the 2D code.
-//
-//==========================================================================
-
-class FGLWipeTexture : public FTexture
-{
-public:
-
-	FGLWipeTexture(int w, int h)
-	{
-		Width = w;
-		Height = h;
-		WidthBits = 4;
-		UseType = ETextureType::SWCanvas;
-		bNoCompress = true;
-		SystemTexture[0] = screen->CreateHardwareTexture(this);
-	}
-
-};
-
-//==========================================================================
-//
 // OpenGLFrameBuffer :: WipeStartScreen
 //
 // Called before the current screen has started rendering. This needs to
@@ -533,7 +511,7 @@ FTexture *OpenGLFrameBuffer::WipeStartScreen()
 {
 	const auto &viewport = screen->mScreenViewport;
 
-	FGLWipeTexture *tex = new FGLWipeTexture(viewport.width, viewport.height);
+	auto tex = new FWrapperTexture(viewport.width, viewport.height, 1);
 	tex->SystemTexture[0]->CreateTexture(nullptr, viewport.width, viewport.height, 0, false, 0, "WipeStartScreen");
 	glFinish();
 	static_cast<FHardwareTexture*>(tex->SystemTexture[0])->Bind(0, false, false);
@@ -555,7 +533,7 @@ FTexture *OpenGLFrameBuffer::WipeEndScreen()
 {
 	GLRenderer->Flush();
 	const auto &viewport = screen->mScreenViewport;
-	FGLWipeTexture *tex = new FGLWipeTexture(viewport.width, viewport.height);
+	auto tex = new FWrapperTexture(viewport.width, viewport.height, 1);
 	tex->SystemTexture[0]->CreateTexture(NULL, viewport.width, viewport.height, 0, false, 0, "WipeEndScreen");
 	glFinish();
 	static_cast<FHardwareTexture*>(tex->SystemTexture[0])->Bind(0, false, false);

@@ -97,11 +97,12 @@ HWDrawInfo *FDrawInfoList::GetNew()
 		mList.Pop(di);
 		return di;
 	}
-	return screen->CreateDrawInfo();
+	return new HWDrawInfo;
 }
 
 void FDrawInfoList::Release(HWDrawInfo * di)
 {
+	di->DrawScene = nullptr;
 	di->ClearBuffers();
 	mList.Push(di);
 }
@@ -115,6 +116,7 @@ void FDrawInfoList::Release(HWDrawInfo * di)
 HWDrawInfo *HWDrawInfo::StartDrawInfo(HWDrawInfo *parent, FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms)
 {
 	HWDrawInfo *di = di_list.GetNew();
+	if (parent) di->DrawScene = parent->DrawScene;
 	di->StartScene(parentvp, uniforms);
 	return di;
 }
@@ -674,14 +676,13 @@ void HWDrawInfo::Set3DViewport(FRenderState &state)
 //
 //-----------------------------------------------------------------------------
 
-void HWDrawInfo::ProcessScene(bool toscreen)
+void HWDrawInfo::ProcessScene(bool toscreen, const std::function<void(HWDrawInfo *,int)> &drawScene)
 {
 	screen->mPortalState->BeginScene();
 
 	int mapsection = R_PointInSubsector(Viewpoint.Pos)->mapsection;
 	CurrentMapSections.Set(mapsection);
-	DrawScene(toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
+	DrawScene = drawScene;
+	DrawScene(this, toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
 
 }
-
-

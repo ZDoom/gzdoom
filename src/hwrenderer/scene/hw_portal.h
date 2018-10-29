@@ -328,7 +328,7 @@ public:
 	{
 		if (mScene->Setup(di, state, di->mClipper))
 		{
-			di->DrawScene(DM_PORTAL);
+			di->DrawScene(di, DM_PORTAL);
 			mScene->Shutdown(di, state);
 		}
 		else state.ClearScreen();

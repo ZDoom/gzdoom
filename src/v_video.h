@@ -469,7 +469,6 @@ public:
 	virtual IVertexBuffer *CreateVertexBuffer() { return nullptr; }
 	virtual IIndexBuffer *CreateIndexBuffer() { return nullptr; }
 	virtual IDataBuffer *CreateDataBuffer(int bindingpoint, bool ssbo) { return nullptr; }
-	virtual HWDrawInfo *CreateDrawInfo() { return nullptr; }
 	bool BuffersArePersistent() { return !!(hwcaps & RFL_BUFFER_STORAGE); }
 
 	// Begin/End 2D drawing operations.

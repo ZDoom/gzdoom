@@ -379,11 +379,6 @@ IDataBuffer *OpenGLFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo)
 	return new GLDataBuffer(bindingpoint, ssbo);
 }
 
-HWDrawInfo *OpenGLFrameBuffer::CreateDrawInfo()
-{
-	return new FDrawInfo;
-}
-
 void OpenGLFrameBuffer::TextureFilterChanged()
 {
 	if (GLRenderer != NULL && GLRenderer->mSamplerManager != NULL) GLRenderer->mSamplerManager->SetTextureFilterMode();

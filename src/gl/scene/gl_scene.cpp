@@ -83,11 +83,11 @@ EXTERN_CVAR (Bool, r_drawvoxels)
 //
 //-----------------------------------------------------------------------------
 
-void FDrawInfo::DrawScene(int drawmode)
+void FGLRenderer::DrawScene(HWDrawInfo *di, int drawmode)
 {
 	static int recursion=0;
 	static int ssao_portals_available = 0;
-	const auto &vp = Viewpoint;
+	const auto &vp = di->Viewpoint;
 
 	bool applySSAO = false;
 	if (drawmode == DM_MAINVIEW)
@@ -108,36 +108,36 @@ void FDrawInfo::DrawScene(int drawmode)
 	if (vp.camera != nullptr)
 	{
 		ActorRenderFlags savedflags = vp.camera->renderflags;
-		CreateScene();
+		di->CreateScene();
 		vp.camera->renderflags = savedflags;
 	}
 	else
 	{
-		CreateScene();
+		di->CreateScene();
 	}
 
 	glDepthMask(true);
-	if (!gl_no_skyclear) screen->mPortalState->RenderFirstSkyPortal(recursion, this, gl_RenderState);
+	if (!gl_no_skyclear) screen->mPortalState->RenderFirstSkyPortal(recursion, di, gl_RenderState);
 
-	RenderScene(gl_RenderState);
+	di->RenderScene(gl_RenderState);
 
 	if (applySSAO && gl_RenderState.GetPassType() == GBUFFER_PASS)
 	{
 		gl_RenderState.EnableDrawBuffers(1);
-		GLRenderer->AmbientOccludeScene(VPUniforms.mProjectionMatrix.get()[5]);
+		GLRenderer->AmbientOccludeScene(di->VPUniforms.mProjectionMatrix.get()[5]);
 		glViewport(screen->mSceneViewport.left, screen->mSceneViewport.top, screen->mSceneViewport.width, screen->mSceneViewport.height);
 		GLRenderer->mBuffers->BindSceneFB(true);
 		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
 		gl_RenderState.Apply();
-		screen->mViewpoints->Bind(gl_RenderState, vpIndex);
+		screen->mViewpoints->Bind(gl_RenderState, di->vpIndex);
 	}
 
 	// Handle all portals after rendering the opaque objects but before
 	// doing all translucent stuff
 	recursion++;
-	screen->mPortalState->EndFrame(this, gl_RenderState);
+	screen->mPortalState->EndFrame(di, gl_RenderState);
 	recursion--;
-	RenderTranslucent(gl_RenderState);
+	di->RenderTranslucent(gl_RenderState);
 }
 
 //-----------------------------------------------------------------------------
@@ -170,7 +170,7 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 		}
 
 
-		FDrawInfo *di = static_cast<FDrawInfo*>(HWDrawInfo::StartDrawInfo(nullptr, mainvp, nullptr));
+		auto di = HWDrawInfo::StartDrawInfo(nullptr, mainvp, nullptr);
 		auto &vp = di->Viewpoint;
 
 		di->Set3DViewport(gl_RenderState);
@@ -184,7 +184,10 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 		vp.Pos += eye.GetViewShift(vp.HWAngles.Yaw.Degrees);
 		di->SetupView(gl_RenderState, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);
 
-		di->ProcessScene(toscreen);
+		// std::function until this can be done better in a cross-API fashion.
+		di->ProcessScene(toscreen, [&](HWDrawInfo *di, int mode) {
+			DrawScene(di, mode);
+		});
 
 		if (mainview)
 		{

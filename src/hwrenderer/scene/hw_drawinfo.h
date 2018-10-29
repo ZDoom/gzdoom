@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <functional>
 #include "vectors.h"
 #include "r_defs.h"
 #include "r_utility.h"
@@ -178,6 +179,7 @@ struct HWDrawInfo
 	area_t	in_area;
 	fixed_t viewx, viewy;	// since the nodes are still fixed point, keeping the view position  also fixed point for node traversal is faster.
 
+	std::function<void(HWDrawInfo *, int)> DrawScene = nullptr;
 
 private:
     // For ProcessLowerMiniseg
@@ -189,7 +191,6 @@ private:
 	sector_t *currentsector;
 
     sector_t fakesec;    // this is a struct member because it gets used in recursively called functions so it cannot be put on the stack.
-
 
 	void UnclipSubsector(subsector_t *sub);
 	void AddLine(seg_t *seg, bool portalclip);
@@ -271,7 +272,7 @@ public:
 	void EndDrawScene(sector_t * viewsector, FRenderState &state);
 	void DrawEndScene2D(sector_t * viewsector, FRenderState &state);
 	void Set3DViewport(FRenderState &state);
-	void ProcessScene(bool toscreen);
+	void ProcessScene(bool toscreen, const std::function<void(HWDrawInfo *, int)> &drawScene);
 
 	bool DoOneSectorUpper(subsector_t * subsec, float planez, area_t in_area);
 	bool DoOneSectorLower(subsector_t * subsec, float planez, area_t in_area);
@@ -329,7 +330,5 @@ public:
 
 
     GLDecal *AddDecal(bool onmirror);
-
-	virtual void DrawScene(int drawmode) = 0;
 };
 

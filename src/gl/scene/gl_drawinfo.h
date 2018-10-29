@@ -1,3 +1,4 @@
+/*
 #ifndef __GL_DRAWINFO_H
 #define __GL_DRAWINFO_H
 
@@ -13,6 +14,6 @@
 
 struct FDrawInfo : public HWDrawInfo
 {
-    void DrawScene(int drawmode) override;
 };
 #endif
+*/

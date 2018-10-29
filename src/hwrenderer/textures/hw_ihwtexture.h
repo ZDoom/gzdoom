@@ -27,5 +27,7 @@ public:
 
 	virtual void Clean(bool all) = 0;
 	virtual void CleanUnused(SpriteHits &usedtranslations) = 0;
+
+	void Resize(int swidth, int sheight, int width, int height, unsigned char *src_data, unsigned char *dst_data);
 };
 

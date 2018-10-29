@@ -13,7 +13,6 @@
 
 struct FDrawInfo : public HWDrawInfo
 {
-    void CreateScene();
     void DrawScene(int drawmode) override;
     void ProcessScene(bool toscreen = false);
     void EndDrawScene(sector_t * viewsector);

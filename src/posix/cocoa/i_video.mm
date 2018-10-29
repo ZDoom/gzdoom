@@ -527,14 +527,6 @@ void SystemGLFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 		SetWindowedMode();
 	}
 
-	const NSSize viewSize = I_GetContentViewSize(m_window);
-
-	glViewport(0, 0, static_cast<GLsizei>(viewSize.width), static_cast<GLsizei>(viewSize.height));
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	[[NSOpenGLContext currentContext] flushBuffer];
-
 	[m_window updateTitle];
 
 	if (![m_window isKeyWindow])

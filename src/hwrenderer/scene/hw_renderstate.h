@@ -14,9 +14,9 @@ class IIndexBuffer;
 
 enum EClearTarget
 {
-	CT_Depth,
-	CT_Stencil,
-	CT_Color
+	CT_Depth = 1,
+	CT_Stencil = 2,
+	CT_Color = 4
 };
 
 enum ERenderEffect

@@ -159,34 +159,6 @@ void FDrawInfo::ProcessScene(bool toscreen)
 
 //-----------------------------------------------------------------------------
 //
-// sets 3D viewport and initial state
-//
-//-----------------------------------------------------------------------------
-
-void FGLRenderer::Set3DViewport()
-{
-    // Always clear all buffers with scissor test disabled.
-    // This is faster on newer hardware because it allows the GPU to skip
-    // reading from slower memory where the full buffers are stored.
-    glDisable(GL_SCISSOR_TEST);
-	glClearColor(screen->mSceneClearColor[0], screen->mSceneClearColor[1], screen->mSceneClearColor[2], screen->mSceneClearColor[3]);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    
-    const auto &bounds = screen->mSceneViewport;
-    glViewport(bounds.left, bounds.top, bounds.width, bounds.height);
-    glScissor(bounds.left, bounds.top, bounds.width, bounds.height);
-    
-    glEnable(GL_SCISSOR_TEST);
-    
-    glEnable(GL_MULTISAMPLE);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_ALWAYS,0,~0);    // default stencil
-    glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
-}
-
-//-----------------------------------------------------------------------------
-//
 // Renders one viewpoint in a scene
 //
 //-----------------------------------------------------------------------------
@@ -214,10 +186,11 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 			gl_RenderState.Apply();
 		}
 
-		Set3DViewport();
 
 		FDrawInfo *di = static_cast<FDrawInfo*>(HWDrawInfo::StartDrawInfo(mainvp, nullptr));
 		auto &vp = di->Viewpoint;
+
+		di->Set3DViewport(gl_RenderState);
 		di->SetViewArea();
 		auto cm =  di->SetFullbrightFlags(mainview ? vp.camera->player : nullptr);
 		di->Viewpoint.FieldOfView = fov;	// Set the real FOV for the current scene (it's not necessarily the same as the global setting in r_viewpoint)

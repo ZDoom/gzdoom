@@ -94,7 +94,6 @@ public:
 	sector_t *RenderView(player_t *player);
 	void BeginFrame();
     
-    void Set3DViewport();
     sector_t *RenderViewpoint (FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 
 

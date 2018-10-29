@@ -645,3 +645,26 @@ void HWDrawInfo::DrawEndScene2D(sector_t * viewsector, FRenderState &state)
 	state.SetScissor(0, 0, -1, -1);
 }
 
+//-----------------------------------------------------------------------------
+//
+// sets 3D viewport and initial state
+//
+//-----------------------------------------------------------------------------
+
+void HWDrawInfo::Set3DViewport(FRenderState &state)
+{
+	// Always clear all buffers with scissor test disabled.
+	// This is faster on newer hardware because it allows the GPU to skip
+	// reading from slower memory where the full buffers are stored.
+	state.SetScissor(0, 0, -1, -1);
+	state.Clear(CT_Color | CT_Depth | CT_Stencil);
+
+	const auto &bounds = screen->mSceneViewport;
+	state.SetViewport(bounds.left, bounds.top, bounds.width, bounds.height);
+	state.SetScissor(bounds.left, bounds.top, bounds.width, bounds.height);
+	state.EnableMultisampling(true);
+	state.EnableDepthTest(true);
+	state.EnableStencil(true);
+	state.SetStencil(0, SOP_Keep, SF_AllOn);
+}
+

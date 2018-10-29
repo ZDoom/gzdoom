@@ -268,7 +268,7 @@ void HWPortal::RemoveStencil(HWDrawInfo *di, FRenderState &state, bool usestenci
 	auto &vp = di->Viewpoint;
 	if (vp.camera != nullptr) vp.camera->renderflags = (vp.camera->renderflags & ~RF_MAYBEINVISIBLE) | savedvisibility;
 
-		state.EnableDepthTest(true);
+	state.EnableDepthTest(true);
 	if (usestencil)
 	{
 		state.SetEffect(EFF_NONE);

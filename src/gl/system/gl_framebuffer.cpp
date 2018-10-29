@@ -131,8 +131,6 @@ void OpenGLFrameBuffer::InitializeState()
 		gl_PrintStartupLog();
 	}
 
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClearDepth(1.0f);
 	glDepthFunc(GL_LESS);
 
 	glEnable(GL_DITHER);
@@ -145,6 +143,8 @@ void OpenGLFrameBuffer::InitializeState()
 	glDisable(GL_LINE_SMOOTH);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	SetViewportRects(nullptr);
@@ -414,15 +414,6 @@ void OpenGLFrameBuffer::UpdatePalette()
 // 
 //
 //===========================================================================
-
-void OpenGLFrameBuffer::SetClearColor(int color)
-{
-	PalEntry pe = GPalette.BaseColors[color];
-	GLRenderer->mSceneClearColor[0] = pe.r / 255.f;
-	GLRenderer->mSceneClearColor[1] = pe.g / 255.f;
-	GLRenderer->mSceneClearColor[2] = pe.b / 255.f;
-}
-
 
 void OpenGLFrameBuffer::BeginFrame()
 {

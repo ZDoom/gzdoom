@@ -389,6 +389,8 @@ public:
 	IntRect mScreenViewport;
 	IntRect mSceneViewport;
 	IntRect mOutputLetterbox;
+	float mSceneClearColor[4];
+
 
 public:
 	DFrameBuffer (int width=1, int height=1);
@@ -493,7 +495,7 @@ public:
 
 	// Report a game restart
 	void InitPalette();
-	virtual void SetClearColor(int color) {}
+	void SetClearColor(int color);
 	virtual uint32_t GetCaps();
 	virtual void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV);
 	virtual void WriteSavePic(player_t *player, FileWriter *file, int width, int height);

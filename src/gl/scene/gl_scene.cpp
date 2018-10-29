@@ -223,7 +223,7 @@ void FGLRenderer::Set3DViewport()
     // This is faster on newer hardware because it allows the GPU to skip
     // reading from slower memory where the full buffers are stored.
     glDisable(GL_SCISSOR_TEST);
-    glClearColor(mSceneClearColor[0], mSceneClearColor[1], mSceneClearColor[2], 1.0f);
+	glClearColor(screen->mSceneClearColor[0], screen->mSceneClearColor[1], screen->mSceneClearColor[2], screen->mSceneClearColor[3]);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     
     const auto &bounds = screen->mSceneViewport;

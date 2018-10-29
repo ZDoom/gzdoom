@@ -324,6 +324,14 @@ void DFrameBuffer::GetFlash(PalEntry &rgb, int &amount)
 	amount = Flash.a;
 }
 
+void DFrameBuffer::SetClearColor(int color)
+{
+	PalEntry pe = GPalette.BaseColors[color];
+	mSceneClearColor[0] = pe.r / 255.f;
+	mSceneClearColor[1] = pe.g / 255.f;
+	mSceneClearColor[2] = pe.b / 255.f;
+	mSceneClearColor[3] = 1.f;
+}
 
 //==========================================================================
 //

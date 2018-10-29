@@ -70,8 +70,6 @@ public:
 
 	SWSceneDrawer *swdrawer = nullptr;
 
-	float mSceneClearColor[3];
-
 	FGLRenderer(OpenGLFrameBuffer *fb);
 	~FGLRenderer() ;
 

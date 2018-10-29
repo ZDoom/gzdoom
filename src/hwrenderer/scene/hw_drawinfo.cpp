@@ -112,7 +112,7 @@ void FDrawInfoList::Release(HWDrawInfo * di)
 //
 //==========================================================================
 
-HWDrawInfo *HWDrawInfo::StartDrawInfo(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms)
+HWDrawInfo *HWDrawInfo::StartDrawInfo(HWDrawInfo *parent, FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms)
 {
 	HWDrawInfo *di = di_list.GetNew();
 	di->StartScene(parentvp, uniforms);
@@ -581,7 +581,7 @@ void HWDrawInfo::RenderPortal(HWPortal *p, FRenderState &state, bool usestencil)
 {
 	auto gp = static_cast<HWPortal *>(p);
 	gp->SetupStencil(this, state, usestencil);
-	auto new_di = StartDrawInfo(Viewpoint, &VPUniforms);
+	auto new_di = StartDrawInfo(this, Viewpoint, &VPUniforms);
 	new_di->mCurrentPortal = gp;
 	state.SetLightIndex(-1);
 	gp->DrawContents(new_di, state);
@@ -667,4 +667,21 @@ void HWDrawInfo::Set3DViewport(FRenderState &state)
 	state.EnableStencil(true);
 	state.SetStencil(0, SOP_Keep, SF_AllOn);
 }
+
+//-----------------------------------------------------------------------------
+//
+// R_RenderView - renders one view - either the screen or a camera texture
+//
+//-----------------------------------------------------------------------------
+
+void HWDrawInfo::ProcessScene(bool toscreen)
+{
+	screen->mPortalState->BeginScene();
+
+	int mapsection = R_PointInSubsector(Viewpoint.Pos)->mapsection;
+	CurrentMapSections.Set(mapsection);
+	DrawScene(toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
+
+}
+
 

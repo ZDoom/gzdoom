@@ -142,22 +142,6 @@ void FDrawInfo::DrawScene(int drawmode)
 
 //-----------------------------------------------------------------------------
 //
-// R_RenderView - renders one view - either the screen or a camera texture
-//
-//-----------------------------------------------------------------------------
-
-void FDrawInfo::ProcessScene(bool toscreen)
-{
-	screen->mPortalState->BeginScene();
-
-	int mapsection = R_PointInSubsector(Viewpoint.Pos)->mapsection;
-	CurrentMapSections.Set(mapsection);
-	DrawScene(toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
-
-}
-
-//-----------------------------------------------------------------------------
-//
 // Renders one viewpoint in a scene
 //
 //-----------------------------------------------------------------------------
@@ -186,7 +170,7 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 		}
 
 
-		FDrawInfo *di = static_cast<FDrawInfo*>(HWDrawInfo::StartDrawInfo(mainvp, nullptr));
+		FDrawInfo *di = static_cast<FDrawInfo*>(HWDrawInfo::StartDrawInfo(nullptr, mainvp, nullptr));
 		auto &vp = di->Viewpoint;
 
 		di->Set3DViewport(gl_RenderState);

@@ -257,7 +257,7 @@ public:
 	HWPortal * FindPortal(const void * src);
 	void RenderBSPNode(void *node);
 
-	static HWDrawInfo *StartDrawInfo(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
+	static HWDrawInfo *StartDrawInfo(HWDrawInfo *parent, FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
 	void StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
 	void ClearBuffers();
 	HWDrawInfo *EndDrawInfo();
@@ -271,6 +271,7 @@ public:
 	void EndDrawScene(sector_t * viewsector, FRenderState &state);
 	void DrawEndScene2D(sector_t * viewsector, FRenderState &state);
 	void Set3DViewport(FRenderState &state);
+	void ProcessScene(bool toscreen);
 
 	bool DoOneSectorUpper(subsector_t * subsec, float planez, area_t in_area);
 	bool DoOneSectorLower(subsector_t * subsec, float planez, area_t in_area);

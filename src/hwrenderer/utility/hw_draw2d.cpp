@@ -58,9 +58,9 @@ public:
 		mIndexBuffer = screen->CreateIndexBuffer();
 
 		static const FVertexBufferAttribute format[] = {
-			{ 0, VATTR_VERTEX, VFmt_Float3, myoffsetof(F2DDrawer::TwoDVertex, x) },
-			{ 0, VATTR_TEXCOORD, VFmt_Float2, myoffsetof(F2DDrawer::TwoDVertex, u) },
-			{ 0, VATTR_COLOR, VFmt_Byte4, myoffsetof(F2DDrawer::TwoDVertex, color0) }
+			{ 0, VATTR_VERTEX, VFmt_Float3, (int)myoffsetof(F2DDrawer::TwoDVertex, x) },
+			{ 0, VATTR_TEXCOORD, VFmt_Float2, (int)myoffsetof(F2DDrawer::TwoDVertex, u) },
+			{ 0, VATTR_COLOR, VFmt_Byte4, (int)myoffsetof(F2DDrawer::TwoDVertex, color0) }
 		};
 		mVertexBuffer->SetFormat(1, 3, sizeof(F2DDrawer::TwoDVertex), format);
 	}

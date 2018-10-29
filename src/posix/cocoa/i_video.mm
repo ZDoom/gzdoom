@@ -204,7 +204,7 @@ class CocoaVideo : public IVideo
 public:
 	virtual DFrameBuffer* CreateFrameBuffer() override
 	{
-		auto fb = new OpenGLFrameBuffer(nullptr, fullscreen);
+		auto fb = new OpenGLRenderer::OpenGLFrameBuffer(nullptr, fullscreen);
 
 		fb->SetMode(fullscreen, vid_hidpi);
 		fb->SetSize(fb->GetClientWidth(), fb->GetClientHeight());

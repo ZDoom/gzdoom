@@ -141,10 +141,10 @@ FModelVertexBuffer::FModelVertexBuffer(bool needindex, bool singleframe)
 	mIndexBuffer = needindex ? screen->CreateIndexBuffer() : nullptr;
 
 	static const FVertexBufferAttribute format[] = {
-		{ 0, VATTR_VERTEX, VFmt_Float3, myoffsetof(FModelVertex, x) },
-		{ 0, VATTR_TEXCOORD, VFmt_Float2, myoffsetof(FModelVertex, u) },
-		{ 0, VATTR_NORMAL, VFmt_Packed_A2R10G10B10, myoffsetof(FModelVertex, packedNormal) },
-		{ 1, VATTR_VERTEX2, VFmt_Float3, myoffsetof(FModelVertex, x) }
+		{ 0, VATTR_VERTEX, VFmt_Float3, (int)myoffsetof(FModelVertex, x) },
+		{ 0, VATTR_TEXCOORD, VFmt_Float2, (int)myoffsetof(FModelVertex, u) },
+		{ 0, VATTR_NORMAL, VFmt_Packed_A2R10G10B10, (int)myoffsetof(FModelVertex, packedNormal) },
+		{ 1, VATTR_VERTEX2, VFmt_Float3, (int)myoffsetof(FModelVertex, x) }
 	};
 	mVertexBuffer->SetFormat(2, 4, sizeof(FModelVertex), format);
 }

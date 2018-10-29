@@ -388,10 +388,9 @@ static int dt2gl[] = { GL_POINTS, GL_LINES, GL_TRIANGLES, GL_TRIANGLE_FAN, GL_TR
 
 void FGLRenderState::Draw(int dt, int index, int count, bool apply)
 {
-	assert(this == &gl_RenderState);
 	if (apply)
 	{
-		gl_RenderState.Apply();
+		Apply();
 	}
 	drawcalls.Clock();
 	glDrawArrays(dt2gl[dt], index, count);
@@ -400,10 +399,9 @@ void FGLRenderState::Draw(int dt, int index, int count, bool apply)
 
 void FGLRenderState::DrawIndexed(int dt, int index, int count, bool apply)
 {
-	assert(this == &gl_RenderState);
 	if (apply)
 	{
-		gl_RenderState.Apply();
+		Apply();
 	}
 	drawcalls.Clock();
 	glDrawElements(dt2gl[dt], count, GL_UNSIGNED_INT, (void*)(intptr_t)(index * sizeof(uint32_t)));
@@ -428,7 +426,7 @@ void FGLRenderState::SetDepthRange(float min, float max)
 
 void FGLRenderState::EnableDrawBufferAttachments(bool on)
 {
-	EnableDrawBuffers(on ? gl_RenderState.GetPassDrawBufferCount() : 1);
+	EnableDrawBuffers(on ? GetPassDrawBufferCount() : 1);
 }
 
 void FGLRenderState::SetStencil(int offs, int op, int flags)
@@ -441,6 +439,18 @@ void FGLRenderState::SetStencil(int offs, int op, int flags)
 	bool cmon = !(flags & SF_ColorMaskOff);
 	glColorMask(cmon, cmon, cmon, cmon);						// don't write to the graphics buffer
 	glDepthMask(!(flags & SF_DepthMaskOff));
+}
+
+void FGLRenderState::ToggleState(int state, bool on)
+{
+	if (on)
+	{
+		glEnable(state);
+	}
+	else
+	{
+		glDisable(state);
+	}
 }
 
 void FGLRenderState::SetCulling(int mode)
@@ -461,14 +471,7 @@ void FGLRenderState::EnableClipDistance(int num, bool state)
 	// Update the viewpoint-related clip plane setting.
 	if (!(gl.flags & RFL_NO_CLIP_PLANES))
 	{
-		if (state)
-		{
-			glEnable(GL_CLIP_DISTANCE0 + num);
-		}
-		else
-		{
-			glDisable(GL_CLIP_DISTANCE0 + num);
-		}
+		ToggleState(GL_CLIP_DISTANCE0 + num, state);
 	}
 }
 
@@ -496,14 +499,7 @@ void FGLRenderState::Clear(int targets)
 
 void FGLRenderState::EnableStencil(bool on)
 {
-	if (on)
-	{
-		glEnable(GL_STENCIL_TEST);
-	}
-	else
-	{
-		glDisable(GL_STENCIL_TEST);
-	}
+	ToggleState(GL_STENCIL_TEST, on);
 }
 
 void FGLRenderState::SetScissor(int x, int y, int w, int h)
@@ -526,26 +522,17 @@ void FGLRenderState::SetViewport(int x, int y, int w, int h)
 
 void FGLRenderState::EnableDepthTest(bool on)
 {
-	if (on)
-	{
-		glEnable(GL_DEPTH_TEST);
-	}
-	else
-	{
-		glDisable(GL_DEPTH_TEST);
-	}
+	ToggleState(GL_DEPTH_TEST, on);
 }
 
 void FGLRenderState::EnableMultisampling(bool on)
 {
-	if (on)
-	{
-		glEnable(GL_MULTISAMPLE);
-	}
-	else
-	{
-		glDisable(GL_MULTISAMPLE);
-	}
+	ToggleState(GL_MULTISAMPLE, on);
+}
+
+void FGLRenderState::EnableLineSmooth(bool on)
+{
+	ToggleState(GL_LINE_SMOOTH, on);
 }
 
 //==========================================================================

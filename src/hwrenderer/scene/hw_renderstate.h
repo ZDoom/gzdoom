@@ -36,6 +36,45 @@ enum EAlphaFunc
 	Alpha_Greater = 1
 };
 
+enum EDrawType
+{
+	DT_Points = 0,
+	DT_Lines = 1,
+	DT_Triangles = 2,
+	DT_TriangleFan = 3,
+	DT_TriangleStrip = 4
+};
+
+enum EDepthFunc
+{
+	DF_Less,
+	DF_LEqual,
+	DF_Always
+};
+
+enum EStencilFlags
+{
+	SF_AllOn = 0,
+	SF_ColorMaskOff = 1,
+	SF_DepthMaskOff = 2,
+};
+
+enum EStencilOp
+{
+	SOP_Keep = 0,
+	SOP_Increment = 1,
+	SOP_Decrement = 2
+};
+
+enum ECull
+{
+	Cull_None,
+	Cull_CCW,
+	Cull_CW
+};
+
+
+
 struct FStateVec4
 {
 	float vec[4];
@@ -453,6 +492,7 @@ public:
 	virtual void SetViewport(int x, int y, int w, int h) = 0;
 	virtual void EnableDepthTest(bool on) = 0;
 	virtual void EnableMultisampling(bool on) = 0;
+	virtual void EnableLineSmooth(bool on) = 0;
 
 
 };

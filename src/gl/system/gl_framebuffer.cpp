@@ -56,6 +56,8 @@ FGLRenderer *GLRenderer;
 
 void gl_LoadExtensions();
 void gl_PrintStartupLog();
+void Draw2D(F2DDrawer *drawer, FRenderState &state);
+
 
 CUSTOM_CVAR(Int, vid_hwgamma, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -480,7 +482,15 @@ void OpenGLFrameBuffer::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, 
 
 void OpenGLFrameBuffer::Draw2D()
 {
-	if (GLRenderer != nullptr) GLRenderer->Draw2D(&m2DDrawer);
+	if (GLRenderer != nullptr)
+	{
+		FGLDebug::PushGroup("Draw2D");
+		if (VRMode::GetVRMode(true)->mEyeCount == 1)
+			GLRenderer->mBuffers->BindCurrentFB();
+
+		::Draw2D(&m2DDrawer, gl_RenderState);
+		FGLDebug::PopGroup();
+	}
 }
 
 void OpenGLFrameBuffer::PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)

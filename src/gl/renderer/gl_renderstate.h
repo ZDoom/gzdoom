@@ -140,6 +140,8 @@ public:
 		return mPassType == GBUFFER_PASS ? 3 : 1;
 	}
 
+	void ToggleState(int state, bool on);
+
 	void ClearScreen() override;
 	void Draw(int dt, int index, int count, bool apply = true) override;
 	void DrawIndexed(int dt, int index, int count, bool apply = true) override;
@@ -158,6 +160,7 @@ public:
 	void SetViewport(int x, int y, int w, int h) override;
 	void EnableDepthTest(bool on) override;
 	void EnableMultisampling(bool on) override;
+	void EnableLineSmooth(bool on) override;
 
 
 };

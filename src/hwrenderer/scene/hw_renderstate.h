@@ -57,6 +57,7 @@ enum EStencilFlags
 	SF_AllOn = 0,
 	SF_ColorMaskOff = 1,
 	SF_DepthMaskOff = 2,
+	SF_ColorMaskAlpha = 4,	// hack value for SSAO
 };
 
 enum EStencilOp

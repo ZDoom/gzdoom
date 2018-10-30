@@ -68,7 +68,10 @@ public:
 
 	FSkyVertexBuffer();
 	void SetupMatrices(FMaterial *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelmatrix, VSMatrix &textureMatrix);
-	void Bind(FRenderState &state);
+	std::pair<IVertexBuffer *, IIndexBuffer *> GetBufferObjects() const
+	{
+		return std::make_pair(mVertexBuffer, nullptr);
+	}
 
 	int FaceStart(int i)
 	{

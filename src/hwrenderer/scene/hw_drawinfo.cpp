@@ -496,7 +496,6 @@ void HWDrawInfo::RenderScene(FRenderState &state)
 
 	state.SetDepthMask(true);
 
-	screen->mLights->BindBase(state);	// not needed for OpenGL but necessary for Vulkan command buffers to do it here!
 	state.EnableFog(true);
 	state.SetRenderStyle(STYLE_Source);
 

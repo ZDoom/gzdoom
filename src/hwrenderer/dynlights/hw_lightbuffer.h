@@ -54,13 +54,6 @@ public:
 		}
 		return index;
 	}
-
-	// The parameter is a reminder for Vulkan.
-	void BindBase(FRenderState &state)
-	{
-		mBuffer->BindBase();
-	}
-
 };
 
 int gl_SetDynModelLight(AActor *self, int dynlightindex);

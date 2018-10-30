@@ -180,7 +180,7 @@ void HWSkyPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 
 	di->SetupView(state, 0, 0, 0, !!(mState->MirrorFlag & 1), !!(mState->PlaneMirrorFlag & 1));
 
-	vertexBuffer->Bind(state);
+	state.SetVertexBuffer(vertexBuffer);
 	if (origin->texture[0] && origin->texture[0]->tex->bSkybox)
 	{
 		RenderBox(di, state, origin->skytexno1, origin->texture[0], origin->x_offset[0], origin->sky2);

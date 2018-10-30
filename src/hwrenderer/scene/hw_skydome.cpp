@@ -102,17 +102,6 @@ FSkyVertexBuffer::FSkyVertexBuffer()
 //
 //-----------------------------------------------------------------------------
 
-void FSkyVertexBuffer::Bind(FRenderState &state)
-{
-	state.SetVertexBuffer(mVertexBuffer, 0, 0);
-}
-
-//-----------------------------------------------------------------------------
-//
-//
-//
-//-----------------------------------------------------------------------------
-
 void FSkyVertexBuffer::SkyVertex(int r, int c, bool zflip)
 {
 	static const FAngle maxSideAngle = 60.f;

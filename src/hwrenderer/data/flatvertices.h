@@ -103,7 +103,11 @@ public:
 	~FFlatVertexBuffer();
 
 	void OutputResized(int width, int height);
-	void Bind(FRenderState &state);
+	std::pair<IVertexBuffer *, IIndexBuffer *> GetBufferObjects() const 
+	{
+		return std::make_pair(mVertexBuffer, mIndexBuffer);
+	}
+
 	void CreateVBO();
 	void Copy(int start, int count);
 
@@ -147,6 +151,7 @@ protected:
 	void CheckPlanes(sector_t *sector);
 public:
 	void CheckUpdate(sector_t *sector);
+
 };
 
 #endif

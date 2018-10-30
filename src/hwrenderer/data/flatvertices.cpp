@@ -411,18 +411,6 @@ void FFlatVertexBuffer::Copy(int start, int count)
 //
 //==========================================================================
 
-void FFlatVertexBuffer::Bind(FRenderState &state)
-{
-	state.SetVertexBuffer(mVertexBuffer, 0, 0);
-	state.SetIndexBuffer(mIndexBuffer);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 void FFlatVertexBuffer::CreateVBO()
 {
 	vbo_shadowdata.Resize(mNumReserved);

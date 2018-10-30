@@ -30,6 +30,7 @@
 #include "m_png.h"
 #include "r_utility.h"
 #include "d_player.h"
+#include "gl/system/gl_buffers.h"
 #include "gl/system/gl_framebuffer.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/system/gl_debug.h"
@@ -56,8 +57,8 @@ namespace OpenGLRenderer
 
 void FGLRenderer::RenderScreenQuad()
 {
-	screen->mVertexData->Bind(gl_RenderState);
-	gl_RenderState.ApplyBuffers();
+	auto buffer = static_cast<GLVertexBuffer *>(screen->mVertexData->GetBufferObjects().first);
+	buffer->Bind(nullptr);
 	glDrawArrays(GL_TRIANGLE_STRIP, FFlatVertexBuffer::PRESENT_INDEX, 4);
 }
 

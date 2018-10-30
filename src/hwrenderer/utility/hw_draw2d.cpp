@@ -212,7 +212,7 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 	state.SetScissor(-1, -1, -1, -1);
 
 	state.SetRenderStyle(STYLE_Translucent);
-	screen->mVertexData->Bind(state);
+	state.SetVertexBuffer(screen->mVertexData);
 	state.EnableTexture(true);
 	state.EnableBrightmap(true);
 	state.SetTextureMode(TM_NORMAL);

@@ -457,6 +457,13 @@ public:
 		mIndexBuffer = ib;
 	}
 
+	template <class T> void SetVertexBuffer(T *buffer)
+	{
+		auto ptrs = buffer->GetBufferObjects(); 
+		SetVertexBuffer(ptrs.first, 0, 0);
+		SetIndexBuffer(ptrs.second);
+	}
+
 	void SetInterpolationFactor(float fac)
 	{
 		mInterpolationFactor = fac;

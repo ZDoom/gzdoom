@@ -271,7 +271,7 @@ void GLSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 		{
 			FGLModelRenderer renderer(di, state, dynlightindex);
 			renderer.RenderModel(x, y, z, modelframe, actor, di->Viewpoint.TicFrac);
-			screen->mVertexData->Bind(state);
+			state.SetVertexBuffer(screen->mVertexData);
 		}
 	}
 

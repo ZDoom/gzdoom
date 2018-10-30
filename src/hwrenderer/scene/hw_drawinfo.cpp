@@ -588,7 +588,7 @@ void HWDrawInfo::RenderPortal(HWPortal *p, FRenderState &state, bool usestencil)
 	state.SetLightIndex(-1);
 	gp->DrawContents(new_di, state);
 	new_di->EndDrawInfo();
-	screen->mVertexData->Bind(state);
+	state.SetVertexBuffer(screen->mVertexData);
 	screen->mViewpoints->Bind(state, vpIndex);
 	gp->RemoveStencil(this, state, usestencil);
 

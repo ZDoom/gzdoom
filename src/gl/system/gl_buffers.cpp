@@ -186,7 +186,7 @@ void GLVertexBuffer::Bind(int *offsets)
 {
 	int i = 0;
 
-	// This is what gets called from RenderState.Apply. It shouldn't be called anywhere else.
+	// This is what gets called from RenderState.Apply. It shouldn't be called anywhere else if the render state is in use
 	GLBuffer::Bind();
 	for(auto &attrinf : mAttributeInfo)
 	{

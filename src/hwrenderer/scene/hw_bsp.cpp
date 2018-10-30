@@ -175,7 +175,7 @@ RenderJobQueue jobQueue;
 
 void WorkerThread(HWDrawInfo *di)
 {
-	sector_t fakefront, fakeback;
+	sector_t fakefront, fakeback, *front, *back;
 
 	isWorkerThread = true;	// for adding asserts in GL API code. The worker thread may never call any GL API.
 	while (true)
@@ -204,25 +204,37 @@ void WorkerThread(HWDrawInfo *di)
 		case RenderJob::WallJob:
 		{
 			GLWall wall;
+			SetupWall.Clock();
 			wall.sub = job->sub;
-			wall.Process(di, job->seg, job->sub->render_sector, job->seg->PartnerSeg ? job->seg->PartnerSeg->Subsector->render_sector : nullptr);
+			front = hw_FakeFlat(job->sub->render_sector, &fakefront, di->in_area, false);
+			back = job->seg->PartnerSeg ? hw_FakeFlat(job->seg->PartnerSeg->Subsector->render_sector, &fakeback, di->in_area, true) : nullptr;
+			wall.Process(di, job->seg, front, back);
 			rendered_lines++;
+			SetupWall.Unclock();
 			break;
 		}
 
 		case RenderJob::FlatJob:
 		{
 			GLFlat flat;
-			flat.ProcessSector(di, job->sub->render_sector);
+			SetupFlat.Clock();
+			front = hw_FakeFlat(job->sub->render_sector, &fakefront, di->in_area, false);
+			flat.ProcessSector(di, front);
+			SetupFlat.Unclock();
 			break;
 		}
 
 		case RenderJob::SpriteJob:
-			di->RenderThings(job->sub, job->sub->render_sector);
+			SetupSprite.Clock();
+			front = hw_FakeFlat(job->sub->render_sector, &fakefront, di->in_area, false);
+			di->RenderThings(job->sub, front);
+			SetupSprite.Unclock();
 			break;
 
 		case RenderJob::ParticleJob:
 		{
+			SetupSprite.Clock();
+			front = hw_FakeFlat(job->sub->render_sector, &fakefront, di->in_area, false);
 			for (int i = ParticlesInSubsec[job->sub->Index()]; i != NO_PARTICLE; i = Particles[i].snext)
 			{
 				if (di->mClipPortal)
@@ -232,9 +244,9 @@ void WorkerThread(HWDrawInfo *di)
 				}
 
 				GLSprite sprite;
-				sprite.ProcessParticle(di, &Particles[i], job->sub->render_sector);
+				sprite.ProcessParticle(di, &Particles[i], front);
 			}
-
+			SetupSprite.Unclock();
 			break;
 		}
 		}
@@ -375,17 +387,7 @@ void HWDrawInfo::AddLine (seg_t *seg, bool portalclip)
 
 		if (gl_render_walls)
 		{
-			SetupWall.Clock();
 			jobQueue.AddJob(RenderJob::WallJob, seg->Subsector, seg);
-
-			/*
-			GLWall wall;
-			wall.sub = currentsubsector;
-			wall.Process(this, seg, currentsector, backsector);
-			rendered_lines++;
-			*/
-
-			SetupWall.Unclock();
 		}
 	}
 }
@@ -616,7 +618,6 @@ void HWDrawInfo::RenderThings(subsector_t * sub, sector_t * sector)
 
 void HWDrawInfo::DoSubsector(subsector_t * sub)
 {
-	unsigned int i;
 	sector_t * sector;
 	sector_t * fakesector;
 	sector_t fake;
@@ -669,28 +670,10 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 
 	// [RH] Add particles
 	//int shade = LIGHT2SHADE((floorlightlevel + ceilinglightlevel)/2 + r_actualextralight);
-#if 0
 	if (gl_render_things && ParticlesInSubsec[sub->Index()] != NO_PARTICLE)
 	{
-		SetupSprite.Clock();
 		jobQueue.AddJob(RenderJob::ParticleJob, sub, nullptr);
-
-		/*
-		for (i = ParticlesInSubsec[sub->Index()]; i != NO_PARTICLE; i = Particles[i].snext)
-		{
-			if (mClipPortal)
-			{
-				int clipres = mClipPortal->ClipPoint(Particles[i].Pos);
-				if (clipres == PClip_InFront) continue;
-			}
-
-			GLSprite sprite;
-			sprite.ProcessParticle(this, &Particles[i], fakesector);
-		}
-		*/
-		SetupSprite.Unclock();
 	}
-#endif
 
 	AddLines(sub, fakesector);
 
@@ -702,15 +685,12 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 	{
 		// Well, now it will be done.
 		sector->validcount = validcount;
+		sector->MoreFlags |= SECMF_DRAWN;
 
 		if (gl_render_things)
 		{
-			SetupSprite.Clock();
 			jobQueue.AddJob(RenderJob::SpriteJob, sub, nullptr);
-			//RenderThings(sub, fakesector);
-			SetupSprite.Unclock();
 		}
-		sector->MoreFlags |= SECMF_DRAWN;
 	}
 
 	if (gl_render_flats)
@@ -737,13 +717,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 				{
 					srf |= SSRF_PROCESSED;
 
-					SetupFlat.Clock();
 					jobQueue.AddJob(RenderJob::FlatJob, sub);
-					/*
-					GLFlat flat;
-					flat.ProcessSector(this, fakesector);
-					*/
-					SetupFlat.Unclock();
 				}
 				// mark subsector as processed - but mark for rendering only if it has an actual area.
 				ss_renderflags[sub->Index()] = 

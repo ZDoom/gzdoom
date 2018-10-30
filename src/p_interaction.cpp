@@ -112,30 +112,34 @@ void P_TouchSpecialThing (AActor *special, AActor *toucher)
 
 
 // [RH]
-// SexMessage: Replace parts of strings with gender-specific pronouns
+// PronounMessage: Replace parts of strings with player-specific pronouns
 //
 // The following expansions are performed:
-//		%g -> he/she/it
-//		%h -> him/her/it
-//		%p -> his/her/its
+//		%g -> he/she/they/it
+//		%h -> him/her/them/it
+//		%p -> his/her/their/its
+//		%s -> his/hers/theirs/its
+//		%r -> he's/she's/they're/it's
 //		%o -> other (victim)
 //		%k -> killer
 //
-void SexMessage (const char *from, char *to, int gender, const char *victim, const char *killer)
+void PronounMessage (const char *from, char *to, int pronoun, const char *victim, const char *killer)
 {
-	static const char *genderstuff[3][3] =
+	static const char *pronouns[GENDER_MAX][5] =
 	{
-		{ "he",  "him", "his" },
-		{ "she", "her", "her" },
-		{ "it",  "it",  "its" }
+		{ "he",   "him",  "his",   "his",    "he's"    },
+		{ "she",  "her",  "her",   "hers",   "she's"   },
+		{ "they", "them", "their", "theirs", "they're" },
+		{ "it",   "it",   "its",   "its'",   "it's"    }
 	};
-	static const int gendershift[3][3] =
+	static const int pronounshift[GENDER_MAX][5] =
 	{
-		{ 2, 3, 3 },
-		{ 3, 3, 3 },
-		{ 2, 2, 3 }
+		{ 2, 3, 3, 3, 4 },
+		{ 3, 3, 3, 4, 5 },
+		{ 4, 4, 5, 6, 7 },
+		{ 2, 2, 3, 4, 4 }
 	};
-	const char *subst = NULL;
+	const char *substitute = NULL;
 
 	do
 	{
@@ -145,32 +149,34 @@ void SexMessage (const char *from, char *to, int gender, const char *victim, con
 		}
 		else
 		{
-			int gendermsg = -1;
+			int grammarcase = -1;
 			
 			switch (from[1])
 			{
-			case 'g':	gendermsg = 0;	break;
-			case 'h':	gendermsg = 1;	break;
-			case 'p':	gendermsg = 2;	break;
-			case 'o':	subst = victim;	break;
-			case 'k':	subst = killer;	break;
+			case 'g': grammarcase = 0; break; // Subject
+			case 'h': grammarcase = 1; break; // Object
+			case 'p': grammarcase = 2; break; // Possessive Determiner
+			case 's': grammarcase = 3; break; // Possessive Pronoun
+			case 'r': grammarcase = 4; break; // Perfective
+			case 'o': substitute = victim; break;
+			case 'k': substitute = killer; break;
 			}
-			if (subst != NULL)
+			if (substitute != nullptr)
 			{
-				size_t len = strlen (subst);
-				memcpy (to, subst, len);
+				size_t len = strlen (substitute);
+				memcpy (to, substitute, len);
 				to += len;
 				from++;
-				subst = NULL;
+				substitute = nullptr;
 			}
-			else if (gendermsg < 0)
+			else if (grammarcase < 0)
 			{
 				*to++ = '%';
 			}
 			else
 			{
-				strcpy (to, genderstuff[gender][gendermsg]);
-				to += gendershift[gender][gendermsg];
+				strcpy (to, pronouns[pronoun][grammarcase]);
+				to += pronounshift[pronoun][grammarcase];
 				from++;
 			}
 		}
@@ -268,7 +274,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 	if (message == NULL || strlen(message) <= 0)
 		return;
 		
-	SexMessage (message, gendermessage, self->player->userinfo.GetGender(),
+	PronounMessage (message, gendermessage, self->player->userinfo.GetGender(),
 		self->player->userinfo.GetName(), attacker->player->userinfo.GetName());
 	Printf (PRINT_MEDIUM, "%s\n", gendermessage);
 }
@@ -402,7 +408,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 				player->fragcount--;
 				if (deathmatch && player->spreecount >= 5 && cl_showsprees)
 				{
-					SexMessage (GStrings("SPREEKILLSELF"), buff,
+					PronounMessage (GStrings("SPREEKILLSELF"), buff,
 						player->userinfo.GetGender(), player->userinfo.GetName(),
 						player->userinfo.GetName());
 					StatusBar->AttachMessage (Create<DHUDMessageFadeOut>(SmallFont, buff,
@@ -460,7 +466,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 					{
 						if (!AnnounceSpreeLoss (this))
 						{
-							SexMessage (GStrings("SPREEOVER"), buff, player->userinfo.GetGender(),
+							PronounMessage (GStrings("SPREEOVER"), buff, player->userinfo.GetGender(),
 								player->userinfo.GetName(), source->player->userinfo.GetName());
 							StatusBar->AttachMessage (Create<DHUDMessageFadeOut> (SmallFont, buff,
 								1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), MAKE_ID('K','S','P','R'));
@@ -470,7 +476,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 					{
 						if (!AnnounceSpree (source))
 						{
-							SexMessage (spreemsg, buff, player->userinfo.GetGender(),
+							PronounMessage (spreemsg, buff, player->userinfo.GetGender(),
 								player->userinfo.GetName(), source->player->userinfo.GetName());
 							StatusBar->AttachMessage (Create<DHUDMessageFadeOut> (SmallFont, buff,
 								1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), MAKE_ID('K','S','P','R'));
@@ -520,7 +526,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 
 							if (!AnnounceMultikill (source))
 							{
-								SexMessage (multimsg, buff, player->userinfo.GetGender(),
+								PronounMessage (multimsg, buff, player->userinfo.GetGender(),
 									player->userinfo.GetName(), source->player->userinfo.GetName());
 								StatusBar->AttachMessage (Create<DHUDMessageFadeOut> (SmallFont, buff,
 									1.5f, 0.8f, 0, 0, CR_RED, 3.f, 0.5f), MAKE_ID('M','K','I','L'));

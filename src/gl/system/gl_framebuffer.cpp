@@ -52,6 +52,7 @@
 EXTERN_CVAR (Bool, vid_vsync)
 EXTERN_CVAR(Bool, r_drawvoxels)
 EXTERN_CVAR(Int, gl_tonemap)
+EXTERN_CVAR(Bool, gl_texture_usehires)
 
 void gl_LoadExtensions();
 void gl_PrintStartupLog();
@@ -351,7 +352,25 @@ IHardwareTexture *OpenGLFrameBuffer::CreateHardwareTexture(FTexture *tex)
 
 void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 {
-	gl_RenderState.ApplyMaterial(mat, CLAMP_NONE, translation, false);
+	auto tex = mat->tex;
+	if (tex->UseType == ETextureType::SWCanvas) return;
+
+	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
+	int flags = mat->isExpanded() ? CTF_Expand : (gl_texture_usehires && tex->Scale.X == 1 && tex->Scale.Y == 1) ? CTF_CheckHires : 0;
+	int numLayers = mat->GetLayers();
+	auto base = static_cast<FHardwareTexture*>(mat->GetLayer(0));
+
+	if (base->BindOrCreate(tex, 0, CLAMP_NONE, translation, flags))
+	{
+		for (int i = 1; i < numLayers; i++)
+		{
+			FTexture *layer;
+			auto systex = static_cast<FHardwareTexture*>(mat->GetLayer(i, &layer));
+			systex->BindOrCreate(layer, i, CLAMP_NONE, 0, mat->isExpanded() ? CTF_Expand : 0);
+		}
+	}
+	// unbind everything. 
+	FHardwareTexture::UnbindAll();
 }
 
 FModelRenderer *OpenGLFrameBuffer::CreateModelRenderer(int mli) 

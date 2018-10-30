@@ -31,6 +31,7 @@
 #include "g_levellocals.h"
 #include "p_effect.h"
 #include "po_man.h"
+#include "ctpl.h"
 #include "hwrenderer/scene/hw_fakeflat.h"
 #include "hwrenderer/scene/hw_clipper.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
@@ -38,6 +39,210 @@
 #include "hwrenderer/scene/hw_portal.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/data/flatvertices.h"
+
+
+thread_local bool isWorkerThread;
+ctpl::thread_pool renderPool;
+bool inited = false;
+
+void InitRenderPool()
+{
+	if (!inited)
+	{
+		inited = true;
+		renderPool.resize(1);	// we only need one worker.
+	}
+}
+
+struct RenderJob
+{
+	enum
+	{
+		FlatJob,
+		WallJob,
+		SpriteJob,
+		ParticleJob,
+		TerminateJob	// inserted when all work is done so that the worker can return.
+	};
+	
+	int type;
+	subsector_t *sub;
+	seg_t *seg;
+	RenderJob *Next;
+};
+
+// Used for a few things where the overhead of a full-blown mutex would be too costly.
+// Code taken from http://www.modernescpp.com/index.php/the-atomic-flag
+class Spinlock
+{
+	std::atomic_bool flag = false;
+public:
+
+	void lock()
+	{
+		do
+		{
+			while (flag.load(std::memory_order_relaxed))
+			{
+				_mm_pause();
+			}
+		} while (flag.exchange(true, std::memory_order_acquire));
+	}
+
+	void unlock()
+	{
+		flag.store(false, std::memory_order_release);
+	}
+
+};
+
+template<class T> class TRenderList
+{
+	T *mHead = nullptr;
+	T *mTail = nullptr;
+	Spinlock mLock;
+
+public:
+	// Since we do not own the elements we will not free them.
+	void Clear()
+	{
+		mHead = nullptr;
+		mTail = nullptr;
+	}
+
+	T* Head() const
+	{
+		return mHead;
+	}
+
+	void AddTail(T *element)
+	{
+		mLock.lock();
+		if (mHead == nullptr) mHead = element;
+		if (mTail != nullptr) mTail->Next = element;
+		mTail = element;
+
+		element->Next = nullptr;
+		mLock.unlock();
+	}
+
+	void AddHead(T *element)
+	{
+		mLock.lock();
+		element->Next = mHead;
+		mHead = element;
+		mLock.unlock();
+	}
+
+	T* GetHead()
+	{
+		if (mHead == nullptr) return nullptr;	// handle an empty list without thrashing the spinlock.
+		mLock.lock();
+		auto val = mHead;
+		if (val != nullptr) mHead = val->Next;
+		mLock.unlock();
+		return val;
+	}
+
+};
+
+
+class RenderJobQueue
+{
+	RenderJob pool[200000];	// Way more than ever needed.
+	int poolindex = 0;
+	TRenderList<RenderJob> jobList;
+public:
+	void AddJob(int type, subsector_t *sub, seg_t *seg = nullptr)
+	{
+		RenderJob *job = &pool[poolindex++];
+		*job = { type, sub, seg, nullptr };
+		jobList.AddTail(job);
+	}
+
+	RenderJob *GetJob()
+	{
+		return jobList.GetHead();
+	}
+	
+	void ReleaseAll()
+	{
+		poolindex = 0;
+	}
+};
+
+RenderJobQueue jobQueue;
+
+void WorkerThread(HWDrawInfo *di)
+{
+	sector_t fakefront, fakeback;
+
+	isWorkerThread = true;	// for adding asserts in GL API code. The worker thread may never call any GL API.
+	while (true)
+	{
+		auto job = jobQueue.GetJob();
+		if (job == nullptr)
+		{
+			// The queue is empty. But here yielding would be too costly and possibly cause further delays down the line if the thread is halted.
+			// So instead add a few pause instructions and retry immediately.
+			_mm_pause();
+			_mm_pause();
+			_mm_pause();
+			_mm_pause();
+			_mm_pause();
+			_mm_pause();
+			_mm_pause();
+			_mm_pause();
+			_mm_pause();
+			_mm_pause();
+		}
+		else switch (job->type)
+		{
+		case RenderJob::TerminateJob:
+			return;
+
+		case RenderJob::WallJob:
+		{
+			GLWall wall;
+			wall.sub = job->sub;
+			wall.Process(di, job->seg, job->sub->render_sector, job->seg->PartnerSeg ? job->seg->PartnerSeg->Subsector->render_sector : nullptr);
+			rendered_lines++;
+			break;
+		}
+
+		case RenderJob::FlatJob:
+		{
+			GLFlat flat;
+			flat.ProcessSector(di, job->sub->render_sector);
+			break;
+		}
+
+		case RenderJob::SpriteJob:
+			di->RenderThings(job->sub, job->sub->render_sector);
+			break;
+
+		case RenderJob::ParticleJob:
+		{
+			for (int i = ParticlesInSubsec[job->sub->Index()]; i != NO_PARTICLE; i = Particles[i].snext)
+			{
+				if (di->mClipPortal)
+				{
+					int clipres = di->mClipPortal->ClipPoint(Particles[i].Pos);
+					if (clipres == PClip_InFront) continue;
+				}
+
+				GLSprite sprite;
+				sprite.ProcessParticle(di, &Particles[i], job->sub->render_sector);
+			}
+
+			break;
+		}
+		}
+	}
+}
+
+
+
 
 
 EXTERN_CVAR(Bool, gl_render_segs)
@@ -171,11 +376,14 @@ void HWDrawInfo::AddLine (seg_t *seg, bool portalclip)
 		if (gl_render_walls)
 		{
 			SetupWall.Clock();
+			jobQueue.AddJob(RenderJob::WallJob, seg->Subsector, seg);
 
+			/*
 			GLWall wall;
 			wall.sub = currentsubsector;
 			wall.Process(this, seg, currentsector, backsector);
 			rendered_lines++;
+			*/
 
 			SetupWall.Unclock();
 		}
@@ -350,7 +558,6 @@ void HWDrawInfo::AddSpecialPortalLines(subsector_t * sub, sector_t * sector, lin
 
 void HWDrawInfo::RenderThings(subsector_t * sub, sector_t * sector)
 {
-	SetupSprite.Clock();
 	sector_t * sec=sub->sector;
 	// Handle all things in sector.
     const auto &vp = Viewpoint;
@@ -395,7 +602,6 @@ void HWDrawInfo::RenderThings(subsector_t * sub, sector_t * sector)
 		GLSprite sprite;
 		sprite.Process(this, thing, sector, in_area, true);
 	}
-	SetupSprite.Unclock();
 }
 
 
@@ -463,10 +669,13 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 
 	// [RH] Add particles
 	//int shade = LIGHT2SHADE((floorlightlevel + ceilinglightlevel)/2 + r_actualextralight);
-	if (gl_render_things)
+#if 0
+	if (gl_render_things && ParticlesInSubsec[sub->Index()] != NO_PARTICLE)
 	{
 		SetupSprite.Clock();
+		jobQueue.AddJob(RenderJob::ParticleJob, sub, nullptr);
 
+		/*
 		for (i = ParticlesInSubsec[sub->Index()]; i != NO_PARTICLE; i = Particles[i].snext)
 		{
 			if (mClipPortal)
@@ -478,8 +687,10 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 			GLSprite sprite;
 			sprite.ProcessParticle(this, &Particles[i], fakesector);
 		}
+		*/
 		SetupSprite.Unclock();
 	}
+#endif
 
 	AddLines(sub, fakesector);
 
@@ -494,7 +705,10 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 
 		if (gl_render_things)
 		{
-			RenderThings(sub, fakesector);
+			SetupSprite.Clock();
+			jobQueue.AddJob(RenderJob::SpriteJob, sub, nullptr);
+			//RenderThings(sub, fakesector);
+			SetupSprite.Unclock();
 		}
 		sector->MoreFlags |= SECMF_DRAWN;
 	}
@@ -524,8 +738,11 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 					srf |= SSRF_PROCESSED;
 
 					SetupFlat.Clock();
+					jobQueue.AddJob(RenderJob::FlatJob, sub);
+					/*
 					GLFlat flat;
 					flat.ProcessSector(this, fakesector);
+					*/
 					SetupFlat.Unclock();
 				}
 				// mark subsector as processed - but mark for rendering only if it has an actual area.
@@ -595,4 +812,14 @@ void HWDrawInfo::RenderBSPNode (void *node)
 	DoSubsector ((subsector_t *)((uint8_t *)node - 1));
 }
 
-
+void HWDrawInfo::RenderBSP(void *node)
+{
+	InitRenderPool();
+	auto future = renderPool.push([&](int id) {
+		WorkerThread(this);
+	});
+	RenderBSPNode(node);
+	jobQueue.AddJob(RenderJob::TerminateJob, nullptr, nullptr);
+	future.wait();
+	jobQueue.ReleaseAll();
+}

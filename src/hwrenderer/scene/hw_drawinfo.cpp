@@ -459,7 +459,7 @@ void HWDrawInfo::CreateScene()
 
 	validcount++;	// used for processing sidedefs only once by the renderer.
 
-	RenderBSPNode(level.HeadNode());
+	RenderBSP(level.HeadNode());
 	PreparePlayerSprites(vp.sector, in_area);
 
 	// Process all the sprites on the current portal's back side which touch the portal.

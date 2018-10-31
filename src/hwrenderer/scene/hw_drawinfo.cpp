@@ -449,22 +449,10 @@ void HWDrawInfo::CreateScene()
 	ProcessAll.Clock();
 
 	// clip the scene and fill the drawlists
-	Bsp.Clock();
 	screen->mVertexData->Map();
 	screen->mLights->Map();
 
-	// Give the DrawInfo the viewpoint in fixed point because that's what the nodes are.
-	viewx = FLOAT2FIXED(vp.Pos.X);
-	viewy = FLOAT2FIXED(vp.Pos.Y);
-
-	validcount++;	// used for processing sidedefs only once by the renderer.
-
 	RenderBSP(level.HeadNode());
-	PreparePlayerSprites(vp.sector, in_area);
-
-	// Process all the sprites on the current portal's back side which touch the portal.
-	if (mCurrentPortal != nullptr) mCurrentPortal->RenderAttached(this);
-	Bsp.Unclock();
 
 	// And now the crappy hacks that have to be done to avoid rendering anomalies.
 	// These cannot be multithreaded when the time comes because all these depend

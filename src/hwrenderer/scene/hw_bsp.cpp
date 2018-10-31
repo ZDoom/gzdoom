@@ -31,6 +31,7 @@
 #include "g_levellocals.h"
 #include "p_effect.h"
 #include "po_man.h"
+#include "m_fixed.h"
 #include "ctpl.h"
 #include "hwrenderer/scene/hw_fakeflat.h"
 #include "hwrenderer/scene/hw_clipper.h"
@@ -42,17 +43,8 @@
 
 
 thread_local bool isWorkerThread;
-ctpl::thread_pool renderPool;
+ctpl::thread_pool renderPool(1);
 bool inited = false;
-
-void InitRenderPool()
-{
-	if (!inited)
-	{
-		inited = true;
-		renderPool.resize(1);	// we only need one worker.
-	}
-}
 
 struct RenderJob
 {
@@ -68,112 +60,39 @@ struct RenderJob
 	int type;
 	subsector_t *sub;
 	seg_t *seg;
-	RenderJob *Next;
-};
-
-// Used for a few things where the overhead of a full-blown mutex would be too costly.
-// Code taken from http://www.modernescpp.com/index.php/the-atomic-flag
-class Spinlock
-{
-	std::atomic_bool flag = false;
-public:
-
-	void lock()
-	{
-		do
-		{
-			while (flag.load(std::memory_order_relaxed))
-			{
-				_mm_pause();
-			}
-		} while (flag.exchange(true, std::memory_order_acquire));
-	}
-
-	void unlock()
-	{
-		flag.store(false, std::memory_order_release);
-	}
-
-};
-
-template<class T> class TRenderList
-{
-	T *mHead = nullptr;
-	T *mTail = nullptr;
-	Spinlock mLock;
-
-public:
-	// Since we do not own the elements we will not free them.
-	void Clear()
-	{
-		mHead = nullptr;
-		mTail = nullptr;
-	}
-
-	T* Head() const
-	{
-		return mHead;
-	}
-
-	void AddTail(T *element)
-	{
-		mLock.lock();
-		if (mHead == nullptr) mHead = element;
-		if (mTail != nullptr) mTail->Next = element;
-		mTail = element;
-
-		element->Next = nullptr;
-		mLock.unlock();
-	}
-
-	void AddHead(T *element)
-	{
-		mLock.lock();
-		element->Next = mHead;
-		mHead = element;
-		mLock.unlock();
-	}
-
-	T* GetHead()
-	{
-		if (mHead == nullptr) return nullptr;	// handle an empty list without thrashing the spinlock.
-		mLock.lock();
-		auto val = mHead;
-		if (val != nullptr) mHead = val->Next;
-		mLock.unlock();
-		return val;
-	}
-
 };
 
 
 class RenderJobQueue
 {
-	RenderJob pool[200000];	// Way more than ever needed.
-	int poolindex = 0;
-	TRenderList<RenderJob> jobList;
+	RenderJob pool[300000];	// Way more than ever needed. The largest ever seen on a single viewpoint is around 40000.
+	std::atomic<int> readindex = 0;
+	std::atomic<int> writeindex = 0;
 public:
 	void AddJob(int type, subsector_t *sub, seg_t *seg = nullptr)
 	{
-		RenderJob *job = &pool[poolindex++];
-		*job = { type, sub, seg, nullptr };
-		jobList.AddTail(job);
+		// This does not check for array overflows. The pool should be large enough that it never hits the limit.
+
+		pool[writeindex] = { type, sub, seg };
+		writeindex++;	// update index only after the value has been written.
 	}
 
 	RenderJob *GetJob()
 	{
-		return jobList.GetHead();
+		if (readindex < writeindex) return &pool[readindex++];
+		return nullptr;
 	}
 	
 	void ReleaseAll()
 	{
-		poolindex = 0;
+		readindex = 0;
+		writeindex = 0;
 	}
 };
 
-RenderJobQueue jobQueue;
+static RenderJobQueue jobQueue;	// One static queue is sufficient here. This code will never be called recursively.
 
-void WorkerThread(HWDrawInfo *di)
+void HWDrawInfo::WorkerThread()
 {
 	sector_t fakefront, fakeback, *front, *back;
 
@@ -183,7 +102,7 @@ void WorkerThread(HWDrawInfo *di)
 		auto job = jobQueue.GetJob();
 		if (job == nullptr)
 		{
-			// The queue is empty. But here yielding would be too costly and possibly cause further delays down the line if the thread is halted.
+			// The queue is empty. But yielding would be too costly here and possibly cause further delays down the line if the thread is halted.
 			// So instead add a few pause instructions and retry immediately.
 			_mm_pause();
 			_mm_pause();
@@ -199,6 +118,7 @@ void WorkerThread(HWDrawInfo *di)
 		else switch (job->type)
 		{
 		case RenderJob::TerminateJob:
+			PreparePlayerSprites(Viewpoint.sector, in_area);
 			return;
 
 		case RenderJob::WallJob:
@@ -206,9 +126,9 @@ void WorkerThread(HWDrawInfo *di)
 			GLWall wall;
 			SetupWall.Clock();
 			wall.sub = job->sub;
-			front = hw_FakeFlat(job->sub->render_sector, &fakefront, di->in_area, false);
-			back = job->seg->PartnerSeg ? hw_FakeFlat(job->seg->PartnerSeg->Subsector->render_sector, &fakeback, di->in_area, true) : nullptr;
-			wall.Process(di, job->seg, front, back);
+			front = hw_FakeFlat(job->sub->render_sector, &fakefront, in_area, false);
+			back = job->seg->PartnerSeg ? hw_FakeFlat(job->seg->PartnerSeg->Subsector->render_sector, &fakeback, in_area, true) : nullptr;
+			wall.Process(this, job->seg, front, back);
 			rendered_lines++;
 			SetupWall.Unclock();
 			break;
@@ -218,33 +138,33 @@ void WorkerThread(HWDrawInfo *di)
 		{
 			GLFlat flat;
 			SetupFlat.Clock();
-			front = hw_FakeFlat(job->sub->render_sector, &fakefront, di->in_area, false);
-			flat.ProcessSector(di, front);
+			front = hw_FakeFlat(job->sub->render_sector, &fakefront, in_area, false);
+			flat.ProcessSector(this, front);
 			SetupFlat.Unclock();
 			break;
 		}
 
 		case RenderJob::SpriteJob:
 			SetupSprite.Clock();
-			front = hw_FakeFlat(job->sub->render_sector, &fakefront, di->in_area, false);
-			di->RenderThings(job->sub, front);
+			front = hw_FakeFlat(job->sub->render_sector, &fakefront, in_area, false);
+			RenderThings(job->sub, front);
 			SetupSprite.Unclock();
 			break;
 
 		case RenderJob::ParticleJob:
 		{
 			SetupSprite.Clock();
-			front = hw_FakeFlat(job->sub->render_sector, &fakefront, di->in_area, false);
+			front = hw_FakeFlat(job->sub->render_sector, &fakefront, in_area, false);
 			for (int i = ParticlesInSubsec[job->sub->Index()]; i != NO_PARTICLE; i = Particles[i].snext)
 			{
-				if (di->mClipPortal)
+				if (mClipPortal)
 				{
-					int clipres = di->mClipPortal->ClipPoint(Particles[i].Pos);
+					int clipres = mClipPortal->ClipPoint(Particles[i].Pos);
 					if (clipres == PClip_InFront) continue;
 				}
 
 				GLSprite sprite;
-				sprite.ProcessParticle(di, &Particles[i], front);
+				sprite.ProcessParticle(this, &Particles[i], front);
 			}
 			SetupSprite.Unclock();
 			break;
@@ -788,12 +708,26 @@ void HWDrawInfo::RenderBSPNode (void *node)
 
 void HWDrawInfo::RenderBSP(void *node)
 {
-	InitRenderPool();
+	Bsp.Clock();
+
+	// Give the DrawInfo the viewpoint in fixed point because that's what the nodes are.
+	viewx = FLOAT2FIXED(Viewpoint.Pos.X);
+	viewy = FLOAT2FIXED(Viewpoint.Pos.Y);
+
+	validcount++;	// used for processing sidedefs only once by the renderer.
+
+
 	auto future = renderPool.push([&](int id) {
-		WorkerThread(this);
+		WorkerThread();
 	});
 	RenderBSPNode(node);
+
+	// Process all the sprites on the current portal's back side which touch the portal.
+	if (mCurrentPortal != nullptr) mCurrentPortal->RenderAttached(this);
+
 	jobQueue.AddJob(RenderJob::TerminateJob, nullptr, nullptr);
+	Bsp.Unclock();
+
 	future.wait();
 	jobQueue.ReleaseAll();
 }

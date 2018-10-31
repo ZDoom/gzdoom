@@ -192,6 +192,8 @@ private:
 
     sector_t fakesec;    // this is a struct member because it gets used in recursively called functions so it cannot be put on the stack.
 
+	void WorkerThread();
+
 	void UnclipSubsector(subsector_t *sub);
 	void AddLine(seg_t *seg, bool portalclip);
 	void PolySubsector(subsector_t * sub);

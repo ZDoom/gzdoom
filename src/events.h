@@ -9,6 +9,12 @@
 
 class DStaticEventHandler;
 
+enum class EventHandlerType
+{
+	Global,
+	PerMap
+};
+
 // register
 bool E_RegisterHandler(DStaticEventHandler* handler);
 // unregister
@@ -73,7 +79,7 @@ void E_Console(int player, FString name, int arg1, int arg2, int arg3, bool manu
 bool E_CheckReplacement(PClassActor* replacee, PClassActor** replacement);
 
 // called on new game
-void E_NewGame(bool map);
+void E_NewGame(EventHandlerType handlerType);
 
 // send networked event. unified function.
 bool E_SendNetworkEvent(FString name, int arg1, int arg2, int arg3, bool manual);

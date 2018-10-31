@@ -3722,7 +3722,7 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 
 	if (newGame)
 	{
-		E_NewGame(true);
+		E_NewGame(EventHandlerType::PerMap);
 	}
 
 	// [RH] Support loading Build maps (because I felt like it. :-)

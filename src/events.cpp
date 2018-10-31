@@ -515,15 +515,17 @@ bool E_CheckReplacement( PClassActor *replacee, PClassActor **replacement )
 	return final;
 }
 
-void E_NewGame(bool map)
+void E_NewGame(EventHandlerType handlerType)
 {
+	bool isStatic = handlerType == EventHandlerType::Global;
+
 	// Shut down all per-map event handlers before static NewGame events.
-	if (!map)
+	if (isStatic)
 		E_Shutdown(true);
 
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 	{
-		if (handler->IsStatic() == !map)
+		if (handler->IsStatic() == isStatic)
 			handler->NewGame();
 	}
 }

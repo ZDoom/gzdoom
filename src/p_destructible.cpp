@@ -358,7 +358,7 @@ void P_GeometryRadiusAttack(AActor* bombspot, AActor* bombsource, int bombdamage
 	TArray<line_t*> lines;
 	while ((ln = it.Next())) // iterator and Trace both use validcount and interfere with each other
 		lines.Push(ln);
-	for (int i = 0; i < lines.Size(); i++)
+	for (unsigned i = 0; i < lines.Size(); i++)
 	{
 		ln = lines[i];
 		DVector2 pos2d = bombspot->Pos().XY();

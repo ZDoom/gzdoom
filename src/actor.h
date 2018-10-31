@@ -1182,6 +1182,8 @@ public:
 
 	AActor			*BlockingMobj;	// Actor that blocked the last move
 	line_t			*BlockingLine;	// Line that blocked the last move
+	sector_t		*BlockingCeiling;	// Sector that blocked the last move (ceiling plane slope)
+	sector_t		*BlockingFloor;		// Sector that blocked the last move (floor plane slope)
 
 	int PoisonDamage; // Damage received per tic from poison.
 	FName PoisonDamageType; // Damage type dealt by poison.

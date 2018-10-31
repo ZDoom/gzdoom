@@ -1196,9 +1196,9 @@ static void PrintSecretString(const char *string, bool thislevel)
 		}
 		auto brok = V_BreakLines(ConFont, screen->GetWidth()*95/100, string);
 
-		for (int k = 0; brok[k].Width >= 0; k++)
+		for (auto &line : brok)
 		{
-			Printf("%s%s\n", colstr, brok[k].Text.GetChars());
+			Printf("%s%s\n", colstr, line.Text.GetChars());
 		}
 	}
 }

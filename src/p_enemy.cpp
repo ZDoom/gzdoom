@@ -711,7 +711,7 @@ bool P_Move (AActor *actor)
 				{
 					actor->floorsector->TriggerSectorActions(actor, SECSPAC_HitFloor);
 				}
-				P_CheckFor3DFloorHit(actor, actor->Z());
+				P_CheckFor3DFloorHit(actor, actor->Z(), true);
 			}
 		}
 	}

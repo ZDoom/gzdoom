@@ -296,6 +296,8 @@ DEFINE_FIELD(AActor, lastbump)
 DEFINE_FIELD(AActor, DesignatedTeam)
 DEFINE_FIELD(AActor, BlockingMobj)
 DEFINE_FIELD(AActor, BlockingLine)
+DEFINE_FIELD(AActor, BlockingCeiling)
+DEFINE_FIELD(AActor, BlockingFloor)
 DEFINE_FIELD(AActor, PoisonDamage)
 DEFINE_FIELD(AActor, PoisonDamageType)
 DEFINE_FIELD(AActor, PoisonDuration)
@@ -478,6 +480,8 @@ void AActor::Serialize(FSerializer &arc)
 		A("smokecounter", smokecounter)
 		("blockingmobj", BlockingMobj)
 		A("blockingline", BlockingLine)
+		A("blockingceiling", BlockingCeiling)
+		A("blockingfloor", BlockingFloor)
 		A("visibletoteam", VisibleToTeam)
 		A("pushfactor", pushfactor)
 		A("species", Species)
@@ -2552,6 +2556,21 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 			AActor *BlockingMobj = mo->BlockingMobj;
 			line_t *BlockingLine = mo->BlockingLine;
 
+			// [ZZ] 
+			if (!BlockingLine && !BlockingMobj) // hit floor or ceiling while XY movement - sector actions
+			{
+				int hitpart = -1;
+				sector_t* hitsector = nullptr;
+				secplane_t* hitplane = nullptr;
+				if (tm.ceilingsector && mo->Z() + mo->Height > tm.ceilingsector->ceilingplane.ZatPoint(tm.pos.XY()))
+					mo->BlockingCeiling = tm.ceilingsector;
+				if (tm.floorsector && mo->Z() < tm.floorsector->floorplane.ZatPoint(tm.pos.XY()))
+					mo->BlockingFloor = tm.floorsector;
+				// the following two only set the appropriate field - to avoid issues caused by running actions right in the middle of XY movement
+				P_CheckFor3DFloorHit(mo, mo->floorz, false);
+				P_CheckFor3DCeilingHit(mo, mo->ceilingz, false);
+			}
+
 			if (!(mo->flags & MF_MISSILE) && (mo->BounceFlags & BOUNCE_MBF) 
 				&& (BlockingMobj != NULL ? P_BounceActor(mo, BlockingMobj, false) : P_BounceWall(mo)))
 			{
@@ -2738,25 +2757,15 @@ explode:
 					}
 					else onsky = true;
 				}
-				if (!mo->BlockingLine && !BlockingMobj) // hit floor or ceiling while XY movement
+				if (mo->BlockingCeiling) // hit floor or ceiling while XY movement
 				{
-					int hitpart = -1;
-					sector_t* hitsector = nullptr;
-					// check against floor
-					if (tm.floorsector && mo->Z() < tm.floorsector->floorplane.ZatPoint(tm.pos.XY()))
-					{
-						hitpart = SECPART_Floor;
-						hitsector = tm.floorsector;
-						if (hitsector->healthfloor > 0 && P_CheckSectorVulnerable(hitsector, hitpart))
-							P_DamageSector(hitsector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, hitpart, mo->Pos());
-					}
-					if (tm.ceilingsector && mo->Z() + mo->Height > tm.ceilingsector->ceilingplane.ZatPoint(tm.pos.XY()))
-					{
-						hitpart = SECPART_Ceiling;
-						hitsector = tm.ceilingsector;
-						if (hitsector->healthceiling > 0 && P_CheckSectorVulnerable(hitsector, hitpart))
-							P_DamageSector(hitsector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, hitpart, mo->Pos());
-					}
+					if (mo->BlockingCeiling->healthceiling > 0 && P_CheckSectorVulnerable(mo->BlockingCeiling, SECPART_Ceiling))
+						P_DamageSector(mo->BlockingCeiling, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Ceiling, mo->Pos());
+				}
+				if (mo->BlockingFloor)
+				{
+					if (mo->BlockingFloor->healthfloor > 0 && P_CheckSectorVulnerable(mo->BlockingFloor, SECPART_Floor))
+						P_DamageSector(mo->BlockingFloor, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Floor, mo->Pos());
 				}
 				P_ExplodeMissile (mo, mo->BlockingLine, BlockingMobj, onsky);
 				return Oldfloorz;
@@ -3110,13 +3119,14 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 			mo->Sector->SecActTarget != NULL &&
 			mo->Sector->floorplane.ZatPoint(mo) == mo->floorz)
 		{ // [RH] Let the sector do something to the actor
-			mo->Sector->TriggerSectorActions (mo, SECSPAC_HitFloor);
+			mo->Sector->TriggerSectorActions(mo, SECSPAC_HitFloor);
 		}
-		P_CheckFor3DFloorHit(mo, mo->floorz);
+		P_CheckFor3DFloorHit(mo, mo->floorz, true);
 		// [RH] Need to recheck this because the sector action might have
 		// teleported the actor so it is no longer below the floor.
 		if (mo->Z() <= mo->floorz)
 		{
+			mo->BlockingFloor = mo->Sector;
 			if ((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
 			{
 				mo->SetZ(mo->floorz);
@@ -3223,11 +3233,12 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 		{ // [RH] Let the sector do something to the actor
 			mo->Sector->TriggerSectorActions (mo, SECSPAC_HitCeiling);
 		}
-		P_CheckFor3DCeilingHit(mo, mo->ceilingz);
+		P_CheckFor3DCeilingHit(mo, mo->ceilingz, true);
 		// [RH] Need to recheck this because the sector action might have
 		// teleported the actor so it is no longer above the ceiling.
 		if (mo->Top() > mo->ceilingz)
 		{
+			mo->BlockingCeiling = mo->Sector;
 			mo->SetZ(mo->ceilingz - mo->Height);
 			if (mo->BounceFlags & BOUNCE_Ceilings)
 			{	// ceiling bounce
@@ -4505,12 +4516,21 @@ void AActor::Tick ()
 		}
 
 		// Handle X and Y velocities
-		BlockingMobj = NULL;
+		BlockingMobj = nullptr;
+		sector_t* oldBlockingCeiling = BlockingCeiling;
+		sector_t* oldBlockingFloor = BlockingFloor;
+		BlockingFloor = nullptr;
+		BlockingCeiling = nullptr;
 		double oldfloorz = P_XYMovement (this, cumm);
 		if (ObjectFlags & OF_EuthanizeMe)
 		{ // actor was destroyed
 			return;
 		}
+		// [ZZ] trigger hit floor/hit ceiling actions from XY movement
+		if (BlockingFloor && BlockingFloor != oldBlockingFloor && (!player || !(player->cheats & CF_PREDICTING)) && BlockingFloor->SecActTarget)
+			BlockingFloor->TriggerSectorActions(this, SECSPAC_HitFloor);
+		if (BlockingCeiling && BlockingCeiling != oldBlockingCeiling && (!player || !(player->cheats & CF_PREDICTING)) && BlockingCeiling->SecActTarget)
+			BlockingCeiling->TriggerSectorActions(this, SECSPAC_HitCeiling);
 		if (Vel.X == 0 && Vel.Y == 0) // Actors at rest
 		{
 			if (flags2 & MF2_BLASTED)
@@ -4756,11 +4776,11 @@ void AActor::CheckSectorTransition(sector_t *oldsec)
 		}
 		if (Z() == floorz)
 		{
-			P_CheckFor3DFloorHit(this, Z());
+			P_CheckFor3DFloorHit(this, Z(), true);
 		}
 		if (Top() == ceilingz)
 		{
-			P_CheckFor3DCeilingHit(this, Top());
+			P_CheckFor3DCeilingHit(this, Top(), true);
 		}
 	}
 }

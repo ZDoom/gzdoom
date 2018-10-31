@@ -1106,10 +1106,10 @@ void DBaseStatusBar::DrawLog ()
 		hudheight = SCREENHEIGHT / scale;
 
 		int linelen = hudwidth<640? Scale(hudwidth,9,10)-40 : 560;
-		FBrokenLines *lines = V_BreakLines (SmallFont, linelen, CPlayer->LogText);
+		auto lines = V_BreakLines (SmallFont, linelen, CPlayer->LogText);
 		int height = 20;
 
-		for (int i = 0; lines[i].Width != -1; i++) height += SmallFont->GetHeight () + 1;
+		for (unsigned i = 0; i < lines.Size(); i++) height += SmallFont->GetHeight () + 1;
 
 		int x,y,w;
 
@@ -1138,8 +1138,6 @@ void DBaseStatusBar::DrawLog ()
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
 			y += SmallFont->GetHeight ()+1;
 		}
-
-		V_FreeBrokenLines (lines);
 	}
 }
 
@@ -1882,13 +1880,12 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawString)
 
 	if (wrapwidth > 0)
 	{
-		FBrokenLines *brk = V_BreakLines(font->mFont, wrapwidth, string, true);
-		for (int i = 0; brk[i].Width >= 0; i++)
+		auto brk = V_BreakLines(font->mFont, wrapwidth, string, true);
+		for (auto &line : brk)
 		{
-			self->DrawString(font->mFont, brk[i].Text, x, y, flags, alpha, trans, font->mSpacing, font->mMonospaced, font->mShadowX, font->mShadowY);
+			self->DrawString(font->mFont, line.Text, x, y, flags, alpha, trans, font->mSpacing, font->mMonospaced, font->mShadowX, font->mShadowY);
 			y += font->mFont->GetHeight() + linespacing;
 		}
-		V_FreeBrokenLines(brk);
 	}
 	else
 	{

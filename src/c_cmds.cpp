@@ -1194,13 +1194,12 @@ static void PrintSecretString(const char *string, bool thislevel)
 				else colstr = TEXTCOLOR_GREEN;
 			}
 		}
-		FBrokenLines *brok = V_BreakLines(ConFont, screen->GetWidth()*95/100, string);
+		auto brok = V_BreakLines(ConFont, screen->GetWidth()*95/100, string);
 
 		for (int k = 0; brok[k].Width >= 0; k++)
 		{
 			Printf("%s%s\n", colstr, brok[k].Text.GetChars());
 		}
-		V_FreeBrokenLines(brok);
 	}
 }
 

@@ -73,7 +73,7 @@ private:
 	int LastAccessed = -1;
 	TArray<char> SavePicData;
 	FTexture *SavePic = nullptr;
-	FBrokenLines *SaveComment = nullptr;
+	TArray<FBrokenLines> SaveComment;
 
 public:
 	int WindowSize = 0;

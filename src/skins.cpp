@@ -28,7 +28,8 @@ of the following entries:
 						is only useful when playing Doom.
   Gender (opt)			The gender to use for deciding which player sounds
 						to use for sounds not defined in the [Sounds] section.
-						Can be male, female, or cyborg. The default is male.
+						Can be male, female, neutral or cyborg.
+						The default is male.
   ColorRange (opt)		The range of palette entries to recolor to match
 						the player's color. Specified as <first>,<last>.
 						For Doom, this defaults to 112,127. For Heretic,

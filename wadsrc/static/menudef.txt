@@ -368,7 +368,8 @@ OptionValue "Gender"
 {
 	0, "$OPTVAL_MALE"
 	1, "$OPTVAL_FEMALE"
-	2, "$OPTVAL_OTHER"
+	2, "$OPTVAL_NEUTRAL"
+	3, "$OPTVAL_OTHER"
 }
 
 ListMenu "PlayerMenu"

@@ -57,6 +57,7 @@ enum EStencilFlags
 	SF_AllOn = 0,
 	SF_ColorMaskOff = 1,
 	SF_DepthMaskOff = 2,
+	SF_ColorMaskAlpha = 4,	// hack value for SSAO
 };
 
 enum EStencilOp
@@ -485,21 +486,21 @@ public:
 	virtual void DrawIndexed(int dt, int index, int count, bool apply = true) = 0;
 
 	// Immediate render state change commands. These only change infrequently and should not clutter the render state.
-	virtual bool SetDepthClamp(bool on) = 0;
-	virtual void SetDepthMask(bool on) = 0;
-	virtual void SetDepthFunc(int func) = 0;
-	virtual void SetDepthRange(float min, float max) = 0;
-	virtual void EnableDrawBufferAttachments(bool on) = 0;
-	virtual void SetStencil(int offs, int op, int flags) = 0;
-	virtual void SetCulling(int mode) = 0;
-	virtual void EnableClipDistance(int num, bool state) = 0;
-	virtual void Clear(int targets) = 0;
-	virtual void EnableStencil(bool on) = 0;
-	virtual void SetScissor(int x, int y, int w, int h) = 0;
-	virtual void SetViewport(int x, int y, int w, int h) = 0;
-	virtual void EnableDepthTest(bool on) = 0;
-	virtual void EnableMultisampling(bool on) = 0;
-	virtual void EnableLineSmooth(bool on) = 0;
+	virtual bool SetDepthClamp(bool on) = 0;					// Deactivated only by skyboxes.
+	virtual void SetDepthMask(bool on) = 0;						// Used by decals and indirectly by portal setup.
+	virtual void SetDepthFunc(int func) = 0;					// Used by models, portals and mirror surfaces.
+	virtual void SetDepthRange(float min, float max) = 0;		// Used by portal setup.
+	virtual void EnableDrawBufferAttachments(bool on) = 0;		// Used by fog boundary drawer.
+	virtual void SetStencil(int offs, int op, int flags) = 0;	// Used by portal setup and render hacks.
+	virtual void SetCulling(int mode) = 0;						// Used by model drawer only.
+	virtual void EnableClipDistance(int num, bool state) = 0;	// Use by sprite sorter for vertical splits.
+	virtual void Clear(int targets) = 0;						// not used during normal rendering
+	virtual void EnableStencil(bool on) = 0;					// always on for 3D, always off for 2D
+	virtual void SetScissor(int x, int y, int w, int h) = 0;	// constant for 3D, changes for 2D
+	virtual void SetViewport(int x, int y, int w, int h) = 0;	// constant for all 3D and all 2D
+	virtual void EnableDepthTest(bool on) = 0;					// used by 2D, portals and render hacks.
+	virtual void EnableMultisampling(bool on) = 0;				// only active for 2D
+	virtual void EnableLineSmooth(bool on) = 0;					// constant setting for each 2D drawer operation
 
 
 };

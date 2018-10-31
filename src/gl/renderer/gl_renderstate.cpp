@@ -440,7 +440,8 @@ void FGLRenderState::SetStencil(int offs, int op, int flags)
 	glStencilOp(GL_KEEP, GL_KEEP, op2gl[op]);		// this stage doesn't modify the stencil
 
 	bool cmon = !(flags & SF_ColorMaskOff);
-	glColorMask(cmon, cmon, cmon, cmon);						// don't write to the graphics buffer
+	bool cmalpha = cmon || (flags & SF_ColorMaskAlpha);
+	glColorMask(cmon, cmon, cmon, cmalpha);						// don't write to the graphics buffer
 	glDepthMask(!(flags & SF_DepthMaskOff));
 }
 

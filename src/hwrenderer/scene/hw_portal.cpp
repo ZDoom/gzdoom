@@ -301,7 +301,7 @@ void HWPortal::RemoveStencil(HWDrawInfo *di, FRenderState &state, bool usestenci
 		state.EnableTexture(false);
 		state.SetRenderStyle(STYLE_Source);
 
-		state.SetStencil(0, SOP_Keep, SF_ColorMaskOff);
+		state.SetStencil(0, SOP_Keep, SF_ColorMaskOff | SF_ColorMaskAlpha);	// SSAO needs the alpha channel as a marker.
 		if (needdepth) state.Clear(CT_Depth);
 		state.SetDepthRange(0, 1);
 		state.SetDepthFunc(DF_LEqual);
@@ -946,8 +946,8 @@ void HWEEHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 	{
 		GLSkyInfo skyinfo;
 		skyinfo.init(sector->sky, 0);
-		//GLSkyPortal sky(mState, &skyinfo, true);
-		//sky.DrawContents(di, state);
+		HWSkyPortal sky(screen->mSkyData, mState, &skyinfo, true);
+		sky.DrawContents(di, state);
 	}
 	if (sector->GetTexture(sector_t::ceiling) != skyflatnum)
 	{

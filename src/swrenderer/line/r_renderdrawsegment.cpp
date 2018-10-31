@@ -159,6 +159,9 @@ namespace swrenderer
 		auto viewport = Thread->Viewport.get();
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
 
+		if (curline->sidedef->GetTexture(side_t::mid).isNull())
+			return false;
+
 		FTexture *tex = TexMan(curline->sidedef->GetTexture(side_t::mid), true);
 		if (i_compatflags & COMPATF_MASKEDMIDTEX)
 		{

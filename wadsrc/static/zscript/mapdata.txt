@@ -156,6 +156,9 @@ struct Line native play
 	native int						locknumber;	// [Dusk] lock number for special
 	native readonly uint			portalindex;
 	native readonly uint			portaltransferred;
+
+	native readonly int		health;
+	native readonly int		healthgroup;
 	
 	native bool isLinePortal();
 	native bool isVisualPortal();
@@ -286,6 +289,11 @@ struct Sector native play
 	native int16 		leakydamage;
 
 	native readonly uint16	ZoneNumber;
+
+	native readonly int healthceiling;
+	native readonly int healthfloor;
+	native readonly int healthceilinggroup;
+	native readonly int healthfloorgroup;
 	
 	enum ESectorMoreFlags
 	{

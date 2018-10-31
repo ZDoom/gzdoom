@@ -9,6 +9,7 @@
 #include "p_local.h"
 #include "p_maputl.h"
 #include "c_cvars.h"
+#include "serializer.h"
 
 //==========================================================================
 //
@@ -529,4 +530,51 @@ bool P_CheckSectorVulnerable(sector_t* sector, int part)
 	if (texture == skyflatnum)
 		return false;
 	return true;
+}
+
+///
+
+FSerializer &Serialize(FSerializer &arc, const char *key, FHealthGroup& g, FHealthGroup *def)
+{
+	if (arc.BeginObject(key))
+	{
+		arc("id", g.id)
+		   ("health", g.health)
+			.EndObject();
+	}
+	return arc;
+}
+
+void P_SerializeHealthGroups(FSerializer& arc)
+{
+	// todo : stuff
+	if (arc.BeginArray("healthgroups"))
+	{
+		if (arc.isReading())
+		{
+			TArray<FHealthGroup> readGroups;
+			int sz = arc.ArraySize();
+			for (int i = 0; i < sz; i++)
+			{
+				FHealthGroup grp;
+				arc(nullptr, grp);
+				FHealthGroup* existinggrp = P_GetHealthGroup(grp.id);
+				if (!existinggrp)
+					continue;
+				existinggrp->health = grp.health;
+			}
+		}
+		else
+		{
+			TMap<int, FHealthGroup>::ConstIterator it(level.healthGroups);
+			TMap<int, FHealthGroup>::ConstPair* pair;
+			while (it.NextPair(pair))
+			{
+				FHealthGroup grp = pair->Value;
+				arc(nullptr, grp);
+			}
+		}
+
+		arc.EndArray();
+	}
 }

@@ -35,3 +35,5 @@ void P_GeometryRadiusAttack(AActor* bombspot, AActor* bombsource, int bombdamage
 
 bool P_CheckLinedefVulnerable(line_t* line, int side, int part = -1);
 bool P_CheckSectorVulnerable(sector_t* sector, int part);
+
+void P_SerializeHealthGroups(FSerializer& arc);

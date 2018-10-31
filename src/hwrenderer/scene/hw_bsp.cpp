@@ -96,6 +96,7 @@ void HWDrawInfo::WorkerThread()
 {
 	sector_t fakefront, fakeback, *front, *back;
 
+	WTTotal.Clock();
 	isWorkerThread = true;	// for adding asserts in GL API code. The worker thread may never call any GL API.
 	while (true)
 	{
@@ -118,7 +119,7 @@ void HWDrawInfo::WorkerThread()
 		else switch (job->type)
 		{
 		case RenderJob::TerminateJob:
-			PreparePlayerSprites(Viewpoint.sector, in_area);
+			WTTotal.Unclock();
 			return;
 
 		case RenderJob::WallJob:
@@ -727,7 +728,10 @@ void HWDrawInfo::RenderBSP(void *node)
 
 	jobQueue.AddJob(RenderJob::TerminateJob, nullptr, nullptr);
 	Bsp.Unclock();
-
+	MTWait.Clock();
 	future.wait();
 	jobQueue.ReleaseAll();
+	MTWait.Unclock();
+
+	PreparePlayerSprites(Viewpoint.sector, in_area);
 }

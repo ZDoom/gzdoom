@@ -1054,7 +1054,7 @@ void G_Ticker ()
 		switch (gameaction)
 		{
 		case ga_loadlevel:
-			G_DoLoadLevel (-1, false);
+			G_DoLoadLevel (-1, false, false);
 			break;
 		case ga_recordgame:
 			G_CheckDemoStatus();

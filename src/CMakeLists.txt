@@ -633,12 +633,9 @@ if( NOT SEND_ANON_STATS )
 	add_definitions( -DNO_SEND_STATS )
 endif()
 
-# OPLMIDI needs for USE_LEGACY_EMULATOR macro to be correctly built
-add_definitions(-DOPNMIDI_USE_LEGACY_EMULATOR)
-
-# Disable ADLMIDI's and OPNMIDI's MIDI Sequencer, MUS and XMI converters
-add_definitions(-DADLMIDI_DISABLE_MUS_SUPPORT -DADLMIDI_DISABLE_XMI_SUPPORT -DADLMIDI_DISABLE_MIDI_SEQUENCER)
-add_definitions(-DOPNMIDI_DISABLE_MUS_SUPPORT -DOPNMIDI_DISABLE_XMI_SUPPORT -DOPNMIDI_DISABLE_MIDI_SEQUENCER)
+# Disable ADLMIDI's and OPNMIDI's MIDI Sequencer
+add_definitions(-DADLMIDI_DISABLE_MIDI_SEQUENCER)
+add_definitions(-DOPNMIDI_DISABLE_MIDI_SEQUENCER)
 
 # Disable OPNMIDI's experimental yet emulator (using of it has some issues and missing notes in playback)
 add_definitions(-DOPNMIDI_DISABLE_GX_EMULATOR)
@@ -697,13 +694,12 @@ file( GLOB HEADER_FILES
 	polyrenderer/scene/*.h
 	hwrenderer/data/*.h
 	hwrenderer/dynlights/*.h
+	hwrenderer/models/*.h
 	hwrenderer/postprocessing/*.h
 	hwrenderer/scene/*.h
 	hwrenderer/textures/*.h
 	hwrenderer/utility/*.h
 	gl/*.h
-	gl/data/*.h
-	gl/dynlights/*.h
 	gl/models/*.h
 	gl/renderer/*.h
 	gl/scene/*.h
@@ -823,14 +819,6 @@ set( FASTMATH_SOURCES
 	textures/hires/hqnx/hq4x.cpp
 	textures/hires/xbr/xbrz.cpp
 	textures/hires/xbr/xbrz_old.cpp
-	gl/scene/gl_drawinfo.cpp
-	gl/scene/gl_flats.cpp
-	gl/scene/gl_sprite.cpp
-	gl/scene/gl_skydome.cpp
-	gl/scene/gl_weapon.cpp
-	gl/scene/gl_scene.cpp
-	gl/scene/gl_portal.cpp
-	gl/scene/gl_walls_draw.cpp
 	gl_load/gl_load.c
 	hwrenderer/postprocessing/hw_postprocess_cvars.cpp
 	hwrenderer/postprocessing/hw_postprocessshader.cpp
@@ -845,6 +833,7 @@ set( FASTMATH_SOURCES
 	hwrenderer/scene/hw_portal.cpp
 	hwrenderer/scene/hw_renderhacks.cpp
 	hwrenderer/scene/hw_sky.cpp
+	hwrenderer/scene/hw_skyportal.cpp
 	hwrenderer/scene/hw_sprites.cpp
 	hwrenderer/scene/hw_spritelight.cpp
 	hwrenderer/scene/hw_walls.cpp
@@ -876,6 +865,7 @@ set( FASTMATH_SOURCES
 	sound/opnmidi/opnmidi_midiplay.cpp
 	sound/opnmidi/opnmidi_opn2.cpp
 	sound/opnmidi/opnmidi_private.cpp
+	sound/opnmidi/wopn/wopn_file.c
 
 )
 
@@ -958,6 +948,7 @@ set (PCH_SOURCES
 	p_actionfunctions.cpp
 	p_ceiling.cpp
 	p_conversation.cpp
+	p_destructible.cpp
 	p_doors.cpp
 	p_effect.cpp
 	p_enemy.cpp
@@ -1042,32 +1033,31 @@ set (PCH_SOURCES
 	g_statusbar/sbarinfo.cpp
 	g_statusbar/sbar_mugshot.cpp
 	g_statusbar/shared_sbar.cpp
-	gl/data/gl_vertexbuffer.cpp
-	gl/data/gl_uniformbuffer.cpp
-	gl/data/gl_viewpointbuffer.cpp
-	gl/dynlights/gl_lightbuffer.cpp
-	gl/dynlights/gl_shadowmap.cpp
-	gl/models/gl_models.cpp
-	gl/renderer/gl_quaddrawer.cpp
 	gl/renderer/gl_renderer.cpp
 	gl/renderer/gl_renderstate.cpp
 	gl/renderer/gl_renderbuffers.cpp
-	gl/renderer/gl_lightdata.cpp
 	gl/renderer/gl_postprocess.cpp
 	gl/renderer/gl_postprocessstate.cpp
 	gl/renderer/gl_stereo3d.cpp
+	gl/renderer/gl_scene.cpp
 	gl/shaders/gl_shader.cpp
 	gl/shaders/gl_shaderprogram.cpp
 	gl/shaders/gl_postprocessshader.cpp
 	gl_load/gl_interface.cpp
 	gl/system/gl_framebuffer.cpp
 	gl/system/gl_debug.cpp
+	gl/system/gl_buffers.cpp
 	gl/textures/gl_hwtexture.cpp
 	gl/textures/gl_samplers.cpp
 	hwrenderer/data/flatvertices.cpp
+	hwrenderer/data/hw_viewpointbuffer.cpp
 	hwrenderer/dynlights/hw_aabbtree.cpp
 	hwrenderer/dynlights/hw_shadowmap.cpp
+	hwrenderer/dynlights/hw_lightbuffer.cpp
+	hwrenderer/models/hw_models.cpp
 	hwrenderer/scene/hw_skydome.cpp
+	hwrenderer/scene/hw_drawlistadd.cpp
+	hwrenderer/scene/hw_renderstate.cpp
 	hwrenderer/postprocessing/hw_postprocess.cpp
 	hwrenderer/postprocessing/hw_postprocess_cvars.cpp
 	hwrenderer/postprocessing/hw_postprocessshader.cpp
@@ -1078,6 +1068,7 @@ set (PCH_SOURCES
 	hwrenderer/textures/hw_precache.cpp
 	hwrenderer/utility/hw_clock.cpp
 	hwrenderer/utility/hw_cvars.cpp
+	hwrenderer/utility/hw_draw2d.cpp
 	hwrenderer/utility/hw_lighting.cpp
 	hwrenderer/utility/hw_shaderpatcher.cpp
 	hwrenderer/utility/hw_vrmodes.cpp
@@ -1352,7 +1343,12 @@ endif()
 
 add_custom_command(TARGET zdoom POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-	${CMAKE_SOURCE_DIR}/soundfont/gzdoom.sf2 $<TARGET_FILE_DIR:zdoom>/soundfonts/gzdoom.sf2)
+	${CMAKE_SOURCE_DIR}/soundfont/gzdoom.sf2 $<TARGET_FILE_DIR:zdoom>/soundfonts/gzdoom.sf2
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different
+	${CMAKE_SOURCE_DIR}/fm_banks/GENMIDI.GS.wopl $<TARGET_FILE_DIR:zdoom>/fm_banks/GENMIDI.GS.wopl
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different
+	${CMAKE_SOURCE_DIR}/fm_banks/gs-by-papiezak-and-sneakernets.wopn $<TARGET_FILE_DIR:zdoom>/fm_banks/gs-by-papiezak-and-sneakernets.wopn
+)
 
 if( CMAKE_COMPILER_IS_GNUCXX )
 	# GCC misoptimizes this file
@@ -1420,7 +1416,6 @@ source_group("OpenGL Loader" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl
 source_group("OpenGL Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/.+")
 source_group("OpenGL Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/data/.+")
 source_group("OpenGL Renderer\\Dynamic Lights" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/dynlights/.+")
-source_group("OpenGL Renderer\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/models/.+")
 source_group("OpenGL Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/renderer/.+")
 source_group("OpenGL Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/scene/.+")
 source_group("OpenGL Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/shaders/.+")

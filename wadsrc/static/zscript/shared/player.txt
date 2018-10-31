@@ -1277,6 +1277,7 @@ class PlayerPawn : Actor native
 	native void CheckUse();
 	native void CheckWeaponButtons();
 	native Weapon BestWeapon(class<Ammo> ammotype);
+	native Weapon PickNewWeapon(class<Ammo> ammotype);
 
 }
 
@@ -1363,6 +1364,14 @@ enum EPlayerState
 	PST_REBORN,	// Ready to restart/respawn???
 	PST_ENTER,	// [BC] Entered the game
 	PST_GONE	// Player has left the game
+}
+
+enum EPlayerGender
+{
+	GENDER_MALE,
+	GENDER_FEMALE,
+	GENDER_NEUTRAL,
+	GENDER_OTHER
 }
 
 struct PlayerInfo native play	// this is what internally is known as player_t

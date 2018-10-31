@@ -1120,6 +1120,21 @@ public:
 				tagstring = CheckString(key);
 				break;
 
+			case NAME_Health:
+				ld->health = CheckInt(key);
+				break;
+
+			case NAME_DamageSpecial:
+				Flag(ld->activation, SPAC_Damage, key);
+				break;
+
+			case NAME_DeathSpecial:
+				Flag(ld->activation, SPAC_Death, key);
+				break;
+
+			case NAME_HealthGroup:
+				ld->healthgroup = CheckInt(key);
+				break;
 
 			default:
 				break;
@@ -1361,7 +1376,6 @@ public:
 		double scroll_floor_x = 0;
 		double scroll_floor_y = 0;
 		FName scroll_floor_type = NAME_None;
-
 
 		memset(sec, 0, sizeof(*sec));
 		sec->lightlevel = 160;
@@ -1675,19 +1689,19 @@ public:
 					break;
 
 				case NAME_floorglowcolor:
-					sec->planes[sector_t::floor].GlowColor = CheckInt(key);
+					sec->SetGlowColor(sector_t::floor, CheckInt(key));
 					break;
 
 				case NAME_floorglowheight:
-					sec->planes[sector_t::floor].GlowHeight = (float)CheckFloat(key);
+					sec->SetGlowHeight(sector_t::floor, (float)CheckFloat(key));
 					break;
 
 				case NAME_ceilingglowcolor:
-					sec->planes[sector_t::ceiling].GlowColor = CheckInt(key);
+					sec->SetGlowColor(sector_t::ceiling, CheckInt(key));
 					break;
 
 				case NAME_ceilingglowheight:
-					sec->planes[sector_t::ceiling].GlowHeight = (float)CheckFloat(key);
+					sec->SetGlowHeight(sector_t::ceiling, (float)CheckFloat(key));
 					break;
 
 				case NAME_Noattack:
@@ -1769,6 +1783,22 @@ public:
 				// These two are used by Eternity for something I do not understand.
 				//case NAME_portal_ceil_useglobaltex:
 				//case NAME_portal_floor_useglobaltex:
+
+				case NAME_HealthFloor:
+					sec->healthfloor = CheckInt(key);
+					break;
+
+				case NAME_HealthCeiling:
+					sec->healthceiling = CheckInt(key);
+					break;
+
+				case NAME_HealthFloorGroup:
+					sec->healthfloorgroup = CheckInt(key);
+					break;
+
+				case NAME_HealthCeilingGroup:
+					sec->healthceilinggroup = CheckInt(key);
+					break;
 					
 				default:
 					break;

@@ -40,7 +40,7 @@ template <class T>
 class BasicBankMap
 {
 public:
-    typedef uint16_t key_type;  /* the bank identifier */
+    typedef size_t key_type;  /* the bank identifier */
     typedef T mapped_type;
     typedef std::pair<key_type, T> value_type;
 

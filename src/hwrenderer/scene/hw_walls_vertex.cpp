@@ -267,7 +267,7 @@ void GLWall::MakeVertices(HWDrawInfo *di, bool nosplit)
 	if (vertcount == 0)
 	{
 		bool split = (gl_seamless && !nosplit && seg->sidedef != nullptr && !(seg->sidedef->Flags & WALLF_POLYOBJ) && !(flags & GLWF_NOSPLIT));
-		auto ret = di->AllocVertices(split ? CountVertices() : 4);
+		auto ret = screen->mVertexData->AllocVertices(split ? CountVertices() : 4);
 		vertindex = ret.second;
 		vertcount = CreateVertices(ret.first, split);
 	}

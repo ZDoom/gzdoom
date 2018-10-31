@@ -1545,11 +1545,6 @@ pointlight MANA1
     offset 0 36 0
 }
 
-object Mana1
-{
-    frame MAN1 { light MANA1 }
-}
-
 // Green mana
 pointlight MANA2
 {
@@ -1557,11 +1552,6 @@ pointlight MANA2
 	color 0.0 0.6 0.0
     size 36
     offset 0 36 0
-}
-
-object Mana2
-{
-    frame MAN2 { light MANA2 }
 }
 
 // Combined mana

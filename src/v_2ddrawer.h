@@ -39,16 +39,6 @@ public:
 		DrawTypePoints,
 	};
 
-	enum ETextureDrawMode : uint8_t
-	{
-		DTM_Normal = 0,
-		DTM_Stencil = 1,
-		DTM_Opaque = 2,
-		DTM_Invert = 3,
-		DTM_AlphaTexture = 4,
-		DTM_InvertOpaque = 6,
-	};
-
 	enum ETextureFlags : uint8_t
 	{
 		DTF_Wrap = 1,
@@ -101,7 +91,7 @@ public:
 		int mDesaturate;
 		FRenderStyle mRenderStyle;
 		PalEntry mColor1;	// Overlay color
-		ETextureDrawMode mDrawMode;
+		ETexMode mDrawMode;
 		uint8_t mFlags;
 
 		RenderCommand()

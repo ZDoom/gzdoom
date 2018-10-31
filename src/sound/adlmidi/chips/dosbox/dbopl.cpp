@@ -37,6 +37,8 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <vector>
+#include <memory>
 #include "dbopl.h"
 
 #if defined(__GNUC__) && __GNUC__ > 3
@@ -69,6 +71,37 @@
 #ifndef PI
 #define PI 3.14159265358979323846
 #endif
+
+struct NoCopy {
+	NoCopy() {}
+private:
+	NoCopy(const NoCopy &);
+	NoCopy &operator=(const NoCopy &);
+};
+#if !defined(_WIN32)
+#include <pthread.h>
+struct Mutex : NoCopy {
+	Mutex() { pthread_mutex_init(&m, NULL);}
+	~Mutex() { pthread_mutex_destroy(&m); }
+	void lock() { pthread_mutex_lock(&m); }
+	void unlock() { pthread_mutex_unlock(&m); }
+	pthread_mutex_t m;
+};
+#else
+#include <windows.h>
+struct Mutex : NoCopy {
+	Mutex() { InitializeCriticalSection(&m); }
+	~Mutex() { DeleteCriticalSection(&m); }
+	void lock() { EnterCriticalSection(&m); }
+	void unlock() { LeaveCriticalSection(&m); }
+	CRITICAL_SECTION m;
+};
+#endif
+struct MutexHolder : NoCopy {
+	explicit MutexHolder(Mutex &m) : m(m) { m.lock(); }
+	~MutexHolder() { m.unlock(); }
+	Mutex &m;
+};
 
 namespace DBOPL {
 
@@ -217,6 +250,29 @@ static const Bit8s VibratoTable[ 8 ] = {
 //Shift strength for the ksl value determined by ksl strength
 static const Bit8u KslShiftTable[4] = {
 	31,1,2,0
+};
+
+// Pan law table
+static const Bit16u PanLawTable[] =
+{
+	65535, 65529, 65514, 65489, 65454, 65409, 65354, 65289,
+	65214, 65129, 65034, 64929, 64814, 64689, 64554, 64410,
+	64255, 64091, 63917, 63733, 63540, 63336, 63123, 62901,
+	62668, 62426, 62175, 61914, 61644, 61364, 61075, 60776,
+	60468, 60151, 59825, 59489, 59145, 58791, 58428, 58057,
+	57676, 57287, 56889, 56482, 56067, 55643, 55211, 54770,
+	54320, 53863, 53397, 52923, 52441, 51951, 51453, 50947,
+	50433, 49912, 49383, 48846, 48302, 47750, 47191,
+	46340, /* Center left */
+	46340, /* Center right */
+	45472, 44885, 44291, 43690, 43083, 42469, 41848, 41221,
+	40588, 39948, 39303, 38651, 37994, 37330, 36661, 35986,
+	35306, 34621, 33930, 33234, 32533, 31827, 31116, 30400,
+	29680, 28955, 28225, 27492, 26754, 26012, 25266, 24516,
+	23762, 23005, 22244, 21480, 20713, 19942, 19169, 18392,
+	17613, 16831, 16046, 15259, 14469, 13678, 12884, 12088,
+	11291, 10492, 9691, 8888, 8085, 7280, 6473, 5666,
+	4858, 4050, 3240, 2431, 1620, 810, 0
 };
 
 //Generate a table index and table shift value using input value from a selected rate
@@ -442,6 +498,7 @@ Bits Operator::TemplateVolume(  ) {
 			return vol;
 		}
 		//In sustain phase, but not sustaining, do regular release
+				/* fall through */
 	case RELEASE:
 		vol += RateForward( releaseAdd );;
 		if ( GCC_UNLIKELY(vol >= ENV_MAX) ) {
@@ -757,6 +814,11 @@ void Channel::WriteC0(const Chip* chip, Bit8u val) {
 	UpdateSynth(chip);
 }
 
+void Channel::WritePan(Bit8u val) {
+	panLeft  = PanLawTable[val & 0x7F];
+	panRight = PanLawTable[0x7F - (val & 0x7F)];
+}
+
 void Channel::UpdateSynth( const Chip* chip ) {
 	//Select the new synth mode
 	if ( chip->opl3Active ) {
@@ -971,8 +1033,8 @@ Channel* Channel::BlockTemplate( Chip* chip, Bit32u samples, Bit32s* output ) {
 		case sm3AMFM:
 		case sm3FMAM:
 		case sm3AMAM:
-			output[ i * 2 + 0 ] += sample & maskLeft;
-			output[ i * 2 + 1 ] += sample & maskRight;
+			output[ i * 2 + 0 ] += (sample * panLeft / 65535) & maskLeft;
+			output[ i * 2 + 1 ] += (sample * panRight / 65535) & maskRight;
 			break;
 		default:
 			break;
@@ -1265,21 +1327,56 @@ void Chip::GenerateBlock3_Mix( Bitu total, Bit32s* output  ) {
 	}
 }
 
-void Chip::Setup( Bit32u rate ) {
+struct CacheEntry {
+	Bit32u rate;
+	Bit32u freqMul[16];
+	Bit32u linearRates[76];
+	Bit32u attackRates[76];
+};
+struct Cache : NoCopy {
+    ~Cache();
+    Mutex mutex;
+    std::vector<CacheEntry *> entries;
+};
+
+static Cache cache;
+
+Cache::~Cache()
+{
+	for ( size_t i = 0, n = entries.size(); i < n; ++i )
+		delete entries[i];
+}
+
+static const CacheEntry *CacheLookupRateDependent( Bit32u rate )
+{
+	for ( size_t i = 0, n = cache.entries.size(); i < n; ++i ) {
+		const CacheEntry *entry = cache.entries[i];
+		if (entry->rate == rate)
+			return entry;
+	}
+	return NULL;
+}
+
+static const CacheEntry &ComputeRateDependent( Bit32u rate )
+{
+	{
+		MutexHolder lock( cache.mutex );
+		if (const CacheEntry *entry = CacheLookupRateDependent( rate ))
+			return *entry;
+	}
+
 	double original = OPLRATE;
-//	double original = rate;
 	double scale = original / (double)rate;
 
-	//Noise counter is run at the same precision as general waves
-	noiseAdd = (Bit32u)( 0.5 + scale * ( 1 << LFO_SH ) );
-	noiseCounter = 0;
-	noiseValue = 1;	//Make sure it triggers the noise xor the first time
-	//The low frequency oscillation counter
-	//Every time his overflows vibrato and tremoloindex are increased
-	lfoAdd = (Bit32u)( 0.5 + scale * ( 1 << LFO_SH ) );
-	lfoCounter = 0;
-	vibratoIndex = 0;
-	tremoloIndex = 0;
+#if __cplusplus >= 201103L
+	std::unique_ptr<CacheEntry> entry(new CacheEntry);
+#else
+	std::auto_ptr<CacheEntry> entry(new CacheEntry);
+#endif
+	entry->rate = rate;
+	Bit32u *freqMul = entry->freqMul;
+	Bit32u *linearRates = entry->linearRates;
+	Bit32u *attackRates = entry->attackRates;
 
 	//With higher octave this gets shifted up
 	//-1 since the freqCreateTable = *2
@@ -1301,6 +1398,7 @@ void Chip::Setup( Bit32u rate ) {
 		EnvelopeSelect( i, index, shift );
 		linearRates[i] = (Bit32u)( scale * (EnvelopeIncreaseTable[ index ] << ( RATE_SH + ENV_EXTRA - shift - 3 )));
 	}
+
 //	Bit32s attackDiffs[62];
 	//Generate the best matching attack rate
 	for ( Bit8u i = 0; i < 62; i++ ) {
@@ -1353,6 +1451,36 @@ void Chip::Setup( Bit32u rate ) {
 		//This should provide instant volume maximizing
 		attackRates[i] = 8 << RATE_SH;
 	}
+
+	MutexHolder lock( cache.mutex );
+	if (const CacheEntry *entry = CacheLookupRateDependent( rate ))
+		return *entry;
+
+	cache.entries.push_back(entry.get());
+	return *entry.release();
+}
+
+void Chip::Setup( Bit32u rate ) {
+	double original = OPLRATE;
+//	double original = rate;
+	double scale = original / (double)rate;
+
+	//Noise counter is run at the same precision as general waves
+	noiseAdd = (Bit32u)( 0.5 + scale * ( 1 << LFO_SH ) );
+	noiseCounter = 0;
+	noiseValue = 1;	//Make sure it triggers the noise xor the first time
+	//The low frequency oscillation counter
+	//Every time his overflows vibrato and tremoloindex are increased
+	lfoAdd = (Bit32u)( 0.5 + scale * ( 1 << LFO_SH ) );
+	lfoCounter = 0;
+	vibratoIndex = 0;
+	tremoloIndex = 0;
+
+	const CacheEntry &entry = ComputeRateDependent( rate );
+	freqMul = entry.freqMul;
+	linearRates = entry.linearRates;
+	attackRates = entry.attackRates;
+
 	//Setup the channels with the correct four op flags
 	//Channels are accessed through a table so they appear linear here
 	chan[ 0].fourMask = 0x00 | ( 1 << 0 );
@@ -1387,6 +1515,10 @@ void Chip::Setup( Bit32u rate ) {
 	for ( int i = 0; i < 255; i++ ) {
 		WriteReg( i, 0xff );
 		WriteReg( i, 0x0 );
+	}
+
+	for ( int i = 0; i < 18; i++ ) {
+		chan[i].WritePan( 0x40 );
 	}
 }
 
@@ -1614,5 +1746,14 @@ void Handler::Init( Bitu rate ) {
 	chip.Setup( static_cast<Bit32u>(rate) );
 }
 
+void Handler::WritePan( Bit32u reg, Bit8u val )
+{
+	Bitu index;
+	index = ((reg >> 4) & 0x10) | (reg & 0xf);
+	if (ChanOffsetTable[index]) {
+		Channel* regChan = (Channel*)(((char *)&chip) + ChanOffsetTable[index]);
+		regChan->WritePan(val);
+	}
+}
 
 }		//Namespace DBOPL

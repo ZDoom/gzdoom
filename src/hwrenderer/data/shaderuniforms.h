@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include "hwrenderer/data/uniformbuffer.h"
+#include "hwrenderer/data/buffers.h"
 #include "v_video.h"
 
 enum
@@ -116,17 +116,17 @@ public:
 	void Init()
 	{
 		if (mBuffer == nullptr)
-			mBuffer = screen->CreateUniformBuffer(sizeof(T));
+			mBuffer = screen->CreateDataBuffer(bindingpoint, false);
 	}
 
 	void Set(bool bind = true)
 	{
 		if (mBuffer != nullptr)
-			mBuffer->SetData(&Values);
+			mBuffer->SetData(sizeof(T), &Values);
 
 		// Let's hope this can be done better when things have moved further ahead.
 		// This really is not the best place to add something that depends on API behavior.
-		if (bind) mBuffer->Bind(bindingpoint);
+		if (bind) mBuffer->BindBase();
 	}
 
 	T *operator->() { return &Values; }
@@ -138,7 +138,7 @@ private:
 	ShaderUniforms(const ShaderUniforms &) = delete;
 	ShaderUniforms &operator=(const ShaderUniforms &) = delete;
 
-    IUniformBuffer *mBuffer = nullptr;
+    IDataBuffer *mBuffer = nullptr;
 	std::vector<UniformFieldDesc> mFields;
 };
 

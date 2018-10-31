@@ -668,6 +668,14 @@ xx(Prev)
 xx(Children)
 xx(Owner)
 
+xx(HealthFloor)
+xx(HealthCeiling)
+xx(DamageSpecial)
+xx(DeathSpecial)
+xx(HealthFloorGroup)
+xx(HealthCeilingGroup)
+xx(HealthGroup)
+
 // USDF keywords
 xx(Amount)
 xx(Text)

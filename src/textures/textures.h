@@ -77,7 +77,11 @@ struct UserShaderDesc
 	FString shader;
 	MaterialShaderIndex shaderType;
 	FString defines;
+	bool disablealphatest = false;
 };
+
+extern TArray<UserShaderDesc> usershaders;
+
 
 struct FloatRect
 {
@@ -787,6 +791,13 @@ public:
 
 
 	friend struct FCanvasTextureInfo;
+};
+
+// A wrapper around a hardware texture, to allow using it in the 2D drawing interface.
+class FWrapperTexture : public FTexture
+{
+public:
+	FWrapperTexture(int w, int h, int bits = 1);
 };
 
 extern FTextureManager TexMan;

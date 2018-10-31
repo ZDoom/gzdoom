@@ -536,3 +536,96 @@ class CompatibilityMenu : OptionMenu
 			DTA_CleanNoMove_1, true);
 	}
 }
+
+class GLTextureGLOptions : OptionMenu
+{
+	private int mWarningIndex;
+	private string mWarningLabel;
+
+	override void Init(Menu parent, OptionMenuDescriptor desc)
+	{
+		super.Init(parent, desc);
+
+		// Find index of warning item placeholder
+		mWarningIndex = -1;
+		mWarningLabel = "!HQRESIZE_WARNING!";
+
+		for (int i=0; i < mDesc.mItems.Size(); ++i)
+		{
+			if (mDesc.mItems[i].mLabel == mWarningLabel)
+			{
+				mWarningIndex = i;
+				break;
+			}
+		}
+	}
+
+	override void OnDestroy()
+	{
+		// Restore warning item placeholder
+		if (mWarningIndex >= 0)
+		{
+			mDesc.mItems[mWarningIndex].mLabel = mWarningLabel;
+		}
+
+		Super.OnDestroy();
+	}
+
+	override void Ticker()
+	{
+		Super.Ticker();
+
+		if (mWarningIndex >= 0)
+		{
+			string message;
+
+			if (gl_texture_hqresize > 0)
+			{
+				int multiplier;
+
+				switch (gl_texture_hqresize)
+				{
+				case 1:
+				case 4:
+				case 7:
+				case 10:
+				case 13:
+				case 20:
+					multiplier = 4;
+					break;
+				case 2:
+				case 5:
+				case 8:
+				case 11:
+				case 14:
+				case 21:
+					multiplier = 9;
+					break;
+				case 3:
+				case 6:
+				case 9:
+				case 12:
+				case 15:
+				case 22:
+					multiplier = 16;
+					break;
+				case 16:
+				case 18:
+				case 23:
+					multiplier = 25;
+					break;
+				case 17:
+				case 19:
+				case 24:
+					multiplier = 36;
+					break;
+				}
+
+				string localized = StringTable.Localize("$GLTEXMNU_HQRESIZEWARN");
+				message = String.Format(localized, multiplier);
+			}
+
+			mDesc.mItems[mWarningIndex].mLabel = message;
+		}
+	}
+}

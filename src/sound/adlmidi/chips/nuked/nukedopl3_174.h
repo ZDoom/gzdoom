@@ -103,6 +103,7 @@ struct _opl3_channel {
     Bit8u alg;
     Bit8u ksv;
     Bit16u cha, chb;
+    Bit16u chl, chr;
 };
 
 typedef struct _opl3_writebuf {
@@ -142,6 +143,7 @@ struct _opl3_chip {
 void OPL3v17_Generate(opl3_chip *chip, Bit16s *buf);
 void OPL3v17_GenerateResampled(opl3_chip *chip, Bit16s *buf);
 void OPL3v17_Reset(opl3_chip *chip, Bit32u samplerate);
+void OPL3v17_WritePan(opl3_chip *chip, Bit16u reg, Bit8u v);
 void OPL3v17_WriteReg(opl3_chip *chip, Bit16u reg, Bit8u v);
 void OPL3v17_WriteRegBuffered(opl3_chip *chip, Bit16u reg, Bit8u v);
 void OPL3v17_GenerateStream(opl3_chip *chip, Bit16s *sndptr, Bit32u numsamples);

@@ -353,6 +353,8 @@ int WOPL_LoadInstFromMem(WOPIFile *file, void *mem, size_t length)
         GO_FORWARD(2);
     }
 
+    file->version = version;
+
     {/* is drum flag */
         if(length < 1)
             return WOPL_ERR_UNEXPECTED_ENDING;
@@ -434,11 +436,13 @@ size_t WOPL_CalculateInstFileSize(WOPIFile *file, uint16_t version)
      * is percussive instrument
      */
 
-    if(version >= 3)
-        ins_size = WOPL_INST_SIZE_V3;
+    if(version > 2)
+        /* Skip sounding delays are not part of single-instrument file
+         * two sizes of uint16_t will be subtracted */
+        ins_size = WOPL_INST_SIZE_V3 - (sizeof(uint16_t) * 2);
     else
         ins_size = WOPL_INST_SIZE_V2;
-    final_size += ins_size * 128;
+    final_size += ins_size;
 
     return final_size;
 }

@@ -123,11 +123,14 @@ void FUE1Model::LoadGeometry()
 		// unpack coords
 		for ( int j=0; j<3; j++ )
 			Poly.C[j] = FVector2(dpolys[i].uv[j][0]/255.f,dpolys[i].uv[j][1]/255.f);
-		// compute facet normal
-		FVector3 dir[2];
-		dir[0] = verts[Poly.V[1]].Pos-verts[Poly.V[0]].Pos;
-		dir[1] = verts[Poly.V[2]].Pos-verts[Poly.V[0]].Pos;
-		Poly.Normal = dir[0]^dir[1];
+		// compute facet normals
+		for ( int j=0; j<numFrames; j++ )
+		{
+			FVector3 dir[2];
+			dir[0] = verts[Poly.V[1]+numVerts*j].Pos-verts[Poly.V[0]+numVerts*j].Pos;
+			dir[1] = verts[Poly.V[2]+numVerts*j].Pos-verts[Poly.V[0]+numVerts*j].Pos;
+			Poly.Normals.Push((dir[0]^dir[1]).Unit());
+		}
 		// push
 		polys.Push(Poly);
 	}
@@ -142,7 +145,7 @@ void FUE1Model::LoadGeometry()
 			for ( int k=0; k<numPolys; k++ )
 			{
 				if ( (polys[k].V[0] != j) && (polys[k].V[1] != j) && (polys[k].V[2] != j) ) continue;
-				nsum += polys[k].Normal;
+				nsum += polys[k].Normals[i];
 			}
 			verts[j+numVerts*i].Normal = nsum.Unit();
 		}
@@ -198,6 +201,8 @@ void FUE1Model::UnloadGeometry()
 	numPolys = 0;
 	numGroups = 0;
 	verts.Reset();
+	for ( int i=0; i<numPolys; i++ )
+		polys[i].Normals.Reset();
 	polys.Reset();
 	for ( int i=0; i<numGroups; i++ )
 		groups[i].P.Reset();
@@ -275,9 +280,9 @@ void FUE1Model::BuildVertexBuffer( FModelRenderer *renderer )
 					vert->Set(V.Pos.X,V.Pos.Y,V.Pos.Z,C.X,C.Y);
 					if ( groups[j].type&PT_Curvy )	// use facet normal
 					{
-						vert->SetNormal(polys[groups[j].P[k]].Normal.X,
-							polys[groups[j].P[k]].Normal.Y,
-							polys[groups[j].P[k]].Normal.Z);
+						vert->SetNormal(polys[groups[j].P[k]].Normals[i].X,
+							polys[groups[j].P[k]].Normals[i].Y,
+							polys[groups[j].P[k]].Normals[i].Z);
 					}
 					else vert->SetNormal(V.Normal.X,V.Normal.Y,V.Normal.Z);
 				}

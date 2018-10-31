@@ -47,7 +47,7 @@
 
 CUSTOM_CVAR(Int, gl_texture_hqresize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	if (self < 0 || self > 16)
+	if (self < 0 || self > 24)
 	{
 		self = 0;
 	}
@@ -187,7 +187,6 @@ static void scale4x ( uint32_t* inputBuffer, uint32_t* outputBuffer, int inWidth
 	delete[] buffer2x;
 }
 
-
 static unsigned char *scaleNxHelper( void (*scaleNxFunction) ( uint32_t* , uint32_t* , int , int),
 							  const int N,
 							  unsigned char *inputBuffer,
@@ -201,6 +200,44 @@ static unsigned char *scaleNxHelper( void (*scaleNxFunction) ( uint32_t* , uint3
 	unsigned char * newBuffer = new unsigned char[outWidth*outHeight*4];
 
 	scaleNxFunction ( reinterpret_cast<uint32_t*> ( inputBuffer ), reinterpret_cast<uint32_t*> ( newBuffer ), inWidth, inHeight );
+	delete[] inputBuffer;
+	return newBuffer;
+}
+
+static void normalNx ( uint32_t* inputBuffer, uint32_t* outputBuffer, int inWidth, int inHeight, int size )
+{
+	const int width = size * inWidth;
+	const int height = size * inHeight;
+
+	for ( int i = 0; i < inWidth; ++i )
+	{
+		for ( int j = 0; j < inHeight; ++j )
+		{
+			const uint32_t E = inputBuffer[ i     +inWidth*j    ];
+			for ( int k = 0; k < size; k++ )
+			{
+				for ( int l = 0; l < size; l++ )
+				{
+					outputBuffer[size*i+k + width*(size*j+l)] = E;
+				}
+			}
+		}
+	}
+}
+
+static unsigned char *normalNxHelper( void (normalNxFunction) ( uint32_t* , uint32_t* , int , int, int),
+							  const int N,
+							  unsigned char *inputBuffer,
+							  const int inWidth,
+							  const int inHeight,
+							  int &outWidth,
+							  int &outHeight )
+{
+	outWidth = N * inWidth;
+	outHeight = N *inHeight;
+	unsigned char * newBuffer = new unsigned char[outWidth*outHeight*4];
+
+	normalNxFunction ( reinterpret_cast<uint32_t*> ( inputBuffer ), reinterpret_cast<uint32_t*> ( newBuffer ), inWidth, inHeight, N );
 	delete[] inputBuffer;
 	return newBuffer;
 }
@@ -285,13 +322,13 @@ static unsigned char *xbrzHelper( void (*xbrzFunction) ( size_t, const uint32_t*
 		parallel_for(inHeight, thresholdHeight, [=](int sliceY)
 		{
 			xbrzFunction(N, reinterpret_cast<uint32_t*>(inputBuffer), reinterpret_cast<uint32_t*>(newBuffer),
-				inWidth, inHeight, xbrz::ARGB, xbrz::ScalerCfg(), sliceY, sliceY + thresholdHeight);
+				inWidth, inHeight, xbrz::ColorFormat::ARGB, xbrz::ScalerCfg(), sliceY, sliceY + thresholdHeight);
 		});
 	}
 	else
 	{
 		xbrzFunction(N, reinterpret_cast<uint32_t*>(inputBuffer), reinterpret_cast<uint32_t*>(newBuffer),
-			inWidth, inHeight, xbrz::ARGB, xbrz::ScalerCfg(), 0, std::numeric_limits<int>::max());
+			inWidth, inHeight, xbrz::ColorFormat::ARGB, xbrz::ScalerCfg(), 0, std::numeric_limits<int>::max());
 	}
 
 	delete[] inputBuffer;
@@ -389,8 +426,23 @@ unsigned char *FTexture::CreateUpsampledTextureBuffer (unsigned char *inputBuffe
 		case 13:
 		case 14:
 		case 15:
+		case 16:
+		case 17:
 			return xbrzHelper(xbrzOldScale, type - 11, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-			
+
+		case 18:
+		case 19:
+			return xbrzHelper(xbrz::scale, type - 13, inputBuffer, inWidth, inHeight, outWidth, outHeight);
+		case 20:
+			return normalNxHelper( &normalNx, 2, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+		case 21:
+			return normalNxHelper( &normalNx, 3, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+		case 22:
+			return normalNxHelper( &normalNx, 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+		case 23:
+			return normalNxHelper( &normalNx, 5, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+		case 24:
+			return normalNxHelper( &normalNx, 6, inputBuffer, inWidth, inHeight, outWidth, outHeight );
 		}
 	}
 	return inputBuffer;

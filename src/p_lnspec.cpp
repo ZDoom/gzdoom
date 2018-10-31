@@ -56,6 +56,7 @@
 #include "p_spec.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "p_destructible.h"
 
 // Remaps EE sector change types to Generic_Floor values. According to the Eternity Wiki:
 /*
@@ -3478,6 +3479,53 @@ FUNC(LS_Sector_SetCeilingGlow)
 	return true;
 }
 
+FUNC(LS_Line_SetHealth)
+// Line_SetHealth(id, health)
+{
+	FLineIdIterator itr(arg0);
+	int l;
+
+	if (arg1 < 0)
+		arg1 = 0;
+
+	while ((l = itr.Next()) >= 0)
+	{
+		line_t* line = &level.lines[l];
+		line->health = arg1;
+		if (line->healthgroup)
+			P_SetHealthGroupHealth(line->healthgroup, arg1);
+	}
+	return true;
+}
+
+FUNC(LS_Sector_SetHealth)
+// Sector_SetHealth(id, part, health)
+{
+	FSectorTagIterator itr(arg0);
+	int s;
+
+	if (arg2 < 0)
+		arg2 = 0;
+
+	while ((s = itr.Next()) >= 0)
+	{
+		sector_t* sector = &level.sectors[s];
+		if (arg1 == SECPART_Ceiling)
+		{
+			sector->healthceiling = arg2;
+			if (sector->healthceilinggroup)
+				P_SetHealthGroupHealth(sector->healthceilinggroup, arg2);
+		}
+		else if (arg1 == SECPART_Floor)
+		{
+			sector->healthfloor = arg2;
+			if (sector->healthfloorgroup)
+				P_SetHealthGroupHealth(sector->healthfloorgroup, arg2);
+		}
+	}
+	return true;
+}
+
 static lnSpecFunc LineSpecials[] =
 {
 	/*   0 */ LS_NOP,
@@ -3630,8 +3678,8 @@ static lnSpecFunc LineSpecials[] =
 	/* 147 */ LS_NOP,
 	/* 148 */ LS_NOP,
 	/* 149 */ LS_NOP,
-	/* 150 */ LS_NOP,
-	/* 151 */ LS_NOP,
+	/* 150 */ LS_Line_SetHealth,
+	/* 151 */ LS_Sector_SetHealth,
 	/* 152 */ LS_NOP,		// 152 Team_Score
 	/* 153 */ LS_NOP,		// 153 Team_GivePoints
 	/* 154 */ LS_Teleport_NoStop,

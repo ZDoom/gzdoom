@@ -29,6 +29,9 @@ public:
 	// Write addr to register 2 then data to register 3
 	void write1( int addr, int data );
 
+	// Write pan level channel data
+	void write_pan( int channel, int data );
+
 	// Run and add pair_count samples into current output buffer contents
 	typedef short sample_t;
 	enum { out_chan_count = 2 }; // stereo

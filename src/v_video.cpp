@@ -127,6 +127,7 @@ public:
 	bool IsFullscreen() { DBGBREAK; return 0; }
 	int GetClientWidth() { DBGBREAK; return 0; }
 	int GetClientHeight() { DBGBREAK; return 0; }
+	void InitializeState() override {}
 
 	float Gamma;
 };
@@ -593,6 +594,7 @@ bool IVideo::SetResolution ()
 	}
 
 	screen = buff;
+	screen->InitializeState();
 	screen->SetGamma();
 
 	V_UpdateModeSize(screen->GetWidth(), screen->GetHeight());

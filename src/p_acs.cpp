@@ -4975,6 +4975,8 @@ enum EACSFunctions
 	ACSF_Ceil,
 	ACSF_ScriptCall,
 	ACSF_StartSlideshow,
+	ACSF_GetSectorHealth,
+	ACSF_GetLineHealth,
 
 		// Eternity's
 	ACSF_GetLineX = 300,
@@ -6840,6 +6842,44 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		case ACSF_StartSlideshow:
 			G_StartSlideshow(FName(FBehavior::StaticLookupString(args[0])));
 			break;
+
+		case ACSF_GetSectorHealth:
+		{
+			int part = args[1];
+			FSectorTagIterator it(args[0]);
+			int s = it.Next();
+			if (s < 0)
+				return 0;
+			sector_t* ss = &level.sectors[s];
+			FHealthGroup* grp;
+			if (part == SECPART_Ceiling)
+			{
+				return (ss->healthceilinggroup && (grp = P_GetHealthGroup(ss->healthceilinggroup)))
+					? grp->health : ss->healthceiling;
+			}
+			else if (part == SECPART_Floor)
+			{
+				return (ss->healthfloorgroup && (grp = P_GetHealthGroup(ss->healthfloorgroup)))
+					? grp->health : ss->healthfloor;
+			}
+			return 0;
+		}
+
+		case ACSF_GetLineHealth:
+		{
+			FLineIdIterator it(args[0]);
+			int l = it.Next();
+			if (l < 0)
+				return 0;
+			line_t* ll = &level.lines[l];
+			if (ll->healthgroup > 0)
+			{
+				FHealthGroup* grp = P_GetHealthGroup(ll->healthgroup);
+				if (grp) return grp->health;
+			}
+
+			return ll->health;
+		}
 
 		case ACSF_GetLineX:
 		case ACSF_GetLineY:

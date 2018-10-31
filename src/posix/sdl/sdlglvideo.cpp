@@ -117,7 +117,7 @@ SDLGLVideo::~SDLGLVideo ()
 
 DFrameBuffer *SDLGLVideo::CreateFrameBuffer ()
 {
-	SystemGLFrameBuffer *fb = new OpenGLFrameBuffer(0, fullscreen);
+	SystemGLFrameBuffer *fb = new OpenGLRenderer::OpenGLFrameBuffer(0, fullscreen);
 
 	return fb;
 }

@@ -73,7 +73,7 @@ private:
 	int LastAccessed = -1;
 	TArray<char> SavePicData;
 	FTexture *SavePic = nullptr;
-	FBrokenLines *SaveComment = nullptr;
+	TArray<FBrokenLines> SaveComment;
 
 public:
 	int WindowSize = 0;
@@ -265,6 +265,7 @@ public:
 	bool mMouseCapture;
 	bool mBackbuttonSelected;
 	bool DontDim;
+	static int InMenu;
 
 	DMenu(DMenu *parent = NULL);
 	bool TranslateKeyboardEvents();

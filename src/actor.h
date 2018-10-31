@@ -922,12 +922,24 @@ public:
 			return asin(otherpos.Z / dist) * 180/ 3.1415926;
 		}
 
+
+	DAngle PitchTo(AActor *other)
+	{
+		DVector3 otherpos = other->PosRelative(this) - this->Pos();
+
+		double dist = this->Distance3D(other);
+
+		if (dist > 0)
+		{
+			return asin(otherpos.Z / dist) * 180 / 3.1415926;
+		}
+
 		else
 		{
 			return 0.;
 		}
 	}
-	
+  
 	DVector2 Vec2To(AActor *other) const
 	{
 		return other->PosRelative(this) - Pos();

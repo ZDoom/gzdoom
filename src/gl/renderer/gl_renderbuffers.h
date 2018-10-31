@@ -4,6 +4,9 @@
 #include "gl/shaders/gl_shader.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 
+namespace OpenGLRenderer
+{
+
 class PPGLTexture
 {
 public:
@@ -168,3 +171,5 @@ private:
 
 	static bool FailedCreate;
 };
+
+}

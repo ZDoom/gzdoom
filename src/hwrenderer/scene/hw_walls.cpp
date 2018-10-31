@@ -38,7 +38,229 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_portal.h"
+#include "hwrenderer/dynlights/hw_lightbuffer.h"
+#include "hw_renderstate.h"
+#include "hw_skydome.h"
 
+//==========================================================================
+//
+// General purpose wall rendering function
+// everything goes through here
+//
+//==========================================================================
+
+void GLWall::RenderWall(HWDrawInfo *di, FRenderState &state, int textured)
+{
+	assert(vertcount > 0);
+	state.SetLightIndex(dynlightindex);
+	state.Draw(DT_TriangleFan, vertindex, vertcount);
+	vertexcount += vertcount;
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void GLWall::RenderFogBoundary(HWDrawInfo *di, FRenderState &state)
+{
+	if (gl_fogmode && !di->isFullbrightScene())
+	{
+		int rel = rellight + getExtraLight();
+		state.EnableDrawBufferAttachments(false);
+		state.SetFog(lightlevel, rel, false, &Colormap, false);
+		state.SetEffect(EFF_FOGBOUNDARY);
+		state.AlphaFunc(Alpha_GEqual, 0.f);
+		state.SetDepthBias(-1, -128);
+		RenderWall(di, state, GLWall::RWF_BLANK);
+		state.ClearDepthBias();
+		state.SetEffect(EFF_NONE);
+		state.EnableDrawBufferAttachments(true);
+	}
+}
+
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+void GLWall::RenderMirrorSurface(HWDrawInfo *di, FRenderState &state)
+{
+	if (!TexMan.mirrorTexture.isValid()) return;
+
+	state.SetDepthFunc(DF_LEqual);
+
+	// we use texture coordinates and texture matrix to pass the normal stuff to the shader so that the default vertex buffer format can be used as is.
+	state.EnableTextureMatrix(true);
+
+	// Use sphere mapping for this
+	state.SetEffect(EFF_SPHEREMAP);
+	state.SetColor(lightlevel, 0, di->isFullbrightScene(), Colormap, 0.1f);
+	state.SetFog(lightlevel, 0, di->isFullbrightScene(), &Colormap, true);
+	state.SetRenderStyle(STYLE_Add);
+	state.AlphaFunc(Alpha_Greater, 0);
+
+	FMaterial * pat = FMaterial::ValidateTexture(TexMan.mirrorTexture, false, false);
+	state.SetMaterial(pat, CLAMP_NONE, 0, -1);
+
+	flags &= ~GLWall::GLWF_GLOW;
+	RenderWall(di, state, GLWall::RWF_BLANK);
+
+	state.EnableTextureMatrix(false);
+	state.SetEffect(EFF_NONE);
+	state.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
+
+	state.SetDepthFunc(DF_Less);
+
+	// This is drawn in the translucent pass which is done after the decal pass
+	// As a result the decals have to be drawn here, right after the wall they are on,
+	// because the depth buffer won't get set by translucent items.
+	if (seg->sidedef->AttachedDecals)
+	{
+		DrawDecalsForMirror(di, state, di->Decals[1]);
+	}
+	state.SetRenderStyle(STYLE_Translucent);
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void GLWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
+{
+	int tmode = state.GetTextureMode();
+	int rel = rellight + getExtraLight();
+
+	if (flags & GLWall::GLWF_GLOW)
+	{
+		state.EnableGlow(true);
+		state.SetGlowParams(topglowcolor, bottomglowcolor);
+	}
+	state.SetGlowPlanes(topplane, bottomplane);
+	state.SetMaterial(gltexture, flags & 3, 0, -1);
+
+	if (type == RENDERWALL_M2SNF)
+	{
+		if (flags & GLWall::GLWF_CLAMPY)
+		{
+			if (tmode == TM_NORMAL) state.SetTextureMode(TM_CLAMPY);
+		}
+		state.SetFog(255, 0, di->isFullbrightScene(), nullptr, false);
+	}
+	state.SetObjectColor(seg->frontsector->SpecialColors[sector_t::walltop] | 0xff000000);
+	state.SetObjectColor2(seg->frontsector->SpecialColors[sector_t::wallbottom] | 0xff000000);
+
+	float absalpha = fabsf(alpha);
+	if (lightlist == nullptr)
+	{
+		if (type != RENDERWALL_M2SNF) state.SetFog(lightlevel, rel, di->isFullbrightScene(), &Colormap, RenderStyle == STYLE_Add);
+		state.SetColor(lightlevel, rel, di->isFullbrightScene(), Colormap, absalpha);
+		RenderWall(di, state, rflags);
+	}
+	else
+	{
+		state.EnableSplit(true);
+
+		for (unsigned i = 0; i < lightlist->Size(); i++)
+		{
+			secplane_t &lowplane = i == (*lightlist).Size() - 1 ? bottomplane : (*lightlist)[i + 1].plane;
+			// this must use the exact same calculation method as GLWall::Process etc.
+			float low1 = lowplane.ZatPoint(vertexes[0]);
+			float low2 = lowplane.ZatPoint(vertexes[1]);
+
+			if (low1 < ztop[0] || low2 < ztop[1])
+			{
+				int thisll = (*lightlist)[i].caster != NULL ? hw_ClampLight(*(*lightlist)[i].p_lightlevel) : lightlevel;
+				FColormap thiscm;
+				thiscm.FadeColor = Colormap.FadeColor;
+				thiscm.FogDensity = Colormap.FogDensity;
+				thiscm.CopyFrom3DLight(&(*lightlist)[i]);
+				state.SetColor(thisll, rel, false, thiscm, absalpha);
+				if (type != RENDERWALL_M2SNF) state.SetFog(thisll, rel, false, &thiscm, RenderStyle == STYLE_Add);
+				state.SetSplitPlanes((*lightlist)[i].plane, lowplane);
+				RenderWall(di, state, rflags);
+			}
+			if (low1 <= zbottom[0] && low2 <= zbottom[1]) break;
+		}
+
+		state.EnableSplit(false);
+	}
+	state.SetObjectColor(0xffffffff);
+	state.SetObjectColor2(0);
+	state.SetTextureMode(tmode);
+	state.EnableGlow(false);
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void GLWall::RenderTranslucentWall(HWDrawInfo *di, FRenderState &state)
+{
+	state.SetRenderStyle(RenderStyle);
+	if (gltexture)
+	{
+		if (!gltexture->tex->GetTranslucency()) state.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
+		else state.AlphaFunc(Alpha_GEqual, 0.f);
+		RenderTexturedWall(di, state, GLWall::RWF_TEXTURED | GLWall::RWF_NOSPLIT);
+	}
+	else
+	{
+		state.AlphaFunc(Alpha_GEqual, 0.f);
+		state.SetColor(lightlevel, 0, false, Colormap, fabsf(alpha));
+		state.SetFog(lightlevel, 0, false, &Colormap, RenderStyle == STYLE_Add);
+		state.EnableTexture(false);
+		RenderWall(di, state, GLWall::RWF_NOSPLIT);
+		state.EnableTexture(true);
+	}
+	state.SetRenderStyle(STYLE_Translucent);
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+void GLWall::DrawWall(HWDrawInfo *di, FRenderState &state, bool translucent)
+{
+	if (screen->BuffersArePersistent())
+	{
+		if (level.HasDynamicLights && !di->isFullbrightScene() && gltexture != nullptr)
+		{
+			SetupLights(di, lightdata);
+		}
+		MakeVertices(di, !!(flags & GLWall::GLWF_TRANSLUCENT));
+	}
+
+	state.SetNormal(glseg.Normal());
+	if (!translucent)
+	{
+		RenderTexturedWall(di, state, GLWall::RWF_TEXTURED);
+	}
+	else
+	{
+		switch (type)
+		{
+		case RENDERWALL_MIRRORSURFACE:
+			RenderMirrorSurface(di, state);
+			break;
+
+		case RENDERWALL_FOGBOUNDARY:
+			RenderFogBoundary(di, state);
+			break;
+
+		default:
+			RenderTranslucentWall(di, state);
+			break;
+		}
+	}
+}
 
 //==========================================================================
 //
@@ -132,13 +354,13 @@ void GLWall::SetupLights(HWDrawInfo *di, FDynLightData &lightdata)
 				}
 				if (outcnt[0]!=4 && outcnt[1]!=4 && outcnt[2]!=4 && outcnt[3]!=4) 
 				{
-					lightdata.GetLight(seg->frontsector->PortalGroup, p, node->lightsource, true);
+					draw_dlight += lightdata.GetLight(seg->frontsector->PortalGroup, p, node->lightsource, true);
 				}
 			}
 		}
 		node = node->nextLight;
 	}
-	dynlightindex = di->UploadLights(lightdata);
+	dynlightindex = screen->mLights->UploadLights(lightdata);
 }
 
 
@@ -182,7 +404,7 @@ void GLWall::PutWall(HWDrawInfo *di, bool translucent)
     if (di->isFullbrightScene() || (Colormap.LightColor.isWhite() && lightlevel == 255))
         flags &= ~GLWF_GLOW;
     
-	if (!(screen->hwcaps & RFL_BUFFER_STORAGE))
+	if (!screen->BuffersArePersistent())
 	{
 		if (level.HasDynamicLights && !di->isFullbrightScene() && gltexture != nullptr)
 		{
@@ -207,9 +429,117 @@ void GLWall::PutWall(HWDrawInfo *di, bool translucent)
 	flags &= ~GLWF_TRANSLUCENT;
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 void GLWall::PutPortal(HWDrawInfo *di, int ptype)
 {
-	di->AddPortal(this, ptype);
+	auto pstate = screen->mPortalState;
+	HWPortal * portal;
+
+	MakeVertices(di, false);
+	switch (ptype)
+	{
+		// portals don't go into the draw list.
+		// Instead they are added to the portal manager
+	case PORTALTYPE_HORIZON:
+		horizon = pstate->UniqueHorizons.Get(horizon);
+		portal = di->FindPortal(horizon);
+		if (!portal)
+		{
+			portal = new HWHorizonPortal(pstate, horizon, di->Viewpoint, di);
+			di->Portals.Push(portal);
+		}
+		portal->AddLine(this);
+		break;
+
+	case PORTALTYPE_SKYBOX:
+		portal = di->FindPortal(secportal);
+		if (!portal)
+		{
+			// either a regular skybox or an Eternity-style horizon
+			if (secportal->mType != PORTS_SKYVIEWPOINT) portal = new HWEEHorizonPortal(pstate, secportal, di);
+			else
+			{
+				portal = new HWScenePortal(pstate, new HWSkyboxPortal(secportal));
+				di->Portals.Push(portal);
+			}
+		}
+		portal->AddLine(this);
+		break;
+
+	case PORTALTYPE_SECTORSTACK:
+		portal = di->FindPortal(this->portal);
+		if (!portal)
+		{
+			portal = new HWScenePortal(pstate, new HWSectorStackPortal(this->portal));
+			di->Portals.Push(portal);
+		}
+		portal->AddLine(this);
+		break;
+
+	case PORTALTYPE_PLANEMIRROR:
+		if (pstate->PlaneMirrorMode * planemirror->fC() <= 0)
+		{
+			//@sync-portal
+			planemirror = pstate->UniquePlaneMirrors.Get(planemirror);
+			portal = di->FindPortal(planemirror);
+			if (!portal)
+			{
+				portal = new HWScenePortal(pstate, new HWPlaneMirrorPortal(planemirror));
+				di->Portals.Push(portal);
+			}
+			portal->AddLine(this);
+		}
+		break;
+
+	case PORTALTYPE_MIRROR:
+		portal = di->FindPortal(seg->linedef);
+		if (!portal)
+		{
+			portal = new HWScenePortal(pstate, new HWMirrorPortal(seg->linedef));
+			di->Portals.Push(portal);
+		}
+		portal->AddLine(this);
+		if (gl_mirror_envmap)
+		{
+			// draw a reflective layer over the mirror
+			di->AddMirrorSurface(this);
+		}
+		break;
+
+	case PORTALTYPE_LINETOLINE:
+		if (!lineportal)
+			return;
+		portal = di->FindPortal(lineportal);
+		if (!portal)
+		{
+			line_t *otherside = lineportal->lines[0]->mDestination;
+			if (otherside != nullptr && otherside->portalindex < level.linePortals.Size())
+			{
+				di->ProcessActorsInPortal(otherside->getPortal()->mGroup, di->in_area);
+			}
+			portal = new HWScenePortal(pstate, new HWLineToLinePortal(lineportal));
+			di->Portals.Push(portal);
+		}
+		portal->AddLine(this);
+		break;
+
+	case PORTALTYPE_SKY:
+		sky = pstate->UniqueSkies.Get(sky);
+		portal = di->FindPortal(sky);
+		if (!portal)
+		{
+			portal = new HWSkyPortal(screen->mSkyData, pstate, sky);
+			di->Portals.Push(portal);
+		}
+		portal->AddLine(this);
+		break;
+	}
+	vertcount = 0;
 }
 
 //==========================================================================

@@ -110,6 +110,7 @@ struct opnInstMeta2
     uint16_t ms_sound_kon;  // Number of milliseconds it produces sound;
     uint16_t ms_sound_koff;
     double   fine_tune;
+    int8_t   midi_velocity_offset;
 #if 0
     opnInstMeta2() {}
     explicit opnInstMeta2(const opnInstMeta &d);
@@ -120,6 +121,16 @@ OPNDATA_BYTE_COMPARABLE(struct opnInstMeta2)
 #undef OPNDATA_BYTE_COMPARABLE
 #pragma pack(pop)
 
+/**
+ * @brief Bank global setup
+ */
+struct OpnBankSetup
+{
+    int volumeModel;
+    int lfoEnable;
+    int lfoFrequency;
+};
+
 #if 0
 /**
  * @brief Conversion of storage formats
@@ -127,11 +138,21 @@ OPNDATA_BYTE_COMPARABLE(struct opnInstMeta2)
 inline opnInstMeta2::opnInstMeta2(const opnInstMeta &d)
     : tone(d.tone), flags(d.flags),
       ms_sound_kon(d.ms_sound_kon), ms_sound_koff(d.ms_sound_koff),
-      fine_tune(d.fine_tune)
+      fine_tune(d.fine_tune), midi_velocity_offset(d.midi_velocity_offset)
 {
     opn[0] = ::opn[d.opnno1];
     opn[1] = ::opn[d.opnno2];
 }
 #endif
+
+/**
+ * @brief Convert external instrument to internal instrument
+ */
+void cvt_OPNI_to_FMIns(opnInstMeta2 &dst, const struct OPN2_Instrument &src);
+
+/**
+ * @brief Convert internal instrument to external instrument
+ */
+void cvt_FMIns_to_OPNI(struct OPN2_Instrument &dst, const opnInstMeta2 &src);
 
 #endif  // OPNMIDI_OPNBANK_H

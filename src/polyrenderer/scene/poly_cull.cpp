@@ -164,7 +164,7 @@ void PolyCull::CullSubsector(subsector_t *sub)
 		angle_t angle2 = PointToPseudoAngle(line->v1->fX(), line->v1->fY());
 		angle_t angle1 = PointToPseudoAngle(line->v2->fX(), line->v2->fY());
 		bool lineVisible = !IsSegmentCulled(angle1, angle2);
-		if (lineVisible && line->backsector == nullptr)
+		if (lineVisible && IsSolidLine(line))
 		{
 			MarkSegmentCulled(angle1, angle2);
 		}
@@ -180,6 +180,52 @@ void PolyCull::CullSubsector(subsector_t *sub)
 	}
 
 	SubsectorDepths[sub->Index()] = subsectorDepth;
+}
+
+bool PolyCull::IsSolidLine(seg_t *line)
+{
+	// One-sided
+	if (!line->backsector) return true;
+
+	// Portal
+	if (line->linedef && line->linedef->isVisualPortal() && line->sidedef == line->linedef->sidedef[0]) return true;
+
+	double frontCeilingZ1 = line->frontsector->ceilingplane.ZatPoint(line->v1);
+	double frontFloorZ1 = line->frontsector->floorplane.ZatPoint(line->v1);
+	double frontCeilingZ2 = line->frontsector->ceilingplane.ZatPoint(line->v2);
+	double frontFloorZ2 = line->frontsector->floorplane.ZatPoint(line->v2);
+
+	double backCeilingZ1 = line->backsector->ceilingplane.ZatPoint(line->v1);
+	double backFloorZ1 = line->backsector->floorplane.ZatPoint(line->v1);
+	double backCeilingZ2 = line->backsector->ceilingplane.ZatPoint(line->v2);
+	double backFloorZ2 = line->backsector->floorplane.ZatPoint(line->v2);
+
+	// Closed door.
+	if (backCeilingZ1 <= frontFloorZ1 && backCeilingZ2 <= frontFloorZ2) return true;
+	if (backFloorZ1 >= frontCeilingZ1 && backFloorZ2 >= frontCeilingZ2) return true;
+
+	// properly render skies (consider door "open" if both ceilings are sky)
+	if (line->backsector->GetTexture(sector_t::ceiling) == skyflatnum && line->frontsector->GetTexture(sector_t::ceiling) == skyflatnum) return false;
+
+	// if door is closed because back is shut:
+	if (!(backCeilingZ1 <= backFloorZ1 && backCeilingZ2 <= backFloorZ2)) return false;
+
+	// preserve a kind of transparent door/lift special effect:
+	if (((backCeilingZ1 >= frontCeilingZ1 && backCeilingZ2 >= frontCeilingZ2) || line->sidedef->GetTexture(side_t::top).isValid())
+		&& ((backFloorZ1 <= frontFloorZ1 && backFloorZ2 <= frontFloorZ2) || line->sidedef->GetTexture(side_t::bottom).isValid()))
+	{
+		// killough 1/18/98 -- This function is used to fix the automap bug which
+		// showed lines behind closed doors simply because the door had a dropoff.
+		//
+		// It assumes that Doom has already ruled out a door being closed because
+		// of front-back closure (e.g. front floor is taller than back ceiling).
+
+		// This fixes the automap floor height bug -- killough 1/18/98:
+		// killough 4/7/98: optimize: save result in doorclosed for use in r_segs.c
+		return true;
+	}
+
+	return false;
 }
 
 bool PolyCull::IsSegmentCulled(angle_t startAngle, angle_t endAngle) const

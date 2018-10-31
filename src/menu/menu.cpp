@@ -53,6 +53,7 @@
 #include "events.h"
 #include "scripting/types.h"
 
+int DMenu::InMenu;
 //
 // Todo: Move these elsewhere
 //
@@ -190,7 +191,9 @@ bool DMenu::CallResponder(event_t *ev)
 			VMValue params[] = { (DObject*)this, &e };
 			int retval;
 			VMReturn ret(&retval);
+			InMenu++;
 			VMCall(func, params, 2, &ret, 1);
+			InMenu--;
 			return !!retval;
 		}
 	}
@@ -202,7 +205,9 @@ bool DMenu::CallResponder(event_t *ev)
 			VMValue params[] = { (DObject*)this, &e };
 			int retval;
 			VMReturn ret(&retval);
+			InMenu++;
 			VMCall(func, params, 2, &ret, 1);
+			InMenu--;
 			return !!retval;
 		}
 	}
@@ -222,7 +227,9 @@ bool DMenu::CallMenuEvent(int mkey, bool fromcontroller)
 		VMValue params[] = { (DObject*)this, mkey, fromcontroller };
 		int retval;
 		VMReturn ret(&retval);
+		InMenu++;
 		VMCall(func, params, 3, &ret, 1);
+		InMenu--;
 		return !!retval;
 	}
 	else return false;

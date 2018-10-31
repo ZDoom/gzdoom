@@ -76,7 +76,7 @@ vec4 getTexel(vec2 st)
 	//
 	switch (uTextureMode)
 	{
-		case 1:	// TM_MASK
+		case 1:	// TM_STENCIL
 			texel.rgb = vec3(1.0,1.0,1.0);
 			break;
 			
@@ -88,7 +88,7 @@ vec4 getTexel(vec2 st)
 			texel = vec4(1.0-texel.r, 1.0-texel.b, 1.0-texel.g, texel.a);
 			break;
 			
-		case 4:	// TM_REDTOALPHA
+		case 4:	// TM_ALPHATEXTURE
 		{
 			float gray = grayscale(texel);
 			texel = vec4(1.0, 1.0, 1.0, gray*texel.a);
@@ -147,7 +147,7 @@ float R_DoomLightingEquation(float light)
 		lightscale = shade - vis;
 
 	// Result is the normalized colormap index (0 bright .. 1 dark)
-	return clamp(lightscale, 0.0, 31.0 / 32.0);
+	return clamp(lightscale, 1.0 - light, 31.0 / 32.0);
 }
 
 //===========================================================================
@@ -160,101 +160,129 @@ float R_DoomLightingEquation(float light)
 
 float shadowDirToU(vec2 dir)
 {
-	if (abs(dir.x) > abs(dir.y))
+	if (abs(dir.y) > abs(dir.x))
 	{
-		if (dir.x >= 0.0)
-			return dir.y / dir.x * 0.125 + (0.25 + 0.125);
+		float x = dir.x / dir.y * 0.125;
+		if (dir.y >= 0.0)
+			return 0.125 + x;
 		else
-			return dir.y / dir.x * 0.125 + (0.75 + 0.125);
+			return (0.50 + 0.125) + x;
 	}
 	else
 	{
-		if (dir.y >= 0.0)
-			return dir.x / dir.y * 0.125 + 0.125;
+		float y = dir.y / dir.x * 0.125;
+		if (dir.x >= 0.0)
+			return (0.25 + 0.125) - y;
 		else
-			return dir.x / dir.y * 0.125 + (0.50 + 0.125);
+			return (0.75 + 0.125) - y;
 	}
 }
 
-float sampleShadowmap(vec2 dir, float v)
+vec2 shadowUToDir(float u)
 {
-	float u = shadowDirToU(dir);
-	float dist2 = dot(dir, dir);
-	return texture(ShadowMap, vec2(u, v)).x > dist2 ? 1.0 : 0.0;
+	u *= 4.0;
+	vec2 raydir;
+	switch (int(u))
+	{
+	case 0: raydir = vec2(u * 2.0 - 1.0, 1.0); break;
+	case 1: raydir = vec2(1.0, 1.0 - (u - 1.0) * 2.0); break;
+	case 2: raydir = vec2(1.0 - (u - 2.0) * 2.0, -1.0); break;
+	case 3: raydir = vec2(-1.0, (u - 3.0) * 2.0 - 1.0); break;
+	}
+	return raydir;
 }
 
-float sampleShadowmapLinear(vec2 dir, float v)
+float sampleShadowmap(vec3 planePoint, float v)
 {
-	float u = shadowDirToU(dir);
-	float dist2 = dot(dir, dir);
+	float bias = 1.0;
+	float negD = dot(vWorldNormal.xyz, planePoint);
+
+	vec3 ray = planePoint;
 
 	vec2 isize = textureSize(ShadowMap, 0);
-	vec2 size = vec2(isize);
+	float scale = float(isize.x) * 0.25;
 
-	vec2 fetchPos = vec2(u, v) * size - vec2(0.5, 0.0);
-	if (fetchPos.x < 0.0)
-		fetchPos.x += size.x;
+	// Snap to shadow map texel grid
+	if (abs(ray.z) > abs(ray.x))
+	{
+		ray.y = ray.y / abs(ray.z);
+		ray.x = ray.x / abs(ray.z);
+		ray.x = (floor((ray.x + 1.0) * 0.5 * scale) + 0.5) / scale * 2.0 - 1.0;
+		ray.z = sign(ray.z);
+	}
+	else
+	{
+		ray.y = ray.y / abs(ray.x);
+		ray.z = ray.z / abs(ray.x);
+		ray.z = (floor((ray.z + 1.0) * 0.5 * scale) + 0.5) / scale * 2.0 - 1.0;
+		ray.x = sign(ray.x);
+	}
 
-	ivec2 ifetchPos = ivec2(fetchPos);
-	int y = ifetchPos.y;
+	float t = negD / dot(vWorldNormal.xyz, ray) - bias;
+	vec2 dir = ray.xz * t;
 
-	float t = fract(fetchPos.x);
-	int x0 = ifetchPos.x;
-	int x1 = ifetchPos.x + 1;
-	if (x1 == isize.x)
-		x1 = 0;
-
-	float depth0 = texelFetch(ShadowMap, ivec2(x0, y), 0).x;
-	float depth1 = texelFetch(ShadowMap, ivec2(x1, y), 0).x;
-	return mix(step(dist2, depth0), step(dist2, depth1), t);
+	float u = shadowDirToU(dir);
+	float dist2 = dot(dir, dir);
+	return step(dist2, texture(ShadowMap, vec2(u, v)).x);
 }
 
-//===========================================================================
-//
-// Check if light is in shadow using Percentage Closer Filtering (PCF)
-//
-//===========================================================================
+float sampleShadowmapPCF(vec3 planePoint, float v)
+{
+	float bias = 1.0;
+	float negD = dot(vWorldNormal.xyz, planePoint);
 
-#define PCF_FILTER_STEP_COUNT 3
-#define PCF_COUNT (PCF_FILTER_STEP_COUNT * 2 + 1)
+	vec3 ray = planePoint;
 
-// #define USE_LINEAR_SHADOW_FILTER
-#define USE_PCF_SHADOW_FILTER 1
+	if (abs(ray.z) > abs(ray.x))
+		ray.y = ray.y / abs(ray.z);
+	else
+		ray.y = ray.y / abs(ray.x);
+
+	vec2 isize = textureSize(ShadowMap, 0);
+	float scale = float(isize.x);
+	float texelPos = floor(shadowDirToU(ray.xz) * scale);
+
+	float sum = 0.0;
+	float step_count = uShadowmapFilter;
+		
+	texelPos -= step_count + 0.5;
+	for (float x = -step_count; x <= step_count; x++)
+	{
+		float u = fract(texelPos / scale);
+		vec2 dir = shadowUToDir(u);
+
+		ray.x = dir.x;
+		ray.z = dir.y;
+		float t = negD / dot(vWorldNormal.xyz, ray) - bias;
+		dir = ray.xz * t;
+
+		float dist2 = dot(dir, dir);
+		sum += step(dist2, texture(ShadowMap, vec2(u, v)).x);
+		texelPos++;
+	}
+	return sum / (uShadowmapFilter * 2.0 + 1.0);
+}
 
 float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
 {
 	if (shadowIndex >= 1024.0)
 		return 1.0; // No shadowmap available for this light
 
+	vec3 planePoint = pixelpos.xyz - lightpos.xyz;
+
+	if (dot(planePoint.xz, planePoint.xz) < 1.0)
+		return 1.0; // Light is too close
+
 	float v = (shadowIndex + 0.5) / 1024.0;
 
-	vec2 ray = pixelpos.xz - lightpos.xz;
-	float length = length(ray);
-	if (length < 3.0)
-		return 1.0;
-
-	vec2 dir = ray / length;
-
-#if defined(USE_LINEAR_SHADOW_FILTER)
-	ray -= dir * 6.0; // Shadow acne margin
-	return sampleShadowmapLinear(ray, v);
-#elif defined(USE_PCF_SHADOW_FILTER)
-	ray -= dir * 2.0; // Shadow acne margin
-	dir = dir * min(length / 50.0, 1.0); // avoid sampling behind light
-
-	vec2 normal = vec2(-dir.y, dir.x);
-	vec2 bias = dir * 10.0;
-
-	float sum = 0.0;
-	for (float x = -PCF_FILTER_STEP_COUNT; x <= PCF_FILTER_STEP_COUNT; x++)
+	if (uShadowmapFilter <= 0)
 	{
-		sum += sampleShadowmap(ray + normal * x - bias * abs(x), v);
+		return sampleShadowmap(planePoint, v);
 	}
-	return sum / PCF_COUNT;
-#else // nearest shadow filter
-	ray -= dir * 6.0; // Shadow acne margin
-	return sampleShadowmap(ray, v);
-#endif
+	else
+	{
+		return sampleShadowmapPCF(planePoint, v);
+	}
 }
 
 float shadowAttenuation(vec4 lightpos, float lightcolorA)
@@ -358,7 +386,7 @@ vec4 getLightColor(Material material, float fogdist, float fogfactor)
 		float newlightlevel = 1.0 - R_DoomLightingEquation(uLightLevel);
 		color.rgb *= newlightlevel;
 	}
-	else if (uFogColor.rgb == vec3(0.0))
+	else if (uFogEnabled > 0)
 	{
 		// brightening around the player for light mode 2
 		if (fogdist < uLightDist)
@@ -421,9 +449,9 @@ vec3 AmbientOcclusionColor()
 	//
 	// calculate fog factor
 	//
-	if (uFogEnabled == 1) 
+	if (uFogEnabled == -1) 
 	{
-		fogdist = pixelpos.w;
+		fogdist = max(16.0, pixelpos.w);
 	}
 	else 
 	{
@@ -449,19 +477,19 @@ void main()
 	if (frag.a <= uAlphaThreshold) discard;
 #endif
 
-	if (uFogEnabled != 3)	// check for special 2D 'fog' mode.
+	if (uFogEnabled != -3)	// check for special 2D 'fog' mode.
 	{
 		float fogdist = 0.0;
-		float fogfactor = 1.0;
+		float fogfactor = 0.0;
 		
 		//
 		// calculate fog factor
 		//
-		if (uFogEnabled != 0 && uFogDensity != 0)
+		if (uFogEnabled != 0)
 		{
-			if (uFogEnabled == 1) 
+			if (uFogEnabled == 1 || uFogEnabled == -1) 
 			{
-				fogdist = pixelpos.w;
+				fogdist = max(16.0, pixelpos.w);
 			}
 			else 
 			{
@@ -476,7 +504,7 @@ void main()
 			//
 			// colored fog
 			//
-			if (uFogColor.rgb != vec3(0.0)) 
+			if (uFogEnabled < 0) 
 			{
 				frag = applyFog(frag, fogfactor);
 			}
@@ -494,7 +522,7 @@ void main()
 			vec4 cm = (uObjectColor + gray * (uObjectColor2 - uObjectColor)) * 2;
 			frag = vec4(clamp(cm.rgb, 0.0, 1.0), frag.a);
 		}
-		frag = frag * ProcessLight(material, vColor);
+			frag = frag * ProcessLight(material, vColor);
 		frag.rgb = frag.rgb + uFogColor.rgb;
 	}
 	FragColor = frag;

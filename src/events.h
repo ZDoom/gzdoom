@@ -9,6 +9,12 @@
 
 class DStaticEventHandler;
 
+enum class EventHandlerType
+{
+	Global,
+	PerMap
+};
+
 // register
 bool E_RegisterHandler(DStaticEventHandler* handler);
 // unregister
@@ -71,6 +77,9 @@ void E_Console(int player, FString name, int arg1, int arg2, int arg3, bool manu
 
 // called when looking up the replacement for an actor class
 bool E_CheckReplacement(PClassActor* replacee, PClassActor** replacement);
+
+// called on new game
+void E_NewGame(EventHandlerType handlerType);
 
 // send networked event. unified function.
 bool E_SendNetworkEvent(FString name, int arg1, int arg2, int arg3, bool manual);
@@ -172,6 +181,9 @@ public:
 
 	//
 	void CheckReplacement(PClassActor* replacee, PClassActor** replacement, bool* final);
+
+	//
+	void NewGame();
 };
 class DEventHandler : public DStaticEventHandler
 {

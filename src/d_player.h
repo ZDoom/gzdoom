@@ -34,6 +34,8 @@
 
 #include "a_weapons.h"
 
+#include "d_netinf.h"
+
 // The player data structure depends on a number
 // of other structs: items (internal inventory),
 // animation states (closely tied to the sprites
@@ -261,13 +263,6 @@ public:
 extern TArray<FPlayerClass> PlayerClasses;
 
 // User info (per-player copies of each CVAR_USERINFO cvar)
-enum
-{
-	GENDER_MALE,
-	GENDER_FEMALE,
-	GENDER_NEUTER
-};
-
 struct userinfo_t : TMap<FName,FBaseCVar *>
 {
 	~userinfo_t();

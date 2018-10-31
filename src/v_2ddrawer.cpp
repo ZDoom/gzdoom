@@ -203,22 +203,22 @@ bool F2DDrawer::SetStyle(FTexture *tex, DrawParms &parms, PalEntry &vertexcolor,
 
 		if (style.Flags & STYLEF_RedIsAlpha)
 		{
-			quad.mDrawMode = DTM_AlphaTexture;
+			quad.mDrawMode = TM_ALPHATEXTURE;
 		}
 		else
 		{
-			quad.mDrawMode = DTM_Stencil;
+			quad.mDrawMode = TM_STENCIL;
 		}
 	}
 	else
 	{
 		if (style.Flags & STYLEF_RedIsAlpha)
 		{
-			quad.mDrawMode = DTM_AlphaTexture;
+			quad.mDrawMode = TM_ALPHATEXTURE;
 		}
 		else if (style.Flags & STYLEF_InvertSource)
 		{
-			quad.mDrawMode = DTM_Invert;
+			quad.mDrawMode = TM_INVERSE;
 		}
 
 		if (parms.specialcolormap != nullptr)
@@ -237,9 +237,9 @@ bool F2DDrawer::SetStyle(FTexture *tex, DrawParms &parms, PalEntry &vertexcolor,
 
 	if (!parms.masked)
 	{
-		// For DTM_AlphaTexture and DTM_Stencil the mask cannot be turned off because it would not yield a usable result.
-		if (quad.mDrawMode == DTM_Normal) quad.mDrawMode = DTM_Opaque;
-		else if (quad.mDrawMode == DTM_Invert) quad.mDrawMode = DTM_InvertOpaque;
+		// For TM_ALPHATEXTURE and TM_STENCIL the mask cannot be turned off because it would not yield a usable result.
+		if (quad.mDrawMode == TM_NORMAL) quad.mDrawMode = TM_OPAQUE;
+		else if (quad.mDrawMode == TM_INVERSE) quad.mDrawMode = TM_INVERTOPAQUE;
 	}
 	quad.mRenderStyle = parms.style;	// this  contains the blend mode and blend equation settings.
     if (parms.burn) quad.mFlags |= DTF_Burn;

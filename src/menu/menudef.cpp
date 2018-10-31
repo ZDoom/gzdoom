@@ -1382,10 +1382,12 @@ static void InitMusicMenus()
 {
 	DMenuDescriptor **advmenu = MenuDescriptors.CheckKey("AdvSoundOptions");
 	auto soundfonts = sfmanager.GetList();
-	std::tuple<const char *, int, const char *> sfmenus[] = { std::make_tuple("GusConfigMenu", SF_SF2 | SF_GUS, "midi_config"), 
-																std::make_tuple("WildMidiConfigMenu", SF_GUS, "wildmidi_config"), 
-																std::make_tuple("TimidityConfigMenu", SF_SF2 | SF_GUS, "timidity_config"), 
-																std::make_tuple("FluidPatchsetMenu", SF_SF2, "fluid_patchset") };
+	std::tuple<const char *, int, const char *> sfmenus[] = { std::make_tuple("GusConfigMenu", SF_SF2 | SF_GUS, "midi_config"),
+																std::make_tuple("WildMidiConfigMenu", SF_GUS, "wildmidi_config"),
+																std::make_tuple("TimidityConfigMenu", SF_SF2 | SF_GUS, "timidity_config"),
+																std::make_tuple("FluidPatchsetMenu", SF_SF2, "fluid_patchset"),
+																std::make_tuple("ADLMIDICustomBanksMenu", SF_WOPL, "adl_custom_bank"),
+																std::make_tuple("OPNMIDICustomBanksMenu", SF_WOPN, "opn_custom_bank")};
 
 	for (auto &p : sfmenus)
 	{

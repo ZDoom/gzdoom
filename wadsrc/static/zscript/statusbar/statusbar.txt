@@ -318,6 +318,8 @@ class BaseStatusBar native ui
 	native void BeginStatusBar(bool forceScaled = false, int resW = -1, int resH = -1, int rel = -1);
 	native void BeginHUD(double Alpha = 1., bool forcescaled = false, int resW = -1, int resH = -1);
 	
+	native void UpdateScreenGeometry();
+
 	virtual void Init() 
 	{
 		mSmallFont = HUDFont.Create("SmallFont");
@@ -330,7 +332,7 @@ class BaseStatusBar native ui
 	native virtual clearscope void SetMugShotState (String state_name, bool wait_till_done=false, bool reset=false);
 
 	virtual void FlashItem (class<Inventory> itemtype) { artiflashTick = 4; itemflashFade = 0.75; }
-	virtual void AttachToPlayer (PlayerInfo player) { CPlayer = player; }
+	virtual void AttachToPlayer (PlayerInfo player) { CPlayer = player; UpdateScreenGeometry(); }
 	virtual void FlashCrosshair () { CrosshairSize = XHAIRPICKUPSIZE; }
 	virtual void NewGame () { if (CPlayer != null) AttachToPlayer(CPlayer); }
 	virtual void ShowPop (int popnum) { ShowLog = (popnum == POP_Log && !ShowLog); }

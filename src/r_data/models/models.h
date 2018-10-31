@@ -70,9 +70,6 @@ public:
 
 	virtual IModelVertexBuffer *CreateVertexBuffer(bool needindex, bool singleframe) = 0;
 
-	virtual void SetVertexBuffer(IModelVertexBuffer *buffer) = 0;
-	virtual void ResetVertexBuffer() = 0;
-
 	virtual VSMatrix GetViewToWorldMatrix() = 0;
 
 	virtual void BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix, bool mirrored) = 0;
@@ -478,6 +475,7 @@ struct FSpriteModelFrame
 	float angleoffset;
 	// added pithoffset, rolloffset.
 	float pitchoffset, rolloffset; // I don't want to bother with type transformations, so I made this variables float.
+	bool isVoxel;
 };
 
 FSpriteModelFrame * FindModelFrame(const PClass * ti, int sprite, int frame, bool dropped);

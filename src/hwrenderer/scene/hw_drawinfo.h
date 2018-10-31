@@ -178,6 +178,7 @@ struct HWDrawInfo
 	BitArray CurrentMapSections;	// this cannot be a single number, because a group of portals with the same displacement may link different sections.
 	area_t	in_area;
 	fixed_t viewx, viewy;	// since the nodes are still fixed point, keeping the view position  also fixed point for node traversal is faster.
+	bool multithread;
 
 	std::function<void(HWDrawInfo *, int)> DrawScene = nullptr;
 
@@ -195,6 +196,7 @@ private:
 	void WorkerThread();
 
 	void UnclipSubsector(subsector_t *sub);
+	
 	void AddLine(seg_t *seg, bool portalclip);
 	void PolySubsector(subsector_t * sub);
 	void RenderPolyBSPNode(void *node);
@@ -203,6 +205,7 @@ private:
 	void AddSpecialPortalLines(subsector_t * sub, sector_t * sector, line_t *line);
 	public:
 	void RenderThings(subsector_t * sub, sector_t * sector);
+	void RenderParticles(subsector_t *sub, sector_t *front);
 	void DoSubsector(subsector_t * sub);
 	int SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &lightdata, const secplane_t *plane);
 	int CreateOtherPlaneVertices(subsector_t *sub, const secplane_t *plane);

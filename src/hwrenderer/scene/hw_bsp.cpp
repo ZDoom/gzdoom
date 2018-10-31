@@ -41,6 +41,7 @@
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/data/flatvertices.h"
 
+CVAR(Bool, gl_multithread, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 thread_local bool isWorkerThread;
 ctpl::thread_pool renderPool(1);
@@ -127,8 +128,22 @@ void HWDrawInfo::WorkerThread()
 			GLWall wall;
 			SetupWall.Clock();
 			wall.sub = job->sub;
-			front = hw_FakeFlat(job->sub->render_sector, &fakefront, in_area, false);
-			back = job->seg->PartnerSeg ? hw_FakeFlat(job->seg->PartnerSeg->Subsector->render_sector, &fakeback, in_area, true) : nullptr;
+
+			front = hw_FakeFlat(job->sub->sector, &fakefront, in_area, false);
+			auto seg = job->seg;
+			if (seg->backsector)
+			{
+				if (front->sectornum == seg->backsector->sectornum || (seg->sidedef->Flags & WALLF_POLYOBJ))
+				{
+					back = front;
+				}
+				else
+				{
+					back = hw_FakeFlat(seg->backsector, &fakeback, in_area, true);
+				}
+			}
+			else back = nullptr;
+
 			wall.Process(this, job->seg, front, back);
 			rendered_lines++;
 			SetupWall.Unclock();
@@ -147,29 +162,17 @@ void HWDrawInfo::WorkerThread()
 
 		case RenderJob::SpriteJob:
 			SetupSprite.Clock();
-			front = hw_FakeFlat(job->sub->render_sector, &fakefront, in_area, false);
+			front = hw_FakeFlat(job->sub->sector, &fakefront, in_area, false);
 			RenderThings(job->sub, front);
 			SetupSprite.Unclock();
 			break;
 
 		case RenderJob::ParticleJob:
-		{
 			SetupSprite.Clock();
-			front = hw_FakeFlat(job->sub->render_sector, &fakefront, in_area, false);
-			for (int i = ParticlesInSubsec[job->sub->Index()]; i != NO_PARTICLE; i = Particles[i].snext)
-			{
-				if (mClipPortal)
-				{
-					int clipres = mClipPortal->ClipPoint(Particles[i].Pos);
-					if (clipres == PClip_InFront) continue;
-				}
-
-				GLSprite sprite;
-				sprite.ProcessParticle(this, &Particles[i], front);
-			}
+			front = hw_FakeFlat(job->sub->sector, &fakefront, in_area, false);
+			RenderParticles(job->sub, front);
 			SetupSprite.Unclock();
 			break;
-		}
 		}
 	}
 }
@@ -308,7 +311,19 @@ void HWDrawInfo::AddLine (seg_t *seg, bool portalclip)
 
 		if (gl_render_walls)
 		{
-			jobQueue.AddJob(RenderJob::WallJob, seg->Subsector, seg);
+			if (multithread)
+			{
+				jobQueue.AddJob(RenderJob::WallJob, seg->Subsector, seg);
+			}
+			else
+			{
+				GLWall wall;
+				SetupWall.Clock();
+				wall.sub = seg->Subsector;
+				wall.Process(this, seg, currentsector, backsector);
+				rendered_lines++;
+				SetupWall.Unclock();
+			}
 		}
 	}
 }
@@ -527,6 +542,23 @@ void HWDrawInfo::RenderThings(subsector_t * sub, sector_t * sector)
 	}
 }
 
+void HWDrawInfo::RenderParticles(subsector_t *sub, sector_t *front)
+{
+	SetupSprite.Clock();
+	for (int i = ParticlesInSubsec[sub->Index()]; i != NO_PARTICLE; i = Particles[i].snext)
+	{
+		if (mClipPortal)
+		{
+			int clipres = mClipPortal->ClipPoint(Particles[i].Pos);
+			if (clipres == PClip_InFront) continue;
+		}
+
+		GLSprite sprite;
+		sprite.ProcessParticle(this, &Particles[i], front);
+	}
+	SetupSprite.Unclock();
+}
+
 
 //==========================================================================
 //
@@ -582,18 +614,22 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 
 	if (sector->validcount != validcount)
 	{
-		if (sector->Index() == 62)
-		{
-			int a = 0;
-		}
 		screen->mVertexData->CheckUpdate(sector);
 	}
 
 	// [RH] Add particles
-	//int shade = LIGHT2SHADE((floorlightlevel + ceilinglightlevel)/2 + r_actualextralight);
 	if (gl_render_things && ParticlesInSubsec[sub->Index()] != NO_PARTICLE)
 	{
-		jobQueue.AddJob(RenderJob::ParticleJob, sub, nullptr);
+		if (multithread)
+		{
+			jobQueue.AddJob(RenderJob::ParticleJob, sub, nullptr);
+		}
+		else
+		{
+			SetupSprite.Clock();
+			RenderParticles(sub, fakesector);
+			SetupSprite.Unclock();
+		}
 	}
 
 	AddLines(sub, fakesector);
@@ -608,9 +644,18 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 		sector->validcount = validcount;
 		sector->MoreFlags |= SECMF_DRAWN;
 
-		if (gl_render_things)
+		if (gl_render_things && sector->touching_renderthings)
 		{
-			jobQueue.AddJob(RenderJob::SpriteJob, sub, nullptr);
+			if (multithread)
+			{
+				jobQueue.AddJob(RenderJob::SpriteJob, sub, nullptr);
+			}
+			else
+			{
+				SetupSprite.Clock();
+				RenderThings(sub, fakesector);
+				SetupSprite.Unclock();
+			}
 		}
 	}
 
@@ -638,7 +683,17 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 				{
 					srf |= SSRF_PROCESSED;
 
-					jobQueue.AddJob(RenderJob::FlatJob, sub);
+					if (multithread)
+					{
+						jobQueue.AddJob(RenderJob::FlatJob, sub);
+					}
+					else
+					{
+						GLFlat flat;
+						SetupFlat.Clock();
+						flat.ProcessSector(this, fakesector);
+						SetupFlat.Unclock();
+					}
 				}
 				// mark subsector as processed - but mark for rendering only if it has an actual area.
 				ss_renderflags[sub->Index()] = 
@@ -717,21 +772,29 @@ void HWDrawInfo::RenderBSP(void *node)
 
 	validcount++;	// used for processing sidedefs only once by the renderer.
 
+	multithread = gl_multithread;
+	if (multithread)
+	{
+		auto future = renderPool.push([&](int id) {
+			WorkerThread();
+		});
+		RenderBSPNode(node);
 
-	auto future = renderPool.push([&](int id) {
-		WorkerThread();
-	});
-	RenderBSPNode(node);
-
+		jobQueue.AddJob(RenderJob::TerminateJob, nullptr, nullptr);
+		Bsp.Unclock();
+		MTWait.Clock();
+		future.wait();
+		jobQueue.ReleaseAll();
+		MTWait.Unclock();
+	}
+	else
+	{
+		RenderBSPNode(node);
+		Bsp.Unclock();
+	}
 	// Process all the sprites on the current portal's back side which touch the portal.
 	if (mCurrentPortal != nullptr) mCurrentPortal->RenderAttached(this);
 
-	jobQueue.AddJob(RenderJob::TerminateJob, nullptr, nullptr);
-	Bsp.Unclock();
-	MTWait.Clock();
-	future.wait();
-	jobQueue.ReleaseAll();
-	MTWait.Unclock();
 
 	PreparePlayerSprites(Viewpoint.sector, in_area);
 }

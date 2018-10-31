@@ -40,6 +40,7 @@
 #include "hwrenderer/scene/hw_portal.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/data/flatvertices.h"
+#include <immintrin.h>
 
 CVAR(Bool, gl_multithread, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
@@ -67,8 +68,8 @@ struct RenderJob
 class RenderJobQueue
 {
 	RenderJob pool[300000];	// Way more than ever needed. The largest ever seen on a single viewpoint is around 40000.
-	std::atomic<int> readindex;
-	std::atomic<int> writeindex;
+	std::atomic<int> readindex{};
+	std::atomic<int> writeindex{};
 public:
 	void AddJob(int type, subsector_t *sub, seg_t *seg = nullptr)
 	{

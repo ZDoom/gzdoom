@@ -67,8 +67,8 @@ struct RenderJob
 class RenderJobQueue
 {
 	RenderJob pool[300000];	// Way more than ever needed. The largest ever seen on a single viewpoint is around 40000.
-	std::atomic<int> readindex = 0;
-	std::atomic<int> writeindex = 0;
+	std::atomic<int> readindex;
+	std::atomic<int> writeindex;
 public:
 	void AddJob(int type, subsector_t *sub, seg_t *seg = nullptr)
 	{
@@ -775,6 +775,7 @@ void HWDrawInfo::RenderBSP(void *node)
 	multithread = gl_multithread;
 	if (multithread)
 	{
+		jobQueue.ReleaseAll();
 		auto future = renderPool.push([&](int id) {
 			WorkerThread();
 		});
@@ -784,7 +785,6 @@ void HWDrawInfo::RenderBSP(void *node)
 		Bsp.Unclock();
 		MTWait.Clock();
 		future.wait();
-		jobQueue.ReleaseAll();
 		MTWait.Unclock();
 	}
 	else

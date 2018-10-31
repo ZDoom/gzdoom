@@ -104,10 +104,8 @@ void GLSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 		{
 			state.AlphaFunc(Alpha_GEqual, 0.f);
 		}
-		else
-		{
-			state.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
-		}
+		else if (!gltexture->tex->GetTranslucency()) state.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
+		else state.AlphaFunc(Alpha_Greater, 0.f);
 
 		if (RenderStyle.BlendOp == STYLEOP_Shadow)
 		{

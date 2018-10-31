@@ -43,8 +43,6 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/shaders/gl_shader.h"
 
-extern TArray<UserShaderDesc> usershaders;
-
 namespace OpenGLRenderer
 {
 

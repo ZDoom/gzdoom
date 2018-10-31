@@ -77,7 +77,11 @@ struct UserShaderDesc
 	FString shader;
 	MaterialShaderIndex shaderType;
 	FString defines;
+	bool disablealphatest = false;
 };
+
+extern TArray<UserShaderDesc> usershaders;
+
 
 struct FloatRect
 {

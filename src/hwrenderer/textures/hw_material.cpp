@@ -31,8 +31,6 @@
 
 EXTERN_CVAR(Bool, gl_texture_usehires)
 
-extern TArray<UserShaderDesc> usershaders;
-
 //===========================================================================
 // 
 //	Quick'n dirty image rescaling.

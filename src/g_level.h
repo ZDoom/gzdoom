@@ -507,7 +507,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 void G_StartTravel ();
 int G_FinishTravel ();
 
-void G_DoLoadLevel (int position, bool autosave);
+void G_DoLoadLevel (int position, bool autosave, bool newGame);
 
 void G_InitLevelLocals (void);
 

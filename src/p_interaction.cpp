@@ -1583,7 +1583,7 @@ dopain:
 		}
 	}
 	//ALLOWPAIN and CAUSEPAIN can still trigger infighting, even if no pain state is worked out.
-	target->reactiontime = 0;			// we're awake now...	
+	if (target->player == nullptr) target->reactiontime = 0;			// we're awake now...	
 	if (source)
 	{
 		if (source == target->target)

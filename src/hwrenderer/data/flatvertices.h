@@ -38,6 +38,7 @@ struct FFlatVertex
 	float lindex;	// lightmap texture index
 
 	void SetFlatVertex(vertex_t *vt, const secplane_t &plane);
+	void SetFlatVertex(vertex_t *vt, const secplane_t &plane, float llu, float llv, float llindex);
 	void Set(float xx, float zz, float yy, float uu, float vv)
 	{
 		x = xx;
@@ -155,7 +156,8 @@ public:
 
 private:
 	int CreateIndexedSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor, int vi, FIndexGenerationInfo &gen);
-	int CreateIndexedSectorVertices(sector_t *sec, const secplane_t &plane, int floor, FIndexGenerationInfo &gen);
+	int CreateIndexedSectorVertices(sector_t *sec, const secplane_t &plane, int floor, FIndexGenerationInfo &gen, int h, int lightmapIndex);
+	int CreateIndexedSectorVerticesLM(sector_t *sec, const secplane_t &plane, int floor, int h, int lightmapIndex);
 	int CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, TArray<FIndexGenerationInfo> &gen);
 	void CreateIndexedFlatVertices();
 

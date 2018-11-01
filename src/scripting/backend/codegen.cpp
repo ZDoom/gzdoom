@@ -10632,11 +10632,17 @@ FxExpression *FxReturnStatement::Resolve(FCompileContext &ctx)
 
 	if (ctx.ReturnProto != nullptr && ctx.ReturnProto->ReturnTypes.Size() != Args.Size())
 	{
-		ScriptPosition.Message(MSG_ERROR, "Incorrect number of return values. Got %u, but expected %u", Args.Size(), ctx.ReturnProto->ReturnTypes.Size());
-		delete this;
-		return nullptr;
+		int severity = ctx.Version >= MakeVersion(3, 7) ? MSG_ERROR : MSG_WARNING;
+		ScriptPosition.Message(severity, "Incorrect number of return values. Got %u, but expected %u", Args.Size(), ctx.ReturnProto->ReturnTypes.Size());
+		if (severity == MSG_ERROR)
+		{
+			delete this;
+			return nullptr;
+		}
+		// For older script versions this must fall through.
 	}
-	else if (Args.Size() == 0)
+	
+	if (Args.Size() == 0)
 	{
 		TArray<PType *> none(0);
 		retproto = NewPrototype(none, none);

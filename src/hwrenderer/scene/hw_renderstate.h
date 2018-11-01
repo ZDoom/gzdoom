@@ -193,7 +193,7 @@ public:
 		mBias.Reset();
 
 		mVertexBuffer = nullptr;
-		mVertexOffsets[0] = mVertexOffsets[0] = 0;
+		mVertexOffsets[0] = mVertexOffsets[1] = 0;
 		mIndexBuffer = nullptr;
 
 		mColor.Set(1.0f, 1.0f, 1.0f, 1.0f);

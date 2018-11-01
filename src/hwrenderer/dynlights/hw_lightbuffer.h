@@ -46,7 +46,7 @@ public:
     }
 
 	// Only relevant for OpenGL, so this does not need access to the render state.
-	int BindUBO(unsigned int index)
+	int BindUBO(int index)
 	{
 		if (!mBufferType && index > -1)
 		{

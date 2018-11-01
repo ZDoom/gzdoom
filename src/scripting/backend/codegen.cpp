@@ -382,7 +382,11 @@ void FxExpression::EmitCompare(VMFunctionBuilder *build, bool invert, TArray<siz
 {
 	ExpEmit op = Emit(build);
 	ExpEmit i;
-	assert(op.RegType != REGT_NIL && op.RegCount == 1 && !op.Konst);
+	assert(op.RegType != REGT_NIL && op.RegCount == 1);
+	if (op.Konst)
+	{
+		ScriptPosition.Message(MSG_WARNING, "Conditional expression is constant");
+	}
 	switch (op.RegType)
 	{
 	case REGT_INT:

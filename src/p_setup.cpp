@@ -4136,6 +4136,7 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 	// This must be done BEFORE the PolyObj Spawn!!!
 	InitRenderInfo();			// create hardware independent renderer resources for the level.
 	screen->mVertexData->CreateVBO();
+	screen->InitLightmap();
 	SWRenderer->SetColormap();	//The SW renderer needs to do some special setup for the level's default colormap.
 	InitPortalGroups();
 	P_InitHealthGroups();
@@ -4448,6 +4449,7 @@ void P_LoadLightmap(MapData *map)
 
 	// Load lightmap textures
 
+	level.LMTextureCount = numTextures;
 	level.LMTextureSize = textureSize;
 	level.LMTextureData.Resize(numTexBytes);
 	uint8_t *data = &level.LMTextureData[0];

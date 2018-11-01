@@ -91,6 +91,7 @@ struct FLevelLocals
 	// Lightmaps
 	TArray<LightmapSurface> LMSurfaces;
 	TArray<float> LMTexCoords;
+	int LMTextureCount = 0;
 	int LMTextureSize = 0;
 	TArray<uint8_t> LMTextureData;
 

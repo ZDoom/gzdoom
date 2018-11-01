@@ -62,6 +62,7 @@ enum
 	ML_BEHAVIOR,		// [RH] Hexen-style scripts. If present, THINGS
 						//		and LINEDEFS are also Hexen-style.
 	ML_CONVERSATION,	// Strife dialog (only for TEXTMAP format)
+	ML_LIGHTMAP,		// ZDRay generated lightmap
 	ML_MAX,
 
 	// [RH] These are compressed (and extended) nodes. They combine the data from

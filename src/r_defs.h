@@ -51,6 +51,7 @@ struct FLinePortal;
 struct seg_t;
 struct sector_t;
 class AActor;
+struct LightmapSurface;
 
 #define MAXWIDTH 12000
 #define MAXHEIGHT 5000
@@ -1085,6 +1086,8 @@ public:
 	int				vbocount[2];	// Total count of vertices belonging to this sector's planes. This is used when a sector height changes and also contains all attached planes.
 	int				ibocount;		// number of indices per plane (identical for all planes.) If this is -1 the index buffer is not in use.
 
+	bool HasLightmaps = false;		// Sector has lightmaps, each subsector vertex needs its own unique lightmap UV data
+
 	float GetReflect(int pos) { return gl_plane_reflection_i? reflect[pos] : 0; }
 	FSectorPortalGroup *GetPortalGroup(int plane) { return portals[plane]; }
 
@@ -1320,6 +1323,7 @@ struct line_t
 	AutomapLineStyle automapstyle;
 	int			health;		// [ZZ] for destructible geometry (0 = no special behavior)
 	int			healthgroup; // [ZZ] this is the "destructible object" id
+	LightmapSurface *lightmap[4];
 
 	DVector2 Delta() const
 	{
@@ -1468,6 +1472,8 @@ struct subsector_t
 	int Index() const;
 									// 2: has one-sided walls
 	FPortalCoverage	portalcoverage[2];
+
+	LightmapSurface *lightmap[2];
 };
 
 
@@ -1509,6 +1515,28 @@ struct FMiniBSP
 	TArray<seg_t> Segs;
 	TArray<subsector_t> Subsectors;
 	TArray<vertex_t> Verts;
+};
+
+// Lightmap data
+
+enum SurfaceType
+{
+	ST_NULL,
+	ST_MIDDLEWALL,
+	ST_UPPERWALL,
+	ST_LOWERWALL,
+	ST_CEILING,
+	ST_FLOOR
+};
+
+struct LightmapSurface
+{
+	SurfaceType Type;
+	subsector_t *Subsector;
+	line_t *Line;
+	sector_t *ControlSector;
+	uint32_t LightmapNum;
+	float *TexCoords;
 };
 
 //

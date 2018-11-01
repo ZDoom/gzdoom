@@ -585,7 +585,7 @@ uint32_t *MIDISong2::SendCommand (uint32_t *events, TrackInfo *track, uint32_t d
 		if (event == MIDI_SYSEX || event == MIDI_SYSEXEND)
 		{
 			len = track->ReadVarLen();
-			if (len >= (MAX_MIDI_EVENTS-1)*3*4)
+			if (len >= (MAX_MIDI_EVENTS-1)*3*4 || skipSysex)
 			{ // This message will never fit. Throw it away.
 				track->TrackP += len;
 			}

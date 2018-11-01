@@ -3,6 +3,9 @@
 
 #include "gl_hwtexture.h"
 
+namespace OpenGLRenderer
+{
+
 class FSamplerManager
 {
 	// We need 6 different samplers: 4 for the different clamping modes,
@@ -22,6 +25,6 @@ public:
 
 };
 
-
+}
 #endif
 

@@ -296,6 +296,8 @@ DEFINE_FIELD(AActor, lastbump)
 DEFINE_FIELD(AActor, DesignatedTeam)
 DEFINE_FIELD(AActor, BlockingMobj)
 DEFINE_FIELD(AActor, BlockingLine)
+DEFINE_FIELD(AActor, BlockingCeiling)
+DEFINE_FIELD(AActor, BlockingFloor)
 DEFINE_FIELD(AActor, PoisonDamage)
 DEFINE_FIELD(AActor, PoisonDamageType)
 DEFINE_FIELD(AActor, PoisonDuration)
@@ -478,6 +480,8 @@ void AActor::Serialize(FSerializer &arc)
 		A("smokecounter", smokecounter)
 		("blockingmobj", BlockingMobj)
 		A("blockingline", BlockingLine)
+		A("blockingceiling", BlockingCeiling)
+		A("blockingfloor", BlockingFloor)
 		A("visibletoteam", VisibleToTeam)
 		A("pushfactor", pushfactor)
 		A("species", Species)
@@ -1938,6 +1942,31 @@ bool AActor::Massacre ()
 
 void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target, bool onsky)
 {
+	// [ZZ] line damage callback
+	if (line)
+	{
+		int wside = P_PointOnLineSide(mo->Pos(), line);
+		int oside = !wside;
+		side_t* otherside = line->sidedef[oside];
+		// check if hit upper or lower part
+		if (otherside)
+		{
+			sector_t* othersector = otherside->sector;
+			double otherfloorz = othersector->floorplane.ZatPoint(mo->Pos());
+			double otherceilingz = othersector->ceilingplane.ZatPoint(mo->Pos());
+			double actualz = mo->Pos().Z;
+			if (actualz < otherfloorz && othersector->healthfloor > 0 && P_CheckLinedefVulnerable(line, wside, SECPART_Floor))
+				P_DamageSector(othersector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Floor, mo->Pos());
+			if (actualz > otherceilingz && othersector->healthceiling > 0 && P_CheckLinedefVulnerable(line, wside, SECPART_Ceiling))
+				P_DamageSector(othersector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Ceiling, mo->Pos());
+		}
+		
+		if (line->health > 0 && P_CheckLinedefVulnerable(line, wside))
+		{
+			P_DamageLinedef(line, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, wside, mo->Pos());
+		}
+	}
+
 	if (mo->flags3 & MF3_EXPLOCOUNT)
 	{
 		if (++mo->threshold < mo->DefThreshold)
@@ -2527,6 +2556,21 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 			AActor *BlockingMobj = mo->BlockingMobj;
 			line_t *BlockingLine = mo->BlockingLine;
 
+			// [ZZ] 
+			if (!BlockingLine && !BlockingMobj) // hit floor or ceiling while XY movement - sector actions
+			{
+				int hitpart = -1;
+				sector_t* hitsector = nullptr;
+				secplane_t* hitplane = nullptr;
+				if (tm.ceilingsector && mo->Z() + mo->Height > tm.ceilingsector->ceilingplane.ZatPoint(tm.pos.XY()))
+					mo->BlockingCeiling = tm.ceilingsector;
+				if (tm.floorsector && mo->Z() < tm.floorsector->floorplane.ZatPoint(tm.pos.XY()))
+					mo->BlockingFloor = tm.floorsector;
+				// the following two only set the appropriate field - to avoid issues caused by running actions right in the middle of XY movement
+				P_CheckFor3DFloorHit(mo, mo->floorz, false);
+				P_CheckFor3DCeilingHit(mo, mo->ceilingz, false);
+			}
+
 			if (!(mo->flags & MF_MISSILE) && (mo->BounceFlags & BOUNCE_MBF) 
 				&& (BlockingMobj != NULL ? P_BounceActor(mo, BlockingMobj, false) : P_BounceWall(mo)))
 			{
@@ -2689,30 +2733,40 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 explode:
 				// explode a missile
 				bool onsky = false;
-					if (tm.ceilingline &&
-						tm.ceilingline->backsector &&
-						tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
-						mo->Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint(mo->PosRelative(tm.ceilingline)))
+				if (tm.ceilingline &&
+					tm.ceilingline->backsector &&
+					tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
+					mo->Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint(mo->PosRelative(tm.ceilingline)))
+				{
+					if (!(mo->flags3 & MF3_SKYEXPLODE))
 					{
-						if (!(mo->flags3 & MF3_SKYEXPLODE))
-						{
-							// Hack to prevent missiles exploding against the sky.
-							// Does not handle sky floors.
-							mo->Destroy();
-							return Oldfloorz;
-						}
-						else onsky = true;
+						// Hack to prevent missiles exploding against the sky.
+						// Does not handle sky floors.
+						mo->Destroy();
+						return Oldfloorz;
 					}
-					// [RH] Don't explode on horizon lines.
-					if (mo->BlockingLine != NULL && mo->BlockingLine->special == Line_Horizon)
+					else onsky = true;
+				}
+				// [RH] Don't explode on horizon lines.
+				if (mo->BlockingLine != NULL && mo->BlockingLine->special == Line_Horizon)
+				{
+					if (!(mo->flags3 & MF3_SKYEXPLODE))
 					{
-						if (!(mo->flags3 & MF3_SKYEXPLODE))
-						{
-							mo->Destroy();
-							return Oldfloorz;
-						}
-						else onsky = true;
+						mo->Destroy();
+						return Oldfloorz;
 					}
+					else onsky = true;
+				}
+				if (mo->BlockingCeiling) // hit floor or ceiling while XY movement
+				{
+					if (mo->BlockingCeiling->healthceiling > 0 && P_CheckSectorVulnerable(mo->BlockingCeiling, SECPART_Ceiling))
+						P_DamageSector(mo->BlockingCeiling, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Ceiling, mo->Pos());
+				}
+				if (mo->BlockingFloor)
+				{
+					if (mo->BlockingFloor->healthfloor > 0 && P_CheckSectorVulnerable(mo->BlockingFloor, SECPART_Floor))
+						P_DamageSector(mo->BlockingFloor, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Floor, mo->Pos());
+				}
 				P_ExplodeMissile (mo, mo->BlockingLine, BlockingMobj, onsky);
 				return Oldfloorz;
 			}
@@ -3065,13 +3119,14 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 			mo->Sector->SecActTarget != NULL &&
 			mo->Sector->floorplane.ZatPoint(mo) == mo->floorz)
 		{ // [RH] Let the sector do something to the actor
-			mo->Sector->TriggerSectorActions (mo, SECSPAC_HitFloor);
+			mo->Sector->TriggerSectorActions(mo, SECSPAC_HitFloor);
 		}
-		P_CheckFor3DFloorHit(mo, mo->floorz);
+		P_CheckFor3DFloorHit(mo, mo->floorz, true);
 		// [RH] Need to recheck this because the sector action might have
 		// teleported the actor so it is no longer below the floor.
 		if (mo->Z() <= mo->floorz)
 		{
+			mo->BlockingFloor = mo->Sector;
 			if ((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
 			{
 				mo->SetZ(mo->floorz);
@@ -3105,6 +3160,9 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 						else onsky = true;
 					}
 					P_HitFloor (mo);
+					// hit floor: direct damage callback
+					if (mo->Sector->healthfloor > 0 && P_CheckSectorVulnerable(mo->Sector, SECPART_Floor))
+						P_DamageSector(mo->Sector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Floor, mo->Pos());
 					P_ExplodeMissile (mo, NULL, NULL, onsky);
 					return;
 				}
@@ -3175,11 +3233,12 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 		{ // [RH] Let the sector do something to the actor
 			mo->Sector->TriggerSectorActions (mo, SECSPAC_HitCeiling);
 		}
-		P_CheckFor3DCeilingHit(mo, mo->ceilingz);
+		P_CheckFor3DCeilingHit(mo, mo->ceilingz, true);
 		// [RH] Need to recheck this because the sector action might have
 		// teleported the actor so it is no longer above the ceiling.
 		if (mo->Top() > mo->ceilingz)
 		{
+			mo->BlockingCeiling = mo->Sector;
 			mo->SetZ(mo->ceilingz - mo->Height);
 			if (mo->BounceFlags & BOUNCE_Ceilings)
 			{	// ceiling bounce
@@ -3208,6 +3267,9 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 					}
 					else onsky = true;
 				}
+				// hit ceiling: direct damage callback
+				if (mo->Sector->healthceiling > 0 && P_CheckSectorVulnerable(mo->Sector, SECPART_Ceiling))
+					P_DamageSector(mo->Sector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Ceiling, mo->Pos());
 				P_ExplodeMissile (mo, NULL, NULL, onsky);
 				return;
 			}
@@ -4454,12 +4516,21 @@ void AActor::Tick ()
 		}
 
 		// Handle X and Y velocities
-		BlockingMobj = NULL;
+		BlockingMobj = nullptr;
+		sector_t* oldBlockingCeiling = BlockingCeiling;
+		sector_t* oldBlockingFloor = BlockingFloor;
+		BlockingFloor = nullptr;
+		BlockingCeiling = nullptr;
 		double oldfloorz = P_XYMovement (this, cumm);
 		if (ObjectFlags & OF_EuthanizeMe)
 		{ // actor was destroyed
 			return;
 		}
+		// [ZZ] trigger hit floor/hit ceiling actions from XY movement
+		if (BlockingFloor && BlockingFloor != oldBlockingFloor && (!player || !(player->cheats & CF_PREDICTING)) && BlockingFloor->SecActTarget)
+			BlockingFloor->TriggerSectorActions(this, SECSPAC_HitFloor);
+		if (BlockingCeiling && BlockingCeiling != oldBlockingCeiling && (!player || !(player->cheats & CF_PREDICTING)) && BlockingCeiling->SecActTarget)
+			BlockingCeiling->TriggerSectorActions(this, SECSPAC_HitCeiling);
 		if (Vel.X == 0 && Vel.Y == 0) // Actors at rest
 		{
 			if (flags2 & MF2_BLASTED)
@@ -4705,11 +4776,11 @@ void AActor::CheckSectorTransition(sector_t *oldsec)
 		}
 		if (Z() == floorz)
 		{
-			P_CheckFor3DFloorHit(this, Z());
+			P_CheckFor3DFloorHit(this, Z(), true);
 		}
 		if (Top() == ceilingz)
 		{
-			P_CheckFor3DCeilingHit(this, Top());
+			P_CheckFor3DCeilingHit(this, Top(), true);
 		}
 	}
 }

@@ -715,27 +715,6 @@ DEFINE_ACTION_FUNCTION(DConversationMenu, SendConversationReply)
 }
 
 
-// Needed for the conversion process.
-class DBrokenLines : public DObject
-{
-	DECLARE_ABSTRACT_CLASS(DBrokenLines, DObject)
-
-public:
-	FBrokenLines *mBroken;
-	unsigned int mCount;
-
-	DBrokenLines(FBrokenLines *broken, unsigned int count)
-	{
-		mBroken = broken;
-		mCount = count;
-	}
-
-	void OnDestroy() override
-	{
-		V_FreeBrokenLines(mBroken);
-	}
-};
-
 //============================================================================
 //
 // P_FreeStrifeConversations

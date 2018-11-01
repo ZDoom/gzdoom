@@ -95,6 +95,8 @@ public:
 	Blip_Buffer();
 	~Blip_Buffer();
 	
+	Blip_Buffer(Blip_Buffer &&) = default;
+
 	// Deprecated
 	typedef blip_resampled_time_t resampled_time_t;
 	blargg_err_t sample_rate( long r ) { return set_sample_rate( r ); }

@@ -1054,7 +1054,7 @@ void G_Ticker ()
 		switch (gameaction)
 		{
 		case ga_loadlevel:
-			G_DoLoadLevel (-1, false);
+			G_DoLoadLevel (-1, false, false);
 			break;
 		case ga_recordgame:
 			G_CheckDemoStatus();
@@ -2986,6 +2986,7 @@ DEFINE_GLOBAL(playeringame)
 DEFINE_GLOBAL(PlayerClasses)
 DEFINE_GLOBAL_NAMED(Skins, PlayerSkins)
 DEFINE_GLOBAL(consoleplayer)
+DEFINE_GLOBAL_NAMED(PClass::AllClasses, AllClasses)
 DEFINE_GLOBAL_NAMED(PClassActor::AllActorClasses, AllActorClasses)
 DEFINE_GLOBAL(validcount)
 DEFINE_GLOBAL(multiplayer)

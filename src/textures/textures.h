@@ -77,7 +77,11 @@ struct UserShaderDesc
 	FString shader;
 	MaterialShaderIndex shaderType;
 	FString defines;
+	bool disablealphatest = false;
 };
+
+extern TArray<UserShaderDesc> usershaders;
+
 
 struct FloatRect
 {
@@ -259,7 +263,7 @@ public:
 	uint8_t bComplex:1;		// Will be used to mark extended MultipatchTextures that have to be
 							// fully composited before subjected to any kind of postprocessing instead of
 							// doing it per patch.
-	uint8_t bMultiPatch:1;		// This is a multipatch texture (we really could use real type info for textures...)
+	uint8_t bMultiPatch:2;		// This is a multipatch texture (we really could use real type info for textures...)
 	uint8_t bKeepAround:1;		// This texture was used as part of a multi-patch texture. Do not free it.
 	uint8_t bFullNameTexture : 1;
 	uint8_t bBrightmapChecked : 1;				// Set to 1 if brightmap has been checked
@@ -787,6 +791,13 @@ public:
 
 
 	friend struct FCanvasTextureInfo;
+};
+
+// A wrapper around a hardware texture, to allow using it in the 2D drawing interface.
+class FWrapperTexture : public FTexture
+{
+public:
+	FWrapperTexture(int w, int h, int bits = 1);
 };
 
 extern FTextureManager TexMan;

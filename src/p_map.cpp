@@ -3649,22 +3649,6 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 			mo->Angles.Yaw = angle;
 			mo->VelFromAngle(speed);
 			mo->PlayBounceSound(true);
-			if (mo->BounceFlags & BOUNCE_UseBounceState)
-			{
-				FName names[] = { NAME_Bounce, NAME_Actor, NAME_Creature };
-				FState *bouncestate;
-				int count = 2;
-
-				if ((BlockingMobj->flags & MF_SHOOTABLE) && !(BlockingMobj->flags & MF_NOBLOOD))
-				{
-					count = 3;
-				}
-				bouncestate = mo->FindState(count, names);
-				if (bouncestate != NULL)
-				{
-					mo->SetState(bouncestate);
-				}
-			}
 		}
 		else
 		{
@@ -3701,6 +3685,21 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 			{
 				if (!(mo->flags & MF_NOGRAVITY) && (mo->Vel.Z < 3.))
 					mo->BounceFlags &= ~BOUNCE_TypeMask;
+			}
+		}
+		if (mo->BounceFlags & BOUNCE_UseBounceState)
+		{
+			FName names[] = { NAME_Bounce, NAME_Actor, NAME_Creature };
+			FState *bouncestate;
+			int count = 2;
+ 			if ((BlockingMobj->flags & MF_SHOOTABLE) && !(BlockingMobj->flags & MF_NOBLOOD))
+			{
+				count = 3;
+			}
+			bouncestate = mo->FindState(count, names);
+			if (bouncestate != NULL)
+			{
+				mo->SetState(bouncestate);
 			}
 		}
 		return true;
@@ -4684,6 +4683,8 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	{
 		if (trace.HitType != TRACE_HitActor)
 		{
+			P_GeometryLineAttack(trace, t1, damage, damageType);
+
 			// position a bit closer for puffs
 			if (nointeract || trace.HitType != TRACE_HitWall || ((trace.Line->special != Line_Horizon) || spawnSky))
 			{
@@ -5517,6 +5518,8 @@ void P_RailAttack(FRailParams *p)
 		}
 	}
 
+	P_GeometryLineAttack(trace, p->source, p->damage, damagetype);
+
 	// Spawn a decal or puff at the point where the trace ended.
 	if (trace.HitType == TRACE_HitWall)
 	{
@@ -6126,6 +6129,8 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 	{ // The source is actually the same as the spot, even if that wasn't what we received.
 		bombsource = bombspot;
 	}
+
+	P_GeometryRadiusAttack(bombspot, bombsource, bombdamage, bombdistance, bombmod, fulldamagedistance);
 
 	int count = 0;
 	while ((it.Next(&cres)))

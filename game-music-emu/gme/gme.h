@@ -1,6 +1,6 @@
 /* Game music emulator library C interface (also usable from C++) */
 
-/* Game_Music_Emu 0.6.1 */
+/* Game_Music_Emu 0.6.2 */
 #ifndef GME_H
 #define GME_H
 
@@ -8,7 +8,7 @@
 	extern "C" {
 #endif
 
-#define GME_VERSION 0x000601 /* 1 byte major, 1 byte minor, 1 byte patch-level */
+#define GME_VERSION 0x000602 /* 1 byte major, 1 byte minor, 1 byte patch-level */
 
 /* Error string returned by library functions, or NULL if no error (success) */
 typedef const char* gme_err_t;
@@ -187,13 +187,18 @@ const char* gme_type_system( gme_type_t );
 /* True if this music file type supports multiple tracks */
 int gme_type_multitrack( gme_type_t );
 
+/* whether the pcm output retrieved by gme_play() will have all 8 voices rendered to their
+ * individual stereo channel or (if false) these voices get mixed into one single stereo channel
+ * @since 0.6.2 */
+int gme_multi_channel( Music_Emu const* );
 
 /******** Advanced file loading ********/
 
 /* Error returned if file type is not supported */
 extern const char* const gme_wrong_file_type;
 
-/* Same as gme_open_file(), but uses file data already in memory. Makes copy of data. */
+/* Same as gme_open_file(), but uses file data already in memory. Makes copy of data.
+ * The resulting Music_Emu object will be set to single channel mode. */
 gme_err_t gme_open_data( void const* data, long size, Music_Emu** out, int sample_rate );
 
 /* Determine likely game music type based on first four bytes of file. Returns
@@ -204,6 +209,14 @@ const char* gme_identify_header( void const* header );
 /* Get corresponding music type for file path or extension passed in. */
 gme_type_t gme_identify_extension( const char path_or_extension [] );
 
+/**
+ * Get typical file extension for a given music type.  This is not a replacement
+ * for a file content identification library (but see gme_identify_header).
+ *
+ * @since 0.6.2
+ */
+const char* gme_type_extension( gme_type_t music_type );
+
 /* Determine file type based on file's extension or header (if extension isn't recognized).
 Sets *type_out to type, or 0 if unrecognized or error. */
 gme_err_t gme_identify_file( const char path [], gme_type_t* type_out );
@@ -211,6 +224,13 @@ gme_err_t gme_identify_file( const char path [], gme_type_t* type_out );
 /* Create new emulator and set sample rate. Returns NULL if out of memory. If you only need
 track information, pass gme_info_only for sample_rate. */
 Music_Emu* gme_new_emu( gme_type_t, int sample_rate );
+
+/* Create new multichannel emulator and set sample rate. Returns NULL if out of memory.
+ * If you only need track information, pass gme_info_only for sample_rate.
+ * (see gme_multi_channel for more information on multichannel support)
+ * @since 0.6.2
+ */
+Music_Emu* gme_new_emu_multi_channel( gme_type_t, int sample_rate );
 
 /* Load music file into emulator */
 gme_err_t gme_load_file( Music_Emu*, const char path [] );

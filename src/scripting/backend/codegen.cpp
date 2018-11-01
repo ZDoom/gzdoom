@@ -382,7 +382,11 @@ void FxExpression::EmitCompare(VMFunctionBuilder *build, bool invert, TArray<siz
 {
 	ExpEmit op = Emit(build);
 	ExpEmit i;
-	assert(op.RegType != REGT_NIL && op.RegCount == 1 && !op.Konst);
+	assert(op.RegType != REGT_NIL && op.RegCount == 1);
+	if (op.Konst)
+	{
+		ScriptPosition.Message(MSG_WARNING, "Conditional expression is constant");
+	}
 	switch (op.RegType)
 	{
 	case REGT_INT:
@@ -10629,6 +10633,19 @@ FxExpression *FxReturnStatement::Resolve(FCompileContext &ctx)
 	}
 
 	PPrototype *retproto;
+
+	if (ctx.ReturnProto != nullptr && ctx.ReturnProto->ReturnTypes.Size() != Args.Size())
+	{
+		int severity = ctx.Version >= MakeVersion(3, 7) ? MSG_ERROR : MSG_WARNING;
+		ScriptPosition.Message(severity, "Incorrect number of return values. Got %u, but expected %u", Args.Size(), ctx.ReturnProto->ReturnTypes.Size());
+		if (severity == MSG_ERROR)
+		{
+			delete this;
+			return nullptr;
+		}
+		// For older script versions this must fall through.
+	}
+	
 	if (Args.Size() == 0)
 	{
 		TArray<PType *> none(0);
@@ -10645,7 +10662,7 @@ FxExpression *FxReturnStatement::Resolve(FCompileContext &ctx)
 		}
 		retproto = Args[0]->ReturnProto();
 	}
-	else if (ctx.ReturnProto != nullptr && ctx.ReturnProto->ReturnTypes.Size() == Args.Size())
+	else
 	{
 		for (unsigned i = 0; i < Args.Size(); i++)
 		{
@@ -10659,12 +10676,6 @@ FxExpression *FxReturnStatement::Resolve(FCompileContext &ctx)
 			return nullptr;
 		}
 		return this;	// no point calling CheckReturn here.
-	}
-	else
-	{
-		ScriptPosition.Message(MSG_ERROR, "Incorrect number of return values. Got %u, but expected %u", Args.Size(), ctx.ReturnProto->ReturnTypes.Size());
-		delete this;
-		return nullptr;
 	}
 
 	ctx.CheckReturn(retproto, ScriptPosition);

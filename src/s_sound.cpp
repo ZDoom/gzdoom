@@ -2737,8 +2737,8 @@ DEFINE_ACTION_FUNCTION(DObject, S_ChangeMusic)
 	PARAM_PROLOGUE;
 	PARAM_STRING(music);
 	PARAM_INT_DEF(order);
-	PARAM_BOOL(looping);
-	PARAM_BOOL(force);
+	PARAM_BOOL_DEF(looping);
+	PARAM_BOOL_DEF(force);
 	ACTION_RETURN_BOOL(S_ChangeMusic(music, order, looping, force));
 }
 

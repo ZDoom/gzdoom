@@ -1366,6 +1366,14 @@ enum EPlayerState
 	PST_GONE	// Player has left the game
 }
 
+enum EPlayerGender
+{
+	GENDER_MALE,
+	GENDER_FEMALE,
+	GENDER_NEUTRAL,
+	GENDER_OTHER
+}
+
 struct PlayerInfo native play	// this is what internally is known as player_t
 {
 	// technically engine constants but the only part of the playsim using them is the player.

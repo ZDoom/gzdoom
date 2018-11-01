@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 
 #include "Kss_Scc_Apu.h"
 
@@ -43,7 +43,7 @@ void Scc_Apu::run_until( blip_time_t end_time )
 				volume = (regs [0x8A + index] & 0x0F) * (amp_range / 256 / 15);
 		}
 		
-		BOOST::int8_t const* wave = (BOOST::int8_t*) regs + index * wave_size;
+		int8_t const* wave = (int8_t*) regs + index * wave_size;
 		if ( index == osc_count - 1 )
 			wave -= wave_size; // last two oscs share wave
 		{

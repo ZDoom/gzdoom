@@ -207,7 +207,13 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, GenderChanged)
 	// only allow if the menu is active to prevent abuse.
 	if (self == CurrentMenu)
 	{
-		cvar_set("gender", v == 0 ? "male" : v == 1 ? "female" : "other");
+		switch(v)
+		{
+		case 0: cvar_set("gender", "male");    break;
+		case 1: cvar_set("gender", "female");  break;
+		case 2: cvar_set("gender", "neutral"); break;
+		case 3: cvar_set("gender", "other");   break;
+		}
 	}
 	return 0;
 }

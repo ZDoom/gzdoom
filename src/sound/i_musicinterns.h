@@ -82,6 +82,7 @@ public:
 	virtual bool Preprocess(MIDIStreamer *song, bool looping);
 	virtual FString GetStats();
 	virtual int GetDeviceType() const { return MDEV_DEFAULT; }
+	virtual bool CanHandleSysex() const { return true; }
 };
 
 

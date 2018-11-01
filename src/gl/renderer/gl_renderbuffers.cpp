@@ -38,6 +38,9 @@
 
 CVAR(Int, gl_multisample, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
+namespace OpenGLRenderer
+{
+
 //==========================================================================
 //
 // Initialize render buffers and textures used in rendering passes
@@ -966,9 +969,9 @@ void FGLRenderBuffers::RenderEffect(const FString &name)
 		if (step.Uniforms.Size > 0)
 		{
 			if (!shader->Uniforms)
-				shader->Uniforms.reset(screen->CreateUniformBuffer(step.Uniforms.Size));
-			shader->Uniforms->SetData(step.Uniforms.Data);
-			shader->Uniforms->Bind(POSTPROCESS_BINDINGPOINT);
+				shader->Uniforms.reset(screen->CreateDataBuffer(POSTPROCESS_BINDINGPOINT, false));
+			shader->Uniforms->SetData(step.Uniforms.Size, step.Uniforms.Data);
+			shader->Uniforms->BindBase();
 		}
 
 		// Set shader
@@ -985,4 +988,6 @@ void FGLRenderBuffers::RenderEffect(const FString &name)
 	glViewport(screen->mScreenViewport.left, screen->mScreenViewport.top, screen->mScreenViewport.width, screen->mScreenViewport.height);
 
 	FGLDebug::PopGroup();
+}
+
 }

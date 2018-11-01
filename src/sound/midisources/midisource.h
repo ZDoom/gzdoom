@@ -25,6 +25,7 @@ class MIDISource
 protected:
 
 	bool isLooping = false;
+	bool skipSysex = false;
 	int Division = 0;
 	int Tempo = 500000;
 	int InitialTempo = 500000;
@@ -54,6 +55,8 @@ public:
 		LoopLimit = looplimit;
 		isLooping = looped;
 	}
+
+	void SkipSysex() { skipSysex = true; }
 	
 	bool isValid() const { return Division > 0; }
 	int getDivision() const { return Division; }

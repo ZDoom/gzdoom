@@ -34,6 +34,9 @@
 #include "hwrenderer/utility/hw_shaderpatcher.h"
 #include "w_wad.h"
 
+namespace OpenGLRenderer
+{
+
 FShaderProgram::FShaderProgram()
 {
 	for (int i = 0; i < NumShaderTypes; i++)
@@ -248,4 +251,6 @@ FString FShaderProgram::PatchShader(ShaderType type, const FString &code, const 
 	}
 
 	return patchedCode;
+}
+
 }

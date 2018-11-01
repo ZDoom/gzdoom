@@ -28,17 +28,11 @@
 
 extern bool gl_shaderactive;
 
-enum
-{
-	VATTR_VERTEX = 0,
-	VATTR_TEXCOORD = 1,
-	VATTR_COLOR = 2,
-	VATTR_VERTEX2 = 3,
-	VATTR_NORMAL = 4
-};
-
-class FShaderCollection;
 struct HWViewpointUniforms;
+
+namespace OpenGLRenderer
+{
+	class FShaderCollection;
 
 //==========================================================================
 //
@@ -234,7 +228,7 @@ public:
 class FShader
 {
 	friend class FShaderCollection;
-	friend class FRenderState;
+	friend class FGLRenderState;
 
 	unsigned int hShader;
 	unsigned int hVertProg;
@@ -269,9 +263,6 @@ class FShader
 
 
 public:
-	int vertexmatrix_index;
-	int texcoordmatrix_index;
-	int quadmode_index;
 	int fakevb_index;
 private:
 	int currentglowstate = 0;
@@ -353,5 +344,6 @@ public:
 	}
 };
 
+}
 #endif
 

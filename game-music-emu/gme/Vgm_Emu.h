@@ -1,6 +1,6 @@
 // Sega Master System/Mark III, Sega Genesis/Mega Drive, BBC Micro VGM music file emulator
 
-// Game_Music_Emu 0.6.0
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 #ifndef VGM_EMU_H
 #define VGM_EMU_H
 
@@ -16,6 +16,8 @@ public:
 	// True if custom buffer and custom equalization are supported
 	// TODO: move into Music_Emu and rename to something like supports_custom_buffer()
 	bool is_classic_emu() const { return !uses_fm; }
+	
+	blargg_err_t set_multi_channel ( bool is_enabled ) override;
 	
 	// Disable running FM chips at higher than normal rate. Will result in slightly
 	// more aliasing of high notes.

@@ -86,6 +86,12 @@ public:
 	bool Update() override;
 	void PrecacheInstruments(const uint16_t *instruments, int count);
 	DWORD PlayerLoop();
+	bool CanHandleSysex() const override
+	{
+		// No Sysex for GS synth.
+		return VolumeWorks;
+	}
+
 
 //protected:
 	static void CALLBACK CallbackFunc(HMIDIOUT, UINT, DWORD_PTR, DWORD, DWORD);

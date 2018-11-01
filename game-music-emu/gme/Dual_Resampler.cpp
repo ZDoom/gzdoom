@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 
 #include "Dual_Resampler.h"
 
@@ -18,7 +18,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
 #include "blargg_source.h"
 
-//unsigned const resampler_extra = 256;
+unsigned const resampler_extra = 256;
 
 Dual_Resampler::Dual_Resampler() :
 	sample_buf_size(0),
@@ -68,10 +68,13 @@ void Dual_Resampler::play_frame_( Blip_Buffer& blip_buf, dsample_t* out )
 	assert( blip_buf.samples_avail() == pair_count );
 	
 	resampler.write( new_count );
-	
+
+#ifdef	NDEBUG // Avoid warning when asserts are disabled
+	resampler.read( sample_buf.begin(), sample_buf_size );
+#else
 	long count = resampler.read( sample_buf.begin(), sample_buf_size );
 	assert( count == (long) sample_buf_size );
-	(void)count;	// Silence warning in non-debug build
+#endif
 	
 	mix_samples( blip_buf, out );
 	blip_buf.remove_samples( pair_count );
@@ -119,17 +122,17 @@ void Dual_Resampler::mix_samples( Blip_Buffer& blip_buf, dsample_t* out )
 	{
 		int s = sn.read();
 		blargg_long l = (blargg_long) in [0] * 2 + s;
-		if ( (BOOST::int16_t) l != l )
+		if ( (int16_t) l != l )
 			l = 0x7FFF - (l >> 24);
 		
 		sn.next( bass );
 		blargg_long r = (blargg_long) in [1] * 2 + s;
-		if ( (BOOST::int16_t) r != r )
+		if ( (int16_t) r != r )
 			r = 0x7FFF - (r >> 24);
 		
 		in += 2;
-		out [0] = (dsample_t)l;
-		out [1] = (dsample_t)r;
+		out [0] = l;
+		out [1] = r;
 		out += 2;
 	}
 	

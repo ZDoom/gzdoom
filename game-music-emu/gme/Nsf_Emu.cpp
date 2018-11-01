@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 
 #include "Nsf_Emu.h"
 
@@ -130,7 +130,7 @@ static Music_Emu* new_nsf_emu () { return BLARGG_NEW Nsf_Emu ; }
 static Music_Emu* new_nsf_file() { return BLARGG_NEW Nsf_File; }
 
 static gme_type_t_ const gme_nsf_type_ = { "Nintendo NES", 0, &new_nsf_emu, &new_nsf_file, "NSF", 1 };
-gme_type_t const gme_nsf_type = &gme_nsf_type_;
+BLARGG_EXPORT extern gme_type_t const gme_nsf_type = &gme_nsf_type_;
 
 
 // Setup

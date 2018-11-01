@@ -56,6 +56,8 @@ private:
 	void MarkViewFrustum();
 	void InvertSegments();
 
+	static bool IsSolidLine(seg_t *line);
+
 	bool IsSegmentCulled(angle_t angle1, angle_t angle2) const;
 
 	void CullNode(void *node);

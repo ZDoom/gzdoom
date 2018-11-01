@@ -42,7 +42,9 @@
 #include "hwrenderer/textures/hw_material.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/data/flatvertices.h"
+#include "hwrenderer/dynlights/hw_lightbuffer.h"
 #include "hw_drawstructs.h"
+#include "hw_renderstate.h"
 
 #ifdef _DEBUG
 CVAR(Int, gl_breaksec, -1, 0)
@@ -118,7 +120,6 @@ void GLFlat::CreateSkyboxVertices(FFlatVertex *vert)
 		if (y > maxy) maxy = y;
 	}
 
-	float z = plane.plane.ZatPoint(0., 0.) + dz;
 	static float uvals[] = { 0, 0, 1, 1 };
 	static float vvals[] = { 1, 0, 0, 1 };
 	int rot = -xs_FloorToInt(plane.Angle / 90.f);
@@ -135,13 +136,16 @@ void GLFlat::CreateSkyboxVertices(FFlatVertex *vert)
 //
 //==========================================================================
 
-bool GLFlat::SetupLights(int pass, FLightNode * node, FDynLightData &lightdata, int portalgroup)
+void GLFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &lightdata, int portalgroup)
 {
 	Plane p;
 
 	lightdata.Clear();
-	if (renderstyle == STYLE_Add && !level.lightadditivesurfaces) return false;	// no lights on additively blended surfaces.
-
+	if (renderstyle == STYLE_Add && !level.lightadditivesurfaces)
+	{
+		dynlightindex = -1;
+		return;	// no lights on additively blended surfaces.
+	}
 	while (node)
 	{
 		ADynamicLight * light = node->lightsource;
@@ -163,21 +167,183 @@ bool GLFlat::SetupLights(int pass, FLightNode * node, FDynLightData &lightdata, 
 		}
 
 		p.Set(plane.plane.Normal(), plane.plane.fD());
-		lightdata.GetLight(portalgroup, p, light, false);
+		draw_dlightf += lightdata.GetLight(portalgroup, p, light, false);
 		node = node->nextLight;
 	}
 
-	return true;
+	dynlightindex = screen->mLights->UploadLights(lightdata);
 }
 
-bool GLFlat::SetupSubsectorLights(int pass, subsector_t * sub, FDynLightData &lightdata)
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 {
-	return SetupLights(pass, sub->lighthead, lightdata, sub->sector->PortalGroup);
+	auto vcount = sector->ibocount;
+
+	if (level.HasDynamicLights && screen->BuffersArePersistent())
+	{
+		SetupLights(di, sector->lighthead, lightdata, sector->PortalGroup);
+	}
+	state.SetLightIndex(dynlightindex);
+	if (vcount > 0 && !di->ClipLineShouldBeActive())
+	{
+		state.DrawIndexed(DT_Triangles, iboindex, vcount);
+		flatvertices += vcount;
+		flatprimitives++;
+	}
+	else
+	{
+		int index = iboindex;
+		bool applied = false;
+		for (int i = 0; i < sector->subsectorcount; i++)
+		{
+			subsector_t * sub = sector->subsectors[i];
+			if (sub->numlines <= 2) continue;
+
+			if (di->ss_renderflags[sub->Index()] & renderflags)
+			{
+				state.DrawIndexed(DT_Triangles, index, (sub->numlines - 2) * 3, !applied);
+				applied = true;
+				flatvertices += sub->numlines;
+				flatprimitives++;
+			}
+			index += (sub->numlines - 2) * 3;
+		}
+	}
+
+	if (!(renderflags&SSRF_RENDER3DPLANES))
+	{
+		// Draw the subsectors assigned to it due to missing textures
+		gl_subsectorrendernode * node = (renderflags&SSRF_RENDERFLOOR) ?
+			di->GetOtherFloorPlanes(sector->sectornum) :
+			di->GetOtherCeilingPlanes(sector->sectornum);
+
+		while (node)
+		{
+			state.SetLightIndex(node->lightindex);
+			auto num = node->sub->numlines;
+			flatvertices += num;
+			flatprimitives++;
+			state.Draw(DT_TriangleFan,node->vertexindex, num);
+			node = node->next;
+		}
+		// Flood gaps with the back side's ceiling/floor texture
+		// This requires a stencil because the projected plane interferes with
+		// the depth buffer
+		gl_floodrendernode * fnode = (renderflags&SSRF_RENDERFLOOR) ?
+			di->GetFloodFloorSegs(sector->sectornum) :
+			di->GetFloodCeilingSegs(sector->sectornum);
+
+		state.SetLightIndex(dynlightindex);
+		while (fnode)
+		{
+			flatvertices += 12;
+			flatprimitives += 3;
+
+			// Push bleeding floor/ceiling textures back a little in the z-buffer
+			// so they don't interfere with overlapping mid textures.
+			state.SetDepthBias(1, 128);
+
+			// Create stencil 
+			state.SetEffect(EFF_STENCIL);
+			state.EnableTexture(false);
+			state.SetStencil(0, SOP_Increment, SF_ColorMaskOff);
+			state.Draw(DT_TriangleFan,fnode->vertexindex, 4);
+
+			// Draw projected plane into stencil
+			state.EnableTexture(true);
+			state.SetEffect(EFF_NONE);
+			state.SetStencil(1, SOP_Keep, SF_DepthMaskOff);
+			state.EnableDepthTest(false);
+			state.Draw(DT_TriangleFan,fnode->vertexindex + 4, 4);
+
+			// clear stencil
+			state.SetEffect(EFF_STENCIL);
+			state.EnableTexture(false);
+			state.SetStencil(1, SOP_Decrement, SF_ColorMaskOff | SF_DepthMaskOff);
+			state.Draw(DT_TriangleFan,fnode->vertexindex, 4);
+
+			// restore old stencil op.
+			state.EnableTexture(true);
+			state.EnableDepthTest(true);
+			state.SetEffect(EFF_NONE);
+			state.SetDepthBias(0, 0);
+			state.SetStencil(0, SOP_Keep, SF_AllOn);
+
+			fnode = fnode->next;
+		}
+
+	}
 }
 
-bool GLFlat::SetupSectorLights(int pass, sector_t * sec, FDynLightData &lightdata)
+//==========================================================================
+//
+//
+//
+//==========================================================================
+void GLFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 {
-	return SetupLights(pass, sec->lighthead, lightdata, sec->PortalGroup);
+#ifdef _DEBUG
+	if (sector->sectornum == gl_breaksec)
+	{
+		int a = 0;
+	}
+#endif
+
+	int rel = getExtraLight();
+
+	state.SetNormal(plane.plane.Normal().X, plane.plane.Normal().Z, plane.plane.Normal().Y);
+
+	state.SetColor(lightlevel, rel, di->isFullbrightScene(), Colormap, alpha);
+	state.SetFog(lightlevel, rel, di->isFullbrightScene(), &Colormap, false);
+	if (!gltexture || !gltexture->tex->isFullbright())
+		state.SetObjectColor(FlatColor | 0xff000000);
+
+	if (!translucent)
+	{
+		if (sector->special != GLSector_Skybox)
+		{
+			state.SetMaterial(gltexture, CLAMP_NONE, 0, -1);
+			state.SetPlaneTextureRotation(&plane, gltexture);
+			DrawSubsectors(di, state);
+			state.EnableTextureMatrix(false);
+		}
+		else
+		{
+			state.SetMaterial(gltexture, CLAMP_XY, 0, -1);
+			state.SetLightIndex(dynlightindex);
+			state.Draw(DT_TriangleFan,iboindex, 4);
+			flatvertices += 4;
+			flatprimitives++;
+		}
+		state.SetObjectColor(0xffffffff);
+	}
+	else
+	{
+		state.SetRenderStyle(renderstyle);
+		if (!gltexture)
+		{
+			state.AlphaFunc(Alpha_GEqual, 0.f);
+			state.EnableTexture(false);
+			DrawSubsectors(di, state);
+			state.EnableTexture(true);
+		}
+		else
+		{
+			if (!gltexture->tex->GetTranslucency()) state.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
+			else state.AlphaFunc(Alpha_GEqual, 0.f);
+			state.SetMaterial(gltexture, CLAMP_NONE, 0, -1);
+			state.SetPlaneTextureRotation(&plane, gltexture);
+			DrawSubsectors(di, state);
+			state.EnableTextureMatrix(false);
+		}
+		state.SetRenderStyle(DefaultRenderStyle());
+		state.SetObjectColor(0xffffffff);
+	}
 }
 
 //==========================================================================
@@ -194,7 +360,13 @@ inline void GLFlat::PutFlat(HWDrawInfo *di, bool fog)
 	{
 		Colormap.Clear();
 	}
-	dynlightindex = -1;	// make sure this is always initialized to something proper.
+	else if (!screen->BuffersArePersistent())
+	{
+		if (level.HasDynamicLights && gltexture != nullptr)
+		{
+			SetupLights(di, sector->lighthead, lightdata, sector->PortalGroup);
+		}
+	}
 	di->AddFlat(this, fog);
 }
 
@@ -232,11 +404,14 @@ void GLFlat::Process(HWDrawInfo *di, sector_t * model, int whichplane, bool fog)
 		lightlevel = abs(lightlevel);
 	}
 
-	// get height from vplane
-	if (whichplane == sector_t::floor && sector->transdoor) dz = -1;
-	else dz = 0;
-
 	z = plane.plane.ZatPoint(0.f, 0.f);
+	if (sector->special == GLSector_Skybox)
+	{
+		auto vert = screen->mVertexData->AllocVertices(4);
+		CreateSkyboxVertices(vert.first);
+		iboindex = vert.second;
+	}
+
 	
 	PutFlat(di, fog);
 	rendered_flats++;
@@ -270,14 +445,7 @@ void GLFlat::SetFrom3DFloor(F3DFloor *rover, bool top, bool underside)
 
 	alpha = rover->alpha/255.0f;
 	renderstyle = rover->flags&FF_ADDITIVETRANS? STYLE_Add : STYLE_Translucent;
-	if (plane.model->VBOHeightcheck(plane.isceiling))
-	{
-		iboindex = plane.vindex;
-	}
-	else
-	{
-		iboindex = -1;
-	}
+	iboindex = plane.vindex;
 }
 
 //==========================================================================
@@ -340,14 +508,7 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 
 		if (alpha != 0.f && frontsector->GetTexture(sector_t::floor) != skyflatnum)
 		{
-			if (frontsector->VBOHeightcheck(sector_t::floor))
-			{
-				iboindex = frontsector->iboindex[sector_t::floor];
-			}
-			else
-			{
-				iboindex = -1;
-			}
+			iboindex = frontsector->iboindex[sector_t::floor];
 
 			ceiling = false;
 			renderflags = SSRF_RENDERFLOOR;
@@ -400,15 +561,7 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 
 		if (alpha != 0.f && frontsector->GetTexture(sector_t::ceiling) != skyflatnum)
 		{
-			if (frontsector->VBOHeightcheck(sector_t::ceiling))
-			{
-				iboindex = frontsector->iboindex[sector_t::ceiling];
-			}
-			else
-			{
-				iboindex = -1;
-			}
-
+			iboindex = frontsector->iboindex[sector_t::ceiling];
 			ceiling = true;
 			renderflags = SSRF_RENDERCEILING;
 

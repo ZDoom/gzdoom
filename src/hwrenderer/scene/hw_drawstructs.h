@@ -25,6 +25,8 @@ struct FDynLightData;
 class VSMatrix;
 struct FSpriteModelFrame;
 struct particle_t;
+class FRenderState;
+struct GLDecal;
 enum area_t : int;
 
 enum HWRenderStyle
@@ -145,7 +147,7 @@ public:
 	};
 
 	friend struct HWDrawList;
-	friend class GLPortal;
+	friend class HWPortal;
 
 	vertex_t * vertexes[2];				// required for polygon splitting
 	FMaterial *gltexture;
@@ -261,20 +263,14 @@ public:
 
 	int CountVertices();
 
+	void RenderWall(HWDrawInfo *di, FRenderState &state, int textured);
+	void RenderFogBoundary(HWDrawInfo *di, FRenderState &state);
+	void RenderMirrorSurface(HWDrawInfo *di, FRenderState &state);
+	void RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags);
+	void RenderTranslucentWall(HWDrawInfo *di, FRenderState &state);
+	void DrawDecalsForMirror(HWDrawInfo *di, FRenderState &state, TArray<GLDecal *> &decals);
+
 public:
-	GLWall() {}
-
-	GLWall(const GLWall &other)
-	{
-		memcpy(this, &other, sizeof(GLWall));
-	}
-
-	GLWall & operator=(const GLWall &other)
-	{
-		memcpy(this, &other, sizeof(GLWall));
-		return *this;
-	}
-
 	void Process(HWDrawInfo *di, seg_t *seg, sector_t *frontsector, sector_t *backsector);
 	void ProcessLowerMiniseg(HWDrawInfo *di, seg_t *seg, sector_t *frontsector, sector_t *backsector);
 
@@ -282,6 +278,8 @@ public:
 	{
 		return -((y-glseg.y1)*(glseg.x2-glseg.x1)-(x-glseg.x1)*(glseg.y2-glseg.y1));
 	}
+
+	void DrawWall(HWDrawInfo *di, FRenderState &state, bool translucent);
 
 };
 
@@ -295,7 +293,6 @@ class GLFlat
 {
 public:
 	sector_t * sector;
-	float dz; // z offset for rendering hacks
 	float z; // the z position of the flat (only valid for non-sloped planes)
 	FMaterial *gltexture;
 
@@ -315,28 +312,15 @@ public:
 	int dynlightindex;
 
 	void CreateSkyboxVertices(FFlatVertex *buffer);
-	bool SetupLights(int pass, FLightNode *head, FDynLightData &lightdata, int portalgroup);
-	bool SetupSubsectorLights(int pass, subsector_t * sub, FDynLightData &lightdata);
-	bool SetupSectorLights(int pass, sector_t * sec, FDynLightData &lightdata);
+	void SetupLights(HWDrawInfo *di, FLightNode *head, FDynLightData &lightdata, int portalgroup);
 
 	void PutFlat(HWDrawInfo *di, bool fog = false);
 	void Process(HWDrawInfo *di, sector_t * model, int whichplane, bool notexture);
 	void SetFrom3DFloor(F3DFloor *rover, bool top, bool underside);
 	void ProcessSector(HWDrawInfo *di, sector_t * frontsector);
 	
-	GLFlat() {}
-
-	GLFlat(const GLFlat &other)
-	{
-		memcpy(this, &other, sizeof(GLFlat));
-	}
-
-	GLFlat & operator=(const GLFlat &other)
-	{
-		memcpy(this, &other, sizeof(GLFlat));
-		return *this;
-	}
-
+	void DrawSubsectors(HWDrawInfo *di, FRenderState &state);
+	void DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent);
 };
 
 //==========================================================================
@@ -353,6 +337,7 @@ public:
 	uint8_t foglevel;
 	uint8_t hw_styleflags;
 	bool fullbright;
+	bool polyoffset;
 	PalEntry ThingColor;	// thing's own color
 	FColormap Colormap;
 	FSpriteModelFrame * modelframe;
@@ -362,6 +347,7 @@ public:
 	int translation;
 	int index;
 	int depth;
+	int vertexindex;
 
 	float topclip;
 	float bottomclip;
@@ -388,22 +374,12 @@ public:
 
 public:
 
-	GLSprite() {}
+	void CreateVertices(HWDrawInfo *di);
 	void PutSprite(HWDrawInfo *di, bool translucent);
 	void Process(HWDrawInfo *di, AActor* thing,sector_t * sector, area_t in_area, int thruportal = false);
 	void ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *sector);//, int shade, int fakeside)
 
-	GLSprite(const GLSprite &other)
-	{
-		memcpy(this, &other, sizeof(GLSprite));
-	}
-
-	GLSprite & operator=(const GLSprite &other)
-	{
-		memcpy(this, &other, sizeof(GLSprite));
-		return *this;
-	}
-
+	void DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent);
 };
 
 
@@ -431,6 +407,8 @@ struct GLDecal
 	FColormap Colormap;
 	secplane_t bottomplane;
 	FVector3 Normal;
+
+	void DrawDecal(HWDrawInfo *di, FRenderState &state);
 
 };
 

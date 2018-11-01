@@ -11,7 +11,7 @@ extend class Object
 	{
 		let f = Font.GetFont(fontname);
 		if (f == null) return;
-		return Console.MidPrint(f, textlabel, bold);
+		Console.MidPrint(f, textlabel, bold);
 	}
 
 }

@@ -535,13 +535,10 @@ void FSavegameManager::UnloadSaveData()
 	{
 		delete SavePic;
 	}
-	if (SaveComment != nullptr)
-	{
-		V_FreeBrokenLines(SaveComment);
-	}
+	SaveComment.Clear();
+	SaveComment.ShrinkToFit();
 
 	SavePic = nullptr;
-	SaveComment = nullptr;
 	SavePicData.Clear();
 }
 
@@ -615,7 +612,7 @@ void FSavegameManager::DrawSaveComment(FFont *font, int cr, int x, int y, int sc
 	// I'm not sure why SaveComment would go nullptr in this loop, but I got
 	// a crash report where it was nullptr when i reached 1, so now I check
 	// for that.
-	for (int i = 0; SaveComment != nullptr && SaveComment[i].Width >= 0 && i < maxlines; ++i)
+	for  (int i = 0; i < maxlines && (unsigned)i < SaveComment.Size(); ++i)
 	{
 		screen->DrawText(font, cr, x, y + font->GetHeight() * i * scalefactor, SaveComment[i].Text,	DTA_CleanNoMove, true, TAG_DONE);
 	}
@@ -647,14 +644,9 @@ void FSavegameManager::SetFileInfo(int Selected)
 {
 	if (!SaveGames[Selected]->Filename.IsEmpty())
 	{
-		char workbuf[512];
-
-		mysnprintf(workbuf, countof(workbuf), "File on disk:\n%s", SaveGames[Selected]->Filename.GetChars());
-		if (SaveComment != nullptr)
-		{
-			V_FreeBrokenLines(SaveComment);
-		}
-		SaveComment = V_BreakLines(SmallFont, WindowSize, workbuf);
+		FString work;
+		work.Format("File on disk:\n%s", SaveGames[Selected]->Filename.GetChars());
+		SaveComment = V_BreakLines(SmallFont, WindowSize, work);
 	}
 }
 

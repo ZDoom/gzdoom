@@ -7,6 +7,9 @@
 #include "r_defs.h"
 #include "v_video.h"
 
+namespace OpenGLRenderer
+{
+
 class FGLDebug
 {
 public:
@@ -38,4 +41,5 @@ private:
 	bool mBreakpointMode = false;
 };
 
+}
 #endif

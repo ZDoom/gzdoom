@@ -301,7 +301,7 @@ void E_InitStaticHandlers(bool map)
 void E_Shutdown(bool map)
 {
 	// delete handlers.
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	for (DStaticEventHandler* handler = E_LastEventHandler; handler; handler = handler->prev)
 	{
 		if (handler->IsStatic() == !map)
 			handler->Destroy();
@@ -515,11 +515,18 @@ bool E_CheckReplacement( PClassActor *replacee, PClassActor **replacement )
 	return final;
 }
 
-void E_NewGame()
+void E_NewGame(EventHandlerType handlerType)
 {
+	bool isStatic = handlerType == EventHandlerType::Global;
+
+	// Shut down all per-map event handlers before static NewGame events.
+	if (isStatic)
+		E_Shutdown(true);
+
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
 	{
-		handler->NewGame();
+		if (handler->IsStatic() == isStatic)
+			handler->NewGame();
 	}
 }
 

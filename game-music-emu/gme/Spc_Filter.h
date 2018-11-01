@@ -1,6 +1,6 @@
 // Simple low-pass and high-pass filter to better match sound output of a SNES
 
-// Game_Music_Emu 0.6.0
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 #ifndef SPC_FILTER_H
 #define SPC_FILTER_H
 

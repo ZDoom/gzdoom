@@ -254,14 +254,14 @@ DThinker::DThinker(no_link_type foo) throw()
 
 DThinker::~DThinker ()
 {
-	assert(NextThinker == NULL && PrevThinker == NULL);
+	assert(NextThinker == nullptr && PrevThinker == nullptr);
 }
 
 void DThinker::OnDestroy ()
 {
-	assert((NextThinker != NULL && PrevThinker != NULL) ||
-		   (NextThinker == NULL && PrevThinker == NULL));
-	if (NextThinker != NULL)
+	assert((NextThinker != nullptr && PrevThinker != nullptr) ||
+		   (NextThinker == nullptr && PrevThinker == nullptr));
+	if (NextThinker != nullptr)
 	{
 		Remove();
 	}
@@ -282,7 +282,8 @@ void DThinker::Remove()
 	}
 	DThinker *prev = PrevThinker;
 	DThinker *next = NextThinker;
-	assert(prev != NULL && next != NULL);
+	if (prev == nullptr && next == nullptr) return;	// This was already removed earlier.
+
 	assert((ObjectFlags & OF_Sentinel) || (prev != this && next != this));
 	assert(prev->NextThinker == this);
 	assert(next->PrevThinker == this);
@@ -290,8 +291,8 @@ void DThinker::Remove()
 	next->PrevThinker = prev;
 	GC::WriteBarrier(prev, next);
 	GC::WriteBarrier(next, prev);
-	NextThinker = NULL;
-	PrevThinker = NULL;
+	NextThinker = nullptr;
+	PrevThinker = nullptr;
 }
 
 //==========================================================================
@@ -423,17 +424,22 @@ void DThinker::MarkRoots()
 void DThinker::DestroyAllThinkers ()
 {
 	int i;
+	bool error = false;
 
 	for (i = 0; i <= MAX_STATNUM; i++)
 	{
 		if (i != STAT_TRAVELLING && i != STAT_STATIC)
 		{
-			DestroyThinkersInList (Thinkers[i]);
-			DestroyThinkersInList (FreshThinkers[i]);
+			error |= DoDestroyThinkersInList (Thinkers[i]);
+			error |= DoDestroyThinkersInList (FreshThinkers[i]);
 		}
 	}
-	DestroyThinkersInList (Thinkers[MAX_STATNUM+1]);
+	error |= DoDestroyThinkersInList (Thinkers[MAX_STATNUM+1]);
 	GC::FullGC();
+	if (error)
+	{
+		I_Error("DestroyAllThinkers failed");
+	}
 }
 
 //==========================================================================
@@ -442,18 +448,68 @@ void DThinker::DestroyAllThinkers ()
 //
 //==========================================================================
 
-void DThinker::DestroyThinkersInList (FThinkerList &list)
+void DThinker::DestroyThinkersInList(FThinkerList &list)
 {
-	if (list.Sentinel != NULL)
+	if (DoDestroyThinkersInList(list))
 	{
-		for (DThinker *node = list.Sentinel->NextThinker; node != list.Sentinel; node = list.Sentinel->NextThinker)
-		{
-			assert(node != NULL);
-			node->Destroy();
-		}
-		list.Sentinel->Destroy();
-		list.Sentinel = NULL;
+		I_Error("DestroyThinkersInList failed");
 	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+bool DThinker::DoDestroyThinkersInList (FThinkerList &list)
+{
+	bool error = false;
+	if (list.Sentinel != nullptr)
+	{
+		// Taking down the linked list live is far too dangerous in case something goes wrong. So first copy all elements into an array, take down the list and then destroy them.
+
+		TArray<DThinker *> toDelete;
+		DThinker *node = list.Sentinel->NextThinker;
+		while (node != list.Sentinel)
+		{
+			assert(node != nullptr);
+			auto next = node->NextThinker;
+			toDelete.Push(node);
+			node->NextThinker = node->PrevThinker = nullptr;	// clear the links
+			node = next;
+		}
+		list.Sentinel->NextThinker = list.Sentinel->PrevThinker = nullptr;
+		list.Sentinel->Destroy();
+		list.Sentinel = nullptr;
+		for(auto node : toDelete)
+		{
+			// We must intercept all exceptions so that we can continue deleting the list.
+			try
+			{
+				node->Destroy();
+			}
+			catch (CVMAbortException &exception)
+			{
+				Printf("VM exception in DestroyThinkers:\n");
+				exception.MaybePrintMessage();
+				Printf("%s", exception.stacktrace.GetChars());
+				// forcibly delete this. Cleanup may be incomplete, though.
+				node->ObjectFlags |= OF_YesReallyDelete;
+				delete node;
+				error = true; 
+			}
+			catch (CRecoverableError &exception)
+			{
+				Printf("Error in DestroyThinkers: %s\n", exception.GetMessage());
+				// forcibly delete this. Cleanup may be incomplete, though.
+				node->ObjectFlags |= OF_YesReallyDelete;
+				delete node;
+				error = true;
+			}
+		}
+	}
+	return error;
 }
 
 //==========================================================================

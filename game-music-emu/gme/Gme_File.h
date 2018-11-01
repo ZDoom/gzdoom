@@ -1,6 +1,6 @@
 // Common interface to game music file loading and information
 
-// Game_Music_Emu 0.6.0
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 #ifndef GME_FILE_H
 #define GME_FILE_H
 
@@ -105,7 +105,7 @@ public:
 	Gme_File();
 	virtual ~Gme_File();
 	BLARGG_DISABLE_NOTHROW
-	typedef BOOST::uint8_t byte;
+	typedef uint8_t byte;
 protected:
 	// Services
 	void set_track_count( int n )       { track_count_ = raw_track_count_ = n; }
@@ -154,11 +154,7 @@ Music_Emu* gme_new_( Music_Emu*, long sample_rate );
 	{ Gme_File::copy_field_( out->name, in.name, sizeof in.name ); }
 
 #ifndef GME_FILE_READER
-	#ifdef HAVE_ZLIB_H
-		#define GME_FILE_READER Gzip_File_Reader
-	#else
-		#define GME_FILE_READER Std_File_Reader
-	#endif
+	#define GME_FILE_READER Std_File_Reader
 #elif defined (GME_FILE_READER_INCLUDE)
 	#include GME_FILE_READER_INCLUDE
 #endif

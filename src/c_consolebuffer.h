@@ -49,9 +49,9 @@ enum EAddType
 class FConsoleBuffer
 {
 	TArray<FString> mConsoleText;
-	TArray<FBrokenLines *> mBrokenConsoleText;	// This holds the structures returned by V_BreakLines and is used for memory management.
+	TArray<TArray<FBrokenLines>> m_BrokenConsoleText;	// This holds the structures returned by V_BreakLines and is used for memory management.
 	TArray<unsigned int> mBrokenStart;		
-	TArray<FBrokenLines *> mBrokenLines;		// This holds the single lines, indexed by mBrokenStart and is used for printing.
+	TArray<FBrokenLines> mBrokenLines;		// This holds the single lines, indexed by mBrokenStart and is used for printing.
 	FILE * mLogFile;
 	EAddType mAddType;
 	int mTextLines;
@@ -80,6 +80,6 @@ public:
 		mConsoleText.Clear();
 	}
 	int GetFormattedLineCount() { return mTextLines; }
-	FBrokenLines **GetLines() { return &mBrokenLines[0]; }
+	FBrokenLines *GetLines() { return &mBrokenLines[0]; }
 };
 

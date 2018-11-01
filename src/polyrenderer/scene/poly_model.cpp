@@ -39,6 +39,7 @@ void PolyRenderModel(PolyRenderThread *thread, const Mat4f &worldToClip, uint32_
 	renderer.AddLights(actor);
 	renderer.RenderModel(x, y, z, smf, actor, r_viewpoint.TicFrac);
 	PolyTriangleDrawer::SetModelVertexShader(thread->DrawQueue, -1, -1, 0.0f);
+	PolyTriangleDrawer::SetTransform(thread->DrawQueue, thread->FrameMemory->NewObject<Mat4f>(worldToClip), nullptr);
 }
 
 void PolyRenderHUDModel(PolyRenderThread *thread, const Mat4f &worldToClip, uint32_t stencilValue, DPSprite *psp, float ofsx, float ofsy)
@@ -141,14 +142,6 @@ void PolyModelRenderer::EndDrawModel(AActor *actor, FSpriteModelFrame *smf)
 IModelVertexBuffer *PolyModelRenderer::CreateVertexBuffer(bool needindex, bool singleframe)
 {
 	return new PolyModelVertexBuffer(needindex, singleframe);
-}
-
-void PolyModelRenderer::SetVertexBuffer(IModelVertexBuffer *buffer)
-{
-}
-
-void PolyModelRenderer::ResetVertexBuffer()
-{
 }
 
 VSMatrix PolyModelRenderer::GetViewToWorldMatrix()

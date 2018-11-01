@@ -23,6 +23,7 @@
 #include "hwrenderer/dynlights/hw_shadowmap.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
+#include "hwrenderer/data/buffers.h"
 #include "stats.h"
 #include "g_levellocals.h"
 
@@ -160,3 +161,54 @@ bool IShadowMap::ValidateAABBTree()
 	mAABBTree.reset(new hwrenderer::LevelAABBTree());
 	return false;
 }
+
+bool IShadowMap::PerformUpdate()
+{
+	UpdateCycles.Reset();
+
+	LightsProcessed = 0;
+	LightsShadowmapped = 0;
+
+	if (IsEnabled())
+	{
+		UpdateCycles.Clock();
+		UploadAABBTree();
+		UploadLights();
+		mLightList->BindBase();
+		mNodesBuffer->BindBase();
+		mLinesBuffer->BindBase();
+		return true;
+	}
+	return false;
+}
+
+void IShadowMap::UploadLights()
+{
+	CollectLights();
+
+	if (mLightList == nullptr)
+		mLightList = screen->CreateDataBuffer(4, true);
+
+	mLightList->SetData(sizeof(float) * mLights.Size(), &mLights[0]);
+}
+
+
+void IShadowMap::UploadAABBTree()
+{
+	if (!ValidateAABBTree())
+	{
+		mNodesBuffer = screen->CreateDataBuffer(2, true);
+		mNodesBuffer->SetData(sizeof(hwrenderer::AABBTreeNode) * mAABBTree->nodes.Size(), &mAABBTree->nodes[0]);
+
+		mLinesBuffer = screen->CreateDataBuffer(3, true);
+		mLinesBuffer->SetData(sizeof(hwrenderer::AABBTreeLine) * mAABBTree->lines.Size(), &mAABBTree->lines[0]);
+	}
+}
+
+IShadowMap::~IShadowMap()
+{
+	if (mLightList) delete mLightList;
+	if (mNodesBuffer) delete mNodesBuffer;
+	if (mLinesBuffer) delete mLinesBuffer;
+}
+

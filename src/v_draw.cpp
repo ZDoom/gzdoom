@@ -1075,9 +1075,9 @@ void DFrameBuffer::FillBorder (FTexture *img)
 //
 //==========================================================================
 
-void DFrameBuffer::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor)
+void DFrameBuffer::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor, uint8_t alpha)
 {
-	m2DDrawer.AddLine(x0, y0, x1, y1, palColor, realcolor);
+	m2DDrawer.AddLine(x0, y0, x1, y1, palColor, realcolor, alpha);
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, DrawLine)
@@ -1088,13 +1088,14 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawLine)
 	PARAM_INT(x1);
 	PARAM_INT(y1);
 	PARAM_INT(color);
+	PARAM_INT_DEF(alpha);
 	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	screen->DrawLine(x0, y0, x1, y1, -1, color);
+	screen->DrawLine(x0, y0, x1, y1, -1, color, alpha);
 	return 0;
 }
 
-void DFrameBuffer::DrawThickLine(int x0, int y0, int x1, int y1, double thickness, uint32_t realcolor) {
-	m2DDrawer.AddThickLine(x0, y0, x1, y1, thickness, realcolor);
+void DFrameBuffer::DrawThickLine(int x0, int y0, int x1, int y1, double thickness, uint32_t realcolor, uint8_t alpha) {
+	m2DDrawer.AddThickLine(x0, y0, x1, y1, thickness, realcolor, alpha);
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, DrawThickLine)
@@ -1106,8 +1107,9 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawThickLine)
 	PARAM_INT(y1);
 	PARAM_FLOAT(thickness);
 	PARAM_INT(color);
+	PARAM_INT_DEF(alpha);
 	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	screen->DrawThickLine(x0, y0, x1, y1, thickness, color);
+	screen->DrawThickLine(x0, y0, x1, y1, thickness, color, alpha);
 	return 0;
 }
 

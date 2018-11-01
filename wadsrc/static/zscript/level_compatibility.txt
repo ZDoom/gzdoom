@@ -5,6 +5,22 @@ class LevelCompatibility play
 	{
 		switch (checksum)
 		{			
+			case '9527DD0809FDA39CCFC316A21D135783': // HACX.WAD map05
+			{
+				// fix non-functional self-referencing sector hack.
+				for(int i = 578; i < 582; i++) 
+					SetLineSectorRef(i, Line.back, 91);
+				
+				for(int i = 707; i < 714; i++)
+					SetLineSectorRef(i, Line.back, 91);
+
+				SetLineSectorRef(736, Line.front, 91);
+				SetLineSectorRef(659, Line.front, 91);
+				SetLineSpecial(659, Transfer_Heights, 60);
+				break;
+			}
+			
+		
 			case 'E2B5D1400279335811C1C1C0B437D9C8': // Deathknights of the Dark Citadel, map54
 			{
 				// This map has two gear boxes which are flagged for player cross

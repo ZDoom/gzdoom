@@ -80,7 +80,7 @@ struct FRandomSoundList
 struct FPlayerClassLookup
 {
 	FString		Name;
-	uint16_t		ListIndex[3];	// indices into PlayerSounds (0xffff means empty)
+	uint16_t		ListIndex[GENDER_MAX];	// indices into PlayerSounds (0xffff means empty)
 };
 
 // Used to lookup a sound like "*grunt". This contains all player sounds for
@@ -1622,7 +1622,8 @@ static int S_AddPlayerClass (const char *name)
 		FPlayerClassLookup lookup;
 
 		lookup.Name = name;
-		lookup.ListIndex[2] = lookup.ListIndex[1] = lookup.ListIndex[0] = 0xffff;
+		for(int i = 0; i < GENDER_MAX; i++)
+			lookup.ListIndex[i] = 0xffff;
 		cnum = (int)PlayerClassLookups.Push (lookup);
 		PlayerClassesIsSorted = false;
 
@@ -1770,11 +1771,11 @@ static int S_LookupPlayerSound (int classidx, int gender, FSoundID refid)
 	{
 		int g;
 
-		for (g = 0; g < 3 && listidx == 0xffff; ++g)
+		for (g = 0; g < GENDER_MAX && listidx == 0xffff; ++g)
 		{
 			listidx = PlayerClassLookups[classidx].ListIndex[g];
 		}
-		if (g == 3)
+		if (g == GENDER_MAX)
 		{ // No sounds defined at all for this class (can this happen?)
 			if (classidx != DefPlayerClass)
 			{
@@ -1796,7 +1797,7 @@ static int S_LookupPlayerSound (int classidx, int gender, FSoundID refid)
 	{ // This sound is unavailable.
 		if (ingender != 0)
 		{ // Try "male"
-			return S_LookupPlayerSound (classidx, 0, refid);
+			return S_LookupPlayerSound (classidx, GENDER_MALE, refid);
 		}
 		if (classidx != DefPlayerClass)
 		{ // Try the default class.
@@ -1912,7 +1913,7 @@ bool S_AreSoundsEquivalent (AActor *actor, int id1, int id2)
 int S_FindSkinnedSound (AActor *actor, FSoundID refid)
 {
 	const char *pclass;
-	int gender = GENDER_MALE;
+	int gender = 0;
 
 	if (actor != NULL && actor->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
 	{
@@ -2074,7 +2075,7 @@ void S_MarkPlayerSounds (const char *playerclass)
 	{
 		classidx = DefPlayerClass;
 	}
-	for (int g = 0; g < 3; ++g)
+	for (int g = 0; g < GENDER_MAX; ++g)
 	{
 		int listidx = PlayerClassLookups[classidx].ListIndex[0];
 		if (listidx != 0xffff)
@@ -2178,7 +2179,7 @@ CCMD (playersounds)
 
 	for (i = 0; i < PlayerClassLookups.Size(); ++i)
 	{
-		for (j = 0; j < 3; ++j)
+		for (j = 0; j < GENDER_MAX; ++j)
 		{
 			if ((l = PlayerClassLookups[i].ListIndex[j]) != 0xffff)
 			{

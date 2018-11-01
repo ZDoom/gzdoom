@@ -133,7 +133,7 @@ public:
 	}
 
 protected:
-	FBrokenLines *Lines;
+	TArray<FBrokenLines> Lines;
 	int Width, Height, NumLines;
 	float Left, Top;
 	bool CenterX, NoWrap;

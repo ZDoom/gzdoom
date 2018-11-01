@@ -31,6 +31,7 @@
 #include "hwrenderer/utility/hw_vrmodes.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/renderer/gl_postprocessstate.h"
+#include "gl/system/gl_framebuffer.h"
 #include "hwrenderer/postprocessing/hw_presentshader.h"
 #include "hwrenderer/postprocessing/hw_present3dRowshader.h"
 
@@ -41,24 +42,27 @@ EXTERN_CVAR(Float, vid_contrast)
 EXTERN_CVAR(Int, gl_satformula)
 EXTERN_CVAR(Int, gl_dither_bpc)
 
+namespace OpenGLRenderer
+{
+
 //==========================================================================
 //
 //
 //
 //==========================================================================
 
-static void PresentAnaglyph(bool r, bool g, bool b)
+void FGLRenderer::PresentAnaglyph(bool r, bool g, bool b)
 {
-	GLRenderer->mBuffers->BindOutputFB();
-	GLRenderer->ClearBorders();
+	mBuffers->BindOutputFB();
+	ClearBorders();
 
 	glColorMask(r, g, b, 1);
-	GLRenderer->mBuffers->BindEyeTexture(0, 0);
- 	GLRenderer->DrawPresentTexture(screen->mOutputLetterbox, true);
+	mBuffers->BindEyeTexture(0, 0);
+ 	DrawPresentTexture(screen->mOutputLetterbox, true);
 
 	glColorMask(!r, !g, !b, 1);
-	GLRenderer->mBuffers->BindEyeTexture(1, 0);
-	GLRenderer->DrawPresentTexture(screen->mOutputLetterbox, true);
+	mBuffers->BindEyeTexture(1, 0);
+	DrawPresentTexture(screen->mOutputLetterbox, true);
 
 	glColorMask(1, 1, 1, 1);
 }
@@ -69,10 +73,10 @@ static void PresentAnaglyph(bool r, bool g, bool b)
 //
 //==========================================================================
 
-static void PresentSideBySide()
+void FGLRenderer::PresentSideBySide()
 {
-	GLRenderer->mBuffers->BindOutputFB();
-	GLRenderer->ClearBorders();
+	mBuffers->BindOutputFB();
+	ClearBorders();
 
 	// Compute screen regions to use for left and right eye views
 	int leftWidth = screen->mOutputLetterbox.width / 2;
@@ -83,11 +87,11 @@ static void PresentSideBySide()
 	rightHalfScreen.width = rightWidth;
 	rightHalfScreen.left += leftWidth;
 
-	GLRenderer->mBuffers->BindEyeTexture(0, 0);
-	GLRenderer->DrawPresentTexture(leftHalfScreen, true);
+	mBuffers->BindEyeTexture(0, 0);
+	DrawPresentTexture(leftHalfScreen, true);
 
-	GLRenderer->mBuffers->BindEyeTexture(1, 0);
-	GLRenderer->DrawPresentTexture(rightHalfScreen, true);
+	mBuffers->BindEyeTexture(1, 0);
+	DrawPresentTexture(rightHalfScreen, true);
 }
 
 
@@ -97,10 +101,10 @@ static void PresentSideBySide()
 //
 //==========================================================================
 
-static void PresentTopBottom()
+void FGLRenderer::PresentTopBottom()
 {
-	GLRenderer->mBuffers->BindOutputFB();
-	GLRenderer->ClearBorders();
+	mBuffers->BindOutputFB();
+	ClearBorders();
 
 	// Compute screen regions to use for left and right eye views
 	int topHeight = screen->mOutputLetterbox.height / 2;
@@ -112,11 +116,11 @@ static void PresentTopBottom()
 	bottomHalfScreen.height = bottomHeight;
 	bottomHalfScreen.top = 0;
 
-	GLRenderer->mBuffers->BindEyeTexture(0, 0);
-	GLRenderer->DrawPresentTexture(topHalfScreen, true);
+	mBuffers->BindEyeTexture(0, 0);
+	DrawPresentTexture(topHalfScreen, true);
 
-	GLRenderer->mBuffers->BindEyeTexture(1, 0);
-	GLRenderer->DrawPresentTexture(bottomHalfScreen, true);
+	mBuffers->BindEyeTexture(1, 0);
+	DrawPresentTexture(bottomHalfScreen, true);
 }
 
 //==========================================================================
@@ -125,15 +129,15 @@ static void PresentTopBottom()
 //
 //==========================================================================
 
-static void prepareInterleavedPresent(FPresentShaderBase& shader)
+void FGLRenderer::prepareInterleavedPresent(FPresentShaderBase& shader)
 {
-	GLRenderer->mBuffers->BindOutputFB();
-	GLRenderer->ClearBorders();
+	mBuffers->BindOutputFB();
+	ClearBorders();
 
 
 	// Bind each eye texture, for composition in the shader
-	GLRenderer->mBuffers->BindEyeTexture(0, 0);
-	GLRenderer->mBuffers->BindEyeTexture(1, 1);
+	mBuffers->BindEyeTexture(0, 0);
+	mBuffers->BindEyeTexture(1, 1);
 
 	glActiveTexture(GL_TEXTURE0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -148,7 +152,7 @@ static void prepareInterleavedPresent(FPresentShaderBase& shader)
 
 	shader.Bind(NOQUEUE);
 
-	if (GLRenderer->framebuffer->IsHWGammaActive())
+	if (framebuffer->IsHWGammaActive())
 	{
 		shader.Uniforms->InvGamma = 1.0f;
 		shader.Uniforms->Contrast = 1.0f;
@@ -165,8 +169,8 @@ static void prepareInterleavedPresent(FPresentShaderBase& shader)
 	}
 	shader.Uniforms->ColorScale = (gl_dither_bpc == -1) ? 255.0f : (float)((1 << gl_dither_bpc) - 1);
 	shader.Uniforms->Scale = {
-		screen->mScreenViewport.width / (float)GLRenderer->mBuffers->GetWidth(),
-		screen->mScreenViewport.height / (float)GLRenderer->mBuffers->GetHeight()
+		screen->mScreenViewport.width / (float)mBuffers->GetWidth(),
+		screen->mScreenViewport.height / (float)mBuffers->GetHeight()
 	};
 	shader.Uniforms.Set();
 }
@@ -177,11 +181,11 @@ static void prepareInterleavedPresent(FPresentShaderBase& shader)
 //
 //==========================================================================
 
-static void PresentColumnInterleaved()
+void FGLRenderer::PresentColumnInterleaved()
 {
 	FGLPostProcessState savedState;
 	savedState.SaveTextureBindings(2);
-	prepareInterleavedPresent(*GLRenderer->mPresent3dColumnShader);
+	prepareInterleavedPresent(*mPresent3dColumnShader);
 
 	// Compute absolute offset from top of screen to top of current display window
 	// because we need screen-relative, not window-relative, scan line parity
@@ -191,10 +195,10 @@ static void PresentColumnInterleaved()
 	//auto windowHOffset = clientoffset.X % 2;
 	int windowHOffset = 0;
 
-	GLRenderer->mPresent3dColumnShader->Uniforms->WindowPositionParity = windowHOffset;
-	GLRenderer->mPresent3dColumnShader->Uniforms.Set();
+	mPresent3dColumnShader->Uniforms->WindowPositionParity = windowHOffset;
+	mPresent3dColumnShader->Uniforms.Set();
 
-	GLRenderer->RenderScreenQuad();
+	RenderScreenQuad();
 }
 
 //==========================================================================
@@ -203,24 +207,24 @@ static void PresentColumnInterleaved()
 //
 //==========================================================================
 
-static void PresentRowInterleaved()
+void FGLRenderer::PresentRowInterleaved()
 {
 	FGLPostProcessState savedState;
 	savedState.SaveTextureBindings(2);
-	prepareInterleavedPresent(*GLRenderer->mPresent3dRowShader);
+	prepareInterleavedPresent(*mPresent3dRowShader);
 
 	// Todo:
 	//auto clientoffset = screen->GetClientOffset();
 	//auto windowVOffset = clientoffset.Y % 2;
 	int windowVOffset = 0;
 
-	GLRenderer->mPresent3dRowShader->Uniforms->WindowPositionParity =
+	mPresent3dRowShader->Uniforms->WindowPositionParity =
 		(windowVOffset
 			+ screen->mOutputLetterbox.height + 1 // +1 because of origin at bottom
 			) % 2;
 
-	GLRenderer->mPresent3dRowShader->Uniforms.Set();
-	GLRenderer->RenderScreenQuad();
+	mPresent3dRowShader->Uniforms.Set();
+	RenderScreenQuad();
 }
 
 //==========================================================================
@@ -229,11 +233,11 @@ static void PresentRowInterleaved()
 //
 //==========================================================================
 
-static void PresentCheckerInterleaved()
+void FGLRenderer::PresentCheckerInterleaved()
 {
 	FGLPostProcessState savedState;
 	savedState.SaveTextureBindings(2);
-	prepareInterleavedPresent(*GLRenderer->mPresent3dCheckerShader);
+	prepareInterleavedPresent(*mPresent3dCheckerShader);
 
 	// Compute absolute offset from top of screen to top of current display window
 	// because we need screen-relative, not window-relative, scan line parity
@@ -244,14 +248,14 @@ static void PresentCheckerInterleaved()
 	int windowHOffset = 0;
 	int windowVOffset = 0;
 
-	GLRenderer->mPresent3dCheckerShader->Uniforms->WindowPositionParity =
+	mPresent3dCheckerShader->Uniforms->WindowPositionParity =
 		(windowVOffset
 			+ windowHOffset
 			+ screen->mOutputLetterbox.height + 1 // +1 because of origin at bottom
 			) % 2; // because we want the top pixel offset, but gl_FragCoord.y is the bottom pixel offset
 
-	GLRenderer->mPresent3dCheckerShader->Uniforms.Set();
-	GLRenderer->RenderScreenQuad();
+	mPresent3dCheckerShader->Uniforms.Set();
+	RenderScreenQuad();
 }
 
 //==========================================================================
@@ -260,12 +264,12 @@ static void PresentCheckerInterleaved()
 //
 //==========================================================================
 
-bool QuadStereoCheckInitialRenderContextState()
+bool FGLRenderer::QuadStereoCheckInitialRenderContextState()
 {
 	// Keep trying until we see at least one good OpenGL context to render to
-	static bool bQuadStereoSupported = false;
-	static bool bDecentContextWasFound = false;
-	static int contextCheckCount = 0;
+	bool bQuadStereoSupported = false;
+	bool bDecentContextWasFound = false;
+	int contextCheckCount = 0;
 	if ((!bDecentContextWasFound) && (contextCheckCount < 200))
 	{
 		contextCheckCount += 1;
@@ -290,30 +294,30 @@ bool QuadStereoCheckInitialRenderContextState()
 //
 //==========================================================================
 
-static void PresentQuadStereo()
+void FGLRenderer::PresentQuadStereo()
 {
 	if (QuadStereoCheckInitialRenderContextState())
 	{
-		GLRenderer->mBuffers->BindOutputFB();
+		mBuffers->BindOutputFB();
 
 		glDrawBuffer(GL_BACK_LEFT);
-		GLRenderer->ClearBorders();
-		GLRenderer->mBuffers->BindEyeTexture(0, 0);
-		GLRenderer->DrawPresentTexture(screen->mOutputLetterbox, true);
+		ClearBorders();
+		mBuffers->BindEyeTexture(0, 0);
+		DrawPresentTexture(screen->mOutputLetterbox, true);
 
 		glDrawBuffer(GL_BACK_RIGHT);
-		GLRenderer->ClearBorders();
-		GLRenderer->mBuffers->BindEyeTexture(1, 0);
-		GLRenderer->DrawPresentTexture(screen->mOutputLetterbox, true);
+		ClearBorders();
+		mBuffers->BindEyeTexture(1, 0);
+		DrawPresentTexture(screen->mOutputLetterbox, true);
 
 		glDrawBuffer(GL_BACK);
 	}
 	else
 	{
-		GLRenderer->mBuffers->BindOutputFB();
-		GLRenderer->ClearBorders();
-		GLRenderer->mBuffers->BindEyeTexture(0, 0);
-		GLRenderer->DrawPresentTexture(screen->mOutputLetterbox, true);
+		mBuffers->BindOutputFB();
+		ClearBorders();
+		mBuffers->BindEyeTexture(0, 0);
+		DrawPresentTexture(screen->mOutputLetterbox, true);
 	}
 }
 
@@ -364,3 +368,4 @@ void FGLRenderer::PresentStereo()
 	}
 }
 
+}

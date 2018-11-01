@@ -1,6 +1,6 @@
 // Nintendo NES/Famicom NSFE music file emulator
 
-// Game_Music_Emu 0.6.0
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 #ifndef NSFE_EMU_H
 #define NSFE_EMU_H
 

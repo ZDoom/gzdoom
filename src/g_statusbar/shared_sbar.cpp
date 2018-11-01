@@ -1130,10 +1130,9 @@ void DBaseStatusBar::DrawLog ()
 							 Scale(w, SCREENWIDTH, hudwidth), Scale(height, SCREENHEIGHT, hudheight));
 		x+=20;
 		y+=10;
-		for (int i = 0; lines[i].Width != -1; i++)
+		for (const FBrokenLines &line : lines)
 		{
-
-			screen->DrawText (SmallFont, CR_UNTRANSLATED, x, y, lines[i].Text,
+			screen->DrawText (SmallFont, CR_UNTRANSLATED, x, y, line.Text,
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
 			y += SmallFont->GetHeight ()+1;

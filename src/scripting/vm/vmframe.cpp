@@ -41,6 +41,14 @@
 #include "vmintern.h"
 #include "types.h"
 #include "jit.h"
+#include "c_cvars.h"
+#include "version.h"
+
+CUSTOM_CVAR(Bool, vm_jit, true, CVAR_NOINITCALL)
+{
+	Printf("You must restart " GAMENAME " for this change to take effect.\n");
+	Printf("This cvar is currently not saved. You must specify it on the command line.");
+}
 
 cycle_t VMCycles[10];
 int VMCalls[10];
@@ -50,7 +58,6 @@ IMPLEMENT_CLASS(VMException, false, false)
 #endif
 
 TArray<VMFunction *> VMFunction::AllFunctions;
-
 
 VMScriptFunction::VMScriptFunction(FName name)
 {
@@ -210,10 +217,16 @@ int VMScriptFunction::PCToLine(const VMOP *pc)
 
 int VMScriptFunction::FirstScriptCall(VMFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret)
 {
-	VMScriptFunction *sfunc = static_cast<VMScriptFunction*>(func);
-	sfunc->ScriptCall = JitCompile(sfunc);
-	if (!sfunc->ScriptCall)
-		sfunc->ScriptCall = VMExec;
+	if (vm_jit)
+	{
+		func->ScriptCall = JitCompile(static_cast<VMScriptFunction*>(func));
+		if (!func->ScriptCall)
+			func->ScriptCall = VMExec;
+	}
+	else
+	{
+		func->ScriptCall = VMExec;
+	}
 
 	return func->ScriptCall(func, params, numparams, ret, numret);
 }

@@ -5,6 +5,7 @@ in vec4 vWorldNormal;
 in vec4 vEyeNormal;
 in vec4 vTexCoord;
 in vec4 vColor;
+in vec3 vLightmap;
 
 layout(location=0) out vec4 FragColor;
 #ifdef GBUFFER_PASS
@@ -417,6 +418,14 @@ vec4 getLightColor(Material material, float fogdist, float fogfactor)
 	// apply brightmaps (or other light manipulation by custom shaders.
 	//
 	color = ProcessLight(material, color);
+
+	//
+	// apply lightmaps
+	//
+	if (vLightmap.z >= 0.0)
+	{
+		color.rgb += texture(LightMap, vLightmap).rgb;
+	}
 
 	//
 	// apply dynamic lights

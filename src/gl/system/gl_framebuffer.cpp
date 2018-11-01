@@ -46,6 +46,7 @@
 #include "gl_debug.h"
 #include "r_videoscale.h"
 #include "gl_buffers.h"
+#include "g_levellocals.h"
 
 #include "hwrenderer/data/flatvertices.h"
 
@@ -406,6 +407,29 @@ void OpenGLFrameBuffer::TextureFilterChanged()
 void OpenGLFrameBuffer::BlurScene(float amount)
 {
 	GLRenderer->BlurScene(amount);
+}
+
+void OpenGLFrameBuffer::InitLightmap()
+{
+	if (level.LMTextureData.Size() > 0)
+	{
+		GLint activeTex = 0;
+		glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTex);
+		glActiveTexture(GL_TEXTURE0 + 17);
+
+		if (GLRenderer->mLightMapID == 0)
+			glGenTextures(1, (GLuint*)&GLRenderer->mLightMapID);
+
+		glBindTexture(GL_TEXTURE_2D_ARRAY, GLRenderer->mLightMapID);
+		glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB16F, level.LMTextureSize, level.LMTextureSize, level.LMTextureCount, 0, GL_RGB, GL_HALF_FLOAT, &level.LMTextureData[0]);
+		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+
+		glActiveTexture(activeTex);
+
+		level.LMTextureData.Reset(); // We no longer need this, release the memory
+	}
 }
 
 void OpenGLFrameBuffer::SetViewportRects(IntRect *bounds)

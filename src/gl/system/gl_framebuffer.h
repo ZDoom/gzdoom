@@ -41,7 +41,8 @@ public:
 	void BeginFrame() override;
 	void SetViewportRects(IntRect *bounds) override;
 	void BlurScene(float amount) override;
-    IShaderProgram *CreateShaderProgram() override;
+	void InitLightmap() override;
+	IShaderProgram *CreateShaderProgram() override;
 	IVertexBuffer *CreateVertexBuffer() override;
 	IIndexBuffer *CreateIndexBuffer() override;
 	IDataBuffer *CreateDataBuffer(int bindingpoint, bool ssbo) override;

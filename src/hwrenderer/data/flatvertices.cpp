@@ -83,9 +83,10 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 
 	static const FVertexBufferAttribute format[] = {
 		{ 0, VATTR_VERTEX, VFmt_Float3, (int)myoffsetof(FFlatVertex, x) },
-		{ 0, VATTR_TEXCOORD, VFmt_Float2, (int)myoffsetof(FFlatVertex, u) }
+		{ 0, VATTR_TEXCOORD, VFmt_Float2, (int)myoffsetof(FFlatVertex, u) },
+		{ 0, VATTR_LIGHTMAP, VFmt_Float3, (int)myoffsetof(FFlatVertex, lu) },
 	};
-	mVertexBuffer->SetFormat(1, 2, sizeof(FFlatVertex), format);
+	mVertexBuffer->SetFormat(1, 3, sizeof(FFlatVertex), format);
 
 	mIndex = mCurIndex = 0;
 	mNumReserved = NUM_RESERVED;
@@ -134,6 +135,7 @@ void FFlatVertex::SetFlatVertex(vertex_t *vt, const secplane_t & plane)
 	z = (float)plane.ZatPoint(vt);
 	u = (float)vt->fX()/64.f;
 	v = -(float)vt->fY()/64.f;
+	lindex = -1.0f;
 }
 
 //==========================================================================

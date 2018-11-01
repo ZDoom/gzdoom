@@ -34,6 +34,8 @@ struct FFlatVertex
 {
 	float x, z, y;	// world position
 	float u, v;		// texture coordinates
+	float lu, lv;	// lightmap texture coordinates
+	float lindex;	// lightmap texture index
 
 	void SetFlatVertex(vertex_t *vt, const secplane_t &plane);
 	void Set(float xx, float zz, float yy, float uu, float vv)
@@ -43,6 +45,18 @@ struct FFlatVertex
 		y = yy;
 		u = uu;
 		v = vv;
+		lindex = -1.0f;
+	}
+	void Set(float xx, float zz, float yy, float uu, float vv, float llu, float llv, float llindex)
+	{
+		x = xx;
+		z = zz;
+		y = yy;
+		u = uu;
+		v = vv;
+		lu = llu;
+		lv = llv;
+		lindex = llindex;
 	}
 };
 

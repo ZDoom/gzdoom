@@ -5,6 +5,7 @@ layout(location = 2) in vec4 aColor;
 #ifndef SIMPLE	// we do not need these for simple shaders
 layout(location = 3) in vec4 aVertex2;
 layout(location = 4) in vec4 aNormal;
+layout(location = 5) in vec3 aLightmap;
 out vec4 pixelpos;
 out vec3 glowdist;
 
@@ -14,6 +15,7 @@ out vec4 vEyeNormal;
 
 out vec4 vTexCoord;
 out vec4 vColor;
+out vec3 vLightmap;
 
 void main()
 {
@@ -34,6 +36,8 @@ void main()
 	vColor = aColor;
 
 	#ifndef SIMPLE
+		vLightmap = aLightmap;
+
 		pixelpos.xyz = worldcoord.xyz;
 		pixelpos.w = -eyeCoordPos.z/eyeCoordPos.w;
 

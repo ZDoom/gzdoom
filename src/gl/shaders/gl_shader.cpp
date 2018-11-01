@@ -131,6 +131,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	// textures
 	i_data += "uniform sampler2D tex;\n";
 	i_data += "uniform sampler2D ShadowMap;\n";
+	i_data += "uniform sampler2DArray LightMap;\n";
 	i_data += "uniform sampler2D texture2;\n";
 	i_data += "uniform sampler2D texture3;\n";
 	i_data += "uniform sampler2D texture4;\n";
@@ -368,7 +369,10 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	}
 
 	int shadowmapindex = glGetUniformLocation(hShader, "ShadowMap");
-	if (shadowmapindex > 0) glUniform1i(shadowmapindex, 16);
+	if (shadowmapindex >= 0) glUniform1i(shadowmapindex, 16);
+
+	int lightmapindex = glGetUniformLocation(hShader, "LightMap");
+	if (lightmapindex >= 0) glUniform1i(lightmapindex, 17);
 
 	glUseProgram(0);
 	return !!linked;

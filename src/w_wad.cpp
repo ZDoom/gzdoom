@@ -101,10 +101,6 @@ void uppercopy (char *to, const char *from)
 }
 
 FWadCollection::FWadCollection ()
-: FirstLumpIndex(NULL), NextLumpIndex(NULL),
-  FirstLumpIndex_FullName(NULL), NextLumpIndex_FullName(NULL), 
-  FirstLumpIndex_NoExt(NULL), NextLumpIndex_NoExt(NULL), 
-  NumLumps(0)
 {
 }
 
@@ -115,37 +111,6 @@ FWadCollection::~FWadCollection ()
 
 void FWadCollection::DeleteAll ()
 {
-	if (FirstLumpIndex != NULL)
-	{
-		delete[] FirstLumpIndex;
-		FirstLumpIndex = NULL;
-	}
-	if (NextLumpIndex != NULL)
-	{
-		delete[] NextLumpIndex;
-		NextLumpIndex = NULL;
-	}
-	if (FirstLumpIndex_FullName != NULL)
-	{
-		delete[] FirstLumpIndex_FullName;
-		FirstLumpIndex_FullName = NULL;
-	}
-	if (NextLumpIndex_FullName != NULL)
-	{
-		delete[] NextLumpIndex_FullName;
-		NextLumpIndex_FullName = NULL;
-	}
-	if (FirstLumpIndex_NoExt != NULL)
-	{
-		delete[] FirstLumpIndex_NoExt;
-		FirstLumpIndex_NoExt = NULL;
-	}
-	if (NextLumpIndex_NoExt != NULL)
-	{
-		delete[] NextLumpIndex_NoExt;
-		NextLumpIndex_NoExt = NULL;
-	}
-
 	LumpInfo.Clear();
 	NumLumps = 0;
 
@@ -193,12 +158,13 @@ void FWadCollection::InitMultipleFiles (TArray<FString> &filenames)
 	FixMacHexen();
 
 	// [RH] Set up hash table
-	FirstLumpIndex = new uint32_t[NumLumps];
-	NextLumpIndex = new uint32_t[NumLumps];
-	FirstLumpIndex_FullName = new uint32_t[NumLumps];
-	NextLumpIndex_FullName = new uint32_t[NumLumps];
-	FirstLumpIndex_NoExt = new uint32_t[NumLumps];
-	NextLumpIndex_NoExt = new uint32_t[NumLumps];
+	Hashes.Resize(6 * NumLumps);
+	FirstLumpIndex = &Hashes[0];
+	NextLumpIndex = &Hashes[NumLumps];
+	FirstLumpIndex_FullName = &Hashes[NumLumps*2];
+	NextLumpIndex_FullName = &Hashes[NumLumps*3];
+	FirstLumpIndex_NoExt = &Hashes[NumLumps*4];
+	NextLumpIndex_NoExt = &Hashes[NumLumps*5];
 	InitHashChains ();
 	LumpInfo.ShrinkToFit();
 	Files.ShrinkToFit();

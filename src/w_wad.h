@@ -188,6 +188,7 @@ protected:
 	TArray<FResourceFile *> Files;
 	TArray<LumpRecord> LumpInfo;
 
+	TArray<uint32_t> Hashes;	// one allocation for all hash lists.
 	uint32_t *FirstLumpIndex;	// [RH] Hashing stuff moved out of lumpinfo structure
 	uint32_t *NextLumpIndex;
 
@@ -197,12 +198,11 @@ protected:
 	uint32_t *FirstLumpIndex_NoExt;	// The same information for fully qualified paths from .zips
 	uint32_t *NextLumpIndex_NoExt;
 
-	uint32_t NumLumps;					// Not necessarily the same as LumpInfo.Size()
+	uint32_t NumLumps = 0;					// Not necessarily the same as LumpInfo.Size()
 	uint32_t NumWads;
 
 	int IwadIndex;
 
-	void SkinHack (int baselump);
 	void InitHashChains ();								// [RH] Set up the lumpinfo hashing
 
 private:

@@ -121,8 +121,7 @@ private:
 	uint32_t *SendCommand (uint32_t *event, TrackInfo *track, uint32_t delay, ptrdiff_t room, bool &sysex_noroom);
 	TrackInfo *FindNextDue ();
 	
-	uint8_t *MusHeader;
-	int SongLen;
+	TArray<uint8_t> MusHeader;
 	TrackInfo *Tracks;
 	TrackInfo *TrackDue;
 	int NumTracks;
@@ -181,8 +180,7 @@ private:
 	static uint32_t ReadVarLenHMI(TrackInfo *);
 	static uint32_t ReadVarLenHMP(TrackInfo *);
 	
-	uint8_t *MusHeader;
-	int SongLen;
+	TArray<uint8_t> MusHeader;
 	int NumTracks;
 	TrackInfo *Tracks;
 	TrackInfo *TrackDue;
@@ -218,8 +216,7 @@ private:
 	uint32_t *SendCommand (uint32_t *event, EventSource track, uint32_t delay, ptrdiff_t room, bool &sysex_noroom);
 	EventSource FindNextDue();
 	
-	uint8_t *MusHeader;
-	int SongLen;		// length of the entire file
+	TArray<uint8_t> MusHeader;
 	int NumSongs;
 	TrackInfo *Songs;
 	TrackInfo *CurrSong;

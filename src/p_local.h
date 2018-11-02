@@ -110,7 +110,8 @@ enum EPuffFlags
 	PF_MELEERANGE = 2,
 	PF_TEMPORARY = 4,
 	PF_HITTHINGBLEED = 8,
-	PF_NORANDOMZ = 16
+	PF_NORANDOMZ = 16,
+	PF_HITSKY = 32
 };
 
 AActor *P_SpawnPuff(AActor *source, PClassActor *pufftype, const DVector3 &pos, DAngle hitdir, DAngle particledir, int updown, int flags = 0, AActor *vict = NULL);

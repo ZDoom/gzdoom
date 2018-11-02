@@ -52,6 +52,7 @@ enum ETraceResult
 	TRACE_HitWall,
 	TRACE_HitActor,
 	TRACE_CrossingPortal,
+	TRACE_HasHitSky,
 };
 
 enum
@@ -98,6 +99,7 @@ enum
 	TRACE_PortalRestrict= 0x0008,	// Cannot go through portals without a static link offset.
 	TRACE_ReportPortals = 0x0010,	// Report any portal crossing to the TraceCallback
 	TRACE_3DCallback	= 0x0020,	// [ZZ] use TraceCallback to determine whether we need to go through a line to do 3D floor check, or not. without this, only line flag mask is used
+	TRACE_HitSky		= 0x0040,	// Hitting the sky returns TRACE_HasHitSky
 };
 
 // return values from callback

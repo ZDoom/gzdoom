@@ -104,13 +104,11 @@ struct XMISong::TrackInfo
 XMISong::XMISong (FileReader &reader)
 : MusHeader(0), Songs(0)
 {
-	SongLen = (int)reader.GetLength();
-	MusHeader = new uint8_t[SongLen];
-	if (reader.Read(MusHeader, SongLen) != SongLen)
-		return;
+	MusHeader = reader.Read();
+	if (MusHeader.Size() == 0) return;
 
 	// Find all the songs in this file.
-	NumSongs = FindXMIDforms(MusHeader, SongLen, NULL);
+	NumSongs = FindXMIDforms(&MusHeader[0], MusHeader.Size(), nullptr);
 	if (NumSongs == 0)
 	{
 		return;
@@ -128,7 +126,7 @@ XMISong::XMISong (FileReader &reader)
 
 	Songs = new TrackInfo[NumSongs];
 	memset(Songs, 0, sizeof(*Songs) * NumSongs);
-	FindXMIDforms(MusHeader, SongLen, Songs);
+	FindXMIDforms(&MusHeader[0], MusHeader.Size(), Songs);
 	CurrSong = Songs;
 	DPrintf(DMSG_SPAMMY, "XMI song count: %d\n", NumSongs);
 }
@@ -141,13 +139,9 @@ XMISong::XMISong (FileReader &reader)
 
 XMISong::~XMISong ()
 {
-	if (Songs != NULL)
+	if (Songs != nullptr)
 	{
 		delete[] Songs;
-	}
-	if (MusHeader != NULL)
-	{
-		delete[] MusHeader;
 	}
 }
 
@@ -172,7 +166,7 @@ int XMISong::FindXMIDforms(const uint8_t *chunk, int len, TrackInfo *songs) cons
 		{
 			if (GetNativeInt(chunk + p + 8) == MAKE_ID('X','M','I','D'))
 			{
-				if (songs != NULL)
+				if (songs != nullptr)
 				{
 					FoundXMID(chunk + p + 12, chunklen - 4, songs + count);
 				}
@@ -515,7 +509,7 @@ uint32_t *XMISong::SendCommand (uint32_t *events, EventSource due, uint32_t dela
 		if (event == MIDI_SYSEX || event == MIDI_SYSEXEND)
 		{
 			len = track->ReadVarLen();
-			if (len >= (MAX_MIDI_EVENTS-1)*3*4)
+			if (len >= (MAX_MIDI_EVENTS-1)*3*4 || skipSysex)
 			{ // This message will never fit. Throw it away.
 				track->EventP += len;
 			}

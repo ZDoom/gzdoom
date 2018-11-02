@@ -108,11 +108,15 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
     # potential uses; see https://bitbucket.org/mpyne/game-music-emu/issues/18/
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fwrapv")
 
-    if (NOT DEFINED LIBGME_SWITCH_FALLTHROUGH)
-        check_cxx_compiler_flag (-Wimplicit-fallthrough __LIBGME_SWITCH_FALLTHROUGH_WARNINGS)
-        set (LIBGME_SWITCH_FALLTHROUGH ${__LIBGME_SWITCH_FALLTHROUGH_WARNINGS}
-            CACHE BOOL "Set if the compiler will complain about implicit switch fallthrough"
-            )
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        if (NOT DEFINED LIBGME_SWITCH_FALLTHROUGH)
+            check_cxx_compiler_flag (-Wimplicit-fallthrough __LIBGME_SWITCH_FALLTHROUGH_WARNINGS)
+            set (LIBGME_SWITCH_FALLTHROUGH ${__LIBGME_SWITCH_FALLTHROUGH_WARNINGS}
+                CACHE BOOL "Set if the compiler will complain about implicit switch fallthrough"
+                )
+        endif()
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-inconsistent-missing-override -Wno-unused-const-variable")
     endif()
 
     if (ENABLE_UBSAN)

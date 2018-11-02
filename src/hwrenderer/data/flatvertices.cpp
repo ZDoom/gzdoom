@@ -232,7 +232,7 @@ int FFlatVertexBuffer::CreateIndexedSectorVerticesLM(sector_t *sec, const secpla
 			int lindex = lightmap->LightmapNum;
 			for (unsigned int j = 0; j < sub->numlines; j++)
 			{
-				vbo_shadowdata[vi + pos].SetFlatVertex(sub->firstline->v1, plane, luvs[j * 2], luvs[j * 2 + 1], lindex);
+				vbo_shadowdata[vi + pos].SetFlatVertex(sub->firstline[j].v1, plane, luvs[j * 2], luvs[j * 2 + 1], lindex);
 				vbo_shadowdata[vi + pos].z += diff;
 				pos++;
 			}
@@ -241,7 +241,7 @@ int FFlatVertexBuffer::CreateIndexedSectorVerticesLM(sector_t *sec, const secpla
 		{
 			for (unsigned int j = 0; j < sub->numlines; j++)
 			{
-				vbo_shadowdata[vi + pos].SetFlatVertex(sub->firstline->v1, plane);
+				vbo_shadowdata[vi + pos].SetFlatVertex(sub->firstline[j].v1, plane);
 				vbo_shadowdata[vi + pos].z += diff;
 				pos++;
 			}
@@ -249,7 +249,7 @@ int FFlatVertexBuffer::CreateIndexedSectorVerticesLM(sector_t *sec, const secpla
 	}
 
 	// Create the indices for the subsectors
-	for (int i = 0; i < sec->subsectorcount; i++)
+	for (i = 0, pos = 0; i < sec->subsectorcount; i++)
 	{
 		subsector_t *sub = sec->subsectors[i];
 		int firstndx = vi + pos;

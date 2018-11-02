@@ -1168,6 +1168,7 @@ struct side_t
 	uint8_t		Flags;
 	int			UDMFIndex;		// needed to access custom UDMF fields which are stored in loading order.
 	FLightNode * lighthead;		// all dynamic lights that may affect this wall
+	LightmapSurface *lightmap[4];
 
 	int GetLightLevel (bool foggy, int baselight, bool is3dlight=false, int *pfakecontrast_usedbygzdoom=NULL) const;
 
@@ -1323,7 +1324,6 @@ struct line_t
 	AutomapLineStyle automapstyle;
 	int			health;		// [ZZ] for destructible geometry (0 = no special behavior)
 	int			healthgroup; // [ZZ] this is the "destructible object" id
-	LightmapSurface *lightmap[4];
 
 	DVector2 Delta() const
 	{
@@ -1533,7 +1533,7 @@ struct LightmapSurface
 {
 	SurfaceType Type;
 	subsector_t *Subsector;
-	line_t *Line;
+	side_t *Side;
 	sector_t *ControlSector;
 	uint32_t LightmapNum;
 	float *TexCoords;

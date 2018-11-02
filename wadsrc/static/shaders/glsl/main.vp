@@ -5,7 +5,7 @@ layout(location = 2) in vec4 aColor;
 #ifndef SIMPLE	// we do not need these for simple shaders
 layout(location = 3) in vec4 aVertex2;
 layout(location = 4) in vec4 aNormal;
-layout(location = 5) in vec3 aLightmap;
+layout(location = 6) in vec3 aLightmap;
 out vec4 pixelpos;
 out vec3 glowdist;
 

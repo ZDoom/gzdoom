@@ -938,6 +938,27 @@ bool FTraceInfo::CheckPlane (const secplane_t &plane)
 
 static bool EditTraceResult (uint32_t flags, FTraceResults &res)
 {
+	if (flags & TRACE_HitSky)
+	{ // Throw away sky hits
+		if (res.HitType == TRACE_HitFloor || res.HitType == TRACE_HitCeiling)
+		{
+			if (res.HitTexture == skyflatnum)
+			{
+				res.HitType = TRACE_HasHitSky;
+				return true;
+			}
+		}
+		else if (res.HitType == TRACE_HitWall)
+		{
+			if (res.Tier == TIER_Upper &&
+				res.Line->frontsector->GetTexture(sector_t::ceiling) == skyflatnum &&
+				res.Line->backsector->GetTexture(sector_t::ceiling) == skyflatnum)
+			{
+				res.HitType = TRACE_HasHitSky;
+				return true;
+			}
+		}
+	}
 	if (flags & TRACE_NoSky)
 	{ // Throw away sky hits
 		if (res.HitType == TRACE_HitFloor || res.HitType == TRACE_HitCeiling)

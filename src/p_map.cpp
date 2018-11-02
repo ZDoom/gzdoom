@@ -4623,9 +4623,13 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 		damageType = puffDefaults->DamageType;
 	}
 
-	int tflags;
-	if (nointeract || (puffDefaults && puffDefaults->flags6 & MF6_NOTRIGGER)) tflags = TRACE_NoSky;
-	else tflags = TRACE_NoSky | TRACE_Impact;
+	uint32_t tflags = TRACE_NoSky | TRACE_Impact;
+	if (nointeract || (puffDefaults && puffDefaults->flags6 & MF6_NOTRIGGER)) tflags &= ~TRACE_Impact;
+	if (spawnSky)
+	{
+		tflags &= ~TRACE_NoSky;
+		tflags |= TRACE_HitSky;
+	}
 
 	// [MC] Check the flags and set the position according to what is desired.
 	// LAF_ABSPOSITION: Treat the offset parameters as direct coordinates.
@@ -4683,7 +4687,15 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	{
 		if (trace.HitType != TRACE_HitActor)
 		{
+
+			if (trace.HitType == TRACE_HasHitSky || (trace.HitType == TRACE_HitWall
+				&& trace.Line->special == Line_Horizon && spawnSky))
+			{
+				puffFlags |= PF_HITSKY;
+			}
+
 			P_GeometryLineAttack(trace, t1, damage, damageType);
+
 
 			// position a bit closer for puffs
 			if (nointeract || trace.HitType != TRACE_HitWall || ((trace.Line->special != Line_Horizon) || spawnSky))

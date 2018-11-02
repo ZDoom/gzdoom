@@ -38,7 +38,8 @@ struct FLineTraceData
 		TRACE_HitCeiling,
 		TRACE_HitWall,
 		TRACE_HitActor,
-		TRACE_CrossingPortal
+		TRACE_CrossingPortal,
+		TRACE_HasHitSky
 	};
 
 	Actor HitActor;

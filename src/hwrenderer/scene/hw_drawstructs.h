@@ -152,6 +152,7 @@ public:
 	vertex_t * vertexes[2];				// required for polygon splitting
 	FMaterial *gltexture;
 	TArray<lightlist_t> *lightlist;
+	LightmapSurface *lightmap;
 
 	GLSeg glseg;
 	float ztop[2],zbottom[2];
@@ -236,13 +237,13 @@ public:
 
 	void GetPlanePos(F3DFloor::planeref * planeref, float & left, float & right);
 
-	void BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover,
+	void BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover, int roverIndex,
 					  float ff_topleft, float ff_topright, 
 					  float ff_bottomleft, float ff_bottomright);
 	void InverseFloors(HWDrawInfo *di, seg_t * seg, sector_t * frontsector,
 					   float topleft, float topright, 
 					   float bottomleft, float bottomright);
-	void ClipFFloors(HWDrawInfo *di, seg_t * seg, F3DFloor * ffloor, sector_t * frontsector,
+	void ClipFFloors(HWDrawInfo *di, seg_t * seg, F3DFloor * ffloor, int ffloorIndex, sector_t * frontsector,
 					float topleft, float topright, 
 					float bottomleft, float bottomright);
 	void DoFFloorBlocks(HWDrawInfo *di, seg_t * seg, sector_t * frontsector, sector_t * backsector,

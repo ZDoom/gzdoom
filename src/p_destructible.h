@@ -17,7 +17,8 @@ struct FHealthGroup
 enum
 {
 	SECPART_Floor = 0,
-	SECPART_Ceiling = 1
+	SECPART_Ceiling = 1,
+	SECPART_3D = 2
 };
 
 void P_InitHealthGroups();
@@ -32,6 +33,8 @@ void P_DamageLinedef(line_t* line, AActor* source, int damage, FName damagetype,
 
 void P_GeometryLineAttack(FTraceResults& trace, AActor* thing, int damage, FName damageType);
 void P_GeometryRadiusAttack(AActor* bombspot, AActor* bombsource, int bombdamage, int bombdistance, FName damagetype, int fulldamagedistance);
+void P_ProjectileHitLinedef(AActor* projectile, line_t* line);
+void P_ProjectileHitPlane(AActor* projectile, int part);
 
 bool P_CheckLinedefVulnerable(line_t* line, int side, int part = -1);
 bool P_CheckSectorVulnerable(sector_t* sector, int part);

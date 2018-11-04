@@ -6862,6 +6862,11 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				return (ss->healthfloorgroup && (grp = P_GetHealthGroup(ss->healthfloorgroup)))
 					? grp->health : ss->healthfloor;
 			}
+			else if (part == SECPART_3D)
+			{
+				return (ss->health3dgroup && (grp = P_GetHealthGroup(ss->health3dgroup)))
+					? grp->health : ss->health3d;
+			}
 			return 0;
 		}
 

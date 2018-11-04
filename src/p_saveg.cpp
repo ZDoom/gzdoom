@@ -297,6 +297,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t 
 			("scrolls", scroll, nul)
 			("healthfloor", p.healthfloor, def->healthfloor)
 			("healthceiling", p.healthceiling, def->healthceiling)
+			("health3d", p.health3d, def->health3d)
 			// GZDoom exclusive:
 			.Array("reflect", p.reflect, def->reflect, 2, true)
 			.EndObject();

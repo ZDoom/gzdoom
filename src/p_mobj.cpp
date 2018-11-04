@@ -296,6 +296,7 @@ DEFINE_FIELD(AActor, lastbump)
 DEFINE_FIELD(AActor, DesignatedTeam)
 DEFINE_FIELD(AActor, BlockingMobj)
 DEFINE_FIELD(AActor, BlockingLine)
+DEFINE_FIELD(AActor, Blocking3DFloor)
 DEFINE_FIELD(AActor, BlockingCeiling)
 DEFINE_FIELD(AActor, BlockingFloor)
 DEFINE_FIELD(AActor, PoisonDamage)
@@ -481,6 +482,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("smokecounter", smokecounter)
 		("blockingmobj", BlockingMobj)
 		A("blockingline", BlockingLine)
+		A("blocking3dfloor", Blocking3DFloor)
 		A("blockingceiling", BlockingCeiling)
 		A("blockingfloor", BlockingFloor)
 		A("visibletoteam", VisibleToTeam)
@@ -1947,26 +1949,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target, bool onsky)
 	// [ZZ] line damage callback
 	if (line)
 	{
-		int wside = P_PointOnLineSide(mo->Pos(), line);
-		int oside = !wside;
-		side_t* otherside = line->sidedef[oside];
-		// check if hit upper or lower part
-		if (otherside)
-		{
-			sector_t* othersector = otherside->sector;
-			double otherfloorz = othersector->floorplane.ZatPoint(mo->Pos());
-			double otherceilingz = othersector->ceilingplane.ZatPoint(mo->Pos());
-			double actualz = mo->Pos().Z;
-			if (actualz < otherfloorz && othersector->healthfloor > 0 && P_CheckLinedefVulnerable(line, wside, SECPART_Floor))
-				P_DamageSector(othersector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Floor, mo->Pos());
-			if (actualz > otherceilingz && othersector->healthceiling > 0 && P_CheckLinedefVulnerable(line, wside, SECPART_Ceiling))
-				P_DamageSector(othersector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Ceiling, mo->Pos());
-		}
-		
-		if (line->health > 0 && P_CheckLinedefVulnerable(line, wside))
-		{
-			P_DamageLinedef(line, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, wside, mo->Pos());
-		}
+		P_ProjectileHitLinedef(mo, line);
 	}
 
 	if (mo->flags3 & MF3_EXPLOCOUNT)
@@ -2761,13 +2744,11 @@ explode:
 				}
 				if (mo->BlockingCeiling) // hit floor or ceiling while XY movement
 				{
-					if (mo->BlockingCeiling->healthceiling > 0 && P_CheckSectorVulnerable(mo->BlockingCeiling, SECPART_Ceiling))
-						P_DamageSector(mo->BlockingCeiling, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Ceiling, mo->Pos());
+					P_ProjectileHitPlane(mo, SECPART_Ceiling);
 				}
 				if (mo->BlockingFloor)
 				{
-					if (mo->BlockingFloor->healthfloor > 0 && P_CheckSectorVulnerable(mo->BlockingFloor, SECPART_Floor))
-						P_DamageSector(mo->BlockingFloor, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Floor, mo->Pos());
+					P_ProjectileHitPlane(mo, SECPART_Floor);
 				}
 				P_ExplodeMissile (mo, mo->BlockingLine, BlockingMobj, onsky);
 				return Oldfloorz;
@@ -3163,8 +3144,7 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 					}
 					P_HitFloor (mo);
 					// hit floor: direct damage callback
-					if (mo->Sector->healthfloor > 0 && P_CheckSectorVulnerable(mo->Sector, SECPART_Floor))
-						P_DamageSector(mo->Sector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Floor, mo->Pos());
+					P_ProjectileHitPlane(mo, SECPART_Floor);
 					P_ExplodeMissile (mo, NULL, NULL, onsky);
 					return;
 				}
@@ -3270,8 +3250,7 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 					else onsky = true;
 				}
 				// hit ceiling: direct damage callback
-				if (mo->Sector->healthceiling > 0 && P_CheckSectorVulnerable(mo->Sector, SECPART_Ceiling))
-					P_DamageSector(mo->Sector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Ceiling, mo->Pos());
+				P_ProjectileHitPlane(mo, SECPART_Ceiling);
 				P_ExplodeMissile (mo, NULL, NULL, onsky);
 				return;
 			}
@@ -4521,6 +4500,7 @@ void AActor::Tick ()
 		BlockingMobj = nullptr;
 		sector_t* oldBlockingCeiling = BlockingCeiling;
 		sector_t* oldBlockingFloor = BlockingFloor;
+		Blocking3DFloor = nullptr;
 		BlockingFloor = nullptr;
 		BlockingCeiling = nullptr;
 		double oldfloorz = P_XYMovement (this, cumm);

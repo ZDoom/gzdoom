@@ -110,6 +110,8 @@ struct FLineOpening
 	int				floorterrain;
 	bool			touchmidtex;
 	bool			abovemidtex;
+	F3DFloor		*topffloor;
+	F3DFloor		*bottomffloor;
 };
 
 static const double LINEOPEN_MIN = -FLT_MAX;

@@ -1542,8 +1542,14 @@ void GLWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover, int rov
 		translucent = false;
 	}
 
-	if (seg->sidedef->lightmap[1])
-		lightmap = &seg->sidedef->lightmap[1][1 + roverIndex];
+	LightmapSurface *surf = nullptr;
+	if (seg->sidedef == seg->linedef->sidedef[0])
+		surf = seg->linedef->sidedef[1]->lightmap[1];
+	else
+		surf = seg->linedef->sidedef[0]->lightmap[1];
+
+	if (surf)
+		lightmap = &surf[1 + roverIndex];
 
 	sector_t * sec = sub ? sub->sector : seg->frontsector;
 

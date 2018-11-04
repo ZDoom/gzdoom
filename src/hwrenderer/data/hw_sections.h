@@ -2,8 +2,18 @@
 #ifndef __GL_SECTIONS_H
 #define __GL_SECTIONS_H
 
+#include <algorithm>
 #include "tarray.h"
 #include "r_defs.h"
+
+// Undefine Windows garbage.
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
 
 //==========================================================================
 //
@@ -71,6 +81,7 @@ struct FSection
 	// tbd: Do we need a list of subsectors here? Ideally the subsectors should not be used anywhere anymore except for finding out where a location is.
 	TArrayView<FSectionLine> segments;
 	TArrayView<side_t *>	 sides;		// contains all sidedefs, including the internal ones that do not make up the outer shape. (this list is not exclusive. A sidedef can be in multiple sections!)
+	TArrayView<subsector_t *>	 subsectors;		// contains all sidedefs, including the internal ones that do not make up the outer shape. (this list is not exclusive. A sidedef can be in multiple sections!)
 	sector_t				*sector;
 	FLightNode				*lighthead;	// Light nodes (blended and additive)
 	BoundingRect			 bounds;
@@ -86,6 +97,7 @@ public:
 	TArray<FSection> allSections;
 	//TArray<vertex_t*> allVertices;
 	TArray<side_t *> allSides;
+	TArray<subsector_t *> allSubsectors;
 	TArray<int> allIndices;
 
 	int *sectionForSubsectorPtr;			// stored inside allIndices
@@ -122,5 +134,7 @@ public:
 	}
 };
 
+
+void CreateSections(FSectionContainer &container);
 
 #endif

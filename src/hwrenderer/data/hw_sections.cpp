@@ -88,6 +88,7 @@ struct Group
 	TArray<GroupWork> groupedSections;
 	TMap<int, bool> sideMap;
 	TArray<WorkSectionLine*> segments;
+	TArray<int> subsectors;
 };
 
 class FSectionCreator
@@ -531,12 +532,14 @@ public:
 	{
 		const double MAX_GROUP_DIST = 256;
 		TArray<GroupWork> build;
+		TArray<int> subsectorcopy;
 
 		if (workingSet.Size() == 1)
 		{
 			groupForSection[workingSet[0].index] = groups.Size();
 			Group g;
 			g.groupedSections = std::move(workingSet);
+			g.subsectors = std::move(rawsections[workingSet[0].index]);
 			groups.Push(std::move(g));
 			return;
 		}
@@ -546,7 +549,9 @@ public:
 			build.Clear();
 			build.Push(workingSet[0]);
 			groupForSection[workingSet[0].index] = groups.Size();
+			subsectorcopy = std::move(rawsections[workingSet[0].index]);
 			workingSet.Delete(0);
+
 
 			// Don't use iterators here. These arrays are modified inside.
 			for (unsigned j = 0; j < build.Size(); j++)
@@ -560,6 +565,7 @@ public:
 					{
 						build.Push(workingSet[i]);
 						groupForSection[workingSet[i].index] = groups.Size();
+						subsectorcopy.Append(rawsections[workingSet[i].index]);
 						workingSet.Delete(i);
 						i--;
 						continue;
@@ -570,6 +576,7 @@ public:
 					{
 						build.Push(workingSet[i]);
 						groupForSection[workingSet[i].index] = groups.Size();
+						subsectorcopy.Append(rawsections[workingSet[i].index]);
 						workingSet.Delete(i);
 						i--;
 						continue;
@@ -578,6 +585,7 @@ public:
 			}
 			Group g;
 			g.groupedSections = std::move(build);
+			g.subsectors = std::move(subsectorcopy);
 			groups.Push(std::move(g));
 		}
 	}
@@ -615,6 +623,7 @@ public:
 		output.allIndices.Resize(level.subsectors.Size() + level.sides.Size());
 		output.sectionForSubsectorPtr = &output.allIndices[0];
 		output.sectionForSidedefPtr = &output.allIndices[level.subsectors.Size()];
+		memset(output.sectionForSubsectorPtr, -1, sizeof(int) * level.subsectors.Size());
 
 		unsigned numsegments = 0;
 		unsigned numsides = 0;
@@ -642,9 +651,11 @@ public:
 		}
 		output.allLines.Resize(numsegments);
 		output.allSides.Resize(numsides);
+		output.allSubsectors.Resize(level.subsectors.Size());
 
 		numsegments = 0;
 		numsides = 0;
+		unsigned numsubsectors = 0;
 
 		// Now piece it all together
 		unsigned curgroup = 0;
@@ -658,6 +669,7 @@ public:
 			dest.validcount = 0;
 			dest.segments.Set(&output.allLines[numsegments], group.segments.Size());
 			dest.sides.Set(&output.allSides[numsides], group.sideMap.CountUsed());
+			dest.subsectors.Set(&output.allSubsectors[numsubsectors]);
 			dest.bounds = {1e32, 1e32, -1e32, -1e32};
 			numsegments += group.segments.Size();
 
@@ -677,7 +689,14 @@ public:
 			while (it.NextPair(pair))
 			{
 				output.allSides[numsides++] = &level.sides[pair->Key];
+				output.sectionForSidedefPtr[pair->Key] = curgroup;
 			}
+			memcpy(&output.allSubsectors[numsubsectors], &group.subsectors[0], group.subsectors.Size() * sizeof(subsector_t*));
+			for (auto ssi : group.subsectors)
+			{
+				output.sectionForSubsectorPtr[ssi] = curgroup;
+			}
+			numsubsectors += group.subsectors.Size();
 			curgroup++;
 		}
 	}
@@ -739,12 +758,8 @@ void PrintSections(FSectionContainer &container)
 //
 //=============================================================================
 
-void MakeSections()
+void CreateSections(FSectionContainer &container)
 {
-	FSectionContainer container;
-	cycle_t timer;
-	timer.Reset();
-	timer.Clock();
 	FSectionCreator creat;
 	creat.GroupSubsectors();
 	creat.CompileSections();
@@ -753,12 +768,9 @@ void MakeSections()
 	creat.FindOuterLoops();
 	creat.GroupSections();
 	creat.ConstructOutput(container);
-	timer.Unclock();
-	PrintSections(container);
-	Printf("Time = %2.3f ms\n", timer.TimeMS());
 }
 
-CCMD(makesections)
+CCMD(printsections)
 {
-	MakeSections();
+	PrintSections(level.sections);
 }

@@ -1033,6 +1033,8 @@ public:
 	void AttachLight(unsigned int count, const FLightDefaults *lightdef);
 	void SetDynamicLights();
 
+	// When was this actor spawned? (relative to the current level)
+	int GetLevelSpawnTime() const;
 
 // info for drawing
 // NOTE: The first member variable *must* be snext.
@@ -1261,6 +1263,9 @@ public:
 	DRotator PrevAngles;
 	int PrevPortalGroup;
 	TArray<TObjPtr<AActor*> > AttachedLights;
+
+	// When was this actor spawned?
+	int SpawnTime;
 
 	// ThingIDs
 	static void ClearTIDHashes ();

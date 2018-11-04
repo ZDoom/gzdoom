@@ -348,6 +348,7 @@ DEFINE_FIELD(AActor, BloodTranslation)
 DEFINE_FIELD(AActor, RenderHidden)
 DEFINE_FIELD(AActor, RenderRequired)
 DEFINE_FIELD(AActor, friendlyseeblocks)
+DEFINE_FIELD(AActor, SpawnTime)
 
 //==========================================================================
 //
@@ -528,8 +529,9 @@ void AActor::Serialize(FSerializer &arc)
 		A("selfdamagefactor", SelfDamageFactor)
 		A("stealthalpha", StealthAlpha)
 		A("renderhidden", RenderHidden)
-		A("renderrequired", RenderRequired);
-		A("friendlyseeblocks", friendlyseeblocks);
+		A("renderrequired", RenderRequired)
+		A("friendlyseeblocks", friendlyseeblocks)
+		A("spawntime", SpawnTime);
 }
 
 #undef A
@@ -5006,6 +5008,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 	AActor *actor;
 	
 	actor = static_cast<AActor *>(const_cast<PClassActor *>(type)->CreateNew ());
+	actor->SpawnTime = level.totaltime;
 
 	// Set default dialogue
 	actor->ConversationRoot = GetConversation(actor->GetClass()->TypeName);
@@ -8063,6 +8066,25 @@ void AActor::SetTranslation(FName trname)
 	// silently ignore if the name does not exist, this would create some insane message spam otherwise.
 }
 
+//==========================================================================
+//
+// AActor :: GetLevelSpawnTime
+//
+// Returns the time when this actor was spawned, 
+// relative to the current level.
+//
+//==========================================================================
+int AActor::GetLevelSpawnTime() const
+{
+	return SpawnTime - level.totaltime + level.time;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetLevelSpawnTime)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_INT(self->GetLevelSpawnTime());
+}
+
 //---------------------------------------------------------------------------
 //
 // PROP A_RestoreSpecialPosition
@@ -8587,5 +8609,8 @@ void PrintMiscActorInfo(AActor *query)
 		Printf("FriendlySeeBlocks: %d\n", query->friendlyseeblocks);
 		Printf("Target: %s\n", query->target ? query->target->GetClass()->TypeName.GetChars() : "-");
 		Printf("Last enemy: %s\n", query->lastenemy ? query->lastenemy->GetClass()->TypeName.GetChars() : "-");
+		Printf("Spawn time: %d ticks (%f seconds) after game start, %d ticks (%f seconds) after level start\n", 
+			query->SpawnTime, (double) query->SpawnTime / TICRATE,
+			query->GetLevelSpawnTime(), (double) query->GetLevelSpawnTime() / TICRATE);
 	}
 }

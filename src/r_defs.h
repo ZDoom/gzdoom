@@ -1437,6 +1437,7 @@ enum
 	SSECF_DEGENERATE = 1,
 	SSECMF_DRAWN = 2,
 	SSECF_POLYORG = 4,
+	SSECF_HOLE = 8,
 };
 
 struct FPortalCoverage

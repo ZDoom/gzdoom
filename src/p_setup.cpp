@@ -4055,6 +4055,8 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 	if (hasglnodes)
 	{
 		P_SetRenderSector();
+		FixMinisegReferences();
+		FixHoles();
 	}
 
 	bodyqueslot = 0;

@@ -1071,6 +1071,8 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 				tm.ceilingpic = open.ceilingpic;
 				tm.ceilingline = ld;
 				tm.thing->BlockingLine = ld;
+				if (open.topffloor)
+					tm.thing->Blocking3DFloor = open.topffloor->model;
 			}
 		}
 
@@ -1086,6 +1088,8 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 				tm.touchmidtex = open.touchmidtex;
 				tm.abovemidtex = open.abovemidtex;
 				tm.thing->BlockingLine = ld;
+				if (open.bottomffloor)
+					tm.thing->Blocking3DFloor = open.bottomffloor->model;
 			}
 			else if (open.bottom == tm.floorz)
 			{

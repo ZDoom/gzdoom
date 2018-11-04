@@ -18,7 +18,9 @@ class SectorAction : Actor
 		SECSPAC_DamageFloor	= 1<<11,
 		SECSPAC_DamageCeiling	= 1<<12,
 		SECSPAC_DeathFloor	= 1<<13,
-		SECSPAC_DeathCeiling	= 1<<14
+		SECSPAC_DeathCeiling	= 1<<14,
+		SECSPAC_Damage3D	= 1<<15,
+		SECSPAC_Death3D		= 1<<16
 	};
 
 	default
@@ -246,6 +248,30 @@ class SecActDeathCeiling : SectorAction
 	Default
 	{
 		Health SECSPAC_DeathCeiling;
+	}
+
+	// [ZZ] damage is unconditional, so this as well
+	override bool CanTrigger (Actor triggerer) { return !!special; }
+}
+
+// Triggered when controlled 3d floor is damaged ----------------------------------
+class SecActDamage3D : SectorAction
+{
+	Default
+	{
+		Health SECSPAC_Damage3D;
+	}
+
+	// [ZZ] damage is unconditional, so this as well
+	override bool CanTrigger (Actor triggerer) { return !!special; }
+}
+
+// Triggered when controlled 3d floor is reduced to 0 hp ----------------------------------
+class SecActDeath3D : SectorAction
+{
+	Default
+	{
+		Health SECSPAC_Death3D;
 	}
 
 	// [ZZ] damage is unconditional, so this as well

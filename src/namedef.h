@@ -670,10 +670,12 @@ xx(Owner)
 
 xx(HealthFloor)
 xx(HealthCeiling)
+xx(Health3D)
 xx(DamageSpecial)
 xx(DeathSpecial)
 xx(HealthFloorGroup)
 xx(HealthCeilingGroup)
+xx(Health3DGroup)
 xx(HealthGroup)
 
 // USDF keywords

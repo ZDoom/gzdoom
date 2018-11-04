@@ -281,6 +281,8 @@ enum
 	SECSPAC_DamageCeiling=1<<12,	// Trigger when ceiling is damaged
 	SECSPAC_DeathFloor	= 1<<13,	// Trigger when floor has 0 hp
 	SECSPAC_DeathCeiling= 1<<14,	// Trigger when ceiling has 0 hp
+	SECSPAC_Damage3D	= 1<<15,	// Trigger when controlled 3d floor is damaged
+	SECSPAC_Death3D		= 1<<16		// Trigger when controlled 3d floor has 0 hp
 };
 
 struct secplane_t
@@ -1098,8 +1100,10 @@ public:
 	//      default is 0, which means no special behavior
 	int				healthfloor;
 	int				healthceiling;
+	int				health3d;
 	int				healthfloorgroup;
 	int				healthceilinggroup;
+	int				health3dgroup;
 
 };
 

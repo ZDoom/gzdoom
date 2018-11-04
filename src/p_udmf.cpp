@@ -1792,12 +1792,20 @@ public:
 					sec->healthceiling = CheckInt(key);
 					break;
 
+				case NAME_Health3D:
+					sec->health3d = CheckInt(key);
+					break;
+
 				case NAME_HealthFloorGroup:
 					sec->healthfloorgroup = CheckInt(key);
 					break;
 
 				case NAME_HealthCeilingGroup:
 					sec->healthceilinggroup = CheckInt(key);
+					break;
+
+				case NAME_Health3DGroup:
+					sec->health3dgroup = CheckInt(key);
 					break;
 					
 				default:

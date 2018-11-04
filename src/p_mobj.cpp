@@ -8085,6 +8085,24 @@ DEFINE_ACTION_FUNCTION(AActor, GetLevelSpawnTime)
 	ACTION_RETURN_INT(self->GetLevelSpawnTime());
 }
 
+//==========================================================================
+//
+// AActor :: GetAge
+//
+// Returns the number of ticks passed since this actor was spawned.
+//
+//==========================================================================
+int AActor::GetAge() const
+{
+	return level.totaltime - SpawnTime;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetAge)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_INT(self->GetAge());
+}
+
 //---------------------------------------------------------------------------
 //
 // PROP A_RestoreSpecialPosition

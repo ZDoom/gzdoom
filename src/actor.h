@@ -1035,6 +1035,8 @@ public:
 
 	// When was this actor spawned? (relative to the current level)
 	int GetLevelSpawnTime() const;
+	// How many ticks passed since this actor was spawned?
+	int GetAge() const;
 
 // info for drawing
 // NOTE: The first member variable *must* be snext.

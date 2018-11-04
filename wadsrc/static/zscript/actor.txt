@@ -234,6 +234,7 @@ class Actor : Thinker native
 	native int RenderHidden;
 	native int RenderRequired;
 	native readonly int FriendlySeeBlocks;
+	native readonly int SpawnTime;
 
 	meta String Obituary;		// Player was killed by this actor
 	meta String HitObituary;		// Player was killed by this actor in melee
@@ -708,6 +709,7 @@ class Actor : Thinker native
 	native void GiveSecret(bool printmsg = true, bool playsound = true);
 	native clearscope double GetCameraHeight() const;
 	native clearscope double GetGravity() const;
+	native clearscope int GetLevelSpawnTime() const;
 
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);
 	native void AddInventory(Inventory inv);

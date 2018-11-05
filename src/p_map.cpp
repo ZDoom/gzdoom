@@ -3552,6 +3552,18 @@ bool FSlide::BounceWall(AActor *mo)
 		return true;
 	}
 
+	// [ZZ] if bouncing missile hits a damageable linedef, it dies
+	if (P_ProjectileHitLinedef(mo, line) && mo->bouncecount > 0)
+	{
+		mo->Vel.Zero();
+		mo->Speed = 0;
+		mo->bouncecount = 0;
+		if (mo->flags & MF_MISSILE)
+			P_ExplodeMissile(mo, line, nullptr);
+		else mo->CallDie(nullptr, nullptr);
+		return true;
+	}
+
 	// The amount of bounces is limited
 	if (mo->bouncecount>0 && --mo->bouncecount == 0)
 	{

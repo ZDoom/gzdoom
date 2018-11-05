@@ -2127,6 +2127,18 @@ void AActor::PlayBounceSound(bool onfloor)
 
 bool AActor::FloorBounceMissile (secplane_t &plane)
 {
+	// [ZZ] if bouncing missile hits a damageable sector(plane), it dies
+	if (P_ProjectileHitPlane(this, -1) && bouncecount > 0)
+	{
+		Vel.Zero();
+		Speed = 0;
+		bouncecount = 0;
+		if (flags & MF_MISSILE)
+			P_ExplodeMissile(this, nullptr, nullptr);
+		else CallDie(nullptr, nullptr);
+		return true;
+	}
+
 	if (Z() <= floorz && P_HitFloor (this))
 	{
 		// Landed in some sort of liquid

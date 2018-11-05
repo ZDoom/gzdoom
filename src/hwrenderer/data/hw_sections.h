@@ -76,12 +76,6 @@ struct FSectionLine
 	side_t *sidedef;
 };
 
-struct FSectionVertex
-{
-	vertex_t *vertex;       // index into vertex array
-	int qualifier;          // some index to prevent vertices in different groups from being merged together.
-};
-
 struct FSection
 {
 	// tbd: Do we need a list of subsectors here? Ideally the subsectors should not be used anywhere anymore except for finding out where a location is.

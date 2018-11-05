@@ -25,6 +25,7 @@
 
 #include "tarray.h"
 #include "hwrenderer/data/buffers.h"
+#include "hw_vertexbuilder.h"
 #include <atomic>
 #include <mutex>
 
@@ -117,7 +118,7 @@ public:
 private:
 	int CreateIndexedSectionVertices(subsector_t *sub, const secplane_t &plane, int floor, VertexContainer &cont);
 	int CreateIndexedSectorVertices(sector_t *sec, const secplane_t &plane, int floor, VertexContainer &cont);
-	int CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, VertexContainers &cont);
+	int CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, VertexContainer &cont);
 	void CreateIndexedFlatVertices();
 
 	void UpdatePlaneVertices(sector_t *sec, int plane);

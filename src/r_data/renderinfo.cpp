@@ -532,8 +532,6 @@ static void PrepareSegs()
 
 void InitRenderInfo()
 {
-	CreateSections(level.sections);
-
 	PrepareSegs();
 	PrepareSectorData();
 	InitVertexData();

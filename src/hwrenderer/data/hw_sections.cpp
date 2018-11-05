@@ -47,16 +47,6 @@ template<> struct THashTraits<DoublePoint>
 	int Compare(const DoublePoint &left, const DoublePoint &right) { return left != right; }
 };
 
-template<> struct THashTraits<FSectionVertex>
-{
-    hash_t Hash(const FSectionVertex &key)
-    {
-        return (int)(((intptr_t)key.vertex) >> 4) ^ (key.qualifier << 16);
-    }
-    int Compare(const FSectionVertex &left, const FSectionVertex &right) { return left.vertex != right.vertex && left.qualifier != right.qualifier; }
-};
-
-
 struct WorkSectionLine
 {
 	vertex_t *start;
@@ -77,6 +67,7 @@ struct WorkSection
 	bool hasminisegs;
 	TArray<WorkSectionLine*>segments;
 	TArray<side_t *> originalSides;	// The segs will lose some of these while working on them.
+	TArray<int> subsectors;
 };
 
 struct TriangleWorkData
@@ -107,7 +98,6 @@ class FSectionCreator
 
 	bool verbose = false;
 	TMap<int, TArray<int>> subsectormap;
-	TArray<TArray<int>> rawsections;	// list of unprocessed subsectors. Sector and mapsection can be retrieved from the elements so aren't stored.
 	TArray<WorkSection> sections;
 
 	TArray<TriangleWorkData> triangles;
@@ -185,16 +175,18 @@ public:
 	//
 	//==========================================================================
 
-	void CompileSections()
+	TArray < TArray<int>> CompileSections()
 	{
 		TMap<int, TArray<int>>::Pair *pair;
 		TMap<int, TArray<int>>::Iterator it(subsectormap);
+		TArray<TArray<int>> rawsections;	// list of unprocessed subsectors. Sector and mapsection can be retrieved from the elements so aren't stored.
 
 		while (it.NextPair(pair))
 		{
-			CompileSections(pair->Value);
+			CompileSections(pair->Value, rawsections);
 		}
 		subsectormap.Clear();
+		return rawsections;
 	}
 
 	//==========================================================================
@@ -203,7 +195,7 @@ public:
 	//
 	//==========================================================================
 
-	void CompileSections(TArray<int> &list)
+	void CompileSections(TArray<int> &list, TArray<TArray<int>>&rawsections)
 	{
 		TArray<int> sublist;
 		TArray<seg_t *> seglist;
@@ -255,12 +247,15 @@ public:
 
 	void MakeOutlines()
 	{
+		auto rawsections = CompileSections();
 		TArray<WorkSectionLine *> lineForSeg(level.segs.Size(), true);
 		memset(lineForSeg.Data(), 0, sizeof(WorkSectionLine*) * level.segs.Size());
 		for (auto &list : rawsections)
 		{
 			MakeOutline(list, lineForSeg);
 		}
+		rawsections.Clear();
+		rawsections.ShrinkToFit();
 
 		// Assign partners after everything has been collected
 		for (auto &section : sections)
@@ -403,8 +398,14 @@ public:
 					*sectionlines[i] = { nullptr, nullptr, nullptr, nullptr, -1, (int)sections.Size(), nullptr };
 				}
 			}
-
-			sections.Push({ sector, mapsec, hasminisegs, std::move(sectionlines), std::move(foundsides) });
+			sections.Reserve(1);
+			auto &section = sections.Last();
+			section.sectorindex = sector;
+			section.mapsection = mapsec;
+			section.hasminisegs = hasminisegs;
+			section.originalSides = std::move(foundsides);
+			section.segments = std::move(sectionlines);
+			section.subsectors = std::move(rawsection);
 		}
 	}
 
@@ -547,8 +548,8 @@ public:
 		{
 			groupForSection[workingSet[0].index] = groups.Size();
 			Group g;
+			g.subsectors = std::move(workingSet[0].section->subsectors);
 			g.groupedSections = std::move(workingSet);
-			g.subsectors = std::move(rawsections[workingSet[0].index]);
 			groups.Push(std::move(g));
 			return;
 		}
@@ -558,7 +559,7 @@ public:
 			build.Clear();
 			build.Push(workingSet[0]);
 			groupForSection[workingSet[0].index] = groups.Size();
-			subsectorcopy = std::move(rawsections[workingSet[0].index]);
+			subsectorcopy = std::move(workingSet[0].section->subsectors);
 			workingSet.Delete(0);
 
 
@@ -574,7 +575,7 @@ public:
 					{
 						build.Push(workingSet[i]);
 						groupForSection[workingSet[i].index] = groups.Size();
-						subsectorcopy.Append(rawsections[workingSet[i].index]);
+						subsectorcopy.Append(workingSet[i].section->subsectors);
 						workingSet.Delete(i);
 						i--;
 						continue;
@@ -585,7 +586,7 @@ public:
 					{
 						build.Push(workingSet[i]);
 						groupForSection[workingSet[i].index] = groups.Size();
-						subsectorcopy.Append(rawsections[workingSet[i].index]);
+						subsectorcopy.Append(workingSet[i].section->subsectors);
 						workingSet.Delete(i);
 						i--;
 						continue;
@@ -693,6 +694,8 @@ public:
 			if (output.firstSectionForSectorPtr[dest.sector->Index()] == -1)
 				output.firstSectionForSectorPtr[dest.sector->Index()] = curgroup;
 
+			output.numberOfSectionForSectorPtr[dest.sector->Index()]++;
+
 			for (auto &segment : group.segments)
 			{
 				// Use the indices calculated above to store these elements.
@@ -711,13 +714,11 @@ public:
 				output.allSides[numsides++] = &level.sides[pair->Key];
 				output.sectionForSidedefPtr[pair->Key] = curgroup;
 			}
-			memcpy(&output.allSubsectors[numsubsectors], &group.subsectors[0], group.subsectors.Size() * sizeof(subsector_t*));
 			for (auto ssi : group.subsectors)
 			{
+				output.allSubsectors[numsubsectors++] = &level.subsectors[ssi];
 				output.sectionForSubsectorPtr[ssi] = curgroup;
 			}
-			numsubsectors += group.subsectors.Size();
-			CreateVerticesForSection(output, dest, true);
 			curgroup++;
 		}
 	}
@@ -783,7 +784,6 @@ void CreateSections(FSectionContainer &container)
 {
 	FSectionCreator creat;
 	creat.GroupSubsectors();
-	creat.CompileSections();
 	creat.MakeOutlines();
 	creat.MergeLines();
 	creat.FindOuterLoops();
@@ -797,183 +797,3 @@ CCMD(printsections)
 }
 
 
-
-//=============================================================================
-//
-// One sector's vertex data.
-//
-//=============================================================================
-
-struct VertexContainer
-{
-	TArray<FSectionVertex> vertices;
-	TMap<FSectionVertex *, uint32_t> vertexmap;
-	bool perSubsector = false;
-	
-	TArray<uint32_t> indices;
-	
-	uint32_t AddVertex(FSectionVertex *vert)
-	{
-		auto check = vertexmap.CheckKey(vert);
-		if (check != nullptr) return *check;
-		auto index = vertices.Push(*vert);
-		vertexmap[vert] = index;
-		return index;
-	}
-	
-	uint32_t AddVertex(vertex_t *vert, int qualifier)
-	{
-		FSectionVertex vertx = { vert, qualifier};
-		return AddVertex(&vertx);
-	}
-	
-	uint32_t GetIndex(FSectionVertex *vert)
-	{
-		auto check = vertexmap.CheckKey(vert);
-		if (check != nullptr) return *check;
-		return ~0u;
-	}
-	
-	uint32_t GetIndex(vertex_t *vert, int qualifier)
-	{
-		FSectionVertex vertx = { vert, qualifier};
-		return GetIndex(&vertx);
-	}
-	
-	uint32_t AddIndexForVertex(FSectionVertex *vert)
-	{
-		return indices.Push(GetIndex(vert));
-	}
-	
-	uint32_t AddIndexForVertex(vertex_t *vert, int qualifier)
-	{
-		return indices.Push(GetIndex(vert, qualifier));
-	}
-	
-	uint32_t AddIndex(uint32_t indx)
-	{
-		return indices.Push(indx);
-	}
-};
-
-
-//=============================================================================
-//
-// Creates vertex meshes for sector planes
-//
-//=============================================================================
-
-namespace VertexBuilder
-{
-
-	//=============================================================================
-	//
-	//
-	//
-	//=============================================================================
-	
-	static void CreateVerticesForSubsector(subsector_t *sub, VertexContainer &gen, int qualifier)
-	{
-		if (sub->numlines < 3) return;
-		
-		uint32_t startindex = gen.indices.Size();
-		
-		if ((sub->flags & SSECF_HOLE) && sub->numlines > 3)
-		{
-			// Hole filling "subsectors" are not necessarily convex so they require real triangulation.
-			// These things are extremely rare so performance is secondary here.
-			
-			using Point = std::pair<double, double>;
-			std::vector<std::vector<Point>> polygon;
-			std::vector<Point> *curPoly;
-			
-			for (unsigned i = 0; i < sub->numlines; i++)
-			{
-				polygon.resize(1);
-				curPoly = &polygon.back();
-				curPoly->push_back({ sub->firstline[i].v1->fX(), sub->firstline[i].v1->fY() });
-			}
-			auto indices = mapbox::earcut(polygon);
-			for (auto vti : indices)
-			{
-				gen.AddIndexForVertex(sub->firstline[vti].v1, qualifier);
-			}
-		}
-		else
-		{
-			int firstndx = gen.GetIndex(sub->firstline[0].v1, qualifier);
-			int secondndx = gen.GetIndex(sub->firstline[1].v1, qualifier);
-			for (unsigned int k = 2; k < sub->numlines; k++)
-			{
-				gen.AddIndex(firstndx);
-				gen.AddIndex(secondndx);
-				auto ndx = gen.GetIndex(sub->firstline[k].v1, qualifier);
-				gen.AddIndex(ndx);
-				secondndx = ndx;
-			}
-		}
-	}
-	
-	//=============================================================================
-	//
-	//
-	//
-	//=============================================================================
-	
-	static void TriangulateSection(FSection &sect, VertexContainer &gen, int qualifier)
-	{
-		if (sect.segments.Size() < 3) return;
-		
-		// todo
-	}
-	
-	//=============================================================================
-	//
-	//
-	//
-	//=============================================================================
-	
-	
-	static void CreateVerticesForSection(FSection &section, VertexContainer &gen, bool useSubsectors)
-	{
-		section.vertexindex = gen.indices.Size();
-
-		if (useSubsectors)
-		{
-			for (auto sub : section.subsectors)
-			{
-				CreateVerticesForSubsector(sub, gen, -1);
-			}
-		}
-		else
-		{
-			TriangulateSection(section, gen, -1);
-		}
-		section.vertexcount = gen.indices.Size() - section.vertexindex;
-	}
-	
-	//==========================================================================
-	//
-	// Creates the vertices for one plane in one subsector
-	//
-	//==========================================================================
-	
-	static void CreateVerticesForSector(sector_t *sec, VertexContainer gen)
-	{
-		auto sections = level.sections.SectionsForSector(sec);
-		for (auto &section :sections)
-		{
-			CreateVerticesForSection( section, gen, true);
-		}
-	}
-	
-	TArray<VertexContainer> BuildVertices()
-	{
-		TArray<VertexContainer> verticesPerSector(level.sectors.Size(), true);
-		for (unsigned i=0; i<level.sectors.Size(); i++)
-		{
-			CreateVerticesForSector(&level.sectors[i], verticesPerSector[i]);
-		}
-	}
-
-};

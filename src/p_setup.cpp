@@ -4067,6 +4067,8 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 	for (i = 0; i < BODYQUESIZE; i++)
 		bodyque[i] = NULL;
 
+	CreateSections(level.sections);
+
 	if (!buildmap)
 	{
 		// [RH] Spawn slope creating things first.

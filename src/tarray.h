@@ -162,6 +162,10 @@ public:
 		Most = max;
 		Count = reserve? max : 0;
 		Array = (T *)M_Malloc (sizeof(T)*max);
+		if (reserve)
+		{
+			for (unsigned i = 0; i < Count; i++) ::new(&Array[i]) T();
+		}
 	}
 	TArray (const TArray<T,TT> &other)
 	{

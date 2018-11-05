@@ -658,7 +658,9 @@ public:
 				}
 				for (auto side : section.originalSides)
 				{
-					group.sideMap[side->Index()] = true;
+					// This is only used for attaching lights to those sidedefs which are not part of the outline.
+					if (side->linedef && side->linedef->sidedef[1] && side->linedef->sidedef[0]->sector == side->linedef->sidedef[1]->sector)
+						group.sideMap[side->Index()] = true;
 				}
 			}
 			numsides += group.sideMap.CountUsed();

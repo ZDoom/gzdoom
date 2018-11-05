@@ -210,7 +210,7 @@ public:
 	FLightNode * touching_sector;
 
 private:
-	double DistToSeg(const DVector3 &pos, FSectionLine *seg);
+	double DistToSeg(const DVector3 &pos, vertex_t *start, vertex_t *end);
 	void CollectWithinRadius(const DVector3 &pos, FSection *section, float radius);
 
 protected:

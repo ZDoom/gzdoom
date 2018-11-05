@@ -527,20 +527,20 @@ static FLightNode * DeleteLightNode(FLightNode * node)
 //
 //==========================================================================
 
-double ADynamicLight::DistToSeg(const DVector3 &pos, FSectionLine *segment)
+double ADynamicLight::DistToSeg(const DVector3 &pos, vertex_t *start, vertex_t *end)
 {
 	double u, px, py;
 
-	double seg_dx = segment->end->fX() - segment->start->fX();
-	double seg_dy = segment->end->fY() - segment->start->fY();
+	double seg_dx = end->fX() - start->fX();
+	double seg_dy = end->fY() - start->fY();
 	double seg_length_sq = seg_dx * seg_dx + seg_dy * seg_dy;
 
-	u = (((pos.X - segment->start->fX()) * seg_dx) + (pos.Y - segment->start->fY()) * seg_dy) / seg_length_sq;
+	u = (((pos.X - start->fX()) * seg_dx) + (pos.Y - start->fY()) * seg_dy) / seg_length_sq;
 	if (u < 0.) u = 0.; // clamp the test point to the line segment
 	else if (u > 1.) u = 1.;
 
-	px = segment->start->fX() + (u * seg_dx);
-	py = segment->start->fY() + (u * seg_dy);
+	px = start->fX() + (u * seg_dx);
+	py = start->fY() + (u * seg_dy);
 
 	px -= pos.X;
 	py -= pos.Y;
@@ -572,53 +572,58 @@ void ADynamicLight::CollectWithinRadius(const DVector3 &opos, FSection *section,
 	bool hitonesidedback = false;
 	for (unsigned i = 0; i < collected_ss.Size(); i++)
 	{
+		auto &pos = collected_ss[i].pos;
 		section = collected_ss[i].sect;
 
 		touching_sector = AddLightNode(&section->lighthead, section, this, touching_sector);
 
+
+		auto processSide = [&](side_t *sidedef, vertex_t *v1, vertex_t *v2)
+		{
+			auto linedef = sidedef->linedef;
+			if (linedef && linedef->validcount != ::validcount)
+			{
+				// light is in front of the seg
+				if ((pos.Y - v1->fY()) * (v2->fX() - v1->fX()) + (v1->fX() - pos.X) * (v2->fY() - v1->fY()) <= 0)
+				{
+					linedef->validcount = ::validcount;
+					touching_sides = AddLightNode(&sidedef->lighthead, sidedef, this, touching_sides);
+				}
+				else if (linedef->sidedef[0] == sidedef && linedef->sidedef[1] == nullptr)
+				{
+					hitonesidedback = true;
+				}
+			}
+			if (linedef)
+			{
+				FLinePortal *port = linedef->getPortal();
+				if (port && port->mType == PORTT_LINKED)
+				{
+					line_t *other = port->mDestination;
+					if (other->validcount != ::validcount)
+					{
+						subsector_t *othersub = R_PointInSubsector(other->v1->fPos() + other->Delta() / 2);
+						FSection *othersect = othersub->section;
+						if (othersect->validcount != ::validcount)
+						{
+							othersect->validcount = ::validcount;
+							collected_ss.Push({ othersect, PosRelative(other) });
+						}
+					}
+				}
+			}
+		};
+
 		for (auto &segment : section->segments)
 		{
-			auto &pos = collected_ss[i].pos;
-
 			// check distance from x/y to seg and if within radius add this seg and, if present the opposing subsector (lather/rinse/repeat)
 			// If out of range we do not need to bother with this seg.
-			if (DistToSeg(pos, &segment) <= radius)
+			if (DistToSeg(pos, segment.start, segment.end) <= radius)
 			{
-				if (segment.sidedef)
+				auto sidedef = segment.sidedef;
+				if (sidedef)
 				{
-					auto sidedef = segment.sidedef;
-					auto linedef = sidedef->linedef;
-					if (linedef && linedef->validcount != ::validcount)
-					{
-						// light is in front of the seg
-						if ((pos.Y - segment.start->fY()) * (segment.end->fX() - segment.start->fX()) + (segment.start->fX() - pos.X) * (segment.end->fY() - segment.start->fY()) <= 0)
-						{
-							linedef->validcount = ::validcount;
-							touching_sides = AddLightNode(&sidedef->lighthead, sidedef, this, touching_sides);
-						}
-						else if (linedef->sidedef[0] == sidedef && linedef->sidedef[1] == nullptr)
-						{
-							hitonesidedback = true;
-						}
-					}
-					if (linedef)
-					{
-						FLinePortal *port = linedef->getPortal();
-						if (port && port->mType == PORTT_LINKED)
-						{
-							line_t *other = port->mDestination;
-							if (other->validcount != ::validcount)
-							{
-								subsector_t *othersub = R_PointInSubsector(other->v1->fPos() + other->Delta() / 2);
-								FSection *othersect = othersub->section;
-								if (othersect->validcount != ::validcount)
-								{
-									othersect->validcount = ::validcount;
-									collected_ss.Push({ othersect, PosRelative(other) });
-								}
-							}
-						}
-					}
+					processSide(sidedef, segment.start, segment.end);
 				}
 
 				auto partner = segment.partner;
@@ -632,6 +637,10 @@ void ADynamicLight::CollectWithinRadius(const DVector3 &opos, FSection *section,
 					}
 				}
 			}
+		}
+		for (auto side : section->sides)
+		{
+			processSide(side, side->V1(), side->V2());
 		}
 		sector_t *sec = section->sector;
 		if (!sec->PortalBlocksSight(sector_t::ceiling))

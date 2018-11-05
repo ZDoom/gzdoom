@@ -54,7 +54,8 @@ int HWDrawInfo::SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &light
 	if (level.HasDynamicLights && !isFullbrightScene())
 	{
 		Plane p;
-		FLightNode * node = sub->sector->lighthead;
+
+		FLightNode * node = sub->section->lighthead;
 
 		lightdata.Clear();
 		while (node)

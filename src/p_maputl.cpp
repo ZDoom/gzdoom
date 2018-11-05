@@ -470,7 +470,7 @@ void AActor::LinkToWorld(FLinkContext *ctx, bool spawningmapthing, sector_t *sec
 
 	Sector = sector;
 	subsector = R_PointInSubsector(Pos());	// this is from the rendering nodes, not the gameplay nodes!
-	section = level.sections.SectionForSubsector(subsector->Index());
+	section = subsector->section;
 
 	if (!(flags & MF_NOSECTOR))
 	{

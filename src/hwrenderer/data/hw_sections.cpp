@@ -633,11 +633,9 @@ public:
 	{
 		output.allSections.Resize(groups.Size());
 		output.allIndices.Resize(level.subsectors.Size() + level.sides.Size() + 2*level.sectors.Size());
-		output.sectionForSubsectorPtr = &output.allIndices[0];
-		output.sectionForSidedefPtr = &output.allIndices[level.subsectors.Size()];
-		output.firstSectionForSectorPtr = &output.allIndices[level.subsectors.Size() + level.sides.Size()];
-		output.numberOfSectionForSectorPtr = &output.allIndices[level.subsectors.Size() + level.sides.Size() + level.sectors.Size()];
-		memset(output.sectionForSubsectorPtr, -1, sizeof(int) * level.subsectors.Size());
+		output.sectionForSidedefPtr = &output.allIndices[0];
+		output.firstSectionForSectorPtr = &output.allIndices[level.sides.Size()];
+		output.numberOfSectionForSectorPtr = &output.allIndices[level.sides.Size() + level.sectors.Size()];
 		memset(output.firstSectionForSectorPtr, -1, sizeof(int) * level.sectors.Size());
 		memset(output.numberOfSectionForSectorPtr, 0, sizeof(int) * level.sectors.Size());
 
@@ -704,6 +702,7 @@ public:
 				fseg.end = segment->end;
 				fseg.partner = segment->partner == nullptr ? nullptr : &output.allLines[segment->partner->tempindex];
 				fseg.sidedef = segment->sidedef;
+				fseg.section = &dest;
 				dest.bounds.addVertex(fseg.start->fX(), fseg.start->fY());
 				dest.bounds.addVertex(fseg.end->fX(), fseg.end->fY());
 			}
@@ -717,7 +716,7 @@ public:
 			for (auto ssi : group.subsectors)
 			{
 				output.allSubsectors[numsubsectors++] = &level.subsectors[ssi];
-				output.sectionForSubsectorPtr[ssi] = curgroup;
+				level.subsectors[ssi].section = &output.allSections[curgroup];
 			}
 			curgroup++;
 		}

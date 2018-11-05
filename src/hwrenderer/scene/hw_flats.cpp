@@ -184,7 +184,7 @@ void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 {
 	if (level.HasDynamicLights && screen->BuffersArePersistent())
 	{
-		SetupLights(di, sector->lighthead, lightdata, sector->PortalGroup);
+		SetupLights(di, section->lighthead, lightdata, sector->PortalGroup);
 	}
 	state.SetLightIndex(dynlightindex);
 
@@ -346,7 +346,7 @@ inline void GLFlat::PutFlat(HWDrawInfo *di, bool fog)
 	{
 		if (level.HasDynamicLights && gltexture != nullptr)
 		{
-			SetupLights(di, sector->lighthead, lightdata, sector->PortalGroup);
+			SetupLights(di, section->lighthead, lightdata, sector->PortalGroup);
 		}
 	}
 	di->AddFlat(this, fog);

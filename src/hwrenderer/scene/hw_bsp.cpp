@@ -155,7 +155,7 @@ void HWDrawInfo::WorkerThread()
 		{
 			GLFlat flat;
 			SetupFlat.Clock();
-			flat.section = level.sections.SectionForSubsector(job->sub);
+			flat.section = job->sub->section;
 			front = hw_FakeFlat(job->sub->render_sector, &fakefront, in_area, false);
 			flat.ProcessSector(this, front);
 			SetupFlat.Unclock();
@@ -680,8 +680,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 					fakesector = hw_FakeFlat(sector, &fake, in_area, false);
 				}
 
-				auto secnum = level.sections.SectionNumForSubsector(sub);
-				uint8_t &srf = section_renderflags[secnum];
+				uint8_t &srf = section_renderflags[level.sections.SectionIndex(sub->section)];
 				if (!(srf & SSRF_PROCESSED))
 				{
 					srf |= SSRF_PROCESSED;
@@ -693,7 +692,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 					else
 					{
 						GLFlat flat;
-						flat.section = level.sections.SectionForSubsector(sub);
+						flat.section = sub->section;
 						SetupFlat.Clock();
 						flat.ProcessSector(this, fakesector);
 						SetupFlat.Unclock();

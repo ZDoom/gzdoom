@@ -80,7 +80,7 @@ DEFINE_CLASS_PROPERTY(type, S, DynamicLight)
 {
 	PROP_STRING_PARM(str, 0);
 	static const char * ltype_names[]={
-		"Point","Pulse","Flicker","Sector","RandomFlicker", "ColorPulse", "ColorFlicker", "RandomColorFlicker", NULL};
+		"Point","Pulse","Flicker","Sector","RandomFlicker", "ColorPulse", "ColorFlicker", "RandomColorFlicker", nullptr};
 
 	static const int ltype_values[]={
 		PointLight, PulseLight, FlickerLight, SectorLight, RandomFlickerLight, ColorPulseLight, ColorFlickerLight, RandomColorFlickerLight };
@@ -182,7 +182,7 @@ void ADynamicLight::PostBeginPlay()
 	
 	if (!(SpawnFlags & MTF_DORMANT))
 	{
-		Activate (NULL);
+		Activate (nullptr);
 	}
 
 	subsector = R_PointInSubsector(Pos());
@@ -430,14 +430,14 @@ void ADynamicLight::SetOffset(const DVector3 &pos)
 //==========================================================================
 //
 // The target pointer in dynamic lights should never be substituted unless 
-// notOld is NULL (which indicates that the object was destroyed by force.)
+// notOld is nullptr (which indicates that the object was destroyed by force.)
 //
 //==========================================================================
 size_t ADynamicLight::PointerSubstitution (DObject *old, DObject *notOld)
 {
 	AActor *saved_target = target;
 	size_t ret = Super::PointerSubstitution(old, notOld);
-	if (notOld != NULL) target = saved_target;
+	if (notOld != nullptr) target = saved_target;
 	return ret;
 }
 
@@ -494,7 +494,7 @@ FLightNode * AddLightNode(FLightNode ** thread, void * linkto, ADynamicLight * l
 //
 // P_DelSecnode() deletes a sector node from the list of
 // sectors this object appears in. Returns a pointer to the next node
-// on the linked list, or NULL.
+// on the linked list, or nullptr.
 //
 //=============================================================================
 
@@ -516,7 +516,7 @@ static FLightNode * DeleteLightNode(FLightNode * node)
 		delete node;
 		return(tn);
     }
-	return(NULL);
+	return(nullptr);
 }                             // phares 3/13/98
 
 
@@ -527,20 +527,20 @@ static FLightNode * DeleteLightNode(FLightNode * node)
 //
 //==========================================================================
 
-double ADynamicLight::DistToSeg(const DVector3 &pos, seg_t *seg)
+double ADynamicLight::DistToSeg(const DVector3 &pos, FSectionLine *segment)
 {
 	double u, px, py;
 
-	double seg_dx = seg->v2->fX() - seg->v1->fX();
-	double seg_dy = seg->v2->fY() - seg->v1->fY();
+	double seg_dx = segment->end->fX() - segment->start->fX();
+	double seg_dy = segment->end->fY() - segment->start->fY();
 	double seg_length_sq = seg_dx * seg_dx + seg_dy * seg_dy;
 
-	u = (((pos.X - seg->v1->fX()) * seg_dx) + (pos.Y - seg->v1->fY()) * seg_dy) / seg_length_sq;
+	u = (((pos.X - segment->start->fX()) * seg_dx) + (pos.Y - segment->start->fY()) * seg_dy) / seg_length_sq;
 	if (u < 0.) u = 0.; // clamp the test point to the line segment
 	else if (u > 1.) u = 1.;
 
-	px = seg->v1->fX() + (u * seg_dx);
-	py = seg->v1->fY() + (u * seg_dy);
+	px = segment->start->fX() + (u * seg_dx);
+	py = segment->start->fY() + (u * seg_dy);
 
 	px -= pos.X;
 	py -= pos.Y;
@@ -557,108 +557,110 @@ double ADynamicLight::DistToSeg(const DVector3 &pos, seg_t *seg)
 //==========================================================================
 struct LightLinkEntry
 {
-	subsector_t *sub;
+	FSection *sect;
 	DVector3 pos;
 };
 static TArray<LightLinkEntry> collected_ss;
 
-void ADynamicLight::CollectWithinRadius(const DVector3 &opos, subsector_t *subSec, float radius)
+void ADynamicLight::CollectWithinRadius(const DVector3 &opos, FSection *section, float radius)
 {
-	if (!subSec) return;
+	if (!section) return;
 	collected_ss.Clear();
-	collected_ss.Push({ subSec, opos });
-	subSec->validcount = ::validcount;
+	collected_ss.Push({ section, opos });
+	section->validcount = dl_validcount;
 
 	bool hitonesidedback = false;
 	for (unsigned i = 0; i < collected_ss.Size(); i++)
 	{
-		subSec = collected_ss[i].sub;
+		section = collected_ss[i].sect;
 
-		//touching_subsectors = AddLightNode(&subSec->lighthead, subSec, this, touching_subsectors);
-		if (subSec->sector->validcount != ::validcount)
-		{
-			touching_sector = AddLightNode(&subSec->render_sector->lighthead, subSec->sector, this, touching_sector);
-			subSec->sector->validcount = ::validcount;
-		}
+		touching_sector = AddLightNode(&section->lighthead, section, this, touching_sector);
 
-		for (unsigned int j = 0; j < subSec->numlines; ++j)
+		for (auto &segment : section->segments)
 		{
 			auto &pos = collected_ss[i].pos;
-			seg_t *seg = subSec->firstline + j;
 
 			// check distance from x/y to seg and if within radius add this seg and, if present the opposing subsector (lather/rinse/repeat)
 			// If out of range we do not need to bother with this seg.
-			if (DistToSeg(pos, seg) <= radius)
+			if (DistToSeg(pos, &segment) <= radius)
 			{
-				if (seg->sidedef && seg->linedef && seg->linedef->validcount != ::validcount)
+				if (segment.sidedef)
 				{
-					// light is in front of the seg
-					if ((pos.Y - seg->v1->fY()) * (seg->v2->fX() - seg->v1->fX()) + (seg->v1->fX() - pos.X) * (seg->v2->fY() - seg->v1->fY()) <= 0)
+					auto sidedef = segment.sidedef;
+					auto linedef = sidedef->linedef;
+					if (linedef && linedef->validcount != ::validcount)
 					{
-						seg->linedef->validcount = validcount;
-						touching_sides = AddLightNode(&seg->sidedef->lighthead, seg->sidedef, this, touching_sides);
-					}
-					else if (seg->linedef->sidedef[0] == seg->sidedef && seg->linedef->sidedef[1] == nullptr)
-					{
-						hitonesidedback = true;
-					}
-				}
-				if (seg->linedef)
-				{
-					FLinePortal *port = seg->linedef->getPortal();
-					if (port && port->mType == PORTT_LINKED)
-					{
-						line_t *other = port->mDestination;
-						if (other->validcount != ::validcount)
+						// light is in front of the seg
+						if ((pos.Y - segment.start->fY()) * (segment.end->fX() - segment.start->fX()) + (segment.start->fX() - pos.X) * (segment.end->fY() - segment.start->fY()) <= 0)
 						{
-							subsector_t *othersub = R_PointInSubsector(other->v1->fPos() + other->Delta() / 2);
-							if (othersub->validcount != ::validcount)
+							linedef->validcount = ::validcount;
+							touching_sides = AddLightNode(&sidedef->lighthead, sidedef, this, touching_sides);
+						}
+						else if (linedef->sidedef[0] == sidedef && linedef->sidedef[1] == nullptr)
+						{
+							hitonesidedback = true;
+						}
+					}
+					if (linedef)
+					{
+						FLinePortal *port = linedef->getPortal();
+						if (port && port->mType == PORTT_LINKED)
+						{
+							line_t *other = port->mDestination;
+							if (other->validcount != ::validcount)
 							{
-								othersub->validcount = ::validcount;
-								collected_ss.Push({ othersub, PosRelative(other) });
+								subsector_t *othersub = R_PointInSubsector(other->v1->fPos() + other->Delta() / 2);
+								FSection *othersect = othersub->section;
+								if (othersect->validcount != ::validcount)
+								{
+									othersect->validcount = ::validcount;
+									collected_ss.Push({ othersect, PosRelative(other) });
+								}
 							}
 						}
 					}
 				}
 
-				seg_t *partner = seg->PartnerSeg;
+				auto partner = segment.partner;
 				if (partner)
 				{
-					subsector_t *sub = partner->Subsector;
-					if (sub != NULL && sub->validcount != ::validcount)
+					FSection *sect = partner->section;
+					if (sect != nullptr && sect->validcount != dl_validcount)
 					{
-						sub->validcount = ::validcount;
-						collected_ss.Push({ sub, pos });
+						sect->validcount = dl_validcount;
+						collected_ss.Push({ sect, pos });
 					}
 				}
 			}
 		}
-		sector_t *sec = subSec->sector;
+		sector_t *sec = section->sector;
 		if (!sec->PortalBlocksSight(sector_t::ceiling))
 		{
-			line_t *other = subSec->firstline->linedef;
+			line_t *other = section->segments[0].sidedef->linedef;
 			if (sec->GetPortalPlaneZ(sector_t::ceiling) < Z() + radius)
 			{
 				DVector2 refpos = other->v1->fPos() + other->Delta() / 2 + sec->GetPortalDisplacement(sector_t::ceiling);
 				subsector_t *othersub = R_PointInSubsector(refpos);
-				if (othersub->validcount != ::validcount)
+				FSection *othersect = othersub->section;
+				if (othersect->validcount != dl_validcount)
 				{
-					othersub->validcount = ::validcount;
-					collected_ss.Push({ othersub, PosRelative(othersub->sector) });
+					othersect->validcount = dl_validcount;
+					collected_ss.Push({ othersect, PosRelative(othersub->sector) });
 				}
 			}
 		}
 		if (!sec->PortalBlocksSight(sector_t::floor))
 		{
-			line_t *other = subSec->firstline->linedef;
+			line_t *other = section->segments[0].sidedef->linedef;
 			if (sec->GetPortalPlaneZ(sector_t::floor) > Z() - radius)
 			{
 				DVector2 refpos = other->v1->fPos() + other->Delta() / 2 + sec->GetPortalDisplacement(sector_t::floor);
 				subsector_t *othersub = R_PointInSubsector(refpos);
-				if (othersub->validcount != ::validcount)
+				FSection *othersect = othersub->section;
+				if (othersect->validcount != dl_validcount)
 				{
-					othersub->validcount = ::validcount;
-					collected_ss.Push({ othersub, PosRelative(othersub->sector) });
+					othersect->validcount = dl_validcount;
+					collected_ss.Push({ othersect, PosRelative(othersub->sector) });
 				}
 			}
 		}
@@ -680,32 +682,33 @@ void ADynamicLight::LinkLight()
 	node = touching_sides;
 	while (node)
     {
-		node->lightsource = NULL;
+		node->lightsource = nullptr;
 		node = node->nextTarget;
     }
 	node = touching_sector;
 	while (node)
 	{
-		node->lightsource = NULL;
+		node->lightsource = nullptr;
 		node = node->nextTarget;
 	}
 
 	if (radius>0)
 	{
 		// passing in radius*radius allows us to do a distance check without any calls to sqrt
-		subsector_t * subSec = R_PointInSubsector(Pos());
-		::validcount++;
-		CollectWithinRadius(Pos(), subSec, float(radius*radius));
+		FSection *sect = R_PointInSubsector(Pos())->section;
+
+		dl_validcount++;
+		CollectWithinRadius(Pos(), sect, float(radius*radius));
 
 	}
 		
 	// Now delete any nodes that won't be used. These are the ones where
-	// m_thing is still NULL.
+	// m_thing is still nullptr.
 	
 	node = touching_sides;
 	while (node)
 	{
-		if (node->lightsource == NULL)
+		if (node->lightsource == nullptr)
 		{
 			node = DeleteLightNode(node);
 		}
@@ -716,7 +719,7 @@ void ADynamicLight::LinkLight()
 	node = touching_sector;
 	while (node)
 	{
-		if (node->lightsource == NULL)
+		if (node->lightsource == nullptr)
 		{
 			node = DeleteLightNode(node);
 		}
@@ -733,7 +736,7 @@ void ADynamicLight::LinkLight()
 //==========================================================================
 void ADynamicLight::UnlinkLight ()
 {
-	if (owned && target != NULL)
+	if (owned && target != nullptr)
 	{
 		// Delete reference in owning actor
 		for(int c=target->AttachedLights.Size()-1; c>=0; c--)
@@ -770,7 +773,7 @@ void AActor::AttachLight(unsigned int count, const FLightDefaults *lightdef)
 	if (count < AttachedLights.Size()) 
 	{
 		light = barrier_cast<ADynamicLight*>(AttachedLights[count]);
-		assert(light != NULL);
+		assert(light != nullptr);
 	}
 	else
 	{
@@ -797,13 +800,13 @@ void AActor::SetDynamicLights()
 	TArray<FInternalLightAssociation *> & LightAssociations = GetInfo()->LightAssociations;
 	unsigned int count = 0;
 
-	if (state == NULL) return;
+	if (state == nullptr) return;
 	if (LightAssociations.Size() > 0)
 	{
 		ADynamicLight *lights, *tmpLight;
 		unsigned int i;
 
-		lights = tmpLight = NULL;
+		lights = tmpLight = nullptr;
 
 		for (i = 0; i < LightAssociations.Size(); i++)
 		{
@@ -816,7 +819,7 @@ void AActor::SetDynamicLights()
 	}
 	if (count == 0 && state->Light > 0)
 	{
-		for(int i= state->Light; StateLights[i] != NULL; i++)
+		for(int i= state->Light; StateLights[i] != nullptr; i++)
 		{
 			if (StateLights[i] != (FLightDefaults*)-1)
 			{

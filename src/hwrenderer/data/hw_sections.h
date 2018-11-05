@@ -73,6 +73,7 @@ struct FSectionLine
 	vertex_t *start;
 	vertex_t *end;
 	FSectionLine *partner;
+	FSection *section;
 	side_t *sidedef;
 };
 
@@ -101,27 +102,10 @@ public:
 	TArray<subsector_t *> allSubsectors;
 	TArray<int> allIndices;
 
-	int *sectionForSubsectorPtr;			// stored inside allIndices
 	int *sectionForSidedefPtr;				// also stored inside allIndices;
 	int *firstSectionForSectorPtr;			// ditto.
 	int *numberOfSectionForSectorPtr;		// ditto.
 
-	FSection *SectionForSubsector(subsector_t *sub)
-	{
-		return SectionForSubsector(sub->Index());
-	}
-	FSection *SectionForSubsector(int ssindex)
-	{
-		return ssindex < 0 ? nullptr : &allSections[sectionForSubsectorPtr[ssindex]];
-	}
-	int SectionNumForSubsector(subsector_t *sub)
-	{
-		return SectionNumForSubsector(sub->Index());
-	}
-	int SectionNumForSubsector(int ssindex)
-	{
-		return ssindex < 0 ? -1 : sectionForSubsectorPtr[ssindex];
-	}
 	FSection *SectionForSidedef(side_t *side)
 	{
 		return SectionForSidedef(side->Index());

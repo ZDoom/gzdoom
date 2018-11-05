@@ -40,12 +40,20 @@ using DoublePoint = std::pair<DVector2, DVector2>;
 
 template<> struct THashTraits<DoublePoint>
 {
-	// Use all bits when hashing doubles instead of converting them to ints.
 	hash_t Hash(const DoublePoint &key)
 	{
 		return (hash_t)SuperFastHash((const char*)(const void*)&key, sizeof(key));
 	}
 	int Compare(const DoublePoint &left, const DoublePoint &right) { return left != right; }
+};
+
+template<> struct THashTraits<FSectionVertex>
+{
+    hash_t Hash(const FSectionVertex &key)
+    {
+        return (int)(((intptr_t)key.vertex) >> 4) ^ (key.qualifier << 16);
+    }
+    int Compare(const FSectionVertex &left, const FSectionVertex &right) { return left.vertex != right.vertex && left.qualifier != right.qualifier; }
 };
 
 
@@ -613,112 +621,6 @@ public:
 	}
 
 
-	//=============================================================================
-	//
-	//
-	//
-	//=============================================================================
-
-	// Temporary data for creating an indexed buffer
-	struct VertexIndexGenerationInfo
-	{
-		TArray<vertex_t *> vertices;
-		TMap<vertex_t*, uint32_t> vertexmap;
-
-		TArray<uint32_t> indices;
-
-		uint32_t AddVertex(vertex_t *vert)
-		{
-			auto check = vertexmap.CheckKey(vert);
-			if (check != nullptr) return *check;
-			auto index = vertices.Push(vert);
-			vertexmap[vert] = index;
-			return index;
-		}
-
-		uint32_t GetIndex(vertex_t *vert)
-		{
-			auto check = vertexmap.CheckKey(vert);
-			if (check != nullptr) return *check;
-			return ~0u;
-		}
-
-		uint32_t AddIndexForVertex(vertex_t *vert)
-		{
-			return indices.Push(GetIndex(vert));
-		}
-
-		uint32_t AddIndex(uint32_t indx)
-		{
-			return indices.Push(indx);
-		}
-	};
-
-	//=============================================================================
-	//
-	//
-	//
-	//=============================================================================
-
-	void CreateIndexedSubsectorVertices(subsector_t *sub, VertexIndexGenerationInfo &gen)
-	{
-		if (sub->numlines < 3) return;
-
-		uint32_t startindex = gen.indices.Size();
-
-		if ((sub->flags & SSECF_HOLE) && sub->numlines > 3)
-		{
-			// Hole filling "subsectors" are not necessarily convex so they require real triangulation.
-			// These things are extremely rare so performance is secondary here.
-
-			using Point = std::pair<double, double>;
-			std::vector<std::vector<Point>> polygon;
-			std::vector<Point> *curPoly;
-
-			for (unsigned i = 0; i < sub->numlines; i++)
-			{
-				polygon.resize(1);
-				curPoly = &polygon.back();
-				curPoly->push_back({ sub->firstline[i].v1->fX(), sub->firstline[i].v1->fY() });
-			}
-			auto indices = mapbox::earcut(polygon);
-			for (auto vti : indices)
-			{
-				gen.AddIndexForVertex(sub->firstline[vti].v1);
-			}
-		}
-		else
-		{
-			int firstndx = gen.GetIndex(sub->firstline[0].v1);
-			int secondndx = gen.GetIndex(sub->firstline[1].v1);
-			for (unsigned int k = 2; k < sub->numlines; k++)
-			{
-				gen.AddIndex(firstndx);
-				gen.AddIndex(secondndx);
-				auto ndx = gen.GetIndex(sub->firstline[k].v1);
-				gen.AddIndex(ndx);
-				secondndx = ndx;
-			}
-		}
-	}
-
-
-	void CreateVerticesForSection(FSectionContainer &output, FSection &section)
-	{
-		VertexIndexGenerationInfo gen;
-
-		for (auto sub : section.subsectors)
-		{
-			CreateIndexedSubsectorVertices(sub, gen);
-		}
-		section.vertexindex = output.allVertices.Size();
-		section.vertexcount = gen.vertices.Size();
-		section.indexindex = output.allVertexIndices.Size();
-		section.indexcount = gen.indices.Size();
-		output.allVertices.Append(gen.vertices);
-		output.allVertexIndices.Append(gen.indices);
-	}
-
 
 	//=============================================================================
 	//
@@ -815,7 +717,7 @@ public:
 				output.sectionForSubsectorPtr[ssi] = curgroup;
 			}
 			numsubsectors += group.subsectors.Size();
-			CreateVerticesForSection(output, dest);
+			CreateVerticesForSection(output, dest, true);
 			curgroup++;
 		}
 	}
@@ -893,3 +795,185 @@ CCMD(printsections)
 {
 	PrintSections(level.sections);
 }
+
+
+
+//=============================================================================
+//
+// One sector's vertex data.
+//
+//=============================================================================
+
+struct VertexContainer
+{
+	TArray<FSectionVertex> vertices;
+	TMap<FSectionVertex *, uint32_t> vertexmap;
+	bool perSubsector = false;
+	
+	TArray<uint32_t> indices;
+	
+	uint32_t AddVertex(FSectionVertex *vert)
+	{
+		auto check = vertexmap.CheckKey(vert);
+		if (check != nullptr) return *check;
+		auto index = vertices.Push(*vert);
+		vertexmap[vert] = index;
+		return index;
+	}
+	
+	uint32_t AddVertex(vertex_t *vert, int qualifier)
+	{
+		FSectionVertex vertx = { vert, qualifier};
+		return AddVertex(&vertx);
+	}
+	
+	uint32_t GetIndex(FSectionVertex *vert)
+	{
+		auto check = vertexmap.CheckKey(vert);
+		if (check != nullptr) return *check;
+		return ~0u;
+	}
+	
+	uint32_t GetIndex(vertex_t *vert, int qualifier)
+	{
+		FSectionVertex vertx = { vert, qualifier};
+		return GetIndex(&vertx);
+	}
+	
+	uint32_t AddIndexForVertex(FSectionVertex *vert)
+	{
+		return indices.Push(GetIndex(vert));
+	}
+	
+	uint32_t AddIndexForVertex(vertex_t *vert, int qualifier)
+	{
+		return indices.Push(GetIndex(vert, qualifier));
+	}
+	
+	uint32_t AddIndex(uint32_t indx)
+	{
+		return indices.Push(indx);
+	}
+};
+
+
+//=============================================================================
+//
+// Creates vertex meshes for sector planes
+//
+//=============================================================================
+
+namespace VertexBuilder
+{
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+	
+	static void CreateVerticesForSubsector(subsector_t *sub, VertexContainer &gen, int qualifier)
+	{
+		if (sub->numlines < 3) return;
+		
+		uint32_t startindex = gen.indices.Size();
+		
+		if ((sub->flags & SSECF_HOLE) && sub->numlines > 3)
+		{
+			// Hole filling "subsectors" are not necessarily convex so they require real triangulation.
+			// These things are extremely rare so performance is secondary here.
+			
+			using Point = std::pair<double, double>;
+			std::vector<std::vector<Point>> polygon;
+			std::vector<Point> *curPoly;
+			
+			for (unsigned i = 0; i < sub->numlines; i++)
+			{
+				polygon.resize(1);
+				curPoly = &polygon.back();
+				curPoly->push_back({ sub->firstline[i].v1->fX(), sub->firstline[i].v1->fY() });
+			}
+			auto indices = mapbox::earcut(polygon);
+			for (auto vti : indices)
+			{
+				gen.AddIndexForVertex(sub->firstline[vti].v1, qualifier);
+			}
+		}
+		else
+		{
+			int firstndx = gen.GetIndex(sub->firstline[0].v1, qualifier);
+			int secondndx = gen.GetIndex(sub->firstline[1].v1, qualifier);
+			for (unsigned int k = 2; k < sub->numlines; k++)
+			{
+				gen.AddIndex(firstndx);
+				gen.AddIndex(secondndx);
+				auto ndx = gen.GetIndex(sub->firstline[k].v1, qualifier);
+				gen.AddIndex(ndx);
+				secondndx = ndx;
+			}
+		}
+	}
+	
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+	
+	static void TriangulateSection(FSection &sect, VertexContainer &gen, int qualifier)
+	{
+		if (sect.segments.Size() < 3) return;
+		
+		// todo
+	}
+	
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+	
+	
+	static void CreateVerticesForSection(FSection &section, VertexContainer &gen, bool useSubsectors)
+	{
+		section.vertexindex = gen.indices.Size();
+
+		if (useSubsectors)
+		{
+			for (auto sub : section.subsectors)
+			{
+				CreateVerticesForSubsector(sub, gen, -1);
+			}
+		}
+		else
+		{
+			TriangulateSection(section, gen, -1);
+		}
+		section.vertexcount = gen.indices.Size() - section.vertexindex;
+	}
+	
+	//==========================================================================
+	//
+	// Creates the vertices for one plane in one subsector
+	//
+	//==========================================================================
+	
+	static void CreateVerticesForSector(sector_t *sec, VertexContainer gen)
+	{
+		auto sections = level.sections.SectionsForSector(sec);
+		for (auto &section :sections)
+		{
+			CreateVerticesForSection( section, gen, true);
+		}
+	}
+	
+	TArray<VertexContainer> BuildVertices()
+	{
+		TArray<VertexContainer> verticesPerSector(level.sectors.Size(), true);
+		for (unsigned i=0; i<level.sectors.Size(); i++)
+		{
+			CreateVerticesForSector(&level.sectors[i], verticesPerSector[i]);
+		}
+	}
+
+};

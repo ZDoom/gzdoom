@@ -35,6 +35,13 @@
 #include "hwrenderer/data/buffers.h"
 #include "hwrenderer/scene/hw_renderstate.h"
 
+namespace VertexBuilder
+{
+    TArray<VertexContainer> BuildVertices();
+}
+
+using VertexContainers = TArray<VertexContainer>;
+
 
 //==========================================================================
 //
@@ -158,54 +165,22 @@ static F3DFloor *Find3DFloor(sector_t *target, sector_t *model)
 //
 //==========================================================================
 
-int FFlatVertexBuffer::CreateIndexedSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor, int vi, FFlatVertexBuffer::FIndexGenerationInfo &gen)
+int FFlatVertexBuffer::CreateIndexedSectorVertices(sector_t *sec, const secplane_t &plane, int floor, VertexContainer &verts)
 {
-	if (sub->numlines < 3) return -1;
-
-	int idx = ibo_data.Reserve((sub->numlines - 2) * 3);
-	int idxc = idx;
-	int firstndx = gen.GetIndex(sub->firstline[0].v1);
-	int secondndx = gen.GetIndex(sub->firstline[1].v1);
-	for (unsigned int k = 2; k<sub->numlines; k++)
-	{
-		auto ndx = gen.GetIndex(sub->firstline[k].v1);
-
-		ibo_data[idx++] = vi + firstndx;
-		ibo_data[idx++] = vi + secondndx;
-		ibo_data[idx++] = vi + ndx;
-		secondndx = ndx;
-	}
-	return idx;
-}
-
-//==========================================================================
-//
-// Creates the vertices for one plane in one subsector
-//
-//==========================================================================
-
-int FFlatVertexBuffer::CreateIndexedSectorVertices(sector_t *sec, const secplane_t &plane, int floor, FFlatVertexBuffer::FIndexGenerationInfo &gen)
-{
-	int rt = ibo_data.Size();
-	int vi = vbo_shadowdata.Reserve(gen.vertices.Size());
+	int vi = vbo_shadowdata.Reserve(verts.vertices.Size());
 	float diff;
 
 	// Create the actual vertices.
 	if (sec->transdoor && floor) diff = -1.f;
 	else diff = 0.f;
-	for (unsigned i = 0; i < gen.vertices.Size(); i++)
+	for (unsigned i = 0; i < verts.vertices.Size(); i++)
 	{
-		vbo_shadowdata[vi + i].SetFlatVertex(gen.vertices[i], plane);
+		vbo_shadowdata[vi + i].SetFlatVertex(verts.vertices[i].vertex, plane);
 		vbo_shadowdata[vi + i].z += diff;
 	}
-	
-	// Create the indices for the subsectors
-	for (int j = 0; j<sec->subsectorcount; j++)
-	{
-		subsector_t *sub = sec->subsectors[j];
-		CreateIndexedSubsectorVertices(sub, plane, floor, vi, gen);
-	}
-	sec->ibocount = ibo_data.Size() - rt;
+
+    int rt = ibo_data.size();
+    ibo_data.Append(verts.indices);
 	return rt;
 }
 
@@ -215,19 +190,20 @@ int FFlatVertexBuffer::CreateIndexedSectorVertices(sector_t *sec, const secplane
 //
 //==========================================================================
 
-int FFlatVertexBuffer::CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, TArray<FFlatVertexBuffer::FIndexGenerationInfo> &gen)
+int FFlatVertexBuffer::CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, VertexContainers &verts)
 {
 	sec->vboindex[h] = vbo_shadowdata.Size();
 	// First calculate the vertices for the sector itself
 	sec->vboheight[h] = sec->GetPlaneTexZ(h);
-	sec->iboindex[h] = CreateIndexedSectorVertices(sec, plane, floor, gen[sec->Index()]);
+    sec->ibocount = verts.indices.Size();
+	sec->iboindex[h] = CreateIndexedSectorVertices(sec, plane, floor, verts[sec->Index()]);
 
 	// Next are all sectors using this one as heightsec
 	TArray<sector_t *> &fakes = sec->e->FakeFloor.Sectors;
 	for (unsigned g = 0; g < fakes.Size(); g++)
 	{
 		sector_t *fsec = fakes[g];
-		fsec->iboindex[2 + h] = CreateIndexedSectorVertices(fsec, plane, false, gen[fsec->Index()]);
+		fsec->iboindex[2 + h] = CreateIndexedSectorVertices(fsec, plane, false, verts[fsec->Index()]);
 	}
 
 	// and finally all attached 3D floors
@@ -244,7 +220,7 @@ int FFlatVertexBuffer::CreateIndexedVertices(int h, sector_t *sec, const secplan
 
 			if (dotop || dobottom)
 			{
-				auto ndx = CreateIndexedSectorVertices(fsec, plane, false, gen[fsec->Index()]);
+				auto ndx = CreateIndexedSectorVertices(fsec, plane, false, verts[fsec->Index()]);
 				if (dotop) ffloor->top.vindex = ndx;
 				if (dobottom) ffloor->bottom.vindex = ndx;
 			}
@@ -263,26 +239,13 @@ int FFlatVertexBuffer::CreateIndexedVertices(int h, sector_t *sec, const secplan
 
 void FFlatVertexBuffer::CreateIndexedFlatVertices()
 {
-	TArray<FIndexGenerationInfo> gen;
-	gen.Resize(level.sectors.Size());
-	// This must be generated up front so that the following code knows how many vertices a sector contains.
-	for (unsigned i = 0; i < level.sectors.Size(); i++)
-	{
-		for (int j = 0; j < level.sectors[i].subsectorcount; j++)
-		{
-			auto sub = level.sectors[i].subsectors[j];
-			for (unsigned k = 0; k < sub->numlines; k++)
-			{
-				auto vert = sub->firstline[k].v1;
-				gen[i].AddVertex(vert);
-			}
-		}
-	}
+    auto verts = VertexBuilder::BuildVertices();
+    
 	for (int h = sector_t::floor; h <= sector_t::ceiling; h++)
 	{
 		for (auto &sec : level.sectors)
 		{
-			CreateIndexedVertices(h, &sec, sec.GetSecPlane(h), h == sector_t::floor, gen);
+			CreateIndexedVertices(h, &sec, sec.GetSecPlane(h), h == sector_t::floor, verts);
 		}
 	}
 

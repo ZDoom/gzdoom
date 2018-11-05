@@ -76,6 +76,12 @@ struct FSectionLine
 	side_t *sidedef;
 };
 
+struct FSectionVertex
+{
+	vertex_t *vertex;       // index into vertex array
+	int qualifier;          // some index to prevent vertices in different groups from being merged together.
+};
+
 struct FSection
 {
 	// tbd: Do we need a list of subsectors here? Ideally the subsectors should not be used anywhere anymore except for finding out where a location is.
@@ -85,10 +91,8 @@ struct FSection
 	sector_t				*sector;
 	FLightNode				*lighthead;			// Light nodes (blended and additive)
 	BoundingRect			 bounds;
-	int						 vertexindex;	
-	int						 vertexcount;		// index and length of this section's entry in the allVertices array
-	int						 indexindex;
-	int						 indexcount;		// index and length of this section's entry in the allVertices array
+	int						 vertexindex;		// This is relative to the start of the entire sector's vertex plane data because it needs to be used with different sources.
+	int						 vertexcount;
 	int						 validcount;
 	short					 mapsection;
 	char					 hacked;			// 1: is part of a render hack
@@ -99,8 +103,6 @@ class FSectionContainer
 public:
 	TArray<FSectionLine> allLines;
 	TArray<FSection> allSections;
-	TArray<vertex_t*> allVertices;
-	TArray<uint32_t> allVertexIndices;
 	TArray<side_t *> allSides;
 	TArray<subsector_t *> allSubsectors;
 	TArray<int> allIndices;
@@ -159,8 +161,6 @@ public:
 		allLines.Clear();
 		allSections.Clear();
 		allIndices.Clear();
-		allVertexIndices.Clear();
-		allVertices.Clear();
 		allSides.Clear();
 		allSubsectors.Clear();
 	}
@@ -170,8 +170,6 @@ public:
 		allLines.ShrinkToFit();
 		allSections.ShrinkToFit();
 		allIndices.ShrinkToFit();
-		allVertexIndices.ShrinkToFit();
-		allVertices.ShrinkToFit();
 		allSides.ShrinkToFit();
 		allSubsectors.ShrinkToFit();
 	}

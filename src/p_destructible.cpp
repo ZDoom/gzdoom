@@ -569,24 +569,27 @@ void P_GeometryRadiusAttack(AActor* bombspot, AActor* bombsource, int bombdamage
 		}
 
 		// check 3d floors
-		for (auto f : othersector->e->XFloor.ffloors)
+		if (othersector)
 		{
-			if (!(f->flags & FF_EXISTS)) continue;
-			if (!(f->flags & FF_SOLID)) continue;
+			for (auto f : othersector->e->XFloor.ffloors)
+			{
+				if (!(f->flags & FF_EXISTS)) continue;
+				if (!(f->flags & FF_SOLID)) continue;
 
-			if (!f->model || !f->model->health3d) continue;
+				if (!f->model || !f->model->health3d) continue;
 
-			// 3d floors over real ceiling, or under real floor, are ignored
-			double z_ff_top = clamp(f->top.plane->ZatPoint(to2d), z_bottom2, z_top2);
-			double z_ff_bottom = clamp(f->bottom.plane->ZatPoint(to2d), z_bottom2, z_top2);
-			if (z_ff_top < z_ff_bottom)
-				continue; // also ignore eldritch geometry
+				// 3d floors over real ceiling, or under real floor, are ignored
+				double z_ff_top = clamp(f->top.plane->ZatPoint(to2d), z_bottom2, z_top2);
+				double z_ff_bottom = clamp(f->bottom.plane->ZatPoint(to2d), z_bottom2, z_top2);
+				if (z_ff_top < z_ff_bottom)
+					continue; // also ignore eldritch geometry
 
-			DVector3 to3d_ffloor(to2d.X, to2d.Y, clamp(bombspot->Z(), z_ff_bottom, z_ff_top));
-			int grp = f->model->health3dgroup;
-			if (grp <= 0)
-				grp = 0x20000000 | (f->model->sectornum & 0x0FFFFFFF);
-			PGRA_InsertIfCloser(damageGroupPos, grp, to3d_ffloor, bombspot->Pos(), srcsector, f->model, nullptr, SECPART_3D);
+				DVector3 to3d_ffloor(to2d.X, to2d.Y, clamp(bombspot->Z(), z_ff_bottom, z_ff_top));
+				int grp = f->model->health3dgroup;
+				if (grp <= 0)
+					grp = 0x20000000 | (f->model->sectornum & 0x0FFFFFFF);
+				PGRA_InsertIfCloser(damageGroupPos, grp, to3d_ffloor, bombspot->Pos(), srcsector, f->model, nullptr, SECPART_3D);
+			}
 		}
 
 	}
@@ -646,13 +649,17 @@ void P_GeometryRadiusAttack(AActor* bombspot, AActor* bombsource, int bombdamage
 // Called if P_ExplodeMissile was called against a wall.
 //==========================================================================
 
-void P_ProjectileHitLinedef(AActor* mo, line_t* line)
+bool P_ProjectileHitLinedef(AActor* mo, line_t* line)
 {
+	bool washit = false;
 	// detect 3d floor hit
 	if (mo->Blocking3DFloor)
 	{
 		if (mo->Blocking3DFloor->health3d > 0)
+		{
 			P_DamageSector(mo->Blocking3DFloor, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_3D, mo->Pos());
+			washit = true;
+		}
 	}
 
 	int wside = P_PointOnLineSide(mo->Pos(), line);
@@ -676,33 +683,59 @@ void P_ProjectileHitLinedef(AActor* mo, line_t* line)
 		if (zbottom < (otherfloorz + EQUAL_EPSILON) && othersector->healthfloor > 0 && P_CheckLinedefVulnerable(line, wside, SECPART_Floor))
 		{
 			P_DamageSector(othersector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Floor, mo->Pos());
+			washit = true;
 		}
 		if (ztop > (otherceilingz - EQUAL_EPSILON) && othersector->healthceiling > 0 && P_CheckLinedefVulnerable(line, wside, SECPART_Ceiling))
 		{
 			P_DamageSector(othersector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Ceiling, mo->Pos());
+			washit = true;
 		}
 	}
 
 	if (line->health > 0 && P_CheckLinedefVulnerable(line, wside))
 	{
 		P_DamageLinedef(line, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, wside, mo->Pos());
+		washit = true;
 	}
+
+	return washit;
 }
 
-void P_ProjectileHitPlane(AActor* mo, int part)
+// part = -1 means "detect from blocking"
+bool P_ProjectileHitPlane(AActor* mo, int part)
 {
+	if (part < 0)
+	{
+		if (mo->BlockingCeiling)
+			part = SECPART_Ceiling;
+		else if (mo->BlockingFloor)
+			part = SECPART_Floor;
+	}
+
 	// detect 3d floor hit
 	if (mo->Blocking3DFloor)
 	{
 		if (mo->Blocking3DFloor->health3d > 0)
+		{
 			P_DamageSector(mo->Blocking3DFloor, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_3D, mo->Pos());
-		return;
+			return true;
+		}
+		
+		return false;
 	}
 
 	if (part == SECPART_Floor && mo->Sector->healthfloor > 0 && P_CheckSectorVulnerable(mo->Sector, SECPART_Floor))
+	{
 		P_DamageSector(mo->Sector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Floor, mo->Pos());
+		return true;
+	}
 	else if (part == SECPART_Ceiling && mo->Sector->healthceiling > 0 && P_CheckSectorVulnerable(mo->Sector, SECPART_Ceiling))
+	{
 		P_DamageSector(mo->Sector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Ceiling, mo->Pos());
+		return true;
+	}
+
+	return false;
 }
 
 //==========================================================================

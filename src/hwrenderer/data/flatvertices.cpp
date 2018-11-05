@@ -159,7 +159,7 @@ static F3DFloor *Find3DFloor(sector_t *target, sector_t *model)
 
 int FFlatVertexBuffer::CreateIndexedSectorVertices(sector_t *sec, const secplane_t &plane, int floor, VertexContainer &verts)
 {
-	int vi = vbo_shadowdata.Reserve(verts.vertices.Size());
+	unsigned vi = vbo_shadowdata.Reserve(verts.vertices.Size());
 	float diff;
 
 	// Create the actual vertices.
@@ -171,9 +171,12 @@ int FFlatVertexBuffer::CreateIndexedSectorVertices(sector_t *sec, const secplane
 		vbo_shadowdata[vi + i].z += diff;
 	}
 
-    int rt = ibo_data.Size();
-    ibo_data.Append(verts.indices);
-	return rt;
+	unsigned rt = ibo_data.Reserve(verts.indices.Size());
+	for (unsigned i = 0; i < verts.indices.Size(); i++)
+	{
+		ibo_data[rt + i] = vi + verts.indices[i];
+	}
+	return (int)rt;
 }
 
 //==========================================================================

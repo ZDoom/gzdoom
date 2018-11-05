@@ -189,6 +189,8 @@ void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 		SetupLights(di, sector->lighthead, lightdata, sector->PortalGroup);
 	}
 	state.SetLightIndex(dynlightindex);
+
+
 	if (vcount > 0 && !di->ClipLineShouldBeActive())
 	{
 		state.DrawIndexed(DT_Triangles, iboindex, vcount);
@@ -197,6 +199,7 @@ void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 	}
 	else
 	{
+		/*
 		int index = iboindex;
 		bool applied = false;
 		for (int i = 0; i < sector->subsectorcount; i++)
@@ -213,6 +216,7 @@ void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 			}
 			index += (sub->numlines - 2) * 3;
 		}
+		*/
 	}
 
 	if (!(renderflags&SSRF_RENDER3DPLANES))
@@ -473,7 +477,7 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 	extsector_t::xfloor &x = sector->e->XFloor;
 	dynlightindex = -1;
 
-	uint8_t &srf = di->sectorrenderflags[sector->sectornum];
+	uint8_t &srf = di->section_renderflags[level.sections.SectionIndex(section)];
     const auto &vp = di->Viewpoint;
 
 	//

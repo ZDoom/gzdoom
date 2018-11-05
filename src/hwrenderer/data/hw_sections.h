@@ -80,11 +80,15 @@ struct FSection
 {
 	// tbd: Do we need a list of subsectors here? Ideally the subsectors should not be used anywhere anymore except for finding out where a location is.
 	TArrayView<FSectionLine> segments;
-	TArrayView<side_t *>	 sides;		// contains all sidedefs, including the internal ones that do not make up the outer shape. (this list is not exclusive. A sidedef can be in multiple sections!)
-	TArrayView<subsector_t *>	 subsectors;		// contains all sidedefs, including the internal ones that do not make up the outer shape. (this list is not exclusive. A sidedef can be in multiple sections!)
+	TArrayView<side_t *>	 sides;				// contains all sidedefs, including the internal ones that do not make up the outer shape.
+	TArrayView<subsector_t *>	 subsectors;	// contains all subsectors making up this section
 	sector_t				*sector;
-	FLightNode				*lighthead;	// Light nodes (blended and additive)
+	FLightNode				*lighthead;			// Light nodes (blended and additive)
 	BoundingRect			 bounds;
+	int						 vertexindex;	
+	int						 vertexcount;		// index and length of this section's entry in the allVertices array
+	int						 indexindex;
+	int						 indexcount;		// index and length of this section's entry in the allVertices array
 	int						 validcount;
 	short					 mapsection;
 	char					 hacked;			// 1: is part of a render hack
@@ -95,13 +99,16 @@ class FSectionContainer
 public:
 	TArray<FSectionLine> allLines;
 	TArray<FSection> allSections;
-	//TArray<vertex_t*> allVertices;
+	TArray<vertex_t*> allVertices;
+	TArray<uint32_t> allVertexIndices;
 	TArray<side_t *> allSides;
 	TArray<subsector_t *> allSubsectors;
 	TArray<int> allIndices;
 
 	int *sectionForSubsectorPtr;			// stored inside allIndices
 	int *sectionForSidedefPtr;				// also stored inside allIndices;
+	int *firstSectionForSectorPtr;			// ditto.
+	int *numberOfSectionForSectorPtr;		// ditto.
 
 	FSection *SectionForSubsector(subsector_t *sub)
 	{
@@ -111,6 +118,14 @@ public:
 	{
 		return ssindex < 0 ? nullptr : &allSections[sectionForSubsectorPtr[ssindex]];
 	}
+	int SectionNumForSubsector(subsector_t *sub)
+	{
+		return SectionNumForSubsector(sub->Index());
+	}
+	int SectionNumForSubsector(int ssindex)
+	{
+		return ssindex < 0 ? -1 : sectionForSubsectorPtr[ssindex];
+	}
 	FSection *SectionForSidedef(side_t *side)
 	{
 		return SectionForSidedef(side->Index());
@@ -119,11 +134,35 @@ public:
 	{
 		return sindex < 0 ? nullptr : &allSections[sectionForSidedefPtr[sindex]];
 	}
+	int SectionNumForSidedef(side_t *side)
+	{
+		return SectionNumForSidedef(side->Index());
+	}
+	int SectionNumForSidedef(int sindex)
+	{
+		return sindex < 0 ? -1 : sectionForSidedefPtr[sindex];
+	}
+	TArrayView<FSection> SectionsForSector(sector_t *sec)
+	{
+		return SectionsForSector(sec->Index());
+	}
+	TArrayView<FSection> SectionsForSector(int sindex)
+	{
+		return sindex < 0 ? TArrayView<FSection>(0) : TArrayView<FSection>(&allSections[firstSectionForSectorPtr[sindex]], numberOfSectionForSectorPtr[sindex]);
+	}
+	int SectionIndex(const FSection *sect)
+	{
+		return int(sect - allSections.Data());
+	}
 	void Clear()
 	{
 		allLines.Clear();
 		allSections.Clear();
 		allIndices.Clear();
+		allVertexIndices.Clear();
+		allVertices.Clear();
+		allSides.Clear();
+		allSubsectors.Clear();
 	}
 	void Reset()
 	{
@@ -131,6 +170,10 @@ public:
 		allLines.ShrinkToFit();
 		allSections.ShrinkToFit();
 		allIndices.ShrinkToFit();
+		allVertexIndices.ShrinkToFit();
+		allVertices.ShrinkToFit();
+		allSides.ShrinkToFit();
+		allSubsectors.ShrinkToFit();
 	}
 };
 

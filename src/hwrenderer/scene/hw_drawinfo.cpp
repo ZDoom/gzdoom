@@ -214,11 +214,11 @@ void HWDrawInfo::ClearBuffers()
 	CurrentMapSections.Resize(level.NumMapSections);
 	CurrentMapSections.Zero();
 
-	sectorrenderflags.Resize(level.sectors.Size());
+	section_renderflags.Resize(level.sections.allSections.Size());
 	ss_renderflags.Resize(level.subsectors.Size());
 	no_renderflags.Resize(level.subsectors.Size());
 
-	memset(&sectorrenderflags[0], 0, level.sectors.Size() * sizeof(sectorrenderflags[0]));
+	memset(&section_renderflags[0], 0, level.sections.allSections.Size() * sizeof(section_renderflags[0]));
 	memset(&ss_renderflags[0], 0, level.subsectors.Size() * sizeof(ss_renderflags[0]));
 	memset(&no_renderflags[0], 0, level.nodes.Size() * sizeof(no_renderflags[0]));
 

@@ -170,7 +170,7 @@ struct HWDrawInfo
 
 	TArray<subsector_t *> HandledSubsectors;
 
-	TArray<uint8_t> sectorrenderflags;
+	TArray<uint8_t> section_renderflags;
 	TArray<uint8_t> ss_renderflags;
 	TArray<uint8_t> no_renderflags;
 

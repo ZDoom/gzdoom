@@ -53,6 +53,7 @@ struct FBlockNode;
 struct FPortalGroupArray;
 struct visstyle_t;
 class FLightDefaults;
+struct FSection;
 //
 // NOTES: AActor
 //

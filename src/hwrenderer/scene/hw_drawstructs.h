@@ -27,6 +27,7 @@ struct FSpriteModelFrame;
 struct particle_t;
 class FRenderState;
 struct GLDecal;
+struct FSection;
 enum area_t : int;
 
 enum HWRenderStyle
@@ -293,6 +294,7 @@ class GLFlat
 {
 public:
 	sector_t * sector;
+	FSection *section;
 	float z; // the z position of the flat (only valid for non-sloped planes)
 	FMaterial *gltexture;
 

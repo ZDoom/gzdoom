@@ -850,7 +850,8 @@ void HWDrawInfo::PrepareUnhandledMissingTextures()
 
 			if (seg->linedef->validcount == validcount) continue;		// already done
 			seg->linedef->validcount = validcount;
-			if (!(sectorrenderflags[seg->backsector->sectornum] & SSRF_RENDERFLOOR)) continue;
+			int section = level.sections.SectionNumForSidedef(seg->sidedef);
+			if (!(section_renderflags[section] & SSRF_RENDERFLOOR)) continue;
 			if (seg->frontsector->GetPlaneTexZ(sector_t::floor) > Viewpoint.Pos.Z) continue;	// out of sight
 			if (seg->backsector->transdoor) continue;
 			if (seg->backsector->GetTexture(sector_t::floor) == skyflatnum) continue;

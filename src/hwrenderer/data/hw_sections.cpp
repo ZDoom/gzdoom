@@ -34,6 +34,7 @@
 #include "p_setup.h"
 #include "c_dispatch.h"
 #include "memarena.h"
+#include "flatvertices.h"
 
 using DoublePoint = std::pair<DVector2, DVector2>;
 
@@ -611,6 +612,114 @@ public:
 		return false;
 	}
 
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	// Temporary data for creating an indexed buffer
+	struct VertexIndexGenerationInfo
+	{
+		TArray<vertex_t *> vertices;
+		TMap<vertex_t*, uint32_t> vertexmap;
+
+		TArray<uint32_t> indices;
+
+		uint32_t AddVertex(vertex_t *vert)
+		{
+			auto check = vertexmap.CheckKey(vert);
+			if (check != nullptr) return *check;
+			auto index = vertices.Push(vert);
+			vertexmap[vert] = index;
+			return index;
+		}
+
+		uint32_t GetIndex(vertex_t *vert)
+		{
+			auto check = vertexmap.CheckKey(vert);
+			if (check != nullptr) return *check;
+			return ~0u;
+		}
+
+		uint32_t AddIndexForVertex(vertex_t *vert)
+		{
+			return indices.Push(GetIndex(vert));
+		}
+
+		uint32_t AddIndex(uint32_t indx)
+		{
+			return indices.Push(indx);
+		}
+	};
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	void CreateIndexedSubsectorVertices(subsector_t *sub, VertexIndexGenerationInfo &gen)
+	{
+		if (sub->numlines < 3) return;
+
+		uint32_t startindex = gen.indices.Size();
+
+		if ((sub->flags & SSECF_HOLE) && sub->numlines > 3)
+		{
+			// Hole filling "subsectors" are not necessarily convex so they require real triangulation.
+			// These things are extremely rare so performance is secondary here.
+
+			using Point = std::pair<double, double>;
+			std::vector<std::vector<Point>> polygon;
+			std::vector<Point> *curPoly;
+
+			for (unsigned i = 0; i < sub->numlines; i++)
+			{
+				polygon.resize(1);
+				curPoly = &polygon.back();
+				curPoly->push_back({ sub->firstline[i].v1->fX(), sub->firstline[i].v1->fY() });
+			}
+			auto indices = mapbox::earcut(polygon);
+			for (auto vti : indices)
+			{
+				gen.AddIndexForVertex(sub->firstline[vti].v1);
+			}
+		}
+		else
+		{
+			int firstndx = gen.GetIndex(sub->firstline[0].v1);
+			int secondndx = gen.GetIndex(sub->firstline[1].v1);
+			for (unsigned int k = 2; k < sub->numlines; k++)
+			{
+				gen.AddIndex(firstndx);
+				gen.AddIndex(secondndx);
+				auto ndx = gen.GetIndex(sub->firstline[k].v1);
+				gen.AddIndex(ndx);
+				secondndx = ndx;
+			}
+		}
+	}
+
+
+	void CreateVerticesForSection(FSectionContainer &output, FSection &section)
+	{
+		VertexIndexGenerationInfo gen;
+
+		for (auto sub : section.subsectors)
+		{
+			CreateIndexedSubsectorVertices(sub, gen);
+		}
+		section.vertexindex = output.allVertices.Size();
+		section.vertexcount = gen.vertices.Size();
+		section.indexindex = output.allVertexIndices.Size();
+		section.indexcount = gen.indices.Size();
+		output.allVertices.Append(gen.vertices);
+		output.allVertexIndices.Append(gen.indices);
+	}
+
+
 	//=============================================================================
 	//
 	//
@@ -620,10 +729,14 @@ public:
 	void ConstructOutput(FSectionContainer &output)
 	{
 		output.allSections.Resize(groups.Size());
-		output.allIndices.Resize(level.subsectors.Size() + level.sides.Size());
+		output.allIndices.Resize(level.subsectors.Size() + level.sides.Size() + 2*level.sectors.Size());
 		output.sectionForSubsectorPtr = &output.allIndices[0];
 		output.sectionForSidedefPtr = &output.allIndices[level.subsectors.Size()];
+		output.firstSectionForSectorPtr = &output.allIndices[level.subsectors.Size() + level.sides.Size()];
+		output.numberOfSectionForSectorPtr = &output.allIndices[level.subsectors.Size() + level.sides.Size() + level.sectors.Size()];
 		memset(output.sectionForSubsectorPtr, -1, sizeof(int) * level.subsectors.Size());
+		memset(output.firstSectionForSectorPtr, -1, sizeof(int) * level.sectors.Size());
+		memset(output.numberOfSectionForSectorPtr, 0, sizeof(int) * level.sectors.Size());
 
 		unsigned numsegments = 0;
 		unsigned numsides = 0;
@@ -669,9 +782,14 @@ public:
 			dest.validcount = 0;
 			dest.segments.Set(&output.allLines[numsegments], group.segments.Size());
 			dest.sides.Set(&output.allSides[numsides], group.sideMap.CountUsed());
-			dest.subsectors.Set(&output.allSubsectors[numsubsectors]);
+			dest.subsectors.Set(&output.allSubsectors[numsubsectors], group.subsectors.Size());
+			dest.vertexindex = -1;
+			dest.vertexcount = 0;
 			dest.bounds = {1e32, 1e32, -1e32, -1e32};
 			numsegments += group.segments.Size();
+
+			if (output.firstSectionForSectorPtr[dest.sector->Index()] == -1)
+				output.firstSectionForSectorPtr[dest.sector->Index()] = curgroup;
 
 			for (auto &segment : group.segments)
 			{
@@ -697,6 +815,7 @@ public:
 				output.sectionForSubsectorPtr[ssi] = curgroup;
 			}
 			numsubsectors += group.subsectors.Size();
+			CreateVerticesForSection(output, dest);
 			curgroup++;
 		}
 	}

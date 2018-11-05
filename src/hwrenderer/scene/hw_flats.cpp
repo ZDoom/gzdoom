@@ -182,8 +182,6 @@ void GLFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &light
 
 void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 {
-	auto vcount = sector->ibocount;
-
 	if (level.HasDynamicLights && screen->BuffersArePersistent())
 	{
 		SetupLights(di, sector->lighthead, lightdata, sector->PortalGroup);
@@ -191,34 +189,13 @@ void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 	state.SetLightIndex(dynlightindex);
 
 
-	if (vcount > 0 && !di->ClipLineShouldBeActive())
-	{
-		state.DrawIndexed(DT_Triangles, iboindex, vcount);
-		flatvertices += vcount;
-		flatprimitives++;
-	}
-	else
-	{
-		/*
-		int index = iboindex;
-		bool applied = false;
-		for (int i = 0; i < sector->subsectorcount; i++)
-		{
-			subsector_t * sub = sector->subsectors[i];
-			if (sub->numlines <= 2) continue;
+	state.DrawIndexed(DT_Triangles, iboindex + section->vertexindex, section->vertexcount);
+	flatvertices += section->vertexcount;
+	flatprimitives++;
 
-			if (di->ss_renderflags[sub->Index()] & renderflags)
-			{
-				state.DrawIndexed(DT_Triangles, index, (sub->numlines - 2) * 3, !applied);
-				applied = true;
-				flatvertices += sub->numlines;
-				flatprimitives++;
-			}
-			index += (sub->numlines - 2) * 3;
-		}
-		*/
-	}
 
+#if 0
+	//Temporarily disabled until the render hack code can be redone and refactored into its own draw elements
 	if (!(renderflags&SSRF_RENDER3DPLANES))
 	{
 		// Draw the subsectors assigned to it due to missing textures
@@ -282,6 +259,7 @@ void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 		}
 
 	}
+#endif
 }
 
 //==========================================================================

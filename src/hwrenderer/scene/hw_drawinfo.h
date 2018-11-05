@@ -256,11 +256,6 @@ public:
 		VPUniforms.mClipHeight = 0;
 	}
 
-	bool ClipLineShouldBeActive()
-	{
-		return (screen->hwcaps & RFL_NO_CLIP_PLANES) && VPUniforms.mClipLine.X > -1000000.f;
-	}
-
 	HWPortal * FindPortal(const void * src);
 	void RenderBSPNode(void *node);
 	void RenderBSP(void *node);

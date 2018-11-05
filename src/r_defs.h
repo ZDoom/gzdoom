@@ -1460,7 +1460,6 @@ struct subsector_t
 	uint16_t	sectorindex;
 
 	// subsector related GL data
-	FLightNode *	lighthead;	// Light nodes (blended and additive)
 	int				validcount;
 	short			mapsection;
 	char			hacked;			// 1: is part of a render hack

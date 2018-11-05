@@ -131,11 +131,11 @@ void HWDrawInfo::GetDynSpriteLight(AActor *thing, particle_t *particle, float *o
 {
 	if (thing != NULL)
 	{
-		GetDynSpriteLight(thing, (float)thing->X(), (float)thing->Y(), (float)thing->Center(), thing->subsector->lighthead, thing->Sector->PortalGroup, out);
+		GetDynSpriteLight(thing, (float)thing->X(), (float)thing->Y(), (float)thing->Center(), thing->Sector->lighthead, thing->Sector->PortalGroup, out);
 	}
 	else if (particle != NULL)
 	{
-		GetDynSpriteLight(NULL, (float)particle->Pos.X, (float)particle->Pos.Y, (float)particle->Pos.Z, particle->subsector->lighthead, particle->subsector->sector->PortalGroup, out);
+		GetDynSpriteLight(NULL, (float)particle->Pos.X, (float)particle->Pos.Y, (float)particle->Pos.Z, particle->subsector->sector->lighthead, particle->subsector->sector->PortalGroup, out);
 	}
 }
 
@@ -160,7 +160,7 @@ void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata)
 
 		BSPWalkCircle(x, y, radiusSquared, [&](subsector_t *subsector) // Iterate through all subsectors potentially touched by actor
 		{
-			FLightNode * node = subsector->lighthead;
+			FLightNode * node = subsector->sector->lighthead;
 			while (node) // check all lights touching a subsector
 			{
 				ADynamicLight *light = node->lightsource;

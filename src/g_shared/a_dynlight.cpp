@@ -574,7 +574,7 @@ void ADynamicLight::CollectWithinRadius(const DVector3 &opos, subsector_t *subSe
 	{
 		subSec = collected_ss[i].sub;
 
-		touching_subsectors = AddLightNode(&subSec->lighthead, subSec, this, touching_subsectors);
+		//touching_subsectors = AddLightNode(&subSec->lighthead, subSec, this, touching_subsectors);
 		if (subSec->sector->validcount != ::validcount)
 		{
 			touching_sector = AddLightNode(&subSec->render_sector->lighthead, subSec->sector, this, touching_sector);
@@ -683,12 +683,6 @@ void ADynamicLight::LinkLight()
 		node->lightsource = NULL;
 		node = node->nextTarget;
     }
-	node = touching_subsectors;
-	while (node)
-    {
-		node->lightsource = NULL;
-		node = node->nextTarget;
-    }
 	node = touching_sector;
 	while (node)
 	{
@@ -709,17 +703,6 @@ void ADynamicLight::LinkLight()
 	// m_thing is still NULL.
 	
 	node = touching_sides;
-	while (node)
-	{
-		if (node->lightsource == NULL)
-		{
-			node = DeleteLightNode(node);
-		}
-		else
-			node = node->nextTarget;
-	}
-
-	node = touching_subsectors;
 	while (node)
 	{
 		if (node->lightsource == NULL)
@@ -763,7 +746,6 @@ void ADynamicLight::UnlinkLight ()
 		}
 	}
 	while (touching_sides) touching_sides = DeleteLightNode(touching_sides);
-	while (touching_subsectors) touching_subsectors = DeleteLightNode(touching_subsectors);
 	while (touching_sector) touching_sector = DeleteLightNode(touching_sector);
 	shadowmapped = false;
 }
@@ -918,7 +900,7 @@ void AActor::RecreateAllAttachedLights()
 
 CCMD(listlights)
 {
-	int walls, sectors, subsecs;
+	int walls, sectors;
 	int allwalls=0, allsectors=0, allsubsecs = 0;
 	int i=0, shadowcount = 0;
 	ADynamicLight * dl;
@@ -928,7 +910,6 @@ CCMD(listlights)
 	{
 		walls=0;
 		sectors=0;
-		subsecs = 0;
 		Printf("%s at (%f, %f, %f), color = 0x%02x%02x%02x, radius = %f %s %s",
 			dl->target? dl->target->GetClass()->TypeName.GetChars() : dl->GetClass()->TypeName.GetChars(),
 			dl->X(), dl->Y(), dl->Z(), dl->args[LIGHT_RED], 
@@ -954,14 +935,6 @@ CCMD(listlights)
 			node = node->nextTarget;
 		}
 
-		node=dl->touching_subsectors;
-
-		while (node)
-		{
-			allsubsecs++;
-			subsecs++;
-			node = node->nextTarget;
-		}
 
 		node = dl->touching_sector;
 
@@ -971,27 +944,10 @@ CCMD(listlights)
 			sectors++;
 			node = node->nextTarget;
 		}
-		Printf("- %d walls, %d subsectors, %d sectors\n", walls, subsecs, sectors);
+		Printf("- %d walls, %d sectors\n", walls, sectors);
 
 	}
-	Printf("%i dynamic lights, %d shadowmapped, %d walls, %d subsectors, %d sectors\n\n\n", i, shadowcount, allwalls, allsubsecs, allsectors);
-}
-
-CCMD(listsublights)
-{
-	for(auto &sub : level.subsectors)
-	{
-		int lights = 0;
-
-		FLightNode * node = sub.lighthead;
-		while (node != NULL)
-		{
-			lights++;
-			node = node->nextLight;
-		}
-
-		Printf(PRINT_LOG, "Subsector %d - %d lights\n", sub.Index(), lights);
-	}
+	Printf("%i dynamic lights, %d shadowmapped, %d walls, %d sectors\n\n\n", i, shadowcount, allwalls, allsectors);
 }
 
 

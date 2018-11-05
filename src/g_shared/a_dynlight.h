@@ -206,7 +206,6 @@ public:
 	bool IsSpot() { return !!(lightflags & LF_SPOT); }
 	FState *targetState;
 	FLightNode * touching_sides;
-	FLightNode * touching_subsectors;
 	FLightNode * touching_sector;
 
 private:

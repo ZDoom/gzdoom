@@ -28,13 +28,12 @@
 #include "c_dispatch.h"
 #include "r_defs.h"
 #include "g_levellocals.h"
-#include "hw_sections.h"
+#include "r_sections.h"
 #include "earcut.hpp"
 #include "stats.h"
 #include "p_setup.h"
 #include "c_dispatch.h"
 #include "memarena.h"
-#include "flatvertices.h"
 
 using DoublePoint = std::pair<DVector2, DVector2>;
 

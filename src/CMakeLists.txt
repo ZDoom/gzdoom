@@ -1050,7 +1050,6 @@ set (PCH_SOURCES
 	gl/textures/gl_hwtexture.cpp
 	gl/textures/gl_samplers.cpp
 	hwrenderer/data/hw_vertexbuilder.cpp
-	hwrenderer/data/hw_sections.cpp
 	hwrenderer/data/flatvertices.cpp
 	hwrenderer/data/hw_viewpointbuffer.cpp
 	hwrenderer/dynlights/hw_aabbtree.cpp
@@ -1143,6 +1142,7 @@ set (PCH_SOURCES
 	r_data/renderstyle.cpp
 	r_data/r_interpolate.cpp
 	r_data/r_vanillatrans.cpp
+	r_data/r_sections.cpp
 	r_data/models/models_md3.cpp
 	r_data/models/models_md2.cpp
 	r_data/models/models_voxel.cpp

@@ -42,7 +42,7 @@
 #include "p_blockmap.h"
 #include "p_local.h"
 #include "p_destructible.h"
-#include "hwrenderer/data/hw_sections.h"
+#include "r_data/r_sections.h"
 
 struct FLevelLocals
 {

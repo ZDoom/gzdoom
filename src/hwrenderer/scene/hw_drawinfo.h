@@ -68,6 +68,8 @@ enum SectorRenderFlags
     SSRF_RENDERALL = 7,
     SSRF_PROCESSED = 8,
     SSRF_SEEN = 16,
+    SSRF_PLANEHACK = 32,
+    SSRF_FLOODHACK = 64
 };
 
 enum EPortalClip
@@ -160,10 +162,10 @@ struct HWDrawInfo
 
 	TArray<SubsectorHackInfo> SubsectorHacks;
 
-	TArray<gl_subsectorrendernode*> otherfloorplanes;
-	TArray<gl_subsectorrendernode*> otherceilingplanes;
-	TArray<gl_floodrendernode*> floodfloorsegs;
-	TArray<gl_floodrendernode*> floodceilingsegs;
+    TMap<int, gl_subsectorrendernode*> otherFloorPlanes;
+    TMap<int, gl_subsectorrendernode*> otherCeilingPlanes;
+    TMap<int, gl_floodrendernode*> floodFloorSegs;
+    TMap<int, gl_floodrendernode*> floodCeilingSegs;
 
 	TArray<sector_t *> CeilingStacks;
 	TArray<sector_t *> FloorStacks;
@@ -211,32 +213,6 @@ private:
 	int CreateOtherPlaneVertices(subsector_t *sub, const secplane_t *plane);
 	void DrawPSprite(HUDSprite *huds, FRenderState &state);
 public:
-
-	gl_subsectorrendernode * GetOtherFloorPlanes(unsigned int sector)
-	{
-		if (sector<otherfloorplanes.Size()) return otherfloorplanes[sector];
-		else return nullptr;
-	}
-
-	gl_subsectorrendernode * GetOtherCeilingPlanes(unsigned int sector)
-	{
-		if (sector<otherceilingplanes.Size()) return otherceilingplanes[sector];
-		else return nullptr;
-	}
-
-	gl_floodrendernode * GetFloodFloorSegs(unsigned int sector)
-	{
-		if (sector<floodfloorsegs.Size()) return floodfloorsegs[sector];
-		else return nullptr;
-	}
-
-	gl_floodrendernode * GetFloodCeilingSegs(unsigned int sector)
-	{
-		if (sector<floodceilingsegs.Size()) return floodceilingsegs[sector];
-		else return nullptr;
-	}
-
-
 
 	void SetCameraPos(const DVector3 &pos)
 	{

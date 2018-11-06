@@ -41,6 +41,17 @@
 
 sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back);
 
+// Get the nodes from the render data allocator so we don't have to keep track of them ourselves.
+static gl_subsectorrendernode *NewSubsectorRenderNode()
+{
+    return (gl_subsectorrendernode*)RenderDataAllocator.Alloc(sizeof(gl_subsectorrendernode));
+}
+
+static gl_floodrendernode *NewFloodRenderNode()
+{
+    return (gl_floodrendernode*)RenderDataAllocator.Alloc(sizeof(gl_floodrendernode));
+}
+
 //==========================================================================
 //
 // light setup for render hacks.
@@ -110,34 +121,23 @@ int HWDrawInfo::CreateOtherPlaneVertices(subsector_t *sub, const secplane_t *pla
 
 void HWDrawInfo::AddOtherFloorPlane(int sector, gl_subsectorrendernode * node)
 {
-	int oldcnt = otherfloorplanes.Size();
-
-	if (oldcnt <= sector)
-	{
-		otherfloorplanes.Resize(sector + 1);
-		for (int i = oldcnt; i <= sector; i++) otherfloorplanes[i] = nullptr;
-	}
-	node->next = otherfloorplanes[sector];
+    auto pNode = otherFloorPlanes.CheckKey(sector);
+    
+	node->next = pNode? *pNode : nullptr;
 	node->lightindex = SetupLightsForOtherPlane(node->sub, lightdata, &level.sectors[sector].floorplane);
 	node->vertexindex = CreateOtherPlaneVertices(node->sub, &level.sectors[sector].floorplane);
-	otherfloorplanes[sector] = node;
+	otherFloorPlanes[sector] = node;
 }
 
 void HWDrawInfo::AddOtherCeilingPlane(int sector, gl_subsectorrendernode * node)
 {
-	int oldcnt = otherceilingplanes.Size();
-
-	if (oldcnt <= sector)
-	{
-		otherceilingplanes.Resize(sector + 1);
-		for (int i = oldcnt; i <= sector; i++) otherceilingplanes[i] = nullptr;
-	}
-	node->next = otherceilingplanes[sector];
+    auto pNode = otherCeilingPlanes.CheckKey(sector);
+    
+    node->next = pNode? *pNode : nullptr;
 	node->lightindex = SetupLightsForOtherPlane(node->sub, lightdata, &level.sectors[sector].ceilingplane);
 	node->vertexindex = CreateOtherPlaneVertices(node->sub, &level.sectors[sector].ceilingplane);
-	otherceilingplanes[sector] = node;
+	otherCeilingPlanes[sector] = node;
 }
-
 
 //==========================================================================
 //
@@ -511,7 +511,7 @@ void HWDrawInfo::HandleMissingTextures(area_t in_area)
 
 				for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
 				{
-					gl_subsectorrendernode * node = new gl_subsectorrendernode;
+                    gl_subsectorrendernode * node = NewSubsectorRenderNode();
 					node->sub = HandledSubsectors[j];
 
 					AddOtherCeilingPlane(sec->sectornum, node);
@@ -555,7 +555,7 @@ void HWDrawInfo::HandleMissingTextures(area_t in_area)
 
 				for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
 				{
-					gl_subsectorrendernode * node = new gl_subsectorrendernode;
+                    gl_subsectorrendernode * node = NewSubsectorRenderNode();
 					node->sub = HandledSubsectors[j];
 					AddOtherCeilingPlane(fakesector->sectornum, node);
 				}
@@ -583,7 +583,7 @@ void HWDrawInfo::HandleMissingTextures(area_t in_area)
 
 				for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
 				{
-					gl_subsectorrendernode * node = new gl_subsectorrendernode;
+                    gl_subsectorrendernode * node = NewSubsectorRenderNode();
 					node->sub = HandledSubsectors[j];
 					AddOtherFloorPlane(sec->sectornum, node);
 				}
@@ -626,7 +626,7 @@ void HWDrawInfo::HandleMissingTextures(area_t in_area)
 
 				for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
 				{
-					gl_subsectorrendernode * node = new gl_subsectorrendernode;
+                    gl_subsectorrendernode * node = NewSubsectorRenderNode();
 					node->sub = HandledSubsectors[j];
 					AddOtherFloorPlane(fakesector->sectornum, node);
 				}
@@ -730,19 +730,13 @@ void HWDrawInfo::PrepareUpperGap(seg_t * seg)
 	CreateFloodStencilPoly(&ws, vertices.first);
 	CreateFloodPoly(&ws, vertices.first+4, ws.z2, fakebsector, true);
 
-	gl_floodrendernode *node = new gl_floodrendernode;
-	int oldcnt = floodfloorsegs.Size();
-	auto sector = fakebsector->sectornum;
-	if (oldcnt <= sector)
-	{
-		floodfloorsegs.Resize(sector + 1);
-		for (int i = oldcnt; i <= sector; i++) floodfloorsegs[i] = nullptr;
-	}
+	gl_floodrendernode *node = NewFloodRenderNode();
+    auto pNode = floodFloorSegs.CheckKey(fakebsector->sectornum);
 
-	node->next = floodfloorsegs[sector];
+    node->next = pNode? *pNode : nullptr;
 	node->seg = seg;
 	node->vertexindex = vertices.second;
-	floodfloorsegs[sector] = node;
+	floodFloorSegs[fakebsector->sectornum] = node;
 }
 
 
@@ -794,19 +788,14 @@ void HWDrawInfo::PrepareLowerGap(seg_t * seg)
 	CreateFloodStencilPoly(&ws, vertices.first);
 	CreateFloodPoly(&ws, vertices.first+4, ws.z1, fakebsector, false);
 
-	gl_floodrendernode *node = new gl_floodrendernode;
-	int oldcnt = floodceilingsegs.Size();
-	auto sector = fakebsector->sectornum;
-	if (oldcnt <= sector)
-	{
-		floodceilingsegs.Resize(sector + 1);
-		for (int i = oldcnt; i <= sector; i++) floodceilingsegs[i] = nullptr;
-	}
+	gl_floodrendernode *node = NewFloodRenderNode();
+    auto pNode = floodCeilingSegs.CheckKey(fakebsector->sectornum);
+    
+    node->next = pNode? *pNode : nullptr;
 
-	node->next = floodceilingsegs[sector];
 	node->seg = seg;
 	node->vertexindex = vertices.second;
-	floodceilingsegs[sector] = node;
+	floodCeilingSegs[fakebsector->sectornum] = node;
 }
 
 //==========================================================================
@@ -1122,8 +1111,7 @@ void HWDrawInfo::HandleHackedSubsectors()
 			{
 				for(unsigned int j=0;j<HandledSubsectors.Size();j++)
 				{				
-					gl_subsectorrendernode * node = new gl_subsectorrendernode;
-
+                    gl_subsectorrendernode * node = NewSubsectorRenderNode();
 					node->sub = HandledSubsectors[j];
 					AddOtherFloorPlane(sub->render_sector->sectornum, node);
 				}
@@ -1145,8 +1133,7 @@ void HWDrawInfo::HandleHackedSubsectors()
 			{
 				for(unsigned int j=0;j<HandledSubsectors.Size();j++)
 				{				
-					gl_subsectorrendernode * node = new gl_subsectorrendernode;
-
+                    gl_subsectorrendernode * node = NewSubsectorRenderNode();
 					node->sub = HandledSubsectors[j];
 					AddOtherCeilingPlane(sub->render_sector->sectornum, node);
 				}
@@ -1308,7 +1295,7 @@ void HWDrawInfo::ProcessSectorStacks(area_t in_area)
 
 					if (sec->GetAlpha(sector_t::ceiling) != 0 && sec->GetTexture(sector_t::ceiling) != skyflatnum)
 					{
-						gl_subsectorrendernode * node = new gl_subsectorrendernode;
+                        gl_subsectorrendernode * node = NewSubsectorRenderNode();
 						node->sub = sub;
 						AddOtherCeilingPlane(sec->sectornum, node);
 					}
@@ -1353,7 +1340,7 @@ void HWDrawInfo::ProcessSectorStacks(area_t in_area)
 
 					if (sec->GetAlpha(sector_t::floor) != 0 && sec->GetTexture(sector_t::floor) != skyflatnum)
 					{
-						gl_subsectorrendernode * node = new gl_subsectorrendernode;
+                        gl_subsectorrendernode * node = NewSubsectorRenderNode();
 						node->sub = sub;
 						AddOtherFloorPlane(sec->sectornum, node);
 					}

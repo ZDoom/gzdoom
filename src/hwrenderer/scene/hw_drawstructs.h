@@ -308,6 +308,7 @@ public:
 	bool stack;
 	bool ceiling;
 	uint8_t renderflags;
+    uint8_t hacktype;
 	int iboindex;
 	//int vboheight;
 
@@ -319,10 +320,13 @@ public:
 	void PutFlat(HWDrawInfo *di, bool fog = false);
 	void Process(HWDrawInfo *di, sector_t * model, int whichplane, bool notexture);
 	void SetFrom3DFloor(F3DFloor *rover, bool top, bool underside);
-	void ProcessSector(HWDrawInfo *di, sector_t * frontsector);
+	void ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which = SSRF_RENDERALL);
 	
 	void DrawSubsectors(HWDrawInfo *di, FRenderState &state);
 	void DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent);
+    
+    void DrawOtherPlanes(HWDrawInfo *di, FRenderState &state);
+    void DrawFloodPlanes(HWDrawInfo *di, FRenderState &state);
 };
 
 //==========================================================================

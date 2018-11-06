@@ -56,18 +56,6 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 //
 //==========================================================================
 
-template<class T>
-inline void DeleteLinkedList(T *node)
-{
-	while (node)
-	{
-		auto n = node;
-		node = node->next;
-		delete n;
-	}
-}
-
-
 class FDrawInfoList
 {
 public:
@@ -188,17 +176,10 @@ HWDrawInfo *HWDrawInfo::EndDrawInfo()
 
 void HWDrawInfo::ClearBuffers()
 {
-	for (auto node : otherfloorplanes) DeleteLinkedList(node);
-	otherfloorplanes.Clear();
-
-	for (auto node : otherceilingplanes) DeleteLinkedList(node);
-	otherceilingplanes.Clear();
-
-	for (auto node : floodfloorsegs) DeleteLinkedList(node);
-	floodfloorsegs.Clear();
-
-	for (auto node : floodceilingsegs) DeleteLinkedList(node);
-	floodceilingsegs.Clear();
+    otherFloorPlanes.Clear();
+    otherCeilingPlanes.Clear();
+    floodFloorSegs.Clear();
+    floodCeilingSegs.Clear();
 
 	// clear all the lists that might not have been cleared already
 	MissingUpperTextures.Clear();

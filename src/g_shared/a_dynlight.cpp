@@ -578,7 +578,7 @@ void ADynamicLight::CollectWithinRadius(const DVector3 &opos, FSection *section,
 		touching_sector = AddLightNode(&section->lighthead, section, this, touching_sector);
 
 
-		auto processSide = [&](side_t *sidedef, vertex_t *v1, vertex_t *v2)
+		auto processSide = [&](side_t *sidedef, const vertex_t *v1, const vertex_t *v2)
 		{
 			auto linedef = sidedef->linedef;
 			if (linedef && linedef->validcount != ::validcount)
@@ -640,7 +640,11 @@ void ADynamicLight::CollectWithinRadius(const DVector3 &opos, FSection *section,
 		}
 		for (auto side : section->sides)
 		{
-			processSide(side, side->V1(), side->V2());
+			auto v1 = side->V1(), v2 = side->V2();
+			if (DistToSeg(pos, v1, v2) <= radius)
+			{
+				processSide(side, v1, v2);
+			}
 		}
 		sector_t *sec = section->sector;
 		if (!sec->PortalBlocksSight(sector_t::ceiling))
@@ -707,7 +711,7 @@ void ADynamicLight::LinkLight()
 		FSection *sect = R_PointInSubsector(Pos())->section;
 
 		dl_validcount++;
-		validcount++;
+		::validcount++;
 		CollectWithinRadius(Pos(), sect, float(radius*radius));
 
 	}

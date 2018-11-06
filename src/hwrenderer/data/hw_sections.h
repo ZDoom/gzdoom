@@ -102,26 +102,9 @@ public:
 	TArray<subsector_t *> allSubsectors;
 	TArray<int> allIndices;
 
-	int *sectionForSidedefPtr;				// also stored inside allIndices;
 	int *firstSectionForSectorPtr;			// ditto.
 	int *numberOfSectionForSectorPtr;		// ditto.
 
-	FSection *SectionForSidedef(side_t *side)
-	{
-		return SectionForSidedef(side->Index());
-	}
-	FSection *SectionForSidedef(int sindex)
-	{
-		return sindex < 0 ? nullptr : &allSections[sectionForSidedefPtr[sindex]];
-	}
-	int SectionNumForSidedef(side_t *side)
-	{
-		return SectionNumForSidedef(side->Index());
-	}
-	int SectionNumForSidedef(int sindex)
-	{
-		return sindex < 0 ? -1 : sectionForSidedefPtr[sindex];
-	}
 	TArrayView<FSection> SectionsForSector(sector_t *sec)
 	{
 		return SectionsForSector(sec->Index());

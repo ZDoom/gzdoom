@@ -264,6 +264,7 @@ public:
 	void CollectSectorStacksCeiling(subsector_t * sub, sector_t * anchor, area_t in_area);
 	void CollectSectorStacksFloor(subsector_t * sub, sector_t * anchor, area_t in_area);
 
+	void DispatchRenderHacks();
 	void AddUpperMissingTexture(side_t * side, subsector_t *sub, float backheight);
 	void AddLowerMissingTexture(side_t * side, subsector_t *sub, float backheight);
 	void HandleMissingTextures(area_t in_area);

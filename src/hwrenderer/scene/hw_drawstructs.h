@@ -320,7 +320,7 @@ public:
 	void PutFlat(HWDrawInfo *di, bool fog = false);
 	void Process(HWDrawInfo *di, sector_t * model, int whichplane, bool notexture);
 	void SetFrom3DFloor(F3DFloor *rover, bool top, bool underside);
-	void ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which = SSRF_RENDERALL);
+	void ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which = 7 /*SSRF_RENDERALL*/);	// cannot use constant due to circular dependencies.
 	
 	void DrawSubsectors(HWDrawInfo *di, FRenderState &state);
 	void DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent);

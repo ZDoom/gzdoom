@@ -536,8 +536,9 @@ public:
 	}
 };
 
-// This is not a real dynamic array but just a wrapper around a pointer reference.
-// Used for wrapping some memory allocated elsewhere into a VM compatible data structure.
+// This is only used for exposing the sector's Lines array to ZScript.
+// This also must be trivial so that sector_t remains trivial.
+// For other uses TArrayView should be preferred.
 
 template <class T>
 class TStaticPointedArray

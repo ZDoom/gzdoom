@@ -203,7 +203,7 @@ void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 
 void GLFlat::DrawOtherPlanes(HWDrawInfo *di, FRenderState &state)
 {
-    state.SetMaterial(gltexture, CLAMP_XY, 0, -1);
+    state.SetMaterial(gltexture, CLAMP_NONE, 0, -1);
     
     // Draw the subsectors assigned to it due to missing textures
     auto pNode = (renderflags&SSRF_RENDERFLOOR) ?
@@ -231,68 +231,58 @@ void GLFlat::DrawOtherPlanes(HWDrawInfo *di, FRenderState &state)
 
 void GLFlat::DrawFloodPlanes(HWDrawInfo *di, FRenderState &state)
 {
-        // Flood gaps with the back side's ceiling/floor texture
-        // This requires a stencil because the projected plane interferes with
-        // the depth buffer
-    
-    state.SetMaterial(gltexture, CLAMP_XY, 0, -1);
-    
-    // Draw the subsectors assigned to it due to missing textures
-    auto pNode = (renderflags&SSRF_RENDERFLOOR) ?
-    di->floodFloorSegs.CheckKey(sector->sectornum) : di->floodCeilingSegs.CheckKey(sector->sectornum);
-    
-    if (!pNode) return;
-    auto node = *pNode;
-    
-    while (node)
-    {
+	// Flood gaps with the back side's ceiling/floor texture
+	// This requires a stencil because the projected plane interferes with
+	// the depth buffer
 
-        auto pNode = (renderflags&SSRF_RENDERFLOOR) ?
-        di->floodFloorSegs.CheckKey(sector->sectornum) : di->floodCeilingSegs.CheckKey(sector->sectornum);
-        if (!pNode) return;
-        
-        auto fnode = *pNode;
+	state.SetMaterial(gltexture, CLAMP_NONE, 0, -1);
 
-        state.SetLightIndex(-1);
-        while (fnode)
-        {
-            flatvertices += 12;
-            flatprimitives += 3;
-            
-            // Push bleeding floor/ceiling textures back a little in the z-buffer
-            // so they don't interfere with overlapping mid textures.
-            state.SetDepthBias(1, 128);
-            
-            // Create stencil
-            state.SetEffect(EFF_STENCIL);
-            state.EnableTexture(false);
-            state.SetStencil(0, SOP_Increment, SF_ColorMaskOff);
-            state.Draw(DT_TriangleFan,fnode->vertexindex, 4);
-            
-            // Draw projected plane into stencil
-            state.EnableTexture(true);
-            state.SetEffect(EFF_NONE);
-            state.SetStencil(1, SOP_Keep, SF_DepthMaskOff);
-            state.EnableDepthTest(false);
-            state.Draw(DT_TriangleFan,fnode->vertexindex + 4, 4);
-            
-            // clear stencil
-            state.SetEffect(EFF_STENCIL);
-            state.EnableTexture(false);
-            state.SetStencil(1, SOP_Decrement, SF_ColorMaskOff | SF_DepthMaskOff);
-            state.Draw(DT_TriangleFan,fnode->vertexindex, 4);
-            
-            // restore old stencil op.
-            state.EnableTexture(true);
-            state.EnableDepthTest(true);
-            state.SetEffect(EFF_NONE);
-            state.SetDepthBias(0, 0);
-            state.SetStencil(0, SOP_Keep, SF_AllOn);
-            
-            fnode = fnode->next;
-        }
-        
-    }
+	// Draw the subsectors assigned to it due to missing textures
+	auto pNode = (renderflags&SSRF_RENDERFLOOR) ?
+		di->floodFloorSegs.CheckKey(sector->sectornum) : di->floodCeilingSegs.CheckKey(sector->sectornum);
+	if (!pNode) return;
+
+	auto fnode = *pNode;
+
+	state.SetLightIndex(-1);
+	while (fnode)
+	{
+		flatvertices += 12;
+		flatprimitives += 3;
+
+		// Push bleeding floor/ceiling textures back a little in the z-buffer
+		// so they don't interfere with overlapping mid textures.
+		state.SetDepthBias(1, 128);
+
+		// Create stencil
+		state.SetEffect(EFF_STENCIL);
+		state.EnableTexture(false);
+		state.SetStencil(0, SOP_Increment, SF_ColorMaskOff);
+		state.Draw(DT_TriangleFan, fnode->vertexindex, 4);
+
+		// Draw projected plane into stencil
+		state.EnableTexture(true);
+		state.SetEffect(EFF_NONE);
+		state.SetStencil(1, SOP_Keep, SF_DepthMaskOff);
+		state.EnableDepthTest(false);
+		state.Draw(DT_TriangleFan, fnode->vertexindex + 4, 4);
+
+		// clear stencil
+		state.SetEffect(EFF_STENCIL);
+		state.EnableTexture(false);
+		state.SetStencil(1, SOP_Decrement, SF_ColorMaskOff | SF_DepthMaskOff);
+		state.Draw(DT_TriangleFan, fnode->vertexindex, 4);
+
+		// restore old stencil op.
+		state.EnableTexture(true);
+		state.EnableDepthTest(true);
+		state.SetEffect(EFF_NONE);
+		state.SetDepthBias(0, 0);
+		state.SetStencil(0, SOP_Keep, SF_AllOn);
+
+		fnode = fnode->next;
+	}
+
 }
 
 
@@ -318,7 +308,15 @@ void GLFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 	state.SetFog(lightlevel, rel, di->isFullbrightScene(), &Colormap, false);
 	state.SetObjectColor(FlatColor | 0xff000000);
 
-	if (!translucent)
+	if (hacktype & SSRF_PLANEHACK)
+	{
+		DrawOtherPlanes(di, state);
+	}
+	else if (hacktype & SSRF_FLOODHACK)
+	{
+		DrawFloodPlanes(di, state);
+	}
+	else if (!translucent)
 	{
 		if (sector->special != GLSector_Skybox)
 		{
@@ -335,14 +333,6 @@ void GLFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 			flatvertices += 4;
 			flatprimitives++;
 		}
-        else if (hacktype & SSRF_PLANEHACK)
-        {
-            DrawOtherPlanes(di, state);
-        }
-        else if (hacktype & SSRF_FLOODHACK)
-        {
-            DrawFloodPlanes(di, state);
-        }
 		state.SetObjectColor(0xffffffff);
 	}
 	else
@@ -385,7 +375,7 @@ inline void GLFlat::PutFlat(HWDrawInfo *di, bool fog)
 	}
 	else if (!screen->BuffersArePersistent())
 	{
-		if (level.HasDynamicLights && gltexture != nullptr)
+		if (level.HasDynamicLights && gltexture != nullptr && !(hacktype & (SSRF_PLANEHACK|SSRF_FLOODHACK)) )
 		{
 			SetupLights(di, section->lighthead, lightdata, sector->PortalGroup);
 		}
@@ -434,7 +424,7 @@ void GLFlat::Process(HWDrawInfo *di, sector_t * model, int whichplane, bool fog)
 	}
 
 	// For hacks this won't go into a render list.
-	if (hacktype == 0) PutFlat(di, fog);
+	PutFlat(di, fog);
 	rendered_flats++;
 }
 
@@ -495,7 +485,8 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 	dynlightindex = -1;
     hacktype = (which & (SSRF_PLANEHACK|SSRF_FLOODHACK));
 
-	uint8_t &srf = di->section_renderflags[level.sections.SectionIndex(section)];
+	uint8_t sink;
+	uint8_t &srf = hacktype? sink : di->section_renderflags[level.sections.SectionIndex(section)];
     const auto &vp = di->Viewpoint;
 
 	//

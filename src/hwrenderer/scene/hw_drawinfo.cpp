@@ -441,8 +441,8 @@ void HWDrawInfo::CreateScene()
 
 	HandleMissingTextures(in_area);	// Missing upper/lower textures
 	HandleHackedSubsectors();	// open sector hacks for deep water
-	ProcessSectorStacks(in_area);		// merge visplanes of sector stacks
 	PrepareUnhandledMissingTextures();
+	DispatchRenderHacks();
 	screen->mLights->Unmap();
 	screen->mVertexData->Unmap();
 

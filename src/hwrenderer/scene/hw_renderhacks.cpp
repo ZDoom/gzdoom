@@ -41,7 +41,55 @@
 
 sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back);
 
+//==========================================================================
+//
+// Create render list entries from the data generated below
+//
+//==========================================================================
+
+void HWDrawInfo::DispatchRenderHacks()
+{
+	TMap<int, gl_subsectorrendernode*>::Pair *pair;
+	TMap<int, gl_floodrendernode*>::Pair *fpair;
+	TMap<int, gl_subsectorrendernode*>::Iterator ofi(otherFloorPlanes);
+	GLFlat glflat;
+	sector_t fakesec;
+	glflat.section = nullptr;
+	while (ofi.NextPair(pair))
+	{
+		auto sec = hw_FakeFlat(&level.sectors[pair->Key], &fakesec, in_area, false);
+		glflat.ProcessSector(this, sec, SSRF_RENDERFLOOR | SSRF_PLANEHACK);
+	}
+
+	TMap<int, gl_subsectorrendernode*>::Iterator oci(otherCeilingPlanes);
+	while (ofi.NextPair(pair))
+	{
+		auto sec = hw_FakeFlat(&level.sectors[pair->Key], &fakesec, in_area, false);
+		glflat.ProcessSector(this, sec, SSRF_RENDERCEILING | SSRF_PLANEHACK);
+	}
+
+	TMap<int, gl_floodrendernode*>::Iterator ffi(floodFloorSegs);
+	while (ffi.NextPair(fpair))
+	{
+		auto sec = hw_FakeFlat(&level.sectors[fpair->Key], &fakesec, in_area, false);
+		glflat.ProcessSector(this, sec, SSRF_RENDERFLOOR | SSRF_FLOODHACK);
+	}
+
+	TMap<int, gl_floodrendernode*>::Iterator fci(floodCeilingSegs);
+	while (fci.NextPair(fpair))
+	{
+		auto sec = hw_FakeFlat(&level.sectors[fpair->Key], &fakesec, in_area, false);
+		glflat.ProcessSector(this, sec, SSRF_RENDERCEILING | SSRF_FLOODHACK);
+	}
+}
+
+
+//==========================================================================
+//
 // Get the nodes from the render data allocator so we don't have to keep track of them ourselves.
+//
+//==========================================================================
+
 static gl_subsectorrendernode *NewSubsectorRenderNode()
 {
     return (gl_subsectorrendernode*)RenderDataAllocator.Alloc(sizeof(gl_subsectorrendernode));
@@ -506,9 +554,6 @@ void HWDrawInfo::HandleMissingTextures(area_t in_area)
 			if (DoOneSectorUpper(MissingUpperTextures[i].sub, MissingUpperTextures[i].Planez, in_area))
 			{
 				sector_t * sec = MissingUpperTextures[i].seg->backsector;
-				// The mere fact that this seg has been added to the list means that the back sector
-				// will be rendered so we can safely assume that it is already in the render list
-
 				for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
 				{
                     gl_subsectorrendernode * node = NewSubsectorRenderNode();
@@ -550,9 +595,6 @@ void HWDrawInfo::HandleMissingTextures(area_t in_area)
 			backsub->validcount = validcount;
 			if (DoFakeCeilingBridge(backsub, planez, in_area))
 			{
-				// The mere fact that this seg has been added to the list means that the back sector
-				// will be rendered so we can safely assume that it is already in the render list
-
 				for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
 				{
                     gl_subsectorrendernode * node = NewSubsectorRenderNode();
@@ -578,8 +620,6 @@ void HWDrawInfo::HandleMissingTextures(area_t in_area)
 			if (DoOneSectorLower(MissingLowerTextures[i].sub, MissingLowerTextures[i].Planez, in_area))
 			{
 				sector_t * sec = MissingLowerTextures[i].seg->backsector;
-				// The mere fact that this seg has been added to the list means that the back sector
-				// will be rendered so we can safely assume that it is already in the render list
 
 				for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
 				{
@@ -621,9 +661,6 @@ void HWDrawInfo::HandleMissingTextures(area_t in_area)
 			backsub->validcount = validcount;
 			if (DoFakeBridge(backsub, planez, in_area))
 			{
-				// The mere fact that this seg has been added to the list means that the back sector
-				// will be rendered so we can safely assume that it is already in the render list
-
 				for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
 				{
                     gl_subsectorrendernode * node = NewSubsectorRenderNode();
@@ -840,8 +877,6 @@ void HWDrawInfo::PrepareUnhandledMissingTextures()
 
 			if (seg->linedef->validcount == validcount) continue;		// already done
 			seg->linedef->validcount = validcount;
-			int section = level.sections.SectionNumForSidedef(seg->sidedef);
-			if (!(section_renderflags[section] & SSRF_RENDERFLOOR)) continue;
 			if (seg->frontsector->GetPlaneTexZ(sector_t::floor) > Viewpoint.Pos.Z) continue;	// out of sight
 			if (seg->backsector->transdoor) continue;
 			if (seg->backsector->GetTexture(sector_t::floor) == skyflatnum) continue;

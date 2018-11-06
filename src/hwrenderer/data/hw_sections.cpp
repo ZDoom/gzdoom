@@ -632,10 +632,9 @@ public:
 	void ConstructOutput(FSectionContainer &output)
 	{
 		output.allSections.Resize(groups.Size());
-		output.allIndices.Resize(level.subsectors.Size() + level.sides.Size() + 2*level.sectors.Size());
-		output.sectionForSidedefPtr = &output.allIndices[0];
-		output.firstSectionForSectorPtr = &output.allIndices[level.sides.Size()];
-		output.numberOfSectionForSectorPtr = &output.allIndices[level.sides.Size() + level.sectors.Size()];
+		output.allIndices.Resize(2*level.sectors.Size());
+		output.firstSectionForSectorPtr = &output.allIndices[0];
+		output.numberOfSectionForSectorPtr = &output.allIndices[level.sectors.Size()];
 		memset(output.firstSectionForSectorPtr, -1, sizeof(int) * level.sectors.Size());
 		memset(output.numberOfSectionForSectorPtr, 0, sizeof(int) * level.sectors.Size());
 
@@ -713,7 +712,6 @@ public:
 			while (it.NextPair(pair))
 			{
 				output.allSides[numsides++] = &level.sides[pair->Key];
-				output.sectionForSidedefPtr[pair->Key] = curgroup;
 			}
 			for (auto ssi : group.subsectors)
 			{

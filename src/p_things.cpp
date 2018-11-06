@@ -440,7 +440,7 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser, int nocheck)
 	FState * RaiseState = thing->GetRaiseState();
 	if (RaiseState == NULL)
 	{
-		return true;	// monster doesn't have a raise state
+		return false;	// monster doesn't have a raise state
 	}
 	
 	AActor *info = thing->GetDefault ();

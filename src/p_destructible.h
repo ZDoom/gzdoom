@@ -23,13 +23,14 @@ enum
 
 void P_InitHealthGroups();
 
+void P_SetHealthGroupHealth(FHealthGroup* group, int health);
 void P_SetHealthGroupHealth(int group, int health);
 
 FHealthGroup* P_GetHealthGroup(int id);
 FHealthGroup* P_GetHealthGroupOrNew(int id, int startinghealth);
 
-void P_DamageSector(sector_t* sector, AActor* source, int damage, FName damagetype, int part, DVector3 position, bool dogroups = true);
-void P_DamageLinedef(line_t* line, AActor* source, int damage, FName damagetype, int side, DVector3 position, bool dogroups = true);
+void P_DamageSector(sector_t* sector, AActor* source, int damage, FName damagetype, int part, DVector3 position, bool isradius, bool dogroups);
+void P_DamageLinedef(line_t* line, AActor* source, int damage, FName damagetype, int side, DVector3 position, bool isradius, bool dogroups);
 
 void P_GeometryLineAttack(FTraceResults& trace, AActor* thing, int damage, FName damageType);
 void P_GeometryRadiusAttack(AActor* bombspot, AActor* bombsource, int bombdamage, int bombdistance, FName damagetype, int fulldamagedistance);

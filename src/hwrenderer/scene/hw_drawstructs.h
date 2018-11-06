@@ -27,6 +27,7 @@ struct FSpriteModelFrame;
 struct particle_t;
 class FRenderState;
 struct GLDecal;
+struct FSection;
 enum area_t : int;
 
 enum HWRenderStyle
@@ -293,6 +294,7 @@ class GLFlat
 {
 public:
 	sector_t * sector;
+	FSection *section;
 	float z; // the z position of the flat (only valid for non-sloped planes)
 	FMaterial *gltexture;
 
@@ -306,6 +308,7 @@ public:
 	bool stack;
 	bool ceiling;
 	uint8_t renderflags;
+    uint8_t hacktype;
 	int iboindex;
 	//int vboheight;
 
@@ -317,10 +320,13 @@ public:
 	void PutFlat(HWDrawInfo *di, bool fog = false);
 	void Process(HWDrawInfo *di, sector_t * model, int whichplane, bool notexture);
 	void SetFrom3DFloor(F3DFloor *rover, bool top, bool underside);
-	void ProcessSector(HWDrawInfo *di, sector_t * frontsector);
+	void ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which = 7 /*SSRF_RENDERALL*/);	// cannot use constant due to circular dependencies.
 	
 	void DrawSubsectors(HWDrawInfo *di, FRenderState &state);
 	void DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent);
+    
+    void DrawOtherPlanes(HWDrawInfo *di, FRenderState &state);
+    void DrawFloodPlanes(HWDrawInfo *di, FRenderState &state);
 };
 
 //==========================================================================

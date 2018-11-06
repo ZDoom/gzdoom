@@ -302,7 +302,7 @@ void GLWall::SetupLights(HWDrawInfo *di, FDynLightData &lightdata)
 	else if (sub)
 	{
 		// Polobject segs cannot be checked per sidedef so use the subsector instead.
-		node = sub->lighthead;
+		node = sub->section->lighthead;
 	}
 	else node = NULL;
 

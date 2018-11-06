@@ -2072,7 +2072,7 @@ void AM_drawSubsectors()
 			continue;
 		}
 
-		if ((!(subsectors[i].flags & SSECMF_DRAWN) || (subsectors[i].render_sector->MoreFlags & SECMF_HIDDEN)) && am_cheat == 0)
+		if ((!(subsectors[i].flags & SSECMF_DRAWN) || (subsectors[i].flags & SSECF_HOLE) || (subsectors[i].render_sector->MoreFlags & SECMF_HIDDEN)) && am_cheat == 0)
 		{
 			continue;
 		}

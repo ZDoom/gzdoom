@@ -70,7 +70,7 @@ void PolyModelRenderer::AddLights(AActor *actor)
 
 		BSPWalkCircle(x, y, radiusSquared, [&](subsector_t *subsector) // Iterate through all subsectors potentially touched by actor
 		{
-			FLightNode * node = subsector->lighthead;
+			FLightNode * node = subsector->section->lighthead;
 			while (node) // check all lights touching a subsector
 			{
 				ADynamicLight *light = node->lightsource;

@@ -3559,6 +3559,7 @@ void P_FreeLevelData ()
 
 
 	FBehavior::StaticUnloadModules ();
+	level.sections.Clear();
 	level.segs.Clear();
 	level.sectors.Clear();
 	level.lines.Clear();
@@ -4055,6 +4056,8 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 	if (hasglnodes)
 	{
 		P_SetRenderSector();
+		FixMinisegReferences();
+		FixHoles();
 	}
 
 	bodyqueslot = 0;
@@ -4063,6 +4066,8 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 
 	for (i = 0; i < BODYQUESIZE; i++)
 		bodyque[i] = NULL;
+
+	CreateSections(level.sections);
 
 	if (!buildmap)
 	{

@@ -51,6 +51,7 @@ struct FLinePortal;
 struct seg_t;
 struct sector_t;
 class AActor;
+struct FSection;
 
 #define MAXWIDTH 12000
 #define MAXHEIGHT 5000
@@ -1028,7 +1029,6 @@ public:
 
 	// killough 3/7/98: support flat heights drawn at another sector's heights
 	sector_t *heightsec;		// other sector, or NULL if no other sector
-	FLightNode *				lighthead;
 
 	uint32_t bottommap, midmap, topmap;	// killough 4/4/98: dynamic colormaps
 										// [RH] these can also be blend values if
@@ -1437,6 +1437,7 @@ enum
 	SSECF_DEGENERATE = 1,
 	SSECMF_DRAWN = 2,
 	SSECF_POLYORG = 4,
+	SSECF_HOLE = 8,
 };
 
 struct FPortalCoverage
@@ -1454,14 +1455,13 @@ struct subsector_t
 	FMiniBSP	*BSP;
 	seg_t		*firstline;
 	sector_t	*render_sector;
+	FSection	*section;
 	uint32_t	numlines;
 	uint16_t	flags;
-	uint16_t	sectorindex;
+	short		mapsection;
 
 	// subsector related GL data
-	FLightNode *	lighthead;	// Light nodes (blended and additive)
 	int				validcount;
-	short			mapsection;
 	char			hacked;			// 1: is part of a render hack
 
 	void BuildPolyBSP();

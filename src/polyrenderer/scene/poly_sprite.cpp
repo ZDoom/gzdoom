@@ -381,7 +381,7 @@ void RenderPolySprite::SetDynlight(AActor *thing, PolyDrawArgs &args)
 	float lit_red = 0;
 	float lit_green = 0;
 	float lit_blue = 0;
-	auto node = thing->Sector->lighthead;
+	auto node = thing->section->lighthead;
 	while (node != nullptr)
 	{
 		ADynamicLight *light = node->lightsource;

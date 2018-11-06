@@ -2757,11 +2757,63 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 	actor->flags &= ~MF_INCHASE;
 }
 
+//==========================================================================
+//
+// CanResurrect
+//
+// Checks if an actor can resurrect with another one, calling virtual script
+// functions to check.
+// 
+//==========================================================================
+// [MC] Code is almost a duplicate of CanCollideWith but with changes to
+// accommodate checking of just one actor.
+bool P_CanResurrect(AActor *tmthing, AActor *thing)
+{
+	if (tmthing == nullptr)
+		return false;
+
+	static unsigned VIndex = ~0u;
+	if (VIndex == ~0u)
+	{
+		VIndex = GetVirtualIndex(RUNTIME_CLASS(AActor), "CanResurrect");
+		assert(VIndex != ~0u);
+	}
+
+	VMValue params[3] = { tmthing, thing, false };
+	VMReturn ret;
+	int retval;
+	ret.IntAt(&retval);
+
+	auto clss = tmthing->GetClass();
+	VMFunction *func = clss->Virtuals.Size() > VIndex ? clss->Virtuals[VIndex] : nullptr;
+	if (func != nullptr)
+	{
+		VMCall(func, params, 3, &ret, 1);
+		if (!retval) return false;
+	}
+
+	// Pointless to be running it again if it's just self.
+	if (thing == nullptr || thing == tmthing)
+		return true;
+
+	std::swap(params[0].a, params[1].a);
+	params[2].i = true;
+
+	// re-get for the other actor.
+	clss = thing->GetClass();
+	func = clss->Virtuals.Size() > VIndex ? clss->Virtuals[VIndex] : nullptr;
+	if (func != nullptr)
+	{
+		VMCall(func, params, 3, &ret, 1);
+		if (!retval) return false;
+	}
+	return true;
+}
 
 //==========================================================================
 //
 // P_CheckForResurrection (formerly part of A_VileChase)
-// Check for ressurecting a body
+// Check for resurrecting a body
 //
 //==========================================================================
 
@@ -2834,7 +2886,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				corpsehit->flags = oldflags;
 				corpsehit->radius = oldradius;
 				corpsehit->Height = oldheight;
-				if (!check) continue;
+				if (!check || !P_CanResurrect(self, corpsehit)) continue;
 
 				// got one!
 				temp = self->target;

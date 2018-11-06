@@ -707,6 +707,7 @@ void ADynamicLight::LinkLight()
 		FSection *sect = R_PointInSubsector(Pos())->section;
 
 		dl_validcount++;
+		validcount++;
 		CollectWithinRadius(Pos(), sect, float(radius*radius));
 
 	}

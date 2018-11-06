@@ -185,20 +185,20 @@ int FFlatVertexBuffer::CreateIndexedSectorVertices(sector_t *sec, const secplane
 //
 //==========================================================================
 
-int FFlatVertexBuffer::CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, VertexContainer &verts)
+int FFlatVertexBuffer::CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, VertexContainers &verts)
 {
 	sec->vboindex[h] = vbo_shadowdata.Size();
 	// First calculate the vertices for the sector itself
 	sec->vboheight[h] = sec->GetPlaneTexZ(h);
-    sec->ibocount = verts.indices.Size();
-	sec->iboindex[h] = CreateIndexedSectorVertices(sec, plane, floor, verts);
+    sec->ibocount = verts[sec->Index()].indices.Size();
+	sec->iboindex[h] = CreateIndexedSectorVertices(sec, plane, floor, verts[sec->Index()]);
 
 	// Next are all sectors using this one as heightsec
 	TArray<sector_t *> &fakes = sec->e->FakeFloor.Sectors;
 	for (unsigned g = 0; g < fakes.Size(); g++)
 	{
 		sector_t *fsec = fakes[g];
-		fsec->iboindex[2 + h] = CreateIndexedSectorVertices(fsec, plane, false, verts);
+		fsec->iboindex[2 + h] = CreateIndexedSectorVertices(fsec, plane, false, verts[fsec->Index()]);
 	}
 
 	// and finally all attached 3D floors
@@ -215,7 +215,7 @@ int FFlatVertexBuffer::CreateIndexedVertices(int h, sector_t *sec, const secplan
 
 			if (dotop || dobottom)
 			{
-				auto ndx = CreateIndexedSectorVertices(fsec, plane, false, verts);
+				auto ndx = CreateIndexedSectorVertices(fsec, plane, false, verts[fsec->Index()]);
 				if (dotop) ffloor->top.vindex = ndx;
 				if (dobottom) ffloor->bottom.vindex = ndx;
 			}
@@ -237,6 +237,7 @@ void FFlatVertexBuffer::CreateIndexedFlatVertices()
     auto verts = BuildVertices();
 
 	int i = 0;
+	/*
 	for (auto &vert : verts)
 	{
 		Printf(PRINT_LOG, "Sector %d\n", i);
@@ -253,13 +254,14 @@ void FFlatVertexBuffer::CreateIndexedFlatVertices()
 
 		i++;
 	}
+	*/
 
     
 	for (int h = sector_t::floor; h <= sector_t::ceiling; h++)
 	{
 		for (auto &sec : level.sectors)
 		{
-			CreateIndexedVertices(h, &sec, sec.GetSecPlane(h), h == sector_t::floor, verts[sec.Index()]);
+			CreateIndexedVertices(h, &sec, sec.GetSecPlane(h), h == sector_t::floor, verts);
 		}
 	}
 

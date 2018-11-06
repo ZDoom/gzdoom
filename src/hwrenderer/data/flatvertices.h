@@ -118,7 +118,7 @@ public:
 private:
 	int CreateIndexedSectionVertices(subsector_t *sub, const secplane_t &plane, int floor, VertexContainer &cont);
 	int CreateIndexedSectorVertices(sector_t *sec, const secplane_t &plane, int floor, VertexContainer &cont);
-	int CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, VertexContainer &cont);
+	int CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, VertexContainers &cont);
 	void CreateIndexedFlatVertices();
 
 	void UpdatePlaneVertices(sector_t *sec, int plane);

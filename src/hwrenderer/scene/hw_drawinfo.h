@@ -167,8 +167,8 @@ struct HWDrawInfo
     TMap<int, gl_floodrendernode*> floodFloorSegs;
     TMap<int, gl_floodrendernode*> floodCeilingSegs;
 
-	TArray<sector_t *> CeilingStacks;
-	TArray<sector_t *> FloorStacks;
+	//TArray<sector_t *> CeilingStacks;
+	//TArray<sector_t *> FloorStacks;
 
 	TArray<subsector_t *> HandledSubsectors;
 
@@ -300,7 +300,6 @@ public:
 	void DrawPlayerSprites(bool hudModelStep, FRenderState &state);
 
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs);
-    void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub);
     
     void AddWall(GLWall *w);
     void AddMirrorSurface(GLWall *w);

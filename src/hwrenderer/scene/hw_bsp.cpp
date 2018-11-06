@@ -702,20 +702,6 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 				ss_renderflags[sub->Index()] = 
 					(sub->numlines > 2) ? SSRF_PROCESSED|SSRF_RENDERALL : SSRF_PROCESSED;
 				if (sub->hacked & 1) AddHackedSubsector(sub);
-
-				FSectorPortalGroup *portal;
-
-				portal = fakesector->GetPortalGroup(sector_t::ceiling);
-				if (portal != nullptr)
-				{
-					AddSubsectorToPortal(portal, sub);
-				}
-
-				portal = fakesector->GetPortalGroup(sector_t::floor);
-				if (portal != nullptr)
-				{
-					AddSubsectorToPortal(portal, sub);
-				}
 			}
 		}
 	}

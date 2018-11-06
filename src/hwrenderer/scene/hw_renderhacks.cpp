@@ -1180,6 +1180,11 @@ void HWDrawInfo::HandleHackedSubsectors()
 	SubsectorHacks.Clear();
 }
 
+// This code was meant to fix the portal in KDIZD's Z1M1, but later versions of that mod do not need it anymore.
+// I am not aware of other portals ever having been set up so badly as this one so it probably is not needed anymore.
+// Even if needed this must be done differently because this code depends on hacking the render data in a bad way.
+#if 0	
+		
 //==========================================================================
 //
 // This merges visplanes that lie inside a sector stack together
@@ -1406,3 +1411,4 @@ void HWDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *ptg, subsector_t *sub)
 	ptl->AddSubsector(sub);
 }
 
+#endif

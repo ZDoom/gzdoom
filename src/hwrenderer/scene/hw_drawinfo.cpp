@@ -187,8 +187,8 @@ void HWDrawInfo::ClearBuffers()
 	MissingUpperSegs.Clear();
 	MissingLowerSegs.Clear();
 	SubsectorHacks.Clear();
-	CeilingStacks.Clear();
-	FloorStacks.Clear();
+	//CeilingStacks.Clear();
+	//FloorStacks.Clear();
 	HandledSubsectors.Clear();
 	spriteindex = 0;
 

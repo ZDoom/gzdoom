@@ -434,6 +434,9 @@ void P_RemoveThing(AActor * actor)
 
 bool P_Thing_Raise(AActor *thing, AActor *raiser, int nocheck)
 {
+	if (!thing)	
+		return false;
+
 	FState * RaiseState = thing->GetRaiseState();
 	if (RaiseState == NULL)
 	{

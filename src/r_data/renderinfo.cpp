@@ -758,7 +758,7 @@ void FixHoles()
 			// Add the new data. This doesn't care about convexity. It is never directly used to generate a primitive.
 			for (auto &segloop : segloops)
 			{
-				Printf("Adding dummy subsector for sector %d\n", segloop[0]->Subsector->render_sector->Index());
+				DPrintf(DMSG_NOTIFY, "Adding dummy subsector for sector %d\n", segloop[0]->Subsector->render_sector->Index());
 
 				subsector_t &sub = level.subsectors[newssstart++];
 				memset(&sub, 0, sizeof(sub));
@@ -770,7 +770,7 @@ void FixHoles()
 
 				for (auto otherseg : segloop)
 				{
-					Printf("   Adding seg from (%2.3f, %2.3f) -> (%2.3f, %2.3f)\n", otherseg->v2->fX(), otherseg->v2->fY(), otherseg->v1->fX(), otherseg->v1->fY());
+					DPrintf(DMSG_NOTIFY, "   Adding seg from (%2.3f, %2.3f) -> (%2.3f, %2.3f)\n", otherseg->v2->fX(), otherseg->v2->fY(), otherseg->v1->fX(), otherseg->v1->fY());
 					seg_t &seg = level.segs[newsegstart++];
 					memset(&seg, 0, sizeof(seg));
 					seg.v1 = otherseg->v2;

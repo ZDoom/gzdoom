@@ -162,6 +162,10 @@ public:
 		Most = max;
 		Count = reserve? max : 0;
 		Array = (T *)M_Malloc (sizeof(T)*max);
+		if (reserve)
+		{
+			for (unsigned i = 0; i < Count; i++) ::new(&Array[i]) T();
+		}
 	}
 	TArray (const TArray<T,TT> &other)
 	{
@@ -250,6 +254,12 @@ public:
 		return Array[Count-1];
 	}
 
+	// returns address of first element
+	T *Data() const
+	{
+		return &Array[0];
+	}
+
     unsigned int Find(const T& item) const
     {
         unsigned int i;
@@ -267,6 +277,7 @@ public:
 		::new((void*)&Array[Count]) T(item);
 		return Count++;
 	}
+
 	void Append(const TArray<T> &item)
 	{
 		unsigned start = Reserve(item.Size());
@@ -350,6 +361,18 @@ public:
 			::new ((void *)&Array[index]) T(item);
 		}
 	}
+
+	// Reserves a range of entries in the middle of the array, shifting elements as needed
+	void ReserveAt(unsigned int index, unsigned int amount)
+	{
+		Grow(amount);
+		memmove(&Array[index + amount], &Array[index], sizeof(T)*(Count - index - amount));
+		for (unsigned i = 0; i < amount; i++)
+		{
+			::new ((void *)&Array[index + i]) T();
+		}
+	}
+
 	void ShrinkToFit ()
 	{
 		if (Most > Count)
@@ -513,8 +536,9 @@ public:
 	}
 };
 
-// This is not a real dynamic array but just a wrapper around a pointer reference.
-// Used for wrapping some memory allocated elsewhere into a VM compatible data structure.
+// This is only used for exposing the sector's Lines array to ZScript.
+// This also must be trivial so that sector_t remains trivial.
+// For other uses TArrayView should be preferred.
 
 template <class T>
 class TStaticPointedArray
@@ -1332,3 +1356,125 @@ public:
 		memset(&bytes[0], 0, bytes.Size());
 	}
 };
+
+
+// A wrapper to externally stored data.
+// I would have expected something for this in the stl, but std::span is only in C++20.
+template <class T>
+class TArrayView
+{
+public:
+
+	typedef TIterator<T>                       iterator;
+	typedef TIterator<const T>                 const_iterator;
+
+	iterator begin()
+	{
+		return &Array[0];
+	}
+	const_iterator begin() const
+	{
+		return &Array[0];
+	}
+	const_iterator cbegin() const
+	{
+		return &Array[0];
+	}
+
+	iterator end()
+	{
+		return &Array[Count];
+	}
+	const_iterator end() const
+	{
+		return &Array[Count];
+	}
+	const_iterator cend() const
+	{
+		return &Array[Count];
+	}
+
+
+	////////
+	TArrayView() = default;	// intended to keep this type trivial.
+	TArrayView(T *data, unsigned count = 0)
+	{
+		Count = count;
+		Array = data;
+	}
+	TArrayView(const TArrayView<T> &other)
+	{
+		Count = other.Count;
+		Array = other.Array;
+	}
+	TArrayView<T> &operator= (const TArrayView<T> &other)
+	{
+		Count = other.Count;
+		Array = other.Array;
+		return *this;
+	}
+	// Check equality of two arrays
+	bool operator==(const TArrayView<T> &other) const
+	{
+		if (Count != other.Count)
+		{
+			return false;
+		}
+		for (unsigned int i = 0; i < Count; ++i)
+		{
+			if (Array[i] != other.Array[i])
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+	// Return a reference to an element
+	T &operator[] (size_t index) const
+	{
+		return Array[index];
+	}
+	// Returns a reference to the last element
+	T &Last() const
+	{
+		return Array[Count - 1];
+	}
+
+	// returns address of first element
+	T *Data() const
+	{
+		return &Array[0];
+	}
+
+	unsigned Size() const
+	{
+		return Count;
+	}
+
+	unsigned int Find(const T& item) const
+	{
+		unsigned int i;
+		for (i = 0; i < Count; ++i)
+		{
+			if (Array[i] == item)
+				break;
+		}
+		return i;
+	}
+
+	void Set(T *data, unsigned count)
+	{
+		Array = data;
+		Count = count;
+	}
+
+	void Clear()
+	{
+		Count = 0;
+		Array = nullptr;
+	}
+private:
+	T *Array;
+	unsigned int Count;
+};
+

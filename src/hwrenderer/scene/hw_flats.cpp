@@ -182,103 +182,109 @@ void GLFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &light
 
 void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 {
-	auto vcount = sector->ibocount;
-
 	if (level.HasDynamicLights && screen->BuffersArePersistent())
 	{
-		SetupLights(di, sector->lighthead, lightdata, sector->PortalGroup);
+		SetupLights(di, section->lighthead, lightdata, sector->PortalGroup);
 	}
 	state.SetLightIndex(dynlightindex);
-	if (vcount > 0 && !di->ClipLineShouldBeActive())
-	{
-		state.DrawIndexed(DT_Triangles, iboindex, vcount);
-		flatvertices += vcount;
-		flatprimitives++;
-	}
-	else
-	{
-		int index = iboindex;
-		bool applied = false;
-		for (int i = 0; i < sector->subsectorcount; i++)
-		{
-			subsector_t * sub = sector->subsectors[i];
-			if (sub->numlines <= 2) continue;
 
-			if (di->ss_renderflags[sub->Index()] & renderflags)
-			{
-				state.DrawIndexed(DT_Triangles, index, (sub->numlines - 2) * 3, !applied);
-				applied = true;
-				flatvertices += sub->numlines;
-				flatprimitives++;
-			}
-			index += (sub->numlines - 2) * 3;
-		}
-	}
 
-	if (!(renderflags&SSRF_RENDER3DPLANES))
-	{
-		// Draw the subsectors assigned to it due to missing textures
-		gl_subsectorrendernode * node = (renderflags&SSRF_RENDERFLOOR) ?
-			di->GetOtherFloorPlanes(sector->sectornum) :
-			di->GetOtherCeilingPlanes(sector->sectornum);
-
-		while (node)
-		{
-			state.SetLightIndex(node->lightindex);
-			auto num = node->sub->numlines;
-			flatvertices += num;
-			flatprimitives++;
-			state.Draw(DT_TriangleFan,node->vertexindex, num);
-			node = node->next;
-		}
-		// Flood gaps with the back side's ceiling/floor texture
-		// This requires a stencil because the projected plane interferes with
-		// the depth buffer
-		gl_floodrendernode * fnode = (renderflags&SSRF_RENDERFLOOR) ?
-			di->GetFloodFloorSegs(sector->sectornum) :
-			di->GetFloodCeilingSegs(sector->sectornum);
-
-		state.SetLightIndex(dynlightindex);
-		while (fnode)
-		{
-			flatvertices += 12;
-			flatprimitives += 3;
-
-			// Push bleeding floor/ceiling textures back a little in the z-buffer
-			// so they don't interfere with overlapping mid textures.
-			state.SetDepthBias(1, 128);
-
-			// Create stencil 
-			state.SetEffect(EFF_STENCIL);
-			state.EnableTexture(false);
-			state.SetStencil(0, SOP_Increment, SF_ColorMaskOff);
-			state.Draw(DT_TriangleFan,fnode->vertexindex, 4);
-
-			// Draw projected plane into stencil
-			state.EnableTexture(true);
-			state.SetEffect(EFF_NONE);
-			state.SetStencil(1, SOP_Keep, SF_DepthMaskOff);
-			state.EnableDepthTest(false);
-			state.Draw(DT_TriangleFan,fnode->vertexindex + 4, 4);
-
-			// clear stencil
-			state.SetEffect(EFF_STENCIL);
-			state.EnableTexture(false);
-			state.SetStencil(1, SOP_Decrement, SF_ColorMaskOff | SF_DepthMaskOff);
-			state.Draw(DT_TriangleFan,fnode->vertexindex, 4);
-
-			// restore old stencil op.
-			state.EnableTexture(true);
-			state.EnableDepthTest(true);
-			state.SetEffect(EFF_NONE);
-			state.SetDepthBias(0, 0);
-			state.SetStencil(0, SOP_Keep, SF_AllOn);
-
-			fnode = fnode->next;
-		}
-
-	}
+	state.DrawIndexed(DT_Triangles, iboindex + section->vertexindex, section->vertexcount);
+	flatvertices += section->vertexcount;
+	flatprimitives++;
 }
+
+
+//==========================================================================
+//
+// Drawer for render hacks
+//
+//==========================================================================
+
+void GLFlat::DrawOtherPlanes(HWDrawInfo *di, FRenderState &state)
+{
+    state.SetMaterial(gltexture, CLAMP_NONE, 0, -1);
+    
+    // Draw the subsectors assigned to it due to missing textures
+    auto pNode = (renderflags&SSRF_RENDERFLOOR) ?
+        di->otherFloorPlanes.CheckKey(sector->sectornum) : di->otherCeilingPlanes.CheckKey(sector->sectornum);
+    
+    if (!pNode) return;
+    auto node = *pNode;
+    
+    while (node)
+    {
+        state.SetLightIndex(node->lightindex);
+        auto num = node->sub->numlines;
+        flatvertices += num;
+        flatprimitives++;
+        state.Draw(DT_TriangleFan,node->vertexindex, num);
+        node = node->next;
+    }
+}
+
+//==========================================================================
+//
+// Drawer for render hacks
+//
+//==========================================================================
+
+void GLFlat::DrawFloodPlanes(HWDrawInfo *di, FRenderState &state)
+{
+	// Flood gaps with the back side's ceiling/floor texture
+	// This requires a stencil because the projected plane interferes with
+	// the depth buffer
+
+	state.SetMaterial(gltexture, CLAMP_NONE, 0, -1);
+
+	// Draw the subsectors assigned to it due to missing textures
+	auto pNode = (renderflags&SSRF_RENDERFLOOR) ?
+		di->floodFloorSegs.CheckKey(sector->sectornum) : di->floodCeilingSegs.CheckKey(sector->sectornum);
+	if (!pNode) return;
+
+	auto fnode = *pNode;
+
+	state.SetLightIndex(-1);
+	while (fnode)
+	{
+		flatvertices += 12;
+		flatprimitives += 3;
+
+		// Push bleeding floor/ceiling textures back a little in the z-buffer
+		// so they don't interfere with overlapping mid textures.
+		state.SetDepthBias(1, 128);
+
+		// Create stencil
+		state.SetEffect(EFF_STENCIL);
+		state.EnableTexture(false);
+		state.SetStencil(0, SOP_Increment, SF_ColorMaskOff);
+		state.Draw(DT_TriangleFan, fnode->vertexindex, 4);
+
+		// Draw projected plane into stencil
+		state.EnableTexture(true);
+		state.SetEffect(EFF_NONE);
+		state.SetStencil(1, SOP_Keep, SF_DepthMaskOff);
+		state.EnableDepthTest(false);
+		state.Draw(DT_TriangleFan, fnode->vertexindex + 4, 4);
+
+		// clear stencil
+		state.SetEffect(EFF_STENCIL);
+		state.EnableTexture(false);
+		state.SetStencil(1, SOP_Decrement, SF_ColorMaskOff | SF_DepthMaskOff);
+		state.Draw(DT_TriangleFan, fnode->vertexindex, 4);
+
+		// restore old stencil op.
+		state.EnableTexture(true);
+		state.EnableDepthTest(true);
+		state.SetEffect(EFF_NONE);
+		state.SetDepthBias(0, 0);
+		state.SetStencil(0, SOP_Keep, SF_AllOn);
+
+		fnode = fnode->next;
+	}
+
+}
+
 
 //==========================================================================
 //
@@ -300,10 +306,17 @@ void GLFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 
 	state.SetColor(lightlevel, rel, di->isFullbrightScene(), Colormap, alpha);
 	state.SetFog(lightlevel, rel, di->isFullbrightScene(), &Colormap, false);
-	if (!gltexture || !gltexture->tex->isFullbright())
-		state.SetObjectColor(FlatColor | 0xff000000);
+	state.SetObjectColor(FlatColor | 0xff000000);
 
-	if (!translucent)
+	if (hacktype & SSRF_PLANEHACK)
+	{
+		DrawOtherPlanes(di, state);
+	}
+	else if (hacktype & SSRF_FLOODHACK)
+	{
+		DrawFloodPlanes(di, state);
+	}
+	else if (!translucent)
 	{
 		if (sector->special != GLSector_Skybox)
 		{
@@ -312,7 +325,7 @@ void GLFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 			DrawSubsectors(di, state);
 			state.EnableTextureMatrix(false);
 		}
-		else
+		else if (!hacktype)
 		{
 			state.SetMaterial(gltexture, CLAMP_XY, 0, -1);
 			state.SetLightIndex(dynlightindex);
@@ -362,9 +375,9 @@ inline void GLFlat::PutFlat(HWDrawInfo *di, bool fog)
 	}
 	else if (!screen->BuffersArePersistent())
 	{
-		if (level.HasDynamicLights && gltexture != nullptr)
+		if (level.HasDynamicLights && gltexture != nullptr && !(hacktype & (SSRF_PLANEHACK|SSRF_FLOODHACK)) )
 		{
-			SetupLights(di, sector->lighthead, lightdata, sector->PortalGroup);
+			SetupLights(di, section->lighthead, lightdata, sector->PortalGroup);
 		}
 	}
 	di->AddFlat(this, fog);
@@ -373,8 +386,6 @@ inline void GLFlat::PutFlat(HWDrawInfo *di, bool fog)
 //==========================================================================
 //
 // This draws one flat 
-// The passed sector does not indicate the area which is rendered. 
-// It is only used as source for the plane data.
 // The whichplane boolean indicates if the flat is a floor(false) or a ceiling(true)
 //
 //==========================================================================
@@ -412,7 +423,7 @@ void GLFlat::Process(HWDrawInfo *di, sector_t * model, int whichplane, bool fog)
 		iboindex = vert.second;
 	}
 
-	
+	// For hacks this won't go into a render list.
 	PutFlat(di, fog);
 	rendered_flats++;
 }
@@ -456,7 +467,7 @@ void GLFlat::SetFrom3DFloor(F3DFloor *rover, bool top, bool underside)
 //
 //==========================================================================
 
-void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
+void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 {
 	lightlist_t * light;
 	FSectorPortal *port;
@@ -472,8 +483,10 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 	sector = &level.sectors[frontsector->sectornum];
 	extsector_t::xfloor &x = sector->e->XFloor;
 	dynlightindex = -1;
+    hacktype = (which & (SSRF_PLANEHACK|SSRF_FLOODHACK));
 
-	uint8_t &srf = di->sectorrenderflags[sector->sectornum];
+	uint8_t sink;
+	uint8_t &srf = hacktype? sink : di->section_renderflags[level.sections.SectionIndex(section)];
     const auto &vp = di->Viewpoint;
 
 	//
@@ -483,7 +496,7 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 	//
 	//
 	//
-	if (frontsector->floorplane.ZatPoint(vp.Pos) <= vp.Pos.Z)
+	if ((which & SSRF_RENDERFLOOR) && frontsector->floorplane.ZatPoint(vp.Pos) <= vp.Pos.Z)
 	{
 		// process the original floor first.
 
@@ -495,10 +508,12 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 		port = frontsector->ValidatePortal(sector_t::floor);
 		if ((stack = (port != NULL)))
 		{
+            /* to be redone in a less invasive manner
 			if (port->mType == PORTS_STACKEDSECTORTHING)
 			{
 				di->AddFloorStack(sector);	// stacked sector things require visplane merging.
 			}
+             */
 			alpha = frontsector->GetAlpha(sector_t::floor);
 		}
 		else
@@ -536,7 +551,7 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 	//
 	//
 	//
-	if (frontsector->ceilingplane.ZatPoint(vp.Pos) >= vp.Pos.Z)
+	if ((which & SSRF_RENDERCEILING) && frontsector->ceilingplane.ZatPoint(vp.Pos) >= vp.Pos.Z)
 	{
 		// process the original ceiling first.
 
@@ -548,10 +563,12 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 		port = frontsector->ValidatePortal(sector_t::ceiling);
 		if ((stack = (port != NULL)))
 		{
+            /* as above for floors
 			if (port->mType == PORTS_STACKEDSECTORTHING)
 			{
 				di->AddCeilingStack(sector);
 			}
+             */
 			alpha = frontsector->GetAlpha(sector_t::ceiling);
 		}
 		else
@@ -590,7 +607,7 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 	//
 
 	stack = false;
-	if (x.ffloors.Size())
+	if ((which & SSRF_RENDER3DPLANES) && x.ffloors.Size())
 	{
 		player_t * player = players[consoleplayer].camera->player;
 

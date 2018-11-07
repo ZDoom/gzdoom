@@ -160,6 +160,9 @@ bool P_LoadGLNodes(MapData * map);
 bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime);
 bool P_CheckForGLNodes();
 void P_SetRenderSector();
+void FixMinisegReferences();
+void FixHoles();
+void ReportUnpairedMinisegs();
 
 
 struct sidei_t	// [RH] Only keep BOOM sidedef init stuff around for init

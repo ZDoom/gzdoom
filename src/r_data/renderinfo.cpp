@@ -247,7 +247,7 @@ static void PrepareSectorData()
 
 	for (auto &sub : level.subsectors)
 	{
-		sub.sectorindex = (uint16_t)sub.render_sector->subsectorcount++;
+		sub.render_sector->subsectorcount++;
 	}
 
 	for (auto &sec : level.sectors) 
@@ -573,7 +573,244 @@ void InitRenderInfo()
 }
 
 
+//==========================================================================
+//
+// FixMinisegReferences
+//
+// Sometimes it can happen that two matching minisegs do not have their partner set.
+// Fix that here.
+//
+//==========================================================================
 
+void FixMinisegReferences()
+{
+	TArray<seg_t *> bogussegs;
+
+	for (unsigned i = 0; i < level.segs.Size(); i++)
+	{
+		if (level.segs[i].sidedef == nullptr && level.segs[i].PartnerSeg == nullptr)
+		{
+			bogussegs.Push(&level.segs[i]);
+		}
+	}
+
+	for (unsigned i = 0; i < bogussegs.Size(); i++)
+	{
+		auto seg1 = bogussegs[i];
+		seg_t *pick = nullptr;
+		unsigned int picki = -1;
+
+		// Try to fix the reference: If there's exactly one other seg in the set which matches as a partner link those two segs together.
+		for (unsigned j = i + 1; j < bogussegs.Size(); j++)
+		{
+			auto seg2 = bogussegs[j];
+			if (seg1->v1 == seg2->v2 && seg2->v1 == seg1->v2 && seg1->Subsector->render_sector == seg2->Subsector->render_sector)
+			{
+				pick = seg2;
+				picki = j;
+				break;
+			}
+		}
+		if (pick)
+		{
+			DPrintf(DMSG_NOTIFY, "Linking miniseg pair from (%2.3f, %2.3f) -> (%2.3f, %2.3f) in sector %d\n", pick->v2->fX(), pick->v2->fY(), pick->v1->fX(), pick->v1->fY(), pick->frontsector->Index());
+			pick->PartnerSeg = seg1;
+			seg1->PartnerSeg = pick;
+			assert(seg1->v1 == pick->v2 && pick->v1 == seg1->v2);
+			bogussegs.Delete(picki);
+			bogussegs.Delete(i);
+			i--;
+		}
+	}
+}
+
+//==========================================================================
+//
+// FixHoles
+//
+// ZDBSP can leave holes in the node tree on extremely detailed maps.
+// To help out the triangulator these are filled with dummy subsectors
+// so that it can process the area correctly.
+//
+//==========================================================================
+
+void FixHoles()
+{
+	TArray<seg_t *> bogussegs;
+	TArray<TArray<seg_t *>> segloops;
+
+	for (unsigned i = 0; i < level.segs.Size(); i++)
+	{
+		if (level.segs[i].sidedef == nullptr && level.segs[i].PartnerSeg == nullptr)
+		{
+			bogussegs.Push(&level.segs[i]);
+		}
+	}
+
+	while (bogussegs.Size() > 0)
+	{
+		segloops.Reserve(1);
+		auto *segloop = &segloops.Last();
+
+		seg_t *startseg;
+		seg_t *checkseg;
+		while (bogussegs.Size() > 0)
+		{
+			bool foundsome = false;
+			if (segloop->Size() == 0)
+			{
+				bogussegs.Pop(startseg);
+				segloop->Push(startseg);
+				checkseg = startseg;
+			}
+			for (unsigned i = 0; i < bogussegs.Size(); i++)
+			{
+				auto seg1 = bogussegs[i];
+
+				if (seg1->v1 == checkseg->v2 && seg1->Subsector->render_sector == checkseg->Subsector->render_sector)
+				{
+					foundsome = true;
+					segloop->Push(seg1);
+					bogussegs.Delete(i);
+					i--;
+					checkseg = seg1;
+
+					if (seg1->v2 == startseg->v1)
+					{
+						// The loop is complete. Start a new one
+						segloops.Reserve(1);
+						segloop = &segloops.Last();
+					}
+				}
+			}
+			if (!foundsome)
+			{
+				if ((*segloop)[0]->v1 != segloop->Last()->v2)
+				{
+					// There was no connected seg, leaving an unclosed loop. 
+					// Clear this and continue looking.
+					segloop->Clear();
+				}
+			}
+		}
+		for (unsigned i = 0; i < segloops.Size(); i++)
+		{
+			if (segloops[i].Size() == 0)
+			{
+				segloops.Delete(i);
+				i--;
+			}
+		}
+
+		// Add dummy entries to the level's seg and subsector arrays
+		if (segloops.Size() > 0)
+		{
+			// cound the number of segs to add.
+			unsigned segcount = 0;
+			for (auto &segloop : segloops)
+				segcount += segloop.Size();
+
+			seg_t *oldsegstartptr = &level.segs[0];
+			subsector_t *oldssstartptr = &level.subsectors[0];
+
+			unsigned newsegstart = level.segs.Reserve(segcount);
+			unsigned newssstart = level.subsectors.Reserve(segloops.Size());
+
+			seg_t *newsegstartptr = &level.segs[0];
+			subsector_t *newssstartptr = &level.subsectors[0];
+
+			// Now fix all references to these in the level data.
+			// Note that the Index() method does not work here due to the reallocation.
+			for (auto &seg : level.segs)
+			{
+				if (seg.PartnerSeg) seg.PartnerSeg = newsegstartptr + (seg.PartnerSeg - oldsegstartptr);
+				seg.Subsector = newssstartptr + (seg.Subsector - oldssstartptr);
+			}
+			for (auto &sub : level.subsectors)
+			{
+				sub.firstline = newsegstartptr + (sub.firstline - oldsegstartptr);
+			}
+			for (auto &node : level.nodes)
+			{
+				// How hideous... :(
+				for (auto & p : node.children)
+				{
+					auto intp = (intptr_t)p;
+					if (intp & 1)
+					{
+						subsector_t *sp = (subsector_t*)(intp - 1);
+						sp = newssstartptr + (sp - oldssstartptr);
+						intp = intptr_t(sp) + 1;
+						p = (void*)intp;
+					}
+				}
+			}
+			for (auto &segloop : segloops)
+			{
+				for (auto &seg : segloop)
+				{
+					seg = newsegstartptr + (seg - oldsegstartptr);
+				}
+			}
+
+			// The seg lists in the sidedefs and the subsector lists in the sectors are not set yet when this gets called.
+
+			// Add the new data. This doesn't care about convexity. It is never directly used to generate a primitive.
+			for (auto &segloop : segloops)
+			{
+				DPrintf(DMSG_NOTIFY, "Adding dummy subsector for sector %d\n", segloop[0]->Subsector->render_sector->Index());
+
+				subsector_t &sub = level.subsectors[newssstart++];
+				memset(&sub, 0, sizeof(sub));
+				sub.sector = segloop[0]->frontsector;
+				sub.render_sector = segloop[0]->Subsector->render_sector;
+				sub.numlines = segloop.Size();
+				sub.firstline = &level.segs[newsegstart];
+				sub.flags = SSECF_HOLE;
+
+				for (auto otherseg : segloop)
+				{
+					DPrintf(DMSG_NOTIFY, "   Adding seg from (%2.3f, %2.3f) -> (%2.3f, %2.3f)\n", otherseg->v2->fX(), otherseg->v2->fY(), otherseg->v1->fX(), otherseg->v1->fY());
+					seg_t &seg = level.segs[newsegstart++];
+					memset(&seg, 0, sizeof(seg));
+					seg.v1 = otherseg->v2;
+					seg.v2 = otherseg->v1;
+					seg.frontsector = seg.backsector = otherseg->backsector = otherseg->frontsector;
+					seg.PartnerSeg = otherseg;
+					otherseg->PartnerSeg = &seg;
+					seg.Subsector = &sub;
+				}
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
+// ReportUnpairedMinisegs
+//
+// Debug routine
+// reports all unpaired minisegs that couldn't be fixed by either 
+// explicitly pairing them or combining them to a dummy subsector
+//
+//==========================================================================
+
+void ReportUnpairedMinisegs()
+{
+	int bogus = 0;
+	for (unsigned i = 0; i < level.segs.Size(); i++)
+	{
+		if (level.segs[i].sidedef == nullptr && level.segs[i].PartnerSeg == nullptr)
+		{
+			Printf("Unpaired miniseg %d, sector %d, (%d: %2.6f, %2.6f) -> (%d: %2.6f, %2.6f)\n",
+				i, level.segs[i].Subsector->render_sector->Index(),
+				level.segs[i].v1->Index(), level.segs[i].v1->fX(), level.segs[i].v1->fY(),
+				level.segs[i].v2->Index(), level.segs[i].v2->fX(), level.segs[i].v2->fY());
+			bogus++;
+		}
+	}
+	if (bogus > 0) Printf("%d unpaired minisegs found\n", bogus);
+}
 //==========================================================================
 //
 //
@@ -593,4 +830,9 @@ CCMD(listmapsections)
 			}
 		}
 	}
+}
+
+CCMD(listbadminisegs)
+{
+	ReportUnpairedMinisegs();
 }

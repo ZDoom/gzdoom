@@ -10,15 +10,16 @@
 #include "p_maputl.h"
 #include "c_cvars.h"
 #include "serializer.h"
+#include "vm.h"
+#include "events.h"
 
 //==========================================================================
 //
 // [ZZ] Geometry damage logic callbacks
 //
 //==========================================================================
-void P_SetHealthGroupHealth(int group, int health)
+void P_SetHealthGroupHealth(FHealthGroup* grp, int health)
 {
-	FHealthGroup* grp = P_GetHealthGroup(group);
 	if (!grp) return;
 
 	grp->health = health;
@@ -33,14 +34,21 @@ void P_SetHealthGroupHealth(int group, int health)
 	for (unsigned i = 0; i < grp->sectors.Size(); i++)
 	{
 		sector_t* lsector = grp->sectors[i];
-		if (lsector->healthceilinggroup == group)
+		if (lsector->healthceilinggroup == grp->id)
 			lsector->healthceiling = health;
-		if (lsector->healthfloorgroup == group)
+		if (lsector->healthfloorgroup == grp->id)
 			lsector->healthfloor = health;
+		if (lsector->health3dgroup == grp->id)
+			lsector->health3d = health;
 	}
 }
 
-void P_DamageHealthGroup(FHealthGroup* grp, void* object, AActor* source, int damage, FName damagetype, int side, int part, DVector3 position)
+void P_SetHealthGroupHealth(int id, int health)
+{
+	P_SetHealthGroupHealth(P_GetHealthGroup(id), health);
+}
+
+void P_DamageHealthGroup(FHealthGroup* grp, void* object, AActor* source, int damage, FName damagetype, int side, int part, DVector3 position, bool isradius)
 {
 	if (!grp) return;
 	int group = grp->id;
@@ -52,7 +60,7 @@ void P_DamageHealthGroup(FHealthGroup* grp, void* object, AActor* source, int da
 		if (lline == object)
 			continue;
 		lline->health = grp->health + damage;
-		P_DamageLinedef(lline, source, damage, damagetype, side, position, false);
+		P_DamageLinedef(lline, source, damage, damagetype, side, position, isradius, false);
 	}
 	//
 	for (unsigned i = 0; i < grp->sectors.Size(); i++)
@@ -62,19 +70,35 @@ void P_DamageHealthGroup(FHealthGroup* grp, void* object, AActor* source, int da
 		if (lsector->healthceilinggroup == group && (lsector != object || part != SECPART_Ceiling))
 		{
 			lsector->healthceiling = grp->health + damage;
-			P_DamageSector(lsector, source, damage, damagetype, SECPART_Ceiling, position, false);
+			P_DamageSector(lsector, source, damage, damagetype, SECPART_Ceiling, position, isradius, false);
 		}
 		
 		if (lsector->healthfloorgroup == group && (lsector != object || part != SECPART_Floor))
 		{
 			lsector->healthfloor = grp->health + damage;
-			P_DamageSector(lsector, source, damage, damagetype, SECPART_Floor, position, false);
+			P_DamageSector(lsector, source, damage, damagetype, SECPART_Floor, position, isradius, false);
+		}
+
+		if (lsector->health3dgroup == group && (lsector != object || part != SECPART_3D))
+		{
+			lsector->health3d = grp->health + damage;
+			P_DamageSector(lsector, source, damage, damagetype, SECPART_3D, position, isradius, false);
 		}
 	}
 }
 
-void P_DamageLinedef(line_t* line, AActor* source, int damage, FName damagetype, int side, DVector3 position, bool dogroups)
+void P_DamageLinedef(line_t* line, AActor* source, int damage, FName damagetype, int side, DVector3 position, bool isradius, bool dogroups)
 {
+	if (damage < 0) damage = 0;
+
+	if (dogroups)
+	{
+		damage = E_WorldLineDamaged(line, source, damage, damagetype, side, position, isradius);
+		if (damage < 0) damage = 0;
+	}
+
+	if (!damage) return;
+
 	line->health -= damage;
 	if (line->health < 0) line->health = 0;
 
@@ -92,24 +116,58 @@ void P_DamageLinedef(line_t* line, AActor* source, int damage, FName damagetype,
 		FHealthGroup* grp = P_GetHealthGroup(line->healthgroup);
 		if (grp)
 			grp->health = line->health;
-		P_DamageHealthGroup(grp, line, source, damage, damagetype, side, -1, position);
+		P_DamageHealthGroup(grp, line, source, damage, damagetype, side, -1, position, isradius);
 	}
 
 	//Printf("P_DamageLinedef: %d damage (type=%s, source=%p), new health = %d\n", damage, damagetype.GetChars(), source, line->health);
 }
 
-void P_DamageSector(sector_t* sector, AActor* source, int damage, FName damagetype, int part, DVector3 position, bool dogroups)
+void P_DamageSector(sector_t* sector, AActor* source, int damage, FName damagetype, int part, DVector3 position, bool isradius, bool dogroups)
 {
-	int sectorhealth = (part == SECPART_Ceiling) ? sector->healthceiling : sector->healthfloor;
-	int newhealth = sectorhealth - damage;
+	if (damage < 0) damage = 0;
+
+	if (dogroups)
+	{
+		damage = E_WorldSectorDamaged(sector, source, damage, damagetype, part, position, isradius);
+		if (damage < 0) damage = 0;
+	}
+
+	if (!damage) return;
+
+	int* sectorhealth;
+	int group;
+	int dmg;
+	int dth;
+	switch (part)
+	{
+	case SECPART_Ceiling:
+		sectorhealth = &sector->healthceiling;
+		group = sector->healthceilinggroup;
+		dmg = SECSPAC_DamageCeiling;
+		dth = SECSPAC_DeathCeiling;
+		break;
+	case SECPART_Floor:
+		sectorhealth = &sector->healthfloor;
+		group = sector->healthfloorgroup;
+		dmg = SECSPAC_DamageFloor;
+		dth = SECSPAC_DeathFloor;
+		break;
+	case SECPART_3D:
+		sectorhealth = &sector->health3d;
+		group = sector->health3dgroup;
+		dmg = SECSPAC_Damage3D;
+		dth = SECSPAC_Death3D;
+		break;
+	default:
+		return;
+	}
+
+	int newhealth = *sectorhealth - damage;
 	if (newhealth < 0) newhealth = 0;
-	if (part == SECPART_Ceiling)
-		sector->healthceiling = newhealth;
-	else sector->healthfloor = newhealth;
+	
+	*sectorhealth = newhealth;
 
 	// callbacks here
-	int dmg = (part == SECPART_Ceiling) ? SECSPAC_DamageCeiling : SECSPAC_DamageFloor;
-	int dth = (part == SECPART_Ceiling) ? SECSPAC_DeathCeiling : SECSPAC_DeathFloor;
 	if (sector->SecActTarget)
 	{
 		sector->TriggerSectorActions(source, dmg);
@@ -117,13 +175,12 @@ void P_DamageSector(sector_t* sector, AActor* source, int damage, FName damagety
 			sector->TriggerSectorActions(source, dth);
 	}
 
-	int group = (part == SECPART_Ceiling) ? sector->healthceilinggroup : sector->healthfloorgroup;
 	if (dogroups && group)
 	{
 		FHealthGroup* grp = P_GetHealthGroup(group);
 		if (grp)
 			grp->health = newhealth;
-		P_DamageHealthGroup(grp, sector, source, damage, damagetype, 0, part, position);
+		P_DamageHealthGroup(grp, sector, source, damage, damagetype, 0, part, position, isradius);
 	}
 
 	//Printf("P_DamageSector: %d damage (type=%s, position=%s, source=%p), new health = %d\n", damage, damagetype.GetChars(), (part == SECPART_Ceiling) ? "ceiling" : "floor", source, newhealth);
@@ -222,6 +279,14 @@ void P_GeometryLineAttack(FTraceResults& trace, AActor* thing, int damage, FName
 {
 	// [ZZ] hitscan geometry damage logic
 	//      
+
+	// check 3d floor, but still allow the wall to take generic damage
+	if (trace.HitType == TRACE_HitWall && trace.Tier == TIER_FFloor)
+	{
+		if (trace.ffloor && trace.ffloor->model && trace.ffloor->model->health3d)
+			P_DamageSector(trace.ffloor->model, thing, damage, damageType, SECPART_3D, trace.HitPos, false, true);
+	}
+	
 	if (trace.HitType == TRACE_HitWall && P_CheckLinedefVulnerable(trace.Line, trace.Side))
 	{
 		if (trace.Tier == TIER_Lower || trace.Tier == TIER_Upper) // process back sector health if any
@@ -234,18 +299,45 @@ void P_GeometryLineAttack(FTraceResults& trace, AActor* thing, int damage, FName
 				sectorhealth = backsector->healthceiling;
 			if (sectorhealth > 0)
 			{
-				P_DamageSector(backsector, thing, damage, damageType, (trace.Tier == TIER_Upper) ? SECPART_Ceiling : SECPART_Floor, trace.HitPos);
+				P_DamageSector(backsector, thing, damage, damageType, (trace.Tier == TIER_Upper) ? SECPART_Ceiling : SECPART_Floor, trace.HitPos, false, true);
 			}
 		}
 		// always process linedef health if any
 		if (trace.Line->health > 0)
 		{
-			P_DamageLinedef(trace.Line, thing, damage, damageType, trace.Side, trace.HitPos);
+			P_DamageLinedef(trace.Line, thing, damage, damageType, trace.Side, trace.HitPos, false, true);
 		}
 		// fake floors are not handled
 	}
 	else if (trace.HitType == TRACE_HitFloor || trace.HitType == TRACE_HitCeiling)
 	{
+		// check for 3d floors. if a 3d floor was hit, it'll block any interaction with the sector planes at the same point, if present.
+		// i.e. if there are 3d floors at the same height as the sector's real floor/ceiling, and they blocked the shot, then it won't damage.
+		bool hit3dfloors = false;
+		sector_t* sector = trace.Sector;
+		for (auto f : sector->e->XFloor.ffloors)
+		{
+			if (!(f->flags & FF_EXISTS)) continue;
+			if (!(f->flags & FF_SOLID) || (f->flags & FF_SHOOTTHROUGH)) continue;
+
+			if (!f->model) continue;
+			if (trace.HitType == TRACE_HitFloor && fabs(f->top.plane->ZatPoint(trace.HitPos.XY())-trace.HitPos.Z) <= EQUAL_EPSILON)
+			{
+				if (f->model->health3d)
+					P_DamageSector(f->model, thing, damage, damageType, SECPART_3D, trace.HitPos, false, true);
+				hit3dfloors = true;
+			}
+			else if (trace.HitType == TRACE_HitCeiling && fabs(f->bottom.plane->ZatPoint(trace.HitPos.XY())-trace.HitPos.Z) <= EQUAL_EPSILON)
+			{
+				if (f->model->health3d)
+					P_DamageSector(f->model, thing, damage, damageType, SECPART_3D, trace.HitPos, false, true);
+				hit3dfloors = true;
+			}
+		}
+
+		if (hit3dfloors)
+			return;
+
 		int sectorhealth = 0;
 		if (trace.HitType == TRACE_HitFloor && trace.Sector->healthfloor > 0 && P_CheckSectorVulnerable(trace.Sector, SECPART_Floor))
 			sectorhealth = trace.Sector->healthfloor;
@@ -253,7 +345,7 @@ void P_GeometryLineAttack(FTraceResults& trace, AActor* thing, int damage, FName
 			sectorhealth = trace.Sector->healthceiling;
 		if (sectorhealth > 0)
 		{
-			P_DamageSector(trace.Sector, thing, damage, damageType, (trace.HitType == TRACE_HitCeiling) ? SECPART_Ceiling : SECPART_Floor, trace.HitPos);
+			P_DamageSector(trace.Sector, thing, damage, damageType, (trace.HitType == TRACE_HitCeiling) ? SECPART_Ceiling : SECPART_Floor, trace.HitPos, false, true);
 		}
 	}
 }
@@ -290,16 +382,23 @@ static DVector2 PGRA_ClosestPointOnLine2D(DVector2 x, DVector2 p1, DVector2 p2)
 	return p1 + p2p1.Unit() * r;
 }
 
-static void PGRA_InsertIfCloser(TMap<int, pgra_data_t>& damageGroupPos, int group, DVector3 pt, DVector3 check, sector_t* checksector, sector_t* sector, line_t* line, int secpart)
+static bool PGRA_CheckExplosionBlocked(DVector3 pt, DVector3 check, sector_t* checksector)
 {
 	// simple solid geometry sight check between "check" and "pt"
 	// expected - Trace hits nothing
+	check.Z += EQUAL_EPSILON; // this is so that floor under the rocket doesn't block explosion
 	DVector3 ptVec = (pt - check);
 	double ptDst = ptVec.Length() - 0.5;
 	ptVec.MakeUnit();
 	FTraceResults res;
-	bool isblocked = Trace(check, checksector, ptVec, ptDst, 0, 0xFFFFFFFF, nullptr, res);
-	if (isblocked) return;
+	bool isblocked = Trace(check, checksector, ptVec, ptDst, 0, ML_BLOCKEVERYTHING, nullptr, res);
+	return isblocked;
+}
+
+static void PGRA_InsertIfCloser(TMap<int, pgra_data_t>& damageGroupPos, int group, DVector3 pt, DVector3 check, sector_t* checksector, sector_t* sector, line_t* line, int secpart)
+{
+	if (PGRA_CheckExplosionBlocked(pt, check, checksector))
+		return;
 
 	pgra_data_t* existing = damageGroupPos.CheckKey(group);
 	// not present or distance is closer
@@ -337,7 +436,7 @@ void P_GeometryRadiusAttack(AActor* bombspot, AActor* bombsource, int bombdamage
 		DVector3 spotTo = bombspot->Pos() - srcsector->ceilingplane.Normal() * dstceiling;
 		int grp = srcsector->healthceilinggroup;
 		if (grp <= 0)
-			grp = 0x80000000 | (srcsector->sectornum & 0x7FFFFFFF);
+			grp = 0x80000000 | (srcsector->sectornum & 0x0FFFFFFF);
 		PGRA_InsertIfCloser(damageGroupPos, grp, spotTo, bombspot->Pos(), srcsector, srcsector, nullptr, SECPART_Ceiling);
 	}
 
@@ -347,12 +446,48 @@ void P_GeometryRadiusAttack(AActor* bombspot, AActor* bombsource, int bombdamage
 		DVector3 spotTo = bombspot->Pos() - srcsector->floorplane.Normal() * dstfloor;
 		int grp = srcsector->healthfloorgroup;
 		if (grp <= 0)
-			grp = 0x40000000 | (srcsector->sectornum & 0x7FFFFFFF);
+			grp = 0x40000000 | (srcsector->sectornum & 0x0FFFFFFF);
 		PGRA_InsertIfCloser(damageGroupPos, grp, spotTo, bombspot->Pos(), srcsector, srcsector, nullptr, SECPART_Floor);
 	}
 
+	for (auto f : srcsector->e->XFloor.ffloors)
+	{
+		if (!(f->flags & FF_EXISTS)) continue;
+		if (!(f->flags & FF_SOLID)) continue;
+
+		if (!f->model || !f->model->health3d) continue;
+
+		double ff_top = f->top.plane->ZatPoint(bombspot->Pos());
+		double ff_bottom = f->bottom.plane->ZatPoint(bombspot->Pos());
+		if (ff_top < ff_bottom) // ignore eldritch geometry
+			continue;
+
+		int grp = f->model->health3dgroup;
+		if (grp <= 0)
+			grp = 0x20000000 | (f->model->sectornum & 0x0FFFFFFF);
+
+		DVector3 spotTo;
+		
+		if (bombspot->Z() < ff_bottom) // use bottom plane
+		{
+			double dst = f->bottom.plane->Normal() | (bombspot->Pos() + f->bottom.plane->Normal()*f->bottom.plane->D);
+			spotTo = bombspot->Pos() - f->bottom.plane->Normal() * dst;
+		}
+		else if (bombspot->Z() > ff_top) // use top plane
+		{
+			double dst = f->top.plane->Normal() | (bombspot->Pos() + f->top.plane->Normal()*f->top.plane->D);
+			spotTo = bombspot->Pos() - f->top.plane->Normal() * dst;
+		}
+		else // explosion right inside the floor. do 100% damage
+		{
+			spotTo = bombspot->Pos();
+		}
+
+		PGRA_InsertIfCloser(damageGroupPos, grp, spotTo, bombspot->Pos(), srcsector, f->model, nullptr, SECPART_3D);
+	}
+
 	// enumerate all lines around
-	FBoundingBox bombbox(bombspot->X(), bombspot->Y(), bombdistance * 16);
+	FBoundingBox bombbox(bombspot->X(), bombspot->Y(), bombdistance);
 	FBlockLinesIterator it(bombbox);
 	line_t* ln;
 	int vc = validcount;
@@ -370,7 +505,7 @@ void P_GeometryRadiusAttack(AActor* bombspot, AActor* bombsource, int bombdamage
 		sector_t* sector = side->sector;
 		side_t* otherside = ln->sidedef[!sd];
 		sector_t* othersector = otherside ? otherside->sector : nullptr;
-		if (!ln->health && (!othersector || (!othersector->healthfloor && !othersector->healthceiling)))
+		if (!ln->health && (!othersector || (!othersector->healthfloor && !othersector->healthceiling && !othersector->e->XFloor.ffloors.Size())))
 			continue; // non-interactive geometry
 
 		DVector2 to2d = PGRA_ClosestPointOnLine2D(bombspot->Pos().XY(), side->V1()->p, side->V2()->p);
@@ -378,13 +513,15 @@ void P_GeometryRadiusAttack(AActor* bombspot, AActor* bombsource, int bombdamage
 		double distto2d = (to2d - pos2d).Length();
 		double z_top1, z_top2, z_bottom1, z_bottom2; // here, z_top1 is closest to the ceiling, and z_bottom1 is closest to the floor.
 		z_top1 = sector->ceilingplane.ZatPoint(to2d);
+		z_top2 = othersector ? othersector->ceilingplane.ZatPoint(to2d) : z_top1;
 		z_bottom1 = sector->floorplane.ZatPoint(to2d);
+		z_bottom2 = othersector ? othersector->floorplane.ZatPoint(to2d) : z_bottom1;
 		DVector3 to3d_fullheight(to2d.X, to2d.Y, clamp(bombspot->Z(), z_bottom1, z_top1));
 
 		if (ln->health && P_CheckLinedefVulnerable(ln, sd))
 		{
 			bool cantdamage = false;
-			bool linefullheight = othersector && !!(ln->flags & (ML_BLOCKEVERYTHING));
+			bool linefullheight = !othersector || !!(ln->flags & (ML_BLOCKEVERYTHING));
 			// decide specific position to affect on a line.
 			if (!linefullheight)
 			{
@@ -410,7 +547,7 @@ void P_GeometryRadiusAttack(AActor* bombspot, AActor* bombsource, int bombdamage
 				{
 					PGRA_InsertIfCloser(damageGroupPos, ln->healthgroup, to3d_fullheight, bombspot->Pos(), srcsector, nullptr, ln, -1);
 				}
-				else
+				else if (!PGRA_CheckExplosionBlocked(to3d_fullheight, bombspot->Pos(), srcsector))
 				{
 					// otherwise just damage line
 					double dst = (to3d_fullheight - bombspot->Pos()).Length();
@@ -422,36 +559,59 @@ void P_GeometryRadiusAttack(AActor* bombspot, AActor* bombsource, int bombdamage
 						if (bombsource == bombspot)
 							damage = (int)(damage * splashfactor);
 					}
-					P_DamageLinedef(ln, bombsource, damage, damagetype, sd, to3d_fullheight);
+					P_DamageLinedef(ln, bombsource, damage, damagetype, sd, to3d_fullheight, true, true);
 				}
 			}
 		}
 
 		if (othersector && othersector->healthceiling && P_CheckLinedefVulnerable(ln, sd, SECPART_Ceiling))
 		{
-			z_top2 = othersector->ceilingplane.ZatPoint(to2d);
 			if (z_top2 < z_top1) // we have front side to hit against
 			{
 				DVector3 to3d_upper(to2d.X, to2d.Y, clamp(bombspot->Z(), z_top2, z_top1));
 				int grp = othersector->healthceilinggroup;
 				if (grp <= 0)
-					grp = 0x80000000 | (othersector->sectornum & 0x7FFFFFFF);
+					grp = 0x80000000 | (othersector->sectornum & 0x0FFFFFFF);
 				PGRA_InsertIfCloser(damageGroupPos, grp, to3d_upper, bombspot->Pos(), srcsector, othersector, nullptr, SECPART_Ceiling);
 			}
 		}
 
 		if (othersector && othersector->healthfloor && P_CheckLinedefVulnerable(ln, sd, SECPART_Floor))
 		{
-			z_bottom2 = othersector->floorplane.ZatPoint(to2d);
 			if (z_bottom2 > z_bottom1) // we have front side to hit against
 			{
 				DVector3 to3d_lower(to2d.X, to2d.Y, clamp(bombspot->Z(), z_bottom1, z_bottom2));
 				int grp = othersector->healthfloorgroup;
 				if (grp <= 0)
-					grp = 0x40000000 | (othersector->sectornum & 0x7FFFFFFF);
+					grp = 0x40000000 | (othersector->sectornum & 0x0FFFFFFF);
 				PGRA_InsertIfCloser(damageGroupPos, grp, to3d_lower, bombspot->Pos(), srcsector, othersector, nullptr, SECPART_Floor);
 			}
 		}
+
+		// check 3d floors
+		if (othersector)
+		{
+			for (auto f : othersector->e->XFloor.ffloors)
+			{
+				if (!(f->flags & FF_EXISTS)) continue;
+				if (!(f->flags & FF_SOLID)) continue;
+
+				if (!f->model || !f->model->health3d) continue;
+
+				// 3d floors over real ceiling, or under real floor, are ignored
+				double z_ff_top = clamp(f->top.plane->ZatPoint(to2d), z_bottom2, z_top2);
+				double z_ff_bottom = clamp(f->bottom.plane->ZatPoint(to2d), z_bottom2, z_top2);
+				if (z_ff_top < z_ff_bottom)
+					continue; // also ignore eldritch geometry
+
+				DVector3 to3d_ffloor(to2d.X, to2d.Y, clamp(bombspot->Z(), z_ff_bottom, z_ff_top));
+				int grp = f->model->health3dgroup;
+				if (grp <= 0)
+					grp = 0x20000000 | (f->model->sectornum & 0x0FFFFFFF);
+				PGRA_InsertIfCloser(damageGroupPos, grp, to3d_ffloor, bombspot->Pos(), srcsector, f->model, nullptr, SECPART_3D);
+			}
+		}
+
 	}
 
 	// damage health groups and sectors.
@@ -480,21 +640,122 @@ void P_GeometryRadiusAttack(AActor* bombspot, AActor* bombsource, int bombdamage
 		if (grp & 0x80000000) // sector ceiling
 		{
 			assert(damageGroupPair->Value.sector != nullptr);
-			P_DamageSector(damageGroupPair->Value.sector, bombsource, damage, damagetype, SECPART_Ceiling, pos);
+			P_DamageSector(damageGroupPair->Value.sector, bombsource, damage, damagetype, SECPART_Ceiling, pos, true, true);
 		}
 		else if (grp & 0x40000000) // sector floor
 		{
 			assert(damageGroupPair->Value.sector != nullptr);
-			P_DamageSector(damageGroupPair->Value.sector, bombsource, damage, damagetype, SECPART_Floor, pos);
+			P_DamageSector(damageGroupPair->Value.sector, bombsource, damage, damagetype, SECPART_Floor, pos, true, true);
+		}
+		else if (grp & 0x20000000) // sector 3d
+		{
+			assert(damageGroupPair->Value.sector != nullptr);
+			P_DamageSector(damageGroupPair->Value.sector, bombsource, damage, damagetype, SECPART_3D, pos, true, true);
 		}
 		else
 		{
 			assert((damageGroupPair->Value.sector != nullptr) != (damageGroupPair->Value.line != nullptr));
 			if (damageGroupPair->Value.line != nullptr)
-				P_DamageLinedef(damageGroupPair->Value.line, bombsource, damage, damagetype, P_PointOnLineSide(pos.XY(), damageGroupPair->Value.line), pos);
-			else P_DamageSector(damageGroupPair->Value.sector, bombsource, damage, damagetype, damageGroupPair->Value.secpart, pos);
+				P_DamageLinedef(damageGroupPair->Value.line, bombsource, damage, damagetype, P_PointOnLineSide(pos.XY(), damageGroupPair->Value.line), pos, true, true);
+			else P_DamageSector(damageGroupPair->Value.sector, bombsource, damage, damagetype, damageGroupPair->Value.secpart, pos, true, true);
 		}
 	}
+}
+
+//==========================================================================
+//
+// P_ProjectileHitLinedef
+//
+// Called if P_ExplodeMissile was called against a wall.
+//==========================================================================
+
+bool P_ProjectileHitLinedef(AActor* mo, line_t* line)
+{
+	bool washit = false;
+	// detect 3d floor hit
+	if (mo->Blocking3DFloor)
+	{
+		if (mo->Blocking3DFloor->health3d > 0)
+		{
+			P_DamageSector(mo->Blocking3DFloor, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_3D, mo->Pos(), false, true);
+			washit = true;
+		}
+	}
+
+	int wside = P_PointOnLineSide(mo->Pos(), line);
+	int oside = !wside;
+	side_t* otherside = line->sidedef[oside];
+	// check if hit upper or lower part
+	if (otherside)
+	{
+		sector_t* othersector = otherside->sector;
+		// find closest pos from line to MO.
+		// this logic is so that steep slopes work correctly (value at the line is used, instead of value below the rocket actor)
+		DVector2 moRelPos = line->v1->p - mo->Pos().XY();
+		DVector2 lineNormal = line->delta.Rotated90CW().Unit();
+		double moRelDst = lineNormal | moRelPos;
+		DVector2 moPos = mo->Pos().XY() - lineNormal*fabs(moRelDst);
+
+		double otherfloorz = othersector->floorplane.ZatPoint(moPos);
+		double otherceilingz = othersector->ceilingplane.ZatPoint(moPos);
+		double zbottom = mo->Pos().Z;
+		double ztop = mo->Pos().Z + mo->Height;
+		if (zbottom < (otherfloorz + EQUAL_EPSILON) && othersector->healthfloor > 0 && P_CheckLinedefVulnerable(line, wside, SECPART_Floor))
+		{
+			P_DamageSector(othersector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Floor, mo->Pos(), false, true);
+			washit = true;
+		}
+		if (ztop > (otherceilingz - EQUAL_EPSILON) && othersector->healthceiling > 0 && P_CheckLinedefVulnerable(line, wside, SECPART_Ceiling))
+		{
+			P_DamageSector(othersector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Ceiling, mo->Pos(), false, true);
+			washit = true;
+		}
+	}
+
+	if (line->health > 0 && P_CheckLinedefVulnerable(line, wside))
+	{
+		P_DamageLinedef(line, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, wside, mo->Pos(), false, true);
+		washit = true;
+	}
+
+	return washit;
+}
+
+// part = -1 means "detect from blocking"
+bool P_ProjectileHitPlane(AActor* mo, int part)
+{
+	if (part < 0)
+	{
+		if (mo->BlockingCeiling)
+			part = SECPART_Ceiling;
+		else if (mo->BlockingFloor)
+			part = SECPART_Floor;
+	}
+
+	// detect 3d floor hit
+	if (mo->Blocking3DFloor)
+	{
+		if (mo->Blocking3DFloor->health3d > 0)
+		{
+			P_DamageSector(mo->Blocking3DFloor, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_3D, mo->Pos(), false, true);
+			return true;
+		}
+		
+		return false;
+	}
+
+	if (part == SECPART_Floor && mo->Sector->healthfloor > 0 && P_CheckSectorVulnerable(mo->Sector, SECPART_Floor))
+	{
+		P_DamageSector(mo->Sector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Floor, mo->Pos(), false, true);
+		return true;
+	}
+	else if (part == SECPART_Ceiling && mo->Sector->healthceiling > 0 && P_CheckSectorVulnerable(mo->Sector, SECPART_Ceiling))
+	{
+		P_DamageSector(mo->Sector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Ceiling, mo->Pos(), false, true);
+		return true;
+	}
+
+	return false;
 }
 
 //==========================================================================
@@ -525,6 +786,8 @@ bool P_CheckLinedefVulnerable(line_t* line, int side, int sectorpart)
 
 bool P_CheckSectorVulnerable(sector_t* sector, int part)
 {
+	if (part == SECPART_3D)
+		return true;
 	FTextureID texture = sector->GetTexture((part == SECPART_Ceiling) ? sector_t::ceiling : sector_t::floor);
 	secplane_t* plane = (part == SECPART_Ceiling) ? &sector->ceilingplane : &sector->floorplane;
 	if (texture == skyflatnum)
@@ -577,4 +840,206 @@ void P_SerializeHealthGroups(FSerializer& arc)
 
 		arc.EndArray();
 	}
+}
+
+// ===================== zscript interface =====================
+// 
+// =============================================================
+
+DEFINE_FIELD_X(HealthGroup, FHealthGroup, id)
+DEFINE_FIELD_X(HealthGroup, FHealthGroup, health)
+DEFINE_FIELD_X(HealthGroup, FHealthGroup, sectors)
+DEFINE_FIELD_X(HealthGroup, FHealthGroup, lines)
+
+DEFINE_ACTION_FUNCTION(FHealthGroup, Find)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(id);
+	FHealthGroup* grp = P_GetHealthGroup(id);
+	ACTION_RETURN_POINTER(grp);
+}
+
+DEFINE_ACTION_FUNCTION(FHealthGroup, SetHealth)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FHealthGroup);
+	PARAM_INT(health);
+	P_SetHealthGroupHealth(self, health);
+	return 0;
+}
+
+// genuine hack. this essentially causes the engine to register a struct called Destructible, and enables use of DEFINE_ACTION_FUNCTION
+struct FDestructible { void* none; };
+DEFINE_FIELD_X(Destructible, FDestructible, none);
+
+DEFINE_ACTION_FUNCTION(FDestructible, DamageSector)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(sec, sector_t);
+	PARAM_OBJECT(source, AActor);
+	PARAM_INT(damage);
+	PARAM_NAME(damagetype);
+	PARAM_INT(part);
+	PARAM_FLOAT(position_x);
+	PARAM_FLOAT(position_y);
+	PARAM_FLOAT(position_z);
+	PARAM_BOOL(isradius);
+	P_DamageSector(sec, source, damage, damagetype, part, DVector3(position_x, position_y, position_z), isradius, true);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FDestructible, DamageLinedef)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(def, line_t);
+	PARAM_OBJECT(source, AActor);
+	PARAM_INT(damage);
+	PARAM_NAME(damagetype);
+	PARAM_INT(side);
+	PARAM_FLOAT(position_x);
+	PARAM_FLOAT(position_y);
+	PARAM_FLOAT(position_z);
+	PARAM_BOOL(isradius);
+	P_DamageLinedef(def, source, damage, damagetype, side, DVector3(position_x, position_y, position_z), isradius, true);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FDestructible, GeometryLineAttack)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(trace, FTraceResults);
+	PARAM_OBJECT(thing, AActor);
+	PARAM_INT(damage);
+	PARAM_NAME(damagetype);
+	P_GeometryLineAttack(*trace, thing, damage, damagetype);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FDestructible, GeometryRadiusAttack)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(bombspot, AActor);
+	PARAM_OBJECT(bombsource, AActor);
+	PARAM_INT(bombdamage);
+	PARAM_INT(bombdistance);
+	PARAM_NAME(damagetype);
+	PARAM_INT(fulldamagedistance);
+	P_GeometryRadiusAttack(bombspot, bombsource, bombdamage, bombdistance, damagetype, fulldamagedistance);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FDestructible, ProjectileHitLinedef)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(projectile, AActor);
+	PARAM_POINTER(def, line_t);
+	ACTION_RETURN_BOOL(P_ProjectileHitLinedef(projectile, def));
+}
+
+DEFINE_ACTION_FUNCTION(FDestructible, ProjectileHitPlane)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(projectile, AActor);
+	PARAM_INT(part);
+	ACTION_RETURN_BOOL(P_ProjectileHitPlane(projectile, part));
+}
+
+DEFINE_ACTION_FUNCTION(FDestructible, CheckLinedefVulnerable)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(def, line_t);
+	PARAM_INT(side);
+	PARAM_INT(part);
+	ACTION_RETURN_BOOL(P_CheckLinedefVulnerable(def, side, part));
+}
+
+DEFINE_ACTION_FUNCTION(FDestructible, CheckSectorVulnerable)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(sec, sector_t);
+	PARAM_INT(part);
+	ACTION_RETURN_BOOL(P_CheckSectorVulnerable(sec, part));
+}
+
+DEFINE_ACTION_FUNCTION(_Line, GetHealth)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	if (self->healthgroup)
+	{
+		FHealthGroup* grp = P_GetHealthGroup(self->healthgroup);
+		if (grp) ACTION_RETURN_INT(grp->health);
+	}
+
+	ACTION_RETURN_INT(self->health);
+}
+
+DEFINE_ACTION_FUNCTION(_Line, SetHealth)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	PARAM_INT(newhealth);
+
+	if (newhealth < 0)
+		newhealth = 0;
+
+	self->health = newhealth;
+	if (self->healthgroup)
+	{
+		FHealthGroup* grp = P_GetHealthGroup(self->healthgroup);
+		if (grp) P_SetHealthGroupHealth(grp, newhealth);
+	}
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, GetHealth)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(part);
+
+	FHealthGroup* grp;
+	switch (part)
+	{
+	case SECPART_Floor:
+		ACTION_RETURN_INT((self->healthfloorgroup && (grp = P_GetHealthGroup(self->healthfloorgroup))) ? grp->health : self->healthfloor);
+	case SECPART_Ceiling:
+		ACTION_RETURN_INT((self->healthceilinggroup && (grp = P_GetHealthGroup(self->healthceilinggroup))) ? grp->health : self->healthceiling);
+	case SECPART_3D:
+		ACTION_RETURN_INT((self->health3dgroup && (grp = P_GetHealthGroup(self->health3dgroup))) ? grp->health : self->health3d);
+	default:
+		ACTION_RETURN_INT(0);
+	}
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, SetHealth)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(part);
+	PARAM_INT(newhealth);
+
+	if (newhealth < 0)
+		newhealth = 0;
+
+	int group;
+	int* health;
+	switch (part)
+	{
+	case SECPART_Floor:
+		group = self->healthfloorgroup;
+		health = &self->healthfloor;
+		break;
+	case SECPART_Ceiling:
+		group = self->healthceilinggroup;
+		health = &self->healthceiling;
+		break;
+	case SECPART_3D:
+		group = self->health3dgroup;
+		health = &self->health3d;
+		break;
+	default:
+		return 0;
+	}
+
+	FHealthGroup* grp = group ? P_GetHealthGroup(group) : nullptr;
+	*health = newhealth;
+	if (grp) P_SetHealthGroupHealth(grp, newhealth);
+	return 0;
 }

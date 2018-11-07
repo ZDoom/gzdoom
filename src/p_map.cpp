@@ -1071,6 +1071,8 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 				tm.ceilingpic = open.ceilingpic;
 				tm.ceilingline = ld;
 				tm.thing->BlockingLine = ld;
+				if (open.topffloor)
+					tm.thing->Blocking3DFloor = open.topffloor->model;
 			}
 		}
 
@@ -1086,6 +1088,8 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 				tm.touchmidtex = open.touchmidtex;
 				tm.abovemidtex = open.abovemidtex;
 				tm.thing->BlockingLine = ld;
+				if (open.bottomffloor)
+					tm.thing->Blocking3DFloor = open.bottomffloor->model;
 			}
 			else if (open.bottom == tm.floorz)
 			{
@@ -3548,6 +3552,18 @@ bool FSlide::BounceWall(AActor *mo)
 		return true;
 	}
 
+	// [ZZ] if bouncing missile hits a damageable linedef, it dies
+	if (P_ProjectileHitLinedef(mo, line) && mo->bouncecount > 0)
+	{
+		mo->Vel.Zero();
+		mo->Speed = 0;
+		mo->bouncecount = 0;
+		if (mo->flags & MF_MISSILE)
+			P_ExplodeMissile(mo, line, nullptr);
+		else mo->CallDie(nullptr, nullptr);
+		return true;
+	}
+
 	// The amount of bounces is limited
 	if (mo->bouncecount>0 && --mo->bouncecount == 0)
 	{
@@ -4623,9 +4639,13 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 		damageType = puffDefaults->DamageType;
 	}
 
-	int tflags;
-	if (nointeract || (puffDefaults && puffDefaults->flags6 & MF6_NOTRIGGER)) tflags = TRACE_NoSky;
-	else tflags = TRACE_NoSky | TRACE_Impact;
+	uint32_t tflags = TRACE_NoSky | TRACE_Impact;
+	if (nointeract || (puffDefaults && puffDefaults->flags6 & MF6_NOTRIGGER)) tflags &= ~TRACE_Impact;
+	if (spawnSky)
+	{
+		tflags &= ~TRACE_NoSky;
+		tflags |= TRACE_HitSky;
+	}
 
 	// [MC] Check the flags and set the position according to what is desired.
 	// LAF_ABSPOSITION: Treat the offset parameters as direct coordinates.
@@ -4683,7 +4703,15 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	{
 		if (trace.HitType != TRACE_HitActor)
 		{
+
+			if (trace.HitType == TRACE_HasHitSky || (trace.HitType == TRACE_HitWall
+				&& trace.Line->special == Line_Horizon && spawnSky))
+			{
+				puffFlags |= PF_HITSKY;
+			}
+
 			P_GeometryLineAttack(trace, t1, damage, damageType);
+
 
 			// position a bit closer for puffs
 			if (nointeract || trace.HitType != TRACE_HitWall || ((trace.Line->special != Line_Horizon) || spawnSky))

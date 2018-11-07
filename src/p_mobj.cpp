@@ -296,6 +296,7 @@ DEFINE_FIELD(AActor, lastbump)
 DEFINE_FIELD(AActor, DesignatedTeam)
 DEFINE_FIELD(AActor, BlockingMobj)
 DEFINE_FIELD(AActor, BlockingLine)
+DEFINE_FIELD(AActor, Blocking3DFloor)
 DEFINE_FIELD(AActor, BlockingCeiling)
 DEFINE_FIELD(AActor, BlockingFloor)
 DEFINE_FIELD(AActor, PoisonDamage)
@@ -348,6 +349,7 @@ DEFINE_FIELD(AActor, BloodTranslation)
 DEFINE_FIELD(AActor, RenderHidden)
 DEFINE_FIELD(AActor, RenderRequired)
 DEFINE_FIELD(AActor, friendlyseeblocks)
+DEFINE_FIELD(AActor, SpawnTime)
 
 //==========================================================================
 //
@@ -480,6 +482,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("smokecounter", smokecounter)
 		("blockingmobj", BlockingMobj)
 		A("blockingline", BlockingLine)
+		A("blocking3dfloor", Blocking3DFloor)
 		A("blockingceiling", BlockingCeiling)
 		A("blockingfloor", BlockingFloor)
 		A("visibletoteam", VisibleToTeam)
@@ -528,8 +531,9 @@ void AActor::Serialize(FSerializer &arc)
 		A("selfdamagefactor", SelfDamageFactor)
 		A("stealthalpha", StealthAlpha)
 		A("renderhidden", RenderHidden)
-		A("renderrequired", RenderRequired);
-		A("friendlyseeblocks", friendlyseeblocks);
+		A("renderrequired", RenderRequired)
+		A("friendlyseeblocks", friendlyseeblocks)
+		A("spawntime", SpawnTime);
 }
 
 #undef A
@@ -1945,26 +1949,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target, bool onsky)
 	// [ZZ] line damage callback
 	if (line)
 	{
-		int wside = P_PointOnLineSide(mo->Pos(), line);
-		int oside = !wside;
-		side_t* otherside = line->sidedef[oside];
-		// check if hit upper or lower part
-		if (otherside)
-		{
-			sector_t* othersector = otherside->sector;
-			double otherfloorz = othersector->floorplane.ZatPoint(mo->Pos());
-			double otherceilingz = othersector->ceilingplane.ZatPoint(mo->Pos());
-			double actualz = mo->Pos().Z;
-			if (actualz < otherfloorz && othersector->healthfloor > 0 && P_CheckLinedefVulnerable(line, wside, SECPART_Floor))
-				P_DamageSector(othersector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Floor, mo->Pos());
-			if (actualz > otherceilingz && othersector->healthceiling > 0 && P_CheckLinedefVulnerable(line, wside, SECPART_Ceiling))
-				P_DamageSector(othersector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Ceiling, mo->Pos());
-		}
-		
-		if (line->health > 0 && P_CheckLinedefVulnerable(line, wside))
-		{
-			P_DamageLinedef(line, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, wside, mo->Pos());
-		}
+		P_ProjectileHitLinedef(mo, line);
 	}
 
 	if (mo->flags3 & MF3_EXPLOCOUNT)
@@ -2142,6 +2127,18 @@ void AActor::PlayBounceSound(bool onfloor)
 
 bool AActor::FloorBounceMissile (secplane_t &plane)
 {
+	// [ZZ] if bouncing missile hits a damageable sector(plane), it dies
+	if (P_ProjectileHitPlane(this, -1) && bouncecount > 0)
+	{
+		Vel.Zero();
+		Speed = 0;
+		bouncecount = 0;
+		if (flags & MF_MISSILE)
+			P_ExplodeMissile(this, nullptr, nullptr);
+		else CallDie(nullptr, nullptr);
+		return true;
+	}
+
 	if (Z() <= floorz && P_HitFloor (this))
 	{
 		// Landed in some sort of liquid
@@ -2759,13 +2756,11 @@ explode:
 				}
 				if (mo->BlockingCeiling) // hit floor or ceiling while XY movement
 				{
-					if (mo->BlockingCeiling->healthceiling > 0 && P_CheckSectorVulnerable(mo->BlockingCeiling, SECPART_Ceiling))
-						P_DamageSector(mo->BlockingCeiling, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Ceiling, mo->Pos());
+					P_ProjectileHitPlane(mo, SECPART_Ceiling);
 				}
 				if (mo->BlockingFloor)
 				{
-					if (mo->BlockingFloor->healthfloor > 0 && P_CheckSectorVulnerable(mo->BlockingFloor, SECPART_Floor))
-						P_DamageSector(mo->BlockingFloor, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Floor, mo->Pos());
+					P_ProjectileHitPlane(mo, SECPART_Floor);
 				}
 				P_ExplodeMissile (mo, mo->BlockingLine, BlockingMobj, onsky);
 				return Oldfloorz;
@@ -3161,8 +3156,7 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 					}
 					P_HitFloor (mo);
 					// hit floor: direct damage callback
-					if (mo->Sector->healthfloor > 0 && P_CheckSectorVulnerable(mo->Sector, SECPART_Floor))
-						P_DamageSector(mo->Sector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Floor, mo->Pos());
+					P_ProjectileHitPlane(mo, SECPART_Floor);
 					P_ExplodeMissile (mo, NULL, NULL, onsky);
 					return;
 				}
@@ -3268,8 +3262,7 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 					else onsky = true;
 				}
 				// hit ceiling: direct damage callback
-				if (mo->Sector->healthceiling > 0 && P_CheckSectorVulnerable(mo->Sector, SECPART_Ceiling))
-					P_DamageSector(mo->Sector, mo, mo->GetMissileDamage((mo->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1), mo->DamageType, SECPART_Ceiling, mo->Pos());
+				P_ProjectileHitPlane(mo, SECPART_Ceiling);
 				P_ExplodeMissile (mo, NULL, NULL, onsky);
 				return;
 			}
@@ -4519,6 +4512,7 @@ void AActor::Tick ()
 		BlockingMobj = nullptr;
 		sector_t* oldBlockingCeiling = BlockingCeiling;
 		sector_t* oldBlockingFloor = BlockingFloor;
+		Blocking3DFloor = nullptr;
 		BlockingFloor = nullptr;
 		BlockingCeiling = nullptr;
 		double oldfloorz = P_XYMovement (this, cumm);
@@ -5006,6 +5000,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 	AActor *actor;
 	
 	actor = static_cast<AActor *>(const_cast<PClassActor *>(type)->CreateNew ());
+	actor->SpawnTime = level.totaltime;
 
 	// Set default dialogue
 	actor->ConversationRoot = GetConversation(actor->GetClass()->TypeName);
@@ -6245,7 +6240,11 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, const DVector3 &pos1
 	// it will enter the crash state. This is used by the StrifeSpark
 	// and BlasterPuff.
 	FState *crashstate;
-	if (!(flags & PF_HITTHING) && (crashstate = puff->FindState(NAME_Crash)) != NULL)
+	if ((flags & PF_HITSKY) && (crashstate = puff->FindState(NAME_Death, NAME_Sky, true)) != NULL)
+	{
+		puff->SetState (crashstate);
+	}
+	else if (!(flags & PF_HITTHING) && (crashstate = puff->FindState(NAME_Crash)) != NULL)
 	{
 		puff->SetState (crashstate);
 	}
@@ -8059,6 +8058,43 @@ void AActor::SetTranslation(FName trname)
 	// silently ignore if the name does not exist, this would create some insane message spam otherwise.
 }
 
+//==========================================================================
+//
+// AActor :: GetLevelSpawnTime
+//
+// Returns the time when this actor was spawned, 
+// relative to the current level.
+//
+//==========================================================================
+int AActor::GetLevelSpawnTime() const
+{
+	return SpawnTime - level.totaltime + level.time;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetLevelSpawnTime)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_INT(self->GetLevelSpawnTime());
+}
+
+//==========================================================================
+//
+// AActor :: GetAge
+//
+// Returns the number of ticks passed since this actor was spawned.
+//
+//==========================================================================
+int AActor::GetAge() const
+{
+	return level.totaltime - SpawnTime;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetAge)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_INT(self->GetAge());
+}
+
 //---------------------------------------------------------------------------
 //
 // PROP A_RestoreSpecialPosition
@@ -8583,5 +8619,8 @@ void PrintMiscActorInfo(AActor *query)
 		Printf("FriendlySeeBlocks: %d\n", query->friendlyseeblocks);
 		Printf("Target: %s\n", query->target ? query->target->GetClass()->TypeName.GetChars() : "-");
 		Printf("Last enemy: %s\n", query->lastenemy ? query->lastenemy->GetClass()->TypeName.GetChars() : "-");
+		Printf("Spawn time: %d ticks (%f seconds) after game start, %d ticks (%f seconds) after level start\n", 
+			query->SpawnTime, (double) query->SpawnTime / TICRATE,
+			query->GetLevelSpawnTime(), (double) query->GetLevelSpawnTime() / TICRATE);
 	}
 }

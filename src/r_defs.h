@@ -51,6 +51,7 @@ struct FLinePortal;
 struct seg_t;
 struct sector_t;
 class AActor;
+struct FSection;
 struct LightmapSurface;
 
 #define MAXWIDTH 12000
@@ -282,6 +283,8 @@ enum
 	SECSPAC_DamageCeiling=1<<12,	// Trigger when ceiling is damaged
 	SECSPAC_DeathFloor	= 1<<13,	// Trigger when floor has 0 hp
 	SECSPAC_DeathCeiling= 1<<14,	// Trigger when ceiling has 0 hp
+	SECSPAC_Damage3D	= 1<<15,	// Trigger when controlled 3d floor is damaged
+	SECSPAC_Death3D		= 1<<16		// Trigger when controlled 3d floor has 0 hp
 };
 
 struct secplane_t
@@ -1029,7 +1032,6 @@ public:
 
 	// killough 3/7/98: support flat heights drawn at another sector's heights
 	sector_t *heightsec;		// other sector, or NULL if no other sector
-	FLightNode *				lighthead;
 
 	uint32_t bottommap, midmap, topmap;	// killough 4/4/98: dynamic colormaps
 										// [RH] these can also be blend values if
@@ -1101,8 +1103,10 @@ public:
 	//      default is 0, which means no special behavior
 	int				healthfloor;
 	int				healthceiling;
+	int				health3d;
 	int				healthfloorgroup;
 	int				healthceilinggroup;
+	int				health3dgroup;
 
 };
 
@@ -1441,6 +1445,7 @@ enum
 	SSECF_DEGENERATE = 1,
 	SSECMF_DRAWN = 2,
 	SSECF_POLYORG = 4,
+	SSECF_HOLE = 8,
 };
 
 struct FPortalCoverage
@@ -1458,14 +1463,13 @@ struct subsector_t
 	FMiniBSP	*BSP;
 	seg_t		*firstline;
 	sector_t	*render_sector;
+	FSection	*section;
 	uint32_t	numlines;
 	uint16_t	flags;
-	uint16_t	sectorindex;
+	short		mapsection;
 
 	// subsector related GL data
-	FLightNode *	lighthead;	// Light nodes (blended and additive)
 	int				validcount;
-	short			mapsection;
 	char			hacked;			// 1: is part of a render hack
 
 	void BuildPolyBSP();

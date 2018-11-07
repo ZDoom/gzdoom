@@ -565,7 +565,7 @@ public:
 			// Don't use iterators here. These arrays are modified inside.
 			for (unsigned j = 0; j < build.Size(); j++)
 			{
-				auto &current = build[j];
+				auto current = build[j];
 				for (int i = 0; i < (int)workingSet.Size(); i++)
 				{
 					// Are both sections close together?

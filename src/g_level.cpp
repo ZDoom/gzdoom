@@ -1588,6 +1588,43 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, IsFreelookAllowed)
 	ACTION_RETURN_BOOL(self->IsFreelookAllowed());
 }
 
+//==========================================================================
+//
+// Finds the lightmap light contribution for the cell at (x,y,z)
+// Used by dynamic objects
+//
+//==========================================================================
+
+FVector3 FLevelLocals::GetCellLight(float x, float y, float z) const
+{
+	if (LMGrid.Size() == 0)
+		return { 0.0f, 0.0f, 0.0f }; // No lightmap loaded
+
+	int worldBlockSize = LM_BLOCK_SIZE * LM_CELL_SIZE;
+	int worldGridX = LMGridX * worldBlockSize;
+	int worldGridY = LMGridY * worldBlockSize;
+
+	int xx = (int)x - worldGridX;
+	int yy = (int)y - worldGridY;
+	if (xx < 0 || yy < 0)
+		return { 0.0f, 0.0f, 0.0f }; // Out of bounds
+
+	int bx = xx / worldBlockSize;
+	int by = yy / worldBlockSize;
+	if (bx >= LMGridWidth || by >= LMGridHeight)
+		return { 0.0f, 0.0f, 0.0f }; // Out of bounds
+
+	const LightmapCellBlock &block = LMGrid[bx + by * LMGridWidth];
+	if (block.Layers == 0)
+		return { 0.0f, 0.0f, 0.0f }; // Grid block is empty
+
+	int cx = (xx % worldBlockSize) / LM_CELL_SIZE;
+	int cy = (yy % worldBlockSize) / LM_CELL_SIZE;
+	int cz = clamp(static_cast<int>((z - block.Z) / LM_CELL_SIZE + 0.5f), 0, block.Layers - 1);
+
+	FVector3 *cells = block.FirstCell + cz * LM_BLOCK_SIZE * LM_BLOCK_SIZE;
+	return cells[cx + cy * LM_BLOCK_SIZE];
+}
 
 //==========================================================================
 //

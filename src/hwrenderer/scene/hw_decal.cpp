@@ -49,13 +49,18 @@ void GLDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 	auto tex = gltexture;
 
 	// calculate dynamic light effect.
-	if (level.HasDynamicLights && !di->isFullbrightScene() && gl_light_sprites)
+	if (!di->isFullbrightScene() && ((level.HasDynamicLights && gl_light_sprites) || level.HasLightmaps))
 	{
 		// Note: This should be replaced with proper shader based lighting.
 		double x, y;
-		float out[3];
+		float out[3] = { 0.0f, 0.0f, 0.0f };
 		decal->GetXY(decal->Side, x, y);
-		di->GetDynSpriteLight(nullptr, x, y, zcenter, decal->Side->lighthead, decal->Side->sector->PortalGroup, out);
+
+		if (level.HasDynamicLights && gl_light_sprites)
+			di->GetDynSpriteLight(nullptr, x, y, zcenter, decal->Side->lighthead, decal->Side->sector->PortalGroup, out);
+
+		di->GetCellSpriteLight(x, y, zcenter, out);
+
 		state.SetDynLight(out[0], out[1], out[2]);
 	}
 

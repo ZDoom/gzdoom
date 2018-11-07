@@ -4356,6 +4356,8 @@ void P_SetSideLightmap(const LightmapSurface &surface)
 
 void P_LoadLightmap(MapData *map)
 {
+	level.HasLightmaps = false;
+
 	if (!map->Size(ML_LIGHTMAP))
 		return;
 
@@ -4371,12 +4373,40 @@ void P_LoadLightmap(MapData *map)
 	uint16_t numTextures = fr.ReadUInt16();
 	uint32_t numSurfaces = fr.ReadUInt32();
 	uint32_t numTexCoords = fr.ReadUInt32();
+	int16_t gridX = fr.ReadInt16();
+	int16_t gridY = fr.ReadInt16();
+	uint16_t gridWidth = fr.ReadUInt16();
+	uint16_t gridHeight = fr.ReadUInt16();
+	uint32_t numCells = fr.ReadUInt32();
 	uint32_t numTexBytes = numTextures * textureSize * textureSize * 3 * 2;
 
-	if (numSurfaces == 0 || numTexCoords == 0 || numTexBytes == 0)
+	if (numSurfaces == 0 || numTexCoords == 0 || numTexBytes == 0 || numCells == 0 || gridWidth == 0 || gridHeight == 0)
 		return;
 
 	level.LMTexCoords.Resize(numTexCoords * 2);
+	level.LMGrid.Resize(static_cast<unsigned int>(gridWidth) * gridHeight);
+	level.LMCells.Resize(numCells);
+	level.LMGridX = gridX;
+	level.LMGridY = gridY;
+	level.LMGridWidth = gridWidth;
+	level.LMGridHeight = gridHeight;
+
+	// Load light cell grid blocks
+
+	int cellOffset = 0;
+	for (unsigned int i = 0; i < level.LMGrid.Size(); i++)
+	{
+		auto &block = level.LMGrid[i];
+		block.Z = fr.ReadInt16() * (float)LM_CELL_SIZE;
+		block.Layers = fr.ReadUInt16();
+		block.FirstCell = &level.LMCells[cellOffset];
+		cellOffset += block.Layers * LM_BLOCK_SIZE * LM_BLOCK_SIZE;
+	}
+
+	// Load light cells
+
+	static_assert(sizeof(float) * 3 == sizeof(FVector3), "FVector has an unexpected size - class not a standard layout?");
+	fr.Read(&level.LMCells[0], numCells * sizeof(FVector3));
 
 	// Allocate room for all surfaces
 
@@ -4463,6 +4493,8 @@ void P_LoadLightmap(MapData *map)
 	for (uint32_t i = 1; i < numTexBytes; i++)
 		data[i] += data[i - 1];
 #endif
+
+	level.HasLightmaps = true;
 }
 
 //

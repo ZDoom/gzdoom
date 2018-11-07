@@ -1539,6 +1539,19 @@ struct LightmapSurface
 	float *TexCoords;
 };
 
+enum
+{
+	LM_BLOCK_SIZE = 16,
+	LM_CELL_SIZE = 64
+};
+
+struct LightmapCellBlock
+{
+	float Z;
+	int Layers;
+	FVector3 *FirstCell;
+};
+
 //
 // OTHER TYPES
 //

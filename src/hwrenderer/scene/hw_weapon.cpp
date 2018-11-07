@@ -549,6 +549,10 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 			}
 		}
 
+		if (hudsprite.RenderStyle.BlendOp != STYLEOP_Shadow)
+			GetCellSpriteLight(playermo, nullptr, hudsprite.dynrgb);
+
+
 		// [BB] In the HUD model step we just render the model and break out. 
 		if (hudModelStep)
 		{

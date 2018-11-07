@@ -316,6 +316,9 @@ public:
 	void GetDynSpriteLight(AActor *self, float x, float y, float z, FLightNode *node, int portalgroup, float *out);
 	void GetDynSpriteLight(AActor *thing, particle_t *particle, float *out);
 
+	void GetCellSpriteLight(float x, float y, float z, float *out);
+	void GetCellSpriteLight(AActor *thing, particle_t *particle, float *out);
+
 	void PreparePlayerSprites(sector_t * viewsector, area_t in_area);
 	void PrepareTargeterSprites();
 

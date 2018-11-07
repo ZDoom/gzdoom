@@ -142,12 +142,19 @@ void GLSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 	}
 	if (RenderStyle.BlendOp != STYLEOP_Shadow)
 	{
-		if (level.HasDynamicLights && !di->isFullbrightScene() && !fullbright)
+		if (!di->isFullbrightScene() && ((level.HasDynamicLights && !fullbright) || level.HasLightmaps))
 		{
-			if (dynlightindex == -1)	// only set if we got no light buffer index. This covers all cases where sprite lighting is used.
+			if (level.HasDynamicLights && !fullbright && dynlightindex == -1)	// only set if we got no light buffer index. This covers all cases where sprite lighting is used.
 			{
 				float out[3];
 				di->GetDynSpriteLight(gl_light_sprites ? actor : nullptr, gl_light_particles ? particle : nullptr, out);
+				di->GetCellSpriteLight(gl_light_sprites ? actor : nullptr, gl_light_particles ? particle : nullptr, out);
+				state.SetDynLight(out[0], out[1], out[2]);
+			}
+			else if (level.HasLightmaps)
+			{
+				float out[3] = { 0.0f, 0.0f, 0.0f };
+				di->GetCellSpriteLight(gl_light_sprites ? actor : nullptr, gl_light_particles ? particle : nullptr, out);
 				state.SetDynLight(out[0], out[1], out[2]);
 			}
 		}

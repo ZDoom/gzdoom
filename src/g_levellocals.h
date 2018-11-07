@@ -89,11 +89,21 @@ struct FLevelLocals
 	TArray<FLinePortal> linePortals;
 
 	// Lightmaps
+	bool HasLightmaps = false;
 	TArray<LightmapSurface> LMSurfaces;
 	TArray<float> LMTexCoords;
 	int LMTextureCount = 0;
 	int LMTextureSize = 0;
 	TArray<uint8_t> LMTextureData;
+	int LMGridX = 0;
+	int LMGridY = 0;
+	int LMGridWidth = 0;
+	int LMGridHeight = 0;
+	TArray<LightmapCellBlock> LMGrid;
+	TArray<FVector3> LMCells;
+
+	FVector3 GetCellLight(const FVector3 &p) const { return GetCellLight(p.X, p.Y, p.Z); }
+	FVector3 GetCellLight(float x, float y, float z) const;
 
 	// Portal information.
 	FDisplacementTable Displacements;

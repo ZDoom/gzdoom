@@ -139,6 +139,26 @@ void HWDrawInfo::GetDynSpriteLight(AActor *thing, particle_t *particle, float *o
 	}
 }
 
+void HWDrawInfo::GetCellSpriteLight(float x, float y, float z, float *out)
+{
+	FVector3 cell = level.GetCellLight(x, y, z);
+	out[0] += cell.X;
+	out[1] += cell.Y;
+	out[2] += cell.Z;
+}
+
+void HWDrawInfo::GetCellSpriteLight(AActor *thing, particle_t *particle, float *out)
+{
+	if (thing != NULL)
+	{
+		GetCellSpriteLight((float)thing->X(), (float)thing->Y(), (float)thing->Center(), out);
+	}
+	else if (particle != NULL)
+	{
+		GetCellSpriteLight((float)particle->Pos.X, (float)particle->Pos.Y, (float)particle->Pos.Z, out);
+	}
+}
+
 // static so that we build up a reserve (memory allocations stop)
 // For multithread processing each worker thread needs its own copy, though.
 static thread_local TArray<ADynamicLight*> addedLightsArray; 

@@ -323,7 +323,7 @@ extend class Actor
 			A_PlaySound(AttackSound, CHAN_WEAPON);
 			A_FaceTarget();
 			double slope = AimLineAttack(angle, MISSILERANGE);
-			double ang = angle + Random2[SPosAttack]() * (22.5/256);
+			double ang = angle + Random2[CPosAttack]() * (22.5/256);
 			int damage = Random[CPosAttack](1, 5) * 3;
 			LineAttack(ang, MISSILERANGE, slope, damage, "Hitscan", "Bulletpuff");
 		}

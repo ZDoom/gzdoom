@@ -2025,8 +2025,7 @@ bool IsPointInMap(DVector3 p)
 		
 		divline_t dline;
 		P_MakeDivline(seg->linedef, &dline);
-		int res = P_PointOnDivlineSide(p.XY(), &dline);
-		bool pol = (res < 1);
+		bool pol = (P_PointOnDivlineSide(p.XY(), &dline) < 1);
 		if (!pol) return false;
 	}
 

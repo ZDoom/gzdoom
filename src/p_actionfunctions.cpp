@@ -4566,11 +4566,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseSelf)
 
 //===========================================================================
 //
-// A_RaiseActor
+// RaiseActor
 //
 // Generalized version that allows passing pointers for ZScript's sake.
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_RaiseActor)
+DEFINE_ACTION_FUNCTION(AActor, RaiseActor)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT(other, AActor);

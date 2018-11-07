@@ -85,6 +85,7 @@
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "i_time.h"
+#include "nodebuild.h"
 
 void STAT_StartNewGame(const char *lev);
 void STAT_ChangeLevel(const char *newl);
@@ -2004,9 +2005,50 @@ void FLevelLocals::SetMusicVolume(float f)
 }
 
 //==========================================================================
+// IsPointInMap
 //
-//
+// Checks to see if a point is inside the void or not.
+// Made by dpJudas, modified and implemented by Major Cooke
 //==========================================================================
+
+
+bool IsPointInMap(DVector3 p)
+{
+	subsector_t *subsector = R_PointInSubsector(FLOAT2FIXED(p.X), FLOAT2FIXED(p.Y));
+	if (!subsector) return false;
+
+	for (uint32_t i = 0; i < subsector->numlines; i++)
+	{
+		// Skip single sided lines.
+		seg_t *seg = subsector->firstline + i;
+		if (seg->backsector != nullptr)	continue;
+		
+		int sx = (int)seg->v1->fX();
+		int sy = (int)seg->v1->fY();
+		int dx = (int)seg->v2->fX() - sx;
+		int dy = (int)seg->v2->fY() - sy;
+		int res = FNodeBuilder::PointOnSide(sx, sy, (int)p.X, (int)p.Y, dx, dy);
+		bool pointOnSide = (res > 0);
+		if (!pointOnSide) return false;
+	}
+
+	double ceilingZ = subsector->sector->ceilingplane.ZatPoint(p.X, p.Y);
+	if (p.Z > ceilingZ) return false;
+
+	double floorZ = subsector->sector->floorplane.ZatPoint(p.X, p.Y);
+	if (p.Z < floorZ) return false;
+
+	return true;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, IsPointInMap)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	ACTION_RETURN_BOOL(IsPointInMap(DVector3(x,y,z)));
+}
 
 template <typename T>
 inline T VecDiff(const T& v1, const T& v2)

@@ -670,6 +670,8 @@ struct LevelLocals native
 	native bool IsCrouchingAllowed() const;
 	native bool IsFreelookAllowed() const;
 
+	native static clearscope bool IsPointInMap(vector3 p);
+
 	native static clearscope vector2 Vec2Diff(vector2 v1, vector2 v2);
 	native static clearscope vector3 Vec3Diff(vector3 v1, vector3 v2);
 	native static clearscope vector3 SphericalCoords(vector3 viewpoint, vector3 targetPos, vector2 viewAngles = (0, 0), bool absolute = false);	

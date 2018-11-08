@@ -175,7 +175,7 @@ void MapLoader::LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
         ss->SetXScale(sector_t::ceiling, 1.);
         ss->SetYScale(sector_t::ceiling, 1.);
         
-        ss->heightsec = NULL;    // sector used to get floor and ceiling height
+        ss->heightsec = nullptr;    // sector used to get floor and ceiling height
         // killough 3/7/98: end changes
         
         ss->gravity = 1.f;    // [RH] Default sector gravity of 1.0
@@ -329,7 +329,7 @@ void MapLoader::SetLineID (int i, line_t *ld)
 
 void MapLoader::SaveLineSpecial (line_t *ld)
 {
-    if (ld->sidedef[0] == NULL)
+    if (ld->sidedef[0] == nullptr)
         return;
     
     uint32_t sidenum = ld->sidedef[0]->Index();
@@ -356,13 +356,13 @@ void MapLoader::FinishLoadingLineDef(line_t *ld, int alpha)
 {
     bool additive = false;
     
-    ld->frontsector = ld->sidedef[0] != NULL ? ld->sidedef[0]->sector : NULL;
-    ld->backsector  = ld->sidedef[1] != NULL ? ld->sidedef[1]->sector : NULL;
+    ld->frontsector = ld->sidedef[0] != nullptr ? ld->sidedef[0]->sector : nullptr;
+    ld->backsector  = ld->sidedef[1] != nullptr ? ld->sidedef[1]->sector : nullptr;
     double dx = (ld->v2->fX() - ld->v1->fX());
     double dy = (ld->v2->fY() - ld->v1->fY());
     int linenum = ld->Index();
     
-    if (ld->frontsector == NULL)
+    if (ld->frontsector == nullptr)
     {
         Printf ("Line %d has no front sector\n", linemap[linenum]);
     }
@@ -370,13 +370,13 @@ void MapLoader::FinishLoadingLineDef(line_t *ld, int alpha)
     // [RH] Set some new sidedef properties
     int len = (int)(g_sqrt (dx*dx + dy*dy) + 0.5f);
     
-    if (ld->sidedef[0] != NULL)
+    if (ld->sidedef[0] != nullptr)
     {
         ld->sidedef[0]->linedef = ld;
         ld->sidedef[0]->TexelLength = len;
         
     }
-    if (ld->sidedef[1] != NULL)
+    if (ld->sidedef[1] != nullptr)
     {
         ld->sidedef[1]->linedef = ld;
         ld->sidedef[1]->TexelLength = len;
@@ -449,7 +449,7 @@ void MapLoader::SetSideNum (side_t **sidenum_p, uint16_t sidenum)
 {
     if (sidenum == NO_INDEX)
     {
-        *sidenum_p = NULL;
+        *sidenum_p = nullptr;
     }
     else if (sidecount < (int)sides.Size())
     {
@@ -756,7 +756,7 @@ void MapLoader::LoopSidedefs (bool firstloop)
         {
             const side_t* const rightside = line->sidedef[!sidetemp[i].b.lineside];
             
-            if (NULL == rightside)
+            if (nullptr == rightside)
             {
                 // There is no right side!
                 if (firstloop) Printf ("Line %d's right edge is unconnected\n", linemap[line->Index()]);
@@ -992,9 +992,9 @@ void MapLoader::SetTextureNoErr (side_t *side, int position, uint32_t *color, co
                 
                 int factor = l==7? 0 : clamp<int> ((name2[6]&223)-'A', 0, 25);
                 
-                name2[6]=0; int blue=strtol(name2+4,NULL,16);
-                name2[4]=0; int green=strtol(name2+2,NULL,16);
-                name2[2]=0; int red=strtol(name2,NULL,16);
+                name2[6]=0; int blue=strtol(name2+4,nullptr,16);
+                name2[4]=0; int green=strtol(name2+2,nullptr,16);
+                name2[2]=0; int red=strtol(name2,nullptr,16);
                 
                 if (!isFog)
                 {
@@ -1037,7 +1037,7 @@ void MapLoader::ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec
             //      but a packed ARGB word for blending, so we also allow
             //      the blend to be specified directly by the texture names
             //      instead of figuring something out from the colormap.
-            if (sec != NULL)
+            if (sec != nullptr)
             {
                 SetTexture (sd, side_t::bottom, &sec->bottommap, msd->bottomtexture);
                 SetTexture (sd, side_t::mid, &sec->midmap, msd->midtexture);
@@ -1078,7 +1078,7 @@ void MapLoader::ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec
         case Sector_Set3DFloor:
             if (msd->toptexture[0]=='#')
             {
-                sd->SetTexture(side_t::top, FNullTextureID() +(int)(-strtoll(&msd->toptexture[1], NULL, 10)));    // store the alpha as a negative texture index
+                sd->SetTexture(side_t::top, FNullTextureID() +(int)(-strtoll(&msd->toptexture[1], nullptr, 10)));    // store the alpha as a negative texture index
                 // This will be sorted out by the 3D-floor code later.
             }
             else
@@ -1157,7 +1157,7 @@ void MapLoader::LoadSideDefs2 (MapData *map, FMissingTextureTracker &missingtex)
         sd->SetTextureYOffset(LittleShort(msd->rowoffset));
         sd->SetTextureXScale(1.);
         sd->SetTextureYScale(1.);
-        sd->linedef = NULL;
+        sd->linedef = nullptr;
         sd->Flags = 0;
         sd->UDMFIndex = i;
         
@@ -1168,7 +1168,7 @@ void MapLoader::LoadSideDefs2 (MapData *map, FMissingTextureTracker &missingtex)
         if ((unsigned)LittleShort(msd->sector)>=sectors.Size())
         {
             Printf (PRINT_HIGH, "Sidedef %d has a bad sector\n", i);
-            sd->sector = sec = NULL;
+            sd->sector = sec = nullptr;
         }
         else
         {
@@ -1183,5 +1183,146 @@ void MapLoader::LoadSideDefs2 (MapData *map, FMissingTextureTracker &missingtex)
         ProcessSideTextures(!map->HasBehavior, sd, sec, &imsd,
                               sidetemp[i].a.special, sidetemp[i].a.tag, &sidetemp[i].a.alpha, missingtex);
     }
+}
+
+//===========================================================================
+//
+// P_GroupLines
+// Builds sector line lists and subsector sector numbers.
+// Finds block bounding boxes for sectors.
+//
+//===========================================================================
+
+ void MapLoader::GroupLines(bool buildmap)
+{
+	cycle_t times[16];
+	unsigned int*		linesDoneInEachSector;
+	int 				total;
+	sector_t*			sector;
+	FBoundingBox		bbox;
+	bool				flaggedNoFronts = false;
+	unsigned int		jj;
+
+	for (unsigned i = 0; i < countof(times); ++i)
+	{
+		times[i].Reset();
+	}
+
+	// look up sector number for each subsector
+	for (auto &sub : subsectors)
+	{
+		sub.sector = sub.firstline->sidedef->sector;
+	}
+	for (auto &sub : subsectors)
+	{
+		for (jj = 0; jj < sub.numlines; ++jj)
+		{
+			sub.firstline[jj].Subsector = &sub;
+		}
+	}
+
+	// count number of lines in each sector
+	total = 0;
+	for (unsigned i = 0; i < lines.Size(); i++)
+	{
+		auto li = &lines[i];
+		if (li->frontsector == nullptr)
+		{
+			if (!flaggedNoFronts)
+			{
+				flaggedNoFronts = true;
+				Printf("The following lines do not have a front sidedef:\n");
+			}
+			Printf(" %d\n", i);
+		}
+		else
+		{
+			li->frontsector->Lines.Count++;
+			total++;
+		}
+
+		if (li->backsector && li->backsector != li->frontsector)
+		{
+			li->backsector->Lines.Count++;
+			total++;
+		}
+	}
+	if (flaggedNoFronts)
+	{
+		I_Error("You need to fix these lines to play this map.\n");
+	}
+
+	// build line tables for each sector
+	linebuffer.Alloc(total);
+	line_t **lineb_p = &linebuffer[0];
+	auto numsectors = sectors.Size();
+	linesDoneInEachSector = new unsigned int[numsectors];
+	memset(linesDoneInEachSector, 0, sizeof(int)*numsectors);
+
+	sector = &sectors[0];
+	for (unsigned i = 0; i < numsectors; i++, sector++)
+	{
+		if (sector->Lines.Count == 0)
+		{
+			Printf("Sector %i (tag %i) has no lines\n", i, tagManager->GetFirstSectorTag(sector));
+			// 0 the sector's tag so that no specials can use it
+			tagManager->RemoveSectorTags(i);
+		}
+		else
+		{
+			sector->Lines.Array = lineb_p;
+			lineb_p += sector->Lines.Count;
+		}
+	}
+
+	for (unsigned i = 0; i < lines.Size(); i++)
+	{
+		auto li = &lines[i];
+		if (li->frontsector != nullptr)
+		{
+			li->frontsector->Lines[linesDoneInEachSector[li->frontsector->Index()]++] = li;
+		}
+		if (li->backsector != nullptr && li->backsector != li->frontsector)
+		{
+			li->backsector->Lines[linesDoneInEachSector[li->backsector->Index()]++] = li;
+		}
+	}
+
+	sector = &sectors[0];
+	for (unsigned i = 0; i < numsectors; ++i, ++sector)
+	{
+		if (linesDoneInEachSector[i] != sector->Lines.Size())
+		{
+			I_Error("P_GroupLines: miscounted");
+		}
+		if (sector->Lines.Size() > 3)
+		{
+			bbox.ClearBox();
+			for (auto li : sector->Lines)
+			{
+				bbox.AddToBox(li->v1->fPos());
+				bbox.AddToBox(li->v2->fPos());
+			}
+
+			// set the center to the middle of the bounding box
+			sector->centerspot.X = (bbox.Right() + bbox.Left()) / 2;
+			sector->centerspot.Y = (bbox.Top() + bbox.Bottom()) / 2;
+		}
+		else if (sector->Lines.Size() > 0)
+		{
+			// For triangular sectors the above does not calculate good points unless the longest of the triangle's lines is perfectly horizontal and vertical
+			DVector2 pos = { 0,0 };
+			for (auto ln : sector->Lines)
+			{
+				pos += ln->v1->fPos() + ln->v2->fPos();
+			}
+			sector->centerspot = pos / (2 * sector->Lines.Size());
+		}
+	}
+	delete[] linesDoneInEachSector;
+
+	// killough 1/30/98: Create xref tables for tags
+	tagManager->HashTags();
+
 }
 

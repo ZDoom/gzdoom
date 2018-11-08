@@ -53,6 +53,7 @@ public:
 	TArray<node_t> &nodes;
     TArray<subsector_t> &gamesubsectors;
     TArray<node_t> &gamenodes;
+	TArray<line_t*>linebuffer;
 	FBlockmap &blockmap;
 
     const int *oldvertextable = nullptr;
@@ -123,6 +124,7 @@ public:
 		nodes(store.nodes),
 		gamesubsectors(store.gamesubsectors),
 		gamenodes(store.gamenodes),
+		linebuffer(store.linebuffer),
 		blockmap(store.blockmap)
 	{
 		tagManager = tm;
@@ -140,8 +142,9 @@ public:
     void FinishLoadingLineDefs ();
     void LoadSideDefs2 (MapData *map, FMissingTextureTracker &missingtex);
     void LoopSidedefs (bool firstloop);
+	void GroupLines(bool buildmap);
 
-    bool LoadBsp(MapData *map);
+	bool LoadBsp(MapData *map);
 
     void ParseTextMap(MapData *map, FMissingTextureTracker &missingtex);
 

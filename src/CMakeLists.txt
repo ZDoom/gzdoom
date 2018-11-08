@@ -953,7 +953,6 @@ set (PCH_SOURCES
 	p_effect.cpp
 	p_enemy.cpp
 	p_floor.cpp
-	p_glnodes.cpp
 	p_interaction.cpp
 	p_lights.cpp
 	p_linkedsectors.cpp
@@ -1074,6 +1073,7 @@ set (PCH_SOURCES
 	hwrenderer/utility/hw_shaderpatcher.cpp
 	hwrenderer/utility/hw_vrmodes.cpp
 	maploader/maploader.cpp
+	maploader/maploader_glnodes.cpp
 	maploader/maploader_bsp.cpp
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp

@@ -34,6 +34,7 @@
 #include <zlib.h>
 #include "p_setup.h"
 #include "maploader.h"
+#include "maploader_internal.h"
 #include "files.h"
 #include "i_system.h"
 #include "i_time.h"
@@ -53,6 +54,82 @@ extern TArray<FMapThing> MapThingsConverted;
 CVAR(Bool, gl_cachenodes, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_cachetime, 0.6f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
+
+//==========================================================================
+//
+// Collect all sidedefs which are not entirely covered by segs
+// Old ZDBSPs could create such maps. If such a BSP is discovered
+// a node rebuild must be done to ensure proper rendering
+//
+//==========================================================================
+
+int MapLoader::CheckForMissingSegs()
+{
+    auto numsides = sides.Size();
+    TArray<double> added_seglen(numsides, true);
+    int missing = 0;
+    
+    memset(added_seglen.Data(), 0, sizeof(double)*numsides);
+    for (auto &seg : segs)
+    {
+        if (seg.sidedef != nullptr)
+        {
+            // check all the segs and calculate the length they occupy on their sidedef
+            DVector2 vec1(seg.v2->fX() - seg.v1->fX(), seg.v2->fY() - seg.v1->fY());
+            added_seglen[seg.sidedef->Index()] += vec1.Length();
+        }
+    }
+    
+    for (unsigned i = 0; i < numsides; i++)
+    {
+        double linelen = sides[i].linedef->Delta().Length();
+        missing += (added_seglen[i] < linelen - 1.);
+    }
+    
+    return missing;
+}
+
+//==========================================================================
+//
+// Checks whether the nodes are suitable for GL rendering
+//
+//==========================================================================
+
+bool MapLoader::CheckForGLNodes()
+{
+    for(auto &sub : subsectors)
+    {
+        seg_t * firstseg = sub.firstline;
+        seg_t * lastseg = sub.firstline + sub.numlines - 1;
+        
+        if (firstseg->v1 != lastseg->v2)
+        {
+            // This subsector is incomplete which means that these
+            // are normal nodes
+            return false;
+        }
+        else
+        {
+            for(uint32_t j=0;j<sub.numlines;j++)
+            {
+                if (segs[j].linedef==nullptr)    // miniseg
+                {
+                    // We already have GL nodes. Great!
+                    return true;
+                }
+            }
+        }
+    }
+    // all subsectors were closed but there are no minisegs
+    // Although unlikely this can happen. Such nodes are not a problem.
+    // all that is left is to check whether the BSP covers all sidedefs completely.
+    int missing = CheckForMissingSegs();
+    if (missing > 0)
+    {
+        Printf("%d missing segs counted\nThe BSP needs to be rebuilt.\n", missing);
+    }
+    return missing == 0;
+}
 
 //===========================================================================
 //
@@ -779,7 +856,7 @@ bool MapLoader::CheckNodes(MapData * map, bool rebuilt, int buildtime)
         segs.Clear();
         
         // Try to load GL nodes (cached or GWA)
-        loaded = P_LoadGLNodes(map);
+        loaded = LoadGLNodes(map);
         if (!loaded)
         {
             // none found - we have to build new ones!
@@ -1121,7 +1198,7 @@ bool MapLoader::LoadBsp(MapData *map)
         // If loading the regular nodes failed try GL nodes before considering a rebuild
         if (ForceNodeBuild)
         {
-            if (P_LoadGLNodes(map))
+            if (LoadGLNodes(map))
             {
                 ForceNodeBuild = false;
                 reloop = true;
@@ -1151,7 +1228,7 @@ bool MapLoader::LoadBsp(MapData *map)
         builder.Extract (*this);
         endTime = I_msTime ();
         DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, segs.Size());
-        oldvertextable = builder.GetOldVertexTable();
+        oldvertextable.reset(builder.GetOldVertexTable());
         reloop = true;
     }
     else

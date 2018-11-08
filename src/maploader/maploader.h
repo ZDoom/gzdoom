@@ -20,11 +20,16 @@ public:
     TArray<subsector_t> &gamesubsectors;
     TArray<node_t> &gamenodes;
 
-    const int *oldvertextable = NULL;
+    std::unique_ptr<const int> oldvertextable;
+    int firstglvertex = -1;
+    bool format5 = false;
 
 private:
 	bool ForceNodeBuild = false;
     
+    // maploader_bsp.cpp
+    int CheckForMissingSegs();
+    bool CheckForGLNodes();
     void LoadZSegs (FileReader &data);
     void LoadGLZSegs (FileReader &data, int type);
     void LoadZNodes(FileReader &data, int glnodes);
@@ -37,7 +42,16 @@ private:
     bool CheckNodes(MapData * map, bool rebuilt, int buildtime);
     void CreateCachedNodes(MapData *map);
     bool CheckCachedNodes(MapData *map);
-
+    
+    // maploader_glnodes.cpp
+    bool LoadGLVertexes(FileReader &lump);
+    int checkGLVertex(int num);
+    int checkGLVertex3(int num);
+    bool LoadGLSegs(FileReader &lump);
+    bool LoadGLSubsectors(FileReader &lump);
+    bool LoadGLNodeLump (FileReader &lump);
+    bool DoLoadGLNodes(FileReader * lumps);
+    bool LoadGLNodes(MapData * map);
 public:
     template<class T>MapLoader(T &store)
     : vertexes(store.vertexes),

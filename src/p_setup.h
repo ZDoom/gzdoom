@@ -35,6 +35,7 @@
 
 struct MapData
 {
+    friend class MapLoader;
 private:
 	struct ResourceHolder
 	{
@@ -124,7 +125,6 @@ public:
 
 	void GetChecksum(uint8_t cksum[16]);
 
-	friend bool P_LoadGLNodes(MapData * map);
 	friend MapData *P_OpenMapData(const char * mapname, bool justcheck);
 
 };
@@ -156,7 +156,6 @@ int P_TranslateSectorSpecial (int);
 int GetUDMFInt(int type, int index, FName key);
 double GetUDMFFloat(int type, int index, FName key);
 
-bool P_LoadGLNodes(MapData * map);
 void P_SetRenderSector();
 void FixMinisegReferences();
 void FixHoles();

@@ -3181,7 +3181,7 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 	if (!buildmap)
 	{
 		// [RH] Spawn slope creating things first.
-		P_SpawnSlopeMakers (&MapThingsConverted[0], &MapThingsConverted[MapThingsConverted.Size()], oldvertextable);
+		P_SpawnSlopeMakers (&MapThingsConverted[0], &MapThingsConverted[MapThingsConverted.Size()], maploader.oldvertextable.get());
 		P_CopySlopes();
 
 		// Spawn 3d floors - must be done before spawning things so it can't be done in P_SpawnSpecials
@@ -3213,10 +3213,6 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 	}
 #endif
 	delete map;
-	if (oldvertextable != NULL)
-	{
-		delete[] oldvertextable;
-	}
 
 	// set up world state
 	P_SpawnSpecials ();

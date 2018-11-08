@@ -1228,7 +1228,7 @@ bool MapLoader::LoadBsp(MapData *map)
         builder.Extract (*this);
         endTime = I_msTime ();
         DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, segs.Size());
-        oldvertextable.reset(builder.GetOldVertexTable());
+        oldvertextable = builder.GetOldVertexTable();
         reloop = true;
     }
     else

@@ -20,7 +20,7 @@ public:
     TArray<subsector_t> &gamesubsectors;
     TArray<node_t> &gamenodes;
 
-    std::unique_ptr<const int> oldvertextable;
+    const int *oldvertextable;
     int firstglvertex = -1;
     bool format5 = false;
 
@@ -65,6 +65,11 @@ public:
       gamenodes(store.gamenodes)
     {
         
+    }
+    
+    ~MapLoader()
+    {
+        if (oldvertextable) delete[] oldvertextable;
     }
 	
     void LoadVertexes (MapData * map);

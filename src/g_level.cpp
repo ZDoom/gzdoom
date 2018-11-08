@@ -85,7 +85,7 @@
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "i_time.h"
-#include "nodebuild.h"
+#include "p_maputl.h"
 
 void STAT_StartNewGame(const char *lev);
 void STAT_ChangeLevel(const char *newl);
@@ -2022,14 +2022,11 @@ bool IsPointInMap(DVector3 p)
 		// Skip single sided lines.
 		seg_t *seg = subsector->firstline + i;
 		if (seg->backsector != nullptr)	continue;
-		
-		int sx = (int)seg->v1->fX();
-		int sy = (int)seg->v1->fY();
-		int dx = (int)seg->v2->fX() - sx;
-		int dy = (int)seg->v2->fY() - sy;
-		int res = FNodeBuilder::PointOnSide(sx, sy, (int)p.X, (int)p.Y, dx, dy);
-		bool pointOnSide = (res > 0);
-		if (!pointOnSide) return false;
+
+		divline_t dline;
+		P_MakeDivline(seg->linedef, &dline);
+		bool pol = P_PointOnDivlineSide(p.XY(), &dline) < 1;
+		if (!pol) return false;
 	}
 
 	double ceilingZ = subsector->sector->ceilingplane.ZatPoint(p.X, p.Y);

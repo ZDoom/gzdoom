@@ -1073,7 +1073,8 @@ set (PCH_SOURCES
 	hwrenderer/utility/hw_lighting.cpp
 	hwrenderer/utility/hw_shaderpatcher.cpp
 	hwrenderer/utility/hw_vrmodes.cpp
-
+	maploader/maploader.cpp
+	maploader/maploader_bsp.cpp
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp
 	menu/menu.cpp

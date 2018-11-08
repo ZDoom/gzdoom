@@ -43,6 +43,7 @@
 
 #include "nodebuild.h"
 #include "g_levellocals.h"
+#include "maploader/maploader.h"
 
 #if 0
 #define D(x) x
@@ -52,7 +53,7 @@
 #undef DD
 #endif
 
-void FNodeBuilder::Extract (FLevelLocals &level)
+void FNodeBuilder::Extract (MapLoader &level)
 {
 	int i;
 

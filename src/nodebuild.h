@@ -34,6 +34,7 @@
 **---------------------------------------------------------------------------
 **
 */
+#pragma once
 
 #include "doomdata.h"
 #include "tarray.h"
@@ -43,6 +44,7 @@
 struct FPolySeg;
 struct FMiniBSP;
 struct FLevelLocals;
+class MapLoader;
 
 struct FEventInfo
 {
@@ -233,7 +235,7 @@ public:
 		bool makeGLNodes);
 	~FNodeBuilder ();
 
-	void Extract(FLevelLocals &level);
+	void Extract(MapLoader &level);
 	const int *GetOldVertexTable();
 
 	// These are used for building sub-BSP trees for polyobjects.

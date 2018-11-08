@@ -836,3 +836,203 @@ CCMD(listbadminisegs)
 {
 	ReportUnpairedMinisegs();
 }
+
+//==========================================================================
+//
+// Keep both the original nodes from the WAD and the GL nodes created here.
+// The original set is only being used to get the sector for in-game
+// positioning of actors but not for rendering.
+//
+// This is necessary because ZDBSP is much more sensitive
+// to sloppy mapping practices that produce overlapping sectors.
+// The crane in P:AR E1M3 is a good example that would be broken if
+// this wasn't done.
+//
+//==========================================================================
+
+
+//==========================================================================
+//
+// PointOnLine
+//
+// Same as the one im the node builder, but not part of a specific class
+//
+//==========================================================================
+
+static bool PointOnLine (int x, int y, int x1, int y1, int dx, int dy)
+{
+    const double SIDE_EPSILON = 6.5536;
+    
+    // For most cases, a simple dot product is enough.
+    double d_dx = double(dx);
+    double d_dy = double(dy);
+    double d_x = double(x);
+    double d_y = double(y);
+    double d_x1 = double(x1);
+    double d_y1 = double(y1);
+    
+    double s_num = (d_y1-d_y)*d_dx - (d_x1-d_x)*d_dy;
+    
+    if (fabs(s_num) < 17179869184.0)    // 4<<32
+    {
+        // Either the point is very near the line, or the segment defining
+        // the line is very short: Do a more expensive test to determine
+        // just how far from the line the point is.
+        double l = g_sqrt(d_dx*d_dx+d_dy*d_dy);
+        double dist = fabs(s_num)/l;
+        if (dist < SIDE_EPSILON)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+//==========================================================================
+//
+// SetRenderSector
+//
+// Sets the render sector for each GL subsector so that the proper flat
+// information can be retrieved
+//
+//==========================================================================
+
+void P_SetRenderSector()
+{
+    int                 i;
+    uint32_t                 j;
+    TArray<subsector_t *> undetermined;
+    subsector_t *        ss;
+    
+#if 0    // doesn't work as expected :(
+    
+    // hide all sectors on textured automap that only have hidden lines.
+    bool *hidesec = new bool[numsectors];
+    for(i = 0; i < numsectors; i++)
+    {
+        hidesec[i] = true;
+    }
+    for(i = 0; i < numlines; i++)
+    {
+        if (!(lines[i].flags & ML_DONTDRAW))
+        {
+            hidesec[lines[i].frontsector - sectors] = false;
+            if (lines[i].backsector != NULL)
+            {
+                hidesec[lines[i].backsector - sectors] = false;
+            }
+        }
+    }
+    for(i = 0; i < numsectors; i++)
+    {
+        if (hidesec[i]) sectors[i].MoreFlags |= SECMF_HIDDEN;
+    }
+    delete [] hidesec;
+#endif
+    
+    // Check for incorrect partner seg info so that the following code does not crash.
+    
+    for (auto &seg : level.segs)
+    {
+        auto p = seg.PartnerSeg;
+        if (p != nullptr)
+        {
+            int partner = p->Index();
+            
+            if (partner < 0 || partner >= (int)level.segs.Size() || &level.segs[partner] != p)
+            {
+                seg.PartnerSeg = nullptr;
+            }
+            
+            // glbsp creates such incorrect references for Strife.
+            if (seg.linedef && seg.PartnerSeg != nullptr && !seg.PartnerSeg->linedef)
+            {
+                seg.PartnerSeg = seg.PartnerSeg->PartnerSeg = nullptr;
+            }
+        }
+    }
+    for (auto &seg : level.segs)
+    {
+        if (seg.PartnerSeg != nullptr && seg.PartnerSeg->PartnerSeg != &seg)
+        {
+            seg.PartnerSeg = nullptr;
+        }
+    }
+    
+    // look up sector number for each subsector
+    for (auto &ss : level.subsectors)
+    {
+        // For rendering pick the sector from the first seg that is a sector boundary
+        // this takes care of self-referencing sectors
+        seg_t *seg = ss.firstline;
+        
+        // Check for one-dimensional subsectors. These should be ignored when
+        // being processed for automap drawing etc.
+        ss.flags |= SSECF_DEGENERATE;
+        for(j=2; j<ss.numlines; j++)
+        {
+            if (!PointOnLine(seg[j].v1->fixX(), seg[j].v1->fixY(), seg->v1->fixX(), seg->v1->fixY(), seg->v2->fixX() -seg->v1->fixX(), seg->v2->fixY() -seg->v1->fixY()))
+            {
+                // Not on the same line
+                ss.flags &= ~SSECF_DEGENERATE;
+                break;
+            }
+        }
+        
+        seg = ss.firstline;
+        for(j=0; j<ss.numlines; j++)
+        {
+            if(seg->sidedef && (seg->PartnerSeg == nullptr || (seg->PartnerSeg->sidedef != nullptr && seg->sidedef->sector!=seg->PartnerSeg->sidedef->sector)))
+            {
+                ss.render_sector = seg->sidedef->sector;
+                break;
+            }
+            seg++;
+        }
+        if(ss.render_sector == NULL)
+        {
+            undetermined.Push(&ss);
+        }
+    }
+    
+    // assign a vaild render sector to all subsectors which haven't been processed yet.
+    while (undetermined.Size())
+    {
+        bool deleted=false;
+        for(i=undetermined.Size()-1;i>=0;i--)
+        {
+            ss=undetermined[i];
+            seg_t * seg = ss->firstline;
+            
+            for(j=0; j<ss->numlines; j++)
+            {
+                if (seg->PartnerSeg != nullptr && seg->PartnerSeg->Subsector)
+                {
+                    sector_t * backsec = seg->PartnerSeg->Subsector->render_sector;
+                    if (backsec)
+                    {
+                        ss->render_sector = backsec;
+                        undetermined.Delete(i);
+                        deleted = 1;
+                        break;
+                    }
+                }
+                seg++;
+            }
+        }
+        // We still got some left but the loop above was unable to assign them.
+        // This only happens when a subsector is off the map.
+        // Don't bother and just assign the real sector for rendering
+        if (!deleted && undetermined.Size())
+        {
+            for(i=undetermined.Size()-1;i>=0;i--)
+            {
+                ss=undetermined[i];
+                ss->render_sector=ss->sector;
+            }
+            break;
+        }
+    }
+}
+

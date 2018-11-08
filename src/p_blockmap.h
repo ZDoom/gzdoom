@@ -32,14 +32,14 @@ struct FBlockNode
 
 struct FBlockmap
 {
-	int*				blockmaplump;	// offsets in blockmap are from here
+	TArray<int>			blockmaplump;	// offsets in blockmap are from here
 
 	int*				blockmap;
 	int					bmapwidth;
 	int					bmapheight; 	// in mapblocks
 	double				bmaporgx;
 	double				bmaporgy;		// origin of block map
-	FBlockNode**		blocklinks; 	// for thing chains
+	TArray<FBlockNode*>		blocklinks; 	// for thing chains
 
 	// mapblocks are used to check movement
 	// against lines and things
@@ -70,23 +70,13 @@ struct FBlockmap
 		// Apparently, id had originally intended for it to be used
 		// to keep track of things, but the final code does not do that.
 		int offset = y*bmapwidth + x;
-		return blockmaplump + *(blockmap + offset) + 1;
+		return blockmaplump.Data() + *(blockmap + offset) + 1;
 	}
-
-	bool VerifyBlockMap(int count);
 
 	void Clear()
 	{
-		if (blockmaplump != NULL)
-		{
-			delete[] blockmaplump;
-			blockmaplump = NULL;
-		}
-		if (blocklinks != NULL)
-		{
-			delete[] blocklinks;
-			blocklinks = NULL;
-		}
+		blockmaplump.Reset();
+		blocklinks.Reset();
 	}
 
 };

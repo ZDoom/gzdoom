@@ -9,6 +9,7 @@ class FileReader;
 
 struct FLevelLocals;
 class FTagManager;
+struct FBlockmap;
 
 struct sidei_t    // [RH] Only keep BOOM sidedef init stuff around for init
 {
@@ -52,6 +53,7 @@ public:
 	TArray<node_t> &nodes;
     TArray<subsector_t> &gamesubsectors;
     TArray<node_t> &gamenodes;
+	FBlockmap &blockmap;
 
     const int *oldvertextable = nullptr;
     int firstglvertex = -1;
@@ -104,23 +106,27 @@ public:
     void SetTexture (side_t *side, int position, uint32_t *blend, const char *name);
     void SetTextureNoErr (side_t *side, int position, uint32_t *color, const char *name, bool *validcolor, bool isFog);
     void ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmapsidedef_t *msd, int special, int tag, short *alpha, FMissingTextureTracker &missingtex);
-
+	
+	void CreateBlockMap();
+	bool VerifyBlockMap(int count);
+	void LoadBlockMap(MapData * map);
 
 
 public:
-    template<class T>MapLoader(T &store, FTagManager *tm)
-    : vertexes(store.vertexes),
-      lines(store.lines),
-      sides(store.sides),
-      sectors(store.sectors),
-      segs(store.segs),
-      subsectors(store.subsectors),
-      nodes(store.nodes),
-      gamesubsectors(store.gamesubsectors),
-      gamenodes(store.gamenodes)
-    {
+	template<class T>MapLoader(T &store, FTagManager *tm)
+		: vertexes(store.vertexes),
+		lines(store.lines),
+		sides(store.sides),
+		sectors(store.sectors),
+		segs(store.segs),
+		subsectors(store.subsectors),
+		nodes(store.nodes),
+		gamesubsectors(store.gamesubsectors),
+		gamenodes(store.gamenodes),
+		blockmap(store.blockmap)
+	{
 		tagManager = tm;
-    }
+	}
     
     ~MapLoader()
     {

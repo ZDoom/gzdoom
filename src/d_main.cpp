@@ -101,6 +101,7 @@
 #include "vm.h"
 #include "types.h"
 #include "r_data/r_vanillatrans.h"
+#include "maploader/mapdata.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, vr_mode)

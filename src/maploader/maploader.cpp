@@ -4,7 +4,6 @@
 // Copyright 1994-1996 Raven Software
 // Copyright 1999-2016 Randy Heit
 // Copyright 2002-2018 Christoph Oelckers
-// Copyright 2010 James Haley
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -27,6 +26,7 @@
 
 #include "p_setup.h"
 #include "maploader.h"
+#include "mapdata.h"
 #include "files.h"
 #include "i_system.h"
 #include "g_levellocals.h"

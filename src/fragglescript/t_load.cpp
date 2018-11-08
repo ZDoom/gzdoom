@@ -32,6 +32,7 @@
 #include "cmdlib.h"
 #include "gi.h"
 #include "g_levellocals.h"
+#include "maploader/mapdata.h"
 #include "xlat/xlat.h"
 
 void T_Init();

@@ -52,6 +52,7 @@
 #include "g_levellocals.h"
 #include "vm.h"
 #include "actor.h"
+#include "maploader/mapdata.h"
 
 // MACROS ------------------------------------------------------------------
 

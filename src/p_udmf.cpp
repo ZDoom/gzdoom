@@ -49,6 +49,7 @@
 #include "g_levellocals.h"
 #include "info.h"
 #include "vm.h"
+#include "maploader/mapdata.h"
 
 #include "maploader/maploader.h"
 

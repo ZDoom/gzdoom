@@ -42,6 +42,7 @@
 #include "resourcefiles/resourcefile.h"
 #include "doomerrors.h"
 #include "g_levellocals.h"
+#include "mapdata.h"
 
 
 #define gNd2        MAKE_ID('g','N','d','2')

@@ -56,6 +56,7 @@
 #include "g_levellocals.h"
 #include "vm.h"
 #include "actorinlines.h"
+#include "maploader/mapdata.h"
 
 // The conversations as they exist inside a SCRIPTxx lump.
 struct Response

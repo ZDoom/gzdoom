@@ -85,6 +85,7 @@
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "i_time.h"
+#include "maploader/mapdata.h"
 
 void STAT_StartNewGame(const char *lev);
 void STAT_ChangeLevel(const char *newl);

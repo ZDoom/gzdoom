@@ -58,6 +58,7 @@
 #include "p_lnspec.h"
 #include "serializer.h"
 #include "g_levellocals.h"
+#include "maploader/mapdata.h"
 
 CVAR(Int, savestatistics, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(String, statfile, "zdoomstat.txt", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)

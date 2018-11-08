@@ -33,6 +33,7 @@
 
 #include <zlib.h>
 #include "p_setup.h"
+#include "mapdata.h"
 #include "maploader.h"
 #include "maploader_internal.h"
 #include "files.h"

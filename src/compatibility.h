@@ -4,6 +4,9 @@
 #include "doomtype.h"
 #include "tarray.h"
 #include "p_setup.h"
+#include "name.h"
+
+struct MapData;
 
 union FMD5Holder
 {

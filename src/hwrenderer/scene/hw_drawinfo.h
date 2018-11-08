@@ -300,6 +300,7 @@ public:
 	void DrawPlayerSprites(bool hudModelStep, FRenderState &state);
 
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs);
+    void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub);
     
     void AddWall(GLWall *w);
     void AddMirrorSurface(GLWall *w);

@@ -655,3 +655,22 @@ void HWDrawInfo::ProcessScene(bool toscreen, const std::function<void(HWDrawInfo
 	DrawScene(this, toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
 
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void HWDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *ptg, subsector_t *sub)
+{
+	auto portal = FindPortal(ptg);
+	if (!portal)
+	{
+		portal = new HWScenePortal(screen->mPortalState, new HWSectorStackPortal(ptg));
+		Portals.Push(portal);
+	}
+	auto ptl = static_cast<HWSectorStackPortal*>(static_cast<HWScenePortal*>(portal)->mScene);
+	ptl->AddSubsector(sub);
+}
+

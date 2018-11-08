@@ -1887,7 +1887,8 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 	}
 #endif
 
-    MapLoader maploader(level);
+    MapLoader maploader(level, &tagManager);
+	maploader.maptype = level.maptype;
 	if (!buildmap)
 	{
 		// note: most of this ordering is important 

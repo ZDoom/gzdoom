@@ -108,7 +108,7 @@ public:
 
 
 public:
-    template<class T>MapLoader(T &store)
+    template<class T>MapLoader(T &store, FTagManager *tm)
     : vertexes(store.vertexes),
       lines(store.lines),
       sides(store.sides),
@@ -119,7 +119,7 @@ public:
       gamesubsectors(store.gamesubsectors),
       gamenodes(store.gamenodes)
     {
-        
+		tagManager = tm;
     }
     
     ~MapLoader()

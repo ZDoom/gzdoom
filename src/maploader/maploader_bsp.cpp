@@ -46,6 +46,7 @@
 #include "w_wad.h"
 #include "cmdlib.h"
 #include "m_misc.h"
+#include "g_levellocals.h"
 
 // should be moved into the map loader later but for now it is referenced from too many parts elsewhere.
 extern TArray<FMapThing> MapThingsConverted;
@@ -1258,7 +1259,7 @@ bool MapLoader::LoadBsp(MapData *map)
     // If the original nodes being loaded are not GL nodes they will be kept around for
     // use in P_PointInSubsector to avoid problems with maps that depend on the specific
     // nodes they were built with (P:AR E1M3 is a good example for a map where this is the case.)
-    reloop |= CheckNodes(map, true, (uint32_t)(endTime - startTime));
+    reloop |= CheckNodes(map, ForceNodeBuild, (uint32_t)(endTime - startTime));
  
     return reloop;
 }

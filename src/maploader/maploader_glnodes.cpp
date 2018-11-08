@@ -40,7 +40,8 @@
 #include "p_setup.h"
 #include "w_wad.h"
 #include "resourcefiles/resourcefile.h"
- #include "doomerrors.h"
+#include "doomerrors.h"
+#include "g_levellocals.h"
 
 
 #define gNd2        MAKE_ID('g','N','d','2')

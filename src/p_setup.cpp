@@ -1865,7 +1865,7 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 	map->GetChecksum(level.md5);
 	// find map num
 	level.lumpnum = map->lumpnum;
-	hasglnodes = false;
+	hasglnodes = true;
 
 	if (newGame)
 	{
@@ -2030,12 +2030,9 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 	P_FloodZones ();
 	times[13].Unclock();
 
-	if (hasglnodes)
-	{
-		P_SetRenderSector();
-		FixMinisegReferences();
-		FixHoles();
-	}
+	P_SetRenderSector();
+	FixMinisegReferences();
+	FixHoles();
 
 	bodyqueslot = 0;
 // phares 8/10/98: Clear body queue so the corpses from previous games are

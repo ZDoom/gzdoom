@@ -53,7 +53,7 @@ public:
     TArray<subsector_t> &gamesubsectors;
     TArray<node_t> &gamenodes;
 
-    const int *oldvertextable;
+    const int *oldvertextable = nullptr;
     int firstglvertex = -1;
     bool format5 = false;
     int maptype = MAPTYPE_UNKNOWN;

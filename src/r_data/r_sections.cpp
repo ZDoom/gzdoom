@@ -371,7 +371,7 @@ public:
 				{
 					// Did not find another one but have an unclosed loop. This should never happen and would indicate broken nodes.
 					// Error out and let the calling code deal with it.
-					I_Error("Unclosed loop in sector %d at position (%d, %d)\n", loopedsegs[0]->Subsector->render_sector->Index(), (int)loopedsegs[0]->v1->fX(), (int)loopedsegs[0]->v1->fY());
+					//I_Error("Unclosed loop in sector %d at position (%d, %d)\n", loopedsegs[0]->Subsector->render_sector->Index(), (int)loopedsegs[0]->v1->fX(), (int)loopedsegs[0]->v1->fY());
 				}
 				seg = nullptr;
 				loopedsegs.Push(nullptr);	// A separator is not really needed but useful for debugging.

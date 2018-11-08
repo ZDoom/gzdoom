@@ -39,6 +39,7 @@
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "v_text.h"
+#include "maploader/maploader.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -123,7 +124,6 @@ public:
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void PO_Init (void);
 void P_AdjustLine(line_t *ld);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -132,8 +132,6 @@ static void UnLinkPolyobj (FPolyObj *po);
 static void LinkPolyobj (FPolyObj *po);
 static bool CheckMobjBlocking (side_t *seg, FPolyObj *po);
 static void InitBlockMap (void);
-static void IterFindPolySides (FPolyObj *po, side_t *side);
-static void SpawnPolyobj (int index, int tag, int type);
 static void TranslateToStartSpot (int tag, const DVector2 &origin);
 static void DoMovePolyobj (FPolyObj *po, const DVector2 & move);
 static void InitSegLists ();
@@ -1483,7 +1481,7 @@ static void AddPolyVert(TArray<uint32_t> &vnum, uint32_t vert)
 //
 //==========================================================================
 
-static void IterFindPolySides (FPolyObj *po, side_t *side)
+static void IterFindPolySides (FPolyObj *po, side_t *side, sidei_t *sidetemp)
 {
 	static TArray<uint32_t> vnum;
 	unsigned int vnumat;
@@ -1518,7 +1516,7 @@ static int posicmp(const void *a, const void *b)
 	return (*(const side_t **)a)->linedef->args[1] - (*(const side_t **)b)->linedef->args[1];
 }
 
-static void SpawnPolyobj (int index, int tag, int type)
+static void SpawnPolyobj (int index, int tag, int type, sidei_t *sidetemp)
 {
 	unsigned int ii;
 	int i;
@@ -1548,7 +1546,7 @@ static void SpawnPolyobj (int index, int tag, int type)
 			{
 				sd->linedef->special = 0;
 				sd->linedef->args[0] = 0;
-				IterFindPolySides(&polyobjs[index], sd);
+				IterFindPolySides(&polyobjs[index], sd, sidetemp);
 				po->MirrorNum = sd->linedef->args[1];
 				po->crush = (type != SMT_PolySpawn) ? 3 : 0;
 				po->bHurtOnTouch = (type == SMT_PolySpawnHurt);
@@ -1703,7 +1701,7 @@ static void TranslateToStartSpot (int tag, const DVector2 &origin)
 //
 //==========================================================================
 
-void PO_Init (void)
+void PO_Init (sidei_t *sidetemp)
 {
 	// [RH] Hexen found the polyobject-related things by reloading the map's
 	//		THINGS lump here and scanning through it. I have P_SpawnMapThing()
@@ -1726,7 +1724,7 @@ void PO_Init (void)
 		{ 
 			// Polyobj StartSpot Pt.
 			polyobjs[polyIndex].StartSpot.pos = polyspawn->pos;
-			SpawnPolyobj(polyIndex, polyspawn->angle, polyspawn->type);
+			SpawnPolyobj(polyIndex, polyspawn->angle, polyspawn->type, sidetemp);
 			polyIndex++;
 			*prev = polyspawn->next;
 			delete polyspawn;

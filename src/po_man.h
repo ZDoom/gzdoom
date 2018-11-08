@@ -158,8 +158,9 @@ struct polyspawns_t
 extern int po_NumPolyobjs;
 extern polyspawns_t *polyspawns;	// [RH] list of polyobject things to spawn
 
+struct sidei_t;
 
-void PO_Init ();
+void PO_Init (sidei_t *);
 bool PO_Busy (int polyobj);
 FPolyObj *PO_GetPolyobj(int polyNum);
 

@@ -5,7 +5,40 @@ class FileReader;
 
 #include "r_defs.h"
 #include "nodebuild.h"
+#include "g_level.h"
 
+struct FLevelLocals;
+class FTagManager;
+
+struct sidei_t    // [RH] Only keep BOOM sidedef init stuff around for init
+{
+    union
+    {
+        // Used when unpacking sidedefs and assigning
+        // properties based on linedefs.
+        struct
+        {
+            short tag, special;
+            short alpha;
+            uint32_t map;
+        } a;
+        
+        // Used when grouping sidedefs into loops.
+        struct
+        {
+            uint32_t first, next;
+            char lineside;
+        } b;
+    };
+};
+
+
+
+struct FMissingCount
+{
+    int Count = 0;
+};
+typedef TMap<FString,FMissingCount> FMissingTextureTracker;
 
 class MapLoader
 {
@@ -23,10 +56,16 @@ public:
     const int *oldvertextable;
     int firstglvertex = -1;
     bool format5 = false;
+    int maptype = MAPTYPE_UNKNOWN;
+    TArray<sidei_t> sidetemp;
+    TArray<int> linemap;
 
-private:
+//private:
+    FLevelLocals *level = nullptr;
 	bool ForceNodeBuild = false;
-    
+    FTagManager *tagManager = nullptr;
+    int sidecount = 0;
+
     // maploader_bsp.cpp
     int CheckForMissingSegs();
     bool CheckForGLNodes();
@@ -52,6 +91,22 @@ private:
     bool LoadGLNodeLump (FileReader &lump);
     bool DoLoadGLNodes(FileReader * lumps);
     bool LoadGLNodes(MapData * map);
+    
+    // maploader.cpp
+    void SetLineID (int i, line_t *ld);
+    void SaveLineSpecial (line_t *ld);
+    void FinishLoadingLineDef(line_t *ld, int alpha);
+    void SetSideNum (side_t **sidenum_p, uint16_t sidenum);
+    void AllocateSideDefs (MapData *map, int count);
+    int DetermineTranslucency (int lumpnum);
+    void SetTexture (sector_t *sector, int index, int position, const char *name, FMissingTextureTracker &track, bool truncate);
+    void SetTexture (side_t *side, int position, const char *name, FMissingTextureTracker &track);
+    void SetTexture (side_t *side, int position, uint32_t *blend, const char *name);
+    void SetTextureNoErr (side_t *side, int position, uint32_t *color, const char *name, bool *validcolor, bool isFog);
+    void ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmapsidedef_t *msd, int special, int tag, short *alpha, FMissingTextureTracker &missingtex);
+
+
+
 public:
     template<class T>MapLoader(T &store)
     : vertexes(store.vertexes),
@@ -73,9 +128,16 @@ public:
     }
 	
     void LoadVertexes (MapData * map);
+    void LoadSectors (MapData *map, FMissingTextureTracker &missingtex);
+    void LoadLineDefs (MapData * map);
+    void LoadLineDefs2 (MapData * map);
+    void FinishLoadingLineDefs ();
+    void LoadSideDefs2 (MapData *map, FMissingTextureTracker &missingtex);
+    void LoopSidedefs (bool firstloop);
 
     bool LoadBsp(MapData *map);
 
-	
+    void ParseTextMap(MapData *map, FMissingTextureTracker &missingtex);
+
 	
 };

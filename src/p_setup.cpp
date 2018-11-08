@@ -112,9 +112,6 @@
 
 #define MISSING_TEXTURE_WARN_LIMIT		20
 
-void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldvertextable);
-void P_SetSlopes ();
-void P_CopySlopes();
 void BloodCrypt (void *data, int key, int len);
 void P_ClearUDMFKeys();
 void InitRenderInfo();
@@ -988,6 +985,7 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 
 		FMissingTextureTracker missingtex;
 
+		times[0].Clock();
 		if (!map->isText)
 		{
 			maploader.LoadVertexes (map);
@@ -998,13 +996,8 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 			else
 				maploader.LoadLineDefs2 (map);	// [RH] Load Hexen-style linedefs
 
-			times[4].Clock();
 			maploader.LoadSideDefs2 (map, missingtex);
-			times[4].Unclock();
-
-			times[5].Clock();
 			maploader.FinishLoadingLineDefs ();
-			times[5].Unclock();
 
 			if (!map->HasBehavior)
 				P_LoadThings (map);
@@ -1013,10 +1006,9 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 		}
 		else
 		{
-			times[0].Clock();
 			maploader.ParseTextMap(map, missingtex);
-			times[0].Unclock();
 		}
+		times[0].Unclock();
 
 		SetCompatibilityParams(checksum);
 
@@ -1046,7 +1038,7 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 
 	times[12].Clock();
 	maploader.GroupLines (buildmap);
-	P_SetSlopes();
+	maploader.SetSlopes();
 	times[12].Unclock();
 
 	times[13].Clock();
@@ -1069,8 +1061,8 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 	if (!buildmap)
 	{
 		// [RH] Spawn slope creating things first.
-		P_SpawnSlopeMakers (&MapThingsConverted[0], &MapThingsConverted[MapThingsConverted.Size()], maploader.oldvertextable);
-		P_CopySlopes();
+		maploader.SpawnSlopeMakers (&MapThingsConverted[0], &MapThingsConverted[MapThingsConverted.Size()], maploader.oldvertextable);
+		maploader.CopySlopes();
 
 		// Spawn 3d floors - must be done before spawning things so it can't be done in P_SpawnSpecials
 		P_Spawn3DFloors();

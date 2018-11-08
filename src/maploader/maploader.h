@@ -69,6 +69,8 @@ public:
     FTagManager *tagManager = nullptr;
     int sidecount = 0;
 
+	subsector_t *PointInSubsector(double x, double y);
+	
     // maploader_bsp.cpp
     int CheckForMissingSegs();
     bool CheckForGLNodes();
@@ -112,6 +114,17 @@ public:
 	bool VerifyBlockMap(int count);
 	void LoadBlockMap(MapData * map);
 
+	void SlopeLineToPoint (int lineid, const DVector3 &pos, bool slopeCeil);
+	void CopyPlane (int tag, sector_t *dest, bool copyCeil);
+	void CopyPlane (int tag, const DVector2 &pos, bool copyCeil);
+	void SetSlope (secplane_t *plane, bool setCeil, int xyangi, int zangi, const DVector3 &pos);
+	void VavoomSlope(sector_t * sec, int id, const DVector3 &pos, int which);
+	void SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, const int *oldvertextable);
+	void SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldvertextable);
+	void AlignPlane(sector_t *sec, line_t *line, int which);
+	void SetSlopes ();
+	void CopySlopes();
+	
 
 public:
 	template<class T>MapLoader(T &store, FTagManager *tm)

@@ -971,7 +971,6 @@ set (PCH_SOURCES
 	p_sectors.cpp
 	p_setup.cpp
 	p_sight.cpp
-	p_slopes.cpp
 	p_spec.cpp
 	p_states.cpp
 	p_switch.cpp
@@ -1078,6 +1077,7 @@ set (PCH_SOURCES
 	maploader/maploader_glnodes.cpp
 	maploader/maploader_bsp.cpp
 	maploader/maploader_blockmap.cpp
+	maploader/maploader_slopes.cpp
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp
 	menu/menu.cpp

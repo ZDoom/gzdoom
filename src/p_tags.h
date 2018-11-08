@@ -76,8 +76,10 @@ class FSectorTagIterator
 protected:
 	int searchtag;
 	int start;
+	FTagManager &tagManager;
 
 	FSectorTagIterator()
+		: tagManager(::tagManager)
 	{
 		// For DSectorTagIterator
 	}
@@ -104,12 +106,20 @@ protected:
 
 public:
 	FSectorTagIterator(int tag)
+		:tagManager(::tagManager)
+	{
+		Init(tag);
+	}
+
+	FSectorTagIterator(FTagManager &tm, int tag)
+		:tagManager(tm)
 	{
 		Init(tag);
 	}
 
 	// Special constructor for actions that treat tag 0 as  'back of activation line'
 	FSectorTagIterator(int tag, line_t *line)
+		:tagManager(::tagManager)
 	{
 		Init(tag, line);
 	}
@@ -123,9 +133,18 @@ class FLineIdIterator
 protected:
 	int searchtag;
 	int start;
+	FTagManager &tagManager;
 
 public:
 	FLineIdIterator(int id)
+		: tagManager(::tagManager)
+	{
+		searchtag = id;
+		start = tagManager.IDHashFirst[((unsigned int)id) % FTagManager::TAG_HASH_SIZE];
+	}
+
+	FLineIdIterator(FTagManager &tm, int id)
+		: tagManager(tm)
 	{
 		searchtag = id;
 		start = tagManager.IDHashFirst[((unsigned int)id) % FTagManager::TAG_HASH_SIZE];

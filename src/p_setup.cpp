@@ -563,6 +563,7 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
     MapLoader maploader(level, &tagManager);
     maploader.maptype = level.maptype;
     maploader.ForceNodeBuild = gennodes;
+	maploader.level = &level;
     
     if (ib_compatflags & BCOMPATF_REBUILDNODES)
     {
@@ -597,7 +598,7 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 	}
 	times[0].Unclock();
 
-	SetCompatibilityParams(checksum);
+	maploader.SetCompatibilityParams(checksum);
 
 	maploader.LoopSidedefs (true);
 

@@ -175,6 +175,7 @@ public:
 	void SetRenderSector();
 	void FixMinisegReferences();
 	void FixHoles();
+	void SetCompatibilityParams(FName checksum);
 
     void ParseTextMap(MapData *map, FMissingTextureTracker &missingtex);
 

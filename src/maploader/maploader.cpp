@@ -1374,8 +1374,8 @@ void MapLoader::LoadThings (MapData * map)
     int    lumplen = map->Size(ML_THINGS);
     int numthings = lumplen / sizeof(mapthing_t);
     
-    TArray<uint8_t> mtp;
-    map->Read(ML_THINGS, mtp.Data());
+	TArray<uint8_t> mtp(lumplen, true);
+	map->Read(ML_THINGS, mtp.Data());
     auto mt = (mapthing_t*)mtp.Data();
     
     MapThingsConverted.Resize(numthings);
@@ -1467,7 +1467,7 @@ void MapLoader::LoadThings2 (MapData * map)
     MapThingsConverted.Resize(numthings);
     FMapThing *mti = &MapThingsConverted[0];
     
-    TArray<uint8_t> mtp;
+    TArray<uint8_t> mtp(lumplen, true);
     map->Read(ML_THINGS, mtp.Data());
     auto mth = (mapthinghexen_t*)mtp.Data();
     
@@ -1488,7 +1488,7 @@ void MapLoader::LoadThings2 (MapData * map)
         mti[i].SkillFilter = MakeSkill(mti[i].flags);
         mti[i].ClassFilter = (mti[i].flags & MTF_CLASS_MASK) >> MTF_CLASS_SHIFT;
         mti[i].flags &= ~(MTF_SKILLMASK|MTF_CLASS_MASK);
-        if (level->flags2 & LEVEL2_HEXENHACK)
+        if (level && (level->flags2 & LEVEL2_HEXENHACK))
         {
             mti[i].flags &= 0x7ff;    // mask out Strife flags if playing an original Hexen map.
         }

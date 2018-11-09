@@ -49,10 +49,6 @@
 #include "m_misc.h"
 #include "g_levellocals.h"
 
-// should be moved into the map loader later but for now it is referenced from too many parts elsewhere.
-extern TArray<FMapThing> MapThingsConverted;
-
-
 CVAR(Bool, gl_cachenodes, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_cachetime, 0.6f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 

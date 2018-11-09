@@ -53,6 +53,7 @@
 #include "vm.h"
 #include "actor.h"
 #include "maploader/mapdata.h"
+#include "maploader/maploader.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -79,8 +80,6 @@ enum
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-extern TArray<FMapThing> MapThingsConverted;
-extern bool ForceNodeBuild;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -311,9 +310,11 @@ FName CheckCompatibility(MapData *map)
 // SetCompatibilityParams
 //
 //==========================================================================
+static MapLoader *maploader;	// so that the script functions have access. Should be done more cleanly later.
 
-void SetCompatibilityParams(FName checksum)
+void MapLoader::SetCompatibilityParams(FName checksum)
 {
+	maploader = this;
 	if (checksum != NAME_None)
 	{
 		PClass *const cls = PClass::FindClass("LevelCompatibility");
@@ -327,6 +328,7 @@ void SetCompatibilityParams(FName checksum)
 			}
 		}
 	}
+	maploader = nullptr;
 }
 
 DEFINE_ACTION_FUNCTION(DLevelCompatibility, OffsetSectorPlane)
@@ -336,7 +338,7 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, OffsetSectorPlane)
 	PARAM_INT(planeval);
 	PARAM_FLOAT(delta);
 
-	sector_t *sec = &level.sectors[sector];
+	sector_t *sec = &maploader->sectors[sector];
 	secplane_t& plane = sector_t::floor == planeval? sec->floorplane : sec->ceilingplane;
 	plane.ChangeHeight(delta);
 	sec->ChangePlaneTexZ(planeval, delta);
@@ -347,7 +349,7 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, ClearSectorTags)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(sector);
-	tagManager.RemoveSectorTags(sector);
+	maploader->tagManager->RemoveSectorTags(sector);
 	return 0;
 }
 
@@ -356,7 +358,7 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, AddSectorTag)
 	PARAM_PROLOGUE;
 	PARAM_INT(sector);
 	PARAM_INT(tag);
-	tagManager.AddSectorTag(sector, tag);
+	maploader->tagManager->AddSectorTag(sector, tag);
 	return 0;
 }
 
@@ -366,9 +368,9 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetThingSkills)
 	PARAM_INT(thing);
 	PARAM_INT(skillmask);
 
-	if ((unsigned)thing < MapThingsConverted.Size())
+	if ((unsigned)thing < maploader->MapThingsConverted.Size())
 	{
-		MapThingsConverted[thing].SkillFilter = skillmask;
+		maploader->MapThingsConverted[thing].SkillFilter = skillmask;
 	}
 	return 0;
 }
@@ -380,9 +382,9 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetThingXY)
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 
-	if ((unsigned)thing < MapThingsConverted.Size())
+	if ((unsigned)thing < maploader->MapThingsConverted.Size())
 	{
-		auto& pos = MapThingsConverted[thing].pos;
+		auto& pos = maploader->MapThingsConverted[thing].pos;
 		pos.X = x;
 		pos.Y = y;
 	}
@@ -395,9 +397,9 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetThingZ)
 	PARAM_INT(thing);
 	PARAM_FLOAT(z);
 
-	if ((unsigned)thing < MapThingsConverted.Size())
+	if ((unsigned)thing < maploader->MapThingsConverted.Size())
 	{
-		MapThingsConverted[thing].pos.Z = z;
+		maploader->MapThingsConverted[thing].pos.Z = z;
 	}
 	return 0;
 }
@@ -408,9 +410,9 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetThingFlags)
 	PARAM_INT(thing);
 	PARAM_INT(flags);
 
-	if ((unsigned)thing < MapThingsConverted.Size())
+	if ((unsigned)thing < maploader->MapThingsConverted.Size())
 	{
-		MapThingsConverted[thing].flags = flags;
+		maploader->MapThingsConverted[thing].flags = flags;
 	}
 	return 0;
 }
@@ -422,11 +424,11 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetVertex)
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 
-	if (vertex < level.vertexes.Size())
+	if (vertex < maploader->vertexes.Size())
 	{
-		level.vertexes[vertex].p = DVector2(x, y);
+		maploader->vertexes[vertex].p = DVector2(x, y);
 	}
-	ForceNodeBuild = true;
+	maploader->ForceNodeBuild = true;
 	return 0;
 }
 
@@ -438,16 +440,16 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetLineSectorRef)
 	PARAM_UINT(sectoridx);
 
 	if (   sideidx < 2
-		&& lineidx < level.lines.Size()
-		&& sectoridx < level.sectors.Size())
+		&& lineidx < maploader->lines.Size()
+		&& sectoridx < maploader->sectors.Size())
 	{
-		line_t *line = &level.lines[lineidx];
+		line_t *line = &maploader->lines[lineidx];
 		side_t *side = line->sidedef[sideidx];
-		side->sector = &level.sectors[sectoridx];
+		side->sector = &maploader->sectors[sectoridx];
 		if (sideidx == 0) line->frontsector = side->sector;
 		else line->backsector = side->sector;
 	}
-	ForceNodeBuild = true;
+	maploader->ForceNodeBuild = true;
 	return 0;
 }
 

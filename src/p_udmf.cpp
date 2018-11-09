@@ -126,11 +126,6 @@ enum
 	// namespace for each game
 };
 
-void SpawnMapThing(int index, FMapThing *mt, int position);
-extern bool		ForceNodeBuild;
-extern TArray<FMapThing> MapThingsConverted;
-
-
 #define CHECK_N(f) if (!(namespace_bits&(f))) break;
 
 
@@ -1967,7 +1962,7 @@ public:
 			{
 				Printf ("Removing 0-length line %d\n", i+skipped);
 				ParsedLines.Delete(i);
-				ForceNodeBuild = true;
+				maploader->ForceNodeBuild = true;
 				skipped++;
 			}
 			else
@@ -2134,10 +2129,10 @@ public:
 				FMapThing th;
 				unsigned userdatastart = maploader->MapThingsUserData.Size();
 				ParseThing(&th);
-				MapThingsConverted.Push(th);
+				maploader->MapThingsConverted.Push(th);
 				if (userdatastart < maploader->MapThingsUserData.Size())
 				{ // User data added
-					maploader->MapThingsUserDataIndex[MapThingsConverted.Size()-1] = userdatastart;
+					maploader->MapThingsUserDataIndex[maploader->MapThingsConverted.Size()-1] = userdatastart;
 					// Mark end of the user data for this map thing
 					FUDMFKey ukey;
 					ukey.Key = NAME_None;

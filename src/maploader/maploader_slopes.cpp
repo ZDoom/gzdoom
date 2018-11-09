@@ -279,7 +279,6 @@ void MapLoader::VavoomSlope(sector_t * sec, int id, const DVector3 &pos, int whi
 void MapLoader::SetSlopesFromVertexHeights()
 {
 	TMap<int, double> vt_heights[2];
-	FMapThing *mt;
 	bool vt_found = false;
 
     for (unsigned i=0;i<MapThingsConverted.Size(); i++)

@@ -73,6 +73,7 @@ namespace swrenderer
 
 		FVector3 gpos = { 0.0f, 0.0f, 0.0f }; // origin in world coordinates
 		sector_t *sector = nullptr; // sector this sprite is in
+		FSection *section;
 
 		ColormapLight Light;
 		float Alpha = 0.0f;

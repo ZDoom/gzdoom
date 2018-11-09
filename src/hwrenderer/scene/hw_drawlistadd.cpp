@@ -116,7 +116,7 @@ void HWDrawInfo::AddFlat(GLFlat *flat, bool fog)
 			list = GLDL_PLAINFLATS;
 		}
 	}
-	else
+	else //if (flat->hacktype != SSRF_FLOODHACK) // The flood hack may later need different treatment but with the current setup can go into the existing render list.
 	{
 		bool masked = flat->gltexture->isMasked() && ((flat->renderflags&SSRF_RENDER3DPLANES) || flat->stack);
 		list = masked ? GLDL_MASKEDFLATS : GLDL_PLAINFLATS;

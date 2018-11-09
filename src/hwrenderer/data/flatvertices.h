@@ -25,6 +25,7 @@
 
 #include "tarray.h"
 #include "hwrenderer/data/buffers.h"
+#include "hw_vertexbuilder.h"
 #include <atomic>
 #include <mutex>
 
@@ -61,31 +62,6 @@ class FFlatVertexBuffer
 
 	static const unsigned int BUFFER_SIZE = 2000000;
 	static const unsigned int BUFFER_SIZE_TO_USE = 1999500;
-
-
-	// Temporary data for creating an indexed buffer
-	struct FIndexGenerationInfo
-	{
-		TArray<vertex_t *> vertices;
-		TMap<vertex_t*, uint32_t> vertexmap;
-
-		uint32_t AddVertex(vertex_t *vert)
-		{
-			auto check = vertexmap.CheckKey(vert);
-			if (check != nullptr) return *check;
-			auto index = vertices.Push(vert);
-			vertexmap[vert] = index;
-			return index;
-		}
-
-		uint32_t GetIndex(vertex_t *vert)
-		{
-			auto check = vertexmap.CheckKey(vert);
-			if (check != nullptr) return *check;
-			return ~0;
-		}
-	};
-
 
 public:
 	enum
@@ -140,9 +116,9 @@ public:
 	}
 
 private:
-	int CreateIndexedSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor, int vi, FIndexGenerationInfo &gen);
-	int CreateIndexedSectorVertices(sector_t *sec, const secplane_t &plane, int floor, FIndexGenerationInfo &gen);
-	int CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, TArray<FIndexGenerationInfo> &gen);
+	int CreateIndexedSectionVertices(subsector_t *sub, const secplane_t &plane, int floor, VertexContainer &cont);
+	int CreateIndexedSectorVertices(sector_t *sec, const secplane_t &plane, int floor, VertexContainer &cont);
+	int CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, VertexContainers &cont);
 	void CreateIndexedFlatVertices();
 
 	void UpdatePlaneVertices(sector_t *sec, int plane);

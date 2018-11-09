@@ -155,6 +155,7 @@ void HWDrawInfo::WorkerThread()
 		{
 			GLFlat flat;
 			SetupFlat.Clock();
+			flat.section = job->sub->section;
 			front = hw_FakeFlat(job->sub->render_sector, &fakefront, in_area, false);
 			flat.ProcessSector(this, front);
 			SetupFlat.Unclock();
@@ -679,7 +680,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 					fakesector = hw_FakeFlat(sector, &fake, in_area, false);
 				}
 
-				uint8_t &srf = sectorrenderflags[sub->render_sector->sectornum];
+				uint8_t &srf = section_renderflags[level.sections.SectionIndex(sub->section)];
 				if (!(srf & SSRF_PROCESSED))
 				{
 					srf |= SSRF_PROCESSED;
@@ -691,6 +692,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 					else
 					{
 						GLFlat flat;
+						flat.section = sub->section;
 						SetupFlat.Clock();
 						flat.ProcessSector(this, fakesector);
 						SetupFlat.Unclock();
@@ -701,6 +703,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 					(sub->numlines > 2) ? SSRF_PROCESSED|SSRF_RENDERALL : SSRF_PROCESSED;
 				if (sub->hacked & 1) AddHackedSubsector(sub);
 
+				// This is for portal coverage.
 				FSectorPortalGroup *portal;
 
 				portal = fakesector->GetPortalGroup(sector_t::ceiling);

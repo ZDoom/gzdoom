@@ -202,6 +202,7 @@ namespace swrenderer
 		// killough 3/27/98: save sector for special clipping later
 		vis->heightsec = heightsec;
 		vis->sector = thing->Sector;
+		vis->section = thing->section;
 
 		vis->depth = (float)tz;
 		vis->gpos = { (float)pos.X, (float)pos.Y, (float)pos.Z };
@@ -251,7 +252,7 @@ namespace swrenderer
 			float lit_red = 0;
 			float lit_green = 0;
 			float lit_blue = 0;
-			auto node = vis->sector->lighthead;
+			auto node = vis->section->lighthead;
 			while (node != nullptr)
 			{
 				ADynamicLight *light = node->lightsource;

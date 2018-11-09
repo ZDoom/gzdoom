@@ -1122,7 +1122,8 @@ enum EPuffFlags
 	PF_MELEERANGE = 2,
 	PF_TEMPORARY = 4,
 	PF_HITTHINGBLEED = 8,
-	PF_NORANDOMZ = 16
+	PF_NORANDOMZ = 16,
+	PF_HITSKY = 32
 };
 
 enum EPlayerCheats

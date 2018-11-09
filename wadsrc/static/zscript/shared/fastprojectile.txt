@@ -148,6 +148,7 @@ class FastProjectile : Actor
 
 					SetZ(floorz);
 					HitFloor ();
+                    Destructible.ProjectileHitPlane(self, SECPART_Floor);
 					ExplodeMissile (NULL, NULL);
 					return;
 				}
@@ -161,6 +162,7 @@ class FastProjectile : Actor
 					}
 
 					SetZ(ceilingz - Height);
+                    Destructible.ProjectileHitPlane(self, SECPART_Ceiling);
 					ExplodeMissile (NULL, NULL);
 					return;
 				}

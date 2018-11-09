@@ -275,7 +275,7 @@ void RenderPolyPlane::SetDynLights(PolyRenderThread *thread, PolyDrawArgs &args,
 		return;
 	}
 
-	FLightNode *light_list = sub->lighthead;
+	FLightNode *light_list = sub->section->lighthead;
 
 	auto cameraLight = PolyCameraLight::Instance();
 	if ((cameraLight->FixedLightLevel() >= 0) || (cameraLight->FixedColormap() != nullptr))

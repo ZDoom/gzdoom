@@ -180,6 +180,9 @@ struct Line native play
 	{
 		return Level.GetUDMFString(LevelLocals.UDMF_Line, Index(), nm);
 	}
+
+    native clearscope int GetHealth();
+    native void SetHealth(int newhealth);
 }
 
 struct SecPlane native play
@@ -479,6 +482,8 @@ struct Sector native play
 		return Level.GetUDMFString(LevelLocals.UDMF_Sector, Index(), nm);
 	}
 	 
+    native clearscope int GetHealth(SectorPart part);
+    native void SetHealth(SectorPart part, int newhealth);
 }
 
 class SectorTagIterator : Object native

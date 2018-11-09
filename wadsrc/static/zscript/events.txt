@@ -19,7 +19,7 @@ struct WorldEvent native play version("2.4")
     native readonly Actor Thing;
     // for thingdied. can be null
     native readonly Actor Inflictor;
-    // for thingdamaged.
+    // for thingdamaged, line/sector damaged
     native readonly int Damage;
     native readonly Actor DamageSource;
     native readonly Name DamageType;
@@ -29,6 +29,14 @@ struct WorldEvent native play version("2.4")
     native readonly Line ActivatedLine;
 	native readonly int ActivationType;
     native bool ShouldActivate;
+    // for line/sector damaged
+    native readonly SectorPart DamageSectorPart;
+    native readonly Line DamageLine;
+    native readonly Sector DamageSector;
+    native readonly int DamageLineSide;
+    native readonly vector3 DamagePosition;
+    native readonly bool DamageIsRadius;
+    native int NewDamage;
 }
 
 struct PlayerEvent native play version("2.4")
@@ -313,6 +321,8 @@ class StaticEventHandler : Object native play version("2.4")
     virtual native void WorldThingDestroyed(WorldEvent e);
     virtual native void WorldLinePreActivated(WorldEvent e);
     virtual native void WorldLineActivated(WorldEvent e);
+    virtual native void WorldSectorDamaged(WorldEvent e);
+    virtual native void WorldLineDamaged(WorldEvent e);
     virtual native void WorldLightning(WorldEvent e); // for the sake of completeness.
     virtual native void WorldTick();
 

@@ -3522,6 +3522,12 @@ FUNC(LS_Sector_SetHealth)
 			if (sector->healthfloorgroup)
 				P_SetHealthGroupHealth(sector->healthfloorgroup, arg2);
 		}
+		else if (arg1 == SECPART_3D)
+		{
+			sector->health3d = arg2;
+			if (sector->health3dgroup)
+				P_SetHealthGroupHealth(sector->health3dgroup, arg2);
+		}
 	}
 	return true;
 }

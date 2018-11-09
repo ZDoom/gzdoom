@@ -184,6 +184,14 @@ public:
 		return mReader->Read(buffer, (long)len);
 	}
 
+	TArray<uint8_t> Read()
+	{
+		TArray<uint8_t> buffer(mReader->Length, true);
+		Size length = mReader->Read(&buffer[0], mReader->Length);
+		if (length < mReader->Length) buffer.Clear();
+		return buffer;
+	}
+
 	char *Gets(char *strbuf, Size len)
 	{
 		return mReader->Gets(strbuf, (int)len);

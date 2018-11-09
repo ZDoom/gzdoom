@@ -96,6 +96,11 @@ FSkyVertexBuffer::FSkyVertexBuffer()
 	mVertexBuffer->SetData(mVertices.Size() * sizeof(FSkyVertex), &mVertices[0], true);
 }
 
+FSkyVertexBuffer::~FSkyVertexBuffer()
+{
+	delete mVertexBuffer;
+}
+
 //-----------------------------------------------------------------------------
 //
 //

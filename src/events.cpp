@@ -416,6 +416,20 @@ void E_WorldLineActivated(line_t* line, AActor* actor, int activationType)
 		handler->WorldLineActivated(line, actor, activationType);
 }
 
+int E_WorldSectorDamaged(sector_t* sector, AActor* source, int damage, FName damagetype, int part, DVector3 position, bool isradius)
+{
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		damage = handler->WorldSectorDamaged(sector, source, damage, damagetype, part, position, isradius);
+	return damage;
+}
+
+int E_WorldLineDamaged(line_t* line, AActor* source, int damage, FName damagetype, int side, DVector3 position, bool isradius)
+{
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		damage = handler->WorldLineDamaged(line, source, damage, damagetype, side, position, isradius);
+	return damage;
+}
+
 void E_PlayerEntered(int num, bool fromhub)
 {
 	// this event can happen during savegamerestore. make sure that local handlers don't receive it.
@@ -570,6 +584,13 @@ DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamageAngle);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, ActivatedLine);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, ActivationType);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, ShouldActivate);
+DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamageSectorPart);
+DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamageLine);
+DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamageSector);
+DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamageLineSide);
+DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamagePosition);
+DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamageIsRadius);
+DEFINE_FIELD_X(WorldEvent, FWorldEvent, NewDamage);
 
 DEFINE_FIELD_X(PlayerEvent, FPlayerEvent, PlayerNumber);
 DEFINE_FIELD_X(PlayerEvent, FPlayerEvent, IsReturn);
@@ -662,6 +683,8 @@ DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDamaged)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDestroyed)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLinePreActivated)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLineActivated)
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldSectorDamaged);
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLineDamaged);
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLightning)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldTick)
 
@@ -859,6 +882,54 @@ void DStaticEventHandler::WorldLineActivated(line_t* line, AActor* actor, int ac
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
 	}
+}
+
+int DStaticEventHandler::WorldSectorDamaged(sector_t* sector, AActor* source, int damage, FName damagetype, int part, DVector3 position, bool isradius)
+{
+	IFVIRTUAL(DStaticEventHandler, WorldSectorDamaged)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_WorldSectorDamaged_VMPtr)
+			return damage;
+		FWorldEvent e = E_SetupWorldEvent();
+		e.DamageSource = source;
+		e.DamageSector = sector;
+		e.NewDamage = e.Damage = damage;
+		e.DamageType = damagetype;
+		e.DamageSectorPart = part;
+		e.DamagePosition = position;
+		e.DamageIsRadius = isradius;
+
+		VMValue params[2] = { (DStaticEventHandler*)this, &e };
+		VMCall(func, params, 2, nullptr, 0);
+		return e.NewDamage;
+	}
+
+	return damage;
+}
+
+int DStaticEventHandler::WorldLineDamaged(line_t* line, AActor* source, int damage, FName damagetype, int side, DVector3 position, bool isradius)
+{
+	IFVIRTUAL(DStaticEventHandler, WorldLineDamaged)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_WorldLineDamaged_VMPtr)
+			return damage;
+		FWorldEvent e = E_SetupWorldEvent();
+		e.DamageSource = source;
+		e.DamageLine = line;
+		e.NewDamage = e.Damage = damage;
+		e.DamageType = damagetype;
+		e.DamageLineSide = side;
+		e.DamagePosition = position;
+		e.DamageIsRadius = isradius;
+
+		VMValue params[2] = { (DStaticEventHandler*)this, &e };
+		VMCall(func, params, 2, nullptr, 0);
+		return e.NewDamage;
+	}
+
+	return damage;
 }
 
 void DStaticEventHandler::WorldLightning()

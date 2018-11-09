@@ -503,6 +503,7 @@ enum ETraceFlags
 	TRACE_PortalRestrict	= 0x0008,	// Cannot go through portals without a static link offset.
 	TRACE_ReportPortals	= 0x0010,	// Report any portal crossing to the TraceCallback
 	//TRACE_3DCallback	= 0x0020,	// [ZZ] use TraceCallback to determine whether we need to go through a line to do 3D floor check, or not. without this, only line flag mask is used
+	TRACE_HitSky		= 0x0040	// Hitting the sky returns TRACE_HasHitSky
 }
 
 
@@ -513,7 +514,8 @@ enum ETraceResult
 	TRACE_HitCeiling,
 	TRACE_HitWall,
 	TRACE_HitActor,
-	TRACE_CrossingPortal
+	TRACE_CrossingPortal,
+	TRACE_HasHitSky
 }
 
 enum ELineTier
@@ -667,6 +669,8 @@ struct LevelLocals native
 	native bool IsJumpingAllowed() const;
 	native bool IsCrouchingAllowed() const;
 	native bool IsFreelookAllowed() const;
+
+	native static clearscope bool IsPointInMap(vector3 p);
 
 	native static clearscope vector2 Vec2Diff(vector2 v1, vector2 v2);
 	native static clearscope vector3 Vec3Diff(vector3 v1, vector3 v2);

@@ -3642,7 +3642,8 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 		|| ((BlockingMobj->player == NULL) && (!(BlockingMobj->flags3 & MF3_ISMONSTER)))))
 	{
 		// Rippers should not bounce off shootable actors, since they rip through them.
-		if ((mo->flags & MF_MISSILE) && (mo->flags2 & MF2_RIP) && BlockingMobj->flags & MF_SHOOTABLE)
+		if ((mo->flags & MF_MISSILE) && (mo->flags2 & MF2_RIP) && BlockingMobj->flags & MF_SHOOTABLE
+			&& !(mo->BounceFlags & BOUNCE_BounceOnUnrips && BlockingMobj->flags5 & MF5_DONTRIP))
 			return true;
 
 		if (BlockingMobj->flags & MF_SHOOTABLE && mo->BounceFlags & BOUNCE_NotOnShootables)

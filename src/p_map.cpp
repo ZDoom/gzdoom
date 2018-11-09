@@ -1809,6 +1809,10 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 	tm.abovemidtex = false;
 	validcount++;
 
+	// Remove all old entries before returning.
+	spechit.Clear();
+	portalhit.Clear();
+
 	if ((thing->flags & MF_NOCLIP) && !(thing->flags & MF_SKULLFLY))
 		return true;
 
@@ -1886,13 +1890,15 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 	// being considered for collision with the player.
 	validcount++;
 
+	// Clear out any residual garbage left behind by PIT_CheckThing induced recursions etc.
+	spechit.Clear();
+	portalhit.Clear();
+
 	thing->BlockingMobj = NULL;
 	thing->Height = realHeight;
 	if (actorsonly || (thing->flags & MF_NOCLIP))
 		return (thing->BlockingMobj = thingblocker) == NULL;
 
-	spechit.Clear();
-	portalhit.Clear();
 
 	FMultiBlockLinesIterator it(pcheck, pos.X, pos.Y, thing->Z(), thing->Height, thing->radius, newsec);
 	FMultiBlockLinesIterator::CheckResult lcres;

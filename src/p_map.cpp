@@ -1697,6 +1697,28 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	// return !(thing->flags & MF_SOLID);	// old code -- killough
 }
 
+//==========================================================================
+//
+// P_CheckBlockingFloorCeiling
+// Sets BlockingFloor, BlockingCeiling and Blocking3DFloor fields if needed
+//
+//==========================================================================
+
+static void P_CheckBlockingFloorCeiling(AActor* thing, FCheckPosition& tm)
+{
+	if (!thing->BlockingLine && !thing->BlockingMobj) // hit floor or ceiling
+	{
+		thing->BlockingCeiling = nullptr;
+		thing->BlockingFloor = nullptr;
+
+		if (tm.ceilingsector && thing->Z() + thing->Height > tm.ceilingsector->ceilingplane.ZatPoint(tm.pos.XY()))
+			thing->BlockingCeiling = tm.ceilingsector;
+		if (tm.floorsector && thing->Z() < tm.floorsector->floorplane.ZatPoint(tm.pos.XY()))
+			thing->BlockingFloor = tm.floorsector;
+		P_CheckFor3DFloorHit(thing, thing->floorz, false);
+		P_CheckFor3DCeilingHit(thing, thing->ceilingz, false);
+	}
+}
 
 
 /*
@@ -1928,12 +1950,15 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 			}
 		}
 	}
+
 	if (!good)
 	{
+		P_CheckBlockingFloorCeiling(thing, tm);
 		return false;
 	}
 	if (tm.ceilingz - tm.floorz < thing->Height)
 	{
+		P_CheckBlockingFloorCeiling(thing, tm);
 		return false;
 	}
 	if (tm.touchmidtex)
@@ -2731,6 +2756,8 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 
 pushline:
 	thing->flags6 &= ~MF6_INTRYMOVE;
+
+	P_CheckBlockingFloorCeiling(thing, tm);
 
 	// [RH] Don't activate anything if just predicting
 	if (thing->player && (thing->player->cheats & CF_PREDICTING))

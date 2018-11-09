@@ -2553,21 +2553,6 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 			AActor *BlockingMobj = mo->BlockingMobj;
 			line_t *BlockingLine = mo->BlockingLine;
 
-			// [ZZ] 
-			if (!BlockingLine && !BlockingMobj) // hit floor or ceiling while XY movement - sector actions
-			{
-				int hitpart = -1;
-				sector_t* hitsector = nullptr;
-				secplane_t* hitplane = nullptr;
-				if (tm.ceilingsector && mo->Z() + mo->Height > tm.ceilingsector->ceilingplane.ZatPoint(tm.pos.XY()))
-					mo->BlockingCeiling = tm.ceilingsector;
-				if (tm.floorsector && mo->Z() < tm.floorsector->floorplane.ZatPoint(tm.pos.XY()))
-					mo->BlockingFloor = tm.floorsector;
-				// the following two only set the appropriate field - to avoid issues caused by running actions right in the middle of XY movement
-				P_CheckFor3DFloorHit(mo, mo->floorz, false);
-				P_CheckFor3DCeilingHit(mo, mo->ceilingz, false);
-			}
-
 			if (!(mo->flags & MF_MISSILE) && (mo->BounceFlags & BOUNCE_MBF) 
 				&& (BlockingMobj != NULL ? P_BounceActor(mo, BlockingMobj, false) : P_BounceWall(mo)))
 			{

@@ -128,6 +128,12 @@ class FastProjectile : Actor
 							}
 						}
 
+						if (!BlockingLine && !BlockingMobj)
+						{
+							if (BlockingFloor) Destructible.ProjectileHitPlane(self, SECPART_Floor);
+							if (BlockingCeiling) Destructible.ProjectileHitPlane(self, SECPART_Ceiling);
+						}
+
 						ExplodeMissile (BlockingLine, BlockingMobj);
 						return;
 					}
@@ -148,7 +154,7 @@ class FastProjectile : Actor
 
 					SetZ(floorz);
 					HitFloor ();
-                    Destructible.ProjectileHitPlane(self, SECPART_Floor);
+					Destructible.ProjectileHitPlane(self, SECPART_Floor);
 					ExplodeMissile (NULL, NULL);
 					return;
 				}
@@ -162,7 +168,7 @@ class FastProjectile : Actor
 					}
 
 					SetZ(ceilingz - Height);
-                    Destructible.ProjectileHitPlane(self, SECPART_Ceiling);
+					Destructible.ProjectileHitPlane(self, SECPART_Ceiling);
 					ExplodeMissile (NULL, NULL);
 					return;
 				}

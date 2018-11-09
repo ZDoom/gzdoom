@@ -793,7 +793,7 @@ public:
 					FUDMFKey ukey;
 					ukey.Key = key;
 					ReadUserKey(ukey);
-					MapThingsUserData.Push(ukey);
+					maploader->MapThingsUserData.Push(ukey);
 				}
 				break;
 			}
@@ -2132,17 +2132,17 @@ public:
 			if (sc.Compare("thing"))
 			{
 				FMapThing th;
-				unsigned userdatastart = MapThingsUserData.Size();
+				unsigned userdatastart = maploader->MapThingsUserData.Size();
 				ParseThing(&th);
 				MapThingsConverted.Push(th);
-				if (userdatastart < MapThingsUserData.Size())
+				if (userdatastart < maploader->MapThingsUserData.Size())
 				{ // User data added
-					MapThingsUserDataIndex[MapThingsConverted.Size()-1] = userdatastart;
+					maploader->MapThingsUserDataIndex[MapThingsConverted.Size()-1] = userdatastart;
 					// Mark end of the user data for this map thing
 					FUDMFKey ukey;
 					ukey.Key = NAME_None;
 					ukey = 0;
-					MapThingsUserData.Push(ukey);
+					maploader->MapThingsUserData.Push(ukey);
 				}
 			}
 			else if (sc.Compare("linedef"))

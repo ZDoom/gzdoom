@@ -55,6 +55,12 @@ public:
     TArray<node_t> &gamenodes;
 	TArray<line_t*>linebuffer;
 	FBlockmap &blockmap;
+    TArray<uint8_t> &rejectmatrix;
+	TArray<zone_t>	&Zones;
+
+    TMap<unsigned,unsigned>  MapThingsUserDataIndex;    // from mapthing idx -> user data idx
+    TArray<FUDMFKey> MapThingsUserData;
+    TArray<FMapThing> MapThingsConverted;
 
     const int *oldvertextable = nullptr;
     int firstglvertex = -1;
@@ -119,8 +125,8 @@ public:
 	void CopyPlane (int tag, const DVector2 &pos, bool copyCeil);
 	void SetSlope (secplane_t *plane, bool setCeil, int xyangi, int zangi, const DVector3 &pos);
 	void VavoomSlope(sector_t * sec, int id, const DVector3 &pos, int which);
-	void SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, const int *oldvertextable);
-	void SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldvertextable);
+	void SetSlopesFromVertexHeights();
+	void SpawnSlopeMakers ();
 	void AlignPlane(sector_t *sec, line_t *line, int which);
 	void SetSlopes ();
 	void CopySlopes();
@@ -138,7 +144,9 @@ public:
 		gamesubsectors(store.gamesubsectors),
 		gamenodes(store.gamenodes),
 		linebuffer(store.linebuffer),
-		blockmap(store.blockmap)
+		blockmap(store.blockmap),
+		rejectmatrix(store.rejectmatrix),
+		Zones(store.Zones)
 	{
 		tagManager = tm;
 	}
@@ -156,8 +164,17 @@ public:
     void LoadSideDefs2 (MapData *map, FMissingTextureTracker &missingtex);
     void LoopSidedefs (bool firstloop);
 	void GroupLines(bool buildmap);
+    void LoadThings (MapData * map);
+    void LoadThings2 (MapData * map);
 
 	bool LoadBsp(MapData *map);
+    void LoadReject (MapData * map);
+	void FloodZone (sector_t *sec, int zonenum);
+	void FloodZones ();
+	void SummarizeMissingTextures(const FMissingTextureTracker &missing);
+	void SetRenderSector();
+	void FixMinisegReferences();
+	void FixHoles();
 
     void ParseTextMap(MapData *map, FMissingTextureTracker &missingtex);
 

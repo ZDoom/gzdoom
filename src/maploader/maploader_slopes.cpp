@@ -276,14 +276,15 @@ void MapLoader::VavoomSlope(sector_t * sec, int id, const DVector3 &pos, int whi
 //
 //==========================================================================
 
-void MapLoader::SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, const int *oldvertextable)
+void MapLoader::SetSlopesFromVertexHeights()
 {
 	TMap<int, double> vt_heights[2];
 	FMapThing *mt;
 	bool vt_found = false;
 
-	for (mt = firstmt; mt < lastmt; ++mt)
-	{
+    for (unsigned i=0;i<MapThingsConverted.Size(); i++)
+    {
+        auto mt = &MapThingsConverted[i];
 		if (mt->info != nullptr && mt->info->Type == nullptr)
 		{
 			if (mt->info->Special == SMT_VertexFloorZ || mt->info->Special == SMT_VertexCeilingZ)
@@ -401,12 +402,11 @@ void MapLoader::SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt
 //
 //===========================================================================
 
-void MapLoader::SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldvertextable)
+void MapLoader::SpawnSlopeMakers ()
 {
-	FMapThing *mt;
-
-	for (mt = firstmt; mt < lastmt; ++mt)
+    for (unsigned i=0;i<MapThingsConverted.Size(); i++)
 	{
+        auto mt = &MapThingsConverted[i];
 		if (mt->info != nullptr && mt->info->Type == nullptr &&
 		   (mt->info->Special >= SMT_SlopeFloorPointLine && mt->info->Special <= SMT_VavoomCeiling))
 		{
@@ -444,8 +444,9 @@ void MapLoader::SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const i
 		}
 	}
 
-	for (mt = firstmt; mt < lastmt; ++mt)
-	{
+    for (unsigned i=0;i<MapThingsConverted.Size(); i++)
+    {
+        auto mt = &MapThingsConverted[i];
 		if (mt->info != nullptr && mt->info->Type == nullptr &&
 			(mt->info->Special == SMT_CopyFloorPlane || mt->info->Special == SMT_CopyCeilingPlane))
 		{
@@ -454,7 +455,7 @@ void MapLoader::SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const i
 		}
 	}
 
-	SetSlopesFromVertexHeights(firstmt, lastmt, oldvertextable);
+	SetSlopesFromVertexHeights();
 }
 
 

@@ -56,16 +56,10 @@ int P_TranslateSectorSpecial (int);
 int GetUDMFInt(int type, int index, FName key);
 double GetUDMFFloat(int type, int index, FName key);
 
-void P_SetRenderSector();
-void FixMinisegReferences();
-void FixHoles();
 void ReportUnpairedMinisegs();
 
 
 extern bool hasglnodes;
-
-extern TMap<unsigned,unsigned> MapThingsUserDataIndex;	// from mapthing idx -> user data idx
-extern TArray<FUDMFKey> MapThingsUserData;
 
 
 #endif

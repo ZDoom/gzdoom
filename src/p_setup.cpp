@@ -116,7 +116,6 @@ void BloodCrypt (void *data, int key, int len);
 void P_ClearUDMFKeys();
 void InitRenderInfo();
 
-extern AActor *P_SpawnMapThing (FMapThing *mthing, int position);
 
 extern void P_TranslateTeleportThings (void);
 
@@ -140,6 +139,8 @@ inline bool P_LoadBuildMap(uint8_t *mapdata, size_t len, FMapThing **things, int
 	return false;
 }
 
+void P_SpawnThings (TArray<FMapThing> &MapThingsConverted, TArray<FUDMFKey> &MapThingsUserData, TMap<unsigned,unsigned>  &MapThingsUserDataIndex, int position);
+
 
 //
 // MAP related Lookup tables.
@@ -149,163 +150,7 @@ TArray<vertexdata_t> vertexdatas;
 
 bool			hasglnodes;
 
-TArray<FMapThing> MapThingsConverted;
-TMap<unsigned,unsigned>  MapThingsUserDataIndex;	// from mapthing idx -> user data idx
-TArray<FUDMFKey> MapThingsUserData;
-
 static void P_AllocateSideDefs (MapData *map, int count);
-
-//===========================================================================
-//
-// SummarizeMissingTextures
-//
-// Lists textures that were missing more than MISSING_TEXTURE_WARN_LIMIT
-// times.
-//
-//===========================================================================
-
-static void SummarizeMissingTextures(const FMissingTextureTracker &missing)
-{
-	FMissingTextureTracker::ConstIterator it(missing);
-	FMissingTextureTracker::ConstPair *pair;
-
-	while (it.NextPair(pair))
-	{
-		if (pair->Value.Count > MISSING_TEXTURE_WARN_LIMIT)
-		{
-			Printf(TEXTCOLOR_RED "Missing texture '"
-				TEXTCOLOR_ORANGE "%s" TEXTCOLOR_RED
-				"' is used %d more times\n",
-				pair->Key.GetChars(), pair->Value.Count - MISSING_TEXTURE_WARN_LIMIT);
-		}
-	}
-}
-
-//===========================================================================
-//
-// Sound enviroment handling
-//
-//===========================================================================
-
-void P_FloodZone (sector_t *sec, int zonenum)
-{
-	if (sec->ZoneNumber == zonenum)
-		return;
-
-	sec->ZoneNumber = zonenum;
-
-	for (auto check : sec->Lines)
-	{
-		sector_t *other;
-
-		if (check->sidedef[1] == NULL || (check->flags & ML_ZONEBOUNDARY))
-				continue;
-
-		if (check->frontsector == sec)
-		{
-			assert(check->backsector != NULL);
-			other = check->backsector;
-		}
-		else
-		{
-			assert(check->frontsector != NULL);
-			other = check->frontsector;
-		}
-
-		if (other->ZoneNumber != zonenum)
-			P_FloodZone (other, zonenum);
-	}
-}
-
-void P_FloodZones ()
-{
-	int z = 0, i;
-	ReverbContainer *reverb;
-
-	for (auto &sec : level.sectors)
-	{
-		if (sec.ZoneNumber == 0xFFFF)
-		{
-			P_FloodZone (&sec, z++);
-		}
-	}
-	level.Zones.Resize(z);
-	reverb = S_FindEnvironment(level.DefaultEnvironment);
-	if (reverb == NULL)
-	{
-		Printf("Sound environment %d, %d not found\n", level.DefaultEnvironment >> 8, level.DefaultEnvironment & 255);
-		reverb = DefaultEnvironments[0];
-	}
-	for (i = 0; i < z; ++i)
-	{
-		level.Zones[i].Environment = reverb;
-	}
-}
-
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-void P_LoadReject (MapData * map, bool junk)
-{
-	const int neededsize = (level.sectors.Size() * level.sectors.Size() + 7) >> 3;
-	int rejectsize;
-
-	if (!map->CheckName(ML_REJECT, "REJECT"))
-	{
-		rejectsize = 0;
-	}
-	else
-	{
-		rejectsize = junk ? 0 : map->Size(ML_REJECT);
-	}
-
-	if (rejectsize < neededsize)
-	{
-		if (rejectsize > 0)
-		{
-			Printf ("REJECT is %d byte%s too small.\n", neededsize - rejectsize,
-				neededsize-rejectsize==1?"":"s");
-		}
-		level.rejectmatrix.Reset();
-	}
-	else
-	{
-		// Check if the reject has some actual content. If not, free it.
-		rejectsize = MIN (rejectsize, neededsize);
-		level.rejectmatrix.Alloc(rejectsize);
-
-		map->Read (ML_REJECT, &level.rejectmatrix[0], rejectsize);
-
-		int qwords = rejectsize / 8;
-		int i;
-
-		if (qwords > 0)
-		{
-			const uint64_t *qreject = (const uint64_t *)&level.rejectmatrix[0];
-
-			i = 0;
-			do
-			{
-				if (qreject[i] != 0)
-					return;
-			} while (++i < qwords);
-		}
-		rejectsize &= 7;
-		qwords *= 8;
-		for (i = 0; i < rejectsize; ++i)
-		{
-			if (level.rejectmatrix[qwords + i] != 0)
-				return;
-		}
-
-		// Reject has no data, so pretend it isn't there.
-		level.rejectmatrix.Reset();
-	}
-}
 
 //===========================================================================
 //
@@ -439,9 +284,6 @@ void P_FreeLevelData ()
 
 	// [ZZ] delete per-map event handlers
 	E_Shutdown(true);
-	MapThingsConverted.Clear();
-	MapThingsUserDataIndex.Clear();
-	MapThingsUserData.Clear();
 	FCanvasTextureInfo::EmptyList();
 	R_FreePastViewers();
 	P_ClearUDMFKeys();
@@ -569,12 +411,7 @@ void P_FreeExtraLevelData()
 void P_SetupLevel (const char *lumpname, int position, bool newGame)
 {
 	cycle_t times[20];
-#if 0
-	FMapThing *buildthings;
-	int numbuildthings;
-#endif
 	int i;
-	bool buildmap;
 
 	level.ShaderStartTime = I_msTimeFS(); // indicate to the shader system that the level just started
 
@@ -672,10 +509,6 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 	}
 	
 
-	// ----------------------------------------->
-    MapLoader maploader(level, &tagManager);
-	maploader.maptype = level.maptype;
-	maploader.ForceNodeBuild = gennodes;
 
 	// note: most of this ordering is important 
 
@@ -713,10 +546,7 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 		level.maptype = MAPTYPE_UDMF;
 	}
 	FName checksum = CheckCompatibility(map);
-	if (ib_compatflags & BCOMPATF_REBUILDNODES)
-	{
-		maploader.ForceNodeBuild = true;
-	}
+    
 	T_LoadScripts(map);
 
 
@@ -727,6 +557,18 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 
 
 	P_LoadStrifeConversations (map, lumpname);
+    
+    // ----------------------------------------->
+
+    MapLoader maploader(level, &tagManager);
+    maploader.maptype = level.maptype;
+    maploader.ForceNodeBuild = gennodes;
+    
+    if (ib_compatflags & BCOMPATF_REBUILDNODES)
+    {
+        maploader.ForceNodeBuild = true;
+    }
+
 
 	FMissingTextureTracker missingtex;
 
@@ -745,9 +587,9 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 		maploader.FinishLoadingLineDefs ();
 
 		if (!map->HasBehavior)
-			P_LoadThings (map);
+			maploader.LoadThings (map);
 		else
-			P_LoadThings2 (map);	// [RH] Load Hexen-style things
+			maploader.LoadThings2 (map);	// [RH] Load Hexen-style things
 	}
 	else
 	{
@@ -759,33 +601,32 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 
 	maploader.LoopSidedefs (true);
 
-	SummarizeMissingTextures(missingtex);
-	bool reloop = false;
+    maploader.SummarizeMissingTextures(missingtex);
 
-    maploader.LoadBsp(map);
-
-	// set the head node for gameplay purposes. If the separate gamenodes array is not empty, use that, otherwise use the render nodes.
-	level.headgamenode = level.gamenodes.Size() > 0 ? &level.gamenodes[level.gamenodes.Size() - 1] : level.nodes.Size()? &level.nodes[level.nodes.Size() - 1] : nullptr;
+    bool reloop = maploader.LoadBsp(map);
 
 	maploader.LoadBlockMap (map);
 
-	P_LoadReject (map, buildmap);
+	maploader.LoadReject (map);
 
-	maploader.GroupLines (buildmap);
+	maploader.GroupLines (false);
 	maploader.SetSlopes();
 
-	P_FloodZones ();
+	maploader.FloodZones ();
 
-	P_SetRenderSector();
-	FixMinisegReferences();
-	FixHoles();
+	maploader.SetRenderSector();
+	maploader.FixMinisegReferences();
+	maploader.FixHoles();
 
 
 	// [RH] Spawn slope creating things first.
-	maploader.SpawnSlopeMakers (&MapThingsConverted[0], &MapThingsConverted[MapThingsConverted.Size()], maploader.oldvertextable);
+	maploader.SpawnSlopeMakers();
 	maploader.CopySlopes();
 	
 	//////////////////////// <-------------------------------------
+
+    // set the head node for gameplay purposes. If the separate gamenodes array is not empty, use that, otherwise use the render nodes.
+    level.headgamenode = level.gamenodes.Size() > 0 ? &level.gamenodes[level.gamenodes.Size() - 1] : level.nodes.Size()? &level.nodes[level.nodes.Size() - 1] : nullptr;
 
 	// phares 8/10/98: Clear body queue so the corpses from previous games are
 	// not assumed to be from this one.
@@ -799,7 +640,7 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 	P_Spawn3DFloors();
 
 	times[14].Clock();
-	P_SpawnThings(position);
+	P_SpawnThings(maploader.MapThingsConverted, maploader.MapThingsUserData, maploader.MapThingsUserDataIndex, position);
 
 	for (i = 0; i < MAXPLAYERS; ++i)
 	{
@@ -953,6 +794,7 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 	P_ResetSightCounters (true);
 	//Printf ("free memory: 0x%x\n", Z_FreeMemory());
 
+    /*
 	if (showloadtimes)
 	{
 		Printf ("---Total load times---\n");
@@ -982,10 +824,8 @@ void P_SetupLevel (const char *lumpname, int position, bool newGame)
 			Printf ("Time%3d:%9.4f ms (%s)\n", i, times[i].TimeMS(), timenames[i]);
 		}
 	}
-	MapThingsConverted.Clear();
-	MapThingsUserDataIndex.Clear();
-	MapThingsUserData.Clear();
-
+     */
+    
 	// Create a backup of the map data so the savegame code can toss out all fields that haven't changed in order to reduce processing time and file size.
 	// Note that we want binary identity here, so assignment is not sufficient because it won't initialize any padding bytes.
 	// Note that none of these structures may contain non POD fields anyway.

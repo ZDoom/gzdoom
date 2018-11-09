@@ -96,6 +96,7 @@ struct FLevelLocals
 	TArray<FSectorPortalGroup *> portalGroups;	
 	TArray<FLinePortalSpan> linePortalSpans;
 	FSectionContainer sections;
+    
 
 	int NumMapSections;
 

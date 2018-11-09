@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 //
 // Copyright 1993-1996 id Software
 // Copyright 1994-1996 Raven Software
@@ -98,6 +98,8 @@
 #include "events.h"
 #include "actorinlines.h"
 #include "a_dynlight.h"
+#include "fragglescript/t_fs.h"
+#include "types.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -5791,13 +5793,14 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 }
 
 
+
 //
 // P_SpawnMapThing
 // The fields of the mapthing should
 // already be in host byte order.
 //
 // [RH] position is used to weed out unwanted start spots
-AActor *P_SpawnMapThing (FMapThing *mthing, int position)
+static AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 {
 	PClassActor *i;
 	int mask;
@@ -6192,6 +6195,94 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 
 	return mobj;
 }
+
+//===========================================================================
+//
+// SpawnMapThing
+//
+//===========================================================================
+CVAR(Bool, dumpspawnedthings, false, 0)
+
+static AActor *SpawnMapThing(int index, FMapThing *mt, int position)
+{
+    AActor *spawned = P_SpawnMapThing(mt, position);
+    if (dumpspawnedthings)
+    {
+        Printf("%5d: (%5f, %5f, %5f), doomednum = %5d, flags = %04x, type = %s\n",
+               index, mt->pos.X, mt->pos.Y, mt->pos.Z, mt->EdNum, mt->flags,
+               spawned? spawned->GetClass()->TypeName.GetChars() : "(none)");
+    }
+    T_AddSpawnedThing(spawned);
+    return spawned;
+}
+
+
+//===========================================================================
+//
+// SetMapThingUserData
+//
+//===========================================================================
+
+static void SetMapThingUserData(AActor *actor, unsigned udi, TArray<FUDMFKey> &MapThingsUserData, TMap<unsigned,unsigned>  &MapThingsUserDataIndex)
+{
+    if (actor == NULL)
+    {
+        return;
+    }
+    while (MapThingsUserData[udi].Key != NAME_None)
+    {
+        FName varname = MapThingsUserData[udi].Key;
+        PField *var = dyn_cast<PField>(actor->GetClass()->FindSymbol(varname, true));
+        
+        if (var == NULL || (var->Flags & (VARF_Native|VARF_Private|VARF_Protected|VARF_Static)) || !var->Type->isScalar())
+        {
+            DPrintf(DMSG_WARNING, "%s is not a writable user variable in class %s\n", varname.GetChars(),
+                    actor->GetClass()->TypeName.GetChars());
+        }
+        else
+        { // Set the value of the specified user variable.
+            void *addr = reinterpret_cast<uint8_t *>(actor) + var->Offset;
+            if (var->Type == TypeString)
+            {
+                var->Type->InitializeValue(addr, &MapThingsUserData[udi].StringVal);
+            }
+            else if (var->Type->isFloat())
+            {
+                var->Type->SetValue(addr, MapThingsUserData[udi].FloatVal);
+            }
+            else if (var->Type->isInt() || var->Type == TypeBool)
+            {
+                var->Type->SetValue(addr, MapThingsUserData[udi].IntVal);
+            }
+        }
+        
+        udi++;
+    }
+}
+
+
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
+
+void P_SpawnThings (TArray<FMapThing> &MapThingsConverted, TArray<FUDMFKey> &MapThingsUserData, TMap<unsigned,unsigned>  &MapThingsUserDataIndex, int position)
+{
+    int numthings = MapThingsConverted.Size();
+    
+    for (int i=0; i < numthings; i++)
+    {
+        AActor *actor = SpawnMapThing (i, &MapThingsConverted[i], position);
+        unsigned *udi = MapThingsUserDataIndex.CheckKey((unsigned)i);
+        if (udi != NULL)
+        {
+            SetMapThingUserData(actor, *udi, MapThingsUserData, MapThingsUserDataIndex);
+        }
+    }
+}
+
 
 
 

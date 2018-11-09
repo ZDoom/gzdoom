@@ -1074,6 +1074,7 @@ set (PCH_SOURCES
 	hwrenderer/utility/hw_vrmodes.cpp
 	maploader/mapdata.cpp
 	maploader/maploader.cpp
+	maploader/maploader_misc.cpp
 	maploader/maploader_glnodes.cpp
 	maploader/maploader_bsp.cpp
 	maploader/maploader_blockmap.cpp

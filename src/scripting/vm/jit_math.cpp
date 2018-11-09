@@ -1157,8 +1157,8 @@ void JitCompiler::EmitADDV2_RR()
 	auto rc0 = CheckRegF(C, A);
 	auto rc1 = CheckRegF(C + 1, A + 1);
 	cc.movsd(regF[A], regF[B]);
-	cc.movsd(regF[A + 1], regF[B + 1]);
 	cc.addsd(regF[A], rc0);
+	cc.movsd(regF[A + 1], regF[B + 1]);
 	cc.addsd(regF[A + 1], rc1);
 }
 
@@ -1167,8 +1167,8 @@ void JitCompiler::EmitSUBV2_RR()
 	auto rc0 = CheckRegF(C, A);
 	auto rc1 = CheckRegF(C + 1, A + 1);
 	cc.movsd(regF[A], regF[B]);
-	cc.movsd(regF[A + 1], regF[B + 1]);
 	cc.subsd(regF[A], rc0);
+	cc.movsd(regF[A + 1], regF[B + 1]);
 	cc.subsd(regF[A + 1], rc1);
 }
 
@@ -1289,10 +1289,10 @@ void JitCompiler::EmitADDV3_RR()
 	auto rc1 = CheckRegF(C + 1, A + 1);
 	auto rc2 = CheckRegF(C + 2, A + 2);
 	cc.movsd(regF[A], regF[B]);
-	cc.movsd(regF[A + 1], regF[B + 1]);
-	cc.movsd(regF[A + 2], regF[B + 2]);
 	cc.addsd(regF[A], rc0);
+	cc.movsd(regF[A + 1], regF[B + 1]);
 	cc.addsd(regF[A + 1], rc1);
+	cc.movsd(regF[A + 2], regF[B + 2]);
 	cc.addsd(regF[A + 2], rc2);
 }
 
@@ -1302,10 +1302,10 @@ void JitCompiler::EmitSUBV3_RR()
 	auto rc1 = CheckRegF(C + 1, A + 1);
 	auto rc2 = CheckRegF(C + 2, A + 2);
 	cc.movsd(regF[A], regF[B]);
-	cc.movsd(regF[A + 1], regF[B + 1]);
-	cc.movsd(regF[A + 2], regF[B + 2]);
 	cc.subsd(regF[A], rc0);
+	cc.movsd(regF[A + 1], regF[B + 1]);
 	cc.subsd(regF[A + 1], rc1);
+	cc.movsd(regF[A + 2], regF[B + 2]);
 	cc.subsd(regF[A + 2], rc2);
 }
 

@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 
 #include "Spc_Dsp.h"
 
@@ -28,11 +28,11 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
 
 // TODO: add to blargg_endian.h
-#define GET_LE16SA( addr )      ((BOOST::int16_t) GET_LE16( addr ))
+#define GET_LE16SA( addr )      ((int16_t) GET_LE16( addr ))
 #define GET_LE16A( addr )       GET_LE16( addr )
 #define SET_LE16A( addr, data ) SET_LE16( addr, data )
 
-static BOOST::uint8_t const initial_regs [Spc_Dsp::register_count] =
+static uint8_t const initial_regs [Spc_Dsp::register_count] =
 {
 	0x45,0x8B,0x5A,0x9A,0xE4,0x82,0x1B,0x78,0x00,0x00,0xAA,0x96,0x89,0x0E,0xE0,0x80,
 	0x2A,0x49,0x3D,0xBA,0x14,0xA0,0xAC,0xC5,0x00,0x00,0x51,0xBB,0x9C,0x4E,0x7B,0xFF,
@@ -155,7 +155,7 @@ inline void Spc_Dsp::init_counter()
 	// counters start out with this synchronization
 	m.counters [0] =     1;
 	m.counters [1] =     0;
-	m.counters [2] = -0x20;
+	m.counters [2] = -0x20u;
 	m.counters [3] =  0x0B;
 	
 	int n = 2;
@@ -498,8 +498,9 @@ void Spc_Dsp::run( int clock_count )
 					// Decode four samples
 					for ( end = pos + 4; pos < end; pos++, nybbles <<= 4 )
 					{
-						// Extract upper nybble and scale appropriately
-						int s = ((int16_t) nybbles >> right_shift) << left_shift;
+						// Extract upper nybble and scale appropriately. Every cast is
+						// necessary to maintain correctness and avoid undef behavior
+						int s = int16_t(uint16_t((int16_t) nybbles >> right_shift) << left_shift);
 						
 						// Apply IIR filter (8 is the most commonly used)
 						int const filter = brr_header & 0x0C;

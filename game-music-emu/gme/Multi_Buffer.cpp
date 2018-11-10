@@ -81,7 +81,7 @@ void Stereo_Buffer::clock_rate( long rate )
 
 void Stereo_Buffer::bass_freq( int bass )
 {
-	for ( unsigned i = 0; i < buf_count; i++ )
+	for ( int i = 0; i < buf_count; i++ )
 		bufs [i].bass_freq( bass );
 }
 
@@ -96,7 +96,7 @@ void Stereo_Buffer::clear()
 void Stereo_Buffer::end_frame( blip_time_t clock_count )
 {
 	stereo_added = 0;
-	for ( unsigned i = 0; i < buf_count; i++ )
+	for ( int i = 0; i < buf_count; i++ )
 	{
 		stereo_added |= bufs [i].clear_modified() << i;
 		bufs [i].end_frame( clock_count );
@@ -161,18 +161,18 @@ void Stereo_Buffer::mix_stereo( blip_sample_t* out_, blargg_long count )
 		int c = BLIP_READER_READ( center );
 		blargg_long l = c + BLIP_READER_READ( left );
 		blargg_long r = c + BLIP_READER_READ( right );
-		if ( (BOOST::int16_t) l != l )
+		if ( (int16_t) l != l )
 			l = 0x7FFF - (l >> 24);
 		
 		BLIP_READER_NEXT( center, bass );
-		if ( (BOOST::int16_t) r != r )
+		if ( (int16_t) r != r )
 			r = 0x7FFF - (r >> 24);
 		
 		BLIP_READER_NEXT( left, bass );
 		BLIP_READER_NEXT( right, bass );
 		
-		out [0] = (blip_sample_t)l;
-		out [1] = (blip_sample_t)r;
+		out [0] = l;
+		out [1] = r;
 		out += 2;
 	}
 	
@@ -191,18 +191,18 @@ void Stereo_Buffer::mix_stereo_no_center( blip_sample_t* out_, blargg_long count
 	for ( ; count; --count )
 	{
 		blargg_long l = BLIP_READER_READ( left );
-		if ( (BOOST::int16_t) l != l )
+		if ( (int16_t) l != l )
 			l = 0x7FFF - (l >> 24);
 		
 		blargg_long r = BLIP_READER_READ( right );
-		if ( (BOOST::int16_t) r != r )
+		if ( (int16_t) r != r )
 			r = 0x7FFF - (r >> 24);
 		
 		BLIP_READER_NEXT( left, bass );
 		BLIP_READER_NEXT( right, bass );
 		
-		out [0] = (blip_sample_t)l;
-		out [1] = (blip_sample_t)r;
+		out [0] = l;
+		out [1] = r;
 		out += 2;
 	}
 	
@@ -219,12 +219,12 @@ void Stereo_Buffer::mix_mono( blip_sample_t* out_, blargg_long count )
 	for ( ; count; --count )
 	{
 		blargg_long s = BLIP_READER_READ( center );
-		if ( (BOOST::int16_t) s != s )
+		if ( (int16_t) s != s )
 			s = 0x7FFF - (s >> 24);
 		
 		BLIP_READER_NEXT( center, bass );
-		out [0] = (blip_sample_t)s;
-		out [1] = (blip_sample_t)s;
+		out [0] = s;
+		out [1] = s;
 		out += 2;
 	}
 	

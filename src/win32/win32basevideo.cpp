@@ -49,7 +49,7 @@
 #include "v_text.h"
 #include "m_argv.h"
 #include "doomerrors.h"
-#include "Win32BaseVideo.h"
+#include "win32basevideo.h"
 
 #include "gl/system/gl_framebuffer.h"
 

@@ -24,6 +24,12 @@
 #define _HW__VERTEXBUFFER_H
 
 #include "tarray.h"
+#include "hwrenderer/data/buffers.h"
+#include "hw_vertexbuilder.h"
+#include <atomic>
+#include <mutex>
+
+class FRenderState;
 
 struct FFlatVertex
 {
@@ -41,36 +47,21 @@ struct FFlatVertex
 	}
 };
 
-class FFlatVertexGenerator
+class FFlatVertexBuffer
 {
-protected:
 	TArray<FFlatVertex> vbo_shadowdata;
 	TArray<uint32_t> ibo_data;
-	FFlatVertex *mMap;
 
-	// Temporary data for creating an indexed buffer
-	struct FIndexGenerationInfo
-	{
-		TArray<vertex_t *> vertices;
-		TMap<vertex_t*, uint32_t> vertexmap;
+	IVertexBuffer *mVertexBuffer;
+	IIndexBuffer *mIndexBuffer;
 
-		uint32_t AddVertex(vertex_t *vert)
-		{
-			auto check = vertexmap.CheckKey(vert);
-			if (check != nullptr) return *check;
-			auto index = vertices.Push(vert);
-			vertexmap[vert] = index;
-			return index;
-		}
+	unsigned int mIndex;
+	std::atomic<unsigned int> mCurIndex;
+	unsigned int mNumReserved;
 
-		uint32_t GetIndex(vertex_t *vert)
-		{
-			auto check = vertexmap.CheckKey(vert);
-			if (check != nullptr) return *check;
-			return ~0;
-		}
-	};
 
+	static const unsigned int BUFFER_SIZE = 2000000;
+	static const unsigned int BUFFER_SIZE_TO_USE = 1999500;
 
 public:
 	enum
@@ -84,14 +75,50 @@ public:
 		NUM_RESERVED = 20
 	};
 
-	FFlatVertexGenerator(int width, int height);
+	FFlatVertexBuffer(int width, int height);
+	~FFlatVertexBuffer();
 
 	void OutputResized(int width, int height);
+	std::pair<IVertexBuffer *, IIndexBuffer *> GetBufferObjects() const 
+	{
+		return std::make_pair(mVertexBuffer, mIndexBuffer);
+	}
+
+	void CreateVBO();
+	void Copy(int start, int count);
+
+	FFlatVertex *GetBuffer(int index) const
+	{
+		FFlatVertex *ff = (FFlatVertex*)mVertexBuffer->Memory();
+		return &ff[index];
+	}
+
+	FFlatVertex *GetBuffer() const
+	{
+		return GetBuffer(mCurIndex);
+	}
+
+	std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count);
+
+	void Reset()
+	{
+		mCurIndex = mIndex;
+	}
+
+	void Map()
+	{
+		mVertexBuffer->Map();
+	}
+
+	void Unmap()
+	{
+		mVertexBuffer->Unmap();
+	}
 
 private:
-	int CreateIndexedSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor, int vi, FIndexGenerationInfo &gen);
-	int CreateIndexedSectorVertices(sector_t *sec, const secplane_t &plane, int floor, FIndexGenerationInfo &gen);
-	int CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, TArray<FIndexGenerationInfo> &gen);
+	int CreateIndexedSectionVertices(subsector_t *sub, const secplane_t &plane, int floor, VertexContainer &cont);
+	int CreateIndexedSectorVertices(sector_t *sec, const secplane_t &plane, int floor, VertexContainer &cont);
+	int CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, VertexContainers &cont);
 	void CreateIndexedFlatVertices();
 
 	void UpdatePlaneVertices(sector_t *sec, int plane);
@@ -100,6 +127,7 @@ protected:
 	void CheckPlanes(sector_t *sector);
 public:
 	void CheckUpdate(sector_t *sector);
+
 };
 
 #endif

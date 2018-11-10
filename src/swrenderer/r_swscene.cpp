@@ -61,22 +61,6 @@ public:
 	}
 };
 
-class FSWSceneTexture : public FTexture
-{
-public:
-
-	FSWSceneTexture(int w, int h, int bits)
-	{
-		Width = w;
-		Height = h;
-		WidthBits = bits;
-		UseType = ETextureType::SWCanvas;
-		bNoCompress = true;
-		SystemTexture[0] = screen->CreateHardwareTexture(this);
-	}
-
-	// This is just a wrapper around the hardware texture and should never call the bitmap getters - if it does, something is wrong.
-};
 
 //==========================================================================
 //
@@ -106,7 +90,7 @@ sector_t *SWSceneDrawer::RenderView(player_t *player)
 	{
 		// This manually constructs its own material here.
 		fbtex.reset();
-		fbtex.reset(new FSWSceneTexture(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor()));
+		fbtex.reset(new FWrapperTexture(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor()));
 		fbtex->SystemTexture[0]->AllocateBuffer(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor() ? 4 : 1);
 		auto mat = FMaterial::ValidateTexture(fbtex.get(), false);
 		mat->AddTextureLayer(PaletteTexture.get());

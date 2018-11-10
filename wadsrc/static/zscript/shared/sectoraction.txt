@@ -4,17 +4,23 @@ class SectorAction : Actor
 	// self class uses health to define the activation type.
 	enum EActivation
 	{
-		SECSPAC_Enter		= 1,
-		SECSPAC_Exit		= 2,
-		SECSPAC_HitFloor	= 4,
-		SECSPAC_HitCeiling	= 8,
-		SECSPAC_Use			= 16,
-		SECSPAC_UseWall		= 32,
-		SECSPAC_EyesDive	= 64,
-		SECSPAC_EyesSurface = 128,
-		SECSPAC_EyesBelowC	= 256,
-		SECSPAC_EyesAboveC	= 512,
-		SECSPAC_HitFakeFloor= 1024,
+		SECSPAC_Enter		= 1<< 0,
+		SECSPAC_Exit		= 1<< 1,
+		SECSPAC_HitFloor	= 1<< 2,
+		SECSPAC_HitCeiling	= 1<< 3,
+		SECSPAC_Use		= 1<< 4,
+		SECSPAC_UseWall		= 1<< 5,
+		SECSPAC_EyesDive	= 1<< 6,
+		SECSPAC_EyesSurface 	= 1<< 7,
+		SECSPAC_EyesBelowC	= 1<< 8,
+		SECSPAC_EyesAboveC	= 1<< 9,
+		SECSPAC_HitFakeFloor	= 1<<10,
+		SECSPAC_DamageFloor	= 1<<11,
+		SECSPAC_DamageCeiling	= 1<<12,
+		SECSPAC_DeathFloor	= 1<<13,
+		SECSPAC_DeathCeiling	= 1<<14,
+		SECSPAC_Damage3D	= 1<<15,
+		SECSPAC_Death3D		= 1<<16
 	};
 
 	default
@@ -198,6 +204,78 @@ class SecActHitFakeFloor : SectorAction
 	{
 		Health SECSPAC_HitFakeFloor;
 	}
+}
+
+// Triggered when sector's floor is damaged ----------------------------------
+class SecActDamageFloor : SectorAction
+{
+	Default
+	{
+		Health SECSPAC_DamageFloor;
+	}
+
+	// [ZZ] damage is unconditional, so this as well
+	override bool CanTrigger (Actor triggerer) { return !!special; }
+}
+
+// Triggered when sector's ceiling is damaged ----------------------------------
+class SecActDamageCeiling : SectorAction
+{
+	Default
+	{
+		Health SECSPAC_DamageCeiling;
+	}
+
+	// [ZZ] damage is unconditional, so this as well
+	override bool CanTrigger (Actor triggerer) { return !!special; }
+}
+
+// Triggered when sector's floor is reduced to 0 hp ----------------------------------
+class SecActDeathFloor : SectorAction
+{
+	Default
+	{
+		Health SECSPAC_DeathFloor;
+	}
+
+	// [ZZ] damage is unconditional, so this as well
+	override bool CanTrigger (Actor triggerer) { return !!special; }
+}
+
+// Triggered when sector's ceiling is reduced to 0 hp ----------------------------------
+class SecActDeathCeiling : SectorAction
+{
+	Default
+	{
+		Health SECSPAC_DeathCeiling;
+	}
+
+	// [ZZ] damage is unconditional, so this as well
+	override bool CanTrigger (Actor triggerer) { return !!special; }
+}
+
+// Triggered when controlled 3d floor is damaged ----------------------------------
+class SecActDamage3D : SectorAction
+{
+	Default
+	{
+		Health SECSPAC_Damage3D;
+	}
+
+	// [ZZ] damage is unconditional, so this as well
+	override bool CanTrigger (Actor triggerer) { return !!special; }
+}
+
+// Triggered when controlled 3d floor is reduced to 0 hp ----------------------------------
+class SecActDeath3D : SectorAction
+{
+	Default
+	{
+		Health SECSPAC_Death3D;
+	}
+
+	// [ZZ] damage is unconditional, so this as well
+	override bool CanTrigger (Actor triggerer) { return !!special; }
 }
 
 //==========================================================================

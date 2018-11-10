@@ -98,13 +98,11 @@ struct MIDISong2::TrackInfo
 MIDISong2::MIDISong2 (FileReader &reader)
 : MusHeader(0), Tracks(0)
 {
-	int p;
+	unsigned p;
 	int i;
 
-	SongLen = (int)reader.GetLength();
-	MusHeader = new uint8_t[SongLen];
-	if (reader.Read(MusHeader, SongLen) != SongLen)
-		return;
+	MusHeader = reader.Read();
+	if (MusHeader.Size() == 0) return;
 
 	// Do some validation of the MIDI file
 	if (MusHeader[4] != 0 || MusHeader[5] != 0 || MusHeader[6] != 0 || MusHeader[7] != 6)
@@ -134,7 +132,7 @@ MIDISong2::MIDISong2 (FileReader &reader)
 	Tracks = new TrackInfo[NumTracks];
 
 	// Gather information about each track
-	for (i = 0, p = 14; i < NumTracks && p < SongLen + 8; ++i)
+	for (i = 0, p = 14; i < NumTracks && p < MusHeader.Size() + 8; ++i)
 	{
 		uint32_t chunkLen =
 			(MusHeader[p+4]<<24) |
@@ -142,9 +140,9 @@ MIDISong2::MIDISong2 (FileReader &reader)
 			(MusHeader[p+6]<<8)  |
 			(MusHeader[p+7]);
 
-		if (chunkLen + p + 8 > (uint32_t)SongLen)
+		if (chunkLen + p + 8 > MusHeader.Size())
 		{ // Track too long, so truncate it
-			chunkLen = SongLen - p - 8;
+			chunkLen = MusHeader.Size() - p - 8;
 		}
 
 		if (MusHeader[p+0] == 'M' &&
@@ -152,7 +150,7 @@ MIDISong2::MIDISong2 (FileReader &reader)
 			MusHeader[p+2] == 'r' &&
 			MusHeader[p+3] == 'k')
 		{
-			Tracks[i].TrackBegin = MusHeader + p + 8;
+			Tracks[i].TrackBegin = &MusHeader[p + 8];
 			Tracks[i].TrackP = 0;
 			Tracks[i].MaxTrackP = chunkLen;
 		}
@@ -178,13 +176,9 @@ MIDISong2::MIDISong2 (FileReader &reader)
 
 MIDISong2::~MIDISong2 ()
 {
-	if (Tracks != NULL)
+	if (Tracks != nullptr)
 	{
 		delete[] Tracks;
-	}
-	if (MusHeader != NULL)
-	{
-		delete[] MusHeader;
 	}
 }
 
@@ -273,7 +267,7 @@ void MIDISong2 :: DoRestart()
 
 bool MIDISong2::CheckDone()
 {
-	return TrackDue == NULL;
+	return TrackDue == nullptr;
 }
 
 //==========================================================================
@@ -585,7 +579,7 @@ uint32_t *MIDISong2::SendCommand (uint32_t *events, TrackInfo *track, uint32_t d
 		if (event == MIDI_SYSEX || event == MIDI_SYSEXEND)
 		{
 			len = track->ReadVarLen();
-			if (len >= (MAX_MIDI_EVENTS-1)*3*4)
+			if (len >= (MAX_MIDI_EVENTS-1)*3*4 || skipSysex)
 			{ // This message will never fit. Throw it away.
 				track->TrackP += len;
 			}
@@ -750,7 +744,7 @@ uint32_t MIDISong2::TrackInfo::ReadVarLen ()
 //
 // MIDISong2 :: FindNextDue
 //
-// Scans every track for the next event to play. Returns NULL if all events
+// Scans every track for the next event to play. Returns nullptr if all events
 // have been consumed.
 //
 //==========================================================================
@@ -770,10 +764,10 @@ MIDISong2::TrackInfo *MIDISong2::FindNextDue ()
 	switch (Format)
 	{
 	case 0:
-		return Tracks[0].Finished ? NULL : Tracks;
+		return Tracks[0].Finished ? nullptr : Tracks;
 		
 	case 1:
-		track = NULL;
+		track = nullptr;
 		best = 0xFFFFFFFF;
 		for (i = 0; i < NumTracks; ++i)
 		{
@@ -794,9 +788,9 @@ MIDISong2::TrackInfo *MIDISong2::FindNextDue ()
 		{
 			track++;
 		}
-		return track < &Tracks[NumTracks] ? track : NULL;
+		return track < &Tracks[NumTracks] ? track : nullptr;
 	}
-	return NULL;
+	return nullptr;
 }
 
 

@@ -523,18 +523,21 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 
 			// Is this really still necessary with real math instead of imprecise trig tables?
 #if 1
+			const double fudgeamount = 1. / 65536.;
+
 			int side = reverse || (player && stepdown);
 			int fudge = FUDGEFACTOR;
 
 			double dx = line->Delta().X;
 			double dy = line->Delta().Y;
+
 			// Make sure we are on correct side of exit linedef.
 			while (P_PointOnLineSidePrecise(p, l) != side && --fudge >= 0)
 			{
 				if (fabs(dx) > fabs(dy))
-					p.Y -= (dx < 0) != side ? -1 : 1;
+					p.Y -= (dx < 0) != side ? -fudgeamount : fudgeamount;
 				else
-					p.X += (dy < 0) != side ? -1 : 1;
+					p.X += (dy < 0) != side ? -fudgeamount : fudgeamount;
 			}
 #endif
 

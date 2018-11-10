@@ -9,6 +9,12 @@
 
 class DStaticEventHandler;
 
+enum class EventHandlerType
+{
+	Global,
+	PerMap
+};
+
 // register
 bool E_RegisterHandler(DStaticEventHandler* handler);
 // unregister
@@ -44,6 +50,10 @@ void E_WorldThingDestroyed(AActor* actor);
 void E_WorldLinePreActivated(line_t* line, AActor* actor, int activationType, bool* shouldactivate);
 // called in P_ActivateLine after successful special execution.
 void E_WorldLineActivated(line_t* line, AActor* actor, int activationType);
+// called in P_DamageSector and P_DamageLinedef before receiving damage to the sector. returns actual damage
+int E_WorldSectorDamaged(sector_t* sector, AActor* source, int damage, FName damagetype, int part, DVector3 position, bool isradius);
+// called in P_DamageLinedef before receiving damage to the linedef. returns actual damage
+int E_WorldLineDamaged(line_t* line, AActor* source, int damage, FName damagetype, int side, DVector3 position, bool isradius);
 // same as ACS SCRIPT_Lightning
 void E_WorldLightning();
 // this executes on every tick, before everything, only when in valid level and not paused
@@ -73,7 +83,7 @@ void E_Console(int player, FString name, int arg1, int arg2, int arg3, bool manu
 bool E_CheckReplacement(PClassActor* replacee, PClassActor** replacement);
 
 // called on new game
-void E_NewGame();
+void E_NewGame(EventHandlerType handlerType);
 
 // send networked event. unified function.
 bool E_SendNetworkEvent(FString name, int arg1, int arg2, int arg3, bool manual);
@@ -151,6 +161,8 @@ public:
 	void WorldThingDestroyed(AActor* actor);
 	void WorldLinePreActivated(line_t* line, AActor* actor, int activationType, bool* shouldactivate);
 	void WorldLineActivated(line_t* line, AActor* actor, int activationType);
+	int WorldSectorDamaged(sector_t* sector, AActor* source, int damage, FName damagetype, int part, DVector3 position, bool isradius);
+	int WorldLineDamaged(line_t* line, AActor* source, int damage, FName damagetype, int side, DVector3 position, bool isradius);
 	void WorldLightning();
 	void WorldTick();
 
@@ -209,14 +221,22 @@ struct FWorldEvent
 	AActor* Thing = nullptr; // for thingdied
 	AActor* Inflictor = nullptr; // can be null - for damagemobj
 	AActor* DamageSource = nullptr; // can be null
-	int Damage = 0;
-	FName DamageType = NAME_None;
-	int DamageFlags = 0;
-	DAngle DamageAngle;
+	int Damage = 0; // thingdamaged, sector/line damaged
+	FName DamageType = NAME_None; // thingdamaged, sector/line damaged
+	int DamageFlags = 0; // thingdamaged
+	DAngle DamageAngle; // thingdamaged
 	// for line(pre)activated
 	line_t* ActivatedLine = nullptr;
 	int ActivationType = 0;
 	bool ShouldActivate = true;
+	// for line/sector damaged
+	int DamageSectorPart = 0;
+	line_t* DamageLine = nullptr;
+	sector_t* DamageSector = nullptr;
+	int DamageLineSide = -1;
+	DVector3 DamagePosition;
+	bool DamageIsRadius; // radius damage yes/no
+	int NewDamage = 0; // sector/line damaged. allows modifying damage
 };
 
 struct FPlayerEvent

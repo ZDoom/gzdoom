@@ -1071,6 +1071,8 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 				tm.ceilingpic = open.ceilingpic;
 				tm.ceilingline = ld;
 				tm.thing->BlockingLine = ld;
+				if (open.topffloor)
+					tm.thing->Blocking3DFloor = open.topffloor->model;
 			}
 		}
 
@@ -1086,6 +1088,8 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 				tm.touchmidtex = open.touchmidtex;
 				tm.abovemidtex = open.abovemidtex;
 				tm.thing->BlockingLine = ld;
+				if (open.bottomffloor)
+					tm.thing->Blocking3DFloor = open.bottomffloor->model;
 			}
 			else if (open.bottom == tm.floorz)
 			{
@@ -1805,6 +1809,10 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 	tm.abovemidtex = false;
 	validcount++;
 
+	// Remove all old entries before returning.
+	spechit.Clear();
+	portalhit.Clear();
+
 	if ((thing->flags & MF_NOCLIP) && !(thing->flags & MF_SKULLFLY))
 		return true;
 
@@ -1882,13 +1890,15 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 	// being considered for collision with the player.
 	validcount++;
 
+	// Clear out any residual garbage left behind by PIT_CheckThing induced recursions etc.
+	spechit.Clear();
+	portalhit.Clear();
+
 	thing->BlockingMobj = NULL;
 	thing->Height = realHeight;
 	if (actorsonly || (thing->flags & MF_NOCLIP))
 		return (thing->BlockingMobj = thingblocker) == NULL;
 
-	spechit.Clear();
-	portalhit.Clear();
 
 	FMultiBlockLinesIterator it(pcheck, pos.X, pos.Y, thing->Z(), thing->Height, thing->radius, newsec);
 	FMultiBlockLinesIterator::CheckResult lcres;
@@ -3548,6 +3558,18 @@ bool FSlide::BounceWall(AActor *mo)
 		return true;
 	}
 
+	// [ZZ] if bouncing missile hits a damageable linedef, it dies
+	if (P_ProjectileHitLinedef(mo, line) && mo->bouncecount > 0)
+	{
+		mo->Vel.Zero();
+		mo->Speed = 0;
+		mo->bouncecount = 0;
+		if (mo->flags & MF_MISSILE)
+			P_ExplodeMissile(mo, line, nullptr);
+		else mo->CallDie(nullptr, nullptr);
+		return true;
+	}
+
 	// The amount of bounces is limited
 	if (mo->bouncecount>0 && --mo->bouncecount == 0)
 	{
@@ -3649,22 +3671,6 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 			mo->Angles.Yaw = angle;
 			mo->VelFromAngle(speed);
 			mo->PlayBounceSound(true);
-			if (mo->BounceFlags & BOUNCE_UseBounceState)
-			{
-				FName names[] = { NAME_Bounce, NAME_Actor, NAME_Creature };
-				FState *bouncestate;
-				int count = 2;
-
-				if ((BlockingMobj->flags & MF_SHOOTABLE) && !(BlockingMobj->flags & MF_NOBLOOD))
-				{
-					count = 3;
-				}
-				bouncestate = mo->FindState(count, names);
-				if (bouncestate != NULL)
-				{
-					mo->SetState(bouncestate);
-				}
-			}
 		}
 		else
 		{
@@ -3701,6 +3707,21 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 			{
 				if (!(mo->flags & MF_NOGRAVITY) && (mo->Vel.Z < 3.))
 					mo->BounceFlags &= ~BOUNCE_TypeMask;
+			}
+		}
+		if (mo->BounceFlags & BOUNCE_UseBounceState)
+		{
+			FName names[] = { NAME_Bounce, NAME_Actor, NAME_Creature };
+			FState *bouncestate;
+			int count = 2;
+ 			if ((BlockingMobj->flags & MF_SHOOTABLE) && !(BlockingMobj->flags & MF_NOBLOOD))
+			{
+				count = 3;
+			}
+			bouncestate = mo->FindState(count, names);
+			if (bouncestate != NULL)
+			{
+				mo->SetState(bouncestate);
 			}
 		}
 		return true;
@@ -4624,9 +4645,13 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 		damageType = puffDefaults->DamageType;
 	}
 
-	int tflags;
-	if (nointeract || (puffDefaults && puffDefaults->flags6 & MF6_NOTRIGGER)) tflags = TRACE_NoSky;
-	else tflags = TRACE_NoSky | TRACE_Impact;
+	uint32_t tflags = TRACE_NoSky | TRACE_Impact;
+	if (nointeract || (puffDefaults && puffDefaults->flags6 & MF6_NOTRIGGER)) tflags &= ~TRACE_Impact;
+	if (spawnSky)
+	{
+		tflags &= ~TRACE_NoSky;
+		tflags |= TRACE_HitSky;
+	}
 
 	// [MC] Check the flags and set the position according to what is desired.
 	// LAF_ABSPOSITION: Treat the offset parameters as direct coordinates.
@@ -4684,6 +4709,16 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	{
 		if (trace.HitType != TRACE_HitActor)
 		{
+
+			if (trace.HitType == TRACE_HasHitSky || (trace.HitType == TRACE_HitWall
+				&& trace.Line->special == Line_Horizon && spawnSky))
+			{
+				puffFlags |= PF_HITSKY;
+			}
+
+			P_GeometryLineAttack(trace, t1, damage, damageType);
+
+
 			// position a bit closer for puffs
 			if (nointeract || trace.HitType != TRACE_HitWall || ((trace.Line->special != Line_Horizon) || spawnSky))
 			{
@@ -5517,6 +5552,8 @@ void P_RailAttack(FRailParams *p)
 		}
 	}
 
+	P_GeometryLineAttack(trace, p->source, p->damage, damagetype);
+
 	// Spawn a decal or puff at the point where the trace ended.
 	if (trace.HitType == TRACE_HitWall)
 	{
@@ -6126,6 +6163,8 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 	{ // The source is actually the same as the spot, even if that wasn't what we received.
 		bombsource = bombspot;
 	}
+
+	P_GeometryRadiusAttack(bombspot, bombsource, bombdamage, bombdistance, bombmod, fulldamagedistance);
 
 	int count = 0;
 	while ((it.Next(&cres)))

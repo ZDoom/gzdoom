@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 
 #include "M3u_Playlist.h"
 #include "Music_Emu.h"
@@ -407,7 +407,7 @@ blargg_err_t M3u_Playlist::parse()
 blargg_err_t M3u_Playlist::load( Data_Reader& in )
 {
 	RETURN_ERR( data.resize( in.remain() + 1 ) );
-	RETURN_ERR( in.read( data.begin(), long(data.size() - 1) ) );
+	RETURN_ERR( in.read( data.begin(), data.size() - 1 ) );
 	return parse();
 }
 

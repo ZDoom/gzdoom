@@ -31,13 +31,22 @@
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "hw_fakeflat.h"
-#include "hw_drawinfo.h"
 #include "hw_portal.h"
+#include "hw_renderstate.h"
+#include "hw_drawinfo.h"
+#include "po_man.h"
+#include "r_data/models/models.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_cvars.h"
+#include "hwrenderer/data/hw_viewpointbuffer.h"
+#include "hwrenderer/data/flatvertices.h"
+#include "hwrenderer/dynlights/hw_lightbuffer.h"
+#include "hwrenderer/utility/hw_vrmodes.h"
+#include "hw_clipper.h"
 
 EXTERN_CVAR(Float, r_visibility)
 CVAR(Bool, gl_bandedswlight, false, CVAR_ARCHIVE)
+CVAR(Bool, gl_sort_textures, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back);
 
@@ -47,31 +56,130 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 //
 //==========================================================================
 
+class FDrawInfoList
+{
+public:
+	TDeletingArray<HWDrawInfo *> mList;
+
+	HWDrawInfo * GetNew();
+	void Release(HWDrawInfo *);
+};
+
+
+FDrawInfoList di_list;
+
+//==========================================================================
+//
+// Try to reuse the lists as often as possible as they contain resources that
+// are expensive to create and delete.
+//
+// Note: If multithreading gets used, this class needs synchronization.
+//
+//==========================================================================
+
+HWDrawInfo *FDrawInfoList::GetNew()
+{
+	if (mList.Size() > 0)
+	{
+		HWDrawInfo *di;
+		mList.Pop(di);
+		return di;
+	}
+	return new HWDrawInfo;
+}
+
+void FDrawInfoList::Release(HWDrawInfo * di)
+{
+	di->DrawScene = nullptr;
+	di->ClearBuffers();
+	mList.Push(di);
+}
+
+//==========================================================================
+//
+// Sets up a new drawinfo struct
+//
+//==========================================================================
+
+HWDrawInfo *HWDrawInfo::StartDrawInfo(HWDrawInfo *parent, FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms)
+{
+	HWDrawInfo *di = di_list.GetNew();
+	if (parent) di->DrawScene = parent->DrawScene;
+	di->StartScene(parentvp, uniforms);
+	return di;
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+static Clipper staticClipper;		// Since all scenes are processed sequentially we only need one clipper.
+static HWDrawInfo * gl_drawinfo;	// This is a linked list of all active DrawInfos and needed to free the memory arena after the last one goes out of scope.
+
+void HWDrawInfo::StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms)
+{
+	staticClipper.Clear();
+	mClipper = &staticClipper;
+
+	Viewpoint = parentvp;
+	if (uniforms)
+	{
+		VPUniforms = *uniforms;
+		// The clip planes will never be inherited from the parent drawinfo.
+		VPUniforms.mClipLine.X = -1000001.f;
+		VPUniforms.mClipHeight = 0;
+	}
+	else VPUniforms.SetDefaults();
+	mClipper->SetViewpoint(Viewpoint);
+
+	ClearBuffers();
+
+	for (int i = 0; i < GLDL_TYPES; i++) drawlists[i].Reset();
+	hudsprites.Clear();
+	vpIndex = 0;
+
+	// Fullbright information needs to be propagated from the main view.
+	if (outer != nullptr) FullbrightFlags = outer->FullbrightFlags;
+	else FullbrightFlags = 0;
+
+	outer = gl_drawinfo;
+	gl_drawinfo = this;
+
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+HWDrawInfo *HWDrawInfo::EndDrawInfo()
+{
+	assert(this == gl_drawinfo);
+	for (int i = 0; i < GLDL_TYPES; i++) drawlists[i].Reset();
+	gl_drawinfo = outer;
+	di_list.Release(this);
+	if (gl_drawinfo == nullptr)
+		ResetRenderDataAllocator();
+	return gl_drawinfo;
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void HWDrawInfo::ClearBuffers()
 {
-	for(unsigned int i=0;i< otherfloorplanes.Size();i++)
-	{
-		gl_subsectorrendernode * node = otherfloorplanes[i];
-		while (node)
-		{
-			gl_subsectorrendernode * n = node;
-			node = node->next;
-			delete n;
-		}
-	}
-	otherfloorplanes.Clear();
-
-	for(unsigned int i=0;i< otherceilingplanes.Size();i++)
-	{
-		gl_subsectorrendernode * node = otherceilingplanes[i];
-		while (node)
-		{
-			gl_subsectorrendernode * n = node;
-			node = node->next;
-			delete n;
-		}
-	}
-	otherceilingplanes.Clear();
+    otherFloorPlanes.Clear();
+    otherCeilingPlanes.Clear();
+    floodFloorSegs.Clear();
+    floodCeilingSegs.Clear();
 
 	// clear all the lists that might not have been cleared already
 	MissingUpperTextures.Clear();
@@ -79,21 +187,24 @@ void HWDrawInfo::ClearBuffers()
 	MissingUpperSegs.Clear();
 	MissingLowerSegs.Clear();
 	SubsectorHacks.Clear();
-	CeilingStacks.Clear();
-	FloorStacks.Clear();
+	//CeilingStacks.Clear();
+	//FloorStacks.Clear();
 	HandledSubsectors.Clear();
 	spriteindex = 0;
 
 	CurrentMapSections.Resize(level.NumMapSections);
 	CurrentMapSections.Zero();
 
-	sectorrenderflags.Resize(level.sectors.Size());
+	section_renderflags.Resize(level.sections.allSections.Size());
 	ss_renderflags.Resize(level.subsectors.Size());
 	no_renderflags.Resize(level.subsectors.Size());
 
-	memset(&sectorrenderflags[0], 0, level.sectors.Size() * sizeof(sectorrenderflags[0]));
+	memset(&section_renderflags[0], 0, level.sections.allSections.Size() * sizeof(section_renderflags[0]));
 	memset(&ss_renderflags[0], 0, level.subsectors.Size() * sizeof(ss_renderflags[0]));
 	memset(&no_renderflags[0], 0, level.nodes.Size() * sizeof(no_renderflags[0]));
+
+	Decals[0].Clear();
+	Decals[1].Clear();
 
 	mClipPortal = nullptr;
 	mCurrentPortal = nullptr;
@@ -242,13 +353,14 @@ void HWDrawInfo::SetViewMatrix(const FRotator &angles, float vx, float vy, float
 // Setup the view rotation matrix for the given viewpoint
 //
 //-----------------------------------------------------------------------------
-void HWDrawInfo::SetupView(float vx, float vy, float vz, bool mirror, bool planemirror)
+void HWDrawInfo::SetupView(FRenderState &state, float vx, float vy, float vz, bool mirror, bool planemirror)
 {
 	auto &vp = Viewpoint;
 	vp.SetViewAngle(r_viewwindow);
 	SetViewMatrix(vp.HWAngles, vx, vy, vz, mirror, planemirror);
 	SetCameraPos(vp.Pos);
-	ApplyVPUniforms();
+	VPUniforms.CalcDependencies();
+	vpIndex = screen->mViewpoints->SetViewpoint(state, &VPUniforms);
 }
 
 //-----------------------------------------------------------------------------
@@ -257,7 +369,7 @@ void HWDrawInfo::SetupView(float vx, float vy, float vz, bool mirror, bool plane
 //
 //-----------------------------------------------------------------------------
 
-IPortal * HWDrawInfo::FindPortal(const void * src)
+HWPortal * HWDrawInfo::FindPortal(const void * src)
 {
 	int i = Portals.Size() - 1;
 
@@ -283,3 +395,282 @@ void HWViewpointUniforms::SetDefaults()
 	mShadowmapFilter = gl_shadowmap_filter;
 
 }
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+GLDecal *HWDrawInfo::AddDecal(bool onmirror)
+{
+	auto decal = (GLDecal*)RenderDataAllocator.Alloc(sizeof(GLDecal));
+	Decals[onmirror ? 1 : 0].Push(decal);
+	return decal;
+}
+
+//-----------------------------------------------------------------------------
+//
+// CreateScene
+//
+// creates the draw lists for the current scene
+//
+//-----------------------------------------------------------------------------
+
+void HWDrawInfo::CreateScene()
+{
+	const auto &vp = Viewpoint;
+	angle_t a1 = FrustumAngle();
+	mClipper->SafeAddClipRangeRealAngles(vp.Angles.Yaw.BAMs() + a1, vp.Angles.Yaw.BAMs() - a1);
+
+	// reset the portal manager
+	screen->mPortalState->StartFrame();
+	PO_LinkToSubsectors();
+
+	ProcessAll.Clock();
+
+	// clip the scene and fill the drawlists
+	screen->mVertexData->Map();
+	screen->mLights->Map();
+
+	RenderBSP(level.HeadNode());
+
+	// And now the crappy hacks that have to be done to avoid rendering anomalies.
+	// These cannot be multithreaded when the time comes because all these depend
+	// on the global 'validcount' variable.
+
+	HandleMissingTextures(in_area);	// Missing upper/lower textures
+	HandleHackedSubsectors();	// open sector hacks for deep water
+	PrepareUnhandledMissingTextures();
+	DispatchRenderHacks();
+	screen->mLights->Unmap();
+	screen->mVertexData->Unmap();
+
+	ProcessAll.Unclock();
+
+}
+
+//-----------------------------------------------------------------------------
+//
+// RenderScene
+//
+// Draws the current draw lists for the non GLSL renderer
+//
+//-----------------------------------------------------------------------------
+
+void HWDrawInfo::RenderScene(FRenderState &state)
+{
+	const auto &vp = Viewpoint;
+	RenderAll.Clock();
+
+	state.SetDepthMask(true);
+
+	screen->mLights->BindBase();
+	state.EnableFog(true);
+	state.SetRenderStyle(STYLE_Source);
+
+	if (gl_sort_textures)
+	{
+		drawlists[GLDL_PLAINWALLS].SortWalls();
+		drawlists[GLDL_PLAINFLATS].SortFlats();
+		drawlists[GLDL_MASKEDWALLS].SortWalls();
+		drawlists[GLDL_MASKEDFLATS].SortFlats();
+		drawlists[GLDL_MASKEDWALLSOFS].SortWalls();
+	}
+
+	// Part 1: solid geometry. This is set up so that there are no transparent parts
+	state.SetDepthFunc(DF_Less);
+	state.AlphaFunc(Alpha_GEqual, 0.f);
+	state.ClearDepthBias();
+
+	state.EnableTexture(gl_texture);
+	state.EnableBrightmap(true);
+	drawlists[GLDL_PLAINWALLS].DrawWalls(this, state, false);
+	drawlists[GLDL_PLAINFLATS].DrawFlats(this, state, false);
+
+
+	// Part 2: masked geometry. This is set up so that only pixels with alpha>gl_mask_threshold will show
+	state.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
+	drawlists[GLDL_MASKEDWALLS].DrawWalls(this, state, false);
+	drawlists[GLDL_MASKEDFLATS].DrawFlats(this, state, false);
+
+	// Part 3: masked geometry with polygon offset. This list is empty most of the time so only waste time on it when in use.
+	if (drawlists[GLDL_MASKEDWALLSOFS].Size() > 0)
+	{
+		state.SetDepthBias(-1, -128);
+		drawlists[GLDL_MASKEDWALLSOFS].DrawWalls(this, state, false);
+		state.ClearDepthBias();
+	}
+
+	drawlists[GLDL_MODELS].Draw(this, state, false);
+
+	state.SetRenderStyle(STYLE_Translucent);
+
+	// Part 4: Draw decals (not a real pass)
+	state.SetDepthFunc(DF_LEqual);
+	DrawDecals(state, Decals[0]);
+
+	RenderAll.Unclock();
+}
+
+//-----------------------------------------------------------------------------
+//
+// RenderTranslucent
+//
+//-----------------------------------------------------------------------------
+
+void HWDrawInfo::RenderTranslucent(FRenderState &state)
+{
+	RenderAll.Clock();
+
+	// final pass: translucent stuff
+	state.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
+	state.SetRenderStyle(STYLE_Translucent);
+
+	state.EnableBrightmap(true);
+	drawlists[GLDL_TRANSLUCENTBORDER].Draw(this, state, true);
+	state.SetDepthMask(false);
+
+	drawlists[GLDL_TRANSLUCENT].DrawSorted(this, state);
+	state.EnableBrightmap(false);
+
+
+	state.AlphaFunc(Alpha_GEqual, 0.5f);
+	state.SetDepthMask(true);
+
+	RenderAll.Unclock();
+}
+
+
+//-----------------------------------------------------------------------------
+//
+// RenderTranslucent
+//
+//-----------------------------------------------------------------------------
+
+void HWDrawInfo::RenderPortal(HWPortal *p, FRenderState &state, bool usestencil)
+{
+	auto gp = static_cast<HWPortal *>(p);
+	gp->SetupStencil(this, state, usestencil);
+	auto new_di = StartDrawInfo(this, Viewpoint, &VPUniforms);
+	new_di->mCurrentPortal = gp;
+	state.SetLightIndex(-1);
+	gp->DrawContents(new_di, state);
+	new_di->EndDrawInfo();
+	state.SetVertexBuffer(screen->mVertexData);
+	screen->mViewpoints->Bind(state, vpIndex);
+	gp->RemoveStencil(this, state, usestencil);
+
+}
+
+//-----------------------------------------------------------------------------
+//
+// Draws player sprites and color blend
+//
+//-----------------------------------------------------------------------------
+
+
+void HWDrawInfo::EndDrawScene(sector_t * viewsector, FRenderState &state)
+{
+	state.EnableFog(false);
+
+	// [BB] HUD models need to be rendered here. 
+	const bool renderHUDModel = IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
+	if (renderHUDModel)
+	{
+		// [BB] The HUD model should be drawn over everything else already drawn.
+		state.Clear(CT_Depth);
+		DrawPlayerSprites(true, state);
+	}
+
+	state.EnableStencil(false);
+	state.SetViewport(screen->mScreenViewport.left, screen->mScreenViewport.top, screen->mScreenViewport.width, screen->mScreenViewport.height);
+
+	// Restore standard rendering state
+	state.SetRenderStyle(STYLE_Translucent);
+	state.ResetColor();
+	state.EnableTexture(true);
+	state.SetScissor(0, 0, -1, -1);
+}
+
+void HWDrawInfo::DrawEndScene2D(sector_t * viewsector, FRenderState &state)
+{
+	const bool renderHUDModel = IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
+	auto vrmode = VRMode::GetVRMode(true);
+
+	HWViewpointUniforms vp = VPUniforms;
+	vp.mViewMatrix.loadIdentity();
+	vp.mProjectionMatrix = vrmode->GetHUDSpriteProjection();
+	screen->mViewpoints->SetViewpoint(state, &vp);
+	state.EnableDepthTest(false);
+	state.EnableMultisampling(false);
+
+	DrawPlayerSprites(false, state);
+
+	state.SetSoftLightLevel(-1);
+
+	// Restore standard rendering state
+	state.SetRenderStyle(STYLE_Translucent);
+	state.ResetColor();
+	state.EnableTexture(true);
+	state.SetScissor(0, 0, -1, -1);
+}
+
+//-----------------------------------------------------------------------------
+//
+// sets 3D viewport and initial state
+//
+//-----------------------------------------------------------------------------
+
+void HWDrawInfo::Set3DViewport(FRenderState &state)
+{
+	// Always clear all buffers with scissor test disabled.
+	// This is faster on newer hardware because it allows the GPU to skip
+	// reading from slower memory where the full buffers are stored.
+	state.SetScissor(0, 0, -1, -1);
+	state.Clear(CT_Color | CT_Depth | CT_Stencil);
+
+	const auto &bounds = screen->mSceneViewport;
+	state.SetViewport(bounds.left, bounds.top, bounds.width, bounds.height);
+	state.SetScissor(bounds.left, bounds.top, bounds.width, bounds.height);
+	state.EnableMultisampling(true);
+	state.EnableDepthTest(true);
+	state.EnableStencil(true);
+	state.SetStencil(0, SOP_Keep, SF_AllOn);
+}
+
+//-----------------------------------------------------------------------------
+//
+// R_RenderView - renders one view - either the screen or a camera texture
+//
+//-----------------------------------------------------------------------------
+
+void HWDrawInfo::ProcessScene(bool toscreen, const std::function<void(HWDrawInfo *,int)> &drawScene)
+{
+	screen->mPortalState->BeginScene();
+
+	int mapsection = R_PointInSubsector(Viewpoint.Pos)->mapsection;
+	CurrentMapSections.Set(mapsection);
+	DrawScene = drawScene;
+	DrawScene(this, toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
+
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void HWDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *ptg, subsector_t *sub)
+{
+	auto portal = FindPortal(ptg);
+	if (!portal)
+	{
+		portal = new HWScenePortal(screen->mPortalState, new HWSectorStackPortal(ptg));
+		Portals.Push(portal);
+	}
+	auto ptl = static_cast<HWSectorStackPortal*>(static_cast<HWScenePortal*>(portal)->mScene);
+	ptl->AddSubsector(sub);
+}
+

@@ -1,6 +1,6 @@
 // Core SPC emulation: CPU, timers, SMP registers, memory
 
-// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 
 #include "Snes_Spc.h"
 
@@ -284,7 +284,7 @@ static unsigned char const glitch_probs [3] [256] =
 // If write isn't preceded by read, data has this added to it
 int const no_read_before_write = 0x2000;
 
-void Snes_Spc::cpu_write_smp_reg_( int data, rel_time_t time, int addr )
+void Snes_Spc::cpu_write_smp_reg_( int data, rel_time_t time, uint16_t addr )
 {
 	switch ( addr )
 	{
@@ -385,7 +385,7 @@ void Snes_Spc::cpu_write_smp_reg_( int data, rel_time_t time, int addr )
 	}
 }
 
-void Snes_Spc::cpu_write_smp_reg( int data, rel_time_t time, int addr )
+void Snes_Spc::cpu_write_smp_reg( int data, rel_time_t time, uint16_t addr )
 {
 	if ( addr == r_dspdata ) // 99%
 		dsp_write( data, time );
@@ -393,33 +393,23 @@ void Snes_Spc::cpu_write_smp_reg( int data, rel_time_t time, int addr )
 		cpu_write_smp_reg_( data, time, addr );
 }
 
-void Snes_Spc::cpu_write_high( int data, int i, rel_time_t time )
+void Snes_Spc::cpu_write_high( int data, uint8_t i )
 {
-	if ( i < rom_size )
-	{
-		m.hi_ram [i] = (uint8_t) data;
-		if ( m.rom_enabled )
-			RAM [i + rom_addr] = m.rom [i]; // restore overwritten ROM
-	}
-	else
-	{
-		assert( RAM [i + rom_addr] == (uint8_t) data );
-		RAM [i + rom_addr] = cpu_pad_fill; // restore overwritten padding
-		cpu_write( data, i + rom_addr - 0x10000, time );
-	}
+	assert ( i < rom_size );
+	m.hi_ram [i] = (uint8_t) data;
+	if ( m.rom_enabled )
+		RAM [i + rom_addr] = m.rom [i]; // restore overwritten ROM
 }
 
-int const bits_in_int = CHAR_BIT * sizeof (int);
-
-void Snes_Spc::cpu_write( int data, int addr, rel_time_t time )
+void Snes_Spc::cpu_write( int data, uint16_t addr, rel_time_t time )
 {
 	MEM_ACCESS( time, addr )
 	
 	// RAM
 	RAM [addr] = (uint8_t) data;
-	int reg = addr - 0xF0;
-	if ( reg >= 0 ) // 64%
+	if ( addr >= 0xF0 ) // 64%
 	{
+		const uint16_t reg = addr - 0xF0;
 		// $F0-$FF
 		if ( reg < reg_count ) // 87%
 		{
@@ -437,12 +427,8 @@ void Snes_Spc::cpu_write( int data, int addr, rel_time_t time )
 				cpu_write_smp_reg( data, time, reg );
 		}
 		// High mem/address wrap-around
-		else
-		{
-			reg -= rom_addr - 0xF0;
-			if ( reg >= 0 ) // 1% in IPL ROM area or address wrapped around
-				cpu_write_high( data, reg, time );
-		}
+		else if ( addr >= rom_addr ) // 1% in IPL ROM area or address wrapped around
+			cpu_write_high( data, addr - rom_addr );
 	}
 }
 
@@ -463,7 +449,7 @@ inline int Snes_Spc::cpu_read_smp_reg( int reg, rel_time_t time )
 	return result;
 }
 
-int Snes_Spc::cpu_read( int addr, rel_time_t time )
+int Snes_Spc::cpu_read( uint16_t addr, rel_time_t time )
 {
 	MEM_ACCESS( time, addr )
 	
@@ -507,7 +493,7 @@ int Snes_Spc::cpu_read( int addr, rel_time_t time )
 
 // Prefix and suffix for CPU emulator function
 #define SPC_CPU_RUN_FUNC \
-BOOST::uint8_t* Snes_Spc::run_until_( time_t end_time )\
+uint8_t* Snes_Spc::run_until_( time_t end_time )\
 {\
 	rel_time_t rel_time = m.spc_time - end_time;\
 	assert( rel_time <= 0 );\
@@ -527,7 +513,7 @@ BOOST::uint8_t* Snes_Spc::run_until_( time_t end_time )\
 	return &REGS [r_cpuio0];\
 }
 
-#define cpu_lag_max (12 - 1) // DIV YA,X takes 12 clocks
+int const cpu_lag_max = 12 - 1; // DIV YA,X takes 12 clocks
 
 void Snes_Spc::end_frame( time_t end_time )
 {

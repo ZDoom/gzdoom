@@ -1,6 +1,6 @@
 // Z80 CPU emulator
 
-// Game_Music_Emu 0.6.0
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 #ifndef AY_CPU_H
 #define AY_CPU_H
 
@@ -27,9 +27,6 @@ public:
 	// Alter current time. Not supported during run() call.
 	void set_time( cpu_time_t t )       { state->time = t - state->base; }
 	void adjust_time( int delta )       { state->time += delta; }
-	
-	typedef BOOST::uint8_t uint8_t;
-	typedef BOOST::uint16_t uint16_t;
 	
 	#if BLARGG_BIG_ENDIAN
 		struct regs_t { uint8_t b, c, d, e, h, l, flags, a; };

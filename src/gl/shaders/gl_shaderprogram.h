@@ -5,6 +5,9 @@
 #include "gl_shader.h"
 #include "hwrenderer/postprocessing/hw_shaderprogram.h"
 
+namespace OpenGLRenderer
+{
+
 class FShaderProgram : public IShaderProgram
 {
 public:
@@ -21,7 +24,7 @@ public:
 	GLuint Handle() { return mProgram; }
 	//explicit operator bool() const { return mProgram != 0; }
 
-	std::unique_ptr<IUniformBuffer> Uniforms;
+	std::unique_ptr<IDataBuffer> Uniforms;
 
 private:
 	FShaderProgram(const FShaderProgram &) = delete;
@@ -37,3 +40,5 @@ private:
 	GLuint mShaders[NumShaderTypes];
 	TArray<std::pair<FString, int>> samplerstobind;
 };
+
+}

@@ -103,7 +103,7 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FLig
 					frac *= (float)smoothstep(light->SpotOuterAngle.Cos(), light->SpotInnerAngle.Cos(), cosDir);
 				}
 
-				if (frac > 0 && (!light->shadowmapped || mShadowMap->ShadowTest(light, { x, y, z })))
+				if (frac > 0 && (!light->shadowmapped || screen->mShadowMap.ShadowTest(light, { x, y, z })))
 				{
 					lr = light->GetRed() / 255.0f;
 					lg = light->GetGreen() / 255.0f;
@@ -131,11 +131,11 @@ void HWDrawInfo::GetDynSpriteLight(AActor *thing, particle_t *particle, float *o
 {
 	if (thing != NULL)
 	{
-		GetDynSpriteLight(thing, (float)thing->X(), (float)thing->Y(), (float)thing->Center(), thing->subsector->lighthead, thing->Sector->PortalGroup, out);
+		GetDynSpriteLight(thing, (float)thing->X(), (float)thing->Y(), (float)thing->Center(), thing->section->lighthead, thing->Sector->PortalGroup, out);
 	}
 	else if (particle != NULL)
 	{
-		GetDynSpriteLight(NULL, (float)particle->Pos.X, (float)particle->Pos.Y, (float)particle->Pos.Z, particle->subsector->lighthead, particle->subsector->sector->PortalGroup, out);
+		GetDynSpriteLight(NULL, (float)particle->Pos.X, (float)particle->Pos.Y, (float)particle->Pos.Z, particle->subsector->section->lighthead, particle->subsector->sector->PortalGroup, out);
 	}
 }
 
@@ -157,10 +157,13 @@ void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata)
 		float y = (float)self->Y();
 		float z = (float)self->Center();
 		float radiusSquared = (float)(self->renderradius * self->renderradius);
+		dl_validcount++;
 
 		BSPWalkCircle(x, y, radiusSquared, [&](subsector_t *subsector) // Iterate through all subsectors potentially touched by actor
 		{
-			FLightNode * node = subsector->lighthead;
+			auto section = subsector->section;
+			if (section->validcount == dl_validcount) return;	// already done from a previous subsector.
+			FLightNode * node = section->lighthead;
 			while (node) // check all lights touching a subsector
 			{
 				ADynamicLight *light = node->lightsource;

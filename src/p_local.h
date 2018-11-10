@@ -110,7 +110,8 @@ enum EPuffFlags
 	PF_MELEERANGE = 2,
 	PF_TEMPORARY = 4,
 	PF_HITTHINGBLEED = 8,
-	PF_NORANDOMZ = 16
+	PF_NORANDOMZ = 16,
+	PF_HITSKY = 32
 };
 
 AActor *P_SpawnPuff(AActor *source, PClassActor *pufftype, const DVector3 &pos, DAngle hitdir, DAngle particledir, int updown, int flags = 0, AActor *vict = NULL);
@@ -247,7 +248,6 @@ AActor *P_RoughMonsterSearch (AActor *mo, int distance, bool onlyseekable=false,
 //
 // P_MAP
 //
-
 
 struct spechit_t
 {
@@ -454,6 +454,7 @@ enum EDmgFlags
 	DMG_USEANGLE = 512,
 	DMG_NO_PAIN = 1024,
 	DMG_EXPLOSION = 2048,
+	DMG_NO_ENHANCE = 4096,
 };
 
 

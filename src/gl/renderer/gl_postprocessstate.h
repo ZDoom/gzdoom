@@ -7,6 +7,9 @@
 #include "c_cvars.h"
 #include "r_defs.h"
 
+namespace OpenGLRenderer
+{
+
 class FGLPostProcessState
 {
 public:
@@ -35,4 +38,5 @@ private:
 	GLint blendDestAlpha;
 };
 
+}
 #endif

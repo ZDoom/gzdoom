@@ -156,6 +156,9 @@ struct Line native play
 	native int						locknumber;	// [Dusk] lock number for special
 	native readonly uint			portalindex;
 	native readonly uint			portaltransferred;
+
+	native readonly int		health;
+	native readonly int		healthgroup;
 	
 	native bool isLinePortal();
 	native bool isVisualPortal();
@@ -177,6 +180,9 @@ struct Line native play
 	{
 		return Level.GetUDMFString(LevelLocals.UDMF_Line, Index(), nm);
 	}
+
+    native clearscope int GetHealth();
+    native void SetHealth(int newhealth);
 }
 
 struct SecPlane native play
@@ -286,6 +292,11 @@ struct Sector native play
 	native int16 		leakydamage;
 
 	native readonly uint16	ZoneNumber;
+
+	native readonly int healthceiling;
+	native readonly int healthfloor;
+	native readonly int healthceilinggroup;
+	native readonly int healthfloorgroup;
 	
 	enum ESectorMoreFlags
 	{
@@ -471,6 +482,8 @@ struct Sector native play
 		return Level.GetUDMFString(LevelLocals.UDMF_Sector, Index(), nm);
 	}
 	 
+    native clearscope int GetHealth(SectorPart part);
+    native void SetHealth(SectorPart part, int newhealth);
 }
 
 class SectorTagIterator : Object native

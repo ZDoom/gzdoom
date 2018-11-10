@@ -82,7 +82,7 @@
 #define I24		MODE_ABCJOINT
 #define I8		MODE_AIMMZ | MODE_BUNUSED | MODE_CUNUSED
 #define I8I16	MODE_AIMMZ | MODE_BCIMMZ
-#define __BCP	MODE_AUNUSED | MODE_BCJOINT | MODE_BCPARAM
+#define __BCP	MODE_PARAM24
 #define RPI8	MODE_AP | MODE_BIMMZ | MODE_CUNUSED
 #define KPI8	MODE_AKP | MODE_BIMMZ | MODE_CUNUSED
 #define RPI8I8	MODE_AP | MODE_BIMMZ | MODE_CIMMZ
@@ -292,7 +292,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 			a &= CMP_CHECK | CMP_APPROX;
 			cmp = true;
 		}
-		if (code[i].op == OP_PARAM && code[i].b & REGT_ADDROF)
+		if (code[i].op == OP_PARAM && code[i].a & REGT_ADDROF)
 		{
 			name = "parama";
 		}
@@ -340,6 +340,20 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 			}
 			break;
 		}
+
+		case OP_PARAM:
+		{
+			col = print_reg(out, col, code[i].i24 & 0xffffff, MODE_PARAM24, 16, func);
+			break;
+		}
+
+		case OP_RESULT:
+		{
+			// Default handling for this broke after changing OP_PARAM...
+			col = print_reg(out, col, code[i].i16u, MODE_PARAM, 16, func);
+			break;
+		}
+
 		case OP_RET:
 			if (code[i].b != REGT_NIL)
 			{
@@ -583,14 +597,31 @@ static int print_reg(FILE *out, int col, int arg, int mode, int immshift, const 
 		return col+printf_wrapper(out, "%d", arg);
 
 	case MODE_PARAM:
-		{
-			int regtype, regnum;
+	case MODE_PARAM24:
+	{
+		int regtype, regnum;
 #ifdef __BIG_ENDIAN__
+		if (mode == MODE_PARAM)
+		{
 			regtype = (arg >> 8) & 255;
 			regnum = arg & 255;
+		}
+		else
+		{
+			regtype = (arg >> 16) & 255;
+			regnum = arg & 65535;
+		}
 #else
+		if (mode == MODE_PARAM)
+		{
 			regtype = arg & 255;
 			regnum = (arg >> 8) & 255;
+		}
+		else
+		{
+			regtype = arg & 255;
+			regnum = (arg >> 8) & 65535;
+		}
 #endif
 			switch (regtype & (REGT_TYPE | REGT_KONST | REGT_MULTIREG))
 			{

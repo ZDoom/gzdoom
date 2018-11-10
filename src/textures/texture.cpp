@@ -1489,6 +1489,23 @@ void FDummyTexture::SetSize (int width, int height)
 	CalcBitSize ();
 }
 
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+FWrapperTexture::FWrapperTexture(int w, int h, int bits)
+{
+	Width = w;
+	Height = h;
+	WidthBits = bits;
+	UseType = ETextureType::SWCanvas;
+	bNoCompress = true;
+	SystemTexture[0] = screen->CreateHardwareTexture(this);
+}
+
 //==========================================================================
 //
 // Debug stuff

@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 
 #include "Gb_Cpu.h"
 
@@ -89,20 +89,12 @@ unsigned const n_flag = 0x40;
 unsigned const h_flag = 0x20;
 unsigned const c_flag = 0x10;
 
-#ifdef _MSC_VER
-// warning C4101: 'blargg_failed_' : unreferenced local variable
-// -- produced by the BOOST_STATIC_ASSERT line below
-#pragma warning(disable:4101)
-#endif
-
 bool Gb_Cpu::run( blargg_long cycle_count )
 {
 	state_.remain = blargg_ulong (cycle_count + clocks_per_instr) / clocks_per_instr;
 	state_t s;
 	this->state = &s;
 	memcpy( &s, &this->state_, sizeof s );
-	
-	typedef BOOST::uint16_t uint16_t;
 	
 #if BLARGG_BIG_ENDIAN
 	#define R8( n ) (r8_ [n]) 
@@ -116,11 +108,11 @@ bool Gb_Cpu::run( blargg_long cycle_count )
 		core_regs_t rg; // individual registers
 		
 		struct {
-			BOOST::uint16_t bc, de, hl, unused; // pairs
+			uint16_t bc, de, hl, unused; // pairs
 		} rp;
 		
 		uint8_t r8_ [8]; // indexed registers (use R8 macro due to endian dependence)
-		BOOST::uint16_t r16 [4]; // indexed pairs
+		uint16_t r16 [4]; // indexed pairs
 	};
 	BOOST_STATIC_ASSERT( sizeof rg == 8 && sizeof rp == 8 );
 	
@@ -168,7 +160,7 @@ loop:
 #define BRANCH( cond )\
 {\
 	pc++;\
-	int offset = (BOOST::int8_t) data;\
+	int offset = (int8_t) data;\
 	if ( !(cond) ) goto loop;\
 	pc = uint16_t (pc + offset);\
 	goto loop;\
@@ -688,7 +680,7 @@ loop:
 		unsigned prev;
 		
 	case 0xF8: // LD HL,SP+imm
-		temp = BOOST::int8_t (data); // sign-extend to 16 bits
+		temp = int8_t (data); // sign-extend to 16 bits
 		pc++;
 		flags = 0;
 		temp += sp;
@@ -696,7 +688,7 @@ loop:
 		goto add_16_hl;
 	
 	case 0xE8: // ADD SP,IMM
-		temp = BOOST::int8_t (data); // sign-extend to 16 bits
+		temp = int8_t (data); // sign-extend to 16 bits
 		pc++;
 		flags = 0;
 		temp += sp;
@@ -717,7 +709,7 @@ loop:
 		temp += prev;
 		flags &= z_flag;
 	add_16_hl:
-		rp.hl = (uint16_t)temp;
+		rp.hl = temp;
 	add_16_comm:
 		flags |= (temp >> 12) & c_flag;
 		flags |= (((temp & 0x0FFF) - (prev & 0x0FFF)) >> 7) & h_flag;

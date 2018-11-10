@@ -12,6 +12,7 @@ struct seg_t;
 
 class ADynamicLight;
 class FSerializer;
+struct FSectionLine;
 
 enum ELightType
 {
@@ -206,12 +207,11 @@ public:
 	bool IsSpot() { return !!(lightflags & LF_SPOT); }
 	FState *targetState;
 	FLightNode * touching_sides;
-	FLightNode * touching_subsectors;
 	FLightNode * touching_sector;
 
 private:
-	double DistToSeg(const DVector3 &pos, seg_t *seg);
-	void CollectWithinRadius(const DVector3 &pos, subsector_t *subSec, float radius);
+	double DistToSeg(const DVector3 &pos, vertex_t *start, vertex_t *end);
+	void CollectWithinRadius(const DVector3 &pos, FSection *section, float radius);
 
 protected:
 	DVector3 m_off;

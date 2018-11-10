@@ -51,6 +51,7 @@ struct FLinePortal;
 struct seg_t;
 struct sector_t;
 class AActor;
+struct FSection;
 
 #define MAXWIDTH 12000
 #define MAXHEIGHT 5000
@@ -266,17 +267,23 @@ struct FRemapTable;
 
 enum
 {
-	SECSPAC_Enter		= 1,	// Trigger when player enters
-	SECSPAC_Exit		= 2,	// Trigger when player exits
-	SECSPAC_HitFloor	= 4,	// Trigger when player hits floor
-	SECSPAC_HitCeiling	= 8,	// Trigger when player hits ceiling
-	SECSPAC_Use			= 16,	// Trigger when player uses
-	SECSPAC_UseWall		= 32,	// Trigger when player uses a wall
-	SECSPAC_EyesDive	= 64,	// Trigger when player eyes go below fake floor
-	SECSPAC_EyesSurface = 128,	// Trigger when player eyes go above fake floor
-	SECSPAC_EyesBelowC	= 256,	// Trigger when player eyes go below fake ceiling
-	SECSPAC_EyesAboveC	= 512,	// Trigger when player eyes go above fake ceiling
-	SECSPAC_HitFakeFloor= 1024,	// Trigger when player hits fake floor
+	SECSPAC_Enter		= 1<< 0,	// Trigger when player enters
+	SECSPAC_Exit		= 1<< 1,	// Trigger when player exits
+	SECSPAC_HitFloor	= 1<< 2,	// Trigger when player hits floor
+	SECSPAC_HitCeiling	= 1<< 3,	// Trigger when player hits ceiling
+	SECSPAC_Use			= 1<< 4,	// Trigger when player uses
+	SECSPAC_UseWall		= 1<< 5,	// Trigger when player uses a wall
+	SECSPAC_EyesDive	= 1<< 6,	// Trigger when player eyes go below fake floor
+	SECSPAC_EyesSurface = 1<< 7,	// Trigger when player eyes go above fake floor
+	SECSPAC_EyesBelowC	= 1<< 8,	// Trigger when player eyes go below fake ceiling
+	SECSPAC_EyesAboveC	= 1<< 9,	// Trigger when player eyes go above fake ceiling
+	SECSPAC_HitFakeFloor= 1<<10,	// Trigger when player hits fake floor
+	SECSPAC_DamageFloor = 1<<11,	// Trigger when floor is damaged
+	SECSPAC_DamageCeiling=1<<12,	// Trigger when ceiling is damaged
+	SECSPAC_DeathFloor	= 1<<13,	// Trigger when floor has 0 hp
+	SECSPAC_DeathCeiling= 1<<14,	// Trigger when ceiling has 0 hp
+	SECSPAC_Damage3D	= 1<<15,	// Trigger when controlled 3d floor is damaged
+	SECSPAC_Death3D		= 1<<16		// Trigger when controlled 3d floor has 0 hp
 };
 
 struct secplane_t
@@ -588,16 +595,6 @@ struct secspecial_t
 	short damageinterval;	// Interval for damage application
 	short leakydamage;		// chance of leaking through radiation suit
 	int Flags;
-
-	secspecial_t()
-	{
-		Clear();
-	}
-
-	void Clear()
-	{
-		memset(this, 0, sizeof(*this));
-	}
 };
 
 FSerializer &Serialize(FSerializer &arc, const char *key, secspecial_t &spec, secspecial_t *def);
@@ -1034,7 +1031,6 @@ public:
 
 	// killough 3/7/98: support flat heights drawn at another sector's heights
 	sector_t *heightsec;		// other sector, or NULL if no other sector
-	FLightNode *				lighthead;
 
 	uint32_t bottommap, midmap, topmap;	// killough 4/4/98: dynamic colormaps
 										// [RH] these can also be blend values if
@@ -1092,7 +1088,6 @@ public:
 	int				ibocount;		// number of indices per plane (identical for all planes.) If this is -1 the index buffer is not in use.
 
 	float GetReflect(int pos) { return gl_plane_reflection_i? reflect[pos] : 0; }
-	bool VBOHeightcheck(int pos) const { return vboheight[pos] == GetPlaneTexZ(pos); }
 	FSectorPortalGroup *GetPortalGroup(int plane) { return portals[plane]; }
 
 	enum
@@ -1100,6 +1095,15 @@ public:
 		INVALIDATE_PLANES = 1,
 		INVALIDATE_OTHER = 2
 	};
+
+	// [ZZ] these are for destructible sectors.
+	//      default is 0, which means no special behavior
+	int				healthfloor;
+	int				healthceiling;
+	int				health3d;
+	int				healthfloorgroup;
+	int				healthceilinggroup;
+	int				health3dgroup;
 
 };
 
@@ -1318,6 +1322,8 @@ struct line_t
 	unsigned	portalindex;
 	unsigned	portaltransferred;
 	AutomapLineStyle automapstyle;
+	int			health;		// [ZZ] for destructible geometry (0 = no special behavior)
+	int			healthgroup; // [ZZ] this is the "destructible object" id
 
 	DVector2 Delta() const
 	{
@@ -1435,6 +1441,7 @@ enum
 	SSECF_DEGENERATE = 1,
 	SSECMF_DRAWN = 2,
 	SSECF_POLYORG = 4,
+	SSECF_HOLE = 8,
 };
 
 struct FPortalCoverage
@@ -1452,14 +1459,13 @@ struct subsector_t
 	FMiniBSP	*BSP;
 	seg_t		*firstline;
 	sector_t	*render_sector;
+	FSection	*section;
 	uint32_t	numlines;
 	uint16_t	flags;
-	uint16_t	sectorindex;
+	short		mapsection;
 
 	// subsector related GL data
-	FLightNode *	lighthead;	// Light nodes (blended and additive)
 	int				validcount;
-	short			mapsection;
 	char			hacked;			// 1: is part of a render hack
 
 	void BuildPolyBSP();

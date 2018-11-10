@@ -1,6 +1,6 @@
 // NES 6502 CPU emulator
 
-// Game_Music_Emu 0.6.0
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 #ifndef NES_CPU_H
 #define NES_CPU_H
 
@@ -12,8 +12,6 @@ enum { future_nes_time = INT_MAX / 2 + 1 };
 
 class Nes_Cpu {
 public:
-	typedef BOOST::uint8_t uint8_t;
-	
 	// Clear registers, map low memory and its three mirrors to address 0,
 	// and mirror unmapped_page in remaining memory
 	void reset( void const* unmapped_page = 0 );
@@ -32,12 +30,12 @@ public:
 	
 	// NES 6502 registers. Not kept updated during a call to run().
 	struct registers_t {
-		BOOST::uint16_t pc;
-		BOOST::uint8_t a;
-		BOOST::uint8_t x;
-		BOOST::uint8_t y;
-		BOOST::uint8_t status;
-		BOOST::uint8_t sp;
+		uint16_t pc;
+		uint8_t a;
+		uint8_t x;
+		uint8_t y;
+		uint8_t status;
+		uint8_t sp;
 	};
 	registers_t r;
 	
@@ -84,7 +82,7 @@ private:
 	inline int update_end_time( nes_time_t end, nes_time_t irq );
 };
 
-inline BOOST::uint8_t const* Nes_Cpu::get_code( nes_addr_t addr )
+inline uint8_t const* Nes_Cpu::get_code( nes_addr_t addr )
 {
 	return state->code_map [addr >> page_bits] + addr
 	#if !BLARGG_NONPORTABLE

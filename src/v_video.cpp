@@ -103,6 +103,7 @@ CUSTOM_CVAR(Int, vid_rendermode, 4, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 	// No further checks needed. All this changes now is which scene drawer the render backend calls.
 }
 
+CVAR(Int, vid_renderer, 1, 0)	// for some stupid mods which threw caution out of the window...
 
 
 EXTERN_CVAR(Bool, r_blendmethod)
@@ -127,6 +128,7 @@ public:
 	bool IsFullscreen() { DBGBREAK; return 0; }
 	int GetClientWidth() { DBGBREAK; return 0; }
 	int GetClientHeight() { DBGBREAK; return 0; }
+	void InitializeState() override {}
 
 	float Gamma;
 };
@@ -593,6 +595,7 @@ bool IVideo::SetResolution ()
 	}
 
 	screen = buff;
+	screen->InitializeState();
 	screen->SetGamma();
 
 	V_UpdateModeSize(screen->GetWidth(), screen->GetHeight());

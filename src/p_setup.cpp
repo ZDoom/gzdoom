@@ -101,9 +101,11 @@
 #include "edata.h"
 #endif
 #include "events.h"
+#include "p_destructible.h"
 #include "types.h"
 #include "i_time.h"
 #include "scripting/vm/vm.h"
+#include "hwrenderer/data/flatvertices.h"
 
 #include "fragglescript/t_fs.h"
 
@@ -1689,15 +1691,10 @@ uint16_t MakeSkill(int flags)
 
 void P_LoadThings (MapData * map)
 {
-	int	lumplen = map->Size(ML_THINGS);
-	int numthings = lumplen / sizeof(mapthing_t);
-
-	char *mtp;
 	mapthing_t *mt;
-
-	mtp = new char[lumplen];
-	map->Read(ML_THINGS, mtp);
-	mt = (mapthing_t*)mtp;
+	auto mtp = map->Read(ML_THINGS);
+	int numthings = mtp.Size() / sizeof(mapthing_t);
+	mt = (mapthing_t*)mtp.Data();
 
 	MapThingsConverted.Resize(numthings);
 	FMapThing *mti = &MapThingsConverted[0];
@@ -1765,7 +1762,6 @@ void P_LoadThings (MapData * map)
 			if (flags & BTF_NOTSINGLE)			mti[i].flags &= ~MTF_SINGLE;
 		}
 	}
-	delete [] mtp;
 }
 
 //===========================================================================
@@ -2111,15 +2107,11 @@ void P_LoadLineDefs (MapData * map)
 {
 	int i, skipped;
 	line_t *ld;
-	int lumplen = map->Size(ML_LINEDEFS);
-	char * mldf;
 	maplinedef_t *mld;
 		
-	int numlines = lumplen / sizeof(maplinedef_t);
+	auto mldf = map->Read(ML_LINEDEFS);
+	int numlines = mldf.Size() / sizeof(maplinedef_t);
 	linemap.Resize(numlines);
-
-	mldf = new char[lumplen];
-	map->Read(ML_LINEDEFS, mldf);
 
 	// [RH] Count the number of sidedef references. This is the number of
 	// sidedefs we need. The actual number in the SIDEDEFS lump might be less.
@@ -2127,13 +2119,12 @@ void P_LoadLineDefs (MapData * map)
 
 	for (skipped = sidecount = i = 0; i < numlines; )
 	{
-		mld = ((maplinedef_t*)mldf) + i;
+		mld = ((maplinedef_t*)mldf.Data()) + i;
 		unsigned v1 = LittleShort(mld->v1);
 		unsigned v2 = LittleShort(mld->v2);
 
 		if (v1 >= level.vertexes.Size() || v2 >= level.vertexes.Size())
 		{
-			delete [] mldf;
 			I_Error ("Line %d has invalid vertices: %d and/or %d.\nThe map only contains %u vertices.", i+skipped, v1, v2, level.vertexes.Size());
 		}
 		else if (v1 == v2 ||
@@ -2166,7 +2157,7 @@ void P_LoadLineDefs (MapData * map)
 
 	P_AllocateSideDefs (map, sidecount);
 
-	mld = (maplinedef_t *)mldf;
+	mld = (maplinedef_t *)mldf.Data();
 	ld = &level.lines[0];
 	for (i = 0; i < numlines; i++, mld++, ld++)
 	{
@@ -2205,7 +2196,6 @@ void P_LoadLineDefs (MapData * map)
 		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
 		if (level.flags2 & LEVEL2_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
 	}
-	delete[] mldf;
 }
 
 //===========================================================================
@@ -3561,6 +3551,7 @@ void P_FreeLevelData ()
 
 
 	FBehavior::StaticUnloadModules ();
+	level.sections.Clear();
 	level.segs.Clear();
 	level.sectors.Clear();
 	level.lines.Clear();
@@ -3645,7 +3636,7 @@ void P_FreeExtraLevelData()
 //
 //===========================================================================
 
-void P_SetupLevel (const char *lumpname, int position)
+void P_SetupLevel (const char *lumpname, int position, bool newGame)
 {
 	cycle_t times[20];
 #if 0
@@ -3722,6 +3713,11 @@ void P_SetupLevel (const char *lumpname, int position)
 	// find map num
 	level.lumpnum = map->lumpnum;
 	hasglnodes = false;
+
+	if (newGame)
+	{
+		E_NewGame(EventHandlerType::PerMap);
+	}
 
 	// [RH] Support loading Build maps (because I felt like it. :-)
 	buildmap = false;
@@ -4052,6 +4048,8 @@ void P_SetupLevel (const char *lumpname, int position)
 	if (hasglnodes)
 	{
 		P_SetRenderSector();
+		FixMinisegReferences();
+		FixHoles();
 	}
 
 	bodyqueslot = 0;
@@ -4060,6 +4058,8 @@ void P_SetupLevel (const char *lumpname, int position)
 
 	for (i = 0; i < BODYQUESIZE; i++)
 		bodyque[i] = NULL;
+
+	CreateSections(level.sections);
 
 	if (!buildmap)
 	{
@@ -4119,9 +4119,10 @@ void P_SetupLevel (const char *lumpname, int position)
 
 	// This must be done BEFORE the PolyObj Spawn!!!
 	InitRenderInfo();			// create hardware independent renderer resources for the level.
-	screen->InitForLevel();		// create hardware dependent level resources (e.g. the vertex buffer)
+	screen->mVertexData->CreateVBO();
 	SWRenderer->SetColormap();	//The SW renderer needs to do some special setup for the level's default colormap.
 	InitPortalGroups();
+	P_InitHealthGroups();
 
 	times[16].Clock();
 	if (reloop) P_LoopSidedefs (false);
@@ -4301,13 +4302,13 @@ void P_Init ()
 }
 
 static void P_Shutdown ()
-{
-	// [ZZ] delete global event handlers
-	DThinker::DestroyThinkersInList(STAT_STATIC);
-	E_Shutdown(false);
+{	
+	DThinker::DestroyThinkersInList(STAT_STATIC);	
 	P_DeinitKeyMessages ();
 	P_FreeLevelData ();
 	P_FreeExtraLevelData ();
+	// [ZZ] delete global event handlers
+	E_Shutdown(false);
 	ST_Clear();
 	FS_Close();
 	for (auto &p : players)

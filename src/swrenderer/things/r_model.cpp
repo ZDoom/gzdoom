@@ -111,7 +111,7 @@ namespace swrenderer
 
 			BSPWalkCircle(x, y, radiusSquared, [&](subsector_t *subsector) // Iterate through all subsectors potentially touched by actor
 			{
-				FLightNode * node = subsector->lighthead;
+				FLightNode * node = subsector->section->lighthead;
 				while (node) // check all lights touching a subsector
 				{
 					ADynamicLight *light = node->lightsource;
@@ -216,14 +216,6 @@ namespace swrenderer
 	IModelVertexBuffer *SWModelRenderer::CreateVertexBuffer(bool needindex, bool singleframe)
 	{
 		return new SWModelVertexBuffer(needindex, singleframe);
-	}
-
-	void SWModelRenderer::SetVertexBuffer(IModelVertexBuffer *buffer)
-	{
-	}
-
-	void SWModelRenderer::ResetVertexBuffer()
-	{
 	}
 
 	VSMatrix SWModelRenderer::GetViewToWorldMatrix()

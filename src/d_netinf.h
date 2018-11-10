@@ -36,8 +36,17 @@
 
 #include "c_cvars.h"
 
+enum
+{
+	GENDER_MALE,
+	GENDER_FEMALE,
+	GENDER_NEUTER,
+	GENDER_OBJECT,
+	GENDER_MAX
+};
+
 int D_GenderToInt (const char *gender);
-extern const char *GenderNames[3];
+extern const char *GenderNames[GENDER_MAX];
 
 int D_PlayerClassToInt (const char *classname);
 

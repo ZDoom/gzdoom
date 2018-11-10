@@ -1,6 +1,6 @@
 // Finite impulse response (FIR) resampler with adjustable FIR size
 
-// Game_Music_Emu 0.6.0
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 #ifndef FIR_RESAMPLER_H
 #define FIR_RESAMPLER_H
 
@@ -31,7 +31,7 @@ public:
 	void clear();
 	
 	// Number of input samples that can be written
-	int max_write() const { return int(buf.end() - write_pos); }
+	int max_write() const { return buf.end() - write_pos; }
 	
 	// Pointer to place to write input samples
 	sample_t* buffer() { return write_pos; }
@@ -40,7 +40,7 @@ public:
 	void write( long count );
 	
 	// Number of input samples in buffer
-	int written() const { return int(write_pos - &buf [write_offset]); }
+	int written() const { return write_pos - &buf [write_offset]; }
 	
 	// Skip 'count' input samples. Returns number of samples actually skipped.
 	int skip_input( long count );
@@ -51,7 +51,7 @@ public:
 	int input_needed( blargg_long count ) const;
 	
 	// Number of output samples available
-	int avail() const { return avail_( blargg_long(write_pos - &buf [width_ * stereo] )); }
+	int avail() const { return avail_( write_pos - &buf [width_ * stereo] ); }
 	
 public:
 	~Fir_Resampler_();
@@ -161,11 +161,11 @@ int Fir_Resampler<width>::read( sample_t* out_begin, blargg_long count )
 	
 	imp_phase = res - remain;
 	
-	int left = int(write_pos - in);
+	int left = write_pos - in;
 	write_pos = &buf [left];
 	memmove( buf.begin(), in, left * sizeof *in );
 	
-	return int(out - out_begin);
+	return out - out_begin;
 }
 
 #endif

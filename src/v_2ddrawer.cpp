@@ -203,22 +203,22 @@ bool F2DDrawer::SetStyle(FTexture *tex, DrawParms &parms, PalEntry &vertexcolor,
 
 		if (style.Flags & STYLEF_RedIsAlpha)
 		{
-			quad.mDrawMode = DTM_AlphaTexture;
+			quad.mDrawMode = TM_ALPHATEXTURE;
 		}
 		else
 		{
-			quad.mDrawMode = DTM_Stencil;
+			quad.mDrawMode = TM_STENCIL;
 		}
 	}
 	else
 	{
 		if (style.Flags & STYLEF_RedIsAlpha)
 		{
-			quad.mDrawMode = DTM_AlphaTexture;
+			quad.mDrawMode = TM_ALPHATEXTURE;
 		}
 		else if (style.Flags & STYLEF_InvertSource)
 		{
-			quad.mDrawMode = DTM_Invert;
+			quad.mDrawMode = TM_INVERSE;
 		}
 
 		if (parms.specialcolormap != nullptr)
@@ -237,9 +237,9 @@ bool F2DDrawer::SetStyle(FTexture *tex, DrawParms &parms, PalEntry &vertexcolor,
 
 	if (!parms.masked)
 	{
-		// For DTM_AlphaTexture and DTM_Stencil the mask cannot be turned off because it would not yield a usable result.
-		if (quad.mDrawMode == DTM_Normal) quad.mDrawMode = DTM_Opaque;
-		else if (quad.mDrawMode == DTM_Invert) quad.mDrawMode = DTM_InvertOpaque;
+		// For TM_ALPHATEXTURE and TM_STENCIL the mask cannot be turned off because it would not yield a usable result.
+		if (quad.mDrawMode == TM_NORMAL) quad.mDrawMode = TM_OPAQUE;
+		else if (quad.mDrawMode == TM_INVERSE) quad.mDrawMode = TM_INVERTOPAQUE;
 	}
 	quad.mRenderStyle = parms.style;	// this  contains the blend mode and blend equation settings.
     if (parms.burn) quad.mFlags |= DTF_Burn;
@@ -419,7 +419,8 @@ void F2DDrawer::AddShape( FTexture *img, DShape2D *shape, DrawParms &parms )
 
 void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
-		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel)
+		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel,
+		uint32_t *indices, size_t indexcount)
 {
 	// Use an equation similar to player sprites to determine shade
 
@@ -487,9 +488,20 @@ void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 	poly.mIndexIndex = mIndices.Size();
 	poly.mIndexCount += (npoints - 2) * 3;
 
-	for (int i = 2; i < npoints; ++i)
+	if (indices == nullptr || indexcount == 0)
 	{
-		AddIndices(poly.mVertIndex, 3, 0, i - 1, i);
+		for (int i = 2; i < npoints; ++i)
+		{
+			AddIndices(poly.mVertIndex, 3, 0, i - 1, i);
+		}
+	}
+	else
+	{
+		int addr = mIndices.Reserve(indexcount);
+		for (size_t i = 0; i < indexcount; i++)
+		{
+			mIndices[addr + i] = addr + indices[i];
+		}
 	}
 
 	AddCommand(&poly);
@@ -574,10 +586,10 @@ void F2DDrawer::AddColorOnlyQuad(int x1, int y1, int w, int h, PalEntry color, F
 //
 //==========================================================================
 
-void F2DDrawer::AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t color)
+void F2DDrawer::AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t color, uint8_t alpha)
 {
 	PalEntry p = color ? (PalEntry)color : GPalette.BaseColors[palcolor];
-	p.a = 255;
+	p.a = alpha;
 
 	RenderCommand dg;
 
@@ -596,9 +608,10 @@ void F2DDrawer::AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t c
 //
 //==========================================================================
 
-void F2DDrawer::AddThickLine(int x1, int y1, int x2, int y2, double thickness, uint32_t color)
+void F2DDrawer::AddThickLine(int x1, int y1, int x2, int y2, double thickness, uint32_t color, uint8_t alpha)
 {
 	PalEntry p = (PalEntry)color;
+	p.a = alpha;
 
 	DVector2 point0(x1, y1);
 	DVector2 point1(x2, y2);

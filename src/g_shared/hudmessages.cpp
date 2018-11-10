@@ -194,7 +194,6 @@ DHUDMessage::DHUDMessage (FFont *font, const char *text, float x, float y, int h
 	WrapWidth = 0;
 	HandleAspect = true;
 	Top = y;
-	Lines = NULL;
 	HoldTics = (int)(holdTime * TICRATE);
 	Tics = 0;
 	TextColor = textColor;
@@ -215,11 +214,6 @@ DHUDMessage::DHUDMessage (FFont *font, const char *text, float x, float y, int h
 
 void DHUDMessage::OnDestroy()
 {
-	if (Lines)
-	{
-		V_FreeBrokenLines (Lines);
-		Lines = NULL;
-	}
 	if (SourceText != NULL)
 	{
 		delete[] SourceText;
@@ -260,7 +254,6 @@ void DHUDMessage::Serialize(FSerializer &arc)
 
 	if (arc.isReading())
 	{
-		Lines = NULL;
 		ResetText(SourceText);
 	}
 }
@@ -329,24 +322,16 @@ void DHUDMessage::ResetText (const char *text)
 		width = SCREENWIDTH / active_con_scaletext();
 	}
 
-	if (Lines != NULL)
-	{
-		V_FreeBrokenLines (Lines);
-	}
-
 	Lines = V_BreakLines (Font, NoWrap ? INT_MAX : width, (uint8_t *)text);
 
-	NumLines = 0;
+	NumLines = Lines.Size();
 	Width = 0;
 	Height = 0;
 
-	if (Lines)
+	for (auto &line : Lines)
 	{
-		for (; Lines[NumLines].Width >= 0; NumLines++)
-		{
-			Height += Font->GetHeight ();
-			Width = MAX<int> (Width, Lines[NumLines].Width);
-		}
+		Height += Font->GetHeight ();
+		Width = MAX<int> (Width, line.Width);
 	}
 }
 

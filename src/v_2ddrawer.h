@@ -39,16 +39,6 @@ public:
 		DrawTypePoints,
 	};
 
-	enum ETextureDrawMode : uint8_t
-	{
-		DTM_Normal = 0,
-		DTM_Stencil = 1,
-		DTM_Opaque = 2,
-		DTM_Invert = 3,
-		DTM_AlphaTexture = 4,
-		DTM_InvertOpaque = 6,
-	};
-
 	enum ETextureFlags : uint8_t
 	{
 		DTF_Wrap = 1,
@@ -101,7 +91,7 @@ public:
 		int mDesaturate;
 		FRenderStyle mRenderStyle;
 		PalEntry mColor1;	// Overlay color
-		ETextureDrawMode mDrawMode;
+		ETexMode mDrawMode;
 		uint8_t mFlags;
 
 		RenderCommand()
@@ -140,7 +130,7 @@ public:
 	void AddShape(FTexture *img, DShape2D *shape, DrawParms &parms);
 	void AddPoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
-		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel);
+		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel, uint32_t *indices, size_t indexcount);
 	void AddFlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin);
 
 	void AddColorOnlyQuad(int left, int top, int width, int height, PalEntry color, FRenderStyle *style);
@@ -149,8 +139,8 @@ public:
 	void AddClear(int left, int top, int right, int bottom, int palcolor, uint32_t color);
 	
 		
-	void AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t color);
-	void AddThickLine(int x1, int y1, int x2, int y2, double thickness, uint32_t color);
+	void AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t color, uint8_t alpha = 255);
+	void AddThickLine(int x1, int y1, int x2, int y2, double thickness, uint32_t color, uint8_t alpha = 255);
 	void AddPixel(int x1, int y1, int palcolor, uint32_t color);
 
 	void Clear();

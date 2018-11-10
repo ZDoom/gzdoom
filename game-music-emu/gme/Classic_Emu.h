@@ -1,6 +1,6 @@
 // Common aspects of emulators which use Blip_Buffer for sound output
 
-// Game_Music_Emu 0.6.0
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 #ifndef CLASSIC_EMU_H
 #define CLASSIC_EMU_H
 
@@ -13,6 +13,7 @@ public:
 	Classic_Emu();
 	~Classic_Emu();
 	void set_buffer( Multi_Buffer* );
+	blargg_err_t set_multi_channel( bool is_enabled ) override;
 protected:
 	// Services
 	enum { wave_type = 0x100, noise_type = 0x200, mixed_type = wave_type | noise_type };

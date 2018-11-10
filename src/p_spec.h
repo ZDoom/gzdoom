@@ -439,7 +439,7 @@ protected:
 
 	// [RH] Need these for BOOM-ish transferring ceilings
 	FTextureID	m_Texture;
-	secspecial_t m_NewSpecial;
+	secspecial_t m_NewSpecial{};
 
 	// ID
 	int 		m_Tag;
@@ -536,7 +536,7 @@ public:
 	bool		m_Hexencrush;
 	bool		m_Instant;
 	int 		m_Direction;
-	secspecial_t m_NewSpecial;
+	secspecial_t m_NewSpecial{};
 	FTextureID	m_Texture;
 	double	 	m_FloorDestDist;
 	double	 	m_Speed;

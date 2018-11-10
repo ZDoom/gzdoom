@@ -1,9 +1,8 @@
-Game_Music_Emu 0.6.1
+Game_Music_Emu 0.6.2
 --------------------
 Author     : Shay Green <gblargg@gmail.com>
 Maintainer : Michael Pyne <mpyne@purinchu.net>
-Website    : http://www.slack.net/~ant/libs/
-Forum      : http://groups.google.com/group/blargg-sound-libs
+Website    : https://bitbucket.org/mpyne/game-music-emu/
 Source     : https://bitbucket.org/mpyne/game-music-emu/
 License    : GNU Lesser General Public License (LGPL), see LICENSE.txt
 

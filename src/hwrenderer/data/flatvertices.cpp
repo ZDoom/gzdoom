@@ -31,7 +31,9 @@
 #include "c_cvars.h"
 #include "g_levellocals.h"
 #include "flatvertices.h"
-
+#include "cmdlib.h"
+#include "hwrenderer/data/buffers.h"
+#include "hwrenderer/scene/hw_renderstate.h"
 
 //==========================================================================
 //
@@ -39,7 +41,7 @@
 //
 //==========================================================================
 
-FFlatVertexGenerator::FFlatVertexGenerator(int width, int height)
+FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 {
 	vbo_shadowdata.Resize(NUM_RESERVED);
 
@@ -71,14 +73,51 @@ FFlatVertexGenerator::FFlatVertexGenerator(int width, int height)
 	vbo_shadowdata[17].Set(-32767.0f, -32767.0f, 32767.0f, 0, 0);
 	vbo_shadowdata[18].Set(32767.0f, -32767.0f, 32767.0f, 0, 0);
 	vbo_shadowdata[19].Set(32767.0f, -32767.0f, -32767.0f, 0, 0);
+
+	mVertexBuffer = screen->CreateVertexBuffer();
+	mIndexBuffer = screen->CreateIndexBuffer();
+
+	unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
+	mVertexBuffer->SetData(bytesize, nullptr, false);
+
+	static const FVertexBufferAttribute format[] = {
+		{ 0, VATTR_VERTEX, VFmt_Float3, (int)myoffsetof(FFlatVertex, x) },
+		{ 0, VATTR_TEXCOORD, VFmt_Float2, (int)myoffsetof(FFlatVertex, u) }
+	};
+	mVertexBuffer->SetFormat(1, 2, sizeof(FFlatVertex), format);
+
+	mIndex = mCurIndex = 0;
+	mNumReserved = NUM_RESERVED;
+	Copy(0, NUM_RESERVED);
 }
 
-void FFlatVertexGenerator::OutputResized(int width, int height)
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FFlatVertexBuffer::~FFlatVertexBuffer()
+{
+	delete mIndexBuffer;
+	delete mVertexBuffer;
+	mIndexBuffer = nullptr;
+	mVertexBuffer = nullptr;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FFlatVertexBuffer::OutputResized(int width, int height)
 {
 	vbo_shadowdata[4].Set(0, 0, 0, 0, 0);
 	vbo_shadowdata[5].Set(0, (float)height, 0, 0, 1);
 	vbo_shadowdata[6].Set((float)width, 0, 0, 1, 0);
 	vbo_shadowdata[7].Set((float)width, (float)height, 0, 1, 1);
+	Copy(4, 4);
 }
 
 //==========================================================================
@@ -118,55 +157,26 @@ static F3DFloor *Find3DFloor(sector_t *target, sector_t *model)
 //
 //==========================================================================
 
-int FFlatVertexGenerator::CreateIndexedSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor, int vi, FFlatVertexGenerator::FIndexGenerationInfo &gen)
+int FFlatVertexBuffer::CreateIndexedSectorVertices(sector_t *sec, const secplane_t &plane, int floor, VertexContainer &verts)
 {
-	if (sub->numlines < 3) return -1;
-
-	int idx = ibo_data.Reserve((sub->numlines - 2) * 3);
-	int idxc = idx;
-	int firstndx = gen.GetIndex(sub->firstline[0].v1);
-	int secondndx = gen.GetIndex(sub->firstline[1].v1);
-	for (unsigned int k = 2; k<sub->numlines; k++)
-	{
-		auto ndx = gen.GetIndex(sub->firstline[k].v1);
-
-		ibo_data[idx++] = vi + firstndx;
-		ibo_data[idx++] = vi + secondndx;
-		ibo_data[idx++] = vi + ndx;
-		secondndx = ndx;
-	}
-	return idx;
-}
-
-//==========================================================================
-//
-// Creates the vertices for one plane in one subsector
-//
-//==========================================================================
-
-int FFlatVertexGenerator::CreateIndexedSectorVertices(sector_t *sec, const secplane_t &plane, int floor, FFlatVertexGenerator::FIndexGenerationInfo &gen)
-{
-	int rt = ibo_data.Size();
-	int vi = vbo_shadowdata.Reserve(gen.vertices.Size());
+	unsigned vi = vbo_shadowdata.Reserve(verts.vertices.Size());
 	float diff;
 
 	// Create the actual vertices.
 	if (sec->transdoor && floor) diff = -1.f;
 	else diff = 0.f;
-	for (unsigned i = 0; i < gen.vertices.Size(); i++)
+	for (unsigned i = 0; i < verts.vertices.Size(); i++)
 	{
-		vbo_shadowdata[vi + i].SetFlatVertex(gen.vertices[i], plane);
+		vbo_shadowdata[vi + i].SetFlatVertex(verts.vertices[i].vertex, plane);
 		vbo_shadowdata[vi + i].z += diff;
 	}
-	
-	// Create the indices for the subsectors
-	for (int j = 0; j<sec->subsectorcount; j++)
+
+	unsigned rt = ibo_data.Reserve(verts.indices.Size());
+	for (unsigned i = 0; i < verts.indices.Size(); i++)
 	{
-		subsector_t *sub = sec->subsectors[j];
-		CreateIndexedSubsectorVertices(sub, plane, floor, vi, gen);
+		ibo_data[rt + i] = vi + verts.indices[i];
 	}
-	sec->ibocount = ibo_data.Size() - rt;
-	return rt;
+	return (int)rt;
 }
 
 //==========================================================================
@@ -175,19 +185,20 @@ int FFlatVertexGenerator::CreateIndexedSectorVertices(sector_t *sec, const secpl
 //
 //==========================================================================
 
-int FFlatVertexGenerator::CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, TArray<FFlatVertexGenerator::FIndexGenerationInfo> &gen)
+int FFlatVertexBuffer::CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, VertexContainers &verts)
 {
 	sec->vboindex[h] = vbo_shadowdata.Size();
 	// First calculate the vertices for the sector itself
 	sec->vboheight[h] = sec->GetPlaneTexZ(h);
-	sec->iboindex[h] = CreateIndexedSectorVertices(sec, plane, floor, gen[sec->Index()]);
+    sec->ibocount = verts[sec->Index()].indices.Size();
+	sec->iboindex[h] = CreateIndexedSectorVertices(sec, plane, floor, verts[sec->Index()]);
 
 	// Next are all sectors using this one as heightsec
 	TArray<sector_t *> &fakes = sec->e->FakeFloor.Sectors;
 	for (unsigned g = 0; g < fakes.Size(); g++)
 	{
 		sector_t *fsec = fakes[g];
-		fsec->iboindex[2 + h] = CreateIndexedSectorVertices(fsec, plane, false, gen[fsec->Index()]);
+		fsec->iboindex[2 + h] = CreateIndexedSectorVertices(fsec, plane, false, verts[fsec->Index()]);
 	}
 
 	// and finally all attached 3D floors
@@ -204,7 +215,7 @@ int FFlatVertexGenerator::CreateIndexedVertices(int h, sector_t *sec, const secp
 
 			if (dotop || dobottom)
 			{
-				auto ndx = CreateIndexedSectorVertices(fsec, plane, false, gen[fsec->Index()]);
+				auto ndx = CreateIndexedSectorVertices(fsec, plane, false, verts[fsec->Index()]);
 				if (dotop) ffloor->top.vindex = ndx;
 				if (dobottom) ffloor->bottom.vindex = ndx;
 			}
@@ -221,28 +232,36 @@ int FFlatVertexGenerator::CreateIndexedVertices(int h, sector_t *sec, const secp
 //
 //==========================================================================
 
-void FFlatVertexGenerator::CreateIndexedFlatVertices()
+void FFlatVertexBuffer::CreateIndexedFlatVertices()
 {
-	TArray<FIndexGenerationInfo> gen;
-	gen.Resize(level.sectors.Size());
-	// This must be generated up front so that the following code knows how many vertices a sector contains.
-	for (unsigned i = 0; i < level.sectors.Size(); i++)
+    auto verts = BuildVertices();
+
+	int i = 0;
+	/*
+	for (auto &vert : verts)
 	{
-		for (int j = 0; j < level.sectors[i].subsectorcount; j++)
+		Printf(PRINT_LOG, "Sector %d\n", i);
+		Printf(PRINT_LOG, "%d vertices, %d indices\n", vert.vertices.Size(), vert.indices.Size());
+		int j = 0;
+		for (auto &v : vert.vertices)
 		{
-			auto sub = level.sectors[i].subsectors[j];
-			for (unsigned k = 0; k < sub->numlines; k++)
-			{
-				auto vert = sub->firstline[k].v1;
-				gen[i].AddVertex(vert);
-			}
+			Printf(PRINT_LOG, "    %d: (%2.3f, %2.3f)\n", j++, v.vertex->fX(), v.vertex->fY());
 		}
+		for (unsigned i=0;i<vert.indices.Size();i+=3)
+		{
+			Printf(PRINT_LOG, "     %d, %d, %d\n", vert.indices[i], vert.indices[i + 1], vert.indices[i + 2]);
+		}
+
+		i++;
 	}
+	*/
+
+    
 	for (int h = sector_t::floor; h <= sector_t::ceiling; h++)
 	{
 		for (auto &sec : level.sectors)
 		{
-			CreateIndexedVertices(h, &sec, sec.GetSecPlane(h), h == sector_t::floor, gen);
+			CreateIndexedVertices(h, &sec, sec.GetSecPlane(h), h == sector_t::floor, verts);
 		}
 	}
 
@@ -270,13 +289,13 @@ void FFlatVertexGenerator::CreateIndexedFlatVertices()
 //
 //==========================================================================
 
-void FFlatVertexGenerator::UpdatePlaneVertices(sector_t *sec, int plane)
+void FFlatVertexBuffer::UpdatePlaneVertices(sector_t *sec, int plane)
 {
 	int startvt = sec->vboindex[plane];
 	int countvt = sec->vbocount[plane];
 	secplane_t &splane = sec->GetSecPlane(plane);
 	FFlatVertex *vt = &vbo_shadowdata[startvt];
-	FFlatVertex *mapvt = &mMap[startvt];
+	FFlatVertex *mapvt = GetBuffer(startvt);
 	for(int i=0; i<countvt; i++, vt++, mapvt++)
 	{
 		vt->z = (float)splane.ZatPoint(vt->x, vt->y);
@@ -291,7 +310,7 @@ void FFlatVertexGenerator::UpdatePlaneVertices(sector_t *sec, int plane)
 //
 //==========================================================================
 
-void FFlatVertexGenerator::CreateVertices()
+void FFlatVertexBuffer::CreateVertices()
 {
 	vbo_shadowdata.Resize(NUM_RESERVED);
 	CreateIndexedFlatVertices();
@@ -303,7 +322,7 @@ void FFlatVertexGenerator::CreateVertices()
 //
 //==========================================================================
 
-void FFlatVertexGenerator::CheckPlanes(sector_t *sector)
+void FFlatVertexBuffer::CheckPlanes(sector_t *sector)
 {
 	if (sector->GetPlaneTexZ(sector_t::ceiling) != sector->vboheight[sector_t::ceiling])
 	{
@@ -324,11 +343,58 @@ void FFlatVertexGenerator::CheckPlanes(sector_t *sector)
 //
 //==========================================================================
 
-void FFlatVertexGenerator::CheckUpdate(sector_t *sector)
+void FFlatVertexBuffer::CheckUpdate(sector_t *sector)
 {
 	CheckPlanes(sector);
 	sector_t *hs = sector->GetHeightSec();
 	if (hs != NULL) CheckPlanes(hs);
 	for (unsigned i = 0; i < sector->e->XFloor.ffloors.Size(); i++)
 		CheckPlanes(sector->e->XFloor.ffloors[i]->model);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+std::pair<FFlatVertex *, unsigned int> FFlatVertexBuffer::AllocVertices(unsigned int count)
+{
+	FFlatVertex *p = GetBuffer();
+	auto index = mCurIndex.fetch_add(count);
+	auto offset = index;
+	if (index + count >= BUFFER_SIZE_TO_USE)
+	{
+		// If a single scene needs 2'000'000 vertices there must be something very wrong. 
+		I_FatalError("Out of vertex memory. Tried to allocate more than %u vertices for a single frame", index + count);
+	}
+	return std::make_pair(p, index);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FFlatVertexBuffer::Copy(int start, int count)
+{
+	Map();
+	memcpy(GetBuffer(start), &vbo_shadowdata[0], count * sizeof(FFlatVertex));
+	Unmap();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FFlatVertexBuffer::CreateVBO()
+{
+	vbo_shadowdata.Resize(mNumReserved);
+	FFlatVertexBuffer::CreateVertices();
+	mCurIndex = mIndex = vbo_shadowdata.Size();
+	Copy(0, mIndex);
+	mIndexBuffer->SetData(ibo_data.Size() * sizeof(uint32_t), &ibo_data[0]);
 }

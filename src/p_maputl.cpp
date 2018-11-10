@@ -242,6 +242,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef, co
 		open.backfloorplane.SetAtHeight(LINEOPEN_MIN, sector_t::floor);
 	}
 
+	open.topffloor = open.bottomffloor = nullptr;
 	// Check 3D floors
 	if (actor != NULL)
 	{
@@ -470,6 +471,7 @@ void AActor::LinkToWorld(FLinkContext *ctx, bool spawningmapthing, sector_t *sec
 
 	Sector = sector;
 	subsector = R_PointInSubsector(Pos());	// this is from the rendering nodes, not the gameplay nodes!
+	section = subsector->section;
 
 	if (!(flags & MF_NOSECTOR))
 	{

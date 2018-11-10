@@ -36,6 +36,9 @@
 #include "hwrenderer/utility/hw_cvars.h"
 #include "r_utility.h"
 
+static sector_t **fakesectorbuffer;
+
+extern thread_local bool isWorkerThread;
 
 //==========================================================================
 //
@@ -182,6 +185,24 @@ area_t hw_CheckViewArea(vertex_t *v1, vertex_t *v2, sector_t *frontsector, secto
 	return area_default;
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+static FMemArena FakeSectorAllocator(20 * sizeof(sector_t));
+
+static sector_t *allocateSector(sector_t *sec)
+{
+	if (fakesectorbuffer == nullptr)
+	{
+		fakesectorbuffer = (sector_t**)FakeSectorAllocator.Alloc(level.sectors.Size() * sizeof(sector_t*));
+		memset(fakesectorbuffer, 0, level.sectors.Size() * sizeof(sector_t*));
+	}
+	auto sectornum = sec->sectornum;
+	fakesectorbuffer[sectornum] = (sector_t*)FakeSectorAllocator.Alloc(sizeof(sector_t));
+	return fakesectorbuffer[sectornum];
+}
 
 //==========================================================================
 //
@@ -189,7 +210,8 @@ area_t hw_CheckViewArea(vertex_t *v1, vertex_t *v2, sector_t *frontsector, secto
 // by hardware rendering
 //
 //==========================================================================
-sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back)
+
+sector_t * hw_FakeFlat(sector_t * sec, area_t in_area, bool back, sector_t *localcopy)
 {
 	if (!sec->GetHeightSec() || sec->heightsec==sec) 
 	{
@@ -197,6 +219,8 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 		// visual glitches because upper amd lower textures overlap.
 		if (back && (sec->MoreFlags & SECMF_OVERLAPPING))
 		{
+			if (fakesectorbuffer && fakesectorbuffer[sec->sectornum]) return fakesectorbuffer[sec->sectornum];
+			auto dest = localcopy? localcopy : allocateSector(sec);
 			*dest = *sec;
 			dest->ceilingplane = sec->floorplane;
 			dest->ceilingplane.FlipVert();
@@ -215,6 +239,12 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 	}
 #endif
 
+	if (fakesectorbuffer && fakesectorbuffer[sec->sectornum])
+	{
+		return fakesectorbuffer[sec->sectornum];
+	}
+	assert(!(isWorkerThread && localcopy == nullptr));
+
 	if (in_area==area_above)
 	{
 		if (sec->heightsec->MoreFlags&SECMF_FAKEFLOORONLY /*|| sec->GetTexture(sector_t::ceiling)==skyflatnum*/) in_area=area_normal;
@@ -223,11 +253,8 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 	int diffTex = (sec->heightsec->MoreFlags & SECMF_CLIPFAKEPLANES);
 	sector_t * s = sec->heightsec;
 	
-#if 0
-	*dest=*sec;	// This will invoke the copy operator which isn't really needed here. Memcpy is faster.
-#else
-	memcpy(dest, sec, sizeof(sector_t));
-#endif
+	auto dest = localcopy ? localcopy : allocateSector(sec);
+	*dest = *sec;
 
 	// Replace floor and ceiling height with control sector's heights.
 	if (diffTex)
@@ -309,7 +336,7 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 			dest->lightlevel  = s->lightlevel;
 		}
 
-		if (!back)
+		//if (!back)
 		{
 			dest->SetTexture(sector_t::floor, diffTex ? sec->GetTexture(sector_t::floor) : s->GetTexture(sector_t::floor), false);
 			dest->planes[sector_t::floor].xform = s->planes[sector_t::floor].xform;
@@ -362,7 +389,7 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 			dest->lightlevel  = s->lightlevel;
 		}
 
-		if (!back)
+		//if (!back)
 		{
 			dest->SetTexture(sector_t::ceiling, diffTex ? sec->GetTexture(sector_t::ceiling) : s->GetTexture(sector_t::ceiling), false);
 			dest->SetTexture(sector_t::floor, s->GetTexture(sector_t::ceiling), false);
@@ -385,4 +412,11 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 		}
 	}
 	return dest;
+}
+
+
+void hw_ClearFakeFlat()
+{
+	FakeSectorAllocator.FreeAll();
+	fakesectorbuffer = nullptr;
 }

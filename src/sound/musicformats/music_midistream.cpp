@@ -364,6 +364,7 @@ bool MIDIStreamer::InitPlayback()
 	}
 
 	source->CheckCaps(MIDI->GetTechnology());
+	if (!MIDI->CanHandleSysex()) source->SkipSysex();
 
 	if (MIDI->Preprocess(this, m_Looping))
 	{

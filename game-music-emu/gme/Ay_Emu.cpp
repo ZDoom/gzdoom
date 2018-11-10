@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 
 #include "Ay_Emu.h"
 
@@ -47,10 +47,10 @@ Ay_Emu::~Ay_Emu() { }
 
 static byte const* get_data( Ay_Emu::file_t const& file, byte const* ptr, int min_size )
 {
-	long pos = long(ptr - (byte const*) file.header);
-	long file_size = long(file.end - (byte const*) file.header);
+	long pos = ptr - (byte const*) file.header;
+	long file_size = file.end - (byte const*) file.header;
 	assert( (unsigned long) pos <= (unsigned long) file_size - 2 );
-	int offset = (BOOST::int16_t) get_be16( ptr );
+	int offset = (int16_t) get_be16( ptr );
 	if ( !offset || blargg_ulong (pos + offset) > blargg_ulong (file_size - min_size) )
 		return 0;
 	return ptr + offset;
@@ -117,7 +117,7 @@ static Music_Emu* new_ay_emu () { return BLARGG_NEW Ay_Emu ; }
 static Music_Emu* new_ay_file() { return BLARGG_NEW Ay_File; }
 
 static gme_type_t_ const gme_ay_type_ = { "ZX Spectrum", 0, &new_ay_emu, &new_ay_file, "AY", 1 };
-gme_type_t const gme_ay_type = &gme_ay_type_;
+BLARGG_EXPORT extern gme_type_t const gme_ay_type = &gme_ay_type_;
 
 // Setup
 
@@ -207,7 +207,7 @@ blargg_err_t Ay_Emu::start_track_( int track )
 		if ( len > blargg_ulong (file.end - in) )
 		{
 			set_warning( "Missing file data" );
-			len = unsigned(file.end - in);
+			len = file.end - in;
 		}
 		//debug_printf( "addr: $%04X, len: $%04X\n", addr, len );
 		if ( addr < ram_start && addr >= 0x400 ) // several tracks use low data

@@ -30,19 +30,19 @@
 #include "m_png.h"
 #include "r_utility.h"
 #include "d_player.h"
+#include "gl/system/gl_buffers.h"
 #include "gl/system/gl_framebuffer.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/system/gl_debug.h"
-#include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_postprocessstate.h"
-#include "gl/data/gl_vertexbuffer.h"
 #include "hwrenderer/postprocessing/hw_presentshader.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 #include "hwrenderer/postprocessing/hw_postprocess_cvars.h"
 #include "hwrenderer/utility/hw_vrmodes.h"
+#include "hwrenderer/data/flatvertices.h"
 #include "gl/shaders/gl_postprocessshaderinstance.h"
 #include "gl/textures/gl_hwtexture.h"
 #include "r_videoscale.h"
@@ -51,11 +51,15 @@ extern bool vid_hdr_active;
 
 CVAR(Int, gl_dither_bpc, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 
+namespace OpenGLRenderer
+{
+
+
 void FGLRenderer::RenderScreenQuad()
 {
-	mVBO->BindVBO();
-	gl_RenderState.ResetVertexBuffer();
-	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, FFlatVertexBuffer::PRESENT_INDEX, 4);
+	auto buffer = static_cast<GLVertexBuffer *>(screen->mVertexData->GetBufferObjects().first);
+	buffer->Bind(nullptr);
+	glDrawArrays(GL_TRIANGLE_STRIP, FFlatVertexBuffer::PRESENT_INDEX, 4);
 }
 
 void FGLRenderer::PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)
@@ -158,7 +162,7 @@ void FGLRenderer::Flush()
 		FGLDebug::PushGroup("PresentEyes");
 		// Note: This here is the ONLY place in the entire engine where the OpenGL dependent parts of the Stereo3D code need to be dealt with.
 		// There's absolutely no need to create a overly complex class hierarchy for just this.
-		GLRenderer->PresentStereo();
+		PresentStereo();
 		FGLDebug::PopGroup();
 	}
 }
@@ -201,7 +205,7 @@ void FGLRenderer::DrawPresentTexture(const IntRect &box, bool applyGamma)
 {
 	glViewport(box.left, box.top, box.width, box.height);
 
-	GLRenderer->mBuffers->BindDitherTexture(1);
+	mBuffers->BindDitherTexture(1);
 
 	glActiveTexture(GL_TEXTURE0);
 	if (ViewportLinearScale())
@@ -288,3 +292,4 @@ void FGLRenderer::ClearBorders()
 	glDisable(GL_SCISSOR_TEST);
 }
 
+}

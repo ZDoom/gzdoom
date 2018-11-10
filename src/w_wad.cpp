@@ -101,10 +101,6 @@ void uppercopy (char *to, const char *from)
 }
 
 FWadCollection::FWadCollection ()
-: FirstLumpIndex(NULL), NextLumpIndex(NULL),
-  FirstLumpIndex_FullName(NULL), NextLumpIndex_FullName(NULL), 
-  FirstLumpIndex_NoExt(NULL), NextLumpIndex_NoExt(NULL), 
-  NumLumps(0)
 {
 }
 
@@ -115,37 +111,6 @@ FWadCollection::~FWadCollection ()
 
 void FWadCollection::DeleteAll ()
 {
-	if (FirstLumpIndex != NULL)
-	{
-		delete[] FirstLumpIndex;
-		FirstLumpIndex = NULL;
-	}
-	if (NextLumpIndex != NULL)
-	{
-		delete[] NextLumpIndex;
-		NextLumpIndex = NULL;
-	}
-	if (FirstLumpIndex_FullName != NULL)
-	{
-		delete[] FirstLumpIndex_FullName;
-		FirstLumpIndex_FullName = NULL;
-	}
-	if (NextLumpIndex_FullName != NULL)
-	{
-		delete[] NextLumpIndex_FullName;
-		NextLumpIndex_FullName = NULL;
-	}
-	if (FirstLumpIndex_NoExt != NULL)
-	{
-		delete[] FirstLumpIndex_NoExt;
-		FirstLumpIndex_NoExt = NULL;
-	}
-	if (NextLumpIndex_NoExt != NULL)
-	{
-		delete[] NextLumpIndex_NoExt;
-		NextLumpIndex_NoExt = NULL;
-	}
-
 	LumpInfo.Clear();
 	NumLumps = 0;
 
@@ -193,12 +158,13 @@ void FWadCollection::InitMultipleFiles (TArray<FString> &filenames)
 	FixMacHexen();
 
 	// [RH] Set up hash table
-	FirstLumpIndex = new uint32_t[NumLumps];
-	NextLumpIndex = new uint32_t[NumLumps];
-	FirstLumpIndex_FullName = new uint32_t[NumLumps];
-	NextLumpIndex_FullName = new uint32_t[NumLumps];
-	FirstLumpIndex_NoExt = new uint32_t[NumLumps];
-	NextLumpIndex_NoExt = new uint32_t[NumLumps];
+	Hashes.Resize(6 * NumLumps);
+	FirstLumpIndex = &Hashes[0];
+	NextLumpIndex = &Hashes[NumLumps];
+	FirstLumpIndex_FullName = &Hashes[NumLumps*2];
+	NextLumpIndex_FullName = &Hashes[NumLumps*3];
+	FirstLumpIndex_NoExt = &Hashes[NumLumps*4];
+	NextLumpIndex_NoExt = &Hashes[NumLumps*5];
 	InitHashChains ();
 	LumpInfo.ShrinkToFit();
 	Files.ShrinkToFit();
@@ -1317,6 +1283,30 @@ void FWadCollection::ReadLump (int lump, void *dest)
 
 //==========================================================================
 //
+// W_ReadLump
+//
+// Loads the lump into a TArray and returns it.
+//
+//==========================================================================
+
+TArray<uint8_t> FWadCollection::ReadLumpIntoArray(int lump, int pad)
+{
+	auto lumpr = OpenLumpReader(lump);
+	auto size = lumpr.GetLength();
+	TArray<uint8_t> data(size + pad);
+	auto numread = lumpr.Read(data.Data(), size);
+
+	if (numread != size)
+	{
+		I_Error("W_ReadLump: only read %ld of %ld on lump %i\n",
+			numread, size, lump);
+	}
+	if (pad > 0) memset(&data[size], 0, pad);
+	return data;
+}
+
+//==========================================================================
+//
 // ReadLump - variant 2
 //
 // Loads the lump into a newly created buffer and returns it.
@@ -1423,7 +1413,7 @@ const char *FWadCollection::GetWadName (int wadnum) const
 		return NULL;
 	}
 
-	name = Files[wadnum]->Filename;
+	name = Files[wadnum]->FileName;
 	slash = strrchr (name, '/');
 	return slash != NULL ? slash+1 : name;
 }
@@ -1486,10 +1476,10 @@ const char *FWadCollection::GetWadFullName (int wadnum) const
 {
 	if ((unsigned int)wadnum >= Files.Size())
 	{
-		return NULL;
+		return nullptr;
 	}
 
-	return Files[wadnum]->Filename;
+	return Files[wadnum]->FileName;
 }
 
 

@@ -56,6 +56,7 @@
 #include "serializer.h"
 #include "g_levellocals.h"
 #include "events.h"
+#include "p_destructible.h"
 
 //==========================================================================
 //
@@ -73,6 +74,8 @@ FSerializer &Serialize(FSerializer &arc, const char *key, line_t &line, line_t *
 			("alpha", line.alpha, def->alpha)
 			.Args("args", line.args, def->args, line.special)
 			("portalindex", line.portalindex, def->portalindex)
+			("locknumber", line.locknumber, def->locknumber)
+			("health", line.health, def->health)
 			// Unless the map loader is changed the sidedef references will not change between map loads so there's no need to save them.
 			//.Array("sides", line.sidedef, 2)
 			.EndObject();
@@ -292,6 +295,9 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t 
 			.Terrain("floorterrain", p.terrainnum[0], &def->terrainnum[0])
 			.Terrain("ceilingterrain", p.terrainnum[1], &def->terrainnum[1])
 			("scrolls", scroll, nul)
+			("healthfloor", p.healthfloor, def->healthfloor)
+			("healthceiling", p.healthceiling, def->healthceiling)
+			("health3d", p.health3d, def->health3d)
 			// GZDoom exclusive:
 			.Array("reflect", p.reflect, def->reflect, 2, true)
 			.EndObject();
@@ -990,6 +996,8 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	arc("sectorportals", level.sectorPortals);
 	if (arc.isReading()) P_FinalizePortals();
 
+	// [ZZ] serialize health groups
+	P_SerializeHealthGroups(arc);
 	// [ZZ] serialize events
 	E_SerializeEvents(arc);
 	DThinker::SerializeThinkers(arc, hubload);

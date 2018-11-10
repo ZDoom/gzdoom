@@ -1,7 +1,7 @@
 // Sega Genesis/Mega Drive GYM music file emulator
 // Includes with PCM timing recovery to improve sample quality.
 
-// Game_Music_Emu 0.6.0
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 #ifndef GYM_EMU_H
 #define GYM_EMU_H
 

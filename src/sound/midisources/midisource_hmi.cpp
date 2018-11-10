@@ -129,19 +129,17 @@ HMISong::HMISong (FileReader &reader)
 	{ // Way too small to be HMI.
 		return;
 	}
-	MusHeader = new uint8_t[len];
-	SongLen = len;
+	MusHeader = reader.Read();
 	NumTracks = 0;
-	if (reader.Read(MusHeader, len) != len)
+	if (MusHeader.Size() == 0)
 		return;
 
 	// Do some validation of the MIDI file
-	if (memcmp(MusHeader, HMI_SONG_MAGIC, sizeof(HMI_SONG_MAGIC)) == 0)
+	if (memcmp(&MusHeader[0], HMI_SONG_MAGIC, sizeof(HMI_SONG_MAGIC)) == 0)
 	{
 		SetupForHMI(len);
 	}
-	else if (((uint32_t *)MusHeader)[0] == MAKE_ID('H','M','I','M') &&
-			 ((uint32_t *)MusHeader)[1] == MAKE_ID('I','D','I','P'))
+	else if (memcmp(&MusHeader[0], "HMIMIDIP", 8) == 0)
 	{
 		SetupForHMP(len);
 	}
@@ -155,13 +153,9 @@ HMISong::HMISong (FileReader &reader)
 
 HMISong::~HMISong()
 {
-	if (Tracks != NULL)
+	if (Tracks != nullptr)
 	{
 		delete[] Tracks;
-	}
-	if (MusHeader != NULL)
-	{
-		delete[] MusHeader;
 	}
 }
 
@@ -175,8 +169,10 @@ void HMISong::SetupForHMI(int len)
 {
 	int i, p;
 
+	auto MusPtr = &MusHeader[0];
+
 	ReadVarLen = ReadVarLenHMI;
-	NumTracks = GetShort(MusHeader + HMI_TRACK_COUNT_OFFSET);
+	NumTracks = GetShort(MusPtr + HMI_TRACK_COUNT_OFFSET);
 
 	if (NumTracks <= 0)
 	{
@@ -187,16 +183,16 @@ void HMISong::SetupForHMI(int len)
 	// HMI files have two values here, a full value and a quarter value. Some games, 
 	// notably Quarantines, have identical values for some reason, so it's safer to
 	// use the quarter value and multiply it by four than to trust the full value.
-	Division = GetShort(MusHeader + HMI_DIVISION_OFFSET) << 2;
+	Division = GetShort(MusPtr + HMI_DIVISION_OFFSET) << 2;
 	Tempo = InitialTempo = 4000000;
 
 	Tracks = new TrackInfo[NumTracks + 1];
-	int track_dir = GetInt(MusHeader + HMI_TRACK_DIR_PTR_OFFSET);
+	int track_dir = GetInt(MusPtr + HMI_TRACK_DIR_PTR_OFFSET);
 
 	// Gather information about each track
 	for (i = 0, p = 0; i < NumTracks; ++i)
 	{
-		int start = GetInt(MusHeader + track_dir + i*4);
+		int start = GetInt(MusPtr + track_dir + i*4);
 		int tracklen, datastart;
 
 		if (start > len - HMITRACK_DESIGNATION_OFFSET - 4)
@@ -205,7 +201,7 @@ void HMISong::SetupForHMI(int len)
 		}
 
 		// BTW, HMI does not actually check the track header.
-		if (memcmp(MusHeader + start, TRACK_MAGIC, 13) != 0)
+		if (memcmp(MusPtr + start, TRACK_MAGIC, 13) != 0)
 		{
 			continue;
 		}
@@ -218,7 +214,7 @@ void HMISong::SetupForHMI(int len)
 		}
 		else
 		{
-			tracklen = GetInt(MusHeader + track_dir + i*4 + 4) - start;
+			tracklen = GetInt(MusPtr + track_dir + i*4 + 4) - start;
 		}
 		// Clamp incomplete tracks to the end of the file.
 		tracklen = MIN(tracklen, len - start);
@@ -228,7 +224,7 @@ void HMISong::SetupForHMI(int len)
 		}
 
 		// Offset to actual MIDI events.
-		datastart = GetInt(MusHeader + start + HMITRACK_DATA_PTR_OFFSET);
+		datastart = GetInt(MusPtr + start + HMITRACK_DATA_PTR_OFFSET);
 		tracklen -= datastart;
 		if (tracklen <= 0)
 		{
@@ -236,7 +232,7 @@ void HMISong::SetupForHMI(int len)
 		}
 
 		// Store track information
-		Tracks[p].TrackBegin = MusHeader + start + datastart;
+		Tracks[p].TrackBegin = MusPtr + start + datastart;
 		Tracks[p].TrackP = 0;
 		Tracks[p].MaxTrackP = tracklen;
 
@@ -244,7 +240,7 @@ void HMISong::SetupForHMI(int len)
 		// connected to the MIDI device.
 		for (int ii = 0; ii < NUM_HMI_DESIGNATIONS; ++ii)
 		{
-			Tracks[p].Designation[ii] = GetShort(MusHeader + start + HMITRACK_DESIGNATION_OFFSET + ii*2);
+			Tracks[p].Designation[ii] = GetShort(MusPtr + start + HMITRACK_DESIGNATION_OFFSET + ii*2);
 		}
 
 		p++;
@@ -266,12 +262,14 @@ void HMISong::SetupForHMP(int len)
 	int track_data;
 	int i, p;
 
+	auto MusPtr = &MusHeader[0];
+
 	ReadVarLen = ReadVarLenHMP;
-	if (MusHeader[8] == 0)
+	if (MusPtr[8] == 0)
 	{
 		track_data = HMP_TRACK_OFFSET_0;
 	}
-	else if (memcmp(MusHeader + 8, HMP_NEW_DATE, sizeof(HMP_NEW_DATE)) == 0)
+	else if (memcmp(MusPtr + 8, HMP_NEW_DATE, sizeof(HMP_NEW_DATE)) == 0)
 	{
 		track_data = HMP_TRACK_OFFSET_1;
 	}
@@ -280,7 +278,7 @@ void HMISong::SetupForHMP(int len)
 		return;
 	}
 
-	NumTracks = GetInt(MusHeader + HMP_TRACK_COUNT_OFFSET);
+	NumTracks = GetInt(MusPtr + HMP_TRACK_COUNT_OFFSET);
 
 	if (NumTracks <= 0)
 	{
@@ -288,7 +286,7 @@ void HMISong::SetupForHMP(int len)
 	}
 
 	// The division is the number of pulses per quarter note (PPQN).
-	Division = GetInt(MusHeader + HMP_DIVISION_OFFSET);
+	Division = GetInt(MusPtr + HMP_DIVISION_OFFSET);
 	Tempo = InitialTempo = 1000000;
 
 	Tracks = new TrackInfo[NumTracks + 1];
@@ -304,7 +302,7 @@ void HMISong::SetupForHMP(int len)
 			break;
 		}
 
-		tracklen = GetInt(MusHeader + start + HMPTRACK_LEN_OFFSET);
+		tracklen = GetInt(MusPtr + start + HMPTRACK_LEN_OFFSET);
 		track_data += tracklen;
 
 		// Clamp incomplete tracks to the end of the file.
@@ -322,7 +320,7 @@ void HMISong::SetupForHMP(int len)
 		}
 
 		// Store track information
-		Tracks[p].TrackBegin = MusHeader + start + HMPTRACK_MIDI_DATA_OFFSET;
+		Tracks[p].TrackBegin = MusPtr + start + HMPTRACK_MIDI_DATA_OFFSET;
 		Tracks[p].TrackP = 0;
 		Tracks[p].MaxTrackP = tracklen;
 
@@ -333,14 +331,14 @@ void HMISong::SetupForHMP(int len)
 		// HMI files. Some songs contain nothing but zeroes for this data, so I'd rather
 		// not go around using it without confirmation.
 
-		Printf("Track %d: %d %08x %d:  \034I", i, GetInt(MusHeader + start),
-			GetInt(MusHeader + start + 4), GetInt(MusHeader + start + 8));
+		Printf("Track %d: %d %08x %d:  \034I", i, GetInt(MusPtr + start),
+			GetInt(MusPtr + start + 4), GetInt(MusPtr + start + 8));
 
 		int designations = HMP_DESIGNATIONS_OFFSET +
-			GetInt(MusHeader + start + HMPTRACK_DESIGNATION_OFFSET) * 4 * NUM_HMP_DESIGNATIONS;
+			GetInt(MusPtr + start + HMPTRACK_DESIGNATION_OFFSET) * 4 * NUM_HMP_DESIGNATIONS;
 		for (int ii = 0; ii < NUM_HMP_DESIGNATIONS; ++ii)
 		{
-			Printf(" %04x", GetInt(MusHeader + designations + ii*4));
+			Printf(" %04x", GetInt(MusPtr + designations + ii*4));
 		}
 		Printf("\n");
 #endif
@@ -474,7 +472,7 @@ void HMISong :: DoRestart()
 
 bool HMISong::CheckDone()
 {
-	return TrackDue == NULL;
+	return TrackDue == nullptr;
 }
 
 //==========================================================================
@@ -644,7 +642,7 @@ uint32_t *HMISong::SendCommand (uint32_t *events, TrackInfo *track, uint32_t del
 		if (event == MIDI_SYSEX || event == MIDI_SYSEXEND)
 		{
 			len = ReadVarLen(track);
-			if (len >= (MAX_MIDI_EVENTS-1)*3*4)
+			if (len >= (MAX_MIDI_EVENTS-1)*3*4 || skipSysex)
 			{ // This message will never fit. Throw it away.
 				track->TrackP += len;
 			}
@@ -964,7 +962,7 @@ void NoteOffQueue::Heapify()
 //
 // HMISong :: FindNextDue
 //
-// Scans every track for the next event to play. Returns NULL if all events
+// Scans every track for the next event to play. Returns nullptr if all events
 // have been consumed.
 //
 //==========================================================================
@@ -987,7 +985,7 @@ HMISong::TrackInfo *HMISong::FindNextDue ()
 	}
 
 	// Check regular tracks.
-	track = NULL;
+	track = nullptr;
 	best = 0xFFFFFFFF;
 	for (i = 0; i < NumTracks; ++i)
 	{

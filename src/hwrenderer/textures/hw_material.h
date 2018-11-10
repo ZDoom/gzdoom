@@ -50,8 +50,6 @@ struct FTexCoordInfo
 
 class FMaterial
 {
-	friend class FRenderState;
-
 	// This array is needed because not all textures are managed by the texture manager
 	// but some code needs to discard all hardware dependent data attached to any created texture.
 	// Font characters are not, for example.
@@ -86,6 +84,7 @@ public:
 	void SetSpriteRect();
 	void Precache();
 	void PrecacheList(SpriteHits &translations);
+	int GetShaderIndex() const { return mShaderIndex; }
 	IHardwareTexture * ValidateSysTexture(FTexture * tex, bool expand);
 	void AddTextureLayer(FTexture *tex)
 	{

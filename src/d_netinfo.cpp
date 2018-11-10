@@ -83,7 +83,7 @@ enum
 	INFO_ClassicFlight,
 };
 
-const char *GenderNames[3] = { "male", "female", "other" };
+const char *GenderNames[GENDER_MAX] = { "male", "female", "neutral", "other" };
 
 // Replace \ with %/ and % with %%
 FString D_EscapeUserInfo (const char *str)
@@ -136,12 +136,14 @@ FString D_UnescapeUserInfo (const char *str, size_t len)
 
 int D_GenderToInt (const char *gender)
 {
-	if (!stricmp (gender, "female"))
+	if (gender[0] == 'f')
 		return GENDER_FEMALE;
-	else if (!stricmp (gender, "other") || !stricmp (gender, "cyborg"))
+	else if (gender[0] == 'm')
+		return GENDER_MALE;
+	else if (gender[0] == 'n')
 		return GENDER_NEUTER;
 	else
-		return GENDER_MALE;
+		return GENDER_OBJECT;
 }
 
 int D_PlayerClassToInt (const char *classname)
@@ -726,7 +728,8 @@ void D_WriteUserInfoStrings (int pnum, uint8_t **stream, bool compact)
 		case NAME_Gender:
 			*stream += sprintf(*((char **)stream), "\\%s",
 				*static_cast<FIntCVar *>(pair->Value) == GENDER_FEMALE ? "female" :
-				*static_cast<FIntCVar *>(pair->Value) == GENDER_NEUTER ? "other" : "male");
+				*static_cast<FIntCVar *>(pair->Value) == GENDER_MALE ? "male" :
+				*static_cast<FIntCVar *>(pair->Value) == GENDER_NEUTER ? "neutral" : "other");
 			break;
 
 		case NAME_PlayerClass:

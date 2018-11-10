@@ -88,6 +88,12 @@ DoomEdNums
   9503 = "$SetCeilingSlope"
   9510 = "$CopyFloorPlane"
   9511 = "$CopyCeilingPlane"
+  9600 = SecActDamageFloor
+  9601 = SecActDamageCeiling
+  9602 = SecActDeathFloor
+  9603 = SecActDeathCeiling
+  9604 = SecActDamage3D
+  9605 = SecActDeath3D
   9800 = PointLight
   9801 = PointLightPulse
   9802 = PointLightFlicker

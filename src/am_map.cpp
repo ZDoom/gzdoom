@@ -62,6 +62,7 @@
 #include "a_keys.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
+#include "earcut.hpp"
 
 
 //=============================================================================
@@ -2054,6 +2055,7 @@ sector_t * AM_FakeFlat(AActor *viewer, sector_t * sec, sector_t * dest)
 void AM_drawSubsectors()
 {
 	static TArray<FVector2> points;
+	std::vector<uint32_t> indices;
 	double scale = scale_mtof;
 	DAngle rotation;
 	sector_t tempsec;
@@ -2067,27 +2069,28 @@ void AM_drawSubsectors()
 	auto &subsectors = level.subsectors;
 	for (unsigned i = 0; i < subsectors.Size(); ++i)
 	{
-		if (subsectors[i].flags & SSECF_POLYORG)
+		auto sub = &subsectors[i];
+		if (sub->flags & SSECF_POLYORG)
 		{
 			continue;
 		}
 
-		if ((!(subsectors[i].flags & SSECMF_DRAWN) || (subsectors[i].render_sector->MoreFlags & SECMF_HIDDEN)) && am_cheat == 0)
+		if ((!(sub->flags & SSECMF_DRAWN) || (sub->flags & SSECF_HOLE) || (sub->render_sector->MoreFlags & SECMF_HIDDEN)) && am_cheat == 0)
 		{
 			continue;
 		}
 
-		if (am_portaloverlay && subsectors[i].render_sector->PortalGroup != MapPortalGroup && subsectors[i].render_sector->PortalGroup != 0)
+		if (am_portaloverlay && sub->render_sector->PortalGroup != MapPortalGroup && sub->render_sector->PortalGroup != 0)
 		{
 			continue;
 		}
 
 		// Fill the points array from the subsector.
-		points.Resize(subsectors[i].numlines);
-		for (uint32_t j = 0; j < subsectors[i].numlines; ++j)
+		points.Resize(sub->numlines);
+		for (uint32_t j = 0; j < sub->numlines; ++j)
 		{
-			mpoint_t pt = { subsectors[i].firstline[j].v1->fX(),
-							subsectors[i].firstline[j].v1->fY() };
+			mpoint_t pt = { sub->firstline[j].v1->fX(),
+							sub->firstline[j].v1->fY() };
 			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 			{
 				AM_rotatePoint(&pt.x, &pt.y);
@@ -2096,7 +2099,7 @@ void AM_drawSubsectors()
 			points[j].Y = float(f_y + (f_h - (pt.y - m_y) * scale));
 		}
 		// For lighting and texture determination
-		sector_t *sec = AM_FakeFlat(players[consoleplayer].camera, subsectors[i].render_sector, &tempsec);
+		sector_t *sec = AM_FakeFlat(players[consoleplayer].camera, sub->render_sector, &tempsec);
 		floorlight = sec->GetFloorLight();
 		// Find texture origin.
 		originpt.x = -sec->GetXOffset(sector_t::floor);
@@ -2123,7 +2126,7 @@ void AM_drawSubsectors()
 			double secx;
 			double secy;
 			double seczb, seczt;
-            auto &vp = r_viewpoint;
+			auto &vp = r_viewpoint;
 			double cmpz = vp.Pos.Z;
 
 			if (players[consoleplayer].camera && sec == players[consoleplayer].camera->Sector)
@@ -2144,7 +2147,7 @@ void AM_drawSubsectors()
 			{
 				F3DFloor *rover = sec->e->XFloor.ffloors[i];
 				if (!(rover->flags & FF_EXISTS)) continue;
-				if (rover->flags & (FF_FOG|FF_THISINSIDE)) continue;
+				if (rover->flags & (FF_FOG | FF_THISINSIDE)) continue;
 				if (!(rover->flags & FF_RENDERPLANES)) continue;
 				if (rover->alpha == 0) continue;
 				double roverz = rover->top.plane->ZatPoint(secx, secy);
@@ -2194,7 +2197,7 @@ void AM_drawSubsectors()
 
 		// If this subsector has not actually been seen yet (because you are cheating
 		// to see it on the map), tint and desaturate it.
-		if (!(subsectors[i].flags & SSECMF_DRAWN))
+		if (!(sub->flags & SSECMF_DRAWN))
 		{
 			colormap.LightColor = PalEntry(
 				(colormap.LightColor.r + 255) / 2,
@@ -2210,8 +2213,28 @@ void AM_drawSubsectors()
 
 		// Draw the polygon.
 		FTexture *pic = TexMan(maptex);
-		if (pic != NULL && pic->UseType != ETextureType::Null)
+		if (pic != nullptr && pic->UseType != ETextureType::Null)
 		{
+			// Hole filling "subsectors" are not necessarily convex so they require real triangulation.
+			// These things are extremely rare so performance is secondary here.
+			if (sub->flags & SSECF_HOLE && sub->numlines > 3)
+			{
+				using Point = std::pair<double, double>;
+				std::vector<std::vector<Point>> polygon;
+				std::vector<Point> *curPoly;
+
+				polygon.resize(1);
+				curPoly = &polygon.back();
+				curPoly->resize(points.Size());
+
+				for (unsigned i = 0; i < points.Size(); i++)
+				{
+					(*curPoly)[i] = { points[i].X, points[i].Y };
+				}
+				indices = mapbox::earcut(polygon);
+			}
+			else indices.clear();
+
 			screen->FillSimplePoly(TexMan(maptex),
 				&points[0], points.Size(),
 				originx, originy,
@@ -2221,8 +2244,8 @@ void AM_drawSubsectors()
 				colormap,
 				flatcolor,
 				floorlight,
-				f_y + f_h
-				);
+				f_y + f_h,
+				indices.data(), indices.size());
 		}
 	}
 }

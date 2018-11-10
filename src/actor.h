@@ -55,6 +55,7 @@ struct FBlockNode;
 struct FPortalGroupArray;
 struct visstyle_t;
 class FLightDefaults;
+struct FSection;
 //
 // NOTES: AActor
 //
@@ -1038,6 +1039,10 @@ public:
 	void AttachLight(unsigned int count, const FLightDefaults *lightdef);
 	void SetDynamicLights();
 
+	// When was this actor spawned? (relative to the current level)
+	int GetLevelSpawnTime() const;
+	// How many ticks passed since this actor was spawned?
+	int GetAge() const;
 
 // info for drawing
 // NOTE: The first member variable *must* be snext.
@@ -1088,6 +1093,7 @@ public:
 	FBlockNode		*BlockNode;			// links in blocks (if needed)
 	struct sector_t	*Sector;
 	subsector_t *		subsector;
+	FSection *			section;
 	double			floorz, ceilingz;	// closest together of contacted secs
 	double			dropoffz;		// killough 11/98: the lowest floor over all contacted Sectors.
 
@@ -1187,6 +1193,9 @@ public:
 
 	AActor			*BlockingMobj;	// Actor that blocked the last move
 	line_t			*BlockingLine;	// Line that blocked the last move
+	sector_t		*Blocking3DFloor;	// 3D floor that blocked the last move (if any)
+	sector_t		*BlockingCeiling;	// Sector that blocked the last move (ceiling plane slope)
+	sector_t		*BlockingFloor;		// Sector that blocked the last move (floor plane slope)
 
 	int PoisonDamage; // Damage received per tic from poison.
 	FName PoisonDamageType; // Damage type dealt by poison.
@@ -1264,6 +1273,9 @@ public:
 	DRotator PrevAngles;
 	int PrevPortalGroup;
 	TArray<TObjPtr<AActor*> > AttachedLights;
+
+	// When was this actor spawned?
+	int SpawnTime;
 
 	// ThingIDs
 	static void ClearTIDHashes ();

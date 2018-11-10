@@ -32,7 +32,11 @@
 #include "g_levellocals.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_drawlist.h"
+#include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/utility/hw_clock.h"
+#include "hw_renderstate.h"
+#include "hw_drawinfo.h"
+#include "hw_fakeflat.h"
 
 FMemArena RenderDataAllocator(1024*1024);	// Use large blocks to reduce allocation time.
 
@@ -771,7 +775,7 @@ GLSprite *HWDrawList::NewSprite()
 //
 //
 //==========================================================================
-void HWDrawList::DoDraw(HWDrawInfo *di, int pass, int i, bool trans)
+void HWDrawList::DoDraw(HWDrawInfo *di, FRenderState &state, bool translucent, int i)
 {
 	switch(drawitems[i].rendertype)
 	{
@@ -779,7 +783,7 @@ void HWDrawList::DoDraw(HWDrawInfo *di, int pass, int i, bool trans)
 		{
 			GLFlat * f= flats[drawitems[i].index];
 			RenderFlat.Clock();
-			di->DrawFlat(f, pass, trans);
+			f->DrawFlat(di, state, translucent);
 			RenderFlat.Unclock();
 		}
 		break;
@@ -788,7 +792,7 @@ void HWDrawList::DoDraw(HWDrawInfo *di, int pass, int i, bool trans)
 		{
 			GLWall * w= walls[drawitems[i].index];
 			RenderWall.Clock();
-			di->DrawWall(w, pass);
+			w->DrawWall(di, state, translucent);
 			RenderWall.Unclock();
 		}
 		break;
@@ -797,7 +801,7 @@ void HWDrawList::DoDraw(HWDrawInfo *di, int pass, int i, bool trans)
 		{
 			GLSprite * s= sprites[drawitems[i].index];
 			RenderSprite.Clock();
-			di->DrawSprite(s, pass);
+			s->DrawSprite(di, state, translucent);
 			RenderSprite.Unclock();
 		}
 		break;
@@ -809,11 +813,11 @@ void HWDrawList::DoDraw(HWDrawInfo *di, int pass, int i, bool trans)
 //
 //
 //==========================================================================
-void HWDrawList::Draw(HWDrawInfo *di, int pass, bool trans)
+void HWDrawList::Draw(HWDrawInfo *di, FRenderState &state, bool translucent)
 {
 	for (unsigned i = 0; i < drawitems.Size(); i++)
 	{
-		DoDraw(di, pass, i, trans);
+		DoDraw(di, state, translucent, i);
 	}
 }
 
@@ -822,12 +826,12 @@ void HWDrawList::Draw(HWDrawInfo *di, int pass, bool trans)
 //
 //
 //==========================================================================
-void HWDrawList::DrawWalls(HWDrawInfo *di, int pass)
+void HWDrawList::DrawWalls(HWDrawInfo *di, FRenderState &state, bool translucent)
 {
 	RenderWall.Clock();
 	for (auto &item : drawitems)
 	{
-		di->DrawWall(walls[item.index], pass);
+		walls[item.index]->DrawWall(di, state, translucent);
 	}
 	RenderWall.Unclock();
 }
@@ -837,13 +841,97 @@ void HWDrawList::DrawWalls(HWDrawInfo *di, int pass)
 //
 //
 //==========================================================================
-void HWDrawList::DrawFlats(HWDrawInfo *di, int pass)
+void HWDrawList::DrawFlats(HWDrawInfo *di, FRenderState &state, bool translucent)
 {
 	RenderFlat.Clock();
 	for (unsigned i = 0; i<drawitems.Size(); i++)
 	{
-		di->DrawFlat(flats[drawitems[i].index], pass, false);
+		flats[drawitems[i].index]->DrawFlat(di, state, translucent);
 	}
 	RenderFlat.Unclock();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+void HWDrawList::DrawSorted(HWDrawInfo *di, FRenderState &state, SortNode * head)
+{
+	float clipsplit[2];
+	int relation = 0;
+	float z = 0.f;
+
+	state.GetClipSplit(clipsplit);
+
+	if (drawitems[head->itemindex].rendertype == GLDIT_FLAT)
+	{
+		z = flats[drawitems[head->itemindex].index]->z;
+		relation = z > di->Viewpoint.Pos.Z ? 1 : -1;
+	}
+
+
+	// left is further away, i.e. for stuff above viewz its z coordinate higher, for stuff below viewz its z coordinate is lower
+	if (head->left)
+	{
+		if (relation == -1)
+		{
+			state.SetClipSplit(clipsplit[0], z);	// render below: set flat as top clip plane
+		}
+		else if (relation == 1)
+		{
+			state.SetClipSplit(z, clipsplit[1]);	// render above: set flat as bottom clip plane
+		}
+		DrawSorted(di, state, head->left);
+		state.SetClipSplit(clipsplit);
+	}
+	DoDraw(di, state, true, head->itemindex);
+	if (head->equal)
+	{
+		SortNode * ehead = head->equal;
+		while (ehead)
+		{
+			DoDraw(di, state, true, ehead->itemindex);
+			ehead = ehead->equal;
+		}
+	}
+	// right is closer, i.e. for stuff above viewz its z coordinate is lower, for stuff below viewz its z coordinate is higher
+	if (head->right)
+	{
+		if (relation == 1)
+		{
+			state.SetClipSplit(clipsplit[0], z);	// render below: set flat as top clip plane
+		}
+		else if (relation == -1)
+		{
+			state.SetClipSplit(z, clipsplit[1]);	// render above: set flat as bottom clip plane
+		}
+		DrawSorted(di, state, head->right);
+		state.SetClipSplit(clipsplit);
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+void HWDrawList::DrawSorted(HWDrawInfo *di, FRenderState &state)
+{
+	if (drawitems.Size() == 0) return;
+
+	if (!sorted)
+	{
+		screen->mVertexData->Map();
+		Sort(di);
+		screen->mVertexData->Unmap();
+	}
+	state.ClearClipSplit();
+	state.EnableClipDistance(1, true);
+	state.EnableClipDistance(2, true);
+	DrawSorted(di, state, sorted);
+	state.EnableClipDistance(1, false);
+	state.EnableClipDistance(2, false);
+	state.ClearClipSplit();
 }
 

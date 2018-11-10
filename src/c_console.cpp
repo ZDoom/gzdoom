@@ -732,8 +732,8 @@ void FNotifyBuffer::Shift(int maxlines)
 
 void FNotifyBuffer::AddString(int printlevel, FString source)
 {
-	FBrokenLines *lines;
-	int i, width;
+	TArray<FBrokenLines> lines;
+	int width;
 
 	if ((printlevel != 128 && !show_messages) ||
 		source.IsEmpty() ||
@@ -764,14 +764,14 @@ void FNotifyBuffer::AddString(int printlevel, FString source)
 		}
 	}
 
-	if (lines == NULL)
+	if (lines.Size() == 0)
 		return;
 
-	for (i = 0; lines[i].Width >= 0; i++)
+	for (auto &line : lines)
 	{
 		FNotifyText newline;
 
-		newline.Text = lines[i].Text;
+		newline.Text = line.Text;
 		newline.TimeOut = gametic + int(con_notifytime * TICRATE);
 		newline.PrintLevel = printlevel;
 		if (AddType == NEWLINE || Text.Size() == 0)
@@ -788,9 +788,6 @@ void FNotifyBuffer::AddString(int printlevel, FString source)
 		}
 		AddType = NEWLINE;
 	}
-
-	V_FreeBrokenLines (lines);
-	lines = NULL;
 
 	switch (source[source.Len()-1])
 	{
@@ -1185,22 +1182,22 @@ void C_DrawConsole ()
 		// No more enqueuing because adding new text to the console won't touch the actual print data.
 		conbuffer->FormatText(ConFont, ConWidth / textScale);
 		unsigned int consolelines = conbuffer->GetFormattedLineCount();
-		FBrokenLines **blines = conbuffer->GetLines();
-		FBrokenLines **printline = blines + consolelines - 1 - RowAdjust;
+		FBrokenLines *blines = conbuffer->GetLines();
+		FBrokenLines *printline = blines + consolelines - 1 - RowAdjust;
 
 		int bottomline = ConBottom / textScale - ConFont->GetHeight()*2 - 4;
 
 		ConsoleDrawing = true;
 
-		for(FBrokenLines **p = printline; p >= blines && lines > 0; p--, lines--)
+		for(FBrokenLines *p = printline; p >= blines && lines > 0; p--, lines--)
 		{
 			if (textScale == 1)
 			{
-				screen->DrawText(ConFont, CR_TAN, LEFTMARGIN, offset + lines * ConFont->GetHeight(), (*p)->Text, TAG_DONE);
+				screen->DrawText(ConFont, CR_TAN, LEFTMARGIN, offset + lines * ConFont->GetHeight(), p->Text, TAG_DONE);
 			}
 			else
 			{
-				screen->DrawText(ConFont, CR_TAN, LEFTMARGIN, offset + lines * ConFont->GetHeight(), (*p)->Text,
+				screen->DrawText(ConFont, CR_TAN, LEFTMARGIN, offset + lines * ConFont->GetHeight(), p->Text,
 					DTA_VirtualWidth, screen->GetWidth() / textScale,
 					DTA_VirtualHeight, screen->GetHeight() / textScale,
 					DTA_KeepRatio, true, TAG_DONE);

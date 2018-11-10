@@ -44,6 +44,19 @@ enum
 	OPAQUE = 65536,
 };
 
+enum ETexMode
+{
+	TM_NORMAL = 0,	// (r, g, b, a)
+	TM_STENCIL,			// (1, 1, 1, a)
+	TM_OPAQUE,			// (r, g, b, 1)
+	TM_INVERSE,			// (1-r, 1-g, 1-b, a)
+	TM_ALPHATEXTURE,		// (1, 1, 1, r)
+	TM_CLAMPY,			// (r, g, b, (t >= 0.0 && t <= 1.0)? a:0)
+	TM_INVERTOPAQUE,	// (1-r, 1-g, 1-b, 1)
+	TM_FOGLAYER,		// (renders a fog layer in the shape of the active texture)
+	TM_FIXEDCOLORMAP = TM_FOGLAYER,	// repurposes the objectcolor uniforms to render a fixed colormap range. (Same constant because they cannot be used in the same context.
+};
+
 // Legacy render styles
 enum ERenderStyle
 {
@@ -63,6 +76,8 @@ enum ERenderStyle
 	STYLE_AddShaded,		// Treat patch data as alpha values for alphacolor
 	STYLE_Multiply,			// Multiply source with destination (HW renderer only.)
 	STYLE_InverseMultiply,	// Multiply source with inverse of destination (HW renderer only.)
+	STYLE_ColorBlend,		// Use color intensity as transparency factor
+	STYLE_Source,			// No blending (only used internally)
 
 	STYLE_Count
 };
@@ -141,6 +156,7 @@ union FRenderStyle
 
 	inline FRenderStyle &operator= (ERenderStyle legacy);
 	bool operator==(const FRenderStyle &o) const { return AsDWORD == o.AsDWORD; }
+	bool operator!=(const FRenderStyle &o) const { return AsDWORD != o.AsDWORD; }
 	void CheckFuzz();
 	bool IsVisible(double alpha) const throw();
 private:
@@ -153,11 +169,6 @@ private:
 extern FRenderStyle LegacyRenderStyles[STYLE_Count];
 
 inline FRenderStyle DefaultRenderStyle()
-{
-	return LegacyRenderStyles[STYLE_Normal];
-}
-
-inline FRenderStyle BadRenderStyle()	// This is just a marker to find places where work is still needed.
 {
 	return LegacyRenderStyles[STYLE_Normal];
 }

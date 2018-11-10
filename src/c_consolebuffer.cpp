@@ -74,11 +74,11 @@ FConsoleBuffer::~FConsoleBuffer()
 
 void FConsoleBuffer::FreeBrokenText(unsigned start, unsigned end)
 {
-	if (end > mBrokenConsoleText.Size()) end = mBrokenConsoleText.Size();
+	if (end > m_BrokenConsoleText.Size()) end = m_BrokenConsoleText.Size();
 	for (unsigned i = start; i < end; i++)
 	{
-		if (mBrokenConsoleText[i] != NULL) V_FreeBrokenLines(mBrokenConsoleText[i]);
-		mBrokenConsoleText[i] = NULL;
+		m_BrokenConsoleText[i].Clear();
+		m_BrokenConsoleText[i].ShrinkToFit();
 	}
 }
 
@@ -150,9 +150,9 @@ void FConsoleBuffer::AddText(int printlevel, const char *text, FILE *logfile)
 void FConsoleBuffer::WriteLineToLog(FILE *LogFile, const char *outline)
 {
 	// Strip out any color escape sequences before writing to the log file
-	char * copy = new char[strlen(outline)+1];
+	TArray<char> copy(strlen(outline)+1);
 	const char * srcp = outline;
-	char * dstp = copy;
+	char * dstp = copy.Data();
 
 	while (*srcp != 0)
 	{
@@ -193,8 +193,7 @@ void FConsoleBuffer::WriteLineToLog(FILE *LogFile, const char *outline)
 	}
 	*dstp=0;
 
-	fputs (copy, LogFile);
-	delete [] copy;
+	fputs (copy.Data(), LogFile);
 	fflush (LogFile);
 }
 
@@ -260,7 +259,7 @@ void FConsoleBuffer::FormatText(FFont *formatfont, int displaywidth)
 	if (formatfont != mLastFont || displaywidth != mLastDisplayWidth || mBufferWasCleared)
 	{
 		FreeBrokenText();
-		mBrokenConsoleText.Clear();
+		m_BrokenConsoleText.Clear();
 		mBrokenStart.Clear();
 		mBrokenStart.Push(0);
 		mBrokenLines.Clear();
@@ -268,7 +267,7 @@ void FConsoleBuffer::FormatText(FFont *formatfont, int displaywidth)
 		mLastDisplayWidth = displaywidth;
 		mBufferWasCleared = false;
 	}
-	unsigned brokensize = mBrokenConsoleText.Size();
+	unsigned brokensize = m_BrokenConsoleText.Size();
 	if (brokensize == mConsoleText.Size())
 	{
 		// The last line got text appended. We have to wait until here to format it because
@@ -276,21 +275,19 @@ void FConsoleBuffer::FormatText(FFont *formatfont, int displaywidth)
 		if (mLastLineNeedsUpdate)
 		{
 			brokensize--;
-			V_FreeBrokenLines(mBrokenConsoleText[brokensize]);
-			mBrokenConsoleText.Resize(brokensize);
+			m_BrokenConsoleText.Resize(brokensize);
 		}
 	}
 	mBrokenLines.Resize(mBrokenStart[brokensize]);
 	mBrokenStart.Resize(brokensize);
 	for (unsigned i = brokensize; i < mConsoleText.Size(); i++)
 	{
-		FBrokenLines *bl = V_BreakLines(formatfont, displaywidth, mConsoleText[i], true);
-		mBrokenConsoleText.Push(bl);
+		auto bl = V_BreakLines(formatfont, displaywidth, mConsoleText[i], true);
+		m_BrokenConsoleText.Push(bl);
 		mBrokenStart.Push(mBrokenLines.Size());
-		while (bl->Width != -1)
+		for(auto &bline : bl)
 		{
-			mBrokenLines.Push(bl);
-			bl++;
+			mBrokenLines.Push(bline);
 		}
 	}
 	mTextLines = mBrokenLines.Size();

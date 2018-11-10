@@ -1086,7 +1086,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 				damage = int(damage * source->DamageMultiply);
 
 				// Handle active damage modifiers (e.g. PowerDamage)
-				if (damage > 0)
+				if (damage > 0 && !(flags & DMG_NO_ENHANCE))
 				{
 					damage = source->GetModifiedDamage(mod, damage, false);
 				}

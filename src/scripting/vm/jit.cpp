@@ -685,27 +685,24 @@ void JitCompiler::EmitNullPointerThrow(int index, EVMAbortException reason)
 	cc.bind(label);
 }
 
+void JitCompiler::ThrowException(VMScriptFunction *func, VMOP *line, int reason)
+{
+	try
+	{
+		ThrowAbortException(func, line, (EVMAbortException)reason, nullptr);
+	}
+	catch (...)
+	{
+		VMThrowException(std::current_exception());
+	}
+}
+
 void JitCompiler::EmitThrowException(EVMAbortException reason)
 {
-	auto call = CreateCall<void, VMScriptFunction *, VMOP *, int>([](VMScriptFunction *func, VMOP *line, int r) {
-		try
-		{
-			ThrowAbortException(func, line, (EVMAbortException)r, nullptr);
-		}
-		catch (...)
-		{
-			VMThrowException(std::current_exception());
-		}
-	});
+	auto call = CreateCall<void, VMScriptFunction *, VMOP *, int>(&JitCompiler::ThrowException);
 	call->setArg(0, asmjit::imm_ptr(sfunc));
 	call->setArg(1, asmjit::imm_ptr(pc));
 	call->setArg(2, asmjit::imm(reason));
-}
-
-void JitCompiler::EmitThrowException(EVMAbortException reason, asmjit::X86Gp arg1)
-{
-	// To do: fix throw message and use arg1
-	EmitThrowException(reason);
 }
 
 asmjit::X86Gp JitCompiler::CheckRegD(int r0, int r1)

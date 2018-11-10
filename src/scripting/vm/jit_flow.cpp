@@ -297,23 +297,37 @@ void JitCompiler::EmitNEW()
 void JitCompiler::EmitNEW_K()
 {
 	PClass *cls = (PClass*)konsta[B].v;
-	if (!cls->ConstructNative)
+	auto regcls = newTempIntPtr();
+	cc.mov(regcls, asmjit::imm_ptr(cls));
+
+	if (!cls->ConstructNative || cls->bAbstract || cls->IsDescendantOf(NAME_Actor))
 	{
-		EmitThrowException(X_OTHER); // "Class %s requires native construction", cls->TypeName.GetChars()
-	}
-	else if (cls->bAbstract)
-	{
-		EmitThrowException(X_OTHER); // "Cannot instantiate abstract class %s", cls->TypeName.GetChars()
-	}
-	else if (cls->IsDescendantOf(NAME_Actor)) // Creating actors here must be outright prohibited
-	{
-		EmitThrowException(X_OTHER); // "Cannot create actors with 'new'"
+		auto call = CreateCall<void, PClass*, int>([](PClass *cls, int c) {
+			try
+			{
+				if (!cls->ConstructNative)
+				{
+					ThrowAbortException(X_OTHER, "Class %s requires native construction", cls->TypeName.GetChars());
+				}
+				else if (cls->bAbstract)
+				{
+					ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
+				}
+				else // if (cls->IsDescendantOf(NAME_Actor)) // Creating actors here must be outright prohibited
+				{
+					ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
+				}
+			}
+			catch (...)
+			{
+				VMThrowException(std::current_exception());
+			}
+		});
+		call->setArg(0, regcls);
 	}
 	else
 	{
 		auto result = newResultIntPtr();
-		auto regcls = newTempIntPtr();
-		cc.mov(regcls, asmjit::imm_ptr(konsta[B].v));
 		auto call = CreateCall<DObject*, PClass*, int>([](PClass *cls, int c) -> DObject* {
 			try
 			{
@@ -341,42 +355,65 @@ void JitCompiler::EmitTHROW()
 
 void JitCompiler::EmitBOUND()
 {
-	auto label1 = cc.newLabel();
-	auto label2 = cc.newLabel();
+	auto label = cc.newLabel();
+
 	cc.cmp(regD[A], (int)BC);
-	cc.jl(label1);
-	EmitThrowException(X_ARRAY_OUT_OF_BOUNDS); // "Max.index = %u, current index = %u\n", BC, reg.d[A]
-	cc.bind(label1);
-	cc.cmp(regD[A], (int)0);
-	cc.jge(label2);
-	EmitThrowException(X_ARRAY_OUT_OF_BOUNDS); // "Negative current index = %i\n", reg.d[A]
-	cc.bind(label2);
+	cc.jb(label);
+
+	auto call = CreateCall<void, VMScriptFunction *, VMOP *, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
+	call->setArg(0, asmjit::imm_ptr(sfunc));
+	call->setArg(1, asmjit::imm_ptr(pc));
+	call->setArg(2, regD[A]);
+	call->setArg(3, asmjit::imm(BC));
+
+	cc.bind(label);
 }
 
 void JitCompiler::EmitBOUND_K()
 {
-	auto label1 = cc.newLabel();
-	auto label2 = cc.newLabel();
+	auto label = cc.newLabel();
 	cc.cmp(regD[A], (int)konstd[BC]);
-	cc.jl(label1);
-	EmitThrowException(X_ARRAY_OUT_OF_BOUNDS); // "Max.index = %u, current index = %u\n", konstd[BC], reg.d[A]
-	cc.bind(label1);
-	cc.cmp(regD[A], (int)0);
-	cc.jge(label2);
-	EmitThrowException(X_ARRAY_OUT_OF_BOUNDS); // "Negative current index = %i\n", reg.d[A]
-	cc.bind(label2);
+	cc.jb(label);
+
+	auto call = CreateCall<void, VMScriptFunction *, VMOP *, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
+	call->setArg(0, asmjit::imm_ptr(sfunc));
+	call->setArg(1, asmjit::imm_ptr(pc));
+	call->setArg(2, regD[A]);
+	call->setArg(3, asmjit::imm(konstd[BC]));
+
+	cc.bind(label);
 }
 
 void JitCompiler::EmitBOUND_R()
 {
-	auto label1 = cc.newLabel();
-	auto label2 = cc.newLabel();
+	auto label = cc.newLabel();
 	cc.cmp(regD[A], regD[B]);
-	cc.jl(label1);
-	EmitThrowException(X_ARRAY_OUT_OF_BOUNDS); // "Max.index = %u, current index = %u\n", reg.d[B], reg.d[A]
-	cc.bind(label1);
-	cc.cmp(regD[A], (int)0);
-	cc.jge(label2);
-	EmitThrowException(X_ARRAY_OUT_OF_BOUNDS); // "Negative current index = %i\n", reg.d[A]
-	cc.bind(label2);
+	cc.jb(label);
+
+	auto call = CreateCall<void, VMScriptFunction *, VMOP *, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
+	call->setArg(0, asmjit::imm_ptr(sfunc));
+	call->setArg(1, asmjit::imm_ptr(pc));
+	call->setArg(2, regD[A]);
+	call->setArg(3, regD[B]);
+
+	cc.bind(label);
+}
+
+void JitCompiler::ThrowArrayOutOfBounds(VMScriptFunction *func, VMOP *line, int index, int size)
+{
+	try
+	{
+		if (index > size)
+		{
+			ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", size, index);
+		}
+		else
+		{
+			ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Negative current index = %i\n", index);
+		}
+	}
+	catch (...)
+	{
+		VMThrowException(std::current_exception());
+	}
 }

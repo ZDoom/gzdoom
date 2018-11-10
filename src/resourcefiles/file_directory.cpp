@@ -195,7 +195,7 @@ int FDirectory::AddDirectory(const char *dirpath)
 		return 0;
 	}
 
-	const size_t namepos = strlen(Filename);
+	const size_t namepos = strlen(FileName);
 	FString pathfix;
 
 	while ((ent = fts_read(fts)) != NULL)

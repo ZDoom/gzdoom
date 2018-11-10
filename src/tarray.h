@@ -164,7 +164,7 @@ public:
 		Array = (T *)M_Malloc (sizeof(T)*max);
 		if (reserve)
 		{
-			for (unsigned i = 0; i < Count; i++) ::new(&Array[i]) T();
+			ConstructEmpty(0, Count - 1);
 		}
 	}
 	TArray (const TArray<T,TT> &other)
@@ -362,17 +362,6 @@ public:
 		}
 	}
 
-	// Reserves a range of entries in the middle of the array, shifting elements as needed
-	void ReserveAt(unsigned int index, unsigned int amount)
-	{
-		Grow(amount);
-		memmove(&Array[index + amount], &Array[index], sizeof(T)*(Count - index - amount));
-		for (unsigned i = 0; i < amount; i++)
-		{
-			::new ((void *)&Array[index + i]) T();
-		}
-	}
-
 	void ShrinkToFit ()
 	{
 		if (Most > Count)
@@ -411,10 +400,7 @@ public:
 		{
 			// Adding new entries
 			Grow (amount - Count);
-			for (unsigned int i = Count; i < amount; ++i)
-			{
-				::new((void *)&Array[i]) T;
-			}
+			ConstructEmpty(Count, amount - 1);
 		}
 		else if (Count != amount)
 		{
@@ -422,6 +408,18 @@ public:
 			DoDelete (amount, Count - 1);
 		}
 		Count = amount;
+	}
+	// Ensures that the array has at most amount entries.
+	// Useful in cases where the initial allocation may be larger than the final result.
+	// Resize would create a lot of unneeded code in those cases.
+	void Clamp(unsigned int amount)
+	{
+		if (Count > amount)
+		{
+			// Deleting old entries
+			DoDelete(amount, Count - 1);
+			Count = amount;
+		}
 	}
 	void Alloc(unsigned int amount)
 	{
@@ -438,10 +436,7 @@ public:
 		Grow (amount);
 		unsigned int place = Count;
 		Count += amount;
-		for (unsigned int i = place; i < Count; ++i)
-		{
-			::new((void *)&Array[i]) T;
-		}
+		ConstructEmpty(place, Count - 1);
 		return place;
 	}
 	unsigned int Size () const
@@ -499,6 +494,15 @@ private:
 		for (unsigned int i = first; i <= last; ++i)
 		{
 			Array[i].~T();
+		}
+	}
+
+	void ConstructEmpty(unsigned int first, unsigned int last)
+	{
+		assert(last != ~0u);
+		for (unsigned int i = first; i <= last; ++i)
+		{
+			::new(&Array[i]) T;
 		}
 	}
 };

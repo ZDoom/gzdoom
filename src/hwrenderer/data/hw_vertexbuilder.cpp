@@ -53,12 +53,14 @@ static void CreateVerticesForSubsector(subsector_t *sub, VertexContainer &gen, i
 		using Point = std::pair<double, double>;
 		std::vector<std::vector<Point>> polygon;
 		std::vector<Point> *curPoly;
-		
+
+		polygon.resize(1);
+		curPoly = &polygon.back();
+		curPoly->resize(sub->numlines);
+
 		for (unsigned i = 0; i < sub->numlines; i++)
 		{
-			polygon.resize(1);
-			curPoly = &polygon.back();
-			curPoly->push_back({ sub->firstline[i].v1->fX(), sub->firstline[i].v1->fY() });
+			(*curPoly)[i] = { sub->firstline[i].v1->fX(), sub->firstline[i].v1->fY() };
 		}
 		auto indices = mapbox::earcut(polygon);
 		for (auto vti : indices)

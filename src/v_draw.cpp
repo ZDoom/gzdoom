@@ -1253,9 +1253,9 @@ DEFINE_ACTION_FUNCTION(_Screen, Dim)
 
 void DFrameBuffer::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	double originx, double originy, double scalex, double scaley, DAngle rotation,
-	const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip)
+	const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip, uint32_t *indices, size_t indexcount)
 {
-	m2DDrawer.AddPoly(tex, points, npoints, originx, originy, scalex, scaley, rotation, colormap, flatcolor, lightlevel);
+	m2DDrawer.AddPoly(tex, points, npoints, originx, originy, scalex, scaley, rotation, colormap, flatcolor, lightlevel, indices, indexcount);
 }
 
 //==========================================================================

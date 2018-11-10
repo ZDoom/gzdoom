@@ -403,7 +403,7 @@ void JitCompiler::ThrowArrayOutOfBounds(VMScriptFunction *func, VMOP *line, int 
 {
 	try
 	{
-		if (index > size)
+		if (index >= size)
 		{
 			ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", size, index);
 		}

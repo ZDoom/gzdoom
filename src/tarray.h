@@ -157,12 +157,12 @@ public:
 		Count = 0;
 		Array = NULL;
 	}
-	TArray (int max, bool reserve = false)
+	TArray (size_t max, bool reserve = false)
 	{
-		Most = max;
-		Count = reserve? max : 0;
+		Most = (unsigned)max;
+		Count = (unsigned)(reserve? max : 0);
 		Array = (T *)M_Malloc (sizeof(T)*max);
-		if (reserve)
+		if (reserve && Count > 0)
 		{
 			ConstructEmpty(0, Count - 1);
 		}
@@ -436,7 +436,7 @@ public:
 		Grow (amount);
 		unsigned int place = Count;
 		Count += amount;
-		ConstructEmpty(place, Count - 1);
+		if (Count > 0) ConstructEmpty(place, Count - 1);
 		return place;
 	}
 	unsigned int Size () const

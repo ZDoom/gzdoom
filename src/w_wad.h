@@ -148,6 +148,7 @@ public:
 
 
 	void ReadLump (int lump, void *dest);
+	TArray<uint8_t> ReadLumpIntoArray(int lump, int pad = 0);	// reads lump into a writable buffer and optionally adds some padding at the end. (FMemLump isn't writable!)
 	FMemLump ReadLump (int lump);
 	FMemLump ReadLump (const char *name) { return ReadLump (GetNumForName (name)); }
 

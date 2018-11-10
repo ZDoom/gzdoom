@@ -184,6 +184,14 @@ public:
 		return mReader->Read(buffer, (long)len);
 	}
 
+	TArray<uint8_t> Read(size_t len)
+	{
+		TArray<uint8_t> buffer((int)len, true);
+		Size length = mReader->Read(&buffer[0], (long)len);
+		buffer.Clamp((int)length);
+		return buffer;
+	}
+
 	TArray<uint8_t> Read()
 	{
 		TArray<uint8_t> buffer(mReader->Length, true);

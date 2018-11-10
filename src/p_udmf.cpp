@@ -2045,15 +2045,11 @@ public:
 
 	void ParseTextMap(MapData *map)
 	{
-		char *buffer = new char[map->Size(ML_TEXTMAP)];
-
 		isTranslated = true;
 		isExtended = false;
 		floordrop = false;
 
-		map->Read(ML_TEXTMAP, buffer);
-		sc.OpenMem(Wads.GetLumpFullName(map->lumpnum), buffer, map->Size(ML_TEXTMAP));
-		delete [] buffer;
+		sc.OpenMem(Wads.GetLumpFullName(map->lumpnum), map->Read(ML_TEXTMAP));
 		sc.SetCMode(true);
 		if (sc.CheckString("namespace"))
 		{

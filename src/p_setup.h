@@ -104,6 +104,13 @@ public:
 		}
 	}
 
+	TArray<uint8_t> Read(unsigned lumpindex)
+	{
+		TArray<uint8_t> buffer(Size(lumpindex), true);
+ 		Read(lumpindex, buffer.Data(), (int)buffer.Size());
+		return buffer;
+	}
+
 	uint32_t Size(unsigned int lumpindex)
 	{
 		if (lumpindex<countof(MapLumps) && MapLumps[lumpindex].Reader.isOpen())

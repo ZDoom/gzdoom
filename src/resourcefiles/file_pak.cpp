@@ -80,7 +80,6 @@ public:
 FPakFile::FPakFile(const char *filename, FileReader &file) 
 	: FUncompressedFile(filename, file)
 {
-	Lumps = NULL;
 }
 
 //==========================================================================
@@ -101,7 +100,7 @@ bool FPakFile::Open(bool quiet)
 	Reader.Seek (header.dirofs, FileReader::SeekSet);
 	Reader.Read (fileinfo, NumLumps * sizeof(dpackfile_t));
 
-	Lumps = new FUncompressedLump[NumLumps];
+	Lumps.Resize(NumLumps);
 
 	if (!quiet && !batchrun) Printf(", %d lumps\n", NumLumps);
 

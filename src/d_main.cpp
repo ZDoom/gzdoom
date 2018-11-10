@@ -1905,7 +1905,7 @@ static FString CheckGameInfo(TArray<FString> & pwads)
 				if (lmp->Namespace == ns_global && !stricmp(lmp->Name, "GAMEINFO"))
 				{
 					// Found one!
-					FString iwad = ParseGameInfo(pwads, resfile->Filename, (const char*)lmp->CacheLump(), lmp->LumpSize);
+					FString iwad = ParseGameInfo(pwads, resfile->FileName, (const char*)lmp->CacheLump(), lmp->LumpSize);
 					delete resfile;
 					return iwad;
 				}

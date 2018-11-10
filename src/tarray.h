@@ -431,11 +431,11 @@ public:
 	}
 	// Reserves amount entries at the end of the array, but does nothing
 	// with them.
-	unsigned int Reserve (unsigned int amount)
+	unsigned int Reserve (size_t amount)
 	{
-		Grow (amount);
+		Grow ((unsigned)amount);
 		unsigned int place = Count;
-		Count += amount;
+		Count += (unsigned)amount;
 		if (Count > 0) ConstructEmpty(place, Count - 1);
 		return place;
 	}

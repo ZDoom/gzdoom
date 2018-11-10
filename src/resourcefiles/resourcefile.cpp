@@ -156,7 +156,7 @@ static bool IsWadInFolder(const FResourceFile* const archive, const char* const 
 		return false;
 	}
 
-    const FString dirName = ExtractFileBase(archive->Filename);
+    const FString dirName = ExtractFileBase(archive->FileName);
 	const FString fileName = ExtractFileBase(resPath, true);
 	const FString filePath = dirName + '/' + fileName;
 
@@ -323,9 +323,8 @@ FResourceFile *FResourceFile::OpenDirectory(const char *filename, bool quiet)
 //==========================================================================
 
 FResourceFile::FResourceFile(const char *filename)
+	: FileName(filename)
 {
-	if (filename != NULL) Filename = copystring(filename);
-	else Filename = NULL;
 }
 
 FResourceFile::FResourceFile(const char *filename, FileReader &r)
@@ -336,7 +335,6 @@ FResourceFile::FResourceFile(const char *filename, FileReader &r)
 
 FResourceFile::~FResourceFile()
 {
-	if (Filename != NULL) delete [] Filename;
 }
 
 int lumpcmp(const void * a, const void * b)
@@ -653,12 +651,6 @@ FUncompressedFile::FUncompressedFile(const char *filename, FileReader &r)
 	: FResourceFile(filename, r)
 {}
 
-FUncompressedFile::~FUncompressedFile()
-{
-	if (Lumps != NULL) delete [] Lumps;
-}
-
-
 
 //==========================================================================
 //
@@ -667,9 +659,8 @@ FUncompressedFile::~FUncompressedFile()
 //==========================================================================
 
 FExternalLump::FExternalLump(const char *_filename, int filesize)
+	: Filename(_filename)
 {
-	filename = _filename? copystring(_filename) : NULL;
-
 	if (filesize == -1)
 	{
 		FileReader f;
@@ -690,11 +681,6 @@ FExternalLump::FExternalLump(const char *_filename, int filesize)
 }
 
 
-FExternalLump::~FExternalLump()
-{
-	if (filename != NULL) delete [] filename;
-}
-
 //==========================================================================
 //
 // Caches a lump's content and increases the reference counter
@@ -707,7 +693,7 @@ int FExternalLump::FillCache()
 	Cache = new char[LumpSize];
 	FileReader f;
 
-	if (f.OpenFile(filename))
+	if (f.OpenFile(Filename))
 	{
 		f.Read(Cache, LumpSize);
 	}
@@ -722,19 +708,19 @@ int FExternalLump::FillCache()
 
 bool FMemoryFile::Open(bool quiet)
 {
-    FString name(ExtractFileBase(Filename));
-    FString fname(ExtractFileBase(Filename, true));
+    FString name(ExtractFileBase(FileName));
+    FString fname(ExtractFileBase(FileName, true));
     
-    Lumps = new FUncompressedLump[1];    // must use array allocator
-    uppercopy(Lumps->Name, name);
-    Lumps->Name[8] = 0;
-    Lumps->FullName = fname;
-    Lumps->Owner = this;
-    Lumps->Position = 0;
-    Lumps->LumpSize = (int)Reader.GetLength();
-    Lumps->Namespace = ns_global;
-    Lumps->Flags = 0;
-    Lumps->FullName = NULL;
+	Lumps.Resize(1);
+    uppercopy(Lumps[0].Name, name);
+    Lumps[0].Name[8] = 0;
+    Lumps[0].FullName = fname;
+    Lumps[0].Owner = this;
+    Lumps[0].Position = 0;
+    Lumps[0].LumpSize = (int)Reader.GetLength();
+    Lumps[0].Namespace = ns_global;
+    Lumps[0].Flags = 0;
+    Lumps[0].FullName = nullptr;
     NumLumps = 1;
     return true;
 }

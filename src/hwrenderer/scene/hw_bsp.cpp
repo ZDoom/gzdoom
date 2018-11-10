@@ -96,7 +96,7 @@ static RenderJobQueue jobQueue;	// One static queue is sufficient here. This cod
 
 void HWDrawInfo::WorkerThread()
 {
-	sector_t fakefront, fakeback, *front, *back;
+	sector_t *front, *back;
 
 	WTTotal.Clock();
 	isWorkerThread = true;	// for adding asserts in GL API code. The worker thread may never call any GL API.
@@ -118,6 +118,8 @@ void HWDrawInfo::WorkerThread()
 			_mm_pause();
 			_mm_pause();
 		}
+		// Note that the main thread MUST have prepared the fake sectors that get used below!
+		// This worker thread cannot prepare them itself without costly synchronization.
 		else switch (job->type)
 		{
 		case RenderJob::TerminateJob:
@@ -130,7 +132,7 @@ void HWDrawInfo::WorkerThread()
 			SetupWall.Clock();
 			wall.sub = job->sub;
 
-			front = hw_FakeFlat(job->sub->sector, &fakefront, in_area, false);
+			front = hw_FakeFlat(job->sub->sector, in_area, false);
 			auto seg = job->seg;
 			if (seg->backsector)
 			{
@@ -140,7 +142,7 @@ void HWDrawInfo::WorkerThread()
 				}
 				else
 				{
-					back = hw_FakeFlat(seg->backsector, &fakeback, in_area, true);
+					back = hw_FakeFlat(seg->backsector, in_area, true);
 				}
 			}
 			else back = nullptr;
@@ -156,7 +158,7 @@ void HWDrawInfo::WorkerThread()
 			GLFlat flat;
 			SetupFlat.Clock();
 			flat.section = job->sub->section;
-			front = hw_FakeFlat(job->sub->render_sector, &fakefront, in_area, false);
+			front = hw_FakeFlat(job->sub->render_sector, in_area, false);
 			flat.ProcessSector(this, front);
 			SetupFlat.Unclock();
 			break;
@@ -164,14 +166,14 @@ void HWDrawInfo::WorkerThread()
 
 		case RenderJob::SpriteJob:
 			SetupSprite.Clock();
-			front = hw_FakeFlat(job->sub->sector, &fakefront, in_area, false);
+			front = hw_FakeFlat(job->sub->sector, in_area, false);
 			RenderThings(job->sub, front);
 			SetupSprite.Unclock();
 			break;
 
 		case RenderJob::ParticleJob:
 			SetupSprite.Clock();
-			front = hw_FakeFlat(job->sub->sector, &fakefront, in_area, false);
+			front = hw_FakeFlat(job->sub->sector, in_area, false);
 			RenderParticles(job->sub, front);
 			SetupSprite.Unclock();
 			break;
@@ -228,7 +230,6 @@ void HWDrawInfo::AddLine (seg_t *seg, bool portalclip)
 #endif
 
 	sector_t * backsector = nullptr;
-	sector_t bs;
 
 	if (portalclip)
 	{
@@ -291,7 +292,7 @@ void HWDrawInfo::AddLine (seg_t *seg, bool portalclip)
 			// clipping checks are only needed when the backsector is not the same as the front sector
 			if (in_area == area_default) in_area = hw_CheckViewArea(seg->v1, seg->v2, seg->frontsector, seg->backsector);
 
-			backsector = hw_FakeFlat(seg->backsector, &bs, in_area, true);
+			backsector = hw_FakeFlat(seg->backsector, in_area, true);
 
 			if (hw_CheckClip(seg->sidedef, currentsector, backsector))
 			{
@@ -575,7 +576,6 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 {
 	sector_t * sector;
 	sector_t * fakesector;
-	sector_t fake;
 	
 #ifdef _DEBUG
 	if (sub->sector->sectornum==931)
@@ -600,7 +600,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 	}
 	if (mClipper->IsBlocked()) return;	// if we are inside a stacked sector portal which hasn't unclipped anything yet.
 
-	fakesector=hw_FakeFlat(sector, &fake, in_area, false);
+	fakesector=hw_FakeFlat(sector, in_area, false);
 
 	if (mClipPortal)
 	{
@@ -677,7 +677,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 					sector = sub->render_sector;
 					// the planes of this subsector are faked to belong to another sector
 					// This means we need the heightsec parts and light info of the render sector, not the actual one.
-					fakesector = hw_FakeFlat(sector, &fake, in_area, false);
+					fakesector = hw_FakeFlat(sector, in_area, false);
 				}
 
 				uint8_t &srf = section_renderflags[level.sections.SectionIndex(sub->section)];

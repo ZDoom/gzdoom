@@ -193,8 +193,6 @@ private:
 	subsector_t *currentsubsector;	// used by the line processing code.
 	sector_t *currentsector;
 
-    sector_t fakesec;    // this is a struct member because it gets used in recursively called functions so it cannot be put on the stack.
-
 	void WorkerThread();
 
 	void UnclipSubsector(subsector_t *sub);

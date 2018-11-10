@@ -140,7 +140,7 @@ void GLWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 		state.EnableGlow(true);
 		state.SetGlowParams(topglowcolor, bottomglowcolor);
 	}
-	state.SetGlowPlanes(topplane, bottomplane);
+	state.SetGlowPlanes(frontsector->ceilingplane, frontsector->floorplane);
 	state.SetMaterial(gltexture, flags & 3, 0, -1);
 
 	if (type == RENDERWALL_M2SNF)
@@ -167,7 +167,7 @@ void GLWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 
 		for (unsigned i = 0; i < lightlist->Size(); i++)
 		{
-			secplane_t &lowplane = i == (*lightlist).Size() - 1 ? bottomplane : (*lightlist)[i + 1].plane;
+			secplane_t &lowplane = i == (*lightlist).Size() - 1 ? frontsector->floorplane : (*lightlist)[i + 1].plane;
 			// this must use the exact same calculation method as GLWall::Process etc.
 			float low1 = lowplane.ZatPoint(vertexes[0]);
 			float low2 = lowplane.ZatPoint(vertexes[1]);
@@ -1799,6 +1799,8 @@ void GLWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 	// note: we always have a valid sidedef and linedef reference when getting here.
 
 	this->seg = seg;
+	this->frontsector = frontsector;
+	this->backsector = backsector;
 	vertindex = 0;
 	vertcount = 0;
 
@@ -1893,8 +1895,6 @@ void GLWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 
 
 	if (frontsector->GetWallGlow(topglowcolor, bottomglowcolor)) flags |= GLWF_GLOW;
-	topplane = frontsector->ceilingplane;
-	bottomplane = frontsector->floorplane;
 
 	zfloor[0] = ffh1 = segfront->floorplane.ZatPoint(v1);
 	zfloor[1] = ffh2 = segfront->floorplane.ZatPoint(v2);
@@ -2104,6 +2104,8 @@ void GLWall::ProcessLowerMiniseg(HWDrawInfo *di, seg_t *seg, sector_t * frontsec
 	if (bfh > ffh)
 	{
 		this->seg = seg;
+		this->frontsector = frontsector;
+		this->backsector = backsector;
 		this->sub = NULL;
 
 		vertex_t * v1 = seg->v1;
@@ -2129,8 +2131,6 @@ void GLWall::ProcessLowerMiniseg(HWDrawInfo *di, seg_t *seg, sector_t * frontsec
 		Colormap = frontsector->Colormap;
 
 		if (frontsector->GetWallGlow(topglowcolor, bottomglowcolor)) flags |= GLWF_GLOW;
-		topplane = frontsector->ceilingplane;
-		bottomplane = frontsector->floorplane;
 		dynlightindex = -1;
 
 		zfloor[0] = zfloor[1] = ffh;

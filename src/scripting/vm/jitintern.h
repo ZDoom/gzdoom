@@ -146,6 +146,7 @@ private:
 
 	void EmitNullPointerThrow(int index, EVMAbortException reason);
 	void EmitThrowException(EVMAbortException reason);
+	asmjit::Label EmitThrowExceptionLabel(EVMAbortException reason);
 
 	static void ThrowArrayOutOfBounds(VMScriptFunction *func, VMOP *line, int index, int size);
 	static void ThrowException(VMScriptFunction *func, VMOP *line, int reason);

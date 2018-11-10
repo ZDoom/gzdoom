@@ -678,11 +678,9 @@ void JitCompiler::EmitPopFrame()
 
 void JitCompiler::EmitNullPointerThrow(int index, EVMAbortException reason)
 {
-	auto label = cc.newLabel();
+	auto label = EmitThrowExceptionLabel(reason);
 	cc.test(regA[index], regA[index]);
-	cc.jne(label);
-	EmitThrowException(reason);
-	cc.bind(label);
+	cc.je(label);
 }
 
 void JitCompiler::ThrowException(VMScriptFunction *func, VMOP *line, int reason)
@@ -703,6 +701,16 @@ void JitCompiler::EmitThrowException(EVMAbortException reason)
 	call->setArg(0, asmjit::imm_ptr(sfunc));
 	call->setArg(1, asmjit::imm_ptr(pc));
 	call->setArg(2, asmjit::imm(reason));
+}
+
+asmjit::Label JitCompiler::EmitThrowExceptionLabel(EVMAbortException reason)
+{
+	auto label = cc.newLabel();
+	auto cursor = cc.getCursor();
+	cc.bind(label);
+	EmitThrowException(reason);
+	cc.setCursor(cursor);
+	return label;
 }
 
 asmjit::X86Gp JitCompiler::CheckRegD(int r0, int r1)

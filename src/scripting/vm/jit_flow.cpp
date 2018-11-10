@@ -50,11 +50,9 @@ void JitCompiler::EmitIJMP()
 
 void JitCompiler::EmitVTBL()
 {
-	auto notnull = cc.newLabel();
+	auto label = EmitThrowExceptionLabel(X_READ_NIL);
 	cc.test(regA[B], regA[B]);
-	cc.jnz(notnull);
-	EmitThrowException(X_READ_NIL);
-	cc.bind(notnull);
+	cc.jz(label);
 
 	auto result = newResultIntPtr();
 	auto call = CreateCall<VMFunction*, DObject*, int>([](DObject *o, int c) -> VMFunction* {
@@ -70,11 +68,9 @@ void JitCompiler::EmitVTBL()
 
 void JitCompiler::EmitSCOPE()
 {
-	auto notnull = cc.newLabel();
+	auto label = EmitThrowExceptionLabel(X_READ_NIL);
 	cc.test(regA[A], regA[A]);
-	cc.jnz(notnull);
-	EmitThrowException(X_READ_NIL);
-	cc.bind(notnull);
+	cc.jz(label);
 
 	auto f = newTempIntPtr();
 	cc.mov(f, asmjit::imm_ptr(konsta[C].v));
@@ -355,48 +351,50 @@ void JitCompiler::EmitTHROW()
 
 void JitCompiler::EmitBOUND()
 {
+	auto cursor = cc.getCursor();
 	auto label = cc.newLabel();
-
-	cc.cmp(regD[A], (int)BC);
-	cc.jb(label);
-
+	cc.bind(label);
 	auto call = CreateCall<void, VMScriptFunction *, VMOP *, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
 	call->setArg(0, asmjit::imm_ptr(sfunc));
 	call->setArg(1, asmjit::imm_ptr(pc));
 	call->setArg(2, regD[A]);
 	call->setArg(3, asmjit::imm(BC));
+	cc.setCursor(cursor);
 
-	cc.bind(label);
+	cc.cmp(regD[A], (int)BC);
+	cc.jae(label);
 }
 
 void JitCompiler::EmitBOUND_K()
 {
+	auto cursor = cc.getCursor();
 	auto label = cc.newLabel();
-	cc.cmp(regD[A], (int)konstd[BC]);
-	cc.jb(label);
-
+	cc.bind(label);
 	auto call = CreateCall<void, VMScriptFunction *, VMOP *, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
 	call->setArg(0, asmjit::imm_ptr(sfunc));
 	call->setArg(1, asmjit::imm_ptr(pc));
 	call->setArg(2, regD[A]);
 	call->setArg(3, asmjit::imm(konstd[BC]));
+	cc.setCursor(cursor);
 
-	cc.bind(label);
+	cc.cmp(regD[A], (int)konstd[BC]);
+	cc.jae(label);
 }
 
 void JitCompiler::EmitBOUND_R()
 {
+	auto cursor = cc.getCursor();
 	auto label = cc.newLabel();
-	cc.cmp(regD[A], regD[B]);
-	cc.jb(label);
-
+	cc.bind(label);
 	auto call = CreateCall<void, VMScriptFunction *, VMOP *, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
 	call->setArg(0, asmjit::imm_ptr(sfunc));
 	call->setArg(1, asmjit::imm_ptr(pc));
 	call->setArg(2, regD[A]);
 	call->setArg(3, regD[B]);
+	cc.setCursor(cursor);
 
-	cc.bind(label);
+	cc.cmp(regD[A], regD[B]);
+	cc.jae(label);
 }
 
 void JitCompiler::ThrowArrayOutOfBounds(VMScriptFunction *func, VMOP *line, int index, int size)

@@ -200,14 +200,11 @@ void JitCompiler::EmitDIV_RR()
 {
 	auto tmp0 = newTempInt32();
 	auto tmp1 = newTempInt32();
-	auto label = cc.newLabel();
 
+	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	cc.test(regD[C], regD[C]);
-	cc.jne(label);
+	cc.je(label);
 
-	EmitThrowException(X_DIVISION_BY_ZERO);
-
-	cc.bind(label);
 	cc.mov(tmp0, regD[B]);
 	cc.cdq(tmp1, tmp0);
 	cc.idiv(tmp1, tmp0, regD[C]);
@@ -227,21 +224,21 @@ void JitCompiler::EmitDIV_RK()
 		cc.idiv(tmp1, tmp0, asmjit::x86::ptr(konstTmp));
 		cc.mov(regD[A], tmp0);
 	}
-	else EmitThrowException(X_DIVISION_BY_ZERO);
+	else
+	{
+		EmitThrowException(X_DIVISION_BY_ZERO);
+	}
 }
 
 void JitCompiler::EmitDIV_KR()
 {
 	auto tmp0 = newTempInt32();
 	auto tmp1 = newTempInt32();
-	auto label = cc.newLabel();
 
+	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	cc.test(regD[C], regD[C]);
-	cc.jne(label);
+	cc.je(label);
 
-	EmitThrowException(X_DIVISION_BY_ZERO);
-
-	cc.bind(label);
 	cc.mov(tmp0, konstd[B]);
 	cc.cdq(tmp1, tmp0);
 	cc.idiv(tmp1, tmp0, regD[C]);
@@ -252,14 +249,11 @@ void JitCompiler::EmitDIVU_RR()
 {
 	auto tmp0 = newTempInt32();
 	auto tmp1 = newTempInt32();
-	auto label = cc.newLabel();
 
+	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	cc.test(regD[C], regD[C]);
-	cc.jne(label);
+	cc.je(label);
 
-	EmitThrowException(X_DIVISION_BY_ZERO);
-
-	cc.bind(label);
 	cc.mov(tmp0, regD[B]);
 	cc.mov(tmp1, 0);
 	cc.div(tmp1, tmp0, regD[C]);
@@ -279,21 +273,21 @@ void JitCompiler::EmitDIVU_RK()
 		cc.div(tmp1, tmp0, asmjit::x86::ptr(konstTmp));
 		cc.mov(regD[A], tmp0);
 	}
-	else EmitThrowException(X_DIVISION_BY_ZERO);
+	else
+	{
+		EmitThrowException(X_DIVISION_BY_ZERO);
+	}
 }
 
 void JitCompiler::EmitDIVU_KR()
 {
 	auto tmp0 = newTempInt32();
 	auto tmp1 = newTempInt32();
-	auto label = cc.newLabel();
 
+	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	cc.test(regD[C], regD[C]);
-	cc.jne(label);
+	cc.je(label);
 
-	EmitThrowException(X_DIVISION_BY_ZERO);
-
-	cc.bind(label);
 	cc.mov(tmp0, konstd[B]);
 	cc.mov(tmp1, 0);
 	cc.div(tmp1, tmp0, regD[C]);
@@ -304,14 +298,11 @@ void JitCompiler::EmitMOD_RR()
 {
 	auto tmp0 = newTempInt32();
 	auto tmp1 = newTempInt32();
-	auto label = cc.newLabel();
 
+	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	cc.test(regD[C], regD[C]);
-	cc.jne(label);
+	cc.je(label);
 
-	EmitThrowException(X_DIVISION_BY_ZERO);
-
-	cc.bind(label);
 	cc.mov(tmp0, regD[B]);
 	cc.cdq(tmp1, tmp0);
 	cc.idiv(tmp1, tmp0, regD[C]);
@@ -331,21 +322,21 @@ void JitCompiler::EmitMOD_RK()
 		cc.idiv(tmp1, tmp0, asmjit::x86::ptr(konstTmp));
 		cc.mov(regD[A], tmp1);
 	}
-	else EmitThrowException(X_DIVISION_BY_ZERO);
+	else
+	{
+		EmitThrowException(X_DIVISION_BY_ZERO);
+	}
 }
 
 void JitCompiler::EmitMOD_KR()
 {
 	auto tmp0 = newTempInt32();
 	auto tmp1 = newTempInt32();
-	auto label = cc.newLabel();
 
+	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	cc.test(regD[C], regD[C]);
-	cc.jne(label);
+	cc.je(label);
 
-	EmitThrowException(X_DIVISION_BY_ZERO);
-
-	cc.bind(label);
 	cc.mov(tmp0, konstd[B]);
 	cc.cdq(tmp1, tmp0);
 	cc.idiv(tmp1, tmp0, regD[C]);
@@ -356,14 +347,11 @@ void JitCompiler::EmitMODU_RR()
 {
 	auto tmp0 = newTempInt32();
 	auto tmp1 = newTempInt32();
-	auto label = cc.newLabel();
 
+	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	cc.test(regD[C], regD[C]);
-	cc.jne(label);
+	cc.je(label);
 
-	EmitThrowException(X_DIVISION_BY_ZERO);
-
-	cc.bind(label);
 	cc.mov(tmp0, regD[B]);
 	cc.mov(tmp1, 0);
 	cc.div(tmp1, tmp0, regD[C]);
@@ -383,21 +371,21 @@ void JitCompiler::EmitMODU_RK()
 		cc.div(tmp1, tmp0, asmjit::x86::ptr(konstTmp));
 		cc.mov(regD[A], tmp1);
 	}
-	else EmitThrowException(X_DIVISION_BY_ZERO);
+	else
+	{
+		EmitThrowException(X_DIVISION_BY_ZERO);
+	}
 }
 
 void JitCompiler::EmitMODU_KR()
 {
 	auto tmp0 = newTempInt32();
 	auto tmp1 = newTempInt32();
-	auto label = cc.newLabel();
 
+	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	cc.test(regD[C], regD[C]);
-	cc.jne(label);
+	cc.je(label);
 
-	EmitThrowException(X_DIVISION_BY_ZERO);
-
-	cc.bind(label);
 	cc.mov(tmp0, konstd[B]);
 	cc.mov(tmp1, 0);
 	cc.div(tmp1, tmp0, regD[C]);
@@ -717,11 +705,10 @@ void JitCompiler::EmitMULF_RK()
 
 void JitCompiler::EmitDIVF_RR()
 {
-	auto label = cc.newLabel();
+	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	cc.ptest(regF[C], regF[C]);
-	cc.jne(label);
-	EmitThrowException(X_DIVISION_BY_ZERO);
-	cc.bind(label);
+	cc.je(label);
+
 	auto rc = CheckRegF(C, A);
 	cc.movsd(regF[A], regF[B]);
 	cc.divsd(regF[A], rc);
@@ -753,11 +740,9 @@ void JitCompiler::EmitDIVF_KR()
 
 void JitCompiler::EmitMODF_RR()
 {
-	auto label = cc.newLabel();
+	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	cc.ptest(regF[C], regF[C]);
-	cc.jne(label);
-	EmitThrowException(X_DIVISION_BY_ZERO);
-	cc.bind(label);
+	cc.je(label);
 
 	auto result = newResultXmmSd();
 	auto call = CreateCall<double, double, double>([](double a, double b) -> double
@@ -772,11 +757,9 @@ void JitCompiler::EmitMODF_RR()
 
 void JitCompiler::EmitMODF_RK()
 {
-	auto label = cc.newLabel();
+	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	cc.ptest(regF[C], regF[C]);
-	cc.jne(label);
-	EmitThrowException(X_DIVISION_BY_ZERO);
-	cc.bind(label);
+	cc.je(label);
 
 	auto tmp = newTempXmmSd();
 	cc.movsd(tmp, asmjit::x86::ptr(ToMemAddress(&konstf[C])));
@@ -795,11 +778,9 @@ void JitCompiler::EmitMODF_KR()
 {
 	using namespace asmjit;
 
-	auto label = cc.newLabel();
+	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	cc.ptest(regF[C], regF[C]);
-	cc.jne(label);
-	EmitThrowException(X_DIVISION_BY_ZERO);
-	cc.bind(label);
+	cc.je(label);
 
 	auto tmp = newTempXmmSd();
 	cc.movsd(tmp, x86::ptr(ToMemAddress(&konstf[B])));

@@ -78,11 +78,9 @@ void JitCompiler::EmitLFP()
 
 void JitCompiler::EmitMETA()
 {
-	auto label = cc.newLabel();
+	auto label = EmitThrowExceptionLabel(X_READ_NIL);
 	cc.test(regA[B], regA[B]);
-	cc.jne(label);
-	EmitThrowException(X_READ_NIL);
-	cc.bind(label);
+	cc.je(label);
 
 	auto result = newResultIntPtr();
 	auto call = CreateCall<uint8_t*, DObject*>([](DObject *o) { return o->GetClass()->Meta; });
@@ -93,11 +91,9 @@ void JitCompiler::EmitMETA()
 
 void JitCompiler::EmitCLSS()
 {
-	auto label = cc.newLabel();
+	auto label = EmitThrowExceptionLabel(X_READ_NIL);
 	cc.test(regA[B], regA[B]);
-	cc.jne(label);
-	EmitThrowException(X_READ_NIL);
-	cc.bind(label);
+	cc.je(label);
 
 	auto result = newResultIntPtr();
 	auto call = CreateCall<PClass*, DObject*>([](DObject *o) { return o->GetClass(); });

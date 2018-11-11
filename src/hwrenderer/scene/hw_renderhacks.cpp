@@ -820,13 +820,13 @@ void HWDrawInfo::PrepareLowerGap(seg_t * seg)
 	CreateFloodPoly(&ws, vertices.first+4, ws.z1, fakebsector, false);
 
 	gl_floodrendernode *node = NewFloodRenderNode();
-    auto pNode = floodCeilingSegs.CheckKey(fakebsector->sectornum);
+    auto pNode = floodFloorSegs.CheckKey(fakebsector->sectornum);
     
     node->next = pNode? *pNode : nullptr;
 
 	node->seg = seg;
 	node->vertexindex = vertices.second;
-	floodCeilingSegs[fakebsector->sectornum] = node;
+	floodFloorSegs[fakebsector->sectornum] = node;
 }
 
 //==========================================================================

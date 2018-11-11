@@ -4280,20 +4280,6 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 	memcpy(&level.loadlines[0], &level.lines[0], level.lines.Size() * sizeof(level.lines[0]));
 	level.loadsides.Resize(level.sides.Size());
 	memcpy(&level.loadsides[0], &level.sides[0], level.sides.Size() * sizeof(level.sides[0]));
-
-
-	for (auto i : { 29, 30 })
-	{
-		level.lines[i].sidedef[0]->SetSpecialColor(side_t::top, side_t::walltop, PalEntry(255, 255, 0));
-		level.lines[i].sidedef[0]->SetSpecialColor(side_t::top, side_t::wallbottom, PalEntry(0, 255, 255));
-		level.lines[i].sidedef[0]->SetSpecialColor(side_t::bottom, side_t::walltop, PalEntry(255, 0, 0));
-		level.lines[i].sidedef[0]->SetSpecialColor(side_t::bottom, side_t::wallbottom, PalEntry(0, 0, 255));
-	}
-	level.lines[29].sidedef[0]->textures[side_t::top].flags = side_t::part::UseOwnColors;
-	level.lines[30].sidedef[0]->textures[side_t::top].flags = side_t::part::UseOwnColors | side_t::part::ClampGradient;
-	level.lines[29].sidedef[0]->textures[side_t::bottom].flags = side_t::part::UseOwnColors;
-	level.lines[30].sidedef[0]->textures[side_t::bottom].flags = side_t::part::UseOwnColors | side_t::part::ClampGradient;
-
 }
 
 //

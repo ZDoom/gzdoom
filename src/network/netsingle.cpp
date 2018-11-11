@@ -82,10 +82,9 @@ void NetSinglePlayer::Update()
 {
 }
 
-void NetSinglePlayer::SetCurrentTic(int receivetic, int sendtic)
+void NetSinglePlayer::SetCurrentTic(int tictime)
 {
-	gametic = receivetic;
-	mSendTic = sendtic;
+	gametic = tictime;
 }
 
 void NetSinglePlayer::EndCurrentTic()
@@ -96,7 +95,7 @@ void NetSinglePlayer::EndCurrentTic()
 
 int NetSinglePlayer::GetSendTick() const
 {
-	return mSendTic;
+	return gametic;
 }
 
 ticcmd_t NetSinglePlayer::GetPlayerInput(int player) const

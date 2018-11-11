@@ -76,16 +76,17 @@ NetServer::NetServer()
 
 void NetServer::Update()
 {
+	// Read all packets currently available from clients
 	while (true)
 	{
 		NetPacket packet;
 		mComm->PacketGet(packet);
 		if (packet.node == -1)
-			break;
+			break; // No more packets. We are done.
 
 		NetNode &node = mNodes[packet.node];
 
-		if (packet.size == 0)
+		if (packet.size == 0) // Connection to node closed (timed out)
 		{
 			OnClose(node, packet);
 		}
@@ -108,15 +109,27 @@ void NetServer::Update()
 				case NetPacketType::Tic: OnTic(node, packet); break;
 				}
 			}
-			break;
 		}
 	}
 }
 
-void NetServer::SetCurrentTic(int receivetic, int sendtic)
+void NetServer::SetCurrentTic(int tictime)
 {
-	gametic = receivetic;
-	mSendTic = sendtic;
+	gametic = tictime;
+
+	for (int i = 0; i < MAXNETNODES; i++)
+	{
+		NetNode &node = mNodes[i];
+		if (node.Status == NodeStatus::InGame && node.Player != -1)
+		{
+			NetNode::TicUpdate &update = node.TicUpdates[gametic % BACKUPTICS];
+			if (update.received)
+			{
+				mCurrentInput[node.Player].ucmd = update.input;
+				update.received = false;
+			}
+		}
+	}
 }
 
 void NetServer::EndCurrentTic()
@@ -160,7 +173,7 @@ void NetServer::EndCurrentTic()
 
 int NetServer::GetSendTick() const
 {
-	return mSendTic;
+	return gametic;
 }
 
 ticcmd_t NetServer::GetPlayerInput(int player) const
@@ -223,7 +236,7 @@ void NetServer::OnClose(NetNode &node, const NetPacket &packet)
 {
 	if (node.Status == NodeStatus::InGame)
 	{
-		Printf("Player %d left the server", node.Player);
+		Printf("Player %d left the server\n", node.Player);
 
 		playeringame[node.Player] = false;
 		players[node.Player].settings_controller = false;
@@ -234,28 +247,48 @@ void NetServer::OnClose(NetNode &node, const NetPacket &packet)
 	mComm->Close(packet.node);
 }
 
-void NetServer::OnConnectRequest(NetNode &node, const NetPacket &packet)
+void NetServer::OnConnectRequest(NetNode &node, NetPacket &packet)
 {
-	// Search for a spot in the player list
-	if (node.Status != NodeStatus::InGame)
+	// Make the initial connect packet a bit more complex than a bunch of zeros..
+	if (strcmp(packet.stream.ReadString(), "ZDoom Connect Request") != 0)
 	{
-		for (int i = 0; i < MAXPLAYERS; i++)
+		if (node.Status == NodeStatus::InGame)
 		{
-			if (!playeringame[i])
-			{
-				node.Player = i;
-				playeringame[i] = true;
-				players[i].settings_controller = false;
-				break;
-			}
+			Printf("Junk data received from a joined player\n");
+		}
+		else
+		{
+			node.Status = NodeStatus::Closed;
+			mComm->Close(packet.node);
+			return;
+		}
+	}
+
+	if (node.Status == NodeStatus::InGame)
+		return;
+
+	// Search for a spot in the player list
+	for (int i = 0; i < MAXPLAYERS; i++)
+	{
+		if (!playeringame[i])
+		{
+			node.Player = i;
+			break;
 		}
 	}
 
 	if (node.Player != -1) // Join accepted.
 	{
-		Printf("Player %d joined the server", node.Player);
+		Printf("Player %d joined the server\n", node.Player);
 
+		for (int i = 0; i < BACKUPTICS; i++)
+			node.TicUpdates[i].received = false;
+
+		node.Status = NodeStatus::InGame;
 		mNodeForPlayer[node.Player] = packet.node;
+
+		playeringame[node.Player] = true;
+		players[node.Player].settings_controller = false;
 
 		NetPacket response;
 		response.node = packet.node;
@@ -266,8 +299,6 @@ void NetServer::OnConnectRequest(NetNode &node, const NetPacket &packet)
 		cmd.writeCommandToPacket ( response );
 
 		mComm->PacketSend(response);
-
-		node.Status = NodeStatus::InGame;
 
 		FullUpdate ( node );
 	}
@@ -294,7 +325,7 @@ void NetServer::OnDisconnect(NetNode &node, const NetPacket &packet)
 {
 	if (node.Status == NodeStatus::InGame)
 	{
-		Printf("Player %d left the server", node.Player);
+		Printf("Player %d left the server\n", node.Player);
 
 		playeringame[node.Player] = false;
 		players[node.Player].settings_controller = false;
@@ -307,16 +338,29 @@ void NetServer::OnDisconnect(NetNode &node, const NetPacket &packet)
 
 void NetServer::OnTic(NetNode &node, NetPacket &packet)
 {
-	if (node.Status == NodeStatus::InGame)
+	if (node.Status != NodeStatus::InGame)
+		return;
+
+	int tic = packet.stream.ReadByte();
+
+	int delta = tic - (gametic & 0xff);
+	if (delta > 128) delta -= 256;
+	else if (delta < -128) delta += 256;
+	tic = gametic + delta;
+
+	if (tic <= gametic)
 	{
-		/* gametic */ packet.stream.ReadByte();
-		packet.stream.ReadBuffer ( &mCurrentInput[node.Player].ucmd, sizeof(usercmd_t));
+		// Packet arrived too late.
+		tic = gametic + 1;
+
+		if (tic < 0 || node.TicUpdates[tic % BACKUPTICS].received)
+			return; // We already received the proper packet.
 	}
-	else
-	{
-		node.Status = NodeStatus::Closed;
-		mComm->Close(packet.node);
-	}
+
+	NetNode::TicUpdate update;
+	update.received = true;
+	packet.stream.ReadBuffer(&update.input, sizeof(usercmd_t));
+	node.TicUpdates[tic % BACKUPTICS] = update;
 }
 
 void NetServer::CmdSpawnPlayer(NetNode &node, int player)

@@ -30,7 +30,7 @@ public:
 
 	void Update() override;
 
-	void SetCurrentTic(int receivetic, int sendtic) override;
+	void SetCurrentTic(int tictime) override;
 	void EndCurrentTic() override;
 
 	int GetSendTick() const override;
@@ -53,6 +53,5 @@ private:
 	ticcmd_t mCurrentInput[MAXPLAYERS];
 	FDynamicBuffer mCurrentCommands;
 
-	int mSendTic = 0;
 	FDynamicBuffer mSendCommands;
 };

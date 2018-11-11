@@ -31,6 +31,9 @@ struct NetPacket
 	const uint8_t &operator[](int i) const { return data[i]; }
 
 	BYTESTREAM_s stream;
+
+	NetPacket(const NetPacket &) = delete;
+	NetPacket &operator=(const NetPacket &) = delete;
 };
 
 // Network packet data.

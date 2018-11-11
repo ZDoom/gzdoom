@@ -986,11 +986,6 @@ public:
 		return LastTic;
 	}
 
-	int BaseMakeTic() const
-	{
-		return LastTic + 1;
-	}
-
 private:
 	int LastTic = 0;
 	int CurrentTic = 0;
@@ -1038,7 +1033,7 @@ public:
 
 		for (int i = 0; i < tics; i++)
 		{
-			network->SetCurrentTic(gametime.BaseGameTic() + i, gametime.BaseMakeTic() + i);
+			network->SetCurrentTic(gametime.BaseGameTic() + i);
 			network->WriteLocalInput(G_BuildTiccmd());
 
 			if (advancedemo)
@@ -1095,6 +1090,8 @@ void D_DoomLoop()
 
 			if (wantToRestart)
 			{
+				P_UnPredictPlayer();
+
 				wantToRestart = false;
 				return;
 			}

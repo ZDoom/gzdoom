@@ -30,7 +30,7 @@ public:
 
 	void Update() override;
 
-	void SetCurrentTic(int receivetic, int sendtic) override;
+	void SetCurrentTic(int tictime) override;
 	void EndCurrentTic() override;
 
 	int GetSendTick() const override;
@@ -56,11 +56,28 @@ private:
 	void OnTic(NetPacket &packet);
 	void OnSpawnPlayer(NetPacket &packet);
 
+	void UpdateLastReceivedTic(int tic);
+
 	std::unique_ptr<doomcom_t> mComm;
 	int mServerNode = -1;
 	int mPlayer = -1;
 	NodeStatus mStatus = NodeStatus::Closed;
+
 	int mSendTic = 0;
+	int mServerTic = 0;
+	int mServerTicDelta = -1;
+	int mLastReceivedTic = -1;
+
+	struct TicUpdate
+	{
+		bool received = false;
+		float x;
+		float y;
+		float z;
+		float yaw;
+		float pitch;
+	};
+	TicUpdate mTicUpdates[BACKUPTICS];
 
 	ticcmd_t mCurrentInput[MAXPLAYERS];
 	ticcmd_t mSentInput[BACKUPTICS];

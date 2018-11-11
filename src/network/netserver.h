@@ -38,7 +38,13 @@ struct NetNode
 	int Gametic = 0;
 	int Player = -1;
 
-	ticcmd_t PlayerMovement;
+	struct TicUpdate
+	{
+		bool received = false;
+		usercmd_t input;
+	};
+	TicUpdate TicUpdates[BACKUPTICS];
+
 	FDynamicBuffer Commands; // "NetSpecs"
 };
 
@@ -49,7 +55,7 @@ public:
 
 	void Update() override;
 
-	void SetCurrentTic(int receivetic, int sendtic) override;
+	void SetCurrentTic(int tictime) override;
 	void EndCurrentTic() override;
 
 	int GetSendTick() const override;
@@ -70,7 +76,7 @@ public:
 
 private:
 	void OnClose(NetNode &node, const NetPacket &packet);
-	void OnConnectRequest(NetNode &node, const NetPacket &packet);
+	void OnConnectRequest(NetNode &node, NetPacket &packet);
 	void OnDisconnect(NetNode &node, const NetPacket &packet);
 	void OnTic(NetNode &node, NetPacket &packet);
 
@@ -80,7 +86,6 @@ private:
 	std::unique_ptr<doomcom_t> mComm;
 	NetNode mNodes[MAXNETNODES];
 	int mNodeForPlayer[MAXPLAYERS];
-	int mSendTic = 0;
 
 	ticcmd_t mCurrentInput[MAXPLAYERS];
 	FDynamicBuffer mCurrentCommands;

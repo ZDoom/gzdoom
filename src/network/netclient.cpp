@@ -82,6 +82,7 @@ NetClient::NetClient(FString server)
 	packet.node = mServerNode;
 
 	NetCommand cmd ( NetPacketType::ConnectRequest );
+	cmd.addString("ZDoom Connect Request");
 	cmd.writeCommandToPacket ( packet );
 
 	mComm->PacketSend(packet);
@@ -149,26 +150,62 @@ void NetClient::Update()
 	}
 }
 
-void NetClient::SetCurrentTic(int receivetic, int sendtic)
+void NetClient::SetCurrentTic(int tictime)
 {
-	gametic = receivetic;
-	mSendTic = sendtic;
+	gametic = tictime;
+	mSendTic = gametic + 10;
+
+	int jitter = 2;
+	if (mLastReceivedTic == -1)
+	{
+		mServerTic = 0;
+	}
+	else
+	{
+		if (mServerTicDelta == -1 || std::abs(gametic + mServerTicDelta - mLastReceivedTic) > jitter)
+		{
+			//Printf("netcable icon! ;)\n");
+			mServerTicDelta = mLastReceivedTic - gametic - jitter;
+		}
+
+		mServerTic = MAX(gametic + mServerTicDelta, 0);
+	}
+
+	mCurrentInput[consoleplayer] = mSentInput[gametic % BACKUPTICS];
 }
 
 void NetClient::EndCurrentTic()
 {
+	mCurrentCommands = mSendCommands;
+	mSendCommands.Clear();
+
+	if (mStatus != NodeStatus::InGame)
+		return;
+
+	int targettic = (mSendTic + mServerTicDelta);
+
 	NetPacket packet;
 	packet.node = mServerNode;
 
 	NetCommand cmd ( NetPacketType::Tic );
-	cmd.addByte ( 0 ); // target gametic
-	cmd.addBuffer ( &mCurrentInput[consoleplayer].ucmd, sizeof(usercmd_t) );
+	cmd.addByte (targettic); // target gametic
+	cmd.addBuffer ( &mSentInput[(mSendTic - 1) % BACKUPTICS].ucmd, sizeof(usercmd_t) );
 	cmd.writeCommandToPacket ( packet );
 
 	mComm->PacketSend(packet);
 
-	mCurrentCommands = mSendCommands;
-	mSendCommands.Clear();
+	TicUpdate &update = mTicUpdates[mServerTic % BACKUPTICS];
+	if (update.received)
+	{
+		if (playeringame[consoleplayer] && players[consoleplayer].mo)
+		{
+			players[consoleplayer].mo->SetXYZ(update.x, update.y, update.z);
+			players[consoleplayer].mo->Angles.Yaw = update.yaw;
+			players[consoleplayer].mo->Angles.Pitch = update.pitch;
+		}
+
+		update.received = false;
+	}
 }
 
 int NetClient::GetSendTick() const
@@ -196,8 +233,7 @@ void NetClient::RunCommands(int player)
 
 void NetClient::WriteLocalInput(ticcmd_t cmd)
 {
-	mCurrentInput[consoleplayer] = cmd;
-	mSentInput[gametic % BACKUPTICS] = cmd;
+	mSentInput[(mSendTic - 1) % BACKUPTICS] = cmd;
 }
 
 void NetClient::WriteBotInput(int player, const ticcmd_t &cmd)
@@ -284,25 +320,42 @@ void NetClient::OnDisconnect(const NetPacket &packet)
 	mStatus = NodeStatus::Closed;
 }
 
+void NetClient::UpdateLastReceivedTic(int tic)
+{
+	if (mLastReceivedTic != -1)
+	{
+		int delta = tic - (mLastReceivedTic & 0xff);
+		if (delta > 128) delta -= 256;
+		else if (delta < -128) delta += 256;
+		mLastReceivedTic += delta;
+	}
+	else
+	{
+		mLastReceivedTic = tic;
+	}
+	mLastReceivedTic = MAX(mLastReceivedTic, 0);
+}
+
 void NetClient::OnTic(NetPacket &packet)
 {
-	int tic = packet.stream.ReadByte();
-	float x = packet.stream.ReadFloat();
-	float y = packet.stream.ReadFloat();
-	float z = packet.stream.ReadFloat();
-	float yaw = packet.stream.ReadFloat();
-	float pitch = packet.stream.ReadFloat();
+	UpdateLastReceivedTic(packet.stream.ReadByte());
 
-	if (playeringame[consoleplayer] && players[consoleplayer].mo)
-	{
-		players[consoleplayer].mo->SetXYZ(x, y, z);
-		players[consoleplayer].mo->Angles.Yaw = yaw;
-		players[consoleplayer].mo->Angles.Pitch = pitch;
-	}
+	TicUpdate update;
+	update.received = true;
+	update.x = packet.stream.ReadFloat();
+	update.y = packet.stream.ReadFloat();
+	update.z = packet.stream.ReadFloat();
+	update.yaw = packet.stream.ReadFloat();
+	update.pitch = packet.stream.ReadFloat();
+
+	mTicUpdates[mLastReceivedTic % BACKUPTICS] = update;
 }
 
 void NetClient::OnSpawnPlayer(NetPacket &packet)
 {
+	// To do: this needs a tic and should be inserted in mTicUpdates.
+	// Otherwise it might not arrive at the intended moment in time.
+
 	int player = packet.stream.ReadByte();
 	const float x = packet.stream.ReadFloat();
 	const float y = packet.stream.ReadFloat();
@@ -320,7 +373,7 @@ void NetClient::OnSpawnPlayer(NetPacket &packet)
 
 	// This player is now in the game.
 	playeringame[player] = true;
-	player_t p = players[player];
+	player_t &p = players[player];
 
 	if ( cl_showspawnnames )
 		Printf ( "Spawning player %d at %f,%f,%f (id %d)\n", player, x, y, z, netID );

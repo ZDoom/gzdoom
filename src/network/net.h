@@ -63,8 +63,8 @@ public:
 	// Check for incoming packets
 	virtual void Update() = 0;
 
-	// Set current tic for reading and writing
-	virtual void SetCurrentTic(int receivetic, int sendtic) = 0;
+	// Set current tic time
+	virtual void SetCurrentTic(int localtic) = 0;
 
 	// Send any pending outgoing data
 	virtual void EndCurrentTic() = 0;

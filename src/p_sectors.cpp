@@ -2230,6 +2230,26 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 	 ACTION_RETURN_INT(self->Index());
  }
 
+ //=====================================================================================
+//
+//
+//=====================================================================================
+
+ DEFINE_ACTION_FUNCTION(_Side, SetSpecialColor)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(tier);
+	 PARAM_INT(position);
+	 PARAM_COLOR(color);
+	 if (tier >= 0 && tier < 3 && position >= 0 && position < 2)
+	 {
+		 color.a = 255;
+		 self->SetSpecialColor(tier, position, color);
+	 }
+	 return 0;
+ }
+
+
  DEFINE_ACTION_FUNCTION(_Vertex, Index)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(vertex_t);

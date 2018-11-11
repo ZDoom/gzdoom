@@ -60,7 +60,7 @@ void HWDrawInfo::DispatchRenderHacks()
 	}
 
 	TMap<int, gl_subsectorrendernode*>::Iterator oci(otherCeilingPlanes);
-	while (ofi.NextPair(pair))
+	while (oci.NextPair(pair))
 	{
 		auto sec = hw_FakeFlat(&level.sectors[pair->Key], in_area, false);
 		glflat.ProcessSector(this, sec, SSRF_RENDERCEILING | SSRF_PLANEHACK);

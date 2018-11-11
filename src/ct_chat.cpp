@@ -35,7 +35,7 @@
 #include "v_text.h"
 #include "d_gui.h"
 #include "g_input.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "d_event.h"
 #include "sbar.h"
 

@@ -42,7 +42,7 @@
 #include "gstrings.h"
 #include "doomstat.h"
 #include "c_dispatch.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "g_game.h"
 #include "m_png.h"
 #include "doomerrors.h"

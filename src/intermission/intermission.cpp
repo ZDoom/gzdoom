@@ -47,7 +47,7 @@
 #include "c_bind.h"
 #include "p_conversation.h"
 #include "menu/menu.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "g_levellocals.h"
 
 FIntermissionDescriptorList IntermissionDescriptors;

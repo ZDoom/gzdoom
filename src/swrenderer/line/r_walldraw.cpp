@@ -33,7 +33,6 @@
 
 #include "m_swap.h"
 #include "a_sharedglobal.h"
-#include "d_net.h"
 #include "g_level.h"
 #include "r_walldraw.h"
 #include "v_palette.h"

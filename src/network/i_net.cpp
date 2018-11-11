@@ -55,7 +55,7 @@
 
 #include "doomtype.h"
 #include "i_system.h"
-#include "d_net.h"
+#include "net.h"
 #include "m_argv.h"
 #include "m_crc32.h"
 #include "d_player.h"

@@ -46,7 +46,7 @@
 #include "gi.h"
 #include "p_conversation.h"
 #include "p_3dmidtex.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "d_event.h"
 #include "gstrings.h"
 #include "po_man.h"

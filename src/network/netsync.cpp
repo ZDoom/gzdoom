@@ -17,7 +17,7 @@
 //
 
 #include "d_player.h"
-#include "d_netsync.h"
+#include "netsync.h"
 #include "c_dispatch.h"
 #include "actor.h"
 #include "doomstat.h"
@@ -628,7 +628,7 @@ void NetCommand::addShortByte ( int value, int bits )
 //
 void NetCommand::addString ( const char *pszString )
 {
-	const int len = ( pszString != NULL ) ? strlen( pszString ) : 0;
+	const int len = ( pszString != NULL ) ? (int)strlen( pszString ) : 0;
 
 	if ( len > MAX_NETWORK_STRING )
 	{

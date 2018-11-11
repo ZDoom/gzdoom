@@ -44,7 +44,7 @@
 #include "p_local.h"
 #include "cmdlib.h"
 #include "teaminfo.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "serializer.h"
 #include "d_player.h"
 #include "vm.h"

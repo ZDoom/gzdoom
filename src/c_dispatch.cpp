@@ -49,7 +49,7 @@
 #include "d_player.h"
 #include "configfile.h"
 #include "v_text.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "d_main.h"
 #include "serializer.h"
 #include "menu/menu.h"

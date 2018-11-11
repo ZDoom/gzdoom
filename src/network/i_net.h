@@ -2,7 +2,7 @@
 #pragma once
 
 #include <memory>
-#include "d_netsync.h"
+#include "netsync.h"
 
 #define MAX_MSGLEN 14000
 #define DOOMPORT 5029

@@ -54,7 +54,7 @@
 #include "doomstat.h"
 #include "d_gui.h"
 #include "cmdlib.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "d_event.h"
 #include "d_player.h"
 #include "gstrings.h"

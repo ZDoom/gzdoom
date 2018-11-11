@@ -31,7 +31,7 @@
 #include "c_dispatch.h"
 #include "d_event.h"
 #include "gi.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "doomstat.h"
 #include "g_level.h"
 #include "g_levellocals.h"

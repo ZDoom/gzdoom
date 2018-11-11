@@ -33,7 +33,6 @@
 #include "a_sharedglobal.h"
 #include "c_console.h"
 #include "cmdlib.h"
-#include "d_net.h"
 #include "g_level.h"
 #include "swrenderer/scene/r_opaque_pass.h"
 #include "r_skyplane.h"

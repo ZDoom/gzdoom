@@ -47,7 +47,7 @@
 #include "sbar.h"
 #include "c_dispatch.h"
 #include "a_keys.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "serializer.h"
 #include "r_utility.h"
 #include "a_morph.h"

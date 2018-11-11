@@ -59,7 +59,7 @@
 #include "m_png.h"
 #include "a_keys.h"
 #include "cmdlib.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "d_event.h"
 #include "p_acs.h"
 #include "p_effect.h"

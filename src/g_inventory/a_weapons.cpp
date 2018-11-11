@@ -43,7 +43,7 @@
 #include "gameconfigfile.h"
 #include "cmdlib.h"
 #include "sbar.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "serializer.h"
 #include "vm.h"
 

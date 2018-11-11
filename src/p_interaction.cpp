@@ -54,7 +54,7 @@
 #include "d_player.h"
 #include "gi.h"
 #include "sbar.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "d_netinf.h"
 #include "a_morph.h"
 #include "vm.h"

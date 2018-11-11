@@ -37,7 +37,7 @@
 #include "gi.h"
 #include "actor.h"
 #include "c_dispatch.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "info.h"
 
 DStaticEventHandler* E_FirstEventHandler = nullptr;

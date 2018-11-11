@@ -45,7 +45,7 @@
 #include "gstrings.h"
 #include "sound/i_music.h"
 #include "p_setup.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "d_event.h"
 #include "doomstat.h"
 #include "c_console.h"

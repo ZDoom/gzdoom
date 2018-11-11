@@ -38,7 +38,7 @@
 #include "doomstat.h"
 #include "info.h"
 #include "c_dispatch.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "v_text.h"
 
 #include "gi.h"

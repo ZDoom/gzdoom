@@ -47,7 +47,7 @@
 #include "p_local.h"
 #include "b_bot.h"
 #include "g_game.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "d_event.h"
 #include "d_player.h"
 #include "actorinlines.h"

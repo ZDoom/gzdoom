@@ -21,12 +21,12 @@
 
 #pragma once
 
-#include "d_netserver.h"
+#include "network/net.h"
 
-class NetClient : public Network
+class NetSinglePlayer : public Network
 {
 public:
-	NetClient(FString server);
+	NetSinglePlayer();
 
 	void Update() override;
 
@@ -50,20 +50,9 @@ public:
 	void Network_Controller(int playernum, bool add) override;
 
 private:
-	void OnClose(const NetPacket &packet);
-	void OnConnectResponse(NetPacket &packet);
-	void OnDisconnect(const NetPacket &packet);
-	void OnTic(NetPacket &packet);
-	void OnSpawnPlayer(NetPacket &packet);
-
-	std::unique_ptr<doomcom_t> mComm;
-	int mServerNode = -1;
-	int mPlayer = -1;
-	NodeStatus mStatus = NodeStatus::Closed;
-	int mSendTic = 0;
-
 	ticcmd_t mCurrentInput[MAXPLAYERS];
-	ticcmd_t mSentInput[BACKUPTICS];
 	FDynamicBuffer mCurrentCommands;
+
+	int mSendTic = 0;
 	FDynamicBuffer mSendCommands;
 };

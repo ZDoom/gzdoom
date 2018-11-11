@@ -34,7 +34,7 @@
 
 #include "templates.h"
 #include "doomdef.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "doomstat.h"
 #include "m_random.h"
 #include "m_bbox.h"

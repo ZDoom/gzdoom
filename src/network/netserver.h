@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "d_net.h"
+#include "net.h"
 
 enum class NodeStatus
 {

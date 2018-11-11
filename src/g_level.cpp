@@ -67,7 +67,7 @@
 #include "sbarinfo.h"
 #include "p_lnspec.h"
 #include "cmdlib.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "d_netinf.h"
 #include "menu/menu.h"
 #include "a_sharedglobal.h"

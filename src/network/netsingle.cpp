@@ -33,7 +33,7 @@
 #include "doomstat.h"
 #include "c_console.h"
 #include "d_netinf.h"
-#include "d_netsingle.h"
+#include "netsingle.h"
 #include "cmdlib.h"
 #include "s_sound.h"
 #include "m_cheat.h"

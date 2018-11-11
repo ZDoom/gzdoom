@@ -33,7 +33,7 @@
 #include "doomstat.h"
 #include "c_console.h"
 #include "d_netinf.h"
-#include "d_netserver.h"
+#include "netserver.h"
 #include "cmdlib.h"
 #include "s_sound.h"
 #include "m_cheat.h"
@@ -323,7 +323,7 @@ void NetServer::CmdSpawnPlayer(NetNode &node, int player)
 {
 	// TODO: This shouldn't be one packet per command.
 	NetPacket packet;
-	packet.node = &node-mNodes;
+	packet.node = (int)(ptrdiff_t)(&node-mNodes);
 	NetCommand cmd ( NetPacketType::SpawnPlayer );
 	cmd.addByte ( player );
 	cmd.addFloat ( static_cast<float> ( players[player].mo->X() ) );

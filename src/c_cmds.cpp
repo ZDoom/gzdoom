@@ -62,7 +62,7 @@
 #include "r_sky.h"
 #include "p_setup.h"
 #include "cmdlib.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "v_text.h"
 #include "p_lnspec.h"
 #include "r_utility.h"

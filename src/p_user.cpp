@@ -76,7 +76,7 @@
 #include "intermission/intermission.h"
 #include "c_console.h"
 #include "c_dispatch.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "serializer.h"
 #include "r_renderer.h"
 #include "d_player.h"

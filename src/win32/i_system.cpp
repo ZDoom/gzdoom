@@ -70,7 +70,6 @@
 #include "stats.h"
 
 #include "d_main.h"
-#include "d_net.h"
 #include "g_game.h"
 #include "i_input.h"
 #include "c_dispatch.h"

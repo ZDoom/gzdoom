@@ -48,7 +48,7 @@
 #include "tflags.h"
 #include "portal.h"
 
-#include "d_netsync.h"
+#include "network/netsync.h"
 
 struct subsector_t;
 struct FBlockNode;

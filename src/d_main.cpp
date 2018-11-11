@@ -85,7 +85,7 @@
 #include "teaminfo.h"
 #include "hardware.h"
 #include "sbarinfo.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "d_event.h"
 #include "d_netinf.h"
 #include "m_cheat.h"
@@ -101,7 +101,7 @@
 #include "vm.h"
 #include "types.h"
 #include "r_data/r_vanillatrans.h"
-#include "d_netsingle.h"
+#include "network/netsingle.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, vr_mode)

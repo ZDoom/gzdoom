@@ -46,7 +46,7 @@
 #include "gi.h"
 #include "doomstat.h"
 #include "g_level.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "d_player.h"
 #include "serializer.h"
 #include "r_utility.h"

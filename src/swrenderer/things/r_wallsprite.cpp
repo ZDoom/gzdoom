@@ -41,7 +41,6 @@
 #include "r_sky.h"
 #include "cmdlib.h"
 #include "g_level.h"
-#include "d_net.h"
 #include "colormatcher.h"
 #include "d_netinf.h"
 #include "p_effect.h"

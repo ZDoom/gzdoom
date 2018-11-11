@@ -40,7 +40,7 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_netinf.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "d_player.h"
 #include "c_dispatch.h"
 #include "r_state.h"

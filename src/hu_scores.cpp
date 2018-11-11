@@ -46,7 +46,7 @@
 #include "d_player.h"
 #include "hu_stuff.h"
 #include "gstrings.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "c_dispatch.h"
 #include "g_levellocals.h"
 #include "sbar.h"

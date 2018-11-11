@@ -64,6 +64,7 @@ struct WorkSection
 	int sectorindex;
 	int mapsection;
 	bool hasminisegs;
+	bool bad;	// Did not produce a proper area and cannot be triangulated by tesselation.
 	TArray<WorkSectionLine*>segments;
 	TArray<side_t *> originalSides;	// The segs will lose some of these while working on them.
 	TArray<int> subsectors;
@@ -307,6 +308,7 @@ public:
 		TArray<seg_t *> outersegs;
 		TArray<seg_t *> loopedsegs;
 		bool hasminisegs = false;
+		bool bad = false;
 
 		// Collect all the segs that make up the outline of this section.
 		for (auto j : rawsection)
@@ -397,7 +399,8 @@ public:
 				{
 					// Did not find another one but have an unclosed loop. This should never happen and would indicate broken nodes.
 					// Error out and let the calling code deal with it.
-					I_Error("Unclosed loop in sector %d at position (%d, %d)\n", loopedsegs[0]->Subsector->render_sector->Index(), (int)loopedsegs[0]->v1->fX(), (int)loopedsegs[0]->v1->fY());
+					DPrintf(DMSG_NOTIFY, "Unclosed loop in sector %d at position (%d, %d)\n", loopedsegs[0]->Subsector->render_sector->Index(), (int)loopedsegs[0]->v1->fX(), (int)loopedsegs[0]->v1->fY());
+					bad = true;
 				}
 				seg = nullptr;
 				loopedsegs.Push(nullptr);	// A separator is not really needed but useful for debugging.
@@ -428,6 +431,7 @@ public:
 			section.sectorindex = sector;
 			section.mapsection = mapsec;
 			section.hasminisegs = hasminisegs;
+			section.bad = bad;
 			section.originalSides = std::move(foundsides);
 			section.segments = std::move(sectionlines);
 			section.subsectors = std::move(rawsection);

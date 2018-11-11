@@ -325,7 +325,7 @@ public:
 		return !normal.XY().isZero();
 	}
 
-	DVector3 Normal() const
+	const DVector3 &Normal() const
 	{
 		return normal;
 	}
@@ -645,8 +645,6 @@ public:
 	void SetColor(int r, int g, int b, int desat);
 	void SetFade(int r, int g, int b);
 	void SetFogDensity(int dens);
-	void SetSpecialColor(int num, int r, int g, int b);
-	void SetSpecialColor(int num, PalEntry rgb);
 	void ClosestPoint(const DVector2 &pos, DVector2 &out) const;
 	int GetFloorLight () const;
 	int GetCeilingLight () const;
@@ -917,6 +915,17 @@ public:
 		Flags &= ~SECF_SPECIALFLAGS;
 	}
 
+	void SetSpecialColor(int slot, int r, int g, int b)
+	{
+		SpecialColors[slot] = PalEntry(255, r, g, b);
+	}
+
+	void SetSpecialColor(int slot, PalEntry rgb)
+	{
+		rgb.a = 255;
+		SpecialColors[slot] = rgb;
+	}
+
 	inline bool PortalBlocksView(int plane);
 	inline bool PortalBlocksSight(int plane);
 	inline bool PortalBlocksMovement(int plane);
@@ -1138,16 +1147,31 @@ struct side_t
 	{
 		top=0,
 		mid=1,
-		bottom=2
+		bottom=2,
+		none = 1,	// this is just for clarification in a mapping table
+	};
+	enum EColorSlot
+	{
+		walltop = 0,
+		wallbottom = 1,
 	};
 	struct part
 	{
+		enum EPartFlags
+		{
+			NoGradient = 1,
+			FlipGradient = 2,
+			ClampGradient = 4,
+			UseOwnColors = 8,
+		};
 		double xOffset;
 		double yOffset;
 		double xScale;
 		double yScale;
 		TObjPtr<DInterpolation*> interpolation;
 		FTextureID texture;
+		int flags;
+		PalEntry SpecialColors[2];
 
 		void InitFrom(const part &other)
 		{
@@ -1269,6 +1293,28 @@ struct side_t
 	{
 		textures[which].yScale *= delta;
 	}
+
+	void SetSpecialColor(int which, int slot, int r, int g, int b)
+	{
+		textures[which].SpecialColors[slot] = PalEntry(255, r, g, b);
+	}
+
+	void SetSpecialColor(int which, int slot, PalEntry rgb)
+	{
+		rgb.a = 255;
+		textures[which].SpecialColors[slot] = rgb;
+	}
+
+	// Note that the sector being passed in here may not be the actual sector this sidedef belongs to
+	// (either for polyobjects or FakeFlat'ed temporaries.)
+	PalEntry GetSpecialColor(int which, int slot, sector_t *frontsector) const
+	{
+		auto &part = textures[which];
+		if (part.flags & part::NoGradient) slot = 0;
+		if (part.flags & part::FlipGradient) slot ^= 1;
+		return (part.flags & part::UseOwnColors) ? part.SpecialColors[slot] : frontsector->SpecialColors[sector_t::walltop + slot];
+	}
+
 
 	DInterpolation *SetInterpolation(int position);
 	void StopInterpolation(int position);

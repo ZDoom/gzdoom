@@ -878,17 +878,6 @@ DEFINE_ACTION_FUNCTION(_Sector, SetFade)
 //
 //=====================================================================================
 
-void sector_t::SetSpecialColor(int slot, int r, int g, int b)
-{
-	SpecialColors[slot] = PalEntry(255, r, g, b);
-}
-
-void sector_t::SetSpecialColor(int slot, PalEntry rgb)
-{
-	rgb.a = 255;
-	SpecialColors[slot] = rgb;
-}
-
 DEFINE_ACTION_FUNCTION(_Sector, SetSpecialColor)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);

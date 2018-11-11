@@ -1223,6 +1223,7 @@ public:
 		{
 			FName key = ParseKey();
 			switch(key)
+
 			{
 			case NAME_Offsetx:
 				texOfs[0] = CheckInt(key);
@@ -1333,6 +1334,79 @@ public:
 			case NAME_Nodecals:
 				Flag(sd->Flags, WALLF_NOAUTODECALS, key);
 				continue;
+
+			case NAME_nogradient_top:
+				Flag(sd->textures[side_t::top].flags, side_t::part::NoGradient, key);
+				break;
+
+			case NAME_flipgradient_top:
+				Flag(sd->textures[side_t::top].flags, side_t::part::FlipGradient, key);
+				break;
+
+			case NAME_clampgradient_top:
+				Flag(sd->textures[side_t::top].flags, side_t::part::ClampGradient, key);
+				break;
+
+			case NAME_useowncolors_top:
+				Flag(sd->textures[side_t::top].flags, side_t::part::UseOwnColors, key);
+				break;
+
+			case NAME_uppercolor_top:
+				sd->SetSpecialColor(side_t::top, 0, CheckInt(key));
+				break;
+
+			case NAME_lowercolor_top:
+				sd->SetSpecialColor(side_t::top, 1, CheckInt(key));
+				break;
+
+			case NAME_nogradient_mid:
+				Flag(sd->textures[side_t::mid].flags, side_t::part::NoGradient, key);
+				break;
+
+			case NAME_flipgradient_mid:
+				Flag(sd->textures[side_t::mid].flags, side_t::part::FlipGradient, key);
+				break;
+
+			case NAME_clampgradient_mid:
+				Flag(sd->textures[side_t::mid].flags, side_t::part::ClampGradient, key);
+				break;
+
+			case NAME_useowncolors_mid:
+				Flag(sd->textures[side_t::mid].flags, side_t::part::UseOwnColors, key);
+				break;
+
+			case NAME_uppercolor_mid:
+				sd->SetSpecialColor(side_t::mid, 0, CheckInt(key));
+				break;
+
+			case NAME_lowercolor_mid:
+				sd->SetSpecialColor(side_t::mid, 1, CheckInt(key));
+				break;
+
+			case NAME_nogradient_bottom:
+				Flag(sd->textures[side_t::bottom].flags, side_t::part::NoGradient, key);
+				break;
+
+			case NAME_flipgradient_bottom:
+				Flag(sd->textures[side_t::bottom].flags, side_t::part::FlipGradient, key);
+				break;
+
+			case NAME_clampgradient_bottom:
+				Flag(sd->textures[side_t::bottom].flags, side_t::part::ClampGradient, key);
+				break;
+
+			case NAME_useowncolors_bottom:
+				Flag(sd->textures[side_t::bottom].flags, side_t::part::UseOwnColors, key);
+				break;
+
+			case NAME_uppercolor_bottom:
+				sd->SetSpecialColor(side_t::bottom, 0, CheckInt(key));
+				break;
+
+			case NAME_lowercolor_bottom:
+				sd->SetSpecialColor(side_t::bottom, 1, CheckInt(key));
+				break;
+
 
 			default:
 				break;

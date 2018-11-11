@@ -154,31 +154,52 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 
    sidedef
    {
-      scalex_top = <float>;    // X scale for upper texture, Default = 1.0.
-      scaley_top = <float>;    // y scale for upper texture, Default = 1.0.
-      scalex_mid = <float>;    // X scale for mid texture, Default = 1.0.
-      scaley_mid = <float>;    // y scale for mid texture, Default = 1.0.
-      scalex_bottom = <float>; // X scale for lower texture, Default = 1.0.
-      scaley_bottom = <float>; // y scale for lower texture, Default = 1.0.
-      offsetx_top = <float>;    // X offset for upper texture, Default = 0.0.
-      offsety_top = <float>;    // y offset for upper texture, Default = 0.0.
-      offsetx_mid = <float>;    // X offset for mid texture, Default = 0.0.
-      offsety_mid = <float>;    // y offset for mid texture, Default = 0.0.
-      offsetx_bottom = <float>; // X offset for lower texture, Default = 0.0.
-      offsety_bottom = <float>; // y offset for lower texture, Default = 0.0.
-                                // When global texture offsets are used they will
-                                // be added on top of these values.
-      light = <integer>;        // This side's light level. Default is 0.
-      lightabsolute = <bool>;   // true = 'light' is an absolute value. Default is 
-                                // relative to the owning sector's light level.
-      lightfog = <bool>;        // true = This side's relative lighting is used even in
-                                // foggy sectors. Default is to disable relative
-                                // lighting in foggy sectors.
-      nofakecontrast = <bool>;  // Disables use of fake contrast on this sidedef.
-      smoothlighting = <bool>;  // Use smooth fake contrast.
-      clipmidtex = <bool>;      // Side's mid textures are clipped to floor and ceiling.
-      wrapmidtex = <bool>;      // Side's mid textures are wrapped.
-      nodecals = <bool>;        // Disables decals on the sidedef.
+      scalex_top = <float>;         // X scale for upper texture, Default = 1.0.
+      scaley_top = <float>;         // y scale for upper texture, Default = 1.0.
+      scalex_mid = <float>;         // X scale for mid texture, Default = 1.0.
+      scaley_mid = <float>;         // y scale for mid texture, Default = 1.0.
+      scalex_bottom = <float>;      // X scale for lower texture, Default = 1.0.
+      scaley_bottom = <float>;      // y scale for lower texture, Default = 1.0.
+      offsetx_top = <float>;        // X offset for upper texture, Default = 0.0.
+      offsety_top = <float>;        // y offset for upper texture, Default = 0.0.
+      offsetx_mid = <float>;        // X offset for mid texture, Default = 0.0.
+      offsety_mid = <float>;        // y offset for mid texture, Default = 0.0.
+      offsetx_bottom = <float>;     // X offset for lower texture, Default = 0.0.
+      offsety_bottom = <float>;     // y offset for lower texture, Default = 0.0.
+                                    // When global texture offsets are used they will
+                                    // be added on top of these values.
+      light = <integer>;            // This side's light level. Default is 0.
+      lightabsolute = <bool>;       // true = 'light' is an absolute value. Default is 
+                                    // relative to the owning sector's light level.
+      lightfog = <bool>;            // true = This side's relative lighting is used even in
+                                    // foggy sectors. Default is to disable relative
+                                    // lighting in foggy sectors.
+      nofakecontrast = <bool>;      // Disables use of fake contrast on this sidedef.
+      smoothlighting = <bool>;      // Use smooth fake contrast.
+      clipmidtex = <bool>;          // Side's mid textures are clipped to floor and ceiling.
+      wrapmidtex = <bool>;          // Side's mid textures are wrapped.
+      nodecals = <bool>;            // Disables decals on the sidedef.
+	  
+	  nogradient_top = <bool>;	    // disables color gradient on upper tier. (Hardware rendering only.)
+	  flipgradient_top = <bool>;    // flips gradient colors on upper tier. (Hardware rendering only.)
+	  clampgradient_top = <bool>;   // clamps gradient on upper tier to actual bounds (default is the entire front sector height, hardware rendering only.)
+	  useowncolors_top = <bool>;    // Set to 1 to use the colors set in the sidedef. Default is using the colors from the owning sector.
+	  uppercolor_top = <int>;       // Material color of the top of the upper tier.
+	  lowercolor_top = <int>;       // Material color of the bottom of the upper tier. (Hardware rendering only.)
+	  
+	  nogradient_mid = <bool>;	    // disables color gradient on middle tier. (Hardware rendering only.)
+	  flipgradient_mid = <bool>;    // flips gradient colors on middle tier. (Hardware rendering only.)
+	  clampgradient_mid = <bool>;   // clamps gradient on middle tier to actual bounds (default is the entire front sector height, hardware rendering only.)
+	  useowncolors_mid = <bool>;    // Set to 1 to use the colors set in the sidedef. Default is using the colors from the owning sector.
+	  uppercolor_mid = <int>;       // Material color of the top of the middle tier.
+	  lowercolor_mid = <int>;       // Material color of the bottom of the middle tier. (Hardware rendering only.)
+
+	  nogradient_bottom = <bool>;   // disables color gradient on lower tier. (Hardware rendering only.)
+	  flipgradient_bottom = <bool>; // flips gradient colors on lower tier. (Hardware rendering only.)
+	  clampgradient_bottom = <bool>;// clamps gradient on lower tier to actual bounds (default is the entire front sector height, hardware rendering only.)
+	  useowncolors_bottom = <bool>; // Set to 1 to use the colors set in the sidedef. Default is using the colors from the owning sector.
+	  uppercolor_bottom = <int>;    // Material color of the top of the lower tier.
+	  lowercolor_bottom = <int>;    // Material color of the bottom of the lower tier. (Hardware rendering only.)
    }
 
    sector

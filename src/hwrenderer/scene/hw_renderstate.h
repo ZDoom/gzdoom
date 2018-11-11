@@ -127,6 +127,7 @@ protected:
 	uint8_t mFogEnabled;
 	uint8_t mTextureEnabled:1;
 	uint8_t mGlowEnabled : 1;
+	uint8_t mGradientEnabled : 1;
 	uint8_t mBrightmapEnabled : 1;
 	uint8_t mModelMatrixEnabled : 1;
 	uint8_t mTextureMatrixEnabled : 1;
@@ -147,6 +148,7 @@ protected:
 	FStateVec4 mColor;
 	FStateVec4 mGlowTop, mGlowBottom;
 	FStateVec4 mGlowTopPlane, mGlowBottomPlane;
+	FStateVec4 mGradientTopPlane, mGradientBottomPlane;
 	FStateVec4 mSplitTopPlane, mSplitBottomPlane;
 	PalEntry mFogColor;
 	PalEntry mObjectColor;
@@ -172,7 +174,7 @@ public:
 	void Reset()
 	{
 		mTextureEnabled = true;
-		mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
+		mGradientEnabled = mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
 		mFogColor.d = -1;
 		mTextureMode = -1;
 		mDesaturation = 0;
@@ -201,6 +203,8 @@ public:
 		mGlowBottom.Set(0.0f, 0.0f, 0.0f, 0.0f);
 		mGlowTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
 		mGlowBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
+		mGradientTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
+		mGradientBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
 		mSplitTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
 		mSplitBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
 		mDynColor.Set(0.0f, 0.0f, 0.0f, 0.0f);
@@ -290,6 +294,11 @@ public:
 		mGlowEnabled = on;
 	}
 
+	void EnableGradient(bool on)
+	{
+		mGradientEnabled = on;
+	}
+
 	void EnableBrightmap(bool on)
 	{
 		mBrightmapEnabled = on;
@@ -324,18 +333,26 @@ public:
 
 	void SetGlowPlanes(const secplane_t &top, const secplane_t &bottom)
 	{
-		DVector3 tn = top.Normal();
-		DVector3 bn = bottom.Normal();
-		mGlowTopPlane.Set((float)tn.X, (float)tn.Y, (float)(1. / tn.Z), (float)top.fD());
-		mGlowBottomPlane.Set((float)bn.X, (float)bn.Y, (float)(1. / bn.Z), (float)bottom.fD());
+		auto &tn = top.Normal();
+		auto &bn = bottom.Normal();
+		mGlowTopPlane.Set((float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD());
+		mGlowBottomPlane.Set((float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD());
+	}
+
+	void SetGradientPlanes(const secplane_t &top, const secplane_t &bottom)
+	{
+		auto &tn = top.Normal();
+		auto &bn = bottom.Normal();
+		mGradientTopPlane.Set((float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD());
+		mGradientBottomPlane.Set((float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD());
 	}
 
 	void SetSplitPlanes(const secplane_t &top, const secplane_t &bottom)
 	{
-		DVector3 tn = top.Normal();
-		DVector3 bn = bottom.Normal();
-		mSplitTopPlane.Set((float)tn.X, (float)tn.Y, (float)(1. / tn.Z), (float)top.fD());
-		mSplitBottomPlane.Set((float)bn.X, (float)bn.Y, (float)(1. / bn.Z), (float)bottom.fD());
+		auto &tn = top.Normal();
+		auto &bn = bottom.Normal();
+		mSplitTopPlane.Set((float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD());
+		mSplitBottomPlane.Set((float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD());
 	}
 
 	void SetDynLight(float r, float g, float b)

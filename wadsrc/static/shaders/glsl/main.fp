@@ -1,5 +1,6 @@
 in vec4 pixelpos;
 in vec3 glowdist;
+in vec3 gradientdist;
 
 in vec4 vWorldNormal;
 in vec4 vEyeNormal;
@@ -111,7 +112,7 @@ vec4 getTexel(vec2 st)
 
 	}
 	if (uObjectColor2.a == 0.0) texel *= uObjectColor;
-	else texel *= mix(uObjectColor, uObjectColor2, glowdist.z);
+	else texel *= mix(uObjectColor, uObjectColor2, gradientdist.z);
 
 	return desaturate(texel);
 }

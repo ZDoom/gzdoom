@@ -184,6 +184,33 @@ public:
 		{
 			CompileSections(pair->Value, rawsections);
 		}
+
+		// Make sure that all subsectors have a sector. In some degenerate cases a subsector may come up empty.
+		// An example is in Doom.wad E3M4 near linedef 1087. With the grouping data here this is relatively easy to fix.
+		sector_t *lastsector = &level.sectors[0];
+		for (auto &rawsection : rawsections)
+		{
+			sector_t *mysector = nullptr;
+			bool missing = false;
+			for (auto num : rawsection)
+			{
+				auto &sub = level.subsectors[num];
+				if (sub.sector == nullptr) missing = true;
+				else mysector = sub.sector;
+			}
+			// Should the worst case happen and no sector be found, use the last used one. Subsectors must not be sector-less!
+			if (mysector == nullptr) mysector = lastsector;
+			else lastsector = mysector;
+			for (auto num : rawsection)
+			{
+				auto &sub = level.subsectors[num];
+				if (sub.sector == nullptr)
+				{
+					sub.sector = mysector;
+				}
+			}
+		}
+
 		subsectormap.Clear();
 		return rawsections;
 	}
@@ -253,8 +280,7 @@ public:
 		{
 			MakeOutline(list, lineForSeg);
 		}
-		rawsections.Clear();
-		rawsections.ShrinkToFit();
+		rawsections.Reset();
 
 		// Assign partners after everything has been collected
 		for (auto &section : sections)
@@ -720,8 +746,59 @@ public:
 			curgroup++;
 		}
 	}
-};
 
+	//=============================================================================
+	//
+	// Check if some subsectors have come up empty on sections.
+	// In this case assign the best fit from the containing sector.
+	// This is only to ensure that the section pointer is not null.
+	// These are always degenerate and do not produce any actual render output.
+	//
+	//=============================================================================
+
+	void FixMissingReferences()
+	{
+		for (auto &sub : level.subsectors)
+		{
+			if (sub.section == nullptr)
+			{
+				int sector = sub.sector->Index();
+				int mapsection = sub.mapsection;
+				auto sections = level.sections.SectionsForSector(sector);
+				FSection *bestfit = nullptr;
+				for (auto &section : sections)
+				{
+					if (bestfit == nullptr)
+					{
+						bestfit = &section;
+					}
+					else if (bestfit->mapsection != section.mapsection && section.mapsection == mapsection)
+					{
+						bestfit = &section;
+					}
+					else if (section.mapsection == mapsection)
+					{
+						BoundingRect rc;
+						for (unsigned i = 0; i < sub.numlines; i++)
+						{
+							rc.addVertex(sub.firstline[i].v1->fX(), sub.firstline[i].v1->fY());
+							rc.addVertex(sub.firstline[i].v2->fX(), sub.firstline[i].v2->fY());
+						}
+						// Pick the one closer to this subsector. 
+						if (rc.distanceTo(section.bounds) < rc.distanceTo(bestfit->bounds))
+						{
+							bestfit = &section;
+						}
+					}
+				}
+				// This should really never happen, but better be safe than sorry and assign at least something.
+				if (bestfit == nullptr) bestfit = &level.sections.allSections[0];
+				sub.section = bestfit;
+			}
+		}
+	}
+
+};
 
 
 //=============================================================================
@@ -787,6 +864,7 @@ void CreateSections(FSectionContainer &container)
 	creat.FindOuterLoops();
 	creat.GroupSections();
 	creat.ConstructOutput(container);
+	creat.FixMissingReferences();
 }
 
 CCMD(printsections)

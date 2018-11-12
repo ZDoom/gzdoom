@@ -78,12 +78,12 @@ NetClient::NetClient(FString server)
 	mServerNode = mComm->Connect(server);
 	mStatus = NodeStatus::InPreGame;
 
-	NetPacket packet;
+	NetOutputPacket packet;
 	packet.node = mServerNode;
 
 	NetCommand cmd ( NetPacketType::ConnectRequest );
 	cmd.addString("ZDoom Connect Request");
-	cmd.writeCommandToPacket ( packet );
+	cmd.writeCommandToStream (packet.stream);
 
 	mComm->PacketSend(packet);
 }
@@ -97,7 +97,7 @@ void NetClient::Update()
 		if ( ( gameaction == ga_newgame ) || ( gameaction == ga_newgame2 ) )
 			return;
 
-		NetPacket packet;
+		NetInputPacket packet;
 		mComm->PacketGet(packet);
 		if (packet.node == -1)
 			break;
@@ -106,29 +106,23 @@ void NetClient::Update()
 		{
 			mComm->Close(packet.node);
 		}
-		else if (packet.size == 0)
+		else if (packet.stream.IsAtEnd())
 		{
-			OnClose(packet);
+			OnClose();
 			break;
 		}
 		else
 		{
-			if (packet.stream.ReadByte () != 0)
-			{
-				Printf ("Error parsing packet. Unexpected header.\n");
-				break;
-			}
-
 			while ( packet.stream.IsAtEnd() == false )
 			{
 				NetPacketType type = (NetPacketType)packet.stream.ReadByte();
 				switch (type)
 				{
-				default: OnClose(packet); break;
-				case NetPacketType::ConnectResponse: OnConnectResponse(packet); break;
-				case NetPacketType::Disconnect: OnDisconnect(packet); break;
-				case NetPacketType::Tic: OnTic(packet); break;
-				case NetPacketType::SpawnPlayer: OnSpawnPlayer(packet); break;
+				default: OnClose(); break;
+				case NetPacketType::ConnectResponse: OnConnectResponse(packet.stream); break;
+				case NetPacketType::Disconnect: OnDisconnect(); break;
+				case NetPacketType::Tic: OnTic(packet.stream); break;
+				case NetPacketType::SpawnPlayer: OnSpawnPlayer(packet.stream); break;
 				}
 			}
 			break;
@@ -184,13 +178,13 @@ void NetClient::EndCurrentTic()
 
 	int targettic = (mSendTic + mServerTicDelta);
 
-	NetPacket packet;
+	NetOutputPacket packet;
 	packet.node = mServerNode;
 
 	NetCommand cmd ( NetPacketType::Tic );
 	cmd.addByte (targettic); // target gametic
 	cmd.addBuffer ( &mSentInput[(mSendTic - 1) % BACKUPTICS].ucmd, sizeof(usercmd_t) );
-	cmd.writeCommandToPacket ( packet );
+	cmd.writeCommandToStream ( packet.stream );
 
 	mComm->PacketSend(packet);
 
@@ -264,7 +258,7 @@ void NetClient::Network_Controller(int playernum, bool add)
 {
 }
 
-void NetClient::OnClose(const NetPacket &packet)
+void NetClient::OnClose()
 {
 	mComm->Close(mServerNode);
 	mServerNode = -1;
@@ -280,13 +274,13 @@ void NetClient::OnClose(const NetPacket &packet)
 	}
 }
 
-void NetClient::OnConnectResponse(NetPacket &packet)
+void NetClient::OnConnectResponse(ByteInputStream &stream)
 {
-	int version = packet.stream.ReadByte(); // Protocol version
+	int version = stream.ReadByte(); // Protocol version
 	if (version == 1)
 	{
-		int playernum = packet.stream.ReadByte();
-		if (playernum != 255) // Join accepted
+		int playernum = stream.ReadByte();
+		if (playernum > 0 && playernum < MAXPLAYERS) // Join accepted
 		{
 			mPlayer = playernum;
 			mStatus = NodeStatus::InGame;
@@ -313,9 +307,9 @@ void NetClient::OnConnectResponse(NetPacket &packet)
 	}
 }
 
-void NetClient::OnDisconnect(const NetPacket &packet)
+void NetClient::OnDisconnect()
 {
-	mComm->Close(packet.node);
+	mComm->Close(mServerNode);
 	mServerNode = -1;
 	mStatus = NodeStatus::Closed;
 }
@@ -336,31 +330,31 @@ void NetClient::UpdateLastReceivedTic(int tic)
 	mLastReceivedTic = MAX(mLastReceivedTic, 0);
 }
 
-void NetClient::OnTic(NetPacket &packet)
+void NetClient::OnTic(ByteInputStream &stream)
 {
-	UpdateLastReceivedTic(packet.stream.ReadByte());
+	UpdateLastReceivedTic(stream.ReadByte());
 
 	TicUpdate update;
 	update.received = true;
-	update.x = packet.stream.ReadFloat();
-	update.y = packet.stream.ReadFloat();
-	update.z = packet.stream.ReadFloat();
-	update.yaw = packet.stream.ReadFloat();
-	update.pitch = packet.stream.ReadFloat();
+	update.x = stream.ReadFloat();
+	update.y = stream.ReadFloat();
+	update.z = stream.ReadFloat();
+	update.yaw = stream.ReadFloat();
+	update.pitch = stream.ReadFloat();
 
 	mTicUpdates[mLastReceivedTic % BACKUPTICS] = update;
 }
 
-void NetClient::OnSpawnPlayer(NetPacket &packet)
+void NetClient::OnSpawnPlayer(ByteInputStream &stream)
 {
 	// To do: this needs a tic and should be inserted in mTicUpdates.
 	// Otherwise it might not arrive at the intended moment in time.
 
-	int player = packet.stream.ReadByte();
-	const float x = packet.stream.ReadFloat();
-	const float y = packet.stream.ReadFloat();
-	const float z = packet.stream.ReadFloat();
-	const int16_t netID = packet.stream.ReadShort();
+	int player = stream.ReadByte();
+	const float x = stream.ReadFloat();
+	const float y = stream.ReadFloat();
+	const float z = stream.ReadFloat();
+	const int16_t netID = stream.ReadShort();
 
 	AActor *oldNetActor = g_NetIDList.findPointerByID ( netID );
 

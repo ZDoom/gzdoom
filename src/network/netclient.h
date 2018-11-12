@@ -22,6 +22,7 @@
 #pragma once
 
 #include "netserver.h"
+#include "netcommand.h"
 
 class NetClient : public Network
 {
@@ -50,11 +51,11 @@ public:
 	void Network_Controller(int playernum, bool add) override;
 
 private:
-	void OnClose(const NetPacket &packet);
-	void OnConnectResponse(NetPacket &packet);
-	void OnDisconnect(const NetPacket &packet);
-	void OnTic(NetPacket &packet);
-	void OnSpawnPlayer(NetPacket &packet);
+	void OnClose();
+	void OnConnectResponse(ByteInputStream &stream);
+	void OnDisconnect();
+	void OnTic(ByteInputStream &stream);
+	void OnSpawnPlayer(ByteInputStream &stream);
 
 	void UpdateLastReceivedTic(int tic);
 

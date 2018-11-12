@@ -2,38 +2,41 @@
 #pragma once
 
 #include <memory>
-#include "netsync.h"
+#include "netcommand.h"
 
 #define MAX_MSGLEN 14000
 #define DOOMPORT 5029
 
-struct NetPacket
+class NetOutputPacket
 {
-	NetPacket()
-	{
-		memset(data, 0, sizeof(data));
-		stream.pbStream = data;
-		stream.bitBuffer = NULL;
-		stream.bitShift = -1;
-		stream.pbStreamEnd = stream.pbStream + sizeof(data);
-	}
+public:
+	NetOutputPacket() : stream(buffer + 1, MAX_MSGLEN - 1) { buffer[0] = 0; }
 
-	// packet data to be sent
-	uint8_t	data[MAX_MSGLEN];
+	int node = 0;
+	ByteOutputStream stream;
 
-	// bytes in data to be sent
-	int16_t	size = 0;
+private:
+	uint8_t	buffer[MAX_MSGLEN];
 
-	// dest for send, set by get (-1 = no packet).
-	int16_t	node = 0;
+	NetOutputPacket(const NetOutputPacket &) = delete;
+	NetOutputPacket &operator=(const NetOutputPacket &) = delete;
+	friend class DoomComImpl;
+};
 
-	uint8_t &operator[](int i) { return data[i]; }
-	const uint8_t &operator[](int i) const { return data[i]; }
+class NetInputPacket
+{
+public:
+	NetInputPacket() = default;
 
-	BYTESTREAM_s stream;
+	int node = -1; // -1 = no packet available
+	ByteInputStream stream;
 
-	NetPacket(const NetPacket &) = delete;
-	NetPacket &operator=(const NetPacket &) = delete;
+private:
+	uint8_t	buffer[MAX_MSGLEN];
+
+	NetInputPacket(const NetInputPacket &) = delete;
+	NetInputPacket &operator=(const NetInputPacket &) = delete;
+	friend class DoomComImpl;
 };
 
 // Network packet data.
@@ -41,8 +44,8 @@ struct doomcom_t
 {
 	virtual ~doomcom_t() { }
 
-	virtual void PacketSend(const NetPacket &packet) = 0;
-	virtual void PacketGet(NetPacket &packet) = 0;
+	virtual void PacketSend(const NetOutputPacket &packet) = 0;
+	virtual void PacketGet(NetInputPacket &packet) = 0;
 
 	virtual int Connect(const char *name) = 0;
 	virtual void Close(int node) = 0;

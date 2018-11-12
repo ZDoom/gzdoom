@@ -124,7 +124,7 @@ CUSTOM_CVAR(Int, net_extratic, 0, CVAR_SERVERINFO | CVAR_NOSAVE)
 	}
 }
 
-#ifdef _DEBUG
+#if 0
 CVAR(Int, net_fakelatency, 0, 0);
 
 struct PacketStore

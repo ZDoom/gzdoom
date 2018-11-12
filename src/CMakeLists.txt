@@ -902,6 +902,7 @@ set (PCH_SOURCES
 	network/netserver.cpp
 	network/netsync.cpp
 	network/netclient.cpp
+	network/netcommand.cpp
 	network/i_net.cpp
 	d_netinfo.cpp
 	d_protocol.cpp

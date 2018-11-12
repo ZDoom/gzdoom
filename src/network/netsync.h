@@ -1,27 +1,13 @@
-#ifndef __D_NETSYNC_H__
-#define __D_NETSYNC_H__
+
+#pragma once
 
 #include "vectors.h"
 #include "r_data/renderstyle.h"
 
-// Maximum size of the packets sent out by the server.
-#define	MAX_UDP_PACKET				8192
-
-// This is the longest possible string we can pass over the network.
-#define	MAX_NETWORK_STRING			2048
-
-enum class NetPacketType
-{
-	ConnectRequest,
-	ConnectResponse,
-	Disconnect,
-	Tic,
-	SpawnPlayer
-};
-
 class AActor;
 
-struct NetSyncData {
+struct NetSyncData
+{
 	DVector3		Pos;
 	DVector3		Vel;
 	DAngle			SpriteAngle;
@@ -49,119 +35,8 @@ struct NetSyncData {
 	double			StealthAlpha;	// Minmum alpha for MF_STEALTH.
 	int				NetID;
 
-	void AssignNetID ( AActor *pActor );
-	void FreeNetID ();
-};
-
-//*****************************************************************************
-struct BYTESTREAM_s
-{
-	BYTESTREAM_s();
-	void EnsureBitSpace( int bits, bool writing );
-
-	int	ReadByte();
-	int ReadShort();
-	int	ReadLong();
-	float ReadFloat();
-	const char* ReadString();
-	bool ReadBit();
-	int ReadVariable();
-	int ReadShortByte( int bits );
-	void ReadBuffer( void* buffer, size_t length );
-
-	void WriteByte( int Byte );
-	void WriteShort( int Short );
-	void WriteLong( int Long );
-	void WriteFloat( float Float );
-	void WriteString( const char *pszString );
-	void WriteBit( bool bit );
-	void WriteVariable( int value );
-	void WriteShortByte( int value, int bits );
-	void WriteBuffer( const void *pvBuffer, int nLength );
-
-	void WriteHeader( int Byte );
-
-	bool IsAtEnd() const;
-
-	// Pointer to our stream of data.
-	uint8_t		*pbStream;
-
-	// Pointer to the end of the stream. When pbStream > pbStreamEnd, the
-	// entire stream has been read.
-	uint8_t		*pbStreamEnd;
-
-	uint8_t		*bitBuffer;
-	int			bitShift;
-
-	void AdvancePointer( const int NumBytes, const bool OutboundTraffic );
-};
-
-//*****************************************************************************
-enum BUFFERTYPE_e
-{
-	BUFFERTYPE_READ,
-	BUFFERTYPE_WRITE,
-
-};
-
-//*****************************************************************************
-struct NETBUFFER_s
-{
-	// This is the data in our packet.
-	uint8_t			*pbData;
-
-	// The maximum amount of data this packet can hold.
-	unsigned int	ulMaxSize;
-
-	// How much data is currently in this packet?
-	unsigned int	ulCurrentSize;
-
-	// Byte stream for this buffer for managing our current position and where
-	// the end of the stream is.
-	BYTESTREAM_s	ByteStream;
-
-	// Is this a buffer that we write to, or read from?
-	BUFFERTYPE_e	BufferType;
-
-	NETBUFFER_s ( );
-	NETBUFFER_s ( const NETBUFFER_s &Buffer );
-
-	void			Init( unsigned int ulLength, BUFFERTYPE_e BufferType );
-	void			Free();
-	void			Clear();
-	int				CalcSize() const;
-	int				WriteTo( BYTESTREAM_s &ByteStream ) const;
-};
-
-struct NetPacket;
-
-/**
- * \author Benjamin Berkels
- */
-class NetCommand {
-	NETBUFFER_s	_buffer;
-	bool		_unreliable;
-
-public:
-	NetCommand ( const NetPacketType Header );
-	~NetCommand ( );
-
-	void addInteger( const int IntValue, const int Size );
-	void addByte ( const int ByteValue );
-	void addShort ( const int ShortValue );
-	void addLong ( const int32_t LongValue );
-	void addFloat ( const float FloatValue );
-	void addString ( const char *pszString );
-	void addName ( FName name );
-	void addBit ( const bool value );
-	void addVariable ( const int value );
-	void addShortByte ( int value, int bits );
-	void addBuffer ( const void *pvBuffer, int nLength );
-	void writeCommandToStream ( BYTESTREAM_s &ByteStream ) const;
-	void writeCommandToPacket ( NetPacket &response ) const;
-	bool isUnreliable() const;
-	void setUnreliable ( bool a );
-	int calcSize() const;
+	void AssignNetID(AActor *pActor);
+	void FreeNetID();
 };
 
 //==========================================================================
@@ -187,54 +62,52 @@ private:
 	typedef struct
 	{
 		// Is this node occupied, or free to be used by a new actor?
-		bool	bFree;
+		bool bFree;
 
 		// If this node is occupied, this is the actor occupying it.
-		T	*pActor;
+		T *pActor;
 
 	} IDNODE_t;
 
 	IDNODE_t _entries[MAX_NETID];
 	unsigned int _firstFreeID;
 
-	inline bool isIndexValid ( const int lNetID ) const
+	inline bool isIndexValid(const int lNetID) const
 	{
-		return ( lNetID >= 0 ) && ( lNetID < MAX_NETID );
+		return (lNetID >= 0) && (lNetID < MAX_NETID);
 	}
 public:
-	void clear ( );
+	void clear();
 
 	// [BB] Rebuild the global list of used / free NetIDs from scratch.
-	void rebuild ( );
+	void rebuild();
 
-	IDList ( )
+	IDList()
 	{
-		clear ( );
+		clear();
 	}
 
-	void useID ( const int lNetID, T *pActor );
+	void useID(const int lNetID, T *pActor);
 
-	void freeID ( const int lNetID )
+	void freeID(const int lNetID)
 	{
-		if ( isIndexValid ( lNetID ) )
+		if (isIndexValid(lNetID))
 		{
 			_entries[lNetID].bFree = true;
-			_entries[lNetID].pActor = NULL;
+			_entries[lNetID].pActor = nullptr;
 		}
 	}
 
-	unsigned int getNewID ( );
+	unsigned int getNewID();
 
-	T* findPointerByID ( const int lNetID ) const
+	T* findPointerByID(const int lNetID) const
 	{
-		if ( isIndexValid ( lNetID ) == false )
-			return ( NULL );
+		if (isIndexValid(lNetID) == false)
+			return nullptr;
 
-		if (( _entries[lNetID].bFree == false ) && ( _entries[lNetID].pActor ))
-			return ( _entries[lNetID].pActor );
+		if ((_entries[lNetID].bFree == false) && (_entries[lNetID].pActor))
+			return _entries[lNetID].pActor;
 
-		return ( NULL );
+		return nullptr;
 	}
 };
-
-#endif //__D_NETSYNC_H__

@@ -102,8 +102,8 @@ public:
 	DoomComImpl(int port);
 	~DoomComImpl();
 
-	void PacketSend(const NetPacket &packet) override;
-	void PacketGet(NetPacket &packet) override;
+	void PacketSend(const NetOutputPacket &packet) override;
+	void PacketGet(NetInputPacket &packet) override;
 
 	int Connect(const char *name) override;
 	void Close(int node) override;
@@ -226,28 +226,29 @@ int DoomComImpl::FindNode(const sockaddr_in *address)
 	return slot;
 }
 
-void DoomComImpl::PacketSend(const NetPacket &packet)
+void DoomComImpl::PacketSend(const NetOutputPacket &packet)
 {
-	assert(!(packet.data[0] & NCMD_COMPRESSED));
+	assert(!(packet.buffer[0] & NCMD_COMPRESSED));
 
-	if (packet.size >= 10)
+	int packetSize = packet.stream.GetSize() + 1;
+	if (packetSize >= 10)
 	{
-		mTransmitBuffer[0] = packet.data[0] | NCMD_COMPRESSED;
+		mTransmitBuffer[0] = packet.buffer[0] | NCMD_COMPRESSED;
 
 		uLong size = TRANSMIT_SIZE - 1;
-		int c = compress2(mTransmitBuffer + 1, &size, packet.data + 1, packet.size - 1, 9);
+		int c = compress2(mTransmitBuffer + 1, &size, packet.buffer + 1, packetSize - 1, 9);
 		size += 1;
 
-		if (c == Z_OK && size < (uLong)packet.size)
+		if (c == Z_OK && size < (uLong)packetSize)
 		{
 			sendto(mSocket, (char *)mTransmitBuffer, size, 0, (sockaddr *)&mNodeEndpoints[packet.node], sizeof(mNodeEndpoints[packet.node]));
 			return;
 		}
 	}
 
-	if (packet.size <= TRANSMIT_SIZE)
+	if (packetSize <= TRANSMIT_SIZE)
 	{
-		sendto(mSocket, (char *)packet.data, packet.size, 0, (sockaddr *)&mNodeEndpoints[packet.node], sizeof(mNodeEndpoints[packet.node]));
+		sendto(mSocket, (char *)packet.buffer, packetSize, 0, (sockaddr *)&mNodeEndpoints[packet.node], sizeof(mNodeEndpoints[packet.node]));
 	}
 	else
 	{
@@ -255,7 +256,7 @@ void DoomComImpl::PacketSend(const NetPacket &packet)
 	}
 }
 
-void DoomComImpl::PacketGet(NetPacket &packet)
+void DoomComImpl::PacketGet(NetInputPacket &packet)
 {
 	// First check if anything timed out. Treat this as a close.
 	uint64_t nowtime = I_nsTime();
@@ -265,8 +266,7 @@ void DoomComImpl::PacketGet(NetPacket &packet)
 		{
 			Close(i);
 			packet.node = i;
-			packet.size = 0;
-			packet.stream.pbStreamEnd = packet.stream.pbStream;
+			packet.stream.SetBuffer(nullptr, 0);
 			return;
 		}
 	}
@@ -288,9 +288,7 @@ void DoomComImpl::PacketGet(NetPacket &packet)
 
 				Close(node);
 				packet.node = node;
-				packet.size = 0;
-				packet.stream.pbStream = packet.data;
-				packet.stream.pbStreamEnd = packet.data + packet.size;
+				packet.stream.SetBuffer(nullptr, 0);
 				return;
 			}
 			else if (err != WSAEWOULDBLOCK)
@@ -300,9 +298,7 @@ void DoomComImpl::PacketGet(NetPacket &packet)
 			else // no packet
 			{
 				packet.node = -1;
-				packet.size = 0;
-				packet.stream.pbStream = packet.data;
-				packet.stream.pbStreamEnd = packet.data + packet.size;
+				packet.stream.SetBuffer(nullptr, 0);
 				return;
 			}
 		}
@@ -312,11 +308,11 @@ void DoomComImpl::PacketGet(NetPacket &packet)
 			if (node == -1)
 				continue;
 
-			packet.data[0] = mTransmitBuffer[0] & ~NCMD_COMPRESSED;
+			packet.buffer[0] = mTransmitBuffer[0] & ~NCMD_COMPRESSED;
 			if ((mTransmitBuffer[0] & NCMD_COMPRESSED) && size > 1)
 			{
 				uLongf msgsize = MAX_MSGLEN - 1;
-				int err = uncompress(packet.data + 1, &msgsize, mTransmitBuffer + 1, size - 1);
+				int err = uncompress(packet.buffer + 1, &msgsize, mTransmitBuffer + 1, size - 1);
 				if (err != Z_OK)
 				{
 					Printf("Net decompression failed (zlib error %s)\n", M_ZLibError(err).GetChars());
@@ -326,13 +322,11 @@ void DoomComImpl::PacketGet(NetPacket &packet)
 			}
 			else
 			{
-				memcpy(packet.data + 1, mTransmitBuffer + 1, size - 1);
+				memcpy(packet.buffer + 1, mTransmitBuffer + 1, size - 1);
 			}
 
 			packet.node = node;
-			packet.size = (short)size;
-			packet.stream.pbStream = packet.data;
-			packet.stream.pbStreamEnd = packet.data + packet.size;
+			packet.stream.SetBuffer(packet.buffer + 1, size - 1);
 			return;
 		}
 	}

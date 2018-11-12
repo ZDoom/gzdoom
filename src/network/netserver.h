@@ -22,6 +22,7 @@
 #pragma once
 
 #include "net.h"
+#include "netcommand.h"
 
 enum class NodeStatus
 {
@@ -37,6 +38,7 @@ struct NetNode
 	int Ping = 0;
 	int Gametic = 0;
 	int Player = -1;
+	int NodeIndex = -1;
 
 	struct TicUpdate
 	{
@@ -75,12 +77,12 @@ public:
 	void Network_Controller(int playernum, bool add) override;
 
 private:
-	void OnClose(NetNode &node, const NetPacket &packet);
-	void OnConnectRequest(NetNode &node, NetPacket &packet);
-	void OnDisconnect(NetNode &node, const NetPacket &packet);
-	void OnTic(NetNode &node, NetPacket &packet);
+	void OnClose(NetNode &node, ByteInputStream &stream);
+	void OnConnectRequest(NetNode &node, ByteInputStream &stream);
+	void OnDisconnect(NetNode &node, ByteInputStream &stream);
+	void OnTic(NetNode &node, ByteInputStream &packet);
 
-	void CmdSpawnPlayer(NetNode &node, int player);
+	void CmdSpawnPlayer(ByteOutputStream &stream, int player);
 	void FullUpdate(NetNode &node);
 
 	std::unique_ptr<doomcom_t> mComm;

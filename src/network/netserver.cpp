@@ -69,6 +69,9 @@ NetServer::NetServer()
 {
 	Printf("Started hosting multiplayer game..\n");
 
+	for (int i = 0; i < MAXNETNODES; i++)
+		mNodes[i].NodeIndex = i;
+
 	mComm = I_InitNetwork(DOOMPORT);
 
 	G_InitServerNetGame("e1m1");
@@ -79,34 +82,28 @@ void NetServer::Update()
 	// Read all packets currently available from clients
 	while (true)
 	{
-		NetPacket packet;
+		NetInputPacket packet;
 		mComm->PacketGet(packet);
 		if (packet.node == -1)
 			break; // No more packets. We are done.
 
 		NetNode &node = mNodes[packet.node];
 
-		if (packet.size == 0) // Connection to node closed (timed out)
+		if (packet.stream.IsAtEnd()) // Connection to node closed (timed out)
 		{
-			OnClose(node, packet);
+			OnClose(node, packet.stream);
 		}
 		else
 		{
-			if (packet.stream.ReadByte () != 0)
-			{
-				Printf ("Error parsing packet. Unexpected header.\n");
-				break;
-			}
-
-			while ( packet.stream.IsAtEnd() == false )
+			while (packet.stream.IsAtEnd() == false)
 			{
 				NetPacketType type = (NetPacketType)packet.stream.ReadByte();
 				switch (type)
 				{
-				default: OnClose(node, packet); break;
-				case NetPacketType::ConnectRequest: OnConnectRequest(node, packet); break;
-				case NetPacketType::Disconnect: OnDisconnect(node, packet); break;
-				case NetPacketType::Tic: OnTic(node, packet); break;
+				default: OnClose(node, packet.stream); break;
+				case NetPacketType::ConnectRequest: OnConnectRequest(node, packet.stream); break;
+				case NetPacketType::Disconnect: OnDisconnect(node, packet.stream); break;
+				case NetPacketType::Tic: OnTic(node, packet.stream); break;
 				}
 			}
 		}
@@ -138,7 +135,7 @@ void NetServer::EndCurrentTic()
 	{
 		if (mNodes[i].Status == NodeStatus::InGame)
 		{
-			NetPacket packet;
+			NetOutputPacket packet;
 			packet.node = i;
 
 			NetCommand cmd ( NetPacketType::Tic);
@@ -161,8 +158,8 @@ void NetServer::EndCurrentTic()
 				cmd.addFloat ( 0.0f );
 				cmd.addFloat ( 0.0f );
 			}
-			cmd.writeCommandToPacket ( packet );
 
+			cmd.writeCommandToStream(packet.stream);
 			mComm->PacketSend(packet);
 		}
 	}
@@ -232,7 +229,7 @@ void NetServer::Network_Controller(int playernum, bool add)
 {
 }
 
-void NetServer::OnClose(NetNode &node, const NetPacket &packet)
+void NetServer::OnClose(NetNode &node, ByteInputStream &stream)
 {
 	if (node.Status == NodeStatus::InGame)
 	{
@@ -244,13 +241,13 @@ void NetServer::OnClose(NetNode &node, const NetPacket &packet)
 	}
 
 	node.Status = NodeStatus::Closed;
-	mComm->Close(packet.node);
+	mComm->Close(node.NodeIndex);
 }
 
-void NetServer::OnConnectRequest(NetNode &node, NetPacket &packet)
+void NetServer::OnConnectRequest(NetNode &node, ByteInputStream &stream)
 {
 	// Make the initial connect packet a bit more complex than a bunch of zeros..
-	if (strcmp(packet.stream.ReadString(), "ZDoom Connect Request") != 0)
+	if (strcmp(stream.ReadString(), "ZDoom Connect Request") != 0)
 	{
 		if (node.Status == NodeStatus::InGame)
 		{
@@ -259,7 +256,7 @@ void NetServer::OnConnectRequest(NetNode &node, NetPacket &packet)
 		else
 		{
 			node.Status = NodeStatus::Closed;
-			mComm->Close(packet.node);
+			mComm->Close(node.NodeIndex);
 			return;
 		}
 	}
@@ -285,18 +282,18 @@ void NetServer::OnConnectRequest(NetNode &node, NetPacket &packet)
 			node.TicUpdates[i].received = false;
 
 		node.Status = NodeStatus::InGame;
-		mNodeForPlayer[node.Player] = packet.node;
+		mNodeForPlayer[node.Player] = node.NodeIndex;
 
 		playeringame[node.Player] = true;
 		players[node.Player].settings_controller = false;
 
-		NetPacket response;
-		response.node = packet.node;
+		NetOutputPacket response;
+		response.node = node.NodeIndex;
 
 		NetCommand cmd ( NetPacketType::ConnectResponse );
 		cmd.addByte ( 1 ); // Protocol version
 		cmd.addByte ( node.Player );
-		cmd.writeCommandToPacket ( response );
+		cmd.writeCommandToStream ( response.stream );
 
 		mComm->PacketSend(response);
 
@@ -306,22 +303,22 @@ void NetServer::OnConnectRequest(NetNode &node, NetPacket &packet)
 	{
 		node.Status = NodeStatus::Closed;
 
-		NetPacket response;
-		response.node = packet.node;
+		NetOutputPacket response;
+		response.node = node.NodeIndex;
 
 		NetCommand cmd ( NetPacketType::ConnectResponse );
 		cmd.addByte ( 1 ); // Protocol version
 		cmd.addByte ( 255 );
-		cmd.writeCommandToPacket ( response );
+		cmd.writeCommandToStream (response.stream);
 
 		mComm->PacketSend(response);
 
 		node.Status = NodeStatus::Closed;
-		mComm->Close(packet.node);
+		mComm->Close(node.NodeIndex);
 	}
 }
 
-void NetServer::OnDisconnect(NetNode &node, const NetPacket &packet)
+void NetServer::OnDisconnect(NetNode &node, ByteInputStream &stream)
 {
 	if (node.Status == NodeStatus::InGame)
 	{
@@ -333,20 +330,23 @@ void NetServer::OnDisconnect(NetNode &node, const NetPacket &packet)
 	}
 
 	node.Status = NodeStatus::Closed;
-	mComm->Close(packet.node);
+	mComm->Close(node.NodeIndex);
 }
 
-void NetServer::OnTic(NetNode &node, NetPacket &packet)
+void NetServer::OnTic(NetNode &node, ByteInputStream &stream)
 {
 	if (node.Status != NodeStatus::InGame)
 		return;
 
-	int tic = packet.stream.ReadByte();
-
+	int tic = stream.ReadByte();
 	int delta = tic - (gametic & 0xff);
 	if (delta > 128) delta -= 256;
 	else if (delta < -128) delta += 256;
 	tic = gametic + delta;
+
+	NetNode::TicUpdate update;
+	update.received = true;
+	stream.ReadBuffer(&update.input, sizeof(usercmd_t));
 
 	if (tic <= gametic)
 	{
@@ -357,30 +357,25 @@ void NetServer::OnTic(NetNode &node, NetPacket &packet)
 			return; // We already received the proper packet.
 	}
 
-	NetNode::TicUpdate update;
-	update.received = true;
-	packet.stream.ReadBuffer(&update.input, sizeof(usercmd_t));
 	node.TicUpdates[tic % BACKUPTICS] = update;
 }
 
-void NetServer::CmdSpawnPlayer(NetNode &node, int player)
+void NetServer::CmdSpawnPlayer(ByteOutputStream &stream, int player)
 {
-	// TODO: This shouldn't be one packet per command.
-	NetPacket packet;
-	packet.node = (int)(ptrdiff_t)(&node-mNodes);
 	NetCommand cmd ( NetPacketType::SpawnPlayer );
 	cmd.addByte ( player );
 	cmd.addFloat ( static_cast<float> ( players[player].mo->X() ) );
 	cmd.addFloat ( static_cast<float> ( players[player].mo->Y() ) );
 	cmd.addFloat ( static_cast<float> ( players[player].mo->Z() ) );
 	cmd.addShort ( players[player].mo->syncdata.NetID );
-	cmd.writeCommandToPacket ( packet );
-
-	mComm->PacketSend(packet);
+	cmd.writeCommandToStream ( stream );
 }
 
 void NetServer::FullUpdate(NetNode &node)
 {
+	NetOutputPacket packet;
+	packet.node = node.NodeIndex;
+
 	// Inform the client about all players already in the game.
 	for ( int i = 0; i < MAXPLAYERNAME; ++i )
 	{
@@ -388,6 +383,8 @@ void NetServer::FullUpdate(NetNode &node)
 			continue;
 
 		if ( playeringame[i] == true )
-			CmdSpawnPlayer(node, i);
+			CmdSpawnPlayer(packet.stream, i);
 	}
+
+	mComm->PacketSend(packet);
 }

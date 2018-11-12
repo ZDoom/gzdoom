@@ -321,8 +321,8 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       score = <int>;            // Score value of this actor, overriding the class default if not null. Default = 0.
       pitch = <integer>;        // Pitch of thing in degrees. Default = 0 (horizontal).
       roll = <integer>;         // Pitch of thing in degrees. Default = 0 (horizontal).
-      scalex = <float>;         // Vertical scaling on thing. Default = 0 (ignored).
-      scaley = <float>;         // Horizontal scaling on thing. Default = 0 (ignored).
+      scalex = <float>;         // Horizontal scaling on thing. Default = 0 (ignored).
+      scaley = <float>;         // Vertical scaling on thing. Default = 0 (ignored).
       scale = <float>;          // Vertical and horizontal scaling on thing. Default = 0 (ignored).
       floatbobphase = <int>;    // Sets the thing's floatbobphase. Valid phase values are 0-63. Default = -1 (use actor class default).
 

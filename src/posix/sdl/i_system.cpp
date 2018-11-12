@@ -46,7 +46,7 @@
 #include "x86.h"
 
 #include "d_main.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "g_game.h"
 #include "c_dispatch.h"
 

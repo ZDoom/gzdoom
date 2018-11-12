@@ -156,7 +156,7 @@ void NetClient::SetCurrentTic(int tictime)
 	}
 	else
 	{
-		if (mServerTicDelta == -1 || std::abs(gametic + mServerTicDelta - mLastReceivedTic) > jitter)
+		if (mServerTicDelta == -1 || abs(gametic + mServerTicDelta - mLastReceivedTic) > jitter)
 		{
 			//Printf("netcable icon! ;)\n");
 			mServerTicDelta = mLastReceivedTic - gametic - jitter;

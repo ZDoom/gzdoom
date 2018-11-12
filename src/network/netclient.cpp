@@ -65,6 +65,7 @@
 #include "g_levellocals.h"
 #include "events.h"
 #include "i_time.h"
+#include <cmath>
 
 extern IDList<AActor> g_NetIDList;
 

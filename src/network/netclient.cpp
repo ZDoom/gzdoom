@@ -78,8 +78,7 @@ NetClient::NetClient(FString server)
 	mServerNode = mComm->Connect(server);
 	mStatus = NodeStatus::InPreGame;
 
-	NetOutputPacket packet;
-	packet.node = mServerNode;
+	NetOutputPacket packet(mServerNode);
 
 	NetCommand cmd ( NetPacketType::ConnectRequest );
 	cmd.addString("ZDoom Connect Request");
@@ -178,8 +177,7 @@ void NetClient::EndCurrentTic()
 
 	int targettic = (mSendTic + mServerTicDelta);
 
-	NetOutputPacket packet;
-	packet.node = mServerNode;
+	NetOutputPacket packet(mServerNode);
 
 	NetCommand cmd ( NetPacketType::Tic );
 	cmd.addByte (targettic); // target gametic

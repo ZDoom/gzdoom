@@ -10,7 +10,7 @@
 class NetOutputPacket
 {
 public:
-	NetOutputPacket() : stream(buffer + 1, MAX_MSGLEN - 1) { buffer[0] = 0; }
+	NetOutputPacket(int node) : node(node), stream(buffer + 1, MAX_MSGLEN - 1) { buffer[0] = 0; }
 
 	int node = 0;
 	ByteOutputStream stream;

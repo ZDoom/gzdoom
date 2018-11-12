@@ -135,8 +135,7 @@ void NetServer::EndCurrentTic()
 	{
 		if (mNodes[i].Status == NodeStatus::InGame)
 		{
-			NetOutputPacket packet;
-			packet.node = i;
+			NetOutputPacket packet(i);
 
 			NetCommand cmd ( NetPacketType::Tic);
 			cmd.addByte ( gametic );
@@ -287,8 +286,7 @@ void NetServer::OnConnectRequest(NetNode &node, ByteInputStream &stream)
 		playeringame[node.Player] = true;
 		players[node.Player].settings_controller = false;
 
-		NetOutputPacket response;
-		response.node = node.NodeIndex;
+		NetOutputPacket response(node.NodeIndex);
 
 		NetCommand cmd ( NetPacketType::ConnectResponse );
 		cmd.addByte ( 1 ); // Protocol version
@@ -303,8 +301,7 @@ void NetServer::OnConnectRequest(NetNode &node, ByteInputStream &stream)
 	{
 		node.Status = NodeStatus::Closed;
 
-		NetOutputPacket response;
-		response.node = node.NodeIndex;
+		NetOutputPacket response(node.NodeIndex);
 
 		NetCommand cmd ( NetPacketType::ConnectResponse );
 		cmd.addByte ( 1 ); // Protocol version
@@ -373,8 +370,7 @@ void NetServer::CmdSpawnPlayer(ByteOutputStream &stream, int player)
 
 void NetServer::FullUpdate(NetNode &node)
 {
-	NetOutputPacket packet;
-	packet.node = node.NodeIndex;
+	NetOutputPacket packet(node.NodeIndex);
 
 	// Inform the client about all players already in the game.
 	for ( int i = 0; i < MAXPLAYERNAME; ++i )

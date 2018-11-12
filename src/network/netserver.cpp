@@ -143,20 +143,35 @@ void NetServer::EndCurrentTic()
 			int player = mNodes[i].Player;
 			if (playeringame[player] && players[player].mo)
 			{
-				cmd.addFloat ( static_cast<float> ( players[player].mo->X() ) );
-				cmd.addFloat ( static_cast<float> ( players[player].mo->Y() ) );
-				cmd.addFloat ( static_cast<float> ( players[player].mo->Z() ) );
-				cmd.addFloat ( static_cast<float> ( players[player].mo->Angles.Yaw.Degrees ) );
-				cmd.addFloat ( static_cast<float> ( players[player].mo->Angles.Pitch.Degrees ) );
+				cmd.addFloat(static_cast<float> (players[player].mo->X()));
+				cmd.addFloat(static_cast<float> (players[player].mo->Y()));
+				cmd.addFloat(static_cast<float> (players[player].mo->Z()));
+				cmd.addFloat(static_cast<float> (players[player].mo->Angles.Yaw.Degrees));
+				cmd.addFloat(static_cast<float> (players[player].mo->Angles.Pitch.Degrees));
 			}
 			else
 			{
-				cmd.addFloat ( 0.0f );
-				cmd.addFloat ( 0.0f );
-				cmd.addFloat ( 0.0f );
-				cmd.addFloat ( 0.0f );
-				cmd.addFloat ( 0.0f );
+				cmd.addFloat(0.0f);
+				cmd.addFloat(0.0f);
+				cmd.addFloat(0.0f);
+				cmd.addFloat(0.0f);
+				cmd.addFloat(0.0f);
 			}
+
+			// To do: needs to be done for all syncdata objects that changed and not just players
+			for (player = 0; player < MAXPLAYERS; player++)
+			{
+				if (player != mNodes[i].Player && playeringame[player] && players[player].mo)
+				{
+					cmd.addShort(players[player].mo->syncdata.NetID);
+					cmd.addFloat(static_cast<float> (players[player].mo->X()));
+					cmd.addFloat(static_cast<float> (players[player].mo->Y()));
+					cmd.addFloat(static_cast<float> (players[player].mo->Z()));
+					cmd.addFloat(static_cast<float> (players[player].mo->Angles.Yaw.Degrees));
+					cmd.addFloat(static_cast<float> (players[player].mo->Angles.Pitch.Degrees));
+				}
+			}
+			cmd.addShort(-1);
 
 			cmd.writeCommandToStream(packet.stream);
 			mComm->PacketSend(packet);
@@ -373,7 +388,7 @@ void NetServer::FullUpdate(NetNode &node)
 	NetOutputPacket packet(node.NodeIndex);
 
 	// Inform the client about all players already in the game.
-	for ( int i = 0; i < MAXPLAYERNAME; ++i )
+	for ( int i = 0; i < MAXPLAYERS; ++i )
 	{
 		if ( i == node.Player )
 			continue;

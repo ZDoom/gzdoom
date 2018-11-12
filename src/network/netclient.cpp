@@ -197,7 +197,19 @@ void NetClient::EndCurrentTic()
 			players[consoleplayer].mo->Angles.Pitch = update.pitch;
 		}
 
-		update.received = false;
+		for (unsigned int i = 0; i < update.syncUpdates.Size(); i++)
+		{
+			const TicSyncData &syncdata = update.syncUpdates[i];
+			AActor *netactor = g_NetIDList.findPointerByID(syncdata.netID);
+			if (netactor)
+			{
+				netactor->SetXYZ(syncdata.x, syncdata.y, syncdata.z);
+				netactor->Angles.Yaw = syncdata.yaw;
+				netactor->Angles.Pitch = syncdata.pitch;
+			}
+		}
+
+		update = TicUpdate();
 	}
 }
 
@@ -341,6 +353,21 @@ void NetClient::OnTic(ByteInputStream &stream)
 	update.yaw = stream.ReadFloat();
 	update.pitch = stream.ReadFloat();
 
+	while (true)
+	{
+		TicSyncData syncdata;
+		syncdata.netID = stream.ReadShort();
+		if (syncdata.netID == -1)
+			break;
+
+		syncdata.x = stream.ReadFloat();
+		syncdata.y = stream.ReadFloat();
+		syncdata.z = stream.ReadFloat();
+		syncdata.yaw = stream.ReadFloat();
+		syncdata.pitch = stream.ReadFloat();
+		update.syncUpdates.Push(syncdata);
+	}
+
 	mTicUpdates[mLastReceivedTic % BACKUPTICS] = update;
 }
 
@@ -381,4 +408,10 @@ void NetClient::OnSpawnPlayer(ByteInputStream &stream)
 		p.mo->syncdata.NetID = netID;
 		g_NetIDList.useID ( netID, p.mo );
 	}
+
+	//ANetSyncActor *syncactor = Spawn<ANetSyncActor>(DVector3(x, y, z), NO_REPLACE);
+	//syncactor->sprite = GetSpriteIndex("POSSA1");
 }
+
+IMPLEMENT_CLASS(ANetSyncActor, false, false)
+

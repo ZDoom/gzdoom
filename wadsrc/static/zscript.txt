@@ -9,6 +9,7 @@ version "3.7"
 #include "zscript/events.txt"
 #include "zscript/destructible.txt"
 #include "zscript/level_compatibility.txt"
+#include "zscript/network.txt"
 
 #include "zscript/menu/menuitembase.txt"
 #include "zscript/menu/menu.txt"

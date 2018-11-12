@@ -69,6 +69,16 @@ private:
 	int mServerTicDelta = -1;
 	int mLastReceivedTic = -1;
 
+	struct TicSyncData
+	{
+		int16_t netID;
+		float x;
+		float y;
+		float z;
+		float yaw;
+		float pitch;
+	};
+
 	struct TicUpdate
 	{
 		bool received = false;
@@ -77,6 +87,7 @@ private:
 		float z;
 		float yaw;
 		float pitch;
+		TArray<TicSyncData> syncUpdates;
 	};
 	TicUpdate mTicUpdates[BACKUPTICS];
 
@@ -84,4 +95,10 @@ private:
 	ticcmd_t mSentInput[BACKUPTICS];
 	FDynamicBuffer mCurrentCommands;
 	FDynamicBuffer mSendCommands;
+};
+
+class ANetSyncActor : public AActor
+{
+	DECLARE_CLASS(ANetSyncActor, AActor)
+public:
 };

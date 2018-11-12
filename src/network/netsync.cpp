@@ -27,6 +27,8 @@ extern bool netserver, netclient;
 
 IDList<AActor> g_NetIDList;
 
+void CountActors();
+
 void NetSyncData::AssignNetID(AActor *pActor)
 {
 	if (netserver)

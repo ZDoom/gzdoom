@@ -207,8 +207,8 @@ void GLSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 		state.EnableSplit(true);
 	}
 
-	secplane_t bottomp = { { 0, 0, -1. }, bottomclip };
-	secplane_t topp = { { 0, 0, -1. }, topclip };
+	secplane_t bottomp = { { 0, 0, -1. }, bottomclip, 1. };
+	secplane_t topp = { { 0, 0, -1. }, topclip, 1. };
 	for (unsigned i = 0; i < iter; i++)
 	{
 		if (lightlist)

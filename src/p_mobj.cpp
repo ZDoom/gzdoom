@@ -98,6 +98,7 @@
 #include "events.h"
 #include "actorinlines.h"
 #include "a_dynlight.h"
+#include "network/net.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -5169,8 +5170,8 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 	// force scroller check in the first tic.
 	actor->flags8 |= MF8_INSCROLLSEC;
 
-	// [BB] Give this actor a NetID so that we can sync it to the clients.
-	actor->syncdata.AssignNetID( actor );
+	// notify network that we got a new actor
+	network->ActorSpawned(actor);
 
 	return actor;
 }
@@ -5441,8 +5442,8 @@ void AActor::CallDeactivate(AActor *activator)
 
 void AActor::OnDestroy ()
 {
-	// [BB] Free it's network ID.
-	syncdata.FreeNetID ();
+	// Notify network
+	network->ActorDestroyed(this);
 
 	// [ZZ] call destroy event hook.
 	//      note that this differs from ThingSpawned in that you can actually override OnDestroy to avoid calling the hook.

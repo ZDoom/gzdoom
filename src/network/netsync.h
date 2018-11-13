@@ -34,9 +34,6 @@ struct NetSyncData
 	double			CameraFOV;
 	double			StealthAlpha;	// Minmum alpha for MF_STEALTH.
 	int				NetID;
-
-	void AssignNetID(AActor *pActor);
-	void FreeNetID();
 };
 
 //==========================================================================

@@ -23,27 +23,9 @@
 #include "doomstat.h"
 #include "i_net.h"
 
-extern bool netserver, netclient;
-
-IDList<AActor> g_NetIDList;
+extern bool netserver;
 
 void CountActors();
-
-void NetSyncData::AssignNetID(AActor *pActor)
-{
-	if (netserver)
-	{
-		NetID = g_NetIDList.getNewID();
-		g_NetIDList.useID(NetID, pActor);
-	}
-	else
-		NetID = -1;
-}
-
-void NetSyncData::FreeNetID()
-{
-	g_NetIDList.freeID(NetID);
-}
 
 template <typename T>
 void IDList<T>::clear()

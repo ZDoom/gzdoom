@@ -16,7 +16,8 @@ enum class NetPacketType
 	ConnectResponse,
 	Disconnect,
 	Tic,
-	SpawnActor
+	SpawnActor,
+	DestroyActor
 };
 
 class ByteInputStream
@@ -54,9 +55,12 @@ class ByteOutputStream
 {
 public:
 	ByteOutputStream() = default;
+	ByteOutputStream(int size);
 	ByteOutputStream(void *buffer, int size);
 
+	void SetBuffer(int size);
 	void SetBuffer(void *buffer, int size);
+	void ResetPos();
 
 	void WriteByte(int Byte);
 	void WriteShort(int Short);
@@ -81,13 +85,7 @@ private:
 
 	uint8_t *bitBuffer = nullptr;
 	int bitShift = -1;
-};
 
-/**
- * \author Benjamin Berkels
- */
-class NetCommand
-{
 	struct DataBuffer
 	{
 		DataBuffer(int size) : data(new uint8_t[size]), size(size) { }
@@ -97,6 +95,13 @@ class NetCommand
 		int size;
 	};
 	std::shared_ptr<DataBuffer> mBuffer;
+};
+
+/**
+ * \author Benjamin Berkels
+ */
+class NetCommand
+{
 	ByteOutputStream mStream;
 	bool mUnreliable = false;
 

@@ -29,16 +29,32 @@ static	int		g_OutboundBytesMeasured = 0;
 
 //*****************************************************************************
 
+ByteOutputStream::ByteOutputStream(int size)
+{
+	SetBuffer(size);
+}
+
 ByteOutputStream::ByteOutputStream(void *buffer, int size)
 {
 	SetBuffer(buffer, size);
 }
 
+void ByteOutputStream::SetBuffer(int size)
+{
+	mBuffer = std::make_shared<DataBuffer>(size);
+	SetBuffer(mBuffer->data, mBuffer->size);
+}
+
 void ByteOutputStream::SetBuffer(void *buffer, int size)
 {
 	mData = (uint8_t*)buffer;
+	pbStreamEnd = mData + size;
+	ResetPos();
+}
+
+void ByteOutputStream::ResetPos()
+{
 	pbStream = mData;
-	pbStreamEnd = pbStream + size;
 	bitBuffer = nullptr;
 	bitShift = -1;
 }
@@ -388,8 +404,7 @@ void ByteInputStream::EnsureBitSpace(int bits, bool writing)
 NetCommand::NetCommand(const NetPacketType Header)
 {
 	// To do: improve memory handling here. 8 kb per command is very wasteful
-	mBuffer = std::make_shared<DataBuffer>(MAX_UDP_PACKET);
-	mStream.SetBuffer(mBuffer->data, mBuffer->size);
+	mStream.SetBuffer(MAX_UDP_PACKET);
 
 	addByte(static_cast<int>(Header));
 }

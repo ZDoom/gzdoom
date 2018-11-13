@@ -50,12 +50,16 @@ public:
 	void ListPingTimes() override;
 	void Network_Controller(int playernum, bool add) override;
 
+	void ActorSpawned(AActor *actor) override;
+	void ActorDestroyed(AActor *actor) override;
+
 private:
 	void OnClose();
 	void OnConnectResponse(ByteInputStream &stream);
 	void OnDisconnect();
 	void OnTic(ByteInputStream &stream);
 	void OnSpawnActor(ByteInputStream &stream);
+	void OnDestroyActor(ByteInputStream &stream);
 
 	void UpdateLastReceivedTic(int tic);
 
@@ -78,6 +82,7 @@ private:
 		float yaw;
 		float pitch;
 		int16_t sprite;
+		uint8_t frame;
 	};
 
 	struct TicUpdate
@@ -96,6 +101,8 @@ private:
 	ticcmd_t mSentInput[BACKUPTICS];
 	FDynamicBuffer mCurrentCommands;
 	FDynamicBuffer mSendCommands;
+
+	IDList<AActor> mNetIDList;
 };
 
 class ANetSyncActor : public AActor

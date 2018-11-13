@@ -32,6 +32,8 @@
 #define MAXTICDUP		5
 #define LOCALCMDTICS	(BACKUPTICS*MAXTICDUP)
 
+class AActor;
+
 class FDynamicBuffer
 {
 public:
@@ -95,6 +97,10 @@ public:
 	// CCMDs
 	virtual void ListPingTimes() = 0;
 	virtual void Network_Controller(int playernum, bool add) = 0;
+
+	// Playsim events
+	virtual void ActorSpawned(AActor *actor) { }
+	virtual void ActorDestroyed(AActor *actor) { }
 
 	// Old init/deinit stuff
 	void Startup() { }

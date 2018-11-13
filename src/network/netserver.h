@@ -76,6 +76,9 @@ public:
 	void ListPingTimes() override;
 	void Network_Controller(int playernum, bool add) override;
 
+	void ActorSpawned(AActor *actor) override;
+	void ActorDestroyed(AActor *actor) override;
+
 private:
 	void OnClose(NetNode &node, ByteInputStream &stream);
 	void OnConnectRequest(NetNode &node, ByteInputStream &stream);
@@ -83,6 +86,7 @@ private:
 	void OnTic(NetNode &node, ByteInputStream &packet);
 
 	void CmdSpawnActor(ByteOutputStream &stream, AActor *actor);
+	void CmdDestroyActor(ByteOutputStream &stream, AActor *actor);
 	void FullUpdate(NetNode &node);
 
 	std::unique_ptr<doomcom_t> mComm;
@@ -92,4 +96,8 @@ private:
 	ticcmd_t mCurrentInput[MAXPLAYERS];
 	FDynamicBuffer mCurrentCommands;
 	FDynamicBuffer mSendCommands;
+
+	IDList<AActor> mNetIDList;
+
+	ByteOutputStream mBroadcastCommands; // Playsim events everyone should hear about
 };

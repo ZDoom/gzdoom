@@ -67,8 +67,6 @@
 #include "i_time.h"
 #include <cmath>
 
-extern IDList<AActor> g_NetIDList;
-
 CVAR( Int, cl_showspawnnames, 0, CVAR_ARCHIVE )
 
 NetClient::NetClient(FString server)
@@ -123,6 +121,7 @@ void NetClient::Update()
 				case NetPacketType::Disconnect: OnDisconnect(); break;
 				case NetPacketType::Tic: OnTic(packet.stream); break;
 				case NetPacketType::SpawnActor: OnSpawnActor(packet.stream); break;
+				case NetPacketType::DestroyActor: OnDestroyActor(packet.stream); break;
 				}
 			}
 			break;
@@ -200,13 +199,14 @@ void NetClient::EndCurrentTic()
 		for (unsigned int i = 0; i < update.syncUpdates.Size(); i++)
 		{
 			const TicSyncData &syncdata = update.syncUpdates[i];
-			AActor *netactor = g_NetIDList.findPointerByID(syncdata.netID);
+			AActor *netactor = mNetIDList.findPointerByID(syncdata.netID);
 			if (netactor)
 			{
 				netactor->SetOrigin(syncdata.x, syncdata.y, syncdata.z, true);
 				netactor->Angles.Yaw = syncdata.yaw;
 				netactor->Angles.Pitch = syncdata.pitch;
 				netactor->sprite = syncdata.sprite;
+				netactor->frame = syncdata.frame;
 			}
 		}
 
@@ -267,6 +267,15 @@ void NetClient::ListPingTimes()
 }
 
 void NetClient::Network_Controller(int playernum, bool add)
+{
+}
+
+void NetClient::ActorSpawned(AActor *actor)
+{
+	actor->syncdata.NetID = -1;
+}
+
+void NetClient::ActorDestroyed(AActor *actor)
 {
 }
 
@@ -367,6 +376,7 @@ void NetClient::OnTic(ByteInputStream &stream)
 		syncdata.yaw = stream.ReadFloat();
 		syncdata.pitch = stream.ReadFloat();
 		syncdata.sprite = stream.ReadShort();
+		syncdata.frame = stream.ReadByte();
 		update.syncUpdates.Push(syncdata);
 	}
 
@@ -380,18 +390,24 @@ void NetClient::OnSpawnActor(ByteInputStream &stream)
 	const float y = stream.ReadFloat();
 	const float z = stream.ReadFloat();
 
-	AActor *oldNetActor = g_NetIDList.findPointerByID(netID);
+	AActor *oldNetActor = mNetIDList.findPointerByID(netID);
 
 	// If there's already an actor with this net ID, destroy it.
 	if (oldNetActor)
 	{
 		oldNetActor->Destroy();
-		g_NetIDList.freeID(netID);
+		mNetIDList.freeID(netID);
 	}
 
 	ANetSyncActor *actor = Spawn<ANetSyncActor>(DVector3(x, y, z), NO_REPLACE);
-	//actor->sprite = GetSpriteIndex("PLAYA");
-	g_NetIDList.useID(netID, actor);
+	mNetIDList.useID(netID, actor);
+}
+
+void NetClient::OnDestroyActor(ByteInputStream &stream)
+{
+	const int16_t netID = stream.ReadShort();
+	AActor *actor = mNetIDList.findPointerByID(netID);
+	actor->Destroy();
 }
 
 #if 0 // Use playerpawn, problematic as client pawn behavior may have to deviate from server side
@@ -410,7 +426,7 @@ void NetClient::OnSpawnActor(ByteInputStream &stream)
 	{
 		// Set the network ID.
 		p.mo->syncdata.NetID = netID;
-		g_NetIDList.useID ( netID, p.mo );
+		mNetIDList.useID ( netID, p.mo );
 	}
 #endif
 

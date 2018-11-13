@@ -69,6 +69,8 @@ NetServer::NetServer()
 {
 	Printf("Started hosting multiplayer game..\n");
 
+	mBroadcastCommands.SetBuffer(MAX_MSGLEN);
+
 	for (int i = 0; i < MAXNETNODES; i++)
 		mNodes[i].NodeIndex = i;
 
@@ -137,6 +139,8 @@ void NetServer::EndCurrentTic()
 		{
 			NetOutputPacket packet(i);
 
+			packet.stream.WriteBuffer(mBroadcastCommands.GetData(), mBroadcastCommands.GetSize());
+
 			NetCommand cmd ( NetPacketType::Tic);
 			cmd.addByte ( gametic );
 
@@ -162,7 +166,7 @@ void NetServer::EndCurrentTic()
 			AActor *mo;
 			while (mo = it.Next())
 			{
-				if (mo != players[player].mo)
+				if (mo != players[player].mo && mo->syncdata.NetID)
 				{
 					cmd.addShort(mo->syncdata.NetID);
 					cmd.addFloat(static_cast<float> (mo->X()));
@@ -171,6 +175,7 @@ void NetServer::EndCurrentTic()
 					cmd.addFloat(static_cast<float> (mo->Angles.Yaw.Degrees));
 					cmd.addFloat(static_cast<float> (mo->Angles.Pitch.Degrees));
 					cmd.addShort(mo->sprite);
+					cmd.addByte(mo->frame);
 				}
 			}
 			cmd.addShort(-1);
@@ -179,6 +184,8 @@ void NetServer::EndCurrentTic()
 			mComm->PacketSend(packet);
 		}
 	}
+
+	mBroadcastCommands.ResetPos();
 
 	mCurrentCommands = mSendCommands;
 	mSendCommands.Clear();
@@ -384,6 +391,13 @@ void NetServer::CmdSpawnActor(ByteOutputStream &stream, AActor *actor)
 	cmd.writeCommandToStream(stream);
 }
 
+void NetServer::CmdDestroyActor(ByteOutputStream &stream, AActor *actor)
+{
+	NetCommand cmd(NetPacketType::DestroyActor);
+	cmd.addShort(actor->syncdata.NetID);
+	cmd.writeCommandToStream(stream);
+}
+
 void NetServer::FullUpdate(NetNode &node)
 {
 	NetOutputPacket packet(node.NodeIndex);
@@ -399,4 +413,18 @@ void NetServer::FullUpdate(NetNode &node)
 	}
 
 	mComm->PacketSend(packet);
+}
+
+void NetServer::ActorSpawned(AActor *actor)
+{
+	actor->syncdata.NetID = mNetIDList.getNewID();
+	mNetIDList.useID(actor->syncdata.NetID, actor);
+
+	CmdSpawnActor(mBroadcastCommands, actor);
+}
+
+void NetServer::ActorDestroyed(AActor *actor)
+{
+	CmdDestroyActor(mBroadcastCommands, actor);
+	mNetIDList.freeID(actor->syncdata.NetID);
 }

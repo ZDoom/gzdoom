@@ -55,7 +55,7 @@ private:
 	void OnConnectResponse(ByteInputStream &stream);
 	void OnDisconnect();
 	void OnTic(ByteInputStream &stream);
-	void OnSpawnPlayer(ByteInputStream &stream);
+	void OnSpawnActor(ByteInputStream &stream);
 
 	void UpdateLastReceivedTic(int tic);
 
@@ -77,6 +77,7 @@ private:
 		float z;
 		float yaw;
 		float pitch;
+		int16_t sprite;
 	};
 
 	struct TicUpdate

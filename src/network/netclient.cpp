@@ -122,7 +122,7 @@ void NetClient::Update()
 				case NetPacketType::ConnectResponse: OnConnectResponse(packet.stream); break;
 				case NetPacketType::Disconnect: OnDisconnect(); break;
 				case NetPacketType::Tic: OnTic(packet.stream); break;
-				case NetPacketType::SpawnPlayer: OnSpawnPlayer(packet.stream); break;
+				case NetPacketType::SpawnActor: OnSpawnActor(packet.stream); break;
 				}
 			}
 			break;
@@ -206,6 +206,7 @@ void NetClient::EndCurrentTic()
 				netactor->SetOrigin(syncdata.x, syncdata.y, syncdata.z, true);
 				netactor->Angles.Yaw = syncdata.yaw;
 				netactor->Angles.Pitch = syncdata.pitch;
+				netactor->sprite = syncdata.sprite;
 			}
 		}
 
@@ -365,31 +366,33 @@ void NetClient::OnTic(ByteInputStream &stream)
 		syncdata.z = stream.ReadFloat();
 		syncdata.yaw = stream.ReadFloat();
 		syncdata.pitch = stream.ReadFloat();
+		syncdata.sprite = stream.ReadShort();
 		update.syncUpdates.Push(syncdata);
 	}
 
 	mTicUpdates[mLastReceivedTic % BACKUPTICS] = update;
 }
 
-void NetClient::OnSpawnPlayer(ByteInputStream &stream)
+void NetClient::OnSpawnActor(ByteInputStream &stream)
 {
-	// To do: this needs a tic and should be inserted in mTicUpdates.
-	// Otherwise it might not arrive at the intended moment in time.
-
-	int player = stream.ReadByte();
+	const int16_t netID = stream.ReadShort();
 	const float x = stream.ReadFloat();
 	const float y = stream.ReadFloat();
 	const float z = stream.ReadFloat();
-	const int16_t netID = stream.ReadShort();
 
-	AActor *oldNetActor = g_NetIDList.findPointerByID ( netID );
+	AActor *oldNetActor = g_NetIDList.findPointerByID(netID);
 
 	// If there's already an actor with this net ID, destroy it.
-	if ( oldNetActor != NULL )
+	if (oldNetActor)
 	{
-		oldNetActor->Destroy( );
-		g_NetIDList.freeID ( netID );
+		oldNetActor->Destroy();
+		g_NetIDList.freeID(netID);
 	}
+
+	ANetSyncActor *actor = Spawn<ANetSyncActor>(DVector3(x, y, z), NO_REPLACE);
+	//actor->sprite = GetSpriteIndex("PLAYA");
+	g_NetIDList.useID(netID, actor);
+}
 
 #if 0 // Use playerpawn, problematic as client pawn behavior may have to deviate from server side
 	// This player is now in the game.
@@ -409,12 +412,7 @@ void NetClient::OnSpawnPlayer(ByteInputStream &stream)
 		p.mo->syncdata.NetID = netID;
 		g_NetIDList.useID ( netID, p.mo );
 	}
-#else
-	ANetSyncActor *pawn = Spawn<ANetSyncActor>(DVector3(x, y, z), NO_REPLACE);
-	pawn->sprite = GetSpriteIndex("PLAYA");
-	g_NetIDList.useID(netID, pawn);
 #endif
-}
 
 IMPLEMENT_CLASS(ANetSyncActor, false, false)
 

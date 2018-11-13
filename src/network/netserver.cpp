@@ -158,17 +158,19 @@ void NetServer::EndCurrentTic()
 				cmd.addFloat(0.0f);
 			}
 
-			// To do: needs to be done for all syncdata objects that changed and not just players
-			for (player = 0; player < MAXPLAYERS; player++)
+			TThinkerIterator<AActor> it;
+			AActor *mo;
+			while (mo = it.Next())
 			{
-				if (player != mNodes[i].Player && playeringame[player] && players[player].mo)
+				if (mo != players[player].mo)
 				{
-					cmd.addShort(players[player].mo->syncdata.NetID);
-					cmd.addFloat(static_cast<float> (players[player].mo->X()));
-					cmd.addFloat(static_cast<float> (players[player].mo->Y()));
-					cmd.addFloat(static_cast<float> (players[player].mo->Z()));
-					cmd.addFloat(static_cast<float> (players[player].mo->Angles.Yaw.Degrees));
-					cmd.addFloat(static_cast<float> (players[player].mo->Angles.Pitch.Degrees));
+					cmd.addShort(mo->syncdata.NetID);
+					cmd.addFloat(static_cast<float> (mo->X()));
+					cmd.addFloat(static_cast<float> (mo->Y()));
+					cmd.addFloat(static_cast<float> (mo->Z()));
+					cmd.addFloat(static_cast<float> (mo->Angles.Yaw.Degrees));
+					cmd.addFloat(static_cast<float> (mo->Angles.Pitch.Degrees));
+					cmd.addShort(mo->sprite);
 				}
 			}
 			cmd.addShort(-1);
@@ -372,29 +374,28 @@ void NetServer::OnTic(NetNode &node, ByteInputStream &stream)
 	node.TicUpdates[tic % BACKUPTICS] = update;
 }
 
-void NetServer::CmdSpawnPlayer(ByteOutputStream &stream, int player)
+void NetServer::CmdSpawnActor(ByteOutputStream &stream, AActor *actor)
 {
-	NetCommand cmd ( NetPacketType::SpawnPlayer );
-	cmd.addByte ( player );
-	cmd.addFloat ( static_cast<float> ( players[player].mo->X() ) );
-	cmd.addFloat ( static_cast<float> ( players[player].mo->Y() ) );
-	cmd.addFloat ( static_cast<float> ( players[player].mo->Z() ) );
-	cmd.addShort ( players[player].mo->syncdata.NetID );
-	cmd.writeCommandToStream ( stream );
+	NetCommand cmd(NetPacketType::SpawnActor);
+	cmd.addShort(actor->syncdata.NetID);
+	cmd.addFloat(static_cast<float>(actor->X()));
+	cmd.addFloat(static_cast<float>(actor->Y()));
+	cmd.addFloat(static_cast<float>(actor->Z()));
+	cmd.writeCommandToStream(stream);
 }
 
 void NetServer::FullUpdate(NetNode &node)
 {
 	NetOutputPacket packet(node.NodeIndex);
 
-	// Inform the client about all players already in the game.
-	for ( int i = 0; i < MAXPLAYERS; ++i )
+	TThinkerIterator<AActor> it;
+	AActor *mo;
+	while (mo = it.Next())
 	{
-		if ( i == node.Player )
-			continue;
-
-		if ( playeringame[i] == true )
-			CmdSpawnPlayer(packet.stream, i);
+		if (mo != players[node.Player].mo)
+		{
+			CmdSpawnActor(packet.stream, mo);
+		}
 	}
 
 	mComm->PacketSend(packet);

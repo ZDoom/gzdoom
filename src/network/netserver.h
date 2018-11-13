@@ -82,7 +82,7 @@ private:
 	void OnDisconnect(NetNode &node, ByteInputStream &stream);
 	void OnTic(NetNode &node, ByteInputStream &packet);
 
-	void CmdSpawnPlayer(ByteOutputStream &stream, int player);
+	void CmdSpawnActor(ByteOutputStream &stream, AActor *actor);
 	void FullUpdate(NetNode &node);
 
 	std::unique_ptr<doomcom_t> mComm;

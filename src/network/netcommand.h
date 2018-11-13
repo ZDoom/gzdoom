@@ -16,7 +16,7 @@ enum class NetPacketType
 	ConnectResponse,
 	Disconnect,
 	Tic,
-	SpawnPlayer
+	SpawnActor
 };
 
 class ByteInputStream

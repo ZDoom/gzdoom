@@ -192,7 +192,7 @@ void NetClient::EndCurrentTic()
 	{
 		if (playeringame[consoleplayer] && players[consoleplayer].mo)
 		{
-			players[consoleplayer].mo->SetXYZ(update.x, update.y, update.z);
+			players[consoleplayer].mo->SetOrigin(update.x, update.y, update.z, false);
 			players[consoleplayer].mo->Angles.Yaw = update.yaw;
 			players[consoleplayer].mo->Angles.Pitch = update.pitch;
 		}
@@ -203,7 +203,7 @@ void NetClient::EndCurrentTic()
 			AActor *netactor = g_NetIDList.findPointerByID(syncdata.netID);
 			if (netactor)
 			{
-				netactor->SetXYZ(syncdata.x, syncdata.y, syncdata.z);
+				netactor->SetOrigin(syncdata.x, syncdata.y, syncdata.z, true);
 				netactor->Angles.Yaw = syncdata.yaw;
 				netactor->Angles.Pitch = syncdata.pitch;
 			}
@@ -391,6 +391,7 @@ void NetClient::OnSpawnPlayer(ByteInputStream &stream)
 		g_NetIDList.freeID ( netID );
 	}
 
+#if 0 // Use playerpawn, problematic as client pawn behavior may have to deviate from server side
 	// This player is now in the game.
 	playeringame[player] = true;
 	player_t &p = players[player];
@@ -408,9 +409,11 @@ void NetClient::OnSpawnPlayer(ByteInputStream &stream)
 		p.mo->syncdata.NetID = netID;
 		g_NetIDList.useID ( netID, p.mo );
 	}
-
-	//ANetSyncActor *syncactor = Spawn<ANetSyncActor>(DVector3(x, y, z), NO_REPLACE);
-	//syncactor->sprite = GetSpriteIndex("POSSA1");
+#else
+	ANetSyncActor *pawn = Spawn<ANetSyncActor>(DVector3(x, y, z), NO_REPLACE);
+	pawn->sprite = GetSpriteIndex("PLAYA");
+	g_NetIDList.useID(netID, pawn);
+#endif
 }
 
 IMPLEMENT_CLASS(ANetSyncActor, false, false)

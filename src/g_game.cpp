@@ -2853,7 +2853,13 @@ void G_InitClientNetGame(int player, const char* mapname)
 	multiplayer = true;
 	multiplayernext = true;
 	consoleplayer = player;
-	players[consoleplayer].settings_controller = true;
+
+	for (int i = 0; i < MAXPLAYERS; i++)
+	{
+		playeringame[i] = false;
+		players[i].settings_controller = false;
+	}
+
 	playeringame[consoleplayer] = true;
 
 	GameConfig->ReadNetVars();	// [RH] Read network ServerInfo cvars

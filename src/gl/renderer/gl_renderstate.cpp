@@ -436,22 +436,29 @@ void FGLRenderState::SetDepthRange(float min, float max)
 	glDepthRange(min, max);
 }
 
+void FGLRenderState::SetColorMask(bool r, bool g, bool b, bool a)
+{
+	glColorMask(r, g, b, a);
+}
+
 void FGLRenderState::EnableDrawBufferAttachments(bool on)
 {
 	EnableDrawBuffers(on ? GetPassDrawBufferCount() : 1);
 }
 
-void FGLRenderState::SetStencil(int offs, int op, int flags)
+void FGLRenderState::SetStencil(int offs, int op, int flags = -1)
 {
 	static int op2gl[] = { GL_KEEP, GL_INCR, GL_DECR };
 
 	glStencilFunc(GL_EQUAL, screen->stencilValue + offs, ~0);		// draw sky into stencil
 	glStencilOp(GL_KEEP, GL_KEEP, op2gl[op]);		// this stage doesn't modify the stencil
 
-	bool cmon = !(flags & SF_ColorMaskOff);
-	bool cmalpha = cmon || (flags & SF_ColorMaskAlpha);
-	glColorMask(cmon, cmon, cmon, cmalpha);						// don't write to the graphics buffer
-	glDepthMask(!(flags & SF_DepthMaskOff));
+	if (flags != -1)
+	{
+		bool cmon = !(flags & SF_ColorMaskOff);
+		glColorMask(cmon, cmon, cmon, cmon);						// don't write to the graphics buffer
+		glDepthMask(!(flags & SF_DepthMaskOff));
+	}
 }
 
 void FGLRenderState::ToggleState(int state, bool on)

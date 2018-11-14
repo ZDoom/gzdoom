@@ -144,7 +144,7 @@ struct HWDrawInfo
 	HWDrawInfo * outer = nullptr;
 	int FullbrightFlags;
 	std::atomic<int> spriteindex;
-	HWScenePortalBase *mClipPortal;
+	HWPortal *mClipPortal;
 	HWPortal *mCurrentPortal;
 	//FRotator mAngles;
 	Clipper *mClipper;

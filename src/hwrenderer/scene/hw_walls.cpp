@@ -498,7 +498,7 @@ void GLWall::PutPortal(HWDrawInfo *di, int ptype)
 		portal = di->FindPortal(horizon);
 		if (!portal)
 		{
-			portal = new HWHorizonPortal(pstate, horizon, di->Viewpoint, di);
+			portal = new HWHorizonPortal(pstate, horizon, di->Viewpoint);
 			di->Portals.Push(portal);
 		}
 		portal->AddLine(this);
@@ -509,10 +509,10 @@ void GLWall::PutPortal(HWDrawInfo *di, int ptype)
 		if (!portal)
 		{
 			// either a regular skybox or an Eternity-style horizon
-			if (secportal->mType != PORTS_SKYVIEWPOINT) portal = new HWEEHorizonPortal(pstate, secportal, di);
+			if (secportal->mType != PORTS_SKYVIEWPOINT) portal = new HWEEHorizonPortal(pstate, secportal);
 			else
 			{
-				portal = new HWScenePortal(pstate, new HWSkyboxPortal(secportal));
+				portal = new HWSkyboxPortal(pstate, secportal);
 				di->Portals.Push(portal);
 			}
 		}
@@ -523,7 +523,7 @@ void GLWall::PutPortal(HWDrawInfo *di, int ptype)
 		portal = di->FindPortal(this->portal);
 		if (!portal)
 		{
-			portal = new HWScenePortal(pstate, new HWSectorStackPortal(this->portal));
+			portal = new HWSectorStackPortal(pstate, this->portal);
 			di->Portals.Push(portal);
 		}
 		portal->AddLine(this);
@@ -537,7 +537,7 @@ void GLWall::PutPortal(HWDrawInfo *di, int ptype)
 			portal = di->FindPortal(planemirror);
 			if (!portal)
 			{
-				portal = new HWScenePortal(pstate, new HWPlaneMirrorPortal(planemirror));
+				portal = new HWPlaneMirrorPortal(pstate, planemirror);
 				di->Portals.Push(portal);
 			}
 			portal->AddLine(this);
@@ -548,7 +548,7 @@ void GLWall::PutPortal(HWDrawInfo *di, int ptype)
 		portal = di->FindPortal(seg->linedef);
 		if (!portal)
 		{
-			portal = new HWScenePortal(pstate, new HWMirrorPortal(seg->linedef));
+			portal = new HWMirrorPortal(pstate, seg->linedef);
 			di->Portals.Push(portal);
 		}
 		portal->AddLine(this);
@@ -570,7 +570,7 @@ void GLWall::PutPortal(HWDrawInfo *di, int ptype)
 			{
 				di->ProcessActorsInPortal(otherside->getPortal()->mGroup, di->in_area);
 			}
-			portal = new HWScenePortal(pstate, new HWLineToLinePortal(lineportal));
+			portal = new HWLineToLinePortal(pstate, lineportal);
 			di->Portals.Push(portal);
 		}
 		portal->AddLine(this);

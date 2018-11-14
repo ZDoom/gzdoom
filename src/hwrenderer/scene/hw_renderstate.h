@@ -57,7 +57,6 @@ enum EStencilFlags
 	SF_AllOn = 0,
 	SF_ColorMaskOff = 1,
 	SF_DepthMaskOff = 2,
-	SF_ColorMaskAlpha = 4,	// hack value for SSAO
 };
 
 enum EStencilOp
@@ -507,8 +506,9 @@ public:
 	virtual void SetDepthMask(bool on) = 0;						// Used by decals and indirectly by portal setup.
 	virtual void SetDepthFunc(int func) = 0;					// Used by models, portals and mirror surfaces.
 	virtual void SetDepthRange(float min, float max) = 0;		// Used by portal setup.
+	virtual void SetColorMask(bool r, bool g, bool b, bool a) = 0;	// Used by portals.
 	virtual void EnableDrawBufferAttachments(bool on) = 0;		// Used by fog boundary drawer.
-	virtual void SetStencil(int offs, int op, int flags) = 0;	// Used by portal setup and render hacks.
+	virtual void SetStencil(int offs, int op, int flags=-1) = 0;	// Used by portal setup and render hacks.
 	virtual void SetCulling(int mode) = 0;						// Used by model drawer only.
 	virtual void EnableClipDistance(int num, bool state) = 0;	// Use by sprite sorter for vertical splits.
 	virtual void Clear(int targets) = 0;						// not used during normal rendering
@@ -519,6 +519,10 @@ public:
 	virtual void EnableMultisampling(bool on) = 0;				// only active for 2D
 	virtual void EnableLineSmooth(bool on) = 0;					// constant setting for each 2D drawer operation
 
+	void SetColorMask(bool on)
+	{
+		SetColorMask(on, on, on, on);
+	}
 
 };
 

@@ -757,21 +757,27 @@ void JitCompiler::EmitMODF_RR()
 
 void JitCompiler::EmitMODF_RK()
 {
-	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
-	cc.ptest(regF[C], regF[C]);
-	cc.je(label);
+	if (konstf[C] == 0.)
+	{
+		EmitThrowException(X_DIVISION_BY_ZERO);
+	}
+	else
+	{
+		auto tmpPtr = newTempIntPtr();
+		cc.mov(tmpPtr, asmjit::imm_ptr(&konstf[C]));
 
-	auto tmp = newTempXmmSd();
-	cc.movsd(tmp, asmjit::x86::ptr(ToMemAddress(&konstf[C])));
+		auto tmp = newTempXmmSd();
+		cc.movsd(tmp, asmjit::x86::qword_ptr(tmpPtr));
 
-	auto result = newResultXmmSd();
-	auto call = CreateCall<double, double, double>([](double a, double b) -> double {
-		return a - floor(a / b) * b;
-	});
-	call->setRet(0, result);
-	call->setArg(0, regF[B]);
-	call->setArg(1, tmp);
-	cc.movsd(regF[A], result);
+		auto result = newResultXmmSd();
+		auto call = CreateCall<double, double, double>([](double a, double b) -> double {
+			return a - floor(a / b) * b;
+		});
+		call->setRet(0, result);
+		call->setArg(0, regF[B]);
+		call->setArg(1, tmp);
+		cc.movsd(regF[A], result);
+	}
 }
 
 void JitCompiler::EmitMODF_KR()

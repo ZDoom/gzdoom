@@ -191,9 +191,14 @@ void NetClient::EndCurrentTic()
 	{
 		if (playeringame[consoleplayer] && players[consoleplayer].mo)
 		{
-			players[consoleplayer].mo->SetOrigin(update.x, update.y, update.z, false);
-			players[consoleplayer].mo->Angles.Yaw = update.yaw;
-			players[consoleplayer].mo->Angles.Pitch = update.pitch;
+			APlayerPawn *pawn = players[consoleplayer].mo;
+			if ((update.Pos - pawn->Pos()).LengthSquared() > 10.0)
+				pawn->SetOrigin(update.Pos, false);
+			else
+				P_TryMove(pawn, update.Pos.XY(), true);
+			pawn->Vel = update.Vel;
+			pawn->Angles.Yaw = update.yaw;
+			pawn->Angles.Pitch = update.pitch;
 		}
 
 		for (unsigned int i = 0; i < update.syncUpdates.Size(); i++)
@@ -357,9 +362,12 @@ void NetClient::OnTic(ByteInputStream &stream)
 
 	TicUpdate update;
 	update.received = true;
-	update.x = stream.ReadFloat();
-	update.y = stream.ReadFloat();
-	update.z = stream.ReadFloat();
+	update.Pos.X = stream.ReadFloat();
+	update.Pos.Y = stream.ReadFloat();
+	update.Pos.Z = stream.ReadFloat();
+	update.Vel.X = stream.ReadFloat();
+	update.Vel.Y = stream.ReadFloat();
+	update.Vel.Z = stream.ReadFloat();
 	update.yaw = stream.ReadFloat();
 	update.pitch = stream.ReadFloat();
 

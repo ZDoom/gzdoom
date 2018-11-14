@@ -88,9 +88,8 @@ private:
 	struct TicUpdate
 	{
 		bool received = false;
-		float x;
-		float y;
-		float z;
+		DVector3 Pos;
+		DVector3 Vel;
 		float yaw;
 		float pitch;
 		TArray<TicSyncData> syncUpdates;

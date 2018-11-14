@@ -150,11 +150,17 @@ void NetServer::EndCurrentTic()
 				cmd.addFloat(static_cast<float> (players[player].mo->X()));
 				cmd.addFloat(static_cast<float> (players[player].mo->Y()));
 				cmd.addFloat(static_cast<float> (players[player].mo->Z()));
+				cmd.addFloat(static_cast<float> (players[player].mo->Vel.X));
+				cmd.addFloat(static_cast<float> (players[player].mo->Vel.Y));
+				cmd.addFloat(static_cast<float> (players[player].mo->Vel.Z));
 				cmd.addFloat(static_cast<float> (players[player].mo->Angles.Yaw.Degrees));
 				cmd.addFloat(static_cast<float> (players[player].mo->Angles.Pitch.Degrees));
 			}
 			else
 			{
+				cmd.addFloat(0.0f);
+				cmd.addFloat(0.0f);
+				cmd.addFloat(0.0f);
 				cmd.addFloat(0.0f);
 				cmd.addFloat(0.0f);
 				cmd.addFloat(0.0f);

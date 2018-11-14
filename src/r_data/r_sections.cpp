@@ -495,9 +495,9 @@ public:
 			auto &section = sections[i];
 			auto &work = triangles[i];
 
-			BoundingRect bounds = { 1e32, 1e32, -1e32, -1e32 };
-			BoundingRect loopBounds = { 1e32, 1e32, -1e32, -1e32 };
-			BoundingRect outermostBounds = { 1e32, 1e32, -1e32, -1e32 };
+			BoundingRect bounds(false);
+			BoundingRect loopBounds(false);
+			BoundingRect outermostBounds(false);
 			unsigned outermoststart = ~0u;
 			unsigned loopstart = 0;
 			bool ispolyorg = false;
@@ -519,7 +519,7 @@ public:
 						outermoststart = loopstart;
 						loopstart = i + 1;
 					}
-					loopBounds = { 1e32, 1e32, -1e32, -1e32 };
+					loopBounds.setEmpty();
 				}
 			}
 			work.boundingLoopStart = outermoststart;
@@ -716,7 +716,7 @@ public:
 			dest.subsectors.Set(&output.allSubsectors[numsubsectors], group.subsectors.Size());
 			dest.vertexindex = -1;
 			dest.vertexcount = 0;
-			dest.bounds = {1e32, 1e32, -1e32, -1e32};
+			dest.bounds.setEmpty();
 			numsegments += group.segments.Size();
 
 			if (output.firstSectionForSectorPtr[dest.sector->Index()] == -1)

@@ -25,12 +25,35 @@ struct BoundingRect
 {
 	double left, top, right, bottom;
 
-	bool contains(const BoundingRect & other)
+	BoundingRect() = default;
+	BoundingRect(bool)
+	{
+		setEmpty();
+	}
+
+	void setEmpty()
+	{
+		left = top = 1e38;
+		bottom = right = -1e38;
+	}
+
+	bool contains(const BoundingRect & other) const
 	{
 		return left <= other.left && top <= other.top && right >= other.right && bottom >= other.bottom;
 	}
 
-	bool intersects(const BoundingRect & other)
+	bool contains(double x, double y) const
+	{
+		return left <= x && top <= y && right >= x && bottom >= y;
+	}
+
+	template <class T>
+	bool contains(const T &vec) const
+	{
+		return left <= vec.X && top <= vec.Y && right >= vec.X && bottom >= vec.Y;
+	}
+
+	bool intersects(const BoundingRect & other) const
 	{
 		return !(other.left > right ||
 			other.right < left ||
@@ -46,7 +69,7 @@ struct BoundingRect
 		if (other.bottom > bottom) bottom = other.bottom;
 	}
 
-	double distanceTo(const BoundingRect &other)
+	double distanceTo(const BoundingRect &other) const
 	{
 		if (intersects(other)) return 0;
 		return std::max(std::min(fabs(left - other.right), fabs(right - other.left)),
@@ -61,10 +84,11 @@ struct BoundingRect
 		if (y > bottom) bottom = y;
 	}
 
-	bool operator == (const BoundingRect &other)
+	bool operator == (const BoundingRect &other) const
 	{
 		return left == other.left && top == other.top && right == other.right && bottom == other.bottom;
 	}
+
 };
 
 

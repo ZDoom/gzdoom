@@ -140,6 +140,14 @@ bool FPortalSceneState::RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di
 				best = p;
 				bestindex = i;
 			}
+
+			// If the portal area contains the current camera viewpoint, let's always use it because it's likely to give the largest area.
+			if (p->boundingBox.contains(outer_di->Viewpoint.Pos))
+			{
+				best = p;
+				bestindex = i;
+				break;
+			}
 		}
 	}
 
@@ -187,8 +195,27 @@ void HWPortal::DrawPortalStencil(FRenderState &state, int pass)
 	{
 		// The cap's depth handling needs special treatment so that it won't block further portal caps.
 		if (pass == STP_DepthRestore) state.SetDepthRange(1, 1);
-		state.Draw(DT_TriangleFan, FFlatVertexBuffer::STENCILTOP_INDEX, 4, false);
-		state.Draw(DT_TriangleFan, FFlatVertexBuffer::STENCILBOTTOM_INDEX, 4, false);
+
+		if (planesused & (1 << sector_t::floor))
+		{
+			auto verts = screen->mVertexData->AllocVertices(4);
+			auto ptr = verts.first;
+			ptr[0].Set((float)boundingBox.left, -32767.f, (float)boundingBox.top, 0, 0);
+			ptr[1].Set((float)boundingBox.right, -32767.f, (float)boundingBox.top, 0, 0);
+			ptr[2].Set((float)boundingBox.left, -32767.f, (float)boundingBox.bottom, 0, 0);
+			ptr[3].Set((float)boundingBox.right, -32767.f, (float)boundingBox.bottom, 0, 0);
+			state.Draw(DT_TriangleStrip, verts.second, 4, false);
+		}
+		if (planesused & (1 << sector_t::ceiling))
+		{
+			auto verts = screen->mVertexData->AllocVertices(4);
+			auto ptr = verts.first;
+			ptr[0].Set((float)boundingBox.left, 32767.f, (float)boundingBox.top, 0, 0);
+			ptr[1].Set((float)boundingBox.right, 32767.f, (float)boundingBox.top, 0, 0);
+			ptr[2].Set((float)boundingBox.left, 32767.f, (float)boundingBox.bottom, 0, 0);
+			ptr[3].Set((float)boundingBox.right, 32767.f, (float)boundingBox.bottom, 0, 0);
+			state.Draw(DT_TriangleStrip, verts.second, 4, false);
+		}
 		if (pass == STP_DepthRestore) state.SetDepthRange(0, 1);
 	}
 }

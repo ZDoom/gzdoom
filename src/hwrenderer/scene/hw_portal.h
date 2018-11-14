@@ -61,8 +61,10 @@ class HWPortal
 public:
 	FPortalSceneState * mState;
 	TArray<GLWall> lines;
+	BoundingRect boundingBox;
+	int planesused = 0;
 
-    HWPortal(FPortalSceneState *s, bool local = false) : mState(s)
+    HWPortal(FPortalSceneState *s, bool local = false) : mState(s), boundingBox(false)
     {
     }
     virtual ~HWPortal() {}
@@ -83,6 +85,8 @@ public:
 	void AddLine(GLWall * l)
 	{
 		lines.Push(*l);
+		boundingBox.addVertex(l->glseg.x1, l->glseg.y1);
+		boundingBox.addVertex(l->glseg.x2, l->glseg.y2);
 	}
 
 

@@ -93,6 +93,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "uniform vec4 uGlowBottomPlane;\n";
 	i_data += "uniform vec4 uGlowBottomColor;\n";
 
+	i_data += "uniform vec4 uGradientTopPlane;\n";
+	i_data += "uniform vec4 uGradientBottomPlane;\n";
+
 	i_data += "uniform vec4 uSplitTopPlane;\n";
 	i_data += "uniform vec4 uSplitBottomPlane;\n";
 
@@ -335,6 +338,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muGlowTopColor.Init(hShader, "uGlowTopColor");
 	muGlowBottomPlane.Init(hShader, "uGlowBottomPlane");
 	muGlowTopPlane.Init(hShader, "uGlowTopPlane");
+	muGradientBottomPlane.Init(hShader, "uGradientBottomPlane");
+	muGradientTopPlane.Init(hShader, "uGradientTopPlane");
 	muSplitBottomPlane.Init(hShader, "uSplitBottomPlane");
 	muSplitTopPlane.Init(hShader, "uSplitTopPlane");
 	muInterpolationFactor.Init(hShader, "uInterpolationFactor");

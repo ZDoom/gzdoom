@@ -7063,7 +7063,7 @@ void SpawnShootDecal(AActor *t1, const FTraceResults &trace)
 
 	if (t1->player != NULL && t1->player->ReadyWeapon != NULL)
 	{
-		decalbase = t1->player->ReadyWeapon->GetDefault()->DecalGenerator;
+		decalbase = t1->player->ReadyWeapon->DecalGenerator;
 	}
 	else
 	{

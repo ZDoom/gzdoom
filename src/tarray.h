@@ -458,7 +458,12 @@ public:
 	void Reset()
 	{
 		Clear();
-		ShrinkToFit();
+		Most = 0;
+		if (Array != nullptr)
+		{
+			M_Free(Array);
+			Array = nullptr;
+		}
 	}
 private:
 	T *Array;

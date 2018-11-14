@@ -7,6 +7,7 @@ layout(location = 3) in vec4 aVertex2;
 layout(location = 4) in vec4 aNormal;
 out vec4 pixelpos;
 out vec3 glowdist;
+out vec3 gradientdist;
 
 out vec4 vWorldNormal;
 out vec4 vEyeNormal;
@@ -37,16 +38,28 @@ void main()
 		pixelpos.xyz = worldcoord.xyz;
 		pixelpos.w = -eyeCoordPos.z/eyeCoordPos.w;
 
-		float topatpoint = -((uGlowTopPlane.w + uGlowTopPlane.x * worldcoord.x + uGlowTopPlane.y * worldcoord.z) * uGlowTopPlane.z);
-		float bottomatpoint = -((uGlowBottomPlane.w + uGlowBottomPlane.x * worldcoord.x + uGlowBottomPlane.y * worldcoord.z) * uGlowBottomPlane.z);
-		glowdist.x = topatpoint - worldcoord.y;
-		glowdist.y = worldcoord.y - bottomatpoint;
-		glowdist.z = clamp(glowdist.x / (topatpoint - bottomatpoint), 0.0, 1.0);
+		if (uGlowTopColor.a > 0 || uGlowBottomColor.a > 0)
+		{
+			float topatpoint = (uGlowTopPlane.w + uGlowTopPlane.x * worldcoord.x + uGlowTopPlane.y * worldcoord.z) * uGlowTopPlane.z;
+			float bottomatpoint = (uGlowBottomPlane.w + uGlowBottomPlane.x * worldcoord.x + uGlowBottomPlane.y * worldcoord.z) * uGlowBottomPlane.z;
+			glowdist.x = topatpoint - worldcoord.y;
+			glowdist.y = worldcoord.y - bottomatpoint;
+			glowdist.z = clamp(glowdist.x / (topatpoint - bottomatpoint), 0.0, 1.0);
+		}
+		
+		if (uObjectColor2.a != 0)
+		{
+			float topatpoint = (uGradientTopPlane.w + uGradientTopPlane.x * worldcoord.x + uGradientTopPlane.y * worldcoord.z) * uGradientTopPlane.z;
+			float bottomatpoint = (uGradientBottomPlane.w + uGradientBottomPlane.x * worldcoord.x + uGradientBottomPlane.y * worldcoord.z) * uGradientBottomPlane.z;
+			gradientdist.x = topatpoint - worldcoord.y;
+			gradientdist.y = worldcoord.y - bottomatpoint;
+			gradientdist.z = clamp(gradientdist.x / (topatpoint - bottomatpoint), 0.0, 1.0);
+		}
 		
 		if (uSplitBottomPlane.z != 0.0)
 		{
-			gl_ClipDistance[3] = -((uSplitTopPlane.w + uSplitTopPlane.x * worldcoord.x + uSplitTopPlane.y * worldcoord.z) * uSplitTopPlane.z) - worldcoord.y;
-			gl_ClipDistance[4] = worldcoord.y + ((uSplitBottomPlane.w + uSplitBottomPlane.x * worldcoord.x + uSplitBottomPlane.y * worldcoord.z) * uSplitBottomPlane.z);
+			gl_ClipDistance[3] = ((uSplitTopPlane.w + uSplitTopPlane.x * worldcoord.x + uSplitTopPlane.y * worldcoord.z) * uSplitTopPlane.z) - worldcoord.y;
+			gl_ClipDistance[4] = worldcoord.y - ((uSplitBottomPlane.w + uSplitBottomPlane.x * worldcoord.x + uSplitBottomPlane.y * worldcoord.z) * uSplitBottomPlane.z);
 		}
 
 		vWorldNormal = NormalModelMatrix * vec4(normalize(aNormal.xyz), 1.0);

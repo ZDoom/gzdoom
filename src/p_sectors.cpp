@@ -878,17 +878,6 @@ DEFINE_ACTION_FUNCTION(_Sector, SetFade)
 //
 //=====================================================================================
 
-void sector_t::SetSpecialColor(int slot, int r, int g, int b)
-{
-	SpecialColors[slot] = PalEntry(255, r, g, b);
-}
-
-void sector_t::SetSpecialColor(int slot, PalEntry rgb)
-{
-	rgb.a = 255;
-	SpecialColors[slot] = rgb;
-}
-
 DEFINE_ACTION_FUNCTION(_Sector, SetSpecialColor)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
@@ -2240,6 +2229,26 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
 	 ACTION_RETURN_INT(self->Index());
  }
+
+ //=====================================================================================
+//
+//
+//=====================================================================================
+
+ DEFINE_ACTION_FUNCTION(_Side, SetSpecialColor)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(tier);
+	 PARAM_INT(position);
+	 PARAM_COLOR(color);
+	 if (tier >= 0 && tier < 3 && position >= 0 && position < 2)
+	 {
+		 color.a = 255;
+		 self->SetSpecialColor(tier, position, color);
+	 }
+	 return 0;
+ }
+
 
  DEFINE_ACTION_FUNCTION(_Vertex, Index)
  {

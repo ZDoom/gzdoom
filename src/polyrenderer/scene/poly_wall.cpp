@@ -88,7 +88,6 @@ bool RenderPolyWall::RenderLine(PolyRenderThread *thread, seg_t *line, sector_t 
 	wall.Line = line->linedef;
 	wall.Side = line->sidedef;
 	wall.LineSegLine = line->linedef;
-	wall.Colormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::walltop]);
 	wall.Masked = false;
 	wall.SubsectorDepth = subsectorDepth;
 	wall.StencilValue = stencilValue;
@@ -102,6 +101,7 @@ bool RenderPolyWall::RenderLine(PolyRenderThread *thread, seg_t *line, sector_t 
 			wall.TopTexZ = topTexZ;
 			wall.BottomTexZ = bottomTexZ;
 			wall.Wallpart = side_t::mid;
+			wall.Colormap = GetColorTable(frontsector->Colormap, wall.Side->GetSpecialColor(wall.Wallpart, side_t::walltop, frontsector));
 			wall.Texture = GetTexture(wall.Line, wall.Side, side_t::mid);
 			wall.Polyportal = polyportal;
 			wall.Render(thread);
@@ -140,6 +140,7 @@ bool RenderPolyWall::RenderLine(PolyRenderThread *thread, seg_t *line, sector_t 
 			wall.TopTexZ = topTexZ;
 			wall.BottomTexZ = MIN(MIN(backceilz1, frontceilz1), MIN(backceilz2, frontceilz2));
 			wall.Wallpart = side_t::top;
+			wall.Colormap = GetColorTable(frontsector->Colormap, wall.Side->GetSpecialColor(wall.Wallpart, side_t::walltop, frontsector));
 			wall.Texture = GetTexture(wall.Line, wall.Side, side_t::top);
 			wall.Render(thread);
 		}
@@ -152,6 +153,7 @@ bool RenderPolyWall::RenderLine(PolyRenderThread *thread, seg_t *line, sector_t 
 			wall.UnpeggedCeil1 = topceilz1;
 			wall.UnpeggedCeil2 = topceilz2;
 			wall.Wallpart = side_t::bottom;
+			wall.Colormap = GetColorTable(frontsector->Colormap, wall.Side->GetSpecialColor(wall.Wallpart, side_t::walltop, frontsector));
 			wall.Texture = GetTexture(wall.Line, wall.Side, side_t::bottom);
 			wall.Render(thread);
 		}
@@ -162,6 +164,7 @@ bool RenderPolyWall::RenderLine(PolyRenderThread *thread, seg_t *line, sector_t 
 			wall.TopTexZ = MAX(middleceilz1, middleceilz2);
 			wall.BottomTexZ = MIN(middlefloorz1, middlefloorz2);
 			wall.Wallpart = side_t::mid;
+			wall.Colormap = GetColorTable(frontsector->Colormap, wall.Side->GetSpecialColor(wall.Wallpart, side_t::walltop, frontsector));
 			wall.Texture = GetTexture(wall.Line, wall.Side, side_t::mid);
 			wall.Masked = true;
 			wall.Additive = !!(wall.Line->flags & ML_ADDTRANS);
@@ -212,7 +215,6 @@ void RenderPolyWall::Render3DFloorLine(PolyRenderThread *thread, seg_t *line, se
 	wall.LineSegLine = line->linedef;
 	wall.Line = fakeFloor->master;
 	wall.Side = fakeFloor->master->sidedef[0];
-	wall.Colormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::walltop]);
 	wall.SectorLightLevel = frontsector->lightlevel;
 	wall.Additive = !!(fakeFloor->flags & FF_ADDITIVETRANS);
 	if (!wall.Additive && fakeFloor->alpha == 255)
@@ -231,6 +233,7 @@ void RenderPolyWall::Render3DFloorLine(PolyRenderThread *thread, seg_t *line, se
 	wall.TopTexZ = topTexZ;
 	wall.BottomTexZ = bottomTexZ;
 	wall.Wallpart = side_t::mid;
+	wall.Colormap = GetColorTable(frontsector->Colormap, wall.Side->GetSpecialColor(wall.Wallpart, side_t::walltop, frontsector));
 	if (fakeFloor->flags & FF_UPPERTEXTURE)
 		wall.Texture = GetTexture(line->linedef, line->sidedef, side_t::top);
 	else if (fakeFloor->flags & FF_LOWERTEXTURE)

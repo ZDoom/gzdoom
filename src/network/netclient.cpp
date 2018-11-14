@@ -416,6 +416,7 @@ void NetClient::OnDestroyActor(ByteInputStream &stream)
 	const int16_t netID = stream.ReadShort();
 	AActor *actor = mNetIDList.findPointerByID(netID);
 	actor->Destroy();
+	mNetIDList.freeID(netID);
 }
 
 #if 0 // Use playerpawn, problematic as client pawn behavior may have to deviate from server side

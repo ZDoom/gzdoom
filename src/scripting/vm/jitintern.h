@@ -72,6 +72,53 @@ private:
 		pc++; // This instruction uses two instruction slots - skip the next one
 	}
 
+	template<int N>
+	void EmitVectorComparison(bool check, asmjit::Label& fail, asmjit::Label& success)
+	{
+		bool approx = static_cast<bool>(A & CMP_APPROX);
+		if (!approx)
+		{
+			for (int i = 0; i < N; i++)
+			{
+				cc.ucomisd(regF[B + i], regF[C + i]);
+				if (check)
+				{
+					cc.jp(success);
+					cc.jne(success);
+				}
+				else
+				{
+					cc.jp(fail);
+					cc.jne(fail);
+				}
+			}
+		}
+		else
+		{
+			auto tmp = newTempXmmSd();
+
+			const int64_t absMaskInt = 0x7FFFFFFFFFFFFFFF;
+			auto absMask = cc.newDoubleConst(asmjit::kConstScopeLocal, reinterpret_cast<const double&>(absMaskInt));
+			auto absMaskXmm = newTempXmmPd();
+
+			auto epsilon = cc.newDoubleConst(asmjit::kConstScopeLocal, VM_EPSILON);
+			auto epsilonXmm = newTempXmmSd();
+
+			for (int i = 0; i < N; i++)
+			{
+				cc.movsd(tmp, regF[B + i]);
+				cc.subsd(tmp, regF[C + i]);
+				cc.movsd(absMaskXmm, absMask);
+				cc.andpd(tmp, absMaskXmm);
+				cc.movsd(epsilonXmm, epsilon);
+				cc.ucomisd(epsilonXmm, tmp);
+
+				if (check) cc.ja(fail);
+				else       cc.jna(fail);
+			}
+		}
+	}
+
 	static uint64_t ToMemAddress(const void *d)
 	{
 		return (uint64_t)(ptrdiff_t)d;

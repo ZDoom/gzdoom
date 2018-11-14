@@ -84,7 +84,14 @@ private:
 				if (check)
 				{
 					cc.jp(success);
-					cc.jne(success);
+					if (i == (N - 1))
+					{
+						cc.je(fail);
+					}
+					else
+					{
+						cc.jne(success);
+					}
 				}
 				else
 				{

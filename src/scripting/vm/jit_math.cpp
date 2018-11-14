@@ -1219,27 +1219,7 @@ void JitCompiler::EmitLENV2()
 void JitCompiler::EmitEQV2_R()
 {
 	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for EQV2_R.\n");
-
-		cc.ucomisd(regF[B], regF[C]);
-		if (check) {
-			cc.jp(success);
-			cc.jne(success);
-		}
-		else {
-			cc.jp(fail);
-			cc.jne(fail);
-		}
-
-		cc.ucomisd(regF[B + 1], regF[C + 1]);
-		if (check) {
-			cc.jp(success);
-			cc.je(fail);
-		}
-		else {
-			cc.jp(fail);
-			cc.jne(fail);
-		}
+		EmitVectorComparison<2> (check, fail, success);
 	});
 }
 
@@ -1406,37 +1386,7 @@ void JitCompiler::EmitLENV3()
 void JitCompiler::EmitEQV3_R()
 {
 	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for EQV3_R.\n");
-
-		cc.ucomisd(regF[B], regF[C]);
-		if (check) {
-			cc.jp(success);
-			cc.jne(success);
-		}
-		else {
-			cc.jp(fail);
-			cc.jne(fail);
-		}
-
-		cc.ucomisd(regF[B + 1], regF[C + 1]);
-		if (check) {
-			cc.jp(success);
-			cc.jne(success);
-		}
-		else {
-			cc.jp(fail);
-			cc.jne(fail);
-		}
-
-		cc.ucomisd(regF[B + 2], regF[C + 2]);
-		if (check) {
-			cc.jp(success);
-			cc.je(fail);
-		}
-		else {
-			cc.jp(fail);
-			cc.jne(fail);
-		}
+		EmitVectorComparison<3> (check, fail, success);
 	});
 }
 	

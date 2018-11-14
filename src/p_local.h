@@ -162,6 +162,7 @@ void	P_Thing_SetVelocity(AActor *actor, const DVector3 &vec, bool add, bool setb
 void P_RemoveThing(AActor * actor);
 bool P_Thing_Raise(AActor *thing, AActor *raiser, int nocheck = false);
 bool P_Thing_CanRaise(AActor *thing);
+bool P_CanResurrect(AActor *ththing, AActor *thing);
 PClassActor *P_GetSpawnableType(int spawnnum);
 void InitSpawnablesFromMapinfo();
 int P_Thing_CheckInputNum(player_t *p, int inputnum);
@@ -454,6 +455,7 @@ enum EDmgFlags
 	DMG_USEANGLE = 512,
 	DMG_NO_PAIN = 1024,
 	DMG_EXPLOSION = 2048,
+	DMG_NO_ENHANCE = 4096,
 };
 
 

@@ -4566,6 +4566,20 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseSelf)
 
 //===========================================================================
 //
+// RaiseActor
+//
+// Generalized version that allows passing pointers for ZScript's sake.
+//===========================================================================
+DEFINE_ACTION_FUNCTION(AActor, RaiseActor)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(other, AActor);
+	PARAM_INT_DEF(flags);
+	ACTION_RETURN_BOOL(P_Thing_Raise(other, self, (flags & RF_NOCHECKPOSITION)));
+}
+
+//===========================================================================
+//
 // CanRaise
 //
 //===========================================================================

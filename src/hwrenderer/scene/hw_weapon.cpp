@@ -222,8 +222,7 @@ static WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &po
 	}
 	else
 	{
-		sector_t fs;
-		auto fakesec = hw_FakeFlat(viewsector, &fs, in_area, false);
+		auto fakesec = hw_FakeFlat(viewsector, in_area, false);
 
 		// calculate light level for weapon sprites
 		l.lightlevel = hw_ClampLight(fakesec->lightlevel);

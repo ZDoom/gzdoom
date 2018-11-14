@@ -36,6 +36,7 @@
 #include "hwrenderer/utility/hw_clock.h"
 #include "hw_renderstate.h"
 #include "hw_drawinfo.h"
+#include "hw_fakeflat.h"
 
 FMemArena RenderDataAllocator(1024*1024);	// Use large blocks to reduce allocation time.
 

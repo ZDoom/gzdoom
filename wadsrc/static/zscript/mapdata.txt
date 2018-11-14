@@ -45,6 +45,12 @@ struct Side native play
 		bottom=2
 	};
 	
+	enum EColorPos
+	{
+		walltop = 0,
+		wallbottom = 1
+	}
+	
 	enum EWallFlags
 	{
 		WALLF_ABSLIGHTING	 = 1,	// Light is absolute instead of relative
@@ -56,6 +62,7 @@ struct Side native play
 		WALLF_POLYOBJ		 = 64,	// This wall belongs to a polyobject.
 		WALLF_LIGHT_FOG      = 128,	// This wall's Light is used even in fog.
 	};
+
 
 	native readonly Sector sector;			// Sector the SideDef is facing.
 	//DBaseDecal*	AttachedDecals;	// [RH] Decals bound to the wall
@@ -77,6 +84,7 @@ struct Side native play
 	native void SetTextureYScale(int which, double scale);
 	native double GetTextureYScale(int which);
 	native void MultiplyTextureYScale(int which, double delta);
+	native void SetSpecialColor(int tier, int position, Color scolor);
 	//native DInterpolation *SetInterpolation(int position);
 	//native void StopInterpolation(int position);
 

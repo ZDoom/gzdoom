@@ -207,8 +207,8 @@ void GLSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 		state.EnableSplit(true);
 	}
 
-	secplane_t bottomp = { { 0, 0, -1. }, bottomclip };
-	secplane_t topp = { { 0, 0, -1. }, topclip };
+	secplane_t bottomp = { { 0, 0, -1. }, bottomclip, 1. };
+	secplane_t topp = { { 0, 0, -1. }, topclip, 1. };
 	for (unsigned i = 0; i < iter; i++)
 	{
 		if (lightlist)
@@ -755,7 +755,9 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 	if (sector->sectornum != thing->Sector->sectornum && !thruportal)
 	{
-		rendersector = hw_FakeFlat(thing->Sector, &rs, in_area, false);
+		// This cannot create a copy in the fake sector cache because it'd interfere with the main thread, so provide a local buffer for the copy.
+		// Adding synchronization for this one case would cost more than it might save if the result here could be cached.
+		rendersector = hw_FakeFlat(thing->Sector, in_area, false, &rs);
 	}
 	else
 	{
@@ -1287,7 +1289,8 @@ void HWDrawInfo::ProcessActorsInPortal(FLinePortalSpan *glport, area_t in_area)
 					th->Prev += newpos - savedpos;
 
 					GLSprite spr;
-					spr.Process(this, th, hw_FakeFlat(th->Sector, &fakesector, in_area, false), in_area, 2);
+					// This is called from the worker thread and must not alter the fake sector cache.
+					spr.Process(this, th, hw_FakeFlat(th->Sector, in_area, false, &fakesector), in_area, 2);
 					th->Angles.Yaw = savedangle;
 					th->SetXYZ(savedpos);
 					th->Prev -= newpos - savedpos;

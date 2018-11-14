@@ -138,7 +138,6 @@ bool FGLRenderState::ApplyShader()
 	activeShader->muLightParms.Set(mLightParms);
 	activeShader->muFogColor.Set(mFogColor);
 	activeShader->muObjectColor.Set(mObjectColor);
-	activeShader->muObjectColor2.Set(mObjectColor2);
 	activeShader->muDynLightColor.Set(mDynColor.vec);
 	activeShader->muInterpolationFactor.Set(mInterpolationFactor);
 	activeShader->muTimer.Set((double)(screen->FrameTime - firstFrame) * (double)mShaderTimer / 1000.);
@@ -151,6 +150,8 @@ bool FGLRenderState::ApplyShader()
 	{
 		activeShader->muGlowTopColor.Set(mGlowTop.vec);
 		activeShader->muGlowBottomColor.Set(mGlowBottom.vec);
+		activeShader->muGlowTopPlane.Set(mGlowTopPlane.vec);
+		activeShader->muGlowBottomPlane.Set(mGlowBottomPlane.vec);
 		activeShader->currentglowstate = 1;
 	}
 	else if (activeShader->currentglowstate)
@@ -160,10 +161,18 @@ bool FGLRenderState::ApplyShader()
 		activeShader->muGlowBottomColor.Set(nulvec);
 		activeShader->currentglowstate = 0;
 	}
-	if (mGlowEnabled || mObjectColor2.a != 0)
+
+	if (mGradientEnabled)
 	{
-		activeShader->muGlowTopPlane.Set(mGlowTopPlane.vec);
-		activeShader->muGlowBottomPlane.Set(mGlowBottomPlane.vec);
+		activeShader->muObjectColor2.Set(mObjectColor2);
+		activeShader->muGradientTopPlane.Set(mGradientTopPlane.vec);
+		activeShader->muGradientBottomPlane.Set(mGradientBottomPlane.vec);
+		activeShader->currentgradientstate = 1;
+	}
+	else if (activeShader->currentgradientstate)
+	{
+		activeShader->muObjectColor2.Set(0);
+		activeShader->currentgradientstate = 0;
 	}
 
 	if (mSplitEnabled)

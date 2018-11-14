@@ -230,7 +230,7 @@ bool F7ZFile::Open(bool quiet)
 		Archive = NULL;
 		if (!quiet)
 		{
-			Printf("\n" TEXTCOLOR_RED "%s: ", Filename);
+			Printf("\n" TEXTCOLOR_RED "%s: ", FileName.GetChars());
 			if (res == SZ_ERROR_UNSUPPORTED)
 			{
 				Printf("Decoder does not support this archive\n");
@@ -309,7 +309,7 @@ bool F7ZFile::Open(bool quiet)
 
 		if (SZ_OK != Archive->Extract(Lumps[0].Position, &temp[0]))
 		{
-			if (!quiet) Printf("\n%s: unsupported 7z/LZMA file!\n", Filename);
+			if (!quiet) Printf("\n%s: unsupported 7z/LZMA file!\n", FileName.GetChars());
 			return false;
 		}
 	}

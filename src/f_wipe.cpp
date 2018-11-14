@@ -32,29 +32,24 @@
 
 class FBurnTexture : public FTexture
 {
-	uint32_t *WorkBuffer;
+	TArray<uint32_t> WorkBuffer;
 public:
 	FBurnTexture(int w, int h)
+		: WorkBuffer(w*h, true)
 	{
 		Width = w;
 		Height = h;
-		WorkBuffer = new uint32_t[w * h];
-	}
-	
-	~FBurnTexture()
-	{
-		delete [] WorkBuffer;
 	}
 	
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override
 	{
-		bmp->CopyPixelDataRGB(x, y, (uint8_t*)WorkBuffer, Width, Height, 4, Width*4, rotate, CF_RGBA, inf);
+		bmp->CopyPixelDataRGB(x, y, (uint8_t*)WorkBuffer.Data(), Width, Height, 4, Width*4, rotate, CF_RGBA, inf);
 		return 0;
 	}
 	
 	uint32_t *GetBuffer()
 	{
-		return WorkBuffer;
+		return WorkBuffer.Data();
 	}
 };
 

@@ -82,7 +82,7 @@ class FResourceFile
 {
 public:
 	FileReader Reader;
-	const char *Filename;
+	FString FileName;
 protected:
 	uint32_t NumLumps;
 
@@ -133,21 +133,19 @@ struct FUncompressedLump : public FResourceLump
 class FUncompressedFile : public FResourceFile
 {
 protected:
-	FUncompressedLump * Lumps = nullptr;
+	TArray<FUncompressedLump> Lumps;
 
 	FUncompressedFile(const char *filename);
 	FUncompressedFile(const char *filename, FileReader &r);
-	virtual ~FUncompressedFile();
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
 };
 
 
 struct FExternalLump : public FResourceLump
 {
-	const char *filename;	// the actual file name. This is not necessarily the same as the lump name!
+	FString Filename;
 
 	FExternalLump(const char *_filename, int filesize = -1);
-	~FExternalLump();
 	virtual int FillCache();
 
 };

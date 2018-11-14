@@ -434,10 +434,13 @@ void P_RemoveThing(AActor * actor)
 
 bool P_Thing_Raise(AActor *thing, AActor *raiser, int nocheck)
 {
+	if (!thing)	
+		return false;
+
 	FState * RaiseState = thing->GetRaiseState();
 	if (RaiseState == NULL)
 	{
-		return true;	// monster doesn't have a raise state
+		return false;	// monster doesn't have a raise state
 	}
 	
 	AActor *info = thing->GetDefault ();
@@ -460,6 +463,8 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser, int nocheck)
 		return false;
 	}
 
+	if (!P_CanResurrect(thing, raiser))
+		return false;
 
 	S_Sound (thing, CHAN_BODY, "vile/raise", 1, ATTN_IDLE);
 

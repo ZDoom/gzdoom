@@ -21,6 +21,10 @@ public:
 	void Open(const char *lumpname);
 	bool OpenFile(const char *filename);
 	void OpenMem(const char *name, const char *buffer, int size);
+	void OpenMem(const char *name, const TArray<uint8_t> &buffer)
+	{
+		OpenMem(name, (const char*)buffer.Data(), buffer.Size());
+	}
 	void OpenString(const char *name, FString buffer);
 	void OpenLumpNum(int lump);
 	void Close();

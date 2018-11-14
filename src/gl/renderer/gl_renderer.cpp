@@ -53,6 +53,7 @@
 #include "hwrenderer/postprocessing/hw_shadowmapshader.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/scene/hw_skydome.h"
+#include "hwrenderer/scene/hw_fakeflat.h"
 #include "gl/shaders/gl_postprocessshaderinstance.h"
 #include "gl/textures/gl_samplers.h"
 #include "hwrenderer/dynlights/hw_lightbuffer.h"
@@ -231,6 +232,8 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 	}
 	else
 	{
+		hw_ClearFakeFlat();
+
 		iter_dlightf = iter_dlight = draw_dlight = draw_dlightf = 0;
 
 		checkBenchActive();
@@ -302,6 +305,7 @@ void FGLRenderer::BindToFrameBuffer(FMaterial *mat)
 
 void FGLRenderer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV)
 {
+	// This doesn't need to clear the fake flat cache. It can be shared between camera textures and the main view of a scene.
 	FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
 
 	int width = gltex->TextureWidth();
@@ -343,7 +347,8 @@ void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, i
     // Switch to render buffers dimensioned for the savepic
     mBuffers = mSaveBuffers;
     
-    P_FindParticleSubsectors();    // make sure that all recently spawned particles have a valid subsector.
+	hw_ClearFakeFlat();
+	P_FindParticleSubsectors();    // make sure that all recently spawned particles have a valid subsector.
 	gl_RenderState.SetVertexBuffer(screen->mVertexData);
 	screen->mVertexData->Reset();
     screen->mLights->Clear();

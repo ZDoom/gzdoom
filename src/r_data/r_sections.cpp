@@ -64,6 +64,7 @@ struct WorkSection
 	int sectorindex;
 	int mapsection;
 	bool hasminisegs;
+	bool bad;	// Did not produce a proper area and cannot be triangulated by tesselation.
 	TArray<WorkSectionLine*>segments;
 	TArray<side_t *> originalSides;	// The segs will lose some of these while working on them.
 	TArray<int> subsectors;
@@ -184,6 +185,33 @@ public:
 		{
 			CompileSections(pair->Value, rawsections);
 		}
+
+		// Make sure that all subsectors have a sector. In some degenerate cases a subsector may come up empty.
+		// An example is in Doom.wad E3M4 near linedef 1087. With the grouping data here this is relatively easy to fix.
+		sector_t *lastsector = &level.sectors[0];
+		for (auto &rawsection : rawsections)
+		{
+			sector_t *mysector = nullptr;
+			bool missing = false;
+			for (auto num : rawsection)
+			{
+				auto &sub = level.subsectors[num];
+				if (sub.sector == nullptr) missing = true;
+				else mysector = sub.sector;
+			}
+			// Should the worst case happen and no sector be found, use the last used one. Subsectors must not be sector-less!
+			if (mysector == nullptr) mysector = lastsector;
+			else lastsector = mysector;
+			for (auto num : rawsection)
+			{
+				auto &sub = level.subsectors[num];
+				if (sub.sector == nullptr)
+				{
+					sub.sector = mysector;
+				}
+			}
+		}
+
 		subsectormap.Clear();
 		return rawsections;
 	}
@@ -253,8 +281,7 @@ public:
 		{
 			MakeOutline(list, lineForSeg);
 		}
-		rawsections.Clear();
-		rawsections.ShrinkToFit();
+		rawsections.Reset();
 
 		// Assign partners after everything has been collected
 		for (auto &section : sections)
@@ -281,6 +308,7 @@ public:
 		TArray<seg_t *> outersegs;
 		TArray<seg_t *> loopedsegs;
 		bool hasminisegs = false;
+		bool bad = false;
 
 		// Collect all the segs that make up the outline of this section.
 		for (auto j : rawsection)
@@ -371,7 +399,8 @@ public:
 				{
 					// Did not find another one but have an unclosed loop. This should never happen and would indicate broken nodes.
 					// Error out and let the calling code deal with it.
-					I_Error("Unclosed loop in sector %d at position (%d, %d)\n", loopedsegs[0]->Subsector->render_sector->Index(), (int)loopedsegs[0]->v1->fX(), (int)loopedsegs[0]->v1->fY());
+					DPrintf(DMSG_NOTIFY, "Unclosed loop in sector %d at position (%d, %d)\n", loopedsegs[0]->Subsector->render_sector->Index(), (int)loopedsegs[0]->v1->fX(), (int)loopedsegs[0]->v1->fY());
+					bad = true;
 				}
 				seg = nullptr;
 				loopedsegs.Push(nullptr);	// A separator is not really needed but useful for debugging.
@@ -402,6 +431,7 @@ public:
 			section.sectorindex = sector;
 			section.mapsection = mapsec;
 			section.hasminisegs = hasminisegs;
+			section.bad = bad;
 			section.originalSides = std::move(foundsides);
 			section.segments = std::move(sectionlines);
 			section.subsectors = std::move(rawsection);
@@ -720,8 +750,59 @@ public:
 			curgroup++;
 		}
 	}
-};
 
+	//=============================================================================
+	//
+	// Check if some subsectors have come up empty on sections.
+	// In this case assign the best fit from the containing sector.
+	// This is only to ensure that the section pointer is not null.
+	// These are always degenerate and do not produce any actual render output.
+	//
+	//=============================================================================
+
+	void FixMissingReferences()
+	{
+		for (auto &sub : level.subsectors)
+		{
+			if (sub.section == nullptr)
+			{
+				int sector = sub.sector->Index();
+				int mapsection = sub.mapsection;
+				auto sections = level.sections.SectionsForSector(sector);
+				FSection *bestfit = nullptr;
+				for (auto &section : sections)
+				{
+					if (bestfit == nullptr)
+					{
+						bestfit = &section;
+					}
+					else if (bestfit->mapsection != section.mapsection && section.mapsection == mapsection)
+					{
+						bestfit = &section;
+					}
+					else if (section.mapsection == mapsection)
+					{
+						BoundingRect rc;
+						for (unsigned i = 0; i < sub.numlines; i++)
+						{
+							rc.addVertex(sub.firstline[i].v1->fX(), sub.firstline[i].v1->fY());
+							rc.addVertex(sub.firstline[i].v2->fX(), sub.firstline[i].v2->fY());
+						}
+						// Pick the one closer to this subsector. 
+						if (rc.distanceTo(section.bounds) < rc.distanceTo(bestfit->bounds))
+						{
+							bestfit = &section;
+						}
+					}
+				}
+				// This should really never happen, but better be safe than sorry and assign at least something.
+				if (bestfit == nullptr) bestfit = &level.sections.allSections[0];
+				sub.section = bestfit;
+			}
+		}
+	}
+
+};
 
 
 //=============================================================================
@@ -787,6 +868,7 @@ void CreateSections(FSectionContainer &container)
 	creat.FindOuterLoops();
 	creat.GroupSections();
 	creat.ConstructOutput(container);
+	creat.FixMissingReferences();
 }
 
 CCMD(printsections)

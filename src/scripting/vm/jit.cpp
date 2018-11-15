@@ -604,7 +604,12 @@ void JitCompiler::Setup()
 		{
 			auto zero32 = newTempInt32();
 			cc.xor_(zero32, zero32);
-			for (unsigned int i = sseend; i < clearend; i++)
+
+			unsigned int dwordend = sseend + (clearend - sseend) / 4 * 4;
+			for (unsigned int i = sseend; i < dwordend; i += 4)
+				cc.mov(asmjit::x86::dword_ptr(vmframe, i), zero32);
+
+			for (unsigned int i = dwordend; i < clearend; i++)
 				cc.mov(asmjit::x86::byte_ptr(vmframe, i), zero32.r8Lo());
 		}
 

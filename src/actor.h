@@ -551,7 +551,7 @@ typedef TFlags<ActorFlag6> ActorFlags6;
 typedef TFlags<ActorFlag7> ActorFlags7;
 typedef TFlags<ActorFlag8> ActorFlags8;
 typedef TFlags<ActorRenderFlag> ActorRenderFlags;
-typedef TFlags<ActorBounceFlag, uint16_t> ActorBounceFlags;
+typedef TFlags<ActorBounceFlag> ActorBounceFlags;
 typedef TFlags<ActorRenderFeatureFlag> ActorRenderFeatureFlags;
 DEFINE_TFLAGS_OPERATORS (ActorFlags)
 DEFINE_TFLAGS_OPERATORS (ActorFlags2)

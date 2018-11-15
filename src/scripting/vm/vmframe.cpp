@@ -44,11 +44,17 @@
 #include "c_cvars.h"
 #include "version.h"
 
+#if (defined(_M_X64  ) || defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(__amd64 ) || defined(__amd64__ ))
+#define ARCH_X64
+#endif
+
+#ifdef ARCH_X64
 CUSTOM_CVAR(Bool, vm_jit, true, CVAR_NOINITCALL)
 {
 	Printf("You must restart " GAMENAME " for this change to take effect.\n");
 	Printf("This cvar is currently not saved. You must specify it on the command line.");
 }
+#endif
 
 cycle_t VMCycles[10];
 int VMCalls[10];
@@ -217,6 +223,7 @@ int VMScriptFunction::PCToLine(const VMOP *pc)
 
 int VMScriptFunction::FirstScriptCall(VMFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret)
 {
+#ifdef ARCH_X64
 	if (vm_jit)
 	{
 		func->ScriptCall = JitCompile(static_cast<VMScriptFunction*>(func));
@@ -227,6 +234,9 @@ int VMScriptFunction::FirstScriptCall(VMFunction *func, VMValue *params, int num
 	{
 		func->ScriptCall = VMExec;
 	}
+#else
+	func->ScriptCall = VMExec;
+#endif
 
 	return func->ScriptCall(func, params, numparams, ret, numret);
 }

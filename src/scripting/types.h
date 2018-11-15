@@ -575,6 +575,10 @@ public:
 };
 
 
+inline PClass *PObjectPointer::PointedClass() const
+{
+	return static_cast<PClassType*>(PointedType)->Descriptor;
+}
 
 // Returns a type from the TypeTable. Will create one if it isn't present.
 PMap *NewMap(PType *keytype, PType *valuetype);

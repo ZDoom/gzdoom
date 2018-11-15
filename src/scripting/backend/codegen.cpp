@@ -48,8 +48,6 @@
 #include "w_wad.h"
 #include "doomstat.h"
 
-inline PClass *PObjectPointer::PointedClass() const { return static_cast<PClassType*>(PointedType)->Descriptor; }
-
 extern FRandom pr_exrandom;
 FMemArena FxAlloc(65536);
 int utf8_decode(const char *src, int *size);

@@ -255,8 +255,7 @@ void JitCompiler::EmitLV2()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
 	auto tmp = newTempIntPtr();
-	cc.mov(tmp, regA[B]);
-	cc.add(tmp, konstd[C]);
+	cc.lea(tmp, asmjit::x86::qword_ptr(regA[B], konstd[C]));
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
 	cc.movsd(regF[A + 1], asmjit::x86::qword_ptr(tmp, 8));
 }
@@ -265,8 +264,7 @@ void JitCompiler::EmitLV2_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
 	auto tmp = newTempIntPtr();
-	cc.mov(tmp, regA[B]);
-	cc.add(tmp, regD[C]);
+	cc.lea(tmp, asmjit::x86::qword_ptr(regA[B], regD[C]));
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
 	cc.movsd(regF[A + 1], asmjit::x86::qword_ptr(tmp, 8));
 }
@@ -275,8 +273,7 @@ void JitCompiler::EmitLV3()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
 	auto tmp = newTempIntPtr();
-	cc.mov(tmp, regA[B]);
-	cc.add(tmp, konstd[C]);
+	cc.lea(tmp, asmjit::x86::qword_ptr(regA[B], konstd[C]));
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
 	cc.movsd(regF[A + 1], asmjit::x86::qword_ptr(tmp, 8));
 	cc.movsd(regF[A + 2], asmjit::x86::qword_ptr(tmp, 16));
@@ -286,8 +283,7 @@ void JitCompiler::EmitLV3_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
 	auto tmp = newTempIntPtr();
-	cc.mov(tmp, regA[B]);
-	cc.add(tmp, regD[C]);
+	cc.lea(tmp, asmjit::x86::qword_ptr(regA[B], regD[C]));
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
 	cc.movsd(regF[A + 1], asmjit::x86::qword_ptr(tmp, 8));
 	cc.movsd(regF[A + 2], asmjit::x86::qword_ptr(tmp, 16));

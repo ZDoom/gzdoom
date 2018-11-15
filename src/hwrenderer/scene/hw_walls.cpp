@@ -483,10 +483,10 @@ void GLWall::PutWall(HWDrawInfo *di, bool translucent)
 //
 //==========================================================================
 
-void GLWall::PutPortal(HWDrawInfo *di, int ptype)
+void GLWall::PutPortal(HWDrawInfo *di, int ptype, int plane)
 {
 	auto pstate = screen->mPortalState;
-	HWPortal * portal;
+	HWPortal * portal = nullptr;
 
 	MakeVertices(di, false);
 	switch (ptype)
@@ -498,7 +498,7 @@ void GLWall::PutPortal(HWDrawInfo *di, int ptype)
 		portal = di->FindPortal(horizon);
 		if (!portal)
 		{
-			portal = new HWHorizonPortal(pstate, horizon, di->Viewpoint, di);
+			portal = new HWHorizonPortal(pstate, horizon, di->Viewpoint);
 			di->Portals.Push(portal);
 		}
 		portal->AddLine(this);
@@ -509,10 +509,10 @@ void GLWall::PutPortal(HWDrawInfo *di, int ptype)
 		if (!portal)
 		{
 			// either a regular skybox or an Eternity-style horizon
-			if (secportal->mType != PORTS_SKYVIEWPOINT) portal = new HWEEHorizonPortal(pstate, secportal, di);
+			if (secportal->mType != PORTS_SKYVIEWPOINT) portal = new HWEEHorizonPortal(pstate, secportal);
 			else
 			{
-				portal = new HWScenePortal(pstate, new HWSkyboxPortal(secportal));
+				portal = new HWSkyboxPortal(pstate, secportal);
 				di->Portals.Push(portal);
 			}
 		}
@@ -523,7 +523,7 @@ void GLWall::PutPortal(HWDrawInfo *di, int ptype)
 		portal = di->FindPortal(this->portal);
 		if (!portal)
 		{
-			portal = new HWScenePortal(pstate, new HWSectorStackPortal(this->portal));
+			portal = new HWSectorStackPortal(pstate, this->portal);
 			di->Portals.Push(portal);
 		}
 		portal->AddLine(this);
@@ -532,12 +532,11 @@ void GLWall::PutPortal(HWDrawInfo *di, int ptype)
 	case PORTALTYPE_PLANEMIRROR:
 		if (pstate->PlaneMirrorMode * planemirror->fC() <= 0)
 		{
-			//@sync-portal
 			planemirror = pstate->UniquePlaneMirrors.Get(planemirror);
 			portal = di->FindPortal(planemirror);
 			if (!portal)
 			{
-				portal = new HWScenePortal(pstate, new HWPlaneMirrorPortal(planemirror));
+				portal = new HWPlaneMirrorPortal(pstate, planemirror);
 				di->Portals.Push(portal);
 			}
 			portal->AddLine(this);
@@ -548,7 +547,7 @@ void GLWall::PutPortal(HWDrawInfo *di, int ptype)
 		portal = di->FindPortal(seg->linedef);
 		if (!portal)
 		{
-			portal = new HWScenePortal(pstate, new HWMirrorPortal(seg->linedef));
+			portal = new HWMirrorPortal(pstate, seg->linedef);
 			di->Portals.Push(portal);
 		}
 		portal->AddLine(this);
@@ -570,7 +569,7 @@ void GLWall::PutPortal(HWDrawInfo *di, int ptype)
 			{
 				di->ProcessActorsInPortal(otherside->getPortal()->mGroup, di->in_area);
 			}
-			portal = new HWScenePortal(pstate, new HWLineToLinePortal(lineportal));
+			portal = new HWLineToLinePortal(pstate, lineportal);
 			di->Portals.Push(portal);
 		}
 		portal->AddLine(this);
@@ -588,6 +587,11 @@ void GLWall::PutPortal(HWDrawInfo *di, int ptype)
 		break;
 	}
 	vertcount = 0;
+
+	if (plane != -1 && portal)
+	{
+		portal->planesused |= (1<<plane);
+	}
 }
 
 //==========================================================================
@@ -849,7 +853,7 @@ bool GLWall::DoHorizon(HWDrawInfo *di, seg_t * seg,sector_t * fs, vertex_t * v1,
 
 			if (di->isFullbrightScene()) hi.colormap.Clear();
 			horizon = &hi;
-			PutPortal(di, PORTALTYPE_HORIZON);
+			PutPortal(di, PORTALTYPE_HORIZON, -1);
 		}
 		ztop[1] = ztop[0] = zbottom[0];
 	} 
@@ -878,7 +882,7 @@ bool GLWall::DoHorizon(HWDrawInfo *di, seg_t * seg,sector_t * fs, vertex_t * v1,
 
 			if (di->isFullbrightScene()) hi.colormap.Clear();
 			horizon = &hi;
-			PutPortal(di, PORTALTYPE_HORIZON);
+			PutPortal(di, PORTALTYPE_HORIZON, -1);
 		}
 	}
 	return true;
@@ -1135,7 +1139,7 @@ void GLWall::DoTexture(HWDrawInfo *di, int _type,seg_t * seg, int peg,
 
 	if (seg->linedef->special == Line_Mirror && _type == RENDERWALL_M1S && gl_mirrors)
 	{
-		PutPortal(di, PORTALTYPE_MIRROR);
+		PutPortal(di, PORTALTYPE_MIRROR, -1);
 	}
 	else
 	{
@@ -1970,7 +1974,7 @@ void GLWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 			ztop[1] = zceil[1];
 			zbottom[0] = zfloor[0];
 			zbottom[1] = zfloor[1];
-			PutPortal(di, PORTALTYPE_LINETOLINE);
+			PutPortal(di, PORTALTYPE_LINETOLINE, -1);
 		}
 		else if (seg->linedef->GetTransferredPortal())
 		{
@@ -2077,7 +2081,7 @@ void GLWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 			ztop[1] = bch2;
 			zbottom[0] = bfh1;
 			zbottom[1] = bfh2;
-			PutPortal(di, PORTALTYPE_LINETOLINE);
+			PutPortal(di, PORTALTYPE_LINETOLINE, -1);
 		}
 		else if (backsector->e->XFloor.ffloors.Size() || frontsector->e->XFloor.ffloors.Size())
 		{

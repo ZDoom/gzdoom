@@ -153,6 +153,7 @@ public:
 	void SetDepthMask(bool on) override;
 	void SetDepthFunc(int func) override;
 	void SetDepthRange(float min, float max) override;
+	void SetColorMask(bool r, bool g, bool b, bool a) override;
 	void EnableDrawBufferAttachments(bool on) override;
 	void SetStencil(int offs, int op, int flags) override;
 	void SetCulling(int mode) override;

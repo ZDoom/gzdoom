@@ -118,6 +118,37 @@ void FState::SetAction(const char *name)
 	ActionFunc = FindVMFunction(RUNTIME_CLASS(AActor), name);
 }
 
+
+void FState::CheckCallerType(AActor *self, AActor *stateowner)
+{
+	auto CheckType = [=](AActor *check, PType *requiredType)
+	{
+		// This should really never happen. Any valid action function must have actor pointers here.
+		if (!requiredType->isObjectPointer())
+		{
+			ThrowAbortException(X_OTHER, "Bad function prototype in function call to %s", ActionFunc->PrintableName.GetChars());
+		}
+		auto cls = static_cast<PObjectPointer*>(requiredType)->PointedClass();
+		if (!check->IsKindOf(cls))
+		{
+			ThrowAbortException(X_OTHER, "Invalid class %s in function call to %s. %s expected", check->GetClass()->TypeName.GetChars(), ActionFunc->PrintableName.GetChars(), cls->TypeName.GetChars());
+		}
+	};
+	
+	if (ActionFunc->ImplicitArgs >= 1)
+	{
+		auto argtypes = ActionFunc->Proto->ArgumentTypes;
+		
+		CheckType(self, argtypes[0]);
+		
+		if (ActionFunc->ImplicitArgs >= 2)
+		{
+			CheckType(stateowner, argtypes[1]);
+		}
+	}
+}
+
+
 bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info, FState **stateret)
 {
 	if (ActionFunc != nullptr)
@@ -140,6 +171,8 @@ bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info,
 		}
 		try
 		{
+			CheckCallerType(self, stateowner);
+			
 			if (stateret == nullptr)
 			{
 				VMCall(ActionFunc, params, ActionFunc->ImplicitArgs, nullptr, 0);

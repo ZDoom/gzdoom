@@ -589,6 +589,21 @@ void JitCompiler::Setup()
 		cc.mov(x86::word_ptr(vmframe, offsetof(VMFrame, MaxParam)), sfunc->MaxParam);
 		cc.mov(x86::word_ptr(vmframe, offsetof(VMFrame, NumParam)), 0);
 
+		// Zero initialize the variables (retardedly stupid to do here - should be done by the compiler backend!!)
+		unsigned int clearoffset = (unsigned int)offsetof(VMFrame, NumParam) + 2;
+		unsigned int sselength = (sfunc->StackSize - clearoffset) / 4;
+		auto zerosse = newTempXmmPd();
+		cc.xorpd(zerosse, zerosse);
+		for (unsigned int i = 0; i < sselength * 4; i += 4)
+			cc.movupd(x86::ptr(vmframe, clearoffset + i), zerosse);
+		if (clearoffset + sselength * 4 < sfunc->StackSize)
+		{
+			auto zero32 = newTempInt32();
+			cc.xor_(zero32, zero32);
+			for (unsigned int i = clearoffset + sselength * 4; i < sfunc->StackSize; i++)
+				cc.mov(asmjit::x86::byte_ptr(vmframe, i), zero32.r8Lo());
+		}
+
 		auto fillParams = CreateCall<void, VMFrame *, VMValue *, int>([](VMFrame *newf, VMValue *args, int numargs) {
 			try
 			{

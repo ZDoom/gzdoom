@@ -4691,14 +4691,7 @@ FxExpression *FxDynamicCast::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 	SAFE_RESOLVE(expr, ctx);
-	bool constflag = expr->ValueType->isPointer() && expr->ValueType->toPointer()->IsConst;
-	if (constflag)
-	{
-		// readonly pointers are normally only used for class defaults which lack type information to be cast properly, so we have to error out here.
-		ScriptPosition.Message(MSG_ERROR, "Cannot cast a readonly pointer");
-		delete this;
-		return nullptr;
-	}
+	bool constflag = expr->ValueType->isPointer() && expr->ValueType->toPointer()->IsConst;	
 	expr = new FxTypeCast(expr, NewPointer(RUNTIME_CLASS(DObject), constflag), true, true);
 	expr = expr->Resolve(ctx);
 	if (expr == nullptr)

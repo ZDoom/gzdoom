@@ -137,7 +137,7 @@ extend class Actor
 		{
 			drop.Vel.Z = -1.;
 		}
-		A_Explode(64, 64, XF_NOSPLASH|XF_HURTSOURCE, damagetype: 'Fire');
+		A_Explode(64, 64, XF_NOSPLASH|XF_HURTSOURCE|XF_NOTMISSILE, damagetype: 'Fire');
 	}	
 
 	//==========================================================================

@@ -590,17 +590,21 @@ void JitCompiler::Setup()
 		cc.mov(x86::word_ptr(vmframe, offsetof(VMFrame, NumParam)), 0);
 
 		// Zero initialize the variables (retardedly stupid to do here - should be done by the compiler backend!!)
-		unsigned int clearoffset = (unsigned int)offsetof(VMFrame, NumParam) + 2;
-		unsigned int sselength = (sfunc->StackSize - clearoffset) / 4;
-		auto zerosse = newTempXmmPd();
-		cc.xorpd(zerosse, zerosse);
-		for (unsigned int i = 0; i < sselength * 4; i += 4)
-			cc.movupd(x86::ptr(vmframe, clearoffset + i), zerosse);
-		if (clearoffset + sselength * 4 < sfunc->StackSize)
+		unsigned int clearbegin = (unsigned int)offsetof(VMFrame, NumParam) + 2;
+		unsigned int clearend = sfunc->StackSize;
+		unsigned int sseend = clearbegin + (clearend - clearbegin) / 16 * 16;
+		if (clearbegin < sseend)
+		{
+			auto zerosse = newTempXmmPd();
+			cc.xorpd(zerosse, zerosse);
+			for (unsigned int i = clearbegin; i < sseend; i += 16)
+				cc.movupd(x86::ptr(vmframe, i), zerosse);
+		}
+		if (sseend < clearend)
 		{
 			auto zero32 = newTempInt32();
 			cc.xor_(zero32, zero32);
-			for (unsigned int i = clearoffset + sselength * 4; i < sfunc->StackSize; i++)
+			for (unsigned int i = sseend; i < clearend; i++)
 				cc.mov(asmjit::x86::byte_ptr(vmframe, i), zero32.r8Lo());
 		}
 

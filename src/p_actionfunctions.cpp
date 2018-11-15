@@ -169,6 +169,7 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 			}
 			try
 			{
+                state->CheckCallerType(actor, this);
 				VMCall(state->ActionFunc, params, state->ActionFunc->ImplicitArgs, wantret, numret);
 			}
 			catch (CVMAbortException &err)

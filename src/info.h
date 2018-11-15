@@ -175,10 +175,13 @@ public:
 	void ClearAction() { ActionFunc = NULL; }
 	void SetAction(const char *name);
 	bool CallAction(AActor *self, AActor *stateowner, FStateParamInfo *stateinfo, FState **stateret);
+    void CheckCallerType(AActor *self, AActor *stateowner);
+
 	static PClassActor *StaticFindStateOwner (const FState *state);
 	static PClassActor *StaticFindStateOwner (const FState *state, PClassActor *info);
 	static FString StaticGetStateName(const FState *state);
 	static FRandom pr_statetics;
+
 };
 
 struct FStateLabels;

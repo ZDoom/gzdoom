@@ -9127,6 +9127,31 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	{
 		count += EmitParameter(build, ArgList[i], ScriptPosition, &tempstrings);
 	}
+	// Complete the parameter list from the defaults.
+	auto &defaults = Function->Variants[0].Implementation->DefaultArgs;
+	for (unsigned i = count; i < defaults.Size(); i++)
+	{
+		FxConstant *constant;
+		switch (defaults[i].Type)
+		{
+		default:
+		case REGT_INT:
+			constant = new FxConstant(defaults[i].i, ScriptPosition);
+			break;
+		case REGT_FLOAT:
+			constant = new FxConstant(defaults[i].f, ScriptPosition);
+			break;
+		case REGT_POINTER:
+			constant = new FxConstant(defaults[i].a, ScriptPosition);
+			break;
+		case REGT_STRING:
+			constant = new FxConstant(defaults[i].s(), ScriptPosition);
+			break;
+		}
+		count += EmitParameter(build, constant, ScriptPosition, &tempstrings);
+		delete constant;
+	}
+
 	ArgList.DeleteAndClear();
 	ArgList.ShrinkToFit();
 

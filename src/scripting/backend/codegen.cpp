@@ -5445,12 +5445,9 @@ FxRandom::FxRandom(FRandom * r, FxExpression *mi, FxExpression *ma, const FScrip
 : FxExpression(EFX_Random, pos)
 {
 	EmitTail = false;
-	if (mi != nullptr && ma != nullptr)
-	{
-		min = new FxIntCast(mi, nowarn);
-		max = new FxIntCast(ma, nowarn);
-	}
-	else min = max = nullptr;
+	assert(mi && ma);
+	min = new FxIntCast(mi, nowarn);
+	max = new FxIntCast(ma, nowarn);
 	rng = r;
 	ValueType = TypeSInt32;
 }
@@ -5508,29 +5505,15 @@ FxExpression *FxRandom::Resolve(FCompileContext &ctx)
 
 int BuiltinRandom(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
-	assert(numparam >= 1 && numparam <= 3);
-	FRandom *rng = reinterpret_cast<FRandom *>(param[0].a);
-	if (numparam == 1)
+	PARAM_PROLOGUE;
+	PARAM_POINTER(rng, FRandom);
+	PARAM_INT(min);
+	PARAM_INT(max);
+	if (max < min)
 	{
-		ACTION_RETURN_INT((*rng)());
+		std::swap(max, min);
 	}
-	else if (numparam == 2)
-	{
-		int maskval = param[1].i;
-		ACTION_RETURN_INT(rng->Random2(maskval));
-	}
-	else if (numparam == 3)
-	{
-		int min = param[1].i, max = param[2].i;
-		if (max < min)
-		{
-			swapvalues(max, min);
-		}
-		ACTION_RETURN_INT((*rng)(max - min + 1) + min);
-	}
-
-	// Shouldn't happen
-	return 0;
+	ACTION_RETURN_INT((*rng)(max - min + 1) + min);
 }
 
 ExpEmit FxRandom::Emit(VMFunctionBuilder *build)
@@ -5541,22 +5524,16 @@ ExpEmit FxRandom::Emit(VMFunctionBuilder *build)
 
 	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
+	assert(min && max);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
 	if (build->FramePointer.Fixed) EmitTail = false;	// do not tail call if the stack is in use
 	int opcode = (EmitTail ? OP_TAIL_K : OP_CALL_K);
 
 	build->Emit(OP_PARAM, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng));
-	if (min != nullptr && max != nullptr)
-	{
-		EmitParameter(build, min, ScriptPosition);
-		EmitParameter(build, max, ScriptPosition);
-		build->Emit(opcode, build->GetConstantAddress(callfunc), 3, 1);
-	}
-	else
-	{
-		build->Emit(opcode, build->GetConstantAddress(callfunc), 1, 1);
-	}
+	EmitParameter(build, min, ScriptPosition);
+	EmitParameter(build, max, ScriptPosition);
+	build->Emit(opcode, build->GetConstantAddress(callfunc), 3, 1);
 
 	if (EmitTail)
 	{
@@ -5746,11 +5723,9 @@ ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 FxFRandom::FxFRandom(FRandom *r, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos)
 : FxRandom(r, nullptr, nullptr, pos, true)
 {
-	if (mi != nullptr && ma != nullptr)
-	{
-		min = new FxFloatCast(mi);
-		max = new FxFloatCast(ma);
-	}
+	assert(mi && ma);
+	min = new FxFloatCast(mi);
+	max = new FxFloatCast(ma);
 	ValueType = TypeFloat64;
 	ExprType = EFX_FRandom;
 }
@@ -5763,25 +5738,19 @@ FxFRandom::FxFRandom(FRandom *r, FxExpression *mi, FxExpression *ma, const FScri
 
 int BuiltinFRandom(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
-	assert(numparam == 1 || numparam == 3);
-	FRandom *rng = reinterpret_cast<FRandom *>(param[0].a);
+	PARAM_PROLOGUE;
+	PARAM_POINTER(rng, FRandom);
+	PARAM_FLOAT(min);
+	PARAM_FLOAT(max);
 
 	int random = (*rng)(0x40000000);
 	double frandom = random / double(0x40000000);
 
-	if (numparam == 3)
+	if (max < min)
 	{
-		double min = param[1].f, max = param[2].f;
-		if (max < min)
-		{
-			swapvalues(max, min);
-		}
-		ACTION_RETURN_FLOAT(frandom * (max - min) + min);
+		std::swap(max, min);
 	}
-	else
-	{
-		ACTION_RETURN_FLOAT(frandom);
-	}
+	ACTION_RETURN_FLOAT(frandom * (max - min) + min);
 }
 
 ExpEmit FxFRandom::Emit(VMFunctionBuilder *build)
@@ -5792,22 +5761,16 @@ ExpEmit FxFRandom::Emit(VMFunctionBuilder *build)
 
 	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
+	assert(min && max);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
 	if (build->FramePointer.Fixed) EmitTail = false;	// do not tail call if the stack is in use
 	int opcode = (EmitTail ? OP_TAIL_K : OP_CALL_K);
 
 	build->Emit(OP_PARAM, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng));
-	if (min != nullptr && max != nullptr)
-	{
-		EmitParameter(build, min, ScriptPosition);
-		EmitParameter(build, max, ScriptPosition);
-		build->Emit(opcode, build->GetConstantAddress(callfunc), 3, 1);
-	}
-	else
-	{
-		build->Emit(opcode, build->GetConstantAddress(callfunc), 1, 1);
-	}
+	EmitParameter(build, min, ScriptPosition);
+	EmitParameter(build, max, ScriptPosition);
+	build->Emit(opcode, build->GetConstantAddress(callfunc), 3, 1);
 
 	if (EmitTail)
 	{
@@ -5879,11 +5842,25 @@ FxExpression *FxRandom2::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
+int BuiltinRandom2(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(rng, FRandom);
+	PARAM_INT(maskval);
+	ACTION_RETURN_INT(rng->Random2(maskval));
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 ExpEmit FxRandom2::Emit(VMFunctionBuilder *build)
 {
 	// Call the BuiltinRandom function to generate the random number.
 	VMFunction *callfunc;
-	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinRandom, BuiltinRandom);
+	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinRandom2, BuiltinRandom2);
 
 	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
@@ -8536,6 +8513,10 @@ FxActionSpecialCall::FxActionSpecialCall(FxExpression *self, int special, FArgum
 	Self = self;
 	Special = special;
 	ArgList = std::move(args);
+	while (ArgList.Size() < 5)
+	{
+		ArgList.Push(new FxConstant(0, ScriptPosition));
+	}
 	EmitTail = false;
 }
 
@@ -8617,6 +8598,8 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 			}
 		}
 	}
+
+
 	if (failed)
 	{
 		delete this;
@@ -8635,16 +8618,16 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 
 int BuiltinCallLineSpecial(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
-	assert(numparam > 2 && numparam < 8);
-	assert(param[0].Type == REGT_INT);
-	assert(param[1].Type == REGT_POINTER);
-	int v[5] = { 0 };
+	PARAM_PROLOGUE;
+	PARAM_INT(special);
+	PARAM_OBJECT(activator, AActor);
+	PARAM_INT_DEF(arg1);
+	PARAM_INT_DEF(arg2);
+	PARAM_INT_DEF(arg3);
+	PARAM_INT_DEF(arg4);
+	PARAM_INT_DEF(arg5);
 
-	for (int i = 2; i < numparam; ++i)
-	{
-		v[i - 2] = param[i].i;
-	}
-	ACTION_RETURN_INT(P_ExecuteSpecial(param[0].i, nullptr, reinterpret_cast<AActor*>(param[1].a), false, v[0], v[1], v[2], v[3], v[4]));
+	ACTION_RETURN_INT(P_ExecuteSpecial(special, nullptr, activator, 0, arg1, arg2, arg3, arg4, arg5));
 }
 
 ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)

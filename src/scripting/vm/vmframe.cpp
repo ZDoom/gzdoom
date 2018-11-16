@@ -577,6 +577,18 @@ int VMCall(VMFunction *func, VMValue *params, int numparams, VMReturn *results, 
 #endif
 }
 
+int VMCallWithDefaults(VMFunction *func, TArray<VMValue> &params, VMReturn *results, int numresults/*, VMException **trap = NULL*/)
+{
+	if (func->DefaultArgs.Size() > params.Size())
+	{
+		auto oldp = params.Size();
+		params.Resize(func->DefaultArgs.Size());
+		memcpy(&params[oldp], &func->DefaultArgs[oldp], (params.Size() - oldp) * sizeof(VMValue));
+	}
+	return VMCall(func, params.Data(), params.Size(), results, numresults);
+}
+
+
 // Exception stuff for the VM is intentionally placed there, because having this in vmexec.cpp would subject it to inlining
 // which we do not want because it increases the local stack requirements of Exec which are already too high.
 FString CVMAbortException::stacktrace;

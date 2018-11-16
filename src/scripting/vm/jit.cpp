@@ -502,10 +502,10 @@ void JitCompiler::SetupFrame()
 
 		cc.cmp(numargs, sfunc->NumArgs);
 		cc.jne(slowinit);
-		SetupSimpleFrame(vmstack);
+		SetupSimpleFrame();
 		cc.jmp(endinit);
 		cc.bind(slowinit);
-		SetupSimpleFrameMissingArgs(vmstack); // Does this ever happen?
+		SetupSimpleFrameMissingArgs(); // Does this ever happen?
 		cc.bind(endinit);
 	}
 	else
@@ -514,7 +514,7 @@ void JitCompiler::SetupFrame()
 	}
 }
 
-void JitCompiler::SetupSimpleFrame(asmjit::X86Mem vmstack)
+void JitCompiler::SetupSimpleFrame()
 {
 	using namespace asmjit;
 
@@ -569,7 +569,7 @@ void JitCompiler::SetupSimpleFrame(asmjit::X86Mem vmstack)
 		cc.xor_(regA[i], regA[i]);
 }
 
-void JitCompiler::SetupSimpleFrameMissingArgs(asmjit::X86Mem vmstack)
+void JitCompiler::SetupSimpleFrameMissingArgs()
 {
 	using namespace asmjit;
 

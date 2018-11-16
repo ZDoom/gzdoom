@@ -42,8 +42,8 @@ private:
 	void CreateRegisters();
 	void IncrementVMCalls();
 	void SetupFrame();
-	void SetupSimpleFrame(asmjit::X86Mem vmstack);
-	void SetupSimpleFrameMissingArgs(asmjit::X86Mem vmstack);
+	void SetupSimpleFrame();
+	void SetupSimpleFrameMissingArgs();
 	void SetupFullVMFrame();
 	void BindLabels();
 	void EmitOpcode();

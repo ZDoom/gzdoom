@@ -96,12 +96,13 @@ static FRandom pr_bfgselfdamage("BFGSelfDamage");
 // until there is no next state
 //
 //==========================================================================
+extern TArray<VMValue> actionParams;	// this can use the same storage as CallAction
+
 
 bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 {
 	INTBOOL result = false;
 	int counter = 0;
-	VMValue params[3] = { actor, this, 0 };
 
 	// We accept return types of `state`, `(int|bool)` or `state, (int|bool)`.
 	// The last one is for the benefit of A_Warp and A_Teleport.
@@ -139,7 +140,6 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 			VMReturn *wantret;
 			FStateParamInfo stp = { state, STATE_StateChain, PSP_WEAPON };
 
-			params[2] = VMValue(&stp);
 			retval = true;		// assume success
 			wantret = NULL;		// assume no return value wanted
 			numret = 0;
@@ -167,10 +167,33 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 				wantret = &ret[1];
 				numret = 1;
 			}
+
+
 			try
 			{
                 state->CheckCallerType(actor, this);
-				VMCallAction(state->ActionFunc, params, state->ActionFunc->ImplicitArgs, wantret, numret);
+
+				if (state->ActionFunc->DefaultArgs.Size() > 0)
+				{
+					auto index = actionParams.Append(state->ActionFunc->DefaultArgs);
+					if (state->ActionFunc->ImplicitArgs >= 1)
+					{
+						actionParams[index] = actor;
+					}
+					if (state->ActionFunc->ImplicitArgs == 3)
+					{
+						actionParams[index + 1] = this;
+						actionParams[index + 2] = VMValue(&stp);
+					}
+
+					VMCallAction(state->ActionFunc, &actionParams[index], state->ActionFunc->DefaultArgs.Size(), wantret, numret);
+					actionParams.Clamp(index);
+				}
+				else
+				{
+					VMValue params[3] = { actor, this, VMValue(&stp) };
+					VMCallAction(state->ActionFunc, params, state->ActionFunc->ImplicitArgs, wantret, numret);
+				}
 			}
 			catch (CVMAbortException &err)
 			{

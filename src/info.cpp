@@ -148,6 +148,7 @@ void FState::CheckCallerType(AActor *self, AActor *stateowner)
 	}
 }
 
+TArray<VMValue> actionParams;
 
 bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info, FState **stateret)
 {
@@ -155,7 +156,6 @@ bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info,
 	{
 		ActionCycles.Clock();
 
-		VMValue params[3] = { self, stateowner, VMValue(info) };
 		// If the function returns a state, store it at *stateret.
 		// If it doesn't return a state but stateret is non-nullptr, we need
 		// to set *stateret to nullptr.
@@ -169,19 +169,36 @@ bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info,
 				stateret = nullptr;
 			}
 		}
+
+		VMReturn ret;
+		ret.PointerAt((void **)stateret);
 		try
 		{
 			CheckCallerType(self, stateowner);
-			
-			if (stateret == nullptr)
+
+			// Build the parameter array. Action functions have never any explicit parameters but need to pass the defaults
+			// and fill in the implicit arguments of the called function.
+
+			if (ActionFunc->DefaultArgs.Size() > 0)
 			{
-				VMCallAction(ActionFunc, params, ActionFunc->ImplicitArgs, nullptr, 0);
+				auto index = actionParams.Append(ActionFunc->DefaultArgs);
+				if (ActionFunc->ImplicitArgs >= 1)
+				{
+					actionParams[index] = self;
+				}
+				if (ActionFunc->ImplicitArgs == 3)
+				{
+					actionParams[index + 1] = stateowner;
+					actionParams[index + 2] = VMValue(info);
+				}
+
+				VMCallAction(ActionFunc, &actionParams[index], ActionFunc->DefaultArgs.Size(), &ret, stateret != nullptr);
+				actionParams.Clamp(index);
 			}
 			else
 			{
-				VMReturn ret;
-				ret.PointerAt((void **)stateret);
-				VMCallAction(ActionFunc, params, ActionFunc->ImplicitArgs, &ret, 1);
+				VMValue params[3] = { self, stateowner, VMValue(info) };
+				VMCallAction(ActionFunc, params, ActionFunc->ImplicitArgs, &ret, stateret != nullptr);
 			}
 		}
 		catch (CVMAbortException &err)

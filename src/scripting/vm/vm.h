@@ -329,6 +329,7 @@ public:
 	FString PrintableName;	// so that the VM can print meaningful info if something in this function goes wrong.
 
 	class PPrototype *Proto;
+	TArray<uint32_t> ArgFlags;		// Should be the same length as Proto->ArgumentTypes
 
 	int(*ScriptCall)(VMFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret) = nullptr;
 

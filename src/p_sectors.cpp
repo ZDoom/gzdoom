@@ -2603,7 +2603,8 @@ DEFINE_ACTION_FUNCTION(_Secplane, HeightDiff)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
 	PARAM_FLOAT(oldd);
-	if (numparam == 2)
+	PARAM_FLOAT(newd);
+	if (newd != 1e37)
 	{
 		ACTION_RETURN_FLOAT(self->HeightDiff(oldd));
 	}

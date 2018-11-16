@@ -7432,7 +7432,7 @@ DEFINE_ACTION_FUNCTION(AActor, SpawnPlayerMissile)
 	PARAM_BOOL_DEF(noautoaim);
 	PARAM_INT_DEF(aimflags);
 	AActor *missileactor;
-	if (numparam == 2) angle = self->Angles.Yaw;
+	if (angle == 1e37) angle = self->Angles.Yaw;
 	AActor *misl = P_SpawnPlayerMissile(self, x, y, z, type, angle, lt, &missileactor, nofreeaim, noautoaim, aimflags);
 	if (numret > 0) ret[0].SetObject(misl);
 	if (numret > 1) ret[1].SetObject(missileactor), numret = 2;
@@ -8292,20 +8292,22 @@ DEFINE_ACTION_FUNCTION(AActor, GetDefaultByType)
 DEFINE_ACTION_FUNCTION(AActor, VelFromAngle)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	if (numparam == 1)
+	PARAM_FLOAT(speed);
+	PARAM_ANGLE(angle);
+
+	if (speed == 1e37)
 	{
 		self->VelFromAngle();
 	}
 	else
 	{
-		PARAM_FLOAT(speed);
-		if (numparam == 2)
+		if (angle == 1e37)
+
 		{
 			self->VelFromAngle(speed);
 		}
 		else
 		{
-			PARAM_ANGLE(angle);
 			self->VelFromAngle(speed, angle);
 		}
 	}
@@ -8327,20 +8329,21 @@ DEFINE_ACTION_FUNCTION(AActor, Vel3DFromAngle)
 DEFINE_ACTION_FUNCTION(AActor, Thrust)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	if (numparam == 1)
+	PARAM_FLOAT(speed);
+	PARAM_ANGLE(angle);
+
+	if (speed == 1e37)
 	{
 		self->Thrust();
 	}
 	else
 	{
-		PARAM_FLOAT(speed);
-		if (numparam == 2)
+		if (angle == 1e37)
 		{
 			self->Thrust(speed);
 		}
 		else
 		{
-			PARAM_ANGLE(angle);
 			self->Thrust(angle, speed);
 		}
 	}

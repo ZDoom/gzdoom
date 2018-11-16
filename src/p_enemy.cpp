@@ -2976,17 +2976,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_Chase)
 	PARAM_STATE_DEF	(missile)	
 	PARAM_INT_DEF	(flags)		
 
-	if (numparam > 1)
+	if (melee != nullptr || missile != nullptr || flags != 0x40000000)
 	{
 		if ((flags & CHF_RESURRECT) && P_CheckForResurrection(self, false))
 			return 0;
 		
 		A_DoChase(self, !!(flags&CHF_FASTCHASE), melee, missile, !(flags&CHF_NOPLAYACTIVE), 
-					!!(flags&CHF_NIGHTMAREFAST), !!(flags&CHF_DONTMOVE), flags);
+					!!(flags&CHF_NIGHTMAREFAST), !!(flags&CHF_DONTMOVE), flags & 0x3fffffff);
 	}
 	else // this is the old default A_Chase
 	{
-		A_DoChase(self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, flags);
+		A_DoChase(self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, 0);
 	}
 	return 0;
 }

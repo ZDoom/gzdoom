@@ -5448,7 +5448,7 @@ static int ScriptCall(AActor *activator, unsigned argc, int32_t *args)
 		// The return value can be the same types as the parameter types, plus void
 		if (func->Proto->ReturnTypes.Size() == 0)
 		{
-			VMCall(func, &params[0], params.Size(), nullptr, 0);
+			VMCallWithDefaults(func, &params[0], params.Size(), nullptr, 0);
 		}
 		else
 		{
@@ -5470,20 +5470,20 @@ static int ScriptCall(AActor *activator, unsigned argc, int32_t *args)
 			{
 				double d;
 				VMReturn ret(&d);
-				VMCall(func, &params[0], params.Size(), &ret, 1);
+				VMCallWithDefaults(func, &params[0], params.Size(), &ret, 1);
 				retval = DoubleToACS(d);
 			}
 			else if (rettype == TypeString)
 			{
 				FString d;
 				VMReturn ret(&d);
-				VMCall(func, &params[0], params.Size(), &ret, 1);
+				VMCallWithDefaults(func, &params[0], params.Size(), &ret, 1);
 				retval = GlobalACSStrings.AddString(d);
 			}
 			else
 			{
 				// All other return values can not be handled so ignore them.
-				VMCall(func, &params[0], params.Size(), nullptr, 0);
+				VMCallWithDefaults(func, &params[0], params.Size(), nullptr, 0);
 			}
 		}
 	}

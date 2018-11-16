@@ -377,6 +377,11 @@ private:
 
 int VMCall(VMFunction *func, VMValue *params, int numparams, VMReturn *results, int numresults/*, VMException **trap = NULL*/);
 
+inline int VMCallWithDefaults(VMFunction *func, VMValue *params, int numparams, VMReturn *results, int numresults/*, VMException **trap = NULL*/)
+{
+	VMCall(func, params, numparams, results, numresults);
+}
+
 // Use this in the prototype for a native function.
 #define VM_ARGS			VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret
 #define VM_ARGS_NAMES	param, defaultparam, numparam, ret, numret

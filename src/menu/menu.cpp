@@ -1211,7 +1211,7 @@ DMenuItemBase * CreateOptionMenuItemSubmenu(const char *label, FName cmd, int ce
 	auto c = PClass::FindClass("OptionMenuItemSubmenu");
 	auto p = c->CreateNew();
 	FString namestr = label;
-	VMValue params[] = { p, &namestr, cmd.GetIndex(), center };
+	VMValue params[] = { p, &namestr, cmd.GetIndex(), center, false };
 	auto f = dyn_cast<PFunction>(c->FindSymbol("Init", false));
 	VMCall(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenuItemBase*)p;
@@ -1233,7 +1233,7 @@ DMenuItemBase * CreateOptionMenuItemCommand(const char *label, FName cmd, bool c
 	auto c = PClass::FindClass("OptionMenuItemCommand");
 	auto p = c->CreateNew();
 	FString namestr = label;
-	VMValue params[] = { p, &namestr, cmd.GetIndex(), centered };
+	VMValue params[] = { p, &namestr, cmd.GetIndex(), centered, false };
 	auto f = dyn_cast<PFunction>(c->FindSymbol("Init", false));
 	VMCall(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	auto unsafe = dyn_cast<PField>(c->FindSymbol("mUnsafe", false));

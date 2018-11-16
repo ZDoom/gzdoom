@@ -175,13 +175,13 @@ bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info,
 			
 			if (stateret == nullptr)
 			{
-				VMCall(ActionFunc, params, ActionFunc->ImplicitArgs, nullptr, 0);
+				VMCallWithDefaults(ActionFunc, params, ActionFunc->ImplicitArgs, nullptr, 0);
 			}
 			else
 			{
 				VMReturn ret;
 				ret.PointerAt((void **)stateret);
-				VMCall(ActionFunc, params, ActionFunc->ImplicitArgs, &ret, 1);
+				VMCallWithDefaults(ActionFunc, params, ActionFunc->ImplicitArgs, &ret, 1);
 			}
 		}
 		catch (CVMAbortException &err)

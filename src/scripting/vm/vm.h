@@ -379,7 +379,7 @@ int VMCall(VMFunction *func, VMValue *params, int numparams, VMReturn *results, 
 
 inline int VMCallWithDefaults(VMFunction *func, VMValue *params, int numparams, VMReturn *results, int numresults/*, VMException **trap = NULL*/)
 {
-	VMCall(func, params, numparams, results, numresults);
+	return VMCall(func, params, numparams, results, numresults);
 }
 
 // Use this in the prototype for a native function.

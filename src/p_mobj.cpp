@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 //
 // Copyright 1993-1996 id Software
 // Copyright 1994-1996 Raven Software
@@ -533,7 +533,8 @@ void AActor::Serialize(FSerializer &arc)
 		A("renderhidden", RenderHidden)
 		A("renderrequired", RenderRequired)
 		A("friendlyseeblocks", friendlyseeblocks)
-		A("spawntime", SpawnTime);
+		A("spawntime", SpawnTime)
+		A("friction", Friction);
 }
 
 #undef A

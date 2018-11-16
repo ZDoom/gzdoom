@@ -2058,10 +2058,12 @@ ExpEmit FxUnaryNotBitwise::Emit(VMFunctionBuilder *build)
 {
 	assert(Operand->ValueType->GetRegType() == REGT_INT);
 	ExpEmit from = Operand->Emit(build);
+	from.Free(build);
+	ExpEmit to(build, REGT_INT);
 	assert(!from.Konst);
-	// Do it in-place.
-	build->Emit(OP_NOT, from.RegNum, from.RegNum, 0);
-	return from;
+	
+	build->Emit(OP_NOT, to.RegNum, from.RegNum, 0);
+	return to;
 }
 
 //==========================================================================

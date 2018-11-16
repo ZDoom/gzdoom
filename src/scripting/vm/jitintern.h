@@ -43,7 +43,6 @@ private:
 	void IncrementVMCalls();
 	void SetupFrame();
 	void SetupSimpleFrame();
-	void SetupSimpleFrameMissingArgs();
 	void SetupFullVMFrame();
 	void BindLabels();
 	void EmitOpcode();

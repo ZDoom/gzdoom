@@ -244,11 +244,18 @@ class PhosphorousFire : Actor
 	
 	override int DoSpecialDamage (Actor target, int damage, Name damagetype)
 	{
+		// This may look a bit weird but is the same as in SVE:
+		// For the bosses, only their regular 0.5 damage factor for fire applies.
+		let firedamage = target.ApplyDamageFactor('Fire', damage);
+		if (firedamage != damage) return damage;	// if the target has a factor, do nothing here. The factor will be applied elsewhere.
+
+		// For everything else damage is halved, for robots quartered.
+		damage >>= 1;
 		if (target.bNoBlood)
 		{
-			return damage / 2;
+			damage >>= 1;
 		}
-		return Super.DoSpecialDamage (target, damage, damagetype);
+		return damage;
 	}
 	
 	// This function is mostly redundant and only kept in case some mod references it.

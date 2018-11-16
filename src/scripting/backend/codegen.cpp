@@ -4011,7 +4011,7 @@ FxExpression *FxShift::Resolve(FCompileContext& ctx)
 	if (left->IsNumeric() && right->IsNumeric())
 	{
 		if (!Promote(ctx, true)) return nullptr;
-		if (ValueType == TypeUInt32 && Operator == TK_RShift) Operator = TK_URShift;
+		if ((left->ValueType == TypeUInt32 && ctx.Version >= MakeVersion(3, 7)) && Operator == TK_RShift) Operator = TK_URShift;
 	}
 	else
 	{

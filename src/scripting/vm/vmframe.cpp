@@ -221,10 +221,17 @@ int VMScriptFunction::PCToLine(const VMOP *pc)
 	return -1;
 }
 
+static bool CanJit(VMScriptFunction *func)
+{
+	// Asmjit has a 256 register limit. Stay safely away from it as the jit compiler uses a few for temporaries as well.
+	// Any function exceeding the limit will use the VM - a fair punishment to someone for writing a function so bloated ;)
+	return func->NumRegA + func->NumRegD + func->NumRegF + func->NumRegS < 200;
+}
+
 int VMScriptFunction::FirstScriptCall(VMFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret)
 {
 #ifdef ARCH_X64
-	if (vm_jit)
+	if (vm_jit && CanJit(static_cast<VMScriptFunction*>(func)))
 	{
 		func->ScriptCall = JitCompile(static_cast<VMScriptFunction*>(func));
 		if (!func->ScriptCall)

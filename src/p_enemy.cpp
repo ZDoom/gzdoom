@@ -599,7 +599,7 @@ bool P_Move (AActor *actor)
 
 	// [RH] I'm not so sure this is such a good idea
 	// [GZ] That's why it's compat-optioned.
-	if (compatflags & COMPATF_MBFMONSTERMOVE)
+	if (compatflags & COMPATF_MBFMONSTERMOVE && !(actor->flags8 & MF8_NOFRICTION))
 	{
 		// killough 10/98: make monsters get affected by ice and sludge too:
 		movefactor = P_GetMoveFactor (actor, &friction);

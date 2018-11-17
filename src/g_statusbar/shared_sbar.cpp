@@ -417,8 +417,8 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, SetSize)
 	PARAM_INT(rt);
 	PARAM_INT(vw);
 	PARAM_INT(vh);
-	PARAM_INT_DEF(hvw);
-	PARAM_INT_DEF(hvh);
+	PARAM_INT(hvw);
+	PARAM_INT(hvh);
 	self->SetSize(rt, vw, vh, hvw, hvh);
 	return 0;
 }
@@ -555,10 +555,10 @@ void DBaseStatusBar::BeginStatusBar(int resW, int resH, int relTop, bool forceSc
 DEFINE_ACTION_FUNCTION(DBaseStatusBar, BeginStatusBar)
 {
 	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_BOOL_DEF(fs);
-	PARAM_INT_DEF(w);
-	PARAM_INT_DEF(h);
-	PARAM_INT_DEF(r);
+	PARAM_BOOL(fs);
+	PARAM_INT(w);
+	PARAM_INT(h);
+	PARAM_INT(r);
 	self->BeginStatusBar(w, h, r, fs);
 	return 0;
 }
@@ -580,10 +580,10 @@ void DBaseStatusBar::BeginHUD(int resW, int resH, double Alpha, bool forcescaled
 DEFINE_ACTION_FUNCTION(DBaseStatusBar, BeginHUD)
 {
 	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_FLOAT_DEF(a);
-	PARAM_BOOL_DEF(fs);
-	PARAM_INT_DEF(w);
-	PARAM_INT_DEF(h);
+	PARAM_FLOAT(a);
+	PARAM_BOOL(fs);
+	PARAM_INT(w);
+	PARAM_INT(h);
 	self->BeginHUD(w, h, a, fs);
 	return 0;
 }
@@ -736,8 +736,8 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, AttachMessage)
 {
 	PARAM_SELF_PROLOGUE(DBaseStatusBar);
 	PARAM_OBJECT(msg, DHUDMessageBase);
-	PARAM_UINT_DEF(id);
-	PARAM_INT_DEF(layer);
+	PARAM_UINT(id);
+	PARAM_INT(layer);
 	self->AttachMessage(msg, id, layer);
 	return 0;
 }
@@ -1508,9 +1508,9 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, StatusbarToRealCoords)
 {
 	PARAM_SELF_PROLOGUE(DBaseStatusBar);
 	PARAM_FLOAT(x);
-	PARAM_FLOAT_DEF(y);
-	PARAM_FLOAT_DEF(w);
-	PARAM_FLOAT_DEF(h);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
 	self->StatusbarToRealCoords(x, y, w, h);
 	if (numret > 0) ret[0].SetFloat(x);
 	if (numret > 1) ret[1].SetFloat(y);
@@ -1657,12 +1657,12 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawTexture)
 	PARAM_INT(texid);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
-	PARAM_INT_DEF(flags);
-	PARAM_FLOAT_DEF(alpha);
-	PARAM_FLOAT_DEF(w);
-	PARAM_FLOAT_DEF(h);
-	PARAM_FLOAT_DEF(scaleX);
-	PARAM_FLOAT_DEF(scaleY);
+	PARAM_INT(flags);
+	PARAM_FLOAT(alpha);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
+	PARAM_FLOAT(scaleX);
+	PARAM_FLOAT(scaleY);
 	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 	self->DrawGraphic(FSetTextureID(texid), x, y, flags, alpha, w, h, scaleX, scaleY);
 	return 0;
@@ -1674,12 +1674,12 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawImage)
 	PARAM_STRING(texid);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
-	PARAM_INT_DEF(flags);
-	PARAM_FLOAT_DEF(alpha);
-	PARAM_FLOAT_DEF(w);
-	PARAM_FLOAT_DEF(h);
-	PARAM_FLOAT_DEF(scaleX);
-	PARAM_FLOAT_DEF(scaleY);
+	PARAM_INT(flags);
+	PARAM_FLOAT(alpha);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
+	PARAM_FLOAT(scaleX);
+	PARAM_FLOAT(scaleY);
 	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 	self->DrawGraphic(TexMan.CheckForTexture(texid, ETextureType::Any), x, y, flags, alpha, w, h, scaleX, scaleY);
 	return 0;
@@ -1714,10 +1714,10 @@ DEFINE_ACTION_FUNCTION(DHUDFont, Create)
 {
 	PARAM_PROLOGUE;
 	PARAM_POINTER(fnt, FFont);
-	PARAM_INT_DEF(spac);
-	PARAM_BOOL_DEF(mono);
-	PARAM_INT_DEF(sx);
-	PARAM_INT_DEF(sy);
+	PARAM_INT(spac);
+	PARAM_BOOL(mono);
+	PARAM_INT(sx);
+	PARAM_INT(sy);
 	ACTION_RETURN_POINTER(Create<DHUDFont>(fnt, spac, mono, sy, sy));
 }
 
@@ -1860,11 +1860,11 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawString)
 	PARAM_STRING(string);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
-	PARAM_INT_DEF(flags);
-	PARAM_INT_DEF(trans);
-	PARAM_FLOAT_DEF(alpha);
-	PARAM_INT_DEF(wrapwidth);
-	PARAM_INT_DEF(linespacing);
+	PARAM_INT(flags);
+	PARAM_INT(trans);
+	PARAM_FLOAT(alpha);
+	PARAM_INT(wrapwidth);
+	PARAM_INT(linespacing);
 
 	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 
@@ -1958,7 +1958,7 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, TransformRect)
 	PARAM_FLOAT(y);
 	PARAM_FLOAT(w);
 	PARAM_FLOAT(h);
-	PARAM_INT_DEF(flags);
+	PARAM_INT(flags);
 	self->TransformRect(x, y, w, h, flags);
 	if (numret > 0) ret[0].SetFloat(x);
 	if (numret > 1) ret[1].SetFloat(y);
@@ -1997,7 +1997,7 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, Fill)
 	PARAM_FLOAT(y);
 	PARAM_FLOAT(w);
 	PARAM_FLOAT(h);
-	PARAM_INT_DEF(flags);
+	PARAM_INT(flags);
 	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 	self->Fill(color, x, y, w, h, flags);
 	return 0;
@@ -2027,7 +2027,7 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, SetClipRect)
 	PARAM_FLOAT(y);
 	PARAM_FLOAT(w);
 	PARAM_FLOAT(h);
-	PARAM_INT_DEF(flags);
+	PARAM_INT(flags);
 	self->SetClipRect(x, y, w, h, flags);
 	return 0;
 }
@@ -2126,10 +2126,10 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, FormatNumber)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(number);
-	PARAM_INT_DEF(minsize);
-	PARAM_INT_DEF(maxsize);
-	PARAM_INT_DEF(flags);
-	PARAM_STRING_DEF(prefix);
+	PARAM_INT(minsize);
+	PARAM_INT(maxsize);
+	PARAM_INT(flags);
+	PARAM_STRING(prefix);
 	static int maxvals[] = { 1, 9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999 };
 
 	if (number == 0 && (flags & FNF_WHENNOTZERO)) ACTION_RETURN_STRING("");
@@ -2155,8 +2155,8 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetMugshot)
 {
 	PARAM_SELF_PROLOGUE(DBaseStatusBar);
 	PARAM_INT(accuracy);
-	PARAM_INT_DEF(stateflags);
-	PARAM_STRING_DEF(def_face);
+	PARAM_INT(stateflags);
+	PARAM_STRING(def_face);
 	auto tex = self->mugshot.GetFace(self->CPlayer, def_face, accuracy, (FMugShot::StateFlags)stateflags);
 	ACTION_RETURN_INT(tex ? tex->id.GetIndex() : -1);
 }

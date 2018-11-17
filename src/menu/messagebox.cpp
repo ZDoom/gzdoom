@@ -270,8 +270,8 @@ DEFINE_ACTION_FUNCTION(DMenu, StartMessage)
 {
 	PARAM_PROLOGUE;
 	PARAM_STRING(msg);
-	PARAM_INT_DEF(mode);
-	PARAM_NAME_DEF(action);
+	PARAM_INT(mode);
+	PARAM_NAME(action);
 	M_StartMessage(msg, mode, action);
 	return 0;
 }

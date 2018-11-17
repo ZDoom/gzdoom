@@ -522,7 +522,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckKeys)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(locknum);
 	PARAM_BOOL(remote);
-	PARAM_BOOL_DEF(quiet);
+	PARAM_BOOL(quiet);
 	ACTION_RETURN_BOOL(P_CheckKeys(self, locknum, remote, quiet));
 }
 

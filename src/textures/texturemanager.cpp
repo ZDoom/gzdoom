@@ -265,7 +265,7 @@ DEFINE_ACTION_FUNCTION(_TexMan, CheckForTexture)
 	PARAM_PROLOGUE;
 	PARAM_STRING(name);
 	PARAM_INT(type);
-	PARAM_INT_DEF(flags);
+	PARAM_INT(flags);
 	ACTION_RETURN_INT(TexMan.CheckForTexture(name, static_cast<ETextureType>(type), flags).GetIndex());
 }
 

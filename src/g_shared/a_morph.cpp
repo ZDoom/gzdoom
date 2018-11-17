@@ -180,8 +180,8 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, MorphPlayer)
 	PARAM_CLASS(spawntype, APlayerPawn);
 	PARAM_INT(duration);
 	PARAM_INT(style);
-	PARAM_CLASS_DEF(enter_flash, AActor);
-	PARAM_CLASS_DEF(exit_flash, AActor);
+	PARAM_CLASS(enter_flash, AActor);
+	PARAM_CLASS(exit_flash, AActor);
 	ACTION_RETURN_BOOL(P_MorphPlayer(activator, self, spawntype, duration, style, enter_flash, exit_flash));
 }
 
@@ -396,8 +396,8 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, UndoPlayerMorph)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
 	PARAM_POINTER_NOT_NULL(player, player_t);
-	PARAM_INT_DEF(unmorphflag);
-	PARAM_BOOL_DEF(force);
+	PARAM_INT(unmorphflag);
+	PARAM_BOOL(force);
 	ACTION_RETURN_BOOL(P_UndoPlayerMorph(self, player, unmorphflag, force));
 }
 
@@ -466,8 +466,8 @@ DEFINE_ACTION_FUNCTION(AActor, MorphMonster)
 	PARAM_CLASS(spawntype, AActor);
 	PARAM_INT(duration);
 	PARAM_INT(style);
-	PARAM_CLASS_DEF(enter_flash, AActor);
-	PARAM_CLASS_DEF(exit_flash, AActor);
+	PARAM_CLASS(enter_flash, AActor);
+	PARAM_CLASS(exit_flash, AActor);
 	ACTION_RETURN_BOOL(P_MorphMonster(self, spawntype, duration, style, enter_flash, exit_flash));
 }
 
@@ -725,10 +725,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_Morph)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS(type, AActor);
-	PARAM_INT_DEF(duration);
-	PARAM_INT_DEF(flags);
-	PARAM_CLASS_DEF(enter_flash, AActor);
-	PARAM_CLASS_DEF(exit_flash, AActor);
+	PARAM_INT(duration);
+	PARAM_INT(flags);
+	PARAM_CLASS(enter_flash, AActor);
+	PARAM_CLASS(exit_flash, AActor);
 	bool res = false;
 	if (self->player)
 	{

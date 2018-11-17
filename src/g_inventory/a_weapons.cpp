@@ -298,8 +298,8 @@ DEFINE_ACTION_FUNCTION(AWeapon, CheckAmmo)
 	PARAM_SELF_PROLOGUE(AWeapon);
 	PARAM_INT(mode);
 	PARAM_BOOL(autoswitch);
-	PARAM_BOOL_DEF(require);
-	PARAM_INT_DEF(ammocnt);
+	PARAM_BOOL(require);
+	PARAM_INT(ammocnt);
 	ACTION_RETURN_BOOL(self->DoCheckAmmo(mode, autoswitch, require, ammocnt));
 }
 
@@ -376,8 +376,8 @@ DEFINE_ACTION_FUNCTION(AWeapon, DepleteAmmo)
 {
 	PARAM_SELF_PROLOGUE(AWeapon);
 	PARAM_BOOL(altfire);
-	PARAM_BOOL_DEF(checkenough);
-	PARAM_INT_DEF(ammouse);
+	PARAM_BOOL(checkenough);
+	PARAM_INT(ammouse);
 	ACTION_RETURN_BOOL(self->DoDepleteAmmo(altfire, checkenough, ammouse));
 }
 

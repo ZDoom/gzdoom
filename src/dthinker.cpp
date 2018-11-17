@@ -979,8 +979,8 @@ IMPLEMENT_CLASS(DThinkerIterator, true, false);
 DEFINE_ACTION_FUNCTION(DThinkerIterator, Create)
 {
 	PARAM_PROLOGUE;
-	PARAM_CLASS_DEF(type, DThinker);
-	PARAM_INT_DEF(statnum);
+	PARAM_CLASS(type, DThinker);
+	PARAM_INT(statnum);
 	ACTION_RETURN_OBJECT(Create<DThinkerIterator>(type, statnum));
 }
 

@@ -1656,7 +1656,7 @@ DEFINE_ACTION_FUNCTION(DObject, G_PickPlayerStart)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(playernum);
-	PARAM_INT_DEF(flags);
+	PARAM_INT(flags);
 	auto ps = G_PickPlayerStart(playernum, flags);
 	if (numret > 1)
 	{
@@ -2976,7 +2976,7 @@ void G_StartSlideshow(FName whichone)
 DEFINE_ACTION_FUNCTION(FLevelLocals, StartSlideshow)
 {
 	PARAM_PROLOGUE;
-	PARAM_NAME_DEF(whichone);
+	PARAM_NAME(whichone);
 	G_StartSlideshow(whichone);
 	return 0;
 }

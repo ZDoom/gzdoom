@@ -5512,7 +5512,7 @@ FxExpression *FxRandom::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-int BuiltinRandom(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+int BuiltinRandom(VMValue *param, int numparam, VMReturn *ret, int numret)
 {
 	PARAM_PROLOGUE;
 	PARAM_POINTER(rng, FRandom);
@@ -5744,7 +5744,7 @@ FxFRandom::FxFRandom(FRandom *r, FxExpression *mi, FxExpression *ma, const FScri
 //
 //==========================================================================
 
-int BuiltinFRandom(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+int BuiltinFRandom(VMValue *param, int numparam, VMReturn *ret, int numret)
 {
 	PARAM_PROLOGUE;
 	PARAM_POINTER(rng, FRandom);
@@ -5850,7 +5850,7 @@ FxExpression *FxRandom2::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-int BuiltinRandom2(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+int BuiltinRandom2(VMValue *param, int numparam, VMReturn *ret, int numret)
 {
 	PARAM_PROLOGUE;
 	PARAM_POINTER(rng, FRandom);
@@ -5938,7 +5938,7 @@ FxExpression *FxRandomSeed::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-int BuiltinRandomSeed(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+int BuiltinRandomSeed(VMValue *param, int numparam, VMReturn *ret, int numret)
 {
 	PARAM_PROLOGUE;
 	PARAM_POINTER(rng, FRandom)
@@ -8624,16 +8624,16 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-int BuiltinCallLineSpecial(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+int BuiltinCallLineSpecial(VMValue *param, int numparam, VMReturn *ret, int numret)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(special);
 	PARAM_OBJECT(activator, AActor);
-	PARAM_INT_DEF(arg1);
-	PARAM_INT_DEF(arg2);
-	PARAM_INT_DEF(arg3);
-	PARAM_INT_DEF(arg4);
-	PARAM_INT_DEF(arg5);
+	PARAM_INT(arg1);
+	PARAM_INT(arg2);
+	PARAM_INT(arg3);
+	PARAM_INT(arg4);
+	PARAM_INT(arg5);
 
 	ACTION_RETURN_INT(P_ExecuteSpecial(special, nullptr, activator, 0, arg1, arg2, arg3, arg4, arg5));
 }
@@ -10898,7 +10898,7 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-int BuiltinNameToClass(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+int BuiltinNameToClass(VMValue *param, int numparam, VMReturn *ret, int numret)
 {
 	PARAM_PROLOGUE;
 	PARAM_NAME(clsname);
@@ -11023,7 +11023,7 @@ FxExpression *FxClassPtrCast::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-int BuiltinClassCast(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+int BuiltinClassCast(VMValue *param, int numparam, VMReturn *ret, int numret)
 {
 	PARAM_PROLOGUE;
 	PARAM_CLASS(from, DObject);

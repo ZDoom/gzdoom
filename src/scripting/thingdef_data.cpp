@@ -1008,7 +1008,7 @@ DEFINE_ACTION_FUNCTION(FStringTable, Localize)
 {
 	PARAM_PROLOGUE;
 	PARAM_STRING(label);
-	PARAM_BOOL_DEF(prefixed);
+	PARAM_BOOL(prefixed);
 	if (!prefixed) ACTION_RETURN_STRING(GStrings(label));
 	if (label[0] != '$') ACTION_RETURN_STRING(label);
 	ACTION_RETURN_STRING(GStrings(&label[1]));
@@ -1184,7 +1184,7 @@ FString FStringFormat(VM_ARGS)
 DEFINE_ACTION_FUNCTION(FStringStruct, Format)
 {
 	PARAM_PROLOGUE;
-	FString s = FStringFormat(param, defaultparam, numparam, ret, numret);
+	FString s = FStringFormat(param, numparam, ret, numret);
 	ACTION_RETURN_STRING(s);
 }
 
@@ -1192,7 +1192,7 @@ DEFINE_ACTION_FUNCTION(FStringStruct, AppendFormat)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
 	// first parameter is the self pointer
-	FString s = FStringFormat(param+1, defaultparam, numparam-1, ret, numret);
+	FString s = FStringFormat(param+1, numparam-1, ret, numret);
 	(*self) += s;
 	return 0;
 }
@@ -1200,8 +1200,8 @@ DEFINE_ACTION_FUNCTION(FStringStruct, AppendFormat)
 DEFINE_ACTION_FUNCTION(FStringStruct, Mid)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_UINT_DEF(pos);
-	PARAM_UINT_DEF(len);
+	PARAM_UINT(pos);
+	PARAM_UINT(len);
 	FString s = self->Mid(pos, len);
 	ACTION_RETURN_STRING(s);
 }
@@ -1262,7 +1262,7 @@ DEFINE_ACTION_FUNCTION(FStringStruct, IndexOf)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
 	PARAM_STRING(substr);
-	PARAM_INT_DEF(startIndex);
+	PARAM_INT(startIndex);
 	ACTION_RETURN_INT(self->IndexOf(substr, startIndex));
 }
 
@@ -1270,7 +1270,7 @@ DEFINE_ACTION_FUNCTION(FStringStruct, LastIndexOf)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
 	PARAM_STRING(substr);
-	PARAM_INT_DEF(endIndex);
+	PARAM_INT(endIndex);
 	ACTION_RETURN_INT(self->LastIndexOfBroken(substr, endIndex));
 }
 
@@ -1278,7 +1278,7 @@ DEFINE_ACTION_FUNCTION(FStringStruct, RightIndexOf)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
 	PARAM_STRING(substr);
-	PARAM_INT_DEF(endIndex);
+	PARAM_INT(endIndex);
 	ACTION_RETURN_INT(self->LastIndexOf(substr, endIndex));
 }
 
@@ -1299,7 +1299,7 @@ DEFINE_ACTION_FUNCTION(FStringStruct, ToLower)
 DEFINE_ACTION_FUNCTION(FStringStruct, ToInt)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_INT_DEF(base);
+	PARAM_INT(base);
 	ACTION_RETURN_INT(self->ToLong(base));
 }
 
@@ -1314,7 +1314,7 @@ DEFINE_ACTION_FUNCTION(FStringStruct, Split)
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
 	PARAM_POINTER(tokens, TArray<FString>);
 	PARAM_STRING(delimiter);
-	PARAM_INT_DEF(keepEmpty);
+	PARAM_INT(keepEmpty);
 	self->Split(*tokens, delimiter, static_cast<FString::EmptyTokenType>(keepEmpty));
 	return 0;
 }

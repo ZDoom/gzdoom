@@ -404,9 +404,9 @@ DEFINE_ACTION_FUNCTION(ASpecialSpot, A_SpawnSingleItem)
 {
 	PARAM_SELF_PROLOGUE(ASpecialSpot);
 	PARAM_CLASS_NOT_NULL(cls, AActor);
-	PARAM_INT_DEF	(fail_sp) 
-	PARAM_INT_DEF	(fail_co) 
-	PARAM_INT_DEF	(fail_dm) 
+	PARAM_INT	(fail_sp) 
+	PARAM_INT	(fail_co) 
+	PARAM_INT	(fail_dm) 
 
 	AActor *spot = NULL;
 	DSpotState *state = DSpotState::GetSpotState();

@@ -1385,7 +1385,7 @@ int APlayerPawn::GetMaxHealth(bool withupgrades) const
 DEFINE_ACTION_FUNCTION(APlayerPawn, GetMaxHealth)
 {
 	PARAM_SELF_PROLOGUE(APlayerPawn);
-	PARAM_BOOL_DEF(withupgrades);
+	PARAM_BOOL(withupgrades);
 	ACTION_RETURN_INT(self->GetMaxHealth(withupgrades));
 }
 
@@ -1445,7 +1445,7 @@ bool APlayerPawn::ResetAirSupply (bool playgasp)
 DEFINE_ACTION_FUNCTION(APlayerPawn, ResetAirSupply)
 {
 	PARAM_SELF_PROLOGUE(APlayerPawn);
-	PARAM_BOOL_DEF(playgasp);
+	PARAM_BOOL(playgasp);
 	ACTION_RETURN_BOOL(self->ResetAirSupply(playgasp));
 }
 
@@ -1771,7 +1771,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 DEFINE_ACTION_FUNCTION(AActor, A_SkullPop)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS_DEF(spawntype, APlayerPawn);
+	PARAM_CLASS(spawntype, APlayerPawn);
 
 	APlayerPawn *mo;
 	player_t *player;

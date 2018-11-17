@@ -728,8 +728,8 @@ DEFINE_ACTION_FUNCTION(AActor, Die)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT(source, AActor);
 	PARAM_OBJECT(inflictor, AActor);
-	PARAM_INT_DEF(dmgflags);
-	PARAM_NAME_DEF(MeansOfDeath);
+	PARAM_INT(dmgflags);
+	PARAM_NAME(MeansOfDeath);
 	self->Die(source, inflictor, dmgflags, MeansOfDeath);
 	return 0;
 }
@@ -1635,8 +1635,8 @@ DEFINE_ACTION_FUNCTION(AActor, DamageMobj)
 	PARAM_OBJECT(source, AActor);
 	PARAM_INT(damage);
 	PARAM_NAME(mod);
-	PARAM_INT_DEF(flags);
-	PARAM_FLOAT_DEF(angle);
+	PARAM_INT(flags);
+	PARAM_FLOAT(angle);
 
 	// [ZZ] event handlers need the result.
 	bool needevent = true;

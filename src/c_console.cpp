@@ -1294,7 +1294,7 @@ DEFINE_ACTION_FUNCTION(_Console, HideConsole)
 DEFINE_ACTION_FUNCTION(_Console, Printf)
 {
 	PARAM_PROLOGUE;
-	FString s = FStringFormat(param, defaultparam, numparam, ret, numret);
+	FString s = FStringFormat(param, numparam, ret, numret);
 	Printf("%s\n", s.GetChars());
 	return 0;
 }
@@ -1788,7 +1788,7 @@ DEFINE_ACTION_FUNCTION(_Console, MidPrint)
 	PARAM_PROLOGUE;
 	PARAM_POINTER_NOT_NULL(fnt, FFont);
 	PARAM_STRING(text);
-	PARAM_BOOL_DEF(bold);
+	PARAM_BOOL(bold);
 
 	const char *txt = text[0] == '$'? GStrings(&text[1]) : text.GetChars();
 	if (!bold) C_MidPrint(fnt, txt);

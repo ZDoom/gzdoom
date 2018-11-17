@@ -697,7 +697,7 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 				try
 				{
 					VMCycles[0].Unclock();
-					numret = static_cast<VMNativeFunction *>(call)->NativeCall(reg.param + f->NumParam - b, call->DefaultArgs, b, returns, C);
+					numret = static_cast<VMNativeFunction *>(call)->NativeCall(reg.param + f->NumParam - b, b, returns, C);
 					VMCycles[0].Clock();
 				}
 				catch (CVMAbortException &err)
@@ -738,7 +738,7 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 				try
 				{
 					VMCycles[0].Unclock();
-					auto r = static_cast<VMNativeFunction *>(call)->NativeCall(reg.param + f->NumParam - B, call->DefaultArgs, B, ret, numret);
+					auto r = static_cast<VMNativeFunction *>(call)->NativeCall(reg.param + f->NumParam - B, B, ret, numret);
 					VMCycles[0].Clock();
 					return r;
 				}

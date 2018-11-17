@@ -473,11 +473,11 @@ DEFINE_ACTION_FUNCTION(DCeiling, CreateCeiling)
 	PARAM_POINTER(ln, line_t);
 	PARAM_FLOAT(speed);
 	PARAM_FLOAT(speed2);
-	PARAM_FLOAT_DEF(height);
-	PARAM_INT_DEF(crush);
-	PARAM_INT_DEF(silent);
-	PARAM_INT_DEF(change);
-	PARAM_INT_DEF(crushmode);
+	PARAM_FLOAT(height);
+	PARAM_INT(crush);
+	PARAM_INT(silent);
+	PARAM_INT(change);
+	PARAM_INT(crushmode);
 	ACTION_RETURN_BOOL(P_CreateCeiling(sec, (DCeiling::ECeiling)type, ln, 0, speed, speed2, height, crush, silent, change, (DCeiling::ECrushMode)crushmode));
 }
 

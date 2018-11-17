@@ -2097,9 +2097,9 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, SphericalCoords)
 	PARAM_FLOAT(targetX);
 	PARAM_FLOAT(targetY);
 	PARAM_FLOAT(targetZ);
-	PARAM_ANGLE_DEF(viewYaw);
-	PARAM_ANGLE_DEF(viewPitch);
-	PARAM_BOOL_DEF(absolute);
+	PARAM_ANGLE(viewYaw);
+	PARAM_ANGLE(viewPitch);
+	PARAM_BOOL(absolute);
 
 	DVector3 viewpoint(viewpointX, viewpointY, viewpointZ);
 	DVector3 target(targetX, targetY, targetZ);
@@ -2119,7 +2119,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, Vec2Offset)
 	PARAM_FLOAT(y);
 	PARAM_FLOAT(dx);
 	PARAM_FLOAT(dy);
-	PARAM_BOOL_DEF(absolute);
+	PARAM_BOOL(absolute);
 	if (absolute)
 	{
 		ACTION_RETURN_VEC2(DVector2(x + dx, y + dy));
@@ -2139,7 +2139,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, Vec2OffsetZ)
 	PARAM_FLOAT(dx);
 	PARAM_FLOAT(dy);
 	PARAM_FLOAT(atz);
-	PARAM_BOOL_DEF(absolute);
+	PARAM_BOOL(absolute);
 	if (absolute)
 	{
 		ACTION_RETURN_VEC3(DVector3(x + dx, y + dy, atz));
@@ -2160,7 +2160,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, Vec3Offset)
 	PARAM_FLOAT(dx);
 	PARAM_FLOAT(dy);
 	PARAM_FLOAT(dz);
-	PARAM_BOOL_DEF(absolute);
+	PARAM_BOOL(absolute);
 	if (absolute)
 	{
 		ACTION_RETURN_VEC3(DVector3(x + dx, y + dy, z + dz));

@@ -1342,8 +1342,8 @@ DEFINE_ACTION_FUNCTION(DObject, S_Sound)
 	PARAM_PROLOGUE;
 	PARAM_SOUND(id);
 	PARAM_INT(channel);
-	PARAM_FLOAT_DEF(volume);
-	PARAM_FLOAT_DEF(attn);
+	PARAM_FLOAT(volume);
+	PARAM_FLOAT(attn);
 	S_Sound(channel, id, static_cast<float>(volume), static_cast<float>(attn));
 	return 0;
 }
@@ -2736,9 +2736,9 @@ DEFINE_ACTION_FUNCTION(DObject, S_ChangeMusic)
 {
 	PARAM_PROLOGUE;
 	PARAM_STRING(music);
-	PARAM_INT_DEF(order);
-	PARAM_BOOL_DEF(looping);
-	PARAM_BOOL_DEF(force);
+	PARAM_INT(order);
+	PARAM_BOOL(looping);
+	PARAM_BOOL(force);
 	ACTION_RETURN_BOOL(S_ChangeMusic(music, order, looping, force));
 }
 

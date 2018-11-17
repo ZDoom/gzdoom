@@ -240,7 +240,7 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, SetPSprite)	// the underscore is needed to g
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
 	PARAM_INT(id);
 	PARAM_POINTER(state, FState);
-	PARAM_BOOL_DEF(pending);
+	PARAM_BOOL(pending);
 	P_SetPsprite(self, (PSPLayers)id, state, pending);
 	return 0;
 }
@@ -540,7 +540,7 @@ DEFINE_ACTION_FUNCTION(DPSprite, SetState)
 {
 	PARAM_SELF_PROLOGUE(DPSprite);
 	PARAM_POINTER(state, FState);
-	PARAM_BOOL_DEF(pending);
+	PARAM_BOOL(pending);
 	self->SetState(state, pending);
 	return 0;
 }
@@ -856,7 +856,7 @@ void DoReadyWeaponToGeneric(AActor *self, int paramflags)
 DEFINE_ACTION_FUNCTION(AStateProvider, A_WeaponReady)
 {
 	PARAM_ACTION_PROLOGUE(AStateProvider);
-	PARAM_INT_DEF(flags);
+	PARAM_INT(flags);
 
 													DoReadyWeaponToSwitch(self, !(flags & WRF_NoSwitch));
 	if ((flags & WRF_NoFire) != WRF_NoFire)			DoReadyWeaponToFire(self, !(flags & WRF_NoPrimary), !(flags & WRF_NoSecondary));
@@ -972,10 +972,10 @@ void A_OverlayOffset(AActor *self, int layer, double wx, double wy, int flags)
 DEFINE_ACTION_FUNCTION(AActor, A_OverlayOffset)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
-	PARAM_INT_DEF(layer)
-	PARAM_FLOAT_DEF(wx)	
-	PARAM_FLOAT_DEF(wy)	
-	PARAM_INT_DEF(flags)
+	PARAM_INT(layer)
+	PARAM_FLOAT(wx)	
+	PARAM_FLOAT(wy)	
+	PARAM_INT(flags)
 	A_OverlayOffset(self, ((layer != 0) ? layer : stateinfo->mPSPIndex), wx, wy, flags);
 	return 0;
 }
@@ -983,9 +983,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayOffset)
 DEFINE_ACTION_FUNCTION(AActor, A_WeaponOffset)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT_DEF(wx)	
-	PARAM_FLOAT_DEF(wy)	
-	PARAM_INT_DEF(flags)
+	PARAM_FLOAT(wx)	
+	PARAM_FLOAT(wy)	
+	PARAM_INT(flags)
 	A_OverlayOffset(self, PSP_WEAPON, wx, wy, flags);
 	return 0;
 }
@@ -1042,7 +1042,7 @@ static double GetOverlayPosition(AActor *self, int layer, bool gety)
 DEFINE_ACTION_FUNCTION(AActor, OverlayX)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
-	PARAM_INT_DEF(layer);
+	PARAM_INT(layer);
 
 	if (ACTION_CALL_FROM_PSPRITE())
 	{
@@ -1055,7 +1055,7 @@ DEFINE_ACTION_FUNCTION(AActor, OverlayX)
 DEFINE_ACTION_FUNCTION(AActor, OverlayY)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
-	PARAM_INT_DEF(layer);
+	PARAM_INT(layer);
 
 	if (ACTION_CALL_FROM_PSPRITE())
 	{
@@ -1108,7 +1108,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayAlpha)
 DEFINE_ACTION_FUNCTION(AActor, OverlayAlpha)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
-	PARAM_INT_DEF(layer);
+	PARAM_INT(layer);
 
 	if (ACTION_CALL_FROM_PSPRITE())
 	{
@@ -1156,8 +1156,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_Overlay)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_INT		(layer);
-	PARAM_STATE_ACTION_DEF(state);
-	PARAM_BOOL_DEF(dontoverride);
+	PARAM_STATE_ACTION(state);
+	PARAM_BOOL(dontoverride);
 
 	player_t *player = self->player;
 
@@ -1175,9 +1175,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Overlay)
 DEFINE_ACTION_FUNCTION(AActor, A_ClearOverlays)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT_DEF(start);
-	PARAM_INT_DEF(stop);
-	PARAM_BOOL_DEF(safety)
+	PARAM_INT(start);
+	PARAM_INT(stop);
+	PARAM_BOOL(safety)
 
 	if (self->player == nullptr)
 		ACTION_RETURN_INT(0);
@@ -1255,8 +1255,8 @@ DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimfla
 DEFINE_ACTION_FUNCTION(AActor, BulletSlope)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_POINTER_DEF(t, FTranslatedLineTarget);
-	PARAM_INT_DEF(aimflags);
+	PARAM_POINTER(t, FTranslatedLineTarget);
+	PARAM_INT(aimflags);
 	ACTION_RETURN_FLOAT(P_BulletSlope(self, t, aimflags).Degrees);
 }
 

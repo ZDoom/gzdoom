@@ -232,13 +232,12 @@ bool P_GetMidTexturePosition(const line_t *line, int sideno, double *ptextop, do
 	FTexture * tex= TexMan(texnum);
 	if (!tex) return false;
 
-	double totalscale = fabs(side->GetTextureYScale(side_t::mid)) * tex->GetScaleY();
-	double y_offset = side->GetTextureYOffset(side_t::mid);
-	double textureheight = tex->GetHeight() / totalscale;
-	if (totalscale != 1. && !tex->bWorldPanning)
-	{ 
-		y_offset /= totalscale;
-	}
+	FTexCoordInfo tci;
+
+	// We only need the vertical positioning info here.
+	tci.GetFromTexture(tex, 1., (float)side->GetTextureYScale(side_t::mid));
+	double y_offset = tci.RowOffset((float)side->GetTextureYOffset(side_t::mid));
+	double textureheight = tci.mRenderHeight;
 
 	if(line->flags & ML_DONTPEGBOTTOM)
 	{

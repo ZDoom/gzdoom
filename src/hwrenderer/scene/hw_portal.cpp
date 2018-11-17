@@ -185,6 +185,33 @@ void HWPortal::DrawPortalStencil(FRenderState &state, int pass)
 			mPrimIndices[i * 2] = lines[i].vertindex;
 			mPrimIndices[i * 2 + 1] = lines[i].vertcount;
 		}
+
+		if (NeedCap() && lines.Size() > 1 && planesused != 0)
+		{
+			screen->mVertexData->Map();
+			if (planesused & (1 << sector_t::floor))
+			{
+				auto verts = screen->mVertexData->AllocVertices(4);
+				auto ptr = verts.first;
+				ptr[0].Set((float)boundingBox.left, -32767.f, (float)boundingBox.top, 0, 0);
+				ptr[1].Set((float)boundingBox.right, -32767.f, (float)boundingBox.top, 0, 0);
+				ptr[2].Set((float)boundingBox.left, -32767.f, (float)boundingBox.bottom, 0, 0);
+				ptr[3].Set((float)boundingBox.right, -32767.f, (float)boundingBox.bottom, 0, 0);
+				mBottomCap = verts.second;
+			}
+			if (planesused & (1 << sector_t::ceiling))
+			{
+				auto verts = screen->mVertexData->AllocVertices(4);
+				auto ptr = verts.first;
+				ptr[0].Set((float)boundingBox.left, 32767.f, (float)boundingBox.top, 0, 0);
+				ptr[1].Set((float)boundingBox.right, 32767.f, (float)boundingBox.top, 0, 0);
+				ptr[2].Set((float)boundingBox.left, 32767.f, (float)boundingBox.bottom, 0, 0);
+				ptr[3].Set((float)boundingBox.right, 32767.f, (float)boundingBox.bottom, 0, 0);
+				mTopCap = verts.second;
+			}
+			screen->mVertexData->Unmap();
+		}
+
 	}
 	
 	for (unsigned int i = 0; i < mPrimIndices.Size(); i += 2)
@@ -196,26 +223,15 @@ void HWPortal::DrawPortalStencil(FRenderState &state, int pass)
 		// The cap's depth handling needs special treatment so that it won't block further portal caps.
 		if (pass == STP_DepthRestore) state.SetDepthRange(1, 1);
 
-		if (planesused & (1 << sector_t::floor))
+		if (mBottomCap != ~0u)
 		{
-			auto verts = screen->mVertexData->AllocVertices(4);
-			auto ptr = verts.first;
-			ptr[0].Set((float)boundingBox.left, -32767.f, (float)boundingBox.top, 0, 0);
-			ptr[1].Set((float)boundingBox.right, -32767.f, (float)boundingBox.top, 0, 0);
-			ptr[2].Set((float)boundingBox.left, -32767.f, (float)boundingBox.bottom, 0, 0);
-			ptr[3].Set((float)boundingBox.right, -32767.f, (float)boundingBox.bottom, 0, 0);
-			state.Draw(DT_TriangleStrip, verts.second, 4, false);
+			state.Draw(DT_TriangleStrip, mBottomCap, 4, false);
 		}
-		if (planesused & (1 << sector_t::ceiling))
+		if (mTopCap != ~0u)
 		{
-			auto verts = screen->mVertexData->AllocVertices(4);
-			auto ptr = verts.first;
-			ptr[0].Set((float)boundingBox.left, 32767.f, (float)boundingBox.top, 0, 0);
-			ptr[1].Set((float)boundingBox.right, 32767.f, (float)boundingBox.top, 0, 0);
-			ptr[2].Set((float)boundingBox.left, 32767.f, (float)boundingBox.bottom, 0, 0);
-			ptr[3].Set((float)boundingBox.right, 32767.f, (float)boundingBox.bottom, 0, 0);
-			state.Draw(DT_TriangleStrip, verts.second, 4, false);
+			state.Draw(DT_TriangleStrip, mTopCap, 4, false);
 		}
+
 		if (pass == STP_DepthRestore) state.SetDepthRange(0, 1);
 	}
 }

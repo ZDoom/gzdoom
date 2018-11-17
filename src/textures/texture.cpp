@@ -1351,6 +1351,11 @@ bool FTexture::ProcessData(unsigned char * buffer, int w, int h, bool ispatch)
 	if (bMasked)
 	{
 		bMasked = SmoothEdges(buffer, w, h);
+		if (!bMasked)
+		{
+			auto stex = GetRedirect();
+			stex->bMasked = false;	// also clear in the base texture if there is a redirection.
+		}
 		if (bMasked && !ispatch) FindHoles(buffer, w, h);
 	}
 	return true;
@@ -1543,3 +1548,119 @@ CCMD (printspans)
 #endif
 
 
+//===========================================================================
+//
+// Coordinate helper.
+// The only reason this is even needed is that many years ago someone
+// was convinced that having per-texel panning on walls was a good idea.
+// If it wasn't for this relatively useless feature the entire positioning
+// code for wall textures could be a lot simpler.
+//
+//===========================================================================
+
+//===========================================================================
+//
+// 
+//
+//===========================================================================
+
+float FTexCoordInfo::RowOffset(float rowoffset) const
+{
+	float tscale = fabs(mTempScale.Y);
+	float scale = fabs(mScale.Y);
+
+	if (tscale == 1.f)
+	{
+		if (scale == 1.f || mWorldPanning) return rowoffset;
+		else return rowoffset / scale;
+	}
+	else
+	{
+		if (mWorldPanning) return rowoffset / tscale;
+		else return rowoffset / scale;
+	}
+}
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
+
+float FTexCoordInfo::TextureOffset(float textureoffset) const
+{
+	float tscale = fabs(mTempScale.X);
+	float scale = fabs(mScale.X);
+	if (tscale == 1.f)
+	{
+		if (scale == 1.f || mWorldPanning) return textureoffset;
+		else return textureoffset / scale;
+	}
+	else
+	{
+		if (mWorldPanning) return textureoffset / tscale;
+		else return textureoffset / scale;
+	}
+}
+
+//===========================================================================
+//
+// Returns the size for which texture offset coordinates are used.
+//
+//===========================================================================
+
+float FTexCoordInfo::TextureAdjustWidth() const
+{
+	if (mWorldPanning)
+	{
+		float tscale = fabs(mTempScale.X);
+		if (tscale == 1.f) return (float)mRenderWidth;
+		else return mWidth / fabs(tscale);
+	}
+	else return (float)mWidth;
+}
+
+
+//===========================================================================
+//
+// Retrieve texture coordinate info for per-wall scaling
+//
+//===========================================================================
+
+void FTexCoordInfo::GetFromTexture(FTexture *tex, float x, float y)
+{
+	if (x == 1.f)
+	{
+		mRenderWidth = tex->GetScaledWidth();
+		mScale.X = (float)tex->Scale.X;
+		mTempScale.X = 1.f;
+	}
+	else
+	{
+		float scale_x = x * (float)tex->Scale.X;
+		mRenderWidth = xs_CeilToInt(tex->GetWidth() / scale_x);
+		mScale.X = scale_x;
+		mTempScale.X = x;
+	}
+
+	if (y == 1.f)
+	{
+		mRenderHeight = tex->GetScaledHeight();
+		mScale.Y = (float)tex->Scale.Y;
+		mTempScale.Y = 1.f;
+	}
+	else
+	{
+		float scale_y = y * (float)tex->Scale.Y;
+		mRenderHeight = xs_CeilToInt(tex->GetHeight() / scale_y);
+		mScale.Y = scale_y;
+		mTempScale.Y = y;
+	}
+	if (tex->bHasCanvas)
+	{
+		mScale.Y = -mScale.Y;
+		mRenderHeight = -mRenderHeight;
+	}
+	mWorldPanning = tex->bWorldPanning;
+	mWidth = tex->GetWidth();
+}

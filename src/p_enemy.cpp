@@ -2767,9 +2767,9 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 //==========================================================================
 // [MC] Code is almost a duplicate of CanCollideWith but with changes to
 // accommodate checking of just one actor.
-bool P_CanResurrect(AActor *tmthing, AActor *thing)
+bool P_CanResurrect(AActor *raiser, AActor *thing)
 {
-	if (tmthing == nullptr)
+	if (raiser == nullptr)
 		return false;
 
 	static unsigned VIndex = ~0u;
@@ -2779,12 +2779,12 @@ bool P_CanResurrect(AActor *tmthing, AActor *thing)
 		assert(VIndex != ~0u);
 	}
 
-	VMValue params[3] = { tmthing, thing, false };
+	VMValue params[3] = { raiser, thing, false };
 	VMReturn ret;
 	int retval;
 	ret.IntAt(&retval);
 
-	auto clss = tmthing->GetClass();
+	auto clss = raiser->GetClass();
 	VMFunction *func = clss->Virtuals.Size() > VIndex ? clss->Virtuals[VIndex] : nullptr;
 	if (func != nullptr)
 	{
@@ -2793,7 +2793,7 @@ bool P_CanResurrect(AActor *tmthing, AActor *thing)
 	}
 
 	// Pointless to be running it again if it's just self.
-	if (thing == nullptr || thing == tmthing)
+	if (thing == nullptr || thing == raiser)
 		return true;
 
 	std::swap(params[0].a, params[1].a);

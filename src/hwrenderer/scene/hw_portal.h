@@ -55,6 +55,7 @@ class HWPortal
 
 	ActorRenderFlags savedvisibility;
 	TArray<unsigned int> mPrimIndices;
+	unsigned int mTopCap = ~0u, mBottomCap = ~0u;
 
 	void DrawPortalStencil(FRenderState &state, int pass);
 

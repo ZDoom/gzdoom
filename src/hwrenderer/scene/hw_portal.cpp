@@ -196,26 +196,49 @@ void HWPortal::DrawPortalStencil(FRenderState &state, int pass)
 		// The cap's depth handling needs special treatment so that it won't block further portal caps.
 		if (pass == STP_DepthRestore) state.SetDepthRange(1, 1);
 
-		if (planesused & (1 << sector_t::floor))
+		const bool hasFloorPlane = planesused & (1 << sector_t::floor);
+		const bool hasCeilingPlane = planesused & (1 << sector_t::ceiling);
+
+		if (hasFloorPlane || hasCeilingPlane)
 		{
-			auto verts = screen->mVertexData->AllocVertices(4);
-			auto ptr = verts.first;
-			ptr[0].Set((float)boundingBox.left, -32767.f, (float)boundingBox.top, 0, 0);
-			ptr[1].Set((float)boundingBox.right, -32767.f, (float)boundingBox.top, 0, 0);
-			ptr[2].Set((float)boundingBox.left, -32767.f, (float)boundingBox.bottom, 0, 0);
-			ptr[3].Set((float)boundingBox.right, -32767.f, (float)boundingBox.bottom, 0, 0);
-			state.Draw(DT_TriangleStrip, verts.second, 4, false);
+			unsigned int floorVertexIndex;
+			unsigned int ceilingVertexIndex;
+
+			screen->mVertexData->Map();
+
+			if (hasFloorPlane)
+			{
+				auto verts = screen->mVertexData->AllocVertices(4);
+				auto ptr = verts.first;
+				ptr[0].Set((float)boundingBox.left, -32767.f, (float)boundingBox.top, 0, 0);
+				ptr[1].Set((float)boundingBox.right, -32767.f, (float)boundingBox.top, 0, 0);
+				ptr[2].Set((float)boundingBox.left, -32767.f, (float)boundingBox.bottom, 0, 0);
+				ptr[3].Set((float)boundingBox.right, -32767.f, (float)boundingBox.bottom, 0, 0);
+				floorVertexIndex = verts.second;
+			}
+			if (hasCeilingPlane)
+			{
+				auto verts = screen->mVertexData->AllocVertices(4);
+				auto ptr = verts.first;
+				ptr[0].Set((float)boundingBox.left, 32767.f, (float)boundingBox.top, 0, 0);
+				ptr[1].Set((float)boundingBox.right, 32767.f, (float)boundingBox.top, 0, 0);
+				ptr[2].Set((float)boundingBox.left, 32767.f, (float)boundingBox.bottom, 0, 0);
+				ptr[3].Set((float)boundingBox.right, 32767.f, (float)boundingBox.bottom, 0, 0);
+				ceilingVertexIndex = verts.second;
+			}
+
+			screen->mVertexData->Unmap();
+
+			if (hasFloorPlane)
+			{
+				state.Draw(DT_TriangleStrip, floorVertexIndex, 4, false);
+			}
+			if (hasCeilingPlane)
+			{
+				state.Draw(DT_TriangleStrip, ceilingVertexIndex, 4, false);
+			}
 		}
-		if (planesused & (1 << sector_t::ceiling))
-		{
-			auto verts = screen->mVertexData->AllocVertices(4);
-			auto ptr = verts.first;
-			ptr[0].Set((float)boundingBox.left, 32767.f, (float)boundingBox.top, 0, 0);
-			ptr[1].Set((float)boundingBox.right, 32767.f, (float)boundingBox.top, 0, 0);
-			ptr[2].Set((float)boundingBox.left, 32767.f, (float)boundingBox.bottom, 0, 0);
-			ptr[3].Set((float)boundingBox.right, 32767.f, (float)boundingBox.bottom, 0, 0);
-			state.Draw(DT_TriangleStrip, verts.second, 4, false);
-		}
+
 		if (pass == STP_DepthRestore) state.SetDepthRange(0, 1);
 	}
 }

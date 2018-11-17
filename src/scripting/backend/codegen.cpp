@@ -5453,7 +5453,7 @@ FxRandom::FxRandom(EFxType type, FRandom * r, const FScriptPosition &pos)
 //
 //==========================================================================
 FxRandom::FxRandom(FRandom * r, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos, bool nowarn)
-	: FxRandom(EFX_Random, rng, pos)
+	: FxRandom(EFX_Random, r, pos)
 {
 	assert(mi && ma);
 	min = new FxIntCast(mi, nowarn);

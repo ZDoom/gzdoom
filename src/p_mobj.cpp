@@ -1865,8 +1865,12 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 	// that large thrusts can't propel an actor through a wall, because wall
 	// running depends on the player's original movement continuing even after
 	// it gets blocked.
-	if ((mo->player != NULL && (i_compatflags & COMPATF_WALLRUN)) || (mo->waterlevel >= 1) ||
-		(mo->player != NULL && mo->player->crouchfactor < 0.75))
+	//
+	// [anon] When friction is turned off, turn off the crouching and water
+	//  speed caps as well, since it is a sort of friction, and the modders
+	//  most likely want to deal with that themselves.
+	if ((mo->player != NULL && (i_compatflags & COMPATF_WALLRUN)) || ((mo->waterlevel >= 1 ||
+		(mo->player != NULL && mo->player->crouchfactor < 0.75)) && !(mo->flags8 & MF8_NOFRICTION)))
 	{
 		// preserve the direction instead of clamping x and y independently.
 		double cx = mo->Vel.X == 0 ? 1. : clamp(mo->Vel.X, -maxmove, maxmove) / mo->Vel.X;
@@ -2255,7 +2259,7 @@ explode:
 		return Oldfloorz;
 	}
 
-	if (mo->flags & (MF_MISSILE | MF_SKULLFLY))
+	if (mo->flags & (MF_MISSILE | MF_SKULLFLY) || mo->flags8 & MF8_NOFRICTION)
 	{ // no friction for missiles
 		return Oldfloorz;
 	}

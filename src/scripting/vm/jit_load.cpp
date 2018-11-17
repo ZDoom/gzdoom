@@ -76,6 +76,28 @@ void JitCompiler::EmitLFP()
 	cc.lea(regA[A], asmjit::x86::ptr(vmframe, offsetExtra));
 }
 
+#if 1 // Inline implementation
+
+void JitCompiler::EmitMETA()
+{
+	auto label = EmitThrowExceptionLabel(X_READ_NIL);
+	cc.test(regA[B], regA[B]);
+	cc.je(label);
+
+	cc.mov(regA[A], asmjit::x86::qword_ptr(regA[B], offsetof(DObject, Class)));
+	cc.mov(regA[A], asmjit::x86::qword_ptr(regA[A], offsetof(PClass, Meta)));
+}
+
+void JitCompiler::EmitCLSS()
+{
+	auto label = EmitThrowExceptionLabel(X_READ_NIL);
+	cc.test(regA[B], regA[B]);
+	cc.je(label);
+	cc.mov(regA[A], asmjit::x86::qword_ptr(regA[B], offsetof(DObject, Class)));
+}
+
+#else
+
 static uint8_t *GetClassMeta(DObject *o)
 {
 	return o->GetClass()->Meta;
@@ -111,6 +133,8 @@ void JitCompiler::EmitCLSS()
 	call->setArg(0, regA[B]);
 	cc.mov(regA[A], result);
 }
+
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // Load from memory. rA = *(rB + rkC)
@@ -221,6 +245,41 @@ void JitCompiler::EmitLS_R()
 	call->setArg(1, ptr);
 }
 
+#if 1 // Inline read barrier impl
+
+void JitCompiler::EmitReadBarrier()
+{
+	auto isnull = cc.newLabel();
+	cc.test(regA[A], regA[A]);
+	cc.je(isnull);
+
+	auto mask = newTempIntPtr();
+	cc.mov(mask.r32(), asmjit::x86::dword_ptr(regA[A], offsetof(DObject, ObjectFlags)));
+	cc.shl(mask, 63 - 5); // put OF_EuthanizeMe (1 << 5) in the highest bit
+	cc.sar(mask, 63); // sign extend so all bits are set if OF_EuthanizeMe was set
+	cc.andn(regA[A], mask, regA[A]);
+
+	cc.bind(isnull);
+}
+
+void JitCompiler::EmitLO()
+{
+	EmitNullPointerThrow(B, X_READ_NIL);
+
+	cc.mov(regA[A], asmjit::x86::ptr(regA[B], konstd[C]));
+	EmitReadBarrier();
+}
+
+void JitCompiler::EmitLO_R()
+{
+	EmitNullPointerThrow(B, X_READ_NIL);
+
+	cc.mov(regA[A], asmjit::x86::ptr(regA[B], regD[C]));
+	EmitReadBarrier();
+}
+
+#else
+
 static DObject *ReadBarrier(DObject *p)
 {
 	return GC::ReadBarrier(p);
@@ -253,6 +312,8 @@ void JitCompiler::EmitLO_R()
 	call->setArg(0, ptr);
 	cc.mov(regA[A], result);
 }
+
+#endif
 
 void JitCompiler::EmitLP()
 {

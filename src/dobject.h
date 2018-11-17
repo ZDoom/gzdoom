@@ -357,6 +357,7 @@ protected:
 	template<typename T, typename... Args>
 		friend T* Create(Args&&... args);
 
+	friend class JitCompiler;
 };
 
 // This is the only method aside from calling CreateNew that should be used for creating DObjects

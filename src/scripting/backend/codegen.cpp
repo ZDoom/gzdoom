@@ -5660,7 +5660,7 @@ ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 
 	ExpEmit resultreg(build, REGT_INT);
 	build->Emit(OP_RESULT, 0, REGT_INT, resultreg.RegNum);
-	build->Emit(OP_IJMP, resultreg.RegNum, 0);
+	build->Emit(OP_IJMP, resultreg.RegNum, choices.Size());
 
 	// Free the result register now. The simple code generation algorithm should
 	// automatically pick it as the destination register for each case.
@@ -8783,6 +8783,41 @@ VMFunction *FxVMFunctionCall::GetDirectFunction(PFunction *callingfunc, const Ve
 
 //==========================================================================
 //
+// FxVMFunctionCall :: UnravelVarArgAJump
+//
+// Converts A_Jump(chance, a, b, c, d) -> A_Jump(chance, RandomPick[cajump](a, b, c, d))
+// so that varargs are restricted to either text formatting or graphics drawing.
+//
+//==========================================================================
+extern FRandom pr_cajump;
+
+bool FxVMFunctionCall::UnravelVarArgAJump(FCompileContext &ctx)
+{
+	FArgumentList rplist;
+
+	for (unsigned i = 1; i < ArgList.Size(); i++)
+	{
+		// This needs a bit of casting voodoo because RandomPick wants integer parameters.
+		auto x = new FxIntCast(new FxTypeCast(ArgList[i], TypeStateLabel, true, true), true, true);
+		rplist.Push(x->Resolve(ctx));
+		ArgList[i] = nullptr;
+		if (rplist[i - 1] == nullptr)
+		{
+			return false;
+		}
+	}
+	FxExpression *x = new FxRandomPick(&pr_cajump, rplist, false, ScriptPosition, true);
+	x = x->Resolve(ctx);
+	// This cannot be done with a cast because that interprets the value as an index.
+	// All we want here is to take the literal value and change its type.
+	if (x) x->ValueType = TypeStateLabel;	
+	ArgList[1] = x;
+	ArgList.Clamp(2);
+	return x != nullptr;
+}
+
+//==========================================================================
+//
 // FxVMFunctionCall :: Resolve
 //
 //==========================================================================
@@ -8813,9 +8848,18 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 		return nullptr;
 	}
 
-	if (Function->Variants[0].Implementation->PrintableName.CompareNoCase("CustomStatusBar.DrawTexture") == 0)
+	// Unfortunately the PrintableName is the only safe thing to catch this special case here.
+	if (Function->Variants[0].Implementation->PrintableName.CompareNoCase("Actor.A_Jump [Native]") == 0)
 	{
-		int a = 0;
+		// Unravel the varargs part of this function here so that the VM->native interface does not have to deal with it anymore.
+		if (ArgList.Size() > 2)
+		{
+			auto ret = UnravelVarArgAJump(ctx);
+			if (!ret)
+			{
+				return nullptr;
+			}
+		}
 	}
 
 	CallingFunction = ctx.Function;

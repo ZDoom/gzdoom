@@ -75,7 +75,6 @@ AActor *SingleActorFromTID(int tid, AActor *defactor);
 
 static FRandom pr_camissile ("CustomActorfire");
 static FRandom pr_cabullet ("CustomBullet");
-static FRandom pr_cajump ("CustomJump");
 static FRandom pr_cwbullet ("CustomWpBullet");
 static FRandom pr_cwjump ("CustomWpJump");
 static FRandom pr_cwpunch ("CustomWpPunch");
@@ -87,6 +86,7 @@ static FRandom pr_burst ("Burst");
 static FRandom pr_monsterrefire ("MonsterRefire");
 static FRandom pr_teleport("A_Teleport");
 static FRandom pr_bfgselfdamage("BFGSelfDamage");
+FRandom pr_cajump("CustomJump");
 
 //==========================================================================
 //
@@ -1129,13 +1129,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_Jump)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_INT(maxchance);
+	PARAM_STATE_ACTION(jumpto);
 
-	paramnum++;		// Increment paramnum to point at the first jump target
-	int count = numparam - paramnum;
-	if (count > 0 && (maxchance >= 256 || pr_cajump() < maxchance))
+	if (maxchance >= 256 || pr_cajump() < maxchance)
 	{
-		int jumpnum = (count == 1 ? 0 : (pr_cajump() % count));
-		PARAM_STATE_ACTION_AT(paramnum + jumpnum, jumpto);
 		ACTION_RETURN_STATE(jumpto);
 	}
 	ACTION_RETURN_STATE(NULL);

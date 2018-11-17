@@ -196,7 +196,16 @@ void HWPortal::DrawPortalStencil(FRenderState &state, int pass)
 		// The cap's depth handling needs special treatment so that it won't block further portal caps.
 		if (pass == STP_DepthRestore) state.SetDepthRange(1, 1);
 
-		if (planesused & (1 << sector_t::floor))
+		const bool hasFloorPlane = planesused & (1 << sector_t::floor);
+		const bool hasCeilingPlane = planesused & (1 << sector_t::ceiling);
+		const bool needMapBuffer = hasFloorPlane || hasCeilingPlane;
+		
+		if (needMapBuffer)
+		{
+			screen->mVertexData->Map();
+		}
+
+		if (hasFloorPlane)
 		{
 			auto verts = screen->mVertexData->AllocVertices(4);
 			auto ptr = verts.first;
@@ -206,7 +215,7 @@ void HWPortal::DrawPortalStencil(FRenderState &state, int pass)
 			ptr[3].Set((float)boundingBox.right, -32767.f, (float)boundingBox.bottom, 0, 0);
 			state.Draw(DT_TriangleStrip, verts.second, 4, false);
 		}
-		if (planesused & (1 << sector_t::ceiling))
+		if (hasCeilingPlane)
 		{
 			auto verts = screen->mVertexData->AllocVertices(4);
 			auto ptr = verts.first;
@@ -216,6 +225,12 @@ void HWPortal::DrawPortalStencil(FRenderState &state, int pass)
 			ptr[3].Set((float)boundingBox.right, 32767.f, (float)boundingBox.bottom, 0, 0);
 			state.Draw(DT_TriangleStrip, verts.second, 4, false);
 		}
+
+		if (needMapBuffer)
+		{
+			screen->mVertexData->Unmap();
+		}
+
 		if (pass == STP_DepthRestore) state.SetDepthRange(0, 1);
 	}
 }

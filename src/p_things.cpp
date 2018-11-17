@@ -463,7 +463,7 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser, int nocheck)
 		return false;
 	}
 
-	if (!P_CanResurrect(thing, raiser))
+	if (!P_CanResurrect(raiser, thing))
 		return false;
 
 	S_Sound (thing, CHAN_BODY, "vile/raise", 1, ATTN_IDLE);

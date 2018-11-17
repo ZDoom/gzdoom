@@ -25,24 +25,21 @@ void JitCompiler::EmitJMP()
 
 void JitCompiler::EmitIJMP()
 {
-	// This uses the whole function as potential jump targets. Can the range be reduced?
-
-	int i = (int)(ptrdiff_t)(pc - sfunc->Code);
+	int base = (int)(ptrdiff_t)(pc - sfunc->Code) + 1;
 	auto val = newTempInt32();
 	cc.mov(val, regD[A]);
-	cc.add(val, i + (int)BCs + 1);
 
-	int size = sfunc->CodeSize;
-	for (i = 0; i < size; i++)
+	for (int i = 0; i < (int)BCs; i++)
 	{
-		if (sfunc->Code[i].op == OP_JMP)
+		if (sfunc->Code[base +i].op == OP_JMP)
 		{
-			int target = i + JMPOFS(&sfunc->Code[i]) + 1;
+			int target = base + i + JMPOFS(&sfunc->Code[base + i]) + 1;
 
 			cc.cmp(val, i);
 			cc.je(GetLabel(target));
 		}
 	}
+	pc += BCs;
 
 	// This should never happen. It means we are jumping to something that is not a JMP instruction!
 	EmitThrowException(X_OTHER);

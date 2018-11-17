@@ -554,7 +554,7 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		NEXTOP;
 	OP(IJMP):
 		ASSERTD(a);
-		pc += (BCs + reg.d[a]);
+		pc += (reg.d[a]);
 		assert(pc[1].op == OP_JMP);
 		pc += 1 + JMPOFS(pc+1);
 		NEXTOP;

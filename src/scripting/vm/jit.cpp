@@ -560,26 +560,29 @@ void JitCompiler::SetupSimpleFrame()
 		cc.xor_(regA[i], regA[i]);
 }
 
+static VMFrameStack *CreateFullVMFrame(VMScriptFunction *func, VMValue *args, int numargs)
+{
+	try
+	{
+		VMFrameStack *stack = &GlobalVMStack;
+		VMFrame *newf = stack->AllocFrame(func);
+		CurrentJitExceptInfo->vmframes++;
+		VMFillParams(args, newf, numargs);
+		return stack;
+	}
+	catch (...)
+	{
+		VMThrowException(std::current_exception());
+		return nullptr;
+	}
+}
+
 void JitCompiler::SetupFullVMFrame()
 {
 	using namespace asmjit;
 
 	stack = cc.newIntPtr("stack");
-	auto allocFrame = CreateCall<VMFrameStack *, VMScriptFunction *, VMValue *, int>([](VMScriptFunction *func, VMValue *args, int numargs) -> VMFrameStack* {
-		try
-		{
-			VMFrameStack *stack = &GlobalVMStack;
-			VMFrame *newf = stack->AllocFrame(func);
-			CurrentJitExceptInfo->vmframes++;
-			VMFillParams(args, newf, numargs);
-			return stack;
-		}
-		catch (...)
-		{
-			VMThrowException(std::current_exception());
-			return nullptr;
-		}
-	});
+	auto allocFrame = CreateCall<VMFrameStack *, VMScriptFunction *, VMValue *, int>(CreateFullVMFrame);
 	allocFrame->setRet(0, stack);
 	allocFrame->setArg(0, imm_ptr(sfunc));
 	allocFrame->setArg(1, args);
@@ -601,21 +604,24 @@ void JitCompiler::SetupFullVMFrame()
 		cc.mov(regA[i], x86::ptr(vmframe, offsetA + i * sizeof(void*)));
 }
 
+static void PopFullVMFrame(VMFrameStack *stack)
+{
+	try
+	{
+		stack->PopFrame();
+		CurrentJitExceptInfo->vmframes--;
+	}
+	catch (...)
+	{
+		VMThrowException(std::current_exception());
+	}
+}
+
 void JitCompiler::EmitPopFrame()
 {
 	if (sfunc->SpecialInits.Size() != 0 || sfunc->NumRegS != 0)
 	{
-		auto popFrame = CreateCall<void, VMFrameStack *>([](VMFrameStack *stack) {
-			try
-			{
-				stack->PopFrame();
-				CurrentJitExceptInfo->vmframes--;
-			}
-			catch (...)
-			{
-				VMThrowException(std::current_exception());
-			}
-		});
+		auto popFrame = CreateCall<void, VMFrameStack *>(PopFullVMFrame);
 		popFrame->setArg(0, stack);
 	}
 }

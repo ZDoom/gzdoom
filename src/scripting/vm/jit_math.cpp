@@ -4,41 +4,49 @@
 /////////////////////////////////////////////////////////////////////////////
 // String instructions.
 
+static void ConcatString(FString* to, FString* first, FString* second)
+{
+	*to = *first + *second;
+}
+
 void JitCompiler::EmitCONCAT()
 {
 	auto rc = CheckRegS(C, A);
-	auto call = CreateCall<void, FString*, FString*, FString*>([](FString* to, FString* first, FString* second) {
-		*to = *first + *second;
-	});
+	auto call = CreateCall<void, FString*, FString*, FString*>(ConcatString);
 	call->setArg(0, regS[A]);
 	call->setArg(1, regS[B]);
 	call->setArg(2, rc);
 }
 
+static int StringLength(FString* str)
+{
+	return static_cast<int>(str->Len());
+}
+
 void JitCompiler::EmitLENS()
 {
 	auto result = newResultInt32();
-	auto call = CreateCall<int, FString*>([](FString* str) -> int {
-		return static_cast<int>(str->Len());
-	});
+	auto call = CreateCall<int, FString*>(StringLength);
 	call->setRet(0, result);
 	call->setArg(0, regS[B]);
 	cc.mov(regD[A], result);
 }
 
+static int StringCompareNoCase(FString* first, FString* second)
+{
+	return first->CompareNoCase(*second);
+}
+
+static int StringCompare(FString* first, FString* second)
+{
+	return first->Compare(*second);
+}
+
 void JitCompiler::EmitCMPS()
 {
 	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		auto compareNoCaseLambda = [](FString* first, FString* second) -> int {
-			return first->CompareNoCase(*second);
-		};
-		auto compareLambda = [](FString* first, FString* second) -> int {
-			return first->Compare(*second);
-		};
 
-		auto call = static_cast<bool>(A & CMP_APPROX) ?
-			CreateCall<int, FString*, FString*>(compareNoCaseLambda) :
-			CreateCall<int, FString*, FString*>(compareLambda);
+		auto call = CreateCall<int, FString*, FString*>(static_cast<bool>(A & CMP_APPROX) ? StringCompareNoCase : StringCompare);
 
 		auto result = newResultInt32();
 		call->setRet(0, result);
@@ -738,6 +746,11 @@ void JitCompiler::EmitDIVF_KR()
 	cc.divsd(regF[A], rc);
 }
 
+static double DoubleModF(double a, double b)
+{
+	return a - floor(a / b) * b;
+}
+
 void JitCompiler::EmitMODF_RR()
 {
 	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
@@ -745,10 +758,7 @@ void JitCompiler::EmitMODF_RR()
 	cc.je(label);
 
 	auto result = newResultXmmSd();
-	auto call = CreateCall<double, double, double>([](double a, double b) -> double
-	{
-		return a - floor(a / b) * b;
-	});
+	auto call = CreateCall<double, double, double>(DoubleModF);
 	call->setRet(0, result);
 	call->setArg(0, regF[B]);
 	call->setArg(1, regF[C]);
@@ -770,9 +780,7 @@ void JitCompiler::EmitMODF_RK()
 		cc.movsd(tmp, asmjit::x86::qword_ptr(tmpPtr));
 
 		auto result = newResultXmmSd();
-		auto call = CreateCall<double, double, double>([](double a, double b) -> double {
-			return a - floor(a / b) * b;
-		});
+		auto call = CreateCall<double, double, double>(DoubleModF);
 		call->setRet(0, result);
 		call->setArg(0, regF[B]);
 		call->setArg(1, tmp);
@@ -792,9 +800,7 @@ void JitCompiler::EmitMODF_KR()
 	cc.movsd(tmp, x86::ptr(ToMemAddress(&konstf[B])));
 
 	auto result = newResultXmmSd();
-	auto call = CreateCall<double, double, double>([](double a, double b) -> double {
-		return a - floor(a / b) * b;
-	});
+	auto call = CreateCall<double, double, double>(DoubleModF);
 	call->setRet(0, result);
 	call->setArg(0, tmp);
 	call->setArg(1, regF[C]);

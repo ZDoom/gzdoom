@@ -48,6 +48,13 @@ void JitCompiler::EmitIJMP()
 	EmitThrowException(X_OTHER);
 }
 
+static VMFunction *GetVirtual(DObject *o, int c)
+{
+	auto p = o->GetClass();
+	assert(c < (int)p->Virtuals.Size());
+	return p->Virtuals[c];
+}
+
 void JitCompiler::EmitVTBL()
 {
 	auto label = EmitThrowExceptionLabel(X_READ_NIL);
@@ -55,15 +62,23 @@ void JitCompiler::EmitVTBL()
 	cc.jz(label);
 
 	auto result = newResultIntPtr();
-	auto call = CreateCall<VMFunction*, DObject*, int>([](DObject *o, int c) -> VMFunction* {
-		auto p = o->GetClass();
-		assert(c < (int)p->Virtuals.Size());
-		return p->Virtuals[c];
-	});
+	auto call = CreateCall<VMFunction*, DObject*, int>(GetVirtual);
 	call->setRet(0, result);
 	call->setArg(0, regA[B]);
 	call->setArg(1, asmjit::Imm(C));
 	cc.mov(regA[A], result);
+}
+
+static void ValidateCall(DObject *o, VMFunction *f, int b)
+{
+	try
+	{
+		FScopeBarrier::ValidateCall(o->GetClass(), f, b - 1);
+	}
+	catch (...)
+	{
+		VMThrowException(std::current_exception());
+	}
 }
 
 void JitCompiler::EmitSCOPE()
@@ -76,19 +91,15 @@ void JitCompiler::EmitSCOPE()
 	cc.mov(f, asmjit::imm_ptr(konsta[C].v));
 
 	typedef int(*FuncPtr)(DObject*, VMFunction*, int);
-	auto call = CreateCall<void, DObject*, VMFunction*, int>([](DObject *o, VMFunction *f, int b) {
-		try
-		{
-			FScopeBarrier::ValidateCall(o->GetClass(), f, b - 1);
-		}
-		catch (...)
-		{
-			VMThrowException(std::current_exception());
-		}
-	});
+	auto call = CreateCall<void, DObject*, VMFunction*, int>(ValidateCall);
 	call->setArg(0, regA[A]);
 	call->setArg(1, f);
 	call->setArg(2, asmjit::Imm(B));
+}
+
+static void SetString(VMReturn* ret, FString* str)
+{
+	ret->SetString(*str);
 }
 
 void JitCompiler::EmitRET()
@@ -179,9 +190,7 @@ void JitCompiler::EmitRET()
 			auto ptr = newTempIntPtr();
 			cc.mov(ptr, ret);
 			cc.add(ptr, (int)(retnum * sizeof(VMReturn)));
-			auto call = CreateCall<void, VMReturn*, FString*>([](VMReturn* ret, FString* str) -> void {
-				ret->SetString(*str);
-			});
+			auto call = CreateCall<void, VMReturn*, FString*>(SetString);
 			call->setArg(0, ptr);
 			if (regtype & REGT_KONST) call->setArg(1, asmjit::imm_ptr(&konsts[regnum]));
 			else                      call->setArg(1, regS[regnum]);
@@ -254,40 +263,80 @@ void JitCompiler::EmitRETI()
 	}
 }
 
+static DObject* CreateNew(PClass *cls, int c)
+{
+	try
+	{
+		if (!cls->ConstructNative)
+		{
+			ThrowAbortException(X_OTHER, "Class %s requires native construction", cls->TypeName.GetChars());
+		}
+		else if (cls->bAbstract)
+		{
+			ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
+		}
+		else if (cls->IsDescendantOf(NAME_Actor)) // Creating actors here must be outright prohibited
+		{
+			ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
+		}
+
+		// [ZZ] validate readonly and between scope construction
+		if (c) FScopeBarrier::ValidateNew(cls, c - 1);
+		return cls->CreateNew();
+	}
+	catch (...)
+	{
+		VMThrowException(std::current_exception());
+		return nullptr;
+	}
+}
+
 void JitCompiler::EmitNEW()
 {
 	auto result = newResultIntPtr();
-	auto call = CreateCall<DObject*, PClass*, int>([](PClass *cls, int c) -> DObject* {
-		try
-		{
-			if (!cls->ConstructNative)
-			{
-				ThrowAbortException(X_OTHER, "Class %s requires native construction", cls->TypeName.GetChars());
-			}
-			else if (cls->bAbstract)
-			{
-				ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
-			}
-			else if (cls->IsDescendantOf(NAME_Actor)) // Creating actors here must be outright prohibited
-			{
-				ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
-			}
-
-			// [ZZ] validate readonly and between scope construction
-			if (c) FScopeBarrier::ValidateNew(cls, c - 1);
-			return cls->CreateNew();
-		}
-		catch (...)
-		{
-			VMThrowException(std::current_exception());
-			return nullptr;
-		}
-	});
+	auto call = CreateCall<DObject*, PClass*, int>(CreateNew);
 	call->setRet(0, result);
 	call->setArg(0, regA[B]);
 	call->setArg(1, asmjit::Imm(C));
 
 	cc.mov(regA[A], result);
+}
+
+static void ThrowNewK(PClass *cls, int c)
+{
+	try
+	{
+		if (!cls->ConstructNative)
+		{
+			ThrowAbortException(X_OTHER, "Class %s requires native construction", cls->TypeName.GetChars());
+		}
+		else if (cls->bAbstract)
+		{
+			ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
+		}
+		else // if (cls->IsDescendantOf(NAME_Actor)) // Creating actors here must be outright prohibited
+		{
+			ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
+		}
+	}
+	catch (...)
+	{
+		VMThrowException(std::current_exception());
+	}
+}
+
+static DObject *CreateNewK(PClass *cls, int c)
+{
+	try
+	{
+		if (c) FScopeBarrier::ValidateNew(cls, c - 1);
+		return cls->CreateNew();
+	}
+	catch (...)
+	{
+		VMThrowException(std::current_exception());
+		return nullptr;
+	}
 }
 
 void JitCompiler::EmitNEW_K()
@@ -298,44 +347,13 @@ void JitCompiler::EmitNEW_K()
 
 	if (!cls->ConstructNative || cls->bAbstract || cls->IsDescendantOf(NAME_Actor))
 	{
-		auto call = CreateCall<void, PClass*, int>([](PClass *cls, int c) {
-			try
-			{
-				if (!cls->ConstructNative)
-				{
-					ThrowAbortException(X_OTHER, "Class %s requires native construction", cls->TypeName.GetChars());
-				}
-				else if (cls->bAbstract)
-				{
-					ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
-				}
-				else // if (cls->IsDescendantOf(NAME_Actor)) // Creating actors here must be outright prohibited
-				{
-					ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
-				}
-			}
-			catch (...)
-			{
-				VMThrowException(std::current_exception());
-			}
-		});
+		auto call = CreateCall<void, PClass*, int>(ThrowNewK);
 		call->setArg(0, regcls);
 	}
 	else
 	{
 		auto result = newResultIntPtr();
-		auto call = CreateCall<DObject*, PClass*, int>([](PClass *cls, int c) -> DObject* {
-			try
-			{
-				if (c) FScopeBarrier::ValidateNew(cls, c - 1);
-				return cls->CreateNew();
-			}
-			catch (...)
-			{
-				VMThrowException(std::current_exception());
-				return nullptr;
-			}
-		});
+		auto call = CreateCall<DObject*, PClass*, int>(CreateNewK);
 		call->setRet(0, result);
 		call->setArg(0, regcls);
 		call->setArg(1, asmjit::Imm(C));

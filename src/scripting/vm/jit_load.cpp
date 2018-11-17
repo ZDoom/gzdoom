@@ -76,6 +76,11 @@ void JitCompiler::EmitLFP()
 	cc.lea(regA[A], asmjit::x86::ptr(vmframe, offsetExtra));
 }
 
+static uint8_t *GetClassMeta(DObject *o)
+{
+	return o->GetClass()->Meta;
+}
+
 void JitCompiler::EmitMETA()
 {
 	auto label = EmitThrowExceptionLabel(X_READ_NIL);
@@ -83,10 +88,15 @@ void JitCompiler::EmitMETA()
 	cc.je(label);
 
 	auto result = newResultIntPtr();
-	auto call = CreateCall<uint8_t*, DObject*>([](DObject *o) { return o->GetClass()->Meta; });
+	auto call = CreateCall<uint8_t*, DObject*>(GetClassMeta);
 	call->setRet(0, result);
 	call->setArg(0, regA[B]);
 	cc.mov(regA[A], result);
+}
+
+static PClass *GetClass(DObject *o)
+{
+	return o->GetClass();
 }
 
 void JitCompiler::EmitCLSS()
@@ -96,7 +106,7 @@ void JitCompiler::EmitCLSS()
 	cc.je(label);
 
 	auto result = newResultIntPtr();
-	auto call = CreateCall<PClass*, DObject*>([](DObject *o) { return o->GetClass(); });
+	auto call = CreateCall<PClass*, DObject*>(GetClass);
 	call->setRet(0, result);
 	call->setArg(0, regA[B]);
 	cc.mov(regA[A], result);
@@ -211,6 +221,11 @@ void JitCompiler::EmitLS_R()
 	call->setArg(1, ptr);
 }
 
+static DObject *ReadBarrier(DObject *p)
+{
+	return GC::ReadBarrier(p);
+}
+
 void JitCompiler::EmitLO()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
@@ -219,7 +234,7 @@ void JitCompiler::EmitLO()
 	cc.mov(ptr, asmjit::x86::ptr(regA[B], konstd[C]));
 
 	auto result = newResultIntPtr();
-	auto call = CreateCall<DObject*,DObject*>([](DObject *p) { return GC::ReadBarrier(p); });
+	auto call = CreateCall<DObject*, DObject*>(ReadBarrier);
 	call->setRet(0, result);
 	call->setArg(0, ptr);
 	cc.mov(regA[A], result);
@@ -233,7 +248,7 @@ void JitCompiler::EmitLO_R()
 	cc.mov(ptr, asmjit::x86::ptr(regA[B], regD[C]));
 
 	auto result = newResultIntPtr();
-	auto call = CreateCall<DObject*, DObject*>([](DObject *p) { return GC::ReadBarrier(p); });
+	auto call = CreateCall<DObject*, DObject*>(ReadBarrier);
 	call->setRet(0, result);
 	call->setArg(0, ptr);
 	cc.mov(regA[A], result);
@@ -289,12 +304,17 @@ void JitCompiler::EmitLV3_R()
 	cc.movsd(regF[A + 2], asmjit::x86::qword_ptr(tmp, 16));
 }
 
+static void SetString(FString *to, char **from)
+{
+	*to = *from;
+}
+
 void JitCompiler::EmitLCS()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
 	auto ptr = newTempIntPtr();
 	cc.lea(ptr, asmjit::x86::ptr(regA[B], konstd[C]));
-	auto call = CreateCall<void, FString*, char**>([](FString* to, char** from) { *to = *from; });
+	auto call = CreateCall<void, FString*, char**>(SetString);
 	call->setArg(0, regS[A]);
 	call->setArg(1, ptr);
 }
@@ -304,7 +324,7 @@ void JitCompiler::EmitLCS_R()
 	EmitNullPointerThrow(B, X_READ_NIL);
 	auto ptr = newTempIntPtr();
 	cc.lea(ptr, asmjit::x86::ptr(regA[B], regD[C]));
-	auto call = CreateCall<void, FString*, char**>([](FString* to, char** from) { *to = *from; });
+	auto call = CreateCall<void, FString*, char**>(SetString);
 	call->setArg(0, regS[A]);
 	call->setArg(1, ptr);
 }

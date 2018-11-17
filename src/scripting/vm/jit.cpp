@@ -1,6 +1,7 @@
 
 #include "jit.h"
 #include "jitintern.h"
+#include <map>
 
 extern PString *TypeString;
 extern PStruct *TypeVector2;
@@ -794,3 +795,242 @@ void JitCompiler::EmitNOP()
 {
 	cc.nop();
 }
+
+#if 0
+
+void JitCompiler::SetupNative()
+{
+	using namespace asmjit;
+
+	ResetTemp();
+
+	static const char *marks = "=======================================================";
+	cc.comment("", 0);
+	cc.comment(marks, 56);
+
+	FString funcname;
+	funcname.Format("Function: %s", sfunc->PrintableName.GetChars());
+	cc.comment(funcname.GetChars(), funcname.Len());
+
+	cc.comment(marks, 56);
+	cc.comment("", 0);
+
+	konstd = sfunc->KonstD;
+	konstf = sfunc->KonstF;
+	konsts = sfunc->KonstS;
+	konsta = sfunc->KonstA;
+
+	CreateRegisters();
+
+	func = cc.addFunc(CreateFuncSignature(sfunc));
+
+	int argsPos = 0;
+	int regd = 0, regf = 0, regs = 0, rega = 0;
+	for (unsigned int i = 0; i < sfunc->Proto->ArgumentTypes.Size(); i++)
+	{
+		const PType *type = sfunc->Proto->ArgumentTypes[i];
+		if (sfunc->ArgFlags[i] & (VARF_Out | VARF_Ref))
+		{
+			cc.setArg(argsPos++, regA[rega++]);
+		}
+		else if (type == TypeVector2)
+		{
+			cc.setArg(argsPos++, regF[regf++]);
+			cc.setArg(argsPos++, regF[regf++]);
+		}
+		else if (type == TypeVector3)
+		{
+			cc.setArg(argsPos++, regF[regf++]);
+			cc.setArg(argsPos++, regF[regf++]);
+			cc.setArg(argsPos++, regF[regf++]);
+		}
+		else if (type == TypeFloat64)
+		{
+			cc.setArg(argsPos++, regF[regf++]);
+		}
+		else if (type == TypeString)
+		{
+			cc.setArg(argsPos++, regS[regs++]);
+		}
+		else if (type->isIntCompatible())
+		{
+			cc.setArg(argsPos++, regA[regd++]);
+		}
+		else
+		{
+			cc.setArg(argsPos++, regA[rega++]);
+		}
+	}
+
+	if (sfunc->NumArgs != argsPos || regd > sfunc->NumRegD || regf > sfunc->NumRegF || regs > sfunc->NumRegS || rega > sfunc->NumRegA)
+		I_FatalError("JIT: sfunc->NumArgs != argsPos || regd > sfunc->NumRegD || regf > sfunc->NumRegF  || regs > sfunc->NumRegS || rega > sfunc->NumRegA");
+
+	for (int i = regd; i < sfunc->NumRegD; i++)
+		cc.xor_(regD[i], regD[i]);
+
+	for (int i = regf; i < sfunc->NumRegF; i++)
+		cc.xorpd(regF[i], regF[i]);
+
+	for (int i = regs; i < sfunc->NumRegS; i++)
+		cc.xor_(regS[i], regS[i]);
+
+	for (int i = rega; i < sfunc->NumRegA; i++)
+		cc.xor_(regA[i], regA[i]);
+
+	labels.Resize(sfunc->CodeSize);
+
+	IncrementVMCalls();
+}
+
+asmjit::CCFunc *JitCompiler::CodegenThunk(asmjit::X86Compiler &cc, VMScriptFunction *sfunc, void *nativefunc)
+{
+	using namespace asmjit;
+
+	static const char *marks = "=======================================================";
+	cc.comment("", 0);
+	cc.comment(marks, 56);
+
+	FString funcname;
+	funcname.Format("Thunk: %s", sfunc->PrintableName.GetChars());
+	cc.comment(funcname.GetChars(), funcname.Len());
+
+	cc.comment(marks, 56);
+	cc.comment("", 0);
+
+	auto unusedFunc = cc.newIntPtr("func"); // VMFunction*
+	auto args = cc.newIntPtr("args"); // VMValue *params
+	auto numargs = cc.newInt32("numargs"); // int numargs
+	auto ret = cc.newIntPtr("ret"); // VMReturn *ret
+	auto numret = cc.newInt32("numret"); // int numret
+
+	CCFunc *func = cc.addFunc(FuncSignature5<int, VMFunction *, void *, int, void *, int>());
+	cc.setArg(0, unusedFunc);
+	cc.setArg(1, args);
+	cc.setArg(2, numargs);
+	cc.setArg(3, ret);
+	cc.setArg(4, numret);
+
+	TArray<Reg> callArgs;
+	int argsPos = 0;
+	for (unsigned int i = 0; i < sfunc->Proto->ArgumentTypes.Size(); i++)
+	{
+		const PType *type = sfunc->Proto->ArgumentTypes[i];
+		if (sfunc->ArgFlags[i] & (VARF_Out | VARF_Ref))
+		{
+			auto reg = cc.newIntPtr();
+			cc.mov(reg, x86::ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, a)));
+			callArgs.Push(reg);
+		}
+		else if (type == TypeVector2)
+		{
+			for (int j = 0; j < 2; j++)
+			{
+				auto reg = cc.newXmmSd();
+				cc.movsd(reg, x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
+				callArgs.Push(reg);
+			}
+		}
+		else if (type == TypeVector3)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				auto reg = cc.newXmmSd();
+				cc.movsd(reg, x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
+				callArgs.Push(reg);
+			}
+		}
+		else if (type == TypeFloat64)
+		{
+			auto reg = cc.newXmmSd();
+			cc.movsd(reg, x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
+			callArgs.Push(reg);
+		}
+		else if (type == TypeString)
+		{
+			auto reg = cc.newIntPtr();
+			cc.mov(reg, x86::ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, a)));
+			callArgs.Push(reg);
+		}
+		else if (type->isIntCompatible())
+		{
+			auto reg = cc.newInt32();
+			cc.mov(reg, x86::dword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, i)));
+			callArgs.Push(reg);
+		}
+		else
+		{
+			auto reg = cc.newIntPtr();
+			cc.mov(reg, x86::ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, a)));
+			callArgs.Push(reg);
+		}
+	}
+
+	auto call = cc.call(imm_ptr(nativefunc), CreateFuncSignature(sfunc));
+	for (unsigned int i = 0; i < callArgs.Size(); i++)
+		call->setArg(i, callArgs[i]);
+
+	cc.ret(numret);
+
+	return func;
+}
+
+asmjit::FuncSignature JitCompiler::CreateFuncSignature(VMScriptFunction *sfunc)
+{
+	using namespace asmjit;
+
+	TArray<uint8_t> args;
+	FString key;
+	for (unsigned int i = 0; i < sfunc->Proto->ArgumentTypes.Size(); i++)
+	{
+		const PType *type = sfunc->Proto->ArgumentTypes[i];
+		if (sfunc->ArgFlags[i] & (VARF_Out | VARF_Ref))
+		{
+			args.Push(TypeIdOf<void*>::kTypeId);
+			key += "v";
+		}
+		else if (type == TypeVector2)
+		{
+			args.Push(TypeIdOf<double>::kTypeId);
+			args.Push(TypeIdOf<double>::kTypeId);
+			key += "ff";
+		}
+		else if (type == TypeVector3)
+		{
+			args.Push(TypeIdOf<double>::kTypeId);
+			args.Push(TypeIdOf<double>::kTypeId);
+			args.Push(TypeIdOf<double>::kTypeId);
+			key += "fff";
+		}
+		else if (type == TypeFloat64)
+		{
+			args.Push(TypeIdOf<double>::kTypeId);
+			key += "f";
+		}
+		else if (type == TypeString)
+		{
+			args.Push(TypeIdOf<void*>::kTypeId);
+			key += "s";
+		}
+		else if (type->isIntCompatible())
+		{
+			args.Push(TypeIdOf<int>::kTypeId);
+			key += "i";
+		}
+		else
+		{
+			args.Push(TypeIdOf<void*>::kTypeId);
+			key += "v";
+		}
+	}
+
+	// FuncSignature only keeps a pointer to its args array. Keep a copy of each args array variant.
+	static std::map<FString, std::unique_ptr<TArray<uint8_t>>> argsCache;
+	std::unique_ptr<TArray<uint8_t>> &cachedArgs = argsCache[key];
+	if (!cachedArgs) cachedArgs.reset(new TArray<uint8_t>(args));
+
+	FuncSignature signature;
+	signature.init(CallConv::kIdHost, TypeIdOf<void>::kTypeId, cachedArgs->Data(), cachedArgs->Size());
+	return signature;
+}
+
+#endif

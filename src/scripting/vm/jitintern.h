@@ -38,6 +38,10 @@ private:
 	#include "vmops.h"
 	#undef xx
 
+	//static asmjit::FuncSignature CreateFuncSignature(VMScriptFunction *sfunc);
+	//static asmjit::CCFunc *CodegenThunk(asmjit::X86Compiler &cc, VMScriptFunction *sfunc, void *nativefunc);
+	//void SetupNative();
+
 	void Setup();
 	void CreateRegisters();
 	void IncrementVMCalls();

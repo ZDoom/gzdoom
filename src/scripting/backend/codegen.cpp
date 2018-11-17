@@ -5441,14 +5441,23 @@ ExpEmit FxMinMax::Emit(VMFunctionBuilder *build)
 //
 //
 //==========================================================================
-FxRandom::FxRandom(FRandom * r, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos, bool nowarn)
+FxRandom::FxRandom(EFxType type, FRandom * r, const FScriptPosition &pos)
 : FxExpression(EFX_Random, pos)
 {
-	EmitTail = false;
+	rng = r;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+FxRandom::FxRandom(FRandom * r, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos, bool nowarn)
+	: FxRandom(EFX_Random, rng, pos)
+{
 	assert(mi && ma);
 	min = new FxIntCast(mi, nowarn);
 	max = new FxIntCast(ma, nowarn);
-	rng = r;
 	ValueType = TypeSInt32;
 }
 
@@ -5721,13 +5730,12 @@ ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 FxFRandom::FxFRandom(FRandom *r, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos)
-: FxRandom(r, nullptr, nullptr, pos, true)
+: FxRandom(EFX_FRandom, r, pos)
 {
 	assert(mi && ma);
 	min = new FxFloatCast(mi);
 	max = new FxFloatCast(ma);
 	ValueType = TypeFloat64;
-	ExprType = EFX_FRandom;
 }
 
 //==========================================================================

@@ -257,7 +257,8 @@ void JitCompiler::EmitReadBarrier()
 	cc.mov(mask.r32(), asmjit::x86::dword_ptr(regA[A], offsetof(DObject, ObjectFlags)));
 	cc.shl(mask, 63 - 5); // put OF_EuthanizeMe (1 << 5) in the highest bit
 	cc.sar(mask, 63); // sign extend so all bits are set if OF_EuthanizeMe was set
-	cc.andn(regA[A], mask, regA[A]);
+	cc.not_(mask);
+	cc.and_(regA[A], mask);
 
 	cc.bind(isnull);
 }

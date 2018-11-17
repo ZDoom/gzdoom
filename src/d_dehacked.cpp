@@ -636,27 +636,14 @@ static int GetLine (void)
 // misc1 = vrange (arg +3), misc2 = hrange (arg+4)
 static int CreateMushroomFunc(VMFunctionBuilder &buildit, int value1, int value2)
 { // A_Mushroom
-	buildit.Emit(OP_PARAM, REGT_NIL, 0);		// spawntype
-	buildit.Emit(OP_PARAM, REGT_NIL, 0);		// numspawns
+	int typereg = buildit.GetConstantAddress(PClass::FindClass("FatShot"));
+	buildit.Emit(OP_PARAM, REGT_POINTER | REGT_KONST, typereg);	// itemtype
+	buildit.Emit(OP_PARAMI, 0);					// numspawns
 	buildit.Emit(OP_PARAMI, 1);					// flag
 	// vrange
-	if (value1 == 0)
-	{
-		buildit.Emit(OP_PARAM, REGT_NIL, 0);
-	}
-	else
-	{
-		buildit.Emit(OP_PARAM, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(DEHToDouble(value1)));
-	}
+	buildit.Emit(OP_PARAM, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(value1? DEHToDouble(value1) : 4.0));
 	// hrange
-	if (value2 == 0)
-	{
-		buildit.Emit(OP_PARAM, REGT_NIL, 0);
-	}
-	else
-	{
-		buildit.Emit(OP_PARAM, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(DEHToDouble(value2)));
-	}
+	buildit.Emit(OP_PARAM, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(value2? DEHToDouble(value2) : 0.5));
 	return 5;
 }
 
@@ -752,13 +739,13 @@ static int CreateNailBombFunc(VMFunctionBuilder &buildit, int value1, int value2
 	// This one does not actually have MBF-style parameters. But since
 	// we're aliasing it to an extension of A_Explode...
 	int typereg = buildit.GetConstantAddress(PClass::FindClass(NAME_BulletPuff));
-	buildit.Emit(OP_PARAM, REGT_NIL, 0);			// damage
-	buildit.Emit(OP_PARAM, REGT_NIL, 0);			// distance
-	buildit.Emit(OP_PARAM, REGT_NIL, 0);			// flags
-	buildit.Emit(OP_PARAM, REGT_NIL, 0);			// alert
-	buildit.Emit(OP_PARAM, REGT_NIL, 0);			// fulldamagedistance
-	buildit.Emit(OP_PARAMI, 30);					// nails
-	buildit.Emit(OP_PARAMI, 10);					// naildamage
+	buildit.Emit(OP_PARAMI, -1);		// damage
+	buildit.Emit(OP_PARAMI, -1);		// distance
+	buildit.Emit(OP_PARAMI, 1);			// flags (1=XF_HURTSOURCE)
+	buildit.Emit(OP_PARAMI, 0);			// alert
+	buildit.Emit(OP_PARAMI, 0);			// fulldamagedistance
+	buildit.Emit(OP_PARAMI, 30);		// nails
+	buildit.Emit(OP_PARAMI, 10);		// naildamage
 	buildit.Emit(OP_PARAM, REGT_POINTER | REGT_KONST, typereg);	// itemtype
 	buildit.Emit(OP_PARAMI, NAME_None);						// damage type
 

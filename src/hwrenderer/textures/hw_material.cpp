@@ -133,70 +133,6 @@ void IHardwareTexture::Resize(int swidth, int sheight, int width, int height, un
 //
 //
 //===========================================================================
-
-float FTexCoordInfo::RowOffset(float rowoffset) const
-{
-	float tscale = fabs(mTempScale.Y);
-	float scale = fabs(mScale.Y);
-
-	if (tscale == 1.f)
-	{
-		if (scale == 1.f || mWorldPanning) return rowoffset;
-		else return rowoffset / scale;
-	}
-	else
-	{
-		if (mWorldPanning) return rowoffset / tscale;
-		else return rowoffset / scale;
-	}
-}
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-float FTexCoordInfo::TextureOffset(float textureoffset) const
-{
-	float tscale = fabs(mTempScale.X);
-	float scale = fabs(mScale.X);
-	if (tscale == 1.f)
-	{
-		if (scale == 1.f || mWorldPanning) return textureoffset;
-		else return textureoffset / scale;
-	}
-	else
-	{
-		if (mWorldPanning) return textureoffset / tscale;
-		else return textureoffset / scale;
-	}
-}
-
-//===========================================================================
-//
-// Returns the size for which texture offset coordinates are used.
-//
-//===========================================================================
-
-float FTexCoordInfo::TextureAdjustWidth() const
-{
-	if (mWorldPanning) 
-	{
-		float tscale = fabs(mTempScale.X);
-		if (tscale == 1.f) return (float)mRenderWidth;
-		else return mWidth / fabs(tscale);
-	}
-	else return (float)mWidth;
-}
-
-
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
 IHardwareTexture * FMaterial::ValidateSysTexture(FTexture * tex, bool expand)
 {
 	if (tex	&& tex->UseType!=ETextureType::Null)
@@ -520,50 +456,6 @@ void FMaterial::PrecacheList(SpriteHits &translations)
 	SpriteHits::Iterator it(translations);
 	SpriteHits::Pair *pair;
 	while(it.NextPair(pair)) screen->PrecacheMaterial(this, pair->Key);
-}
-
-//===========================================================================
-//
-// Retrieve texture coordinate info for per-wall scaling
-//
-//===========================================================================
-
-void FMaterial::GetTexCoordInfo(FTexCoordInfo *tci, float x, float y) const
-{
-	if (x == 1.f)
-	{
-		tci->mRenderWidth = mRenderWidth;
-		tci->mScale.X = (float)tex->Scale.X;
-		tci->mTempScale.X = 1.f;
-	}
-	else
-	{
-		float scale_x = x * (float)tex->Scale.X;
-		tci->mRenderWidth = xs_CeilToInt(mWidth / scale_x);
-		tci->mScale.X = scale_x;
-		tci->mTempScale.X = x;
-	}
-
-	if (y == 1.f)
-	{
-		tci->mRenderHeight = mRenderHeight;
-		tci->mScale.Y = (float)tex->Scale.Y;
-		tci->mTempScale.Y = 1.f;
-	}
-	else
-	{
-		float scale_y = y * (float)tex->Scale.Y;
-		tci->mRenderHeight = xs_CeilToInt(mHeight / scale_y);
-		tci->mScale.Y = scale_y;
-		tci->mTempScale.Y = y;
-	}
-	if (tex->bHasCanvas) 
-	{
-		tci->mScale.Y = -tci->mScale.Y;
-		tci->mRenderHeight = -tci->mRenderHeight;
-	}
-	tci->mWorldPanning = tex->bWorldPanning;
-	tci->mWidth = mWidth;
 }
 
 //===========================================================================

@@ -163,13 +163,14 @@ extern FFunctionBuildList FunctionBuildList;
 //==========================================================================
 extern int EncodeRegType(ExpEmit reg);
 
-class EmitterArray
+class FunctionCallEmitter
 {
 	// std::function and TArray are not compatible so this has to use std::vector instead.
 	std::vector<std::function<int(VMFunctionBuilder *)>> emitters;
-	TArray<int> returns;
+	TArray<std::pair<int, int>> returns;
 	unsigned numparams = 0;	// This counts the number of pushed elements, which can differ from the number of emitters with vectors.
 	VMFunction *target = nullptr;
+	int virtualselfreg = -1;
 
 public:
 	void AddParameter(VMFunctionBuilder *build, FxExpression *operand);
@@ -179,15 +180,15 @@ public:
 	void AddParameterFloatConst(double konst);
 	void AddParameterIntConst(int konst);
 	void AddParameterStringConst(const FString &konst);
-	int EmitParameters(VMFunctionBuilder *build);
-	ExpEmit EmitCall(VMFunctionBuilder *build);
-	void AddReturn(int regtype)
+	ExpEmit EmitCall(VMFunctionBuilder *build, TArray<ExpEmit> *ReturnRegs = nullptr);
+	void AddReturn(int regtype, int regcount = 1)
 	{
-		returns.Push(regtype);
+		returns.Push({ regtype, regcount });
 	}
-	void AddTarget(VMFunction *func)
+	void AddTarget(VMFunction *func, int virtreg = -1)
 	{
 		target = func;
+		virtualselfreg = virtreg;
 	}
 	unsigned Count() const
 	{

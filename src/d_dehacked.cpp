@@ -676,7 +676,7 @@ static void CreateFaceFunc(EmitterArray &emitters, int value1, int value2)
 static void CreateScratchFunc(EmitterArray &emitters, int value1, int value2)
 { // A_CustomMeleeAttack
 	emitters.AddParameterIntConst(value1);								// damage
-	emitters.AddParameterIntConst(value2 ? SoundMap[value2 - 1] : 0);	// hit sound
+	emitters.AddParameterIntConst(value2 ? (int)SoundMap[value2 - 1] : 0);	// hit sound
 	emitters.AddParameterIntConst(0);									// miss sound
 	emitters.AddParameterIntConst(NAME_None);							// damage type
 	emitters.AddParameterIntConst(true);								// bleed
@@ -685,7 +685,7 @@ static void CreateScratchFunc(EmitterArray &emitters, int value1, int value2)
 // misc1 = sound, misc2 = attenuation none (true) or normal (false)
 static void CreatePlaySoundFunc(EmitterArray &emitters, int value1, int value2)
 { // A_PlaySound
-	emitters.AddParameterIntConst(value1 ? SoundMap[value1 - 1] : 0);	// soundid
+	emitters.AddParameterIntConst(value1 ? (int)SoundMap[value1 - 1] : 0);	// soundid
 	emitters.AddParameterIntConst(CHAN_BODY);							// channel
 	emitters.AddParameterFloatConst(1);									// volume
 	emitters.AddParameterIntConst(false);								// looping

@@ -161,7 +161,7 @@ void JitCompiler::EmitScriptCall(asmjit::X86Gp vmfunc, asmjit::X86Gp paramsptr)
 	using namespace asmjit;
 
 	auto scriptcall = newTempIntPtr();
-	cc.mov(scriptcall, x86::ptr(vmfunc, offsetof(VMScriptFunction, ScriptCall)));
+	cc.mov(scriptcall, x86::ptr(vmfunc, myoffsetof(VMScriptFunction, ScriptCall)));
 
 	auto result = newResultInt32();
 	auto call = cc.call(scriptcall, FuncSignature5<int, VMFunction *, VMValue*, int, VMReturn*, int>());

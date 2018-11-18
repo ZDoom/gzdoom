@@ -84,8 +84,8 @@ void JitCompiler::EmitMETA()
 	cc.test(regA[B], regA[B]);
 	cc.je(label);
 
-	cc.mov(regA[A], asmjit::x86::qword_ptr(regA[B], offsetof(DObject, Class)));
-	cc.mov(regA[A], asmjit::x86::qword_ptr(regA[A], offsetof(PClass, Meta)));
+	cc.mov(regA[A], asmjit::x86::qword_ptr(regA[B], myoffsetof(DObject, Class)));
+	cc.mov(regA[A], asmjit::x86::qword_ptr(regA[A], myoffsetof(PClass, Meta)));
 }
 
 void JitCompiler::EmitCLSS()
@@ -93,7 +93,7 @@ void JitCompiler::EmitCLSS()
 	auto label = EmitThrowExceptionLabel(X_READ_NIL);
 	cc.test(regA[B], regA[B]);
 	cc.je(label);
-	cc.mov(regA[A], asmjit::x86::qword_ptr(regA[B], offsetof(DObject, Class)));
+	cc.mov(regA[A], asmjit::x86::qword_ptr(regA[B], myoffsetof(DObject, Class)));
 }
 
 #else
@@ -254,7 +254,7 @@ void JitCompiler::EmitReadBarrier()
 	cc.je(isnull);
 
 	auto mask = newTempIntPtr();
-	cc.mov(mask.r32(), asmjit::x86::dword_ptr(regA[A], offsetof(DObject, ObjectFlags)));
+	cc.mov(mask.r32(), asmjit::x86::dword_ptr(regA[A], myoffsetof(DObject, ObjectFlags)));
 	cc.shl(mask, 63 - 5); // put OF_EuthanizeMe (1 << 5) in the highest bit
 	cc.sar(mask, 63); // sign extend so all bits are set if OF_EuthanizeMe was set
 	cc.not_(mask);

@@ -52,11 +52,11 @@ private:
 	void EmitOpcode();
 	void EmitPopFrame();
 
-	void EmitDoCall(asmjit::X86Gp ptr);
+	void EmitDoCall(asmjit::X86Gp ptr, VMFunction *target);
 	void EmitScriptCall(asmjit::X86Gp vmfunc, asmjit::X86Gp paramsptr);
 	void EmitVtbl(const VMOP *op);
 
-	int StoreCallParams();
+	int StoreCallParams(bool simpleFrameTarget);
 	void LoadInOuts();
 	void LoadReturns(const VMOP *retval, int numret);
 	void FillReturns(const VMOP *retval, int numret);

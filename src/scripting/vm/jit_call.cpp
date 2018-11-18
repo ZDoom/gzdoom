@@ -50,21 +50,28 @@ void JitCompiler::EmitVtbl(const VMOP *op)
 
 void JitCompiler::EmitCALL()
 {
-	EmitDoCall(regA[A]);
+	EmitDoCall(regA[A], nullptr);
 }
 
 void JitCompiler::EmitCALL_K()
 {
 	auto ptr = newTempIntPtr();
-	cc.mov(ptr, asmjit::imm_ptr(konsta[A].o));
-	EmitDoCall(ptr);
+	cc.mov(ptr, asmjit::imm_ptr(konsta[A].v));
+	EmitDoCall(ptr, static_cast<VMFunction*>(konsta[A].v));
 }
 
-void JitCompiler::EmitDoCall(asmjit::X86Gp vmfunc)
+void JitCompiler::EmitDoCall(asmjit::X86Gp vmfunc, VMFunction *target)
 {
 	using namespace asmjit;
 
-	int numparams = StoreCallParams();
+	bool simpleFrameTarget = false;
+	if (target && (target->VarFlags & VARF_Native))
+	{
+		VMScriptFunction *starget = static_cast<VMScriptFunction*>(target);
+		simpleFrameTarget = starget->SpecialInits.Size() == 0 && starget->NumRegS == 0;
+	}
+
+	int numparams = StoreCallParams(simpleFrameTarget);
 	if (numparams != B)
 		I_FatalError("OP_CALL parameter count does not match the number of preceding OP_PARAM instructions");
 
@@ -103,7 +110,7 @@ void JitCompiler::EmitScriptCall(asmjit::X86Gp vmfunc, asmjit::X86Gp paramsptr)
 	call->setArg(4, Imm(C));
 }
 
-int JitCompiler::StoreCallParams()
+int JitCompiler::StoreCallParams(bool simpleFrameTarget)
 {
 	using namespace asmjit;
 
@@ -120,7 +127,8 @@ int JitCompiler::StoreCallParams()
 		{
 			int abcs = ParamOpcodes[i]->i24;
 			cc.mov(asmjit::x86::dword_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, i)), abcs);
-			cc.mov(asmjit::x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_INT);
+			if (!simpleFrameTarget)
+				cc.mov(asmjit::x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_INT);
 			continue;
 		}
 
@@ -130,59 +138,71 @@ int JitCompiler::StoreCallParams()
 		{
 		case REGT_NIL:
 			cc.mov(x86::ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, a)), (int64_t)0);
-			cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_NIL);
+			if (!simpleFrameTarget)
+				cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_NIL);
 			break;
 		case REGT_INT:
 			cc.mov(x86::dword_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, i)), regD[bc]);
-			cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_INT);
+			if (!simpleFrameTarget)
+				cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_INT);
 			break;
 		case REGT_INT | REGT_ADDROF:
 			cc.lea(stackPtr, x86::ptr(vmframe, offsetD + (int)(bc * sizeof(int32_t))));
 			cc.mov(x86::dword_ptr(stackPtr), regD[bc]);
 			cc.mov(x86::ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, a)), stackPtr);
-			cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_POINTER);
+			if (!simpleFrameTarget)
+				cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_POINTER);
 			break;
 		case REGT_INT | REGT_KONST:
 			cc.mov(x86::dword_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, i)), konstd[bc]);
-			cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_INT);
+			if (!simpleFrameTarget)
+				cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_INT);
 			break;
 		case REGT_STRING:
 			cc.mov(x86::ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, sp)), regS[bc]);
-			cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_STRING);
+			if (!simpleFrameTarget)
+				cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_STRING);
 			break;
 		case REGT_STRING | REGT_ADDROF:
 			cc.mov(x86::ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, a)), regS[bc]);
-			cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_POINTER);
+			if (!simpleFrameTarget)
+				cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_POINTER);
 			break;
 		case REGT_STRING | REGT_KONST:
 			cc.mov(tmp, asmjit::imm_ptr(&konsts[bc]));
 			cc.mov(x86::ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, sp)), tmp);
-			cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_STRING);
+			if (!simpleFrameTarget)
+				cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_STRING);
 			break;
 		case REGT_POINTER:
 			cc.mov(x86::ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, a)), regA[bc]);
-			cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_POINTER);
+			if (!simpleFrameTarget)
+				cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_POINTER);
 			break;
 		case REGT_POINTER | REGT_ADDROF:
 			cc.lea(stackPtr, x86::ptr(vmframe, offsetA + (int)(bc * sizeof(void*))));
 			cc.mov(x86::ptr(stackPtr), regA[bc]);
 			cc.mov(x86::ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, a)), stackPtr);
-			cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_POINTER);
+			if (!simpleFrameTarget)
+				cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_POINTER);
 			break;
 		case REGT_POINTER | REGT_KONST:
 			cc.mov(tmp, asmjit::imm_ptr(konsta[bc].v));
 			cc.mov(x86::ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, a)), tmp);
-			cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_POINTER);
+			if (!simpleFrameTarget)
+				cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_POINTER);
 			break;
 		case REGT_FLOAT:
 			cc.movsd(x86::qword_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, f)), regF[bc]);
-			cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_FLOAT);
+			if (!simpleFrameTarget)
+				cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_FLOAT);
 			break;
 		case REGT_FLOAT | REGT_MULTIREG2:
 			for (int j = 0; j < 2; j++)
 			{
 				cc.movsd(x86::qword_ptr(vmframe, offsetParams + (slot + j) * sizeof(VMValue) + myoffsetof(VMValue, f)), regF[bc + j]);
-				cc.mov(x86::byte_ptr(vmframe, offsetParams + (slot + j) * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_FLOAT);
+				if (!simpleFrameTarget)
+					cc.mov(x86::byte_ptr(vmframe, offsetParams + (slot + j) * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_FLOAT);
 			}
 			numparams++;
 			break;
@@ -190,7 +210,8 @@ int JitCompiler::StoreCallParams()
 			for (int j = 0; j < 3; j++)
 			{
 				cc.movsd(x86::qword_ptr(vmframe, offsetParams + (slot + j) * sizeof(VMValue) + myoffsetof(VMValue, f)), regF[bc + j]);
-				cc.mov(x86::byte_ptr(vmframe, offsetParams + (slot + j) * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_FLOAT);
+				if (!simpleFrameTarget)
+					cc.mov(x86::byte_ptr(vmframe, offsetParams + (slot + j) * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_FLOAT);
 			}
 			numparams += 2;
 			break;
@@ -203,13 +224,15 @@ int JitCompiler::StoreCallParams()
 					cc.movsd(x86::qword_ptr(stackPtr, j * sizeof(double)), regF[bc + j]);
 			}
 			cc.mov(x86::ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, a)), stackPtr);
-			cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_POINTER);
+			if (!simpleFrameTarget)
+				cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_POINTER);
 			break;
 		case REGT_FLOAT | REGT_KONST:
 			cc.mov(tmp, asmjit::imm_ptr(konstf + bc));
 			cc.movsd(tmp2, asmjit::x86::qword_ptr(tmp));
 			cc.movsd(x86::qword_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, f)), tmp2);
-			cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_FLOAT);
+			if (!simpleFrameTarget)
+				cc.mov(x86::byte_ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, Type)), (int)REGT_FLOAT);
 			break;
 
 		default:

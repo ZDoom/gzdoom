@@ -283,6 +283,7 @@ public:
 		unsigned start = Count;
 
 		Grow(item.Size());
+		Count += item.Size();
 
 		for (unsigned i = 0; i < item.Size(); i++)
 		{
@@ -296,6 +297,7 @@ public:
 		unsigned start = Count;
 
 		Grow(item.Size());
+		Count += item.Size();
 
 		for (unsigned i = 0; i < item.Size(); i++)
 		{

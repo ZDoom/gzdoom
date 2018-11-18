@@ -404,7 +404,6 @@ public:
 class FxClassDefaults : public FxExpression
 {
 	FxExpression *obj;
-	bool EmitTail;
 
 public:
 	FxClassDefaults(FxExpression *, const FScriptPosition &);
@@ -1257,7 +1256,6 @@ public:
 class FxRandom : public FxExpression
 {
 protected:
-	bool EmitTail = false;
 	FRandom *rng;
 	FxExpression *min, *max;
 
@@ -1267,7 +1265,6 @@ public:
 	FxRandom(FRandom *, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos, bool nowarn);
 	~FxRandom();
 	FxExpression *Resolve(FCompileContext&);
-	PPrototype *ReturnProto();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -1313,7 +1310,6 @@ public:
 
 class FxRandom2 : public FxExpression
 {
-	bool EmitTail;
 	FRandom * rng;
 	FxExpression *mask;
 
@@ -1322,7 +1318,6 @@ public:
 	FxRandom2(FRandom *, FxExpression *m, const FScriptPosition &pos, bool nowarn);
 	~FxRandom2();
 	FxExpression *Resolve(FCompileContext&);
-	PPrototype *ReturnProto();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -1336,7 +1331,6 @@ public:
 class FxRandomSeed : public FxExpression
 {
 protected:
-	bool EmitTail;
 	FRandom *rng;
 	FxExpression *seed;
 
@@ -1583,7 +1577,6 @@ public:
 class FxActionSpecialCall : public FxExpression
 {
 	int Special;
-	bool EmitTail;
 	FxExpression *Self;
 	FArgumentList ArgList;
 
@@ -1592,7 +1585,6 @@ public:
 	FxActionSpecialCall(FxExpression *self, int special, FArgumentList &args, const FScriptPosition &pos);
 	~FxActionSpecialCall();
 	FxExpression *Resolve(FCompileContext&);
-	PPrototype *ReturnProto();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -1752,7 +1744,6 @@ class FxVMFunctionCall : public FxExpression
 {
 	friend class FxMultiAssign;
 
-	bool EmitTail = false;
 	bool NoVirtual;
 	bool hasStringArgs = false;
 	FxExpression *Self;

@@ -55,9 +55,6 @@ private:
 	void EmitDoCall(asmjit::X86Gp ptr);
 	void EmitScriptCall(asmjit::X86Gp vmfunc, asmjit::X86Gp paramsptr);
 
-	void EmitDoTail(asmjit::X86Gp ptr);
-	void EmitScriptTailCall(asmjit::X86Gp vmfunc, asmjit::X86Gp result, asmjit::X86Gp paramsptr);
-
 	void StoreInOuts(int b);
 	void LoadInOuts(int b);
 	void LoadReturns(const VMOP *retval, int numret);

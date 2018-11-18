@@ -330,7 +330,6 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 			break;
 
 		case OP_CALL_K:
-		case OP_TAIL_K:
 		{
 			callfunc = (VMFunction *)func->KonstA[code[i].a].o;
 			col = printf_wrapper(out, "[%p],%d", callfunc, code[i].b);
@@ -524,7 +523,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 			{
 				printf_wrapper(out, ",%d\n", code[++i].i24);
 			}
-			else if (code[i].op == OP_CALL_K || code[i].op == OP_TAIL_K)
+			else if (code[i].op == OP_CALL_K)
 			{
 				printf_wrapper(out, "  [%s]\n", callfunc->PrintableName.GetChars());
 			}

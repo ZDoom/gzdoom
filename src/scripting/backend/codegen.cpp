@@ -5449,18 +5449,6 @@ FxRandom::~FxRandom()
 //
 //==========================================================================
 
-PPrototype *FxRandom::ReturnProto()
-{
-	EmitTail = true;
-	return FxExpression::ReturnProto();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 FxExpression *FxRandom::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
@@ -5506,23 +5494,13 @@ ExpEmit FxRandom::Emit(VMFunctionBuilder *build)
 	assert(min && max);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
-	if (build->FramePointer.Fixed) EmitTail = false;	// do not tail call if the stack is in use
-	int opcode = (EmitTail ? OP_TAIL_K : OP_CALL_K);
-
 	EmitterArray emitters;
 
 	emitters.AddParameterPointerConst(rng);
 	emitters.AddParameter(build, min);
 	emitters.AddParameter(build, max);
 	int count = emitters.EmitParameters(build);
-	build->Emit(opcode, build->GetConstantAddress(callfunc), count, 1);
-
-	if (EmitTail)
-	{
-		ExpEmit call;
-		call.Final = true;
-		return call;
-	}
+	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc), count, 1);
 
 	ExpEmit out(build, REGT_INT);
 	build->Emit(OP_RESULT, 0, REGT_INT, out.RegNum);
@@ -5747,22 +5725,12 @@ ExpEmit FxFRandom::Emit(VMFunctionBuilder *build)
 	assert(min && max);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
-	if (build->FramePointer.Fixed) EmitTail = false;	// do not tail call if the stack is in use
-	int opcode = (EmitTail ? OP_TAIL_K : OP_CALL_K);
-
 	EmitterArray emitters;
 	emitters.AddParameterPointerConst(rng);
 	emitters.AddParameter(build, min);
 	emitters.AddParameter(build, max);
 	int count = emitters.EmitParameters(build);
-	build->Emit(opcode, build->GetConstantAddress(callfunc), count, 1);
-
-	if (EmitTail)
-	{
-		ExpEmit call;
-		call.Final = true;
-		return call;
-	}
+	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc), count, 1);
 
 	ExpEmit out(build, REGT_FLOAT);
 	build->Emit(OP_RESULT, 0, REGT_FLOAT, out.RegNum);
@@ -5778,7 +5746,6 @@ ExpEmit FxFRandom::Emit(VMFunctionBuilder *build)
 FxRandom2::FxRandom2(FRandom *r, FxExpression *m, const FScriptPosition &pos, bool nowarn)
 : FxExpression(EFX_Random2, pos)
 {
-	EmitTail = false;
 	rng = r;
 	if (m) mask = new FxIntCast(m, nowarn);
 	else mask = new FxConstant(-1, pos);
@@ -5794,18 +5761,6 @@ FxRandom2::FxRandom2(FRandom *r, FxExpression *m, const FScriptPosition &pos, bo
 FxRandom2::~FxRandom2()
 {
 	SAFE_DELETE(mask);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-PPrototype *FxRandom2::ReturnProto()
-{
-	EmitTail = true;
-	return FxExpression::ReturnProto();
 }
 
 //==========================================================================
@@ -5851,22 +5806,12 @@ ExpEmit FxRandom2::Emit(VMFunctionBuilder *build)
 	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
-	if (build->FramePointer.Fixed) EmitTail = false;	// do not tail call if the stack is in use
-	int opcode = (EmitTail ? OP_TAIL_K : OP_CALL_K);
-
 	EmitterArray emitters;
 
 	emitters.AddParameterPointerConst(rng);
 	emitters.AddParameter(build, mask);
 	int count = emitters.EmitParameters(build);
-	build->Emit(opcode, build->GetConstantAddress(callfunc), count, 1);
-
-	if (EmitTail)
-	{
-		ExpEmit call;
-		call.Final = true;
-		return call;
-	}
+	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc), count, 1);
 
 	ExpEmit out(build, REGT_INT);
 	build->Emit(OP_RESULT, 0, REGT_INT, out.RegNum);
@@ -5881,7 +5826,6 @@ ExpEmit FxRandom2::Emit(VMFunctionBuilder *build)
 FxRandomSeed::FxRandomSeed(FRandom * r, FxExpression *s, const FScriptPosition &pos, bool nowarn)
 	: FxExpression(EFX_Random, pos)
 {
-	EmitTail = false;
 	seed = new FxIntCast(s, nowarn);
 	rng = r;
 	ValueType = TypeVoid;
@@ -5937,18 +5881,14 @@ ExpEmit FxRandomSeed::Emit(VMFunctionBuilder *build)
 	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
-	if (build->FramePointer.Fixed) EmitTail = false;	// do not tail call if the stack is in use
-	int opcode = (EmitTail ? OP_TAIL_K : OP_CALL_K);
-
 	EmitterArray emitters;
 
 	emitters.AddParameterPointerConst(rng);
 	emitters.AddParameter(build, seed);
 	int count = emitters.EmitParameters(build);
-	build->Emit(opcode, build->GetConstantAddress(callfunc), count, 0);
+	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc), count, 0);
 
 	ExpEmit call;
-	if (EmitTail) call.Final = true;
 	return call;
 }
 
@@ -6636,7 +6576,6 @@ FxClassDefaults::FxClassDefaults(FxExpression *X, const FScriptPosition &pos)
 	: FxExpression(EFX_ClassDefaults, pos)
 {
 	obj = X;
-	EmitTail = false;
 }
 
 FxClassDefaults::~FxClassDefaults()
@@ -8508,7 +8447,6 @@ FxActionSpecialCall::FxActionSpecialCall(FxExpression *self, int special, FArgum
 	{
 		ArgList.Push(new FxConstant(0, ScriptPosition));
 	}
-	EmitTail = false;
 }
 
 //==========================================================================
@@ -8520,18 +8458,6 @@ FxActionSpecialCall::FxActionSpecialCall(FxExpression *self, int special, FArgum
 FxActionSpecialCall::~FxActionSpecialCall()
 {
 	SAFE_DELETE(Self);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-PPrototype *FxActionSpecialCall::ReturnProto()
-{
-	EmitTail = true;
-	return FxExpression::ReturnProto();
 }
 
 //==========================================================================
@@ -8664,16 +8590,8 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 	ArgList.DeleteAndClear();
 	ArgList.ShrinkToFit();
 
-	if (build->FramePointer.Fixed) EmitTail = false;	// do not tail call if the stack is in use
 	int count = emitters.EmitParameters(build);
 	selfemit.Free(build);
-	if (EmitTail)
-	{
-		build->Emit(OP_TAIL_K, build->GetConstantAddress(callfunc), count, 0);
-		ExpEmit call;
-		call.Final = true;
-		return call;
-	}
 
 	ExpEmit dest(build, REGT_INT);
 	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc), count, 1);
@@ -8717,7 +8635,7 @@ PPrototype *FxVMFunctionCall::ReturnProto()
 {
 	if (hasStringArgs) 
 		return FxExpression::ReturnProto();
-	EmitTail = true;
+
 	return Function->Variants[0].Proto;
 }
 
@@ -9068,12 +8986,10 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	assert(build->Registers[REGT_POINTER].GetMostUsed() >= build->NumImplicits);
 	int count = 0;
 
-	if (build->FramePointer.Fixed) EmitTail = false;	// do not tail call if the stack is in use
-
 	if (count == 1)
 	{
 		ExpEmit reg;
-		if (CheckEmitCast(build, EmitTail, reg))
+		if (CheckEmitCast(build, false, reg))
 		{
 			ArgList.DeleteAndClear();
 			ArgList.ShrinkToFit();
@@ -9166,14 +9082,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	{
 		int funcaddr = build->GetConstantAddress(vmfunc);
 		// Emit the call
-		if (EmitTail)
-		{ // Tail call
-			build->Emit(OP_TAIL_K, funcaddr, count, 0);
-			ExpEmit call;
-			call.Final = true;
-			return call;
-		}
-		else if (vmfunc->Proto->ReturnTypes.Size() > 0)
+		if (vmfunc->Proto->ReturnTypes.Size() > 0)
 		{ // Call, expecting one result
 			build->Emit(OP_CALL_K, funcaddr, count, MAX(1, AssignCount));
 			goto handlereturns;
@@ -9189,14 +9098,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 		ExpEmit funcreg(build, REGT_POINTER);
 
 		build->Emit(OP_VTBL, funcreg.RegNum, selfemit.RegNum, vmfunc->VirtualIndex);
-		if (EmitTail)
-		{ // Tail call
-			build->Emit(OP_TAIL, funcreg.RegNum, count, 0);
-			ExpEmit call;
-			call.Final = true;
-			return call;
-		}
-		else if (vmfunc->Proto->ReturnTypes.Size() > 0)
+		if (vmfunc->Proto->ReturnTypes.Size() > 0)
 		{ // Call, expecting one result
 			build->Emit(OP_CALL, funcreg.RegNum, count, MAX(1, AssignCount));
 			goto handlereturns;

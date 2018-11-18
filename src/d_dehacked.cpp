@@ -784,7 +784,8 @@ void SetDehParams(FState *state, int codepointer)
 		// Emit code for action parameters.
 		MBFCodePointerFactories[codepointer](emitters, value1, value2);
 		int count = emitters.EmitParameters(&buildit);
-		buildit.Emit(OP_TAIL_K, buildit.GetConstantAddress(sym->Variants[0].Implementation), count, 0);
+		buildit.Emit(OP_CALL_K, buildit.GetConstantAddress(sym->Variants[0].Implementation), count, 0);
+		buildit.Emit(OP_RET, RET_FINAL, REGT_NIL, 0);
 		// Attach it to the state.
 		VMScriptFunction *sfunc = new VMScriptFunction;
 		buildit.MakeFunction(sfunc);

@@ -132,18 +132,6 @@ void JitCompiler::EmitCALL_K()
 	EmitDoCall(ptr);
 }
 
-void JitCompiler::EmitTAIL()
-{
-	EmitDoTail(regA[A]);
-}
-
-void JitCompiler::EmitTAIL_K()
-{
-	auto ptr = newTempIntPtr();
-	cc.mov(ptr, asmjit::imm_ptr(konsta[A].o));
-	EmitDoTail(ptr);
-}
-
 void JitCompiler::EmitDoCall(asmjit::X86Gp vmfunc)
 {
 	using namespace asmjit;
@@ -183,50 +171,6 @@ void JitCompiler::EmitScriptCall(asmjit::X86Gp vmfunc, asmjit::X86Gp paramsptr)
 	call->setArg(2, Imm(B));
 	call->setArg(3, callReturns);
 	call->setArg(4, Imm(C));
-}
-
-void JitCompiler::EmitDoTail(asmjit::X86Gp vmfunc)
-{
-	// Whereas the CALL instruction uses its third operand to specify how many return values
-	// it expects, TAIL ignores its third operand and uses whatever was passed to this Exec call.
-
-	// Note: this is not a true tail call, but then again, it isn't in the vmexec implementation either..
-
-	using namespace asmjit;
-
-	if (NumParam < B)
-		I_FatalError("OP_TAIL parameter count does not match the number of preceding OP_PARAM instructions");
-
-	StoreInOuts(B); // Is REGT_ADDROF even allowed for (true) tail calls?
-
-	X86Gp paramsptr = newTempIntPtr();
-	cc.lea(paramsptr, x86::ptr(vmframe, offsetParams + (int)((NumParam - B) * sizeof(VMValue))));
-
-	auto result = newResultInt32();
-
-	EmitScriptTailCall(vmfunc, result, paramsptr);
-
-	EmitPopFrame();
-	cc.ret(result);
-
-	NumParam -= B;
-	ParamOpcodes.Resize(ParamOpcodes.Size() - B);
-}
-
-void JitCompiler::EmitScriptTailCall(asmjit::X86Gp vmfunc, asmjit::X86Gp result, asmjit::X86Gp paramsptr)
-{
-	using namespace asmjit;
-
-	auto scriptcall = newTempIntPtr();
-	cc.mov(scriptcall, x86::ptr(vmfunc, offsetof(VMScriptFunction, ScriptCall)));
-
-	auto call = cc.call(scriptcall, FuncSignature5<int, VMFunction *, VMValue*, int, VMReturn*, int>());
-	call->setRet(0, result);
-	call->setArg(0, vmfunc);
-	call->setArg(1, paramsptr);
-	call->setArg(2, Imm(B));
-	call->setArg(3, ret);
-	call->setArg(4, numret);
 }
 
 void JitCompiler::StoreInOuts(int b)

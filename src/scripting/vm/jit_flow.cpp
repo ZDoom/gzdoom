@@ -45,27 +45,6 @@ void JitCompiler::EmitIJMP()
 	EmitThrowException(X_OTHER);
 }
 
-static VMFunction *GetVirtual(DObject *o, int c)
-{
-	auto p = o->GetClass();
-	assert(c < (int)p->Virtuals.Size());
-	return p->Virtuals[c];
-}
-
-void JitCompiler::EmitVTBL()
-{
-	auto label = EmitThrowExceptionLabel(X_READ_NIL);
-	cc.test(regA[B], regA[B]);
-	cc.jz(label);
-
-	auto result = newResultIntPtr();
-	auto call = CreateCall<VMFunction*, DObject*, int>(GetVirtual);
-	call->setRet(0, result);
-	call->setArg(0, regA[B]);
-	call->setArg(1, asmjit::Imm(C));
-	cc.mov(regA[A], result);
-}
-
 static void ValidateCall(DObject *o, VMFunction *f, int b)
 {
 	try

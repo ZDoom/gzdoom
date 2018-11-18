@@ -8246,12 +8246,17 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 				}
 				if (isDynArrayObj && ((MethodName == NAME_Push && idx == 0) || (MethodName == NAME_Insert && idx == 1)))
 				{
-					// The DynArray_Obj declaration in dynarrays.txt doesn't support generics yet. Check the type here as if it did.
-					if (!static_cast<PObjectPointer*>(elementType)->PointedClass()->IsAncestorOf(static_cast<PObjectPointer*>(a->ValueType)->PointedClass()))
+					// Null pointers are always valid.
+					if (!a->isConstant() || static_cast<FxConstant*>(a)->GetValue().GetPointer() != nullptr)
 					{
-						ScriptPosition.Message(MSG_ERROR, "Type mismatch in function argument");
-						delete this;
-						return nullptr;
+						// The DynArray_Obj declaration in dynarrays.txt doesn't support generics yet. Check the type here as if it did.
+						if (!a->ValueType->isObjectPointer() ||
+							!static_cast<PObjectPointer*>(elementType)->PointedClass()->IsAncestorOf(static_cast<PObjectPointer*>(a->ValueType)->PointedClass()))
+						{
+							ScriptPosition.Message(MSG_ERROR, "Type mismatch in function argument");
+							delete this;
+							return nullptr;
+						}
 					}
 				}
 				if (a->IsDynamicArray())

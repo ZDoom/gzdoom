@@ -71,6 +71,8 @@ void JitCompiler::EmitDoCall(asmjit::X86Gp vmfunc, VMFunction *target)
 		simpleFrameTarget = starget->SpecialInits.Size() == 0 && starget->NumRegS == 0;
 	}
 
+	CheckVMFrame();
+
 	int numparams = StoreCallParams(simpleFrameTarget);
 	if (numparams != B)
 		I_FatalError("OP_CALL parameter count does not match the number of preceding OP_PARAM instructions");
@@ -106,7 +108,7 @@ void JitCompiler::EmitScriptCall(asmjit::X86Gp vmfunc, asmjit::X86Gp paramsptr)
 	call->setArg(0, vmfunc);
 	call->setArg(1, paramsptr);
 	call->setArg(2, Imm(B));
-	call->setArg(3, callReturns);
+	call->setArg(3, GetCallReturns());
 	call->setArg(4, Imm(C));
 }
 
@@ -346,7 +348,7 @@ void JitCompiler::FillReturns(const VMOP *retval, int numret)
 			break;
 		}
 
-		cc.mov(x86::ptr(callReturns, i * sizeof(VMReturn) + myoffsetof(VMReturn, Location)), regPtr);
-		cc.mov(x86::byte_ptr(callReturns, i * sizeof(VMReturn) + myoffsetof(VMReturn, RegType)), type);
+		cc.mov(x86::ptr(GetCallReturns(), i * sizeof(VMReturn) + myoffsetof(VMReturn, Location)), regPtr);
+		cc.mov(x86::byte_ptr(GetCallReturns(), i * sizeof(VMReturn) + myoffsetof(VMReturn, RegType)), type);
 	}
 }

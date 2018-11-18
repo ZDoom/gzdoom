@@ -237,9 +237,18 @@ private:
 	int offsetA;
 	int offsetD;
 	int offsetExtra;
-	asmjit::X86Gp vmframe;
-	int NumParam = 0; // Actually part of vmframe (f->NumParam), but nobody seems to read that?
+
 	TArray<const VMOP *> ParamOpcodes;
+
+	void CheckVMFrame();
+	asmjit::X86Gp GetCallReturns();
+
+	bool vmframeAllocated = false;
+	asmjit::CBNode *vmframeCursor = nullptr;
+	asmjit::X86Gp vmframe;
+
+	bool callReturnsAllocated = false;
+	asmjit::CBNode *callReturnsCursor = nullptr;
 	asmjit::X86Gp callReturns;
 
 	const int *konstd;

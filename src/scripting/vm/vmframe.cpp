@@ -65,6 +65,42 @@ IMPLEMENT_CLASS(VMException, false, false)
 
 TArray<VMFunction *> VMFunction::AllFunctions;
 
+// Creates the register type list for a function.
+// Native functions only need this to assert their parameters in debug mode, script functions use this to load their registers from the VMValues.
+void VMFunction::CreateRegUse()
+{
+#ifdef NDEBUG
+	if (VarFlags & VARF_Native) return;	// we do not need this for native functions in release builds.
+#endif
+	int count = 0;
+	if (!Proto)
+	{
+		if (RegTypes) return;
+		Printf(TEXTCOLOR_ORANGE "Function without prototype needs register info manually set: %s\n", PrintableName.GetChars());
+		return;
+	}
+	assert(Proto->isPrototype());
+	for (auto arg : Proto->ArgumentTypes)
+	{
+		count += arg? arg->GetRegCount() : 1;
+	}
+	uint8_t *regp;
+	RegTypes = regp = (uint8_t*)ClassDataAllocator.Alloc(count);
+	count = 0;
+	for (auto arg : Proto->ArgumentTypes)
+	{
+		if (arg == nullptr)
+		{
+			// Marker for start of varargs.
+			*regp++ = REGT_NIL;
+		}
+		else for (int i = 0; i < arg->GetRegCount(); i++)
+		{
+			*regp++ = arg->GetRegType();
+		}
+	}
+}
+
 VMScriptFunction::VMScriptFunction(FName name)
 {
 	Name = name;

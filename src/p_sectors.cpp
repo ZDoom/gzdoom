@@ -1899,13 +1899,6 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 	 ACTION_RETURN_INT(self->GetLightLevel());
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, ClearSpecial)
- {
-	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
-	 self->ClearSpecial();
-	 return 0;
- }
-
  DEFINE_ACTION_FUNCTION(_Sector, PortalBlocksView)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);

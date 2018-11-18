@@ -34,6 +34,7 @@ struct SectorPortal native play
 struct Vertex native play
 {
 	native readonly Vector2 p;
+	native int Index();
 }
 
 struct Side native play

@@ -319,10 +319,11 @@ class VMFunction
 {
 public:
 	bool Unsafe = false;
-	int VarFlags = 0; // [ZZ] this replaces 5+ bool fields
 	uint8_t ImplicitArgs = 0;	// either 0 for static, 1 for method or 3 for action
+	int VarFlags = 0; // [ZZ] this replaces 5+ bool fields
 	unsigned VirtualIndex = ~0u;
 	FName Name;
+	const uint8_t *RegTypes = nullptr;
 	TArray<VMValue> DefaultArgs;
 	FString PrintableName;	// so that the VM can print meaningful info if something in this function goes wrong.
 
@@ -352,8 +353,16 @@ public:
 		}
 		AllFunctions.Clear();
 	}
+	static void CreateRegUseInfo()
+	{
+		for (auto f : AllFunctions)
+		{
+			f->CreateRegUse();
+		}
+	}
 	static TArray<VMFunction *> AllFunctions;
 protected:
+	void CreateRegUse();
 };
 
 class VMNativeFunction : public VMFunction

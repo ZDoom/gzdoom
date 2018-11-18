@@ -73,6 +73,7 @@ void JitCompiler::EmitLKP_R()
 
 void JitCompiler::EmitLFP()
 {
+	CheckVMFrame();
 	cc.lea(regA[A], asmjit::x86::ptr(vmframe, offsetExtra));
 }
 

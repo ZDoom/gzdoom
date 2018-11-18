@@ -210,6 +210,7 @@ private:
 	void RenameSprites();
 	void RenameNerve();
 	void FixMacHexen();
+	void RemoveIgnoredLumps();
 	void DeleteAll();
 	FileReader * GetFileReader(int wadnum);	// Gets a FileReader object to the entire WAD
 };

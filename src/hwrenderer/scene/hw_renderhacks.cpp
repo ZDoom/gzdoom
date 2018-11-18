@@ -763,12 +763,12 @@ void HWDrawInfo::PrepareUpperGap(seg_t * seg)
 	CreateFloodPoly(&ws, vertices.first+4, ws.z2, fakebsector, true);
 
 	gl_floodrendernode *node = NewFloodRenderNode();
-    auto pNode = floodFloorSegs.CheckKey(fakebsector->sectornum);
+    auto pNode = floodCeilingSegs.CheckKey(fakebsector->sectornum);
 
     node->next = pNode? *pNode : nullptr;
 	node->seg = seg;
 	node->vertexindex = vertices.second;
-	floodFloorSegs[fakebsector->sectornum] = node;
+	floodCeilingSegs[fakebsector->sectornum] = node;
 }
 
 

@@ -4,6 +4,7 @@
 #include "dobject.h"
 #include "vmintern.h"
 #include <vector>
+#include <functional>
 
 class VMFunctionBuilder;
 class FxExpression;

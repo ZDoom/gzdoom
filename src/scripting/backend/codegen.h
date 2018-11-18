@@ -514,7 +514,7 @@ public:
 		isresolved = true;
 	}
 
-	FxConstant(PType *type, VMValue &vmval, const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
+	FxConstant(PType *type, TypedVMValue &vmval, const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
 	{
 		isresolved = true;
 		switch (vmval.Type)

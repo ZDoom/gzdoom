@@ -777,14 +777,13 @@ void SetDehParams(FState *state, int codepointer)
 		// self, stateowner, state (all are pointers)
 		buildit.Registers[REGT_POINTER].Get(numargs);
 		// Emit code to pass the standard action function parameters.
-		FunctionCallEmitter emitters;
+		FunctionCallEmitter emitters(sym->Variants[0].Implementation);
 		for (int i = 0; i < numargs; i++)
 		{
 			emitters.AddParameterPointer(i, false);
 		}
 		// Emit code for action parameters.
 		MBFCodePointerFactories[codepointer](emitters, value1, value2);
-		emitters.AddTarget(sym->Variants[0].Implementation);
 		emitters.EmitCall(&buildit);
 		buildit.Emit(OP_RET, RET_FINAL, REGT_NIL, 0);
 		// Attach it to the state.

@@ -203,7 +203,6 @@ void VMFillParams(VMValue *params, VMFrame *callee, int numparam)
 	{
 		// copy all parameters to the local registers.
 		VMValue &p = params[i];
-		assert(*reginfo == p.Type);
 		if (*reginfo < REGT_STRING)
 		{
 			if (*reginfo == REGT_INT)

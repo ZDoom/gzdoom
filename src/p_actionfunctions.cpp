@@ -175,7 +175,13 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 
 				if (state->ActionFunc->DefaultArgs.Size() > 0)
 				{
-					auto index = actionParams.Append(state->ActionFunc->DefaultArgs);
+					auto defs = state->ActionFunc->DefaultArgs;
+					auto index = actionParams.Reserve(defs.Size());
+					for (unsigned i = 0; i < defs.Size(); i++)
+					{
+						actionParams[i + index] = defs[i];
+					}
+
 					if (state->ActionFunc->ImplicitArgs >= 1)
 					{
 						actionParams[index] = actor;

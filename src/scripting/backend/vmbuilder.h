@@ -169,11 +169,22 @@ class FunctionCallEmitter
 	// std::function and TArray are not compatible so this has to use std::vector instead.
 	std::vector<std::function<int(VMFunctionBuilder *)>> emitters;
 	TArray<std::pair<int, int>> returns;
+	TArray<uint8_t> reginfo;
 	unsigned numparams = 0;	// This counts the number of pushed elements, which can differ from the number of emitters with vectors.
 	VMFunction *target = nullptr;
 	int virtualselfreg = -1;
 
 public:
+	FunctionCallEmitter(VMFunction *func)
+	{
+		target = func;
+	}
+
+	void SetVirtualReg(int virtreg)
+	{
+		virtualselfreg = virtreg;
+	}
+
 	void AddParameter(VMFunctionBuilder *build, FxExpression *operand);
 	void AddParameter(ExpEmit &emit, bool reference);
 	void AddParameterPointerConst(void *konst);
@@ -185,11 +196,6 @@ public:
 	void AddReturn(int regtype, int regcount = 1)
 	{
 		returns.Push({ regtype, regcount });
-	}
-	void AddTarget(VMFunction *func, int virtreg = -1)
-	{
-		target = func;
-		virtualselfreg = virtreg;
 	}
 	unsigned Count() const
 	{

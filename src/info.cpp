@@ -181,7 +181,13 @@ bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info,
 
 			if (ActionFunc->DefaultArgs.Size() > 0)
 			{
-				auto index = actionParams.Append(ActionFunc->DefaultArgs);
+				auto defs = ActionFunc->DefaultArgs;
+				auto index = actionParams.Reserve(defs.Size());
+				for (unsigned i = 0; i < defs.Size(); i++)
+				{
+					actionParams[i + index] = defs[i];
+				}
+
 				if (ActionFunc->ImplicitArgs >= 1)
 				{
 					actionParams[index] = self;

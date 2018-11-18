@@ -2287,7 +2287,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 	TArray<PType *> rets(1);
 	TArray<PType *> args;
 	TArray<uint32_t> argflags;
-	TArray<VMValue> argdefaults;
+	TArray<TypedVMValue> argdefaults;
 	TArray<FName> argnames;
 
 	rets.Clear();
@@ -2495,7 +2495,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			do
 			{
 				int elementcount = 1;
-				VMValue vmval[3];	// default is REGT_NIL which means 'no default value' here.
+				TypedVMValue vmval[3];	// default is REGT_NIL which means 'no default value' here.
 				if (p->Type != nullptr)
 				{
 					auto type = DetermineType(c->Type(), p, f->Name, p->Type, false, false);

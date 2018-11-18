@@ -191,8 +191,10 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawChar)
 	PARAM_FLOAT(y);
 	PARAM_INT(chr);
 
+	PARAM_VA_POINTER(va_reginfo)	// Get the hidden type information array
+
 	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	VMVa_List args = { param + 5, 0, numparam - 5 };
+	VMVa_List args = { param + 5, 0, numparam - 6, va_reginfo };
 	screen->DrawChar(font, cr, x, y, chr, args);
 	return 0;
 }
@@ -321,8 +323,10 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawText)
 	PARAM_FLOAT(y);
 	PARAM_STRING(chr);
 
+	PARAM_VA_POINTER(va_reginfo)	// Get the hidden type information array
+
 	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	VMVa_List args = { param + 5, 0, numparam - 5 };
+	VMVa_List args = { param + 5, 0, numparam - 6, va_reginfo };
 	const char *txt = chr[0] == '$' ? GStrings(&chr[1]) : chr.GetChars();
 	screen->DrawText(font, cr, x, y, txt, args);
 	return 0;

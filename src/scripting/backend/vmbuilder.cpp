@@ -941,6 +941,8 @@ void FunctionCallEmitter::AddParameter(VMFunctionBuilder *build, FxExpression *o
 		operand->ScriptPosition.Message(MSG_ERROR, "Attempted to pass a non-value");
 	}
 	numparams += where.RegCount;
+	if (target->VarFlags & VARF_VarArg)
+		for (unsigned i = 0; i < where.RegCount; i++) reginfo.Push(where.RegType & REGT_TYPE);
 
 	emitters.push_back([=](VMFunctionBuilder *build) -> int
 	{
@@ -962,6 +964,11 @@ void FunctionCallEmitter::AddParameter(VMFunctionBuilder *build, FxExpression *o
 void FunctionCallEmitter::AddParameter(ExpEmit &emit, bool reference)
 {
 	numparams += emit.RegCount;
+	if (target->VarFlags & VARF_VarArg)
+	{
+		if (reference) reginfo.Push(REGT_POINTER);
+		else for (unsigned i = 0; i < emit.RegCount; i++) reginfo.Push(emit.RegType & REGT_TYPE);
+	}
 	emitters.push_back([=](VMFunctionBuilder *build) ->int
 	{
 		build->Emit(OP_PARAM, emit.RegType + (reference * REGT_ADDROF), emit.RegNum);
@@ -974,6 +981,8 @@ void FunctionCallEmitter::AddParameter(ExpEmit &emit, bool reference)
 void FunctionCallEmitter::AddParameterPointerConst(void *konst)
 {
 	numparams++;
+	if (target->VarFlags & VARF_VarArg)
+		reginfo.Push(REGT_POINTER);
 	emitters.push_back([=](VMFunctionBuilder *build) ->int
 	{
 		build->Emit(OP_PARAM, REGT_POINTER | REGT_KONST, build->GetConstantAddress(konst));
@@ -984,6 +993,8 @@ void FunctionCallEmitter::AddParameterPointerConst(void *konst)
 void FunctionCallEmitter::AddParameterPointer(int index, bool konst)
 {
 	numparams++;
+	if (target->VarFlags & VARF_VarArg)
+		reginfo.Push(REGT_POINTER);
 	emitters.push_back([=](VMFunctionBuilder *build) ->int
 	{
 		build->Emit(OP_PARAM, konst ? REGT_POINTER | REGT_KONST : REGT_POINTER, index);
@@ -994,6 +1005,8 @@ void FunctionCallEmitter::AddParameterPointer(int index, bool konst)
 void FunctionCallEmitter::AddParameterFloatConst(double konst)
 {
 	numparams++;
+	if (target->VarFlags & VARF_VarArg)
+		reginfo.Push(REGT_FLOAT);
 	emitters.push_back([=](VMFunctionBuilder *build) ->int
 	{
 		build->Emit(OP_PARAM, REGT_FLOAT | REGT_KONST, build->GetConstantFloat(konst));
@@ -1004,6 +1017,8 @@ void FunctionCallEmitter::AddParameterFloatConst(double konst)
 void FunctionCallEmitter::AddParameterIntConst(int konst)
 {
 	numparams++;
+	if (target->VarFlags & VARF_VarArg)
+		reginfo.Push(REGT_INT);
 	emitters.push_back([=](VMFunctionBuilder *build) ->int
 	{
 		// Immediates for PARAMI must fit in 24 bits.
@@ -1022,6 +1037,8 @@ void FunctionCallEmitter::AddParameterIntConst(int konst)
 void FunctionCallEmitter::AddParameterStringConst(const FString &konst)
 {
 	numparams++;
+	if (target->VarFlags & VARF_VarArg)
+		reginfo.Push(REGT_STRING);
 	emitters.push_back([=](VMFunctionBuilder *build) ->int
 	{
 		build->Emit(OP_PARAM, REGT_STRING | REGT_KONST, build->GetConstantString(konst));
@@ -1037,6 +1054,16 @@ ExpEmit FunctionCallEmitter::EmitCall(VMFunctionBuilder *build, TArray<ExpEmit> 
 		paramcount += func(build);
 	}
 	assert(paramcount == numparams);
+	if (target->VarFlags & VARF_VarArg)
+	{
+		// Pass a hidden type information parameter to vararg functions.
+		// It would really be nicer to actually pass real types but that'd require a far more complex interface on the compiler side than what we have.
+		uint8_t *regbuffer = (uint8_t*)ClassDataAllocator.Alloc(reginfo.Size());	// Allocate in the arena so that the pointer does not need to be maintained.
+		memcpy(regbuffer, reginfo.Data(), reginfo.Size());
+		build->Emit(OP_PARAM, REGT_POINTER | REGT_KONST, build->GetConstantAddress(regbuffer));
+		paramcount++;
+	}
+
 
 	if (virtualselfreg == -1)
 	{

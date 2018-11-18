@@ -5609,7 +5609,6 @@ ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 	emitters.AddReturn(REGT_INT);
 	auto resultreg = emitters.EmitCall(build);
 
-	build->Emit(OP_RESULT, 0, REGT_INT, resultreg.RegNum);
 	build->Emit(OP_IJMP, resultreg.RegNum, choices.Size());
 
 	// Free the result register now. The simple code generation algorithm should

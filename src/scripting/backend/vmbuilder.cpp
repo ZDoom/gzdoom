@@ -656,28 +656,6 @@ size_t VMFunctionBuilder::Emit(int opcode, int opabc)
 
 //==========================================================================
 //
-// VMFunctionBuilder :: EmitParamInt
-//
-// Passes a constant integer parameter, using either PARAMI and an immediate
-// value or PARAM and a constant register, as appropriate.
-//
-//==========================================================================
-
-size_t VMFunctionBuilder::EmitParamInt(int value)
-{
-	// Immediates for PARAMI must fit in 24 bits.
-	if (((value << 8) >> 8) == value)
-	{
-		return Emit(OP_PARAMI, value);
-	}
-	else
-	{
-		return Emit(OP_PARAM, REGT_INT | REGT_KONST, GetConstantInt(value));
-	}
-}
-
-//==========================================================================
-//
 // VMFunctionBuilder :: EmitLoadInt
 //
 // Loads an integer constant into a register, using either an immediate
@@ -950,4 +928,113 @@ void FFunctionBuildList::DumpJit()
 	}
 
 	fclose(dump);
+}
+
+
+void EmitterArray::AddParameter(VMFunctionBuilder *build, FxExpression *operand)
+{
+	ExpEmit where = operand->Emit(build);
+
+	if (where.RegType == REGT_NIL)
+	{
+		operand->ScriptPosition.Message(MSG_ERROR, "Attempted to pass a non-value");
+	}
+	numparams += where.RegCount;
+
+	emitters.push_back([=](VMFunctionBuilder *build) -> int
+	{
+		auto op = where;
+		if (op.RegType == REGT_NIL)
+		{
+			build->Emit(OP_PARAM, op.RegType, op.RegNum);
+			return 1;
+		}
+		else
+		{
+			build->Emit(OP_PARAM, EncodeRegType(op), op.RegNum);
+			op.Free(build);
+			return op.RegCount;
+		}
+	});
+}
+
+void EmitterArray::AddParameter(ExpEmit &emit, bool reference)
+{
+	numparams += emit.RegCount;
+	emitters.push_back([=](VMFunctionBuilder *build) ->int
+	{
+		build->Emit(OP_PARAM, emit.RegType + (reference * REGT_ADDROF), emit.RegNum);
+		auto op = emit;
+		op.Free(build);
+		return emit.RegCount;
+	});
+}
+
+void EmitterArray::AddParameterPointerConst(void *konst)
+{
+	numparams++;
+	emitters.push_back([=](VMFunctionBuilder *build) ->int
+	{
+		build->Emit(OP_PARAM, REGT_POINTER | REGT_KONST, build->GetConstantAddress(konst));
+		return 1;
+	});
+}
+
+void EmitterArray::AddParameterPointer(int index, bool konst)
+{
+	numparams++;
+	emitters.push_back([=](VMFunctionBuilder *build) ->int
+	{
+		build->Emit(OP_PARAM, konst ? REGT_POINTER | REGT_KONST : REGT_POINTER, index);
+		return 1;
+	});
+}
+
+void EmitterArray::AddParameterFloatConst(double konst)
+{
+	numparams++;
+	emitters.push_back([=](VMFunctionBuilder *build) ->int
+	{
+		build->Emit(OP_PARAM, REGT_FLOAT | REGT_KONST, build->GetConstantFloat(konst));
+		return 1;
+	});
+}
+
+void EmitterArray::AddParameterIntConst(int konst)
+{
+	numparams++;
+	emitters.push_back([=](VMFunctionBuilder *build) ->int
+	{
+		// Immediates for PARAMI must fit in 24 bits.
+		if (((konst << 8) >> 8) == konst)
+		{
+			build->Emit(OP_PARAMI, konst);
+		}
+		else
+		{
+			build->Emit(OP_PARAM, REGT_INT | REGT_KONST, build->GetConstantInt(konst));
+		}
+		return 1;
+	});
+}
+
+void EmitterArray::AddParameterStringConst(const FString &konst)
+{
+	numparams++;
+	emitters.push_back([=](VMFunctionBuilder *build) ->int
+	{
+		build->Emit(OP_PARAM, REGT_STRING | REGT_KONST, build->GetConstantString(konst));
+		return 1;
+	});
+}
+
+int EmitterArray::EmitParameters(VMFunctionBuilder *build)
+{
+	int paramcount = 0;
+	for (auto &func : emitters)
+	{
+		paramcount += func(build);
+	}
+	assert(paramcount == numparams);
+	return paramcount;
 }

@@ -68,7 +68,6 @@ public:
 	size_t Emit(int opcode, int opa, int opb, int opc);
 	size_t Emit(int opcode, int opa, VM_SHALF opbc);
 	size_t Emit(int opcode, int opabc);
-	size_t EmitParamInt(int value);
 	size_t EmitLoadInt(int regnum, int value);
 	size_t EmitRetInt(int retnum, bool final, int value);
 
@@ -154,4 +153,34 @@ public:
 };
 
 extern FFunctionBuildList FunctionBuildList;
+
+
+//==========================================================================
+//
+// Function call parameter collector
+//
+//==========================================================================
+extern int EncodeRegType(ExpEmit reg);
+
+class EmitterArray
+{
+	// std::function and TArray are not compatible so this has to use std::vector instead.
+	std::vector<std::function<int(VMFunctionBuilder *)>> emitters;
+	unsigned numparams = 0;
+
+public:
+	void AddParameter(VMFunctionBuilder *build, FxExpression *operand);
+	void AddParameter(ExpEmit &emit, bool reference);
+	void AddParameterPointerConst(void *konst);
+	void AddParameterPointer(int index, bool konst);
+	void AddParameterFloatConst(double konst);
+	void AddParameterIntConst(int konst);
+	void AddParameterStringConst(const FString &konst);
+	int EmitParameters(VMFunctionBuilder *build);
+	unsigned Count() const
+	{
+		return numparams;
+	}
+};
+
 #endif

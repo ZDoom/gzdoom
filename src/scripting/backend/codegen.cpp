@@ -5499,12 +5499,9 @@ ExpEmit FxRandom::Emit(VMFunctionBuilder *build)
 	emitters.AddParameterPointerConst(rng);
 	emitters.AddParameter(build, min);
 	emitters.AddParameter(build, max);
-	int count = emitters.EmitParameters(build);
-	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc), count, 1);
-
-	ExpEmit out(build, REGT_INT);
-	build->Emit(OP_RESULT, 0, REGT_INT, out.RegNum);
-	return out;
+	emitters.AddTarget(callfunc);
+	emitters.AddReturn(REGT_INT);
+	return emitters.EmitCall(build);
 }
 
 //==========================================================================
@@ -5608,10 +5605,10 @@ ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 	emitters.AddParameterPointerConst(rng);
 	emitters.AddParameterIntConst(0);
 	emitters.AddParameterIntConst(choices.Size() - 1);
-	int count = emitters.EmitParameters(build);
-	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc), count, 1);
+	emitters.AddTarget(callfunc);
+	emitters.AddReturn(REGT_INT);
+	auto resultreg = emitters.EmitCall(build);
 
-	ExpEmit resultreg(build, REGT_INT);
 	build->Emit(OP_RESULT, 0, REGT_INT, resultreg.RegNum);
 	build->Emit(OP_IJMP, resultreg.RegNum, choices.Size());
 
@@ -5729,12 +5726,9 @@ ExpEmit FxFRandom::Emit(VMFunctionBuilder *build)
 	emitters.AddParameterPointerConst(rng);
 	emitters.AddParameter(build, min);
 	emitters.AddParameter(build, max);
-	int count = emitters.EmitParameters(build);
-	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc), count, 1);
-
-	ExpEmit out(build, REGT_FLOAT);
-	build->Emit(OP_RESULT, 0, REGT_FLOAT, out.RegNum);
-	return out;
+	emitters.AddTarget(callfunc);
+	emitters.AddReturn(REGT_FLOAT);
+	return emitters.EmitCall(build);
 }
 
 //==========================================================================
@@ -5810,12 +5804,9 @@ ExpEmit FxRandom2::Emit(VMFunctionBuilder *build)
 
 	emitters.AddParameterPointerConst(rng);
 	emitters.AddParameter(build, mask);
-	int count = emitters.EmitParameters(build);
-	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc), count, 1);
-
-	ExpEmit out(build, REGT_INT);
-	build->Emit(OP_RESULT, 0, REGT_INT, out.RegNum);
-	return out;
+	emitters.AddTarget(callfunc);
+	emitters.AddReturn(REGT_INT);
+	return emitters.EmitCall(build);
 }
 
 //==========================================================================
@@ -5885,11 +5876,8 @@ ExpEmit FxRandomSeed::Emit(VMFunctionBuilder *build)
 
 	emitters.AddParameterPointerConst(rng);
 	emitters.AddParameter(build, seed);
-	int count = emitters.EmitParameters(build);
-	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc), count, 0);
-
-	ExpEmit call;
-	return call;
+	emitters.AddTarget(callfunc);
+	return emitters.EmitCall(build);
 }
 
 //==========================================================================
@@ -8554,9 +8542,7 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 	EmitterArray emitters;
 
 	emitters.AddParameterIntConst(abs(Special));			// pass special number
-
-	ExpEmit selfemit(Self->Emit(build));
-	emitters.AddParameterPointer(selfemit.RegNum, selfemit.Konst);
+	emitters.AddParameter(build, Self);
 
 	for (; i < ArgList.Size(); ++i)
 	{
@@ -8590,13 +8576,9 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 	ArgList.DeleteAndClear();
 	ArgList.ShrinkToFit();
 
-	int count = emitters.EmitParameters(build);
-	selfemit.Free(build);
-
-	ExpEmit dest(build, REGT_INT);
-	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc), count, 1);
-	build->Emit(OP_RESULT, 0, REGT_INT, dest.RegNum);
-	return dest;
+	emitters.AddTarget(callfunc);
+	emitters.AddReturn(REGT_INT);
+	return emitters.EmitCall(build);
 }
 
 //==========================================================================
@@ -10641,8 +10623,8 @@ ExpEmit FxReturnStatement::Emit(VMFunctionBuilder *build)
 		build->Emit(OP_ADDA_RK, reg.RegNum, build->FramePointer.RegNum, build->GetConstantInt(build->ConstructedStructs[i]->StackOffset));
 		EmitterArray emitters;
 		emitters.AddParameter(reg, false);
-		int count = emitters.EmitParameters(build);
-		build->Emit(OP_CALL_K, build->GetConstantAddress(pstr->mDestructor), count, 0);
+		emitters.AddTarget(pstr->mDestructor);
+		emitters.EmitCall(build);
 	}
 
 	// If we return nothing, use a regular RET opcode.
@@ -10834,11 +10816,8 @@ ExpEmit FxClassTypeCast::Emit(VMFunctionBuilder *build)
 	{
 		return ExpEmit(build->GetConstantAddress(nullptr), REGT_POINTER, true);
 	}
-	ExpEmit clsname = basex->Emit(build);
-	assert(!clsname.Konst);
-	ExpEmit dest(build, REGT_POINTER);
 	EmitterArray emitters;
-	emitters.AddParameter(clsname, false);
+	emitters.AddParameter(build, basex);
 	emitters.AddParameterPointerConst(const_cast<PClass *>(desttype));
 
 	// Call the BuiltinNameToClass function to convert from 'name' to class.
@@ -10849,10 +10828,9 @@ ExpEmit FxClassTypeCast::Emit(VMFunctionBuilder *build)
 	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
-	int count = emitters.EmitParameters(build);
-	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc), count, 1);
-	build->Emit(OP_RESULT, 0, REGT_POINTER, dest.RegNum);
-	return dest;
+	emitters.AddTarget(callfunc);
+	emitters.AddReturn(REGT_POINTER);
+	return emitters.EmitCall(build);
 }
 
 //==========================================================================
@@ -10958,11 +10936,9 @@ ExpEmit FxClassPtrCast::Emit(VMFunctionBuilder *build)
 	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
-	ExpEmit dest(build, REGT_POINTER);
-	int count = emitters.EmitParameters(build);
-	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc), count, 1);
-	build->Emit(OP_RESULT, 0, REGT_POINTER, dest.RegNum);
-	return dest;
+	emitters.AddTarget(callfunc);
+	emitters.AddReturn(REGT_POINTER);
+	return emitters.EmitCall(build);
 }
 
 //==========================================================================
@@ -11337,8 +11313,8 @@ ExpEmit FxLocalVariableDeclaration::Emit(VMFunctionBuilder *build)
 				build->Emit(OP_ADDA_RK, reg.RegNum, build->FramePointer.RegNum, build->GetConstantInt(StackOffset));
 				EmitterArray emitters;
 				emitters.AddParameter(reg, false);
-				int count = emitters.EmitParameters(build);
-				build->Emit(OP_CALL_K, build->GetConstantAddress(pstr->mConstructor), count, 0);
+				emitters.AddTarget(pstr->mConstructor);
+				emitters.EmitCall(build);
 			}
 			if (pstr->mDestructor != nullptr) build->ConstructedStructs.Push(this);
 		}
@@ -11364,8 +11340,8 @@ void FxLocalVariableDeclaration::Release(VMFunctionBuilder *build)
 				build->Emit(OP_ADDA_RK, reg.RegNum, build->FramePointer.RegNum, build->GetConstantInt(StackOffset));
 				EmitterArray emitters;
 				emitters.AddParameter(reg, false);
-				int count = emitters.EmitParameters(build);
-				build->Emit(OP_CALL_K, build->GetConstantAddress(pstr->mDestructor), count, 0);
+				emitters.AddTarget(pstr->mDestructor);
+				emitters.EmitCall(build);
 			}
 			build->ConstructedStructs.Delete(build->ConstructedStructs.Find(this));
 		}

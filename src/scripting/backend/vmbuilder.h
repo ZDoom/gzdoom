@@ -167,7 +167,9 @@ class EmitterArray
 {
 	// std::function and TArray are not compatible so this has to use std::vector instead.
 	std::vector<std::function<int(VMFunctionBuilder *)>> emitters;
-	unsigned numparams = 0;
+	TArray<int> returns;
+	unsigned numparams = 0;	// This counts the number of pushed elements, which can differ from the number of emitters with vectors.
+	VMFunction *target = nullptr;
 
 public:
 	void AddParameter(VMFunctionBuilder *build, FxExpression *operand);
@@ -178,6 +180,15 @@ public:
 	void AddParameterIntConst(int konst);
 	void AddParameterStringConst(const FString &konst);
 	int EmitParameters(VMFunctionBuilder *build);
+	ExpEmit EmitCall(VMFunctionBuilder *build);
+	void AddReturn(int regtype)
+	{
+		returns.Push(regtype);
+	}
+	void AddTarget(VMFunction *func)
+	{
+		target = func;
+	}
 	unsigned Count() const
 	{
 		return numparams;

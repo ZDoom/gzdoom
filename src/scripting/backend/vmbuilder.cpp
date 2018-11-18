@@ -1038,3 +1038,16 @@ int EmitterArray::EmitParameters(VMFunctionBuilder *build)
 	assert(paramcount == numparams);
 	return paramcount;
 }
+
+
+ExpEmit EmitterArray::EmitCall(VMFunctionBuilder *build)
+{
+	int count = EmitParameters(build);
+	build->Emit(OP_CALL_K, build->GetConstantAddress(target), count, returns.Size());
+	if (returns.Size() == 0) return ExpEmit();
+
+	ExpEmit out(build, returns[0]);
+	build->Emit(OP_RESULT, 0, returns[0], out.RegNum);
+	return out;
+}
+

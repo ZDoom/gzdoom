@@ -383,10 +383,13 @@ asmjit::CCFunc *JitCompiler::Codegen()
 		int i = (int)(ptrdiff_t)(pc - sfunc->Code);
 		op = pc->op;
 
-		FString lineinfo;
-		lineinfo.Format("; line %d: %02x%02x%02x%02x %s", sfunc->PCToLine(pc), pc->op, pc->a, pc->b, pc->c, OpNames[op]);
-		cc.comment("", 0);
-		cc.comment(lineinfo.GetChars(), lineinfo.Len());
+		if (op != OP_PARAM && op != OP_PARAMI && op != OP_VTBL)
+		{
+			FString lineinfo;
+			lineinfo.Format("; line %d: %02x%02x%02x%02x %s", sfunc->PCToLine(pc), pc->op, pc->a, pc->b, pc->c, OpNames[op]);
+			cc.comment("", 0);
+			cc.comment(lineinfo.GetChars(), lineinfo.Len());
+		}
 
 		labels[i].cursor = cc.getCursor();
 		ResetTemp();

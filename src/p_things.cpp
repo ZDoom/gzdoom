@@ -432,7 +432,7 @@ void P_RemoveThing(AActor * actor)
 
 }
 
-bool P_Thing_Raise(AActor *thing, AActor *raiser, int nocheck)
+bool P_Thing_Raise(AActor *thing, AActor *raiser, int flags)
 {
 	if (!thing)	
 		return false;
@@ -455,7 +455,7 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser, int nocheck)
 	thing->flags |= MF_SOLID;
 	thing->Height = info->Height;	// [RH] Use real height
 	thing->radius = info->radius;	// [RH] Use real radius
-	if (!nocheck && !P_CheckPosition (thing, thing->Pos()))
+	if (!(flags & RF_NOCHECKPOSITION) && !P_CheckPosition (thing, thing->Pos()))
 	{
 		thing->flags = oldflags;
 		thing->radius = oldradius;
@@ -470,7 +470,7 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser, int nocheck)
 
 	thing->Revive();
 
-	if (raiser != NULL)
+	if ((flags & RF_TRANSFERFRIENDLINESS) && raiser != nullptr)
 	{
 		// Let's copy the friendliness of the one who raised it.
 		thing->CopyFriendliness(raiser, false);

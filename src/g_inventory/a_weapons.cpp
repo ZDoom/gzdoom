@@ -467,17 +467,6 @@ FState *AWeapon::GetReadyState ()
 	return nullptr;
 }
 
-//===========================================================================
-//
-// AWeapon :: GetStateForButtonName
-//
-//===========================================================================
-
-FState *AWeapon::GetStateForButtonName (FName button)
-{
-	return FindState(button);
-}
-
 
 /* Weapon slots ***********************************************************/
 

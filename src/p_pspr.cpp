@@ -892,7 +892,7 @@ static void P_CheckWeaponButtons (player_t *player)
 		if ((player->WeaponState & ButtonChecks[i].StateFlag) &&
 			(player->cmd.ucmd.buttons & ButtonChecks[i].ButtonFlag))
 		{
-			FState *state = weapon->GetStateForButtonName(ButtonChecks[i].StateName);
+			FState *state = weapon->FindState(ButtonChecks[i].StateName);
 			// [XA] don't change state if still null, so if the modder
 			// sets WRF_xxx to true but forgets to define the corresponding
 			// state, the weapon won't disappear. ;)

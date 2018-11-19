@@ -132,8 +132,6 @@ public:
 	FState *GetUpState ();
 	FState *GetDownState ();
 	FState *GetReadyState ();
-	
-	FState *GetStateForButtonName (FName button);
 
 	enum
 	{

@@ -835,6 +835,7 @@ void CopyPlayer(player_t *dst, player_t *src, const char *name)
 
 
 	*dst = *src;		// To avoid memory leaks at this point the userinfo in src must be empty which is taken care of by the TransferFrom call above.
+	dst->psprites = src->psprites;
 
 	dst->cheats |= chasecam;
 

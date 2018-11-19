@@ -359,7 +359,7 @@ player_t &player_t::operator=(const player_t &p)
 	extralight = p.extralight;
 	fixedcolormap = p.fixedcolormap;
 	fixedlightlevel = p.fixedlightlevel;
-	psprites = p.psprites;
+	// psprites should be copied explicitly
 	morphTics = p.morphTics;
 	MorphedPlayerClass = p.MorphedPlayerClass;
 	MorphStyle = p.MorphStyle;

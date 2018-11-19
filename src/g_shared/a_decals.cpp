@@ -43,6 +43,7 @@
 #include "serializer.h"
 #include "doomdata.h"
 #include "g_levellocals.h"
+#include "vm.h"
 
 static double DecalWidth, DecalLeft, DecalRight;
 static double SpreadZ;
@@ -753,29 +754,20 @@ DBaseDecal *ShootDecal(const FDecalTemplate *tpl, AActor *basisactor, sector_t *
 	return NULL;
 }
 
-class ADecal : public AActor
+DEFINE_ACTION_FUNCTION(ADecal, SpawnDecal)
 {
-	DECLARE_CLASS (ADecal, AActor);
-public:
-	void BeginPlay ();
-};
+	PARAM_SELF_PROLOGUE(AActor);
 
-IMPLEMENT_CLASS(ADecal, false, false)
-
-void ADecal::BeginPlay ()
-{
 	const FDecalTemplate *tpl = nullptr;
 
-	Super::BeginPlay ();
-
-	if (args[0] < 0)
+	if (self->args[0] < 0)
 	{
-		FName name = ENamedName(-args[0]);
+		FName name = ENamedName(-self->args[0]);
 		tpl = DecalLibrary.GetDecalByName(name.GetChars());
 	}
 	else
 	{
-		int decalid = args[0] + (args[1] << 8); // [KS] High byte for decals.
+		int decalid = self->args[0] + (self->args[1] << 8); // [KS] High byte for decals.
 		tpl = DecalLibrary.GetDecalByNum(decalid);
 	}
 
@@ -784,23 +776,22 @@ void ADecal::BeginPlay ()
 	{
 		if (!tpl->PicNum.Exists())
 		{
-			Printf("Decal actor at (%f,%f) does not have a valid texture\n", X(), Y());
+			Printf("Decal actor at (%f,%f) does not have a valid texture\n", self->X(), self->Y());
 		}
 		else
 		{
 			// Look for a wall within 64 units behind the actor. If none can be
 			// found, then no decal is created, and this actor is destroyed
 			// without effectively doing anything.
-			if (NULL == ShootDecal(tpl, this, Sector, X(), Y(), Z(), Angles.Yaw + 180, 64., true))
+			if (NULL == ShootDecal(tpl, self, self->Sector, self->X(), self->Y(), self->Z(), self->Angles.Yaw + 180, 64., true))
 			{
-				DPrintf (DMSG_WARNING, "Could not find a wall to stick decal to at (%f,%f)\n", X(), Y());
+				DPrintf (DMSG_WARNING, "Could not find a wall to stick decal to at (%f,%f)\n", self->X(), self->Y());
 			}
 		}
 	}
 	else
 	{
-		DPrintf (DMSG_ERROR, "Decal actor at (%f,%f) does not have a good template\n", X(), Y());
+		DPrintf (DMSG_ERROR, "Decal actor at (%f,%f) does not have a good template\n", self->X(), self->Y());
 	}
-	// This actor doesn't need to stick around anymore.
-	Destroy();
+	return 0;
 }

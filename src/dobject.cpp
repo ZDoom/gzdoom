@@ -307,7 +307,6 @@ DObject::~DObject ()
 			if (!(ObjectFlags & OF_Released))
 			{
 				// Find all pointers that reference this object and NULL them.
-				StaticPointerSubstitution(this, NULL);
 				Release();
 			}
 		}
@@ -478,11 +477,15 @@ size_t DObject::PointerSubstitution (DObject *old, DObject *notOld)
 
 //==========================================================================
 //
-//
+// This once was the main method for pointer cleanup, but
+// nowadays its only use is swapping out PlayerPawns.
+// This requires pointer fixing throughout all objects and a few
+// global variables, but it only needs to look at pointers that
+// can point to a player.
 //
 //==========================================================================
 
-size_t DObject::StaticPointerSubstitution (DObject *old, DObject *notOld, bool scandefaults)
+size_t DObject::StaticPointerSubstitution (AActor *old, AActor *notOld)
 {
 	DObject *probe;
 	size_t changed = 0;
@@ -497,24 +500,12 @@ size_t DObject::StaticPointerSubstitution (DObject *old, DObject *notOld, bool s
 		last = probe;
 	}
 
-	if (scandefaults)
-	{
-		for (auto p : PClassActor::AllActorClasses)
-		{
-			auto def = GetDefaultByType(p);
-			if (def != nullptr)
-			{
-				def->DObject::PointerSubstitution(old, notOld);
-			}
-		}
-	}
-
 	// Go through the bodyque.
 	for (i = 0; i < BODYQUESIZE; ++i)
 	{
 		if (bodyque[i] == old)
 		{
-			bodyque[i] = static_cast<AActor *>(notOld);
+			bodyque[i] = notOld;
 			changed++;
 		}
 	}
@@ -523,35 +514,24 @@ size_t DObject::StaticPointerSubstitution (DObject *old, DObject *notOld, bool s
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		if (playeringame[i])
-			changed += players[i].FixPointers (old, notOld);
-	}
-
-	for (auto &s : level.sectorPortals)
-	{
-		if (s.mSkybox == old)
 		{
-			s.mSkybox = static_cast<AActor*>(notOld);
-			changed++;
+			APlayerPawn *replacement = static_cast<APlayerPawn *>(notOld);
+			auto &p = players[i];
+			
+			if (p.mo == old)					p.mo = replacement, changed++;
+			if (p.poisoner.pp == old)			p.poisoner = replacement, changed++;
+			if (p.attacker.pp == old)			p.attacker = replacement, changed++;
+			if (p.camera.pp == old)				p.camera = replacement, changed++;
+			if (p.ConversationNPC.pp == old)	p.ConversationNPC = replacement, changed++;
+			if (p.ConversationPC == old)		p.ConversationPC = replacement, changed++;
 		}
 	}
 
 	// Go through sectors.
 	for (auto &sec : level.sectors)
 	{
-#define SECTOR_CHECK(f,t) \
-if (sec.f.pp == static_cast<t *>(old)) { sec.f = static_cast<t *>(notOld); changed++; }
-		SECTOR_CHECK( SoundTarget, AActor );
-		SECTOR_CHECK( SecActTarget, AActor );
-		SECTOR_CHECK( floordata, DSectorEffect );
-		SECTOR_CHECK( ceilingdata, DSectorEffect );
-		SECTOR_CHECK( lightingdata, DSectorEffect );
-#undef SECTOR_CHECK
+		if (sec.SoundTarget == old) sec.SoundTarget = notOld;
 	}
-
-	// Go through bot stuff.
-	if (bglobal.firstthing.pp == (AActor *)old)		bglobal.firstthing = (AActor *)notOld, ++changed;
-	if (bglobal.body1.pp == (AActor *)old)			bglobal.body1 = (AActor *)notOld, ++changed;
-	if (bglobal.body2.pp == (AActor *)old)			bglobal.body2 = (AActor *)notOld, ++changed;
 
 	return changed;
 }

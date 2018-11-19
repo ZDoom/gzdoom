@@ -1048,7 +1048,7 @@ void FunctionCallEmitter::AddParameterStringConst(const FString &konst)
 
 ExpEmit FunctionCallEmitter::EmitCall(VMFunctionBuilder *build, TArray<ExpEmit> *ReturnRegs)
 {
-	int paramcount = 0;
+	unsigned paramcount = 0;
 	for (auto &func : emitters)
 	{
 		paramcount += func(build);

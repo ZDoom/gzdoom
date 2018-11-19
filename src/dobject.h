@@ -185,6 +185,8 @@ protected: \
 
 #include "dobjgc.h"
 
+class AActor;
+
 class DObject
 {
 public:
@@ -249,11 +251,9 @@ public:
 	inline FString &StringVar(FName field);
 	template<class T> T*& PointerVar(FName field);
 
-	// If you need to replace one object with another and want to
-	// change any pointers from the old object to the new object,
-	// use this method.
+	// This is only needed for swapping out PlayerPawns and absolutely nothing else!
 	virtual size_t PointerSubstitution (DObject *old, DObject *notOld);
-	static size_t StaticPointerSubstitution (DObject *old, DObject *notOld, bool scandefaults = false);
+	static size_t StaticPointerSubstitution (AActor *old, AActor *notOld);
 
 	PClass *GetClass() const
 	{

@@ -396,38 +396,6 @@ player_t &player_t::operator=(const player_t &p)
 	return *this;
 }
 
-// This function supplements the pointer cleanup in dobject.cpp, because
-// player_t is not derived from DObject. (I tried it, and DestroyScan was
-// unable to properly determine the player object's type--possibly
-// because it gets staticly allocated in an array.)
-//
-// This function checks all the DObject pointers in a player_t and NULLs any
-// that match the pointer passed in. If you add any pointers that point to
-// DObject (or a subclass), add them here too.
-
-size_t player_t::FixPointers (const DObject *old, DObject *rep)
-{
-	APlayerPawn *replacement = static_cast<APlayerPawn *>(rep);
-	size_t changed = 0;
-
-	// The construct *& is used in several of these to avoid the read barriers
-	// that would turn the pointer we want to check to NULL if the old object
-	// is pending deletion.
-	if (mo == old)					mo = replacement, changed++;
-	if (*&poisoner == old)			poisoner = replacement, changed++;
-	if (*&attacker == old)			attacker = replacement, changed++;
-	if (*&camera == old)			camera = replacement, changed++;
-	if (*&Bot == old)				Bot = static_cast<DBot *>(rep), changed++;
-	if (ReadyWeapon == old)			ReadyWeapon = static_cast<AWeapon *>(rep), changed++;
-	if (PendingWeapon == old)		PendingWeapon = static_cast<AWeapon *>(rep), changed++;
-	if (*&PremorphWeapon == old)	PremorphWeapon = static_cast<AWeapon *>(rep), changed++;
-	if (psprites == old)			psprites = static_cast<DPSprite *>(rep), changed++;
-	if (*&ConversationNPC == old)	ConversationNPC = replacement, changed++;
-	if (*&ConversationPC == old)	ConversationPC = replacement, changed++;
-	if (*&MUSINFOactor == old)		MUSINFOactor = replacement, changed++;
-	return changed;
-}
-
 size_t player_t::PropagateMark()
 {
 	GC::Mark(mo);

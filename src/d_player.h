@@ -372,7 +372,6 @@ public:
 	player_t &operator= (const player_t &p);
 
 	void Serialize(FSerializer &arc);
-	size_t FixPointers (const DObject *obj, DObject *replacement);
 	size_t PropagateMark();
 
 	void SetLogNumber (int num);

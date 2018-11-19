@@ -116,7 +116,7 @@ public:
 	botinfo_t *botinfo;
 	int spawn_tries;
 	int wanted_botnum;
-	TObjPtr<AActor*> firstthing;
+	TObjPtr<AInventory*> firstthing;
 	TObjPtr<AActor*>	body1;
 	TObjPtr<AActor*> body2;
 

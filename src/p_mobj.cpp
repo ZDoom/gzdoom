@@ -5772,10 +5772,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 			}
 
 			DObject::StaticPointerSubstitution (oldactor, p->mo);
-			// PointerSubstitution() will also affect the bodyque, so undo that now.
-			for (int ii=0; ii < BODYQUESIZE; ++ii)
-				if (bodyque[ii] == p->mo)
-					bodyque[ii] = oldactor;
+
 			E_PlayerRespawned(int(p - players));
 			FBehavior::StaticStartTypedScripts (SCRIPT_Respawn, p->mo, true);
 		}

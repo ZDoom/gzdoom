@@ -4048,12 +4048,12 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 		FixHoles();
 	}
 
-	bodyqueslot = 0;
+	level.bodyqueslot = 0;
 	// phares 8/10/98: Clear body queue so the corpses from previous games are
 	// not assumed to be from this one.
 
-	for (i = 0; i < BODYQUESIZE; i++)
-		bodyque[i] = NULL;
+	for(auto & p : level.bodyque)
+		p = nullptr;
 
 	CreateSections(level.sections);
 

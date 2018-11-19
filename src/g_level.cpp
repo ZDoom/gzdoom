@@ -1956,6 +1956,24 @@ void FLevelLocals::Tick ()
 //
 //==========================================================================
 
+void FLevelLocals::Mark()
+{
+	for (auto &s : sectorPortals)
+	{
+		GC::Mark(s.mSkybox);
+	}
+	// Mark dead bodies.
+	for (auto &p : bodyque)
+	{
+		GC::Mark(p);
+	}
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
 void FLevelLocals::AddScroller (int secnum)
 {
 	if (secnum < 0)

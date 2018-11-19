@@ -47,6 +47,7 @@
 struct FLevelLocals
 {
 	void Tick ();
+	void Mark();
 	void AddScroller (int secnum);
 	void SetInterMusic(const char *nextmap);
 	void SetMusicVolume(float v);
@@ -85,6 +86,11 @@ struct FLevelLocals
 	TArray<node_t> gamenodes;
 	node_t *headgamenode;
 	TArray<uint8_t> rejectmatrix;
+	
+	static const int BODYQUESIZE = 32;
+	TObjPtr<AActor*> bodyque[BODYQUESIZE];
+	int bodyqueslot;
+
 
 	TArray<FSectorPortal> sectorPortals;
 	TArray<FLinePortal> linePortals;

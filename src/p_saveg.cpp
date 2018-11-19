@@ -971,7 +971,9 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		("level.skytexture2", level.skytexture2)
 		("level.fogdensity", level.fogdensity)
 		("level.outsidefogdensity", level.outsidefogdensity)
-		("level.skyfog", level.skyfog);
+		("level.skyfog", level.skyfog)
+		("level.bodyqueslot", level.bodyqueslot)
+		.Array("level.bodyque", level.bodyque, level.BODYQUESIZE);
 
 	// Hub transitions must keep the current total time
 	if (!hubload)

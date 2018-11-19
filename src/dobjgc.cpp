@@ -325,15 +325,8 @@ static void MarkRoot()
 	FCanvasTextureInfo::Mark();
 	Mark(E_FirstEventHandler);
 	Mark(E_LastEventHandler);
-	for (auto &s : level.sectorPortals)
-	{
-		Mark(s.mSkybox);
-	}
-	// Mark dead bodies.
-	for (i = 0; i < BODYQUESIZE; ++i)
-	{
-		Mark(bodyque[i]);
-	}
+	level.Mark();
+
 	// Mark players.
 	for (i = 0; i < MAXPLAYERS; i++)
 	{

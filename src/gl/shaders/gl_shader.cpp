@@ -32,6 +32,8 @@
 #include "w_wad.h"
 #include "doomerrors.h"
 #include "cmdlib.h"
+#include "md5.h"
+#include "m_misc.h"
 #include "hwrenderer/utility/hw_shaderpatcher.h"
 #include "hwrenderer/data/shaderuniforms.h"
 #include "hwrenderer/scene/hw_viewpointuniforms.h"
@@ -42,10 +44,152 @@
 #include "r_data/matrix.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/shaders/gl_shader.h"
+#include <map>
+#include <memory>
 
 namespace OpenGLRenderer
 {
 
+struct ProgramBinary
+{
+	uint32_t format;
+	TArray<uint8_t> data;
+};
+
+const char *ShaderMagic = "ZDSC";
+
+static std::map<FString, std::unique_ptr<ProgramBinary>> ShaderCache; // Not a TMap because it doesn't support unique_ptr move semantics
+
+static FString CalcProgramBinaryChecksum(const FString &vertex, const FString &fragment)
+{
+	const GLubyte *vendor = glGetString(GL_VENDOR);
+	const GLubyte *renderer = glGetString(GL_RENDERER);
+	const GLubyte *version = glGetString(GL_VERSION);
+
+	uint8_t digest[16];
+	MD5Context md5;
+	md5.Update(vendor, (unsigned int)strlen((const char*)vendor));
+	md5.Update(renderer, (unsigned int)strlen((const char*)renderer));
+	md5.Update(version, (unsigned int)strlen((const char*)version));
+	md5.Update((const uint8_t *)vertex.GetChars(), (unsigned int)vertex.Len());
+	md5.Update((const uint8_t *)fragment.GetChars(), (unsigned int)fragment.Len());
+	md5.Final(digest);
+
+	char hexdigest[33];
+	for (int i = 0; i < 16; i++)
+	{
+		int v = digest[i] >> 4;
+		hexdigest[i * 2] = v < 10 ? ('0' + v) : ('a' + v - 10);
+		v = digest[i] & 15;
+		hexdigest[i * 2 + 1] = v < 10 ? ('0' + v) : ('a' + v - 10);
+	}
+	hexdigest[32] = 0;
+	return hexdigest;
+}
+
+static FString CreateProgramCacheName(bool create)
+{
+	FString path = M_GetCachePath(create);
+	if (create) CreatePath(path);
+	path << "/shadercache.zdsc";
+	return path;
+}
+
+static void LoadShaders()
+{
+	static bool loaded = false;
+	if (loaded)
+		return;
+	loaded = true;
+
+	try
+	{
+		FString path = CreateProgramCacheName(false);
+		FileReader fr;
+		if (!fr.OpenFile(path))
+			throw std::runtime_error("Could not open shader file");
+
+		char magic[4];
+		fr.Read(magic, 4);
+		if (memcmp(magic, ShaderMagic, 4) != 0)
+			throw std::runtime_error("Not a shader cache file");
+
+		uint32_t count = fr.ReadUInt32();
+		if (count > 512)
+			throw std::runtime_error("Too many shaders cached");
+
+		for (uint32_t i = 0; i < count; i++)
+		{
+			char hexdigest[33];
+			if (fr.Read(hexdigest, 32) != 32)
+				throw std::runtime_error("Read error");
+			hexdigest[32] = 0;
+
+			std::unique_ptr<ProgramBinary> binary(new ProgramBinary());
+			binary->format = fr.ReadUInt32();
+			uint32_t size = fr.ReadUInt32();
+			if (size > 1024 * 1024)
+				throw std::runtime_error("Shader too big, probably file corruption");
+
+			binary->data.Resize(size);
+			if (fr.Read(binary->data.Data(), binary->data.Size()) != binary->data.Size())
+				throw std::runtime_error("Read error");
+
+			ShaderCache[hexdigest] = std::move(binary);
+		}
+	}
+	catch (...)
+	{
+		ShaderCache.clear();
+	}
+}
+
+static void SaveShaders()
+{
+	FString path = CreateProgramCacheName(true);
+	std::unique_ptr<FileWriter> fw(FileWriter::Open(path));
+	if (fw)
+	{
+		uint32_t count = (uint32_t)ShaderCache.size();
+		fw->Write(ShaderMagic, 4);
+		fw->Write(&count, sizeof(uint32_t));
+		for (const auto &it : ShaderCache)
+		{
+			uint32_t size = it.second->data.Size();
+			fw->Write(it.first.GetChars(), 32);
+			fw->Write(&it.second->format, sizeof(uint32_t));
+			fw->Write(&size, sizeof(uint32_t));
+			fw->Write(it.second->data.Data(), it.second->data.Size());
+		}
+	}
+}
+
+TArray<uint8_t> LoadCachedProgramBinary(const FString &vertex, const FString &fragment, uint32_t &binaryFormat)
+{
+	LoadShaders();
+
+	auto it = ShaderCache.find(CalcProgramBinaryChecksum(vertex, fragment));
+	if (it != ShaderCache.end())
+	{
+		binaryFormat = it->second->format;
+		return it->second->data;
+	}
+	else
+	{
+		binaryFormat = 0;
+		return {};
+	}
+}
+
+void SaveCachedProgramBinary(const FString &vertex, const FString &fragment, const TArray<uint8_t> &binary, uint32_t binaryFormat)
+{
+	auto &entry = ShaderCache[CalcProgramBinaryChecksum(vertex, fragment)];
+	entry.reset(new ProgramBinary());
+	entry->format = binaryFormat;
+	entry->data = binary;
+
+	SaveShaders();
+}
 
 bool FShader::Load(const char * name, const char * vert_prog_lump, const char * frag_prog_lump, const char * proc_prog_lump, const char * light_fragprog, const char * defines)
 {
@@ -273,56 +417,85 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		vp_comb.Substitute("gl_ClipDistance", "//");
 	}
 
-	hVertProg = glCreateShader(GL_VERTEX_SHADER);
-	hFragProg = glCreateShader(GL_FRAGMENT_SHADER);	
-
-	FGLDebug::LabelObject(GL_SHADER, hVertProg, vert_prog_lump);
-	FGLDebug::LabelObject(GL_SHADER, hFragProg, frag_prog_lump);
-
-	int vp_size = (int)vp_comb.Len();
-	int fp_size = (int)fp_comb.Len();
-
-	const char *vp_ptr = vp_comb.GetChars();
-	const char *fp_ptr = fp_comb.GetChars();
-
-	glShaderSource(hVertProg, 1, &vp_ptr, &vp_size);
-	glShaderSource(hFragProg, 1, &fp_ptr, &fp_size);
-
-	glCompileShader(hVertProg);
-	glCompileShader(hFragProg);
-
 	hShader = glCreateProgram();
 	FGLDebug::LabelObject(GL_PROGRAM, hShader, name);
 
-	glAttachShader(hShader, hVertProg);
-	glAttachShader(hShader, hFragProg);
+	uint32_t binaryFormat = 0;
+	TArray<uint8_t> binary = LoadCachedProgramBinary(vp_comb, fp_comb, binaryFormat);
 
-	glLinkProgram(hShader);
-
-	glGetShaderInfoLog(hVertProg, 10000, NULL, buffer);
-	if (*buffer) 
+	bool linked = false;
+	if (binary.Size() > 0 && glProgramBinary)
 	{
-		error << "Vertex shader:\n" << buffer << "\n";
-	}
-	glGetShaderInfoLog(hFragProg, 10000, NULL, buffer);
-	if (*buffer) 
-	{
-		error << "Fragment shader:\n" << buffer << "\n";
+		glProgramBinary(hShader, binaryFormat, binary.Data(), binary.Size());
+		GLint status = 0;
+		glGetProgramiv(hShader, GL_LINK_STATUS, &status);
+		linked = (status == GL_TRUE);
 	}
 
-	glGetProgramInfoLog(hShader, 10000, NULL, buffer);
-	if (*buffer) 
+	if (!linked)
 	{
-		error << "Linking:\n" << buffer << "\n";
-	}
-	int linked;
-	glGetProgramiv(hShader, GL_LINK_STATUS, &linked);
-	if (linked == 0)
-	{
-		// only print message if there's an error.
-		I_Error("Init Shader '%s':\n%s\n", name, error.GetChars());
-	}
+		hVertProg = glCreateShader(GL_VERTEX_SHADER);
+		hFragProg = glCreateShader(GL_FRAGMENT_SHADER);
 
+		FGLDebug::LabelObject(GL_SHADER, hVertProg, vert_prog_lump);
+		FGLDebug::LabelObject(GL_SHADER, hFragProg, frag_prog_lump);
+
+		int vp_size = (int)vp_comb.Len();
+		int fp_size = (int)fp_comb.Len();
+
+		const char *vp_ptr = vp_comb.GetChars();
+		const char *fp_ptr = fp_comb.GetChars();
+
+		glShaderSource(hVertProg, 1, &vp_ptr, &vp_size);
+		glShaderSource(hFragProg, 1, &fp_ptr, &fp_size);
+
+		glCompileShader(hVertProg);
+		glCompileShader(hFragProg);
+
+		glAttachShader(hShader, hVertProg);
+		glAttachShader(hShader, hFragProg);
+
+		glLinkProgram(hShader);
+
+		glGetShaderInfoLog(hVertProg, 10000, NULL, buffer);
+		if (*buffer)
+		{
+			error << "Vertex shader:\n" << buffer << "\n";
+		}
+		glGetShaderInfoLog(hFragProg, 10000, NULL, buffer);
+		if (*buffer)
+		{
+			error << "Fragment shader:\n" << buffer << "\n";
+		}
+
+		glGetProgramInfoLog(hShader, 10000, NULL, buffer);
+		if (*buffer)
+		{
+			error << "Linking:\n" << buffer << "\n";
+		}
+		GLint status = 0;
+		glGetProgramiv(hShader, GL_LINK_STATUS, &status);
+		linked = (status == GL_TRUE);
+		if (!linked)
+		{
+			// only print message if there's an error.
+			I_Error("Init Shader '%s':\n%s\n", name, error.GetChars());
+		}
+		else if (glProgramBinary)
+		{
+			int binaryLength = 0;
+			glGetProgramiv(hShader, GL_PROGRAM_BINARY_LENGTH, &binaryLength);
+			binary.Resize(binaryLength);
+			glGetProgramBinary(hShader, binary.Size(), &binaryLength, &binaryFormat, binary.Data());
+			binary.Resize(binaryLength);
+			SaveCachedProgramBinary(vp_comb, fp_comb, binary, binaryFormat);
+		}
+	}
+	else
+	{
+		hVertProg = 0;
+		hFragProg = 0;
+	}
 
 	muDesaturation.Init(hShader, "uDesaturationFactor");
 	muFogEnabled.Init(hShader, "uFogEnabled");
@@ -376,7 +549,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	if (shadowmapindex > 0) glUniform1i(shadowmapindex, 16);
 
 	glUseProgram(0);
-	return !!linked;
+	return linked;
 }
 
 //==========================================================================
@@ -388,8 +561,10 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 FShader::~FShader()
 {
 	glDeleteProgram(hShader);
-	glDeleteShader(hVertProg);
-	glDeleteShader(hFragProg);
+	if (hVertProg != 0)
+		glDeleteShader(hVertProg);
+	if (hFragProg != 0)
+		glDeleteShader(hFragProg);
 }
 
 

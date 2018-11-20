@@ -4489,7 +4489,7 @@ DEFINE_ACTION_FUNCTION(AActor, AimLineAttack)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_ANGLE(angle);
 	PARAM_FLOAT(distance);
-	PARAM_POINTER(pLineTarget, FTranslatedLineTarget);
+	PARAM_OUTPOINTER(pLineTarget, FTranslatedLineTarget);
 	PARAM_ANGLE(vrange);
 	PARAM_INT(flags);
 	PARAM_OBJECT(target, AActor);
@@ -4926,7 +4926,7 @@ DEFINE_ACTION_FUNCTION(AActor, LineAttack)
 	PARAM_NAME(damageType);
 	PARAM_CLASS(puffType, AActor);
 	PARAM_INT(flags);
-	PARAM_POINTER(victim, FTranslatedLineTarget);
+	PARAM_OUTPOINTER(victim, FTranslatedLineTarget);
 	PARAM_FLOAT(offsetz);
 	PARAM_FLOAT(offsetforward);
 	PARAM_FLOAT(offsetside);
@@ -5092,7 +5092,7 @@ DEFINE_ACTION_FUNCTION(AActor, LineTrace)
 	PARAM_FLOAT(offsetz);
 	PARAM_FLOAT(offsetforward);
 	PARAM_FLOAT(offsetside);
-	PARAM_POINTER(data, FLineTraceData);
+	PARAM_OUTPOINTER(data, FLineTraceData);
 	ACTION_RETURN_BOOL(P_LineTrace(self,angle,distance,pitch,flags,offsetz,offsetforward,offsetside,data));
 }
 

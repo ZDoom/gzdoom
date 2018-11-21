@@ -121,7 +121,7 @@ void FShaderProgram::CompileShader(ShaderType type)
 	glGetShaderiv(handle, GL_COMPILE_STATUS, &status);
 	if (status == GL_FALSE)
 	{
-		I_FatalError("Compile Shader '%s':\n%s\n", mShaderNames[type], GetShaderInfoLog(handle).GetChars());
+		I_FatalError("Compile Shader '%s':\n%s\n", mShaderNames[type].GetChars(), GetShaderInfoLog(handle).GetChars());
 	}
 	else
 	{

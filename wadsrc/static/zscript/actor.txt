@@ -566,6 +566,7 @@ class Actor : Thinker native
 	native void ChangeTid(int newtid);
 	native static int FindUniqueTid(int start = 0, int limit = 0);
 	native void SetShade(color col);
+	native void SetBloodColor(color col);
 	native clearscope int GetRenderStyle() const;
 	native clearscope bool CheckKeys(int locknum, bool remote, bool quiet = false);
 	native clearscope Inventory FirstInv() const;

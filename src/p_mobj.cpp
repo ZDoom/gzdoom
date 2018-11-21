@@ -4020,6 +4020,15 @@ PClassActor *AActor::GetBloodType(int type) const
 	return nullptr;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SetBloodColor)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_COLOR(color);
+	self->BloodColor = color;
+	self->BloodColor.a = 255;	// a should not be 0.
+	self->BloodTranslation = TRANSLATION(TRANSLATION_Blood, CreateBloodTranslation(color));
+	return 0;
+}
 
 DVector3 AActor::GetPortalTransition(double byoffset, sector_t **pSec)
 {

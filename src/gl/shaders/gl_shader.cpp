@@ -68,7 +68,7 @@ bool IsShaderCacheActive()
 	if (firstcall)
 	{
 		const char *vendor = (const char *)glGetString(GL_VENDOR);
-		active = strstr(vendor, "Intel") == nullptr;
+		active = !(strstr(vendor, "Intel") == nullptr);
 		firstcall = false;
 	}
 	return active;

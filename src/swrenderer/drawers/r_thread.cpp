@@ -174,7 +174,11 @@ void DrawerThreads::StartThreads()
 {
 	std::unique_lock<std::mutex> lock(threads_mutex);
 
-	int num_threads = std::thread::hardware_concurrency();
+	int num_numathreads = 0;
+	for (int i = 0; i < I_GetNumaNodeCount(); i++)
+		num_numathreads += I_GetNumaNodeThreadCount(i);
+
+	int num_threads = num_numathreads;
 	if (num_threads == 0)
 		num_threads = 4;
 
@@ -189,13 +193,41 @@ void DrawerThreads::StartThreads()
 
 		threads.resize(num_threads);
 
-		for (int i = 0; i < num_threads; i++)
+		if (num_threads == num_numathreads)
 		{
-			DrawerThreads *queue = this;
-			DrawerThread *thread = &threads[i];
-			thread->core = i;
-			thread->num_cores = num_threads;
-			thread->thread = std::thread([=]() { queue->WorkerMain(thread); });
+			int curThread = 0;
+			for (int numaNode = 0; numaNode < I_GetNumaNodeCount(); numaNode++)
+			{
+				for (int i = 0; i < I_GetNumaNodeThreadCount(numaNode); i++)
+				{
+					DrawerThreads *queue = this;
+					DrawerThread *thread = &threads[curThread++];
+					thread->core = i;
+					thread->num_cores = I_GetNumaNodeThreadCount(numaNode);
+					thread->numa_node = numaNode;
+					thread->num_numa_nodes = I_GetNumaNodeCount();
+					thread->numa_start_y = numaNode * viewheight / I_GetNumaNodeCount();
+					thread->numa_end_y = (numaNode + 1) * viewheight / I_GetNumaNodeCount();
+					thread->thread = std::thread([=]() { queue->WorkerMain(thread); });
+					I_SetThreadNumaNode(thread->thread, numaNode);
+				}
+			}
+		}
+		else
+		{
+			for (int i = 0; i < num_threads; i++)
+			{
+				DrawerThreads *queue = this;
+				DrawerThread *thread = &threads[i];
+				thread->core = i;
+				thread->num_cores = num_threads;
+				thread->numa_node = 0;
+				thread->num_numa_nodes = 1;
+				thread->numa_start_y = 0;
+				thread->numa_end_y = viewheight;
+				thread->thread = std::thread([=]() { queue->WorkerMain(thread); });
+				I_SetThreadNumaNode(thread->thread, 0);
+			}
 		}
 	}
 }

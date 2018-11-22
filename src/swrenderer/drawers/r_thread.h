@@ -47,6 +47,16 @@ public:
 	// Number of active threads
 	int num_cores = 1;
 
+	// NUMA node this thread belongs to
+	int numa_node = 0;
+
+	// Number of active NUMA nodes
+	int num_numa_nodes = 1;
+
+	// Active range for the numa block the cores are part of
+	int numa_start_y = 0;
+	int numa_end_y = 0;
+
 	// Working buffer used by the tilted (sloped) span drawer
 	const uint8_t *tiltlighting[MAXWIDTH];
 
@@ -57,19 +67,21 @@ public:
 	// Checks if a line is rendered by this thread
 	bool line_skipped_by_thread(int line)
 	{
-		return line % num_cores != core;
+		return line < numa_start_y || line >= numa_end_y || line % num_cores != core;
 	}
 
 	// The number of lines to skip to reach the first line to be rendered by this thread
 	int skipped_by_thread(int first_line)
 	{
-		int core_skip = (num_cores - (first_line - core) % num_cores) % num_cores;
-		return core_skip;
+		int clip_first_line = MAX(first_line, numa_start_y);
+		int core_skip = (num_cores - (clip_first_line - core) % num_cores) % num_cores;
+		return clip_first_line + core_skip - first_line;
 	}
 
 	// The number of lines to be rendered by this thread
 	int count_for_thread(int first_line, int count)
 	{
+		count = MIN(count, numa_end_y - first_line);
 		int c = (count - skipped_by_thread(first_line) + num_cores - 1) / num_cores;
 		return MAX(c, 0);
 	}

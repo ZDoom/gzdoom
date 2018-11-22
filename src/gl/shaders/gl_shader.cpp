@@ -56,9 +56,23 @@ struct ProgramBinary
 	TArray<uint8_t> data;
 };
 
-const char *ShaderMagic = "ZDSC";
+static const char *ShaderMagic = "ZDSC";
 
 static std::map<FString, std::unique_ptr<ProgramBinary>> ShaderCache; // Not a TMap because it doesn't support unique_ptr move semantics
+
+bool IsShaderCacheActive()
+{
+	static bool active = true;
+	static bool firstcall = true;
+
+	if (firstcall)
+	{
+		const char *vendor = (const char *)glGetString(GL_VENDOR);
+		active = strstr(vendor, "Intel") == nullptr;
+		firstcall = false;
+	}
+	return active;
+}
 
 static FString CalcProgramBinaryChecksum(const FString &vertex, const FString &fragment)
 {
@@ -421,7 +435,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	FGLDebug::LabelObject(GL_PROGRAM, hShader, name);
 
 	uint32_t binaryFormat = 0;
-	TArray<uint8_t> binary = LoadCachedProgramBinary(vp_comb, fp_comb, binaryFormat);
+	TArray<uint8_t> binary;
+	if (IsShaderCacheActive())
+		binary = LoadCachedProgramBinary(vp_comb, fp_comb, binaryFormat);
 
 	bool linked = false;
 	if (binary.Size() > 0 && glProgramBinary)
@@ -481,7 +497,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			// only print message if there's an error.
 			I_Error("Init Shader '%s':\n%s\n", name, error.GetChars());
 		}
-		else if (glProgramBinary)
+		else if (glProgramBinary && IsShaderCacheActive())
 		{
 			int binaryLength = 0;
 			glGetProgramiv(hShader, GL_PROGRAM_BINARY_LENGTH, &binaryLength);

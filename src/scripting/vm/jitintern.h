@@ -38,9 +38,7 @@ private:
 	#include "vmops.h"
 	#undef xx
 
-	//static asmjit::FuncSignature CreateFuncSignature(VMScriptFunction *sfunc);
-	//static asmjit::CCFunc *CodegenThunk(asmjit::X86Compiler &cc, VMScriptFunction *sfunc, void *nativefunc);
-	//void SetupNative();
+	static asmjit::FuncSignature CreateFuncSignature(VMFunction *sfunc);
 
 	void Setup();
 	void CreateRegisters();
@@ -52,11 +50,11 @@ private:
 	void EmitOpcode();
 	void EmitPopFrame();
 
-	void EmitDoCall(asmjit::X86Gp ptr, VMFunction *target);
-	void EmitScriptCall(asmjit::X86Gp vmfunc, asmjit::X86Gp paramsptr);
+	void EmitNativeCall(VMNativeFunction *target);
+	void EmitVMCall(asmjit::X86Gp ptr);
 	void EmitVtbl(const VMOP *op);
 
-	int StoreCallParams(bool simpleFrameTarget);
+	int StoreCallParams();
 	void LoadInOuts();
 	void LoadReturns(const VMOP *retval, int numret);
 	void FillReturns(const VMOP *retval, int numret);

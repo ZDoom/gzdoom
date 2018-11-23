@@ -464,6 +464,9 @@ public:
 	// Return value is the number of results.
 	NativeCallType NativeCall;
 
+	// Function pointer to a native function to be called directly by the JIT using the platform calling convention
+	void *DirectNativeCall = nullptr;
+
 private:
 	static int NativeScriptCall(VMFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret);
 };

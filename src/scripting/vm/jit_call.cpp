@@ -1,6 +1,7 @@
 
 #include "jitintern.h"
 #include <map>
+#include <memory>
 
 void JitCompiler::EmitPARAM()
 {

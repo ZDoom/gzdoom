@@ -326,7 +326,7 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 {
 	using namespace asmjit;
 
-	auto call = cc.call(imm_ptr(target->NativeCall), CreateFuncSignature(target));
+	auto call = cc.call(imm_ptr(target->DirectNativeCall), CreateFuncSignature(target));
 
 	if ((pc - 1)->op == OP_VTBL)
 	{
@@ -510,7 +510,7 @@ asmjit::FuncSignature JitCompiler::CreateFuncSignature(VMFunction *func)
 		}
 	}
 
-	// FuncSignature only keeps a pointer to its args array. Keep a copy of each args array variant.
+	// FuncSignature only keeps a pointer to its args array. Store a copy of each args array variant.
 	static std::map<FString, std::unique_ptr<TArray<uint8_t>>> argsCache;
 	std::unique_ptr<TArray<uint8_t>> &cachedArgs = argsCache[key];
 	if (!cachedArgs) cachedArgs.reset(new TArray<uint8_t>(args));

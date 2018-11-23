@@ -556,16 +556,16 @@ static void GenericParse (FScanner &sc, FGenericParse *parser, const char **keyw
 			else
 			{
 				info = PClass::FindClass (sc.String);
-				if (!info->IsDescendantOf (RUNTIME_CLASS(AActor)))
+				if (info == NULL)
+				{
+					Printf ("Unknown actor %s in %s %s\n",
+						sc.String, type, name.GetChars());
+				}
+				else if (!info->IsDescendantOf (RUNTIME_CLASS(AActor)))
 				{
 					Printf ("%s is not an Actor (in %s %s)\n",
 						sc.String, type, name.GetChars());
 					info = NULL;
-				}
-				else if (info == NULL)
-				{
-					Printf ("Unknown actor %s in %s %s\n",
-						sc.String, type, name.GetChars());
 				}
 			}
 			SET_FIELD (const PClass *, info);

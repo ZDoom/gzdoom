@@ -178,7 +178,7 @@ TArray<FString> I_GetSteamPath()
 	{
 		SteamInstallFolders = ParseSteamRegistry(regPath);
 	}
-	catch(class CDoomError &error)
+	catch(class CRecoverableError &error)
 	{
 		// If we can't parse for some reason just pretend we can't find anything.
 		return result;
@@ -201,7 +201,7 @@ TArray<FString> I_GetSteamPath()
 		{
 			SteamInstallFolders = ParseSteamRegistry(regPath);
 		}
-		catch(class CDoomError &error)
+		catch(class CRecoverableError &error)
 		{
 			// If we can't parse for some reason just pretend we can't find anything.
 			return result;

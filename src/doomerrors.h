@@ -37,10 +37,11 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <exception>
 
 #define MAX_ERRORTEXT	1024
 
-class CDoomError
+class CDoomError : public std::exception
 {
 public:
 	CDoomError ()
@@ -69,13 +70,22 @@ public:
 		else
 			return NULL;
 	}
+	char const *what() const override
+	{
+		return m_Message;
+	}
+
 
 protected:
 	char m_Message[MAX_ERRORTEXT];
 };
 
-class CNoRunExit : public CDoomError
+class CNoRunExit : public std::exception
 {
+public:
+	CNoRunExit() : std::exception("NoRunExit")
+	{
+	}
 };
 
 class CRecoverableError : public CDoomError

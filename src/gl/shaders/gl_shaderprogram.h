@@ -30,6 +30,7 @@ private:
 	FShaderProgram(const FShaderProgram &) = delete;
 	FShaderProgram &operator=(const FShaderProgram &) = delete;
 
+	void CompileShader(ShaderType type);
 	FString PatchShader(ShaderType type, const FString &code, const char *defines, int maxGlslVersion);
 
 	void CreateShader(ShaderType type);
@@ -38,6 +39,8 @@ private:
 
 	GLuint mProgram = 0;
 	GLuint mShaders[NumShaderTypes];
+	FString mShaderSources[NumShaderTypes];
+	FString mShaderNames[NumShaderTypes];
 	TArray<std::pair<FString, int>> samplerstobind;
 };
 

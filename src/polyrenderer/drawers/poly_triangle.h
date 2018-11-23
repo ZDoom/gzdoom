@@ -48,7 +48,7 @@ public:
 class PolyTriangleThreadData
 {
 public:
-	PolyTriangleThreadData(int32_t core, int32_t num_cores) : core(core), num_cores(num_cores) { }
+	PolyTriangleThreadData(int32_t core, int32_t num_cores, int32_t numa_node, int32_t num_numa_nodes) : core(core), num_cores(num_cores), numa_node(numa_node), num_numa_nodes(num_numa_nodes) { }
 
 	void ClearStencil(uint8_t value);
 	void SetViewport(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra);
@@ -63,12 +63,18 @@ public:
 
 	int32_t core;
 	int32_t num_cores;
+	int32_t numa_node;
+	int32_t num_numa_nodes;
+
+	int numa_start_y;
+	int numa_end_y;
 
 	// The number of lines to skip to reach the first line to be rendered by this thread
 	int skipped_by_thread(int first_line)
 	{
-		int core_skip = (num_cores - (first_line - core) % num_cores) % num_cores;
-		return core_skip;
+		int clip_first_line = MAX(first_line, numa_start_y);
+		int core_skip = (num_cores - (clip_first_line - core) % num_cores) % num_cores;
+		return clip_first_line + core_skip - first_line;
 	}
 
 	static PolyTriangleThreadData *Get(DrawerThread *thread);

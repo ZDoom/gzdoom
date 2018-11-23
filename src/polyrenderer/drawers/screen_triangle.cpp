@@ -59,9 +59,9 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, PolyTriangleThreadDat
 	SortVertices(args, sortedVertices);
 
 	int clipright = args->clipright;
-	int clipbottom = args->clipbottom;
+	int cliptop = thread->numa_start_y;
+	int clipbottom = MIN(args->clipbottom, thread->numa_end_y);
 
-	// Ranges that different triangles edges are active
 	int topY = (int)(sortedVertices[0]->y + 0.5f);
 	int midY = (int)(sortedVertices[1]->y + 0.5f);
 	int bottomY = (int)(sortedVertices[2]->y + 0.5f);
@@ -1567,6 +1567,7 @@ void DrawRect8(const void *destOrg, int destWidth, int destHeight, int destPitch
 	uint32_t stepV = (int32_t)(fstepV * 0x1000000);
 
 	uint32_t posV = startV;
+	y1 = MIN(y1, thread->numa_end_y);
 	int num_cores = thread->num_cores;
 	int skip = thread->skipped_by_thread(y0);
 	posV += skip * stepV;
@@ -1817,6 +1818,7 @@ void DrawRectOpt32(const void *destOrg, int destWidth, int destHeight, int destP
 	uint32_t stepV = (int32_t)(fstepV * 0x1000000);
 
 	uint32_t posV = startV;
+	y1 = MIN(y1, thread->numa_end_y);
 	int num_cores = thread->num_cores;
 	int skip = thread->skipped_by_thread(y0);
 	posV += skip * stepV;

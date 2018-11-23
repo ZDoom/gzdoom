@@ -366,6 +366,7 @@ struct GameInfoStruct native
 	native double gibfactor;
 	native bool intermissioncounter;
 	native Name mSliderColor;
+	native Color defaultbloodcolor;
 }
 
 class Object native

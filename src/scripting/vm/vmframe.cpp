@@ -633,7 +633,10 @@ int VMCallWithDefaults(VMFunction *func, TArray<VMValue> &params, VMReturn *resu
 	{
 		auto oldp = params.Size();
 		params.Resize(func->DefaultArgs.Size());
-		memcpy(&params[oldp], &func->DefaultArgs[oldp], (params.Size() - oldp) * sizeof(VMValue));
+		for (unsigned i = oldp; i < params.Size(); i++)
+		{
+			params[i] = func->DefaultArgs[i];
+		}
 	}
 	return VMCall(func, params.Data(), params.Size(), results, numresults);
 }

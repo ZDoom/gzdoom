@@ -510,12 +510,38 @@ asmjit::FuncSignature JitCompiler::CreateFuncSignature(VMFunction *func)
 		}
 	}
 
+	uint32_t rettype = TypeIdOf<void>::kTypeId;
+	if (func->Proto->ReturnTypes.Size() > 0)
+	{
+		const PType *type = func->Proto->ReturnTypes[0];
+		if (type == TypeFloat64)
+		{
+			rettype = TypeIdOf<double>::kTypeId;
+			key += "rf";
+		}
+		else if (type == TypeString)
+		{
+			rettype = TypeIdOf<void*>::kTypeId;
+			key += "rs";
+		}
+		else if (type->isIntCompatible())
+		{
+			rettype = TypeIdOf<int>::kTypeId;
+			key += "ri";
+		}
+		else
+		{
+			rettype = TypeIdOf<void*>::kTypeId;
+			key += "rv";
+		}
+	}
+
 	// FuncSignature only keeps a pointer to its args array. Store a copy of each args array variant.
 	static std::map<FString, std::unique_ptr<TArray<uint8_t>>> argsCache;
 	std::unique_ptr<TArray<uint8_t>> &cachedArgs = argsCache[key];
 	if (!cachedArgs) cachedArgs.reset(new TArray<uint8_t>(args));
 
 	FuncSignature signature;
-	signature.init(CallConv::kIdHost, TypeIdOf<void>::kTypeId, cachedArgs->Data(), cachedArgs->Size());
+	signature.init(CallConv::kIdHost, rettype, cachedArgs->Data(), cachedArgs->Size());
 	return signature;
 }

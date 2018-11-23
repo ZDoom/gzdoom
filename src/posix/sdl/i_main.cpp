@@ -265,11 +265,11 @@ int main (int argc, char **argv)
 			fprintf (stderr, "%s\n", error.what ());
 
 #ifdef __APPLE__
-		Mac_I_FatalError(error.GetMessage());
+		Mac_I_FatalError(error.what());
 #endif // __APPLE__
 
 #ifdef __linux__
-		Linux_I_FatalError(error.GetMessage());
+		Linux_I_FatalError(error.what());
 #endif // __linux__
 
 		exit (-1);

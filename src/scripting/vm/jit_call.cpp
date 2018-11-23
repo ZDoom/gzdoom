@@ -24,13 +24,6 @@ void JitCompiler::EmitVTBL()
 	// This instruction is handled in the CALL/CALL_K instruction following it
 }
 
-static VMFunction *GetVirtual(DObject *o, int c)
-{
-	auto p = o->GetClass();
-	assert(c < (int)p->Virtuals.Size());
-	return p->Virtuals[c];
-}
-
 void JitCompiler::EmitVtbl(const VMOP *op)
 {
 	int a = op->a;
@@ -41,12 +34,9 @@ void JitCompiler::EmitVtbl(const VMOP *op)
 	cc.test(regA[b], regA[b]);
 	cc.jz(label);
 
-	auto result = newResultIntPtr();
-	auto call = CreateCall<VMFunction*, DObject*, int>(GetVirtual);
-	call->setRet(0, result);
-	call->setArg(0, regA[b]);
-	call->setArg(1, asmjit::Imm(c));
-	cc.mov(regA[a], result);
+	cc.mov(regA[a], asmjit::x86::qword_ptr(regA[b], myoffsetof(DObject, Class)));
+	cc.mov(regA[a], asmjit::x86::qword_ptr(regA[a], myoffsetof(PClass, Virtuals) + myoffsetof(FArray, Array)));
+	cc.mov(regA[a], asmjit::x86::qword_ptr(regA[a], c * (int)sizeof(void*)));
 }
 
 void JitCompiler::EmitCALL()

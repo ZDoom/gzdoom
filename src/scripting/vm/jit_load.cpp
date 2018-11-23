@@ -77,8 +77,6 @@ void JitCompiler::EmitLFP()
 	cc.lea(regA[A], asmjit::x86::ptr(vmframe, offsetExtra));
 }
 
-#if 1 // Inline implementation
-
 void JitCompiler::EmitMETA()
 {
 	auto label = EmitThrowExceptionLabel(X_READ_NIL);
@@ -96,46 +94,6 @@ void JitCompiler::EmitCLSS()
 	cc.je(label);
 	cc.mov(regA[A], asmjit::x86::qword_ptr(regA[B], myoffsetof(DObject, Class)));
 }
-
-#else
-
-static uint8_t *GetClassMeta(DObject *o)
-{
-	return o->GetClass()->Meta;
-}
-
-void JitCompiler::EmitMETA()
-{
-	auto label = EmitThrowExceptionLabel(X_READ_NIL);
-	cc.test(regA[B], regA[B]);
-	cc.je(label);
-
-	auto result = newResultIntPtr();
-	auto call = CreateCall<uint8_t*, DObject*>(GetClassMeta);
-	call->setRet(0, result);
-	call->setArg(0, regA[B]);
-	cc.mov(regA[A], result);
-}
-
-static PClass *GetClass(DObject *o)
-{
-	return o->GetClass();
-}
-
-void JitCompiler::EmitCLSS()
-{
-	auto label = EmitThrowExceptionLabel(X_READ_NIL);
-	cc.test(regA[B], regA[B]);
-	cc.je(label);
-
-	auto result = newResultIntPtr();
-	auto call = CreateCall<PClass*, DObject*>(GetClass);
-	call->setRet(0, result);
-	call->setArg(0, regA[B]);
-	cc.mov(regA[A], result);
-}
-
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // Load from memory. rA = *(rB + rkC)

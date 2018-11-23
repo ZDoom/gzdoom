@@ -288,4 +288,7 @@ void MemcpyCommand::Execute(DrawerThread *thread)
 		d += dstep;
 		s += sstep;
 	}
+
+	thread->numa_start_y = thread->numa_node * viewheight / thread->num_numa_nodes;
+	thread->numa_end_y = (thread->numa_node + 1) * viewheight / thread->num_numa_nodes;
 }

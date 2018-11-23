@@ -38,6 +38,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <exception>
+#include <stdexcept>
 
 #define MAX_ERRORTEXT	1024
 

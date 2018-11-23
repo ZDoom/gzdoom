@@ -38,6 +38,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <exception>
+#include <stdexcept>
 
 #define MAX_ERRORTEXT	1024
 
@@ -70,7 +71,7 @@ public:
 		else
 			return NULL;
 	}
-	char const *what() const override
+	char const *what() const noexcept override
 	{
 		return m_Message;
 	}
@@ -80,10 +81,10 @@ protected:
 	char m_Message[MAX_ERRORTEXT];
 };
 
-class CNoRunExit : public std::exception
+class CNoRunExit : public std::runtime_error
 {
 public:
-	CNoRunExit() : std::exception("NoRunExit")
+	CNoRunExit() : std::runtime_error("NoRunExit")
 	{
 	}
 };

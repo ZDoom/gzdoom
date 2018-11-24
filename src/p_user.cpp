@@ -780,6 +780,12 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetNoAutostartMap)
 	ACTION_RETURN_INT(self->userinfo.GetNoAutostartMap());
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetWBobSpeed)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_FLOAT(self->userinfo.GetWBobSpeed());
+}
+
 
 //===========================================================================
 //
@@ -2278,6 +2284,7 @@ DEFINE_FIELD(APlayerPawn, AirCapacity)
 DEFINE_FIELD(APlayerPawn, FlechetteType)
 DEFINE_FIELD(APlayerPawn, DamageFade)
 DEFINE_FIELD(APlayerPawn, ViewBob)
+DEFINE_FIELD(APlayerPawn, curBob)
 DEFINE_FIELD(APlayerPawn, FullHeight)
 DEFINE_FIELD(APlayerPawn, SoundClass)
 DEFINE_FIELD(APlayerPawn, Face)

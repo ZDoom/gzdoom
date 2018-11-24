@@ -1265,3 +1265,12 @@ enum IntermissionSequenceType
 	FSTATE_InLevel = 2
 };
 
+enum Bobbing
+{
+	Bob_Normal,
+	Bob_Inverse,
+	Bob_Alpha,
+	Bob_InverseAlpha,
+	Bob_Smooth,
+	Bob_InverseSmooth
+};

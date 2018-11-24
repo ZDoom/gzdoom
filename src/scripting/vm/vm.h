@@ -177,6 +177,11 @@ struct VMReturn
 		Location = loc;
 		RegType = REGT_FLOAT;
 	}
+	void Vec2At(DVector2 *loc)
+	{
+		Location = loc;
+		RegType = REGT_FLOAT | REGT_MULTIREG2;
+	}
 	void StringAt(FString *loc)
 	{
 		Location = loc;
@@ -190,6 +195,7 @@ struct VMReturn
 	VMReturn() { }
 	VMReturn(int *loc) { IntAt(loc); }
 	VMReturn(double *loc) { FloatAt(loc); }
+	VMReturn(DVector2 *loc) { Vec2At(loc); }
 	VMReturn(FString *loc) { StringAt(loc); }
 	VMReturn(void **loc) { PointerAt(loc); }
 };

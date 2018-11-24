@@ -49,6 +49,7 @@ class PlayerPawn : Actor native
 	native color 		DamageFade;				// [CW] Fades for when you are being damaged.
 	native double		ViewBob;				// [SP] ViewBob Multiplier
 	native double		FullHeight;
+	native double		curBob;
 
 	meta Name HealingRadiusType;
 	meta Name InvulMode;
@@ -1939,6 +1940,116 @@ class PlayerPawn : Actor native
 		return player.ReadyWeapon;
 	}
 
+	//============================================================================
+	//
+	// P_BobWeapon
+	//
+	// [RH] Moved this out of A_WeaponReady so that the weapon can bob every
+	// tic and not just when A_WeaponReady is called. Not all weapons execute
+	// A_WeaponReady every tic, and it looks bad if they don't bob smoothly.
+	//
+	// [XA] Added new bob styles and exposed bob properties. Thanks, Ryan Cordell!
+	// [SP] Added new user option for bob speed
+	//
+	//============================================================================
+
+	virtual Vector2 BobWeapon (double ticfrac)
+	{
+		Vector2 p1, p2, r;
+		Vector2 result;
+
+		float bobtarget;
+
+		let player = self.player;
+		if (!player) return (0, 0);
+		let weapon = player.ReadyWeapon;
+
+		if (weapon == null || weapon.bDontBob)
+		{
+			return (0, 0);
+		}
+
+		// [XA] Get the current weapon's bob properties.
+		int bobstyle = weapon.BobStyle;
+		double BobSpeed = (weapon.BobSpeed * 128);
+		double Rangex = weapon.BobRangeX;
+		double Rangey = weapon.BobRangeY;
+
+		for (int i = 0; i < 2; i++)
+		{
+			// Bob the weapon based on movement speed. ([SP] And user's bob speed setting)
+			double angle = (BobSpeed * player.GetWBobSpeed() * 35 /	TICRATE*(level.time - 1 + i)) * (360. / 8192.);
+
+			// [RH] Smooth transitions between bobbing and not-bobbing frames.
+			// This also fixes the bug where you can "stick" a weapon off-center by
+			// shooting it when it's at the peak of its swing.
+			bobtarget = double((player.WeaponState & WF_WEAPONBOBBING) ? player.bob : 0.);
+			if (curbob != bobtarget)
+			{
+				if (abs(bobtarget - curbob) <= 1)
+				{
+					curbob = bobtarget;
+				}
+				else
+				{
+					double zoom = MAX(1., abs(curbob - bobtarget) / 40);
+					if (curbob > bobtarget)
+					{
+						curbob -= zoom;
+					}
+					else
+					{
+						curbob += zoom;
+					}
+				}
+			}
+
+			if (curbob != 0)
+			{
+				//[SP] Added in decorate player.viewbob checks
+				double bobx = (player.bob * Rangex * ViewBob);
+				double boby = (player.bob * Rangey * ViewBob);
+				switch (bobstyle)
+				{
+				case Bob_Normal:
+					r.X = bobx * cos(angle);
+					r.Y = boby * abs(sin(angle));
+					break;
+
+				case Bob_Inverse:
+					r.X = bobx*cos(angle);
+					r.Y = boby * (1. - abs(sin(angle)));
+					break;
+
+				case Bob_Alpha:
+					r.X = bobx * sin(angle);
+					r.Y = boby * abs(sin(angle));
+					break;
+
+				case Bob_InverseAlpha:
+					r.X = bobx * sin(angle);
+					r.Y = boby * (1. - abs(sin(angle)));
+					break;
+
+				case Bob_Smooth:
+					r.X = bobx*cos(angle);
+					r.Y = 0.5f * (boby * (1. - (cos(angle * 2))));
+					break;
+
+				case Bob_InverseSmooth:
+					r.X = bobx*cos(angle);
+					r.Y = 0.5f * (boby * (1. + (cos(angle * 2))));
+				}
+			}
+			else
+			{
+				r = (0, 0);
+			}
+			if (i == 0) p1 = r; else p2 = r;
+		}
+		return p1 * (1. - ticfrac) + p2 * ticfrac;
+	}
+
 	
 	//----------------------------------------------------------------------------
 	//
@@ -2169,6 +2280,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native int GetTeam() const;
 	native float GetAutoaim() const;
 	native bool GetNoAutostartMap() const;
+	native double GetWBobSpeed() const;
 	native void SetFOV(float fov);
 	native bool GetClassicFlight() const;
 	native clearscope bool HasWeaponsInSlot(int slot) const;

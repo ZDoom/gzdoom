@@ -151,6 +151,7 @@ public:
 
 	// [SP] ViewBob Multiplier
 	double		ViewBob;
+	double		curBob;
 
 	// Former class properties that were moved into the object to get rid of the meta class.
 	FName SoundClass;		// Sound class

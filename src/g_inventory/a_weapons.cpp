@@ -224,83 +224,7 @@ bool AWeapon::CheckAmmo(int fireMode, bool autoSwitch, bool requireAmmo, int amm
 		VMCall(func, params, 5, &ret, 1);
 		return !!retval;
 	}
-	return DoCheckAmmo(fireMode, autoSwitch, requireAmmo, ammocount);
-}
-
-bool AWeapon::DoCheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo, int ammocount)
-{
-	int altFire;
-	int count1, count2;
-	int enough, enoughmask;
-	int lAmmoUse1;
-
-	if ((dmflags & DF_INFINITE_AMMO) || (Owner->FindInventory (PClass::FindActor(NAME_PowerInfiniteAmmo), true) != nullptr))
-	{
-		return true;
-	}
-	if (fireMode == EitherFire)
-	{
-		bool gotSome = CheckAmmo (PrimaryFire, false) || CheckAmmo (AltFire, false);
-		if (!gotSome && autoSwitch)
-		{
-			barrier_cast<APlayerPawn *>(Owner)->PickNewWeapon (nullptr);
-		}
-		return gotSome;
-	}
-	altFire = (fireMode == AltFire);
-	if (!requireAmmo && (WeaponFlags & (WIF_AMMO_OPTIONAL << altFire)))
-	{
-		return true;
-	}
-	count1 = (Ammo1 != nullptr) ? Ammo1->Amount : 0;
-	count2 = (Ammo2 != nullptr) ? Ammo2->Amount : 0;
-
-	if ((WeaponFlags & WIF_DEHAMMO) && (Ammo1 == nullptr))
-	{
-		lAmmoUse1 = 0;
-	}
-	else if (ammocount >= 0 && (WeaponFlags & WIF_DEHAMMO))
-	{
-		lAmmoUse1 = ammocount;
-	}
-	else
-	{
-		lAmmoUse1 = AmmoUse1;
-	}
-
-	enough = (count1 >= lAmmoUse1) | ((count2 >= AmmoUse2) << 1);
-	if (WeaponFlags & (WIF_PRIMARY_USES_BOTH << altFire))
-	{
-		enoughmask = 3;
-	}
-	else
-	{
-		enoughmask = 1 << altFire;
-	}
-	if (altFire && FindState(NAME_AltFire) == nullptr)
-	{ // If this weapon has no alternate fire, then there is never enough ammo for it
-		enough &= 1;
-	}
-	if (((enough & enoughmask) == enoughmask) || (enough && (WeaponFlags & WIF_AMMO_CHECKBOTH)))
-	{
-		return true;
-	}
-	// out of ammo, pick a weapon to change to
-	if (autoSwitch)
-	{
-		barrier_cast<APlayerPawn *>(Owner)->PickNewWeapon (nullptr);
-	}
 	return false;
-}
-
-DEFINE_ACTION_FUNCTION(AWeapon, CheckAmmo)
-{
-	PARAM_SELF_PROLOGUE(AWeapon);
-	PARAM_INT(mode);
-	PARAM_BOOL(autoswitch);
-	PARAM_BOOL(require);
-	PARAM_INT(ammocnt);
-	ACTION_RETURN_BOOL(self->DoCheckAmmo(mode, autoswitch, require, ammocnt));
 }
 
 //===========================================================================
@@ -324,63 +248,8 @@ bool AWeapon::DepleteAmmo(bool altFire, bool checkEnough, int ammouse)
 		VMCall(func, params, 4, &ret, 1);
 		return !!retval;
 	}
-	return DoDepleteAmmo(altFire, checkEnough, ammouse);
+	return false;
 }
-
-bool AWeapon::DoDepleteAmmo (bool altFire, bool checkEnough, int ammouse)
-{
-	if (!((dmflags & DF_INFINITE_AMMO) || (Owner->FindInventory (PClass::FindActor(NAME_PowerInfiniteAmmo), true) != nullptr)))
-	{
-		if (checkEnough && !CheckAmmo (altFire ? AltFire : PrimaryFire, false, false, ammouse))
-		{
-			return false;
-		}
-		if (!altFire)
-		{
-			if (Ammo1 != nullptr)
-			{
-				if (ammouse >= 0 && (WeaponFlags & WIF_DEHAMMO))
-				{
-					Ammo1->Amount -= ammouse;
-				}
-				else
-				{
-					Ammo1->Amount -= AmmoUse1;
-				}
-			}
-			if ((WeaponFlags & WIF_PRIMARY_USES_BOTH) && Ammo2 != nullptr)
-			{
-				Ammo2->Amount -= AmmoUse2;
-			}
-		}
-		else
-		{
-			if (Ammo2 != nullptr)
-			{
-				Ammo2->Amount -= AmmoUse2;
-			}
-			if ((WeaponFlags & WIF_ALT_USES_BOTH) && Ammo1 != nullptr)
-			{
-				Ammo1->Amount -= AmmoUse1;
-			}
-		}
-		if (Ammo1 != nullptr && Ammo1->Amount < 0)
-			Ammo1->Amount = 0;
-		if (Ammo2 != nullptr && Ammo2->Amount < 0)
-			Ammo2->Amount = 0;
-	}
-	return true;
-}
-
-DEFINE_ACTION_FUNCTION(AWeapon, DepleteAmmo)
-{
-	PARAM_SELF_PROLOGUE(AWeapon);
-	PARAM_BOOL(altfire);
-	PARAM_BOOL(checkenough);
-	PARAM_INT(ammouse);
-	ACTION_RETURN_BOOL(self->DoDepleteAmmo(altfire, checkenough, ammouse));
-}
-
 
 //===========================================================================
 //

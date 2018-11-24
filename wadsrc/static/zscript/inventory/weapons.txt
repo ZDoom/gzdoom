@@ -78,9 +78,6 @@ class Weapon : StateProvider native
 		Stop;
 	}
 	
-	native virtual bool CheckAmmo(int fireMode, bool autoSwitch, bool requireAmmo = false, int ammocount = -1);
-	native virtual bool DepleteAmmo(bool altFire, bool checkEnough = true, int ammouse = -1);
-	
 	virtual State GetReadyState ()
 	{
 		return FindState('Ready');
@@ -262,13 +259,13 @@ class Weapon : StateProvider native
 			zoom = 1 / clamp(zoom, 0.1, 50.0);
 			if (flags & 1)
 			{ // Make the zoom instant.
-				self.player.FOV = self.player.DesiredFOV * zoom;
+				player.FOV = player.DesiredFOV * zoom;
 			}
 			if (flags & 2)
 			{ // Disable pitch/yaw scaling.
 				zoom = -zoom;
 			}
-			self.player.ReadyWeapon.FOVScale = zoom;
+			player.ReadyWeapon.FOVScale = zoom;
 		}
 	}
 
@@ -703,6 +700,138 @@ class Weapon : StateProvider native
 		pspr.SetState(GetUpState());
 	}
 
+	//===========================================================================
+	//
+	// AWeapon :: CheckAmmo
+	//
+	// Returns true if there is enough ammo to shoot.  If not, selects the
+	// next weapon to use.
+	//
+	//===========================================================================
+	
+	virtual bool CheckAmmo(int fireMode, bool autoSwitch, bool requireAmmo = false, int ammocount = -1)
+	{
+		int count1, count2;
+		int enough, enoughmask;
+		int lAmmoUse1;
+
+		if (sv_infiniteammo || (Owner.FindInventory ('PowerInfiniteAmmo', true) != null))
+		{
+			return true;
+		}
+		if (fireMode == EitherFire)
+		{
+			bool gotSome = CheckAmmo (PrimaryFire, false) || CheckAmmo (AltFire, false);
+			if (!gotSome && autoSwitch)
+			{
+				PlayerPawn(Owner).PickNewWeapon (null);
+			}
+			return gotSome;
+		}
+		let altFire = (fireMode == AltFire);
+		let optional = (altFire? bAlt_Ammo_Optional : bAmmo_Optional);
+		let useboth = (altFire? bPrimary_Uses_Both : bAlt_Uses_Both);
+
+		if (!requireAmmo && optional)
+		{
+			return true;
+		}
+		count1 = (Ammo1 != null) ? Ammo1.Amount : 0;
+		count2 = (Ammo2 != null) ? Ammo2.Amount : 0;
+
+		if (bDehAmmo && Ammo1 == null)
+		{
+			lAmmoUse1 = 0;
+		}
+		else if (ammocount >= 0 && bDehAmmo)
+		{
+			lAmmoUse1 = ammocount;
+		}
+		else
+		{
+			lAmmoUse1 = AmmoUse1;
+		}
+
+		enough = (count1 >= lAmmoUse1) | ((count2 >= AmmoUse2) << 1);
+		if (useboth)
+		{
+			enoughmask = 3;
+		}
+		else
+		{
+			enoughmask = 1 << altFire;
+		}
+		if (altFire && FindState('AltFire') == null)
+		{ // If this weapon has no alternate fire, then there is never enough ammo for it
+			enough &= 1;
+		}
+		if (((enough & enoughmask) == enoughmask) || (enough && bAmmo_CheckBoth))
+		{
+			return true;
+		}
+		// out of ammo, pick a weapon to change to
+		if (autoSwitch)
+		{
+			PlayerPawn(Owner).PickNewWeapon (null);
+		}
+		return false;
+	}
+
+		
+	//===========================================================================
+	//
+	// AWeapon :: DepleteAmmo
+	//
+	// Use up some of the weapon's ammo. Returns true if the ammo was successfully
+	// depleted. If checkEnough is false, then the ammo will always be depleted,
+	// even if it drops below zero.
+	//
+	//===========================================================================
+
+	virtual bool DepleteAmmo(bool altFire, bool checkEnough = true, int ammouse = -1)
+	{
+		if (!(sv_infiniteammo || (Owner.FindInventory ('PowerInfiniteAmmo', true) != null)))
+		{
+			if (checkEnough && !CheckAmmo (altFire ? AltFire : PrimaryFire, false, false, ammouse))
+			{
+				return false;
+			}
+			if (!altFire)
+			{
+				if (Ammo1 != null)
+				{
+					if (ammouse >= 0 && bDehAmmo)
+					{
+						Ammo1.Amount -= ammouse;
+					}
+					else
+					{
+						Ammo1.Amount -= AmmoUse1;
+					}
+				}
+				if (bPRIMARY_USES_BOTH && Ammo2 != null)
+				{
+					Ammo2.Amount -= AmmoUse2;
+				}
+			}
+			else
+			{
+				if (Ammo2 != null)
+				{
+					Ammo2.Amount -= AmmoUse2;
+				}
+				if (bALT_USES_BOTH && Ammo1 != null)
+				{
+					Ammo1.Amount -= AmmoUse1;
+				}
+			}
+			if (Ammo1 != null && Ammo1.Amount < 0)
+				Ammo1.Amount = 0;
+			if (Ammo2 != null && Ammo2.Amount < 0)
+				Ammo2.Amount = 0;
+		}
+		return true;
+	}
 
 
 }

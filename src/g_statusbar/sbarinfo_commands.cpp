@@ -527,9 +527,9 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 			if(condition == WEAPONSLOT) //weaponslots
 			{
 				drawAlt = 1; //draw off state until we know we have something.
-				for (int i = 0; i < statusBar->CPlayer->weapons.Slots[conditionalValue[0]].Size(); i++)
+				for (int i = 0; i < statusBar->CPlayer->weapons.SlotSize(conditionalValue[0]); i++)
 				{
-					PClassActor *weap = statusBar->CPlayer->weapons.Slots[conditionalValue[0]].GetWeapon(i);
+					PClassActor *weap = statusBar->CPlayer->weapons.GetWeapon(conditionalValue[0], i);
 					if(weap == NULL)
 					{
 						continue;

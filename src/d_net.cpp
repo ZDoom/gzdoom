@@ -2631,7 +2631,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 			int count = ReadByte(stream);
 			if (slot < NUM_WEAPON_SLOTS)
 			{
-				players[pnum].weapons.Slots[slot].Clear();
+				players[pnum].weapons.ClearSlot(slot);
 			}
 			for(i = 0; i < count; ++i)
 			{

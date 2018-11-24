@@ -582,9 +582,9 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 	else
 	{
 		// Order ammo by use of weapons in the weapon slots
-		for (k = 0; k < NUM_WEAPON_SLOTS; k++) for(j = 0; j < CPlayer->weapons.Slots[k].Size(); j++)
+		for (k = 0; k < NUM_WEAPON_SLOTS; k++) for(j = 0; j < CPlayer->weapons.SlotSize(k); j++)
 		{
-			PClassActor *weap = CPlayer->weapons.Slots[k].GetWeapon(j);
+			PClassActor *weap = CPlayer->weapons.GetWeapon(k, j);
 
 			if (weap)
 			{
@@ -782,9 +782,9 @@ static void DrawWeapons(player_t *CPlayer, int x, int y)
 	}
 
 	// And now everything in the weapon slots back to front
-	for (k = NUM_WEAPON_SLOTS - 1; k >= 0; k--) for(j = CPlayer->weapons.Slots[k].Size() - 1; j >= 0; j--)
+	for (k = NUM_WEAPON_SLOTS - 1; k >= 0; k--) for(j = CPlayer->weapons.SlotSize(k) - 1; j >= 0; j--)
 	{
-		PClassActor *weap = CPlayer->weapons.Slots[k].GetWeapon(j);
+		PClassActor *weap = CPlayer->weapons.GetWeapon(k, j);
 		if (weap) 
 		{
 			inv=CPlayer->mo->FindInventory(weap);

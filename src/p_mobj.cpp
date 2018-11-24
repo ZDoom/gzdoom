@@ -1126,9 +1126,14 @@ bool AActor::UseInventory (AInventory *item)
 	{
 		return false;
 	}
-	if (!item->CallUse (false))
+
+	IFVIRTUALPTR(item, AInventory, Use)
 	{
-		return false;
+		VMValue params[2] = { item, false };
+		int retval;
+		VMReturn ret(&retval);
+		VMCall(func, params, 2, &ret, 1);
+		if (!retval) return false;
 	}
 
 	if (dmflags2 & DF2_INFINITE_INVENTORY)

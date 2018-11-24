@@ -233,7 +233,6 @@ void DBot::Dofire (ticcmd_t *cmd)
 			}
 		}
 		// prediction aiming
-shootmissile:
 		Dist = player->mo->Distance2D(enemy);
 		fm = Dist / GetDefaultByType (player->ReadyWeapon->ProjectileType)->Speed;
 		bglobal.SetBodyAt(enemy->Pos() + enemy->Vel.XY() * fm * 2, 1);

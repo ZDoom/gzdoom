@@ -81,13 +81,11 @@ public:
 	bool CallTryPickup(AActor *toucher, AActor **toucher_return = NULL);	// Wrapper for script function.
 
 	void DepleteOrDestroy ();			// virtual on the script side. 
-	bool CallUse(bool pickup);			// virtual on the script side.
 	PalEntry CallGetBlend();			// virtual on the script side.
 	bool GetNoTeleportFreeze();			// virtual on the script side.
 
 	bool DoRespawn();
 
-	AInventory *PrevItem();		// Returns the item preceding this one in the list.
 	AInventory *PrevInv();		// Returns the previous item with IF_INVBAR set.
 	AInventory *NextInv();		// Returns the next item with IF_INVBAR set.
 

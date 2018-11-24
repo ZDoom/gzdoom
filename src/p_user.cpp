@@ -655,9 +655,9 @@ void player_t::SendPitchLimits() const
 
 bool player_t::HasWeaponsInSlot(int slot) const
 {
-	for (int i = 0; i < weapons.Slots[slot].Size(); i++)
+	for (int i = 0; i < weapons.SlotSize(slot); i++)
 	{
-		PClassActor *weap = weapons.Slots[slot].GetWeapon(i);
+		PClassActor *weap = weapons.GetWeapon(slot, i);
 		if (weap != NULL && mo->FindInventory(weap)) return true;
 	}
 	return false;

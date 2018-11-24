@@ -319,73 +319,6 @@ int FWeaponSlot::LocateWeapon(PClassActor *type)
 
 //===========================================================================
 //
-// FWeaponSlot :: PickWeapon
-//
-// Picks a weapon from this slot. If no weapon is selected in this slot,
-// or the first weapon in this slot is selected, returns the last weapon.
-// Otherwise, returns the previous weapon in this slot. This means
-// precedence is given to the last weapon in the slot, which by convention
-// is probably the strongest. Does not return weapons you have no ammo
-// for or which you do not possess.
-//
-//===========================================================================
-
-AWeapon *FWeaponSlot::PickWeapon(player_t *player, bool checkammo)
-{
-	int i, j;
-
-	if (player->mo == nullptr)
-	{
-		return nullptr;
-	}
-	// Does this slot even have any weapons?
-	if (Weapons.Size() == 0)
-	{
-		return player->ReadyWeapon;
-	}
-	if (player->ReadyWeapon != nullptr)
-	{
-		for (i = 0; (unsigned)i < Weapons.Size(); i++)
-		{
-			if (Weapons[i].Type == player->ReadyWeapon->GetClass() ||
-				(player->ReadyWeapon->WeaponFlags & WIF_POWERED_UP &&
-				 player->ReadyWeapon->SisterWeapon != nullptr &&
-				 player->ReadyWeapon->SisterWeapon->GetClass() == Weapons[i].Type))
-			{
-				for (j = (i == 0 ? Weapons.Size() - 1 : i - 1);
-					j != i;
-					j = (j == 0 ? Weapons.Size() - 1 : j - 1))
-				{
-					AWeapon *weap = static_cast<AWeapon *> (player->mo->FindInventory(Weapons[j].Type));
-
-					if (weap != nullptr && weap->IsKindOf(NAME_Weapon))
-					{
-						if (!checkammo || weap->CheckAmmo(AWeapon::EitherFire, false))
-						{
-							return weap;
-						}
-					}
-				}
-			}
-		}
-	}
-	for (i = Weapons.Size() - 1; i >= 0; i--)
-	{
-		AWeapon *weap = static_cast<AWeapon *> (player->mo->FindInventory(Weapons[i].Type));
-
-		if (weap != nullptr && weap->IsKindOf(NAME_Weapon))
-		{
-			if (!checkammo || weap->CheckAmmo(AWeapon::EitherFire, false))
-			{
-				return weap;
-			}
-		}
-	}
-	return player->ReadyWeapon;
-}
-
-//===========================================================================
-//
 // FWeaponSlot :: SetInitialPositions
 //
 // Fills in the position field for every weapon currently in the slot based
@@ -531,154 +464,6 @@ DEFINE_ACTION_FUNCTION(FWeaponSlots, LocateWeapon)
 	if (numret >= 2) ret[1].SetInt(slot);
 	if (numret >= 3) ret[2].SetInt(index);
 	return MIN(numret, 3);
-}
-
-//===========================================================================
-//
-// FindMostRecentWeapon
-//
-// Locates the slot and index for the most recently selected weapon. If the
-// player is in the process of switching to a new weapon, that is the most
-// recently selected weapon. Otherwise, the current weapon is the most recent
-// weapon.
-//
-//===========================================================================
-
-static bool FindMostRecentWeapon(player_t *player, int *slot, int *index)
-{
-	if (player->PendingWeapon != WP_NOCHANGE)
-	{
-		return player->weapons.LocateWeapon(player->PendingWeapon->GetClass(), slot, index);
-	}
-	else if (player->ReadyWeapon != nullptr)
-	{
-		AWeapon *weap = player->ReadyWeapon;
-		if (!player->weapons.LocateWeapon(weap->GetClass(), slot, index))
-		{
-			// If the current weapon wasn't found and is powered up,
-			// look for its non-powered up version.
-			if (weap->WeaponFlags & WIF_POWERED_UP && weap->SisterWeaponType != nullptr)
-			{
-				return player->weapons.LocateWeapon(weap->SisterWeaponType, slot, index);
-			}
-			return false;
-		}
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
-
-//===========================================================================
-//
-// FWeaponSlots :: PickNextWeapon
-//
-// Returns the "next" weapon for this player. If the current weapon is not
-// in a slot, then it just returns that weapon, since there's nothing to
-// consider it relative to.
-//
-//===========================================================================
-
-AWeapon *FWeaponSlots::PickNextWeapon(player_t *player)
-{
-	int startslot, startindex;
-	int slotschecked = 0;
-
-	if (player->mo == nullptr)
-	{
-		return nullptr;
-	}
-	if (player->ReadyWeapon == nullptr || FindMostRecentWeapon(player, &startslot, &startindex))
-	{
-		int slot;
-		int index;
-
-		if (player->ReadyWeapon == nullptr)
-		{
-			startslot = NUM_WEAPON_SLOTS - 1;
-			startindex = Slots[startslot].Size() - 1;
-		}
-
-		slot = startslot;
-		index = startindex;
-		do
-		{
-			if (++index >= Slots[slot].Size())
-			{
-				index = 0;
-				slotschecked++;
-				if (++slot >= NUM_WEAPON_SLOTS)
-				{
-					slot = 0;
-				}
-			}
-			PClassActor *type = Slots[slot].GetWeapon(index);
-			AWeapon *weap = static_cast<AWeapon *>(player->mo->FindInventory(type));
-			if (weap != nullptr && weap->CheckAmmo(AWeapon::EitherFire, false))
-			{
-				return weap;
-			}
-		}
-		while ((slot != startslot || index != startindex) && slotschecked <= NUM_WEAPON_SLOTS);
-	}
-	return player->ReadyWeapon;
-}
-
-//===========================================================================
-//
-// FWeaponSlots :: PickPrevWeapon
-//
-// Returns the "previous" weapon for this player. If the current weapon is
-// not in a slot, then it just returns that weapon, since there's nothing to
-// consider it relative to.
-//
-//===========================================================================
-
-AWeapon *FWeaponSlots::PickPrevWeapon (player_t *player)
-{
-	int startslot, startindex;
-	int slotschecked = 0;
-
-	if (player->mo == nullptr)
-	{
-		return nullptr;
-	}
-	if (player->ReadyWeapon == nullptr || FindMostRecentWeapon (player, &startslot, &startindex))
-	{
-		int slot;
-		int index;
-
-		if (player->ReadyWeapon == nullptr)
-		{
-			startslot = 0;
-			startindex = 0;
-		}
-
-		slot = startslot;
-		index = startindex;
-		do
-		{
-			if (--index < 0)
-			{
-				slotschecked++;
-				if (--slot < 0)
-				{
-					slot = NUM_WEAPON_SLOTS - 1;
-				}
-				index = Slots[slot].Size() - 1;
-			}
-			PClassActor *type = Slots[slot].GetWeapon(index);
-			AWeapon *weap = static_cast<AWeapon *>(player->mo->FindInventory(type));
-			if (weap != nullptr && weap->CheckAmmo(AWeapon::EitherFire, false))
-			{
-				return weap;
-			}
-		}
-		while ((slot != startslot || index != startindex) && slotschecked <= NUM_WEAPON_SLOTS);
-	}
-	return player->ReadyWeapon;
 }
 
 //===========================================================================
@@ -976,10 +761,10 @@ CCMD (setslot)
 	}
 	else if (PlayingKeyConf != nullptr)
 	{
-		PlayingKeyConf->Slots[slot].Clear();
+		PlayingKeyConf->ClearSlot(slot);
 		for (int i = 2; i < argv.argc(); ++i)
 		{
-			PlayingKeyConf->Slots[slot].AddWeapon(argv[i]);
+			PlayingKeyConf->AddWeapon(slot, argv[i]);
 		}
 	}
 	else

@@ -15,7 +15,6 @@ public:
 	bool AddWeapon (const char *type);
 	bool AddWeapon (PClassActor *type);
 	void AddWeaponList (const char *list, bool clear);
-	AWeapon *PickWeapon (player_t *player, bool checkammo = false);
 	int Size () const { return (int)Weapons.Size(); }
 	int LocateWeapon (PClassActor *type);
 
@@ -56,10 +55,9 @@ struct FWeaponSlots
 	FWeaponSlots() { Clear(); }
 	FWeaponSlots(const FWeaponSlots &other);
 
+private:
 	FWeaponSlot Slots[NUM_WEAPON_SLOTS];
-
-	AWeapon *PickNextWeapon (player_t *player);
-	AWeapon *PickPrevWeapon (player_t *player);
+public:
 
 	void Clear ();
 	bool LocateWeapon (PClassActor *type, int *const slot, int *const index);
@@ -76,7 +74,49 @@ struct FWeaponSlots
 
 	void AddSlot(int slot, PClassActor *type, bool feedback);
 	void AddSlotDefault(int slot, PClassActor *type, bool feedback);
+	// Abstract access interface to the slots
 
+	void AddWeapon(int slot, PClassActor *type)
+	{
+		if (slot >= 0 && slot < NUM_WEAPON_SLOTS)
+		{
+			Slots[slot].AddWeapon(type);
+		}
+	}
+
+	void AddWeapon(int slot, const char *type)
+	{
+		if (slot >= 0 && slot < NUM_WEAPON_SLOTS)
+		{
+			Slots[slot].AddWeapon(type);
+		}
+	}
+
+	void ClearSlot(int slot)
+	{
+		if (slot >= 0 && slot < NUM_WEAPON_SLOTS)
+		{
+			Slots[slot].Weapons.Clear();
+		}
+	}
+
+	int SlotSize(int slot) const
+	{
+		if (slot >= 0 && slot < NUM_WEAPON_SLOTS)
+		{
+			return Slots[slot].Weapons.Size();
+		}
+		return 0;
+	}
+
+	PClassActor *GetWeapon(int slot, int index) const
+	{
+		if (slot >= 0 && slot < NUM_WEAPON_SLOTS && (unsigned)index < Slots[slot].Weapons.Size())
+		{
+			return Slots[slot].GetWeapon(index);
+		}
+		return nullptr;
+	}
 };
 
 void P_PlaybackKeyConfWeapons(FWeaponSlots *slots);

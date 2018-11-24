@@ -202,55 +202,6 @@ bool AInventory::Grind(bool items)
 
 //===========================================================================
 //
-// AInventory :: GetSpeedFactor
-//
-//===========================================================================
-
-double AInventory::GetSpeedFactor()
-{
-	double factor = 1.;
-	auto self = this;
-	while (self != nullptr)
-	{
-		IFVIRTUALPTR(self, AInventory, GetSpeedFactor)
-		{
-			VMValue params[1] = { (DObject*)self };
-			double retval;
-			VMReturn ret(&retval);
-			VMCall(func, params, 1, &ret, 1);
-			factor *= retval;
-		}
-		self = self->Inventory;
-	}
-	return factor;
-}
-
-//===========================================================================
-//
-// AInventory :: GetNoTeleportFreeze
-//
-//===========================================================================
-
-bool AInventory::GetNoTeleportFreeze ()
-{
-	auto self = this;
-	while (self != nullptr)
-	{
-		IFVIRTUALPTR(self, AInventory, GetNoTeleportFreeze)
-		{
-			VMValue params[1] = { (DObject*)self };
-			int retval;
-			VMReturn ret(&retval);
-			VMCall(func, params, 1, &ret, 1);
-			if (retval) return true;
-		}
-		self = self->Inventory;
-	}
-	return false;
-}
-
-//===========================================================================
-//
 // AInventory :: Use
 //
 //===========================================================================

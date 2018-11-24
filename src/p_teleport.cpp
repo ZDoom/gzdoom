@@ -203,9 +203,14 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 	// [BC] && bHaltVelocity.
 	if (thing->player && ((flags & TELF_DESTFOG) || !(flags & TELF_KEEPORIENTATION)) && !(flags & TELF_KEEPVELOCITY))
 	{
-		// Freeze player for about .5 sec
-		if (thing->Inventory == NULL || !thing->Inventory->GetNoTeleportFreeze())
-			thing->reactiontime = 18;
+		int time = 18;
+		IFVIRTUALPTR(thing, APlayerPawn, GetTeleportFreezeTime)
+		{
+			VMValue param = thing;
+			VMReturn ret(&time);
+			VMCall(func, &param, 1, &ret, 1);
+		}
+		thing->reactiontime = time;
 	}
 	if (thing->flags & MF_MISSILE)
 	{

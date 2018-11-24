@@ -52,6 +52,7 @@ class PlayerPawn : Actor native
 
 	meta Name HealingRadiusType;
 	meta Name InvulMode;
+	meta int TeleportFreezeTime;
 	
 	property prefix: Player;
 	property HealRadiusType: HealingradiusType;
@@ -69,6 +70,7 @@ class PlayerPawn : Actor native
 	property MorphWeapon: MorphWeapon;
 	property FlechetteType: FlechetteType;
 	property Portrait: Portrait;
+	property TeleportFreezeTime: TeleportFreezeTime;
 	
 	Default
 	{
@@ -106,6 +108,7 @@ class PlayerPawn : Actor native
 		Player.FlechetteType "ArtiPoisonBag3";
 		Player.AirCapacity 1;
 		Player.ViewBob 1;
+		Player.TeleportFreezeTime 18;
 		Obituary "$OB_MPDEFAULT";
 	}
 	
@@ -1700,6 +1703,23 @@ class PlayerPawn : Actor native
 		}
 	}
 
+	//===========================================================================
+	//
+	// 
+	//
+	//===========================================================================
+
+	virtual int GetTeleportFreezeTime()
+	{
+		if (TeleportFreezeTime <= 0) return 0;
+		let item = inv;
+		while (item != null)
+		{
+			if (item.GetNoTeleportFreeze()) return 0;
+			item = item.inv;
+		}
+		return TeleportFreezeTime;
+	}
 	
 	//----------------------------------------------------------------------------
 	//
@@ -2008,7 +2028,6 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	{
 		return (mo.ViewHeight + crouchviewdelta - viewheight) / 8;
 	}
-	
 	
 }
 

@@ -83,7 +83,6 @@ public:
 	void DepleteOrDestroy ();			// virtual on the script side. 
 	bool CallUse(bool pickup);			// virtual on the script side.
 	PalEntry CallGetBlend();			// virtual on the script side.
-	double GetSpeedFactor();			// virtual on the script side.
 	bool GetNoTeleportFreeze();			// virtual on the script side.
 
 	bool DoRespawn();

@@ -260,3 +260,5 @@ version "3.7"
 #include "zscript/chex/chexitems.txt"
 #include "zscript/chex/chexdecorations.txt"
 #include "zscript/chex/chexplayer.txt"
+
+#include "zscript/scriptutil/scriptutil.txt"

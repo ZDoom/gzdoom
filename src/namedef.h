@@ -983,3 +983,8 @@ xx(snd_output)
 xx(snd_output_format)
 xx(snd_speakermode)
 xx(snd_resampler)
+
+// ScriptUtil entry points
+xx(ScriptUtil)
+xx(SetMarineWeapon)
+xx(SetMarineSprite)

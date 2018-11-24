@@ -43,6 +43,7 @@
 class FFont;
 class FileReader;
 struct line_t;
+class FSerializer;
 
 
 enum

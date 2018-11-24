@@ -74,6 +74,7 @@
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "types.h"
+#include "scriptutil.h"
 
 	// P-codes for ACS scripts
 	enum
@@ -6963,28 +6964,6 @@ static bool CharArrayParms(int &capacity, int &offset, int &a, FACSStackMemory& 
 	return true;
 }
 
-static void SetMarineWeapon(AActor *marine, int weapon)
-{
-	static VMFunction *smw = nullptr;
-	if (smw == nullptr) PClass::FindFunction(&smw, NAME_ScriptedMarine, NAME_SetWeapon);
-	if (smw)
-	{
-		VMValue params[2] = { marine, weapon };
-		VMCall(smw, params, 2, nullptr, 0);
-	}
-}
-
-static void SetMarineSprite(AActor *marine, PClassActor *source)
-{
-	static VMFunction *sms = nullptr;
-	if (sms == nullptr) PClass::FindFunction(&sms, NAME_ScriptedMarine, NAME_SetSprite);
-	if (sms)
-	{
-		VMValue params[2] = { marine, source };
-		VMCall(sms, params, 2, nullptr, 0);
-	}
-}
-
 int DLevelScript::RunScript ()
 {
 	DACSThinker *controller = DACSThinker::ActiveThinker;
@@ -9832,93 +9811,16 @@ scriptwait:
             break;
 
 		case PCD_SETWEAPON:
-			if (activator == NULL || activator->player == NULL)
-			{
-				STACK(1) = 0;
-			}
-			else
-			{
-				AInventory *item = activator->FindInventory (PClass::FindActor (FBehavior::StaticLookupString (STACK(1))));
-
-				if (item == NULL || !item->IsKindOf(NAME_Weapon))
-				{
-					STACK(1) = 0;
-				}
-				else if (activator->player->ReadyWeapon == item)
-				{
-					// The weapon is already selected, so setweapon succeeds by default,
-					// but make sure the player isn't switching away from it.
-					activator->player->PendingWeapon = WP_NOCHANGE;
-					STACK(1) = 1;
-				}
-				else
-				{
-					AWeapon *weap = static_cast<AWeapon *> (item);
-
-					if (weap->CheckAmmo (AWeapon::EitherFire, false))
-					{
-						// There's enough ammo, so switch to it.
-						STACK(1) = 1;
-						activator->player->PendingWeapon = weap;
-					}
-					else
-					{
-						STACK(1) = 0;
-					}
-				}
-			}
+			STACK(1) = ScriptUtil::Exec(NAME_SetWeapon, ScriptUtil::Pointer, activator, ScriptUtil::ACSClass, STACK(1), ScriptUtil::End);
 			break;
 
 		case PCD_SETMARINEWEAPON:
-			if (STACK(2) != 0)
-			{
-				AActor *marine;
-				NActorIterator iterator(NAME_ScriptedMarine, STACK(2));
-
-				while ((marine = iterator.Next()) != NULL)
-				{
-					SetMarineWeapon(marine, STACK(1));
-				}
-			}
-			else
-			{
-				if (activator != nullptr && activator->IsKindOf (NAME_ScriptedMarine))
-				{
-					SetMarineWeapon(activator, STACK(1));
-				}
-			}
+			ScriptUtil::Exec(NAME_SetMarineWeapon, ScriptUtil::Pointer, activator, ScriptUtil::Int, STACK(2), ScriptUtil::Int, STACK(1), ScriptUtil::End);
 			sp -= 2;
 			break;
 
 		case PCD_SETMARINESPRITE:
-			{
-				PClassActor *type = PClass::FindActor(FBehavior::StaticLookupString (STACK(1)));
-
-				if (type != NULL)
-				{
-					if (STACK(2) != 0)
-					{
-						AActor *marine;
-						NActorIterator iterator(NAME_ScriptedMarine, STACK(2));
-
-						while ((marine = iterator.Next()) != NULL)
-						{
-							SetMarineSprite(marine, type);
-						}
-					}
-					else
-					{
-						if (activator != nullptr && activator->IsKindOf(NAME_ScriptedMarine))
-						{
-							SetMarineSprite(activator, type);
-						}
-					}
-				}
-				else
-				{
-					Printf ("Unknown actor type: %s\n", FBehavior::StaticLookupString (STACK(1)));
-				}
-			}
+			ScriptUtil::Exec(NAME_SetMarineSprite, ScriptUtil::Pointer, activator, ScriptUtil::Int, STACK(2), ScriptUtil::ACSClass, STACK(1), ScriptUtil::End);
 			sp -= 2;
 			break;
 

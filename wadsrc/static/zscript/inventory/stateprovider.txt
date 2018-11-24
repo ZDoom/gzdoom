@@ -3,11 +3,123 @@ class StateProvider : Inventory native
 {
 	action native state A_JumpIfNoAmmo(statelabel label);
 	action native void A_CustomPunch(int damage, bool norandom = false, int flags = CPF_USEAMMO, class<Actor> pufftype = "BulletPuff", double range = 0, double lifesteal = 0, int lifestealmax = 0, class<BasicArmorBonus> armorbonustype = "ArmorBonus", sound MeleeSound = 0, sound MissSound = "");
-	action native void A_FireBullets(double spread_xy, double spread_z, int numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", int flags = 1, double range = 0, class<Actor> missile = null, double Spawnheight = 32, double Spawnofs_xy = 0);
 	action native Actor A_FireProjectile(class<Actor> missiletype, double angle = 0, bool useammo = true, double spawnofs_xy = 0, double spawnheight = 0, int flags = 0, double pitch = 0);
 	action native void A_RailAttack(int damage, int spawnofs_xy = 0, bool useammo = true, color color1 = 0, color color2 = 0, int flags = 0, double maxdiff = 0, class<Actor> pufftype = "BulletPuff", double spread_xy = 0, double spread_z = 0, double range = 0, int duration = 0, double sparsity = 1.0, double driftspeed = 1.0, class<Actor> spawnclass = "none", double spawnofs_z = 0, int spiraloffset = 270, int limit = 0);
 	action native void A_WeaponReady(int flags = 0);
 
+	//---------------------------------------------------------------------------
+	//
+	//
+	//
+	//---------------------------------------------------------------------------
+
+	action void A_FireBullets(double spread_xy, double spread_z, int numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", int flags = 1, double range = 0, class<Actor> missile = null, double Spawnheight = 32, double Spawnofs_xy = 0)
+	{
+		let player = self.player;
+		if (!player) return;
+
+		let pawn = PlayerPawn(self);
+		let weapon = player.ReadyWeapon;
+
+		int i;
+		double bangle;
+		double bslope = 0.;
+		int laflags = (flags & FBF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
+
+		if ((flags & FBF_USEAMMO) && weapon &&  stateinfo != null && stateinfo.mStateType == STATE_Psprite)
+		{
+			if (!weapon.DepleteAmmo(weapon.bAltFire, true))
+				return;	// out of ammo
+		}
+		
+		if (range == 0)	range = PLAYERMISSILERANGE;
+
+		if (!(flags & FBF_NOFLASH)) pawn.PlayAttacking2 ();
+
+		if (!(flags & FBF_NOPITCH)) bslope = BulletSlope();
+		bangle = self.Angle;
+
+		if (pufftype == NULL) pufftype = 'BulletPuff';
+
+		if (weapon != NULL)
+		{
+			A_PlaySound(weapon.AttackSound, CHAN_WEAPON);
+		}
+
+		if ((numbullets == 1 && !player.refire) || numbullets == 0)
+		{
+			int damage = damageperbullet;
+
+			if (!(flags & FBF_NORANDOM))
+				damage *= random[cabullet](1, 3);
+
+			let puff = LineAttack(bangle, range, bslope, damage, 'Hitscan', pufftype, laflags);
+
+			if (missile != null)
+			{
+				bool temp = false;
+				double ang = self.Angle - 90;
+				Vector2 ofs = AngleToVector(Spawnofs_xy);
+				Actor proj = SpawnPlayerMissile(missile, bangle, ofs.X, ofs.Y, Spawnheight);
+				if (proj)
+				{
+					if (!puff)
+					{
+						temp = true;
+						puff = LineAttack(bangle, range, bslope, 0, 'Hitscan', pufftype, laflags | LAF_NOINTERACT);
+					}
+					AimBulletMissile(proj, puff, flags, temp, false);
+				}
+			}
+		}
+		else 
+		{
+			if (numbullets < 0)
+				numbullets = 1;
+			for (i = 0; i < numbullets; i++)
+			{
+				double pangle = bangle;
+				double slope = bslope;
+
+				if (flags & FBF_EXPLICITANGLE)
+				{
+					pangle += spread_xy;
+					slope += spread_z;
+				}
+				else
+				{
+					pangle += spread_xy * Random2[cabullet]() / 255.;
+					slope += spread_z * Random2[cabullet]() / 255.;
+				}
+
+				int damage = damageperbullet;
+
+				if (!(flags & FBF_NORANDOM))
+					damage *= random[cabullet](1, 3);
+
+				let puff = LineAttack(pangle, range, slope, damage, 'Hitscan', pufftype, laflags);
+
+				if (missile != null)
+				{
+					bool temp = false;
+					double ang = self.Angle - 90;
+					Vector2 ofs = AngleToVector(Spawnofs_xy);
+					Actor proj = SpawnPlayerMissile(missile, bangle, ofs.X, ofs.Y, Spawnheight);
+					if (proj)
+					{
+						if (!puff)
+						{
+							temp = true;
+							puff = LineAttack(bangle, range, bslope, 0, 'Hitscan', pufftype, laflags | LAF_NOINTERACT);
+						}
+						AimBulletMissile(proj, puff, flags, temp, false);
+					}
+				}
+			}
+		}
+	}
+
+	
 	//---------------------------------------------------------------------------
 	//
 	// PROC A_ReFire

@@ -1,0 +1,120 @@
+extend class Actor
+{
+	//---------------------------------------------------------------------------
+	//
+	// Used by A_CustomBulletAttack and A_FireBullets
+	//
+	//---------------------------------------------------------------------------
+
+	static void AimBulletMissile(Actor proj, Actor puff, int flags, bool temp, bool cba)
+	{
+		if (proj && puff)
+		{
+			// FAF_BOTTOM = 1
+			// Aim for the base of the puff as that's where blood puffs will spawn... roughly.
+
+			proj.A_Face(puff, 0., 0., 0., 0., 1);
+			proj.Vel3DFromAngle(proj.Speed, proj.Angle, proj.Pitch);
+
+			if (!temp)
+			{
+				if (cba)
+				{
+					if (flags & CBAF_PUFFTARGET)	proj.target = puff;
+					if (flags & CBAF_PUFFMASTER)	proj.master = puff;
+					if (flags & CBAF_PUFFTRACER)	proj.tracer = puff;
+				}
+				else
+				{
+					if (flags & FBF_PUFFTARGET)	proj.target = puff;
+					if (flags & FBF_PUFFMASTER)	proj.master = puff;
+					if (flags & FBF_PUFFTRACER)	proj.tracer = puff;
+				}
+			}
+		}
+		if (puff && temp)
+		{
+			puff.Destroy();
+		}
+	}
+	
+	//---------------------------------------------------------------------------
+	//
+	//
+	//
+	//---------------------------------------------------------------------------
+
+	void A_CustomBulletAttack(double spread_xy, double spread_z, int numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", double range = 0, int flags = 0, int ptr = AAPTR_TARGET, class<Actor> missile = null, double Spawnheight = 32, double Spawnofs_xy = 0)
+	{
+		let ref = GetPointer(ptr);
+
+		if (range == 0)
+			range = MISSILERANGE;
+
+		int i;
+		double bangle;
+		double bslope = 0.;
+		int laflags = (flags & CBAF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
+
+		if (ref != NULL || (flags & CBAF_AIMFACING))
+		{
+			if (!(flags & CBAF_AIMFACING))
+			{
+				A_Face(ref);
+			}
+			bangle = self.Angle;
+
+			if (!(flags & CBAF_NOPITCH)) bslope = AimLineAttack (bangle, MISSILERANGE);
+			if (pufftype == null) pufftype = 'BulletPuff';
+
+			A_PlaySound(AttackSound, CHAN_WEAPON);
+			for (i = 0; i < numbullets; i++)
+			{
+				double pangle = bangle;
+				double slope = bslope;
+
+				if (flags & CBAF_EXPLICITANGLE)
+				{
+					pangle += spread_xy;
+					slope += spread_z;
+				}
+				else
+				{
+					pangle += spread_xy * Random2[cwbullet]() / 255.;
+					slope += spread_z * Random2[cwbullet]() / 255.;
+				}
+
+				int damage = damageperbullet;
+
+				if (!(flags & CBAF_NORANDOM))
+					damage *= random[cwbullet](1, 3);
+
+				let puff = LineAttack(pangle, range, slope, damage, 'Hitscan', pufftype, laflags);
+				if (missile != null && pufftype != null)
+				{
+					double x = Spawnofs_xy * cos(pangle);
+					double y = Spawnofs_xy * sin(pangle);
+					
+					SetXYZ(Vec3Offset(x, y, 0.));
+					let proj = SpawnMissileAngleZSpeed(Pos.Z + GetBobOffset() + Spawnheight, missile, self.Angle, 0, GetDefaultByType(missile).Speed, self, false);
+					SetXYZ(pos);
+					
+					if (proj)
+					{
+						bool temp = (puff == null);
+						if (!puff)
+						{
+							puff = LineAttack(pangle, range, slope, 0, 'Hitscan', pufftype, laflags | LAF_NOINTERACT);
+						}
+						if (puff)
+						{			
+							AimBulletMissile(proj, puff, flags, temp, true);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	
+}

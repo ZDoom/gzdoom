@@ -99,7 +99,6 @@ public:
 
 	bool ResetAirSupply (bool playgasp = true);
 	int GetMaxHealth(bool withupgrades = false) const;
-	void ActivateMorphWeapon ();
 	AWeapon *PickNewWeapon (PClassActor *ammotype);
 	AWeapon *BestWeapon (PClassActor *ammotype);
 	void GiveDeathmatchInventory ();

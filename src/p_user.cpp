@@ -1503,45 +1503,6 @@ void APlayerPawn::GiveDefaultInventory ()
 	}
 }
 
-void APlayerPawn::ActivateMorphWeapon ()
-{
-	PClassActor *morphweapon = PClass::FindActor (MorphWeapon);
-	player->PendingWeapon = WP_NOCHANGE;
-
-	if (player->ReadyWeapon != nullptr)
-	{
-		player->GetPSprite(PSP_WEAPON)->y = WEAPONTOP;
-	}
-
-	if (morphweapon == nullptr || !morphweapon->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
-	{ // No weapon at all while morphed!
-		player->ReadyWeapon = nullptr;
-	}
-	else
-	{
-		player->ReadyWeapon = static_cast<AWeapon *>(player->mo->FindInventory (morphweapon));
-		if (player->ReadyWeapon == nullptr)
-		{
-			player->ReadyWeapon = static_cast<AWeapon *>(player->mo->GiveInventoryType (morphweapon));
-			if (player->ReadyWeapon != nullptr)
-			{
-				player->ReadyWeapon->GivenAsMorphWeapon = true; // flag is used only by new beastweap semantics in P_UndoPlayerMorph
-			}
-		}
-		if (player->ReadyWeapon != nullptr)
-		{
-			P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->GetReadyState());
-		}
-	}
-
-	if (player->ReadyWeapon != nullptr)
-	{
-		P_SetPsprite(player, PSP_FLASH, nullptr);
-	}
-
-	player->PendingWeapon = WP_NOCHANGE;
-}
-
 //===========================================================================
 //
 // APlayerPawn :: Die

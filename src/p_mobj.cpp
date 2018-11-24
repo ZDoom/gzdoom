@@ -6779,29 +6779,6 @@ DEFINE_ACTION_FUNCTION(AActor, HitFloor)
 
 //---------------------------------------------------------------------------
 //
-// P_CheckSplash
-//
-// Checks for splashes caused by explosions
-//
-//---------------------------------------------------------------------------
-
-void P_CheckSplash(AActor *self, double distance)
-{
-	sector_t *floorsec;
-	self->Sector->LowestFloorAt(self, &floorsec);
-	if (self->Z() <= self->floorz + distance && self->floorsector == floorsec && self->Sector->GetHeightSec() == NULL && floorsec->heightsec == NULL)
-	{
-		// Explosion splashes never alert monsters. This is because A_Explode has
-		// a separate parameter for that so this would get in the way of proper 
-		// behavior.
-		DVector3 pos = self->PosRelative(floorsec);
-		pos.Z = self->floorz;
-		P_HitWater (self, floorsec, pos, false, false);
-	}
-}
-
-//---------------------------------------------------------------------------
-//
 // FUNC P_CheckMissileSpawn
 //
 // Returns true if the missile is at a valid spawn point, otherwise

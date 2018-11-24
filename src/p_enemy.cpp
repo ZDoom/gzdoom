@@ -3409,20 +3409,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_Pain)
 	return 0;
 }
 
-//
-// A_Detonate
-// killough 8/9/98: same as A_Explode, except that the damage is variable
-//
-
-DEFINE_ACTION_FUNCTION(AActor, A_Detonate)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	int damage = self->GetMissileDamage(0, 1);
-	P_RadiusAttack (self, self->target, damage, damage, self->DamageType, RADF_HURTSOURCE);
-	P_CheckSplash(self, damage);
-	return 0;
-}
-
 bool CheckBossDeath (AActor *actor)
 {
 	int i;

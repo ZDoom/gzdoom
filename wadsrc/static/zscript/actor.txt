@@ -964,69 +964,6 @@ class Actor : Thinker native
 	native bool A_LineEffect(int boomspecial = 0, int tag = 0);
 	// End of MBF redundant functions.
 	
-
-	//==========================================================================
-	//
-	// old customizable attack functions which use actor parameters.
-	//
-	//==========================================================================
-	
-	private void DoAttack (bool domelee, bool domissile, int MeleeDamage, Sound MeleeSound, Class<Actor> MissileType,double MissileHeight)
-	{
-		let targ = target;
-		if (targ == NULL) return;
-
-		A_FaceTarget ();
-		if (domelee && MeleeDamage>0 && CheckMeleeRange ())
-		{
-			int damage = random[CustomMelee](1, 8) * MeleeDamage;
-			if (MeleeSound) A_PlaySound (MeleeSound, CHAN_WEAPON);
-			int newdam = targ.DamageMobj (self, self, damage, 'Melee');
-			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
-		}
-		else if (domissile && MissileType != NULL)
-		{
-			// This seemingly senseless code is needed for proper aiming.
-			double add = MissileHeight + GetBobOffset() - 32;
-			AddZ(add);
-			Actor missile = SpawnMissileXYZ (Pos + (0, 0, 32), targ, MissileType, false);
-			AddZ(-add);
-
-			if (missile)
-			{
-				// automatic handling of seeker missiles
-				if (missile.bSeekerMissile)
-				{
-					missile.tracer = targ;
-				}
-				missile.CheckMissileSpawn(radius);
-			}
-		}
-	}
-
-	deprecated("2.3") void A_MeleeAttack()
-	{
-		DoAttack(true, false, MeleeDamage, MeleeSound, NULL, 0);
-	}
-
-	deprecated("2.3") void A_MissileAttack()
-	{
-		Class<Actor> MissileType = MissileName;
-		DoAttack(false, true, 0, 0, MissileType, MissileHeight);
-	}
-
-	deprecated("2.3") void A_ComboAttack()
-	{
-		Class<Actor> MissileType = MissileName;
-		DoAttack(true, true, MeleeDamage, MeleeSound, MissileType, MissileHeight);
-	}
-
-	void A_BasicAttack(int melee_damage, sound melee_sound, class<actor> missile_type, double missile_height)
-	{
-		DoAttack(true, true, melee_damage, melee_sound, missile_type, missile_height);
-	}
-
-
 	native void A_MonsterRail();
 	native void A_Pain();
 	native void A_NoBlocking(bool drop = true);
@@ -1038,7 +975,6 @@ class Actor : Thinker native
 	native void A_VileChase();
 	native bool A_CheckForResurrection();
 	native void A_BossDeath();
-	native void A_Detonate();
 	bool A_CallSpecial(int special, int arg1=0, int arg2=0, int arg3=0, int arg4=0, int arg5=0)
 	{
 		return Level.ExecuteSpecial(special, self, null, false, arg1, arg2, arg3, arg4, arg5);
@@ -1110,10 +1046,10 @@ class Actor : Thinker native
 	native void A_CustomMeleeAttack(int damage = 0, sound meleesound = "", sound misssound = "", name damagetype = "none", bool bleed = true);
 	native void A_CustomComboAttack(class<Actor> missiletype, double spawnheight, int damage, sound meleesound = "", name damagetype = "none", bool bleed = true);
 	native void A_Burst(class<Actor> chunktype);
-	native void A_RadiusThrust(int force = 128, int distance = -1, int flags = RTF_AFFECTSOURCE, int fullthrustdistance = 0);
 	native void A_RadiusDamageSelf(int damage = 128, double distance = 128, int flags = 0, class<Actor> flashtype = null);
-	native int A_Explode(int damage = -1, int distance = -1, int flags = XF_HURTSOURCE, bool alert = false, int fulldamagedistance = 0, int nails = 0, int naildamage = 10, class<Actor> pufftype = "BulletPuff", name damagetype = "none");
 	native int GetRadiusDamage(Actor thing, int damage, int distance, int fulldmgdistance = 0, bool oldradiusdmg = false);
+	native int RadiusAttack(Actor bombsource, int bombdamage, int bombdistance, Name bombmod = 'none', int flags = RADF_HURTSOURCE, int fulldamagedistance = 0);
+	
 	native void A_Stop();
 	native void A_Respawn(int flags = 1);
 	native void A_RestoreSpecialPosition();

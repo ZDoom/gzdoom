@@ -359,7 +359,6 @@ void	P_TraceBleed(int damage, FTranslatedLineTarget *t, AActor *puff);		// hitsc
 void	P_TraceBleed (int damage, AActor *target);		// random direction version
 bool	P_HitFloor (AActor *thing);
 bool	P_HitWater (AActor *thing, sector_t *sec, const DVector3 &pos, bool checkabove = false, bool alert = true, bool force = false);
-void	P_CheckSplash(AActor *self, double distance);
 
 struct FRailParams
 {
@@ -410,6 +409,7 @@ enum
 	RADF_SOURCEISSPOT = 4,
 	RADF_NODAMAGE = 8,
 	RADF_THRUSTZ = 16,
+	RADF_OLDRADIUSDAMAGE = 32
 };
 int	P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, 
 						FName damageType, int flags, int fulldamagedistance=0);

@@ -154,7 +154,7 @@ class PlayerPawn : Actor native
 			let invul = Powerup(Spawn("PowerInvulnerable"));
 			invul.EffectTics = 3 * TICRATE;
 			invul.BlendColor = 0;			// don't mess with the view
-			invul.bUndroppable = true;		// Don't drop this
+			invul.bUndroppable = true;		// Don't drop self
 			bRespawnInvul = true;			// [RH] special effect
 		}
 	}
@@ -363,7 +363,7 @@ class PlayerPawn : Actor native
 	//
 	// PROC P_CheckWeaponChange
 	//
-	// The player can change to another weapon at this time.
+	// The player can change to another weapon at self time.
 	// [GZ] This was cut from P_CheckWeaponFire.
 	//
 	//---------------------------------------------------------------------------
@@ -537,6 +537,84 @@ class PlayerPawn : Actor native
 		}
 	}
 
+	//===========================================================================
+	//
+	// APlayerPawn :: Die
+	//
+	//===========================================================================
+
+	override void Die (Actor source, Actor inflictor, int dmgflags, Name MeansOfDeath)
+	{
+		Super.Die (source, inflictor, dmgflags, MeansOfDeath);
+
+		if (player != NULL && player.mo == self) player.bonuscount = 0;
+
+		if (player != NULL && player.mo != self)
+		{ // Make the real player die, too
+			player.mo.Die (source, inflictor, dmgflags, MeansOfDeath);
+		}
+		else
+		{
+			if (player != NULL && sv_weapondrop)
+			{ // Voodoo dolls don't drop weapons
+				let weap = player.ReadyWeapon;
+				if (weap != NULL)
+				{
+					// kgDROP - start - modified copy from a_action.cpp
+					let di = weap.GetDropItems();
+
+					if (di != NULL)
+					{
+						while (di != NULL)
+						{
+							if (di.Name != 'None')
+							{
+								class<Actor> ti = di.Name;
+								if (ti) A_DropItem (ti, di.Amount, di.Probability);
+							}
+							di = di.Next;
+						}
+					} 
+					else if (weap.SpawnState != NULL &&
+						weap.SpawnState != GetDefaultByType('Actor').SpawnState)
+					{
+						let weapitem = Weapon(A_DropItem (weap.GetClass(), -1, 256));
+						if (weapitem)
+						{
+							if (weap.AmmoGive1 && weap.Ammo1)
+							{
+								weapitem.AmmoGive1 = weap.Ammo1.Amount;
+							}
+							if (weap.AmmoGive2 && weap.Ammo2)
+							{
+								weapitem.AmmoGive2 = weap.Ammo2.Amount;
+							}
+							weapitem.bIgnoreSkill = true;
+						}
+					}
+					else
+					{
+						let item = Inventory(A_DropItem (weap.AmmoType1, -1, 256));
+						if (item != NULL)
+						{
+							item.Amount = weap.Ammo1.Amount;
+							item.bIgnoreSkill = true;
+						}
+						item = Inventory(A_DropItem (weap.AmmoType2, -1, 256));
+						if (item != NULL)
+						{
+							item.Amount = weap.Ammo2.Amount;
+							item.bIgnoreSkill = true;
+						}
+					}
+				}
+			}
+			if (!multiplayer && level.deathsequence != 'None')
+			{
+				level.StartIntermission(level.deathsequence, FSTATE_EndingGame);
+			}
+		}
+	}
 	//----------------------------------------------------------------------------
 	//
 	// PROC P_CheckFOV
@@ -1244,7 +1322,7 @@ class PlayerPawn : Actor native
 			CheckUse();
 			CheckUndoMorph();
 			// Cycle psprites.
-			// Note that after this point the PlayerPawn may have changed due to getting unmorphed so 'self' is no longer safe to use.
+			// Note that after self point the PlayerPawn may have changed due to getting unmorphed so 'self' is no longer safe to use.
 			player.mo.TickPSprites();
 			// Other Counters
 			if (player.damagecount)	player.damagecount--;
@@ -1285,7 +1363,7 @@ class PlayerPawn : Actor native
 
 		let weapon = player.PendingWeapon;
 
-		// If the player has a tome of power, use this weapon's powered up
+		// If the player has a tome of power, use self weapon's powered up
 		// version, if one is available.
 		if (weapon != null &&
 			weapon.SisterWeapon &&
@@ -1345,7 +1423,7 @@ class PlayerPawn : Actor native
 				 weap.Ammo1.GetClass() != ammotype))
 				continue;
 
-			// Don't select it if the Tome is active and this isn't the powered-up version.
+			// Don't select it if the Tome is active and self isn't the powered-up version.
 			if (tomed && weap.SisterWeapon != NULL && weap.SisterWeapon.bPowered_Up)
 				continue;
 
@@ -1400,7 +1478,7 @@ class PlayerPawn : Actor native
 	//
 	// APlayerPawn :: PickNewWeapon
 	//
-	// Picks a new weapon for this player. Used mostly for running out of ammo,
+	// Picks a new weapon for self player. Used mostly for running out of ammo,
 	// but it also works when an ACS script explicitly takes the ready weapon
 	// away or the player picks up some ammo they had previously run out of.
 	//
@@ -1632,7 +1710,7 @@ enum EPlayerGender
 	GENDER_OTHER
 }
 
-struct PlayerInfo native play	// this is what internally is known as player_t
+struct PlayerInfo native play	// self is what internally is known as player_t
 {
 	// technically engine constants but the only part of the playsim using them is the player.
 	const NOFIXEDCOLORMAP = -1;

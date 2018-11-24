@@ -3225,7 +3225,7 @@ void ModifyDropAmount(AInventory *inv, int dropamount)
 
 CVAR(Int, sv_dropstyle, 0, CVAR_SERVERINFO | CVAR_ARCHIVE);
 
-AInventory *P_DropItem (AActor *source, PClassActor *type, int dropamount, int chance)
+AActor *P_DropItem (AActor *source, PClassActor *type, int dropamount, int chance)
 {
 	if (type != NULL && pr_dropitem() <= chance)
 	{
@@ -3276,9 +3276,8 @@ AInventory *P_DropItem (AActor *source, PClassActor *type, int dropamount, int c
 						return NULL;
 					}
 				}
-				return inv;
 			}
-			// we can't really return an AInventory pointer to a non-inventory item here, can we?
+			return mo;
 		}
 	}
 	return NULL;

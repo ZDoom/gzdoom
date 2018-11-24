@@ -655,6 +655,7 @@ struct LevelLocals native
 	native readonly int outsidefogdensity;
 	native readonly int skyfog;
 	native readonly float pixelstretch;
+	native name deathsequence;
 // level_info_t *info cannot be done yet.
 
 	native String GetUDMFString(int type, int index, Name key);
@@ -670,6 +671,7 @@ struct LevelLocals native
 	native bool IsJumpingAllowed() const;
 	native bool IsCrouchingAllowed() const;
 	native bool IsFreelookAllowed() const;
+	native void StartIntermission(Name type, int state) const;
 
 	native static clearscope bool IsPointInMap(vector3 p);
 

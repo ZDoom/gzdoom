@@ -560,7 +560,7 @@ extend class PlayerPawn
 	override Actor, int, int MorphedDeath()
 	{
 		// Voodoo dolls should not unmorph the real player here.
-		if ((player.mo == self) &&
+		if (player && (player.mo == self) &&
 			(player.morphTics) &&
 			(player.MorphStyle & MRF_UNDOBYDEATH) &&
 			(alternative))

@@ -4512,8 +4512,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DropItem)
 	PARAM_INT(amount);
 	PARAM_INT(chance);
 
-	P_DropItem(self, spawntype, amount, chance);
-	return 0;
+	ACTION_RETURN_OBJECT(P_DropItem(self, spawntype, amount, chance));
 }
 
 //===========================================================================

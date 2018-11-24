@@ -94,7 +94,6 @@ public:
 	virtual bool UseInventory (AInventory *item) override;
 	virtual void MarkPrecacheSounds () const override;
 	virtual void BeginPlay () override;
-	virtual void Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOfDeath) override;
 	virtual bool UpdateWaterLevel (bool splash) override;
 
 	bool ResetAirSupply (bool playgasp = true);

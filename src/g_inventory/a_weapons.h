@@ -119,9 +119,9 @@ public:
 	TObjPtr<AWeapon*> SisterWeapon;
 	float FOVScale;
 	int Crosshair;							// 0 to use player's crosshair
-	bool GivenAsMorphWeapon;
+	bool GivenAsMorphWeapon;				// *** only accessed from ZScript.
 
-	bool bAltFire;	// Set when this weapon's alternate fire is used.
+	bool bAltFire;							// *** only accessed from ZScript. Set when this weapon's alternate fire is used.
 
 	virtual void MarkPrecacheSounds() const;
 	

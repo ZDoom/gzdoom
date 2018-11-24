@@ -1257,3 +1257,11 @@ enum RadiusDamageFlags
 	RADF_THRUSTZ = 16,
 	RADF_OLDRADIUSDAMAGE = 32
 };
+
+enum IntermissionSequenceType
+{
+	FSTATE_EndingGame = 0,
+	FSTATE_ChangingLevel = 1,
+	FSTATE_InLevel = 2
+};
+

@@ -972,6 +972,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		("level.fogdensity", level.fogdensity)
 		("level.outsidefogdensity", level.outsidefogdensity)
 		("level.skyfog", level.skyfog)
+		("level.deathsequence", level.deathsequence)
 		("level.bodyqueslot", level.bodyqueslot)
 		.Array("level.bodyque", level.bodyque, level.BODYQUESIZE);
 

@@ -175,6 +175,7 @@ struct FLevelLocals
 	int outsidefogdensity;
 	int skyfog;
 
+	FName		deathsequence;
 	float		pixelstretch;
 	float		MusicVolume;
 

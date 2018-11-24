@@ -3157,51 +3157,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_Scream)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	if (self->DeathSound)
-	{
-		// Check for bosses.
-		if (self->flags2 & MF2_BOSS)
-		{
-			// full volume
-			S_Sound (self, CHAN_VOICE, self->DeathSound, 1, ATTN_NONE);
-		}
-		else
-		{
-			S_Sound (self, CHAN_VOICE, self->DeathSound, 1, ATTN_NORM);
-		}
-	}
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_XScream)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	if (self->player)
-		S_Sound (self, CHAN_VOICE, "*gibbed", 1, ATTN_NORM);
-	else
-		S_Sound (self, CHAN_VOICE, "misc/gibbed", 1, ATTN_NORM);
-	return 0;
-}
-
-//===========================================================================
-//
-// A_ActiveSound
-//
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_ActiveSound)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	if (self->ActiveSound)
-	{
-		S_Sound(self, CHAN_VOICE, self->ActiveSound, 1, ATTN_NORM);
-	}
-	return 0;
-}
-
 //---------------------------------------------------------------------------
 //
 // Modifies the drop amount of this item according to the current skill's

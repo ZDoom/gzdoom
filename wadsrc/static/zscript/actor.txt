@@ -968,10 +968,8 @@ class Actor : Thinker native
 	native void A_Pain();
 	native void A_NoBlocking(bool drop = true);
 	void A_Fall() { A_NoBlocking(); }
-	native void A_XScream();
 	native void A_Look();
 	native void A_Chase(statelabel melee = null, statelabel missile = null, int flags = 0x40000000);
-	native void A_Scream();
 	native void A_VileChase();
 	native bool A_CheckForResurrection();
 	native void A_BossDeath();
@@ -979,9 +977,6 @@ class Actor : Thinker native
 	{
 		return Level.ExecuteSpecial(special, self, null, false, arg1, arg2, arg3, arg4, arg5);
 	}
-
-
-	native void A_ActiveSound();
 
 	native void A_FastChase();
 	native void A_PlayerScream();
@@ -1151,6 +1146,32 @@ class Actor : Thinker native
 		return ACS_ExecuteWithResult(-int(script), arg1, arg2, arg3, arg4);
 	}
 	
+	//===========================================================================
+	//
+	// Sounds
+	//
+	//===========================================================================
+
+	void A_Scream()
+	{
+		if (DeathSound)
+		{
+			A_PlaySound(DeathSound, CHAN_VOICE, 1, false, bBoss? ATTN_NONE : ATTN_NORM);
+		}
+	}
+
+	void A_XScream()
+	{
+		A_PlaySound(player? Sound("*gibbed") : Sound("misc/gibbed"), CHAN_VOICE);
+	}
+
+	void A_ActiveSound()
+	{
+		if (ActiveSound)
+		{
+			A_PlaySound(ActiveSound, CHAN_VOICE);
+		}
+	}
 	
 	States(Actor, Overlay, Weapon, Item)
 	{

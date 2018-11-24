@@ -615,6 +615,113 @@ class PlayerPawn : Actor native
 			}
 		}
 	}
+	
+	//===========================================================================
+	//
+	// APlayerPawn :: FilterCoopRespawnInventory
+	//
+	// When respawning in coop, this function is called to walk through the dead
+	// player's inventory and modify it according to the current game flags so
+	// that it can be transferred to the new live player. This player currently
+	// has the default inventory, and the oldplayer has the inventory at the time
+	// of death.
+	//
+	//===========================================================================
+
+	void FilterCoopRespawnInventory (PlayerPawn oldplayer)
+	{
+		// If we're losing everything, this is really simple.
+		if (sv_cooploseinventory)
+		{
+			oldplayer.DestroyAllInventory();
+			return;
+		}
+
+		// Walk through the old player's inventory and destroy or modify
+		// according to dmflags.
+		Inventory next;
+		for (Inventory item = oldplayer.Inv; item != NULL; item = next)
+		{
+			next = item.Inv;
+
+			// If this item is part of the default inventory, we never want
+			// to destroy it, although we might want to copy the default
+			// inventory amount.
+			let defitem = FindInventory (item.GetClass());
+
+			if (sv_cooplosekeys && defitem == NULL && item is 'Key')
+			{
+				item.Destroy();
+			}
+			else if (sv_cooploseweapons && defitem == NULL && item is 'Weapon')
+			{
+				item.Destroy();
+			}
+			else if (sv_cooplosearmor && item is 'Armor')
+			{
+				if (defitem == NULL)
+				{
+					item.Destroy();
+				}
+				else if (item is 'BasicArmor')
+				{
+					BasicArmor(item).SavePercent = BasicArmor(defitem).SavePercent;
+					item.Amount = defitem.Amount;
+				}
+				else if (item is 'HexenArmor')
+				{
+					let to = HexenArmor(item);
+					let from = HexenArmor(defitem);
+					to.Slots[0] = from.Slots[0];
+					to.Slots[1] = from.Slots[1];
+					to.Slots[2] = from.Slots[2];
+					to.Slots[3] = from.Slots[3];
+				}
+			}
+			else if (sv_cooplosepowerups &&	defitem == NULL && item is  'Powerup')
+			{
+				item.Destroy();
+			}
+			else if ((sv_cooploseammo || sv_coophalveammo) && item is 'Ammo')
+			{
+				if (defitem == NULL)
+				{
+					if (sv_cooploseammo)
+					{
+						// Do NOT destroy the ammo, because a weapon might reference it.
+						item.Amount = 0;
+					}
+					else if (item.Amount > 1)
+					{
+						item.Amount /= 2;
+					}
+				}
+				else
+				{
+					// When set to lose ammo, you get to keep all your starting ammo.
+					// When set to halve ammo, you won't be left with less than your starting amount.
+					if (sv_cooploseammo)
+					{
+						item.Amount = defitem.Amount;
+					}
+					else if (item.Amount > 1)
+					{
+						item.Amount = MAX(item.Amount / 2, defitem.Amount);
+					}
+				}
+			}
+		}
+
+		// Now destroy the default inventory this player is holding and move
+		// over the old player's remaining inventory.
+		DestroyAllInventory();
+		ObtainInventory (oldplayer);
+
+		player.ReadyWeapon = NULL;
+		PickNewWeapon (NULL);
+	}
+
+	
 	//----------------------------------------------------------------------------
 	//
 	// PROC P_CheckFOV

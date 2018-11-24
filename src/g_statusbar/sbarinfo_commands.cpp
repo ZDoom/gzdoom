@@ -597,8 +597,9 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 				auto armor = statusBar->CPlayer->mo->FindInventory(NAME_BasicArmor);
 				if(armor != NULL)
 				{
-					bool matches1 = armor->NameVar(NAME_ArmorType).GetIndex() == armorType[0] && EvaluateOperation(conditionalOperator[0], conditionalValue[0], armor->Amount);
-					bool matches2 = armor->NameVar(NAME_ArmorType).GetIndex() == armorType[1] && EvaluateOperation(conditionalOperator[1], conditionalValue[1], armor->Amount);
+					auto n = armor->NameVar(NAME_ArmorType).GetIndex();
+					bool matches1 = n == armorType[0] && EvaluateOperation(conditionalOperator[0], conditionalValue[0], armor->Amount);
+					bool matches2 = n == armorType[1] && EvaluateOperation(conditionalOperator[1], conditionalValue[1], armor->Amount);
 
 					drawAlt = 1;
 					if(conditionAnd)

@@ -1094,125 +1094,6 @@ void APlayerPawn::GiveDeathmatchInventory()
 
 //===========================================================================
 //
-// APlayerPawn :: FilterCoopRespawnInventory
-//
-// When respawning in coop, this function is called to walk through the dead
-// player's inventory and modify it according to the current game flags so
-// that it can be transferred to the new live player. This player currently
-// has the default inventory, and the oldplayer has the inventory at the time
-// of death.
-//
-//===========================================================================
-
-void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
-{
-	AInventory *item, *next, *defitem;
-
-	// If we're losing everything, this is really simple.
-	if (dmflags & DF_COOP_LOSE_INVENTORY)
-	{
-		oldplayer->DestroyAllInventory();
-		return;
-	}
-
-	if (dmflags &  (DF_COOP_LOSE_KEYS |
-					DF_COOP_LOSE_WEAPONS |
-					DF_COOP_LOSE_AMMO |
-					DF_COOP_HALVE_AMMO |
-					DF_COOP_LOSE_ARMOR |
-					DF_COOP_LOSE_POWERUPS))
-	{
-		// Walk through the old player's inventory and destroy or modify
-		// according to dmflags.
-		for (item = oldplayer->Inventory; item != NULL; item = next)
-		{
-			next = item->Inventory;
-
-			// If this item is part of the default inventory, we never want
-			// to destroy it, although we might want to copy the default
-			// inventory amount.
-			defitem = FindInventory (item->GetClass());
-
-			if ((dmflags & DF_COOP_LOSE_KEYS) &&
-				defitem == NULL &&
-				item->IsKindOf(NAME_Key))
-			{
-				item->Destroy();
-			}
-			else if ((dmflags & DF_COOP_LOSE_WEAPONS) &&
-				defitem == NULL &&
-				item->IsKindOf(NAME_Weapon))
-			{
-				item->Destroy();
-			}
-			else if ((dmflags & DF_COOP_LOSE_ARMOR) &&
-				item->IsKindOf(NAME_Armor))
-			{
-				if (defitem == NULL)
-				{
-					item->Destroy();
-				}
-				else if (item->IsKindOf(NAME_BasicArmor))
-				{
-					item->IntVar(NAME_SavePercent) = defitem->IntVar(NAME_SavePercent);
-					item->Amount = defitem->Amount;
-				}
-				else if (item->IsKindOf(NAME_HexenArmor))
-				{
-					double *SlotsTo = (double*)item->ScriptVar(NAME_Slots, nullptr);
-					double *SlotsFrom = (double*)defitem->ScriptVar(NAME_Slots, nullptr);
-					memcpy(SlotsTo, SlotsFrom, 4 * sizeof(double)); 
-				}
-			}
-			else if ((dmflags & DF_COOP_LOSE_POWERUPS) &&
-				defitem == NULL &&
-				item->IsKindOf(NAME_PowerupGiver))
-			{
-				item->Destroy();
-			}
-			else if ((dmflags & (DF_COOP_LOSE_AMMO | DF_COOP_HALVE_AMMO)) &&
-				item->IsKindOf(NAME_Ammo))
-			{
-				if (defitem == NULL)
-				{
-					if (dmflags & DF_COOP_LOSE_AMMO)
-					{
-						// Do NOT destroy the ammo, because a weapon might reference it.
-						item->Amount = 0;
-					}
-					else if (item->Amount > 1)
-					{
-						item->Amount /= 2;
-					}
-				}
-				else
-				{
-					// When set to lose ammo, you get to keep all your starting ammo.
-					// When set to halve ammo, you won't be left with less than your starting amount.
-					if (dmflags & DF_COOP_LOSE_AMMO)
-					{
-						item->Amount = defitem->Amount;
-					}
-					else if (item->Amount > 1)
-					{
-						item->Amount = MAX(item->Amount / 2, defitem->Amount);
-					}
-				}
-			}
-		}
-	}
-
-	// Now destroy the default inventory this player is holding and move
-	// over the old player's remaining inventory.
-	DestroyAllInventory();
-	ObtainInventory (oldplayer);
-
-	player->ReadyWeapon = NULL;
-	PickNewWeapon (NULL);
-}
-
-//===========================================================================
-//
 // APlayerPawn :: GetSoundClass
 //
 //===========================================================================
@@ -1350,7 +1231,7 @@ void APlayerPawn::GiveDefaultInventory ()
 		VMCall(func, params, 1, nullptr, 0);
 	}
 }
-
+ 
 //===========================================================================
 //
 // A_PlayerScream

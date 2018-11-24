@@ -101,8 +101,7 @@ public:
 	AWeapon *PickNewWeapon (PClassActor *ammotype);
 	AWeapon *BestWeapon (PClassActor *ammotype);
 	void GiveDeathmatchInventory ();
-	void FilterCoopRespawnInventory (APlayerPawn *oldplayer);
-
+	
 	void GiveDefaultInventory ();
 
 	// These are virtual on the script side only.

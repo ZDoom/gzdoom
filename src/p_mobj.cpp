@@ -1071,6 +1071,12 @@ void AActor::DestroyAllInventory ()
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, DestroyAllInventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->DestroyAllInventory();
+	return 0;
+}
 //============================================================================
 //
 // AActor :: FirstInv
@@ -5711,7 +5717,11 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	else if ((multiplayer || (level.flags2 & LEVEL2_ALLOWRESPAWN) || sv_singleplayerrespawn ||
 		!!G_SkillProperty(SKILLP_PlayerRespawn)) && state == PST_REBORN && oldactor != NULL)
 	{ // Special inventory handling for respawning in coop
-		p->mo->FilterCoopRespawnInventory (oldactor);
+		IFVM(PlayerPawn, FilterCoopRespawnInventory)
+		{
+			VMValue params[] = { p->mo, oldactor };
+			VMCall(func, params, 2, nullptr, 0);
+		}
 	}
 	if (oldactor != NULL)
 	{ // Remove any inventory left from the old actor. Coop handles

@@ -109,6 +109,14 @@ class Weapon : StateProvider native
 		return s;
 	}
 	
+	virtual void PlayUpSound(Actor origin)
+	{
+		if (UpSound)
+		{
+			origin.A_PlaySound(UpSound, CHAN_WEAPON);
+		}
+	}
+	
 	override String GetObituary(Actor victim, Actor inflictor, Name mod, bool playerattack)
 	{
 		// Weapons may never return HitObituary by default. Override this if it is needed.
@@ -165,7 +173,7 @@ class Weapon : StateProvider native
 		}
 		if (null == player.ReadyWeapon)
 		{
-			player.BringUpWeapon();
+			player.mo.BringUpWeapon();
 			return;
 		}
 		let psp = player.GetPSprite(PSP_WEAPON);
@@ -190,7 +198,7 @@ class Weapon : StateProvider native
 		}
 		// [RH] Clear the flash state. Only needed for Strife.
 		player.SetPsprite(PSP_FLASH, null);
-		player.BringUpWeapon ();
+		player.mo.BringUpWeapon ();
 		return;
 	}
 

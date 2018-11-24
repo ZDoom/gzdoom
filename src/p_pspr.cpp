@@ -556,56 +556,11 @@ DEFINE_ACTION_FUNCTION(DPSprite, SetState)
 
 void P_BringUpWeapon (player_t *player)
 {
-	AWeapon *weapon;
-
-	if (player->PendingWeapon == WP_NOCHANGE)
+	IFVM(PlayerPawn, BringUpWeapon)
 	{
-		if (player->ReadyWeapon != nullptr)
-		{
-			player->GetPSprite(PSP_WEAPON)->y = WEAPONTOP;
-			P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->GetReadyState());
-		}
-		return;
+		VMValue param = player->mo;
+		VMCall(func, &param, 1, nullptr, 0);
 	}
-
-	weapon = player->PendingWeapon;
-
-	// If the player has a tome of power, use this weapon's powered up
-	// version, if one is available.
-	if (weapon != nullptr &&
-		weapon->SisterWeapon &&
-		weapon->SisterWeapon->WeaponFlags & WIF_POWERED_UP &&
-		player->mo->FindInventory (PClass::FindActor(NAME_PowerWeaponLevel2), true))
-	{
-		weapon = weapon->SisterWeapon;
-	}
-
-	player->PendingWeapon = WP_NOCHANGE;
-	player->ReadyWeapon = weapon;
-	player->mo->weaponspecial = 0;
-
-	if (weapon != nullptr)
-	{
-		if (weapon->UpSound)
-		{
-			S_Sound (player->mo, CHAN_WEAPON, weapon->UpSound, 1, ATTN_NORM);
-		}
-		player->refire = 0;
-
-		player->GetPSprite(PSP_WEAPON)->y = player->cheats & CF_INSTANTWEAPSWITCH
-			? WEAPONTOP : WEAPONBOTTOM;
-		// make sure that the previous weapon's flash state is terminated.
-		// When coming here from a weapon drop it may still be active.
-		P_SetPsprite(player, PSP_FLASH, nullptr);
-		P_SetPsprite(player, PSP_WEAPON, weapon->GetUpState());
-	}
-}
-
-DEFINE_ACTION_FUNCTION(_PlayerInfo, BringUpWeapon)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(player_t);
-	P_BringUpWeapon(self);
-	return 0;
 }
 
 //---------------------------------------------------------------------------

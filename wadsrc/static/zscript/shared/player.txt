@@ -421,7 +421,7 @@ class PlayerPawn : Actor native
 			if (player.ReadyWeapon == null)
 			{
 				if (player.PendingWeapon != WP_NOCHANGE)
-					player.BringUpWeapon();
+					player.mo.BringUpWeapon();
 			}
 			else
 			{
@@ -1262,6 +1262,56 @@ class PlayerPawn : Actor native
 		}
 	}
 
+	//---------------------------------------------------------------------------
+	//
+	// PROC P_BringUpWeapon
+	//
+	// Starts bringing the pending weapon up from the bottom of the screen.
+	// This is only called to start the rising, not throughout it.
+	//
+	//---------------------------------------------------------------------------
+
+	void BringUpWeapon ()
+	{
+		if (player.PendingWeapon == WP_NOCHANGE)
+		{
+			if (player.ReadyWeapon != null)
+			{
+				player.GetPSprite(PSP_WEAPON).y = WEAPONTOP;
+				player.SetPsprite(PSP_WEAPON, player.ReadyWeapon.GetReadyState());
+			}
+			return;
+		}
+
+		let weapon = player.PendingWeapon;
+
+		// If the player has a tome of power, use this weapon's powered up
+		// version, if one is available.
+		if (weapon != null &&
+			weapon.SisterWeapon &&
+			weapon.SisterWeapon.bPowered_Up &&
+			player.mo.FindInventory ('PowerWeaponLevel2', true))
+		{
+			weapon = weapon.SisterWeapon;
+		}
+
+		player.PendingWeapon = WP_NOCHANGE;
+		player.ReadyWeapon = weapon;
+		player.mo.weaponspecial = 0;
+
+		if (weapon != null)
+		{
+			weapon.PlayUpSound(self);
+			player.refire = 0;
+
+			player.GetPSprite(PSP_WEAPON).y = player.cheats & CF_INSTANTWEAPSWITCH? WEAPONTOP : WEAPONBOTTOM;
+			// make sure that the previous weapon's flash state is terminated.
+			// When coming here from a weapon drop it may still be active.
+			player.SetPsprite(PSP_FLASH, null);
+			player.SetPsprite(PSP_WEAPON, weapon.GetUpState());
+		}
+	}
+	
 	
 	//----------------------------------------------------------------------------
 	//
@@ -1503,7 +1553,6 @@ struct PlayerInfo native play	// this is what internally is known as player_t
 	native void SetLogNumber (int text);
 	native void SetLogText (String text);
 	native void DropWeapon();
-	native void BringUpWeapon();
 	native bool Resurrect();
 
 	native String GetUserName() const;
@@ -1567,7 +1616,6 @@ struct PlayerInfo native play	// this is what internally is known as player_t
 	{
 		return (mo.ViewHeight + crouchviewdelta - viewheight) / 8;
 	}
-
 	
 	
 }

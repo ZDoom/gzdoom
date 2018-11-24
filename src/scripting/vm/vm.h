@@ -678,15 +678,7 @@ FString FStringFormat(VM_ARGS, int offset = 0);
 #define IFVM(cls, funcname) \
 	static VMFunction * func = nullptr; \
 	if (func == nullptr) { \
-		func = dyn_cast<PFunction>(RUNTIME_CLASS(cls)->FindSymbol(#funcname, false)); \
-		assert(func); \
-	} \
-	if (func != nullptr)
-
-#define IFVMNAME(cls, funcname) \
-	static VMFunction * func = nullptr; \
-	if (func == nullptr) { \
-		func = dyn_cast<PFunction>(PClass::FindClass(cls)->FindSymbol(#funcname, false)); \
+		PClass::FindFunction(&func, #cls, #funcname); \
 		assert(func); \
 	} \
 	if (func != nullptr)

@@ -131,7 +131,6 @@ public:
 	// scripted virtuals.
 	FState *GetUpState ();
 	FState *GetDownState ();
-	FState *GetReadyState ();
 
 	enum
 	{

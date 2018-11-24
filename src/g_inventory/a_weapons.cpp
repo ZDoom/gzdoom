@@ -267,27 +267,6 @@ FState *AWeapon::GetDownState ()
 	return nullptr;
 }
 
-//===========================================================================
-//
-// AWeapon :: GetReadyState
-//
-//===========================================================================
-
-FState *AWeapon::GetReadyState ()
-{
-	IFVIRTUAL(AWeapon, GetReadyState)
-	{
-		VMValue params[1] = { (DObject*)this };
-		VMReturn ret;
-		FState *retval;
-		ret.PointerAt((void**)&retval);
-		VMCall(func, params, 1, &ret, 1);
-		return retval;
-	}
-	return nullptr;
-}
-
-
 /* Weapon slots ***********************************************************/
 
 //===========================================================================

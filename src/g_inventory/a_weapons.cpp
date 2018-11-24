@@ -229,30 +229,6 @@ bool AWeapon::CheckAmmo(int fireMode, bool autoSwitch, bool requireAmmo, int amm
 
 //===========================================================================
 //
-// AWeapon :: DepleteAmmo
-//
-// Use up some of the weapon's ammo. Returns true if the ammo was successfully
-// depleted. If checkEnough is false, then the ammo will always be depleted,
-// even if it drops below zero.
-//
-//===========================================================================
-
-bool AWeapon::DepleteAmmo(bool altFire, bool checkEnough, int ammouse)
-{
-	IFVIRTUAL(AWeapon, DepleteAmmo)
-	{
-		VMValue params[] = { (DObject*)this, altFire, checkEnough, ammouse };
-		VMReturn ret;
-		int retval;
-		ret.IntAt(&retval);
-		VMCall(func, params, 4, &ret, 1);
-		return !!retval;
-	}
-	return false;
-}
-
-//===========================================================================
-//
 // AWeapon :: GetUpState
 //
 //===========================================================================

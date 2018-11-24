@@ -92,6 +92,7 @@ public:
 	void		ResetInterpolation() { oldx = x; oldy = y; }
 	void OnDestroy() override;
 	std::pair<FRenderStyle, float> GetRenderStyle(FRenderStyle ownerstyle, double owneralpha);
+	float GetYAdjust(bool fullscreen);
 
 	double x, y, alpha;
 	double oldx, oldy;

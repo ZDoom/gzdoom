@@ -4859,38 +4859,13 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 			}
 			if (!(puffDefaults != NULL && puffDefaults->flags3&MF3_BLOODLESSIMPACT))
 			{
-				bool bloodsplatter = (t1->flags5 & MF5_BLOODSPLATTER) ||
-					(t1->player != nullptr &&	t1->player->ReadyWeapon != nullptr &&
-						(t1->player->ReadyWeapon->WeaponFlags & WIF_AXEBLOOD));
-
-				bool axeBlood = (t1->player != nullptr &&
-					t1->player->ReadyWeapon != nullptr &&
-					(t1->player->ReadyWeapon->WeaponFlags & WIF_AXEBLOOD));
-
-				if (!bloodsplatter && !axeBlood &&
-					!(trace.Actor->flags & MF_NOBLOOD) &&
-					!(trace.Actor->flags2 & (MF2_INVULNERABLE | MF2_DORMANT)))
+				IFVIRTUALPTR(trace.Actor, AActor, SpawnLineAttackBlood)
 				{
-					P_SpawnBlood(bleedpos, trace.SrcAngleFromTarget, newdam > 0 ? newdam : damage, trace.Actor);
+					VMValue params[] = { trace.Actor, t1, bleedpos.X, bleedpos.Y, bleedpos.Z, trace.SrcAngleFromTarget.Degrees, damage, newdam };
+					VMCall(func, params, countof(params), nullptr, 0);
 				}
-
 				if (damage)
 				{
-					if (bloodsplatter || axeBlood)
-					{
-						if (!(trace.Actor->flags&MF_NOBLOOD) &&
-							!(trace.Actor->flags2&(MF2_INVULNERABLE | MF2_DORMANT)))
-						{
-							if (axeBlood)
-							{
-								P_BloodSplatter2(bleedpos, trace.Actor, trace.SrcAngleFromTarget);
-							}
-							if (pr_lineattack() < 192)
-							{
-								P_BloodSplatter(bleedpos, trace.Actor, trace.SrcAngleFromTarget);
-							}
-						}
-					}
 					// [RH] Stick blood to walls
 					P_TraceBleed(newdam > 0 ? newdam : damage, trace.HitPos, trace.Actor, trace.SrcAngleFromTarget, pitch);
 				}

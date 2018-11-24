@@ -705,4 +705,37 @@ extend class Actor
 	}
 
 	
+	//==========================================================================
+	//
+	// called with the victim as 'self'
+	//
+	//==========================================================================
+	
+	virtual void SpawnLineAttackBlood(Actor attacker, Vector3 bleedpos, double SrcAngleFromTarget, int originaldamage, int actualdamage)
+	{
+		if (!bNoBlood && !bDormant && !bInvulnerable)
+		{
+			let player = attacker.player;
+			let weapon = player? player.ReadyWeapon : null;
+			let axeBlood = (weapon && weapon.bAxeBlood);
+			let bloodsplatter = attacker.bBloodSplatter || axeBlood;
+
+			if (!bloodsplatter)
+			{
+				SpawnBlood(bleedpos, SrcAngleFromTarget, actualdamage > 0 ? actualdamage : originaldamage);
+			}
+			else if (damage)
+			{
+				if (axeBlood)
+				{
+					BloodSplatter(bleedpos, SrcAngleFromTarget, true);
+				}
+				// No else here...
+				if (random[LineAttack]() < 192)
+				{
+					BloodSplatter(bleedpos, SrcAngleFromTarget, false);
+				}
+			}
+		}
+	}
 }

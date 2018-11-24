@@ -563,7 +563,7 @@ FString cht_Morph(player_t *player, PClassActor *morphclass, bool quickundo)
 		FString message;
 		VMReturn msgret(&message);
 		VMValue params[3] = { player->mo, morphclass, quickundo };
-		VMCall(func, params, 3, nullptr, 0);
+		VMCall(func, params, 3, &msgret, 1);
 		return message;
 	}
 	return "";

@@ -382,7 +382,7 @@ class PlayerPawn : Actor native
 		if ((player.PendingWeapon != WP_NOCHANGE || player.health <= 0) &&
 			player.WeaponState & WF_WEAPONSWITCHOK)
 		{
-			player.DropWeapon();
+			DropWeapon();
 		}
 	}
 	
@@ -1312,7 +1312,119 @@ class PlayerPawn : Actor native
 		}
 	}
 	
+	//===========================================================================
+	//
+	// APlayerPawn :: BestWeapon
+	//
+	// Returns the best weapon a player has, possibly restricted to a single
+	// type of ammo.
+	//
+	//===========================================================================
+
+	Weapon BestWeapon(Class<Ammo> ammotype)
+	{
+		Weapon bestMatch = NULL;
+		int bestOrder = int.max;
+		Inventory item;
+		bool tomed = !!FindInventory ('PowerWeaponLevel2', true);
+
+		// Find the best weapon the player has.
+		for (item = Inv; item != NULL; item = item.Inv)
+		{
+			let weap = Weapon(item);
+			if (weap == null)
+				continue;
+
+			// Don't select it if it's worse than what was already found.
+			if (weap.SelectionOrder > bestOrder)
+				continue;
+
+			// Don't select it if its primary fire doesn't use the desired ammo.
+			if (ammotype != NULL &&
+				(weap.Ammo1 == NULL ||
+				 weap.Ammo1.GetClass() != ammotype))
+				continue;
+
+			// Don't select it if the Tome is active and this isn't the powered-up version.
+			if (tomed && weap.SisterWeapon != NULL && weap.SisterWeapon.bPowered_Up)
+				continue;
+
+			// Don't select it if it's powered-up and the Tome is not active.
+			if (!tomed && weap.bPowered_Up)
+				continue;
+
+			// Don't select it if there isn't enough ammo to use its primary fire.
+			if (!(weap.bAMMO_OPTIONAL) &&
+				!weap.CheckAmmo (Weapon.PrimaryFire, false))
+				continue;
+
+			// Don't select if if there isn't enough ammo as determined by the weapon's author.
+			if (weap.MinSelAmmo1 > 0 && (weap.Ammo1 == NULL || weap.Ammo1.Amount < weap.MinSelAmmo1))
+				continue;
+			if (weap.MinSelAmmo2 > 0 && (weap.Ammo2 == NULL || weap.Ammo2.Amount < weap.MinSelAmmo2))
+				continue;
+
+			// This weapon is usable!
+			bestOrder = weap.SelectionOrder;
+			bestMatch = weap;
+		}
+		return bestMatch;
+	}
+
 	
+	//---------------------------------------------------------------------------
+	//
+	// PROC P_DropWeapon
+	//
+	// The player died, so put the weapon away.
+	//
+	//---------------------------------------------------------------------------
+
+	void DropWeapon ()
+	{
+		let player = self.player;
+		if (player == null)
+		{
+			return;
+		}
+		// Since the weapon is dropping, stop blocking switching.
+		player.WeaponState &= ~WF_DISABLESWITCH;
+		Weapon weap = player.ReadyWeapon;
+		if ((weap != null) && (player.health > 0 || !weap.bNoDeathDeselect))
+		{
+			player.SetPsprite(PSP_WEAPON, weap.GetDownState());
+		}
+	}
+	
+	//===========================================================================
+	//
+	// APlayerPawn :: PickNewWeapon
+	//
+	// Picks a new weapon for this player. Used mostly for running out of ammo,
+	// but it also works when an ACS script explicitly takes the ready weapon
+	// away or the player picks up some ammo they had previously run out of.
+	//
+	//===========================================================================
+
+	Weapon PickNewWeapon(Class<Ammo> ammotype)
+	{
+		Weapon best = BestWeapon (ammotype);
+
+		if (best != NULL)
+		{
+			player.PendingWeapon = best;
+			if (player.ReadyWeapon != NULL)
+			{
+				DropWeapon();
+			}
+			else if (player.PendingWeapon != WP_NOCHANGE)
+			{
+				BringUpWeapon ();
+			}
+		}
+		return best;
+	}
+
 	//----------------------------------------------------------------------------
 	//
 	// 
@@ -1327,8 +1439,6 @@ class PlayerPawn : Actor native
 	native void CheckEnvironment();
 	native void CheckUse();
 	native void CheckWeaponButtons();
-	native Weapon BestWeapon(class<Ammo> ammotype);
-	native Weapon PickNewWeapon(class<Ammo> ammotype);
 }
 
 class PlayerChunk : PlayerPawn
@@ -1523,6 +1633,30 @@ struct PlayerInfo native play	// this is what internally is known as player_t
 	native @UserCmd cmd;
 	native readonly @UserCmd original_cmd;
 
+	native bool PoisonPlayer(Actor poisoner, Actor source, int poison);
+	native void PoisonDamage(Actor source, int damage, bool playPainSound);
+	native void SetPsprite(int id, State stat, bool pending = false);
+	native void SetSafeFlash(Weapon weap, State flashstate, int index);
+	native PSprite GetPSprite(int id) const;
+	native PSprite FindPSprite(int id) const;
+	native void SetLogNumber (int text);
+	native void SetLogText (String text);
+	native bool Resurrect();
+
+	native String GetUserName() const;
+	native Color GetColor() const;
+	native Color GetDisplayColor() const;
+	native int GetColorSet() const;
+	native int GetPlayerClassNum() const;
+	native int GetSkin() const;
+	native bool GetNeverSwitch() const;
+	native int GetGender() const;
+	native int GetTeam() const;
+	native float GetAutoaim() const;
+	native bool GetNoAutostartMap() const;
+	native void SetFOV(float fov);
+	native bool GetClassicFlight() const;
+	native clearscope bool HasWeaponsInSlot(int slot) const;
 
 	// The actual implementation is on PlayerPawn where it can be overridden. Use that directly in the future.
 	deprecated("3.7") bool MorphPlayer(playerinfo p, Class<PlayerPawn> spawntype, int duration, int style, Class<Actor> enter_flash = null, Class<Actor> exit_flash = null)
@@ -1543,33 +1677,15 @@ struct PlayerInfo native play	// this is what internally is known as player_t
 		}
 		return false;
 	}
+
+	deprecated("3.7") void DropWeapon()
+	{
+		if (mo != null)
+		{
+			mo.DropWeapon();
+		}
+	}
 	
-	native bool PoisonPlayer(Actor poisoner, Actor source, int poison);
-	native void PoisonDamage(Actor source, int damage, bool playPainSound);
-	native void SetPsprite(int id, State stat, bool pending = false);
-	native void SetSafeFlash(Weapon weap, State flashstate, int index);
-	native PSprite GetPSprite(int id) const;
-	native PSprite FindPSprite(int id) const;
-	native void SetLogNumber (int text);
-	native void SetLogText (String text);
-	native void DropWeapon();
-	native bool Resurrect();
-
-	native String GetUserName() const;
-	native Color GetColor() const;
-	native Color GetDisplayColor() const;
-	native int GetColorSet() const;
-	native int GetPlayerClassNum() const;
-	native int GetSkin() const;
-	native bool GetNeverSwitch() const;
-	native int GetGender() const;
-	native int GetTeam() const;
-	native float GetAutoaim() const;
-	native bool GetNoAutostartMap() const;
-	native void SetFOV(float fov);
-	native bool GetClassicFlight() const;
-	native clearscope bool HasWeaponsInSlot(int slot) const;
-
 	bool IsTotallyFrozen()
 	{
 		return

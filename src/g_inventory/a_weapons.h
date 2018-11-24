@@ -128,9 +128,6 @@ public:
 	void Finalize(FStateDefinitions &statedef) override;
 	void Serialize(FSerializer &arc) override;
 
-	// scripted virtuals.
-	FState *GetDownState ();
-
 	enum
 	{
 		PrimaryFire,

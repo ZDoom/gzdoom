@@ -218,7 +218,7 @@ class Weapon : StateProvider native
 		}
 		if (player.PendingWeapon != WP_NOCHANGE)
 		{
-			player.DropWeapon();
+			player.mo.DropWeapon();
 			return;
 		}
 		if (player.ReadyWeapon == null)

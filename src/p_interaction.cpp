@@ -599,7 +599,13 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 						
 		flags &= ~MF_SOLID;
 		player->playerstate = PST_DEAD;
-		P_DropWeapon (player);
+
+		IFVM(PlayerPawn, DropWeapon)
+		{
+			VMValue param = player->mo;
+			VMCall(func, &param, 1, nullptr, 0);
+		}
+
 		if (this == players[consoleplayer].camera && automapactive)
 		{
 			// don't die in auto map, switch view prior to dying

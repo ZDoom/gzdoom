@@ -563,34 +563,6 @@ void P_BringUpWeapon (player_t *player)
 	}
 }
 
-//---------------------------------------------------------------------------
-//
-// PROC P_DropWeapon
-//
-// The player died, so put the weapon away.
-//
-//---------------------------------------------------------------------------
-
-void P_DropWeapon (player_t *player)
-{
-	if (player == nullptr)
-	{
-		return;
-	}
-	// Since the weapon is dropping, stop blocking switching.
-	player->WeaponState &= ~WF_DISABLESWITCH;
-	if ((player->ReadyWeapon != nullptr) && (player->health > 0 || !(player->ReadyWeapon->WeaponFlags & WIF_NODEATHDESELECT)))
-	{
-		P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->GetDownState());
-	}
-}
-
-DEFINE_ACTION_FUNCTION(_PlayerInfo, DropWeapon)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(player_t);
-	P_DropWeapon(self);
-	return 0;
-}
 //============================================================================
 //
 // P_BobWeapon

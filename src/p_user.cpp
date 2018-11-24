@@ -1043,73 +1043,6 @@ bool APlayerPawn::UseInventory (AInventory *item)
 
 //===========================================================================
 //
-// APlayerPawn :: BestWeapon
-//
-// Returns the best weapon a player has, possibly restricted to a single
-// type of ammo.
-//
-//===========================================================================
-
-AWeapon *APlayerPawn::BestWeapon(PClassActor *ammotype)
-{
-	AWeapon *bestMatch = NULL;
-	int bestOrder = INT_MAX;
-	AInventory *item;
-	AWeapon *weap;
-	bool tomed = NULL != FindInventory (PClass::FindActor(NAME_PowerWeaponLevel2), true);
-
-	// Find the best weapon the player has.
-	for (item = Inventory; item != NULL; item = item->Inventory)
-	{
-		if (!item->IsKindOf(NAME_Weapon))
-			continue;
-
-		weap = static_cast<AWeapon *> (item);
-
-		// Don't select it if it's worse than what was already found.
-		if (weap->SelectionOrder > bestOrder)
-			continue;
-
-		// Don't select it if its primary fire doesn't use the desired ammo.
-		if (ammotype != NULL &&
-			(weap->Ammo1 == NULL ||
-			 weap->Ammo1->GetClass() != ammotype))
-			continue;
-
-		// Don't select it if the Tome is active and this isn't the powered-up version.
-		if (tomed && weap->SisterWeapon != NULL && weap->SisterWeapon->WeaponFlags & WIF_POWERED_UP)
-			continue;
-
-		// Don't select it if it's powered-up and the Tome is not active.
-		if (!tomed && weap->WeaponFlags & WIF_POWERED_UP)
-			continue;
-
-		// Don't select it if there isn't enough ammo to use its primary fire.
-		if (!(weap->WeaponFlags & WIF_AMMO_OPTIONAL) &&
-			!weap->CheckAmmo (AWeapon::PrimaryFire, false))
-			continue;
-
-		// Don't select if if there isn't enough ammo as determined by the weapon's author.
-		if (weap->MinSelAmmo1 > 0 && (weap->Ammo1 == NULL || weap->Ammo1->Amount < weap->MinSelAmmo1))
-			continue;
-		if (weap->MinSelAmmo2 > 0 && (weap->Ammo2 == NULL || weap->Ammo2->Amount < weap->MinSelAmmo2))
-			continue;
-
-		// This weapon is usable!
-		bestOrder = weap->SelectionOrder;
-		bestMatch = weap;
-	}
-	return bestMatch;
-}
-
-DEFINE_ACTION_FUNCTION(APlayerPawn, BestWeapon)
-{
-	PARAM_SELF_PROLOGUE(APlayerPawn);
-	PARAM_CLASS(ammo, AActor);
-	ACTION_RETURN_POINTER(self->BestWeapon(ammo));
-}
-//===========================================================================
-//
 // APlayerPawn :: PickNewWeapon
 //
 // Picks a new weapon for this player. Used mostly for running out of ammo,
@@ -1120,29 +1053,17 @@ DEFINE_ACTION_FUNCTION(APlayerPawn, BestWeapon)
 
 AWeapon *APlayerPawn::PickNewWeapon(PClassActor *ammotype)
 {
-	AWeapon *best = BestWeapon (ammotype);
-
-	if (best != NULL)
+	AWeapon *best = nullptr;
+	IFVM(PlayerPawn, DropWeapon)
 	{
-		player->PendingWeapon = best;
-		if (player->ReadyWeapon != NULL)
-		{
-			P_DropWeapon(player);
-		}
-		else if (player->PendingWeapon != WP_NOCHANGE)
-		{
-			P_BringUpWeapon (player);
-		}
+		VMValue param = player->mo;
+		VMReturn ret((void**)&best);
+		VMCall(func, &param, 1, &ret, 1);
 	}
+
 	return best;
 }
 
-DEFINE_ACTION_FUNCTION(APlayerPawn, PickNewWeapon)
-{
-	PARAM_SELF_PROLOGUE(APlayerPawn);
-	PARAM_CLASS(ammo, AActor);
-	ACTION_RETURN_POINTER(self->PickNewWeapon(ammo));
-}
 //===========================================================================
 //
 // APlayerPawn :: GiveDeathmatchInventory

@@ -229,26 +229,6 @@ bool AWeapon::CheckAmmo(int fireMode, bool autoSwitch, bool requireAmmo, int amm
 
 //===========================================================================
 //
-// AWeapon :: GetUpState
-//
-//===========================================================================
-
-FState *AWeapon::GetUpState ()
-{
-	IFVIRTUAL(AWeapon, GetUpState)
-	{
-		VMValue params[1] = { (DObject*)this };
-		VMReturn ret;
-		FState *retval;
-		ret.PointerAt((void**)&retval);
-		VMCall(func, params, 1, &ret, 1);
-		return retval;
-	}
-	return nullptr;
-}
-
-//===========================================================================
-//
 // AWeapon :: GetDownState
 //
 //===========================================================================

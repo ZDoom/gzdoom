@@ -690,7 +690,8 @@ bool player_t::Resurrect()
 	}
 	if (ReadyWeapon != nullptr)
 	{
-		P_SetPsprite(this, PSP_WEAPON, ReadyWeapon->GetUpState());
+		PendingWeapon = ReadyWeapon;
+		P_BringUpWeapon(this);
 	}
 
 	if (morphTics)

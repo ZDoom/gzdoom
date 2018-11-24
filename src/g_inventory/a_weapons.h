@@ -129,7 +129,6 @@ public:
 	void Serialize(FSerializer &arc) override;
 
 	// scripted virtuals.
-	FState *GetUpState ();
 	FState *GetDownState ();
 
 	enum

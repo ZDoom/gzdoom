@@ -375,6 +375,8 @@ static bool DoSubstitution (FString &out, const char *in)
 {
 	player_t *player = &players[consoleplayer];
 	AWeapon *weapon = player->ReadyWeapon;
+	auto ammo1 = weapon ? weapon->Ammo1 : nullptr;
+	auto ammo2 = weapon ? weapon->Ammo2 : nullptr;
 	const char *a, *b;
 
 	a = in;
@@ -427,10 +429,10 @@ static bool DoSubstitution (FString &out, const char *in)
 				}
 				else
 				{
-					out.AppendFormat("%d", weapon->Ammo1 != NULL ? weapon->Ammo1->Amount : 0);
-					if (weapon->Ammo2 != NULL)
+					out.AppendFormat("%d", ammo1 != NULL ? ammo1->Amount : 0);
+					if (ammo2 != NULL)
 					{
-						out.AppendFormat("/%d", weapon->Ammo2->Amount);
+						out.AppendFormat("/%d", ammo2->Amount);
 					}
 				}
 			}
@@ -439,16 +441,16 @@ static bool DoSubstitution (FString &out, const char *in)
 		{
 			if (strnicmp(a, "ammo", 4) == 0)
 			{
-				if (weapon == NULL || weapon->Ammo1 == NULL)
+				if (ammo1 == NULL)
 				{
 					out += "no ammo";
 				}
 				else
 				{
-					out.AppendFormat("%s", weapon->Ammo1->GetClass()->TypeName.GetChars());
-					if (weapon->Ammo2 != NULL)
+					out.AppendFormat("%s", ammo1->GetClass()->TypeName.GetChars());
+					if (ammo2 != NULL)
 					{
-						out.AppendFormat("/%s", weapon->Ammo2->GetClass()->TypeName.GetChars());
+						out.AppendFormat("/%s", ammo2->GetClass()->TypeName.GetChars());
 					}
 				}
 			}

@@ -1874,7 +1874,7 @@ class CommandUsesAmmo : public SBarInfoNegatableFlowControl
 		{
 			SBarInfoNegatableFlowControl::Tick(block, statusBar, hudChanged);
 
-			SetTruth(statusBar->CPlayer->ReadyWeapon != NULL && (statusBar->CPlayer->ReadyWeapon->AmmoType1 != NULL || statusBar->CPlayer->ReadyWeapon->AmmoType2 != NULL), block, statusBar);
+			SetTruth(statusBar->AmmoType(1) || statusBar->AmmoType(2), block, statusBar);
 		}
 };
 
@@ -1891,7 +1891,7 @@ class CommandUsesSecondaryAmmo : public CommandUsesAmmo
 		{
 			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
 
-			SetTruth(statusBar->CPlayer->ReadyWeapon != NULL && statusBar->CPlayer->ReadyWeapon->AmmoType2 != NULL && statusBar->CPlayer->ReadyWeapon->AmmoType1 != statusBar->CPlayer->ReadyWeapon->AmmoType2, block, statusBar);
+			SetTruth(statusBar->AmmoType(2) && statusBar->AmmoType(2) != statusBar->AmmoType(1), block, statusBar);
 		}
 };
 
@@ -3247,8 +3247,8 @@ class CommandWeaponAmmo : public SBarInfoNegatableFlowControl
 
 			if(statusBar->CPlayer->ReadyWeapon != NULL)
 			{
-				const PClass *AmmoType1 = statusBar->CPlayer->ReadyWeapon->AmmoType1;
-				const PClass *AmmoType2 = statusBar->CPlayer->ReadyWeapon->AmmoType2;
+				const PClass *AmmoType1 = statusBar->AmmoType(1);
+				const PClass *AmmoType2 = statusBar->AmmoType(2);
 				bool usesammo1 = (AmmoType1 != NULL);
 				bool usesammo2 = (AmmoType2 != NULL);
 				//if(!usesammo1 && !usesammo2) //if the weapon doesn't use ammo don't go though the trouble.

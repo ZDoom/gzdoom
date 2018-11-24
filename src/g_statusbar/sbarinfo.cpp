@@ -1467,6 +1467,12 @@ public:
 		return TRANSLATION(TRANSLATION_Players, int(CPlayer - players));
 	}
 
+	PClassActor *AmmoType(int no) const
+	{
+		auto w = StatusBar->CPlayer->ReadyWeapon;
+		return w == nullptr ? nullptr : (no == 1 ? w->AmmoType1 : w->AmmoType2);
+	}
+
 	AInventory *ammo1, *ammo2;
 	int ammocount1, ammocount2;
 	AInventory *armor;

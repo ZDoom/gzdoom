@@ -65,6 +65,7 @@ class ZRock4 : Actor
 	{
 		Radius 20;
 		Height 16;
+		+SOLID
 	}
 	States
 	{

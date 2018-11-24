@@ -958,3 +958,24 @@ struct Shader native
 	native clearscope static void SetUniform3f(PlayerInfo player, string shaderName, string uniformName, vector3 value);
 	native clearscope static void SetUniform1i(PlayerInfo player, string shaderName, string uniformName, int value);
 }
+
+struct FRailParams
+{
+	native int damage;
+	native double offset_xy;
+	native double offset_z;
+	native int color1, color2;
+	native double maxdiff;
+	native int flags;
+	native Class<Actor> puff;
+	native double angleoffset;
+	native double pitchoffset;
+	native double distance;
+	native int duration;
+	native double sparsity;
+	native double drift;
+	native Class<Actor> spawnclass;
+	native int SpiralOffset;
+	native int limit;
+};	// [RH] Shoot a railgun
+

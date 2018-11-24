@@ -948,6 +948,11 @@ void InitThingdef()
 	fcp->Size = sizeof(FCheckPosition);
 	fcp->Align = alignof(FCheckPosition);
 
+	//This must also have its size set.
+	auto frp = NewStruct("FRailParams", nullptr);
+	frp->Size = sizeof(FRailParams);
+	frp->Align = alignof(FRailParams);
+
 
 	FieldTable.Clear();
 	if (FieldTable.Size() == 0)

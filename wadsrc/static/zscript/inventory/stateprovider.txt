@@ -2,8 +2,9 @@
 class StateProvider : Inventory native
 {
 	action native state A_JumpIfNoAmmo(statelabel label);
-	action native void A_RailAttack(int damage, int spawnofs_xy = 0, bool useammo = true, color color1 = 0, color color2 = 0, int flags = 0, double maxdiff = 0, class<Actor> pufftype = "BulletPuff", double spread_xy = 0, double spread_z = 0, double range = 0, int duration = 0, double sparsity = 1.0, double driftspeed = 1.0, class<Actor> spawnclass = "none", double spawnofs_z = 0, int spiraloffset = 270, int limit = 0);
 	action native void A_WeaponReady(int flags = 0);
+	action native state A_CheckForReload(int counter, statelabel label, bool dontincrement = false);
+	action native void A_ResetReloadCounter();
 
 	//---------------------------------------------------------------------------
 	//
@@ -265,6 +266,55 @@ class StateProvider : Inventory native
 		}
 	}
 
+	//==========================================================================
+	//
+	// customizable railgun attack function
+	//
+	//==========================================================================
+	
+	action void A_RailAttack(int damage, int spawnofs_xy = 0, bool useammo = true, color color1 = 0, color color2 = 0, int flags = 0, double maxdiff = 0, class<Actor> pufftype = "BulletPuff", double spread_xy = 0, double spread_z = 0, double range = 0, int duration = 0, double sparsity = 1.0, double driftspeed = 1.0, class<Actor> spawnclass = "none", double spawnofs_z = 0, int spiraloffset = 270, int limit = 0)
+	{
+		if (range == 0) range = 8192;
+		if (sparsity == 0) sparsity=1.0;
+
+		let player = self.player;
+		if (!player) return;
+
+		let weapon = player.ReadyWeapon;
+
+		if (useammo && weapon != NULL && stateinfo != null && stateinfo.mStateType == STATE_Psprite)
+		{
+			if (!weapon.DepleteAmmo(weapon.bAltFire, true))
+				return;	// out of ammo
+		}
+
+		if (!(flags & RGF_EXPLICITANGLE))
+		{
+			spread_xy = spread_xy * Random2[crailgun]() / 255.;
+			spread_z = spread_z * Random2[crailgun]() / 255.;
+		}
+
+		FRailParams p;
+		p.damage = damage;
+		p.offset_xy = spawnofs_xy;
+		p.offset_z = spawnofs_z;
+		p.color1 = color1;
+		p.color2 = color2;
+		p.maxdiff = maxdiff;
+		p.flags = flags;
+		p.puff = pufftype;
+		p.angleoffset = spread_xy;
+		p.pitchoffset = spread_z;
+		p.distance = range;
+		p.duration = duration;
+		p.sparsity = sparsity;
+		p.drift = driftspeed;
+		p.spawnclass = spawnclass;
+		p.SpiralOffset = SpiralOffset;
+		p.limit = limit;
+		self.RailAttack(p);
+	}
+	
 
 	
 	//---------------------------------------------------------------------------
@@ -304,8 +354,7 @@ class StateProvider : Inventory native
 		}
 	}
 	
-	action native state A_CheckForReload(int counter, statelabel label, bool dontincrement = false);
-	action native void A_ResetReloadCounter();
+	
 
 	action void A_ClearReFire()
 	{

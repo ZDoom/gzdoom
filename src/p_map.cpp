@@ -156,6 +156,25 @@ DEFINE_FIELD_X(FCheckPosition, FCheckPosition, portalstep);
 DEFINE_FIELD_X(FCheckPosition, FCheckPosition, portalgroup);
 DEFINE_FIELD_X(FCheckPosition, FCheckPosition, PushTime);
 
+DEFINE_FIELD_X(FRailParams, FRailParams, source);
+DEFINE_FIELD_X(FRailParams, FRailParams, damage);
+DEFINE_FIELD_X(FRailParams, FRailParams, offset_xy);
+DEFINE_FIELD_X(FRailParams, FRailParams, offset_z);
+DEFINE_FIELD_X(FRailParams, FRailParams, color1);
+DEFINE_FIELD_X(FRailParams, FRailParams, color2);
+DEFINE_FIELD_X(FRailParams, FRailParams, maxdiff);
+DEFINE_FIELD_X(FRailParams, FRailParams, flags);
+DEFINE_FIELD_X(FRailParams, FRailParams, puff);
+DEFINE_FIELD_X(FRailParams, FRailParams, angleoffset);
+DEFINE_FIELD_X(FRailParams, FRailParams, pitchoffset);
+DEFINE_FIELD_X(FRailParams, FRailParams, distance);
+DEFINE_FIELD_X(FRailParams, FRailParams, duration);
+DEFINE_FIELD_X(FRailParams, FRailParams, sparsity);
+DEFINE_FIELD_X(FRailParams, FRailParams, drift);
+DEFINE_FIELD_X(FRailParams, FRailParams, spawnclass);
+DEFINE_FIELD_X(FRailParams, FRailParams, SpiralOffset);
+DEFINE_FIELD_X(FRailParams, FRailParams, limit);
+
 //==========================================================================
 //
 // CanCollideWith
@@ -5601,6 +5620,15 @@ void P_RailAttack(FRailParams *p)
 
 	// Draw the slug's trail.
 	P_DrawRailTrail(source, rail_data.PortalHits, p->color1, p->color2, p->maxdiff, p->flags, p->spawnclass, angle, p->duration, p->sparsity, p->drift, p->SpiralOffset, pitch);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, RailAttack)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(p, FRailParams);
+	p->source = self;
+	P_RailAttack(p);
+	return 0;
 }
 
 //==========================================================================

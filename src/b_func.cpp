@@ -205,25 +205,8 @@ void DBot::Dofire (ticcmd_t *cmd)
 	//FIRE EACH TYPE OF WEAPON DIFFERENT: Here should all the different weapons go.
 	if (player->ReadyWeapon->WeaponFlags & WIF_MELEEWEAPON)
 	{
-		if ((player->ReadyWeapon->ProjectileType != NULL))
-		{
-			if (player->ReadyWeapon->CheckAmmo (AWeapon::PrimaryFire, false, true))
-			{
-				// This weapon can fire a projectile and has enough ammo to do so
-				goto shootmissile;
-			}
-			else if (!(player->ReadyWeapon->WeaponFlags & WIF_AMMO_OPTIONAL))
-			{
-				// Ammo is required, so don't shoot. This is for weapons that shoot
-				// missiles that die at close range, such as the powered-up Phoneix Rod.
-				return;
-			}
-		}
-		else
-		{
-			//*4 is for atmosphere,  the chainsaws sounding and all..
-			no_fire = (Dist > DEFMELEERANGE*4);
-		}
+		//*4 is for atmosphere,  the chainsaws sounding and all..
+		no_fire = (Dist > DEFMELEERANGE*4);
 	}
 	else if (player->ReadyWeapon->WeaponFlags & WIF_BOT_BFG)
 	{

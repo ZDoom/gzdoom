@@ -86,9 +86,6 @@ public:
 	double GetSpeedFactor();			// virtual on the script side.
 	bool GetNoTeleportFreeze();			// virtual on the script side.
 
-	void BecomeItem ();
-	void BecomePickup ();
-
 	bool DoRespawn();
 
 	AInventory *PrevItem();		// Returns the item preceding this one in the list.

@@ -50,8 +50,6 @@ class Inventory : Actor native
 	}
 	
 	native bool DoRespawn();
-	native void BecomeItem();
-	native void BecomePickup();
 	native static void PrintPickupMessage (bool localview, String str);
 
 	States(Actor)
@@ -144,6 +142,55 @@ class Inventory : Actor native
 		}
 	}
 		
+
+	//===========================================================================
+	//
+	// AInventory :: BecomeItem
+	//
+	// Lets this actor know that it's about to be placed in an inventory.
+	//
+	//===========================================================================
+
+	void BecomeItem ()
+	{
+		if (!bNoBlockmap || !bNoSector)
+		{
+			A_ChangeLinkFlags(1, 1);
+		}
+		ChangeTid(0);
+		bSpecial = false;
+		ChangeStatNum(STAT_INVENTORY);
+		// stop all sounds this item is playing.
+		for(int i = 1;i<=7;i++) A_StopSound(i);
+		SetState (FindState("Held"));
+	}
+
+	//===========================================================================
+	//
+	// AInventory :: BecomePickup
+	//
+	// Lets this actor know it should wait to be picked up.
+	//
+	//===========================================================================
+
+	void BecomePickup ()
+	{
+		if (Owner != NULL)
+		{
+			Owner.RemoveInventory (self);
+		}
+		if (bNoBlockmap || bNoSector)
+		{
+			A_ChangeLinkFlags(0, 0);
+			FindFloorCeiling();
+		}
+		bSpecial = true;
+		bDropped = true;
+		bCountItem = false;
+		bInvisible = false;
+		ChangeStatNum(STAT_DEFAULT);
+		SetState (SpawnState);
+	}
 
 	//===========================================================================
 	//

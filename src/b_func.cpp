@@ -188,7 +188,7 @@ void DBot::Dofire (ticcmd_t *cmd)
 
 	//Reaction skill thing.
 	if (first_shot &&
-		!(player->ReadyWeapon->WeaponFlags & WIF_BOT_REACTION_SKILL_THING))
+		!(GetBotInfo(player->ReadyWeapon).flags & BIF_BOT_REACTION_SKILL_THING))
 	{
 		t_react = (100-skill.reaction+1)/((pr_botdofire()%3)+3);
 	}
@@ -203,21 +203,21 @@ void DBot::Dofire (ticcmd_t *cmd)
 	Dist = player->mo->Distance2D(enemy, player->mo->Vel.X - enemy->Vel.X, player->mo->Vel.Y - enemy->Vel.Y);
 
 	//FIRE EACH TYPE OF WEAPON DIFFERENT: Here should all the different weapons go.
-	if (player->ReadyWeapon->WeaponFlags & WIF_MELEEWEAPON)
+	if (GetBotInfo(player->ReadyWeapon).MoveCombatDist == 0)
 	{
 		//*4 is for atmosphere,  the chainsaws sounding and all..
 		no_fire = (Dist > DEFMELEERANGE*4);
 	}
-	else if (player->ReadyWeapon->WeaponFlags & WIF_BOT_BFG)
+	else if (GetBotInfo(player->ReadyWeapon).flags & BIF_BOT_BFG)
 	{
 		//MAKEME: This should be smarter.
 		if ((pr_botdofire()%200)<=skill.reaction)
 			if(Check_LOS(enemy, SHOOTFOV))
 				no_fire = false;
 	}
-	else if (player->ReadyWeapon->ProjectileType != NULL)
+	else if (GetBotInfo(player->ReadyWeapon).projectileType != NULL)
 	{
-		if (player->ReadyWeapon->WeaponFlags & WIF_BOT_EXPLOSIVE)
+		if (GetBotInfo(player->ReadyWeapon).flags & BIF_BOT_EXPLOSIVE)
 		{
 			//Special rules for RL
 			an = FireRox (enemy, cmd);
@@ -234,7 +234,7 @@ void DBot::Dofire (ticcmd_t *cmd)
 		}
 		// prediction aiming
 		Dist = player->mo->Distance2D(enemy);
-		fm = Dist / GetDefaultByType (player->ReadyWeapon->ProjectileType)->Speed;
+		fm = Dist / GetDefaultByType (GetBotInfo(player->ReadyWeapon).projectileType)->Speed;
 		bglobal.SetBodyAt(enemy->Pos() + enemy->Vel.XY() * fm * 2, 1);
 		Angle = player->mo->AngleTo(bglobal.body1);
 		if (Check_LOS (enemy, SHOOTFOV))

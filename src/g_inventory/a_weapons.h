@@ -142,11 +142,8 @@ public:
 	float YAdjust;							// For viewing the weapon fullscreen (visual only so no need to be a double)
 	FSoundIDNoInit UpSound, ReadySound;		// Sounds when coming up and idle
 	PClassActor *SisterWeaponType;			// Another weapon to pick up with this one
-	PClassActor *ProjectileType;			// Projectile used by primary attack
-	PClassActor *AltProjectileType;			// Projectile used by alternate attack
 	int SelectionOrder;						// Lower-numbered weapons get picked first
 	int MinSelAmmo1, MinSelAmmo2;			// Ignore in BestWeapon() if inadequate ammo
-	double MoveCombatDist;					// Used by bots, but do they *really* need it?
 	int ReloadCounter;						// For A_CheckForReload
 	int BobStyle;							// [XA] Bobbing style. Defines type of bobbing (e.g. Normal, Alpha)  (visual only so no need to be a double)
 	float BobSpeed;							// [XA] Bobbing speed. Defines how quickly a weapon bobs.
@@ -210,11 +207,5 @@ enum
 	WIF_NODEATHDESELECT =	0x00020000, // Don't jump to the Deselect state when the player dies
 	WIF_NODEATHINPUT =		0x00040000, // The weapon cannot be fired/reloaded/whatever when the player is dead
 	WIF_CHEATNOTWEAPON	=	0x08000000,	// Give cheat considers this not a weapon (used by Sigil)
-
-	// Flags used only by bot AI:
-
-	WIF_BOT_REACTION_SKILL_THING = 1<<31, // I don't understand this
-	WIF_BOT_EXPLOSIVE =		1<<30,		// weapon fires an explosive
-	WIF_BOT_BFG =			1<<28,		// this is a BFG
 };
 

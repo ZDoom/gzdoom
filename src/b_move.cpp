@@ -345,7 +345,7 @@ void DBot::TurnToAng ()
 
 	if (player->ReadyWeapon != NULL)
 	{
-		if (player->ReadyWeapon->WeaponFlags & WIF_BOT_EXPLOSIVE)
+		if (GetBotInfo(player->ReadyWeapon).flags & BIF_BOT_EXPLOSIVE)
 		{
 			if (t_roam && !missile)
 			{ //Keep angle that where when shot where decided.
@@ -356,7 +356,7 @@ void DBot::TurnToAng ()
 
 		if(enemy)
 			if(!dest) //happens when running after item in combat situations, or normal, prevents weak turns
-				if(player->ReadyWeapon->ProjectileType == NULL && !(player->ReadyWeapon->WeaponFlags & WIF_MELEEWEAPON))
+				if(GetBotInfo(player->ReadyWeapon).projectileType == NULL && GetBotInfo(player->ReadyWeapon).MoveCombatDist > 0)
 					if(Check_LOS(enemy, SHOOTFOV+5))
 						maxturn = 3;
 	}

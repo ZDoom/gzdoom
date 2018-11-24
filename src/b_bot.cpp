@@ -47,6 +47,7 @@
 #include "d_net.h"
 #include "serializer.h"
 #include "d_player.h"
+#include "w_wad.h"
 #include "vm.h"
 
 IMPLEMENT_CLASS(DBot, false, true)
@@ -246,69 +247,61 @@ CCMD (listbots)
 
 // set the bot specific weapon information
 // This is intentionally not in the weapon definition anymore.
+
+BotInfoMap BotInfo;
+
 void InitBotStuff()
 {
-	static struct BotInit
+	int lump;
+	int lastlump = 0;
+	while (-1 != (lump = Wads.FindLump("BOTSUPP", &lastlump)))
 	{
-		const char *type;
-		int movecombatdist;
-		int weaponflags;
-		const char *projectile;
-	} botinits[] = {
-
-		{ "Pistol", 25000000, 0, NULL },
-		{ "Shotgun", 24000000, 0, NULL },
-		{ "SuperShotgun", 15000000, 0, NULL },
-		{ "Chaingun", 27000000, 0, NULL },
-		{ "RocketLauncher", 18350080, WIF_BOT_REACTION_SKILL_THING|WIF_BOT_EXPLOSIVE, "Rocket" },
-		{ "PlasmaRifle",  27000000, 0, "PlasmaBall" },
-		{ "BFG9000", 10000000, WIF_BOT_REACTION_SKILL_THING|WIF_BOT_BFG, "BFGBall" },
-		{ "GoldWand", 25000000, 0, NULL },
-		{ "GoldWandPowered", 25000000, 0, NULL },
-		{ "Crossbow", 24000000, 0, "CrossbowFX1" },
-		{ "CrossbowPowered", 24000000, 0, "CrossbowFX2" },
-		{ "Blaster", 27000000, 0, NULL },
-		{ "BlasterPowered", 27000000, 0, "BlasterFX1" },
-		{ "SkullRod", 27000000, 0, "HornRodFX1" },
-		{ "SkullRodPowered", 27000000, 0, "HornRodFX2" },
-		{ "PhoenixRod", 18350080, WIF_BOT_REACTION_SKILL_THING|WIF_BOT_EXPLOSIVE, "PhoenixFX1" },
-		{ "Mace", 27000000, WIF_BOT_REACTION_SKILL_THING, "MaceFX2" },
-		{ "MacePowered", 27000000, WIF_BOT_REACTION_SKILL_THING|WIF_BOT_EXPLOSIVE, "MaceFX4" },
-		{ "FWeapHammer", 22000000, 0, "HammerMissile" },
-		{ "FWeapQuietus", 20000000, 0, "FSwordMissile" },
-		{ "CWeapStaff", 25000000, 0, "CStaffMissile" },
-		{ "CWeapFlane", 27000000, 0, "CFlameMissile" },
-		{ "MWeapWand", 25000000, 0, "MageWandMissile" },
-		{ "CWeapWraithverge", 22000000, 0, "HolyMissile" },
-		{ "MWeapFrost", 19000000, 0, "FrostMissile" },
-		{ "MWeapLightning", 23000000, 0, "LightningFloor" },
-		{ "MWeapBloodscourge", 20000000, 0, "MageStaffFX2" },
-		{ "StrifeCrossbow", 24000000, 0, "ElectricBolt" },
-		{ "StrifeCrossbow2", 24000000, 0, "PoisonBolt" },
-		{ "AssaultGun", 27000000, 0, NULL },
-		{ "MiniMissileLauncher", 18350080, WIF_BOT_REACTION_SKILL_THING|WIF_BOT_EXPLOSIVE, "MiniMissile" },
-		{ "FlameThrower", 24000000, 0, "FlameMissile" },
-		{ "Mauler", 15000000, 0, NULL },
-		{ "Mauler2", 10000000, 0, "MaulerTorpedo" },
-		{ "StrifeGrenadeLauncher", 18350080, WIF_BOT_REACTION_SKILL_THING|WIF_BOT_EXPLOSIVE, "HEGrenade" },
-		{ "StrifeGrenadeLauncher2", 18350080, WIF_BOT_REACTION_SKILL_THING|WIF_BOT_EXPLOSIVE, "PhosphorousGrenade" },
-	};
-
-	for(unsigned i=0;i<sizeof(botinits)/sizeof(botinits[0]);i++)
-	{
-		const PClass *cls = PClass::FindClass(botinits[i].type);
-		if (cls != NULL && cls->IsDescendantOf(NAME_Weapon))
+		FScanner sc(lump);
+		sc.SetCMode(true);
+		while (sc.GetString())
 		{
-			AWeapon *w = (AWeapon*)GetDefaultByType(cls);
-			if (w != NULL)
+			PClassActor *wcls = PClass::FindActor(sc.String);
+			if (wcls != NULL && wcls->IsDescendantOf(NAME_Weapon))
 			{
-				w->MoveCombatDist = botinits[i].movecombatdist/65536.;
-				w->WeaponFlags |= botinits[i].weaponflags;
-				w->ProjectileType = PClass::FindActor(botinits[i].projectile);
+				BotInfoData bi = {};
+				sc.MustGetStringName(",");
+				sc.MustGetNumber();
+				bi.MoveCombatDist = sc.Number;
+				while (sc.CheckString(","))
+				{
+					sc.MustGetString();
+					if (sc.Compare("BOT_REACTION_SKILL_THING"))
+					{
+						bi.flags |= BIF_BOT_REACTION_SKILL_THING;
+					}
+					else if (sc.Compare("BOT_EXPLOSIVE"))
+					{
+						bi.flags |= BIF_BOT_EXPLOSIVE;
+					}
+					else if (sc.Compare("BOT_BFG"))
+					{
+						bi.flags |= BIF_BOT_BFG;
+					}
+					else
+					{
+						PClassActor *cls = PClass::FindActor(sc.String);
+						bi.projectileType = cls;
+						if (cls == nullptr)
+						{
+							sc.ScriptError("Unknown token %s", sc.String);
+						}
+					}
+				}
+				BotInfo[wcls->TypeName] = bi;
+			}
+			else
+			{
+				sc.ScriptError("%s is not a weapon type", sc.String);
 			}
 		}
 	}
 
+	// Fixme: Export these, too.
 	static const char *warnbotmissiles[] = { "PlasmaBall", "Ripper", "HornRodFX1" };
 	for(unsigned i=0;i<countof(warnbotmissiles);i++)
 	{

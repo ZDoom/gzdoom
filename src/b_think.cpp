@@ -173,9 +173,9 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 				  is (Megasphere)
 				 ) || 
 				 dist < (GETINCOMBAT/4) ||
-				 (player->ReadyWeapon == NULL || player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON)
+				 (GetBotInfo(player->ReadyWeapon).MoveCombatDist == 0)
 				)
-				&& (dist < GETINCOMBAT || (player->ReadyWeapon == NULL || player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
+				&& (dist < GETINCOMBAT || (GetBotInfo(player->ReadyWeapon).MoveCombatDist == 0))
 				&& Reachable (dest))
 #undef is
 			{
@@ -185,7 +185,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 
 		dest = NULL; //To let bot turn right
 
-		if (player->ReadyWeapon != NULL && !(player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
+		if (GetBotInfo(player->ReadyWeapon).MoveCombatDist == 0)
 			player->mo->flags &= ~MF_DROPOFF; //Don't jump off any ledges when fighting.
 
 		if (!(enemy->flags3 & MF3_ISMONSTER))
@@ -205,7 +205,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 
 		if (player->ReadyWeapon == NULL ||
 			player->mo->Distance2D(enemy) >
-			player->ReadyWeapon->MoveCombatDist)
+			GetBotInfo(player->ReadyWeapon).MoveCombatDist)
 		{
 			// If a monster, use lower speed (just for cooler apperance while strafing down doomed monster)
 			cmd->ucmd.forwardmove = (enemy->flags3 & MF3_ISMONSTER) ? FORWARDWALK : FORWARDRUN;
@@ -273,8 +273,8 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 			{
 				if (enemy->player)
 				{
-					if (((enemy->player->ReadyWeapon != NULL && enemy->player->ReadyWeapon->WeaponFlags & WIF_BOT_EXPLOSIVE) ||
-						(pr_botmove()%100)>skill.isp) && player->ReadyWeapon != NULL && !(player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
+					if (((enemy->player->ReadyWeapon != NULL && GetBotInfo(enemy->player->ReadyWeapon).flags & BIF_BOT_EXPLOSIVE) ||
+						(pr_botmove()%100)>skill.isp) && (GetBotInfo(player->ReadyWeapon).MoveCombatDist != 0))
 						dest = enemy;//Dont let enemy kill the bot by supressive fire. So charge enemy.
 					else //hide while t_fight, but keep view at enemy.
 						Angle = player->mo->AngleTo(enemy);

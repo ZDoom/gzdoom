@@ -456,9 +456,7 @@ static FFlagDef WeaponFlagDefs[] =
 	DEFINE_FLAG(WIF, WIMPY_WEAPON, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, POWERED_UP, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, STAFF2_KICKBACK, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF_BOT, EXPLOSIVE, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, MELEEWEAPON, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF_BOT, BFG, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, CHEATNOTWEAPON, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, NO_AUTO_SWITCH, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, AMMO_CHECKBOTH, AWeapon, WeaponFlags),
@@ -469,6 +467,8 @@ static FFlagDef WeaponFlagDefs[] =
 
 	DEFINE_DUMMY_FLAG(NOLMS, false),
 	DEFINE_DUMMY_FLAG(ALLOW_WITH_RESPAWN_INVUL, false),
+	DEFINE_DUMMY_FLAG(BFG, true),
+	DEFINE_DUMMY_FLAG(EXPLOSIVE, true),
 };
 
 

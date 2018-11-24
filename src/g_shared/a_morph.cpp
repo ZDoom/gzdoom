@@ -173,18 +173,6 @@ bool P_MorphPlayer (player_t *activator, player_t *p, PClassActor *spawntype, in
 	return true;
 }
 
-DEFINE_ACTION_FUNCTION(_PlayerInfo, MorphPlayer)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(player_t);
-	PARAM_POINTER(activator, player_t);
-	PARAM_CLASS(spawntype, APlayerPawn);
-	PARAM_INT(duration);
-	PARAM_INT(style);
-	PARAM_CLASS(enter_flash, AActor);
-	PARAM_CLASS(exit_flash, AActor);
-	ACTION_RETURN_BOOL(P_MorphPlayer(activator, self, spawntype, duration, style, enter_flash, exit_flash));
-}
-
 //----------------------------------------------------------------------------
 //
 // FUNC P_UndoPlayerMorph

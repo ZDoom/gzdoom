@@ -802,7 +802,6 @@ VMFunction *FFunctionBuildList::AddFunction(PNamespace *gnspc, const VersionInfo
 
 void FFunctionBuildList::Build()
 {
-	int errorcount = 0;
 	int codesize = 0;
 	int datasize = 0;
 	FILE *dump = nullptr;
@@ -911,7 +910,8 @@ void FFunctionBuildList::Build()
 	}
 	VMFunction::CreateRegUseInfo();
 	FScriptPosition::StrictErrors = false;
-	if (Args->CheckParm("-dumpjit")) DumpJit();
+
+	if (FScriptPosition::ErrorCounter == 0 && Args->CheckParm("-dumpjit")) DumpJit();
 	mItems.Clear();
 	mItems.ShrinkToFit();
 	FxAlloc.FreeAllBlocks();

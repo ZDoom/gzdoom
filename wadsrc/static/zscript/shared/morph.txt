@@ -1,3 +1,221 @@
+extend class PlayerPawn
+{
+	//===========================================================================
+	//
+	// EndAllPowerupEffects
+	//
+	// Calls EndEffect() on every Powerup in the inventory list.
+	//
+	//===========================================================================
+
+	void InitAllPowerupEffects()
+	{
+		let item = Inv;
+		while (item != null)
+		{
+			let power = Powerup(item);
+			if (power != null)
+			{
+				power.InitEffect();
+			}
+			item = item.Inv;
+		}
+	}
+	
+	//===========================================================================
+	//
+	// EndAllPowerupEffects
+	//
+	// Calls EndEffect() on every Powerup in the inventory list.
+	//
+	//===========================================================================
+
+	void EndAllPowerupEffects()
+	{
+		let item = Inv;
+		while (item != null)
+		{
+			let power = Powerup(item);
+			if (power != null)
+			{
+				power.EndEffect();
+			}
+			item = item.Inv;
+		}
+	}
+	
+	//===========================================================================
+	//
+	//
+	//
+	//===========================================================================
+
+	virtual void ActivateMorphWeapon ()
+	{
+		class<Weapon> morphweaponcls = MorphWeapon;
+		player.PendingWeapon = WP_NOCHANGE;
+
+		if (player.ReadyWeapon != null)
+		{
+			player.GetPSprite(PSP_WEAPON).y = WEAPONTOP;
+		}
+
+		if (morphweaponcls == null || !(morphweaponcls is 'Weapon'))
+		{ // No weapon at all while morphed!
+			player.ReadyWeapon = null;
+		}
+		else
+		{
+			player.ReadyWeapon = Weapon(FindInventory (morphweaponcls));
+			if (player.ReadyWeapon == null)
+			{
+				player.ReadyWeapon = Weapon(GiveInventoryType (morphweaponcls));
+				if (player.ReadyWeapon != null)
+				{
+					player.ReadyWeapon.GivenAsMorphWeapon = true; // flag is used only by new beastweap semantics in P_UndoPlayerMorph
+				}
+			}
+			if (player.ReadyWeapon != null)
+			{
+				player.SetPsprite(PSP_WEAPON, player.ReadyWeapon.GetReadyState());
+			}
+		}
+
+		if (player.ReadyWeapon != null)
+		{
+			player.SetPsprite(PSP_FLASH, null);
+		}
+
+		player.PendingWeapon = WP_NOCHANGE;
+	}
+
+	//---------------------------------------------------------------------------
+	//
+	// FUNC P_MorphPlayer
+	//
+	// Returns true if the player gets turned into a chicken/pig.
+	//
+	// TODO: Allow morphed players to receive weapon sets (not just one weapon),
+	// since they have their own weapon slots now.
+	//
+	//---------------------------------------------------------------------------
+
+	virtual bool MorphPlayer(playerinfo activator, Class<PlayerPawn> spawntype, int duration, int style, Class<Actor> enter_flash = null, Class<Actor> exit_flash = null)
+	{
+		if (bDontMorph)
+		{
+			return false;
+		}
+		if (bInvulnerable && (player != activator || !(style & MRF_WHENINVULNERABLE)))
+		{ // Immune when invulnerable unless this is a power we activated
+			return false;
+		}
+		if (player.morphTics)
+		{ // Player is already a beast
+			if ((GetClass() == spawntype) && bCanSuperMorph
+				&& (player.morphTics < (((duration) ? duration : DEFMORPHTICS) - TICRATE))
+				&& FindInventory('PowerWeaponLevel2', true) == null)
+			{ // Make a super chicken
+				GiveInventoryType ('PowerWeaponLevel2');
+			}
+			return false;
+		}
+		if (health <= 0)
+		{ // Dead players cannot morph
+			return false;
+		}
+		if (spawntype == null)
+		{
+			return false;
+		}
+		if (!(spawntype is 'PlayerPawn'))
+		{
+			return false;
+		}
+		if (spawntype == GetClass())
+		{
+			return false;
+		}
+
+		let morphed = PlayerPawn(Spawn (spawntype, Pos, NO_REPLACE));
+		EndAllPowerupEffects();
+		Substitute(morphed);
+		if ((style & MRF_TRANSFERTRANSLATION) && !morphed.bDontTranslate)
+		{
+			morphed.Translation = Translation;
+		}
+		if (tid != 0 && (style & MRF_NEWTIDBEHAVIOUR))
+		{
+			morphed.ChangeTid(tid);
+			ChangeTid(0);
+		}
+		morphed.Angle = Angle;
+		morphed.target = target;
+		morphed.tracer = tracer;
+		morphed.alternative = self;
+		morphed.FriendPlayer = FriendPlayer;
+		morphed.DesignatedTeam = DesignatedTeam;
+		morphed.Score = Score;
+		player.PremorphWeapon = player.ReadyWeapon;
+		
+		morphed.special2 = bSolid * 2 + bShootable * 4 + bInvisible * 0x40;	// The factors are for savegame compatibility
+		morphed.player = player;
+
+		if (morphed.ViewHeight > player.viewheight && player.deltaviewheight == 0)
+		{ // If the new view height is higher than the old one, start moving toward it.
+			player.deltaviewheight = player.GetDeltaViewHeight();
+		}
+		morphed.bShadow |= bShadow;
+		morphed.bNoGravity |= bNoGravity;
+		morphed.bFly |= bFly;
+		morphed.bGhost |= bGhost;
+
+		if (enter_flash == null) enter_flash = 'TeleportFog';
+		let eflash = Spawn(enter_flash, Pos + (0, 0, gameinfo.telefogheight), ALLOW_REPLACE);
+		let p = player;
+		player = null;
+		alternative = morphed;
+		bSolid = false;
+		bShootable = false;
+		bUnmorphed = true;
+		bInvisible = true;
+		
+		p.morphTics = (duration) ? duration : DEFMORPHTICS;
+
+		// [MH] Used by SBARINFO to speed up face drawing
+		p.MorphedPlayerClass = spawntype;
+
+		p.MorphStyle = style;
+		if (exit_flash == null) exit_flash = 'TeleportFog';
+		p.MorphExitFlash = exit_flash;
+		p.health = morphed.health;
+		p.mo = morphed;
+		p.vel = (0, 0);
+		morphed.ObtainInventory (self);
+		// Remove all armor
+		for (Inventory item = morphed.Inv; item != null; )
+		{
+			let next = item.Inv;
+			if (item is 'Armor')
+			{
+				item.DepleteOrDestroy();
+			}
+			item = next;
+		}
+		morphed.InitAllPowerupEffects();
+		morphed.ActivateMorphWeapon ();
+		if (p.camera == self)	// can this happen?
+		{
+			p.camera = morphed;
+		}
+		morphed.ScoreIcon = ScoreIcon;	// [GRB]
+		if (eflash)	
+			eflash.target = morphed;
+		return true;
+	}
+	
+}
+
 class MorphProjectile : Actor
 {
 

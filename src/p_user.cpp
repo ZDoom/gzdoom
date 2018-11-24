@@ -293,6 +293,13 @@ CCMD (playerclasses)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(APlayerPawn, Substitute)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	PARAM_OBJECT(replace, APlayerPawn);
+	DObject::StaticPointerSubstitution(self, replace);
+	return 0;
+}
 
 //
 // Movement.

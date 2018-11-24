@@ -15,6 +15,7 @@ class PlayerPawn : Actor native
 	const CROUCHSPEED = (1./12);
 	// [RH] # of ticks to complete a turn180
 	const TURN180_TICKS = ((TICRATE / 4) + 1);
+	const DEFMORPHTICS = 40 * TICRATE;
 	
 	native int			crouchsprite;
 	native int			MaxHealth;
@@ -1261,6 +1262,7 @@ class PlayerPawn : Actor native
 			player.mo.CheckAirSupply();
 		}
 	}
+
 	
 	//----------------------------------------------------------------------------
 	//
@@ -1278,6 +1280,7 @@ class PlayerPawn : Actor native
 	native void CheckWeaponButtons();
 	native Weapon BestWeapon(class<Ammo> ammotype);
 	native Weapon PickNewWeapon(class<Ammo> ammotype);
+	native void Substitute(PlayerPawn replacement);
 
 }
 
@@ -1434,7 +1437,7 @@ struct PlayerInfo native play	// this is what internally is known as player_t
 	native Class<PlayerPawn>MorphedPlayerClass;
 	native int MorphStyle;
 	native Class<Actor> MorphExitFlash;
-	native Class<Weapon> PremorphWeapon;
+	native Weapon PremorphWeapon;
 	native int chickenPeck;
 	native int jumpTics;
 	native bool onground;
@@ -1467,7 +1470,16 @@ struct PlayerInfo native play	// this is what internally is known as player_t
 	native readonly @UserCmd original_cmd;
 
 
-	native bool MorphPlayer(playerinfo p, Class<PlayerPawn> spawntype, int duration, int style, Class<Actor> enter_flash = null, Class<Actor> exit_flash = null);
+	bool MorphPlayer(playerinfo p, Class<PlayerPawn> spawntype, int duration, int style, Class<Actor> enter_flash = null, Class<Actor> exit_flash = null)
+	{
+		if (mo != null)
+		{
+			// The actual implementation is on PlayerPawn where it can be overridden.
+			return mo.MorphPlayer(p, spawntype, duration, style, enter_flash, exit_flash);
+		}
+		return false;
+	}
+	
 	native bool UndoPlayerMorph(playerinfo player, int unmorphflag = 0, bool force = false);
 	native bool PoisonPlayer(Actor poisoner, Actor source, int poison);
 	native void PoisonDamage(Actor source, int damage, bool playPainSound);
@@ -1537,6 +1549,13 @@ struct PlayerInfo native play	// this is what internally is known as player_t
 		allfrags -= frags[playernum];
 		return allfrags;
 	}
+	
+	double GetDeltaViewHeight()
+	{
+		return (mo.ViewHeight + crouchviewdelta - viewheight) / 8;
+	}
+
+	
 	
 }
 

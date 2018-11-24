@@ -2536,10 +2536,10 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 	case DEM_MORPHEX:
 		{
 			s = ReadString (stream);
-			const char *msg = cht_Morph (players + player, PClass::FindActor (s), false);
+			FString msg = cht_Morph (players + player, PClass::FindActor (s), false);
 			if (player == consoleplayer)
 			{
-				Printf ("%s\n", *msg != '\0' ? msg : "Morph failed.");
+				Printf ("%s\n", msg[0] != '\0' ? msg.GetChars() : "Morph failed.");
 			}
 		}
 		break;

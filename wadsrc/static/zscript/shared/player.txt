@@ -1111,7 +1111,7 @@ class PlayerPawn : Actor native
 			}
 			if (!--player.morphTics)
 			{ // Attempt to undo the chicken/pig
-				player.UndoPlayerMorph(player, MRF_UNDOBYTIMEOUT);
+				player.mo.UndoPlayerMorph(player, MRF_UNDOBYTIMEOUT);
 			}
 		}
 	}
@@ -1477,18 +1477,18 @@ struct PlayerInfo native play	// this is what internally is known as player_t
 	native readonly @UserCmd original_cmd;
 
 
-	bool MorphPlayer(playerinfo p, Class<PlayerPawn> spawntype, int duration, int style, Class<Actor> enter_flash = null, Class<Actor> exit_flash = null)
+	// The actual implementation is on PlayerPawn where it can be overridden. Use that directly in the future.
+	deprecated("3.7") bool MorphPlayer(playerinfo p, Class<PlayerPawn> spawntype, int duration, int style, Class<Actor> enter_flash = null, Class<Actor> exit_flash = null)
 	{
 		if (mo != null)
 		{
-			// The actual implementation is on PlayerPawn where it can be overridden.
 			return mo.MorphPlayer(p, spawntype, duration, style, enter_flash, exit_flash);
 		}
 		return false;
 	}
 	
 	// This somehow got its arguments mixed up. 'self' should have been the player to be unmorphed, not the activator
-	bool UndoPlayerMorph(playerinfo player, int unmorphflag = 0, bool force = false)
+	deprecated("3.7") bool UndoPlayerMorph(playerinfo player, int unmorphflag = 0, bool force = false)
 	{
 		if (player.mo != null)
 		{

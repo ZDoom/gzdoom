@@ -72,7 +72,7 @@ extend class PlayerPawn
 				player.ReadyWeapon = Weapon(GiveInventoryType (morphweaponcls));
 				if (player.ReadyWeapon != null)
 				{
-					player.ReadyWeapon.GivenAsMorphWeapon = true; // flag is used only by new beastweap semantics in P_UndoPlayerMorph
+					player.ReadyWeapon.GivenAsMorphWeapon = true; // flag is used only by new beastweap semantics in UndoPlayerMorph
 				}
 			}
 			if (player.ReadyWeapon != null)
@@ -91,7 +91,7 @@ extend class PlayerPawn
 
 	//---------------------------------------------------------------------------
 	//
-	// FUNC P_MorphPlayer
+	// MorphPlayer
 	//
 	// Returns true if the player gets turned into a chicken/pig.
 	//
@@ -216,7 +216,7 @@ extend class PlayerPawn
 	
 	//----------------------------------------------------------------------------
 	//
-	// FUNC P_UndoPlayerMorph
+	// FUNC UndoPlayerMorph
 	//
 	//----------------------------------------------------------------------------
 
@@ -279,13 +279,13 @@ extend class PlayerPawn
 		altmo.bSolid = !!(special2 & 2);
 		altmo.bShootable = !!(special2 & 4);
 		altmo.bInvisible = !!(special2 & 0x40);
-		altmo.Vel.XY = (0, 0);
+		altmo.Vel = (0, 0, Vel.Z);
 		player.Vel = (0, 0);
-		altmo.Vel.Z = Vel.Z;
 		altmo.floorz = floorz;
 		altmo.bShadow = bShadow;
 		altmo.bNoGravity = bNoGravity;
 		altmo.bGhost = bGhost;
+		altmo.bUnmorphed = false;
 		altmo.Score = Score;
 		altmo.InitAllPowerupEffects();
 
@@ -427,7 +427,8 @@ class MorphProjectile : Actor
 	{
 		if (target.player)
 		{
-			target.player.MorphPlayer (NULL, PlayerClass, Duration, MorphStyle, MorphFlash, UnMorphFlash);
+			// Voodoo dolls forward this to the real player
+			target.player.mo.MorphPlayer (NULL, PlayerClass, Duration, MorphStyle, MorphFlash, UnMorphFlash);
 		}
 		else
 		{

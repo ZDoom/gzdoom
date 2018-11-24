@@ -1893,7 +1893,7 @@ class PowerMorph : Powerup
 		if (Owner != null && Owner.player != null && PlayerClass != null)
 		{
 			let realplayer = Owner.player;	// Remember the identity of the player
-			if (realplayer.MorphPlayer(realplayer, PlayerClass, 0x7fffffff/*INDEFINITELY*/, MorphStyle, MorphFlash, UnMorphFlash))
+			if (realplayer.mo.MorphPlayer(realplayer, PlayerClass, 0x7fffffff/*INDEFINITELY*/, MorphStyle, MorphFlash, UnMorphFlash))
 			{
 				Owner = realplayer.mo;				// Replace the new owner in our owner; safe because we are not attached to anything yet
 				bCreateCopyMoved = true;			// Let the caller know the "real" owner has changed (to the morphed actor)
@@ -1930,7 +1930,7 @@ class PowerMorph : Powerup
 		}
 
 		int savedMorphTics = MorphedPlayer.morphTics;
-		MorphedPlayer.UndoPlayerMorph (MorphedPlayer, 0, !!(MorphedPlayer.MorphStyle & MRF_UNDOALWAYS));
+		MorphedPlayer.mo.UndoPlayerMorph (MorphedPlayer, 0, !!(MorphedPlayer.MorphStyle & MRF_UNDOALWAYS));
 		MorphedPlayer = null;
 	}
 

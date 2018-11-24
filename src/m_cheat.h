@@ -15,6 +15,6 @@ void cht_Give (player_t *player, const char *item, int amount=1);
 void cht_Take (player_t *player, const char *item, int amount=1);
 void cht_SetInv(player_t *player, const char *item, int amount = 1, bool beyondMax = false);
 void cht_Suicide (player_t *player);
-const char *cht_Morph (player_t *player, PClassActor *morphclass, bool quickundo);
+FString cht_Morph (player_t *player, PClassActor *morphclass, bool quickundo);
 
 #endif

@@ -445,7 +445,7 @@ public:
 	int			morphTics = 0;				// player is a chicken/pig if > 0
 	PClassActor *MorphedPlayerClass = nullptr;		// [MH] (for SBARINFO) class # for this player instance when morphed
 	int			MorphStyle = 0;				// which effects to apply for this player instance when morphed
-	PClassActor *MorphExitFlash = nullptr;		// flash to apply when demorphing (cache of value given to P_MorphPlayer)
+	PClassActor *MorphExitFlash = nullptr;		// flash to apply when demorphing (cache of value given to MorphPlayer)
 	TObjPtr<AWeapon*>	PremorphWeapon = nullptr;		// ready weapon before morphing
 	int			chickenPeck = 0;			// chicken peck countdown
 	int			jumpTics = 0;				// delay the next jump for a moment

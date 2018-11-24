@@ -1,11 +1,78 @@
 
 class StateProvider : Inventory native
 {
-	action native state A_JumpIfNoAmmo(statelabel label);
 	action native void A_WeaponReady(int flags = 0);
-	action native state A_CheckForReload(int counter, statelabel label, bool dontincrement = false);
-	action native void A_ResetReloadCounter();
 
+	//==========================================================================
+	//
+	// State jump function
+	//
+	//==========================================================================
+
+	action state A_JumpIfNoAmmo(statelabel label)
+	{
+		if (stateinfo == null || stateinfo.mStateType != STATE_Psprite || player == null || player.ReadyWeapon == null ||
+			!player.ReadyWeapon.CheckAmmo(player.ReadyWeapon.bAltFire, false, true))
+		{
+			return null;
+		}
+		else return ResolveState(label);
+	}
+
+	//===========================================================================
+	//
+	// Modified code pointer from Skulltag
+	//
+	//===========================================================================
+
+	action state A_CheckForReload(int count, statelabel jump, bool dontincrement = false)
+	{
+		if (stateinfo == null || stateinfo.mStateType != STATE_Psprite || player == null || player.ReadyWeapon == null)
+		{
+			return null;
+		}
+
+		state ret = null;
+
+		let weapon = player.ReadyWeapon;
+
+		int ReloadCounter = weapon.ReloadCounter;
+		if (!dontincrement || ReloadCounter != 0)
+			ReloadCounter = (weapon.ReloadCounter+1) % count;
+		else // 0 % 1 = 1?  So how do we check if the weapon was never fired?  We should only do this when we're not incrementing the counter though.
+			ReloadCounter = 1;
+
+		// If we have not made our last shot...
+		if (ReloadCounter != 0)
+		{
+			// Go back to the refire frames, instead of continuing on to the reload frames.
+			ret = ResolveState(jump);
+		}
+		else
+		{
+			// We need to reload. However, don't reload if we're out of ammo.
+			weapon.CheckAmmo(false, false);
+		}
+		if (!dontincrement)
+		{
+			weapon.ReloadCounter = ReloadCounter;
+		}
+		return ret;
+	}
+
+	//===========================================================================
+	//
+	// Resets the counter for the above function
+	//
+	//===========================================================================
+
+	action void A_ResetReloadCounter()
+	{
+		if (stateinfo != null && stateinfo.mStateType == STATE_Psprite && player != null && player.ReadyWeapon != null)
+			player.ReadyWeapon.ReloadCounter = 0;
+	}
+
+	
 	//---------------------------------------------------------------------------
 	//
 	//

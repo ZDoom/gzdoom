@@ -1604,30 +1604,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomComboAttack)
 
 //==========================================================================
 //
-// State jump function
-//
-//==========================================================================
-DEFINE_ACTION_FUNCTION(AStateProvider, A_JumpIfNoAmmo)
-{
-	PARAM_ACTION_PROLOGUE(AStateProvider);
-	PARAM_STATE_ACTION(jump);
-
-	if (!ACTION_CALL_FROM_PSPRITE() || self->player->ReadyWeapon == nullptr)
-	{
-		ACTION_RETURN_STATE(NULL);
-	}
-
-	if (!self->player->ReadyWeapon->CheckAmmo(self->player->ReadyWeapon->bAltFire, false, true))
-	{
-		ACTION_RETURN_STATE(jump);
-	}
-	ACTION_RETURN_STATE(NULL);
-}
-
-
-
-//==========================================================================
-//
 // also for monsters
 //
 //==========================================================================
@@ -3828,77 +3804,6 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfInTargetLOS)
 		ACTION_RETURN_BOOL(false);
 	}
 	ACTION_RETURN_BOOL(true);
-}
-
-//===========================================================================
-//
-// Modified code pointer from Skulltag
-//
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION(AStateProvider, A_CheckForReload)
-{
-	PARAM_ACTION_PROLOGUE(AStateProvider);
-
-	if ( self->player == NULL || self->player->ReadyWeapon == NULL )
-	{
-		ACTION_RETURN_STATE(NULL);
-	}
-	PARAM_INT		(count);
-	PARAM_STATE_ACTION	(jump);
-	PARAM_BOOL	(dontincrement);
-
-	if (numret > 0)
-	{
-		ret->SetPointer(NULL);
-		numret = 1;
-	}
-
-	AWeapon *weapon = self->player->ReadyWeapon;
-
-	int ReloadCounter = weapon->ReloadCounter;
-	if (!dontincrement || ReloadCounter != 0)
-		ReloadCounter = (weapon->ReloadCounter+1) % count;
-	else // 0 % 1 = 1?  So how do we check if the weapon was never fired?  We should only do this when we're not incrementing the counter though.
-		ReloadCounter = 1;
-
-	// If we have not made our last shot...
-	if (ReloadCounter != 0)
-	{
-		// Go back to the refire frames, instead of continuing on to the reload frames.
-		if (numret != 0)
-		{
-			ret->SetPointer(jump);
-		}
-	}
-	else
-	{
-		// We need to reload. However, don't reload if we're out of ammo.
-		weapon->CheckAmmo(false, false);
-	}
-	if (!dontincrement)
-	{
-		weapon->ReloadCounter = ReloadCounter;
-	}
-	return numret;
-}
-
-//===========================================================================
-//
-// Resets the counter for the above function
-//
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION(AStateProvider, A_ResetReloadCounter)
-{
-	PARAM_ACTION_PROLOGUE(AStateProvider);
-
-	if (self->player == NULL || self->player->ReadyWeapon == NULL)
-		return 0;
-
-	AWeapon *weapon = self->player->ReadyWeapon;
-	weapon->ReloadCounter = 0;
-	return 0;
 }
 
 //===========================================================================

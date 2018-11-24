@@ -21,6 +21,7 @@ class Wraith : Actor
 		ActiveSound "WraithActive";
 		HitObituary "$OB_WRAITHHIT";
 		Obituary "$OB_WRAITH";
+		Tag "$FN_WRAITH";
 	}
 
 	States

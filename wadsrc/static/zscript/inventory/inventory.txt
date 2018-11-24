@@ -52,7 +52,6 @@ class Inventory : Actor native
 	native bool DoRespawn();
 	native void BecomeItem();
 	native void BecomePickup();
-	native void ModifyDropAmount(int dropamount);
 	native static void PrintPickupMessage (bool localview, String str);
 
 	States(Actor)
@@ -917,6 +916,22 @@ class Inventory : Actor native
 	//===========================================================================
 
 	virtual void OnDrop (Actor dropper) {}
+	
+	//---------------------------------------------------------------------------
+	//
+	// Modifies the drop amount of this item according to the current skill's
+	// settings (also called by ADehackedPickup::TryPickup)
+	//
+	//---------------------------------------------------------------------------
+	
+	virtual void ModifyDropAmount(int dropamount)
+	{
+		if (dropamount > 0)
+		{
+			Amount = dropamount;
+		}
+	}
+	
 }
 
 //===========================================================================
@@ -1014,6 +1029,14 @@ class DehackedPickup : Inventory
 		}
 		Super.OnDestroy();
 	}
+	
+	override void ModifyDropAmount(int dropamount)
+	{
+		// Must forward the adjustment to the real item.
+		// dropamount is not relevant here because Dehacked cannot change it.
+		droppedbymonster = true;
+	}
+	
 }
 
 //===========================================================================

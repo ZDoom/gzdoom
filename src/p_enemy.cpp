@@ -3210,64 +3210,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_ActiveSound)
 //---------------------------------------------------------------------------
 void ModifyDropAmount(AInventory *inv, int dropamount)
 {
-	auto flagmask = IF_IGNORESKILL;
-	double dropammofactor = G_SkillProperty(SKILLP_DropAmmoFactor);
-	// Default drop amount is half of regular amount * regular ammo multiplication
-	if (dropammofactor == -1) 
+	IFVIRTUALPTR(inv, AInventory, ModifyDropAmount)
 	{
-		dropammofactor = 0.5;
-		flagmask = ItemFlag(0);
+		VMValue params[] = { inv, dropamount };
+		VMCall(func, params, 2, nullptr, 0);
 	}
-
-	if (dropamount > 0)
-	{
-		if (flagmask != 0 && inv->IsKindOf(NAME_Ammo))
-		{
-			inv->Amount = int(dropamount * dropammofactor);
-			inv->ItemFlags |= IF_IGNORESKILL;
-		}
-		else
-		{
-			inv->Amount = dropamount;
-		}
-	}
-	else if (inv->IsKindOf (PClass::FindActor(NAME_Ammo)))
-	{
-		// Half ammo when dropped by bad guys.
-		int amount = inv->IntVar("DropAmount");
-		if (amount <= 0)
-		{
-			amount = MAX(1, int(inv->Amount * dropammofactor));
-		}
-		inv->Amount = amount;
-		inv->ItemFlags |= flagmask;
-	}
-	else if (inv->IsKindOf (PClass::FindActor(NAME_WeaponGiver)))
-	{
-		inv->FloatVar("AmmoFactor") = dropammofactor;
-		inv->ItemFlags |= flagmask;
-	}
-	else if (inv->IsKindOf(NAME_Weapon))
-	{
-		// The same goes for ammo from a weapon.
-		static_cast<AWeapon *>(inv)->AmmoGive1 = int(static_cast<AWeapon *>(inv)->AmmoGive1 * dropammofactor);
-		static_cast<AWeapon *>(inv)->AmmoGive2 = int(static_cast<AWeapon *>(inv)->AmmoGive2 * dropammofactor);
-		inv->ItemFlags |= flagmask;
-	}			
-	else if (inv->IsKindOf (PClass::FindClass(NAME_DehackedPickup)))
-	{
-		// For weapons and ammo modified by Dehacked we need to flag the item.
-		inv->BoolVar("droppedbymonster") = true;
-	}
-}
-
-// todo: make this a scripted virtual function so it can better deal with some of the classes involved.
-DEFINE_ACTION_FUNCTION(AInventory, ModifyDropAmount)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	PARAM_INT(dropamount);
-	ModifyDropAmount(self, dropamount);
-	return 0;
 }
 
 //---------------------------------------------------------------------------

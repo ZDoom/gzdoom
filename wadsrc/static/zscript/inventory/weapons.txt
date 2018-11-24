@@ -842,6 +842,33 @@ class Weapon : StateProvider native
 	}
 
 
+	//---------------------------------------------------------------------------
+	//
+	// Modifies the drop amount of this item according to the current skill's
+	// settings (also called by ADehackedPickup::TryPickup)
+	//
+	//---------------------------------------------------------------------------
+	override void ModifyDropAmount(int dropamount)
+	{
+		bool ignoreskill = true;
+		double dropammofactor = G_SkillPropertyFloat(SKILLP_DropAmmoFactor);
+		// Default drop amount is half of regular amount * regular ammo multiplication
+		if (dropammofactor == -1) 
+		{
+			dropammofactor = 0.5;
+			ignoreskill = false;
+		}
+
+		if (dropamount > 0)
+		{
+			self.Amount = dropamount;
+		}
+		// Adjust the ammo given by this weapon
+		AmmoGive1 = int(AmmoGive1 * dropammofactor);
+		AmmoGive2 = int(AmmoGive2 * dropammofactor);
+		bIgnoreSkill = ignoreskill;
+	}
+	
 }
 
 class WeaponGiver : Weapon
@@ -904,6 +931,29 @@ class WeaponGiver : Weapon
 		}
 		return false;
 	}
+	
+	//---------------------------------------------------------------------------
+	//
+	// Modifies the drop amount of this item according to the current skill's
+	// settings (also called by ADehackedPickup::TryPickup)
+	//
+	//---------------------------------------------------------------------------
+
+	override void ModifyDropAmount(int dropamount)
+	{
+		bool ignoreskill = true;
+		double dropammofactor = G_SkillPropertyFloat(SKILLP_DropAmmoFactor);
+		// Default drop amount is half of regular amount * regular ammo multiplication
+		if (dropammofactor == -1) 
+		{
+			dropammofactor = 0.5;
+			ignoreskill = false;
+		}
+
+		AmmoFactor = dropammofactor;
+		bIgnoreSkill = ignoreskill;
+	}
+	
 	
 }
 

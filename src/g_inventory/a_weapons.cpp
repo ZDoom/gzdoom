@@ -204,29 +204,6 @@ void AWeapon::MarkPrecacheSounds() const
 	ReadySound.MarkUsed();
 }
 
-//===========================================================================
-//
-// AWeapon :: CheckAmmo
-//
-// Returns true if there is enough ammo to shoot.  If not, selects the
-// next weapon to use.
-//
-//===========================================================================
-
-bool AWeapon::CheckAmmo(int fireMode, bool autoSwitch, bool requireAmmo, int ammocount)
-{
-	IFVIRTUAL(AWeapon, CheckAmmo)
-	{
-		VMValue params[] = { (DObject*)this, fireMode, autoSwitch, requireAmmo, ammocount };
-		VMReturn ret;
-		int retval;
-		ret.IntAt(&retval);
-		VMCall(func, params, 5, &ret, 1);
-		return !!retval;
-	}
-	return false;
-}
-
 /* Weapon slots ***********************************************************/
 
 //===========================================================================
@@ -464,6 +441,23 @@ DEFINE_ACTION_FUNCTION(FWeaponSlots, LocateWeapon)
 	if (numret >= 2) ret[1].SetInt(slot);
 	if (numret >= 3) ret[2].SetInt(index);
 	return MIN(numret, 3);
+}
+
+DEFINE_ACTION_FUNCTION(FWeaponSlots, GetWeapon)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FWeaponSlots);
+	PARAM_INT(slot);
+	PARAM_INT(index);
+	ACTION_RETURN_POINTER(self->GetWeapon(slot, index));
+	return 1;
+}
+
+DEFINE_ACTION_FUNCTION(FWeaponSlots, SlotSize)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FWeaponSlots);
+	PARAM_INT(slot);
+	ACTION_RETURN_INT(self->SlotSize(slot));
+	return 1;
 }
 
 //===========================================================================

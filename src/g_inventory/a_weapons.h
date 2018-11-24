@@ -174,7 +174,6 @@ public:
 		AltFire,
 		EitherFire
 	};
-	bool CheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo=false, int ammocount = -1);
 
 	enum
 	{

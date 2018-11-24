@@ -961,4 +961,6 @@ struct WeaponSlots native
 {
 	native bool, int, int LocateWeapon(class<Weapon> weap);
 	native static void SetupWeaponSlots(PlayerPawn pp);
+	native class<Weapon> GetWeapon(int slot, int index);
+	native int SlotSize(int slot);
 }

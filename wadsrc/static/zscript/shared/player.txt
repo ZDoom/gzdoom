@@ -1721,6 +1721,225 @@ class PlayerPawn : Actor native
 		return TeleportFreezeTime;
 	}
 	
+	//===========================================================================
+	//
+	// FWeaponSlot :: PickWeapon
+	//
+	// Picks a weapon from this slot. If no weapon is selected in this slot,
+	// or the first weapon in this slot is selected, returns the last weapon.
+	// Otherwise, returns the previous weapon in this slot. This means
+	// precedence is given to the last weapon in the slot, which by convention
+	// is probably the strongest. Does not return weapons you have no ammo
+	// for or which you do not possess.
+	//
+	//===========================================================================
+
+	virtual Weapon PickWeapon(int slot, bool checkammo)
+	{
+		int i, j;
+
+		let player = self.player;
+		int Size = player.weapons.SlotSize(slot);
+		// Does this slot even have any weapons?
+		if (Size == 0)
+		{
+			return player.ReadyWeapon;
+		}
+		let ReadyWeapon = player.ReadyWeapon;
+		if (ReadyWeapon != null)
+		{
+			for (i = 0; i < Size; i++)
+			{
+				let weapontype = player.weapons.GetWeapon(slot, i);
+				if (weapontype == ReadyWeapon.GetClass() ||
+					(ReadyWeapon.bPOWERED_UP && ReadyWeapon.SisterWeapon != null && ReadyWeapon.SisterWeapon.GetClass() == weapontype))
+				{
+					for (j = (i == 0 ? Size - 1 : i - 1);
+						j != i;
+						j = (j == 0 ? Size - 1 : j - 1))
+					{
+						let weapontype2 = player.weapons.GetWeapon(slot, j);
+						let weap = Weapon(player.mo.FindInventory(weapontype2));
+
+						if (weap != null)
+						{
+							if (!checkammo || weap.CheckAmmo(Weapon.EitherFire, false))
+							{
+								return weap;
+							}
+						}
+					}
+				}
+			}
+		}
+		for (i = Size - 1; i >= 0; i--)
+		{
+			let weapontype = player.weapons.GetWeapon(slot, i);
+			let weap = Weapon(player.mo.FindInventory(weapontype));
+
+			if (weap != null)
+			{
+				if (!checkammo || weap.CheckAmmo(Weapon.EitherFire, false))
+				{
+					return weap;
+				}
+			}
+		}
+		return ReadyWeapon;
+	}
+
+	//===========================================================================
+	//
+	// FindMostRecentWeapon
+	//
+	// Locates the slot and index for the most recently selected weapon. If the
+	// player is in the process of switching to a new weapon, that is the most
+	// recently selected weapon. Otherwise, the current weapon is the most recent
+	// weapon.
+	//
+	//===========================================================================
+
+	bool, int, int FindMostRecentWeapon()
+	{
+		let player = self.player;
+		let ReadyWeapon = player.ReadyWeapon;
+		if (player.PendingWeapon != WP_NOCHANGE)
+		{
+			return player.weapons.LocateWeapon(player.PendingWeapon.GetClass());
+		}
+		else if (ReadyWeapon != null)
+		{
+			bool found;
+			int slot;
+			int index;
+			[found, slot, index] = player.weapons.LocateWeapon(ReadyWeapon.GetClass());
+			if (!found)
+			{
+				// If the current weapon wasn't found and is powered up,
+				// look for its non-powered up version.
+				if (ReadyWeapon.bPOWERED_UP && ReadyWeapon.SisterWeaponType != null)
+				{
+					return player.weapons.LocateWeapon(ReadyWeapon.SisterWeaponType);
+				}
+				return false, 0, 0;
+			}
+			return true, slot, index;
+		}
+		else
+		{
+			return false, 0, 0;
+		}
+	}
+
+	//===========================================================================
+	//
+	// FWeaponSlots :: PickNextWeapon
+	//
+	// Returns the "next" weapon for this player. If the current weapon is not
+	// in a slot, then it just returns that weapon, since there's nothing to
+	// consider it relative to.
+	//
+	//===========================================================================
+	const NUM_WEAPON_SLOTS = 10;
+
+	virtual Weapon PickNextWeapon()
+	{
+		let player = self.player;
+		bool found;
+		int startslot, startindex;
+		int slotschecked = 0;
+
+		[found, startslot, startindex] = FindMostRecentWeapon();
+		let ReadyWeapon = player.ReadyWeapon;
+		if (ReadyWeapon == null || found)
+		{
+			int slot;
+			int index;
+
+			if (ReadyWeapon == null)
+			{
+				startslot = NUM_WEAPON_SLOTS - 1;
+				startindex = player.weapons.SlotSize(startslot) - 1;
+			}
+
+			slot = startslot;
+			index = startindex;
+			do
+			{
+				if (++index >= player.weapons.SlotSize(slot))
+				{
+					index = 0;
+					slotschecked++;
+					if (++slot >= NUM_WEAPON_SLOTS)
+					{
+						slot = 0;
+					}
+				}
+				let type = player.weapons.GetWeapon(slot, index);
+				let weap = Weapon(FindInventory(type));
+				if (weap != null && weap.CheckAmmo(Weapon.EitherFire, false))
+				{
+					return weap;
+				}
+			} while ((slot != startslot || index != startindex) && slotschecked <= NUM_WEAPON_SLOTS);
+		}
+		return ReadyWeapon;
+	}
+
+	//===========================================================================
+	//
+	// FWeaponSlots :: PickPrevWeapon
+	//
+	// Returns the "previous" weapon for this player. If the current weapon is
+	// not in a slot, then it just returns that weapon, since there's nothing to
+	// consider it relative to.
+	//
+	//===========================================================================
+
+	virtual Weapon PickPrevWeapon()
+	{
+		let player = self.player;
+		int startslot, startindex;
+		bool found;
+		int slotschecked = 0;
+
+		[found, startslot, startindex] = FindMostRecentWeapon();
+		if (player.ReadyWeapon == null || found)
+		{
+			int slot;
+			int index;
+
+			if (player.ReadyWeapon == null)
+			{
+				startslot = 0;
+				startindex = 0;
+			}
+
+			slot = startslot;
+			index = startindex;
+			do
+			{
+				if (--index < 0)
+				{
+					slotschecked++;
+					if (--slot < 0)
+					{
+						slot = NUM_WEAPON_SLOTS - 1;
+					}
+					index = player.weapons.SlotSize(slot) - 1;
+				}
+				let type = player.weapons.GetWeapon(slot, index);
+				let weap = Weapon(FindInventory(type));
+				if (weap != null && weap.CheckAmmo(Weapon.EitherFire, false))
+				{
+					return weap;
+				}
+			} while ((slot != startslot || index != startindex) && slotschecked <= NUM_WEAPON_SLOTS);
+		}
+		return player.ReadyWeapon;
+	}
+
+	
 	//----------------------------------------------------------------------------
 	//
 	// 

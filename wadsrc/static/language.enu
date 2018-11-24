@@ -1423,6 +1423,24 @@ TXT_QUIETUS_PIECE = "SEGMENT OF QUIETUS";
 TXT_WRAITHVERGE_PIECE = "SEGMENT OF WRAITHVERGE";
 TXT_BLOODSCOURGE_PIECE = "SEGMENT OF BLOODSCOURGE";
 
+// Friendly names
+
+FN_FIREDEMON = "Afrit";
+FN_DEMON1 = "Serpent";
+FN_ETTIN = "Ettin";
+FN_CENTAUR = "Centaur";
+FN_SLAUGHTAUR = "Slaughtaur";
+FN_BISHOP = "Bishop";
+FN_ICEGUY = "Wendigo";
+FN_SERPENT = "Stalker";
+FN_WRAITH = "Reiver";
+FN_DRAGON = "Death Wyvern";
+FN_KORAX = "Korax";
+FN_FBOSS = "Zedek";
+FN_MBOSS = "Menelkir";
+FN_CBOSS = "Traductus";
+FN_HERESIARCH = "Heresiarch";
+
 // Strife locks
 
 TXT_NEEDKEY = "You don't have the key";

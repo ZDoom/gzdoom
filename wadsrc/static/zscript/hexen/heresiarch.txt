@@ -70,6 +70,7 @@ class Heresiarch : Actor
 		DeathSound "SorcererDeathScream";
 		ActiveSound "SorcererActive";
 		Obituary "$OB_HERESIARCH";
+		Tag "$FN_HERESIARCH";
 	}
 	
 	States

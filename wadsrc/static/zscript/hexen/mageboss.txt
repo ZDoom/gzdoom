@@ -16,6 +16,7 @@ class MageBoss : Actor
 		PainSound "PlayerMagePain";
 		DeathSound "PlayerMageCrazyDeath";
 		Obituary "$OB_MBOSS";
+		Tag "$FN_MBOSS";
 	}
 
 	States

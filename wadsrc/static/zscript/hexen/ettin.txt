@@ -22,6 +22,7 @@ class Ettin : Actor
 		ActiveSound "EttinActive";
 		HowlSound "PuppyBeat";
 		Obituary "$OB_ETTIN";
+		Tag "$FN_ETTIN";
 	}
 	States
 	{

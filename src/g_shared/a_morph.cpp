@@ -39,12 +39,11 @@
 static FRandom pr_morphmonst ("MorphMonster");
 
 
-bool P_MorphPlayer(player_t *activator, player_t *p, PClassActor *spawntype, int duration, int style, PClassActor *enter_flash, PClassActor *exit_flash)
+bool P_MorphActor(AActor *activator, AActor *victim, PClassActor *ptype, PClassActor *mtype, int duration, int style, PClassActor *enter_flash, PClassActor *exit_flash)
 {
-	if (!p->mo) return false;
-	IFVIRTUALPTR(p->mo, APlayerPawn, MorphPlayer)
+	IFVIRTUALPTR(victim, AActor, Morph)
 	{
-		VMValue params[] = { p->mo, activator, spawntype, duration, style, enter_flash, exit_flash };
+		VMValue params[] = { victim, activator, ptype, mtype, duration, style, enter_flash, exit_flash };
 		int retval;
 		VMReturn ret(&retval);
 		VMCall(func, params, countof(params), &ret, 1);
@@ -56,7 +55,7 @@ bool P_MorphPlayer(player_t *activator, player_t *p, PClassActor *spawntype, int
 bool P_UndoPlayerMorph(player_t *activator, player_t *player, int unmorphflag, bool force)
 {
 	if (!player->mo) return false;
-	IFVIRTUALPTR(player->mo, APlayerPawn, MorphPlayer)
+	IFVIRTUALPTR(player->mo, APlayerPawn, UndoPlayerMorph)
 	{
 		VMValue params[] = { player->mo, activator, unmorphflag, force };
 		int retval;
@@ -65,76 +64,6 @@ bool P_UndoPlayerMorph(player_t *activator, player_t *player, int unmorphflag, b
 		return !!retval;
 	}
 	return false;
-}
-
-//---------------------------------------------------------------------------
-//
-// FUNC P_MorphMonster
-//
-// Returns true if the monster gets turned into a chicken/pig.
-//
-//---------------------------------------------------------------------------
-
-bool P_MorphMonster (AActor *actor, PClassActor *spawntype, int duration, int style, PClassActor *enter_flash, PClassActor *exit_flash)
-{
-	AMorphedMonster *morphed;
-
-	if (actor == NULL || actor->player || spawntype == NULL ||
-		actor->flags3 & MF3_DONTMORPH ||
-		!(actor->flags3 & MF3_ISMONSTER) ||
-		!spawntype->IsDescendantOf (PClass::FindActor(NAME_MorphedMonster)))
-	{
-		return false;
-	}
-
-	morphed = static_cast<AMorphedMonster *>(Spawn (spawntype, actor->Pos(), NO_REPLACE));
-	DObject::StaticPointerSubstitution (actor, morphed);
-	if ((style & MORPH_TRANSFERTRANSLATION) && !(morphed->flags2 & MF2_DONTTRANSLATE))
-	{
-		morphed->Translation = actor->Translation;
-	}
-	morphed->tid = actor->tid;
-	morphed->Angles.Yaw = actor->Angles.Yaw;
-	morphed->UnmorphedMe = actor;
-	morphed->Alpha = actor->Alpha;
-	morphed->RenderStyle = actor->RenderStyle;
-	morphed->Score = actor->Score;
-
-	morphed->UnmorphTime = level.time + ((duration) ? duration : MORPHTICS) + pr_morphmonst();
-	morphed->MorphStyle = style;
-	morphed->MorphExitFlash = (exit_flash) ? exit_flash : PClass::FindActor("TeleportFog");
-	morphed->FlagsSave = actor->flags & ~MF_JUSTHIT;
-	morphed->special = actor->special;
-	memcpy (morphed->args, actor->args, sizeof(actor->args));
-	morphed->CopyFriendliness (actor, true);
-	morphed->flags |= actor->flags & MF_SHADOW;
-	morphed->flags3 |= actor->flags3 & MF3_GHOST;
-	if (actor->renderflags & RF_INVISIBLE)
-	{
-		morphed->FlagsSave |= MF_JUSTHIT;
-	}
-	morphed->AddToHash ();
-	actor->RemoveFromHash ();
-	actor->special = 0;
-	actor->tid = 0;
-	actor->flags &= ~(MF_SOLID|MF_SHOOTABLE);
-	actor->flags |= MF_UNMORPHED;
-	actor->renderflags |= RF_INVISIBLE;
-	AActor *eflash = Spawn(((enter_flash) ? enter_flash : PClass::FindActor("TeleportFog")), actor->PosPlusZ(TELEFOGHEIGHT), ALLOW_REPLACE);
-	if (eflash)
-		eflash->target = morphed;
-	return true;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, MorphMonster)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS(spawntype, AActor);
-	PARAM_INT(duration);
-	PARAM_INT(style);
-	PARAM_CLASS(enter_flash, AActor);
-	PARAM_CLASS(exit_flash, AActor);
-	ACTION_RETURN_BOOL(P_MorphMonster(self, spawntype, duration, style, enter_flash, exit_flash));
 }
 
 //----------------------------------------------------------------------------
@@ -195,23 +124,6 @@ bool P_UndoMonsterMorph (AMorphedMonster *beast, bool force)
 	if (eflash)
 		eflash->target = actor;
 	return true;
-}
-
-//----------------------------------------------------------------------------
-//
-// FUNC P_UpdateMorphedMonster
-//
-// Returns true if the monster unmorphs.
-//
-//----------------------------------------------------------------------------
-
-bool P_UpdateMorphedMonster (AMorphedMonster *beast)
-{
-	if (beast->UnmorphTime > level.time)
-	{
-		return false;
-	}
-	return P_UndoMonsterMorph (beast);
 }
 
 //----------------------------------------------------------------------------
@@ -280,55 +192,6 @@ bool P_MorphedDeath(AActor *actor, AActor **morphed, int *morphedstyle, int *mor
 	return false;
 }
 
-//===========================================================================
-//
-// EndAllPowerupEffects
-//
-// Calls EndEffect() on every Powerup in the inventory list.
-//
-//===========================================================================
-
-void EndAllPowerupEffects(AInventory *item)
-{
-	auto ptype = PClass::FindActor(NAME_Powerup);
-	while (item != NULL)
-	{
-		if (item->IsKindOf(ptype))
-		{
-			IFVIRTUALPTRNAME(item, NAME_Powerup, EndEffect)
-			{
-				VMValue params[1] = { item };
-				VMCall(func, params, 1, nullptr, 0);
-			}
-		}
-		item = item->Inventory;
-	}
-}
-
-//===========================================================================
-//
-// InitAllPowerupEffects
-//
-// Calls InitEffect() on every Powerup in the inventory list.
-//
-//===========================================================================
-
-void InitAllPowerupEffects(AInventory *item)
-{
-	auto ptype = PClass::FindActor(NAME_Powerup);
-	while (item != NULL)
-	{
-		if (item->IsKindOf(ptype))
-		{
-			IFVIRTUALPTRNAME(item, NAME_Powerup, InitEffect)
-			{
-				VMValue params[1] = { item };
-				VMCall(func, params, 1, nullptr, 0);
-			}
-		}
-		item = item->Inventory;
-	}
-}
 
 // Morphed Monster (you must subclass this to do something useful) ---------
 
@@ -380,35 +243,9 @@ void AMorphedMonster::Die (AActor *source, AActor *inflictor, int dmgflags, FNam
 
 void AMorphedMonster::Tick ()
 {
-	if (!P_UpdateMorphedMonster (this))
+	if (UnmorphTime > level.time || !P_UndoMonsterMorph(this))
 	{
-		Super::Tick ();
+		Super::Tick();
 	}
 }
 
-
-DEFINE_ACTION_FUNCTION(AActor, A_Morph)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS(type, AActor);
-	PARAM_INT(duration);
-	PARAM_INT(flags);
-	PARAM_CLASS(enter_flash, AActor);
-	PARAM_CLASS(exit_flash, AActor);
-	bool res = false;
-	if (self->player)
-	{
-		if (type->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)))
-		{
-			res = P_MorphPlayer(self->player, self->player, type, duration, flags, enter_flash, exit_flash);
-		}
-	}
-	else
-	{
-		if (type->IsDescendantOf(RUNTIME_CLASS(AMorphedMonster)))
-		{
-			res = P_MorphMonster(self, type, duration, flags, enter_flash, exit_flash);
-		}
-	}
-	ACTION_RETURN_BOOL(res);
-}

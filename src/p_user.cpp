@@ -293,10 +293,10 @@ CCMD (playerclasses)
 	}
 }
 
-DEFINE_ACTION_FUNCTION(APlayerPawn, Substitute)
+DEFINE_ACTION_FUNCTION(AActor, Substitute)
 {
-	PARAM_SELF_PROLOGUE(APlayerPawn);
-	PARAM_OBJECT(replace, APlayerPawn);
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(replace, AActor);
 	DObject::StaticPointerSubstitution(self, replace);
 	return 0;
 }

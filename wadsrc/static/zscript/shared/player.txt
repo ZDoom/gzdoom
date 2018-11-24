@@ -15,7 +15,6 @@ class PlayerPawn : Actor native
 	const CROUCHSPEED = (1./12);
 	// [RH] # of ticks to complete a turn180
 	const TURN180_TICKS = ((TICRATE / 4) + 1);
-	const DEFMORPHTICS = 40 * TICRATE;
 	
 	native int			crouchsprite;
 	native int			MaxHealth;
@@ -1280,8 +1279,6 @@ class PlayerPawn : Actor native
 	native void CheckWeaponButtons();
 	native Weapon BestWeapon(class<Ammo> ammotype);
 	native Weapon PickNewWeapon(class<Ammo> ammotype);
-	native void Substitute(PlayerPawn replacement);
-
 }
 
 class PlayerChunk : PlayerPawn

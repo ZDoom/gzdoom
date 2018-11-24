@@ -46,7 +46,6 @@ struct FLookExParams
 	FState *seestate;
 };
 
-void P_DaggerAlert (AActor *target, AActor *emitter);
 bool P_HitFriend (AActor *self);
 void P_NoiseAlert (AActor *target, AActor *emmiter, bool splash=false, double maxdist=0);
 

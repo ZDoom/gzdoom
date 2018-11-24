@@ -116,5 +116,59 @@ extend class Actor
 		}
 	}
 
+	//============================================================================
+	//
+	// P_DaggerAlert
+	//
+	//============================================================================
+
+	void DaggerAlert(Actor target)
+	{
+		Actor looker;
+
+		if (LastHeard != NULL)
+			return;
+		if (health <= 0)
+			return;
+		if (!bIsMonster)
+			return;
+		if (bInCombat)
+			return;
+		bInCombat = true;
+
+		self.target = target;
+		let painstate = FindState('Pain', 'Dagger');
+		if (painstate != NULL)
+		{
+			SetState(painstate);
+		}
+
+		for (looker = cursector.thinglist; looker != NULL; looker = looker.snext)
+		{
+			if (looker == self || looker == target)
+				continue;
+
+			if (looker.health <= 0)
+				continue;
+
+			if (!looker.bSeesDaggers)
+				continue;
+
+			if (!looker.bInCombat)
+			{
+				if (!looker.CheckSight(target) && !looker.CheckSight(self))
+					continue;
+
+				looker.target = target;
+				if (looker.SeeSound)
+				{
+					looker.A_PlaySound(looker.SeeSound, CHAN_VOICE);
+				}
+				looker.SetState(looker.SeeState);
+				looker.bInCombat = true;
+			}
+		}
+	}
+
 	
 }

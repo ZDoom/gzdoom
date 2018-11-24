@@ -2,7 +2,6 @@
 class StateProvider : Inventory native
 {
 	action native state A_JumpIfNoAmmo(statelabel label);
-	action native void A_CustomPunch(int damage, bool norandom = false, int flags = CPF_USEAMMO, class<Actor> pufftype = "BulletPuff", double range = 0, double lifesteal = 0, int lifestealmax = 0, class<BasicArmorBonus> armorbonustype = "ArmorBonus", sound MeleeSound = 0, sound MissSound = "");
 	action native void A_RailAttack(int damage, int spawnofs_xy = 0, bool useammo = true, color color1 = 0, color color2 = 0, int flags = 0, double maxdiff = 0, class<Actor> pufftype = "BulletPuff", double spread_xy = 0, double spread_z = 0, double range = 0, int duration = 0, double sparsity = 1.0, double driftspeed = 1.0, class<Actor> spawnclass = "none", double spawnofs_z = 0, int spiraloffset = 270, int limit = 0);
 	action native void A_WeaponReady(int flags = 0);
 
@@ -174,6 +173,98 @@ class StateProvider : Inventory native
 		}
 		return null;
 	}
+
+//==========================================================================
+//
+// A_CustomPunch
+//
+// Berserk is not handled here. That can be done with A_CheckIfInventory
+//
+//==========================================================================
+
+	action void A_CustomPunch(int damage, bool norandom = false, int flags = CPF_USEAMMO, class<Actor> pufftype = "BulletPuff", double range = 0, double lifesteal = 0, int lifestealmax = 0, class<BasicArmorBonus> armorbonustype = "ArmorBonus", sound MeleeSound = 0, sound MissSound = "")
+	{
+		let player = self.player;
+		if (!player) return;
+
+		let weapon = player.ReadyWeapon;
+
+		double angle;
+		double pitch;
+		FTranslatedLineTarget t;
+		int			actualdamage;
+
+		if (!norandom)
+			damage *= random[cwpunch](1, 8);
+
+		angle = self.Angle + random2[cwpunch]() * (5.625 / 256);
+		if (range == 0) range = DEFMELEERANGE;
+		pitch = AimLineAttack (angle, range, t, 0., ALF_CHECK3D);
+
+		// only use ammo when actually hitting something!
+		if ((flags & CPF_USEAMMO) && t.linetarget && weapon && stateinfo != null && stateinfo.mStateType == STATE_Psprite)
+		{
+			if (!weapon.DepleteAmmo(weapon.bAltFire, true))
+				return;	// out of ammo
+		}
+
+		if (pufftype == NULL)
+			pufftype = 'BulletPuff';
+		int puffFlags = LAF_ISMELEEATTACK | ((flags & CPF_NORANDOMPUFFZ) ? LAF_NORANDOMPUFFZ : 0);
+
+		Actor puff;
+		[puff, actualdamage] = LineAttack (angle, range, pitch, damage, 'Melee', pufftype, puffFlags, t);
+
+		if (!t.linetarget)
+		{
+			if (MissSound) A_PlaySound(MissSound, CHAN_WEAPON);
+		}
+		else
+		{
+			if (lifesteal > 0 && !(t.linetarget.bDontDrain))
+			{
+				if (flags & CPF_STEALARMOR)
+				{
+					if (armorbonustype == NULL)
+					{
+						armorbonustype = 'ArmorBonus';
+					}
+					if (armorbonustype != NULL)
+					{
+						let armorbonus = ArmorBonus(Spawn(armorbonustype));
+						armorbonus.SaveAmount *= int(actualdamage * lifesteal);
+						if (lifestealmax > 0) armorbonus.MaxSaveAmount = lifestealmax;
+						armorbonus.bDropped = true;
+						armorbonus.ClearCounters();
+
+						if (!armorbonus.CallTryPickup(self))
+						{
+							armorbonus.Destroy ();
+						}
+					}
+				}
+				else
+				{
+					GiveBody (int(actualdamage * lifesteal), lifestealmax);
+				}
+			}
+			if (weapon != NULL)
+			{
+				if (MeleeSound) A_PlaySound(MeleeSound, CHAN_WEAPON);
+				else			A_PlaySound(AttackSound, CHAN_WEAPON);
+			}
+
+			if (!(flags & CPF_NOTURN))
+			{
+				// turn to face target
+				self.Angle = t.angleFromSource;
+			}
+
+			if (flags & CPF_PULLIN) self.bJustAttacked = true;
+			if (flags & CPF_DAGGER) t.linetarget.DaggerAlert (self);
+		}
+	}
+
 
 	
 	//---------------------------------------------------------------------------

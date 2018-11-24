@@ -10331,24 +10331,7 @@ scriptwait:
 
 				if (tag == 0)
 				{
-					if (activator->player)
-					{
-						if (P_UndoPlayerMorph(activator->player, activator->player, 0, force))
-						{
-							changes++;
-						}
-					}
-					else
-					{
-						if (activator->GetClass()->IsDescendantOf(RUNTIME_CLASS(AMorphedMonster)))
-						{
-							AMorphedMonster *morphed_actor = barrier_cast<AMorphedMonster *>(activator);
-							if (P_UndoMonsterMorph(morphed_actor, force))
-							{
-								changes++;
-							}
-						}
-					}
+					changes += P_UnmorphActor(activator, activator, 0, force);
 				}
 				else
 				{
@@ -10357,24 +10340,7 @@ scriptwait:
 
 					while ( (actor = iterator.Next ()) )
 					{
-						if (actor->player)
-						{
-							if (P_UndoPlayerMorph(activator->player, actor->player, 0, force))
-							{
-								changes++;
-							}
-						}
-						else
-						{
-							if (actor->GetClass()->IsDescendantOf(RUNTIME_CLASS(AMorphedMonster)))
-							{
-								AMorphedMonster *morphed_actor = static_cast<AMorphedMonster *>(actor);
-								if (P_UndoMonsterMorph(morphed_actor, force))
-								{
-									changes++;
-								}
-							}
-						}
+						changes += P_UnmorphActor(activator, actor, 0, force);
 					}
 				}
 

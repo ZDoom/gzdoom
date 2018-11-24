@@ -289,38 +289,40 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 {
 	// Handle possible unmorph on death
 	bool wasgibbed = (health < GetGibHealth());
-	AActor *realthis = NULL;
-	int realstyle = 0;
-	int realhealth = 0;
-	if (P_MorphedDeath(this, &realthis, &realstyle, &realhealth))
+
 	{
-		if (!(realstyle & MORPH_UNDOBYDEATHSAVES))
+		IFVIRTUAL(AActor, MorphedDeath)
 		{
-			if (wasgibbed)
+			AActor *realthis = NULL;
+			int realstyle = 0;
+			int realhealth = 0;
+
+			VMValue params[] = { this };
+			VMReturn returns[3];
+			returns[0].PointerAt((void**)&realthis);
+			returns[1].IntAt(&realstyle);
+			returns[2].IntAt(&realhealth);
+			VMCall(func, params, 1, returns, 3);
+
+			if (realthis && !(realstyle & MORPH_UNDOBYDEATHSAVES))
 			{
-				int realgibhealth = realthis->GetGibHealth();
-				if (realthis->health >= realgibhealth)
+				if (wasgibbed)
 				{
-					realthis->health = realgibhealth -1; // if morphed was gibbed, so must original be (where allowed)l
+					int realgibhealth = realthis->GetGibHealth();
+					if (realthis->health >= realgibhealth)
+					{
+						realthis->health = realgibhealth - 1; // if morphed was gibbed, so must original be (where allowed)l
+					}
 				}
+				realthis->CallDie(source, inflictor, dmgflags, MeansOfDeath);
 			}
-			realthis->CallDie(source, inflictor, dmgflags, MeansOfDeath);
+
 		}
-		return;
 	}
 
 	// [SO] 9/2/02 -- It's rather funny to see an exploded player body with the invuln sparkle active :) 
 	effects &= ~FX_RESPAWNINVUL;
 	//flags &= ~MF_INVINCIBLE;
-
-	if (debugfile && this->player)
-	{
-		static int dieticks[MAXPLAYERS]; // [ZzZombo] not used? Except if for peeking in debugger...
-		int pnum = int(this->player-players);
-		dieticks[pnum] = gametic;
-		fprintf(debugfile, "died (%d) on tic %d (%s)\n", pnum, gametic,
-			this->player->cheats&CF_PREDICTING ? "predicting" : "real");
-	}
 
 	// [RH] Notify this actor's items.
 	for (AInventory *item = Inventory; item != NULL; )

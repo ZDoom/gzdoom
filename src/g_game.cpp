@@ -1249,7 +1249,7 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 
 	if (p->morphTics != 0)
 	{ // Undo morph
-		P_UndoPlayerMorph (p, p, 0, true);
+		P_UnmorphActor(p->mo, p->mo, 0, true);
 	}
 
 	// Strip all current powers, unless moving in a hub and the power is okay to keep.

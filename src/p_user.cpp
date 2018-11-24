@@ -695,7 +695,7 @@ bool player_t::Resurrect()
 
 	if (morphTics)
 	{
-		P_UndoPlayerMorph(this, this);
+		P_UnmorphActor(mo, mo);
 	}
 
 	// player is now alive.

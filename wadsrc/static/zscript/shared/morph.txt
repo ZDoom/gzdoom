@@ -1,5 +1,34 @@
+//-----------------------------------------------------------------------------
+//
+// Copyright 1994-1996 Raven Software
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2018 Christoph Oelckers
+// Copyright 2005-2008 Martin Howe
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
+//
+
 extend class Actor
 {
+	virtual Actor, int, int MorphedDeath()
+	{
+		return null, 0, 0;
+	}
+
+	
 	//===========================================================================
 	//
 	// Main entry point
@@ -10,7 +39,7 @@ extend class Actor
 	{
 		if (player != null && player.mo != null && playerclass != null)
 		{
-			return player.mo.MorphPlayer(activator.player, playerclass, duration, style, morphflash, unmorphflash);
+			return player.mo.MorphPlayer(activator? activator.player : null, playerclass, duration, style, morphflash, unmorphflash);
 		}
 		else
 		{
@@ -38,7 +67,28 @@ extend class Actor
 		return false;
 	}
 
+	//===========================================================================
+	//
+	// Main entry point
+	//
+	//===========================================================================
 
+	bool UnMorph(Actor activator, int flags, bool force)
+	{
+		if (player)
+		{
+			return player.mo.UndoPlayerMorph(activator? activator.player : null, flags, force);
+		}
+		else 
+		{
+			let morphed = MorphedMonster(self);
+			if (morphed)
+				return morphed.UndoMonsterMorph(force);
+		}
+		return false;
+	}
+
+	
 	//---------------------------------------------------------------------------
 	//
 	// FUNC P_MorphMonster
@@ -71,7 +121,7 @@ extend class Actor
 		morphed.UnmorphTime = level.time + ((duration) ? duration : DEFMORPHTICS) + random[morphmonst]();
 		morphed.MorphStyle = style;
 		morphed.MorphExitFlash = (exit_flash) ? exit_flash : (class<Actor>)("TeleportFog");
-		//morphed.FlagsSave = bSolid * 2 + bShootable * 4 + bInvisible * 0x40;	// The factors are for savegame compatibility
+		morphed.FlagsSave = bSolid * 2 + bShootable * 4 + bInvisible * 0x40;	// The factors are for savegame compatibility
 		
 		morphed.special = special;
 		morphed.args[0] = args[0];
@@ -501,8 +551,37 @@ extend class PlayerPawn
 		return true;
 	}
 
-	
+	//===========================================================================
+	//
+	//
+	//
+	//===========================================================================
+
+	override Actor, int, int MorphedDeath()
+	{
+		// Voodoo dolls should not unmorph the real player here.
+		if ((player.mo == self) &&
+			(player.morphTics) &&
+			(player.MorphStyle & MRF_UNDOBYDEATH) &&
+			(alternative))
+		{
+			Actor realme = alternative;
+			int realstyle = player.MorphStyle;
+			int realhealth = health;
+			if (UndoPlayerMorph(player, 0, !!(player.MorphStyle & MRF_UNDOBYDEATHFORCED)))
+			{
+				return realme, realstyle, realhealth;
+			}
+		}
+		return null, 0, 0;
+	}
 }
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
 
 class MorphProjectile : Actor
 {
@@ -536,11 +615,18 @@ class MorphProjectile : Actor
 	
 }
 
-class MorphedMonster : Actor native
+//===========================================================================
+//
+//
+//
+//===========================================================================
+
+class MorphedMonster : Actor
 {
-	native Actor UnmorphedMe;
-	native int UnmorphTime, MorphStyle;
-	native Class<Actor> MorphExitFlash;
+	Actor UnmorphedMe;
+	int UnmorphTime, MorphStyle;
+	Class<Actor> MorphExitFlash;
+	int FlagsSave;
 
 	Default
 	{
@@ -548,5 +634,118 @@ class MorphedMonster : Actor native
 		-COUNTKILL
 		+FLOORCLIP
 	}
+
+	override void OnDestroy ()
+	{
+		if (UnmorphedMe != NULL)
+		{
+			UnmorphedMe.Destroy ();
+		}
+		Super.OnDestroy();
+	}
+
+	override void Die (Actor source, Actor inflictor, int dmgflags, Name MeansOfDeath)
+	{
+		Super.Die (source, inflictor, dmgflags, MeansOfDeath);
+		if (UnmorphedMe != NULL && UnmorphedMe.bUnmorphed)
+		{
+			UnmorphedMe.health = health;
+			UnmorphedMe.Die (source, inflictor, dmgflags, MeansOfDeath);
+		}
+	}
+
+	override void Tick ()
+	{
+		if (UnmorphTime > level.time || !UndoMonsterMorph())
+		{
+			Super.Tick();
+		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// FUNC P_UndoMonsterMorph
+	//
+	// Returns true if the monster unmorphs.
+	//
+	//----------------------------------------------------------------------------
+
+	virtual bool UndoMonsterMorph(bool force = false)
+	{
+		if (UnmorphTime == 0 || UnmorphedMe == NULL || bStayMorphed || UnmorphedMe.bStayMorphed)
+		{
+			return false;
+		}
+		let unmorphed = UnmorphedMe;
+		unmorphed.SetOrigin (Pos, false);
+		unmorphed.bSolid = true;
+		bSolid = false;
+		bool save = bTouchy;
+		bTouchy = false;
+		if (!force && !unmorphed.TestMobjLocation ())
+		{ // Didn't fit
+			unmorphed.bSolid = false;
+			bSolid = true;
+			bTouchy = save;
+			UnmorphTime = level.time + 5*TICRATE; // Next try in 5 seconds
+			return false;
+		}
+		unmorphed.Angle = Angle;
+		unmorphed.target = target;
+		unmorphed.bShadow = bShadow;
+		unmorphed.bGhost = bGhost;
+		unmorphed.bSolid = !!(flagssave & 2);
+		unmorphed.bShootable = !!(flagssave & 4);
+		unmorphed.bInvisible = !!(flagssave & 0x40);
+		unmorphed.health = unmorphed.SpawnHealth();
+		unmorphed.Vel = Vel;
+		unmorphed.ChangeTid(tid);
+		unmorphed.special = special;
+		unmorphed.Score = Score;
+		unmorphed.args[0] = args[0];
+		unmorphed.args[1] = args[1];
+		unmorphed.args[2] = args[2];
+		unmorphed.args[3] = args[3];
+		unmorphed.args[4] = args[4];
+		unmorphed.CopyFriendliness (self, true);
+		UnmorphedMe = NULL;
+		Substitute(unmorphed);
+		Destroy ();
+		let eflash = Spawn(MorphExitFlash, Pos + (0, 0, gameinfo.TELEFOGHEIGHT), ALLOW_REPLACE);
+		if (eflash)
+			eflash.target = unmorphed;
+		return true;
+	}
+
+	//===========================================================================
+	//
+	//
+	//
+	//===========================================================================
+
+	override Actor, int, int MorphedDeath()
+	{
+		let realme = UnmorphedMe;
+		if (realme != NULL)
+		{
+			if ((UnmorphTime) &&
+				(MorphStyle & MRF_UNDOBYDEATH))
+			{
+				int realstyle = MorphStyle;
+				int realhealth = health;
+				if (UndoMonsterMorph(!!(MorphStyle & MRF_UNDOBYDEATHFORCED)))
+				{
+					return realme, realstyle, realhealth;
+				}
+			}
+			if (realme.bBossDeath)
+			{
+				realme.health = 0;	// make sure that A_BossDeath considers it dead.
+				realme.A_BossDeath();
+			}
+		}
+		return null, 0, 0;
+	}
+
 }
 

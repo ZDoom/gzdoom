@@ -186,6 +186,7 @@ PFunction *FindClassMemberFunction(PContainerType *selfcls, PContainerType *func
 		auto cls_target = funcsym ? PType::toClass(funcsym->OwningClass) : nullptr;
 		if (funcsym == nullptr)
 		{
+			if (PClass::FindClass(name)) return nullptr;	// Special case when a class's member variable hides a global class name. This should still work.
 			sc.Message(MSG_ERROR, "%s is not a member function of %s", name.GetChars(), selfcls->TypeName.GetChars());
 		}
 		else if ((funcsym->Variants[0].Flags & VARF_Private) && symtable != &funccls->Symbols)

@@ -1358,6 +1358,13 @@ class PSprite : Object native play
 			}
 		}
 	}
+	
+	void ResetInterpolation() 
+	{ 
+		oldx = x; 
+		oldy = y; 
+	}
+		
 }
 
 enum EPlayerState
@@ -1480,7 +1487,16 @@ struct PlayerInfo native play	// this is what internally is known as player_t
 		return false;
 	}
 	
-	native bool UndoPlayerMorph(playerinfo player, int unmorphflag = 0, bool force = false);
+	// This somehow got its arguments mixed up. 'self' should have been the player to be unmorphed, not the activator
+	bool UndoPlayerMorph(playerinfo player, int unmorphflag = 0, bool force = false)
+	{
+		if (player.mo != null)
+		{
+			return player.mo.UndoPlayerMorph(self, unmorphflag, force);
+		}
+		return false;
+	}
+	
 	native bool PoisonPlayer(Actor poisoner, Actor source, int poison);
 	native void PoisonDamage(Actor source, int damage, bool playPainSound);
 	native void SetPsprite(int id, State stat, bool pending = false);

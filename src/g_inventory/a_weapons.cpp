@@ -384,31 +384,6 @@ DEFINE_ACTION_FUNCTION(AWeapon, DepleteAmmo)
 
 //===========================================================================
 //
-// AWeapon :: PostMorphWeapon
-//
-// Bring this weapon up after a player unmorphs.
-//
-//===========================================================================
-
-void AWeapon::PostMorphWeapon ()
-{
-	DPSprite *pspr;
-	if (Owner == nullptr)
-	{
-		return;
-	}
-	Owner->player->PendingWeapon = WP_NOCHANGE;
-	Owner->player->ReadyWeapon = this;
-	Owner->player->refire = 0;
-
-	pspr = Owner->player->GetPSprite(PSP_WEAPON);
-	pspr->y = WEAPONBOTTOM;
-	pspr->ResetInterpolation();
-	pspr->SetState(GetUpState());
-}
-
-//===========================================================================
-//
 // AWeapon :: GetUpState
 //
 //===========================================================================
@@ -1380,6 +1355,49 @@ void P_PlaybackKeyConfWeapons(FWeaponSlots *slots)
 		AddCommandString(cmd.LockBuffer());
 	}
 	PlayingKeyConf = nullptr;
+}
+
+//===========================================================================
+//
+// APlayerPawn :: SetupWeaponSlots
+//
+// Sets up the default weapon slots for this player. If this is also the
+// local player, determines local modifications and sends those across the
+// network. Ignores voodoo dolls.
+//
+//===========================================================================
+
+void FWeaponSlots::SetupWeaponSlots(APlayerPawn *pp)
+{
+	auto player = pp->player;
+	if (player != nullptr && player->mo == pp)
+	{
+		player->weapons.StandardSetup(pp->GetClass());
+		// If we're the local player, then there's a bit more work to do.
+		// This also applies if we're a bot and this is the net arbitrator.
+		if (player - players == consoleplayer ||
+			(player->Bot != nullptr && consoleplayer == Net_Arbitrator))
+		{
+			FWeaponSlots local_slots(player->weapons);
+			if (player->Bot != nullptr)
+			{ // Bots only need weapons from KEYCONF, not INI modifications.
+				P_PlaybackKeyConfWeapons(&local_slots);
+			}
+			else
+			{
+				local_slots.LocalSetup(pp->GetClass());
+			}
+			local_slots.SendDifferences(int(player - players), player->weapons);
+		}
+	}
+}
+
+DEFINE_ACTION_FUNCTION(FWeaponSlots, SetupWeaponSlots)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(pawn, APlayerPawn);
+	FWeaponSlots::SetupWeaponSlots(pawn);
+	return 0;
 }
 
 //===========================================================================

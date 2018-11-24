@@ -105,7 +105,6 @@ public:
 	void GiveDeathmatchInventory ();
 	void FilterCoopRespawnInventory (APlayerPawn *oldplayer);
 
-	void SetupWeaponSlots ();
 	void GiveDefaultInventory ();
 
 	// These are virtual on the script side only.

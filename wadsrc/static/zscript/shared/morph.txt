@@ -214,6 +214,198 @@ extend class PlayerPawn
 		return true;
 	}
 	
+	//----------------------------------------------------------------------------
+	//
+	// FUNC P_UndoPlayerMorph
+	//
+	//----------------------------------------------------------------------------
+
+	virtual bool UndoPlayerMorph(playerinfo activator, int unmorphflag = 0, bool force = false)
+	{
+		if (alternative == null)
+		{
+			return false;
+		}
+
+		let player = self.player;
+		bool DeliberateUnmorphIsOkay = !!(MRF_STANDARDUNDOING & unmorphflag);
+
+		if ((bInvulnerable) // If the player is invulnerable
+			&& ((player != activator)       // and either did not decide to unmorph,
+			|| (!((player.MorphStyle & MRF_WHENINVULNERABLE)  // or the morph style does not allow it
+			|| (DeliberateUnmorphIsOkay))))) // (but standard morph styles always allow it),
+		{ // Then the player is immune to the unmorph.
+			return false;
+		}
+
+		let altmo = PlayerPawn(alternative);
+		altmo.SetOrigin (Pos, false);
+		altmo.bSolid = true;
+		bSolid = false;
+		if (!force && !altmo.TestMobjLocation())
+		{ // Didn't fit
+			altmo.bSolid = false;
+			bSolid = true;
+			player.morphTics = 2*TICRATE;
+			return false;
+		}
+		// No longer using tracer as morph storage. That is what 'alternative' is for. 
+		// If the tracer has changed on the morph, change the original too.
+		altmo.target = target;
+		altmo.tracer = tracer;
+		self.player = null;
+		altmo.alternative = alternative = null;
+
+		// Remove the morph power if the morph is being undone prematurely.
+		for (Inventory item = Inv; item != null;)
+		{
+			let next = item.Inv;
+			if (item is "PowerMorph")
+			{
+				item.Destroy();
+			}
+			item = next;
+		}
+		EndAllPowerupEffects();
+		altmo.ObtainInventory (self);
+		Substitute(altmo);
+		if ((tid != 0) && (player.MorphStyle & MRF_NEWTIDBEHAVIOUR))
+		{
+			altmo.ChangeTid(tid);
+		}
+		altmo.Angle = Angle;
+		altmo.player = player;
+		altmo.reactiontime = 18;
+		altmo.bSolid = !!(special2 & 2);
+		altmo.bShootable = !!(special2 & 4);
+		altmo.bInvisible = !!(special2 & 0x40);
+		altmo.Vel.XY = (0, 0);
+		player.Vel = (0, 0);
+		altmo.Vel.Z = Vel.Z;
+		altmo.floorz = floorz;
+		altmo.bShadow = bShadow;
+		altmo.bNoGravity = bNoGravity;
+		altmo.bGhost = bGhost;
+		altmo.Score = Score;
+		altmo.InitAllPowerupEffects();
+
+		let exit_flash = player.MorphExitFlash;
+		bool correctweapon = !!(player.MorphStyle & MRF_LOSEACTUALWEAPON);
+		bool undobydeathsaves = !!(player.MorphStyle & MRF_UNDOBYDEATHSAVES);
+
+		player.morphTics = 0;
+		player.MorphedPlayerClass = null;
+		player.MorphStyle = 0;
+		player.MorphExitFlash = null;
+		player.viewheight = altmo.ViewHeight;
+		Inventory level2 = altmo.FindInventory("PowerWeaponLevel2", true);
+		if (level2 != null)
+		{
+			level2.Destroy ();
+		}
+
+		if ((player.health > 0) || undobydeathsaves)
+		{
+			player.health = altmo.health = altmo.SpawnHealth();
+		}
+		else // killed when morphed so stay dead
+		{
+			altmo.health = player.health;
+		}
+
+		player.mo = altmo;
+		if (player.camera == self)
+		{
+			player.camera = altmo;
+		}
+
+		// [MH]
+		// If the player that was morphed is the one
+		// taking events, reset up the face, if any;
+		// this is only needed for old-skool skins
+		// and for the original DOOM status bar.
+		if (player == players[consoleplayer])
+		{
+			if (face != 'None')
+			{
+				// Assume root-level base skin to begin with
+				let skinindex = 0;
+				let skin = player.GetSkin();
+				// If a custom skin was in use, then reload it
+				// or else the base skin for the player class.
+				if (skin >= PlayerClasses.Size () && skin < PlayerSkins.Size())
+				{
+					skinindex = skin;
+				}
+				else if (PlayerClasses.Size () > 1)
+				{
+					let whatami = altmo.GetClass();
+					for (int i = 0; i < PlayerClasses.Size (); ++i)
+					{
+						if (PlayerClasses[i].Type == whatami)
+						{
+							skinindex = i;
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		Actor eflash = null;
+		if (exit_flash != null)
+		{
+			eflash = Spawn(exit_flash, Vec3Angle(20., altmo.Angle, gameinfo.telefogheight), ALLOW_REPLACE);
+			if (eflash)	eflash.target = altmo;
+		}
+		WeaponSlots.SetupWeaponSlots(altmo);		// Use original class's weapon slots.
+		let beastweap = player.ReadyWeapon;
+		if (player.PremorphWeapon != null)
+		{
+			player.PremorphWeapon.PostMorphWeapon ();
+		}
+		else
+		{
+			player.ReadyWeapon = player.PendingWeapon = null;
+		}
+		if (correctweapon)
+		{ // Better "lose morphed weapon" semantics
+			class<Actor> morphweaponcls = MorphWeapon;
+			if (morphweaponcls != null && morphweaponcls is 'Weapon')
+			{
+				let OriginalMorphWeapon = Weapon(altmo.FindInventory (morphweapon));
+				if ((OriginalMorphWeapon != null) && (OriginalMorphWeapon.GivenAsMorphWeapon))
+				{ // You don't get to keep your morphed weapon.
+					if (OriginalMorphWeapon.SisterWeapon != null)
+					{
+						OriginalMorphWeapon.SisterWeapon.Destroy ();
+					}
+					OriginalMorphWeapon.Destroy ();
+				}
+			}
+		}
+		else // old behaviour (not really useful now)
+		{ // Assumptions made here are no longer valid
+			if (beastweap != null)
+			{ // You don't get to keep your morphed weapon.
+				if (beastweap.SisterWeapon != null)
+				{
+					beastweap.SisterWeapon.Destroy ();
+				}
+				beastweap.Destroy ();
+			}
+		}
+		Destroy ();
+		// Restore playerclass armor to its normal amount.
+		let hxarmor = HexenArmor(altmo.FindInventory('HexenArmor'));
+		if (hxarmor != null)
+		{
+			hxarmor.Slots[4] = altmo.HexenArmor[0];
+		}
+		return true;
+	}
+
+	
 }
 
 class MorphProjectile : Actor

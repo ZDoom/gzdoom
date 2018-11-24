@@ -916,7 +916,7 @@ void APlayerPawn::Tick()
 void APlayerPawn::PostBeginPlay()
 {
 	Super::PostBeginPlay();
-	SetupWeaponSlots();
+	FWeaponSlots::SetupWeaponSlots(this);
 
 	// Voodoo dolls: restore original floorz/ceilingz logic
 	if (player == NULL || player->mo != this)
@@ -928,40 +928,6 @@ void APlayerPawn::PostBeginPlay()
 	else
 	{
 		player->SendPitchLimits();
-	}
-}
-
-//===========================================================================
-//
-// APlayerPawn :: SetupWeaponSlots
-//
-// Sets up the default weapon slots for this player. If this is also the
-// local player, determines local modifications and sends those across the
-// network. Ignores voodoo dolls.
-//
-//===========================================================================
-
-void APlayerPawn::SetupWeaponSlots()
-{
-	if (player != NULL && player->mo == this)
-	{
-		player->weapons.StandardSetup(GetClass());
-		// If we're the local player, then there's a bit more work to do.
-		// This also applies if we're a bot and this is the net arbitrator.
-		if (player - players == consoleplayer ||
-			(player->Bot != NULL && consoleplayer == Net_Arbitrator))
-		{
-			FWeaponSlots local_slots(player->weapons);
-			if (player->Bot != NULL)
-			{ // Bots only need weapons from KEYCONF, not INI modifications.
-				P_PlaybackKeyConfWeapons(&local_slots);
-			}
-			else
-			{
-				local_slots.LocalSetup(GetClass());
-			}
-			local_slots.SendDifferences(int(player - players), player->weapons);
-		}
 	}
 }
 

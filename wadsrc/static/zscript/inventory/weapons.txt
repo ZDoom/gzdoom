@@ -677,6 +677,33 @@ class Weapon : StateProvider native
 		}
 	}
 
+	
+	//===========================================================================
+	//
+	// Weapon :: PostMorphWeapon
+	//
+	// Bring this weapon up after a player unmorphs.
+	//
+	//===========================================================================
+
+	void PostMorphWeapon ()
+	{
+		if (Owner == null)
+		{
+			return;
+		}
+		let p = owner.player;
+		p.PendingWeapon = WP_NOCHANGE;
+		p.ReadyWeapon = self;
+		p.refire = 0;
+
+		let pspr = p.GetPSprite(PSP_WEAPON);
+		pspr.y = WEAPONBOTTOM;
+		pspr.ResetInterpolation();
+		pspr.SetState(GetUpState());
+	}
+
+
 
 }
 
@@ -746,4 +773,5 @@ class WeaponGiver : Weapon
 struct WeaponSlots native
 {
 	native bool, int, int LocateWeapon(class<Weapon> weap);
+	native static void SetupWeaponSlots(PlayerPawn pp);
 }

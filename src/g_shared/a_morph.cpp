@@ -38,6 +38,18 @@
 
 static FRandom pr_morphmonst ("MorphMonster");
 
+
+bool P_MorphPlayer(player_t *activator, player_t *p, PClassActor *spawntype, int duration, int style, PClassActor *enter_flash, PClassActor *exit_flash)
+{
+	return false;
+}
+
+bool P_UndoPlayerMorph(player_t *activator, player_t *player, int unmorphflag, bool force)
+{
+	return false;
+}
+
+#if 0
 void EndAllPowerupEffects(AInventory *item);
 void InitAllPowerupEffects(AInventory *item);
 
@@ -336,7 +348,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	beastweap = player->ReadyWeapon;
 	if (player->PremorphWeapon != nullptr)
 	{
-		player->PremorphWeapon->PostMorphWeapon ();
+		player->PremorphWeapon-> P ostMorphWeapon ();
 	}
 	else
 	{
@@ -386,8 +398,10 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, UndoPlayerMorph)
 	PARAM_POINTER_NOT_NULL(player, player_t);
 	PARAM_INT(unmorphflag);
 	PARAM_BOOL(force);
-	ACTION_RETURN_BOOL(P_UndoPlayerMorph(self, player, unmorphflag, force));
+	ACTION_RETURN_BOOL(P_UndoPlayerMorph(player, self, unmorphflag, force));
 }
+
+#endif
 
 //---------------------------------------------------------------------------
 //

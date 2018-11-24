@@ -3,7 +3,6 @@ class StateProvider : Inventory native
 {
 	action native state A_JumpIfNoAmmo(statelabel label);
 	action native void A_CustomPunch(int damage, bool norandom = false, int flags = CPF_USEAMMO, class<Actor> pufftype = "BulletPuff", double range = 0, double lifesteal = 0, int lifestealmax = 0, class<BasicArmorBonus> armorbonustype = "ArmorBonus", sound MeleeSound = 0, sound MissSound = "");
-	action native Actor A_FireProjectile(class<Actor> missiletype, double angle = 0, bool useammo = true, double spawnofs_xy = 0, double spawnheight = 0, int flags = 0, double pitch = 0);
 	action native void A_RailAttack(int damage, int spawnofs_xy = 0, bool useammo = true, color color1 = 0, color color2 = 0, int flags = 0, double maxdiff = 0, class<Actor> pufftype = "BulletPuff", double spread_xy = 0, double spread_z = 0, double range = 0, int duration = 0, double sparsity = 1.0, double driftspeed = 1.0, class<Actor> spawnclass = "none", double spawnofs_z = 0, int spiraloffset = 270, int limit = 0);
 	action native void A_WeaponReady(int flags = 0);
 
@@ -15,7 +14,7 @@ class StateProvider : Inventory native
 
 	action void A_FireBullets(double spread_xy, double spread_z, int numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", int flags = 1, double range = 0, class<Actor> missile = null, double Spawnheight = 32, double Spawnofs_xy = 0)
 	{
-		let player = self.player;
+		let player = player;
 		if (!player) return;
 
 		let pawn = PlayerPawn(self);
@@ -37,7 +36,7 @@ class StateProvider : Inventory native
 		if (!(flags & FBF_NOFLASH)) pawn.PlayAttacking2 ();
 
 		if (!(flags & FBF_NOPITCH)) bslope = BulletSlope();
-		bangle = self.Angle;
+		bangle = Angle;
 
 		if (pufftype == NULL) pufftype = 'BulletPuff';
 
@@ -58,7 +57,7 @@ class StateProvider : Inventory native
 			if (missile != null)
 			{
 				bool temp = false;
-				double ang = self.Angle - 90;
+				double ang = Angle - 90;
 				Vector2 ofs = AngleToVector(Spawnofs_xy);
 				Actor proj = SpawnPlayerMissile(missile, bangle, ofs.X, ofs.Y, Spawnheight);
 				if (proj)
@@ -102,7 +101,7 @@ class StateProvider : Inventory native
 				if (missile != null)
 				{
 					bool temp = false;
-					double ang = self.Angle - 90;
+					double ang = Angle - 90;
 					Vector2 ofs = AngleToVector(Spawnofs_xy);
 					Actor proj = SpawnPlayerMissile(missile, bangle, ofs.X, ofs.Y, Spawnheight);
 					if (proj)
@@ -119,6 +118,63 @@ class StateProvider : Inventory native
 		}
 	}
 
+
+	//==========================================================================
+	//
+	// A_FireProjectile
+	//
+	//==========================================================================
+
+	action Actor A_FireProjectile(class<Actor> ti, double spawnangle = 0, bool useammo = true, double spawnofs_xy = 0, double spawnheight = 0, int flags = 0, double pitch = 0)
+	{
+		let player = self.player;
+		if (!player) return null;
+
+		let weapon = player.ReadyWeapon;
+
+		FTranslatedLineTarget t;
+
+			// Only use ammo if called from a weapon
+		if (useammo && weapon && stateinfo != null && stateinfo.mStateType == STATE_Psprite)
+		{
+			if (!weapon.DepleteAmmo(weapon.bAltFire, true))
+				return null;	// out of ammo
+		}
+
+		if (ti) 
+		{
+			double ang = Angle - 90;
+			Vector2 ofs = AngleToVector(Spawnofs_xy);
+			double shootangle = Angle;
+
+			if (flags & FPF_AIMATANGLE) shootangle += spawnangle;
+
+			// Temporarily adjusts the pitch
+			double saved_player_pitch = self.Pitch;
+			self.Pitch += pitch;
+			let misl = SpawnPlayerMissile (ti, shootangle, ofs.X, ofs.Y, spawnheight, t, NULL, false, (flags & FPF_NOAUTOAIM) != 0);
+			self.Pitch = saved_player_pitch;
+
+			// automatic handling of seeker missiles
+			if (misl)
+			{
+				if (flags & FPF_TRANSFERTRANSLATION)
+					misl.Translation = Translation;
+				if (t.linetarget && !t.unlinked && misl.bSeekerMissile)
+					misl.tracer = t.linetarget;
+				if (!(flags & FPF_AIMATANGLE))
+				{
+					// This original implementation is to aim straight ahead and then offset
+					// the angle from the resulting direction. 
+					misl.Angle += spawnangle;
+					misl.VelFromAngle(misl.Vel.XY.Length());
+				}
+			}
+			return misl;
+		}
+		return null;
+	}
+
 	
 	//---------------------------------------------------------------------------
 	//
@@ -130,7 +186,7 @@ class StateProvider : Inventory native
 
 	action void A_ReFire(statelabel flash = null)
 	{
-		let player = self.player;
+		let player = player;
 		bool pending;
 
 		if (NULL == player)

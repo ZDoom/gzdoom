@@ -233,6 +233,110 @@ class Weapon : StateProvider native
 		return;
 	}
 
+	//============================================================================
+	//
+	// PROC A_WeaponReady
+	//
+	// Readies a weapon for firing or bobbing with its three ancillary functions,
+	// DoReadyWeaponToSwitch(), DoReadyWeaponToFire() and DoReadyWeaponToBob().
+	// [XA] Added DoReadyWeaponToReload() and DoReadyWeaponToZoom()
+	//
+	//============================================================================
+
+	static void DoReadyWeaponToSwitch (PlayerInfo player, bool switchable)
+	{
+		// Prepare for switching action.
+		if (switchable)
+		{
+			player.WeaponState |= WF_WEAPONSWITCHOK | WF_REFIRESWITCHOK;
+		}
+		else
+		{
+			// WF_WEAPONSWITCHOK is automatically cleared every tic by P_SetPsprite().
+			player.WeaponState &= ~WF_REFIRESWITCHOK;
+		}
+	}
+
+	static void DoReadyWeaponDisableSwitch (PlayerInfo player, int disable)
+	{
+		// Discard all switch attempts?
+		if (disable)
+		{
+			player.WeaponState |= WF_DISABLESWITCH;
+			player.WeaponState &= ~WF_REFIRESWITCHOK;
+		}
+		else
+		{
+			player.WeaponState &= ~WF_DISABLESWITCH;
+		}
+	}
+
+	static void DoReadyWeaponToFire (PlayerPawn pawn, bool prim, bool alt)
+	{
+		let player = pawn.player;
+		let weapon = player.ReadyWeapon;
+		if (!weapon)
+		{
+			return;
+		}
+
+		// Change player from attack state
+		if (pawn.InStateSequence(pawn.curstate, pawn.MissileState) ||
+			pawn.InStateSequence(pawn.curstate, pawn.MeleeState))
+		{
+			pawn.PlayIdle ();
+		}
+
+		// Play ready sound, if any.
+		if (weapon.ReadySound && player.GetPSprite(PSP_WEAPON).curState == weapon.FindState('Ready'))
+		{
+			if (!weapon.bReadySndHalf || random[WpnReadySnd]() < 128)
+			{
+				pawn.A_PlaySound(weapon.ReadySound, CHAN_WEAPON);
+			}
+		}
+
+		// Prepare for firing action.
+		player.WeaponState |= ((prim ? WF_WEAPONREADY : 0) | (alt ? WF_WEAPONREADYALT : 0));
+		return;
+	}
+
+	static void DoReadyWeaponToBob (PlayerInfo player)
+	{
+		if (player.ReadyWeapon)
+		{
+			// Prepare for bobbing action.
+			player.WeaponState |= WF_WEAPONBOBBING;
+			let pspr = player.GetPSprite(PSP_WEAPON);
+			pspr.x = 0;
+			pspr.y = WEAPONTOP;
+		}
+	}
+
+	static int GetButtonStateFlags(int flags)
+	{
+		// Rewritten for efficiency and clarity
+		int outflags = 0;
+		if (flags & WRF_AllowZoom) outflags |= WF_WEAPONZOOMOK;
+		if (flags & WRF_AllowReload) outflags |= WF_WEAPONRELOADOK;
+		if (flags & WRF_AllowUser1) outflags |= WF_USER1OK;
+		if (flags & WRF_AllowUser2) outflags |= WF_USER2OK;
+		if (flags & WRF_AllowUser3) outflags |= WF_USER3OK;
+		if (flags & WRF_AllowUser4) outflags |= WF_USER4OK;
+		return outflags;
+	}
+	
+	action void A_WeaponReady(int flags = 0)
+	{
+		if (!player) return;
+														DoReadyWeaponToSwitch(player, !(flags & WRF_NoSwitch));
+		if ((flags & WRF_NoFire) != WRF_NoFire)			DoReadyWeaponToFire(player.mo, !(flags & WRF_NoPrimary), !(flags & WRF_NoSecondary));
+		if (!(flags & WRF_NoBob))						DoReadyWeaponToBob(player);
+
+		player.WeaponState |= GetButtonStateFlags(flags);														
+		DoReadyWeaponDisableSwitch(player, flags & WRF_DisableSwitch);
+	}
+
 	//---------------------------------------------------------------------------
 	//
 	// PROC A_CheckReload

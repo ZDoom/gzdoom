@@ -93,8 +93,6 @@ CVAR(Int, sv_fastweapons, false, CVAR_SERVERINFO);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static FRandom pr_wpnreadysnd ("WpnReadySnd");
-
 static const FGenericButtons ButtonChecks[] =
 {
 	{ WRF_AllowZoom,	WF_WEAPONZOOMOK,	BT_ZOOM,	NAME_Zoom },
@@ -590,124 +588,6 @@ void P_BobWeapon (player_t *player, float *x, float *y, double ticfrac)
 		return;
 	}
 	*x = *y = 0;
-}
-
-//============================================================================
-//
-// PROC A_WeaponReady
-//
-// Readies a weapon for firing or bobbing with its three ancillary functions,
-// DoReadyWeaponToSwitch(), DoReadyWeaponToFire() and DoReadyWeaponToBob().
-// [XA] Added DoReadyWeaponToReload() and DoReadyWeaponToZoom()
-//
-//============================================================================
-
-void DoReadyWeaponToSwitch (AActor *self, bool switchable)
-{
-	// Prepare for switching action.
-	player_t *player;
-	if (self && (player = self->player))
-	{
-		if (switchable)
-		{
-			player->WeaponState |= WF_WEAPONSWITCHOK | WF_REFIRESWITCHOK;
-		}
-		else
-		{
-			// WF_WEAPONSWITCHOK is automatically cleared every tic by P_SetPsprite().
-			player->WeaponState &= ~WF_REFIRESWITCHOK;
-		}
-	}
-}
-
-void DoReadyWeaponDisableSwitch (AActor *self, INTBOOL disable)
-{
-	// Discard all switch attempts?
-	player_t *player;
-	if (self && (player = self->player))
-	{
-		if (disable)
-		{
-			player->WeaponState |= WF_DISABLESWITCH;
-			player->WeaponState &= ~WF_REFIRESWITCHOK;
-		}
-		else
-		{
-			player->WeaponState &= ~WF_DISABLESWITCH;
-		}
-	}
-}
-
-void DoReadyWeaponToFire (AActor *self, bool prim, bool alt)
-{
-	player_t *player;
-	AWeapon *weapon;
-
-	if (!self || !(player = self->player) || !(weapon = player->ReadyWeapon))
-	{
-		return;
-	}
-
-	// Change player from attack state
-	if (self->InStateSequence(self->state, self->MissileState) ||
-		self->InStateSequence(self->state, self->MeleeState))
-	{
-		static_cast<APlayerPawn *>(self)->PlayIdle ();
-	}
-
-	// Play ready sound, if any.
-	if (weapon->ReadySound && player->GetPSprite(PSP_WEAPON)->GetState() == weapon->FindState(NAME_Ready))
-	{
-		if (!(weapon->WeaponFlags & WIF_READYSNDHALF) || pr_wpnreadysnd() < 128)
-		{
-			S_Sound (self, CHAN_WEAPON, weapon->ReadySound, 1, ATTN_NORM);
-		}
-	}
-
-	// Prepare for firing action.
-	player->WeaponState |= ((prim ? WF_WEAPONREADY : 0) | (alt ? WF_WEAPONREADYALT : 0));
-	return;
-}
-
-void DoReadyWeaponToBob (AActor *self)
-{
-	if (self && self->player && self->player->ReadyWeapon)
-	{
-		// Prepare for bobbing action.
-		self->player->WeaponState |= WF_WEAPONBOBBING;
-		self->player->GetPSprite(PSP_WEAPON)->x = 0;
-		self->player->GetPSprite(PSP_WEAPON)->y = WEAPONTOP;
-	}
-}
-
-void DoReadyWeaponToGeneric(AActor *self, int paramflags)
-{
-	int flags = 0;
-
-	for (size_t i = 0; i < countof(ButtonChecks); ++i)
-	{
-		if (paramflags & ButtonChecks[i].ReadyFlag)
-		{
-			flags |= ButtonChecks[i].StateFlag;
-		}
-	}
-	if (self != NULL && self->player != NULL)
-	{
-		self->player->WeaponState |= flags;
-	}
-}
-
-DEFINE_ACTION_FUNCTION(AStateProvider, A_WeaponReady)
-{
-	PARAM_ACTION_PROLOGUE(AStateProvider);
-	PARAM_INT(flags);
-
-													DoReadyWeaponToSwitch(self, !(flags & WRF_NoSwitch));
-	if ((flags & WRF_NoFire) != WRF_NoFire)			DoReadyWeaponToFire(self, !(flags & WRF_NoPrimary), !(flags & WRF_NoSecondary));
-	if (!(flags & WRF_NoBob))						DoReadyWeaponToBob(self);
-													DoReadyWeaponToGeneric(self, flags);
-	DoReadyWeaponDisableSwitch(self, flags & WRF_DisableSwitch);
-	return 0;
 }
 
 //---------------------------------------------------------------------------

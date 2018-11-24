@@ -1344,84 +1344,10 @@ void APlayerPawn::PlayAttacking2 ()
 
 void APlayerPawn::GiveDefaultInventory ()
 {
-	if (player == NULL) return;
-
-	// HexenArmor must always be the first item in the inventory because
-	// it provides player class based protection that should not affect
-	// any other protection item.
-	auto myclass = GetClass();
-	GiveInventoryType(PClass::FindActor(NAME_HexenArmor));
-	auto harmor = FindInventory(NAME_HexenArmor);
-
-	double *Slots = (double*)harmor->ScriptVar(NAME_Slots, nullptr);
-	double *SlotsIncrement = (double*)harmor->ScriptVar(NAME_SlotsIncrement, nullptr);
-	Slots[4] = HexenArmor[0];
-	for (int i = 0; i < 4; ++i)
+	IFVIRTUAL(APlayerPawn, GiveDefaultInventory)
 	{
-		SlotsIncrement[i] = HexenArmor[i + 1];
-	}
-
-	// BasicArmor must come right after that. It should not affect any
-	// other protection item as well but needs to process the damage
-	// before the HexenArmor does.
-	auto barmor = (AInventory*)Spawn(NAME_BasicArmor);
-	barmor->BecomeItem ();
-	AddInventory (barmor);
-
-	// Now add the items from the DECORATE definition
-	auto di = GetDropItems();
-
-	while (di)
-	{
-		PClassActor *ti = PClass::FindActor (di->Name);
-		if (ti)
-		{
-			if (!ti->IsDescendantOf(RUNTIME_CLASS(AInventory)))
-			{
-				Printf(TEXTCOLOR_ORANGE "%s is not an inventory item and cannot be given to a player as start item.\n", ti->TypeName.GetChars());
-			}
-			else
-			{
-				AInventory *item = FindInventory(ti);
-				if (item != NULL)
-				{
-					item->Amount = clamp<int>(
-						item->Amount + (di->Amount ? di->Amount : ((AInventory *)item->GetDefault())->Amount),
-						0, item->MaxAmount);
-				}
-				else
-				{
-					item = static_cast<AInventory *>(Spawn(ti));
-					item->ItemFlags |= IF_IGNORESKILL;	// no skill multiplicators here
-					item->Amount = di->Amount;
-					if (item->IsKindOf(NAME_Weapon))
-					{
-						// To allow better control any weapon is emptied of
-						// ammo before being given to the player.
-						static_cast<AWeapon*>(item)->AmmoGive1 =
-							static_cast<AWeapon*>(item)->AmmoGive2 = 0;
-					}
-					AActor *check;
-					if (!item->CallTryPickup(this, &check))
-					{
-						if (check != this)
-						{
-							// Player was morphed. This is illegal at game start.
-							// This problem is only detectable when it's too late to do something about it...
-							I_Error("Cannot give morph items when starting a game");
-						}
-						item->Destroy();
-						item = NULL;
-					}
-				}
-				if (item != NULL && item->IsKindOf(NAME_Weapon) &&
-					static_cast<AWeapon*>(item)->CheckAmmo(AWeapon::EitherFire, false))
-				{
-					player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *> (item);
-				}
-			}
-		}
-		di = di->Next;
+		VMValue params[1] = { (DObject*)this };
+		VMCall(func, params, 1, nullptr, 0);
 	}
 }
 

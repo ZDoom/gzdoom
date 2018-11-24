@@ -102,4 +102,50 @@ class ScriptUtil play
 		}
 	}
 	
+
+	//==========================================================================
+	//
+	//
+	//
+	//==========================================================================
+
+	static int PlayerMaxAmmo(Actor activator, class<Actor> type, int newmaxamount = int.min, int newbpmaxamount = int.min)
+	{
+		if (activator == null) return 0;
+		let ammotype = (class<Ammo>)(type);
+		if (ammotype == null) return 0;
+		
+		if (newmaxamount != int.min)
+		{
+			let iammo = Ammo(activator.FindInventory(ammotype));
+			if(newmaxamount < 0) newmaxamount = 0;
+			if (!iammo) 
+			{
+				activator.GiveAmmo(ammotype, 1);
+				iammo = Ammo(activator.FindInventory(ammotype));
+				if (iammo)
+					iammo.Amount = 0;
+			}
+
+			for (Inventory item = activator.Inv; item != NULL; item = item.Inv)
+			{
+				if (item is 'BackpackItem')
+				{
+					if (newbpmaxamount == int.min) newbpmaxamount = newmaxamount * 2;
+					break;
+				}
+			}
+			if (iammo)
+			{
+				iammo.MaxAmount = newmaxamount;
+				iammo.BackpackMaxAmount = newbpmaxamount;
+			}
+		}
+
+		let rammo = activator.FindInventory(ammotype);
+		if (rammo) return rammo.maxamount;
+		else return GetDefaultByType(ammotype).MaxAmount;
+	}
+
+	
 }

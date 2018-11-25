@@ -1468,15 +1468,19 @@ bool ZCCCompiler::CompileFlagDefs(PClass *type, TArray<ZCC_FlagDef *> &Propertie
 		}
 		else
 		{
-			field = dyn_cast<PField>(type->FindSymbol(referenced, true));
-			if (field == nullptr)
+			if (referenced != NAME_None)
 			{
-				Error(p, "Variable %s not found in %s", referenced.GetChars(), type->TypeName.GetChars());
+				field = dyn_cast<PField>(type->FindSymbol(referenced, true));
+				if (field == nullptr)
+				{
+					Error(p, "Variable %s not found in %s", referenced.GetChars(), type->TypeName.GetChars());
+				}
+				if (!field->Type->isInt() || field->Type->Size != 4)
+				{
+					Error(p, "Variable %s in %s must have a size of 4 bytes for use as flag storage", referenced.GetChars(), type->TypeName.GetChars());
+				}
 			}
-			if (!field->Type->isInt() || field->Type->Size != 4)
-			{
-				Error(p, "Variable %s in %s must have a size of 4 bytes for use as flag storage", referenced.GetChars(), type->TypeName.GetChars());
-			}
+			else field = nullptr;
 
 
 			FString qualifiedname;
@@ -1498,7 +1502,7 @@ bool ZCCCompiler::CompileFlagDefs(PClass *type, TArray<ZCC_FlagDef *> &Propertie
 				}
 			}
 
-			if (p->BitValue >= 0)
+			if (field != nullptr)
 				type->VMType->AddNativeField(FStringf("b%s", name.GetChars()), TypeSInt32, field->Offset, 0, 1 << p->BitValue);
 		} 
 	}

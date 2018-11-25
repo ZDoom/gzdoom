@@ -530,8 +530,8 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2, bo
 			{
 				forInternalFlags.fieldsize = 4;
 				forInternalFlags.name = "";
-				forInternalFlags.flagbit = field->bitval >= 0? 1 << field->bitval : DEPF_UNUSED;
-				forInternalFlags.structoffset = field->bitval >= 0 ? field->Offset->Offset : -1;
+				forInternalFlags.flagbit = field->Offset? 1 << field->bitval : DEPF_UNUSED;
+				forInternalFlags.structoffset = field->Offset? (int)field->Offset->Offset : -1;
 				forInternalFlags.varflags = 0;
 				return &forInternalFlags;
 			}
@@ -548,8 +548,8 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2, bo
 			{
 				forInternalFlags.fieldsize = 4;
 				forInternalFlags.name = "";
-				forInternalFlags.flagbit = field->bitval >= 0 ? 1 << field->bitval : DEPF_UNUSED;
-				forInternalFlags.structoffset = field->bitval >= 0 ? field->Offset->Offset : -1;
+				forInternalFlags.flagbit = field->Offset ? 1 << field->bitval : DEPF_UNUSED;
+				forInternalFlags.structoffset = field->Offset ? (int)field->Offset->Offset : -1;
 				forInternalFlags.varflags = 0;
 				return &forInternalFlags;
 			}

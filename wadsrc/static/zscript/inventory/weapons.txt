@@ -80,10 +80,10 @@ class Weapon : StateProvider
 	flagdef CheatNotWeapon: WeaponFlags, 18;	// Give cheat considers this not a weapon (used by Sigil)
 
 	// no-op flags
-	flagdef NoLMS: WeaponFlags, -1;
-	flagdef Allow_With_Respawn_Invul: WeaponFlags, -1;
-	flagdef BFG: WeaponFlags, -1;
-	flagdef Explosive: WeaponFlags, -1;
+	flagdef NoLMS: none, 0;
+	flagdef Allow_With_Respawn_Invul: none, 0;
+	flagdef BFG: none, 0;
+	flagdef Explosive: none, 0;
 
 	Default
 	{

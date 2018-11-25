@@ -196,6 +196,29 @@ PProperty::PProperty(FName name, TArray<PField *> &fields)
 	Variables = std::move(fields);
 }
 
+/* PProperty *****************************************************************/
+
+IMPLEMENT_CLASS(PPropFlag, false, false)
+
+//==========================================================================
+//
+// PField - Default Constructor
+//
+//==========================================================================
+
+PPropFlag::PPropFlag()
+	: PSymbol(NAME_None)
+{
+}
+
+PPropFlag::PPropFlag(FName name, PField * field, int bitValue, bool forDecorate)
+	: PSymbol(name)
+{
+	Offset = field;
+	bitval = bitValue;
+	decorateOnly = forDecorate;
+}
+
 //==========================================================================
 //
 //

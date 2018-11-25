@@ -55,7 +55,6 @@ IMPLEMENT_POINTERS_START(AWeapon)
 	IMPLEMENT_POINTER(SisterWeapon)
 IMPLEMENT_POINTERS_END
 
-/*
 DEFINE_FIELD(AWeapon, AmmoType1)
 DEFINE_FIELD(AWeapon, AmmoType2)	
 DEFINE_FIELD(AWeapon, AmmoGive1)
@@ -86,7 +85,6 @@ DEFINE_FIELD(AWeapon, GivenAsMorphWeapon)
 DEFINE_FIELD(AWeapon, bAltFire)
 DEFINE_FIELD(AWeapon, WeaponFlags)
 DEFINE_FIELD(AWeapon, bDehAmmo)
-*/
 
 //===========================================================================
 //

@@ -445,30 +445,10 @@ static FFlagDef InventoryFlagDefs[] =
 static FFlagDef WeaponFlagDefs[] =
 {
 	// Weapon flags
-	DEFINE_FLAG(WIF, NOAUTOFIRE, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, READYSNDHALF, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, DONTBOB, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, AXEBLOOD, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, NOALERT, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, AMMO_OPTIONAL, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, ALT_AMMO_OPTIONAL, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, PRIMARY_USES_BOTH, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, WIMPY_WEAPON, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, POWERED_UP, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, STAFF2_KICKBACK, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, MELEEWEAPON, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, CHEATNOTWEAPON, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, NO_AUTO_SWITCH, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, AMMO_CHECKBOTH, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, NOAUTOAIM, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, NODEATHDESELECT, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, NODEATHINPUT, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, ALT_USES_BOTH, AWeapon, WeaponFlags),
-
 	DEFINE_DUMMY_FLAG(NOLMS, false),
 	DEFINE_DUMMY_FLAG(ALLOW_WITH_RESPAWN_INVUL, false),
-	DEFINE_DUMMY_FLAG(BFG, true),
-	DEFINE_DUMMY_FLAG(EXPLOSIVE, true),
+	DEFINE_DUMMY_FLAG(BFG, false),
+	DEFINE_DUMMY_FLAG(EXPLOSIVE, false),
 };
 
 
@@ -511,6 +491,8 @@ static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int 
 };
 #define NUM_FLAG_LISTS (countof(FlagLists))
 
+static FFlagDef forInternalFlags;
+
 //==========================================================================
 //
 // Find a flag by name using a binary search
@@ -548,6 +530,47 @@ static FFlagDef *FindFlag (FFlagDef *flags, int numflags, const char *flag)
 
 FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2, bool strict)
 {
+
+	if (part2 == nullptr)
+	{
+		FStringf internalname("@flagdef@%s", part1);
+		FName name(internalname, true);
+		if (name != NAME_None)
+		{
+			auto field = dyn_cast<PPropFlag>(type->FindSymbol(name, true));
+			if (field != nullptr && (!strict || !field->decorateOnly))
+			{
+				forInternalFlags.fieldsize = 4;
+				forInternalFlags.name = "";
+				forInternalFlags.flagbit = 1 << field->bitval;
+				forInternalFlags.structoffset = field->Offset->Offset;
+				forInternalFlags.varflags = 0;
+				return &forInternalFlags;
+			}
+		}
+	}
+	else
+	{
+		FStringf internalname("@flagdef@%s.%s", part1, part2);
+		FName name(internalname, true);
+		if (name != NAME_None)
+		{
+			auto field = dyn_cast<PPropFlag>(type->FindSymbol(name, true));
+			if (field != nullptr)
+			{
+				forInternalFlags.fieldsize = 4;
+				forInternalFlags.name = "";
+				forInternalFlags.flagbit = 1 << field->bitval;
+				forInternalFlags.structoffset = field->Offset->Offset;
+				forInternalFlags.varflags = 0;
+				return &forInternalFlags;
+			}
+		}
+	}
+
+	// Not found. Try the internal flag definitions.
+
+
 	FFlagDef *def;
 
 	if (part2 == NULL)

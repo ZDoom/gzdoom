@@ -53,6 +53,8 @@ extern FMemArena ClassDataAllocator;
 #define MAX_RETURNS		8	// Maximum number of results a function called by script code can return
 #define MAX_TRY_DEPTH	8	// Maximum number of nested TRYs in a single function
 
+void JitRelease();
+
 
 typedef unsigned char		VM_UBYTE;
 typedef signed char			VM_SBYTE;
@@ -426,6 +428,8 @@ public:
 			f->~VMFunction();
 		}
 		AllFunctions.Clear();
+		// also release any JIT data
+		JitRelease();
 	}
 	static void CreateRegUseInfo()
 	{

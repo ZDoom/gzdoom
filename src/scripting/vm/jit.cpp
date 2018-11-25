@@ -9,6 +9,7 @@ extern PStruct *TypeVector3;
 static void OutputJitLog(const asmjit::StringLogger &logger);
 
 static TArray<uint8_t*> JitBlocks;
+static TArray<uint8_t*> JitFrames;
 static size_t JitBlockPos = 0;
 static size_t JitBlockSize = 0;
 
@@ -60,6 +61,21 @@ static void *AllocJitMemory(size_t size)
 #define UWOP_SAVE_XMM128 8
 #define UWOP_SAVE_XMM128_FAR 9
 #define UWOP_PUSH_MACHFRAME 10
+
+
+void JitRelease()
+{
+#ifdef _WIN64
+	for (auto p : JitFrames)
+	{
+		RtlDeleteFunctionTable((PRUNTIME_FUNCTION)p);
+	}
+#endif
+	for (auto p : JitBlocks)
+	{
+		asmjit::OSUtils::releaseVirtualMemory(p, 1024 * 1024);
+	}
+}
 
 static TArray<uint16_t> CreateUnwindInfo(asmjit::CCFunc *func)
 {
@@ -276,6 +292,7 @@ static void *AddJitFunction(asmjit::CodeHolder* code, asmjit::CCFunc *func)
 	table[0].EndAddress = (DWORD)(ptrdiff_t)(endaddr - baseaddr);
 	table[0].UnwindInfoAddress = (DWORD)(ptrdiff_t)(unwindptr - baseaddr);
 	BOOLEAN result = RtlAddFunctionTable(table, 1, (DWORD64)baseaddr);
+	JitFrames.Push((uint8_t*)table);
 	if (result == 0)
 		I_FatalError("RtlAddFunctionTable failed");
 #endif

@@ -1673,6 +1673,7 @@ void subsector_t::BuildPolyBSP()
 	for (unsigned int i = 0; i < BSP->Subsectors.Size(); ++i)
 	{
 		BSP->Subsectors[i].sector = sector;
+		BSP->Subsectors[i].section = section;
 	}
 }
 

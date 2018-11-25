@@ -20,6 +20,7 @@ class Demon1 : Actor
 		DeathSound "DemonDeath";
 		ActiveSound "DemonActive";
 		Obituary "$OB_DEMON1";
+		Tag "$FN_DEMON1";
 	}
 	
 	const ChunkFlags = SXF_TRANSFERTRANSLATION | SXF_ABSOLUTEVELOCITY;

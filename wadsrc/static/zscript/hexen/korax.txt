@@ -60,6 +60,7 @@ class Korax : Actor
 		DeathSound "KoraxDeath";
 		ActiveSound "KoraxActive";
 		Obituary "$OB_KORAX";
+		Tag "$FN_KORAX";
 	}
 
 	States

@@ -24,6 +24,7 @@ class FireDemon : Actor
 		DeathSound "FireDemonDeath";
 		ActiveSound "FireDemonActive";
 		Obituary "$OB_FIREDEMON";
+		Tag "$FN_FIREDEMON";
 	}
 
 	States

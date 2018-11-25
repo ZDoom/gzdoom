@@ -77,6 +77,17 @@ public:
 		return clip_first_line + core_skip - first_line;
 	}
 
+	// Varyings
+	float worldposX[MAXWIDTH];
+	float worldposY[MAXWIDTH];
+	float worldposZ[MAXWIDTH];
+	uint32_t texel[MAXWIDTH];
+	int32_t texelV[MAXWIDTH];
+	fixed_t lightarray[MAXWIDTH];
+	uint16_t dynlights_r[MAXWIDTH];
+	uint16_t dynlights_g[MAXWIDTH];
+	uint16_t dynlights_b[MAXWIDTH];
+
 	static PolyTriangleThreadData *Get(DrawerThread *thread);
 
 private:

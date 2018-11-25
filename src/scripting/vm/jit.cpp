@@ -75,6 +75,10 @@ void JitRelease()
 	{
 		asmjit::OSUtils::releaseVirtualMemory(p, 1024 * 1024);
 	}
+	JitFrames.Clear();
+	JitBlocks.Clear();
+	JitBlockPos = 0;
+	JitBlockSize = 0;
 }
 
 static TArray<uint16_t> CreateUnwindInfo(asmjit::CCFunc *func)

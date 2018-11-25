@@ -434,7 +434,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, SetPlaneLight)
+ static void SetPlaneLight(sector_t *self, int pos, int o)
+ {
+	 self->SetPlaneLight(pos, o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetPlaneLight, SetPlaneLight)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
@@ -443,14 +448,24 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, GetPlaneLight)
+ static int GetPlaneLight(sector_t *self, int pos)
+ {
+	 return self->GetPlaneLight(pos);
+ }
+
+  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetPlaneLight, GetPlaneLight)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 ACTION_RETURN_INT(self->GetPlaneLight(pos));
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, SetTexture)
+  static void SetTexture(sector_t *self, int pos, int o, bool adj)
+  {
+	  self->SetTexture(pos, FSetTextureID(o), adj);
+  }
+
+  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetTexture, SetTexture)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
@@ -460,14 +475,24 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, GetTexture)
+  static int GetTexture(sector_t *self, int pos)
+  {
+	  return self->GetTexture(pos).GetIndex();
+  }
+
+  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetTexture, GetTexture)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 ACTION_RETURN_INT(self->GetTexture(pos).GetIndex());
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, SetPlaneTexZ)
+  static void SetPlaneTexZ(sector_t *self, int pos, double o, bool)
+  {
+	  self->SetPlaneTexZ(pos, o, true);	// not setting 'dirty' here is a guaranteed cause for problems.
+  }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetPlaneTexZ, SetPlaneTexZ)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
@@ -477,14 +502,24 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, GetPlaneTexZ)
+ static double GetPlaneTexZ(sector_t *self, int pos)
+ {
+	 return self->GetPlaneTexZ(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetPlaneTexZ, GetPlaneTexZ)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 ACTION_RETURN_FLOAT(self->GetPlaneTexZ(pos));
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, SetLightLevel)
+ static void SetLightLevel(sector_t *self, int o)
+ {
+	 self->SetLightLevel(o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetLightLevel, SetLightLevel)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(o);
@@ -492,7 +527,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, ChangeLightLevel)
+ static void ChangeLightLevel(sector_t *self, int o)
+ {
+	 self->ChangeLightLevel(o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, ChangeLightLevel, ChangeLightLevel)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(o);
@@ -500,48 +540,83 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, GetLightLevel)
+ static int GetLightLevel(sector_t *self)
+ {
+	 return self->GetLightLevel();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetLightLevel, GetLightLevel)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 ACTION_RETURN_INT(self->GetLightLevel());
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, PortalBlocksView)
+ static int PortalBlocksView(sector_t *self, int pos)
+ {
+	 return self->PortalBlocksView(pos);
+ }
+ 
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, PortalBlocksView, PortalBlocksView)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 ACTION_RETURN_BOOL(self->PortalBlocksView(pos));
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, PortalBlocksSight)
+ static int PortalBlocksSight(sector_t *self, int pos)
+ {
+	 return self->PortalBlocksSight(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, PortalBlocksSight, PortalBlocksSight)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 ACTION_RETURN_BOOL(self->PortalBlocksSight(pos));
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, PortalBlocksMovement)
+ static int PortalBlocksMovement(sector_t *self, int pos)
+ {
+	 return self->PortalBlocksMovement(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, PortalBlocksMovement, PortalBlocksMovement)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 ACTION_RETURN_BOOL(self->PortalBlocksMovement(pos));
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, PortalBlocksSound)
+ static int PortalBlocksSound(sector_t *self, int pos)
+ {
+	 return self->PortalBlocksSound(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, PortalBlocksSound, PortalBlocksSound)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 ACTION_RETURN_BOOL(self->PortalBlocksSound(pos));
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, PortalIsLinked)
+ static int PortalIsLinked(sector_t *self, int pos)
+ {
+	 return self->PortalIsLinked(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, PortalIsLinked, PortalIsLinked)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 ACTION_RETURN_BOOL(self->PortalIsLinked(pos));
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, ClearPortal)
+ static void ClearPortal(sector_t *self, int pos)
+ {
+	 self->ClearPortal(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, ClearPortal, ClearPortal)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
@@ -549,89 +624,133 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, GetPortalPlaneZ)
+ static double GetPortalPlaneZ(sector_t *self, int pos)
+ {
+	 return self->GetPortalPlaneZ(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetPortalPlaneZ, GetPortalPlaneZ)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 ACTION_RETURN_FLOAT(self->GetPortalPlaneZ(pos));
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, GetPortalDisplacement)
+ static int GetPortalType(sector_t *self, int pos)
  {
-	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
-	 PARAM_INT(pos);
-	 ACTION_RETURN_VEC2(self->GetPortalDisplacement(pos));
+	 return self->GetPortalType(pos);
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, GetPortalType)
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetPortalType, GetPortalType)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 ACTION_RETURN_INT(self->GetPortalType(pos));
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, GetOppositePortalGroup)
+ static int GetOppositePortalGroup(sector_t *self, int pos)
+ {
+	 return self->GetOppositePortalGroup(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetOppositePortalGroup, GetOppositePortalGroup)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 ACTION_RETURN_INT(self->GetOppositePortalGroup(pos));
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, CenterFloor)
+ static double CenterFloor(sector_t *self)
+ {
+	 return self->CenterFloor();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, CenterFloor, CenterFloor)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 ACTION_RETURN_FLOAT(self->CenterFloor());
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, CenterCeiling)
+ static double CenterCeiling(sector_t *self)
+ {
+	 return self->CenterCeiling();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, CenterCeiling, CenterCeiling)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 ACTION_RETURN_FLOAT(self->CenterCeiling());
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, Index)
+ static int Index(sector_t *self)
  {
-	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
-	unsigned ndx = self->Index();
-	if (ndx >= level.sectors.Size())
-	{
-		// This qualifies as an array out of bounds exception. Normally it can only happen when a sector copy is concerned which scripts should not be able to create.
-		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Accessed invalid sector");
-	}
-	ACTION_RETURN_INT(ndx);
+	 unsigned ndx = self->Index();
+	 if (ndx >= level.sectors.Size()) return -1;	// This must not throw because it is the only means to check that the given pointer is valid.
+	 return ndx;
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, SetEnvironmentID)
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, Index, Index)
+ {
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	ACTION_RETURN_INT(Index(self));
+ }
+
+ static void SetEnvironmentID(sector_t *self, int envnum)
+ {
+	 level.Zones[self->ZoneNumber].Environment = S_FindEnvironment(envnum);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetEnvironmentID, SetEnvironmentID)
  {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	PARAM_INT(envnum);
-	level.Zones[self->ZoneNumber].Environment = S_FindEnvironment(envnum);
+	SetEnvironmentID(self, envnum);
 	return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, SetEnvironment)
+ static void SetEnvironment(sector_t *self, const FString &env)
+ {
+	 level.Zones[self->ZoneNumber].Environment = S_FindEnvironment(env);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetEnvironment, SetEnvironment)
  {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	PARAM_STRING(env);
-	level.Zones[self->ZoneNumber].Environment = S_FindEnvironment(env);
+	SetEnvironment(self, env);
 	return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, GetGlowHeight)
+ static double GetGlowHeight(sector_t *self, int pos)
+ {
+	 return self->GetGlowHeight(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetGlowHeight, GetGlowHeight)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 ACTION_RETURN_FLOAT(self->GetGlowHeight(pos));
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, GetGlowColor)
+ static double GetGlowColor(sector_t *self, int pos)
+ {
+	 return self->GetGlowColor(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetGlowColor, GetGlowColor)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 ACTION_RETURN_INT(self->GetGlowColor(pos));
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, SetGlowHeight)
+ static void SetGlowHeight(sector_t *self, int pos, double o)
+ {
+	 self->SetGlowHeight(pos, float(o));
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetGlowHeight, SetGlowHeight)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
@@ -640,7 +759,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, SetGlowColor)
+ static void SetGlowColor(sector_t *self, int pos, int o)
+ {
+	 self->SetGlowColor(pos, o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetGlowColor, SetGlowColor)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);

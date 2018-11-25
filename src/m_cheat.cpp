@@ -416,29 +416,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_TAKEWEAPS:
-		if (player->morphTics || player->mo == NULL || player->mo->health <= 0)
-		{
-			return;
-		}
-		{
-			// Take away all weapons that are either non-wimpy or use ammo.
-			AInventory **invp = &player->mo->Inventory, **lastinvp;
-			for (item = *invp; item != NULL; item = *invp)
-			{
-				lastinvp = invp;
-				invp = &(*invp)->Inventory;
-				if (item->IsKindOf(NAME_Weapon))
-				{
-					AWeapon *weap = static_cast<AWeapon *> (item);
-					if (!(weap->WeaponFlags & WIF_WIMPY_WEAPON) ||
-						weap->AmmoType1 != NULL)
-					{
-						item->Destroy ();
-						invp = lastinvp;
-					}
-				}
-			}
-		}
+		cht_Takeweaps(player);
 		msg = GStrings("TXT_CHEATIDKFA");
 		break;
 
@@ -610,6 +588,15 @@ void cht_Take (player_t *player, const char *name, int amount)
 		FString namestr = name;
 		VMValue params[3] = { player->mo, &namestr, amount };
 		VMCall(func, params, 3, nullptr, 0);
+	}
+}
+
+void cht_Takeweaps(player_t *player)
+{
+	IFVIRTUALPTR(player->mo, APlayerPawn, CheatTakeWeaps)
+	{
+		VMValue params[3] = { player->mo };
+		VMCall(func, params, 1, nullptr, 0);
 	}
 }
 

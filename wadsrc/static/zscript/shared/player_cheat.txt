@@ -426,4 +426,28 @@ extend class PlayerPawn
 		return "";
 	}
 	
+	virtual void CheatTakeWeaps()
+	{
+		if (player.morphTics || health <= 0)
+		{
+			return;
+		}
+		// Do not mass-delete directly from the linked list. That can cause problems.
+		Array<Inventory> collect;
+		// Take away all weapons that are either non-wimpy or use ammo.
+		for(let item = Inv; item; item = item.Inv)
+		{
+			let weap = Weapon(item);
+			if (weap && (!weap.bWimpy_Weapon || weap.AmmoType1 != null))
+			{
+				collect.Push(item);
+			}
+		}
+		// Destroy them in a second loop. We have to look out for indirect destructions here as will happen with powered up weapons.
+		for(int i = 0; i < collect.Size(); i++)
+		{
+			let item = collect[i];
+			if (item) item.Destroy();
+		}
+	}
 }

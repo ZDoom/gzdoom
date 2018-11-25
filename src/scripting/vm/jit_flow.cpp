@@ -47,14 +47,7 @@ void JitCompiler::EmitIJMP()
 
 static void ValidateCall(DObject *o, VMFunction *f, int b)
 {
-	try
-	{
-		FScopeBarrier::ValidateCall(o->GetClass(), f, b - 1);
-	}
-	catch (...)
-	{
-		VMThrowException(std::current_exception());
-	}
+	FScopeBarrier::ValidateCall(o->GetClass(), f, b - 1);
 }
 
 void JitCompiler::EmitSCOPE()
@@ -241,30 +234,22 @@ void JitCompiler::EmitRETI()
 
 static DObject* CreateNew(PClass *cls, int c)
 {
-	try
+	if (!cls->ConstructNative)
 	{
-		if (!cls->ConstructNative)
-		{
-			ThrowAbortException(X_OTHER, "Class %s requires native construction", cls->TypeName.GetChars());
-		}
-		else if (cls->bAbstract)
-		{
-			ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
-		}
-		else if (cls->IsDescendantOf(NAME_Actor)) // Creating actors here must be outright prohibited
-		{
-			ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
-		}
+		ThrowAbortException(X_OTHER, "Class %s requires native construction", cls->TypeName.GetChars());
+	}
+	else if (cls->bAbstract)
+	{
+		ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
+	}
+	else if (cls->IsDescendantOf(NAME_Actor)) // Creating actors here must be outright prohibited
+	{
+		ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
+	}
 
-		// [ZZ] validate readonly and between scope construction
-		if (c) FScopeBarrier::ValidateNew(cls, c - 1);
-		return cls->CreateNew();
-	}
-	catch (...)
-	{
-		VMThrowException(std::current_exception());
-		return nullptr;
-	}
+	// [ZZ] validate readonly and between scope construction
+	if (c) FScopeBarrier::ValidateNew(cls, c - 1);
+	return cls->CreateNew();
 }
 
 void JitCompiler::EmitNEW()
@@ -280,39 +265,24 @@ void JitCompiler::EmitNEW()
 
 static void ThrowNewK(PClass *cls, int c)
 {
-	try
+	if (!cls->ConstructNative)
 	{
-		if (!cls->ConstructNative)
-		{
-			ThrowAbortException(X_OTHER, "Class %s requires native construction", cls->TypeName.GetChars());
-		}
-		else if (cls->bAbstract)
-		{
-			ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
-		}
-		else // if (cls->IsDescendantOf(NAME_Actor)) // Creating actors here must be outright prohibited
-		{
-			ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
-		}
+		ThrowAbortException(X_OTHER, "Class %s requires native construction", cls->TypeName.GetChars());
 	}
-	catch (...)
+	else if (cls->bAbstract)
 	{
-		VMThrowException(std::current_exception());
+		ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
+	}
+	else // if (cls->IsDescendantOf(NAME_Actor)) // Creating actors here must be outright prohibited
+	{
+		ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
 	}
 }
 
 static DObject *CreateNewK(PClass *cls, int c)
 {
-	try
-	{
-		if (c) FScopeBarrier::ValidateNew(cls, c - 1);
-		return cls->CreateNew();
-	}
-	catch (...)
-	{
-		VMThrowException(std::current_exception());
-		return nullptr;
-	}
+	if (c) FScopeBarrier::ValidateNew(cls, c - 1);
+	return cls->CreateNew();
 }
 
 void JitCompiler::EmitNEW_K()
@@ -393,19 +363,12 @@ void JitCompiler::EmitBOUND_R()
 
 void JitCompiler::ThrowArrayOutOfBounds(VMScriptFunction *func, VMOP *line, int index, int size)
 {
-	try
+	if (index >= size)
 	{
-		if (index >= size)
-		{
-			ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", size, index);
-		}
-		else
-		{
-			ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Negative current index = %i\n", index);
-		}
+		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", size, index);
 	}
-	catch (...)
+	else
 	{
-		VMThrowException(std::current_exception());
+		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Negative current index = %i\n", index);
 	}
 }

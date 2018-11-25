@@ -173,7 +173,7 @@ void Linux_I_FatalError(const char* errortext)
 }
 #endif
 
-void I_FatalError (const char *error, ...)
+void I_FatalError (const char *error, va_list ap)
 {
 	static bool alreadyThrown = false;
 	gameisdead = true;
@@ -183,10 +183,7 @@ void I_FatalError (const char *error, ...)
 		alreadyThrown = true;
 		char errortext[MAX_ERRORTEXT];
 		int index;
-		va_list argptr;
-		va_start (argptr, error);
-		index = vsnprintf (errortext, MAX_ERRORTEXT, error, argptr);
-		va_end (argptr);
+		index = vsnprintf (errortext, MAX_ERRORTEXT, error, ap);
 
 #ifdef __APPLE__
 		Mac_I_FatalError(errortext);
@@ -214,16 +211,34 @@ void I_FatalError (const char *error, ...)
 	}
 }
 
+void I_FatalError(const char* const error, ...)
+{
+	va_list argptr;
+	va_start(argptr, error);
+	I_FatalError(error, argptr);
+	va_end(argptr);
+
+}
+
+extern thread_local int jit_frames;
 void I_Error (const char *error, ...)
 {
 	va_list argptr;
 	char errortext[MAX_ERRORTEXT];
 
-	va_start (argptr, error);
-	vsprintf (errortext, error, argptr);
-	va_end (argptr);
+	va_start(argptr, error);
 
-	throw CRecoverableError (errortext);
+	if (jit_frames == 0)
+	{
+		vsprintf (errortext, error, argptr);
+		va_end (argptr);
+		throw CRecoverableError(errortext);
+	}
+	else
+	{
+		I_FatalError(error, argptr);
+		va_end(argptr);
+	}
 }
 
 void I_SetIWADInfo ()

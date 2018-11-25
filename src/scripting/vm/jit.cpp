@@ -316,19 +316,10 @@ void JitCompiler::SetupSimpleFrame()
 
 static VMFrameStack *CreateFullVMFrame(VMScriptFunction *func, VMValue *args, int numargs)
 {
-	try
-	{
-		VMFrameStack *stack = &GlobalVMStack;
-		VMFrame *newf = stack->AllocFrame(func);
-		CurrentJitExceptInfo->vmframes++;
-		VMFillParams(args, newf, numargs);
-		return stack;
-	}
-	catch (...)
-	{
-		VMThrowException(std::current_exception());
-		return nullptr;
-	}
+	VMFrameStack *stack = &GlobalVMStack;
+	VMFrame *newf = stack->AllocFrame(func);
+	VMFillParams(args, newf, numargs);
+	return stack;
 }
 
 void JitCompiler::SetupFullVMFrame()
@@ -362,15 +353,7 @@ void JitCompiler::SetupFullVMFrame()
 
 static void PopFullVMFrame(VMFrameStack *stack)
 {
-	try
-	{
-		stack->PopFrame();
-		CurrentJitExceptInfo->vmframes--;
-	}
-	catch (...)
-	{
-		VMThrowException(std::current_exception());
-	}
+	stack->PopFrame();
 }
 
 void JitCompiler::EmitPopFrame()
@@ -434,14 +417,7 @@ void JitCompiler::EmitNullPointerThrow(int index, EVMAbortException reason)
 
 void JitCompiler::ThrowException(VMScriptFunction *func, VMOP *line, int reason)
 {
-	try
-	{
-		ThrowAbortException(func, line, (EVMAbortException)reason, nullptr);
-	}
-	catch (...)
-	{
-		VMThrowException(std::current_exception());
-	}
+	ThrowAbortException(func, line, (EVMAbortException)reason, nullptr);
 }
 
 void JitCompiler::EmitThrowException(EVMAbortException reason)

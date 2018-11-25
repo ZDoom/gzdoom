@@ -475,12 +475,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
-  static int GetTexture(sector_t *self, int pos)
+  static int GetSectorTexture(sector_t *self, int pos)
   {
 	  return self->GetTexture(pos).GetIndex();
   }
 
-  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetTexture, GetTexture)
+  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetTexture, GetSectorTexture)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
@@ -682,17 +682,17 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 ACTION_RETURN_FLOAT(self->CenterCeiling());
  }
 
- static int Index(sector_t *self)
+ static int SectorIndex(sector_t *self)
  {
 	 unsigned ndx = self->Index();
 	 if (ndx >= level.sectors.Size()) return -1;	// This must not throw because it is the only means to check that the given pointer is valid.
 	 return ndx;
  }
 
- DEFINE_ACTION_FUNCTION_NATIVE(_Sector, Index, Index)
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, Index, SectorIndex)
  {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
-	ACTION_RETURN_INT(Index(self));
+	ACTION_RETURN_INT(SectorIndex(self));
  }
 
  static void SetEnvironmentID(sector_t *self, int envnum)
@@ -779,39 +779,64 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
  //
  //===========================================================================
 
- DEFINE_ACTION_FUNCTION(_Line, isLinePortal)
+ static int isLinePortal(line_t *self)
+ {
+	 return self->isLinePortal();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Line, isLinePortal, isLinePortal)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
 	 ACTION_RETURN_BOOL(self->isLinePortal());
  }
 
- DEFINE_ACTION_FUNCTION(_Line, isVisualPortal)
+ static int isVisualPortal(line_t *self)
+ {
+	 return self->isVisualPortal();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Line, isVisualPortal, isVisualPortal)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
 	 ACTION_RETURN_BOOL(self->isVisualPortal());
  }
 
- DEFINE_ACTION_FUNCTION(_Line, getPortalDestination)
+ static line_t *getPortalDestination(line_t *self)
+ {
+	 return self->getPortalDestination();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Line, getPortalDestination, getPortalDestination)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
 	 ACTION_RETURN_POINTER(self->getPortalDestination());
  }
 
- DEFINE_ACTION_FUNCTION(_Line, getPortalAlignment)
+ static int getPortalAlignment(line_t *self)
+ {
+	 return self->getPortalAlignment();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Line, getPortalAlignment, getPortalAlignment)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
 	 ACTION_RETURN_INT(self->getPortalAlignment());
  }
 
- DEFINE_ACTION_FUNCTION(_Line, Index)
+ static int LineIndex(line_t *self)
  {
-	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
 	 unsigned ndx = self->Index();
 	 if (ndx >= level.lines.Size())
 	 {
-		 ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Accessed invalid line");
+		 return -1;
 	 }
-	 ACTION_RETURN_INT(ndx);
+	 return ndx;
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Line, Index, LineIndex)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_INT(LineIndex(self));
  }
 
  //===========================================================================
@@ -820,14 +845,24 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
  //
  //===========================================================================
 
- DEFINE_ACTION_FUNCTION(_Side, GetTexture)
+ static int GetSideTexture(side_t *self, int which)
+ {
+	return self->GetTexture(which).GetIndex();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, GetTexture, GetSideTexture)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
 	 PARAM_INT(which);
 	 ACTION_RETURN_INT(self->GetTexture(which).GetIndex());
  }
 
- DEFINE_ACTION_FUNCTION(_Side, SetTexture)
+ static void SetSideTexture(side_t *self, int which, int tex)
+ {
+	 self->SetTexture(which, FSetTextureID(tex));
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, SetTexture, SetSideTexture)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
 	 PARAM_INT(which);
@@ -836,7 +871,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Side, SetTextureXOffset)
+ static void SetTextureXOffset(side_t *self, int which, double ofs)
+ {
+	 self->SetTextureXOffset(which, ofs);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, SetTextureXOffset, SetTextureXOffset)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
 	 PARAM_INT(which);
@@ -845,7 +885,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Side, AddTextureXOffset)
+ static void AddTextureXOffset(side_t *self, int which, double ofs)
+ {
+	 self->AddTextureXOffset(which, ofs);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, AddTextureXOffset, AddTextureXOffset)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
 	 PARAM_INT(which);
@@ -854,14 +899,24 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Side, GetTextureXOffset)
+ static double GetTextureXOffset(side_t *self, int which)
+ {
+	 return self->GetTextureXOffset(which);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, GetTextureXOffset, GetTextureXOffset)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
 	 PARAM_INT(which);
 	 ACTION_RETURN_FLOAT(self->GetTextureXOffset(which));
  }
 
- DEFINE_ACTION_FUNCTION(_Side, SetTextureYOffset)
+ static void SetTextureYOffset(side_t *self, int which, double ofs)
+ {
+	 self->SetTextureYOffset(which, ofs);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, SetTextureYOffset, SetTextureYOffset)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
 	 PARAM_INT(which);
@@ -870,7 +925,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Side, AddTextureYOffset)
+ static void AddTextureYOffset(side_t *self, int which, double ofs)
+ {
+	 self->AddTextureYOffset(which, ofs);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, AddTextureYOffset, AddTextureYOffset)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
 	 PARAM_INT(which);
@@ -879,14 +939,24 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Side, GetTextureYOffset)
+ static double GetTextureYOffset(side_t *self, int which)
+ {
+	 return self->GetTextureYOffset(which);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, GetTextureYOffset, GetTextureYOffset)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
 	 PARAM_INT(which);
 	 ACTION_RETURN_FLOAT(self->GetTextureYOffset(which));
  }
 
- DEFINE_ACTION_FUNCTION(_Side, SetTextureXScale)
+ static void SetTextureXScale(side_t *self, int which, double ofs)
+ {
+	 self->SetTextureXScale(which, ofs);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, SetTextureXScale, SetTextureXScale)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
 	 PARAM_INT(which);
@@ -895,7 +965,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Side, MultiplyTextureXScale)
+ static void MultiplyTextureXScale(side_t *self, int which, double ofs)
+ {
+	 self->MultiplyTextureXScale(which, ofs);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, MultiplyTextureXScale, MultiplyTextureXScale)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
 	 PARAM_INT(which);
@@ -904,14 +979,24 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Side, GetTextureXScale)
+ static double GetTextureXScale(side_t *self, int which)
+ {
+	 return self->GetTextureXScale(which);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, GetTextureXScale, GetTextureXScale)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
 	 PARAM_INT(which);
 	 ACTION_RETURN_FLOAT(self->GetTextureXScale(which));
  }
 
- DEFINE_ACTION_FUNCTION(_Side, SetTextureYScale)
+ static void SetTextureYScale(side_t *self, int which, double ofs)
+ {
+	 self->SetTextureYScale(which, ofs);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, SetTextureYScale, SetTextureYScale)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
 	 PARAM_INT(which);
@@ -920,7 +1005,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Side, MultiplyTextureYScale)
+ static void MultiplyTextureYScale(side_t *self, int which, double ofs)
+ {
+	 self->MultiplyTextureYScale(which, ofs);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, MultiplyTextureYScale, MultiplyTextureYScale)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
 	 PARAM_INT(which);
@@ -929,29 +1019,72 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Side, GetTextureYScale)
+ static double GetTextureYScale(side_t *self, int which)
+ {
+	 return self->GetTextureYScale(which);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, GetTextureYScale, GetTextureYScale)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
 	 PARAM_INT(which);
 	 ACTION_RETURN_FLOAT(self->GetTextureYScale(which));
  }
 
- DEFINE_ACTION_FUNCTION(_Side, V1)
+ static vertex_t *GetSideV1(side_t *self)
+ {
+	 return self->V1();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, V1, GetSideV1)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
 	 ACTION_RETURN_POINTER(self->V1());
  }
 
- DEFINE_ACTION_FUNCTION(_Side, V2)
+ static vertex_t *GetSideV2(side_t *self)
+ {
+	 return self->V2();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, V2, GetSideV2)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
 	 ACTION_RETURN_POINTER(self->V2());
  }
 
- DEFINE_ACTION_FUNCTION(_Side, Index)
+ static void SetSideSpecialColor(side_t *self, int tier, int position, int color)
+ {
+	 if (tier >= 0 && tier < 3 && position >= 0 && position < 2)
+	 {
+		 self->SetSpecialColor(tier, position, color);
+	 }
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, SetSpecialColor, SetSideSpecialColor)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
-	 ACTION_RETURN_INT(self->Index());
+	 PARAM_INT(tier);
+	 PARAM_INT(position);
+	 PARAM_COLOR(color);
+	 SetSideSpecialColor(self, tier, position, color);
+	 return 0;
+ }
+
+ static int SideIndex(side_t *self)
+ {
+	 unsigned ndx = self->Index();
+	 if (ndx >= level.sides.Size())
+	 {
+		 return -1;
+	 }
+	 return ndx;
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, Index, SideIndex)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 ACTION_RETURN_INT(SideIndex(self));
  }
 
  //=====================================================================================
@@ -959,28 +1092,29 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 //
 //=====================================================================================
 
- DEFINE_ACTION_FUNCTION(_Side, SetSpecialColor)
+ static int VertexIndex(vertex_t *self)
  {
-	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
-	 PARAM_INT(tier);
-	 PARAM_INT(position);
-	 PARAM_COLOR(color);
-	 if (tier >= 0 && tier < 3 && position >= 0 && position < 2)
+	 unsigned ndx = self->Index();
+	 if (ndx >= level.vertexes.Size())
 	 {
-		 color.a = 255;
-		 self->SetSpecialColor(tier, position, color);
+		 return -1;
 	 }
-	 return 0;
+	 return ndx;
  }
 
-
- DEFINE_ACTION_FUNCTION(_Vertex, Index)
+ DEFINE_ACTION_FUNCTION_NATIVE(_Vertex, Index, VertexIndex)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(vertex_t);
-	 ACTION_RETURN_INT(self->Index());
+	 ACTION_RETURN_INT(VertexIndex(self));
  }
 
-DEFINE_ACTION_FUNCTION(_TexMan, ReplaceTextures)
+ // This is needed to convert the strings to char pointers.
+ static void ReplaceTextures(const FString &from, const FString &to, int flags)
+ {
+	 P_ReplaceTextures(from, to, flags);
+ }
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, ReplaceTextures, ReplaceTextures)
 {
 	PARAM_PROLOGUE;
 	PARAM_STRING(from);
@@ -990,13 +1124,28 @@ DEFINE_ACTION_FUNCTION(_TexMan, ReplaceTextures)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(_Secplane, isSlope)
+//=====================================================================================
+//
+//
+//=====================================================================================
+
+static int isSlope(secplane_t *self)
+{
+	return !self->normal.XY().isZero();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Secplane, isSlope, isSlope)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
 	ACTION_RETURN_BOOL(!self->normal.XY().isZero());
 }
 
-DEFINE_ACTION_FUNCTION(_Secplane, PointOnSide)
+static int PointOnSide(const secplane_t *self, double x, double y, double z)
+{
+	return self->PointOnSide(DVector3(x, y, z));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Secplane, PointOnSide, PointOnSide)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
 	PARAM_FLOAT(x);
@@ -1005,7 +1154,12 @@ DEFINE_ACTION_FUNCTION(_Secplane, PointOnSide)
 	ACTION_RETURN_INT(self->PointOnSide(DVector3(x, y, z)));
 }
 
-DEFINE_ACTION_FUNCTION(_Secplane, ZatPoint)
+static double ZatPoint(const secplane_t *self, double x, double y)
+{
+	return self->ZatPoint(x, y);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Secplane, ZatPoint, ZatPoint)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
 	PARAM_FLOAT(x);
@@ -1013,23 +1167,38 @@ DEFINE_ACTION_FUNCTION(_Secplane, ZatPoint)
 	ACTION_RETURN_FLOAT(self->ZatPoint(x, y));
 }
 
-DEFINE_ACTION_FUNCTION(_Secplane, ZatPointDist)
+static double ZatPointDist(const secplane_t *self, double x, double y, double d)
+{
+	return (d + self->normal.X*x + self->normal.Y*y) * self->negiC;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Secplane, ZatPointDist, ZatPointDist)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	PARAM_FLOAT(d);
-	ACTION_RETURN_FLOAT((d + self->normal.X*x + self->normal.Y*y) * self->negiC);
+	ACTION_RETURN_FLOAT(ZatPointDist(self, x, y, d));
 }
 
-DEFINE_ACTION_FUNCTION(_Secplane, isEqual)
+static int isPlaneEqual(const secplane_t *self, const secplane_t *other)
+{
+	return *self == *other;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Secplane, isEqual, isPlaneEqual)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
 	PARAM_POINTER(other, secplane_t);
 	ACTION_RETURN_BOOL(*self == *other);
 }
 
-DEFINE_ACTION_FUNCTION(_Secplane, ChangeHeight)
+static void ChangeHeight(secplane_t *self, double hdiff)
+{
+	self->ChangeHeight(hdiff);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Secplane, ChangeHeight, ChangeHeight)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
 	PARAM_FLOAT(hdiff);
@@ -1037,30 +1206,45 @@ DEFINE_ACTION_FUNCTION(_Secplane, ChangeHeight)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(_Secplane, GetChangedHeight)
+static double GetChangedHeight(const secplane_t *self, double hdiff)
+{
+	return self->GetChangedHeight(hdiff);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Secplane, GetChangedHeight, GetChangedHeight)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
 	PARAM_FLOAT(hdiff);
 	ACTION_RETURN_FLOAT(self->GetChangedHeight(hdiff));
 }
 
-DEFINE_ACTION_FUNCTION(_Secplane, HeightDiff)
+static double HeightDiff(const secplane_t *self, double oldd, double newd)
+{
+	if (newd != 1e37)
+	{
+		return self->HeightDiff(oldd);
+	}
+	else
+	{
+		return self->HeightDiff(oldd, newd);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Secplane, HeightDiff, HeightDiff)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
 	PARAM_FLOAT(oldd);
 	PARAM_FLOAT(newd);
-	if (newd != 1e37)
-	{
-		ACTION_RETURN_FLOAT(self->HeightDiff(oldd));
-	}
-	else
-	{
-		PARAM_FLOAT(newd);
-		ACTION_RETURN_FLOAT(self->HeightDiff(oldd, newd));
-	}
+	ACTION_RETURN_FLOAT(HeightDiff(self, oldd, newd));
 }
 
-DEFINE_ACTION_FUNCTION(_Secplane, PointToDist)
+static double PointToDist(const secplane_t *self, double x, double y, double z)
+{
+	return self->PointToDist(DVector2(x, y), z);
+}
+
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Secplane, PointToDist, PointToDist)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
 	PARAM_FLOAT(x);

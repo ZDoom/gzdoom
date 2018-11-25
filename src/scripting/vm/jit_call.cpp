@@ -317,12 +317,15 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 {
 	using namespace asmjit;
 
-	auto call = cc.call(imm_ptr(target->DirectNativeCall), CreateFuncSignature(target));
-
 	if ((pc - 1)->op == OP_VTBL)
 	{
 		I_FatalError("Native direct member function calls not implemented\n");
 	}
+
+	asmjit::CBNode *cursorBefore = cc.getCursor();
+	auto call = cc.call(imm_ptr(target->DirectNativeCall), CreateFuncSignature(target));
+	asmjit::CBNode *cursorAfter = cc.getCursor();
+	cc.setCursor(cursorBefore);
 
 	X86Gp tmp;
 	X86Xmm tmp2;
@@ -397,6 +400,8 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 			}
 		}
 	}
+
+	cc.setCursor(cursorAfter);
 
 	if (numparams != B)
 		I_FatalError("OP_CALL parameter count does not match the number of preceding OP_PARAM instructions\n");

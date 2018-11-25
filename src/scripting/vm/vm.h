@@ -579,12 +579,19 @@ struct AFuncDesc
 #define DEFINE_ACTION_FUNCTION_NATIVE(cls, name, native) \
 	static int AF_##cls##_##name(VM_ARGS); \
 	VMNativeFunction *cls##_##name##_VMPtr; \
-	static const AFuncDesc cls##_##name##_Hook = { #cls, #name, AF_##cls##_##name, &cls##_##name##_VMPtr, native }; \
+	static const AFuncDesc cls##_##name##_Hook = { #cls, #name, AF_##cls##_##name, &cls##_##name##_VMPtr, reinterpret_cast<void*>(native) }; \
 	extern AFuncDesc const *const cls##_##name##_HookPtr; \
 	MSVC_ASEG AFuncDesc const *const cls##_##name##_HookPtr GCC_ASEG = &cls##_##name##_Hook; \
 	static int AF_##cls##_##name(VM_ARGS)
 
-#define DEFINE_ACTION_FUNCTION(cls, name) DEFINE_ACTION_FUNCTION_NATIVE(cls, name, nullptr)
+//#define DEFINE_ACTION_FUNCTION(cls, name) DEFINE_ACTION_FUNCTION_NATIVE(cls, name, nullptr)
+#define DEFINE_ACTION_FUNCTION(cls, name) \
+	static int AF_##cls##_##name(VM_ARGS); \
+	VMNativeFunction *cls##_##name##_VMPtr; \
+	static const AFuncDesc cls##_##name##_Hook = { #cls, #name, AF_##cls##_##name, &cls##_##name##_VMPtr, nullptr }; \
+	extern AFuncDesc const *const cls##_##name##_HookPtr; \
+	MSVC_ASEG AFuncDesc const *const cls##_##name##_HookPtr GCC_ASEG = &cls##_##name##_Hook; \
+	static int AF_##cls##_##name(VM_ARGS)
 
 // cls is the scripted class name, icls the internal one (e.g. player_t vs. Player)
 #define DEFINE_FIELD_X(cls, icls, name) \

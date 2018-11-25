@@ -54,12 +54,6 @@
 
 EXTERN_CVAR(Bool, sv_unlimited_pickup)
 
-void AInventory::Finalize(FStateDefinitions &statedef)
-{
-	Super::Finalize(statedef);
-	flags |= MF_SPECIAL;
-}
-
 IMPLEMENT_CLASS(AInventory, false, true)
 
 IMPLEMENT_POINTERS_START(AInventory)

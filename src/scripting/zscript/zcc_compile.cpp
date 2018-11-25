@@ -3105,7 +3105,7 @@ void ZCCCompiler::CompileStates()
 		}
 		try
 		{
-			GetDefaultByType(c->ClassType())->Finalize(statedef);
+			FinalizeClass(c->ClassType(), statedef);
 		}
 		catch (CRecoverableError &err)
 		{

@@ -51,6 +51,8 @@
 #include "v_text.h"
 #include "backend/codegen.h"
 #include "stats.h"
+#include "info.h"
+#include "thingdef.h"
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 void InitThingdef();
@@ -59,6 +61,69 @@ void InitThingdef();
 
 static TMap<FState *, FScriptPosition> StateSourceLines;
 static FScriptPosition unknownstatesource("unknown file", 0);
+
+
+//==========================================================================
+//
+// PClassActor :: Finalize
+//
+// Installs the parsed states and does some sanity checking
+//
+//==========================================================================
+
+void FinalizeClass(PClass *ccls, FStateDefinitions &statedef)
+{
+	if (!ccls->IsDescendantOf(NAME_Actor)) return;
+	auto cls = static_cast<PClassActor*>(ccls);
+	try
+	{
+		statedef.FinishStates(cls);
+	}
+	catch (CRecoverableError &)
+	{
+		statedef.MakeStateDefines(nullptr);
+		throw;
+	}
+	auto def = GetDefaultByType(cls);
+	statedef.InstallStates(cls, def);
+	statedef.MakeStateDefines(nullptr);
+
+	if (cls->IsDescendantOf(NAME_Inventory))
+	{
+		def->flags |= MF_SPECIAL;
+	}
+
+	if (cls->IsDescendantOf(NAME_Weapon))
+	{
+		FState *ready = def->FindState(NAME_Ready);
+		FState *select = def->FindState(NAME_Select);
+		FState *deselect = def->FindState(NAME_Deselect);
+		FState *fire = def->FindState(NAME_Fire);
+		auto TypeName = cls->TypeName;
+
+		// Consider any weapon without any valid state abstract and don't output a warning
+		// This is for creating base classes for weapon groups that only set up some properties.
+		if (ready || select || deselect || fire)
+		{
+			if (!ready)
+			{
+				I_Error("Weapon %s doesn't define a ready state.", TypeName.GetChars());
+			}
+			if (!select)
+			{
+				I_Error("Weapon %s doesn't define a select state.", TypeName.GetChars());
+			}
+			if (!deselect)
+			{
+				I_Error("Weapon %s doesn't define a deselect state.", TypeName.GetChars());
+			}
+			if (!fire)
+			{
+				I_Error("Weapon %s doesn't define a fire state.", TypeName.GetChars());
+			}
+		}
+	}
+}
 
 //==========================================================================
 //

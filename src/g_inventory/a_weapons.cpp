@@ -103,45 +103,6 @@ static int ntoh_cmp(const void *a, const void *b);
 
 //===========================================================================
 //
-//
-//
-//===========================================================================
-
-void AWeapon::Finalize(FStateDefinitions &statedef)
-{
-	Super::Finalize(statedef);
-	FState *ready = FindState(NAME_Ready);
-	FState *select = FindState(NAME_Select);
-	FState *deselect = FindState(NAME_Deselect);
-	FState *fire = FindState(NAME_Fire);
-	auto TypeName = GetClass()->TypeName;
-
-	// Consider any weapon without any valid state abstract and don't output a warning
-	// This is for creating base classes for weapon groups that only set up some properties.
-	if (ready || select || deselect || fire)
-	{
-		if (!ready)
-		{
-			I_Error("Weapon %s doesn't define a ready state.", TypeName.GetChars());
-		}
-		if (!select)
-		{
-			I_Error("Weapon %s doesn't define a select state.", TypeName.GetChars());
-		}
-		if (!deselect)
-		{
-			I_Error("Weapon %s doesn't define a deselect state.", TypeName.GetChars());
-		}
-		if (!fire)
-		{
-			I_Error("Weapon %s doesn't define a fire state.", TypeName.GetChars());
-		}
-	}
-}
-
-
-//===========================================================================
-//
 // AWeapon :: Serialize
 //
 //===========================================================================

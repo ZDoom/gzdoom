@@ -7287,20 +7287,6 @@ DEFINE_ACTION_FUNCTION(AActor, SpawnSubMissile)
 ================
 */
 
-AActor *P_SpawnPlayerMissile (AActor *source, PClassActor *type)
-{
-	if (source == NULL)
-	{
-		return NULL;
-	}
-	return P_SpawnPlayerMissile (source, 0, 0, 0, type, source->Angles.Yaw);
-}
-
-AActor *P_SpawnPlayerMissile (AActor *source, PClassActor *type, DAngle angle)
-{
-	return P_SpawnPlayerMissile (source, 0, 0, 0, type, angle);
-}
-
 AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 							  PClassActor *type, DAngle angle, FTranslatedLineTarget *pLineTarget, AActor **pMissileActor,
 							  bool nofreeaim, bool noautoaim, int aimflags)

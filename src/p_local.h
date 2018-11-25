@@ -131,9 +131,6 @@ AActor *P_SpawnMissileAngleZSpeed(AActor *source, double z, PClassActor *type, D
 AActor *P_SpawnMissileZAimed(AActor *source, double z, AActor *dest, PClassActor *type);
 
 
-AActor *P_SpawnPlayerMissile (AActor* source, PClassActor *type);
-AActor *P_SpawnPlayerMissile (AActor *source, PClassActor *type, DAngle angle);
-
 AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z, PClassActor *type, DAngle angle, 
 							  FTranslatedLineTarget *pLineTarget = NULL, AActor **MissileActor = NULL, bool nofreeaim = false, bool noautoaim = false, int aimflags = 0);
 

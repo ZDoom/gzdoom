@@ -84,9 +84,7 @@ public:
 	uint32_t texel[MAXWIDTH];
 	int32_t texelV[MAXWIDTH];
 	fixed_t lightarray[MAXWIDTH];
-	uint16_t dynlights_r[MAXWIDTH];
-	uint16_t dynlights_g[MAXWIDTH];
-	uint16_t dynlights_b[MAXWIDTH];
+	uint32_t dynlights[MAXWIDTH];
 
 	static PolyTriangleThreadData *Get(DrawerThread *thread);
 

@@ -404,9 +404,7 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyT
 	uint32_t *texel = thread->texel;
 	int32_t *texelV = thread->texelV;
 	fixed_t *lightarray = thread->lightarray;
-	uint16_t *dynlights_r = thread->dynlights_r;
-	uint16_t *dynlights_g = thread->dynlights_g;
-	uint16_t *dynlights_b = thread->dynlights_b;
+	uint32_t *dynlights = thread->dynlights;
 
 	if (!(ModeT::SWFlags & SWSTYLEF_Fill) && !(ModeT::SWFlags & SWSTYLEF_FogBoundary))
 	{
@@ -596,9 +594,7 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyT
 			lit_r = MIN<uint32_t>(lit_r, 255);
 			lit_g = MIN<uint32_t>(lit_g, 255);
 			lit_b = MIN<uint32_t>(lit_b, 255);
-			dynlights_r[x] = lit_r;
-			dynlights_g[x] = lit_g;
-			dynlights_b[x] = lit_b;
+			dynlights[x] = MAKEARGB(255, lit_r, lit_g, lit_b);
 		}
 	}
 
@@ -629,7 +625,49 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyT
 	uint32_t *dest = (uint32_t*)args->dest;
 	uint32_t *destLine = dest + args->pitch * y;
 
-	for (int x = x0; x < x1; x++)
+	int sseend = x0;
+#ifndef NO_SSE
+	if (ModeT::BlendOp == STYLEOP_Add &&
+		ModeT::BlendSrc == STYLEALPHA_One &&
+		ModeT::BlendDest == STYLEALPHA_Zero &&
+		(ModeT::Flags & STYLEF_Alpha1) &&
+		!(OptT::Flags & SWOPT_ColoredFog) &&
+		!(ModeT::Flags & STYLEF_RedIsAlpha) &&
+		!(ModeT::SWFlags & SWSTYLEF_Skycap) &&
+		!(ModeT::SWFlags & SWSTYLEF_FogBoundary) &&
+		!(ModeT::SWFlags & SWSTYLEF_Fill))
+	{
+		sseend += (x1 - x0) / 2 * 2;
+
+		__m128i mlightshade;
+		if (OptT::Flags & SWOPT_FixedLight)
+			mlightshade = _mm_set1_epi16(fixedlight);
+
+		__m128i alphamask = _mm_set1_epi32(0xff000000);
+
+		for (int x = x0; x < sseend; x += 2)
+		{
+			__m128i mfg = _mm_unpacklo_epi8(_mm_setr_epi32(texPixels[texel[x]], texPixels[texel[x + 1]], 0, 0), _mm_setzero_si128());
+
+			if (!(OptT::Flags & SWOPT_FixedLight))
+				mlightshade = _mm_shuffle_epi32(_mm_shufflelo_epi16(_mm_loadl_epi64((const __m128i*)&lightarray[x]), _MM_SHUFFLE(2, 2, 0, 0)), _MM_SHUFFLE(1, 1, 0, 0));
+
+			if (OptT::Flags & SWOPT_DynLights)
+			{
+				__m128i mdynlight = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)&dynlights[x]), _mm_setzero_si128());
+				mfg = _mm_srli_epi16(_mm_mullo_epi16(_mm_min_epi16(_mm_add_epi16(mdynlight, mlightshade), _mm_set1_epi16(256)), mfg), 8);
+			}
+			else
+			{
+				mfg = _mm_srli_epi16(_mm_mullo_epi16(mlightshade, mfg), 8);
+			}
+
+			_mm_storel_epi64((__m128i*)&destLine[x], _mm_or_si128(_mm_packus_epi16(mfg, _mm_setzero_si128()), alphamask));
+		}
+	}
+#endif
+
+	for (int x = sseend; x < x1; x++)
 	{
 		if (ModeT::BlendOp == STYLEOP_Fuzz)
 		{
@@ -781,18 +819,18 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyT
 
 				if (OptT::Flags & SWOPT_DynLights)
 				{
-					shadedfg_r = MIN(shadedfg_r + ((fg_r * dynlights_r[x]) >> 8), (uint32_t)255);
-					shadedfg_g = MIN(shadedfg_g + ((fg_g * dynlights_g[x]) >> 8), (uint32_t)255);
-					shadedfg_b = MIN(shadedfg_b + ((fg_b * dynlights_b[x]) >> 8), (uint32_t)255);
+					shadedfg_r = MIN(shadedfg_r + ((fg_r * RPART(dynlights[x])) >> 8), (uint32_t)255);
+					shadedfg_g = MIN(shadedfg_g + ((fg_g * GPART(dynlights[x])) >> 8), (uint32_t)255);
+					shadedfg_b = MIN(shadedfg_b + ((fg_b * BPART(dynlights[x])) >> 8), (uint32_t)255);
 				}
 			}
 			else
 			{
 				if (OptT::Flags & SWOPT_DynLights)
 				{
-					shadedfg_r = (RPART(fg) * MIN(lightshade + dynlights_r[x], (uint32_t)256)) >> 8;
-					shadedfg_g = (GPART(fg) * MIN(lightshade + dynlights_g[x], (uint32_t)256)) >> 8;
-					shadedfg_b = (BPART(fg) * MIN(lightshade + dynlights_b[x], (uint32_t)256)) >> 8;
+					shadedfg_r = (RPART(fg) * MIN(lightshade + RPART(dynlights[x]), (uint32_t)256)) >> 8;
+					shadedfg_g = (GPART(fg) * MIN(lightshade + GPART(dynlights[x]), (uint32_t)256)) >> 8;
+					shadedfg_b = (BPART(fg) * MIN(lightshade + BPART(dynlights[x]), (uint32_t)256)) >> 8;
 				}
 				else
 				{

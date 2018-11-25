@@ -139,7 +139,7 @@ public:
 	int MinAmmo1, MinAmmo2;					// Minimum ammo needed to switch to this weapon
 	int AmmoUse1, AmmoUse2;					// How much ammo to use with each shot
 	int Kickback;
-	float YAdjust;							// For viewing the weapon fullscreen (visual only so no need to be a double)
+	double YAdjust;							// For viewing the weapon fullscreen (visual only so no need to be a double)
 	FSoundIDNoInit UpSound, ReadySound;		// Sounds when coming up and idle
 	PClassActor *SisterWeaponType;			// Another weapon to pick up with this one
 	int SelectionOrder;						// Lower-numbered weapons get picked first
@@ -152,32 +152,24 @@ public:
 	// In-inventory instance variables
 	TObjPtr<AInventory*> Ammo1, Ammo2;
 	TObjPtr<AWeapon*> SisterWeapon;
-	float FOVScale;
+	double FOVScale;
 	int Crosshair;							// 0 to use player's crosshair
-	bool GivenAsMorphWeapon;				// *** only accessed from ZScript.
+	bool GivenAsMorphWeapon;
 
-	bool bAltFire;							// *** only accessed from ZScript. Set when this weapon's alternate fire is used.
+	bool bAltFire;
 	bool bDehAmmo;
 
 	void Serialize(FSerializer &arc) override;
+};
 
-	enum
-	{
-		PrimaryFire,
-		AltFire,
-		EitherFire
-	};
-
-	enum
-	{
-		BobNormal,
-		BobInverse,
-		BobAlpha,
-		BobInverseAlpha,
-		BobSmooth,
-		BobInverseSmooth
-	};
-
+enum class EBobStyle
+{
+	BobNormal,
+	BobInverse,
+	BobAlpha,
+	BobInverseAlpha,
+	BobSmooth,
+	BobInverseSmooth
 };
 
 enum

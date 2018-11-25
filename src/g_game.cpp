@@ -799,7 +799,7 @@ static int LookAdjust(int look)
 	if (players[consoleplayer].playerstate != PST_DEAD &&		// No adjustment while dead.
 		players[consoleplayer].ReadyWeapon != NULL)			// No adjustment if no weapon.
 	{
-		auto scale = players[consoleplayer].ReadyWeapon->FOVScale;
+		auto scale = players[consoleplayer].ReadyWeapon->FloatVar(NAME_FOVScale);
 		if (scale > 0)		// No adjustment if it is non-positive.
 		{
 			look = int(look * scale);
@@ -1301,8 +1301,8 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 		item = next;
 	}
 	if (p->ReadyWeapon != NULL &&
-		p->ReadyWeapon->WeaponFlags&WIF_POWERED_UP &&
-		p->PendingWeapon == p->ReadyWeapon->SisterWeapon)
+		p->ReadyWeapon->IntVar(NAME_WeaponFlags) & WIF_POWERED_UP &&
+		p->PendingWeapon == p->ReadyWeapon->PointerVar<AInventory>(NAME_SisterWeapon))
 	{
 		// Unselect powered up weapons if the unpowered counterpart is pending
 		p->ReadyWeapon=p->PendingWeapon;

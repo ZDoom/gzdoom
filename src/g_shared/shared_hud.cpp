@@ -512,7 +512,7 @@ static void AddAmmoToList(AWeapon * weapdef)
 
 	for (int i = 0; i < 2; i++)
 	{
-		auto ti = i == 0 ? weapdef->AmmoType1 : weapdef->AmmoType2;
+		auto ti = weapdef->PointerVar<PClassActor>(i == 0 ? NAME_AmmoType1 : NAME_AmmoType2);
 		if (ti)
 		{
 			auto ammodef = (AInventory*)GetDefaultByType(ti);
@@ -643,7 +643,7 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 		FTextureID icon = !AltIcon.isNull()? AltIcon : inv->Icon;
 		if (!icon.isValid()) continue;
 
-		double trans= (wi && (type==wi->AmmoType1 || type==wi->AmmoType2)) ? 0.75 : 0.375;
+		double trans= (wi && (type==wi->PointerVar<PClassActor>(NAME_AmmoType1) || type==wi->PointerVar<PClassActor>(NAME_AmmoType2))) ? 0.75 : 0.375;
 
 		int maxammo = inv->MaxAmount;
 		int ammo = ammoitem? ammoitem->Amount : 0;
@@ -741,13 +741,14 @@ static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AWeapon * weapon)
 	double trans;
 
 	// Powered up weapons and inherited sister weapons are not displayed.
-	if (weapon->WeaponFlags & WIF_POWERED_UP) return;
-	if (weapon->SisterWeapon && weapon->IsKindOf(weapon->SisterWeapon->GetClass())) return;
+	if (weapon->IntVar(NAME_WeaponFlags) & WIF_POWERED_UP) return;
+	auto SisterWeapon = weapon->PointerVar<AInventory>(NAME_SisterWeapon);
+	if (SisterWeapon && weapon->IsKindOf(SisterWeapon->GetClass())) return;
 
 	trans=0.4;
 	if (CPlayer->ReadyWeapon)
 	{
-		if (weapon==CPlayer->ReadyWeapon || weapon==CPlayer->ReadyWeapon->SisterWeapon) trans = 0.85;
+		if (weapon==CPlayer->ReadyWeapon || SisterWeapon == CPlayer->ReadyWeapon) trans = 0.85;
 	}
 
 	FTextureID picnum = GetInventoryIcon(weapon, DI_ALTICONFIRST);

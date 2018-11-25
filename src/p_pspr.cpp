@@ -1150,16 +1150,16 @@ float DPSprite::GetYAdjust(bool fullscreen)
 	AWeapon *weapon = dyn_cast<AWeapon>(GetCaller());
 	if (weapon != nullptr)
 	{
-		float fYAd = weapon->YAdjust;
+		auto fYAd = weapon->FloatVar(NAME_YAdjust);
 		if (fYAd != 0)
 		{
 			if (fullscreen)
 			{
-				return fYAd;
+				return (float)fYAd;
 			}
 			else
 			{
-				return (float)StatusBar->GetDisplacement() * fYAd;
+				return (float)(StatusBar->GetDisplacement() * fYAd);
 			}
 		}
 	}

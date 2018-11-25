@@ -965,7 +965,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 				if (item->GetClass()->TypeName == NAME_FlameThrower)
 				{
 					// The flame thrower gives less ammo when given in a dialog
-					static_cast<AWeapon*>(item)->AmmoGive1 = 40;
+					item->IntVar(NAME_AmmoGive1) = 40;
 				}
 				item->flags |= MF_DROPPED;
 				if (!item->CallTryPickup(player->mo))

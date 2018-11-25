@@ -1029,7 +1029,7 @@ void P_NewChaseDir(AActor * actor)
 			{
 				// melee range of player weapon is a parameter of the action function and cannot be checked here.
 				// Add a new weapon property?
-				ismeleeattacker = ((target->player->ReadyWeapon->WeaponFlags & WIF_MELEEWEAPON) && dist < 192);
+				ismeleeattacker = ((target->player->ReadyWeapon->IntVar(NAME_WeaponFlags) & WIF_MELEEWEAPON) && dist < 192);
 			}
 			if (ismeleeattacker)
 			{

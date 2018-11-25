@@ -1583,13 +1583,15 @@ static int PatchAmmo (int ammoNum)
 			else if (type->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
 			{
 				AWeapon *defWeap = (AWeapon *)GetDefaultByType (type);
-				if (defWeap->AmmoType1 == ammoType)
+				if (defWeap->PointerVar<PClassActor>(NAME_AmmoType1) == ammoType)
 				{
-					defWeap->AmmoGive1 = Scale (defWeap->AmmoGive1, *per, oldclip);
+					auto &AmmoGive1 = defWeap->IntVar(NAME_AmmoGive1);
+					AmmoGive1 = Scale (AmmoGive1, *per, oldclip);
 				}
-				if (defWeap->AmmoType2 == ammoType)
+				if (defWeap->PointerVar<PClassActor>(NAME_AmmoType2) == ammoType)
 				{
-					defWeap->AmmoGive2 = Scale (defWeap->AmmoGive2, *per, oldclip);
+					auto &AmmoGive2 = defWeap->IntVar(NAME_AmmoGive2);
+					AmmoGive2 = Scale (AmmoGive2, *per, oldclip);
 				}
 			}
 		}
@@ -1655,13 +1657,15 @@ static int PatchWeapon (int weapNum)
 				{
 					val = 5;
 				}
-				info->AmmoType1 = AmmoNames[val];
-				if (info->AmmoType1 != NULL)
+				auto &AmmoType = info->PointerVar<PClassActor>(NAME_AmmoType1);
+				AmmoType = AmmoNames[val];
+				if (AmmoType != nullptr)
 				{
-					info->AmmoGive1 = ((AInventory*)GetDefaultByType (info->AmmoType1))->Amount * 2;
-					if (info->AmmoUse1 == 0)
+					info->IntVar(NAME_AmmoGive1) = ((AInventory*)GetDefaultByType (AmmoType))->Amount * 2;
+					auto &AmmoUse = info->IntVar(NAME_AmmoUse1);
+					if (AmmoUse == 0)
 					{
-						info->AmmoUse1 = 1;
+						AmmoUse = 1;
 					}
 				}
 			}
@@ -1685,12 +1689,12 @@ static int PatchWeapon (int weapNum)
 		}
 		else if (stricmp (Line1, "Ammo use") == 0 || stricmp (Line1, "Ammo per shot") == 0)
 		{
-			info->AmmoUse1 = val;
+			info->IntVar(NAME_AmmoUse1) = val;
 			info->flags6 |= MF6_INTRYMOVE;	// flag the weapon for postprocessing (reuse a flag that can't be set by external means)
 		}
 		else if (stricmp (Line1, "Min ammo") == 0)
 		{
-			info->MinSelAmmo1 = val;
+			info->IntVar(NAME_MinSelAmmo1) = val;
 		}
 		else
 		{
@@ -1698,9 +1702,9 @@ static int PatchWeapon (int weapNum)
 		}
 	}
 
-	if (info->AmmoType1 == NULL)
+	if (info->PointerVar<PClassActor>(NAME_AmmoType1) == nullptr)
 	{
-		info->AmmoUse1 = 0;
+		info->IntVar(NAME_AmmoUse1) = 0;
 	}
 
 	if (patchedStates)
@@ -3095,8 +3099,8 @@ void FinishDehPatch ()
 		}
 		else
 		{
-			weap->bDehAmmo = true;
-			weap->AmmoUse1 = 0;
+			weap->BoolVar(NAME_bDehAmmo) = true;
+			weap->IntVar(NAME_AmmoUse1) = 0;
 			// to allow proper checks in CheckAmmo we have to find the first attack pointer in the Fire sequence
 			// and set its default ammo use as the weapon's AmmoUse1.
 
@@ -3123,7 +3127,7 @@ void FinishDehPatch ()
 						found = true;
 						int use = AmmoPerAttacks[j].ammocount;
 						if (use < 0) use = deh.BFGCells;
-						weap->AmmoUse1 = use;
+						weap->IntVar(NAME_AmmoUse1) = use;
 						break;
 					}
 				}

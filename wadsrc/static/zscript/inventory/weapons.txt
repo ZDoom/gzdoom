@@ -10,13 +10,13 @@ class Weapon : StateProvider native
 	const ZOOM_INSTANT = 1;
 	const ZOOM_NOSCALETURNING = 2;
 	
-	native uint WeaponFlags;
+	deprecated("3.7") native uint WeaponFlags;		// not to be used directly.
 	native class<Ammo> AmmoType1, AmmoType2;		// Types of ammo used by self weapon
 	native int AmmoGive1, AmmoGive2;				// Amount of each ammo to get when picking up weapon
-	native int MinAmmo1, MinAmmo2;					// not used anywhere.
+	deprecated("3.7") native int MinAmmo1, MinAmmo2;	// not used anywhere and thus deprecated.
 	native int AmmoUse1, AmmoUse2;					// How much ammo to use with each shot
 	native int Kickback;
-	native float YAdjust;							// For viewing the weapon fullscreen (visual only so no need to be a double)
+	native double YAdjust;							// For viewing the weapon fullscreen
 	native sound UpSound, ReadySound;				// Sounds when coming up and idle
 	native class<Weapon> SisterWeaponType;			// Another weapon to pick up with self one
 	native int SelectionOrder;						// Lower-numbered weapons get picked first
@@ -27,7 +27,7 @@ class Weapon : StateProvider native
 	native float BobRangeX, BobRangeY;				// [XA] Bobbing range. Defines how far a weapon bobs in either direction.
 	native Ammo Ammo1, Ammo2;						// In-inventory instance variables
 	native Weapon SisterWeapon;
-	native float FOVScale;
+	native double FOVScale;
 	native int Crosshair;							// 0 to use player's crosshair
 	native bool GivenAsMorphWeapon;
 	native bool bAltFire;							// Set when this weapon's alternate fire is used.

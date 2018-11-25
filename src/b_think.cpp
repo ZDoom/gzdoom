@@ -369,8 +369,10 @@ void DBot::WhatToGet (AActor *item)
 		{
 			if (!weapgiveammo)
 				return;
-			if ((heldWeapon->Ammo1 == NULL || heldWeapon->Ammo1->Amount >= heldWeapon->Ammo1->MaxAmount) &&
-				(heldWeapon->Ammo2 == NULL || heldWeapon->Ammo2->Amount >= heldWeapon->Ammo2->MaxAmount))
+			auto ammo1 = heldWeapon->PointerVar<AInventory>(NAME_Ammo1);
+			auto ammo2 = heldWeapon->PointerVar<AInventory>(NAME_Ammo2);
+			if ((ammo1 == NULL || ammo1->Amount >= ammo1->MaxAmount) &&
+				(ammo2 == NULL || ammo2->Amount >= ammo2->MaxAmount))
 			{
 				return;
 			}

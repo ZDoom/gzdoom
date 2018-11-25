@@ -245,7 +245,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			else if(type == AMMO1)
 			{
 				auto ammo = statusBar->ammo1;
-				if(ammo != NULL)
+				if(ammo != NULL) 
 					GetIcon(ammo);
 			}
 			else if(type == AMMO2)

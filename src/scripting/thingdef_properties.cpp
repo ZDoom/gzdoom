@@ -1181,7 +1181,7 @@ DEFINE_CLASS_PROPERTY(pickupannouncerentry, S, Inventory)
 //==========================================================================
 DEFINE_CLASS_PROPERTY(defaultkickback, 0, Weapon)
 {
-	defaults->Kickback = gameinfo.defKickback;
+	defaults->IntVar(NAME_Kickback) = gameinfo.defKickback;
 }
 
 //==========================================================================
@@ -1190,9 +1190,9 @@ DEFINE_CLASS_PROPERTY(defaultkickback, 0, Weapon)
 DEFINE_CLASS_PROPERTY(bobstyle, S, Weapon)
 {
 	static const char *names[] = { "Normal", "Inverse", "Alpha", "InverseAlpha", "Smooth", "InverseSmooth", NULL };
-	static const int styles[] = { AWeapon::BobNormal,
-		AWeapon::BobInverse, AWeapon::BobAlpha, AWeapon::BobInverseAlpha,
-		AWeapon::BobSmooth, AWeapon::BobInverseSmooth, };
+	static const EBobStyle styles[] = { EBobStyle::BobNormal,
+		EBobStyle::BobInverse, EBobStyle::BobAlpha, EBobStyle::BobInverseAlpha,
+		EBobStyle::BobSmooth, EBobStyle::BobInverseSmooth, };
 	PROP_STRING_PARM(id, 0);
 	int match = MatchString(id, names);
 	if (match < 0)
@@ -1200,7 +1200,7 @@ DEFINE_CLASS_PROPERTY(bobstyle, S, Weapon)
 		I_Error("Unknown bobstyle %s", id);
 		match = 0;
 	}
-	defaults->BobStyle = styles[match];
+	defaults->IntVar(NAME_BobStyle) = (int)styles[match];
 }
 
 //==========================================================================

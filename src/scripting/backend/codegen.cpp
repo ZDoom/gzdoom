@@ -10747,9 +10747,10 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-static PClass *NativeNameToClass(FName clsname, PClass *desttype)
+static PClass *NativeNameToClass(int _clsname, PClass *desttype)
 {
 	PClass *cls = nullptr;
+	FName clsname = ENamedName(_clsname);
 	if (clsname != NAME_None)
 	{
 		cls = PClass::FindClass(clsname);

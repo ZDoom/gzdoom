@@ -66,7 +66,9 @@ namespace swrenderer
 		virtual void DrawSingleSkyColumn(const SkyDrawerArgs &args) = 0;
 		virtual void DrawDoubleSkyColumn(const SkyDrawerArgs &args) = 0;
 		virtual void DrawColumn(const SpriteDrawerArgs &args) = 0;
+		virtual void DrawNiteVisColumn(const SpriteDrawerArgs &args) = 0;
 		virtual void FillColumn(const SpriteDrawerArgs &args) = 0;
+		virtual void FillNiteVisColumn(const SpriteDrawerArgs &args) = 0;
 		virtual void FillAddColumn(const SpriteDrawerArgs &args) = 0;
 		virtual void FillAddClampColumn(const SpriteDrawerArgs &args) = 0;
 		virtual void FillSubClampColumn(const SpriteDrawerArgs &args) = 0;
@@ -74,6 +76,7 @@ namespace swrenderer
 		virtual void DrawFuzzColumn(const SpriteDrawerArgs &args) = 0;
 		virtual void DrawAddColumn(const SpriteDrawerArgs &args) = 0;
 		virtual void DrawTranslatedColumn(const SpriteDrawerArgs &args) = 0;
+		virtual void DrawTranslatedNiteVisColumn(const SpriteDrawerArgs &args) = 0;
 		virtual void DrawTranslatedAddColumn(const SpriteDrawerArgs &args) = 0;
 		virtual void DrawShadedColumn(const SpriteDrawerArgs &args) = 0;
 		virtual void DrawAddClampShadedColumn(const SpriteDrawerArgs &args) = 0;

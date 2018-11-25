@@ -29,9 +29,10 @@ namespace swrenderer
 {
 	namespace DrawSprite32TModes
 	{
-		enum class SpriteBlendModes { Copy, Opaque, Shaded, AddClampShaded, AddClamp, SubClamp, RevSubClamp };
+		enum class SpriteBlendModes { Copy, Opaque, NiteVis, Shaded, AddClampShaded, AddClamp, SubClamp, RevSubClamp };
 		struct CopySprite { static const int Mode = (int)SpriteBlendModes::Copy; };
 		struct OpaqueSprite { static const int Mode = (int)SpriteBlendModes::Opaque; };
+		struct NiteVisSprite { static const int Mode = (int)SpriteBlendModes::NiteVis; };
 		struct ShadedSprite { static const int Mode = (int)SpriteBlendModes::Shaded; };
 		struct AddClampShadedSprite { static const int Mode = (int)SpriteBlendModes::AddClampShaded; };
 		struct AddClampSprite { static const int Mode = (int)SpriteBlendModes::AddClamp; };
@@ -325,6 +326,19 @@ namespace swrenderer
 				fgcolor.a = 255;
 				return fgcolor;
 			}
+			if (BlendT::Mode == (int)SpriteBlendModes::NiteVis)
+			{
+				// lumi is a desaturated colour and goes between 0.0 and 1.0, this is intentional
+				float lumi = ((float)fgcolor.r * 30.0f + 
+					fgcolor.g * 59.0f +
+					fgcolor.b * 11.0f) / 25500.0f;
+
+				fgcolor.r = int(255.0f - lumi * 255.0f);
+				fgcolor.g = int(clamp(511.0f - lumi * 511.0f, 0.0f, 255.0f));
+				fgcolor.b = int(255.0f - lumi * 255.0f);
+				fgcolor.a = 255;
+				return fgcolor;
+			}
 			else if (BlendT::Mode == (int)SpriteBlendModes::Shaded)
 			{
 				uint32_t alpha = ifgshade;
@@ -391,11 +405,13 @@ namespace swrenderer
 	typedef DrawSprite32T<DrawSprite32TModes::CopySprite, DrawSprite32TModes::TextureSampler> DrawSpriteCopy32Command;
 
 	typedef DrawSprite32T<DrawSprite32TModes::OpaqueSprite, DrawSprite32TModes::TextureSampler> DrawSprite32Command;
+	typedef DrawSprite32T<DrawSprite32TModes::NiteVisSprite, DrawSprite32TModes::TextureSampler> DrawSpriteNiteVis32Command;
 	typedef DrawSprite32T<DrawSprite32TModes::AddClampSprite, DrawSprite32TModes::TextureSampler> DrawSpriteAddClamp32Command;
 	typedef DrawSprite32T<DrawSprite32TModes::SubClampSprite, DrawSprite32TModes::TextureSampler> DrawSpriteSubClamp32Command;
 	typedef DrawSprite32T<DrawSprite32TModes::RevSubClampSprite, DrawSprite32TModes::TextureSampler> DrawSpriteRevSubClamp32Command;
 
 	typedef DrawSprite32T<DrawSprite32TModes::OpaqueSprite, DrawSprite32TModes::FillSampler> FillSprite32Command;
+	typedef DrawSprite32T<DrawSprite32TModes::NiteVisSprite, DrawSprite32TModes::FillSampler> FillSpriteNiteVis32Command;
 	typedef DrawSprite32T<DrawSprite32TModes::AddClampSprite, DrawSprite32TModes::FillSampler> FillSpriteAddClamp32Command;
 	typedef DrawSprite32T<DrawSprite32TModes::SubClampSprite, DrawSprite32TModes::FillSampler> FillSpriteSubClamp32Command;
 	typedef DrawSprite32T<DrawSprite32TModes::RevSubClampSprite, DrawSprite32TModes::FillSampler> FillSpriteRevSubClamp32Command;
@@ -404,6 +420,7 @@ namespace swrenderer
 	typedef DrawSprite32T<DrawSprite32TModes::AddClampShadedSprite, DrawSprite32TModes::ShadedSampler> DrawSpriteAddClampShaded32Command;
 
 	typedef DrawSprite32T<DrawSprite32TModes::OpaqueSprite, DrawSprite32TModes::TranslatedSampler> DrawSpriteTranslated32Command;
+	typedef DrawSprite32T<DrawSprite32TModes::NiteVisSprite, DrawSprite32TModes::TranslatedSampler> DrawSpriteTranslatedNiteVis32Command;
 	typedef DrawSprite32T<DrawSprite32TModes::AddClampSprite, DrawSprite32TModes::TranslatedSampler> DrawSpriteTranslatedAddClamp32Command;
 	typedef DrawSprite32T<DrawSprite32TModes::SubClampSprite, DrawSprite32TModes::TranslatedSampler> DrawSpriteTranslatedSubClamp32Command;
 	typedef DrawSprite32T<DrawSprite32TModes::RevSubClampSprite, DrawSprite32TModes::TranslatedSampler> DrawSpriteTranslatedRevSubClamp32Command;

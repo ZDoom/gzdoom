@@ -115,9 +115,19 @@ namespace swrenderer
 		Queue->Push<DrawSprite32Command>(args);
 	}
 
+	void SWTruecolorDrawers::DrawNiteVisColumn(const SpriteDrawerArgs &args)
+	{
+		Queue->Push<DrawSpriteNiteVis32Command>(args);
+	}
+
 	void SWTruecolorDrawers::FillColumn(const SpriteDrawerArgs &args)
 	{
 		Queue->Push<FillSprite32Command>(args);
+	}
+
+	void SWTruecolorDrawers::FillNiteVisColumn(const SpriteDrawerArgs &args)
+	{
+		Queue->Push<FillSpriteNiteVis32Command>(args);
 	}
 
 	void SWTruecolorDrawers::FillAddColumn(const SpriteDrawerArgs &args)
@@ -157,6 +167,11 @@ namespace swrenderer
 	void SWTruecolorDrawers::DrawTranslatedColumn(const SpriteDrawerArgs &args)
 	{
 		Queue->Push<DrawSpriteTranslated32Command>(args);
+	}
+
+	void SWTruecolorDrawers::DrawTranslatedNiteVisColumn(const SpriteDrawerArgs &args)
+	{
+		Queue->Push<DrawSpriteTranslatedNiteVis32Command>(args);
 	}
 
 	void SWTruecolorDrawers::DrawTranslatedAddColumn(const SpriteDrawerArgs &args)

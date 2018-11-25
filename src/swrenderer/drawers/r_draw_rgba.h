@@ -253,7 +253,9 @@ namespace swrenderer
 		void DrawSingleSkyColumn(const SkyDrawerArgs &args) override;
 		void DrawDoubleSkyColumn(const SkyDrawerArgs &args) override;
 		void DrawColumn(const SpriteDrawerArgs &args) override;
+		void DrawNiteVisColumn(const SpriteDrawerArgs &args) override;
 		void FillColumn(const SpriteDrawerArgs &args) override;
+		void FillNiteVisColumn(const SpriteDrawerArgs &args) override;
 		void FillAddColumn(const SpriteDrawerArgs &args) override;
 		void FillAddClampColumn(const SpriteDrawerArgs &args) override;
 		void FillSubClampColumn(const SpriteDrawerArgs &args) override;
@@ -261,6 +263,7 @@ namespace swrenderer
 		void DrawFuzzColumn(const SpriteDrawerArgs &args) override;
 		void DrawAddColumn(const SpriteDrawerArgs &args) override;
 		void DrawTranslatedColumn(const SpriteDrawerArgs &args) override;
+		void DrawTranslatedNiteVisColumn(const SpriteDrawerArgs &args) override;
 		void DrawTranslatedAddColumn(const SpriteDrawerArgs &args) override;
 		void DrawShadedColumn(const SpriteDrawerArgs &args) override;
 		void DrawAddClampShadedColumn(const SpriteDrawerArgs &args) override;

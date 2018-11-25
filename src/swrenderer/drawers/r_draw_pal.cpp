@@ -933,6 +933,107 @@ namespace swrenderer
 		}
 	}
 
+	void DrawColumnNiteVisPalCommand::Execute(DrawerThread *thread)
+	{
+		int count;
+		uint8_t *dest;
+		fixed_t frac;
+		fixed_t fracstep;
+
+		count = args.Count();
+
+		// Framebuffer destination address.
+		dest = args.Dest();
+
+		// Determine scaling,
+		//	which is the only mapping to be done.
+		fracstep = args.TextureVStep();
+		frac = args.TextureVPos();
+
+		count = thread->count_for_thread(args.DestY(), count);
+		if (count <= 0)
+			return;
+
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(args.DestY());
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
+
+		// [RH] Get local copies of these variables so that the compiler
+		//		has a better chance of optimizing this well.
+		const uint8_t *colormap = args.Colormap(args.Viewport());
+		const uint8_t *source = args.TexturePixels();
+		
+		do
+		{
+			uint8_t fg = source[frac >> FRACBITS];
+
+			// lumi is a desaturated colour and goes between 0.0 and 1.0, this is intentional
+			float lumi = ((float)GPalette.BaseColors[colormap[fg]].r * 30.f + 
+				GPalette.BaseColors[colormap[fg]].g * 59.f +
+				GPalette.BaseColors[colormap[fg]].b * 11.f) / 25500.f;
+			float r = 255.f - lumi * 255.f;
+			float g = clamp(511.f - lumi * 511.f, 0.f, 255.f);
+			float b = 255.f - lumi * 255.f;
+			*dest = RGB256k.RGB[(int)r>>2][(int)g>>2][(int)b>>2];
+
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
+	}
+
+	void DrawColumnTranslatedNiteVisPalCommand::Execute(DrawerThread *thread)
+	{
+		int count;
+		uint8_t *dest;
+		fixed_t frac;
+		fixed_t fracstep;
+
+		count = args.Count();
+
+		// Framebuffer destination address.
+		dest = args.Dest();
+
+		// Determine scaling,
+		//	which is the only mapping to be done.
+		fracstep = args.TextureVStep();
+		frac = args.TextureVPos();
+
+		count = thread->count_for_thread(args.DestY(), count);
+		if (count <= 0)
+			return;
+
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(args.DestY());
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
+		const uint8_t *translation = args.TranslationMap();
+
+		// [RH] Get local copies of these variables so that the compiler
+		//		has a better chance of optimizing this well.
+		const uint8_t *colormap = args.Colormap(args.Viewport());
+		const uint8_t *source = args.TexturePixels();
+		
+		do
+		{
+			uint8_t fg = translation[source[frac >> FRACBITS]];
+
+			// lumi is a desaturated colour and goes between 0.0 and 1.0, this is intentional
+			float lumi = ((float)GPalette.BaseColors[colormap[fg]].r * 30.f + 
+				GPalette.BaseColors[colormap[fg]].g * 59.f +
+				GPalette.BaseColors[colormap[fg]].b * 11.f) / 25500.f;
+			float r = 255.f - lumi * 255.f;
+			float g = clamp(511.f - lumi * 511.f, 0.f, 255.f);
+			float b = 255.f - lumi * 255.f;
+			*dest = RGB256k.RGB[(int)r>>2][(int)g>>2][(int)b>>2];
+
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
+	}
+
 	void FillColumnPalCommand::Execute(DrawerThread *thread)
 	{
 		int count;
@@ -954,6 +1055,55 @@ namespace swrenderer
 		{
 			*dest = color;
 			dest += pitch;
+		} while (--count);
+	}
+
+	void FillColumnNiteVisPalCommand::Execute(DrawerThread *thread)
+	{
+		int count;
+		uint8_t *dest;
+		fixed_t frac;
+		fixed_t fracstep;
+
+		count = args.Count();
+
+		// Framebuffer destination address.
+		dest = args.Dest();
+
+		// Determine scaling,
+		//	which is the only mapping to be done.
+		fracstep = args.TextureVStep();
+		frac = args.TextureVPos();
+
+		count = thread->count_for_thread(args.DestY(), count);
+		if (count <= 0)
+			return;
+
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
+		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(args.DestY());
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
+
+		// [RH] Get local copies of these variables so that the compiler
+		//		has a better chance of optimizing this well.
+		const uint8_t *colormap = args.Colormap(args.Viewport());
+		const uint8_t *source = args.TexturePixels();
+		
+		uint8_t fg = args.SolidColor();
+		do
+		{
+			// lumi is a desaturated colour and goes between 0.0 and 1.0, this is intentional
+			float lumi = ((float)GPalette.BaseColors[colormap[fg]].r * 30.f + 
+				GPalette.BaseColors[colormap[fg]].g * 59.f +
+				GPalette.BaseColors[colormap[fg]].b * 11.f) / 25500.f;
+			float r = 255.f - lumi * 255.f;
+			float g = clamp(511.f - lumi * 511.f, 0.f, 255.f);
+			float b = 255.f - lumi * 255.f;
+			*dest = RGB256k.RGB[(int)r>>2][(int)g>>2][(int)b>>2];
+
+			dest += pitch;
+			frac += fracstep;
 		} while (--count);
 	}
 

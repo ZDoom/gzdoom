@@ -29,9 +29,10 @@ namespace swrenderer
 {
 	namespace DrawSprite32TModes
 	{
-		enum class SpriteBlendModes { Copy, Opaque, Shaded, AddClampShaded, AddClamp, SubClamp, RevSubClamp };
+		enum class SpriteBlendModes { Copy, Opaque, NiteVis, Shaded, AddClampShaded, AddClamp, SubClamp, RevSubClamp };
 		struct CopySprite { static const int Mode = (int)SpriteBlendModes::Copy; };
 		struct OpaqueSprite { static const int Mode = (int)SpriteBlendModes::Opaque; };
+		struct NiteVisSprite { static const int Mode = (int)SpriteBlendModes::NiteVis; };
 		struct ShadedSprite { static const int Mode = (int)SpriteBlendModes::Shaded; };
 		struct AddClampShadedSprite { static const int Mode = (int)SpriteBlendModes::AddClampShaded; };
 		struct AddClampSprite { static const int Mode = (int)SpriteBlendModes::AddClamp; };
@@ -371,6 +372,36 @@ namespace swrenderer
 				outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 				return outcolor;
 			}
+			if (BlendT::Mode == (int)SpriteBlendModes::NiteVis)
+			{
+				// this is a WIP, todo: translate this to SSE2 instructions later
+				// i am writing it this way for now so the implementation can be changed and
+				// finalized before going full SSE2
+				// it is easier to understand and change in this form, but it's incredibly slow
+				BgraColor bgra_fgcolor[2];
+				BgraColor bgra_outcolor[2];
+
+				_mm_storeu_si128((__m128i*)&bgra_fgcolor[0], _mm_unpacklo_epi16(fgcolor, _mm_setzero_si128()));
+				_mm_storeu_si128((__m128i*)&bgra_fgcolor[1], _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128()));
+
+				for (int i = 0; i < 2; i++)
+				{
+					// lumi is a desaturated colour and goes between 0.0 and 1.0, this is intentional
+					float lumi = ((float)bgra_fgcolor[i].r * 30.0f + 
+						bgra_fgcolor[i].g * 59.0f +
+						bgra_fgcolor[i].b * 11.0f) / 25500.0f;
+
+					bgra_outcolor[i].r = int(255.0f - lumi * 255.0f);
+					bgra_outcolor[i].g = int(clamp(511.0f - lumi * 511.0f, 0.0f, 255.0f));
+					bgra_outcolor[i].b = int(255.0f - lumi * 255.0f);
+					bgra_outcolor[i].a = 255;
+				}
+
+				__m128i outcolor = _mm_packs_epi32(_mm_loadu_si128((__m128i*)&bgra_outcolor[0]), _mm_loadu_si128((__m128i*)&bgra_outcolor[1]));
+				_mm_packus_epi16(outcolor, _mm_setzero_si128());
+
+				return outcolor;
+			}
 			else if (BlendT::Mode == (int)SpriteBlendModes::Shaded)
 			{
 				__m128i alpha = _mm_set_epi16(ifgshade1, ifgshade1, ifgshade1, ifgshade1, ifgshade0, ifgshade0, ifgshade0, ifgshade0);
@@ -448,11 +479,13 @@ namespace swrenderer
 	typedef DrawSprite32T<DrawSprite32TModes::CopySprite, DrawSprite32TModes::TextureSampler> DrawSpriteCopy32Command;
 
 	typedef DrawSprite32T<DrawSprite32TModes::OpaqueSprite, DrawSprite32TModes::TextureSampler> DrawSprite32Command;
+	typedef DrawSprite32T<DrawSprite32TModes::NiteVisSprite, DrawSprite32TModes::TextureSampler> DrawSpriteNiteVis32Command;
 	typedef DrawSprite32T<DrawSprite32TModes::AddClampSprite, DrawSprite32TModes::TextureSampler> DrawSpriteAddClamp32Command;
 	typedef DrawSprite32T<DrawSprite32TModes::SubClampSprite, DrawSprite32TModes::TextureSampler> DrawSpriteSubClamp32Command;
 	typedef DrawSprite32T<DrawSprite32TModes::RevSubClampSprite, DrawSprite32TModes::TextureSampler> DrawSpriteRevSubClamp32Command;
 
 	typedef DrawSprite32T<DrawSprite32TModes::OpaqueSprite, DrawSprite32TModes::FillSampler> FillSprite32Command;
+	typedef DrawSprite32T<DrawSprite32TModes::NiteVisSprite, DrawSprite32TModes::FillSampler> FillSpriteNiteVis32Command;
 	typedef DrawSprite32T<DrawSprite32TModes::AddClampSprite, DrawSprite32TModes::FillSampler> FillSpriteAddClamp32Command;
 	typedef DrawSprite32T<DrawSprite32TModes::SubClampSprite, DrawSprite32TModes::FillSampler> FillSpriteSubClamp32Command;
 	typedef DrawSprite32T<DrawSprite32TModes::RevSubClampSprite, DrawSprite32TModes::FillSampler> FillSpriteRevSubClamp32Command;
@@ -461,6 +494,7 @@ namespace swrenderer
 	typedef DrawSprite32T<DrawSprite32TModes::AddClampShadedSprite, DrawSprite32TModes::ShadedSampler> DrawSpriteAddClampShaded32Command;
 
 	typedef DrawSprite32T<DrawSprite32TModes::OpaqueSprite, DrawSprite32TModes::TranslatedSampler> DrawSpriteTranslated32Command;
+	typedef DrawSprite32T<DrawSprite32TModes::NiteVisSprite, DrawSprite32TModes::TranslatedSampler> DrawSpriteTranslatedNiteVis32Command;
 	typedef DrawSprite32T<DrawSprite32TModes::AddClampSprite, DrawSprite32TModes::TranslatedSampler> DrawSpriteTranslatedAddClamp32Command;
 	typedef DrawSprite32T<DrawSprite32TModes::SubClampSprite, DrawSprite32TModes::TranslatedSampler> DrawSpriteTranslatedSubClamp32Command;
 	typedef DrawSprite32T<DrawSprite32TModes::RevSubClampSprite, DrawSprite32TModes::TranslatedSampler> DrawSpriteTranslatedRevSubClamp32Command;

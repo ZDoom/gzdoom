@@ -833,16 +833,16 @@ void APlayerPawn::Serialize(FSerializer &arc)
 
 //===========================================================================
 //
-// APlayerPawn :: MarkPrecacheSounds
+// APlayerPawn :: MarkPlayerSounds
 //
 //===========================================================================
 
-void APlayerPawn::MarkPrecacheSounds() const
+DEFINE_ACTION_FUNCTION(APlayerPawn, MarkPlayerSounds)
 {
-	Super::MarkPrecacheSounds();
-	S_MarkPlayerSounds(GetSoundClass());
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	S_MarkPlayerSounds(self->GetSoundClass());
+	return 0;
 }
-
 //===========================================================================
 //
 // APlayerPawn :: BeginPlay

@@ -92,7 +92,6 @@ public:
 	virtual void AddInventory (AInventory *item) override;
 	virtual void RemoveInventory (AInventory *item) override;
 	virtual bool UseInventory (AInventory *item) override;
-	virtual void MarkPrecacheSounds () const override;
 	virtual void BeginPlay () override;
 	virtual bool UpdateWaterLevel (bool splash) override;
 

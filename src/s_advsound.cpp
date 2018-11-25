@@ -2232,18 +2232,20 @@ void AAmbientSound::Serialize(FSerializer &arc)
 
 //==========================================================================
 //
-// AmbientSound :: MarkPrecacheSounds
+// AmbientSound :: MarkAmbientSounds
 //
 //==========================================================================
 
-void AAmbientSound::MarkPrecacheSounds() const
+DEFINE_ACTION_FUNCTION(AAmbientSound, MarkAmbientSounds)
 {
-	Super::MarkPrecacheSounds();
-	FAmbientSound *ambient = Ambients.CheckKey(args[0]);
+	PARAM_SELF_PROLOGUE(AAmbientSound);
+
+	FAmbientSound *ambient = Ambients.CheckKey(self->args[0]);
 	if (ambient != NULL)
 	{
 		ambient->sound.MarkUsed();
 	}
+	return 0;
 }
 
 //==========================================================================
@@ -2457,4 +2459,12 @@ void S_ParseMusInfo()
 	}
 }
 
+
+DEFINE_ACTION_FUNCTION(DObject, MarkSound)
+{
+	PARAM_PROLOGUE;
+	PARAM_SOUND(sound_id);
+	sound_id.MarkUsed();
+	return 0;
+}
 

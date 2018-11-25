@@ -72,7 +72,6 @@ public:
 	
 	virtual void Finalize(FStateDefinitions &statedef) override;
 	virtual void Serialize(FSerializer &arc) override;
-	virtual void MarkPrecacheSounds() const override;
 	virtual void OnDestroy() override;
 	virtual void Tick() override;
 	virtual bool Massacre() override;

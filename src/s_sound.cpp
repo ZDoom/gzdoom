@@ -504,13 +504,8 @@ void S_PrecacheLevel ()
 		{
 			IFVIRTUALPTR(actor, AActor, MarkPrecacheSounds)
 			{
-				// Without the type cast this picks the 'void *' assignment...
 				VMValue params[1] = { actor };
 				VMCall(func, params, 1, nullptr, 0);
-			}
-			else
-			{
-				actor->MarkPrecacheSounds();
 			}
 		}
 		for (auto snd : gameinfo.PrecachedSounds)

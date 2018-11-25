@@ -113,6 +113,18 @@ class PlayerPawn : Actor native
 		Obituary "$OB_MPDEFAULT";
 	}
 	
+	//===========================================================================
+	//
+	// APlayerPawn :: MarkPrecacheSounds
+	//
+	//===========================================================================
+
+	override void MarkPrecacheSounds()
+	{
+		Super.MarkPrecacheSounds();
+		MarkPlayerSounds();
+	}
+	
 	//----------------------------------------------------------------------------
 	//
 	// 
@@ -2065,6 +2077,7 @@ class PlayerPawn : Actor native
 	native void CheckEnvironment();
 	native void CheckUse();
 	native void CheckWeaponButtons();
+	native void MarkPlayerSounds();
 }
 
 class PlayerChunk : PlayerPawn

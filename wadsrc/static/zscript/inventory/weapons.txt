@@ -78,6 +78,18 @@ class Weapon : StateProvider native
 		Stop;
 	}
 
+	//===========================================================================
+	//
+	// AWeapon :: MarkPrecacheSounds
+	//
+	//===========================================================================
+
+	override void MarkPrecacheSounds()
+	{
+		Super.MarkPrecacheSounds();
+		MarkSound(UpSound);
+		MarkSound(ReadySound);
+	}
 	
 	virtual int, int CheckAddToSlots()
 	{

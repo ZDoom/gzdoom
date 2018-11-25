@@ -66,6 +66,14 @@ class AmbientSound : Actor native
 		+NOSECTOR
 		+DONTSPLASH
 	}
+	
+	native void MarkAmbientSounds();
+	
+	override void MarkPrecacheSounds()
+	{
+		Super.MarkPrecacheSounds();
+		MarkAmbientSounds();
+	}
 }
 
 class AmbientSoundNoGravity : AmbientSound

@@ -159,8 +159,6 @@ public:
 	bool bAltFire;							// *** only accessed from ZScript. Set when this weapon's alternate fire is used.
 	bool bDehAmmo;
 
-	virtual void MarkPrecacheSounds() const;
-	
 	void Finalize(FStateDefinitions &statedef) override;
 	void Serialize(FSerializer &arc) override;
 

@@ -74,6 +74,17 @@ class Inventory : Actor native
 		Stop;
 	}
 	
+	//===========================================================================
+	//
+	// AInventory :: MarkPrecacheSounds
+	//
+	//===========================================================================
+
+	override void MarkPrecacheSounds()
+	{
+		Super.MarkPrecacheSounds();
+		MarkSound(PickupSound);
+	}
 
 	//===========================================================================
 	//

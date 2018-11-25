@@ -5310,26 +5310,6 @@ void AActor::CallPostBeginPlay()
 	E_WorldThingSpawned(this);
 }
 
-void AActor::MarkPrecacheSounds() const
-{
-	SeeSound.MarkUsed();
-	AttackSound.MarkUsed();
-	PainSound.MarkUsed();
-	DeathSound.MarkUsed();
-	ActiveSound.MarkUsed();
-	UseSound.MarkUsed();
-	BounceSound.MarkUsed();
-	WallBounceSound.MarkUsed();
-	CrushPainSound.MarkUsed();
-}
-
-DEFINE_ACTION_FUNCTION(AActor, MarkPrecacheSounds)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	self->MarkPrecacheSounds();
-	return 0;
-}
-
 bool AActor::isFast()
 {
 	if (flags5&MF5_ALWAYSFAST) return true;

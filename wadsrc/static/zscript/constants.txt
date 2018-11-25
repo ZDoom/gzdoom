@@ -1001,6 +1001,7 @@ enum EFSkillProperty	// floating point properties
 	SKILLP_Aggressiveness,
 	SKILLP_MonsterHealth,
 	SKILLP_FriendlyHealth,
+	SKILLP_KickbackFactor,
 };
 
 enum EWeaponPos

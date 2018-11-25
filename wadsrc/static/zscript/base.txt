@@ -367,6 +367,7 @@ struct GameInfoStruct native
 	native bool intermissioncounter;
 	native Name mSliderColor;
 	native double telefogheight;
+	native int defKickback;
 }
 
 class Object native

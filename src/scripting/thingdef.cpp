@@ -324,7 +324,7 @@ static void CheckForUnsafeStates(PClassActor *obj)
 			if (obj->Size == citype->Size) return;	// This class cannot have user variables.
 			test = pickupstates;
 		}
-		else return;	// something else derived from AStateProvider. We do not know what this may be.
+		else return;	// something else derived from StateProvider. We do not know what this may be.
 	}
 
 	for (; *test != NAME_None; test++)
@@ -483,7 +483,7 @@ void LoadActors()
 
 		CheckStates(ti);
 
-		if (ti->bDecorateClass && ti->IsDescendantOf(RUNTIME_CLASS(AStateProvider)))
+		if (ti->bDecorateClass && ti->IsDescendantOf(NAME_StateProvider))
 		{
 			// either a DECORATE based weapon or CustomInventory. 
 			// These are subject to relaxed rules for user variables in states.

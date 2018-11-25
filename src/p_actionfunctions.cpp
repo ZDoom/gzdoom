@@ -98,7 +98,7 @@ FRandom pr_cajump("CustomJump");
 extern TArray<VMValue> actionParams;	// this can use the same storage as CallAction
 
 
-bool AStateProvider::CallStateChain (AActor *actor, FState *state)
+static bool CallStateChain (AActor *self, AActor *actor, FState *state)
 {
 	INTBOOL result = false;
 	int counter = 0;
@@ -111,7 +111,7 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 	ret[0].PointerAt((void **)&nextstate);
 	ret[1].IntAt(&retval);
 
-	FState *savedstate = this->state;
+	FState *savedstate = self->state;
 
 	while (state != NULL)
 	{
@@ -121,7 +121,7 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 			return false;
 		}
 
-		this->state = state;
+		self->state = state;
 		nextstate = NULL;	// assume no jump
 
 		if (state->ActionFunc != NULL)
@@ -170,7 +170,7 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 
 			try
 			{
-                state->CheckCallerType(actor, this);
+                state->CheckCallerType(actor, self);
 
 				if (state->ActionFunc->DefaultArgs.Size() > 0)
 				{
@@ -187,7 +187,7 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 					}
 					if (state->ActionFunc->ImplicitArgs == 3)
 					{
-						actionParams[index + 1] = this;
+						actionParams[index + 1] = self;
 						actionParams[index + 2] = VMValue(&stp);
 					}
 
@@ -196,14 +196,14 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 				}
 				else
 				{
-					VMValue params[3] = { actor, this, VMValue(&stp) };
+					VMValue params[3] = { actor, self, VMValue(&stp) };
 					VMCallAction(state->ActionFunc, params, state->ActionFunc->ImplicitArgs, wantret, numret);
 				}
 			}
 			catch (CVMAbortException &err)
 			{
 				err.MaybePrintMessage();
-				err.stacktrace.AppendFormat("Called from state %s in inventory state chain in %s\n", FState::StaticGetStateName(state).GetChars(), GetClass()->TypeName.GetChars());
+				err.stacktrace.AppendFormat("Called from state %s in inventory state chain in %s\n", FState::StaticGetStateName(state).GetChars(), self->GetClass()->TypeName.GetChars());
 				throw;
 			}
 
@@ -231,16 +231,16 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 		}
 		state = nextstate;
 	}
-	this->state = savedstate;
+	self->state = savedstate;
 	return !!result;
 }
 
 DEFINE_ACTION_FUNCTION(ACustomInventory, CallStateChain)
 {
-	PARAM_SELF_PROLOGUE(AStateProvider);
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT(affectee, AActor);
 	PARAM_POINTER(state, FState);
-	ACTION_RETURN_BOOL(self->CallStateChain(affectee, state));
+	ACTION_RETURN_BOOL(CallStateChain(self, affectee, state));
 }
 
 //==========================================================================

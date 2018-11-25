@@ -103,11 +103,4 @@ public:
 	FSoundIDNoInit PickupSound;
 };
 
-class AStateProvider : public AInventory
-{
-	DECLARE_CLASS (AStateProvider, AInventory)
-public:
-	bool CallStateChain(AActor *actor, FState *state);
-};
-
 #endif //__A_PICKUPS_H__

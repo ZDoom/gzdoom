@@ -539,6 +539,61 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyT
 			worldnormalZ *= rcplen;
 		}
 
+#ifndef NO_SSE
+		__m128 mworldnormalX = _mm_set1_ps(worldnormalX);
+		__m128 mworldnormalY = _mm_set1_ps(worldnormalY);
+		__m128 mworldnormalZ = _mm_set1_ps(worldnormalZ);
+		for (int x = x0; x < x1; x += 4)
+		{
+			__m128i litlo = _mm_shuffle_epi32(_mm_unpacklo_epi8(_mm_cvtsi32_si128(dynlightcolor), _mm_setzero_si128()), _MM_SHUFFLE(1, 0, 1, 0));
+			__m128i lithi = litlo;
+
+			for (int i = 0; i < num_lights; i++)
+			{
+				__m128 lightposX = _mm_set1_ps(lights[i].x);
+				__m128 lightposY = _mm_set1_ps(lights[i].y);
+				__m128 lightposZ = _mm_set1_ps(lights[i].z);
+				__m128 light_radius = _mm_set1_ps(lights[i].radius);
+				__m128i light_color = _mm_shuffle_epi32(_mm_unpacklo_epi8(_mm_cvtsi32_si128(lights[i].color), _mm_setzero_si128()), _MM_SHUFFLE(1, 0, 1, 0));
+
+				__m128 is_attenuated = _mm_cmplt_ps(light_radius, _mm_setzero_ps());
+				light_radius = _mm_andnot_ps(_mm_set1_ps(-0.0f), light_radius); // clear sign bit
+
+				// L = light-pos
+				// dist = sqrt(dot(L, L))
+				// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+				__m128 Lx = _mm_sub_ps(lightposX, _mm_loadu_ps(&worldposX[x]));
+				__m128 Ly = _mm_sub_ps(lightposY, _mm_loadu_ps(&worldposY[x]));
+				__m128 Lz = _mm_sub_ps(lightposZ, _mm_loadu_ps(&worldposZ[x]));
+				__m128 dist2 = _mm_add_ps(_mm_mul_ps(Lx, Lx), _mm_add_ps(_mm_mul_ps(Ly, Ly), _mm_mul_ps(Lz, Lz)));
+				__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+				__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+				__m128 distance_attenuation = _mm_sub_ps(_mm_set1_ps(256.0f), _mm_min_ps(_mm_mul_ps(dist, light_radius), _mm_set1_ps(256.0f)));
+
+				// The simple light type
+				__m128 simple_attenuation = distance_attenuation;
+
+				// The point light type
+				// diffuse = max(dot(N,normalize(L)),0) * attenuation
+				Lx = _mm_mul_ps(Lx, rcp_dist);
+				Ly = _mm_mul_ps(Ly, rcp_dist);
+				Lz = _mm_mul_ps(Lz, rcp_dist);
+				__m128 dotNL = _mm_add_ps(_mm_add_ps(_mm_mul_ps(mworldnormalX, Lx), _mm_mul_ps(mworldnormalY, Ly)), _mm_mul_ps(mworldnormalZ, Lz));
+				__m128 point_attenuation = _mm_mul_ps(_mm_max_ps(dotNL, _mm_setzero_ps()), distance_attenuation);
+
+				__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, point_attenuation), _mm_andnot_ps(is_attenuated, simple_attenuation)));
+
+				attenuation = _mm_shufflehi_epi16(_mm_shufflelo_epi16(attenuation, _MM_SHUFFLE(2, 2, 0, 0)), _MM_SHUFFLE(2, 2, 0, 0));
+				__m128i attenlo = _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1, 1, 0, 0));
+				__m128i attenhi = _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(3, 3, 2, 2));
+
+				litlo = _mm_add_epi16(litlo, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenlo), 8));
+				lithi = _mm_add_epi16(lithi, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenhi), 8));
+			}
+
+			_mm_storeu_si128((__m128i*)&dynlights[x], _mm_packus_epi16(litlo, lithi));
+		}
+#else
 		for (int x = x0; x < x1; x++)
 		{
 			uint32_t lit_r = RPART(dynlightcolor);
@@ -596,6 +651,7 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyT
 			lit_b = MIN<uint32_t>(lit_b, 255);
 			dynlights[x] = MAKEARGB(255, lit_r, lit_g, lit_b);
 		}
+#endif
 	}
 
 	if (OptT::Flags & SWOPT_FixedLight)

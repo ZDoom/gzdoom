@@ -908,6 +908,80 @@ void P_AutoUseStrifeHealth (player_t *player)
 ==================
 */
 
+void ApplyKickback(AActor *target, AActor *inflictor, AActor *source, int damage, DAngle angle, FName mod, int flags)
+{
+	DAngle ang;
+	int kickback;
+	double thrust;
+
+	if (inflictor && inflictor->projectileKickback)
+		kickback = inflictor->projectileKickback;
+	else if (!source || !source->player || !source->player->ReadyWeapon)
+		kickback = gameinfo.defKickback;
+	else
+		kickback = source->player->ReadyWeapon->Kickback;
+
+	kickback = int(kickback * G_SkillProperty(SKILLP_KickbackFactor));
+	if (kickback)
+	{
+		AActor *origin = (source && (flags & DMG_INFLICTOR_IS_PUFF)) ? source : inflictor;
+
+		if (flags & DMG_USEANGLE)
+		{
+			ang = angle;
+		}
+		else if (origin->X() == target->X() && origin->Y() == target->Y())
+		{
+			// If the origin and target are in exactly the same spot, choose a random direction.
+			// (Most likely cause is from telefragging somebody during spawning because they
+			// haven't moved from their spawn spot at all.)
+			ang = pr_kickbackdir.GenRand_Real2() * 360.;
+		}
+		else
+		{
+			ang = origin->AngleTo(target);
+		}
+
+		thrust = mod == NAME_MDK ? 10 : 32;
+		if (target->Mass > 0)
+		{
+			thrust = clamp((damage * 0.125 * kickback) / target->Mass, 0., thrust);
+		}
+
+		// Don't apply ultra-small damage thrust
+		if (thrust < 0.01) thrust = 0;
+
+		// make fall forwards sometimes
+		if ((damage < 40) && (damage > target->health)
+			&& (target->Z() - origin->Z() > 64)
+			&& (pr_damagemobj() & 1)
+			// [RH] But only if not too fast and not flying
+			&& thrust < 10
+			&& !(target->flags & MF_NOGRAVITY)
+			&& (inflictor == NULL || !(inflictor->flags5 & MF5_NOFORWARDFALL))
+			)
+		{
+			ang += 180.;
+			thrust *= 4;
+		}
+		if (source && source->player && (flags & DMG_INFLICTOR_IS_PUFF)
+			&& source->player->ReadyWeapon != NULL &&
+			(source->player->ReadyWeapon->WeaponFlags & WIF_STAFF2_KICKBACK))
+		{
+			// Staff power level 2
+			target->Thrust(ang, 10);
+			if (!(target->flags & MF_NOGRAVITY))
+			{
+				target->Vel.Z += 5.;
+			}
+		}
+		else
+		{
+			target->Thrust(ang, thrust);
+		}
+	}
+}
+
 static inline bool MustForcePain(AActor *target, AActor *inflictor)
 {
 	return (inflictor && (inflictor->flags6 & MF6_FORCEPAIN));
@@ -1188,74 +1262,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 		&& !(target->flags7 & MF7_DONTTHRUST)
 		&& (source == NULL || source->player == NULL || !(source->flags2 & MF2_NODMGTHRUST)))
 	{
-		int kickback;
-
-		if (inflictor && inflictor->projectileKickback)
-			kickback = inflictor->projectileKickback;
-		else if (!source || !source->player || !source->player->ReadyWeapon)
-			kickback = gameinfo.defKickback;
-		else
-			kickback = source->player->ReadyWeapon->Kickback;
-
-		kickback = int(kickback * G_SkillProperty(SKILLP_KickbackFactor));
-		if (kickback)
-		{
-			AActor *origin = (source && (flags & DMG_INFLICTOR_IS_PUFF))? source : inflictor;
-
-			if (flags & DMG_USEANGLE)
-			{
-				ang = angle;
-			}
-			else if (origin->X() == target->X() && origin->Y() == target->Y())
-			{
-				// If the origin and target are in exactly the same spot, choose a random direction.
-				// (Most likely cause is from telefragging somebody during spawning because they
-				// haven't moved from their spawn spot at all.)
-				ang = pr_kickbackdir.GenRand_Real2() * 360.;
-			}
-			else
-			{
-				ang = origin->AngleTo(target);
-			}
-
-            thrust = mod == NAME_MDK ? 10 : 32;
-            if (target->Mass > 0)
-            {
-                thrust = clamp((damage * 0.125 * kickback) / target->Mass, 0., thrust);
-            }
-
-			// Don't apply ultra-small damage thrust
-			if (thrust < 0.01) thrust = 0;
-
-			// make fall forwards sometimes
-			if ((damage < 40) && (damage > target->health)
-				 && (target->Z() - origin->Z() > 64)
-				 && (pr_damagemobj()&1)
-				 // [RH] But only if not too fast and not flying
-				 && thrust < 10
-				 && !(target->flags & MF_NOGRAVITY)
-				 && (inflictor == NULL || !(inflictor->flags5 & MF5_NOFORWARDFALL))
-				 )
-			{
-				ang += 180.;
-				thrust *= 4;
-			}
-			if (source && source->player && (flags & DMG_INFLICTOR_IS_PUFF)
-				&& source->player->ReadyWeapon != NULL &&
-				(source->player->ReadyWeapon->WeaponFlags & WIF_STAFF2_KICKBACK))
-			{
-				// Staff power level 2
-				target->Thrust(ang, 10);
-				if (!(target->flags & MF_NOGRAVITY))
-				{
-					target->Vel.Z += 5.;
-				}
-			}
-			else
-			{
-				target->Thrust(ang, thrust);
-			}
-		}
+		ApplyKickback(target, inflictor, source, damage, angle, mod, flags);
 	}
 
 	// [RH] Avoid friendly fire if enabled

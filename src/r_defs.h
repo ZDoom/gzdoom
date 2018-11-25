@@ -638,12 +638,13 @@ public:
 	int Index() const;
 
 	void AdjustFloorClip () const;
-	void SetColor(int r, int g, int b, int desat);
-	void SetFade(int r, int g, int b);
+	void SetColor(PalEntry pe, int desat);
+	void SetFade(PalEntry pe);
 	void SetFogDensity(int dens);
 	void ClosestPoint(const DVector2 &pos, DVector2 &out) const;
-	int GetFloorLight () const;
-	int GetCeilingLight () const;
+
+	int GetFloorLight() const;
+	int GetCeilingLight() const;
 
 	sector_t *GetHeightSec() const
 	{
@@ -1581,6 +1582,11 @@ inline sector_t *P_PointInSector(double X, double Y)
 	return P_PointInSubsector(X, Y)->sector;
 }
 
+inline sector_t *P_PointInSectorXY(double X, double Y)	// This is for the benefit of unambiguously looking up this function's address
+{
+	return P_PointInSubsector(X, Y)->sector;
+}
+
 inline bool FBoundingBox::inRange(const line_t *ld) const
 {
 	return Left() < ld->bbox[BOXRIGHT] &&
@@ -1614,6 +1620,11 @@ void GetSpecial(sector_t *self, secspecial_t *spec);
 void SetSpecial(sector_t *self, const secspecial_t *spec);
 int GetTerrain(const sector_t *, int pos);
 void CheckPortalPlane(sector_t *sector, int plane);
+void AdjustFloorClip(const sector_t *sector);
+void SetColor(sector_t *sector, int color, int desat);
+void SetFade(sector_t *sector, int color);
+int GetFloorLight(const sector_t *);
+int GetCeilingLight(const sector_t *);
 
 
 inline void sector_t::RemoveForceField() { return ::RemoveForceField(this); }
@@ -1623,6 +1634,11 @@ inline void sector_t::GetSpecial(secspecial_t *spec) { ::GetSpecial(this, spec);
 inline void sector_t::SetSpecial(const secspecial_t *spec) { ::SetSpecial(this, spec); }
 inline int sector_t::GetTerrain(int pos) const { return ::GetTerrain(this, pos); }
 inline void sector_t::CheckPortalPlane(int plane) { return ::CheckPortalPlane(this, plane); }
+inline void sector_t::AdjustFloorClip() const { ::AdjustFloorClip(this); }
+inline void sector_t::SetColor(PalEntry pe, int desat) { ::SetColor(this, pe, desat); }
+inline void sector_t::SetFade(PalEntry pe) { ::SetFade(this, pe); }
+inline int sector_t::GetFloorLight() const { return ::GetFloorLight(this); }
+inline int sector_t::GetCeilingLight() const { return ::GetCeilingLight(this); }
 
 
 #endif

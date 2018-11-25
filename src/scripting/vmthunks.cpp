@@ -55,14 +55,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindModelCeilingSector, FindModelCeilingS
 	ACTION_RETURN_POINTER(h);
 }
 
-// Note: Do not use struct types like PalEntry as argument types here! We never know what the compilers will do with them, buz we need a guaranteed integer calling convention .
-static void SetColor(sector_t *self, int color, int desat)
-{
-	self->Colormap.LightColor.SetRGB(color);
-	self->Colormap.Desaturation = desat;
-	P_RecalculateAttachedLights(self);
-}
-
 DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetColor, SetColor)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
@@ -70,12 +62,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetColor, SetColor)
 	PARAM_INT(desat);
 	SetColor(self, color, desat);
 	return 0;
-}
-
-static void SetFade(sector_t *self, int fade)
-{
-	self->Colormap.FadeColor.SetRGB(fade);
-	P_RecalculateAttachedLights(self);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetFade, SetFade)
@@ -123,20 +109,10 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, PlaneMoving, PlaneMoving)
 	ACTION_RETURN_BOOL(PlaneMoving(self, pos));
 }
 
-static int GetFloorLight(sector_t *self)
-{
-	return self->GetFloorLight();
-}
-
 DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetFloorLight, GetFloorLight)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	ACTION_RETURN_INT(self->GetFloorLight());
-}
-
-static int GetCeilingLight(sector_t *self)
-{
-	return self->GetCeilingLight();
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetCeilingLight, GetCeilingLight)
@@ -203,20 +179,14 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	return 0;
  }
 
-  DEFINE_ACTION_FUNCTION(_Sector, AdjustFloorClip)
+  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, AdjustFloorClip, AdjustFloorClip)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
-	 self->AdjustFloorClip();
+	 AdjustFloorClip(self);
 	 return 0;
  }
 
- //===========================================================================
- //
- //
- //
- //===========================================================================
-
- DEFINE_ACTION_FUNCTION(_Sector, PointInSector)
+  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, PointInSector, P_PointInSectorXY)
  {
 	 PARAM_PROLOGUE;
 	 PARAM_FLOAT(x);
@@ -224,7 +194,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 ACTION_RETURN_POINTER(P_PointInSector(x, y));
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, SetXOffset)
+  static void SetXOffset(sector_t *self, int pos, double o)
+  {
+	  self->SetXOffset(pos, o);
+  }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
@@ -233,7 +208,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, AddXOffset)
+ static void AddXOffset(sector_t *self, int pos, double o)
+ {
+	 self->AddXOffset(pos, o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, AddXOffset, AddXOffset)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
@@ -242,14 +222,24 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, GetXOffset)
+ static double GetXOffset(sector_t *self, int pos)
+ {
+	 return self->GetXOffset(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetXOffset, GetXOffset)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 ACTION_RETURN_FLOAT(self->GetXOffset(pos));
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, SetYOffset)
+ static void SetYOffset(sector_t *self, int pos, double o)
+ {
+	 self->SetYOffset(pos, o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetYOffset, SetYOffset)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
@@ -258,16 +248,26 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, AddYOffset)
+ static void AddYOffset(sector_t *self, int pos, double o)
+ {
+	 self->AddYOffset(pos, o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, AddYOffset, AddYOffset)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 PARAM_FLOAT(o);
-	 self->AddXOffset(pos, o);
+	 self->AddYOffset(pos, o);
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, GetYOffset)
+ static double GetYOffset(sector_t *self, int pos)
+ {
+	 return self->GetYOffset(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetYOffset, GetYOffset)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
@@ -275,7 +275,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 ACTION_RETURN_FLOAT(self->GetYOffset(pos, addbase));
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, SetXScale)
+ static void SetXScale(sector_t *self, int pos, double o)
+ {
+	 self->SetXScale(pos, o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXScale, SetXScale)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
@@ -284,12 +289,21 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- 
- DEFINE_ACTION_FUNCTION(_Sector, GetXScale)
+ static double GetXScale(sector_t *self, int pos)
+ {
+	 return self->GetXScale(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetXScale, GetXScale)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 ACTION_RETURN_FLOAT(self->GetXScale(pos));
+ }
+
+ static void SetYScale(sector_t *self, int pos, double o)
+ {
+	 self->SetYScale(pos, o);
  }
 
  DEFINE_ACTION_FUNCTION(_Sector, SetYScale)
@@ -301,14 +315,24 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, GetYScale)
+ static double GetYScale(sector_t *self, int pos)
+ {
+	 return self->GetYScale(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetYScale, GetYScale)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 ACTION_RETURN_FLOAT(self->GetYScale(pos));
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, SetAngle)
+ static void SetAngle(sector_t *self, int pos, double o)
+ {
+	 self->SetAngle(pos, o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetAngle, SetAngle)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
@@ -317,7 +341,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, GetAngle)
+ static double GetAngle(sector_t *self, int pos, bool addbase)
+ {
+	 return self->GetAngle(pos, addbase).Degrees;
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetAngle, GetAngle)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
@@ -325,7 +354,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 ACTION_RETURN_FLOAT(self->GetAngle(pos, addbase).Degrees);
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, SetBase)
+ static void SetBase(sector_t *self, int pos, double o, double a)
+ {
+	 self->SetBase(pos, o, a);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetBase, SetBase)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
@@ -335,7 +369,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, SetAlpha)
+ static void SetAlpha(sector_t *self, int pos, double o)
+ {
+	 self->SetAlpha(pos, o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetAlpha, SetAlpha)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
@@ -344,28 +383,48 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, GetAlpha)
+ static double GetAlpha(sector_t *self, int pos)
+ {
+	 return self->GetAlpha(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetAlpha, GetAlpha)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 ACTION_RETURN_FLOAT(self->GetAlpha(pos));
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, GetFlags)
+ static int GetFlags(sector_t *self, int pos)
+ {
+	 return self->GetFlags(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetFlags, GetFlags)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 ACTION_RETURN_INT(self->GetFlags(pos));
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, GetVisFlags)
+ static int GetVisFlags(sector_t *self, int pos)
+ {
+	 return self->GetVisFlags(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetVisFlags, GetVisFlags)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 ACTION_RETURN_INT(self->GetVisFlags(pos));
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, ChangeFlags)
+ static void ChangeFlags(sector_t *self, int pos, int a, int o)
+ {
+	 self->ChangeFlags(pos, a, o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, ChangeFlags, ChangeFlags)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);

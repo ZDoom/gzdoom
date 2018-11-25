@@ -800,25 +800,27 @@ DEFINE_ACTION_FUNCTION(_Sector, FindLowestCeilingPoint)
 
 //=====================================================================================
 //
+// 'color' is intentionally an int here
 //
 //=====================================================================================
 
-void sector_t::SetColor(int r, int g, int b, int desat)
+void SetColor(sector_t *sector, int color, int desat)
 {
-	Colormap.LightColor = PalEntry(r, g, b);
-	Colormap.Desaturation = desat;
-	P_RecalculateAttachedLights(this);
+	sector->Colormap.LightColor = color;
+	sector->Colormap.Desaturation = desat;
+	P_RecalculateAttachedLights(sector);
 }
 
 //=====================================================================================
 //
+// 'color' is intentionally an int here
 //
 //=====================================================================================
 
-void sector_t::SetFade(int r, int g, int b)
+void SetFade(sector_t *sector, int color)
 {
-	Colormap.FadeColor = PalEntry (r,g,b);
-	P_RecalculateAttachedLights(this);
+	sector->Colormap.FadeColor = color;
+	P_RecalculateAttachedLights(sector);
 }
 
 //=====================================================================================
@@ -917,15 +919,15 @@ bool PlaneMoving(sector_t *sector, int pos)
 //
 //=====================================================================================
 
-int sector_t::GetFloorLight () const
+int GetFloorLight(const sector_t *sector)
 {
-	if (GetFlags(sector_t::floor) & PLANEF_ABSLIGHTING)
+	if (sector->GetFlags(sector_t::floor) & PLANEF_ABSLIGHTING)
 	{
-		return GetPlaneLight(floor);
+		return sector->GetPlaneLight(sector_t::floor);
 	}
 	else
 	{
-		return ClampLight(lightlevel + GetPlaneLight(floor));
+		return sector->ClampLight(sector->lightlevel + sector->GetPlaneLight(sector_t::floor));
 	}
 }
 
@@ -934,15 +936,15 @@ int sector_t::GetFloorLight () const
 //
 //=====================================================================================
 
-int sector_t::GetCeilingLight () const
+int GetCeilingLight(const sector_t *sector)
 {
-	if (GetFlags(ceiling) & PLANEF_ABSLIGHTING)
+	if (sector->GetFlags(sector_t::ceiling) & PLANEF_ABSLIGHTING)
 	{
-		return GetPlaneLight(ceiling);
+		return sector->GetPlaneLight(sector_t::ceiling);
 	}
 	else
 	{
-		return ClampLight(lightlevel + GetPlaneLight(ceiling));
+		return sector->ClampLight(sector->lightlevel + sector->GetPlaneLight(sector_t::ceiling));
 	}
 }
 
@@ -1020,14 +1022,14 @@ int GetTerrain(const sector_t *sector, int pos)
 //
 //=====================================================================================
 
-void sector_t::CheckPortalPlane(int plane)
+void CheckPortalPlane(sector_t *sector, int plane)
 {
-	if (GetPortalType(plane) == PORTS_LINKEDPORTAL)
+	if (sector->GetPortalType(plane) == PORTS_LINKEDPORTAL)
 	{
-		double portalh = GetPortalPlaneZ(plane);
-		double planeh = GetPlaneTexZ(plane);
+		double portalh = sector->GetPortalPlaneZ(plane);
+		double planeh = sector->GetPlaneTexZ(plane);
 		int obstructed = PLANEF_OBSTRUCTED * (plane == sector_t::floor ? planeh > portalh : planeh < portalh);
-		planes[plane].Flags = (planes[plane].Flags  & ~PLANEF_OBSTRUCTED) | obstructed;
+		sector->planes[plane].Flags = (sector->planes[plane].Flags  & ~PLANEF_OBSTRUCTED) | obstructed;
 	}
 }
 
@@ -1320,11 +1322,11 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
  //
  //===========================================================================
 
- void sector_t::AdjustFloorClip() const
+ void AdjustFloorClip(const sector_t *sector)
  {
 	 msecnode_t *node;
 
-	 for (node = touching_thinglist; node; node = node->m_snext)
+	 for (node = sector->touching_thinglist; node; node = node->m_snext)
 	 {
 		 if (node->m_thing->flags2 & MF2_FLOORCLIP)
 		 {

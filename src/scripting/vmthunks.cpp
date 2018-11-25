@@ -1253,3 +1253,15 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Secplane, PointToDist, PointToDist)
 	ACTION_RETURN_FLOAT(self->PointToDist(DVector2(x, y), z));
 }
 
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_PlaySound, A_PlaySound)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_SOUND(soundid);
+	PARAM_INT(channel);
+	PARAM_FLOAT(volume);
+	PARAM_BOOL(looping);
+	PARAM_FLOAT(attenuation);
+	PARAM_BOOL(local);
+	A_PlaySound(self, soundid, channel, volume, looping, attenuation, local);
+	return 0;
+}

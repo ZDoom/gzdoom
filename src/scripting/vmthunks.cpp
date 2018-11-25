@@ -55,7 +55,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindModelCeilingSector, FindModelCeilingS
 	ACTION_RETURN_POINTER(h);
 }
 
-// Note: Do not use struct types like PalEntry as argument types here! We never know what the compilers will do with them.
+// Note: Do not use struct types like PalEntry as argument types here! We never know what the compilers will do with them, buz we need a guaranteed integer calling convention .
 static void SetColor(sector_t *self, int color, int desat)
 {
 	self->Colormap.LightColor.SetRGB(color);
@@ -86,15 +86,14 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetFade, SetFade)
 	return 0;
 }
 
-static void SetSpecialColor(sector_t *self, int num, int _color)
+static void SetSpecialColor(sector_t *self, int num, int color)
 {
 	if (num >= 0 && num < 5)
 	{
-		PalEntry color = _color;
-		color.a = 255;
 		self->SetSpecialColor(num, color);
 	}
 }
+
 DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetSpecialColor, SetSpecialColor)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
@@ -117,16 +116,11 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetFogDensity, SetFogDensity)
 	return 0;
 }
 
-static int PlaneMoving(sector_t *self, int pos)
-{
-	return self->PlaneMoving(pos);
-}
-
-DEFINE_ACTION_FUNCTION(_Sector, PlaneMoving)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, PlaneMoving, PlaneMoving)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	PARAM_INT(pos);
-	ACTION_RETURN_BOOL(self->PlaneMoving(pos));
+	ACTION_RETURN_BOOL(PlaneMoving(self, pos));
 }
 
 static int GetFloorLight(sector_t *self)
@@ -162,43 +156,39 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetHeightSec, GetHeightSec)
 	ACTION_RETURN_POINTER(self->GetHeightSec());
 }
 
-static void GetSpecial(sector_t *self, secspecial_t *spec)
-{
-	self->GetSpecial(spec);
-}
-
 DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetSpecial, GetSpecial)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	PARAM_POINTER(spec, secspecial_t);
-	self->GetSpecial(spec);
+	GetSpecial(self, spec);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(_Sector, SetSpecial)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetSpecial, SetSpecial)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	PARAM_POINTER(spec, secspecial_t);
-	self->SetSpecial(spec);
+	SetSpecial(self, spec);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(_Sector, TransferSpecial)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, TransferSpecial, TransferSpecial)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	PARAM_POINTER(spec, sector_t);
-	self->TransferSpecial(spec);
+	TransferSpecial(self, spec);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(_Sector, GetTerrain)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetTerrain, GetTerrain)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	PARAM_INT(pos);
-	ACTION_RETURN_INT(self->GetTerrain(pos));
+	ACTION_RETURN_INT(GetTerrain(self, pos));
 }
 
-DEFINE_ACTION_FUNCTION(_Sector, CheckPortalPlane)
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, CheckPortalPlane, CheckPortalPlane)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	PARAM_INT(plane);
@@ -206,11 +196,11 @@ DEFINE_ACTION_FUNCTION(_Sector, CheckPortalPlane)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(_Sector, RemoveForceField)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
  {
-	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
-	 self->RemoveForceField();
-	 return 0;
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	RemoveForceField(self);
+	return 0;
  }
 
   DEFINE_ACTION_FUNCTION(_Sector, AdjustFloorClip)

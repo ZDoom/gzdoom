@@ -1605,4 +1605,24 @@ double FindShortestUpperAround(sector_t *sector);					// jff 2/04/98
 sector_t *FindModelFloorSector(sector_t *sec, double floordestheight);		// jff 2/04/98
 sector_t *FindModelCeilingSector(sector_t *sec, double floordestheight);		// jff 2/04/98
 
+// This setup is to allow the VM call directily into the implementation.
+// With a member function this may be subject to OS implementation details, e.g. on Windows 32 bit members use a different calling convention than regular functions.
+void RemoveForceField(sector_t *sec);
+bool PlaneMoving(sector_t *sector, int pos);
+void TransferSpecial(sector_t *self, sector_t *model);
+void GetSpecial(sector_t *self, secspecial_t *spec);
+void SetSpecial(sector_t *self, const secspecial_t *spec);
+int GetTerrain(const sector_t *, int pos);
+void CheckPortalPlane(sector_t *sector, int plane);
+
+
+inline void sector_t::RemoveForceField() { return ::RemoveForceField(this); }
+inline bool sector_t::PlaneMoving(int pos) { return ::PlaneMoving(this, pos); }
+inline void sector_t::TransferSpecial(sector_t *model) { return ::TransferSpecial(this, model); }
+inline void sector_t::GetSpecial(secspecial_t *spec) { ::GetSpecial(this, spec); }
+inline void sector_t::SetSpecial(const secspecial_t *spec) { ::SetSpecial(this, spec); }
+inline int sector_t::GetTerrain(int pos) const { return ::GetTerrain(this, pos); }
+inline void sector_t::CheckPortalPlane(int plane) { return ::CheckPortalPlane(this, plane); }
+
+
 #endif

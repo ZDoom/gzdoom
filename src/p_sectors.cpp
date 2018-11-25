@@ -904,12 +904,12 @@ void sector_t::ClosestPoint(const DVector2 &in, DVector2 &out) const
 //
 //=====================================================================================
 
-bool sector_t::PlaneMoving(int pos)
+bool PlaneMoving(sector_t *sector, int pos)
 {
-	if (pos == floor)
-		return (floordata != NULL || (planes[floor].Flags & PLANEF_BLOCKED));
+	if (pos == sector_t::floor)
+		return (sector->floordata != nullptr || (sector->planes[sector_t::floor].Flags & PLANEF_BLOCKED));
 	else
-		return (ceilingdata != NULL || (planes[ceiling].Flags & PLANEF_BLOCKED));
+		return (sector->ceilingdata != nullptr || (sector->planes[sector_t::ceiling].Flags & PLANEF_BLOCKED));
 }
 
 //=====================================================================================
@@ -965,14 +965,14 @@ FSectorPortal *sector_t::ValidatePortal(int which)
 //
 //=====================================================================================
 
-void sector_t::GetSpecial(secspecial_t *spec)
+void GetSpecial(sector_t *sector, secspecial_t *spec)
 {
-	spec->special = special;
-	spec->damageamount = damageamount;
-	spec->damagetype = damagetype;
-	spec->damageinterval = damageinterval;
-	spec->leakydamage = leakydamage;
-	spec->Flags = Flags & SECF_SPECIALFLAGS;
+	spec->special = sector->special;
+	spec->damageamount = sector->damageamount;
+	spec->damagetype = sector->damagetype;
+	spec->damageinterval = sector->damageinterval;
+	spec->leakydamage = sector->leakydamage;
+	spec->Flags = sector->Flags & SECF_SPECIALFLAGS;
 }
 
 //=====================================================================================
@@ -980,14 +980,14 @@ void sector_t::GetSpecial(secspecial_t *spec)
 //
 //=====================================================================================
 
-void sector_t::SetSpecial(const secspecial_t *spec)
+void SetSpecial(sector_t *sector, const secspecial_t *spec)
 {
-	special = spec->special;
-	damageamount = spec->damageamount;
-	damagetype = spec->damagetype;
-	damageinterval = spec->damageinterval;
-	leakydamage = spec->leakydamage;
-	Flags = (Flags & ~SECF_SPECIALFLAGS) | (spec->Flags & SECF_SPECIALFLAGS);
+	sector->special = spec->special;
+	sector->damageamount = spec->damageamount;
+	sector->damagetype = spec->damagetype;
+	sector->damageinterval = spec->damageinterval;
+	sector->leakydamage = spec->leakydamage;
+	sector->Flags = (sector->Flags & ~SECF_SPECIALFLAGS) | (spec->Flags & SECF_SPECIALFLAGS);
 }
 
 //=====================================================================================
@@ -995,14 +995,14 @@ void sector_t::SetSpecial(const secspecial_t *spec)
 //
 //=====================================================================================
 
-void sector_t::TransferSpecial(sector_t *model)
+void TransferSpecial(sector_t *sector, sector_t *model)
 {
-	special = model->special;
-	damageamount = model->damageamount;
-	damagetype = model->damagetype;
-	damageinterval = model->damageinterval;
-	leakydamage = model->leakydamage;
-	Flags = (Flags&~SECF_SPECIALFLAGS) | (model->Flags & SECF_SPECIALFLAGS);
+	sector->special = model->special;
+	sector->damageamount = model->damageamount;
+	sector->damagetype = model->damagetype;
+	sector->damageinterval = model->damageinterval;
+	sector->leakydamage = model->leakydamage;
+	sector->Flags = (sector->Flags&~SECF_SPECIALFLAGS) | (model->Flags & SECF_SPECIALFLAGS);
 }
 
 //=====================================================================================
@@ -1010,9 +1010,9 @@ void sector_t::TransferSpecial(sector_t *model)
 //
 //=====================================================================================
 
-int sector_t::GetTerrain(int pos) const
+int GetTerrain(const sector_t *sector, int pos)
 {
-	return terrainnum[pos] >= 0 ? terrainnum[pos] : TerrainTypes[GetTexture(pos)];
+	return sector->terrainnum[pos] >= 0 ? sector->terrainnum[pos] : TerrainTypes[sector->GetTexture(pos)];
 }
 
 	//=====================================================================================
@@ -1300,9 +1300,9 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
  //
  //===========================================================================
 
- void sector_t::RemoveForceField()
+ void RemoveForceField(sector_t *sector)
  {
-	 for (auto line : Lines)
+	 for (auto line : sector->Lines)
 	 {
 		 if (line->backsector != NULL && line->special == ForceField)
 		 {

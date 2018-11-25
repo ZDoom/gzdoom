@@ -1206,15 +1206,6 @@ DEFINE_CLASS_PROPERTY(bobstyle, S, Weapon)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(slotpriority, F, Weapon)
-{
-	PROP_DOUBLE_PARM(i, 0);
-	defaults->SlotPriority = int(i*65536);
-}
-
-//==========================================================================
-//
-//==========================================================================
 DEFINE_CLASS_PROPERTY(preferredskin, S, Weapon)
 {
 	PROP_STRING_PARM(str, 0);

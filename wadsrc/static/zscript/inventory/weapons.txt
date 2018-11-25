@@ -31,8 +31,10 @@ class Weapon : StateProvider native
 	native int Crosshair;							// 0 to use player's crosshair
 	native bool GivenAsMorphWeapon;
 	native bool bAltFire;							// Set when this weapon's alternate fire is used.
-	native readonly bool bDehAmmo;
-	native readonly int SlotNumber;
+	native readonly bool bDehAmmo;					// Uses Doom's original amount of ammo for the respective attack functions so that old DEHACKED patches work as intended.
+													// AmmoUse1 will be set to the first attack's ammo use so that checking for empty weapons still works
+	meta int SlotNumber;
+	meta int SlotPriority;
 	
 	property AmmoGive: AmmoGive1;
 	property AmmoGive1: AmmoGive1;
@@ -55,6 +57,7 @@ class Weapon : StateProvider native
 	property BobRangeX: BobRangeX;
 	property BobRangeY: BobRangeY;
 	property SlotNumber: SlotNumber;
+	property SlotPriority: SlotPriority;
 
 	Default
 	{
@@ -73,6 +76,16 @@ class Weapon : StateProvider native
 	LightDone:
 		SHTG E 0 A_Light0;
 		Stop;
+	}
+
+	
+	virtual int, int CheckAddToSlots()
+	{
+		if (GetReplacement(GetClass()) == null && !bPowered_Up)
+		{
+			return SlotNumber, SlotPriority*65536;
+		}
+		return -1, 0;
 	}
 	
 	virtual State GetReadyState ()

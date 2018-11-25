@@ -3095,7 +3095,7 @@ void FinishDehPatch ()
 		}
 		else
 		{
-			weap->WeaponFlags |= WIF_DEHAMMO;
+			weap->bDehAmmo = true;
 			weap->AmmoUse1 = 0;
 			// to allow proper checks in CheckAmmo we have to find the first attack pointer in the Fire sequence
 			// and set its default ammo use as the weapon's AmmoUse1.

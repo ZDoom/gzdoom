@@ -83,9 +83,8 @@ DEFINE_FIELD(AWeapon, FOVScale)
 DEFINE_FIELD(AWeapon, Crosshair)					
 DEFINE_FIELD(AWeapon, GivenAsMorphWeapon)
 DEFINE_FIELD(AWeapon, bAltFire)
-DEFINE_FIELD(AWeapon, SlotNumber)
 DEFINE_FIELD(AWeapon, WeaponFlags)
-DEFINE_FIELD_BIT(AWeapon, WeaponFlags, bDehAmmo, WIF_DEHAMMO)
+DEFINE_FIELD(AWeapon, bDehAmmo)
 
 //===========================================================================
 //
@@ -482,18 +481,23 @@ void FWeaponSlots::AddExtraWeapons()
 		{
 			continue;
 		}
-		auto weapdef = ((AWeapon*)GetDefaultByType(cls));
-		auto gf = cls->ActorInfo()->GameFilter;
-		if ((gf == GAME_Any || (gf & gameinfo.gametype)) &&
-			cls->ActorInfo()->Replacement == nullptr &&		// Replaced weapons don't get slotted.
-			!(weapdef->WeaponFlags & WIF_POWERED_UP) &&
-			!LocateWeapon(cls, nullptr, nullptr)		// Don't duplicate it if it's already present.
-			)
+		if (LocateWeapon(cls, nullptr, nullptr))	// Do we already have it? Don't add it again.
 		{
-			int slot = weapdef->SlotNumber;
-			if ((unsigned)slot < NUM_WEAPON_SLOTS)
+			continue;
+		}
+		auto weapdef = ((AWeapon*)GetDefaultByType(cls));
+
+		// Let the weapon decide for itself if it wants to get added to a slot.
+		IFVIRTUALPTR(weapdef, AWeapon, CheckAddToSlots)
+		{
+			VMValue param = weapdef;
+			int slot = -1, slotpriority;
+			VMReturn rets[]{ &slot, &slotpriority };
+			VMCall(func, &param, 1, rets, 2);
+
+			if (slot >= 0 && slot < NUM_WEAPON_SLOTS)
 			{
-				FWeaponSlot::WeaponInfo info = { cls, weapdef->SlotPriority };
+				FWeaponSlot::WeaponInfo info = { cls, slotpriority };
 				Slots[slot].Weapons.Push(info);
 			}
 		}

@@ -50,7 +50,6 @@
 #define MMAXSELECT   100 //Maximum number of monsters that can be selected at a time.
 
 struct FCheckPosition;
-class AWeapon;
 
 struct botskill_t
 {
@@ -100,7 +99,7 @@ using BotInfoMap = TMap<FName, BotInfoData>;
 
 extern BotInfoMap BotInfo;
 
-inline BotInfoData GetBotInfo(AWeapon *weap)
+inline BotInfoData GetBotInfo(AInventory *weap)
 {
 	if (weap == nullptr) return BotInfoData();
 	auto k = BotInfo.CheckKey(weap->GetClass()->TypeName);

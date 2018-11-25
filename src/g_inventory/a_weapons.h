@@ -2,7 +2,6 @@
 
 #include "a_pickups.h"
 class PClassActor;
-class AWeapon;
 class APlayerPawn;
 
 class FWeaponSlot
@@ -127,40 +126,6 @@ void P_SetupWeapons_ntohton();
 void P_WriteDemoWeaponsChunk(uint8_t **demo);
 void P_ReadDemoWeaponsChunk(uint8_t **demo);
 
-
-class AWeapon : public AStateProvider
-{
-	DECLARE_CLASS(AWeapon, AStateProvider)
-	HAS_OBJECT_POINTERS
-public:
-	uint32_t WeaponFlags;
-	PClassActor *AmmoType1, *AmmoType2;		// Types of ammo used by this weapon
-	int AmmoGive1, AmmoGive2;				// Amount of each ammo to get when picking up weapon
-	int MinAmmo1, MinAmmo2;					// Minimum ammo needed to switch to this weapon
-	int AmmoUse1, AmmoUse2;					// How much ammo to use with each shot
-	int Kickback;
-	double YAdjust;							// For viewing the weapon fullscreen (visual only so no need to be a double)
-	FSoundIDNoInit UpSound, ReadySound;		// Sounds when coming up and idle
-	PClassActor *SisterWeaponType;			// Another weapon to pick up with this one
-	int SelectionOrder;						// Lower-numbered weapons get picked first
-	int MinSelAmmo1, MinSelAmmo2;			// Ignore in BestWeapon() if inadequate ammo
-	int ReloadCounter;						// For A_CheckForReload
-	int BobStyle;							// [XA] Bobbing style. Defines type of bobbing (e.g. Normal, Alpha)  (visual only so no need to be a double)
-	float BobSpeed;							// [XA] Bobbing speed. Defines how quickly a weapon bobs.
-	float BobRangeX, BobRangeY;				// [XA] Bobbing range. Defines how far a weapon bobs in either direction.
-
-	// In-inventory instance variables
-	TObjPtr<AInventory*> Ammo1, Ammo2;
-	TObjPtr<AWeapon*> SisterWeapon;
-	double FOVScale;
-	int Crosshair;							// 0 to use player's crosshair
-	bool GivenAsMorphWeapon;
-
-	bool bAltFire;
-	bool bDehAmmo;
-
-	void Serialize(FSerializer &arc) override;
-};
 
 enum class EBobStyle
 {

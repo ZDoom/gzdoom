@@ -1057,9 +1057,9 @@ bool APlayerPawn::UseInventory (AInventory *item)
 //
 //===========================================================================
 
-AWeapon *APlayerPawn::PickNewWeapon(PClassActor *ammotype)
+AInventory *APlayerPawn::PickNewWeapon(PClassActor *ammotype)
 {
-	AWeapon *best = nullptr;
+	AInventory *best = nullptr;
 	IFVM(PlayerPawn, DropWeapon)
 	{
 		VMValue param = player->mo;

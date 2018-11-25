@@ -362,9 +362,9 @@ void DBot::WhatToGet (AActor *item)
 	if (item->IsKindOf(NAME_Weapon))
 	{
 		// FIXME
-		AWeapon *heldWeapon;
+		AInventory *heldWeapon;
 
-		heldWeapon = dyn_cast<AWeapon>(player->mo->FindInventory(item->GetClass()));
+		heldWeapon = player->mo->FindInventory(item->GetClass());
 		if (heldWeapon != NULL)
 		{
 			if (!weapgiveammo)

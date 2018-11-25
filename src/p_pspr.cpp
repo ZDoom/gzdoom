@@ -604,7 +604,7 @@ static void P_CheckWeaponButtons (player_t *player)
 	{
 		return;
 	}
-	AWeapon *weapon = player->ReadyWeapon;
+	auto weapon = player->ReadyWeapon;
 	if (weapon == nullptr)
 	{
 		return;
@@ -1057,12 +1057,13 @@ void player_t::DestroyPSprites()
 //
 //------------------------------------------------------------------------------------
 
-void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int index)
+void P_SetSafeFlash(AInventory *weapon, player_t *player, FState *flashstate, int index)
 {
+	auto wcls = PClass::FindActor(NAME_Weapon);
 	if (flashstate != nullptr)
 	{
 		PClassActor *cls = weapon->GetClass();
-		while (cls != RUNTIME_CLASS(AWeapon))
+		while (cls != wcls)
 		{
 			if (cls->OwnsState(flashstate))
 			{
@@ -1100,7 +1101,7 @@ void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int i
 DEFINE_ACTION_FUNCTION(_PlayerInfo, SetSafeFlash)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
-	PARAM_OBJECT_NOT_NULL(weapon, AWeapon);
+	PARAM_OBJECT_NOT_NULL(weapon, AInventory);
 	PARAM_POINTER(state, FState);
 	PARAM_INT(index);
 	P_SetSafeFlash(weapon, self, state, index);
@@ -1147,8 +1148,8 @@ void DPSprite::OnDestroy()
 
 float DPSprite::GetYAdjust(bool fullscreen)
 {
-	AWeapon *weapon = dyn_cast<AWeapon>(GetCaller());
-	if (weapon != nullptr)
+	auto weapon = GetCaller();
+	if (weapon != nullptr && weapon->IsKindOf(NAME_Weapon))
 	{
 		auto fYAd = weapon->FloatVar(NAME_YAdjust);
 		if (fYAd != 0)

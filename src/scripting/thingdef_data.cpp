@@ -442,17 +442,6 @@ static FFlagDef InventoryFlagDefs[] =
 	DEFINE_DEPRECATED_FLAG(INTERHUBSTRIP),
 };
 
-static FFlagDef WeaponFlagDefs[] =
-{
-	// Weapon flags
-	DEFINE_DUMMY_FLAG(NOLMS, false),
-	DEFINE_DUMMY_FLAG(ALLOW_WITH_RESPAWN_INVUL, false),
-	DEFINE_DUMMY_FLAG(BFG, false),
-	DEFINE_DUMMY_FLAG(EXPLOSIVE, false),
-};
-
-
-
 static FFlagDef PlayerPawnFlagDefs[] =
 {
 	// PlayerPawn flags
@@ -485,7 +474,6 @@ static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int 
 	{ &RUNTIME_CLASS_CASTLESS(AActor), 		MoreFlagDefs,		countof(MoreFlagDefs), 1 },
 	{ &RUNTIME_CLASS_CASTLESS(AActor), 	InternalActorFlagDefs,	countof(InternalActorFlagDefs), 2 },
 	{ &RUNTIME_CLASS_CASTLESS(AInventory), 	InventoryFlagDefs,	countof(InventoryFlagDefs), 3 },
-	{ &RUNTIME_CLASS_CASTLESS(AWeapon), 	WeaponFlagDefs,		countof(WeaponFlagDefs), 3 },
 	{ &RUNTIME_CLASS_CASTLESS(APlayerPawn),	PlayerPawnFlagDefs,	countof(PlayerPawnFlagDefs), 3 },
 	{ &RUNTIME_CLASS_CASTLESS(ADynamicLight),DynLightFlagDefs,	countof(DynLightFlagDefs), 3 },
 };
@@ -542,8 +530,8 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2, bo
 			{
 				forInternalFlags.fieldsize = 4;
 				forInternalFlags.name = "";
-				forInternalFlags.flagbit = 1 << field->bitval;
-				forInternalFlags.structoffset = field->Offset->Offset;
+				forInternalFlags.flagbit = field->bitval >= 0? 1 << field->bitval : DEPF_UNUSED;
+				forInternalFlags.structoffset = field->bitval >= 0 ? field->Offset->Offset : -1;
 				forInternalFlags.varflags = 0;
 				return &forInternalFlags;
 			}
@@ -560,8 +548,8 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2, bo
 			{
 				forInternalFlags.fieldsize = 4;
 				forInternalFlags.name = "";
-				forInternalFlags.flagbit = 1 << field->bitval;
-				forInternalFlags.structoffset = field->Offset->Offset;
+				forInternalFlags.flagbit = field->bitval >= 0 ? 1 << field->bitval : DEPF_UNUSED;
+				forInternalFlags.structoffset = field->bitval >= 0 ? field->Offset->Offset : -1;
 				forInternalFlags.varflags = 0;
 				return &forInternalFlags;
 			}
@@ -994,17 +982,6 @@ void InitThingdef()
 
 void SynthesizeFlagFields()
 {
-	// These are needed for inserting the flag symbols
-	/*
-	NewClassType(RUNTIME_CLASS(DObject));
-	NewClassType(RUNTIME_CLASS(DThinker));
-	NewClassType(RUNTIME_CLASS(AActor));
-	NewClassType(RUNTIME_CLASS(AInventory));
-	NewClassType(RUNTIME_CLASS(AStateProvider));
-	NewClassType(RUNTIME_CLASS(AWeapon));
-	NewClassType(RUNTIME_CLASS(APlayerPawn));
-	NewClassType(RUNTIME_CLASS(ADynamicLight));
-	*/
 	// synthesize a symbol for each flag from the flag name tables to avoid redundant declaration of them.
 	for (auto &fl : FlagLists)
 	{

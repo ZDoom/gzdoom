@@ -1,4 +1,4 @@
-class Weapon : StateProvider native
+class Weapon : StateProvider
 {
 	enum EFireMode
 	{
@@ -10,29 +10,29 @@ class Weapon : StateProvider native
 	const ZOOM_INSTANT = 1;
 	const ZOOM_NOSCALETURNING = 2;
 	
-	deprecated("3.7") native uint WeaponFlags;		// not to be used directly.
-	native class<Ammo> AmmoType1, AmmoType2;		// Types of ammo used by self weapon
-	native int AmmoGive1, AmmoGive2;				// Amount of each ammo to get when picking up weapon
-	deprecated("3.7") native int MinAmmo1, MinAmmo2;	// not used anywhere and thus deprecated.
-	native int AmmoUse1, AmmoUse2;					// How much ammo to use with each shot
-	native int Kickback;
-	native double YAdjust;							// For viewing the weapon fullscreen
-	native sound UpSound, ReadySound;				// Sounds when coming up and idle
-	native class<Weapon> SisterWeaponType;			// Another weapon to pick up with self one
-	native int SelectionOrder;						// Lower-numbered weapons get picked first
-	native int MinSelAmmo1, MinSelAmmo2;			// Ignore in BestWeapon() if inadequate ammo
-	native int ReloadCounter;						// For A_CheckForReload
-	native int BobStyle;							// [XA] Bobbing style. Defines type of bobbing (e.g. Normal, Alpha)  (visual only so no need to be a double)
-	native float BobSpeed;							// [XA] Bobbing speed. Defines how quickly a weapon bobs.
-	native float BobRangeX, BobRangeY;				// [XA] Bobbing range. Defines how far a weapon bobs in either direction.
-	native Ammo Ammo1, Ammo2;						// In-inventory instance variables
-	native Weapon SisterWeapon;
-	native double FOVScale;
-	native int Crosshair;							// 0 to use player's crosshair
-	native bool GivenAsMorphWeapon;
-	native bool bAltFire;							// Set when this weapon's alternate fire is used.
-	native readonly bool bDehAmmo;					// Uses Doom's original amount of ammo for the respective attack functions so that old DEHACKED patches work as intended.
-													// AmmoUse1 will be set to the first attack's ammo use so that checking for empty weapons still works
+	deprecated("3.7") uint WeaponFlags;		// not to be used directly.
+	class<Ammo> AmmoType1, AmmoType2;		// Types of ammo used by self weapon
+	int AmmoGive1, AmmoGive2;				// Amount of each ammo to get when picking up weapon
+	deprecated("3.7") int MinAmmo1, MinAmmo2;	// not used anywhere and thus deprecated.
+	int AmmoUse1, AmmoUse2;					// How much ammo to use with each shot
+	int Kickback;
+	double YAdjust;							// For viewing the weapon fullscreen
+	sound UpSound, ReadySound;				// Sounds when coming up and idle
+	class<Weapon> SisterWeaponType;			// Another weapon to pick up with self one
+	int SelectionOrder;						// Lower-numbered weapons get picked first
+	int MinSelAmmo1, MinSelAmmo2;			// Ignore in BestWeapon() if inadequate ammo
+	int ReloadCounter;						// For A_CheckForReload
+	int BobStyle;							// [XA] Bobbing style. Defines type of bobbing (e.g. Normal, Alpha)  (visual only so no need to be a double)
+	float BobSpeed;							// [XA] Bobbing speed. Defines how quickly a weapon bobs.
+	float BobRangeX, BobRangeY;				// [XA] Bobbing range. Defines how far a weapon bobs in either direction.
+	Ammo Ammo1, Ammo2;						// In-inventory instance variables
+	Weapon SisterWeapon;
+	double FOVScale;
+	int Crosshair;							// 0 to use player's crosshair
+	bool GivenAsMorphWeapon;
+	bool bAltFire;							// Set when this weapon's alternate fire is used.
+	readonly bool bDehAmmo;					// Uses Doom's original amount of ammo for the respective attack functions so that old DEHACKED patches work as intended.
+											// AmmoUse1 will be set to the first attack's ammo use so that checking for empty weapons still works
 	meta int SlotNumber;
 	meta int SlotPriority;
 	
@@ -79,6 +79,12 @@ class Weapon : StateProvider native
 	flagdef NoDeathInput: WeaponFlags, 17;		// The weapon cannot be fired/reloaded/whatever when the player is dead
 	flagdef CheatNotWeapon: WeaponFlags, 18;	// Give cheat considers this not a weapon (used by Sigil)
 
+	// no-op flags
+	flagdef NoLMS: WeaponFlags, -1;
+	flagdef Allow_With_Respawn_Invul: WeaponFlags, -1;
+	flagdef BFG: WeaponFlags, -1;
+	flagdef Explosive: WeaponFlags, -1;
+
 	Default
 	{
 		Inventory.PickupSound "misc/w_pkup";
@@ -100,7 +106,7 @@ class Weapon : StateProvider native
 
 	//===========================================================================
 	//
-	// AWeapon :: MarkPrecacheSounds
+	// Weapon :: MarkPrecacheSounds
 	//
 	//===========================================================================
 
@@ -856,7 +862,7 @@ class Weapon : StateProvider native
 
 	//===========================================================================
 	//
-	// AWeapon :: CheckAmmo
+	// Weapon :: CheckAmmo
 	//
 	// Returns true if there is enough ammo to shoot.  If not, selects the
 	// next weapon to use.
@@ -934,7 +940,7 @@ class Weapon : StateProvider native
 		
 	//===========================================================================
 	//
-	// AWeapon :: DepleteAmmo
+	// Weapon :: DepleteAmmo
 	//
 	// Use up some of the weapon's ammo. Returns true if the ammo was successfully
 	// depleted. If checkEnough is false, then the ammo will always be depleted,

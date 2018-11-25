@@ -2882,7 +2882,7 @@ class CommandIsSelected : public SBarInfoNegatableFlowControl
 				if(weapon[i] == NULL || !weapon[i]->IsDescendantOf(NAME_Weapon))
 				{
 					sc.ScriptMessage("'%s' is not a type of weapon.", sc.String);
-					weapon[i] = RUNTIME_CLASS(AWeapon);
+					weapon[i] = PClass::FindClass(NAME_Weapon);
 				}
 		
 				if(sc.CheckToken(','))
@@ -3035,7 +3035,7 @@ class CommandHasWeaponPiece : public SBarInfoCommandFlowControl
 			if (weapon == NULL || !weapon->IsDescendantOf(NAME_Weapon)) //must be a weapon
 			{
 				sc.ScriptMessage("%s is not a kind of weapon.", sc.String);
-				weapon = RUNTIME_CLASS(AWeapon);
+				weapon = PClass::FindClass(NAME_Weapon);
 			}
 			sc.MustGetToken(',');
 			sc.MustGetToken(TK_IntConst);

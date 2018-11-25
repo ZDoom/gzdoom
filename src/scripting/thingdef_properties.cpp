@@ -1179,7 +1179,7 @@ DEFINE_CLASS_PROPERTY(pickupannouncerentry, S, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(defaultkickback, 0, Weapon)
+DEFINE_SCRIPTED_PROPERTY(defaultkickback, 0, Weapon)
 {
 	defaults->IntVar(NAME_Kickback) = gameinfo.defKickback;
 }
@@ -1187,7 +1187,7 @@ DEFINE_CLASS_PROPERTY(defaultkickback, 0, Weapon)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(bobstyle, S, Weapon)
+DEFINE_SCRIPTED_PROPERTY(bobstyle, S, Weapon)
 {
 	static const char *names[] = { "Normal", "Inverse", "Alpha", "InverseAlpha", "Smooth", "InverseSmooth", NULL };
 	static const EBobStyle styles[] = { EBobStyle::BobNormal,
@@ -1206,7 +1206,7 @@ DEFINE_CLASS_PROPERTY(bobstyle, S, Weapon)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(preferredskin, S, Weapon)
+DEFINE_SCRIPTED_PROPERTY(preferredskin, S, Weapon)
 {
 	PROP_STRING_PARM(str, 0);
 	// NoOp - only for Skulltag compatibility

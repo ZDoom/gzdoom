@@ -310,9 +310,10 @@ static void CheckForUnsafeStates(PClassActor *obj)
 	TMap<FState *, bool> checked;
 	ENamedName *test;
 
-	if (obj->IsDescendantOf(NAME_Weapon))
+	auto cwtype = PClass::FindActor(NAME_Weapon);
+	if (obj->IsDescendantOf(cwtype))
 	{
-		if (obj->Size == RUNTIME_CLASS(AWeapon)->Size) return;	// This class cannot have user variables.
+		if (obj->Size == cwtype->Size) return;	// This class cannot have user variables.
 		test = weaponstates;
 	}
 	else

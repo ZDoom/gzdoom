@@ -480,7 +480,7 @@ void cht_DoCheat (player_t *player, int cheat)
 					}
 					else
 					{
-						player->PendingWeapon = static_cast<AWeapon *> (item);
+						player->PendingWeapon = item;
 					}
 				}
 			}

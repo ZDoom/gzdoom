@@ -1874,7 +1874,7 @@ enum SW_Flags
 DEFINE_ACTION_FUNCTION(AActor, A_SelectWeapon)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS(cls, AWeapon);
+	PARAM_CLASS(cls, AInventory);
 	PARAM_INT(flags);
 
 	bool selectPriority = !!(flags & SWF_SELECTPRIORITY);
@@ -1884,7 +1884,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectWeapon)
 		ACTION_RETURN_BOOL(false);
 	}
 
-	AWeapon *weaponitem = static_cast<AWeapon*>(self->FindInventory(cls));
+	auto weaponitem = self->FindInventory(cls);
 
 	if (weaponitem != NULL && weaponitem->IsKindOf(NAME_Weapon))
 	{

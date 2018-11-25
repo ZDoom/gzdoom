@@ -47,45 +47,6 @@
 #include "serializer.h"
 #include "vm.h"
 
-IMPLEMENT_CLASS(AWeapon, false, true)
-
-IMPLEMENT_POINTERS_START(AWeapon)
-	IMPLEMENT_POINTER(Ammo1)
-	IMPLEMENT_POINTER(Ammo2)
-	IMPLEMENT_POINTER(SisterWeapon)
-IMPLEMENT_POINTERS_END
-
-DEFINE_FIELD(AWeapon, AmmoType1)
-DEFINE_FIELD(AWeapon, AmmoType2)	
-DEFINE_FIELD(AWeapon, AmmoGive1)
-DEFINE_FIELD(AWeapon, AmmoGive2)	
-DEFINE_FIELD(AWeapon, MinAmmo1)
-DEFINE_FIELD(AWeapon, MinAmmo2)		
-DEFINE_FIELD(AWeapon, AmmoUse1)
-DEFINE_FIELD(AWeapon, AmmoUse2)		
-DEFINE_FIELD(AWeapon, Kickback)
-DEFINE_FIELD(AWeapon, YAdjust)				
-DEFINE_FIELD(AWeapon, UpSound)
-DEFINE_FIELD(AWeapon, ReadySound)	
-DEFINE_FIELD(AWeapon, SisterWeaponType)		
-DEFINE_FIELD(AWeapon, SelectionOrder)				
-DEFINE_FIELD(AWeapon, MinSelAmmo1)
-DEFINE_FIELD(AWeapon, MinSelAmmo2)	
-DEFINE_FIELD(AWeapon, ReloadCounter)				
-DEFINE_FIELD(AWeapon, BobStyle)					
-DEFINE_FIELD(AWeapon, BobSpeed)					
-DEFINE_FIELD(AWeapon, BobRangeX)
-DEFINE_FIELD(AWeapon, BobRangeY)		
-DEFINE_FIELD(AWeapon, Ammo1)
-DEFINE_FIELD(AWeapon, Ammo2)
-DEFINE_FIELD(AWeapon, SisterWeapon)
-DEFINE_FIELD(AWeapon, FOVScale)
-DEFINE_FIELD(AWeapon, Crosshair)					
-DEFINE_FIELD(AWeapon, GivenAsMorphWeapon)
-DEFINE_FIELD(AWeapon, bAltFire)
-DEFINE_FIELD(AWeapon, WeaponFlags)
-DEFINE_FIELD(AWeapon, bDehAmmo)
-
 //===========================================================================
 //
 //
@@ -100,50 +61,6 @@ TArray<PClassActor *> Weapons_ntoh;
 TMap<PClassActor *, int> Weapons_hton;
 
 static int ntoh_cmp(const void *a, const void *b);
-
-//===========================================================================
-//
-// AWeapon :: Serialize
-//
-//===========================================================================
-
-void AWeapon::Serialize(FSerializer &arc)
-{
-	Super::Serialize (arc);
-	auto def = (AWeapon*)GetDefault();
-	arc("weaponflags", WeaponFlags, def->WeaponFlags)
-		("ammogive1", AmmoGive1, def->AmmoGive1)
-		("ammogive2", AmmoGive2, def->AmmoGive2)
-		("minammo1", MinAmmo1, def->MinAmmo1)
-		("minammo2", MinAmmo2, def->MinAmmo2)
-		("ammouse1", AmmoUse1, def->AmmoUse1)
-		("ammouse2", AmmoUse2, def->AmmoUse2)
-		("kickback", Kickback, Kickback)
-		("yadjust", YAdjust, def->YAdjust)
-		("upsound", UpSound, def->UpSound)
-		("readysound", ReadySound, def->ReadySound)
-		("selectionorder", SelectionOrder, def->SelectionOrder)
-		("ammo1", Ammo1)
-		("ammo2", Ammo2)
-		("sisterweapon", SisterWeapon)
-		("givenasmorphweapon", GivenAsMorphWeapon, def->GivenAsMorphWeapon)
-		("altfire", bAltFire, def->bAltFire)
-		("reloadcounter", ReloadCounter, def->ReloadCounter)
-		("bobstyle", BobStyle, def->BobStyle)
-		("bobspeed", BobSpeed, def->BobSpeed)
-		("bobrangex", BobRangeX, def->BobRangeX)
-		("bobrangey", BobRangeY, def->BobRangeY)
-		("fovscale", FOVScale, def->FOVScale)
-		("crosshair", Crosshair, def->Crosshair)
-		("minselammo1", MinSelAmmo1, def->MinSelAmmo1)
-		("minselammo2", MinSelAmmo2, def->MinSelAmmo2);
-		/* these can never change
-		("ammotype1", AmmoType1, def->AmmoType1)
-		("ammotype2", AmmoType2, def->AmmoType2)
-		("sisterweapontype", SisterWeaponType, def->SisterWeaponType)
-		*/
-
-}
 
 
 /* Weapon slots ***********************************************************/
@@ -376,7 +293,7 @@ bool FWeaponSlots::LocateWeapon (PClassActor *type, int *const slot, int *const 
 DEFINE_ACTION_FUNCTION(FWeaponSlots, LocateWeapon)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FWeaponSlots);
-	PARAM_CLASS(weap, AWeapon);
+	PARAM_CLASS(weap, AInventory);
 	int slot = 0, index = 0;
 	bool retv = self->LocateWeapon(weap, &slot, &index);
 	if (numret >= 1) ret[0].SetInt(retv);
@@ -434,10 +351,10 @@ void FWeaponSlots::AddExtraWeapons()
 		{
 			continue;
 		}
-		auto weapdef = ((AWeapon*)GetDefaultByType(cls));
+		auto weapdef = ((AInventory*)GetDefaultByType(cls));
 
 		// Let the weapon decide for itself if it wants to get added to a slot.
-		IFVIRTUALPTR(weapdef, AWeapon, CheckAddToSlots)
+		IFVIRTUALPTRNAME(weapdef, NAME_Weapon, CheckAddToSlots)
 		{
 			VMValue param = weapdef;
 			int slot = -1, slotpriority;

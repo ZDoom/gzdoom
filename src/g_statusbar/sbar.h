@@ -52,8 +52,6 @@ enum EHudState
 	HUD_AltHud // Used for passing through popups to the alt hud
 };
 
-class AWeapon;
-
 bool ST_IsTimeVisible();
 bool ST_IsLatencyVisible();
 

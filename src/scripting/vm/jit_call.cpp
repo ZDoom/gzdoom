@@ -461,7 +461,7 @@ asmjit::FuncSignature JitCompiler::CreateFuncSignature(VMFunction *func)
 	for (unsigned int i = 0; i < func->Proto->ArgumentTypes.Size(); i++)
 	{
 		const PType *type = func->Proto->ArgumentTypes[i];
-		if (func->ArgFlags[i] & (VARF_Out | VARF_Ref))
+		if (func->ArgFlags.Size() && func->ArgFlags[i] & (VARF_Out | VARF_Ref))
 		{
 			args.Push(TypeIdOf<void*>::kTypeId);
 			key += "v";

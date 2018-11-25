@@ -373,6 +373,15 @@ class Object native
 {
 	native bool bDestroyed;
 
+	// These must be defined in some class, so that the compiler can find them. Object is just fine, as long as they are private to external code.
+	private native int BuiltinRandom(voidptr rng, int min, int max);
+	private native double BuiltinFRandom(voidptr rng, double min, double max);
+	private native int BuiltinRandom2(voidptr rng, int mask);
+	private native void BuiltinRandomSeed(voidptr rng, int seed);
+	private native int BuiltinCallLineSpecial(int special, Actor activator, int arg1, int arg2, int arg3, int arg4, int arg5);
+	private native Class<Object> BuiltinNameToClass(Name nm, Class<Object> filter);
+	private native Object BuiltinClassCast(Object inptr, Class<Object> test);
+	
 	// These really should be global functions...
 	native static String G_SkillName();
 	native static int G_SkillPropertyInt(int p);

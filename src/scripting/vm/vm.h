@@ -555,6 +555,7 @@ struct AFuncDesc
 	const char *FuncName;
 	actionf_p Function;
 	VMNativeFunction **VMPointer;
+	void *DirectNative;
 };
 
 #if defined(_MSC_VER)
@@ -575,13 +576,15 @@ struct AFuncDesc
 // Macros to handle action functions. These are here so that I don't have to
 // change every single use in case the parameters change.
 
-#define DEFINE_ACTION_FUNCTION(cls, name) \
+#define DEFINE_ACTION_FUNCTION_NATIVE(cls, name, native) \
 	static int AF_##cls##_##name(VM_ARGS); \
 	VMNativeFunction *cls##_##name##_VMPtr; \
-	static const AFuncDesc cls##_##name##_Hook = { #cls, #name, AF_##cls##_##name, &cls##_##name##_VMPtr }; \
+	static const AFuncDesc cls##_##name##_Hook = { #cls, #name, AF_##cls##_##name, &cls##_##name##_VMPtr, native }; \
 	extern AFuncDesc const *const cls##_##name##_HookPtr; \
 	MSVC_ASEG AFuncDesc const *const cls##_##name##_HookPtr GCC_ASEG = &cls##_##name##_Hook; \
 	static int AF_##cls##_##name(VM_ARGS)
+
+#define DEFINE_ACTION_FUNCTION(cls, name) DEFINE_ACTION_FUNCTION_NATIVE(cls, name, nullptr)
 
 // cls is the scripted class name, icls the internal one (e.g. player_t vs. Player)
 #define DEFINE_FIELD_X(cls, icls, name) \

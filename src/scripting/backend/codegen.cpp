@@ -259,20 +259,9 @@ void ExpEmit::Reuse(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-static PSymbol *FindBuiltinFunction(FName funcname, VMNativeFunction::NativeCallType func, const uint8_t *reginfo)
+static PFunction *FindBuiltinFunction(FName funcname)
 {
-	PSymbol *sym = Namespaces.GlobalNamespace->Symbols.FindSymbol(funcname, false);
-	if (sym == nullptr)
-	{
-		PSymbolVMFunction *symfunc = Create<PSymbolVMFunction>(funcname);
-		VMNativeFunction *calldec = new VMNativeFunction(func, funcname);
-		calldec->PrintableName = funcname.GetChars();
-		calldec->RegTypes = reginfo;
-		symfunc->Function = calldec;
-		sym = symfunc;
-		Namespaces.GlobalNamespace->Symbols.AddSymbol(sym);
-	}
-	return sym;
+	return dyn_cast<PFunction>(RUNTIME_CLASS(DObject)->FindSymbol(funcname, true));
 }
 
 //==========================================================================
@@ -5471,33 +5460,35 @@ FxExpression *FxRandom::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-int BuiltinRandom(VM_ARGS)
+static int NativeRandom(FRandom *rng, int min, int max)
+{
+	if (max < min)
+	{
+		std::swap(max, min);
+	}
+	return (*rng)(max - min + 1) + min;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, BuiltinRandom, NativeRandom)
 {
 	PARAM_PROLOGUE;
 	PARAM_POINTER(rng, FRandom);
 	PARAM_INT(min);
 	PARAM_INT(max);
-	if (max < min)
-	{
-		std::swap(max, min);
-	}
-	ACTION_RETURN_INT((*rng)(max - min + 1) + min);
+	ACTION_RETURN_INT(NativeRandom(rng, min, max));
 }
 
 ExpEmit FxRandom::Emit(VMFunctionBuilder *build)
 {
 	// Call DecoRandom to generate a random number.
 	VMFunction *callfunc;
-	static const uint8_t reginfo[] = { REGT_POINTER, REGT_INT, REGT_INT };
-	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinRandom, BuiltinRandom, reginfo);
+	auto sym = FindBuiltinFunction(NAME_BuiltinRandom);
 
-	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
-	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
+	assert(sym);
+	callfunc = sym->Variants[0].Implementation;
 	assert(min && max);
-	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
 	FunctionCallEmitter emitters(callfunc);
-
 	emitters.AddParameterPointerConst(rng);
 	emitters.AddParameter(build, min);
 	emitters.AddParameter(build, max);
@@ -5596,12 +5587,10 @@ ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 
 	// Call BuiltinRandom to generate a random number.
 	VMFunction *callfunc;
-	static const uint8_t reginfo[] = { REGT_POINTER, REGT_INT, REGT_INT };
-	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinRandom, BuiltinRandom, reginfo);
+	auto sym = FindBuiltinFunction(NAME_BuiltinRandom);
 
-	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
-	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
-	callfunc = ((PSymbolVMFunction *)sym)->Function;
+	assert(sym);
+	callfunc = sym->Variants[0].Implementation;
 
 	FunctionCallEmitter emitters(callfunc);
 	emitters.AddParameterPointerConst(rng);
@@ -5694,13 +5683,8 @@ FxFRandom::FxFRandom(FRandom *r, FxExpression *mi, FxExpression *ma, const FScri
 //
 //==========================================================================
 
-int BuiltinFRandom(VM_ARGS)
+static double NativeFRandom(FRandom *rng, double min, double max)
 {
-	PARAM_PROLOGUE;
-	PARAM_POINTER(rng, FRandom);
-	PARAM_FLOAT(min);
-	PARAM_FLOAT(max);
-
 	int random = (*rng)(0x40000000);
 	double frandom = random / double(0x40000000);
 
@@ -5708,20 +5692,29 @@ int BuiltinFRandom(VM_ARGS)
 	{
 		std::swap(max, min);
 	}
-	ACTION_RETURN_FLOAT(frandom * (max - min) + min);
+	return frandom * (max - min) + min;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, BuiltinFRandom, NativeFRandom)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(rng, FRandom);
+	PARAM_FLOAT(min);
+	PARAM_FLOAT(max);
+
+	ACTION_RETURN_FLOAT(NativeFRandom(rng, min, max));
 }
 
 ExpEmit FxFRandom::Emit(VMFunctionBuilder *build)
 {
 	// Call the BuiltinFRandom function to generate a floating point random number..
 	VMFunction *callfunc;
-	static uint8_t reginfo[] = { REGT_POINTER, REGT_FLOAT, REGT_FLOAT };
-	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinFRandom, BuiltinFRandom, reginfo);
+	auto sym = FindBuiltinFunction(NAME_BuiltinFRandom);
 
-	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
-	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
+	assert(sym);
+	callfunc = sym->Variants[0].Implementation;
+
 	assert(min && max);
-	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
 	FunctionCallEmitter emitters(callfunc);
 	emitters.AddParameterPointerConst(rng);
@@ -5776,7 +5769,12 @@ FxExpression *FxRandom2::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-int BuiltinRandom2(VM_ARGS)
+static int NativeRandom2(FRandom *rng, int maskval)
+{
+	return rng->Random2(maskval);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, BuiltinRandom2, NativeRandom2)
 {
 	PARAM_PROLOGUE;
 	PARAM_POINTER(rng, FRandom);
@@ -5794,12 +5792,10 @@ ExpEmit FxRandom2::Emit(VMFunctionBuilder *build)
 {
 	// Call the BuiltinRandom function to generate the random number.
 	VMFunction *callfunc;
-	static uint8_t reginfo[] = { REGT_POINTER, REGT_INT };
-	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinRandom2, BuiltinRandom2, reginfo);
+	auto sym = FindBuiltinFunction(NAME_BuiltinRandom2);
 
-	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
-	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
-	callfunc = ((PSymbolVMFunction *)sym)->Function;
+	assert(sym);
+	callfunc = sym->Variants[0].Implementation;
 
 	FunctionCallEmitter emitters(callfunc);
 
@@ -5853,7 +5849,12 @@ FxExpression *FxRandomSeed::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-int BuiltinRandomSeed(VM_ARGS)
+static void NativeRandomSeed(FRandom *rng, int seed)
+{
+	rng->Init(seed);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, BuiltinRandomSeed, NativeRandomSeed)
 {
 	PARAM_PROLOGUE;
 	PARAM_POINTER(rng, FRandom)
@@ -5866,12 +5867,10 @@ ExpEmit FxRandomSeed::Emit(VMFunctionBuilder *build)
 {
 	// Call DecoRandom to generate a random number.
 	VMFunction *callfunc;
-	static uint8_t reginfo[] = { REGT_POINTER, REGT_INT };
-	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinRandomSeed, BuiltinRandomSeed, reginfo);
+	auto sym = FindBuiltinFunction(NAME_BuiltinRandomSeed);
 
-	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
-	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
-	callfunc = ((PSymbolVMFunction *)sym)->Function;
+	assert(sym);
+	callfunc = sym->Variants[0].Implementation;
 
 	FunctionCallEmitter emitters(callfunc);
 	emitters.AddParameterPointerConst(rng);
@@ -8525,7 +8524,7 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-int BuiltinCallLineSpecial(VM_ARGS)
+DEFINE_ACTION_FUNCTION(DObject, BuiltinCallLineSpecial)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(special);
@@ -8545,11 +8544,10 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 
 	// Call the BuiltinCallLineSpecial function to perform the desired special.
 	static uint8_t reginfo[] = { REGT_INT, REGT_POINTER, REGT_INT, REGT_INT, REGT_INT, REGT_INT, REGT_INT };
-	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinCallLineSpecial, BuiltinCallLineSpecial, reginfo);
+	auto sym = FindBuiltinFunction(NAME_BuiltinCallLineSpecial);
 
-	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
-	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
-	VMFunction *callfunc = ((PSymbolVMFunction *)sym)->Function;
+	assert(sym);
+	auto callfunc = sym->Variants[0].Implementation;
 
 	FunctionCallEmitter emitters(callfunc);
 
@@ -10749,12 +10747,8 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-int BuiltinNameToClass(VM_ARGS)
+static PClass *NativeNameToClass(FName clsname, PClass *desttype)
 {
-	PARAM_PROLOGUE;
-	PARAM_NAME(clsname);
-	PARAM_CLASS(desttype, DObject);
-
 	PClass *cls = nullptr;
 	if (clsname != NAME_None)
 	{
@@ -10762,10 +10756,19 @@ int BuiltinNameToClass(VM_ARGS)
 		if (cls != nullptr && (cls->VMType == nullptr || !cls->IsDescendantOf(desttype)))
 		{
 			// does not match required parameters or is invalid.
-			cls = nullptr;
+			return nullptr;
 		}
 	}
-	ACTION_RETURN_POINTER(cls);
+	return cls;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, BuiltinNameToClass, NativeNameToClass)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(clsname);
+	PARAM_CLASS(desttype, DObject);
+
+	ACTION_RETURN_POINTER(NativeNameToClass(clsname, desttype));
 }
 
 ExpEmit FxClassTypeCast::Emit(VMFunctionBuilder *build)
@@ -10777,12 +10780,10 @@ ExpEmit FxClassTypeCast::Emit(VMFunctionBuilder *build)
 
 	// Call the BuiltinNameToClass function to convert from 'name' to class.
 	VMFunction *callfunc;
-	static uint8_t reginfo[] = { REGT_INT, REGT_POINTER };
-	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinNameToClass, BuiltinNameToClass, reginfo);
+	auto sym = FindBuiltinFunction(NAME_BuiltinNameToClass);
 
-	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
-	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
-	callfunc = ((PSymbolVMFunction *)sym)->Function;
+	assert(sym);
+	callfunc = sym->Variants[0].Implementation;
 
 	FunctionCallEmitter emitters(callfunc);
 	emitters.AddParameter(build, basex);
@@ -10871,12 +10872,17 @@ FxExpression *FxClassPtrCast::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-int BuiltinClassCast(VM_ARGS)
+static PClass *NativeClassCast(PClass *from, PClass *to)
+{
+	return from && to && from->IsDescendantOf(to) ? from : nullptr;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, BuiltinClassCast, NativeClassCast)
 {
 	PARAM_PROLOGUE;
 	PARAM_CLASS(from, DObject);
 	PARAM_CLASS(to, DObject);
-	ACTION_RETURN_POINTER(from && to && from->IsDescendantOf(to) ? from : nullptr);
+	ACTION_RETURN_POINTER(NativeClassCast(from, to));
 }
 
 ExpEmit FxClassPtrCast::Emit(VMFunctionBuilder *build)
@@ -10884,12 +10890,10 @@ ExpEmit FxClassPtrCast::Emit(VMFunctionBuilder *build)
 	ExpEmit clsname = basex->Emit(build);
 
 	VMFunction *callfunc;
-	static uint8_t reginfo[] = { REGT_POINTER, REGT_POINTER };
-	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinClassCast, BuiltinClassCast, reginfo);
+	auto sym = FindBuiltinFunction(NAME_BuiltinClassCast);
 
-	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
-	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
-	callfunc = ((PSymbolVMFunction *)sym)->Function;
+	assert(sym);
+	callfunc = sym->Variants[0].Implementation;
 
 	FunctionCallEmitter emitters(callfunc);
 	emitters.AddParameter(clsname, false);

@@ -52,7 +52,6 @@ IMPLEMENT_CLASS(PSymbolConstNumeric, false, false);
 IMPLEMENT_CLASS(PSymbolConstString, false, false);
 IMPLEMENT_CLASS(PSymbolTreeNode, false, false)
 IMPLEMENT_CLASS(PSymbolType, false, false)
-IMPLEMENT_CLASS(PSymbolVMFunction, false, false)
 IMPLEMENT_CLASS(PFunction, false, false)
 
 //==========================================================================

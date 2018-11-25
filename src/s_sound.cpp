@@ -1438,6 +1438,24 @@ void S_PlaySound(AActor *a, int chan, FSoundID sid, float vol, float atten, bool
 	}
 }
 
+void A_PlaySound(AActor *self, int soundid, int channel, double volume, int looping, double attenuation, int local)
+{
+	if (!looping)
+	{
+		if (!(channel & CHAN_NOSTOP) || !S_IsActorPlayingSomething(self, channel & 7, soundid))
+		{
+			S_PlaySound(self, channel, soundid, (float)volume, (float)attenuation, local);
+		}
+	}
+	else
+	{
+		if (!S_IsActorPlayingSomething(self, channel & 7, soundid))
+		{
+			S_PlaySound(self, channel | CHAN_LOOP, soundid, (float)volume, (float)attenuation, local);
+		}
+	}
+}
+
 //==========================================================================
 //
 // S_LoadSound

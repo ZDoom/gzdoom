@@ -392,7 +392,7 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 
 	case DFloor::floorLowerByTexture:
 		floor->m_Direction = -1;
-		newheight = sec->CenterFloor() - sec->FindShortestTextureAround();
+		newheight = sec->CenterFloor() - FindShortestTextureAround(sec);
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(sec->centerspot, newheight);
 		break;
 
@@ -409,7 +409,7 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 		//		since the code is identical to what was here. (Oddly
 		//		enough, BOOM preserved the code here even though it
 		//		also had this function.)
-		newheight = sec->CenterFloor() + sec->FindShortestTextureAround();
+		newheight = sec->CenterFloor() + FindShortestTextureAround(sec);
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(sec->centerspot, newheight);
 		break;
 
@@ -440,7 +440,7 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 
 		//jff 5/23/98 use model subroutine to unify fixes and handling
 		sector_t *modelsec;
-		modelsec = sec->FindModelFloorSector(newheight);
+		modelsec = FindModelFloorSector(sec, newheight);
 		if (modelsec != NULL)
 		{
 			floor->m_Texture = modelsec->GetTexture(sector_t::floor);
@@ -485,8 +485,8 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 				floortype == DFloor::floorLowerToLowestCeiling ||
 				floortype == DFloor::floorRaiseToCeiling ||
 				floortype == DFloor::floorLowerToCeiling) ?
-				sec->FindModelCeilingSector(-floor->m_FloorDestDist) :
-				sec->FindModelFloorSector(-floor->m_FloorDestDist);
+				FindModelCeilingSector(sec, -floor->m_FloorDestDist) :
+				FindModelFloorSector(sec, -floor->m_FloorDestDist);
 
 			if (modelsec != NULL)
 			{
@@ -1126,7 +1126,7 @@ bool EV_DoChange (line_t *line, EChange changetype, int tag)
 			}
 			break;
 		case numChangeOnly:
-			secm = sec->FindModelFloorSector (sec->CenterFloor());
+			secm = FindModelFloorSector(sec, sec->CenterFloor());
 			if (secm)
 			{ // if no model, no change
 				sec->SetTexture(sector_t::floor, secm->GetTexture(sector_t::floor));

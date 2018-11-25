@@ -37,16 +37,6 @@ protected:
 
 // A VM function ------------------------------------------------------------
 
-class PSymbolVMFunction : public PSymbol
-{
-	DECLARE_CLASS(PSymbolVMFunction, PSymbol);
-public:
-	VMFunction *Function;
-
-	PSymbolVMFunction(FName name) : PSymbol(name) {}
-	PSymbolVMFunction() : PSymbol(NAME_None) {}
-};
-
 // A symbol for a type ------------------------------------------------------
 
 class PSymbolType : public PSymbol

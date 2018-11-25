@@ -15,7 +15,8 @@ class ClericBoss : Actor
 		+DONTMORPH
 		PainSound "PlayerClericPain";
 		DeathSound "PlayerClericCrazyDeath";
-		Obituary "$OBCBOSS";
+		Obituary "$OB_CBOSS";
+		Tag "$FN_CBOSS";
 	}
 
 	States

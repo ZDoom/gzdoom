@@ -53,6 +53,8 @@ extern FMemArena ClassDataAllocator;
 #define MAX_RETURNS		8	// Maximum number of results a function called by script code can return
 #define MAX_TRY_DEPTH	8	// Maximum number of nested TRYs in a single function
 
+void JitRelease();
+
 
 typedef unsigned char		VM_UBYTE;
 typedef signed char			VM_SBYTE;
@@ -432,6 +434,8 @@ public:
 			f->~VMFunction();
 		}
 		AllFunctions.Clear();
+		// also release any JIT data
+		JitRelease();
 	}
 	static void CreateRegUseInfo()
 	{
@@ -511,6 +515,7 @@ bool AssertObject(void * ob);
 #define PARAM_STATE_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_INT); FState *x = (FState *)StateLabels.GetState(param[p].i, self->GetClass());
 #define PARAM_STATE_ACTION_AT(p,x)	assert((p) < numparam); assert(reginfo[p] == REGT_INT); FState *x = (FState *)StateLabels.GetState(param[p].i, stateowner->GetClass());
 #define PARAM_POINTER_AT(p,x,type)	assert((p) < numparam); assert(reginfo[p] == REGT_POINTER); type *x = (type *)param[p].a;
+#define PARAM_OUTPOINTER_AT(p,x,type)	assert((p) < numparam); type *x = (type *)param[p].a;
 #define PARAM_POINTERTYPE_AT(p,x,type)	assert((p) < numparam); assert(reginfo[p] == REGT_POINTER); type x = (type )param[p].a;
 #define PARAM_OBJECT_AT(p,x,type)	assert((p) < numparam); assert(reginfo[p] == REGT_POINTER && AssertObject(param[p].a)); type *x = (type *)param[p].a; assert(x == NULL || x->IsKindOf(RUNTIME_CLASS(type)));
 #define PARAM_CLASS_AT(p,x,base)	assert((p) < numparam); assert(reginfo[p] == REGT_POINTER); base::MetaClass *x = (base::MetaClass *)param[p].a; assert(x == NULL || x->IsDescendantOf(RUNTIME_CLASS(base)));
@@ -534,6 +539,7 @@ bool AssertObject(void * ob);
 #define PARAM_STATE(x)				++paramnum; PARAM_STATE_AT(paramnum,x)
 #define PARAM_STATE_ACTION(x)		++paramnum; PARAM_STATE_ACTION_AT(paramnum,x)
 #define PARAM_POINTER(x,type)		++paramnum; PARAM_POINTER_AT(paramnum,x,type)
+#define PARAM_OUTPOINTER(x,type)		++paramnum; PARAM_OUTPOINTER_AT(paramnum,x,type)
 #define PARAM_POINTERTYPE(x,type)	++paramnum; PARAM_POINTERTYPE_AT(paramnum,x,type)
 #define PARAM_OBJECT(x,type)		++paramnum; PARAM_OBJECT_AT(paramnum,x,type)
 #define PARAM_CLASS(x,base)			++paramnum; PARAM_CLASS_AT(paramnum,x,base)
@@ -559,6 +565,7 @@ struct AFuncDesc
 	const char *FuncName;
 	actionf_p Function;
 	VMNativeFunction **VMPointer;
+	void *DirectNative;
 };
 
 #if defined(_MSC_VER)
@@ -579,10 +586,19 @@ struct AFuncDesc
 // Macros to handle action functions. These are here so that I don't have to
 // change every single use in case the parameters change.
 
+#define DEFINE_ACTION_FUNCTION_NATIVE(cls, name, native) \
+	static int AF_##cls##_##name(VM_ARGS); \
+	VMNativeFunction *cls##_##name##_VMPtr; \
+	static const AFuncDesc cls##_##name##_Hook = { #cls, #name, AF_##cls##_##name, &cls##_##name##_VMPtr, reinterpret_cast<void*>(native) }; \
+	extern AFuncDesc const *const cls##_##name##_HookPtr; \
+	MSVC_ASEG AFuncDesc const *const cls##_##name##_HookPtr GCC_ASEG = &cls##_##name##_Hook; \
+	static int AF_##cls##_##name(VM_ARGS)
+
+//#define DEFINE_ACTION_FUNCTION(cls, name) DEFINE_ACTION_FUNCTION_NATIVE(cls, name, nullptr)
 #define DEFINE_ACTION_FUNCTION(cls, name) \
 	static int AF_##cls##_##name(VM_ARGS); \
 	VMNativeFunction *cls##_##name##_VMPtr; \
-	static const AFuncDesc cls##_##name##_Hook = { #cls, #name, AF_##cls##_##name, &cls##_##name##_VMPtr }; \
+	static const AFuncDesc cls##_##name##_Hook = { #cls, #name, AF_##cls##_##name, &cls##_##name##_VMPtr, nullptr }; \
 	extern AFuncDesc const *const cls##_##name##_HookPtr; \
 	MSVC_ASEG AFuncDesc const *const cls##_##name##_HookPtr GCC_ASEG = &cls##_##name##_Hook; \
 	static int AF_##cls##_##name(VM_ARGS)

@@ -22,6 +22,7 @@ class Serpent : Actor
 		PainSound "SerpentPain";
 		DeathSound "SerpentDeath";
 		HitObituary "$OB_SERPENTHIT";
+		Tag "$FN_SERPENT";
 	}
 
 	States

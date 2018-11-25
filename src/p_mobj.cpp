@@ -7375,7 +7375,7 @@ DEFINE_ACTION_FUNCTION(AActor, SpawnPlayerMissile)
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	PARAM_FLOAT(z);
-	PARAM_POINTER(lt, FTranslatedLineTarget);
+	PARAM_OUTPOINTER(lt, FTranslatedLineTarget);
 	PARAM_BOOL(nofreeaim);
 	PARAM_BOOL(noautoaim);
 	PARAM_INT(aimflags);

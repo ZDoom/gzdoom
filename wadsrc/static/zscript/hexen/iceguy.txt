@@ -20,6 +20,7 @@ class IceGuy : Actor
 		AttackSound "IceGuyAttack";
 		ActiveSound "IceGuyActive";
 		Obituary "$OB_ICEGUY";
+		Tag "$FN_ICEGUY";
 	}
 
 

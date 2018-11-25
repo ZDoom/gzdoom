@@ -2434,7 +2434,7 @@ FUNC(LS_Sector_SetColor)
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
-		level.sectors[secnum].SetColor(arg1, arg2, arg3, arg4);
+		level.sectors[secnum].SetColor(PalEntry(255, arg1, arg2, arg3), arg4);
 	}
 
 	return true;
@@ -2447,7 +2447,7 @@ FUNC(LS_Sector_SetFade)
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
-		level.sectors[secnum].SetFade(arg1, arg2, arg3);
+		level.sectors[secnum].SetFade(PalEntry(255, arg1, arg2, arg3));
 	}
 	return true;
 }

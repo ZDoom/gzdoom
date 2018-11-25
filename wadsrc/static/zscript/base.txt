@@ -366,6 +366,7 @@ struct GameInfoStruct native
 	native double gibfactor;
 	native bool intermissioncounter;
 	native Name mSliderColor;
+	native Color defaultbloodcolor;
 	native double telefogheight;
 	native int defKickback;
 }
@@ -374,6 +375,15 @@ class Object native
 {
 	native bool bDestroyed;
 
+	// These must be defined in some class, so that the compiler can find them. Object is just fine, as long as they are private to external code.
+	private native static int BuiltinRandom(voidptr rng, int min, int max);
+	private native static double BuiltinFRandom(voidptr rng, double min, double max);
+	private native static int BuiltinRandom2(voidptr rng, int mask);
+	private native static void BuiltinRandomSeed(voidptr rng, int seed);
+	private native static int BuiltinCallLineSpecial(int special, Actor activator, int arg1, int arg2, int arg3, int arg4, int arg5);
+	private native static Class<Object> BuiltinNameToClass(Name nm, Class<Object> filter);
+	private native static Object BuiltinClassCast(Object inptr, Class<Object> test);
+	
 	// These really should be global functions...
 	native static String G_SkillName();
 	native static int G_SkillPropertyInt(int p);

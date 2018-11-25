@@ -3833,7 +3833,7 @@ void FParser::SF_SetColor(void)
 		{
 			if (!DFraggleThinker::ActiveThinker->setcolormaterial)
 			{
-				level.sectors[i].SetColor(color.r, color.g, color.b, 0);
+				level.sectors[i].SetColor(color, 0);
 			}
 			else
 			{

@@ -944,6 +944,7 @@ void InitThingdef()
 			assert(afunc->VMPointer != NULL);
 			*(afunc->VMPointer) = new VMNativeFunction(afunc->Function, afunc->FuncName);
 			(*(afunc->VMPointer))->PrintableName.Format("%s.%s [Native]", afunc->ClassName+1, afunc->FuncName);
+			(*(afunc->VMPointer))->DirectNativeCall = afunc->DirectNative;
 			AFTable.Push(*afunc);
 		}
 		AFTable.ShrinkToFit();

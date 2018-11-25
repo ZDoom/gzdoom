@@ -24,6 +24,7 @@ class Bishop : Actor
 		DeathSound "BishopDeath";
 		ActiveSound "BishopActiveSounds";
 		Obituary"$OB_BISHOP";
+		Tag "$FN_BISHOP";
 	}
 
 	States

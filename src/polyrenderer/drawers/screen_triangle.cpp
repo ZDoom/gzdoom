@@ -403,7 +403,7 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyT
 	float *worldposZ = thread->worldposZ;
 	uint32_t *texel = thread->texel;
 	int32_t *texelV = thread->texelV;
-	fixed_t *lightarray = thread->lightarray;
+	uint16_t *lightarray = thread->lightarray;
 	uint32_t *dynlights = thread->dynlights;
 
 	if (!(ModeT::SWFlags & SWSTYLEF_Fill) && !(ModeT::SWFlags & SWSTYLEF_FogBoundary))
@@ -463,6 +463,29 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyT
 		shade = (fixed_t)((2.0f - (light + 12.0f) / 128.0f) * (float)FRACUNIT);
 		lightpos = (fixed_t)(globVis * posW * (float)FRACUNIT);
 		lightstep = (fixed_t)(globVis * stepW * (float)FRACUNIT);
+
+		fixed_t maxvis = 24 * FRACUNIT / 32;
+		fixed_t maxlight = 31 * FRACUNIT / 32;
+
+		fixed_t lightend = lightpos + lightstep * (x1 - x0);
+		if (lightpos < maxvis && shade >= lightpos && shade - lightpos <= maxlight &&
+			lightend < maxvis && shade >= lightend && shade - lightend <= maxlight)
+		{
+			lightpos += FRACUNIT - shade;
+			for (int x = x0; x < x1; x++)
+			{
+				lightarray[x] = lightpos >> 8;
+				lightpos += lightstep;
+			}
+		}
+		else
+		{
+			for (int x = x0; x < x1; x++)
+			{
+				lightarray[x] = (FRACUNIT - clamp<fixed_t>(shade - MIN(maxvis, lightpos), 0, maxlight)) >> 8;
+				lightpos += lightstep;
+			}
+		}
 	}
 
 	for (int x = x0; x < x1; x++)
@@ -477,15 +500,6 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyT
 			posWorldY += stepWorldY;
 			posWorldZ += stepWorldZ;
 		}
-
-		if (!(OptT::Flags & SWOPT_FixedLight))
-		{
-			fixed_t maxvis = 24 * FRACUNIT / 32;
-			fixed_t maxlight = 31 * FRACUNIT / 32;
-			lightarray[x] = (FRACUNIT - clamp<fixed_t>(shade - MIN(maxvis, lightpos), 0, maxlight)) >> 8;
-			lightpos += lightstep;
-		}
-
 		if (!(ModeT::SWFlags & SWSTYLEF_Fill) && !(ModeT::SWFlags & SWSTYLEF_FogBoundary))
 		{
 			float rcpW = 0x01000000 / posW;
@@ -706,7 +720,7 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyT
 			__m128i mfg = _mm_unpacklo_epi8(_mm_setr_epi32(texPixels[texel[x]], texPixels[texel[x + 1]], 0, 0), _mm_setzero_si128());
 
 			if (!(OptT::Flags & SWOPT_FixedLight))
-				mlightshade = _mm_shuffle_epi32(_mm_shufflelo_epi16(_mm_loadl_epi64((const __m128i*)&lightarray[x]), _MM_SHUFFLE(2, 2, 0, 0)), _MM_SHUFFLE(1, 1, 0, 0));
+				mlightshade = _mm_shuffle_epi32(_mm_shufflelo_epi16(_mm_cvtsi32_si128(*(int*)&lightarray[x]), _MM_SHUFFLE(1, 1, 0, 0)), _MM_SHUFFLE(1, 1, 0, 0));
 
 			if (OptT::Flags & SWOPT_DynLights)
 			{

@@ -43,6 +43,8 @@
 #include "swrenderer/viewport/r_viewport.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
+EXTERN_CVAR(Int, gl_enhanced_nv_stealth)
+EXTERN_CVAR(Bool, gl_enhanced_nightvision)
 
 namespace swrenderer
 {
@@ -62,9 +64,31 @@ namespace swrenderer
 		realfixedcolormap = nullptr;
 		fixedcolormap = nullptr;
 		fixedlightlev = -1;
+		doenhancednightvis = 0;
 
 		if (player != nullptr && camera == player->mo)
 		{
+			if (player->fixedlightlevel != -1)
+			{
+				auto torchtype = PClass::FindActor(NAME_PowerTorch);
+				auto litetype = PClass::FindActor(NAME_PowerLightAmp);
+				for (AInventory * in = player->mo->Inventory; in; in = in->Inventory)
+				{
+					// Need special handling for light amplifiers 
+					if (in->IsKindOf(torchtype))
+					{
+						// these can become more sophisticated later, right now i really am only
+						// worried about the basic implementation
+						if (gl_enhanced_nv_stealth > 1) doenhancednightvis = 2;
+					}
+					else if (in->IsKindOf(litetype))
+					{
+						if (gl_enhanced_nightvision) doenhancednightvis = 1;
+						if (gl_enhanced_nv_stealth > 0) doenhancednightvis |= 2;
+					}
+				}
+			}
+			
 			if (player->fixedcolormap >= 0 && player->fixedcolormap < (int)SpecialColormaps.Size())
 			{
 				realfixedcolormap = &SpecialColormaps[player->fixedcolormap];

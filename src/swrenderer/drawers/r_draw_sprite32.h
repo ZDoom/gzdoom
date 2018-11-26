@@ -332,6 +332,7 @@ namespace swrenderer
 				float lumi = ((float)fgcolor.r * 30.0f + 
 					fgcolor.g * 59.0f +
 					fgcolor.b * 11.0f) / 25500.0f;
+				lumi = pow(lumi, 0.5);
 
 				fgcolor.r = int(255.0f - lumi * 255.0f);
 				fgcolor.g = int(clamp(511.0f - lumi * 511.0f, 0.0f, 255.0f));

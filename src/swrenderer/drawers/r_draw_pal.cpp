@@ -973,6 +973,8 @@ namespace swrenderer
 			float lumi = ((float)GPalette.BaseColors[colormap[fg]].r * 30.f + 
 				GPalette.BaseColors[colormap[fg]].g * 59.f +
 				GPalette.BaseColors[colormap[fg]].b * 11.f) / 25500.f;
+			lumi = pow(lumi, 0.5f);
+
 			float r = 255.f - lumi * 255.f;
 			float g = clamp(511.f - lumi * 511.f, 0.f, 255.f);
 			float b = 255.f - lumi * 255.f;
@@ -1024,6 +1026,8 @@ namespace swrenderer
 			float lumi = ((float)GPalette.BaseColors[colormap[fg]].r * 30.f + 
 				GPalette.BaseColors[colormap[fg]].g * 59.f +
 				GPalette.BaseColors[colormap[fg]].b * 11.f) / 25500.f;
+			lumi = pow(lumi, 0.5f);
+
 			float r = 255.f - lumi * 255.f;
 			float g = clamp(511.f - lumi * 511.f, 0.f, 255.f);
 			float b = 255.f - lumi * 255.f;
@@ -1091,16 +1095,19 @@ namespace swrenderer
 		const uint8_t *source = args.TexturePixels();
 		
 		uint8_t fg = args.SolidColor();
+		// lumi is a desaturated colour and goes between 0.0 and 1.0, this is intentional
+		float lumi = ((float)GPalette.BaseColors[colormap[fg]].r * 30.f + 
+			GPalette.BaseColors[colormap[fg]].g * 59.f +
+			GPalette.BaseColors[colormap[fg]].b * 11.f) / 25500.f;
+		lumi = pow(lumi, 0.5f);
+
+		float r = 255.f - lumi * 255.f;
+		float g = clamp(511.f - lumi * 511.f, 0.f, 255.f);
+		float b = 255.f - lumi * 255.f;
+		int destcolor = RGB256k.RGB[(int)r>>2][(int)g>>2][(int)b>>2];
 		do
 		{
-			// lumi is a desaturated colour and goes between 0.0 and 1.0, this is intentional
-			float lumi = ((float)GPalette.BaseColors[colormap[fg]].r * 30.f + 
-				GPalette.BaseColors[colormap[fg]].g * 59.f +
-				GPalette.BaseColors[colormap[fg]].b * 11.f) / 25500.f;
-			float r = 255.f - lumi * 255.f;
-			float g = clamp(511.f - lumi * 511.f, 0.f, 255.f);
-			float b = 255.f - lumi * 255.f;
-			*dest = RGB256k.RGB[(int)r>>2][(int)g>>2][(int)b>>2];
+			*dest = destcolor;
 
 			dest += pitch;
 			frac += fracstep;

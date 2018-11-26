@@ -60,6 +60,7 @@ namespace swrenderer
 		static CameraLight *Instance();
 
 		int FixedLightLevel() const { return fixedlightlev; }
+		int DoEnhancedNightVis() const { return doenhancednightvis; }
 		FSWColormap *FixedColormap() const { return fixedcolormap; }
 		FSpecialColormap *ShaderColormap() const { return realfixedcolormap; }
 
@@ -70,6 +71,7 @@ namespace swrenderer
 		
 	private:
 		int fixedlightlev = 0;
+		int doenhancednightvis = 0;
 		FSWColormap *fixedcolormap = nullptr;
 		FSpecialColormap *realfixedcolormap = nullptr;
 	};

@@ -390,6 +390,8 @@ namespace swrenderer
 					float lumi = ((float)bgra_fgcolor[i].r * 30.0f + 
 						bgra_fgcolor[i].g * 59.0f +
 						bgra_fgcolor[i].b * 11.0f) / 25500.0f;
+					lumi = pow(lumi, 0.5f);
+					//lumi = _mm_cvtss_f32(_mm_sqrt_ss(_mm_set_ss(lumi)));
 
 					bgra_outcolor[i].r = int(255.0f - lumi * 255.0f);
 					bgra_outcolor[i].g = int(clamp(511.0f - lumi * 511.0f, 0.0f, 255.0f));
@@ -398,7 +400,7 @@ namespace swrenderer
 				}
 
 				__m128i outcolor = _mm_packs_epi32(_mm_loadu_si128((__m128i*)&bgra_outcolor[0]), _mm_loadu_si128((__m128i*)&bgra_outcolor[1]));
-				_mm_packus_epi16(outcolor, _mm_setzero_si128());
+				outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
 
 				return outcolor;
 			}

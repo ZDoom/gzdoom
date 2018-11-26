@@ -244,6 +244,46 @@ namespace swrenderer
 
 	bool SpriteDrawerArgs::SetBlendFunc(int op, fixed_t fglevel, fixed_t bglevel, int flags)
 	{
+		CameraLight *cameraLight = CameraLight::Instance();
+		if (cameraLight->FixedLightLevel() > 0)
+		{
+			if (!!(cameraLight->DoEnhancedNightVis() & 1))
+			{
+				if (flags & STYLEF_ColorIsFixed)
+				{
+					colfunc = &SWPixelFormatDrawers::FillNiteVisColumn;
+				}
+				else if (TranslationMap() == nullptr)
+				{
+					colfunc = &SWPixelFormatDrawers::DrawNiteVisColumn;
+				}
+				else
+				{
+					colfunc = &SWPixelFormatDrawers::DrawTranslatedNiteVisColumn;
+					drawer_needs_pal_input = true;
+				}
+				return true;
+			}
+			else if (!!(cameraLight->DoEnhancedNightVis() & 2))
+			{
+				// just render things without translucency (for now) if stealth vision is enabled
+				if (flags & STYLEF_ColorIsFixed)
+				{
+					colfunc = &SWPixelFormatDrawers::FillColumn;
+				}
+				else if (TranslationMap() == nullptr)
+				{
+					colfunc = &SWPixelFormatDrawers::DrawColumn;
+				}
+				else
+				{
+					colfunc = &SWPixelFormatDrawers::DrawTranslatedColumn;
+					drawer_needs_pal_input = true;
+				}
+				return true;
+			}
+		}
+
 		// r_drawtrans is a seriously bad thing to turn off. I wonder if I should
 		// just remove it completely.
 		if (!r_drawtrans || (op == STYLEOP_Add && fglevel == FRACUNIT && bglevel == 0 && !(flags & STYLEF_InvertSource)))

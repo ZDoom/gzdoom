@@ -52,6 +52,7 @@
 #include "teaminfo.h"
 #include "p_conversation.h"
 #include "d_event.h"
+#include "p_enemy.h"
 #include "m_argv.h"
 #include "p_lnspec.h"
 #include "p_spec.h"
@@ -2079,19 +2080,7 @@ uint8_t *FDynamicBuffer::GetData (int *len)
 
 static int KillAll(PClassActor *cls)
 {
-	AActor *actor;
-	int killcount = 0;
-	TThinkerIterator<AActor> iterator(cls);
-	while ( (actor = iterator.Next ()) )
-	{
-		if (actor->IsA(cls))
-		{
-			if (!(actor->flags2 & MF2_DORMANT) && (actor->flags3 & MF3_ISMONSTER))
-					killcount += actor->Massacre ();
-		}
-	}
-	return killcount;
-
+	return P_Massacre(false, cls);
 }
 
 static int RemoveClass(const PClass *cls)

@@ -72,7 +72,6 @@ public:
 	
 	virtual void Serialize(FSerializer &arc) override;
 	virtual void Tick() override;
-	virtual bool Massacre() override;
 
 	bool CallTryPickup(AActor *toucher, AActor **toucher_return = NULL);	// Wrapper for script function.
 

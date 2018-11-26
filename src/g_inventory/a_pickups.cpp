@@ -143,20 +143,6 @@ void AInventory::Serialize(FSerializer &arc)
 
 //===========================================================================
 //
-// AInventory :: Massacre
-//
-// This is a countermeasure for Dehacked modifications mainly.
-//
-//===========================================================================
-
-bool AInventory::Massacre()
-{
-	if (Owner == nullptr) return Super::Massacre();
-	return false;
-}
-
-//===========================================================================
-//
 //
 //===========================================================================
 static int StaticLastMessageTic;

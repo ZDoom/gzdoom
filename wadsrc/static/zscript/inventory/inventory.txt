@@ -212,6 +212,9 @@ class Inventory : Actor native
 		}
 		ChangeTid(0);
 		bSpecial = false;
+		// if the item was turned into a monster through Dehacked, undo that here.
+		bCountkill = false;
+		bIsMonster = false;
 		ChangeStatNum(STAT_INVENTORY);
 		// stop all sounds this item is playing.
 		for(int i = 1;i<=7;i++) A_StopSound(i);

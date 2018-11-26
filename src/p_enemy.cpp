@@ -3465,7 +3465,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BossDeath)
 //
 //----------------------------------------------------------------------------
 
-int P_Massacre (bool baddies)
+int P_Massacre (bool baddies, PClassActor *cls)
 {
 	// jff 02/01/98 'em' cheat - kill all monsters
 	// partially taken from Chi's .46 port
@@ -3475,7 +3475,7 @@ int P_Massacre (bool baddies)
 
 	int killcount = 0;
 	AActor *actor;
-	TThinkerIterator<AActor> iterator;
+	TThinkerIterator<AActor> iterator(cls);
 
 	while ( (actor = iterator.Next ()) )
 	{

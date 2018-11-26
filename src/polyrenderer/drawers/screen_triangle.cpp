@@ -488,6 +488,80 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyT
 		}
 	}
 
+#ifndef NO_SSE
+	__m128 mposW, mposU, mposV, mstepW, mstepU, mstepV;
+	__m128 mposWorldX, mposWorldY, mposWorldZ, mstepWorldX, mstepWorldY, mstepWorldZ;
+	__m128i mtexMul1, mtexMul2;
+
+	#define SETUP_STEP_SSE(mpos,mstep,pos,step) \
+		mstep = _mm_load_ss(&step); \
+		mpos = _mm_load_ss(&pos); \
+		mpos = _mm_shuffle_ps(mpos, mpos, _MM_SHUFFLE(2, 1, 0, 0)); \
+		mpos = _mm_add_ss(mpos, mstep); \
+		mpos = _mm_shuffle_ps(mpos, mpos, _MM_SHUFFLE(2, 1, 0, 0)); \
+		mpos = _mm_add_ss(mpos, mstep); \
+		mpos = _mm_shuffle_ps(mpos, mpos, _MM_SHUFFLE(2, 1, 0, 0)); \
+		mpos = _mm_add_ss(mpos, mstep); \
+		mpos = _mm_shuffle_ps(mpos, mpos, _MM_SHUFFLE(0, 1, 2, 3)); \
+		mstep = _mm_mul_ss(mstep, _mm_set1_ps(4.0f)); \
+		mstep = _mm_shuffle_ps(mstep, mstep, _MM_SHUFFLE(0, 0, 0, 0));
+
+	SETUP_STEP_SSE(mposW, mstepW, posW, stepW);
+
+	if (OptT::Flags & SWOPT_DynLights)
+	{
+		SETUP_STEP_SSE(mposWorldX, mstepWorldX, posWorldX, stepWorldX);
+		SETUP_STEP_SSE(mposWorldY, mstepWorldY, posWorldY, stepWorldY);
+		SETUP_STEP_SSE(mposWorldZ, mstepWorldZ, posWorldZ, stepWorldZ);
+	}
+
+	if (!(ModeT::SWFlags & SWSTYLEF_Fill) && !(ModeT::SWFlags & SWSTYLEF_FogBoundary))
+	{
+		SETUP_STEP_SSE(mposU, mstepU, posU, stepU);
+		SETUP_STEP_SSE(mposV, mstepV, posV, stepV);
+
+		mtexMul1 = _mm_setr_epi16(texWidth, texWidth, texWidth, texWidth, texHeight, texHeight, texHeight, texHeight);
+		mtexMul2 = _mm_setr_epi16(texHeight, texHeight, texHeight, texHeight, 1, 1, 1, 1);
+	}
+
+	#undef SETUP_STEP_SSE
+
+	for (int x = x0; x < x1; x += 4)
+	{
+		__m128 rcp_posW = _mm_rcp_ps(mposW);
+
+		if (OptT::Flags & SWOPT_DynLights)
+		{
+			_mm_storeu_ps(&worldposX[x], _mm_mul_ps(mposWorldX, rcp_posW));
+			_mm_storeu_ps(&worldposY[x], _mm_mul_ps(mposWorldY, rcp_posW));
+			_mm_storeu_ps(&worldposZ[x], _mm_mul_ps(mposWorldZ, rcp_posW));
+			mposWorldX = _mm_add_ps(mposWorldX, mstepWorldX);
+			mposWorldY = _mm_add_ps(mposWorldY, mstepWorldY);
+			mposWorldZ = _mm_add_ps(mposWorldZ, mstepWorldZ);
+		}
+		if (!(ModeT::SWFlags & SWSTYLEF_Fill) && !(ModeT::SWFlags & SWSTYLEF_FogBoundary))
+		{
+			__m128 rcpW = _mm_mul_ps(_mm_set1_ps(0x01000000), rcp_posW);
+			__m128i u = _mm_cvtps_epi32(_mm_mul_ps(mposU, rcpW));
+			__m128i v = _mm_cvtps_epi32(_mm_mul_ps(mposV, rcpW));
+			_mm_storeu_si128((__m128i*)&texelV[x], v);
+
+			__m128i texelX = _mm_srli_epi32(_mm_slli_epi32(u, 8), 17);
+			__m128i texelY = _mm_srli_epi32(_mm_slli_epi32(v, 8), 17);
+			__m128i texelXY = _mm_mulhi_epu16(_mm_slli_epi16(_mm_packs_epi32(texelX, texelY), 1), mtexMul1);
+			__m128i texlo = _mm_mullo_epi16(texelXY, mtexMul2);
+			__m128i texhi = _mm_mulhi_epi16(texelXY, mtexMul2);
+			texelX = _mm_unpacklo_epi16(texlo, texhi);
+			texelY = _mm_unpackhi_epi16(texlo, texhi);
+			_mm_storeu_si128((__m128i*)&texel[x], _mm_add_epi32(texelX, texelY));
+
+			mposU = _mm_add_ps(mposU, mstepU);
+			mposV = _mm_add_ps(mposV, mstepV);
+		}
+
+		mposW = _mm_add_ps(mposW, mstepW);
+	}
+#else
 	for (int x = x0; x < x1; x++)
 	{
 		if (OptT::Flags & SWOPT_DynLights)
@@ -515,6 +589,7 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyT
 
 		posW += stepW;
 	}
+#endif
 
 	if (OptT::Flags & SWOPT_DynLights)
 	{

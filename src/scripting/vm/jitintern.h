@@ -307,3 +307,6 @@ public:
 		throw AsmJitException(err, message);
 	}
 };
+
+void *AddJitFunction(asmjit::CodeHolder* code, asmjit::CCFunc *func);
+asmjit::CodeInfo GetHostCodeInfo();

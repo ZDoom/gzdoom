@@ -378,23 +378,16 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, PolyTriangleThreadDat
 	}
 }
 
-template<typename ModeT, typename OptT>
-void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread)
+template<typename ModeT, typename OptT, int BitsPerPixel>
+void StepSpan(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread)
 {
 	using namespace TriScreenDrawerModes;
 
-	uint32_t fixedlight;
-	uint32_t shade_fade_r, shade_fade_g, shade_fade_b, shade_light_r, shade_light_g, shade_light_b, desaturate, inv_desaturate;
-	fixed_t fuzzscale;
-	int _fuzzpos;
-	const uint32_t *texPixels, *translation;
-	int texWidth, texHeight;
-	uint32_t fillcolor;
-	int actoralpha;
 	float v1X, v1Y, v1W, v1U, v1V, v1WorldX, v1WorldY, v1WorldZ;
 	float startX, startY;
 	float stepW, stepU, stepV, stepWorldX, stepWorldY, stepWorldZ;
 	float posW, posU, posV, posWorldX, posWorldY, posWorldZ;
+	int texWidth, texHeight;
 	uint32_t light;
 	fixed_t shade, lightpos, lightstep;
 
@@ -405,28 +398,6 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyT
 	int32_t *texelV = thread->texelV;
 	uint16_t *lightarray = thread->lightarray;
 	uint32_t *dynlights = thread->dynlights;
-
-	if (!(ModeT::SWFlags & SWSTYLEF_Fill) && !(ModeT::SWFlags & SWSTYLEF_FogBoundary))
-	{
-		texPixels = (const uint32_t*)args->uniforms->TexturePixels();
-		texWidth = args->uniforms->TextureWidth();
-		texHeight = args->uniforms->TextureHeight();
-	}
-
-	if (ModeT::SWFlags & SWSTYLEF_Translated)
-	{
-		translation = (const uint32_t*)args->uniforms->Translation();
-	}
-
-	if ((ModeT::SWFlags & SWSTYLEF_Fill) || (ModeT::SWFlags & SWSTYLEF_Skycap) || (ModeT::Flags & STYLEF_ColorIsFixed))
-	{
-		fillcolor = args->uniforms->Color();
-	}
-
-	if (!(ModeT::Flags & STYLEF_Alpha1))
-	{
-		actoralpha = args->uniforms->Alpha();
-	}
 
 	v1X = args->v1->x;
 	v1Y = args->v1->y;
@@ -441,6 +412,12 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyT
 	posW = v1W + stepW * startX + args->gradientY.W * startY;
 	posU = v1U + stepU * startX + args->gradientY.U * startY;
 	posV = v1V + stepV * startX + args->gradientY.V * startY;
+
+	if (!(ModeT::SWFlags & SWSTYLEF_Fill) && !(ModeT::SWFlags & SWSTYLEF_FogBoundary))
+	{
+		texWidth = args->uniforms->TextureWidth();
+		texHeight = args->uniforms->TextureHeight();
+	}
 
 	if (OptT::Flags & SWOPT_DynLights)
 	{
@@ -471,19 +448,42 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyT
 		if (lightpos < maxvis && shade >= lightpos && shade - lightpos <= maxlight &&
 			lightend < maxvis && shade >= lightend && shade - lightend <= maxlight)
 		{
-			lightpos += FRACUNIT - shade;
-			for (int x = x0; x < x1; x++)
+			if (BitsPerPixel == 32)
 			{
-				lightarray[x] = lightpos >> 8;
-				lightpos += lightstep;
+				lightpos += FRACUNIT - shade;
+				for (int x = x0; x < x1; x++)
+				{
+					lightarray[x] = lightpos >> 8;
+					lightpos += lightstep;
+				}
+			}
+			else
+			{
+				lightpos = shade - lightpos;
+				for (int x = x0; x < x1; x++)
+				{
+					lightarray[x] = (lightpos >> 3) & 0xffffff00;
+					lightpos -= lightstep;
+				}
 			}
 		}
 		else
 		{
-			for (int x = x0; x < x1; x++)
+			if (BitsPerPixel == 32)
 			{
-				lightarray[x] = (FRACUNIT - clamp<fixed_t>(shade - MIN(maxvis, lightpos), 0, maxlight)) >> 8;
-				lightpos += lightstep;
+				for (int x = x0; x < x1; x++)
+				{
+					lightarray[x] = (FRACUNIT - clamp<fixed_t>(shade - MIN(maxvis, lightpos), 0, maxlight)) >> 8;
+					lightpos += lightstep;
+				}
+			}
+			else
+			{
+				for (int x = x0; x < x1; x++)
+				{
+					lightarray[x] = (clamp<fixed_t>(shade - MIN(maxvis, lightpos), 0, maxlight) >> 3) & 0xffffff00;
+					lightpos += lightstep;
+				}
 			}
 		}
 	}
@@ -741,6 +741,47 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyT
 			dynlights[x] = MAKEARGB(255, lit_r, lit_g, lit_b);
 		}
 #endif
+	}
+}
+
+template<typename ModeT, typename OptT>
+void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread)
+{
+	using namespace TriScreenDrawerModes;
+
+	StepSpan<ModeT, OptT, 32>(y, x0, x1, args, thread);
+
+	uint32_t fixedlight;
+	uint32_t shade_fade_r, shade_fade_g, shade_fade_b, shade_light_r, shade_light_g, shade_light_b, desaturate, inv_desaturate;
+	fixed_t fuzzscale;
+	int _fuzzpos;
+	const uint32_t *texPixels, *translation;
+	uint32_t fillcolor;
+	int actoralpha;
+
+	uint32_t *texel = thread->texel;
+	int32_t *texelV = thread->texelV;
+	uint16_t *lightarray = thread->lightarray;
+	uint32_t *dynlights = thread->dynlights;
+
+	if (!(ModeT::SWFlags & SWSTYLEF_Fill) && !(ModeT::SWFlags & SWSTYLEF_FogBoundary))
+	{
+		texPixels = (const uint32_t*)args->uniforms->TexturePixels();
+	}
+
+	if (ModeT::SWFlags & SWSTYLEF_Translated)
+	{
+		translation = (const uint32_t*)args->uniforms->Translation();
+	}
+
+	if ((ModeT::SWFlags & SWSTYLEF_Fill) || (ModeT::SWFlags & SWSTYLEF_Skycap) || (ModeT::Flags & STYLEF_ColorIsFixed))
+	{
+		fillcolor = args->uniforms->Color();
+	}
+
+	if (!(ModeT::Flags & STYLEF_Alpha1))
+	{
+		actoralpha = args->uniforms->Alpha();
 	}
 
 	if (OptT::Flags & SWOPT_FixedLight)
@@ -1142,226 +1183,52 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTr
 {
 	using namespace TriScreenDrawerModes;
 
-	float v1X, v1Y, v1W, v1U, v1V, v1WorldX, v1WorldY, v1WorldZ;
-	float startX, startY;
-	float stepW, stepU, stepV, stepWorldX, stepWorldY, stepWorldZ;
-	float posW, posU, posV, posWorldX, posWorldY, posWorldZ;
+	StepSpan<ModeT, OptT, 8>(y, x0, x1, args, thread);
 
-	PolyLight *lights;
-	int num_lights;
-	float worldnormalX, worldnormalY, worldnormalZ;
-	uint32_t dynlightcolor;
+	uint32_t fixedlight, capcolor;
+	fixed_t fuzzscale;
+	int _fuzzpos;
 	const uint8_t *colormaps, *texPixels, *translation;
-	int texWidth, texHeight;
-	uint32_t fillcolor, capcolor;
-	int alpha;
-	uint32_t light;
-	fixed_t shade, lightpos, lightstep;
-	int16_t dynlights_r[MAXWIDTH / 16], dynlights_g[MAXWIDTH / 16], dynlights_b[MAXWIDTH / 16];
-	int16_t posdynlight_r, posdynlight_g, posdynlight_b;
-	fixed_t lightarray[MAXWIDTH / 16];
+	uint32_t fillcolor;
+	int actoralpha;
 
-	v1X = args->v1->x;
-	v1Y = args->v1->y;
-	v1W = args->v1->w;
-	v1U = args->v1->u * v1W;
-	v1V = args->v1->v * v1W;
-	startX = x0 + (0.5f - v1X);
-	startY = y + (0.5f - v1Y);
-	stepW = args->gradientX.W;
-	stepU = args->gradientX.U;
-	stepV = args->gradientX.V;
-	posW = v1W + stepW * startX + args->gradientY.W * startY;
-	posU = v1U + stepU * startX + args->gradientY.U * startY;
-	posV = v1V + stepV * startX + args->gradientY.V * startY;
+	uint32_t *texel = thread->texel;
+	int32_t *texelV = thread->texelV;
+	uint16_t *lightarray = thread->lightarray;
+	uint32_t *dynlights = thread->dynlights;
 
-	texPixels = args->uniforms->TexturePixels();
-	translation = args->uniforms->Translation();
-	texWidth = args->uniforms->TextureWidth();
-	texHeight = args->uniforms->TextureHeight();
-	fillcolor = args->uniforms->Color();
-	alpha = args->uniforms->Alpha();
 	colormaps = args->uniforms->BaseColormap();
-	light = args->uniforms->Light();
+
+	if (!(ModeT::SWFlags & SWSTYLEF_Fill) && !(ModeT::SWFlags & SWSTYLEF_FogBoundary))
+	{
+		texPixels = args->uniforms->TexturePixels();
+	}
+
+	if (ModeT::SWFlags & SWSTYLEF_Translated)
+	{
+		translation = args->uniforms->Translation();
+	}
+
+	if ((ModeT::SWFlags & SWSTYLEF_Fill) || (ModeT::SWFlags & SWSTYLEF_Skycap) || (ModeT::Flags & STYLEF_ColorIsFixed))
+	{
+		fillcolor = args->uniforms->Color();
+	}
+
+	if (!(ModeT::Flags & STYLEF_Alpha1))
+	{
+		actoralpha = args->uniforms->Alpha();
+	}
 
 	if (ModeT::SWFlags & SWSTYLEF_Skycap)
 		capcolor = GPalette.BaseColors[fillcolor].d;
 
 	if (OptT::Flags & SWOPT_FixedLight)
 	{
-		light += light >> 7; // 255 -> 256
-		light = ((256 - light) * NUMCOLORMAPS) & 0xffffff00;
-	}
-	else
-	{
-		float globVis = args->uniforms->GlobVis() * (1.0f / 32.0f);
-
-		shade = (fixed_t)((2.0f - (light + 12.0f) / 128.0f) * (float)FRACUNIT);
-		lightpos = (fixed_t)(globVis * posW * (float)FRACUNIT);
-		lightstep = (fixed_t)(globVis * stepW * (float)FRACUNIT);
-
-		int affineOffset = x0 / 16 * 16 - x0;
-		lightpos = lightpos + lightstep * affineOffset;
-		lightstep = lightstep * 16;
-
-		fixed_t maxvis = 24 * FRACUNIT / 32;
-		fixed_t maxlight = 31 * FRACUNIT / 32;
-
-		for (int x = x0 / 16; x <= x1 / 16 + 1; x++)
-		{
-			lightarray[x] = (clamp<fixed_t>(shade - MIN(maxvis, lightpos), 0, maxlight) >> 8) << 5;
-			lightpos += lightstep;
-		}
-
-		int offset = x0 >> 4;
-		int t1 = x0 & 15;
-		int t0 = 16 - t1;
-		lightpos = (lightarray[offset] * t0 + lightarray[offset + 1] * t1);
-
-		for (int x = x0 / 16; x <= x1 / 16; x++)
-		{
-			lightarray[x] = lightarray[x + 1] - lightarray[x];
-		}
+		fixedlight = args->uniforms->Light();
+		fixedlight += fixedlight >> 7; // 255 -> 256
+		fixedlight = ((256 - fixedlight) * NUMCOLORMAPS) & 0xffffff00;
 	}
 
-	if (OptT::Flags & SWOPT_DynLights)
-	{
-		v1WorldX = args->v1->worldX * v1W;
-		v1WorldY = args->v1->worldY * v1W;
-		v1WorldZ = args->v1->worldZ * v1W;
-		stepWorldX = args->gradientX.WorldX;
-		stepWorldY = args->gradientX.WorldY;
-		stepWorldZ = args->gradientX.WorldZ;
-		posWorldX = v1WorldX + stepWorldX * startX + args->gradientY.WorldX * startY;
-		posWorldY = v1WorldY + stepWorldY * startX + args->gradientY.WorldY * startY;
-		posWorldZ = v1WorldZ + stepWorldZ * startX + args->gradientY.WorldZ * startY;
-
-		lights = args->uniforms->Lights();
-		num_lights = args->uniforms->NumLights();
-		worldnormalX = args->uniforms->Normal().X;
-		worldnormalY = args->uniforms->Normal().Y;
-		worldnormalZ = args->uniforms->Normal().Z;
-		dynlightcolor = args->uniforms->DynLightColor();
-
-		// The normal vector cannot be uniform when drawing models. Calculate and use the face normal:
-		if (worldnormalX == 0.0f && worldnormalY == 0.0f && worldnormalZ == 0.0f)
-		{
-			float dx1 = args->v2->worldX - args->v1->worldX;
-			float dy1 = args->v2->worldY - args->v1->worldY;
-			float dz1 = args->v2->worldZ - args->v1->worldZ;
-			float dx2 = args->v3->worldX - args->v1->worldX;
-			float dy2 = args->v3->worldY - args->v1->worldY;
-			float dz2 = args->v3->worldZ - args->v1->worldZ;
-			worldnormalX = dy1 * dz2 - dz1 * dy2;
-			worldnormalY = dz1 * dx2 - dx1 * dz2;
-			worldnormalZ = dx1 * dy2 - dy1 * dx2;
-			float lensqr = worldnormalX * worldnormalX + worldnormalY * worldnormalY + worldnormalZ * worldnormalZ;
-#ifndef NO_SSE
-			float rcplen = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ss(lensqr)));
-#else
-			float rcplen = 1.0f / sqrt(lensqr);
-#endif
-			worldnormalX *= rcplen;
-			worldnormalY *= rcplen;
-			worldnormalZ *= rcplen;
-		}
-
-		int affineOffset = x0 / 16 * 16 - x0;
-		float posLightW = posW + stepW * affineOffset;
-		posWorldX = posWorldX + stepWorldX * affineOffset;
-		posWorldY = posWorldY + stepWorldY * affineOffset;
-		posWorldZ = posWorldZ + stepWorldZ * affineOffset;
-		float stepLightW = stepW * 16.0f;
-		stepWorldX *= 16.0f;
-		stepWorldY *= 16.0f;
-		stepWorldZ *= 16.0f;
-
-		for (int x = x0 / 16; x <= x1 / 16 + 1; x++)
-		{
-			uint32_t lit_r = RPART(dynlightcolor);
-			uint32_t lit_g = GPART(dynlightcolor);
-			uint32_t lit_b = BPART(dynlightcolor);
-
-			float rcp_posW = 1.0f / posLightW;
-			float worldposX = posWorldX * rcp_posW;
-			float worldposY = posWorldY * rcp_posW;
-			float worldposZ = posWorldZ * rcp_posW;
-			for (int i = 0; i < num_lights; i++)
-			{
-				float lightposX = lights[i].x;
-				float lightposY = lights[i].y;
-				float lightposZ = lights[i].z;
-				float light_radius = lights[i].radius;
-				uint32_t light_color = lights[i].color;
-
-				bool is_attenuated = light_radius < 0.0f;
-				if (is_attenuated)
-					light_radius = -light_radius;
-
-				// L = light-pos
-				// dist = sqrt(dot(L, L))
-				// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
-				float Lx = lightposX - worldposX;
-				float Ly = lightposY - worldposY;
-				float Lz = lightposZ - worldposZ;
-				float dist2 = Lx * Lx + Ly * Ly + Lz * Lz;
-#ifdef NO_SSE
-				//float rcp_dist = 1.0f / sqrt(dist2);
-				float rcp_dist = 1.0f / (dist2 * 0.01f);
-#else
-				float rcp_dist = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ss(dist2)));
-#endif
-				float dist = dist2 * rcp_dist;
-				float distance_attenuation = 256.0f - MIN(dist * light_radius, 256.0f);
-
-				// The simple light type
-				float simple_attenuation = distance_attenuation;
-
-				// The point light type
-				// diffuse = max(dot(N,normalize(L)),0) * attenuation
-				Lx *= rcp_dist;
-				Ly *= rcp_dist;
-				Lz *= rcp_dist;
-				float dotNL = worldnormalX * Lx + worldnormalY * Ly + worldnormalZ * Lz;
-				float point_attenuation = MAX(dotNL, 0.0f) * distance_attenuation;
-
-				uint32_t attenuation = (uint32_t)(is_attenuated ? (int32_t)point_attenuation : (int32_t)simple_attenuation);
-
-				lit_r += (RPART(light_color) * attenuation) >> 8;
-				lit_g += (GPART(light_color) * attenuation) >> 8;
-				lit_b += (BPART(light_color) * attenuation) >> 8;
-			}
-
-			lit_r = MIN<uint32_t>(lit_r, 255);
-			lit_g = MIN<uint32_t>(lit_g, 255);
-			lit_b = MIN<uint32_t>(lit_b, 255);
-			dynlights_r[x] = lit_r;
-			dynlights_g[x] = lit_g;
-			dynlights_b[x] = lit_b;
-
-			posLightW += stepLightW;
-			posWorldX += stepWorldX;
-			posWorldY += stepWorldY;
-			posWorldZ += stepWorldZ;
-		}
-
-		int offset = x0 >> 4;
-		int t1 = x0 & 15;
-		int t0 = 16 - t1;
-		posdynlight_r = (dynlights_r[offset] * t0 + dynlights_r[offset + 1] * t1);
-		posdynlight_g = (dynlights_g[offset] * t0 + dynlights_g[offset + 1] * t1);
-		posdynlight_b = (dynlights_b[offset] * t0 + dynlights_b[offset + 1] * t1);
-
-		for (int x = x0 / 16; x <= x1 / 16; x++)
-		{
-			dynlights_r[x] = dynlights_r[x + 1] - dynlights_r[x];
-			dynlights_g[x] = dynlights_g[x + 1] - dynlights_g[x];
-			dynlights_b[x] = dynlights_b[x + 1] - dynlights_b[x];
-		}
-	}
-
-	fixed_t fuzzscale;
-	int _fuzzpos;
 	if (ModeT::BlendOp == STYLEOP_Fuzz)
 	{
 		fuzzscale = (200 << FRACBITS) / viewheight;
@@ -1371,19 +1238,13 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTr
 	uint8_t *dest = (uint8_t*)args->dest;
 	uint8_t *destLine = dest + args->pitch * y;
 
-	int x = x0;
-	while (x < x1)
+	for (int x = x0; x < x1; x++)
 	{
 		if (ModeT::BlendOp == STYLEOP_Fuzz)
 		{
 			using namespace swrenderer;
 
-			float rcpW = 0x01000000 / posW;
-			int32_t u = (int32_t)(posU * rcpW);
-			int32_t v = (int32_t)(posV * rcpW);
-			uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
-			uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
-			unsigned int sampleshadeout = (texPixels[texelX * texHeight + texelY] != 0) ? 256 : 0;
+			unsigned int sampleshadeout = (texPixels[texel[x]] != 0) ? 256 : 0;
 
 			int scaled_x = (x * fuzzscale) >> FRACBITS;
 			int fuzz_x = fuzz_random_x_offset[scaled_x % FUZZ_RANDOM_X_SIZE] + _fuzzpos;
@@ -1404,12 +1265,8 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTr
 		}
 		else if (ModeT::SWFlags & SWSTYLEF_Skycap)
 		{
-			float rcpW = 0x01000000 / posW;
-			int32_t u = (int32_t)(posU * rcpW);
-			int32_t v = (int32_t)(posV * rcpW);
-			uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
-			uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
-			int fg = texPixels[texelX * texHeight + texelY];
+			int32_t v = texelV[x];
+			int fg = texPixels[texel[x]];
 
 			int start_fade = 2; // How fast it should fade out
 			int alpha_top = clamp(v >> (16 - start_fade), 0, 256);
@@ -1446,12 +1303,11 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTr
 			uint8_t shadedfg;
 			if (OptT::Flags & SWOPT_FixedLight)
 			{
-				shadedfg = colormaps[light + fg];
+				shadedfg = colormaps[fixedlight + fg];
 			}
 			else
 			{
-				int lightshade = (lightpos >> 4) & 0xffffff00;
-				shadedfg = colormaps[lightshade + fg];
+				shadedfg = colormaps[lightarray[x] + fg];
 			}
 
 			destLine[x] = shadedfg;
@@ -1465,12 +1321,7 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTr
 			}
 			else
 			{
-				float rcpW = 0x01000000 / posW;
-				int32_t u = (int32_t)(posU * rcpW);
-				int32_t v = (int32_t)(posV * rcpW);
-				uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
-				uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
-				fg = texPixels[texelX * texHeight + texelY];
+				fg = texPixels[texel[x]];
 			}
 
 			int fgalpha = 255;
@@ -1490,7 +1341,7 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTr
 
 			if (!(ModeT::Flags & STYLEF_Alpha1))
 			{
-				fgalpha = (fgalpha * alpha) >> 8;
+				fgalpha = (fgalpha * actoralpha) >> 8;
 			}
 
 			if (ModeT::SWFlags & SWSTYLEF_Translated)
@@ -1499,28 +1350,24 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTr
 			uint8_t shadedfg;
 			if (OptT::Flags & SWOPT_FixedLight)
 			{
-				shadedfg = colormaps[light + fg];
+				shadedfg = colormaps[fixedlight + fg];
 			}
 			else
 			{
-				int lightshade = (lightpos >> 4) & 0xffffff00;
-				shadedfg = colormaps[lightshade + fg];
+				shadedfg = colormaps[lightarray[x] + fg];
 			}
 
 			if (OptT::Flags & SWOPT_DynLights)
 			{
-				if (posdynlight_r | posdynlight_g | posdynlight_b)
+				uint32_t lit = dynlights[x];
+				if (lit & 0x00ffffff)
 				{
-					uint32_t lit_r = posdynlight_r >> 4;
-					uint32_t lit_g = posdynlight_g >> 4;
-					uint32_t lit_b = posdynlight_b >> 4;
-
 					uint32_t fgrgb = GPalette.BaseColors[fg];
 					uint32_t shadedfgrgb = GPalette.BaseColors[shadedfg];
 
-					uint32_t out_r = MIN(((RPART(fgrgb) * lit_r) >> 8) + RPART(shadedfgrgb), (uint32_t)255);
-					uint32_t out_g = MIN(((GPART(fgrgb) * lit_g) >> 8) + GPART(shadedfgrgb), (uint32_t)255);
-					uint32_t out_b = MIN(((BPART(fgrgb) * lit_b) >> 8) + BPART(shadedfgrgb), (uint32_t)255);
+					uint32_t out_r = MIN(((RPART(fgrgb) * RPART(lit)) >> 8) + RPART(shadedfgrgb), (uint32_t)255);
+					uint32_t out_g = MIN(((GPART(fgrgb) * GPART(lit)) >> 8) + GPART(shadedfgrgb), (uint32_t)255);
+					uint32_t out_b = MIN(((BPART(fgrgb) * BPART(lit)) >> 8) + BPART(shadedfgrgb), (uint32_t)255);
 					shadedfg = RGB256k.All[((out_r >> 2) << 12) | ((out_g >> 2) << 6) | (out_b >> 2)];
 				}
 			}
@@ -1637,19 +1484,6 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTr
 				destLine[x] = RGB256k.All[((out_r >> 2) << 12) | ((out_g >> 2) << 6) | (out_b >> 2)];
 			}
 		}
-
-		posW += stepW;
-		posU += stepU;
-		posV += stepV;
-		if (OptT::Flags & SWOPT_DynLights)
-		{
-			posdynlight_r += dynlights_r[x >> 4];
-			posdynlight_g += dynlights_g[x >> 4];
-			posdynlight_b += dynlights_b[x >> 4];
-		}
-		if (!(OptT::Flags & SWOPT_FixedLight))
-			lightpos += lightarray[x >> 4];
-		x++;
 	}
 }
 

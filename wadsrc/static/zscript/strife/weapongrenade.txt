@@ -204,7 +204,7 @@ class PhosphorousGrenade : Actor
 	}
 }
 
-// Fire from the Phoshorous Grenade -----------------------------------------
+// Fire from the Phosphorous Grenade ----------------------------------------
 
 class PhosphorousFire : Actor
 {

@@ -428,7 +428,7 @@ const ATTN_NORM = 1;
 const ATTN_IDLE = 1.001;
 const ATTN_STATIC = 3;
 
-// For SetPlayerProprty action special
+// For SetPlayerProperty action special
 enum EPlayerProperties
 {
 	PROP_FROZEN = 0,

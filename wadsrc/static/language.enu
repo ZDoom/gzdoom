@@ -660,7 +660,7 @@ SPREE15 = "%k is dominating!";
 SPREE20 = "%k is unstoppable!";
 SPREE25 = "%k is Godlike!";
 
-// Mulitkill messages
+// Multikill messages
 MULTI2 = "Double kill!";
 MULTI3 = "Multi kill!";
 MULTI4 = "Ultra kill!";
@@ -824,12 +824,12 @@ OB_MPCWEAPFLAME = "%o was lit up by %k's flames.";
 OB_MPCWEAPWRAITHVERGE = "%o was cleansed by %k's Wraithverge.";
 OB_MPMWEAPWAND = "%o took one too many sapphire beams from %k.";
 OB_MPMWEAPFROST = "%o was turned into a frosty fellow by %k.";
-OB_MPMWEAPLIGHTNING = "%o recieved a shocking revelation from %k.";
+OB_MPMWEAPLIGHTNING = "%o received a shocking revelation from %k.";
 OB_MPMWEAPBLOODSCOURGE = "%o was wiped off the face of the universe by %k's Bloodscourge.";
 
 OB_MPPUNCHDAGGER = "%o was unwittingly backstabbed by %k.";
 OB_MPELECTRICBOLT = "%o got bolted to the wall by %k.";
-OB_MPPOISONBOLT = "%o recieved a lethal dose of %k's wrath.";
+OB_MPPOISONBOLT = "%o received a lethal dose of %k's wrath.";
 OB_MPASSAULTGUN = "%o was drilled full of holes by %k's assault gun.";
 OB_MPMINIMISSILELAUNCHER = "%o gulped down %k's missile.";
 OB_MPSTRIFEGRENADE = "%o was inverted by %k's H-E grenade.";
@@ -950,7 +950,7 @@ TAG_ARTIPUZZGEMGREEN2 = "Emerald Planet (2)";
 TAG_ARTIPUZZGEMBLUE1 = "Sapphire Planet (1)";
 TAG_ARTIPUZZGEMBLUE2 = "Sapphire Planet (2)";
 TAG_ARTIPUZZBOOK1 = "Daemon Codex";
-TAG_ARTIPUZZBOOK2 = "Liber Obscura";
+TAG_ARTIPUZZBOOK2 = "Liber Oscura";
 TAG_ARTIPUZZSKULL2 = "Flame Mask";
 TAG_ARTIPUZZFWEAPON = "Glaive Seal";
 TAG_ARTIPUZZCWEAPON = "Holy Relic";
@@ -1003,7 +1003,7 @@ TAG_TELEPORTERBEACON = "Teleporter Beacon";
 TAG_METALARMOR = "Metal Armor";
 TAG_LEATHER = "Leather Armor";
 TAG_HEGRENADES = "HE-Grenade Rounds";
-TAG_PHGRENADES = "Phoshorus-Grenade Rounds";	// "Fire-Grenade_Rounds" in the Teaser
+TAG_PHGRENADES = "Phosphorus-Grenade Rounds";	// "Fire-Grenade_Rounds" in the Teaser
 TAG_CLIPOFBULLETS = "Clip of Bullets";	// "bullets" in the Teaser
 TAG_BOXOFBULLETS = "Ammo";
 TAG_MINIMISSILES = "Mini Missiles";	//"rocket" in the Teaser
@@ -2692,7 +2692,7 @@ OB_CYCLOPTIS = "%o was slimed by a cycloptis.";
 OB_FLEMBRANE = "%o was defeated by the Flembrane.";
 
 OB_MPSPOON = "%o was spoon fed by %k.";
-OB_MPBOOTSPORK = "%o was thouroughly mixed with %k's bootspork.";
+OB_MPBOOTSPORK = "%o was thoroughly mixed with %k's bootspork.";
 OB_MPZORCH = "%o was zorched by %k.";
 OB_MPMEGAZORCH = "%o was hit by %k's mega-zorcher.";
 OB_MPRAPIDZORCH = "%o was rapid zorched by %k.";

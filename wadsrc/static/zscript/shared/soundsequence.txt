@@ -1,6 +1,6 @@
 /*
 ** a_soundsequence.cpp
-** Actors for independantly playing sound sequences in a map.
+** Actors for independently playing sound sequences in a map.
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2006 Randy Heit

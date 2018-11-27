@@ -51,7 +51,7 @@ private:
 	void EmitPopFrame();
 
 	void EmitNativeCall(VMNativeFunction *target);
-	void EmitVMCall(asmjit::X86Gp ptr);
+	void EmitVMCall(asmjit::X86Gp ptr, VMFunction *target);
 	void EmitVtbl(const VMOP *op);
 
 	int StoreCallParams();

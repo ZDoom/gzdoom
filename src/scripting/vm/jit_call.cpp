@@ -62,13 +62,13 @@ void JitCompiler::EmitCALL_K()
 	{
 		auto ptr = newTempIntPtr();
 		cc.mov(ptr, asmjit::imm_ptr(target));
-		EmitVMCall(ptr);
+		EmitVMCall(ptr, target);
 	}
 
 	pc += C; // Skip RESULTs
 }
 
-void JitCompiler::EmitVMCall(asmjit::X86Gp vmfunc)
+void JitCompiler::EmitVMCall(asmjit::X86Gp vmfunc, VMFunction *target)
 {
 	using namespace asmjit;
 
@@ -97,6 +97,7 @@ void JitCompiler::EmitVMCall(asmjit::X86Gp vmfunc)
 	call->setArg(2, Imm(B));
 	call->setArg(3, GetCallReturns());
 	call->setArg(4, Imm(C));
+	call->setInlineComment(target ? target->PrintableName.GetChars() : "VMCall");
 
 	LoadInOuts();
 	LoadReturns(pc + 1, C);
@@ -324,6 +325,7 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 
 	asmjit::CBNode *cursorBefore = cc.getCursor();
 	auto call = cc.call(imm_ptr(target->DirectNativeCall), CreateFuncSignature(target));
+	call->setInlineComment(target->PrintableName.GetChars());
 	asmjit::CBNode *cursorAfter = cc.getCursor();
 	cc.setCursor(cursorBefore);
 

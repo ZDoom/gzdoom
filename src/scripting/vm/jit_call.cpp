@@ -324,7 +324,7 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 	}
 
 	asmjit::CBNode *cursorBefore = cc.getCursor();
-	auto call = cc.call(imm_ptr(target->DirectNativeCall), CreateFuncSignature(target));
+	auto call = cc.call(imm_ptr(target->DirectNativeCall), CreateFuncSignature());
 	call->setInlineComment(target->PrintableName.GetChars());
 	asmjit::CBNode *cursorAfter = cc.getCursor();
 	cc.setCursor(cursorBefore);
@@ -460,79 +460,120 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 	ParamOpcodes.Clear();
 }
 
-asmjit::FuncSignature JitCompiler::CreateFuncSignature(VMFunction *func)
+asmjit::FuncSignature JitCompiler::CreateFuncSignature()
 {
 	using namespace asmjit;
 
 	TArray<uint8_t> args;
 	FString key;
-	for (unsigned int i = 0; i < func->Proto->ArgumentTypes.Size(); i++)
+
+	// First add parameters as args to the signature
+
+	for (unsigned int i = 0; i < ParamOpcodes.Size(); i++)
 	{
-		const PType *type = func->Proto->ArgumentTypes[i];
-		if (func->ArgFlags.Size() && func->ArgFlags[i] & (VARF_Out | VARF_Ref))
-		{
-			args.Push(TypeIdOf<void*>::kTypeId);
-			key += "v";
-		}
-		else if (type == TypeVector2)
-		{
-			args.Push(TypeIdOf<double>::kTypeId);
-			args.Push(TypeIdOf<double>::kTypeId);
-			key += "ff";
-		}
-		else if (type == TypeVector3)
-		{
-			args.Push(TypeIdOf<double>::kTypeId);
-			args.Push(TypeIdOf<double>::kTypeId);
-			args.Push(TypeIdOf<double>::kTypeId);
-			key += "fff";
-		}
-		else if (type == TypeFloat64)
-		{
-			args.Push(TypeIdOf<double>::kTypeId);
-			key += "f";
-		}
-		else if (type == TypeString)
-		{
-			args.Push(TypeIdOf<void*>::kTypeId);
-			key += "s";
-		}
-		else if (type->isIntCompatible())
+		if (ParamOpcodes[i]->op == OP_PARAMI)
 		{
 			args.Push(TypeIdOf<int>::kTypeId);
 			key += "i";
 		}
-		else
+		else // OP_PARAM
 		{
-			args.Push(TypeIdOf<void*>::kTypeId);
-			key += "v";
+			int bc = ParamOpcodes[i]->i16u;
+			switch (ParamOpcodes[i]->a)
+			{
+			case REGT_NIL:
+			case REGT_POINTER:
+			case REGT_POINTER | REGT_KONST:
+			case REGT_STRING | REGT_ADDROF:
+			case REGT_INT | REGT_ADDROF:
+			case REGT_POINTER | REGT_ADDROF:
+			case REGT_FLOAT | REGT_ADDROF:
+				args.Push(TypeIdOf<void*>::kTypeId);
+				key += "v";
+				break;
+			case REGT_INT:
+			case REGT_INT | REGT_KONST:
+				args.Push(TypeIdOf<int>::kTypeId);
+				key += "i";
+				break;
+			case REGT_STRING:
+			case REGT_STRING | REGT_KONST:
+				args.Push(TypeIdOf<void*>::kTypeId);
+				key += "s";
+				break;
+			case REGT_FLOAT:
+			case REGT_FLOAT | REGT_KONST:
+				args.Push(TypeIdOf<double>::kTypeId);
+				key += "f";
+				break;
+			case REGT_FLOAT | REGT_MULTIREG2:
+				args.Push(TypeIdOf<double>::kTypeId);
+				args.Push(TypeIdOf<double>::kTypeId);
+				key += "ff";
+				break;
+			case REGT_FLOAT | REGT_MULTIREG3:
+				args.Push(TypeIdOf<double>::kTypeId);
+				args.Push(TypeIdOf<double>::kTypeId);
+				args.Push(TypeIdOf<double>::kTypeId);
+				key += "fff";
+				break;
+
+			default:
+				I_FatalError("Unknown REGT value passed to EmitPARAM\n");
+				break;
+			}
 		}
 	}
 
+	const VMOP *retval = pc + 1;
+	int numret = C;
+
 	uint32_t rettype = TypeIdOf<void>::kTypeId;
-	if (func->Proto->ReturnTypes.Size() > 0)
+
+	// Check if first return value can be placed in the function's real return value slot
+	int startret = 1;
+	if (numret > 0)
 	{
-		const PType *type = func->Proto->ReturnTypes[0];
-		if (type == TypeFloat64)
+		if (retval[0].op != OP_RESULT)
 		{
-			rettype = TypeIdOf<double>::kTypeId;
-			key += "rf";
+			I_FatalError("Expected OP_RESULT to follow OP_CALL\n");
 		}
-		else if (type == TypeString)
+
+		int type = retval[0].b;
+		switch (type)
 		{
-			rettype = TypeIdOf<void*>::kTypeId;
-			key += "rs";
-		}
-		else if (type->isIntCompatible())
-		{
+		case REGT_INT:
 			rettype = TypeIdOf<int>::kTypeId;
 			key += "ri";
-		}
-		else
-		{
+			break;
+		case REGT_FLOAT:
+			rettype = TypeIdOf<double>::kTypeId;
+			key += "rf";
+			break;
+		case REGT_STRING:
+			rettype = TypeIdOf<void*>::kTypeId;
+			key += "rs";
+			break;
+		case REGT_POINTER:
 			rettype = TypeIdOf<void*>::kTypeId;
 			key += "rv";
+			break;
+		default:
+			startret = 0;
+			break;
 		}
+	}
+
+	// Add any additional return values as function arguments
+	for (int i = startret; i < numret; ++i)
+	{
+		if (retval[i].op != OP_RESULT)
+		{
+			I_FatalError("Expected OP_RESULT to follow OP_CALL\n");
+		}
+
+		args.Push(TypeIdOf<void*>::kTypeId);
+		key += "v";
 	}
 
 	// FuncSignature only keeps a pointer to its args array. Store a copy of each args array variant.

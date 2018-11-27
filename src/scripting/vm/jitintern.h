@@ -38,7 +38,7 @@ private:
 	#include "vmops.h"
 	#undef xx
 
-	static asmjit::FuncSignature CreateFuncSignature(VMFunction *sfunc);
+	asmjit::FuncSignature CreateFuncSignature();
 
 	void Setup();
 	void CreateRegisters();

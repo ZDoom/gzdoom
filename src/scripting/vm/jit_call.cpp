@@ -445,6 +445,7 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 			break;
 		case REGT_POINTER:
 			tmp = newResultIntPtr();
+			call->setRet(0, tmp);
 			cc.mov(regA[regnum], tmp);
 			break;
 		case REGT_STRING:

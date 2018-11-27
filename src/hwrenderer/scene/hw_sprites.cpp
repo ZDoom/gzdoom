@@ -94,7 +94,7 @@ void GLSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 			gl_usecolorblending && !di->isFullbrightScene() && actor &&
 			fullbright && gltexture && !gltexture->tex->GetTranslucency())
 		{
-			RenderStyle = LegacyRenderStyles[STYLE_ColorBlend];
+			RenderStyle = LegacyRenderStyles[STYLE_ColorAdd];
 		}
 
 		state.SetRenderStyle(RenderStyle);

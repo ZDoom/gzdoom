@@ -46,6 +46,9 @@ xx(Shadow)
 xx(Subtract)
 xx(Subtractive)
 xx(FillColor)
+xx(ColorBlend)
+xx(ColorAdd)
+xx(Multiply)
 
 // Healingradius types
 xx(Mana)

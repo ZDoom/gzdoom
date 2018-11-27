@@ -42,7 +42,7 @@ void JitCompiler::EmitVtbl(const VMOP *op)
 
 void JitCompiler::EmitCALL()
 {
-	EmitVMCall(regA[A]);
+	EmitVMCall(regA[A], nullptr);
 	pc += C; // Skip RESULTs
 }
 

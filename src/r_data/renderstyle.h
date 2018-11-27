@@ -78,6 +78,7 @@ enum ERenderStyle
 	STYLE_InverseMultiply,	// Multiply source with inverse of destination (HW renderer only.)
 	STYLE_ColorBlend,		// Use color intensity as transparency factor
 	STYLE_Source,			// No blending (only used internally)
+	STYLE_ColorAdd,			// Use color intensity as transparency factor and blend additively.
 
 	STYLE_Count
 };

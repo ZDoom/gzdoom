@@ -827,7 +827,7 @@ class Inventory : Actor native
 		}
 		/*
 		else if ((ItemFlags & IF_FANCYPICKUPSOUND) &&
-			(toucher == NULL || toucher->CheckLocalView(consoeplayer)))
+			(toucher == NULL || toucher->CheckLocalView(consoleplayer)))
 		{
 			atten = ATTN_NONE;
 		}

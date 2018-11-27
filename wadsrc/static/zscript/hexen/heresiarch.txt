@@ -1038,7 +1038,7 @@ class SorcFX3 : Actor
 				mo.Destroy ();
 			}
 			else if (target != null)
-			{ // [RH] Make the new bishops inherit the Heriarch's target
+			{ // [RH] Make the new bishops inherit the Heresiarch's target
 				mo.CopyFriendliness (target, true);
 				mo.master = target;
 			}

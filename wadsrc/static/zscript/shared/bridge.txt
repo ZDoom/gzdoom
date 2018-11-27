@@ -46,7 +46,7 @@ class BridgeBall : Actor
 	{
 		if (target == NULL)
 		{ // Don't crash if somebody spawned this into the world
-		  // independantly of a Bridge actor.
+		  // independently of a Bridge actor.
 			return;
 		}
 		// Set default values

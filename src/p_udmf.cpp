@@ -739,6 +739,15 @@ public:
 				case NAME_Subtractive:
 					th->RenderStyle = STYLE_Subtract;
 					break;
+				case NAME_ColorBlend:
+					th->RenderStyle = STYLE_ColorBlend;
+					break;
+				case NAME_ColorAdd:
+					th->RenderStyle = STYLE_ColorAdd;
+					break;
+				case NAME_Multiply:
+					th->RenderStyle = STYLE_Multiply;
+					break;
 				default:
 					break;
 				}

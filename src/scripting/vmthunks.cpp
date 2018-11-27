@@ -1,4 +1,4 @@
-//-----------------------------------------------------------------------------
+s//-----------------------------------------------------------------------------
 //
 // Copyright 2016-2018 Christoph Oelckers
 //
@@ -17,7 +17,7 @@
 //
 //-----------------------------------------------------------------------------
 //
-// VM thunks for simple functions.
+// VM thunks for internal functions.
 //
 //-----------------------------------------------------------------------------
 
@@ -26,6 +26,219 @@
 #include "g_levellocals.h"
 #include "s_sound.h"
 #include "p_local.h"
+
+
+DEFINE_ACTION_FUNCTION(_Sector, FindLowestFloorSurrounding)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = self->FindLowestFloorSurrounding(&v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v);
+	return numret;
+}
+
+
+DEFINE_ACTION_FUNCTION(_Sector, FindHighestFloorSurrounding)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = self->FindHighestFloorSurrounding(&v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v);
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, FindNextHighestFloor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = self->FindNextHighestFloor(&v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v);
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, FindNextLowestFloor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = self->FindNextLowestFloor(&v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v);
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, FindNextLowestCeiling)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = self->FindNextLowestCeiling(&v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v);
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, FindNextHighestCeiling)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = self->FindNextHighestCeiling(&v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v);
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, FindLowestCeilingSurrounding)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = self->FindLowestCeilingSurrounding(&v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v);
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, FindHighestCeilingSurrounding)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = self->FindHighestCeilingSurrounding(&v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v);
+	return numret;
+}
+
+
+DEFINE_ACTION_FUNCTION(_Sector, FindMinSurroundingLight)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(min);
+	auto h = self->FindMinSurroundingLight(min);
+	ACTION_RETURN_INT(h);
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, FindHighestFloorPoint)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = self->FindHighestFloorPoint(&v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v);
+	return numret;
+}
+DEFINE_ACTION_FUNCTION(_Sector, FindLowestCeilingPoint)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = self->FindLowestCeilingPoint(&v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v);
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, HighestCeilingAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	sector_t *s;
+	double h = self->HighestCeilingAt(DVector2(x, y), &s);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(s);
+	return numret;
+}
+DEFINE_ACTION_FUNCTION(_Sector, LowestFloorAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	sector_t *s;
+	double h = self->LowestFloorAt(DVector2(x, y), &s);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(s);
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, NextHighestCeilingAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(bottomz);
+	PARAM_FLOAT(topz);
+	PARAM_INT(flags);
+	sector_t *resultsec;
+	F3DFloor *resultff;
+	double resultheight = self->NextHighestCeilingAt(x, y, bottomz, topz, flags, &resultsec, &resultff);
+
+	if (numret > 2)
+	{
+		ret[2].SetPointer(resultff);
+		numret = 3;
+	}
+	if (numret > 1)
+	{
+		ret[1].SetPointer(resultsec);
+	}
+	if (numret > 0)
+	{
+		ret[0].SetFloat(resultheight);
+	}
+	return numret;
+}
+DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_INT(flags);
+	PARAM_FLOAT(steph);
+	sector_t *resultsec;
+	F3DFloor *resultff;
+	double resultheight = self->NextLowestFloorAt(x, y, z, flags, steph, &resultsec, &resultff);
+
+	if (numret > 2)
+	{
+		ret[2].SetPointer(resultff);
+		numret = 3;
+	}
+	if (numret > 1)
+	{
+		ret[1].SetPointer(resultsec);
+	}
+	if (numret > 0)
+	{
+		ret[0].SetFloat(resultheight);
+	}
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, GetFriction)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(plane);
+	double mf;
+	double h = self->GetFriction(plane, &mf);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetFloat(mf);
+	return numret;
+}
+DEFINE_ACTION_FUNCTION(_Sector, TriggerSectorActions)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_OBJECT(thing, AActor);
+	PARAM_INT(activation);
+	ACTION_RETURN_BOOL(self->TriggerSectorActions(thing, activation));
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, GetPortalDisplacement)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(pos);
+	ACTION_RETURN_VEC2(self->GetPortalDisplacement(pos));
+}
 
 DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindShortestTextureAround, FindShortestTextureAround)
 {
@@ -1265,3 +1478,82 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_PlaySound, A_PlaySound)
 	A_PlaySound(self, soundid, channel, volume, looping, attenuation, local);
 	return 0;
 }
+
+
+DEFINE_FIELD_X(Sector, sector_t, floorplane)
+DEFINE_FIELD_X(Sector, sector_t, ceilingplane)
+DEFINE_FIELD_X(Sector, sector_t, Colormap)
+DEFINE_FIELD_X(Sector, sector_t, SpecialColors)
+DEFINE_FIELD_X(Sector, sector_t, SoundTarget)
+DEFINE_FIELD_X(Sector, sector_t, special)
+DEFINE_FIELD_X(Sector, sector_t, lightlevel)
+DEFINE_FIELD_X(Sector, sector_t, seqType)
+DEFINE_FIELD_X(Sector, sector_t, sky)
+DEFINE_FIELD_X(Sector, sector_t, SeqName)
+DEFINE_FIELD_X(Sector, sector_t, centerspot)
+DEFINE_FIELD_X(Sector, sector_t, validcount)
+DEFINE_FIELD_X(Sector, sector_t, thinglist)
+DEFINE_FIELD_X(Sector, sector_t, friction)
+DEFINE_FIELD_X(Sector, sector_t, movefactor)
+DEFINE_FIELD_X(Sector, sector_t, terrainnum)
+DEFINE_FIELD_X(Sector, sector_t, floordata)
+DEFINE_FIELD_X(Sector, sector_t, ceilingdata)
+DEFINE_FIELD_X(Sector, sector_t, lightingdata)
+DEFINE_FIELD_X(Sector, sector_t, interpolations)
+DEFINE_FIELD_X(Sector, sector_t, soundtraversed)
+DEFINE_FIELD_X(Sector, sector_t, stairlock)
+DEFINE_FIELD_X(Sector, sector_t, prevsec)
+DEFINE_FIELD_X(Sector, sector_t, nextsec)
+DEFINE_FIELD_UNSIZED(Sector, sector_t, Lines)
+DEFINE_FIELD_X(Sector, sector_t, heightsec)
+DEFINE_FIELD_X(Sector, sector_t, bottommap)
+DEFINE_FIELD_X(Sector, sector_t, midmap)
+DEFINE_FIELD_X(Sector, sector_t, topmap)
+DEFINE_FIELD_X(Sector, sector_t, touching_thinglist)
+DEFINE_FIELD_X(Sector, sector_t, sectorportal_thinglist)
+DEFINE_FIELD_X(Sector, sector_t, gravity)
+DEFINE_FIELD_X(Sector, sector_t, damagetype)
+DEFINE_FIELD_X(Sector, sector_t, damageamount)
+DEFINE_FIELD_X(Sector, sector_t, damageinterval)
+DEFINE_FIELD_X(Sector, sector_t, leakydamage)
+DEFINE_FIELD_X(Sector, sector_t, ZoneNumber)
+DEFINE_FIELD_X(Sector, sector_t, healthceiling)
+DEFINE_FIELD_X(Sector, sector_t, healthfloor)
+DEFINE_FIELD_X(Sector, sector_t, healthceilinggroup)
+DEFINE_FIELD_X(Sector, sector_t, healthfloorgroup)
+DEFINE_FIELD_X(Sector, sector_t, MoreFlags)
+DEFINE_FIELD_X(Sector, sector_t, Flags)
+DEFINE_FIELD_X(Sector, sector_t, SecActTarget)
+DEFINE_FIELD_X(Sector, sector_t, Portals)
+DEFINE_FIELD_X(Sector, sector_t, PortalGroup)
+DEFINE_FIELD_X(Sector, sector_t, sectornum)
+
+DEFINE_FIELD_X(Line, line_t, v1)
+DEFINE_FIELD_X(Line, line_t, v2)
+DEFINE_FIELD_X(Line, line_t, delta)
+DEFINE_FIELD_X(Line, line_t, flags)
+DEFINE_FIELD_X(Line, line_t, activation)
+DEFINE_FIELD_X(Line, line_t, special)
+DEFINE_FIELD_X(Line, line_t, args)
+DEFINE_FIELD_X(Line, line_t, alpha)
+DEFINE_FIELD_X(Line, line_t, sidedef)
+DEFINE_FIELD_X(Line, line_t, bbox)
+DEFINE_FIELD_X(Line, line_t, frontsector)
+DEFINE_FIELD_X(Line, line_t, backsector)
+DEFINE_FIELD_X(Line, line_t, validcount)
+DEFINE_FIELD_X(Line, line_t, locknumber)
+DEFINE_FIELD_X(Line, line_t, portalindex)
+DEFINE_FIELD_X(Line, line_t, portaltransferred)
+DEFINE_FIELD_X(Line, line_t, health)
+DEFINE_FIELD_X(Line, line_t, healthgroup)
+
+DEFINE_FIELD_X(Side, side_t, sector)
+DEFINE_FIELD_X(Side, side_t, linedef)
+DEFINE_FIELD_X(Side, side_t, Light)
+DEFINE_FIELD_X(Side, side_t, Flags)
+
+DEFINE_FIELD_X(Secplane, secplane_t, normal)
+DEFINE_FIELD_X(Secplane, secplane_t, D)
+DEFINE_FIELD_X(Secplane, secplane_t, negiC)
+
+DEFINE_FIELD_X(Vertex, vertex_t, p)

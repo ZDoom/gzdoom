@@ -179,6 +179,11 @@ class LevelCompatibility play
 			{
 				// The famous missing yellow key...
 				SetThingFlags(470, 2016);
+				// Fix textures on the two switches that rise from the floor in the eastern area
+				for (int i = 0; i < 8; i++)
+				{
+					SetLineFlags(1676 + i, 0, Line.ML_DONTPEGBOTTOM);
+				}
 				break;
 			}
 

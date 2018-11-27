@@ -403,35 +403,77 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 		}
 	}
 
-	cc.setCursor(cursorAfter);
-
 	if (numparams != B)
 		I_FatalError("OP_CALL parameter count does not match the number of preceding OP_PARAM instructions\n");
 
+	// Note: the usage of newResultXX is intentional. Asmjit has a register allocation bug
+	// if the return virtual register is already allocated in an argument slot.
+
+	const VMOP *retval = pc + 1;
 	int numret = C;
-	if (numret > 1)
-		I_FatalError("Only one return parameter is supported for direct native calls\n");
 
-	if (numret == 1)
+	// Check if first return value was placed in the function's real return value slot
+	int startret = 1;
+	if (numret > 0)
 	{
-		const auto &retval = pc[1];
-		if (retval.op != OP_RESULT)
+		int type = retval[0].b;
+		switch (type)
 		{
-			I_FatalError("Expected OP_RESULT to follow OP_CALL\n");
+		case REGT_INT:
+		case REGT_FLOAT:
+		case REGT_POINTER:
+			break;
+		default:
+			startret = 0;
+			break;
 		}
+	}
 
-		int type = retval.b;
-		int regnum = retval.c;
+	// Pass return pointers as arguments
+	for (int i = startret; i < numret; ++i)
+	{
+		int type = retval[i].b;
+		int regnum = retval[i].c;
 
 		if (type & REGT_KONST)
 		{
 			I_FatalError("OP_RESULT with REGT_KONST is not allowed\n");
 		}
 
-		// Note: the usage of newResultXX is intentional. Asmjit has a register allocation bug
-		// if the return virtual register is already allocated in an argument slot.
+		CheckVMFrame();
+
+		auto regPtr = newTempIntPtr();
 
 		switch (type & REGT_TYPE)
+		{
+		case REGT_INT:
+			cc.lea(regPtr, x86::ptr(vmframe, offsetD + (int)(regnum * sizeof(int32_t))));
+			break;
+		case REGT_FLOAT:
+			cc.lea(regPtr, x86::ptr(vmframe, offsetF + (int)(regnum * sizeof(double))));
+			break;
+		case REGT_STRING:
+			cc.lea(regPtr, x86::ptr(vmframe, offsetS + (int)(regnum * sizeof(FString))));
+			break;
+		case REGT_POINTER:
+			cc.lea(regPtr, x86::ptr(vmframe, offsetA + (int)(regnum * sizeof(void*))));
+			break;
+		default:
+			I_FatalError("Unknown OP_RESULT type encountered\n");
+			break;
+		}
+
+		cc.setArg(numparams + i - startret, regPtr);
+	}
+
+	cc.setCursor(cursorAfter);
+
+	if (startret == 1 && numret > 0)
+	{
+		int type = retval[0].b;
+		int regnum = retval[0].c;
+
+		switch (type)
 		{
 		case REGT_INT:
 			tmp = newResultInt32();
@@ -448,11 +490,40 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 			call->setRet(0, tmp);
 			cc.mov(regA[regnum], tmp);
 			break;
-		case REGT_STRING:
+		}
+	}
+
+	// Move the result into virtual registers
+	for (int i = startret; i < numret; ++i)
+	{
+		int type = retval[i].b;
+		int regnum = retval[i].c;
+
+		switch (type)
+		{
+		case REGT_INT:
+			cc.mov(regD[regnum], asmjit::x86::dword_ptr(vmframe, offsetD + regnum * sizeof(int32_t)));
+			break;
+		case REGT_FLOAT:
+			cc.movsd(regF[regnum], asmjit::x86::qword_ptr(vmframe, offsetF + regnum * sizeof(double)));
+			break;
 		case REGT_FLOAT | REGT_MULTIREG2:
+			cc.movsd(regF[regnum], asmjit::x86::qword_ptr(vmframe, offsetF + regnum * sizeof(double)));
+			cc.movsd(regF[regnum + 1], asmjit::x86::qword_ptr(vmframe, offsetF + (regnum + 1) * sizeof(double)));
+			break;
 		case REGT_FLOAT | REGT_MULTIREG3:
+			cc.movsd(regF[regnum], asmjit::x86::qword_ptr(vmframe, offsetF + regnum * sizeof(double)));
+			cc.movsd(regF[regnum + 1], asmjit::x86::qword_ptr(vmframe, offsetF + (regnum + 1) * sizeof(double)));
+			cc.movsd(regF[regnum + 2], asmjit::x86::qword_ptr(vmframe, offsetF + (regnum + 2) * sizeof(double)));
+			break;
+		case REGT_STRING:
+			// We don't have to do anything in this case. String values are never moved to virtual registers.
+			break;
+		case REGT_POINTER:
+			cc.mov(regA[regnum], asmjit::x86::ptr(vmframe, offsetA + regnum * sizeof(void*)));
+			break;
 		default:
-			I_FatalError("Unsupported OP_RESULT type encountered in EmitNativeCall\n");
+			I_FatalError("Unknown OP_RESULT type encountered\n");
 			break;
 		}
 	}

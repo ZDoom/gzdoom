@@ -35,6 +35,7 @@
 #include "vmbuilder.h"
 #include "codegen.h"
 #include "m_argv.h"
+#include "c_cvars.h"
 #include "scripting/vm/jit.h"
 
 struct VMRemap
@@ -1046,6 +1047,8 @@ void FunctionCallEmitter::AddParameterStringConst(const FString &konst)
 	});
 }
 
+EXTERN_CVAR(Bool, vm_jit)
+
 ExpEmit FunctionCallEmitter::EmitCall(VMFunctionBuilder *build, TArray<ExpEmit> *ReturnRegs)
 {
 	unsigned paramcount = 0;
@@ -1084,6 +1087,15 @@ ExpEmit FunctionCallEmitter::EmitCall(VMFunctionBuilder *build, TArray<ExpEmit> 
 		build->Emit(OP_RESULT, 0, EncodeRegType(reg), reg.RegNum);
 		if (ReturnRegs) ReturnRegs->Push(reg);
 		else return reg;
+	}
+	if (vm_jit)	// The JIT compiler needs this, but the VM interpreter does not.
+	{
+		for (unsigned i = returns.Size(); i < target->Proto->ReturnTypes.Size(); i++)
+		{
+			ExpEmit reg(build, target->Proto->ReturnTypes[i]->RegType, target->Proto->ReturnTypes[i]->RegCount);
+			build->Emit(OP_RESULT, 0, EncodeRegType(reg), reg.RegNum);
+			reg.Free(build);
+		}
 	}
 	return ExpEmit();
 }

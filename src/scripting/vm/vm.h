@@ -36,8 +36,8 @@
 #ifndef VM_H
 #define VM_H
 
-#include "zstring.h"
 #include "autosegs.h"
+#include "zstring.h"
 #include "vectors.h"
 #include "cmdlib.h"
 #include "doomerrors.h"

@@ -582,7 +582,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetZAt)
 					}
 					else
 					{	// [MC] Handle strict 3D floors and portal toggling via the flags passed to it.
-						z = sec->NextHighestCeilingAt(pos.X, pos.Y, mobj->Z(), mobj->Top(), pflags);
+						z = NextHighestCeilingAt(sec, pos.X, pos.Y, mobj->Z(), mobj->Top(), pflags);
 					}
 				}
 				else

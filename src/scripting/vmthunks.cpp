@@ -160,7 +160,7 @@ DEFINE_ACTION_FUNCTION(_Sector, LowestFloorAt)
 	return numret;
 }
 
-DEFINE_ACTION_FUNCTION(_Sector, NextHighestCeilingAt)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, NextHighestCeilingAt, NextHighestCeilingAt)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	PARAM_FLOAT(x);
@@ -170,21 +170,11 @@ DEFINE_ACTION_FUNCTION(_Sector, NextHighestCeilingAt)
 	PARAM_INT(flags);
 	sector_t *resultsec;
 	F3DFloor *resultff;
-	double resultheight = self->NextHighestCeilingAt(x, y, bottomz, topz, flags, &resultsec, &resultff);
+	double resultheight = NextHighestCeilingAt(self, x, y, bottomz, topz, flags, &resultsec, &resultff);
 
-	if (numret > 2)
-	{
-		ret[2].SetPointer(resultff);
-		numret = 3;
-	}
-	if (numret > 1)
-	{
-		ret[1].SetPointer(resultsec);
-	}
-	if (numret > 0)
-	{
-		ret[0].SetFloat(resultheight);
-	}
+	if (numret > 2) ret[2].SetPointer(resultff);
+	if (numret > 1) ret[1].SetPointer(resultsec);
+	if (numret > 0) ret[0].SetFloat(resultheight);
 	return numret;
 }
 DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
@@ -199,19 +189,9 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 	F3DFloor *resultff;
 	double resultheight = self->NextLowestFloorAt(x, y, z, flags, steph, &resultsec, &resultff);
 
-	if (numret > 2)
-	{
-		ret[2].SetPointer(resultff);
-		numret = 3;
-	}
-	if (numret > 1)
-	{
-		ret[1].SetPointer(resultsec);
-	}
-	if (numret > 0)
-	{
-		ret[0].SetFloat(resultheight);
-	}
+	if (numret > 2) ret[2].SetPointer(resultff);
+	if (numret > 1) ret[1].SetPointer(resultsec);
+	if (numret > 0) ret[0].SetFloat(resultheight);
 	return numret;
 }
 

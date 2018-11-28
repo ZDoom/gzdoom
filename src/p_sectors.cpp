@@ -976,9 +976,8 @@ double sector_t::LowestFloorAt(const DVector2 &p, sector_t **resultsec)
 //
 //=====================================================================================
 
-double sector_t::NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags, sector_t **resultsec, F3DFloor **resultffloor)
+double NextHighestCeilingAt(sector_t *sec, double x, double y, double bottomz, double topz, int flags, sector_t **resultsec, F3DFloor **resultffloor)
 {
-	sector_t *sec = this;
 	double planeheight = -FLT_MAX;
 
 	while (true)
@@ -1003,7 +1002,7 @@ double sector_t::NextHighestCeilingAt(double x, double y, double bottomz, double
 				return ff_bottom;
 			}
 		}
-		if ((flags & FFCF_NOPORTALS) || sec->PortalBlocksMovement(ceiling) || planeheight >= sec->GetPortalPlaneZ(ceiling))
+		if ((flags & FFCF_NOPORTALS) || sec->PortalBlocksMovement(sector_t::ceiling) || planeheight >= sec->GetPortalPlaneZ(sector_t::ceiling))
 		{ // Use sector's ceiling
 			if (resultffloor) *resultffloor = NULL;
 			if (resultsec) *resultsec = sec;
@@ -1011,10 +1010,10 @@ double sector_t::NextHighestCeilingAt(double x, double y, double bottomz, double
 		}
 		else
 		{
-			DVector2 pos = sec->GetPortalDisplacement(ceiling);
+			DVector2 pos = sec->GetPortalDisplacement(sector_t::ceiling);
 			x += pos.X;
 			y += pos.Y;
-			planeheight = sec->GetPortalPlaneZ(ceiling);
+			planeheight = sec->GetPortalPlaneZ(sector_t::ceiling);
 			sec = P_PointInSector(x, y);
 		}
 	}

@@ -1081,12 +1081,14 @@ ExpEmit FunctionCallEmitter::EmitCall(VMFunctionBuilder *build, TArray<ExpEmit> 
 	}
 
 	assert(returns.Size() < 2 || ReturnRegs != nullptr);
+
+	ExpEmit retreg;
 	for (unsigned i = 0; i < returns.Size(); i++)
 	{
 		ExpEmit reg(build, returns[i].first, returns[i].second);
 		build->Emit(OP_RESULT, 0, EncodeRegType(reg), reg.RegNum);
 		if (ReturnRegs) ReturnRegs->Push(reg);
-		else return reg;
+		else retreg = reg;
 	}
 	if (vm_jit)	// The JIT compiler needs this, but the VM interpreter does not.
 	{
@@ -1097,6 +1099,6 @@ ExpEmit FunctionCallEmitter::EmitCall(VMFunctionBuilder *build, TArray<ExpEmit> 
 			reg.Free(build);
 		}
 	}
-	return ExpEmit();
+	return retreg;
 }
 

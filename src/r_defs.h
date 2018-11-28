@@ -973,7 +973,6 @@ public:
 		return floorplane.Normal() == -ceilingplane.Normal() && floorplane.D == -ceilingplane.D;
 	}
 
-	double NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
 	double NextLowestFloorAt(double x, double y, double z, int flags = 0, double steph = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
 
 	// Member variables
@@ -1610,6 +1609,8 @@ double FindShortestTextureAround(sector_t *sector);					// jff 2/04/98
 double FindShortestUpperAround(sector_t *sector);					// jff 2/04/98
 sector_t *FindModelFloorSector(sector_t *sec, double floordestheight);		// jff 2/04/98
 sector_t *FindModelCeilingSector(sector_t *sec, double floordestheight);		// jff 2/04/98
+
+double NextHighestCeilingAt(sector_t *sec, double x, double y, double bottomz, double topz, int flags = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
 
 // This setup is to allow the VM call directily into the implementation.
 // With a member function this may be subject to OS implementation details, e.g. on Windows 32 bit members use a different calling convention than regular functions.

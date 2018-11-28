@@ -891,11 +891,6 @@ void P_Spawn3DFloors (void)
 		line.special=0;
 		line.args[0] = line.args[1] = line.args[2] = line.args[3] = line.args[4] = 0;
 	}
-	// kg3D - do it in software
-	for (auto &sec : level.sectors)
-	{
-		P_Recalculate3DFloors(&sec);
-	}
 }
 
 

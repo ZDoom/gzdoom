@@ -26,6 +26,10 @@ struct FCheckPosition
 
 	native int			PushTime;
 	
+	// These are internal helpers to properly initialize an object of this type.
+	private native void _Constructor();
+	private native void _Destructor();
+	
 	native void ClearLastRipped();
 }
 

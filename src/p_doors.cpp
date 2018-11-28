@@ -404,7 +404,7 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, double speed, int delay, int lightTag
 	}
 	else
 	{
-		height = sec->FindLowestCeilingPoint(&m_BotSpot);
+		height = FindLowestCeilingPoint(sec, &m_BotSpot);
 		m_BotDist = sec->ceilingplane.PointToDist (m_BotSpot, height);
 	}
 	m_OldFloorDist = sec->floorplane.fD();

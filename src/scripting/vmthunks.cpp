@@ -127,34 +127,34 @@ DEFINE_ACTION_FUNCTION(_Sector, FindHighestFloorPoint)
 	if (numret > 1) ret[1].SetPointer(v);
 	return numret;
 }
-DEFINE_ACTION_FUNCTION(_Sector, FindLowestCeilingPoint)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindLowestCeilingPoint, FindLowestCeilingPoint)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	vertex_t *v;
-	double h = self->FindLowestCeilingPoint(&v);
+	double h = FindLowestCeilingPoint(self, &v);
 	if (numret > 0) ret[0].SetFloat(h);
 	if (numret > 1) ret[1].SetPointer(v);
 	return numret;
 }
 
-DEFINE_ACTION_FUNCTION(_Sector, HighestCeilingAt)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, HighestCeilingAt, HighestCeilingAt)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	sector_t *s;
-	double h = self->HighestCeilingAt(DVector2(x, y), &s);
+	double h = HighestCeilingAt(self, x, y, &s);
 	if (numret > 0) ret[0].SetFloat(h);
 	if (numret > 1) ret[1].SetPointer(s);
 	return numret;
 }
-DEFINE_ACTION_FUNCTION(_Sector, LowestFloorAt)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, LowestFloorAt, LowestFloorAt)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	sector_t *s;
-	double h = self->LowestFloorAt(DVector2(x, y), &s);
+	double h = LowestFloorAt(self, x, y, &s);
 	if (numret > 0) ret[0].SetFloat(h);
 	if (numret > 1) ret[1].SetPointer(s);
 	return numret;
@@ -177,7 +177,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, NextHighestCeilingAt, NextHighestCeilingA
 	if (numret > 0) ret[0].SetFloat(resultheight);
 	return numret;
 }
-DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, NextLowestFloorAt, NextLowestFloorAt)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	PARAM_FLOAT(x);
@@ -187,7 +187,7 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 	PARAM_FLOAT(steph);
 	sector_t *resultsec;
 	F3DFloor *resultff;
-	double resultheight = self->NextLowestFloorAt(x, y, z, flags, steph, &resultsec, &resultff);
+	double resultheight = NextLowestFloorAt(self, x, y, z, flags, steph, &resultsec, &resultff);
 
 	if (numret > 2) ret[2].SetPointer(resultff);
 	if (numret > 1) ret[1].SetPointer(resultsec);
@@ -195,7 +195,7 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 	return numret;
 }
 
-DEFINE_ACTION_FUNCTION(_Sector, GetFriction)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetFriction, GetFriction)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	PARAM_INT(plane);
@@ -205,15 +205,14 @@ DEFINE_ACTION_FUNCTION(_Sector, GetFriction)
 	if (numret > 1) ret[1].SetFloat(mf);
 	return numret;
 }
-DEFINE_ACTION_FUNCTION(_Sector, TriggerSectorActions)
+
+
+static void GetPortalDisplacement(sector_t *sec, int plane, DVector2 *result)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
-	PARAM_OBJECT(thing, AActor);
-	PARAM_INT(activation);
-	ACTION_RETURN_BOOL(self->TriggerSectorActions(thing, activation));
+	*result = sec->GetPortalDisplacement(plane);
 }
 
-DEFINE_ACTION_FUNCTION(_Sector, GetPortalDisplacement)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetPortalDisplacement, GetPortalDisplacement)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	PARAM_INT(pos);

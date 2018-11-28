@@ -653,38 +653,38 @@ double sector_t::FindHighestFloorPoint (vertex_t **v) const
 //
 // Find the lowest point on the ceiling of the sector
 //
-double sector_t::FindLowestCeilingPoint (vertex_t **v) const
+double FindLowestCeilingPoint (const sector_t *sector, vertex_t **v)
 {
 	double height = FLT_MAX;
 	double probeheight;
-	vertex_t *spot = NULL;
+	vertex_t *spot = nullptr;
 
-	if (!ceilingplane.isSlope())
+	if (!sector->ceilingplane.isSlope())
 	{
-		if (v != NULL)
+		if (v != nullptr)
 		{
-			if (Lines.Size() == 0) *v = &level.vertexes[0];
-			else *v = Lines[0]->v1;
+			if (sector->Lines.Size() == 0) *v = &level.vertexes[0];
+			else *v = sector->Lines[0]->v1;
 		}
-		return ceilingplane.fD();
+		return sector->ceilingplane.fD();
 	}
 
-	for (auto line : Lines)
+	for (auto line : sector->Lines)
 	{
-		probeheight = ceilingplane.ZatPoint(line->v1);
+		probeheight = sector->ceilingplane.ZatPoint(line->v1);
 		if (probeheight < height)
 		{
 			height = probeheight;
 			spot = line->v1;
 		}
-		probeheight = ceilingplane.ZatPoint(line->v2);
+		probeheight = sector->ceilingplane.ZatPoint(line->v2);
 		if (probeheight < height)
 		{
 			height = probeheight;
 			spot = line->v2;
 		}
 	}
-	if (v != NULL)
+	if (v != nullptr)
 		*v = spot;
 	return height;
 }
@@ -931,17 +931,16 @@ void CheckPortalPlane(sector_t *sector, int plane)
 //
 //===========================================================================
 
-double sector_t::HighestCeilingAt(const DVector2 &p, sector_t **resultsec)
+double HighestCeilingAt(sector_t *check, double x, double y, sector_t **resultsec)
 {
-	sector_t *check = this;
 	double planeheight = -FLT_MAX;
-	DVector2 pos = p;
+	DVector2 pos(x, y);
 
 	// Continue until we find a blocking portal or a portal below where we actually are.
-	while (!check->PortalBlocksMovement(ceiling) && planeheight < check->GetPortalPlaneZ(ceiling))
+	while (!check->PortalBlocksMovement(sector_t::ceiling) && planeheight < check->GetPortalPlaneZ(sector_t::ceiling))
 	{
-		pos += check->GetPortalDisplacement(ceiling);
-		planeheight = check->GetPortalPlaneZ(ceiling);
+		pos += check->GetPortalDisplacement(sector_t::ceiling);
+		planeheight = check->GetPortalPlaneZ(sector_t::ceiling);
 		check = P_PointInSector(pos);
 	}
 	if (resultsec) *resultsec = check;
@@ -954,17 +953,16 @@ double sector_t::HighestCeilingAt(const DVector2 &p, sector_t **resultsec)
 //
 //===========================================================================
 
-double sector_t::LowestFloorAt(const DVector2 &p, sector_t **resultsec)
+double LowestFloorAt(sector_t *check, double x, double y, sector_t **resultsec)
 {
-	sector_t *check = this;
 	double planeheight = FLT_MAX;
-	DVector2 pos = p;
+	DVector2 pos(x, y);
 
 	// Continue until we find a blocking portal or a portal above where we actually are.
-	while (!check->PortalBlocksMovement(floor) && planeheight > check->GetPortalPlaneZ(floor))
+	while (!check->PortalBlocksMovement(sector_t::floor) && planeheight > check->GetPortalPlaneZ(sector_t::floor))
 	{
-		pos += check->GetPortalDisplacement(floor);
-		planeheight = check->GetPortalPlaneZ(ceiling);
+		pos += check->GetPortalDisplacement(sector_t::floor);
+		planeheight = check->GetPortalPlaneZ(sector_t::ceiling);
 		check = P_PointInSector(pos);
 	}
 	if (resultsec) *resultsec = check;
@@ -1024,9 +1022,8 @@ double NextHighestCeilingAt(sector_t *sec, double x, double y, double bottomz, d
 //
 //=====================================================================================
 
-double sector_t::NextLowestFloorAt(double x, double y, double z, int flags, double steph, sector_t **resultsec, F3DFloor **resultffloor)
+double NextLowestFloorAt(sector_t *sec, double x, double y, double z, int flags, double steph, sector_t **resultsec, F3DFloor **resultffloor)
 {
-	sector_t *sec = this;
 	double planeheight = FLT_MAX;
 	while (true)
 	{
@@ -1052,7 +1049,7 @@ double sector_t::NextLowestFloorAt(double x, double y, double z, int flags, doub
 				}
 			}
 		}
-		if ((flags & FFCF_NOPORTALS) || sec->PortalBlocksMovement(sector_t::floor) || planeheight <= sec->GetPortalPlaneZ(floor))
+		if ((flags & FFCF_NOPORTALS) || sec->PortalBlocksMovement(sector_t::floor) || planeheight <= sec->GetPortalPlaneZ(sector_t::floor))
 		{ // Use sector's floor
 			if (resultffloor) *resultffloor = NULL;
 			if (resultsec) *resultsec = sec;
@@ -1060,10 +1057,10 @@ double sector_t::NextLowestFloorAt(double x, double y, double z, int flags, doub
 		}
 		else
 		{
-			DVector2 pos = sec->GetPortalDisplacement(floor);
+			DVector2 pos = sec->GetPortalDisplacement(sector_t::floor);
 			x += pos.X;
 			y += pos.Y;
-			planeheight = sec->GetPortalPlaneZ(floor);
+			planeheight = sec->GetPortalPlaneZ(sector_t::floor);
 			sec = P_PointInSector(x, y);
 		}
 	}
@@ -1075,14 +1072,14 @@ double sector_t::NextLowestFloorAt(double x, double y, double z, int flags, doub
 //
 //===========================================================================
 
- double sector_t::GetFriction(int plane, double *pMoveFac) const
+double GetFriction(const sector_t *self, int plane, double *pMoveFac)
 {
-	if (Flags & SECF_FRICTION) 
+	if (self->Flags & SECF_FRICTION) 
 	{ 
-		if (pMoveFac) *pMoveFac = movefactor;
-		return friction; 
+		if (pMoveFac) *pMoveFac = self->movefactor;
+		return self->friction;
 	}
-	FTerrainDef *terrain = &Terrains[GetTerrain(plane)];
+	FTerrainDef *terrain = &Terrains[self->GetTerrain(plane)];
 	if (terrain->Friction != 0)
 	{
 		if (pMoveFac) *pMoveFac = terrain->MoveFactor;

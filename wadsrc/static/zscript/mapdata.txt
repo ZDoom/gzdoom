@@ -431,7 +431,6 @@ struct Sector native play
 	native int GetOppositePortalGroup(int plane);
 	native double CenterFloor();
 	native double CenterCeiling();
-	native bool TriggerSectorActions(Actor thing, int activation);
 
 	native int MoveFloor(double speed, double dest, int crush, int direction, bool hexencrush, bool instant = false);
 	native int MoveCeiling(double speed, double dest, int crush, int direction, bool hexencrush);
@@ -490,7 +489,36 @@ struct Sector native play
 	{
 		return Level.GetUDMFString(LevelLocals.UDMF_Sector, Index(), nm);
 	}
-	 
+
+	//===========================================================================
+	//
+	//
+	//
+	//===========================================================================
+
+	bool TriggerSectorActions(Actor thing, int activation)
+	{
+		let act = SecActTarget;
+		bool res = false;
+
+		while (act != null)
+		{
+			Actor next = act.tracer;
+
+			if (act.TriggerAction(thing, activation))
+			{
+				if (act.bStandStill)
+				{
+					act.Destroy();
+				}
+				res = true;
+			}
+			act = SectorAction(next);
+		}
+		return res;
+	}
+
+	
     native clearscope int GetHealth(SectorPart part);
     native void SetHealth(SectorPart part, int newhealth);
 }

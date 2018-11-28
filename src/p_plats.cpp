@@ -358,7 +358,7 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, double height,
 			plat->m_Crush = 10;	//jff 3/14/98 crush anything in the way
 
 			// set up toggling between ceiling, floor inclusive
-			newheight = sec->FindLowestCeilingPoint (&spot);
+			newheight = FindLowestCeilingPoint(sec, &spot);
 			plat->m_Low = sec->floorplane.PointToDist (spot, newheight);
 			plat->m_High = sec->floorplane.fD();
 			plat->m_Status = DPlat::down;

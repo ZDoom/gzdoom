@@ -528,7 +528,7 @@ void StepSpan(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTriang
 
 	for (int x = x0; x < x1; x += 4)
 	{
-		__m128 rcp_posW = _mm_rcp_ps(mposW);
+		__m128 rcp_posW = _mm_div_ps(_mm_set1_ps(1.0f), mposW); // precision of _mm_rcp_ps(mposW) is terrible!
 
 		if (OptT::Flags & SWOPT_DynLights)
 		{

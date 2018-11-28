@@ -46,7 +46,7 @@ void PolyRenderModel(PolyRenderThread *thread, const Mat4f &worldToClip, uint32_
 	bool foggy = false;
 	int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Viewpoint.extralight << 4;
 	bool fullbrightSprite = ((actor->renderflags & RF_FULLBRIGHT) || (actor->flags5 & MF5_BRIGHT));
-	int lightlevel = fullbrightSprite ? 255 : actor->Sector->lightlevel + actualextralight;
+	renderer.lightlevel = fullbrightSprite ? 255 : actor->Sector->lightlevel + actualextralight;
 	renderer.visibility = PolyRenderer::Instance()->Light.SpriteGlobVis(foggy);
 
 	renderer.fillcolor = actor->fillcolor;
@@ -90,7 +90,7 @@ void PolyRenderHUDModel(PolyRenderThread *thread, const Mat4f &worldToClip, uint
 	bool foggy = false;
 	int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Viewpoint.extralight << 4;
 	bool fullbrightSprite = isBright(psp);
-	int lightlevel = fullbrightSprite ? 255 : playermo->Sector->lightlevel + actualextralight;
+	renderer.lightlevel = fullbrightSprite ? 255 : playermo->Sector->lightlevel + actualextralight;
 	renderer.visibility = PolyRenderer::Instance()->Light.SpriteGlobVis(foggy);
 
 	PalEntry ThingColor = (playermo->RenderStyle.Flags & STYLEF_ColorIsFixed) ? playermo->fillcolor : 0xffffff;

@@ -46,6 +46,8 @@ static void *AllocJitMemory(size_t size)
 	}
 }
 
+#ifdef WIN32
+
 #define UWOP_PUSH_NONVOL 0
 #define UWOP_ALLOC_LARGE 1
 #define UWOP_ALLOC_SMALL 2
@@ -56,25 +58,7 @@ static void *AllocJitMemory(size_t size)
 #define UWOP_SAVE_XMM128_FAR 9
 #define UWOP_PUSH_MACHFRAME 10
 
-void JitRelease()
-{
-#ifdef _WIN64
-	for (auto p : JitFrames)
-	{
-		RtlDeleteFunctionTable((PRUNTIME_FUNCTION)p);
-	}
-#endif
-	for (auto p : JitBlocks)
-	{
-		asmjit::OSUtils::releaseVirtualMemory(p, 1024 * 1024);
-	}
-	JitFrames.Clear();
-	JitBlocks.Clear();
-	JitBlockPos = 0;
-	JitBlockSize = 0;
-}
-
-static TArray<uint16_t> CreateUnwindInfo(asmjit::CCFunc *func)
+static TArray<uint16_t> CreateUnwindInfoWindows(asmjit::CCFunc *func)
 {
 	using namespace asmjit;
 	FuncFrameLayout layout;
@@ -255,7 +239,7 @@ void *AddJitFunction(asmjit::CodeHolder* code, asmjit::CCFunc *func)
 		return nullptr;
 
 #ifdef _WIN64
-	TArray<uint16_t> unwindInfo = CreateUnwindInfo(func);
+	TArray<uint16_t> unwindInfo = CreateUnwindInfoWindows(func);
 	size_t unwindInfoSize = unwindInfo.Size() * sizeof(uint16_t);
 	size_t functionTableSize = sizeof(RUNTIME_FUNCTION);
 #else
@@ -295,4 +279,335 @@ void *AddJitFunction(asmjit::CodeHolder* code, asmjit::CCFunc *func)
 #endif
 
 	return p;
+}
+
+#else
+
+extern "C"
+{
+	void __register_frame(const void*);
+	void __deregister_frame(const void*);
+}
+
+static void WriteLength(TArray<uint8_t> &stream, unsigned int pos, unsigned int v)
+{
+	stream[pos] = v >> 24;
+	stream[pos + 1] = (v >> 16) & 0xff;
+	stream[pos + 2] = (v >> 8) & 0xff;
+	stream[pos + 3] = v & 0xff;
+}
+
+static void WriteUInt64(TArray<uint8_t> &stream, uint64_t v)
+{
+	stream.Push(v >> 56);
+	stream.Push((v >> 48) & 0xff);
+	stream.Push((v >> 40) & 0xff);
+	stream.Push((v >> 32) & 0xff);
+	stream.Push((v >> 24) & 0xff);
+	stream.Push((v >> 16) & 0xff);
+	stream.Push((v >> 8) & 0xff);
+	stream.Push(v & 0xff);
+}
+
+static void WriteUInt32(TArray<uint8_t> &stream, uint32_t v)
+{
+	stream.Push(v >> 24);
+	stream.Push((v >> 16) & 0xff);
+	stream.Push((v >> 8) & 0xff);
+	stream.Push(v & 0xff);
+}
+
+static void WriteUInt16(TArray<uint8_t> &stream, uint16_t v)
+{
+	stream.Push((v >> 8) & 0xff);
+	stream.Push(v & 0xff);
+}
+
+static void WriteUInt8(TArray<uint8_t> &stream, uint8_t v)
+{
+	stream.Push(v);
+}
+
+static void WriteULEB128(TArray<uint8_t> &stream, uint32_t v)
+{
+}
+
+static void WriteSLEB128(TArray<uint8_t> &stream, int32_t v)
+{
+}
+
+struct FrameDesc
+{
+	int minInstAlignment = 4;
+	int dataAlignmentFactor = -4;
+	uint8_t returnAddressReg = 0;
+
+	uint32_t cieLocation = 0;
+	uint64_t functionStart = 0;
+	uint64_t functionSize = 0;
+};
+
+static void WriteCIE(TArray<uint8_t> &stream, const TArray<uint8_t> &cieInstructions, uint8_t returnAddressReg, int minInstAlignment, int dataAlignmentFactor)
+{
+	unsigned int lengthPos = stream.Size();
+	WriteUInt32(stream, 0); // Length
+
+	WriteUInt32(stream, 0); // CIE ID
+	WriteUInt8(stream, 1); // CIE Version
+	WriteUInt8(stream, 'z');
+	WriteUInt8(stream, 'R');
+	WriteUInt8(stream, 0);
+	WriteULEB128(stream, minInstAlignment);
+	WriteSLEB128(stream, dataAlignmentFactor);
+	WriteUInt8(stream, returnAddressReg);
+	WriteULEB128(stream, 0);
+
+	for (unsigned int i = 0; i < cieInstructions.Size(); i++)
+		stream.Push(cieInstructions[i]);
+
+	// Padding and update length field
+	unsigned int length = stream.Size() - lengthPos;
+	int padding = stream.Size() % 4;
+	for (int i = 0; i <= padding; i++) WriteUInt8(stream, 0);
+	WriteLength(stream, lengthPos, length);
+}
+
+static void WriteFDE(TArray<uint8_t> &stream, const TArray<uint8_t> &fdeInstructions, uint32_t cieLocation, unsigned int &functionStart)
+{
+	uint32_t offsetToCIE = stream.Size() - cieLocation;
+
+	unsigned int lengthPos = stream.Size();
+	WriteUInt32(stream, 0); // Length
+
+	WriteUInt32(stream, offsetToCIE);
+	functionStart = stream.Size();
+	WriteUInt64(stream, 0); // func start
+	WriteUInt64(stream, 0); // func size
+
+	for (unsigned int i = 0; i < fdeInstructions.Size(); i++)
+		stream.Push(fdeInstructions[i]);
+
+	// Padding and update length field
+	unsigned int length = stream.Size() - lengthPos;
+	int padding = stream.Size() % 4;
+	for (int i = 0; i <= padding; i++) WriteUInt8(stream, 0);
+	WriteLength(stream, lengthPos, length);
+}
+
+static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &functionStart)
+{
+	using namespace asmjit;
+
+	FuncFrameLayout layout;
+	Error error = layout.init(func->getDetail(), func->getFrameInfo());
+	if (error != kErrorOk)
+		I_FatalError("FuncFrameLayout.init failed");
+
+	// We need a dummy emitter for instruction size calculations
+	CodeHolder code;
+	code.init(GetHostCodeInfo());
+	X86Assembler assembler(&code);
+	X86Emitter *emitter = assembler.asEmitter();
+
+	// Build .eh_frame:
+
+	// To do: write CIE and FDE call frame instructions (see appendix D.6 "Call Frame Information Example" in the DWARF 5 spec)
+
+	TArray<uint8_t> cieInstructions;
+	TArray<uint8_t> fdeInstructions;
+
+	int minInstAlignment = 4; // To do: is this correct?
+	int dataAlignmentFactor = -4; // To do: is this correct?
+	uint8_t returnAddressReg = 0; // To do: get this from asmjit
+
+	// Note: this must match exactly what X86Internal::emitProlog does
+
+	X86Gp zsp = emitter->zsp();   // ESP|RSP register.
+	X86Gp zbp = emitter->zsp();   // EBP|RBP register.
+	zbp.setId(X86Gp::kIdBp);
+	X86Gp gpReg = emitter->zsp(); // General purpose register (temporary).
+	X86Gp saReg = emitter->zsp(); // Stack-arguments base register.
+	uint32_t gpSaved = layout.getSavedRegs(X86Reg::kKindGp);
+
+	if (layout.hasPreservedFP())
+	{
+		// Emit: 'push zbp'
+		//       'mov  zbp, zsp'.
+		gpSaved &= ~Utils::mask(X86Gp::kIdBp);
+		emitter->push(zbp);
+
+		// WriteXX(cieInstructions, UWOP_PUSH_NONVOL);
+		// WriteXX(cieInstructions, X86Gp::kIdBp);
+		// WriteXX(cieInstructions, (uint32_t)assembler.getOffset());
+
+		emitter->mov(zbp, zsp);
+	}
+
+	if (gpSaved)
+	{
+		for (uint32_t i = gpSaved, regId = 0; i; i >>= 1, regId++)
+		{
+			if (!(i & 0x1)) continue;
+			// Emit: 'push gp' sequence.
+			gpReg.setId(regId);
+			emitter->push(gpReg);
+
+			// WriteXX(cieInstructions, UWOP_PUSH_NONVOL);
+			// WriteXX(cieInstructions, regId);
+			// WriteXX(cieInstructions, (uint32_t)assembler.getOffset());
+		}
+	}
+
+	uint32_t stackArgsRegId = layout.getStackArgsRegId();
+	if (stackArgsRegId != Globals::kInvalidRegId && stackArgsRegId != X86Gp::kIdSp)
+	{
+		saReg.setId(stackArgsRegId);
+		if (!(layout.hasPreservedFP() && stackArgsRegId == X86Gp::kIdBp))
+		{
+			// Emit: 'mov saReg, zsp'.
+			emitter->mov(saReg, zsp);
+		}
+	}
+
+	if (layout.hasDynamicAlignment())
+	{
+		// Emit: 'and zsp, StackAlignment'.
+		emitter->and_(zsp, -static_cast<int32_t>(layout.getStackAlignment()));
+	}
+
+	if (layout.hasStackAdjustment())
+	{
+		// Emit: 'sub zsp, StackAdjustment'.
+		emitter->sub(zsp, layout.getStackAdjustment());
+
+		uint32_t stackadjust = layout.getStackAdjustment();
+		// WriteXX(cieInstructions, UWOP_ALLOC);
+		// WriteXX(cieInstructions, stackadjust);
+		// WriteXX(cieInstructions, (uint32_t)assembler.getOffset());
+	}
+
+	if (layout.hasDynamicAlignment() && layout.hasDsaSlotUsed())
+	{
+		// Emit: 'mov [zsp + dsaSlot], saReg'.
+		X86Mem saMem = x86::ptr(zsp, layout._dsaSlot);
+		emitter->mov(saMem, saReg);
+	}
+
+	uint32_t xmmSaved = layout.getSavedRegs(X86Reg::kKindVec);
+	if (xmmSaved)
+	{
+		X86Mem vecBase = x86::ptr(zsp, layout.getVecStackOffset());
+		X86Reg vecReg = x86::xmm(0);
+		bool avx = layout.isAvxEnabled();
+		bool aligned = layout.hasAlignedVecSR();
+		uint32_t vecInst = aligned ? (avx ? X86Inst::kIdVmovaps : X86Inst::kIdMovaps) : (avx ? X86Inst::kIdVmovups : X86Inst::kIdMovups);
+		uint32_t vecSize = 16;
+		for (uint32_t i = xmmSaved, regId = 0; i; i >>= 1, regId++)
+		{
+			if (!(i & 0x1)) continue;
+
+			// Emit 'movaps|movups [zsp + X], xmm0..15'.
+			vecReg.setId(regId);
+			emitter->emit(vecInst, vecBase, vecReg);
+			vecBase.addOffsetLo32(static_cast<int32_t>(vecSize));
+
+			// WriteXX(cieInstructions, UWOP_SAVE_XMM128);
+			// WriteXX(cieInstructions, regId);
+			// WriteXX(cieInstructions, (uint32_t)assembler.getOffset());
+		}
+	}
+
+	TArray<uint8_t> stream;
+	WriteCIE(stream, cieInstructions, returnAddressReg, minInstAlignment, dataAlignmentFactor);
+	WriteFDE(stream, fdeInstructions, 0, functionStart);
+	WriteUInt32(stream, 0);
+	return stream;
+}
+
+void *AddJitFunction(asmjit::CodeHolder* code, asmjit::CCFunc *func)
+{
+	using namespace asmjit;
+
+	size_t codeSize = code->getCodeSize();
+	if (codeSize == 0)
+		return nullptr;
+
+	unsigned int fdeFunctionStart = 0;
+	TArray<uint8_t> unwindInfo;// = CreateUnwindInfoUnix(func, fdeFunctionStart);
+	size_t unwindInfoSize = unwindInfo.Size();
+
+	codeSize = (codeSize + 15) / 16 * 16;
+
+	uint8_t *p = (uint8_t *)AllocJitMemory(codeSize + unwindInfoSize);
+	if (!p)
+		return nullptr;
+
+	size_t relocSize = code->relocate(p);
+	if (relocSize == 0)
+		return nullptr;
+
+	size_t unwindStart = relocSize;
+	unwindStart = (unwindStart + 15) / 16 * 16;
+	JitBlockPos -= codeSize - unwindStart;
+
+	uint8_t *baseaddr = JitBlocks.Last();
+	uint8_t *startaddr = p;
+	uint8_t *endaddr = p + relocSize;
+	uint8_t *unwindptr = p + unwindStart;
+	memcpy(unwindptr, &unwindInfo[0], unwindInfoSize);
+
+	if (unwindInfo.Size() > 0)
+	{
+		uint64_t *unwindfuncaddr = (uint64_t *)(unwindptr + fdeFunctionStart);
+		unwindfuncaddr[0] = (ptrdiff_t)startaddr;
+		unwindfuncaddr[1] = (ptrdiff_t)(endaddr - startaddr);
+
+#ifdef __APPLE__
+		// On macOS __register_frame takes a single FDE as an argument
+		uint8_t *entry = unwindptr;
+		while (true)
+		{
+			uint32_t length = *((uint32_t *)entry);
+			if (length == 0)
+				break;
+
+			uint32_t offset = *((uint32_t *)(entry + 4));
+			if (offset != 0)
+			{
+				__register_frame(entry);
+				JitFrames.Push(entry);
+			}
+		}
+#else
+		// On Linux it takes a pointer to the entire .eh_frame
+		__register_frame(unwindptr);
+		JitFrames.Push(unwindptr);
+#endif
+	}
+
+	return p;
+}
+#endif
+
+void JitRelease()
+{
+#ifdef _WIN64
+	for (auto p : JitFrames)
+	{
+		RtlDeleteFunctionTable((PRUNTIME_FUNCTION)p);
+	}
+#else !defined(WIN32)
+	for (auto p : JitFrames)
+	{
+		__deregister_frame(p);
+	}
+#endif
+	for (auto p : JitBlocks)
+	{
+		asmjit::OSUtils::releaseVirtualMemory(p, 1024 * 1024);
+	}
+	JitFrames.Clear();
+	JitBlocks.Clear();
+	JitBlockPos = 0;
+	JitBlockSize = 0;
 }

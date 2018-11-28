@@ -596,7 +596,7 @@ void JitRelease()
 	{
 		RtlDeleteFunctionTable((PRUNTIME_FUNCTION)p);
 	}
-#else !defined(WIN32)
+#elif !defined(WIN32)
 	for (auto p : JitFrames)
 	{
 		__deregister_frame(p);

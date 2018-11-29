@@ -350,7 +350,19 @@ static void WriteSLEB128(TArray<uint8_t> &stream, int32_t v)
 	}
 	else
 	{
-		// To do: sign extended version
+		while (true)
+		{
+			if (v > -128)
+			{
+				WriteUInt8(stream, v & 0x7f);
+				break;
+			}
+			else
+			{
+				WriteUInt8(stream, v);
+				v >>= 7;
+			}
+		}
 	}
 }
 
@@ -363,19 +375,31 @@ static void WriteCIE(TArray<uint8_t> &stream, const TArray<uint8_t> &cieInstruct
 	WriteUInt32(stream, 0); // CIE ID
 	WriteUInt8(stream, 1); // CIE Version
 	WriteUInt8(stream, 'z');
-	WriteUInt8(stream, 'R');
+	//WriteUInt8(stream, 'R'); // fde encoding
 	WriteUInt8(stream, 0);
 	WriteULEB128(stream, minInstAlignment);
 	WriteSLEB128(stream, dataAlignmentFactor);
 	WriteUInt8(stream, returnAddressReg);
-	WriteULEB128(stream, 0);
+
+	// augmentation length and data (empty but aligned)
+	int padding = (stream.Size() + 1) % 8;
+	if (padding == 0)
+	{
+		WriteULEB128(stream, 0);
+	}
+	else
+	{
+		padding = 8 - padding;
+		WriteULEB128(stream, padding);
+		for (int i = 0; i <= padding; i++) WriteUInt8(stream, 0);
+	}
 
 	for (unsigned int i = 0; i < cieInstructions.Size(); i++)
 		stream.Push(cieInstructions[i]);
 
 	// Padding and update length field
 	unsigned int length = stream.Size() - lengthPos - 8;
-	int padding = stream.Size() % 4;
+	padding = stream.Size() % 8;
 	for (int i = 0; i <= padding; i++) WriteUInt8(stream, 0);
 	WriteLength(stream, lengthPos, length);
 }
@@ -398,7 +422,7 @@ static void WriteFDE(TArray<uint8_t> &stream, const TArray<uint8_t> &fdeInstruct
 
 	// Padding and update length field
 	unsigned int length = stream.Size() - lengthPos - 8;
-	int padding = stream.Size() % 4;
+	int padding = stream.Size() % 8;
 	for (int i = 0; i <= padding; i++) WriteUInt8(stream, 0);
 	WriteLength(stream, lengthPos, length);
 }

@@ -1503,14 +1503,24 @@ void SBarInfoMainBlock::DrawAux(const SBarInfoMainBlock *block, DSBarInfo *statu
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION(DSBarInfo, Destroy)
+static void SBarInfo_Destroy(DSBarInfo *self)
+{
+	delete self;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSBarInfo, Destroy, SBarInfo_Destroy)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
 	delete self;
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DSBarInfo, AttachToPlayer)
+static void SBarInfo_AttachToPlayer(DSBarInfo *self, player_t *player)
+{
+	self->_AttachToPlayer(player);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSBarInfo, AttachToPlayer, SBarInfo_AttachToPlayer)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
 	PARAM_POINTER(player, player_t);
@@ -1518,7 +1528,12 @@ DEFINE_ACTION_FUNCTION(DSBarInfo, AttachToPlayer)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DSBarInfo, Draw)
+static void SBarInfo_Draw(DSBarInfo *self, int state)
+{
+	self->_Draw((EHudState)state);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSBarInfo, Draw, SBarInfo_Draw)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
 	PARAM_INT(State);
@@ -1526,28 +1541,48 @@ DEFINE_ACTION_FUNCTION(DSBarInfo, Draw)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DSBarInfo, NewGame)
+static void SBarInfo_NewGame(DSBarInfo *self)
+{
+	self->_NewGame();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSBarInfo, NewGame, SBarInfo_NewGame)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
 	self->_NewGame();
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DSBarInfo, MustDrawLog)
+static int SBarInfo_MustDrawLog(DSBarInfo *self, int state)
+{
+	return self->_MustDrawLog((EHudState)state);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSBarInfo, MustDrawLog, SBarInfo_MustDrawLog)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
 	PARAM_INT(State);
 	ACTION_RETURN_BOOL(self->_MustDrawLog((EHudState)State));
 }
 
-DEFINE_ACTION_FUNCTION(DSBarInfo, Tick)
+static void SBarInfo_Tick(DSBarInfo *self)
+{
+	self->_Tick();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSBarInfo, Tick, SBarInfo_Tick)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
 	self->_Tick();
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DSBarInfo, ShowPop)
+static void SBarInfo_ShowPop(DSBarInfo *self, int state)
+{
+	self->_ShowPop(state);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSBarInfo, ShowPop, SBarInfo_ShowPop)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
 	PARAM_INT(State);
@@ -1555,7 +1590,12 @@ DEFINE_ACTION_FUNCTION(DSBarInfo, ShowPop)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DSBarInfo, GetProtrusion)
+static int SBarInfo_GetProtrusion(DSBarInfo *self, float scale)
+{
+	return self->_GetProtrusion(scale);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSBarInfo, GetProtrusion, SBarInfo_GetProtrusion)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
 	PARAM_FLOAT(scalefac);

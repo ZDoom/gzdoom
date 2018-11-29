@@ -331,7 +331,7 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, PolyTriangleThreadDat
 			if (x > xstart)
 			{
 				if (writeColor)
-					drawfunc(y, xstart, x, args);
+					drawfunc(y, xstart, x, args, thread);
 
 				if (writeStencil)
 				{

@@ -1100,15 +1100,27 @@ void FCanvasTextureInfo::Add (AActor *viewpoint, FTextureID picnum, double fov)
 }
 
 // [ZZ] expose this to ZScript
-DEFINE_ACTION_FUNCTION(_TexMan, SetCameraToTexture)
+void SetCameraToTexture(AActor *viewpoint, const FString &texturename, double fov)
+{
+	FTextureID textureid = TexMan.CheckForTexture(texturename, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
+	if (textureid.isValid())
+	{
+		// Only proceed if the texture actually has a canvas.
+		FTexture *tex = TexMan[textureid];
+		if (tex && tex->bHasCanvas)
+		{
+			FCanvasTextureInfo::Add(viewpoint, textureid, fov);
+		}
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraToTexture, SetCameraToTexture)
 {
 	PARAM_PROLOGUE;
 	PARAM_OBJECT(viewpoint, AActor);
 	PARAM_STRING(texturename); // [ZZ] there is no point in having this as FTextureID because it's easier to refer to a cameratexture by name and it isn't executed too often to cache it.
 	PARAM_FLOAT(fov);
-	FTextureID textureid = TexMan.CheckForTexture(texturename, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
-	if (textureid.isValid())
-		FCanvasTextureInfo::Add(viewpoint, textureid, fov);
+	SetCameraToTexture(viewpoint, texturename, fov);
 	return 0;
 }
 

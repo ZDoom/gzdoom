@@ -814,7 +814,8 @@ public:
 	virtual bool Massacre ();
 
 	// Transforms the actor into a finely-ground paste
-	virtual bool Grind(bool items);
+	bool Grind(bool items);
+	bool CallGrind(bool items);
 
 	// Get this actor's team
 	int GetTeam();

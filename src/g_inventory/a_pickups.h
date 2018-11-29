@@ -76,7 +76,6 @@ public:
 	virtual void OnDestroy() override;
 	virtual void Tick() override;
 	virtual bool Massacre() override;
-	virtual bool Grind(bool items) override;
 
 	bool CallTryPickup(AActor *toucher, AActor **toucher_return = NULL);	// Wrapper for script function.
 

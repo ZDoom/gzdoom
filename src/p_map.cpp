@@ -6485,7 +6485,7 @@ void P_FindBelowIntersectors(AActor *actor)
 
 void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 {
-	if (!(thing && thing->Grind(true) && cpos)) return;
+	if (!(thing && thing->CallGrind(true) && cpos)) return;
 	cpos->nofit = true;
 
 	if ((cpos->crushchange > 0) && !(level.maptime & 3))

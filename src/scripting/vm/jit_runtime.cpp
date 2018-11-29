@@ -291,36 +291,33 @@ extern "C"
 
 static void WriteLength(TArray<uint8_t> &stream, unsigned int pos, unsigned int v)
 {
-	stream[pos] = v >> 24;
-	stream[pos + 1] = (v >> 16) & 0xff;
-	stream[pos + 2] = (v >> 8) & 0xff;
-	stream[pos + 3] = v & 0xff;
+	*(uint64_t*)(&stream[pos]) = v;
 }
 
 static void WriteUInt64(TArray<uint8_t> &stream, uint64_t v)
 {
-	stream.Push(v >> 56);
-	stream.Push((v >> 48) & 0xff);
-	stream.Push((v >> 40) & 0xff);
-	stream.Push((v >> 32) & 0xff);
-	stream.Push((v >> 24) & 0xff);
-	stream.Push((v >> 16) & 0xff);
-	stream.Push((v >> 8) & 0xff);
 	stream.Push(v & 0xff);
+	stream.Push((v >> 8) & 0xff);
+	stream.Push((v >> 16) & 0xff);
+	stream.Push((v >> 24) & 0xff);
+	stream.Push((v >> 32) & 0xff);
+	stream.Push((v >> 40) & 0xff);
+	stream.Push((v >> 48) & 0xff);
+	stream.Push(v >> 56);
 }
 
 static void WriteUInt32(TArray<uint8_t> &stream, uint32_t v)
 {
-	stream.Push(v >> 24);
-	stream.Push((v >> 16) & 0xff);
-	stream.Push((v >> 8) & 0xff);
 	stream.Push(v & 0xff);
+	stream.Push((v >> 8) & 0xff);
+	stream.Push((v >> 16) & 0xff);
+	stream.Push(v >> 24);
 }
 
 static void WriteUInt16(TArray<uint8_t> &stream, uint16_t v)
 {
-	stream.Push((v >> 8) & 0xff);
 	stream.Push(v & 0xff);
+	stream.Push((v >> 8) & 0xff);
 }
 
 static void WriteUInt8(TArray<uint8_t> &stream, uint8_t v)
@@ -357,21 +354,11 @@ static void WriteSLEB128(TArray<uint8_t> &stream, int32_t v)
 	}
 }
 
-struct FrameDesc
-{
-	int minInstAlignment = 4;
-	int dataAlignmentFactor = -4;
-	uint8_t returnAddressReg = 0;
-
-	uint32_t cieLocation = 0;
-	uint64_t functionStart = 0;
-	uint64_t functionSize = 0;
-};
-
 static void WriteCIE(TArray<uint8_t> &stream, const TArray<uint8_t> &cieInstructions, uint8_t returnAddressReg, int minInstAlignment, int dataAlignmentFactor)
 {
+	WriteUInt32(stream, 0xffffffff); // this is a 64-bit entry
 	unsigned int lengthPos = stream.Size();
-	WriteUInt32(stream, 0); // Length
+	WriteUInt64(stream, 0); // Length
 
 	WriteUInt32(stream, 0); // CIE ID
 	WriteUInt8(stream, 1); // CIE Version
@@ -387,7 +374,7 @@ static void WriteCIE(TArray<uint8_t> &stream, const TArray<uint8_t> &cieInstruct
 		stream.Push(cieInstructions[i]);
 
 	// Padding and update length field
-	unsigned int length = stream.Size() - lengthPos;
+	unsigned int length = stream.Size() - lengthPos - 8;
 	int padding = stream.Size() % 4;
 	for (int i = 0; i <= padding; i++) WriteUInt8(stream, 0);
 	WriteLength(stream, lengthPos, length);
@@ -397,8 +384,9 @@ static void WriteFDE(TArray<uint8_t> &stream, const TArray<uint8_t> &fdeInstruct
 {
 	uint32_t offsetToCIE = stream.Size() - cieLocation;
 
+	WriteUInt32(stream, 0xffffffff); // this is a 64-bit entry
 	unsigned int lengthPos = stream.Size();
-	WriteUInt32(stream, 0); // Length
+	WriteUInt64(stream, 0); // Length
 
 	WriteUInt32(stream, offsetToCIE);
 	functionStart = stream.Size();
@@ -409,7 +397,7 @@ static void WriteFDE(TArray<uint8_t> &stream, const TArray<uint8_t> &fdeInstruct
 		stream.Push(fdeInstructions[i]);
 
 	// Padding and update length field
-	unsigned int length = stream.Size() - lengthPos;
+	unsigned int length = stream.Size() - lengthPos - 8;
 	int padding = stream.Size() % 4;
 	for (int i = 0; i <= padding; i++) WriteUInt8(stream, 0);
 	WriteLength(stream, lengthPos, length);
@@ -452,19 +440,45 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 	X86Emitter *emitter = assembler.asEmitter();
 
 	// Build .eh_frame:
-	// (see appendix D.6 "Call Frame Information Example" in the DWARF 5 spec)
+	//
+	// The documentation for this can be found in the DWARF standard
+	// The x64 specific details are described in "System V Application Binary Interface AMD64 Architecture Processor Supplement"
+	//
+	// See appendix D.6 "Call Frame Information Example" in the DWARF 5 spec.
+	
+	// Asmjit -> DWARF register id
+	int dwarfRegId[16];
+	dwarfRegId[X86Gp::kIdAx] = 0;
+	dwarfRegId[X86Gp::kIdDx] = 1;
+	dwarfRegId[X86Gp::kIdCx] = 2;
+	dwarfRegId[X86Gp::kIdBx] = 3;
+	dwarfRegId[X86Gp::kIdSi] = 4;
+	dwarfRegId[X86Gp::kIdDi] = 5;
+	dwarfRegId[X86Gp::kIdBp] = 6;
+	dwarfRegId[X86Gp::kIdSp] = 7;
+	dwarfRegId[X86Gp::kIdR8] = 8;
+	dwarfRegId[X86Gp::kIdR9] = 9;
+	dwarfRegId[X86Gp::kIdR10] = 10;
+	dwarfRegId[X86Gp::kIdR11] = 11;
+	dwarfRegId[X86Gp::kIdR12] = 12;
+	dwarfRegId[X86Gp::kIdR13] = 13;
+	dwarfRegId[X86Gp::kIdR14] = 14;
+	dwarfRegId[X86Gp::kIdR15] = 15;
+	int dwarfRegRAId = 16;
+	int dwarfRegXmmId = 17;
 	
 	TArray<uint8_t> cieInstructions;
 	TArray<uint8_t> fdeInstructions;
 	uint64_t lastOffset = 0;
 
-	int minInstAlignment = 4; // To do: is this correct?
-	int dataAlignmentFactor = -4; // To do: is this correct?
-	uint8_t returnAddressReg = 0; // To do: get this from asmjit
+	int minInstAlignment = 1;
+	int dataAlignmentFactor = -4;
+	uint8_t returnAddressReg = dwarfRegRAId;
 
 	// To do: do we need to write register defaults into the CIE or does the defaults match the x64 calling convention?
+	// Great! the "System V Application Binary Interface AMD64 Architecture Processor Supplement" doesn't say what the defaults are..
 
-	// Note: this must match exactly what X86Internal::emitProlog does
+	// Note: the following code must match exactly what X86Internal::emitProlog does
 
 	X86Gp zsp = emitter->zsp();   // ESP|RSP register.
 	X86Gp zbp = emitter->zsp();   // EBP|RBP register.
@@ -472,6 +486,8 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 	X86Gp gpReg = emitter->zsp(); // General purpose register (temporary).
 	X86Gp saReg = emitter->zsp(); // Stack-arguments base register.
 	uint32_t gpSaved = layout.getSavedRegs(X86Reg::kKindGp);
+
+	int saveoffset = 0;
 
 	if (layout.hasPreservedFP())
 	{
@@ -481,8 +497,9 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 		emitter->push(zbp);
 
 		WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
-		// WriteXX(cieInstructions, UWOP_PUSH_NONVOL);
-		// WriteXX(cieInstructions, X86Gp::kIdBp);
+		WriteUInt8(fdeInstructions, (2 << 6) | dwarfRegId[X86Gp::kIdBp]); // DW_CFA_offset
+		WriteULEB128(fdeInstructions, saveoffset);
+		saveoffset += 2;
 
 		emitter->mov(zbp, zsp);
 	}
@@ -497,8 +514,9 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 			emitter->push(gpReg);
 
 			WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
-			// WriteXX(cieInstructions, UWOP_PUSH_NONVOL);
-			// WriteXX(cieInstructions, regId);
+			WriteUInt8(fdeInstructions, (2 << 6) | dwarfRegId[regId]); // DW_CFA_offset
+			WriteULEB128(fdeInstructions, saveoffset);
+			saveoffset += 2;
 		}
 	}
 
@@ -528,6 +546,8 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 		WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
 		WriteUInt8(fdeInstructions, 0x0e); // DW_CFA_def_cfa_offset
 		WriteULEB128(fdeInstructions, stackadjust);
+		
+		saveoffset += layout.getStackAdjustment() / dataAlignmentFactor;
 	}
 
 	if (layout.hasDynamicAlignment() && layout.hasDsaSlotUsed())
@@ -540,6 +560,7 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 	uint32_t xmmSaved = layout.getSavedRegs(X86Reg::kKindVec);
 	if (xmmSaved)
 	{
+		saveoffset += layout.getVecStackOffset() / dataAlignmentFactor;
 		X86Mem vecBase = x86::ptr(zsp, layout.getVecStackOffset());
 		X86Reg vecReg = x86::xmm(0);
 		bool avx = layout.isAvxEnabled();
@@ -556,8 +577,9 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 			vecBase.addOffsetLo32(static_cast<int32_t>(vecSize));
 
 			WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
-			// WriteXX(cieInstructions, UWOP_SAVE_XMM128);
-			// WriteXX(cieInstructions, regId);
+			WriteUInt8(fdeInstructions, (2 << 6) | (dwarfRegXmmId + regId)); // DW_CFA_offset
+			WriteULEB128(fdeInstructions, saveoffset);
+			saveoffset += 2;
 		}
 	}
 

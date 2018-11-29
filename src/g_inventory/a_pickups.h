@@ -76,8 +76,6 @@ public:
 	bool CallTryPickup(AActor *toucher, AActor **toucher_return = NULL);	// Wrapper for script function.
 
 	void DepleteOrDestroy ();			// virtual on the script side. 
-	PalEntry CallGetBlend();			// virtual on the script side.
-	bool GetNoTeleportFreeze();			// virtual on the script side.
 
 	bool DoRespawn();
 

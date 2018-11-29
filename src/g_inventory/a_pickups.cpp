@@ -185,28 +185,6 @@ void AInventory::DepleteOrDestroy ()
 
 //===========================================================================
 //
-// AInventory :: GetBlend
-//
-// Returns a color to blend to the player's view as long as they possess this
-// item.
-//
-//===========================================================================
-
-PalEntry AInventory::CallGetBlend()
-{
-	IFVIRTUAL(AInventory, GetBlend)
-	{
-		VMValue params[1] = { (DObject*)this };
-		int retval;
-		VMReturn ret(&retval);
-		VMCall(func, params, 1, &ret, 1);
-		return retval;
-	}
-	else return 0;
-}
-
-//===========================================================================
-//
 // AInventory :: PrevInv
 //
 // Returns the previous item with IF_INVBAR set.

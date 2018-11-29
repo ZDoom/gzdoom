@@ -4150,7 +4150,7 @@ static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amo
 			}
 			gift->flags |= MF_DROPPED;
 			gift->ClearCounters();
-			if (!gift->CallTryPickup(thing))
+			if (!CallTryPickup(gift, thing))
 			{
 				gift->Destroy();
 				return false;

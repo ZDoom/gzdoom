@@ -260,11 +260,11 @@ DEFINE_ACTION_FUNCTION(AInventory, DoRespawn)
 //
 //===========================================================================
 
-bool AInventory::CallTryPickup(AActor *toucher, AActor **toucher_return)
+bool CallTryPickup(AInventory *item, AActor *toucher, AActor **toucher_return)
 {
 	static VMFunction *func = nullptr;
 	if (func == nullptr) PClass::FindFunction(&func, NAME_Inventory, NAME_CallTryPickup);
-	VMValue params[2] = { (DObject*)this, toucher };
+	VMValue params[2] = { (DObject*)item, toucher };
 	VMReturn ret[2];
 	int res;
 	AActor *tret;

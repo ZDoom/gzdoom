@@ -926,7 +926,7 @@ AInventory *AActor::GiveInventoryType (PClassActor *type)
 	if (type != NULL)
 	{
 		item = static_cast<AInventory *>(Spawn (type));
-		if (!item->CallTryPickup (this))
+		if (!CallTryPickup (item, this))
 		{
 			item->Destroy ();
 			return NULL;

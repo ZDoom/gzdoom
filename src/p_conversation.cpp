@@ -972,7 +972,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 					item->IntVar(NAME_AmmoGive1) = 40;
 				}
 				item->flags |= MF_DROPPED;
-				if (!item->CallTryPickup(player->mo))
+				if (!CallTryPickup(item, player->mo))
 				{
 					item->Destroy();
 					takestuff = false;

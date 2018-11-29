@@ -980,7 +980,7 @@ void APlayerPawn::GiveDeathmatchInventory()
 			if (key->special1 != 0)
 			{
 				key = (AInventory*)Spawn(PClassActor::AllActorClasses[i]);
-				if (!key->CallTryPickup (this))
+				if (!CallTryPickup (key, this))
 				{
 					key->Destroy ();
 				}

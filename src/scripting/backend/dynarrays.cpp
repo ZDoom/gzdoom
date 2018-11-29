@@ -72,12 +72,12 @@ template<class T> void ArrayMove(T *self, T* other)
 
 template<class T, class U> int ArrayFind(T *self, U val)
 {
-	return self->Find(val);
+	return self->Find(static_cast<T::value_type>(val));
 }
 
 template<class T, class U> int ArrayPush(T *self, U val)
 {
-	return self->Push(val);
+	return self->Push(static_cast<T::value_type>(val));
 }
 
 template<class T> bool ArrayPop(T *self)
@@ -93,7 +93,7 @@ template<class T> void ArrayDelete(T *self, int index, int count)
 template<class T, class U, int fill = 1> void ArrayInsert(T *self, int index, U val)
 {
 	//int oldSize = self->Size();
-	self->Insert(index, val);
+	self->Insert(index, static_cast<T::value_type>(val));
 	// Is this even necessary? All Insert does is inserting one defined element into the array and moving the rest.
 	// It never creates empty tailing entries. fillcount in the macro will always be 0
 	//if (fill) { DYNARRAY_FILL_ITEMS_SKIP(1); }

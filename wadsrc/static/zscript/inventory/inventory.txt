@@ -144,7 +144,33 @@ class Inventory : Actor native
 			Spawn ("ItemFog", Pos, ALLOW_REPLACE);
 		}
 	}
-		
+
+	//===========================================================================
+	//
+	// AInventory :: Grind
+	//
+	//===========================================================================
+
+	override bool Grind(bool items)
+	{
+		// Does this grind request even care about items?
+		if (!items)
+		{
+			return false;
+		}
+		// Dropped items are normally destroyed by crushers. Set the DONTGIB flag,
+		// and they'll act like corpses with it set and be immune to crushers.
+		if (bDropped)
+		{
+			if (!bDontGib)
+			{
+				Destroy();
+			}
+			return false;
+		}
+		// Non-dropped items call the super method for compatibility.
+		return Super.Grind(items);
+	}		
 
 	//===========================================================================
 	//

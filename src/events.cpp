@@ -32,6 +32,7 @@
 */
 #include "events.h"
 #include "vm.h"
+#include "vmintern.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
 #include "gi.h"
@@ -665,48 +666,19 @@ DEFINE_ACTION_FUNCTION(DStaticEventHandler, Find)
 	ACTION_RETURN_OBJECT(nullptr);
 }
 
-#define DEFINE_EMPTY_HANDLER(cls, funcname) DEFINE_ACTION_FUNCTION(cls, funcname) \
-{ \
-	PARAM_SELF_PROLOGUE(cls); \
-	return 0; \
+
+// Check if the handler implements a callback for this event. This is used to avoid setting up the data for any event that the handler won't process
+static bool isEmpty(VMFunction *func)
+{
+	auto code = static_cast<VMScriptFunction *>(func)->Code;
+	return (code == nullptr || code->word == (0x00808000|OP_RET));
 }
 
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, OnRegister)
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, OnUnregister)
-
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLoaded)
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldUnloaded)
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingSpawned)
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDied)
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingRevived)
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDamaged)
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDestroyed)
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLinePreActivated)
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLineActivated)
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldSectorDamaged);
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLineDamaged);
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLightning)
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldTick)
-
-//DEFINE_EMPTY_HANDLER(DStaticEventHandler, RenderFrame)
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, RenderOverlay)
-
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, PlayerEntered)
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, PlayerRespawned)
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, PlayerDied)
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, PlayerDisconnected)
-
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, UiProcess);
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, InputProcess);
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, UiTick);
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, PostUiTick);
-
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, ConsoleProcess);
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, NetworkProcess);
-
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, CheckReplacement);
-
-DEFINE_EMPTY_HANDLER(DStaticEventHandler, NewGame)
+static bool isEmptyInt(VMFunction *func)
+{
+	auto code = static_cast<VMScriptFunction *>(func)->Code;
+	return (code == nullptr || code->word == (0x00048000|OP_RET));
+}
 
 // ===========================================
 //
@@ -719,8 +691,7 @@ void DStaticEventHandler::OnRegister()
 	IFVIRTUAL(DStaticEventHandler, OnRegister)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_OnRegister_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		VMValue params[1] = { (DStaticEventHandler*)this };
 		VMCall(func, params, 1, nullptr, 0);
 	}
@@ -731,8 +702,7 @@ void DStaticEventHandler::OnUnregister()
 	IFVIRTUAL(DStaticEventHandler, OnUnregister)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_OnUnregister_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		VMValue params[1] = { (DStaticEventHandler*)this };
 		VMCall(func, params, 1, nullptr, 0);
 	}
@@ -752,8 +722,7 @@ void DStaticEventHandler::WorldLoaded()
 	IFVIRTUAL(DStaticEventHandler, WorldLoaded)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_WorldLoaded_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		FWorldEvent e = E_SetupWorldEvent();
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
@@ -765,8 +734,7 @@ void DStaticEventHandler::WorldUnloaded()
 	IFVIRTUAL(DStaticEventHandler, WorldUnloaded)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_WorldUnloaded_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		FWorldEvent e = E_SetupWorldEvent();
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
@@ -778,8 +746,7 @@ void DStaticEventHandler::WorldThingSpawned(AActor* actor)
 	IFVIRTUAL(DStaticEventHandler, WorldThingSpawned)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_WorldThingSpawned_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		FWorldEvent e = E_SetupWorldEvent();
 		e.Thing = actor;
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
@@ -792,8 +759,7 @@ void DStaticEventHandler::WorldThingDied(AActor* actor, AActor* inflictor)
 	IFVIRTUAL(DStaticEventHandler, WorldThingDied)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_WorldThingDied_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		FWorldEvent e = E_SetupWorldEvent();
 		e.Thing = actor;
 		e.Inflictor = inflictor;
@@ -807,8 +773,7 @@ void DStaticEventHandler::WorldThingRevived(AActor* actor)
 	IFVIRTUAL(DStaticEventHandler, WorldThingRevived)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_WorldThingRevived_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		FWorldEvent e = E_SetupWorldEvent();
 		e.Thing = actor;
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
@@ -821,8 +786,7 @@ void DStaticEventHandler::WorldThingDamaged(AActor* actor, AActor* inflictor, AA
 	IFVIRTUAL(DStaticEventHandler, WorldThingDamaged)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_WorldThingDamaged_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		FWorldEvent e = E_SetupWorldEvent();
 		e.Thing = actor;
 		e.Inflictor = inflictor;
@@ -841,8 +805,7 @@ void DStaticEventHandler::WorldThingDestroyed(AActor* actor)
 	IFVIRTUAL(DStaticEventHandler, WorldThingDestroyed)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_WorldThingDestroyed_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		FWorldEvent e = E_SetupWorldEvent();
 		e.Thing = actor;
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
@@ -855,8 +818,7 @@ void DStaticEventHandler::WorldLinePreActivated(line_t* line, AActor* actor, int
 	IFVIRTUAL(DStaticEventHandler, WorldLinePreActivated)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_WorldLinePreActivated_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		FWorldEvent e = E_SetupWorldEvent();
 		e.Thing = actor;
 		e.ActivatedLine = line;
@@ -873,8 +835,7 @@ void DStaticEventHandler::WorldLineActivated(line_t* line, AActor* actor, int ac
 	IFVIRTUAL(DStaticEventHandler, WorldLineActivated)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_WorldLineActivated_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		FWorldEvent e = E_SetupWorldEvent();
 		e.Thing = actor;
 		e.ActivatedLine = line;
@@ -889,8 +850,7 @@ int DStaticEventHandler::WorldSectorDamaged(sector_t* sector, AActor* source, in
 	IFVIRTUAL(DStaticEventHandler, WorldSectorDamaged)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_WorldSectorDamaged_VMPtr)
-			return damage;
+		if (isEmpty(func)) return damage;
 		FWorldEvent e = E_SetupWorldEvent();
 		e.DamageSource = source;
 		e.DamageSector = sector;
@@ -913,8 +873,7 @@ int DStaticEventHandler::WorldLineDamaged(line_t* line, AActor* source, int dama
 	IFVIRTUAL(DStaticEventHandler, WorldLineDamaged)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_WorldLineDamaged_VMPtr)
-			return damage;
+		if (isEmpty(func)) return damage;
 		FWorldEvent e = E_SetupWorldEvent();
 		e.DamageSource = source;
 		e.DamageLine = line;
@@ -937,8 +896,7 @@ void DStaticEventHandler::WorldLightning()
 	IFVIRTUAL(DStaticEventHandler, WorldLightning)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_WorldLightning_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		FWorldEvent e = E_SetupWorldEvent();
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
@@ -950,8 +908,7 @@ void DStaticEventHandler::WorldTick()
 	IFVIRTUAL(DStaticEventHandler, WorldTick)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_WorldTick_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		VMValue params[1] = { (DStaticEventHandler*)this };
 		VMCall(func, params, 1, nullptr, 0);
 	}
@@ -976,8 +933,7 @@ void DStaticEventHandler::RenderFrame()
 	IFVIRTUAL(DStaticEventHandler, RenderFrame)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_RenderFrame_VMPtr)
-			return;
+	 	if (isEmpty(func)) return;
 		FRenderEvent e = E_SetupRenderEvent();
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
@@ -990,8 +946,7 @@ void DStaticEventHandler::RenderOverlay(EHudState state)
 	IFVIRTUAL(DStaticEventHandler, RenderOverlay)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_RenderOverlay_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		FRenderEvent e = E_SetupRenderEvent();
 		e.HudState = int(state);
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
@@ -1004,8 +959,7 @@ void DStaticEventHandler::PlayerEntered(int num, bool fromhub)
 	IFVIRTUAL(DStaticEventHandler, PlayerEntered)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_PlayerEntered_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		FPlayerEvent e = { num, fromhub };
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
@@ -1017,8 +971,7 @@ void DStaticEventHandler::PlayerRespawned(int num)
 	IFVIRTUAL(DStaticEventHandler, PlayerRespawned)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_PlayerRespawned_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		FPlayerEvent e = { num, false };
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
@@ -1030,8 +983,7 @@ void DStaticEventHandler::PlayerDied(int num)
 	IFVIRTUAL(DStaticEventHandler, PlayerDied)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_PlayerDied_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		FPlayerEvent e = { num, false };
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
@@ -1043,8 +995,7 @@ void DStaticEventHandler::PlayerDisconnected(int num)
 	IFVIRTUAL(DStaticEventHandler, PlayerDisconnected)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_PlayerDisconnected_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		FPlayerEvent e = { num, false };
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
@@ -1096,8 +1047,7 @@ bool DStaticEventHandler::UiProcess(const event_t* ev)
 	IFVIRTUAL(DStaticEventHandler, UiProcess)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_UiProcess_VMPtr)
-			return false;
+		if (isEmptyInt(func)) return false;
 		FUiEvent e = ev;
 
 		int processed;
@@ -1142,9 +1092,7 @@ bool DStaticEventHandler::InputProcess(const event_t* ev)
 	IFVIRTUAL(DStaticEventHandler, InputProcess)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_InputProcess_VMPtr)
-			return false;
-
+		if (isEmptyInt(func)) return false;
 		FInputEvent e = ev;
 		//
 
@@ -1163,8 +1111,7 @@ void DStaticEventHandler::UiTick()
 	IFVIRTUAL(DStaticEventHandler, UiTick)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_UiTick_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		VMValue params[1] = { (DStaticEventHandler*)this };
 		VMCall(func, params, 1, nullptr, 0);
 	}
@@ -1175,8 +1122,7 @@ void DStaticEventHandler::PostUiTick()
 	IFVIRTUAL(DStaticEventHandler, PostUiTick)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_PostUiTick_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		VMValue params[1] = { (DStaticEventHandler*)this };
 		VMCall(func, params, 1, nullptr, 0);
 	}
@@ -1189,8 +1135,7 @@ void DStaticEventHandler::ConsoleProcess(int player, FString name, int arg1, int
 		IFVIRTUAL(DStaticEventHandler, ConsoleProcess)
 		{
 			// don't create excessive DObjects if not going to be processed anyway
-			if (func == DStaticEventHandler_ConsoleProcess_VMPtr)
-				return;
+			if (isEmpty(func)) return;
 			FConsoleEvent e;
 
 			//
@@ -1210,8 +1155,7 @@ void DStaticEventHandler::ConsoleProcess(int player, FString name, int arg1, int
 		IFVIRTUAL(DStaticEventHandler, NetworkProcess)
 		{
 			// don't create excessive DObjects if not going to be processed anyway
-			if (func == DStaticEventHandler_NetworkProcess_VMPtr)
-				return;
+			if (isEmpty(func)) return;
 			FConsoleEvent e;
 
 			//
@@ -1233,8 +1177,7 @@ void DStaticEventHandler::CheckReplacement( PClassActor *replacee, PClassActor *
 	IFVIRTUAL(DStaticEventHandler, CheckReplacement)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_CheckReplacement_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		FReplaceEvent e = { replacee, *replacement, *final };
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
@@ -1249,8 +1192,7 @@ void DStaticEventHandler::NewGame()
 	IFVIRTUAL(DStaticEventHandler, NewGame)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
-		if (func == DStaticEventHandler_NewGame_VMPtr)
-			return;
+		if (isEmpty(func)) return;
 		VMValue params[1] = { (DStaticEventHandler*)this };
 		VMCall(func, params, 1, nullptr, 0);
 	}

@@ -227,35 +227,6 @@ AInventory *AInventory::NextInv ()
 
 //===========================================================================
 //
-// AInventory :: DoRespawn
-//
-//===========================================================================
-
-bool AInventory::DoRespawn ()
-{
-	if (SpawnPointClass != NULL)
-	{
-		AActor *spot = NULL;
-		DSpotState *state = DSpotState::GetSpotState();
-
-		if (state != NULL) spot = state->GetRandomSpot(SpawnPointClass);
-		if (spot != NULL) 
-		{
-			SetOrigin (spot->Pos(), false);
-			SetZ(floorz);
-		}
-	}
-	return true;
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, DoRespawn)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	ACTION_RETURN_BOOL(self->DoRespawn());
-}
-
-//===========================================================================
-//
 // AInventory :: CallTryPickup
 //
 //===========================================================================

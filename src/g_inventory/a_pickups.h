@@ -75,8 +75,6 @@ public:
 
 	void DepleteOrDestroy ();			// virtual on the script side. 
 
-	bool DoRespawn();
-
 	AInventory *PrevInv();		// Returns the previous item with IF_INVBAR set.
 	AInventory *NextInv();		// Returns the next item with IF_INVBAR set.
 

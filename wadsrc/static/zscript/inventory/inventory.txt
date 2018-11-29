@@ -49,7 +49,6 @@ class Inventory : Actor native
 		Inventory.PickupMessage "$TXT_DEFAULTPICKUPMSG";
 	}
 	
-	native bool DoRespawn();
 	native static void PrintPickupMessage (bool localview, String str);
 
 	States(Actor)
@@ -169,6 +168,29 @@ class Inventory : Actor native
 		}
 	}
 
+	//===========================================================================
+	//
+	// AInventory :: DoRespawn
+	//
+	//===========================================================================
+
+	bool DoRespawn ()
+	{
+		if (SpawnPointClass != NULL)
+		{
+			Actor spot = NULL;
+			let state = SpotState.GetSpotState();
+
+			if (state != NULL) spot = state.GetRandomSpot(SpawnPointClass, false);
+			if (spot != NULL) 
+			{
+				SetOrigin (spot.Pos, false);
+				SetZ(floorz);
+			}
+		}
+		return true;
+	}
+	
 	//===========================================================================
 	//
 	// AInventory :: Grind

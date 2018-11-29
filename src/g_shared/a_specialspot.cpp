@@ -368,6 +368,13 @@ ASpecialSpot *DSpotState::GetRandomSpot(PClassActor *type, bool onlyonce)
 	return NULL;
 }
 
+DEFINE_ACTION_FUNCTION(DSpotState, GetRandomSpot)
+{
+	PARAM_SELF_PROLOGUE(DSpotState);
+	PARAM_CLASS(type, AActor);
+	PARAM_BOOL(onlyonce);
+	ACTION_RETURN_POINTER(self->GetRandomSpot(type, onlyonce));
+}
 
 //----------------------------------------------------------------------------
 //

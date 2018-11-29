@@ -622,14 +622,7 @@ public:
 	}
 
 	bool IsLinked(sector_t *other, bool ceiling) const;
-	double FindLowestFloorSurrounding(vertex_t **v) const;
-	double FindHighestFloorSurrounding(vertex_t **v) const;
-	double FindNextHighestFloor(vertex_t **v) const;
-	double FindNextLowestFloor(vertex_t **v) const;
-	double FindLowestCeilingSurrounding(vertex_t **v) const;			// jff 2/04/98
-	double FindHighestCeilingSurrounding(vertex_t **v) const;			// jff 2/04/98
-	double FindNextLowestCeiling(vertex_t **v) const;					// jff 2/04/98
-	double FindNextHighestCeiling(vertex_t **v) const;					// jff 2/04/98
+
 	int FindMinSurroundingLight (int max) const;
 	sector_t *NextSpecialSector (int type, sector_t *prev) const;		// [RH]
 	double FindHighestFloorPoint(vertex_t **v) const;
@@ -1597,6 +1590,14 @@ inline void FColormap::CopyFrom3DLight(lightlist_t *light)
 	}
 }
 
+double FindLowestFloorSurrounding(const sector_t *sec, vertex_t **v);
+double FindHighestFloorSurrounding(const sector_t *sec, vertex_t **v);
+double FindNextHighestFloor(const sector_t *sec, vertex_t **v);
+double FindNextLowestFloor(const sector_t *sec, vertex_t **v);
+double FindLowestCeilingSurrounding(const sector_t *sec, vertex_t **v);			// jff 2/04/98
+double FindHighestCeilingSurrounding(const sector_t *sec, vertex_t **v);			// jff 2/04/98
+double FindNextLowestCeiling(const sector_t *sec, vertex_t **v);					// jff 2/04/98
+double FindNextHighestCeiling(const sector_t *sec, vertex_t **v);					// jff 2/04/98
 
 double FindShortestTextureAround(sector_t *sector);					// jff 2/04/98
 double FindShortestUpperAround(sector_t *sector);					// jff 2/04/98

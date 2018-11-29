@@ -359,7 +359,7 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, double speed, int delay, int lightTag
 	{
 	case doorClose:
 		m_Direction = -1;
-		height = sec->FindLowestCeilingSurrounding (&spot);
+		height = FindLowestCeilingSurrounding (sec, &spot);
 		m_TopDist = sec->ceilingplane.PointToDist (spot, height - 4);
 		DoorSound (false);
 		break;
@@ -367,7 +367,7 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, double speed, int delay, int lightTag
 	case doorOpen:
 	case doorRaise:
 		m_Direction = 1;
-		height = sec->FindLowestCeilingSurrounding (&spot);
+		height = FindLowestCeilingSurrounding (sec, &spot);
 		m_TopDist = sec->ceilingplane.PointToDist (spot, height - 4);
 		if (m_TopDist != sec->ceilingplane.fD())
 			DoorSound (true);
@@ -381,7 +381,7 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, double speed, int delay, int lightTag
 
 	case doorWaitRaise:
 		m_Direction = 2;
-		height = sec->FindLowestCeilingSurrounding (&spot);
+		height = FindLowestCeilingSurrounding (sec, &spot);
 		m_TopDist = sec->ceilingplane.PointToDist (spot, height - 4);
 		break;
 

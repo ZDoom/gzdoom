@@ -264,7 +264,7 @@ bool P_CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int t
 		break;
 
 	case DCeiling::ceilRaiseToHighest:
-		targheight = sec->FindHighestCeilingSurrounding (&spot);
+		targheight = FindHighestCeilingSurrounding (sec, &spot);
 		ceiling->m_TopHeight = sec->ceilingplane.PointToDist (spot, targheight);
 		ceiling->m_Direction = 1;
 		break;
@@ -300,13 +300,13 @@ bool P_CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int t
 		break;
 
 	case DCeiling::ceilLowerToHighestFloor:
-		targheight = sec->FindHighestFloorSurrounding (&spot) + height;
+		targheight = FindHighestFloorSurrounding (sec, &spot) + height;
 		ceiling->m_BottomHeight = sec->ceilingplane.PointToDist (spot, targheight);
 		ceiling->m_Direction = -1;
 		break;
 
 	case DCeiling::ceilRaiseToHighestFloor:
-		targheight = sec->FindHighestFloorSurrounding (&spot);
+		targheight = FindHighestFloorSurrounding (sec, &spot);
 		ceiling->m_TopHeight = sec->ceilingplane.PointToDist (spot, targheight);
 		ceiling->m_Direction = 1;
 		break;
@@ -326,25 +326,25 @@ bool P_CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int t
 		break;
 
 	case DCeiling::ceilLowerToNearest:
-		targheight = sec->FindNextLowestCeiling (&spot);
+		targheight = FindNextLowestCeiling (sec, &spot);
 		ceiling->m_BottomHeight = sec->ceilingplane.PointToDist (spot, targheight);
 		ceiling->m_Direction = -1;
 		break;
 
 	case DCeiling::ceilRaiseToNearest:
-		targheight = sec->FindNextHighestCeiling (&spot);
+		targheight = FindNextHighestCeiling (sec, &spot);
 		ceiling->m_TopHeight = sec->ceilingplane.PointToDist (spot, targheight);
 		ceiling->m_Direction = 1;
 		break;
 
 	case DCeiling::ceilLowerToLowest:
-		targheight = sec->FindLowestCeilingSurrounding (&spot);
+		targheight = FindLowestCeilingSurrounding (sec, &spot);
 		ceiling->m_BottomHeight = sec->ceilingplane.PointToDist (spot, targheight);
 		ceiling->m_Direction = -1;
 		break;
 
 	case DCeiling::ceilRaiseToLowest:
-		targheight = sec->FindLowestCeilingSurrounding (&spot);
+		targheight = FindLowestCeilingSurrounding (sec, &spot);
 		ceiling->m_TopHeight = sec->ceilingplane.PointToDist (spot, targheight);
 		ceiling->m_Direction = 1;
 		break;
@@ -362,7 +362,7 @@ bool P_CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int t
 		break;
 
 	case DCeiling::ceilLowerToHighest:
-		targheight = sec->FindHighestCeilingSurrounding (&spot);
+		targheight = FindHighestCeilingSurrounding (sec, &spot);
 		ceiling->m_BottomHeight = sec->ceilingplane.PointToDist (spot, targheight);
 		ceiling->m_Direction = -1;
 		break;

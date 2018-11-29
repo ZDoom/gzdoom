@@ -104,37 +104,37 @@ DEFINE_ACTION_FUNCTION(_Sector, NextSpecialSector)
 // P_FindLowestFloorSurrounding()
 // FIND LOWEST FLOOR HEIGHT IN SURROUNDING SECTORS
 //
-double sector_t::FindLowestFloorSurrounding (vertex_t **v) const
+double FindLowestFloorSurrounding (const sector_t *sector, vertex_t **v)
 {
 	sector_t *other;
 	double floor;
 	double ofloor;
 	vertex_t *spot;
 
-	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::floor);
+	if (sector->Lines.Size() == 0) return sector->GetPlaneTexZ(sector_t::floor);
 
-	spot = Lines[0]->v1;
-	floor = floorplane.ZatPoint(spot);
+	spot = sector->Lines[0]->v1;
+	floor = sector->floorplane.ZatPoint(spot);
 
-	for (auto check : Lines)
+	for (auto check : sector->Lines)
 	{
-		if (NULL != (other = getNextSector (check, this)))
+		if (NULL != (other = getNextSector (check, sector)))
 		{
 			ofloor = other->floorplane.ZatPoint (check->v1);
-			if (ofloor < floor && ofloor < floorplane.ZatPoint (check->v1))
+			if (ofloor < floor && ofloor < sector->floorplane.ZatPoint (check->v1))
 			{
 				floor = ofloor;
 				spot = check->v1;
 			}
 			ofloor = other->floorplane.ZatPoint (check->v2);
-			if (ofloor < floor && ofloor < floorplane.ZatPoint (check->v2))
+			if (ofloor < floor && ofloor < sector->floorplane.ZatPoint (check->v2))
 			{
 				floor = ofloor;
 				spot = check->v2;
 			}
 		}
 	}
-	if (v != NULL)
+	if (v != nullptr)
 		*v = spot;
 	return floor;
 }
@@ -143,21 +143,21 @@ double sector_t::FindLowestFloorSurrounding (vertex_t **v) const
 // P_FindHighestFloorSurrounding()
 // FIND HIGHEST FLOOR HEIGHT IN SURROUNDING SECTORS
 //
-double sector_t::FindHighestFloorSurrounding (vertex_t **v) const
+double FindHighestFloorSurrounding (const sector_t *sector, vertex_t **v)
 {
 	sector_t *other;
 	double floor;
 	double ofloor;
 	vertex_t *spot;
 
-	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::floor);
+	if (sector->Lines.Size() == 0) return sector->GetPlaneTexZ(sector_t::floor);
 
-	spot = Lines[0]->v1;
+	spot = sector->Lines[0]->v1;
 	floor = -FLT_MAX;
 
-	for (auto check : Lines)
+	for (auto check : sector->Lines)
 	{
-		if (NULL != (other = getNextSector (check, this)))
+		if (NULL != (other = getNextSector (check, sector)))
 		{
 			ofloor = other->floorplane.ZatPoint (check->v1);
 			if (ofloor > floor)
@@ -173,7 +173,7 @@ double sector_t::FindHighestFloorSurrounding (vertex_t **v) const
 			}
 		}
 	}
-	if (v != NULL)
+	if (v != nullptr)
 		*v = spot;
 	return floor;
 }
@@ -188,7 +188,7 @@ double sector_t::FindHighestFloorSurrounding (vertex_t **v) const
 //
 // Rewritten by Lee Killough to avoid fixed array and to be faster
 //
-double sector_t::FindNextHighestFloor (vertex_t **v) const
+double FindNextHighestFloor (const sector_t *sector, vertex_t **v)
 {
 	double height;
 	double heightdiff;
@@ -196,27 +196,27 @@ double sector_t::FindNextHighestFloor (vertex_t **v) const
 	sector_t *other;
 	vertex_t *spot;
 
-	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::floor);
+	if (sector->Lines.Size() == 0) return sector->GetPlaneTexZ(sector_t::floor);
 
-	spot = Lines[0]->v1;
-	height = floorplane.ZatPoint(spot);
+	spot = sector->Lines[0]->v1;
+	height = sector->floorplane.ZatPoint(spot);
 	heightdiff = FLT_MAX;
 
-	for (auto check : Lines)
+	for (auto check : sector->Lines)
 	{
-		if (NULL != (other = getNextSector (check, this)))
+		if (NULL != (other = getNextSector (check, sector)))
 		{
 			ofloor = other->floorplane.ZatPoint (check->v1);
-			floor = floorplane.ZatPoint (check->v1);
-			if (ofloor > floor && ofloor - floor < heightdiff && !IsLinked(other, false))
+			floor = sector->floorplane.ZatPoint (check->v1);
+			if (ofloor > floor && ofloor - floor < heightdiff && !sector->IsLinked(other, false))
 			{
 				heightdiff = ofloor - floor;
 				height = ofloor;
 				spot = check->v1;
 			}
 			ofloor = other->floorplane.ZatPoint (check->v2);
-			floor = floorplane.ZatPoint (check->v2);
-			if (ofloor > floor && ofloor - floor < heightdiff && !IsLinked(other, false))
+			floor = sector->floorplane.ZatPoint (check->v2);
+			if (ofloor > floor && ofloor - floor < heightdiff && !sector->IsLinked(other, false))
 			{
 				heightdiff = ofloor - floor;
 				height = ofloor;
@@ -224,7 +224,7 @@ double sector_t::FindNextHighestFloor (vertex_t **v) const
 			}
 		}
 	}
-	if (v != NULL)
+	if (v != nullptr)
 		*v = spot;
 	return height;
 }
@@ -240,7 +240,7 @@ double sector_t::FindNextHighestFloor (vertex_t **v) const
 //
 // jff 02/03/98 Twiddled Lee's P_FindNextHighestFloor to make this
 //
-double sector_t::FindNextLowestFloor (vertex_t **v) const
+double FindNextLowestFloor (const sector_t *sector, vertex_t **v)
 {
 	double height;
 	double heightdiff;
@@ -248,27 +248,27 @@ double sector_t::FindNextLowestFloor (vertex_t **v) const
 	sector_t *other;
 	vertex_t *spot;
 
-	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::floor);
+	if (sector->Lines.Size() == 0) return sector->GetPlaneTexZ(sector_t::floor);
 
-	spot = Lines[0]->v1;
-	height = floorplane.ZatPoint (spot);
+	spot = sector->Lines[0]->v1;
+	height = sector->floorplane.ZatPoint (spot);
 	heightdiff = FLT_MAX;
 
-	for (auto check : Lines)
+	for (auto check : sector->Lines)
 	{
-		if (NULL != (other = getNextSector (check, this)))
+		if (NULL != (other = getNextSector (check, sector)))
 		{
 			ofloor = other->floorplane.ZatPoint (check->v1);
-			floor = floorplane.ZatPoint (check->v1);
-			if (ofloor < floor && floor - ofloor < heightdiff && !IsLinked(other, false))
+			floor = sector->floorplane.ZatPoint (check->v1);
+			if (ofloor < floor && floor - ofloor < heightdiff && !sector->IsLinked(other, false))
 			{
 				heightdiff = floor - ofloor;
 				height = ofloor;
 				spot = check->v1;
 			}
 			ofloor = other->floorplane.ZatPoint (check->v2);
-			floor = floorplane.ZatPoint(check->v2);
-			if (ofloor < floor && floor - ofloor < heightdiff && !IsLinked(other, false))
+			floor = sector->floorplane.ZatPoint(check->v2);
+			if (ofloor < floor && floor - ofloor < heightdiff && !sector->IsLinked(other, false))
 			{
 				heightdiff = floor - ofloor;
 				height = ofloor;
@@ -276,7 +276,7 @@ double sector_t::FindNextLowestFloor (vertex_t **v) const
 			}
 		}
 	}
-	if (v != NULL)
+	if (v != nullptr)
 		*v = spot;
 	return height;
 }
@@ -292,7 +292,7 @@ double sector_t::FindNextLowestFloor (vertex_t **v) const
 //
 // jff 02/03/98 Twiddled Lee's P_FindNextHighestFloor to make this
 //
-double sector_t::FindNextLowestCeiling (vertex_t **v) const
+double FindNextLowestCeiling (const sector_t *sector, vertex_t **v)
 {
 	double height;
 	double heightdiff;
@@ -300,27 +300,27 @@ double sector_t::FindNextLowestCeiling (vertex_t **v) const
 	sector_t *other;
 	vertex_t *spot;
 
-	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::floor);
+	if (sector->Lines.Size() == 0) return sector->GetPlaneTexZ(sector_t::floor);
 
-	spot = Lines[0]->v1;
-	height = ceilingplane.ZatPoint(spot);
+	spot = sector->Lines[0]->v1;
+	height = sector->ceilingplane.ZatPoint(spot);
 	heightdiff = FLT_MAX;
 
-	for (auto check : Lines)
+	for (auto check : sector->Lines)
 	{
-		if (NULL != (other = getNextSector (check, this)))
+		if (NULL != (other = getNextSector (check, sector)))
 		{
 			oceil = other->ceilingplane.ZatPoint(check->v1);
-			ceil = ceilingplane.ZatPoint(check->v1);
-			if (oceil < ceil && ceil - oceil < heightdiff && !IsLinked(other, true))
+			ceil = sector->ceilingplane.ZatPoint(check->v1);
+			if (oceil < ceil && ceil - oceil < heightdiff && !sector->IsLinked(other, true))
 			{
 				heightdiff = ceil - oceil;
 				height = oceil;
 				spot = check->v1;
 			}
 			oceil = other->ceilingplane.ZatPoint(check->v2);
-			ceil = ceilingplane.ZatPoint(check->v2);
-			if (oceil < ceil && ceil - oceil < heightdiff && !IsLinked(other, true))
+			ceil = sector->ceilingplane.ZatPoint(check->v2);
+			if (oceil < ceil && ceil - oceil < heightdiff && !sector->IsLinked(other, true))
 			{
 				heightdiff = ceil - oceil;
 				height = oceil;
@@ -328,7 +328,7 @@ double sector_t::FindNextLowestCeiling (vertex_t **v) const
 			}
 		}
 	}
-	if (v != NULL)
+	if (v != nullptr)
 		*v = spot;
 	return height;
 }
@@ -344,7 +344,7 @@ double sector_t::FindNextLowestCeiling (vertex_t **v) const
 //
 // jff 02/03/98 Twiddled Lee's P_FindNextHighestFloor to make this
 //
-double sector_t::FindNextHighestCeiling (vertex_t **v) const
+double FindNextHighestCeiling (const sector_t *sector, vertex_t **v)
 {
 	double height;
 	double heightdiff;
@@ -352,27 +352,27 @@ double sector_t::FindNextHighestCeiling (vertex_t **v) const
 	sector_t *other;
 	vertex_t *spot;
 
-	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::ceiling);
+	if (sector->Lines.Size() == 0) return sector->GetPlaneTexZ(sector_t::ceiling);
 
-	spot = Lines[0]->v1;
-	height = ceilingplane.ZatPoint(spot);
+	spot = sector->Lines[0]->v1;
+	height = sector->ceilingplane.ZatPoint(spot);
 	heightdiff = FLT_MAX;
 
-	for (auto check : Lines)
+	for (auto check : sector->Lines)
 	{
-		if (NULL != (other = getNextSector (check, this)))
+		if (NULL != (other = getNextSector (check, sector)))
 		{
 			oceil = other->ceilingplane.ZatPoint(check->v1);
-			ceil = ceilingplane.ZatPoint(check->v1);
-			if (oceil > ceil && oceil - ceil < heightdiff && !IsLinked(other, true))
+			ceil = sector->ceilingplane.ZatPoint(check->v1);
+			if (oceil > ceil && oceil - ceil < heightdiff && !sector->IsLinked(other, true))
 			{
 				heightdiff = oceil - ceil;
 				height = oceil;
 				spot = check->v1;
 			}
 			oceil = other->ceilingplane.ZatPoint(check->v2);
-			ceil = ceilingplane.ZatPoint(check->v2);
-			if (oceil > ceil && oceil - ceil < heightdiff && !IsLinked(other, true))
+			ceil = sector->ceilingplane.ZatPoint(check->v2);
+			if (oceil > ceil && oceil - ceil < heightdiff && !sector->IsLinked(other, true))
 			{
 				heightdiff = oceil - ceil;
 				height = oceil;
@@ -380,7 +380,7 @@ double sector_t::FindNextHighestCeiling (vertex_t **v) const
 			}
 		}
 	}
-	if (v != NULL)
+	if (v != nullptr)
 		*v = spot;
 	return height;
 }
@@ -389,21 +389,21 @@ double sector_t::FindNextHighestCeiling (vertex_t **v) const
 //
 // FIND LOWEST CEILING IN THE SURROUNDING SECTORS
 //
-double sector_t::FindLowestCeilingSurrounding (vertex_t **v) const
+double FindLowestCeilingSurrounding (const sector_t *sector, vertex_t **v)
 {
 	double height;
 	double oceil;
 	sector_t *other;
 	vertex_t *spot;
 
-	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::ceiling);
+	if (sector->Lines.Size() == 0) return sector->GetPlaneTexZ(sector_t::ceiling);
 
-	spot = Lines[0]->v1;
+	spot = sector->Lines[0]->v1;
 	height = FLT_MAX;
 
-	for (auto check : Lines)
+	for (auto check : sector->Lines)
 	{
-		if (NULL != (other = getNextSector (check, this)))
+		if (NULL != (other = getNextSector (check, sector)))
 		{
 			oceil = other->ceilingplane.ZatPoint(check->v1);
 			if (oceil < height)
@@ -419,7 +419,7 @@ double sector_t::FindLowestCeilingSurrounding (vertex_t **v) const
 			}
 		}
 	}
-	if (v != NULL)
+	if (v != nullptr)
 		*v = spot;
 	return height;
 }
@@ -428,21 +428,21 @@ double sector_t::FindLowestCeilingSurrounding (vertex_t **v) const
 //
 // FIND HIGHEST CEILING IN THE SURROUNDING SECTORS
 //
-double sector_t::FindHighestCeilingSurrounding (vertex_t **v) const
+double FindHighestCeilingSurrounding (const sector_t *sector, vertex_t **v)
 {
 	double height;
 	double oceil;
 	sector_t *other;
 	vertex_t *spot;
 
-	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::ceiling);
+	if (sector->Lines.Size() == 0) return sector->GetPlaneTexZ(sector_t::ceiling);
 
-	spot = Lines[0]->v1;
+	spot = sector->Lines[0]->v1;
 	height = -FLT_MAX;
 
-	for (auto check : Lines)
+	for (auto check : sector->Lines)
 	{
-		if (NULL != (other = getNextSector (check, this)))
+		if (NULL != (other = getNextSector (check, sector)))
 		{
 			oceil = other->ceilingplane.ZatPoint(check->v1);
 			if (oceil > height)
@@ -458,7 +458,7 @@ double sector_t::FindHighestCeilingSurrounding (vertex_t **v) const
 			}
 		}
 	}
-	if (v != NULL)
+	if (v != nullptr)
 		*v = spot;
 	return height;
 }

@@ -28,82 +28,82 @@
 #include "p_local.h"
 
 
-DEFINE_ACTION_FUNCTION(_Sector, FindLowestFloorSurrounding)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindLowestFloorSurrounding, FindLowestFloorSurrounding)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	vertex_t *v;
-	double h = self->FindLowestFloorSurrounding(&v);
+	double h = FindLowestFloorSurrounding(self, &v);
 	if (numret > 0) ret[0].SetFloat(h);
 	if (numret > 1) ret[1].SetPointer(v);
 	return numret;
 }
 
 
-DEFINE_ACTION_FUNCTION(_Sector, FindHighestFloorSurrounding)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindHighestFloorSurrounding, FindHighestFloorSurrounding)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	vertex_t *v;
-	double h = self->FindHighestFloorSurrounding(&v);
+	double h = FindHighestFloorSurrounding(self, &v);
 	if (numret > 0) ret[0].SetFloat(h);
 	if (numret > 1) ret[1].SetPointer(v);
 	return numret;
 }
 
-DEFINE_ACTION_FUNCTION(_Sector, FindNextHighestFloor)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindNextHighestFloor, FindNextHighestFloor)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	vertex_t *v;
-	double h = self->FindNextHighestFloor(&v);
+	double h = FindNextHighestFloor(self, &v);
 	if (numret > 0) ret[0].SetFloat(h);
 	if (numret > 1) ret[1].SetPointer(v);
 	return numret;
 }
 
-DEFINE_ACTION_FUNCTION(_Sector, FindNextLowestFloor)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindNextLowestFloor, FindNextLowestFloor)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	vertex_t *v;
-	double h = self->FindNextLowestFloor(&v);
+	double h = FindNextLowestFloor(self, &v);
 	if (numret > 0) ret[0].SetFloat(h);
 	if (numret > 1) ret[1].SetPointer(v);
 	return numret;
 }
 
-DEFINE_ACTION_FUNCTION(_Sector, FindNextLowestCeiling)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindNextLowestCeiling, FindNextLowestCeiling)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	vertex_t *v;
-	double h = self->FindNextLowestCeiling(&v);
+	double h = FindNextLowestCeiling(self, &v);
 	if (numret > 0) ret[0].SetFloat(h);
 	if (numret > 1) ret[1].SetPointer(v);
 	return numret;
 }
 
-DEFINE_ACTION_FUNCTION(_Sector, FindNextHighestCeiling)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindNextHighestCeiling, FindNextHighestCeiling)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	vertex_t *v;
-	double h = self->FindNextHighestCeiling(&v);
+	double h = FindNextHighestCeiling(self, &v);
 	if (numret > 0) ret[0].SetFloat(h);
 	if (numret > 1) ret[1].SetPointer(v);
 	return numret;
 }
 
-DEFINE_ACTION_FUNCTION(_Sector, FindLowestCeilingSurrounding)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindLowestCeilingSurrounding, FindLowestCeilingSurrounding)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	vertex_t *v;
-	double h = self->FindLowestCeilingSurrounding(&v);
+	double h = FindLowestCeilingSurrounding(self, &v);
 	if (numret > 0) ret[0].SetFloat(h);
 	if (numret > 1) ret[1].SetPointer(v);
 	return numret;
 }
 
-DEFINE_ACTION_FUNCTION(_Sector, FindHighestCeilingSurrounding)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindHighestCeilingSurrounding, FindHighestCeilingSurrounding)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	vertex_t *v;
-	double h = self->FindHighestCeilingSurrounding(&v);
+	double h = FindHighestCeilingSurrounding(self, &v);
 	if (numret > 0) ret[0].SetFloat(h);
 	if (numret > 1) ret[1].SetPointer(v);
 	return numret;

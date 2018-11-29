@@ -330,10 +330,31 @@ static void WriteUInt8(TArray<uint8_t> &stream, uint8_t v)
 
 static void WriteULEB128(TArray<uint8_t> &stream, uint32_t v)
 {
+	while (true)
+	{
+		if (v < 128)
+		{
+			WriteUInt8(stream, v);
+			break;
+		}
+		else
+		{
+			WriteUInt8(stream, (v & 0x7f) | 0x80);
+			v >>= 7;
+		}
+	}
 }
 
 static void WriteSLEB128(TArray<uint8_t> &stream, int32_t v)
 {
+	if (v >= 0)
+	{
+		WriteULEB128(stream, v);
+	}
+	else
+	{
+		// To do: sign extended version
+	}
 }
 
 struct FrameDesc
@@ -394,6 +415,27 @@ static void WriteFDE(TArray<uint8_t> &stream, const TArray<uint8_t> &fdeInstruct
 	WriteLength(stream, lengthPos, length);
 }
 
+static void WriteAdvanceLoc(TArray<uint8_t> &fdeInstructions, uint64_t offset, uint64_t &lastOffset)
+{
+	uint64_t delta = offset - lastOffset;
+	if (delta < (1 << 8))
+	{
+		WriteUInt8(fdeInstructions, 2); // DW_CFA_advance_loc1
+		WriteUInt8(fdeInstructions, delta);
+	}
+	else if (delta < (1 << 16))
+	{
+		WriteUInt8(fdeInstructions, 3); // DW_CFA_advance_loc2
+		WriteUInt16(fdeInstructions, delta);
+	}
+	else
+	{
+		WriteUInt8(fdeInstructions, 4); // DW_CFA_advance_loc3
+		WriteUInt32(fdeInstructions, delta);
+	}
+	lastOffset = offset;
+}
+
 static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &functionStart)
 {
 	using namespace asmjit;
@@ -410,15 +452,17 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 	X86Emitter *emitter = assembler.asEmitter();
 
 	// Build .eh_frame:
-
-	// To do: write CIE and FDE call frame instructions (see appendix D.6 "Call Frame Information Example" in the DWARF 5 spec)
-
+	// (see appendix D.6 "Call Frame Information Example" in the DWARF 5 spec)
+	
 	TArray<uint8_t> cieInstructions;
 	TArray<uint8_t> fdeInstructions;
+	uint64_t lastOffset = 0;
 
 	int minInstAlignment = 4; // To do: is this correct?
 	int dataAlignmentFactor = -4; // To do: is this correct?
 	uint8_t returnAddressReg = 0; // To do: get this from asmjit
+
+	// To do: do we need to write register defaults into the CIE or does the defaults match the x64 calling convention?
 
 	// Note: this must match exactly what X86Internal::emitProlog does
 
@@ -436,9 +480,9 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 		gpSaved &= ~Utils::mask(X86Gp::kIdBp);
 		emitter->push(zbp);
 
+		WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
 		// WriteXX(cieInstructions, UWOP_PUSH_NONVOL);
 		// WriteXX(cieInstructions, X86Gp::kIdBp);
-		// WriteXX(cieInstructions, (uint32_t)assembler.getOffset());
 
 		emitter->mov(zbp, zsp);
 	}
@@ -452,9 +496,9 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 			gpReg.setId(regId);
 			emitter->push(gpReg);
 
+			WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
 			// WriteXX(cieInstructions, UWOP_PUSH_NONVOL);
 			// WriteXX(cieInstructions, regId);
-			// WriteXX(cieInstructions, (uint32_t)assembler.getOffset());
 		}
 	}
 
@@ -481,9 +525,9 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 		emitter->sub(zsp, layout.getStackAdjustment());
 
 		uint32_t stackadjust = layout.getStackAdjustment();
-		// WriteXX(cieInstructions, UWOP_ALLOC);
-		// WriteXX(cieInstructions, stackadjust);
-		// WriteXX(cieInstructions, (uint32_t)assembler.getOffset());
+		WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
+		WriteUInt8(fdeInstructions, 0x0e); // DW_CFA_def_cfa_offset
+		WriteULEB128(fdeInstructions, stackadjust);
 	}
 
 	if (layout.hasDynamicAlignment() && layout.hasDsaSlotUsed())
@@ -511,9 +555,9 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 			emitter->emit(vecInst, vecBase, vecReg);
 			vecBase.addOffsetLo32(static_cast<int32_t>(vecSize));
 
+			WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
 			// WriteXX(cieInstructions, UWOP_SAVE_XMM128);
 			// WriteXX(cieInstructions, regId);
-			// WriteXX(cieInstructions, (uint32_t)assembler.getOffset());
 		}
 	}
 

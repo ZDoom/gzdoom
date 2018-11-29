@@ -110,19 +110,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindHighestCeilingSurrounding, FindHighes
 }
 
 
-DEFINE_ACTION_FUNCTION(_Sector, FindMinSurroundingLight)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindMinSurroundingLight, FindMinSurroundingLight)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	PARAM_INT(min);
-	auto h = self->FindMinSurroundingLight(min);
+	auto h = FindMinSurroundingLight(self, min);
 	ACTION_RETURN_INT(h);
 }
 
-DEFINE_ACTION_FUNCTION(_Sector, FindHighestFloorPoint)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindHighestFloorPoint, FindHighestFloorPoint)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	vertex_t *v;
-	double h = self->FindHighestFloorPoint(&v);
+	double h = FindHighestFloorPoint(self, &v);
 	if (numret > 0) ret[0].SetFloat(h);
 	if (numret > 1) ret[1].SetPointer(v);
 	return numret;
@@ -498,7 +498,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 self->SetYScale(pos, o);
  }
 
- DEFINE_ACTION_FUNCTION(_Sector, SetYScale)
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetYScale, SetYScale)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);

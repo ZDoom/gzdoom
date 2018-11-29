@@ -595,13 +595,13 @@ sector_t *FindModelCeilingSector (sector_t *sect, double floordestheight)
 //
 // Find minimum light from an adjacent sector
 //
-int sector_t::FindMinSurroundingLight (int min) const
+int FindMinSurroundingLight (const sector_t *sector, int min)
 {
 	sector_t*	check;
 		
-	for (auto line : Lines)
+	for (auto line : sector->Lines)
 	{
-		if (NULL != (check = getNextSector (line, this)) &&
+		if (NULL != (check = getNextSector (line, sector)) &&
 			check->lightlevel < min)
 		{
 			min = check->lightlevel;
@@ -613,38 +613,38 @@ int sector_t::FindMinSurroundingLight (int min) const
 //
 // Find the highest point on the floor of the sector
 //
-double sector_t::FindHighestFloorPoint (vertex_t **v) const
+double FindHighestFloorPoint (const sector_t *sector, vertex_t **v)
 {
 	double height = -FLT_MAX;
 	double probeheight;
 	vertex_t *spot = NULL;
 
-	if (!floorplane.isSlope())
+	if (!sector->floorplane.isSlope())
 	{
 		if (v != NULL)
 		{
-			if (Lines.Size() == 0) *v = &level.vertexes[0];
-			else *v = Lines[0]->v1;
+			if (sector->Lines.Size() == 0) *v = &level.vertexes[0];
+			else *v = sector->Lines[0]->v1;
 		}
-		return -floorplane.fD();
+		return -sector->floorplane.fD();
 	}
 
-	for (auto line : Lines)
+	for (auto line : sector->Lines)
 	{
-		probeheight = floorplane.ZatPoint(line->v1);
+		probeheight = sector->floorplane.ZatPoint(line->v1);
 		if (probeheight > height)
 		{
 			height = probeheight;
 			spot = line->v1;
 		}
-		probeheight = floorplane.ZatPoint(line->v2);
+		probeheight = sector->floorplane.ZatPoint(line->v2);
 		if (probeheight > height)
 		{
 			height = probeheight;
 			spot = line->v2;
 		}
 	}
-	if (v != NULL)
+	if (v != nullptr)
 		*v = spot;
 	return height;
 }

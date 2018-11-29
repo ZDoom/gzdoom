@@ -388,7 +388,7 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, double speed, int delay, int lightTag
 	case doorWaitClose:
 		m_Direction = 0;
 		m_Type = DDoor::doorRaise;
-		height = sec->FindHighestFloorPoint (&m_BotSpot);
+		height = FindHighestFloorPoint (sec, &m_BotSpot);
 		m_BotDist = sec->ceilingplane.PointToDist (m_BotSpot, height);
 		m_OldFloorDist = sec->floorplane.fD();
 		m_TopDist = sec->ceilingplane.fD();
@@ -399,7 +399,7 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, double speed, int delay, int lightTag
 	if (!m_Sector->floordata || !m_Sector->floordata->IsKindOf(RUNTIME_CLASS(DPlat)) ||
 		!(barrier_cast<DPlat*>(m_Sector->floordata))->IsLift())
 	{
-		height = sec->FindHighestFloorPoint (&m_BotSpot);
+		height = FindHighestFloorPoint (sec, &m_BotSpot);
 		m_BotDist = sec->ceilingplane.PointToDist (m_BotSpot, height);
 	}
 	else

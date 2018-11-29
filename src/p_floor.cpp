@@ -338,7 +338,7 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 		break;
 
 	case DFloor::floorMoveToValue:
-		sec->FindHighestFloorPoint(&spot);
+		FindHighestFloorPoint(sec, &spot);
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(spot, height);
 		floor->m_Direction = (floor->m_FloorDestDist > sec->floorplane.fD()) ? -1 : 1;
 		break;
@@ -829,7 +829,7 @@ bool EV_DoDonut (int tag, line_t *line, double pillarspeed, double slimespeed)
 			floor->m_Instant = false;
 			floor->m_Texture = s3->GetTexture(sector_t::floor);
 			floor->m_NewSpecial = {};
-			height = s3->FindHighestFloorPoint (&spot);
+			height = FindHighestFloorPoint (s3, &spot);
 			floor->m_FloorDestDist = s2->floorplane.PointToDist (spot, height);
 			floor->StartFloorSound ();
 			
@@ -842,7 +842,7 @@ bool EV_DoDonut (int tag, line_t *line, double pillarspeed, double slimespeed)
 			floor->m_Sector = s1;
 			floor->m_Speed = pillarspeed;
 			floor->m_Instant = false;
-			height = s3->FindHighestFloorPoint (&spot);
+			height = FindHighestFloorPoint (s3, &spot);
 			floor->m_FloorDestDist = s1->floorplane.PointToDist (spot, height);
 			floor->StartFloorSound ();
 			break;

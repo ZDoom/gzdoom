@@ -623,9 +623,7 @@ public:
 
 	bool IsLinked(sector_t *other, bool ceiling) const;
 
-	int FindMinSurroundingLight (int max) const;
 	sector_t *NextSpecialSector (int type, sector_t *prev) const;		// [RH]
-	double FindHighestFloorPoint(vertex_t **v) const;
 	void RemoveForceField();
 	int Index() const;
 
@@ -1598,6 +1596,8 @@ double FindLowestCeilingSurrounding(const sector_t *sec, vertex_t **v);			// jff
 double FindHighestCeilingSurrounding(const sector_t *sec, vertex_t **v);			// jff 2/04/98
 double FindNextLowestCeiling(const sector_t *sec, vertex_t **v);					// jff 2/04/98
 double FindNextHighestCeiling(const sector_t *sec, vertex_t **v);					// jff 2/04/98
+int FindMinSurroundingLight (const sector_t *sec, int max);
+double FindHighestFloorPoint(const sector_t *sec, vertex_t **v);
 
 double FindShortestTextureAround(sector_t *sector);					// jff 2/04/98
 double FindShortestUpperAround(sector_t *sector);					// jff 2/04/98

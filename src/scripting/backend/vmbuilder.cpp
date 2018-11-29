@@ -1068,16 +1068,17 @@ ExpEmit FunctionCallEmitter::EmitCall(VMFunctionBuilder *build, TArray<ExpEmit> 
 	}
 
 
+
 	if (virtualselfreg == -1)
 	{
-		build->Emit(OP_CALL_K, build->GetConstantAddress(target), paramcount, returns.Size());
+		build->Emit(OP_CALL_K, build->GetConstantAddress(target), paramcount, vm_jit ? target->Proto->ReturnTypes.Size() : returns.Size());
 	}
 	else
 	{
 		ExpEmit funcreg(build, REGT_POINTER);
 
 		build->Emit(OP_VTBL, funcreg.RegNum, virtualselfreg, target->VirtualIndex);
-		build->Emit(OP_CALL, funcreg.RegNum, paramcount, returns.Size());
+		build->Emit(OP_CALL, funcreg.RegNum, paramcount, vm_jit? target->Proto->ReturnTypes.Size() : returns.Size());
 	}
 
 	assert(returns.Size() < 2 || ReturnRegs != nullptr);

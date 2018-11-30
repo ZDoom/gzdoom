@@ -804,7 +804,7 @@ bool AActor::GiveInventory(PClassActor *type, int amount, bool givecheat)
 
 	if (type == nullptr || !type->IsDescendantOf(RUNTIME_CLASS(AInventory))) return false;
 
-	AWeapon *savedPendingWeap = player != NULL ? player->PendingWeapon : NULL;
+	auto savedPendingWeap = player != NULL ? player->PendingWeapon : NULL;
 	bool hadweap = player != NULL ? player->ReadyWeapon != NULL : true;
 
 	AInventory *item;
@@ -1071,6 +1071,12 @@ void AActor::DestroyAllInventory ()
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, DestroyAllInventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->DestroyAllInventory();
+	return 0;
+}
 //============================================================================
 //
 // AActor :: FirstInv
@@ -1120,9 +1126,14 @@ bool AActor::UseInventory (AInventory *item)
 	{
 		return false;
 	}
-	if (!item->CallUse (false))
+
+	IFVIRTUALPTR(item, AInventory, Use)
 	{
-		return false;
+		VMValue params[2] = { item, false };
+		int retval;
+		VMReturn ret(&retval);
+		VMCall(func, params, 2, &ret, 1);
+		if (!retval) return false;
 	}
 
 	if (dmflags2 & DF2_INFINITE_INVENTORY)
@@ -5319,26 +5330,6 @@ void AActor::CallPostBeginPlay()
 	E_WorldThingSpawned(this);
 }
 
-void AActor::MarkPrecacheSounds() const
-{
-	SeeSound.MarkUsed();
-	AttackSound.MarkUsed();
-	PainSound.MarkUsed();
-	DeathSound.MarkUsed();
-	ActiveSound.MarkUsed();
-	UseSound.MarkUsed();
-	BounceSound.MarkUsed();
-	WallBounceSound.MarkUsed();
-	CrushPainSound.MarkUsed();
-}
-
-DEFINE_ACTION_FUNCTION(AActor, MarkPrecacheSounds)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	self->MarkPrecacheSounds();
-	return 0;
-}
-
 bool AActor::isFast()
 {
 	if (flags5&MF5_ALWAYSFAST) return true;
@@ -5731,7 +5722,11 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	else if ((multiplayer || (level.flags2 & LEVEL2_ALLOWRESPAWN) || sv_singleplayerrespawn ||
 		!!G_SkillProperty(SKILLP_PlayerRespawn)) && state == PST_REBORN && oldactor != NULL)
 	{ // Special inventory handling for respawning in coop
-		p->mo->FilterCoopRespawnInventory (oldactor);
+		IFVM(PlayerPawn, FilterCoopRespawnInventory)
+		{
+			VMValue params[] = { p->mo, oldactor };
+			VMCall(func, params, 2, nullptr, 0);
+		}
 	}
 	if (oldactor != NULL)
 	{ // Remove any inventory left from the old actor. Coop handles
@@ -6799,29 +6794,6 @@ DEFINE_ACTION_FUNCTION(AActor, HitFloor)
 
 //---------------------------------------------------------------------------
 //
-// P_CheckSplash
-//
-// Checks for splashes caused by explosions
-//
-//---------------------------------------------------------------------------
-
-void P_CheckSplash(AActor *self, double distance)
-{
-	sector_t *floorsec;
-	self->Sector->LowestFloorAt(self, &floorsec);
-	if (self->Z() <= self->floorz + distance && self->floorsector == floorsec && self->Sector->GetHeightSec() == NULL && floorsec->heightsec == NULL)
-	{
-		// Explosion splashes never alert monsters. This is because A_Explode has
-		// a separate parameter for that so this would get in the way of proper 
-		// behavior.
-		DVector3 pos = self->PosRelative(floorsec);
-		pos.Z = self->floorz;
-		P_HitWater (self, floorsec, pos, false, false);
-	}
-}
-
-//---------------------------------------------------------------------------
-//
 // FUNC P_CheckMissileSpawn
 //
 // Returns true if the missile is at a valid spawn point, otherwise
@@ -7315,20 +7287,6 @@ DEFINE_ACTION_FUNCTION(AActor, SpawnSubMissile)
 ================
 */
 
-AActor *P_SpawnPlayerMissile (AActor *source, PClassActor *type)
-{
-	if (source == NULL)
-	{
-		return NULL;
-	}
-	return P_SpawnPlayerMissile (source, 0, 0, 0, type, source->Angles.Yaw);
-}
-
-AActor *P_SpawnPlayerMissile (AActor *source, PClassActor *type, DAngle angle)
-{
-	return P_SpawnPlayerMissile (source, 0, 0, 0, type, angle);
-}
-
 AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 							  PClassActor *type, DAngle angle, FTranslatedLineTarget *pLineTarget, AActor **pMissileActor,
 							  bool nofreeaim, bool noautoaim, int aimflags)
@@ -7346,7 +7304,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 	DAngle vrange = nofreeaim ? 35. : 0.;
 
 	if (!pLineTarget) pLineTarget = &scratch;
-	if (source->player && source->player->ReadyWeapon && ((source->player->ReadyWeapon->WeaponFlags & WIF_NOAUTOAIM) || noautoaim))
+	if (!(aimflags & ALF_NOWEAPONCHECK) && source->player && source->player->ReadyWeapon && ((source->player->ReadyWeapon->IntVar(NAME_WeaponFlags) & WIF_NOAUTOAIM) || noautoaim))
 	{
 		// Keep exactly the same angle and pitch as the player's own aim
 		an = angle;

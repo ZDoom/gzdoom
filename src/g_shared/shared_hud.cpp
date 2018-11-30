@@ -507,12 +507,12 @@ static int DrawKeys(player_t * CPlayer, int x, int y)
 //---------------------------------------------------------------------------
 static TArray<PClassActor *> orderedammos;
 
-static void AddAmmoToList(AWeapon * weapdef)
+static void AddAmmoToList(AInventory * weapdef)
 {
 
 	for (int i = 0; i < 2; i++)
 	{
-		auto ti = i == 0 ? weapdef->AmmoType1 : weapdef->AmmoType2;
+		auto ti = weapdef->PointerVar<PClassActor>(i == 0 ? NAME_AmmoType1 : NAME_AmmoType2);
 		if (ti)
 		{
 			auto ammodef = (AInventory*)GetDefaultByType(ti);
@@ -570,7 +570,7 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 	char buf[256];
 	AInventory *inv;
 
-	AWeapon *wi=CPlayer->ReadyWeapon;
+	auto wi=CPlayer->ReadyWeapon;
 
 	orderedammos.Clear();
 
@@ -582,9 +582,9 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 	else
 	{
 		// Order ammo by use of weapons in the weapon slots
-		for (k = 0; k < NUM_WEAPON_SLOTS; k++) for(j = 0; j < CPlayer->weapons.Slots[k].Size(); j++)
+		for (k = 0; k < NUM_WEAPON_SLOTS; k++) for(j = 0; j < CPlayer->weapons.SlotSize(k); j++)
 		{
-			PClassActor *weap = CPlayer->weapons.Slots[k].GetWeapon(j);
+			PClassActor *weap = CPlayer->weapons.GetWeapon(k, j);
 
 			if (weap)
 			{
@@ -593,7 +593,7 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 				
 				if (hud_showammo > 1 || CPlayer->mo->FindInventory(weap))
 				{
-					AddAmmoToList((AWeapon*)GetDefaultByType(weap));
+					AddAmmoToList((AInventory*)GetDefaultByType(weap));
 				}
 			}
 		}
@@ -603,7 +603,7 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 		{
 			if (inv->IsKindOf(NAME_Weapon))
 			{
-				AddAmmoToList((AWeapon*)inv);
+				AddAmmoToList(inv);
 			}
 		}
 	}
@@ -643,7 +643,7 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 		FTextureID icon = !AltIcon.isNull()? AltIcon : inv->Icon;
 		if (!icon.isValid()) continue;
 
-		double trans= (wi && (type==wi->AmmoType1 || type==wi->AmmoType2)) ? 0.75 : 0.375;
+		double trans= (wi && (type==wi->PointerVar<PClassActor>(NAME_AmmoType1) || type==wi->PointerVar<PClassActor>(NAME_AmmoType2))) ? 0.75 : 0.375;
 
 		int maxammo = inv->MaxAmount;
 		int ammo = ammoitem? ammoitem->Amount : 0;
@@ -736,18 +736,19 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetInventoryIcon)
 	return MIN(numret, 2);
 }
 
-static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AWeapon * weapon)
+static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AInventory * weapon)
 {
 	double trans;
 
 	// Powered up weapons and inherited sister weapons are not displayed.
-	if (weapon->WeaponFlags & WIF_POWERED_UP) return;
-	if (weapon->SisterWeapon && weapon->IsKindOf(weapon->SisterWeapon->GetClass())) return;
+	if (weapon->IntVar(NAME_WeaponFlags) & WIF_POWERED_UP) return;
+	auto SisterWeapon = weapon->PointerVar<AInventory>(NAME_SisterWeapon);
+	if (SisterWeapon && weapon->IsKindOf(SisterWeapon->GetClass())) return;
 
 	trans=0.4;
 	if (CPlayer->ReadyWeapon)
 	{
-		if (weapon==CPlayer->ReadyWeapon || weapon==CPlayer->ReadyWeapon->SisterWeapon) trans = 0.85;
+		if (weapon==CPlayer->ReadyWeapon || SisterWeapon == CPlayer->ReadyWeapon) trans = 0.85;
 	}
 
 	FTextureID picnum = GetInventoryIcon(weapon, DI_ALTICONFIRST);
@@ -775,22 +776,22 @@ static void DrawWeapons(player_t *CPlayer, int x, int y)
 	for(inv = CPlayer->mo->Inventory; inv; inv = inv->Inventory)
 	{
 		if (inv->IsKindOf(NAME_Weapon) && 
-			!CPlayer->weapons.LocateWeapon(static_cast<AWeapon*>(inv)->GetClass(), NULL, NULL))
+			!CPlayer->weapons.LocateWeapon(inv->GetClass(), NULL, NULL))
 		{
-			DrawOneWeapon(CPlayer, x, y, static_cast<AWeapon*>(inv));
+			DrawOneWeapon(CPlayer, x, y, inv);
 		}
 	}
 
 	// And now everything in the weapon slots back to front
-	for (k = NUM_WEAPON_SLOTS - 1; k >= 0; k--) for(j = CPlayer->weapons.Slots[k].Size() - 1; j >= 0; j--)
+	for (k = NUM_WEAPON_SLOTS - 1; k >= 0; k--) for(j = CPlayer->weapons.SlotSize(k) - 1; j >= 0; j--)
 	{
-		PClassActor *weap = CPlayer->weapons.Slots[k].GetWeapon(j);
+		PClassActor *weap = CPlayer->weapons.GetWeapon(k, j);
 		if (weap) 
 		{
 			inv=CPlayer->mo->FindInventory(weap);
 			if (inv) 
 			{
-				DrawOneWeapon(CPlayer, x, y, static_cast<AWeapon*>(inv));
+				DrawOneWeapon(CPlayer, x, y, inv);
 			}
 		}
 	}

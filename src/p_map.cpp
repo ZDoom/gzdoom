@@ -156,6 +156,25 @@ DEFINE_FIELD_X(FCheckPosition, FCheckPosition, portalstep);
 DEFINE_FIELD_X(FCheckPosition, FCheckPosition, portalgroup);
 DEFINE_FIELD_X(FCheckPosition, FCheckPosition, PushTime);
 
+DEFINE_FIELD_X(FRailParams, FRailParams, source);
+DEFINE_FIELD_X(FRailParams, FRailParams, damage);
+DEFINE_FIELD_X(FRailParams, FRailParams, offset_xy);
+DEFINE_FIELD_X(FRailParams, FRailParams, offset_z);
+DEFINE_FIELD_X(FRailParams, FRailParams, color1);
+DEFINE_FIELD_X(FRailParams, FRailParams, color2);
+DEFINE_FIELD_X(FRailParams, FRailParams, maxdiff);
+DEFINE_FIELD_X(FRailParams, FRailParams, flags);
+DEFINE_FIELD_X(FRailParams, FRailParams, puff);
+DEFINE_FIELD_X(FRailParams, FRailParams, angleoffset);
+DEFINE_FIELD_X(FRailParams, FRailParams, pitchoffset);
+DEFINE_FIELD_X(FRailParams, FRailParams, distance);
+DEFINE_FIELD_X(FRailParams, FRailParams, duration);
+DEFINE_FIELD_X(FRailParams, FRailParams, sparsity);
+DEFINE_FIELD_X(FRailParams, FRailParams, drift);
+DEFINE_FIELD_X(FRailParams, FRailParams, spawnclass);
+DEFINE_FIELD_X(FRailParams, FRailParams, SpiralOffset);
+DEFINE_FIELD_X(FRailParams, FRailParams, limit);
+
 //==========================================================================
 //
 // CanCollideWith
@@ -4439,8 +4458,8 @@ DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLin
 		else
 		{
 			// [BB] Disable autoaim on weapons with WIF_NOAUTOAIM.
-			AWeapon *weapon = t1->player->ReadyWeapon;
-			if (weapon && (weapon->WeaponFlags & WIF_NOAUTOAIM))
+			auto weapon = t1->player->ReadyWeapon;
+			if ((weapon && (weapon->IntVar(NAME_WeaponFlags) & WIF_NOAUTOAIM)) && !(flags & ALF_NOWEAPONCHECK))
 			{
 				vrange = 0.5;
 			}
@@ -4840,38 +4859,13 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 			}
 			if (!(puffDefaults != NULL && puffDefaults->flags3&MF3_BLOODLESSIMPACT))
 			{
-				bool bloodsplatter = (t1->flags5 & MF5_BLOODSPLATTER) ||
-					(t1->player != nullptr &&	t1->player->ReadyWeapon != nullptr &&
-						(t1->player->ReadyWeapon->WeaponFlags & WIF_AXEBLOOD));
-
-				bool axeBlood = (t1->player != nullptr &&
-					t1->player->ReadyWeapon != nullptr &&
-					(t1->player->ReadyWeapon->WeaponFlags & WIF_AXEBLOOD));
-
-				if (!bloodsplatter && !axeBlood &&
-					!(trace.Actor->flags & MF_NOBLOOD) &&
-					!(trace.Actor->flags2 & (MF2_INVULNERABLE | MF2_DORMANT)))
+				IFVIRTUALPTR(trace.Actor, AActor, SpawnLineAttackBlood)
 				{
-					P_SpawnBlood(bleedpos, trace.SrcAngleFromTarget, newdam > 0 ? newdam : damage, trace.Actor);
+					VMValue params[] = { trace.Actor, t1, bleedpos.X, bleedpos.Y, bleedpos.Z, trace.SrcAngleFromTarget.Degrees, damage, newdam };
+					VMCall(func, params, countof(params), nullptr, 0);
 				}
-
 				if (damage)
 				{
-					if (bloodsplatter || axeBlood)
-					{
-						if (!(trace.Actor->flags&MF_NOBLOOD) &&
-							!(trace.Actor->flags2&(MF2_INVULNERABLE | MF2_DORMANT)))
-						{
-							if (axeBlood)
-							{
-								P_BloodSplatter2(bleedpos, trace.Actor, trace.SrcAngleFromTarget);
-							}
-							if (pr_lineattack() < 192)
-							{
-								P_BloodSplatter(bleedpos, trace.Actor, trace.SrcAngleFromTarget);
-							}
-						}
-					}
 					// [RH] Stick blood to walls
 					P_TraceBleed(newdam > 0 ? newdam : damage, trace.HitPos, trace.Actor, trace.SrcAngleFromTarget, pitch);
 				}
@@ -5603,6 +5597,15 @@ void P_RailAttack(FRailParams *p)
 	P_DrawRailTrail(source, rail_data.PortalHits, p->color1, p->color2, p->maxdiff, p->flags, p->spawnclass, angle, p->duration, p->sparsity, p->drift, p->SpiralOffset, pitch);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, RailAttack)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(p, FRailParams);
+	p->source = self;
+	P_RailAttack(p);
+	return 0;
+}
+
 //==========================================================================
 //
 // [RH] P_AimCamera
@@ -6201,7 +6204,7 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 		// them far too "active." BossBrains also use the old code
 		// because some user levels require they have a height of 16,
 		// which can make them near impossible to hit with the new code.
-		if ((flags & RADF_NODAMAGE) || !((bombspot->flags5 | thing->flags5) & MF5_OLDRADIUSDMG))
+		if (((flags & RADF_NODAMAGE) || !((bombspot->flags5 | thing->flags5) & MF5_OLDRADIUSDMG)) && !(flags & RADF_OLDRADIUSDAMAGE))
 		{
 			double points = P_GetRadiusDamage(false, bombspot, thing, bombdamage, bombdistance, fulldamagedistance, bombsource == thing);
 			double check = int(points) * bombdamage;
@@ -6276,6 +6279,18 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 		}
 	}
 	return count;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, RadiusAttack)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(bombsource, AActor);
+	PARAM_INT(bombdamage);
+	PARAM_INT(bombdistance);
+	PARAM_NAME(damagetype);
+	PARAM_INT(flags);
+	PARAM_INT(fulldamagedistance);
+	ACTION_RETURN_INT(P_RadiusAttack(self, bombsource, bombdamage, bombdistance, damagetype, flags, fulldamagedistance));
 }
 
 //==========================================================================

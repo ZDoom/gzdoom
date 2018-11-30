@@ -99,10 +99,11 @@ class PPropFlag : public PSymbol
 {
 	DECLARE_CLASS(PPropFlag, PSymbol);
 public:
-	PPropFlag(FName name, PField *offset, int bitval);
+	PPropFlag(FName name, PField *offset, int bitval, bool decorateonly);
 
 	PField *Offset;
 	int bitval;
+	bool decorateOnly;
 
 protected:
 	PPropFlag();

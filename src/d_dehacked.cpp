@@ -761,8 +761,8 @@ void SetDehParams(FState *state, int codepointer)
 	
 	// Let's identify the codepointer we're dealing with.
 	PFunction *sym;
-	sym = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->FindSymbol(FName(MBFCodePointers[codepointer].name), true));
-	if (sym == NULL) return;
+	sym = dyn_cast<PFunction>(PClass::FindActor(NAME_Weapon)->FindSymbol(FName(MBFCodePointers[codepointer].name), true));
+	if (sym == NULL ) return;
 
 	if (codepointer < 0 || (unsigned)codepointer >= countof(MBFCodePointerFactories))
 	{
@@ -1580,16 +1580,18 @@ static int PatchAmmo (int ammoNum)
 				defaultAmmo->MaxAmount = *max;
 				defaultAmmo->Amount = Scale (defaultAmmo->Amount, *per, oldclip);
 			}
-			else if (type->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
+			else if (type->IsDescendantOf (NAME_Weapon))
 			{
-				AWeapon *defWeap = (AWeapon *)GetDefaultByType (type);
-				if (defWeap->AmmoType1 == ammoType)
+				auto defWeap = GetDefaultByType (type);
+				if (defWeap->PointerVar<PClassActor>(NAME_AmmoType1) == ammoType)
 				{
-					defWeap->AmmoGive1 = Scale (defWeap->AmmoGive1, *per, oldclip);
+					auto &AmmoGive1 = defWeap->IntVar(NAME_AmmoGive1);
+					AmmoGive1 = Scale (AmmoGive1, *per, oldclip);
 				}
-				if (defWeap->AmmoType2 == ammoType)
+				if (defWeap->PointerVar<PClassActor>(NAME_AmmoType2) == ammoType)
 				{
-					defWeap->AmmoGive2 = Scale (defWeap->AmmoGive2, *per, oldclip);
+					auto &AmmoGive2 = defWeap->IntVar(NAME_AmmoGive2);
+					AmmoGive2 = Scale (AmmoGive2, *per, oldclip);
 				}
 			}
 		}
@@ -1601,9 +1603,8 @@ static int PatchAmmo (int ammoNum)
 static int PatchWeapon (int weapNum)
 {
 	int result;
-	PClassActor *type = NULL;
-	uint8_t dummy[sizeof(AWeapon)];
-	AWeapon *info = (AWeapon *)&dummy;
+	PClassActor *type = nullptr;
+	AInventory *info = nullptr;
 	bool patchedStates = false;
 	FStateDefinitions statedef;
 
@@ -1612,7 +1613,7 @@ static int PatchWeapon (int weapNum)
 		type = WeaponNames[weapNum];
 		if (type != NULL)
 		{
-			info = (AWeapon *)GetDefaultByType (type);
+			info = (AInventory*)GetDefaultByType (type);
 			DPrintf (DMSG_SPAMMY, "Weapon %d\n", weapNum);
 		}
 	}
@@ -1655,13 +1656,18 @@ static int PatchWeapon (int weapNum)
 				{
 					val = 5;
 				}
-				info->AmmoType1 = AmmoNames[val];
-				if (info->AmmoType1 != NULL)
+				if (info)
 				{
-					info->AmmoGive1 = ((AInventory*)GetDefaultByType (info->AmmoType1))->Amount * 2;
-					if (info->AmmoUse1 == 0)
+					auto &AmmoType = info->PointerVar<PClassActor>(NAME_AmmoType1);
+					AmmoType = AmmoNames[val];
+					if (AmmoType != nullptr)
 					{
-						info->AmmoUse1 = 1;
+						info->IntVar(NAME_AmmoGive1) = ((AInventory*)GetDefaultByType(AmmoType))->Amount * 2;
+						auto &AmmoUse = info->IntVar(NAME_AmmoUse1);
+						if (AmmoUse == 0)
+						{
+							AmmoUse = 1;
+						}
 					}
 				}
 			}
@@ -1676,7 +1682,7 @@ static int PatchWeapon (int weapNum)
 			const FDecalTemplate *decal = DecalLibrary.GetDecalByName (Line2);
 			if (decal != NULL)
 			{
-				info->DecalGenerator = const_cast <FDecalTemplate *>(decal);
+				if (info) info->DecalGenerator = const_cast <FDecalTemplate *>(decal);
 			}
 			else
 			{
@@ -1685,12 +1691,15 @@ static int PatchWeapon (int weapNum)
 		}
 		else if (stricmp (Line1, "Ammo use") == 0 || stricmp (Line1, "Ammo per shot") == 0)
 		{
-			info->AmmoUse1 = val;
-			info->flags6 |= MF6_INTRYMOVE;	// flag the weapon for postprocessing (reuse a flag that can't be set by external means)
+			if (info)
+			{
+				info->IntVar(NAME_AmmoUse1) = val;
+				info->flags6 |= MF6_INTRYMOVE;	// flag the weapon for postprocessing (reuse a flag that can't be set by external means)
+			}
 		}
 		else if (stricmp (Line1, "Min ammo") == 0)
 		{
-			info->MinAmmo1 = val;
+			if (info) info->IntVar(NAME_MinSelAmmo1) = val;
 		}
 		else
 		{
@@ -1698,14 +1707,17 @@ static int PatchWeapon (int weapNum)
 		}
 	}
 
-	if (info->AmmoType1 == NULL)
+	if (info)
 	{
-		info->AmmoUse1 = 0;
-	}
+		if (info->PointerVar<PClassActor>(NAME_AmmoType1) == nullptr)
+		{
+			info->IntVar(NAME_AmmoUse1) = 0;
+		}
 
-	if (patchedStates)
-	{
-		statedef.InstallStates(type, info);
+		if (patchedStates)
+		{
+			statedef.InstallStates(type, info);
+		}
 	}
 
 	return result;
@@ -2117,7 +2129,7 @@ static int PatchCodePtrs (int dummy)
 
 				// This skips the action table and goes directly to the internal symbol table
 				// DEH compatible functions are easy to recognize.
-				PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->FindSymbol(symname, true));
+				PFunction *sym = dyn_cast<PFunction>(PClass::FindActor(NAME_Weapon)->FindSymbol(symname, true));
 				if (sym == NULL)
 				{
 					Printf(TEXTCOLOR_RED "Frame %d: Unknown code pointer '%s'\n", frame, Line2);
@@ -2724,6 +2736,7 @@ static bool LoadDehSupp ()
 		sc.OpenLumpNum(lump);
 		sc.SetCMode(true);
 
+		auto wcls = PClass::FindActor(NAME_Weapon);
 		while (sc.GetString())
 		{
 			if (sc.Compare("ActionList"))
@@ -2738,11 +2751,11 @@ static bool LoadDehSupp ()
 					}
 					else
 					{
-						// all relevant code pointers are either defined in AWeapon
-						// or AActor so this will find all of them.
+						// all relevant code pointers are either defined in Weapon
+						// or Actor so this will find all of them.
 						FString name = "A_";
 						name << sc.String;
-						PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->FindSymbol(name, true));
+						PFunction *sym = dyn_cast<PFunction>(wcls->FindSymbol(name, true));
 						if (sym == NULL)
 						{
 							sc.ScriptError("Unknown code pointer '%s'", sc.String);
@@ -3084,9 +3097,10 @@ void FinishDehPatch ()
 	// Now it gets nasty: We have to fiddle around with the weapons' ammo use info to make Doom's original
 	// ammo consumption work as intended.
 
+	auto wcls = PClass::FindActor(NAME_Weapon);
 	for(unsigned i = 0; i < WeaponNames.Size(); i++)
 	{
-		AWeapon *weap = (AWeapon*)GetDefaultByType(WeaponNames[i]);
+		AInventory *weap = (AInventory*)GetDefaultByType(WeaponNames[i]);
 		bool found = false;
 		if (weap->flags6 & MF6_INTRYMOVE)
 		{
@@ -3095,8 +3109,8 @@ void FinishDehPatch ()
 		}
 		else
 		{
-			weap->WeaponFlags |= WIF_DEHAMMO;
-			weap->AmmoUse1 = 0;
+			weap->BoolVar(NAME_bDehAmmo) = true;
+			weap->IntVar(NAME_AmmoUse1) = 0;
 			// to allow proper checks in CheckAmmo we have to find the first attack pointer in the Fire sequence
 			// and set its default ammo use as the weapon's AmmoUse1.
 
@@ -3115,7 +3129,7 @@ void FinishDehPatch ()
 				{
 					if (AmmoPerAttacks[j].ptr == nullptr)
 					{
-						auto p = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->FindSymbol(AmmoPerAttacks[j].func, true));
+						auto p = dyn_cast<PFunction>(wcls->FindSymbol(AmmoPerAttacks[j].func, true));
 						if (p != nullptr) AmmoPerAttacks[j].ptr = p->Variants[0].Implementation;
 					}
 					if (state->ActionFunc == AmmoPerAttacks[j].ptr)
@@ -3123,7 +3137,7 @@ void FinishDehPatch ()
 						found = true;
 						int use = AmmoPerAttacks[j].ammocount;
 						if (use < 0) use = deh.BFGCells;
-						weap->AmmoUse1 = use;
+						weap->IntVar(NAME_AmmoUse1) = use;
 						break;
 					}
 				}

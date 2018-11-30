@@ -75,7 +75,6 @@ AActor *SingleActorFromTID(int tid, AActor *defactor);
 
 static FRandom pr_camissile ("CustomActorfire");
 static FRandom pr_cabullet ("CustomBullet");
-static FRandom pr_cwbullet ("CustomWpBullet");
 static FRandom pr_cwjump ("CustomWpJump");
 static FRandom pr_cwpunch ("CustomWpPunch");
 static FRandom pr_grenade ("ThrowGrenade");
@@ -99,7 +98,7 @@ FRandom pr_cajump("CustomJump");
 extern TArray<VMValue> actionParams;	// this can use the same storage as CallAction
 
 
-bool AStateProvider::CallStateChain (AActor *actor, FState *state)
+static bool CallStateChain (AActor *self, AActor *actor, FState *state)
 {
 	INTBOOL result = false;
 	int counter = 0;
@@ -112,7 +111,7 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 	ret[0].PointerAt((void **)&nextstate);
 	ret[1].IntAt(&retval);
 
-	FState *savedstate = this->state;
+	FState *savedstate = self->state;
 
 	while (state != NULL)
 	{
@@ -122,7 +121,7 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 			return false;
 		}
 
-		this->state = state;
+		self->state = state;
 		nextstate = NULL;	// assume no jump
 
 		if (state->ActionFunc != NULL)
@@ -171,7 +170,7 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 
 			try
 			{
-                state->CheckCallerType(actor, this);
+                state->CheckCallerType(actor, self);
 
 				if (state->ActionFunc->DefaultArgs.Size() > 0)
 				{
@@ -188,7 +187,7 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 					}
 					if (state->ActionFunc->ImplicitArgs == 3)
 					{
-						actionParams[index + 1] = this;
+						actionParams[index + 1] = self;
 						actionParams[index + 2] = VMValue(&stp);
 					}
 
@@ -197,14 +196,14 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 				}
 				else
 				{
-					VMValue params[3] = { actor, this, VMValue(&stp) };
+					VMValue params[3] = { actor, self, VMValue(&stp) };
 					VMCallAction(state->ActionFunc, params, state->ActionFunc->ImplicitArgs, wantret, numret);
 				}
 			}
 			catch (CVMAbortException &err)
 			{
 				err.MaybePrintMessage();
-				err.stacktrace.AppendFormat("Called from state %s in inventory state chain in %s\n", FState::StaticGetStateName(state).GetChars(), GetClass()->TypeName.GetChars());
+				err.stacktrace.AppendFormat("Called from state %s in inventory state chain in %s\n", FState::StaticGetStateName(state).GetChars(), self->GetClass()->TypeName.GetChars());
 				throw;
 			}
 
@@ -232,16 +231,16 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 		}
 		state = nextstate;
 	}
-	this->state = savedstate;
+	self->state = savedstate;
 	return !!result;
 }
 
 DEFINE_ACTION_FUNCTION(ACustomInventory, CallStateChain)
 {
-	PARAM_SELF_PROLOGUE(AStateProvider);
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT(affectee, AActor);
 	PARAM_POINTER(state, FState);
-	ACTION_RETURN_BOOL(self->CallStateChain(affectee, state));
+	ACTION_RETURN_BOOL(CallStateChain(self, affectee, state));
 }
 
 //==========================================================================
@@ -1162,119 +1161,6 @@ DEFINE_ACTION_FUNCTION(AActor, CheckInventory)
 
 //==========================================================================
 //
-// Parameterized version of A_Explode
-//
-//==========================================================================
-
-enum
-{
-	XF_HURTSOURCE =		1,
-	XF_NOTMISSILE =		4,
-	XF_NOACTORTYPE =	1 << 3,
-	XF_NOSPLASH	=		16,
-};
-
-DEFINE_ACTION_FUNCTION(AActor, A_Explode)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT	(damage);
-	PARAM_INT	(distance);
-	PARAM_INT	(flags);
-	PARAM_BOOL	(alert);
-	PARAM_INT	(fulldmgdistance);
-	PARAM_INT	(nails);
-	PARAM_INT	(naildamage);
-	PARAM_CLASS	(pufftype, AActor);
-	PARAM_NAME	(damagetype);
-
-	if (damage < 0)	// get parameters from metadata
-	{
-		damage = self->IntVar(NAME_ExplosionDamage);
-		distance = self->IntVar(NAME_ExplosionRadius);
-		flags = !self->BoolVar(NAME_DontHurtShooter);
-		alert = false;
-	}
-	if (distance <= 0) distance = damage;
-
-	// NailBomb effect, from SMMU but not from its source code: instead it was implemented and
-	// generalized from the documentation at http://www.doomworld.com/eternity/engine/codeptrs.html
-
-	if (nails)
-	{
-		DAngle ang;
-		for (int i = 0; i < nails; i++)
-		{
-			ang = i*360./nails;
-			// Comparing the results of a test wad with Eternity, it seems A_NailBomb does not aim
-			P_LineAttack(self, ang, MISSILERANGE, 0.,
-				//P_AimLineAttack (self, ang, MISSILERANGE), 
-				naildamage, NAME_Hitscan, pufftype, (self->flags & MF_MISSILE) ? LAF_TARGETISSOURCE : 0);
-		}
-	}
-
-	if (!(flags & XF_NOACTORTYPE) && damagetype == NAME_None)
-	{
-		damagetype = self->DamageType;
-	}
-
-	int pflags = 0;
-	if (flags & XF_HURTSOURCE)	pflags |= RADF_HURTSOURCE;
-	if (flags & XF_NOTMISSILE)	pflags |= RADF_SOURCEISSPOT;
-
-	int count = P_RadiusAttack (self, self->target, damage, distance, damagetype, pflags, fulldmgdistance);
-	if (!(flags & XF_NOSPLASH)) P_CheckSplash(self, distance);
-	if (alert && self->target != NULL && self->target->player != NULL)
-	{
-		P_NoiseAlert(self->target, self);
-	}
-	ACTION_RETURN_INT(count);
-}
-
-//==========================================================================
-//
-// A_RadiusThrust
-//
-//==========================================================================
-
-enum
-{
-	RTF_AFFECTSOURCE =			1,
-	RTF_NOIMPACTDAMAGE =		2,
-	RTF_NOTMISSILE =			4,
-};
-
-DEFINE_ACTION_FUNCTION(AActor, A_RadiusThrust)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT	(force);
-	PARAM_INT	(distance);
-	PARAM_INT	(flags);
-	PARAM_INT	(fullthrustdistance);
-
-	bool sourcenothrust = false;
-
-	if (force == 0) force = 128;
-	if (distance <= 0) distance = abs(force);
-
-	// Temporarily negate MF2_NODMGTHRUST on the shooter, since it renders this function useless.
-	if (!(flags & RTF_NOTMISSILE) && self->target != NULL && self->target->flags2 & MF2_NODMGTHRUST)
-	{
-		sourcenothrust = true;
-		self->target->flags2 &= ~MF2_NODMGTHRUST;
-	}
-
-	P_RadiusAttack (self, self->target, force, distance, self->DamageType, flags | RADF_NODAMAGE, fullthrustdistance);
-	P_CheckSplash(self, distance);
-
-	if (sourcenothrust)
-	{
-		self->target->flags2 |= MF2_NODMGTHRUST;
-	}
-	return 0;
-}
-
-//==========================================================================
-//
 // A_RadiusDamageSelf
 //
 //==========================================================================
@@ -1491,112 +1377,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnProjectile)
 
 //==========================================================================
 //
-// An even more customizable hitscan attack
-//
-//==========================================================================
-enum CBA_Flags
-{
-	CBAF_AIMFACING = 1,
-	CBAF_NORANDOM = 2,
-	CBAF_EXPLICITANGLE = 4,
-	CBAF_NOPITCH = 8,
-	CBAF_NORANDOMPUFFZ = 16,
-	CBAF_PUFFTARGET = 32,
-	CBAF_PUFFMASTER = 64,
-	CBAF_PUFFTRACER = 128,
-};
-
-static void AimBulletMissile(AActor *proj, AActor *puff, int flags, bool temp, bool cba);
-
-DEFINE_ACTION_FUNCTION(AActor, A_CustomBulletAttack)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_ANGLE		(spread_xy);
-	PARAM_ANGLE		(spread_z);
-	PARAM_INT		(numbullets);
-	PARAM_INT		(damageperbullet);
-	PARAM_CLASS	(pufftype, AActor);
-	PARAM_FLOAT	(range);
-	PARAM_INT	(flags);
-	PARAM_INT	(ptr);
-	PARAM_CLASS (missile, AActor);
-	PARAM_FLOAT (Spawnheight);
-	PARAM_FLOAT (Spawnofs_xy);
-
-	AActor *ref = COPY_AAPTR(self, ptr);
-
-	if (range == 0)
-		range = MISSILERANGE;
-
-	int i;
-	DAngle bangle;
-	DAngle bslope = 0.;
-	int laflags = (flags & CBAF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
-
-	if (ref != NULL || (flags & CBAF_AIMFACING))
-	{
-		if (!(flags & CBAF_AIMFACING))
-		{
-			A_Face(self, ref);
-		}
-		bangle = self->Angles.Yaw;
-
-		if (!(flags & CBAF_NOPITCH)) bslope = P_AimLineAttack (self, bangle, MISSILERANGE);
-		if (pufftype == nullptr) pufftype = PClass::FindActor(NAME_BulletPuff);
-
-		S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
-		for (i = 0; i < numbullets; i++)
-		{
-			DAngle angle = bangle;
-			DAngle slope = bslope;
-
-			if (flags & CBAF_EXPLICITANGLE)
-			{
-				angle += spread_xy;
-				slope += spread_z;
-			}
-			else
-			{
-				angle += spread_xy * (pr_cwbullet.Random2() / 255.);
-				slope += spread_z * (pr_cwbullet.Random2() / 255.);
-			}
-
-			int damage = damageperbullet;
-
-			if (!(flags & CBAF_NORANDOM))
-				damage *= ((pr_cabullet()%3)+1);
-
-			AActor *puff = P_LineAttack(self, angle, range, slope, damage, NAME_Hitscan, pufftype, laflags);
-			if (missile != nullptr && pufftype != nullptr)
-			{
-				double x = Spawnofs_xy * angle.Cos();
-				double y = Spawnofs_xy * angle.Sin();
-				
-				DVector3 pos = self->Pos();
-				self->SetXYZ(self->Vec3Offset(x, y, 0.));
-				AActor *proj = P_SpawnMissileAngleZSpeed(self, self->Z() + self->GetBobOffset() + Spawnheight, missile, self->Angles.Yaw, 0, GetDefaultByType(missile)->Speed, self, false);
-				self->SetXYZ(pos);
-				
-				if (proj)
-				{
-					bool temp = (puff == nullptr);
-					if (!puff)
-					{
-						puff = P_LineAttack(self, angle, range, slope, 0, NAME_Hitscan, pufftype, laflags | LAF_NOINTERACT);
-					}
-					if (puff)
-					{			
-						AimBulletMissile(proj, puff, flags, temp, true);
-					}
-				}
-			}
-		}
-    }
-	return 0;
-}
-
-//==========================================================================
-//
 // A fully customizable melee attack
 //
 //==========================================================================
@@ -1679,459 +1459,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomComboAttack)
 			P_CheckMissileSpawn(missile, self->radius);
 		}
 	}
-	return 0;
-}
-
-//==========================================================================
-//
-// State jump function
-//
-//==========================================================================
-DEFINE_ACTION_FUNCTION(AStateProvider, A_JumpIfNoAmmo)
-{
-	PARAM_ACTION_PROLOGUE(AStateProvider);
-	PARAM_STATE_ACTION(jump);
-
-	if (!ACTION_CALL_FROM_PSPRITE() || self->player->ReadyWeapon == nullptr)
-	{
-		ACTION_RETURN_STATE(NULL);
-	}
-
-	if (!self->player->ReadyWeapon->CheckAmmo(self->player->ReadyWeapon->bAltFire, false, true))
-	{
-		ACTION_RETURN_STATE(jump);
-	}
-	ACTION_RETURN_STATE(NULL);
-}
-
-
-//==========================================================================
-//
-// An even more customizable hitscan attack
-//
-//==========================================================================
-enum FB_Flags
-{
-	FBF_USEAMMO = 1,
-	FBF_NORANDOM = 2,
-	FBF_EXPLICITANGLE = 4,
-	FBF_NOPITCH = 8,
-	FBF_NOFLASH = 16,
-	FBF_NORANDOMPUFFZ = 32,
-	FBF_PUFFTARGET = 64,
-	FBF_PUFFMASTER = 128,
-	FBF_PUFFTRACER = 256,
-};
-
-static void AimBulletMissile(AActor *proj, AActor *puff, int flags, bool temp, bool cba)
-{
-	if (proj && puff)
-	{
-		if (proj)
-		{
-			// FAF_BOTTOM = 1
-			// Aim for the base of the puff as that's where blood puffs will spawn... roughly.
-
-			A_Face(proj, puff, 0., 0., 0., 0., 1);
-			proj->Vel3DFromAngle(proj->Angles.Pitch, proj->Speed);
-
-			if (!temp)
-			{
-				if (cba)
-				{
-					if (flags & CBAF_PUFFTARGET)	proj->target = puff;
-					if (flags & CBAF_PUFFMASTER)	proj->master = puff;
-					if (flags & CBAF_PUFFTRACER)	proj->tracer = puff;
-				}
-				else
-				{
-					if (flags & FBF_PUFFTARGET)	proj->target = puff;
-					if (flags & FBF_PUFFMASTER)	proj->master = puff;
-					if (flags & FBF_PUFFTRACER)	proj->tracer = puff;
-				}
-			}
-		}
-	}
-	if (puff && temp)
-	{
-		puff->Destroy();
-	}
-}
-
-DEFINE_ACTION_FUNCTION(AStateProvider, A_FireBullets)
-{
-	PARAM_ACTION_PROLOGUE(AStateProvider);
-	PARAM_ANGLE		(spread_xy);
-	PARAM_ANGLE		(spread_z);
-	PARAM_INT		(numbullets);
-	PARAM_INT		(damageperbullet);
-	PARAM_CLASS	(pufftype, AActor);
-	PARAM_INT	(flags);
-	PARAM_FLOAT	(range);
-	PARAM_CLASS (missile, AActor);
-	PARAM_FLOAT (Spawnheight);
-	PARAM_FLOAT (Spawnofs_xy);
-
-	if (!self->player) return 0;
-
-	player_t *player = self->player;
-	AWeapon *weapon = player->ReadyWeapon;
-
-	int i;
-	DAngle bangle;
-	DAngle bslope = 0.;
-	int laflags = (flags & FBF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
-
-	if ((flags & FBF_USEAMMO) && weapon && ACTION_CALL_FROM_PSPRITE())
-	{
-		if (!weapon->DepleteAmmo(weapon->bAltFire, true))
-			return 0;	// out of ammo
-	}
-	
-	if (range == 0)	range = PLAYERMISSILERANGE;
-
-	if (!(flags & FBF_NOFLASH)) static_cast<APlayerPawn *>(self)->PlayAttacking2 ();
-
-	if (!(flags & FBF_NOPITCH)) bslope = P_BulletSlope(self);
-	bangle = self->Angles.Yaw;
-
-	if (pufftype == NULL) pufftype = PClass::FindActor(NAME_BulletPuff);
-
-	if (weapon != NULL)
-	{
-		S_Sound(self, CHAN_WEAPON, weapon->AttackSound, 1, ATTN_NORM);
-	}
-
-	if ((numbullets == 1 && !player->refire) || numbullets == 0)
-	{
-		int damage = damageperbullet;
-
-		if (!(flags & FBF_NORANDOM))
-			damage *= ((pr_cwbullet()%3)+1);
-
-		AActor *puff = P_LineAttack(self, bangle, range, bslope, damage, NAME_Hitscan, pufftype, laflags);
-
-		if (missile != nullptr)
-		{
-			bool temp = false;
-			DAngle ang = self->Angles.Yaw - 90;
-			DVector2 ofs = ang.ToVector(Spawnofs_xy);
-			AActor *proj = P_SpawnPlayerMissile(self, ofs.X, ofs.Y, Spawnheight, missile, bangle, nullptr, nullptr, false, true);
-			if (proj)
-			{
-				if (!puff)
-				{
-					temp = true;
-					puff = P_LineAttack(self, bangle, range, bslope, 0, NAME_Hitscan, pufftype, laflags | LAF_NOINTERACT);
-				}
-				AimBulletMissile(proj, puff, flags, temp, false);
-			}
-		}
-	}
-	else 
-	{
-		if (numbullets < 0)
-			numbullets = 1;
-		for (i = 0; i < numbullets; i++)
-		{
-			DAngle angle = bangle;
-			DAngle slope = bslope;
-
-			if (flags & FBF_EXPLICITANGLE)
-			{
-				angle += spread_xy;
-				slope += spread_z;
-			}
-			else
-			{
-				angle += spread_xy * (pr_cwbullet.Random2() / 255.);
-				slope += spread_z * (pr_cwbullet.Random2() / 255.);
-			}
-
-			int damage = damageperbullet;
-
-			if (!(flags & FBF_NORANDOM))
-				damage *= ((pr_cwbullet()%3)+1);
-
-			AActor *puff = P_LineAttack(self, angle, range, slope, damage, NAME_Hitscan, pufftype, laflags);
-
-			if (missile != nullptr)
-			{
-				bool temp = false;
-				DAngle ang = self->Angles.Yaw - 90;
-				DVector2 ofs = ang.ToVector(Spawnofs_xy);
-				AActor *proj = P_SpawnPlayerMissile(self, ofs.X, ofs.Y, Spawnheight, missile, angle, nullptr, nullptr, false, true);
-				if (proj)
-				{
-					if (!puff)
-					{
-						temp = true;
-						puff = P_LineAttack(self, angle, range, slope, 0, NAME_Hitscan, pufftype, laflags | LAF_NOINTERACT);
-					}
-					AimBulletMissile(proj, puff, flags, temp, false);
-				}
-			}
-		}
-	}
-	return 0;
-}
-
-
-//==========================================================================
-//
-// A_FireProjectile
-//
-//==========================================================================
-enum FP_Flags
-{
-	FPF_AIMATANGLE = 1,
-	FPF_TRANSFERTRANSLATION = 2,
-	FPF_NOAUTOAIM = 4,
-};
-DEFINE_ACTION_FUNCTION(AStateProvider, A_FireProjectile)
-{
-	PARAM_ACTION_PROLOGUE(AStateProvider);
-	PARAM_CLASS		(ti, AActor);
-	PARAM_ANGLE	(angle);
-	PARAM_BOOL	(useammo);
-	PARAM_FLOAT	(spawnofs_xy);
-	PARAM_FLOAT	(spawnheight);
-	PARAM_INT	(flags);
-	PARAM_ANGLE	(pitch);
-
-	if (!self->player)
-		ACTION_RETURN_OBJECT(nullptr);
-
-	player_t *player = self->player;
-	AWeapon *weapon = player->ReadyWeapon;
-	FTranslatedLineTarget t;
-
-		// Only use ammo if called from a weapon
-	if (useammo && ACTION_CALL_FROM_PSPRITE() && weapon)
-	{
-		if (!weapon->DepleteAmmo(weapon->bAltFire, true))
-			ACTION_RETURN_OBJECT(nullptr);	// out of ammo
-	}
-
-	if (ti) 
-	{
-		DAngle ang = self->Angles.Yaw - 90;
-		DVector2 ofs = ang.ToVector(spawnofs_xy);
-		DAngle shootangle = self->Angles.Yaw;
-
-		if (flags & FPF_AIMATANGLE) shootangle += angle;
-
-		// Temporarily adjusts the pitch
-		DAngle saved_player_pitch = self->Angles.Pitch;
-		self->Angles.Pitch += pitch;
-		AActor * misl=P_SpawnPlayerMissile (self, ofs.X, ofs.Y, spawnheight, ti, shootangle, &t, NULL, false, (flags & FPF_NOAUTOAIM) != 0);
-		self->Angles.Pitch = saved_player_pitch;
-
-		// automatic handling of seeker missiles
-		if (misl)
-		{
-			if (flags & FPF_TRANSFERTRANSLATION)
-				misl->Translation = self->Translation;
-			if (t.linetarget && !t.unlinked && (misl->flags2 & MF2_SEEKERMISSILE))
-				misl->tracer = t.linetarget;
-			if (!(flags & FPF_AIMATANGLE))
-			{
-				// This original implementation is to aim straight ahead and then offset
-				// the angle from the resulting direction. 
-				misl->Angles.Yaw += angle;
-				misl->VelFromAngle(misl->VelXYToSpeed());
-			}
-		}
-		ACTION_RETURN_OBJECT(misl);
-	}
-	ACTION_RETURN_OBJECT(nullptr);
-}
-
-
-//==========================================================================
-//
-// A_CustomPunch
-//
-// Berserk is not handled here. That can be done with A_CheckIfInventory
-//
-//==========================================================================
-
-enum
-{
-	CPF_USEAMMO = 1,
-	CPF_DAGGER = 2,
-	CPF_PULLIN = 4,
-	CPF_NORANDOMPUFFZ = 8,
-	CPF_NOTURN = 16,
-	CPF_STEALARMOR = 32,
-};
-
-DEFINE_ACTION_FUNCTION(AStateProvider, A_CustomPunch)
-{
-	PARAM_ACTION_PROLOGUE(AStateProvider);
-	PARAM_INT		(damage);
-	PARAM_BOOL	(norandom);
-	PARAM_INT	(flags);
-	PARAM_CLASS	(pufftype, AActor);
-	PARAM_FLOAT	(range);
-	PARAM_FLOAT	(lifesteal);
-	PARAM_INT	(lifestealmax);
-	PARAM_CLASS	(armorbonustype, AActor);
-	PARAM_SOUND	(MeleeSound);
-	PARAM_SOUND	(MissSound);
-
-	if (!self->player)
-		return 0;
-
-	player_t *player = self->player;
-	AWeapon *weapon = player->ReadyWeapon;
-
-
-	DAngle angle;
-	DAngle pitch;
-	FTranslatedLineTarget t;
-	int			actualdamage;
-
-	if (!norandom)
-		damage *= pr_cwpunch() % 8 + 1;
-
-	angle = self->Angles.Yaw + pr_cwpunch.Random2() * (5.625 / 256);
-	if (range == 0) range = DEFMELEERANGE;
-	pitch = P_AimLineAttack (self, angle, range, &t, 0., ALF_CHECK3D);
-
-	// only use ammo when actually hitting something!
-	if ((flags & CPF_USEAMMO) && t.linetarget && weapon && ACTION_CALL_FROM_PSPRITE())
-	{
-		if (!weapon->DepleteAmmo(weapon->bAltFire, true))
-			return 0;	// out of ammo
-	}
-
-	if (pufftype == NULL)
-		pufftype = PClass::FindActor(NAME_BulletPuff);
-	int puffFlags = LAF_ISMELEEATTACK | ((flags & CPF_NORANDOMPUFFZ) ? LAF_NORANDOMPUFFZ : 0);
-
-	P_LineAttack (self, angle, range, pitch, damage, NAME_Melee, pufftype, puffFlags, &t, &actualdamage);
-
-	if (!t.linetarget)
-	{
-		if (MissSound) S_Sound(self, CHAN_WEAPON, MissSound, 1, ATTN_NORM);
-	}
-	else
-	{
-		if (lifesteal > 0 && !(t.linetarget->flags5 & MF5_DONTDRAIN))
-		{
-			if (flags & CPF_STEALARMOR)
-			{
-				if (armorbonustype == NULL)
-				{
-					armorbonustype = PClass::FindActor("ArmorBonus");
-				}
-				if (armorbonustype != NULL)
-				{
-					auto armorbonus = Spawn(armorbonustype);
-					armorbonus->IntVar(NAME_SaveAmount) *= int(actualdamage * lifesteal);
-					if (lifestealmax > 0) armorbonus->IntVar("MaxSaveAmount") = lifestealmax;
-					armorbonus->flags |= MF_DROPPED;
-					armorbonus->ClearCounters();
-
-					if (!static_cast<AInventory*>(armorbonus)->CallTryPickup(self))
-					{
-						armorbonus->Destroy ();
-					}
-				}
-			}
-			else
-			{
-				P_GiveBody (self, int(actualdamage * lifesteal), lifestealmax);
-			}
-		}
-		if (weapon != NULL)
-		{
-			if (MeleeSound) S_Sound(self, CHAN_WEAPON, MeleeSound, 1, ATTN_NORM);
-			else			S_Sound (self, CHAN_WEAPON, weapon->AttackSound, 1, ATTN_NORM);
-		}
-
-		if (!(flags & CPF_NOTURN))
-		{
-			// turn to face target
-			self->Angles.Yaw = t.angleFromSource;
-		}
-
-		if (flags & CPF_PULLIN) self->flags |= MF_JUSTATTACKED;
-		if (flags & CPF_DAGGER) P_DaggerAlert (self, t.linetarget);
-	}
-	return 0;
-}
-
-
-//==========================================================================
-//
-// customizable railgun attack function
-//
-//==========================================================================
-DEFINE_ACTION_FUNCTION(AStateProvider, A_RailAttack)
-{
-	PARAM_ACTION_PROLOGUE(AStateProvider);
-	PARAM_INT		(damage);
-	PARAM_INT	(spawnofs_xy);
-	PARAM_BOOL	(useammo);
-	PARAM_COLOR	(color1);
-	PARAM_COLOR	(color2);
-	PARAM_INT	(flags);
-	PARAM_FLOAT	(maxdiff);
-	PARAM_CLASS	(pufftype, AActor);
-	PARAM_ANGLE	(spread_xy);
-	PARAM_ANGLE	(spread_z);
-	PARAM_FLOAT	(range)	;
-	PARAM_INT	(duration);
-	PARAM_FLOAT	(sparsity);
-	PARAM_FLOAT	(driftspeed);
-	PARAM_CLASS	(spawnclass, AActor);
-	PARAM_FLOAT	(spawnofs_z);
-	PARAM_INT	(SpiralOffset);
-	PARAM_INT	(limit);
-	
-	if (range == 0) range = 8192;
-	if (sparsity == 0) sparsity=1.0;
-
-	if (self->player == NULL)
-		return 0;
-
-	AWeapon *weapon = self->player->ReadyWeapon;
-
-	// only use ammo when actually hitting something!
-	if (useammo && weapon != NULL && ACTION_CALL_FROM_PSPRITE())
-	{
-		if (!weapon->DepleteAmmo(weapon->bAltFire, true))
-			return 0;	// out of ammo
-	}
-
-	if (!(flags & RAF_EXPLICITANGLE))
-	{
-		spread_xy = spread_xy * pr_crailgun.Random2() / 255;
-		spread_z = spread_z * pr_crailgun.Random2() / 255;
-	}
-
-	FRailParams p;
-	p.source = self;
-	p.damage = damage;
-	p.offset_xy = spawnofs_xy;
-	p.offset_z = spawnofs_z;
-	p.color1 = color1;
-	p.color2 = color2;
-	p.maxdiff = maxdiff;
-	p.flags = flags;
-	p.puff = pufftype;
-	p.angleoffset = spread_xy;
-	p.pitchoffset = spread_z;
-	p.distance = range;
-	p.duration = duration;
-	p.sparsity = sparsity;
-	p.drift = driftspeed;
-	p.spawnclass = spawnclass;
-	p.SpiralOffset = SpiralOffset;
-	p.limit = limit;
-	P_RailAttack(&p);
 	return 0;
 }
 
@@ -2495,452 +1822,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_TakeFromSiblings)
 
 //===========================================================================
 //
-// Common code for A_SpawnItem and A_SpawnItemEx
-//
-//===========================================================================
-
-enum SIX_Flags
-{
-	SIXF_TRANSFERTRANSLATION	= 0x00000001,
-	SIXF_ABSOLUTEPOSITION		= 0x00000002,
-	SIXF_ABSOLUTEANGLE			= 0x00000004,
-	SIXF_ABSOLUTEVELOCITY		= 0x00000008,
-	SIXF_SETMASTER				= 0x00000010,
-	SIXF_NOCHECKPOSITION		= 0x00000020,
-	SIXF_TELEFRAG				= 0x00000040,
-	SIXF_CLIENTSIDE				= 0x00000080,	// only used by Skulldronum
-	SIXF_TRANSFERAMBUSHFLAG		= 0x00000100,
-	SIXF_TRANSFERPITCH			= 0x00000200,
-	SIXF_TRANSFERPOINTERS		= 0x00000400,
-	SIXF_USEBLOODCOLOR			= 0x00000800,
-	SIXF_CLEARCALLERTID			= 0x00001000,
-	SIXF_MULTIPLYSPEED			= 0x00002000,
-	SIXF_TRANSFERSCALE			= 0x00004000,
-	SIXF_TRANSFERSPECIAL		= 0x00008000,
-	SIXF_CLEARCALLERSPECIAL		= 0x00010000,
-	SIXF_TRANSFERSTENCILCOL		= 0x00020000,
-	SIXF_TRANSFERALPHA			= 0x00040000,
-	SIXF_TRANSFERRENDERSTYLE	= 0x00080000,
-	SIXF_SETTARGET				= 0x00100000,
-	SIXF_SETTRACER				= 0x00200000,
-	SIXF_NOPOINTERS				= 0x00400000,
-	SIXF_ORIGINATOR				= 0x00800000,
-	SIXF_TRANSFERSPRITEFRAME	= 0x01000000,
-	SIXF_TRANSFERROLL			= 0x02000000,
-	SIXF_ISTARGET				= 0x04000000,
-	SIXF_ISMASTER				= 0x08000000,
-	SIXF_ISTRACER				= 0x10000000,
-};
-
-static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
-{
-	if (mo == NULL)
-	{
-		return false;
-	}
-	AActor *originator = self;
-
-	if (!(mo->flags2 & MF2_DONTTRANSLATE))
-	{
-		if (flags & SIXF_TRANSFERTRANSLATION)
-		{
-			mo->Translation = self->Translation;
-		}
-		else if (flags & SIXF_USEBLOODCOLOR)
-		{
-			// [XA] Use the spawning actor's BloodColor to translate the newly-spawned object.
-			mo->Translation = self->BloodTranslation;
-		}
-	}
-	if (flags & SIXF_TRANSFERPOINTERS)
-	{
-		mo->target = self->target;
-		mo->master = self->master; // This will be overridden later if SIXF_SETMASTER is set
-		mo->tracer = self->tracer;
-	}
-
-	mo->Angles.Yaw = self->Angles.Yaw;
-	if (flags & SIXF_TRANSFERPITCH)
-	{
-		mo->Angles.Pitch = self->Angles.Pitch;
-	}
-	if (!(flags & SIXF_ORIGINATOR))
-	{
-		while (originator && originator->isMissile())
-		{
-			originator = originator->target;
-		}
-	}
-	if (flags & SIXF_TELEFRAG) 
-	{
-		P_TeleportMove(mo, mo->Pos(), true);
-		// This is needed to ensure consistent behavior.
-		// Otherwise it will only spawn if nothing gets telefragged
-		flags |= SIXF_NOCHECKPOSITION;	
-	}
-	if (mo->flags3 & MF3_ISMONSTER)
-	{
-		if (!(flags & SIXF_NOCHECKPOSITION) && !P_TestMobjLocation(mo))
-		{
-			// The monster is blocked so don't spawn it at all!
-			mo->ClearCounters();
-			mo->Destroy();
-			return false;
-		}
-		else if (originator && !(flags & SIXF_NOPOINTERS))
-		{
-			if (originator->flags3 & MF3_ISMONSTER)
-			{
-				// If this is a monster transfer all friendliness information
-				mo->CopyFriendliness(originator, true);
-			}
-			else if (originator->player)
-			{
-				// A player always spawns a monster friendly to him
-				mo->flags |= MF_FRIENDLY;
-				mo->SetFriendPlayer(originator->player);
-
-				AActor * attacker=originator->player->attacker;
-				if (attacker)
-				{
-					if (!(attacker->flags&MF_FRIENDLY) || 
-						(deathmatch && attacker->FriendPlayer!=0 && attacker->FriendPlayer!=mo->FriendPlayer))
-					{
-						// Target the monster which last attacked the player
-						mo->LastHeard = mo->target = attacker;
-					}
-				}
-			}
-		}
-	}
-	else if (!(flags & SIXF_TRANSFERPOINTERS))
-	{
-		// If this is a missile or something else set the target to the originator
-		mo->target = originator ? originator : self;
-	}
-	if (flags & SIXF_NOPOINTERS)
-	{
-		//[MC]Intentionally eliminate pointers. Overrides TRANSFERPOINTERS, but is overridden by SETMASTER/TARGET/TRACER.
-		mo->LastHeard = NULL; //Sanity check.
-		mo->target = NULL;
-		mo->master = NULL;
-		mo->tracer = NULL;
-	}
-	if (flags & SIXF_SETMASTER)
-	{ // don't let it attack you (optional)!
-		mo->master = originator;
-	}
-	if (flags & SIXF_SETTARGET)
-	{
-		mo->target = originator;
-	}
-	if (flags & SIXF_SETTRACER)
-	{
-		mo->tracer = originator;
-	}
-	if (flags & SIXF_TRANSFERSCALE)
-	{
-		mo->Scale = self->Scale;
-	}
-	if (flags & SIXF_TRANSFERAMBUSHFLAG)
-	{
-		mo->flags = (mo->flags & ~MF_AMBUSH) | (self->flags & MF_AMBUSH);
-	}
-	if (flags & SIXF_CLEARCALLERTID)
-	{
-		self->RemoveFromHash();
-		self->tid = 0;
-	}
-	if (flags & SIXF_TRANSFERSPECIAL)
-	{
-		mo->special = self->special;
-		memcpy(mo->args, self->args, sizeof(self->args));
-	}
-	if (flags & SIXF_CLEARCALLERSPECIAL)
-	{
-		self->special = 0;
-		memset(self->args, 0, sizeof(self->args));
-	}
-	if (flags & SIXF_TRANSFERSTENCILCOL)
-	{
-		mo->fillcolor = self->fillcolor;
-	}
-	if (flags & SIXF_TRANSFERALPHA)
-	{
-		mo->Alpha = self->Alpha;
-	}
-	if (flags & SIXF_TRANSFERRENDERSTYLE)
-	{
-		mo->RenderStyle = self->RenderStyle;
-	}
-	
-	if (flags & SIXF_TRANSFERSPRITEFRAME)
-	{
-		mo->sprite = self->sprite;
-		mo->frame = self->frame;
-	}
-
-	if (flags & SIXF_TRANSFERROLL)
-	{
-		mo->Angles.Roll = self->Angles.Roll;
-	}
-
-	if (flags & SIXF_ISTARGET)
-	{
-		self->target = mo;
-	}
-	if (flags & SIXF_ISMASTER)
-	{
-		self->master = mo;
-	}
-	if (flags & SIXF_ISTRACER)
-	{
-		self->tracer = mo;
-	}
-	return true;
-}
-
-//===========================================================================
-//
-// A_SpawnItem
-//
-// Spawns an item in front of the caller like Heretic's time bomb
-//
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_SpawnItem)
-{
-	PARAM_ACTION_PROLOGUE(AActor);
-	PARAM_CLASS	(missile, AActor)		
-	PARAM_FLOAT	(distance)				
-	PARAM_FLOAT	(zheight)				
-	PARAM_BOOL	(useammo)				
-	PARAM_BOOL	(transfer_translation);
-		
-	if (numret > 1) ret[1].SetObject(nullptr);
-
-	if (missile == NULL)
-	{
-		if (numret > 0) ret[0].SetInt(false);
-		return MIN(numret, 2);
-	}
-
-	// Don't spawn monsters if this actor has been massacred
-	if (self->DamageType == NAME_Massacre && (GetDefaultByType(missile)->flags3 & MF3_ISMONSTER))
-	{
-		if (numret > 0) ret[0].SetInt(true);
-		return MIN(numret, 2);
-	}
-
-	if (ACTION_CALL_FROM_PSPRITE())
-	{
-		// Used from a weapon, so use some ammo
-		AWeapon *weapon = self->player->ReadyWeapon;
-
-		if (weapon == NULL)
-		{
-			if (numret > 0) ret[0].SetInt(true);
-			return MIN(numret, 2);
-		}
-		if (useammo && !weapon->DepleteAmmo(weapon->bAltFire))
-		{
-			if (numret > 0) ret[0].SetInt(true);
-			return MIN(numret, 2);
-		}
-	}
-
-	AActor *mo = Spawn( missile, self->Vec3Angle(distance, self->Angles.Yaw, -self->Floorclip + self->GetBobOffset() + zheight), ALLOW_REPLACE);
-
-	int flags = (transfer_translation ? SIXF_TRANSFERTRANSLATION : 0) + (useammo ? SIXF_SETMASTER : 0);
-	bool res = InitSpawnedItem(self, mo, flags);	// for an inventory item's use state
-	if (numret > 0) ret[0].SetInt(res);
-	if (numret > 1) ret[1].SetObject(mo);
-	return MIN(numret, 2);
-
-}
-
-//===========================================================================
-//
-// A_SpawnItemEx
-//
-// Enhanced spawning function
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_SpawnItemEx)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS		(missile, AActor);
-	PARAM_FLOAT	(xofs)		
-	PARAM_FLOAT	(yofs)		
-	PARAM_FLOAT	(zofs)		
-	PARAM_FLOAT	(xvel)		
-	PARAM_FLOAT	(yvel)		
-	PARAM_FLOAT	(zvel)		
-	PARAM_ANGLE	(angle)		
-	PARAM_INT	(flags)		
-	PARAM_INT	(chance)	
-	PARAM_INT	(tid)		
-
-	if (numret > 1) ret[1].SetObject(nullptr);
-
-	if (missile == NULL) 
-	{
-		if (numret > 0) ret[0].SetInt(false);
-		return MIN(numret, 2);
-	}
-	if (chance > 0 && pr_spawnitemex() < chance)
-	{
-		if (numret > 0) ret[0].SetInt(true);
-		return MIN(numret, 2);
-	}
-	// Don't spawn monsters if this actor has been massacred
-	if (self->DamageType == NAME_Massacre && (GetDefaultByType(missile)->flags3 & MF3_ISMONSTER))
-	{
-		if (numret > 0) ret[0].SetInt(true);
-		return MIN(numret, 2);
-	}
-
-	DVector2 pos;
-
-	if (!(flags & SIXF_ABSOLUTEANGLE))
-	{
-		angle += self->Angles.Yaw;
-	}
-	double s = angle.Sin();
-	double c = angle.Cos();
-
-	if (flags & SIXF_ABSOLUTEPOSITION)
-	{
-		pos = self->Vec2Offset(xofs, yofs);
-	}
-	else
-	{
-		// in relative mode negative y values mean 'left' and positive ones mean 'right'
-		// This is the inverse orientation of the absolute mode!
-		pos = self->Vec2Offset(xofs * c + yofs * s, xofs * s - yofs*c);
-	}
-
-	if (!(flags & SIXF_ABSOLUTEVELOCITY))
-	{
-		// Same orientation issue here!
-		double newxvel = xvel * c + yvel * s;
-		yvel = xvel * s - yvel * c;
-		xvel = newxvel;
-	}
-
-	AActor *mo = Spawn(missile, DVector3(pos, self->Z() - self->Floorclip + self->GetBobOffset() + zofs), ALLOW_REPLACE);
-	bool res = InitSpawnedItem(self, mo, flags);
-	if (res)
-	{
-		if (tid != 0)
-		{
-			assert(mo->tid == 0);
-			mo->tid = tid;
-			mo->AddToHash();
-		}
-		mo->Vel = {xvel, yvel, zvel};
-		if (flags & SIXF_MULTIPLYSPEED)
-		{
-			mo->Vel *= mo->Speed;
-		}
-		mo->Angles.Yaw = angle;
-	}
-	if (numret > 0) ret[0].SetInt(res);
-	if (numret > 1) ret[1].SetObject(mo);
-	return MIN(numret, 2);
-}
-
-//===========================================================================
-//
-// A_ThrowGrenade
-//
-// Throws a grenade (like Hexen's fighter flechette)
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_ThrowGrenade)
-{
-		PARAM_ACTION_PROLOGUE(AActor);
-	PARAM_CLASS		(missile, AActor);
-		PARAM_FLOAT	(zheight)	
-		PARAM_FLOAT	(xyvel)		
-		PARAM_FLOAT	(zvel)		
-		PARAM_BOOL	(useammo)	
-
-	if (numret > 1) ret[1].SetObject(nullptr);
-
-	if (missile == NULL)
-	{
-		if (numret > 0) ret[0].SetInt(false);
-		return MIN(numret, 2);
-	}
-	if (ACTION_CALL_FROM_PSPRITE())
-	{
-		// Used from a weapon, so use some ammo
-		AWeapon *weapon = self->player->ReadyWeapon;
-
-		if (weapon == NULL)
-		{
-			if (numret > 0) ret[0].SetInt(true);
-			return MIN(numret, 2);
-		}
-		if (useammo && !weapon->DepleteAmmo(weapon->bAltFire))
-		{
-			if (numret > 0) ret[0].SetInt(true);
-			return MIN(numret, 2);
-		}
-	}
-
-	AActor *bo;
-
-	bo = Spawn(missile, 
-			self->PosPlusZ(-self->Floorclip + self->GetBobOffset() + zheight + 35 + (self->player? self->player->crouchoffset : 0.)),
-			ALLOW_REPLACE);
-	if (bo)
-	{
-		P_PlaySpawnSound(bo, self);
-		if (xyvel != 0)
-			bo->Speed = xyvel;
-		bo->Angles.Yaw = self->Angles.Yaw + (((pr_grenade()&7) - 4) * (360./256.));
-
-		DAngle pitch = -self->Angles.Pitch;
-		DAngle angle = bo->Angles.Yaw;
-
-		// There are two vectors we are concerned about here: xy and z. We rotate
-		// them separately according to the shooter's pitch and then sum them to
-		// get the final velocity vector to shoot with.
-
-		double xy_xyscale = bo->Speed * pitch.Cos();
-		double xy_velz = bo->Speed * pitch.Sin();
-		double xy_velx = xy_xyscale * angle.Cos();
-		double xy_vely = xy_xyscale * angle.Sin();
-
-		pitch = self->Angles.Pitch;
-		double z_xyscale = zvel * pitch.Sin();
-		double z_velz = zvel * pitch.Cos();
-		double z_velx = z_xyscale * angle.Cos();
-		double z_vely = z_xyscale * angle.Sin();
-
-		bo->Vel.X = xy_velx + z_velx + self->Vel.X / 2;
-		bo->Vel.Y = xy_vely + z_vely + self->Vel.Y / 2;
-		bo->Vel.Z = xy_velz + z_velz;
-
-		bo->target = self;
-		if (!P_CheckMissileSpawn(bo, self->radius)) bo = nullptr;
-
-		if (numret > 0) ret[0].SetInt(true);
-		if (numret > 1) ret[1].SetObject(bo);
-		return MIN(numret, 2);
-	} 
-	else
-	{
-		if (numret > 0) ret[0].SetInt(false);
-		return MIN(numret, 2);
-	}
-}
-
-
-//===========================================================================
-//
 // A_Recoil
 //
 //===========================================================================
@@ -2966,7 +1847,7 @@ enum SW_Flags
 DEFINE_ACTION_FUNCTION(AActor, A_SelectWeapon)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS(cls, AWeapon);
+	PARAM_CLASS(cls, AInventory);
 	PARAM_INT(flags);
 
 	bool selectPriority = !!(flags & SWF_SELECTPRIORITY);
@@ -2976,7 +1857,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectWeapon)
 		ACTION_RETURN_BOOL(false);
 	}
 
-	AWeapon *weaponitem = static_cast<AWeapon*>(self->FindInventory(cls));
+	auto weaponitem = self->FindInventory(cls);
 
 	if (weaponitem != NULL && weaponitem->IsKindOf(NAME_Weapon))
 	{
@@ -4341,77 +3222,6 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfInTargetLOS)
 
 //===========================================================================
 //
-// Modified code pointer from Skulltag
-//
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION(AStateProvider, A_CheckForReload)
-{
-	PARAM_ACTION_PROLOGUE(AStateProvider);
-
-	if ( self->player == NULL || self->player->ReadyWeapon == NULL )
-	{
-		ACTION_RETURN_STATE(NULL);
-	}
-	PARAM_INT		(count);
-	PARAM_STATE_ACTION	(jump);
-	PARAM_BOOL	(dontincrement);
-
-	if (numret > 0)
-	{
-		ret->SetPointer(NULL);
-		numret = 1;
-	}
-
-	AWeapon *weapon = self->player->ReadyWeapon;
-
-	int ReloadCounter = weapon->ReloadCounter;
-	if (!dontincrement || ReloadCounter != 0)
-		ReloadCounter = (weapon->ReloadCounter+1) % count;
-	else // 0 % 1 = 1?  So how do we check if the weapon was never fired?  We should only do this when we're not incrementing the counter though.
-		ReloadCounter = 1;
-
-	// If we have not made our last shot...
-	if (ReloadCounter != 0)
-	{
-		// Go back to the refire frames, instead of continuing on to the reload frames.
-		if (numret != 0)
-		{
-			ret->SetPointer(jump);
-		}
-	}
-	else
-	{
-		// We need to reload. However, don't reload if we're out of ammo.
-		weapon->CheckAmmo(false, false);
-	}
-	if (!dontincrement)
-	{
-		weapon->ReloadCounter = ReloadCounter;
-	}
-	return numret;
-}
-
-//===========================================================================
-//
-// Resets the counter for the above function
-//
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION(AStateProvider, A_ResetReloadCounter)
-{
-	PARAM_ACTION_PROLOGUE(AStateProvider);
-
-	if (self->player == NULL || self->player->ReadyWeapon == NULL)
-		return 0;
-
-	AWeapon *weapon = self->player->ReadyWeapon;
-	weapon->ReloadCounter = 0;
-	return 0;
-}
-
-//===========================================================================
-//
 // A_ChangeFlag
 //
 //===========================================================================
@@ -5675,8 +4485,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DropItem)
 	PARAM_INT(amount);
 	PARAM_INT(chance);
 
-	P_DropItem(self, spawntype, amount, chance);
-	return 0;
+	ACTION_RETURN_OBJECT(P_DropItem(self, spawntype, amount, chance));
 }
 
 //===========================================================================

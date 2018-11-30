@@ -33,15 +33,8 @@ enum
 class PClass;
 class AActor;
 class player_t;
-class AMorphedMonster;
 
-bool P_MorphPlayer (player_t *activator, player_t *player, PClassActor *morphclass, int duration = 0, int style = 0,
-					PClassActor *enter_flash = NULL, PClassActor *exit_flash = NULL);
-bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag = 0, bool force = false);
-bool P_MorphMonster (AActor *actor, PClassActor *morphclass, int duration = 0, int style = 0,
-					 PClassActor *enter_flash = NULL, PClassActor *exit_flash = NULL);
-bool P_UndoMonsterMorph (AMorphedMonster *beast, bool force = false);
-bool P_UpdateMorphedMonster (AActor *actor);
-bool P_MorphedDeath(AActor *actor, AActor **morphed, int *morphedstyle, int *morphedhealth);
+bool P_MorphActor(AActor *activator, AActor *victim, PClassActor *ptype, PClassActor *mtype, int duration, int style, PClassActor *enter_flash, PClassActor *exit_flash);
+bool P_UnmorphActor(AActor *activator, AActor *morphed, int flags = 0, bool force = false);
 
 #endif //__A_MORPH__

@@ -1513,6 +1513,7 @@ void G_InitLevelLocals ()
 	level.fogdensity = info->fogdensity;
 	level.outsidefogdensity = info->outsidefogdensity;
 	level.skyfog = info->skyfog;
+	level.deathsequence = info->deathsequence;
 
 	level.pixelstretch = info->pixelstretch;
 
@@ -2238,6 +2239,7 @@ DEFINE_FIELD(FLevelLocals, fogdensity)
 DEFINE_FIELD(FLevelLocals, outsidefogdensity)
 DEFINE_FIELD(FLevelLocals, skyfog)
 DEFINE_FIELD(FLevelLocals, pixelstretch)
+DEFINE_FIELD(FLevelLocals, deathsequence)
 DEFINE_FIELD_BIT(FLevelLocals, flags, noinventorybar, LEVEL_NOINVENTORYBAR)
 DEFINE_FIELD_BIT(FLevelLocals, flags, monsterstelefrag, LEVEL_MONSTERSTELEFRAG)
 DEFINE_FIELD_BIT(FLevelLocals, flags, actownspecial, LEVEL_ACTOWNSPECIAL)
@@ -2302,5 +2304,14 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, ChangeSky)
 	sky1texture = self->skytexture1 = FSetTextureID(sky1);
 	sky2texture = self->skytexture2 = FSetTextureID(sky2);
 	R_InitSkyMap();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, StartIntermission)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_NAME(seq);
+	PARAM_INT(state);
+	F_StartIntermission(seq, (uint8_t)state);
 	return 0;
 }

@@ -92,20 +92,15 @@ public:
 	virtual void AddInventory (AInventory *item) override;
 	virtual void RemoveInventory (AInventory *item) override;
 	virtual bool UseInventory (AInventory *item) override;
-	virtual void MarkPrecacheSounds () const override;
 	virtual void BeginPlay () override;
-	virtual void Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOfDeath) override;
 	virtual bool UpdateWaterLevel (bool splash) override;
 
 	bool ResetAirSupply (bool playgasp = true);
 	int GetMaxHealth(bool withupgrades = false) const;
-	void ActivateMorphWeapon ();
-	AWeapon *PickNewWeapon (PClassActor *ammotype);
-	AWeapon *BestWeapon (PClassActor *ammotype);
+	AInventory *PickNewWeapon (PClassActor *ammotype);
+	AInventory *BestWeapon (PClassActor *ammotype);
 	void GiveDeathmatchInventory ();
-	void FilterCoopRespawnInventory (APlayerPawn *oldplayer);
-
-	void SetupWeaponSlots ();
+	
 	void GiveDefaultInventory ();
 
 	// These are virtual on the script side only.
@@ -155,6 +150,7 @@ public:
 
 	// [SP] ViewBob Multiplier
 	double		ViewBob;
+	double		curBob;
 
 	// Former class properties that were moved into the object to get rid of the meta class.
 	FName SoundClass;		// Sound class
@@ -235,7 +231,7 @@ enum
 // The VM cannot deal with this as an invalid pointer because it performs a read barrier on every object pointer read.
 // This doesn't have to point to a valid weapon, though, because WP_NOCHANGE is never dereferenced, but it must point to a valid object
 // and the class descriptor just works fine for that.
-extern AWeapon *WP_NOCHANGE;
+extern AInventory *WP_NOCHANGE;
 
 
 #define MAXPLAYERNAME	15
@@ -421,8 +417,8 @@ public:
 	uint8_t		spreecount = 0;				// [RH] Keep track of killing sprees
 	uint16_t	WeaponState = 0;
 
-	AWeapon	   *ReadyWeapon = nullptr;
-	AWeapon	   *PendingWeapon = nullptr;			// WP_NOCHANGE if not changing
+	AInventory	   *ReadyWeapon = nullptr;
+	AInventory	   *PendingWeapon = nullptr;			// WP_NOCHANGE if not changing
 	TObjPtr<DPSprite*> psprites = nullptr; // view sprites (gun, etc)
 
 	int			cheats = 0;					// bit flags
@@ -446,8 +442,8 @@ public:
 	int			morphTics = 0;				// player is a chicken/pig if > 0
 	PClassActor *MorphedPlayerClass = nullptr;		// [MH] (for SBARINFO) class # for this player instance when morphed
 	int			MorphStyle = 0;				// which effects to apply for this player instance when morphed
-	PClassActor *MorphExitFlash = nullptr;		// flash to apply when demorphing (cache of value given to P_MorphPlayer)
-	TObjPtr<AWeapon*>	PremorphWeapon = nullptr;		// ready weapon before morphing
+	PClassActor *MorphExitFlash = nullptr;		// flash to apply when demorphing (cache of value given to MorphPlayer)
+	TObjPtr<AInventory*>	PremorphWeapon = nullptr;		// ready weapon before morphing
 	int			chickenPeck = 0;			// chicken peck countdown
 	int			jumpTics = 0;				// delay the next jump for a moment
 	bool		onground = 0;				// Identifies if this player is on the ground or other object

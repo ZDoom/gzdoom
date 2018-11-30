@@ -179,6 +179,11 @@ struct VMReturn
 		Location = loc;
 		RegType = REGT_FLOAT;
 	}
+	void Vec2At(DVector2 *loc)
+	{
+		Location = loc;
+		RegType = REGT_FLOAT | REGT_MULTIREG2;
+	}
 	void StringAt(FString *loc)
 	{
 		Location = loc;
@@ -192,6 +197,7 @@ struct VMReturn
 	VMReturn() { }
 	VMReturn(int *loc) { IntAt(loc); }
 	VMReturn(double *loc) { FloatAt(loc); }
+	VMReturn(DVector2 *loc) { Vec2At(loc); }
 	VMReturn(FString *loc) { StringAt(loc); }
 	VMReturn(void **loc) { PointerAt(loc); }
 };
@@ -690,6 +696,15 @@ VMFunction *FindVMFunction(PClass *cls, const char *name);
 #define DECLARE_VMFUNC(cls, name) static VMFunction *name; if (name == nullptr) name = FindVMFunction(RUNTIME_CLASS(cls), #name);
 
 FString FStringFormat(VM_ARGS, int offset = 0);
+
+#define IFVM(cls, funcname) \
+	static VMFunction * func = nullptr; \
+	if (func == nullptr) { \
+		PClass::FindFunction(&func, #cls, #funcname); \
+		assert(func); \
+	} \
+	if (func != nullptr)
+
 
 
 unsigned GetVirtualIndex(PClass *cls, const char *funcname);

@@ -54,12 +54,6 @@
 
 EXTERN_CVAR(Bool, sv_unlimited_pickup)
 
-void AInventory::Finalize(FStateDefinitions &statedef)
-{
-	Super::Finalize(statedef);
-	flags |= MF_SPECIAL;
-}
-
 IMPLEMENT_CLASS(AInventory, false, true)
 
 IMPLEMENT_POINTERS_START(AInventory)
@@ -163,152 +157,6 @@ bool AInventory::Massacre()
 
 //===========================================================================
 //
-// AInventory :: MarkPrecacheSounds
-//
-//===========================================================================
-
-void AInventory::MarkPrecacheSounds() const
-{
-	Super::MarkPrecacheSounds();
-	PickupSound.MarkUsed();
-}
-
-//===========================================================================
-//
-// AInventory :: BecomeItem
-//
-// Lets this actor know that it's about to be placed in an inventory.
-//
-//===========================================================================
-
-void AInventory::BecomeItem ()
-{
-	if (!(flags & (MF_NOBLOCKMAP|MF_NOSECTOR)))
-	{
-		UnlinkFromWorld (nullptr);
-		flags |= MF_NOBLOCKMAP|MF_NOSECTOR;
-		LinkToWorld (nullptr);
-	}
-	RemoveFromHash ();
-	flags &= ~MF_SPECIAL;
-	ChangeStatNum(STAT_INVENTORY);
-	// stop all sounds this item is playing.
-	for(int i = 1;i<=7;i++) S_StopSound(this, i);
-	SetState (FindState("Held"));
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, BecomeItem)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	self->BecomeItem();
-	return 0;
-}
-
-//===========================================================================
-//
-// AInventory :: BecomePickup
-//
-// Lets this actor know it should wait to be picked up.
-//
-//===========================================================================
-
-void AInventory::BecomePickup ()
-{
-	if (Owner != NULL)
-	{
-		Owner->RemoveInventory (this);
-	}
-	if (flags & (MF_NOBLOCKMAP|MF_NOSECTOR))
-	{
-		UnlinkFromWorld (nullptr);
-		flags &= ~(MF_NOBLOCKMAP|MF_NOSECTOR);
-		LinkToWorld (nullptr);
-		P_FindFloorCeiling (this);
-	}
-	flags = (GetDefault()->flags | MF_DROPPED) & ~MF_COUNTITEM;
-	renderflags &= ~RF_INVISIBLE;
-	ChangeStatNum(STAT_DEFAULT);
-	SetState (SpawnState);
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, BecomePickup)
-{
-	PARAM_SELF_PROLOGUE(AInventory);
-	self->BecomePickup();
-	return 0;
-}
-
-//===========================================================================
-//
-// AInventory :: GetSpeedFactor
-//
-//===========================================================================
-
-double AInventory::GetSpeedFactor()
-{
-	double factor = 1.;
-	auto self = this;
-	while (self != nullptr)
-	{
-		IFVIRTUALPTR(self, AInventory, GetSpeedFactor)
-		{
-			VMValue params[1] = { (DObject*)self };
-			double retval;
-			VMReturn ret(&retval);
-			VMCall(func, params, 1, &ret, 1);
-			factor *= retval;
-		}
-		self = self->Inventory;
-	}
-	return factor;
-}
-
-//===========================================================================
-//
-// AInventory :: GetNoTeleportFreeze
-//
-//===========================================================================
-
-bool AInventory::GetNoTeleportFreeze ()
-{
-	auto self = this;
-	while (self != nullptr)
-	{
-		IFVIRTUALPTR(self, AInventory, GetNoTeleportFreeze)
-		{
-			VMValue params[1] = { (DObject*)self };
-			int retval;
-			VMReturn ret(&retval);
-			VMCall(func, params, 1, &ret, 1);
-			if (retval) return true;
-		}
-		self = self->Inventory;
-	}
-	return false;
-}
-
-//===========================================================================
-//
-// AInventory :: Use
-//
-//===========================================================================
-
-bool AInventory::CallUse(bool pickup)
-{
-	IFVIRTUAL(AInventory, Use)
-	{
-		VMValue params[2] = { (DObject*)this, pickup };
-		int retval;
-		VMReturn ret(&retval);
-		VMCall(func, params, 2, &ret, 1);
-		return !!retval;
-	}
-	return false;
-}
-
-
-//===========================================================================
-//
 //
 //===========================================================================
 static int StaticLastMessageTic;
@@ -389,25 +237,6 @@ PalEntry AInventory::CallGetBlend()
 		return retval;
 	}
 	else return 0;
-}
-
-//===========================================================================
-//
-// AInventory :: PrevItem
-//
-// Returns the previous item.
-//
-//===========================================================================
-
-AInventory *AInventory::PrevItem ()
-{
-	AInventory *item = Owner->Inventory;
-
-	while (item != NULL && item->Inventory != this)
-	{
-		item = item->Inventory;
-	}
-	return item;
 }
 
 //===========================================================================
@@ -544,11 +373,4 @@ CCMD (targetinv)
 	else Printf("No target found. Targetinv cannot find actors that have "
 				"the NOBLOCKMAP flag or have height/radius of 0.\n");
 }
-
-//===========================================================================
-//===========================================================================
-
-
-
-IMPLEMENT_CLASS(AStateProvider, false, false)
 

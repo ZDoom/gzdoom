@@ -175,7 +175,7 @@ void ST_LoadCrosshair(bool alwaysload)
 		players[consoleplayer].camera->player != NULL &&
 		players[consoleplayer].camera->player->ReadyWeapon != NULL)
 	{
-		num = players[consoleplayer].camera->player->ReadyWeapon->Crosshair;
+		num = players[consoleplayer].camera->player->ReadyWeapon->IntVar(NAME_Crosshair);
 	}
 	if (num == 0)
 	{

@@ -68,7 +68,6 @@ FRandom pr_damagemobj ("ActorTakeDamage");
 static FRandom pr_lightning ("LightningDamage");
 static FRandom pr_poison ("PoisonDamage");
 static FRandom pr_switcher ("SwitchTarget");
-static FRandom pr_kickbackdir ("KickbackDir");
 
 CVAR (Bool, cl_showsprees, true, CVAR_ARCHIVE)
 CVAR (Bool, cl_showmultikills, true, CVAR_ARCHIVE)
@@ -289,38 +288,40 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 {
 	// Handle possible unmorph on death
 	bool wasgibbed = (health < GetGibHealth());
-	AActor *realthis = NULL;
-	int realstyle = 0;
-	int realhealth = 0;
-	if (P_MorphedDeath(this, &realthis, &realstyle, &realhealth))
+
 	{
-		if (!(realstyle & MORPH_UNDOBYDEATHSAVES))
+		IFVIRTUAL(AActor, MorphedDeath)
 		{
-			if (wasgibbed)
+			AActor *realthis = NULL;
+			int realstyle = 0;
+			int realhealth = 0;
+
+			VMValue params[] = { this };
+			VMReturn returns[3];
+			returns[0].PointerAt((void**)&realthis);
+			returns[1].IntAt(&realstyle);
+			returns[2].IntAt(&realhealth);
+			VMCall(func, params, 1, returns, 3);
+
+			if (realthis && !(realstyle & MORPH_UNDOBYDEATHSAVES))
 			{
-				int realgibhealth = realthis->GetGibHealth();
-				if (realthis->health >= realgibhealth)
+				if (wasgibbed)
 				{
-					realthis->health = realgibhealth -1; // if morphed was gibbed, so must original be (where allowed)l
+					int realgibhealth = realthis->GetGibHealth();
+					if (realthis->health >= realgibhealth)
+					{
+						realthis->health = realgibhealth - 1; // if morphed was gibbed, so must original be (where allowed)l
+					}
 				}
+				realthis->CallDie(source, inflictor, dmgflags, MeansOfDeath);
 			}
-			realthis->CallDie(source, inflictor, dmgflags, MeansOfDeath);
+
 		}
-		return;
 	}
 
 	// [SO] 9/2/02 -- It's rather funny to see an exploded player body with the invuln sparkle active :) 
 	effects &= ~FX_RESPAWNINVUL;
 	//flags &= ~MF_INVINCIBLE;
-
-	if (debugfile && this->player)
-	{
-		static int dieticks[MAXPLAYERS]; // [ZzZombo] not used? Except if for peeking in debugger...
-		int pnum = int(this->player-players);
-		dieticks[pnum] = gametic;
-		fprintf(debugfile, "died (%d) on tic %d (%s)\n", pnum, gametic,
-			this->player->cheats&CF_PREDICTING ? "predicting" : "real");
-	}
 
 	// [RH] Notify this actor's items.
 	for (AInventory *item = Inventory; item != NULL; )
@@ -597,7 +598,13 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 						
 		flags &= ~MF_SOLID;
 		player->playerstate = PST_DEAD;
-		P_DropWeapon (player);
+
+		IFVM(PlayerPawn, DropWeapon)
+		{
+			VMValue param = player->mo;
+			VMCall(func, &param, 1, nullptr, 0);
+		}
+
 		if (this == players[consoleplayer].camera && automapactive)
 		{
 			// don't die in auto map, switch view prior to dying
@@ -915,9 +922,7 @@ static inline bool isFakePain(AActor *target, AActor *inflictor, int damage)
 // the damage was cancelled.
 static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags, DAngle angle, bool& needevent)
 {
-	DAngle ang;
 	player_t *player = NULL;
-	double thrust;
 	int temp;
 	int painchance = 0;
 	FState * woundstate = NULL;
@@ -1180,73 +1185,10 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 		&& !(target->flags7 & MF7_DONTTHRUST)
 		&& (source == NULL || source->player == NULL || !(source->flags2 & MF2_NODMGTHRUST)))
 	{
-		int kickback;
-
-		if (inflictor && inflictor->projectileKickback)
-			kickback = inflictor->projectileKickback;
-		else if (!source || !source->player || !source->player->ReadyWeapon)
-			kickback = gameinfo.defKickback;
-		else
-			kickback = source->player->ReadyWeapon->Kickback;
-
-		kickback = int(kickback * G_SkillProperty(SKILLP_KickbackFactor));
-		if (kickback)
+		IFVIRTUALPTR(target, AActor, ApplyKickback)
 		{
-			AActor *origin = (source && (flags & DMG_INFLICTOR_IS_PUFF))? source : inflictor;
-
-			if (flags & DMG_USEANGLE)
-			{
-				ang = angle;
-			}
-			else if (origin->X() == target->X() && origin->Y() == target->Y())
-			{
-				// If the origin and target are in exactly the same spot, choose a random direction.
-				// (Most likely cause is from telefragging somebody during spawning because they
-				// haven't moved from their spawn spot at all.)
-				ang = pr_kickbackdir.GenRand_Real2() * 360.;
-			}
-			else
-			{
-				ang = origin->AngleTo(target);
-			}
-
-            thrust = mod == NAME_MDK ? 10 : 32;
-            if (target->Mass > 0)
-            {
-                thrust = clamp((damage * 0.125 * kickback) / target->Mass, 0., thrust);
-            }
-
-			// Don't apply ultra-small damage thrust
-			if (thrust < 0.01) thrust = 0;
-
-			// make fall forwards sometimes
-			if ((damage < 40) && (damage > target->health)
-				 && (target->Z() - origin->Z() > 64)
-				 && (pr_damagemobj()&1)
-				 // [RH] But only if not too fast and not flying
-				 && thrust < 10
-				 && !(target->flags & MF_NOGRAVITY)
-				 && (inflictor == NULL || !(inflictor->flags5 & MF5_NOFORWARDFALL))
-				 )
-			{
-				ang += 180.;
-				thrust *= 4;
-			}
-			if (source && source->player && (flags & DMG_INFLICTOR_IS_PUFF)
-				&& source->player->ReadyWeapon != NULL &&
-				(source->player->ReadyWeapon->WeaponFlags & WIF_STAFF2_KICKBACK))
-			{
-				// Staff power level 2
-				target->Thrust(ang, 10);
-				if (!(target->flags & MF_NOGRAVITY))
-				{
-					target->Vel.Z += 5.;
-				}
-			}
-			else
-			{
-				target->Thrust(ang, thrust);
-			}
+			VMValue params[] = { target, inflictor, source, damage, angle.Degrees, mod.GetIndex(), flags };
+			VMCall(func, params, countof(params), nullptr, 0);
 		}
 	}
 

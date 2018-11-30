@@ -426,6 +426,8 @@ template<class T> T *dyn_cast(DObject *p)
 	return NULL;
 }
 
+
+
 template<class T> const T *dyn_cast(const DObject *p)
 {
 	return dyn_cast<T>(const_cast<DObject *>(p));

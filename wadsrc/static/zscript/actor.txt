@@ -79,6 +79,7 @@ class Actor : Thinker native
 	const LARGE_MASS = 10000000;	// not INT_MAX on purpose
 	const ORIG_FRICTION = (0xE800/65536.);	// original value
 	const ORIG_FRICTION_FACTOR = (2048/65536.);	// original value
+	const DEFMORPHTICS = 40 * TICRATE;
 
 
 	// flags are not defined here, the native fields for those get synthesized from the internal tables.
@@ -333,6 +334,7 @@ class Actor : Thinker native
 	
 	// need some definition work first
 	//FRenderStyle RenderStyle;
+	native private int RenderStyle;	// This is kept private until its real type has been implemented into the VM. But some code needs to copy this.
 	//int ConversationRoot; // THe root of the current dialogue
 
 	// deprecated things.
@@ -422,6 +424,18 @@ class Actor : Thinker native
 	native clearscope static Vector2 RotateVector(Vector2 vec, double angle);
 	native clearscope static double Normalize180(double ang);
 	
+	virtual void MarkPrecacheSounds()
+	{
+		MarkSound(SeeSound);
+		MarkSound(AttackSound);
+		MarkSound(PainSound);
+		MarkSound(DeathSound);
+		MarkSound(ActiveSound);
+		MarkSound(UseSound);
+		MarkSound(BounceSound);
+		MarkSound(WallBounceSound);
+		MarkSound(CrushPainSound);
+	}
 
 	bool IsPointerEqual(int ptr_select1, int ptr_select2)
 	{
@@ -441,7 +455,7 @@ class Actor : Thinker native
 	virtual native void Die(Actor source, Actor inflictor, int dmgflags = 0, Name MeansOfDeath = 'none');
 	virtual native bool Slam(Actor victim);
 	virtual native void Touch(Actor toucher);
-	virtual native void MarkPrecacheSounds();
+	native void Substitute(Actor replacement);
 
 	// Called by PIT_CheckThing to check if two actors actually can collide.
 	virtual bool CanCollideWith(Actor other, bool passive)
@@ -586,7 +600,6 @@ class Actor : Thinker native
 	native clearscope int PlayerNumber() const;
 	native void SetFriendPlayer(PlayerInfo player);
 	native void SoundAlert(Actor target, bool splash = false, double maxdist = 0);
-	native void DaggerAlert(Actor target);
 	native void ClearBounce();
 	native TerrainDef GetFloorTerrain();
 	native bool CheckLocalView(int consoleplayer);
@@ -595,6 +608,7 @@ class Actor : Thinker native
 	native bool IsZeroDamage();
 	native void ClearInterpolation();
 	native clearscope Vector3 PosRelative(sector sec) const;
+	native void RailAttack(FRailParams p);
 		
 	native void HandleSpawnFlags();
 	native void ExplodeMissile(line lin = null, Actor target = null, bool onsky = false);
@@ -729,6 +743,7 @@ class Actor : Thinker native
 	native void AddInventory(Inventory inv);
 	native void RemoveInventory(Inventory inv);
 	native void ClearInventory();
+	protected native void DestroyAllInventory();	// This is not supposed to be called by user code!
 	native bool GiveInventory(class<Inventory> type, int amount, bool givecheat = false);
 	native bool SetInventory(class<Inventory> itemclass, int amount, bool beyondMax = false);
 	native bool TakeInventory(class<Inventory> itemclass, int amount, bool fromdecorate = false, bool notakeinfinite = false);
@@ -740,7 +755,7 @@ class Actor : Thinker native
 	native bool GiveAmmo (Class<Ammo> type, int amount);
 	native bool UsePuzzleItem(int PuzzleItemType);
 	native float AccuracyFactor();
-	native bool MorphMonster (Class<Actor> spawntype, int duration, int style, Class<Actor> enter_flash, Class<Actor> exit_flash);
+	
 	action native void SetCamera(Actor cam, bool revert = false);
 	native bool Warp(Actor dest, double xofs = 0, double yofs = 0, double zofs = 0, double angle = 0, int flags = 0, double heightoffset = 0, double radiusoffset = 0, double pitch = 0);
 
@@ -966,88 +981,19 @@ class Actor : Thinker native
 	native bool A_LineEffect(int boomspecial = 0, int tag = 0);
 	// End of MBF redundant functions.
 	
-
-	//==========================================================================
-	//
-	// old customizable attack functions which use actor parameters.
-	//
-	//==========================================================================
-	
-	private void DoAttack (bool domelee, bool domissile, int MeleeDamage, Sound MeleeSound, Class<Actor> MissileType,double MissileHeight)
-	{
-		let targ = target;
-		if (targ == NULL) return;
-
-		A_FaceTarget ();
-		if (domelee && MeleeDamage>0 && CheckMeleeRange ())
-		{
-			int damage = random[CustomMelee](1, 8) * MeleeDamage;
-			if (MeleeSound) A_PlaySound (MeleeSound, CHAN_WEAPON);
-			int newdam = targ.DamageMobj (self, self, damage, 'Melee');
-			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
-		}
-		else if (domissile && MissileType != NULL)
-		{
-			// This seemingly senseless code is needed for proper aiming.
-			double add = MissileHeight + GetBobOffset() - 32;
-			AddZ(add);
-			Actor missile = SpawnMissileXYZ (Pos + (0, 0, 32), targ, MissileType, false);
-			AddZ(-add);
-
-			if (missile)
-			{
-				// automatic handling of seeker missiles
-				if (missile.bSeekerMissile)
-				{
-					missile.tracer = targ;
-				}
-				missile.CheckMissileSpawn(radius);
-			}
-		}
-	}
-
-	deprecated("2.3") void A_MeleeAttack()
-	{
-		DoAttack(true, false, MeleeDamage, MeleeSound, NULL, 0);
-	}
-
-	deprecated("2.3") void A_MissileAttack()
-	{
-		Class<Actor> MissileType = MissileName;
-		DoAttack(false, true, 0, 0, MissileType, MissileHeight);
-	}
-
-	deprecated("2.3") void A_ComboAttack()
-	{
-		Class<Actor> MissileType = MissileName;
-		DoAttack(true, true, MeleeDamage, MeleeSound, MissileType, MissileHeight);
-	}
-
-	void A_BasicAttack(int melee_damage, sound melee_sound, class<actor> missile_type, double missile_height)
-	{
-		DoAttack(true, true, melee_damage, melee_sound, missile_type, missile_height);
-	}
-
-
 	native void A_MonsterRail();
 	native void A_Pain();
 	native void A_NoBlocking(bool drop = true);
 	void A_Fall() { A_NoBlocking(); }
-	native void A_XScream();
 	native void A_Look();
 	native void A_Chase(statelabel melee = null, statelabel missile = null, int flags = 0x40000000);
-	native void A_Scream();
 	native void A_VileChase();
 	native bool A_CheckForResurrection();
 	native void A_BossDeath();
-	native void A_Detonate();
 	bool A_CallSpecial(int special, int arg1=0, int arg2=0, int arg3=0, int arg4=0, int arg5=0)
 	{
 		return Level.ExecuteSpecial(special, self, null, false, arg1, arg2, arg3, arg4, arg5);
 	}
-
-
-	native void A_ActiveSound();
 
 	native void A_FastChase();
 	native void A_PlayerScream();
@@ -1069,13 +1015,10 @@ class Actor : Thinker native
 	native void A_SeekerMissile(int threshold, int turnmax, int flags = 0, int chance = 50, int distance = 10);
 	native action state A_Jump(int chance, statelabel label, ...);
 	native Actor A_SpawnProjectile(class<Actor> missiletype, double spawnheight = 32, double spawnofs_xy = 0, double angle = 0, int flags = 0, double pitch = 0, int ptr = AAPTR_TARGET);
-	native void A_CustomBulletAttack(double spread_xy, double spread_z, int numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", double range = 0, int flags = 0, int ptr = AAPTR_TARGET, class<Actor> missile = null, double Spawnheight = 32, double Spawnofs_xy = 0);
 	native void A_CustomRailgun(int damage, int spawnofs_xy = 0, color color1 = 0, color color2 = 0, int flags = 0, int aim = 0, double maxdiff = 0, class<Actor> pufftype = "BulletPuff", double spread_xy = 0, double spread_z = 0, double range = 0, int duration = 0, double sparsity = 1.0, double driftspeed = 1.0, class<Actor> spawnclass = null, double spawnofs_z = 0, int spiraloffset = 270, int limit = 0, double veleffect = 3);
 	native bool A_SetInventory(class<Inventory> itemtype, int amount, int ptr = AAPTR_DEFAULT, bool beyondMax = false);
 	native bool A_GiveInventory(class<Inventory> itemtype, int amount = 0, int giveto = AAPTR_DEFAULT);
 	native bool A_TakeInventory(class<Inventory> itemtype, int amount = 0, int flags = 0, int giveto = AAPTR_DEFAULT);
-	action native bool, Actor A_SpawnItem(class<Actor> itemtype = "Unknown", double distance = 0, double zheight = 0, bool useammo = true, bool transfer_translation = false);
-	native bool, Actor A_SpawnItemEx(class<Actor> itemtype, double xofs = 0, double yofs = 0, double zofs = 0, double xvel = 0, double yvel = 0, double zvel = 0, double angle = 0, int flags = 0, int failchance = 0, int tid=0);
 	native void A_Print(string whattoprint, double time = 0, name fontname = "none");
 	native void A_PrintBold(string whattoprint, double time = 0, name fontname = "none");
 	native void A_Log(string whattoprint, bool local = false);
@@ -1100,10 +1043,7 @@ class Actor : Thinker native
 	native bool RaiseActor(Actor other, int flags = 0);
 	native bool CanRaise();
 	native void Revive();
-	action native bool, Actor A_ThrowGrenade(class<Actor> itemtype, double zheight = 0, double xyvel = 0, double zvel = 0, bool useammo = true);
 	native void A_Weave(int xspeed, int yspeed, double xdist, double ydist);
-	native bool A_Morph(class<Actor> type, int duration = 0, int flags = 0, class<Actor> enter_flash = null, class<Actor> exit_flash = null);
-
 
 	action native state, bool A_Teleport(statelabel teleportstate = null, class<SpecialSpot> targettype = "BossSpot", class<Actor> fogtype = "TeleportFog", int flags = 0, double mindist = 128, double maxdist = 0, int ptr = AAPTR_DEFAULT);
 	action native state, bool A_Warp(int ptr_destination, double xofs = 0, double yofs = 0, double zofs = 0, double angle = 0, int flags = 0, statelabel success_state = null, double heightoffset = 0, double radiusoffset = 0, double pitch = 0);
@@ -1118,10 +1058,10 @@ class Actor : Thinker native
 	native void A_CustomMeleeAttack(int damage = 0, sound meleesound = "", sound misssound = "", name damagetype = "none", bool bleed = true);
 	native void A_CustomComboAttack(class<Actor> missiletype, double spawnheight, int damage, sound meleesound = "", name damagetype = "none", bool bleed = true);
 	native void A_Burst(class<Actor> chunktype);
-	native void A_RadiusThrust(int force = 128, int distance = -1, int flags = RTF_AFFECTSOURCE, int fullthrustdistance = 0);
 	native void A_RadiusDamageSelf(int damage = 128, double distance = 128, int flags = 0, class<Actor> flashtype = null);
-	native int A_Explode(int damage = -1, int distance = -1, int flags = XF_HURTSOURCE, bool alert = false, int fulldamagedistance = 0, int nails = 0, int naildamage = 10, class<Actor> pufftype = "BulletPuff", name damagetype = "none");
 	native int GetRadiusDamage(Actor thing, int damage, int distance, int fulldmgdistance = 0, bool oldradiusdmg = false);
+	native int RadiusAttack(Actor bombsource, int bombdamage, int bombdistance, Name bombmod = 'none', int flags = RADF_HURTSOURCE, int fulldamagedistance = 0);
+	
 	native void A_Stop();
 	native void A_Respawn(int flags = 1);
 	native void A_RestoreSpecialPosition();
@@ -1142,7 +1082,7 @@ class Actor : Thinker native
 	native void A_Quake(int intensity, int duration, int damrad, int tremrad, sound sfx = "world/quake");
 	native void A_QuakeEx(int intensityX, int intensityY, int intensityZ, int duration, int damrad, int tremrad, sound sfx = "world/quake", int flags = 0, double mulWaveX = 1, double mulWaveY = 1, double mulWaveZ = 1, int falloff = 0, int highpoint = 0, double rollIntensity = 0, double rollWave = 0);
 	action native void A_SetTics(int tics);
-	native void A_DropItem(class<Actor> item, int dropamount = -1, int chance = 256);
+	native Actor A_DropItem(class<Actor> item, int dropamount = -1, int chance = 256);
 	native void A_DamageSelf(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
 	native void A_DamageTarget(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
 	native void A_DamageMaster(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
@@ -1221,6 +1161,33 @@ class Actor : Thinker native
 	int ACS_ScriptCall(name script, int arg1=0, int arg2=0, int arg3=0, int arg4=0)
 	{
 		return ACS_ExecuteWithResult(-int(script), arg1, arg2, arg3, arg4);
+	}
+	
+	//===========================================================================
+	//
+	// Sounds
+	//
+	//===========================================================================
+
+	void A_Scream()
+	{
+		if (DeathSound)
+		{
+			A_PlaySound(DeathSound, CHAN_VOICE, 1, false, bBoss? ATTN_NONE : ATTN_NORM);
+		}
+	}
+
+	void A_XScream()
+	{
+		A_PlaySound(player? Sound("*gibbed") : Sound("misc/gibbed"), CHAN_VOICE);
+	}
+
+	void A_ActiveSound()
+	{
+		if (ActiveSound)
+		{
+			A_PlaySound(ActiveSound, CHAN_VOICE);
+		}
 	}
 	
 	States(Actor, Overlay, Weapon, Item)

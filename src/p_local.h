@@ -80,7 +80,6 @@ extern int bmapnegy;
 // P_PSPR
 //
 void P_SetupPsprites (player_t* curplayer, bool startweaponup);
-void P_DropWeapon (player_t* player);
 
 
 //
@@ -131,9 +130,6 @@ AActor *P_SpawnMissileAngleZ(AActor *source, double z, PClassActor *type, DAngle
 AActor *P_SpawnMissileAngleZSpeed(AActor *source, double z, PClassActor *type, DAngle angle, double vz, double speed, AActor *owner = NULL, bool checkspawn = true);
 AActor *P_SpawnMissileZAimed(AActor *source, double z, AActor *dest, PClassActor *type);
 
-
-AActor *P_SpawnPlayerMissile (AActor* source, PClassActor *type);
-AActor *P_SpawnPlayerMissile (AActor *source, PClassActor *type, DAngle angle);
 
 AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z, PClassActor *type, DAngle angle, 
 							  FTranslatedLineTarget *pLineTarget = NULL, AActor **MissileActor = NULL, bool nofreeaim = false, bool noautoaim = false, int aimflags = 0);
@@ -320,6 +316,7 @@ enum	// P_AimLineAttack flags
 	ALF_CHECKCONVERSATION = 8,
 	ALF_NOFRIENDS = 16,
 	ALF_PORTALRESTRICT = 32,	// only work through portals with a global offset (to be used for stuff that cannot remember the calculated FTranslatedLineTarget info)
+	ALF_NOWEAPONCHECK = 64,		// ignore NOAUTOAIM flag on a player's weapon.
 };
 
 enum	// P_LineAttack flags
@@ -360,7 +357,6 @@ void	P_TraceBleed(int damage, FTranslatedLineTarget *t, AActor *puff);		// hitsc
 void	P_TraceBleed (int damage, AActor *target);		// random direction version
 bool	P_HitFloor (AActor *thing);
 bool	P_HitWater (AActor *thing, sector_t *sec, const DVector3 &pos, bool checkabove = false, bool alert = true, bool force = false);
-void	P_CheckSplash(AActor *self, double distance);
 
 struct FRailParams
 {
@@ -411,6 +407,7 @@ enum
 	RADF_SOURCEISSPOT = 4,
 	RADF_NODAMAGE = 8,
 	RADF_THRUSTZ = 16,
+	RADF_OLDRADIUSDAMAGE = 32
 };
 int	P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, 
 						FName damageType, int flags, int fulldamagedistance=0);

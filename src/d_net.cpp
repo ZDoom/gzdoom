@@ -2335,7 +2335,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 				{
 					if (GetDefaultByType (typeinfo)->flags & MF_MISSILE)
 					{
-						P_SpawnPlayerMissile (source, typeinfo);
+						P_SpawnPlayerMissile (source, 0, 0, 0, typeinfo, source->Angles.Yaw);
 					}
 					else
 					{
@@ -2536,10 +2536,10 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 	case DEM_MORPHEX:
 		{
 			s = ReadString (stream);
-			const char *msg = cht_Morph (players + player, PClass::FindActor (s), false);
+			FString msg = cht_Morph (players + player, PClass::FindActor (s), false);
 			if (player == consoleplayer)
 			{
-				Printf ("%s\n", *msg != '\0' ? msg : "Morph failed.");
+				Printf ("%s\n", msg[0] != '\0' ? msg.GetChars() : "Morph failed.");
 			}
 		}
 		break;
@@ -2631,7 +2631,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 			int count = ReadByte(stream);
 			if (slot < NUM_WEAPON_SLOTS)
 			{
-				players[pnum].weapons.Slots[slot].Clear();
+				players[pnum].weapons.ClearSlot(slot);
 			}
 			for(i = 0; i < count; ++i)
 			{

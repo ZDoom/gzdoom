@@ -75,7 +75,7 @@ bool PClass::bVMOperational;
 // that does not work anymore. WP_NOCHANGE needs to point to a vaild object to work as intended.
 // This Object does not need to be garbage collected, though, but it needs to provide the proper structure so that the
 // GC can process it.
-AWeapon *WP_NOCHANGE;
+AInventory *WP_NOCHANGE;
 DEFINE_GLOBAL(WP_NOCHANGE);
 
 
@@ -231,7 +231,7 @@ void PClass::StaticInit ()
 
 	// WP_NOCHANGE must point to a valid object, although it does not need to be a weapon.
 	// A simple DObject is enough to give the GC the ability to deal with it, if subjected to it.
-	WP_NOCHANGE = (AWeapon*)Create<DObject>();
+	WP_NOCHANGE = (AInventory*)Create<DObject>();
 	WP_NOCHANGE->Release();
 }
 

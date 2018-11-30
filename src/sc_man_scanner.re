@@ -179,6 +179,7 @@ std2:
 		'none'						{ RET(TK_None); }
 		'auto'						{ RET(TK_Auto); }
 		'property'					{ RET(TK_Property); }
+		'flagdef'					{ RET(ParseVersion >= MakeVersion(3, 7, 0)? TK_FlagDef : TK_Identifier); }
 		'native'					{ RET(TK_Native); }
 		'var'						{ RET(TK_Var); }
 		'out'						{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Out : TK_Identifier); }

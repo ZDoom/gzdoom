@@ -640,7 +640,6 @@ public:
 	AActor &operator= (const AActor &other);
 	~AActor ();
 
-	virtual void Finalize(FStateDefinitions &statedef);
 	virtual void OnDestroy() override;
 	virtual void Serialize(FSerializer &arc) override;
 	virtual void PostSerialize() override;
@@ -684,8 +683,6 @@ public:
 
 	void LevelSpawned();				// Called after BeginPlay if this actor was spawned by the world
 	void HandleSpawnFlags();	// Translates SpawnFlags into in-game flags.
-
-	virtual void MarkPrecacheSounds() const;	// Marks sounds used by this actor for precaching.
 
 	virtual void Activate (AActor *activator);
 	void CallActivate(AActor *activator);

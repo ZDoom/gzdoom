@@ -281,10 +281,16 @@ CCMD (slot)
 	{
 		int slot = atoi (argv[1]);
 
-		if (slot < NUM_WEAPON_SLOTS)
+		auto mo = players[consoleplayer].mo;
+		if (slot < NUM_WEAPON_SLOTS && mo)
 		{
-			SendItemUse = players[consoleplayer].weapons.Slots[slot].PickWeapon (&players[consoleplayer], 
-				!(dmflags2 & DF2_DONTCHECKAMMO));
+			// Needs to be redone
+			IFVIRTUALPTR(mo, APlayerPawn, PickWeapon)
+			{
+				VMValue param[] = { mo, slot, !(dmflags2 & DF2_DONTCHECKAMMO) };
+				VMReturn ret((void**)&SendItemUse);
+				VMCall(func, param, 3, &ret, 1);
+			}
 		}
 	}
 }
@@ -316,7 +322,18 @@ CCMD (turn180)
 
 CCMD (weapnext)
 {
-	SendItemUse = players[consoleplayer].weapons.PickNextWeapon (&players[consoleplayer]);
+	auto mo = players[consoleplayer].mo;
+	if (mo)
+	{
+		// Needs to be redone
+		IFVIRTUALPTR(mo, APlayerPawn, PickNextWeapon)
+		{
+			VMValue param[] = { mo };
+			VMReturn ret((void**)&SendItemUse);
+			VMCall(func, param, 1, &ret, 1);
+		}
+	}
+
 	// [BC] Option to display the name of the weapon being cycled to.
 	if ((displaynametags & 2) && StatusBar && SmallFont && SendItemUse)
 	{
@@ -331,7 +348,18 @@ CCMD (weapnext)
 
 CCMD (weapprev)
 {
-	SendItemUse = players[consoleplayer].weapons.PickPrevWeapon (&players[consoleplayer]);
+	auto mo = players[consoleplayer].mo;
+	if (mo)
+	{
+		// Needs to be redone
+		IFVIRTUALPTR(mo, APlayerPawn, PickPrevWeapon)
+		{
+			VMValue param[] = { mo };
+			VMReturn ret((void**)&SendItemUse);
+			VMCall(func, param, 1, &ret, 1);
+		}
+	}
+
 	// [BC] Option to display the name of the weapon being cycled to.
 	if ((displaynametags & 2) && StatusBar && SmallFont && SendItemUse)
 	{
@@ -765,19 +793,28 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 //[Graf Zahl] This really helps if the mouse update rate can't be increased!
 CVAR (Bool,		smooth_mouse,	false,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 
+static int LookAdjust(int look)
+{
+	look <<= 16;
+	if (players[consoleplayer].playerstate != PST_DEAD &&		// No adjustment while dead.
+		players[consoleplayer].ReadyWeapon != NULL)			// No adjustment if no weapon.
+	{
+		auto scale = players[consoleplayer].ReadyWeapon->FloatVar(NAME_FOVScale);
+		if (scale > 0)		// No adjustment if it is non-positive.
+		{
+			look = int(look * scale);
+		}
+	}
+	return look;
+}
+
 void G_AddViewPitch (int look, bool mouse)
 {
 	if (gamestate == GS_TITLELEVEL)
 	{
 		return;
 	}
-	look <<= 16;
-	if (players[consoleplayer].playerstate != PST_DEAD &&		// No adjustment while dead.
-		players[consoleplayer].ReadyWeapon != NULL &&			// No adjustment if no weapon.
-		players[consoleplayer].ReadyWeapon->FOVScale > 0)		// No adjustment if it is non-positive.
-	{
-		look = int(look * players[consoleplayer].ReadyWeapon->FOVScale);
-	}
+	look = LookAdjust(look);
 	if (!level.IsFreelookAllowed())
 	{
 		LocalViewPitch = 0;
@@ -817,14 +854,9 @@ void G_AddViewAngle (int yaw, bool mouse)
 	if (gamestate == GS_TITLELEVEL)
 	{
 		return;
+
 	}
-	yaw <<= 16;
-	if (players[consoleplayer].playerstate != PST_DEAD &&	// No adjustment while dead.
-		players[consoleplayer].ReadyWeapon != NULL &&		// No adjustment if no weapon.
-		players[consoleplayer].ReadyWeapon->FOVScale > 0)	// No adjustment if it is non-positive.
-	{
-		yaw = int(yaw * players[consoleplayer].ReadyWeapon->FOVScale);
-	}
+	yaw = LookAdjust(yaw);
 	LocalViewAngle -= yaw;
 	if (yaw != 0)
 	{
@@ -1249,7 +1281,7 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 
 	if (p->morphTics != 0)
 	{ // Undo morph
-		P_UndoPlayerMorph (p, p, 0, true);
+		P_UnmorphActor(p->mo, p->mo, 0, true);
 	}
 
 	// Strip all current powers, unless moving in a hub and the power is okay to keep.
@@ -1269,8 +1301,8 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 		item = next;
 	}
 	if (p->ReadyWeapon != NULL &&
-		p->ReadyWeapon->WeaponFlags&WIF_POWERED_UP &&
-		p->PendingWeapon == p->ReadyWeapon->SisterWeapon)
+		p->ReadyWeapon->IntVar(NAME_WeaponFlags) & WIF_POWERED_UP &&
+		p->PendingWeapon == p->ReadyWeapon->PointerVar<AInventory>(NAME_SisterWeapon))
 	{
 		// Unselect powered up weapons if the unpowered counterpart is pending
 		p->ReadyWeapon=p->PendingWeapon;

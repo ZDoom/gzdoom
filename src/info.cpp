@@ -367,29 +367,6 @@ bool PClassActor::SetReplacement(FName replaceName)
 
 //==========================================================================
 //
-// PClassActor :: Finalize
-//
-// Installs the parsed states and does some sanity checking
-//
-//==========================================================================
-
-void AActor::Finalize(FStateDefinitions &statedef)
-{
-	try
-	{
-		statedef.FinishStates(GetClass());
-	}
-	catch (CRecoverableError &)
-	{
-		statedef.MakeStateDefines(nullptr);
-		throw;
-	}
-	statedef.InstallStates(GetClass(), this);
-	statedef.MakeStateDefines(nullptr);
-}
-
-//==========================================================================
-//
 // PClassActor :: RegisterIDs
 //
 // Registers this class's SpawnID and DoomEdNum in the appropriate tables.

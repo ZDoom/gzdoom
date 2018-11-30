@@ -998,6 +998,7 @@ set (PCH_SOURCES
 	s_sound.cpp
 	serializer.cpp
 	sc_man.cpp
+	scriptutil.cpp
 	st_stuff.cpp
 	statistics.cpp
 	stats.cpp

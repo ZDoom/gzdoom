@@ -68,6 +68,7 @@ struct FFlagDef
 	int varflags;
 };
 
+void FinalizeClass(PClass *cls, FStateDefinitions &statedef);
 FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2, bool strict = false);
 void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int index);
 bool CheckDeprecatedFlags(const AActor *actor, PClassActor *info, int index);

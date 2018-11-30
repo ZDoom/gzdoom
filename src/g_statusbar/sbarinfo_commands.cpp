@@ -245,7 +245,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			else if(type == AMMO1)
 			{
 				auto ammo = statusBar->ammo1;
-				if(ammo != NULL)
+				if(ammo != NULL) 
 					GetIcon(ammo);
 			}
 			else if(type == AMMO2)
@@ -527,9 +527,9 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 			if(condition == WEAPONSLOT) //weaponslots
 			{
 				drawAlt = 1; //draw off state until we know we have something.
-				for (int i = 0; i < statusBar->CPlayer->weapons.Slots[conditionalValue[0]].Size(); i++)
+				for (int i = 0; i < statusBar->CPlayer->weapons.SlotSize(conditionalValue[0]); i++)
 				{
-					PClassActor *weap = statusBar->CPlayer->weapons.Slots[conditionalValue[0]].GetWeapon(i);
+					PClassActor *weap = statusBar->CPlayer->weapons.GetWeapon(conditionalValue[0], i);
 					if(weap == NULL)
 					{
 						continue;
@@ -597,8 +597,9 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 				auto armor = statusBar->CPlayer->mo->FindInventory(NAME_BasicArmor);
 				if(armor != NULL)
 				{
-					bool matches1 = armor->NameVar(NAME_ArmorType).GetIndex() == armorType[0] && EvaluateOperation(conditionalOperator[0], conditionalValue[0], armor->Amount);
-					bool matches2 = armor->NameVar(NAME_ArmorType).GetIndex() == armorType[1] && EvaluateOperation(conditionalOperator[1], conditionalValue[1], armor->Amount);
+					auto n = armor->NameVar(NAME_ArmorType).GetIndex();
+					bool matches1 = n == armorType[0] && EvaluateOperation(conditionalOperator[0], conditionalValue[0], armor->Amount);
+					bool matches2 = n == armorType[1] && EvaluateOperation(conditionalOperator[1], conditionalValue[1], armor->Amount);
 
 					drawAlt = 1;
 					if(conditionAnd)
@@ -1873,7 +1874,7 @@ class CommandUsesAmmo : public SBarInfoNegatableFlowControl
 		{
 			SBarInfoNegatableFlowControl::Tick(block, statusBar, hudChanged);
 
-			SetTruth(statusBar->CPlayer->ReadyWeapon != NULL && (statusBar->CPlayer->ReadyWeapon->AmmoType1 != NULL || statusBar->CPlayer->ReadyWeapon->AmmoType2 != NULL), block, statusBar);
+			SetTruth(statusBar->AmmoType(1) || statusBar->AmmoType(2), block, statusBar);
 		}
 };
 
@@ -1890,7 +1891,7 @@ class CommandUsesSecondaryAmmo : public CommandUsesAmmo
 		{
 			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
 
-			SetTruth(statusBar->CPlayer->ReadyWeapon != NULL && statusBar->CPlayer->ReadyWeapon->AmmoType2 != NULL && statusBar->CPlayer->ReadyWeapon->AmmoType1 != statusBar->CPlayer->ReadyWeapon->AmmoType2, block, statusBar);
+			SetTruth(statusBar->AmmoType(2) && statusBar->AmmoType(2) != statusBar->AmmoType(1), block, statusBar);
 		}
 };
 
@@ -2881,7 +2882,7 @@ class CommandIsSelected : public SBarInfoNegatableFlowControl
 				if(weapon[i] == NULL || !weapon[i]->IsDescendantOf(NAME_Weapon))
 				{
 					sc.ScriptMessage("'%s' is not a type of weapon.", sc.String);
-					weapon[i] = RUNTIME_CLASS(AWeapon);
+					weapon[i] = PClass::FindClass(NAME_Weapon);
 				}
 		
 				if(sc.CheckToken(','))
@@ -3034,7 +3035,7 @@ class CommandHasWeaponPiece : public SBarInfoCommandFlowControl
 			if (weapon == NULL || !weapon->IsDescendantOf(NAME_Weapon)) //must be a weapon
 			{
 				sc.ScriptMessage("%s is not a kind of weapon.", sc.String);
-				weapon = RUNTIME_CLASS(AWeapon);
+				weapon = PClass::FindClass(NAME_Weapon);
 			}
 			sc.MustGetToken(',');
 			sc.MustGetToken(TK_IntConst);
@@ -3246,8 +3247,8 @@ class CommandWeaponAmmo : public SBarInfoNegatableFlowControl
 
 			if(statusBar->CPlayer->ReadyWeapon != NULL)
 			{
-				const PClass *AmmoType1 = statusBar->CPlayer->ReadyWeapon->AmmoType1;
-				const PClass *AmmoType2 = statusBar->CPlayer->ReadyWeapon->AmmoType2;
+				const PClass *AmmoType1 = statusBar->AmmoType(1);
+				const PClass *AmmoType2 = statusBar->AmmoType(2);
 				bool usesammo1 = (AmmoType1 != NULL);
 				bool usesammo2 = (AmmoType2 != NULL);
 				//if(!usesammo1 && !usesammo2) //if the weapon doesn't use ammo don't go though the trouble.

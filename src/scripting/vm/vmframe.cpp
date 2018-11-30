@@ -54,6 +54,8 @@ CUSTOM_CVAR(Bool, vm_jit, true, CVAR_NOINITCALL)
 	Printf("You must restart " GAMENAME " for this change to take effect.\n");
 	Printf("This cvar is currently not saved. You must specify it on the command line.");
 }
+#else
+CVAR(Bool, vm_jit, false, CVAR_NOINITCALL|CVAR_NOSET)
 #endif
 
 cycle_t VMCycles[10];

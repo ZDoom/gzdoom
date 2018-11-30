@@ -1417,7 +1417,7 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetName)
 //
 //==========================================================================
 
-static void GetTextureSize(int texid, int *px, int *py)
+static int GetTextureSize(int texid, int *py)
 {
 	auto tex = TexMan.ByIndex(texid);
 	int x, y;
@@ -1427,8 +1427,8 @@ static void GetTextureSize(int texid, int *px, int *py)
 		y = tex->GetHeight();
 	}
 	else x = y = -1;
-	if (px) *px = x;
 	if (py) *py = y;
+	return x;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, GetSize, GetTextureSize)
@@ -1436,7 +1436,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, GetSize, GetTextureSize)
 	PARAM_PROLOGUE;
 	PARAM_INT(texid);
 	int x, y;
-	GetTextureSize(texid, &x, &y);
+	x = GetTextureSize(texid, &y);
 	if (numret > 0) ret[0].SetInt(x);
 	if (numret > 1) ret[1].SetInt(y);
 	return MIN(numret, 2);

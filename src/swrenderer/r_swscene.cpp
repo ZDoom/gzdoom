@@ -96,7 +96,7 @@ sector_t *SWSceneDrawer::RenderView(player_t *player)
 		mat->AddTextureLayer(PaletteTexture.get());
 
 		Canvas.reset();
-		Canvas.reset(new DSimpleCanvas(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor()));
+		Canvas.reset(new DCanvas(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor()));
 	}
 
 	auto buf = fbtex->SystemTexture[0]->MapBuffer();

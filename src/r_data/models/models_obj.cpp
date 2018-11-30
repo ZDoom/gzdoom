@@ -236,7 +236,7 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
  */
 template<typename T, size_t L> void FOBJModel::ParseVector(TArray<T> &array)
 {
-	float *coord = new float[L];
+	float coord[L];
 	for (size_t axis = 0; axis < L; axis++)
 	{
 		sc.MustGetFloat();
@@ -244,7 +244,6 @@ template<typename T, size_t L> void FOBJModel::ParseVector(TArray<T> &array)
 	}
 	T vec(coord);
 	array.Push(vec);
-	delete[] coord;
 }
 
 /**

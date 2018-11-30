@@ -20,7 +20,7 @@ inline DVector3 AActor::PosRelative(sector_t *sec) const
 	return Pos() + level.Displacements.getOffset(Sector->PortalGroup, sec->PortalGroup);
 }
 
-inline DVector3 AActor::PosRelative(line_t *line) const
+inline DVector3 AActor::PosRelative(const line_t *line) const
 {
 	return Pos() + level.Displacements.getOffset(Sector->PortalGroup, line->frontsector->PortalGroup);
 }

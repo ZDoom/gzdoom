@@ -2189,15 +2189,27 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 		}
 	}
 
+	bool onsky;
+
 	if (plane.fC() < 0)
 	{ // on ceiling
 		if (!(BounceFlags & BOUNCE_Ceilings))
 			return true;
+
+		onsky = ceilingpic == skyflatnum;
 	}
 	else
 	{ // on floor
 		if (!(BounceFlags & BOUNCE_Floors))
 			return true;
+
+		onsky = floorpic == skyflatnum;
+	}
+
+	if (onsky && (BounceFlags & BOUNCE_NotOnSky))
+	{
+		Destroy();
+		return true;
 	}
 
 	// The amount of bounces is limited
@@ -2762,10 +2774,7 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 explode:
 				// explode a missile
 				bool onsky = false;
-				if (tm.ceilingline &&
-					tm.ceilingline->backsector &&
-					tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
-					mo->Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint(mo->PosRelative(tm.ceilingline)))
+				if (tm.ceilingline && tm.ceilingline->hitSkyWall(mo))
 				{
 					if (!(mo->flags3 & MF3_SKYEXPLODE))
 					{

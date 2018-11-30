@@ -463,7 +463,7 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 			break;
 		}
 
-		cc.setArg(numparams + i - startret, regPtr);
+		call->setArg(numparams + i - startret, regPtr);
 	}
 
 	cc.setCursor(cursorAfter);

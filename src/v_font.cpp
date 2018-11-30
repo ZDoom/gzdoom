@@ -357,7 +357,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	int i;
 	FTextureID lump;
 	char buffer[12];
-	FTexture **charlumps;
+	TArray<FTexture*> charLumps;
 	int maxyoffs;
 	bool doomtemplate = gameinfo.gametype & GAME_DoomChex ? strncmp (nametemplate, "STCFN", 5) == 0 : false;
 	bool stcfn121 = false;
@@ -365,7 +365,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	noTranslate = notranslate;
 	Lump = fdlump;
 	Chars = new CharData[count];
-	charlumps = new FTexture *[count];
+	charLumps.Resize(count);
 	PatchRemap = new uint8_t[256];
 	FirstChar = first;
 	LastChar = first + count - 1;
@@ -381,7 +381,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 
 	for (i = 0; i < count; i++)
 	{
-		charlumps[i] = NULL;
+		charLumps[i] = NULL;
 		mysnprintf (buffer, countof(buffer), nametemplate, i + start);
 
 		lump = TexMan.CheckForTexture(buffer, ETextureType::MiscPatch);
@@ -395,7 +395,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 				!TexMan.CheckForTexture("STCFN122", ETextureType::MiscPatch).isValid())
 			{
 				// insert the incorrectly named '|' graphic in its correct position.
-				if (count > 124-start) charlumps[124-start] = TexMan[lump];
+				if (count > 124-start) charLumps[124-start] = TexMan[lump];
 				lump.SetInvalid();
 				stcfn121 = true;
 			}
@@ -408,7 +408,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 			{
 				// set the lump here only if it represents a valid texture
 				if (i != 124-start || !stcfn121)
-					charlumps[i] = pic;
+					charLumps[i] = pic;
 
 				int height = pic->GetScaledHeight();
 				int yoffs = pic->GetScaledTopOffset(0);
@@ -425,10 +425,10 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 			}
 		}
 
-		if (charlumps[i] != NULL)
+		if (charLumps[i] != nullptr)
 		{
-			if (!noTranslate) Chars[i].Pic = new FFontChar1 (charlumps[i]);
-			else Chars[i].Pic = charlumps[i];
+			if (!noTranslate) Chars[i].Pic = new FFontChar1 (charLumps[i]);
+			else Chars[i].Pic = charLumps[i];
 			Chars[i].XMove = Chars[i].Pic->GetScaledWidth();
 		}
 		else
@@ -454,8 +454,6 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	FixXMoves();
 
 	if (!noTranslate) LoadTranslations();
-
-	delete[] charlumps;
 }
 
 //==========================================================================

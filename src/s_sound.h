@@ -165,8 +165,8 @@ public:
 };
 
 extern FRolloffInfo S_Rolloff;
-extern uint8_t *S_SoundCurve;
-extern int S_SoundCurveSize;
+extern TArray<uint8_t> S_SoundCurve;
+
 
 // Information about one playing sound.
 struct sector_t;

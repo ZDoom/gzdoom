@@ -150,8 +150,7 @@ FSoundChan *Channels;
 FSoundChan *FreeChannels;
 
 FRolloffInfo S_Rolloff;
-uint8_t *S_SoundCurve;
-int S_SoundCurveSize;
+TArray<uint8_t> S_SoundCurve;
 
 FBoolCVar noisedebug ("noise", false, 0);	// [RH] Print sound debugging info?
 CUSTOM_CVAR (Int, snd_channels, 128, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)	// number of channels available
@@ -311,20 +310,16 @@ void S_Init ()
 
 	atterm (S_Shutdown);
 
-	// remove old data (S_Init can be called multiple times!)
-	if (S_SoundCurve != NULL)
-	{
-		delete[] S_SoundCurve;
-		S_SoundCurve = NULL;
-	}
-
 	// Heretic and Hexen have sound curve lookup tables. Doom does not.
 	curvelump = Wads.CheckNumForName ("SNDCURVE");
 	if (curvelump >= 0)
 	{
-		S_SoundCurveSize = Wads.LumpLength (curvelump);
-		S_SoundCurve = new uint8_t[S_SoundCurveSize];
-		Wads.ReadLump(curvelump, S_SoundCurve);
+		S_SoundCurve.Resize(Wads.LumpLength (curvelump));
+		Wads.ReadLump(curvelump, S_SoundCurve.Data());
+	}
+	else
+	{
+		S_SoundCurve.Clear();
 	}
 
 	// Free all channels for use.
@@ -376,11 +371,6 @@ void S_Shutdown ()
 	}
 	FreeChannels = NULL;
 
-	if (S_SoundCurve != NULL)
-	{
-		delete[] S_SoundCurve;
-		S_SoundCurve = NULL;
-	}
 	if (PlayList != NULL)
 	{
 		delete PlayList;
@@ -1504,34 +1494,32 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer)
 		if (size > 0)
 		{
 			auto wlump = Wads.OpenLumpReader(sfx->lumpnum);
-			uint8_t *sfxdata = new uint8_t[size];
-			wlump.Read(sfxdata, size);
-			int32_t dmxlen = LittleLong(((int32_t *)sfxdata)[1]);
+			auto sfxdata = wlump.Read(size);
+			int32_t dmxlen = LittleLong(((int32_t *)sfxdata.Data())[1]);
             std::pair<SoundHandle,bool> snd;
 
 			// If the sound is voc, use the custom loader.
-			if (strncmp ((const char *)sfxdata, "Creative Voice File", 19) == 0)
+			if (strncmp ((const char *)sfxdata.Data(), "Creative Voice File", 19) == 0)
 			{
-				snd = GSnd->LoadSoundVoc(sfxdata, size);
+				snd = GSnd->LoadSoundVoc(sfxdata.Data(), size);
 			}
 			// If the sound is raw, just load it as such.
 			else if (sfx->bLoadRAW)
 			{
-				snd = GSnd->LoadSoundRaw(sfxdata, size, sfx->RawRate, 1, 8, sfx->LoopStart);
+				snd = GSnd->LoadSoundRaw(sfxdata.Data(), size, sfx->RawRate, 1, 8, sfx->LoopStart);
 			}
 			// Otherwise, try the sound as DMX format.
-			else if (((uint8_t *)sfxdata)[0] == 3 && ((uint8_t *)sfxdata)[1] == 0 && dmxlen <= size - 8)
+			else if (((uint8_t *)sfxdata.Data())[0] == 3 && ((uint8_t *)sfxdata.Data())[1] == 0 && dmxlen <= size - 8)
 			{
-				int frequency = LittleShort(((uint16_t *)sfxdata)[1]);
+				int frequency = LittleShort(((uint16_t *)sfxdata.Data())[1]);
 				if (frequency == 0) frequency = 11025;
-				snd = GSnd->LoadSoundRaw(sfxdata+8, dmxlen, frequency, 1, 8, sfx->LoopStart);
+				snd = GSnd->LoadSoundRaw(sfxdata.Data()+8, dmxlen, frequency, 1, 8, sfx->LoopStart);
 			}
 			// If that fails, let the sound system try and figure it out.
 			else
 			{
-				snd = GSnd->LoadSound(sfxdata, size, false, pBuffer);
+				snd = GSnd->LoadSound(sfxdata.Data(), size, false, pBuffer);
 			}
-			delete[] sfxdata;
 
             sfx->data = snd.first;
             if(snd.second)
@@ -1572,33 +1560,31 @@ static void S_LoadSound3D(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer)
 		if (size <= 0) return;
 
 		auto wlump = Wads.OpenLumpReader(sfx->lumpnum);
-		uint8_t *sfxdata = new uint8_t[size];
-		wlump.Read(sfxdata, size);
-		int32_t dmxlen = LittleLong(((int32_t *)sfxdata)[1]);
+		auto sfxdata = wlump.Read(size);
+		int32_t dmxlen = LittleLong(((int32_t *)sfxdata.Data())[1]);
 
 		// If the sound is voc, use the custom loader.
-		if (strncmp((const char *)sfxdata, "Creative Voice File", 19) == 0)
+		if (strncmp((const char *)sfxdata.Data(), "Creative Voice File", 19) == 0)
 		{
-			snd = GSnd->LoadSoundVoc(sfxdata, size, true);
+			snd = GSnd->LoadSoundVoc(sfxdata.Data(), size, true);
 		}
 		// If the sound is raw, just load it as such.
 		else if (sfx->bLoadRAW)
 		{
-			snd = GSnd->LoadSoundRaw(sfxdata, size, sfx->RawRate, 1, 8, sfx->LoopStart, true);
+			snd = GSnd->LoadSoundRaw(sfxdata.Data(), size, sfx->RawRate, 1, 8, sfx->LoopStart, true);
 		}
 		// Otherwise, try the sound as DMX format.
-		else if (((uint8_t *)sfxdata)[0] == 3 && ((uint8_t *)sfxdata)[1] == 0 && dmxlen <= size - 8)
+		else if (((uint8_t *)sfxdata.Data())[0] == 3 && ((uint8_t *)sfxdata.Data())[1] == 0 && dmxlen <= size - 8)
 		{
-			int frequency = LittleShort(((uint16_t *)sfxdata)[1]);
+			int frequency = LittleShort(((uint16_t *)sfxdata.Data())[1]);
 			if (frequency == 0) frequency = 11025;
-			snd = GSnd->LoadSoundRaw(sfxdata + 8, dmxlen, frequency, 1, 8, sfx->LoopStart, -1, true);
+			snd = GSnd->LoadSoundRaw(sfxdata.Data() + 8, dmxlen, frequency, 1, 8, sfx->LoopStart, -1, true);
 		}
 		// If that fails, let the sound system try and figure it out.
 		else
 		{
-			snd = GSnd->LoadSound(sfxdata, size, true, pBuffer);
+			snd = GSnd->LoadSound(sfxdata.Data(), size, true, pBuffer);
 		}
-		delete[] sfxdata;
 	}
 
 	sfx->data3d = snd.first;
@@ -2274,9 +2260,9 @@ float S_GetRolloff(FRolloffInfo *rolloff, float distance, bool logarithmic)
 	}
 
 	float volume = (rolloff->MaxDistance - distance) / (rolloff->MaxDistance - rolloff->MinDistance);
-	if (rolloff->RolloffType == ROLLOFF_Custom && S_SoundCurve != NULL)
+	if (rolloff->RolloffType == ROLLOFF_Custom && S_SoundCurve.Size() > 0)
 	{
-		volume = S_SoundCurve[int(S_SoundCurveSize * (1 - volume))] / 127.f;
+		volume = S_SoundCurve[int(S_SoundCurve.Size() * (1 - volume))] / 127.f;
 	}
 	if (logarithmic)
 	{

@@ -292,52 +292,28 @@ struct VMVa_List
 //
 // VIDEO
 //
-// [RH] Made screens more implementation-independant:
 //
 class DCanvas
 {
 public:
 	DCanvas (int width, int height, bool bgra);
-	virtual ~DCanvas ();
+	~DCanvas ();
+	void Resize(int width, int height);
 
 	// Member variable access
-	inline uint8_t *GetPixels () const { return PixelBuffer; }
+	inline uint8_t *GetPixels () const { return Pixels.Data(); }
 	inline int GetWidth () const { return Width; }
 	inline int GetHeight () const { return Height; }
 	inline int GetPitch () const { return Pitch; }
 	inline bool IsBgra() const { return Bgra; }
 
-	// Note: pitch here is in pixels, not bytes.
-	bool SetBuffer(int width, int height, int pitch, uint8_t *buffer)
-	{
-		assert(buffer);
-		Width = width;
-		Height = height;
-		Pitch = pitch;
-		PixelBuffer = buffer;
-		return true;
-	}
-
-
 protected:
-	uint8_t *PixelBuffer;
+	TArray<uint8_t> Pixels;
 	int Width;
 	int Height;
 	int Pitch;
 	bool Bgra;
 };
-
-// A canvas in system memory.
-
-class DSimpleCanvas : public DCanvas
-{
-	typedef DCanvas Super;
-public:
-	DSimpleCanvas (int width, int height, bool bgra);
-	~DSimpleCanvas ();
-	void Resize(int width, int height);
-};
-
 
 class FUniquePalette;
 class IHardwareTexture;
@@ -349,7 +325,6 @@ class FTexture;
 
 class DFrameBuffer
 {
-	typedef DSimpleCanvas Super;
 protected:
 
 	void DrawTextureV(FTexture *img, double x, double y, uint32_t tag, va_list tags) = delete;

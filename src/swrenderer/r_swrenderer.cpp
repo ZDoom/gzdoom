@@ -181,7 +181,7 @@ void FSoftwareRenderer::RenderView(player_t *player, DCanvas *target, void *vide
 
 void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, int height)
 {
-	DSimpleCanvas pic(width, height, false);
+	DCanvas pic(width, height, false);
 	PalEntry palette[256];
 
 	// Take a snapshot of the player's view
@@ -241,7 +241,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 	cameraViewwindow = r_viewwindow;
 	
 	uint8_t *Pixels = renderTarget->IsBgra() ? (uint8_t*)tex->GetPixelsBgra() : (uint8_t*)tex->GetPixels(DefaultRenderStyle());
-	DSimpleCanvas *Canvas = renderTarget->IsBgra() ? tex->GetCanvasBgra() : tex->GetCanvas();
+	DCanvas *Canvas = renderTarget->IsBgra() ? tex->GetCanvasBgra() : tex->GetCanvas();
 
 	// curse Doom's overuse of global variables in the renderer.
 	// These get clobbered by rendering to a camera texture but they need to be preserved so the final rendering can be done with the correct palette.

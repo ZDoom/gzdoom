@@ -1903,6 +1903,26 @@ bool AActor::Grind(bool items)
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Grind)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL(items);
+	ACTION_RETURN_BOOL(self->Grind(items));
+}
+
+bool AActor::CallGrind(bool items)
+{
+	IFVIRTUAL(AActor, Grind)
+	{
+		VMValue params[] = { (DObject*)this, items };
+		int retv;
+		VMReturn ret(&retv);
+		VMCall(func, params, 2, &ret, 1);
+		return !!retv;
+	}
+	return Grind(items);
+}
+
 //============================================================================
 //
 // AActor :: Massacre

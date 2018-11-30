@@ -754,7 +754,7 @@ protected:
 };
 
 // A texture that can be drawn to.
-class DSimpleCanvas;
+class DCanvas;
 class AActor;
 
 class FCanvasTexture : public FTexture
@@ -770,16 +770,16 @@ public:
 	bool CheckModified (FRenderStyle) override;
 	void NeedUpdate() { bNeedsUpdate=true; }
 	void SetUpdated() { bNeedsUpdate = false; bDidUpdate = true; bFirstUpdate = false; }
-	DSimpleCanvas *GetCanvas() { return Canvas; }
-	DSimpleCanvas *GetCanvasBgra() { return CanvasBgra; }
+	DCanvas *GetCanvas() { return Canvas; }
+	DCanvas *GetCanvasBgra() { return CanvasBgra; }
 	bool Mipmapped() override { return false; }
 	void MakeTexture (FRenderStyle style);
 	void MakeTextureBgra ();
 
 protected:
 
-	DSimpleCanvas *Canvas = nullptr;
-	DSimpleCanvas *CanvasBgra = nullptr;
+	DCanvas *Canvas = nullptr;
+	DCanvas *CanvasBgra = nullptr;
 	uint8_t *Pixels = nullptr;
 	uint32_t *PixelsBgra = nullptr;
 	Span DummySpans[2];

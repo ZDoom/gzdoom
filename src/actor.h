@@ -488,6 +488,7 @@ enum ActorBounceFlag
 	BOUNCE_UseBounceState = 1<<14,	// Use Bounce[.*] states
 	BOUNCE_NotOnShootables = 1<<15,	// do not bounce off shootable actors if we are a projectile. Explode instead.
 	BOUNCE_BounceOnUnrips = 1<<16,	// projectile bounces on actors with DONTRIP
+	BOUNCE_NotOnSky = 1<<17,		// Don't bounce on sky floors / ceilings / walls
 
 	BOUNCE_TypeMask = BOUNCE_Walls | BOUNCE_Floors | BOUNCE_Ceilings | BOUNCE_Actors | BOUNCE_AutoOff | BOUNCE_HereticType | BOUNCE_MBF,
 
@@ -1376,7 +1377,7 @@ public:
 	DVector3 PosRelative(int grp) const;
 	DVector3 PosRelative(const AActor *other) const;
 	DVector3 PosRelative(sector_t *sec) const;
-	DVector3 PosRelative(line_t *line) const;
+	DVector3 PosRelative(const line_t *line) const;
 
 	FVector3 SoundPos() const
 	{

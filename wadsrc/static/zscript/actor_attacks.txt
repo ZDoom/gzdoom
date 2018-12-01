@@ -400,13 +400,13 @@ extend class Actor
 	// Enhanced spawning function
 	//
 	//===========================================================================
-	bool, Actor A_SpawnItemEx(class<Actor> missile, double xofs = 0, double yofs = 0, double zofs = 0, double xvel = 0, double yvel = 0, double zvel = 0, double angle = 0, int flags = 0, int chance = 0, int tid=0)
+	bool, Actor A_SpawnItemEx(class<Actor> missile, double xofs = 0, double yofs = 0, double zofs = 0, double xvel = 0, double yvel = 0, double zvel = 0, double angle = 0, int flags = 0, int failchance = 0, int tid=0)
 	{
 		if (missile == NULL) 
 		{
 			return false, null;
 		}
-		if (chance > 0 && random[spawnitemex]() < chance)
+		if (failchance > 0 && random[spawnitemex]() < failchance)
 		{
 			return true, null;
 		}

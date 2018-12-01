@@ -372,79 +372,43 @@ CCMD (weapprev)
 	}
 }
 
-static void DisplayNameTag(const char *tag)
+static void DisplayNameTag(AActor *actor)
 {
+	auto tag = actor->GetTag();
 	if ((displaynametags & 1) && StatusBar && SmallFont)
 		StatusBar->AttachMessage(Create<DHUDMessageFadeOut>(SmallFont, tag,
 			1.5f, 0.80f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID('S', 'I', 'N', 'V'));
 
 }
 
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, DisplayNameTag, DisplayNameTag)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	DisplayNameTag(self);
+	return 0;
+}
+
 CCMD (invnext)
 {
-	AInventory *next;
-
-	if (who == NULL)
-		return;
-
-	auto old = who->InvSel;
-	if (who->InvSel != NULL)
+	if (who != NULL)
 	{
-		if ((next = who->InvSel->NextInv()) != NULL)
+		IFVM(PlayerPawn, InvNext)
 		{
-			who->InvSel = next;
+			VMValue param = who;
+			VMCall(func, &param, 1, nullptr, 0);
 		}
-		else
-		{
-			// Select the first item in the inventory
-			if (!(who->Inventory->ItemFlags & IF_INVBAR))
-			{
-				who->InvSel = who->Inventory->NextInv();
-			}
-			else
-			{
-				who->InvSel = who->Inventory;
-			}
-		}
-		if (who->InvSel) DisplayNameTag(who->InvSel->GetTag());
-	}
-	who->player->inventorytics = 5*TICRATE;
-	if (old != who->InvSel)
-	{
-		S_Sound(CHAN_AUTO, "misc/invchange", 1.0, ATTN_NONE);
 	}
 }
 
-CCMD (invprev)
+CCMD(invprev)
 {
-	AInventory *item, *newitem;
-
-	if (who == NULL)
-		return;
-
-	auto old = who->InvSel;
-	if (who->InvSel != NULL)
+	if (who != NULL)
 	{
-		if ((item = who->InvSel->PrevInv()) != NULL)
+		IFVM(PlayerPawn, InvNext)
 		{
-			who->InvSel = item;
+			VMValue param = who;
+			VMCall(func, &param, 1, nullptr, 0);
 		}
-		else
-		{
-			// Select the last item in the inventory
-			item = who->InvSel;
-			while ((newitem = item->NextInv()) != NULL)
-			{
-				item = newitem;
-			}
-			who->InvSel = item;
-		}
-		if (who->InvSel) DisplayNameTag(who->InvSel->GetTag());
-	}
-	who->player->inventorytics = 5*TICRATE;
-	if (old != who->InvSel)
-	{
-		S_Sound(CHAN_AUTO, "misc/invchange", 1.0, ATTN_NONE);
 	}
 }
 

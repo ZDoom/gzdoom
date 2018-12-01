@@ -1,5 +1,73 @@
 extend class PlayerPawn
 {
+	
+	//===========================================================================
+	//
+	// 
+	//
+	//===========================================================================
+
+	ui void InvNext()
+	{
+		Inventory next;
+
+		let old = InvSel;
+		if (InvSel != NULL)
+		{
+			if ((next = InvSel.NextInv()) != NULL)
+			{
+				InvSel = next;
+			}
+			else
+			{
+				// Select the first item in the inventory
+				InvSel = FirstInv();
+			}
+			if (InvSel) InvSel.DisplayNameTag();
+		}
+		player.inventorytics = 5*TICRATE;
+		if (old != InvSel)
+		{
+			A_PlaySound("misc/invchange", CHAN_AUTO, 1.0, false, ATTN_NONE);
+		}
+	}
+
+	//===========================================================================
+	//
+	// APlayerPawn :: AddInventory
+	//
+	//===========================================================================
+
+	ui void InvPrev()
+	{
+		Inventory item, newitem;
+
+		let old = InvSel;
+		if (InvSel != NULL)
+		{
+			if ((item = InvSel.PrevInv()) != NULL)
+			{
+				InvSel = item;
+			}
+			else
+			{
+				// Select the last item in the inventory
+				item = InvSel;
+				while ((newitem = item.NextInv()) != NULL)
+				{
+					item = newitem;
+				}
+				InvSel = item;
+			}
+			if (InvSel) InvSel.DisplayNameTag();
+		}
+		player.inventorytics = 5*TICRATE;
+		if (old != InvSel)
+		{
+			A_PlaySound("misc/invchange", CHAN_AUTO, 1.0, false, ATTN_NONE);
+		}
+	}
+	
 	//===========================================================================
 	//
 	// APlayerPawn :: AddInventory

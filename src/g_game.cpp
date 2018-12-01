@@ -372,6 +372,14 @@ CCMD (weapprev)
 	}
 }
 
+static void DisplayNameTag(const char *tag)
+{
+	if ((displaynametags & 1) && StatusBar && SmallFont)
+		StatusBar->AttachMessage(Create<DHUDMessageFadeOut>(SmallFont, tag,
+			1.5f, 0.80f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID('S', 'I', 'N', 'V'));
+
+}
+
 CCMD (invnext)
 {
 	AInventory *next;
@@ -398,9 +406,7 @@ CCMD (invnext)
 				who->InvSel = who->Inventory;
 			}
 		}
-		if ((displaynametags & 1) && StatusBar && SmallFont && who->InvSel)
-			StatusBar->AttachMessage (Create<DHUDMessageFadeOut> (SmallFont, who->InvSel->GetTag(),
-			1.5f, 0.80f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID('S','I','N','V'));
+		if (who->InvSel) DisplayNameTag(who->InvSel->GetTag());
 	}
 	who->player->inventorytics = 5*TICRATE;
 	if (old != who->InvSel)
@@ -433,9 +439,7 @@ CCMD (invprev)
 			}
 			who->InvSel = item;
 		}
-		if ((displaynametags & 1) && StatusBar && SmallFont && who->InvSel)
-			StatusBar->AttachMessage (Create<DHUDMessageFadeOut> (SmallFont, who->InvSel->GetTag(),
-			1.5f, 0.80f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID('S','I','N','V'));
+		if (who->InvSel) DisplayNameTag(who->InvSel->GetTag());
 	}
 	who->player->inventorytics = 5*TICRATE;
 	if (old != who->InvSel)

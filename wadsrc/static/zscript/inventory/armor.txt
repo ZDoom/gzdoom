@@ -340,6 +340,10 @@ class BasicArmorBonus : Armor
 	}
 
 	
+	override void SetGiveAmount(Actor receiver, int amount, bool bycheat)
+	{
+		SaveAmount *= amount;
+	}
 }
 
 //===========================================================================
@@ -440,6 +444,12 @@ class BasicArmorPickup : Armor
 		armor.ActualSaveAmount = SaveAmount;
 		return true;
 	}
+	
+	override void SetGiveAmount(Actor receiver, int amount, bool bycheat)
+	{
+		SaveAmount *= amount;
+	}
+	
 }
 
 //===========================================================================

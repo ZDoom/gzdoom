@@ -992,6 +992,7 @@ xx(snd_resampler)
 xx(ScriptUtil)
 xx(SetMarineWeapon)
 xx(SetMarineSprite)
+xx(GiveInventory)
 
 // Weapon member fields that need direct access
 xx(Ammo1)
@@ -1010,3 +1011,10 @@ xx(FOVScale)
 xx(YAdjust)
 xx(Crosshair)
 xx(WeaponFlags)
+
+xx(BlueCard)
+xx(YellowCard)
+xx(RedCard)
+xx(BlueSkull)
+xx(YellowSkull)
+xx(RedSkull)

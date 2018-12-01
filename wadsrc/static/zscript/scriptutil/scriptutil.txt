@@ -4,6 +4,47 @@
 class ScriptUtil play
 {
 
+	//============================================================================
+	//
+	// GiveInventory
+	//
+	// Gives an item to one or more actors.
+	//
+	//============================================================================
+
+	static void GiveInventory (Actor activator, Name type, int amount)
+	{
+		if (amount <= 0 || type == 'none')
+		{
+			return;
+		}
+		if (type == 'Armor')
+		{
+			type = "BasicArmorPickup";
+		}
+		Class<Actor> info = type;
+		if (info == NULL)
+		{
+			Console.Printf ("GiveInventory: Unknown item type %s.\n", type);
+		}
+		else if (!(info is 'Inventory'))
+		{
+			Console.Printf ("GiveInventory: %s is not an inventory item.\n", type);
+		}
+		else if (activator == NULL)
+		{
+			for (int i = 0; i < MAXPLAYERS; ++i)
+			{
+				if (playeringame[i])
+					players[i].mo.GiveInventory((class<Inventory>)(info), amount);
+			}
+		}
+		else
+		{
+			activator.GiveInventory((class<Inventory>)(info), amount);
+		}
+	}
+
 	//==========================================================================
 	//
 	//

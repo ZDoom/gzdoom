@@ -2407,34 +2407,6 @@ void FParser::SF_IsPlayerObj(void)
 
 //============================================================================
 //
-// DoGiveInv
-//
-// Gives an item to a single actor.
-//
-//============================================================================
-
-static void FS_GiveInventory (AActor *actor, const char * type, int amount)
-{
-	if (amount <= 0)
-	{
-		return;
-	}
-	if (strcmp (type, "Armor") == 0)
-	{
-		type = "BasicArmorPickup";
-	}
-	auto info = PClass::FindActor (type);
-	if (info == NULL || !info->IsDescendantOf(RUNTIME_CLASS(AInventory)))
-	{
-		Printf ("Unknown inventory item: %s\n", type);
-		return;
-	}
-
-	actor->GiveInventory(info, amount);
-}
-
-//============================================================================
-//
 // DoTakeInv
 //
 // Takes an item from a single actor.
@@ -2509,9 +2481,9 @@ static int FS_CheckInventory (AActor *activator, const char *type)
 
 void FParser::SF_PlayerKeys(void)
 {
-	static const char * const DoomKeys[]={"BlueCard", "YellowCard", "RedCard", "BlueSkull", "YellowSkull", "RedSkull"};
+	static const ENamedName DoomKeys[]={NAME_BlueCard, NAME_YellowCard, NAME_RedCard, NAME_BlueSkull, NAME_YellowSkull, NAME_RedSkull};
 	int  playernum, keynum, givetake;
-	const char * keyname;
+	FName keyname;
 	
 	if (CheckArgs(2))
 	{
@@ -2535,7 +2507,7 @@ void FParser::SF_PlayerKeys(void)
 		else
 		{
 			givetake = intvalue(t_argv[2]);
-			if(givetake) FS_GiveInventory(players[playernum].mo, keyname, 1);
+			if(givetake) ScriptUtil::Exec(NAME_GiveInventory, players[playernum].mo, keyname.GetIndex(), 1);
 			else FS_TakeInventory(players[playernum].mo, keyname, 1);
 			t_return.type = svt_int;
 			t_return.value.i = 0;
@@ -2745,7 +2717,7 @@ void FParser::SF_GiveInventory(void)
 
 		if(t_argc == 2) count=1;
 		else count=intvalue(t_argv[2]);
-		FS_GiveInventory(players[playernum].mo, stringvalue(t_argv[1]), count);
+		ScriptUtil::Exec(NAME_GiveInventory, ScriptUtil::Pointer, players[playernum].mo, FName(stringvalue(t_argv[1])).GetIndex(), count);
 		t_return.type = svt_int;
 		t_return.value.i = 0;
 	}

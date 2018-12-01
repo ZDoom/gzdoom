@@ -746,10 +746,6 @@ public:
 	// APlayerPawn for some specific handling for players. None of this
 	// should ever be overridden by custom classes.
 
-	// Give an item to the actor and pick it up.
-	// Returns true if the item pickup succeeded.
-	bool GiveInventory (PClassActor *type, int amount, bool givecheat = false);
-
 	// Removes the item from the inventory list.
 	virtual void RemoveInventory (AInventory *item);
 

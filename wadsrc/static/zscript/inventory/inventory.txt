@@ -1016,6 +1016,27 @@ class Inventory : Actor native
 		}
 	}
 	
+	//---------------------------------------------------------------------------
+	//
+	// Modifies the amount based on what an item should contain if given
+	//
+	//---------------------------------------------------------------------------
+	
+	virtual void SetGiveAmount(Actor receiver, int amount, bool givecheat)
+	{
+		if (givecheat)
+		{
+			let haveitem = receiver.FindInventory(GetClass());
+			self.Amount = MIN(amount, haveitem == null? self.Default.MaxAmount : haveitem.MaxAmount);
+		}
+		else
+		{
+			self.Amount = amount;
+		}
+	}
+
+	
+	
 }
 
 //===========================================================================

@@ -31,4 +31,53 @@ extend class Actor
 		Inv.InventoryID = InventoryID++;
 	}
 
+	//============================================================================
+	//
+	// AActor :: GiveInventory
+	//
+	//============================================================================
+	
+	bool GiveInventory(Class<Inventory> type, int amount, bool givecheat = false)
+	{
+		bool result = true;
+		let player = self.player;
+
+		// This can be called from places which do not check the given item's type.
+		if (type == null || !(type is 'Inventory')) return false;
+
+		Weapon savedPendingWeap = player != NULL ? player.PendingWeapon : NULL;
+		bool hadweap = player != NULL ? player.ReadyWeapon != NULL : true;
+
+		Inventory item;
+		if (!givecheat)
+		{
+			item = Inventory(Spawn (type));
+		}
+		else
+		{
+			item = Inventory(Spawn (type, Pos, NO_REPLACE));
+			if (item == NULL) return false;
+		}
+
+		// This shouldn't count for the item statistics.
+		item.ClearCounters();
+		if (!givecheat || amount > 0)
+		{
+			item.SetGiveAmount(self, amount, givecheat);
+		}
+		if (!item.CallTryPickup (self))
+		{
+			item.Destroy ();
+			result = false;
+		}
+		// If the item was a weapon, don't bring it up automatically
+		// unless the player was not already using a weapon.
+		// Don't bring it up automatically if this is called by the give cheat.
+		if (!givecheat && player != NULL && savedPendingWeap != NULL && hadweap)
+		{
+			player.PendingWeapon = savedPendingWeap;
+		}
+		return result;
+	}
+
 }

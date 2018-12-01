@@ -1,13 +1,12 @@
 #ifndef __M_CHEAT_H__
 #define __M_CHEAT_H__
 
-#include "zstring.h"
-
 //
 // CHEAT SEQUENCE PACKAGE
 //
 
 // [RH] Functions that actually perform the cheating
+class FString;
 class player_t;
 class PClassActor;
 

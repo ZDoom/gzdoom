@@ -29,7 +29,7 @@
 #include "vm.h"
 #include "scriptutil.h"
 #include "p_acs.h"
-#include "actor.h"
+#include "actorinlines.h"
 
 
 static TArray<VMValue> parameters;

@@ -1,0 +1,349 @@
+/*
+** Enhanced heads up 'overlay' for fullscreen
+**
+**---------------------------------------------------------------------------
+** Copyright 2003-2008 Christoph Oelckers
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
+/*
+
+// Icons
+static FTexture * fragpic;					// Frags icon
+static FTexture * invgems[2];				// Inventory arrows
+
+DVector2 AM_GetPosition();
+*/
+
+class AltHud
+{
+	TextureID healthPic, berserkPic;
+	int hudwidth, hudheight;
+	int statspace;
+	Font HudFont;					// The font for the health and armor display
+	Font IndexFont;					// The font for the inventory indices
+	
+	//---------------------------------------------------------------------------
+	//
+	// Draws an image into a box with its bottom center at the bottom
+	// center of the box. The image is scaled down if it doesn't fit
+	//
+	//---------------------------------------------------------------------------
+
+	void DrawImageToBox(TextureID tex, int x, int y, int w, int h, double trans = 0.75)
+	{
+		double scale1, scale2;
+
+		if (tex)
+		{
+			let texsize = TexMan.GetScaledSize(tex);
+
+			if (w < texsize.X) scale1 = w / texsize.X;
+			else scale1 = 1.0;
+			if (h < texsize.Y) scale2 = h / texsize.Y;
+			else scale2 = 1.0;
+			scale1 = min(scale1, scale2);
+			if (scale2 < scale1) scale1=scale2;
+
+			x += w >> 1;
+			y += h;
+
+			w = (int)(texsize.X * scale1);
+			h = (int)(texsize.Y * scale1);
+
+			screen.DrawTexture(tex, false, x, y,
+				DTA_KeepRatio, true,
+				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, trans, 
+				DTA_DestWidth, w, DTA_DestHeight, h, DTA_CenterBottomOffset, 1);
+
+		}
+	}
+
+	
+	//---------------------------------------------------------------------------
+	//
+	// Draws a text but uses a fixed width for all characters
+	//
+	//---------------------------------------------------------------------------
+
+	void DrawHudText(Font fnt, int color, String text, int x, int y, double trans = 0.75)
+	{
+		int zerowidth = fnt.GetCharWidth("0");
+
+		x += zerowidth / 2;
+		for(int i=0; i < text.length(); i++)
+		{
+			int c = text.CharCodeAt(i);
+			int width = fnt.GetCharWidth(c);
+			double offset = fnt.GetBottomAlignOffset(c);
+
+			screen.DrawChar(fnt, color, x, y, c,
+				DTA_KeepRatio, true,
+				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, trans, 
+				DTA_LeftOffset, width/2, DTA_TopOffsetF, offset);
+			x += zerowidth;
+		}
+	}
+
+
+	//---------------------------------------------------------------------------
+	//
+	// Draws a number with a fixed width for all digits
+	//
+	//---------------------------------------------------------------------------
+
+	 void DrawHudNumber(Font fnt, int color, int num, int x, int y, double trans = 0.75)
+	{
+		DrawHudText(fnt, color, String.Format("%d", num), x, y, trans);
+	}
+
+
+	//===========================================================================
+	//
+	// draw the status (number of kills etc)
+	//
+	//===========================================================================
+
+	void DrawStatLine(int x, in out int y, String prefix, String text)
+	{
+		y -= SmallFont.GetHeight()-1;
+		screen.DrawText(SmallFont, hudcolor_statnames, x, y, prefix, 
+			DTA_KeepRatio, true,
+			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0.75);
+
+		screen.DrawText(SmallFont, hudcolor_stats, x+statspace, y, text,
+			DTA_KeepRatio, true,
+			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0.75);
+	}
+
+	void DrawStatus(PlayerInfo CPlayer, int x, int y)
+	{
+		let mo = CPlayer.mo;
+		if (hud_showscore)
+		{
+			DrawStatLine(x, y, "Sc:", String.Format("%d ", mo.Score));
+		}
+		
+		if (hud_showstats)
+		{
+			DrawStatLine(x, y, "Ac:", String.Format("%i ", mo.accuracy));
+			DrawStatLine(x, y, "St:", String.Format("%i ", mo.stamina));
+		}
+		
+		if (!deathmatch)
+		{
+			// FIXME: ZDoom doesn't preserve the player's stat counters across hubs so this doesn't
+			// work in cooperative hub games
+			if (hud_showsecrets)
+			{
+				DrawStatLine(x, y, "S:", String.Format("%i/%i ", multiplayer? CPlayer.secretcount : level.found_secrets, level.total_secrets));
+			}
+			
+			if (hud_showitems)
+			{
+				DrawStatLine(x, y, "I:", String.Format("%i/%i ", multiplayer? CPlayer.itemcount : level.found_items, level.total_items));
+			}
+			
+			if (hud_showmonsters)
+			{
+				DrawStatLine(x, y, "K:", String.Format("%i/%i ", multiplayer? CPlayer.killcount : level.killed_monsters, level.total_monsters));
+			}
+		}
+	}
+
+	//===========================================================================
+	//
+	// draw health
+	//
+	//===========================================================================
+
+	void DrawHealth(PlayerInfo CPlayer, int x, int y)
+	{
+		int health = CPlayer.health;
+
+		// decide on the color first
+		int fontcolor =
+			health < hud_health_red ? Font.CR_RED :
+			health < hud_health_yellow ? Font.CR_GOLD :
+			health <= hud_health_green ? Font.CR_GREEN :
+			Font.CR_BLUE;
+
+		bool haveBerserk = hud_berserk_health
+			&& !berserkpic.IsNull()
+			&& CPlayer.mo.FindInventory('PowerStrength');
+
+		DrawImageToBox(haveBerserk ? berserkpic : healthpic, x, y, 31, 17);
+		DrawHudNumber(HudFont, fontcolor, health, x + 33, y + 17);
+	}
+
+	//===========================================================================
+	//
+	// Draw Armor.
+	// very similar to drawhealth, but adapted to handle Hexen armor too
+	//
+	//===========================================================================
+
+	void DrawArmor(BasicArmor barmor, HexenArmor harmor, int x, int y)
+	{
+		int ap = 0;
+		int bestslot = 4;
+
+		if (harmor)
+		{
+			let ac = (harmor.Slots[0] + harmor.Slots[1] + harmor.Slots[2] + harmor.Slots[3] + harmor.Slots[4]);
+			ap += int(ac);
+			
+			if (ac)
+			{
+				// Find the part of armor that protects the most
+				bestslot = 0;
+				for (int i = 1; i < 4; ++i)
+				{
+					if (harmor.Slots[i] > harmor.Slots[bestslot])
+					{
+						bestslot = i;
+					}
+				}
+			}
+		}
+
+		if (barmor)
+		{
+			ap += barmor.Amount;
+		}
+
+		if (ap)
+		{
+			// decide on color
+			int fontcolor =
+				ap < hud_armor_red ? Font.CR_RED :
+				ap < hud_armor_yellow ? Font.CR_GOLD :
+				ap <= hud_armor_green ? Font.CR_GREEN :
+				Font.CR_BLUE;
+
+
+			// Use the sprite of one of the predefined Hexen armor bonuses.
+			// This is not a very generic approach, but it is not possible
+			// to truly create new types of Hexen armor bonus items anyway.
+			if (harmor && bestslot < 4)
+			{
+				static const String harmorIcons[] = { "AR_1A0", "AR_2A0", "AR_3A0", "AR_4A0" };
+				DrawImageToBox(TexMan.CheckForTexture(harmorIcons[bestslot], TexMan.Type_Sprite), x, y, 31, 17);
+			}
+			else if (barmor) DrawImageToBox(barmor.Icon, x, y, 31, 17);
+			DrawHudNumber(HudFont, fontcolor, ap, x + 33, y + 17);
+		}
+	}
+
+	//===========================================================================
+	//
+	// KEYS
+	//
+	//===========================================================================
+
+	//---------------------------------------------------------------------------
+	//
+	// Draw one key
+	//
+	// Regarding key icons, Doom's are too small, Heretic doesn't have any,
+	// for Hexen the in-game sprites look better and for Strife it doesn't matter
+	// so always use the spawn state's sprite instead of the icon here unless an
+	// override is specified in ALTHUDCF.
+	//
+	//---------------------------------------------------------------------------
+
+	bool DrawOneKey(int xo, int x, int y, in out int c, Key inv)
+	{
+		TextureID icon;
+		
+		if (!inv) return false;
+		
+		TextureID AltIcon = inv.AltHUDIcon;
+		if (!AltIcon.Exists()) return false;	// Setting a non-existent AltIcon hides this key.
+
+		if (AltIcon.isValid()) 
+		{
+			icon = AltIcon;
+		}
+		else if (inv.SpawnState && inv.SpawnState.sprite!=0)
+		{
+			let state = inv.SpawnState;
+			if (state != null) icon = state.GetSpriteTexture(0);
+			else icon.SetNull();
+		}
+		if (icon.isNull()) icon = inv.Icon;
+
+		if (icon.isValid())	
+		{
+			DrawImageToBox(icon, x, y, 8, 10);
+			return true;
+		}
+		return false;
+	}
+
+	//---------------------------------------------------------------------------
+	//
+	// Draw all keys
+	//
+	//---------------------------------------------------------------------------
+
+	int DrawKeys(PlayerInfo CPlayer, int x, int y)
+	{
+		int yo = y;
+		int xo = x;
+		int i;
+		int c = 0;
+		Key inv;
+
+		if (!deathmatch)
+		{
+			int count = Key.GetKeyTypeCount();
+			
+			// Go through the key in reverse order of definition, because we start at the right.
+			for(int i = count-1; i >= 0; i--)
+			{
+				if ((inv = Key(CPlayer.mo.FindInventory(Key.GetKeyType(i)))))
+				{
+					if (DrawOneKey(xo, x - 9, y, c, inv))
+					{
+						x -= 9;
+						if (++c >= 10)
+						{
+							x = xo;
+							y -= 11;
+							c = 0;
+						}
+					}
+				}
+			}
+		}
+		if (x == xo && y != yo) y += 11;	// undo the last wrap if the current line is empty.
+		return y - 11;
+	}
+
+}

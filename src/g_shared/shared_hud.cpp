@@ -121,6 +121,8 @@ static FTextureID tnt1a0;					// We need this to check for empty sprites.
 static int hudwidth, hudheight;				// current width/height for HUD display
 static int statspace;
 
+DObject *althud;								// scripted parts. This is here to make a gradual transition
+
 DVector2 AM_GetPosition();
 
 //---------------------------------------------------------------------------
@@ -131,30 +133,10 @@ DVector2 AM_GetPosition();
 //---------------------------------------------------------------------------
 static void DrawImageToBox(FTexture * tex, int x, int y, int w, int h, double trans = 0.75)
 {
-	double scale1, scale2;
-
-	if (tex)
+	IFVM(AltHud, DrawImageToBox)
 	{
-		double texwidth=tex->GetScaledWidthDouble();
-		double texheight=tex->GetScaledHeightDouble();
-
-		if (w<texwidth) scale1=w/texwidth;
-		else scale1=1.0f;
-		if (h<texheight) scale2=h/texheight;
-		else scale2=1.0f;
-		if (scale2<scale1) scale1=scale2;
-
-		x+=w>>1;
-		y+=h;
-
-		w=(int)(texwidth*scale1);
-		h=(int)(texheight*scale1);
-
-		screen->DrawTexture(tex, x, y,
-			DTA_KeepRatio, true,
-			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, trans, 
-			DTA_DestWidth, w, DTA_DestHeight, h, DTA_CenterBottomOffset, 1, TAG_DONE);
-
+		VMValue params[] = { althud, tex->id.GetIndex(), x, y, w, h, trans };
+		VMCall(func, params, countof(params), nullptr, 0);
 	}
 }
 
@@ -164,26 +146,14 @@ static void DrawImageToBox(FTexture * tex, int x, int y, int w, int h, double tr
 // Draws a text but uses a fixed width for all characters
 //
 //---------------------------------------------------------------------------
-double GetBottomAlignOffset(FFont *font, int c);
 
 static void DrawHudText(FFont *font, int color, char * text, int x, int y, double trans = 0.75)
 {
-	int zerowidth;
-	FTexture *tex_zero = font->GetChar('0', &zerowidth);
-
-	x+=zerowidth/2;
-	for(int i=0;text[i];i++)
+	IFVM(AltHud, DrawHudText)
 	{
-		int width = font->GetCharWidth(text[i]);
-		double offset = GetBottomAlignOffset(font, text[i]);
-
-		screen->DrawChar(font, color, x, y, text[i],
-			DTA_KeepRatio, true,
-			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, trans, 
-			DTA_LeftOffset, width/2, DTA_TopOffsetF, offset,
-			/*DTA_CenterBottomOffset, 1,*/ TAG_DONE);
-
-		x += zerowidth;
+		FString string = text;
+		VMValue params[] = { althud, font, color, &string, x, y, trans };
+		VMCall(func, params, countof(params), nullptr, 0);
 	}
 }
 
@@ -196,10 +166,11 @@ static void DrawHudText(FFont *font, int color, char * text, int x, int y, doubl
 
 static void DrawHudNumber(FFont *font, int color, int num, int x, int y, double trans = 0.75)
 {
-	char text[15];
-
-	mysnprintf(text, countof(text), "%d", num);
-	DrawHudText(font, color, text, x, y, trans);
+	IFVM(AltHud, DrawHudNumber)
+	{
+		VMValue params[] = { althud, font, color, num, x, y, trans };
+		VMCall(func, params, countof(params), nullptr, 0);
+	}
 }
 
 
@@ -209,57 +180,12 @@ static void DrawHudNumber(FFont *font, int color, int num, int x, int y, double 
 //
 //===========================================================================
 
-static void DrawStatLine(int x, int &y, const char *prefix, const char *string)
-{
-	y -= SmallFont->GetHeight()-1;
-	screen->DrawText(SmallFont, hudcolor_statnames, x, y, prefix, 
-		DTA_KeepRatio, true,
-		DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0.75, TAG_DONE);
-
-	screen->DrawText(SmallFont, hudcolor_stats, x+statspace, y, string,
-		DTA_KeepRatio, true,
-		DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0.75, TAG_DONE);
-}
-
 static void DrawStatus(player_t * CPlayer, int x, int y)
 {
-	char tempstr[50];
-	
-	if (hud_showscore)
+	IFVM(AltHud, DrawStatus)
 	{
-		mysnprintf(tempstr, countof(tempstr), "%i ", CPlayer->mo->Score);
-		DrawStatLine(x, y, "Sc:", tempstr);
-	}
-	
-	if (hud_showstats)
-	{
-		mysnprintf(tempstr, countof(tempstr), "%i ", CPlayer->mo->accuracy);
-		DrawStatLine(x, y, "Ac:", tempstr);
-		mysnprintf(tempstr, countof(tempstr), "%i ", CPlayer->mo->stamina);
-		DrawStatLine(x, y, "St:", tempstr);
-	}
-	
-	if (!deathmatch)
-	{
-		// FIXME: ZDoom doesn't preserve the player's stat counters across hubs so this doesn't
-		// work in cooperative hub games
-		if (hud_showsecrets)
-		{
-			mysnprintf(tempstr, countof(tempstr), "%i/%i ", multiplayer? CPlayer->secretcount : level.found_secrets, level.total_secrets);
-			DrawStatLine(x, y, "S:", tempstr);
-		}
-		
-		if (hud_showitems)
-		{
-			mysnprintf(tempstr, countof(tempstr), "%i/%i ", multiplayer? CPlayer->itemcount : level.found_items, level.total_items);
-			DrawStatLine(x, y, "I:", tempstr);
-		}
-		
-		if (hud_showmonsters)
-		{
-			mysnprintf(tempstr, countof(tempstr), "%i/%i ", multiplayer? CPlayer->killcount : level.killed_monsters, level.total_monsters);
-			DrawStatLine(x, y, "K:", tempstr);
-		}
+		VMValue params[] = { althud, CPlayer, x, y };
+		VMCall(func, params, countof(params), nullptr, 0);
 	}
 }
 
@@ -272,21 +198,11 @@ static void DrawStatus(player_t * CPlayer, int x, int y)
 
 static void DrawHealth(player_t *CPlayer, int x, int y)
 {
-	int health = CPlayer->health;
-
-	// decide on the color first
-	int fontcolor =
-		health < hud_health_red ? CR_RED :
-		health < hud_health_yellow ? CR_GOLD :
-		health <= hud_health_green ? CR_GREEN :
-		CR_BLUE;
-
-	const bool haveBerserk = hud_berserk_health
-		&& nullptr != berserkpic
-		&& nullptr != CPlayer->mo->FindInventory(NAME_PowerStrength);
-
-	DrawImageToBox(haveBerserk ? berserkpic : healthpic, x, y, 31, 17);
-	DrawHudNumber(HudFont, fontcolor, health, x + 33, y + 17);
+	IFVM(AltHud, DrawHealth)
+	{
+		VMValue params[] = { althud, CPlayer, x, y };
+		VMCall(func, params, countof(params), nullptr, 0);
+	}
 }
 
 //===========================================================================
@@ -298,61 +214,10 @@ static void DrawHealth(player_t *CPlayer, int x, int y)
 
 static void DrawArmor(AInventory * barmor, AInventory * harmor, int x, int y)
 {
-	int ap = 0;
-	int bestslot = 4;
-
-	if (harmor)
+	IFVM(AltHud, DrawArmor)
 	{
-		double *Slots = (double*)harmor->ScriptVar(NAME_Slots, nullptr);
-		auto ac = (Slots[0] + Slots[1] + Slots[2] + Slots[3] + Slots[4]);
-		ap += int(ac);
-		
-		if (ac)
-		{
-			// Find the part of armor that protects the most
-			bestslot = 0;
-			for (int i = 1; i < 4; ++i)
-			{
-				if (Slots[i] > Slots[bestslot])
-				{
-					bestslot = i;
-				}
-			}
-		}
-	}
-
-	if (barmor)
-	{
-		ap += barmor->Amount;
-	}
-
-	if (ap)
-	{
-		// decide on color
-		int fontcolor =
-			ap < hud_armor_red ? CR_RED :
-			ap < hud_armor_yellow ? CR_GOLD :
-			ap <= hud_armor_green ? CR_GREEN :
-			CR_BLUE;
-
-
-		// Use the sprite of one of the predefined Hexen armor bonuses.
-		// This is not a very generic approach, but it is not possible
-		// to truly create new types of Hexen armor bonus items anyway.
-		if (harmor && bestslot < 4)
-		{
-			char icon[] = "AR_1A0";
-			switch (bestslot)
-			{
-			case 1: icon[3] = '2'; break;
-			case 2: icon[3] = '3'; break;
-			case 3: icon[3] = '4'; break;
-			default: break;
-			}
-			DrawImageToBox(TexMan.FindTexture(icon, ETextureType::Sprite), x, y, 31, 17);
-		}
-		else if (barmor) DrawImageToBox(TexMan[barmor->Icon], x, y, 31, 17);
-		DrawHudNumber(HudFont, fontcolor, ap, x + 33, y + 17);
+		VMValue params[] = { althud, barmor, harmor, x, y };
+		VMCall(func, params, countof(params), nullptr, 0);
 	}
 }
 
@@ -364,81 +229,22 @@ static void DrawArmor(AInventory * barmor, AInventory * harmor, int x, int y)
 
 //---------------------------------------------------------------------------
 //
-// Draw one key
-//
-// Regarding key icons, Doom's are too small, Heretic doesn't have any,
-// for Hexen the in-game sprites look better and for Strife it doesn't matter
-// so always use the spawn state's sprite instead of the icon here unless an
-// override is specified in ALTHUDCF.
-//
-//---------------------------------------------------------------------------
-
-static void DrawOneKey(int xo, int & x, int & y, int & c, AInventory * inv)
-{
-	FTextureID icon = FNullTextureID();
-	FTextureID AltIcon = inv->AltHUDIcon;
-
-	if (!AltIcon.Exists()) return;
-
-	if (AltIcon.isValid()) 
-	{
-		icon = AltIcon;
-	}
-	else if (inv->SpawnState && inv->SpawnState->sprite!=0)
-	{
-		FState * state = inv->SpawnState;
-		if (state &&  (unsigned)state->sprite < (unsigned)sprites.Size ())
-		{
-			spritedef_t * sprdef = &sprites[state->sprite];
-			spriteframe_t * sprframe = &SpriteFrames[sprdef->spriteframes + state->GetFrame()];
-			if (sprframe->Texture[0] != tnt1a0)
-				icon = sprframe->Texture[0];
-		}
-	}
-	if (icon.isNull()) icon = inv->Icon;
-
-	if (icon.isValid())	
-	{
-		x -= 9;
-		DrawImageToBox(TexMan[icon], x, y, 8, 10);
-		c++;
-		if (c>=10)
-		{
-			x=xo;
-			y-=11;
-			c=0;
-		}
-	}
-}
-
-//---------------------------------------------------------------------------
-//
 // Draw all keys
 //
 //---------------------------------------------------------------------------
 
 static int DrawKeys(player_t * CPlayer, int x, int y)
 {
-	int yo=y;
-	int xo=x;
-	int c=0;
-	AInventory *inv;
-
-	if (!deathmatch)
+	IFVM(AltHud, DrawKeys)
 	{
-		int i = P_GetKeyTypeCount();
-		for(i--; i >= 0; i--)
-		{
-			if ((inv = CPlayer->mo->FindInventory(P_GetKeyType(i))))
-			{
-				DrawOneKey(xo, x, y, c, inv);
-			}
-		}
+		VMValue params[] = { althud, CPlayer, x, y };
+		int retv;
+		VMReturn ret(&retv);
+		VMCall(func, params, countof(params), &ret, 1);
+		return retv;
 	}
-	if (x == xo && y != yo) y+=11;
-	return y-11;
+	return 0;
 }
-
 
 //---------------------------------------------------------------------------
 //
@@ -1029,6 +835,18 @@ void DrawHUD()
 	hudwidth = SCREENWIDTH / scale;
 	hudheight = hud_aspectscale ? int(SCREENHEIGHT / (scale*1.2)) : SCREENHEIGHT / scale;
 
+	// Until the script export is complete we need to do some manual setup here
+	auto cls = PClass::FindClass("AltHud");
+	if (!cls) return;
+
+	althud = cls->CreateNew();
+	althud->IntVar("hudwidth") = hudwidth;
+	althud->IntVar("hudheight") = hudheight;
+	althud->IntVar("statspace") = statspace;
+	althud->IntVar("healthpic") = healthpic? healthpic->id.GetIndex() : -1;
+	althud->IntVar("berserkpic") = berserkpic? berserkpic->id.GetIndex() : -1;
+	althud->PointerVar<FFont>("HUDFont") = HudFont;
+
 	if (!automapactive)
 	{
 		int i;
@@ -1094,6 +912,9 @@ void DrawHUD()
 
 		DrawCoordinates(CPlayer);
 	}
+
+	if (althud) althud->Destroy();
+	althud = nullptr;
 }
 
 /////////////////////////////////////////////////////////////////////////

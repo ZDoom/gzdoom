@@ -287,11 +287,52 @@ extern "C"
 {
 	void __register_frame(const void*);
 	void __deregister_frame(const void*);
-}
 
-static void WriteLength64(TArray<uint8_t> &stream, unsigned int pos, unsigned int v)
-{
-	*(uint64_t*)(&stream[pos]) = v;
+#if 0 // Someone needs to implement this if GDB/LLDB should produce correct call stacks
+	
+	// GDB JIT interface (GG guys! Thank you SO MUCH for not hooking into the above functions. Really appreciate it!)
+	
+	// To register code with GDB, the JIT should follow this protocol:
+	//
+	// * Generate an object file in memory with symbols and other desired debug information.
+	//   The file must include the virtual addresses of the sections. 
+	// * Create a code entry for the file, which gives the start and size of the symbol file. 
+	// * Add it to the linked list in the JIT descriptor.
+	// * Point the relevant_entry field of the descriptor at the entry.
+	// * Set action_flag to JIT_REGISTER and call __jit_debug_register_code.
+	
+	// Pure beauty! Now a JIT also has to create a full ELF object file. And is it a MACH-O on macOS? You guys ROCK!
+
+	typedef enum
+	{
+	  JIT_NOACTION = 0,
+	  JIT_REGISTER_FN,
+	  JIT_UNREGISTER_FN
+	} jit_actions_t;
+
+	struct jit_code_entry
+	{
+	  struct jit_code_entry *next_entry;
+	  struct jit_code_entry *prev_entry;
+	  const char *symfile_addr;
+	  uint64_t symfile_size;
+	};
+
+	struct jit_descriptor
+	{
+	  uint32_t version;
+	  // This type should be jit_actions_t, but we use uint32_t to be explicit about the bitwidth.
+	  uint32_t action_flag;
+	  struct jit_code_entry *relevant_entry;
+	  struct jit_code_entry *first_entry;
+	};
+
+	// GDB puts a breakpoint in this function.
+	void __attribute__((noinline)) __jit_debug_register_code() { };
+
+	// Make sure to specify the version statically, because the debugger may check the version before we can set it.
+	struct jit_descriptor __jit_debug_descriptor = { 1, 0, 0, 0 };
+#endif
 }
 
 static void WriteLength(TArray<uint8_t> &stream, unsigned int pos, unsigned int v)
@@ -373,85 +414,56 @@ static void WritePadding(TArray<uint8_t> &stream)
 	}
 }
 
-static void WriteEmptyAugmentation(TArray<uint8_t> &stream)
-{
-	int padding = (stream.Size() + 1) % 8;
-	if (padding == 0)
-	{
-		WriteULEB128(stream, 0);
-	}
-	else
-	{
-		padding = 8 - padding;
-		WriteULEB128(stream, padding);
-		for (int i = 0; i <= padding; i++) WriteUInt8(stream, 0);
-	}
-}
-
 static void WriteCIE(TArray<uint8_t> &stream, const TArray<uint8_t> &cieInstructions, uint8_t returnAddressReg)
 {
-#ifdef USE_DWARF64
-	WriteUInt32(stream, 0xffffffff); // this is a 64-bit entry
-	unsigned int lengthPos = stream.Size();
-	WriteUInt64(stream, 0); // Length
-	WriteUInt64(stream, 0); // CIE ID
-#else
 	unsigned int lengthPos = stream.Size();
 	WriteUInt32(stream, 0); // Length
 	WriteUInt32(stream, 0); // CIE ID
-#endif
 	
 	WriteUInt8(stream, 1); // CIE Version
-	WriteUInt8(stream, 'z');
+	//WriteUInt8(stream, 'z');
+	//WriteUInt8(stream, 'L'); // LSDA (language specific data area)
 	//WriteUInt8(stream, 'R'); // fde encoding
 	WriteUInt8(stream, 0);
 	WriteULEB128(stream, 1);
-	WriteSLEB128(stream, -4);
-	WriteUInt8(stream, returnAddressReg);
+	WriteSLEB128(stream, -1);
+	WriteULEB128(stream, returnAddressReg);
 
-	WriteEmptyAugmentation(stream);
-
+	//unsigned int augmentStartPos = stream.Size();
+	//WriteULEB128(stream, 0); // LEB128 augmentation size
+	//WriteUInt8(stream, 0xff); // DW_EH_PE_omit (no LSDA)
+	//WriteUInt8(stream, 0); // DW_EH_PE_absptr (FDE uses absolute pointers)
+	//WritePadding(stream);
+	//stream[augmentStartPos] = stream.Size() - augmentStartPos - 1;
+	
 	for (unsigned int i = 0; i < cieInstructions.Size(); i++)
 		stream.Push(cieInstructions[i]);
 
 	WritePadding(stream);
-#ifdef USE_DWARF64
-	WriteLength64(stream, lengthPos, stream.Size() - lengthPos - 8);
-#else
 	WriteLength(stream, lengthPos, stream.Size() - lengthPos - 4);
-#endif
 }
 
 static void WriteFDE(TArray<uint8_t> &stream, const TArray<uint8_t> &fdeInstructions, uint32_t cieLocation, unsigned int &functionStart)
 {
-#ifdef USE_DWARF64
-	WriteUInt32(stream, 0xffffffff); // this is a 64-bit entry
-	unsigned int lengthPos = stream.Size();
-	WriteUInt64(stream, 0); // Length
-	uint32_t offsetToCIE = stream.Size() - cieLocation;
-	WriteUInt64(stream, offsetToCIE);
-#else
 	unsigned int lengthPos = stream.Size();
 	WriteUInt32(stream, 0); // Length
 	uint32_t offsetToCIE = stream.Size() - cieLocation;
 	WriteUInt32(stream, offsetToCIE);
-#endif
 	
 	functionStart = stream.Size();
 	WriteUInt64(stream, 0); // func start
 	WriteUInt64(stream, 0); // func size
-	
-	WriteEmptyAugmentation(stream);
+
+	//unsigned int augmentStartPos = stream.Size();
+	//WriteULEB128(stream, 0); // LEB128 augmentation size
+	//WritePadding(stream);
+	//stream[augmentStartPos] = stream.Size() - augmentStartPos - 1;
 
 	for (unsigned int i = 0; i < fdeInstructions.Size(); i++)
 		stream.Push(fdeInstructions[i]);
 
 	WritePadding(stream);
-#ifdef USE_DWARF64
-	WriteLength64(stream, lengthPos, stream.Size() - lengthPos - 8);
-#else
 	WriteLength(stream, lengthPos, stream.Size() - lengthPos - 4);
-#endif
 }
 
 static void WriteAdvanceLoc(TArray<uint8_t> &fdeInstructions, uint64_t offset, uint64_t &lastOffset)
@@ -485,6 +497,11 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 	// The x64 specific details are described in "System V Application Binary Interface AMD64 Architecture Processor Supplement"
 	//
 	// See appendix D.6 "Call Frame Information Example" in the DWARF 5 spec.
+	//
+	// Unofficial description: https://www.airs.com/blog/archives/460
+	//
+	// The CFI_Parser<A>::decodeFDE parser on the other side..
+	// https://github.com/llvm-mirror/libunwind/blob/master/src/DwarfParser.hpp
 	
 	// Asmjit -> DWARF register id
 	int dwarfRegId[16];
@@ -512,18 +529,25 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 	uint64_t lastOffset = 0;
 
 	uint8_t returnAddressReg = dwarfRegRAId;
+	int stackOffset = 8; // Offset from RSP to the Canonical Frame Address (CFA) - stack position where the CALL return address is stored
 
 	// Do we need to write register defaults into the CIE or does the defaults match the x64 calling convention?
 	// Great! the "System V Application Binary Interface AMD64 Architecture Processor Supplement" doesn't say what the defaults are..
 	// This is basically just the x64 calling convention..
+	
 	WriteUInt8(cieInstructions, 0x0c); // DW_CFA_def_cfa
 	WriteULEB128(cieInstructions, dwarfRegId[X86Gp::kIdSp]);
+	WriteULEB128(cieInstructions, stackOffset);
+	
+	WriteUInt8(cieInstructions, (2 << 6) | returnAddressReg); // DW_CFA_offset
 	WriteULEB128(cieInstructions, 0);
+	
 	for (auto regId : { X86Gp::kIdAx, X86Gp::kIdDx, X86Gp::kIdCx, X86Gp::kIdSi, X86Gp::kIdDi, X86Gp::kIdSp, X86Gp::kIdR8, X86Gp::kIdR9, X86Gp::kIdR10, X86Gp::kIdR11 })
 	{
 		WriteUInt8(cieInstructions, 0x07); // DW_CFA_undefined
 		WriteULEB128(cieInstructions, dwarfRegId[regId]);
 	}
+	
 	for (auto regId : { X86Gp::kIdBx, X86Gp::kIdBp, X86Gp::kIdR12, X86Gp::kIdR13, X86Gp::kIdR14, X86Gp::kIdR15 })
 	{
 		WriteUInt8(cieInstructions, 0x08); // DW_CFA_same_value
@@ -549,8 +573,6 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 	X86Gp gpReg = emitter->zsp(); // General purpose register (temporary).
 	X86Gp saReg = emitter->zsp(); // Stack-arguments base register.
 	uint32_t gpSaved = layout.getSavedRegs(X86Reg::kKindGp);
-
-	int stackOffset = 0;
 
 	if (layout.hasPreservedFP())
 	{

@@ -229,5 +229,28 @@ class ScriptUtil play
 		else return GetDefaultByType(ammotype).MaxAmount;
 	}
 
+	//==========================================================================
+	//
+	//
+	//
+	//==========================================================================
+
+	int PlayerAmmo(Actor activator, class<Inventory> type, int newamount = int.min)
+	{
+		if (activator == null) return 0;
+		let ammotype = (class<Ammo>)(type);
+		if (ammotype == null) return 0;
+		
+		if (newamount != int.min)
+		{
+			let iammo = activator.FindInventory(ammotype);
+			newamount = max(newamount, 0);
+			if (iammo) iammo.Amount = newamount;
+			else activator.GiveAmmo(ammotype, newamount);
+		}
+		let iammo = activator.FindInventory(ammotype);
+		if (iammo) return iammo.Amount;
+		else return 0;
+	}	
 	
 }

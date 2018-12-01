@@ -283,6 +283,35 @@ extend class Actor
 	}
 
 
+	//============================================================================
+	//
+	// AActor :: GiveAmmo
+	//
+	// Returns true if the ammo was added, false if not.
+	//
+	//============================================================================
+
+	bool GiveAmmo (Class<Ammo> type, int amount)
+	{
+		if (type != NULL && type is 'Ammo')
+		{
+			let item = Inventory(Spawn (type));
+			if (item)
+			{
+				item.Amount = amount;
+				item.bDropped = true;
+				if (!item.CallTryPickup (self))
+				{
+					item.Destroy ();
+					return false;
+				}
+				return true;
+			}
+		}
+		return false;
+	}
+
+
 	//===========================================================================
 	//
 	// DoGiveInventory

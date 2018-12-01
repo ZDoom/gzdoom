@@ -772,9 +772,6 @@ public:
 	// Returns the first item held with IF_INVBAR set.
 	AInventory *FirstInv ();
 
-	// Tries to give the actor some ammo.
-	bool GiveAmmo (PClassActor *type, int amount);
-
 	// Destroys all the inventory the actor is holding.
 	void DestroyAllInventory ();
 

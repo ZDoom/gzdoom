@@ -944,44 +944,6 @@ DEFINE_ACTION_FUNCTION(AActor, GiveInventoryType)
 
 //============================================================================
 //
-// AActor :: GiveAmmo
-//
-// Returns true if the ammo was added, false if not.
-//
-//============================================================================
-
-bool AActor::GiveAmmo (PClassActor *type, int amount)
-{
-	if (type != NULL)
-	{
-		if (!type->IsDescendantOf(RUNTIME_CLASS(AInventory))) return false;
-
-		AInventory *item = static_cast<AInventory *>(Spawn (type));
-		if (item)
-		{
-			item->Amount = amount;
-			item->flags |= MF_DROPPED;
-			if (!item->CallTryPickup (this))
-			{
-				item->Destroy ();
-				return false;
-			}
-			return true;
-		}
-	}
-	return false;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, GiveAmmo)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS(type, AInventory);
-	PARAM_INT(amount);
-	ACTION_RETURN_BOOL(self->GiveAmmo(type, amount));
-}
-
-//============================================================================
-//
 // AActor :: ClearInventory
 //
 // Clears the inventory of a single actor.

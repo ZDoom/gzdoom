@@ -2485,30 +2485,11 @@ void FParser::SF_PlayerKeys(void)
 
 void FParser::SF_PlayerAmmo(void)
 {
-	int playernum, amount;
-	PClassActor * ammotype;
-	
 	if (CheckArgs(2))
 	{
-		playernum=T_GetPlayerNum(t_argv[0]);
-		if (playernum==-1) return;
-
-		ammotype=T_GetAmmo(t_argv[1]);
-		if (!ammotype) return;
-
-		if(t_argc >= 3)
-		{
-			AInventory * iammo = players[playernum].mo->FindInventory(ammotype);
-			amount = intvalue(t_argv[2]);
-			if(amount < 0) amount = 0;
-			if (iammo) iammo->Amount = amount;
-			else players[playernum].mo->GiveAmmo(ammotype, amount);
-		}
-
 		t_return.type = svt_int;
-		AInventory * iammo = players[playernum].mo->FindInventory(ammotype);
-		if (iammo) t_return.value.i = iammo->Amount;
-		else t_return.value.i = 0;
+		t_return.value.i = ScriptUtil::Exec("PlayerAmmo", ScriptUtil::Pointer, T_GetPlayerActor(t_argv[0]), ScriptUtil::Class, T_GetAmmo(t_argv[1]),
+			ScriptUtil::Int, t_argc >= 3 ? intvalue(t_argv[2]) : INT_MIN, ScriptUtil::End);
 	}
 }
 
@@ -2524,7 +2505,7 @@ void FParser::SF_MaxPlayerAmmo()
 	if (CheckArgs(2))
 	{
 		t_return.type = svt_int;
-		t_return.value.i = ScriptUtil::Exec("MaxPlayerAmmo", ScriptUtil::Pointer, T_GetPlayerActor(t_argv[0]), ScriptUtil::Class, T_ClassType(t_argv[1]), 
+		t_return.value.i = ScriptUtil::Exec("MaxPlayerAmmo", ScriptUtil::Pointer, T_GetPlayerActor(t_argv[0]), ScriptUtil::Class, T_GetAmmo(t_argv[1]),
 			ScriptUtil::Int, t_argc >= 3? intvalue(t_argv[2]) : INT_MIN, ScriptUtil::Int, t_argc >= 4 ? intvalue(t_argv[3]) : INT_MIN, ScriptUtil::End);
 	}
 }

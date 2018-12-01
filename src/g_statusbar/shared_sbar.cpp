@@ -2161,3 +2161,75 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetMugshot)
 	ACTION_RETURN_INT(tex ? tex->id.GetIndex() : -1);
 }
 
+//---------------------------------------------------------------------------
+//
+// Weapons List
+//
+//---------------------------------------------------------------------------
+FTextureID GetInventoryIcon(AInventory *item, uint32_t flags, bool *applyscale)
+{
+	if (applyscale != NULL)
+	{
+		*applyscale = false;
+	}
+
+	if (item == nullptr) return FNullTextureID();
+
+	FTextureID picnum, Icon = item->Icon, AltIcon = item->AltHUDIcon;
+	FState * state = NULL, *ReadyState;
+
+	picnum.SetNull();
+	if (flags & DI_ALTICONFIRST)
+	{
+		if (!(flags & DI_SKIPALTICON) && AltIcon.isValid())
+			picnum = AltIcon;
+		else if (!(flags & DI_SKIPICON))
+			picnum = Icon;
+	}
+	else
+	{
+		if (!(flags & DI_SKIPICON) && item->Icon.isValid())
+			picnum = Icon;
+		else if (!(flags & DI_SKIPALTICON))
+			picnum = AltIcon;
+	}
+
+	if (!picnum.isValid()) //isNull() is bad for checking, because picnum could be also invalid (-1)
+	{
+		if (!(flags & DI_SKIPSPAWN) && item->SpawnState && item->SpawnState->sprite != 0)
+		{
+			state = item->SpawnState;
+
+			if (applyscale != NULL && !(flags & DI_FORCESCALE))
+			{
+				*applyscale = true;
+			}
+		}
+		// no spawn state - now try the ready state if it's weapon
+		else if (!(flags & DI_SKIPREADY) && item->GetClass()->IsDescendantOf(NAME_Weapon) && (ReadyState = item->FindState(NAME_Ready)) && ReadyState->sprite != 0)
+		{
+			state = ReadyState;
+		}
+		if (state && (unsigned)state->sprite < (unsigned)sprites.Size())
+		{
+			spritedef_t * sprdef = &sprites[state->sprite];
+			spriteframe_t * sprframe = &SpriteFrames[sprdef->spriteframes + state->GetFrame()];
+
+			picnum = sprframe->Texture[0];
+		}
+	}
+	return picnum;
+}
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetInventoryIcon)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(item, AInventory);
+	PARAM_INT(flags);
+	bool applyscale;
+	FTextureID icon = GetInventoryIcon(item, flags, &applyscale);
+	if (numret >= 1) ret[0].SetInt(icon.GetIndex());
+	if (numret >= 2) ret[1].SetInt(applyscale);
+	return MIN(numret, 2);
+}
+

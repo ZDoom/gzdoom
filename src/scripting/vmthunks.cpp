@@ -35,6 +35,7 @@
 #include "p_local.h"
 #include "v_font.h"
 #include "gstrings.h"
+#include "a_keys.h"
 
 //=====================================================================================
 //
@@ -1578,6 +1579,34 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_PlaySound, A_PlaySound)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckKeys, P_CheckKeys)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(locknum);
+	PARAM_BOOL(remote);
+	PARAM_BOOL(quiet);
+	ACTION_RETURN_BOOL(P_CheckKeys(self, locknum, remote, quiet));
+}
+
+
+//=====================================================================================
+//
+// Key exports
+//
+//=====================================================================================
+
+DEFINE_ACTION_FUNCTION_NATIVE(AKey, GetKeyTypeCount, P_GetKeyTypeCount)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_INT(P_GetKeyTypeCount());
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AKey, GetKeyType, P_GetKeyType)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(num);
+	ACTION_RETURN_POINTER(P_GetKeyType(num));
+}
 
 DEFINE_FIELD_X(Sector, sector_t, floorplane)
 DEFINE_FIELD_X(Sector, sector_t, ceilingplane)

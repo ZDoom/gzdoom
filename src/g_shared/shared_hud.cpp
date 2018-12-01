@@ -116,6 +116,7 @@ static FTexture * healthpic;				// Health icon
 static FTexture * berserkpic;				// Berserk icon (Doom only)
 static FTexture * fragpic;					// Frags icon
 static FTexture * invgems[2];				// Inventory arrows
+static FTextureID tnt1a0;					// We need this to check for empty sprites.
 
 static int hudwidth, hudheight;				// current width/height for HUD display
 static int statspace;
@@ -163,6 +164,7 @@ static void DrawImageToBox(FTexture * tex, int x, int y, int w, int h, double tr
 // Draws a text but uses a fixed width for all characters
 //
 //---------------------------------------------------------------------------
+double GetBottomAlignOffset(FFont *font, int c);
 
 static void DrawHudText(FFont *font, int color, char * text, int x, int y, double trans = 0.75)
 {
@@ -172,20 +174,15 @@ static void DrawHudText(FFont *font, int color, char * text, int x, int y, doubl
 	x+=zerowidth/2;
 	for(int i=0;text[i];i++)
 	{
-		int width;
-		FTexture *texc = font->GetChar(text[i], &width);
-		if (texc != NULL)
-		{
-			double offset = texc->GetScaledTopOffsetDouble(0) 
-				- tex_zero->GetScaledTopOffsetDouble(0) 
-				+ tex_zero->GetScaledHeightDouble();
+		int width = font->GetCharWidth(text[i]);
+		double offset = GetBottomAlignOffset(font, text[i]);
 
-			screen->DrawChar(font, color, x, y, text[i],
-				DTA_KeepRatio, true,
-				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, trans, 
-				DTA_LeftOffset, width/2, DTA_TopOffsetF, offset,
-				/*DTA_CenterBottomOffset, 1,*/ TAG_DONE);
-		}
+		screen->DrawChar(font, color, x, y, text[i],
+			DTA_KeepRatio, true,
+			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, trans, 
+			DTA_LeftOffset, width/2, DTA_TopOffsetF, offset,
+			/*DTA_CenterBottomOffset, 1,*/ TAG_DONE);
+
 		x += zerowidth;
 	}
 }
@@ -367,53 +364,6 @@ static void DrawArmor(AInventory * barmor, AInventory * harmor, int x, int y)
 
 //---------------------------------------------------------------------------
 //
-// create a sorted list of the defined keys so 
-// this doesn't have to be done each frame
-//
-//---------------------------------------------------------------------------
-static TArray<PClassActor *> KeyTypes, UnassignedKeyTypes;
-
-static int ktcmp(const void * a, const void * b)
-{
-	auto key1 = GetDefaultByType ( *(PClassActor **)a );
-	auto key2 = GetDefaultByType ( *(PClassActor **)b );
-	return key1->special1 - key2->special1;
-}
-
-static void SetKeyTypes()
-{
-	for(unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); i++)
-	{
-		PClassActor *ti = PClassActor::AllActorClasses[i];
-		auto kt = PClass::FindActor(NAME_Key);
-
-		if (ti->IsDescendantOf(kt))
-		{
-			AInventory *key = (AInventory*)(GetDefaultByType(ti));
-
-			if (key->Icon.isValid() && key->special1 > 0)
-			{
-				KeyTypes.Push(ti);
-			}
-			else 
-			{
-				UnassignedKeyTypes.Push(ti);
-			}
-		}
-	}
-	if (KeyTypes.Size())
-	{
-		qsort(&KeyTypes[0], KeyTypes.Size(), sizeof(KeyTypes[0]), ktcmp);
-	}
-	else
-	{
-		// Don't leave the list empty
-		KeyTypes.Push(PClass::FindActor(NAME_Key));
-	}
-}
-
-//---------------------------------------------------------------------------
-//
 // Draw one key
 //
 // Regarding key icons, Doom's are too small, Heretic doesn't have any,
@@ -441,7 +391,8 @@ static void DrawOneKey(int xo, int & x, int & y, int & c, AInventory * inv)
 		{
 			spritedef_t * sprdef = &sprites[state->sprite];
 			spriteframe_t * sprframe = &SpriteFrames[sprdef->spriteframes + state->GetFrame()];
-			icon = sprframe->Texture[0];
+			if (sprframe->Texture[0] != tnt1a0)
+				icon = sprframe->Texture[0];
 		}
 	}
 	if (icon.isNull()) icon = inv->Icon;
@@ -470,26 +421,15 @@ static int DrawKeys(player_t * CPlayer, int x, int y)
 {
 	int yo=y;
 	int xo=x;
-	int i;
 	int c=0;
 	AInventory *inv;
 
 	if (!deathmatch)
 	{
-		if (KeyTypes.Size() == 0) SetKeyTypes();
-
-		// First all keys that are assigned to locks (in reverse order of definition)
-		for (i = KeyTypes.Size()-1; i >= 0; i--)
+		int i = P_GetKeyTypeCount();
+		for(i--; i >= 0; i--)
 		{
-			if ((inv = CPlayer->mo->FindInventory(KeyTypes[i])))
-			{
-				DrawOneKey(xo, x, y, c, inv);
-			}
-		}
-		// And now the rest
-		for (i = UnassignedKeyTypes.Size()-1; i >= 0; i--)
-		{
-			if ((inv = CPlayer->mo->FindInventory(UnassignedKeyTypes[i])))
+			if ((inv = CPlayer->mo->FindInventory(P_GetKeyType(i))))
 			{
 				DrawOneKey(xo, x, y, c, inv);
 			}
@@ -663,78 +603,6 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 	return y;
 }
 
-
-//---------------------------------------------------------------------------
-//
-// Weapons List
-//
-//---------------------------------------------------------------------------
-FTextureID GetInventoryIcon(AInventory *item, uint32_t flags, bool *applyscale=NULL)	// This function is also used by SBARINFO
-{
-	if (applyscale != NULL)
-	{
-		*applyscale = false;
-	}
-
-	if (item == nullptr) return FNullTextureID();
-
-	FTextureID picnum, AltIcon = item->AltHUDIcon;
-	FState * state=NULL, *ReadyState;
-	
-	picnum.SetNull();
-	if (flags & DI_ALTICONFIRST)
-	{
-		if (!(flags & DI_SKIPALTICON) && AltIcon.isValid())
-			picnum = AltIcon;
-		else if (!(flags & DI_SKIPICON))
-			picnum = item->Icon;
-	}
-	else
-	{
-		if (!(flags & DI_SKIPICON) && item->Icon.isValid())
-			picnum = item->Icon;
-		else if (!(flags & DI_SKIPALTICON))
-			picnum = AltIcon;
-	}
-	
-	if (!picnum.isValid()) //isNull() is bad for checking, because picnum could be also invalid (-1)
-	{
-		if (!(flags & DI_SKIPSPAWN) && item->SpawnState && item->SpawnState->sprite!=0)
-		{
-			state = item->SpawnState;
-			
-			if (applyscale != NULL && !(flags & DI_FORCESCALE))
-			{
-				*applyscale = true;
-			}
-		}
-		// no spawn state - now try the ready state if it's weapon
-		else if (!(flags & DI_SKIPREADY) && item->GetClass()->IsDescendantOf(NAME_Weapon) && (ReadyState = item->FindState(NAME_Ready)) && ReadyState->sprite!=0)
-		{
-			state = ReadyState;
-		}
-		if (state && (unsigned)state->sprite < (unsigned)sprites.Size ())
-		{
-			spritedef_t * sprdef = &sprites[state->sprite];
-			spriteframe_t * sprframe = &SpriteFrames[sprdef->spriteframes + state->GetFrame()];
-
-			picnum = sprframe->Texture[0];
-		}
-	}
-	return picnum;
-}
-
-DEFINE_ACTION_FUNCTION(DBaseStatusBar, GetInventoryIcon)
-{
-	PARAM_PROLOGUE;
-	PARAM_OBJECT(item, AInventory);
-	PARAM_INT(flags);
-	bool applyscale;
-	FTextureID icon = GetInventoryIcon(item, flags, &applyscale);
-	if (numret >= 1) ret[0].SetInt(icon.GetIndex());
-	if (numret >= 2) ret[1].SetInt(applyscale);
-	return MIN(numret, 2);
-}
 
 static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AInventory * weapon)
 {
@@ -1263,11 +1131,9 @@ void HUD_InitHud()
 
 	invgems[0] = TexMan.FindTexture("INVGEML1");
 	invgems[1] = TexMan.FindTexture("INVGEMR1");
+	tnt1a0 = TexMan.CheckForTexture("TNT1A0", ETextureType::Sprite);
 
 	fragpic = TexMan.FindTexture("HU_FRAGS");	// Sadly, I don't have anything usable for this. :(
-
-	KeyTypes.Clear();
-	UnassignedKeyTypes.Clear();
 
 	statspace = SmallFont->StringWidth("Ac:");
 

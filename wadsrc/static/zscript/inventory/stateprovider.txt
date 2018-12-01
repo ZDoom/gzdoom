@@ -123,7 +123,7 @@ class StateProvider : Inventory
 			{
 				bool temp = false;
 				double ang = Angle - 90;
-				Vector2 ofs = AngleToVector(Spawnofs_xy);
+				Vector2 ofs = AngleToVector(ang, Spawnofs_xy);
 				Actor proj = SpawnPlayerMissile(missile, bangle, ofs.X, ofs.Y, Spawnheight);
 				if (proj)
 				{
@@ -167,7 +167,7 @@ class StateProvider : Inventory
 				{
 					bool temp = false;
 					double ang = Angle - 90;
-					Vector2 ofs = AngleToVector(Spawnofs_xy);
+					Vector2 ofs = AngleToVector(ang, Spawnofs_xy);
 					Actor proj = SpawnPlayerMissile(missile, bangle, ofs.X, ofs.Y, Spawnheight);
 					if (proj)
 					{
@@ -209,7 +209,7 @@ class StateProvider : Inventory
 		if (ti) 
 		{
 			double ang = Angle - 90;
-			Vector2 ofs = AngleToVector(Spawnofs_xy);
+			Vector2 ofs = AngleToVector(ang, spawnofs_xy);
 			double shootangle = Angle;
 
 			if (flags & FPF_AIMATANGLE) shootangle += spawnangle;

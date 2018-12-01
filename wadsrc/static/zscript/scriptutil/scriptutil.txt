@@ -45,6 +45,47 @@ class ScriptUtil play
 		}
 	}
 
+	//============================================================================
+	//
+	// TakeInventory
+	//
+	// Takes an item from one or more actors.
+	//
+	//============================================================================
+
+	static void TakeInventory (Actor activator, Name type, int amount)
+	{
+		if (type == 'none')
+		{
+			return;
+		}
+		if (type == 'Armor')
+		{
+			type = "BasicArmor";
+		}
+		if (amount <= 0)
+		{
+			return;
+		}
+		Class<Inventory> info = type;
+		if (info == NULL)
+		{
+			return;
+		}
+		if (activator == NULL)
+		{
+			for (int i = 0; i < MAXPLAYERS; ++i)
+			{
+				if (playeringame[i])
+					players[i].mo.TakeInventory(info, amount);
+			}
+		}
+		else
+		{
+			activator.TakeInventory(info, amount);
+		}
+	}
+
 	//==========================================================================
 	//
 	//

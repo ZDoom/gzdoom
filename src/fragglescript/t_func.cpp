@@ -2407,44 +2407,6 @@ void FParser::SF_IsPlayerObj(void)
 
 //============================================================================
 //
-// DoTakeInv
-//
-// Takes an item from a single actor.
-//
-//============================================================================
-
-static void FS_TakeInventory (AActor *actor, const char * type, int amount)
-{
-	if (strcmp (type, "Armor") == 0)
-	{
-		type = "BasicArmor";
-	}
-	if (amount <= 0)
-	{
-		return;
-	}
-	PClassActor * info = PClass::FindActor (type);
-	if (info == NULL)
-	{
-		return;
-	}
-
-	AInventory *item = actor->FindInventory (info);
-	if (item != NULL)
-	{
-		item->Amount -= amount;
-		if (item->Amount <= 0)
-		{
-			// If it's not ammo, destroy it. Ammo needs to stick around, even
-			// when it's zero for the benefit of the weapons that use it and 
-			// to maintain the maximum ammo amounts a backpack might have given.
-			item->DepleteOrDestroy();
-		}
-	}
-}
-
-//============================================================================
-//
 // CheckInventory
 //
 // Returns how much of a particular item an actor has.
@@ -2507,8 +2469,7 @@ void FParser::SF_PlayerKeys(void)
 		else
 		{
 			givetake = intvalue(t_argv[2]);
-			if(givetake) ScriptUtil::Exec(NAME_GiveInventory, players[playernum].mo, keyname.GetIndex(), 1);
-			else FS_TakeInventory(players[playernum].mo, keyname, 1);
+			ScriptUtil::Exec(givetake?NAME_GiveInventory : NAME_TakeInventory, players[playernum].mo, keyname.GetIndex(), 1);
 			t_return.type = svt_int;
 			t_return.value.i = 0;
 		}
@@ -2740,7 +2701,7 @@ void FParser::SF_TakeInventory(void)
 
 		if(t_argc == 2) count=32767;
 		else count=intvalue(t_argv[2]);
-		FS_TakeInventory(players[playernum].mo, stringvalue(t_argv[1]), count);
+		ScriptUtil::Exec(NAME_TakeInventory, ScriptUtil::Pointer, players[playernum].mo, FName(stringvalue(t_argv[1])).GetIndex(), count);
 		t_return.type = svt_int;
 		t_return.value.i = 0;
 	}

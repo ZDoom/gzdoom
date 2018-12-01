@@ -761,56 +761,15 @@ DEFINE_ACTION_FUNCTION(AActor, SetState)
 
 bool AActor::TakeInventory(PClassActor *itemclass, int amount, bool fromdecorate, bool notakeinfinite)
 {
-	amount = abs(amount);
-	AInventory *item = FindInventory(itemclass);
-
-	if (item == NULL)
-		return false;
-
-	if (!fromdecorate)
+	IFVM(Actor, TakeInventory)
 	{
-		item->Amount -= amount;
-		if (item->Amount <= 0)
-		{
-			item->DepleteOrDestroy();
-		}
-		// It won't be used in non-decorate context, so return false here
-		return false;
+		VMValue params[] = { this, itemclass, amount, fromdecorate, notakeinfinite };
+		int retval = 0;
+		VMReturn ret(&retval);
+		VMCall(func, params, 5, &ret, 1);
+		return !!retval;
 	}
-
-	bool result = false;
-	if (item->Amount > 0)
-	{
-		result = true;
-	}
-
-	// Do not take ammo if the "no take infinite/take as ammo depletion" flag is set
-	// and infinite ammo is on
-	if (notakeinfinite &&
-	((dmflags & DF_INFINITE_AMMO) || (player && FindInventory(NAME_PowerInfiniteAmmo, true))) && item->IsKindOf(NAME_Ammo))
-	{
-		// Nothing to do here, except maybe res = false;? Would it make sense?
-		result = false;
-	}
-	else if (!amount || amount>=item->Amount)
-	{
-		item->DepleteOrDestroy();
-	}
-	else item->Amount-=amount;
-
-	return result;
 }
-
-DEFINE_ACTION_FUNCTION(AActor, TakeInventory)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS_NOT_NULL(item, AInventory);
-	PARAM_INT(amount);
-	PARAM_BOOL(fromdecorate);
-	PARAM_BOOL(notakeinfinite);
-	ACTION_RETURN_BOOL(self->TakeInventory(item, amount, fromdecorate, notakeinfinite));
-}
-
 
 
 bool AActor::SetInventory(PClassActor *itemtype, int amount, bool beyondMax)

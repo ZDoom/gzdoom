@@ -993,6 +993,7 @@ xx(ScriptUtil)
 xx(SetMarineWeapon)
 xx(SetMarineSprite)
 xx(GiveInventory)
+xx(TakeInventory)
 
 // Weapon member fields that need direct access
 xx(Ammo1)

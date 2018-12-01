@@ -1749,49 +1749,6 @@ static void ClearInventory (AActor *activator)
 
 //============================================================================
 //
-// TakeInventory
-//
-// Takes an item from one or more actors.
-//
-//============================================================================
-
-static void TakeInventory (AActor *activator, const char *type, int amount)
-{
-	PClassActor *info;
-
-	if (type == NULL)
-	{
-		return;
-	}
-	if (strcmp (type, "Armor") == 0)
-	{
-		type = "BasicArmor";
-	}
-	if (amount <= 0)
-	{
-		return;
-	}
-	info = PClass::FindActor (type);
-	if (info == NULL)
-	{
-		return;
-	}
-	if (activator == NULL)
-	{
-		for (int i = 0; i < MAXPLAYERS; ++i)
-		{
-			if (playeringame[i])
-				players[i].mo->TakeInventory(info, amount);
-		}
-	}
-	else
-	{
-		activator->TakeInventory(info, amount);
-	}
-}
-
-//============================================================================
-//
 // DoUseInv
 //
 // Makes a single actor use an inventory item
@@ -9319,34 +9276,41 @@ scriptwait:
 		}
 
 		case PCD_TAKEINVENTORY:
-			TakeInventory (activator, FBehavior::StaticLookupString (STACK(2)), STACK(1));
+		{
+			int typeindex = FName(FBehavior::StaticLookupString(STACK(2))).GetIndex();
+			ScriptUtil::Exec(NAME_TakeInventory, ScriptUtil::Pointer, activator, ScriptUtil::Int, typeindex, ScriptUtil::Int, STACK(1), ScriptUtil::End);
 			sp -= 2;
 			break;
+		}
 
 		case PCD_TAKEACTORINVENTORY:
+		{
+			int typeindex = FName(FBehavior::StaticLookupString(STACK(2))).GetIndex();
+			FName type = FName(FBehavior::StaticLookupString(STACK(2)));
+			if (STACK(3) == 0)
 			{
-				const char *type = FBehavior::StaticLookupString(STACK(2));
-				if (STACK(3) == 0)
-				{
-					TakeInventory(NULL, type, STACK(1));
-				}
-				else
-				{
-					FActorIterator it(STACK(3));
-					AActor *actor;
-					for (actor = it.Next(); actor != NULL; actor = it.Next())
-					{
-						TakeInventory(actor, type, STACK(1));
-					}
-				}
-				sp -= 3;
+				ScriptUtil::Exec(NAME_TakeInventory, ScriptUtil::Pointer, nullptr, ScriptUtil::Int, typeindex, ScriptUtil::Int, STACK(1), ScriptUtil::End);
 			}
+			else
+			{
+				FActorIterator it(STACK(3));
+				AActor *actor;
+				for (actor = it.Next(); actor != NULL; actor = it.Next())
+				{
+					ScriptUtil::Exec(NAME_TakeInventory, ScriptUtil::Pointer, actor, ScriptUtil::Int, typeindex, ScriptUtil::Int, STACK(1), ScriptUtil::End);
+				}
+			}
+			sp -= 3;
 			break;
+		}
 
 		case PCD_TAKEINVENTORYDIRECT:
-			TakeInventory (activator, FBehavior::StaticLookupString (TAGSTR(uallong(pc[0]))), uallong(pc[1]));
+		{
+			int typeindex = FName(FBehavior::StaticLookupString(TAGSTR(uallong(pc[0])))).GetIndex();
+			ScriptUtil::Exec(NAME_TakeInventory, ScriptUtil::Pointer, activator, ScriptUtil::Int, typeindex, ScriptUtil::Int, uallong(pc[1]), ScriptUtil::End);
 			pc += 2;
 			break;
+		}
 
 		case PCD_CHECKINVENTORY:
 			STACK(1) = CheckInventory (activator, FBehavior::StaticLookupString (STACK(1)), false);

@@ -110,4 +110,53 @@ extend class Actor
 		}
 	}
 
+	//============================================================================
+	//
+	// AActor :: TakeInventory
+	//
+	//============================================================================
+
+	bool TakeInventory(class<Inventory> itemclass, int amount, bool fromdecorate = false, bool notakeinfinite = false)
+	{
+		amount = abs(amount);
+		let item = FindInventory(itemclass);
+
+		if (item == NULL)
+			return false;
+
+		if (!fromdecorate)
+		{
+			item.Amount -= amount;
+			if (item.Amount <= 0)
+			{
+				item.DepleteOrDestroy();
+			}
+			// It won't be used in non-decorate context, so return false here
+			return false;
+		}
+
+		bool result = false;
+		if (item.Amount > 0)
+		{
+			result = true;
+		}
+
+		// Do not take ammo if the "no take infinite/take as ammo depletion" flag is set
+		// and infinite ammo is on
+		if (notakeinfinite &&
+		(sv_infiniteammo || (player && FindInventory('PowerInfiniteAmmo', true))) && (item is 'Ammo'))
+		{
+			// Nothing to do here, except maybe res = false;? Would it make sense?
+			result = false;
+		}
+		else if (!amount || amount >= item.Amount)
+		{
+			item.DepleteOrDestroy();
+		}
+		else item.Amount -= amount;
+
+		return result;
+	}
+
+
 }

@@ -951,9 +951,9 @@ void APlayerPawn::PostBeginPlay()
 AInventory *APlayerPawn::PickNewWeapon(PClassActor *ammotype)
 {
 	AInventory *best = nullptr;
-	IFVM(PlayerPawn, DropWeapon)
+	IFVM(PlayerPawn, PickNewWeapon)
 	{
-		VMValue param = player->mo;
+		VMValue param[] = { player->mo, ammotype };
 		VMReturn ret((void**)&best);
 		VMCall(func, &param, 1, &ret, 1);
 	}

@@ -71,7 +71,6 @@ class AInventory : public AActor
 public:
 	
 	virtual void Serialize(FSerializer &arc) override;
-	virtual void OnDestroy() override;
 	virtual void Tick() override;
 	virtual bool Massacre() override;
 

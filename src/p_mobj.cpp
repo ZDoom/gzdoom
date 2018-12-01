@@ -755,48 +755,6 @@ DEFINE_ACTION_FUNCTION(AActor, SetState)
 
 //============================================================================
 //
-// AActor :: RemoveInventory
-//
-//============================================================================
-
-void AActor::RemoveInventory(AInventory *item)
-{
-	AInventory *inv, **invp;
-
-	if (item != NULL && item->Owner != NULL)	// can happen if the owner was destroyed by some action from an item's use state.
-	{
-		invp = &item->Owner->Inventory;
-		for (inv = *invp; inv != NULL; invp = &inv->Inventory, inv = *invp)
-		{
-			if (inv == item)
-			{
-				*invp = item->Inventory;
-
-				IFVIRTUALPTR(item, AInventory, DetachFromOwner)
-				{
-					VMValue params[1] = { item };
-					VMCall(func, params, 1, nullptr, 0);
-				}
-
-				item->Owner = NULL;
-				item->Inventory = NULL;
-				break;
-			}
-		}
-	}
-}
-
-DEFINE_ACTION_FUNCTION(AActor, RemoveInventory)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT_NOT_NULL(item, AInventory);
-	self->RemoveInventory(item);
-	return 0;
-}
-
-
-//============================================================================
-//
 // AActor :: TakeInventory
 //
 //============================================================================

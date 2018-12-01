@@ -98,6 +98,22 @@ class Inventory : Actor native
 		bDropped = true;	// [RH] Items are dropped by default
 	}
 
+	//===========================================================================
+	//
+	// AInventory :: Destroy
+	//
+	//===========================================================================
+
+	override void OnDestroy ()
+	{
+		if (Owner != NULL)
+		{
+			Owner.RemoveInventory (self);
+		}
+		Inv = NULL;
+		Super.OnDestroy();
+	}
+	
 	//---------------------------------------------------------------------------
 	//
 	// PROC A_RestoreSpecialThing1
@@ -990,6 +1006,30 @@ class Inventory : Actor native
 	}
 
 
+	//===========================================================================
+	//
+	// AInventory :: PrevInv
+	//
+	// Returns the previous item with IF_INVBAR set.
+	//
+	//===========================================================================
+
+	Inventory PrevInv ()
+	{
+		Inventory lastgood = NULL;
+		Inventory item = Owner.Inv;
+
+		while (item != NULL && item != self)
+		{
+			if (item.bInvBar)
+			{
+				lastgood = item;
+			}
+			item = item.Inv;
+		}
+		return lastgood;
+	}
+	
 	//===========================================================================
 	//
 	// AInventory :: OnDrop

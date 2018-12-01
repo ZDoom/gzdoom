@@ -182,26 +182,6 @@ DEFINE_ACTION_FUNCTION(AInventory, PrintPickupMessage)
 
 //===========================================================================
 //
-// AInventory :: Destroy
-//
-//===========================================================================
-
-void AInventory::OnDestroy ()
-{
-	if (Owner != NULL)
-	{
-		Owner->RemoveInventory (this);
-	}
-	Inventory = NULL;
-	Super::OnDestroy();
-
-	// Although contrived it can theoretically happen that these variables still got a pointer to this item
-	if (SendItemUse == this) SendItemUse = NULL;
-	if (SendItemDrop == this) SendItemDrop = NULL;
-}
-
-//===========================================================================
-//
 // AInventory :: DepleteOrDestroy
 //
 // If the item is depleted, just change its amount to 0, otherwise it's destroyed.

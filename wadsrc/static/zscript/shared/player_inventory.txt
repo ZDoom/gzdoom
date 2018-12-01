@@ -23,4 +23,56 @@ extend class PlayerPawn
 		}
 	}
 
+	//===========================================================================
+	//
+	// APlayerPawn :: RemoveInventory
+	//
+	//===========================================================================
+
+	override void RemoveInventory (Inventory item)
+	{
+		bool pickWeap = false;
+
+		// Since voodoo dolls aren't supposed to have an inventory, there should be
+		// no need to redirect them to the real player here as there is with AddInventory.
+
+		// If the item removed is the selected one, select something else, either the next
+		// item, if there is one, or the previous item.
+		if (player != NULL)
+		{
+			if (InvSel == item)
+			{
+				InvSel = item.NextInv ();
+				if (InvSel == NULL)
+				{
+					InvSel = item.PrevInv ();
+				}
+			}
+			if (InvFirst == item)
+			{
+				InvFirst = item.NextInv ();
+				if (InvFirst == NULL)
+				{
+					InvFirst = item.PrevInv ();
+				}
+			}
+			if (item == player.PendingWeapon)
+			{
+				player.PendingWeapon = WP_NOCHANGE;
+			}
+			if (item == player.ReadyWeapon)
+			{
+				// If the current weapon is removed, clear the refire counter and pick a new one.
+				pickWeap = true;
+				player.ReadyWeapon = NULL;
+				player.refire = 0;
+			}
+		}
+		Super.RemoveInventory (item);
+		if (pickWeap && player.mo == self && player.PendingWeapon == WP_NOCHANGE)
+		{
+			PickNewWeapon (NULL);
+		}
+	}
+
 }

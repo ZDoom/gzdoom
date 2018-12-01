@@ -746,9 +746,6 @@ public:
 	// APlayerPawn for some specific handling for players. None of this
 	// should ever be overridden by custom classes.
 
-	// Removes the item from the inventory list.
-	virtual void RemoveInventory (AInventory *item);
-
 	// Take the amount value of an item from the inventory list.
 	// If nothing is left, the item may be destroyed.
 	// Returns true if the initial item count is positive.

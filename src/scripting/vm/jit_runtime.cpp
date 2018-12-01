@@ -422,15 +422,13 @@ static void WriteCIE(TArray<uint8_t> &stream, const TArray<uint8_t> &cieInstruct
 	
 	WriteUInt8(stream, 1); // CIE Version
 	WriteUInt8(stream, 'z');
-	//WriteUInt8(stream, 'L'); // LSDA (language specific data area)
 	WriteUInt8(stream, 'R'); // fde encoding
 	WriteUInt8(stream, 0);
 	WriteULEB128(stream, 1);
 	WriteSLEB128(stream, -1);
 	WriteULEB128(stream, returnAddressReg);
 
-	WriteULEB128(stream, 2); // LEB128 augmentation size
-	//WriteUInt8(stream, 0xff); // DW_EH_PE_omit (no LSDA)
+	WriteULEB128(stream, 1); // LEB128 augmentation size
 	WriteUInt8(stream, 0); // DW_EH_PE_absptr (FDE uses absolute pointers)
 
 	for (unsigned int i = 0; i < cieInstructions.Size(); i++)
@@ -495,8 +493,6 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 	// The x64 specific details are described in "System V Application Binary Interface AMD64 Architecture Processor Supplement"
 	//
 	// See appendix D.6 "Call Frame Information Example" in the DWARF 5 spec.
-	//
-	// Unofficial description: https://www.airs.com/blog/archives/460
 	//
 	// The CFI_Parser<A>::decodeFDE parser on the other side..
 	// https://github.com/llvm-mirror/libunwind/blob/master/src/DwarfParser.hpp

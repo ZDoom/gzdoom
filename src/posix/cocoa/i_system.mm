@@ -141,10 +141,7 @@ static void I_FatalError(const char* const error, va_list ap)
 
 		char errortext[MAX_ERRORTEXT];
 		int index;
-		va_list argptr;
-		va_start(argptr, error);
 		index = vsnprintf(errortext, MAX_ERRORTEXT, error, ap);
-		va_end(argptr);
 
 		extern void Mac_I_FatalError(const char*);
 		Mac_I_FatalError(errortext);

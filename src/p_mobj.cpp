@@ -842,6 +842,7 @@ bool AActor::UseInventory (AInventory *item)
 		VMCall(func, params, 2, &ret, 1);
 		return !!retval;
 	}
+	return false;
 }
 
 //===========================================================================
@@ -854,38 +855,15 @@ bool AActor::UseInventory (AInventory *item)
 
 AInventory *AActor::DropInventory (AInventory *item, int amt)
 {
-	AInventory *drop = nullptr;
-	IFVIRTUALPTR(item, AInventory, CreateTossable)
+	IFVM(Actor, DropInventory)
 	{
-		VMValue params[] = { (DObject*)item, amt };
-		VMReturn ret((void**)&drop);
-		VMCall(func, params, countof(params), &ret, 1);
+		VMValue params[] = { this, item, amt };
+		AInventory *retval = 0;
+		VMReturn ret((void**)&retval);
+		VMCall(func, params, 3, &ret, 1);
+		return retval;
 	}
-	if (drop == nullptr) return NULL;
-	drop->SetOrigin(PosPlusZ(10.), false);
-	drop->Angles.Yaw = Angles.Yaw;
-	drop->VelFromAngle(5.);
-	drop->Vel.Z = 1.;
-	drop->Vel += Vel;
-	drop->flags &= ~MF_NOGRAVITY;	// Don't float
-	drop->ClearCounters();	// do not count for statistics again
-	{
-		// [MK] call OnDrop so item can change its drop behaviour
-		IFVIRTUALPTR(drop, AInventory, OnDrop)
-		{
-			VMValue params[] = { drop, this };
-			VMCall(func, params, 2, nullptr, 0);
-		}
-	}
-	return drop;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, DropInventory)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT_NOT_NULL(item, AInventory);
-	PARAM_INT(amt);
-	ACTION_RETURN_OBJECT(self->DropInventory(item, amt));
+	return nullptr;
 }
 
 //============================================================================

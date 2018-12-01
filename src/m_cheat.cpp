@@ -549,7 +549,7 @@ FString cht_Morph(player_t *player, PClassActor *morphclass, bool quickundo)
 
 void cht_SetInv(player_t *player, const char *string, int amount, bool beyond)
 {
-	IFVIRTUALPTR(player->mo, APlayerPawn, CheatSetInv)
+	IFVIRTUALPTR(player->mo, APlayerPawn, CheatTakeInv)
 	{
 		FString message = string;
 		VMValue params[] = { player->mo, &message, amount, beyond };

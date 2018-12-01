@@ -259,6 +259,29 @@ extend class Actor
 		return true;
 	}
 
+	//===========================================================================
+	//
+	// AActor :: DropInventory
+	//
+	// Removes a single copy of an item and throws it out in front of the actor.
+	//
+	//===========================================================================
+
+	Inventory DropInventory (Inventory item, int amt = 1)
+	{
+		Inventory drop = item.CreateTossable(amt);
+		if (drop == null) return NULL;
+		drop.SetOrigin(Pos + (0, 0, 10.), false);
+		drop.Angle = Angle;
+		drop.VelFromAngle(5.);
+		drop.Vel.Z = 1.;
+		drop.Vel += Vel;
+		drop.bNoGravity = false;	// Don't float
+		drop.ClearCounters();	// do not count for statistics again
+		drop.OnDrop(self);
+		return drop;
+	}
+
 
 	//===========================================================================
 	//

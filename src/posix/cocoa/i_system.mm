@@ -173,7 +173,6 @@ void I_FatalError(const char* const error, ...)
 
 }
 
-extern thread_local int jit_frames;
 void I_Error (const char *error, ...)
 {
 	va_list argptr;
@@ -181,17 +180,9 @@ void I_Error (const char *error, ...)
 
 	va_start(argptr, error);
 
-	if (jit_frames == 0)
-	{
-		vsprintf (errortext, error, argptr);
-		va_end (argptr);
-		throw CRecoverableError(errortext);
-	}
-	else
-	{
-		I_FatalError(error, argptr);
-		va_end(argptr);
-	}
+	vsprintf (errortext, error, argptr);
+	va_end (argptr);
+	throw CRecoverableError(errortext);
 }
 
 

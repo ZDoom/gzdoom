@@ -506,6 +506,7 @@ DEFINE_ACTION_FUNCTION(DBrokenLines, StringWidth)
 
 DEFINE_ACTION_FUNCTION(DBrokenLines, StringAt)
 {
+
 	PARAM_SELF_PROLOGUE(DBrokenLines);
 	PARAM_INT(index);
 	ACTION_RETURN_STRING((unsigned)index >= self->mBroken.Size() ? -1 : self->mBroken[index].Text);

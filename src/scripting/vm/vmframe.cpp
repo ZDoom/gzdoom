@@ -58,17 +58,6 @@ CUSTOM_CVAR(Bool, vm_jit, true, CVAR_NOINITCALL)
 CVAR(Bool, vm_jit, false, CVAR_NOINITCALL|CVAR_NOSET)
 #endif
 
-// On Windows we can rely on the system's unwinder to deal with JITed code.
-// On Linux we can not and need to be able to tell the error management that we have some JITed code in the call chain.
-#ifdef _WIN32
-inline void beginVM() { }
-inline void endVM() { }
-#else
-thread_local int jit_frames;
-inline void beginVM() { if (vm_jit) jit_frames++; }
-inline void endVM() { if (vm_jit) jit_frames--; }
-#endif
-
 cycle_t VMCycles[10];
 int VMCalls[10];
 
@@ -581,9 +570,7 @@ int VMCall(VMFunction *func, VMValue *params, int numparams, VMReturn *results, 
 				VMCycles[0].Clock();
 
 				auto sfunc = static_cast<VMScriptFunction *>(func);
-				beginVM();
 				int numret = sfunc->ScriptCall(sfunc, params, numparams, results, numresults);
-				endVM();
 				VMCycles[0].Unclock();
 				return numret;
 			}
@@ -701,15 +688,6 @@ void ThrowAbortException(VMScriptFunction *sfunc, VMOP *line, EVMAbortException 
 	va_start(ap, moreinfo);
 
 	CVMAbortException err(reason, moreinfo, ap);
-
-#ifndef _WIN32)
-
-	// Without a usable unwinder, aborting is the only real option here. :(
-	if (jit_frames)
-	{
-		I_FatalError("VM error: %s", err.what());
-	}
-#endif
 
 	err.stacktrace.AppendFormat("Called from %s at %s, line %d\n", sfunc->PrintableName.GetChars(), sfunc->SourceFileName.GetChars(), sfunc->PCToLine(line));
 	throw err;

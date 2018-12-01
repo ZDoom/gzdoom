@@ -53,6 +53,7 @@
 #include "a_morph.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "zstring.h"
 
 // [RH] Actually handle the cheat. The cheat code in st_stuff.c now just
 // writes some bytes to the network data stream, and the network code

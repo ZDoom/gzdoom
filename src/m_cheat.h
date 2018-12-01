@@ -1,6 +1,8 @@
 #ifndef __M_CHEAT_H__
 #define __M_CHEAT_H__
 
+#include "zstring.h"
+
 //
 // CHEAT SEQUENCE PACKAGE
 //

@@ -130,7 +130,7 @@ void I_Quit()
 extern FILE* Logfile;
 bool gameisdead;
 
-static void I_FatalError(const char* const error, va_list ap)
+static void I_FatalError(const char* const error, ...)
 {
 	static bool alreadyThrown = false;
 	gameisdead = true;
@@ -173,7 +173,6 @@ void I_FatalError(const char* const error, ...)
 	va_start(argptr, error);
 	I_FatalError(error, argptr);
 	va_end(argptr);
-
 }
 
 extern thread_local int jit_frames;

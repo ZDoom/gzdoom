@@ -1542,7 +1542,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, StringWidth, StringWidth)
 	ACTION_RETURN_INT(StringWidth(self, str));
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(FFont, FindFontColor, V_FindFontColor)
+static int FindFontColor(int name)
+{
+	return V_FindFontColor(ENamedName(name));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, FindFontColor, FindFontColor)
 {
 	PARAM_PROLOGUE;
 	PARAM_NAME(code);

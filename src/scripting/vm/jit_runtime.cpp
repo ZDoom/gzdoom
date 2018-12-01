@@ -483,6 +483,25 @@ static void WriteAdvanceLoc(TArray<uint8_t> &fdeInstructions, uint64_t offset, u
 	lastOffset = offset;
 }
 
+static void WriteDefineCFA(TArray<uint8_t> &cieInstructions, int dwarfRegId, int stackOffset)
+{
+	WriteUInt8(cieInstructions, 0x0c); // DW_CFA_def_cfa
+	WriteULEB128(cieInstructions, dwarfRegId);
+	WriteULEB128(cieInstructions, stackOffset);
+}
+
+static void WriteDefineStackOffset(TArray<uint8_t> &fdeInstructions, int stackOffset)
+{
+	WriteUInt8(fdeInstructions, 0x0e); // DW_CFA_def_cfa_offset
+	WriteULEB128(fdeInstructions, stackOffset);
+}
+
+static void WriteRegisterStackLocation(TArray<uint8_t> &instructions, int dwarfRegId, int stackLocation)
+{
+	WriteUInt8(instructions, (2 << 6) | dwarfRegId); // DW_CFA_offset
+	WriteULEB128(instructions, stackLocation);
+}
+
 static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &functionStart)
 {
 	using namespace asmjit;
@@ -524,31 +543,9 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 	uint8_t returnAddressReg = dwarfRegRAId;
 	int stackOffset = 8; // Offset from RSP to the Canonical Frame Address (CFA) - stack position where the CALL return address is stored
 
-	// Do we need to write register defaults into the CIE or does the defaults match the x64 calling convention?
-	// Great! the "System V Application Binary Interface AMD64 Architecture Processor Supplement" doesn't say what the defaults are..
-	// This is basically just the x64 calling convention..
+	WriteDefineCFA(cieInstructions, dwarfRegId[X86Gp::kIdSp], stackOffset);
+	WriteRegisterStackLocation(cieInstructions, returnAddressReg, stackOffset);
 	
-	WriteUInt8(cieInstructions, 0x0c); // DW_CFA_def_cfa
-	WriteULEB128(cieInstructions, dwarfRegId[X86Gp::kIdSp]);
-	WriteULEB128(cieInstructions, stackOffset);
-	
-	WriteUInt8(cieInstructions, (2 << 6) | returnAddressReg); // DW_CFA_offset
-	WriteULEB128(cieInstructions, stackOffset);
-	
-	/* clang doesn't output this, so I guess those were the defaults..
-	for (auto regId : { X86Gp::kIdAx, X86Gp::kIdDx, X86Gp::kIdCx, X86Gp::kIdSi, X86Gp::kIdDi, X86Gp::kIdSp, X86Gp::kIdR8, X86Gp::kIdR9, X86Gp::kIdR10, X86Gp::kIdR11 })
-	{
-		WriteUInt8(cieInstructions, 0x07); // DW_CFA_undefined
-		WriteULEB128(cieInstructions, dwarfRegId[regId]);
-	}
-	
-	for (auto regId : { X86Gp::kIdBx, X86Gp::kIdBp, X86Gp::kIdR12, X86Gp::kIdR13, X86Gp::kIdR14, X86Gp::kIdR15 })
-	{
-		WriteUInt8(cieInstructions, 0x08); // DW_CFA_same_value
-		WriteULEB128(cieInstructions, dwarfRegId[regId]);
-	}
-	*/
-
 	FuncFrameLayout layout;
 	Error error = layout.init(func->getDetail(), func->getFrameInfo());
 	if (error != kErrorOk)
@@ -579,10 +576,8 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 
 		stackOffset += 8;
 		WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
-		WriteUInt8(fdeInstructions, 0x0e); // DW_CFA_def_cfa_offset
-		WriteULEB128(fdeInstructions, stackOffset);
-		WriteUInt8(fdeInstructions, (2 << 6) | dwarfRegId[X86Gp::kIdBp]); // DW_CFA_offset
-		WriteULEB128(fdeInstructions, stackOffset);
+		WriteDefineStackOffset(fdeInstructions, stackOffset);
+		WriteRegisterStackLocation(fdeInstructions, dwarfRegId[X86Gp::kIdBp], stackOffset);
 
 		emitter->mov(zbp, zsp);
 	}
@@ -598,10 +593,8 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 
 			stackOffset += 8;
 			WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
-			WriteUInt8(fdeInstructions, 0x0e); // DW_CFA_def_cfa_offset
-			WriteULEB128(fdeInstructions, stackOffset);
-			WriteUInt8(fdeInstructions, (2 << 6) | dwarfRegId[regId]); // DW_CFA_offset
-			WriteULEB128(fdeInstructions, stackOffset);
+			WriteDefineStackOffset(fdeInstructions, stackOffset);
+			WriteRegisterStackLocation(fdeInstructions, dwarfRegId[regId], stackOffset);
 		}
 	}
 
@@ -629,8 +622,7 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 
 		stackOffset += layout.getStackAdjustment();
 		WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
-		WriteUInt8(fdeInstructions, 0x0e); // DW_CFA_def_cfa_offset
-		WriteULEB128(fdeInstructions, stackOffset);
+		WriteDefineStackOffset(fdeInstructions, stackOffset);
 	}
 
 	if (layout.hasDynamicAlignment() && layout.hasDsaSlotUsed())
@@ -660,8 +652,7 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 			vecBase.addOffsetLo32(static_cast<int32_t>(vecSize));
 
 			WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
-			WriteUInt8(fdeInstructions, (2 << 6) | (dwarfRegXmmId + regId)); // DW_CFA_offset
-			WriteULEB128(fdeInstructions, stackOffset - vecOffset);
+			WriteRegisterStackLocation(fdeInstructions, dwarfRegXmmId + regId, stackOffset - vecOffset);
 			vecOffset += static_cast<int32_t>(vecSize);
 		}
 	}

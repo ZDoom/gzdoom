@@ -89,7 +89,6 @@ public:
 
 	virtual void PostBeginPlay() override;
 	virtual void Tick() override;
-	virtual bool UseInventory (AInventory *item) override;
 	virtual void BeginPlay () override;
 	virtual bool UpdateWaterLevel (bool splash) override;
 

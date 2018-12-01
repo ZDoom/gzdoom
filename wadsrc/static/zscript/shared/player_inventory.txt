@@ -75,4 +75,37 @@ extend class PlayerPawn
 		}
 	}
 
+	//===========================================================================
+	//
+	// APlayerPawn :: UseInventory
+	//
+	//===========================================================================
+
+	override bool UseInventory (Inventory item)
+	{
+		let itemtype = item.GetClass();
+
+		if (player.cheats & CF_TOTALLYFROZEN)
+		{ // You can't use items if you're totally frozen
+			return false;
+		}
+		if ((level.FROZEN) && (player == NULL || player.timefreezer == 0))
+		{
+			// Time frozen
+			return false;
+		}
+
+		if (!Super.UseInventory (item))
+		{
+			// Heretic and Hexen advance the inventory cursor if the use failed.
+			// Should this behavior be retained?
+			return false;
+		}
+		if (player == players[consoleplayer])
+		{
+			A_PlaySound(item.UseSound, CHAN_ITEM);
+ 			StatusBar.FlashItem (itemtype);	// Fixme: This shouldn't be called from here, because it is in the UI.
+		}
+		return true;
+	}
 }

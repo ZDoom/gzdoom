@@ -297,8 +297,8 @@ class BaseStatusBar native ui
 	native PlayerInfo CPlayer;
 	native bool ShowLog;
 	native Vector2 defaultScale;	// factor for fully scaled fullscreen display.
-	native int artiflashTick;
-	native double itemflashFade;
+	clearscope native int artiflashTick;
+	clearscope native double itemflashFade;
 
 	// These are block properties for the drawers. A child class can set them to have a block of items use the same settings.
 	native double Alpha;
@@ -331,7 +331,7 @@ class BaseStatusBar native ui
 	native virtual clearscope void ReceivedWeapon (Weapon weapn);
 	native virtual clearscope void SetMugShotState (String state_name, bool wait_till_done=false, bool reset=false);
 
-	virtual void FlashItem (class<Inventory> itemtype) { artiflashTick = 4; itemflashFade = 0.75; }
+	clearscope virtual void FlashItem (class<Inventory> itemtype) { artiflashTick = 4; itemflashFade = 0.75; }
 	virtual void AttachToPlayer (PlayerInfo player) { CPlayer = player; UpdateScreenGeometry(); }
 	virtual void FlashCrosshair () { CrosshairSize = XHAIRPICKUPSIZE; }
 	virtual void NewGame () { if (CPlayer != null) AttachToPlayer(CPlayer); }

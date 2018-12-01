@@ -940,40 +940,6 @@ void APlayerPawn::PostBeginPlay()
 
 //===========================================================================
 //
-// APlayerPawn :: UseInventory
-//
-//===========================================================================
-
-bool APlayerPawn::UseInventory (AInventory *item)
-{
-	const PClass *itemtype = item->GetClass();
-
-	if (player->cheats & CF_TOTALLYFROZEN)
-	{ // You can't use items if you're totally frozen
-		return false;
-	}
-	if ((level.flags2 & LEVEL2_FROZEN) && (player == NULL || player->timefreezer == 0))
-	{
-		// Time frozen
-		return false;
-	}
-
-	if (!Super::UseInventory (item))
-	{
-		// Heretic and Hexen advance the inventory cursor if the use failed.
-		// Should this behavior be retained?
-		return false;
-	}
-	if (player == &players[consoleplayer])
-	{
-		S_Sound (this, CHAN_ITEM, item->UseSound, 1, ATTN_NORM);
-		StatusBar->FlashItem (itemtype);
-	}
-	return true;
-}
-
-//===========================================================================
-//
 // APlayerPawn :: PickNewWeapon
 //
 // Picks a new weapon for this player. Used mostly for running out of ammo,

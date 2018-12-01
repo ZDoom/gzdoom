@@ -159,4 +159,311 @@ extend class Actor
 	}
 
 
+	//============================================================================
+	//
+	// AActor :: SetInventory
+	//
+	//============================================================================
+
+	bool SetInventory(class<Inventory> itemclass, int amount, bool beyondMax = false)
+	{
+		let item = FindInventory(itemclass);
+
+		if (item != null)
+		{
+			// A_SetInventory sets the absolute amount. 
+			// Subtract or set the appropriate amount as necessary.
+
+			if (amount == item.Amount)
+			{
+				// Nothing was changed.
+				return false;
+			}
+			else if (amount <= 0)
+			{
+				//Remove it all.
+				return TakeInventory(itemclass, item.Amount, true, false);
+			}
+			else if (amount < item.Amount)
+			{
+				int amt = abs(item.Amount - amount);
+				return TakeInventory(itemclass, amt, true, false);
+			}
+			else
+			{
+				item.Amount = (beyondMax ? amount : clamp(amount, 0, item.MaxAmount));
+				return true;
+			}
+		}
+		else
+		{
+			if (amount <= 0)
+			{
+				return true;
+			}
+			item = Inventory(Spawn(itemclass));
+			if (item == null)
+			{
+				return false;
+			}
+			else
+			{
+				item.Amount = amount;
+				item.bDropped = true;
+				item.bIgnoreSkill = true;
+				item.ClearCounters();
+				if (!item.CallTryPickup(self))
+				{
+					item.Destroy();
+					return false;
+				}
+				return true;
+			}
+		}
+		return false;
+	}
+
+
+	//============================================================================
+	//
+	// AActor :: UseInventory
+	//
+	// Attempts to use an item. If the use succeeds, one copy of the item is
+	// removed from the inventory. If all copies are removed, then the item is
+	// destroyed.
+	//
+	//============================================================================
+
+	virtual bool UseInventory (Inventory item)
+	{
+		// No using items if you're dead or you don't have them.
+		if (health <= 0 || item.Amount <= 0 || item.bDestroyed)
+		{
+			return false;
+		}
+
+		if (!item.Use(false)) 
+		{
+			return false;
+		}
+
+		if (sv_infiniteinventory)	
+		{
+			return true;
+		}
+
+		if (--item.Amount <= 0)
+		{
+			item.DepleteOrDestroy ();
+		}
+		return true;
+	}
+
+
+	//===========================================================================
+	//
+	// DoGiveInventory
+	//
+	//===========================================================================
+
+	static bool DoGiveInventory(Actor receiver, bool orresult, class<Inventory> mi, int amount, int setreceiver)
+	{
+		int paramnum = 0;
+
+		if (!orresult)
+		{
+			receiver = receiver.GetPointer(setreceiver);
+		}
+		if (receiver == NULL)
+		{ // If there's nothing to receive it, it's obviously a fail, right?
+			return false;
+		}
+		// Owned inventory items cannot own anything because their Inventory pointer is repurposed for the owner's linked list.
+		if (receiver is 'Inventory' && Inventory(receiver).Owner != null)
+		{
+			return false;
+		}
+
+		if (amount <= 0)
+		{
+			amount = 1;
+		}
+		if (mi) 
+		{
+			let item = Inventory(Spawn(mi));
+			if (item == NULL)
+			{
+				return false;
+			}
+			if (item is 'Health')
+			{
+				item.Amount *= amount;
+			}
+			else
+			{
+				item.Amount = amount;
+			}
+			item.bDropped = true;
+			item.ClearCounters();
+			if (!item.CallTryPickup(receiver))
+			{
+				item.Destroy();
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool A_GiveInventory(class<Inventory> itemtype, int amount = 0, int giveto = AAPTR_DEFAULT)
+	{
+		return DoGiveInventory(self, false, itemtype, amount, giveto);
+	}	
+
+	bool A_GiveToTarget(class<Inventory> itemtype, int amount = 0, int giveto = AAPTR_DEFAULT)
+	{
+		return DoGiveInventory(target, false, itemtype, amount, giveto);
+	}
+
+	int A_GiveToChildren(class<Inventory> itemtype, int amount = 0)
+	{
+		let it = ThinkerIterator.Create('Actor');
+		Actor mo;
+		int count = 0;
+
+		while ((mo = Actor(it.Next())))
+		{
+			if (mo.master == self)
+			{
+				count += DoGiveInventory(mo, true, itemtype, amount, AAPTR_DEFAULT);
+			}
+		}
+		return count;
+	}
+
+	int A_GiveToSiblings(class<Inventory> itemtype, int amount = 0)
+	{
+		let it = ThinkerIterator.Create('Actor');
+		Actor mo;
+		int count = 0;
+
+		if (self.master != NULL)
+		{
+			while ((mo = Actor(it.Next())))
+			{
+				if (mo.master == self.master && mo != self)
+				{
+					count += DoGiveInventory(mo, true, itemtype, amount, AAPTR_DEFAULT);
+				}
+			}
+		}
+		return count;
+	}
+
+	//===========================================================================
+	//
+	// A_TakeInventory
+	//
+	//===========================================================================
+
+	bool DoTakeInventory(Actor receiver, bool orresult, class<Inventory> itemtype, int amount, int flags, int setreceiver = AAPTR_DEFAULT)
+	{
+		int paramnum = 0;
+		
+		if (itemtype == NULL)
+		{
+			return false;
+		}
+		if (!orresult)
+		{
+			receiver = receiver.GetPointer(setreceiver);
+		}
+		if (receiver == NULL)
+		{
+			return false;
+		}
+
+		return receiver.TakeInventory(itemtype, amount, true, (flags & TIF_NOTAKEINFINITE) != 0);
+	}
+
+	bool A_TakeInventory(class<Inventory> itemtype, int amount = 0, int flags = 0, int giveto = AAPTR_DEFAULT)
+	{
+		return DoTakeInventory(self, false, itemtype, amount, flags, giveto);
+	}	
+
+	bool A_TakeFromTarget(class<Inventory> itemtype, int amount = 0, int flags = 0, int giveto = AAPTR_DEFAULT)
+	{
+		return DoTakeInventory(target, false, itemtype, amount, flags, giveto);
+	}	
+
+	int A_TakeFromChildren(class<Inventory> itemtype, int amount = 0)
+	{
+		let it = ThinkerIterator.Create('Actor');
+		Actor mo;
+		int count = 0;
+
+		while ((mo = Actor(it.Next())))
+		{
+			if (mo.master == self)
+			{
+				count += DoTakeInventory(mo, true, itemtype, amount, 0, AAPTR_DEFAULT);
+			}
+		}
+		return count;
+	}
+
+	int A_TakeFromSiblings(class<Inventory> itemtype, int amount = 0)
+	{
+		let it = ThinkerIterator.Create('Actor');
+		Actor mo;
+		int count = 0;
+
+		if (self.master != NULL)
+		{
+			while ((mo = Actor(it.Next())))
+			{
+				if (mo.master == self.master && mo != self)
+				{
+					count += DoTakeInventory(mo, true, itemtype, amount, 0, AAPTR_DEFAULT);
+				}
+			}
+		}
+		return count;
+	}
+
+	//===========================================================================
+	//
+	// A_SetInventory
+	//
+	//===========================================================================
+	
+	bool A_SetInventory(class<Inventory> itemtype, int amount, int ptr = AAPTR_DEFAULT, bool beyondMax = false)
+	{
+		bool res = false;
+
+		if (itemtype == null)
+		{
+			return false;
+		}
+
+		Actor mobj = GetPointer(ptr);
+
+		if (mobj == null)
+		{
+			return false;
+		}
+
+		// Do not run this function on voodoo dolls because the way they transfer the inventory to the player will not work with the code below.
+		if (mobj.player != null)
+		{
+			mobj = mobj.player.mo;
+		}
+		return mobj.SetInventory(itemtype, amount, beyondMax);
+	}
+
+
 }
+

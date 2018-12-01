@@ -743,11 +743,9 @@ class Actor : Thinker native
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);
 	native void ClearInventory();
 	protected native void DestroyAllInventory();	// This is not supposed to be called by user code!
-	native bool SetInventory(class<Inventory> itemclass, int amount, bool beyondMax = false);
 	native clearscope Inventory FindInventory(class<Inventory> itemtype, bool subclass = false) const;
 	native Inventory GiveInventoryType(class<Inventory> itemtype);
 	native Inventory DropInventory (Inventory item, int amt = -1);
-	native bool UseInventory(Inventory item);
 	native void ObtainInventory(Actor other);
 	native bool GiveAmmo (Class<Ammo> type, int amount);
 	native bool UsePuzzleItem(int PuzzleItemType);
@@ -1013,9 +1011,6 @@ class Actor : Thinker native
 	native action state A_Jump(int chance, statelabel label, ...);
 	native Actor A_SpawnProjectile(class<Actor> missiletype, double spawnheight = 32, double spawnofs_xy = 0, double angle = 0, int flags = 0, double pitch = 0, int ptr = AAPTR_TARGET);
 	native void A_CustomRailgun(int damage, int spawnofs_xy = 0, color color1 = 0, color color2 = 0, int flags = 0, int aim = 0, double maxdiff = 0, class<Actor> pufftype = "BulletPuff", double spread_xy = 0, double spread_z = 0, double range = 0, int duration = 0, double sparsity = 1.0, double driftspeed = 1.0, class<Actor> spawnclass = null, double spawnofs_z = 0, int spiraloffset = 270, int limit = 0, double veleffect = 3);
-	native bool A_SetInventory(class<Inventory> itemtype, int amount, int ptr = AAPTR_DEFAULT, bool beyondMax = false);
-	native bool A_GiveInventory(class<Inventory> itemtype, int amount = 0, int giveto = AAPTR_DEFAULT);
-	native bool A_TakeInventory(class<Inventory> itemtype, int amount = 0, int flags = 0, int giveto = AAPTR_DEFAULT);
 	native void A_Print(string whattoprint, double time = 0, name fontname = "none");
 	native void A_PrintBold(string whattoprint, double time = 0, name fontname = "none");
 	native void A_Log(string whattoprint, bool local = false);
@@ -1049,8 +1044,6 @@ class Actor : Thinker native
 	native void A_LookEx(int flags = 0, double minseedist = 0, double maxseedist = 0, double maxheardist = 0, double fov = 0, statelabel label = null);
 	
 	native void A_Recoil(double xyvel);
-	native bool A_GiveToTarget(class<Inventory> itemtype, int amount = 0, int forward_ptr = AAPTR_DEFAULT);
-	native bool A_TakeFromTarget(class<Inventory> itemtype, int amount = 0, int flags = 0, int forward_ptr = AAPTR_DEFAULT);
 	native int A_RadiusGive(class<Inventory> itemtype, double distance, int flags, int amount = 0, class<Actor> filter = null, name species = "None", double mindist = 0, int limit = 0);
 	native void A_CustomMeleeAttack(int damage = 0, sound meleesound = "", sound misssound = "", name damagetype = "none", bool bleed = true);
 	native void A_CustomComboAttack(class<Actor> missiletype, double spawnheight, int damage, sound meleesound = "", name damagetype = "none", bool bleed = true);
@@ -1097,10 +1090,6 @@ class Actor : Thinker native
 	native void A_RemoveChildren(bool removeall = false, int flags = 0, class<Actor> filter = null, name species = "None");
 	native void A_RemoveSiblings(bool removeall = false, int flags = 0, class<Actor> filter = null, name species = "None");
 	native void A_Remove(int removee, int flags = 0, class<Actor> filter = null, name species = "None");
-	native int A_GiveToChildren(class<Inventory> itemtype, int amount = 0);
-	native int A_GiveToSiblings(class<Inventory> itemtype, int amount = 0);
-	native int A_TakeFromChildren(class<Inventory> itemtype, int amount = 0);
-	native int A_TakeFromSiblings(class<Inventory> itemtype, int amount = 0);
 	native void A_SetTeleFog(class<Actor> oldpos, class<Actor> newpos);
 	native void A_SwapTeleFog();
 	native void A_SetHealth(int health, int ptr = AAPTR_DEFAULT);

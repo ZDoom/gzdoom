@@ -1190,15 +1190,6 @@ void DBaseStatusBar::DrawWaiting () const
 	}
 }
 
-void DBaseStatusBar::FlashItem (const PClass *itemtype)
-{
-	IFVIRTUAL(DBaseStatusBar, FlashItem)
-	{
-		VMValue params[] = { (DObject*)this, (PClass*)itemtype };
-		VMCall(func, params, countof(params), nullptr, 0);
-	}
-}
-
 void DBaseStatusBar::NewGame ()
 {
 	IFVIRTUAL(DBaseStatusBar, NewGame)
@@ -1232,7 +1223,7 @@ void DBaseStatusBar::ScreenSizeChanged ()
 
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{
-		DHUDMessageBase *message = Messages[i];
+	DHUDMessageBase *message = Messages[i];
 		while (message != NULL)
 		{
 			message->CallScreenSizeChanged ();

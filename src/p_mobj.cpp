@@ -753,91 +753,6 @@ DEFINE_ACTION_FUNCTION(AActor, SetState)
 	ACTION_RETURN_BOOL(self->SetState(state, nofunction));
 };
 
-//============================================================================
-//
-// AActor :: TakeInventory
-//
-//============================================================================
-
-bool AActor::TakeInventory(PClassActor *itemclass, int amount, bool fromdecorate, bool notakeinfinite)
-{
-	IFVM(Actor, TakeInventory)
-	{
-		VMValue params[] = { this, itemclass, amount, fromdecorate, notakeinfinite };
-		int retval = 0;
-		VMReturn ret(&retval);
-		VMCall(func, params, 5, &ret, 1);
-		return !!retval;
-	}
-}
-
-
-bool AActor::SetInventory(PClassActor *itemtype, int amount, bool beyondMax)
-{
-	AInventory *item = FindInventory(itemtype);
-
-	if (item != nullptr)
-	{
-		// A_SetInventory sets the absolute amount. 
-		// Subtract or set the appropriate amount as necessary.
-
-		if (amount == item->Amount)
-		{
-			// Nothing was changed.
-			return false;
-		}
-		else if (amount <= 0)
-		{
-			//Remove it all.
-			return TakeInventory(itemtype, item->Amount, true, false);
-		}
-		else if (amount < item->Amount)
-		{
-			int amt = abs(item->Amount - amount);
-			return TakeInventory(itemtype, amt, true, false);
-		}
-		else
-		{
-			item->Amount = (beyondMax ? amount : clamp(amount, 0, item->MaxAmount));
-			return true;
-		}
-	}
-	else
-	{
-		if (amount <= 0)
-		{
-			return true;
-		}
-		item = static_cast<AInventory *>(Spawn(itemtype));
-		if (item == nullptr)
-		{
-			return false;
-		}
-		else
-		{
-			item->Amount = amount;
-			item->flags |= MF_DROPPED;
-			item->ItemFlags |= IF_IGNORESKILL;
-			item->ClearCounters();
-			if (!item->CallTryPickup(this))
-			{
-				item->Destroy();
-				return false;
-			}
-			return true;
-		}
-	}
-	return false;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, SetInventory)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS_NOT_NULL(item, AInventory);
-	PARAM_INT(amount);
-	PARAM_BOOL(beyondMax);
-	ACTION_RETURN_BOOL(self->SetInventory(item, amount, beyondMax));
-}
 
 //============================================================================
 //
@@ -919,41 +834,14 @@ DEFINE_ACTION_FUNCTION(AActor, FirstInv)
 
 bool AActor::UseInventory (AInventory *item)
 {
-	// No using items if you're dead.
-	if (health <= 0)
+	IFVIRTUAL(AActor, UseInventory)
 	{
-		return false;
-	}
-	// Don't use it if you don't actually have any of it.
-	if (item->Amount <= 0 || (item->ObjectFlags & OF_EuthanizeMe))
-	{
-		return false;
-	}
-
-	IFVIRTUALPTR(item, AInventory, Use)
-	{
-		VMValue params[2] = { item, false };
-		int retval;
+		VMValue params[] = { this, item };
+		int retval = 0;
 		VMReturn ret(&retval);
 		VMCall(func, params, 2, &ret, 1);
-		if (!retval) return false;
+		return !!retval;
 	}
-
-	if (dmflags2 & DF2_INFINITE_INVENTORY)
-		return true;
-
-	if (--item->Amount <= 0)
-	{
-		item->DepleteOrDestroy ();
-	}
-	return true;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, UseInventory)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT_NOT_NULL(item, AInventory);
-	ACTION_RETURN_BOOL(self->UseInventory(item));
 }
 
 //===========================================================================

@@ -399,6 +399,31 @@ extend class PlayerPawn
 		}
 		return;
 	}
+	
+	virtual void CheatSetInv(String strng, int amount, bool beyond)
+	{
+		if (!(strng ~== "health"))
+		{
+			if (amount <= 0)
+			{
+				CheatSuicide();
+				return;
+			}
+			if (!beyond) amount = MIN(amount, player.mo.GetMaxHealth(true));
+			player.health = player.mo.health = amount;
+		}
+		else
+		{
+			class<Inventory> item = strng;
+			if (item != null)
+			{
+				player.mo.SetInventory(item, amount, beyond);
+				return;
+			}
+			Console.Printf("Unknown item \"%s\"\n", strng);
+		}
+	}
+	
 
 	virtual String CheatMorph(class<PlayerPawn> morphClass, bool quickundo)
 	{

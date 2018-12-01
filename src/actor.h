@@ -746,15 +746,8 @@ public:
 	// APlayerPawn for some specific handling for players. None of this
 	// should ever be overridden by custom classes.
 
-	// Take the amount value of an item from the inventory list.
-	// If nothing is left, the item may be destroyed.
-	// Returns true if the initial item count is positive.
-	virtual bool TakeInventory (PClassActor *itemclass, int amount, bool fromdecorate = false, bool notakeinfinite = false);
-
-	bool SetInventory(PClassActor *itemclass, int amount, bool beyondMax);
-
 	// Uses an item and removes it from the inventory.
-	virtual bool UseInventory (AInventory *item);
+	bool UseInventory (AInventory *item);
 
 	// Tosses an item out of the inventory.
 	AInventory *DropInventory (AInventory *item, int amt = -1);

@@ -641,7 +641,11 @@ static void TakeStrifeItem (player_t *player, PClassActor *itemtype, int amount)
 	if (itemtype->TypeName == NAME_Sigil)
 		return;
 
-	player->mo->TakeInventory(itemtype, amount);
+	IFVM(Actor, TakeInventory)
+	{
+		VMValue params[] = { player->mo, itemtype, amount, false, false };
+		VMCall(func, params, 5, nullptr, 0);
+	}
 }
 
 CUSTOM_CVAR(Float, dlg_musicvolume, 1.0f, CVAR_ARCHIVE)

@@ -327,7 +327,7 @@ static FxExpression *StringConstToChar(FxExpression *basex)
 		int c = utf8_decode(str.GetChars(), &size);
 		if (c >= 0 && size_t(size) == str.Len())
 		{
-			return new FxConstant(str[0], basex->ScriptPosition);
+			return new FxConstant(c, basex->ScriptPosition);
 		}
 	}
 	return nullptr;

@@ -1,5 +1,27 @@
 extend class Actor
 {
+
+	//============================================================================
+	//
+	// AActor :: FirstInv
+	//
+	// Returns the first item in this actor's inventory that has IF_INVBAR set.
+	//
+	//============================================================================
+
+	clearscope Inventory FirstInv ()
+	{
+		if (Inv == NULL)
+		{
+			return NULL;
+		}
+		if (Inv.bInvBar)
+		{
+			return Inv;
+		}
+		return Inv.NextInv ();
+	}
+
 	//============================================================================
 	//
 	// AActor :: AddInventory

@@ -797,33 +797,6 @@ DEFINE_ACTION_FUNCTION(AActor, DestroyAllInventory)
 }
 //============================================================================
 //
-// AActor :: FirstInv
-//
-// Returns the first item in this actor's inventory that has IF_INVBAR set.
-//
-//============================================================================
-
-AInventory *AActor::FirstInv ()
-{
-	if (Inventory == NULL)
-	{
-		return NULL;
-	}
-	if (Inventory->ItemFlags & IF_INVBAR)
-	{
-		return Inventory;
-	}
-	return Inventory->NextInv ();
-}
-
-DEFINE_ACTION_FUNCTION(AActor, FirstInv)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_OBJECT(self->FirstInv());
-}
-
-//============================================================================
-//
 // AActor :: UseInventory
 //
 // Attempts to use an item. If the use succeeds, one copy of the item is

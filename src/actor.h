@@ -769,9 +769,6 @@ public:
 	// Adds one item of a particular type. Returns NULL if it could not be added.
 	AInventory *GiveInventoryType (PClassActor *type);
 
-	// Returns the first item held with IF_INVBAR set.
-	AInventory *FirstInv ();
-
 	// Destroys all the inventory the actor is holding.
 	void DestroyAllInventory ();
 

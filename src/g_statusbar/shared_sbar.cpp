@@ -1253,84 +1253,15 @@ void DBaseStatusBar::CallScreenSizeChanged()
 
 AInventory *DBaseStatusBar::ValidateInvFirst (int numVisible) const
 {
-	AInventory *item;
-	int i;
-
-	if (CPlayer->mo->InvFirst == NULL)
+	IFVM(BaseStatusBar, ValidateInvFirst)
 	{
-		CPlayer->mo->InvFirst = CPlayer->mo->FirstInv();
-		if (CPlayer->mo->InvFirst == NULL)
-		{ // Nothing to show
-			return NULL;
-		}
+		VMValue params[] = { (AInventory*)this, numVisible };
+		AInventory *item;
+		VMReturn ret((void**)&item);
+		VMCall(func, params, 2, &ret, 1);
+		return item;
 	}
-
-	assert (CPlayer->mo->InvFirst->Owner == CPlayer->mo);
-
-	// If there are fewer than numVisible items shown, see if we can shift the
-	// view left to show more.
-	for (i = 0, item = CPlayer->mo->InvFirst; item != NULL && i < numVisible; ++i, item = item->NextInv())
-	{ }
-
-	while (i < numVisible)
-	{
-		item = CPlayer->mo->InvFirst->PrevInv ();
-		if (item == NULL)
-		{
-			break;
-		}
-		else
-		{
-			CPlayer->mo->InvFirst = item;
-			++i;
-		}
-	}
-
-	if (CPlayer->mo->InvSel == NULL)
-	{
-		// Nothing selected, so don't move the view.
-		return CPlayer->mo->InvFirst == NULL ? CPlayer->mo->Inventory : CPlayer->mo->InvFirst;
-	}
-	else
-	{
-		// Check if InvSel is already visible
-		for (item = CPlayer->mo->InvFirst, i = numVisible;
-			 item != NULL && i != 0;
-			 item = item->NextInv(), --i)
-		{
-			if (item == CPlayer->mo->InvSel)
-			{
-				return CPlayer->mo->InvFirst;
-			}
-		}
-		// Check if InvSel is to the right of the visible range
-		for (i = 1; item != NULL; item = item->NextInv(), ++i)
-		{
-			if (item == CPlayer->mo->InvSel)
-			{
-				// Found it. Now advance InvFirst
-				for (item = CPlayer->mo->InvFirst; i != 0; --i)
-				{
-					item = item->NextInv();
-				}
-				return item;
-			}
-		}
-		// Check if InvSel is to the left of the visible range
-		for (item = CPlayer->mo->Inventory;
-			item != CPlayer->mo->InvSel;
-			item = item->NextInv())
-		{ }
-		if (item != NULL)
-		{
-			// Found it, so let it become the first item shown
-			return item;
-		}
-		// Didn't find the selected item, so don't move the view.
-		// This should never happen, so let debug builds assert.
-		assert (item != NULL);
-		return CPlayer->mo->InvFirst;
-	}
+	return nullptr;
 }
 
 uint32_t DBaseStatusBar::GetTranslation() const
@@ -1864,12 +1795,5 @@ FTextureID GetInventoryIcon(AInventory *item, uint32_t flags, int *applyscale)
 		}
 	}
 	return picnum;
-}
-
-DEFINE_ACTION_FUNCTION(DBaseStatusBar, ValidateInvFirst)
-{
-	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_INT(num);
-	ACTION_RETURN_POINTER(self->ValidateInvFirst(num));
 }
 

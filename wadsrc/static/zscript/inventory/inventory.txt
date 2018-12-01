@@ -1039,7 +1039,7 @@ class Inventory : Actor native
 	//
 	//===========================================================================
 
-	Inventory PrevInv ()
+	clearscope Inventory PrevInv ()
 	{
 		Inventory lastgood = NULL;
 		Inventory item = Owner.Inv;

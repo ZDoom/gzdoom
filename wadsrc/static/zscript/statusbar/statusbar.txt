@@ -341,7 +341,6 @@ class BaseStatusBar native ui
 	native TextureID GetMugshot(int accuracy, int stateflags=MugShot.STANDARD, String default_face = "STF");
 	
 	// These functions are kept native solely for performance reasons. They get called repeatedly and can drag down performance easily if they get too slow.
-	native Inventory ValidateInvFirst (int numVisible) const;
 	native static TextureID, bool GetInventoryIcon(Inventory item, int flags);
 	native void DrawTexture(TextureID texture, Vector2 pos, int flags = 0, double Alpha = 1., Vector2 box = (-1, -1), Vector2 scale = (1, 1));
 	native void DrawImage(String texture, Vector2 pos, int flags = 0, double Alpha = 1., Vector2 box = (-1, -1), Vector2 scale = (1, 1));
@@ -356,6 +355,95 @@ class BaseStatusBar native ui
 	void ClearClipRect()
 	{
 		screen.ClearClipRect();
+	}
+	
+	//---------------------------------------------------------------------------
+	//
+	// ValidateInvFirst
+	//
+	// Returns an inventory item that, when drawn as the first item, is sure to
+	// include the selected item in the inventory bar.
+	//
+	//---------------------------------------------------------------------------
+
+	Inventory ValidateInvFirst (int numVisible) const
+	{
+		Inventory item;
+		int i;
+		let pmo = CPlayer.mo;
+
+		if (pmo.InvFirst == NULL)
+		{
+			pmo.InvFirst = pmo.FirstInv();
+			if (pmo.InvFirst == NULL)
+			{ // Nothing to show
+				return NULL;
+			}
+		}
+
+		// If there are fewer than numVisible items shown, see if we can shift the
+		// view left to show more.
+		for (i = 0, item = pmo.InvFirst; item != NULL && i < numVisible; ++i, item = item.NextInv())
+		{ }
+
+		while (i < numVisible)
+		{
+			item = pmo.InvFirst.PrevInv ();
+			if (item == NULL)
+			{
+				break;
+			}
+			else
+			{
+				pmo.InvFirst = item;
+				++i;
+			}
+		}
+
+		if (pmo.InvSel == NULL)
+		{
+			// Nothing selected, so don't move the view.
+			return pmo.InvFirst == NULL ? pmo.Inv : pmo.InvFirst;
+		}
+		else
+		{
+			// Check if InvSel is already visible
+			for (item = pmo.InvFirst, i = numVisible;
+				 item != NULL && i != 0;
+				 item = item.NextInv(), --i)
+			{
+				if (item == pmo.InvSel)
+				{
+					return pmo.InvFirst;
+				}
+			}
+			// Check if InvSel is to the right of the visible range
+			for (i = 1; item != NULL; item = item.NextInv(), ++i)
+			{
+				if (item == pmo.InvSel)
+				{
+					// Found it. Now advance InvFirst
+					for (item = pmo.InvFirst; i != 0; --i)
+					{
+						item = item.NextInv();
+					}
+					return item;
+				}
+			}
+			// Check if InvSel is to the left of the visible range
+			for (item = pmo.Inv;
+				item != pmo.InvSel;
+				item = item.NextInv())
+			{ }
+			if (item != NULL)
+			{
+				// Found it, so let it become the first item shown
+				return item;
+			}
+			// Didn't find the selected item, so don't move the view.
+			// This should never happen.
+			return pmo.InvFirst;
+		}
 	}
 	
 	//============================================================================

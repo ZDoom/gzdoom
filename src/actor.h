@@ -746,9 +746,6 @@ public:
 	// APlayerPawn for some specific handling for players. None of this
 	// should ever be overridden by custom classes.
 
-	// Adds the item to this actor's inventory and sets its Owner.
-	virtual void AddInventory (AInventory *item);
-
 	// Give an item to the actor and pick it up.
 	// Returns true if the item pickup succeeded.
 	bool GiveInventory (PClassActor *type, int amount, bool givecheat = false);

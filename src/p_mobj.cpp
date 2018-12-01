@@ -350,6 +350,7 @@ DEFINE_FIELD(AActor, RenderHidden)
 DEFINE_FIELD(AActor, RenderRequired)
 DEFINE_FIELD(AActor, friendlyseeblocks)
 DEFINE_FIELD(AActor, SpawnTime)
+DEFINE_FIELD(AActor, InventoryID)
 
 //==========================================================================
 //
@@ -751,46 +752,6 @@ DEFINE_ACTION_FUNCTION(AActor, SetState)
 	PARAM_BOOL(nofunction);
 	ACTION_RETURN_BOOL(self->SetState(state, nofunction));
 };
-
-//============================================================================
-//
-// AActor :: AddInventory
-//
-//============================================================================
-
-void AActor::AddInventory (AInventory *item)
-{
-	// Check if it's already attached to an actor
-	if (item->Owner != NULL)
-	{
-		// Is it attached to us?
-		if (item->Owner == this)
-			return;
-
-		// No, then remove it from the other actor first
-		item->Owner->RemoveInventory (item);
-	}
-
-	item->Owner = this;
-	item->Inventory = Inventory;
-	Inventory = item;
-
-	// Each item receives an unique ID when added to an actor's inventory.
-	// This is used by the DEM_INVUSE command to identify the item. Simply
-	// using the item's position in the list won't work, because ticcmds get
-	// run sometime in the future, so by the time it runs, the inventory
-	// might not be in the same state as it was when DEM_INVUSE was sent.
-	Inventory->InventoryID = InventoryID++;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, AddInventory)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT_NOT_NULL(item, AInventory);
-	self->AddInventory(item);
-	return 0;
-}
-
 
 //============================================================================
 //

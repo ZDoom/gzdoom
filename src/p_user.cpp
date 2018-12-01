@@ -940,29 +940,6 @@ void APlayerPawn::PostBeginPlay()
 
 //===========================================================================
 //
-// APlayerPawn :: AddInventory
-//
-//===========================================================================
-
-void APlayerPawn::AddInventory (AInventory *item)
-{
-	// Adding inventory to a voodoo doll should add it to the real player instead.
-	if (player != NULL && player->mo != this && player->mo != NULL)
-	{
-		player->mo->AddInventory (item);
-		return;
-	}
-	Super::AddInventory (item);
-
-	// If nothing is selected, select this item.
-	if (InvSel == NULL && (item->ItemFlags & IF_INVBAR))
-	{
-		InvSel = item;
-	}
-}
-
-//===========================================================================
-//
 // APlayerPawn :: RemoveInventory
 //
 //===========================================================================

@@ -89,7 +89,6 @@ public:
 
 	virtual void PostBeginPlay() override;
 	virtual void Tick() override;
-	virtual void AddInventory (AInventory *item) override;
 	virtual void RemoveInventory (AInventory *item) override;
 	virtual bool UseInventory (AInventory *item) override;
 	virtual void BeginPlay () override;

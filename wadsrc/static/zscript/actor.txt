@@ -241,6 +241,7 @@ class Actor : Thinker native
 	native int RenderRequired;
 	native readonly int FriendlySeeBlocks;
 	native readonly int SpawnTime;
+	private native int InventoryID;	// internal counter.
 
 	meta String Obituary;		// Player was killed by this actor
 	meta String HitObituary;		// Player was killed by this actor in melee
@@ -740,7 +741,6 @@ class Actor : Thinker native
 	native clearscope int GetAge() const;
 
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);
-	native void AddInventory(Inventory inv);
 	native void RemoveInventory(Inventory inv);
 	native void ClearInventory();
 	protected native void DestroyAllInventory();	// This is not supposed to be called by user code!

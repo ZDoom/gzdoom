@@ -1,0 +1,34 @@
+extend class Actor
+{
+	//============================================================================
+	//
+	// AActor :: AddInventory
+	//
+	//============================================================================
+
+	virtual void AddInventory (Inventory item)
+	{
+		// Check if it's already attached to an actor
+		if (item.Owner != NULL)
+		{
+			// Is it attached to us?
+			if (item.Owner == self)
+				return;
+
+			// No, then remove it from the other actor first
+			item.Owner.RemoveInventory (item);
+		}
+
+		item.Owner = self;
+		item.Inv = Inv;
+		Inv = item;
+
+		// Each item receives an unique ID when added to an actor's inventory.
+		// This is used by the DEM_INVUSE command to identify the item. Simply
+		// using the item's position in the list won't work, because ticcmds get
+		// run sometime in the future, so by the time it runs, the inventory
+		// might not be in the same state as it was when DEM_INVUSE was sent.
+		Inv.InventoryID = InventoryID++;
+	}
+
+}

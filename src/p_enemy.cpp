@@ -3475,7 +3475,7 @@ int P_Massacre (bool baddies, PClassActor *cls)
 
 	int killcount = 0;
 	AActor *actor;
-	TThinkerIterator<AActor> iterator(cls);
+	TThinkerIterator<AActor> iterator(cls? cls : RUNTIME_CLASS(AActor));
 
 	while ( (actor = iterator.Next ()) )
 	{

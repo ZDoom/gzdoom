@@ -19,6 +19,13 @@
 //
 // VM thunks for internal functions.
 //
+// Important note about this file: Since everything in here is supposed to be called
+// from JIT-compiled VM code it needs to be very careful about calling conventions.
+// As a result none of the integer sized struct types may be used as function
+// arguments, because current C++ calling conventions require them to be passed
+// by reference. The JIT code, however will pass them by value so any direct native function
+// taking such an argument needs to receive it as a naked int.
+//
 //-----------------------------------------------------------------------------
 
 #include "vm.h"
@@ -26,7 +33,14 @@
 #include "g_levellocals.h"
 #include "s_sound.h"
 #include "p_local.h"
+#include "v_font.h"
+#include "gstrings.h"
 
+//=====================================================================================
+//
+// sector_t exports
+//
+//=====================================================================================
 
 DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindLowestFloorSurrounding, FindLowestFloorSurrounding)
 {
@@ -1033,7 +1047,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 
  //===========================================================================
  //
- // 
+ // side_t exports 
  //
  //===========================================================================
 
@@ -1281,6 +1295,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 
  //=====================================================================================
 //
+ // vertex_t exports
 //
 //=====================================================================================
 
@@ -1300,6 +1315,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 ACTION_RETURN_INT(VertexIndex(self));
  }
 
+ //=====================================================================================
+//
+// TexMan exports
+//
+//=====================================================================================
+
  // This is needed to convert the strings to char pointers.
  static void ReplaceTextures(const FString &from, const FString &to, int flags)
  {
@@ -1318,6 +1339,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, ReplaceTextures, ReplaceTextures)
 
 //=====================================================================================
 //
+// secplane_t exports
 //
 //=====================================================================================
 
@@ -1444,6 +1466,104 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Secplane, PointToDist, PointToDist)
 	PARAM_FLOAT(z);
 	ACTION_RETURN_FLOAT(self->PointToDist(DVector2(x, y), z));
 }
+
+//=====================================================================================
+//
+// FFont exports
+//
+//=====================================================================================
+
+static FFont *GetFont(int name)
+{
+	return V_GetFont(FName(ENamedName(name)).GetChars());
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetFont, GetFont)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(name);
+	ACTION_RETURN_POINTER(GetFont(name));
+}
+
+static FFont *FindFont(int name)
+{
+	return FFont::FindFont(FName(ENamedName(name)));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, FindFont, FindFont)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(name);
+	ACTION_RETURN_POINTER(FFont::FindFont(name));
+}
+
+static int GetCharWidth(FFont *font, int code)
+{
+	return font->GetCharWidth(code);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetCharWidth, GetCharWidth)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	PARAM_INT(code);
+	ACTION_RETURN_INT(self->GetCharWidth(code));
+}
+
+static int GetHeight(FFont *font)
+{
+	return font->GetHeight();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetHeight, GetHeight)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	ACTION_RETURN_INT(self->GetHeight());
+}
+
+double GetBottomAlignOffset(FFont *font, int c);
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetBottomAlignOffset, GetBottomAlignOffset)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	PARAM_INT(code);
+	ACTION_RETURN_FLOAT(GetBottomAlignOffset(self, code));
+}
+
+static int StringWidth(FFont *font, const FString &str)
+{
+	const char *txt = str[0] == '$' ? GStrings(&str[1]) : str.GetChars();
+	return font->StringWidth(txt);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, StringWidth, StringWidth)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	PARAM_STRING(str);
+	ACTION_RETURN_INT(StringWidth(self, str));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, FindFontColor, V_FindFontColor)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(code);
+	ACTION_RETURN_INT((int)V_FindFontColor(code));
+}
+
+static void GetCursor(FFont *font, FString *result)
+{
+	*result = font->GetCursor();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetCursor, GetCursor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	ACTION_RETURN_STRING(FString(self->GetCursor()));
+}
+
+//=====================================================================================
+//
+// AActor exports (this will be expanded)
+//
+//=====================================================================================
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_PlaySound, A_PlaySound)
 {

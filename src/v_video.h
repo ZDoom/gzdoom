@@ -218,7 +218,6 @@ enum
 	DTA_SrcHeight,
 	DTA_LegacyRenderStyle,	// takes an old-style STYLE_* constant instead of an FRenderStyle
 	DTA_Burn,				// activates the burn shader for this element
-
 };
 
 enum

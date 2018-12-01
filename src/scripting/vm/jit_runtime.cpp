@@ -410,7 +410,7 @@ static void WritePadding(TArray<uint8_t> &stream)
 	if (padding != 0)
 	{
 		padding = 8 - padding;
-		for (int i = 0; i <= padding; i++) WriteUInt8(stream, 0);
+		for (int i = 0; i < padding; i++) WriteUInt8(stream, 0);
 	}
 }
 
@@ -421,21 +421,18 @@ static void WriteCIE(TArray<uint8_t> &stream, const TArray<uint8_t> &cieInstruct
 	WriteUInt32(stream, 0); // CIE ID
 	
 	WriteUInt8(stream, 1); // CIE Version
-	//WriteUInt8(stream, 'z');
+	WriteUInt8(stream, 'z');
 	//WriteUInt8(stream, 'L'); // LSDA (language specific data area)
-	//WriteUInt8(stream, 'R'); // fde encoding
+	WriteUInt8(stream, 'R'); // fde encoding
 	WriteUInt8(stream, 0);
 	WriteULEB128(stream, 1);
 	WriteSLEB128(stream, -1);
 	WriteULEB128(stream, returnAddressReg);
 
-	//unsigned int augmentStartPos = stream.Size();
-	//WriteULEB128(stream, 0); // LEB128 augmentation size
+	WriteULEB128(stream, 2); // LEB128 augmentation size
 	//WriteUInt8(stream, 0xff); // DW_EH_PE_omit (no LSDA)
-	//WriteUInt8(stream, 0); // DW_EH_PE_absptr (FDE uses absolute pointers)
-	//WritePadding(stream);
-	//stream[augmentStartPos] = stream.Size() - augmentStartPos - 1;
-	
+	WriteUInt8(stream, 0); // DW_EH_PE_absptr (FDE uses absolute pointers)
+
 	for (unsigned int i = 0; i < cieInstructions.Size(); i++)
 		stream.Push(cieInstructions[i]);
 
@@ -454,10 +451,7 @@ static void WriteFDE(TArray<uint8_t> &stream, const TArray<uint8_t> &fdeInstruct
 	WriteUInt64(stream, 0); // func start
 	WriteUInt64(stream, 0); // func size
 
-	//unsigned int augmentStartPos = stream.Size();
-	//WriteULEB128(stream, 0); // LEB128 augmentation size
-	//WritePadding(stream);
-	//stream[augmentStartPos] = stream.Size() - augmentStartPos - 1;
+	WriteULEB128(stream, 0); // LEB128 augmentation size
 
 	for (unsigned int i = 0; i < fdeInstructions.Size(); i++)
 		stream.Push(fdeInstructions[i]);
@@ -469,7 +463,11 @@ static void WriteFDE(TArray<uint8_t> &stream, const TArray<uint8_t> &fdeInstruct
 static void WriteAdvanceLoc(TArray<uint8_t> &fdeInstructions, uint64_t offset, uint64_t &lastOffset)
 {
 	uint64_t delta = offset - lastOffset;
-	if (delta < (1 << 8))
+	if (delta < (1 << 6))
+	{
+		WriteUInt8(fdeInstructions, (1 << 6) | delta); // DW_CFA_advance_loc
+	}
+	else if (delta < (1 << 8))
 	{
 		WriteUInt8(fdeInstructions, 2); // DW_CFA_advance_loc1
 		WriteUInt8(fdeInstructions, delta);
@@ -526,7 +524,6 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 	
 	TArray<uint8_t> cieInstructions;
 	TArray<uint8_t> fdeInstructions;
-	uint64_t lastOffset = 0;
 
 	uint8_t returnAddressReg = dwarfRegRAId;
 	int stackOffset = 8; // Offset from RSP to the Canonical Frame Address (CFA) - stack position where the CALL return address is stored
@@ -540,8 +537,9 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 	WriteULEB128(cieInstructions, stackOffset);
 	
 	WriteUInt8(cieInstructions, (2 << 6) | returnAddressReg); // DW_CFA_offset
-	WriteULEB128(cieInstructions, 0);
+	WriteULEB128(cieInstructions, stackOffset);
 	
+	/* clang doesn't output this, so I guess those were the defaults..
 	for (auto regId : { X86Gp::kIdAx, X86Gp::kIdDx, X86Gp::kIdCx, X86Gp::kIdSi, X86Gp::kIdDi, X86Gp::kIdSp, X86Gp::kIdR8, X86Gp::kIdR9, X86Gp::kIdR10, X86Gp::kIdR11 })
 	{
 		WriteUInt8(cieInstructions, 0x07); // DW_CFA_undefined
@@ -553,6 +551,7 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 		WriteUInt8(cieInstructions, 0x08); // DW_CFA_same_value
 		WriteULEB128(cieInstructions, dwarfRegId[regId]);
 	}
+	*/
 
 	FuncFrameLayout layout;
 	Error error = layout.init(func->getDetail(), func->getFrameInfo());
@@ -564,6 +563,7 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 	code.init(GetHostCodeInfo());
 	X86Assembler assembler(&code);
 	X86Emitter *emitter = assembler.asEmitter();
+	uint64_t lastOffset = 0;
 
 	// Note: the following code must match exactly what X86Internal::emitProlog does
 
@@ -581,12 +581,12 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 		gpSaved &= ~Utils::mask(X86Gp::kIdBp);
 		emitter->push(zbp);
 
-		WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
 		stackOffset += 8;
+		WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
 		WriteUInt8(fdeInstructions, 0x0e); // DW_CFA_def_cfa_offset
 		WriteULEB128(fdeInstructions, stackOffset);
 		WriteUInt8(fdeInstructions, (2 << 6) | dwarfRegId[X86Gp::kIdBp]); // DW_CFA_offset
-		WriteULEB128(fdeInstructions, stackOffset - 8);
+		WriteULEB128(fdeInstructions, stackOffset);
 
 		emitter->mov(zbp, zsp);
 	}
@@ -600,12 +600,12 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 			gpReg.setId(regId);
 			emitter->push(gpReg);
 
-			WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
 			stackOffset += 8;
+			WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
 			WriteUInt8(fdeInstructions, 0x0e); // DW_CFA_def_cfa_offset
 			WriteULEB128(fdeInstructions, stackOffset);
 			WriteUInt8(fdeInstructions, (2 << 6) | dwarfRegId[regId]); // DW_CFA_offset
-			WriteULEB128(fdeInstructions, stackOffset - 8);
+			WriteULEB128(fdeInstructions, stackOffset);
 		}
 	}
 
@@ -631,8 +631,8 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 		// Emit: 'sub zsp, StackAdjustment'.
 		emitter->sub(zsp, layout.getStackAdjustment());
 
-		WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
 		stackOffset += layout.getStackAdjustment();
+		WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
 		WriteUInt8(fdeInstructions, 0x0e); // DW_CFA_def_cfa_offset
 		WriteULEB128(fdeInstructions, stackOffset);
 	}
@@ -647,7 +647,7 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 	uint32_t xmmSaved = layout.getSavedRegs(X86Reg::kKindVec);
 	if (xmmSaved)
 	{
-		stackOffset += layout.getVecStackOffset();
+		int vecOffset = layout.getVecStackOffset();
 		X86Mem vecBase = x86::ptr(zsp, layout.getVecStackOffset());
 		X86Reg vecReg = x86::xmm(0);
 		bool avx = layout.isAvxEnabled();
@@ -665,8 +665,8 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 
 			WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
 			WriteUInt8(fdeInstructions, (2 << 6) | (dwarfRegXmmId + regId)); // DW_CFA_offset
-			WriteULEB128(fdeInstructions, stackOffset);
-			stackOffset += 8;
+			WriteULEB128(fdeInstructions, stackOffset - vecOffset);
+			vecOffset += static_cast<int32_t>(vecSize);
 		}
 	}
 

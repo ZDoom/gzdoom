@@ -321,6 +321,31 @@ enum
 	HUDMSGLayer_Default = HUDMSGLayer_OverHUD,
 };
 
+
+//============================================================================
+//
+// encapsulates all settings a HUD font may need
+//
+//============================================================================
+
+class DHUDFont : public DObject
+{
+	// this blocks CreateNew on this class which is the intent here.
+	DECLARE_ABSTRACT_CLASS(DHUDFont, DObject);
+
+public:
+	FFont *mFont;
+	int mSpacing;
+	bool mMonospaced;
+	int mShadowX;
+	int mShadowY;
+
+	DHUDFont(FFont *f, int sp, bool ms, int sx, int sy)
+		: mFont(f), mSpacing(sp), mMonospaced(ms), mShadowX(sx), mShadowY(sy)
+	{}
+};
+
+
 class DBaseStatusBar : public DObject
 {
 	friend class DSBarInfo;
@@ -497,7 +522,7 @@ void ST_Clear();
 void ST_CreateStatusBar(bool bTitleLevel);
 extern FTexture *CrosshairImage;
 
-FTextureID GetInventoryIcon(AInventory *item, uint32_t flags, bool *applyscale = nullptr);
+FTextureID GetInventoryIcon(AInventory *item, uint32_t flags, int *applyscale = nullptr);
 
 
 enum DI_Flags

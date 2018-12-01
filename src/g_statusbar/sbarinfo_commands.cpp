@@ -306,7 +306,9 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 	protected:
 		void	GetIcon(AInventory *item)
 		{
-			FTextureID icon = GetInventoryIcon(item, flags, &applyscale);
+			int apply;
+			FTextureID icon = GetInventoryIcon(item, flags, &apply);
+			applyscale = !!apply;
 			
 			if (applyscale)
 			{

@@ -251,162 +251,18 @@ static int DrawKeys(player_t * CPlayer, int x, int y)
 // Drawing Ammo
 //
 //---------------------------------------------------------------------------
-static TArray<PClassActor *> orderedammos;
-
-static void AddAmmoToList(AInventory * weapdef)
-{
-
-	for (int i = 0; i < 2; i++)
-	{
-		auto ti = weapdef->PointerVar<PClassActor>(i == 0 ? NAME_AmmoType1 : NAME_AmmoType2);
-		if (ti)
-		{
-			auto ammodef = (AInventory*)GetDefaultByType(ti);
-
-			if (ammodef && !(ammodef->ItemFlags&IF_INVBAR))
-			{
-				unsigned int j;
-
-				for (j = 0; j < orderedammos.Size(); j++)
-				{
-					if (ti == orderedammos[j]) break;
-				}
-				if (j == orderedammos.Size()) orderedammos.Push(ti);
-			}
-		}
-	}
-}
-
-static int GetDigitCount(int value)
-{
-	int digits = 0;
-
-	do
-	{
-		value /= 10;
-		++digits;
-	}
-	while (0 != value);
-
-	return digits;
-}
-
-static void GetAmmoTextLengths(player_t *CPlayer, int& ammocur, int& ammomax)
-{
-	for (auto type : orderedammos)
-	{
-		auto ammoitem = CPlayer->mo->FindInventory(type);
-		auto inv = nullptr == ammoitem
-			? static_cast<AInventory*>(GetDefaultByType(type))
-			: ammoitem;
-		assert(nullptr != inv);
-
-		ammocur = MAX(ammocur, nullptr == ammoitem ? 0 : ammoitem->Amount);
-		ammomax = MAX(ammomax, inv->MaxAmount);
-	}
-
-	ammocur = GetDigitCount(ammocur);
-	ammomax = GetDigitCount(ammomax);
-}
 
 static int DrawAmmo(player_t *CPlayer, int x, int y)
 {
-
-	int i,j,k;
-	char buf[256];
-	AInventory *inv;
-
-	auto wi=CPlayer->ReadyWeapon;
-
-	orderedammos.Clear();
-
-	if (0 == hud_showammo)
+	IFVM(AltHud, DrawAmmo)
 	{
-		// Show ammo for current weapon if any
-		if (wi) AddAmmoToList(wi);
+		VMValue params[] = { althud, CPlayer, x, y };
+		int retv;
+		VMReturn ret(&retv);
+		VMCall(func, params, countof(params), &ret, 1);
+		return retv;
 	}
-	else
-	{
-		// Order ammo by use of weapons in the weapon slots
-		for (k = 0; k < NUM_WEAPON_SLOTS; k++) for(j = 0; j < CPlayer->weapons.SlotSize(k); j++)
-		{
-			PClassActor *weap = CPlayer->weapons.GetWeapon(k, j);
-
-			if (weap)
-			{
-				// Show ammo for available weapons if hud_showammo CVAR is 1
-				// or show ammo for all weapons if hud_showammo is greater than 1
-				
-				if (hud_showammo > 1 || CPlayer->mo->FindInventory(weap))
-				{
-					AddAmmoToList((AInventory*)GetDefaultByType(weap));
-				}
-			}
-		}
-
-		// Now check for the remaining weapons that are in the inventory but not in the weapon slots
-		for(inv=CPlayer->mo->Inventory;inv;inv=inv->Inventory)
-		{
-			if (inv->IsKindOf(NAME_Weapon))
-			{
-				AddAmmoToList(inv);
-			}
-		}
-	}
-
-	// ok, we got all ammo types. Now draw the list back to front (bottom to top)
-
-	int ammocurlen = 0;
-	int ammomaxlen = 0;
-	GetAmmoTextLengths(CPlayer, ammocurlen, ammomaxlen);
-
-	mysnprintf(buf, countof(buf), "%0*d/%0*d", ammocurlen, 0, ammomaxlen, 0);
-
-	int def_width = ConFont->StringWidth(buf);
-	int yadd = ConFont->GetHeight();
-
-	int xtext = x - def_width;
-	int ximage = x;
-
-	if (hud_ammo_order > 0)
-	{
-		xtext -= 24;
-		ximage -= 20;
-	}
-	else
-	{
-		ximage -= def_width + 20;
-	}
-
-	for(i=orderedammos.Size()-1;i>=0;i--)
-	{
-
-		auto type = orderedammos[i];
-		auto ammoitem = CPlayer->mo->FindInventory(type);
-
-		auto inv = ammoitem? ammoitem : (AInventory*)GetDefaultByType(orderedammos[i]);
-		FTextureID AltIcon = inv->AltHUDIcon;
-		FTextureID icon = !AltIcon.isNull()? AltIcon : inv->Icon;
-		if (!icon.isValid()) continue;
-
-		double trans= (wi && (type==wi->PointerVar<PClassActor>(NAME_AmmoType1) || type==wi->PointerVar<PClassActor>(NAME_AmmoType2))) ? 0.75 : 0.375;
-
-		int maxammo = inv->MaxAmount;
-		int ammo = ammoitem? ammoitem->Amount : 0;
-
-		mysnprintf(buf, countof(buf), "%*d/%*d", ammocurlen, ammo, ammomaxlen, maxammo);
-
-		int tex_width= clamp<int>(ConFont->StringWidth(buf)-def_width, 0, 1000);
-
-		int fontcolor=( !maxammo ? CR_GRAY :    
-						 ammo < ( (maxammo * hud_ammo_red) / 100) ? CR_RED :   
-						 ammo < ( (maxammo * hud_ammo_yellow) / 100) ? CR_GOLD : CR_GREEN );
-
-		DrawHudText(ConFont, fontcolor, buf, xtext-tex_width, y+yadd, trans);
-		DrawImageToBox(TexMan[icon], ximage, y, 16, 8, trans);
-		y-=10;
-	}
-	return y;
+	return 0;
 }
 
 

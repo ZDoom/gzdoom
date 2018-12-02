@@ -47,7 +47,8 @@ class AltHud
 	int statspace;
 	Font HudFont;					// The font for the health and armor display
 	Font IndexFont;					// The font for the inventory indices
-	
+	Array< Class<Ammo> > orderedammos;
+
 	//---------------------------------------------------------------------------
 	//
 	// Draws an image into a box with its bottom center at the bottom
@@ -346,4 +347,183 @@ class AltHud
 		return y - 11;
 	}
 
+	//---------------------------------------------------------------------------
+	//
+	// Drawing Ammo helpers
+	//
+	//---------------------------------------------------------------------------
+
+	void AddAmmoToList(readonly<Weapon> weapdef)
+	{
+		for (int i = 0; i < 2; i++)
+		{
+			let ti = i == 0? weapdef.AmmoType1 : weapdef.AmmoType2;
+			if (ti)
+			{
+				let ammodef = GetDefaultByType(ti);
+
+				if (ammodef && !ammodef.bInvBar)
+				{
+					if (orderedAmmos.Find(ti) == orderedAmmos.Size())
+					{	
+						orderedammos.Push(ti);					
+					}
+				}
+			}
+		}
+	}
+
+	static int GetDigitCount(int value)
+	{
+		int digits = 0;
+
+		do
+		{
+			value /= 10;
+			++digits;
+		}
+		while (0 != value);
+
+		return digits;
+	}
+
+	int, int GetAmmoTextLengths(PlayerInfo CPlayer)
+	{
+		int tammomax = 0, tammocur = 0;
+		for(int i = 0; i < orderedammos.Size(); i++)
+		{
+			let type = orderedammos[i];
+			let ammoitem = CPlayer.mo.FindInventory(type);
+			int ammomax, ammocur;
+			if (ammoitem == null) 
+			{
+				ammomax = GetDefaultByType(type).MaxAmount;
+				ammocur = 0;
+			}
+			else
+			{
+				ammomax = ammoitem.MaxAmount;
+				ammocur = ammoItem.Amount;
+			}
+
+			tammocur = MAX(ammocur, tammocur);
+			tammomax = MAX(ammomax, tammomax);
+		}
+		return GetDigitCount(tammocur), GetDigitCount(tammomax);
+	}
+
+	//---------------------------------------------------------------------------
+	//
+	// Drawing Ammo 
+	//
+	//---------------------------------------------------------------------------
+
+	int DrawAmmo(PlayerInfo CPlayer, int x, int y)
+	{
+
+		int i,j,k;
+		String buf;
+		Inventory inv;
+
+		let wi = CPlayer.ReadyWeapon;
+
+		orderedammos.Clear();
+
+		if (0 == hud_showammo)
+		{
+			// Show ammo for current weapon if any
+			if (wi) AddAmmoToList(wi.default);
+		}
+		else
+		{
+			// Order ammo by use of weapons in the weapon slots
+			for (k = 0; k < PlayerPawn.NUM_WEAPON_SLOTS; k++) 
+			{
+				int slotsize = CPlayer.weapons.SlotSize(k);
+				for(j = 0; j < slotsize; j++)
+				{
+					let weap = CPlayer.weapons.GetWeapon(k, j);
+
+					if (weap)
+					{
+						// Show ammo for available weapons if hud_showammo CVAR is 1
+						// or show ammo for all weapons if hud_showammo is greater than 1
+						
+						if (hud_showammo > 1 || CPlayer.mo.FindInventory(weap))
+						{
+							AddAmmoToList(GetDefaultByType(weap));
+						}
+					}
+				}
+			}
+
+			// Now check for the remaining weapons that are in the inventory but not in the weapon slots
+			for(inv = CPlayer.mo.Inv; inv; inv = inv.Inv)
+			{
+				let weap = Weapon(inv);
+				if (weap)
+				{
+					AddAmmoToList(weap.default);
+				}
+			}
+		}
+
+		// ok, we got all ammo types. Now draw the list back to front (bottom to top)
+
+		int ammocurlen = 0;
+		int ammomaxlen = 0;
+		[ammocurlen, ammomaxlen] = GetAmmoTextLengths(CPlayer);
+
+		//buf = String.Format("%0d/%0d", 0, 0);
+		buf = String.Format("%0*d/%0*d", ammocurlen, 0, ammomaxlen, 0);
+
+		int def_width = ConFont.StringWidth(buf);
+		int yadd = ConFont.GetHeight();
+
+		int xtext = x - def_width;
+		int ximage = x;
+
+		if (hud_ammo_order > 0)
+		{
+			xtext -= 24;
+			ximage -= 20;
+		}
+		else
+		{
+			ximage -= def_width + 20;
+		}
+
+		for(i = orderedammos.Size() - 1; i >= 0; i--)
+		{
+			let type = orderedammos[i];
+			let ammoitem = CPlayer.mo.FindInventory(type);
+			let inv = GetDefaultByType(type);
+
+			let AltIcon = inv.AltHUDIcon;
+			int maxammo = inv.MaxAmount;
+
+			let icon = !AltIcon.isNull()? AltIcon : inv.Icon;
+			if (!icon.isValid()) continue;
+
+			double trans= (wi && (type == wi.AmmoType1 || type == wi.AmmoType2)) ? 0.75 : 0.375;
+
+			int ammo = ammoitem? ammoitem.Amount : 0;
+
+			// buf = String.Format("%d/%d", ammo, maxammo);
+			buf = String.Format("%*d/%*d", ammocurlen, ammo, ammomaxlen, maxammo);
+
+			int tex_width= clamp(ConFont.StringWidth(buf) - def_width, 0, 1000);
+
+			int fontcolor=( !maxammo ? Font.CR_GRAY :    
+							 ammo < ( (maxammo * hud_ammo_red) / 100) ? Font.CR_RED :   
+							 ammo < ( (maxammo * hud_ammo_yellow) / 100) ? Font.CR_GOLD : Font.CR_GREEN );
+
+			DrawHudText(ConFont, fontcolor, buf, xtext-tex_width, y+yadd, trans);
+			DrawImageToBox(icon, ximage, y, 16, 8, trans);
+			y-=10;
+		}
+		return y;
+	}
+
+	
 }

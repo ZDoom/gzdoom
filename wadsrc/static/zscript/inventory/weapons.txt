@@ -1111,8 +1111,8 @@ class WeaponGiver : Weapon
 
 struct WeaponSlots native
 {
-	native bool, int, int LocateWeapon(class<Weapon> weap);
+	native bool, int, int LocateWeapon(class<Weapon> weap) const;
 	native static void SetupWeaponSlots(PlayerPawn pp);
-	native class<Weapon> GetWeapon(int slot, int index);
-	native int SlotSize(int slot);
+	native class<Weapon> GetWeapon(int slot, int index) const;
+	native int SlotSize(int slot) const;
 }

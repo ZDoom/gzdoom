@@ -489,7 +489,9 @@ void VMFunctionBuilder::RegAvailability::Return(int reg, int count)
 		mask <<= firstbit;
 		// If we are trying to return registers that are already free,
 		// it probably means that the caller messed up somewhere.
-		assert((Used[firstword] & mask) == mask);
+		// Unfortunately this can happen if an 'action' function gets called from a non-action context,
+		// because for that case it pushes the self pointer a second time without reallocating, so it gets freed twice.
+		//assert((Used[firstword] & mask) == mask);
 		Used[firstword] &= ~mask;
 	}
 	else

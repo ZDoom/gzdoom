@@ -2085,6 +2085,30 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 			}
 		}
 
+		AInventory *PrevInv(AInventory *item)
+		{
+			AInventory *retval = nullptr;
+			IFVM(Inventory, PrevInv)
+			{
+				VMValue param = item;
+				VMReturn ret((void**)&retval);
+				VMCall(func, &param, 1, &ret, 1);
+			}
+			return retval;
+		}
+
+		AInventory *NextInv(AInventory *item)
+		{
+			AInventory *retval = nullptr;
+			IFVM(Inventory, NextInv)
+			{
+				VMValue param = item;
+				VMReturn ret((void**)&retval);
+				VMCall(func, &param, 1, &ret, 1);
+			}
+			return retval;
+		}
+
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
 		{
 			int spacing = GetCounterSpacing(statusBar);
@@ -2099,7 +2123,7 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 			statusBar->CPlayer->mo->InvFirst = statusBar->wrapper->ValidateInvFirst(size);
 			if(statusBar->CPlayer->mo->InvFirst != NULL || alwaysShow)
 			{
-				for(item = statusBar->CPlayer->mo->InvFirst, i = 0; item != NULL && i < size; item = item->NextInv(), ++i)
+				for(item = statusBar->CPlayer->mo->InvFirst, i = 0; item != NULL && i < size; item = NextInv(item), ++i)
 				{
 					SBarInfoCoordinate rx = x + (!vertical ? i*spacing : 0);
 					SBarInfoCoordinate ry = y + (vertical ? i*spacing : 0);
@@ -2133,7 +2157,7 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 					statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgARTIBOX], x + (!vertical ? (i*spacing) : 0), y + (vertical ? (i*spacing) : 0), block->XOffset(), block->YOffset(), bgalpha, block->FullScreenOffsets());
 		
 				// Is there something to the left?
-				if (!noArrows && statusBar->CPlayer->mo->InvFirst->PrevInv())
+				if (!noArrows && PrevInv(statusBar->CPlayer->mo->InvFirst))
 				{
 					int offset = (style != STYLE_Strife ? (style != STYLE_HexenStrict ? -12 : -10) : 14);
 					int yOffset = style != STYLE_HexenStrict ? 0 : -1;

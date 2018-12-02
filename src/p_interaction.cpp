@@ -794,7 +794,7 @@ static int UseHealthItems(TArray<AInventory *> &Items, int &saveHealth)
 			saveHealth -= maxhealth;
 			if (--Items[index]->Amount == 0)
 			{
-				Items[index]->DepleteOrDestroy ();
+				DepleteOrDestroy (Items[index]);
 				Items.Delete(index);
 				break;
 			}

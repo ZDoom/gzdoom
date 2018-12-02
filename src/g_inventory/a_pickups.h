@@ -73,11 +73,6 @@ public:
 	virtual void Serialize(FSerializer &arc) override;
 	virtual void Tick() override;
 
-	void DepleteOrDestroy ();			// virtual on the script side. 
-
-	AInventory *PrevInv();		// Returns the previous item with IF_INVBAR set.
-	AInventory *NextInv();		// Returns the next item with IF_INVBAR set.
-
 	TObjPtr<AActor*> Owner;		// Who owns this item? NULL if it's still a pickup.
 	int Amount;					// Amount of item this instance has
 	int MaxAmount;				// Max amount of item this instance can have
@@ -95,5 +90,6 @@ public:
 };
 
 bool CallTryPickup(AInventory *item, AActor *toucher, AActor **toucher_return = nullptr);
+void DepleteOrDestroy(AInventory *item);			// virtual on the script side. 
 
 #endif //__A_PICKUPS_H__

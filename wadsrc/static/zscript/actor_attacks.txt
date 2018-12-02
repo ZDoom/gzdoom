@@ -560,7 +560,7 @@ extend class Actor
 	//
 	//==========================================================================
 
-	int A_Explode(int damage = -1, int distance = -1, int flags = XF_HURTSOURCE, bool alert = false, int fulldmgdistance = 0, int nails = 0, int naildamage = 10, class<Actor> pufftype = "BulletPuff", name damagetype = "none")
+	int A_Explode(int damage = -1, int distance = -1, int flags = XF_HURTSOURCE, bool alert = false, int fulldamagedistance = 0, int nails = 0, int naildamage = 10, class<Actor> pufftype = "BulletPuff", name damagetype = "none")
 	{
 
 		if (damage < 0)	// get parameters from metadata
@@ -597,7 +597,7 @@ extend class Actor
 		if (flags & XF_HURTSOURCE)	pflags |= RADF_HURTSOURCE;
 		if (flags & XF_NOTMISSILE)	pflags |= RADF_SOURCEISSPOT;
 
-		int count = RadiusAttack (target, damage, distance, damagetype, pflags, fulldmgdistance);
+		int count = RadiusAttack (target, damage, distance, damagetype, pflags, fulldamagedistance);
 		if (!(flags & XF_NOSPLASH)) CheckSplash(distance);
 		if (alert && target != NULL && target.player != NULL)
 		{

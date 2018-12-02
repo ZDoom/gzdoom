@@ -50,6 +50,8 @@
 #include "d_player.h"
 #include "events.h"
 #include "types.h"
+#include "w_wad.h"
+#include "g_levellocals.h"
 
 extern void LoadActors ();
 extern void InitBotStuff();
@@ -285,6 +287,80 @@ DEFINE_ACTION_FUNCTION(AActor, GetSpriteIndex)
 
 //==========================================================================
 //
+// Load alt HUD icons. This is meant to be an override of the item's own settings.
+//
+//==========================================================================
+
+static void LoadAltHudStuff()
+{
+	// Now read custom icon overrides
+	int lump, lastlump = 0;
+
+	switch (gameinfo.gametype)
+	{
+	case GAME_Heretic:
+	case GAME_Hexen:
+		gameinfo.healthpic = TexMan.CheckForTexture("ARTIPTN2", ETextureType::MiscPatch).GetIndex();
+		gameinfo.berserkpic = -1;
+		break;
+
+	case GAME_Strife:
+		gameinfo.healthpic = TexMan.CheckForTexture("I_MDKT", ETextureType::MiscPatch).GetIndex();
+		gameinfo.berserkpic = -1;
+		break;
+
+	default:
+		gameinfo.healthpic = TexMan.CheckForTexture("MEDIA0", ETextureType::Sprite).GetIndex();
+		gameinfo.berserkpic = TexMan.CheckForTexture("PSTRA0", ETextureType::Sprite).GetIndex();
+		break;
+	}
+
+	while ((lump = Wads.FindLump("ALTHUDCF", &lastlump)) != -1)
+	{
+		FScanner sc(lump);
+		while (sc.GetString())
+		{
+			if (sc.Compare("Health"))
+			{
+				sc.MustGetString();
+				FTextureID tex = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
+				if (tex.isValid()) gameinfo.healthpic = tex.GetIndex();
+			}
+			else if (sc.Compare("Berserk"))
+			{
+				sc.MustGetString();
+				FTextureID tex = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
+				if (tex.isValid()) gameinfo.berserkpic = tex.GetIndex();
+			}
+			else
+			{
+				PClass *ti = PClass::FindClass(sc.String);
+				if (!ti)
+				{
+					Printf("Unknown item class '%s' in ALTHUDCF\n", sc.String);
+				}
+				else if (!ti->IsDescendantOf(RUNTIME_CLASS(AInventory)))
+				{
+					Printf("Invalid item class '%s' in ALTHUDCF\n", sc.String);
+					ti = NULL;
+				}
+				sc.MustGetString();
+				FTextureID tex;
+
+				if (!sc.Compare("0") && !sc.Compare("NULL") && !sc.Compare(""))
+				{
+					tex = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
+				}
+				else tex.SetInvalid();
+
+				if (ti) ((AInventory*)GetDefaultByType(ti))->AltHUDIcon = tex;
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
 // PClassActor :: StaticInit										STATIC
 //
 //==========================================================================
@@ -314,6 +390,7 @@ void PClassActor::StaticInit()
 	if (!batchrun) Printf ("LoadActors: Load actor definitions.\n");
 	ClearStrifeTypes();
 	LoadActors ();
+	LoadAltHudStuff();
 	InitBotStuff();
 
 	// reinit GLOBAL static stuff from gameinfo, once classes are loaded.

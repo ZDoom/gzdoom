@@ -64,6 +64,8 @@ DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mSliderColor)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, defaultbloodcolor)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, telefogheight)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, defKickback)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, healthpic)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, berserkpic)
 
 const char *GameNames[17] =
 {

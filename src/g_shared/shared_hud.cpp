@@ -121,55 +121,6 @@ static FTextureID tnt1a0;					// We need this to check for empty sprites.
 static int hudwidth, hudheight;				// current width/height for HUD display
 static int statspace;
 
-DObject *althud;								// scripted parts. This is here to make a gradual transition
-
-//---------------------------------------------------------------------------
-//
-// Draws an image into a box with its bottom center at the bottom
-// center of the box. The image is scaled down if it doesn't fit
-//
-//---------------------------------------------------------------------------
-static void DrawImageToBox(FTexture * tex, int x, int y, int w, int h, double trans = 0.75)
-{
-	IFVM(AltHud, DrawImageToBox)
-	{
-		VMValue params[] = { althud, tex->id.GetIndex(), x, y, w, h, trans };
-		VMCall(func, params, countof(params), nullptr, 0);
-	}
-}
-
-
-//---------------------------------------------------------------------------
-//
-// Draws a text but uses a fixed width for all characters
-//
-//---------------------------------------------------------------------------
-
-static void DrawHudText(FFont *font, int color, char * text, int x, int y, double trans = 0.75)
-{
-	IFVM(AltHud, DrawHudText)
-	{
-		FString string = text;
-		VMValue params[] = { althud, font, color, &string, x, y, trans };
-		VMCall(func, params, countof(params), nullptr, 0);
-	}
-}
-
-
-//---------------------------------------------------------------------------
-//
-// Draws a number with a fixed width for all digits
-//
-//---------------------------------------------------------------------------
-
-static void DrawHudNumber(FFont *font, int color, int num, int x, int y, double trans = 0.75)
-{
-	IFVM(AltHud, DrawHudNumber)
-	{
-		VMValue params[] = { althud, font, color, num, x, y, trans };
-		VMCall(func, params, countof(params), nullptr, 0);
-	}
-}
 
 //---------------------------------------------------------------------------
 //
@@ -189,160 +140,23 @@ void DrawHUD()
 	// Until the script export is complete we need to do some manual setup here
 	auto cls = PClass::FindClass("AltHud");
 	if (!cls) return;
+	DObject *althud = cls->CreateNew();	// scripted parts. This is here to make a gradual transition
 
-	althud = cls->CreateNew();
-	althud->IntVar("hudwidth") = hudwidth;
-	althud->IntVar("hudheight") = hudheight;
-	althud->IntVar("statspace") = statspace;
-	althud->IntVar("healthpic") = healthpic? healthpic->id.GetIndex() : -1;
-	althud->IntVar("berserkpic") = berserkpic? berserkpic->id.GetIndex() : -1;
-	althud->IntVar("tnt1a0") = tnt1a0.GetIndex();
-	althud->IntVar("invgem_left") = invgems[0]->id.GetIndex();
-	althud->IntVar("invgem_right") = invgems[1]->id.GetIndex();
-	althud->IntVar("fragpic") = fragpic? fragpic->id.GetIndex() : -1;
-	althud->PointerVar<FFont>("HUDFont") = HudFont;
-	althud->PointerVar<FFont>("IndexFont") = IndexFont;
-
-	if (!automapactive)
 	{
-		IFVIRTUALPTRNAME(althud, "AltHud", DrawInGame)
+		IFVM(AltHud, Init)
 		{
-			VMValue params[] = { althud, CPlayer };
+			VMValue params[] = { althud };
 			VMCall(func, params, countof(params), nullptr, 0);
 		}
 	}
-	else
+
+	IFVM(AltHud, Draw)
 	{
-		FString mapname;
-		char printstr[256];
-		int seconds;
-		int length=8*SmallFont->GetCharWidth('0');
-		int fonth=SmallFont->GetHeight()+1;
-		int bottom=hudheight-1;
-
-		if (am_showtotaltime)
-		{
-			seconds = Tics2Seconds(level.totaltime);
-			mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
-			DrawHudText(SmallFont, hudcolor_ttim, printstr, hudwidth-length, bottom, 0x10000);
-			bottom -= fonth;
-		}
-
-		if (am_showtime)
-		{
-			if (level.clusterflags&CLUSTER_HUB)
-			{
-				seconds = Tics2Seconds(level.time);
-				mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
-				DrawHudText(SmallFont, hudcolor_time, printstr, hudwidth-length, bottom, 0x10000);
-				bottom -= fonth;
-			}
-
-			// Single level time for hubs
-			seconds= Tics2Seconds(level.maptime);
-			mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
-			DrawHudText(SmallFont, hudcolor_ltim, printstr, hudwidth-length, bottom, 0x10000);
-		}
-
-		ST_FormatMapName(mapname);
-		screen->DrawText(SmallFont, hudcolor_titl, 1, hudheight-fonth-1, mapname,
-			DTA_KeepRatio, true,
-			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
-
-		//DrawCoordinates(CPlayer);
+		VMValue params[] = { althud, CPlayer, hudwidth, hudheight };
+		VMCall(func, params, countof(params), nullptr, 0);
 	}
 
 	if (althud) althud->Destroy();
 	althud = nullptr;
-}
-
-/////////////////////////////////////////////////////////////////////////
-//
-// Initialize the fonts and other data
-//
-/////////////////////////////////////////////////////////////////////////
-
-void HUD_InitHud()
-{
-	switch (gameinfo.gametype)
-	{
-	case GAME_Heretic:
-	case GAME_Hexen:
-		healthpic = TexMan.FindTexture("ARTIPTN2");
-		HudFont=FFont::FindFont("HUDFONT_RAVEN");
-		break;
-
-	case GAME_Strife:
-		healthpic = TexMan.FindTexture("I_MDKT");
-		HudFont=BigFont;	// Strife doesn't have anything nice so use the standard font
-		break;
-
-	default:
-		healthpic = TexMan.FindTexture("MEDIA0");
-		berserkpic = TexMan.FindTexture("PSTRA0");
-		HudFont=FFont::FindFont("HUDFONT_DOOM");
-		break;
-	}
-
-	IndexFont = V_GetFont("INDEXFONT");
-
-	if (HudFont == NULL) HudFont = BigFont;
-	if (IndexFont == NULL) IndexFont = ConFont;	// Emergency fallback
-
-	invgems[0] = TexMan.FindTexture("INVGEML1");
-	invgems[1] = TexMan.FindTexture("INVGEMR1");
-	tnt1a0 = TexMan.CheckForTexture("TNT1A0", ETextureType::Sprite);
-
-	fragpic = TexMan.FindTexture("HU_FRAGS");	// Sadly, I don't have anything usable for this. :(
-
-	statspace = SmallFont->StringWidth("Ac:");
-
-
-
-	// Now read custom icon overrides
-	int lump, lastlump = 0;
-
-	while ((lump = Wads.FindLump ("ALTHUDCF", &lastlump)) != -1)
-	{
-		FScanner sc(lump);
-		while (sc.GetString())
-		{
-			if (sc.Compare("Health"))
-			{
-				sc.MustGetString();
-				FTextureID tex = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
-				if (tex.isValid()) healthpic = TexMan[tex];
-			}
-			else if (sc.Compare("Berserk"))
-			{
-				sc.MustGetString();
-				FTextureID tex = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
-				if (tex.isValid()) berserkpic = TexMan[tex];
-			}
-			else
-			{
-				PClass *ti = PClass::FindClass(sc.String);
-				if (!ti)
-				{
-					Printf("Unknown item class '%s' in ALTHUDCF\n", sc.String);
-				}
-				else if (!ti->IsDescendantOf(RUNTIME_CLASS(AInventory)))
-				{
-					Printf("Invalid item class '%s' in ALTHUDCF\n", sc.String);
-					ti=NULL;
-				}
-				sc.MustGetString();
-				FTextureID tex;
-
-				if (!sc.Compare("0") && !sc.Compare("NULL") && !sc.Compare(""))
-				{
-					tex = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
-				}
-				else tex.SetInvalid();
-
-				if (ti) ((AInventory*)GetDefaultByType(ti))->AltHUDIcon = tex;
-			}
-		}
-	}
 }
 

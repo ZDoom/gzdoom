@@ -119,7 +119,6 @@ extern void ReadStatistics();
 extern void M_SetDefaultMode ();
 extern void G_NewInit ();
 extern void SetupPlayerClasses ();
-extern void HUD_InitHud();
 void DeinitMenus();
 const FIWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
 
@@ -2536,7 +2535,6 @@ void D_DoomMain (void)
 
 		//SBarInfo support. Note that the first SBARINFO lump contains the mugshot definition so it even needs to be read when a regular status bar is being used.
 		SBarInfo::Load();
-		HUD_InitHud();
 
 		if (!batchrun)
 		{

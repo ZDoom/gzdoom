@@ -38,7 +38,6 @@ DVector2 AM_GetPosition();
 
 class AltHud ui
 {
-	TextureID healthPic, berserkPic;
 	TextureID tnt1a0;
 	TextureID invgem_left, invgem_right;
 	TextureID fragpic;
@@ -49,6 +48,37 @@ class AltHud ui
 	Array< Class<Ammo> > orderedammos;
 	const POWERUPICONSIZE = 32;
 
+	
+	void Init()
+	{
+		switch (gameinfo.gametype)
+		{
+		case GAME_Heretic:
+		case GAME_Hexen:
+			HudFont = Font.FindFont("HUDFONT_RAVEN");
+			break;
+
+		case GAME_Strife:
+			HudFont = BigFont;	// Strife doesn't have anything nice so use the standard font
+			break;
+
+		default:
+			HudFont = Font.FindFont("HUDFONT_DOOM");
+			break;
+		}
+
+		IndexFont = Font.GetFont("INDEXFONT");
+
+		if (HudFont == NULL) HudFont = BigFont;
+		if (IndexFont == NULL) IndexFont = ConFont;	// Emergency fallback
+
+		invgem_left = TexMan.CheckForTexture("INVGEML1", TexMan.Type_MiscPatch);
+		invgem_left = TexMan.CheckForTexture("INVGEMR1", TexMan.Type_MiscPatch);
+		tnt1a0 = TexMan.CheckForTexture("TNT1A0", TexMan.Type_Sprite);
+		fragpic = TexMan.CheckForTexture("HU_FRAGS", TexMan.Type_MiscPatch);
+		statspace = SmallFont.StringWidth("Ac:");
+	}
+	
 	//---------------------------------------------------------------------------
 	//
 	// Draws an image into a box with its bottom center at the bottom
@@ -123,7 +153,20 @@ class AltHud ui
 		DrawHudText(fnt, color, String.Format("%d", num), x, y, trans);
 	}
 
+	//---------------------------------------------------------------------------
+	//
+	// Draws a time string as hh:mm:ss
+	//
+	//---------------------------------------------------------------------------
 
+	void DrawTimeString(Font fnt, int color, int timer, int x, int y, double trans = 0.75)
+	{
+		let seconds = Thinker.Tics2Seconds(timer);
+		String s = String.Format("%02i:%02i:%02i", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
+		int length = 8 * fnt.GetCharWidth("0");
+		DrawHudText(SmallFont, color, s, x-length, y, trans);
+	}
+	
 	//===========================================================================
 	//
 	// draw the status (number of kills etc)
@@ -195,10 +238,10 @@ class AltHud ui
 			Font.CR_BLUE;
 
 		bool haveBerserk = hud_berserk_health
-			&& !berserkpic.IsNull()
+			&& !gameinfo.berserkpic.IsNull()
 			&& CPlayer.mo.FindInventory('PowerStrength');
 
-		DrawImageToBox(haveBerserk ? berserkpic : healthpic, x, y, 31, 17);
+		DrawImageToBox(haveBerserk ? gameinfo.berserkpic : gameinfo.healthpic, x, y, 31, 17);
 		DrawHudNumber(HudFont, fontcolor, health, x + 33, y + 17);
 	}
 
@@ -855,6 +898,12 @@ class AltHud ui
 		}
 	}
 	
+	//---------------------------------------------------------------------------
+	//
+	// main drawer
+	//
+	//---------------------------------------------------------------------------
+
 	virtual void DrawInGame(PlayerInfo CPlayer)
 	{
 		// No HUD in the title level!
@@ -884,6 +933,60 @@ class AltHud ui
 		DrawPowerups(CPlayer, y - h + POWERUPICONSIZE * 5 / 4);
 	}
 
+	//---------------------------------------------------------------------------
+	//
+	// automap drawer
+	//
+	//---------------------------------------------------------------------------
 
+	virtual void DrawAutomap(PlayerInfo CPlayer)
+	{
+		int fonth=SmallFont.GetHeight() + 1;
+		int bottom = hudheight - 1;
+
+		if (am_showtotaltime)
+		{
+			DrawTimeString(SmallFont, hudcolor_ttim, level.totaltime, hudwidth-2, bottom, 1);
+			bottom -= fonth;
+		}
+
+		if (am_showtime)
+		{
+			if (level.clusterflags & level.CLUSTER_HUB)
+			{
+				DrawTimeString(SmallFont, hudcolor_time, level.time, hudwidth-2, bottom, 1);
+				bottom -= fonth;
+			}
+
+			// Single level time for hubs
+			DrawTimeString(SmallFont, hudcolor_ltim, level.maptime, hudwidth-2, bottom, 1);
+		}
+
+		screen.DrawText(SmallFont, 0, 1, hudheight - fonth - 1, level.FormatMapName(hudcolor_titl),
+			DTA_KeepRatio, true,
+			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
+
+		DrawCoordinates(CPlayer);
+	}
+
+	//---------------------------------------------------------------------------
+	//
+	// main drawer
+	//
+	//---------------------------------------------------------------------------
+
+	void Draw(PlayerInfo CPlayer, int w, int h)
+	{
+		hudwidth = w;
+		hudheight = h;
+		if (!automapactive)
+		{
+			DrawInGame(CPlayer);
+		}
+		else
+		{
+			DrawAutomap(CPlayer);
+		}
+	}
 	
 }

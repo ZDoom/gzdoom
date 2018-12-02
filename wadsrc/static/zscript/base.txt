@@ -371,6 +371,8 @@ struct GameInfoStruct native
 	native Color defaultbloodcolor;
 	native double telefogheight;
 	native int defKickback;
+	native TextureID healthpic;
+	native TextureID berserkpic;
 }
 
 class Object native
@@ -613,6 +615,9 @@ struct LevelLocals native
 		UDMF_Sector,
 		//UDMF_Thing // not implemented
 	};
+	
+	const CLUSTER_HUB = 0x00000001;	// Cluster uses hub behavior
+
 
 	native Array<@Sector> Sectors;
 	native Array<@Line> Lines;

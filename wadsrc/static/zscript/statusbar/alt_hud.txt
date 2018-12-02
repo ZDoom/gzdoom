@@ -44,6 +44,7 @@ class AltHud ui
 {
 	TextureID healthPic, berserkPic;
 	TextureID tnt1a0;
+	TextureID invgem_left, invgem_right;
 	int hudwidth, hudheight;
 	int statspace;
 	Font HudFont;					// The font for the health and armor display
@@ -600,5 +601,63 @@ class AltHud ui
 		}
 	}
 
+	//---------------------------------------------------------------------------
+	//
+	// Draw the Inventory
+	//
+	//---------------------------------------------------------------------------
+
+	void DrawInventory(PlayerInfo CPlayer, int x,int y)
+	{
+		Inventory rover;
+		int numitems = (hudwidth - 2*x) / 32;
+		int i;
+
+		CPlayer.mo.InvFirst = rover = StatusBar.ValidateInvFirst(numitems);
+		if (rover!=NULL)
+		{
+			if(rover.PrevInv())
+			{
+				screen.DrawTexture(invgem_left, true, x-10, y,
+					DTA_KeepRatio, true,
+					DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0.4);
+			}
+
+			for(i = 0; i < numitems && rover; rover = rover.NextInv())
+			{
+				if (rover.Amount > 0)
+				{
+					let AltIcon = rover.AltHUDIcon;
+
+					if (AltIcon.Exists() && (rover.Icon.isValid() || AltIcon.isValid()) )
+					{
+						double trans = rover == CPlayer.mo.InvSel ? 1.0 : 0.4;
+
+						DrawImageToBox(AltIcon.isValid()? AltIcon : rover.Icon, x, y, 19, 25, trans);
+						if (rover.Amount > 1)
+						{
+							int xx;
+							String buffer = String.Format("%d", rover.Amount);
+							if (rover.Amount >= 1000) xx = 32 - IndexFont.StringWidth(buffer);
+							else xx = 22;
+
+							screen.DrawText(IndexFont, Font.CR_GOLD, x+xx, y+20, buffer, 
+								DTA_KeepRatio, true,
+								DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, trans);
+						}
+						
+						x+=32;
+						i++;
+					}
+				}
+			}
+			if(rover)
+			{
+				screen.DrawTexture(invgem_right, true, x-10, y,
+					DTA_KeepRatio, true,
+					DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0.4);
+			}
+		}
+	}
 
 }

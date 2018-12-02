@@ -404,7 +404,7 @@ CCMD(invprev)
 {
 	if (who != NULL)
 	{
-		IFVM(PlayerPawn, InvNext)
+		IFVM(PlayerPawn, InvPrev)
 		{
 			VMValue param = who;
 			VMCall(func, &param, 1, nullptr, 0);

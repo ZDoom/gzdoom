@@ -283,57 +283,12 @@ static void DrawWeapons(player_t *CPlayer, int x, int y)
 //
 //---------------------------------------------------------------------------
 
-static void DrawInventory(player_t * CPlayer, int x,int y)
+static void DrawInventory(player_t * CPlayer, int x, int y)
 {
-	AInventory * rover;
-	int numitems = (hudwidth - 2*x) / 32;
-	int i;
-
-	CPlayer->mo->InvFirst = rover = StatusBar->ValidateInvFirst(numitems);
-	if (rover!=NULL)
+	IFVM(AltHud, DrawInventory)
 	{
-		if(rover->PrevInv())
-		{
-			screen->DrawTexture(invgems[0], x-10, y,
-				DTA_KeepRatio, true,
-				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0.4, TAG_DONE);
-		}
-
-		for(i=0;i<numitems && rover;rover=rover->NextInv())
-		{
-			if (rover->Amount>0)
-			{
-				FTextureID AltIcon = rover->AltHUDIcon;
-
-				if (AltIcon.Exists() && (rover->Icon.isValid() || AltIcon.isValid()) )
-				{
-					double trans = rover==CPlayer->mo->InvSel ? 1.0 : 0.4;
-
-					DrawImageToBox(TexMan[AltIcon.isValid()? AltIcon : rover->Icon], x, y, 19, 25, trans);
-					if (rover->Amount>1)
-					{
-						char buffer[10];
-						int xx;
-						mysnprintf(buffer, countof(buffer), "%d", rover->Amount);
-						if (rover->Amount>=1000) xx = 32 - IndexFont->StringWidth(buffer);
-						else xx = 22;
-
-						screen->DrawText(IndexFont, CR_GOLD, x+xx, y+20, buffer, 
-							DTA_KeepRatio, true,
-							DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, trans, TAG_DONE);
-					}
-					
-					x+=32;
-					i++;
-				}
-			}
-		}
-		if(rover)
-		{
-			screen->DrawTexture(invgems[1], x-10, y,
-				DTA_KeepRatio, true,
-				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0.4, TAG_DONE);
-		}
+		VMValue params[] = { althud, CPlayer, x, y };
+		VMCall(func, params, countof(params), nullptr, 0);
 	}
 }
 
@@ -651,7 +606,10 @@ void DrawHUD()
 	althud->IntVar("healthpic") = healthpic? healthpic->id.GetIndex() : -1;
 	althud->IntVar("berserkpic") = berserkpic? berserkpic->id.GetIndex() : -1;
 	althud->IntVar("tnt1a0") = tnt1a0.GetIndex();
+	althud->IntVar("invgem_left") = invgems[0]->id.GetIndex();
+	althud->IntVar("invgem_right") = invgems[1]->id.GetIndex();
 	althud->PointerVar<FFont>("HUDFont") = HudFont;
+	althud->PointerVar<FFont>("IndexFont") = IndexFont;
 
 	if (!automapactive)
 	{

@@ -353,41 +353,6 @@ static void DrawLatency(int y)
 		VMValue params[] = { althud, y };
 		VMCall(func, params, countof(params), nullptr, 0);
 	}
-
-	/*
-	if (!ST_IsLatencyVisible())
-	{
-		return;
-	}
-	int i, localdelay = 0, arbitratordelay = 0;
-	for (i = 0; i < BACKUPTICS; i++) localdelay += netdelay[0][i];
-	for (i = 0; i < BACKUPTICS; i++) arbitratordelay += netdelay[nodeforplayer[Net_Arbitrator]][i];
-	localdelay = ((localdelay / BACKUPTICS) * ticdup) * (1000 / TICRATE);
-	arbitratordelay = ((arbitratordelay / BACKUPTICS) * ticdup) * (1000 / TICRATE);
-	int color = CR_GREEN;
-	if (MAX(localdelay, arbitratordelay) > 200)
-	{
-		color = CR_YELLOW;
-	}
-	if (MAX(localdelay, arbitratordelay) > 400)
-	{
-		color = CR_ORANGE;
-	}
-	if (MAX(localdelay, arbitratordelay) >= ((BACKUPTICS / 2 - 1) * ticdup) * (1000 / TICRATE))
-	{
-		color = CR_RED;
-	}
-
-	char tempstr[32];
-
-	const int millis = (level.time % TICRATE) * (1000 / TICRATE);
-	mysnprintf(tempstr, sizeof(tempstr), "a:%dms - l:%dms", arbitratordelay, localdelay);
-
-	const int characterCount = (int)strlen(tempstr);
-	const int width = SmallFont->GetCharWidth('0') * characterCount + 2; // small offset from screen's border
-
-	DrawHudText(SmallFont, color, tempstr, hudwidth - width, y, 0x10000);
-	*/
 }
 
 //---------------------------------------------------------------------------
@@ -396,18 +361,20 @@ static void DrawLatency(int y)
 //
 //---------------------------------------------------------------------------
 
-static void DrawPowerups(player_t *CPlayer)
+static void DrawPowerups(player_t *CPlayer, int y)
 {
+	IFVM(AltHud, DrawPowerups)
+	{
+		VMValue params[] = { althud, CPlayer, y };
+		VMCall(func, params, countof(params), nullptr, 0);
+	}
+/*
 	// Each icon gets a 32x32 block to draw itself in.
 	int x, y;
 	AInventory *item;
-	const int yshift = SmallFont->GetHeight();
 	const int POWERUPICONSIZE = 32;
 
 	x = hudwidth -20;
-	y = POWERUPICONSIZE * 5/4
-		+ (ST_IsTimeVisible() ? yshift : 0)
-		+ (ST_IsLatencyVisible() ? yshift : 0);
 
 	for (item = CPlayer->mo->Inventory; item != NULL; item = item->Inventory)
 	{
@@ -443,6 +410,7 @@ static void DrawPowerups(player_t *CPlayer)
 			}
 		}
 	}
+	*/
 }
 
 //---------------------------------------------------------------------------
@@ -481,6 +449,7 @@ void DrawHUD()
 	{
 		int i;
 
+
 		// No HUD in the title level!
 		if (gamestate == GS_TITLELEVEL || !CPlayer) return;
 
@@ -500,7 +469,9 @@ void DrawHUD()
 
 		DrawTime(SmallFont->GetHeight());
 		DrawLatency(SmallFont->GetHeight()*2);	// to be fixed when fully scripted.
-		DrawPowerups(CPlayer);
+		const int POWERUPICONSIZE = 32;
+		DrawPowerups(CPlayer, SmallFont->GetHeight() * 2 + POWERUPICONSIZE * 5 / 4);	// to be fixed when fully scripted.
+
 	}
 	else
 	{

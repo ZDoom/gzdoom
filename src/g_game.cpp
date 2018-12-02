@@ -2996,3 +2996,4 @@ DEFINE_GLOBAL(gametic)
 DEFINE_GLOBAL(demoplayback)
 DEFINE_GLOBAL(automapactive);
 DEFINE_GLOBAL(Net_Arbitrator);
+DEFINE_GLOBAL(netgame);

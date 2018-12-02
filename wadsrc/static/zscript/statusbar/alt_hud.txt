@@ -56,7 +56,7 @@ class AltHud ui
 	//
 	//---------------------------------------------------------------------------
 
-	void DrawImageToBox(TextureID tex, int x, int y, int w, int h, double trans = 0.75)
+	void DrawImageToBox(TextureID tex, int x, int y, int w, int h, double trans = 0.75, bool animate = false)
 	{
 		double scale1, scale2;
 
@@ -77,7 +77,7 @@ class AltHud ui
 			w = (int)(texsize.X * scale1);
 			h = (int)(texsize.Y * scale1);
 
-			screen.DrawTexture(tex, false, x, y,
+			screen.DrawTexture(tex, animate, x, y,
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, trans, 
 				DTA_DestWidth, w, DTA_DestHeight, h, DTA_CenterBottomOffset, 1);
@@ -799,9 +799,9 @@ class AltHud ui
 	//---------------------------------------------------------------------------
 	native static int, int, int GetLatency();
 
-	static void DrawLatency(int y)
+	void DrawLatency(int y)
 	{
-		if ((hud_showlag > 0) && (hud_showlag != 1 || netgame) && (hud_showlag <= 2)
+		if ((hud_showlag == 1 && netgame) || hud_showlag == 2)
 		{
 			int severity, localdelay, arbitratordelay;
 			[severity, localdelay, arbitratordelay] = GetLatency();
@@ -809,12 +809,48 @@ class AltHud ui
 
 			String tempstr = String.Format("a:%dms - l:%dms", arbitratordelay, localdelay);
 
-			const int characterCount = tempstr.Length();
-			const int width = SmallFont.GetCharWidth("0") * characterCount + 2; // small offset from screen's border
+			int characterCount = tempstr.Length();
+			int width = SmallFont.GetCharWidth("0") * characterCount + 2; // small offset from screen's border
 
 			DrawHudText(SmallFont, color, tempstr, hudwidth - width, y, 1);
 		}
 	}
+
+	//---------------------------------------------------------------------------
+	//
+	// draw the overlay
+	//
+	//---------------------------------------------------------------------------
+
+	void DrawPowerups(PlayerInfo CPlayer, int y)
+	{
+		// Each icon gets a 32x32 block to draw itself in.
+		int x, y;
+		Inventory item;
+
+		x = hudwidth - POWERUPICONSIZE - 4;
+
+		for (item = CPlayer.mo.Inv; item != NULL; item = item.Inv)
+		{
+			let power = Powerup(item);
+			if (power)
+			{
+				let icon = power.GetPowerupIcon();
+				if (icon.isValid())
+				{
+					if (!power.isBlinking())
+						DrawImageToBox(icon, x, y, POWERUPICONSIZE, POWERUPICONSIZE, 1, true);
+					x -= POWERUPICONSIZE;
+					if (x < -hudwidth / 2)
+					{
+						x = hudwidth - 20;
+						y += POWERUPICONSIZE * 3 / 2;
+					}
+				}
+			}
+		}
+	}
+
 
 	
 }

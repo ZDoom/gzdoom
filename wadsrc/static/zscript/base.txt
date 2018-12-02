@@ -14,6 +14,7 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native readonly @GameInfoStruct gameinfo;
 	native play @PlayerInfo players[MAXPLAYERS];
 	native readonly bool playeringame[MAXPLAYERS];
+	native readonly ui bool netgame;
 
 	native readonly bool automapactive;
 	native play uint gameaction;

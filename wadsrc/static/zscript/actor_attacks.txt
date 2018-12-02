@@ -617,16 +617,18 @@ extend class Actor
 		if (force == 0) force = 128;
 		if (distance <= 0) distance = abs(force);
 
-		bool nothrust = target.bNoDamageThrust;
+		bool nothrust = false; 
 		// Temporarily negate MF2_NODMGTHRUST on the shooter, since it renders this function useless.
 		if (!(flags & RTF_NOTMISSILE) && target != NULL)
 		{
+			nothrust = target.bNoDamageThrust;
 			target.bNoDamageThrust = false;
 		}
 
 		RadiusAttack (target, force, distance, DamageType, flags | RADF_NODAMAGE, fullthrustdistance);
 		CheckSplash(distance);
-		target.bNoDamageThrust = nothrust;
+		if (target)
+			target.bNoDamageThrust = nothrust;
 	}
 
 	//==========================================================================

@@ -952,6 +952,14 @@ class Actor : Thinker native
 		BulletSlope(t, ALF_PORTALRESTRICT);
 		return t.linetarget;
 	}
+	
+	void RestoreRenderStyle()
+	{
+		bShadow = default.bShadow;
+		bGhost = default.bGhost;
+		RenderStyle = default.RenderStyle;
+		Alpha = default.Alpha;
+	}
 
 	native void A_Face(Actor faceto, double max_turn = 0, double max_pitch = 270, double ang_offset = 0, double pitch_offset = 0, int flags = 0, double z_ofs = 0);
 

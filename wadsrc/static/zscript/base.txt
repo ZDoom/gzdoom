@@ -671,6 +671,8 @@ struct LevelLocals native
 	native bool frozen;
 	native readonly bool infinite_flight;
 	native readonly bool no_dlg_freeze;
+	native readonly bool keepfullinventory;
+	native readonly bool removeitems;
 	native readonly int fogdensity;
 	native readonly int outsidefogdensity;
 	native readonly int skyfog;

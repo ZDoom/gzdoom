@@ -1725,30 +1725,6 @@ void P_WriteACSVars(FSerializer &arc)
 
 //============================================================================
 //
-// ClearInventory
-//
-// Clears the inventory for one or more actors.
-//
-//============================================================================
-
-static void ClearInventory (AActor *activator)
-{
-	if (activator == NULL)
-	{
-		for (int i = 0; i < MAXPLAYERS; ++i)
-		{
-			if (playeringame[i])
-				players[i].mo->ClearInventory();
-		}
-	}
-	else
-	{
-		activator->ClearInventory();
-	}
-}
-
-//============================================================================
-//
 // DoUseInv
 //
 // Makes a single actor use an inventory item
@@ -9218,13 +9194,13 @@ scriptwait:
 			break;
 
 		case PCD_CLEARINVENTORY:
-			ClearInventory (activator);
+			ScriptUtil::Exec(NAME_ClearInventory, ScriptUtil::Pointer, activator, ScriptUtil::End);
 			break;
 
 		case PCD_CLEARACTORINVENTORY:
 			if (STACK(1) == 0)
 			{
-				ClearInventory(NULL);
+				ScriptUtil::Exec(NAME_ClearInventory, ScriptUtil::Pointer, nullptr, ScriptUtil::End);
 			}
 			else
 			{
@@ -9232,7 +9208,7 @@ scriptwait:
 				AActor *actor;
 				for (actor = it.Next(); actor != NULL; actor = it.Next())
 				{
-					ClearInventory(actor);
+					ScriptUtil::Exec(NAME_ClearInventory, ScriptUtil::Pointer, actor , ScriptUtil::End);
 				}
 			}
 			sp--;

@@ -994,6 +994,7 @@ xx(SetMarineWeapon)
 xx(SetMarineSprite)
 xx(GiveInventory)
 xx(TakeInventory)
+xx(ClearInventory)
 
 // Weapon member fields that need direct access
 xx(Ammo1)

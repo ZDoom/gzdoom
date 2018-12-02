@@ -1734,6 +1734,112 @@ class PlayerPawn : Actor native
 		return TeleportFreezeTime;
 	}
 	
+	
+	//===========================================================================
+	//
+	// G_PlayerFinishLevel
+	// Called when a player completes a level.
+	//
+	// flags is checked for RESETINVENTORY and RESETHEALTH only.
+	//
+	//===========================================================================
+
+	void PlayerFinishLevel (int mode, int flags)
+	{
+		Inventory item, next;
+		let p = player;
+
+		if (p.morphTics != 0)
+		{ // Undo morph
+			Unmorph(self, 0, true);
+		}
+		// 'self' will be no longer valid from here on in case of an unmorph
+		let me = p.mo;
+
+		// Strip all current powers, unless moving in a hub and the power is okay to keep.
+		item = me.Inv;
+		while (item != NULL)
+		{
+			next = item.Inv;
+			if (item is 'Powerup')
+			{
+				if (deathmatch || ((mode != FINISH_SameHub || !item.bHUBPOWER) && !item.bPERSISTENTPOWER)) // Keep persistent powers in non-deathmatch games
+				{
+					item.Destroy ();
+				}
+			}
+			item = next;
+		}
+		let ReadyWeapon = p.ReadyWeapon;
+		if (ReadyWeapon != NULL && ReadyWeapon.bPOWERED_UP && p.PendingWeapon == ReadyWeapon.SisterWeapon)
+		{
+			// Unselect powered up weapons if the unpowered counterpart is pending
+			p.ReadyWeapon = p.PendingWeapon;
+		}
+		// reset invisibility to default
+		me.RestoreRenderStyle();
+		p.extralight = 0;					// cancel gun flashes
+		p.fixedcolormap = PlayerInfo.NOFIXEDCOLORMAP;	// cancel ir goggles
+		p.fixedlightlevel = -1;
+		p.damagecount = 0; 				// no palette changes
+		p.bonuscount = 0;
+		p.poisoncount = 0;
+		p.inventorytics = 0;
+
+		if (mode != FINISH_SameHub)
+		{
+			// Take away flight and keys (and anything else with IF_INTERHUBSTRIP set)
+			item = me.Inv;
+			while (item != NULL)
+			{
+				next = item.Inv;
+				if (item.InterHubAmount < 1)
+				{
+					item.Destroy ();
+				}
+				item = next;
+			}
+		}
+
+		if (mode == FINISH_NoHub && !level.KEEPFULLINVENTORY)
+		{ // Reduce all owned (visible) inventory to defined maximum interhub amount
+			Array<Inventory> todelete;
+			for (item = me.Inv; item != NULL; item = item.Inv)
+			{
+				// If the player is carrying more samples of an item than allowed, reduce amount accordingly
+				if (item.bINVBAR && item.Amount > item.InterHubAmount)
+				{
+					item.Amount = item.InterHubAmount;
+					if (level.REMOVEITEMS && !item.bUNDROPPABLE)
+					{
+						todelete.Push(item);
+					}
+				}
+			}
+			for (int i = 0; i < toDelete.Size(); i++)
+			{
+				let it = toDelete[i];
+				if (!it.bDestroyed)
+				{
+					item.DepleteOrDestroy();
+				}
+			}
+		}
+
+		// Resets player health to default if not dead.
+		if ((flags & CHANGELEVEL_RESETHEALTH) && p.playerstate != PST_DEAD)
+		{
+			p.health = me.health = me.SpawnHealth();
+		}
+
+		// Clears the entire inventory and gives back the defaults for starting a game
+		if ((flags & CHANGELEVEL_RESETINVENTORY) && p.playerstate != PST_DEAD)
+		{
+			me.ClearInventory();
+			me.GiveDefaultInventory();
+		}
+	}
+	
 	//===========================================================================
 	//
 	// FWeaponSlot :: PickWeapon

@@ -63,6 +63,7 @@
 #include "g_levellocals.h"
 #include "events.h"
 #include "i_time.h"
+#include "vm.h"
 
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (Int, autosavecount)
@@ -2253,9 +2254,10 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 			while (item != NULL)
 			{
 				AInventory *next = item->Inventory;
-				if (item->ItemFlags & IF_INVBAR && !(item->IsKindOf(pitype)))
+				IFVIRTUALPTR(item, AInventory, UseAll)
 				{
-					players[player].mo->UseInventory (item);
+					VMValue param[] = { item, players[player].mo };
+					VMCall(func, param, 2, nullptr, 0);
 				}
 				item = next;
 			}

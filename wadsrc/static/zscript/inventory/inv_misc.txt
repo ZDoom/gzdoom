@@ -132,6 +132,9 @@ class PuzzleItem : Inventory
 		return false;
 	}
 
+	override void UseAll(Actor user)
+	{
+	}
 	
 	override bool ShouldStay ()
 	{

@@ -934,6 +934,11 @@ class Inventory : Actor native
 	virtual version("2.4") ui void AlterWeaponSprite(VisStyle vis, in out int changed) {}
 	virtual void OwnerDied() {}
 	virtual Color GetBlend () { return 0; }
+	
+	virtual void UseAll(Actor user)
+	{
+		if (bInvBar) user.UseInventory(self);
+	}
 
 	//===========================================================================
 	//

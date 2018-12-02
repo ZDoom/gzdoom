@@ -1,3 +1,56 @@
+
+struct AutoUseHealthInfo play
+{
+	Array<Inventory> collectedItems[2];
+	int collectedHealth[2];
+	
+	void AddItemToList(Inventory item, int list)
+	{
+		collectedItems[list].Push(item);
+		collectedHealth[list] += Item.Amount * Item.health;
+	}
+	
+	int UseHealthItems(int list, in out int saveHealth)
+	{
+		int saved = 0;
+
+		while (collectedItems[list].Size() > 0 && saveHealth > 0)
+		{
+			int maxhealth = 0;
+			int index = -1;
+
+			// Find the largest item in the list
+			for(int i = 0; i < collectedItems[list].Size(); i++)
+			{
+				// Workaround for a deficiency in the expression resolver.
+				let item = list == 0? collectedItems[0][i] : collectedItems[1][i];
+				if (Item.health > maxhealth)
+				{
+					index = i;
+					maxhealth = Item.health;
+				}
+			}
+
+			// Now apply the health items, using the same logic as Heretic and Hexen.
+			int count = (saveHealth + maxhealth-1) / maxhealth;
+			for(int i = 0; i < count; i++)
+			{
+				saved += maxhealth;
+				saveHealth -= maxhealth;
+				let item = list == 0? collectedItems[0][index] : collectedItems[1][index];
+				if (--item.Amount == 0)
+				{
+					item.DepleteOrDestroy ();
+					collectedItems[list].Delete(index);
+					break;
+				}
+			}
+		}
+		return saved;
+	}
+	
+}
+
 extend class PlayerPawn
 {
 	
@@ -176,4 +229,95 @@ extend class PlayerPawn
 		}
 		return true;
 	}
+	
+	//---------------------------------------------------------------------------
+	//
+	// PROC P_AutoUseHealth
+	//
+	//---------------------------------------------------------------------------
+
+	void AutoUseHealth(int saveHealth)
+	{
+		AutoUseHealthInfo collector;
+		
+		for(Inventory inv = self.Inv; inv != NULL; inv = inv.Inv)
+		{
+			let hp = HealthPickup(inv);
+			if (hp && hp.Amount > 0)
+			{
+				int mode = hp.autousemode;
+				if (mode == 1 || mode == 2) collector.AddItemToList(inv, mode-1);
+			}
+		}
+
+		bool skilluse = !!G_SkillPropertyInt(SKILLP_AutoUseHealth);
+
+		if (skilluse && collector.collectedHealth[0] >= saveHealth)
+		{ 
+			// Use quartz flasks
+			player.health += collector.UseHealthItems(0, saveHealth);
+		}
+		else if (collector.collectedHealth[1] >= saveHealth)
+		{ 
+			// Use mystic urns
+			player.health += collector.UseHealthItems(1, saveHealth);
+		}
+		else if (skilluse && collector.collectedHealth[0] + collector.collectedHealth[1] >= saveHealth)
+		{ 
+			// Use mystic urns and quartz flasks
+			player.health += collector.UseHealthItems(0, saveHealth);
+			if (saveHealth > 0) player.health += collector.UseHealthItems(1, saveHealth);
+		}
+		health = player.health;
+	}
+
+	//============================================================================
+	//
+	// P_AutoUseStrifeHealth
+	//
+	//============================================================================
+
+	void AutoUseStrifeHealth ()
+	{
+		Array<Inventory> Items;
+
+		for(Inventory inv = self.Inv; inv != NULL; inv = inv.Inv)
+		{
+			let hp = HealthPickup(inv);
+			if (hp && hp.Amount > 0)
+			{
+				if (hp.autousemode == 3) Items.Push(inv);
+			}
+		}
+		
+		if (!sv_disableautohealth)
+		{
+			while (Items.Size() > 0)
+			{
+				int maxhealth = 0;
+				int index = -1;
+
+				// Find the largest item in the list
+				for(int i = 0; i < Items.Size(); i++)
+				{
+					if (Items[i].health > maxhealth)
+					{
+						index = i;
+						maxhealth = Items[i].Amount;
+					}
+				}
+
+				while (player.health < 50)
+				{
+					if (!UseInventory (Items[index]))
+						break;
+				}
+				if (player.health >= 50) return;
+				// Using all of this item was not enough so delete it and restart with the next best one
+				Items.Delete(index);
+			}
+		}
+	}
+
+	
 }

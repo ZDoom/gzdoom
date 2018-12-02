@@ -365,7 +365,7 @@ struct Sector native play
 	native double, Sector, F3DFloor NextLowestFloorAt(double x, double y, double z, int flags = 0, double steph = 0);
 
 	native void RemoveForceField();
-	native static Sector PointInSector(Vector2 pt);
+	native static clearscope Sector PointInSector(Vector2 pt);
 
 	native bool PlaneMoving(int pos);
 	native int GetFloorLight();

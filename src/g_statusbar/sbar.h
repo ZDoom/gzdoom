@@ -52,9 +52,6 @@ enum EHudState
 	HUD_AltHud // Used for passing through popups to the alt hud
 };
 
-bool ST_IsTimeVisible();
-bool ST_IsLatencyVisible();
-
 // HUD Message base object --------------------------------------------------
 
 // This is a mo-op base class to allow derived ZScript message types that can be managed by the status bar.

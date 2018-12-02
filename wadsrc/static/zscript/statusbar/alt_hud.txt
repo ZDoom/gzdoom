@@ -33,10 +33,6 @@
 
 /*
 
-// Icons
-static FTexture * fragpic;					// Frags icon
-static FTexture * invgems[2];				// Inventory arrows
-
 DVector2 AM_GetPosition();
 */
 
@@ -45,11 +41,13 @@ class AltHud ui
 	TextureID healthPic, berserkPic;
 	TextureID tnt1a0;
 	TextureID invgem_left, invgem_right;
+	TextureID fragpic;
 	int hudwidth, hudheight;
 	int statspace;
 	Font HudFont;					// The font for the health and armor display
 	Font IndexFont;					// The font for the inventory indices
 	Array< Class<Ammo> > orderedammos;
+	const POWERUPICONSIZE = 32;
 
 	//---------------------------------------------------------------------------
 	//
@@ -660,4 +658,163 @@ class AltHud ui
 		}
 	}
 
+	//---------------------------------------------------------------------------
+	//
+	// Draw the Frags
+	//
+	//---------------------------------------------------------------------------
+
+	void DrawFrags(PlayerInfo CPlayer, int x, int y)
+	{
+		DrawImageToBox(fragpic, x, y, 31, 17);
+		DrawHudNumber(HudFont, Font.CR_GRAY, CPlayer.fragcount, x + 33, y + 17);
+	}
+	
+	//---------------------------------------------------------------------------
+	//
+	// PROC DrawCoordinates
+	//
+	//---------------------------------------------------------------------------
+	
+	void DrawCoordinateEntry(int xpos, int ypos, String coordstr)
+	{
+		screen.DrawText(SmallFont, hudcolor_xyco, xpos, ypos, coordstr,
+						 DTA_KeepRatio, true,
+						 DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
+	}
+
+	void DrawCoordinates(PlayerInfo CPlayer)
+	{
+		Vector3 pos;
+		String coordstr;
+		int h = SmallFont.GetHeight() + 1;
+		let mo = CPlayer.mo;
+		
+		if (!map_point_coordinates || !automapactive) 
+		{
+			pos = mo.Pos;
+		}
+		else 
+		{
+			pos.xy = Level.GetAutomapPosition();
+			pos.z = Sector.PointInSector(pos.xy).floorplane.ZatPoint(pos.xy);
+		}
+
+		int xpos = hudwidth - SmallFont.StringWidth("X: -00000")-6;
+		int ypos = 18;
+
+		screen.DrawText(SmallFont, hudcolor_titl, hudwidth - 6 - SmallFont.StringWidth(level.MapName), ypos, level.MapName,
+			DTA_KeepRatio, true,
+			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
+
+		screen.DrawText(SmallFont, hudcolor_titl, hudwidth - 6 - SmallFont.StringWidth(level.LevelName), ypos + h, level.LevelName,
+			DTA_KeepRatio, true,
+			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
+
+		
+		ypos += 3 * h;
+		DrawCoordinateEntry(xpos, ypos, String.Format("X: %.0f", pos.X));
+		ypos += h;
+		DrawCoordinateEntry(xpos, ypos, String.Format("Y: %.0f", pos.Y));
+		ypos += h;
+		DrawCoordinateEntry(xpos, ypos, String.Format("Z: %.0f", pos.Z));
+		ypos += h;
+
+		if (hud_showangles)
+		{
+			DrawCoordinateEntry(xpos, ypos, String.Format("Y: %.0f", Actor.Normalize180(mo.Angle)));
+			ypos += h;
+			DrawCoordinateEntry(xpos, ypos, String.Format("P: %.0f", Actor.Normalize180(mo.Pitch)));
+			ypos += h;
+			DrawCoordinateEntry(xpos, ypos, String.Format("R: %.0f", Actor.Normalize180(mo.Roll)));
+		}
+	}
+	
+	//---------------------------------------------------------------------------
+	//
+	// Draw in-game time
+	//
+	// Check AltHUDTime option value in wadsrc/static/menudef.txt
+	// for meaning of all display modes
+	//
+	//---------------------------------------------------------------------------
+	private native static int GetRealTime();
+
+	void DrawTime(int y)
+	{
+		if (hud_showtime > 0 && hud_showtime <= 9)
+		{
+			int timeSeconds;
+
+			if (hud_showtime < 8)
+			{
+				int timeTicks =
+					hud_showtime < 4
+						? level.maptime
+						: (hud_showtime < 6
+							? level.time
+							: level.totaltime);
+				timeSeconds = Thinker.Tics2Seconds(timeTicks);
+			}
+			else
+			{
+				timeSeconds = GetRealTime();
+			}
+
+			int hours   =  timeSeconds / 3600;
+			int minutes = (timeSeconds % 3600) / 60;
+			int seconds =  timeSeconds % 60;
+
+			bool showMillis  = 1 == hud_showtime;
+			bool showSeconds = showMillis || (0 == hud_showtime % 2);
+
+			String timeString;
+
+			if (showMillis)
+			{
+				int millis  = (level.time % Thinker.TICRATE) * (1000 / Thinker.TICRATE);
+				timeString = String.Format("%02i:%02i:%02i.%03i", hours, minutes, seconds, millis);
+			}
+			else if (showSeconds)
+			{
+				timeString = String.Format("%02i:%02i:%02i", hours, minutes, seconds);
+			}
+			else
+			{
+				timeString = String.Format("%02i:%02i", hours, minutes);
+			}
+
+			int characterCount = timeString.length();
+			int width  = SmallFont.GetCharWidth("0") * characterCount + 2; // small offset from screen's border
+			DrawHudText(SmallFont, hud_timecolor, timeString, hudwidth - width, y, 1);
+		}
+	}
+
+	//---------------------------------------------------------------------------
+	//
+	// Draw in-game latency
+	//
+	// 
+	//
+	//---------------------------------------------------------------------------
+	native static int, int, int GetLatency();
+
+	static void DrawLatency(int y)
+	{
+		if ((hud_showlag > 0) && (hud_showlag != 1 || netgame) && (hud_showlag <= 2)
+		{
+			int severity, localdelay, arbitratordelay;
+			[severity, localdelay, arbitratordelay] = GetLatency();
+			int color = severity == 0? Font.CR_GREEN : severity == 1? Font.CR_YELLOW : severity == 2? Font.CR_ORANGE : Font.CR_RED;
+
+			String tempstr = String.Format("a:%dms - l:%dms", arbitratordelay, localdelay);
+
+			const int characterCount = tempstr.Length();
+			const int width = SmallFont.GetCharWidth("0") * characterCount + 2; // small offset from screen's border
+
+			DrawHudText(SmallFont, color, tempstr, hudwidth - width, y, 1);
+		}
+	}
+
+	
 }

@@ -41,6 +41,9 @@
 #include "p_acs.h"
 #include "a_pickups.h"
 
+DVector2 AM_GetPosition();
+int Net_GetLatency(int *ld, int *ad);
+
 //=====================================================================================
 //
 // sector_t exports
@@ -2092,20 +2095,56 @@ DEFINE_ACTION_FUNCTION_NATIVE(DHUDFont, Create, CreateHudFont)
 //
 //=====================================================================================
 
-void FormatMapName(FLevelLocals *self, int cr, FString *result)
+static void FormatMapName(FLevelLocals *self, int cr, FString *result)
 {
 	char mapnamecolor[3] = { '\34', char(cr + 'A'), 0 };
 	ST_FormatMapName(*result, mapnamecolor);
 }
 
-
-DEFINE_ACTION_FUNCTION(FLevelLocals, FormatMapName)
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, FormatMapName, FormatMapName)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_INT(cr);
 	FString rets;
 	FormatMapName(self, cr, &rets);
 	ACTION_RETURN_STRING(rets);
+}
+
+static void GetAutomapPosition(DVector2 *pos)
+{
+	*pos = AM_GetPosition();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetAutomapPosition, GetAutomapPosition)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_VEC2(AM_GetPosition());
+}
+
+
+static int GetRealTime()
+{
+	time_t now;
+	time(&now);
+	struct tm* timeinfo = localtime(&now);
+	return timeinfo ? timeinfo->tm_sec + timeinfo->tm_min * 60 + timeinfo->tm_hour * 3600 : 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_AltHUD, GetRealTime, GetRealTime)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_INT(GetRealTime());
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_AltHUD, GetLatency, Net_GetLatency)
+{
+	PARAM_PROLOGUE;
+	int ld, ad;
+	int severity = Net_GetLatency(&ld, &ad);
+	if (numret > 0) ret[0].SetInt(severity);
+	if (numret > 1) ret[1].SetInt(ld);
+	if (numret > 2) ret[2].SetInt(ad);
+	return numret;
 }
 
 

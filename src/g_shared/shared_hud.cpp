@@ -123,8 +123,6 @@ static int statspace;
 
 DObject *althud;								// scripted parts. This is here to make a gradual transition
 
-DVector2 AM_GetPosition();
-
 //---------------------------------------------------------------------------
 //
 // Draws an image into a box with its bottom center at the bottom
@@ -300,8 +298,11 @@ static void DrawInventory(player_t * CPlayer, int x, int y)
 
 static void DrawFrags(player_t * CPlayer, int x, int y)
 {
-	DrawImageToBox(fragpic, x, y, 31, 17);
-	DrawHudNumber(HudFont, CR_GRAY, CPlayer->fragcount, x + 33, y + 17);
+	IFVM(AltHud, DrawFrags)
+	{
+		VMValue params[] = { althud, CPlayer, x, y };
+		VMCall(func, params, countof(params), nullptr, 0);
+	}
 }
 
 
@@ -314,70 +315,10 @@ static void DrawFrags(player_t * CPlayer, int x, int y)
 
 static void DrawCoordinates(player_t * CPlayer)
 {
-	DVector3 pos;
-	char coordstr[18];
-	int h = SmallFont->GetHeight()+1;
-
-	
-	if (!map_point_coordinates || !automapactive) 
+	IFVM(AltHud, DrawCoordinates)
 	{
-		pos = CPlayer->mo->Pos();
-	}
-	else 
-	{
-		DVector2 apos = AM_GetPosition();
-		double z = P_PointInSector(apos)->floorplane.ZatPoint(apos);
-		pos = DVector3(apos, z);
-	}
-
-	int xpos = hudwidth - SmallFont->StringWidth("X: -00000")-6;
-	int ypos = 18;
-
-	screen->DrawText(SmallFont, hudcolor_titl, hudwidth - 6 - SmallFont->StringWidth(level.MapName), ypos, level.MapName,
-		DTA_KeepRatio, true,
-		DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
-
-	screen->DrawText(SmallFont, hudcolor_titl, hudwidth - 6 - SmallFont->StringWidth(level.LevelName), ypos + h, level.LevelName,
-		DTA_KeepRatio, true,
-		DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
-
-	int linenum = 3;
-
-	typedef struct CoordEntry
-	{
-		const char* const format;
-		double value;
-	}
-	CoordEntryList[3];
-
-	const auto drawentries = [&](CoordEntryList&& entries)
-	{
-		for (const auto& entry : entries)
-		{
-			mysnprintf(coordstr, countof(coordstr), entry.format, entry.value);
-			screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos + linenum * h, coordstr,
-							 DTA_KeepRatio, true,
-							 DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
-			++linenum;
-		}
-	};
-
-	drawentries({
-		{ "X: %.0f", pos.X },
-		{ "Y: %.0f", pos.Y },
-		{ "Z: %.0f", pos.Z }
-	});
-
-	if (hud_showangles)
-	{
-		const DRotator& angles = CPlayer->mo->Angles;
-		++linenum;
-
-		drawentries({
-			{ "P: %.1f", angles.Pitch.Degrees },
-			{ "Y: %.1f", (90.0 - angles.Yaw).Normalized360().Degrees },
-			{ "R: %.1f", angles.Roll.Degrees },
-		});
+		VMValue params[] = { althud, CPlayer };
+		VMCall(func, params, countof(params), nullptr, 0);
 	}
 }
 
@@ -390,88 +331,13 @@ static void DrawCoordinates(player_t * CPlayer)
 //
 //---------------------------------------------------------------------------
 
-static void DrawTime()
+static void DrawTime(int y)
 {
-	if (!ST_IsTimeVisible())
+	IFVM(AltHud, DrawTime)
 	{
-		return;
+		VMValue params[] = { althud, y };
+		VMCall(func, params, countof(params), nullptr, 0);
 	}
-
-	int hours   = 0;
-	int minutes = 0;
-	int seconds = 0;
-
-	if (hud_showtime < 8)
-	{
-		const int timeTicks =
-			hud_showtime < 4
-				? level.maptime
-				: (hud_showtime < 6
-					? level.time
-					: level.totaltime);
-		const int timeSeconds = Tics2Seconds(timeTicks);
-
-		hours   =  timeSeconds / 3600;
-		minutes = (timeSeconds % 3600) / 60;
-		seconds =  timeSeconds % 60;
-	}
-	else
-	{
-		time_t now;
-		time(&now);
-
-		struct tm* timeinfo = localtime(&now);
-
-		if (NULL != timeinfo)
-		{
-			hours   = timeinfo->tm_hour;
-			minutes = timeinfo->tm_min;
-			seconds = timeinfo->tm_sec;
-		}
-	}
-
-	const bool showMillis  = 1 == hud_showtime;
-	const bool showSeconds = showMillis || (0 == hud_showtime % 2);
-
-	char timeString[sizeof "HH:MM:SS.MMM"];
-
-	if (showMillis)
-	{
-		const int millis  = (level.time % TICRATE) * (1000 / TICRATE);
-
-		mysnprintf(timeString, sizeof(timeString), "%02i:%02i:%02i.%03i", hours, minutes, seconds, millis);
-	}
-	else if (showSeconds)
-	{
-		mysnprintf(timeString, sizeof(timeString), "%02i:%02i:%02i", hours, minutes, seconds);
-	}
-	else
-	{
-		mysnprintf(timeString, sizeof(timeString), "%02i:%02i", hours, minutes);
-	}
-
-	const int characterCount = static_cast<int>( sizeof "HH:MM" - 1
-		+ (showSeconds ? sizeof ":SS"  - 1 : 0)
-		+ (showMillis  ? sizeof ".MMM" - 1 : 0) );
-	const int width  = SmallFont->GetCharWidth('0') * characterCount + 2; // small offset from screen's border
-	const int height = SmallFont->GetHeight();
-
-	DrawHudText(SmallFont, hud_timecolor, timeString, hudwidth - width, height, 0x10000);
-}
-
-static bool IsAltHUDTextVisible()
-{
-	return hud_althud
-		&& !automapactive
-		&& (SCREENHEIGHT == viewheight)
-		&& (11 == screenblocks);
-}
-
-bool ST_IsTimeVisible()
-{
-	return IsAltHUDTextVisible()
-		&& (hud_showtime > 0) 
-		&& (hud_showtime <= 9);
 }
 
 //---------------------------------------------------------------------------
@@ -480,8 +346,15 @@ bool ST_IsTimeVisible()
 //
 //---------------------------------------------------------------------------
 
-static void DrawLatency()
+static void DrawLatency(int y)
 {
+	IFVM(AltHud, DrawLatency)
+	{
+		VMValue params[] = { althud, y };
+		VMCall(func, params, countof(params), nullptr, 0);
+	}
+
+	/*
 	if (!ST_IsLatencyVisible())
 	{
 		return;
@@ -512,17 +385,9 @@ static void DrawLatency()
 
 	const int characterCount = (int)strlen(tempstr);
 	const int width = SmallFont->GetCharWidth('0') * characterCount + 2; // small offset from screen's border
-	const int height = SmallFont->GetHeight() * (ST_IsTimeVisible() ? 2 : 1);
 
-	DrawHudText(SmallFont, color, tempstr, hudwidth - width, height, 0x10000);
-}
-
-bool ST_IsLatencyVisible()
-{
-	return IsAltHUDTextVisible()
-		&& (hud_showlag > 0)
-		&& (hud_showlag != 1 || netgame)
-		&& (hud_showlag <= 2);
+	DrawHudText(SmallFont, color, tempstr, hudwidth - width, y, 0x10000);
+	*/
 }
 
 //---------------------------------------------------------------------------
@@ -608,6 +473,7 @@ void DrawHUD()
 	althud->IntVar("tnt1a0") = tnt1a0.GetIndex();
 	althud->IntVar("invgem_left") = invgems[0]->id.GetIndex();
 	althud->IntVar("invgem_right") = invgems[1]->id.GetIndex();
+	althud->IntVar("fragpic") = fragpic? fragpic->id.GetIndex() : -1;
 	althud->PointerVar<FFont>("HUDFont") = HudFont;
 	althud->PointerVar<FFont>("IndexFont") = IndexFont;
 
@@ -632,8 +498,8 @@ void DrawHUD()
 		DrawInventory(CPlayer, 144, hudheight-28);
 		if (idmypos) DrawCoordinates(CPlayer);
 
-		DrawTime();
-		DrawLatency();
+		DrawTime(SmallFont->GetHeight());
+		DrawLatency(SmallFont->GetHeight()*2);	// to be fixed when fully scripted.
 		DrawPowerups(CPlayer);
 	}
 	else

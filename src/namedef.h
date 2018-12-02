@@ -1013,6 +1013,7 @@ xx(FOVScale)
 xx(YAdjust)
 xx(Crosshair)
 xx(WeaponFlags)
+xx(DropTime)
 
 xx(BlueCard)
 xx(YellowCard)

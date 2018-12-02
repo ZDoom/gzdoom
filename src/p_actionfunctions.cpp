@@ -4047,7 +4047,7 @@ static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amo
 			return false;
 		doPass = true;
 	}
-	else if (((flags & RGF_ITEMS) && thing->IsKindOf(RUNTIME_CLASS(AInventory))) ||
+	else if (((flags & RGF_ITEMS) && thing->IsKindOf(NAME_Inventory)) ||
 			((flags & RGF_CORPSES) && thing->flags & MF_CORPSE) ||
 			((flags & RGF_KILLED) && thing->flags6 & MF6_KILLED))
 	{

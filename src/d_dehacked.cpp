@@ -3054,7 +3054,7 @@ void FinishDehPatch ()
 		FStateDefinitions statedef;
 		statedef.MakeStateDefines(type);
 
-		if (!type->IsDescendantOf(RUNTIME_CLASS(AInventory)))
+		if (!type->IsDescendantOf(NAME_Inventory))
 		{
 			// If this is a hacked non-inventory item we must also copy AInventory's special states
 			statedef.AddStateDefines(RUNTIME_CLASS(AInventory)->GetStateLabels());

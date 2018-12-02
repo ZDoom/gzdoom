@@ -625,7 +625,7 @@ DEFINE_ACTION_FUNCTION(AActor, InStateSequence)
 bool AActor::IsMapActor()
 {
 	// [SP] Don't remove owned inventory objects.
-	return (!IsKindOf(RUNTIME_CLASS(AInventory)) || static_cast<AInventory *>(this)->Owner == nullptr);
+	return (!IsKindOf(NAME_Inventory) || static_cast<AInventory *>(this)->Owner == nullptr);
 }
 
 //==========================================================================

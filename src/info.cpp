@@ -339,7 +339,7 @@ static void LoadAltHudStuff()
 				{
 					Printf("Unknown item class '%s' in ALTHUDCF\n", sc.String);
 				}
-				else if (!ti->IsDescendantOf(RUNTIME_CLASS(AInventory)))
+				else if (!ti->IsDescendantOf(NAME_Inventory))
 				{
 					Printf("Invalid item class '%s' in ALTHUDCF\n", sc.String);
 					ti = NULL;

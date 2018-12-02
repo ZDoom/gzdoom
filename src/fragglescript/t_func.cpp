@@ -3658,7 +3658,7 @@ void FParser::SF_ThingCount(void)
 again:
 		TThinkerIterator<AActor> it;
 
-		if (t_argc<2 || intvalue(t_argv[1])==0 || pClass->IsDescendantOf(RUNTIME_CLASS(AInventory)))
+		if (t_argc<2 || intvalue(t_argv[1])==0 || pClass->IsDescendantOf(NAME_Inventory))
 		{
 			while ((mo=it.Next()))
 			{

@@ -178,7 +178,7 @@ static void AddOneKey(Keygroup *keygroup, PClassActor *mi, FScanner &sc)
 	if (mi)
 	{
 		// Any inventory item can be used to unlock a door
-		if (mi->IsDescendantOf(RUNTIME_CLASS(AInventory)))
+		if (mi->IsDescendantOf(NAME_Inventory))
 		{
 			OneKey k = {mi,1};
 			keygroup->anykeylist.Push (k);

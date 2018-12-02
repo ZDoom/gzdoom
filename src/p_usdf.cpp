@@ -75,7 +75,7 @@ class USDFParser : public UDMFParserBase
 	PClassActor *CheckInventoryActorType(const char *key)
 	{
 		PClassActor* const type = CheckActorType(key);
-		return nullptr != type && type->IsDescendantOf(RUNTIME_CLASS(AInventory)) ? type : nullptr;
+		return nullptr != type && type->IsDescendantOf(NAME_Inventory) ? type : nullptr;
 	}
 
 	//===========================================================================

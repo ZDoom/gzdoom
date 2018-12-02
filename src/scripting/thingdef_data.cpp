@@ -1057,7 +1057,11 @@ FString FStringFormat(VM_ARGS, int offset)
 		char c = fmtstring[i];
 		if (in_fmt)
 		{
-			if ((c >= '0' && c <= '9') ||
+			if (c == '*' && (fmt_current.Len() == 1 || (fmt_current.Len() == 2 && fmt_current[1] == '0')))
+			{
+				fmt_current += c;
+			}
+			else if ((c >= '0' && c <= '9') ||
 				c == '-' || c == '+' || (c == ' ' && fmt_current.Back() != ' ') || c == '#' || c == '.')
 			{
 				fmt_current += c;
@@ -1119,16 +1123,32 @@ FString FStringFormat(VM_ARGS, int offset)
 				case 'X':
 				case 'o':
 				case 'c':
+				case 'B':
 				{
 					if (argnum < 0 && haveargnums)
 						ThrowAbortException(X_FORMAT_ERROR, "Cannot mix explicit and implicit arguments.");
 					in_fmt = false;
-					// fail if something was found, but it's not an int
-					if (argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
-					if (va_reginfo[argnum] != REGT_INT &&
-						va_reginfo[argnum] != REGT_FLOAT) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for format %s.", fmt_current.GetChars());
 					// append
-					output.AppendFormat(fmt_current.GetChars(), param[argnum].ToInt(va_reginfo[argnum]));
+					if (fmt_current[1] == '*' || fmt_current[2] == '*')
+					{
+						// fail if something was found, but it's not an int
+						if (argnum+1 >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
+						if (va_reginfo[argnum] != REGT_INT &&
+							va_reginfo[argnum] != REGT_FLOAT) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for format %s.", fmt_current.GetChars());
+						if (va_reginfo[argnum+1] != REGT_INT &&
+							va_reginfo[argnum+1] != REGT_FLOAT) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for format %s.", fmt_current.GetChars());
+
+						output.AppendFormat(fmt_current.GetChars(), param[argnum].ToInt(va_reginfo[argnum]), param[argnum + 1].ToInt(va_reginfo[argnum + 1]));
+						argauto++;
+					}
+					else
+					{
+						// fail if something was found, but it's not an int
+						if (argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
+						if (va_reginfo[argnum] != REGT_INT &&
+							va_reginfo[argnum] != REGT_FLOAT) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for format %s.", fmt_current.GetChars());
+						output.AppendFormat(fmt_current.GetChars(), param[argnum].ToInt(va_reginfo[argnum]));
+					}
 					if (!haveargnums) argnum = ++argauto;
 					else argnum = -1;
 					break;
@@ -1147,12 +1167,27 @@ FString FStringFormat(VM_ARGS, int offset)
 					if (argnum < 0 && haveargnums)
 						ThrowAbortException(X_FORMAT_ERROR, "Cannot mix explicit and implicit arguments.");
 					in_fmt = false;
-					// fail if something was found, but it's not a float
-					if (argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
-					if (va_reginfo[argnum] != REGT_INT &&
-						va_reginfo[argnum] != REGT_FLOAT) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for format %s.", fmt_current.GetChars());
-					// append
-					output.AppendFormat(fmt_current.GetChars(), param[argnum].ToDouble(va_reginfo[argnum]));
+					if (fmt_current[1] == '*' || fmt_current[2] == '*')
+					{
+						// fail if something was found, but it's not an int
+						if (argnum + 1 >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
+						if (va_reginfo[argnum] != REGT_INT &&
+							va_reginfo[argnum] != REGT_FLOAT) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for format %s.", fmt_current.GetChars());
+						if (va_reginfo[argnum + 1] != REGT_INT &&
+							va_reginfo[argnum + 1] != REGT_FLOAT) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for format %s.", fmt_current.GetChars());
+
+						output.AppendFormat(fmt_current.GetChars(), param[argnum].ToInt(va_reginfo[argnum]), param[argnum + 1].ToDouble(va_reginfo[argnum + 1]));
+						argauto++;
+					}
+					else
+					{
+						// fail if something was found, but it's not a float
+						if (argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
+						if (va_reginfo[argnum] != REGT_INT &&
+							va_reginfo[argnum] != REGT_FLOAT) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for format %s.", fmt_current.GetChars());
+						// append
+						output.AppendFormat(fmt_current.GetChars(), param[argnum].ToDouble(va_reginfo[argnum]));
+					}
 					if (!haveargnums) argnum = ++argauto;
 					else argnum = -1;
 					break;

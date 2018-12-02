@@ -113,6 +113,23 @@ class Inventory : Actor native
 		Super.OnDestroy();
 	}
 	
+	//===========================================================================
+	//
+	// AInventory :: ShouldSpawn
+	//
+	//===========================================================================
+
+	override bool ShouldSpawn()
+	{
+		// [RH] Other things that shouldn't be spawned depending on dmflags
+		if (deathmatch || alwaysapplydmflags)
+		{
+			if (sv_nohealth && bIsHealth) return false;
+			if (sv_noarmor && bIsArmor) return false;
+		}
+		return true;
+	}
+	
 	//---------------------------------------------------------------------------
 	//
 	// PROC A_RestoreSpecialThing1

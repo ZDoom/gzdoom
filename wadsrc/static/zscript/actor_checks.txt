@@ -91,8 +91,6 @@ extend class Actor
 	//
 	//==========================================================================
 
-	native bool CheckInventory(class<Inventory> itemtype, int itemamount, int owner = AAPTR_DEFAULT);
-	
 	action state A_JumpIfInventory(class<Inventory> itemtype, int itemamount, statelabel label, int owner = AAPTR_DEFAULT)
 	{
 		return CheckInventory(itemtype, itemamount, owner)? ResolveState(label) : null;

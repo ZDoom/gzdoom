@@ -431,7 +431,7 @@ CCMD(invquery)
 	AInventory *inv = players[consoleplayer].mo->InvSel;
 	if (inv != NULL)
 	{
-		Printf(PRINT_HIGH, "%s (%dx)\n", inv->GetTag(), inv->Amount);
+		Printf(PRINT_HIGH, "%s (%dx)\n", inv->GetTag(), inv->IntVar(NAME_Amount));
 	}
 }
 

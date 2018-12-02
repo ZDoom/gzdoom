@@ -1803,7 +1803,7 @@ static int UseInventory (AActor *activator, const char *type)
 //
 //============================================================================
 
-static int CheckInventory (AActor *activator, const char *type, bool max)
+int CheckInventory (AActor *activator, const char *type, bool max)
 {
 	if (activator == NULL || type == NULL)
 		return 0;
@@ -1850,7 +1850,7 @@ static int CheckInventory (AActor *activator, const char *type, bool max)
 			return ((AInventory *)GetDefaultByType(info))->MaxAmount;
 		}
 	}
-	return item ? item->Amount : 0;
+	return item ? item->IntVar(NAME_Amount) : 0;
 }
 
 //---- Plane watchers ----//
@@ -5536,7 +5536,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 			{
 				FName p(FBehavior::StaticLookupString(args[0]));
 				auto armor = players[args[1]].mo->FindInventory(NAME_BasicArmor);
-				if (armor && armor->NameVar(NAME_ArmorType) == p) return armor->Amount;
+				if (armor && armor->NameVar(NAME_ArmorType) == p) return armor->IntVar(NAME_Amount);
 			}
 			return 0;
 		}
@@ -5547,7 +5547,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 
 			auto equippedarmor = activator->FindInventory(NAME_BasicArmor);
 
-			if (equippedarmor && equippedarmor->Amount != 0)
+			if (equippedarmor && equippedarmor->IntVar(NAME_Amount) != 0)
 			{
 				switch(args[0])
 				{
@@ -8866,7 +8866,7 @@ scriptwait:
 			if (activator)
 			{
 				auto armor = activator->FindInventory(NAME_BasicArmor);
-				PushToStack (armor ? armor->Amount : 0);
+				PushToStack (armor ? armor->IntVar(NAME_Amount) : 0);
 			}
 			else
 			{
@@ -9390,7 +9390,7 @@ scriptwait:
 						if (item != NULL)
 						{
 							item->MaxAmount = STACK(1);
-							item->Amount = 0;
+							item->IntVar(NAME_Amount) = 0;
 						}
 					}
 				}

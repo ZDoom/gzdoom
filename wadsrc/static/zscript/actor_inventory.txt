@@ -671,6 +671,67 @@ extend class Actor
 		return NULL;
 	}
 
+	//==========================================================================
+	//
+	// CountInv
+	//
+	// NON-ACTION function to return the inventory count of an item.
+	//
+	//==========================================================================
+
+	clearscope int CountInv(class<Inventory> itemtype, int ptr_select = AAPTR_DEFAULT) const
+	{
+		let realself = GetPointer(ptr_select);
+		if (realself == NULL || itemtype == NULL)
+		{
+			return 0;
+		}
+		else
+		{
+			let item = realself.FindInventory(itemtype);
+			return item ? item.Amount : 0;
+		}
+	}
+
+	//==========================================================================
+	//
+	// State jump function
+	//
+	//==========================================================================
+
+	bool CheckInventory(class<Inventory> itemtype, int itemamount, int owner = AAPTR_DEFAULT)
+	{
+		if (itemtype == null)
+		{
+			return false;
+		}
+		let owner = GetPointer(owner);
+		if (owner == null)
+		{
+			return false;
+		}
+
+		let item = owner.FindInventory(itemtype);
+
+		if (item)
+		{
+			if (itemamount > 0)
+			{
+				if (item.Amount >= itemamount)
+				{
+					return true;
+				}
+			}
+			else if (item.Amount >= item.MaxAmount)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	
+	
 	
 }
 

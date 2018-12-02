@@ -416,7 +416,7 @@ static bool DoSubstitution (FString &out, const char *in)
 			if (strnicmp(a, "armor", 5) == 0)
 			{
 				AInventory *armor = player->mo->FindInventory(NAME_BasicArmor);
-				out.AppendFormat("%d", armor != NULL ? armor->Amount : 0);
+				out.AppendFormat("%d", armor != NULL ? armor->IntVar(NAME_Amount) : 0);
 			}
 		}
 		else if (len == 9)
@@ -429,10 +429,10 @@ static bool DoSubstitution (FString &out, const char *in)
 				}
 				else
 				{
-					out.AppendFormat("%d", ammo1 != NULL ? ammo1->Amount : 0);
+					out.AppendFormat("%d", ammo1 != NULL ? ammo1->IntVar(NAME_Amount) : 0);
 					if (ammo2 != NULL)
 					{
-						out.AppendFormat("/%d", ammo2->Amount);
+						out.AppendFormat("/%d", ammo2->IntVar(NAME_Amount));
 					}
 				}
 			}

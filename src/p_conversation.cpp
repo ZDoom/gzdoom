@@ -612,7 +612,7 @@ static bool CheckStrifeItem (player_t *player, PClassActor *itemtype, int amount
 	if (item == NULL)
 		return false;
 
-	return amount < 0 || item->Amount >= amount;
+	return amount < 0 || item->IntVar(NAME_Amount) >= amount;
 }
 
 //============================================================================

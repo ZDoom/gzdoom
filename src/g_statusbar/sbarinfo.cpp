@@ -1053,8 +1053,8 @@ public:
 		{
 			ammo1 = ammo2 = nullptr;
 		}
-		ammocount1 = ammo1 != nullptr ? ammo1->Amount : 0;
-		ammocount2 = ammo2 != nullptr ? ammo2->Amount : 0;
+		ammocount1 = ammo1 != nullptr ? ammo1->IntVar(NAME_Amount) : 0;
+		ammocount2 = ammo2 != nullptr ? ammo2->IntVar(NAME_Amount) : 0;
 
 		//prepare ammo counts
 		armor = CPlayer->mo->FindInventory(NAME_BasicArmor);

@@ -328,38 +328,6 @@ DEFINE_ACTION_FUNCTION(AActor, GetMissileDamage)
 
 //==========================================================================
 //
-// CountInv
-//
-// NON-ACTION function to return the inventory count of an item.
-//
-//==========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, CountInv)
-{
-	if (numret > 0)
-	{
-		assert(ret != NULL);
-		PARAM_SELF_PROLOGUE(AActor);
-		PARAM_CLASS(itemtype, AInventory);
-		PARAM_INT(pick_pointer);
-
-		self = COPY_AAPTR(self, pick_pointer);
-		if (self == NULL || itemtype == NULL)
-		{
-			ret->SetInt(0);
-		}
-		else
-		{
-			AInventory *item = self->FindInventory(itemtype);
-			ret->SetInt(item ? item->Amount : 0);
-		}
-		return 1;
-	}
-	return 0;
-}
-
-//==========================================================================
-//
 // GetDistance
 //
 // NON-ACTION function to get the distance in double.
@@ -1114,48 +1082,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_Jump)
 		ACTION_RETURN_STATE(jumpto);
 	}
 	ACTION_RETURN_STATE(NULL);
-}
-
-//==========================================================================
-//
-// State jump function
-//
-//==========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, CheckInventory)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS		(itemtype, AInventory);
-	PARAM_INT		(itemamount);
-	PARAM_INT	(setowner);
-
-	if (itemtype == nullptr)
-	{
-		ACTION_RETURN_BOOL(false);
-	}
-	AActor *owner = COPY_AAPTR(self, setowner);
-	if (owner == nullptr)
-	{
-		ACTION_RETURN_BOOL(false);
-	}
-
-	AInventory *item = owner->FindInventory(itemtype);
-
-	if (item)
-	{
-		if (itemamount > 0)
-		{
-			if (item->Amount >= itemamount)
-			{
-				ACTION_RETURN_BOOL(true);
-			}
-		}
-		else if (item->Amount >= item->MaxAmount)
-		{
-			ACTION_RETURN_BOOL(true);
-		}
-	}
-	ACTION_RETURN_BOOL(false);
 }
 
 
@@ -4142,11 +4068,11 @@ static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amo
 			AInventory *gift = static_cast<AInventory *>(Spawn(item));
 			if (gift->IsKindOf(NAME_Health))
 			{
-				gift->Amount *= amount;
+				gift->IntVar(NAME_Amount) *= amount;
 			}
 			else
 			{
-				gift->Amount = amount;
+				gift->IntVar(NAME_Amount) = amount;
 			}
 			gift->flags |= MF_DROPPED;
 			gift->ClearCounters();

@@ -2409,28 +2409,11 @@ void FParser::SF_IsPlayerObj(void)
 //
 // CheckInventory
 //
-// Returns how much of a particular item an actor has.
+// forward to the ACS equivalent.
 //
 //============================================================================
 
-static int FS_CheckInventory (AActor *activator, const char *type)
-{
-	if (activator == NULL)
-		return 0;
-
-	if (strcmp (type, "Armor") == 0)
-	{
-		type = "BasicArmor";
-	}
-	else if (strcmp (type, "Health") == 0)
-	{
-		return activator->health;
-	}
-
-	PClassActor *info = PClass::FindActor (type);
-	AInventory *item = activator->FindInventory (info);
-	return item ? item->Amount : 0;
-}
+int CheckInventory(AActor *activator, const char *type, bool max = false);
 
 
 //==========================================================================
@@ -2463,7 +2446,7 @@ void FParser::SF_PlayerKeys(void)
 		if(t_argc == 2)
 		{
 			t_return.type = svt_int;
-			t_return.value.i = FS_CheckInventory(players[playernum].mo, keyname);
+			t_return.value.i = CheckInventory(players[playernum].mo, keyname);
 			return;
 		}
 		else
@@ -2707,7 +2690,7 @@ void FParser::SF_CheckInventory(void)
 			return;
 		}
 		t_return.type = svt_int;
-		t_return.value.i = FS_CheckInventory(players[playernum].mo, stringvalue(t_argv[1]));
+		t_return.value.i = CheckInventory(players[playernum].mo, stringvalue(t_argv[1]));
 	}
 }
 

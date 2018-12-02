@@ -708,7 +708,9 @@ void JitCompiler::EmitMULF_RK()
 void JitCompiler::EmitDIVF_RR()
 {
 	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
-	cc.ptest(regF[C], regF[C]);
+	auto zero = newTempXmmSd();
+	cc.xorpd(zero, zero);
+	cc.ucomisd(regF[C], zero);
 	cc.je(label);
 
 	auto rc = CheckRegF(C, A);
@@ -748,7 +750,9 @@ static double DoubleModF(double a, double b)
 void JitCompiler::EmitMODF_RR()
 {
 	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
-	cc.ptest(regF[C], regF[C]);
+	auto zero = newTempXmmSd();
+	cc.xorpd(zero, zero);
+	cc.ucomisd(regF[C], zero);
 	cc.je(label);
 
 	auto result = newResultXmmSd();
@@ -787,7 +791,9 @@ void JitCompiler::EmitMODF_KR()
 	using namespace asmjit;
 
 	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
-	cc.ptest(regF[C], regF[C]);
+	auto zero = newTempXmmSd();
+	cc.xorpd(zero, zero);
+	cc.ucomisd(regF[C], zero);
 	cc.je(label);
 
 	auto tmp = newTempXmmSd();

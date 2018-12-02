@@ -1663,7 +1663,8 @@ bool AActor::CallOkayToSwitchTarget(AActor *other)
 
 bool P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poison)
 {
-	if((player->cheats&CF_GODMODE) || (player->mo->flags2 & MF2_INVULNERABLE) || (player->cheats & CF_GODMODE2))
+	if ((player->cheats & CF_GODMODE) || (player->mo->flags2 & MF2_INVULNERABLE) || (player->cheats & CF_GODMODE2) ||
+		(player->mo->flags5 & MF5_NODAMAGE))
 	{
 		return false;
 	}
@@ -1720,8 +1721,15 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPain
 	{
 		return;
 	}
-	if ((damage < TELEFRAG_DAMAGE && ((target->flags2 & MF2_INVULNERABLE) ||
-		(player->cheats & CF_GODMODE))) || (player->cheats & CF_GODMODE2))
+
+	// [MC] This must be checked before any modifications. Otherwise, power amplifiers
+	// may result in doing too much damage that cannot be negated by regular buddha,
+	// which is inconsistent. The raw damage must be the only determining factor for
+	// determining if telefrag is actually desired.
+	const bool telefragDamage = (damage >= TELEFRAG_DAMAGE && !(target->flags7 & MF7_LAXTELEFRAGDMG));
+
+	if ((player->cheats & CF_GODMODE2) || (target->flags5 & MF5_NODAMAGE) || //These two are never subjected to telefrag thresholds.
+		(!telefragDamage && ((target->flags2 & MF2_INVULNERABLE) ||	(player->cheats & CF_GODMODE))))
 	{ // target is invulnerable
 		return;
 	}
@@ -1759,9 +1767,9 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPain
 	target->health -= damage;
 	if (target->health <= 0)
 	{ // Death
-		if ((((player->cheats & CF_BUDDHA) || (player->cheats & CF_BUDDHA2) ||
-			(player->mo->flags7 & MF7_BUDDHA)) && damage < TELEFRAG_DAMAGE) ||
-			(player->mo->FindInventory (PClass::FindActor(NAME_PowerBuddha),true) != nullptr))
+		if ((player->cheats & CF_BUDDHA2) || //Buddha2 is never subjected to telefrag damage thresholds.
+			((player->cheats & CF_BUDDHA) || (player->mo->flags7 & MF7_BUDDHA) ||
+			(player->mo->FindInventory(PClass::FindActor(NAME_PowerBuddha), true) != nullptr) && !telefragDamage))
 		{ // [SP] Save the player... 
 			player->health = target->health = 1;
 		}

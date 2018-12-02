@@ -2100,7 +2100,7 @@ static int RemoveClass(const PClass *cls)
 				continue;
 			}
 			// [SP] Don't remove owned inventory objects.
-			if (actor->IsKindOf(RUNTIME_CLASS(AInventory)) && static_cast<AInventory *>(actor)->Owner != NULL)
+			if (!actor->IsMapActor())
 			{
 				continue;
 			}

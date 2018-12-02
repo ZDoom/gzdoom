@@ -620,6 +620,14 @@ DEFINE_ACTION_FUNCTION(AActor, InStateSequence)
 	PARAM_POINTER(basestate, FState);
 	ACTION_RETURN_BOOL(self->InStateSequence(newstate, basestate));
 }
+
+
+bool AActor::IsMapActor()
+{
+	// [SP] Don't remove owned inventory objects.
+	return (!IsKindOf(RUNTIME_CLASS(AInventory)) || static_cast<AInventory *>(this)->Owner == nullptr);
+}
+
 //==========================================================================
 //
 // AActor::GetTics

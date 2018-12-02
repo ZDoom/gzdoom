@@ -423,7 +423,7 @@ void P_RemoveThing(AActor * actor)
 	if (actor->player == NULL || actor != actor->player->mo)
 	{
 		// Don't also remove owned inventory items
-		if (actor->IsKindOf(RUNTIME_CLASS(AInventory)) && static_cast<AInventory*>(actor)->Owner != NULL) return;
+		if (!actor->IsMapActor())
 
 		// be friendly to the level statistics. ;)
 		actor->ClearCounters();
@@ -774,13 +774,11 @@ int P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, int
 		else if (classname != mo->GetClass())
 			continue;
 
-		if (mo->IsKindOf(RUNTIME_CLASS(AInventory)))
+		if (!mo->IsMapActor())
 		{
 			// Skip owned item because its position could remain unchanged since attachment to owner
 			// Most likely it is the last location of this item in the world before pick up
-			AInventory *const inventory = static_cast<AInventory*>(mo);
-			if (inventory != nullptr && inventory->Owner != nullptr)
-				continue;
+			continue;
 		}
 
 		// [MC]Make sure it's in range and respect the desire for Z or not. The function forces it to use

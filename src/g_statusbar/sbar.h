@@ -432,6 +432,7 @@ public:
 	virtual void SetMugShotState (const char *state_name, bool wait_till_done=false, bool reset=false);
 	void DrawLog();
 	uint32_t GetTranslation() const;
+	void DrawAltHUD();
 
 	void DrawGraphic(FTextureID texture, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY);
 	void DrawString(FFont *font, const FString &cstring, double x, double y, int flags, double Alpha, int translation, int spacing, bool monospaced, int shadowX, int shadowY);
@@ -453,6 +454,9 @@ public:
 
 	
 	void RefreshBackground () const;
+
+private:
+	DObject *AltHud = nullptr;
 
 public:
 

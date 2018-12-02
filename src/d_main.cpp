@@ -773,7 +773,7 @@ void D_Display ()
 		if (hud_althud && viewheight == SCREENHEIGHT && screenblocks > 10)
 		{
 			StatusBar->DrawBottomStuff (HUD_AltHud);
-			if (DrawFSHUD || automapactive) DrawHUD();
+			if (DrawFSHUD || automapactive) StatusBar->DrawAltHUD();
 			if (players[consoleplayer].camera && players[consoleplayer].camera->player && !automapactive)
 			{
 				StatusBar->DrawCrosshair();

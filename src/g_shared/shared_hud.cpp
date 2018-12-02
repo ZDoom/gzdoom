@@ -31,11 +31,6 @@
 **
 */
 
-// NOTE: Some stuff in here might seem a little redundant but I wanted this
-// to be as true as possible to my original intent which means that it
-// only uses that code from ZDoom's status bar that is the same as any
-// copy would be.
-
 #include "doomtype.h"
 #include "doomdef.h"
 #include "v_video.h"
@@ -56,17 +51,6 @@
 
 #include <time.h>
 
-
-#define HUMETA_AltIcon 0x10f000
-
-EXTERN_CVAR(Bool,am_follow)
-EXTERN_CVAR (Int, con_scaletext)
-EXTERN_CVAR (Bool, idmypos)
-EXTERN_CVAR (Int, screenblocks)
-EXTERN_CVAR(Bool, hud_aspectscale)
-
-EXTERN_CVAR (Bool, am_showtime)
-EXTERN_CVAR (Bool, am_showtotaltime)
 
 CVAR(Int,hud_althudscale, 0, CVAR_ARCHIVE)				// Scale the hud to 640x400?
 CVAR(Bool,hud_althud, false, CVAR_ARCHIVE)				// Enable/Disable the alternate HUD
@@ -108,55 +92,27 @@ CVAR (Int, hudcolor_stats, CR_GREEN, CVAR_ARCHIVE)			// For the stats values the
 
 CVAR(Bool, map_point_coordinates, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)	// show player or map coordinates?
 
-static FFont * HudFont;						// The font for the health and armor display
-static FFont * IndexFont;					// The font for the inventory indices
-
-// Icons
-static FTexture * healthpic;				// Health icon
-static FTexture * berserkpic;				// Berserk icon (Doom only)
-static FTexture * fragpic;					// Frags icon
-static FTexture * invgems[2];				// Inventory arrows
-static FTextureID tnt1a0;					// We need this to check for empty sprites.
-
-static int hudwidth, hudheight;				// current width/height for HUD display
-static int statspace;
-
 
 //---------------------------------------------------------------------------
 //
-// draw the overlay
+// draw the HUD
 //
 //---------------------------------------------------------------------------
+EXTERN_CVAR(Bool, hud_aspectscale)
 
-void DrawHUD()
+void DBaseStatusBar::DrawAltHUD()
 {
 	player_t * CPlayer = StatusBar->CPlayer;
 
 	players[consoleplayer].inventorytics = 0;
 	int scale = GetUIScale(hud_althudscale);
-	hudwidth = SCREENWIDTH / scale;
-	hudheight = hud_aspectscale ? int(SCREENHEIGHT / (scale*1.2)) : SCREENHEIGHT / scale;
-
-	// Until the script export is complete we need to do some manual setup here
-	auto cls = PClass::FindClass("AltHud");
-	if (!cls) return;
-	DObject *althud = cls->CreateNew();	// scripted parts. This is here to make a gradual transition
-
-	{
-		IFVM(AltHud, Init)
-		{
-			VMValue params[] = { althud };
-			VMCall(func, params, countof(params), nullptr, 0);
-		}
-	}
+	int hudwidth = SCREENWIDTH / scale;
+	int hudheight = hud_aspectscale ? int(SCREENHEIGHT / (scale*1.2)) : SCREENHEIGHT / scale;
 
 	IFVM(AltHud, Draw)
 	{
-		VMValue params[] = { althud, CPlayer, hudwidth, hudheight };
+		VMValue params[] = { AltHud, CPlayer, hudwidth, hudheight };
 		VMCall(func, params, countof(params), nullptr, 0);
 	}
-
-	if (althud) althud->Destroy();
-	althud = nullptr;
 }
 

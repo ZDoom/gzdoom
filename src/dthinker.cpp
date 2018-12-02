@@ -992,7 +992,8 @@ DEFINE_ACTION_FUNCTION(DThinkerIterator, Create)
 DEFINE_ACTION_FUNCTION(DThinkerIterator, Next)
 {
 	PARAM_SELF_PROLOGUE(DThinkerIterator);
-	ACTION_RETURN_OBJECT(self->Next());
+	PARAM_BOOL(exact);
+	ACTION_RETURN_OBJECT(self->Next(exact));
 }
 
 DEFINE_ACTION_FUNCTION(DThinkerIterator, Reinit)

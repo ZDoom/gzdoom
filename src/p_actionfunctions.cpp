@@ -4240,22 +4240,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetTics)
 	return 0;
 }
 
-//==========================================================================
-//
-// A_DropItem
-//
-//==========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_DropItem)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS   (spawntype, AActor);
-	PARAM_INT(amount);
-	PARAM_INT(chance);
-
-	ACTION_RETURN_OBJECT(P_DropItem(self, spawntype, amount, chance));
-}
-
 //===========================================================================
 //
 // Common A_Damage handler

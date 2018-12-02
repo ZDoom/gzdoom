@@ -371,6 +371,7 @@ struct GameInfoStruct native
 	native Color defaultbloodcolor;
 	native double telefogheight;
 	native int defKickback;
+	native int defaultdropstyle;
 	native TextureID healthpic;
 	native TextureID berserkpic;
 }

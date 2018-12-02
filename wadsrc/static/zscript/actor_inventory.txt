@@ -590,5 +590,87 @@ extend class Actor
 	}
 
 
+	//============================================================================
+	//
+	// P_TossItem
+	//
+	//============================================================================
+
+	void TossItem ()
+	{
+		int style = sv_dropstyle;
+		if (style==0) style = gameinfo.defaultdropstyle;
+		
+		if (style==2)
+		{
+			Vel.X += random2[DropItem](7);
+			Vel.Y += random2[DropItem](7);
+		}
+		else
+		{
+			Vel.X += random2[DropItem]() / 256.;
+			Vel.Y += random2[DropItem]() / 256.;
+			Vel.Z = 5. + random[DropItem]() / 64.;
+		}
+	}
+
+	
+	//---------------------------------------------------------------------------
+	//
+	// PROC A_DropItem
+	//
+	//---------------------------------------------------------------------------
+
+	Actor A_DropItem(class<Actor> item, int dropamount = -1, int chance = 256)
+	{
+		if (item != NULL && random[DropItem]() <= chance)
+		{
+			Actor mo;
+			double spawnz = 0;
+
+			if (!compat_notossdrops)
+			{
+				int style = sv_dropstyle;
+				if (style == 0)
+				{
+					style = gameinfo.defaultdropstyle;
+				}
+				if (style == 2)
+				{
+					spawnz = 24;
+				}
+				else
+				{
+					spawnz = Height / 2;
+				}
+			}
+			mo = Spawn(item, pos + (0, 0, spawnz), ALLOW_REPLACE);
+			if (mo != NULL)
+			{
+				mo.bDropped = true;
+				mo.bNoGravity = false;	// [RH] Make sure it is affected by gravity
+				if (!compat_notossdrops)
+				{
+					mo.TossItem ();
+				}
+				let inv = Inventory(mo);
+				if (inv)
+				{
+					inv.ModifyDropAmount(dropamount);
+					inv.bTossed = true;
+					if (inv.SpecialDropAction(self))
+					{
+						// The special action indicates that the item should not spawn
+						inv.Destroy();
+						return null;
+					}
+				}
+				return mo;
+			}
+		}
+		return NULL;
+	}
+
+	
 }
 

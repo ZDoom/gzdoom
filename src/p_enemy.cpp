@@ -62,7 +62,6 @@ static FRandom pr_scaredycat ("Anubis");
 	   FRandom pr_chase ("Chase");
 static FRandom pr_facetarget ("FaceTarget");
 static FRandom pr_railface ("RailFace");
-static FRandom pr_dropitem ("DropItem");
 static FRandom pr_look2 ("LookyLooky");
 static FRandom pr_look3 ("IGotHooky");
 static FRandom pr_slook ("SlooK");
@@ -79,6 +78,7 @@ static FRandom pr_enemystrafe("EnemyStrafe");
 // The result is that they tend to 'glide' across the floor
 // so this CVAR allows to switch it off.
 CVAR(Bool, nomonsterinterpolation, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
+CVAR(Int, sv_dropstyle, 0, CVAR_SERVERINFO | CVAR_ARCHIVE);
 
 //
 // P_NewChaseDir related LUT.
@@ -3178,88 +3178,17 @@ void ModifyDropAmount(AInventory *inv, int dropamount)
 //
 //---------------------------------------------------------------------------
 
-CVAR(Int, sv_dropstyle, 0, CVAR_SERVERINFO | CVAR_ARCHIVE);
-
 AActor *P_DropItem (AActor *source, PClassActor *type, int dropamount, int chance)
 {
-	if (type != NULL && pr_dropitem() <= chance)
+	IFVM(Actor, A_DropItem)
 	{
-		AActor *mo;
-		double spawnz = 0;
-
-		if (!(i_compatflags & COMPATF_NOTOSSDROPS))
-		{
-			int style = sv_dropstyle;
-			if (style == 0)
-			{
-				style = gameinfo.defaultdropstyle;
-			}
-			if (style == 2)
-			{
-				spawnz = 24;
-			}
-			else
-			{
-				spawnz = source->Height / 2;
-			}
-		}
-		mo = Spawn(type, source->PosPlusZ(spawnz), ALLOW_REPLACE);
-		if (mo != NULL)
-		{
-			mo->flags |= MF_DROPPED;
-			mo->flags &= ~MF_NOGRAVITY;	// [RH] Make sure it is affected by gravity
-			if (!(i_compatflags & COMPATF_NOTOSSDROPS))
-			{
-				P_TossItem (mo);
-			}
-			if (mo->IsKindOf (RUNTIME_CLASS(AInventory)))
-			{
-				AInventory *inv = static_cast<AInventory *>(mo);
-				ModifyDropAmount(inv, dropamount);
-				inv->ItemFlags |= IF_TOSSED;
-
-				IFVIRTUALPTR(inv, AInventory, SpecialDropAction)
-				{
-					VMValue params[2] = { inv, source };
-					int retval;
-					VMReturn ret(&retval);
-					VMCall(func, params, 2, &ret, 1);
-					if (retval)
-					{
-						// The special action indicates that the item should not spawn
-						inv->Destroy();
-						return NULL;
-					}
-				}
-			}
-			return mo;
-		}
+		VMValue params[] = { source, type, dropamount, chance };
+		AActor *retval;
+		VMReturn ret((void**)&retval);
+		VMCall(func, params, 4, &ret, 1);
+		return retval;
 	}
 	return NULL;
-}
-
-//============================================================================
-//
-// P_TossItem
-//
-//============================================================================
-
-void P_TossItem (AActor *item)
-{
-	int style = sv_dropstyle;
-	if (style==0) style = gameinfo.defaultdropstyle;
-	
-	if (style==2)
-	{
-		item->Vel.X += pr_dropitem.Random2(7);
-		item->Vel.Y += pr_dropitem.Random2(7);
-	}
-	else
-	{
-		item->Vel.X += pr_dropitem.Random2() / 256.;
-		item->Vel.Y += pr_dropitem.Random2() / 256.;
-		item->Vel.Z = 5. + pr_dropitem() / 64.;
-	}
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_Pain)

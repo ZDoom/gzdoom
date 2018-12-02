@@ -171,248 +171,6 @@ static void DrawHudNumber(FFont *font, int color, int num, int x, int y, double 
 	}
 }
 
-
-//===========================================================================
-//
-// draw the status (number of kills etc)
-//
-//===========================================================================
-
-static void DrawStatus(player_t * CPlayer, int x, int y)
-{
-	IFVM(AltHud, DrawStatus)
-	{
-		VMValue params[] = { althud, CPlayer, x, y };
-		VMCall(func, params, countof(params), nullptr, 0);
-	}
-}
-
-
-//===========================================================================
-//
-// draw health
-//
-//===========================================================================
-
-static void DrawHealth(player_t *CPlayer, int x, int y)
-{
-	IFVM(AltHud, DrawHealth)
-	{
-		VMValue params[] = { althud, CPlayer, x, y };
-		VMCall(func, params, countof(params), nullptr, 0);
-	}
-}
-
-//===========================================================================
-//
-// Draw Armor.
-// very similar to drawhealth, but adapted to handle Hexen armor too
-//
-//===========================================================================
-
-static void DrawArmor(AInventory * barmor, AInventory * harmor, int x, int y)
-{
-	IFVM(AltHud, DrawArmor)
-	{
-		VMValue params[] = { althud, barmor, harmor, x, y };
-		VMCall(func, params, countof(params), nullptr, 0);
-	}
-}
-
-//===========================================================================
-//
-// KEYS
-//
-//===========================================================================
-
-//---------------------------------------------------------------------------
-//
-// Draw all keys
-//
-//---------------------------------------------------------------------------
-
-static int DrawKeys(player_t * CPlayer, int x, int y)
-{
-	IFVM(AltHud, DrawKeys)
-	{
-		VMValue params[] = { althud, CPlayer, x, y };
-		int retv;
-		VMReturn ret(&retv);
-		VMCall(func, params, countof(params), &ret, 1);
-		return retv;
-	}
-	return 0;
-}
-
-//---------------------------------------------------------------------------
-//
-// Drawing Ammo
-//
-//---------------------------------------------------------------------------
-
-static int DrawAmmo(player_t *CPlayer, int x, int y)
-{
-	IFVM(AltHud, DrawAmmo)
-	{
-		VMValue params[] = { althud, CPlayer, x, y };
-		int retv;
-		VMReturn ret(&retv);
-		VMCall(func, params, countof(params), &ret, 1);
-		return retv;
-	}
-	return 0;
-}
-
-
-static void DrawWeapons(player_t *CPlayer, int x, int y)
-{
-	IFVM(AltHud, DrawWeapons)
-	{
-		VMValue params[] = { althud, CPlayer, x, y };
-		VMCall(func, params, countof(params), nullptr, 0);
-	}
-}
-
-
-
-//---------------------------------------------------------------------------
-//
-// Draw the Inventory
-//
-//---------------------------------------------------------------------------
-
-static void DrawInventory(player_t * CPlayer, int x, int y)
-{
-	IFVM(AltHud, DrawInventory)
-	{
-		VMValue params[] = { althud, CPlayer, x, y };
-		VMCall(func, params, countof(params), nullptr, 0);
-	}
-}
-
-//---------------------------------------------------------------------------
-//
-// Draw the Frags
-//
-//---------------------------------------------------------------------------
-
-static void DrawFrags(player_t * CPlayer, int x, int y)
-{
-	IFVM(AltHud, DrawFrags)
-	{
-		VMValue params[] = { althud, CPlayer, x, y };
-		VMCall(func, params, countof(params), nullptr, 0);
-	}
-}
-
-
-
-//---------------------------------------------------------------------------
-//
-// PROC DrawCoordinates
-//
-//---------------------------------------------------------------------------
-
-static void DrawCoordinates(player_t * CPlayer)
-{
-	IFVM(AltHud, DrawCoordinates)
-	{
-		VMValue params[] = { althud, CPlayer };
-		VMCall(func, params, countof(params), nullptr, 0);
-	}
-}
-
-//---------------------------------------------------------------------------
-//
-// Draw in-game time
-//
-// Check AltHUDTime option value in wadsrc/static/menudef.txt
-// for meaning of all display modes
-//
-//---------------------------------------------------------------------------
-
-static void DrawTime(int y)
-{
-	IFVM(AltHud, DrawTime)
-	{
-		VMValue params[] = { althud, y };
-		VMCall(func, params, countof(params), nullptr, 0);
-	}
-}
-
-//---------------------------------------------------------------------------
-//
-// Draw in-game latency
-//
-//---------------------------------------------------------------------------
-
-static void DrawLatency(int y)
-{
-	IFVM(AltHud, DrawLatency)
-	{
-		VMValue params[] = { althud, y };
-		VMCall(func, params, countof(params), nullptr, 0);
-	}
-}
-
-//---------------------------------------------------------------------------
-//
-// draw the overlay
-//
-//---------------------------------------------------------------------------
-
-static void DrawPowerups(player_t *CPlayer, int y)
-{
-	IFVM(AltHud, DrawPowerups)
-	{
-		VMValue params[] = { althud, CPlayer, y };
-		VMCall(func, params, countof(params), nullptr, 0);
-	}
-/*
-	// Each icon gets a 32x32 block to draw itself in.
-	int x, y;
-	AInventory *item;
-	const int POWERUPICONSIZE = 32;
-
-	x = hudwidth -20;
-
-	for (item = CPlayer->mo->Inventory; item != NULL; item = item->Inventory)
-	{
-		if (item->IsKindOf(NAME_Powerup))
-		{
-			IFVIRTUALPTRNAME(item, NAME_Powerup, GetPowerupIcon)
-			{
-				VMValue param[] = { item };
-				int rv;
-				VMReturn ret(&rv);
-				VMCall(func, param, 1, &ret, 1);
-				auto tex = FSetTextureID(rv);
-				if (!tex.isValid()) continue;
-				auto texture = TexMan(tex);
-
-				IFVIRTUALPTRNAME(item, NAME_Powerup, IsBlinking)
-				{
-					// Reuse the parameters from GetPowerupIcon
-					VMCall(func, param, 1, &ret, 1);
-					if (!rv)
-					{
-
-						screen->DrawTexture(texture, x, y, DTA_KeepRatio, true, DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_CenterBottomOffset, true, TAG_DONE);
-
-						x -= POWERUPICONSIZE;
-						if (x < -hudwidth / 2)
-						{
-							x = -20;
-							y += POWERUPICONSIZE * 3 / 2;
-						}
-					}
-				}
-			}
-		}
-	}
-	*/
-}
-
 //---------------------------------------------------------------------------
 //
 // draw the overlay
@@ -447,31 +205,11 @@ void DrawHUD()
 
 	if (!automapactive)
 	{
-		int i;
-
-
-		// No HUD in the title level!
-		if (gamestate == GS_TITLELEVEL || !CPlayer) return;
-
-		if (!deathmatch) DrawStatus(CPlayer, 5, hudheight-50);
-		else
+		IFVIRTUALPTRNAME(althud, "AltHud", DrawInGame)
 		{
-			DrawStatus(CPlayer, 5, hudheight-75);
-			DrawFrags(CPlayer, 5, hudheight-70);
+			VMValue params[] = { althud, CPlayer };
+			VMCall(func, params, countof(params), nullptr, 0);
 		}
-		DrawHealth(CPlayer, 5, hudheight-45);
-		DrawArmor(CPlayer->mo->FindInventory(NAME_BasicArmor), CPlayer->mo->FindInventory(NAME_HexenArmor), 5, hudheight-20);
-		i=DrawKeys(CPlayer, hudwidth-4, hudheight-10);
-		i=DrawAmmo(CPlayer, hudwidth-5, i);
-		if (hud_showweapons) DrawWeapons(CPlayer, hudwidth - 5, i);
-		DrawInventory(CPlayer, 144, hudheight-28);
-		if (idmypos) DrawCoordinates(CPlayer);
-
-		DrawTime(SmallFont->GetHeight());
-		DrawLatency(SmallFont->GetHeight()*2);	// to be fixed when fully scripted.
-		const int POWERUPICONSIZE = 32;
-		DrawPowerups(CPlayer, SmallFont->GetHeight() * 2 + POWERUPICONSIZE * 5 / 4);	// to be fixed when fully scripted.
-
 	}
 	else
 	{
@@ -511,7 +249,7 @@ void DrawHUD()
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
 
-		DrawCoordinates(CPlayer);
+		//DrawCoordinates(CPlayer);
 	}
 
 	if (althud) althud->Destroy();
@@ -607,3 +345,4 @@ void HUD_InitHud()
 		}
 	}
 }
+

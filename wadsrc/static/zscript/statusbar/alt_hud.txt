@@ -740,7 +740,7 @@ class AltHud ui
 	//---------------------------------------------------------------------------
 	private native static int GetRealTime();
 
-	void DrawTime(int y)
+	bool DrawTime(int y)
 	{
 		if (hud_showtime > 0 && hud_showtime <= 9)
 		{
@@ -787,7 +787,9 @@ class AltHud ui
 			int characterCount = timeString.length();
 			int width  = SmallFont.GetCharWidth("0") * characterCount + 2; // small offset from screen's border
 			DrawHudText(SmallFont, hud_timecolor, timeString, hudwidth - width, y, 1);
+			return true;
 		}
+		return false;
 	}
 
 	//---------------------------------------------------------------------------
@@ -799,7 +801,7 @@ class AltHud ui
 	//---------------------------------------------------------------------------
 	native static int, int, int GetLatency();
 
-	void DrawLatency(int y)
+	bool DrawLatency(int y)
 	{
 		if ((hud_showlag == 1 && netgame) || hud_showlag == 2)
 		{
@@ -813,7 +815,9 @@ class AltHud ui
 			int width = SmallFont.GetCharWidth("0") * characterCount + 2; // small offset from screen's border
 
 			DrawHudText(SmallFont, color, tempstr, hudwidth - width, y, 1);
+			return true;
 		}
+		return false;
 	}
 
 	//---------------------------------------------------------------------------
@@ -849,6 +853,35 @@ class AltHud ui
 				}
 			}
 		}
+	}
+	
+	virtual void DrawInGame(PlayerInfo CPlayer)
+	{
+		// No HUD in the title level!
+		if (gamestate == GS_TITLELEVEL || !CPlayer) return;
+
+		if (!deathmatch) 
+		{
+			DrawStatus(CPlayer, 5, hudheight-50);
+		}
+		else
+		{
+			DrawStatus(CPlayer, 5, hudheight-75);
+			DrawFrags(CPlayer, 5, hudheight-70);
+		}
+		DrawHealth(CPlayer, 5, hudheight-45);
+		DrawArmor(BasicArmor(CPlayer.mo.FindInventory('BasicArmor')), HexenArmor(CPlayer.mo.FindInventory('HexenArmor')), 5, hudheight-20);
+		int y = DrawKeys(CPlayer, hudwidth-4, hudheight-10);
+		y = DrawAmmo(CPlayer, hudwidth-5, y);
+		if (hud_showweapons) DrawWeapons(CPlayer, hudwidth - 5, y);
+		DrawInventory(CPlayer, 144, hudheight - 28);
+		if (idmypos) DrawCoordinates(CPlayer);
+
+		int h = SmallFont.GetHeight();
+		y = h;
+		if (DrawTime(y)) y += h;
+		if (DrawLatency(y)) y += h;
+		DrawPowerups(CPlayer, y - h + POWERUPICONSIZE * 5 / 4);
 	}
 
 

@@ -43,6 +43,7 @@ DVector2 AM_GetPosition();
 class AltHud
 {
 	TextureID healthPic, berserkPic;
+	TextureID tnt1a0;
 	int hudwidth, hudheight;
 	int statspace;
 	Font HudFont;					// The font for the health and armor display
@@ -297,9 +298,10 @@ class AltHud
 			if (state != null) icon = state.GetSpriteTexture(0);
 			else icon.SetNull();
 		}
-		if (icon.isNull()) icon = inv.Icon;
+		// missing sprites map to TNT1A0. So if that gets encountered, use the default icon instead.
+		if (icon.isNull() || icon == tnt1a0) icon = inv.Icon; 
 
-		if (icon.isValid())	
+		if (icon.isValid())
 		{
 			DrawImageToBox(icon, x, y, 8, 10);
 			return true;

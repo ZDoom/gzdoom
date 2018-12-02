@@ -701,6 +701,7 @@ void DrawHUD()
 	althud->IntVar("statspace") = statspace;
 	althud->IntVar("healthpic") = healthpic? healthpic->id.GetIndex() : -1;
 	althud->IntVar("berserkpic") = berserkpic? berserkpic->id.GetIndex() : -1;
+	althud->IntVar("tnt1a0") = tnt1a0.GetIndex();
 	althud->PointerVar<FFont>("HUDFont") = HudFont;
 
 	if (!automapactive)

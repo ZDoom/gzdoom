@@ -266,66 +266,15 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 }
 
 
-static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AInventory * weapon)
-{
-	double trans;
-
-	// Powered up weapons and inherited sister weapons are not displayed.
-	if (weapon->IntVar(NAME_WeaponFlags) & WIF_POWERED_UP) return;
-	auto SisterWeapon = weapon->PointerVar<AInventory>(NAME_SisterWeapon);
-	if (SisterWeapon && weapon->IsKindOf(SisterWeapon->GetClass())) return;
-
-	trans=0.4;
-	if (CPlayer->ReadyWeapon)
-	{
-		if (weapon==CPlayer->ReadyWeapon || SisterWeapon == CPlayer->ReadyWeapon) trans = 0.85;
-	}
-
-	FTextureID picnum = GetInventoryIcon(weapon, DI_ALTICONFIRST);
-
-	if (picnum.isValid())
-	{
-		FTexture * tex = TexMan[picnum];
-		int w = tex->GetWidth();
-		int h = tex->GetHeight();
-		int rh;
-		if (w>h) rh=8;
-		else rh=16,y-=8;		// don't draw tall sprites too small!
-		DrawImageToBox(tex, x-24, y, 20, rh, trans);
-		y-=10;
-	}
-}
-
-
 static void DrawWeapons(player_t *CPlayer, int x, int y)
 {
-	int k,j;
-	AInventory *inv;
-
-	// First draw all weapons in the inventory that are not assigned to a weapon slot
-	for(inv = CPlayer->mo->Inventory; inv; inv = inv->Inventory)
+	IFVM(AltHud, DrawWeapons)
 	{
-		if (inv->IsKindOf(NAME_Weapon) && 
-			!CPlayer->weapons.LocateWeapon(inv->GetClass(), NULL, NULL))
-		{
-			DrawOneWeapon(CPlayer, x, y, inv);
-		}
-	}
-
-	// And now everything in the weapon slots back to front
-	for (k = NUM_WEAPON_SLOTS - 1; k >= 0; k--) for(j = CPlayer->weapons.SlotSize(k) - 1; j >= 0; j--)
-	{
-		PClassActor *weap = CPlayer->weapons.GetWeapon(k, j);
-		if (weap) 
-		{
-			inv=CPlayer->mo->FindInventory(weap);
-			if (inv) 
-			{
-				DrawOneWeapon(CPlayer, x, y, inv);
-			}
-		}
+		VMValue params[] = { althud, CPlayer, x, y };
+		VMCall(func, params, countof(params), nullptr, 0);
 	}
 }
+
 
 
 //---------------------------------------------------------------------------

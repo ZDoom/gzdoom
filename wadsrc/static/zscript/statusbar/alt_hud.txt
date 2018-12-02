@@ -40,7 +40,7 @@ static FTexture * invgems[2];				// Inventory arrows
 DVector2 AM_GetPosition();
 */
 
-class AltHud
+class AltHud ui
 {
 	TextureID healthPic, berserkPic;
 	TextureID tnt1a0;
@@ -527,5 +527,78 @@ class AltHud
 		return y;
 	}
 
-	
+	//---------------------------------------------------------------------------
+	//
+	// Drawing weapons
+	//
+	//---------------------------------------------------------------------------
+
+	void DrawOneWeapon(PlayerInfo CPlayer, int x, in out int y, Weapon weapon)
+	{
+		double trans;
+
+		// Powered up weapons and inherited sister weapons are not displayed.
+		if (weapon.bPOWERED_UP) return;
+		let SisterWeapon = weapon.SisterWeapon;
+		if (SisterWeapon && (weapon is SisterWeapon.GetClass())) return;
+
+		trans=0.4;
+		let ReadyWeapon = CPlayer.ReadyWeapon;
+		if (ReadyWeapon)
+		{
+			if (weapon == CPlayer.ReadyWeapon || SisterWeapon == CPlayer.ReadyWeapon) trans = 0.85;
+		}
+
+		TextureID picnum = StatusBar.GetInventoryIcon(weapon, StatusBar.DI_ALTICONFIRST);
+
+		if (picnum.isValid())
+		{
+			// don't draw tall sprites too small.
+			int w, h;
+			[w, h] = TexMan.GetSize(picnum);
+			int rh;
+			if (w > h) rh = 8;
+			else 
+			{
+				rh = 16;
+				y -= 8;	
+			}
+			DrawImageToBox(picnum, x-24, y, 20, rh, trans);
+			y-=10;
+		}
+	}
+
+
+	void DrawWeapons(PlayerInfo CPlayer, int x, int y)
+	{
+		int k,j;
+		Inventory inv;
+
+		// First draw all weapons in the inventory that are not assigned to a weapon slot
+		for(inv = CPlayer.mo.Inv; inv; inv = inv.Inv)
+		{
+			let weap = Weapon(inv);
+			if (weap && 
+				!CPlayer.weapons.LocateWeapon(weap.GetClass()))
+			{
+				DrawOneWeapon(CPlayer, x, y, weap);
+			}
+		}
+
+		// And now everything in the weapon slots back to front
+		for (k = PlayerPawn.NUM_WEAPON_SLOTS - 1; k >= 0; k--) for(j = CPlayer.weapons.SlotSize(k) - 1; j >= 0; j--)
+		{
+			let weap = CPlayer.weapons.GetWeapon(k, j);
+			if (weap) 
+			{
+				let weapitem = Weapon(CPlayer.mo.FindInventory(weap));
+				if (weapitem) 
+				{
+					DrawOneWeapon(CPlayer, x, y, weapitem);
+				}
+			}
+		}
+	}
+
+
 }

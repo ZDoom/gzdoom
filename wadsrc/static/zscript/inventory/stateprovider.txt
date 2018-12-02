@@ -10,7 +10,7 @@ class StateProvider : Inventory
 	action state A_JumpIfNoAmmo(statelabel label)
 	{
 		if (stateinfo == null || stateinfo.mStateType != STATE_Psprite || player == null || player.ReadyWeapon == null ||
-			!player.ReadyWeapon.CheckAmmo(player.ReadyWeapon.bAltFire, false, true))
+			player.ReadyWeapon.CheckAmmo(player.ReadyWeapon.bAltFire, false, true))
 		{
 			return null;
 		}

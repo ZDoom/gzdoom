@@ -925,53 +925,12 @@ DEFINE_ACTION_FUNCTION(AActor, GiveInventoryType)
 
 void AActor::ClearInventory()
 {
-	// In case destroying an inventory item causes another to be destroyed
-	// (e.g. Weapons destroy their sisters), keep track of the pointer to
-	// the next inventory item rather than the next inventory item itself.
-	// For example, if a weapon is immediately followed by its sister, the
-	// next weapon we had tracked would be to the sister, so it is now
-	// invalid and we won't be able to find the complete inventory by
-	// following it.
-	//
-	// When we destroy an item, we leave invp alone, since the destruction
-	// process will leave it pointing to the next item we want to check. If
-	// we don't destroy an item, then we move invp to point to its Inventory
-	// pointer.
-	//
-	// It should be safe to assume that an item being destroyed will only
-	// destroy items further down in the chain, because if it was going to
-	// destroy something we already processed, we've already destroyed it,
-	// so it won't have anything to destroy.
-
-	AInventory **invp = &Inventory;
-
-	while (*invp != NULL)
+	IFVIRTUAL(AActor, ClearInventory)
 	{
-		AInventory *inv = *invp;
-		if (!(inv->ItemFlags & IF_UNDROPPABLE))
-		{
-			DepleteOrDestroy(inv);
-			if (!(inv->ObjectFlags & OF_EuthanizeMe)) invp = &inv->Inventory;	// was only depleted so advance the pointer manually.
-		}
-		else
-		{
-			invp = &inv->Inventory;
-		}
-	}
-	if (player != nullptr)
-	{
-		player->ReadyWeapon = nullptr;
-		player->PendingWeapon = WP_NOCHANGE;
+		VMValue params[] = { this };
+		VMCall(func, params, 1, nullptr, 0);
 	}
 }
-
-DEFINE_ACTION_FUNCTION(AActor, ClearInventory)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	self->ClearInventory();
-	return 0;
-}
-
 
 //============================================================================
 //

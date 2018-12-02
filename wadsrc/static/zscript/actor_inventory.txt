@@ -307,6 +307,57 @@ extend class Actor
 
 	//============================================================================
 	//
+	// AActor :: ClearInventory
+	//
+	// Clears the inventory of a single actor.
+	//
+	//============================================================================
+
+	virtual void ClearInventory()
+	{
+		// In case destroying an inventory item causes another to be destroyed
+		// (e.g. Weapons destroy their sisters), keep track of the pointer to
+		// the next inventory item rather than the next inventory item itself.
+		// For example, if a weapon is immediately followed by its sister, the
+		// next weapon we had tracked would be to the sister, so it is now
+		// invalid and we won't be able to find the complete inventory by
+		// following it.
+		//
+		// When we destroy an item, we leave last alone, since the destruction
+		// process will leave it pointing to the next item we want to check. If
+		// we don't destroy an item, then we move last to point to its Inventory
+		// pointer.
+		//
+		// It should be safe to assume that an item being destroyed will only
+		// destroy items further down in the chain, because if it was going to
+		// destroy something we already processed, we've already destroyed it,
+		// so it won't have anything to destroy.
+
+		let last = self;
+
+		while (last.inv != NULL)
+		{
+			let inv = last.inv;
+			if (!inv.bUndroppable)
+			{
+				inv.DepleteOrDestroy();
+				if (!inv.bDestroyed) last = inv;	// was only depleted so advance the pointer manually.
+			}
+			else
+			{
+				last = inv;
+			}
+		}
+		if (player != null)
+		{
+			player.ReadyWeapon = null;
+			player.PendingWeapon = WP_NOCHANGE;
+		}
+	}
+
+	
+	//============================================================================
+	//
 	// AActor :: GiveAmmo
 	//
 	// Returns true if the ammo was added, false if not.

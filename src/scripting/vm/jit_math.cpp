@@ -447,46 +447,40 @@ void JitCompiler::EmitXOR_RK()
 
 void JitCompiler::EmitMIN_RR()
 {
-	auto tmp0 = newTempXmmSs();
-	auto tmp1 = newTempXmmSs();
-	cc.movd(tmp0, regD[B]);
-	cc.movd(tmp1, regD[C]);
-	cc.pminsd(tmp0, tmp1);
-	cc.movd(regD[A], tmp0);
+	auto rc = CheckRegD(C, A);
+	if (A != B)
+		cc.mov(regD[A], regD[B]);
+	cc.cmp(rc, regD[A]);
+	cc.cmovl(regD[A], rc);
 }
 
 void JitCompiler::EmitMIN_RK()
 {
-	auto tmp0 = newTempXmmSs();
-	auto tmp1 = newTempXmmSs();
-	auto konstTmp = newTempIntPtr();
-	cc.mov(konstTmp, asmjit::imm_ptr(&konstd[C]));
-	cc.movd(tmp0, regD[B]);
-	cc.movss(tmp1, asmjit::x86::dword_ptr(konstTmp));
-	cc.pminsd(tmp0, tmp1);
-	cc.movd(regD[A], tmp0);
+	auto rc = newTempInt32();
+	if (A != B)
+		cc.mov(regD[A], regD[B]);
+	cc.mov(rc, asmjit::imm(konstd[C]));
+	cc.cmp(rc, regD[A]);
+	cc.cmovl(regD[A], rc);
 }
 
 void JitCompiler::EmitMAX_RR()
 {
-	auto tmp0 = newTempXmmSs();
-	auto tmp1 = newTempXmmSs();
-	cc.movd(tmp0, regD[B]);
-	cc.movd(tmp1, regD[C]);
-	cc.pmaxsd(tmp0, tmp1);
-	cc.movd(regD[A], tmp0);
+	auto rc = CheckRegD(C, A);
+	if (A != B)
+		cc.mov(regD[A], regD[B]);
+	cc.cmp(rc, regD[A]);
+	cc.cmovg(regD[A], rc);
 }
 
 void JitCompiler::EmitMAX_RK()
 {
-	auto tmp0 = newTempXmmSs();
-	auto tmp1 = newTempXmmSs();
-	auto konstTmp = newTempIntPtr();
-	cc.mov(konstTmp, asmjit::imm_ptr(&konstd[C]));
-	cc.movd(tmp0, regD[B]);
-	cc.movss(tmp1, asmjit::x86::dword_ptr(konstTmp));
-	cc.pmaxsd(tmp0, tmp1);
-	cc.movd(regD[A], tmp0);
+	auto rc = newTempInt32();
+	if (A != B)
+		cc.mov(regD[A], regD[B]);
+	cc.mov(rc, asmjit::imm(konstd[C]));
+	cc.cmp(rc, regD[A]);
+	cc.cmovg(regD[A], rc);
 }
 
 void JitCompiler::EmitABS()
@@ -852,7 +846,7 @@ void JitCompiler::EmitMINF_RR()
 	auto rc = CheckRegF(C, A);
 	if (A != B)
 		cc.movsd(regF[A], regF[B]);
-	cc.minpd(regF[A], rc);  // minsd required SSE 4.1
+	cc.minpd(regF[A], rc);  // minsd requires SSE 4.1
 }
 
 void JitCompiler::EmitMINF_RK()
@@ -861,7 +855,7 @@ void JitCompiler::EmitMINF_RK()
 	auto tmp = newTempIntPtr();
 	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
-	cc.minpd(regF[A], rb); // minsd required SSE 4.1
+	cc.minpd(regF[A], rb); // minsd requires SSE 4.1
 }
 	
 void JitCompiler::EmitMAXF_RR()
@@ -869,7 +863,7 @@ void JitCompiler::EmitMAXF_RR()
 	auto rc = CheckRegF(C, A);
 	if (A != B)
 		cc.movsd(regF[A], regF[B]);
-	cc.maxpd(regF[A], rc); // maxsd required SSE 4.1
+	cc.maxpd(regF[A], rc); // maxsd requires SSE 4.1
 }
 
 void JitCompiler::EmitMAXF_RK()
@@ -878,7 +872,7 @@ void JitCompiler::EmitMAXF_RK()
 	auto tmp = newTempIntPtr();
 	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
-	cc.maxpd(regF[A], rb); // maxsd required SSE 4.1
+	cc.maxpd(regF[A], rb); // maxsd requires SSE 4.1
 }
 	
 void JitCompiler::EmitATAN2()

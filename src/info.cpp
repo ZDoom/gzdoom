@@ -131,6 +131,10 @@ void FState::CheckCallerType(AActor *self, AActor *stateowner)
 			ThrowAbortException(X_OTHER, "Bad function prototype in function call to %s", ActionFunc->PrintableName.GetChars());
 		}
 		auto cls = static_cast<PObjectPointer*>(requiredType)->PointedClass();
+		if (check == nullptr)
+		{
+			ThrowAbortException(X_OTHER, "%s called without valid caller. %s expected", ActionFunc->PrintableName.GetChars(), cls->TypeName.GetChars());
+		}
 		if (!check->IsKindOf(cls))
 		{
 			ThrowAbortException(X_OTHER, "Invalid class %s in function call to %s. %s expected", check->GetClass()->TypeName.GetChars(), ActionFunc->PrintableName.GetChars(), cls->TypeName.GetChars());
@@ -222,6 +226,10 @@ bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info,
 					else callinfo = "overlay ";
 				}
 				err.stacktrace.AppendFormat("Called from %sstate %s in %s\n", callinfo, FState::StaticGetStateName(this).GetChars(), stateowner->GetClass()->TypeName.GetChars());
+			}
+			else
+			{
+				err.stacktrace.AppendFormat("Called from state %s\n", FState::StaticGetStateName(this).GetChars());
 			}
 
 			throw;

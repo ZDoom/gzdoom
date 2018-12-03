@@ -2256,7 +2256,7 @@ class PSprite : Object native play
 				Tics--;
 				// [BC] Apply double firing speed.
 				if (bPowDouble && Tics && (Owner.mo.FindInventory ("PowerDoubleFiringSpeed", true))) Tics--;
-				if (!Tics) SetState(CurState.NextState);
+				if (!Tics && Caller != null) SetState(CurState.NextState);
 			}
 		}
 	}

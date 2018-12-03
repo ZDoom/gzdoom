@@ -561,13 +561,49 @@ struct FieldDesc
 	int BitValue;
 };
 
+// Compile time validation of direct native functions
+struct DirectNativeDesc
+{
+	DirectNativeDesc() = default;
+
+	#define TP(n) typename P##n
+	#define VP(n) ValidateType<P##n>()
+	template<typename Ret> DirectNativeDesc(Ret(*func)()) : Ptr(reinterpret_cast<void*>(func)) { ValidateType<Ret>(); }
+	template<typename Ret, TP(1)> DirectNativeDesc(Ret(*func)(P1)) : Ptr(reinterpret_cast<void*>(func)) { ValidateType<Ret>(); VP(1); }
+	template<typename Ret, TP(1), TP(2)> DirectNativeDesc(Ret(*func)(P1,P2)) : Ptr(reinterpret_cast<void*>(func)) { ValidateType<Ret>(); VP(1); VP(2); }
+	template<typename Ret, TP(1), TP(2), TP(3)> DirectNativeDesc(Ret(*func)(P1,P2,P3)) : Ptr(reinterpret_cast<void*>(func)) { ValidateType<Ret>(); VP(1); VP(2); VP(3); }
+	template<typename Ret, TP(1), TP(2), TP(3), TP(4)> DirectNativeDesc(Ret(*func)(P1, P2, P3, P4)) : Ptr(reinterpret_cast<void*>(func)) { ValidateType<Ret>(); VP(1); VP(2); VP(3); VP(4); }
+	template<typename Ret, TP(1), TP(2), TP(3), TP(4), TP(5)> DirectNativeDesc(Ret(*func)(P1, P2, P3, P4, P5)) : Ptr(reinterpret_cast<void*>(func)) { ValidateType<Ret>(); VP(1); VP(2); VP(3); VP(4); VP(5); }
+	template<typename Ret, TP(1), TP(2), TP(3), TP(4), TP(5), TP(6)> DirectNativeDesc(Ret(*func)(P1, P2, P3, P4, P5, P6)) : Ptr(reinterpret_cast<void*>(func)) { ValidateType<Ret>(); VP(1); VP(2); VP(3); VP(4); VP(5); VP(6); }
+	template<typename Ret, TP(1), TP(2), TP(3), TP(4), TP(5), TP(6), TP(7)> DirectNativeDesc(Ret(*func)(P1, P2, P3, P4, P5, P6, P7)) : Ptr(reinterpret_cast<void*>(func)) { ValidateType<Ret>(); VP(1); VP(2); VP(3); VP(4); VP(5); VP(6); VP(7); }
+	template<typename Ret, TP(1), TP(2), TP(3), TP(4), TP(5), TP(6), TP(7), TP(8)> DirectNativeDesc(Ret(*func)(P1, P2, P3, P4, P5, P6, P7, P8)) : Ptr(reinterpret_cast<void*>(func)) { ValidateType<Ret>(); VP(1); VP(2); VP(3); VP(4); VP(5); VP(6); VP(7); VP(8); }
+	template<typename Ret, TP(1), TP(2), TP(3), TP(4), TP(5), TP(6), TP(7), TP(8), TP(9)> DirectNativeDesc(Ret(*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9)) : Ptr(reinterpret_cast<void*>(func)) { ValidateType<Ret>(); VP(1); VP(2); VP(3); VP(4); VP(5); VP(6); VP(7); VP(8); VP(9); }
+	template<typename Ret, TP(1), TP(2), TP(3), TP(4), TP(5), TP(6), TP(7), TP(8), TP(9), TP(10)> DirectNativeDesc(Ret(*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10)) : Ptr(reinterpret_cast<void*>(func)) { ValidateType<Ret>(); VP(1); VP(2); VP(3); VP(4); VP(5); VP(6); VP(7); VP(8); VP(9); VP(10); }
+	#undef TP
+	#undef VP
+
+	template<typename T> void ValidateType() { static_assert(is_valid<T>::value, "Argument type is not valid as a direct native parameter or return type"); }
+
+	// Traits for the types we are interested in
+	template<typename T> struct is_valid { static const bool value = false; };
+	template<typename T> struct is_valid<T*> { static const bool value = true; };
+	template<typename T> struct is_valid<T&> { static const bool value = true; };
+	template<> struct is_valid<void> { static const bool value = true; };
+	template<> struct is_valid<int> { static const bool value = true; };
+	template<> struct is_valid<double> { static const bool value = true; };
+
+	operator void *() const { return Ptr; }
+
+	void *Ptr = nullptr;
+};
+
 struct AFuncDesc
 {
 	const char *ClassName;
 	const char *FuncName;
 	actionf_p Function;
 	VMNativeFunction **VMPointer;
-	void *DirectNative;
+	DirectNativeDesc DirectNative;
 };
 
 #if defined(_MSC_VER)
@@ -591,16 +627,15 @@ struct AFuncDesc
 #define DEFINE_ACTION_FUNCTION_NATIVE(cls, name, native) \
 	static int AF_##cls##_##name(VM_ARGS); \
 	VMNativeFunction *cls##_##name##_VMPtr; \
-	static const AFuncDesc cls##_##name##_Hook = { #cls, #name, AF_##cls##_##name, &cls##_##name##_VMPtr, reinterpret_cast<void*>(native) }; \
+	static const AFuncDesc cls##_##name##_Hook = { #cls, #name, AF_##cls##_##name, &cls##_##name##_VMPtr, native }; \
 	extern AFuncDesc const *const cls##_##name##_HookPtr; \
 	MSVC_ASEG AFuncDesc const *const cls##_##name##_HookPtr GCC_ASEG = &cls##_##name##_Hook; \
 	static int AF_##cls##_##name(VM_ARGS)
 
-//#define DEFINE_ACTION_FUNCTION(cls, name) DEFINE_ACTION_FUNCTION_NATIVE(cls, name, nullptr)
 #define DEFINE_ACTION_FUNCTION(cls, name) \
 	static int AF_##cls##_##name(VM_ARGS); \
 	VMNativeFunction *cls##_##name##_VMPtr; \
-	static const AFuncDesc cls##_##name##_Hook = { #cls, #name, AF_##cls##_##name, &cls##_##name##_VMPtr, nullptr }; \
+	static const AFuncDesc cls##_##name##_Hook = { #cls, #name, AF_##cls##_##name, &cls##_##name##_VMPtr, {} }; \
 	extern AFuncDesc const *const cls##_##name##_HookPtr; \
 	MSVC_ASEG AFuncDesc const *const cls##_##name##_HookPtr GCC_ASEG = &cls##_##name##_Hook; \
 	static int AF_##cls##_##name(VM_ARGS)

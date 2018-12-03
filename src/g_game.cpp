@@ -508,7 +508,7 @@ CCMD (select)
 {
 	if (argv.argc() > 1)
 	{
-		AInventory *item = who->FindInventory(argv[1]);
+		auto item = who->FindInventory(argv[1]);
 		if (item != NULL)
 		{
 			who->InvSel = item;

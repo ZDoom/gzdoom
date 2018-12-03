@@ -2114,7 +2114,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DropInventory)
 
 	if (drop)
 	{
-		AInventory *inv = self->FindInventory(drop);
+		auto inv = self->FindInventory(drop);
 		if (inv)
 		{
 			self->DropInventory(inv, amount);

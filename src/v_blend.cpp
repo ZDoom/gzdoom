@@ -95,7 +95,7 @@ void V_AddPlayerBlend (player_t *CPlayer, float blend[4], float maxinvalpha, int
 	int cnt;
 
 	// [RH] All powerups can affect the screen blending now
-	for (AInventory *item = CPlayer->mo->Inventory; item != NULL; item = item->Inventory)
+	for (auto item = CPlayer->mo->Inventory; item != NULL; item = item->Inventory)
 	{
 		PalEntry color = 0;
 

@@ -290,7 +290,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 				if (r < 128)
 				{
 					TThinkerIterator<AInventory> it (MAX_STATNUM+1, bglobal.firstthing);
-					AInventory *item = it.Next();
+					auto item = it.Next();
 
 					if (item != NULL || (item = it.Next()) != NULL)
 					{
@@ -369,8 +369,8 @@ void DBot::WhatToGet (AActor *item)
 		{
 			if (!weapgiveammo)
 				return;
-			auto ammo1 = heldWeapon->PointerVar<AInventory>(NAME_Ammo1);
-			auto ammo2 = heldWeapon->PointerVar<AInventory>(NAME_Ammo2);
+			auto ammo1 = heldWeapon->PointerVar<AActor>(NAME_Ammo1);
+			auto ammo2 = heldWeapon->PointerVar<AActor>(NAME_Ammo2);
 			if ((ammo1 == NULL || ammo1->IntVar(NAME_Amount) >= ammo1->IntVar(NAME_MaxAmount)) &&
 				(ammo2 == NULL || ammo2->IntVar(NAME_Amount) >= ammo2->IntVar(NAME_MaxAmount)))
 			{

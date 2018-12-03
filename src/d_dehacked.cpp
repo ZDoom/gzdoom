@@ -1673,7 +1673,7 @@ static int PatchWeapon (int weapNum)
 					AmmoType = AmmoNames[val];
 					if (AmmoType != nullptr)
 					{
-						info->IntVar(NAME_AmmoGive1) = ((AInventory*)GetDefaultByType(AmmoType))->IntVar(NAME_Amount) * 2;
+						info->IntVar(NAME_AmmoGive1) = GetDefaultByType(AmmoType)->IntVar(NAME_Amount) * 2;
 						auto &AmmoUse = info->IntVar(NAME_AmmoUse1);
 						if (AmmoUse == 0)
 						{
@@ -1977,21 +1977,20 @@ static int PatchMisc (int dummy)
 		barmor->IntVar("MaxSaveAmount") = deh.MaxArmor;
 	}
 
-	AInventory *health;
-	health = static_cast<AInventory *> (GetDefaultByName ("HealthBonus"));
+	auto health = GetDefaultByName ("HealthBonus");
 	if (health!=NULL) 
 	{
 		health->IntVar(NAME_MaxAmount) = 2 * deh.MaxHealth;
 	}
 
-	health = static_cast<AInventory *> (GetDefaultByName ("Soulsphere"));
+	health = GetDefaultByName ("Soulsphere");
 	if (health!=NULL)
 	{
 		health->IntVar(NAME_Amount) = deh.SoulsphereHealth;
 		health->IntVar(NAME_MaxAmount) = deh.MaxSoulsphere;
 	}
 
-	health = static_cast<AInventory *> (GetDefaultByName ("MegasphereHealth"));
+	health = GetDefaultByName ("MegasphereHealth");
 	if (health!=NULL)
 	{
 		health->IntVar(NAME_Amount) = health->IntVar(NAME_MaxAmount) = deh.MegasphereHealth;
@@ -3067,8 +3066,8 @@ void FinishDehPatch ()
 
 		if (!type->IsDescendantOf(NAME_Inventory))
 		{
-			// If this is a hacked non-inventory item we must also copy AInventory's special states
-			statedef.AddStateDefines(RUNTIME_CLASS(AInventory)->GetStateLabels());
+			// If this is a hacked non-inventory item we must also copy Inventory's special states
+			statedef.AddStateDefines(PClass::FindActor(NAME_Inventory)->GetStateLabels());
 		}
 		statedef.InstallStates(subclass, defaults2);
 
@@ -3111,7 +3110,7 @@ void FinishDehPatch ()
 	auto wcls = PClass::FindActor(NAME_Weapon);
 	for(unsigned i = 0; i < WeaponNames.Size(); i++)
 	{
-		AInventory *weap = (AInventory*)GetDefaultByType(WeaponNames[i]);
+		auto weap = GetDefaultByType(WeaponNames[i]);
 		bool found = false;
 		if (weap->flags6 & MF6_INTRYMOVE)
 		{
@@ -3163,7 +3162,7 @@ void FinishDehPatch ()
 
 DEFINE_ACTION_FUNCTION(ADehackedPickup, DetermineType)
 {
-	PARAM_SELF_PROLOGUE(AInventory);
+	PARAM_SELF_PROLOGUE(AActor);
 
 	// Look at the actor's current sprite to determine what kind of
 	// item to pretend to me.

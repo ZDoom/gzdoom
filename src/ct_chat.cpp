@@ -375,8 +375,8 @@ static bool DoSubstitution (FString &out, const char *in)
 {
 	player_t *player = &players[consoleplayer];
 	auto weapon = player->ReadyWeapon;
-	auto ammo1 = weapon ? weapon->PointerVar<AInventory>(NAME_Ammo1) : nullptr;
-	auto ammo2 = weapon ? weapon->PointerVar<AInventory>(NAME_Ammo2) : nullptr;
+	auto ammo1 = weapon ? weapon->PointerVar<AActor>(NAME_Ammo1) : nullptr;
+	auto ammo2 = weapon ? weapon->PointerVar<AActor>(NAME_Ammo2) : nullptr;
 	const char *a, *b;
 
 	a = in;
@@ -415,7 +415,7 @@ static bool DoSubstitution (FString &out, const char *in)
 		{
 			if (strnicmp(a, "armor", 5) == 0)
 			{
-				AInventory *armor = player->mo->FindInventory(NAME_BasicArmor);
+				auto armor = player->mo->FindInventory(NAME_BasicArmor);
 				out.AppendFormat("%d", armor != NULL ? armor->IntVar(NAME_Amount) : 0);
 			}
 		}

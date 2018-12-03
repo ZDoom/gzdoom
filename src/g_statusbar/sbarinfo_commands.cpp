@@ -556,7 +556,7 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 				bool found2 = false;
 				drawAlt = 1;
 
-				for(AInventory *item = statusBar->CPlayer->mo->Inventory;item != NULL;item = item->Inventory)
+				for(auto item = statusBar->CPlayer->mo->Inventory;item != NULL;item = item->Inventory)
 				{
 					if(item->IsKindOf(NAME_Key))
 					{
@@ -1208,7 +1208,7 @@ class CommandDrawNumber : public CommandDrawString
 					if (inventoryItem == NULL || !inventoryItem->IsDescendantOf(NAME_Inventory))
 					{
 						sc.ScriptMessage("'%s' is not a type of inventory item.", sc.String);
-						inventoryItem = RUNTIME_CLASS(AInventory);
+						inventoryItem = PClass::FindActor(NAME_Inventory);
 					}
 				}
 				sc.MustGetToken(',');
@@ -1476,7 +1476,7 @@ class CommandDrawNumber : public CommandDrawString
 					break;
 				case KEYS:
 					num = 0;
-					for(AInventory *item = statusBar->CPlayer->mo->Inventory;item != NULL;item = item->Inventory)
+					for(auto item = statusBar->CPlayer->mo->Inventory;item != NULL;item = item->Inventory)
 					{
 						if(item->IsKindOf(NAME_Key))
 							num++;
@@ -2351,7 +2351,7 @@ class CommandDrawKeyBar : public SBarInfoCommand
 
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
 		{
-			AInventory *item = statusBar->CPlayer->mo->Inventory;
+			auto item = statusBar->CPlayer->mo->Inventory;
 			if(item == NULL)
 				return;
 			int slotOffset = 0;
@@ -2603,7 +2603,7 @@ class CommandDrawBar : public SBarInfoCommand
 				if(data.inventoryItem == NULL || !data.inventoryItem->IsDescendantOf(NAME_Inventory))
 				{
 					sc.ScriptMessage("'%s' is not a type of inventory item.", sc.String);
-					data.inventoryItem = RUNTIME_CLASS(AInventory);
+					data.inventoryItem = PClass::FindActor(NAME_Inventory);
 				}
 			}
 			sc.MustGetToken(',');
@@ -2665,7 +2665,7 @@ class CommandDrawBar : public SBarInfoCommand
 						max = data.value;
 					else if(data.inventoryItem != NULL)
 					{
-						AInventory *item = statusBar->CPlayer->mo->FindInventory(data.inventoryItem); //max comparer
+						auto item = statusBar->CPlayer->mo->FindInventory(data.inventoryItem); //max comparer
 						if(item != NULL)
 							max = item->IntVar(NAME_Amount);
 						else
@@ -2680,7 +2680,7 @@ class CommandDrawBar : public SBarInfoCommand
 						max = data.value;
 					else if(data.inventoryItem != NULL)
 					{
-						AInventory *item = statusBar->CPlayer->mo->FindInventory(data.inventoryItem);
+						auto item = statusBar->CPlayer->mo->FindInventory(data.inventoryItem);
 						if(item != NULL)
 							max = item->IntVar(NAME_Amount);
 						else
@@ -2711,7 +2711,7 @@ class CommandDrawBar : public SBarInfoCommand
 					break;
 				case AMMO:
 				{
-					AInventory *item = statusBar->CPlayer->mo->FindInventory(data.inventoryItem);
+					auto item = statusBar->CPlayer->mo->FindInventory(data.inventoryItem);
 					if(item != NULL)
 					{
 						value = item->IntVar(NAME_Amount);
@@ -2739,7 +2739,7 @@ class CommandDrawBar : public SBarInfoCommand
 					break;
 				case INVENTORY:
 				{
-					AInventory *item = statusBar->CPlayer->mo->FindInventory(data.inventoryItem);
+					auto item = statusBar->CPlayer->mo->FindInventory(data.inventoryItem);
 					if(item != NULL)
 					{
 						value = item->IntVar(NAME_Amount);
@@ -2825,7 +2825,7 @@ class CommandDrawBar : public SBarInfoCommand
 				if(data.inventoryItem == NULL || !data.inventoryItem->IsDescendantOf(NAME_Inventory)) //must be a kind of inventory
 				{
 					sc.ScriptMessage("'%s' is not a type of inventory item.", sc.String);
-					data.inventoryItem = RUNTIME_CLASS(AInventory);
+					data.inventoryItem = PClass::FindActor(NAME_Inventory);
 				}
 			}
 			else if(extendedSyntax && sc.CheckToken(TK_IntConst))
@@ -3331,7 +3331,7 @@ class CommandInInventory : public SBarInfoNegatableFlowControl
 				if (item[i] == NULL || !item[i]->IsDescendantOf(NAME_Inventory)) //must be a kind of ammo
 				{
 					sc.ScriptMessage("'%s' is not a type of inventory item.", sc.String);
-					item[i] = RUNTIME_CLASS(AInventory);
+					item[i] = PClass::FindActor(NAME_Inventory);
 				}
 		
 				if (sc.CheckToken(','))

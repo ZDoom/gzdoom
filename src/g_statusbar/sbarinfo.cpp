@@ -1596,7 +1596,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DSBarInfo, ShowPop, SBarInfo_ShowPop)
 	return 0;
 }
 
-static int SBarInfo_GetProtrusion(DSBarInfo *self, float scale)
+static int SBarInfo_GetProtrusion(DSBarInfo *self, double scale)
 {
 	return self->_GetProtrusion(scale);
 }

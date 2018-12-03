@@ -590,7 +590,9 @@ struct DirectNativeDesc
 	template<typename T> struct is_valid<T&> { static const bool value = true; };
 	template<> struct is_valid<void> { static const bool value = true; };
 	template<> struct is_valid<int> { static const bool value = true; };
+	template<> struct is_valid<unsigned int> { static const bool value = true; };
 	template<> struct is_valid<double> { static const bool value = true; };
+	template<> struct is_valid<bool> { static const bool value = true; };
 
 	operator void *() const { return Ptr; }
 

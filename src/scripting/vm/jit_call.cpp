@@ -360,13 +360,17 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 				call->setArg(slot, regS[bc]);
 				break;
 			case REGT_STRING | REGT_KONST:
-				call->setArg(slot, imm_ptr(&konsts[bc]));
+				tmp = newTempIntPtr();
+				cc.mov(tmp, imm_ptr(&konsts[bc]));
+				call->setArg(slot, tmp);
 				break;
 			case REGT_POINTER:
 				call->setArg(slot, regA[bc]);
 				break;
 			case REGT_POINTER | REGT_KONST:
-				call->setArg(slot, asmjit::imm_ptr(konsta[bc].v));
+				tmp = newTempIntPtr();
+				cc.mov(tmp, imm_ptr(konsta[bc].v));
+				call->setArg(slot, tmp);
 				break;
 			case REGT_FLOAT:
 				call->setArg(slot, regF[bc]);
@@ -442,28 +446,36 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 
 		CheckVMFrame();
 
-		auto regPtr = newTempIntPtr();
-
-		switch (type & REGT_TYPE)
+		if ((type & REGT_TYPE) == REGT_STRING)
 		{
-		case REGT_INT:
-			cc.lea(regPtr, x86::ptr(vmframe, offsetD + (int)(regnum * sizeof(int32_t))));
-			break;
-		case REGT_FLOAT:
-			cc.lea(regPtr, x86::ptr(vmframe, offsetF + (int)(regnum * sizeof(double))));
-			break;
-		case REGT_STRING:
-			cc.lea(regPtr, x86::ptr(vmframe, offsetS + (int)(regnum * sizeof(FString))));
-			break;
-		case REGT_POINTER:
-			cc.lea(regPtr, x86::ptr(vmframe, offsetA + (int)(regnum * sizeof(void*))));
-			break;
-		default:
-			I_FatalError("Unknown OP_RESULT type encountered\n");
-			break;
+			// For strings we already have them on the stack and got named registers for them.
+			call->setArg(numparams + i - startret, regS[regnum]);
 		}
+		else
+		{
+			auto regPtr = newTempIntPtr();
 
-		call->setArg(numparams + i - startret, regPtr);
+			switch (type & REGT_TYPE)
+			{
+			case REGT_INT:
+				cc.lea(regPtr, x86::ptr(vmframe, offsetD + (int)(regnum * sizeof(int32_t))));
+				break;
+			case REGT_FLOAT:
+				cc.lea(regPtr, x86::ptr(vmframe, offsetF + (int)(regnum * sizeof(double))));
+				break;
+			case REGT_STRING:
+				cc.lea(regPtr, x86::ptr(vmframe, offsetS + (int)(regnum * sizeof(FString))));
+				break;
+			case REGT_POINTER:
+				cc.lea(regPtr, x86::ptr(vmframe, offsetA + (int)(regnum * sizeof(void*))));
+				break;
+			default:
+				I_FatalError("Unknown OP_RESULT type encountered\n");
+				break;
+			}
+
+			call->setArg(numparams + i - startret, regPtr);
+		}
 	}
 
 	cc.setCursor(cursorAfter);
@@ -621,14 +633,11 @@ asmjit::FuncSignature JitCompiler::CreateFuncSignature()
 			rettype = TypeIdOf<double>::kTypeId;
 			key += "rf";
 			break;
-		case REGT_STRING:
-			rettype = TypeIdOf<void*>::kTypeId;
-			key += "rs";
-			break;
 		case REGT_POINTER:
 			rettype = TypeIdOf<void*>::kTypeId;
 			key += "rv";
 			break;
+		case REGT_STRING:
 		default:
 			startret = 0;
 			break;

@@ -696,8 +696,11 @@ static void CreatePlaySoundFunc(FunctionCallEmitter &emitters, int value1, int v
 // misc1 = state, misc2 = probability
 static void CreateRandomJumpFunc(FunctionCallEmitter &emitters, int value1, int value2)
 { // A_Jump
+	auto symlabel = StateLabels.AddPointer(FindState(value1));
+
 	emitters.AddParameterIntConst(value2);					// maxchance
-	emitters.AddParameterPointerConst(FindState(value1));	// jumpto
+	emitters.AddParameterIntConst(symlabel);				// jumpto
+	emitters.AddReturn(REGT_POINTER);
 }
 
 // misc1 = Boom linedef type, misc2 = sector tag
@@ -754,6 +757,8 @@ void SetDehParams(FState *state, int codepointer)
 	int value2 = state->GetMisc2();
 	if (!(value1|value2)) return;
 	
+	bool returnsState = codepointer == 6;
+	
 	// Fakey fake script position thingamajig. Because NULL cannot be used instead.
 	// Even if the lump was parsed by an FScanner, there would hardly be a way to
 	// identify which line is troublesome.
@@ -772,6 +777,7 @@ void SetDehParams(FState *state, int codepointer)
 	else
 	{
 		int numargs = sym->GetImplicitArgs();
+		auto funcsym = CreateAnonymousFunction(RUNTIME_CLASS(AActor)->VMType, returnsState? (PType*)TypeState : TypeVoid, numargs==3? SUF_ACTOR|SUF_WEAPON : SUF_ACTOR);
 		VMFunctionBuilder buildit(numargs);
 		// Allocate registers used to pass parameters in.
 		// self, stateowner, state (all are pointers)
@@ -784,10 +790,15 @@ void SetDehParams(FState *state, int codepointer)
 		}
 		// Emit code for action parameters.
 		MBFCodePointerFactories[codepointer](emitters, value1, value2);
-		emitters.EmitCall(&buildit);
-		buildit.Emit(OP_RET, RET_FINAL, REGT_NIL, 0);
+		auto where = emitters.EmitCall(&buildit);
+		if (!returnsState) buildit.Emit(OP_RET, RET_FINAL, REGT_NIL, 0);
+		else buildit.Emit(OP_RET, RET_FINAL, EncodeRegType(where), where.RegNum);
+		where.Free(&buildit);
+
 		// Attach it to the state.
 		VMScriptFunction *sfunc = new VMScriptFunction;
+		funcsym->Variants[0].Implementation = sfunc;
+		sfunc->Proto = funcsym->Variants[0].Proto;
 		sfunc->RegTypes = regts;	// These functions are built after running the script compiler so they don't get this info.
 		buildit.MakeFunction(sfunc);
 		sfunc->NumArgs = numargs;

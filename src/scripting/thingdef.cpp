@@ -208,7 +208,7 @@ void SetImplicitArgs(TArray<PType *> *args, TArray<uint32_t> *argflags, TArray<F
 
 PFunction *CreateAnonymousFunction(PContainerType *containingclass, PType *returntype, int flags)
 {
-	TArray<PType *> rets(1);
+	TArray<PType *> rets;
 	TArray<PType *> args;
 	TArray<uint32_t> argflags;
 	TArray<FName> argnames;
@@ -220,7 +220,7 @@ PFunction *CreateAnonymousFunction(PContainerType *containingclass, PType *retur
 	//      (just give them VARF_Play, whatever)
 	fflags |= VARF_Play;
 
-	rets[0] = returntype != nullptr? returntype : TypeError;	// Use TypeError as placeholder if we do not know the return type yet.
+	if (returntype) rets.Push(returntype);
 	SetImplicitArgs(&args, &argflags, &argnames, containingclass, fflags, flags);
 
 	PFunction *sym = Create<PFunction>(containingclass, NAME_None);	// anonymous functions do not have names.

@@ -307,7 +307,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 		void	GetIcon(AInventory *item)
 		{
 			int apply;
-			FTextureID icon = GetInventoryIcon(item, flags, &apply);
+			FTextureID icon = FSetTextureID(GetInventoryIcon(item, flags, &apply));
 			applyscale = !!apply;
 			
 			if (applyscale)

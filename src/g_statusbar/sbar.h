@@ -522,7 +522,8 @@ void ST_Clear();
 void ST_CreateStatusBar(bool bTitleLevel);
 extern FTexture *CrosshairImage;
 
-FTextureID GetInventoryIcon(AInventory *item, uint32_t flags, int *applyscale = nullptr);
+//FTextureID GetInventoryIcon(AInventory *item, uint32_t flags, int *applyscale = nullptr);
+int GetInventoryIcon(AInventory *item, uint32_t flags, int *applyscale = nullptr);
 
 
 enum DI_Flags

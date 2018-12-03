@@ -1029,7 +1029,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 			RenderStyle.DestAlpha = STYLEALPHA_InvSrc;
 		}
 	}
-	if ((gltexture && gltexture->tex->GetTranslucency()) || (RenderStyle.Flags & STYLEF_RedIsAlpha) || (modelframe && RenderStyle != DefaultRenderStyle()))
+	if ((gltexture && gltexture->tex->GetTranslucency()) || (RenderStyle.Flags & STYLEF_RedIsAlpha) || (modelframe && thing->RenderStyle != DefaultRenderStyle()))
 	{
 		if (hw_styleflags == STYLEHW_Solid)
 		{

@@ -1163,6 +1163,23 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		reg.d[a] = reg.d[B] > konstd[C] ? reg.d[B] : konstd[C];
 		NEXTOP;
 
+	OP(MINU_RR) :
+		ASSERTD(a); ASSERTD(B); ASSERTD(C);
+		reg.d[a] = (unsigned)reg.d[B] < (unsigned)reg.d[C] ? reg.d[B] : reg.d[C];
+		NEXTOP;
+	OP(MINU_RK) :
+		ASSERTD(a); ASSERTD(B); ASSERTKD(C);
+		reg.d[a] = (unsigned)reg.d[B] < (unsigned)konstd[C] ? reg.d[B] : konstd[C];
+		NEXTOP;
+	OP(MAXU_RR) :
+		ASSERTD(a); ASSERTD(B); ASSERTD(C);
+		reg.d[a] = (unsigned)reg.d[B] > (unsigned)reg.d[C] ? reg.d[B] : reg.d[C];
+		NEXTOP;
+	OP(MAXU_RK) :
+		ASSERTD(a); ASSERTD(B); ASSERTKD(C);
+		reg.d[a] = (unsigned)reg.d[B] > (unsigned)konstd[C] ? reg.d[B] : konstd[C];
+		NEXTOP;
+
 	OP(ABS):
 		ASSERTD(a); ASSERTD(B);
 		reg.d[a] = abs(reg.d[B]);

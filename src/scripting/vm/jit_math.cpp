@@ -483,6 +483,44 @@ void JitCompiler::EmitMAX_RK()
 	cc.cmovg(regD[A], rc);
 }
 
+void JitCompiler::EmitMINU_RR()
+{
+	auto rc = CheckRegD(C, A);
+	if (A != B)
+		cc.mov(regD[A], regD[B]);
+	cc.cmp(rc, regD[A]);
+	cc.cmovb(regD[A], rc);
+}
+
+void JitCompiler::EmitMINU_RK()
+{
+	auto rc = newTempInt32();
+	if (A != B)
+		cc.mov(regD[A], regD[B]);
+	cc.mov(rc, asmjit::imm(konstd[C]));
+	cc.cmp(rc, regD[A]);
+	cc.cmovb(regD[A], rc);
+}
+
+void JitCompiler::EmitMAXU_RR()
+{
+	auto rc = CheckRegD(C, A);
+	if (A != B)
+		cc.mov(regD[A], regD[B]);
+	cc.cmp(rc, regD[A]);
+	cc.cmova(regD[A], rc);
+}
+
+void JitCompiler::EmitMAXU_RK()
+{
+	auto rc = newTempInt32();
+	if (A != B)
+		cc.mov(regD[A], regD[B]);
+	cc.mov(rc, asmjit::imm(konstd[C]));
+	cc.cmp(rc, regD[A]);
+	cc.cmova(regD[A], rc);
+}
+
 void JitCompiler::EmitABS()
 {
 	auto srcB = CheckRegD(B, A);

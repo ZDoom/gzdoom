@@ -169,6 +169,10 @@ xx(MIN_RR,		min,	RIRIRI,		NOP,	0, 0)		// dA = min(dB,dkC)
 xx(MIN_RK,		min,	RIRIKI,		MIN_RR,	4, REGT_INT)
 xx(MAX_RR,		max,	RIRIRI,		NOP,	0, 0)		// dA = max(dB,dkC)
 xx(MAX_RK,		max,	RIRIKI,		MAX_RR,	4, REGT_INT)
+xx(MINU_RR,		minu,	RIRIRI,		NOP,	0, 0)		// dA = min(dB,dkC) unsigned
+xx(MINU_RK,		minu,	RIRIKI,		MIN_RR,	4, REGT_INT)
+xx(MAXU_RR,		maxu,	RIRIRI,		NOP,	0, 0)		// dA = max(dB,dkC) unsigned
+xx(MAXU_RK,		maxu,	RIRIKI,		MAX_RR,	4, REGT_INT)
 xx(ABS,			abs,	RIRI,		NOP,	0, 0)			// dA = abs(dB)
 xx(NEG,			neg,	RIRI,		NOP,	0, 0)			// dA = -dB
 xx(NOT,			not,	RIRI,		NOP,	0, 0)			// dA = ~dB

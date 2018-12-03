@@ -5206,12 +5206,13 @@ FxMinMax::FxMinMax(TArray<FxExpression*> &expr, FName type, const FScriptPositio
 FxExpression *FxMinMax::Resolve(FCompileContext &ctx)
 {
 	unsigned int i;
-	int intcount, floatcount;
+	int intcount, floatcount, uintcount;
 
 	CHECKRESOLVED();
 
 	// Determine if float or int
-	intcount = floatcount = 0;
+	uintcount = intcount = floatcount = 0;
+
 	for (i = 0; i < choices.Size(); ++i)
 	{
 		RESOLVE(choices[i], ctx);
@@ -5224,6 +5225,9 @@ FxExpression *FxMinMax::Resolve(FCompileContext &ctx)
 		else if (choices[i]->IsInteger())
 		{
 			intcount++;
+			auto type = choices[i]->ValueType;
+			if (type == TypeUInt32 || type == TypeUInt16 || type == TypeUInt8 || type == TypeBool) uintcount++;
+			else if (choices[i]->isConstant() && static_cast<FxConstant*>(choices[i])->GetValue().GetInt() > 0) uintcount++;
 		}
 		else
 		{
@@ -5250,7 +5254,7 @@ FxExpression *FxMinMax::Resolve(FCompileContext &ctx)
 	}
 	else
 	{
-		ValueType = TypeSInt32;
+		ValueType = uintcount == intcount? TypeUInt32 : TypeSInt32;
 	}
 
 	// If at least two arguments are constants, they can be solved now.
@@ -5356,18 +5360,20 @@ ExpEmit FxMinMax::Emit(VMFunctionBuilder *build)
 
 	assert(choices.Size() > 0);
 	assert(!choices[0]->isConstant());
-	assert(OP_MAXF_RK == OP_MAXF_RR+1);
-	assert(OP_MAX_RK == OP_MAX_RR+1);
-	assert(OP_MIN_RK == OP_MIN_RR+1);
-	assert(OP_MIN_RK == OP_MIN_RR+1);
+	static_assert(OP_MAXF_RK == OP_MAXF_RR+1, "maxf opcodes not continuous");
+	static_assert(OP_MAX_RK == OP_MAX_RR+1, "max opcodes not continuous");
+	static_assert(OP_MINF_RK == OP_MINF_RR+1, "minf opcodes not continuous");
+	static_assert(OP_MIN_RK == OP_MIN_RR+1, "min opcodes not continuous");
+	static_assert(OP_MAXU_RK == OP_MAXU_RR + 1, "maxu opcodes not continuous");
+	static_assert(OP_MINU_RK == OP_MINU_RR + 1, "minu opcodes not continuous");
 
 	if (Type == NAME_Min)
 	{
-		opcode = ValueType->GetRegType() == REGT_FLOAT ? OP_MINF_RR : OP_MIN_RR;
+		opcode = ValueType->GetRegType() == REGT_FLOAT ? OP_MINF_RR : ValueType == TypeUInt32? OP_MINU_RR : OP_MIN_RR;
 	}
 	else
 	{
-		opcode = ValueType->GetRegType() == REGT_FLOAT ? OP_MAXF_RR : OP_MAX_RR;
+		opcode = ValueType->GetRegType() == REGT_FLOAT ? OP_MAXF_RR : ValueType == TypeUInt32 ? OP_MAXU_RR : OP_MAX_RR;
 	}
 
 	ExpEmit firstreg = choices[0]->Emit(build);

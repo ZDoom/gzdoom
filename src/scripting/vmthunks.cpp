@@ -2060,7 +2060,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetInventoryIcon, GetInventoryIcon
 	PARAM_OBJECT(item, AInventory);
 	PARAM_INT(flags);
 	int applyscale;
-	FTextureID icon = GetInventoryIcon(item, flags, &applyscale);
+	FTextureID icon = FSetTextureID(GetInventoryIcon(item, flags, &applyscale));
 	if (numret >= 1) ret[0].SetInt(icon.GetIndex());
 	if (numret >= 2) ret[1].SetInt(applyscale);
 	return MIN(numret, 2);

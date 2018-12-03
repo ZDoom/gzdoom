@@ -138,12 +138,12 @@ int D_GenderToInt (const char *gender)
 {
 	if (gender[0] == 'f')
 		return GENDER_FEMALE;
-	else if (gender[0] == 'm')
-		return GENDER_MALE;
 	else if (gender[0] == 'n')
 		return GENDER_NEUTER;
-	else
+	else if (gender[0] == 'o')
 		return GENDER_OBJECT;
+	else
+		return GENDER_MALE;
 }
 
 int D_PlayerClassToInt (const char *classname)
@@ -728,8 +728,8 @@ void D_WriteUserInfoStrings (int pnum, uint8_t **stream, bool compact)
 		case NAME_Gender:
 			*stream += sprintf(*((char **)stream), "\\%s",
 				*static_cast<FIntCVar *>(pair->Value) == GENDER_FEMALE ? "female" :
-				*static_cast<FIntCVar *>(pair->Value) == GENDER_MALE ? "male" :
-				*static_cast<FIntCVar *>(pair->Value) == GENDER_NEUTER ? "neutral" : "other");
+				*static_cast<FIntCVar *>(pair->Value) == GENDER_NEUTER ? "neutral" :
+				*static_cast<FIntCVar *>(pair->Value) == GENDER_OBJECT ? "other" : "male");
 			break;
 
 		case NAME_PlayerClass:

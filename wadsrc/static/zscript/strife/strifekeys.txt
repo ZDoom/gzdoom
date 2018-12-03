@@ -18,6 +18,7 @@ class BaseKey : StrifeKey
 		Inventory.Icon "I_FUSL";
 		Tag "$TAG_BASEKEY";
 		Inventory.PickupMessage "$TXT_BASEKEY";
+		Species "BaseKey";
 	}
 	States
 	{
@@ -37,6 +38,7 @@ class GovsKey : StrifeKey
 		Inventory.Icon "I_REBL";
 		Tag "$TAG_GOVSKEY";
 		Inventory.PickupMessage "$TXT_GOVSKEY";
+		Species "GovsKey";
 	}
 	States
 	{
@@ -56,6 +58,7 @@ class Passcard : StrifeKey
 		Inventory.Icon "I_TPAS";
 		Tag "$TAG_PASSCARD";
 		Inventory.PickupMessage "$TXT_PASSCARD";
+		Species "Passcard";
 	}
 	States
 	{
@@ -75,6 +78,7 @@ class IDBadge : StrifeKey
 		Inventory.Icon "I_CRD1";
 		Tag "$TAG_IDBADGE";
 		Inventory.PickupMessage "$TXT_IDBADGE";
+		Species "IDBadge";
 	}
 	States
 	{
@@ -95,6 +99,7 @@ class PrisonKey : StrifeKey
 		Tag "$TAG_PRISONKEY";
 		Inventory.GiveQuest 11;
 		Inventory.PickupMessage "$TXT_PRISONKEY";
+		Species "PrisonKey";
 	}
 	States
 	{
@@ -115,6 +120,7 @@ class SeveredHand : StrifeKey
 		Tag "$TAG_SEVEREDHAND";
 		Inventory.GiveQuest 12;
 		Inventory.PickupMessage "$TXT_SEVEREDHAND";
+		Species "SeveredHand";
 	}
 	States
 	{
@@ -134,6 +140,7 @@ class Power1Key : StrifeKey
 		Inventory.Icon "I_PWR1";
 		Tag "$TAG_POWER1KEY";
 		Inventory.PickupMessage "$TXT_POWER1KEY";
+		Species "Power1Key";
 	}
 	States
 	{
@@ -153,6 +160,7 @@ class Power2Key : StrifeKey
 		Inventory.Icon "I_PWR2";
 		Tag "$TAG_POWER2KEY";
 		Inventory.PickupMessage "$TXT_POWER2KEY";
+		Species "Power2Key";
 	}
 	States
 	{
@@ -172,6 +180,7 @@ class Power3Key : StrifeKey
 		Inventory.Icon "I_PWR3";
 		Tag "$TAG_POWER3KEY";
 		Inventory.PickupMessage "$TXT_POWER3KEY";
+		Species "Power3Key";
 	}
 	States
 	{
@@ -191,6 +200,7 @@ class GoldKey : StrifeKey
 		Inventory.Icon "I_KY1G";
 		Tag "$TAG_GOLDKEY";
 		Inventory.PickupMessage "$TXT_GOLDKEY";
+		Species "GoldKey";
 	}
 	States
 	{
@@ -210,6 +220,7 @@ class IDCard : StrifeKey
 		Inventory.Icon "I_CRD2";
 		Tag "$TAG_IDCARD";
 		Inventory.PickupMessage "$TXT_IDCARD";
+		Species "IDCard";
 	}
 	States
 	{
@@ -229,6 +240,7 @@ class SilverKey : StrifeKey
 		Inventory.Icon "I_KY2S";
 		Tag "$TAG_SILVERKEY";
 		Inventory.PickupMessage "$TXT_SILVERKEY";
+		Species "SilverKey";
 	}
 	States
 	{
@@ -248,6 +260,7 @@ class OracleKey : StrifeKey
 		Inventory.Icon "I_ORAC";
 		Tag "$TAG_ORACLEKEY";
 		Inventory.PickupMessage "$TXT_ORACLEKEY";
+		Species "OracleKey";
 	}
 	States
 	{
@@ -267,6 +280,7 @@ class MilitaryID : StrifeKey
 		Inventory.Icon "I_GYID";
 		Tag "$TAG_MILITARYID";
 		Inventory.PickupMessage "$TXT_MILITARYID";
+		Species "MilitaryID";
 	}
 	States
 	{
@@ -286,6 +300,7 @@ class OrderKey : StrifeKey
 		Inventory.Icon "I_FUBR";
 		Tag "$TAG_ORDERKEY";
 		Inventory.PickupMessage "$TXT_ORDERKEY";
+		Species "OrderKey";
 	}
 	States
 	{
@@ -305,6 +320,7 @@ class WarehouseKey : StrifeKey
 		Inventory.Icon "I_WARE";
 		Tag "$TAG_WAREHOUSEKEY";
 		Inventory.PickupMessage "$TXT_WAREHOUSEKEY";
+		Species "WarehouseKey";
 	}
 	States
 	{
@@ -324,6 +340,7 @@ class BrassKey : StrifeKey
 		Inventory.Icon "I_KY3B";
 		Tag "$TAG_BRASSKEY";
 		Inventory.PickupMessage "$TXT_BRASSKEY";
+		Species "BrassKey";
 	}
 	States
 	{
@@ -343,6 +360,7 @@ class RedCrystalKey : StrifeKey
 		Inventory.Icon "I_RCRY";
 		Tag "$TAG_REDCRYSTALKEY";
 		Inventory.PickupMessage "$TXT_REDCRYSTAL";
+		Species "RedCrystalKey";
 	}
 	States
 	{
@@ -362,6 +380,7 @@ class BlueCrystalKey : StrifeKey
 		Inventory.Icon "I_BCRY";
 		Tag "$TAG_BLUECRYSTALKEY";
 		Inventory.PickupMessage "$TXT_BLUECRYSTAL";
+		Species "BlueCrystalKey";
 	}
 	States
 	{
@@ -381,6 +400,7 @@ class ChapelKey : StrifeKey
 		Inventory.Icon "I_CHAP";
 		Tag "$TAG_CHAPELKEY";
 		Inventory.PickupMessage "$TXT_CHAPELKEY";
+		Species "ChapelKey";
 	}
 	States
 	{
@@ -401,6 +421,7 @@ class CatacombKey : StrifeKey
 		Tag "$TAG_CATACOMBKEY";
 		Inventory.GiveQuest 28;
 		Inventory.PickupMessage "$TXT_CATACOMBKEY";
+		Species "CatacombKey";
 	}
 	States
 	{
@@ -420,6 +441,7 @@ class SecurityKey : StrifeKey
 		Inventory.Icon "I_SECK";
 		Tag "$TAG_SECURITYKEY";
 		Inventory.PickupMessage "$TXT_SECURITYKEY";
+		Species "SecurityKey";
 	}
 	States
 	{
@@ -439,6 +461,7 @@ class CoreKey : StrifeKey
 		Inventory.Icon "I_GOID";
 		Tag "$TAG_COREKEY";
 		Inventory.PickupMessage "$TXT_COREKEY";
+		Species "CoreKey";
 	}
 	States
 	{
@@ -458,6 +481,7 @@ class MaulerKey : StrifeKey
 		Inventory.Icon "I_BLTK";
 		Tag "$TAG_MAULERKEY";
 		Inventory.PickupMessage "$TXT_MAULERKEY";
+		Species "MaulerKey";
 	}
 	States
 	{
@@ -477,6 +501,7 @@ class FactoryKey : StrifeKey
 		Inventory.Icon "I_PROC";
 		Tag "$TAG_FACTORYKEY";
 		Inventory.PickupMessage "$TXT_FACTORYKEY";
+		Species "FactoryKey";
 	}
 	States
 	{
@@ -496,6 +521,7 @@ class MineKey : StrifeKey
 		Inventory.Icon "I_MINE";
 		Tag "$TAG_MINEKEY";
 		Inventory.PickupMessage "$TXT_MINEKEY";
+		Species "MineKey";
 	}
 	States
 	{
@@ -515,6 +541,7 @@ class NewKey5 : StrifeKey
 		Inventory.Icon "I_BLTK";
 		Tag "$TAG_NEWKEY5";
 		Inventory.PickupMessage "$TXT_NEWKEY5";
+		Species "NewKey5";
 	}
 	States
 	{

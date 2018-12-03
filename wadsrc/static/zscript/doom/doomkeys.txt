@@ -17,6 +17,7 @@ class BlueCard : DoomKey
 	{
 		Inventory.Pickupmessage "$GOTBLUECARD";
 		Inventory.Icon "STKEYS0";
+		Species "BlueCard";
 	}
 	States
 	{
@@ -35,6 +36,7 @@ class YellowCard : DoomKey
 	{
 		Inventory.Pickupmessage "$GOTYELWCARD";
 		Inventory.Icon "STKEYS1";
+		Species "YellowCard";
 	}
 	States
 	{
@@ -53,6 +55,7 @@ class RedCard : DoomKey
 	{
 		Inventory.Pickupmessage "$GOTREDCARD";
 		Inventory.Icon "STKEYS2";
+		Species "RedCard";
 	}
 	States
 	{
@@ -71,6 +74,7 @@ class BlueSkull : DoomKey
 	{
 		Inventory.Pickupmessage "$GOTBLUESKUL";
 		Inventory.Icon "STKEYS3";
+		Species "BlueSkull";
 	}
 	States
 	{
@@ -89,6 +93,7 @@ class YellowSkull : DoomKey
 	{
 		Inventory.Pickupmessage "$GOTYELWSKUL";
 		Inventory.Icon "STKEYS4";
+		Species "YellowSkull";
 	}
 	States
 	{
@@ -107,6 +112,7 @@ class RedSkull : DoomKey
 	{
 		Inventory.Pickupmessage "$GOTREDSKUL";
 		Inventory.Icon "STKEYS5";
+		Species "RedSkull";
 	}
 	States
 	{

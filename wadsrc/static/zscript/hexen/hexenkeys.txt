@@ -14,6 +14,7 @@ class KeySteel : HexenKey
 	{
 		Inventory.Icon "KEYSLOT1";
 		Inventory.PickupMessage "$TXT_KEY_STEEL";
+		Species "KeySteel";
 	}
 	States
 	{
@@ -29,6 +30,7 @@ class KeyCave : HexenKey
 	{
 		Inventory.Icon "KEYSLOT2";
 		Inventory.PickupMessage "$TXT_KEY_CAVE";
+		Species "KeyCave";
 	}
 	States
 	{
@@ -44,6 +46,7 @@ class KeyAxe : HexenKey
 	{
 		Inventory.Icon "KEYSLOT3";
 		Inventory.PickupMessage "$TXT_KEY_AXE";
+		Species "KeyAxe";
 	}
 	States
 	{
@@ -59,6 +62,7 @@ class KeyFire : HexenKey
 	{
 		Inventory.Icon "KEYSLOT4";
 		Inventory.PickupMessage "$TXT_KEY_FIRE";
+		Species "KeyFire";
 	}
 	States
 	{
@@ -74,6 +78,7 @@ class KeyEmerald : HexenKey
 	{
 		Inventory.Icon "KEYSLOT5";
 		Inventory.PickupMessage "$TXT_KEY_EMERALD";
+		Species "KeyEmerald";
 	}
 	States
 	{
@@ -89,6 +94,7 @@ class KeyDungeon : HexenKey
 	{
 		Inventory.Icon "KEYSLOT6";
 		Inventory.PickupMessage "$TXT_KEY_DUNGEON";
+		Species "KeyDungeon";
 	}
 	States
 	{
@@ -104,6 +110,7 @@ class KeySilver : HexenKey
 	{
 		Inventory.Icon "KEYSLOT7";
 		Inventory.PickupMessage "$TXT_KEY_SILVER";
+		Species "KeySilver";
 	}
 	States
 	{
@@ -119,6 +126,7 @@ class KeyRusted : HexenKey
 	{
 		Inventory.Icon "KEYSLOT8";
 		Inventory.PickupMessage "$TXT_KEY_RUSTED";
+		Species "KeyRusted";
 	}
 	States
 	{
@@ -134,6 +142,7 @@ class KeyHorn : HexenKey
 	{
 		Inventory.Icon "KEYSLOT9";
 		Inventory.PickupMessage "$TXT_KEY_HORN";
+		Species "KeyHorn";
 	}
 	States
 	{
@@ -149,6 +158,7 @@ class KeySwamp : HexenKey
 	{
 		Inventory.Icon "KEYSLOTA";
 		Inventory.PickupMessage "$TXT_KEY_SWAMP";
+		Species "KeySwamp";
 	}
 	States
 	{
@@ -164,6 +174,7 @@ class KeyCastle : HexenKey
 	{
 		Inventory.Icon "KEYSLOTB";
 		Inventory.PickupMessage "$TXT_KEY_CASTLE";
+		Species "KeyCastle";
 	}
 	States
 	{

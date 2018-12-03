@@ -17,6 +17,7 @@ Class KeyGreen : HereticKey
 	{
 		Inventory.PickupMessage "$TXT_GOTGREENKEY";
 		Inventory.Icon "GKEYICON";
+		Species "KeyGreen";
 	}
 	States
 	{
@@ -34,6 +35,7 @@ Class KeyBlue : HereticKey
 	{
 		Inventory.PickupMessage "$TXT_GOTBLUEKEY";
 		Inventory.Icon "BKEYICON";
+		Species "KeyBlue";
 	}
 	States
 	{
@@ -51,6 +53,7 @@ Class KeyYellow : HereticKey
 	{
 		Inventory.PickupMessage "$TXT_GOTYELLOWKEY";
 		Inventory.Icon "YKEYICON";
+		Species "KeyYellow";
 	}
 	States
 	{

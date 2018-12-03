@@ -544,7 +544,7 @@ class AltHud ui
 			let inv = GetDefaultByType(type);
 
 			let AltIcon = inv.AltHUDIcon;
-			int maxammo = inv.MaxAmount;
+			int maxammo = ammoitem? ammoitem.MaxAmount : inv.MaxAmount;
 
 			let icon = !AltIcon.isNull()? AltIcon : inv.Icon;
 			if (!icon.isValid()) continue;

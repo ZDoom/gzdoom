@@ -98,7 +98,10 @@ xx(ArmorType)
 xx(HexenArmor)
 xx(Slots)
 xx(SlotsIncrement)
-
+xx(InterHubAmount)
+xx(Icon)
+xx(AltHUDIcon)
+xx(PickupFlash)
 
 xx(BulletPuff)
 xx(StrifePuff)

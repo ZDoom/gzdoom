@@ -154,7 +154,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 					}
 					else
 					{
-						sprite = ((AInventory *)GetDefaultByType(item))->Icon;
+						sprite = ((AInventory *)GetDefaultByType(item))->TextureIDVar(NAME_Icon);
 					}
 					image = -1;
 				}
@@ -270,7 +270,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			{
 				auto item = statusBar->CPlayer->mo->FindInventory(NAME_Sigil);
 				if (item != NULL)
-					texture = TexMan(item->Icon);
+					texture = TexMan(item->TextureIDVar(NAME_Icon));
 			}
 			else if(type == HEXENARMOR_ARMOR || type == HEXENARMOR_SHIELD || type == HEXENARMOR_HELM || type == HEXENARMOR_AMULET)
 			{
@@ -294,7 +294,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			else if(type == INVENTORYICON)
 				texture = TexMan(sprite);
 			else if(type == SELECTEDINVENTORYICON && statusBar->CPlayer->mo->InvSel != NULL)
-				texture = TexMan(statusBar->CPlayer->mo->InvSel->Icon);
+				texture = TexMan(statusBar->CPlayer->mo->InvSel->TextureIDVar(NAME_Icon));
 			else if(image >= 0)
 				texture = statusBar->Images[image];
 			
@@ -1365,7 +1365,7 @@ class CommandDrawNumber : public CommandDrawString
 						return;
 					}
 					else
-						num = statusBar->ammo1->MaxAmount;
+						num = statusBar->ammo1->IntVar(NAME_MaxAmount);
 					break;
 				case AMMO2CAPACITY:
 					if(statusBar->ammo2 == NULL) //no ammo, do not draw
@@ -1374,15 +1374,15 @@ class CommandDrawNumber : public CommandDrawString
 						return;
 					}
 					else
-						num = statusBar->ammo2->MaxAmount;
+						num = statusBar->ammo2->IntVar(NAME_MaxAmount);
 					break;
 				case AMMOCAPACITY:
 				{
 					AInventory* item = statusBar->CPlayer->mo->FindInventory(inventoryItem);
 					if(item != NULL)
-						num = item->MaxAmount;
+						num = item->IntVar(NAME_MaxAmount);
 					else
-						num = ((AInventory *)GetDefaultByType(inventoryItem))->MaxAmount;
+						num = ((AInventory *)GetDefaultByType(inventoryItem))->IntVar(NAME_MaxAmount);
 					break;
 				}
 				case FRAGS:
@@ -2131,7 +2131,7 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 						statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgARTIBOX], rx, ry, block->XOffset(), block->YOffset(), bgalpha, block->FullScreenOffsets());
 		
 					if(style != STYLE_Strife) //Strife draws the cursor before the icons
-						statusBar->DrawGraphic(TexMan(item->Icon), rx - (style == STYLE_HexenStrict ? 2 : 0), ry - (style == STYLE_HexenStrict ? 1 : 0), block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, item->IntVar(NAME_Amount) <= 0);
+						statusBar->DrawGraphic(TexMan(item->TextureIDVar(NAME_Icon)), rx - (style == STYLE_HexenStrict ? 2 : 0), ry - (style == STYLE_HexenStrict ? 1 : 0), block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, item->IntVar(NAME_Amount) <= 0);
 					if(item == statusBar->CPlayer->mo->InvSel)
 					{
 						if(style == STYLE_Heretic)
@@ -2146,7 +2146,7 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 							statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgSELECTBOX], rx, ry, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
 					}
 					if(style == STYLE_Strife)
-						statusBar->DrawGraphic(TexMan(item->Icon), rx, ry, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, item->IntVar(NAME_Amount) <= 0);
+						statusBar->DrawGraphic(TexMan(item->TextureIDVar(NAME_Icon)), rx, ry, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, item->IntVar(NAME_Amount) <= 0);
 					if(counters != NULL && (alwaysShowCounter || item->IntVar(NAME_Amount) != 1))
 					{
 						counters[i]->valueArgument = item->IntVar(NAME_Amount);
@@ -2359,7 +2359,7 @@ class CommandDrawKeyBar : public SBarInfoCommand
 			int rowWidth = 0;
 			for(unsigned int i = 0;i < number+keyOffset;i++)
 			{
-				while(!item->Icon.isValid() || !item->IsKindOf(NAME_Key))
+				while(!item->TextureIDVar(NAME_Icon).isValid() || !item->IsKindOf(NAME_Key))
 				{
 					item = item->Inventory;
 					if(item == NULL)
@@ -2369,22 +2369,22 @@ class CommandDrawKeyBar : public SBarInfoCommand
 				{
 					if(!vertical)
 					{
-						statusBar->DrawGraphic(TexMan(item->Icon), x+slotOffset, y+rowOffset, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
-						rowWidth = rowIconSize == -1 ? TexMan(item->Icon)->GetScaledHeight()+2 : rowIconSize;
+						statusBar->DrawGraphic(TexMan(item->TextureIDVar(NAME_Icon)), x+slotOffset, y+rowOffset, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
+						rowWidth = rowIconSize == -1 ? TexMan(item->TextureIDVar(NAME_Icon))->GetScaledHeight()+2 : rowIconSize;
 					}
 					else
 					{
-						statusBar->DrawGraphic(TexMan(item->Icon), x+rowOffset, y+slotOffset, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
-						rowWidth = rowIconSize == -1 ? TexMan(item->Icon)->GetScaledWidth()+2 : rowIconSize;
+						statusBar->DrawGraphic(TexMan(item->TextureIDVar(NAME_Icon)), x+rowOffset, y+slotOffset, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
+						rowWidth = rowIconSize == -1 ? TexMan(item->TextureIDVar(NAME_Icon))->GetScaledWidth()+2 : rowIconSize;
 					}
 		
 					// If cmd.special is -1 then the slot size is auto detected
 					if(iconSize == -1)
 					{
 						if(!vertical)
-							slotOffset += (reverse ? -1 : 1) * (TexMan(item->Icon)->GetScaledWidth() + 2);
+							slotOffset += (reverse ? -1 : 1) * (TexMan(item->TextureIDVar(NAME_Icon))->GetScaledWidth() + 2);
 						else
-							slotOffset += (reverse ? -1 : 1) * (TexMan(item->Icon)->GetScaledHeight() + 2);
+							slotOffset += (reverse ? -1 : 1) * (TexMan(item->TextureIDVar(NAME_Icon))->GetScaledHeight() + 2);
 					}
 					else
 						slotOffset += (reverse ? -iconSize : iconSize);
@@ -2697,7 +2697,7 @@ class CommandDrawBar : public SBarInfoCommand
 						max = 1;
 					}
 					else
-						max = statusBar->ammo1->MaxAmount;
+						max = statusBar->ammo1->IntVar(NAME_MaxAmount);
 					break;
 				case AMMO2:
 					value = statusBar->ammocount2;
@@ -2707,7 +2707,7 @@ class CommandDrawBar : public SBarInfoCommand
 						max = 1;
 					}
 					else
-						max = statusBar->ammo2->MaxAmount;
+						max = statusBar->ammo2->IntVar(NAME_MaxAmount);
 					break;
 				case AMMO:
 				{
@@ -2715,7 +2715,7 @@ class CommandDrawBar : public SBarInfoCommand
 					if(item != NULL)
 					{
 						value = item->IntVar(NAME_Amount);
-						max = item->MaxAmount;
+						max = item->IntVar(NAME_MaxAmount);
 					}
 					else
 						value = 0;
@@ -2743,7 +2743,7 @@ class CommandDrawBar : public SBarInfoCommand
 					if(item != NULL)
 					{
 						value = item->IntVar(NAME_Amount);
-						max = item->MaxAmount;
+						max = item->IntVar(NAME_MaxAmount);
 					}
 					else
 						value = 0;

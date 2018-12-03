@@ -1548,7 +1548,7 @@ static int PatchAmmo (int ammoNum)
 			defaultAmmo = (AInventory*)GetDefaultByType (ammoType);
 			if (defaultAmmo != NULL)
 			{
-				max = &defaultAmmo->MaxAmount;
+				max = &defaultAmmo->IntVar(NAME_MaxAmount);
 				per = &defaultAmmo->IntVar(NAME_Amount);
 			}
 		}
@@ -1571,7 +1571,7 @@ static int PatchAmmo (int ammoNum)
 	// Calculate the new backpack-given amounts for this ammo.
 	if (ammoType != NULL)
 	{
-		defaultAmmo->IntVar("BackpackMaxAmount") = defaultAmmo->MaxAmount * 2;
+		defaultAmmo->IntVar("BackpackMaxAmount") = defaultAmmo->IntVar(NAME_MaxAmount) * 2;
 		defaultAmmo->IntVar("BackpackAmount") = defaultAmmo->IntVar(NAME_Amount);
 	}
 
@@ -1588,7 +1588,7 @@ static int PatchAmmo (int ammoNum)
 			if (type->IsDescendantOf (ammoType))
 			{
 				defaultAmmo = (AInventory *)GetDefaultByType (type);
-				defaultAmmo->MaxAmount = *max;
+				defaultAmmo->IntVar(NAME_MaxAmount) = *max;
 				defaultAmmo->IntVar(NAME_Amount) = Scale (defaultAmmo->IntVar(NAME_Amount), *per, oldclip);
 			}
 			else if (type->IsDescendantOf (NAME_Weapon))
@@ -1981,20 +1981,20 @@ static int PatchMisc (int dummy)
 	health = static_cast<AInventory *> (GetDefaultByName ("HealthBonus"));
 	if (health!=NULL) 
 	{
-		health->MaxAmount = 2 * deh.MaxHealth;
+		health->IntVar(NAME_MaxAmount) = 2 * deh.MaxHealth;
 	}
 
 	health = static_cast<AInventory *> (GetDefaultByName ("Soulsphere"));
 	if (health!=NULL)
 	{
 		health->IntVar(NAME_Amount) = deh.SoulsphereHealth;
-		health->MaxAmount = deh.MaxSoulsphere;
+		health->IntVar(NAME_MaxAmount) = deh.MaxSoulsphere;
 	}
 
 	health = static_cast<AInventory *> (GetDefaultByName ("MegasphereHealth"));
 	if (health!=NULL)
 	{
-		health->IntVar(NAME_Amount) = health->MaxAmount = deh.MegasphereHealth;
+		health->IntVar(NAME_Amount) = health->IntVar(NAME_MaxAmount) = deh.MegasphereHealth;
 	}
 
 	APlayerPawn *player = static_cast<APlayerPawn *> (GetDefaultByName ("DoomPlayer"));

@@ -76,7 +76,7 @@ void C_PrintInv(AActor *target)
 	{
 		Printf ("    %s #%u (%d/%d)\n", item->GetClass()->TypeName.GetChars(),
 			item->InventoryID,
-			item->IntVar(NAME_Amount), item->MaxAmount);
+			item->IntVar(NAME_Amount), item->IntVar(NAME_MaxAmount));
 		count++;
 	}
 	Printf ("  List count: %d\n", count);

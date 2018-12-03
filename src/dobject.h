@@ -244,6 +244,7 @@ public:
 	// Add other types as needed.
 	inline bool &BoolVar(FName field);
 	inline int &IntVar(FName field);
+	inline FTextureID &TextureIDVar(FName field);
 	inline FSoundID &SoundVar(FName field);
 	inline PalEntry &ColorVar(FName field);
 	inline FName &NameVar(FName field);
@@ -441,6 +442,11 @@ inline bool &DObject::BoolVar(FName field)
 inline int &DObject::IntVar(FName field)
 {
 	return *(int*)ScriptVar(field, nullptr);
+}
+
+inline FTextureID &DObject::TextureIDVar(FName field)
+{
+	return *(FTextureID*)ScriptVar(field, nullptr);
 }
 
 inline FSoundID &DObject::SoundVar(FName field)

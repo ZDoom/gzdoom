@@ -361,7 +361,7 @@ static void LoadAltHudStuff()
 				}
 				else tex.SetInvalid();
 
-				if (ti) ((AInventory*)GetDefaultByType(ti))->AltHUDIcon = tex;
+				if (ti) GetDefaultByType(ti)->TextureIDVar(NAME_AltHUDIcon) = tex;
 			}
 		}
 	}

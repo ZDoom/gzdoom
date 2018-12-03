@@ -1843,11 +1843,11 @@ int CheckInventory (AActor *activator, const char *type, bool max)
 	{
 		if (item)
 		{
-			return item->MaxAmount;
+			return item->IntVar(NAME_MaxAmount);
 		}
 		else if (info != nullptr && info->IsDescendantOf(NAME_Inventory))
 		{
-			return ((AInventory *)GetDefaultByType(info))->MaxAmount;
+			return ((AInventory *)GetDefaultByType(info))->IntVar(NAME_MaxAmount);
 		}
 	}
 	return item ? item->IntVar(NAME_Amount) : 0;
@@ -9353,11 +9353,11 @@ scriptwait:
 					item = activator->FindInventory (static_cast<PClassActor *>(type));
 					if (item != NULL)
 					{
-						STACK(1) = item->MaxAmount;
+						STACK(1) = item->IntVar(NAME_MaxAmount);
 					}
 					else
 					{
-						STACK(1) = ((AInventory *)GetDefaultByType (type))->MaxAmount;
+						STACK(1) = ((AInventory *)GetDefaultByType (type))->IntVar(NAME_MaxAmount);
 					}
 				}
 				else
@@ -9382,14 +9382,14 @@ scriptwait:
 					item = activator->FindInventory (type);
 					if (item != NULL)
 					{
-						item->MaxAmount = STACK(1);
+						item->IntVar(NAME_MaxAmount) = STACK(1);
 					}
 					else
 					{
 						item = activator->GiveInventoryType (type);
 						if (item != NULL)
 						{
-							item->MaxAmount = STACK(1);
+							item->IntVar(NAME_MaxAmount) = STACK(1);
 							item->IntVar(NAME_Amount) = 0;
 						}
 					}

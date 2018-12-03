@@ -371,8 +371,8 @@ void DBot::WhatToGet (AActor *item)
 				return;
 			auto ammo1 = heldWeapon->PointerVar<AInventory>(NAME_Ammo1);
 			auto ammo2 = heldWeapon->PointerVar<AInventory>(NAME_Ammo2);
-			if ((ammo1 == NULL || ammo1->IntVar(NAME_Amount) >= ammo1->MaxAmount) &&
-				(ammo2 == NULL || ammo2->IntVar(NAME_Amount) >= ammo2->MaxAmount))
+			if ((ammo1 == NULL || ammo1->IntVar(NAME_Amount) >= ammo1->IntVar(NAME_MaxAmount)) &&
+				(ammo2 == NULL || ammo2->IntVar(NAME_Amount) >= ammo2->IntVar(NAME_MaxAmount)))
 			{
 				return;
 			}
@@ -384,7 +384,7 @@ void DBot::WhatToGet (AActor *item)
 		auto parent = item->GetClass();
 		while (parent->ParentClass != ac) parent = static_cast<PClassActor*>(parent->ParentClass);
 		AInventory *holdingammo = player->mo->FindInventory(parent);
-		if (holdingammo != NULL && holdingammo->IntVar(NAME_Amount) >= holdingammo->MaxAmount)
+		if (holdingammo != NULL && holdingammo->IntVar(NAME_Amount) >= holdingammo->IntVar(NAME_MaxAmount))
 		{
 			return;
 		}

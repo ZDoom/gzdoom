@@ -1765,9 +1765,9 @@ int GetInventoryIcon(AInventory *item, uint32_t flags, int *applyscale)
 		*applyscale = false;
 	}
 
-	if (item == nullptr) return FNullTextureID().GetIndex();
+	if (item == nullptr) return 0;
 
-	FTextureID picnum, Icon = item->Icon, AltIcon = item->AltHUDIcon;
+	FTextureID picnum, Icon = item->TextureIDVar(NAME_Icon), AltIcon = item->TextureIDVar(NAME_AltHUDIcon);
 	FState * state = NULL, *ReadyState;
 
 	picnum.SetNull();
@@ -1780,7 +1780,7 @@ int GetInventoryIcon(AInventory *item, uint32_t flags, int *applyscale)
 	}
 	else
 	{
-		if (!(flags & DI_SKIPICON) && item->Icon.isValid())
+		if (!(flags & DI_SKIPICON) && Icon.isValid())
 			picnum = Icon;
 		else if (!(flags & DI_SKIPALTICON))
 			picnum = AltIcon;

@@ -206,7 +206,7 @@ bool ModActorFlag(AActor *actor, const FString &flagname, bool set, bool printer
 //
 //==========================================================================
 
-INTBOOL CheckActorFlag(const AActor *owner, FFlagDef *fd)
+INTBOOL CheckActorFlag(AActor *owner, FFlagDef *fd)
 {
 	if (fd->structoffset == -1)
 	{
@@ -232,7 +232,7 @@ INTBOOL CheckActorFlag(const AActor *owner, FFlagDef *fd)
 #endif
 }
 
-INTBOOL CheckActorFlag(const AActor *owner, const char *flagname, bool printerror)
+INTBOOL CheckActorFlag(AActor *owner, const char *flagname, bool printerror)
 {
 	const char *dot = strchr (flagname, '.');
 	FFlagDef *fd;
@@ -310,15 +310,15 @@ void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int in
 	case DEPF_PICKUPFLASH:
 		if (set)
 		{
-			static_cast<AInventory*>(defaults)->PickupFlash = FindClassTentative("PickupFlash", RUNTIME_CLASS(AActor));
+			defaults->PointerVar<PClass>(NAME_PickupFlash) = FindClassTentative("PickupFlash", RUNTIME_CLASS(AActor));
 		}
 		else
 		{
-			static_cast<AInventory*>(defaults)->PickupFlash = NULL;
+			defaults->PointerVar<PClass>(NAME_PickupFlash) = nullptr;
 		}
 		break;
 	case DEPF_INTERHUBSTRIP: // Old system was 0 or 1, so if the flag is cleared, assume 1.
-		static_cast<AInventory*>(defaults)->InterHubAmount = set ? 0 : 1;
+		defaults->IntVar(NAME_InterHubAmount) = set ? 0 : 1;
 		break;
 	case DEPF_NOTRAIL:
 	{
@@ -351,7 +351,7 @@ void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int in
 //
 //===========================================================================
 
-bool CheckDeprecatedFlags(const AActor *actor, PClassActor *info, int index)
+bool CheckDeprecatedFlags(AActor *actor, PClassActor *info, int index)
 {
 	// A deprecated flag is false if
 	// a) it hasn't been added here
@@ -391,11 +391,10 @@ bool CheckDeprecatedFlags(const AActor *actor, PClassActor *info, int index)
 		return (actor->BounceFlags & (BOUNCE_TypeMask|BOUNCE_UseSeeSound)) == BOUNCE_DoomCompat;
 
 	case DEPF_PICKUPFLASH:
-		return static_cast<const AInventory*>(actor)->PickupFlash == PClass::FindClass("PickupFlash");
-		// A pure name lookup may or may not be more efficient, but I know no static identifier for PickupFlash.
+		return actor->PointerVar<PClass>(NAME_PickupFlash) == PClass::FindClass(NAME_PickupFlash);
 
 	case DEPF_INTERHUBSTRIP:
-		return !(static_cast<const AInventory*>(actor)->InterHubAmount);
+		return !(actor->IntVar(NAME_InterHubAmount));
 	}
 
 	return false; // Any entirely unknown flag is not set
@@ -1151,7 +1150,7 @@ static void SetIcon(FTextureID &icon, Baggage &bag, const char *i)
 DEFINE_CLASS_PROPERTY(icon, S, Inventory)
 {
 	PROP_STRING_PARM(i, 0);
-	SetIcon(defaults->Icon, bag, i);
+	SetIcon(defaults->TextureIDVar(NAME_Icon), bag, i);
 }
 
 //==========================================================================
@@ -1160,7 +1159,7 @@ DEFINE_CLASS_PROPERTY(icon, S, Inventory)
 DEFINE_CLASS_PROPERTY(althudicon, S, Inventory)
 {
 	PROP_STRING_PARM(i, 0);
-	SetIcon(defaults->AltHUDIcon, bag, i);
+	SetIcon(defaults->TextureIDVar(NAME_AltHUDIcon), bag, i);
 }
 
 //==========================================================================
@@ -1168,7 +1167,7 @@ DEFINE_CLASS_PROPERTY(althudicon, S, Inventory)
 //==========================================================================
 DEFINE_CLASS_PROPERTY(defmaxamount, 0, Inventory)
 {
-	defaults->MaxAmount = gameinfo.definventorymaxamount;
+	defaults->IntVar(NAME_MaxAmount) = gameinfo.definventorymaxamount;
 }
 
 //==========================================================================

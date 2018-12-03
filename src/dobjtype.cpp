@@ -48,6 +48,7 @@
 #include "a_keys.h"
 #include "vm.h"
 #include "types.h"
+#include "scriptutil.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -255,6 +256,7 @@ void PClass::StaticShutdown ()
 	{
 		*p = nullptr;
 	}
+	ScriptUtil::Clear();
 	FunctionPtrList.Clear();
 	VMFunction::DeleteAll();
 

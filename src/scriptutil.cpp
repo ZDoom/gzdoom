@@ -35,6 +35,11 @@
 static TArray<VMValue> parameters;
 static TMap<FName, VMFunction*> functions;
 
+void ScriptUtil::Clear()
+{
+	parameters.Clear();
+	functions.Clear();
+}
 
 void ScriptUtil::BuildParameters(va_list ap)
 {
@@ -69,7 +74,7 @@ void ScriptUtil::RunFunction(FName functionname, unsigned paramstart, VMReturn &
 	auto check = functions.CheckKey(functionname);
 	if (!check)
 	{
-		PClass::FindFunction(&func, NAME_ScriptUtil, functionname);
+		func = PClass::FindFunction(NAME_ScriptUtil, functionname);
 		if (func == nullptr) 
 		{
 			I_Error("Call to undefined function ScriptUtil.%s", functionname.GetChars());

@@ -24,4 +24,5 @@ public:
 	};
 
 	static int Exec(FName functionname, ...);
+	static void Clear();
 };

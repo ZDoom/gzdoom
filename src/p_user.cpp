@@ -1010,6 +1010,25 @@ const char *APlayerPawn::GetSoundClass() const
 
 //===========================================================================
 //
+// APlayerPawn :: hasBuddha
+//
+
+//===========================================================================
+
+int APlayerPawn::hasBuddha()
+{
+	if (player->playerstate == PST_DEAD) return 0;
+	if (player->cheats & CF_BUDDHA2) return 2;
+	
+	if ((player->cheats & CF_BUDDHA) ||
+		(player->mo->flags7 & MF7_BUDDHA) ||
+		player->mo->FindInventory (PClass::FindActor(NAME_PowerBuddha),true) != nullptr) return 1;
+	
+	return 0;
+}
+
+//===========================================================================
+//
 // APlayerPawn :: GetMaxHealth
 //
 // only needed because Boom screwed up Dehacked.

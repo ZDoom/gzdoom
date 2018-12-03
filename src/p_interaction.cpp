@@ -1210,9 +1210,10 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 			// but telefragging should still do enough damage to kill the player)
 			// Ignore players that are already dead.
 			// [MC]Buddha2 absorbs telefrag damage, and anything else thrown their way.
-			if (!(flags & DMG_FORCED) && (((player->cheats & CF_BUDDHA2) || (((player->cheats & CF_BUDDHA) ||
-				(player->mo->FindInventory (PClass::FindActor(NAME_PowerBuddha),true) != nullptr) ||
-				(player->mo->flags7 & MF7_BUDDHA)) && !telefragDamage)) && (player->playerstate != PST_DEAD)))
+			int buddha = player->mo->hasBuddha();
+			if (flags & DMG_FORCED) buddha = 0;
+			if (telefragDamage && buddha == 1) buddha = 0;
+			if (buddha)
 			{
 				// If this is a voodoo doll we need to handle the real player as well.
 				player->mo->health = target->health = player->health = 1;
@@ -1767,9 +1768,9 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPain
 	target->health -= damage;
 	if (target->health <= 0)
 	{ // Death
-		if ((player->cheats & CF_BUDDHA2) || //Buddha2 is never subjected to telefrag damage thresholds.
-			((player->cheats & CF_BUDDHA) || (player->mo->flags7 & MF7_BUDDHA) ||
-			(player->mo->FindInventory(PClass::FindActor(NAME_PowerBuddha), true) != nullptr) && !telefragDamage))
+		int buddha = player->mo->hasBuddha();
+		if (telefragDamage && buddha == 1) buddha = 0;
+		if (buddha)
 		{ // [SP] Save the player... 
 			player->health = target->health = 1;
 		}

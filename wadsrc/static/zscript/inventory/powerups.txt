@@ -269,7 +269,7 @@ class Powerup : Inventory
 
 	//===========================================================================
 	//
-	// AInventory :: GetPowerupIcon
+	// Inventory :: GetPowerupIcon
 	//
 	// Returns the icon that should be drawn for an active powerup.
 	//

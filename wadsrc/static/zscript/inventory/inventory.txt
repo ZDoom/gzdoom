@@ -114,7 +114,7 @@ class Inventory : Actor native
 	
 	//===========================================================================
 	//
-	// AInventory :: MarkPrecacheSounds
+	// Inventory :: MarkPrecacheSounds
 	//
 	//===========================================================================
 
@@ -126,7 +126,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: BeginPlay
+	// Inventory :: BeginPlay
 	//
 	//===========================================================================
 
@@ -138,7 +138,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: Destroy
+	// Inventory :: Destroy
 	//
 	//===========================================================================
 
@@ -154,7 +154,7 @@ class Inventory : Actor native
 	
 	//===========================================================================
 	//
-	// AInventory :: ShouldSpawn
+	// Inventory :: ShouldSpawn
 	//
 	//===========================================================================
 
@@ -226,7 +226,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: DoRespawn
+	// Inventory :: DoRespawn
 	//
 	//===========================================================================
 
@@ -249,7 +249,7 @@ class Inventory : Actor native
 	
 	//===========================================================================
 	//
-	// AInventory :: Grind
+	// Inventory :: Grind
 	//
 	//===========================================================================
 
@@ -276,7 +276,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: BecomeItem
+	// Inventory :: BecomeItem
 	//
 	// Lets this actor know that it's about to be placed in an inventory.
 	//
@@ -301,7 +301,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: BecomePickup
+	// Inventory :: BecomePickup
 	//
 	// Lets this actor know it should wait to be picked up.
 	//
@@ -328,7 +328,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: CreateCopy
+	// Inventory :: CreateCopy
 	//
 	// Returns an actor suitable for placing in an inventory, either itself or
 	// a copy based on whether it needs to respawn or not. Returning NULL
@@ -356,7 +356,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: HandlePickup
+	// Inventory :: HandlePickup
 	//
 	// Returns true if the pickup was handled (or should not happen at all),
 	// false if not.
@@ -391,7 +391,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: CallHandlePickup
+	// Inventory :: CallHandlePickup
 	//
 	// Runs all HandlePickup methods in the chain
 	//
@@ -410,7 +410,7 @@ class Inventory : Actor native
 		
 	//===========================================================================
 	//
-	// AInventory :: TryPickup
+	// Inventory :: TryPickup
 	//
 	//===========================================================================
 
@@ -495,7 +495,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: GiveQuest
+	// Inventory :: GiveQuest
 	//
 	//===========================================================================
 
@@ -514,7 +514,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: CanPickup
+	// Inventory :: CanPickup
 	//
 	//===========================================================================
 	
@@ -544,7 +544,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: CallTryPickup
+	// Inventory :: CallTryPickup
 	//
 	// In this case the caller function is more than a simple wrapper around the virtual method and
 	// is what must be actually called to pick up an item.
@@ -605,7 +605,7 @@ class Inventory : Actor native
 	
 	//===========================================================================
 	//
-	// AInventory :: ShouldStay
+	// Inventory :: ShouldStay
 	//
 	// Returns true if the item should not disappear, even temporarily.
 	//
@@ -618,7 +618,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: TryPickupRestricted
+	// Inventory :: TryPickupRestricted
 	//
 	//===========================================================================
 
@@ -629,7 +629,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: AttachToOwner
+	// Inventory :: AttachToOwner
 	//
 	//===========================================================================
 
@@ -641,7 +641,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: DetachFromOwner
+	// Inventory :: DetachFromOwner
 	//
 	// Performs any special work needed when the item leaves an inventory,
 	// either through destruction or becoming a pickup.
@@ -654,7 +654,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory::CreateTossable
+	// Inventory::CreateTossable
 	//
 	// Creates a copy of the item suitable for dropping. If this actor embodies
 	// only one item, then it is tossed out itself. Otherwise, the count drops
@@ -698,7 +698,7 @@ class Inventory : Actor native
 	
 	//===========================================================================
 	//
-	// AInventory :: PickupMessage
+	// Inventory :: PickupMessage
 	//
 	// Returns the message to print when this actor is picked up.
 	//
@@ -711,7 +711,7 @@ class Inventory : Actor native
 	
 	//===========================================================================
 	//
-	// AInventory :: Touch
+	// Inventory :: Touch
 	//
 	// Handles collisions from another actor, possible adding itself to the
 	// collider's inventory.
@@ -788,7 +788,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: DepleteOrDestroy
+	// Inventory :: DepleteOrDestroy
 	//
 	// If the item is depleted, just change its amount to 0, otherwise it's destroyed.
 	//
@@ -814,7 +814,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: Travelled
+	// Inventory :: Travelled
 	//
 	// Called when an item in somebody's inventory is carried over to another
 	// map, in case it needs to do special reinitialization.
@@ -825,7 +825,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: DoEffect
+	// Inventory :: DoEffect
 	//
 	// Handles any effect an item might apply to its owner
 	// Normally only used by subclasses of Powerup
@@ -836,7 +836,7 @@ class Inventory : Actor native
 	
 	//===========================================================================
 	//
-	// AInventory :: Hide
+	// Inventory :: Hide
 	//
 	// Hides this actor until it's time to respawn again. 
 	//
@@ -888,7 +888,7 @@ class Inventory : Actor native
 	
 	//===========================================================================
 	//
-	// AInventory :: ShouldRespawn
+	// Inventory :: ShouldRespawn
 	//
 	// Returns true if the item should hide itself and reappear later when picked
 	// up.
@@ -904,7 +904,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: GoAway
+	// Inventory :: GoAway
 	//
 	// Returns true if you must create a copy of this item to give to the player
 	// or false if you can use this one instead.
@@ -933,7 +933,7 @@ class Inventory : Actor native
 	
 	//===========================================================================
 	//
-	// AInventory :: GoAwayAndDie
+	// Inventory :: GoAwayAndDie
 	//
 	// Like GoAway but used by items that don't insert themselves into the
 	// inventory. If they won't be respawning, then they can destroy themselves.
@@ -951,7 +951,7 @@ class Inventory : Actor native
 	
 	//===========================================================================
 	//
-	// AInventory :: ModifyDamage
+	// Inventory :: ModifyDamage
 	//
 	// Allows inventory items to manipulate the amount of damage
 	// inflicted. Damage is the amount of damage that would be done without manipulation,
@@ -981,7 +981,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: DoPickupSpecial
+	// Inventory :: DoPickupSpecial
 	//
 	// Executes this actor's special when it is picked up.
 	//
@@ -997,7 +997,7 @@ class Inventory : Actor native
 	}
 		//===========================================================================
 	//
-	// AInventory :: PlayPickupSound
+	// Inventory :: PlayPickupSound
 	//
 	//===========================================================================
 
@@ -1035,7 +1035,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: DrawPowerup
+	// Inventory :: DrawPowerup
 	//
 	// This has been deprecated because it is not how this should be done
 	// Use GetPowerupIcon instead!
@@ -1046,7 +1046,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: AbsorbDamage
+	// Inventory :: AbsorbDamage
 	//
 	// Allows inventory items (primarily armor) to reduce the amount of damage
 	// taken. Damage is the amount of damage that would be done without armor,
@@ -1059,7 +1059,7 @@ class Inventory : Actor native
 	
 	//===========================================================================
 	//
-	// AInventory :: SpecialDropAction
+	// Inventory :: SpecialDropAction
 	//
 	// Called by P_DropItem. Return true to prevent the standard drop tossing.
 	// A few Strife items that are meant to trigger actions rather than be
@@ -1074,7 +1074,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: NextInv
+	// Inventory :: NextInv
 	//
 	// Returns the next item with IF_INVBAR set.
 	//
@@ -1094,7 +1094,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: PrevInv
+	// Inventory :: PrevInv
 	//
 	// Returns the previous item with IF_INVBAR set.
 	//
@@ -1118,7 +1118,7 @@ class Inventory : Actor native
 	
 	//===========================================================================
 	//
-	// AInventory :: OnDrop
+	// Inventory :: OnDrop
 	//
 	// Called by AActor::DropInventory. Allows items to modify how they behave
 	// after being dropped.

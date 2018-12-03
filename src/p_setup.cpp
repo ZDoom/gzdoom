@@ -1176,12 +1176,12 @@ template<class segtype>
 void P_LoadSegs (MapData * map)
 {
 	uint8_t *data;
-	int numvertexes = level.vertexes.Size();
+	uint32_t numvertexes = level.vertexes.Size();
 	uint8_t *vertchanged = new uint8_t[numvertexes];	// phares 10/4/98
 	uint32_t segangle;
 	//int ptp_angle;		// phares 10/4/98
 	//int delta_angle;	// phares 10/4/98
-	int vnum1,vnum2;	// phares 10/4/98
+	uint32_t vnum1,vnum2;	// phares 10/4/98
 	int lumplen = map->Size(ML_SEGS);
 
 	memset (vertchanged,0,numvertexes); // phares 10/4/98
@@ -1300,6 +1300,10 @@ void P_LoadSegs (MapData * map)
 			ldef = &level.lines[linedef];
 			li->linedef = ldef;
 			side = LittleShort(ml->side);
+			if (side != 0 && side != 1)
+			{
+				throw badseg(3, i, side);
+			}
 			if ((unsigned)(ldef->sidedef[side]->Index()) >= level.sides.Size())
 			{
 				throw badseg(2, i, ldef->sidedef[side]->Index());
@@ -1333,6 +1337,10 @@ void P_LoadSegs (MapData * map)
 
 		case 2:
 			Printf ("The linedef for seg %d references a nonexistant sidedef %d (max %d).\n", bad.badsegnum, bad.baddata, level.sides.Size());
+			break;
+
+		case 3:
+			Printf("Sidedef reference in seg %d is %d (must be 0 or 1).\n", bad.badsegnum, bad.baddata);
 			break;
 		}
 		Printf ("The BSP will be rebuilt.\n");

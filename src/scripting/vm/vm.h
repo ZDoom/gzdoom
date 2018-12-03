@@ -561,6 +561,19 @@ struct FieldDesc
 	int BitValue;
 };
 
+namespace
+{
+	// Traits for the types we are interested in
+	template<typename T> struct native_is_valid { static const bool value = false; };
+	template<typename T> struct native_is_valid<T*> { static const bool value = true; };
+	template<typename T> struct native_is_valid<T&> { static const bool value = true; };
+	template<> struct native_is_valid<void> { static const bool value = true; };
+	template<> struct native_is_valid<int> { static const bool value = true; };
+	template<> struct native_is_valid<unsigned int> { static const bool value = true; };
+	template<> struct native_is_valid<double> { static const bool value = true; };
+	template<> struct native_is_valid<bool> { static const bool value = true; };
+}
+
 // Compile time validation of direct native functions
 struct DirectNativeDesc
 {
@@ -582,17 +595,7 @@ struct DirectNativeDesc
 	#undef TP
 	#undef VP
 
-	template<typename T> void ValidateType() { static_assert(is_valid<T>::value, "Argument type is not valid as a direct native parameter or return type"); }
-
-	// Traits for the types we are interested in
-	template<typename T> struct is_valid { static const bool value = false; };
-	template<typename T> struct is_valid<T*> { static const bool value = true; };
-	template<typename T> struct is_valid<T&> { static const bool value = true; };
-	template<> struct is_valid<void> { static const bool value = true; };
-	template<> struct is_valid<int> { static const bool value = true; };
-	template<> struct is_valid<unsigned int> { static const bool value = true; };
-	template<> struct is_valid<double> { static const bool value = true; };
-	template<> struct is_valid<bool> { static const bool value = true; };
+	template<typename T> void ValidateType() { static_assert(native_is_valid<T>::value, "Argument type is not valid as a direct native parameter or return type"); }
 
 	operator void *() const { return Ptr; }
 

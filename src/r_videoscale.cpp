@@ -113,7 +113,7 @@ int ViewportScaledWidth(int width, int height)
 		vid_scalemode = 0;
 	if (vid_cropaspect && height > 0)
 		width = ((float)width/height > ActiveRatio(width, height)) ? (int)(height * ActiveRatio(width, height)) : width;
-	return (int)MAX((int32_t)320, (int32_t)vScaleTable[vid_scalemode].GetScaledWidth((int)((float)width * vid_scalefactor)));
+	return (int)MAX((int32_t)320, (int32_t)(vid_scalefactor * vScaleTable[vid_scalemode].GetScaledWidth(width)));
 }
 
 int ViewportScaledHeight(int width, int height)
@@ -122,7 +122,7 @@ int ViewportScaledHeight(int width, int height)
 		vid_scalemode = 0;
 	if (vid_cropaspect && height > 0)
 		height = ((float)width/height < ActiveRatio(width, height)) ? (int)(width / ActiveRatio(width, height)) : height;
-	return (int)MAX((int32_t)200, (int32_t)vScaleTable[vid_scalemode].GetScaledHeight((int)((float)height * vid_scalefactor)));
+	return (int)MAX((int32_t)200, (int32_t)(vid_scalefactor * vScaleTable[vid_scalemode].GetScaledHeight(height)));
 }
 
 bool ViewportIsScaled43()

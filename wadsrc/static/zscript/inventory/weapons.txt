@@ -119,7 +119,7 @@ class Weapon : StateProvider
 	
 	virtual int, int CheckAddToSlots()
 	{
-		if (GetReplacement(GetClass()) == null && !bPowered_Up)
+		if (GetReplacement(GetClass()) == GetClass() && !bPowered_Up)
 		{
 			return SlotNumber, SlotPriority*65536;
 		}

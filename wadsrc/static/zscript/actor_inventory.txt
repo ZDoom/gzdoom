@@ -122,11 +122,11 @@ extend class Actor
 					if (invp.Inv == item)
 					{
 						invp.Inv = item.Inv;
-						item.DetachFromOwner();
 						break;
 					}
 				}
 			}
+			item.DetachFromOwner();
 			item.Owner = NULL;
 			item.Inv = NULL;
 		}

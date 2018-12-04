@@ -39,7 +39,6 @@
 
 #define WEAPONTOP				32.
 #define WEAPON_FUDGE_Y			0.375
-class AInventory;
 struct FTranslatedLineTarget;
 
 //

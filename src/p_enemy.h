@@ -6,7 +6,6 @@
 
 struct sector_t;
 class AActor;
-class AInventory;
 class PClass;
 
 

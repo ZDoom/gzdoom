@@ -619,7 +619,7 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 			}
 			else //check the inventory items and draw selected sprite
 			{
-				AInventory* item = statusBar->CPlayer->mo->FindInventory(inventoryItem[0]);
+				auto item = statusBar->CPlayer->mo->FindInventory(inventoryItem[0]);
 				if(item == NULL || !EvaluateOperation(conditionalOperator[0], conditionalValue[0], item->IntVar(NAME_Amount)))
 					drawAlt = 1;
 				if(conditionAnd)
@@ -1351,7 +1351,7 @@ class CommandDrawNumber : public CommandDrawString
 					break;
 				case AMMO:
 				{
-					AInventory* item = statusBar->CPlayer->mo->FindInventory(inventoryItem);
+					auto item = statusBar->CPlayer->mo->FindInventory(inventoryItem);
 					if(item != NULL)
 						num = item->IntVar(NAME_Amount);
 					else
@@ -1378,11 +1378,11 @@ class CommandDrawNumber : public CommandDrawString
 					break;
 				case AMMOCAPACITY:
 				{
-					AInventory* item = statusBar->CPlayer->mo->FindInventory(inventoryItem);
+					auto item = statusBar->CPlayer->mo->FindInventory(inventoryItem);
 					if(item != NULL)
 						num = item->IntVar(NAME_MaxAmount);
 					else
-						num = ((AInventory *)GetDefaultByType(inventoryItem))->IntVar(NAME_MaxAmount);
+						num = GetDefaultByType(inventoryItem)->IntVar(NAME_MaxAmount);
 					break;
 				}
 				case FRAGS:
@@ -1449,7 +1449,7 @@ class CommandDrawNumber : public CommandDrawString
 				}
 				case INVENTORY:
 				{
-					AInventory* item = statusBar->CPlayer->mo->FindInventory(inventoryItem);
+					auto item = statusBar->CPlayer->mo->FindInventory(inventoryItem);
 					if(item != NULL)
 						num = item->IntVar(NAME_Amount);
 					else
@@ -2085,9 +2085,9 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 			}
 		}
 
-		AInventory *PrevInv(AInventory *item)
+		AActor *PrevInv(AActor *item)
 		{
-			AInventory *retval = nullptr;
+			AActor *retval = nullptr;
 			IFVM(Inventory, PrevInv)
 			{
 				VMValue param = item;
@@ -2097,9 +2097,9 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 			return retval;
 		}
 
-		AInventory *NextInv(AInventory *item)
+		AActor *NextInv(AActor *item)
 		{
-			AInventory *retval = nullptr;
+			AActor *retval = nullptr;
 			IFVM(Inventory, NextInv)
 			{
 				VMValue param = item;
@@ -2117,7 +2117,7 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 			if(translucent)
 				bgalpha *= HX_SHADOW;
 		
-			AInventory *item;
+			AActor *item;
 			unsigned int i = 0;
 			// If the player has no artifacts, don't draw the bar
 			statusBar->CPlayer->mo->InvFirst = statusBar->wrapper->ValidateInvFirst(size);
@@ -3074,7 +3074,7 @@ class CommandHasWeaponPiece : public SBarInfoCommandFlowControl
 		{
 			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
 
-			for(AInventory *inv = statusBar->CPlayer->mo->Inventory;inv != NULL;inv=inv->Inventory)
+			for(auto inv = statusBar->CPlayer->mo->Inventory;inv != NULL;inv=inv->Inventory)
 			{
 				auto hc = PClass::FindActor("WeaponHolder");
 				if(inv->IsKindOf(hc))
@@ -3360,7 +3360,7 @@ class CommandInInventory : public SBarInfoNegatableFlowControl
 		{
 			SBarInfoNegatableFlowControl::Tick(block, statusBar, hudChanged);
 
-			AInventory *invItem[2] = { statusBar->CPlayer->mo->FindInventory(item[0]), statusBar->CPlayer->mo->FindInventory(item[1]) };
+			AActor *invItem[2] = { statusBar->CPlayer->mo->FindInventory(item[0]), statusBar->CPlayer->mo->FindInventory(item[1]) };
 			if (invItem[0] != NULL && Amount[0] > 0 && invItem[0]->IntVar(NAME_Amount) < Amount[0]) invItem[0] = NULL;
 			if (invItem[1] != NULL && Amount[1] > 0 && invItem[1]->IntVar(NAME_Amount) < Amount[1]) invItem[1] = NULL;
 

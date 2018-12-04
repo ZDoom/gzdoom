@@ -351,7 +351,7 @@ void FWeaponSlots::AddExtraWeapons()
 		{
 			continue;
 		}
-		auto weapdef = ((AInventory*)GetDefaultByType(cls));
+		auto weapdef = GetDefaultByType(cls);
 
 		// Let the weapon decide for itself if it wants to get added to a slot.
 		IFVIRTUALPTRNAME(weapdef, NAME_Weapon, CheckAddToSlots)

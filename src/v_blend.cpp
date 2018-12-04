@@ -95,11 +95,11 @@ void V_AddPlayerBlend (player_t *CPlayer, float blend[4], float maxinvalpha, int
 	int cnt;
 
 	// [RH] All powerups can affect the screen blending now
-	for (auto item = CPlayer->mo->Inventory; item != NULL; item = item->Inventory)
+	for (AActor *item = CPlayer->mo->Inventory; item != NULL; item = item->Inventory)
 	{
 		PalEntry color = 0;
 
-		IFVIRTUALPTR(item, AInventory, GetBlend)
+		IFVIRTUALPTRNAME(item, NAME_Inventory, GetBlend)
 		{
 			VMValue params[1] = { item };
 			VMReturn ret((int*)&color.d);

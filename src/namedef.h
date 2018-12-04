@@ -1017,6 +1017,7 @@ xx(YAdjust)
 xx(Crosshair)
 xx(WeaponFlags)
 xx(DropTime)
+xx(PickupSound)
 
 xx(BlueCard)
 xx(YellowCard)

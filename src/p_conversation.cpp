@@ -603,12 +603,10 @@ static int FindNode (const FStrifeDialogueNode *node)
 
 static bool CheckStrifeItem (player_t *player, PClassActor *itemtype, int amount=-1)
 {
-	AInventory *item;
-
 	if (itemtype == NULL || amount == 0)
 		return true;
 
-	item = player->ConversationPC->FindInventory (itemtype);
+	auto item = player->ConversationPC->FindInventory (itemtype);
 	if (item == NULL)
 		return false;
 

@@ -1496,7 +1496,7 @@ void DFrameBuffer::DrawBlend(sector_t * viewsector)
 		auto torchtype = PClass::FindActor(NAME_PowerTorch);
 		auto litetype = PClass::FindActor(NAME_PowerLightAmp);
 		PalEntry color = 0xffffffff;
-		for (AInventory * in = player->mo->Inventory; in; in = in->Inventory)
+		for (AActor *in = player->mo->Inventory; in; in = in->Inventory)
 		{
 			// Need special handling for light amplifiers 
 			if (in->IsKindOf(torchtype))

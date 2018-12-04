@@ -377,8 +377,6 @@ T* Create(Args&&... args)
 }
 
 
-class AInventory;//
-
 // When you write to a pointer to an Object, you must call this for
 // proper bookkeeping in case the Object holding this pointer has
 // already been processed by the GC.

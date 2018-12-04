@@ -1541,7 +1541,7 @@ enum SW_Flags
 DEFINE_ACTION_FUNCTION(AActor, A_SelectWeapon)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS(cls, AInventory);
+	PARAM_CLASS(cls, AActor);
 	PARAM_INT(flags);
 
 	bool selectPriority = !!(flags & SWF_SELECTPRIORITY);
@@ -2109,7 +2109,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckRange)
 DEFINE_ACTION_FUNCTION(AActor, A_DropInventory)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS(drop, AInventory);
+	PARAM_CLASS(drop, AActor);
 	PARAM_INT(amount);
 
 	if (drop)

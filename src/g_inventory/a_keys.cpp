@@ -63,9 +63,7 @@ struct OneKey
 		if (owner->IsA(key) || owner->GetSpecies() == key->TypeName) return true;
 
 		// Other calls check an actor that may have a key in its inventory.
-		AInventory *item;
-
-		for (item = owner->Inventory; item != NULL; item = item->Inventory)
+		for (AActor *item = owner->Inventory; item != NULL; item = item->Inventory)
 		{
 			if (item->IsA(key))
 			{
@@ -129,7 +127,7 @@ struct Lock
 		if (!keylist.Size())
 		{
 			auto kt = PClass::FindActor(NAME_Key);
-			for (AInventory * item = owner->Inventory; item != NULL; item = item->Inventory)
+			for (AActor *item = owner->Inventory; item != NULL; item = item->Inventory)
 			{
 				if (item->IsKindOf (kt))
 				{
@@ -430,9 +428,9 @@ static void CreateSortedKeyList()
 
 		if (ti->IsDescendantOf(kt))
 		{
-			AInventory *key = (AInventory*)(GetDefaultByType(ti));
+			auto key = GetDefaultByType(ti);
 
-			if (key->Icon.isValid() && key->special1 > 0)
+			if (key->special1 > 0)
 			{
 				KeyTypes.Push(ti);
 			}
@@ -587,7 +585,7 @@ int P_GetMapColorForLock (int lock)
 //
 //==========================================================================
 
-int P_GetMapColorForKey (AInventory * key)
+int P_GetMapColorForKey (AActor * key)
 {
 	int i;
 

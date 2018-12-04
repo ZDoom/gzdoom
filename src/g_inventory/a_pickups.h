@@ -89,7 +89,7 @@ public:
 	FSoundIDNoInit PickupSound;
 };
 
-bool CallTryPickup(AInventory *item, AActor *toucher, AActor **toucher_return = nullptr);
-void DepleteOrDestroy(AInventory *item);			// virtual on the script side. 
+bool CallTryPickup(AActor *item, AActor *toucher, AActor **toucher_return = nullptr);
+void DepleteOrDestroy(AActor *item);			// virtual on the script side. 
 
 #endif //__A_PICKUPS_H__

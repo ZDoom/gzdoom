@@ -94,8 +94,7 @@ public:
 
 	bool ResetAirSupply (bool playgasp = true);
 	int GetMaxHealth(bool withupgrades = false) const;
-	AInventory *PickNewWeapon (PClassActor *ammotype);
-	AInventory *BestWeapon (PClassActor *ammotype);
+	AActor *PickNewWeapon (PClassActor *ammotype);
 	void GiveDeathmatchInventory ();
 	
 	void GiveDefaultInventory ();
@@ -124,8 +123,8 @@ public:
 	int			RunHealth;
 	int			PlayerFlags;
 	double		FullHeight;
-	TObjPtr<AInventory*> InvFirst;		// first inventory item displayed on inventory bar
-	TObjPtr<AInventory*> InvSel;			// selected inventory item
+	TObjPtr<AActor*> InvFirst;		// first inventory item displayed on inventory bar
+	TObjPtr<AActor*> InvSel;			// selected inventory item
 
 	// [GRB] Player class properties
 	double		JumpZ;

@@ -324,9 +324,9 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 	//flags &= ~MF_INVINCIBLE;
 
 	// [RH] Notify this actor's items.
-	for (auto item = Inventory; item != NULL; )
+	for (AActor *item = Inventory; item != NULL; )
 	{
-		AInventory *next = item->Inventory;
+		AActor *next = item->Inventory;
 		IFVIRTUALPTR(item, AInventory, OwnerDied)
 		{
 			VMValue params[1] = { item };

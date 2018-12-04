@@ -132,9 +132,9 @@ DEFINE_ACTION_FUNCTION(AInventory, PrintPickupMessage)
 //
 //===========================================================================
 
-void DepleteOrDestroy (AInventory *item)
+void DepleteOrDestroy (AActor *item)
 {
-	IFVIRTUALPTR(item, AInventory, DepleteOrDestroy)
+	IFVIRTUALPTRNAME(item, NAME_Inventory, DepleteOrDestroy)
 	{
 		VMValue params[1] = { item };
 		VMCall(func, params, 1, nullptr, 0);
@@ -147,7 +147,7 @@ void DepleteOrDestroy (AInventory *item)
 //
 //===========================================================================
 
-bool CallTryPickup(AInventory *item, AActor *toucher, AActor **toucher_return)
+bool CallTryPickup(AActor *item, AActor *toucher, AActor **toucher_return)
 {
 	static VMFunction *func = nullptr;
 	if (func == nullptr) PClass::FindFunction(&func, NAME_Inventory, NAME_CallTryPickup);

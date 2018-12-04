@@ -99,7 +99,7 @@ using BotInfoMap = TMap<FName, BotInfoData>;
 
 extern BotInfoMap BotInfo;
 
-inline BotInfoData GetBotInfo(AInventory *weap)
+inline BotInfoData GetBotInfo(AActor *weap)
 {
 	if (weap == nullptr) return BotInfoData();
 	auto k = BotInfo.CheckKey(weap->GetClass()->TypeName);
@@ -145,7 +145,7 @@ public:
 	botinfo_t *botinfo;
 	int spawn_tries;
 	int wanted_botnum;
-	TObjPtr<AInventory*> firstthing;
+	TObjPtr<AActor*> firstthing;
 	TObjPtr<AActor*>	body1;
 	TObjPtr<AActor*> body2;
 

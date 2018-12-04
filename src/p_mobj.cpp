@@ -3450,9 +3450,9 @@ bool AActor::AdjustReflectionAngle (AActor *thing, DAngle &angle)
 
 int AActor::AbsorbDamage(int damage, FName dmgtype)
 {
-	for (auto item = Inventory; item != nullptr; item = item->Inventory)
+	for (AActor *item = Inventory; item != nullptr; item = item->Inventory)
 	{
-		IFVIRTUALPTR(item, AInventory, AbsorbDamage)
+		IFVIRTUALPTRNAME(item, NAME_Inventory, AbsorbDamage)
 		{
 			VMValue params[4] = { item, damage, dmgtype.GetIndex(), &damage };
 			VMCall(func, params, 4, nullptr, 0);
@@ -3464,15 +3464,15 @@ int AActor::AbsorbDamage(int damage, FName dmgtype)
 void AActor::AlterWeaponSprite(visstyle_t *vis)
 {
 	int changed = 0;
-	TArray<AInventory *> items;
+	TArray<AActor *> items;
 	// This needs to go backwards through the items but the list has no backlinks.
-	for (auto item = Inventory; item != nullptr; item = item->Inventory)
+	for (AActor *item = Inventory; item != nullptr; item = item->Inventory)
 	{
 		items.Push(item);
 	}
 	for(int i=items.Size()-1;i>=0;i--)
 	{
-		IFVIRTUALPTR(items[i], AInventory, AlterWeaponSprite)
+		IFVIRTUALPTRNAME(items[i], NAME_Inventory, AlterWeaponSprite)
 		{
 			VMValue params[3] = { items[i], vis, &changed };
 			VMCall(func, params, 3, nullptr, 0);
@@ -3785,11 +3785,11 @@ void AActor::Tick ()
 		{
 			// Handle powerup effects here so that the order is controlled
 			// by the order in the inventory, not the order in the thinker table
-			auto item = Inventory;
+			AActor *item = Inventory;
 			
 			while (item != NULL)
 			{
-				IFVIRTUALPTR(item, AInventory, DoEffect)
+				IFVIRTUALPTRNAME(item, NAME_Inventory, DoEffect)
 				{
 					VMValue params[1] = { item };
 					VMCall(func, params, 1, nullptr, 0);
@@ -8129,7 +8129,7 @@ void PrintMiscActorInfo(AActor *query)
 		/*for (flagi = 0; flagi < 31; flagi++)
 			if (query->BounceFlags & 1<<flagi) Printf(" %s", flagnamesb[flagi]);*/
 		Printf("\nRender style = %i:%s, alpha %f\nRender flags: %x", 
-			querystyle, (querystyle < countof(renderstyles) ? renderstyles[querystyle] : "Custom"),
+			querystyle, ((unsigned)querystyle < countof(renderstyles) ? renderstyles[querystyle] : "Custom"),
 			query->Alpha, query->renderflags.GetValue());
 		/*for (flagi = 0; flagi < 31; flagi++)
 			if (query->renderflags & 1<<flagi) Printf(" %s", flagnamesr[flagi]);*/

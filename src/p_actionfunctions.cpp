@@ -1529,54 +1529,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Recoil)
 }
 
 
-//===========================================================================
-//
-// A_SelectWeapon
-//
-//===========================================================================
-enum SW_Flags
-{
-	SWF_SELECTPRIORITY = 1,
-};
-DEFINE_ACTION_FUNCTION(AActor, A_SelectWeapon)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS(cls, AActor);
-	PARAM_INT(flags);
-
-	bool selectPriority = !!(flags & SWF_SELECTPRIORITY);
-
-	if ((!selectPriority && cls == NULL) || self->player == NULL)
-	{
-		ACTION_RETURN_BOOL(false);
-	}
-
-	auto weaponitem = self->FindInventory(cls);
-
-	if (weaponitem != NULL && weaponitem->IsKindOf(NAME_Weapon))
-	{
-		if (self->player->ReadyWeapon != weaponitem)
-		{
-			self->player->PendingWeapon = weaponitem;
-		}
-		ACTION_RETURN_BOOL(true);
-	}
-	else if (selectPriority)
-	{
-		// [XA] if the named weapon cannot be found (or is a dummy like 'None'),
-		//      select the next highest priority weapon. This is basically
-		//      the same as A_CheckReload minus the ammo check. Handy.
-		self->player->mo->PickNewWeapon(NULL);
-		ACTION_RETURN_BOOL(true);
-	}
-	else
-	{
-		ACTION_RETURN_BOOL(false);
-	}
-}
-
-
-//===========================================================================
+///===========================================================================
 //
 // A_Print
 //

@@ -58,7 +58,7 @@ extend class Actor
 	// AActor :: GiveInventory
 	//
 	//============================================================================
-	
+
 	bool GiveInventory(Class<Inventory> type, int amount, bool givecheat = false)
 	{
 		bool result = true;
@@ -193,7 +193,7 @@ extend class Actor
 
 		if (item != null)
 		{
-			// A_SetInventory sets the absolute amount. 
+			// A_SetInventory sets the absolute amount.
 			// Subtract or set the appropriate amount as necessary.
 
 			if (amount == item.Amount)
@@ -264,12 +264,12 @@ extend class Actor
 			return false;
 		}
 
-		if (!item.Use(false)) 
+		if (!item.Use(false))
 		{
 			return false;
 		}
 
-		if (sv_infiniteinventory)	
+		if (sv_infiniteinventory)
 		{
 			return true;
 		}
@@ -355,7 +355,7 @@ extend class Actor
 		}
 	}
 
-	
+
 	//============================================================================
 	//
 	// AActor :: GiveAmmo
@@ -413,7 +413,7 @@ extend class Actor
 		{
 			amount = 1;
 		}
-		if (mi) 
+		if (mi)
 		{
 			let item = Inventory(Spawn(mi));
 			if (item == NULL)
@@ -446,7 +446,7 @@ extend class Actor
 	bool A_GiveInventory(class<Inventory> itemtype, int amount = 0, int giveto = AAPTR_DEFAULT)
 	{
 		return DoGiveInventory(self, false, itemtype, amount, giveto);
-	}	
+	}
 
 	bool A_GiveToTarget(class<Inventory> itemtype, int amount = 0, int giveto = AAPTR_DEFAULT)
 	{
@@ -497,7 +497,7 @@ extend class Actor
 	bool DoTakeInventory(Actor receiver, bool orresult, class<Inventory> itemtype, int amount, int flags, int setreceiver = AAPTR_DEFAULT)
 	{
 		int paramnum = 0;
-		
+
 		if (itemtype == NULL)
 		{
 			return false;
@@ -517,12 +517,12 @@ extend class Actor
 	bool A_TakeInventory(class<Inventory> itemtype, int amount = 0, int flags = 0, int giveto = AAPTR_DEFAULT)
 	{
 		return DoTakeInventory(self, false, itemtype, amount, flags, giveto);
-	}	
+	}
 
 	bool A_TakeFromTarget(class<Inventory> itemtype, int amount = 0, int flags = 0, int giveto = AAPTR_DEFAULT)
 	{
 		return DoTakeInventory(target, false, itemtype, amount, flags, giveto);
-	}	
+	}
 
 	int A_TakeFromChildren(class<Inventory> itemtype, int amount = 0)
 	{
@@ -564,7 +564,7 @@ extend class Actor
 	// A_SetInventory
 	//
 	//===========================================================================
-	
+
 	bool A_SetInventory(class<Inventory> itemtype, int amount, int ptr = AAPTR_DEFAULT, bool beyondMax = false)
 	{
 		bool res = false;
@@ -600,7 +600,7 @@ extend class Actor
 	{
 		int style = sv_dropstyle;
 		if (style==0) style = gameinfo.defaultdropstyle;
-		
+
 		if (style==2)
 		{
 			Vel.X += random2[DropItem](7);
@@ -614,7 +614,7 @@ extend class Actor
 		}
 	}
 
-	
+
 	//---------------------------------------------------------------------------
 	//
 	// PROC A_DropItem
@@ -730,8 +730,47 @@ extend class Actor
 		return false;
 	}
 
-	
-	
-	
-}
+	//===========================================================================
+	//
+	// A_SelectWeapon
+	//
+	//===========================================================================
 
+	bool A_SelectWeapon(class<Weapon> whichweapon, int flags = 0)
+	{
+		bool selectPriority = !!(flags & SWF_SELECTPRIORITY);
+		let player = self.player;
+
+		if ((!selectPriority && whichweapon == NULL) || player == NULL)
+		{
+			return false;
+		}
+
+		let weaponitem = Weapon(FindInventory(whichweapon));
+
+		if (weaponitem != NULL)
+		{
+			if (player.ReadyWeapon != weaponitem)
+			{
+				player.PendingWeapon = weaponitem;
+			}
+			return true;
+		}
+		else if (selectPriority)
+		{
+			// [XA] if the named weapon cannot be found (or is a dummy like 'None'),
+			//      select the next highest priority weapon. This is basically
+			//      the same as A_CheckReload minus the ammo check. Handy.
+			player.mo.PickNewWeapon(NULL);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+
+
+
+}

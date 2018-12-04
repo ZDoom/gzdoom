@@ -40,9 +40,243 @@
 #include "doomstat.h"
 #include "p_acs.h"
 #include "a_pickups.h"
+#include "a_specialspot.h"
+#include "actorptrselect.h"
 
 DVector2 AM_GetPosition();
 int Net_GetLatency(int *ld, int *ad);
+void PrintPickupMessage(bool localview, const FString &str);
+
+//=====================================================================================
+//
+// FString exports
+//
+//=====================================================================================
+
+static void LocalizeString(const FString &label, bool prefixed, FString *result)
+{
+	if (!prefixed) *result = GStrings(label);
+	else if (label[0] != '$') *result = label;
+	else *result = GStrings(&label[1]);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringTable, Localize, LocalizeString)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(label);
+	PARAM_BOOL(prefixed);
+	FString result;
+	LocalizeString(label, prefixed, &result);
+	ACTION_RETURN_STRING(result);
+}
+
+static void StringReplace(FString *self, const FString &s1, const FString &s2)
+{
+	self->Substitute(s1, s2);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Replace, StringReplace)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_STRING(s1);
+	PARAM_STRING(s2);
+	self->Substitute(s1, s2);
+	return 0;
+}
+
+static void StringMid(FString *self, unsigned pos, unsigned len, FString *result)
+{
+	*result = self->Mid(pos, len);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Mid, StringMid)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_UINT(pos);
+	PARAM_UINT(len);
+	FString s = self->Mid(pos, len);
+	ACTION_RETURN_STRING(s);
+}
+
+static void StringLeft(FString *self, unsigned len, FString *result)
+{
+	*result = self->Left(len);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Left, StringLeft)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_UINT(len);
+	FString s = self->Left(len);
+	ACTION_RETURN_STRING(s);
+}
+
+static void StringTruncate(FString *self, unsigned len)
+{
+	self->Truncate(len);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Truncate, StringTruncate)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_UINT(len);
+	self->Truncate(len);
+	return 0;
+}
+
+static void StringRemove(FString *self, unsigned index, unsigned remlen)
+{
+	self->Remove(index, remlen);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Remove, StringRemove)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_UINT(index);
+	PARAM_UINT(remlen);
+	self->Remove(index, remlen);
+	return 0;
+}
+
+static void StringCharAt(FString *self, int pos, FString *result)
+{
+	if ((unsigned)pos >= self->Len()) *result = "";
+	else *result = FString((*self)[pos]);
+}
+// CharAt and CharCodeAt is how JS does it, and JS is similar here in that it doesn't have char type as int.
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharAt, StringCharAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT(pos);
+	FString result;
+	StringCharAt(self, pos, &result);
+	ACTION_RETURN_STRING(result);
+}
+
+static int StringCharCodeAt(FString *self, int pos)
+{
+	if ((unsigned)pos >= self->Len()) return 0;
+	else return (*self)[pos];
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharCodeAt, StringCharCodeAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT(pos);
+	ACTION_RETURN_INT(StringCharCodeAt(self, pos));
+}
+
+static void StringFilter(FString *self, FString *result)
+{
+	*result = strbin1(*self);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Filter, StringFilter)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	ACTION_RETURN_STRING(strbin1(*self));
+}
+
+static int StringIndexOf(FString *self, const FString &substr, int startIndex)
+{
+	return self->IndexOf(substr, startIndex);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, IndexOf, StringIndexOf)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_STRING(substr);
+	PARAM_INT(startIndex);
+	ACTION_RETURN_INT(self->IndexOf(substr, startIndex));
+}
+
+static int StringLastIndexOf(FString *self, const FString &substr, int endIndex)
+{
+	return self->LastIndexOfBroken(substr, endIndex);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, LastIndexOf, StringLastIndexOf)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_STRING(substr);
+	PARAM_INT(endIndex);
+	ACTION_RETURN_INT(self->LastIndexOfBroken(substr, endIndex));
+}
+
+static int StringRightIndexOf(FString *self, const FString &substr, int endIndex)
+{
+	return self->LastIndexOf(substr, endIndex);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, RightIndexOf, StringRightIndexOf)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_STRING(substr);
+	PARAM_INT(endIndex);
+	ACTION_RETURN_INT(self->LastIndexOf(substr, endIndex));
+}
+
+static void StringToUpper(FString *self)
+{
+	self->ToUpper();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToUpper, StringToUpper)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	self->ToUpper();
+	return 0;
+}
+
+static void StringToLower(FString *self)
+{
+	self->ToLower();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToLower, StringToLower)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	self->ToLower();
+	return 0;
+}
+
+static int StringToInt(FString *self, int base)
+{
+	return (int)self->ToLong(base);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToInt, StringToInt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT(base);
+	ACTION_RETURN_INT(self->ToLong(base));
+}
+
+static int StringToDbl(FString *self)
+{
+	return self->ToDouble();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToDouble, StringToDbl)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	ACTION_RETURN_FLOAT(self->ToDouble());
+}
+
+static void StringSplit(FString *self, TArray<FString> *tokens, const FString &delimiter, int keepEmpty)
+{
+	self->Split(*tokens, delimiter, static_cast<FString::EmptyTokenType>(keepEmpty));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Split, StringSplit)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_POINTER(tokens, TArray<FString>);
+	PARAM_STRING(delimiter);
+	PARAM_INT(keepEmpty);
+	StringSplit(self, tokens, delimiter, keepEmpty);
+	return 0;
+}
 
 //=====================================================================================
 //
@@ -1578,6 +1812,14 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetCursor, GetCursor)
 //
 //=====================================================================================
 
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetPointer, COPY_AAPTR)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(ptr);
+	ACTION_RETURN_OBJECT(COPY_AAPTR(self, ptr));
+}
+
+
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_PlaySound, A_PlaySound)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -1603,6 +1845,21 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckKeys, P_CheckKeys)
 
 //=====================================================================================
 //
+// Inventory exports
+//
+//=====================================================================================
+
+DEFINE_ACTION_FUNCTION_NATIVE(AInventory, PrintPickupMessage, PrintPickupMessage)
+{
+	PARAM_PROLOGUE;
+	PARAM_BOOL(localview);
+	PARAM_STRING(str);
+	PrintPickupMessage(localview, str);
+	return 0;
+}
+
+//=====================================================================================
+//
 // Key exports
 //
 //=====================================================================================
@@ -1620,6 +1877,64 @@ DEFINE_ACTION_FUNCTION_NATIVE(AKey, GetKeyType, P_GetKeyType)
 	ACTION_RETURN_POINTER(P_GetKeyType(num));
 }
 
+//=====================================================================================
+//
+// SpotState exports
+//
+//=====================================================================================
+
+static DSpotState *GetSpotState()
+{
+	return DSpotState::GetSpotState();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSpotState, GetSpotState, GetSpotState)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_OBJECT(DSpotState::GetSpotState());
+}
+
+static AActor *GetNextInList(DSpotState *self, PClassActor *type, int skipcounter)
+{
+	return self->GetNextInList(type, skipcounter);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSpotState, GetNextInList, GetNextInList)
+{
+	PARAM_SELF_PROLOGUE(DSpotState);
+	PARAM_CLASS(type, AActor);
+	PARAM_INT(skipcounter);
+	ACTION_RETURN_OBJECT(self->GetNextInList(type, skipcounter));
+}
+
+static AActor *GetSpotWithMinMaxDistance(DSpotState *self, PClassActor *type, double x, double y, double mindist, double maxdist)
+{
+	return self->GetSpotWithMinMaxDistance(type, x, y, mindist, maxdist);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSpotState, GetSpotWithMinMaxDistance, GetSpotWithMinMaxDistance)
+{
+	PARAM_SELF_PROLOGUE(DSpotState);
+	PARAM_CLASS(type, AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(mindist);
+	PARAM_FLOAT(maxdist);
+	ACTION_RETURN_OBJECT(self->GetSpotWithMinMaxDistance(type, x, y, mindist, maxdist));
+}
+
+static AActor *GetRandomSpot(DSpotState *self, PClassActor *type, bool onlyonce)
+{
+	return self->GetRandomSpot(type, onlyonce);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSpotState, GetRandomSpot, GetRandomSpot)
+{
+	PARAM_SELF_PROLOGUE(DSpotState);
+	PARAM_CLASS(type, AActor);
+	PARAM_BOOL(onlyonce);
+	ACTION_RETURN_POINTER(self->GetRandomSpot(type, onlyonce));
+}
 
 //=====================================================================================
 //
@@ -1867,7 +2182,7 @@ void SBar_DrawImage(DBaseStatusBar *self, const FString &texid, double x, double
 	self->DrawGraphic(TexMan.CheckForTexture(texid, ETextureType::Any), x, y, flags, alpha, w, h, scaleX, scaleY);
 }
 
-DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawImage)
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, DrawImage, SBar_DrawImage)
 {
 	PARAM_SELF_PROLOGUE(DBaseStatusBar);
 	PARAM_STRING(texid);

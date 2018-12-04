@@ -8530,7 +8530,12 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION(DObject, BuiltinCallLineSpecial)
+void BuiltinCallLineSpecial(int special, AActor *activator, int arg1, int arg2, int arg3, int arg4, int arg5)
+{
+	P_ExecuteSpecial(special, nullptr, activator, 0, arg1, arg2, arg3, arg4, arg5);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, BuiltinCallLineSpecial, BuiltinCallLineSpecial)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(special);

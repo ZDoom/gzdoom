@@ -245,21 +245,6 @@ DEFINE_ACTION_FUNCTION(ACustomInventory, CallStateChain)
 
 //==========================================================================
 //
-// GetPointer
-//
-// resolve AAPTR_*
-//
-//==========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, GetPointer)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(ptr);
-	ACTION_RETURN_OBJECT(COPY_AAPTR(self, ptr));
-}
-
-//==========================================================================
-//
 // CheckClass
 //
 // NON-ACTION function to check a pointer's class.

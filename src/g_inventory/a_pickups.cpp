@@ -57,27 +57,24 @@ EXTERN_CVAR(Bool, sv_unlimited_pickup)
 
 //===========================================================================
 //
+// This is only native so it can have some static storage for comparison.
 //
 //===========================================================================
 static int StaticLastMessageTic;
 static FString StaticLastMessage;
 
-DEFINE_ACTION_FUNCTION(AInventory, PrintPickupMessage)
+void PrintPickupMessage(bool localview, const FString &str)
 {
-	PARAM_PROLOGUE;
-	PARAM_BOOL(localview);
-	PARAM_STRING(str);
 	if (str.IsNotEmpty() && localview && (StaticLastMessageTic != gametic || StaticLastMessage.Compare(str)))
 	{
 		StaticLastMessageTic = gametic;
 		StaticLastMessage = str;
 		const char *pstr = str.GetChars();
-
+		
 		if (pstr[0] == '$')	pstr = GStrings(pstr + 1);
 		if (pstr[0] != 0) Printf(PRINT_LOW, "%s\n", pstr);
 		StatusBar->FlashCrosshair();
 	}
-	return 0;
 }
 
 //===========================================================================

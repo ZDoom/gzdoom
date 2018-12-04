@@ -409,13 +409,6 @@ static FFlagDef MoreFlagDefs[] =
 	DEFINE_DUMMY_FLAG(SERVERSIDEONLY, false),
 };
 
-static FFlagDef InventoryFlagDefs[] =
-{
-	// Inventory flags
-	DEFINE_DEPRECATED_FLAG(PICKUPFLASH),
-	DEFINE_DEPRECATED_FLAG(INTERHUBSTRIP),
-};
-
 static FFlagDef PlayerPawnFlagDefs[] =
 {
 	// PlayerPawn flags
@@ -969,25 +962,6 @@ DEFINE_ACTION_FUNCTION(DObject, BAM)
 	ACTION_RETURN_INT(DAngle(ang).BAMs());
 }
 
-DEFINE_ACTION_FUNCTION(FStringTable, Localize)
-{
-	PARAM_PROLOGUE;
-	PARAM_STRING(label);
-	PARAM_BOOL(prefixed);
-	if (!prefixed) ACTION_RETURN_STRING(GStrings(label));
-	if (label[0] != '$') ACTION_RETURN_STRING(label);
-	ACTION_RETURN_STRING(GStrings(&label[1]));
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, Replace)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_STRING(s1);
-	PARAM_STRING(s2);
-	self->Substitute(s1, s2);
-	return 0;
-}
-
 FString FStringFormat(VM_ARGS, int offset)
 {
 	PARAM_VA_POINTER(va_reginfo)	// Get the hidden type information array
@@ -1203,124 +1177,3 @@ DEFINE_ACTION_FUNCTION(FStringStruct, AppendFormat)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(FStringStruct, Mid)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_UINT(pos);
-	PARAM_UINT(len);
-	FString s = self->Mid(pos, len);
-	ACTION_RETURN_STRING(s);
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, Left)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_UINT(len);
-	FString s = self->Left(len);
-	ACTION_RETURN_STRING(s);
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, Truncate)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_UINT(len);
-	self->Truncate(len);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, Remove)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_UINT(index);
-	PARAM_UINT(remlen);
-	self->Remove(index, remlen);
-	return 0;
-}
-
-// CharAt and CharCodeAt is how JS does it, and JS is similar here in that it doesn't have char type as int.
-DEFINE_ACTION_FUNCTION(FStringStruct, CharAt)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_INT(pos);
-	int slen = (int)self->Len();
-	if (pos < 0 || pos >= slen)
-		ACTION_RETURN_STRING("");
-	ACTION_RETURN_STRING(FString((*self)[pos]));
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, CharCodeAt)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_INT(pos);
-	int slen = (int)self->Len();
-	if (pos < 0 || pos >= slen)
-		ACTION_RETURN_INT(0);
-	ACTION_RETURN_INT((*self)[pos]);
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, Filter)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	ACTION_RETURN_STRING(strbin1(*self));
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, IndexOf)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_STRING(substr);
-	PARAM_INT(startIndex);
-	ACTION_RETURN_INT(self->IndexOf(substr, startIndex));
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, LastIndexOf)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_STRING(substr);
-	PARAM_INT(endIndex);
-	ACTION_RETURN_INT(self->LastIndexOfBroken(substr, endIndex));
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, RightIndexOf)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_STRING(substr);
-	PARAM_INT(endIndex);
-	ACTION_RETURN_INT(self->LastIndexOf(substr, endIndex));
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, ToUpper)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	self->ToUpper();
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, ToLower)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	self->ToLower();
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, ToInt)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_INT(base);
-	ACTION_RETURN_INT(self->ToLong(base));
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, ToDouble)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	ACTION_RETURN_FLOAT(self->ToDouble());
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, Split)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_POINTER(tokens, TArray<FString>);
-	PARAM_STRING(delimiter);
-	PARAM_INT(keepEmpty);
-	self->Split(*tokens, delimiter, static_cast<FString::EmptyTokenType>(keepEmpty));
-	return 0;
-}

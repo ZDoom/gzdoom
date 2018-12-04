@@ -1101,15 +1101,6 @@ void APlayerPawn::PlayIdle ()
 	}
 }
 
-void APlayerPawn::PlayAttacking2 ()
-{
-	IFVIRTUAL(APlayerPawn, PlayAttacking2)
-	{
-		VMValue params[1] = { (DObject*)this };
-		VMCall(func, params, 1, nullptr, 0);
-	}
-}
-
 //===========================================================================
 //
 // APlayerPawn :: GiveDefaultInventory

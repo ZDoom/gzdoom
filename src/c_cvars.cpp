@@ -1760,11 +1760,8 @@ EXTERN_CVAR(Bool, sv_cheats);
 
 void FBaseCVar::CmdSet (const char *newval)
 {
-	if ((GetFlags() & CVAR_CHEAT) && !sv_cheats)
-	{
-		Printf("sv_cheats must be true to set this console variable.\n");
+	if ((GetFlags() & CVAR_CHEAT) && CheckCheatmode ())
 		return;
-	}
 
 	MarkUnsafe();
 

@@ -2283,7 +2283,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, Fill, SBar_Fill)
 	return 0;
 }
 
-static void SBar_SetClipRect(DBaseStatusBar *self, int color, double x, double y, double w, double h, int flags)
+static void SBar_SetClipRect(DBaseStatusBar *self, double x, double y, double w, double h, int flags)
 {
 	self->SetClipRect(x, y, w, h, flags);
 }

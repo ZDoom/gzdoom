@@ -3349,7 +3349,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Teleport)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_STATE_ACTION	(teleport_state)			
-	PARAM_CLASS		(target_type, ASpecialSpot)	
+	PARAM_CLASS		(target_type, AActor)	
 	PARAM_CLASS		(fog_type, AActor)			
 	PARAM_INT		(flags)						
 	PARAM_FLOAT		(mindist)					

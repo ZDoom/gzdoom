@@ -1883,15 +1883,38 @@ DEFINE_ACTION_FUNCTION_NATIVE(AKey, GetKeyType, P_GetKeyType)
 //
 //=====================================================================================
 
-static DSpotState *GetSpotState()
-{
-	return DSpotState::GetSpotState();
-}
 
-DEFINE_ACTION_FUNCTION_NATIVE(DSpotState, GetSpotState, GetSpotState)
+DEFINE_ACTION_FUNCTION_NATIVE(DSpotState, GetSpotState, DSpotState::GetSpotState)
 {
 	PARAM_PROLOGUE;
-	ACTION_RETURN_OBJECT(DSpotState::GetSpotState());
+	PARAM_BOOL(create);
+	ACTION_RETURN_OBJECT(DSpotState::GetSpotState(create));
+}
+
+static void AddSpot(DSpotState *state, AActor *spot)
+{
+	state->AddSpot(spot);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSpotState, AddSpot, AddSpot)
+{
+	PARAM_SELF_PROLOGUE(DSpotState);
+	PARAM_OBJECT(spot, AActor);
+	self->AddSpot(spot);
+	return 0;
+}
+
+static void RemoveSpot(DSpotState *state, AActor *spot)
+{
+	state->RemoveSpot(spot);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSpotState, RemoveSpot, RemoveSpot)
+{
+	PARAM_SELF_PROLOGUE(DSpotState);
+	PARAM_OBJECT(spot, AActor);
+	self->RemoveSpot(spot);
+	return 0;
 }
 
 static AActor *GetNextInList(DSpotState *self, PClassActor *type, int skipcounter)

@@ -4,17 +4,6 @@
 #include "actor.h"
 #include "tarray.h"
 
-class ASpecialSpot : public AActor
-{
-	DECLARE_CLASS (ASpecialSpot, AActor)
-
-public:
-
-	void BeginPlay();
-	void OnDestroy() override;
-};
-
-
 struct FSpotList;
 
 
@@ -32,12 +21,12 @@ public:
 	void Tick ();
 	static DSpotState *GetSpotState(bool create = true);
 	FSpotList *FindSpotList(PClassActor *type);
-	bool AddSpot(ASpecialSpot *spot);
-	bool RemoveSpot(ASpecialSpot *spot);
+	bool AddSpot(AActor *spot);
+	bool RemoveSpot(AActor *spot);
 	void Serialize(FSerializer &arc);
-	ASpecialSpot *GetNextInList(PClassActor *type, int skipcounter);
-	ASpecialSpot *GetSpotWithMinMaxDistance(PClassActor *type, double x, double y, double mindist, double maxdist);
-	ASpecialSpot *GetRandomSpot(PClassActor *type, bool onlyonce = false);
+	AActor *GetNextInList(PClassActor *type, int skipcounter);
+	AActor *GetSpotWithMinMaxDistance(PClassActor *type, double x, double y, double mindist, double maxdist);
+	AActor *GetRandomSpot(PClassActor *type, bool onlyonce = false);
 };
 
 

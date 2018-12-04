@@ -598,15 +598,6 @@ struct DropItem native
 	native readonly int Amount;
 }
 
-class SpotState : Object native
-{
-	native static SpotState GetSpotState();
-	native SpecialSpot GetNextInList(class<Actor> type, int skipcounter);
-	native SpecialSpot GetSpotWithMinMaxDistance(Class<Actor> type, double x, double y, double mindist, double maxdist);
-	native SpecialSpot GetRandomSpot(class<Actor> type, bool onlyonce);
-	
-}
-
 struct LevelLocals native
 {
 	enum EUDMF

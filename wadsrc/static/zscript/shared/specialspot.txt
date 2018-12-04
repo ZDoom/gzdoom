@@ -1,6 +1,36 @@
-
-class SpecialSpot : Actor native
+class SpotState : Object native
 {
+	native static SpotState GetSpotState(bool create = true);
+	native SpecialSpot GetNextInList(class<Actor> type, int skipcounter);
+	native SpecialSpot GetSpotWithMinMaxDistance(Class<Actor> type, double x, double y, double mindist, double maxdist);
+	native SpecialSpot GetRandomSpot(class<Actor> type, bool onlyonce);
+	native void AddSpot(SpecialSpot spot);
+	native void RemoveSpot(SpecialSpot spot);
+	
+}
+
+class SpecialSpot : Actor
+{
+	override void BeginPlay()
+	{
+		let sstate = SpotState.GetSpotState();
+		if (sstate != NULL) sstate.AddSpot(self);
+		Super.BeginPlay();
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	//
+	//
+	//----------------------------------------------------------------------------
+
+	override void OnDestroy()
+	{
+		let sstate = SpotState.GetSpotState(false);
+		if (sstate != NULL) sstate.RemoveSpot(self);
+		Super.OnDestroy();
+	}
+	
 	// Mace spawn spot ----------------------------------------------------------
 
 	// Every mace spawn spot will execute this action. The first one

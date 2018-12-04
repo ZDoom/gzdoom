@@ -64,7 +64,7 @@ static TArray<uint16_t> CreateUnwindInfoWindows(asmjit::CCFunc *func)
 	FuncFrameLayout layout;
 	Error error = layout.init(func->getDetail(), func->getFrameInfo());
 	if (error != kErrorOk)
-		I_FatalError("FuncFrameLayout.init failed");
+		I_Error("FuncFrameLayout.init failed");
 
 	// We need a dummy emitter for instruction size calculations
 	CodeHolder code;
@@ -275,7 +275,7 @@ void *AddJitFunction(asmjit::CodeHolder* code, asmjit::CCFunc *func)
 	BOOLEAN result = RtlAddFunctionTable(table, 1, (DWORD64)baseaddr);
 	JitFrames.Push((uint8_t*)table);
 	if (result == 0)
-		I_FatalError("RtlAddFunctionTable failed");
+		I_Error("RtlAddFunctionTable failed");
 #endif
 
 	return p;
@@ -549,7 +549,7 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 	FuncFrameLayout layout;
 	Error error = layout.init(func->getDetail(), func->getFrameInfo());
 	if (error != kErrorOk)
-		I_FatalError("FuncFrameLayout.init failed");
+		I_Error("FuncFrameLayout.init failed");
 
 	// We need a dummy emitter for instruction size calculations
 	CodeHolder code;

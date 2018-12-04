@@ -76,7 +76,7 @@ void JitCompiler::EmitVMCall(asmjit::X86Gp vmfunc, VMFunction *target)
 
 	int numparams = StoreCallParams();
 	if (numparams != B)
-		I_FatalError("OP_CALL parameter count does not match the number of preceding OP_PARAM instructions");
+		I_Error("OP_CALL parameter count does not match the number of preceding OP_PARAM instructions");
 
 	if ((pc - 1)->op == OP_VTBL)
 		EmitVtbl(pc - 1);
@@ -199,7 +199,7 @@ int JitCompiler::StoreCallParams()
 			break;
 
 		default:
-			I_FatalError("Unknown REGT value passed to EmitPARAM\n");
+			I_Error("Unknown REGT value passed to EmitPARAM\n");
 			break;
 		}
 	}
@@ -224,7 +224,7 @@ void JitCompiler::LoadReturns(const VMOP *retval, int numret)
 	for (int i = 0; i < numret; ++i)
 	{
 		if (retval[i].op != OP_RESULT)
-			I_FatalError("Expected OP_RESULT to follow OP_CALL\n");
+			I_Error("Expected OP_RESULT to follow OP_CALL\n");
 
 		LoadCallResult(retval[i].b, retval[i].c, false);
 	}
@@ -264,7 +264,7 @@ void JitCompiler::LoadCallResult(int type, int regnum, bool addrof)
 		cc.mov(regA[regnum], asmjit::x86::ptr(vmframe, offsetA + regnum * sizeof(void*)));
 		break;
 	default:
-		I_FatalError("Unknown OP_RESULT/OP_PARAM type encountered in LoadCallResult\n");
+		I_Error("Unknown OP_RESULT/OP_PARAM type encountered in LoadCallResult\n");
 		break;
 	}
 }
@@ -277,7 +277,7 @@ void JitCompiler::FillReturns(const VMOP *retval, int numret)
 	{
 		if (retval[i].op != OP_RESULT)
 		{
-			I_FatalError("Expected OP_RESULT to follow OP_CALL\n");
+			I_Error("Expected OP_RESULT to follow OP_CALL\n");
 		}
 
 		int type = retval[i].b;
@@ -285,7 +285,7 @@ void JitCompiler::FillReturns(const VMOP *retval, int numret)
 
 		if (type & REGT_KONST)
 		{
-			I_FatalError("OP_RESULT with REGT_KONST is not allowed\n");
+			I_Error("OP_RESULT with REGT_KONST is not allowed\n");
 		}
 
 		auto regPtr = newTempIntPtr();
@@ -305,7 +305,7 @@ void JitCompiler::FillReturns(const VMOP *retval, int numret)
 			cc.lea(regPtr, x86::ptr(vmframe, offsetA + (int)(regnum * sizeof(void*))));
 			break;
 		default:
-			I_FatalError("Unknown OP_RESULT type encountered in FillReturns\n");
+			I_Error("Unknown OP_RESULT type encountered in FillReturns\n");
 			break;
 		}
 
@@ -320,7 +320,7 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 
 	if ((pc - 1)->op == OP_VTBL)
 	{
-		I_FatalError("Native direct member function calls not implemented\n");
+		I_Error("Native direct member function calls not implemented\n");
 	}
 
 	asmjit::CBNode *cursorBefore = cc.getCursor();
@@ -397,18 +397,18 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 			case REGT_INT | REGT_ADDROF:
 			case REGT_POINTER | REGT_ADDROF:
 			case REGT_FLOAT | REGT_ADDROF:
-				I_FatalError("REGT_ADDROF not implemented for native direct calls\n");
+				I_Error("REGT_ADDROF not implemented for native direct calls\n");
 				break;
 
 			default:
-				I_FatalError("Unknown REGT value passed to EmitPARAM\n");
+				I_Error("Unknown REGT value passed to EmitPARAM\n");
 				break;
 			}
 		}
 	}
 
 	if (numparams != B)
-		I_FatalError("OP_CALL parameter count does not match the number of preceding OP_PARAM instructions\n");
+		I_Error("OP_CALL parameter count does not match the number of preceding OP_PARAM instructions\n");
 
 	// Note: the usage of newResultXX is intentional. Asmjit has a register allocation bug
 	// if the return virtual register is already allocated in an argument slot.
@@ -441,7 +441,7 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 
 		if (type & REGT_KONST)
 		{
-			I_FatalError("OP_RESULT with REGT_KONST is not allowed\n");
+			I_Error("OP_RESULT with REGT_KONST is not allowed\n");
 		}
 
 		CheckVMFrame();
@@ -470,7 +470,7 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 				cc.lea(regPtr, x86::ptr(vmframe, offsetA + (int)(regnum * sizeof(void*))));
 				break;
 			default:
-				I_FatalError("Unknown OP_RESULT type encountered\n");
+				I_Error("Unknown OP_RESULT type encountered\n");
 				break;
 			}
 
@@ -535,7 +535,7 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 			cc.mov(regA[regnum], asmjit::x86::ptr(vmframe, offsetA + regnum * sizeof(void*)));
 			break;
 		default:
-			I_FatalError("Unknown OP_RESULT type encountered\n");
+			I_Error("Unknown OP_RESULT type encountered\n");
 			break;
 		}
 	}
@@ -602,7 +602,7 @@ asmjit::FuncSignature JitCompiler::CreateFuncSignature()
 				break;
 
 			default:
-				I_FatalError("Unknown REGT value passed to EmitPARAM\n");
+				I_Error("Unknown REGT value passed to EmitPARAM\n");
 				break;
 			}
 		}
@@ -619,7 +619,7 @@ asmjit::FuncSignature JitCompiler::CreateFuncSignature()
 	{
 		if (retval[0].op != OP_RESULT)
 		{
-			I_FatalError("Expected OP_RESULT to follow OP_CALL\n");
+			I_Error("Expected OP_RESULT to follow OP_CALL\n");
 		}
 
 		int type = retval[0].b;
@@ -649,7 +649,7 @@ asmjit::FuncSignature JitCompiler::CreateFuncSignature()
 	{
 		if (retval[i].op != OP_RESULT)
 		{
-			I_FatalError("Expected OP_RESULT to follow OP_CALL\n");
+			I_Error("Expected OP_RESULT to follow OP_CALL\n");
 		}
 
 		args.Push(TypeIdOf<void*>::kTypeId);

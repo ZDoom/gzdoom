@@ -30,10 +30,10 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 
 		return reinterpret_cast<JitFuncPtr>(AddJitFunction(&code, func));
 	}
-	catch (const std::exception &e)
+	catch (const CRecoverableError &e)
 	{
 		OutputJitLog(logger);
-		I_FatalError("Unexpected JIT error: %s\n", e.what());
+		Printf("%s: Unexpected JIT error: %s\n",sfunc->PrintableName.GetChars(), e.what());
 		return nullptr;
 	}
 }

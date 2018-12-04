@@ -174,7 +174,7 @@ void JitCompiler::EmitCAST()
 		call->setArg(1, regD[B]);
 		break;
 	default:
-		I_FatalError("Unknown OP_CAST type\n");
+		I_Error("Unknown OP_CAST type\n");
 	}
 }
 

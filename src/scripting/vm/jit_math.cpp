@@ -962,7 +962,7 @@ void JitCompiler::EmitFLOP()
 		FuncPtr func = nullptr;
 		switch (C)
 		{
-		default: I_FatalError("Unknown OP_FLOP subfunction");
+		default: I_Error("Unknown OP_FLOP subfunction");
 		case FLOP_ABS:		func = fabs; break;
 		case FLOP_EXP:		func = g_exp; break;
 		case FLOP_LOG:		func = g_log; break;
@@ -1090,7 +1090,7 @@ void JitCompiler::EmitEQF_K()
 void JitCompiler::EmitLTF_RR()
 {
 	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LTF_RR.\n");
+		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LTF_RR.\n");
 
 		cc.ucomisd(regF[C], regF[B]);
 		if (check) cc.ja(fail);
@@ -1101,7 +1101,7 @@ void JitCompiler::EmitLTF_RR()
 void JitCompiler::EmitLTF_RK()
 {
 	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LTF_RK.\n");
+		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LTF_RK.\n");
 
 		auto constTmp = newTempIntPtr();
 		auto xmmTmp = newTempXmmSd();
@@ -1117,7 +1117,7 @@ void JitCompiler::EmitLTF_RK()
 void JitCompiler::EmitLTF_KR()
 {
 	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LTF_KR.\n");
+		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LTF_KR.\n");
 
 		auto tmp = newTempIntPtr();
 		cc.mov(tmp, asmjit::imm_ptr(&konstf[B]));
@@ -1131,7 +1131,7 @@ void JitCompiler::EmitLTF_KR()
 void JitCompiler::EmitLEF_RR()
 {
 	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LEF_RR.\n");
+		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LEF_RR.\n");
 
 		cc.ucomisd(regF[C], regF[B]);
 		if (check) cc.jae(fail);
@@ -1142,7 +1142,7 @@ void JitCompiler::EmitLEF_RR()
 void JitCompiler::EmitLEF_RK()
 {
 	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LEF_RK.\n");
+		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LEF_RK.\n");
 
 		auto constTmp = newTempIntPtr();
 		auto xmmTmp = newTempXmmSd();
@@ -1158,7 +1158,7 @@ void JitCompiler::EmitLEF_RK()
 void JitCompiler::EmitLEF_KR()
 {
 	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		if (static_cast<bool>(A & CMP_APPROX)) I_FatalError("CMP_APPROX not implemented for LEF_KR.\n");
+		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LEF_KR.\n");
 
 		auto tmp = newTempIntPtr();
 		cc.mov(tmp, asmjit::imm_ptr(&konstf[B]));
@@ -1275,7 +1275,7 @@ void JitCompiler::EmitEQV2_R()
 
 void JitCompiler::EmitEQV2_K()
 {
-	I_FatalError("EQV2_K is not used.");
+	I_Error("EQV2_K is not used.");
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1442,7 +1442,7 @@ void JitCompiler::EmitEQV3_R()
 	
 void JitCompiler::EmitEQV3_K()
 {
-	I_FatalError("EQV3_K is not used.");
+	I_Error("EQV3_K is not used.");
 }
 
 /////////////////////////////////////////////////////////////////////////////

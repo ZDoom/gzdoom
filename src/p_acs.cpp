@@ -1847,7 +1847,7 @@ int CheckInventory (AActor *activator, const char *type, bool max)
 		}
 		else if (info != nullptr && info->IsDescendantOf(NAME_Inventory))
 		{
-			return ((AInventory *)GetDefaultByType(info))->IntVar(NAME_MaxAmount);
+			return GetDefaultByType(info)->IntVar(NAME_MaxAmount);
 		}
 	}
 	return item ? item->IntVar(NAME_Amount) : 0;
@@ -6218,7 +6218,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		case ACSF_DropInventory:
 		{
 			const char *type = FBehavior::StaticLookupString(args[1]);
-			AInventory *inv;
+			AActor *inv;
 			
 			if (type != NULL)
 			{

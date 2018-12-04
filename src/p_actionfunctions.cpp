@@ -4065,7 +4065,7 @@ static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amo
 
 		if ((flags & RGF_NOSIGHT) || P_CheckSight(thing, self, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
 		{ // OK to give; target is in direct path, or the monster doesn't care about it being in line of sight.
-			AInventory *gift = static_cast<AInventory *>(Spawn(item));
+			auto gift = Spawn(item);
 			if (gift->IsKindOf(NAME_Health))
 			{
 				gift->IntVar(NAME_Amount) *= amount;
@@ -4093,7 +4093,7 @@ static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amo
 DEFINE_ACTION_FUNCTION(AActor, A_RadiusGive)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS		(item, AInventory);
+	PARAM_CLASS		(item, AActor);
 	PARAM_FLOAT		(distance);
 	PARAM_INT		(flags);
 	PARAM_INT	(amount);
@@ -4103,7 +4103,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RadiusGive)
 	PARAM_INT	(limit);
 
 	// We need a valid item, valid targets, and a valid range
-	if (item == nullptr || (flags & RGF_MASK) == 0 || !flags || distance <= 0 || mindist >= distance)
+	if (item == nullptr || (flags & RGF_MASK) == 0 || !flags || distance <= 0 || mindist >= distance || !item->IsDescendantOf(NAME_Inventory))
 	{
 		ACTION_RETURN_INT(0);
 	}

@@ -2254,7 +2254,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 			while (item != nullptr)
 			{
 				AActor *next = item->Inventory;
-				IFVIRTUALPTR(item, AInventory, UseAll)
+				IFVIRTUALPTRNAME(item, NAME_Inventory, UseAll)
 				{
 					VMValue param[] = { item, players[player].mo };
 					VMCall(func, param, 2, nullptr, 0);

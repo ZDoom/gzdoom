@@ -2944,8 +2944,8 @@ void AM_drawKeys ()
 	mpoint_t p;
 	DAngle	 angle;
 
-	TThinkerIterator<AInventory> it(NAME_Key);
-	AInventory *key;
+	TThinkerIterator<AActor> it(NAME_Key);
+	AActor *key;
 
 	while ((key = it.Next()) != NULL)
 	{

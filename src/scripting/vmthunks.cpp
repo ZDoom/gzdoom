@@ -2057,7 +2057,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetMugshot, GetMugshot)
 DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetInventoryIcon, GetInventoryIcon)
 {
 	PARAM_PROLOGUE;
-	PARAM_OBJECT(item, AInventory);
+	PARAM_OBJECT(item, AActor);
 	PARAM_INT(flags);
 	int applyscale;
 	FTextureID icon = FSetTextureID(GetInventoryIcon(item, flags, &applyscale));

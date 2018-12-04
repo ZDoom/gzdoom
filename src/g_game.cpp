@@ -484,7 +484,7 @@ CCMD (useflechette)
 	PClassActor *type = who->FlechetteType;
 	if (type != NULL)
 	{
-		AInventory *item;
+		AActor *item;
 		if ( (item = who->FindInventory (type) ))
 		{
 			SendItemUse = item;
@@ -495,7 +495,7 @@ CCMD (useflechette)
 	// The default flechette could not be found, or the player had no default. Try all 3 types then.
 	for (int j = 0; j < 3; ++j)
 	{
-		AInventory *item;
+		AActor *item;
 		if ( (item = who->FindInventory (bagnames[j])) )
 		{
 			SendItemUse = item;

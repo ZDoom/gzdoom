@@ -2159,15 +2159,14 @@ FUNC(LS_Radius_Quake)
 FUNC(LS_UsePuzzleItem)
 // UsePuzzleItem (item, script)
 {
-	AInventory *item;
+	AActor *item;
 
 	if (!it) return false;
 
 	// Check player's inventory for puzzle item
-	auto pitype = PClass::FindActor(NAME_PuzzleItem);
 	for (item = it->Inventory; item != NULL; item = item->Inventory)
 	{
-		if (item->IsKindOf (pitype))
+		if (item->IsKindOf (NAME_PuzzleItem))
 		{
 			if (item->IntVar(NAME_PuzzleItemNumber) == arg0)
 			{

@@ -327,7 +327,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 	for (AActor *item = Inventory; item != NULL; )
 	{
 		AActor *next = item->Inventory;
-		IFVIRTUALPTR(item, AInventory, OwnerDied)
+		IFVIRTUALPTRNAME(item, NAME_Inventory, OwnerDied)
 		{
 			VMValue params[1] = { item };
 			VMCall(func, params, 1, nullptr, 0);

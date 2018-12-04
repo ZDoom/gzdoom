@@ -89,7 +89,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		"PowerTargeter",
 	};
 	PClassActor *type;
-	AInventory *item;
+	AActor *item;
 	FString smsg;
 	const char *msg = "";
 	char msgbuild[32];

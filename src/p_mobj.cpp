@@ -770,10 +770,10 @@ DEFINE_ACTION_FUNCTION(AActor, SetState)
 
 void AActor::DestroyAllInventory ()
 {
-	AInventory *inv = Inventory;
+	AActor *inv = Inventory;
 	if (inv != nullptr)
 	{
-		TArray<AInventory *> toDelete;
+		TArray<AActor *> toDelete;
 
 		// Delete the list in a two stage approach.
 		// This is necessary because an item may destroy another item (e.g. sister weapons)
@@ -813,7 +813,7 @@ DEFINE_ACTION_FUNCTION(AActor, DestroyAllInventory)
 //
 //============================================================================
 
-bool AActor::UseInventory (AInventory *item)
+bool AActor::UseInventory (AActor *item)
 {
 	IFVIRTUAL(AActor, UseInventory)
 	{
@@ -834,12 +834,12 @@ bool AActor::UseInventory (AInventory *item)
 //
 //===========================================================================
 
-AInventory *AActor::DropInventory (AInventory *item, int amt)
+AActor *AActor::DropInventory (AActor *item, int amt)
 {
 	IFVM(Actor, DropInventory)
 	{
 		VMValue params[] = { this, item, amt };
-		AInventory *retval = 0;
+		AActor *retval = 0;
 		VMReturn ret((void**)&retval);
 		VMCall(func, params, 3, &ret, 1);
 		return retval;
@@ -853,9 +853,9 @@ AInventory *AActor::DropInventory (AInventory *item, int amt)
 //
 //============================================================================
 
-AInventory *AActor::FindInventory (PClassActor *type, bool subclass)
+AActor *AActor::FindInventory (PClassActor *type, bool subclass)
 {
-	AInventory *item;
+	AActor *item;
 
 	if (type == NULL)
 	{
@@ -881,7 +881,7 @@ AInventory *AActor::FindInventory (PClassActor *type, bool subclass)
 	return item;
 }
 
-AInventory *AActor::FindInventory (FName type, bool subclass)
+AActor *AActor::FindInventory (FName type, bool subclass)
 {
 	return FindInventory(PClass::FindActor(type), subclass);
 }
@@ -889,7 +889,7 @@ AInventory *AActor::FindInventory (FName type, bool subclass)
 DEFINE_ACTION_FUNCTION(AActor, FindInventory)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS(type, AInventory);
+	PARAM_CLASS(type, AActor);
 	PARAM_BOOL(subclass);
 	ACTION_RETURN_OBJECT(self->FindInventory(type, subclass));
 }
@@ -900,11 +900,11 @@ DEFINE_ACTION_FUNCTION(AActor, FindInventory)
 //
 //============================================================================
 
-AInventory *AActor::GiveInventoryType (PClassActor *type)
+AActor *AActor::GiveInventoryType (PClassActor *type)
 {
 	if (type != nullptr)
 	{
-		auto item = static_cast<AInventory *>(Spawn (type));
+		auto item = Spawn (type);
 		if (!CallTryPickup (item, this))
 		{
 			item->Destroy ();
@@ -918,7 +918,7 @@ AInventory *AActor::GiveInventoryType (PClassActor *type)
 DEFINE_ACTION_FUNCTION(AActor, GiveInventoryType)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS(type, AInventory);
+	PARAM_CLASS(type, AActor);
 	ACTION_RETURN_OBJECT(self->GiveInventoryType(type));
 }
 
@@ -4806,7 +4806,7 @@ void AActor::LevelSpawned ()
 		tics = 1 + (pr_spawnmapthing() % tics);
 	}
 	// [RH] Clear MF_DROPPED flag if the default version doesn't have it set.
-	// (AInventory::BeginPlay() makes all inventory items spawn with it set.)
+	// (Inventory.BeginPlay() makes all inventory items spawn with it set.)
 	if (!(GetDefault()->flags & MF_DROPPED))
 	{
 		flags &= ~MF_DROPPED;
@@ -7534,7 +7534,7 @@ int AActor::GetModifiedDamage(FName damagetype, int damage, bool passive)
 	auto inv = Inventory;
 	while (inv != nullptr)
 	{
-		IFVIRTUALPTR(inv, AInventory, ModifyDamage)
+		IFVIRTUALPTRNAME(inv, NAME_Inventory, ModifyDamage)
 		{
 			VMValue params[5] = { (DObject*)inv, damage, int(damagetype), &damage, passive };
 			VMCall(func, params, 5, nullptr, 0);
@@ -8051,7 +8051,7 @@ DEFINE_ACTION_FUNCTION(AActor, ClearInterpolation)
 DEFINE_ACTION_FUNCTION(AActor, ApplyDamageFactors)
 {
 	PARAM_PROLOGUE;
-	PARAM_CLASS(itemcls, AInventory);
+	PARAM_CLASS(itemcls, AActor);
 	PARAM_NAME(damagetype);
 	PARAM_INT(damage);
 	PARAM_INT(defdamage);

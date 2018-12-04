@@ -2610,7 +2610,7 @@ void FParser::SF_PlayerSelectedWeapon()
 				return;
 			}
 
-			players[playernum].PendingWeapon = (AInventory*)players[playernum].mo->FindInventory(ti);
+			players[playernum].PendingWeapon = players[playernum].mo->FindInventory(ti);
 
 		} 
 		t_return.type = svt_int;

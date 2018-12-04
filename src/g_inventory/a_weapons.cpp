@@ -293,7 +293,7 @@ bool FWeaponSlots::LocateWeapon (PClassActor *type, int *const slot, int *const 
 DEFINE_ACTION_FUNCTION(FWeaponSlots, LocateWeapon)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FWeaponSlots);
-	PARAM_CLASS(weap, AInventory);
+	PARAM_CLASS(weap, AActor);
 	int slot = 0, index = 0;
 	bool retv = self->LocateWeapon(weap, &slot, &index);
 	if (numret >= 1) ret[0].SetInt(retv);

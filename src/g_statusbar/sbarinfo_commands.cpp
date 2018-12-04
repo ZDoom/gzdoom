@@ -154,7 +154,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 					}
 					else
 					{
-						sprite = ((AInventory *)GetDefaultByType(item))->TextureIDVar(NAME_Icon);
+						sprite = GetDefaultByType(item)->TextureIDVar(NAME_Icon);
 					}
 					image = -1;
 				}
@@ -304,7 +304,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			}
 		}
 	protected:
-		void	GetIcon(AInventory *item)
+		void	GetIcon(AActor *item)
 		{
 			int apply;
 			FTextureID icon = FSetTextureID(GetInventoryIcon(item, flags, &apply));

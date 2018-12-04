@@ -591,7 +591,6 @@ enum EThingSpecialActivationType
 
 
 class FDecalBase;
-class AInventory;
 
 inline AActor *GetDefaultByName (const char *name)
 {
@@ -747,10 +746,10 @@ public:
 	// should ever be overridden by custom classes.
 
 	// Uses an item and removes it from the inventory.
-	bool UseInventory (AInventory *item);
+	bool UseInventory (AActor *item);
 
 	// Tosses an item out of the inventory.
-	AInventory *DropInventory (AInventory *item, int amt = -1);
+	AActor *DropInventory (AActor *item, int amt = -1);
 
 	// Removes all items from the inventory.
 	void ClearInventory();
@@ -759,15 +758,15 @@ public:
 	bool CheckLocalView (int playernum) const;
 
 	// Finds the first item of a particular type.
-	AInventory *FindInventory (PClassActor *type, bool subclass=false);
-	AInventory *FindInventory (FName type, bool subclass = false);
+	AActor *FindInventory (PClassActor *type, bool subclass=false);
+	AActor *FindInventory (FName type, bool subclass = false);
 	template<class T> T *FindInventory ()
 	{
 		return static_cast<T *> (FindInventory (RUNTIME_CLASS(T)));
 	}
 
 	// Adds one item of a particular type. Returns NULL if it could not be added.
-	AInventory *GiveInventoryType (PClassActor *type);
+	AActor *GiveInventoryType (PClassActor *type);
 
 	// Destroys all the inventory the actor is holding.
 	void DestroyAllInventory ();
@@ -1188,7 +1187,7 @@ public:
 	int validcount;
 
 
-	TObjPtr<AInventory*>	Inventory;		// [RH] This actor's inventory
+	TObjPtr<AActor*>	Inventory;		// [RH] This actor's inventory
 	uint32_t			InventoryID;	// A unique ID to keep track of inventory items
 
 	uint8_t smokecounter;

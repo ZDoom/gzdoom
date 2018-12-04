@@ -1057,7 +1057,7 @@ void player_t::DestroyPSprites()
 //
 //------------------------------------------------------------------------------------
 
-void P_SetSafeFlash(AInventory *weapon, player_t *player, FState *flashstate, int index)
+void P_SetSafeFlash(AActor *weapon, player_t *player, FState *flashstate, int index)
 {
 	auto wcls = PClass::FindActor(NAME_Weapon);
 	if (flashstate != nullptr)
@@ -1101,7 +1101,7 @@ void P_SetSafeFlash(AInventory *weapon, player_t *player, FState *flashstate, in
 DEFINE_ACTION_FUNCTION(_PlayerInfo, SetSafeFlash)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
-	PARAM_OBJECT_NOT_NULL(weapon, AInventory);
+	PARAM_OBJECT_NOT_NULL(weapon, AActor);
 	PARAM_POINTER(state, FState);
 	PARAM_INT(index);
 	P_SetSafeFlash(weapon, self, state, index);

@@ -1041,8 +1041,8 @@ public:
 
 		if (CPlayer->ReadyWeapon != nullptr)
 		{
-			ammo1 = CPlayer->ReadyWeapon->PointerVar<AInventory>(NAME_Ammo1);
-			ammo2 = CPlayer->ReadyWeapon->PointerVar<AInventory>(NAME_Ammo2);
+			ammo1 = CPlayer->ReadyWeapon->PointerVar<AActor>(NAME_Ammo1);
+			ammo2 = CPlayer->ReadyWeapon->PointerVar<AActor>(NAME_Ammo2);
 			if (ammo1 == nullptr)
 			{
 				ammo1 = ammo2;
@@ -1473,9 +1473,9 @@ public:
 		return w == nullptr ? nullptr : (w->PointerVar<PClassActor>(no == 1 ? NAME_AmmoType1 : NAME_AmmoType2));
 	}
 
-	AInventory *ammo1, *ammo2;
+	AActor *ammo1, *ammo2;
 	int ammocount1, ammocount2;
-	AInventory *armor;
+	AActor *armor;
 	FImageCollection Images;
 	unsigned int invBarOffset;
 	player_t *CPlayer = nullptr;

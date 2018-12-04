@@ -3159,21 +3159,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 
 //---------------------------------------------------------------------------
 //
-// Modifies the drop amount of this item according to the current skill's
-// settings (also called by ADehackedPickup::TryPickup)
-//
-//---------------------------------------------------------------------------
-void ModifyDropAmount(AInventory *inv, int dropamount)
-{
-	IFVIRTUALPTR(inv, AInventory, ModifyDropAmount)
-	{
-		VMValue params[] = { inv, dropamount };
-		VMCall(func, params, 2, nullptr, 0);
-	}
-}
-
-//---------------------------------------------------------------------------
-//
 // PROC P_DropItem
 //
 //---------------------------------------------------------------------------

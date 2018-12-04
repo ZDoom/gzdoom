@@ -58,7 +58,7 @@ void C_AimLine(FTranslatedLineTarget *t, bool nonshootable)
 
 void C_PrintInv(AActor *target)
 {
-	AInventory *item;
+	AActor *item;
 	int count = 0;
 
 	if (target == NULL)

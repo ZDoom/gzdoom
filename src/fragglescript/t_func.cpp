@@ -49,6 +49,7 @@
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "scriptutil.h"
+#include "vm.h"
 
 static FRandom pr_script("FScript");
 
@@ -2550,8 +2551,13 @@ void FParser::SF_PlayerWeapon()
 					if (players[playernum].PendingWeapon==wp) players[playernum].PendingWeapon=WP_NOCHANGE;
 					if (players[playernum].ReadyWeapon==wp) 
 					{
-						players[playernum].ReadyWeapon=NULL;
-						players[playernum].mo->PickNewWeapon(NULL);
+						players[playernum].ReadyWeapon=nullptr;
+						
+						IFVM(PlayerPawn, PickNewWeapon)
+						{
+							VMValue param[] = { players[playernum].mo, (void*)nullptr };
+							VMCall(func, param, 2, nullptr, 0);
+						}
 					}
 				}
 			}

@@ -940,29 +940,6 @@ void APlayerPawn::PostBeginPlay()
 
 //===========================================================================
 //
-// APlayerPawn :: PickNewWeapon
-//
-// Picks a new weapon for this player. Used mostly for running out of ammo,
-// but it also works when an ACS script explicitly takes the ready weapon
-// away or the player picks up some ammo they had previously run out of.
-//
-//===========================================================================
-
-AActor *APlayerPawn::PickNewWeapon(PClassActor *ammotype)
-{
-	AActor *best = nullptr;
-	IFVM(PlayerPawn, PickNewWeapon)
-	{
-		VMValue param[] = { player->mo, ammotype };
-		VMReturn ret((void**)&best);
-		VMCall(func, param, 2, &ret, 1);
-	}
-
-	return best;
-}
-
-//===========================================================================
-//
 // APlayerPawn :: GiveDeathmatchInventory
 //
 // Gives players items they should have in addition to their default

@@ -100,7 +100,6 @@ public:
 
 	// These are virtual on the script side only.
 	void PlayIdle();
-	void PlayAttacking2 ();
 
 	const char *GetSoundClass () const;
 	int hasBuddha(); // returns 0  for no buddha, 1 for regular buddha and 2 for strong buddha

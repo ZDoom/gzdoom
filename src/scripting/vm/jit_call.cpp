@@ -356,6 +356,7 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 			case REGT_INT | REGT_KONST:
 				call->setArg(slot, imm(konstd[bc]));
 				break;
+			case REGT_STRING | REGT_ADDROF:	// AddrOf string is essentially the same - a reference to the register, just not constant on the receiving side.
 			case REGT_STRING:
 				call->setArg(slot, regS[bc]);
 				break;
@@ -393,7 +394,6 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 				call->setArg(slot, tmp2);
 				break;
 
-			case REGT_STRING | REGT_ADDROF:
 			case REGT_INT | REGT_ADDROF:
 			case REGT_POINTER | REGT_ADDROF:
 			case REGT_FLOAT | REGT_ADDROF:

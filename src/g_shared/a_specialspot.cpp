@@ -40,7 +40,6 @@
 #include "vm.h"
 
 static FRandom pr_spot ("SpecialSpot");
-static FRandom pr_spawnmace ("SpawnMace");
 
 IMPLEMENT_CLASS(DSpotState, false, false)
 IMPLEMENT_CLASS(ASpecialSpot, false, false)
@@ -74,7 +73,7 @@ struct FSpotList
 
 	//----------------------------------------------------------------------------
 	//
-	// 
+	//
 	//
 	//----------------------------------------------------------------------------
 
@@ -90,7 +89,7 @@ struct FSpotList
 
 	//----------------------------------------------------------------------------
 	//
-	// 
+	//
 	//
 	//----------------------------------------------------------------------------
 
@@ -98,7 +97,7 @@ struct FSpotList
 	{
 		for(unsigned i = 0; i < Spots.Size(); i++)
 		{
-			if (Spots[i] == spot) 
+			if (Spots[i] == spot)
 			{
 				Spots.Delete(i);
 				if (Index > i) Index--;
@@ -110,7 +109,7 @@ struct FSpotList
 
 	//----------------------------------------------------------------------------
 	//
-	// 
+	//
 	//
 	//----------------------------------------------------------------------------
 
@@ -130,7 +129,7 @@ struct FSpotList
 
 	//----------------------------------------------------------------------------
 	//
-	// 
+	//
 	//
 	//----------------------------------------------------------------------------
 
@@ -157,7 +156,7 @@ struct FSpotList
 
 	//----------------------------------------------------------------------------
 	//
-	// 
+	//
 	//
 	//----------------------------------------------------------------------------
 
@@ -175,7 +174,7 @@ struct FSpotList
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
@@ -195,7 +194,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSpotList &list, FSpot
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
@@ -214,7 +213,7 @@ DSpotState::DSpotState ()
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
@@ -229,17 +228,17 @@ void DSpotState::OnDestroy ()
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
-void DSpotState::Tick () 
+void DSpotState::Tick ()
 {
 }
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
@@ -257,7 +256,7 @@ DEFINE_ACTION_FUNCTION(DSpotState, GetSpotState)
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
@@ -273,7 +272,7 @@ FSpotList *DSpotState::FindSpotList(PClassActor *type)
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
@@ -286,7 +285,7 @@ bool DSpotState::AddSpot(ASpecialSpot *spot)
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
@@ -299,7 +298,7 @@ bool DSpotState::RemoveSpot(ASpecialSpot *spot)
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
@@ -311,7 +310,7 @@ void DSpotState::Serialize(FSerializer &arc)
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
@@ -332,7 +331,7 @@ DEFINE_ACTION_FUNCTION(DSpotState, GetNextInList)
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
@@ -357,7 +356,7 @@ DEFINE_ACTION_FUNCTION(DSpotState, GetSpotWithMinMaxDistance)
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
@@ -378,7 +377,7 @@ DEFINE_ACTION_FUNCTION(DSpotState, GetRandomSpot)
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
@@ -390,7 +389,7 @@ void ASpecialSpot::BeginPlay()
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
@@ -400,63 +399,3 @@ void ASpecialSpot::OnDestroy()
 	if (state != NULL) state->RemoveSpot(this);
 	Super::OnDestroy();
 }
-
-// Mace spawn spot ----------------------------------------------------------
-
-// Every mace spawn spot will execute this action. The first one
-// will build a list of all mace spots in the level and spawn a
-// mace. The rest of the spots will do nothing.
-
-DEFINE_ACTION_FUNCTION(ASpecialSpot, A_SpawnSingleItem)
-{
-	PARAM_SELF_PROLOGUE(ASpecialSpot);
-	PARAM_CLASS_NOT_NULL(cls, AActor);
-	PARAM_INT	(fail_sp) 
-	PARAM_INT	(fail_co) 
-	PARAM_INT	(fail_dm) 
-
-	AActor *spot = NULL;
-	DSpotState *state = DSpotState::GetSpotState();
-
-	if (state != NULL) spot = state->GetRandomSpot(self->GetClass(), true);
-	if (spot == NULL) return 0;
-
-	if (!multiplayer && pr_spawnmace() < fail_sp)
-	{ // Sometimes doesn't show up if not in deathmatch
-		return 0;
-	}
-
-	if (multiplayer && !deathmatch && pr_spawnmace() < fail_co)
-	{
-		return 0;
-	}
-
-	if (deathmatch && pr_spawnmace() < fail_dm)
-	{
-		return 0;
-	}
-
-	if (cls == NULL)
-	{
-		return 0;
-	}
-
-	AActor *spawned = Spawn(cls, self->Pos(), ALLOW_REPLACE);
-
-	if (spawned)
-	{
-		spawned->SetOrigin (spot->Pos(), false);
-		spawned->SetZ(spawned->floorz);
-		// We want this to respawn.
-		if (!(self->flags & MF_DROPPED)) 
-		{
-			spawned->flags &= ~MF_DROPPED;
-		}
-		if (spawned->IsKindOf(NAME_Inventory))
-		{
-			static_cast<AInventory*>(spawned)->SpawnPointClass = self->GetClass();
-		}
-	}
-	return 0;
-}
-

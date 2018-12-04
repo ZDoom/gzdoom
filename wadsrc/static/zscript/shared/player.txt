@@ -1601,7 +1601,7 @@ class PlayerPawn : Actor native
 	//
 	// APlayerPawn :: PickNewWeapon
 	//
-	// Picks a new weapon for self player. Used mostly for running out of ammo,
+	// Picks a new weapon for this player. Used mostly for running out of ammo,
 	// but it also works when an ACS script explicitly takes the ready weapon
 	// away or the player picks up some ammo they had previously run out of.
 	//

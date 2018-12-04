@@ -3158,25 +3158,6 @@ void AActor::RemoveFromHash ()
 	tid = 0;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, RemoveFromHash)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	self->RemoveFromHash();
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, ChangeTid)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(tid);
-	self->RemoveFromHash();
-	self->tid = tid;
-	self->AddToHash();
-	return 0;
-}
-
-
-
 //==========================================================================
 //
 // P_IsTIDUsed
@@ -3258,16 +3239,6 @@ int P_FindUniqueTID(int start_tid, int limit)
 	// Nothing free found.
 	return 0;
 }
-
-DEFINE_ACTION_FUNCTION(AActor, FindUniqueTid)
-{
-	PARAM_PROLOGUE;
-	PARAM_INT(start);
-	PARAM_INT(limit);
-	ACTION_RETURN_INT(P_FindUniqueTID(start, limit));
-}
-
-
 
 
 CCMD(utid)
@@ -6130,12 +6101,6 @@ int P_GetThingFloorType (AActor *thing)
 	}
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetFloorTerrain)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_POINTER(&Terrains[P_GetThingFloorType(self)]);
-}
-
 
 //---------------------------------------------------------------------------
 //
@@ -6496,7 +6461,8 @@ DEFINE_ACTION_FUNCTION(AActor, PlaySpawnSound)
 }
 
 
-static double GetDefaultSpeed(PClassActor *type)
+
+double GetDefaultSpeed(PClassActor *type)
 {
 	if (type == NULL)
 		return 0;
@@ -6508,13 +6474,6 @@ static double GetDefaultSpeed(PClassActor *type)
 		if (f >= 0) return f;
 	}
 	return def->Speed;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, GetDefaultSpeed)
-{
-	PARAM_PROLOGUE;
-	PARAM_CLASS(type, AActor);
-	ACTION_RETURN_FLOAT(GetDefaultSpeed(type));
 }
 
 //---------------------------------------------------------------------------
@@ -7010,13 +6969,6 @@ bool AActor::IsTeammate (AActor *other)
 	return false;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, isTeammate)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT_NOT_NULL(other, AActor);
-	ACTION_RETURN_BOOL(self->IsTeammate(other));
-}
-
 //==========================================================================
 //
 // AActor :: GetSpecies
@@ -7050,12 +7002,6 @@ FName AActor::GetSpecies()
 	return Species = thistype->TypeName; // [GZ] Speeds up future calls.
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetSpecies)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_INT(self->GetSpecies());
-}
-
 //==========================================================================
 //
 // AActor :: IsFriend
@@ -7083,13 +7029,6 @@ bool AActor::IsFriend (AActor *other)
 	/*if (!((flags ^ other->flags) & MF_FRIENDLY))
 		return true;*/
 	return false;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, isFriend)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT_NOT_NULL(other, AActor);
-	ACTION_RETURN_BOOL(self->IsFriend(other));
 }
 
 //==========================================================================
@@ -7121,14 +7060,6 @@ bool AActor::IsHostile (AActor *other)
 	}
 	return true;
 }
-
-DEFINE_ACTION_FUNCTION(AActor, isHostile)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT_NOT_NULL(other, AActor);
-	ACTION_RETURN_BOOL(self->IsHostile(other));
-}
-
 
 //==========================================================================
 //
@@ -7236,6 +7167,7 @@ DEFINE_ACTION_FUNCTION(AActor, TakeSpecialDamage)
 	ACTION_RETURN_INT(self->TakeSpecialDamage(inflictor, source, damage, damagetype));
 }
 
+
 int AActor::CallTakeSpecialDamage(AActor *inflictor, AActor *source, int damage, FName damagetype)
 {
 	IFVIRTUAL(AActor, TakeSpecialDamage)
@@ -7301,13 +7233,6 @@ void AActor::SetIdle(bool nofunction)
 	SetState(idle, nofunction);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, SetIdle)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_BOOL(nofunction);
-	self->SetIdle(nofunction);
-	return 0;
-}
 
 int AActor::SpawnHealth() const
 {
@@ -7326,12 +7251,6 @@ int AActor::SpawnHealth() const
 		int adj = int(defhealth * G_SkillProperty(SKILLP_MonsterHealth));
 		return (adj <= 0) ? 1 : adj;
 	}
-}
-
-DEFINE_ACTION_FUNCTION(AActor, SpawnHealth)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_INT(self->SpawnHealth());
 }
 
 FState *AActor::GetRaiseState()
@@ -7387,13 +7306,6 @@ void AActor::Revive()
 	E_WorldThingRevived(this);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, Revive)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	self->Revive();
-	return 0;
-}
-
 int AActor::GetGibHealth() const
 {
 	IFVIRTUAL(AActor, GetGibHealth)
@@ -7412,34 +7324,16 @@ double AActor::GetCameraHeight() const
 	return CameraHeight == INT_MIN ? Height / 2 : CameraHeight;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetCameraHeight)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_FLOAT(self->GetCameraHeight());
-}
-
 
 FDropItem *AActor::GetDropItems() const
 {
 	return GetInfo()->DropItems;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetDropItems)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_POINTER(self->GetDropItems());
-}
-
 double AActor::GetGravity() const
 {
 	if (flags & MF_NOGRAVITY) return 0;
 	return level.gravity * Sector->gravity * Gravity * 0.00125;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, GetGravity)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_FLOAT(self->GetGravity());
 }
 
 
@@ -7478,26 +7372,10 @@ const char *AActor::GetTag(const char *def) const
 	}
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetTag)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STRING(def);
-	ACTION_RETURN_STRING(self->GetTag(def.Len() == 0? nullptr : def.GetChars()));
-}
-
 void AActor::SetTag(const char *def)
 {
 	if (def == NULL || *def == 0) Tag = nullptr;
 	else Tag = mStringPropertyData.Alloc(def);
-}
-
-DEFINE_ACTION_FUNCTION(AActor, SetTag)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STRING(def);
-	if (def.IsEmpty()) self->Tag = nullptr;
-	else self->Tag = self->mStringPropertyData.Alloc(def);
-	return 0;
 }
 
 
@@ -7522,13 +7400,6 @@ void AActor::ClearCounters()
 	}
 }
 
-DEFINE_ACTION_FUNCTION(AActor, ClearCounters)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	self->ClearCounters();
-	return 0;
-}
-
 int AActor::GetModifiedDamage(FName damagetype, int damage, bool passive)
 {
 	auto inv = Inventory;
@@ -7544,14 +7415,6 @@ int AActor::GetModifiedDamage(FName damagetype, int damage, bool passive)
 	return damage;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetModifiedDamage)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_NAME(type);
-	PARAM_INT(damage);
-	PARAM_BOOL(passive);
-	ACTION_RETURN_INT(self->GetModifiedDamage(type, damage, passive));
-}
 
 int AActor::ApplyDamageFactor(FName damagetype, int damage) const
 {
@@ -7562,15 +7425,6 @@ int AActor::ApplyDamageFactor(FName damagetype, int damage) const
 	}
 	return damage;
 }
-
-DEFINE_ACTION_FUNCTION(AActor, ApplyDamageFactor)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_NAME(type);
-	PARAM_INT(damage);
-	ACTION_RETURN_INT(self->ApplyDamageFactor(type, damage));
-}
-
 
 void AActor::SetTranslation(FName trname)
 {
@@ -7588,43 +7442,6 @@ void AActor::SetTranslation(FName trname)
 		Translation = tnum;
 	}
 	// silently ignore if the name does not exist, this would create some insane message spam otherwise.
-}
-
-//==========================================================================
-//
-// AActor :: GetLevelSpawnTime
-//
-// Returns the time when this actor was spawned, 
-// relative to the current level.
-//
-//==========================================================================
-int AActor::GetLevelSpawnTime() const
-{
-	return SpawnTime - level.totaltime + level.time;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, GetLevelSpawnTime)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_INT(self->GetLevelSpawnTime());
-}
-
-//==========================================================================
-//
-// AActor :: GetAge
-//
-// Returns the number of ticks passed since this actor was spawned.
-//
-//==========================================================================
-int AActor::GetAge() const
-{
-	return level.totaltime - SpawnTime;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, GetAge)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_INT(self->GetAge());
 }
 
 //---------------------------------------------------------------------------
@@ -7682,355 +7499,6 @@ void AActor::RestoreSpecialPosition()
 	// picked up, in case that is different from where it is now.
 	ClearInterpolation();
 }
-
-DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	self->RestoreSpecialPosition();
-	return 0;
-}
-
-double AActor::GetBobOffset(double ticfrac) const
-{
-	if (!(flags2 & MF2_FLOATBOB))
-	{
-		return 0;
-	}
-	return BobSin(FloatBobPhase + level.maptime + ticfrac) * FloatBobStrength;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, GetBobOffset)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(frac);
-	ACTION_RETURN_FLOAT(self->GetBobOffset(frac));
-}
-
-
-
-DEFINE_ACTION_FUNCTION(AActor, deltaangle)	// should this be global?
-{
-	PARAM_PROLOGUE;
-	PARAM_FLOAT(a1);
-	PARAM_FLOAT(a2);
-	ACTION_RETURN_FLOAT(deltaangle(DAngle(a1), DAngle(a2)).Degrees);
-}
-
-DEFINE_ACTION_FUNCTION(AActor, absangle)	// should this be global?
-{
-	PARAM_PROLOGUE;
-	PARAM_FLOAT(a1);
-	PARAM_FLOAT(a2);
-	ACTION_RETURN_FLOAT(absangle(DAngle(a1), DAngle(a2)).Degrees);
-}
-
-DEFINE_ACTION_FUNCTION(AActor, Distance2DSquared)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT_NOT_NULL(other, AActor);
-	ACTION_RETURN_FLOAT(self->Distance2DSquared(other));
-}
-
-DEFINE_ACTION_FUNCTION(AActor, Distance3DSquared)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT_NOT_NULL(other, AActor);
-	ACTION_RETURN_FLOAT(self->Distance3DSquared(other));
-}
-
-DEFINE_ACTION_FUNCTION(AActor, Distance2D)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT_NOT_NULL(other, AActor);
-	ACTION_RETURN_FLOAT(self->Distance2D(other));
-}
-
-DEFINE_ACTION_FUNCTION(AActor, Distance3D)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT_NOT_NULL(other, AActor);
-	ACTION_RETURN_FLOAT(self->Distance3D(other));
-}
-
-DEFINE_ACTION_FUNCTION(AActor, AddZ)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(addz);
-	PARAM_BOOL(moving);
-	self->AddZ(addz, moving);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, SetZ)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(z);
-	self->SetZ(z);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, SetDamage)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(dmg);
-	self->SetDamage(dmg);
-	return 0;
-}
-
-// This combines all 3 variations of the internal function
-DEFINE_ACTION_FUNCTION(AActor, VelFromAngle)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(speed);
-	PARAM_ANGLE(angle);
-
-	if (speed == 1e37)
-	{
-		self->VelFromAngle();
-	}
-	else
-	{
-		if (angle == 1e37)
-
-		{
-			self->VelFromAngle(speed);
-		}
-		else
-		{
-			self->VelFromAngle(speed, angle);
-		}
-	}
-	return 0;
-}
-
-// This combines all 3 variations of the internal function
-DEFINE_ACTION_FUNCTION(AActor, Vel3DFromAngle)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(speed);
-	PARAM_ANGLE(angle);
-	PARAM_ANGLE(pitch);
-	self->Vel3DFromAngle(angle, pitch, speed);
-	return 0;
-}
-
-// This combines all 3 variations of the internal function
-DEFINE_ACTION_FUNCTION(AActor, Thrust)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(speed);
-	PARAM_ANGLE(angle);
-
-	if (speed == 1e37)
-	{
-		self->Thrust();
-	}
-	else
-	{
-		if (angle == 1e37)
-		{
-			self->Thrust(speed);
-		}
-		else
-		{
-			self->Thrust(angle, speed);
-		}
-	}
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, AngleTo)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT_NOT_NULL(targ, AActor);
-	PARAM_BOOL(absolute);
-	ACTION_RETURN_FLOAT(self->AngleTo(targ, absolute).Degrees);
-}
-
-DEFINE_ACTION_FUNCTION(AActor, AngleToVector)
-{
-	PARAM_PROLOGUE;
-	PARAM_ANGLE(angle);
-	PARAM_FLOAT(length);
-	ACTION_RETURN_VEC2(angle.ToVector(length));
-}
-
-DEFINE_ACTION_FUNCTION(AActor, RotateVector)
-{
-	PARAM_PROLOGUE;
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-	PARAM_ANGLE(angle);
-	ACTION_RETURN_VEC2(DVector2(x, y).Rotated(angle));
-}
-
-DEFINE_ACTION_FUNCTION(AActor, Normalize180)
-{
-	PARAM_PROLOGUE;
-	PARAM_ANGLE(angle);
-	ACTION_RETURN_FLOAT(angle.Normalized180().Degrees);
-}
-
-DEFINE_ACTION_FUNCTION(AActor, DistanceBySpeed)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT_NOT_NULL(targ, AActor);
-	PARAM_FLOAT(speed);
-	ACTION_RETURN_FLOAT(self->DistanceBySpeed(targ, speed));
-}
-
-DEFINE_ACTION_FUNCTION(AActor, SetXYZ)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-	PARAM_FLOAT(z);
-	self->SetXYZ(x, y, z);
-	return 0; 
-}
-
-DEFINE_ACTION_FUNCTION(AActor, Vec2Angle)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(length);
-	PARAM_ANGLE(angle);
-	PARAM_BOOL(absolute);
-	ACTION_RETURN_VEC2(self->Vec2Angle(length, angle, absolute));
-}
-
-
-DEFINE_ACTION_FUNCTION(AActor, Vec3To)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT_NOT_NULL(t, AActor)
-	ACTION_RETURN_VEC3(self->Vec3To(t));
-}
-
-DEFINE_ACTION_FUNCTION(AActor, Vec2To)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT_NOT_NULL(t, AActor)
-	ACTION_RETURN_VEC2(self->Vec2To(t));
-}
-
-DEFINE_ACTION_FUNCTION(AActor, Vec3Angle)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(length)
-	PARAM_ANGLE(angle);
-	PARAM_FLOAT(z);
-	PARAM_BOOL(absolute);
-	ACTION_RETURN_VEC3(self->Vec3Angle(length, angle, z, absolute));
-}
-
-DEFINE_ACTION_FUNCTION(AActor, Vec2OffsetZ)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-	PARAM_FLOAT(z);
-	PARAM_BOOL(absolute);
-	ACTION_RETURN_VEC3(self->Vec2OffsetZ(x, y, z, absolute));
-}
-
-DEFINE_ACTION_FUNCTION(AActor, Vec2Offset)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-	PARAM_BOOL(absolute);
-	ACTION_RETURN_VEC2(self->Vec2Offset(x, y, absolute));
-}
-
-DEFINE_ACTION_FUNCTION(AActor, Vec3Offset)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-	PARAM_FLOAT(z);
-	PARAM_BOOL(absolute);
-	ACTION_RETURN_VEC3(self->Vec3Offset(x, y, z, absolute));
-}
-
-DEFINE_ACTION_FUNCTION(AActor, PosRelative)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_POINTER(sec, sector_t);
-	ACTION_RETURN_VEC3(self->PosRelative(sec));
-}
-
-DEFINE_ACTION_FUNCTION(AActor, RestoreDamage)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	self->RestoreDamage();
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, PlayerNumber)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_INT(self->player ? int(self->player - players) : 0);
-}
-
-DEFINE_ACTION_FUNCTION(AActor, SetFriendPlayer)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_POINTER(player, player_t);
-	self->SetFriendPlayer(player);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, ClearBounce)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	self->BounceFlags = 0;
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, AccuracyFactor)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_FLOAT(self->AccuracyFactor());
-}
-
-DEFINE_ACTION_FUNCTION(AActor, CountsAsKill)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_BOOL(self->CountsAsKill());
-}
-
-DEFINE_ACTION_FUNCTION(AActor, IsZeroDamage)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_BOOL(self->IsZeroDamage());
-}
-
-DEFINE_ACTION_FUNCTION(AActor, ClearInterpolation)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	self->ClearInterpolation();
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, ApplyDamageFactors)
-{
-	PARAM_PROLOGUE;
-	PARAM_CLASS(itemcls, AActor);
-	PARAM_NAME(damagetype);
-	PARAM_INT(damage);
-	PARAM_INT(defdamage);
-
-	DmgFactors &df = itemcls->ActorInfo()->DamageFactors;
-	if (df.Size() != 0)
-	{
-		ACTION_RETURN_INT(df.Apply(damagetype, damage));
-	}
-	else
-	{
-		ACTION_RETURN_INT(defdamage);
-	}
-}
-
 
 //----------------------------------------------------------------------------
 //
@@ -8111,8 +7579,5 @@ void PrintMiscActorInfo(AActor *query)
 		Printf("FriendlySeeBlocks: %d\n", query->friendlyseeblocks);
 		Printf("Target: %s\n", query->target ? query->target->GetClass()->TypeName.GetChars() : "-");
 		Printf("Last enemy: %s\n", query->lastenemy ? query->lastenemy->GetClass()->TypeName.GetChars() : "-");
-		Printf("Spawn time: %d ticks (%f seconds) after game start, %d ticks (%f seconds) after level start\n", 
-			query->SpawnTime, (double) query->SpawnTime / TICRATE,
-			query->GetLevelSpawnTime(), (double) query->GetLevelSpawnTime() / TICRATE);
 	}
 }

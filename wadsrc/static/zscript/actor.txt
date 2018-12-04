@@ -737,9 +737,36 @@ class Actor : Thinker native
 	native void GiveSecret(bool printmsg = true, bool playsound = true);
 	native clearscope double GetCameraHeight() const;
 	native clearscope double GetGravity() const;
-	native clearscope int GetLevelSpawnTime() const;
-	native clearscope int GetAge() const;
 
+	//==========================================================================
+	//
+	// AActor :: GetLevelSpawnTime
+	//
+	// Returns the time when this actor was spawned, 
+	// relative to the current level.
+	//
+	//==========================================================================
+	clearscope int GetLevelSpawnTime() const
+	{
+		return SpawnTime - level.totaltime + level.time;
+	}
+
+	//==========================================================================
+	//
+	// AActor :: GetAge
+	//
+	// Returns the number of ticks passed since this actor was spawned.
+	//
+	//==========================================================================
+	
+	clearscope int GetAge() const
+	{
+		return level.totaltime - SpawnTime;
+	}
+
+	
+	
+	
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);
 	protected native void DestroyAllInventory();	// This is not supposed to be called by user code!
 	native clearscope Inventory FindInventory(class<Inventory> itemtype, bool subclass = false) const;

@@ -54,3 +54,12 @@ inline double sector_t::LowestFloorAt(AActor *a, sector_t **resultsec)
 	return ::LowestFloorAt(this, a->X(), a->Y(), resultsec);
 }
 
+inline double AActor::GetBobOffset(double ticfrac) const
+{
+	if (!(flags2 & MF2_FLOATBOB))
+	{
+		return 0;
+	}
+	return BobSin(FloatBobPhase + level.maptime + ticfrac) * FloatBobStrength;
+}
+

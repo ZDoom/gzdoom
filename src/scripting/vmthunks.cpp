@@ -52,14 +52,6 @@ int Net_GetLatency(int *ld, int *ad);
 void PrintPickupMessage(bool localview, const FString &str);
 
 
-DEFINE_ACTION_FUNCTION_NATIVE(DObject, SetMusicVolume, I_SetMusicVolume)
-{
-	PARAM_PROLOGUE;
-	PARAM_FLOAT(vol);
-	I_SetMusicVolume(vol);
-	return 0;
-}
-
 //=====================================================================================
 //
 // FString exports
@@ -1817,77 +1809,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetCursor, GetCursor)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FFont);
 	ACTION_RETURN_STRING(FString(self->GetCursor()));
-}
-
-//=====================================================================================
-//
-// AActor exports (this will be expanded)
-//
-//=====================================================================================
-
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetPointer, COPY_AAPTR)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(ptr);
-	ACTION_RETURN_OBJECT(COPY_AAPTR(self, ptr));
-}
-
-
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_PlaySound, A_PlaySound)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_SOUND(soundid);
-	PARAM_INT(channel);
-	PARAM_FLOAT(volume);
-	PARAM_BOOL(looping);
-	PARAM_FLOAT(attenuation);
-	PARAM_BOOL(local);
-	A_PlaySound(self, soundid, channel, volume, looping, attenuation, local);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckKeys, P_CheckKeys)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(locknum);
-	PARAM_BOOL(remote);
-	PARAM_BOOL(quiet);
-	ACTION_RETURN_BOOL(P_CheckKeys(self, locknum, remote, quiet));
-}
-
-
-//=====================================================================================
-//
-// Inventory exports
-//
-//=====================================================================================
-
-DEFINE_ACTION_FUNCTION_NATIVE(AInventory, PrintPickupMessage, PrintPickupMessage)
-{
-	PARAM_PROLOGUE;
-	PARAM_BOOL(localview);
-	PARAM_STRING(str);
-	PrintPickupMessage(localview, str);
-	return 0;
-}
-
-//=====================================================================================
-//
-// Key exports
-//
-//=====================================================================================
-
-DEFINE_ACTION_FUNCTION_NATIVE(AKey, GetKeyTypeCount, P_GetKeyTypeCount)
-{
-	PARAM_PROLOGUE;
-	ACTION_RETURN_INT(P_GetKeyTypeCount());
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(AKey, GetKeyType, P_GetKeyType)
-{
-	PARAM_PROLOGUE;
-	PARAM_INT(num);
-	ACTION_RETURN_POINTER(P_GetKeyType(num));
 }
 
 //=====================================================================================

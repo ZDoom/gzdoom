@@ -624,19 +624,11 @@ void I_UpdateMusic()
 //
 //==========================================================================
 
-void I_SetMusicVolume (float factor)
+void I_SetMusicVolume (double factor)
 {
-	factor = clamp<float>(factor, 0, 2.0f);
-	relative_volume = saved_relative_volume * factor;
+	factor = clamp(factor, 0., 2.0);
+	relative_volume = saved_relative_volume * float(factor);
 	snd_musicvolume.Callback();
-}
-
-DEFINE_ACTION_FUNCTION(DObject, SetMusicVolume)
-{
-	PARAM_PROLOGUE;
-	PARAM_FLOAT(vol);
-	I_SetMusicVolume((float)vol);
-	return 0;
 }
 
 //==========================================================================

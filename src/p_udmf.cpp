@@ -373,15 +373,6 @@ int GetUDMFInt(int type, int index, FName key)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(FLevelLocals, GetUDMFInt)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
-	PARAM_INT(type);
-	PARAM_INT(index);
-	PARAM_NAME(key);
-	ACTION_RETURN_INT(GetUDMFInt(type, index, key));
-}
-
 double GetUDMFFloat(int type, int index, FName key)
 {
 	assert(type >=0 && type <=3);
@@ -397,15 +388,6 @@ double GetUDMFFloat(int type, int index, FName key)
 		}
 	}
 	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(FLevelLocals, GetUDMFFloat)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
-	PARAM_INT(type);
-	PARAM_INT(index);
-	PARAM_NAME(key);
-	ACTION_RETURN_FLOAT(GetUDMFFloat(type, index, key));
 }
 
 FString GetUDMFString(int type, int index, FName key)
@@ -424,16 +406,6 @@ FString GetUDMFString(int type, int index, FName key)
 	}
 	return "";
 }
-
-DEFINE_ACTION_FUNCTION(FLevelLocals, GetUDMFString)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
-	PARAM_INT(type);
-	PARAM_INT(index);
-	PARAM_NAME(key);
-	ACTION_RETURN_STRING(GetUDMFString(type, index, key));
-}
-
 
 //===========================================================================
 //

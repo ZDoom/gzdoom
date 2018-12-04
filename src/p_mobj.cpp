@@ -7708,42 +7708,6 @@ DEFINE_ACTION_FUNCTION(AActor, GetBobOffset)
 
 
 
-
-class DActorIterator : public DObject, public NActorIterator
-{
-	DECLARE_ABSTRACT_CLASS(DActorIterator, DObject)
-
-public:
-	DActorIterator(PClassActor *cls= nullptr, int tid = 0)
-		: NActorIterator(cls, tid)
-	{
-	}
-};
-
-IMPLEMENT_CLASS(DActorIterator, true, false);
-DEFINE_ACTION_FUNCTION(DActorIterator, Create)
-{
-	PARAM_PROLOGUE;
-	PARAM_INT(tid);
-	PARAM_CLASS(type, AActor);
-	ACTION_RETURN_OBJECT(Create<DActorIterator>(type, tid));
-}
-
-DEFINE_ACTION_FUNCTION(DActorIterator, Next)
-{
-	PARAM_SELF_PROLOGUE(DActorIterator);
-	ACTION_RETURN_OBJECT(self->Next());
-}
-
-DEFINE_ACTION_FUNCTION(DActorIterator, Reinit)
-{
-	PARAM_SELF_PROLOGUE(DActorIterator);
-	self->Reinit();
-	return 0;
-}
-
-
-
 DEFINE_ACTION_FUNCTION(AActor, deltaangle)	// should this be global?
 {
 	PARAM_PROLOGUE;

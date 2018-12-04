@@ -162,6 +162,7 @@ int P_TranslateSectorSpecial (int);
 
 int GetUDMFInt(int type, int index, FName key);
 double GetUDMFFloat(int type, int index, FName key);
+FString GetUDMFString(int type, int index, FName key);
 
 bool P_LoadGLNodes(MapData * map);
 bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime);

@@ -54,50 +54,6 @@
 
 EXTERN_CVAR(Bool, sv_unlimited_pickup)
 
-IMPLEMENT_CLASS(AInventory, false, true)
-
-IMPLEMENT_POINTERS_START(AInventory)
-IMPLEMENT_POINTER(Owner)
-IMPLEMENT_POINTERS_END
-
-DEFINE_FIELD_BIT(AInventory, ItemFlags, bPickupGood, IF_PICKUPGOOD)
-DEFINE_FIELD_BIT(AInventory, ItemFlags, bCreateCopyMoved, IF_CREATECOPYMOVED)
-DEFINE_FIELD_BIT(AInventory, ItemFlags, bInitEffectFailed, IF_INITEFFECTFAILED)
-DEFINE_FIELD(AInventory, Owner)
-DEFINE_FIELD(AInventory, Amount)
-DEFINE_FIELD(AInventory, MaxAmount)
-DEFINE_FIELD(AInventory, InterHubAmount)
-DEFINE_FIELD(AInventory, RespawnTics)
-DEFINE_FIELD(AInventory, Icon)
-DEFINE_FIELD(AInventory, AltHUDIcon)
-DEFINE_FIELD(AInventory, DropTime)
-DEFINE_FIELD(AInventory, SpawnPointClass)
-DEFINE_FIELD(AInventory, PickupFlash)
-DEFINE_FIELD(AInventory, PickupSound)
-
-//===========================================================================
-//
-// AInventory :: Serialize
-//
-//===========================================================================
-
-void AInventory::Serialize(FSerializer &arc)
-{
-	Super::Serialize (arc);
-
-	auto def = (AInventory*)GetDefault();
-	arc("owner", Owner)
-		("amount", Amount, def->Amount)
-		("maxamount", MaxAmount, def->MaxAmount)
-		("interhubamount", InterHubAmount, def->InterHubAmount)
-		("respawntics", RespawnTics, def->RespawnTics)
-		("itemflags", ItemFlags, def->ItemFlags)
-		("icon", Icon, def->Icon)
-		("althudicon", AltHUDIcon, def->AltHUDIcon)
-		("pickupsound", PickupSound, def->PickupSound)
-		("spawnpointclass", SpawnPointClass, def->SpawnPointClass)
-		("droptime", DropTime, def->DropTime);
-}
 
 //===========================================================================
 //

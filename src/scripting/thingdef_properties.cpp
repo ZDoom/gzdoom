@@ -320,21 +320,6 @@ void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int in
 	case DEPF_INTERHUBSTRIP: // Old system was 0 or 1, so if the flag is cleared, assume 1.
 		defaults->IntVar(NAME_InterHubAmount) = set ? 0 : 1;
 		break;
-	case DEPF_NOTRAIL:
-	{
-		FString propname = "@property@powerspeed.notrail";
-		FName name(propname, true);
-		if (name != NAME_None)
-		{
-			auto propp = dyn_cast<PProperty>(info->FindSymbol(name, true));
-			if (propp != nullptr)
-			{
-				*((char*)defaults + propp->Variables[0]->Offset) = set ? 1 : 0;
-			}
-		}
-		break;
-	}
-
 
 	default:
 		break;	// silence GCC
@@ -1089,7 +1074,7 @@ DEFINE_PROPERTY(distancecheck, S, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(restrictedto, Ssssssssssssssssssss, Inventory)
+DEFINE_SCRIPTED_PROPERTY(restrictedto, Ssssssssssssssssssss, Inventory)
 {
 	auto restrictarray = (TArray<PClassActor*>*)defaults->ScriptVar(NAME_RestrictedToPlayerClass, nullptr);
 
@@ -1105,7 +1090,7 @@ DEFINE_CLASS_PROPERTY(restrictedto, Ssssssssssssssssssss, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(forbiddento, Ssssssssssssssssssss, Inventory)
+DEFINE_SCRIPTED_PROPERTY(forbiddento, Ssssssssssssssssssss, Inventory)
 {
 	auto forbidarray = (TArray<PClassActor*>*)defaults->ScriptVar(NAME_ForbiddenToPlayerClass, nullptr);
 
@@ -1147,7 +1132,7 @@ static void SetIcon(FTextureID &icon, Baggage &bag, const char *i)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(icon, S, Inventory)
+DEFINE_SCRIPTED_PROPERTY(icon, S, Inventory)
 {
 	PROP_STRING_PARM(i, 0);
 	SetIcon(defaults->TextureIDVar(NAME_Icon), bag, i);
@@ -1156,7 +1141,7 @@ DEFINE_CLASS_PROPERTY(icon, S, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(althudicon, S, Inventory)
+DEFINE_SCRIPTED_PROPERTY(althudicon, S, Inventory)
 {
 	PROP_STRING_PARM(i, 0);
 	SetIcon(defaults->TextureIDVar(NAME_AltHUDIcon), bag, i);
@@ -1165,7 +1150,7 @@ DEFINE_CLASS_PROPERTY(althudicon, S, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(defmaxamount, 0, Inventory)
+DEFINE_SCRIPTED_PROPERTY(defmaxamount, 0, Inventory)
 {
 	defaults->IntVar(NAME_MaxAmount) = gameinfo.definventorymaxamount;
 }
@@ -1173,7 +1158,7 @@ DEFINE_CLASS_PROPERTY(defmaxamount, 0, Inventory)
 //==========================================================================
 // Dummy for Skulltag compatibility...
 //==========================================================================
-DEFINE_CLASS_PROPERTY(pickupannouncerentry, S, Inventory)
+DEFINE_SCRIPTED_PROPERTY(pickupannouncerentry, S, Inventory)
 {
 }
 
@@ -1216,7 +1201,7 @@ DEFINE_SCRIPTED_PROPERTY(preferredskin, S, Weapon)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
+DEFINE_SCRIPTED_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 {
 	static const char *specialcolormapnames[] = {
 		"INVERSEMAP", "GOLDMAP", "REDMAP", "GREENMAP", "BLUEMAP", NULL };
@@ -1271,7 +1256,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
+DEFINE_SCRIPTED_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
 {
 	PalEntry BlendColor;
 
@@ -1308,7 +1293,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(powerup, duration, I, Inventory)
+DEFINE_SCRIPTED_PROPERTY_PREFIX(powerup, duration, I, Inventory)
 {
 	if (!info->IsDescendantOf(NAME_Powerup) && !info->IsDescendantOf(NAME_PowerupGiver))
 	{

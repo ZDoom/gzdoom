@@ -412,33 +412,6 @@ static FFlagDef MoreFlagDefs[] =
 static FFlagDef InventoryFlagDefs[] =
 {
 	// Inventory flags
-	DEFINE_FLAG(IF, QUIET, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, AUTOACTIVATE, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, UNDROPPABLE, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, INVBAR, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, HUBPOWER, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, UNTOSSABLE, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, ADDITIVETIME, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, ALWAYSPICKUP, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, FANCYPICKUPSOUND, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, BIGPOWERUP, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, KEEPDEPLETED, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, IGNORESKILL, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, NOATTENPICKUPSOUND, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, PERSISTENTPOWER, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, RESTRICTABSOLUTELY, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, NEVERRESPAWN, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, NOSCREENFLASH, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, TOSSED, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, ALWAYSRESPAWN, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, TRANSFER, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, NOTELEPORTFREEZE, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, NOSCREENBLINK, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, ISARMOR, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, ISHEALTH, AInventory, ItemFlags),
-
-	DEFINE_DUMMY_FLAG(FORCERESPAWNINSURVIVAL, false),
-
 	DEFINE_DEPRECATED_FLAG(PICKUPFLASH),
 	DEFINE_DEPRECATED_FLAG(INTERHUBSTRIP),
 };
@@ -463,18 +436,11 @@ static FFlagDef DynLightFlagDefs[] =
 	DEFINE_FLAG(LF, SPOT, ADynamicLight, lightflags),
 };
 
-static FFlagDef PowerSpeedFlagDefs[] =
-{
-	// PowerSpeed flags
-	DEFINE_DEPRECATED_FLAG(NOTRAIL),
-};
-
 static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int NumDefs; int Use; } FlagLists[] =
 {
 	{ &RUNTIME_CLASS_CASTLESS(AActor), 		ActorFlagDefs,		countof(ActorFlagDefs), 3 },	// -1 to account for the terminator
 	{ &RUNTIME_CLASS_CASTLESS(AActor), 		MoreFlagDefs,		countof(MoreFlagDefs), 1 },
 	{ &RUNTIME_CLASS_CASTLESS(AActor), 	InternalActorFlagDefs,	countof(InternalActorFlagDefs), 2 },
-	{ &RUNTIME_CLASS_CASTLESS(AInventory), 	InventoryFlagDefs,	countof(InventoryFlagDefs), 3 },
 	{ &RUNTIME_CLASS_CASTLESS(APlayerPawn),	PlayerPawnFlagDefs,	countof(PlayerPawnFlagDefs), 3 },
 	{ &RUNTIME_CLASS_CASTLESS(ADynamicLight),DynLightFlagDefs,	countof(DynLightFlagDefs), 3 },
 };
@@ -531,9 +497,9 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2, bo
 			{
 				forInternalFlags.fieldsize = 4;
 				forInternalFlags.name = "";
-				forInternalFlags.flagbit = field->Offset? 1 << field->bitval : DEPF_UNUSED;
+				forInternalFlags.flagbit = field->Offset? 1 << field->bitval : field->bitval;
 				forInternalFlags.structoffset = field->Offset? (int)field->Offset->Offset : -1;
-				forInternalFlags.varflags = 0;
+				forInternalFlags.varflags = field->Offset == nullptr && field->bitval > 0? VARF_Deprecated : 0;
 				return &forInternalFlags;
 			}
 		}
@@ -549,9 +515,9 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2, bo
 			{
 				forInternalFlags.fieldsize = 4;
 				forInternalFlags.name = "";
-				forInternalFlags.flagbit = field->Offset ? 1 << field->bitval : DEPF_UNUSED;
+				forInternalFlags.flagbit = field->Offset ? 1 << field->bitval : field->bitval;
 				forInternalFlags.structoffset = field->Offset ? (int)field->Offset->Offset : -1;
-				forInternalFlags.varflags = 0;
+				forInternalFlags.varflags = field->Offset == nullptr && field->bitval > 0? VARF_Deprecated : 0;
 				return &forInternalFlags;
 			}
 		}
@@ -595,11 +561,6 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2, bo
 		}
 	}
 
-	// Handle that lone PowerSpeed flag - this should be more generalized but it's just this one flag and unlikely to become more so an explicit check will do.
-	if ((!stricmp(part1, "NOTRAIL") && !strict) || (!stricmp(part1, "POWERSPEED") && !stricmp(part2, "NOTRAIL")))
-	{
-		return &PowerSpeedFlagDefs[0];
-	}
 	return NULL;
 }
 

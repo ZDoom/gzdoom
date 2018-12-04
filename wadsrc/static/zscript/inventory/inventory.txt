@@ -5,25 +5,26 @@ struct VisStyle
 	int				RenderStyle;
 }
 
-class Inventory : Actor native
+class Inventory : Actor
 {
 	const BLINKTHRESHOLD = (4*32);
 	const BONUSADD = 6;
 
-	native Actor Owner;						// Who owns this item? NULL if it's still a pickup.
-	native int Amount;						// Amount of item this instance has
-	native int MaxAmount;					// Max amount of item this instance can have
-	native int InterHubAmount;				// Amount of item that can be kept between hubs or levels
-	native int RespawnTics;					// Tics from pickup time to respawn time
-	native TextureID Icon;					// Icon to show on status bar or HUD
-	native TextureID AltHUDIcon;
-	native int DropTime;					// Countdown after dropping
-	native Class<Actor> SpawnPointClass;	// For respawning like Heretic's mace
-	native Class<Actor> PickupFlash;		// actor to spawn as pickup flash
-	native Sound PickupSound;
-	native bool bPickupGood;
-	native bool bCreateCopyMoved;
-	native bool bInitEffectFailed;
+	deprecated("3.7") private int ItemFlags;
+	Actor Owner;						// Who owns this item? NULL if it's still a pickup.
+	int Amount;						// Amount of item this instance has
+	int MaxAmount;					// Max amount of item this instance can have
+	int InterHubAmount;				// Amount of item that can be kept between hubs or levels
+	int RespawnTics;					// Tics from pickup time to respawn time
+	TextureID Icon;					// Icon to show on status bar or HUD
+	TextureID AltHUDIcon;
+	int DropTime;					// Countdown after dropping
+	Class<Actor> SpawnPointClass;	// For respawning like Heretic's mace
+	Class<Actor> PickupFlash;		// actor to spawn as pickup flash
+	Sound PickupSound;
+	bool bPickupGood;
+	bool bCreateCopyMoved;
+	bool bInitEffectFailed;
 	meta String PickupMsg;
 	meta int GiveQuest;
 	meta array<class<Actor> > ForbiddenToPlayerClass;
@@ -38,7 +39,36 @@ class Inventory : Actor native
 	property PickupSound: PickupSound;
 	property UseSound: UseSound;
 	property RespawnTics: RespawnTics;
-		
+
+	flagdef Quiet: ItemFlags, 0;
+	flagdef Autoactivate: ItemFlags, 1;
+	flagdef Undroppable: ItemFlags, 2;
+	flagdef Invbar: ItemFlags, 3;
+	flagdef HubPower: ItemFlags, 4;
+	flagdef Untossable: ItemFlags, 5;
+	flagdef AdditiveTime: ItemFlags, 6;
+	flagdef FancyPickupSound: ItemFlags, 7;
+	flagdef BigPowerup: ItemFlags, 8;
+	flagdef KeepDepleted: ItemFlags, 9;
+	flagdef IgnoreSkill: ItemFlags, 10;
+	flagdef NoAttenPickupSound: ItemFlags, 11;
+	flagdef PersistentPower : ItemFlags, 12;
+	flagdef RestrictAbsolutely: ItemFlags, 13;
+	flagdef NeverRespawn: ItemFlags, 14;
+	flagdef NoScreenFlash: ItemFlags, 15;
+	flagdef Tossed: ItemFlags, 16;
+	flagdef AlwaysRespawn: ItemFlags, 17;
+	flagdef Transfer: ItemFlags, 18;
+	flagdef NoTeleportFreeze: ItemFlags, 19;
+	flagdef NoScreenBlink: ItemFlags, 20;
+	flagdef IsArmor: ItemFlags, 21;
+	flagdef IsHealth: ItemFlags, 22;
+	flagdef AlwaysPickup: ItemFlags, 23;
+
+	flagdef ForceRespawnInSurvival: none, 0;
+	flagdef PickupFlash: none, 6;
+	flagdef InterHubStrip: none, 12;
+
 	Default
 	{
 		Inventory.Amount 1;

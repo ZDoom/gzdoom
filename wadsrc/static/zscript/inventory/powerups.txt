@@ -1157,6 +1157,7 @@ class PowerSpeed : Powerup
 	int NoTrail;
 
 	Property NoTrail: NoTrail;
+	FlagDef NoTrail: NoTrail, 0;	// This was once a flag, not a property.
 	
 	Default
 	{

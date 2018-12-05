@@ -53,6 +53,8 @@
 #include "p_effect.h"
 #include "p_spec.h"
 #include "actorinlines.h"
+#include "p_enemy.h"
+#include "gi.h"
 
 DVector2 AM_GetPosition();
 int Net_GetLatency(int *ld, int *ad);
@@ -1092,7 +1094,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, LineAttack, ZS_LineAttack)
 	return numret;
 }
 
-static bool LineTrace(AActor *self, double angle, double distance, double pitch, int flags, double offsetz, double offsetforward, double offsetside, FLineTraceData *data)
+static int LineTrace(AActor *self, double angle, double distance, double pitch, int flags, double offsetz, double offsetforward, double offsetside, FLineTraceData *data)
 {
 	return P_LineTrace(self,angle,distance,pitch,flags,offsetz,offsetforward,offsetside,data);
 }
@@ -1345,6 +1347,199 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetMissileDamage, ZS_GetMissileDamage)
 	ACTION_RETURN_INT(ZS_GetMissileDamage(self, mask, add, pick_pointer));
 }
 	
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SoundAlert, P_NoiseAlert)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(target, AActor);
+	PARAM_BOOL(splash);
+	PARAM_FLOAT(maxdist);
+	P_NoiseAlert(self, target, splash, maxdist);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, HitFriend, P_HitFriend)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(P_HitFriend(self));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, MonsterMove, P_Move)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(P_Move(self));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, NewChaseDir, P_NewChaseDir)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	P_NewChaseDir(self);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, RandomChaseDir, P_RandomChaseDir)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	P_RandomChaseDir(self);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, IsVisible, P_IsVisible)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(other, AActor);
+	PARAM_BOOL(allaround);
+	PARAM_POINTER(params, FLookExParams);
+	ACTION_RETURN_BOOL(P_IsVisible(self, other, allaround, params));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, LookForMonsters, P_LookForMonsters)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(P_LookForMonsters(self));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, LookForTID, P_LookForTID)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL(allaround);
+	PARAM_POINTER(params, FLookExParams);
+	ACTION_RETURN_BOOL(P_LookForTID(self, allaround, params));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, LookForEnemies, P_LookForEnemies)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL(allaround);
+	PARAM_POINTER(params, FLookExParams);
+	ACTION_RETURN_BOOL(P_LookForEnemies(self, allaround, params));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, LookForPlayers, P_LookForPlayers)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL(allaround);
+	PARAM_POINTER(params, FLookExParams);
+	ACTION_RETURN_BOOL(P_LookForPlayers(self, allaround, params));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_Wander, A_Wander)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(flags);
+	A_Wander(self, flags);
+	return 0;
+}
+//==========================================================================
+//
+// A_Chase and variations
+//
+//==========================================================================
+
+static void A_FastChase(AActor *self)
+{
+	A_DoChase(self, true, self->MeleeState, self->MissileState, true, true, false, 0);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_FastChase, A_FastChase)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	A_FastChase(self);
+	return 0;
+}
+
+static void A_VileChase(AActor *self)
+{
+	if (!P_CheckForResurrection(self, true))
+	{
+		A_DoChase(self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, 0);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_VileChase, A_VileChase)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	A_VileChase(self);
+	return 0;
+}
+
+static void A_ExtChase(AActor *self, bool domelee, bool domissile, bool playactive, bool nightmarefast)
+{
+	// Now that A_Chase can handle state label parameters, this function has become rather useless...
+	A_DoChase(self, false,
+		domelee ? self->MeleeState : NULL, domissile ? self->MissileState : NULL,
+		playactive, nightmarefast, false, 0);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_ExtChase, A_ExtChase)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL(domelee);
+	PARAM_BOOL(domissile);
+	PARAM_BOOL(playactive);
+	PARAM_BOOL(nightmarefast);
+	A_ExtChase(self, domelee, domissile, playactive, nightmarefast);
+	return 0;
+}
+
+int CheckForResurrection(AActor *self)
+{
+	return P_CheckForResurrection(self, false);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_CheckForResurrection, CheckForResurrection)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(P_CheckForResurrection(self, false));
+}
+
+static void ZS_Face(AActor *self, AActor *faceto, double max_turn, double max_pitch, double ang_offset, double pitch_offset, int flags, double z_add)
+{
+	A_Face(self, faceto, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_add);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_Face, ZS_Face)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(faceto, AActor)
+	PARAM_ANGLE(max_turn)
+	PARAM_ANGLE(max_pitch)
+	PARAM_ANGLE(ang_offset)
+	PARAM_ANGLE(pitch_offset)
+	PARAM_INT(flags)
+	PARAM_FLOAT(z_add)
+
+	A_Face(self, faceto, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_add);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckBossDeath, CheckBossDeath)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(CheckBossDeath(self));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_BossDeath, A_BossDeath)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	A_BossDeath(self);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, Substitute, DObject::StaticPointerSubstitution)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(replace, AActor);
+	DObject::StaticPointerSubstitution(self, replace);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetSpawnableType, P_GetSpawnableType)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(num);
+	ACTION_RETURN_POINTER(P_GetSpawnableType(num));
+}
+
 //=====================================================================================
 //
 // Inventory exports

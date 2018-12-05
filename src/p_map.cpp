@@ -4754,7 +4754,7 @@ static ETraceStatus CheckLineTrace(FTraceResults &res, void *userdata)
 	return TRACE_Stop;
 }
 
-bool P_LineTrace(AActor *t1, DAngle angle, double distance,
+int P_LineTrace(AActor *t1, DAngle angle, double distance,
 	DAngle pitch, int flags, double sz, double offsetforward,
 	double offsetside, FLineTraceData *outdata)
 {
@@ -5612,7 +5612,7 @@ void P_UseLines(player_t *player)
 //
 //==========================================================================
 
-bool P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
+int P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
 {
 	DVector2 start;
 	DVector2 end;

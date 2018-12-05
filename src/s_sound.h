@@ -307,7 +307,7 @@ bool S_GetSoundPlayingInfo (const FPolyObj *poly, int sound_id);
 bool S_IsActorPlayingSomething (AActor *actor, int channel, int sound_id);
 
 // Change a playing sound's volume
-bool S_ChangeSoundVolume(AActor *actor, int channel, double volume);
+void S_ChangeSoundVolume(AActor *actor, int channel, double volume);
 
 // Moves all sounds from one mobj to another
 void S_RelinkSound (AActor *from, AActor *to);

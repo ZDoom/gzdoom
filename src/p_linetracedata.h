@@ -23,7 +23,7 @@ struct FLineTraceData
 	ETraceResult HitType;
 };
 
-bool P_LineTrace(AActor *t1, DAngle angle, double distance,
+int P_LineTrace(AActor *t1, DAngle angle, double distance,
 				 DAngle pitch, int flags, double sz, double offsetforward,
 				 double offsetside, FLineTraceData *outdata);
 

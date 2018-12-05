@@ -276,7 +276,7 @@ void	P_PlayerStartStomp (AActor *actor, bool mononly=false);		// [RH] Stomp on t
 void	P_SlideMove (AActor* mo, const DVector2 &pos, int numsteps);
 bool	P_BounceWall (AActor *mo);
 bool	P_BounceActor (AActor *mo, AActor *BlockingMobj, bool ontop);
-bool	P_CheckSight (AActor *t1, AActor *t2, int flags=0);
+int	P_CheckSight (AActor *t1, AActor *t2, int flags=0);
 
 enum ESightFlags
 {
@@ -289,7 +289,7 @@ enum ESightFlags
 void	P_ResetSightCounters (bool full);
 bool	P_TalkFacing (AActor *player);
 void	P_UseLines (player_t* player);
-bool	P_UsePuzzleItem (AActor *actor, int itemType);
+int	P_UsePuzzleItem (AActor *actor, int itemType);
 
 enum
 {

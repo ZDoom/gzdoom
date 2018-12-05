@@ -254,7 +254,7 @@ public:
 
 	// This is only needed for swapping out PlayerPawns and absolutely nothing else!
 	virtual size_t PointerSubstitution (DObject *old, DObject *notOld);
-	static size_t StaticPointerSubstitution (AActor *old, AActor *notOld);
+	static void StaticPointerSubstitution (AActor *old, AActor *notOld);
 
 	PClass *GetClass() const
 	{

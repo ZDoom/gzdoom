@@ -80,7 +80,7 @@ template<class T, class U> int ArrayPush(T *self, U val)
 	return self->Push(static_cast<typename T::value_type>(val));
 }
 
-template<class T> bool ArrayPop(T *self)
+template<class T> int ArrayPop(T *self)
 {
 	return self->Pop();
 }

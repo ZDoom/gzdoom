@@ -484,7 +484,7 @@ size_t DObject::PointerSubstitution (DObject *old, DObject *notOld)
 //
 //==========================================================================
 
-size_t DObject::StaticPointerSubstitution (AActor *old, AActor *notOld)
+void DObject::StaticPointerSubstitution (AActor *old, AActor *notOld)
 {
 	DObject *probe;
 	size_t changed = 0;
@@ -521,8 +521,6 @@ size_t DObject::StaticPointerSubstitution (AActor *old, AActor *notOld)
 	{
 		if (sec.SoundTarget == old) sec.SoundTarget = notOld;
 	}
-
-	return changed;
 }
 
 //==========================================================================

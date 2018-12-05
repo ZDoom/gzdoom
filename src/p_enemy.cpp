@@ -99,9 +99,6 @@ dirtype_t diags[4] =
 double xspeed[8] = {1,SQRTHALF,0,-SQRTHALF,-1,-SQRTHALF,0,SQRTHALF};
 double yspeed[8] = {0,SQRTHALF,1,SQRTHALF,0,-SQRTHALF,-1,-SQRTHALF};
 
-void P_RandomChaseDir (AActor *actor);
-
-
 //
 // ENEMY THINKING
 // Enemies are always spawned
@@ -240,7 +237,7 @@ static void P_RecursiveSound(sector_t *sec, AActor *soundtarget, bool splash, AA
 //
 //----------------------------------------------------------------------------
 
-void P_NoiseAlert (AActor *target, AActor *emitter, bool splash, double maxdist)
+void P_NoiseAlert (AActor *emitter, AActor *target, bool splash, double maxdist)
 {
 	if (emitter == NULL)
 		return;
@@ -255,17 +252,6 @@ void P_NoiseAlert (AActor *target, AActor *emitter, bool splash, double maxdist)
 	{
 		P_RecursiveSound(NoiseList[i].sec, target, splash, emitter, NoiseList[i].soundblocks, maxdist);
 	}
-}
-
-DEFINE_ACTION_FUNCTION(AActor, SoundAlert)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT(target, AActor);
-	PARAM_BOOL(splash);
-	PARAM_FLOAT(maxdist);
-	// Note that the emitter is self, not the target of the alert! Target can be NULL.
-	P_NoiseAlert(target, self, splash, maxdist);
-	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -409,7 +395,7 @@ bool AActor::SuggestMissileAttack (double dist)
 //
 //=============================================================================
 
-bool P_HitFriend(AActor * self)
+int P_HitFriend(AActor * self)
 {
 	FTranslatedLineTarget t;
 
@@ -426,19 +412,13 @@ bool P_HitFriend(AActor * self)
 	return false;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, HitFriend)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_BOOL(P_HitFriend(self));
-}
-
 //
 // P_Move
 // Move in the current direction,
 // returns false if the move is blocked.
 //
 
-bool P_Move (AActor *actor)
+int P_Move (AActor *actor)
 {
 
 	double tryx, tryy, deltax, deltay, origx, origy;
@@ -670,12 +650,6 @@ bool P_Move (AActor *actor)
 	}
 	return true; 
 }
-DEFINE_ACTION_FUNCTION(AActor, MonsterMove)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_BOOL(P_Move(self));
-}
-
 
 //=============================================================================
 //
@@ -999,14 +973,6 @@ void P_NewChaseDir(AActor * actor)
 
 }
 
-DEFINE_ACTION_FUNCTION(AActor, NewChaseDir)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	P_NewChaseDir(self);
-	return 0;
-}
-
-
 //=============================================================================
 //
 // P_RandomChaseDir
@@ -1165,14 +1131,6 @@ void P_RandomChaseDir (AActor *actor)
 	actor->movedir = DI_NODIR;	// cannot move
 }
 
-DEFINE_ACTION_FUNCTION(AActor, RandomChaseDir)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	P_RandomChaseDir(self);
-	return 0;
-}
-
-
 //---------------------------------------------------------------------------
 //
 // P_IsVisible
@@ -1182,7 +1140,7 @@ DEFINE_ACTION_FUNCTION(AActor, RandomChaseDir)
 //
 //---------------------------------------------------------------------------
 
-bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams *params)
+int P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams *params)
 {
 	double maxdist;
 	double mindist;
@@ -1230,15 +1188,6 @@ bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams
 	return P_CheckSight(lookee, other, SF_SEEPASTSHOOTABLELINES);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, IsVisible)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT(other, AActor);
-	PARAM_BOOL(allaround);
-	PARAM_POINTER(params, FLookExParams);
-	ACTION_RETURN_BOOL(P_IsVisible(self, other, allaround, params));
-}
-
 //---------------------------------------------------------------------------
 //
 // FUNC P_LookForMonsters
@@ -1248,7 +1197,7 @@ DEFINE_ACTION_FUNCTION(AActor, IsVisible)
 #define MONS_LOOK_RANGE (20*64)
 #define MONS_LOOK_LIMIT 64
 
-bool P_LookForMonsters (AActor *actor)
+int P_LookForMonsters (AActor *actor)
 {
 	int count;
 	AActor *mo;
@@ -1290,12 +1239,6 @@ bool P_LookForMonsters (AActor *actor)
 		return true;
 	}
 	return false;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, LookForMonsters)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_BOOL(P_LookForMonsters(self));
 }
 
 //============================================================================
@@ -1369,7 +1312,7 @@ AActor *LookForTIDInBlock (AActor *lookee, int index, void *extparams)
 //
 //============================================================================
 
-bool P_LookForTID (AActor *actor, INTBOOL allaround, FLookExParams *params)
+int P_LookForTID (AActor *actor, INTBOOL allaround, FLookExParams *params)
 {
 	AActor *other;
 	bool reachedend = false;
@@ -1470,14 +1413,6 @@ bool P_LookForTID (AActor *actor, INTBOOL allaround, FLookExParams *params)
 	return false;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, LookForTID)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_BOOL(allaround);
-	PARAM_POINTER(params, FLookExParams);
-	ACTION_RETURN_BOOL(P_LookForTID(self, allaround, params));
-}
-
 //============================================================================
 //
 // LookForEnemiesinBlock
@@ -1575,7 +1510,7 @@ AActor *LookForEnemiesInBlock (AActor *lookee, int index, void *extparam)
 //
 //============================================================================
 
-bool P_LookForEnemies (AActor *actor, INTBOOL allaround, FLookExParams *params)
+int P_LookForEnemies (AActor *actor, INTBOOL allaround, FLookExParams *params)
 {
 	AActor *other;
 
@@ -1617,14 +1552,6 @@ bool P_LookForEnemies (AActor *actor, INTBOOL allaround, FLookExParams *params)
 	return false;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, LookForEnemies)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_BOOL(allaround);
-	PARAM_POINTER(params, FLookExParams);
-	ACTION_RETURN_BOOL(P_LookForEnemies(self, allaround, params));
-}
-
 
 /*
 ================
@@ -1636,7 +1563,7 @@ DEFINE_ACTION_FUNCTION(AActor, LookForEnemies)
 ================
 */
 
-bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
+int P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 {
 	int 		c;
 	int			pnum;
@@ -1810,14 +1737,6 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 		actor->target = player->mo;
 		return true;
 	}
-}
-
-DEFINE_ACTION_FUNCTION(AActor, LookForPlayers)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_BOOL(allaround);
-	PARAM_POINTER(params, FLookExParams);
-	ACTION_RETURN_BOOL(P_LookForPlayers(self, allaround, params));
 }
 
 //
@@ -2165,14 +2084,6 @@ enum ChaseFlags
 	CHF_NOPOSTATTACKTURN = 128,
 	CHF_STOPIFBLOCKED = 256,
 };
-
-DEFINE_ACTION_FUNCTION(AActor, A_Wander)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(flags);
-	A_Wander(self, flags);
-	return 0;
-}
 
 void A_Wander(AActor *self, int flags)
 {
@@ -2702,7 +2613,7 @@ bool P_CanResurrect(AActor *raiser, AActor *thing)
 //
 //==========================================================================
 
-static bool P_CheckForResurrection(AActor *self, bool usevilestates)
+bool P_CheckForResurrection(AActor *self, bool usevilestates)
 {
 	const AActor *info;
 	AActor *temp;
@@ -2848,76 +2759,33 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 	return false;
 }
 
-//==========================================================================
-//
-// A_Chase and variations
-//
-//==========================================================================
+
+// for internal use
+void A_Chase(AActor *self)
+{
+	A_DoChase(self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, 0);
+}
 
 DEFINE_ACTION_FUNCTION(AActor, A_Chase)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE	(melee)		
-	PARAM_STATE	(missile)	
-	PARAM_INT	(flags)		
+	PARAM_STATE(melee);
+	PARAM_STATE(missile);
+	PARAM_INT(flags);
 
 	if (melee != nullptr || missile != nullptr || flags != 0x40000000)
 	{
 		if ((flags & CHF_RESURRECT) && P_CheckForResurrection(self, false))
 			return 0;
-		
-		A_DoChase(self, !!(flags&CHF_FASTCHASE), melee, missile, !(flags&CHF_NOPLAYACTIVE), 
-					!!(flags&CHF_NIGHTMAREFAST), !!(flags&CHF_DONTMOVE), flags & 0x3fffffff);
+
+		A_DoChase(self, !!(flags&CHF_FASTCHASE), melee, missile, !(flags&CHF_NOPLAYACTIVE),
+			!!(flags&CHF_NIGHTMAREFAST), !!(flags&CHF_DONTMOVE), flags & 0x3fffffff);
 	}
 	else // this is the old default A_Chase
 	{
 		A_DoChase(self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, 0);
 	}
 	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_FastChase)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	A_DoChase(self, true, self->MeleeState, self->MissileState, true, true, false, 0);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_VileChase)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	if (!P_CheckForResurrection(self, true))
-	{
-		A_DoChase(self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, 0);
-	}
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_ExtChase)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_BOOL		(domelee);
-	PARAM_BOOL		(domissile);
-	PARAM_BOOL	(playactive);
-	PARAM_BOOL	(nightmarefast);
-
-	// Now that A_Chase can handle state label parameters, this function has become rather useless...
-	A_DoChase(self, false,
-		domelee ? self->MeleeState : NULL, domissile ? self->MissileState : NULL,
-		playactive, nightmarefast, false, 0);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_CheckForResurrection)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_BOOL(P_CheckForResurrection(self, false));
-}
-
-// for internal use
-void A_Chase(AActor *self)
-{
-	A_DoChase(self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, 0);
 }
 
 //=============================================================================
@@ -3037,21 +2905,6 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 void A_FaceTarget(AActor *self)
 {
 	A_Face(self, self->target);
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_Face)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT(faceto, AActor)
-	PARAM_ANGLE(max_turn)		
-	PARAM_ANGLE(max_pitch)		
-	PARAM_ANGLE(ang_offset)		
-	PARAM_ANGLE(pitch_offset)	
-	PARAM_INT(flags)			
-	PARAM_FLOAT(z_add)			
-
-	A_Face(self, faceto, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_add);
-	return 0;
 }
 
 //===========================================================================
@@ -3174,7 +3027,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Pain)
 	return 0;
 }
 
-bool CheckBossDeath (AActor *actor)
+int CheckBossDeath (AActor *actor)
 {
 	int i;
 
@@ -3202,12 +3055,6 @@ bool CheckBossDeath (AActor *actor)
 	}
 	// The boss death is good
 	return true;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, CheckBossDeath)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_BOOL(CheckBossDeath(self));
 }
 
 //
@@ -3312,13 +3159,6 @@ void A_BossDeath(AActor *self)
 		return;
 
 	G_ExitLevel (0, false);
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_BossDeath)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	A_BossDeath(self);
-	return 0;
 }
 
 //----------------------------------------------------------------------------

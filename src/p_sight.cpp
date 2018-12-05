@@ -834,7 +834,7 @@ sightcounts[2]++;
 =====================
 */
 
-bool P_CheckSight (AActor *t1, AActor *t2, int flags)
+int P_CheckSight (AActor *t1, AActor *t2, int flags)
 {
 	SightCycles.Clock();
 

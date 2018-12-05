@@ -798,7 +798,7 @@ void sector_t::ClosestPoint(const DVector2 &in, DVector2 &out) const
 //
 //=====================================================================================
 
-bool PlaneMoving(sector_t *sector, int pos)
+int PlaneMoving(sector_t *sector, int pos)
 {
 	if (pos == sector_t::floor)
 		return (sector->floordata != nullptr || (sector->planes[sector_t::floor].Flags & PLANEF_BLOCKED));

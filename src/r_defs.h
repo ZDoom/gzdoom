@@ -1612,7 +1612,7 @@ double NextLowestFloorAt(sector_t *sec, double x, double y, double z, int flags 
 // This setup is to allow the VM call directily into the implementation.
 // With a member function this may be subject to OS implementation details, e.g. on Windows 32 bit members use a different calling convention than regular functions.
 void RemoveForceField(sector_t *sec);
-bool PlaneMoving(sector_t *sector, int pos);
+int PlaneMoving(sector_t *sector, int pos);
 void TransferSpecial(sector_t *self, sector_t *model);
 void GetSpecial(sector_t *self, secspecial_t *spec);
 void SetSpecial(sector_t *self, const secspecial_t *spec);
@@ -1628,7 +1628,7 @@ double HighestCeilingAt(sector_t *sec, double x, double y, sector_t **resultsec 
 double LowestFloorAt(sector_t *sec, double x, double y, sector_t **resultsec = nullptr);
 
 inline void sector_t::RemoveForceField() { return ::RemoveForceField(this); }
-inline bool sector_t::PlaneMoving(int pos) { return ::PlaneMoving(this, pos); }
+inline bool sector_t::PlaneMoving(int pos) { return !!::PlaneMoving(this, pos); }
 inline void sector_t::TransferSpecial(sector_t *model) { return ::TransferSpecial(this, model); }
 inline void sector_t::GetSpecial(secspecial_t *spec) { ::GetSpecial(this, spec); }
 inline void sector_t::SetSpecial(const secspecial_t *spec) { ::SetSpecial(this, spec); }

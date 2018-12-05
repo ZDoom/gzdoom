@@ -1026,7 +1026,6 @@ class Actor : Thinker native
 	native void A_FastChase();
 	native void A_PlayerScream();
 	native void A_SkullPop(class<PlayerChunk> skulltype = "BloodySkull");
-	native void A_CheckPlayerDone();
 	native void A_CheckTerrain();
 
 	native void A_Wander(int flags = 0);
@@ -1207,6 +1206,19 @@ class Actor : Thinker native
 			A_PlaySound(ActiveSound, CHAN_VOICE);
 		}
 	}
+	
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_CheckSkullDone
+	//
+	//----------------------------------------------------------------------------
+
+	void A_CheckPlayerDone()
+	{
+		if (player == NULL) Destroy();
+	}
+
+	
 	
 	States(Actor, Overlay, Weapon, Item)
 	{

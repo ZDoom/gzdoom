@@ -2484,7 +2484,7 @@ static void ZGetUDMFString(int type, int index, int key, FString *result)
 	*result = GetUDMFString(type, index, ENamedName(key));
 }
 
-DEFINE_ACTION_FUNCTION(FLevelLocals, GetUDMFString, ZGetUDMFString)
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetUDMFString, ZGetUDMFString)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_INT(type);

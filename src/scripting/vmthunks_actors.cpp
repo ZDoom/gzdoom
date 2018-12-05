@@ -267,7 +267,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetZ, SetZ)
 	return 0;
 }
 
-static void SetDamage(AActor *self, double dmg)
+static void SetDamage(AActor *self, int dmg)
 {
 	self->SetDamage(dmg);
 }
@@ -698,6 +698,15 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, SpawnHealth, SpawnHealth)
 	ACTION_RETURN_INT(self->SpawnHealth());
 }
 
+// Why does this exist twice?
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetSpawnHealth, SpawnHealth)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_INT(self->SpawnHealth());
+}
+
+
+
 void Revive(AActor *self)
 {
 	self->Revive();
@@ -1061,7 +1070,7 @@ static AActor *ZS_LineAttack(AActor *self, double angle, double distance, double
 	return P_LineAttack(self, angle, distance, pitch, damage, ENamedName(damageType), puffType, flags, victim, actualdamage, offsetz, offsetforward, offsetside);
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, LineAttac, ZS_LineAttack)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, LineAttack, ZS_LineAttack)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(angle);
@@ -1321,8 +1330,21 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GiveSecret, GiveSecret)
 	return 0;
 }
 
+static int ZS_GetMissileDamage(AActor *self, int mask, int add, int pick_pointer)
+{
+	self = COPY_AAPTR(self, pick_pointer);
+	return self ? self->GetMissileDamage(mask, add) : 0;
+}
 
-
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetMissileDamage, ZS_GetMissileDamage)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(mask);
+	PARAM_INT(add);
+	PARAM_INT(pick_pointer);
+	ACTION_RETURN_INT(ZS_GetMissileDamage(self, mask, add, pick_pointer));
+}
+	
 //=====================================================================================
 //
 // Inventory exports

@@ -1290,7 +1290,7 @@ static void SetOrigin(AActor *self, double x, double y, double z, bool moving)
 	self->SetOrigin(x, y, z, moving);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, SetOrigin)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetOrigin, SetOrigin)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(x);
@@ -1538,6 +1538,14 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetSpawnableType, P_GetSpawnableType)
 	PARAM_PROLOGUE;
 	PARAM_INT(num);
 	ACTION_RETURN_POINTER(P_GetSpawnableType(num));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_NoBlocking, A_Unblock)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL(drop);
+	A_Unblock(self, drop);
+	return 0;
 }
 
 //=====================================================================================

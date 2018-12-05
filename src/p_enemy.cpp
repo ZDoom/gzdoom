@@ -317,56 +317,6 @@ DEFINE_ACTION_FUNCTION(AActor, CheckMeleeRange)
 	ACTION_RETURN_INT(self->CheckMeleeRange());
 }
 
-//----------------------------------------------------------------------------
-//
-// FUNC P_CheckMeleeRange2
-//
-//----------------------------------------------------------------------------
-
-bool P_CheckMeleeRange2 (AActor *actor)
-{
-	AActor *mo;
-	double dist;
-
-
-	if (!actor->target || (actor->Sector->Flags & SECF_NOATTACK))
-	{
-		return false;
-	}
-	mo = actor->target;
-	dist = mo->Distance2D (actor);
-	if (dist >= 128 || dist < actor->meleerange + mo->radius)
-	{
-		return false;
-	}
-	if (mo->Z() > actor->Top())
-	{ // Target is higher than the attacker
-		return false;
-	}
-	else if (actor->Z() > mo->Top())
-	{ // Attacker is higher
-		return false;
-	}
-	else if (actor->IsFriend(mo))
-	{
-		// killough 7/18/98: friendly monsters don't attack other friends
-		return false;
-	}
-
-	if (!P_CheckSight(actor, mo))
-	{
-		return false;
-	}
-	return true;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, CheckMeleeRange2)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_INT(P_CheckMeleeRange2(self));
-}
-
-
 //=============================================================================
 //
 // P_CheckMissileRange

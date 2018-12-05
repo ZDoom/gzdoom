@@ -2031,9 +2031,9 @@ void FLevelLocals::SetMusicVolume(float f)
 //==========================================================================
 
 
-bool IsPointInMap(DVector3 p)
+int IsPointInMap(double x, double y, double z)
 {
-	subsector_t *subsector = R_PointInSubsector(FLOAT2FIXED(p.X), FLOAT2FIXED(p.Y));
+	subsector_t *subsector = R_PointInSubsector(FLOAT2FIXED(x), FLOAT2FIXED(y));
 	if (!subsector) return false;
 
 	for (uint32_t i = 0; i < subsector->numlines; i++)
@@ -2044,26 +2044,26 @@ bool IsPointInMap(DVector3 p)
 
 		divline_t dline;
 		P_MakeDivline(seg->linedef, &dline);
-		bool pol = P_PointOnDivlineSide(p.XY(), &dline) < 1;
+		bool pol = P_PointOnDivlineSide(x, y, &dline) < 1;
 		if (!pol) return false;
 	}
 
-	double ceilingZ = subsector->sector->ceilingplane.ZatPoint(p.X, p.Y);
-	if (p.Z > ceilingZ) return false;
+	double ceilingZ = subsector->sector->ceilingplane.ZatPoint(x, y);
+	if (z > ceilingZ) return false;
 
-	double floorZ = subsector->sector->floorplane.ZatPoint(p.X, p.Y);
-	if (p.Z < floorZ) return false;
+	double floorZ = subsector->sector->floorplane.ZatPoint(x, y);
+	if (z < floorZ) return false;
 
 	return true;
 }
 
-DEFINE_ACTION_FUNCTION(FLevelLocals, IsPointInMap)
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, IsPointInMap, IsPointInMap)
 {
 	PARAM_PROLOGUE;
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	PARAM_FLOAT(z);
-	ACTION_RETURN_BOOL(IsPointInMap(DVector3(x,y,z)));
+	ACTION_RETURN_BOOL(IsPointInMap(x, y, z));
 }
 
 template <typename T>

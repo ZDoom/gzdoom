@@ -35,13 +35,8 @@ static bool IsConsolePlayer(player_t *player)
 	return int(activator->player - players) == consoleplayer;
 }
 
-DEFINE_ACTION_FUNCTION(_Shader, SetEnabled)
+static void ShaderSetEnabled(player_t *player, const FString &shaderName, bool value)
 {
-	PARAM_PROLOGUE;
-	PARAM_POINTER(player, player_t);
-	PARAM_STRING(shaderName);
-	PARAM_BOOL(value);
-
 	if (IsConsolePlayer(player))
 	{
 		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
@@ -51,17 +46,21 @@ DEFINE_ACTION_FUNCTION(_Shader, SetEnabled)
 				shader.Enabled = value;
 		}
 	}
-	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(_Shader, SetUniform1f)
+DEFINE_ACTION_FUNCTION_NATIVE(_Shader, SetEnabled, ShaderSetEnabled)
 {
 	PARAM_PROLOGUE;
 	PARAM_POINTER(player, player_t);
 	PARAM_STRING(shaderName);
-	PARAM_STRING(uniformName);
-	PARAM_FLOAT(value);
+	PARAM_BOOL(value);
+	ShaderSetEnabled(player, shaderName, value);
 
+	return 0;
+}
+
+static void ShaderSetUniform1f(player_t *player, const FString &shaderName, const FString &uniformName, double value)
+{
 	if (IsConsolePlayer(player))
 	{
 		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
@@ -77,6 +76,16 @@ DEFINE_ACTION_FUNCTION(_Shader, SetUniform1f)
 			}
 		}
 	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Shader, SetUniform1f, ShaderSetUniform1f)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(player, player_t);
+	PARAM_STRING(shaderName);
+	PARAM_STRING(uniformName);
+	PARAM_FLOAT(value);
+	ShaderSetUniform1f(player, shaderName, uniformName, value);
 	return 0;
 }
 

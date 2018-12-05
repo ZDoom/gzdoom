@@ -149,7 +149,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBlockLinesIterator, CreateFromPos, CreateBLIFromP
 	ACTION_RETURN_OBJECT(Create<DBlockLinesIterator>(x, y, z, h, radius, sec));
 }
 
-static bool BLINext(DBlockLinesIterator *self)
+static int BLINext(DBlockLinesIterator *self)
 {
 	return self->Next(&self->cres);
 }
@@ -226,7 +226,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBlockThingsIterator, CreateFromPos, CreateBTIFrom
 	ACTION_RETURN_OBJECT(Create<DBlockThingsIterator>(x, y, z, h, radius, ignore, nullptr));
 }
 
-static bool NextBTI(DBlockThingsIterator *bti)
+static int NextBTI(DBlockThingsIterator *bti)
 {
 	return bti->iterator.Next(&bti->cres);
 }

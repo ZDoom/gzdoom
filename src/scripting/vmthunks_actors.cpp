@@ -532,12 +532,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec3Offset, Vec3Offset)
 	ACTION_RETURN_VEC3(self->Vec3Offset(x, y, z, absolute));
 }
 
-static void PosRelative(AActor *self, sector_t *sec, DVector3 *result)
+static void ZS_PosRelative(AActor *self, sector_t *sec, DVector3 *result)
 {
 	*result = self->PosRelative(sec);
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, PosRelative, PosRelative)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, PosRelative, ZS_PosRelative)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_POINTER(sec, sector_t);

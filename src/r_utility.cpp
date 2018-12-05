@@ -61,6 +61,7 @@
 #include "sbar.h"
 #include "vm.h"
 #include "i_time.h"
+#include "actorinlines.h"
 
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------

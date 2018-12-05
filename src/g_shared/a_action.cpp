@@ -30,6 +30,7 @@
 #include "p_enemy.h"
 #include "serializer.h"
 #include "vm.h"
+#include "actorinlines.h"
 
 //----------------------------------------------------------------------------
 //

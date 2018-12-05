@@ -257,8 +257,8 @@ extern TArray<spechit_t> spechit;
 extern TArray<spechit_t> portalhit;
 
 
-bool	P_TestMobjLocation (AActor *mobj);
-bool	P_TestMobjZ (AActor *mobj, bool quick=true, AActor **pOnmobj = NULL);
+int	P_TestMobjLocation (AActor *mobj);
+int	P_TestMobjZ (AActor *mobj, bool quick=true, AActor **pOnmobj = NULL);
 bool P_CheckPosition(AActor *thing, const DVector2 &pos, bool actorsonly = false);
 bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, bool actorsonly = false);
 AActor	*P_CheckOnmobj (AActor *thing);
@@ -266,6 +266,7 @@ void	P_FakeZMovement (AActor *mo);
 bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const secplane_t * onfloor, FCheckPosition &tm, bool missileCheck = false);
 bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const secplane_t * onfloor = NULL, bool missilecheck = false);
 
+bool P_CheckMove(AActor *thing, const DVector2 &pos, FCheckPosition& tm, int flags);
 bool	P_CheckMove(AActor *thing, const DVector2 &pos, int flags = 0);
 void	P_ApplyTorque(AActor *mo);
 
@@ -358,6 +359,7 @@ void	P_TraceBleed (int damage, AActor *target);		// random direction version
 bool	P_HitFloor (AActor *thing);
 bool	P_HitWater (AActor *thing, sector_t *sec, const DVector3 &pos, bool checkabove = false, bool alert = true, bool force = false);
 
+
 struct FRailParams
 {
 	AActor *source = nullptr;
@@ -409,6 +411,7 @@ enum
 	RADF_THRUSTZ = 16,
 	RADF_OLDRADIUSDAMAGE = 32
 };
+int P_GetRadiusDamage(AActor *self, AActor *thing, int damage, int distance, int fulldmgdistance, bool oldradiusdmg);
 int	P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, 
 						FName damageType, int flags, int fulldamagedistance=0);
 

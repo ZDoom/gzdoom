@@ -969,11 +969,6 @@ public:
 		}
 	}
 
-	double AccuracyFactor()
-	{
-		return 1. / (1 << (accuracy * 5 / 100));
-	}
-
 	void ClearInterpolation();
 
 	void Move(const DVector3 &vel)
@@ -1286,12 +1281,6 @@ public:
 	bool IsZeroDamage() const
 	{
 		return DamageVal == 0 && DamageFunc == nullptr;
-	}
-
-	void RestoreDamage()
-	{
-		DamageVal = GetDefault()->DamageVal;
-		DamageFunc = GetDefault()->DamageFunc;
 	}
 
 	FState *FindState (FName label) const

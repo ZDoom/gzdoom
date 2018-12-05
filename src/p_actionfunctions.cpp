@@ -906,31 +906,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_CopyFriendliness)
 
 //==========================================================================
 //
-// Custom sound functions. 
-//
-//==========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_StopSound)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(slot);
-
-	S_StopSound(self, slot);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_SoundVolume)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(channel);
-	PARAM_FLOAT(volume);
-	S_ChangeSoundVolume(self, channel, static_cast<float>(volume));
-	return 0;
-}
-
-
-//==========================================================================
-//
 // These come from a time when DECORATE constants did not exist yet and
 // the sound interface was less flexible. As a result the parameters are
 // not optimal and these functions have been deprecated in favor of extending
@@ -4931,7 +4906,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckBlock)
 	// If checking for dropoffs, set the z so we can have maximum flexibility.
 	// Otherwise, set origin and set it back after testing.
 
-	bool checker = false;
+	int checker = false;
 	if (flags & CBF_DROPOFF)
 	{
 		// Unfortunately, whenever P_CheckMove returned false, that means it could

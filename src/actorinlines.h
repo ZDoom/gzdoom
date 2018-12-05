@@ -63,3 +63,19 @@ inline double AActor::GetBobOffset(double ticfrac) const
 	return BobSin(FloatBobPhase + level.maptime + ticfrac) * FloatBobStrength;
 }
 
+inline double AActor::GetCameraHeight() const
+{
+	return CameraHeight == INT_MIN ? Height / 2 : CameraHeight;
+}
+
+
+inline FDropItem *AActor::GetDropItems() const
+{
+	return GetInfo()->DropItems;
+}
+
+inline double AActor::GetGravity() const
+{
+	if (flags & MF_NOGRAVITY) return 0;
+	return level.gravity * Sector->gravity * Gravity * 0.00125;
+}

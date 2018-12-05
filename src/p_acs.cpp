@@ -6039,7 +6039,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			// SoundVolume(int tid, int channel, fixed volume)
 			{
 				int chan = args[1];
-				float volume = ACSToFloat(args[2]);
+				double volume = ACSToDouble(args[2]);
 
 				if (args[0] == 0)
 				{

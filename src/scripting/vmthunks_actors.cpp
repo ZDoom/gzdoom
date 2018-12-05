@@ -47,10 +47,54 @@
 #include "p_setup.h"
 #include "i_music.h"
 #include "p_terrain.h"
+#include "p_checkposition.h"
+#include "p_linetracedata.h"
+#include "p_local.h"
+#include "p_effect.h"
+#include "p_spec.h"
 
 DVector2 AM_GetPosition();
 int Net_GetLatency(int *ld, int *ad);
 void PrintPickupMessage(bool localview, const FString &str);
+
+// FCheckPosition requires explicit construction and destruction when used in the VM
+
+static void FCheckPosition_C(void *mem)
+{
+	new(mem) FCheckPosition;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_FCheckPosition, _Constructor, FCheckPosition_C)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FCheckPosition);
+	FCheckPosition_C(self);
+	return 0;
+}
+
+static void FCheckPosition_D(FCheckPosition *self)
+{
+	self->~FCheckPosition();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_FCheckPosition, _Destructor, FCheckPosition_D)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FCheckPosition);
+	self->~FCheckPosition();
+	return 0;
+}
+
+static void ClearLastRipped(FCheckPosition *self)
+{
+	self->LastRipped.Clear();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_FCheckPosition, ClearLastRipped, ClearLastRipped)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FCheckPosition);
+	self->LastRipped.Clear();
+	return 0;
+}
+
 
 
 DEFINE_ACTION_FUNCTION_NATIVE(DObject, SetMusicVolume, I_SetMusicVolume)
@@ -75,6 +119,30 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetPointer, COPY_AAPTR)
 }
 
 
+//==========================================================================
+//
+// Custom sound functions.
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopSound, S_StopSound)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(slot);
+	
+	S_StopSound(self, slot);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundVolume, S_ChangeSoundVolume)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(channel);
+	PARAM_FLOAT(volume);
+	S_ChangeSoundVolume(self, channel, volume);
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_PlaySound, A_PlaySound)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -97,7 +165,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckKeys, P_CheckKeys)
 	ACTION_RETURN_BOOL(P_CheckKeys(self, locknum, remote, quiet));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, deltaangle)	// should this be global?
+static double deltaangleDbl(double a1, double a2)
+{
+	return deltaangle(DAngle(a1), DAngle(a2)).Degrees;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, deltaangle, deltaangleDbl)	// should this be global?
 {
 	PARAM_PROLOGUE;
 	PARAM_FLOAT(a1);
@@ -105,7 +178,12 @@ DEFINE_ACTION_FUNCTION(AActor, deltaangle)	// should this be global?
 	ACTION_RETURN_FLOAT(deltaangle(DAngle(a1), DAngle(a2)).Degrees);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, absangle)	// should this be global?
+static double absangleDbl(double a1, double a2)
+{
+	return absangle(DAngle(a1), DAngle(a2)).Degrees;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, absangle, absangleDbl)	// should this be global?
 {
 	PARAM_PROLOGUE;
 	PARAM_FLOAT(a1);
@@ -113,35 +191,60 @@ DEFINE_ACTION_FUNCTION(AActor, absangle)	// should this be global?
 	ACTION_RETURN_FLOAT(absangle(DAngle(a1), DAngle(a2)).Degrees);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, Distance2DSquared)
+static double Distance2DSquared(AActor *self, AActor *other)
+{
+	return self->Distance2DSquared(PARAM_NULLCHECK(other, other));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, Distance2DSquared, Distance2DSquared)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT_NOT_NULL(other, AActor);
 	ACTION_RETURN_FLOAT(self->Distance2DSquared(other));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, Distance3DSquared)
+static double Distance3DSquared(AActor *self, AActor *other)
+{
+	return self->Distance3DSquared(PARAM_NULLCHECK(other, other));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, Distance3DSquared, Distance3DSquared)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT_NOT_NULL(other, AActor);
 	ACTION_RETURN_FLOAT(self->Distance3DSquared(other));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, Distance2D)
+static double Distance2D(AActor *self, AActor *other)
+{
+	return self->Distance2D(PARAM_NULLCHECK(other, other));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, Distance2D, Distance2D)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT_NOT_NULL(other, AActor);
 	ACTION_RETURN_FLOAT(self->Distance2D(other));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, Distance3D)
+static double Distance3D(AActor *self, AActor *other)
+{
+	return self->Distance3D(PARAM_NULLCHECK(other, other));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, Distance3D, Distance3D)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT_NOT_NULL(other, AActor);
 	ACTION_RETURN_FLOAT(self->Distance3D(other));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, AddZ)
+static void AddZ(AActor *self, double addz, bool moving)
+{
+	self->AddZ(addz, moving);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, AddZ, AddZ)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(addz);
@@ -150,7 +253,12 @@ DEFINE_ACTION_FUNCTION(AActor, AddZ)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, SetZ)
+static void SetZ(AActor *self, double z)
+{
+	self->SetZ(z);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetZ, SetZ)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(z);
@@ -158,7 +266,12 @@ DEFINE_ACTION_FUNCTION(AActor, SetZ)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, SetDamage)
+static void SetDamage(AActor *self, double dmg)
+{
+	self->SetDamage(dmg);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetDamage, SetDamage)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(dmg);
@@ -167,12 +280,8 @@ DEFINE_ACTION_FUNCTION(AActor, SetDamage)
 }
 
 // This combines all 3 variations of the internal function
-DEFINE_ACTION_FUNCTION(AActor, VelFromAngle)
+static void VelFromAngle(AActor *self, double speed, double angle)
 {
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(speed);
-	PARAM_ANGLE(angle);
-
 	if (speed == 1e37)
 	{
 		self->VelFromAngle();
@@ -180,7 +289,7 @@ DEFINE_ACTION_FUNCTION(AActor, VelFromAngle)
 	else
 	{
 		if (angle == 1e37)
-
+			
 		{
 			self->VelFromAngle(speed);
 		}
@@ -189,11 +298,24 @@ DEFINE_ACTION_FUNCTION(AActor, VelFromAngle)
 			self->VelFromAngle(speed, angle);
 		}
 	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, VelFromAngle, VelFromAngle)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(speed);
+	PARAM_FLOAT(angle);
+	VelFromAngle(self, speed, angle);
 	return 0;
 }
 
+static void Vel3DFromAngle(AActor *self, double speed, double angle, double pitch)
+{
+	self->Vel3DFromAngle(angle, pitch, speed);
+}
+
 // This combines all 3 variations of the internal function
-DEFINE_ACTION_FUNCTION(AActor, Vel3DFromAngle)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vel3DFromAngle, Vel3DFromAngle)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(speed);
@@ -204,12 +326,8 @@ DEFINE_ACTION_FUNCTION(AActor, Vel3DFromAngle)
 }
 
 // This combines all 3 variations of the internal function
-DEFINE_ACTION_FUNCTION(AActor, Thrust)
+static void Thrust(AActor *self, double speed, double angle)
 {
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(speed);
-	PARAM_ANGLE(angle);
-
 	if (speed == 1e37)
 	{
 		self->Thrust();
@@ -225,10 +343,23 @@ DEFINE_ACTION_FUNCTION(AActor, Thrust)
 			self->Thrust(angle, speed);
 		}
 	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, Thrust, Thrust)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(speed);
+	PARAM_FLOAT(angle);
+	Thrust(self, speed, angle);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, AngleTo)
+static double AngleTo(AActor *self, AActor *targ, bool absolute)
+{
+	return self->AngleTo(PARAM_NULLCHECK(targ, targ), absolute).Degrees;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, AngleTo, AngleTo)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT_NOT_NULL(targ, AActor);
@@ -236,7 +367,12 @@ DEFINE_ACTION_FUNCTION(AActor, AngleTo)
 	ACTION_RETURN_FLOAT(self->AngleTo(targ, absolute).Degrees);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, AngleToVector)
+static void AngleToVector(double angle, double length, DVector2 *result)
+{
+	*result = DAngle(angle).ToVector(length);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, AngleToVector, AngleToVector)
 {
 	PARAM_PROLOGUE;
 	PARAM_ANGLE(angle);
@@ -244,7 +380,12 @@ DEFINE_ACTION_FUNCTION(AActor, AngleToVector)
 	ACTION_RETURN_VEC2(angle.ToVector(length));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, RotateVector)
+static void RotateVector(double x, double y, double angle, DVector2 *result)
+{
+	*result = DVector2(x, y).Rotated(angle);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, RotateVector, RotateVector)
 {
 	PARAM_PROLOGUE;
 	PARAM_FLOAT(x);
@@ -253,14 +394,24 @@ DEFINE_ACTION_FUNCTION(AActor, RotateVector)
 	ACTION_RETURN_VEC2(DVector2(x, y).Rotated(angle));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, Normalize180)
+static double Normalize180(double angle)
+{
+	return DAngle(angle).Normalized180().Degrees;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, Normalize180, Normalize180)
 {
 	PARAM_PROLOGUE;
 	PARAM_ANGLE(angle);
 	ACTION_RETURN_FLOAT(angle.Normalized180().Degrees);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, DistanceBySpeed)
+static double DistanceBySpeed(AActor *self, AActor *targ, double speed)
+{
+	return self->DistanceBySpeed(PARAM_NULLCHECK(targ, targ), speed);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, DistanceBySpeed, DistanceBySpeed)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT_NOT_NULL(targ, AActor);
@@ -268,7 +419,12 @@ DEFINE_ACTION_FUNCTION(AActor, DistanceBySpeed)
 	ACTION_RETURN_FLOAT(self->DistanceBySpeed(targ, speed));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, SetXYZ)
+static void SetXYZ(AActor *self, double x, double y, double z)
+{
+	self->SetXYZ(x, y, z);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetXYZ, SetXYZ)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(x);
@@ -278,7 +434,12 @@ DEFINE_ACTION_FUNCTION(AActor, SetXYZ)
 	return 0; 
 }
 
-DEFINE_ACTION_FUNCTION(AActor, Vec2Angle)
+static void Vec2Angle(AActor *self, double length, double angle, bool absolute, DVector2 *result)
+{
+	*result = self->Vec2Angle(length, angle, absolute);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec2Angle, Vec2Angle)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(length);
@@ -287,22 +448,36 @@ DEFINE_ACTION_FUNCTION(AActor, Vec2Angle)
 	ACTION_RETURN_VEC2(self->Vec2Angle(length, angle, absolute));
 }
 
+static void Vec3To(AActor *self, AActor *t, DVector3 *result)
+{
+	*result = self->Vec3To(PARAM_NULLCHECK(t, other));
+}
 
-DEFINE_ACTION_FUNCTION(AActor, Vec3To)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec3To, Vec3To)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT_NOT_NULL(t, AActor)
 	ACTION_RETURN_VEC3(self->Vec3To(t));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, Vec2To)
+static void Vec2To(AActor *self, AActor *t, DVector2 *result)
+{
+	*result = self->Vec2To(PARAM_NULLCHECK(t, other));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec2To, Vec2To)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT_NOT_NULL(t, AActor)
 	ACTION_RETURN_VEC2(self->Vec2To(t));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, Vec3Angle)
+static void Vec3Angle(AActor *self, double length, double angle, double z, bool absolute, DVector2 *result)
+{
+	*result = self->Vec3Angle(length, angle, z, absolute);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec3Angle, Vec3Angle)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(length)
@@ -312,7 +487,12 @@ DEFINE_ACTION_FUNCTION(AActor, Vec3Angle)
 	ACTION_RETURN_VEC3(self->Vec3Angle(length, angle, z, absolute));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, Vec2OffsetZ)
+static void Vec2OffsetZ(AActor *self, double x, double y, double z, bool absolute, DVector3 *result)
+{
+	*result = self->Vec2OffsetZ(x, y, z, absolute);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec2OffsetZ, Vec2OffsetZ)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(x);
@@ -322,7 +502,12 @@ DEFINE_ACTION_FUNCTION(AActor, Vec2OffsetZ)
 	ACTION_RETURN_VEC3(self->Vec2OffsetZ(x, y, z, absolute));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, Vec2Offset)
+static void Vec2Offset(AActor *self, double x, double y, bool absolute, DVector2 *result)
+{
+	*result = self->Vec2OffsetZ(x, y, absolute);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec2Offset, Vec2Offset)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(x);
@@ -331,7 +516,12 @@ DEFINE_ACTION_FUNCTION(AActor, Vec2Offset)
 	ACTION_RETURN_VEC2(self->Vec2Offset(x, y, absolute));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, Vec3Offset)
+static void Vec3Offset(AActor *self, double x, double y, double z, bool absolute, DVector3 *result)
+{
+	*result = self->Vec3Offset(x, y, z, absolute);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec3Offset, Vec3Offset)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(x);
@@ -341,27 +531,48 @@ DEFINE_ACTION_FUNCTION(AActor, Vec3Offset)
 	ACTION_RETURN_VEC3(self->Vec3Offset(x, y, z, absolute));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, PosRelative)
+static void PosRelative(AActor *self, sector_t *sec, DVector3 *result)
+{
+	*result = self->PosRelative(sec);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, PosRelative, PosRelative)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_POINTER(sec, sector_t);
 	ACTION_RETURN_VEC3(self->PosRelative(sec));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, RestoreDamage)
+static void RestoreDamage(AActor *self)
+{
+	self->DamageVal = self->GetDefault()->DamageVal;
+	self->DamageFunc = self->GetDefault()->DamageFunc;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, RestoreDamage, RestoreDamage)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	self->RestoreDamage();
+	RestoreDamage(self);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, PlayerNumber)
+static int PlayerNumber(AActor *self)
 {
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_INT(self->player ? int(self->player - players) : 0);
+	return self->player ? int(self->player - players) : 0;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, SetFriendPlayer)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, PlayerNumber, PlayerNumber)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_INT(PlayerNumber(self));
+}
+
+static void SetFriendPlayer(AActor *self, player_t *player)
+{
+	self->SetFriendPlayer(player);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetFriendPlayer, SetFriendPlayer)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_POINTER(player, player_t);
@@ -369,72 +580,105 @@ DEFINE_ACTION_FUNCTION(AActor, SetFriendPlayer)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, ClearBounce)
+void ClearBounce(AActor *self)
+{
+	self->BounceFlags = 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, ClearBounce, ClearBounce)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	self->BounceFlags = 0;
+	ClearBounce(self);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, AccuracyFactor)
+static int CountsAsKill(AActor *self)
 {
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_FLOAT(self->AccuracyFactor());
+	return self->CountsAsKill();
 }
 
-DEFINE_ACTION_FUNCTION(AActor, CountsAsKill)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CountsAsKill, CountsAsKill)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	ACTION_RETURN_BOOL(self->CountsAsKill());
 }
 
-DEFINE_ACTION_FUNCTION(AActor, IsZeroDamage)
+static int IsZeroDamage(AActor *self)
+{
+	return self->IsZeroDamage();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, IsZeroDamage, IsZeroDamage)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	ACTION_RETURN_BOOL(self->IsZeroDamage());
 }
 
-DEFINE_ACTION_FUNCTION(AActor, ClearInterpolation)
+static void ClearInterpolation(AActor *self)
+{
+	self->ClearInterpolation();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, ClearInterpolation, ClearInterpolation)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	self->ClearInterpolation();
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, ApplyDamageFactors)
+static int ApplyDamageFactors(PClassActor *itemcls, int damagetype, int damage, int defdamage)
+{
+	DmgFactors &df = itemcls->ActorInfo()->DamageFactors;
+	if (df.Size() != 0)
+	{
+		return (df.Apply(ENamedName(damagetype), damage));
+	}
+	else
+	{
+		return (defdamage);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, ApplyDamageFactors, ApplyDamageFactors)
 {
 	PARAM_PROLOGUE;
 	PARAM_CLASS(itemcls, AActor);
 	PARAM_NAME(damagetype);
 	PARAM_INT(damage);
 	PARAM_INT(defdamage);
-
-	DmgFactors &df = itemcls->ActorInfo()->DamageFactors;
-	if (df.Size() != 0)
-	{
-		ACTION_RETURN_INT(df.Apply(damagetype, damage));
-	}
-	else
-	{
-		ACTION_RETURN_INT(defdamage);
-	}
+	ACTION_RETURN_INT(ApplyDamageFactors(itemcls, damagetype.GetIndex(), damage, defdamage));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
+static void RestoreSpecialPosition(AActor *self)
+{
+	self->RestoreSpecialPosition();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_RestoreSpecialPosition, RestoreSpecialPosition)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	self->RestoreSpecialPosition();
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetBobOffset)
+static double GetBobOffset(AActor *self, double frac)
+{
+	return self->GetBobOffset(frac);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetBobOffset, GetBobOffset)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(frac);
 	ACTION_RETURN_FLOAT(self->GetBobOffset(frac));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, SetIdle)
+static void SetIdle(AActor *self, bool nofunction)
+{
+	self->SetIdle(nofunction);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetIdle, SetIdle)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_BOOL(nofunction);
@@ -442,63 +686,108 @@ DEFINE_ACTION_FUNCTION(AActor, SetIdle)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, SpawnHealth)
+static int SpawnHealth(AActor *self)
+{
+	return self->SpawnHealth();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SpawnHealth, SpawnHealth)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	ACTION_RETURN_INT(self->SpawnHealth());
 }
 
-DEFINE_ACTION_FUNCTION(AActor, Revive)
+void Revive(AActor *self)
+{
+	self->Revive();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, Revive, Revive)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	self->Revive();
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetCameraHeight)
+static double GetCameraHeight(AActor *self)
+{
+	return self->GetCameraHeight();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetCameraHeight, GetCameraHeight)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	ACTION_RETURN_FLOAT(self->GetCameraHeight());
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetDropItems)
+static FDropItem *GetDropItems(AActor *self)
+{
+	return self->GetDropItems();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetDropItems, GetDropItems)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	ACTION_RETURN_POINTER(self->GetDropItems());
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetGravity)
+static double GetGravity(AActor *self)
+{
+	return self->GetGravity();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetGravity, GetGravity)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	ACTION_RETURN_FLOAT(self->GetGravity());
 }
 
-
-DEFINE_ACTION_FUNCTION(AActor, GetTag)
+static void GetTag(AActor *self, const FString &def, FString *result)
 {
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STRING(def);
-	ACTION_RETURN_STRING(self->GetTag(def.Len() == 0 ? nullptr : def.GetChars()));
+	*result = self->GetTag(def.Len() == 0 ? nullptr : def.GetChars());
 }
 
-
-DEFINE_ACTION_FUNCTION(AActor, SetTag)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetTag, GetTag)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_STRING(def);
+	FString res;
+	GetTag(self, def, &res);
+	ACTION_RETURN_STRING(res);
+}
+
+static void SetTag(AActor *self, const FString &def)
+{
 	if (def.IsEmpty()) self->Tag = nullptr;
 	else self->Tag = self->mStringPropertyData.Alloc(def);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetTag, SetTag)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_STRING(def);
+	SetTag(self, def);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, ClearCounters)
+static void ClearCounters(AActor *self)
+{
+	self->ClearCounters();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, ClearCounters, ClearCounters)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	self->ClearCounters();
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetModifiedDamage)
+static int GetModifiedDamage(AActor *self, int type, int damage, bool passive)
+{
+	return self->GetModifiedDamage(ENamedName(type), damage, passive);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetModifiedDamage, GetModifiedDamage)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_NAME(type);
@@ -506,7 +795,13 @@ DEFINE_ACTION_FUNCTION(AActor, GetModifiedDamage)
 	PARAM_BOOL(passive);
 	ACTION_RETURN_INT(self->GetModifiedDamage(type, damage, passive));
 }
-DEFINE_ACTION_FUNCTION(AActor, ApplyDamageFactor)
+
+static int ApplyDamageFactor(AActor *self, int type, int damage)
+{
+	return self->ApplyDamageFactor(ENamedName(type), damage);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, ApplyDamageFactor, ApplyDamageFactor)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_NAME(type);
@@ -516,47 +811,72 @@ DEFINE_ACTION_FUNCTION(AActor, ApplyDamageFactor)
 
 double GetDefaultSpeed(PClassActor *type);
 
-DEFINE_ACTION_FUNCTION(AActor, GetDefaultSpeed)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetDefaultSpeed, GetDefaultSpeed)
 {
 	PARAM_PROLOGUE;
 	PARAM_CLASS(type, AActor);
 	ACTION_RETURN_FLOAT(GetDefaultSpeed(type));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, isTeammate)
+static int isTeammate(AActor *self, AActor *other)
+{
+	return self->IsTeammate(PARAM_NULLCHECK(other, other));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, isTeammate, isTeammate)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT_NOT_NULL(other, AActor);
 	ACTION_RETURN_BOOL(self->IsTeammate(other));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetSpecies)
+static int GetSpecies(AActor *self)
+{
+	return self->GetSpecies();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetSpecies, GetSpecies)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	ACTION_RETURN_INT(self->GetSpecies());
 }
 
-DEFINE_ACTION_FUNCTION(AActor, isFriend)
+static int isFriend(AActor *self, AActor *other)
+{
+	return self->IsFriend(PARAM_NULLCHECK(other, other));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, isFriend, isFriend)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT_NOT_NULL(other, AActor);
 	ACTION_RETURN_BOOL(self->IsFriend(other));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, isHostile)
+static int isHostile(AActor *self, AActor *other)
+{
+	return self->IsHostile(PARAM_NULLCHECK(other, other));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, isHostile, isHostile)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT_NOT_NULL(other, AActor);
 	ACTION_RETURN_BOOL(self->IsHostile(other));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetFloorTerrain)
+static FTerrainDef *GetFloorTerrain(AActor *self)
 {
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_POINTER(&Terrains[P_GetThingFloorType(self)]);
+	return &Terrains[P_GetThingFloorType(self)];
 }
 
-DEFINE_ACTION_FUNCTION(AActor, FindUniqueTid)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetFloorTerrain, GetFloorTerrain)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_POINTER(GetFloorTerrain(self));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, FindUniqueTid, P_FindUniqueTID)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(start);
@@ -564,23 +884,441 @@ DEFINE_ACTION_FUNCTION(AActor, FindUniqueTid)
 	ACTION_RETURN_INT(P_FindUniqueTID(start, limit));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, RemoveFromHash)
+static void RemoveFromHash(AActor *self)
+{
+	self->RemoveFromHash();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, RemoveFromHash, RemoveFromHash)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	self->RemoveFromHash();
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, ChangeTid)
+static void ChangeTid(AActor *self, int tid)
 {
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(tid);
 	self->RemoveFromHash();
 	self->tid = tid;
 	self->AddToHash();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, ChangeTid, ChangeTid)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(tid);
+	ChangeTid(self, tid);
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, FindFloorCeiling, P_FindFloorCeiling)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(flags);
+	P_FindFloorCeiling(self, flags);
+	return 0;
+}
+
+static int TeleportMove(AActor *self, double x, double y, double z, bool telefrag, bool modify)
+{
+	return P_TeleportMove(self, DVector3(x, y, z), telefrag, modify);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, TeleportMove, TeleportMove)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_BOOL(telefrag);
+	PARAM_BOOL(modify);
+	ACTION_RETURN_BOOL(P_TeleportMove(self, DVector3(x, y, z), telefrag, modify));
+}
+
+static double ZS_GetFriction(AActor *self, double *mf)
+{
+	double friction;
+	*mf = P_GetMoveFactor(self, &friction);
+	return friction;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetFriction, ZS_GetFriction)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	double friction, movefactor = P_GetMoveFactor(self, &friction);
+	if (numret > 1) ret[1].SetFloat(movefactor);
+	if (numret > 0)	ret[0].SetFloat(friction);
+	return numret;
+}
+
+static int CheckPosition(AActor *self, double x, double y, bool actorsonly, FCheckPosition *tm)
+{
+	if (tm)
+	{
+		return (P_CheckPosition(self, DVector2(x, y), *tm, actorsonly));
+	}
+	else
+	{
+		return (P_CheckPosition(self, DVector2(x, y), actorsonly));
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckPosition, CheckPosition)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_BOOL(actorsonly);
+	PARAM_POINTER(tm, FCheckPosition);
+	ACTION_RETURN_BOOL(CheckPosition(self, x, y, actorsonly, tm));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, TestMobjLocation, P_TestMobjLocation)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(P_TestMobjLocation(self));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, TestMobjZ, P_TestMobjZ)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL(quick);
+	
+	AActor *on = nullptr;
+	bool retv = P_TestMobjZ(self, quick, &on);
+	if (numret > 1) ret[1].SetObject(on);
+	if (numret > 0) ret[0].SetInt(retv);
+	return numret;
+}
+
+static int TryMove(AActor *self ,double x, double y, int dropoff, bool missilecheck, FCheckPosition *tm)
+{
+	if (tm == nullptr)
+	{
+		return (P_TryMove(self, DVector2(x, y), dropoff, nullptr, missilecheck));
+	}
+	else
+	{
+		return (P_TryMove(self, DVector2(x, y), dropoff, nullptr, *tm, missilecheck));
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, TryMove, TryMove)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_INT(dropoff);
+	PARAM_BOOL(missilecheck);
+	PARAM_POINTER(tm, FCheckPosition);
+	ACTION_RETURN_BOOL(TryMove(self, x, y, dropoff, missilecheck, tm));
+}
+
+static int CheckMove(AActor *self ,double x, double y, int flags, FCheckPosition *tm)
+{
+	if (tm == nullptr)
+	{
+		return (P_CheckMove(self, DVector2(x, y), flags));
+	}
+	else
+	{
+		return (P_CheckMove(self, DVector2(x, y), *tm, flags));
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckMove, CheckMove)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_INT(flags);
+	PARAM_POINTER(tm, FCheckPosition);
+	ACTION_RETURN_BOOL(CheckMove(self, x, y, flags, tm));
+}
+
+static double AimLineAttack(AActor *self, double angle, double distance, FTranslatedLineTarget *pLineTarget, double vrange, int flags, AActor *target, AActor *friender)
+{
+	return P_AimLineAttack(self, angle, distance, pLineTarget, vrange, flags, target, friender).Degrees;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, AimLineAttack, AimLineAttack)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ANGLE(angle);
+	PARAM_FLOAT(distance);
+	PARAM_OUTPOINTER(pLineTarget, FTranslatedLineTarget);
+	PARAM_ANGLE(vrange);
+	PARAM_INT(flags);
+	PARAM_OBJECT(target, AActor);
+	PARAM_OBJECT(friender, AActor);
+	ACTION_RETURN_FLOAT(P_AimLineAttack(self, angle, distance, pLineTarget, vrange, flags, target, friender).Degrees);
+}
+
+static AActor *ZS_LineAttack(AActor *self, double angle, double distance, double pitch, int damage, int damageType, PClassActor *puffType, int flags, FTranslatedLineTarget *victim, double offsetz, double offsetforward, double offsetside, int *actualdamage)
+{
+	if (puffType == nullptr) puffType = PClass::FindActor(NAME_BulletPuff);	// P_LineAttack does not work without a puff to take info from.
+	return P_LineAttack(self, angle, distance, pitch, damage, ENamedName(damageType), puffType, flags, victim, actualdamage, offsetz, offsetforward, offsetside);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, LineAttac, ZS_LineAttack)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(angle);
+	PARAM_FLOAT(distance);
+	PARAM_FLOAT(pitch);
+	PARAM_INT(damage);
+	PARAM_INT(damageType);
+	PARAM_CLASS(puffType, AActor);
+	PARAM_INT(flags);
+	PARAM_OUTPOINTER(victim, FTranslatedLineTarget);
+	PARAM_FLOAT(offsetz);
+	PARAM_FLOAT(offsetforward);
+	PARAM_FLOAT(offsetside);
+	
+	int acdmg;
+	auto puff = ZS_LineAttack(self, angle, distance, pitch, damage, damageType, puffType, flags, victim, offsetz, offsetforward, offsetside, &acdmg);
+	if (numret > 0) ret[0].SetObject(puff);
+	if (numret > 1) ret[1].SetInt(acdmg), numret = 2;
+	return numret;
+}
+
+static bool LineTrace(AActor *self, double angle, double distance, double pitch, int flags, double offsetz, double offsetforward, double offsetside, FLineTraceData *data)
+{
+	return P_LineTrace(self,angle,distance,pitch,flags,offsetz,offsetforward,offsetside,data);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, LineTrace, LineTrace)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(angle);
+	PARAM_FLOAT(distance);
+	PARAM_FLOAT(pitch);
+	PARAM_INT(flags);
+	PARAM_FLOAT(offsetz);
+	PARAM_FLOAT(offsetforward);
+	PARAM_FLOAT(offsetside);
+	PARAM_OUTPOINTER(data, FLineTraceData);
+	ACTION_RETURN_BOOL(P_LineTrace(self,angle,distance,pitch,flags,offsetz,offsetforward,offsetside,data));
+}
+
+static void TraceBleedAngle(AActor *self, int damage, double angle, double pitch)
+{
+	P_TraceBleed(damage, self, angle, pitch);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, TraceBleedAngle, TraceBleedAngle)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(damage);
+	PARAM_FLOAT(angle);
+	PARAM_FLOAT(pitch);
+	
+	P_TraceBleed(damage, self, angle, pitch);
+	return 0;
+}
+
+static void TraceBleedTLT(FTranslatedLineTarget *self, int damage, AActor *missile)
+{
+	P_TraceBleed(damage, self, PARAM_NULLCHECK(missile, missile));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_FTranslatedLineTarget, TraceBleed, TraceBleedTLT)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FTranslatedLineTarget);
+	PARAM_INT(damage);
+	PARAM_OBJECT_NOT_NULL(missile, AActor);
+	
+	P_TraceBleed(damage, self, missile);
+	return 0;
+}
+
+static void TraceBleedA(AActor *self, int damage, AActor *missile)
+{
+	if (missile) P_TraceBleed(damage, self, missile);
+	else P_TraceBleed(damage, self);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, TraceBleed, TraceBleedA)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(damage);
+	PARAM_OBJECT(missile, AActor);
+	TraceBleedA(self, damage, missile);
+	return 0;
+}
+
+static void RailAttack(AActor *self, FRailParams *p)
+{
+	p->source = self;
+	P_RailAttack(p);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, RailAttack, RailAttack)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(p, FRailParams);
+	RailAttack(self, p);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, UsePuzzleItem, P_UsePuzzleItem)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(puzznum);
+	ACTION_RETURN_BOOL(P_UsePuzzleItem(self, puzznum));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetRadiusDamage, P_GetRadiusDamage)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(thing, AActor);
+	PARAM_INT(damage);
+	PARAM_INT(distance);
+	PARAM_INT(fulldmgdistance);
+	PARAM_BOOL(oldradiusdmg);
+	ACTION_RETURN_INT(P_GetRadiusDamage(self, thing, damage, distance, fulldmgdistance, oldradiusdmg));
+}
+
+static int RadiusAttack(AActor *self, AActor *bombsource, int bombdamage, int bombdistance, int damagetype, int flags, int fulldamagedistance)
+{
+	return P_RadiusAttack(self, bombsource, bombdamage, bombdistance, ENamedName(damagetype), flags, fulldamagedistance);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, RadiusAttack, RadiusAttack)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(bombsource, AActor);
+	PARAM_INT(bombdamage);
+	PARAM_INT(bombdistance);
+	PARAM_INT(damagetype);
+	PARAM_INT(flags);
+	PARAM_INT(fulldamagedistance);
+	ACTION_RETURN_INT(RadiusAttack(self, bombsource, bombdamage, bombdistance, damagetype, flags, fulldamagedistance));
+}
+
+static int ZS_GetSpriteIndex(int sprt)
+{
+	return GetSpriteIndex(FName(ENamedName(sprt)).GetChars(), false);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetSpriteIndex, ZS_GetSpriteIndex)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(sprt);
+	ACTION_RETURN_INT(ZS_GetSpriteIndex(sprt));
+}
+
+static PClassActor *ZS_GetReplacement(PClassActor *c)
+{
+	return c->GetReplacement();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetReplacement, ZS_GetReplacement)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(c, PClassActor);
+	ACTION_RETURN_POINTER(c->GetReplacement());
+}
+
+static PClassActor *ZS_GetReplacee(PClassActor *c)
+{
+	return c->GetReplacee();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetReplacee, ZS_GetReplacee)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(c, PClassActor);
+	ACTION_RETURN_POINTER(c->GetReplacee());
+}
+
+static void DrawSplash(AActor *self, int count, double angle, int kind)
+{
+	P_DrawSplash(count, self->Pos(), angle, kind);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, DrawSplash, DrawSplash)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(count);
+	PARAM_FLOAT(angle);
+	PARAM_INT(kind);
+	P_DrawSplash(count, self->Pos(), angle, kind);
+	return 0;
+}
+
+static void UnlinkFromWorld(AActor *self, FLinkContext *ctx)
+{
+	self->UnlinkFromWorld(ctx);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, UnlinkFromWorld, UnlinkFromWorld)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(ctx, FLinkContext);
+	self->UnlinkFromWorld(ctx); // fixme
+	return 0;
+}
+
+static void LinkToWorld(AActor *self, FLinkContext *ctx)
+{
+	self->LinkToWorld(ctx);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, LinkToWorld, LinkToWorld)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(ctx, FLinkContext);
+	self->LinkToWorld(ctx);
+	return 0;
+}
+
+static void SetOrigin(AActor *self, double x, double y, double z, bool moving)
+{
+	self->SetOrigin(x, y, z, moving);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SetOrigin)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_BOOL(moving);
+	self->SetOrigin(x, y, z, moving);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, RoughMonsterSearch, P_RoughMonsterSearch)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(distance);
+	PARAM_BOOL(onlyseekable);
+	PARAM_BOOL(frontonly);
+	ACTION_RETURN_OBJECT(P_RoughMonsterSearch(self, distance, onlyseekable, frontonly));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckSight, P_CheckSight)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(target, AActor);
+	PARAM_INT(flags);
+	ACTION_RETURN_BOOL(P_CheckSight(self, target, flags));
+}
+
+static void GiveSecret(AActor *self, bool printmessage, bool playsound)
+{
+	P_GiveSecret(self, printmessage, playsound, -1);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GiveSecret, GiveSecret)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL(printmessage);
+	PARAM_BOOL(playsound);
+	P_GiveSecret(self, printmessage, playsound, -1);
+	return 0;
+}
 
 
 
@@ -617,4 +1355,235 @@ DEFINE_ACTION_FUNCTION_NATIVE(AKey, GetKeyType, P_GetKeyType)
 	PARAM_INT(num);
 	ACTION_RETURN_POINTER(P_GetKeyType(num));
 }
+
+
+
+DEFINE_FIELD(AActor, snext)
+DEFINE_FIELD(AActor, player)
+DEFINE_FIELD_NAMED(AActor, __Pos, pos)
+DEFINE_FIELD_NAMED(AActor, __Pos.X, x)
+DEFINE_FIELD_NAMED(AActor, __Pos.Y, y)
+DEFINE_FIELD_NAMED(AActor, __Pos.Z, z)
+DEFINE_FIELD(AActor, Prev)
+DEFINE_FIELD(AActor, SpriteAngle)
+DEFINE_FIELD(AActor, SpriteRotation)
+DEFINE_FIELD(AActor, VisibleStartAngle)
+DEFINE_FIELD(AActor, VisibleStartPitch)
+DEFINE_FIELD(AActor, VisibleEndAngle)
+DEFINE_FIELD(AActor, VisibleEndPitch)
+DEFINE_FIELD_NAMED(AActor, Angles.Yaw, angle)
+DEFINE_FIELD_NAMED(AActor, Angles.Pitch, pitch)
+DEFINE_FIELD_NAMED(AActor, Angles.Roll, roll)
+DEFINE_FIELD(AActor, Vel)
+DEFINE_FIELD_NAMED(AActor, Vel.X, velx)
+DEFINE_FIELD_NAMED(AActor, Vel.Y, vely)
+DEFINE_FIELD_NAMED(AActor, Vel.Z, velz)
+DEFINE_FIELD_NAMED(AActor, Vel.X, momx)
+DEFINE_FIELD_NAMED(AActor, Vel.Y, momy)
+DEFINE_FIELD_NAMED(AActor, Vel.Z, momz)
+DEFINE_FIELD(AActor, Speed)
+DEFINE_FIELD(AActor, FloatSpeed)
+DEFINE_FIELD(AActor, sprite)
+DEFINE_FIELD(AActor, frame)
+DEFINE_FIELD(AActor, Scale)
+DEFINE_FIELD_NAMED(AActor, Scale.X, scalex)
+DEFINE_FIELD_NAMED(AActor, Scale.Y, scaley)
+DEFINE_FIELD(AActor, RenderStyle)
+DEFINE_FIELD(AActor, picnum)
+DEFINE_FIELD(AActor, Alpha)
+DEFINE_FIELD(AActor, fillcolor)
+DEFINE_FIELD_NAMED(AActor, Sector, CurSector)	// clashes with type 'sector'.
+DEFINE_FIELD(AActor, subsector)
+DEFINE_FIELD(AActor, ceilingz)
+DEFINE_FIELD(AActor, floorz)
+DEFINE_FIELD(AActor, dropoffz)
+DEFINE_FIELD(AActor, floorsector)
+DEFINE_FIELD(AActor, floorpic)
+DEFINE_FIELD(AActor, floorterrain)
+DEFINE_FIELD(AActor, ceilingsector)
+DEFINE_FIELD(AActor, ceilingpic)
+DEFINE_FIELD(AActor, Height)
+DEFINE_FIELD(AActor, radius)
+DEFINE_FIELD(AActor, renderradius)
+DEFINE_FIELD(AActor, projectilepassheight)
+DEFINE_FIELD(AActor, tics)
+DEFINE_FIELD_NAMED(AActor, state, curstate)		// clashes with type 'state'.
+DEFINE_FIELD_NAMED(AActor, DamageVal, Damage)	// name differs for historic reasons
+DEFINE_FIELD(AActor, projectileKickback)
+DEFINE_FIELD(AActor, VisibleToTeam)
+DEFINE_FIELD(AActor, special1)
+DEFINE_FIELD(AActor, special2)
+DEFINE_FIELD(AActor, specialf1)
+DEFINE_FIELD(AActor, specialf2)
+DEFINE_FIELD(AActor, weaponspecial)
+DEFINE_FIELD(AActor, health)
+DEFINE_FIELD(AActor, movedir)
+DEFINE_FIELD(AActor, visdir)
+DEFINE_FIELD(AActor, movecount)
+DEFINE_FIELD(AActor, strafecount)
+DEFINE_FIELD(AActor, target)
+DEFINE_FIELD(AActor, master)
+DEFINE_FIELD(AActor, tracer)
+DEFINE_FIELD(AActor, LastHeard)
+DEFINE_FIELD(AActor, lastenemy)
+DEFINE_FIELD(AActor, LastLookActor)
+DEFINE_FIELD(AActor, reactiontime)
+DEFINE_FIELD(AActor, threshold)
+DEFINE_FIELD(AActor, DefThreshold)
+DEFINE_FIELD(AActor, SpawnPoint)
+DEFINE_FIELD(AActor, SpawnAngle)
+DEFINE_FIELD(AActor, StartHealth)
+DEFINE_FIELD(AActor, WeaveIndexXY)
+DEFINE_FIELD(AActor, WeaveIndexZ)
+DEFINE_FIELD(AActor, skillrespawncount)
+DEFINE_FIELD(AActor, args)
+DEFINE_FIELD(AActor, Mass)
+DEFINE_FIELD(AActor, special)
+DEFINE_FIELD(AActor, tid)
+DEFINE_FIELD(AActor, TIDtoHate)
+DEFINE_FIELD(AActor, waterlevel)
+DEFINE_FIELD(AActor, Score)
+DEFINE_FIELD(AActor, accuracy)
+DEFINE_FIELD(AActor, stamina)
+DEFINE_FIELD(AActor, meleerange)
+DEFINE_FIELD(AActor, PainThreshold)
+DEFINE_FIELD(AActor, Gravity)
+DEFINE_FIELD(AActor, Floorclip)
+DEFINE_FIELD(AActor, DamageType)
+DEFINE_FIELD(AActor, DamageTypeReceived)
+DEFINE_FIELD(AActor, FloatBobPhase)
+DEFINE_FIELD(AActor, FloatBobStrength)
+DEFINE_FIELD(AActor, RipperLevel)
+DEFINE_FIELD(AActor, RipLevelMin)
+DEFINE_FIELD(AActor, RipLevelMax)
+DEFINE_FIELD(AActor, Species)
+DEFINE_FIELD(AActor, alternative)
+DEFINE_FIELD(AActor, goal)
+DEFINE_FIELD(AActor, MinMissileChance)
+DEFINE_FIELD(AActor, LastLookPlayerNumber)
+DEFINE_FIELD(AActor, SpawnFlags)
+DEFINE_FIELD(AActor, meleethreshold)
+DEFINE_FIELD(AActor, maxtargetrange)
+DEFINE_FIELD(AActor, bouncefactor)
+DEFINE_FIELD(AActor, wallbouncefactor)
+DEFINE_FIELD(AActor, bouncecount)
+DEFINE_FIELD(AActor, Friction)
+DEFINE_FIELD(AActor, FastChaseStrafeCount)
+DEFINE_FIELD(AActor, pushfactor)
+DEFINE_FIELD(AActor, lastpush)
+DEFINE_FIELD(AActor, activationtype)
+DEFINE_FIELD(AActor, lastbump)
+DEFINE_FIELD(AActor, DesignatedTeam)
+DEFINE_FIELD(AActor, BlockingMobj)
+DEFINE_FIELD(AActor, BlockingLine)
+DEFINE_FIELD(AActor, Blocking3DFloor)
+DEFINE_FIELD(AActor, BlockingCeiling)
+DEFINE_FIELD(AActor, BlockingFloor)
+DEFINE_FIELD(AActor, PoisonDamage)
+DEFINE_FIELD(AActor, PoisonDamageType)
+DEFINE_FIELD(AActor, PoisonDuration)
+DEFINE_FIELD(AActor, PoisonPeriod)
+DEFINE_FIELD(AActor, PoisonDamageReceived)
+DEFINE_FIELD(AActor, PoisonDamageTypeReceived)
+DEFINE_FIELD(AActor, PoisonDurationReceived)
+DEFINE_FIELD(AActor, PoisonPeriodReceived)
+DEFINE_FIELD(AActor, Poisoner)
+DEFINE_FIELD_NAMED(AActor, Inventory, Inv)		// clashes with type 'Inventory'.
+DEFINE_FIELD(AActor, smokecounter)
+DEFINE_FIELD(AActor, FriendPlayer)
+DEFINE_FIELD(AActor, Translation)
+DEFINE_FIELD(AActor, AttackSound)
+DEFINE_FIELD(AActor, DeathSound)
+DEFINE_FIELD(AActor, SeeSound)
+DEFINE_FIELD(AActor, PainSound)
+DEFINE_FIELD(AActor, ActiveSound)
+DEFINE_FIELD(AActor, UseSound)
+DEFINE_FIELD(AActor, BounceSound)
+DEFINE_FIELD(AActor, WallBounceSound)
+DEFINE_FIELD(AActor, CrushPainSound)
+DEFINE_FIELD(AActor, MaxDropOffHeight)
+DEFINE_FIELD(AActor, MaxStepHeight)
+DEFINE_FIELD(AActor, PainChance)
+DEFINE_FIELD(AActor, PainType)
+DEFINE_FIELD(AActor, DeathType)
+DEFINE_FIELD(AActor, DamageFactor)
+DEFINE_FIELD(AActor, DamageMultiply)
+DEFINE_FIELD(AActor, TeleFogSourceType)
+DEFINE_FIELD(AActor, TeleFogDestType)
+DEFINE_FIELD(AActor, SpawnState)
+DEFINE_FIELD(AActor, SeeState)
+DEFINE_FIELD(AActor, MeleeState)
+DEFINE_FIELD(AActor, MissileState)
+DEFINE_FIELD(AActor, ConversationRoot)
+DEFINE_FIELD(AActor, Conversation)
+DEFINE_FIELD(AActor, DecalGenerator)
+DEFINE_FIELD(AActor, fountaincolor)
+DEFINE_FIELD(AActor, CameraHeight)
+DEFINE_FIELD(AActor, CameraFOV)
+DEFINE_FIELD(AActor, RadiusDamageFactor)
+DEFINE_FIELD(AActor, SelfDamageFactor)
+DEFINE_FIELD(AActor, StealthAlpha)
+DEFINE_FIELD(AActor, WoundHealth)
+DEFINE_FIELD(AActor, BloodColor)
+DEFINE_FIELD(AActor, BloodTranslation)
+DEFINE_FIELD(AActor, RenderHidden)
+DEFINE_FIELD(AActor, RenderRequired)
+DEFINE_FIELD(AActor, friendlyseeblocks)
+DEFINE_FIELD(AActor, SpawnTime)
+DEFINE_FIELD(AActor, InventoryID)
+
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, thing);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, pos);
+DEFINE_FIELD_NAMED_X(FCheckPosition, FCheckPosition, sector, cursector);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, floorz);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, ceilingz);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, dropoffz);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, floorpic);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, floorterrain);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, floorsector);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, ceilingpic);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, ceilingsector);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, touchmidtex);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, abovemidtex);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, floatok);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, FromPMove);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, ceilingline);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, stepthing);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, DoRipping);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, portalstep);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, portalgroup);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, PushTime);
+
+DEFINE_FIELD_X(FRailParams, FRailParams, source);
+DEFINE_FIELD_X(FRailParams, FRailParams, damage);
+DEFINE_FIELD_X(FRailParams, FRailParams, offset_xy);
+DEFINE_FIELD_X(FRailParams, FRailParams, offset_z);
+DEFINE_FIELD_X(FRailParams, FRailParams, color1);
+DEFINE_FIELD_X(FRailParams, FRailParams, color2);
+DEFINE_FIELD_X(FRailParams, FRailParams, maxdiff);
+DEFINE_FIELD_X(FRailParams, FRailParams, flags);
+DEFINE_FIELD_X(FRailParams, FRailParams, puff);
+DEFINE_FIELD_X(FRailParams, FRailParams, angleoffset);
+DEFINE_FIELD_X(FRailParams, FRailParams, pitchoffset);
+DEFINE_FIELD_X(FRailParams, FRailParams, distance);
+DEFINE_FIELD_X(FRailParams, FRailParams, duration);
+DEFINE_FIELD_X(FRailParams, FRailParams, sparsity);
+DEFINE_FIELD_X(FRailParams, FRailParams, drift);
+DEFINE_FIELD_X(FRailParams, FRailParams, spawnclass);
+DEFINE_FIELD_X(FRailParams, FRailParams, SpiralOffset);
+DEFINE_FIELD_X(FRailParams, FRailParams, limit);
+
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitActor);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitLine);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitSector);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, Hit3DFloor);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitTexture);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitLocation);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, Distance);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, NumPortals);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, LineSide);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, LinePart);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, SectorPlane);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitType);
+
 

@@ -286,13 +286,6 @@ int GetSpriteIndex(const char * spritename, bool add)
 	return (lastindex = (int)sprites.Push (temp));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetSpriteIndex)
-{
-	PARAM_PROLOGUE;
-	PARAM_NAME(sprt);
-	ACTION_RETURN_INT(GetSpriteIndex(sprt.GetChars(), false));
-}
-
 //==========================================================================
 //
 // Load alt HUD icons. This is meant to be an override of the item's own settings.
@@ -574,13 +567,6 @@ PClassActor *PClassActor::GetReplacement(bool lookskill)
 	return rep;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetReplacement)
-{
-	PARAM_PROLOGUE;
-	PARAM_POINTER(c, PClassActor);
-	ACTION_RETURN_POINTER(c->GetReplacement());
-}
-
 //==========================================================================
 //
 // PClassActor :: GetReplacee
@@ -622,13 +608,6 @@ PClassActor *PClassActor::GetReplacee(bool lookskill)
 	rep = rep->GetReplacee(false);
 	ActorInfo()->Replacee = savedrep;
 	return rep;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, GetReplacee)
-{
-	PARAM_PROLOGUE;
-	PARAM_POINTER(c, PClassActor);
-	ACTION_RETURN_POINTER(c->GetReplacee());
 }
 
 //==========================================================================

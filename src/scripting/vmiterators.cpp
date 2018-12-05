@@ -27,6 +27,7 @@
 #include "actor.h"
 #include "p_tags.h"
 #include "p_maputl.h"
+#include "g_levellocals.h"
 #include "vm.h"
 
 //==========================================================================

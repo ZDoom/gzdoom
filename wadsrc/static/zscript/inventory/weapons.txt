@@ -34,7 +34,7 @@ class Weapon : StateProvider
 	readonly bool bDehAmmo;					// Uses Doom's original amount of ammo for the respective attack functions so that old DEHACKED patches work as intended.
 											// AmmoUse1 will be set to the first attack's ammo use so that checking for empty weapons still works
 	meta int SlotNumber;
-	meta int SlotPriority;
+	meta double SlotPriority;
 	
 	property AmmoGive: AmmoGive1;
 	property AmmoGive1: AmmoGive1;
@@ -121,7 +121,7 @@ class Weapon : StateProvider
 	{
 		if (GetReplacement(GetClass()) == GetClass() && !bPowered_Up)
 		{
-			return SlotNumber, SlotPriority*65536;
+			return SlotNumber, int(SlotPriority*65536);
 		}
 		return -1, 0;
 	}

@@ -32,6 +32,11 @@
 
 EXTERN_CVAR(Float, skyoffset)
 
+extern double	skytexturemid;
+extern float	skyiscale;
+extern double	skyscale;
+extern fixed_t		sky1cyl, sky2cyl;
+
 
 PolySkyDome::PolySkyDome()
 {

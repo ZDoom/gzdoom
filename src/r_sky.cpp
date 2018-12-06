@@ -44,19 +44,9 @@
 //
 FTextureID	skyflatnum;
 FTextureID	sky1texture,	sky2texture;
-double		skytexturemid;
-double		skyscale;
-float		skyiscale;
-bool		skystretch;
-
-fixed_t		sky1cyl,		sky2cyl;
 double		sky1pos,		sky2pos;
 float		hw_sky1pos, hw_sky2pos;
-
-CUSTOM_CVAR(Int, testskyoffset, 0, 0)
-{
-	R_InitSkyMap();
-}
+bool		skystretch;
 
 // [RH] Stretch sky texture if not taller than 128 pixels?
 // Also now controls capped skies. 0 = normal, 1 = stretched, 2 = capped
@@ -67,10 +57,6 @@ CUSTOM_CVAR (Int, r_skymode, 2, CVAR_ARCHIVE)
 
 CVAR(Float, skyoffset, 0, 0)	// for testing
 
-
-
-int			freelookviewheight;
-
 //==========================================================================
 //
 // R_InitSkyMap
@@ -79,7 +65,7 @@ int			freelookviewheight;
 //
 //==========================================================================
 
-void R_InitSkyMap ()
+void R_InitSkyMap()
 {
 	int skyheight;
 	FTexture *skytex1, *skytex2;
@@ -102,7 +88,7 @@ void R_InitSkyMap ()
 
 	if ((level.flags & LEVEL_DOUBLESKY) && skytex1->GetDisplayHeight() != skytex2->GetDisplayHeight())
 	{
-		Printf (TEXTCOLOR_BOLD "Both sky textures must be the same height." TEXTCOLOR_NORMAL "\n");
+		Printf(TEXTCOLOR_BOLD "Both sky textures must be the same height." TEXTCOLOR_NORMAL "\n");
 		sky2texture = sky1texture;
 	}
 
@@ -120,55 +106,16 @@ void R_InitSkyMap ()
 	//        h >  200: Unstretched, but the baseline is shifted down so that the top
 	//                  of the texture is at the top of the screen when looking fully up.
 	skyheight = skytex1->GetDisplayHeight();
-	
+
 	if (skyheight >= 128 && skyheight < 200)
 	{
 		skystretch = (r_skymode == 1
-					  && skyheight >= 128
-					  && level.IsFreelookAllowed()
-					  && !(level.flags & LEVEL_FORCETILEDSKY)) ? 1 : 0;
+			&& skyheight >= 128
+			&& level.IsFreelookAllowed()
+			&& !(level.flags & LEVEL_FORCETILEDSKY)) ? 1 : 0;
 	}
 	else skystretch = false;
-	
-	// Anything below is only for the software renderer (todo - move it there!)
-	// Note: I don't think it is good that this stuff gets cached globally.
-	// For something that only needs to be once per frame it is rather pointless and makes it hard to swap out the underlying textures based on user settings.
-	FSoftwareTexture *sskytex1 = skytex1->GetSoftwareTexture();
-	FSoftwareTexture *sskytex2 = skytex2->GetSoftwareTexture();
-	skytexturemid = 0;
-	if (skyheight >= 128 && skyheight < 200)
-	{
-		skytexturemid = -28;
-	}
-	else if (skyheight > 200)
-	{
-		skytexturemid = (200 - skyheight) * sskytex1->GetScale().Y +((r_skymode == 2 && !(level.flags & LEVEL_FORCETILEDSKY)) ? skytex1->GetSkyOffset() + testskyoffset : 0);
-	}
-
-	if (viewwidth != 0 && viewheight != 0)
-	{
-		skyiscale = float(r_Yaspect / freelookviewheight);
-		skyscale = freelookviewheight / r_Yaspect;
-
-		skyiscale *= float(r_viewpoint.FieldOfView.Degrees / 90.);
-		skyscale *= float(90. / r_viewpoint.FieldOfView.Degrees);
-	}
-
-	if (skystretch)
-	{
-		skyscale *= (double)SKYSTRETCH_HEIGHT / skyheight;
-		skyiscale *= skyheight / (float)SKYSTRETCH_HEIGHT;
-		skytexturemid *= skyheight / (double)SKYSTRETCH_HEIGHT;
-	}
-
-	// The standard Doom sky texture is 256 pixels wide, repeated 4 times over 360 degrees,
-	// giving a total sky width of 1024 pixels. So if the sky texture is no wider than 1024,
-	// we map it to a cylinder with circumfrence 1024. For larger ones, we use the width of
-	// the texture as the cylinder's circumfrence.
-	sky1cyl = MAX(sskytex1->GetWidth(), fixed_t(sskytex1->GetScale().X * 1024));
-	sky2cyl = MAX(sskytex2->GetWidth(), fixed_t(sskytex2->GetScale().Y * 1024));
 }
-
 
 //==========================================================================
 //

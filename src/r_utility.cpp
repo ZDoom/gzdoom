@@ -144,6 +144,8 @@ bool			setsizeneeded;
 unsigned int	R_OldBlend = ~0;
 int 			validcount = 1; 	// increment every time a check is made
 int 			dl_validcount = 1; 	// increment every time a check is made
+int			freelookviewheight;
+
 FCanvasTextureInfo *FCanvasTextureInfo::List;
 
 DVector3a view;

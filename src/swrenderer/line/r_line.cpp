@@ -941,6 +941,7 @@ namespace swrenderer
 		
 		FTexture *tex = TexMan(sidedef->GetTexture(side_t::bottom), true);;
 		mBottomPart.Texture = tex && tex->isValid() ? tex->GetSoftwareTexture() : nullptr;
+		if (!mBottomPart.Texture) return;
 
 		mBottomPart.TextureOffsetU = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::bottom));
 		double rowoffset = sidedef->GetTextureYOffset(side_t::bottom);

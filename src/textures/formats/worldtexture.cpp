@@ -85,10 +85,6 @@ void FWorldTexture::Unload ()
 
 const uint8_t *FWorldTexture::GetPixels (FRenderStyle style)
 {
-	if (CheckModified(style))
-	{
-		Unload();
-	}
 	int index = !!(style.Flags & STYLEF_RedIsAlpha);
 	if (Pixeldata[index] == nullptr)
 	{

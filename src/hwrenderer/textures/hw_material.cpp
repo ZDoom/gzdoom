@@ -167,7 +167,6 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	else if (tx->isWarped())
 	{
 		mShaderIndex = tx->isWarped(); // This picks SHADER_Warp1 or SHADER_Warp2
-		tx->shaderspeed = static_cast<FWarpTexture*>(tx)->GetSpeed();
 	}
 	else if (tx->isHardwareCanvas())
 	{

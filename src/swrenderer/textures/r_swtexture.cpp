@@ -61,7 +61,7 @@ const uint32_t *FSoftwareTexture::GetColumnBgra(unsigned int column, const FSoft
 
 const uint32_t *FSoftwareTexture::GetPixelsBgra()
 {
-	if (PixelsBgra.empty() || mTexture->CheckModified(DefaultRenderStyle()))
+	if (PixelsBgra.empty() || CheckModified(DefaultRenderStyle()))
 	{
 		if (!GetColumn(DefaultRenderStyle(), 0, nullptr))
 			return nullptr;

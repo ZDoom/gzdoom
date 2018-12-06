@@ -382,6 +382,7 @@ protected:
 	int shaderindex = 0;
 
 
+
 	// Returns the whole texture, stored in column-major order
 	virtual const uint8_t *GetPixels(FRenderStyle style);
 
@@ -400,6 +401,7 @@ protected:
 
 	// Fill the native texture buffer with pixel data for this image
 	virtual void FillBuffer(uint8_t *buff, int pitch, int height, FTextureFormat fmt);
+	void SetSpeed(float fac) { shaderspeed = fac; }
 
 	int GetWidth () { return Width; }
 	int GetHeight () { return Height; }
@@ -442,11 +444,6 @@ protected:
 	virtual void SetFrontSkyLayer();
 
 	void CopyToBlock (uint8_t *dest, int dwidth, int dheight, int x, int y, int rotate, const uint8_t *translation, FRenderStyle style);
-
-	// Returns true if the next call to GetPixels() will return an image different from the
-	// last call to GetPixels(). This should be considered valid only if a call to CheckModified()
-	// is immediately followed by a call to GetPixels().
-	virtual bool CheckModified (FRenderStyle style);
 
 	static void InitGrayMap();
 
@@ -770,34 +767,6 @@ public:
 	void SetSize (int width, int height);
 };
 
-// A texture that returns a wiggly version of another texture.
-class FWarpTexture : public FWorldTexture
-{
-public:
-	FWarpTexture (FTexture *source, int warptype);
-	~FWarpTexture ();
-	void Unload() override;
-
-	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL) override;
-	virtual int CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, PalEntry *remap, FCopyInfo *inf = NULL) override;
-	//const uint32_t *GetPixelsBgra() override;
-	bool CheckModified (FRenderStyle) override;
-
-	float GetSpeed() const { return Speed; }
-	int GetSourceLump() { return SourcePic->GetSourceLump(); }
-	void SetSpeed(float fac) { Speed = fac; }
-
-	uint64_t GenTime[2] = { 0, 0 };
-	uint64_t GenTimeBgra = 0;
-	float Speed = 1.f;
-	int WidthOffsetMultiplier, HeightOffsetMultiplier;  // [mxd]
-protected:
-	FTexture *SourcePic;
-
-	uint8_t *MakeTexture (FRenderStyle style) override;
-	int NextPo2 (int v); // [mxd]
-	void SetupMultipliers (int width, int height); // [mxd]
-};
 
 // A texture that can be drawn to.
 class DCanvas;
@@ -814,7 +783,7 @@ public:
 
 	const uint8_t *GetPixels (FRenderStyle style);
 	void Unload ();
-	bool CheckModified (FRenderStyle) override;
+	bool CheckModified (FRenderStyle) /*override*/;
 	void NeedUpdate() { bNeedsUpdate=true; }
 	void SetUpdated() { bNeedsUpdate = false; bDidUpdate = true; bFirstUpdate = false; }
 	DCanvas *GetCanvas() { return Canvas; }

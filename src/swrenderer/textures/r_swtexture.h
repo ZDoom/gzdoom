@@ -12,8 +12,10 @@ struct FSoftwareTextureSpan
 // For now this is just a minimal wrapper around FTexture. Once the software renderer no longer accesses FTexture directly, it is time for cleaning up.
 class FSoftwareTexture
 {
+protected:
 	FTexture *mTexture;
 	FTexture *mSource;
+	uint8_t *Pixels[2];
 	std::vector<uint32_t> PixelsBgra;
 	FSoftwareTextureSpan **Spandata[2] = { nullptr, nullptr };
 
@@ -88,7 +90,7 @@ public:
 	DVector2 GetScale() const { return mTexture->Scale; }
 	
 	// Returns the whole texture, stored in column-major order
-	const uint8_t *GetPixels(FRenderStyle style)
+	virtual const uint8_t *GetPixels(FRenderStyle style)
 	{
 		return mTexture->GetPixels(style);
 	}
@@ -98,6 +100,11 @@ public:
 		mTexture->Unload();
 		PixelsBgra = std::vector<uint32_t>();
 	}
+	
+	// Returns true if the next call to GetPixels() will return an image different from the
+	// last call to GetPixels(). This should be considered valid only if a call to CheckModified()
+	// is immediately followed by a call to GetPixels().
+	virtual bool CheckModified (FRenderStyle style) { return false; }
 
 	void GenerateBgraFromBitmap(const FBitmap &bitmap);
 	void CreatePixelsBgraWithMipmaps();
@@ -121,9 +128,36 @@ public:
 	
 };
 
+// A texture that returns a wiggly version of another texture.
+class FWarpTexture : public FSoftwareTexture
+{
+	TArray<uint8_t> WarpedPixels[2];
+	int bWarped = 0;
+public:
+	FWarpTexture (FTexture *source, int warptype);
+
+	const uint32_t *GetPixelsBgra() override;
+	bool CheckModified (FRenderStyle) override;
+
+	float GetSpeed() const { return mTexture->shaderspeed; }
+
+	uint64_t GenTime[2] = { 0, 0 };
+	uint64_t GenTimeBgra = 0;
+	int WidthOffsetMultiplier, HeightOffsetMultiplier;  // [mxd]
+protected:
+
+	const uint8_t *GetPixels(FRenderStyle style);
+	int NextPo2 (int v); // [mxd]
+	void SetupMultipliers (int width, int height); // [mxd]
+};
+
 
 inline FSoftwareTexture *FTexture::GetSoftwareTexture()
 {
-	if (!SoftwareTexture) SoftwareTexture = new FSoftwareTexture(this);
+	if (!SoftwareTexture)
+	{
+		if (bWarped) SoftwareTexture = new FWarpTexture(this, bWarped);
+		else SoftwareTexture = new FSoftwareTexture(this);
+	}
 	return SoftwareTexture;
 }

@@ -1118,7 +1118,6 @@ set (PCH_SOURCES
 	textures/formats/shadertexture.cpp
 	textures/formats/tgatexture.cpp
 	textures/formats/worldtexture.cpp
-	textures/formats/warptexture.cpp
 	textures/hires/hqresize.cpp
 	textures/hires/hirestex.cpp
 	xlat/parse_xlat.cpp
@@ -1246,6 +1245,7 @@ set (PCH_SOURCES
 	sound/wildmidi/wildmidi_lib.cpp
 	sound/wildmidi/wm_error.cpp
 	swrenderer/textures/r_swtexture.cpp
+	swrenderer/textures/warptexture.cpp
 	events.cpp
 )
 

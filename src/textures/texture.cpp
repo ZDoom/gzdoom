@@ -45,7 +45,6 @@
 #include "c_dispatch.h"
 #include "v_video.h"
 #include "m_fixed.h"
-#include "textures/warpbuffer.h"
 #include "hwrenderer/textures/hw_material.h"
 #include "hwrenderer/textures/hw_ihwtexture.h"
 
@@ -238,11 +237,6 @@ void FTexture::Unload()
 // 
 //
 //==========================================================================
-
-bool FTexture::CheckModified (FRenderStyle)
-{
-	return false;
-}
 
 FTextureFormat FTexture::GetFormat()
 {

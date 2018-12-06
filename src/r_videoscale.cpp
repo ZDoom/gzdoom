@@ -77,11 +77,14 @@ namespace
 	}
 }
 
+void R_ShowCurrentScaling();
 CUSTOM_CVAR(Float, vid_scalefactor, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	setsizeneeded = true;
 	if (self < 0.05 || self > 2.0)
 		self = 1.0;
+	if (self != 1.0)
+		R_ShowCurrentScaling();
 }
 
 CUSTOM_CVAR(Int, vid_scalemode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -142,21 +145,6 @@ void R_ShowCurrentScaling()
 	Printf("Real resolution: %i x %i\nEmulated resolution: %i x %i\n", x1, y1, x2, y2);
 }
 
-bool R_CalcsShouldBeBlocked()
-{
-	if (vid_scalemode < 0 || vid_scalemode > 1)
-	{
-		Printf("vid_scalemode should be 0 or 1 before using this command.\n");
-		return true;
-	}
-	if (vid_aspect != 0 && vid_cropaspect == true)
-	{   // just warn ... I'm not going to fix this, it's a pretty niche condition anyway.
-        Printf("Warning: Using this command while vid_aspect is not 0 will yield results based on FULL screen geometry, NOT cropped!.\n");
-		return false;
-	}
-	return false;	
-}
-
 CCMD (vid_showcurrentscaling)
 {
 	R_ShowCurrentScaling();
@@ -164,24 +152,21 @@ CCMD (vid_showcurrentscaling)
 
 CCMD (vid_scaletowidth)
 {
-	if (R_CalcsShouldBeBlocked())
-		return;	
-
 	if (argv.argc() > 1)
-		vid_scalefactor = (float)((double)atof(argv[1]) / screen->GetClientWidth());
-
-	R_ShowCurrentScaling();
+	{
+		// the following enables the use of ViewportScaledWidth to get the proper dimensions in custom scale modes
+		vid_scalefactor = 1;
+		vid_scalefactor = (float)((double)atof(argv[1]) / ViewportScaledWidth(screen->GetClientWidth(), screen->GetClientHeight()));
+	}
 }
 
 CCMD (vid_scaletoheight)
 {
-	if (R_CalcsShouldBeBlocked())
-		return;	
-
 	if (argv.argc() > 1)
-		vid_scalefactor = (float)((double)atof(argv[1]) / screen->GetClientHeight());
-
-	R_ShowCurrentScaling();
+	{
+		vid_scalefactor = 1;
+		vid_scalefactor = (float)((double)atof(argv[1]) / ViewportScaledHeight(screen->GetClientWidth(), screen->GetClientHeight()));
+	}
 }
 
 inline bool atob(char* I)

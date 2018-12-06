@@ -34,7 +34,7 @@ namespace swrenderer
 	{
 	public:
 		RenderFlatPlane(RenderThread *thread);
-		void Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *basecolormap, FTexture *texture);
+		void Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *basecolormap, FSoftwareTexture *texture);
 
 		RenderThread *Thread = nullptr;
 

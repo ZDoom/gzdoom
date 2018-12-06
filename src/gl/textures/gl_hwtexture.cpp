@@ -422,7 +422,6 @@ void FHardwareTexture::BindToFrameBuffer(int width, int height)
 
 bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, int translation, int flags)
 {
-#if 0
 	int usebright = false;
 
 	if (translation <= 0)
@@ -465,7 +464,6 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 	}
 	if (tex->isHardwareCanvas()) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
 	GLRenderer->mSamplerManager->Bind(texunit, clampmode, 255);
-#endif
 	return true;
 }
 

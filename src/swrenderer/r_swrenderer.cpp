@@ -80,12 +80,13 @@ FRenderer *CreateSWRenderer()
 	return new FSoftwareRenderer;
 }
 
-void FSoftwareRenderer::PrecacheTexture(FTexture *tex, int cache)
+void FSoftwareRenderer::PrecacheTexture(FTexture *ttex, int cache)
 {
 	bool isbgra = V_IsTrueColor();
 
-	if (tex != NULL)
+	if (ttex != NULL)
 	{
+		FSoftwareTexture *tex = ttex->GetSoftwareTexture();
 		if (cache & FTextureManager::HIT_Columnmode)
 		{
 			const FSoftwareTextureSpan *spanp;
@@ -232,6 +233,7 @@ void FSoftwareRenderer::SetClearColor(int color)
 
 void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, double fov)
 {
+#if 0	// This will require a complete redesign.
 	auto renderTarget = V_IsPolyRenderer() ? PolyRenderer::Instance()->RenderTarget : mScene.MainThread()->Viewport->RenderTarget;
 	auto &cameraViewpoint = V_IsPolyRenderer() ? PolyRenderer::Instance()->Viewpoint : mScene.MainThread()->Viewport->viewpoint;
 	auto &cameraViewwindow = V_IsPolyRenderer() ? PolyRenderer::Instance()->Viewwindow : mScene.MainThread()->Viewport->viewwindow;
@@ -310,6 +312,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 	// Sync state back to zdoom
 	r_viewpoint = cameraViewpoint;
 	r_viewwindow = cameraViewwindow;
+#endif
 }
 
 void FSoftwareRenderer::SetColormap()

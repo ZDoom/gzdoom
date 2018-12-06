@@ -107,7 +107,7 @@ namespace swrenderer
 			if (lump.isValid())
 			{
 				FTexture * tex = TexMan(lump);
-				if (tex) disablefullbright = tex->bDisableFullbright;
+				if (tex) disablefullbright = tex->isFullbrightDisabled();
 			}
 			return psp->GetState()->GetFullbright() && !disablefullbright;
 		}
@@ -354,7 +354,7 @@ namespace swrenderer
 		args.SetLight(GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true), lightlevel, visibility, fullbrightSprite);
 		args.SetLights(Lights, NumLights);
 		args.SetNormal(FVector3(0.0f, 0.0f, 0.0f));
-		args.SetStyle(RenderStyle, RenderAlpha, fillcolor, Translation, SkinTexture, fullbrightSprite);
+		args.SetStyle(RenderStyle, RenderAlpha, fillcolor, Translation, SkinTexture->GetSoftwareTexture(), fullbrightSprite);
 		args.SetDepthTest(true);
 		args.SetWriteDepth(true);
 		args.SetWriteStencil(false);
@@ -371,7 +371,7 @@ namespace swrenderer
 		args.SetLight(GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true), lightlevel, visibility, fullbrightSprite);
 		args.SetLights(Lights, NumLights);
 		args.SetNormal(FVector3(0.0f, 0.0f, 0.0f));
-		args.SetStyle(RenderStyle, RenderAlpha, fillcolor, Translation, SkinTexture, fullbrightSprite);
+		args.SetStyle(RenderStyle, RenderAlpha, fillcolor, Translation, SkinTexture->GetSoftwareTexture(), fullbrightSprite);
 		args.SetDepthTest(true);
 		args.SetWriteDepth(true);
 		args.SetWriteStencil(false);

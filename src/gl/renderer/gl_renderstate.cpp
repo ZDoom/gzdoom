@@ -303,7 +303,6 @@ void FGLRenderState::Apply()
 
 void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader)
 {
-#if 0
 	if (mat->tex->isHardwareCanvas())
 	{
 		mTempTM = TM_OPAQUE;
@@ -318,7 +317,7 @@ void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translatio
 
 	auto tex = mat->tex;
 	if (tex->UseType == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;
-	if (tex->sHardwareCanvas()) clampmode = CLAMP_CAMTEX;
+	if (tex->isHardwareCanvas()) clampmode = CLAMP_CAMTEX;
 	else if ((tex->isWarped() || tex->shaderindex >= FIRST_USER_SHADER) && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
 	
 	// avoid rebinding the same texture multiple times.
@@ -351,7 +350,6 @@ void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translatio
 		FHardwareTexture::Unbind(i);
 		maxBoundMaterial = maxbound;
 	}
-#endif
 }
 
 //==========================================================================

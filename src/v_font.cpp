@@ -402,8 +402,8 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 				if (i != 124-start || !stcfn121)
 					charLumps[i] = pic;
 
-				int height = pic->GetScaledHeight();
-				int yoffs = pic->GetScaledTopOffset(0);
+				int height = pic->GetDisplayHeight();
+				int yoffs = pic->GetDisplayTopOffset();
 
 				if (yoffs > maxyoffs)
 				{
@@ -421,7 +421,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 		{
 			if (!noTranslate) Chars[i].Pic = new FFontChar1 (charLumps[i]);
 			else Chars[i].Pic = charLumps[i];
-			Chars[i].XMove = Chars[i].Pic->GetScaledWidth();
+			Chars[i].XMove = Chars[i].Pic->GetDisplayWidth();
 		}
 		else
 		{
@@ -465,7 +465,7 @@ FFont::~FFont ()
 		{
 			for (int i = 0; i < count; ++i)
 			{
-				if (Chars[i].Pic != NULL && Chars[i].Pic->Name[0] == 0)
+				if (Chars[i].Pic != nullptr && Chars[i].Pic->GetName().IsEmpty())
 				{
 					delete Chars[i].Pic;
 				}
@@ -843,8 +843,8 @@ double GetBottomAlignOffset(FFont *font, int c)
 	FTexture *tex_zero = font->GetChar('0', &w);
 	FTexture *texc = font->GetChar(c, &w);
 	double offset = 0;
-	if (texc) offset += texc->GetScaledTopOffsetDouble(0);
-	if (tex_zero) offset += -tex_zero->GetScaledTopOffsetDouble(0) + tex_zero->GetScaledHeightDouble();
+	if (texc) offset += texc->GetDisplayTopOffsetDouble();
+	if (tex_zero) offset += -tex_zero->GetDisplayTopOffsetDouble() + tex_zero->GetDisplayHeightDouble();
 	return offset;
 }
 
@@ -999,8 +999,8 @@ void FSingleLumpFont::CreateFontFromPic (FTextureID picnum)
 {
 	FTexture *pic = TexMan[picnum];
 
-	FontHeight = pic->GetHeight ();
-	SpaceWidth = pic->GetWidth ();
+	FontHeight = pic->GetDisplayHeight ();
+	SpaceWidth = pic->GetDisplayWidth ();
 	GlobalKerning = 0;
 
 	FirstChar = LastChar = 'A';
@@ -1498,8 +1498,8 @@ FSinglePicFont::FSinglePicFont(const char *picname) :
 	FTexture *pic = TexMan[picnum];
 
 	FontName = picname;
-	FontHeight = pic->GetScaledHeight();
-	SpaceWidth = pic->GetScaledWidth();
+	FontHeight = pic->GetDisplayHeight();
+	SpaceWidth = pic->GetDisplayWidth();
 	GlobalKerning = 0;
 	FirstChar = LastChar = 'A';
 	ActiveColors = 0;
@@ -1927,8 +1927,8 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 		pic = charlumps[i] = lumplist[i];
 		if (pic != NULL)
 		{
-			int height = pic->GetScaledHeight();
-			int yoffs = pic->GetScaledTopOffset(0);
+			int height = pic->GetDisplayHeight();
+			int yoffs = pic->GetDisplayTopOffset();
 
 			if (yoffs > maxyoffs)
 			{
@@ -1945,7 +1945,7 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 		{
 			if (!noTranslate) Chars[i].Pic = new FFontChar1 (charlumps[i]);
 			else Chars[i].Pic = charlumps[i];
-			Chars[i].XMove = Chars[i].Pic->GetScaledWidth();
+			Chars[i].XMove = Chars[i].Pic->GetDisplayWidth();
 		}
 		else
 		{

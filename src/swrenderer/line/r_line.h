@@ -65,7 +65,7 @@ namespace swrenderer
 		double TextureMid;
 		double TextureScaleU;
 		double TextureScaleV;
-		FTexture *Texture;
+		FSoftwareTexture *Texture;
 	};
 
 	class SWRenderLine : VisibleSegmentRenderer

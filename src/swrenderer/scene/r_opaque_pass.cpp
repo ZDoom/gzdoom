@@ -1024,15 +1024,15 @@ namespace swrenderer
 			sprite.picnum = thing->picnum;
 
 			sprite.tex = TexMan(sprite.picnum);
-			if (sprite.tex->UseType == ETextureType::Null)
+			if (!sprite.tex->isValid())
 			{
 				return false;
 			}
 
-			if (sprite.tex->Rotations != 0xFFFF)
+			if (sprite.tex->GetRotations() != 0xFFFF)
 			{
 				// choose a different rotation based on player view
-				spriteframe_t *sprframe = &SpriteFrames[sprite.tex->Rotations];
+				spriteframe_t *sprframe = &SpriteFrames[sprite.tex->GetRotations()];
 				DAngle ang = (sprite.pos - Thread->Viewport->viewpoint.Pos).Angle();
 				angle_t rot;
 				if (sprframe->Texture[0] == sprframe->Texture[1])
@@ -1096,7 +1096,7 @@ namespace swrenderer
 					return false;
 			}
 
-			if (sprite.voxel == nullptr && (sprite.tex == nullptr || sprite.tex->UseType == ETextureType::Null))
+			if (sprite.voxel == nullptr && (sprite.tex == nullptr || !sprite.tex->isValid()))
 			{
 				return false;
 			}

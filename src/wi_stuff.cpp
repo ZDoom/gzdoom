@@ -217,10 +217,10 @@ private:
 			int            bottom;
 
 
-			right = c[i]->GetScaledWidth();
-			bottom = c[i]->GetScaledHeight();
-			left = lnodes[n].x - c[i]->GetScaledLeftOffset(0);
-			top = lnodes[n].y - c[i]->GetScaledTopOffset(0);
+			right = c[i]->GetDisplayWidth();
+			bottom = c[i]->GetDisplayHeight();
+			left = lnodes[n].x - c[i]->GetDisplayLeftOffset();
+			top = lnodes[n].y - c[i]->GetDisplayTopOffset();
 			right += left;
 			bottom += top;
 
@@ -589,13 +589,13 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 	if (background)
 	{
 		// background
-		if (background->UseType == ETextureType::MiscPatch)
+		if (background->isMiscPatch())
 		{
 			// scale all animations below to fit the size of the base pic
 			// The base pic is always scaled to fit the screen so this allows
 			// placing the animations precisely where they belong on the base pic
-			animwidth = background->GetScaledWidthDouble();
-			animheight = background->GetScaledHeightDouble();
+			animwidth = background->GetDisplayWidthDouble();
+			animheight = background->GetDisplayHeightDouble();
 			screen->FillBorder(NULL);
 			screen->DrawTexture(background, 0, 0, DTA_Fullscreen, true, TAG_DONE);
 		}

@@ -59,7 +59,7 @@ namespace swrenderer
 	class HWAccelPlayerSprite
 	{
 	public:
-		FTexture *pic = nullptr;
+		FSoftwareTexture *pic = nullptr;
 		double texturemid = 0.0;
 		float yscale = 0.0f;
 		fixed_t xscale = 0;

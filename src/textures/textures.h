@@ -222,6 +222,12 @@ struct FSoftwareTextureSpan
 
 struct spriteframewithrotate;
 class FSerializer;
+namespace OpenGLRenderer
+{
+	class FGLRenderState;
+	class FHardwareTexture;
+}
+
 
 // Base texture class
 class FTexture
@@ -238,11 +244,13 @@ class FTexture
 	friend class FSoftwareTexture;
 	friend class FWarpTexture;
 	friend class FMaterial;
-	friend class FGLRenderState;	// For now this needs access to some fields in ApplyMaterial. This should be rerouted through the Material class
+	friend class OpenGLRenderer::FGLRenderState;	// For now this needs access to some fields in ApplyMaterial. This should be rerouted through the Material class
 	friend struct FTexCoordInfo;
-	friend class FHardwareTexture;
+	friend class OpenGLRenderer::FHardwareTexture;
 	friend class FMultiPatchTexture;
 	friend class FSkyBox;
+	friend class FBrightmapTexture;
+	friend class FFontChar1;
 	friend void RecordTextureColors (FTexture *pic, uint8_t *usedcolors);
 
 
@@ -275,6 +283,7 @@ public:
 	bool isFullbrightDisabled() const { return bDisableFullbright; }
 	bool isHardwareCanvas() const { return bHasCanvas; }	// There's two here so that this can deal with software canvases in the hardware renderer later.
 	bool isCanvas() const { return bHasCanvas; }
+	bool isMiscPatch() const { return UseType == ETextureType::MiscPatch; }	// only used by the intermission screen to decide whether to tile the background image or not. 
 	int isWarped() const { return bWarped; }
 	int GetRotations() const { return Rotations; }
 	void SetRotations(int rot) { Rotations = int16_t(rot); }
@@ -282,10 +291,12 @@ public:
 	const FString &GetName() const { return Name; }
 	bool allowNoDecals() const { return bNoDecals; }
 	bool isScaled() const { return Scale.X != 1 || Scale.Y != 1; }
+	bool isMasked() const { return bMasked; }
 	int GetSkyOffset() const { return SkyOffset; }
 	FTextureID GetID() const { return id; }
 	PalEntry GetSkyCapColor(bool bottom);
 	virtual FTexture *GetRawTexture();		// for FMultiPatchTexture to override
+	virtual int GetSourceLump() { return SourceLump; }	// needed by the scripted GetName method.
 	void GetGlowColor(float *data);
 	bool isGlowing() const { return bGlowing; }
 	bool isAutoGlowing() const { return bAutoGlowing; }
@@ -319,7 +330,7 @@ protected:
 
 	FMaterial *Material[2] = { nullptr, nullptr };
 	IHardwareTexture *SystemTexture[2] = { nullptr, nullptr };
-	FSoftwareTexture *SoftwareTexture;
+	FSoftwareTexture *SoftwareTexture = nullptr;
 
 	// None of the following pointers are owned by this texture, they are all controlled by the texture manager.
 
@@ -396,7 +407,6 @@ protected:
 	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL);
 	virtual int CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, PalEntry *remap, FCopyInfo *inf = NULL);
 	virtual bool UseBasePalette();
-	virtual int GetSourceLump() { return SourceLump; }
 	virtual FTexture *GetRedirect();
 
 	virtual void Unload ();
@@ -589,6 +599,11 @@ public:
 	{
 		return mTexture->bWorldPanning;
 	}
+
+	bool isMasked()
+	{
+		return mTexture->bMasked;
+	}
 	
 	bool UseBasePalette() const { return mTexture->UseBasePalette(); }
 	int GetSkyOffset() const { return mTexture->GetSkyOffset(); }
@@ -596,7 +611,10 @@ public:
 	
 	int GetWidth () { return mTexture->GetWidth(); }
 	int GetHeight () { return mTexture->GetHeight(); }
-	
+	int GetWidthBits() { return mTexture->WidthBits; }
+	int GetHeightBits() { return mTexture->HeightBits; }
+	bool Mipmapped() { return mTexture->Mipmapped(); }
+
 	int GetScaledWidth () { return mTexture->GetScaledWidth(); }
 	int GetScaledHeight () { return mTexture->GetScaledHeight(); }
 	double GetScaledWidthDouble () { return mTexture->GetScaledWidthDouble(); }
@@ -650,6 +668,11 @@ public:
 	const uint32_t *GetPixelsBgra()
 	{
 		return mTexture->GetPixelsBgra();
+	}
+
+	void Unload()
+	{
+		mTexture->Unload();
 	}
 
 };
@@ -959,6 +982,11 @@ public:
 	IHardwareTexture *GetSystemTexture(int slot)
 	{
 		return SystemTexture[slot];
+	}
+
+	int GetColorFormat() const
+	{
+		return WidthBits;
 	}
 };
 

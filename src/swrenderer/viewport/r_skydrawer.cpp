@@ -47,7 +47,7 @@ namespace swrenderer
 		dc_viewport = viewport;
 	}
 
-	void SkyDrawerArgs::SetFrontTexture(RenderThread *thread, FTexture *texture, uint32_t column)
+	void SkyDrawerArgs::SetFrontTexture(RenderThread *thread, FSoftwareTexture *texture, uint32_t column)
 	{
 		if (thread->Viewport->RenderTarget->IsBgra())
 		{
@@ -61,7 +61,7 @@ namespace swrenderer
 		}
 	}
 
-	void SkyDrawerArgs::SetBackTexture(RenderThread *thread, FTexture *texture, uint32_t column)
+	void SkyDrawerArgs::SetBackTexture(RenderThread *thread, FSoftwareTexture *texture, uint32_t column)
 	{
 		if (texture == nullptr)
 		{

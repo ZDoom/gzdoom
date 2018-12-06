@@ -30,14 +30,14 @@ namespace swrenderer
 		spanfunc = &SWPixelFormatDrawers::DrawSpan;
 	}
 
-	void SpanDrawerArgs::SetTexture(RenderThread *thread, FTexture *tex)
+	void SpanDrawerArgs::SetTexture(RenderThread *thread, FSoftwareTexture *tex)
 	{
 		thread->PrepareTexture(tex, DefaultRenderStyle());
 
 		ds_texwidth = tex->GetWidth();
 		ds_texheight = tex->GetHeight();
-		ds_xbits = tex->WidthBits;
-		ds_ybits = tex->HeightBits;
+		ds_xbits = tex->GetWidthBits();
+		ds_ybits = tex->GetHeightBits();
 		if ((1 << ds_xbits) > tex->GetWidth())
 		{
 			ds_xbits--;

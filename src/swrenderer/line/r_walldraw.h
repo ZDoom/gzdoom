@@ -50,7 +50,7 @@ namespace swrenderer
 			sector_t *frontsector,
 			seg_t *curline,
 			const FWallCoords &WallC,
-			FTexture *rw_pic,
+			FSoftwareTexture *rw_pic,
 			int x1,
 			int x2,
 			const short *walltop,
@@ -82,7 +82,7 @@ namespace swrenderer
 
 		int x1 = 0;
 		int x2 = 0;
-		FTexture *rw_pic = nullptr;
+		FSoftwareTexture *rw_pic = nullptr;
 		sector_t *frontsector = nullptr;
 		seg_t *curline = nullptr;
 		FWallCoords WallC;
@@ -103,7 +103,7 @@ namespace swrenderer
 	struct WallSampler
 	{
 		WallSampler() { }
-		WallSampler(RenderViewport *viewport, int y1, double texturemid, float swal, double yrepeat, fixed_t xoffset, double xmagnitude, FTexture *texture);
+		WallSampler(RenderViewport *viewport, int y1, double texturemid, float swal, double yrepeat, fixed_t xoffset, double xmagnitude, FSoftwareTexture *texture);
 
 		uint32_t uv_pos;
 		uint32_t uv_step;

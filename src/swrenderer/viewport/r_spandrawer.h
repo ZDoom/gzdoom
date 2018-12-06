@@ -19,7 +19,7 @@ namespace swrenderer
 		void SetDestY(RenderViewport *viewport, int y) { ds_viewport = viewport; ds_y = y; }
 		void SetDestX1(int x) { ds_x1 = x; }
 		void SetDestX2(int x) { ds_x2 = x; }
-		void SetTexture(RenderThread *thread, FTexture *tex);
+		void SetTexture(RenderThread *thread, FSoftwareTexture *tex);
 		void SetTextureLOD(double lod) { ds_lod = lod; }
 		void SetTextureUPos(double u) { ds_xfrac = (uint32_t)(int64_t)(u * 4294967296.0); }
 		void SetTextureVPos(double v) { ds_yfrac = (uint32_t)(int64_t)(v * 4294967296.0); }

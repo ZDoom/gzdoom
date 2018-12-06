@@ -66,9 +66,9 @@ FBrightmapTexture::FBrightmapTexture (FTexture *source)
 	Name = "";
 	SourcePic = source;
 	CopySize(source);
-	bNoDecals = source->bNoDecals;
-	Rotations = source->Rotations;
-	UseType = source->UseType;
+	bNoDecals = true;
+	Rotations = 0xffff;
+	UseType = ETextureType::Override;
 	bMasked = false;
 	id.SetInvalid();
 	SourceLump = -1;

@@ -1399,7 +1399,7 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetName)
 
 	if (tex != nullptr)
 	{
-		if (tex->Name.IsNotEmpty()) retval = tex->Name;
+		if (tex->GetName().IsNotEmpty()) retval = tex->GetName();
 		else
 		{
 			// Textures for full path names do not have their own name, they merely link to the source lump.
@@ -1423,8 +1423,8 @@ static int GetTextureSize(int texid, int *py)
 	int x, y;
 	if (tex != nullptr)
 	{
-		x = tex->GetWidth();
-		y = tex->GetHeight();
+		x = tex->GetDisplayWidth();
+		y = tex->GetDisplayHeight();
 	}
 	else x = y = -1;
 	if (py) *py = y;
@@ -1453,8 +1453,8 @@ static void GetScaledSize(int texid, DVector2 *pvec)
 	double x, y;
 	if (tex != nullptr)
 	{
-		x = tex->GetScaledWidthDouble();
-		y = tex->GetScaledHeightDouble();
+		x = tex->GetDisplayWidthDouble();
+		y = tex->GetDisplayHeightDouble();
 	}
 	else x = y = -1;
 	if (pvec)
@@ -1484,8 +1484,8 @@ static void GetScaledOffset(int texid, DVector2 *pvec)
 	double x, y;
 	if (tex != nullptr)
 	{
-		x = tex->GetScaledLeftOffsetDouble(0);
-		y = tex->GetScaledTopOffsetDouble(0);
+		x = tex->GetDisplayLeftOffsetDouble();
+		y = tex->GetDisplayTopOffsetDouble();
 	}
 	else x = y = -1;
 	if (pvec)

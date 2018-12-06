@@ -89,7 +89,7 @@ namespace swrenderer
 			return pal_drawers.get();
 	}
 
-	void RenderThread::PrepareTexture(FTexture *texture, FRenderStyle style)
+	void RenderThread::PrepareTexture(FSoftwareTexture *texture, FRenderStyle style)
 	{
 		if (texture == nullptr)
 			return;

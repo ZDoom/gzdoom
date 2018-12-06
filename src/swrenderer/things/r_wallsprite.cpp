@@ -71,8 +71,9 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void RenderWallSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FTexture *pic, const DVector2 &scale, int renderflags, int spriteshade, bool foggy, FDynamicColormap *basecolormap)
+	void RenderWallSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FTexture *ppic, const DVector2 &scale, int renderflags, int spriteshade, bool foggy, FDynamicColormap *basecolormap)
 	{
+		FSoftwareTexture *pic = ppic->GetSoftwareTexture();
 		FWallCoords wallc;
 		double x1, x2;
 		DVector2 left, right;
@@ -205,7 +206,7 @@ namespace swrenderer
 			calclighting = true;
 
 		// Draw it
-		FTexture *WallSpriteTile = spr->pic;
+		auto WallSpriteTile = spr->pic;
 		if (spr->renderflags & RF_YFLIP)
 		{
 			sprflipvert = true;
@@ -254,7 +255,7 @@ namespace swrenderer
 		}
 	}
 
-	void RenderWallSprite::DrawColumn(RenderThread *thread, SpriteDrawerArgs &drawerargs, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, FRenderStyle style)
+	void RenderWallSprite::DrawColumn(RenderThread *thread, SpriteDrawerArgs &drawerargs, int x, FSoftwareTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, FRenderStyle style)
 	{
 		auto viewport = thread->Viewport.get();
 		

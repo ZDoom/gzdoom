@@ -59,6 +59,14 @@ EXTERN_CVAR(Int, r_skymode)
 
 namespace swrenderer
 {
+	static FSoftwareTexture *GetSWTex(FTextureID texid, bool allownull = true)
+	{
+		auto tex = TexMan(texid, true);
+		if (tex == nullptr) return nullptr;
+		if (!allownull && !tex->isValid()) return nullptr;
+		return tex->GetSoftwareTexture();
+	}
+
 	RenderSkyPlane::RenderSkyPlane(RenderThread *thread)
 	{
 		Thread = thread;
@@ -86,9 +94,9 @@ namespace swrenderer
 			if (!(pl->sky & PL_SKYFLAT))
 			{	// use sky1
 			sky1:
-				frontskytex = TexMan(sky1tex, true);
+				frontskytex = GetSWTex(sky1tex);
 				if (level.flags & LEVEL_DOUBLESKY)
-					backskytex = TexMan(sky2tex, true);
+					backskytex = GetSWTex(sky2tex);
 				else
 					backskytex = NULL;
 				skyflip = 0;
@@ -99,7 +107,7 @@ namespace swrenderer
 			}
 			else if (pl->sky == PL_SKYFLAT)
 			{	// use sky2
-				frontskytex = TexMan(sky2tex, true);
+				frontskytex = GetSWTex(sky2tex);
 				backskytex = NULL;
 				frontcyl = sky2cyl;
 				skyflip = 0;
@@ -125,8 +133,8 @@ namespace swrenderer
 					pos = side_t::top;
 				}
 
-				frontskytex = TexMan(s->GetTexture(pos), true);
-				if (frontskytex == NULL || frontskytex->UseType == ETextureType::Null)
+				frontskytex = GetSWTex(s->GetTexture(pos));
+				if (frontskytex == nullptr)
 				{ // [RH] The blank texture: Use normal sky instead.
 					goto sky1;
 				}
@@ -148,7 +156,7 @@ namespace swrenderer
 				// allow old sky textures to be used.
 				skyflip = l->args[2] ? 0u : ~0u;
 
-				int frontxscale = int(frontskytex->Scale.X * 1024);
+				int frontxscale = int(frontskytex->GetScale().X * 1024);
 				frontcyl = MAX(frontskytex->GetWidth(), frontxscale);
 				if (skystretch)
 				{
@@ -231,16 +239,16 @@ namespace swrenderer
 
 	void RenderSkyPlane::DrawSkyColumn(int start_x, int y1, int y2)
 	{
-		if (1 << frontskytex->HeightBits == frontskytex->GetHeight())
+		if (1 << frontskytex->GetHeightBits() == frontskytex->GetHeight())
 		{
-			double texturemid = skymid * frontskytex->Scale.Y + frontskytex->GetHeight();
-			DrawSkyColumnStripe(start_x, y1, y2, frontskytex->Scale.Y, texturemid, frontskytex->Scale.Y);
+			double texturemid = skymid * frontskytex->GetScale().Y + frontskytex->GetHeight();
+			DrawSkyColumnStripe(start_x, y1, y2, frontskytex->GetScale().Y, texturemid, frontskytex->GetScale().Y);
 		}
 		else
 		{
 			auto viewport = Thread->Viewport.get();
-			double yrepeat = frontskytex->Scale.Y;
-			double scale = frontskytex->Scale.Y * skyscale;
+			double yrepeat = frontskytex->GetScale().Y;
+			double scale = frontskytex->GetScale().Y * skyscale;
 			double iscale = 1 / scale;
 			short drawheight = short(frontskytex->GetHeight() * scale);
 			double topfrac = fmod(skymid + iscale * (1 - viewport->CenterY), frontskytex->GetHeight());

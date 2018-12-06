@@ -43,7 +43,7 @@ namespace swrenderer
 		colfunc = &SWPixelFormatDrawers::DrawColumn;
 	}
 
-	void SpriteDrawerArgs::DrawMaskedColumn(RenderThread *thread, int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, FRenderStyle style, bool unmasked)
+	void SpriteDrawerArgs::DrawMaskedColumn(RenderThread *thread, int x, fixed_t iscale, FSoftwareTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, FRenderStyle style, bool unmasked)
 	{
 		if (x < thread->X1 || x >= thread->X2)
 			return;
@@ -126,7 +126,7 @@ namespace swrenderer
 		}
 	}
 
-	void SpriteDrawerArgs::DrawMaskedColumnBgra(RenderThread *thread, int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
+	void SpriteDrawerArgs::DrawMaskedColumnBgra(RenderThread *thread, int x, fixed_t iscale, FSoftwareTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
 	{
 		dc_viewport = thread->Viewport.get();
 		dc_x = x;

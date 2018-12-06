@@ -41,8 +41,8 @@ namespace swrenderer
 		void DrawSkyColumnStripe(int start_x, int y1, int y2, double scale, double texturemid, double yrepeat);
 		void DrawSkyColumn(int start_x, int y1, int y2);
 
-		FTexture *frontskytex = nullptr;
-		FTexture *backskytex = nullptr;
+		FSoftwareTexture *frontskytex = nullptr;
+		FSoftwareTexture *backskytex = nullptr;
 		angle_t skyflip = 0;
 		int frontpos = 0;
 		int backpos = 0;

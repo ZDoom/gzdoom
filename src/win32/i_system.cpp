@@ -912,10 +912,12 @@ int I_PickIWad(WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 //
 //==========================================================================
 
+// Custom cursors temporarily disabled until this can directly reference a texture's backing image.
 bool I_SetCursor(FTexture *cursorpic)
 {
 	HCURSOR cursor;
 
+#if 0
 	if (cursorpic != NULL && cursorpic->UseType != ETextureType::Null)
 	{
 		// Must be no larger than 32x32.
@@ -939,6 +941,7 @@ bool I_SetCursor(FTexture *cursorpic)
 		atterm(DestroyCustomCursor);
 	}
 	else
+#endif
 	{
 		DestroyCustomCursor();
 		cursor = LoadCursor(NULL, IDC_ARROW);
@@ -974,6 +977,7 @@ bool I_SetCursor(FTexture *cursorpic)
 
 static HCURSOR CreateCompatibleCursor(FTexture *cursorpic)
 {
+#if 0
 	int picwidth = cursorpic->GetWidth();
 	int picheight = cursorpic->GetHeight();
 
@@ -1025,6 +1029,9 @@ static HCURSOR CreateCompatibleCursor(FTexture *cursorpic)
 
 	// Create the cursor from the bitmaps.
 	return CreateBitmapCursor(cursorpic->GetLeftOffset(0), cursorpic->GetTopOffset(0), and_mask, xor_mask);
+#else
+	return nullptr;
+#endif
 }
 
 //==========================================================================
@@ -1037,6 +1044,7 @@ static HCURSOR CreateCompatibleCursor(FTexture *cursorpic)
 
 static HCURSOR CreateAlphaCursor(FTexture *cursorpic)
 {
+#if 0
 	HDC dc;
 	BITMAPV5HEADER bi;
 	HBITMAP color, mono;
@@ -1109,6 +1117,9 @@ static HCURSOR CreateAlphaCursor(FTexture *cursorpic)
 	}
 
 	return CreateBitmapCursor(cursorpic->GetLeftOffset(0) * scale, cursorpic->GetTopOffset(0) * scale, mono, color);
+#else
+	return nullptr;
+#endif
 }
 
 //==========================================================================

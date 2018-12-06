@@ -45,21 +45,12 @@ struct ScreenTriangleStepVariables
 
 struct TriDrawTriangleArgs
 {
-	uint8_t *dest;
-	int32_t pitch;
 	ShadedTriVertex *v1;
 	ShadedTriVertex *v2;
 	ShadedTriVertex *v3;
-	int32_t clipright;
-	int32_t clipbottom;
-	uint8_t *stencilbuffer;
-	int stencilpitch;
-	float *zbuffer;
 	const PolyDrawArgs *uniforms;
-	bool destBgra;
 	ScreenTriangleStepVariables gradientX;
 	ScreenTriangleStepVariables gradientY;
-	float depthOffset;
 
 	bool CalculateGradients()
 	{

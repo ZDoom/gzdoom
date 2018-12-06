@@ -29,6 +29,8 @@
 #include "polyrenderer/drawers/poly_buffer.h"
 #include "polyrenderer/drawers/poly_draw_args.h"
 
+class PolyDrawerCommand;
+
 class PolyTriangleDrawer
 {
 public:
@@ -88,6 +90,13 @@ public:
 
 	static PolyTriangleThreadData *Get(DrawerThread *thread);
 
+	int dest_pitch = 0;
+	int dest_width = 0;
+	int dest_height = 0;
+	bool dest_bgra = false;
+	uint8_t *dest = nullptr;
+	bool weaponScene = false;
+
 private:
 	ShadedTriVertex ShadeVertex(const PolyDrawArgs &drawargs, const void *vertices, int index);
 	void DrawShadedTriangle(const ShadedTriVertex *vertices, bool ccw, TriDrawTriangleArgs *args);
@@ -99,14 +108,8 @@ private:
 	int viewport_y = 0;
 	int viewport_width = 0;
 	int viewport_height = 0;
-	int dest_pitch = 0;
-	int dest_width = 0;
-	int dest_height = 0;
-	bool dest_bgra = false;
-	uint8_t *dest = nullptr;
 	bool ccw = true;
 	bool twosided = false;
-	bool weaponScene = false;
 	const Mat4f *objectToClip = nullptr;
 	const Mat4f *objectToWorld = nullptr;
 	int modelFrame1 = -1;
@@ -116,7 +119,12 @@ private:
 	enum { max_additional_vertices = 16 };
 };
 
-class PolySetTransformCommand : public DrawerCommand
+class PolyDrawerCommand : public DrawerCommand
+{
+public:
+};
+
+class PolySetTransformCommand : public PolyDrawerCommand
 {
 public:
 	PolySetTransformCommand(const Mat4f *objectToClip, const Mat4f *objectToWorld);
@@ -128,7 +136,7 @@ private:
 	const Mat4f *objectToWorld;
 };
 
-class PolySetCullCCWCommand : public DrawerCommand
+class PolySetCullCCWCommand : public PolyDrawerCommand
 {
 public:
 	PolySetCullCCWCommand(bool ccw);
@@ -139,7 +147,7 @@ private:
 	bool ccw;
 };
 
-class PolySetTwoSidedCommand : public DrawerCommand
+class PolySetTwoSidedCommand : public PolyDrawerCommand
 {
 public:
 	PolySetTwoSidedCommand(bool twosided);
@@ -150,7 +158,7 @@ private:
 	bool twosided;
 };
 
-class PolySetWeaponSceneCommand : public DrawerCommand
+class PolySetWeaponSceneCommand : public PolyDrawerCommand
 {
 public:
 	PolySetWeaponSceneCommand(bool value);
@@ -161,7 +169,7 @@ private:
 	bool value;
 };
 
-class PolySetModelVertexShaderCommand : public DrawerCommand
+class PolySetModelVertexShaderCommand : public PolyDrawerCommand
 {
 public:
 	PolySetModelVertexShaderCommand(int frame1, int frame2, float interpolationFactor);
@@ -174,7 +182,7 @@ private:
 	float interpolationFactor;
 };
 
-class PolyClearStencilCommand : public DrawerCommand
+class PolyClearStencilCommand : public PolyDrawerCommand
 {
 public:
 	PolyClearStencilCommand(uint8_t value);
@@ -185,7 +193,7 @@ private:
 	uint8_t value;
 };
 
-class PolySetViewportCommand : public DrawerCommand
+class PolySetViewportCommand : public PolyDrawerCommand
 {
 public:
 	PolySetViewportCommand(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra);
@@ -204,7 +212,7 @@ private:
 	bool dest_bgra;
 };
 
-class DrawPolyTrianglesCommand : public DrawerCommand
+class DrawPolyTrianglesCommand : public PolyDrawerCommand
 {
 public:
 	DrawPolyTrianglesCommand(const PolyDrawArgs &args, const void *vertices, const unsigned int *elements, int count, PolyDrawMode mode);
@@ -219,7 +227,7 @@ private:
 	PolyDrawMode mode;
 };
 
-class DrawRectCommand : public DrawerCommand
+class DrawRectCommand : public PolyDrawerCommand
 {
 public:
 	DrawRectCommand(const RectDrawArgs &args) : args(args) { }

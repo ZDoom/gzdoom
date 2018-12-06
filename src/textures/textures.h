@@ -214,12 +214,6 @@ enum FTextureFormat : uint32_t
 class FSoftwareTexture;
 class FGLRenderState;
 
-struct FSoftwareTextureSpan
-{
-	uint16_t TopOffset;
-	uint16_t Length;	// A length of 0 terminates this column
-};
-
 struct spriteframewithrotate;
 class FSerializer;
 namespace OpenGLRenderer
@@ -388,18 +382,8 @@ protected:
 	int shaderindex = 0;
 
 
-
-	// Returns a single column of the texture
-	virtual const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out);
-
-	// Returns a single column of the texture, in BGRA8 format
-	virtual const uint32_t *GetColumnBgra(unsigned int column, const FSoftwareTextureSpan **spans_out);
-
 	// Returns the whole texture, stored in column-major order
 	virtual const uint8_t *GetPixels(FRenderStyle style);
-
-	// Returns the whole texture, stored in column-major order, in BGRA8 format
-	virtual const uint32_t *GetPixelsBgra();
 
 	// Returns true if GetPixelsBgra includes mipmaps
 	virtual bool Mipmapped() { return true; }
@@ -535,8 +519,6 @@ protected:
 
 	FTexture (const char *name = NULL, int lumpnum = -1);
 
-	FSoftwareTextureSpan **CreateSpans (const uint8_t *pixels) const;
-	void FreeSpans (FSoftwareTextureSpan **spans) const;
 	void CalcBitSize ();
 	void CopyInfo(FTexture *other)
 	{
@@ -545,13 +527,6 @@ protected:
 		Rotations = other->Rotations;
 	}
 
-	std::vector<uint32_t> PixelsBgra;
-
-	void GenerateBgraFromBitmap(const FBitmap &bitmap);
-	void CreatePixelsBgraWithMipmaps();
-	void GenerateBgraMipmaps();
-	void GenerateBgraMipmapsFast();
-	int MipmapLevels() const;
 
 
 public:
@@ -577,112 +552,6 @@ public:
 	friend class FTextureManager;
 };
 
-// For now this is just a minimal wrapper around FTexture. Once the software renderer no longer accesses FTexture directly, it is time for cleaning up.
-class FSoftwareTexture
-{
-	FTexture *mTexture;
-	
-	
-public:
-	FSoftwareTexture(FTexture *tex)
-	{
-		mTexture = tex;
-	}
-	
-	FTexture *GetTexture() const
-	{
-		return mTexture;
-	}
-	
-	// The feature from hell... :(
-	bool useWorldPanning() const
-	{
-		return mTexture->bWorldPanning;
-	}
-
-	bool isMasked()
-	{
-		return mTexture->bMasked;
-	}
-	
-	bool UseBasePalette() const { return mTexture->UseBasePalette(); }
-	int GetSkyOffset() const { return mTexture->GetSkyOffset(); }
-	PalEntry GetSkyCapColor(bool bottom) const { return mTexture->GetSkyCapColor(bottom); }
-	
-	int GetWidth () { return mTexture->GetWidth(); }
-	int GetHeight () { return mTexture->GetHeight(); }
-	int GetWidthBits() { return mTexture->WidthBits; }
-	int GetHeightBits() { return mTexture->HeightBits; }
-	bool Mipmapped() { return mTexture->Mipmapped(); }
-
-	int GetScaledWidth () { return mTexture->GetScaledWidth(); }
-	int GetScaledHeight () { return mTexture->GetScaledHeight(); }
-	double GetScaledWidthDouble () { return mTexture->GetScaledWidthDouble(); }
-	double GetScaledHeightDouble () { return mTexture->GetScaledHeightDouble(); }
-	double GetScaleY() const { return mTexture->GetScaleY(); }
-	
-	// Now with improved offset adjustment.
-	int GetLeftOffset(int adjusted) { return mTexture->GetLeftOffset(adjusted); }
-	int GetTopOffset(int adjusted) { return mTexture->GetTopOffset(adjusted); }
-	int GetScaledLeftOffset (int adjusted) { return mTexture->GetScaledLeftOffset(adjusted); }
-	int GetScaledTopOffset (int adjusted) { return mTexture->GetScaledTopOffset(adjusted); }
-	double GetScaledLeftOffsetDouble(int adjusted) { return mTexture->GetScaledLeftOffsetDouble(adjusted); }
-	double GetScaledTopOffsetDouble(int adjusted) { return mTexture->GetScaledTopOffsetDouble(adjusted); }
-	
-	// Interfaces for the different renderers. Everything that needs to check renderer-dependent offsets
-	// should use these, so that if changes are needed, this is the only place to edit.
-	
-	// For the original software renderer
-	int GetLeftOffsetSW() { return GetLeftOffset(r_spriteadjustSW); }
-	int GetTopOffsetSW() { return GetTopOffset(r_spriteadjustSW); }
-	int GetScaledLeftOffsetSW() { return GetScaledLeftOffset(r_spriteadjustSW); }
-	int GetScaledTopOffsetSW() { return GetScaledTopOffset(r_spriteadjustSW); }
-	
-	// For the softpoly renderer, in case it wants adjustment
-	int GetLeftOffsetPo() { return GetLeftOffset(r_spriteadjustSW); }
-	int GetTopOffsetPo() { return GetTopOffset(r_spriteadjustSW); }
-	int GetScaledLeftOffsetPo() { return GetScaledLeftOffset(r_spriteadjustSW); }
-	int GetScaledTopOffsetPo() { return GetScaledTopOffset(r_spriteadjustSW); }
-	
-	DVector2 GetScale() const { return mTexture->Scale; }
-
-	// Returns a single column of the texture
-	const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out)
-	{
-		return mTexture->GetColumn(style, column, spans_out);
-	}
-	
-	// Returns a single column of the texture, in BGRA8 format
-	const uint32_t *GetColumnBgra(unsigned int column, const FSoftwareTextureSpan **spans_out)
-	{
-		return mTexture->GetColumnBgra(column, spans_out);
-	}
-	
-	// Returns the whole texture, stored in column-major order
-	const uint8_t *GetPixels(FRenderStyle style)
-	{
-		return mTexture->GetPixels(style);
-	}
-	
-	// Returns the whole texture, stored in column-major order, in BGRA8 format
-	const uint32_t *GetPixelsBgra()
-	{
-		return mTexture->GetPixelsBgra();
-	}
-
-	void Unload()
-	{
-		mTexture->Unload();
-	}
-
-};
-
-
-inline FSoftwareTexture *FTexture::GetSoftwareTexture()
-{
-	if (!SoftwareTexture) SoftwareTexture = new FSoftwareTexture(this);
-	return SoftwareTexture;
-}
 
 class FxAddSub;
 // Texture manager
@@ -883,17 +752,14 @@ class FWorldTexture : public FTexture
 {
 protected:
 	uint8_t *Pixeldata[2] = { nullptr, nullptr };
-	FSoftwareTextureSpan **Spandata[2] = { nullptr, nullptr };
 	uint8_t PixelsAreStatic = 0;	// can be set by subclasses which provide static pixel buffers.
 
 	FWorldTexture(const char *name = nullptr, int lumpnum = -1);
 	~FWorldTexture();
 
-	const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out) override;
-	const uint8_t *GetPixels(FRenderStyle style) override;
 	void Unload() override;
+	const uint8_t *GetPixels(FRenderStyle style) override;
 	virtual uint8_t *MakeTexture(FRenderStyle style) = 0;
-	void FreeAllSpans();
 };
 
 // A texture that doesn't really exist
@@ -914,7 +780,7 @@ public:
 
 	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL) override;
 	virtual int CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, PalEntry *remap, FCopyInfo *inf = NULL) override;
-	const uint32_t *GetPixelsBgra() override;
+	//const uint32_t *GetPixelsBgra() override;
 	bool CheckModified (FRenderStyle) override;
 
 	float GetSpeed() const { return Speed; }
@@ -943,9 +809,10 @@ public:
 	FCanvasTexture (const char *name, int width, int height);
 	~FCanvasTexture ();
 
-	const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out);
+	//const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out);
+	//const uint32_t *GetPixelsBgra() override;
+
 	const uint8_t *GetPixels (FRenderStyle style);
-	const uint32_t *GetPixelsBgra() override;
 	void Unload ();
 	bool CheckModified (FRenderStyle) override;
 	void NeedUpdate() { bNeedsUpdate=true; }
@@ -962,7 +829,7 @@ protected:
 	DCanvas *CanvasBgra = nullptr;
 	uint8_t *Pixels = nullptr;
 	uint32_t *PixelsBgra = nullptr;
-	FSoftwareTextureSpan DummySpans[2];
+	//FSoftwareTextureSpan DummySpans[2];
 	bool bNeedsUpdate = true;
 	bool bDidUpdate = false;
 	bool bPixelsAllocated = false;

@@ -84,7 +84,7 @@ void FSoftwareRenderer::PrecacheTexture(FTexture *ttex, int cache)
 {
 	bool isbgra = V_IsTrueColor();
 
-	if (ttex != NULL)
+	if (ttex != NULL && ttex->isValid())
 	{
 		FSoftwareTexture *tex = ttex->GetSoftwareTexture();
 		if (cache & FTextureManager::HIT_Columnmode)

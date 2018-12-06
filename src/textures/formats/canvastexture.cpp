@@ -44,10 +44,12 @@ FCanvasTexture::FCanvasTexture (const char *name, int width, int height)
 	CalcBitSize ();
 
 	bMasked = false;
+	/*
 	DummySpans[0].TopOffset = 0;
 	DummySpans[0].Length = height;
 	DummySpans[1].TopOffset = 0;
 	DummySpans[1].Length = 0;
+	*/
 	UseType = ETextureType::Wall;
 	bNeedsUpdate = true;
 	bDidUpdate = false;
@@ -61,6 +63,7 @@ FCanvasTexture::~FCanvasTexture ()
 	Unload ();
 }
 
+#if 0
 const uint8_t *FCanvasTexture::GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out)
 {
 	bNeedsUpdate = true;
@@ -85,6 +88,7 @@ const uint8_t *FCanvasTexture::GetColumn(FRenderStyle style, unsigned int column
 	}
 	return Pixels + column*Height;
 }
+#endif
 
 const uint8_t *FCanvasTexture::GetPixels (FRenderStyle style)
 {
@@ -96,6 +100,7 @@ const uint8_t *FCanvasTexture::GetPixels (FRenderStyle style)
 	return Pixels;
 }
 
+#if 0
 const uint32_t *FCanvasTexture::GetPixelsBgra()
 {
 	bNeedsUpdate = true;
@@ -105,6 +110,7 @@ const uint32_t *FCanvasTexture::GetPixelsBgra()
 	}
 	return PixelsBgra;
 }
+#endif
 
 void FCanvasTexture::MakeTexture (FRenderStyle)	// This ignores the render style because making it work as alpha texture is impractical.
 {

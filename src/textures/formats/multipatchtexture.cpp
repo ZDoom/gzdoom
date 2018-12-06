@@ -164,7 +164,7 @@ public:
 
 protected:
 	uint8_t *Pixels;
-	FSoftwareTextureSpan **Spans;
+	//FSoftwareTextureSpan **Spans;
 	int DefinitionLump;
 
 	struct TexPart
@@ -199,8 +199,6 @@ protected:
 
 	// The getters must optionally redirect if it's a simple one-patch texture.
 	const uint8_t *GetPixels(FRenderStyle style) override { return bRedirect ? Parts->Texture->GetPixels(style) : FWorldTexture::GetPixels(style); }
-	const uint8_t *GetColumn(FRenderStyle style, unsigned int col, const FSoftwareTextureSpan **out) override
-		{ return bRedirect ? Parts->Texture->GetColumn(style, col, out) : FWorldTexture::GetColumn(style, col, out); }
 
 
 private:
@@ -215,7 +213,7 @@ private:
 //==========================================================================
 
 FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchlookup, int maxpatchnum, bool strife, int deflumpnum)
-: Pixels (0), Spans(0), Parts(nullptr), Inits(nullptr), bRedirect(false), bTranslucentPatches(false)
+: Pixels (0), Parts(nullptr), Inits(nullptr), bRedirect(false), bTranslucentPatches(false)
 {
 	union
 	{
@@ -1065,7 +1063,7 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part, TexInit &init)
 //==========================================================================
 
 FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, ETextureType usetype)
-: Pixels (0), Spans(0), Parts(0), bRedirect(false), bTranslucentPatches(false)
+: Pixels (0), Parts(0), bRedirect(false), bTranslucentPatches(false)
 {
 	TArray<TexPart> parts;
 	TArray<TexInit> inits;

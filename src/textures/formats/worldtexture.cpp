@@ -56,25 +56,6 @@ FWorldTexture::FWorldTexture(const char *name, int lumpnum)
 FWorldTexture::~FWorldTexture()
 {
 	Unload();
-	FreeAllSpans();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FWorldTexture::FreeAllSpans()
-{
-	for(int i = 0; i < 2; i++)
-	{
-		if (Spandata[i] != nullptr)
-		{
-			FreeSpans (Spandata[i]);
-			Spandata[i] = nullptr;
-		}
-	}
 }
 
 //==========================================================================
@@ -94,38 +75,6 @@ void FWorldTexture::Unload ()
 		Pixeldata[i] = nullptr;
 	}
 	FTexture::Unload();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-const uint8_t *FWorldTexture::GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out)
-{
-	int index = !!(style.Flags & STYLEF_RedIsAlpha);
-	GetPixels(style);
-	if ((unsigned)column >= (unsigned)Width)
-	{
-		if (WidthMask + 1 == Width)
-		{
-			column &= WidthMask;
-		}
-		else
-		{
-			column %= Width;
-		}
-	}
-	if (spans_out != nullptr)
-	{
-		if (Spandata[index] == nullptr)
-		{
-			Spandata[index] = CreateSpans (Pixeldata[index]);
-		}
-		*spans_out = Spandata[index][column];
-	}
-	return Pixeldata[index] + column*Height;
 }
 
 //==========================================================================

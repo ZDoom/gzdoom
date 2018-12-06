@@ -171,7 +171,6 @@ class FFontChar1 : public FTexture
 {
 public:
    FFontChar1 (FTexture *sourcelump);
-   const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out);
    const uint8_t *GetPixels (FRenderStyle style);
    void SetSourceRemap(const uint8_t *sourceremap);
    void Unload ();
@@ -192,7 +191,6 @@ public:
 	FFontChar2 (int sourcelump, int sourcepos, int width, int height, int leftofs=0, int topofs=0);
 	~FFontChar2 ();
 
-	const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out);
 	const uint8_t *GetPixels (FRenderStyle style);
 	void SetSourceRemap(const uint8_t *sourceremap);
 	void Unload ();
@@ -201,7 +199,6 @@ protected:
 	int SourceLump;
 	int SourcePos;
 	uint8_t *Pixels;
-	FSoftwareTextureSpan **Spans;
 	const uint8_t *SourceRemap;
 
 	void MakeTexture ();
@@ -1609,23 +1606,6 @@ void FFontChar1::MakeTexture ()
 
 //==========================================================================
 //
-// FFontChar1 :: GetColumn
-//
-//==========================================================================
-
-const uint8_t *FFontChar1::GetColumn(FRenderStyle, unsigned int column, const FSoftwareTextureSpan **spans_out)
-{
-	if (Pixels == NULL)
-	{
-		MakeTexture ();
-	}
-
-	BaseTexture->GetColumn(DefaultRenderStyle(), column, spans_out);
-	return Pixels + column*Height;
-}
-
-//==========================================================================
-//
 // FFontChar1 :: SetSourceRemap
 //
 //==========================================================================
@@ -1672,7 +1652,7 @@ FFontChar1::~FFontChar1 ()
 //==========================================================================
 
 FFontChar2::FFontChar2 (int sourcelump, int sourcepos, int width, int height, int leftofs, int topofs)
-: SourceLump (sourcelump), SourcePos (sourcepos), Pixels (0), Spans (0), SourceRemap(NULL)
+: SourceLump (sourcelump), SourcePos (sourcepos), Pixels (0), SourceRemap(NULL)
 {
 	UseType = ETextureType::FontChar;
 	Width = width;
@@ -1691,11 +1671,6 @@ FFontChar2::FFontChar2 (int sourcelump, int sourcepos, int width, int height, in
 FFontChar2::~FFontChar2 ()
 {
 	Unload ();
-	if (Spans != NULL)
-	{
-		FreeSpans (Spans);
-		Spans = NULL;
-	}
 }
 
 //==========================================================================
@@ -1729,33 +1704,6 @@ const uint8_t *FFontChar2::GetPixels (FRenderStyle)
 		MakeTexture ();
 	}
 	return Pixels;
-}
-
-//==========================================================================
-//
-// FFontChar2 :: GetColumn
-//
-//==========================================================================
-
-const uint8_t *FFontChar2::GetColumn(FRenderStyle, unsigned int column, const FSoftwareTextureSpan **spans_out)
-{
-	if (Pixels == NULL)
-	{
-		MakeTexture ();
-	}
-	if (column >= Width)
-	{
-		column = WidthMask;
-	}
-	if (spans_out != NULL)
-	{
-		if (Spans == NULL)
-		{
-			Spans = CreateSpans (Pixels);
-		}
-		*spans_out = Spans[column];
-	}
-	return Pixels + column*Height;
 }
 
 //==========================================================================

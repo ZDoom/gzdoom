@@ -55,18 +55,6 @@ FSkyBox::~FSkyBox()
 
 //-----------------------------------------------------------------------------
 //
-// If something attempts to use this as a texture just pass the information of the first face.
-//
-//-----------------------------------------------------------------------------
-
-const uint8_t *FSkyBox::GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out)
-{
-	if (faces[0]) return faces[0]->GetColumn(style, column, spans_out);
-	return NULL;
-}
-
-//-----------------------------------------------------------------------------
-//
 //
 //
 //-----------------------------------------------------------------------------

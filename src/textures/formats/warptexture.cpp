@@ -59,7 +59,7 @@ void FWarpTexture::Unload ()
 {
 	SourcePic->Unload ();
 	FWorldTexture::Unload();
-	FreeAllSpans();
+	//FreeAllSpans();
 }
 
 bool FWarpTexture::CheckModified (FRenderStyle style)
@@ -67,6 +67,7 @@ bool FWarpTexture::CheckModified (FRenderStyle style)
 	return screen->FrameTime != GenTime[!!(style.Flags & STYLEF_RedIsAlpha)];
 }
 
+/*
 const uint32_t *FWarpTexture::GetPixelsBgra()
 {
 	auto Pixels = GetPixels(DefaultRenderStyle());
@@ -85,6 +86,7 @@ const uint32_t *FWarpTexture::GetPixelsBgra()
 	}
 	return PixelsBgra.data();
 }
+*/
 
 
 uint8_t *FWarpTexture::MakeTexture(FRenderStyle style)
@@ -93,7 +95,7 @@ uint8_t *FWarpTexture::MakeTexture(FRenderStyle style)
 	const uint8_t *otherpix = SourcePic->GetPixels(style);
 	auto Pixels = new uint8_t[Width * Height];
 	WarpBuffer(Pixels, otherpix, Width, Height, WidthOffsetMultiplier, HeightOffsetMultiplier, time, Speed, bWarped);
-	FreeAllSpans();
+	//FreeAllSpans();
 	GenTime[!!(style.Flags & STYLEF_RedIsAlpha)] = time;
 	return Pixels;
 }

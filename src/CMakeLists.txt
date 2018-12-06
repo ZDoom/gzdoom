@@ -681,6 +681,7 @@ file( GLOB HEADER_FILES
 	sound/wildmidi/*.h
 	xlat/*.h
 	swrenderer/*.h
+	swrenderer/textures/*.h
 	swrenderer/drawers/*.h
 	swrenderer/scene/*.h
 	swrenderer/segments/*.h
@@ -1244,6 +1245,7 @@ set (PCH_SOURCES
 	sound/wildmidi/reverb.cpp
 	sound/wildmidi/wildmidi_lib.cpp
 	sound/wildmidi/wm_error.cpp
+	swrenderer/textures/r_swtexture.cpp
 	events.cpp
 )
 

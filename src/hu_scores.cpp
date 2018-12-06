@@ -210,14 +210,14 @@ void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth, int &maxiconheigh
 			if (players[i].mo->ScoreIcon.isValid())
 			{
 				FTexture *pic = TexMan[players[i].mo->ScoreIcon];
-				width = pic->GetScaledWidth() - pic->GetScaledLeftOffset(0) + 2;
+				width = pic->GetDisplayWidth() - pic->GetDisplayLeftOffset() + 2;
 				if (width > maxscorewidth)
 				{
 					maxscorewidth = width;
 				}
 				// The icon's top offset does not count toward its height, because
 				// zdoom.pk3's standard Hexen class icons are designed that way.
-				int height = pic->GetScaledHeight() - pic->GetScaledTopOffset(0);
+				int height = pic->GetDisplayHeight() - pic->GetDisplayTopOffset();
 				if (height > maxiconheight)
 				{
 					maxiconheight = height;
@@ -446,7 +446,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 	if (teamplay && Teams[player->userinfo.GetTeam()].GetLogo().IsNotEmpty ())
 	{
 		FTexture *pic = TexMan[Teams[player->userinfo.GetTeam()].GetLogo().GetChars ()];
-		screen->DrawTexture (pic, col1 - (pic->GetScaledWidth() + 2) * CleanXfac, y,
+		screen->DrawTexture (pic, col1 - (pic->GetDisplayWidth() + 2) * CleanXfac, y,
 			DTA_CleanNoMove, true, TAG_DONE);
 	}
 }

@@ -87,6 +87,11 @@ public:
 	{
 		return mTextureLayers.Size() + 1;
 	}
+	
+	bool hasCanvas()
+	{
+		return tex->isHardwareCanvas();
+	}
 
 	IHardwareTexture *GetLayer(int i, FTexture **pLayer = nullptr)
 	{
@@ -165,8 +170,8 @@ public:
 
 	static void DeleteAll();
 	static void FlushAll();
-	static FMaterial *ValidateTexture(FTexture * tex, bool expand);
-	static FMaterial *ValidateTexture(FTextureID no, bool expand, bool trans);
+	static FMaterial *ValidateTexture(FTexture * tex, bool expand, bool create = true);
+	static FMaterial *ValidateTexture(FTextureID no, bool expand, bool trans, bool create = true);
 };
 
 #endif

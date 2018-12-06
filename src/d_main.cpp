@@ -835,15 +835,15 @@ void D_Display ()
 		FString pstring = "By ";
 
 		tex = TexMan(gameinfo.PauseSign);
-		x = (SCREENWIDTH - tex->GetScaledWidth() * CleanXfac)/2 +
-			tex->GetScaledLeftOffset(0) * CleanXfac;
+		x = (SCREENWIDTH - tex->GetDisplayWidth() * CleanXfac)/2 +
+			tex->GetDisplayLeftOffset() * CleanXfac;
 		screen->DrawTexture (tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
 		if (paused && multiplayer)
 		{
 			pstring += players[paused - 1].userinfo.GetName();
 			screen->DrawText(SmallFont, CR_RED,
 				(screen->GetWidth() - SmallFont->StringWidth(pstring)*CleanXfac) / 2,
-				(tex->GetScaledHeight() * CleanYfac) + 4, pstring, DTA_CleanNoMove, true, TAG_DONE);
+				(tex->GetDisplayHeight() * CleanYfac) + 4, pstring, DTA_CleanNoMove, true, TAG_DONE);
 		}
 	}
 
@@ -856,7 +856,7 @@ void D_Display ()
 		if (picnum.isValid())
 		{
 			FTexture *tex = TexMan[picnum];
-			screen->DrawTexture (tex, 160 - tex->GetScaledWidth()/2, 100 - tex->GetScaledHeight()/2,
+			screen->DrawTexture (tex, 160 - tex->GetDisplayWidth()/2, 100 - tex->GetDisplayHeight()/2,
 				DTA_320x200, true, TAG_DONE);
 		}
 		NoWipe = 10;

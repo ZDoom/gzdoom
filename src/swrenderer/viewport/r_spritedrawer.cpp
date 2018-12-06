@@ -62,14 +62,14 @@ namespace swrenderer
 		dc_iscale = iscale;
 		dc_textureheight = tex->GetHeight();
 
-		const FTexture::Span *span;
+		const FSoftwareTextureSpan *span;
 		const uint8_t *column;
 		if (viewport->RenderTarget->IsBgra() && !drawer_needs_pal_input)
 			column = (const uint8_t *)tex->GetColumnBgra(col >> FRACBITS, &span);
 		else
 			column = tex->GetColumn(style, col >> FRACBITS, &span);
 
-		FTexture::Span unmaskedSpan[2];
+		FSoftwareTextureSpan unmaskedSpan[2];
 		if (unmasked)
 		{
 			span = unmaskedSpan;
@@ -192,9 +192,9 @@ namespace swrenderer
 		}
 
 		// Grab the posts we need to draw
-		const FTexture::Span *span;
+		const FSoftwareTextureSpan *span;
 		tex->GetColumnBgra(col >> FRACBITS, &span);
-		FTexture::Span unmaskedSpan[2];
+		FSoftwareTextureSpan unmaskedSpan[2];
 		if (unmasked)
 		{
 			span = unmaskedSpan;

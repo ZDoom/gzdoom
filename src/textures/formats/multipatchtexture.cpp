@@ -164,7 +164,7 @@ public:
 
 protected:
 	uint8_t *Pixels;
-	Span **Spans;
+	FSoftwareTextureSpan **Spans;
 	int DefinitionLump;
 
 	struct TexPart
@@ -199,7 +199,7 @@ protected:
 
 	// The getters must optionally redirect if it's a simple one-patch texture.
 	const uint8_t *GetPixels(FRenderStyle style) override { return bRedirect ? Parts->Texture->GetPixels(style) : FWorldTexture::GetPixels(style); }
-	const uint8_t *GetColumn(FRenderStyle style, unsigned int col, const Span **out) override
+	const uint8_t *GetColumn(FRenderStyle style, unsigned int col, const FSoftwareTextureSpan **out) override
 		{ return bRedirect ? Parts->Texture->GetColumn(style, col, out) : FWorldTexture::GetColumn(style, col, out); }
 
 

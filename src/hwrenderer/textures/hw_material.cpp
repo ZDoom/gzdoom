@@ -164,12 +164,12 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	{
 		mShaderIndex = SHADER_Paletted;
 	}
-	else if (tx->bWarped)
+	else if (tx->isWarped())
 	{
-		mShaderIndex = tx->bWarped; // This picks SHADER_Warp1 or SHADER_Warp2
+		mShaderIndex = tx->isWarped(); // This picks SHADER_Warp1 or SHADER_Warp2
 		tx->shaderspeed = static_cast<FWarpTexture*>(tx)->GetSpeed();
 	}
-	else if (tx->bHasCanvas)
+	else if (tx->isHardwareCanvas())
 	{
 		if (tx->shaderindex >= FIRST_USER_SHADER)
 		{
@@ -265,7 +265,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	mMaxBound = -1;
 	mMaterials.Push(this);
 	tx->Material[expanded] = this;
-	if (tx->bHasCanvas) tx->bTranslucent = 0;
+	if (tx->isHardwareCanvas()) tx->bTranslucent = 0;
 }
 
 //===========================================================================
@@ -484,19 +484,19 @@ int FMaterial::GetAreas(FloatRect **pAreas) const
 //
 //==========================================================================
 
-FMaterial * FMaterial::ValidateTexture(FTexture * tex, bool expand)
+FMaterial * FMaterial::ValidateTexture(FTexture * tex, bool expand, bool create)
 {
 again:
-	if (tex	&& tex->UseType!=ETextureType::Null)
+	if (tex	&& tex->isValid())
 	{
 		if (tex->bNoExpand) expand = false;
 
 		FMaterial *gltex = tex->Material[expand];
-		if (gltex == NULL) 
+		if (gltex == NULL && create)
 		{
 			if (expand)
 			{
-				if (tex->bWarped || tex->bHasCanvas || tex->shaderindex >= FIRST_USER_SHADER || (tex->shaderindex >= SHADER_Specular && tex->shaderindex <= SHADER_PBRBrightmap))
+				if (tex->isWarped() || tex->isHardwareCanvas() || tex->shaderindex >= FIRST_USER_SHADER || (tex->shaderindex >= SHADER_Specular && tex->shaderindex <= SHADER_PBRBrightmap))
 				{
 					tex->bNoExpand = true;
 					goto again;
@@ -518,9 +518,9 @@ again:
 	return NULL;
 }
 
-FMaterial * FMaterial::ValidateTexture(FTextureID no, bool expand, bool translate)
+FMaterial * FMaterial::ValidateTexture(FTextureID no, bool expand, bool translate, bool create)
 {
-	return ValidateTexture(translate? TexMan(no) : TexMan[no], expand);
+	return ValidateTexture(translate? TexMan(no) : TexMan[no], expand, create);
 }
 
 
@@ -552,43 +552,5 @@ void FMaterial::Clean(bool f)
 {
 	// This somehow needs to deal with the other layers as well, but they probably need some form of reference counting to work properly...
 	mBaseLayer->Clean(f);
-}
-
-//==========================================================================
-//
-// Prints some texture info
-//
-//==========================================================================
-
-CCMD(textureinfo)
-{
-	int cntt = 0;
-	for (int i = 0; i < TexMan.NumTextures(); i++)
-	{
-		FTexture *tex = TexMan.ByIndex(i);
-		if (tex->SystemTexture[0] || tex->SystemTexture[1] || tex->Material[0] || tex->Material[1])
-		{
-			int lump = tex->GetSourceLump();
-			Printf(PRINT_LOG, "Texture '%s' (Index %d, Lump %d, Name '%s'):\n", tex->Name.GetChars(), i, lump, Wads.GetLumpFullName(lump));
-			if (tex->Material[0])
-			{
-				Printf(PRINT_LOG, "in use (normal)\n");
-			}
-			else if (tex->SystemTexture[0])
-			{
-				Printf(PRINT_LOG, "referenced (normal)\n");
-			}
-			if (tex->Material[1])
-			{
-				Printf(PRINT_LOG, "in use (expanded)\n");
-			}
-			else if (tex->SystemTexture[1])
-			{
-				Printf(PRINT_LOG, "referenced (normal)\n");
-			}
-			cntt++;
-		}
-	}
-	Printf(PRINT_LOG, "%d system textures\n", cntt);
 }
 

@@ -100,7 +100,7 @@ void R_InitSkyMap ()
 	if (skytex1 == nullptr)
 		return;
 
-	if ((level.flags & LEVEL_DOUBLESKY) && skytex1->GetHeight() != skytex2->GetHeight())
+	if ((level.flags & LEVEL_DOUBLESKY) && skytex1->GetDisplayHeight() != skytex2->GetDisplayHeight())
 	{
 		Printf (TEXTCOLOR_BOLD "Both sky textures must be the same height." TEXTCOLOR_NORMAL "\n");
 		sky2texture = sky1texture;
@@ -119,20 +119,30 @@ void R_InitSkyMap ()
 	//                  the screen when looking fully up.
 	//        h >  200: Unstretched, but the baseline is shifted down so that the top
 	//                  of the texture is at the top of the screen when looking fully up.
-	skyheight = skytex1->GetScaledHeight();
-	skystretch = false;
-	skytexturemid = 0;
+	skyheight = skytex1->GetDisplayHeight();
+	
 	if (skyheight >= 128 && skyheight < 200)
 	{
 		skystretch = (r_skymode == 1
 					  && skyheight >= 128
 					  && level.IsFreelookAllowed()
 					  && !(level.flags & LEVEL_FORCETILEDSKY)) ? 1 : 0;
+	}
+	else skystretch = false;
+	
+	// Anything below is only for the software renderer (todo - move it there!)
+	// Note: I don't think it is good that this stuff gets cached globally.
+	// For something that only needs to be once per frame it is rather pointless and makes it hard to swap out the underlying textures based on user settings.
+	FSoftwareTexture *sskytex1 = skytex1->GetSoftwareTexture();
+	FSoftwareTexture *sskytex2 = skytex2->GetSoftwareTexture();
+	skytexturemid = 0;
+	if (skyheight >= 128 && skyheight < 200)
+	{
 		skytexturemid = -28;
 	}
 	else if (skyheight > 200)
 	{
-		skytexturemid = (200 - skyheight) * skytex1->Scale.Y +((r_skymode == 2 && !(level.flags & LEVEL_FORCETILEDSKY)) ? skytex1->SkyOffset + testskyoffset : 0);
+		skytexturemid = (200 - skyheight) * sskytex1->GetScale().Y +((r_skymode == 2 && !(level.flags & LEVEL_FORCETILEDSKY)) ? skytex1->GetSkyOffset() + testskyoffset : 0);
 	}
 
 	if (viewwidth != 0 && viewheight != 0)
@@ -155,8 +165,8 @@ void R_InitSkyMap ()
 	// giving a total sky width of 1024 pixels. So if the sky texture is no wider than 1024,
 	// we map it to a cylinder with circumfrence 1024. For larger ones, we use the width of
 	// the texture as the cylinder's circumfrence.
-	sky1cyl = MAX(skytex1->GetWidth(), fixed_t(skytex1->Scale.X * 1024));
-	sky2cyl = MAX(skytex2->GetWidth(), fixed_t(skytex2->Scale.Y * 1024));
+	sky1cyl = MAX(sskytex1->GetWidth(), fixed_t(sskytex1->GetScale().X * 1024));
+	sky2cyl = MAX(sskytex2->GetWidth(), fixed_t(sskytex2->GetScale().Y * 1024));
 }
 
 

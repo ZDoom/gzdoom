@@ -573,8 +573,8 @@ void DIntermissionScreenCast::Drawer ()
 		screen->DrawTexture (pic, 160, 170,
 			DTA_320x200, true,
 			DTA_FlipX, sprframe->Flip & 1,
-			DTA_DestHeightF, pic->GetScaledHeightDouble() * castscale.Y,
-			DTA_DestWidthF, pic->GetScaledWidthDouble() * castscale.X,
+			DTA_DestHeightF, pic->GetDisplayHeightDouble() * castscale.Y,
+			DTA_DestWidthF, pic->GetDisplayWidthDouble() * castscale.X,
 			DTA_RenderStyle, mDefaults->RenderStyle,
 			DTA_Alpha, mDefaults->Alpha,
 			DTA_TranslationIndex, casttranslation,
@@ -616,8 +616,8 @@ void DIntermissionScreenScroller::Drawer ()
 	if (mTicker >= mScrollDelay && mTicker < mScrollDelay + mScrollTime && tex != NULL && tex2 != NULL)
 	{
 
-		int fwidth = tex->GetScaledWidth();
-		int fheight = tex->GetScaledHeight();
+		int fwidth = tex->GetDisplayWidth();
+		int fheight = tex->GetDisplayHeight();
 
 		double xpos1 = 0, ypos1 = 0, xpos2 = 0, ypos2 = 0;
 

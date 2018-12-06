@@ -264,7 +264,7 @@ FTextureID DBaseDecal::StickToWall (side_t *wall, double x, double y, F3DFloor *
 
 	FTexture *texture = TexMan[tex];
 
-	if (texture == NULL || texture->bNoDecals)
+	if (texture == NULL || texture->allowNoDecals())
 	{
 		return FNullTextureID();
 	}
@@ -497,10 +497,10 @@ void DBaseDecal::Spread (const FDecalTemplate *tpl, side_t *wall, double x, doub
 		return;
 	}
 
-	int dwidth = tex->GetWidth ();
+	int dwidth = tex->GetDisplayWidth ();
 
 	DecalWidth = dwidth * ScaleX;
-	DecalLeft = tex->GetLeftOffset(0) * ScaleX;
+	DecalLeft = tex->GetDisplayLeftOffset() * ScaleX;
 	DecalRight = DecalWidth - DecalLeft;
 	SpreadSource = this;
 	SpreadTemplate = tpl;

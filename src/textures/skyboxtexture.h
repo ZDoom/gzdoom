@@ -15,9 +15,9 @@ public:
 	FTexture * faces[6];
 	bool fliptop;
 
-	FSkyBox();
+	FSkyBox(const char *name = nullptr);
 	~FSkyBox();
-	const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out);
+	const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out);
 	const uint8_t *GetPixels (FRenderStyle style);
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf);
 	bool UseBasePalette();
@@ -27,9 +27,7 @@ public:
 	{
 		if (faces[0]) 
 		{
-			Width=faces[0]->GetWidth();
-			Height=faces[0]->GetHeight();
-			CalcBitSize();
+			CopySize(faces[0]);
 		}
 	}
 

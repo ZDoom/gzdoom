@@ -304,8 +304,8 @@ bool Wiper_Melt::Run(int ticks)
 				// Only draw for the final tick.
 				// No need for optimization. Wipes won't ever be drawn with anything else.
 				
-				int w = startScreen->GetWidth();
-				int h = startScreen->GetHeight();
+				int w = startScreen->GetDisplayWidth();
+				int h = startScreen->GetDisplayHeight();
 				dpt.x = i * w / WIDTH;
 				dpt.y = MAX(0, y[i] * h / HEIGHT);
 				rect.left = dpt.x;

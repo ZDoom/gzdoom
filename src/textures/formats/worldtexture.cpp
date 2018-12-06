@@ -102,7 +102,7 @@ void FWorldTexture::Unload ()
 //
 //==========================================================================
 
-const uint8_t *FWorldTexture::GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out)
+const uint8_t *FWorldTexture::GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out)
 {
 	int index = !!(style.Flags & STYLEF_RedIsAlpha);
 	GetPixels(style);

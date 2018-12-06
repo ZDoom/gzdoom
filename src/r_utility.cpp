@@ -1108,7 +1108,7 @@ void SetCameraToTexture(AActor *viewpoint, const FString &texturename, double fo
 	{
 		// Only proceed if the texture actually has a canvas.
 		FTexture *tex = TexMan[textureid];
-		if (tex && tex->bHasCanvas)
+		if (tex && tex->isCanvas())
 		{
 			FCanvasTextureInfo::Add(viewpoint, textureid, fov);
 		}

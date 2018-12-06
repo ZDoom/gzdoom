@@ -217,7 +217,7 @@ void PostProcessShaderInstance::BindTextures()
 
 		FString name = pair->Value;
 		FTexture *tex = TexMan(TexMan.CheckForTexture(name, ETextureType::Any));
-		if (tex && tex->UseType != ETextureType::Null)
+		if (tex && tex->isValid())
 		{
 			glUniform1i(location, textureUnit);
 
@@ -225,16 +225,17 @@ void PostProcessShaderInstance::BindTextures()
 			auto it = mTextureHandles.find(tex);
 			if (it == mTextureHandles.end())
 			{
-				FBitmap bitmap;
-				bitmap.Create(tex->GetWidth(), tex->GetHeight());
-				tex->CopyTrueColorPixels(&bitmap, 0, 0);
+				// Why does this completely circumvent the normal way of handling textures?
+				int width, height;
+				auto buffer = tex->CreateTexBuffer(0, width, height);
 
 				GLuint handle = 0;
 				glGenTextures(1, &handle);
 				glBindTexture(GL_TEXTURE_2D, handle);
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tex->GetWidth(), tex->GetHeight(), 0, GL_BGRA, GL_UNSIGNED_BYTE, bitmap.GetPixels());
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, buffer);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				delete[] buffer;
 				mTextureHandles[tex] = handle;
 			}
 			else

@@ -347,16 +347,16 @@ void OpenGLFrameBuffer::SetTextureFilterMode()
 
 IHardwareTexture *OpenGLFrameBuffer::CreateHardwareTexture(FTexture *tex) 
 { 
-	return new FHardwareTexture(tex->bNoCompress);
+	return new FHardwareTexture(true/*tex->bNoCompress*/);
 }
 
 void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 {
 	auto tex = mat->tex;
-	if (tex->UseType == ETextureType::SWCanvas) return;
+	if (tex->isSWCanvas()) return;
 
 	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
-	int flags = mat->isExpanded() ? CTF_Expand : (gl_texture_usehires && tex->Scale.X == 1 && tex->Scale.Y == 1) ? CTF_CheckHires : 0;
+	int flags = mat->isExpanded() ? CTF_Expand : (gl_texture_usehires && !tex->isScaled()) ? CTF_CheckHires : 0;
 	int numLayers = mat->GetLayers();
 	auto base = static_cast<FHardwareTexture*>(mat->GetLayer(0));
 
@@ -527,9 +527,9 @@ FTexture *OpenGLFrameBuffer::WipeStartScreen()
 	const auto &viewport = screen->mScreenViewport;
 
 	auto tex = new FWrapperTexture(viewport.width, viewport.height, 1);
-	tex->SystemTexture[0]->CreateTexture(nullptr, viewport.width, viewport.height, 0, false, 0, "WipeStartScreen");
+	tex->GetSystemTexture(0)->CreateTexture(nullptr, viewport.width, viewport.height, 0, false, 0, "WipeStartScreen");
 	glFinish();
-	static_cast<FHardwareTexture*>(tex->SystemTexture[0])->Bind(0, false, false);
+	static_cast<FHardwareTexture*>(tex->GetSystemTexture(0))->Bind(0, false, false);
 
 	GLRenderer->mBuffers->BindCurrentFB();
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewport.left, viewport.top, viewport.width, viewport.height);
@@ -549,9 +549,9 @@ FTexture *OpenGLFrameBuffer::WipeEndScreen()
 	GLRenderer->Flush();
 	const auto &viewport = screen->mScreenViewport;
 	auto tex = new FWrapperTexture(viewport.width, viewport.height, 1);
-	tex->SystemTexture[0]->CreateTexture(NULL, viewport.width, viewport.height, 0, false, 0, "WipeEndScreen");
+	tex->GetSystemTexture(0)->CreateTexture(NULL, viewport.width, viewport.height, 0, false, 0, "WipeEndScreen");
 	glFinish();
-	static_cast<FHardwareTexture*>(tex->SystemTexture[0])->Bind(0, false, false);
+	static_cast<FHardwareTexture*>(tex->GetSystemTexture(0))->Bind(0, false, false);
 	GLRenderer->mBuffers->BindCurrentFB();
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewport.left, viewport.top, viewport.width, viewport.height);
 	return tex;

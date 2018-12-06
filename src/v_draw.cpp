@@ -312,23 +312,23 @@ bool DFrameBuffer::SetTextureParms(DrawParms *parms, FTexture *img, double xx, d
 	{
 		parms->x = xx;
 		parms->y = yy;
-		parms->texwidth = img->GetScaledWidthDouble();
-		parms->texheight = img->GetScaledHeightDouble();
+		parms->texwidth = img->GetDisplayWidthDouble();
+		parms->texheight = img->GetDisplayHeightDouble();
 		if (parms->top == INT_MAX || parms->fortext)
 		{
-			parms->top = img->GetScaledTopOffset(0);
+			parms->top = img->GetDisplayTopOffset();
 		}
 		if (parms->left == INT_MAX || parms->fortext)
 		{
-			parms->left = img->GetScaledLeftOffset(0);
+			parms->left = img->GetDisplayLeftOffset();
 		}
 		if (parms->destwidth == INT_MAX || parms->fortext)
 		{
-			parms->destwidth = img->GetScaledWidthDouble();
+			parms->destwidth = img->GetDisplayWidthDouble();
 		}
 		if (parms->destheight == INT_MAX || parms->fortext)
 		{
-			parms->destheight = img->GetScaledHeightDouble();
+			parms->destheight = img->GetDisplayHeightDouble();
 		}
 
 		switch (parms->cleanmode)
@@ -470,7 +470,7 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 
 	if (!fortext)
 	{
-		if (img == NULL || img->UseType == ETextureType::Null)
+		if (img == NULL || !img->isValid())
 		{
 			ListEnd(tags);
 			return false;
@@ -650,8 +650,8 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 				assert(fortext == false);
 				if (img == NULL) return false;
 				parms->cleanmode = DTA_Fullscreen;
-				parms->virtWidth = img->GetScaledWidthDouble();
-				parms->virtHeight = img->GetScaledHeightDouble();
+				parms->virtWidth = img->GetDisplayWidthDouble();
+				parms->virtHeight = img->GetDisplayHeightDouble();
 			}
 			break;
 
@@ -697,19 +697,19 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 			break;
 
 		case DTA_SrcX:
-			parms->srcx = ListGetDouble(tags) / img->GetScaledWidthDouble();
+			parms->srcx = ListGetDouble(tags) / img->GetDisplayWidthDouble();
 			break;
 
 		case DTA_SrcY:
-			parms->srcy = ListGetDouble(tags) / img->GetScaledHeightDouble();
+			parms->srcy = ListGetDouble(tags) / img->GetDisplayHeightDouble();
 			break;
 
 		case DTA_SrcWidth:
-			parms->srcwidth = ListGetDouble(tags) / img->GetScaledWidthDouble();
+			parms->srcwidth = ListGetDouble(tags) / img->GetDisplayWidthDouble();
 			break;
 
 		case DTA_SrcHeight:
-			parms->srcheight = ListGetDouble(tags) / img->GetScaledHeightDouble();
+			parms->srcheight = ListGetDouble(tags) / img->GetDisplayHeightDouble();
 			break;
 
 		case DTA_TopOffset:
@@ -741,8 +741,8 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 			if (fortext) return false;
 			if (ListGetInt(tags))
 			{
-				parms->left = img->GetScaledWidthDouble() * 0.5;
-				parms->top = img->GetScaledHeightDouble() * 0.5;
+				parms->left = img->GetDisplayWidthDouble() * 0.5;
+				parms->top = img->GetDisplayHeightDouble() * 0.5;
 			}
 			break;
 
@@ -751,8 +751,8 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 			if (fortext) return false;
 			if (ListGetInt(tags))
 			{
-				parms->left = img->GetScaledWidthDouble() * 0.5;
-				parms->top = img->GetScaledHeightDouble();
+				parms->left = img->GetDisplayWidthDouble() * 0.5;
+				parms->top = img->GetDisplayHeightDouble();
 			}
 			break;
 
@@ -1305,15 +1305,15 @@ void DFrameBuffer::DrawFrame (int left, int top, int width, int height)
 
 	// Draw top and bottom sides.
 	p = TexMan[border->t];
-	FlatFill(left, top - p->GetHeight(), right, top, p, true);
+	FlatFill(left, top - p->GetDisplayHeight(), right, top, p, true);
 	p = TexMan[border->b];
-	FlatFill(left, bottom, right, bottom + p->GetHeight(), p, true);
+	FlatFill(left, bottom, right, bottom + p->GetDisplayHeight(), p, true);
 
 	// Draw left and right sides.
 	p = TexMan[border->l];
-	FlatFill(left - p->GetWidth(), top, left, bottom, p, true);
+	FlatFill(left - p->GetDisplayWidth(), top, left, bottom, p, true);
 	p = TexMan[border->r];
-	FlatFill(right, top, right + p->GetWidth(), bottom, p, true);
+	FlatFill(right, top, right + p->GetDisplayWidth(), bottom, p, true);
 
 	// Draw beveled corners.
 	DrawTexture (TexMan[border->tl], left-offset, top-offset, TAG_DONE);

@@ -422,6 +422,7 @@ void FHardwareTexture::BindToFrameBuffer(int width, int height)
 
 bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, int translation, int flags)
 {
+#if 0
 	int usebright = false;
 
 	if (translation <= 0)
@@ -445,7 +446,7 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 		// Create this texture
 		unsigned char * buffer = nullptr;
 
-		if (!tex->bHasCanvas)
+		if (!tex->isHardwareCanvas())
 		{
 			buffer = tex->CreateTexBuffer(translation, w, h, flags | CTF_ProcessData);
 		}
@@ -462,8 +463,9 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 		}
 		delete[] buffer;
 	}
-	if (tex->bHasCanvas) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
+	if (tex->isHardwareCanvas()) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
 	GLRenderer->mSamplerManager->Bind(texunit, clampmode, 255);
+#endif
 	return true;
 }
 

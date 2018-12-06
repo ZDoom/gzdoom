@@ -29,7 +29,7 @@ class PolyDrawSectorPortal;
 class PolyPlaneUVTransform
 {
 public:
-	PolyPlaneUVTransform(const FTransform &transform, FTexture *tex);
+	PolyPlaneUVTransform(const FTransform &transform, FSoftwareTexture *tex);
 
 	TriVertex GetVertex(vertex_t *v1, double height) const
 	{

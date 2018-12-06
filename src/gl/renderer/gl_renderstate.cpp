@@ -303,7 +303,8 @@ void FGLRenderState::Apply()
 
 void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader)
 {
-	if (mat->tex->bHasCanvas)
+#if 0
+	if (mat->tex->isHardwareCanvas())
 	{
 		mTempTM = TM_OPAQUE;
 	}
@@ -317,8 +318,8 @@ void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translatio
 
 	auto tex = mat->tex;
 	if (tex->UseType == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;
-	if (tex->bHasCanvas) clampmode = CLAMP_CAMTEX;
-	else if ((tex->bWarped || tex->shaderindex >= FIRST_USER_SHADER) && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
+	if (tex->sHardwareCanvas()) clampmode = CLAMP_CAMTEX;
+	else if ((tex->isWarped() || tex->shaderindex >= FIRST_USER_SHADER) && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
 	
 	// avoid rebinding the same texture multiple times.
 	if (mat == lastMaterial && lastClamp == clampmode && translation == lastTranslation) return;
@@ -330,7 +331,7 @@ void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translatio
 	int maxbound = 0;
 
 	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
-	int flags = mat->isExpanded() ? CTF_Expand : (gl_texture_usehires && tex->Scale.X == 1 && tex->Scale.Y == 1 && clampmode <= CLAMP_XY) ? CTF_CheckHires : 0;
+	int flags = mat->isExpanded() ? CTF_Expand : (gl_texture_usehires && !tex->isScaled() && clampmode <= CLAMP_XY) ? CTF_CheckHires : 0;
 	int numLayers = mat->GetLayers();
 	auto base = static_cast<FHardwareTexture*>(mat->GetLayer(0));
 
@@ -350,6 +351,7 @@ void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translatio
 		FHardwareTexture::Unbind(i);
 		maxBoundMaterial = maxbound;
 	}
+#endif
 }
 
 //==========================================================================

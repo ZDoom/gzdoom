@@ -65,7 +65,7 @@ public:
 	uint32_t Translation;
 
 	Mat4f ObjectToWorld;
-	FTexture *SkinTexture = nullptr;
+	FSoftwareTexture *SkinTexture = nullptr;
 	unsigned int *IndexBuffer = nullptr;
 	FModelVertex *VertexBuffer = nullptr;
 	float InterpolationFactor = 0.0;

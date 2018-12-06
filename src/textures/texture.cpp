@@ -240,7 +240,7 @@ void FTexture::Unload()
 //
 //==========================================================================
 
-const uint32_t *FTexture::GetColumnBgra(unsigned int column, const Span **spans_out)
+const uint32_t *FTexture::GetColumnBgra(unsigned int column, const FSoftwareTextureSpan **spans_out)
 {
 	const uint32_t *pixels = GetPixelsBgra();
 	if (pixels == nullptr) return nullptr;
@@ -327,14 +327,14 @@ void FTexture::CalcBitSize ()
 //
 //==========================================================================
 
-FTexture::Span **FTexture::CreateSpans (const uint8_t *pixels) const
+FSoftwareTextureSpan **FTexture::CreateSpans (const uint8_t *pixels) const
 {
-	Span **spans, *span;
+	FSoftwareTextureSpan **spans, *span;
 
 	if (!bMasked)
 	{ // Texture does not have holes, so it can use a simpler span structure
-		spans = (Span **)M_Malloc (sizeof(Span*)*Width + sizeof(Span)*2);
-		span = (Span *)&spans[Width];
+		spans = (FSoftwareTextureSpan **)M_Malloc (sizeof(FSoftwareTextureSpan*)*Width + sizeof(FSoftwareTextureSpan)*2);
+		span = (FSoftwareTextureSpan *)&spans[Width];
 		for (int x = 0; x < Width; ++x)
 		{
 			spans[x] = span;
@@ -378,10 +378,10 @@ FTexture::Span **FTexture::CreateSpans (const uint8_t *pixels) const
 		}
 
 		// Allocate space for the spans
-		spans = (Span **)M_Malloc (sizeof(Span*)*numcols + sizeof(Span)*numspans);
+		spans = (FSoftwareTextureSpan **)M_Malloc (sizeof(FSoftwareTextureSpan*)*numcols + sizeof(FSoftwareTextureSpan)*numspans);
 
 		// Fill in the spans
-		for (x = 0, span = (Span *)&spans[numcols], data_p = pixels; x < numcols; ++x)
+		for (x = 0, span = (FSoftwareTextureSpan *)&spans[numcols], data_p = pixels; x < numcols; ++x)
 		{
 			newspan = true;
 			spans[x] = span;
@@ -421,7 +421,7 @@ FTexture::Span **FTexture::CreateSpans (const uint8_t *pixels) const
 	return spans;
 }
 
-void FTexture::FreeSpans (Span **spans) const
+void FTexture::FreeSpans (FSoftwareTextureSpan **spans) const
 {
 	M_Free (spans);
 }
@@ -996,29 +996,22 @@ PalEntry FTexture::GetSkyCapColor(bool bottom)
 
 int FTexture::CheckRealHeight()
 {
-	const FTexture::Span *span;
-	int maxy = 0, miny = GetHeight();
-
-	for (int i = 0; i < GetWidth(); ++i)
+	auto pixels = GetPixels(DefaultRenderStyle());
+	
+	for(int h = GetHeight()-1; h>= 0; h--)
 	{
-		GetColumn(DefaultRenderStyle(), i, &span);
-		while (span->Length != 0)
+		for(int w = 0; w < GetWidth(); w++)
 		{
-			if (span->TopOffset < miny)
+			if (pixels[h + w * GetHeight()] != 0)
 			{
-				miny = span->TopOffset;
+				// Scale maxy before returning it
+				h = int((h * 2) / Scale.Y);
+				h = (h >> 1) + (h & 1);
+				return h;
 			}
-			if (span->TopOffset + span->Length > maxy)
-			{
-				maxy = span->TopOffset + span->Length;
-			}
-			span++;
 		}
 	}
-	// Scale maxy before returning it
-	maxy = int((maxy * 2) / Scale.Y);
-	maxy = (maxy >> 1) + (maxy & 1);
-	return maxy;
+	return 0;
 }
 
 //==========================================================================
@@ -1461,7 +1454,7 @@ void FTexture::SetSpriteAdjust()
 //
 //===========================================================================
 
-const uint8_t *FTexture::GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out)
+const uint8_t *FTexture::GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out)
 {
 	return nullptr;
 }
@@ -1510,43 +1503,6 @@ FWrapperTexture::FWrapperTexture(int w, int h, int bits)
 	bNoCompress = true;
 	SystemTexture[0] = screen->CreateHardwareTexture(this);
 }
-
-//==========================================================================
-//
-// Debug stuff
-//
-//==========================================================================
-
-#ifdef _DEBUG
-// Prints the spans generated for a texture. Only needed for debugging.
-CCMD (printspans)
-{
-	if (argv.argc() != 2)
-		return;
-
-	FTextureID picnum = TexMan.CheckForTexture (argv[1], ETextureType::Any);
-	if (!picnum.Exists())
-	{
-		Printf ("Unknown texture %s\n", argv[1]);
-		return;
-	}
-	FTexture *tex = TexMan[picnum];
-	for (int x = 0; x < tex->GetWidth(); ++x)
-	{
-		const FTexture::Span *spans;
-		Printf ("%4d:", x);
-		tex->GetColumn(DefaultRenderStyle(), x, &spans);
-		while (spans->Length != 0)
-		{
-			Printf (" (%4d,%4d)", spans->TopOffset, spans->TopOffset+spans->Length-1);
-			spans++;
-		}
-		Printf ("\n");
-	}
-}
-
-#endif
-
 
 //===========================================================================
 //

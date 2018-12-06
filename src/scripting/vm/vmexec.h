@@ -1875,7 +1875,7 @@ static void DoCast(const VMRegisters &reg, const VMFrame *f, int a, int b, int c
 	{
 		ASSERTS(a); ASSERTD(b);
 		auto tex = TexMan[*(FTextureID*)&(reg.d[b])];
-		reg.s[a] = tex == nullptr ? "(null)" : tex->Name.GetChars(); 
+		reg.s[a] = tex == nullptr ? "(null)" : tex->GetName().GetChars();
 		break;
 	}
 

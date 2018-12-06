@@ -67,7 +67,7 @@ static bool isBright(DPSprite *psp)
 		if (lump.isValid())
 		{
 			FTexture * tex = TexMan(lump);
-			if (tex) disablefullbright = tex->bDisableFullbright;
+			if (tex) disablefullbright = tex->isFullbrightDisabled();
 		}
 		return psp->GetState()->GetFullbright() && !disablefullbright;
 	}
@@ -238,7 +238,7 @@ void PolyModelRenderer::SetInterpolation(double interpolation)
 
 void PolyModelRenderer::SetMaterial(FTexture *skin, bool clampNoFilter, int translation)
 {
-	SkinTexture = skin;
+	SkinTexture = skin? skin->GetSoftwareTexture() : nullptr;
 }
 
 void PolyModelRenderer::SetTransform()

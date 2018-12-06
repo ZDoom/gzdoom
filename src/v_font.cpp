@@ -171,7 +171,7 @@ class FFontChar1 : public FTexture
 {
 public:
    FFontChar1 (FTexture *sourcelump);
-   const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out);
+   const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out);
    const uint8_t *GetPixels (FRenderStyle style);
    void SetSourceRemap(const uint8_t *sourceremap);
    void Unload ();
@@ -192,7 +192,7 @@ public:
 	FFontChar2 (int sourcelump, int sourcepos, int width, int height, int leftofs=0, int topofs=0);
 	~FFontChar2 ();
 
-	const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out);
+	const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out);
 	const uint8_t *GetPixels (FRenderStyle style);
 	void SetSourceRemap(const uint8_t *sourceremap);
 	void Unload ();
@@ -201,7 +201,7 @@ protected:
 	int SourceLump;
 	int SourcePos;
 	uint8_t *Pixels;
-	Span **Spans;
+	FSoftwareTextureSpan **Spans;
 	const uint8_t *SourceRemap;
 
 	void MakeTexture ();
@@ -532,25 +532,15 @@ FFont *FFont::FindFont (FName name)
 void RecordTextureColors (FTexture *pic, uint8_t *usedcolors)
 {
 	int x;
-
-	for (x = pic->GetWidth() - 1; x >= 0; x--)
+	
+	auto pixels = pic->GetPixels(DefaultRenderStyle());
+	auto size = pic->GetWidth() * pic->GetHeight();
+	
+	for(x = 0;x < size; x++)
 	{
-		const FTexture::Span *spans;
-		const uint8_t *column = pic->GetColumn(DefaultRenderStyle(), x, &spans);	// This shouldn't use the spans...
-
-		while (spans->Length != 0)
-		{
-			const uint8_t *source = column + spans->TopOffset;
-			int count = spans->Length;
-
-			do
-			{
-				usedcolors[*source++] = 1;
-			} while (--count);
-
-			spans++;
-		}
+		usedcolors[pixels[x]]++;
 	}
+	pic->Unload();
 }
 
 //==========================================================================
@@ -1623,7 +1613,7 @@ void FFontChar1::MakeTexture ()
 //
 //==========================================================================
 
-const uint8_t *FFontChar1::GetColumn(FRenderStyle, unsigned int column, const Span **spans_out)
+const uint8_t *FFontChar1::GetColumn(FRenderStyle, unsigned int column, const FSoftwareTextureSpan **spans_out)
 {
 	if (Pixels == NULL)
 	{
@@ -1747,7 +1737,7 @@ const uint8_t *FFontChar2::GetPixels (FRenderStyle)
 //
 //==========================================================================
 
-const uint8_t *FFontChar2::GetColumn(FRenderStyle, unsigned int column, const Span **spans_out)
+const uint8_t *FFontChar2::GetColumn(FRenderStyle, unsigned int column, const FSoftwareTextureSpan **spans_out)
 {
 	if (Pixels == NULL)
 	{

@@ -61,7 +61,7 @@ void GLSkyInfo::init(int sky1, PalEntry FadeColor)
 
 		FTextureID texno = s->GetTexture(pos);
 		texture[0] = FMaterial::ValidateTexture(texno, false, true);
-		if (!texture[0] || texture[0]->tex->UseType == ETextureType::Null) goto normalsky;
+		if (!texture[0] || !texture[0]->tex->isValid()) goto normalsky;
 		skytexno1 = texno;
 		x_offset[0] = s->GetTextureXOffset(pos) * (360.f/65536.f);
 		y_offset = s->GetTextureYOffset(pos);
@@ -244,7 +244,7 @@ void GLWall::SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vert
 				if (bs->GetPlaneTexZ(sector_t::floor)==fs->GetPlaneTexZ(sector_t::floor)+1.)
 				{
 					FTexture * tex = TexMan(seg->sidedef->GetTexture(side_t::bottom));
-					if (!tex || tex->UseType==ETextureType::Null) return;
+					if (!tex || !tex->isValid()) return;
 
 					// very, very, very ugly special case (See Icarus MAP14)
 					// It is VERY important that this is only done for a floor height difference of 1
@@ -327,8 +327,8 @@ void GLWall::SkyBottom(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,v
 		if (bs->special == GLSector_NoSkyDraw) return;
 		FTexture * tex = TexMan(seg->sidedef->GetTexture(side_t::bottom));
 		
-		// For lower skies the normal logic only applies to walls with no lower texture!
-		if (tex->UseType==ETextureType::Null)
+		// For lower skies the normal logic only applies to walls with no lower texture.
+		if (!tex->isValid())
 		{
 			if (bs->GetTexture(sector_t::floor)==skyflatnum)
 			{
@@ -346,7 +346,7 @@ void GLWall::SkyBottom(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,v
 		}
 		zbottom[0]=zbottom[1]=-32768.0f;
 
-		if ((tex && tex->UseType!=ETextureType::Null) || bs->GetTexture(sector_t::floor)!=skyflatnum)
+		if ((tex && !tex->isValid()) || bs->GetTexture(sector_t::floor)!=skyflatnum)
 		{
 			ztop[0]=zfloor[0];
 			ztop[1]=zfloor[1];

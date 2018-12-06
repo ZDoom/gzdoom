@@ -132,7 +132,7 @@ static bool isBright(DPSprite *psp)
 		if (lump.isValid())
 		{
 			FTexture * tex = TexMan(lump);
-			if (tex) disablefullbright = tex->bDisableFullbright;
+			if (tex) disablefullbright = tex->isFullbrightDisabled();
 		}
 		return psp->GetState()->GetFullbright() && !disablefullbright;
 	}

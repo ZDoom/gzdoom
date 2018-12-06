@@ -40,13 +40,13 @@ void RenderPolyWallSprite::Render(PolyRenderThread *thread, AActor *thing, subse
 	pos.Z += thing->GetBobOffset(viewpoint.TicFrac);
 
 	bool flipTextureX = false;
-	FTexture *tex = RenderPolySprite::GetSpriteTexture(thing, flipTextureX);
-	if (tex == nullptr || tex->UseType == ETextureType::Null)
+	FSoftwareTexture *tex = RenderPolySprite::GetSpriteTexture(thing, flipTextureX);
+	if (tex == nullptr)
 		return;
 
 	DVector2 spriteScale = thing->Scale;
-	double thingxscalemul = spriteScale.X / tex->Scale.X;
-	double thingyscalemul = spriteScale.Y / tex->Scale.Y;
+	double thingxscalemul = spriteScale.X / tex->GetScale().X;
+	double thingyscalemul = spriteScale.Y / tex->GetScale().Y;
 	double spriteHeight = thingyscalemul * tex->GetHeight();
 
 	DAngle ang = thing->Angles.Yaw + 90;
@@ -91,8 +91,8 @@ void RenderPolyWallSprite::Render(PolyRenderThread *thread, AActor *thing, subse
 		vertices[i].y = (float)p.Y;
 		vertices[i].z = (float)(pos.Z + spriteHeight * offsets[i].second);
 		vertices[i].w = 1.0f;
-		vertices[i].u = (float)(offsets[i].first * tex->Scale.X);
-		vertices[i].v = (float)((1.0f - offsets[i].second) * tex->Scale.Y);
+		vertices[i].u = (float)(offsets[i].first * tex->GetScale().X);
+		vertices[i].v = (float)((1.0f - offsets[i].second) * tex->GetScale().Y);
 		if (flipTextureX)
 			vertices[i].u = 1.0f - vertices[i].u;
 	}

@@ -224,7 +224,7 @@ void FTextureManager::InitAnimated (void)
 						(anim_p[21] << 16) | (anim_p[22] << 24);
 
 			// SMMU-style swirly hack? Don't apply on already-warping texture
-			if (animspeed > 65535 && tex1 != NULL && !tex1->bWarped)
+			if (animspeed > 65535 && tex1 != NULL && !tex1->isWarped())
 			{
 				FTexture *warper = new FWarpTexture (tex1, 2);
 				ReplaceTexture (pic1, warper, false);
@@ -622,7 +622,7 @@ void FTextureManager::ParseWarp(FScanner &sc)
 
 
 		// don't warp a texture more than once
-		if (!warper->bWarped)
+		if (!warper->isWarped())
 		{
 			warper = new FWarpTexture (warper, type2? 2:1);
 			ReplaceTexture (picnum, warper, false);

@@ -480,7 +480,7 @@ static inline void CheckShortestTex (FTextureID texnum, double &minsize)
 		FTexture *tex = TexMan[texnum];
 		if (tex != NULL)
 		{
-			double h = tex->GetScaledHeight();
+			double h = tex->GetDisplayHeight();
 			if (h < minsize)
 			{
 				minsize = h;
@@ -501,7 +501,7 @@ double FindShortestTextureAround (sector_t *sec)
 			CheckShortestTex (check->sidedef[1]->GetTexture(side_t::bottom), minsize);
 		}
 	}
-	return minsize < FLT_MAX ? minsize : TexMan[0]->GetHeight();
+	return minsize < FLT_MAX ? minsize : TexMan[0]->GetDisplayHeight();
 }
 
 //
@@ -526,7 +526,7 @@ double FindShortestUpperAround (sector_t *sec)
 			CheckShortestTex (check->sidedef[1]->GetTexture(side_t::top), minsize);
 		}
 	}
-	return minsize < FLT_MAX ? minsize : TexMan[0]->GetHeight();
+	return minsize < FLT_MAX ? minsize : TexMan[0]->GetDisplayHeight();
 }
 
 //
@@ -1147,11 +1147,11 @@ double GetFriction(const sector_t *self, int plane, double *pMoveFac)
 		 FTexture *tex = TexMan[GetTexture(sector_t::floor)];
 		 if (tex != NULL && tex->isGlowing())
 		 {
-			 if (!tex->bAutoGlowing) tex = TexMan(GetTexture(sector_t::floor));
+			 if (!tex->isAutoGlowing()) tex = TexMan(GetTexture(sector_t::floor));
 			 if (tex->isGlowing())	// recheck the current animation frame.
 			 {
 				 tex->GetGlowColor(bottomglowcolor);
-				 bottomglowcolor[3] = (float)tex->GlowHeight;
+				 bottomglowcolor[3] = (float)tex->GetGlowHeight();
 			 }
 		 }
 	 }
@@ -1192,12 +1192,12 @@ double GetFriction(const sector_t *self, int plane, double *pMoveFac)
 		 FTexture *tex = TexMan[GetTexture(sector_t::ceiling)];
 		 if (tex != NULL && tex->isGlowing())
 		 {
-			 if (!tex->bAutoGlowing) tex = TexMan(GetTexture(sector_t::ceiling));
+			 if (!tex->isAutoGlowing()) tex = TexMan(GetTexture(sector_t::ceiling));
 			 if (tex->isGlowing())	// recheck the current animation frame.
 			 {
 				 ret = true;
 				 tex->GetGlowColor(topglowcolor);
-				 topglowcolor[3] = (float)tex->GlowHeight;
+				 topglowcolor[3] = (float)tex->GetGlowHeight();
 			 }
 		 }
 	 }
@@ -1216,12 +1216,12 @@ double GetFriction(const sector_t *self, int plane, double *pMoveFac)
 		 FTexture *tex = TexMan[GetTexture(sector_t::floor)];
 		 if (tex != NULL && tex->isGlowing())
 		 {
-			 if (!tex->bAutoGlowing) tex = TexMan(GetTexture(sector_t::floor));
+			 if (!tex->isAutoGlowing()) tex = TexMan(GetTexture(sector_t::floor));
 			 if (tex->isGlowing())	// recheck the current animation frame.
 			 {
 				 ret = true;
 				 tex->GetGlowColor(bottomglowcolor);
-				 bottomglowcolor[3] = (float)tex->GlowHeight;
+				 bottomglowcolor[3] = (float)tex->GetGlowHeight();
 			 }
 		 }
 	 }

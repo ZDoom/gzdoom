@@ -33,7 +33,8 @@
 //
 //-----------------------------------------------------------------------------
 
-FSkyBox::FSkyBox() 
+FSkyBox::FSkyBox(const char *name)
+: FTexture(name)
 { 
 	faces[0]=faces[1]=faces[2]=faces[3]=faces[4]=faces[5]=NULL; 
 	UseType = ETextureType::Override;
@@ -58,7 +59,7 @@ FSkyBox::~FSkyBox()
 //
 //-----------------------------------------------------------------------------
 
-const uint8_t *FSkyBox::GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out)
+const uint8_t *FSkyBox::GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out)
 {
 	if (faces[0]) return faces[0]->GetColumn(style, column, spans_out);
 	return NULL;

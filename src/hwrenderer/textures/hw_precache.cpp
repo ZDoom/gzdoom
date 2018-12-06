@@ -48,11 +48,6 @@ static void PrecacheTexture(FTexture *tex, int cache)
 		FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
 		if (gltex) gltex->Precache();
 	}
-	else
-	{
-		// make sure that software pixel buffers do not stick around for unneeded textures.
-		tex->Unload();
-	}
 }
 
 //==========================================================================
@@ -91,14 +86,14 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		if (texhitlist[i] & (FTextureManager::HIT_Sky | FTextureManager::HIT_Wall))
 		{
 			FTexture *tex = TexMan.ByIndex(i);
-			if (tex->bSkybox)
+			if (tex->isSkybox())
 			{
 				FSkyBox *sb = static_cast<FSkyBox*>(tex);
 				for (int i = 0; i<6; i++)
 				{
 					if (sb->faces[i])
 					{
-						int index = sb->faces[i]->id.GetIndex();
+						int index = sb->faces[i]->GetID().GetIndex();
 						texhitlist[index] |= FTextureManager::HIT_Flat;
 					}
 				}
@@ -181,11 +176,13 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		{
 			if (!texhitlist[i])
 			{
-				if (tex->Material[0]) tex->Material[0]->Clean(true);
+				auto mat = FMaterial::ValidateTexture(tex, false, false);
+				if (mat) mat->Clean(true);
 			}
 			if (spritehitlist[i] == nullptr || (*spritehitlist[i]).CountUsed() == 0)
 			{
-				if (tex->Material[1]) tex->Material[1]->Clean(true);
+				auto mat = FMaterial::ValidateTexture(tex, true, false);
+				if (mat) mat->Clean(true);
 			}
 		}
 	}

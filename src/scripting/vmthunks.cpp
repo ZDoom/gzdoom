@@ -2372,7 +2372,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, ReceivedWeapon, ReceivedWeapon)
 static int GetMugshot(DBaseStatusBar *self, int accuracy, int stateflags, const FString &def_face)
 {
 	auto tex = self->mugshot.GetFace(self->CPlayer, def_face, accuracy, (FMugShot::StateFlags)stateflags);
-	return (tex ? tex->id.GetIndex() : -1);
+	return (tex ? tex->GetID().GetIndex() : -1);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetMugshot, GetMugshot)

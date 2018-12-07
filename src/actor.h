@@ -643,7 +643,6 @@ public:
 	~AActor ();
 
 	NetSyncData	syncdata;
-	NetSyncData	synccompare;
 
 	virtual void OnDestroy() override;
 	virtual void Serialize(FSerializer &arc) override;

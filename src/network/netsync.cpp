@@ -22,10 +22,139 @@
 #include "actor.h"
 #include "doomstat.h"
 #include "i_net.h"
+#include "cmdlib.h"
 
 extern bool netserver;
 
 void CountActors();
+
+class NetSyncWriter
+{
+public:
+	NetSyncWriter(NetCommand &cmd, int netid) : cmd(cmd), NetID(netid) { }
+
+	void Write(void *compval, void *actorval, size_t size)
+	{
+		if (memcmp(compval, actorval, size) != 0)
+		{
+			if (firstwrite)
+			{
+				firstwrite = false;
+				cmd.addShort(NetID);
+			}
+			cmd.addByte(fieldindex);
+			cmd.addBuffer(actorval, (int)size);
+			memcpy(compval, actorval, size);
+		}
+		fieldindex++;
+	}
+
+	void WriteEnd()
+	{
+		if (!firstwrite)
+		{
+			cmd.addByte(255);
+		}
+	}
+
+private:
+	NetCommand &cmd;
+	int NetID;
+	bool firstwrite = true;
+	int fieldindex = 0;
+};
+
+NetSyncClass::NetSyncClass()
+{
+	mSyncVars.Push({ myoffsetof(AActor, Vel.X), sizeof(double) });
+	mSyncVars.Push({ myoffsetof(AActor, Vel.Y), sizeof(double) });
+	mSyncVars.Push({ myoffsetof(AActor, Vel.Z), sizeof(double) });
+	mSyncVars.Push({ myoffsetof(AActor, SpriteAngle.Degrees), sizeof(double) });
+	mSyncVars.Push({ myoffsetof(AActor, SpriteRotation.Degrees), sizeof(double) });
+	mSyncVars.Push({ myoffsetof(AActor, Angles.Yaw.Degrees), sizeof(double) });
+	mSyncVars.Push({ myoffsetof(AActor, Angles.Pitch.Degrees), sizeof(double) });
+	mSyncVars.Push({ myoffsetof(AActor, Angles.Roll.Degrees), sizeof(double) });
+	mSyncVars.Push({ myoffsetof(AActor, Scale.X), sizeof(double) });
+	mSyncVars.Push({ myoffsetof(AActor, Scale.Y), sizeof(double) });
+	mSyncVars.Push({ myoffsetof(AActor, Alpha), sizeof(double) });
+	mSyncVars.Push({ myoffsetof(AActor, sprite), sizeof(uint32_t) });
+	mSyncVars.Push({ myoffsetof(AActor, frame), sizeof(uint8_t) });
+	mSyncVars.Push({ myoffsetof(AActor, effects), sizeof(uint8_t) });
+	mSyncVars.Push({ myoffsetof(AActor, RenderStyle.AsDWORD), sizeof(uint32_t) });
+	mSyncVars.Push({ myoffsetof(AActor, Translation), sizeof(uint32_t) });
+	mSyncVars.Push({ myoffsetof(AActor, RenderRequired), sizeof(uint32_t) });
+	mSyncVars.Push({ myoffsetof(AActor, RenderHidden), sizeof(uint32_t) });
+	mSyncVars.Push({ myoffsetof(AActor, renderflags.Value), sizeof(uint32_t) });
+	mSyncVars.Push({ myoffsetof(AActor, Floorclip), sizeof(double) });
+	mSyncVars.Push({ myoffsetof(AActor, VisibleStartAngle.Degrees), sizeof(double) });
+	mSyncVars.Push({ myoffsetof(AActor, VisibleStartPitch.Degrees), sizeof(double) });
+	mSyncVars.Push({ myoffsetof(AActor, VisibleEndAngle.Degrees), sizeof(double) });
+	mSyncVars.Push({ myoffsetof(AActor, VisibleEndPitch.Degrees), sizeof(double) });
+	mSyncVars.Push({ myoffsetof(AActor, Speed), sizeof(double) });
+	mSyncVars.Push({ myoffsetof(AActor, FloatSpeed), sizeof(double) });
+	mSyncVars.Push({ myoffsetof(AActor, CameraHeight), sizeof(double) });
+	mSyncVars.Push({ myoffsetof(AActor, CameraFOV), sizeof(double) });
+	mSyncVars.Push({ myoffsetof(AActor, StealthAlpha), sizeof(double) });
+
+	// To do: create NetSyncVariable entries for all the script variables we want sent to the client
+}
+
+void NetSyncClass::InitSyncData(AActor *actor)
+{
+	auto &syncdata = actor->syncdata;
+
+	size_t scriptvarsize = 0;
+	for (unsigned int i = 0; i < mSyncVars.Size(); i++)
+		scriptvarsize += mSyncVars[i].size;
+	syncdata.CompareData.Resize((unsigned int)scriptvarsize);
+
+	syncdata.Pos = actor->Pos();
+
+	size_t pos = 0;
+	for (unsigned int i = 0; i < mSyncVars.Size(); i++)
+	{
+		memcpy(syncdata.CompareData.Data() + pos, ((uint8_t*)actor) + mSyncVars[i].offset, scriptvarsize);
+		pos += mSyncVars[i].size;
+	}
+}
+
+void NetSyncClass::WriteSyncUpdate(NetCommand &cmd, AActor *actor)
+{
+	NetSyncWriter writer(cmd, actor->syncdata.NetID);
+
+	DVector3 pos = actor->Pos();
+	writer.Write(&actor->syncdata.Pos, &pos, sizeof(DVector3));
+
+	size_t compareoffset = 0;
+	for (unsigned int i = 0; i < mSyncVars.Size(); i++)
+	{
+		writer.Write(actor->syncdata.CompareData.Data() + compareoffset, ((uint8_t*)actor) + mSyncVars[i].offset, mSyncVars[i].size);
+		compareoffset += mSyncVars[i].size;
+	}
+}
+
+void NetSyncClass::ReadSyncUpdate(ByteInputStream &stream, AActor *actor)
+{
+	while (true)
+	{
+		int fieldindex = stream.ReadByte();
+		if (fieldindex == 255)
+			break;
+
+		if (fieldindex == 0)
+		{
+			DVector3 pos;
+			stream.ReadBuffer(&pos, sizeof(DVector3));
+			actor->SetOrigin(pos, true);
+		}
+		else if (fieldindex <= (int)mSyncVars.Size())
+		{
+			stream.ReadBuffer(((uint8_t*)actor) + mSyncVars[fieldindex - 1].offset, mSyncVars[fieldindex - 1].size);
+		}
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////////
 
 template <typename T>
 void IDList<T>::clear()

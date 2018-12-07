@@ -298,6 +298,11 @@ public:
 	bool isFullbright() const { return bFullbright; }
 	void CreateDefaultBrightmap();
 	bool FindHoles(const unsigned char * buffer, int w, int h);
+	uint64_t CacheID()
+	{
+		// Just a temporary placeholder. This needs to be done differently as things progress.
+		return (uint64_t)(intptr_t)GetRedirect();
+	}
 
 public:
 	static void FlipSquareBlock (uint8_t *block, int x, int y);
@@ -562,7 +567,7 @@ public:
 	}
 	FTexture *operator[] (const char *texname)
 	{
-		FTextureID texnum = GetTexture (texname, ETextureType::MiscPatch);
+		FTextureID texnum = GetTextureID (texname, ETextureType::MiscPatch);
 		if (!texnum.Exists()) return NULL;
 		return Textures[texnum.GetIndex()].Texture;
 	}
@@ -586,7 +591,7 @@ public:
 	}
 	FTexture *operator() (const char *texname)
 	{
-		FTextureID texnum = GetTexture (texname, ETextureType::MiscPatch);
+		FTextureID texnum = GetTextureID (texname, ETextureType::MiscPatch);
 		if (texnum.texnum == -1) return NULL;
 		return Textures[Translation[texnum.texnum]].Texture;
 	}
@@ -621,7 +626,7 @@ public:
 	};
 
 	FTextureID CheckForTexture (const char *name, ETextureType usetype, BITFIELD flags=TEXMAN_TryAny);
-	FTextureID GetTexture (const char *name, ETextureType usetype, BITFIELD flags=0);
+	FTextureID GetTextureID (const char *name, ETextureType usetype, BITFIELD flags=0);
 	int ListTextures (const char *name, TArray<FTextureID> &list, bool listall = false);
 
 	void AddTexturesLump (const void *lumpdata, int lumpsize, int deflumpnum, int patcheslump, int firstdup=0, bool texture1=false);

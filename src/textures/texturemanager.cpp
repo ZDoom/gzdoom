@@ -329,7 +329,7 @@ int FTextureManager::ListTextures (const char *name, TArray<FTextureID> &list, b
 //
 //==========================================================================
 
-FTextureID FTextureManager::GetTexture (const char *name, ETextureType usetype, BITFIELD flags)
+FTextureID FTextureManager::GetTextureID (const char *name, ETextureType usetype, BITFIELD flags)
 {
 	FTextureID i;
 

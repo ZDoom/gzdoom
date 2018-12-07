@@ -516,7 +516,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 		else
 		{
 			Printf("Intermission script %s not found!\n", lumpname + 1);
-			texture = TexMan.GetTexture("INTERPIC", ETextureType::MiscPatch);
+			texture = TexMan.GetTextureID("INTERPIC", ETextureType::MiscPatch);
 		}
 	}
 	background = TexMan[texture];

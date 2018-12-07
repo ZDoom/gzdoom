@@ -1397,8 +1397,8 @@ void P_ReplaceTextures(const char *fromname, const char *toname, int flags)
 
 	if ((flags ^ (NOT_BOTTOM | NOT_MIDDLE | NOT_TOP)) != 0)
 	{
-		picnum1 = TexMan.GetTexture(fromname, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
-		picnum2 = TexMan.GetTexture(toname, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
+		picnum1 = TexMan.GetTextureID(fromname, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
+		picnum2 = TexMan.GetTextureID(toname, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
 
 		for (auto &side : level.sides)
 		{
@@ -1414,8 +1414,8 @@ void P_ReplaceTextures(const char *fromname, const char *toname, int flags)
 	}
 	if ((flags ^ (NOT_FLOOR | NOT_CEILING)) != 0)
 	{
-		picnum1 = TexMan.GetTexture(fromname, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
-		picnum2 = TexMan.GetTexture(toname, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
+		picnum1 = TexMan.GetTextureID(fromname, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
+		picnum2 = TexMan.GetTextureID(toname, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
 
 		for (auto &sec : level.sectors)
 		{

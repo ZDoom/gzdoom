@@ -977,7 +977,7 @@ class GLDefsParser
 			sc.MustGetString();
 			if (facecount<6) 
 			{
-				sb->faces[facecount] = TexMan[TexMan.GetTexture(sc.String, ETextureType::Wall, FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_Overridable)];
+				sb->faces[facecount] = TexMan[TexMan.GetTextureID(sc.String, ETextureType::Wall, FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_Overridable)];
 			}
 			facecount++;
 		}

@@ -1211,3 +1211,4 @@ void FTexCoordInfo::GetFromTexture(FTexture *tex, float x, float y)
 	mWorldPanning = tex->bWorldPanning;
 	mWidth = tex->GetWidth();
 }
+

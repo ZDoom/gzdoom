@@ -1131,10 +1131,10 @@ void FTextureManager::InitPalettedVersions()
 //
 //==========================================================================
 
-// fixme: The way this is used, it is mostly useless.
 FTextureID FTextureManager::PalCheck(FTextureID tex)
 {
-	if (vid_nopalsubstitutions) return tex;
+	// In any true color mode this shouldn't do anything.
+	if (vid_nopalsubstitutions || V_IsTrueColor()) return tex;
 	auto ftex = operator[](tex);
 	if (ftex != nullptr && ftex->PalVersion != nullptr) return ftex->PalVersion->id;
 	return tex;

@@ -2234,7 +2234,7 @@ void AM_drawSubsectors()
 			}
 			else indices.clear();
 
-			screen->FillSimplePoly(TexMan(maptex),
+			screen->FillSimplePoly(TexMan.GetTexture(maptex, true),
 				&points[0], points.Size(),
 				originx, originy,
 				scale / scalex,
@@ -3019,7 +3019,7 @@ void AM_drawThings ()
 						rotation = int((angle.Normalized360() * (16. / 360.)).Degrees);
 
 						const FTextureID textureID = frame->Texture[show > 2 ? rotation : 0];
-						texture = TexMan(textureID);
+						texture = TexMan.GetTexture(textureID, true);
 					}
 
 					if (texture == NULL) goto drawTriangle;	// fall back to standard display if no sprite can be found.
@@ -3150,7 +3150,7 @@ void AM_drawMarks ()
 	{
 		if (markpoints[i].x != -1)
 		{
-			DrawMarker (TexMan(marknums[i]), markpoints[i].x, markpoints[i].y, -3, 0,
+			DrawMarker (TexMan.GetTexture(marknums[i], true), markpoints[i].x, markpoints[i].y, -3, 0,
 				1, 1, 0, 1, 0, LegacyRenderStyles[STYLE_Normal]);
 		}
 	}
@@ -3183,7 +3183,7 @@ void AM_drawAuthorMarkers ()
 
 		if (mark->picnum.isValid())
 		{
-			tex = TexMan(mark->picnum);
+			tex = TexMan.GetTexture(mark->picnum, true);
 			if (tex->GetRotations() != 0xFFFF)
 			{
 				spriteframe_t *sprframe = &SpriteFrames[tex->GetRotations()];

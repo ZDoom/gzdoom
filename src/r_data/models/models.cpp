@@ -268,7 +268,7 @@ void FModelRenderer::RenderFrameModels(const FSpriteModelFrame *smf, const FStat
 		if (smf->modelIDs[i] != -1)
 		{
 			FModel * mdl = Models[smf->modelIDs[i]];
-			FTexture *tex = smf->skinIDs[i].isValid() ? TexMan(smf->skinIDs[i]) : nullptr;
+			FTexture *tex = smf->skinIDs[i].isValid() ? TexMan.GetTexture(smf->skinIDs[i], true) : nullptr;
 			mdl->BuildVertexBuffer(this);
 
 			mdl->PushSpriteMDLFrame(smf, i);

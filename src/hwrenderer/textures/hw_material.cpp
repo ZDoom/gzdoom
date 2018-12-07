@@ -519,7 +519,7 @@ again:
 
 FMaterial * FMaterial::ValidateTexture(FTextureID no, bool expand, bool translate, bool create)
 {
-	return ValidateTexture(translate? TexMan(no) : TexMan[no], expand, create);
+	return ValidateTexture(TexMan.GetTexture(no, translate), expand, create);
 }
 
 

@@ -1519,7 +1519,7 @@ FTexture *FSinglePicFont::GetChar (int code, int *const width) const
 	*width = SpaceWidth;
 	if (code == 'a' || code == 'A')
 	{
-		return TexMan(PicNum);
+		return TexMan.GetPalettedTexture(PicNum, true);
 	}
 	else
 	{

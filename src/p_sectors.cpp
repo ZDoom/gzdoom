@@ -1147,7 +1147,7 @@ double GetFriction(const sector_t *self, int plane, double *pMoveFac)
 		 FTexture *tex = TexMan[GetTexture(sector_t::floor)];
 		 if (tex != NULL && tex->isGlowing())
 		 {
-			 if (!tex->isAutoGlowing()) tex = TexMan(GetTexture(sector_t::floor));
+			 if (!tex->isAutoGlowing()) tex = TexMan.GetTexture(GetTexture(sector_t::floor), true);
 			 if (tex->isGlowing())	// recheck the current animation frame.
 			 {
 				 tex->GetGlowColor(bottomglowcolor);
@@ -1192,7 +1192,7 @@ double GetFriction(const sector_t *self, int plane, double *pMoveFac)
 		 FTexture *tex = TexMan[GetTexture(sector_t::ceiling)];
 		 if (tex != NULL && tex->isGlowing())
 		 {
-			 if (!tex->isAutoGlowing()) tex = TexMan(GetTexture(sector_t::ceiling));
+			 if (!tex->isAutoGlowing()) tex = TexMan.GetTexture(GetTexture(sector_t::ceiling), true);
 			 if (tex->isGlowing())	// recheck the current animation frame.
 			 {
 				 ret = true;
@@ -1216,7 +1216,7 @@ double GetFriction(const sector_t *self, int plane, double *pMoveFac)
 		 FTexture *tex = TexMan[GetTexture(sector_t::floor)];
 		 if (tex != NULL && tex->isGlowing())
 		 {
-			 if (!tex->isAutoGlowing()) tex = TexMan(GetTexture(sector_t::floor));
+			 if (!tex->isAutoGlowing()) tex = TexMan.GetTexture(GetTexture(sector_t::floor), true);
 			 if (tex->isGlowing())	// recheck the current animation frame.
 			 {
 				 ret = true;

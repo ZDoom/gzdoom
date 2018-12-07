@@ -284,7 +284,7 @@ Mat4f PolySkyDome::GLSkyMath()
 
 static FSoftwareTexture *GetSWTex(FTextureID texid, bool allownull = true)
 {
-	auto tex = TexMan(texid, true);
+	auto tex = TexMan.GetPalettedTexture(texid, true);
 	if (tex == nullptr) return nullptr;
 	if (!allownull && !tex->isValid()) return nullptr;
 	return tex->GetSoftwareTexture();

@@ -49,7 +49,7 @@ void RenderPolyDecal::Render(PolyRenderThread *thread, DBaseDecal *decal, const 
 	if (decal->RenderFlags & RF_INVISIBLE || !viewactive || !decal->PicNum.isValid())
 		return;
 
-	FTexture *ttex = TexMan(decal->PicNum, true);
+	FTexture *ttex = TexMan.GetPalettedTexture(decal->PicNum, true);
 	if (ttex == nullptr || !ttex->isValid())
 		return;
 	

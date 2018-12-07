@@ -113,7 +113,7 @@ namespace swrenderer
 		}
 		else // regular flat
 		{
-			FTexture *ttex = TexMan(picnum, true);
+			FTexture *ttex = TexMan.GetPalettedTexture(picnum, true);
 
 			if (!ttex->isValid())
 			{

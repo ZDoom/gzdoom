@@ -77,5 +77,5 @@ FTexture *FImageCollection::operator[] (int index) const
 	{
 		return NULL;
 	}
-	return ImageMap[index].Exists()? TexMan(ImageMap[index]) : NULL;
+	return ImageMap[index].Exists()? TexMan.GetPalettedTexture(ImageMap[index], true) : NULL;
 }

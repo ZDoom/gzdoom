@@ -80,8 +80,8 @@ void R_InitSkyMap()
 		sky2texture = TexMan.CheckForTexture("-noflat-", ETextureType::Any);
 	}
 
-	skytex1 = TexMan(sky1texture, true);
-	skytex2 = TexMan(sky2texture, true);
+	skytex1 = TexMan.GetTexture(sky1texture, false);
+	skytex2 = TexMan.GetTexture(sky2texture, false);
 
 	if (skytex1 == nullptr)
 		return;

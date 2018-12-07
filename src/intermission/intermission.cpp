@@ -568,7 +568,7 @@ void DIntermissionScreenCast::Drawer ()
 		}
 
 		sprframe = &SpriteFrames[sprites[castsprite].spriteframes + caststate->GetFrame()];
-		pic = TexMan(sprframe->Texture[0]);
+		pic = TexMan.GetTexture(sprframe->Texture[0], true);
 
 		screen->DrawTexture (pic, 160, 170,
 			DTA_320x200, true,

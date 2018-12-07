@@ -789,7 +789,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		if (isPicnumOverride)
 		{
 			// Animate picnum overrides.
-			auto tex = TexMan(thing->picnum);
+			auto tex = TexMan.GetTexture(thing->picnum, true);
 			if (tex == nullptr) return;
 			patch =  tex->GetID();
 			mirror = false;

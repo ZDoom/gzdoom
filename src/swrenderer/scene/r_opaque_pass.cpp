@@ -1023,7 +1023,7 @@ namespace swrenderer
 		{
 			sprite.picnum = thing->picnum;
 
-			sprite.tex = TexMan(sprite.picnum);
+			sprite.tex = TexMan.GetPalettedTexture(sprite.picnum, true);
 			if (!sprite.tex->isValid())
 			{
 				return false;

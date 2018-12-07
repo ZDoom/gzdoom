@@ -566,41 +566,40 @@ public:
 		return Textures[texnum.GetIndex()].Texture;
 	}
 	
+	// This only gets used in UI code so we do not need PALVERS handling.
 	FTexture *GetTextureByName(const char *name, bool animate = false)
 	{
 		FTextureID texnum = GetTextureID (name, ETextureType::MiscPatch);
 		if (!texnum.Exists()) return nullptr;
 		if (!animate) return Textures[texnum.GetIndex()].Texture;
 	 	else return Textures[Translation[texnum.GetIndex()]].Texture;
-
 	}
 	
-	FTexture *ByIndex(int i)
+	FTexture *GetTexture(FTextureID texnum, bool animate)
+	{
+		if ((size_t)texnum.texnum >= Textures.Size()) return nullptr;
+		if (animate) texnum = Translation[texnum.GetIndex()];
+		return Textures[texnum.GetIndex()].Texture;
+	}
+	
+	// This is the only access function that should be used inside the software renderer.
+	FTexture *GetPalettedTexture(FTextureID texnum, bool animate)
+	{
+		if ((size_t)texnum.texnum >= Textures.Size()) return nullptr;
+		if (animate) texnum = Translation[texnum.GetIndex()];
+		texnum = PalCheck(texnum).GetIndex();
+		return Textures[texnum.GetIndex()].Texture;
+	}
+	
+	FTexture *ByIndex(int i, bool animate = false)
 	{
 		if (unsigned(i) >= Textures.Size()) return NULL;
+		if (animate) i = Translation[i];
 		return Textures[i].Texture;
 	}
 	FTexture *FindTexture(const char *texname, ETextureType usetype = ETextureType::MiscPatch, BITFIELD flags = TEXMAN_TryAny);
 
-	// Get texture with translation
-	FTexture *operator() (FTextureID texnum, bool withpalcheck=false)
-	{
-		if ((size_t)texnum.texnum >= Textures.Size()) return NULL;
-		int picnum = Translation[texnum.texnum];
-		if (withpalcheck)
-		{
-			picnum = PalCheck(picnum).GetIndex();
-		}
-		return Textures[picnum].Texture;
-	}
-	/*
-	FTexture *operator() (const char *texname)
-	{
-		FTextureID texnum = GetTextureID (texname, ETextureType::MiscPatch);
-		if (texnum.texnum == -1) return NULL;
-		return Textures[Translation[texnum.texnum]].Texture;
-	}
-	 */
+
 
 //public:
 

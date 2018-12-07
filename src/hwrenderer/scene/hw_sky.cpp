@@ -243,13 +243,13 @@ void GLWall::SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vert
 			{
 				if (bs->GetPlaneTexZ(sector_t::floor)==fs->GetPlaneTexZ(sector_t::floor)+1.)
 				{
-					FTexture * tex = TexMan(seg->sidedef->GetTexture(side_t::bottom));
+					FTexture * tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::bottom), true);
 					if (!tex || !tex->isValid()) return;
 
 					// very, very, very ugly special case (See Icarus MAP14)
 					// It is VERY important that this is only done for a floor height difference of 1
 					// or it will cause glitches elsewhere.
-					tex = TexMan(seg->sidedef->GetTexture(side_t::mid));
+					tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::mid), true);
 					if (tex != NULL && !(seg->linedef->flags & ML_DONTPEGTOP) &&
 						seg->sidedef->GetTextureYOffset(side_t::mid) > 0)
 					{
@@ -265,7 +265,7 @@ void GLWall::SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vert
 
 		ztop[0]=ztop[1]=32768.0f;
 
-		FTexture * tex = TexMan(seg->sidedef->GetTexture(side_t::top));
+		FTexture * tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::top), true);
 		if (bs->GetTexture(sector_t::ceiling) != skyflatnum)
 
 		{
@@ -325,7 +325,7 @@ void GLWall::SkyBottom(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,v
 	if (fs->GetTexture(sector_t::floor)==skyflatnum)
 	{
 		if (bs->special == GLSector_NoSkyDraw) return;
-		FTexture * tex = TexMan(seg->sidedef->GetTexture(side_t::bottom));
+		FTexture * tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::bottom), true);
 		
 		// For lower skies the normal logic only applies to walls with no lower texture.
 		if (!tex->isValid())

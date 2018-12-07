@@ -356,11 +356,11 @@ void FMD3Model::RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame
 		{
 			if (curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].isValid())
 			{
-				surfaceSkin = TexMan(curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i]);
+				surfaceSkin = TexMan.GetTexture(curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i], true);
 			}
 			else if(surf->numSkins > 0 && surf->skins[0].isValid())
 			{
-				surfaceSkin = TexMan(surf->skins[0]);
+				surfaceSkin = TexMan.GetTexture(surf->skins[0], true);
 			}
 
 			if (!surfaceSkin)

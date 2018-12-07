@@ -216,7 +216,7 @@ void PostProcessShaderInstance::BindTextures()
 			continue;
 
 		FString name = pair->Value;
-		FTexture *tex = TexMan(TexMan.CheckForTexture(name, ETextureType::Any));
+		FTexture *tex = TexMan.GetTexture(TexMan.CheckForTexture(name, ETextureType::Any), true);
 		if (tex && tex->isValid())
 		{
 			glUniform1i(location, textureUnit);

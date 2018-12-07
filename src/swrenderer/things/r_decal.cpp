@@ -129,7 +129,7 @@ namespace swrenderer
 			}
 		}
 
-		FTexture *tex = TexMan(decal->PicNum, true);
+		FTexture *tex = TexMan.GetPalettedTexture(decal->PicNum, true);
 		flipx = (uint8_t)(decal->RenderFlags & RF_XFLIP);
 
 		if (tex == NULL || !tex->isValid())

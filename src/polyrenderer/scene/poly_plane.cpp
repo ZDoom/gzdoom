@@ -66,7 +66,7 @@ void RenderPolyPlane::RenderNormal(PolyRenderThread *thread, const PolyTransferH
 	FTextureID picnum = fakeflat.FrontSector->GetTexture(ceiling ? sector_t::ceiling : sector_t::floor);
 	if (picnum != skyflatnum)
 	{
-		FTexture *tex = TexMan(picnum);
+		FTexture *tex = TexMan.GetPalettedTexture(picnum, true);
 		if (!tex || !tex->isValid())
 			return;
 
@@ -510,7 +510,7 @@ void Render3DFloorPlane::RenderPlanes(PolyRenderThread *thread, subsector_t *sub
 void Render3DFloorPlane::Render(PolyRenderThread *thread)
 {
 	FTextureID picnum = ceiling ? *fakeFloor->bottom.texture : *fakeFloor->top.texture;
-	auto tex = TexMan(picnum);
+	auto tex = TexMan.GetPalettedTexture(picnum, true);
 	if (!tex->isValid())
 		return;
 

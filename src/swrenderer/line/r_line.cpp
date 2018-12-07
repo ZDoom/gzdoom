@@ -451,7 +451,7 @@ namespace swrenderer
 
 						lwal = draw_segment->maskedtexturecol;
 						swal = draw_segment->swall;
-						FTexture *tex = TexMan(sidedef->GetTexture(side_t::mid), true);
+						FTexture *tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
 						FSoftwareTexture *pic = tex && tex->isValid()? tex->GetSoftwareTexture() : nullptr;
 						double yscale = pic->GetScale().Y * sidedef->GetTextureYScale(side_t::mid);
 						fixed_t xoffset = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
@@ -770,7 +770,7 @@ namespace swrenderer
 			}
 		}
 
-		FTexture *ftex = TexMan(sidedef->GetTexture(side_t::mid), true);
+		FTexture *ftex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
 		FSoftwareTexture *midtex = ftex && ftex->isValid() ? ftex->GetSoftwareTexture() : nullptr;
 
 		bool segtextured = midtex != NULL || mTopPart.Texture != NULL || mBottomPart.Texture != NULL;
@@ -816,7 +816,7 @@ namespace swrenderer
 		// No top texture for skyhack lines
 		if (mFrontSector->GetTexture(sector_t::ceiling) == skyflatnum && mBackSector->GetTexture(sector_t::ceiling) == skyflatnum) return;
 		
-		FTexture *tex = TexMan(sidedef->GetTexture(side_t::top), true);
+		FTexture *tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::top), true);
 		mTopPart.Texture = tex && tex->isValid() ? tex->GetSoftwareTexture() : nullptr;
 
 		mTopPart.TextureOffsetU = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::top));
@@ -874,7 +874,7 @@ namespace swrenderer
 		if (linedef->isVisualPortal()) return;
 		if (linedef->special == Line_Horizon) return;
 			
-		auto tex = TexMan(sidedef->GetTexture(side_t::mid), true);
+		auto tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
 		mMiddlePart.Texture = tex && tex->isValid() ? tex->GetSoftwareTexture() : nullptr;
 		mMiddlePart.TextureOffsetU = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
 		double rowoffset = sidedef->GetTextureYOffset(side_t::mid);
@@ -939,7 +939,7 @@ namespace swrenderer
 			frontlowertop = mBackSector->GetPlaneTexZ(sector_t::ceiling);
 		}
 		
-		FTexture *tex = TexMan(sidedef->GetTexture(side_t::bottom), true);;
+		FTexture *tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::bottom), true);
 		mBottomPart.Texture = tex && tex->isValid() ? tex->GetSoftwareTexture() : nullptr;
 		if (!mBottomPart.Texture) return;
 

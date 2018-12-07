@@ -131,7 +131,7 @@ static bool isBright(DPSprite *psp)
 		FTextureID lump = sprites[psp->GetSprite()].GetSpriteFrame(psp->GetFrame(), 0, 0., nullptr);
 		if (lump.isValid())
 		{
-			FTexture * tex = TexMan(lump);
+			FTexture * tex = TexMan.GetTexture(lump, true);
 			if (tex) disablefullbright = tex->isFullbrightDisabled();
 		}
 		return psp->GetState()->GetFullbright() && !disablefullbright;

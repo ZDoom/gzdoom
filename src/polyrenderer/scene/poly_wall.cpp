@@ -171,7 +171,7 @@ bool RenderPolyWall::RenderLine(PolyRenderThread *thread, seg_t *line, sector_t 
 			wall.Alpha = wall.Line->alpha;
 			wall.FogBoundary = IsFogBoundary(frontsector, backsector);
 
-			FTexture *midtex = TexMan(line->sidedef->GetTexture(side_t::mid), true);
+			FTexture *midtex = TexMan.GetPalettedTexture(line->sidedef->GetTexture(side_t::mid), true);
 			if ((midtex && midtex->isValid()) || wall.FogBoundary)
 				translucentWallsOutput.push_back(thread->FrameMemory->NewObject<PolyTranslucentWall>(wall));
 
@@ -528,7 +528,7 @@ void RenderPolyWall::ClampHeight(TriVertex &v1, TriVertex &v2)
 
 FSoftwareTexture *RenderPolyWall::GetTexture(const line_t *line, const side_t *side, side_t::ETexpart texpart)
 {
-	FTexture *tex = TexMan(side->GetTexture(texpart), true);
+	FTexture *tex = TexMan.GetPalettedTexture(side->GetTexture(texpart), true);
 	if (tex == nullptr || !tex->isValid())
 	{
 		// Mapping error. Doom floodfills this with a plane.
@@ -537,16 +537,16 @@ FSoftwareTexture *RenderPolyWall::GetTexture(const line_t *line, const side_t *s
 		if (line && line->backsector && line->sidedef[0] == side)
 		{
 			if (texpart == side_t::top)
-				tex = TexMan(line->backsector->GetTexture(sector_t::ceiling), true);
+				tex = TexMan.GetPalettedTexture(line->backsector->GetTexture(sector_t::ceiling), true);
 			else if (texpart == side_t::bottom)
-				tex = TexMan(line->backsector->GetTexture(sector_t::floor), true);
+				tex = TexMan.GetPalettedTexture(line->backsector->GetTexture(sector_t::floor), true);
 		}
 		if (line && line->backsector && line->sidedef[1] == side)
 		{
 			if (texpart == side_t::top)
-				tex = TexMan(line->frontsector->GetTexture(sector_t::ceiling), true);
+				tex = TexMan.GetPalettedTexture(line->frontsector->GetTexture(sector_t::ceiling), true);
 			else if (texpart == side_t::bottom)
-				tex = TexMan(line->frontsector->GetTexture(sector_t::floor), true);
+				tex = TexMan.GetPalettedTexture(line->frontsector->GetTexture(sector_t::floor), true);
 		}
 
 		if (tex == nullptr || !tex->isValid())

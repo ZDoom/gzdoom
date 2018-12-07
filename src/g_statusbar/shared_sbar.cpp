@@ -1323,7 +1323,7 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, double x, double y, int fla
 	if (!texture.isValid())
 		return;
 
-	FTexture *tex = (flags & DI_DONTANIMATE)?  TexMan[texture] : TexMan(texture);
+	FTexture *tex = TexMan.GetTexture(texture, !(flags & DI_DONTANIMATE));
 
 	double texwidth = tex->GetDisplayWidthDouble() * scaleX;
 	double texheight = tex->GetDisplayHeightDouble() * scaleY;

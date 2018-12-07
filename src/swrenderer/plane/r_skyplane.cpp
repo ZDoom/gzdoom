@@ -65,8 +65,8 @@ fixed_t		sky1cyl, sky2cyl;
 
 void InitSoftwareSky()
 {
-	auto skytex1 = TexMan(sky1texture, true);
-	auto skytex2 = TexMan(sky2texture, true);
+	auto skytex1 = TexMan.GetPalettedTexture(sky1texture, true);
+	auto skytex2 = TexMan.GetPalettedTexture(sky2texture, true);
 
 	if (skytex1 == nullptr)
 		return;
@@ -118,7 +118,7 @@ namespace swrenderer
 
 	static FSoftwareTexture *GetSWTex(FTextureID texid, bool allownull = true)
 	{
-		auto tex = TexMan(texid, true);
+		auto tex = TexMan.GetPalettedTexture(texid, true);
 		if (tex == nullptr) return nullptr;
 		if (!allownull && !tex->isValid()) return nullptr;
 		return tex->GetSoftwareTexture();

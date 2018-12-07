@@ -312,7 +312,7 @@ FSoftwareTexture *RenderPolySprite::GetSpriteTexture(AActor *thing, /*out*/ bool
 
 	if (thing->picnum.isValid())
 	{
-		FTexture *ttex = TexMan(thing->picnum);
+		FTexture *ttex = TexMan.GetPalettedTexture(thing->picnum, true);
 		if (!ttex || !ttex->isValid())
 		{
 			return nullptr;

@@ -1052,7 +1052,7 @@ void D_PageDrawer (void)
 	screen->Clear(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
 	if (Page.Exists())
 	{
-		screen->DrawTexture (TexMan(Page), 0, 0,
+		screen->DrawTexture (TexMan.GetTexture(Page, true), 0, 0,
 			DTA_Fullscreen, true,
 			DTA_Masked, false,
 			DTA_BilinearFilter, true,

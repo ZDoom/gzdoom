@@ -674,7 +674,7 @@ class AltHud ui
 					{
 						double trans = rover == CPlayer.mo.InvSel ? 1.0 : 0.4;
 
-						DrawImageToBox(AltIcon.isValid()? AltIcon : rover.Icon, x, y, 19, 25, trans);
+						DrawImageToBox(AltIcon.isValid()? AltIcon : rover.Icon, x, y, 19, 25, trans, true);
 						if (rover.Amount > 1)
 						{
 							int xx;

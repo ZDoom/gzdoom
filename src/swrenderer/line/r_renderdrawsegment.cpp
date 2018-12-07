@@ -162,7 +162,7 @@ namespace swrenderer
 		if (curline->sidedef->GetTexture(side_t::mid).isNull())
 			return false;
 
-		FTexture *ttex = TexMan(curline->sidedef->GetTexture(side_t::mid), true);
+		FTexture *ttex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::mid), true);
 		if (i_compatflags & COMPATF_MASKEDMIDTEX)
 		{
 			ttex = ttex->GetRawTexture();
@@ -643,15 +643,15 @@ namespace swrenderer
 						FTexture *rw_tex = nullptr;
 						if (fover->flags & FF_UPPERTEXTURE)
 						{
-							rw_tex = TexMan(curline->sidedef->GetTexture(side_t::top), true);
+							rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::top), true);
 						}
 						else if (fover->flags & FF_LOWERTEXTURE)
 						{
-							rw_tex = TexMan(curline->sidedef->GetTexture(side_t::bottom), true);
+							rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::bottom), true);
 						}
 						else
 						{
-							rw_tex = TexMan(fover->master->sidedef[0]->GetTexture(side_t::mid), true);
+							rw_tex = TexMan.GetPalettedTexture(fover->master->sidedef[0]->GetTexture(side_t::mid), true);
 						}
 						rw_pic = rw_tex && rw_tex->isValid() ? rw_tex->GetSoftwareTexture() : nullptr;
 					}
@@ -705,15 +705,15 @@ namespace swrenderer
 					FTexture *rw_tex;
 					if (rover->flags & FF_UPPERTEXTURE)
 					{
-						rw_tex = TexMan(curline->sidedef->GetTexture(side_t::top), true);
+						rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::top), true);
 					}
 					else if (rover->flags & FF_LOWERTEXTURE)
 					{
-						rw_tex = TexMan(curline->sidedef->GetTexture(side_t::bottom), true);
+						rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::bottom), true);
 					}
 					else
 					{
-						rw_tex = TexMan(rover->master->sidedef[0]->GetTexture(side_t::mid), true);
+						rw_tex = TexMan.GetPalettedTexture(rover->master->sidedef[0]->GetTexture(side_t::mid), true);
 					}
 					rw_pic = rw_tex && rw_tex->isValid() ? rw_tex->GetSoftwareTexture() : nullptr;
 				}
@@ -832,15 +832,15 @@ namespace swrenderer
 						FTexture *rw_tex;
 						if (fover->flags & FF_UPPERTEXTURE)
 						{
-							rw_tex = TexMan(curline->sidedef->GetTexture(side_t::top), true);
+							rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::top), true);
 						}
 						else if (fover->flags & FF_LOWERTEXTURE)
 						{
-							rw_tex = TexMan(curline->sidedef->GetTexture(side_t::bottom), true);
+							rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::bottom), true);
 						}
 						else
 						{
-							rw_tex = TexMan(fover->master->sidedef[0]->GetTexture(side_t::mid), true);
+							rw_tex = TexMan.GetPalettedTexture(fover->master->sidedef[0]->GetTexture(side_t::mid), true);
 						}
 						rw_pic = rw_tex && rw_tex->isValid() ? rw_tex->GetSoftwareTexture() : nullptr;
 					}
@@ -891,15 +891,15 @@ namespace swrenderer
 					FTexture *rw_tex;
 					if (rover->flags & FF_UPPERTEXTURE)
 					{
-						rw_tex = TexMan(curline->sidedef->GetTexture(side_t::top), true);
+						rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::top), true);
 					}
 					else if (rover->flags & FF_LOWERTEXTURE)
 					{
-						rw_tex = TexMan(curline->sidedef->GetTexture(side_t::bottom), true);
+						rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::bottom), true);
 					}
 					else
 					{
-						rw_tex = TexMan(rover->master->sidedef[0]->GetTexture(side_t::mid), true);
+						rw_tex = TexMan.GetPalettedTexture(rover->master->sidedef[0]->GetTexture(side_t::mid), true);
 					}
 					rw_pic = rw_tex && rw_tex->isValid() ? rw_tex->GetSoftwareTexture() : nullptr;
 				}

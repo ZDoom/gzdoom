@@ -1190,7 +1190,6 @@ public:
 		{
 			if (forceWidth < 0)	dx -= (texture->GetDisplayWidthDouble()/2.0)-texture->GetDisplayLeftOffsetDouble();
 			else	dx -= forceWidth*(0.5-(texture->GetDisplayLeftOffsetDouble()/texture->GetDisplayWidthDouble()));
-			//Unoptimalized ^^formula is dx -= forceWidth/2.0-(texture->GetScaledLeftOffsetDouble()*forceWidth/texture->GetDisplayWidthDouble());
 			
 			if (forceHeight < 0)	dy -= (texture->GetDisplayHeightDouble()/2.0)-texture->GetDisplayTopOffsetDouble();
 			else	dy -= forceHeight*(0.5-(texture->GetDisplayTopOffsetDouble()/texture->GetDisplayHeightDouble()));

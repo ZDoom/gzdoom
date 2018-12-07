@@ -57,7 +57,7 @@ bool FWarpTexture::CheckModified (FRenderStyle style)
 const uint32_t *FWarpTexture::GetPixelsBgra()
 {
 	auto Pixels = GetPixels(DefaultRenderStyle());
-	if (PixelsBgra.empty() || GenTime[0] != GenTimeBgra)
+	if (PixelsBgra.Size() == 0 || GenTime[0] != GenTimeBgra)
 	{
 		CreatePixelsBgraWithMipmaps();
 		for (int i = 0; i < GetWidth() * GetHeight(); i++)
@@ -70,7 +70,7 @@ const uint32_t *FWarpTexture::GetPixelsBgra()
 		GenerateBgraMipmapsFast();
 		GenTimeBgra = GenTime[0];
 	}
-	return PixelsBgra.data();
+	return PixelsBgra.Data();
 }
 
 

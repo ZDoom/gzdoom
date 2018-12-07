@@ -373,7 +373,7 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader &lump, uint32_t &prevSpea
 	for (j = 0; j < 3; ++j)
 	{
 		auto inv = GetStrifeType(speech.ItemCheck[j]);
-		if (!inv->IsDescendantOf(RUNTIME_CLASS(AInventory))) inv = nullptr;
+		if (!inv->IsDescendantOf(NAME_Inventory)) inv = nullptr;
 		node->ItemCheck[j].Item = inv;
 		node->ItemCheck[j].Amount = -1;
 	}
@@ -519,7 +519,7 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 		for (k = 0; k < 3; ++k)
 		{
 			auto inv = GetStrifeType(rsp->Item[k]);
-			if (!inv->IsDescendantOf(RUNTIME_CLASS(AInventory))) inv = nullptr;
+			if (!inv->IsDescendantOf(NAME_Inventory)) inv = nullptr;
 			reply->ItemCheck[k].Item = inv;
 			reply->ItemCheck[k].Amount = rsp->Count[k];
 		}
@@ -603,16 +603,14 @@ static int FindNode (const FStrifeDialogueNode *node)
 
 static bool CheckStrifeItem (player_t *player, PClassActor *itemtype, int amount=-1)
 {
-	AInventory *item;
-
 	if (itemtype == NULL || amount == 0)
 		return true;
 
-	item = player->ConversationPC->FindInventory (itemtype);
+	auto item = player->ConversationPC->FindInventory (itemtype);
 	if (item == NULL)
 		return false;
 
-	return amount < 0 || item->Amount >= amount;
+	return amount < 0 || item->IntVar(NAME_Amount) >= amount;
 }
 
 //============================================================================
@@ -641,7 +639,11 @@ static void TakeStrifeItem (player_t *player, PClassActor *itemtype, int amount)
 	if (itemtype->TypeName == NAME_Sigil)
 		return;
 
-	player->mo->TakeInventory(itemtype, amount);
+	IFVM(Actor, TakeInventory)
+	{
+		VMValue params[] = { player->mo, itemtype, amount, false, false };
+		VMCall(func, params, 5, nullptr, 0);
+	}
 }
 
 CUSTOM_CVAR(Float, dlg_musicvolume, 1.0f, CVAR_ARCHIVE)
@@ -947,7 +949,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	takestuff = true;
 	if (reply->GiveType != NULL)
 	{
-		if (reply->GiveType->IsDescendantOf(RUNTIME_CLASS(AInventory)))
+		if (reply->GiveType->IsDescendantOf(NAME_Inventory))
 		{
 			if (reply->GiveType->IsDescendantOf(NAME_Weapon))
 			{
@@ -959,16 +961,16 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	
 			if (takestuff)
 			{
-				AInventory *item = static_cast<AInventory *>(Spawn(reply->GiveType));
+				auto item = Spawn(reply->GiveType);
 				// Items given here should not count as items!
 				item->ClearCounters();
 				if (item->GetClass()->TypeName == NAME_FlameThrower)
 				{
 					// The flame thrower gives less ammo when given in a dialog
-					static_cast<AWeapon*>(item)->AmmoGive1 = 40;
+					item->IntVar(NAME_AmmoGive1) = 40;
 				}
 				item->flags |= MF_DROPPED;
-				if (!item->CallTryPickup(player->mo))
+				if (!CallTryPickup(item, player->mo))
 				{
 					item->Destroy();
 					takestuff = false;

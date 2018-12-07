@@ -144,7 +144,7 @@ struct HWDrawInfo
 	HWDrawInfo * outer = nullptr;
 	int FullbrightFlags;
 	std::atomic<int> spriteindex;
-	HWScenePortalBase *mClipPortal;
+	HWPortal *mClipPortal;
 	HWPortal *mCurrentPortal;
 	//FRotator mAngles;
 	Clipper *mClipper;
@@ -192,8 +192,6 @@ private:
 
 	subsector_t *currentsubsector;	// used by the line processing code.
 	sector_t *currentsector;
-
-    sector_t fakesec;    // this is a struct member because it gets used in recursively called functions so it cannot be put on the stack.
 
 	void WorkerThread();
 
@@ -303,6 +301,7 @@ public:
 	void DrawPlayerSprites(bool hudModelStep, FRenderState &state);
 
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs);
+    void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub);
     
     void AddWall(GLWall *w);
     void AddMirrorSurface(GLWall *w);

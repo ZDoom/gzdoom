@@ -38,6 +38,7 @@
 #include "doomdata.h"
 #include "g_level.h"
 #include "r_defs.h"
+#include "r_sky.h"
 #include "portal.h"
 #include "p_blockmap.h"
 #include "p_local.h"
@@ -47,6 +48,7 @@
 struct FLevelLocals
 {
 	void Tick ();
+	void Mark();
 	void AddScroller (int secnum);
 	void SetInterMusic(const char *nextmap);
 	void SetMusicVolume(float v);
@@ -85,6 +87,11 @@ struct FLevelLocals
 	TArray<node_t> gamenodes;
 	node_t *headgamenode;
 	TArray<uint8_t> rejectmatrix;
+	
+	static const int BODYQUESIZE = 32;
+	TObjPtr<AActor*> bodyque[BODYQUESIZE];
+	int bodyqueslot;
+
 
 	TArray<FSectorPortal> sectorPortals;
 	TArray<FLinePortal> linePortals;
@@ -186,6 +193,7 @@ struct FLevelLocals
 	int outsidefogdensity;
 	int skyfog;
 
+	FName		deathsequence;
 	float		pixelstretch;
 	float		MusicVolume;
 
@@ -334,4 +342,11 @@ inline line_t *line_t::getPortalDestination() const
 inline int line_t::getPortalAlignment() const
 {
 	return portalindex >= level.linePortals.Size() ? 0 : level.linePortals[portalindex].mAlign;
+}
+
+inline bool line_t::hitSkyWall(AActor* mo) const
+{
+	return backsector &&
+		backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
+		mo->Z() >= backsector->ceilingplane.ZatPoint(mo->PosRelative(this));
 }

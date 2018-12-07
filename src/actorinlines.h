@@ -20,7 +20,7 @@ inline DVector3 AActor::PosRelative(sector_t *sec) const
 	return Pos() + level.Displacements.getOffset(Sector->PortalGroup, sec->PortalGroup);
 }
 
-inline DVector3 AActor::PosRelative(line_t *line) const
+inline DVector3 AActor::PosRelative(const line_t *line) const
 {
 	return Pos() + level.Displacements.getOffset(Sector->PortalGroup, line->frontsector->PortalGroup);
 }
@@ -46,11 +46,36 @@ inline double secplane_t::ZatPoint(const AActor *ac) const
 
 inline double sector_t::HighestCeilingAt(AActor *a, sector_t **resultsec)
 {
-	return HighestCeilingAt(a->Pos(), resultsec);
+	return ::HighestCeilingAt(this, a->X(), a->Y(), resultsec);
 }
 
 inline double sector_t::LowestFloorAt(AActor *a, sector_t **resultsec)
 {
-	return LowestFloorAt(a->Pos(), resultsec);
+	return ::LowestFloorAt(this, a->X(), a->Y(), resultsec);
 }
 
+inline double AActor::GetBobOffset(double ticfrac) const
+{
+	if (!(flags2 & MF2_FLOATBOB))
+	{
+		return 0;
+	}
+	return BobSin(FloatBobPhase + level.maptime + ticfrac) * FloatBobStrength;
+}
+
+inline double AActor::GetCameraHeight() const
+{
+	return CameraHeight == INT_MIN ? Height / 2 : CameraHeight;
+}
+
+
+inline FDropItem *AActor::GetDropItems() const
+{
+	return GetInfo()->DropItems;
+}
+
+inline double AActor::GetGravity() const
+{
+	if (flags & MF_NOGRAVITY) return 0;
+	return level.gravity * Sector->gravity * Gravity * 0.00125;
+}

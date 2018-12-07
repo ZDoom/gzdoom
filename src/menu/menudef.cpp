@@ -477,7 +477,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 					}
 					DMenuItemBase *item = (DMenuItemBase*)cls->CreateNew();
 					params[0] = item;
-					VMCall(func->Variants[0].Implementation, &params[0], params.Size(), nullptr, 0);
+					VMCallWithDefaults(func->Variants[0].Implementation, params, nullptr, 0);
 					desc->mItems.Push((DMenuItemBase*)item);
 
 					if (cls->IsDescendantOf("ListMenuItemSelectable"))
@@ -917,7 +917,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 
 					DMenuItemBase *item = (DMenuItemBase*)cls->CreateNew();
 					params[0] = item;
-					VMCall(func->Variants[0].Implementation, &params[0], params.Size(), nullptr, 0);
+					VMCallWithDefaults(func->Variants[0].Implementation, params, nullptr, 0);
 					desc->mItems.Push((DMenuItemBase*)item);
 
 					success = true;

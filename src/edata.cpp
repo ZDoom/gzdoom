@@ -735,7 +735,7 @@ void ProcessEDSector(sector_t *sec, int recordnum)
 	sec->terrainnum[sector_t::floor] = esec->floorterrain;
 	sec->terrainnum[sector_t::ceiling] = esec->ceilingterrain;
 
-	if (esec->colorSet) sec->SetColor(RPART(esec->color), GPART(esec->color), BPART(esec->color), 0);
+	if (esec->colorSet) sec->SetColor(esec->color, 0);
 
 	const uint32_t pflagmask = PLANEF_DISABLED | PLANEF_NORENDER | PLANEF_NOPASS | PLANEF_BLOCKSOUND | PLANEF_ADDITIVE;
 	for (int i = 0; i < 2; i++)

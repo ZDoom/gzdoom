@@ -26,7 +26,6 @@
 */
 
 #include "c_dispatch.h"
-#include "portal.h"
 #include "p_maputl.h"
 #include "hw_portal.h"
 #include "hw_clipper.h"
@@ -141,6 +140,14 @@ bool FPortalSceneState::RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di
 				best = p;
 				bestindex = i;
 			}
+
+			// If the portal area contains the current camera viewpoint, let's always use it because it's likely to give the largest area.
+			if (p->boundingBox.contains(outer_di->Viewpoint.Pos))
+			{
+				best = p;
+				bestindex = i;
+				break;
+			}
 		}
 	}
 
@@ -172,13 +179,41 @@ void HWPortal::DrawPortalStencil(FRenderState &state, int pass)
 	if (mPrimIndices.Size() == 0)
 	{
 		mPrimIndices.Resize(2 * lines.Size());
-
+		
 		for (unsigned int i = 0; i < lines.Size(); i++)
 		{
 			mPrimIndices[i * 2] = lines[i].vertindex;
 			mPrimIndices[i * 2 + 1] = lines[i].vertcount;
 		}
+
+		if (NeedCap() && lines.Size() > 1 && planesused != 0)
+		{
+			screen->mVertexData->Map();
+			if (planesused & (1 << sector_t::floor))
+			{
+				auto verts = screen->mVertexData->AllocVertices(4);
+				auto ptr = verts.first;
+				ptr[0].Set((float)boundingBox.left, -32767.f, (float)boundingBox.top, 0, 0);
+				ptr[1].Set((float)boundingBox.right, -32767.f, (float)boundingBox.top, 0, 0);
+				ptr[2].Set((float)boundingBox.left, -32767.f, (float)boundingBox.bottom, 0, 0);
+				ptr[3].Set((float)boundingBox.right, -32767.f, (float)boundingBox.bottom, 0, 0);
+				mBottomCap = verts.second;
+			}
+			if (planesused & (1 << sector_t::ceiling))
+			{
+				auto verts = screen->mVertexData->AllocVertices(4);
+				auto ptr = verts.first;
+				ptr[0].Set((float)boundingBox.left, 32767.f, (float)boundingBox.top, 0, 0);
+				ptr[1].Set((float)boundingBox.right, 32767.f, (float)boundingBox.top, 0, 0);
+				ptr[2].Set((float)boundingBox.left, 32767.f, (float)boundingBox.bottom, 0, 0);
+				ptr[3].Set((float)boundingBox.right, 32767.f, (float)boundingBox.bottom, 0, 0);
+				mTopCap = verts.second;
+			}
+			screen->mVertexData->Unmap();
+		}
+
 	}
+	
 	for (unsigned int i = 0; i < mPrimIndices.Size(); i += 2)
 	{
 		state.Draw(DT_TriangleFan, mPrimIndices[i], mPrimIndices[i + 1], i == 0);
@@ -187,11 +222,20 @@ void HWPortal::DrawPortalStencil(FRenderState &state, int pass)
 	{
 		// The cap's depth handling needs special treatment so that it won't block further portal caps.
 		if (pass == STP_DepthRestore) state.SetDepthRange(1, 1);
-		state.Draw(DT_TriangleFan, FFlatVertexBuffer::STENCILTOP_INDEX, 4);
-		state.Draw(DT_TriangleFan, FFlatVertexBuffer::STENCILBOTTOM_INDEX, 4);
+
+		if (mBottomCap != ~0u)
+		{
+			state.Draw(DT_TriangleStrip, mBottomCap, 4, false);
+		}
+		if (mTopCap != ~0u)
+		{
+			state.Draw(DT_TriangleStrip, mTopCap, 4, false);
+		}
+
 		if (pass == STP_DepthRestore) state.SetDepthRange(0, 1);
 	}
 }
+
 
 //-----------------------------------------------------------------------------
 //
@@ -204,53 +248,60 @@ void HWPortal::SetupStencil(HWDrawInfo *di, FRenderState &state, bool usestencil
 	Clocker c(PortalAll);
 
 	rendered_portals++;
+	
 	if (usestencil)
 	{
-		// Create stencil 
+		// Create stencil
+		state.SetStencil(0, SOP_Increment);	// create stencil, increment stencil of valid pixels
+		state.SetColorMask(false);
 		state.SetEffect(EFF_STENCIL);
 		state.EnableTexture(false);
 		state.ResetColor();
-
+		state.SetDepthFunc(DF_Less);
+			
 		if (NeedDepthBuffer())
 		{
-			state.SetStencil(0, SOP_Increment, SF_ColorMaskOff | SF_DepthMaskOff);
-			state.SetDepthFunc(DF_Less);
+			state.SetDepthMask(false);							// don't write to Z-buffer!
+				
 			DrawPortalStencil(state, STP_Stencil);
-
+				
 			// Clear Z-buffer
-			state.SetStencil(1, SOP_Keep, SF_ColorMaskOff);
+			state.SetStencil(1, SOP_Keep); // draw sky into stencil. This stage doesn't modify the stencil.
+			state.SetDepthMask(true);							// enable z-buffer again
 			state.SetDepthRange(1, 1);
 			state.SetDepthFunc(DF_Always);
 			DrawPortalStencil(state, STP_DepthClear);
-
+				
 			// set normal drawing mode
 			state.EnableTexture(true);
-			state.SetStencil(1, SOP_Keep, SF_AllOn);
 			state.SetDepthRange(0, 1);
 			state.SetDepthFunc(DF_Less);
+			state.SetColorMask(true);
 			state.SetEffect(EFF_NONE);
 		}
 		else
 		{
 			// No z-buffer is needed therefore we can skip all the complicated stuff that is involved
 			// Note: We must draw the stencil with z-write enabled here because there is no second pass!
-			state.SetStencil(0, SOP_Increment, SF_ColorMaskOff);
-			state.SetDepthFunc(DF_Less);
+				
+			state.SetDepthMask(true);
 			DrawPortalStencil(state, STP_AllInOne);
-
-			state.SetStencil(1, SOP_Keep, SF_DepthMaskOff);
-			state.EnableDepthTest(false);
+			state.SetStencil(1, SOP_Keep); // draw sky into stencil. This stage doesn't modify the stencil.
 			state.EnableTexture(true);
+			state.SetColorMask(true);
 			state.SetEffect(EFF_NONE);
+			state.EnableDepthTest(false);
+			state.SetDepthMask(false);							// don't write to Z-buffer!
 		}
-
 		screen->stencilValue++;
+		
+		
 	}
 	else
 	{
 		if (!NeedDepthBuffer())
 		{
-			state.SetStencil(0, SOP_Keep, SF_DepthMaskOff);
+			state.SetDepthMask(false);
 			state.EnableDepthTest(false);
 		}
 	}
@@ -259,6 +310,12 @@ void HWPortal::SetupStencil(HWDrawInfo *di, FRenderState &state, bool usestencil
 	savedvisibility = di->Viewpoint.camera ? di->Viewpoint.camera->renderflags & RF_MAYBEINVISIBLE : ActorRenderFlags::FromInt(0);
 }
 
+
+//-----------------------------------------------------------------------------
+//
+// End
+//
+//-----------------------------------------------------------------------------
 void HWPortal::RemoveStencil(HWDrawInfo *di, FRenderState &state, bool usestencil)
 {
 	Clocker c(PortalAll);
@@ -268,51 +325,71 @@ void HWPortal::RemoveStencil(HWDrawInfo *di, FRenderState &state, bool usestenci
 	auto &vp = di->Viewpoint;
 	if (vp.camera != nullptr) vp.camera->renderflags = (vp.camera->renderflags & ~RF_MAYBEINVISIBLE) | savedvisibility;
 
-	state.EnableDepthTest(true);
 	if (usestencil)
 	{
+		
+		state.SetColorMask(false);						// no graphics
 		state.SetEffect(EFF_NONE);
 		state.ResetColor();
 		state.EnableTexture(false);
-
+		
 		if (needdepth)
 		{
 			// first step: reset the depth buffer to max. depth
-			state.SetStencil(0, SOP_Keep, SF_ColorMaskOff);
 			state.SetDepthRange(1, 1);							// always
 			state.SetDepthFunc(DF_Always);						// write the farthest depth value
 			DrawPortalStencil(state, STP_DepthClear);
 		}
-
+		else
+		{
+			state.EnableDepthTest(true);
+		}
+		
 		// second step: restore the depth buffer to the previous values and reset the stencil
-		state.SetStencil(0, SOP_Decrement, SF_ColorMaskOff);
-		state.SetDepthRange(0, 1);
 		state.SetDepthFunc(DF_LEqual);
+		state.SetDepthRange(0, 1);
+		state.SetStencil(0, SOP_Decrement);
 		DrawPortalStencil(state, STP_DepthRestore);
-
+		state.SetDepthFunc(DF_Less);
+		
+		
 		state.EnableTexture(true);
 		state.SetEffect(EFF_NONE);
+		state.SetColorMask(true);
 		screen->stencilValue--;
+		
+		// restore old stencil op.
+		state.SetStencil(0, SOP_Keep);
 	}
 	else
 	{
+		if (needdepth)
+		{
+			state.Clear(CT_Depth);
+		}
+		else
+		{
+			state.EnableDepthTest(true);
+			state.SetDepthMask(true);
+		}
+		
+		// This draws a valid z-buffer into the stencil's contents to ensure it
+		// doesn't get overwritten by the level's geometry.
+		
 		state.ResetColor();
+		state.SetDepthFunc(DF_LEqual);
+		state.SetDepthRange(0, 1);
+		state.SetColorMask(0, 0, 0, 1); // mark portal in alpha channel but don't touch color
 		state.SetEffect(EFF_STENCIL);
 		state.EnableTexture(false);
 		state.SetRenderStyle(STYLE_Source);
-
-		state.SetStencil(0, SOP_Keep, SF_ColorMaskOff | SF_ColorMaskAlpha);	// SSAO needs the alpha channel as a marker.
-		if (needdepth) state.Clear(CT_Depth);
-		state.SetDepthRange(0, 1);
-		state.SetDepthFunc(DF_LEqual);
 		DrawPortalStencil(state, STP_DepthRestore);
-
 		state.SetEffect(EFF_NONE);
 		state.EnableTexture(true);
+		state.SetColorMask(true);
+		state.SetDepthFunc(DF_Less);
 	}
-	state.SetStencil(0, SOP_Keep, SF_AllOn);
 }
-
 
 
 //-----------------------------------------------------------------------------
@@ -328,7 +405,6 @@ void HWScenePortalBase::ClearClipper(HWDrawInfo *di, Clipper *clipper)
 
 	clipper->Clear();
 
-	auto &lines = mOwner->lines;
 	// Set the clipper to the minimal visible area
 	clipper->SafeAddClipRange(0, 0xffffffff);
 	for (unsigned int i = 0; i < lines.Size(); i++)
@@ -409,7 +485,7 @@ int HWLinePortal::ClipPoint(const DVector2 &pos)
 
 bool HWMirrorPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *clipper)
 {
-	auto state = mOwner->mState;
+	auto state = mState;
 	if (state->renderdepth > r_mirror_recursions)
 	{
 		return false;
@@ -490,7 +566,7 @@ bool HWMirrorPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *clippe
 
 void HWMirrorPortal::Shutdown(HWDrawInfo *di, FRenderState &rstate)
 {
-	mOwner->mState->MirrorFlag--;
+	mState->MirrorFlag--;
 }
 
 const char *HWMirrorPortal::GetName() { return "Mirror"; }
@@ -513,7 +589,7 @@ const char *HWMirrorPortal::GetName() { return "Mirror"; }
 bool HWLineToLinePortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *clipper)
 {
 	// TODO: Handle recursion more intelligently
-	auto &state = mOwner->mState;
+	auto &state = mState;
 	if (state->renderdepth>r_mirror_recursions)
 	{
 		return false;
@@ -543,7 +619,6 @@ bool HWLineToLinePortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *cl
 		}
 	}
 
-	auto &lines = mOwner->lines;
 
 	for (unsigned i = 0; i < lines.Size(); i++)
 	{
@@ -589,10 +664,10 @@ const char *HWLineToLinePortal::GetName() { return "LineToLine"; }
 
 bool HWSkyboxPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *clipper)
 {
-	auto state = mOwner->mState;
+	auto state = mState;
 	old_pm = state->PlaneMirrorMode;
 
-	if (mOwner->mState->skyboxrecursion >= 3)
+	if (mState->skyboxrecursion >= 3)
 	{
 		return false;
 	}
@@ -631,7 +706,7 @@ void HWSkyboxPortal::Shutdown(HWDrawInfo *di, FRenderState &rstate)
 {
 	rstate.SetDepthClamp(oldclamp);
 
-	auto state = mOwner->mState;
+	auto state = mState;
 	portal->mFlags &= ~PORTSF_INSKYBOX;
 	state->inskybox = false;
 	state->skyboxrecursion--;
@@ -699,7 +774,7 @@ void HWSectorStackPortal::SetupCoverage(HWDrawInfo *di)
 //-----------------------------------------------------------------------------
 bool HWSectorStackPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *clipper)
 {
-	auto state = mOwner->mState;
+	auto state = mState;
 	FSectorPortalGroup *portal = origin;
 	auto &vp = di->Viewpoint;
 
@@ -751,7 +826,7 @@ const char *HWSectorStackPortal::GetName() { return "Sectorstack"; }
 
 bool HWPlaneMirrorPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *clipper)
 {
-	auto state = mOwner->mState;
+	auto state = mState;
 	if (state->renderdepth > r_mirror_recursions)
 	{
 		return false;
@@ -781,7 +856,7 @@ bool HWPlaneMirrorPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *c
 
 void HWPlaneMirrorPortal::Shutdown(HWDrawInfo *di, FRenderState &rstate)
 {
-	auto state = mOwner->mState;
+	auto state = mState;
 	state->PlaneMirrorFlag--;
 	state->PlaneMirrorMode = old_pm;
 	std::swap(screen->instack[sector_t::floor], screen->instack[sector_t::ceiling]);
@@ -800,8 +875,8 @@ const char *HWPlaneMirrorPortal::GetName() { return origin->fC() < 0? "Planemirr
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-HWHorizonPortal::HWHorizonPortal(FPortalSceneState *s, GLHorizonInfo * pt, FRenderViewpoint &vp, HWDrawInfo *di, bool local)
-	: HWPortal(s, local)
+HWHorizonPortal::HWHorizonPortal(FPortalSceneState *s, GLHorizonInfo * pt, FRenderViewpoint &vp, bool local)
+: HWPortal(s, local)
 {
 	origin = pt;
 
@@ -960,7 +1035,7 @@ void HWEEHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 		{
 			horz.plane.Texheight = vp.Pos.Z + fabs(horz.plane.Texheight);
 		}
-		HWHorizonPortal ceil(mState, &horz, di->Viewpoint, di, true);
+		HWHorizonPortal ceil(mState, &horz, di->Viewpoint, true);
 		ceil.DrawContents(di, state);
 	}
 	if (sector->GetTexture(sector_t::floor) != skyflatnum)
@@ -974,7 +1049,7 @@ void HWEEHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 		{
 			horz.plane.Texheight = vp.Pos.Z - fabs(horz.plane.Texheight);
 		}
-		HWHorizonPortal floor(mState, &horz, di->Viewpoint, di, true);
+		HWHorizonPortal floor(mState, &horz, di->Viewpoint, true);
 		floor.DrawContents(di, state);
 	}
 }

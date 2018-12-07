@@ -323,15 +323,12 @@ void FParseContext::ParseLump(const char *lumpname)
 	}
 
 	// Read the lump into a buffer and add a 0-terminator
-	int lumplen = Wads.LumpLength(lumpno);
-	char *lumpdata = new char[lumplen+1];
-	Wads.ReadLump(lumpno, lumpdata);
-	lumpdata[lumplen] = 0;
+	auto lumpdata = Wads.ReadLumpIntoArray(lumpno, 1);
 
 	SourceLine = 0;
 	SourceFile = lumpname;
 
-	char *sourcep = lumpdata;
+	char *sourcep = (char*)lumpdata.Data();
 	while ( (tokentype = GetToken(sourcep, &token)) )
 	{
 		// It is much easier to handle include statements outside the main parser.
@@ -349,7 +346,6 @@ void FParseContext::ParseLump(const char *lumpname)
 			Parse(pParser, tokentype, token, this);
 		}
 	}
-	delete [] lumpdata;
 	SourceLine = SavedSourceLine;
 	SourceFile = SavedSourceFile;
 }

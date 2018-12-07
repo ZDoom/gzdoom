@@ -205,7 +205,7 @@ class BaseStatusBar native ui
 		DI_ITEM_VMASK = 0x180000,
 			
 		DI_ITEM_LEFT = 0x200000,
-		DI_ITEM_HCENTER = 0,	// this is the deafault horizontal alignment
+		DI_ITEM_HCENTER = 0,	// this is the default horizontal alignment
 		DI_ITEM_RIGHT = 0x400000,
 		DI_ITEM_HOFFSET = 0x600000,
 		DI_ITEM_HMASK = 0x600000,
@@ -297,8 +297,8 @@ class BaseStatusBar native ui
 	native PlayerInfo CPlayer;
 	native bool ShowLog;
 	native Vector2 defaultScale;	// factor for fully scaled fullscreen display.
-	native int artiflashTick;
-	native double itemflashFade;
+	clearscope native int artiflashTick;
+	clearscope native double itemflashFade;
 
 	// These are block properties for the drawers. A child class can set them to have a block of items use the same settings.
 	native double Alpha;
@@ -331,7 +331,7 @@ class BaseStatusBar native ui
 	native virtual clearscope void ReceivedWeapon (Weapon weapn);
 	native virtual clearscope void SetMugShotState (String state_name, bool wait_till_done=false, bool reset=false);
 
-	virtual void FlashItem (class<Inventory> itemtype) { artiflashTick = 4; itemflashFade = 0.75; }
+	clearscope virtual void FlashItem (class<Inventory> itemtype) { artiflashTick = 4; itemflashFade = 0.75; }
 	virtual void AttachToPlayer (PlayerInfo player) { CPlayer = player; UpdateScreenGeometry(); }
 	virtual void FlashCrosshair () { CrosshairSize = XHAIRPICKUPSIZE; }
 	virtual void NewGame () { if (CPlayer != null) AttachToPlayer(CPlayer); }
@@ -341,7 +341,6 @@ class BaseStatusBar native ui
 	native TextureID GetMugshot(int accuracy, int stateflags=MugShot.STANDARD, String default_face = "STF");
 	
 	// These functions are kept native solely for performance reasons. They get called repeatedly and can drag down performance easily if they get too slow.
-	native Inventory ValidateInvFirst (int numVisible) const;
 	native static TextureID, bool GetInventoryIcon(Inventory item, int flags);
 	native void DrawTexture(TextureID texture, Vector2 pos, int flags = 0, double Alpha = 1., Vector2 box = (-1, -1), Vector2 scale = (1, 1));
 	native void DrawImage(String texture, Vector2 pos, int flags = 0, double Alpha = 1., Vector2 box = (-1, -1), Vector2 scale = (1, 1));
@@ -356,6 +355,95 @@ class BaseStatusBar native ui
 	void ClearClipRect()
 	{
 		screen.ClearClipRect();
+	}
+	
+	//---------------------------------------------------------------------------
+	//
+	// ValidateInvFirst
+	//
+	// Returns an inventory item that, when drawn as the first item, is sure to
+	// include the selected item in the inventory bar.
+	//
+	//---------------------------------------------------------------------------
+
+	Inventory ValidateInvFirst (int numVisible) const
+	{
+		Inventory item;
+		int i;
+		let pmo = CPlayer.mo;
+
+		if (pmo.InvFirst == NULL)
+		{
+			pmo.InvFirst = pmo.FirstInv();
+			if (pmo.InvFirst == NULL)
+			{ // Nothing to show
+				return NULL;
+			}
+		}
+
+		// If there are fewer than numVisible items shown, see if we can shift the
+		// view left to show more.
+		for (i = 0, item = pmo.InvFirst; item != NULL && i < numVisible; ++i, item = item.NextInv())
+		{ }
+
+		while (i < numVisible)
+		{
+			item = pmo.InvFirst.PrevInv ();
+			if (item == NULL)
+			{
+				break;
+			}
+			else
+			{
+				pmo.InvFirst = item;
+				++i;
+			}
+		}
+
+		if (pmo.InvSel == NULL)
+		{
+			// Nothing selected, so don't move the view.
+			return pmo.InvFirst == NULL ? pmo.Inv : pmo.InvFirst;
+		}
+		else
+		{
+			// Check if InvSel is already visible
+			for (item = pmo.InvFirst, i = numVisible;
+				 item != NULL && i != 0;
+				 item = item.NextInv(), --i)
+			{
+				if (item == pmo.InvSel)
+				{
+					return pmo.InvFirst;
+				}
+			}
+			// Check if InvSel is to the right of the visible range
+			for (i = 1; item != NULL; item = item.NextInv(), ++i)
+			{
+				if (item == pmo.InvSel)
+				{
+					// Found it. Now advance InvFirst
+					for (item = pmo.InvFirst; i != 0; --i)
+					{
+						item = item.NextInv();
+					}
+					return item;
+				}
+			}
+			// Check if InvSel is to the left of the visible range
+			for (item = pmo.Inv;
+				item != pmo.InvSel;
+				item = item.NextInv())
+			{ }
+			if (item != NULL)
+			{
+				// Found it, so let it become the first item shown
+				return item;
+			}
+			// Didn't find the selected item, so don't move the view.
+			// This should never happen.
+			return pmo.InvFirst;
+		}
 	}
 	
 	//============================================================================
@@ -1140,7 +1228,7 @@ class LinearValueInterpolator : Object
 		mCurrentValue = value;
 	}
 	
-	// This must be called peroiodically in the status bar's Tick function.
+	// This must be called periodically in the status bar's Tick function.
 	// Do not call this in the Draw function because that may skip some frames!
 	void Update(int destvalue)
 	{
@@ -1184,7 +1272,7 @@ class DynamicValueInterpolator : Object
 		mCurrentValue = value;
 	}
 	
-	// This must be called peroiodically in the status bar's Tick function.
+	// This must be called periodically in the status bar's Tick function.
 	// Do not call this in the Draw function because that may skip some frames!
 	void Update(int destvalue)
 	{

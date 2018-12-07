@@ -150,6 +150,7 @@ static void InitTokenMap()
 	TOKENDEF ('}',				ZCC_RBRACE);
 	TOKENDEF (TK_Struct,		ZCC_STRUCT);
 	TOKENDEF (TK_Property,		ZCC_PROPERTY);
+	TOKENDEF (TK_FlagDef,		ZCC_FLAGDEF);
 	TOKENDEF (TK_Transient,		ZCC_TRANSIENT);
 	TOKENDEF (TK_Enum,			ZCC_ENUM);
 	TOKENDEF2(TK_SByte,			ZCC_SBYTE,		NAME_sByte);
@@ -443,7 +444,7 @@ static void DoParse(int lumpnum)
 	// If the parser fails, there is no point starting the compiler, because it'd only flood the output with endless errors.
 	if (FScriptPosition::ErrorCounter > 0)
 	{
-		I_Error("%d errors while parsing %s", FScriptPosition::ErrorCounter, Wads.GetLumpFullPath(lumpnum).GetChars());
+		I_Error("%d errors while parsing %s", FScriptPosition::ErrorCounter, Wads.GetLumpFullPath(baselump).GetChars());
 	}
 
 #ifndef NDEBUG
@@ -457,7 +458,7 @@ static void DoParse(int lumpnum)
 	if (Args->CheckParm("-dumpast"))
 	{
 		FString ast = ZCC_PrintAST(state.TopNode);
-		FString filename = Wads.GetLumpFullPath(lumpnum);
+		FString filename = Wads.GetLumpFullPath(baselump);
 		filename.ReplaceChars(":\\/?|", '.');
 		filename << ".ast";
 		FileWriter *ff = FileWriter::Open(filename);
@@ -469,19 +470,19 @@ static void DoParse(int lumpnum)
 	}
 
 	PSymbolTable symtable;
-	auto newns = Wads.GetLumpFile(lumpnum) == 0 ? Namespaces.GlobalNamespace : Namespaces.NewNamespace(Wads.GetLumpFile(lumpnum));
-	ZCCCompiler cc(state, NULL, symtable, newns, lumpnum, state.ParseVersion);
+	auto newns = Wads.GetLumpFile(baselump) == 0 ? Namespaces.GlobalNamespace : Namespaces.NewNamespace(Wads.GetLumpFile(baselump));
+	ZCCCompiler cc(state, NULL, symtable, newns, baselump, state.ParseVersion);
 	cc.Compile();
 
 	if (FScriptPosition::ErrorCounter > 0)
 	{
 		// Abort if the compiler produced any errors. Also do not compile further lumps, because they very likely miss some stuff.
-		I_Error("%d errors, %d warnings while compiling %s", FScriptPosition::ErrorCounter, FScriptPosition::WarnCounter, Wads.GetLumpFullPath(lumpnum).GetChars());
+		I_Error("%d errors, %d warnings while compiling %s", FScriptPosition::ErrorCounter, FScriptPosition::WarnCounter, Wads.GetLumpFullPath(baselump).GetChars());
 	}
 	else if (FScriptPosition::WarnCounter > 0)
 	{
 		// If we got warnings, but no errors, print the information but continue.
-		Printf(TEXTCOLOR_ORANGE "%d warnings while compiling %s\n", FScriptPosition::WarnCounter, Wads.GetLumpFullPath(lumpnum).GetChars());
+		Printf(TEXTCOLOR_ORANGE "%d warnings while compiling %s\n", FScriptPosition::WarnCounter, Wads.GetLumpFullPath(baselump).GetChars());
 	}
 
 }

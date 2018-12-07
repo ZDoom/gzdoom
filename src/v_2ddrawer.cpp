@@ -40,7 +40,7 @@ IMPLEMENT_CLASS(DShape2D, false, false)
 DEFINE_ACTION_FUNCTION(DShape2D, Clear)
 {
 	PARAM_SELF_PROLOGUE(DShape2D);
-	PARAM_INT_DEF(which);
+	PARAM_INT(which);
 	if ( which&C_Verts ) self->mVertices.Clear();
 	if ( which&C_Coords ) self->mCoords.Clear();
 	if ( which&C_Indices ) self->mIndices.Clear();
@@ -419,7 +419,8 @@ void F2DDrawer::AddShape( FTexture *img, DShape2D *shape, DrawParms &parms )
 
 void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
-		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel)
+		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel,
+		uint32_t *indices, size_t indexcount)
 {
 	// Use an equation similar to player sprites to determine shade
 
@@ -487,9 +488,20 @@ void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 	poly.mIndexIndex = mIndices.Size();
 	poly.mIndexCount += (npoints - 2) * 3;
 
-	for (int i = 2; i < npoints; ++i)
+	if (indices == nullptr || indexcount == 0)
 	{
-		AddIndices(poly.mVertIndex, 3, 0, i - 1, i);
+		for (int i = 2; i < npoints; ++i)
+		{
+			AddIndices(poly.mVertIndex, 3, 0, i - 1, i);
+		}
+	}
+	else
+	{
+		int addr = mIndices.Reserve(indexcount);
+		for (size_t i = 0; i < indexcount; i++)
+		{
+			mIndices[addr + i] = addr + indices[i];
+		}
 	}
 
 	AddCommand(&poly);

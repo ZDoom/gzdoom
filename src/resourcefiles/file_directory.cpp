@@ -102,9 +102,9 @@ FDirectory::FDirectory(const char * directory)
 	#ifdef _WIN32
 		free((void *)directory);
 	#endif
-	dirname.ReplaceChars('\\', '/');
+	FixPathSeperator(dirname);
 	if (dirname[dirname.Len()-1] != '/') dirname += '/';
-	Filename = copystring(dirname);
+	FileName = dirname;
 }
 
 
@@ -195,7 +195,7 @@ int FDirectory::AddDirectory(const char *dirpath)
 		return 0;
 	}
 
-	const size_t namepos = strlen(Filename);
+	const size_t namepos = strlen(FileName);
 	FString pathfix;
 
 	while ((ent = fts_read(fts)) != NULL)
@@ -248,7 +248,7 @@ int FDirectory::AddDirectory(const char *dirpath)
 
 bool FDirectory::Open(bool quiet)
 {
-	NumLumps = AddDirectory(Filename);
+	NumLumps = AddDirectory(FileName);
 	if (!quiet) Printf(", %d lumps\n", NumLumps);
 	PostProcessArchive(&Lumps[0], sizeof(FDirectoryLump));
 	return true;
@@ -268,7 +268,7 @@ void FDirectory::AddEntry(const char *fullpath, int size)
 	lump_p->mFullPath = fullpath;
 
 	// [mxd] Convert name to lowercase
-	FString name = fullpath + strlen(Filename);
+	FString name = fullpath + strlen(FileName);
 	name.ToLower();
 
 	// The lump's name is only the part relative to the main directory

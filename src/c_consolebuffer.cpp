@@ -150,9 +150,9 @@ void FConsoleBuffer::AddText(int printlevel, const char *text, FILE *logfile)
 void FConsoleBuffer::WriteLineToLog(FILE *LogFile, const char *outline)
 {
 	// Strip out any color escape sequences before writing to the log file
-	char * copy = new char[strlen(outline)+1];
+	TArray<char> copy(strlen(outline)+1);
 	const char * srcp = outline;
-	char * dstp = copy;
+	char * dstp = copy.Data();
 
 	while (*srcp != 0)
 	{
@@ -193,8 +193,7 @@ void FConsoleBuffer::WriteLineToLog(FILE *LogFile, const char *outline)
 	}
 	*dstp=0;
 
-	fputs (copy, LogFile);
-	delete [] copy;
+	fputs (copy.Data(), LogFile);
 	fflush (LogFile);
 }
 

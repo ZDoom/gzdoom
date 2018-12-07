@@ -55,7 +55,15 @@ public:
 	const Mat4f &WorldToClip;
 	uint32_t StencilValue = 0;
 
-	AActor *ModelActor = nullptr;
+	FRenderStyle RenderStyle;
+	float RenderAlpha;
+	sector_t *sector;
+	bool fullbrightSprite;
+	int lightlevel;
+	double visibility;
+	uint32_t fillcolor;
+	uint32_t Translation;
+
 	Mat4f ObjectToWorld;
 	FTexture *SkinTexture = nullptr;
 	unsigned int *IndexBuffer = nullptr;

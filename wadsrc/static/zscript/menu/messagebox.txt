@@ -1,6 +1,6 @@
 /*
 ** messagebox.cpp
-** Confirmation, notification screns
+** Confirmation, notification screens
 **
 **---------------------------------------------------------------------------
 ** Copyright 2010-2017 Christoph Oelckers

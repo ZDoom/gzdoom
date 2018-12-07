@@ -1553,16 +1553,6 @@ OptionString ALResamplers
 	// filled in by the sound code
 }
 
-OptionString OutputFormats
-{
-	"PCM-8",		"$OPTSTR_PCM8BIT"
-	"PCM-16",		"$OPTSTR_PCM16BIT"
-	"PCM-24",		"$OPTSTR_PCM24BIT"
-	"PCM-32",		"$OPTSTR_PCM32BIT"
-	"PCM-Float",	"$OPTSTR_PCMFLOAT"
-}
-
-
 OptionString SpeakerModes
 {
 	"Auto",		"$OPTSTR_AUTO"
@@ -1584,12 +1574,6 @@ OptionString Resamplers
 	"Spline",		"$OPTSTR_SPLINE"
 }
 
-
-OptionString SoundBackendsOpenALOnly
-{
-	"openal",	"$OPTSTR_OPENAL"
-	"null",		"$OPTSTR_NOSOUND"
-}
 
 OptionMenu OpenALSoundItems protected
 {
@@ -1617,22 +1601,7 @@ OptionMenu SoundOptions protected
 	Option "$SNDMNU_RANDOMIZEPITCHES",	"snd_pitched", "OnOff"
 	Slider "$SNDMNU_CHANNELS",			"snd_channels", 64, 256, 8, 0
 	StaticText " "
-	Option "$SNDMNU_BACKGROUND",			"i_soundinbackground", "OnOff"
-	StaticText " "
-
-	ifoption(openal)
-	{
-		Option "$SNDMNU_BACKEND",		"snd_backend", "SoundBackendsOpenALOnly"
-		Submenu "$SNDMNU_OPENAL",		"OpenALSoundItems"
-	}
-	StaticText " "
-	Command "$SNDMNU_RESTART",			"snd_reset"
-
-	StaticText " "
 	Submenu "$SNDMNU_ADVANCED",			"AdvSoundOptions"
-	Submenu "$SNDMNU_MIDIPLAYER",		"MidiPlayerOptions"
-	Submenu "$SNDMNU_MODREPLAYER",		"ModReplayerOptions"
-	StaticText " "
 	Submenu "$OPTMNU_REVERB",			"ReverbEdit"
 }
 
@@ -1665,6 +1634,21 @@ OptionMenu AdvSoundOptions protected
 	Title "$ADVSNDMNU_TITLE"
 	Option "$ADVSNDMNU_SAMPLERATE",			"snd_samplerate", "SampleRates"
 	Option "$ADVSNDMNU_HRTF",				"snd_hrtf", "AutoOffOn"
+	StaticText " "
+	Option "$SNDMNU_BACKGROUND",			"i_soundinbackground", "OnOff"
+	StaticText " "
+
+	ifoption(openal)
+	{
+	StaticText " "
+		Submenu "$SNDMNU_OPENAL",		"OpenALSoundItems"
+	}
+
+	StaticText " "
+	Submenu "$SNDMNU_MIDIPLAYER",		"MidiPlayerOptions"
+	Submenu "$SNDMNU_MODREPLAYER",		"ModReplayerOptions"
+	StaticText " "
+	Command "$SNDMNU_RESTART",			"snd_reset"
 }
 
 OptionMenu GusConfigMenu protected

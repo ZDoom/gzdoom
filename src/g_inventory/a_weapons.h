@@ -2,7 +2,7 @@
 
 #include "a_pickups.h"
 class PClassActor;
-class AWeapon;
+class APlayerPawn;
 
 class FWeaponSlot
 {
@@ -14,7 +14,6 @@ public:
 	bool AddWeapon (const char *type);
 	bool AddWeapon (PClassActor *type);
 	void AddWeaponList (const char *list, bool clear);
-	AWeapon *PickWeapon (player_t *player, bool checkammo = false);
 	int Size () const { return (int)Weapons.Size(); }
 	int LocateWeapon (PClassActor *type);
 
@@ -55,10 +54,9 @@ struct FWeaponSlots
 	FWeaponSlots() { Clear(); }
 	FWeaponSlots(const FWeaponSlots &other);
 
+private:
 	FWeaponSlot Slots[NUM_WEAPON_SLOTS];
-
-	AWeapon *PickNextWeapon (player_t *player);
-	AWeapon *PickPrevWeapon (player_t *player);
+public:
 
 	void Clear ();
 	bool LocateWeapon (PClassActor *type, int *const slot, int *const index);
@@ -71,10 +69,53 @@ struct FWeaponSlots
 	void SendDifferences(int playernum, const FWeaponSlots &other);
 	int RestoreSlots (FConfigFile *config, const char *section);
 	void PrintSettings();
+	static void SetupWeaponSlots(APlayerPawn *pp);
 
 	void AddSlot(int slot, PClassActor *type, bool feedback);
 	void AddSlotDefault(int slot, PClassActor *type, bool feedback);
+	// Abstract access interface to the slots
 
+	void AddWeapon(int slot, PClassActor *type)
+	{
+		if (slot >= 0 && slot < NUM_WEAPON_SLOTS)
+		{
+			Slots[slot].AddWeapon(type);
+		}
+	}
+
+	void AddWeapon(int slot, const char *type)
+	{
+		if (slot >= 0 && slot < NUM_WEAPON_SLOTS)
+		{
+			Slots[slot].AddWeapon(type);
+		}
+	}
+
+	void ClearSlot(int slot)
+	{
+		if (slot >= 0 && slot < NUM_WEAPON_SLOTS)
+		{
+			Slots[slot].Weapons.Clear();
+		}
+	}
+
+	int SlotSize(int slot) const
+	{
+		if (slot >= 0 && slot < NUM_WEAPON_SLOTS)
+		{
+			return Slots[slot].Weapons.Size();
+		}
+		return 0;
+	}
+
+	PClassActor *GetWeapon(int slot, int index) const
+	{
+		if (slot >= 0 && slot < NUM_WEAPON_SLOTS && (unsigned)index < Slots[slot].Weapons.Size())
+		{
+			return Slots[slot].GetWeapon(index);
+		}
+		return nullptr;
+	}
 };
 
 void P_PlaybackKeyConfWeapons(FWeaponSlots *slots);
@@ -86,76 +127,14 @@ void P_WriteDemoWeaponsChunk(uint8_t **demo);
 void P_ReadDemoWeaponsChunk(uint8_t **demo);
 
 
-class AWeapon : public AStateProvider
+enum class EBobStyle
 {
-	DECLARE_CLASS(AWeapon, AStateProvider)
-	HAS_OBJECT_POINTERS
-public:
-	uint32_t WeaponFlags;
-	PClassActor *AmmoType1, *AmmoType2;		// Types of ammo used by this weapon
-	int AmmoGive1, AmmoGive2;				// Amount of each ammo to get when picking up weapon
-	int MinAmmo1, MinAmmo2;					// Minimum ammo needed to switch to this weapon
-	int AmmoUse1, AmmoUse2;					// How much ammo to use with each shot
-	int Kickback;
-	float YAdjust;							// For viewing the weapon fullscreen (visual only so no need to be a double)
-	FSoundIDNoInit UpSound, ReadySound;		// Sounds when coming up and idle
-	PClassActor *SisterWeaponType;			// Another weapon to pick up with this one
-	PClassActor *ProjectileType;			// Projectile used by primary attack
-	PClassActor *AltProjectileType;			// Projectile used by alternate attack
-	int SelectionOrder;						// Lower-numbered weapons get picked first
-	int MinSelAmmo1, MinSelAmmo2;			// Ignore in BestWeapon() if inadequate ammo
-	double MoveCombatDist;					// Used by bots, but do they *really* need it?
-	int ReloadCounter;						// For A_CheckForReload
-	int BobStyle;							// [XA] Bobbing style. Defines type of bobbing (e.g. Normal, Alpha)  (visual only so no need to be a double)
-	float BobSpeed;							// [XA] Bobbing speed. Defines how quickly a weapon bobs.
-	float BobRangeX, BobRangeY;				// [XA] Bobbing range. Defines how far a weapon bobs in either direction.
-	int SlotNumber;
-	int SlotPriority;
-
-	// In-inventory instance variables
-	TObjPtr<AInventory*> Ammo1, Ammo2;
-	TObjPtr<AWeapon*> SisterWeapon;
-	float FOVScale;
-	int Crosshair;							// 0 to use player's crosshair
-	bool GivenAsMorphWeapon;
-
-	bool bAltFire;	// Set when this weapon's alternate fire is used.
-
-	virtual void MarkPrecacheSounds() const;
-	
-	void Finalize(FStateDefinitions &statedef) override;
-	void Serialize(FSerializer &arc) override;
-
-	void PostMorphWeapon();
-
-	// scripted virtuals.
-	FState *GetUpState ();
-	FState *GetDownState ();
-	FState *GetReadyState ();
-	
-	FState *GetStateForButtonName (FName button);
-
-	enum
-	{
-		PrimaryFire,
-		AltFire,
-		EitherFire
-	};
-	bool CheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo=false, int ammocount = -1);
-	bool DoCheckAmmo(int fireMode, bool autoSwitch, bool requireAmmo, int ammocount);
-	bool DepleteAmmo (bool altFire, bool checkEnough=true, int ammouse = -1);
-	bool DoDepleteAmmo(bool altFire, bool checkEnough, int ammouse);
-
-	enum
-	{
-		BobNormal,
-		BobInverse,
-		BobAlpha,
-		BobInverseAlpha,
-		BobSmooth,
-		BobInverseSmooth
-	};
-
+	BobNormal,
+	BobInverse,
+	BobAlpha,
+	BobInverseAlpha,
+	BobSmooth,
+	BobInverseSmooth
 };
 
 enum
@@ -176,16 +155,9 @@ enum
 	WIF_STAFF2_KICKBACK =	0x00002000, // the powered-up Heretic staff has special kickback
 	WIF_NOAUTOAIM =			0x00004000, // this weapon never uses autoaim (useful for ballistic projectiles)
 	WIF_MELEEWEAPON =		0x00008000,	// melee weapon. Used by bots and monster AI.
-	WIF_DEHAMMO	=			0x00010000,	// Uses Doom's original amount of ammo for the respective attack functions so that old DEHACKED patches work as intended.
-										// AmmoUse1 will be set to the first attack's ammo use so that checking for empty weapons still works
+	//WIF_DEHAMMO	=			0x00010000,	
 	WIF_NODEATHDESELECT =	0x00020000, // Don't jump to the Deselect state when the player dies
 	WIF_NODEATHINPUT =		0x00040000, // The weapon cannot be fired/reloaded/whatever when the player is dead
 	WIF_CHEATNOTWEAPON	=	0x08000000,	// Give cheat considers this not a weapon (used by Sigil)
-
-	// Flags used only by bot AI:
-
-	WIF_BOT_REACTION_SKILL_THING = 1<<31, // I don't understand this
-	WIF_BOT_EXPLOSIVE =		1<<30,		// weapon fires an explosive
-	WIF_BOT_BFG =			1<<28,		// this is a BFG
 };
 

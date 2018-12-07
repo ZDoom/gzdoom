@@ -105,6 +105,9 @@ FSerializer &Serialize(FSerializer &arc, const char *key, side_t::part &part, si
 			("yscale", part.yScale, def->yScale)
 			("texture", part.texture, def->texture)
 			("interpolation", part.interpolation)
+			("flags", part.flags, def->flags)
+			("color1", part.SpecialColors[0], def->SpecialColors[0])
+			("color2", part.SpecialColors[1], def->SpecialColors[1])
 			.EndObject();
 	}
 	return arc;
@@ -968,7 +971,10 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		("level.skytexture2", level.skytexture2)
 		("level.fogdensity", level.fogdensity)
 		("level.outsidefogdensity", level.outsidefogdensity)
-		("level.skyfog", level.skyfog);
+		("level.skyfog", level.skyfog)
+		("level.deathsequence", level.deathsequence)
+		("level.bodyqueslot", level.bodyqueslot)
+		.Array("level.bodyque", level.bodyque, level.BODYQUESIZE);
 
 	// Hub transitions must keep the current total time
 	if (!hubload)
@@ -1020,7 +1026,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		{
 			if (playeringame[i] && players[i].mo != NULL)
 			{
-				players[i].mo->SetupWeaponSlots();
+				FWeaponSlots::SetupWeaponSlots(players[i].mo);
 			}
 		}
 	}

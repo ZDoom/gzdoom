@@ -48,6 +48,8 @@
 #include "r_utility.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
+#include "scriptutil.h"
+#include "vm.h"
 
 static FRandom pr_script("FScript");
 
@@ -281,6 +283,17 @@ static int T_GetPlayerNum(const svalue_t &arg)
 		return -1;
 	}
 	return playernum;
+}
+
+APlayerPawn *T_GetPlayerActor(const svalue_t &arg)
+{
+	int num = T_GetPlayerNum(arg);
+	return num == -1 ? nullptr : players[num].mo;
+}
+
+PClassActor *T_ClassType(const svalue_t &arg)
+{
+	return PClass::FindActor(stringvalue(arg));
 }
 
 //==========================================================================
@@ -2395,96 +2408,13 @@ void FParser::SF_IsPlayerObj(void)
 
 //============================================================================
 //
-// DoGiveInv
-//
-// Gives an item to a single actor.
-//
-//============================================================================
-
-static void FS_GiveInventory (AActor *actor, const char * type, int amount)
-{
-	if (amount <= 0)
-	{
-		return;
-	}
-	if (strcmp (type, "Armor") == 0)
-	{
-		type = "BasicArmorPickup";
-	}
-	auto info = PClass::FindActor (type);
-	if (info == NULL || !info->IsDescendantOf(RUNTIME_CLASS(AInventory)))
-	{
-		Printf ("Unknown inventory item: %s\n", type);
-		return;
-	}
-
-	actor->GiveInventory(info, amount);
-}
-
-//============================================================================
-//
-// DoTakeInv
-//
-// Takes an item from a single actor.
-//
-//============================================================================
-
-static void FS_TakeInventory (AActor *actor, const char * type, int amount)
-{
-	if (strcmp (type, "Armor") == 0)
-	{
-		type = "BasicArmor";
-	}
-	if (amount <= 0)
-	{
-		return;
-	}
-	PClassActor * info = PClass::FindActor (type);
-	if (info == NULL)
-	{
-		return;
-	}
-
-	AInventory *item = actor->FindInventory (info);
-	if (item != NULL)
-	{
-		item->Amount -= amount;
-		if (item->Amount <= 0)
-		{
-			// If it's not ammo, destroy it. Ammo needs to stick around, even
-			// when it's zero for the benefit of the weapons that use it and 
-			// to maintain the maximum ammo amounts a backpack might have given.
-			item->DepleteOrDestroy();
-		}
-	}
-}
-
-//============================================================================
-//
 // CheckInventory
 //
-// Returns how much of a particular item an actor has.
+// forward to the ACS equivalent.
 //
 //============================================================================
 
-static int FS_CheckInventory (AActor *activator, const char *type)
-{
-	if (activator == NULL)
-		return 0;
-
-	if (strcmp (type, "Armor") == 0)
-	{
-		type = "BasicArmor";
-	}
-	else if (strcmp (type, "Health") == 0)
-	{
-		return activator->health;
-	}
-
-	PClassActor *info = PClass::FindActor (type);
-	AInventory *item = activator->FindInventory (info);
-	return item ? item->Amount : 0;
-}
+int CheckInventory(AActor *activator, const char *type, bool max = false);
 
 
 //==========================================================================
@@ -2497,9 +2427,9 @@ static int FS_CheckInventory (AActor *activator, const char *type)
 
 void FParser::SF_PlayerKeys(void)
 {
-	static const char * const DoomKeys[]={"BlueCard", "YellowCard", "RedCard", "BlueSkull", "YellowSkull", "RedSkull"};
+	static const ENamedName DoomKeys[]={NAME_BlueCard, NAME_YellowCard, NAME_RedCard, NAME_BlueSkull, NAME_YellowSkull, NAME_RedSkull};
 	int  playernum, keynum, givetake;
-	const char * keyname;
+	FName keyname;
 	
 	if (CheckArgs(2))
 	{
@@ -2517,14 +2447,13 @@ void FParser::SF_PlayerKeys(void)
 		if(t_argc == 2)
 		{
 			t_return.type = svt_int;
-			t_return.value.i = FS_CheckInventory(players[playernum].mo, keyname);
+			t_return.value.i = CheckInventory(players[playernum].mo, keyname);
 			return;
 		}
 		else
 		{
 			givetake = intvalue(t_argv[2]);
-			if(givetake) FS_GiveInventory(players[playernum].mo, keyname, 1);
-			else FS_TakeInventory(players[playernum].mo, keyname, 1);
+			ScriptUtil::Exec(givetake?NAME_GiveInventory : NAME_TakeInventory, players[playernum].mo, keyname.GetIndex(), 1);
 			t_return.type = svt_int;
 			t_return.value.i = 0;
 		}
@@ -2540,30 +2469,11 @@ void FParser::SF_PlayerKeys(void)
 
 void FParser::SF_PlayerAmmo(void)
 {
-	int playernum, amount;
-	PClassActor * ammotype;
-	
 	if (CheckArgs(2))
 	{
-		playernum=T_GetPlayerNum(t_argv[0]);
-		if (playernum==-1) return;
-
-		ammotype=T_GetAmmo(t_argv[1]);
-		if (!ammotype) return;
-
-		if(t_argc >= 3)
-		{
-			AInventory * iammo = players[playernum].mo->FindInventory(ammotype);
-			amount = intvalue(t_argv[2]);
-			if(amount < 0) amount = 0;
-			if (iammo) iammo->Amount = amount;
-			else players[playernum].mo->GiveAmmo(ammotype, amount);
-		}
-
 		t_return.type = svt_int;
-		AInventory * iammo = players[playernum].mo->FindInventory(ammotype);
-		if (iammo) t_return.value.i = iammo->Amount;
-		else t_return.value.i = 0;
+		t_return.value.i = ScriptUtil::Exec("PlayerAmmo", ScriptUtil::Pointer, T_GetPlayerActor(t_argv[0]), ScriptUtil::Class, T_GetAmmo(t_argv[1]),
+			ScriptUtil::Int, t_argc >= 3 ? intvalue(t_argv[2]) : INT_MIN, ScriptUtil::End);
 	}
 }
 
@@ -2576,50 +2486,11 @@ void FParser::SF_PlayerAmmo(void)
 
 void FParser::SF_MaxPlayerAmmo()
 {
-	int playernum, amount;
-	PClassActor * ammotype;
-
 	if (CheckArgs(2))
 	{
-		playernum=T_GetPlayerNum(t_argv[0]);
-		if (playernum==-1) return;
-
-		ammotype=T_GetAmmo(t_argv[1]);
-		if (!ammotype) return;
-
-		if(t_argc == 2)
-		{
-		}
-		else if(t_argc >= 3)
-		{
-			auto iammo = players[playernum].mo->FindInventory(ammotype);
-			amount = intvalue(t_argv[2]);
-			if(amount < 0) amount = 0;
-			if (!iammo) 
-			{
-				players[playernum].mo->GiveAmmo(ammotype, 1);
-				iammo = players[playernum].mo->FindInventory(ammotype);
-				iammo->Amount = 0;
-			}
-			iammo->MaxAmount = amount;
-
-
-			for (AInventory *item = players[playernum].mo->Inventory; item != NULL; item = item->Inventory)
-			{
-				if (item->IsKindOf(NAME_BackpackItem))
-				{
-					if (t_argc>=4) amount = intvalue(t_argv[3]);
-					else amount*=2;
-					break;
-				}
-			}
-			iammo->IntVar("BackpackMaxAmount") = amount;
-		}
-
 		t_return.type = svt_int;
-		AInventory * iammo = players[playernum].mo->FindInventory(ammotype);
-		if (iammo) t_return.value.i = iammo->MaxAmount;
-		else t_return.value.i = ((AInventory*)GetDefaultByType(ammotype))->MaxAmount;
+		t_return.value.i = ScriptUtil::Exec("MaxPlayerAmmo", ScriptUtil::Pointer, T_GetPlayerActor(t_argv[0]), ScriptUtil::Class, T_GetAmmo(t_argv[1]),
+			ScriptUtil::Int, t_argc >= 3? intvalue(t_argv[2]) : INT_MIN, ScriptUtil::Int, t_argc >= 4 ? intvalue(t_argv[3]) : INT_MIN, ScriptUtil::End);
 	}
 }
 
@@ -2680,8 +2551,13 @@ void FParser::SF_PlayerWeapon()
 					if (players[playernum].PendingWeapon==wp) players[playernum].PendingWeapon=WP_NOCHANGE;
 					if (players[playernum].ReadyWeapon==wp) 
 					{
-						players[playernum].ReadyWeapon=NULL;
-						players[playernum].mo->PickNewWeapon(NULL);
+						players[playernum].ReadyWeapon=nullptr;
+						
+						IFVM(PlayerPawn, PickNewWeapon)
+						{
+							VMValue param[] = { players[playernum].mo, (void*)nullptr };
+							VMCall(func, param, 2, nullptr, 0);
+						}
 					}
 				}
 			}
@@ -2740,7 +2616,7 @@ void FParser::SF_PlayerSelectedWeapon()
 				return;
 			}
 
-			players[playernum].PendingWeapon = (AWeapon*)players[playernum].mo->FindInventory(ti);
+			players[playernum].PendingWeapon = players[playernum].mo->FindInventory(ti);
 
 		} 
 		t_return.type = svt_int;
@@ -2772,7 +2648,7 @@ void FParser::SF_GiveInventory(void)
 
 		if(t_argc == 2) count=1;
 		else count=intvalue(t_argv[2]);
-		FS_GiveInventory(players[playernum].mo, stringvalue(t_argv[1]), count);
+		ScriptUtil::Exec(NAME_GiveInventory, ScriptUtil::Pointer, players[playernum].mo, FName(stringvalue(t_argv[1])).GetIndex(), count);
 		t_return.type = svt_int;
 		t_return.value.i = 0;
 	}
@@ -2795,7 +2671,7 @@ void FParser::SF_TakeInventory(void)
 
 		if(t_argc == 2) count=32767;
 		else count=intvalue(t_argv[2]);
-		FS_TakeInventory(players[playernum].mo, stringvalue(t_argv[1]), count);
+		ScriptUtil::Exec(NAME_TakeInventory, ScriptUtil::Pointer, players[playernum].mo, FName(stringvalue(t_argv[1])).GetIndex(), count);
 		t_return.type = svt_int;
 		t_return.value.i = 0;
 	}
@@ -2820,7 +2696,7 @@ void FParser::SF_CheckInventory(void)
 			return;
 		}
 		t_return.type = svt_int;
-		t_return.value.i = FS_CheckInventory(players[playernum].mo, stringvalue(t_argv[1]));
+		t_return.value.i = CheckInventory(players[playernum].mo, stringvalue(t_argv[1]));
 	}
 }
 
@@ -2834,34 +2710,8 @@ void FParser::SF_SetWeapon()
 {
 	if (CheckArgs(2))
 	{
-		int playernum=T_GetPlayerNum(t_argv[0]);
-		if (playernum!=-1) 
-		{
-			AInventory *item = players[playernum].mo->FindInventory (PClass::FindActor (stringvalue(t_argv[1])));
-
-			if (item == NULL || !item->IsKindOf(NAME_Weapon))
-			{
-			}
-			else if (players[playernum].ReadyWeapon == item)
-			{
-				// The weapon is already selected, so setweapon succeeds by default,
-				// but make sure the player isn't switching away from it.
-				players[playernum].PendingWeapon = WP_NOCHANGE;
-				t_return.value.i = 1;
-			}
-			else
-			{
-				auto weap = static_cast<AWeapon *> (item);
-
-				if (weap->CheckAmmo (AWeapon::EitherFire, false))
-				{
-					// There's enough ammo, so switch to it.
-					t_return.value.i = 1;
-					players[playernum].PendingWeapon = weap;
-				}
-			}
-		}
-		t_return.value.i = 0;
+		t_return.type = svt_int;
+		t_return.value.i = ScriptUtil::Exec(NAME_SetWeapon, ScriptUtil::Pointer, T_GetPlayerActor(t_argv[0]), ScriptUtil::Class, T_ClassType(t_argv[1]), ScriptUtil::End);
 	}
 }
 
@@ -3273,16 +3123,7 @@ void FParser::SF_MapThingNumExist()
 		}
 		else
 		{
-			// Inventory items in the player's inventory have to be considered non-present.
-			if (SpawnedThings[intval]->IsKindOf(RUNTIME_CLASS(AInventory)) && 
-				barrier_cast<AInventory*>(SpawnedThings[intval])->Owner != NULL)
-			{
-				t_return.value.i = 0;
-			}
-			else
-			{
-				t_return.value.i = 1;
-			}
+			t_return.value.i = SpawnedThings[intval]->IsMapActor();
 			t_return.type = svt_int;
 		}
 	}
@@ -3806,14 +3647,13 @@ void FParser::SF_ThingCount(void)
 again:
 		TThinkerIterator<AActor> it;
 
-		if (t_argc<2 || intvalue(t_argv[1])==0 || pClass->IsDescendantOf(RUNTIME_CLASS(AInventory)))
+		if (t_argc<2 || intvalue(t_argv[1])==0 || pClass->IsDescendantOf(NAME_Inventory))
 		{
 			while ((mo=it.Next()))
 			{
 				if (mo->IsA(pClass))
 				{
-					if (!mo->IsKindOf (RUNTIME_CLASS(AInventory)) ||
-						static_cast<AInventory *>(mo)->Owner == NULL)
+					if (mo->IsMapActor())
 					{
 						count++;
 					}
@@ -3886,7 +3726,7 @@ void FParser::SF_SetColor(void)
 		{
 			if (!DFraggleThinker::ActiveThinker->setcolormaterial)
 			{
-				level.sectors[i].SetColor(color.r, color.g, color.b, 0);
+				level.sectors[i].SetColor(color, 0);
 			}
 			else
 			{

@@ -17,6 +17,7 @@ class FighterBoss : Actor
 		PainSound "PlayerFighterPain";
 		DeathSound "PlayerFighterCrazyDeath";
 		Obituary "$OB_FBOSS";
+		Tag "$FN_FBOSS";
 	}
 
 	States

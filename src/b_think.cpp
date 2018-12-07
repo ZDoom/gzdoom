@@ -173,9 +173,9 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 				  is (Megasphere)
 				 ) || 
 				 dist < (GETINCOMBAT/4) ||
-				 (player->ReadyWeapon == NULL || player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON)
+				 (GetBotInfo(player->ReadyWeapon).MoveCombatDist == 0)
 				)
-				&& (dist < GETINCOMBAT || (player->ReadyWeapon == NULL || player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
+				&& (dist < GETINCOMBAT || (GetBotInfo(player->ReadyWeapon).MoveCombatDist == 0))
 				&& Reachable (dest))
 #undef is
 			{
@@ -185,7 +185,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 
 		dest = NULL; //To let bot turn right
 
-		if (player->ReadyWeapon != NULL && !(player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
+		if (GetBotInfo(player->ReadyWeapon).MoveCombatDist == 0)
 			player->mo->flags &= ~MF_DROPOFF; //Don't jump off any ledges when fighting.
 
 		if (!(enemy->flags3 & MF3_ISMONSTER))
@@ -205,7 +205,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 
 		if (player->ReadyWeapon == NULL ||
 			player->mo->Distance2D(enemy) >
-			player->ReadyWeapon->MoveCombatDist)
+			GetBotInfo(player->ReadyWeapon).MoveCombatDist)
 		{
 			// If a monster, use lower speed (just for cooler apperance while strafing down doomed monster)
 			cmd->ucmd.forwardmove = (enemy->flags3 & MF3_ISMONSTER) ? FORWARDWALK : FORWARDRUN;
@@ -273,8 +273,8 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 			{
 				if (enemy->player)
 				{
-					if (((enemy->player->ReadyWeapon != NULL && enemy->player->ReadyWeapon->WeaponFlags & WIF_BOT_EXPLOSIVE) ||
-						(pr_botmove()%100)>skill.isp) && player->ReadyWeapon != NULL && !(player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
+					if (((enemy->player->ReadyWeapon != NULL && GetBotInfo(enemy->player->ReadyWeapon).flags & BIF_BOT_EXPLOSIVE) ||
+						(pr_botmove()%100)>skill.isp) && (GetBotInfo(player->ReadyWeapon).MoveCombatDist != 0))
 						dest = enemy;//Dont let enemy kill the bot by supressive fire. So charge enemy.
 					else //hide while t_fight, but keep view at enemy.
 						Angle = player->mo->AngleTo(enemy);
@@ -289,8 +289,8 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 				r = pr_botmove();
 				if (r < 128)
 				{
-					TThinkerIterator<AInventory> it (MAX_STATNUM+1, bglobal.firstthing);
-					AInventory *item = it.Next();
+					TThinkerIterator<AActor> it (NAME_Inventory, MAX_STATNUM+1, bglobal.firstthing);
+					auto item = it.Next();
 
 					if (item != NULL || (item = it.Next()) != NULL)
 					{
@@ -362,15 +362,15 @@ void DBot::WhatToGet (AActor *item)
 	if (item->IsKindOf(NAME_Weapon))
 	{
 		// FIXME
-		AWeapon *heldWeapon;
-
-		heldWeapon = dyn_cast<AWeapon>(player->mo->FindInventory(item->GetClass()));
+		auto heldWeapon = player->mo->FindInventory(item->GetClass());
 		if (heldWeapon != NULL)
 		{
 			if (!weapgiveammo)
 				return;
-			if ((heldWeapon->Ammo1 == NULL || heldWeapon->Ammo1->Amount >= heldWeapon->Ammo1->MaxAmount) &&
-				(heldWeapon->Ammo2 == NULL || heldWeapon->Ammo2->Amount >= heldWeapon->Ammo2->MaxAmount))
+			auto ammo1 = heldWeapon->PointerVar<AActor>(NAME_Ammo1);
+			auto ammo2 = heldWeapon->PointerVar<AActor>(NAME_Ammo2);
+			if ((ammo1 == NULL || ammo1->IntVar(NAME_Amount) >= ammo1->IntVar(NAME_MaxAmount)) &&
+				(ammo2 == NULL || ammo2->IntVar(NAME_Amount) >= ammo2->IntVar(NAME_MaxAmount)))
 			{
 				return;
 			}
@@ -381,8 +381,8 @@ void DBot::WhatToGet (AActor *item)
 		auto ac = PClass::FindActor(NAME_Ammo);
 		auto parent = item->GetClass();
 		while (parent->ParentClass != ac) parent = static_cast<PClassActor*>(parent->ParentClass);
-		AInventory *holdingammo = player->mo->FindInventory(parent);
-		if (holdingammo != NULL && holdingammo->Amount >= holdingammo->MaxAmount)
+		AActor *holdingammo = player->mo->FindInventory(parent);
+		if (holdingammo != NULL && holdingammo->IntVar(NAME_Amount) >= holdingammo->IntVar(NAME_MaxAmount))
 		{
 			return;
 		}

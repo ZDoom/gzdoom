@@ -154,7 +154,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 					}
 					else
 					{
-						sprite = ((AInventory *)GetDefaultByType(item))->Icon;
+						sprite = GetDefaultByType(item)->TextureIDVar(NAME_Icon);
 					}
 					image = -1;
 				}
@@ -245,7 +245,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			else if(type == AMMO1)
 			{
 				auto ammo = statusBar->ammo1;
-				if(ammo != NULL)
+				if(ammo != NULL) 
 					GetIcon(ammo);
 			}
 			else if(type == AMMO2)
@@ -257,7 +257,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			else if(type == ARMOR)
 			{
 				auto armor = statusBar->armor;
-				if(armor != NULL && armor->Amount != 0)
+				if(armor != NULL && armor->IntVar(NAME_Amount) != 0)
 					GetIcon(armor);
 			}
 			else if(type == WEAPONICON)
@@ -270,7 +270,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			{
 				auto item = statusBar->CPlayer->mo->FindInventory(NAME_Sigil);
 				if (item != NULL)
-					texture = TexMan(item->Icon);
+					texture = TexMan(item->TextureIDVar(NAME_Icon));
 			}
 			else if(type == HEXENARMOR_ARMOR || type == HEXENARMOR_SHIELD || type == HEXENARMOR_HELM || type == HEXENARMOR_AMULET)
 			{
@@ -294,7 +294,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			else if(type == INVENTORYICON)
 				texture = TexMan(sprite);
 			else if(type == SELECTEDINVENTORYICON && statusBar->CPlayer->mo->InvSel != NULL)
-				texture = TexMan(statusBar->CPlayer->mo->InvSel->Icon);
+				texture = TexMan(statusBar->CPlayer->mo->InvSel->TextureIDVar(NAME_Icon));
 			else if(image >= 0)
 				texture = statusBar->Images[image];
 			
@@ -304,9 +304,11 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			}
 		}
 	protected:
-		void	GetIcon(AInventory *item)
+		void	GetIcon(AActor *item)
 		{
-			FTextureID icon = GetInventoryIcon(item, flags, &applyscale);
+			int apply;
+			FTextureID icon = FSetTextureID(GetInventoryIcon(item, flags, &apply));
+			applyscale = !!apply;
 			
 			if (applyscale)
 			{
@@ -527,9 +529,9 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 			if(condition == WEAPONSLOT) //weaponslots
 			{
 				drawAlt = 1; //draw off state until we know we have something.
-				for (int i = 0; i < statusBar->CPlayer->weapons.Slots[conditionalValue[0]].Size(); i++)
+				for (int i = 0; i < statusBar->CPlayer->weapons.SlotSize(conditionalValue[0]); i++)
 				{
-					PClassActor *weap = statusBar->CPlayer->weapons.Slots[conditionalValue[0]].GetWeapon(i);
+					PClassActor *weap = statusBar->CPlayer->weapons.GetWeapon(conditionalValue[0], i);
 					if(weap == NULL)
 					{
 						continue;
@@ -554,7 +556,7 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 				bool found2 = false;
 				drawAlt = 1;
 
-				for(AInventory *item = statusBar->CPlayer->mo->Inventory;item != NULL;item = item->Inventory)
+				for(auto item = statusBar->CPlayer->mo->Inventory;item != NULL;item = item->Inventory)
 				{
 					if(item->IsKindOf(NAME_Key))
 					{
@@ -597,8 +599,9 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 				auto armor = statusBar->CPlayer->mo->FindInventory(NAME_BasicArmor);
 				if(armor != NULL)
 				{
-					bool matches1 = armor->NameVar(NAME_ArmorType).GetIndex() == armorType[0] && EvaluateOperation(conditionalOperator[0], conditionalValue[0], armor->Amount);
-					bool matches2 = armor->NameVar(NAME_ArmorType).GetIndex() == armorType[1] && EvaluateOperation(conditionalOperator[1], conditionalValue[1], armor->Amount);
+					auto n = armor->NameVar(NAME_ArmorType).GetIndex();
+					bool matches1 = n == armorType[0] && EvaluateOperation(conditionalOperator[0], conditionalValue[0], armor->IntVar(NAME_Amount));
+					bool matches2 = n == armorType[1] && EvaluateOperation(conditionalOperator[1], conditionalValue[1], armor->IntVar(NAME_Amount));
 
 					drawAlt = 1;
 					if(conditionAnd)
@@ -616,13 +619,13 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 			}
 			else //check the inventory items and draw selected sprite
 			{
-				AInventory* item = statusBar->CPlayer->mo->FindInventory(inventoryItem[0]);
-				if(item == NULL || !EvaluateOperation(conditionalOperator[0], conditionalValue[0], item->Amount))
+				auto item = statusBar->CPlayer->mo->FindInventory(inventoryItem[0]);
+				if(item == NULL || !EvaluateOperation(conditionalOperator[0], conditionalValue[0], item->IntVar(NAME_Amount)))
 					drawAlt = 1;
 				if(conditionAnd)
 				{
 					item = statusBar->CPlayer->mo->FindInventory(inventoryItem[1]);
-					bool secondCondition = item != NULL && EvaluateOperation(conditionalOperator[1], conditionalValue[1], item->Amount);
+					bool secondCondition = item != NULL && EvaluateOperation(conditionalOperator[1], conditionalValue[1], item->IntVar(NAME_Amount));
 					if((item != NULL && secondCondition) && drawAlt == 0) //both
 					{
 						drawAlt = 0;
@@ -1205,7 +1208,7 @@ class CommandDrawNumber : public CommandDrawString
 					if (inventoryItem == NULL || !inventoryItem->IsDescendantOf(NAME_Inventory))
 					{
 						sc.ScriptMessage("'%s' is not a type of inventory item.", sc.String);
-						inventoryItem = RUNTIME_CLASS(AInventory);
+						inventoryItem = PClass::FindActor(NAME_Inventory);
 					}
 				}
 				sc.MustGetToken(',');
@@ -1326,7 +1329,7 @@ class CommandDrawNumber : public CommandDrawString
 						interpolationSpeed = script->interpolationSpeed;
 					break;
 				case ARMOR:
-					num = statusBar->armor != NULL ? statusBar->armor->Amount : 0;
+					num = statusBar->armor != NULL ? statusBar->armor->IntVar(NAME_Amount) : 0;
 					if(script->interpolateArmor)
 						interpolationSpeed = script->armorInterpolationSpeed;
 					break;
@@ -1348,9 +1351,9 @@ class CommandDrawNumber : public CommandDrawString
 					break;
 				case AMMO:
 				{
-					AInventory* item = statusBar->CPlayer->mo->FindInventory(inventoryItem);
+					auto item = statusBar->CPlayer->mo->FindInventory(inventoryItem);
 					if(item != NULL)
-						num = item->Amount;
+						num = item->IntVar(NAME_Amount);
 					else
 						num = 0;
 					break;
@@ -1362,7 +1365,7 @@ class CommandDrawNumber : public CommandDrawString
 						return;
 					}
 					else
-						num = statusBar->ammo1->MaxAmount;
+						num = statusBar->ammo1->IntVar(NAME_MaxAmount);
 					break;
 				case AMMO2CAPACITY:
 					if(statusBar->ammo2 == NULL) //no ammo, do not draw
@@ -1371,15 +1374,15 @@ class CommandDrawNumber : public CommandDrawString
 						return;
 					}
 					else
-						num = statusBar->ammo2->MaxAmount;
+						num = statusBar->ammo2->IntVar(NAME_MaxAmount);
 					break;
 				case AMMOCAPACITY:
 				{
-					AInventory* item = statusBar->CPlayer->mo->FindInventory(inventoryItem);
+					auto item = statusBar->CPlayer->mo->FindInventory(inventoryItem);
 					if(item != NULL)
-						num = item->MaxAmount;
+						num = item->IntVar(NAME_MaxAmount);
 					else
-						num = ((AInventory *)GetDefaultByType(inventoryItem))->MaxAmount;
+						num = GetDefaultByType(inventoryItem)->IntVar(NAME_MaxAmount);
 					break;
 				}
 				case FRAGS:
@@ -1446,9 +1449,9 @@ class CommandDrawNumber : public CommandDrawString
 				}
 				case INVENTORY:
 				{
-					AInventory* item = statusBar->CPlayer->mo->FindInventory(inventoryItem);
+					auto item = statusBar->CPlayer->mo->FindInventory(inventoryItem);
 					if(item != NULL)
-						num = item->Amount;
+						num = item->IntVar(NAME_Amount);
 					else
 						num = 0;
 					break;
@@ -1463,7 +1466,7 @@ class CommandDrawNumber : public CommandDrawString
 				}
 				case SELECTEDINVENTORY:
 					if(statusBar->CPlayer->mo->InvSel != NULL)
-						num = statusBar->CPlayer->mo->InvSel->Amount;
+						num = statusBar->CPlayer->mo->InvSel->IntVar(NAME_Amount);
 					break;
 				case ACCURACY:
 					num = statusBar->CPlayer->mo->accuracy;
@@ -1473,7 +1476,7 @@ class CommandDrawNumber : public CommandDrawString
 					break;
 				case KEYS:
 					num = 0;
-					for(AInventory *item = statusBar->CPlayer->mo->Inventory;item != NULL;item = item->Inventory)
+					for(auto item = statusBar->CPlayer->mo->Inventory;item != NULL;item = item->Inventory)
 					{
 						if(item->IsKindOf(NAME_Key))
 							num++;
@@ -1705,7 +1708,7 @@ class CommandDrawSelectedInventory : public CommandDrawImage, private CommandDra
 					}
 					CommandDrawImage::Draw(block, statusBar);
 				}
-				if(alwaysShowCounter || statusBar->CPlayer->mo->InvSel->Amount != 1)
+				if(alwaysShowCounter || statusBar->CPlayer->mo->InvSel->IntVar(NAME_Amount) != 1)
 					CommandDrawNumber::Draw(block, statusBar);
 			}
 		}
@@ -1873,7 +1876,7 @@ class CommandUsesAmmo : public SBarInfoNegatableFlowControl
 		{
 			SBarInfoNegatableFlowControl::Tick(block, statusBar, hudChanged);
 
-			SetTruth(statusBar->CPlayer->ReadyWeapon != NULL && (statusBar->CPlayer->ReadyWeapon->AmmoType1 != NULL || statusBar->CPlayer->ReadyWeapon->AmmoType2 != NULL), block, statusBar);
+			SetTruth(statusBar->AmmoType(1) || statusBar->AmmoType(2), block, statusBar);
 		}
 };
 
@@ -1890,7 +1893,7 @@ class CommandUsesSecondaryAmmo : public CommandUsesAmmo
 		{
 			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
 
-			SetTruth(statusBar->CPlayer->ReadyWeapon != NULL && statusBar->CPlayer->ReadyWeapon->AmmoType2 != NULL && statusBar->CPlayer->ReadyWeapon->AmmoType1 != statusBar->CPlayer->ReadyWeapon->AmmoType2, block, statusBar);
+			SetTruth(statusBar->AmmoType(2) && statusBar->AmmoType(2) != statusBar->AmmoType(1), block, statusBar);
 		}
 };
 
@@ -2082,6 +2085,30 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 			}
 		}
 
+		AActor *PrevInv(AActor *item)
+		{
+			AActor *retval = nullptr;
+			IFVM(Inventory, PrevInv)
+			{
+				VMValue param = item;
+				VMReturn ret((void**)&retval);
+				VMCall(func, &param, 1, &ret, 1);
+			}
+			return retval;
+		}
+
+		AActor *NextInv(AActor *item)
+		{
+			AActor *retval = nullptr;
+			IFVM(Inventory, NextInv)
+			{
+				VMValue param = item;
+				VMReturn ret((void**)&retval);
+				VMCall(func, &param, 1, &ret, 1);
+			}
+			return retval;
+		}
+
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
 		{
 			int spacing = GetCounterSpacing(statusBar);
@@ -2090,13 +2117,13 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 			if(translucent)
 				bgalpha *= HX_SHADOW;
 		
-			AInventory *item;
+			AActor *item;
 			unsigned int i = 0;
 			// If the player has no artifacts, don't draw the bar
 			statusBar->CPlayer->mo->InvFirst = statusBar->wrapper->ValidateInvFirst(size);
 			if(statusBar->CPlayer->mo->InvFirst != NULL || alwaysShow)
 			{
-				for(item = statusBar->CPlayer->mo->InvFirst, i = 0; item != NULL && i < size; item = item->NextInv(), ++i)
+				for(item = statusBar->CPlayer->mo->InvFirst, i = 0; item != NULL && i < size; item = NextInv(item), ++i)
 				{
 					SBarInfoCoordinate rx = x + (!vertical ? i*spacing : 0);
 					SBarInfoCoordinate ry = y + (vertical ? i*spacing : 0);
@@ -2104,7 +2131,7 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 						statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgARTIBOX], rx, ry, block->XOffset(), block->YOffset(), bgalpha, block->FullScreenOffsets());
 		
 					if(style != STYLE_Strife) //Strife draws the cursor before the icons
-						statusBar->DrawGraphic(TexMan(item->Icon), rx - (style == STYLE_HexenStrict ? 2 : 0), ry - (style == STYLE_HexenStrict ? 1 : 0), block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, item->Amount <= 0);
+						statusBar->DrawGraphic(TexMan(item->TextureIDVar(NAME_Icon)), rx - (style == STYLE_HexenStrict ? 2 : 0), ry - (style == STYLE_HexenStrict ? 1 : 0), block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, item->IntVar(NAME_Amount) <= 0);
 					if(item == statusBar->CPlayer->mo->InvSel)
 					{
 						if(style == STYLE_Heretic)
@@ -2119,10 +2146,10 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 							statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgSELECTBOX], rx, ry, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
 					}
 					if(style == STYLE_Strife)
-						statusBar->DrawGraphic(TexMan(item->Icon), rx, ry, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, item->Amount <= 0);
-					if(counters != NULL && (alwaysShowCounter || item->Amount != 1))
+						statusBar->DrawGraphic(TexMan(item->TextureIDVar(NAME_Icon)), rx, ry, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, item->IntVar(NAME_Amount) <= 0);
+					if(counters != NULL && (alwaysShowCounter || item->IntVar(NAME_Amount) != 1))
 					{
-						counters[i]->valueArgument = item->Amount;
+						counters[i]->valueArgument = item->IntVar(NAME_Amount);
 						counters[i]->Draw(block, statusBar);
 					}
 				}
@@ -2130,7 +2157,7 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 					statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgARTIBOX], x + (!vertical ? (i*spacing) : 0), y + (vertical ? (i*spacing) : 0), block->XOffset(), block->YOffset(), bgalpha, block->FullScreenOffsets());
 		
 				// Is there something to the left?
-				if (!noArrows && statusBar->CPlayer->mo->FirstInv() != statusBar->CPlayer->mo->InvFirst)
+				if (!noArrows && PrevInv(statusBar->CPlayer->mo->InvFirst))
 				{
 					int offset = (style != STYLE_Strife ? (style != STYLE_HexenStrict ? -12 : -10) : 14);
 					int yOffset = style != STYLE_HexenStrict ? 0 : -1;
@@ -2324,7 +2351,7 @@ class CommandDrawKeyBar : public SBarInfoCommand
 
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
 		{
-			AInventory *item = statusBar->CPlayer->mo->Inventory;
+			auto item = statusBar->CPlayer->mo->Inventory;
 			if(item == NULL)
 				return;
 			int slotOffset = 0;
@@ -2332,7 +2359,7 @@ class CommandDrawKeyBar : public SBarInfoCommand
 			int rowWidth = 0;
 			for(unsigned int i = 0;i < number+keyOffset;i++)
 			{
-				while(!item->Icon.isValid() || !item->IsKindOf(NAME_Key))
+				while(!item->TextureIDVar(NAME_Icon).isValid() || !item->IsKindOf(NAME_Key))
 				{
 					item = item->Inventory;
 					if(item == NULL)
@@ -2342,22 +2369,22 @@ class CommandDrawKeyBar : public SBarInfoCommand
 				{
 					if(!vertical)
 					{
-						statusBar->DrawGraphic(TexMan(item->Icon), x+slotOffset, y+rowOffset, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
-						rowWidth = rowIconSize == -1 ? TexMan(item->Icon)->GetScaledHeight()+2 : rowIconSize;
+						statusBar->DrawGraphic(TexMan(item->TextureIDVar(NAME_Icon)), x+slotOffset, y+rowOffset, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
+						rowWidth = rowIconSize == -1 ? TexMan(item->TextureIDVar(NAME_Icon))->GetScaledHeight()+2 : rowIconSize;
 					}
 					else
 					{
-						statusBar->DrawGraphic(TexMan(item->Icon), x+rowOffset, y+slotOffset, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
-						rowWidth = rowIconSize == -1 ? TexMan(item->Icon)->GetScaledWidth()+2 : rowIconSize;
+						statusBar->DrawGraphic(TexMan(item->TextureIDVar(NAME_Icon)), x+rowOffset, y+slotOffset, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
+						rowWidth = rowIconSize == -1 ? TexMan(item->TextureIDVar(NAME_Icon))->GetScaledWidth()+2 : rowIconSize;
 					}
 		
 					// If cmd.special is -1 then the slot size is auto detected
 					if(iconSize == -1)
 					{
 						if(!vertical)
-							slotOffset += (reverse ? -1 : 1) * (TexMan(item->Icon)->GetScaledWidth() + 2);
+							slotOffset += (reverse ? -1 : 1) * (TexMan(item->TextureIDVar(NAME_Icon))->GetScaledWidth() + 2);
 						else
-							slotOffset += (reverse ? -1 : 1) * (TexMan(item->Icon)->GetScaledHeight() + 2);
+							slotOffset += (reverse ? -1 : 1) * (TexMan(item->TextureIDVar(NAME_Icon))->GetScaledHeight() + 2);
 					}
 					else
 						slotOffset += (reverse ? -iconSize : iconSize);
@@ -2576,7 +2603,7 @@ class CommandDrawBar : public SBarInfoCommand
 				if(data.inventoryItem == NULL || !data.inventoryItem->IsDescendantOf(NAME_Inventory))
 				{
 					sc.ScriptMessage("'%s' is not a type of inventory item.", sc.String);
-					data.inventoryItem = RUNTIME_CLASS(AInventory);
+					data.inventoryItem = PClass::FindActor(NAME_Inventory);
 				}
 			}
 			sc.MustGetToken(',');
@@ -2638,9 +2665,9 @@ class CommandDrawBar : public SBarInfoCommand
 						max = data.value;
 					else if(data.inventoryItem != NULL)
 					{
-						AInventory *item = statusBar->CPlayer->mo->FindInventory(data.inventoryItem); //max comparer
+						auto item = statusBar->CPlayer->mo->FindInventory(data.inventoryItem); //max comparer
 						if(item != NULL)
-							max = item->Amount;
+							max = item->IntVar(NAME_Amount);
 						else
 							max = 0;
 					}
@@ -2648,14 +2675,14 @@ class CommandDrawBar : public SBarInfoCommand
 						max = statusBar->CPlayer->mo->GetMaxHealth(true);
 					break;
 				case ARMOR:
-					value = statusBar->armor != NULL ? statusBar->armor->Amount : 0;
+					value = statusBar->armor != NULL ? statusBar->armor->IntVar(NAME_Amount) : 0;
 					if(data.useMaximumConstant)
 						max = data.value;
 					else if(data.inventoryItem != NULL)
 					{
-						AInventory *item = statusBar->CPlayer->mo->FindInventory(data.inventoryItem);
+						auto item = statusBar->CPlayer->mo->FindInventory(data.inventoryItem);
 						if(item != NULL)
-							max = item->Amount;
+							max = item->IntVar(NAME_Amount);
 						else
 							max = 0;
 					}
@@ -2670,7 +2697,7 @@ class CommandDrawBar : public SBarInfoCommand
 						max = 1;
 					}
 					else
-						max = statusBar->ammo1->MaxAmount;
+						max = statusBar->ammo1->IntVar(NAME_MaxAmount);
 					break;
 				case AMMO2:
 					value = statusBar->ammocount2;
@@ -2680,15 +2707,15 @@ class CommandDrawBar : public SBarInfoCommand
 						max = 1;
 					}
 					else
-						max = statusBar->ammo2->MaxAmount;
+						max = statusBar->ammo2->IntVar(NAME_MaxAmount);
 					break;
 				case AMMO:
 				{
-					AInventory *item = statusBar->CPlayer->mo->FindInventory(data.inventoryItem);
+					auto item = statusBar->CPlayer->mo->FindInventory(data.inventoryItem);
 					if(item != NULL)
 					{
-						value = item->Amount;
-						max = item->MaxAmount;
+						value = item->IntVar(NAME_Amount);
+						max = item->IntVar(NAME_MaxAmount);
 					}
 					else
 						value = 0;
@@ -2712,11 +2739,11 @@ class CommandDrawBar : public SBarInfoCommand
 					break;
 				case INVENTORY:
 				{
-					AInventory *item = statusBar->CPlayer->mo->FindInventory(data.inventoryItem);
+					auto item = statusBar->CPlayer->mo->FindInventory(data.inventoryItem);
 					if(item != NULL)
 					{
-						value = item->Amount;
-						max = item->MaxAmount;
+						value = item->IntVar(NAME_Amount);
+						max = item->IntVar(NAME_MaxAmount);
 					}
 					else
 						value = 0;
@@ -2798,7 +2825,7 @@ class CommandDrawBar : public SBarInfoCommand
 				if(data.inventoryItem == NULL || !data.inventoryItem->IsDescendantOf(NAME_Inventory)) //must be a kind of inventory
 				{
 					sc.ScriptMessage("'%s' is not a type of inventory item.", sc.String);
-					data.inventoryItem = RUNTIME_CLASS(AInventory);
+					data.inventoryItem = PClass::FindActor(NAME_Inventory);
 				}
 			}
 			else if(extendedSyntax && sc.CheckToken(TK_IntConst))
@@ -2881,7 +2908,7 @@ class CommandIsSelected : public SBarInfoNegatableFlowControl
 				if(weapon[i] == NULL || !weapon[i]->IsDescendantOf(NAME_Weapon))
 				{
 					sc.ScriptMessage("'%s' is not a type of weapon.", sc.String);
-					weapon[i] = RUNTIME_CLASS(AWeapon);
+					weapon[i] = PClass::FindClass(NAME_Weapon);
 				}
 		
 				if(sc.CheckToken(','))
@@ -3034,7 +3061,7 @@ class CommandHasWeaponPiece : public SBarInfoCommandFlowControl
 			if (weapon == NULL || !weapon->IsDescendantOf(NAME_Weapon)) //must be a weapon
 			{
 				sc.ScriptMessage("%s is not a kind of weapon.", sc.String);
-				weapon = RUNTIME_CLASS(AWeapon);
+				weapon = PClass::FindClass(NAME_Weapon);
 			}
 			sc.MustGetToken(',');
 			sc.MustGetToken(TK_IntConst);
@@ -3047,7 +3074,7 @@ class CommandHasWeaponPiece : public SBarInfoCommandFlowControl
 		{
 			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
 
-			for(AInventory *inv = statusBar->CPlayer->mo->Inventory;inv != NULL;inv=inv->Inventory)
+			for(auto inv = statusBar->CPlayer->mo->Inventory;inv != NULL;inv=inv->Inventory)
 			{
 				auto hc = PClass::FindActor("WeaponHolder");
 				if(inv->IsKindOf(hc))
@@ -3151,7 +3178,7 @@ class CommandDrawGem : public SBarInfoCommand
 		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
-			goalValue = armor ? (statusBar->armor ? statusBar->armor->Amount : 0) : statusBar->CPlayer->mo->health;
+			goalValue = armor ? (statusBar->armor ? statusBar->armor->IntVar(NAME_Amount) : 0) : statusBar->CPlayer->mo->health;
 			int max = armor ? 100 : statusBar->CPlayer->mo->GetMaxHealth(true);
 			if(max != 0 && goalValue > 0)
 			{
@@ -3246,8 +3273,8 @@ class CommandWeaponAmmo : public SBarInfoNegatableFlowControl
 
 			if(statusBar->CPlayer->ReadyWeapon != NULL)
 			{
-				const PClass *AmmoType1 = statusBar->CPlayer->ReadyWeapon->AmmoType1;
-				const PClass *AmmoType2 = statusBar->CPlayer->ReadyWeapon->AmmoType2;
+				const PClass *AmmoType1 = statusBar->AmmoType(1);
+				const PClass *AmmoType2 = statusBar->AmmoType(2);
 				bool usesammo1 = (AmmoType1 != NULL);
 				bool usesammo2 = (AmmoType2 != NULL);
 				//if(!usesammo1 && !usesammo2) //if the weapon doesn't use ammo don't go though the trouble.
@@ -3291,7 +3318,7 @@ class CommandInInventory : public SBarInfoNegatableFlowControl
 			conditionAnd(false)
 		{
 			item[0] = item[1] = NULL;
-			amount[0] = amount[1] = 0;
+			Amount[0] = Amount[1] = 0;
 		}
 
 		void	ParseNegatable(FScanner &sc, bool fullScreenOffsets)
@@ -3304,13 +3331,13 @@ class CommandInInventory : public SBarInfoNegatableFlowControl
 				if (item[i] == NULL || !item[i]->IsDescendantOf(NAME_Inventory)) //must be a kind of ammo
 				{
 					sc.ScriptMessage("'%s' is not a type of inventory item.", sc.String);
-					item[i] = RUNTIME_CLASS(AInventory);
+					item[i] = PClass::FindActor(NAME_Inventory);
 				}
 		
 				if (sc.CheckToken(','))
 				{
 					sc.MustGetNumber();
-					amount[i] = sc.Number;
+					Amount[i] = sc.Number;
 				}
 		
 				if(sc.CheckToken(TK_OrOr))
@@ -3333,9 +3360,9 @@ class CommandInInventory : public SBarInfoNegatableFlowControl
 		{
 			SBarInfoNegatableFlowControl::Tick(block, statusBar, hudChanged);
 
-			AInventory *invItem[2] = { statusBar->CPlayer->mo->FindInventory(item[0]), statusBar->CPlayer->mo->FindInventory(item[1]) };
-			if (invItem[0] != NULL && amount[0] > 0 && invItem[0]->Amount < amount[0]) invItem[0] = NULL;
-			if (invItem[1] != NULL && amount[1] > 0 && invItem[1]->Amount < amount[1]) invItem[1] = NULL;
+			AActor *invItem[2] = { statusBar->CPlayer->mo->FindInventory(item[0]), statusBar->CPlayer->mo->FindInventory(item[1]) };
+			if (invItem[0] != NULL && Amount[0] > 0 && invItem[0]->IntVar(NAME_Amount) < Amount[0]) invItem[0] = NULL;
+			if (invItem[1] != NULL && Amount[1] > 0 && invItem[1]->IntVar(NAME_Amount) < Amount[1]) invItem[1] = NULL;
 
 			if (item[1])
 			{
@@ -3350,7 +3377,7 @@ class CommandInInventory : public SBarInfoNegatableFlowControl
 	protected:
 		bool			conditionAnd;
 		PClassActor		*item[2];
-		int				amount[2];
+		int				Amount[2];
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3395,7 +3422,7 @@ class CommandIfHealth : public SBarInfoNegatableFlowControl
 		{
 			sc.MustGetToken(TK_IntConst);
 			percentage = sc.CheckToken('%');
-			hpamount = sc.Number;
+			hpAmount = sc.Number;
 		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
@@ -3403,10 +3430,10 @@ class CommandIfHealth : public SBarInfoNegatableFlowControl
 
 			int phealth = percentage ? statusBar->CPlayer->mo->health * 100 / statusBar->CPlayer->mo->GetMaxHealth() : statusBar->CPlayer->mo->health;
 
-			SetTruth(phealth >= hpamount, block, statusBar);
+			SetTruth(phealth >= hpAmount, block, statusBar);
 		}
 	protected:
-		int		hpamount;
+		int		hpAmount;
 		bool	percentage;
 };
 

@@ -5,25 +5,26 @@ struct VisStyle
 	int				RenderStyle;
 }
 
-class Inventory : Actor native
+class Inventory : Actor
 {
 	const BLINKTHRESHOLD = (4*32);
 	const BONUSADD = 6;
 
-	native Actor Owner;						// Who owns self item? NULL if it's still a pickup.
-	native int Amount;						// Amount of item self instance has
-	native int MaxAmount;					// Max amount of item self instance can have
-	native int InterHubAmount;				// Amount of item that can be kept between hubs or levels
-	native int RespawnTics;					// Tics from pickup time to respawn time
-	native TextureID Icon;					// Icon to show on status bar or HUD
-	native TextureID AltHUDIcon;
-	native int DropTime;					// Countdown after dropping
-	native Class<Actor> SpawnPointClass;	// For respawning like Heretic's mace
-	native Class<Actor> PickupFlash;		// actor to spawn as pickup flash
-	native Sound PickupSound;
-	native bool bPickupGood;
-	native bool bCreateCopyMoved;
-	native bool bInitEffectFailed;
+	deprecated("3.7") private int ItemFlags;
+	Actor Owner;						// Who owns this item? NULL if it's still a pickup.
+	int Amount;						// Amount of item this instance has
+	int MaxAmount;					// Max amount of item this instance can have
+	int InterHubAmount;				// Amount of item that can be kept between hubs or levels
+	int RespawnTics;					// Tics from pickup time to respawn time
+	TextureID Icon;					// Icon to show on status bar or HUD
+	TextureID AltHUDIcon;
+	int DropTime;					// Countdown after dropping
+	Class<Actor> SpawnPointClass;	// For respawning like Heretic's mace
+	Class<Actor> PickupFlash;		// actor to spawn as pickup flash
+	Sound PickupSound;
+	bool bPickupGood;
+	bool bCreateCopyMoved;
+	bool bInitEffectFailed;
 	meta String PickupMsg;
 	meta int GiveQuest;
 	meta array<class<Actor> > ForbiddenToPlayerClass;
@@ -38,7 +39,36 @@ class Inventory : Actor native
 	property PickupSound: PickupSound;
 	property UseSound: UseSound;
 	property RespawnTics: RespawnTics;
-		
+
+	flagdef Quiet: ItemFlags, 0;
+	flagdef Autoactivate: ItemFlags, 1;
+	flagdef Undroppable: ItemFlags, 2;
+	flagdef Invbar: ItemFlags, 3;
+	flagdef HubPower: ItemFlags, 4;
+	flagdef Untossable: ItemFlags, 5;
+	flagdef AdditiveTime: ItemFlags, 6;
+	flagdef FancyPickupSound: ItemFlags, 7;
+	flagdef BigPowerup: ItemFlags, 8;
+	flagdef KeepDepleted: ItemFlags, 9;
+	flagdef IgnoreSkill: ItemFlags, 10;
+	flagdef NoAttenPickupSound: ItemFlags, 11;
+	flagdef PersistentPower : ItemFlags, 12;
+	flagdef RestrictAbsolutely: ItemFlags, 13;
+	flagdef NeverRespawn: ItemFlags, 14;
+	flagdef NoScreenFlash: ItemFlags, 15;
+	flagdef Tossed: ItemFlags, 16;
+	flagdef AlwaysRespawn: ItemFlags, 17;
+	flagdef Transfer: ItemFlags, 18;
+	flagdef NoTeleportFreeze: ItemFlags, 19;
+	flagdef NoScreenBlink: ItemFlags, 20;
+	flagdef IsArmor: ItemFlags, 21;
+	flagdef IsHealth: ItemFlags, 22;
+	flagdef AlwaysPickup: ItemFlags, 23;
+
+	flagdef ForceRespawnInSurvival: none, 0;
+	flagdef PickupFlash: none, 6;
+	flagdef InterHubStrip: none, 12;
+
 	Default
 	{
 		Inventory.Amount 1;
@@ -49,10 +79,45 @@ class Inventory : Actor native
 		Inventory.PickupMessage "$TXT_DEFAULTPICKUPMSG";
 	}
 	
-	native bool DoRespawn();
-	native void BecomeItem();
-	native void BecomePickup();
-	native void ModifyDropAmount(int dropamount);
+	//native override void Tick();
+	
+	override void Tick()
+	{
+		if (Owner == null)
+		{
+			// AActor::Tick is only handling interaction with the world
+			// and we don't want that for owned inventory items.
+			Super.Tick();
+		}
+		else if (tics != -1)	// ... but at least we have to advance the states
+		{
+			tics--;
+					
+			// you can cycle through multiple states in a tic
+			// [RH] Use <= 0 instead of == 0 so that spawnstates
+			// of 0 tics work as expected.
+			if (tics <= 0)
+			{
+				if (curstate == null)
+				{
+					Destroy();
+					return;
+				}
+				if (!SetState (curstate.NextState))
+					return; 		// freed itself
+			}
+		}
+		if (DropTime)
+		{
+			if (--DropTime == 0)
+			{
+				bSpecial = default.bSpecial;
+				bSolid = default.bSolid;
+			}
+		}
+	}
+	
+	
 	native static void PrintPickupMessage (bool localview, String str);
 
 	States(Actor)
@@ -77,10 +142,21 @@ class Inventory : Actor native
 		Stop;
 	}
 	
+	//===========================================================================
+	//
+	// Inventory :: MarkPrecacheSounds
+	//
+	//===========================================================================
+
+	override void MarkPrecacheSounds()
+	{
+		Super.MarkPrecacheSounds();
+		MarkSound(PickupSound);
+	}
 
 	//===========================================================================
 	//
-	// AInventory :: BeginPlay
+	// Inventory :: BeginPlay
 	//
 	//===========================================================================
 
@@ -90,6 +166,39 @@ class Inventory : Actor native
 		bDropped = true;	// [RH] Items are dropped by default
 	}
 
+	//===========================================================================
+	//
+	// Inventory :: Destroy
+	//
+	//===========================================================================
+
+	override void OnDestroy ()
+	{
+		if (Owner != NULL)
+		{
+			Owner.RemoveInventory (self);
+		}
+		Inv = NULL;
+		Super.OnDestroy();
+	}
+	
+	//===========================================================================
+	//
+	// Inventory :: ShouldSpawn
+	//
+	//===========================================================================
+
+	override bool ShouldSpawn()
+	{
+		// [RH] Other things that shouldn't be spawned depending on dmflags
+		if (deathmatch || alwaysapplydmflags)
+		{
+			if (sv_nohealth && bIsHealth) return false;
+			if (sv_noarmor && bIsArmor) return false;
+		}
+		return true;
+	}
+	
 	//---------------------------------------------------------------------------
 	//
 	// PROC A_RestoreSpecialThing1
@@ -144,11 +253,112 @@ class Inventory : Actor native
 			Spawn ("ItemFog", Pos, ALLOW_REPLACE);
 		}
 	}
-		
 
 	//===========================================================================
 	//
-	// AInventory :: CreateCopy
+	// Inventory :: DoRespawn
+	//
+	//===========================================================================
+
+	bool DoRespawn ()
+	{
+		if (SpawnPointClass != NULL)
+		{
+			Actor spot = NULL;
+			let state = SpotState.GetSpotState();
+
+			if (state != NULL) spot = state.GetRandomSpot(SpawnPointClass, false);
+			if (spot != NULL) 
+			{
+				SetOrigin (spot.Pos, false);
+				SetZ(floorz);
+			}
+		}
+		return true;
+	}
+	
+	//===========================================================================
+	//
+	// Inventory :: Grind
+	//
+	//===========================================================================
+
+	override bool Grind(bool items)
+	{
+		// Does this grind request even care about items?
+		if (!items)
+		{
+			return false;
+		}
+		// Dropped items are normally destroyed by crushers. Set the DONTGIB flag,
+		// and they'll act like corpses with it set and be immune to crushers.
+		if (bDropped)
+		{
+			if (!bDontGib)
+			{
+				Destroy();
+			}
+			return false;
+		}
+		// Non-dropped items call the super method for compatibility.
+		return Super.Grind(items);
+	}		
+
+	//===========================================================================
+	//
+	// Inventory :: BecomeItem
+	//
+	// Lets this actor know that it's about to be placed in an inventory.
+	//
+	//===========================================================================
+
+	void BecomeItem ()
+	{
+		if (!bNoBlockmap || !bNoSector)
+		{
+			A_ChangeLinkFlags(1, 1);
+		}
+		ChangeTid(0);
+		bSpecial = false;
+		// if the item was turned into a monster through Dehacked, undo that here.
+		bCountkill = false;
+		bIsMonster = false;
+		ChangeStatNum(STAT_INVENTORY);
+		// stop all sounds this item is playing.
+		for(int i = 1;i<=7;i++) A_StopSound(i);
+		SetState (FindState("Held"));
+	}
+
+	//===========================================================================
+	//
+	// Inventory :: BecomePickup
+	//
+	// Lets this actor know it should wait to be picked up.
+	//
+	//===========================================================================
+
+	void BecomePickup ()
+	{
+		if (Owner != NULL)
+		{
+			Owner.RemoveInventory (self);
+		}
+		if (bNoBlockmap || bNoSector)
+		{
+			A_ChangeLinkFlags(0, 0);
+			FindFloorCeiling();
+		}
+		bSpecial = true;
+		bDropped = true;
+		bCountItem = false;
+		bInvisible = false;
+		ChangeStatNum(STAT_DEFAULT);
+		SetState (SpawnState);
+	}
+
+	//===========================================================================
+	//
+	// Inventory :: CreateCopy
 	//
 	// Returns an actor suitable for placing in an inventory, either itself or
 	// a copy based on whether it needs to respawn or not. Returning NULL
@@ -176,7 +386,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: HandlePickup
+	// Inventory :: HandlePickup
 	//
 	// Returns true if the pickup was handled (or should not happen at all),
 	// false if not.
@@ -211,7 +421,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: CallHandlePickup
+	// Inventory :: CallHandlePickup
 	//
 	// Runs all HandlePickup methods in the chain
 	//
@@ -230,7 +440,7 @@ class Inventory : Actor native
 		
 	//===========================================================================
 	//
-	// AInventory :: TryPickup
+	// Inventory :: TryPickup
 	//
 	//===========================================================================
 
@@ -315,7 +525,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: GiveQuest
+	// Inventory :: GiveQuest
 	//
 	//===========================================================================
 
@@ -334,7 +544,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: CanPickup
+	// Inventory :: CanPickup
 	//
 	//===========================================================================
 	
@@ -364,7 +574,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: CallTryPickup
+	// Inventory :: CallTryPickup
 	//
 	// In this case the caller function is more than a simple wrapper around the virtual method and
 	// is what must be actually called to pick up an item.
@@ -425,7 +635,7 @@ class Inventory : Actor native
 	
 	//===========================================================================
 	//
-	// AInventory :: ShouldStay
+	// Inventory :: ShouldStay
 	//
 	// Returns true if the item should not disappear, even temporarily.
 	//
@@ -438,7 +648,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: TryPickupRestricted
+	// Inventory :: TryPickupRestricted
 	//
 	//===========================================================================
 
@@ -449,7 +659,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: AttachToOwner
+	// Inventory :: AttachToOwner
 	//
 	//===========================================================================
 
@@ -461,7 +671,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: DetachFromOwner
+	// Inventory :: DetachFromOwner
 	//
 	// Performs any special work needed when the item leaves an inventory,
 	// either through destruction or becoming a pickup.
@@ -474,7 +684,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory::CreateTossable
+	// Inventory::CreateTossable
 	//
 	// Creates a copy of the item suitable for dropping. If this actor embodies
 	// only one item, then it is tossed out itself. Otherwise, the count drops
@@ -518,7 +728,7 @@ class Inventory : Actor native
 	
 	//===========================================================================
 	//
-	// AInventory :: PickupMessage
+	// Inventory :: PickupMessage
 	//
 	// Returns the message to print when this actor is picked up.
 	//
@@ -531,7 +741,7 @@ class Inventory : Actor native
 	
 	//===========================================================================
 	//
-	// AInventory :: Touch
+	// Inventory :: Touch
 	//
 	// Handles collisions from another actor, possible adding itself to the
 	// collider's inventory.
@@ -608,7 +818,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: DepleteOrDestroy
+	// Inventory :: DepleteOrDestroy
 	//
 	// If the item is depleted, just change its amount to 0, otherwise it's destroyed.
 	//
@@ -634,7 +844,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: Travelled
+	// Inventory :: Travelled
 	//
 	// Called when an item in somebody's inventory is carried over to another
 	// map, in case it needs to do special reinitialization.
@@ -645,7 +855,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: DoEffect
+	// Inventory :: DoEffect
 	//
 	// Handles any effect an item might apply to its owner
 	// Normally only used by subclasses of Powerup
@@ -656,7 +866,7 @@ class Inventory : Actor native
 	
 	//===========================================================================
 	//
-	// AInventory :: Hide
+	// Inventory :: Hide
 	//
 	// Hides this actor until it's time to respawn again. 
 	//
@@ -708,7 +918,7 @@ class Inventory : Actor native
 	
 	//===========================================================================
 	//
-	// AInventory :: ShouldRespawn
+	// Inventory :: ShouldRespawn
 	//
 	// Returns true if the item should hide itself and reappear later when picked
 	// up.
@@ -724,7 +934,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: GoAway
+	// Inventory :: GoAway
 	//
 	// Returns true if you must create a copy of this item to give to the player
 	// or false if you can use this one instead.
@@ -753,7 +963,7 @@ class Inventory : Actor native
 	
 	//===========================================================================
 	//
-	// AInventory :: GoAwayAndDie
+	// Inventory :: GoAwayAndDie
 	//
 	// Like GoAway but used by items that don't insert themselves into the
 	// inventory. If they won't be respawning, then they can destroy themselves.
@@ -771,7 +981,7 @@ class Inventory : Actor native
 	
 	//===========================================================================
 	//
-	// AInventory :: ModifyDamage
+	// Inventory :: ModifyDamage
 	//
 	// Allows inventory items to manipulate the amount of damage
 	// inflicted. Damage is the amount of damage that would be done without manipulation,
@@ -793,10 +1003,15 @@ class Inventory : Actor native
 	virtual version("2.4") ui void AlterWeaponSprite(VisStyle vis, in out int changed) {}
 	virtual void OwnerDied() {}
 	virtual Color GetBlend () { return 0; }
+	
+	virtual void UseAll(Actor user)
+	{
+		if (bInvBar) user.UseInventory(self);
+	}
 
 	//===========================================================================
 	//
-	// AInventory :: DoPickupSpecial
+	// Inventory :: DoPickupSpecial
 	//
 	// Executes this actor's special when it is picked up.
 	//
@@ -812,7 +1027,7 @@ class Inventory : Actor native
 	}
 		//===========================================================================
 	//
-	// AInventory :: PlayPickupSound
+	// Inventory :: PlayPickupSound
 	//
 	//===========================================================================
 
@@ -827,7 +1042,7 @@ class Inventory : Actor native
 		}
 		/*
 		else if ((ItemFlags & IF_FANCYPICKUPSOUND) &&
-			(toucher == NULL || toucher->CheckLocalView(consoeplayer)))
+			(toucher == NULL || toucher->CheckLocalView(consoleplayer)))
 		{
 			atten = ATTN_NONE;
 		}
@@ -850,7 +1065,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: DrawPowerup
+	// Inventory :: DrawPowerup
 	//
 	// This has been deprecated because it is not how this should be done
 	// Use GetPowerupIcon instead!
@@ -861,7 +1076,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: AbsorbDamage
+	// Inventory :: AbsorbDamage
 	//
 	// Allows inventory items (primarily armor) to reduce the amount of damage
 	// taken. Damage is the amount of damage that would be done without armor,
@@ -874,7 +1089,7 @@ class Inventory : Actor native
 	
 	//===========================================================================
 	//
-	// AInventory :: SpecialDropAction
+	// Inventory :: SpecialDropAction
 	//
 	// Called by P_DropItem. Return true to prevent the standard drop tossing.
 	// A few Strife items that are meant to trigger actions rather than be
@@ -889,7 +1104,7 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: NextInv
+	// Inventory :: NextInv
 	//
 	// Returns the next item with IF_INVBAR set.
 	//
@@ -909,7 +1124,31 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: OnDrop
+	// Inventory :: PrevInv
+	//
+	// Returns the previous item with IF_INVBAR set.
+	//
+	//===========================================================================
+
+	clearscope Inventory PrevInv ()
+	{
+		Inventory lastgood = NULL;
+		Inventory item = Owner.Inv;
+
+		while (item != NULL && item != self)
+		{
+			if (item.bInvBar)
+			{
+				lastgood = item;
+			}
+			item = item.Inv;
+		}
+		return lastgood;
+	}
+	
+	//===========================================================================
+	//
+	// Inventory :: OnDrop
 	//
 	// Called by AActor::DropInventory. Allows items to modify how they behave
 	// after being dropped.
@@ -917,6 +1156,43 @@ class Inventory : Actor native
 	//===========================================================================
 
 	virtual void OnDrop (Actor dropper) {}
+	
+	//---------------------------------------------------------------------------
+	//
+	// Modifies the drop amount of this item according to the current skill's
+	// settings (also called by ADehackedPickup::TryPickup)
+	//
+	//---------------------------------------------------------------------------
+	
+	virtual void ModifyDropAmount(int dropamount)
+	{
+		if (dropamount > 0)
+		{
+			Amount = dropamount;
+		}
+	}
+	
+	//---------------------------------------------------------------------------
+	//
+	// Modifies the amount based on what an item should contain if given
+	//
+	//---------------------------------------------------------------------------
+	
+	virtual void SetGiveAmount(Actor receiver, int amount, bool givecheat)
+	{
+		if (givecheat)
+		{
+			let haveitem = receiver.FindInventory(GetClass());
+			self.Amount = MIN(amount, haveitem == null? self.Default.MaxAmount : haveitem.MaxAmount);
+		}
+		else
+		{
+			self.Amount = amount;
+		}
+	}
+
+	
+	
 }
 
 //===========================================================================
@@ -1014,6 +1290,14 @@ class DehackedPickup : Inventory
 		}
 		Super.OnDestroy();
 	}
+	
+	override void ModifyDropAmount(int dropamount)
+	{
+		// Must forward the adjustment to the real item.
+		// dropamount is not relevant here because Dehacked cannot change it.
+		droppedbymonster = true;
+	}
+	
 }
 
 //===========================================================================

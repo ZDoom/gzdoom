@@ -14,6 +14,7 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native readonly @GameInfoStruct gameinfo;
 	native play @PlayerInfo players[MAXPLAYERS];
 	native readonly bool playeringame[MAXPLAYERS];
+	native readonly ui bool netgame;
 
 	native readonly bool automapactive;
 	native play uint gameaction;
@@ -164,7 +165,7 @@ enum DrawTextureTags
 	DTA_SrcWidth,
 	DTA_SrcHeight,
 	DTA_LegacyRenderStyle,	// takes an old-style STYLE_* constant instead of an FRenderStyle
-
+	DTA_Internal3,
 };
 
 class Shape2D : Object native
@@ -288,6 +289,7 @@ struct Font native
 	native String GetCursor();
 
 	native static int FindFontColor(Name color);
+	native double GetBottomAlignOffset(int code);
 	native static Font FindFont(Name fontname);
 	native static Font GetFont(Name fontname);
 	native BrokenLines BreakLines(String text, int maxlen);
@@ -366,12 +368,27 @@ struct GameInfoStruct native
 	native double gibfactor;
 	native bool intermissioncounter;
 	native Name mSliderColor;
+	native Color defaultbloodcolor;
+	native double telefogheight;
+	native int defKickback;
+	native int defaultdropstyle;
+	native TextureID healthpic;
+	native TextureID berserkpic;
 }
 
 class Object native
 {
 	native bool bDestroyed;
 
+	// These must be defined in some class, so that the compiler can find them. Object is just fine, as long as they are private to external code.
+	private native static int BuiltinRandom(voidptr rng, int min, int max);
+	private native static double BuiltinFRandom(voidptr rng, double min, double max);
+	private native static int BuiltinRandom2(voidptr rng, int mask);
+	private native static void BuiltinRandomSeed(voidptr rng, int seed);
+	private native static int BuiltinCallLineSpecial(int special, Actor activator, int arg1, int arg2, int arg3, int arg4, int arg5);
+	private native static Class<Object> BuiltinNameToClass(Name nm, Class<Object> filter);
+	private native static Object BuiltinClassCast(Object inptr, Class<Object> test);
+	
 	// These really should be global functions...
 	native static String G_SkillName();
 	native static int G_SkillPropertyInt(int p);
@@ -383,6 +400,7 @@ class Object native
 	native static void S_ResumeSound (bool notsfx);
 	native static bool S_ChangeMusic(String music_name, int order = 0, bool looping = true, bool force = false);
 	native static float S_GetLength(Sound sound_id);
+	native static void MarkSound(Sound snd);
 	native static uint BAM(double angle);
 	native static void SetMusicVolume(float vol);
 	native static uint MSTime();
@@ -442,7 +460,7 @@ class Thinker : Object native play
 	
 	virtual native void Tick();
 	virtual native void PostBeginPlay();
-	virtual native void ChangeStatNum(int stat);
+	native void ChangeStatNum(int stat);
 	
 	static clearscope int Tics2Seconds(int tics)
 	{
@@ -580,14 +598,6 @@ struct DropItem native
 	native readonly int Amount;
 }
 
-class SpotState : Object native
-{
-	native static SpotState GetSpotState();
-	native SpecialSpot GetNextInList(class<Actor> type, int skipcounter);
-	native SpecialSpot GetSpotWithMinMaxDistance(Class<Actor> type, double x, double y, double mindist, double maxdist);
-	
-}
-
 struct LevelLocals native
 {
 	enum EUDMF
@@ -597,6 +607,9 @@ struct LevelLocals native
 		UDMF_Sector,
 		//UDMF_Thing // not implemented
 	};
+	
+	const CLUSTER_HUB = 0x00000001;	// Cluster uses hub behavior
+
 
 	native Array<@Sector> Sectors;
 	native Array<@Line> Lines;
@@ -650,10 +663,13 @@ struct LevelLocals native
 	native bool frozen;
 	native readonly bool infinite_flight;
 	native readonly bool no_dlg_freeze;
+	native readonly bool keepfullinventory;
+	native readonly bool removeitems;
 	native readonly int fogdensity;
 	native readonly int outsidefogdensity;
 	native readonly int skyfog;
 	native readonly float pixelstretch;
+	native name deathsequence;
 // level_info_t *info cannot be done yet.
 
 	native String GetUDMFString(int type, int index, Name key);
@@ -664,11 +680,15 @@ struct LevelLocals native
 	native static void StartSlideshow(Name whichone = 'none');
 	native static void WorldDone();
 	native static void RemoveAllBots(bool fromlist);
+	native static Vector2 GetAutomapPosition();
 	native void SetInterMusic(String nextmap);
 	native String FormatMapName(int mapnamecolor);
 	native bool IsJumpingAllowed() const;
 	native bool IsCrouchingAllowed() const;
 	native bool IsFreelookAllowed() const;
+	native void StartIntermission(Name type, int state) const;
+
+	native static clearscope bool IsPointInMap(vector3 p);
 
 	native static clearscope vector2 Vec2Diff(vector2 v1, vector2 v2);
 	native static clearscope vector3 Vec3Diff(vector3 v1, vector3 v2);
@@ -955,3 +975,24 @@ struct Shader native
 	native clearscope static void SetUniform3f(PlayerInfo player, string shaderName, string uniformName, vector3 value);
 	native clearscope static void SetUniform1i(PlayerInfo player, string shaderName, string uniformName, int value);
 }
+
+struct FRailParams
+{
+	native int damage;
+	native double offset_xy;
+	native double offset_z;
+	native int color1, color2;
+	native double maxdiff;
+	native int flags;
+	native Class<Actor> puff;
+	native double angleoffset;
+	native double pitchoffset;
+	native double distance;
+	native int duration;
+	native double sparsity;
+	native double drift;
+	native Class<Actor> spawnclass;
+	native int SpiralOffset;
+	native int limit;
+};	// [RH] Shoot a railgun
+

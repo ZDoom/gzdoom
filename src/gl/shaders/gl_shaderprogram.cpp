@@ -37,6 +37,10 @@
 namespace OpenGLRenderer
 {
 
+bool IsShaderCacheActive();
+TArray<uint8_t> LoadCachedProgramBinary(const FString &vertex, const FString &fragment, uint32_t &binaryFormat);
+void SaveCachedProgramBinary(const FString &vertex, const FString &fragment, const TArray<uint8_t> &binary, uint32_t binaryFormat);
+
 FShaderProgram::FShaderProgram()
 {
 	for (int i = 0; i < NumShaderTypes; i++)
@@ -95,13 +99,19 @@ void FShaderProgram::Compile(ShaderType type, const char *lumpName, const char *
 
 void FShaderProgram::Compile(ShaderType type, const char *name, const FString &code, const char *defines, int maxGlslVersion)
 {
+	mShaderNames[type] = name;
+	mShaderSources[type] = PatchShader(type, code, defines, maxGlslVersion);
+}
+
+void FShaderProgram::CompileShader(ShaderType type)
+{
 	CreateShader(type);
 
 	const auto &handle = mShaders[type];
 
-	FGLDebug::LabelObject(GL_SHADER, handle, name);
+	FGLDebug::LabelObject(GL_SHADER, handle, mShaderNames[type]);
 
-	FString patchedCode = PatchShader(type, code, defines, maxGlslVersion);
+	const FString &patchedCode = mShaderSources[type];
 	int lengths[1] = { (int)patchedCode.Len() };
 	const char *sources[1] = { patchedCode.GetChars() };
 	glShaderSource(handle, 1, sources, lengths);
@@ -112,7 +122,7 @@ void FShaderProgram::Compile(ShaderType type, const char *name, const FString &c
 	glGetShaderiv(handle, GL_COMPILE_STATUS, &status);
 	if (status == GL_FALSE)
 	{
-		I_FatalError("Compile Shader '%s':\n%s\n", name, GetShaderInfoLog(handle).GetChars());
+		I_FatalError("Compile Shader '%s':\n%s\n", mShaderNames[type].GetChars(), GetShaderInfoLog(handle).GetChars());
 	}
 	else
 	{
@@ -131,13 +141,45 @@ void FShaderProgram::Compile(ShaderType type, const char *name, const FString &c
 void FShaderProgram::Link(const char *name)
 {
 	FGLDebug::LabelObject(GL_PROGRAM, mProgram, name);
-	glLinkProgram(mProgram);
 
-	GLint status = 0;
-	glGetProgramiv(mProgram, GL_LINK_STATUS, &status);
-	if (status == GL_FALSE)
+	uint32_t binaryFormat = 0;
+	TArray<uint8_t> binary;
+	if (IsShaderCacheActive())
+		binary = LoadCachedProgramBinary(mShaderSources[Vertex], mShaderSources[Fragment], binaryFormat);
+
+	bool loadedFromBinary = false;
+	if (binary.Size() > 0 && glProgramBinary)
 	{
-		I_FatalError("Link Shader '%s':\n%s\n", name, GetProgramInfoLog(mProgram).GetChars());
+		if (mProgram == 0)
+			mProgram = glCreateProgram();
+		glProgramBinary(mProgram, binaryFormat, binary.Data(), binary.Size());
+		GLint status = 0;
+		glGetProgramiv(mProgram, GL_LINK_STATUS, &status);
+		loadedFromBinary = (status == GL_TRUE);
+	}
+
+	if (!loadedFromBinary)
+	{
+		CompileShader(Vertex);
+		CompileShader(Fragment);
+
+		glLinkProgram(mProgram);
+
+		GLint status = 0;
+		glGetProgramiv(mProgram, GL_LINK_STATUS, &status);
+		if (status == GL_FALSE)
+		{
+			I_FatalError("Link Shader '%s':\n%s\n", name, GetProgramInfoLog(mProgram).GetChars());
+		}
+		else if (glProgramBinary && IsShaderCacheActive())
+		{
+			int binaryLength = 0;
+			glGetProgramiv(mProgram, GL_PROGRAM_BINARY_LENGTH, &binaryLength);
+			binary.Resize(binaryLength);
+			glGetProgramBinary(mProgram, binary.Size(), &binaryLength, &binaryFormat, binary.Data());
+			binary.Resize(binaryLength);
+			SaveCachedProgramBinary(mShaderSources[Vertex], mShaderSources[Fragment], binary, binaryFormat);
+		}
 	}
 
 	// This is only for old OpenGL which didn't allow to set the binding from within the shader.

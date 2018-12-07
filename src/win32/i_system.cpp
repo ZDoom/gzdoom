@@ -50,6 +50,7 @@
 #include <string.h>
 #include <process.h>
 #include <time.h>
+#include <map>
 
 #include <stdarg.h>
 
@@ -1470,3 +1471,76 @@ int _stat64i32(const char *path, struct _stat64i32 *buffer)
 	return 0;
 }
 #endif
+
+struct NumaNode
+{
+	uint64_t affinityMask = 0;
+	int threadCount = 0;
+};
+static TArray<NumaNode> numaNodes;
+
+static void SetupNumaNodes()
+{
+	if (numaNodes.Size() == 0)
+	{
+		// Query processors in the system
+		DWORD_PTR processMask = 0, systemMask = 0;
+		BOOL result = GetProcessAffinityMask(GetCurrentProcess(), &processMask, &systemMask);
+		if (result)
+		{
+			// Find the numa node each processor belongs to
+			std::map<int, NumaNode> nodes;
+			for (int i = 0; i < sizeof(DWORD_PTR) * 8; i++)
+			{
+				DWORD_PTR processorMask = (((DWORD_PTR)1) << i);
+				if (processMask & processorMask)
+				{
+					UCHAR nodeNumber = 0;
+					result = GetNumaProcessorNode(i, &nodeNumber);
+					if (nodeNumber != 0xff)
+					{
+						nodes[nodeNumber].affinityMask |= (uint64_t)processorMask;
+						nodes[nodeNumber].threadCount++;
+					}
+				}
+			}
+
+			// Convert map to a list
+			for (const auto &it : nodes)
+			{
+				numaNodes.Push(it.second);
+			}
+		}
+
+		// Fall back to a single node if something went wrong
+		if (numaNodes.Size() == 0)
+		{
+			NumaNode node;
+			node.threadCount = std::thread::hardware_concurrency();
+			if (node.threadCount == 0)
+				node.threadCount = 1;
+			numaNodes.Push(node);
+		}
+	}
+}
+
+int I_GetNumaNodeCount()
+{
+	SetupNumaNodes();
+	return numaNodes.Size();
+}
+
+int I_GetNumaNodeThreadCount(int numaNode)
+{
+	SetupNumaNodes();
+	return numaNodes[numaNode].threadCount;
+}
+
+void I_SetThreadNumaNode(std::thread &thread, int numaNode)
+{
+	if (numaNodes.Size() > 1)
+	{
+		HANDLE handle = (HANDLE)thread.native_handle();
+		SetThreadAffinityMask(handle, (DWORD_PTR)numaNodes[numaNode].affinityMask);
+	}
+}

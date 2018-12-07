@@ -119,7 +119,6 @@ extern void ReadStatistics();
 extern void M_SetDefaultMode ();
 extern void G_NewInit ();
 extern void SetupPlayerClasses ();
-extern void HUD_InitHud();
 void DeinitMenus();
 const FIWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
 
@@ -774,7 +773,7 @@ void D_Display ()
 		if (hud_althud && viewheight == SCREENHEIGHT && screenblocks > 10)
 		{
 			StatusBar->DrawBottomStuff (HUD_AltHud);
-			if (DrawFSHUD || automapactive) DrawHUD();
+			if (DrawFSHUD || automapactive) StatusBar->DrawAltHUD();
 			if (players[consoleplayer].camera && players[consoleplayer].camera->player && !automapactive)
 			{
 				StatusBar->DrawCrosshair();
@@ -1905,7 +1904,7 @@ static FString CheckGameInfo(TArray<FString> & pwads)
 				if (lmp->Namespace == ns_global && !stricmp(lmp->Name, "GAMEINFO"))
 				{
 					// Found one!
-					FString iwad = ParseGameInfo(pwads, resfile->Filename, (const char*)lmp->CacheLump(), lmp->LumpSize);
+					FString iwad = ParseGameInfo(pwads, resfile->FileName, (const char*)lmp->CacheLump(), lmp->LumpSize);
 					delete resfile;
 					return iwad;
 				}
@@ -2536,7 +2535,6 @@ void D_DoomMain (void)
 
 		//SBarInfo support. Note that the first SBARINFO lump contains the mugshot definition so it even needs to be read when a regular status bar is being used.
 		SBarInfo::Load();
-		HUD_InitHud();
 
 		if (!batchrun)
 		{

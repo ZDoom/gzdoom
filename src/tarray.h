@@ -108,6 +108,7 @@ public:
 
     typedef TIterator<T>                       iterator;
     typedef TIterator<const T>                 const_iterator;
+	typedef T							value_type;
 
     iterator begin()
 	{
@@ -157,14 +158,14 @@ public:
 		Count = 0;
 		Array = NULL;
 	}
-	TArray (int max, bool reserve = false)
+	TArray (size_t max, bool reserve = false)
 	{
-		Most = max;
-		Count = reserve? max : 0;
+		Most = (unsigned)max;
+		Count = (unsigned)(reserve? max : 0);
 		Array = (T *)M_Malloc (sizeof(T)*max);
-		if (reserve)
+		if (reserve && Count > 0)
 		{
-			for (unsigned i = 0; i < Count; i++) ::new(&Array[i]) T();
+			ConstructEmpty(0, Count - 1);
 		}
 	}
 	TArray (const TArray<T,TT> &other)
@@ -278,13 +279,32 @@ public:
 		return Count++;
 	}
 
-	void Append(const TArray<T> &item)
+	unsigned Append(const TArray<T> &item)
 	{
-		unsigned start = Reserve(item.Size());
+		unsigned start = Count;
+
+		Grow(item.Size());
+		Count += item.Size();
+
 		for (unsigned i = 0; i < item.Size(); i++)
 		{
-			Array[start + i] = item[i];
+			new(&Array[start + i]) T(item[i]);
 		}
+		return start;
+	}
+
+	unsigned Append(TArray<T> &&item)
+	{
+		unsigned start = Count;
+
+		Grow(item.Size());
+		Count += item.Size();
+
+		for (unsigned i = 0; i < item.Size(); i++)
+		{
+			new(&Array[start + i]) T(std::move(item[i]));
+		}
+		return start;
 	}
 
 	bool Pop ()
@@ -362,17 +382,6 @@ public:
 		}
 	}
 
-	// Reserves a range of entries in the middle of the array, shifting elements as needed
-	void ReserveAt(unsigned int index, unsigned int amount)
-	{
-		Grow(amount);
-		memmove(&Array[index + amount], &Array[index], sizeof(T)*(Count - index - amount));
-		for (unsigned i = 0; i < amount; i++)
-		{
-			::new ((void *)&Array[index + i]) T();
-		}
-	}
-
 	void ShrinkToFit ()
 	{
 		if (Most > Count)
@@ -411,10 +420,7 @@ public:
 		{
 			// Adding new entries
 			Grow (amount - Count);
-			for (unsigned int i = Count; i < amount; ++i)
-			{
-				::new((void *)&Array[i]) T;
-			}
+			ConstructEmpty(Count, amount - 1);
 		}
 		else if (Count != amount)
 		{
@@ -422,6 +428,18 @@ public:
 			DoDelete (amount, Count - 1);
 		}
 		Count = amount;
+	}
+	// Ensures that the array has at most amount entries.
+	// Useful in cases where the initial allocation may be larger than the final result.
+	// Resize would create a lot of unneeded code in those cases.
+	void Clamp(unsigned int amount)
+	{
+		if (Count > amount)
+		{
+			// Deleting old entries
+			DoDelete(amount, Count - 1);
+			Count = amount;
+		}
 	}
 	void Alloc(unsigned int amount)
 	{
@@ -433,15 +451,12 @@ public:
 	}
 	// Reserves amount entries at the end of the array, but does nothing
 	// with them.
-	unsigned int Reserve (unsigned int amount)
+	unsigned int Reserve (size_t amount)
 	{
-		Grow (amount);
+		Grow ((unsigned)amount);
 		unsigned int place = Count;
-		Count += amount;
-		for (unsigned int i = place; i < Count; ++i)
-		{
-			::new((void *)&Array[i]) T;
-		}
+		Count += (unsigned)amount;
+		if (Count > 0) ConstructEmpty(place, Count - 1);
 		return place;
 	}
 	unsigned int Size () const
@@ -463,7 +478,12 @@ public:
 	void Reset()
 	{
 		Clear();
-		ShrinkToFit();
+		Most = 0;
+		if (Array != nullptr)
+		{
+			M_Free(Array);
+			Array = nullptr;
+		}
 	}
 private:
 	T *Array;
@@ -499,6 +519,15 @@ private:
 		for (unsigned int i = first; i <= last; ++i)
 		{
 			Array[i].~T();
+		}
+	}
+
+	void ConstructEmpty(unsigned int first, unsigned int last)
+	{
+		assert(last != ~0u);
+		for (unsigned int i = first; i <= last; ++i)
+		{
+			::new(&Array[i]) T;
 		}
 	}
 };

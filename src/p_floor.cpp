@@ -300,7 +300,7 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 	{
 	case DFloor::floorLowerToHighest:
 		floor->m_Direction = -1;
-		newheight = sec->FindHighestFloorSurrounding(&spot);
+		newheight = FindHighestFloorSurrounding(sec, &spot);
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(spot, newheight);
 		// [RH] DOOM's turboLower type did this. I've just extended it
 		//		to be applicable to all LowerToHighest types.
@@ -310,14 +310,14 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 
 	case DFloor::floorLowerToLowest:
 		floor->m_Direction = -1;
-		newheight = sec->FindLowestFloorSurrounding(&spot);
+		newheight = FindLowestFloorSurrounding(sec, &spot);
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(spot, newheight);
 		break;
 
 	case DFloor::floorLowerToNearest:
 		//jff 02/03/30 support lowering floor to next lowest floor
 		floor->m_Direction = -1;
-		newheight = sec->FindNextLowestFloor(&spot);
+		newheight = FindNextLowestFloor(sec, &spot);
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(spot, newheight);
 		break;
 
@@ -338,7 +338,7 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 		break;
 
 	case DFloor::floorMoveToValue:
-		sec->FindHighestFloorPoint(&spot);
+		FindHighestFloorPoint(sec, &spot);
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(spot, height);
 		floor->m_Direction = (floor->m_FloorDestDist > sec->floorplane.fD()) ? -1 : 1;
 		break;
@@ -347,8 +347,8 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 		height = 8;
 	case DFloor::floorRaiseToLowestCeiling:
 		floor->m_Direction = 1;
-		newheight = sec->FindLowestCeilingSurrounding(&spot) - height;
-		ceilingheight = sec->FindLowestCeilingPoint(&spot2);
+		newheight = FindLowestCeilingSurrounding(sec, &spot) - height;
+		ceilingheight = FindLowestCeilingPoint(sec, &spot2);
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(spot, newheight);
 		if (sec->floorplane.ZatPointDist(spot2, floor->m_FloorDestDist) > ceilingheight)
 			floor->m_FloorDestDist = sec->floorplane.PointToDist(spot2,	ceilingheight - height);
@@ -356,50 +356,50 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 
 	case DFloor::floorRaiseToHighest:
 		floor->m_Direction = 1;
-		newheight = sec->FindHighestFloorSurrounding(&spot);
+		newheight = FindHighestFloorSurrounding(sec, &spot);
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(spot, newheight);
 		break;
 
 	case DFloor::floorRaiseToNearest:
 		floor->m_Direction = 1;
-		newheight = sec->FindNextHighestFloor(&spot);
+		newheight = FindNextHighestFloor(sec, &spot);
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(spot, newheight);
 		break;
 
 	case DFloor::floorRaiseToLowest:
 		floor->m_Direction = 1;
-		newheight = sec->FindLowestFloorSurrounding(&spot);
+		newheight = FindLowestFloorSurrounding(sec, &spot);
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(spot, newheight);
 		break;
 
 	case DFloor::floorRaiseAndCrush:
 		floor->m_Direction = 1;
-		newheight = sec->FindLowestCeilingPoint(&spot) - 8;
+		newheight = FindLowestCeilingPoint(sec, &spot) - 8;
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(spot, newheight);
 		break;
 
 	case DFloor::floorRaiseToCeiling:
 		floor->m_Direction = 1;
-		newheight = sec->FindLowestCeilingPoint(&spot) - height;
+		newheight = FindLowestCeilingPoint(sec, &spot) - height;
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(spot, newheight);
 		break;
 
 	case DFloor::floorLowerToLowestCeiling:
 		floor->m_Direction = -1;
-		newheight = sec->FindLowestCeilingSurrounding(&spot);
+		newheight = FindLowestCeilingSurrounding(sec, &spot);
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(spot, newheight);
 		break;
 
 	case DFloor::floorLowerByTexture:
 		floor->m_Direction = -1;
-		newheight = sec->CenterFloor() - sec->FindShortestTextureAround();
+		newheight = sec->CenterFloor() - FindShortestTextureAround(sec);
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(sec->centerspot, newheight);
 		break;
 
 	case DFloor::floorLowerToCeiling:
 		// [RH] Essentially instantly raises the floor to the ceiling
 		floor->m_Direction = -1;
-		newheight = sec->FindLowestCeilingPoint(&spot) - height;
+		newheight = FindLowestCeilingPoint(sec, &spot) - height;
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(spot, newheight);
 		break;
 
@@ -409,7 +409,7 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 		//		since the code is identical to what was here. (Oddly
 		//		enough, BOOM preserved the code here even though it
 		//		also had this function.)
-		newheight = sec->CenterFloor() + sec->FindShortestTextureAround();
+		newheight = sec->CenterFloor() + FindShortestTextureAround(sec);
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(sec->centerspot, newheight);
 		break;
 
@@ -431,7 +431,7 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 
 	case DFloor::floorLowerAndChange:
 		floor->m_Direction = -1;
-		newheight = sec->FindLowestFloorSurrounding(&spot);
+		newheight = FindLowestFloorSurrounding(sec, &spot);
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(spot, newheight);
 		floor->m_Texture = sec->GetTexture(sector_t::floor);
 		// jff 1/24/98 make sure floor->m_NewSpecial gets initialized
@@ -440,7 +440,7 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 
 		//jff 5/23/98 use model subroutine to unify fixes and handling
 		sector_t *modelsec;
-		modelsec = sec->FindModelFloorSector(newheight);
+		modelsec = FindModelFloorSector(sec, newheight);
 		if (modelsec != NULL)
 		{
 			floor->m_Texture = modelsec->GetTexture(sector_t::floor);
@@ -485,8 +485,8 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 				floortype == DFloor::floorLowerToLowestCeiling ||
 				floortype == DFloor::floorRaiseToCeiling ||
 				floortype == DFloor::floorLowerToCeiling) ?
-				sec->FindModelCeilingSector(-floor->m_FloorDestDist) :
-				sec->FindModelFloorSector(-floor->m_FloorDestDist);
+				FindModelCeilingSector(sec, -floor->m_FloorDestDist) :
+				FindModelFloorSector(sec, -floor->m_FloorDestDist);
 
 			if (modelsec != NULL)
 			{
@@ -509,11 +509,11 @@ DEFINE_ACTION_FUNCTION(DFloor, CreateFloor)
 	PARAM_INT(floortype);
 	PARAM_POINTER(ln, line_t);
 	PARAM_FLOAT(speed);
-	PARAM_FLOAT_DEF(height);
-	PARAM_INT_DEF(crush);
-	PARAM_INT_DEF(change);
-	PARAM_BOOL_DEF(hereticlower);
-	PARAM_BOOL_DEF(hexencrush);
+	PARAM_FLOAT(height);
+	PARAM_INT(crush);
+	PARAM_INT(change);
+	PARAM_BOOL(hereticlower);
+	PARAM_BOOL(hexencrush);
 	ACTION_RETURN_BOOL(P_CreateFloor(sec, (DFloor::EFloor)floortype, ln, speed, height, crush, change, hexencrush, hereticlower));
 }
 
@@ -829,7 +829,7 @@ bool EV_DoDonut (int tag, line_t *line, double pillarspeed, double slimespeed)
 			floor->m_Instant = false;
 			floor->m_Texture = s3->GetTexture(sector_t::floor);
 			floor->m_NewSpecial = {};
-			height = s3->FindHighestFloorPoint (&spot);
+			height = FindHighestFloorPoint (s3, &spot);
 			floor->m_FloorDestDist = s2->floorplane.PointToDist (spot, height);
 			floor->StartFloorSound ();
 			
@@ -842,7 +842,7 @@ bool EV_DoDonut (int tag, line_t *line, double pillarspeed, double slimespeed)
 			floor->m_Sector = s1;
 			floor->m_Speed = pillarspeed;
 			floor->m_Instant = false;
-			height = s3->FindHighestFloorPoint (&spot);
+			height = FindHighestFloorPoint (s3, &spot);
 			floor->m_FloorDestDist = s1->floorplane.PointToDist (spot, height);
 			floor->StartFloorSound ();
 			break;
@@ -1037,7 +1037,7 @@ bool EV_DoElevator (line_t *line, DElevator::EElevator elevtype,
 		// elevator down to next floor
 		case DElevator::elevateDown:
 			elevator->m_Direction = -1;
-			newheight = sec->FindNextLowestFloor (&spot);
+			newheight = FindNextLowestFloor (sec, &spot);
 			elevator->m_FloorDestDist = sec->floorplane.PointToDist (spot, newheight);
 			newheight += sec->ceilingplane.ZatPoint(spot) - sec->floorplane.ZatPoint(spot);
 			elevator->m_CeilingDestDist = sec->ceilingplane.PointToDist (spot, newheight);
@@ -1046,7 +1046,7 @@ bool EV_DoElevator (line_t *line, DElevator::EElevator elevtype,
 		// elevator up to next floor
 		case DElevator::elevateUp:
 			elevator->m_Direction = 1;
-			newheight = sec->FindNextHighestFloor (&spot);
+			newheight = FindNextHighestFloor (sec, &spot);
 			elevator->m_FloorDestDist = sec->floorplane.PointToDist (spot, newheight);
 			newheight += sec->ceilingplane.ZatPoint(spot) - sec->floorplane.ZatPoint(spot);
 			elevator->m_CeilingDestDist = sec->ceilingplane.PointToDist (spot, newheight);
@@ -1126,7 +1126,7 @@ bool EV_DoChange (line_t *line, EChange changetype, int tag)
 			}
 			break;
 		case numChangeOnly:
-			secm = sec->FindModelFloorSector (sec->CenterFloor());
+			secm = FindModelFloorSector(sec, sec->CenterFloor());
 			if (secm)
 			{ // if no model, no change
 				sec->SetTexture(sector_t::floor, secm->GetTexture(sector_t::floor));

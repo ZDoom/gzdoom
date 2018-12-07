@@ -124,8 +124,6 @@ private:
 
 };
 
-#include "hwrenderer/scene/hw_fakeflat.h"
-
 struct TexFilter_s
 {
 	int minfilter;

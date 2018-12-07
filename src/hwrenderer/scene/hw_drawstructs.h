@@ -187,7 +187,6 @@ public:
 	};
 
 
-	secplane_t topplane, bottomplane;	// we need to save these to pass them to the shader for calculating glows.
 
 	// these are not the same as ytop and ybottom!!!
 	float zceil[2];
@@ -199,10 +198,11 @@ public:
 public:
 	seg_t * seg;			// this gives the easiest access to all other structs involved
 	subsector_t * sub;		// For polyobjects
+	sector_t *frontsector, *backsector;
 //private:
 
 	void PutWall(HWDrawInfo *di, bool translucent);
-	void PutPortal(HWDrawInfo *di, int ptype);
+	void PutPortal(HWDrawInfo *di, int ptype, int plane);
 	void CheckTexturePosition(FTexCoordInfo *tci);
 
 	void Put3DWall(HWDrawInfo *di, lightlist_t * lightlist, bool translucent);
@@ -412,7 +412,7 @@ struct GLDecal
 	int rellight;
 	float alpha;
 	FColormap Colormap;
-	secplane_t bottomplane;
+	sector_t *frontsector;
 	FVector3 Normal;
 
 	void DrawDecal(HWDrawInfo *di, FRenderState &state);

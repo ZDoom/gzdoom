@@ -1764,7 +1764,7 @@ FUNC(LS_Thing_Raise)
 
 	if (arg0==0)
 	{
-		ok = P_Thing_Raise (it,NULL, arg1);
+		ok = P_Thing_Raise (it, it, arg1);
 	}
 	else
 	{
@@ -1772,7 +1772,7 @@ FUNC(LS_Thing_Raise)
 
 		while ( (target = iterator.Next ()) )
 		{
-			ok |= P_Thing_Raise(target,NULL, arg1);
+			ok |= P_Thing_Raise(target, target, arg1);
 		}
 	}
 	return ok;
@@ -2159,15 +2159,14 @@ FUNC(LS_Radius_Quake)
 FUNC(LS_UsePuzzleItem)
 // UsePuzzleItem (item, script)
 {
-	AInventory *item;
+	AActor *item;
 
 	if (!it) return false;
 
 	// Check player's inventory for puzzle item
-	auto pitype = PClass::FindActor(NAME_PuzzleItem);
 	for (item = it->Inventory; item != NULL; item = item->Inventory)
 	{
-		if (item->IsKindOf (pitype))
+		if (item->IsKindOf (NAME_PuzzleItem))
 		{
 			if (item->IntVar(NAME_PuzzleItemNumber) == arg0)
 			{
@@ -2434,7 +2433,7 @@ FUNC(LS_Sector_SetColor)
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
-		level.sectors[secnum].SetColor(arg1, arg2, arg3, arg4);
+		level.sectors[secnum].SetColor(PalEntry(255, arg1, arg2, arg3), arg4);
 	}
 
 	return true;
@@ -2447,7 +2446,7 @@ FUNC(LS_Sector_SetFade)
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
-		level.sectors[secnum].SetFade(arg1, arg2, arg3);
+		level.sectors[secnum].SetFade(PalEntry(255, arg1, arg2, arg3));
 	}
 	return true;
 }
@@ -2961,7 +2960,7 @@ FUNC(LS_SetPlayerProperty)
 			{ // Take power from activator
 				if (power != 4)
 				{
-					AInventory *item = it->FindInventory(powers[power], true);
+					auto item = it->FindInventory(powers[power], true);
 					if (item != NULL)
 					{
 						item->Destroy ();
@@ -3001,7 +3000,7 @@ FUNC(LS_SetPlayerProperty)
 				{ // Take power
 					if (power != 4)
 					{
-						AInventory *item = players[i].mo->FindInventory (PClass::FindActor(powers[power]));
+						auto item = players[i].mo->FindInventory (PClass::FindActor(powers[power]));
 						if (item != NULL)
 						{
 							item->Destroy ();
@@ -3178,7 +3177,7 @@ FUNC(LS_NoiseAlert)
 		emitter = iter.Next();
 	}
 
-	P_NoiseAlert (target, emitter);
+	P_NoiseAlert (emitter, target);
 	return true;
 }
 
@@ -3955,11 +3954,11 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, ExecuteSpecial)
 	PARAM_OBJECT(activator, AActor);
 	PARAM_POINTER(linedef, line_t);
 	PARAM_BOOL(lineside);
-	PARAM_INT_DEF(arg1);
-	PARAM_INT_DEF(arg2);
-	PARAM_INT_DEF(arg3);
-	PARAM_INT_DEF(arg4);
-	PARAM_INT_DEF(arg5);
+	PARAM_INT(arg1);
+	PARAM_INT(arg2);
+	PARAM_INT(arg3);
+	PARAM_INT(arg4);
+	PARAM_INT(arg5);
 
 	bool res = !!P_ExecuteSpecial(special, linedef, activator, lineside, arg1, arg2, arg3, arg4, arg5);
 

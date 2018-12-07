@@ -373,15 +373,6 @@ int GetUDMFInt(int type, int index, FName key)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(FLevelLocals, GetUDMFInt)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
-	PARAM_INT(type);
-	PARAM_INT(index);
-	PARAM_NAME(key);
-	ACTION_RETURN_INT(GetUDMFInt(type, index, key));
-}
-
 double GetUDMFFloat(int type, int index, FName key)
 {
 	assert(type >=0 && type <=3);
@@ -397,15 +388,6 @@ double GetUDMFFloat(int type, int index, FName key)
 		}
 	}
 	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(FLevelLocals, GetUDMFFloat)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
-	PARAM_INT(type);
-	PARAM_INT(index);
-	PARAM_NAME(key);
-	ACTION_RETURN_FLOAT(GetUDMFFloat(type, index, key));
 }
 
 FString GetUDMFString(int type, int index, FName key)
@@ -424,16 +406,6 @@ FString GetUDMFString(int type, int index, FName key)
 	}
 	return "";
 }
-
-DEFINE_ACTION_FUNCTION(FLevelLocals, GetUDMFString)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
-	PARAM_INT(type);
-	PARAM_INT(index);
-	PARAM_NAME(key);
-	ACTION_RETURN_STRING(GetUDMFString(type, index, key));
-}
-
 
 //===========================================================================
 //
@@ -738,6 +710,15 @@ public:
 				case NAME_Subtract:
 				case NAME_Subtractive:
 					th->RenderStyle = STYLE_Subtract;
+					break;
+				case NAME_ColorBlend:
+					th->RenderStyle = STYLE_ColorBlend;
+					break;
+				case NAME_ColorAdd:
+					th->RenderStyle = STYLE_ColorAdd;
+					break;
+				case NAME_Multiply:
+					th->RenderStyle = STYLE_Multiply;
 					break;
 				default:
 					break;
@@ -1223,6 +1204,7 @@ public:
 		{
 			FName key = ParseKey();
 			switch(key)
+
 			{
 			case NAME_Offsetx:
 				texOfs[0] = CheckInt(key);
@@ -1333,6 +1315,79 @@ public:
 			case NAME_Nodecals:
 				Flag(sd->Flags, WALLF_NOAUTODECALS, key);
 				continue;
+
+			case NAME_nogradient_top:
+				Flag(sd->textures[side_t::top].flags, side_t::part::NoGradient, key);
+				break;
+
+			case NAME_flipgradient_top:
+				Flag(sd->textures[side_t::top].flags, side_t::part::FlipGradient, key);
+				break;
+
+			case NAME_clampgradient_top:
+				Flag(sd->textures[side_t::top].flags, side_t::part::ClampGradient, key);
+				break;
+
+			case NAME_useowncolors_top:
+				Flag(sd->textures[side_t::top].flags, side_t::part::UseOwnColors, key);
+				break;
+
+			case NAME_uppercolor_top:
+				sd->SetSpecialColor(side_t::top, 0, CheckInt(key));
+				break;
+
+			case NAME_lowercolor_top:
+				sd->SetSpecialColor(side_t::top, 1, CheckInt(key));
+				break;
+
+			case NAME_nogradient_mid:
+				Flag(sd->textures[side_t::mid].flags, side_t::part::NoGradient, key);
+				break;
+
+			case NAME_flipgradient_mid:
+				Flag(sd->textures[side_t::mid].flags, side_t::part::FlipGradient, key);
+				break;
+
+			case NAME_clampgradient_mid:
+				Flag(sd->textures[side_t::mid].flags, side_t::part::ClampGradient, key);
+				break;
+
+			case NAME_useowncolors_mid:
+				Flag(sd->textures[side_t::mid].flags, side_t::part::UseOwnColors, key);
+				break;
+
+			case NAME_uppercolor_mid:
+				sd->SetSpecialColor(side_t::mid, 0, CheckInt(key));
+				break;
+
+			case NAME_lowercolor_mid:
+				sd->SetSpecialColor(side_t::mid, 1, CheckInt(key));
+				break;
+
+			case NAME_nogradient_bottom:
+				Flag(sd->textures[side_t::bottom].flags, side_t::part::NoGradient, key);
+				break;
+
+			case NAME_flipgradient_bottom:
+				Flag(sd->textures[side_t::bottom].flags, side_t::part::FlipGradient, key);
+				break;
+
+			case NAME_clampgradient_bottom:
+				Flag(sd->textures[side_t::bottom].flags, side_t::part::ClampGradient, key);
+				break;
+
+			case NAME_useowncolors_bottom:
+				Flag(sd->textures[side_t::bottom].flags, side_t::part::UseOwnColors, key);
+				break;
+
+			case NAME_uppercolor_bottom:
+				sd->SetSpecialColor(side_t::bottom, 0, CheckInt(key));
+				break;
+
+			case NAME_lowercolor_bottom:
+				sd->SetSpecialColor(side_t::bottom, 1, CheckInt(key));
+				break;
+
 
 			default:
 				break;
@@ -2045,15 +2100,11 @@ public:
 
 	void ParseTextMap(MapData *map)
 	{
-		char *buffer = new char[map->Size(ML_TEXTMAP)];
-
 		isTranslated = true;
 		isExtended = false;
 		floordrop = false;
 
-		map->Read(ML_TEXTMAP, buffer);
-		sc.OpenMem(Wads.GetLumpFullName(map->lumpnum), buffer, map->Size(ML_TEXTMAP));
-		delete [] buffer;
+		sc.OpenMem(Wads.GetLumpFullName(map->lumpnum), map->Read(ML_TEXTMAP));
 		sc.SetCMode(true);
 		if (sc.CheckString("namespace"))
 		{

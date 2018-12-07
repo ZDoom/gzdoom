@@ -62,7 +62,6 @@
 #include "g_levellocals.h"
 #include "vm.h"
 
-FString FStringFormat(VM_ARGS); // extern from thingdef_data.cpp
 
 #include "gi.h"
 
@@ -1294,7 +1293,9 @@ DEFINE_ACTION_FUNCTION(_Console, HideConsole)
 DEFINE_ACTION_FUNCTION(_Console, Printf)
 {
 	PARAM_PROLOGUE;
-	FString s = FStringFormat(param, defaultparam, numparam, ret, numret);
+	PARAM_VA_POINTER(va_reginfo)	// Get the hidden type information array
+
+	FString s = FStringFormat(VM_ARGS_NAMES);
 	Printf("%s\n", s.GetChars());
 	return 0;
 }
@@ -1788,7 +1789,7 @@ DEFINE_ACTION_FUNCTION(_Console, MidPrint)
 	PARAM_PROLOGUE;
 	PARAM_POINTER_NOT_NULL(fnt, FFont);
 	PARAM_STRING(text);
-	PARAM_BOOL_DEF(bold);
+	PARAM_BOOL(bold);
 
 	const char *txt = text[0] == '$'? GStrings(&text[1]) : text.GetChars();
 	if (!bold) C_MidPrint(fnt, txt);

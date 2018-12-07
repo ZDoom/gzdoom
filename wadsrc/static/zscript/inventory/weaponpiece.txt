@@ -3,7 +3,7 @@
 ** Implements generic weapon pieces
 **
 **---------------------------------------------------------------------------
-** Copyright 2006-2016 Cheistoph Oelckers
+** Copyright 2006-2016 Christoph Oelckers
 ** Copyright 2006-2016 Randy Heit
 ** All rights reserved.
 **

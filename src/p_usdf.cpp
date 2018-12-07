@@ -75,7 +75,7 @@ class USDFParser : public UDMFParserBase
 	PClassActor *CheckInventoryActorType(const char *key)
 	{
 		PClassActor* const type = CheckActorType(key);
-		return nullptr != type && type->IsDescendantOf(RUNTIME_CLASS(AInventory)) ? type : nullptr;
+		return nullptr != type && type->IsDescendantOf(NAME_Inventory) ? type : nullptr;
 	}
 
 	//===========================================================================
@@ -473,10 +473,7 @@ class USDFParser : public UDMFParserBase
 public:
 	bool Parse(int lumpnum, FileReader &lump, int lumplen)
 	{
-		char *buffer = new char[lumplen];
-		lump.Read(buffer, lumplen);
-		sc.OpenMem(Wads.GetLumpFullName(lumpnum), buffer, lumplen);
-		delete [] buffer;
+		sc.OpenMem(Wads.GetLumpFullName(lumpnum), lump.Read(lumplen));
 		sc.SetCMode(true);
 		// Namespace must be the first field because everything else depends on it.
 		if (sc.CheckString("namespace"))

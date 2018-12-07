@@ -85,6 +85,7 @@
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "i_time.h"
+#include "p_maputl.h"
 
 void STAT_StartNewGame(const char *lev);
 void STAT_ChangeLevel(const char *newl);
@@ -1281,7 +1282,7 @@ void G_StartTravel ()
 		if (playeringame[i])
 		{
 			AActor *pawn = players[i].mo;
-			AInventory *inv;
+			AActor *inv;
 			players[i].camera = NULL;
 
 			// Only living players travel. Dead ones get a new body on the new level.
@@ -1320,7 +1321,7 @@ int G_FinishTravel ()
 {
 	TThinkerIterator<APlayerPawn> it (STAT_TRAVELLING);
 	APlayerPawn *pawn, *pawndup, *oldpawn, *next;
-	AInventory *inv;
+	AActor *inv;
 	FPlayerStart *start;
 	int pnum;
 	int failnum = 0;
@@ -1408,7 +1409,7 @@ int G_FinishTravel ()
 			inv->ChangeStatNum (STAT_INVENTORY);
 			inv->LinkToWorld (nullptr);
 
-			IFVIRTUALPTR(inv, AInventory, Travelled)
+			IFVIRTUALPTRNAME(inv, NAME_Inventory, Travelled)
 			{
 				VMValue params[1] = { inv };
 				VMCall(func, params, 1, nullptr, 0);
@@ -1512,6 +1513,7 @@ void G_InitLevelLocals ()
 	level.fogdensity = info->fogdensity;
 	level.outsidefogdensity = info->outsidefogdensity;
 	level.skyfog = info->skyfog;
+	level.deathsequence = info->deathsequence;
 
 	level.pixelstretch = info->pixelstretch;
 
@@ -1992,6 +1994,24 @@ void FLevelLocals::Tick ()
 //
 //==========================================================================
 
+void FLevelLocals::Mark()
+{
+	for (auto &s : sectorPortals)
+	{
+		GC::Mark(s.mSkybox);
+	}
+	// Mark dead bodies.
+	for (auto &p : bodyque)
+	{
+		GC::Mark(p);
+	}
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
 void FLevelLocals::AddScroller (int secnum)
 {
 	if (secnum < 0)
@@ -2041,9 +2061,47 @@ void FLevelLocals::SetMusicVolume(float f)
 }
 
 //==========================================================================
+// IsPointInMap
 //
-//
+// Checks to see if a point is inside the void or not.
+// Made by dpJudas, modified and implemented by Major Cooke
 //==========================================================================
+
+
+int IsPointInMap(double x, double y, double z)
+{
+	subsector_t *subsector = R_PointInSubsector(FLOAT2FIXED(x), FLOAT2FIXED(y));
+	if (!subsector) return false;
+
+	for (uint32_t i = 0; i < subsector->numlines; i++)
+	{
+		// Skip single sided lines.
+		seg_t *seg = subsector->firstline + i;
+		if (seg->backsector != nullptr)	continue;
+
+		divline_t dline;
+		P_MakeDivline(seg->linedef, &dline);
+		bool pol = P_PointOnDivlineSide(x, y, &dline) < 1;
+		if (!pol) return false;
+	}
+
+	double ceilingZ = subsector->sector->ceilingplane.ZatPoint(x, y);
+	if (z > ceilingZ) return false;
+
+	double floorZ = subsector->sector->floorplane.ZatPoint(x, y);
+	if (z < floorZ) return false;
+
+	return true;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, IsPointInMap, IsPointInMap)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	ACTION_RETURN_BOOL(IsPointInMap(x, y, z));
+}
 
 template <typename T>
 inline T VecDiff(const T& v1, const T& v2)
@@ -2095,9 +2153,9 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, SphericalCoords)
 	PARAM_FLOAT(targetX);
 	PARAM_FLOAT(targetY);
 	PARAM_FLOAT(targetZ);
-	PARAM_ANGLE_DEF(viewYaw);
-	PARAM_ANGLE_DEF(viewPitch);
-	PARAM_BOOL_DEF(absolute);
+	PARAM_ANGLE(viewYaw);
+	PARAM_ANGLE(viewPitch);
+	PARAM_BOOL(absolute);
 
 	DVector3 viewpoint(viewpointX, viewpointY, viewpointZ);
 	DVector3 target(targetX, targetY, targetZ);
@@ -2117,7 +2175,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, Vec2Offset)
 	PARAM_FLOAT(y);
 	PARAM_FLOAT(dx);
 	PARAM_FLOAT(dy);
-	PARAM_BOOL_DEF(absolute);
+	PARAM_BOOL(absolute);
 	if (absolute)
 	{
 		ACTION_RETURN_VEC2(DVector2(x + dx, y + dy));
@@ -2137,7 +2195,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, Vec2OffsetZ)
 	PARAM_FLOAT(dx);
 	PARAM_FLOAT(dy);
 	PARAM_FLOAT(atz);
-	PARAM_BOOL_DEF(absolute);
+	PARAM_BOOL(absolute);
 	if (absolute)
 	{
 		ACTION_RETURN_VEC3(DVector3(x + dx, y + dy, atz));
@@ -2158,7 +2216,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, Vec3Offset)
 	PARAM_FLOAT(dx);
 	PARAM_FLOAT(dy);
 	PARAM_FLOAT(dz);
-	PARAM_BOOL_DEF(absolute);
+	PARAM_BOOL(absolute);
 	if (absolute)
 	{
 		ACTION_RETURN_VEC3(DVector3(x + dx, y + dy, z + dz));
@@ -2218,6 +2276,7 @@ DEFINE_FIELD(FLevelLocals, fogdensity)
 DEFINE_FIELD(FLevelLocals, outsidefogdensity)
 DEFINE_FIELD(FLevelLocals, skyfog)
 DEFINE_FIELD(FLevelLocals, pixelstretch)
+DEFINE_FIELD(FLevelLocals, deathsequence)
 DEFINE_FIELD_BIT(FLevelLocals, flags, noinventorybar, LEVEL_NOINVENTORYBAR)
 DEFINE_FIELD_BIT(FLevelLocals, flags, monsterstelefrag, LEVEL_MONSTERSTELEFRAG)
 DEFINE_FIELD_BIT(FLevelLocals, flags, actownspecial, LEVEL_ACTOWNSPECIAL)
@@ -2232,6 +2291,8 @@ DEFINE_FIELD_BIT(FLevelLocals, flags2, nomonsters, LEVEL2_NOMONSTERS)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, frozen, LEVEL2_FROZEN)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, infinite_flight, LEVEL2_INFINITE_FLIGHT)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, no_dlg_freeze, LEVEL2_CONV_SINGLE_UNFREEZE)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, keepfullinventory, LEVEL2_KEEPFULLINVENTORY)
+DEFINE_FIELD_BIT(FLevelLocals, flags3, removeitems, LEVEL3_REMOVEITEMS)
 
 //==========================================================================
 //
@@ -2282,5 +2343,14 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, ChangeSky)
 	sky1texture = self->skytexture1 = FSetTextureID(sky1);
 	sky2texture = self->skytexture2 = FSetTextureID(sky2);
 	R_InitSkyMap();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, StartIntermission)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_NAME(seq);
+	PARAM_INT(state);
+	F_StartIntermission(seq, (uint8_t)state);
 	return 0;
 }

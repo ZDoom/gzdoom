@@ -122,7 +122,7 @@ void GLWall::SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowref
 		skyinfo.init(sector->sky, Colormap.FadeColor);
 		ptype = PORTALTYPE_SKY;
 		sky = &skyinfo;
-		PutPortal(di, ptype);
+		PutPortal(di, ptype, plane);
 	}
 	else if (sportal != nullptr)
 	{
@@ -162,7 +162,7 @@ void GLWall::SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowref
 	}
 	if (ptype != -1)
 	{
-		PutPortal(di, ptype);
+		PutPortal(di, ptype, plane);
 	}
 }
 
@@ -197,7 +197,7 @@ void GLWall::SkyLine(HWDrawInfo *di, sector_t *fs, line_t *line)
 	ztop[1] = zceil[1];
 	zbottom[0] = zfloor[0];
 	zbottom[1] = zfloor[1];
-	PutPortal(di, ptype);
+	PutPortal(di, ptype, -1);
 }
 
 

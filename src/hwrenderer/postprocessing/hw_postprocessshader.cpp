@@ -35,13 +35,8 @@ static bool IsConsolePlayer(player_t *player)
 	return int(activator->player - players) == consoleplayer;
 }
 
-DEFINE_ACTION_FUNCTION(_Shader, SetEnabled)
+static void ShaderSetEnabled(player_t *player, const FString &shaderName, bool value)
 {
-	PARAM_PROLOGUE;
-	PARAM_POINTER_DEF(player, player_t);
-	PARAM_STRING(shaderName);
-	PARAM_BOOL_DEF(value);
-
 	if (IsConsolePlayer(player))
 	{
 		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
@@ -51,17 +46,21 @@ DEFINE_ACTION_FUNCTION(_Shader, SetEnabled)
 				shader.Enabled = value;
 		}
 	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Shader, SetEnabled, ShaderSetEnabled)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(player, player_t);
+	PARAM_STRING(shaderName);
+	PARAM_BOOL(value);
+	ShaderSetEnabled(player, shaderName, value);
+
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(_Shader, SetUniform1f)
+static void ShaderSetUniform1f(player_t *player, const FString &shaderName, const FString &uniformName, double value)
 {
-	PARAM_PROLOGUE;
-	PARAM_POINTER_DEF(player, player_t);
-	PARAM_STRING(shaderName);
-	PARAM_STRING(uniformName);
-	PARAM_FLOAT_DEF(value);
-
 	if (IsConsolePlayer(player))
 	{
 		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
@@ -77,17 +76,27 @@ DEFINE_ACTION_FUNCTION(_Shader, SetUniform1f)
 			}
 		}
 	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Shader, SetUniform1f, ShaderSetUniform1f)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(player, player_t);
+	PARAM_STRING(shaderName);
+	PARAM_STRING(uniformName);
+	PARAM_FLOAT(value);
+	ShaderSetUniform1f(player, shaderName, uniformName, value);
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(_Shader, SetUniform2f)
 {
 	PARAM_PROLOGUE;
-	PARAM_POINTER_DEF(player, player_t);
+	PARAM_POINTER(player, player_t);
 	PARAM_STRING(shaderName);
 	PARAM_STRING(uniformName);
-	PARAM_FLOAT_DEF(x);
-	PARAM_FLOAT_DEF(y);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
 
 	if (IsConsolePlayer(player))
 	{
@@ -110,12 +119,12 @@ DEFINE_ACTION_FUNCTION(_Shader, SetUniform2f)
 DEFINE_ACTION_FUNCTION(_Shader, SetUniform3f)
 {
 	PARAM_PROLOGUE;
-	PARAM_POINTER_DEF(player, player_t);
+	PARAM_POINTER(player, player_t);
 	PARAM_STRING(shaderName);
 	PARAM_STRING(uniformName);
-	PARAM_FLOAT_DEF(x);
-	PARAM_FLOAT_DEF(y);
-	PARAM_FLOAT_DEF(z);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
 
 	if (IsConsolePlayer(player))
 	{
@@ -138,10 +147,10 @@ DEFINE_ACTION_FUNCTION(_Shader, SetUniform3f)
 DEFINE_ACTION_FUNCTION(_Shader, SetUniform1i)
 {
 	PARAM_PROLOGUE;
-	PARAM_POINTER_DEF(player, player_t);
+	PARAM_POINTER(player, player_t);
 	PARAM_STRING(shaderName);
 	PARAM_STRING(uniformName);
-	PARAM_INT_DEF(value);
+	PARAM_INT(value);
 
 	if (IsConsolePlayer(player))
 	{

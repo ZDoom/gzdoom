@@ -65,6 +65,9 @@
 #include "backend/vmbuilder.h"
 #include "types.h"
 #include "m_argv.h"
+#include "actorptrselect.h"
+
+void JitDumpLog(FILE *file, VMScriptFunction *func);
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO
@@ -629,131 +632,107 @@ static int GetLine (void)
 	}
 }
 
+
 // misc1 = vrange (arg +3), misc2 = hrange (arg+4)
-static int CreateMushroomFunc(VMFunctionBuilder &buildit, int value1, int value2)
+static void CreateMushroomFunc(FunctionCallEmitter &emitters, int value1, int value2)
 { // A_Mushroom
-	buildit.Emit(OP_PARAM, REGT_NIL, 0);		// spawntype
-	buildit.Emit(OP_PARAM, REGT_NIL, 0);		// numspawns
-	buildit.Emit(OP_PARAMI, 1);					// flag
-	// vrange
-	if (value1 == 0)
-	{
-		buildit.Emit(OP_PARAM, REGT_NIL, 0);
-	}
-	else
-	{
-		buildit.Emit(OP_PARAM, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(DEHToDouble(value1)));
-	}
-	// hrange
-	if (value2 == 0)
-	{
-		buildit.Emit(OP_PARAM, REGT_NIL, 0);
-	}
-	else
-	{
-		buildit.Emit(OP_PARAM, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(DEHToDouble(value2)));
-	}
-	return 5;
+	emitters.AddParameterPointerConst(PClass::FindClass("FatShot"));	// itemtype
+	emitters.AddParameterIntConst(0);									// numspawns
+	emitters.AddParameterIntConst(1);									// flag MSF_Classic
+	emitters.AddParameterFloatConst(value1? DEHToDouble(value1) : 4.0);	// vrange
+	emitters.AddParameterFloatConst(value2? DEHToDouble(value2) : 0.5);	// hrange
 }
 
 // misc1 = type (arg +0), misc2 = Z-pos (arg +2)
-static int CreateSpawnFunc(VMFunctionBuilder &buildit, int value1, int value2)
+static void CreateSpawnFunc(FunctionCallEmitter &emitters, int value1, int value2)
 { // A_SpawnItem
-	if (InfoNames[value1-1] == NULL)
+	if (InfoNames[value1-1] == nullptr)
 	{
 		I_Error("No class found for dehackednum %d!\n", value1+1);
-		return 0;
 	}
-	int typereg = buildit.GetConstantAddress(InfoNames[value1-1]);
-	int heightreg = buildit.GetConstantFloat(value2);
-
-	buildit.Emit(OP_PARAM, REGT_POINTER | REGT_KONST, typereg);	// itemtype
-	buildit.Emit(OP_PARAM, REGT_NIL, 0);							// distance
-	buildit.Emit(OP_PARAM, REGT_FLOAT | REGT_KONST, heightreg);	// height
-	// The rest of the parameters to A_SpawnItem can just keep their defaults
-	return 3;
+	emitters.AddParameterPointerConst(InfoNames[value1-1]);	// itemtype
+	emitters.AddParameterFloatConst(value2);				// distance
+	emitters.AddParameterFloatConst(0);						// height
+	emitters.AddParameterIntConst(0);						// useammo
+	emitters.AddParameterIntConst(0);						// transfer_translation
 }
 
+
 // misc1 = angle (in degrees) (arg +0 but factor in current actor angle too)
-static int CreateTurnFunc(VMFunctionBuilder &buildit, int value1, int value2)
+static void CreateTurnFunc(FunctionCallEmitter &emitters, int value1, int value2)
 { // A_Turn
-	buildit.Emit(OP_PARAM, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(value1));		// angle
-	return 1;
+	emitters.AddParameterFloatConst(value1);				// angle
 }
 
 // misc1 = angle (in degrees) (arg +0)
-static int CreateFaceFunc(VMFunctionBuilder &buildit, int value1, int value2)
+static void CreateFaceFunc(FunctionCallEmitter &emitters, int value1, int value2)
 { // A_FaceTarget
-	buildit.Emit(OP_PARAM, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(value1));		// angle
-	return 1;
+	emitters.AddParameterFloatConst(value1);				// angle
+	emitters.AddParameterIntConst(0);						// flags
+	emitters.AddParameterIntConst(AAPTR_DEFAULT);			// ptr
 }
 
 // misc1 = damage, misc 2 = sound
-static int CreateScratchFunc(VMFunctionBuilder &buildit, int value1, int value2)
+static void CreateScratchFunc(FunctionCallEmitter &emitters, int value1, int value2)
 { // A_CustomMeleeAttack
-	buildit.EmitParamInt(value1);					// damage
-	if (value2)
-	{
-		buildit.EmitParamInt(SoundMap[value2-1]);	// hit sound
-		return 2;
-	}
-	return 1;
+	emitters.AddParameterIntConst(value1);								// damage
+	emitters.AddParameterIntConst(value2 ? (int)SoundMap[value2 - 1] : 0);	// hit sound
+	emitters.AddParameterIntConst(0);									// miss sound
+	emitters.AddParameterIntConst(NAME_None);							// damage type
+	emitters.AddParameterIntConst(true);								// bleed
 }
 
 // misc1 = sound, misc2 = attenuation none (true) or normal (false)
-static int CreatePlaySoundFunc(VMFunctionBuilder &buildit, int value1, int value2)
+static void CreatePlaySoundFunc(FunctionCallEmitter &emitters, int value1, int value2)
 { // A_PlaySound
-	int float1 = buildit.GetConstantFloat(1);
-	int attenreg = buildit.GetConstantFloat(value2 ? ATTN_NONE : ATTN_NORM);
-
-	buildit.EmitParamInt(SoundMap[value1-1]);						// soundid
-	buildit.Emit(OP_PARAMI, CHAN_BODY);								// channel
-	buildit.Emit(OP_PARAM, REGT_FLOAT | REGT_KONST, float1);		// volume
-	buildit.Emit(OP_PARAMI, false);									// looping
-	buildit.Emit(OP_PARAM, REGT_FLOAT | REGT_KONST, attenreg);	// attenuation
-	return 5;
+	emitters.AddParameterIntConst(value1 ? (int)SoundMap[value1 - 1] : 0);	// soundid
+	emitters.AddParameterIntConst(CHAN_BODY);							// channel
+	emitters.AddParameterFloatConst(1);									// volume
+	emitters.AddParameterIntConst(false);								// looping
+	emitters.AddParameterFloatConst(value2 ? ATTN_NONE : ATTN_NORM);	// attenuation
+	emitters.AddParameterIntConst(false);								// local
 }
 
 // misc1 = state, misc2 = probability
-static int CreateRandomJumpFunc(VMFunctionBuilder &buildit, int value1, int value2)
+static void CreateRandomJumpFunc(FunctionCallEmitter &emitters, int value1, int value2)
 { // A_Jump
-	int statereg = buildit.GetConstantAddress(FindState(value1));
+	auto symlabel = StateLabels.AddPointer(FindState(value1));
 
-	buildit.EmitParamInt(value2);									// maxchance
-	buildit.Emit(OP_PARAM, REGT_POINTER | REGT_KONST, statereg);	// jumpto
-	return 2;
+	emitters.AddParameterIntConst(value2);					// maxchance
+	emitters.AddParameterIntConst(symlabel);				// jumpto
+	emitters.AddReturn(REGT_POINTER);
 }
 
 // misc1 = Boom linedef type, misc2 = sector tag
-static int CreateLineEffectFunc(VMFunctionBuilder &buildit, int value1, int value2)
+static void CreateLineEffectFunc(FunctionCallEmitter &emitters, int value1, int value2)
 { // A_LineEffect
 	// This is the second MBF codepointer that couldn't be translated easily.
 	// Calling P_TranslateLineDef() here was a simple matter, as was adding an
 	// extra parameter to A_CallSpecial so as to replicate the LINEDONE stuff,
 	// but unfortunately DEHACKED lumps are processed before the map translation
 	// arrays are initialized so this didn't work.
-	buildit.EmitParamInt(value1);					// special
-	buildit.EmitParamInt(value2);					// tag
-	return 2;
+	emitters.AddParameterIntConst(value1);		// special
+	emitters.AddParameterIntConst(value2);		// tag
 }
 
 // No misc, but it's basically A_Explode with an added effect
-static int CreateNailBombFunc(VMFunctionBuilder &buildit, int value1, int value2)
+static void CreateNailBombFunc(FunctionCallEmitter &emitters, int value1, int value2)
 { // A_Explode
 	// This one does not actually have MBF-style parameters. But since
 	// we're aliasing it to an extension of A_Explode...
-	buildit.Emit(OP_PARAM, REGT_NIL, 0);			// damage
-	buildit.Emit(OP_PARAM, REGT_NIL, 0);			// distance
-	buildit.Emit(OP_PARAM, REGT_NIL, 0);			// flags
-	buildit.Emit(OP_PARAM, REGT_NIL, 0);			// alert
-	buildit.Emit(OP_PARAM, REGT_NIL, 0);			// fulldamagedistance
-	buildit.Emit(OP_PARAMI, 30);					// nails
-	buildit.Emit(OP_PARAMI, 10);					// naildamage
-	return 7;
+	emitters.AddParameterIntConst(-1);		// damage
+	emitters.AddParameterIntConst(-1);		// distance
+	emitters.AddParameterIntConst(1);		// flags (1=XF_HURTSOURCE)
+	emitters.AddParameterIntConst(0);		// alert
+	emitters.AddParameterIntConst(0);		// fulldamagedistance
+	emitters.AddParameterIntConst(30);		// nails
+	emitters.AddParameterIntConst(10);		// naildamage
+	emitters.AddParameterPointerConst(PClass::FindClass(NAME_BulletPuff));	// itemtype
+	emitters.AddParameterIntConst(NAME_None);	// damage type
 }
 
 // This array must be in sync with the Aliases array in DEHSUPP.
-static int (*MBFCodePointerFactories[])(VMFunctionBuilder&, int, int) =
+static void (*MBFCodePointerFactories[])(FunctionCallEmitter&, int, int) =
 {
 	// Die and Detonate are not in this list because these codepointers have
 	// no dehacked arguments and therefore do not need special handling.
@@ -773,9 +752,12 @@ static int (*MBFCodePointerFactories[])(VMFunctionBuilder&, int, int) =
 
 void SetDehParams(FState *state, int codepointer)
 {
+	static const uint8_t regts[] = { REGT_POINTER, REGT_POINTER, REGT_POINTER };
 	int value1 = state->GetMisc1();
 	int value2 = state->GetMisc2();
 	if (!(value1|value2)) return;
+	
+	bool returnsState = codepointer == 6;
 	
 	// Fakey fake script position thingamajig. Because NULL cannot be used instead.
 	// Even if the lump was parsed by an FScanner, there would hardly be a way to
@@ -784,8 +766,8 @@ void SetDehParams(FState *state, int codepointer)
 	
 	// Let's identify the codepointer we're dealing with.
 	PFunction *sym;
-	sym = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->FindSymbol(FName(MBFCodePointers[codepointer].name), true));
-	if (sym == NULL) return;
+	sym = dyn_cast<PFunction>(PClass::FindActor(NAME_Weapon)->FindSymbol(FName(MBFCodePointers[codepointer].name), true));
+	if (sym == NULL ) return;
 
 	if (codepointer < 0 || (unsigned)codepointer >= countof(MBFCodePointerFactories))
 	{
@@ -795,20 +777,29 @@ void SetDehParams(FState *state, int codepointer)
 	else
 	{
 		int numargs = sym->GetImplicitArgs();
+		auto funcsym = CreateAnonymousFunction(RUNTIME_CLASS(AActor)->VMType, returnsState? (PType*)TypeState : TypeVoid, numargs==3? SUF_ACTOR|SUF_WEAPON : SUF_ACTOR);
 		VMFunctionBuilder buildit(numargs);
 		// Allocate registers used to pass parameters in.
 		// self, stateowner, state (all are pointers)
 		buildit.Registers[REGT_POINTER].Get(numargs);
 		// Emit code to pass the standard action function parameters.
+		FunctionCallEmitter emitters(sym->Variants[0].Implementation);
 		for (int i = 0; i < numargs; i++)
 		{
-			buildit.Emit(OP_PARAM, REGT_POINTER, i);
+			emitters.AddParameterPointer(i, false);
 		}
 		// Emit code for action parameters.
-		int argcount = MBFCodePointerFactories[codepointer](buildit, value1, value2);
-		buildit.Emit(OP_TAIL_K, buildit.GetConstantAddress(sym->Variants[0].Implementation), numargs + argcount, 0);
+		MBFCodePointerFactories[codepointer](emitters, value1, value2);
+		auto where = emitters.EmitCall(&buildit);
+		if (!returnsState) buildit.Emit(OP_RET, RET_FINAL, REGT_NIL, 0);
+		else buildit.Emit(OP_RET, RET_FINAL, EncodeRegType(where), where.RegNum);
+		where.Free(&buildit);
+
 		// Attach it to the state.
 		VMScriptFunction *sfunc = new VMScriptFunction;
+		funcsym->Variants[0].Implementation = sfunc;
+		sfunc->Proto = funcsym->Variants[0].Proto;
+		sfunc->RegTypes = regts;	// These functions are built after running the script compiler so they don't get this info.
 		buildit.MakeFunction(sfunc);
 		sfunc->NumArgs = numargs;
 		sfunc->ImplicitArgs = numargs;
@@ -821,6 +812,15 @@ void SetDehParams(FState *state, int codepointer)
 			if (dump != nullptr)
 			{
 				DumpFunction(dump, sfunc, sfunc->PrintableName.GetChars(), (int)sfunc->PrintableName.Len());
+			}
+			fclose(dump);
+		}
+		if (Args->CheckParm("-dumpjit"))
+		{
+			FILE *dump = fopen("dumpjit.txt", "a");
+			if (dump != nullptr)
+			{
+				JitDumpLog(dump, sfunc);
 			}
 			fclose(dump);
 		}
@@ -1532,7 +1532,7 @@ static int PatchSprite (int sprNum)
 static int PatchAmmo (int ammoNum)
 {
 	PClassActor *ammoType = NULL;
-	AInventory *defaultAmmo = NULL;
+	AActor *defaultAmmo = NULL;
 	int result;
 	int oldclip;
 	int dummy;
@@ -1545,11 +1545,11 @@ static int PatchAmmo (int ammoNum)
 		ammoType = AmmoNames[ammoNum];
 		if (ammoType != NULL)
 		{
-			defaultAmmo = (AInventory*)GetDefaultByType (ammoType);
+			defaultAmmo = GetDefaultByType (ammoType);
 			if (defaultAmmo != NULL)
 			{
-				max = &defaultAmmo->MaxAmount;
-				per = &defaultAmmo->Amount;
+				max = &defaultAmmo->IntVar(NAME_MaxAmount);
+				per = &defaultAmmo->IntVar(NAME_Amount);
 			}
 		}
 	}
@@ -1571,8 +1571,8 @@ static int PatchAmmo (int ammoNum)
 	// Calculate the new backpack-given amounts for this ammo.
 	if (ammoType != NULL)
 	{
-		defaultAmmo->IntVar("BackpackMaxAmount") = defaultAmmo->MaxAmount * 2;
-		defaultAmmo->IntVar("BackpackAmount") = defaultAmmo->Amount;
+		defaultAmmo->IntVar("BackpackMaxAmount") = defaultAmmo->IntVar(NAME_MaxAmount) * 2;
+		defaultAmmo->IntVar("BackpackAmount") = defaultAmmo->IntVar(NAME_Amount);
 	}
 
 	// Fix per-ammo/max-ammo amounts for descendants of the base ammo class
@@ -1587,20 +1587,22 @@ static int PatchAmmo (int ammoNum)
 
 			if (type->IsDescendantOf (ammoType))
 			{
-				defaultAmmo = (AInventory *)GetDefaultByType (type);
-				defaultAmmo->MaxAmount = *max;
-				defaultAmmo->Amount = Scale (defaultAmmo->Amount, *per, oldclip);
+				defaultAmmo = GetDefaultByType (type);
+				defaultAmmo->IntVar(NAME_MaxAmount) = *max;
+				defaultAmmo->IntVar(NAME_Amount) = Scale (defaultAmmo->IntVar(NAME_Amount), *per, oldclip);
 			}
-			else if (type->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
+			else if (type->IsDescendantOf (NAME_Weapon))
 			{
-				AWeapon *defWeap = (AWeapon *)GetDefaultByType (type);
-				if (defWeap->AmmoType1 == ammoType)
+				auto defWeap = GetDefaultByType (type);
+				if (defWeap->PointerVar<PClassActor>(NAME_AmmoType1) == ammoType)
 				{
-					defWeap->AmmoGive1 = Scale (defWeap->AmmoGive1, *per, oldclip);
+					auto &AmmoGive1 = defWeap->IntVar(NAME_AmmoGive1);
+					AmmoGive1 = Scale (AmmoGive1, *per, oldclip);
 				}
-				if (defWeap->AmmoType2 == ammoType)
+				if (defWeap->PointerVar<PClassActor>(NAME_AmmoType2) == ammoType)
 				{
-					defWeap->AmmoGive2 = Scale (defWeap->AmmoGive2, *per, oldclip);
+					auto &AmmoGive2 = defWeap->IntVar(NAME_AmmoGive2);
+					AmmoGive2 = Scale (AmmoGive2, *per, oldclip);
 				}
 			}
 		}
@@ -1612,9 +1614,8 @@ static int PatchAmmo (int ammoNum)
 static int PatchWeapon (int weapNum)
 {
 	int result;
-	PClassActor *type = NULL;
-	uint8_t dummy[sizeof(AWeapon)];
-	AWeapon *info = (AWeapon *)&dummy;
+	PClassActor *type = nullptr;
+	AActor *info = nullptr;
 	bool patchedStates = false;
 	FStateDefinitions statedef;
 
@@ -1623,7 +1624,7 @@ static int PatchWeapon (int weapNum)
 		type = WeaponNames[weapNum];
 		if (type != NULL)
 		{
-			info = (AWeapon *)GetDefaultByType (type);
+			info = GetDefaultByType (type);
 			DPrintf (DMSG_SPAMMY, "Weapon %d\n", weapNum);
 		}
 	}
@@ -1666,13 +1667,18 @@ static int PatchWeapon (int weapNum)
 				{
 					val = 5;
 				}
-				info->AmmoType1 = AmmoNames[val];
-				if (info->AmmoType1 != NULL)
+				if (info)
 				{
-					info->AmmoGive1 = ((AInventory*)GetDefaultByType (info->AmmoType1))->Amount * 2;
-					if (info->AmmoUse1 == 0)
+					auto &AmmoType = info->PointerVar<PClassActor>(NAME_AmmoType1);
+					AmmoType = AmmoNames[val];
+					if (AmmoType != nullptr)
 					{
-						info->AmmoUse1 = 1;
+						info->IntVar(NAME_AmmoGive1) = GetDefaultByType(AmmoType)->IntVar(NAME_Amount) * 2;
+						auto &AmmoUse = info->IntVar(NAME_AmmoUse1);
+						if (AmmoUse == 0)
+						{
+							AmmoUse = 1;
+						}
 					}
 				}
 			}
@@ -1687,7 +1693,7 @@ static int PatchWeapon (int weapNum)
 			const FDecalTemplate *decal = DecalLibrary.GetDecalByName (Line2);
 			if (decal != NULL)
 			{
-				info->DecalGenerator = const_cast <FDecalTemplate *>(decal);
+				if (info) info->DecalGenerator = const_cast <FDecalTemplate *>(decal);
 			}
 			else
 			{
@@ -1696,12 +1702,15 @@ static int PatchWeapon (int weapNum)
 		}
 		else if (stricmp (Line1, "Ammo use") == 0 || stricmp (Line1, "Ammo per shot") == 0)
 		{
-			info->AmmoUse1 = val;
-			info->flags6 |= MF6_INTRYMOVE;	// flag the weapon for postprocessing (reuse a flag that can't be set by external means)
+			if (info)
+			{
+				info->IntVar(NAME_AmmoUse1) = val;
+				info->flags6 |= MF6_INTRYMOVE;	// flag the weapon for postprocessing (reuse a flag that can't be set by external means)
+			}
 		}
 		else if (stricmp (Line1, "Min ammo") == 0)
 		{
-			info->MinAmmo1 = val;
+			if (info) info->IntVar(NAME_MinSelAmmo1) = val;
 		}
 		else
 		{
@@ -1709,14 +1718,17 @@ static int PatchWeapon (int weapNum)
 		}
 	}
 
-	if (info->AmmoType1 == NULL)
+	if (info)
 	{
-		info->AmmoUse1 = 0;
-	}
+		if (info->PointerVar<PClassActor>(NAME_AmmoType1) == nullptr)
+		{
+			info->IntVar(NAME_AmmoUse1) = 0;
+		}
 
-	if (patchedStates)
-	{
-		statedef.InstallStates(type, info);
+		if (patchedStates)
+		{
+			statedef.InstallStates(type, info);
+		}
 	}
 
 	return result;
@@ -1965,24 +1977,23 @@ static int PatchMisc (int dummy)
 		barmor->IntVar("MaxSaveAmount") = deh.MaxArmor;
 	}
 
-	AInventory *health;
-	health = static_cast<AInventory *> (GetDefaultByName ("HealthBonus"));
+	auto health = GetDefaultByName ("HealthBonus");
 	if (health!=NULL) 
 	{
-		health->MaxAmount = 2 * deh.MaxHealth;
+		health->IntVar(NAME_MaxAmount) = 2 * deh.MaxHealth;
 	}
 
-	health = static_cast<AInventory *> (GetDefaultByName ("Soulsphere"));
+	health = GetDefaultByName ("Soulsphere");
 	if (health!=NULL)
 	{
-		health->Amount = deh.SoulsphereHealth;
-		health->MaxAmount = deh.MaxSoulsphere;
+		health->IntVar(NAME_Amount) = deh.SoulsphereHealth;
+		health->IntVar(NAME_MaxAmount) = deh.MaxSoulsphere;
 	}
 
-	health = static_cast<AInventory *> (GetDefaultByName ("MegasphereHealth"));
+	health = GetDefaultByName ("MegasphereHealth");
 	if (health!=NULL)
 	{
-		health->Amount = health->MaxAmount = deh.MegasphereHealth;
+		health->IntVar(NAME_Amount) = health->IntVar(NAME_MaxAmount) = deh.MegasphereHealth;
 	}
 
 	APlayerPawn *player = static_cast<APlayerPawn *> (GetDefaultByName ("DoomPlayer"));
@@ -2128,7 +2139,7 @@ static int PatchCodePtrs (int dummy)
 
 				// This skips the action table and goes directly to the internal symbol table
 				// DEH compatible functions are easy to recognize.
-				PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->FindSymbol(symname, true));
+				PFunction *sym = dyn_cast<PFunction>(PClass::FindActor(NAME_Weapon)->FindSymbol(symname, true));
 				if (sym == NULL)
 				{
 					Printf(TEXTCOLOR_RED "Frame %d: Unknown code pointer '%s'\n", frame, Line2);
@@ -2735,6 +2746,7 @@ static bool LoadDehSupp ()
 		sc.OpenLumpNum(lump);
 		sc.SetCMode(true);
 
+		auto wcls = PClass::FindActor(NAME_Weapon);
 		while (sc.GetString())
 		{
 			if (sc.Compare("ActionList"))
@@ -2749,11 +2761,11 @@ static bool LoadDehSupp ()
 					}
 					else
 					{
-						// all relevant code pointers are either defined in AWeapon
-						// or AActor so this will find all of them.
+						// all relevant code pointers are either defined in Weapon
+						// or Actor so this will find all of them.
 						FString name = "A_";
 						name << sc.String;
-						PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->FindSymbol(name, true));
+						PFunction *sym = dyn_cast<PFunction>(wcls->FindSymbol(name, true));
 						if (sym == NULL)
 						{
 							sc.ScriptError("Unknown code pointer '%s'", sc.String);
@@ -3052,10 +3064,10 @@ void FinishDehPatch ()
 		FStateDefinitions statedef;
 		statedef.MakeStateDefines(type);
 
-		if (!type->IsDescendantOf(RUNTIME_CLASS(AInventory)))
+		if (!type->IsDescendantOf(NAME_Inventory))
 		{
-			// If this is a hacked non-inventory item we must also copy AInventory's special states
-			statedef.AddStateDefines(RUNTIME_CLASS(AInventory)->GetStateLabels());
+			// If this is a hacked non-inventory item we must also copy Inventory's special states
+			statedef.AddStateDefines(PClass::FindActor(NAME_Inventory)->GetStateLabels());
 		}
 		statedef.InstallStates(subclass, defaults2);
 
@@ -3095,9 +3107,10 @@ void FinishDehPatch ()
 	// Now it gets nasty: We have to fiddle around with the weapons' ammo use info to make Doom's original
 	// ammo consumption work as intended.
 
+	auto wcls = PClass::FindActor(NAME_Weapon);
 	for(unsigned i = 0; i < WeaponNames.Size(); i++)
 	{
-		AWeapon *weap = (AWeapon*)GetDefaultByType(WeaponNames[i]);
+		auto weap = GetDefaultByType(WeaponNames[i]);
 		bool found = false;
 		if (weap->flags6 & MF6_INTRYMOVE)
 		{
@@ -3106,8 +3119,8 @@ void FinishDehPatch ()
 		}
 		else
 		{
-			weap->WeaponFlags |= WIF_DEHAMMO;
-			weap->AmmoUse1 = 0;
+			weap->BoolVar(NAME_bDehAmmo) = true;
+			weap->IntVar(NAME_AmmoUse1) = 0;
 			// to allow proper checks in CheckAmmo we have to find the first attack pointer in the Fire sequence
 			// and set its default ammo use as the weapon's AmmoUse1.
 
@@ -3126,7 +3139,7 @@ void FinishDehPatch ()
 				{
 					if (AmmoPerAttacks[j].ptr == nullptr)
 					{
-						auto p = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->FindSymbol(AmmoPerAttacks[j].func, true));
+						auto p = dyn_cast<PFunction>(wcls->FindSymbol(AmmoPerAttacks[j].func, true));
 						if (p != nullptr) AmmoPerAttacks[j].ptr = p->Variants[0].Implementation;
 					}
 					if (state->ActionFunc == AmmoPerAttacks[j].ptr)
@@ -3134,7 +3147,7 @@ void FinishDehPatch ()
 						found = true;
 						int use = AmmoPerAttacks[j].ammocount;
 						if (use < 0) use = deh.BFGCells;
-						weap->AmmoUse1 = use;
+						weap->IntVar(NAME_AmmoUse1) = use;
 						break;
 					}
 				}
@@ -3149,7 +3162,7 @@ void FinishDehPatch ()
 
 DEFINE_ACTION_FUNCTION(ADehackedPickup, DetermineType)
 {
-	PARAM_SELF_PROLOGUE(AInventory);
+	PARAM_SELF_PROLOGUE(AActor);
 
 	// Look at the actor's current sprite to determine what kind of
 	// item to pretend to me.
@@ -3175,4 +3188,3 @@ DEFINE_ACTION_FUNCTION(ADehackedPickup, DetermineType)
 	}
 	ACTION_RETURN_POINTER(nullptr);
 }
-

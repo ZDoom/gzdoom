@@ -80,7 +80,6 @@ extern int bmapnegy;
 // P_PSPR
 //
 void P_SetupPsprites (player_t* curplayer, bool startweaponup);
-void P_DropWeapon (player_t* player);
 
 
 //
@@ -132,9 +131,6 @@ AActor *P_SpawnMissileAngleZSpeed(AActor *source, double z, PClassActor *type, D
 AActor *P_SpawnMissileZAimed(AActor *source, double z, AActor *dest, PClassActor *type);
 
 
-AActor *P_SpawnPlayerMissile (AActor* source, PClassActor *type);
-AActor *P_SpawnPlayerMissile (AActor *source, PClassActor *type, DAngle angle);
-
 AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z, PClassActor *type, DAngle angle, 
 							  FTranslatedLineTarget *pLineTarget = NULL, AActor **MissileActor = NULL, bool nofreeaim = false, bool noautoaim = false, int aimflags = 0);
 
@@ -160,8 +156,9 @@ bool	P_Thing_Move (int tid, AActor *source, int mapspot, bool fog);
 int		P_Thing_Damage (int tid, AActor *whofor0, int amount, FName type);
 void	P_Thing_SetVelocity(AActor *actor, const DVector3 &vec, bool add, bool setbob);
 void P_RemoveThing(AActor * actor);
-bool P_Thing_Raise(AActor *thing, AActor *raiser, int nocheck = false);
+bool P_Thing_Raise(AActor *thing, AActor *raiser, int flags = 0);
 bool P_Thing_CanRaise(AActor *thing);
+bool P_CanResurrect(AActor *ththing, AActor *thing);
 PClassActor *P_GetSpawnableType(int spawnnum);
 void InitSpawnablesFromMapinfo();
 int P_Thing_CheckInputNum(player_t *p, int inputnum);
@@ -260,8 +257,8 @@ extern TArray<spechit_t> spechit;
 extern TArray<spechit_t> portalhit;
 
 
-bool	P_TestMobjLocation (AActor *mobj);
-bool	P_TestMobjZ (AActor *mobj, bool quick=true, AActor **pOnmobj = NULL);
+int	P_TestMobjLocation (AActor *mobj);
+int	P_TestMobjZ (AActor *mobj, bool quick=true, AActor **pOnmobj = NULL);
 bool P_CheckPosition(AActor *thing, const DVector2 &pos, bool actorsonly = false);
 bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, bool actorsonly = false);
 AActor	*P_CheckOnmobj (AActor *thing);
@@ -269,6 +266,7 @@ void	P_FakeZMovement (AActor *mo);
 bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const secplane_t * onfloor, FCheckPosition &tm, bool missileCheck = false);
 bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const secplane_t * onfloor = NULL, bool missilecheck = false);
 
+bool P_CheckMove(AActor *thing, const DVector2 &pos, FCheckPosition& tm, int flags);
 bool	P_CheckMove(AActor *thing, const DVector2 &pos, int flags = 0);
 void	P_ApplyTorque(AActor *mo);
 
@@ -278,7 +276,7 @@ void	P_PlayerStartStomp (AActor *actor, bool mononly=false);		// [RH] Stomp on t
 void	P_SlideMove (AActor* mo, const DVector2 &pos, int numsteps);
 bool	P_BounceWall (AActor *mo);
 bool	P_BounceActor (AActor *mo, AActor *BlockingMobj, bool ontop);
-bool	P_CheckSight (AActor *t1, AActor *t2, int flags=0);
+int	P_CheckSight (AActor *t1, AActor *t2, int flags=0);
 
 enum ESightFlags
 {
@@ -291,7 +289,7 @@ enum ESightFlags
 void	P_ResetSightCounters (bool full);
 bool	P_TalkFacing (AActor *player);
 void	P_UseLines (player_t* player);
-bool	P_UsePuzzleItem (AActor *actor, int itemType);
+int	P_UsePuzzleItem (AActor *actor, int itemType);
 
 enum
 {
@@ -319,6 +317,7 @@ enum	// P_AimLineAttack flags
 	ALF_CHECKCONVERSATION = 8,
 	ALF_NOFRIENDS = 16,
 	ALF_PORTALRESTRICT = 32,	// only work through portals with a global offset (to be used for stuff that cannot remember the calculated FTranslatedLineTarget info)
+	ALF_NOWEAPONCHECK = 64,		// ignore NOAUTOAIM flag on a player's weapon.
 };
 
 enum	// P_LineAttack flags
@@ -359,7 +358,7 @@ void	P_TraceBleed(int damage, FTranslatedLineTarget *t, AActor *puff);		// hitsc
 void	P_TraceBleed (int damage, AActor *target);		// random direction version
 bool	P_HitFloor (AActor *thing);
 bool	P_HitWater (AActor *thing, sector_t *sec, const DVector3 &pos, bool checkabove = false, bool alert = true, bool force = false);
-void	P_CheckSplash(AActor *self, double distance);
+
 
 struct FRailParams
 {
@@ -410,7 +409,9 @@ enum
 	RADF_SOURCEISSPOT = 4,
 	RADF_NODAMAGE = 8,
 	RADF_THRUSTZ = 16,
+	RADF_OLDRADIUSDAMAGE = 32
 };
+int P_GetRadiusDamage(AActor *self, AActor *thing, int damage, int distance, int fulldmgdistance, bool oldradiusdmg);
 int	P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, 
 						FName damageType, int flags, int fulldamagedistance=0);
 
@@ -454,6 +455,7 @@ enum EDmgFlags
 	DMG_USEANGLE = 512,
 	DMG_NO_PAIN = 1024,
 	DMG_EXPLOSION = 2048,
+	DMG_NO_ENHANCE = 4096,
 };
 
 
@@ -472,5 +474,11 @@ enum ETexReplaceFlags
 };
 
 void P_ReplaceTextures(const char *fromname, const char *toname, int flags);
+
+enum ERaise
+{
+	RF_TRANSFERFRIENDLINESS = 1,
+	RF_NOCHECKPOSITION = 2
+};
 
 #endif	// __P_LOCAL__

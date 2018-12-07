@@ -52,35 +52,11 @@ static void CollectExtensions()
 	int max = 0;
 	glGetIntegerv(GL_NUM_EXTENSIONS, &max);
 
-	if (max == 0)
+	// Use modern method to collect extensions
+	for (int i = 0; i < max; i++)
 	{
-		// Try old method to collect extensions
-		const char *supported = (char *)glGetString(GL_EXTENSIONS);
-
-		if (nullptr != supported)
-		{
-			char *extensions = new char[strlen(supported) + 1];
-			strcpy(extensions, supported);
-
-			char *extension = strtok(extensions, " ");
-
-			while (extension)
-			{
-				m_Extensions.Push(FString(extension));
-				extension = strtok(nullptr, " ");
-			}
-
-			delete [] extensions;
-		}
-	}
-	else
-	{
-		// Use modern method to collect extensions
-		for (int i = 0; i < max; i++)
-		{
-			extension = (const char*)glGetStringi(GL_EXTENSIONS, i);
-			m_Extensions.Push(FString(extension));
-		}
+		extension = (const char*)glGetStringi(GL_EXTENSIONS, i);
+		m_Extensions.Push(FString(extension));
 	}
 }
 

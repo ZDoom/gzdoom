@@ -1,0 +1,37 @@
+// This is just a straight dump of an internal table. Contents are: Weapon type, distance coefficient, optional flags and an optional projectile type.
+Pistol, 25000000
+Shotgun, 24000000
+SuperShotgun, 15000000
+Chaingun, 27000000
+RocketLauncher, 18350080, BOT_REACTION_SKILL_THING, BOT_EXPLOSIVE, Rocket
+PlasmaRifle,  27000000, PlasmaBall
+BFG9000, 10000000, BOT_REACTION_SKILL_THING, BOT_BFG, BFGBall
+GoldWand, 25000000
+GoldWandPowered, 25000000
+Crossbow, 24000000, CrossbowFX1
+CrossbowPowered, 24000000, CrossbowFX2
+Blaster, 27000000
+BlasterPowered, 27000000, BlasterFX1
+SkullRod, 27000000, HornRodFX1
+SkullRodPowered, 27000000, HornRodFX2
+PhoenixRod, 18350080, BOT_REACTION_SKILL_THING, BOT_EXPLOSIVE, PhoenixFX1
+Mace, 27000000, BOT_REACTION_SKILL_THING, MaceFX2
+MacePowered, 27000000, BOT_REACTION_SKILL_THING, BOT_EXPLOSIVE, MaceFX4
+FWeapHammer, 22000000, HammerMissile
+FWeapQuietus, 20000000, FSwordMissile
+CWeapStaff, 25000000, CStaffMissile
+CWeapFlame, 27000000, CFlameMissile
+MWeapWand, 25000000, MageWandMissile
+CWeapWraithverge, 22000000, HolyMissile
+MWeapFrost, 19000000, FrostMissile
+MWeapLightning, 23000000, LightningFloor
+MWeapBloodscourge, 20000000, MageStaffFX2
+StrifeCrossbow, 24000000, ElectricBolt
+StrifeCrossbow2, 24000000, PoisonBolt
+AssaultGun, 27000000
+MiniMissileLauncher, 18350080, BOT_REACTION_SKILL_THING, BOT_EXPLOSIVE, MiniMissile
+FlameThrower, 24000000, FlameMissile
+Mauler, 15000000
+Mauler2, 10000000, MaulerTorpedo
+StrifeGrenadeLauncher, 18350080, BOT_REACTION_SKILL_THING, BOT_EXPLOSIVE, HEGrenade
+StrifeGrenadeLauncher2, 18350080, BOT_REACTION_SKILL_THING, BOT_EXPLOSIVE, PhosphorousGrenade

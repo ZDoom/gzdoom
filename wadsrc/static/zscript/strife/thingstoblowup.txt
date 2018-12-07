@@ -38,7 +38,7 @@ extend class Actor
 	
 }
 
-// A Cloud used for varius explosions ---------------------------------------
+// A Cloud used for various explosions --------------------------------------
 // This actor has no direct equivalent in strife. To create this, Strife
 // spawned a spark and then changed its state to that of this explosion
 // cloud. Weird.

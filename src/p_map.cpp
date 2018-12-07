@@ -112,50 +112,6 @@ TArray<spechit_t> spechit;
 TArray<spechit_t> portalhit;
 
 
-// FCheckPosition requires explicit contstruction and destruction when used in the VM
-DEFINE_ACTION_FUNCTION(_FCheckPosition, _Constructor)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FCheckPosition);
-	new(self) FCheckPosition;
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(_FCheckPosition, _Destructor)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FCheckPosition);
-	self->~FCheckPosition();
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(_FCheckPosition, ClearLastRipped)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FCheckPosition);
-	self->LastRipped.Clear();
-	return 0;
-}
-
-DEFINE_FIELD_X(FCheckPosition, FCheckPosition, thing);
-DEFINE_FIELD_X(FCheckPosition, FCheckPosition, pos);
-DEFINE_FIELD_NAMED_X(FCheckPosition, FCheckPosition, sector, cursector);
-DEFINE_FIELD_X(FCheckPosition, FCheckPosition, floorz);
-DEFINE_FIELD_X(FCheckPosition, FCheckPosition, ceilingz);
-DEFINE_FIELD_X(FCheckPosition, FCheckPosition, dropoffz);
-DEFINE_FIELD_X(FCheckPosition, FCheckPosition, floorpic);
-DEFINE_FIELD_X(FCheckPosition, FCheckPosition, floorterrain);
-DEFINE_FIELD_X(FCheckPosition, FCheckPosition, floorsector);
-DEFINE_FIELD_X(FCheckPosition, FCheckPosition, ceilingpic);
-DEFINE_FIELD_X(FCheckPosition, FCheckPosition, ceilingsector);
-DEFINE_FIELD_X(FCheckPosition, FCheckPosition, touchmidtex);
-DEFINE_FIELD_X(FCheckPosition, FCheckPosition, abovemidtex);
-DEFINE_FIELD_X(FCheckPosition, FCheckPosition, floatok);
-DEFINE_FIELD_X(FCheckPosition, FCheckPosition, FromPMove);
-DEFINE_FIELD_X(FCheckPosition, FCheckPosition, ceilingline);
-DEFINE_FIELD_X(FCheckPosition, FCheckPosition, stepthing);
-DEFINE_FIELD_X(FCheckPosition, FCheckPosition, DoRipping);
-DEFINE_FIELD_X(FCheckPosition, FCheckPosition, portalstep);
-DEFINE_FIELD_X(FCheckPosition, FCheckPosition, portalgroup);
-DEFINE_FIELD_X(FCheckPosition, FCheckPosition, PushTime);
-
 //==========================================================================
 //
 // CanCollideWith
@@ -322,8 +278,8 @@ void P_GetFloorCeilingZ(FCheckPosition &tmf, int flags)
 	sector_t *sec = (!(flags & FFCF_SAMESECTOR) || tmf.thing->Sector == NULL)? P_PointInSector(tmf.pos) : tmf.sector;
 	F3DFloor *ffc, *fff;
 
-	tmf.ceilingz = sec->NextHighestCeilingAt(tmf.pos.X, tmf.pos.Y, tmf.pos.Z, tmf.pos.Z + tmf.thing->Height, flags, &tmf.ceilingsector, &ffc);
-	tmf.floorz = tmf.dropoffz = sec->NextLowestFloorAt(tmf.pos.X, tmf.pos.Y, tmf.pos.Z, flags, tmf.thing->MaxStepHeight, &tmf.floorsector, &fff);
+	tmf.ceilingz = NextHighestCeilingAt(sec, tmf.pos.X, tmf.pos.Y, tmf.pos.Z, tmf.pos.Z + tmf.thing->Height, flags, &tmf.ceilingsector, &ffc);
+	tmf.floorz = tmf.dropoffz = NextLowestFloorAt(sec, tmf.pos.X, tmf.pos.Y, tmf.pos.Z, flags, tmf.thing->MaxStepHeight, &tmf.floorsector, &fff);
 
 	if (fff)
 	{
@@ -414,13 +370,6 @@ void P_FindFloorCeiling(AActor *actor, int flags)
 	}
 }
 
-DEFINE_ACTION_FUNCTION(AActor, FindFloorCeiling)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT_DEF(flags); 
-	P_FindFloorCeiling(self, flags);
-	return 0;
-}
 
 // Debug CCMD for checking errors in the MultiBlockLinesIterator (needs to be removed when this code is complete)
 CCMD(ffcf)
@@ -524,7 +473,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 			continue;
 
 		// Don't let players and monsters block item teleports (all other actor types will still block.)
-		if (thing->IsKindOf(RUNTIME_CLASS(AInventory)) && !(thing->flags & MF_SOLID) && ((th->flags3 & MF3_ISMONSTER) || th->player != nullptr))
+		if (thing->IsKindOf(NAME_Inventory) && !(thing->flags & MF_SOLID) && ((th->flags3 & MF3_ISMONSTER) || th->player != nullptr))
 			continue;
 
 		// monsters don't stomp things except on boss level
@@ -576,17 +525,6 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 	return true;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, TeleportMove)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-	PARAM_FLOAT(z);
-	PARAM_BOOL(telefrag);
-	PARAM_BOOL_DEF(modify);
-	ACTION_RETURN_BOOL(P_TeleportMove(self, DVector3(x, y, z), telefrag, modify));
-}
-	
 //==========================================================================
 //
 // [RH] P_PlayerStartStomp
@@ -791,22 +729,6 @@ double P_GetMoveFactor(const AActor *mo, double *frictionp)
 		*frictionp = friction;
 
 	return movefactor;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, GetFriction)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	double friction, movefactor = P_GetMoveFactor(self, &friction);
-	if (numret > 1)
-	{
-		numret = 2;
-		ret[1].SetFloat(movefactor);
-	}
-	if (numret > 0)
-	{
-		ret[0].SetFloat(friction);
-	}
-	return numret;
 }
 
 //==========================================================================
@@ -1798,8 +1720,8 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 	else
 	{
 		// With noclip2, we must ignore 3D floors and go right to the uppermost ceiling and lowermost floor.
-		tm.floorz = tm.dropoffz = newsec->LowestFloorAt(pos, &tm.floorsector);
-		tm.ceilingz = newsec->HighestCeilingAt(pos, &tm.ceilingsector);
+		tm.floorz = tm.dropoffz = LowestFloorAt(newsec, pos.X, pos.Y, &tm.floorsector);
+		tm.ceilingz = HighestCeilingAt(newsec, pos.X, pos.Y, &tm.ceilingsector);
 		tm.floorpic = tm.floorsector->GetTexture(sector_t::floor);
 		tm.floorterrain = tm.floorsector->GetTerrain(sector_t::floor);
 		tm.ceilingpic = tm.ceilingsector->GetTexture(sector_t::ceiling);
@@ -1808,6 +1730,10 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 	tm.touchmidtex = false;
 	tm.abovemidtex = false;
 	validcount++;
+
+	// Remove all old entries before returning.
+	spechit.Clear();
+	portalhit.Clear();
 
 	if ((thing->flags & MF_NOCLIP) && !(thing->flags & MF_SKULLFLY))
 		return true;
@@ -1886,13 +1812,15 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 	// being considered for collision with the player.
 	validcount++;
 
+	// Clear out any residual garbage left behind by PIT_CheckThing induced recursions etc.
+	spechit.Clear();
+	portalhit.Clear();
+
 	thing->BlockingMobj = NULL;
 	thing->Height = realHeight;
 	if (actorsonly || (thing->flags & MF_NOCLIP))
 		return (thing->BlockingMobj = thingblocker) == NULL;
 
-	spechit.Clear();
-	portalhit.Clear();
 
 	FMultiBlockLinesIterator it(pcheck, pos.X, pos.Y, thing->Z(), thing->Height, thing->radius, newsec);
 	FMultiBlockLinesIterator::CheckResult lcres;
@@ -1948,23 +1876,6 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, bool actorsonly)
 	return P_CheckPosition(thing, pos, tm, actorsonly);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, CheckPosition)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-	PARAM_BOOL_DEF(actorsonly);
-	PARAM_POINTER_DEF(tm, FCheckPosition);
-	if (tm)
-	{
-		ACTION_RETURN_BOOL(P_CheckPosition(self, DVector2(x, y), *tm, actorsonly));
-	}
-	else
-	{
-		ACTION_RETURN_BOOL(P_CheckPosition(self, DVector2(x, y), actorsonly));
-	}
-}
-
 
 //----------------------------------------------------------------------------
 //
@@ -1975,7 +1886,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckPosition)
 //
 //----------------------------------------------------------------------------
 
-bool P_TestMobjLocation(AActor *mobj)
+int P_TestMobjLocation(AActor *mobj)
 {
 	ActorFlags flags;
 
@@ -1994,12 +1905,6 @@ bool P_TestMobjLocation(AActor *mobj)
 	return false;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, TestMobjLocation)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_BOOL(P_TestMobjLocation(self));
-}
-
 //=============================================================================
 //
 // P_CheckOnmobj(AActor *thing)
@@ -2010,7 +1915,7 @@ DEFINE_ACTION_FUNCTION(AActor, TestMobjLocation)
 AActor *P_CheckOnmobj(AActor *thing)
 {
 	double oldz;
-	bool good;
+	int good;
 	AActor *onmobj;
 
 	oldz = thing->Z();
@@ -2027,12 +1932,12 @@ AActor *P_CheckOnmobj(AActor *thing)
 //
 //=============================================================================
 
-bool P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
+int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 {
-	AActor *onmobj = NULL;
+	AActor *onmobj = nullptr;
+	if (pOnmobj) *pOnmobj = nullptr;
 	if (actor->flags & MF_NOCLIP)
 	{
-		if (pOnmobj) *pOnmobj = NULL;
 		return true;
 	}
 
@@ -2106,25 +2011,6 @@ bool P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 
 	if (pOnmobj) *pOnmobj = onmobj;
 	return onmobj == NULL;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, TestMobjZ)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_BOOL_DEF(quick);
-	
-	AActor *on = nullptr;;
-	bool retv = P_TestMobjZ(self, quick, &on);
-	if (numret > 1)
-	{
-		numret = 2;
-		ret[1].SetObject(on);
-	}
-	if (numret > 0)
-	{
-		ret[0].SetInt(retv);
-	}
-	return numret;
 }
 
 
@@ -2359,9 +2245,8 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 			else if (thing->Z() < tm.floorz)
 			{ // [RH] Check to make sure there's nothing in the way for the step up
 				double savedz = thing->Z();
-				bool good;
 				thing->SetZ(tm.floorz);
-				good = P_TestMobjZ(thing);
+				auto good = P_TestMobjZ(thing);
 				thing->SetZ(savedz);
 				if (!good)
 				{
@@ -2761,24 +2646,6 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 	return P_TryMove(thing, pos, dropoff, onfloor, tm, missilecheck);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, TryMove)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-	PARAM_INT(dropoff);
-	PARAM_BOOL_DEF(missilecheck);
-	PARAM_POINTER_DEF(tm, FCheckPosition);
-	if (tm == nullptr)
-	{
-		ACTION_RETURN_BOOL(P_TryMove(self, DVector2(x, y), dropoff, nullptr, missilecheck));
-	}
-	else
-	{
-		ACTION_RETURN_BOOL(P_TryMove(self, DVector2(x, y), dropoff, nullptr, *tm, missilecheck));
-	}
-}
-
 
 //==========================================================================
 //
@@ -2787,7 +2654,7 @@ DEFINE_ACTION_FUNCTION(AActor, TryMove)
 //
 //==========================================================================
 
-static bool P_CheckMove(AActor *thing, const DVector2 &pos, FCheckPosition& tm, int flags)
+bool P_CheckMove(AActor *thing, const DVector2 &pos, FCheckPosition& tm, int flags)
 {
 	double		newz = thing->Z();
 
@@ -2854,7 +2721,7 @@ static bool P_CheckMove(AActor *thing, const DVector2 &pos, FCheckPosition& tm, 
 			{ // [RH] Check to make sure there's nothing in the way for the step up
 				double savedz = thing->Z();
 				thing->SetZ(newz = tm.floorz);
-				bool good = P_TestMobjZ(thing);
+				int good = P_TestMobjZ(thing);
 				thing->SetZ(savedz);
 				if (!good)
 				{
@@ -2885,23 +2752,6 @@ bool P_CheckMove(AActor *thing, const DVector2 &pos, int flags)
 {
 	FCheckPosition tm;
 	return P_CheckMove(thing, pos, tm, flags);
-}
-
-DEFINE_ACTION_FUNCTION(AActor, CheckMove)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-	PARAM_INT_DEF(flags);
-	PARAM_POINTER_DEF(tm, FCheckPosition);
-	if (tm == nullptr)
-	{
-		ACTION_RETURN_BOOL(P_CheckMove(self, DVector2(x, y), flags));
-	}
-	else
-	{
-		ACTION_RETURN_BOOL(P_CheckMove(self, DVector2(x, y), *tm, flags));
-	}
 }
 
 
@@ -3134,7 +2984,7 @@ void FSlide::SlideTraverse(const DVector2 &start, const DVector2 &end)
 		{ // [RH] Check to make sure there's nothing in the way for the step up
 			double savedz = slidemo->Z();
 			slidemo->SetZ(open.bottom);
-			bool good = P_TestMobjZ(slidemo);
+			int good = P_TestMobjZ(slidemo);
 			slidemo->SetZ(savedz);
 			if (!good)
 			{
@@ -3545,9 +3395,9 @@ bool FSlide::BounceWall(AActor *mo)
 	}
 	line = bestslideline;
 
-	if (line->special == Line_Horizon)
+	if (line->special == Line_Horizon || ((mo->BounceFlags & BOUNCE_NotOnSky) && line->hitSkyWall(mo)))
 	{
-		mo->SeeSound = 0;	// it might make a sound otherwise
+		mo->SeeSound = mo->BounceSound = 0;	// it might make a sound otherwise
 		mo->Destroy();
 		return true;
 	}
@@ -3636,7 +3486,8 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 		|| ((BlockingMobj->player == NULL) && (!(BlockingMobj->flags3 & MF3_ISMONSTER)))))
 	{
 		// Rippers should not bounce off shootable actors, since they rip through them.
-		if ((mo->flags & MF_MISSILE) && (mo->flags2 & MF2_RIP) && BlockingMobj->flags & MF_SHOOTABLE)
+		if ((mo->flags & MF_MISSILE) && (mo->flags2 & MF2_RIP) && BlockingMobj->flags & MF_SHOOTABLE
+			&& !(mo->BounceFlags & BOUNCE_BounceOnUnrips && BlockingMobj->flags5 & MF5_DONTRIP))
 			return true;
 
 		if (BlockingMobj->flags & MF_SHOOTABLE && mo->BounceFlags & BOUNCE_NotOnShootables)
@@ -4432,8 +4283,8 @@ DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLin
 		else
 		{
 			// [BB] Disable autoaim on weapons with WIF_NOAUTOAIM.
-			AWeapon *weapon = t1->player->ReadyWeapon;
-			if (weapon && (weapon->WeaponFlags & WIF_NOAUTOAIM))
+			auto weapon = t1->player->ReadyWeapon;
+			if ((weapon && (weapon->IntVar(NAME_WeaponFlags) & WIF_NOAUTOAIM)) && !(flags & ALF_NOWEAPONCHECK))
 			{
 				vrange = 0.5;
 			}
@@ -4475,19 +4326,6 @@ DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLin
 		*pLineTarget = *result;
 	}
 	return result->linetarget ? result->pitch : t1->Angles.Pitch;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, AimLineAttack)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_ANGLE(angle);
-	PARAM_FLOAT(distance);
-	PARAM_POINTER_DEF(pLineTarget, FTranslatedLineTarget);
-	PARAM_ANGLE_DEF(vrange);
-	PARAM_INT_DEF(flags);
-	PARAM_OBJECT_DEF(target, AActor);
-	PARAM_OBJECT_DEF(friender, AActor);
-	ACTION_RETURN_FLOAT(P_AimLineAttack(self, angle, distance, pLineTarget, vrange, flags, target, friender).Degrees);
 }
 
 //==========================================================================
@@ -4833,38 +4671,13 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 			}
 			if (!(puffDefaults != NULL && puffDefaults->flags3&MF3_BLOODLESSIMPACT))
 			{
-				bool bloodsplatter = (t1->flags5 & MF5_BLOODSPLATTER) ||
-					(t1->player != nullptr &&	t1->player->ReadyWeapon != nullptr &&
-						(t1->player->ReadyWeapon->WeaponFlags & WIF_AXEBLOOD));
-
-				bool axeBlood = (t1->player != nullptr &&
-					t1->player->ReadyWeapon != nullptr &&
-					(t1->player->ReadyWeapon->WeaponFlags & WIF_AXEBLOOD));
-
-				if (!bloodsplatter && !axeBlood &&
-					!(trace.Actor->flags & MF_NOBLOOD) &&
-					!(trace.Actor->flags2 & (MF2_INVULNERABLE | MF2_DORMANT)))
+				IFVIRTUALPTR(trace.Actor, AActor, SpawnLineAttackBlood)
 				{
-					P_SpawnBlood(bleedpos, trace.SrcAngleFromTarget, newdam > 0 ? newdam : damage, trace.Actor);
+					VMValue params[] = { trace.Actor, t1, bleedpos.X, bleedpos.Y, bleedpos.Z, trace.SrcAngleFromTarget.Degrees, damage, newdam };
+					VMCall(func, params, countof(params), nullptr, 0);
 				}
-
 				if (damage)
 				{
-					if (bloodsplatter || axeBlood)
-					{
-						if (!(trace.Actor->flags&MF_NOBLOOD) &&
-							!(trace.Actor->flags2&(MF2_INVULNERABLE | MF2_DORMANT)))
-						{
-							if (axeBlood)
-							{
-								P_BloodSplatter2(bleedpos, trace.Actor, trace.SrcAngleFromTarget);
-							}
-							if (pr_lineattack() < 192)
-							{
-								P_BloodSplatter(bleedpos, trace.Actor, trace.SrcAngleFromTarget);
-							}
-						}
-					}
 					// [RH] Stick blood to walls
 					P_TraceBleed(newdam > 0 ? newdam : damage, trace.HitPos, trace.Actor, trace.SrcAngleFromTarget, pitch);
 				}
@@ -4909,29 +4722,6 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	}
 }
 
-DEFINE_ACTION_FUNCTION(AActor, LineAttack)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_ANGLE(angle);
-	PARAM_FLOAT(distance);
-	PARAM_ANGLE(pitch);
-	PARAM_INT(damage);
-	PARAM_NAME(damageType);
-	PARAM_CLASS(puffType, AActor);
-	PARAM_INT_DEF(flags);
-	PARAM_POINTER_DEF(victim, FTranslatedLineTarget);
-	PARAM_FLOAT_DEF(offsetz);
-	PARAM_FLOAT_DEF(offsetforward);
-	PARAM_FLOAT_DEF(offsetside);
-
-	int acdmg;
-	if (puffType == nullptr) puffType = PClass::FindActor("BulletPuff");	// P_LineAttack does not work without a puff to take info from.
-	auto puff = P_LineAttack(self, angle, distance, pitch, damage, damageType, puffType, flags, victim, &acdmg, offsetz, offsetforward, offsetside);
-	if (numret > 0) ret[0].SetObject(puff);
-	if (numret > 1) ret[1].SetInt(acdmg), numret = 2;
-	return numret;
-}
-
 //==========================================================================
 //
 // P_LineTrace
@@ -4964,7 +4754,7 @@ static ETraceStatus CheckLineTrace(FTraceResults &res, void *userdata)
 	return TRACE_Stop;
 }
 
-bool P_LineTrace(AActor *t1, DAngle angle, double distance,
+int P_LineTrace(AActor *t1, DAngle angle, double distance,
 	DAngle pitch, int flags, double sz, double offsetforward,
 	double offsetside, FLineTraceData *outdata)
 {
@@ -5060,33 +4850,6 @@ bool P_LineTrace(AActor *t1, DAngle angle, double distance,
 		outdata->HitType = trace.HitType;
 	}
 	return ret;
-}
-
-DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitActor);
-DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitLine);
-DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitSector);
-DEFINE_FIELD_X(FLineTraceData, FLineTraceData, Hit3DFloor);
-DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitTexture);
-DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitLocation);
-DEFINE_FIELD_X(FLineTraceData, FLineTraceData, Distance);
-DEFINE_FIELD_X(FLineTraceData, FLineTraceData, NumPortals);
-DEFINE_FIELD_X(FLineTraceData, FLineTraceData, LineSide);
-DEFINE_FIELD_X(FLineTraceData, FLineTraceData, LinePart);
-DEFINE_FIELD_X(FLineTraceData, FLineTraceData, SectorPlane);
-DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitType);
-
-DEFINE_ACTION_FUNCTION(AActor, LineTrace)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_ANGLE(angle);
-	PARAM_FLOAT(distance);
-	PARAM_ANGLE(pitch);
-	PARAM_INT_DEF(flags);
-	PARAM_FLOAT_DEF(offsetz);
-	PARAM_FLOAT_DEF(offsetforward);
-	PARAM_FLOAT_DEF(offsetside);
-	PARAM_POINTER_DEF(data, FLineTraceData);
-	ACTION_RETURN_BOOL(P_LineTrace(self,angle,distance,pitch,flags,offsetz,offsetforward,offsetside,data));
 }
 
 //==========================================================================
@@ -5225,17 +4988,6 @@ void P_TraceBleed(int damage, AActor *target, DAngle angle, DAngle pitch)
 	P_TraceBleed(damage, target->PosPlusZ(target->Height/2), target, angle, pitch);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, TraceBleedAngle)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(damage);
-	PARAM_FLOAT(angle);
-	PARAM_FLOAT(pitch);
-
-	P_TraceBleed(damage, self, angle, pitch);
-	return 0;
-}
-
 
 //==========================================================================
 //
@@ -5283,16 +5035,6 @@ void P_TraceBleed(int damage, FTranslatedLineTarget *t, AActor *puff)
 	P_TraceBleed(damage, t->linetarget->PosPlusZ(t->linetarget->Height/2), t->linetarget, t->angleFromSource, pitch);
 }
 
-DEFINE_ACTION_FUNCTION(_FTranslatedLineTarget, TraceBleed)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FTranslatedLineTarget);
-	PARAM_INT(damage);
-	PARAM_OBJECT_NOT_NULL(missile, AActor);
-
-	P_TraceBleed(damage, self, missile);
-	return 0;
-}
-
 
 //==========================================================================
 //
@@ -5309,18 +5051,6 @@ void P_TraceBleed(int damage, AActor *target)
 		P_TraceBleed(damage, target->PosPlusZ(target->Height / 2), target, angle, pitch);
 	}
 }
-
-DEFINE_ACTION_FUNCTION(AActor, TraceBleed)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(damage);
-	PARAM_OBJECT(missile, AActor);
-
-	if (missile) P_TraceBleed(damage, self, missile);
-	else P_TraceBleed(damage, self);
-	return 0;
-}
-
 
 //==========================================================================
 //
@@ -5882,7 +5612,7 @@ void P_UseLines(player_t *player)
 //
 //==========================================================================
 
-bool P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
+int P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
 {
 	DVector2 start;
 	DVector2 end;
@@ -5947,13 +5677,6 @@ bool P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
 	return false;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, UsePuzzleItem)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(puzznum);
-	ACTION_RETURN_BOOL(P_UsePuzzleItem(self, puzznum));
-}
-
 //==========================================================================
 //
 // RADIUS ATTACK
@@ -5983,7 +5706,7 @@ CUSTOM_CVAR(Float, splashfactor, 1.f, CVAR_SERVERINFO)
 // Used by anything without OLDRADIUSDMG flag
 //==========================================================================
 
-static double P_GetRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing, int bombdamage, int bombdistance, int fulldamagedistance, bool thingbombsource)
+static double GetRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing, int bombdamage, int bombdistance, int fulldamagedistance, bool thingbombsource)
 {
 	// [RH] New code. The bounding box only covers the
 	// height of the thing and not the height of the map.
@@ -6060,7 +5783,7 @@ static double P_GetRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing
 // based on XY distance.
 //==========================================================================
 
-static int P_GetOldRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing, int bombdamage, int bombdistance, int fulldamagedistance)
+static int GetOldRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing, int bombdamage, int bombdistance, int fulldamagedistance)
 {
 	const int ret = fromaction ? 0 : -1; // -1 is specifically for P_RadiusAttack; continue onto another actor.
 	double dx, dy, dist;
@@ -6104,22 +5827,16 @@ static int P_GetOldRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing
 // damage and not taking into account any damage reduction.
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, GetRadiusDamage)
+int P_GetRadiusDamage(AActor *self, AActor *thing, int damage, int distance, int fulldmgdistance, bool oldradiusdmg)
 {
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT(thing, AActor);
-	PARAM_INT(damage);
-	PARAM_INT(distance);
-	PARAM_INT_DEF(fulldmgdistance);
-	PARAM_BOOL_DEF(oldradiusdmg);
 
 	if (!thing)
 	{
-		ACTION_RETURN_INT(0);
+		return 0;
 	}
 	else if (thing == self)
 	{	// No point in calculating falloff in this case since it is the bomb spot.
-		ACTION_RETURN_INT(damage);
+		return damage;
 	}
 
 	fulldmgdistance = clamp<int>(fulldmgdistance, 0, distance - 1);
@@ -6129,10 +5846,10 @@ DEFINE_ACTION_FUNCTION(AActor, GetRadiusDamage)
 		distance = damage;
 
 	const int newdam = oldradiusdmg
-		? P_GetOldRadiusDamage(true, self, thing, damage, distance, fulldmgdistance)
-		: int(P_GetRadiusDamage(true, self, thing, damage, distance, fulldmgdistance, false));
+		? GetOldRadiusDamage(true, self, thing, damage, distance, fulldmgdistance)
+		: int(GetRadiusDamage(true, self, thing, damage, distance, fulldmgdistance, false));
 
-	ACTION_RETURN_INT(newdam);
+	return newdam;
 }
 
 //==========================================================================
@@ -6194,9 +5911,9 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 		// them far too "active." BossBrains also use the old code
 		// because some user levels require they have a height of 16,
 		// which can make them near impossible to hit with the new code.
-		if ((flags & RADF_NODAMAGE) || !((bombspot->flags5 | thing->flags5) & MF5_OLDRADIUSDMG))
+		if (((flags & RADF_NODAMAGE) || !((bombspot->flags5 | thing->flags5) & MF5_OLDRADIUSDMG)) && !(flags & RADF_OLDRADIUSDAMAGE))
 		{
-			double points = P_GetRadiusDamage(false, bombspot, thing, bombdamage, bombdistance, fulldamagedistance, bombsource == thing);
+			double points = GetRadiusDamage(false, bombspot, thing, bombdamage, bombdistance, fulldamagedistance, bombsource == thing);
 			double check = int(points) * bombdamage;
 			// points and bombdamage should be the same sign (the double cast of 'points' is needed to prevent overflows and incorrect values slipping through.)
 			if ((check > 0 || (check == 0 && bombspot->flags7 & MF7_FORCEZERORADIUSDMG)) && P_CheckSight(thing, bombspot, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
@@ -6254,7 +5971,7 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 		else
 		{
 			// [RH] Old code just for barrels
-			int damage = P_GetOldRadiusDamage(false, bombspot, thing, bombdamage, bombdistance, fulldamagedistance);
+			int damage = GetOldRadiusDamage(false, bombspot, thing, bombdamage, bombdistance, fulldamagedistance);
 
 			if (damage < 0)
 				continue;		// Sight check failed.
@@ -6478,7 +6195,7 @@ void P_FindBelowIntersectors(AActor *actor)
 
 void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 {
-	if (!(thing && thing->Grind(true) && cpos)) return;
+	if (!(thing && thing->CallGrind(true) && cpos)) return;
 	cpos->nofit = true;
 
 	if ((cpos->crushchange > 0) && !(level.maptime & 3))
@@ -7057,7 +6774,7 @@ void SpawnShootDecal(AActor *t1, const FTraceResults &trace)
 
 	if (t1->player != NULL && t1->player->ReadyWeapon != NULL)
 	{
-		decalbase = t1->player->ReadyWeapon->GetDefault()->DecalGenerator;
+		decalbase = t1->player->ReadyWeapon->DecalGenerator;
 	}
 	else
 	{

@@ -313,7 +313,6 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 	FExtraInfo &extra, EDefinitionType def, FScanner &sc, TArray<FState> &StateArray, TArray<FScriptPosition> &SourceLines)
 {
-	AInventory *const inv = static_cast<AInventory *>(defaults);
 	char sprite[5] = "TNT1";
 
 	sc.MustGetString ();
@@ -532,16 +531,16 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (def == DEF_Pickup && sc.Compare ("PickupSound"))
 		{
 			sc.MustGetString ();
-			inv->PickupSound = sc.String;
+			defaults->IntVar(NAME_PickupSound) = FSoundID(sc.String);
 		}
 		else if (def == DEF_Pickup && sc.Compare ("PickupMessage"))
 		{
 			sc.MustGetString ();
-			inv->StringVar(NAME_PickupMsg) = sc.String;
+			defaults->StringVar(NAME_PickupMsg) = sc.String;
 		}
 		else if (def == DEF_Pickup && sc.Compare ("Respawns"))
 		{
-			inv->BoolVar(NAME_Respawnable) = true;
+			defaults->BoolVar(NAME_Respawnable) = true;
 		}
 		else if (def == DEF_BreakableDecoration && sc.Compare ("SolidOnDeath"))
 		{

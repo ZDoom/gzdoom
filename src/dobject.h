@@ -185,6 +185,8 @@ protected: \
 
 #include "dobjgc.h"
 
+class AActor;
+
 class DObject
 {
 public:
@@ -242,6 +244,7 @@ public:
 	// Add other types as needed.
 	inline bool &BoolVar(FName field);
 	inline int &IntVar(FName field);
+	inline FTextureID &TextureIDVar(FName field);
 	inline FSoundID &SoundVar(FName field);
 	inline PalEntry &ColorVar(FName field);
 	inline FName &NameVar(FName field);
@@ -249,11 +252,9 @@ public:
 	inline FString &StringVar(FName field);
 	template<class T> T*& PointerVar(FName field);
 
-	// If you need to replace one object with another and want to
-	// change any pointers from the old object to the new object,
-	// use this method.
+	// This is only needed for swapping out PlayerPawns and absolutely nothing else!
 	virtual size_t PointerSubstitution (DObject *old, DObject *notOld);
-	static size_t StaticPointerSubstitution (DObject *old, DObject *notOld, bool scandefaults = false);
+	static void StaticPointerSubstitution (AActor *old, AActor *notOld);
 
 	PClass *GetClass() const
 	{
@@ -357,6 +358,7 @@ protected:
 	template<typename T, typename... Args>
 		friend T* Create(Args&&... args);
 
+	friend class JitCompiler;
 };
 
 // This is the only method aside from calling CreateNew that should be used for creating DObjects
@@ -374,8 +376,6 @@ T* Create(Args&&... args)
 	return object;
 }
 
-
-class AInventory;//
 
 // When you write to a pointer to an Object, you must call this for
 // proper bookkeeping in case the Object holding this pointer has
@@ -425,6 +425,8 @@ template<class T> T *dyn_cast(DObject *p)
 	return NULL;
 }
 
+
+
 template<class T> const T *dyn_cast(const DObject *p)
 {
 	return dyn_cast<T>(const_cast<DObject *>(p));
@@ -438,6 +440,11 @@ inline bool &DObject::BoolVar(FName field)
 inline int &DObject::IntVar(FName field)
 {
 	return *(int*)ScriptVar(field, nullptr);
+}
+
+inline FTextureID &DObject::TextureIDVar(FName field)
+{
+	return *(FTextureID*)ScriptVar(field, nullptr);
 }
 
 inline FSoundID &DObject::SoundVar(FName field)

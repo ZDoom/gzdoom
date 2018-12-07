@@ -182,7 +182,7 @@ void GLFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &light
 
 void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 {
-	if (level.HasDynamicLights && screen->BuffersArePersistent())
+	if (level.HasDynamicLights && screen->BuffersArePersistent() && !di->isFullbrightScene())
 	{
 		SetupLights(di, section->lighthead, lightdata, sector->PortalGroup);
 	}
@@ -375,7 +375,7 @@ inline void GLFlat::PutFlat(HWDrawInfo *di, bool fog)
 	}
 	else if (!screen->BuffersArePersistent())
 	{
-		if (level.HasDynamicLights && gltexture != nullptr && !(hacktype & (SSRF_PLANEHACK|SSRF_FLOODHACK)) )
+		if (level.HasDynamicLights && gltexture != nullptr && !di->isFullbrightScene() && !(hacktype & (SSRF_PLANEHACK|SSRF_FLOODHACK)) )
 		{
 			SetupLights(di, section->lighthead, lightdata, sector->PortalGroup);
 		}

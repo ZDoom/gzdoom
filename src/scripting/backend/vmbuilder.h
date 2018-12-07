@@ -3,6 +3,8 @@
 
 #include "dobject.h"
 #include "vmintern.h"
+#include <vector>
+#include <functional>
 
 class VMFunctionBuilder;
 class FxExpression;
@@ -68,7 +70,6 @@ public:
 	size_t Emit(int opcode, int opa, int opb, int opc);
 	size_t Emit(int opcode, int opa, VM_SHALF opbc);
 	size_t Emit(int opcode, int opabc);
-	size_t EmitParamInt(int value);
 	size_t EmitLoadInt(int regnum, int value);
 	size_t EmitRetInt(int retnum, bool final, int value);
 
@@ -146,10 +147,60 @@ class FFunctionBuildList
 
 	TArray<Item> mItems;
 
+	void DumpJit();
+
 public:
 	VMFunction *AddFunction(PNamespace *curglobals, const VersionInfo &ver, PFunction *func, FxExpression *code, const FString &name, bool fromdecorate, int currentstate, int statecnt, int lumpnum);
 	void Build();
 };
 
 extern FFunctionBuildList FunctionBuildList;
+
+
+//==========================================================================
+//
+// Function call parameter collector
+//
+//==========================================================================
+extern int EncodeRegType(ExpEmit reg);
+
+class FunctionCallEmitter
+{
+	// std::function and TArray are not compatible so this has to use std::vector instead.
+	std::vector<std::function<int(VMFunctionBuilder *)>> emitters;
+	TArray<std::pair<int, int>> returns;
+	TArray<uint8_t> reginfo;
+	unsigned numparams = 0;	// This counts the number of pushed elements, which can differ from the number of emitters with vectors.
+	VMFunction *target = nullptr;
+	int virtualselfreg = -1;
+
+public:
+	FunctionCallEmitter(VMFunction *func)
+	{
+		target = func;
+	}
+
+	void SetVirtualReg(int virtreg)
+	{
+		virtualselfreg = virtreg;
+	}
+
+	void AddParameter(VMFunctionBuilder *build, FxExpression *operand);
+	void AddParameter(ExpEmit &emit, bool reference);
+	void AddParameterPointerConst(void *konst);
+	void AddParameterPointer(int index, bool konst);
+	void AddParameterFloatConst(double konst);
+	void AddParameterIntConst(int konst);
+	void AddParameterStringConst(const FString &konst);
+	ExpEmit EmitCall(VMFunctionBuilder *build, TArray<ExpEmit> *ReturnRegs = nullptr);
+	void AddReturn(int regtype, int regcount = 1)
+	{
+		returns.Push({ regtype, regcount });
+	}
+	unsigned Count() const
+	{
+		return numparams;
+	}
+};
+
 #endif

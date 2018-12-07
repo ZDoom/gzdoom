@@ -63,9 +63,7 @@ struct OneKey
 		if (owner->IsA(key) || owner->GetSpecies() == key->TypeName) return true;
 
 		// Other calls check an actor that may have a key in its inventory.
-		AInventory *item;
-
-		for (item = owner->Inventory; item != NULL; item = item->Inventory)
+		for (AActor *item = owner->Inventory; item != NULL; item = item->Inventory)
 		{
 			if (item->IsA(key))
 			{
@@ -129,7 +127,7 @@ struct Lock
 		if (!keylist.Size())
 		{
 			auto kt = PClass::FindActor(NAME_Key);
-			for (AInventory * item = owner->Inventory; item != NULL; item = item->Inventory)
+			for (AActor *item = owner->Inventory; item != NULL; item = item->Inventory)
 			{
 				if (item->IsKindOf (kt))
 				{
@@ -155,6 +153,7 @@ static Lock *locks[256];		// all valid locks
 static bool keysdone=false;		// have the locks been initialized?
 static int currentnumber;		// number to be assigned to next key
 static bool ignorekey;			// set to true when the current lock is not being used
+static TArray<PClassActor *> KeyTypes;	// List of all keys sorted by lock.
 
 static void ClearLocks();
 
@@ -177,7 +176,7 @@ static void AddOneKey(Keygroup *keygroup, PClassActor *mi, FScanner &sc)
 	if (mi)
 	{
 		// Any inventory item can be used to unlock a door
-		if (mi->IsDescendantOf(RUNTIME_CLASS(AInventory)))
+		if (mi->IsDescendantOf(NAME_Inventory))
 		{
 			OneKey k = {mi,1};
 			keygroup->anykeylist.Push (k);
@@ -402,6 +401,52 @@ static void ClearLocks()
 	keysdone = false;
 }
 
+//---------------------------------------------------------------------------
+//
+// create a sorted list of the defined keys so 
+// this doesn't have to be done each frame
+//
+// For use by the HUD and statusbar code to get a consistent order.
+//
+//---------------------------------------------------------------------------
+
+static int ktcmp(const void * a, const void * b)
+{
+	auto key1 = GetDefaultByType(*(PClassActor **)a);
+	auto key2 = GetDefaultByType(*(PClassActor **)b);
+	return key1->special1 - key2->special1;
+}
+
+static void CreateSortedKeyList()
+{
+	TArray<PClassActor *> UnassignedKeyTypes;
+	KeyTypes.Clear();
+	for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); i++)
+	{
+		PClassActor *ti = PClassActor::AllActorClasses[i];
+		auto kt = PClass::FindActor(NAME_Key);
+
+		if (ti->IsDescendantOf(kt))
+		{
+			auto key = GetDefaultByType(ti);
+
+			if (key->special1 > 0)
+			{
+				KeyTypes.Push(ti);
+			}
+			else
+			{
+				UnassignedKeyTypes.Push(ti);
+			}
+		}
+	}
+	if (KeyTypes.Size())
+	{
+		qsort(&KeyTypes[0], KeyTypes.Size(), sizeof(KeyTypes[0]), ktcmp);
+	}
+	KeyTypes.Append(UnassignedKeyTypes);
+}
+
 //===========================================================================
 //
 // P_InitKeyMessages
@@ -436,6 +481,7 @@ void P_InitKeyMessages()
 		}
 		sc.Close();
 	}
+	CreateSortedKeyList();
 	keysdone = true;
 }
 
@@ -460,7 +506,7 @@ void P_DeinitKeyMessages()
 //
 //===========================================================================
 
-bool P_CheckKeys (AActor *owner, int keynum, bool remote, bool quiet)
+int P_CheckKeys (AActor *owner, int keynum, bool remote, bool quiet)
 {
 	const char *failtext = NULL;
 	FSoundID *failsound;
@@ -517,15 +563,6 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote, bool quiet)
 	return false;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, CheckKeys)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(locknum);
-	PARAM_BOOL(remote);
-	PARAM_BOOL_DEF(quiet);
-	ACTION_RETURN_BOOL(P_CheckKeys(self, locknum, remote, quiet));
-}
-
 //==========================================================================
 //
 // These functions can be used to get color information for
@@ -548,7 +585,7 @@ int P_GetMapColorForLock (int lock)
 //
 //==========================================================================
 
-int P_GetMapColorForKey (AInventory * key)
+int P_GetMapColorForKey (AActor * key)
 {
 	int i;
 
@@ -557,4 +594,16 @@ int P_GetMapColorForKey (AInventory * key)
 		if (locks[i] && locks[i]->check(key)) return locks[i]->rgb;
 	}
 	return 0;
+}
+
+
+int P_GetKeyTypeCount()
+{
+	return KeyTypes.Size();
+}
+
+PClassActor *P_GetKeyType(int num)
+{
+	if ((unsigned)num >= KeyTypes.Size()) return nullptr;
+	return KeyTypes[num];
 }

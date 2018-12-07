@@ -165,7 +165,7 @@ bool FWadFile::Open(bool quiet)
 		// Check again to detect broken wads
 		if (InfoTableOfs + NumLumps*sizeof(wadlump_t) > (unsigned)wadSize)
 		{
-			I_Error("Cannot load broken WAD file %s\n", Filename);
+			I_Error("Cannot load broken WAD file %s\n", FileName.GetChars());
 		}
 	}
 
@@ -194,7 +194,7 @@ bool FWadFile::Open(bool quiet)
 		{
 			if (Lumps[i].LumpSize != 0)
 			{
-				Printf(PRINT_HIGH, "%s: Lump %s contains invalid positioning info and will be ignored\n", Filename, Lumps[i].Name);
+				Printf(PRINT_HIGH, "%s: Lump %s contains invalid positioning info and will be ignored\n", FileName.GetChars(), Lumps[i].Name);
 				Lumps[i].Name[0] = 0;
 			}
 			Lumps[i].LumpSize = Lumps[i].Position = 0;
@@ -439,7 +439,7 @@ void FWadFile::SkinHack ()
 			"The maps in %s will not be loaded because it has a skin.\n"
 			TEXTCOLOR_BLUE
 			"You should remove the skin from the wad to play these maps.\n",
-			Filename);
+			FileName.GetChars());
 	}
 }
 

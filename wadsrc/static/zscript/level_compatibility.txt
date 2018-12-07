@@ -5,7 +5,8 @@ class LevelCompatibility play
 	{
 		switch (checksum)
 		{			
-			case '9527DD0809FDA39CCFC316A21D135783': // HACX.WAD map05
+			case '9BC9E12781903D7C2D5697A5E0AEFD6F': // HACX.WAD map05 from 21.10.2010
+			case '9527DD0809FDA39CCFC316A21D135783': // HACX.WAD map05 from 20.10.2010
 			{
 				// fix non-functional self-referencing sector hack.
 				for(int i = 578; i < 582; i++) 
@@ -179,6 +180,11 @@ class LevelCompatibility play
 			{
 				// The famous missing yellow key...
 				SetThingFlags(470, 2016);
+				// Fix textures on the two switches that rise from the floor in the eastern area
+				for (int i = 0; i < 8; i++)
+				{
+					SetLineFlags(1676 + i, 0, Line.ML_DONTPEGBOTTOM);
+				}
 				break;
 			}
 
@@ -1109,7 +1115,7 @@ class LevelCompatibility play
 				break;
 			}
 			
-			case 'D67CECE3F60083383DF992B8C824E4AC': // Icarus: Alien Vanuguard MAP13
+			case 'D67CECE3F60083383DF992B8C824E4AC': // Icarus: Alien Vanguard MAP13
 			{
 				// Moves sector special to platform with Berserk powerup. The
 				// map's only secret can now be scored.
@@ -1118,7 +1124,7 @@ class LevelCompatibility play
 				break;
 			}
 			
-			case '61373587339A768854E2912CC99A4781': // Icarus: Alien Vanuguard MAP15
+			case '61373587339A768854E2912CC99A4781': // Icarus: Alien Vanguard MAP15
 			{
 				// Can press use on the lift to reveal the secret Shotgun,
 				// making 100% secrets possible.
@@ -1128,7 +1134,7 @@ class LevelCompatibility play
 				break;
 			}
 			
-			case '9F66B0797925A09D4DC0725540F8EEF7': // Icarus: Alien Vanuguard MAP16
+			case '9F66B0797925A09D4DC0725540F8EEF7': // Icarus: Alien Vanguard MAP16
 			{
 				// Can press use on the walls at the secret Rocket Launcher in
 				// case of getting stuck.

@@ -165,8 +165,8 @@ public:
 };
 
 extern FRolloffInfo S_Rolloff;
-extern uint8_t *S_SoundCurve;
-extern int S_SoundCurveSize;
+extern TArray<uint8_t> S_SoundCurve;
+
 
 // Information about one playing sound.
 struct sector_t;
@@ -307,7 +307,7 @@ bool S_GetSoundPlayingInfo (const FPolyObj *poly, int sound_id);
 bool S_IsActorPlayingSomething (AActor *actor, int channel, int sound_id);
 
 // Change a playing sound's volume
-bool S_ChangeSoundVolume(AActor *actor, int channel, float volume);
+void S_ChangeSoundVolume(AActor *actor, int channel, double volume);
 
 // Moves all sounds from one mobj to another
 void S_RelinkSound (AActor *from, AActor *to);
@@ -371,6 +371,7 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer = nullptr);
 unsigned int S_GetMSLength(FSoundID sound);
 void S_ParseMusInfo();
 bool S_ParseTimeTag(const char *tag, bool *as_samples, unsigned int *time);
+void A_PlaySound(AActor *self, int soundid, int channel, double volume, int looping, double attenuation, int local);
 
 // [RH] Prints sound debug info to the screen.
 //		Modelled after Hexen's noise cheat.

@@ -29,6 +29,7 @@
 #define __I_SYSTEM__
 
 #include "doomtype.h"
+#include <thread>
 
 struct ticcmd_t;
 struct WadStuff;
@@ -185,5 +186,9 @@ inline int I_FindAttr(findstate_t *fileinfo)
 #define FA_SYSTEM	0x00000004
 #define FA_DIREC	0x00000010
 #define FA_ARCH		0x00000020
+
+int I_GetNumaNodeCount();
+int I_GetNumaNodeThreadCount(int numaNode);
+void I_SetThreadNumaNode(std::thread &thread, int numaNode);
 
 #endif

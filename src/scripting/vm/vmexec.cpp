@@ -134,7 +134,7 @@ struct VMExec_Unchecked
 #undef assert
 #include <assert.h>
 
-int (*VMExec)(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret) =
+int (*VMExec)(VMFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret) =
 #ifdef NDEBUG
 VMExec_Unchecked::Exec
 #else
@@ -193,17 +193,19 @@ void VMFillParams(VMValue *params, VMFrame *callee, int numparam)
 	const VMRegisters calleereg(callee);
 
 	assert(calleefunc != NULL && !(calleefunc->VarFlags & VARF_Native));
-	assert(numparam == calleefunc->NumArgs || ((int)calleefunc->DefaultArgs.Size() == calleefunc->NumArgs));
+	assert(numparam == calleefunc->NumArgs);
 	assert(REGT_INT == 0 && REGT_FLOAT == 1 && REGT_STRING == 2 && REGT_POINTER == 3);
 
 	regd = regf = regs = rega = 0;
-	for (int i = 0; i < calleefunc->NumArgs; ++i)
+	const uint8_t *reginfo = calleefunc->RegTypes;
+	assert(reginfo != nullptr);
+	for (int i = 0; i < calleefunc->NumArgs; ++i, reginfo++)
 	{
-		// get all actual parameters and fill the rest from the defaults.
-		VMValue &p = i < numparam? params[i] : calleefunc->DefaultArgs[i];
-		if (p.Type < REGT_STRING)
+		// copy all parameters to the local registers.
+		VMValue &p = params[i];
+		if (*reginfo < REGT_STRING)
 		{
-			if (p.Type == REGT_INT)
+			if (*reginfo == REGT_INT)
 			{
 				calleereg.d[regd++] = p.i;
 			}
@@ -212,13 +214,13 @@ void VMFillParams(VMValue *params, VMFrame *callee, int numparam)
 				calleereg.f[regf++] = p.f;
 			}
 		}
-		else if (p.Type == REGT_STRING)
+		else if (*reginfo == REGT_STRING)
 		{
 			calleereg.s[regs++] = p.s();
 		}
 		else
 		{
-			assert(p.Type == REGT_POINTER);
+			assert(*reginfo == REGT_POINTER);
 			calleereg.a[rega++] = p.a;
 		}
 	}

@@ -359,6 +359,8 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG2(BOUNCE_AutoOffFloorOnly, BOUNCEAUTOOFFFLOORONLY, AActor, BounceFlags),
 	DEFINE_FLAG2(BOUNCE_UseBounceState, USEBOUNCESTATE, AActor, BounceFlags),
 	DEFINE_FLAG2(BOUNCE_NotOnShootables, DONTBOUNCEONSHOOTABLES, AActor, BounceFlags),
+	DEFINE_FLAG2(BOUNCE_BounceOnUnrips, BOUNCEONUNRIPPABLES, AActor, BounceFlags),
+	DEFINE_FLAG2(BOUNCE_NotOnSky, DONTBOUNCEONSKY, AActor, BounceFlags),
 };
 
 // These won't be accessible through bitfield variables
@@ -407,71 +409,6 @@ static FFlagDef MoreFlagDefs[] =
 	DEFINE_DUMMY_FLAG(SERVERSIDEONLY, false),
 };
 
-static FFlagDef InventoryFlagDefs[] =
-{
-	// Inventory flags
-	DEFINE_FLAG(IF, QUIET, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, AUTOACTIVATE, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, UNDROPPABLE, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, INVBAR, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, HUBPOWER, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, UNTOSSABLE, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, ADDITIVETIME, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, ALWAYSPICKUP, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, FANCYPICKUPSOUND, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, BIGPOWERUP, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, KEEPDEPLETED, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, IGNORESKILL, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, NOATTENPICKUPSOUND, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, PERSISTENTPOWER, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, RESTRICTABSOLUTELY, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, NEVERRESPAWN, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, NOSCREENFLASH, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, TOSSED, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, ALWAYSRESPAWN, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, TRANSFER, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, NOTELEPORTFREEZE, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, NOSCREENBLINK, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, ISARMOR, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, ISHEALTH, AInventory, ItemFlags),
-
-	DEFINE_DUMMY_FLAG(FORCERESPAWNINSURVIVAL, false),
-
-	DEFINE_DEPRECATED_FLAG(PICKUPFLASH),
-	DEFINE_DEPRECATED_FLAG(INTERHUBSTRIP),
-};
-
-static FFlagDef WeaponFlagDefs[] =
-{
-	// Weapon flags
-	DEFINE_FLAG(WIF, NOAUTOFIRE, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, READYSNDHALF, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, DONTBOB, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, AXEBLOOD, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, NOALERT, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, AMMO_OPTIONAL, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, ALT_AMMO_OPTIONAL, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, PRIMARY_USES_BOTH, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, WIMPY_WEAPON, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, POWERED_UP, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, STAFF2_KICKBACK, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF_BOT, EXPLOSIVE, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, MELEEWEAPON, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF_BOT, BFG, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, CHEATNOTWEAPON, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, NO_AUTO_SWITCH, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, AMMO_CHECKBOTH, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, NOAUTOAIM, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, NODEATHDESELECT, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, NODEATHINPUT, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, ALT_USES_BOTH, AWeapon, WeaponFlags),
-
-	DEFINE_DUMMY_FLAG(NOLMS, false),
-	DEFINE_DUMMY_FLAG(ALLOW_WITH_RESPAWN_INVUL, false),
-};
-
-
-
 static FFlagDef PlayerPawnFlagDefs[] =
 {
 	// PlayerPawn flags
@@ -492,23 +429,17 @@ static FFlagDef DynLightFlagDefs[] =
 	DEFINE_FLAG(LF, SPOT, ADynamicLight, lightflags),
 };
 
-static FFlagDef PowerSpeedFlagDefs[] =
-{
-	// PowerSpeed flags
-	DEFINE_DEPRECATED_FLAG(NOTRAIL),
-};
-
 static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int NumDefs; int Use; } FlagLists[] =
 {
 	{ &RUNTIME_CLASS_CASTLESS(AActor), 		ActorFlagDefs,		countof(ActorFlagDefs), 3 },	// -1 to account for the terminator
 	{ &RUNTIME_CLASS_CASTLESS(AActor), 		MoreFlagDefs,		countof(MoreFlagDefs), 1 },
 	{ &RUNTIME_CLASS_CASTLESS(AActor), 	InternalActorFlagDefs,	countof(InternalActorFlagDefs), 2 },
-	{ &RUNTIME_CLASS_CASTLESS(AInventory), 	InventoryFlagDefs,	countof(InventoryFlagDefs), 3 },
-	{ &RUNTIME_CLASS_CASTLESS(AWeapon), 	WeaponFlagDefs,		countof(WeaponFlagDefs), 3 },
 	{ &RUNTIME_CLASS_CASTLESS(APlayerPawn),	PlayerPawnFlagDefs,	countof(PlayerPawnFlagDefs), 3 },
 	{ &RUNTIME_CLASS_CASTLESS(ADynamicLight),DynLightFlagDefs,	countof(DynLightFlagDefs), 3 },
 };
 #define NUM_FLAG_LISTS (countof(FlagLists))
+
+static FFlagDef forInternalFlags;
 
 //==========================================================================
 //
@@ -547,6 +478,47 @@ static FFlagDef *FindFlag (FFlagDef *flags, int numflags, const char *flag)
 
 FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2, bool strict)
 {
+
+	if (part2 == nullptr)
+	{
+		FStringf internalname("@flagdef@%s", part1);
+		FName name(internalname, true);
+		if (name != NAME_None)
+		{
+			auto field = dyn_cast<PPropFlag>(type->FindSymbol(name, true));
+			if (field != nullptr && (!strict || !field->decorateOnly))
+			{
+				forInternalFlags.fieldsize = 4;
+				forInternalFlags.name = "";
+				forInternalFlags.flagbit = field->Offset? 1 << field->bitval : field->bitval;
+				forInternalFlags.structoffset = field->Offset? (int)field->Offset->Offset : -1;
+				forInternalFlags.varflags = field->Offset == nullptr && field->bitval > 0? VARF_Deprecated : 0;
+				return &forInternalFlags;
+			}
+		}
+	}
+	else
+	{
+		FStringf internalname("@flagdef@%s.%s", part1, part2);
+		FName name(internalname, true);
+		if (name != NAME_None)
+		{
+			auto field = dyn_cast<PPropFlag>(type->FindSymbol(name, true));
+			if (field != nullptr)
+			{
+				forInternalFlags.fieldsize = 4;
+				forInternalFlags.name = "";
+				forInternalFlags.flagbit = field->Offset ? 1 << field->bitval : field->bitval;
+				forInternalFlags.structoffset = field->Offset ? (int)field->Offset->Offset : -1;
+				forInternalFlags.varflags = field->Offset == nullptr && field->bitval > 0? VARF_Deprecated : 0;
+				return &forInternalFlags;
+			}
+		}
+	}
+
+	// Not found. Try the internal flag definitions.
+
+
 	FFlagDef *def;
 
 	if (part2 == NULL)
@@ -582,11 +554,6 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2, bo
 		}
 	}
 
-	// Handle that lone PowerSpeed flag - this should be more generalized but it's just this one flag and unlikely to become more so an explicit check will do.
-	if ((!stricmp(part1, "NOTRAIL") && !strict) || (!stricmp(part1, "POWERSPEED") && !stricmp(part2, "NOTRAIL")))
-	{
-		return &PowerSpeedFlagDefs[0];
-	}
 	return NULL;
 }
 
@@ -932,6 +899,7 @@ void InitThingdef()
 			assert(afunc->VMPointer != NULL);
 			*(afunc->VMPointer) = new VMNativeFunction(afunc->Function, afunc->FuncName);
 			(*(afunc->VMPointer))->PrintableName.Format("%s.%s [Native]", afunc->ClassName+1, afunc->FuncName);
+			(*(afunc->VMPointer))->DirectNativeCall = afunc->DirectNative;
 			AFTable.Push(*afunc);
 		}
 		AFTable.ShrinkToFit();
@@ -942,8 +910,15 @@ void InitThingdef()
 	auto fcp = NewStruct("FCheckPosition", nullptr);
 	fcp->mConstructor = *FindFunction(fcp, "_Constructor")->VMPointer;
 	fcp->mDestructor = *FindFunction(fcp, "_Destructor")->VMPointer;
+	static const uint8_t reguse[] = { REGT_POINTER };
+	fcp->mConstructor->RegTypes = fcp->mDestructor->RegTypes = reguse;
 	fcp->Size = sizeof(FCheckPosition);
 	fcp->Align = alignof(FCheckPosition);
+
+	//This must also have its size set.
+	auto frp = NewStruct("FRailParams", nullptr);
+	frp->Size = sizeof(FRailParams);
+	frp->Align = alignof(FRailParams);
 
 
 	FieldTable.Clear();
@@ -963,17 +938,6 @@ void InitThingdef()
 
 void SynthesizeFlagFields()
 {
-	// These are needed for inserting the flag symbols
-	/*
-	NewClassType(RUNTIME_CLASS(DObject));
-	NewClassType(RUNTIME_CLASS(DThinker));
-	NewClassType(RUNTIME_CLASS(AActor));
-	NewClassType(RUNTIME_CLASS(AInventory));
-	NewClassType(RUNTIME_CLASS(AStateProvider));
-	NewClassType(RUNTIME_CLASS(AWeapon));
-	NewClassType(RUNTIME_CLASS(APlayerPawn));
-	NewClassType(RUNTIME_CLASS(ADynamicLight));
-	*/
 	// synthesize a symbol for each flag from the flag name tables to avoid redundant declaration of them.
 	for (auto &fl : FlagLists)
 	{
@@ -990,11 +954,6 @@ void SynthesizeFlagFields()
 		}
 	}
 }
-DEFINE_ACTION_FUNCTION(DObject, GameType)
-{
-	PARAM_PROLOGUE;
-	ACTION_RETURN_INT(gameinfo.gametype);
-}
 
 DEFINE_ACTION_FUNCTION(DObject, BAM)
 {
@@ -1003,29 +962,16 @@ DEFINE_ACTION_FUNCTION(DObject, BAM)
 	ACTION_RETURN_INT(DAngle(ang).BAMs());
 }
 
-DEFINE_ACTION_FUNCTION(FStringTable, Localize)
+FString FStringFormat(VM_ARGS, int offset)
 {
-	PARAM_PROLOGUE;
-	PARAM_STRING(label);
-	PARAM_BOOL_DEF(prefixed);
-	if (!prefixed) ACTION_RETURN_STRING(GStrings(label));
-	if (label[0] != '$') ACTION_RETURN_STRING(label);
-	ACTION_RETURN_STRING(GStrings(&label[1]));
-}
+	PARAM_VA_POINTER(va_reginfo)	// Get the hidden type information array
+	assert(va_reginfo[offset] == REGT_STRING);
 
-DEFINE_ACTION_FUNCTION(FStringStruct, Replace)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_STRING(s1);
-	PARAM_STRING(s2);
-	self->Substitute(s1, s2);
-	return 0;
-}
+	FString fmtstring = param[offset].s().GetChars();
 
-FString FStringFormat(VM_ARGS)
-{
-	assert(param[0].Type == REGT_STRING);
-	FString fmtstring = param[0].s().GetChars();
+	param += offset;
+	numparam -= offset;
+	va_reginfo += offset;
 
 	// note: we don't need a real printf format parser.
 	//       enough to simply find the subtitution tokens and feed them to the real printf after checking types.
@@ -1046,7 +992,11 @@ FString FStringFormat(VM_ARGS)
 		char c = fmtstring[i];
 		if (in_fmt)
 		{
-			if ((c >= '0' && c <= '9') ||
+			if (c == '*' && (fmt_current.Len() == 1 || (fmt_current.Len() == 2 && fmt_current[1] == '0')))
+			{
+				fmt_current += c;
+			}
+			else if ((c >= '0' && c <= '9') ||
 				c == '-' || c == '+' || (c == ' ' && fmt_current.Back() != ' ') || c == '#' || c == '.')
 			{
 				fmt_current += c;
@@ -1076,7 +1026,7 @@ FString FStringFormat(VM_ARGS)
 					in_fmt = false;
 					// fail if something was found, but it's not a string
 					if (argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
-					if (param[argnum].Type != REGT_STRING) ThrowAbortException(X_FORMAT_ERROR, "Expected a string for format %s.", fmt_current.GetChars());
+					if (va_reginfo[argnum] != REGT_STRING) ThrowAbortException(X_FORMAT_ERROR, "Expected a string for format %s.", fmt_current.GetChars());
 					// append
 					output.AppendFormat(fmt_current.GetChars(), param[argnum].s().GetChars());
 					if (!haveargnums) argnum = ++argauto;
@@ -1092,7 +1042,7 @@ FString FStringFormat(VM_ARGS)
 					in_fmt = false;
 					// fail if something was found, but it's not a string
 					if (argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
-					if (param[argnum].Type != REGT_POINTER) ThrowAbortException(X_FORMAT_ERROR, "Expected a pointer for format %s.", fmt_current.GetChars());
+					if (va_reginfo[argnum] != REGT_POINTER) ThrowAbortException(X_FORMAT_ERROR, "Expected a pointer for format %s.", fmt_current.GetChars());
 					// append
 					output.AppendFormat(fmt_current.GetChars(), param[argnum].a);
 					if (!haveargnums) argnum = ++argauto;
@@ -1108,16 +1058,32 @@ FString FStringFormat(VM_ARGS)
 				case 'X':
 				case 'o':
 				case 'c':
+				case 'B':
 				{
 					if (argnum < 0 && haveargnums)
 						ThrowAbortException(X_FORMAT_ERROR, "Cannot mix explicit and implicit arguments.");
 					in_fmt = false;
-					// fail if something was found, but it's not an int
-					if (argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
-					if (param[argnum].Type != REGT_INT &&
-						param[argnum].Type != REGT_FLOAT) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for format %s.", fmt_current.GetChars());
 					// append
-					output.AppendFormat(fmt_current.GetChars(), param[argnum].ToInt());
+					if (fmt_current[1] == '*' || fmt_current[2] == '*')
+					{
+						// fail if something was found, but it's not an int
+						if (argnum+1 >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
+						if (va_reginfo[argnum] != REGT_INT &&
+							va_reginfo[argnum] != REGT_FLOAT) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for format %s.", fmt_current.GetChars());
+						if (va_reginfo[argnum+1] != REGT_INT &&
+							va_reginfo[argnum+1] != REGT_FLOAT) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for format %s.", fmt_current.GetChars());
+
+						output.AppendFormat(fmt_current.GetChars(), param[argnum].ToInt(va_reginfo[argnum]), param[argnum + 1].ToInt(va_reginfo[argnum + 1]));
+						argauto++;
+					}
+					else
+					{
+						// fail if something was found, but it's not an int
+						if (argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
+						if (va_reginfo[argnum] != REGT_INT &&
+							va_reginfo[argnum] != REGT_FLOAT) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for format %s.", fmt_current.GetChars());
+						output.AppendFormat(fmt_current.GetChars(), param[argnum].ToInt(va_reginfo[argnum]));
+					}
 					if (!haveargnums) argnum = ++argauto;
 					else argnum = -1;
 					break;
@@ -1136,12 +1102,27 @@ FString FStringFormat(VM_ARGS)
 					if (argnum < 0 && haveargnums)
 						ThrowAbortException(X_FORMAT_ERROR, "Cannot mix explicit and implicit arguments.");
 					in_fmt = false;
-					// fail if something was found, but it's not a float
-					if (argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
-					if (param[argnum].Type != REGT_INT &&
-						param[argnum].Type != REGT_FLOAT) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for format %s.", fmt_current.GetChars());
-					// append
-					output.AppendFormat(fmt_current.GetChars(), param[argnum].ToDouble());
+					if (fmt_current[1] == '*' || fmt_current[2] == '*')
+					{
+						// fail if something was found, but it's not an int
+						if (argnum + 1 >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
+						if (va_reginfo[argnum] != REGT_INT &&
+							va_reginfo[argnum] != REGT_FLOAT) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for format %s.", fmt_current.GetChars());
+						if (va_reginfo[argnum + 1] != REGT_INT &&
+							va_reginfo[argnum + 1] != REGT_FLOAT) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for format %s.", fmt_current.GetChars());
+
+						output.AppendFormat(fmt_current.GetChars(), param[argnum].ToInt(va_reginfo[argnum]), param[argnum + 1].ToDouble(va_reginfo[argnum + 1]));
+						argauto++;
+					}
+					else
+					{
+						// fail if something was found, but it's not a float
+						if (argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format.");
+						if (va_reginfo[argnum] != REGT_INT &&
+							va_reginfo[argnum] != REGT_FLOAT) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for format %s.", fmt_current.GetChars());
+						// append
+						output.AppendFormat(fmt_current.GetChars(), param[argnum].ToDouble(va_reginfo[argnum]));
+					}
 					if (!haveargnums) argnum = ++argauto;
 					else argnum = -1;
 					break;
@@ -1183,7 +1164,7 @@ FString FStringFormat(VM_ARGS)
 DEFINE_ACTION_FUNCTION(FStringStruct, Format)
 {
 	PARAM_PROLOGUE;
-	FString s = FStringFormat(param, defaultparam, numparam, ret, numret);
+	FString s = FStringFormat(VM_ARGS_NAMES);
 	ACTION_RETURN_STRING(s);
 }
 
@@ -1191,129 +1172,8 @@ DEFINE_ACTION_FUNCTION(FStringStruct, AppendFormat)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
 	// first parameter is the self pointer
-	FString s = FStringFormat(param+1, defaultparam, numparam-1, ret, numret);
+	FString s = FStringFormat(VM_ARGS_NAMES, 1);
 	(*self) += s;
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(FStringStruct, Mid)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_UINT_DEF(pos);
-	PARAM_UINT_DEF(len);
-	FString s = self->Mid(pos, len);
-	ACTION_RETURN_STRING(s);
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, Left)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_UINT(len);
-	FString s = self->Left(len);
-	ACTION_RETURN_STRING(s);
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, Truncate)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_UINT(len);
-	self->Truncate(len);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, Remove)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_UINT(index);
-	PARAM_UINT(remlen);
-	self->Remove(index, remlen);
-	return 0;
-}
-
-// CharAt and CharCodeAt is how JS does it, and JS is similar here in that it doesn't have char type as int.
-DEFINE_ACTION_FUNCTION(FStringStruct, CharAt)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_INT(pos);
-	int slen = (int)self->Len();
-	if (pos < 0 || pos >= slen)
-		ACTION_RETURN_STRING("");
-	ACTION_RETURN_STRING(FString((*self)[pos]));
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, CharCodeAt)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_INT(pos);
-	int slen = (int)self->Len();
-	if (pos < 0 || pos >= slen)
-		ACTION_RETURN_INT(0);
-	ACTION_RETURN_INT((*self)[pos]);
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, Filter)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	ACTION_RETURN_STRING(strbin1(*self));
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, IndexOf)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_STRING(substr);
-	PARAM_INT_DEF(startIndex);
-	ACTION_RETURN_INT(self->IndexOf(substr, startIndex));
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, LastIndexOf)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_STRING(substr);
-	PARAM_INT_DEF(endIndex);
-	ACTION_RETURN_INT(self->LastIndexOfBroken(substr, endIndex));
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, RightIndexOf)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_STRING(substr);
-	PARAM_INT_DEF(endIndex);
-	ACTION_RETURN_INT(self->LastIndexOf(substr, endIndex));
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, ToUpper)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	self->ToUpper();
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, ToLower)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	self->ToLower();
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, ToInt)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_INT_DEF(base);
-	ACTION_RETURN_INT(self->ToLong(base));
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, ToDouble)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	ACTION_RETURN_FLOAT(self->ToDouble());
-}
-
-DEFINE_ACTION_FUNCTION(FStringStruct, Split)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_POINTER(tokens, TArray<FString>);
-	PARAM_STRING(delimiter);
-	PARAM_INT_DEF(keepEmpty);
-	self->Split(*tokens, delimiter, static_cast<FString::EmptyTokenType>(keepEmpty));
-	return 0;
-}

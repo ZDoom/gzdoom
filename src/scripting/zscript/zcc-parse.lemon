@@ -313,6 +313,7 @@ class_innards(X) ::= .									{ X = NULL; }
 class_innards(X) ::= class_innards(X) class_member(B).	{ SAFE_APPEND(X,B); }
 
 %type property_def{ZCC_Property *}
+%type flag_def{ZCC_FlagDef *}
 %type struct_def{ZCC_Struct *}
 %type enum_def {ZCC_Enum *}
 %type states_def {ZCC_States *}
@@ -325,6 +326,7 @@ class_member(X) ::= states_def(A).						{ X = A; /*X-overwrites-A*/ }
 class_member(X) ::= default_def(A).						{ X = A; /*X-overwrites-A*/ }
 class_member(X) ::= const_def(A).						{ X = A; /*X-overwrites-A*/ }
 class_member(X) ::= property_def(A).					{ X = A; /*X-overwrites-A*/ }
+class_member(X) ::= flag_def(A).						{ X = A; /*X-overwrites-A*/ }
 class_member(X) ::= staticarray_statement(A).			{ X = A; /*X-overwrites-A*/ }
 
 
@@ -343,6 +345,16 @@ property_def(X) ::= PROPERTY(T) IDENTIFIER(A) COLON identifier_list(B) SEMICOLON
 	def->Body = B;
 	X = def;
 }
+
+flag_def(X) ::= FLAGDEF(T) IDENTIFIER(A) COLON IDENTIFIER(B) COMMA INTCONST(C) SEMICOLON.
+{
+	NEW_AST_NODE(FlagDef,def,T);
+	def->NodeName = A.Name();
+	def->RefName = B.Name();
+	def->BitValue = C.Int;
+	X = def;
+}
+
 
 identifier_list(X) ::= IDENTIFIER(A).
 {

@@ -50,6 +50,8 @@
 #include "d_player.h"
 #include "events.h"
 #include "types.h"
+#include "w_wad.h"
+#include "g_levellocals.h"
 
 extern void LoadActors ();
 extern void InitBotStuff();
@@ -118,13 +120,48 @@ void FState::SetAction(const char *name)
 	ActionFunc = FindVMFunction(RUNTIME_CLASS(AActor), name);
 }
 
+
+void FState::CheckCallerType(AActor *self, AActor *stateowner)
+{
+	auto CheckType = [=](AActor *check, PType *requiredType)
+	{
+		// This should really never happen. Any valid action function must have actor pointers here.
+		if (!requiredType->isObjectPointer())
+		{
+			ThrowAbortException(X_OTHER, "Bad function prototype in function call to %s", ActionFunc->PrintableName.GetChars());
+		}
+		auto cls = static_cast<PObjectPointer*>(requiredType)->PointedClass();
+		if (check == nullptr)
+		{
+			ThrowAbortException(X_OTHER, "%s called without valid caller. %s expected", ActionFunc->PrintableName.GetChars(), cls->TypeName.GetChars());
+		}
+		if (!check->IsKindOf(cls))
+		{
+			ThrowAbortException(X_OTHER, "Invalid class %s in function call to %s. %s expected", check->GetClass()->TypeName.GetChars(), ActionFunc->PrintableName.GetChars(), cls->TypeName.GetChars());
+		}
+	};
+	
+	if (ActionFunc->ImplicitArgs >= 1)
+	{
+		auto argtypes = ActionFunc->Proto->ArgumentTypes;
+		
+		CheckType(self, argtypes[0]);
+		
+		if (ActionFunc->ImplicitArgs >= 2)
+		{
+			CheckType(stateowner, argtypes[1]);
+		}
+	}
+}
+
+TArray<VMValue> actionParams;
+
 bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info, FState **stateret)
 {
 	if (ActionFunc != nullptr)
 	{
 		ActionCycles.Clock();
 
-		VMValue params[3] = { self, stateowner, VMValue(info) };
 		// If the function returns a state, store it at *stateret.
 		// If it doesn't return a state but stateret is non-nullptr, we need
 		// to set *stateret to nullptr.
@@ -138,17 +175,42 @@ bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info,
 				stateret = nullptr;
 			}
 		}
+
+		VMReturn ret;
+		ret.PointerAt((void **)stateret);
 		try
 		{
-			if (stateret == nullptr)
+			CheckCallerType(self, stateowner);
+
+			// Build the parameter array. Action functions have never any explicit parameters but need to pass the defaults
+			// and fill in the implicit arguments of the called function.
+
+			if (ActionFunc->DefaultArgs.Size() > 0)
 			{
-				VMCall(ActionFunc, params, ActionFunc->ImplicitArgs, nullptr, 0);
+				auto defs = ActionFunc->DefaultArgs;
+				auto index = actionParams.Reserve(defs.Size());
+				for (unsigned i = 0; i < defs.Size(); i++)
+				{
+					actionParams[i + index] = defs[i];
+				}
+
+				if (ActionFunc->ImplicitArgs >= 1)
+				{
+					actionParams[index] = self;
+				}
+				if (ActionFunc->ImplicitArgs == 3)
+				{
+					actionParams[index + 1] = stateowner;
+					actionParams[index + 2] = VMValue(info);
+				}
+
+				VMCallAction(ActionFunc, &actionParams[index], ActionFunc->DefaultArgs.Size(), &ret, stateret != nullptr);
+				actionParams.Clamp(index);
 			}
 			else
 			{
-				VMReturn ret;
-				ret.PointerAt((void **)stateret);
-				VMCall(ActionFunc, params, ActionFunc->ImplicitArgs, &ret, 1);
+				VMValue params[3] = { self, stateowner, VMValue(info) };
+				VMCallAction(ActionFunc, params, ActionFunc->ImplicitArgs, &ret, stateret != nullptr);
 			}
 		}
 		catch (CVMAbortException &err)
@@ -164,6 +226,10 @@ bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info,
 					else callinfo = "overlay ";
 				}
 				err.stacktrace.AppendFormat("Called from %sstate %s in %s\n", callinfo, FState::StaticGetStateName(this).GetChars(), stateowner->GetClass()->TypeName.GetChars());
+			}
+			else
+			{
+				err.stacktrace.AppendFormat("Called from state %s\n", FState::StaticGetStateName(this).GetChars());
 			}
 
 			throw;
@@ -220,11 +286,78 @@ int GetSpriteIndex(const char * spritename, bool add)
 	return (lastindex = (int)sprites.Push (temp));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetSpriteIndex)
+//==========================================================================
+//
+// Load alt HUD icons. This is meant to be an override of the item's own settings.
+//
+//==========================================================================
+
+static void LoadAltHudStuff()
 {
-	PARAM_PROLOGUE;
-	PARAM_NAME(sprt);
-	ACTION_RETURN_INT(GetSpriteIndex(sprt.GetChars(), false));
+	// Now read custom icon overrides
+	int lump, lastlump = 0;
+
+	switch (gameinfo.gametype)
+	{
+	case GAME_Heretic:
+	case GAME_Hexen:
+		gameinfo.healthpic = TexMan.CheckForTexture("ARTIPTN2", ETextureType::MiscPatch).GetIndex();
+		gameinfo.berserkpic = -1;
+		break;
+
+	case GAME_Strife:
+		gameinfo.healthpic = TexMan.CheckForTexture("I_MDKT", ETextureType::MiscPatch).GetIndex();
+		gameinfo.berserkpic = -1;
+		break;
+
+	default:
+		gameinfo.healthpic = TexMan.CheckForTexture("MEDIA0", ETextureType::Sprite).GetIndex();
+		gameinfo.berserkpic = TexMan.CheckForTexture("PSTRA0", ETextureType::Sprite).GetIndex();
+		break;
+	}
+
+	while ((lump = Wads.FindLump("ALTHUDCF", &lastlump)) != -1)
+	{
+		FScanner sc(lump);
+		while (sc.GetString())
+		{
+			if (sc.Compare("Health"))
+			{
+				sc.MustGetString();
+				FTextureID tex = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
+				if (tex.isValid()) gameinfo.healthpic = tex.GetIndex();
+			}
+			else if (sc.Compare("Berserk"))
+			{
+				sc.MustGetString();
+				FTextureID tex = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
+				if (tex.isValid()) gameinfo.berserkpic = tex.GetIndex();
+			}
+			else
+			{
+				PClass *ti = PClass::FindClass(sc.String);
+				if (!ti)
+				{
+					Printf("Unknown item class '%s' in ALTHUDCF\n", sc.String);
+				}
+				else if (!ti->IsDescendantOf(NAME_Inventory))
+				{
+					Printf("Invalid item class '%s' in ALTHUDCF\n", sc.String);
+					ti = NULL;
+				}
+				sc.MustGetString();
+				FTextureID tex;
+
+				if (!sc.Compare("0") && !sc.Compare("NULL") && !sc.Compare(""))
+				{
+					tex = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
+				}
+				else tex.SetInvalid();
+
+				if (ti) GetDefaultByType(ti)->TextureIDVar(NAME_AltHUDIcon) = tex;
+			}
+		}
+	}
 }
 
 //==========================================================================
@@ -258,6 +391,7 @@ void PClassActor::StaticInit()
 	if (!batchrun) Printf ("LoadActors: Load actor definitions.\n");
 	ClearStrifeTypes();
 	LoadActors ();
+	LoadAltHudStuff();
 	InitBotStuff();
 
 	// reinit GLOBAL static stuff from gameinfo, once classes are loaded.
@@ -307,29 +441,6 @@ bool PClassActor::SetReplacement(FName replaceName)
 		}
 	}
 	return true;
-}
-
-//==========================================================================
-//
-// PClassActor :: Finalize
-//
-// Installs the parsed states and does some sanity checking
-//
-//==========================================================================
-
-void AActor::Finalize(FStateDefinitions &statedef)
-{
-	try
-	{
-		statedef.FinishStates(GetClass());
-	}
-	catch (CRecoverableError &)
-	{
-		statedef.MakeStateDefines(nullptr);
-		throw;
-	}
-	statedef.InstallStates(GetClass(), this);
-	statedef.MakeStateDefines(nullptr);
 }
 
 //==========================================================================
@@ -456,13 +567,6 @@ PClassActor *PClassActor::GetReplacement(bool lookskill)
 	return rep;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetReplacement)
-{
-	PARAM_PROLOGUE;
-	PARAM_POINTER(c, PClassActor);
-	ACTION_RETURN_POINTER(c->GetReplacement());
-}
-
 //==========================================================================
 //
 // PClassActor :: GetReplacee
@@ -504,13 +608,6 @@ PClassActor *PClassActor::GetReplacee(bool lookskill)
 	rep = rep->GetReplacee(false);
 	ActorInfo()->Replacee = savedrep;
 	return rep;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, GetReplacee)
-{
-	PARAM_PROLOGUE;
-	PARAM_POINTER(c, PClassActor);
-	ACTION_RETURN_POINTER(c->GetReplacee());
 }
 
 //==========================================================================

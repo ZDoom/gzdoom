@@ -52,6 +52,7 @@
 #include "teaminfo.h"
 #include "p_conversation.h"
 #include "d_event.h"
+#include "p_enemy.h"
 #include "m_argv.h"
 #include "p_lnspec.h"
 #include "p_spec.h"
@@ -62,6 +63,7 @@
 #include "g_levellocals.h"
 #include "events.h"
 #include "i_time.h"
+#include "vm.h"
 
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (Int, autosavecount)
@@ -2079,19 +2081,7 @@ uint8_t *FDynamicBuffer::GetData (int *len)
 
 static int KillAll(PClassActor *cls)
 {
-	AActor *actor;
-	int killcount = 0;
-	TThinkerIterator<AActor> iterator(cls);
-	while ( (actor = iterator.Next ()) )
-	{
-		if (actor->IsA(cls))
-		{
-			if (!(actor->flags2 & MF2_DORMANT) && (actor->flags3 & MF3_ISMONSTER))
-					killcount += actor->Massacre ();
-		}
-	}
-	return killcount;
-
+	return P_Massacre(false, cls);
 }
 
 static int RemoveClass(const PClass *cls)
@@ -2111,7 +2101,7 @@ static int RemoveClass(const PClass *cls)
 				continue;
 			}
 			// [SP] Don't remove owned inventory objects.
-			if (actor->IsKindOf(RUNTIME_CLASS(AInventory)) && static_cast<AInventory *>(actor)->Owner != NULL)
+			if (!actor->IsMapActor())
 			{
 				continue;
 			}
@@ -2259,14 +2249,15 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 	case DEM_INVUSEALL:
 		if (gamestate == GS_LEVEL && !paused)
 		{
-			AInventory *item = players[player].mo->Inventory;
+			AActor *item = players[player].mo->Inventory;
 			auto pitype = PClass::FindActor(NAME_PuzzleItem);
-			while (item != NULL)
+			while (item != nullptr)
 			{
-				AInventory *next = item->Inventory;
-				if (item->ItemFlags & IF_INVBAR && !(item->IsKindOf(pitype)))
+				AActor *next = item->Inventory;
+				IFVIRTUALPTRNAME(item, NAME_Inventory, UseAll)
 				{
-					players[player].mo->UseInventory (item);
+					VMValue param[] = { item, players[player].mo };
+					VMCall(func, param, 2, nullptr, 0);
 				}
 				item = next;
 			}
@@ -2284,7 +2275,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 			if (gamestate == GS_LEVEL && !paused
 				&& players[player].playerstate != PST_DEAD)
 			{
-				AInventory *item = players[player].mo->Inventory;
+				auto item = players[player].mo->Inventory;
 				while (item != NULL && item->InventoryID != which)
 				{
 					item = item->Inventory;
@@ -2335,7 +2326,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 				{
 					if (GetDefaultByType (typeinfo)->flags & MF_MISSILE)
 					{
-						P_SpawnPlayerMissile (source, typeinfo);
+						P_SpawnPlayerMissile (source, 0, 0, 0, typeinfo, source->Angles.Yaw);
 					}
 					else
 					{
@@ -2536,10 +2527,10 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 	case DEM_MORPHEX:
 		{
 			s = ReadString (stream);
-			const char *msg = cht_Morph (players + player, PClass::FindActor (s), false);
+			FString msg = cht_Morph (players + player, PClass::FindActor (s), false);
 			if (player == consoleplayer)
 			{
-				Printf ("%s\n", *msg != '\0' ? msg : "Morph failed.");
+				Printf ("%s\n", msg[0] != '\0' ? msg.GetChars() : "Morph failed.");
 			}
 		}
 		break;
@@ -2631,7 +2622,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 			int count = ReadByte(stream);
 			if (slot < NUM_WEAPON_SLOTS)
 			{
-				players[pnum].weapons.Slots[slot].Clear();
+				players[pnum].weapons.ClearSlot(slot);
 			}
 			for(i = 0; i < count; ++i)
 			{
@@ -2860,6 +2851,34 @@ void Net_SkipCommand (int type, uint8_t **stream)
 	}
 
 	*stream += skip;
+}
+
+// This was taken out of shared_hud, because UI code shouldn't do low level calculations that may change if the backing implementation changes.
+int Net_GetLatency(int *ld, int *ad)
+{
+	int i, localdelay = 0, arbitratordelay = 0;
+
+	for (i = 0; i < BACKUPTICS; i++) localdelay += netdelay[0][i];
+	for (i = 0; i < BACKUPTICS; i++) arbitratordelay += netdelay[nodeforplayer[Net_Arbitrator]][i];
+	arbitratordelay = ((arbitratordelay / BACKUPTICS) * ticdup) * (1000 / TICRATE);
+	localdelay = ((localdelay / BACKUPTICS) * ticdup) * (1000 / TICRATE);
+	int severity = 0;
+
+	if (MAX(localdelay, arbitratordelay) > 200)
+	{
+		severity = 1;
+	}
+	if (MAX(localdelay, arbitratordelay) > 400)
+	{
+		severity = 2;
+	}
+	if (MAX(localdelay, arbitratordelay) >= ((BACKUPTICS / 2 - 1) * ticdup) * (1000 / TICRATE))
+	{
+		severity = 3;
+	}
+	*ld = localdelay;
+	*ad = arbitratordelay;
+	return severity;
 }
 
 // [RH] List "ping" times

@@ -280,10 +280,8 @@ int HWDrawInfo::SetFullbrightFlags(player_t *player)
 		{
 			auto torchtype = PClass::FindActor(NAME_PowerTorch);
 			auto litetype = PClass::FindActor(NAME_PowerLightAmp);
-			for (AInventory * in = cplayer->mo->Inventory; in; in = in->Inventory)
+			for (AActor *in = cplayer->mo->Inventory; in; in = in->Inventory)
 			{
-				//PalEntry color = in->CallGetBlend();
-
 				// Need special handling for light amplifiers 
 				if (in->IsKindOf(torchtype))
 				{
@@ -655,3 +653,22 @@ void HWDrawInfo::ProcessScene(bool toscreen, const std::function<void(HWDrawInfo
 	DrawScene(this, toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
 
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void HWDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *ptg, subsector_t *sub)
+{
+	auto portal = FindPortal(ptg);
+	if (!portal)
+	{
+        portal = new HWSectorStackPortal(screen->mPortalState, ptg);
+		Portals.Push(portal);
+	}
+    auto ptl = static_cast<HWSectorStackPortal*>(portal);
+	ptl->AddSubsector(sub);
+}
+

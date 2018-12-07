@@ -108,7 +108,7 @@ const uint32_t *FCanvasTexture::GetPixelsBgra()
 
 void FCanvasTexture::MakeTexture (FRenderStyle)	// This ignores the render style because making it work as alpha texture is impractical.
 {
-	Canvas = new DSimpleCanvas (Width, Height, false);
+	Canvas = new DCanvas (Width, Height, false);
 
 	if (Width != Height || Width != Canvas->GetPitch())
 	{
@@ -128,7 +128,7 @@ void FCanvasTexture::MakeTexture (FRenderStyle)	// This ignores the render style
 
 void FCanvasTexture::MakeTextureBgra()
 {
-	CanvasBgra = new DSimpleCanvas(Width, Height, true);
+	CanvasBgra = new DCanvas(Width, Height, true);
 
 	if (Width != Height || Width != CanvasBgra->GetPitch())
 	{

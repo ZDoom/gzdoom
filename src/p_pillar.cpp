@@ -157,7 +157,7 @@ DPillar::DPillar (sector_t *sector, EPillar type, double speed,
 		// surrounding sectors
 		if (floordist == 0)
 		{
-			newheight = sector->FindLowestFloorSurrounding (&spot);
+			newheight = FindLowestFloorSurrounding (sector, &spot);
 			m_FloorTarget = sector->floorplane.PointToDist (spot, newheight);
 			floordist = sector->floorplane.ZatPoint (spot) - newheight;
 		}
@@ -168,7 +168,7 @@ DPillar::DPillar (sector_t *sector, EPillar type, double speed,
 		}
 		if (ceilingdist == 0)
 		{
-			newheight = sector->FindHighestCeilingSurrounding (&spot);
+			newheight = FindHighestCeilingSurrounding (sector, &spot);
 			m_CeilingTarget = sector->ceilingplane.PointToDist (spot, newheight);
 			ceilingdist = newheight - sector->ceilingplane.ZatPoint (spot);
 		}

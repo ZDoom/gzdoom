@@ -151,6 +151,12 @@ public:
 	TThinkerIterator (ENamedName subclass, int statnum=MAX_STATNUM+1) : FThinkerIterator(PClass::FindClass(subclass), statnum)
 	{
 	}
+	TThinkerIterator (FName subclass, int statnum, DThinker *prev) : FThinkerIterator(PClass::FindClass(subclass), statnum, prev)
+	{
+	}
+	TThinkerIterator (ENamedName subclass, int statnum, DThinker *prev) : FThinkerIterator(PClass::FindClass(subclass), statnum, prev)
+	{
+	}
 	TThinkerIterator (const char *subclass, int statnum=MAX_STATNUM+1) : FThinkerIterator(PClass::FindClass(subclass), statnum)
 	{
 	}

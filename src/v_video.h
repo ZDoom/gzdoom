@@ -218,7 +218,6 @@ enum
 	DTA_SrcHeight,
 	DTA_LegacyRenderStyle,	// takes an old-style STYLE_* constant instead of an FRenderStyle
 	DTA_Burn,				// activates the burn shader for this element
-
 };
 
 enum
@@ -287,56 +286,33 @@ struct VMVa_List
 	VMValue *args;
 	int curindex;
 	int numargs;
+	const uint8_t *reginfo;
 };
 //
 // VIDEO
 //
-// [RH] Made screens more implementation-independant:
 //
 class DCanvas
 {
 public:
 	DCanvas (int width, int height, bool bgra);
-	virtual ~DCanvas ();
+	~DCanvas ();
+	void Resize(int width, int height);
 
 	// Member variable access
-	inline uint8_t *GetPixels () const { return PixelBuffer; }
+	inline uint8_t *GetPixels () const { return Pixels.Data(); }
 	inline int GetWidth () const { return Width; }
 	inline int GetHeight () const { return Height; }
 	inline int GetPitch () const { return Pitch; }
 	inline bool IsBgra() const { return Bgra; }
 
-	// Note: pitch here is in pixels, not bytes.
-	bool SetBuffer(int width, int height, int pitch, uint8_t *buffer)
-	{
-		assert(buffer);
-		Width = width;
-		Height = height;
-		Pitch = pitch;
-		PixelBuffer = buffer;
-		return true;
-	}
-
-
 protected:
-	uint8_t *PixelBuffer;
+	TArray<uint8_t> Pixels;
 	int Width;
 	int Height;
 	int Pitch;
 	bool Bgra;
 };
-
-// A canvas in system memory.
-
-class DSimpleCanvas : public DCanvas
-{
-	typedef DCanvas Super;
-public:
-	DSimpleCanvas (int width, int height, bool bgra);
-	~DSimpleCanvas ();
-	void Resize(int width, int height);
-};
-
 
 class FUniquePalette;
 class IHardwareTexture;
@@ -348,7 +324,6 @@ class FTexture;
 
 class DFrameBuffer
 {
-	typedef DSimpleCanvas Super;
 protected:
 
 	void DrawTextureV(FTexture *img, double x, double y, uint32_t tag, va_list tags) = delete;
@@ -531,7 +506,7 @@ public:
 	// Fill a simple polygon with a texture
 	void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley, DAngle rotation,
-		const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
+		const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip, uint32_t *indices, size_t indexcount);
 
 	// Set an area to a specified color
 	void Clear(int left, int top, int right, int bottom, int palcolor, uint32_t color);

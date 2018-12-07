@@ -224,7 +224,7 @@ class HornRodFX2 : Actor
 		RainTracker tracker;
 
 		if (target == null || target.health <= 0)
-		{ // Shooter is dead or nonexistant
+		{ // Shooter is dead or nonexistent
 			return;
 		}
 

@@ -293,7 +293,6 @@ CCMD (playerclasses)
 	}
 }
 
-
 //
 // Movement.
 //
@@ -394,38 +393,6 @@ player_t &player_t::operator=(const player_t &p)
 	MUSINFOactor = p.MUSINFOactor;
 	MUSINFOtics = p.MUSINFOtics;
 	return *this;
-}
-
-// This function supplements the pointer cleanup in dobject.cpp, because
-// player_t is not derived from DObject. (I tried it, and DestroyScan was
-// unable to properly determine the player object's type--possibly
-// because it gets staticly allocated in an array.)
-//
-// This function checks all the DObject pointers in a player_t and NULLs any
-// that match the pointer passed in. If you add any pointers that point to
-// DObject (or a subclass), add them here too.
-
-size_t player_t::FixPointers (const DObject *old, DObject *rep)
-{
-	APlayerPawn *replacement = static_cast<APlayerPawn *>(rep);
-	size_t changed = 0;
-
-	// The construct *& is used in several of these to avoid the read barriers
-	// that would turn the pointer we want to check to NULL if the old object
-	// is pending deletion.
-	if (mo == old)					mo = replacement, changed++;
-	if (*&poisoner == old)			poisoner = replacement, changed++;
-	if (*&attacker == old)			attacker = replacement, changed++;
-	if (*&camera == old)			camera = replacement, changed++;
-	if (*&Bot == old)				Bot = static_cast<DBot *>(rep), changed++;
-	if (ReadyWeapon == old)			ReadyWeapon = static_cast<AWeapon *>(rep), changed++;
-	if (PendingWeapon == old)		PendingWeapon = static_cast<AWeapon *>(rep), changed++;
-	if (*&PremorphWeapon == old)	PremorphWeapon = static_cast<AWeapon *>(rep), changed++;
-	if (psprites == old)			psprites = static_cast<DPSprite *>(rep), changed++;
-	if (*&ConversationNPC == old)	ConversationNPC = replacement, changed++;
-	if (*&ConversationPC == old)	ConversationPC = replacement, changed++;
-	if (*&MUSINFOactor == old)		MUSINFOactor = replacement, changed++;
-	return changed;
 }
 
 size_t player_t::PropagateMark()
@@ -680,9 +647,9 @@ void player_t::SendPitchLimits() const
 
 bool player_t::HasWeaponsInSlot(int slot) const
 {
-	for (int i = 0; i < weapons.Slots[slot].Size(); i++)
+	for (int i = 0; i < weapons.SlotSize(slot); i++)
 	{
-		PClassActor *weap = weapons.Slots[slot].GetWeapon(i);
+		PClassActor *weap = weapons.GetWeapon(slot, i);
 		if (weap != NULL && mo->FindInventory(weap)) return true;
 	}
 	return false;
@@ -715,12 +682,13 @@ bool player_t::Resurrect()
 	}
 	if (ReadyWeapon != nullptr)
 	{
-		P_SetPsprite(this, PSP_WEAPON, ReadyWeapon->GetUpState());
+		PendingWeapon = ReadyWeapon;
+		P_BringUpWeapon(this);
 	}
 
 	if (morphTics)
 	{
-		P_UndoPlayerMorph(this, this);
+		P_UnmorphActor(mo, mo);
 	}
 
 	// player is now alive.
@@ -804,6 +772,12 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetNoAutostartMap)
 	ACTION_RETURN_INT(self->userinfo.GetNoAutostartMap());
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetWBobSpeed)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_FLOAT(self->userinfo.GetWBobSpeed());
+}
+
 
 //===========================================================================
 //
@@ -851,16 +825,16 @@ void APlayerPawn::Serialize(FSerializer &arc)
 
 //===========================================================================
 //
-// APlayerPawn :: MarkPrecacheSounds
+// APlayerPawn :: MarkPlayerSounds
 //
 //===========================================================================
 
-void APlayerPawn::MarkPrecacheSounds() const
+DEFINE_ACTION_FUNCTION(APlayerPawn, MarkPlayerSounds)
 {
-	Super::MarkPrecacheSounds();
-	S_MarkPlayerSounds(GetSoundClass());
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	S_MarkPlayerSounds(self->GetSoundClass());
+	return 0;
 }
-
 //===========================================================================
 //
 // APlayerPawn :: BeginPlay
@@ -941,7 +915,7 @@ void APlayerPawn::Tick()
 void APlayerPawn::PostBeginPlay()
 {
 	Super::PostBeginPlay();
-	SetupWeaponSlots();
+	FWeaponSlots::SetupWeaponSlots(this);
 
 	// Voodoo dolls: restore original floorz/ceilingz logic
 	if (player == NULL || player->mo != this)
@@ -958,251 +932,6 @@ void APlayerPawn::PostBeginPlay()
 
 //===========================================================================
 //
-// APlayerPawn :: SetupWeaponSlots
-//
-// Sets up the default weapon slots for this player. If this is also the
-// local player, determines local modifications and sends those across the
-// network. Ignores voodoo dolls.
-//
-//===========================================================================
-
-void APlayerPawn::SetupWeaponSlots()
-{
-	if (player != NULL && player->mo == this)
-	{
-		player->weapons.StandardSetup(GetClass());
-		// If we're the local player, then there's a bit more work to do.
-		// This also applies if we're a bot and this is the net arbitrator.
-		if (player - players == consoleplayer ||
-			(player->Bot != NULL && consoleplayer == Net_Arbitrator))
-		{
-			FWeaponSlots local_slots(player->weapons);
-			if (player->Bot != NULL)
-			{ // Bots only need weapons from KEYCONF, not INI modifications.
-				P_PlaybackKeyConfWeapons(&local_slots);
-			}
-			else
-			{
-				local_slots.LocalSetup(GetClass());
-			}
-			local_slots.SendDifferences(int(player - players), player->weapons);
-		}
-	}
-}
-
-//===========================================================================
-//
-// APlayerPawn :: AddInventory
-//
-//===========================================================================
-
-void APlayerPawn::AddInventory (AInventory *item)
-{
-	// Adding inventory to a voodoo doll should add it to the real player instead.
-	if (player != NULL && player->mo != this && player->mo != NULL)
-	{
-		player->mo->AddInventory (item);
-		return;
-	}
-	Super::AddInventory (item);
-
-	// If nothing is selected, select this item.
-	if (InvSel == NULL && (item->ItemFlags & IF_INVBAR))
-	{
-		InvSel = item;
-	}
-}
-
-//===========================================================================
-//
-// APlayerPawn :: RemoveInventory
-//
-//===========================================================================
-
-void APlayerPawn::RemoveInventory (AInventory *item)
-{
-	bool pickWeap = false;
-
-	// Since voodoo dolls aren't supposed to have an inventory, there should be
-	// no need to redirect them to the real player here as there is with AddInventory.
-
-	// If the item removed is the selected one, select something else, either the next
-	// item, if there is one, or the previous item.
-	if (player != NULL)
-	{
-		if (InvSel == item)
-		{
-			InvSel = item->NextInv ();
-			if (InvSel == NULL)
-			{
-				InvSel = item->PrevInv ();
-			}
-		}
-		if (InvFirst == item)
-		{
-			InvFirst = item->NextInv ();
-			if (InvFirst == NULL)
-			{
-				InvFirst = item->PrevInv ();
-			}
-		}
-		if (item == player->PendingWeapon)
-		{
-			player->PendingWeapon = WP_NOCHANGE;
-		}
-		if (item == player->ReadyWeapon)
-		{
-			// If the current weapon is removed, clear the refire counter and pick a new one.
-			pickWeap = true;
-			player->ReadyWeapon = NULL;
-			player->refire = 0;
-		}
-	}
-	Super::RemoveInventory (item);
-	if (pickWeap && player->mo == this && player->PendingWeapon == WP_NOCHANGE)
-	{
-		PickNewWeapon (NULL);
-	}
-}
-
-//===========================================================================
-//
-// APlayerPawn :: UseInventory
-//
-//===========================================================================
-
-bool APlayerPawn::UseInventory (AInventory *item)
-{
-	const PClass *itemtype = item->GetClass();
-
-	if (player->cheats & CF_TOTALLYFROZEN)
-	{ // You can't use items if you're totally frozen
-		return false;
-	}
-	if ((level.flags2 & LEVEL2_FROZEN) && (player == NULL || player->timefreezer == 0))
-	{
-		// Time frozen
-		return false;
-	}
-
-	if (!Super::UseInventory (item))
-	{
-		// Heretic and Hexen advance the inventory cursor if the use failed.
-		// Should this behavior be retained?
-		return false;
-	}
-	if (player == &players[consoleplayer])
-	{
-		S_Sound (this, CHAN_ITEM, item->UseSound, 1, ATTN_NORM);
-		StatusBar->FlashItem (itemtype);
-	}
-	return true;
-}
-
-//===========================================================================
-//
-// APlayerPawn :: BestWeapon
-//
-// Returns the best weapon a player has, possibly restricted to a single
-// type of ammo.
-//
-//===========================================================================
-
-AWeapon *APlayerPawn::BestWeapon(PClassActor *ammotype)
-{
-	AWeapon *bestMatch = NULL;
-	int bestOrder = INT_MAX;
-	AInventory *item;
-	AWeapon *weap;
-	bool tomed = NULL != FindInventory (PClass::FindActor(NAME_PowerWeaponLevel2), true);
-
-	// Find the best weapon the player has.
-	for (item = Inventory; item != NULL; item = item->Inventory)
-	{
-		if (!item->IsKindOf(NAME_Weapon))
-			continue;
-
-		weap = static_cast<AWeapon *> (item);
-
-		// Don't select it if it's worse than what was already found.
-		if (weap->SelectionOrder > bestOrder)
-			continue;
-
-		// Don't select it if its primary fire doesn't use the desired ammo.
-		if (ammotype != NULL &&
-			(weap->Ammo1 == NULL ||
-			 weap->Ammo1->GetClass() != ammotype))
-			continue;
-
-		// Don't select it if the Tome is active and this isn't the powered-up version.
-		if (tomed && weap->SisterWeapon != NULL && weap->SisterWeapon->WeaponFlags & WIF_POWERED_UP)
-			continue;
-
-		// Don't select it if it's powered-up and the Tome is not active.
-		if (!tomed && weap->WeaponFlags & WIF_POWERED_UP)
-			continue;
-
-		// Don't select it if there isn't enough ammo to use its primary fire.
-		if (!(weap->WeaponFlags & WIF_AMMO_OPTIONAL) &&
-			!weap->CheckAmmo (AWeapon::PrimaryFire, false))
-			continue;
-
-		// Don't select if if there isn't enough ammo as determined by the weapon's author.
-		if (weap->MinSelAmmo1 > 0 && (weap->Ammo1 == NULL || weap->Ammo1->Amount < weap->MinSelAmmo1))
-			continue;
-		if (weap->MinSelAmmo2 > 0 && (weap->Ammo2 == NULL || weap->Ammo2->Amount < weap->MinSelAmmo2))
-			continue;
-
-		// This weapon is usable!
-		bestOrder = weap->SelectionOrder;
-		bestMatch = weap;
-	}
-	return bestMatch;
-}
-
-DEFINE_ACTION_FUNCTION(APlayerPawn, BestWeapon)
-{
-	PARAM_SELF_PROLOGUE(APlayerPawn);
-	PARAM_CLASS(ammo, AActor);
-	ACTION_RETURN_POINTER(self->BestWeapon(ammo));
-}
-//===========================================================================
-//
-// APlayerPawn :: PickNewWeapon
-//
-// Picks a new weapon for this player. Used mostly for running out of ammo,
-// but it also works when an ACS script explicitly takes the ready weapon
-// away or the player picks up some ammo they had previously run out of.
-//
-//===========================================================================
-
-AWeapon *APlayerPawn::PickNewWeapon(PClassActor *ammotype)
-{
-	AWeapon *best = BestWeapon (ammotype);
-
-	if (best != NULL)
-	{
-		player->PendingWeapon = best;
-		if (player->ReadyWeapon != NULL)
-		{
-			P_DropWeapon(player);
-		}
-		else if (player->PendingWeapon != WP_NOCHANGE)
-		{
-			P_BringUpWeapon (player);
-		}
-	}
-	return best;
-}
-
-DEFINE_ACTION_FUNCTION(APlayerPawn, PickNewWeapon)
-{
-	PARAM_SELF_PROLOGUE(APlayerPawn);
-	PARAM_CLASS(ammo, AActor);
-	ACTION_RETURN_POINTER(self->PickNewWeapon(ammo));
-}
-//===========================================================================
-//
 // APlayerPawn :: GiveDeathmatchInventory
 //
 // Gives players items they should have in addition to their default
@@ -1216,136 +945,17 @@ void APlayerPawn::GiveDeathmatchInventory()
 	{
 		if (PClassActor::AllActorClasses[i]->IsDescendantOf (PClass::FindActor(NAME_Key)))
 		{
-			AInventory *key = (AInventory*)GetDefaultByType (PClassActor::AllActorClasses[i]);
+			auto key = GetDefaultByType (PClassActor::AllActorClasses[i]);
 			if (key->special1 != 0)
 			{
-				key = (AInventory*)Spawn(PClassActor::AllActorClasses[i]);
-				if (!key->CallTryPickup (this))
+				key = Spawn(PClassActor::AllActorClasses[i]);
+				if (!CallTryPickup (key, this))
 				{
 					key->Destroy ();
 				}
 			}
 		}
 	}
-}
-
-//===========================================================================
-//
-// APlayerPawn :: FilterCoopRespawnInventory
-//
-// When respawning in coop, this function is called to walk through the dead
-// player's inventory and modify it according to the current game flags so
-// that it can be transferred to the new live player. This player currently
-// has the default inventory, and the oldplayer has the inventory at the time
-// of death.
-//
-//===========================================================================
-
-void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
-{
-	AInventory *item, *next, *defitem;
-
-	// If we're losing everything, this is really simple.
-	if (dmflags & DF_COOP_LOSE_INVENTORY)
-	{
-		oldplayer->DestroyAllInventory();
-		return;
-	}
-
-	if (dmflags &  (DF_COOP_LOSE_KEYS |
-					DF_COOP_LOSE_WEAPONS |
-					DF_COOP_LOSE_AMMO |
-					DF_COOP_HALVE_AMMO |
-					DF_COOP_LOSE_ARMOR |
-					DF_COOP_LOSE_POWERUPS))
-	{
-		// Walk through the old player's inventory and destroy or modify
-		// according to dmflags.
-		for (item = oldplayer->Inventory; item != NULL; item = next)
-		{
-			next = item->Inventory;
-
-			// If this item is part of the default inventory, we never want
-			// to destroy it, although we might want to copy the default
-			// inventory amount.
-			defitem = FindInventory (item->GetClass());
-
-			if ((dmflags & DF_COOP_LOSE_KEYS) &&
-				defitem == NULL &&
-				item->IsKindOf(NAME_Key))
-			{
-				item->Destroy();
-			}
-			else if ((dmflags & DF_COOP_LOSE_WEAPONS) &&
-				defitem == NULL &&
-				item->IsKindOf(NAME_Weapon))
-			{
-				item->Destroy();
-			}
-			else if ((dmflags & DF_COOP_LOSE_ARMOR) &&
-				item->IsKindOf(NAME_Armor))
-			{
-				if (defitem == NULL)
-				{
-					item->Destroy();
-				}
-				else if (item->IsKindOf(NAME_BasicArmor))
-				{
-					item->IntVar(NAME_SavePercent) = defitem->IntVar(NAME_SavePercent);
-					item->Amount = defitem->Amount;
-				}
-				else if (item->IsKindOf(NAME_HexenArmor))
-				{
-					double *SlotsTo = (double*)item->ScriptVar(NAME_Slots, nullptr);
-					double *SlotsFrom = (double*)defitem->ScriptVar(NAME_Slots, nullptr);
-					memcpy(SlotsTo, SlotsFrom, 4 * sizeof(double)); 
-				}
-			}
-			else if ((dmflags & DF_COOP_LOSE_POWERUPS) &&
-				defitem == NULL &&
-				item->IsKindOf(NAME_PowerupGiver))
-			{
-				item->Destroy();
-			}
-			else if ((dmflags & (DF_COOP_LOSE_AMMO | DF_COOP_HALVE_AMMO)) &&
-				item->IsKindOf(NAME_Ammo))
-			{
-				if (defitem == NULL)
-				{
-					if (dmflags & DF_COOP_LOSE_AMMO)
-					{
-						// Do NOT destroy the ammo, because a weapon might reference it.
-						item->Amount = 0;
-					}
-					else if (item->Amount > 1)
-					{
-						item->Amount /= 2;
-					}
-				}
-				else
-				{
-					// When set to lose ammo, you get to keep all your starting ammo.
-					// When set to halve ammo, you won't be left with less than your starting amount.
-					if (dmflags & DF_COOP_LOSE_AMMO)
-					{
-						item->Amount = defitem->Amount;
-					}
-					else if (item->Amount > 1)
-					{
-						item->Amount = MAX(item->Amount / 2, defitem->Amount);
-					}
-				}
-			}
-		}
-	}
-
-	// Now destroy the default inventory this player is holding and move
-	// over the old player's remaining inventory.
-	DestroyAllInventory();
-	ObtainInventory (oldplayer);
-
-	player->ReadyWeapon = NULL;
-	PickNewWeapon (NULL);
 }
 
 //===========================================================================
@@ -1369,6 +979,25 @@ const char *APlayerPawn::GetSoundClass() const
 
 //===========================================================================
 //
+// APlayerPawn :: hasBuddha
+//
+
+//===========================================================================
+
+int APlayerPawn::hasBuddha()
+{
+	if (player->playerstate == PST_DEAD) return 0;
+	if (player->cheats & CF_BUDDHA2) return 2;
+	
+	if ((player->cheats & CF_BUDDHA) ||
+		(player->mo->flags7 & MF7_BUDDHA) ||
+		player->mo->FindInventory (PClass::FindActor(NAME_PowerBuddha),true) != nullptr) return 1;
+	
+	return 0;
+}
+
+//===========================================================================
+//
 // APlayerPawn :: GetMaxHealth
 //
 // only needed because Boom screwed up Dehacked.
@@ -1385,7 +1014,7 @@ int APlayerPawn::GetMaxHealth(bool withupgrades) const
 DEFINE_ACTION_FUNCTION(APlayerPawn, GetMaxHealth)
 {
 	PARAM_SELF_PROLOGUE(APlayerPawn);
-	PARAM_BOOL_DEF(withupgrades);
+	PARAM_BOOL(withupgrades);
 	ACTION_RETURN_INT(self->GetMaxHealth(withupgrades));
 }
 
@@ -1445,7 +1074,7 @@ bool APlayerPawn::ResetAirSupply (bool playgasp)
 DEFINE_ACTION_FUNCTION(APlayerPawn, ResetAirSupply)
 {
 	PARAM_SELF_PROLOGUE(APlayerPawn);
-	PARAM_BOOL_DEF(playgasp);
+	PARAM_BOOL(playgasp);
 	ACTION_RETURN_BOOL(self->ResetAirSupply(playgasp));
 }
 
@@ -1464,15 +1093,6 @@ void APlayerPawn::PlayIdle ()
 	}
 }
 
-void APlayerPawn::PlayAttacking2 ()
-{
-	IFVIRTUAL(APlayerPawn, PlayAttacking2)
-	{
-		VMValue params[1] = { (DObject*)this };
-		VMCall(func, params, 1, nullptr, 0);
-	}
-}
-
 //===========================================================================
 //
 // APlayerPawn :: GiveDefaultInventory
@@ -1481,208 +1101,13 @@ void APlayerPawn::PlayAttacking2 ()
 
 void APlayerPawn::GiveDefaultInventory ()
 {
-	if (player == NULL) return;
-
-	// HexenArmor must always be the first item in the inventory because
-	// it provides player class based protection that should not affect
-	// any other protection item.
-	auto myclass = GetClass();
-	GiveInventoryType(PClass::FindActor(NAME_HexenArmor));
-	auto harmor = FindInventory(NAME_HexenArmor);
-
-	double *Slots = (double*)harmor->ScriptVar(NAME_Slots, nullptr);
-	double *SlotsIncrement = (double*)harmor->ScriptVar(NAME_SlotsIncrement, nullptr);
-	Slots[4] = HexenArmor[0];
-	for (int i = 0; i < 4; ++i)
+	IFVIRTUAL(APlayerPawn, GiveDefaultInventory)
 	{
-		SlotsIncrement[i] = HexenArmor[i + 1];
-	}
-
-	// BasicArmor must come right after that. It should not affect any
-	// other protection item as well but needs to process the damage
-	// before the HexenArmor does.
-	auto barmor = (AInventory*)Spawn(NAME_BasicArmor);
-	barmor->BecomeItem ();
-	AddInventory (barmor);
-
-	// Now add the items from the DECORATE definition
-	auto di = GetDropItems();
-
-	while (di)
-	{
-		PClassActor *ti = PClass::FindActor (di->Name);
-		if (ti)
-		{
-			if (!ti->IsDescendantOf(RUNTIME_CLASS(AInventory)))
-			{
-				Printf(TEXTCOLOR_ORANGE "%s is not an inventory item and cannot be given to a player as start item.\n", ti->TypeName.GetChars());
-			}
-			else
-			{
-				AInventory *item = FindInventory(ti);
-				if (item != NULL)
-				{
-					item->Amount = clamp<int>(
-						item->Amount + (di->Amount ? di->Amount : ((AInventory *)item->GetDefault())->Amount),
-						0, item->MaxAmount);
-				}
-				else
-				{
-					item = static_cast<AInventory *>(Spawn(ti));
-					item->ItemFlags |= IF_IGNORESKILL;	// no skill multiplicators here
-					item->Amount = di->Amount;
-					if (item->IsKindOf(NAME_Weapon))
-					{
-						// To allow better control any weapon is emptied of
-						// ammo before being given to the player.
-						static_cast<AWeapon*>(item)->AmmoGive1 =
-							static_cast<AWeapon*>(item)->AmmoGive2 = 0;
-					}
-					AActor *check;
-					if (!item->CallTryPickup(this, &check))
-					{
-						if (check != this)
-						{
-							// Player was morphed. This is illegal at game start.
-							// This problem is only detectable when it's too late to do something about it...
-							I_Error("Cannot give morph items when starting a game");
-						}
-						item->Destroy();
-						item = NULL;
-					}
-				}
-				if (item != NULL && item->IsKindOf(NAME_Weapon) &&
-					static_cast<AWeapon*>(item)->CheckAmmo(AWeapon::EitherFire, false))
-				{
-					player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *> (item);
-				}
-			}
-		}
-		di = di->Next;
+		VMValue params[1] = { (DObject*)this };
+		VMCall(func, params, 1, nullptr, 0);
 	}
 }
-
-void APlayerPawn::ActivateMorphWeapon ()
-{
-	PClassActor *morphweapon = PClass::FindActor (MorphWeapon);
-	player->PendingWeapon = WP_NOCHANGE;
-
-	if (player->ReadyWeapon != nullptr)
-	{
-		player->GetPSprite(PSP_WEAPON)->y = WEAPONTOP;
-	}
-
-	if (morphweapon == nullptr || !morphweapon->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
-	{ // No weapon at all while morphed!
-		player->ReadyWeapon = nullptr;
-	}
-	else
-	{
-		player->ReadyWeapon = static_cast<AWeapon *>(player->mo->FindInventory (morphweapon));
-		if (player->ReadyWeapon == nullptr)
-		{
-			player->ReadyWeapon = static_cast<AWeapon *>(player->mo->GiveInventoryType (morphweapon));
-			if (player->ReadyWeapon != nullptr)
-			{
-				player->ReadyWeapon->GivenAsMorphWeapon = true; // flag is used only by new beastweap semantics in P_UndoPlayerMorph
-			}
-		}
-		if (player->ReadyWeapon != nullptr)
-		{
-			P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->GetReadyState());
-		}
-	}
-
-	if (player->ReadyWeapon != nullptr)
-	{
-		P_SetPsprite(player, PSP_FLASH, nullptr);
-	}
-
-	player->PendingWeapon = WP_NOCHANGE;
-}
-
-//===========================================================================
-//
-// APlayerPawn :: Die
-//
-//===========================================================================
-
-void APlayerPawn::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOfDeath)
-{
-	Super::Die (source, inflictor, dmgflags, MeansOfDeath);
-
-	if (player != NULL && player->mo == this) player->bonuscount = 0;
-
-	if (player != NULL && player->mo != this)
-	{ // Make the real player die, too
-		player->mo->CallDie (source, inflictor, dmgflags, MeansOfDeath);
-	}
-	else
-	{
-		if (player != NULL && (dmflags2 & DF2_YES_WEAPONDROP))
-		{ // Voodoo dolls don't drop weapons
-			AWeapon *weap = player->ReadyWeapon;
-			if (weap != NULL)
-			{
-				AInventory *item;
-
-				// kgDROP - start - modified copy from a_action.cpp
-				auto di = weap->GetDropItems();
-
-				if (di != NULL)
-				{
-					while (di != NULL)
-					{
-						if (di->Name != NAME_None)
-						{
-							PClassActor *ti = PClass::FindActor(di->Name);
-							if (ti) P_DropItem (player->mo, ti, di->Amount, di->Probability);
-						}
-						di = di->Next;
-					}
-				} else
-				// kgDROP - end
-				if (weap->SpawnState != NULL &&
-					weap->SpawnState != ::GetDefault<AActor>()->SpawnState)
-				{
-					item = P_DropItem (this, weap->GetClass(), -1, 256);
-					if (item != NULL && item->IsKindOf(NAME_Weapon))
-					{
-						if (weap->AmmoGive1 && weap->Ammo1)
-						{
-							static_cast<AWeapon *>(item)->AmmoGive1 = weap->Ammo1->Amount;
-						}
-						if (weap->AmmoGive2 && weap->Ammo2)
-						{
-							static_cast<AWeapon *>(item)->AmmoGive2 = weap->Ammo2->Amount;
-						}
-						item->ItemFlags |= IF_IGNORESKILL;
-					}
-				}
-				else
-				{
-					item = P_DropItem (this, weap->AmmoType1, -1, 256);
-					if (item != NULL)
-					{
-						item->Amount = weap->Ammo1->Amount;
-						item->ItemFlags |= IF_IGNORESKILL;
-					}
-					item = P_DropItem (this, weap->AmmoType2, -1, 256);
-					if (item != NULL)
-					{
-						item->Amount = weap->Ammo2->Amount;
-						item->ItemFlags |= IF_IGNORESKILL;
-					}
-				}
-			}
-		}
-		if (!multiplayer && level.info->deathsequence != NAME_None)
-		{
-			F_StartIntermission(level.info->deathsequence, FSTATE_EndingGame);
-		}
-	}
-}
-
+ 
 //===========================================================================
 //
 // A_PlayerScream
@@ -1771,7 +1196,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 DEFINE_ACTION_FUNCTION(AActor, A_SkullPop)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS_DEF(spawntype, APlayerPawn);
+	PARAM_CLASS(spawntype, APlayerPawn);
 
 	APlayerPawn *mo;
 	player_t *player;
@@ -1808,23 +1233,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullPop)
 		{
 			players[i].camera = mo;
 		}
-	}
-	return 0;
-}
-
-//----------------------------------------------------------------------------
-//
-// PROC A_CheckSkullDone
-//
-//----------------------------------------------------------------------------
-
-DEFINE_ACTION_FUNCTION(AActor, A_CheckPlayerDone)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-
-	if (self->player == NULL)
-	{
-		self->Destroy();
 	}
 	return 0;
 }
@@ -2516,7 +1924,7 @@ void P_UnPredictPlayer ()
 		APlayerPawn *act = player->mo;
 		AActor *savedcamera = player->camera;
 
-		TObjPtr<AInventory*> InvSel = act->InvSel;
+		TObjPtr<AActor*> InvSel = act->InvSel;
 		int inventorytics = player->inventorytics;
 
 		*player = PredictionPlayerBackup;
@@ -2729,6 +2137,7 @@ DEFINE_FIELD(APlayerPawn, AirCapacity)
 DEFINE_FIELD(APlayerPawn, FlechetteType)
 DEFINE_FIELD(APlayerPawn, DamageFade)
 DEFINE_FIELD(APlayerPawn, ViewBob)
+DEFINE_FIELD(APlayerPawn, curBob)
 DEFINE_FIELD(APlayerPawn, FullHeight)
 DEFINE_FIELD(APlayerPawn, SoundClass)
 DEFINE_FIELD(APlayerPawn, Face)

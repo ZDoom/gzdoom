@@ -688,8 +688,8 @@ static float GetRolloff(const FRolloffInfo *rolloff, float distance)
 	if(rolloff->RolloffType == ROLLOFF_Linear)
 		return volume;
 
-	if(rolloff->RolloffType == ROLLOFF_Custom && S_SoundCurve != NULL)
-		return S_SoundCurve[int(S_SoundCurveSize * (1.f - volume))] / 127.f;
+	if(rolloff->RolloffType == ROLLOFF_Custom && S_SoundCurve.Size() > 0)
+		return S_SoundCurve[int(S_SoundCurve.Size() * (1.f - volume))] / 127.f;
 	return (powf(10.f, volume) - 1.f) / 9.f;
 }
 

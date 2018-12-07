@@ -52,7 +52,6 @@ IMPLEMENT_CLASS(PSymbolConstNumeric, false, false);
 IMPLEMENT_CLASS(PSymbolConstString, false, false);
 IMPLEMENT_CLASS(PSymbolTreeNode, false, false)
 IMPLEMENT_CLASS(PSymbolType, false, false)
-IMPLEMENT_CLASS(PSymbolVMFunction, false, false)
 IMPLEMENT_CLASS(PFunction, false, false)
 
 //==========================================================================
@@ -194,6 +193,29 @@ PProperty::PProperty(FName name, TArray<PField *> &fields)
 	: PSymbol(name)
 {
 	Variables = std::move(fields);
+}
+
+/* PProperty *****************************************************************/
+
+IMPLEMENT_CLASS(PPropFlag, false, false)
+
+//==========================================================================
+//
+// PField - Default Constructor
+//
+//==========================================================================
+
+PPropFlag::PPropFlag()
+	: PSymbol(NAME_None)
+{
+}
+
+PPropFlag::PPropFlag(FName name, PField * field, int bitValue, bool forDecorate)
+	: PSymbol(name)
+{
+	Offset = field;
+	bitval = bitValue;
+	decorateOnly = forDecorate;
 }
 
 //==========================================================================

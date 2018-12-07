@@ -68,7 +68,6 @@ FRandom pr_damagemobj ("ActorTakeDamage");
 static FRandom pr_lightning ("LightningDamage");
 static FRandom pr_poison ("PoisonDamage");
 static FRandom pr_switcher ("SwitchTarget");
-static FRandom pr_kickbackdir ("KickbackDir");
 
 CVAR (Bool, cl_showsprees, true, CVAR_ARCHIVE)
 CVAR (Bool, cl_showmultikills, true, CVAR_ARCHIVE)
@@ -289,44 +288,46 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 {
 	// Handle possible unmorph on death
 	bool wasgibbed = (health < GetGibHealth());
-	AActor *realthis = NULL;
-	int realstyle = 0;
-	int realhealth = 0;
-	if (P_MorphedDeath(this, &realthis, &realstyle, &realhealth))
+
 	{
-		if (!(realstyle & MORPH_UNDOBYDEATHSAVES))
+		IFVIRTUAL(AActor, MorphedDeath)
 		{
-			if (wasgibbed)
+			AActor *realthis = NULL;
+			int realstyle = 0;
+			int realhealth = 0;
+
+			VMValue params[] = { this };
+			VMReturn returns[3];
+			returns[0].PointerAt((void**)&realthis);
+			returns[1].IntAt(&realstyle);
+			returns[2].IntAt(&realhealth);
+			VMCall(func, params, 1, returns, 3);
+
+			if (realthis && !(realstyle & MORPH_UNDOBYDEATHSAVES))
 			{
-				int realgibhealth = realthis->GetGibHealth();
-				if (realthis->health >= realgibhealth)
+				if (wasgibbed)
 				{
-					realthis->health = realgibhealth -1; // if morphed was gibbed, so must original be (where allowed)l
+					int realgibhealth = realthis->GetGibHealth();
+					if (realthis->health >= realgibhealth)
+					{
+						realthis->health = realgibhealth - 1; // if morphed was gibbed, so must original be (where allowed)l
+					}
 				}
+				realthis->CallDie(source, inflictor, dmgflags, MeansOfDeath);
 			}
-			realthis->CallDie(source, inflictor, dmgflags, MeansOfDeath);
+
 		}
-		return;
 	}
 
 	// [SO] 9/2/02 -- It's rather funny to see an exploded player body with the invuln sparkle active :) 
 	effects &= ~FX_RESPAWNINVUL;
 	//flags &= ~MF_INVINCIBLE;
 
-	if (debugfile && this->player)
-	{
-		static int dieticks[MAXPLAYERS]; // [ZzZombo] not used? Except if for peeking in debugger...
-		int pnum = int(this->player-players);
-		dieticks[pnum] = gametic;
-		fprintf(debugfile, "died (%d) on tic %d (%s)\n", pnum, gametic,
-			this->player->cheats&CF_PREDICTING ? "predicting" : "real");
-	}
-
 	// [RH] Notify this actor's items.
-	for (AInventory *item = Inventory; item != NULL; )
+	for (AActor *item = Inventory; item != NULL; )
 	{
-		AInventory *next = item->Inventory;
-		IFVIRTUALPTR(item, AInventory, OwnerDied)
+		AActor *next = item->Inventory;
+		IFVIRTUALPTRNAME(item, NAME_Inventory, OwnerDied)
 		{
 			VMValue params[1] = { item };
 			VMCall(func, params, 1, nullptr, 0);
@@ -597,7 +598,13 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 						
 		flags &= ~MF_SOLID;
 		player->playerstate = PST_DEAD;
-		P_DropWeapon (player);
+
+		IFVM(PlayerPawn, DropWeapon)
+		{
+			VMValue param = player->mo;
+			VMCall(func, &param, 1, nullptr, 0);
+		}
+
 		if (this == players[consoleplayer].camera && automapactive)
 		{
 			// don't die in auto map, switch view prior to dying
@@ -728,8 +735,8 @@ DEFINE_ACTION_FUNCTION(AActor, Die)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT(source, AActor);
 	PARAM_OBJECT(inflictor, AActor);
-	PARAM_INT_DEF(dmgflags);
-	PARAM_NAME_DEF(MeansOfDeath);
+	PARAM_INT(dmgflags);
+	PARAM_NAME(MeansOfDeath);
 	self->Die(source, inflictor, dmgflags, MeansOfDeath);
 	return 0;
 }
@@ -750,89 +757,14 @@ void AActor::CallDie(AActor *source, AActor *inflictor, int dmgflags, FName Mean
 // PROC P_AutoUseHealth
 //
 //---------------------------------------------------------------------------
-static int CountHealth(TArray<AInventory *> &Items)
-{
-	int counted = 0;
-	for(unsigned i = 0; i < Items.Size(); i++)
-	{
-		counted += Items[i]->Amount * Items[i]->health;
-	}
-	return counted;
-}
-
-static int UseHealthItems(TArray<AInventory *> &Items, int &saveHealth)
-{
-	int saved = 0;
-
-	while (Items.Size() > 0 && saveHealth > 0)
-	{
-		int maxhealth = 0;
-		int index = -1;
-
-		// Find the largest item in the list
-		for(unsigned i = 0; i < Items.Size(); i++)
-		{
-			if (Items[i]->health > maxhealth)
-			{
-				index = i;
-				maxhealth = Items[i]->health;
-			}
-		}
-
-		// Now apply the health items, using the same logic as Heretic and Hexen.
-		int count = (saveHealth + maxhealth-1) / maxhealth;
-		for(int i = 0; i < count; i++)
-		{
-			saved += maxhealth;
-			saveHealth -= maxhealth;
-			if (--Items[index]->Amount == 0)
-			{
-				Items[index]->DepleteOrDestroy ();
-				Items.Delete(index);
-				break;
-			}
-		}
-	}
-	return saved;
-}
 
 void P_AutoUseHealth(player_t *player, int saveHealth)
 {
-	TArray<AInventory *> NormalHealthItems;
-	TArray<AInventory *> LargeHealthItems;
-
-	auto hptype = PClass::FindActor(NAME_HealthPickup);
-	for(AInventory *inv = player->mo->Inventory; inv != NULL; inv = inv->Inventory)
+	IFVM(PlayerPawn, AutoUseHealth)
 	{
-		if (inv->Amount > 0 && inv->IsKindOf(hptype))
-		{
-			int mode = inv->IntVar(NAME_autousemode);
-
-			if (mode == 1) NormalHealthItems.Push(inv);
-			else if (mode == 2) LargeHealthItems.Push(inv);
-		}
+		VMValue params[] = { player->mo, saveHealth };
+		VMCall(func, params, 2, nullptr, 0);
 	}
-
-	int normalhealth = CountHealth(NormalHealthItems);
-	int largehealth = CountHealth(LargeHealthItems);
-
-	bool skilluse = !!G_SkillProperty(SKILLP_AutoUseHealth);
-
-	if (skilluse && normalhealth >= saveHealth)
-	{ // Use quartz flasks
-		player->health += UseHealthItems(NormalHealthItems, saveHealth);
-	}
-	else if (largehealth >= saveHealth)
-	{ 
-		// Use mystic urns
-		player->health += UseHealthItems(LargeHealthItems, saveHealth);
-	}
-	else if (skilluse && normalhealth + largehealth >= saveHealth)
-	{ // Use mystic urns and quartz flasks
-		player->health += UseHealthItems(NormalHealthItems, saveHealth);
-		if (saveHealth > 0) player->health += UseHealthItems(LargeHealthItems, saveHealth);
-	}
-	player->mo->health = player->health;
 }
 
 //============================================================================
@@ -844,44 +776,10 @@ CVAR(Bool, sv_disableautohealth, false, CVAR_ARCHIVE|CVAR_SERVERINFO)
 
 void P_AutoUseStrifeHealth (player_t *player)
 {
-	TArray<AInventory *> Items;
-
-	auto hptype = PClass::FindActor(NAME_HealthPickup);
-	for(AInventory *inv = player->mo->Inventory; inv != NULL; inv = inv->Inventory)
+	IFVM(PlayerPawn, AutoUseStrifeHealth)
 	{
-		if (inv->Amount > 0 && inv->IsKindOf(hptype))
-		{
-			int mode = inv->IntVar(NAME_autousemode);
-			if (mode == 3) Items.Push(inv);
-		}
-	}
-
-	if (!sv_disableautohealth)
-	{
-		while (Items.Size() > 0)
-		{
-			int maxhealth = 0;
-			int index = -1;
-
-			// Find the largest item in the list
-			for(unsigned i = 0; i < Items.Size(); i++)
-			{
-				if (Items[i]->health > maxhealth)
-				{
-					index = i;
-					maxhealth = Items[i]->Amount;
-				}
-			}
-
-			while (player->health < 50)
-			{
-				if (!player->mo->UseInventory (Items[index]))
-					break;
-			}
-			if (player->health >= 50) return;
-			// Using all of this item was not enough so delete it and restart with the next best one
-			Items.Delete(index);
-		}
+		VMValue params[] = { player->mo };
+		VMCall(func, params, 1, nullptr, 0);
 	}
 }
 
@@ -915,9 +813,7 @@ static inline bool isFakePain(AActor *target, AActor *inflictor, int damage)
 // the damage was cancelled.
 static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags, DAngle angle, bool& needevent)
 {
-	DAngle ang;
 	player_t *player = NULL;
-	double thrust;
 	int temp;
 	int painchance = 0;
 	FState * woundstate = NULL;
@@ -1086,7 +982,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 				damage = int(damage * source->DamageMultiply);
 
 				// Handle active damage modifiers (e.g. PowerDamage)
-				if (damage > 0)
+				if (damage > 0 && !(flags & DMG_NO_ENHANCE))
 				{
 					damage = source->GetModifiedDamage(mod, damage, false);
 				}
@@ -1180,73 +1076,10 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 		&& !(target->flags7 & MF7_DONTTHRUST)
 		&& (source == NULL || source->player == NULL || !(source->flags2 & MF2_NODMGTHRUST)))
 	{
-		int kickback;
-
-		if (inflictor && inflictor->projectileKickback)
-			kickback = inflictor->projectileKickback;
-		else if (!source || !source->player || !source->player->ReadyWeapon)
-			kickback = gameinfo.defKickback;
-		else
-			kickback = source->player->ReadyWeapon->Kickback;
-
-		kickback = int(kickback * G_SkillProperty(SKILLP_KickbackFactor));
-		if (kickback)
+		IFVIRTUALPTR(target, AActor, ApplyKickback)
 		{
-			AActor *origin = (source && (flags & DMG_INFLICTOR_IS_PUFF))? source : inflictor;
-
-			if (flags & DMG_USEANGLE)
-			{
-				ang = angle;
-			}
-			else if (origin->X() == target->X() && origin->Y() == target->Y())
-			{
-				// If the origin and target are in exactly the same spot, choose a random direction.
-				// (Most likely cause is from telefragging somebody during spawning because they
-				// haven't moved from their spawn spot at all.)
-				ang = pr_kickbackdir.GenRand_Real2() * 360.;
-			}
-			else
-			{
-				ang = origin->AngleTo(target);
-			}
-
-            thrust = mod == NAME_MDK ? 10 : 32;
-            if (target->Mass > 0)
-            {
-                thrust = clamp((damage * 0.125 * kickback) / target->Mass, 0., thrust);
-            }
-
-			// Don't apply ultra-small damage thrust
-			if (thrust < 0.01) thrust = 0;
-
-			// make fall forwards sometimes
-			if ((damage < 40) && (damage > target->health)
-				 && (target->Z() - origin->Z() > 64)
-				 && (pr_damagemobj()&1)
-				 // [RH] But only if not too fast and not flying
-				 && thrust < 10
-				 && !(target->flags & MF_NOGRAVITY)
-				 && (inflictor == NULL || !(inflictor->flags5 & MF5_NOFORWARDFALL))
-				 )
-			{
-				ang += 180.;
-				thrust *= 4;
-			}
-			if (source && source->player && (flags & DMG_INFLICTOR_IS_PUFF)
-				&& source->player->ReadyWeapon != NULL &&
-				(source->player->ReadyWeapon->WeaponFlags & WIF_STAFF2_KICKBACK))
-			{
-				// Staff power level 2
-				target->Thrust(ang, 10);
-				if (!(target->flags & MF_NOGRAVITY))
-				{
-					target->Vel.Z += 5.;
-				}
-			}
-			else
-			{
-				target->Thrust(ang, thrust);
-			}
+			VMValue params[] = { target, inflictor, source, damage, angle.Degrees, mod.GetIndex(), flags };
+			VMCall(func, params, countof(params), nullptr, 0);
 		}
 	}
 
@@ -1377,9 +1210,10 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 			// but telefragging should still do enough damage to kill the player)
 			// Ignore players that are already dead.
 			// [MC]Buddha2 absorbs telefrag damage, and anything else thrown their way.
-			if (!(flags & DMG_FORCED) && (((player->cheats & CF_BUDDHA2) || (((player->cheats & CF_BUDDHA) ||
-				(player->mo->FindInventory (PClass::FindActor(NAME_PowerBuddha),true) != nullptr) ||
-				(player->mo->flags7 & MF7_BUDDHA)) && !telefragDamage)) && (player->playerstate != PST_DEAD)))
+			int buddha = player->mo->hasBuddha();
+			if (flags & DMG_FORCED) buddha = 0;
+			if (telefragDamage && buddha == 1) buddha = 0;
+			if (buddha)
 			{
 				// If this is a voodoo doll we need to handle the real player as well.
 				player->mo->health = target->health = player->health = 1;
@@ -1635,8 +1469,8 @@ DEFINE_ACTION_FUNCTION(AActor, DamageMobj)
 	PARAM_OBJECT(source, AActor);
 	PARAM_INT(damage);
 	PARAM_NAME(mod);
-	PARAM_INT_DEF(flags);
-	PARAM_FLOAT_DEF(angle);
+	PARAM_INT(flags);
+	PARAM_FLOAT(angle);
 
 	// [ZZ] event handlers need the result.
 	bool needevent = true;
@@ -1830,7 +1664,8 @@ bool AActor::CallOkayToSwitchTarget(AActor *other)
 
 bool P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poison)
 {
-	if((player->cheats&CF_GODMODE) || (player->mo->flags2 & MF2_INVULNERABLE) || (player->cheats & CF_GODMODE2))
+	if ((player->cheats & CF_GODMODE) || (player->mo->flags2 & MF2_INVULNERABLE) || (player->cheats & CF_GODMODE2) ||
+		(player->mo->flags5 & MF5_NODAMAGE))
 	{
 		return false;
 	}
@@ -1887,8 +1722,15 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPain
 	{
 		return;
 	}
-	if ((damage < TELEFRAG_DAMAGE && ((target->flags2 & MF2_INVULNERABLE) ||
-		(player->cheats & CF_GODMODE))) || (player->cheats & CF_GODMODE2))
+
+	// [MC] This must be checked before any modifications. Otherwise, power amplifiers
+	// may result in doing too much damage that cannot be negated by regular buddha,
+	// which is inconsistent. The raw damage must be the only determining factor for
+	// determining if telefrag is actually desired.
+	const bool telefragDamage = (damage >= TELEFRAG_DAMAGE && !(target->flags7 & MF7_LAXTELEFRAGDMG));
+
+	if ((player->cheats & CF_GODMODE2) || (target->flags5 & MF5_NODAMAGE) || //These two are never subjected to telefrag thresholds.
+		(!telefragDamage && ((target->flags2 & MF2_INVULNERABLE) ||	(player->cheats & CF_GODMODE))))
 	{ // target is invulnerable
 		return;
 	}
@@ -1926,9 +1768,9 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPain
 	target->health -= damage;
 	if (target->health <= 0)
 	{ // Death
-		if ((((player->cheats & CF_BUDDHA) || (player->cheats & CF_BUDDHA2) ||
-			(player->mo->flags7 & MF7_BUDDHA)) && damage < TELEFRAG_DAMAGE) ||
-			(player->mo->FindInventory (PClass::FindActor(NAME_PowerBuddha),true) != nullptr))
+		int buddha = player->mo->hasBuddha();
+		if (telefragDamage && buddha == 1) buddha = 0;
+		if (buddha)
 		{ // [SP] Save the player... 
 			player->health = target->health = 1;
 		}

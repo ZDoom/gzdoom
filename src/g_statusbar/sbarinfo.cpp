@@ -1039,22 +1039,22 @@ public:
 		}
 		wrapper->ForceHUDScale(script->huds[hud]->ForceScaled());
 
-		if (CPlayer->ReadyWeapon != NULL)
+		if (CPlayer->ReadyWeapon != nullptr)
 		{
-			ammo1 = CPlayer->ReadyWeapon->Ammo1;
-			ammo2 = CPlayer->ReadyWeapon->Ammo2;
-			if (ammo1 == NULL)
+			ammo1 = CPlayer->ReadyWeapon->PointerVar<AActor>(NAME_Ammo1);
+			ammo2 = CPlayer->ReadyWeapon->PointerVar<AActor>(NAME_Ammo2);
+			if (ammo1 == nullptr)
 			{
 				ammo1 = ammo2;
-				ammo2 = NULL;
+				ammo2 = nullptr;
 			}
 		}
 		else
 		{
-			ammo1 = ammo2 = NULL;
+			ammo1 = ammo2 = nullptr;
 		}
-		ammocount1 = ammo1 != NULL ? ammo1->Amount : 0;
-		ammocount2 = ammo2 != NULL ? ammo2->Amount : 0;
+		ammocount1 = ammo1 != nullptr ? ammo1->IntVar(NAME_Amount) : 0;
+		ammocount2 = ammo2 != nullptr ? ammo2->IntVar(NAME_Amount) : 0;
 
 		//prepare ammo counts
 		armor = CPlayer->mo->FindInventory(NAME_BasicArmor);
@@ -1467,9 +1467,15 @@ public:
 		return TRANSLATION(TRANSLATION_Players, int(CPlayer - players));
 	}
 
-	AInventory *ammo1, *ammo2;
+	PClassActor *AmmoType(int no) const
+	{
+		auto w = StatusBar->CPlayer->ReadyWeapon;
+		return w == nullptr ? nullptr : (w->PointerVar<PClassActor>(no == 1 ? NAME_AmmoType1 : NAME_AmmoType2));
+	}
+
+	AActor *ammo1, *ammo2;
 	int ammocount1, ammocount2;
-	AInventory *armor;
+	AActor *armor;
 	FImageCollection Images;
 	unsigned int invBarOffset;
 	player_t *CPlayer = nullptr;
@@ -1503,14 +1509,24 @@ void SBarInfoMainBlock::DrawAux(const SBarInfoMainBlock *block, DSBarInfo *statu
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION(DSBarInfo, Destroy)
+static void SBarInfo_Destroy(DSBarInfo *self)
+{
+	delete self;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSBarInfo, Destroy, SBarInfo_Destroy)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
 	delete self;
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DSBarInfo, AttachToPlayer)
+static void SBarInfo_AttachToPlayer(DSBarInfo *self, player_t *player)
+{
+	self->_AttachToPlayer(player);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSBarInfo, AttachToPlayer, SBarInfo_AttachToPlayer)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
 	PARAM_POINTER(player, player_t);
@@ -1518,7 +1534,12 @@ DEFINE_ACTION_FUNCTION(DSBarInfo, AttachToPlayer)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DSBarInfo, Draw)
+static void SBarInfo_Draw(DSBarInfo *self, int state)
+{
+	self->_Draw((EHudState)state);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSBarInfo, Draw, SBarInfo_Draw)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
 	PARAM_INT(State);
@@ -1526,28 +1547,48 @@ DEFINE_ACTION_FUNCTION(DSBarInfo, Draw)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DSBarInfo, NewGame)
+static void SBarInfo_NewGame(DSBarInfo *self)
+{
+	self->_NewGame();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSBarInfo, NewGame, SBarInfo_NewGame)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
 	self->_NewGame();
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DSBarInfo, MustDrawLog)
+static int SBarInfo_MustDrawLog(DSBarInfo *self, int state)
+{
+	return self->_MustDrawLog((EHudState)state);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSBarInfo, MustDrawLog, SBarInfo_MustDrawLog)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
 	PARAM_INT(State);
 	ACTION_RETURN_BOOL(self->_MustDrawLog((EHudState)State));
 }
 
-DEFINE_ACTION_FUNCTION(DSBarInfo, Tick)
+static void SBarInfo_Tick(DSBarInfo *self)
+{
+	self->_Tick();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSBarInfo, Tick, SBarInfo_Tick)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
 	self->_Tick();
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DSBarInfo, ShowPop)
+static void SBarInfo_ShowPop(DSBarInfo *self, int state)
+{
+	self->_ShowPop(state);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSBarInfo, ShowPop, SBarInfo_ShowPop)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
 	PARAM_INT(State);
@@ -1555,7 +1596,12 @@ DEFINE_ACTION_FUNCTION(DSBarInfo, ShowPop)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DSBarInfo, GetProtrusion)
+static int SBarInfo_GetProtrusion(DSBarInfo *self, double scale)
+{
+	return self->_GetProtrusion(scale);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSBarInfo, GetProtrusion, SBarInfo_GetProtrusion)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
 	PARAM_FLOAT(scalefac);

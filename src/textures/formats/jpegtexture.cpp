@@ -253,7 +253,6 @@ FJPEGTexture::FJPEGTexture (int lumpnum, int width, int height)
 
 	Width = width;
 	Height = height;
-	CalcBitSize ();
 }
 
 //==========================================================================

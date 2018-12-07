@@ -70,9 +70,6 @@ FVoxelTexture::FVoxelTexture(FVoxel *vox)
 	SourceVox = vox;
 	Width = 16;
 	Height = 16;
-	WidthBits = 4;
-	HeightBits = 4;
-	WidthMask = 15;
 	bNoCompress = true;
 }
 

@@ -80,7 +80,6 @@ FAutomapTexture::FAutomapTexture (int lumpnum)
 {
 	Width = 320;
 	Height = uint16_t(Wads.LumpLength(lumpnum) / 320);
-	CalcBitSize ();
 }
 
 //==========================================================================

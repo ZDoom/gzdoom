@@ -81,7 +81,6 @@ FBuildTexture::FBuildTexture(const FString &pathprefix, int tilenum, const uint8
 	Height = height;
 	_LeftOffset[1] = _LeftOffset[0] = left;
 	_TopOffset[1] = _TopOffset[0] = top;
-	CalcBitSize ();
 	Name.Format("%sBTIL%04d", pathprefix.GetChars(), tilenum);
 	UseType = ETextureType::Override;
 }

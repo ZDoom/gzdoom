@@ -148,7 +148,6 @@ FPCXTexture::FPCXTexture(int lumpnum, PCXHeader & hdr)
 	bMasked = false;
 	Width = LittleShort(hdr.xmax) - LittleShort(hdr.xmin) + 1;
 	Height = LittleShort(hdr.ymax) - LittleShort(hdr.ymin) + 1;
-	CalcBitSize();
 }
 
 //==========================================================================

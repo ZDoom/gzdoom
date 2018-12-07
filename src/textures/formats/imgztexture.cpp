@@ -113,7 +113,6 @@ FIMGZTexture::FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int1
 	_LeftOffset[1] = _LeftOffset[0] = l;
 	_TopOffset[1] = _TopOffset[0] = t;
 	isalpha = _isalpha;
-	CalcBitSize ();
 }
 
 //==========================================================================
@@ -132,7 +131,6 @@ uint8_t *FIMGZTexture::MakeTexture (FRenderStyle style)
 	int dest_adv = Height;
 	int dest_rew = Width * Height - 1;
 
-	CalcBitSize ();
 	auto Pixels = new uint8_t[Width*Height];
 	dest_p = Pixels;
 

@@ -43,6 +43,40 @@
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+void FSoftwareTexture::CalcBitSize ()
+{
+	// WidthBits is rounded down, and HeightBits is rounded up
+	int i;
+	
+	for (i = 0; (1 << i) < GetWidth(); ++i)
+	{ }
+	
+	WidthBits = i;
+	
+	// Having WidthBits that would allow for columns past the end of the
+	// texture is not allowed, even if it means the entire texture is
+	// not drawn.
+	if (GetWidth() < (1 << WidthBits))
+	{
+		WidthBits--;
+	}
+	WidthMask = (1 << WidthBits) - 1;
+	
+	// <hr>The minimum height is 2, because we cannot shift right 32 bits.</hr>
+	// Scratch that. Somebody actually made a 1x1 texture, so now we have to handle it.
+	for (i = 0; (1 << i) < GetHeight(); ++i)
+	{ }
+	
+	HeightBits = i;
+}
+
+
+//==========================================================================
+//
 // 
 //
 //==========================================================================
@@ -61,7 +95,7 @@ const uint32_t *FSoftwareTexture::GetColumnBgra(unsigned int column, const FSoft
 
 const uint32_t *FSoftwareTexture::GetPixelsBgra()
 {
-	if (PixelsBgra.empty() || CheckModified(DefaultRenderStyle()))
+	if (PixelsBgra.Size() == 0 || CheckModified(DefaultRenderStyle()))
 	{
 		if (!GetColumn(DefaultRenderStyle(), 0, nullptr))
 			return nullptr;
@@ -71,7 +105,7 @@ const uint32_t *FSoftwareTexture::GetPixelsBgra()
 		mTexture->CopyTrueColorPixels(&bitmap, 0, 0);
 		GenerateBgraFromBitmap(bitmap);
 	}
-	return PixelsBgra.data();
+	return PixelsBgra.Data();
 }
 
 //==========================================================================
@@ -191,7 +225,7 @@ void FSoftwareTexture::GenerateBgraFromBitmap(const FBitmap &bitmap)
 
 	// Transpose
 	const uint32_t *src = (const uint32_t *)bitmap.GetPixels();
-	uint32_t *dest = PixelsBgra.data();
+	uint32_t *dest = PixelsBgra.Data();
 	for (int x = 0; x < GetWidth(); x++)
 	{
 		for (int y = 0; y < GetHeight(); y++)
@@ -213,7 +247,7 @@ void FSoftwareTexture::CreatePixelsBgraWithMipmaps()
 		int h = MAX(GetHeight() >> i, 1);
 		buffersize += w * h;
 	}
-	PixelsBgra.resize(buffersize, 0xffff0000);
+	PixelsBgra.Resize(buffersize);
 }
 
 int FSoftwareTexture::MipmapLevels()
@@ -249,7 +283,7 @@ void FSoftwareTexture::GenerateBgraMipmaps()
 	};
 
 	int levels = MipmapLevels();
-	std::vector<Color4f> image(PixelsBgra.size());
+	std::vector<Color4f> image(PixelsBgra.Size());
 
 	// Convert to normalized linear colorspace
 	{
@@ -335,7 +369,7 @@ void FSoftwareTexture::GenerateBgraMipmaps()
 	// Convert to bgra8 sRGB colorspace
 	{
 		Color4f *src = image.data() + GetWidth() * GetHeight();
-		uint32_t *dest = PixelsBgra.data() + GetWidth() * GetHeight();
+		uint32_t *dest = PixelsBgra.Data() + GetWidth() * GetHeight();
 		for (int i = 1; i < levels; i++)
 		{
 			int w = MAX(GetWidth() >> i, 1);
@@ -362,7 +396,7 @@ void FSoftwareTexture::GenerateBgraMipmaps()
 
 void FSoftwareTexture::GenerateBgraMipmapsFast()
 {
-	uint32_t *src = PixelsBgra.data();
+	uint32_t *src = PixelsBgra.Data();
 	uint32_t *dest = src + GetWidth() * GetHeight();
 	int levels = MipmapLevels();
 	for (int i = 1; i < levels; i++)
@@ -413,9 +447,9 @@ const uint8_t *FSoftwareTexture::GetColumn(FRenderStyle style, unsigned int colu
 	auto Pixeldata = GetPixels(style);
 	if ((unsigned)column >= (unsigned)GetWidth())
 	{
-		if (mTexture->WidthMask + 1 == GetWidth())
+		if (WidthMask + 1 == GetWidth())
 		{
-			column &= mTexture->WidthMask;
+			column &= WidthMask;
 		}
 		else
 		{

@@ -159,7 +159,6 @@ FPatchTexture::FPatchTexture (int lumpnum, patch_t * header, bool isalphatex)
 	_LeftOffset[1] = _LeftOffset[0] = header->leftoffset;
 	_TopOffset[1] = _TopOffset[0] = header->topoffset;
 	DetectBadPatches();
-	CalcBitSize ();
 }
 
 //==========================================================================
@@ -208,9 +207,7 @@ uint8_t *FPatchTexture::MakeTexture (FRenderStyle style)
 		return Pixels;
 	}
 
-	// Add a little extra space at the end if the texture's height is not
-	// a power of 2, in case somebody accidentally makes it repeat vertically.
-	int numpix = Width * Height + (1 << HeightBits) - Height;
+	int numpix = Width * Height;
 
 	numspans = Width;
 

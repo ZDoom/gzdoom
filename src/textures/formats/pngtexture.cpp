@@ -209,7 +209,6 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 
 	Width = width;
 	Height = height;
-	CalcBitSize ();
 
 	memset(trans, 255, 256);
 

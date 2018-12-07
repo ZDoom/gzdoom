@@ -315,8 +315,6 @@ public:
 protected:
 	//int16_t LeftOffset, TopOffset;
 
-	uint8_t WidthBits, HeightBits;
-
 	DVector2 Scale;
 
 	int SourceLump;
@@ -455,16 +453,13 @@ protected:
 		_TopOffset[1] = BaseTexture->_TopOffset[1];
 		_LeftOffset[0] = BaseTexture->_LeftOffset[0];
 		_LeftOffset[1] = BaseTexture->_LeftOffset[1];
-		WidthBits = BaseTexture->WidthBits;
-		HeightBits = BaseTexture->HeightBits;
 		Scale = BaseTexture->Scale;
-		WidthMask = (1 << WidthBits) - 1;
 	}
 
 	void SetScaledSize(int fitwidth, int fitheight);
 
 protected:
-	uint16_t Width, Height, WidthMask;
+	uint16_t Width, Height;
 	int16_t _LeftOffset[2], _TopOffset[2];
 	static uint8_t GrayMap[256];
 	uint8_t *GetRemap(FRenderStyle style, bool srcisgrayscale = false)
@@ -516,7 +511,6 @@ protected:
 
 	FTexture (const char *name = NULL, int lumpnum = -1);
 
-	void CalcBitSize ();
 	void CopyInfo(FTexture *other)
 	{
 		CopySize(other);
@@ -813,6 +807,7 @@ public:
 // A wrapper around a hardware texture, to allow using it in the 2D drawing interface.
 class FWrapperTexture : public FTexture
 {
+	int Format;
 public:
 	FWrapperTexture(int w, int h, int bits = 1);
 	IHardwareTexture *GetSystemTexture(int slot)
@@ -822,7 +817,7 @@ public:
 
 	int GetColorFormat() const
 	{
-		return WidthBits;
+		return Format;
 	}
 };
 

@@ -159,9 +159,6 @@ FRawPageTexture::FRawPageTexture (int lumpnum)
 {
 	Width = 320;
 	Height = 200;
-	WidthBits = 8;
-	HeightBits = 8;
-	WidthMask = 255;
 
 	// Special case hack for Heretic's E2 end pic. This is not going to be exposed as an editing feature because the implications would be horrible.
 	if (Name.CompareNoCase("E2END") == 0 && gameinfo.gametype == GAME_Heretic)

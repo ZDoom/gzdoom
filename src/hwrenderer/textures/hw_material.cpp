@@ -160,7 +160,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	mShaderIndex = SHADER_Default;
 	sourcetex = tex = tx;
 
-	if (tx->UseType == ETextureType::SWCanvas && tx->WidthBits == 0)
+	if (tx->UseType == ETextureType::SWCanvas && static_cast<FWrapperTexture*>(tx)->GetColorFormat() == 0)
 	{
 		mShaderIndex = SHADER_Paletted;
 	}

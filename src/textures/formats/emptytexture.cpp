@@ -81,9 +81,7 @@ FEmptyTexture::FEmptyTexture (int lumpnum)
 : FWorldTexture(NULL, lumpnum)
 {
 	bMasked = true;
-	WidthBits = HeightBits = 1;
 	Width = Height = 1;
-	WidthMask = 0;
 	PixelsAreStatic = 3;
 }
 

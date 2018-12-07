@@ -254,7 +254,6 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchl
 	Width = SAFESHORT(mtexture.d->width);
 	Height = SAFESHORT(mtexture.d->height);
 	Name = (char *)mtexture.d->name;
-	CalcBitSize ();
 
 	Scale.X = mtexture.d->ScaleX ? mtexture.d->ScaleX / 8. : 1.;
 	Scale.Y = mtexture.d->ScaleY ? mtexture.d->ScaleY / 8. : 1.;
@@ -400,9 +399,7 @@ uint8_t *GetBlendMap(PalEntry blend, uint8_t *blendwork)
 
 uint8_t *FMultiPatchTexture::MakeTexture (FRenderStyle style)
 {
-	// Add a little extra space at the end if the texture's height is not
-	// a power of 2, in case somebody accidentally makes it repeat vertically.
-	int numpix = Width * Height + (1 << HeightBits) - Height;
+	int numpix = Width * Height;
 	uint8_t blendwork[256];
 	bool buildrgb = bComplex;
 
@@ -620,7 +617,6 @@ void FMultiPatchTexture::CheckForHacks ()
 		Height == 128)
 	{
 		Height = 200;
-		HeightBits = 8;
 		return;
 	}
 
@@ -1220,8 +1216,6 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, ETextureType usetype)
 		Printf("Texture %s has invalid dimensions (%d, %d)\n", Name.GetChars(), Width, Height);
 		Width = Height = 1;
 	}
-	CalcBitSize ();
-
 	
 	sc.SetCMode(false);
 }

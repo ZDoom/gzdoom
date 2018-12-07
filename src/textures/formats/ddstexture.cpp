@@ -292,7 +292,6 @@ FDDSTexture::FDDSTexture (FileReader &lump, int lumpnum, void *vsurfdesc)
 
 	Width = uint16_t(surf->Width);
 	Height = uint16_t(surf->Height);
-	CalcBitSize ();
 
 	if (surf->PixelFormat.Flags & DDPF_FOURCC)
 	{

@@ -177,10 +177,10 @@ FTexture * FTexture::CreateTexture (const char *name, int lumpnum, ETextureType 
 
 FTexture::FTexture (const char *name, int lumpnum)
 	: 
-  WidthBits(0), HeightBits(0), Scale(1,1), SourceLump(lumpnum),
+  Scale(1,1), SourceLump(lumpnum),
   UseType(ETextureType::Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
   bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false), bMultiPatch(false), bKeepAround(false), bFullNameTexture(false),
-	Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0), WidthMask(0)
+	Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0)
 {
 	bBrightmapChecked = false;
 	bGlowing = false;
@@ -246,39 +246,6 @@ FTextureFormat FTexture::GetFormat()
 void FTexture::SetFrontSkyLayer ()
 {
 	bNoRemap0 = true;
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-void FTexture::CalcBitSize ()
-{
-	// WidthBits is rounded down, and HeightBits is rounded up
-	int i;
-
-	for (i = 0; (1 << i) < Width; ++i)
-	{ }
-
-	WidthBits = i;
-
-	// Having WidthBits that would allow for columns past the end of the
-	// texture is not allowed, even if it means the entire texture is
-	// not drawn.
-	if (Width < (1 << WidthBits))
-	{
-		WidthBits--;
-	}
-	WidthMask = (1 << WidthBits) - 1;
-
-	// <hr>The minimum height is 2, because we cannot shift right 32 bits.</hr>
-	// Scratch that. Somebody actually made a 1x1 texture, so now we have to handle it.
-	for (i = 0; (1 << i) < Height; ++i)
-	{ }
-
-	HeightBits = i;
 }
 
 //==========================================================================
@@ -1102,9 +1069,6 @@ FDummyTexture::FDummyTexture ()
 {
 	Width = 64;
 	Height = 64;
-	HeightBits = 6;
-	WidthBits = 6;
-	WidthMask = 63;
 	UseType = ETextureType::Null;
 }
 
@@ -1112,7 +1076,6 @@ void FDummyTexture::SetSize (int width, int height)
 {
 	Width = width;
 	Height = height;
-	CalcBitSize ();
 }
 
 
@@ -1126,7 +1089,7 @@ FWrapperTexture::FWrapperTexture(int w, int h, int bits)
 {
 	Width = w;
 	Height = h;
-	WidthBits = bits;
+	Format = bits;
 	UseType = ETextureType::SWCanvas;
 	bNoCompress = true;
 	SystemTexture[0] = screen->CreateHardwareTexture(this);

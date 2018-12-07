@@ -1659,7 +1659,6 @@ FFontChar2::FFontChar2 (int sourcelump, int sourcepos, int width, int height, in
 	Height = height;
 	_LeftOffset[1] = _LeftOffset[0] = leftofs;
 	_TopOffset[1] = _TopOffset[0] = topofs;
-	CalcBitSize ();
 }
 
 //==========================================================================

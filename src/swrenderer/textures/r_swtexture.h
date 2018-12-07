@@ -15,9 +15,11 @@ class FSoftwareTexture
 protected:
 	FTexture *mTexture;
 	FTexture *mSource;
-	uint8_t *Pixels[2];
-	std::vector<uint32_t> PixelsBgra;
+	TArray<uint32_t> PixelsBgra;
 	FSoftwareTextureSpan **Spandata[2] = { nullptr, nullptr };
+	uint8_t WidthBits = 0, HeightBits = 0;
+	uint16_t WidthMask = 0;
+	
 
 	
 public:
@@ -25,6 +27,7 @@ public:
 	{
 		mTexture = tex;
 		mSource = tex;
+		CalcBitSize();
 	}
 	
 	virtual ~FSoftwareTexture()
@@ -48,14 +51,15 @@ public:
 		return mTexture->bMasked;
 	}
 	
+	void CalcBitSize();
 	bool UseBasePalette() const { return mTexture->UseBasePalette(); }
 	int GetSkyOffset() const { return mTexture->GetSkyOffset(); }
 	PalEntry GetSkyCapColor(bool bottom) const { return mTexture->GetSkyCapColor(bottom); }
 	
 	int GetWidth () { return mTexture->GetWidth(); }
 	int GetHeight () { return mTexture->GetHeight(); }
-	int GetWidthBits() { return mTexture->WidthBits; }
-	int GetHeightBits() { return mTexture->HeightBits; }
+	int GetWidthBits() { return WidthBits; }
+	int GetHeightBits() { return HeightBits; }
 	bool Mipmapped() { return mTexture->Mipmapped(); }
 
 	int GetScaledWidth () { return mTexture->GetScaledWidth(); }
@@ -98,7 +102,7 @@ public:
 	void Unload()
 	{
 		mTexture->Unload();
-		PixelsBgra = std::vector<uint32_t>();
+		PixelsBgra.Reset();
 	}
 	
 	// Returns true if the next call to GetPixels() will return an image different from the

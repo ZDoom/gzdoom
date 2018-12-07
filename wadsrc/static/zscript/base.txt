@@ -48,6 +48,21 @@ struct _ native	// These are the global variables, the struct is only here to av
 	
 }
 
+struct SpechitsList
+{
+	native static int Size();
+	native static void Clear();
+	native static bool Pop(out SpecHit spec);
+	native static void Push(out SpecHit spec);
+}
+
+struct SpecHit
+{
+	native Line line;
+	native Vector2 Oldrefpos;
+	native Vector2 Refpos;
+}
+
 struct TexMan
 {
 	enum EUseTypes

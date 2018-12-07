@@ -860,6 +860,10 @@ void InitThingdef()
 	wbplayerstruct->Size = sizeof(wbplayerstruct_t);
 	wbplayerstruct->Align = alignof(wbplayerstruct_t);
 
+	auto spechitstruct = NewStruct("spechit_t", nullptr, true);
+	spechitstruct->Size = sizeof(spechit_t);
+	spechitstruct->Align = alignof(spechit_t);
+
 	FAutoSegIterator probe(CRegHead, CRegTail);
 
 	while (*++probe != NULL)

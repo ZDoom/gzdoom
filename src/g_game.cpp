@@ -2881,6 +2881,42 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, StartSlideshow)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(_SpechitsList, Size)
+{
+	PARAM_PROLOGUE;
+
+	ACTION_RETURN_INT(spechit.Size ());
+}
+
+DEFINE_ACTION_FUNCTION(_SpechitsList, Clear)
+{
+	PARAM_PROLOGUE;
+
+	spechit.Clear ();
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_SpechitsList, Pop)
+{
+	PARAM_PROLOGUE;
+	PARAM_OUTPOINTER(spec, spechit_t);
+
+	ACTION_RETURN_BOOL(spechit.Pop (*spec));
+}
+
+DEFINE_ACTION_FUNCTION(_SpechitsList, Push)
+{
+	PARAM_PROLOGUE;
+	PARAM_OUTPOINTER(spec, spechit_t);
+
+	ACTION_RETURN_BOOL(spechit.Push (*spec));
+}
+
+DEFINE_FIELD_X(SpecHit, spechit_t, line)
+DEFINE_FIELD_X(SpecHit, spechit_t, Oldrefpos)
+DEFINE_FIELD_X(SpecHit, spechit_t, Refpos)
+
 DEFINE_GLOBAL(players)
 DEFINE_GLOBAL(playeringame)
 DEFINE_GLOBAL(PlayerClasses)

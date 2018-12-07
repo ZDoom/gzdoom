@@ -475,7 +475,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec2To, Vec2To)
 	ACTION_RETURN_VEC2(self->Vec2To(t));
 }
 
-static void Vec3Angle(AActor *self, double length, double angle, double z, bool absolute, DVector2 *result)
+static void Vec3Angle(AActor *self, double length, double angle, double z, bool absolute, DVector3 *result)
 {
 	*result = self->Vec3Angle(length, angle, z, absolute);
 }

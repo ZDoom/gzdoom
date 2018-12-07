@@ -445,7 +445,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 
 	if (teamplay && Teams[player->userinfo.GetTeam()].GetLogo().IsNotEmpty ())
 	{
-		FTexture *pic = TexMan[Teams[player->userinfo.GetTeam()].GetLogo().GetChars ()];
+		FTexture *pic = TexMan.GetTextureByName(Teams[player->userinfo.GetTeam()].GetLogo().GetChars ());
 		screen->DrawTexture (pic, col1 - (pic->GetDisplayWidth() + 2) * CleanXfac, y,
 			DTA_CleanNoMove, true, TAG_DONE);
 	}

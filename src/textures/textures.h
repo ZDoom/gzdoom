@@ -565,12 +565,16 @@ public:
 		if ((unsigned)texnum.GetIndex() >= Textures.Size()) return NULL;
 		return Textures[texnum.GetIndex()].Texture;
 	}
-	FTexture *operator[] (const char *texname)
+	
+	FTexture *GetTextureByName(const char *name, bool animate = false)
 	{
-		FTextureID texnum = GetTextureID (texname, ETextureType::MiscPatch);
-		if (!texnum.Exists()) return NULL;
-		return Textures[texnum.GetIndex()].Texture;
+		FTextureID texnum = GetTextureID (name, ETextureType::MiscPatch);
+		if (!texnum.Exists()) return nullptr;
+		if (!animate) return Textures[texnum.GetIndex()].Texture;
+	 	else return Textures[Translation[texnum.GetIndex()]].Texture;
+
 	}
+	
 	FTexture *ByIndex(int i)
 	{
 		if (unsigned(i) >= Textures.Size()) return NULL;
@@ -589,18 +593,15 @@ public:
 		}
 		return Textures[picnum].Texture;
 	}
+	/*
 	FTexture *operator() (const char *texname)
 	{
 		FTextureID texnum = GetTextureID (texname, ETextureType::MiscPatch);
 		if (texnum.texnum == -1) return NULL;
 		return Textures[Translation[texnum.texnum]].Texture;
 	}
+	 */
 
-	FTexture *ByIndexTranslated(int i)
-	{
-		if (unsigned(i) >= Textures.Size()) return NULL;
-		return Textures[Translation[i]].Texture;
-	}
 //public:
 
 	FTextureID PalCheck(FTextureID tex);

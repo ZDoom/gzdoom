@@ -184,18 +184,19 @@ CVAR (Int, snd_drawoutput, 0, 0);
 CUSTOM_CVAR (String, vid_cursor, "None", CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
 	bool res = false;
+	
 
 	if (!stricmp(self, "None" ) && gameinfo.CursorPic.IsNotEmpty())
 	{
-		res = I_SetCursor(TexMan[gameinfo.CursorPic]);
+		res = I_SetCursor(TexMan.GetTextureByName(gameinfo.CursorPic));
 	}
 	else
 	{
-		res = I_SetCursor(TexMan[self]);
+		res = I_SetCursor(TexMan.GetTextureByName(self));
 	}
 	if (!res)
 	{
-		I_SetCursor(TexMan["cursor"]);
+		I_SetCursor(TexMan.GetTextureByName("cursor"));
 	}
 }
 
@@ -834,7 +835,7 @@ void D_Display ()
 		int x;
 		FString pstring = "By ";
 
-		tex = TexMan(gameinfo.PauseSign);
+		tex = TexMan.GetTextureByName(gameinfo.PauseSign, true);
 		x = (SCREENWIDTH - tex->GetDisplayWidth() * CleanXfac)/2 +
 			tex->GetDisplayLeftOffset() * CleanXfac;
 		screen->DrawTexture (tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
@@ -1241,7 +1242,7 @@ void D_DoAdvanceDemo (void)
 	case 3:
 		if (gameinfo.advisoryTime)
 		{
-			Advisory = TexMan["ADVISOR"];
+			Advisory = TexMan.GetTextureByName("ADVISOR");
 			demosequence = 1;
 			pagetic = (int)(gameinfo.advisoryTime * TICRATE);
 			break;

@@ -1304,22 +1304,22 @@ void DFrameBuffer::DrawFrame (int left, int top, int width, int height)
 	int bottom = top + height;
 
 	// Draw top and bottom sides.
-	p = TexMan[border->t];
+	p = TexMan.GetTextureByName(border->t);
 	FlatFill(left, top - p->GetDisplayHeight(), right, top, p, true);
-	p = TexMan[border->b];
+	p = TexMan.GetTextureByName(border->b);
 	FlatFill(left, bottom, right, bottom + p->GetDisplayHeight(), p, true);
 
 	// Draw left and right sides.
-	p = TexMan[border->l];
+	p = TexMan.GetTextureByName(border->l);
 	FlatFill(left - p->GetDisplayWidth(), top, left, bottom, p, true);
-	p = TexMan[border->r];
+	p = TexMan.GetTextureByName(border->r);
 	FlatFill(right, top, right + p->GetDisplayWidth(), bottom, p, true);
 
 	// Draw beveled corners.
-	DrawTexture (TexMan[border->tl], left-offset, top-offset, TAG_DONE);
-	DrawTexture (TexMan[border->tr], left+width, top-offset, TAG_DONE);
-	DrawTexture (TexMan[border->bl], left-offset, top+height, TAG_DONE);
-	DrawTexture (TexMan[border->br], left+width, top+height, TAG_DONE);
+	DrawTexture (TexMan.GetTextureByName(border->tl), left-offset, top-offset, TAG_DONE);
+	DrawTexture (TexMan.GetTextureByName(border->tr), left+width, top-offset, TAG_DONE);
+	DrawTexture (TexMan.GetTextureByName(border->bl), left-offset, top+height, TAG_DONE);
+	DrawTexture (TexMan.GetTextureByName(border->br), left+width, top+height, TAG_DONE);
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, DrawFrame)

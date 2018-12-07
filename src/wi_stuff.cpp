@@ -383,13 +383,13 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 
 				case 1:		// Splat
 					sc.MustGetString();
-					splat = TexMan[sc.String];
+					splat = TexMan.GetTextureByName(sc.String);
 					break;
 
 				case 2:		// Pointers
 					while (sc.GetString() && !sc.Crossed)
 					{
-						yah.Push(TexMan[sc.String]);
+						yah.Push(TexMan.GetTextureByName(sc.String));
 					}
 					if (sc.Crossed)
 						sc.UnGet();
@@ -481,14 +481,14 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 						if (!sc.CheckString("{"))
 						{
 							sc.MustGetString();
-							an.frames.Push(TexMan[sc.String]);
+							an.frames.Push(TexMan.GetTextureByName(sc.String));
 						}
 						else
 						{
 							while (!sc.CheckString("}"))
 							{
 								sc.MustGetString();
-								an.frames.Push(TexMan[sc.String]);
+								an.frames.Push(TexMan.GetTextureByName(sc.String));
 							}
 						}
 						an.ctr = -1;
@@ -503,7 +503,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 						an.loc.y = sc.Number;
 						sc.MustGetString();
 						an.frames.Reserve(1);	// allocate exactly one element
-						an.frames[0] = TexMan[sc.String];
+						an.frames[0] = TexMan.GetTextureByName(sc.String);
 						anims.Push(an);
 						break;
 

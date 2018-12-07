@@ -817,7 +817,7 @@ void DBaseStatusBar::RefreshBackground () const
 
 		if (setblocks >= 10)
 		{
-			FTexture *p = TexMan[gameinfo.Border.b];
+			FTexture *p = TexMan.GetTextureByName(gameinfo.Border.b);
 			if (p != NULL)
 			{
 				screen->FlatFill(0, y, x, y + p->GetDisplayHeight(), p, true);

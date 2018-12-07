@@ -71,7 +71,7 @@ Class ArtiTomeOfPower : PowerupGiver
 		Playerinfo p = Owner.player;
 		if (p && p.morphTics && (p.MorphStyle & MRF_UNDOBYTOMEOFPOWER))
 		{ // Attempt to undo chicken
-			if (!p.UndoPlayerMorph (p, MRF_UNDOBYTOMEOFPOWER))
+			if (!p.mo.UndoPlayerMorph (p, MRF_UNDOBYTOMEOFPOWER))
 			{ // Failed
 				if (!(p.MorphStyle & MRF_FAILNOTELEFRAG))
 				{

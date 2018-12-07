@@ -1,0 +1,2625 @@
+//-----------------------------------------------------------------------------
+//
+// Copyright 2016-2018 Christoph Oelckers
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
+//
+// VM thunks for internal functions.
+//
+// Important note about this file: Since everything in here is supposed to be called
+// from JIT-compiled VM code it needs to be very careful about calling conventions.
+// As a result none of the integer sized struct types may be used as function
+// arguments, because current C++ calling conventions require them to be passed
+// by reference. The JIT code, however will pass them by value so any direct native function
+// taking such an argument needs to receive it as a naked int.
+//
+//-----------------------------------------------------------------------------
+
+#include "vm.h"
+#include "r_defs.h"
+#include "g_levellocals.h"
+#include "s_sound.h"
+#include "p_local.h"
+#include "v_font.h"
+#include "gstrings.h"
+#include "a_keys.h"
+#include "sbar.h"
+#include "doomstat.h"
+#include "p_acs.h"
+#include "a_pickups.h"
+#include "a_specialspot.h"
+#include "actorptrselect.h"
+#include "a_weapons.h"
+#include "d_player.h"
+#include "p_setup.h"
+#include "i_music.h"
+
+DVector2 AM_GetPosition();
+int Net_GetLatency(int *ld, int *ad);
+void PrintPickupMessage(bool localview, const FString &str);
+
+
+//=====================================================================================
+//
+// FString exports
+//
+//=====================================================================================
+
+static void LocalizeString(const FString &label, bool prefixed, FString *result)
+{
+	if (!prefixed) *result = GStrings(label);
+	else if (label[0] != '$') *result = label;
+	else *result = GStrings(&label[1]);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringTable, Localize, LocalizeString)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(label);
+	PARAM_BOOL(prefixed);
+	FString result;
+	LocalizeString(label, prefixed, &result);
+	ACTION_RETURN_STRING(result);
+}
+
+static void StringReplace(FString *self, const FString &s1, const FString &s2)
+{
+	self->Substitute(s1, s2);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Replace, StringReplace)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_STRING(s1);
+	PARAM_STRING(s2);
+	self->Substitute(s1, s2);
+	return 0;
+}
+
+static void StringMid(FString *self, unsigned pos, unsigned len, FString *result)
+{
+	*result = self->Mid(pos, len);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Mid, StringMid)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_UINT(pos);
+	PARAM_UINT(len);
+	FString s = self->Mid(pos, len);
+	ACTION_RETURN_STRING(s);
+}
+
+static void StringLeft(FString *self, unsigned len, FString *result)
+{
+	*result = self->Left(len);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Left, StringLeft)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_UINT(len);
+	FString s = self->Left(len);
+	ACTION_RETURN_STRING(s);
+}
+
+static void StringTruncate(FString *self, unsigned len)
+{
+	self->Truncate(len);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Truncate, StringTruncate)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_UINT(len);
+	self->Truncate(len);
+	return 0;
+}
+
+static void StringRemove(FString *self, unsigned index, unsigned remlen)
+{
+	self->Remove(index, remlen);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Remove, StringRemove)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_UINT(index);
+	PARAM_UINT(remlen);
+	self->Remove(index, remlen);
+	return 0;
+}
+
+static void StringCharAt(FString *self, int pos, FString *result)
+{
+	if ((unsigned)pos >= self->Len()) *result = "";
+	else *result = FString((*self)[pos]);
+}
+// CharAt and CharCodeAt is how JS does it, and JS is similar here in that it doesn't have char type as int.
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharAt, StringCharAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT(pos);
+	FString result;
+	StringCharAt(self, pos, &result);
+	ACTION_RETURN_STRING(result);
+}
+
+static int StringCharCodeAt(FString *self, int pos)
+{
+	if ((unsigned)pos >= self->Len()) return 0;
+	else return (*self)[pos];
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharCodeAt, StringCharCodeAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT(pos);
+	ACTION_RETURN_INT(StringCharCodeAt(self, pos));
+}
+
+static void StringFilter(FString *self, FString *result)
+{
+	*result = strbin1(*self);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Filter, StringFilter)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	ACTION_RETURN_STRING(strbin1(*self));
+}
+
+static int StringIndexOf(FString *self, const FString &substr, int startIndex)
+{
+	return self->IndexOf(substr, startIndex);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, IndexOf, StringIndexOf)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_STRING(substr);
+	PARAM_INT(startIndex);
+	ACTION_RETURN_INT(self->IndexOf(substr, startIndex));
+}
+
+static int StringLastIndexOf(FString *self, const FString &substr, int endIndex)
+{
+	return self->LastIndexOfBroken(substr, endIndex);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, LastIndexOf, StringLastIndexOf)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_STRING(substr);
+	PARAM_INT(endIndex);
+	ACTION_RETURN_INT(self->LastIndexOfBroken(substr, endIndex));
+}
+
+static int StringRightIndexOf(FString *self, const FString &substr, int endIndex)
+{
+	return self->LastIndexOf(substr, endIndex);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, RightIndexOf, StringRightIndexOf)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_STRING(substr);
+	PARAM_INT(endIndex);
+	ACTION_RETURN_INT(self->LastIndexOf(substr, endIndex));
+}
+
+static void StringToUpper(FString *self)
+{
+	self->ToUpper();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToUpper, StringToUpper)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	self->ToUpper();
+	return 0;
+}
+
+static void StringToLower(FString *self)
+{
+	self->ToLower();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToLower, StringToLower)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	self->ToLower();
+	return 0;
+}
+
+static int StringToInt(FString *self, int base)
+{
+	return (int)self->ToLong(base);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToInt, StringToInt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT(base);
+	ACTION_RETURN_INT(self->ToLong(base));
+}
+
+static double StringToDbl(FString *self)
+{
+	return self->ToDouble();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToDouble, StringToDbl)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	ACTION_RETURN_FLOAT(self->ToDouble());
+}
+
+static void StringSplit(FString *self, TArray<FString> *tokens, const FString &delimiter, int keepEmpty)
+{
+	self->Split(*tokens, delimiter, static_cast<FString::EmptyTokenType>(keepEmpty));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Split, StringSplit)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_POINTER(tokens, TArray<FString>);
+	PARAM_STRING(delimiter);
+	PARAM_INT(keepEmpty);
+	StringSplit(self, tokens, delimiter, keepEmpty);
+	return 0;
+}
+
+//=====================================================================================
+//
+// sector_t exports
+//
+//=====================================================================================
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindLowestFloorSurrounding, FindLowestFloorSurrounding)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = FindLowestFloorSurrounding(self, &v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v);
+	return numret;
+}
+
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindHighestFloorSurrounding, FindHighestFloorSurrounding)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = FindHighestFloorSurrounding(self, &v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v);
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindNextHighestFloor, FindNextHighestFloor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = FindNextHighestFloor(self, &v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v);
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindNextLowestFloor, FindNextLowestFloor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = FindNextLowestFloor(self, &v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v);
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindNextLowestCeiling, FindNextLowestCeiling)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = FindNextLowestCeiling(self, &v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v);
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindNextHighestCeiling, FindNextHighestCeiling)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = FindNextHighestCeiling(self, &v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v);
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindLowestCeilingSurrounding, FindLowestCeilingSurrounding)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = FindLowestCeilingSurrounding(self, &v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v);
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindHighestCeilingSurrounding, FindHighestCeilingSurrounding)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = FindHighestCeilingSurrounding(self, &v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v);
+	return numret;
+}
+
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindMinSurroundingLight, FindMinSurroundingLight)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(min);
+	auto h = FindMinSurroundingLight(self, min);
+	ACTION_RETURN_INT(h);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindHighestFloorPoint, FindHighestFloorPoint)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = FindHighestFloorPoint(self, &v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v);
+	return numret;
+}
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindLowestCeilingPoint, FindLowestCeilingPoint)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	vertex_t *v;
+	double h = FindLowestCeilingPoint(self, &v);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(v);
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, HighestCeilingAt, HighestCeilingAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	sector_t *s;
+	double h = HighestCeilingAt(self, x, y, &s);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(s);
+	return numret;
+}
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, LowestFloorAt, LowestFloorAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	sector_t *s;
+	double h = LowestFloorAt(self, x, y, &s);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetPointer(s);
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, NextHighestCeilingAt, NextHighestCeilingAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(bottomz);
+	PARAM_FLOAT(topz);
+	PARAM_INT(flags);
+	sector_t *resultsec;
+	F3DFloor *resultff;
+	double resultheight = NextHighestCeilingAt(self, x, y, bottomz, topz, flags, &resultsec, &resultff);
+
+	if (numret > 2) ret[2].SetPointer(resultff);
+	if (numret > 1) ret[1].SetPointer(resultsec);
+	if (numret > 0) ret[0].SetFloat(resultheight);
+	return numret;
+}
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, NextLowestFloorAt, NextLowestFloorAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_INT(flags);
+	PARAM_FLOAT(steph);
+	sector_t *resultsec;
+	F3DFloor *resultff;
+	double resultheight = NextLowestFloorAt(self, x, y, z, flags, steph, &resultsec, &resultff);
+
+	if (numret > 2) ret[2].SetPointer(resultff);
+	if (numret > 1) ret[1].SetPointer(resultsec);
+	if (numret > 0) ret[0].SetFloat(resultheight);
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetFriction, GetFriction)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(plane);
+	double mf;
+	double h = self->GetFriction(plane, &mf);
+	if (numret > 0) ret[0].SetFloat(h);
+	if (numret > 1) ret[1].SetFloat(mf);
+	return numret;
+}
+
+
+static void GetPortalDisplacement(sector_t *sec, int plane, DVector2 *result)
+{
+	*result = sec->GetPortalDisplacement(plane);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetPortalDisplacement, GetPortalDisplacement)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(pos);
+	ACTION_RETURN_VEC2(self->GetPortalDisplacement(pos));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindShortestTextureAround, FindShortestTextureAround)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	ACTION_RETURN_FLOAT(FindShortestTextureAround(self));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindShortestUpperAround, FindShortestUpperAround)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	ACTION_RETURN_FLOAT(FindShortestUpperAround(self));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindModelFloorSector, FindModelFloorSector)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_FLOAT(fdh);
+	auto h = FindModelFloorSector(self, fdh);
+	ACTION_RETURN_POINTER(h);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, FindModelCeilingSector, FindModelCeilingSector)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_FLOAT(fdh);
+	auto h = FindModelCeilingSector(self, fdh);
+	ACTION_RETURN_POINTER(h);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetColor, SetColor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_COLOR(color);
+	PARAM_INT(desat);
+	SetColor(self, color, desat);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetFade, SetFade)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_COLOR(fade);
+	SetFade(self, fade);
+	return 0;
+}
+
+static void SetSpecialColor(sector_t *self, int num, int color)
+{
+	if (num >= 0 && num < 5)
+	{
+		self->SetSpecialColor(num, color);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetSpecialColor, SetSpecialColor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(num);
+	PARAM_COLOR(color);
+	SetSpecialColor(self, num, color);
+	return 0;
+}
+
+static void SetFogDensity(sector_t *self, int dens)
+{
+	self->Colormap.FogDensity = dens;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetFogDensity, SetFogDensity)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(dens);
+	self->Colormap.FogDensity = dens;
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, PlaneMoving, PlaneMoving)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(pos);
+	ACTION_RETURN_BOOL(PlaneMoving(self, pos));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetFloorLight, GetFloorLight)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	ACTION_RETURN_INT(self->GetFloorLight());
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetCeilingLight, GetCeilingLight)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	ACTION_RETURN_INT(self->GetCeilingLight());
+}
+
+static sector_t *GetHeightSec(sector_t *self)
+{
+	return self->GetHeightSec();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetHeightSec, GetHeightSec)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	ACTION_RETURN_POINTER(self->GetHeightSec());
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetSpecial, GetSpecial)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_POINTER(spec, secspecial_t);
+	GetSpecial(self, spec);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetSpecial, SetSpecial)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_POINTER(spec, secspecial_t);
+	SetSpecial(self, spec);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, TransferSpecial, TransferSpecial)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_POINTER(spec, sector_t);
+	TransferSpecial(self, spec);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetTerrain, GetTerrain)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(pos);
+	ACTION_RETURN_INT(GetTerrain(self, pos));
+}
+
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, CheckPortalPlane, CheckPortalPlane)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(plane);
+	self->CheckPortalPlane(plane);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
+ {
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	RemoveForceField(self);
+	return 0;
+ }
+
+  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, AdjustFloorClip, AdjustFloorClip)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 AdjustFloorClip(self);
+	 return 0;
+ }
+
+  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, PointInSector, P_PointInSectorXY)
+ {
+	 PARAM_PROLOGUE;
+	 PARAM_FLOAT(x);
+	 PARAM_FLOAT(y);
+	 ACTION_RETURN_POINTER(P_PointInSector(x, y));
+ }
+
+  static void SetXOffset(sector_t *self, int pos, double o)
+  {
+	  self->SetXOffset(pos, o);
+  }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_FLOAT(o);
+	 self->SetXOffset(pos, o);
+	 return 0;
+ }
+
+ static void AddXOffset(sector_t *self, int pos, double o)
+ {
+	 self->AddXOffset(pos, o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, AddXOffset, AddXOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_FLOAT(o);
+	 self->AddXOffset(pos, o);
+	 return 0;
+ }
+
+ static double GetXOffset(sector_t *self, int pos)
+ {
+	 return self->GetXOffset(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetXOffset, GetXOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_FLOAT(self->GetXOffset(pos));
+ }
+
+ static void SetYOffset(sector_t *self, int pos, double o)
+ {
+	 self->SetYOffset(pos, o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetYOffset, SetYOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_FLOAT(o);
+	 self->SetXOffset(pos, o);
+	 return 0;
+ }
+
+ static void AddYOffset(sector_t *self, int pos, double o)
+ {
+	 self->AddYOffset(pos, o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, AddYOffset, AddYOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_FLOAT(o);
+	 self->AddYOffset(pos, o);
+	 return 0;
+ }
+
+ static double GetYOffset(sector_t *self, int pos)
+ {
+	 return self->GetYOffset(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetYOffset, GetYOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_BOOL(addbase);
+	 ACTION_RETURN_FLOAT(self->GetYOffset(pos, addbase));
+ }
+
+ static void SetXScale(sector_t *self, int pos, double o)
+ {
+	 self->SetXScale(pos, o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXScale, SetXScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_FLOAT(o);
+	 self->SetXScale(pos, o);
+	 return 0;
+ }
+
+ static double GetXScale(sector_t *self, int pos)
+ {
+	 return self->GetXScale(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetXScale, GetXScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_FLOAT(self->GetXScale(pos));
+ }
+
+ static void SetYScale(sector_t *self, int pos, double o)
+ {
+	 self->SetYScale(pos, o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetYScale, SetYScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_FLOAT(o);
+	 self->SetYScale(pos, o);
+	 return 0;
+ }
+
+ static double GetYScale(sector_t *self, int pos)
+ {
+	 return self->GetYScale(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetYScale, GetYScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_FLOAT(self->GetYScale(pos));
+ }
+
+ static void SetAngle(sector_t *self, int pos, double o)
+ {
+	 self->SetAngle(pos, o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetAngle, SetAngle)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_ANGLE(o);
+	 self->SetAngle(pos, o);
+	 return 0;
+ }
+
+ static double GetAngle(sector_t *self, int pos, bool addbase)
+ {
+	 return self->GetAngle(pos, addbase).Degrees;
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetAngle, GetAngle)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_BOOL(addbase);
+	 ACTION_RETURN_FLOAT(self->GetAngle(pos, addbase).Degrees);
+ }
+
+ static void SetBase(sector_t *self, int pos, double o, double a)
+ {
+	 self->SetBase(pos, o, a);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetBase, SetBase)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_FLOAT(o);
+	 PARAM_ANGLE(a);
+	 self->SetBase(pos, o, a);
+	 return 0;
+ }
+
+ static void SetAlpha(sector_t *self, int pos, double o)
+ {
+	 self->SetAlpha(pos, o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetAlpha, SetAlpha)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_FLOAT(o);
+	 self->SetAlpha(pos, o);
+	 return 0;
+ }
+
+ static double GetAlpha(sector_t *self, int pos)
+ {
+	 return self->GetAlpha(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetAlpha, GetAlpha)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_FLOAT(self->GetAlpha(pos));
+ }
+
+ static int GetFlags(sector_t *self, int pos)
+ {
+	 return self->GetFlags(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetFlags, GetFlags)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_INT(self->GetFlags(pos));
+ }
+
+ static int GetVisFlags(sector_t *self, int pos)
+ {
+	 return self->GetVisFlags(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetVisFlags, GetVisFlags)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_INT(self->GetVisFlags(pos));
+ }
+
+ static void ChangeFlags(sector_t *self, int pos, int a, int o)
+ {
+	 self->ChangeFlags(pos, a, o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, ChangeFlags, ChangeFlags)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_INT(a);
+	 PARAM_INT(o);
+	 self->ChangeFlags(pos, a, o);
+	 return 0;
+ }
+
+ static void SetPlaneLight(sector_t *self, int pos, int o)
+ {
+	 self->SetPlaneLight(pos, o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetPlaneLight, SetPlaneLight)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_INT(o);
+	 self->SetPlaneLight(pos, o);
+	 return 0;
+ }
+
+ static int GetPlaneLight(sector_t *self, int pos)
+ {
+	 return self->GetPlaneLight(pos);
+ }
+
+  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetPlaneLight, GetPlaneLight)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_INT(self->GetPlaneLight(pos));
+ }
+
+  static void SetTexture(sector_t *self, int pos, int o, bool adj)
+  {
+	  self->SetTexture(pos, FSetTextureID(o), adj);
+  }
+
+  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetTexture, SetTexture)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_INT(o);
+	 PARAM_BOOL(adj);
+	 self->SetTexture(pos, FSetTextureID(o), adj);
+	 return 0;
+ }
+
+  static int GetSectorTexture(sector_t *self, int pos)
+  {
+	  return self->GetTexture(pos).GetIndex();
+  }
+
+  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetTexture, GetSectorTexture)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_INT(self->GetTexture(pos).GetIndex());
+ }
+
+  static void SetPlaneTexZ(sector_t *self, int pos, double o, bool)
+  {
+	  self->SetPlaneTexZ(pos, o, true);	// not setting 'dirty' here is a guaranteed cause for problems.
+  }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetPlaneTexZ, SetPlaneTexZ)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_FLOAT(o);
+	 PARAM_BOOL(dirty);
+	 self->SetPlaneTexZ(pos, o, true);	// not setting 'dirty' here is a guaranteed cause for problems.
+	 return 0;
+ }
+
+ static double GetPlaneTexZ(sector_t *self, int pos)
+ {
+	 return self->GetPlaneTexZ(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetPlaneTexZ, GetPlaneTexZ)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_FLOAT(self->GetPlaneTexZ(pos));
+ }
+
+ static void SetLightLevel(sector_t *self, int o)
+ {
+	 self->SetLightLevel(o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetLightLevel, SetLightLevel)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(o);
+	 self->SetLightLevel(o);
+	 return 0;
+ }
+
+ static void ChangeLightLevel(sector_t *self, int o)
+ {
+	 self->ChangeLightLevel(o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, ChangeLightLevel, ChangeLightLevel)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(o);
+	 self->ChangeLightLevel(o);
+	 return 0;
+ }
+
+ static int GetLightLevel(sector_t *self)
+ {
+	 return self->GetLightLevel();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetLightLevel, GetLightLevel)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 ACTION_RETURN_INT(self->GetLightLevel());
+ }
+
+ static int PortalBlocksView(sector_t *self, int pos)
+ {
+	 return self->PortalBlocksView(pos);
+ }
+ 
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, PortalBlocksView, PortalBlocksView)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_BOOL(self->PortalBlocksView(pos));
+ }
+
+ static int PortalBlocksSight(sector_t *self, int pos)
+ {
+	 return self->PortalBlocksSight(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, PortalBlocksSight, PortalBlocksSight)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_BOOL(self->PortalBlocksSight(pos));
+ }
+
+ static int PortalBlocksMovement(sector_t *self, int pos)
+ {
+	 return self->PortalBlocksMovement(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, PortalBlocksMovement, PortalBlocksMovement)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_BOOL(self->PortalBlocksMovement(pos));
+ }
+
+ static int PortalBlocksSound(sector_t *self, int pos)
+ {
+	 return self->PortalBlocksSound(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, PortalBlocksSound, PortalBlocksSound)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_BOOL(self->PortalBlocksSound(pos));
+ }
+
+ static int PortalIsLinked(sector_t *self, int pos)
+ {
+	 return self->PortalIsLinked(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, PortalIsLinked, PortalIsLinked)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_BOOL(self->PortalIsLinked(pos));
+ }
+
+ static void ClearPortal(sector_t *self, int pos)
+ {
+	 self->ClearPortal(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, ClearPortal, ClearPortal)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 self->ClearPortal(pos);
+	 return 0;
+ }
+
+ static double GetPortalPlaneZ(sector_t *self, int pos)
+ {
+	 return self->GetPortalPlaneZ(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetPortalPlaneZ, GetPortalPlaneZ)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_FLOAT(self->GetPortalPlaneZ(pos));
+ }
+
+ static int GetPortalType(sector_t *self, int pos)
+ {
+	 return self->GetPortalType(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetPortalType, GetPortalType)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_INT(self->GetPortalType(pos));
+ }
+
+ static int GetOppositePortalGroup(sector_t *self, int pos)
+ {
+	 return self->GetOppositePortalGroup(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetOppositePortalGroup, GetOppositePortalGroup)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_INT(self->GetOppositePortalGroup(pos));
+ }
+
+ static double CenterFloor(sector_t *self)
+ {
+	 return self->CenterFloor();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, CenterFloor, CenterFloor)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 ACTION_RETURN_FLOAT(self->CenterFloor());
+ }
+
+ static double CenterCeiling(sector_t *self)
+ {
+	 return self->CenterCeiling();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, CenterCeiling, CenterCeiling)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 ACTION_RETURN_FLOAT(self->CenterCeiling());
+ }
+
+ static int SectorIndex(sector_t *self)
+ {
+	 unsigned ndx = self->Index();
+	 if (ndx >= level.sectors.Size()) return -1;	// This must not throw because it is the only means to check that the given pointer is valid.
+	 return ndx;
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, Index, SectorIndex)
+ {
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	ACTION_RETURN_INT(SectorIndex(self));
+ }
+
+ static void SetEnvironmentID(sector_t *self, int envnum)
+ {
+	 level.Zones[self->ZoneNumber].Environment = S_FindEnvironment(envnum);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetEnvironmentID, SetEnvironmentID)
+ {
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(envnum);
+	SetEnvironmentID(self, envnum);
+	return 0;
+ }
+
+ static void SetEnvironment(sector_t *self, const FString &env)
+ {
+	 level.Zones[self->ZoneNumber].Environment = S_FindEnvironment(env);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetEnvironment, SetEnvironment)
+ {
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_STRING(env);
+	SetEnvironment(self, env);
+	return 0;
+ }
+
+ static double GetGlowHeight(sector_t *self, int pos)
+ {
+	 return self->GetGlowHeight(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetGlowHeight, GetGlowHeight)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_FLOAT(self->GetGlowHeight(pos));
+ }
+
+ static double GetGlowColor(sector_t *self, int pos)
+ {
+	 return self->GetGlowColor(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetGlowColor, GetGlowColor)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_INT(self->GetGlowColor(pos));
+ }
+
+ static void SetGlowHeight(sector_t *self, int pos, double o)
+ {
+	 self->SetGlowHeight(pos, float(o));
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetGlowHeight, SetGlowHeight)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_FLOAT(o);
+	 self->SetGlowHeight(pos, float(o));
+	 return 0;
+ }
+
+ static void SetGlowColor(sector_t *self, int pos, int o)
+ {
+	 self->SetGlowColor(pos, o);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetGlowColor, SetGlowColor)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_COLOR(o);
+	 self->SetGlowColor(pos, o);
+	 return 0;
+ }
+
+ //===========================================================================
+ //
+ //  line_t exports
+ //
+ //===========================================================================
+
+ static int isLinePortal(line_t *self)
+ {
+	 return self->isLinePortal();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Line, isLinePortal, isLinePortal)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_BOOL(self->isLinePortal());
+ }
+
+ static int isVisualPortal(line_t *self)
+ {
+	 return self->isVisualPortal();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Line, isVisualPortal, isVisualPortal)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_BOOL(self->isVisualPortal());
+ }
+
+ static line_t *getPortalDestination(line_t *self)
+ {
+	 return self->getPortalDestination();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Line, getPortalDestination, getPortalDestination)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_POINTER(self->getPortalDestination());
+ }
+
+ static int getPortalAlignment(line_t *self)
+ {
+	 return self->getPortalAlignment();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Line, getPortalAlignment, getPortalAlignment)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_INT(self->getPortalAlignment());
+ }
+
+ static int LineIndex(line_t *self)
+ {
+	 unsigned ndx = self->Index();
+	 if (ndx >= level.lines.Size())
+	 {
+		 return -1;
+	 }
+	 return ndx;
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Line, Index, LineIndex)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_INT(LineIndex(self));
+ }
+
+ //===========================================================================
+ //
+ // side_t exports 
+ //
+ //===========================================================================
+
+ static int GetSideTexture(side_t *self, int which)
+ {
+	return self->GetTexture(which).GetIndex();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, GetTexture, GetSideTexture)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 ACTION_RETURN_INT(self->GetTexture(which).GetIndex());
+ }
+
+ static void SetSideTexture(side_t *self, int which, int tex)
+ {
+	 self->SetTexture(which, FSetTextureID(tex));
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, SetTexture, SetSideTexture)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_INT(tex);
+	 self->SetTexture(which, FSetTextureID(tex));
+	 return 0;
+ }
+
+ static void SetTextureXOffset(side_t *self, int which, double ofs)
+ {
+	 self->SetTextureXOffset(which, ofs);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, SetTextureXOffset, SetTextureXOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->SetTextureXOffset(which, ofs);
+	 return 0;
+ }
+
+ static void AddTextureXOffset(side_t *self, int which, double ofs)
+ {
+	 self->AddTextureXOffset(which, ofs);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, AddTextureXOffset, AddTextureXOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->AddTextureXOffset(which, ofs);
+	 return 0;
+ }
+
+ static double GetTextureXOffset(side_t *self, int which)
+ {
+	 return self->GetTextureXOffset(which);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, GetTextureXOffset, GetTextureXOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 ACTION_RETURN_FLOAT(self->GetTextureXOffset(which));
+ }
+
+ static void SetTextureYOffset(side_t *self, int which, double ofs)
+ {
+	 self->SetTextureYOffset(which, ofs);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, SetTextureYOffset, SetTextureYOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->SetTextureYOffset(which, ofs);
+	 return 0;
+ }
+
+ static void AddTextureYOffset(side_t *self, int which, double ofs)
+ {
+	 self->AddTextureYOffset(which, ofs);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, AddTextureYOffset, AddTextureYOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->AddTextureYOffset(which, ofs);
+	 return 0;
+ }
+
+ static double GetTextureYOffset(side_t *self, int which)
+ {
+	 return self->GetTextureYOffset(which);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, GetTextureYOffset, GetTextureYOffset)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 ACTION_RETURN_FLOAT(self->GetTextureYOffset(which));
+ }
+
+ static void SetTextureXScale(side_t *self, int which, double ofs)
+ {
+	 self->SetTextureXScale(which, ofs);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, SetTextureXScale, SetTextureXScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->SetTextureXScale(which, ofs);
+	 return 0;
+ }
+
+ static void MultiplyTextureXScale(side_t *self, int which, double ofs)
+ {
+	 self->MultiplyTextureXScale(which, ofs);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, MultiplyTextureXScale, MultiplyTextureXScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->MultiplyTextureXScale(which, ofs);
+	 return 0;
+ }
+
+ static double GetTextureXScale(side_t *self, int which)
+ {
+	 return self->GetTextureXScale(which);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, GetTextureXScale, GetTextureXScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 ACTION_RETURN_FLOAT(self->GetTextureXScale(which));
+ }
+
+ static void SetTextureYScale(side_t *self, int which, double ofs)
+ {
+	 self->SetTextureYScale(which, ofs);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, SetTextureYScale, SetTextureYScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->SetTextureYScale(which, ofs);
+	 return 0;
+ }
+
+ static void MultiplyTextureYScale(side_t *self, int which, double ofs)
+ {
+	 self->MultiplyTextureYScale(which, ofs);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, MultiplyTextureYScale, MultiplyTextureYScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 PARAM_FLOAT(ofs);
+	 self->MultiplyTextureYScale(which, ofs);
+	 return 0;
+ }
+
+ static double GetTextureYScale(side_t *self, int which)
+ {
+	 return self->GetTextureYScale(which);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, GetTextureYScale, GetTextureYScale)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(which);
+	 ACTION_RETURN_FLOAT(self->GetTextureYScale(which));
+ }
+
+ static vertex_t *GetSideV1(side_t *self)
+ {
+	 return self->V1();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, V1, GetSideV1)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 ACTION_RETURN_POINTER(self->V1());
+ }
+
+ static vertex_t *GetSideV2(side_t *self)
+ {
+	 return self->V2();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, V2, GetSideV2)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 ACTION_RETURN_POINTER(self->V2());
+ }
+
+ static void SetSideSpecialColor(side_t *self, int tier, int position, int color)
+ {
+	 if (tier >= 0 && tier < 3 && position >= 0 && position < 2)
+	 {
+		 self->SetSpecialColor(tier, position, color);
+	 }
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, SetSpecialColor, SetSideSpecialColor)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(tier);
+	 PARAM_INT(position);
+	 PARAM_COLOR(color);
+	 SetSideSpecialColor(self, tier, position, color);
+	 return 0;
+ }
+
+ static int SideIndex(side_t *self)
+ {
+	 unsigned ndx = self->Index();
+	 if (ndx >= level.sides.Size())
+	 {
+		 return -1;
+	 }
+	 return ndx;
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, Index, SideIndex)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 ACTION_RETURN_INT(SideIndex(self));
+ }
+
+ //=====================================================================================
+//
+ // vertex_t exports
+//
+//=====================================================================================
+
+ static int VertexIndex(vertex_t *self)
+ {
+	 unsigned ndx = self->Index();
+	 if (ndx >= level.vertexes.Size())
+	 {
+		 return -1;
+	 }
+	 return ndx;
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Vertex, Index, VertexIndex)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(vertex_t);
+	 ACTION_RETURN_INT(VertexIndex(self));
+ }
+
+ //=====================================================================================
+//
+// TexMan exports
+//
+//=====================================================================================
+
+ // This is needed to convert the strings to char pointers.
+ static void ReplaceTextures(const FString &from, const FString &to, int flags)
+ {
+	 P_ReplaceTextures(from, to, flags);
+ }
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, ReplaceTextures, ReplaceTextures)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(from);
+	PARAM_STRING(to);
+	PARAM_INT(flags);
+	P_ReplaceTextures(from, to, flags);
+	return 0;
+}
+
+//=====================================================================================
+//
+// secplane_t exports
+//
+//=====================================================================================
+
+static int isSlope(secplane_t *self)
+{
+	return !self->normal.XY().isZero();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Secplane, isSlope, isSlope)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
+	ACTION_RETURN_BOOL(!self->normal.XY().isZero());
+}
+
+static int PointOnSide(const secplane_t *self, double x, double y, double z)
+{
+	return self->PointOnSide(DVector3(x, y, z));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Secplane, PointOnSide, PointOnSide)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	ACTION_RETURN_INT(self->PointOnSide(DVector3(x, y, z)));
+}
+
+static double ZatPoint(const secplane_t *self, double x, double y)
+{
+	return self->ZatPoint(x, y);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Secplane, ZatPoint, ZatPoint)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	ACTION_RETURN_FLOAT(self->ZatPoint(x, y));
+}
+
+static double ZatPointDist(const secplane_t *self, double x, double y, double d)
+{
+	return (d + self->normal.X*x + self->normal.Y*y) * self->negiC;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Secplane, ZatPointDist, ZatPointDist)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(d);
+	ACTION_RETURN_FLOAT(ZatPointDist(self, x, y, d));
+}
+
+static int isPlaneEqual(const secplane_t *self, const secplane_t *other)
+{
+	return *self == *other;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Secplane, isEqual, isPlaneEqual)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
+	PARAM_POINTER(other, secplane_t);
+	ACTION_RETURN_BOOL(*self == *other);
+}
+
+static void ChangeHeight(secplane_t *self, double hdiff)
+{
+	self->ChangeHeight(hdiff);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Secplane, ChangeHeight, ChangeHeight)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
+	PARAM_FLOAT(hdiff);
+	self->ChangeHeight(hdiff);
+	return 0;
+}
+
+static double GetChangedHeight(const secplane_t *self, double hdiff)
+{
+	return self->GetChangedHeight(hdiff);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Secplane, GetChangedHeight, GetChangedHeight)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
+	PARAM_FLOAT(hdiff);
+	ACTION_RETURN_FLOAT(self->GetChangedHeight(hdiff));
+}
+
+static double HeightDiff(const secplane_t *self, double oldd, double newd)
+{
+	if (newd != 1e37)
+	{
+		return self->HeightDiff(oldd);
+	}
+	else
+	{
+		return self->HeightDiff(oldd, newd);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Secplane, HeightDiff, HeightDiff)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
+	PARAM_FLOAT(oldd);
+	PARAM_FLOAT(newd);
+	ACTION_RETURN_FLOAT(HeightDiff(self, oldd, newd));
+}
+
+static double PointToDist(const secplane_t *self, double x, double y, double z)
+{
+	return self->PointToDist(DVector2(x, y), z);
+}
+
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Secplane, PointToDist, PointToDist)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	ACTION_RETURN_FLOAT(self->PointToDist(DVector2(x, y), z));
+}
+
+//=====================================================================================
+//
+// FFont exports
+//
+//=====================================================================================
+
+static FFont *GetFont(int name)
+{
+	return V_GetFont(FName(ENamedName(name)).GetChars());
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetFont, GetFont)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(name);
+	ACTION_RETURN_POINTER(GetFont(name));
+}
+
+static FFont *FindFont(int name)
+{
+	return FFont::FindFont(FName(ENamedName(name)));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, FindFont, FindFont)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(name);
+	ACTION_RETURN_POINTER(FFont::FindFont(name));
+}
+
+static int GetCharWidth(FFont *font, int code)
+{
+	return font->GetCharWidth(code);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetCharWidth, GetCharWidth)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	PARAM_INT(code);
+	ACTION_RETURN_INT(self->GetCharWidth(code));
+}
+
+static int GetHeight(FFont *font)
+{
+	return font->GetHeight();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetHeight, GetHeight)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	ACTION_RETURN_INT(self->GetHeight());
+}
+
+double GetBottomAlignOffset(FFont *font, int c);
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetBottomAlignOffset, GetBottomAlignOffset)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	PARAM_INT(code);
+	ACTION_RETURN_FLOAT(GetBottomAlignOffset(self, code));
+}
+
+static int StringWidth(FFont *font, const FString &str)
+{
+	const char *txt = str[0] == '$' ? GStrings(&str[1]) : str.GetChars();
+	return font->StringWidth(txt);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, StringWidth, StringWidth)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	PARAM_STRING(str);
+	ACTION_RETURN_INT(StringWidth(self, str));
+}
+
+static int FindFontColor(int name)
+{
+	return V_FindFontColor(ENamedName(name));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, FindFontColor, FindFontColor)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(code);
+	ACTION_RETURN_INT((int)V_FindFontColor(code));
+}
+
+static void GetCursor(FFont *font, FString *result)
+{
+	*result = font->GetCursor();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetCursor, GetCursor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	ACTION_RETURN_STRING(FString(self->GetCursor()));
+}
+
+//=====================================================================================
+//
+// WeaponSlots exports
+//
+//=====================================================================================
+
+static int LocateWeapon(FWeaponSlots *self, PClassActor *weap, int *pslot, int *pindex)
+{
+	return self->LocateWeapon(weap, pslot, pindex);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FWeaponSlots, LocateWeapon, LocateWeapon)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FWeaponSlots);
+	PARAM_CLASS(weap, AActor);
+	int slot = 0, index = 0;
+	bool retv = self->LocateWeapon(weap, &slot, &index);
+	if (numret >= 1) ret[0].SetInt(retv);
+	if (numret >= 2) ret[1].SetInt(slot);
+	if (numret >= 3) ret[2].SetInt(index);
+	return MIN(numret, 3);
+}
+
+static PClassActor *GetWeapon(FWeaponSlots *self, int slot, int index)
+{
+	return self->GetWeapon(slot, index);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FWeaponSlots, GetWeapon, GetWeapon)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FWeaponSlots);
+	PARAM_INT(slot);
+	PARAM_INT(index);
+	ACTION_RETURN_POINTER(self->GetWeapon(slot, index));
+	return 1;
+}
+
+static int SlotSize(FWeaponSlots *self, int slot)
+{
+	return self->SlotSize(slot);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FWeaponSlots, SlotSize, SlotSize)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FWeaponSlots);
+	PARAM_INT(slot);
+	ACTION_RETURN_INT(self->SlotSize(slot));
+	return 1;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FWeaponSlots, SetupWeaponSlots, FWeaponSlots::SetupWeaponSlots)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(pawn, APlayerPawn);
+	FWeaponSlots::SetupWeaponSlots(pawn);
+	return 0;
+}
+
+//=====================================================================================
+//
+// SpotState exports
+//
+//=====================================================================================
+
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSpotState, GetSpotState, DSpotState::GetSpotState)
+{
+	PARAM_PROLOGUE;
+	PARAM_BOOL(create);
+	ACTION_RETURN_OBJECT(DSpotState::GetSpotState(create));
+}
+
+static void AddSpot(DSpotState *state, AActor *spot)
+{
+	state->AddSpot(spot);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSpotState, AddSpot, AddSpot)
+{
+	PARAM_SELF_PROLOGUE(DSpotState);
+	PARAM_OBJECT(spot, AActor);
+	self->AddSpot(spot);
+	return 0;
+}
+
+static void RemoveSpot(DSpotState *state, AActor *spot)
+{
+	state->RemoveSpot(spot);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSpotState, RemoveSpot, RemoveSpot)
+{
+	PARAM_SELF_PROLOGUE(DSpotState);
+	PARAM_OBJECT(spot, AActor);
+	self->RemoveSpot(spot);
+	return 0;
+}
+
+static AActor *GetNextInList(DSpotState *self, PClassActor *type, int skipcounter)
+{
+	return self->GetNextInList(type, skipcounter);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSpotState, GetNextInList, GetNextInList)
+{
+	PARAM_SELF_PROLOGUE(DSpotState);
+	PARAM_CLASS(type, AActor);
+	PARAM_INT(skipcounter);
+	ACTION_RETURN_OBJECT(self->GetNextInList(type, skipcounter));
+}
+
+static AActor *GetSpotWithMinMaxDistance(DSpotState *self, PClassActor *type, double x, double y, double mindist, double maxdist)
+{
+	return self->GetSpotWithMinMaxDistance(type, x, y, mindist, maxdist);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSpotState, GetSpotWithMinMaxDistance, GetSpotWithMinMaxDistance)
+{
+	PARAM_SELF_PROLOGUE(DSpotState);
+	PARAM_CLASS(type, AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(mindist);
+	PARAM_FLOAT(maxdist);
+	ACTION_RETURN_OBJECT(self->GetSpotWithMinMaxDistance(type, x, y, mindist, maxdist));
+}
+
+static AActor *GetRandomSpot(DSpotState *self, PClassActor *type, bool onlyonce)
+{
+	return self->GetRandomSpot(type, onlyonce);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DSpotState, GetRandomSpot, GetRandomSpot)
+{
+	PARAM_SELF_PROLOGUE(DSpotState);
+	PARAM_CLASS(type, AActor);
+	PARAM_BOOL(onlyonce);
+	ACTION_RETURN_POINTER(self->GetRandomSpot(type, onlyonce));
+}
+
+//=====================================================================================
+//
+// Statusbar exports
+//
+//=====================================================================================
+
+static void SBar_SetSize(DBaseStatusBar *self, int rt, int vw, int vh, int hvw, int hvh)
+{
+	self->SetSize(rt, vw, vh, hvw, hvh);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, SetSize, SBar_SetSize)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_INT(rt);
+	PARAM_INT(vw);
+	PARAM_INT(vh);
+	PARAM_INT(hvw);
+	PARAM_INT(hvh);
+	self->SetSize(rt, vw, vh, hvw, hvh);
+	return 0;
+}
+
+static void SBar_GetHUDScale(DBaseStatusBar *self, DVector2 *result)
+{
+	*result = self->GetHUDScale();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetHUDScale, SBar_GetHUDScale)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	ACTION_RETURN_VEC2(self->GetHUDScale());
+}
+
+static void BeginStatusBar(DBaseStatusBar *self, bool fs, int w, int h, int r)
+{
+	self->BeginStatusBar(w, h, r, fs);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, BeginStatusBar, BeginStatusBar)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_BOOL(fs);
+	PARAM_INT(w);
+	PARAM_INT(h);
+	PARAM_INT(r);
+	self->BeginStatusBar(w, h, r, fs);
+	return 0;
+}
+
+static void BeginHUD(DBaseStatusBar *self, double a, bool fs, int w, int h)
+{
+	self->BeginHUD(w, h, a, fs);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, BeginHUD, BeginHUD)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_FLOAT(a);
+	PARAM_BOOL(fs);
+	PARAM_INT(w);
+	PARAM_INT(h);
+	self->BeginHUD(w, h, a, fs);
+	return 0;
+}
+
+static void UpdateScreenGeometry(DBaseStatusBar *)
+{
+	setsizeneeded = true;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, UpdateScreenGeometry, UpdateScreenGeometry)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	setsizeneeded = true;
+	return 0;
+}
+
+static void SBar_Tick(DBaseStatusBar *self)
+{
+	self->Tick();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, Tick, SBar_Tick)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	self->Tick();
+	return 0;
+}
+
+static void SBar_AttachMessage(DBaseStatusBar *self, DHUDMessageBase *msg, unsigned id, int layer)
+{
+	self->AttachMessage(msg, id, layer);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, AttachMessage, SBar_AttachMessage)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_OBJECT(msg, DHUDMessageBase);
+	PARAM_UINT(id);
+	PARAM_INT(layer);
+	self->AttachMessage(msg, id, layer);
+	return 0;
+}
+
+static void SBar_DetachMessage(DBaseStatusBar *self, DHUDMessageBase *msg)
+{
+	self->DetachMessage(msg);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, DetachMessage, SBar_DetachMessage)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_OBJECT(msg, DHUDMessageBase);
+	ACTION_RETURN_OBJECT(self->DetachMessage(msg));
+}
+
+static void SBar_DetachMessageID(DBaseStatusBar *self, unsigned id)
+{
+	self->DetachMessage(id);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, DetachMessageID, SBar_DetachMessageID)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_INT(id);
+	ACTION_RETURN_OBJECT(self->DetachMessage(id));
+}
+
+static void SBar_DetachAllMessages(DBaseStatusBar *self)
+{
+	self->DetachAllMessages();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, DetachAllMessages, SBar_DetachAllMessages)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	self->DetachAllMessages();
+	return 0;
+}
+
+static void SBar_Draw(DBaseStatusBar *self, int state, double ticFrac)
+{
+	self->Draw((EHudState)state, ticFrac);
+}
+
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, Draw, SBar_Draw)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_INT(state);
+	PARAM_FLOAT(ticFrac);
+	self->Draw((EHudState)state, ticFrac);
+	return 0;
+}
+
+static void SetMugshotState(DBaseStatusBar *self, const FString &statename, bool wait, bool reset)
+{
+	self->mugshot.SetState(statename, wait, reset);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, SetMugshotState, SetMugshotState)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_STRING(statename);
+	PARAM_BOOL(wait);
+	PARAM_BOOL(reset);
+	self->mugshot.SetState(statename, wait, reset);
+	return 0;
+}
+
+static void SBar_ScreenSizeChanged(DBaseStatusBar *self)
+{
+	self->ScreenSizeChanged();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, ScreenSizeChanged, SBar_ScreenSizeChanged)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	self->ScreenSizeChanged();
+	return 0;
+}
+
+static double StatusbarToRealCoords(DBaseStatusBar *self, double x, double y, double w, double h, double *py, double *pw, double *ph)
+{
+	self->StatusbarToRealCoords(x, y, w, h);
+	*py = y;
+	*pw = w;
+	*ph = h;
+	return x;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, StatusbarToRealCoords, StatusbarToRealCoords)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
+	self->StatusbarToRealCoords(x, y, w, h);
+	if (numret > 0) ret[0].SetFloat(x);
+	if (numret > 1) ret[1].SetFloat(y);
+	if (numret > 2) ret[2].SetFloat(w);
+	if (numret > 3) ret[3].SetFloat(h);
+	return MIN(4, numret);
+}
+
+static int GetTopOfStatusbar(DBaseStatusBar *self)
+{
+	return self->GetTopOfStatusbar();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetTopOfStatusbar, GetTopOfStatusbar)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	ACTION_RETURN_INT(self->GetTopOfStatusbar());
+}
+
+void SBar_DrawTexture(DBaseStatusBar *self, int texid, double x, double y, int flags, double alpha, double w, double h, double scaleX, double scaleY)
+{
+	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	self->DrawGraphic(FSetTextureID(texid), x, y, flags, alpha, w, h, scaleX, scaleY);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, DrawTexture, SBar_DrawTexture)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_INT(texid);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_INT(flags);
+	PARAM_FLOAT(alpha);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
+	PARAM_FLOAT(scaleX);
+	PARAM_FLOAT(scaleY);
+	SBar_DrawTexture(self, texid, x, y, flags, alpha, w, h, scaleX, scaleY);
+	return 0;
+}
+
+void SBar_DrawImage(DBaseStatusBar *self, const FString &texid, double x, double y, int flags, double alpha, double w, double h, double scaleX, double scaleY)
+{
+	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	self->DrawGraphic(TexMan.CheckForTexture(texid, ETextureType::Any), x, y, flags, alpha, w, h, scaleX, scaleY);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, DrawImage, SBar_DrawImage)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_STRING(texid);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_INT(flags);
+	PARAM_FLOAT(alpha);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
+	PARAM_FLOAT(scaleX);
+	PARAM_FLOAT(scaleY);
+	SBar_DrawImage(self, texid, x, y, flags, alpha, w, h, scaleX, scaleY);
+	return 0;
+}
+
+void SBar_DrawString(DBaseStatusBar *self, DHUDFont *font, const FString &string, double x, double y, int flags, int trans, double alpha, int wrapwidth, int linespacing);
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, DrawString, SBar_DrawString)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_POINTER_NOT_NULL(font, DHUDFont);
+	PARAM_STRING(string);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_INT(flags);
+	PARAM_INT(trans);
+	PARAM_FLOAT(alpha);
+	PARAM_INT(wrapwidth);
+	PARAM_INT(linespacing);
+	SBar_DrawString(self, font, string, x, y, flags, trans, alpha, wrapwidth, linespacing);
+	return 0;
+}
+
+static double SBar_TransformRect(DBaseStatusBar *self, double x, double y, double w, double h, int flags, double *py, double *pw, double *ph)
+{
+	self->TransformRect(x, y, w, h, flags);
+	*py = y;
+	*pw = w;
+	*ph = h;
+	return x;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, TransformRect, SBar_TransformRect)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
+	PARAM_INT(flags);
+	self->TransformRect(x, y, w, h, flags);
+	if (numret > 0) ret[0].SetFloat(x);
+	if (numret > 1) ret[1].SetFloat(y);
+	if (numret > 2) ret[2].SetFloat(w);
+	if (numret > 3) ret[3].SetFloat(h);
+	return MIN(4, numret);
+}
+
+static void SBar_Fill(DBaseStatusBar *self, int color, double x, double y, double w, double h, int flags)
+{
+	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	self->Fill(color, x, y, w, h, flags);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, Fill, SBar_Fill)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_COLOR(color);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
+	PARAM_INT(flags);
+	SBar_Fill(self, color, x, y, w, h, flags);
+	return 0;
+}
+
+static void SBar_SetClipRect(DBaseStatusBar *self, double x, double y, double w, double h, int flags)
+{
+	self->SetClipRect(x, y, w, h, flags);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, SetClipRect, SBar_SetClipRect)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
+	PARAM_INT(flags);
+	self->SetClipRect(x, y, w, h, flags);
+	return 0;
+}
+
+static void GetGlobalACSString(int index, FString *result)
+{
+	*result = FBehavior::StaticLookupString(ACS_GlobalVars[index]);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSString, GetGlobalACSString)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(index);
+	ACTION_RETURN_STRING(FBehavior::StaticLookupString(ACS_GlobalVars[index]));
+}
+
+static void GetGlobalACSArrayString(int arrayno, int index, FString *result)
+{
+	*result = FBehavior::StaticLookupString(ACS_GlobalVars[index]);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSArrayString, GetGlobalACSArrayString)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(arrayno);
+	PARAM_INT(index);
+	ACTION_RETURN_STRING(FBehavior::StaticLookupString(ACS_GlobalArrays[arrayno][index]));
+}
+
+static int GetGlobalACSValue(int index)
+{
+	return (ACS_GlobalVars[index]);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSValue, GetGlobalACSValue)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(index);
+	ACTION_RETURN_INT(ACS_GlobalVars[index]);
+}
+
+static int GetGlobalACSArrayValue(int arrayno, int index)
+{
+	return (ACS_GlobalArrays[arrayno][index]);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSArrayValue, GetGlobalACSArrayValue)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(arrayno);
+	PARAM_INT(index);
+	ACTION_RETURN_INT(ACS_GlobalArrays[arrayno][index]);
+}
+
+void FormatNumber(int number, int minsize, int maxsize, int flags, const FString &prefix, FString *result);
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, FormatNumber, FormatNumber)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(number);
+	PARAM_INT(minsize);
+	PARAM_INT(maxsize);
+	PARAM_INT(flags);
+	PARAM_STRING(prefix);
+	FString fmt;
+	FormatNumber(number, minsize, maxsize, flags, prefix, &fmt);
+	ACTION_RETURN_STRING(fmt);
+}
+
+static void ReceivedWeapon(DBaseStatusBar *self)
+{
+	self->mugshot.Grin();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, ReceivedWeapon, ReceivedWeapon)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	ReceivedWeapon(self);
+	return 0;
+}
+
+static int GetMugshot(DBaseStatusBar *self, int accuracy, int stateflags, const FString &def_face)
+{
+	auto tex = self->mugshot.GetFace(self->CPlayer, def_face, accuracy, (FMugShot::StateFlags)stateflags);
+	return (tex ? tex->id.GetIndex() : -1);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetMugshot, GetMugshot)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_INT(accuracy);
+	PARAM_INT(stateflags);
+	PARAM_STRING(def_face);
+	ACTION_RETURN_INT(GetMugshot(self, accuracy, stateflags, def_face));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetInventoryIcon, GetInventoryIcon)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(item, AActor);
+	PARAM_INT(flags);
+	int applyscale;
+	FTextureID icon = FSetTextureID(GetInventoryIcon(item, flags, &applyscale));
+	if (numret >= 1) ret[0].SetInt(icon.GetIndex());
+	if (numret >= 2) ret[1].SetInt(applyscale);
+	return MIN(numret, 2);
+}
+
+//=====================================================================================
+//
+// 
+//
+//=====================================================================================
+
+DHUDFont *CreateHudFont(FFont *fnt, int spac, bool mono, int sx, int sy)
+{
+	return (Create<DHUDFont>(fnt, spac, mono, sy, sy));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DHUDFont, Create, CreateHudFont)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(fnt, FFont);
+	PARAM_INT(spac);
+	PARAM_BOOL(mono);
+	PARAM_INT(sx);
+	PARAM_INT(sy);
+	ACTION_RETURN_POINTER(Create<DHUDFont>(fnt, spac, mono, sy, sy));
+}
+
+
+//=====================================================================================
+//
+//
+//
+//=====================================================================================
+
+static void FormatMapName(FLevelLocals *self, int cr, FString *result)
+{
+	char mapnamecolor[3] = { '\34', char(cr + 'A'), 0 };
+	ST_FormatMapName(*result, mapnamecolor);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, FormatMapName, FormatMapName)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_INT(cr);
+	FString rets;
+	FormatMapName(self, cr, &rets);
+	ACTION_RETURN_STRING(rets);
+}
+
+static void GetAutomapPosition(DVector2 *pos)
+{
+	*pos = AM_GetPosition();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetAutomapPosition, GetAutomapPosition)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_VEC2(AM_GetPosition());
+}
+
+static int ZGetUDMFInt(FLevelLocals *self, int type, int index, int key)
+{
+	return GetUDMFInt(type, index, ENamedName(key));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetUDMFInt, ZGetUDMFInt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_INT(type);
+	PARAM_INT(index);
+	PARAM_NAME(key);
+	ACTION_RETURN_INT(GetUDMFInt(type, index, key));
+}
+
+static double ZGetUDMFFloat(FLevelLocals *self, int type, int index, int key)
+{
+	return GetUDMFFloat(type, index, ENamedName(key));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetUDMFFloat, ZGetUDMFFloat)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_INT(type);
+	PARAM_INT(index);
+	PARAM_NAME(key);
+	ACTION_RETURN_FLOAT(GetUDMFFloat(type, index, key));
+}
+
+static void ZGetUDMFString(FLevelLocals *self, int type, int index, int key, FString *result)
+{
+	*result = GetUDMFString(type, index, ENamedName(key));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetUDMFString, ZGetUDMFString)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_INT(type);
+	PARAM_INT(index);
+	PARAM_NAME(key);
+	ACTION_RETURN_STRING(GetUDMFString(type, index, key));
+}
+
+//=====================================================================================
+//
+//
+//
+//=====================================================================================
+
+static int GetRealTime()
+{
+	time_t now;
+	time(&now);
+	struct tm* timeinfo = localtime(&now);
+	return timeinfo ? timeinfo->tm_sec + timeinfo->tm_min * 60 + timeinfo->tm_hour * 3600 : 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_AltHUD, GetRealTime, GetRealTime)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_INT(GetRealTime());
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_AltHUD, GetLatency, Net_GetLatency)
+{
+	PARAM_PROLOGUE;
+	int ld, ad;
+	int severity = Net_GetLatency(&ld, &ad);
+	if (numret > 0) ret[0].SetInt(severity);
+	if (numret > 1) ret[1].SetInt(ld);
+	if (numret > 2) ret[2].SetInt(ad);
+	return numret;
+}
+
+DEFINE_FIELD_X(Sector, sector_t, floorplane)
+DEFINE_FIELD_X(Sector, sector_t, ceilingplane)
+DEFINE_FIELD_X(Sector, sector_t, Colormap)
+DEFINE_FIELD_X(Sector, sector_t, SpecialColors)
+DEFINE_FIELD_X(Sector, sector_t, SoundTarget)
+DEFINE_FIELD_X(Sector, sector_t, special)
+DEFINE_FIELD_X(Sector, sector_t, lightlevel)
+DEFINE_FIELD_X(Sector, sector_t, seqType)
+DEFINE_FIELD_X(Sector, sector_t, sky)
+DEFINE_FIELD_X(Sector, sector_t, SeqName)
+DEFINE_FIELD_X(Sector, sector_t, centerspot)
+DEFINE_FIELD_X(Sector, sector_t, validcount)
+DEFINE_FIELD_X(Sector, sector_t, thinglist)
+DEFINE_FIELD_X(Sector, sector_t, friction)
+DEFINE_FIELD_X(Sector, sector_t, movefactor)
+DEFINE_FIELD_X(Sector, sector_t, terrainnum)
+DEFINE_FIELD_X(Sector, sector_t, floordata)
+DEFINE_FIELD_X(Sector, sector_t, ceilingdata)
+DEFINE_FIELD_X(Sector, sector_t, lightingdata)
+DEFINE_FIELD_X(Sector, sector_t, interpolations)
+DEFINE_FIELD_X(Sector, sector_t, soundtraversed)
+DEFINE_FIELD_X(Sector, sector_t, stairlock)
+DEFINE_FIELD_X(Sector, sector_t, prevsec)
+DEFINE_FIELD_X(Sector, sector_t, nextsec)
+DEFINE_FIELD_UNSIZED(Sector, sector_t, Lines)
+DEFINE_FIELD_X(Sector, sector_t, heightsec)
+DEFINE_FIELD_X(Sector, sector_t, bottommap)
+DEFINE_FIELD_X(Sector, sector_t, midmap)
+DEFINE_FIELD_X(Sector, sector_t, topmap)
+DEFINE_FIELD_X(Sector, sector_t, touching_thinglist)
+DEFINE_FIELD_X(Sector, sector_t, sectorportal_thinglist)
+DEFINE_FIELD_X(Sector, sector_t, gravity)
+DEFINE_FIELD_X(Sector, sector_t, damagetype)
+DEFINE_FIELD_X(Sector, sector_t, damageamount)
+DEFINE_FIELD_X(Sector, sector_t, damageinterval)
+DEFINE_FIELD_X(Sector, sector_t, leakydamage)
+DEFINE_FIELD_X(Sector, sector_t, ZoneNumber)
+DEFINE_FIELD_X(Sector, sector_t, healthceiling)
+DEFINE_FIELD_X(Sector, sector_t, healthfloor)
+DEFINE_FIELD_X(Sector, sector_t, healthceilinggroup)
+DEFINE_FIELD_X(Sector, sector_t, healthfloorgroup)
+DEFINE_FIELD_X(Sector, sector_t, MoreFlags)
+DEFINE_FIELD_X(Sector, sector_t, Flags)
+DEFINE_FIELD_X(Sector, sector_t, SecActTarget)
+DEFINE_FIELD_X(Sector, sector_t, Portals)
+DEFINE_FIELD_X(Sector, sector_t, PortalGroup)
+DEFINE_FIELD_X(Sector, sector_t, sectornum)
+
+DEFINE_FIELD_X(Line, line_t, v1)
+DEFINE_FIELD_X(Line, line_t, v2)
+DEFINE_FIELD_X(Line, line_t, delta)
+DEFINE_FIELD_X(Line, line_t, flags)
+DEFINE_FIELD_X(Line, line_t, activation)
+DEFINE_FIELD_X(Line, line_t, special)
+DEFINE_FIELD_X(Line, line_t, args)
+DEFINE_FIELD_X(Line, line_t, alpha)
+DEFINE_FIELD_X(Line, line_t, sidedef)
+DEFINE_FIELD_X(Line, line_t, bbox)
+DEFINE_FIELD_X(Line, line_t, frontsector)
+DEFINE_FIELD_X(Line, line_t, backsector)
+DEFINE_FIELD_X(Line, line_t, validcount)
+DEFINE_FIELD_X(Line, line_t, locknumber)
+DEFINE_FIELD_X(Line, line_t, portalindex)
+DEFINE_FIELD_X(Line, line_t, portaltransferred)
+DEFINE_FIELD_X(Line, line_t, health)
+DEFINE_FIELD_X(Line, line_t, healthgroup)
+
+DEFINE_FIELD_X(Side, side_t, sector)
+DEFINE_FIELD_X(Side, side_t, linedef)
+DEFINE_FIELD_X(Side, side_t, Light)
+DEFINE_FIELD_X(Side, side_t, Flags)
+
+DEFINE_FIELD_X(Secplane, secplane_t, normal)
+DEFINE_FIELD_X(Secplane, secplane_t, D)
+DEFINE_FIELD_X(Secplane, secplane_t, negiC)
+
+DEFINE_FIELD_X(Vertex, vertex_t, p)
+
+DEFINE_FIELD(DBaseStatusBar, RelTop);
+DEFINE_FIELD(DBaseStatusBar, HorizontalResolution);
+DEFINE_FIELD(DBaseStatusBar, VerticalResolution);
+DEFINE_FIELD(DBaseStatusBar, Centering);
+DEFINE_FIELD(DBaseStatusBar, FixedOrigin);
+DEFINE_FIELD(DBaseStatusBar, CompleteBorder);
+DEFINE_FIELD(DBaseStatusBar, CrosshairSize);
+DEFINE_FIELD(DBaseStatusBar, Displacement);
+DEFINE_FIELD(DBaseStatusBar, CPlayer);
+DEFINE_FIELD(DBaseStatusBar, ShowLog);
+DEFINE_FIELD(DBaseStatusBar, Alpha);
+DEFINE_FIELD(DBaseStatusBar, drawOffset);
+DEFINE_FIELD(DBaseStatusBar, drawClip);
+DEFINE_FIELD(DBaseStatusBar, fullscreenOffsets);
+DEFINE_FIELD(DBaseStatusBar, defaultScale);
+DEFINE_FIELD(DBaseStatusBar, artiflashTick);
+DEFINE_FIELD(DBaseStatusBar, itemflashFade);
+
+DEFINE_FIELD(DHUDFont, mFont);
+
+DEFINE_GLOBAL(StatusBar);

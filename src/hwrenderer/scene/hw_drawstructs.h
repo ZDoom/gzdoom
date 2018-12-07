@@ -201,7 +201,7 @@ public:
 //private:
 
 	void PutWall(HWDrawInfo *di, bool translucent);
-	void PutPortal(HWDrawInfo *di, int ptype);
+	void PutPortal(HWDrawInfo *di, int ptype, int plane);
 	void CheckTexturePosition(FTexCoordInfo *tci);
 
 	void Put3DWall(HWDrawInfo *di, lightlist_t * lightlist, bool translucent);

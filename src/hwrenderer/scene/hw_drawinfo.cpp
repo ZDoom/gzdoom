@@ -280,10 +280,8 @@ int HWDrawInfo::SetFullbrightFlags(player_t *player)
 		{
 			auto torchtype = PClass::FindActor(NAME_PowerTorch);
 			auto litetype = PClass::FindActor(NAME_PowerLightAmp);
-			for (AInventory * in = cplayer->mo->Inventory; in; in = in->Inventory)
+			for (AActor *in = cplayer->mo->Inventory; in; in = in->Inventory)
 			{
-				//PalEntry color = in->CallGetBlend();
-
 				// Need special handling for light amplifiers 
 				if (in->IsKindOf(torchtype))
 				{
@@ -667,10 +665,10 @@ void HWDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *ptg, subsector_t *sub)
 	auto portal = FindPortal(ptg);
 	if (!portal)
 	{
-		portal = new HWScenePortal(screen->mPortalState, new HWSectorStackPortal(ptg));
+        portal = new HWSectorStackPortal(screen->mPortalState, ptg);
 		Portals.Push(portal);
 	}
-	auto ptl = static_cast<HWSectorStackPortal*>(static_cast<HWScenePortal*>(portal)->mScene);
+    auto ptl = static_cast<HWSectorStackPortal*>(portal);
 	ptl->AddSubsector(sub);
 }
 

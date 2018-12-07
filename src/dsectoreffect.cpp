@@ -287,7 +287,7 @@ DEFINE_ACTION_FUNCTION(_Sector, MoveFloor)
 	PARAM_INT(crush);
 	PARAM_INT(dir);
 	PARAM_BOOL(hex);
-	PARAM_BOOL_DEF(inst);
+	PARAM_BOOL(inst);
 	ACTION_RETURN_INT((int)self->MoveFloor(speed, dest, crush, dir, hex, inst));
 }
 

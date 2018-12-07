@@ -73,7 +73,6 @@ class PhoenixRodPowered : PhoenixRod
 	Default
 	{
 		+WEAPON.POWERED_UP
-		+WEAPON.MELEEWEAPON
 		Weapon.SisterWeapon "PhoenixRod";
 		Weapon.AmmoGive 0;
 		Tag "$TAG_PHOENIXRODP";

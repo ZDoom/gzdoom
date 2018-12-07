@@ -225,7 +225,7 @@ double RenderPolySprite::PerformSpriteClipAdjustment(AActor *thing, const DVecto
 	if (!(spriteheight > 0 && spriteclip > 0 && spritetype == RF_FACESPRITE))
 		return z2;
 
-	bool clipthing = (thing->player || thing->flags3&MF3_ISMONSTER || thing->IsKindOf(RUNTIME_CLASS(AInventory))) && (thing->flags&MF_ICECORPSE || !(thing->flags&MF_CORPSE));
+	bool clipthing = (thing->player || thing->flags3&MF3_ISMONSTER || thing->IsKindOf(NAME_Inventory)) && (thing->flags&MF_ICECORPSE || !(thing->flags&MF_CORPSE));
 	bool smarterclip = !clipthing && spriteclip == 3;
 	if (clipthing || spriteclip > 1)
 	{

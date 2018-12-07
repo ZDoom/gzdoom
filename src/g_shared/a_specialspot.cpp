@@ -40,10 +40,8 @@
 #include "vm.h"
 
 static FRandom pr_spot ("SpecialSpot");
-static FRandom pr_spawnmace ("SpawnMace");
 
 IMPLEMENT_CLASS(DSpotState, false, false)
-IMPLEMENT_CLASS(ASpecialSpot, false, false)
 TObjPtr<DSpotState*> DSpotState::SpotState;
 
 //----------------------------------------------------------------------------
@@ -55,7 +53,7 @@ TObjPtr<DSpotState*> DSpotState::SpotState;
 struct FSpotList
 {
 	PClassActor *Type;
-	TArray<ASpecialSpot*> Spots;
+	TArray<AActor*> Spots;
 	unsigned Index;
 	int SkipCount;
 	int numcalls;
@@ -74,11 +72,11 @@ struct FSpotList
 
 	//----------------------------------------------------------------------------
 	//
-	// 
+	//
 	//
 	//----------------------------------------------------------------------------
 
-	bool Add(ASpecialSpot *newspot)
+	bool Add(AActor *newspot)
 	{
 		for(unsigned i = 0; i < Spots.Size(); i++)
 		{
@@ -90,15 +88,15 @@ struct FSpotList
 
 	//----------------------------------------------------------------------------
 	//
-	// 
+	//
 	//
 	//----------------------------------------------------------------------------
 
-	bool Remove(ASpecialSpot *spot)
+	bool Remove(AActor *spot)
 	{
 		for(unsigned i = 0; i < Spots.Size(); i++)
 		{
-			if (Spots[i] == spot) 
+			if (Spots[i] == spot)
 			{
 				Spots.Delete(i);
 				if (Index > i) Index--;
@@ -110,17 +108,17 @@ struct FSpotList
 
 	//----------------------------------------------------------------------------
 	//
-	// 
+	//
 	//
 	//----------------------------------------------------------------------------
 
-	ASpecialSpot *GetNextInList(int skipcounter)
+	AActor *GetNextInList(int skipcounter)
 	{
 		if (Spots.Size() > 0 && ++SkipCount > skipcounter)
 		{
 			SkipCount = 0;
 
-			ASpecialSpot *spot = Spots[Index];
+			AActor *spot = Spots[Index];
 			if (++Index >= Spots.Size()) Index = 0;
 			numcalls++;
 			return spot;
@@ -130,11 +128,11 @@ struct FSpotList
 
 	//----------------------------------------------------------------------------
 	//
-	// 
+	//
 	//
 	//----------------------------------------------------------------------------
 
-	ASpecialSpot *GetSpotWithMinMaxDistance(double x, double y, double mindist, double maxdist)
+	AActor *GetSpotWithMinMaxDistance(double x, double y, double mindist, double maxdist)
 	{
 		if (Spots.Size() == 0) return NULL;
 		int i = pr_spot() % Spots.Size();
@@ -157,11 +155,11 @@ struct FSpotList
 
 	//----------------------------------------------------------------------------
 	//
-	// 
+	//
 	//
 	//----------------------------------------------------------------------------
 
-	ASpecialSpot *GetRandomSpot(bool onlyfirst)
+	AActor *GetRandomSpot(bool onlyfirst)
 	{
 		if (Spots.Size() && !numcalls)
 		{
@@ -175,7 +173,7 @@ struct FSpotList
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
@@ -195,7 +193,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSpotList &list, FSpot
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
@@ -214,14 +212,13 @@ DSpotState::DSpotState ()
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
 void DSpotState::OnDestroy ()
 {
-	SpotLists.Clear();
-	SpotLists.ShrinkToFit();
+	SpotLists.Reset();
 
 	SpotState = NULL;
 	Super::OnDestroy();
@@ -229,17 +226,17 @@ void DSpotState::OnDestroy ()
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
-void DSpotState::Tick () 
+void DSpotState::Tick ()
 {
 }
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
@@ -249,15 +246,9 @@ DSpotState *DSpotState::GetSpotState(bool create)
 	return SpotState;
 }
 
-DEFINE_ACTION_FUNCTION(DSpotState, GetSpotState)
-{
-	PARAM_PROLOGUE;
-	ACTION_RETURN_OBJECT(DSpotState::GetSpotState());
-}
-
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
@@ -273,11 +264,11 @@ FSpotList *DSpotState::FindSpotList(PClassActor *type)
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
-bool DSpotState::AddSpot(ASpecialSpot *spot)
+bool DSpotState::AddSpot(AActor *spot)
 {
 	FSpotList *list = FindSpotList(spot->GetClass());
 	if (list != NULL) return list->Add(spot);
@@ -286,11 +277,11 @@ bool DSpotState::AddSpot(ASpecialSpot *spot)
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
-bool DSpotState::RemoveSpot(ASpecialSpot *spot)
+bool DSpotState::RemoveSpot(AActor *spot)
 {
 	FSpotList *list = FindSpotList(spot->GetClass());
 	if (list != NULL) return list->Remove(spot);
@@ -299,7 +290,7 @@ bool DSpotState::RemoveSpot(ASpecialSpot *spot)
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
@@ -311,145 +302,40 @@ void DSpotState::Serialize(FSerializer &arc)
 
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
-ASpecialSpot *DSpotState::GetNextInList(PClassActor *type, int skipcounter)
+AActor *DSpotState::GetNextInList(PClassActor *type, int skipcounter)
 {
 	FSpotList *list = FindSpotList(type);
 	if (list != NULL) return list->GetNextInList(skipcounter);
 	return NULL;
 }
 
-DEFINE_ACTION_FUNCTION(DSpotState, GetNextInList)
-{
-	PARAM_SELF_PROLOGUE(DSpotState);
-	PARAM_CLASS(type, AActor);
-	PARAM_INT(skipcounter);
-	ACTION_RETURN_OBJECT(self->GetNextInList(type, skipcounter));
-}
-
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
-ASpecialSpot *DSpotState::GetSpotWithMinMaxDistance(PClassActor *type, double x, double y, double mindist, double maxdist)
+AActor *DSpotState::GetSpotWithMinMaxDistance(PClassActor *type, double x, double y, double mindist, double maxdist)
 {
 	FSpotList *list = FindSpotList(type);
 	if (list != NULL) return list->GetSpotWithMinMaxDistance(x, y, mindist, maxdist);
 	return NULL;
 }
 
-DEFINE_ACTION_FUNCTION(DSpotState, GetSpotWithMinMaxDistance)
-{
-	PARAM_SELF_PROLOGUE(DSpotState);
-	PARAM_CLASS(type, AActor);
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-	PARAM_FLOAT(mindist);
-	PARAM_FLOAT(maxdist);
-	ACTION_RETURN_OBJECT(self->GetSpotWithMinMaxDistance(type, x, y, mindist, maxdist));
-}
-
-
 //----------------------------------------------------------------------------
 //
-// 
+//
 //
 //----------------------------------------------------------------------------
 
-ASpecialSpot *DSpotState::GetRandomSpot(PClassActor *type, bool onlyonce)
+AActor *DSpotState::GetRandomSpot(PClassActor *type, bool onlyonce)
 {
 	FSpotList *list = FindSpotList(type);
 	if (list != NULL) return list->GetRandomSpot(onlyonce);
 	return NULL;
-}
-
-
-//----------------------------------------------------------------------------
-//
-// 
-//
-//----------------------------------------------------------------------------
-
-void ASpecialSpot::BeginPlay()
-{
-	DSpotState *state = DSpotState::GetSpotState();
-	if (state != NULL) state->AddSpot(this);
-}
-
-//----------------------------------------------------------------------------
-//
-// 
-//
-//----------------------------------------------------------------------------
-
-void ASpecialSpot::OnDestroy()
-{
-	DSpotState *state = DSpotState::GetSpotState(false);
-	if (state != NULL) state->RemoveSpot(this);
-	Super::OnDestroy();
-}
-
-// Mace spawn spot ----------------------------------------------------------
-
-// Every mace spawn spot will execute this action. The first one
-// will build a list of all mace spots in the level and spawn a
-// mace. The rest of the spots will do nothing.
-
-DEFINE_ACTION_FUNCTION(ASpecialSpot, A_SpawnSingleItem)
-{
-	PARAM_SELF_PROLOGUE(ASpecialSpot);
-	PARAM_CLASS_NOT_NULL(cls, AActor);
-	PARAM_INT_DEF	(fail_sp) 
-	PARAM_INT_DEF	(fail_co) 
-	PARAM_INT_DEF	(fail_dm) 
-
-	AActor *spot = NULL;
-	DSpotState *state = DSpotState::GetSpotState();
-
-	if (state != NULL) spot = state->GetRandomSpot(self->GetClass(), true);
-	if (spot == NULL) return 0;
-
-	if (!multiplayer && pr_spawnmace() < fail_sp)
-	{ // Sometimes doesn't show up if not in deathmatch
-		return 0;
-	}
-
-	if (multiplayer && !deathmatch && pr_spawnmace() < fail_co)
-	{
-		return 0;
-	}
-
-	if (deathmatch && pr_spawnmace() < fail_dm)
-	{
-		return 0;
-	}
-
-	if (cls == NULL)
-	{
-		return 0;
-	}
-
-	AActor *spawned = Spawn(cls, self->Pos(), ALLOW_REPLACE);
-
-	if (spawned)
-	{
-		spawned->SetOrigin (spot->Pos(), false);
-		spawned->SetZ(spawned->floorz);
-		// We want this to respawn.
-		if (!(self->flags & MF_DROPPED)) 
-		{
-			spawned->flags &= ~MF_DROPPED;
-		}
-		if (spawned->IsKindOf(RUNTIME_CLASS(AInventory)))
-		{
-			static_cast<AInventory*>(spawned)->SpawnPointClass = self->GetClass();
-		}
-	}
-	return 0;
 }
 

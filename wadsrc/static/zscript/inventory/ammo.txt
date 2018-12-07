@@ -184,6 +184,48 @@ class Ammo : Inventory
 		return copy;
 	}
 
+	//---------------------------------------------------------------------------
+	//
+	// Modifies the drop amount of this item according to the current skill's
+	// settings (also called by ADehackedPickup::TryPickup)
+	//
+	//---------------------------------------------------------------------------
+	
+	override void ModifyDropAmount(int dropamount)
+	{
+		bool ignoreskill = true;
+		double dropammofactor = G_SkillPropertyFloat(SKILLP_DropAmmoFactor);
+		// Default drop amount is half of regular amount * regular ammo multiplication
+		if (dropammofactor == -1) 
+		{
+			dropammofactor = 0.5;
+			ignoreskill = false;
+		}
+
+		if (dropamount > 0)
+		{
+			if (ignoreskill)
+			{
+				self.Amount = int(dropamount * dropammofactor);
+				bIgnoreSkill = true;
+			}
+			else
+			{
+				self.Amount = dropamount;
+			}
+		}
+		else
+		{
+			// Half ammo when dropped by bad guys.
+			int amount = self.DropAmount;
+			if (amount <= 0)
+			{
+				amount = MAX(1, int(self.Amount * dropammofactor));
+			}
+			self.Amount = amount;
+			bIgnoreSkill = ignoreskill;
+		}
+	}
 	
 }
 

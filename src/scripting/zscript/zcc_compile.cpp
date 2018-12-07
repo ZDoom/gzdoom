@@ -175,6 +175,10 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 			cls->Properties.Push(static_cast<ZCC_Property *>(node));
 			break;
 
+		case AST_FlagDef:
+			cls->FlagDefs.Push(static_cast<ZCC_FlagDef*>(node));
+			break;
+
 		case AST_VarDeclarator: 
 			cls->Fields.Push(static_cast<ZCC_VarDeclarator *>(node)); 
 			break;
@@ -1375,6 +1379,10 @@ void ZCCCompiler::CompileAllProperties()
 	{
 		if (c->Properties.Size() > 0)
 			CompileProperties(c->ClassType(), c->Properties, c->Type()->TypeName);
+
+		if (c->FlagDefs.Size() > 0)
+			CompileFlagDefs(c->ClassType(), c->FlagDefs, c->Type()->TypeName);
+
 	}
 }
 
@@ -1415,20 +1423,88 @@ bool ZCCCompiler::CompileProperties(PClass *type, TArray<ZCC_Property *> &Proper
 				fields.Push(f);
 				id = (ZCC_Identifier*)id->SiblingNext;
 			} while (id != p->Body);
+
+			FString qualifiedname;
+			// Store the full qualified name and prepend some 'garbage' to the name so that no conflicts with other symbol types can happen.
+			// All these will be removed from the symbol table after the compiler finishes to free up the allocated space.
+			FName name = FName(p->NodeName);
+			if (prefix == NAME_None) qualifiedname.Format("@property@%s", name.GetChars());
+			else qualifiedname.Format("@property@%s.%s", prefix.GetChars(), name.GetChars());
+
+			fields.ShrinkToFit();
+			if (!type->VMType->Symbols.AddSymbol(Create<PProperty>(qualifiedname, fields)))
+			{
+				Error(id, "Unable to add property %s to class %s", FName(p->NodeName).GetChars(), type->TypeName.GetChars());
+			}
 		}
+	}
+	return true;
+}
 
-		FString qualifiedname;
-		// Store the full qualified name and prepend some 'garbage' to the name so that no conflicts with other symbol types can happen.
-		// All these will be removed from the symbol table after the compiler finishes to free up the allocated space.
-		FName name = FName(p->NodeName);
-		if (prefix == NAME_None) qualifiedname.Format("@property@%s", name.GetChars());
-		else qualifiedname.Format("@property@%s.%s", prefix.GetChars(), name.GetChars());
+//==========================================================================
+//
+// ZCCCompiler :: CompileProperties
+//
+// builds the internal structure of a single class or struct
+//
+//==========================================================================
 
-		fields.ShrinkToFit();
-		if (!type->VMType->Symbols.AddSymbol(Create<PProperty>(qualifiedname, fields)))
+bool ZCCCompiler::CompileFlagDefs(PClass *type, TArray<ZCC_FlagDef *> &Properties, FName prefix)
+{
+	if (!type->IsDescendantOf(RUNTIME_CLASS(AActor)))
+	{
+		Error(Properties[0], "Flags can only be defined for actors");
+		return false;
+	}
+	for (auto p : Properties)
+	{
+		PField *field;
+		FName referenced = FName(p->RefName);
+
+		if (FName(p->NodeName) == FName("prefix") && Wads.GetLumpFile(Lump) == 0)
 		{
-			Error(id, "Unable to add property %s to class %s", FName(p->NodeName).GetChars(), type->TypeName.GetChars());
+			// only for internal definitions: Allow setting a prefix. This is only for compatiblity with the old DECORATE property parser, but not for general use.
+			prefix = referenced;
 		}
+		else
+		{
+			if (referenced != NAME_None)
+			{
+				field = dyn_cast<PField>(type->FindSymbol(referenced, true));
+				if (field == nullptr)
+				{
+					Error(p, "Variable %s not found in %s", referenced.GetChars(), type->TypeName.GetChars());
+				}
+				if (!field->Type->isInt() || field->Type->Size != 4)
+				{
+					Error(p, "Variable %s in %s must have a size of 4 bytes for use as flag storage", referenced.GetChars(), type->TypeName.GetChars());
+				}
+			}
+			else field = nullptr;
+
+
+			FString qualifiedname;
+			// Store the full qualified name and prepend some 'garbage' to the name so that no conflicts with other symbol types can happen.
+			// All these will be removed from the symbol table after the compiler finishes to free up the allocated space.
+			FName name = FName(p->NodeName);
+			for (int i = 0; i < 2; i++)
+			{
+				if (i == 0) qualifiedname.Format("@flagdef@%s", name.GetChars());
+				else
+				{
+					if (prefix == NAME_None) continue;
+					qualifiedname.Format("@flagdef@%s.%s", prefix.GetChars(), name.GetChars());
+				}
+
+				if (!type->VMType->Symbols.AddSymbol(Create<PPropFlag>(qualifiedname, field, p->BitValue, i == 0 && prefix != NAME_None)))
+				{
+					Error(p, "Unable to add flag definition %s to class %s", FName(p->NodeName).GetChars(), type->TypeName.GetChars());
+				}
+			}
+
+			if (field != nullptr)
+				type->VMType->AddNativeField(FStringf("b%s", name.GetChars()), TypeSInt32, field->Offset, 0, 1 << p->BitValue);
+		} 
 	}
 	return true;
 }
@@ -2287,7 +2363,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 	TArray<PType *> rets(1);
 	TArray<PType *> args;
 	TArray<uint32_t> argflags;
-	TArray<VMValue> argdefaults;
+	TArray<TypedVMValue> argdefaults;
 	TArray<FName> argnames;
 
 	rets.Clear();
@@ -2495,7 +2571,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			do
 			{
 				int elementcount = 1;
-				VMValue vmval[3];	// default is REGT_NIL which means 'no default value' here.
+				TypedVMValue vmval[3];	// default is REGT_NIL which means 'no default value' here.
 				if (p->Type != nullptr)
 				{
 					auto type = DetermineType(c->Type(), p, f->Name, p->Type, false, false);
@@ -3105,7 +3181,7 @@ void ZCCCompiler::CompileStates()
 		}
 		try
 		{
-			GetDefaultByType(c->ClassType())->Finalize(statedef);
+			FinalizeClass(c->ClassType(), statedef);
 		}
 		catch (CRecoverableError &err)
 		{

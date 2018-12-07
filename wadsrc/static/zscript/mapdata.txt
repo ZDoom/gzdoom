@@ -34,6 +34,7 @@ struct SectorPortal native play
 struct Vertex native play
 {
 	native readonly Vector2 p;
+	native int Index();
 }
 
 struct Side native play
@@ -156,7 +157,7 @@ struct Line native play
 	native uint						activation;	// activation type
 	native int						special;
 	native int						args[5];	// <--- hexen-style arguments (expanded to ZDoom's full width)
-	native double					alpha;		// <--- translucency (0=invisibile, FRACUNIT=opaque)
+	native double					alpha;		// <--- translucency (0=invisible, FRACUNIT=opaque)
 	native readonly Side			sidedef[2];
 	native readonly double			bbox[4];	// bounding box, for the extent of the LineDef.
 	native readonly Sector			frontsector, backsector;
@@ -206,7 +207,7 @@ struct SecPlane native play
 	native bool isEqual(Secplane other) const;
 	native void ChangeHeight(double hdiff);
 	native double GetChangedHeight(double hdiff) const;
-	native double HeightDiff(double oldd, double newd = 0.0) const;
+	native double HeightDiff(double oldd, double newd = 1e37) const;
 	native double PointToDist(Vector2 xy, double z) const;
 }
 
@@ -333,6 +334,7 @@ struct Sector native play
 		SECF_ENDGODMODE		= 256,	// getting damaged by this sector ends god mode
 		SECF_ENDLEVEL		= 512,	// ends level when health goes below 10
 		SECF_HAZARD			= 1024,	// Change to Strife's delayed damage handling.
+		SECF_NOATTACK		= 2048,	// monsters cannot start attacks in this sector.
 
 		SECF_WASSECRET		= 1 << 30,	// a secret that was discovered
 		SECF_SECRET			= 1 << 31,	// a secret sector
@@ -364,7 +366,7 @@ struct Sector native play
 	native double, Sector, F3DFloor NextLowestFloorAt(double x, double y, double z, int flags = 0, double steph = 0);
 
 	native void RemoveForceField();
-	native static Sector PointInSector(Vector2 pt);
+	native static clearscope Sector PointInSector(Vector2 pt);
 
 	native bool PlaneMoving(int pos);
 	native int GetFloorLight();
@@ -430,7 +432,6 @@ struct Sector native play
 	native int GetOppositePortalGroup(int plane);
 	native double CenterFloor();
 	native double CenterCeiling();
-	native bool TriggerSectorActions(Actor thing, int activation);
 
 	native int MoveFloor(double speed, double dest, int crush, int direction, bool hexencrush, bool instant = false);
 	native int MoveCeiling(double speed, double dest, int crush, int direction, bool hexencrush);
@@ -489,7 +490,36 @@ struct Sector native play
 	{
 		return Level.GetUDMFString(LevelLocals.UDMF_Sector, Index(), nm);
 	}
-	 
+
+	//===========================================================================
+	//
+	//
+	//
+	//===========================================================================
+
+	bool TriggerSectorActions(Actor thing, int activation)
+	{
+		let act = SecActTarget;
+		bool res = false;
+
+		while (act != null)
+		{
+			Actor next = act.tracer;
+
+			if (act.TriggerAction(thing, activation))
+			{
+				if (act.bStandStill)
+				{
+					act.Destroy();
+				}
+				res = true;
+			}
+			act = SectorAction(next);
+		}
+		return res;
+	}
+
+	
     native clearscope int GetHealth(SectorPart part);
     native void SetHealth(SectorPart part, int newhealth);
 }

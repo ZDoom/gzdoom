@@ -296,18 +296,7 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 		viewheight == renderTarget->GetHeight() ||
 		(renderTarget->GetWidth() > (BASEXCENTER * 2))))
 	{	// Adjust PSprite for fullscreen views
-		AWeapon *weapon = dyn_cast<AWeapon>(pspr->GetCaller());
-		if (weapon != nullptr && weapon->YAdjust != 0)
-		{
-			if (renderToCanvas || viewheight == renderTarget->GetHeight())
-			{
-				vis.texturemid -= weapon->YAdjust;
-			}
-			else
-			{
-				vis.texturemid -= StatusBar->GetDisplacement() * weapon->YAdjust;
-			}
-		}
+		vis.texturemid -= pspr->GetYAdjust(renderToCanvas || viewheight == renderTarget->GetHeight());
 	}
 	if (pspr->GetID() < PSP_TARGETCENTER)
 	{ // Move the weapon down for 1280x1024.

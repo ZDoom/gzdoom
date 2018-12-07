@@ -70,6 +70,7 @@
 #include "p_spec.h"
 #include "serializer.h"
 #include "vm.h"
+#include "dobjgc.h"
 
 #include "g_hub.h"
 #include "g_levellocals.h"
@@ -211,14 +212,11 @@ FString			savedescription;
 // [RH] Name of screenshot file to generate (usually NULL)
 FString			shotfile;
 
-AActor* 		bodyque[BODYQUESIZE]; 
-int 			bodyqueslot; 
-
 FString savename;
 FString BackupSaveName;
 
 bool SendLand;
-const AInventory *SendItemUse, *SendItemDrop;
+const AActor *SendItemUse, *SendItemDrop;
 int SendItemDropAmount;
 
 EXTERN_CVAR (Int, team)
@@ -283,10 +281,16 @@ CCMD (slot)
 	{
 		int slot = atoi (argv[1]);
 
-		if (slot < NUM_WEAPON_SLOTS)
+		auto mo = players[consoleplayer].mo;
+		if (slot < NUM_WEAPON_SLOTS && mo)
 		{
-			SendItemUse = players[consoleplayer].weapons.Slots[slot].PickWeapon (&players[consoleplayer], 
-				!(dmflags2 & DF2_DONTCHECKAMMO));
+			// Needs to be redone
+			IFVIRTUALPTR(mo, APlayerPawn, PickWeapon)
+			{
+				VMValue param[] = { mo, slot, !(dmflags2 & DF2_DONTCHECKAMMO) };
+				VMReturn ret((void**)&SendItemUse);
+				VMCall(func, param, 3, &ret, 1);
+			}
 		}
 	}
 }
@@ -318,7 +322,18 @@ CCMD (turn180)
 
 CCMD (weapnext)
 {
-	SendItemUse = players[consoleplayer].weapons.PickNextWeapon (&players[consoleplayer]);
+	auto mo = players[consoleplayer].mo;
+	if (mo)
+	{
+		// Needs to be redone
+		IFVIRTUALPTR(mo, APlayerPawn, PickNextWeapon)
+		{
+			VMValue param[] = { mo };
+			VMReturn ret((void**)&SendItemUse);
+			VMCall(func, param, 1, &ret, 1);
+		}
+	}
+
 	// [BC] Option to display the name of the weapon being cycled to.
 	if ((displaynametags & 2) && StatusBar && SmallFont && SendItemUse)
 	{
@@ -333,7 +348,18 @@ CCMD (weapnext)
 
 CCMD (weapprev)
 {
-	SendItemUse = players[consoleplayer].weapons.PickPrevWeapon (&players[consoleplayer]);
+	auto mo = players[consoleplayer].mo;
+	if (mo)
+	{
+		// Needs to be redone
+		IFVIRTUALPTR(mo, APlayerPawn, PickPrevWeapon)
+		{
+			VMValue param[] = { mo };
+			VMReturn ret((void**)&SendItemUse);
+			VMCall(func, param, 1, &ret, 1);
+		}
+	}
+
 	// [BC] Option to display the name of the weapon being cycled to.
 	if ((displaynametags & 2) && StatusBar && SmallFont && SendItemUse)
 	{
@@ -346,81 +372,49 @@ CCMD (weapprev)
 	}
 }
 
+static void DisplayNameTag(AActor *actor)
+{
+	auto tag = actor->GetTag();
+	if ((displaynametags & 1) && StatusBar && SmallFont)
+		StatusBar->AttachMessage(Create<DHUDMessageFadeOut>(SmallFont, tag,
+			1.5f, 0.80f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID('S', 'I', 'N', 'V'));
+
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, DisplayNameTag, DisplayNameTag)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	DisplayNameTag(self);
+	return 0;
+}
+
 CCMD (invnext)
 {
-	AInventory *next;
-
-	if (who == NULL)
-		return;
-
-	auto old = who->InvSel;
-	if (who->InvSel != NULL)
+	if (who != NULL)
 	{
-		if ((next = who->InvSel->NextInv()) != NULL)
+		IFVM(PlayerPawn, InvNext)
 		{
-			who->InvSel = next;
+			VMValue param = who;
+			VMCall(func, &param, 1, nullptr, 0);
 		}
-		else
-		{
-			// Select the first item in the inventory
-			if (!(who->Inventory->ItemFlags & IF_INVBAR))
-			{
-				who->InvSel = who->Inventory->NextInv();
-			}
-			else
-			{
-				who->InvSel = who->Inventory;
-			}
-		}
-		if ((displaynametags & 1) && StatusBar && SmallFont && who->InvSel)
-			StatusBar->AttachMessage (Create<DHUDMessageFadeOut> (SmallFont, who->InvSel->GetTag(),
-			1.5f, 0.80f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID('S','I','N','V'));
-	}
-	who->player->inventorytics = 5*TICRATE;
-	if (old != who->InvSel)
-	{
-		S_Sound(CHAN_AUTO, "misc/invchange", 1.0, ATTN_NONE);
 	}
 }
 
-CCMD (invprev)
+CCMD(invprev)
 {
-	AInventory *item, *newitem;
-
-	if (who == NULL)
-		return;
-
-	auto old = who->InvSel;
-	if (who->InvSel != NULL)
+	if (who != NULL)
 	{
-		if ((item = who->InvSel->PrevInv()) != NULL)
+		IFVM(PlayerPawn, InvPrev)
 		{
-			who->InvSel = item;
+			VMValue param = who;
+			VMCall(func, &param, 1, nullptr, 0);
 		}
-		else
-		{
-			// Select the last item in the inventory
-			item = who->InvSel;
-			while ((newitem = item->NextInv()) != NULL)
-			{
-				item = newitem;
-			}
-			who->InvSel = item;
-		}
-		if ((displaynametags & 1) && StatusBar && SmallFont && who->InvSel)
-			StatusBar->AttachMessage (Create<DHUDMessageFadeOut> (SmallFont, who->InvSel->GetTag(),
-			1.5f, 0.80f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID('S','I','N','V'));
-	}
-	who->player->inventorytics = 5*TICRATE;
-	if (old != who->InvSel)
-	{
-		S_Sound(CHAN_AUTO, "misc/invchange", 1.0, ATTN_NONE);
 	}
 }
 
 CCMD (invuseall)
 {
-	SendItemUse = (const AInventory *)1;
+	SendItemUse = (const AActor *)1;
 }
 
 CCMD (invuse)
@@ -434,10 +428,10 @@ CCMD (invuse)
 
 CCMD(invquery)
 {
-	AInventory *inv = players[consoleplayer].mo->InvSel;
+	AActor *inv = players[consoleplayer].mo->InvSel;
 	if (inv != NULL)
 	{
-		Printf(PRINT_HIGH, "%s (%dx)\n", inv->GetTag(), inv->Amount);
+		Printf(PRINT_HIGH, "%s (%dx)\n", inv->GetTag(), inv->IntVar(NAME_Amount));
 	}
 }
 
@@ -490,7 +484,7 @@ CCMD (useflechette)
 	PClassActor *type = who->FlechetteType;
 	if (type != NULL)
 	{
-		AInventory *item;
+		AActor *item;
 		if ( (item = who->FindInventory (type) ))
 		{
 			SendItemUse = item;
@@ -501,7 +495,7 @@ CCMD (useflechette)
 	// The default flechette could not be found, or the player had no default. Try all 3 types then.
 	for (int j = 0; j < 3; ++j)
 	{
-		AInventory *item;
+		AActor *item;
 		if ( (item = who->FindInventory (bagnames[j])) )
 		{
 			SendItemUse = item;
@@ -514,7 +508,7 @@ CCMD (select)
 {
 	if (argv.argc() > 1)
 	{
-		AInventory *item = who->FindInventory(argv[1]);
+		auto item = who->FindInventory(argv[1]);
 		if (item != NULL)
 		{
 			who->InvSel = item;
@@ -738,7 +732,7 @@ ticcmd_t G_BuildTiccmd ()
 		network->WriteString (savedescription);
 		savegamefile = "";
 	}
-	if (SendItemUse == (const AInventory *)1)
+	if (SendItemUse == (const AActor *)1)
 	{
 		network->WriteByte (DEM_INVUSEALL);
 		SendItemUse = NULL;
@@ -766,19 +760,28 @@ ticcmd_t G_BuildTiccmd ()
 //[Graf Zahl] This really helps if the mouse update rate can't be increased!
 CVAR (Bool,		smooth_mouse,	false,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 
+static int LookAdjust(int look)
+{
+	look <<= 16;
+	if (players[consoleplayer].playerstate != PST_DEAD &&		// No adjustment while dead.
+		players[consoleplayer].ReadyWeapon != NULL)			// No adjustment if no weapon.
+	{
+		auto scale = players[consoleplayer].ReadyWeapon->FloatVar(NAME_FOVScale);
+		if (scale > 0)		// No adjustment if it is non-positive.
+		{
+			look = int(look * scale);
+		}
+	}
+	return look;
+}
+
 void G_AddViewPitch (int look, bool mouse)
 {
 	if (gamestate == GS_TITLELEVEL)
 	{
 		return;
 	}
-	look <<= 16;
-	if (players[consoleplayer].playerstate != PST_DEAD &&		// No adjustment while dead.
-		players[consoleplayer].ReadyWeapon != NULL &&			// No adjustment if no weapon.
-		players[consoleplayer].ReadyWeapon->FOVScale > 0)		// No adjustment if it is non-positive.
-	{
-		look = int(look * players[consoleplayer].ReadyWeapon->FOVScale);
-	}
+	look = LookAdjust(look);
 	if (!level.IsFreelookAllowed())
 	{
 		LocalViewPitch = 0;
@@ -818,14 +821,9 @@ void G_AddViewAngle (int yaw, bool mouse)
 	if (gamestate == GS_TITLELEVEL)
 	{
 		return;
+
 	}
-	yaw <<= 16;
-	if (players[consoleplayer].playerstate != PST_DEAD &&	// No adjustment while dead.
-		players[consoleplayer].ReadyWeapon != NULL &&		// No adjustment if no weapon.
-		players[consoleplayer].ReadyWeapon->FOVScale > 0)	// No adjustment if it is non-positive.
-	{
-		yaw = int(yaw * players[consoleplayer].ReadyWeapon->FOVScale);
-	}
+	yaw = LookAdjust(yaw);
 	LocalViewAngle -= yaw;
 	if (yaw != 0)
 	{
@@ -1237,108 +1235,10 @@ void G_Ticker ()
 
 void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 {
-	AInventory *item, *next;
-	player_t *p;
-
-	p = &players[player];
-
-	if (p->morphTics != 0)
-	{ // Undo morph
-		P_UndoPlayerMorph (p, p, 0, true);
-	}
-
-	// Strip all current powers, unless moving in a hub and the power is okay to keep.
-	item = p->mo->Inventory;
-	auto ptype = PClass::FindActor(NAME_Powerup);
-	while (item != NULL)
+	IFVM(PlayerPawn, PlayerFinishLevel)
 	{
-		next = item->Inventory;
-		if (item->IsKindOf (ptype))
-		{
-			if (deathmatch || ((mode != FINISH_SameHub || !(item->ItemFlags & IF_HUBPOWER))
-				&& !(item->ItemFlags & IF_PERSISTENTPOWER))) // Keep persistent powers in non-deathmatch games
-			{
-				item->Destroy ();
-			}
-		}
-		item = next;
-	}
-	if (p->ReadyWeapon != NULL &&
-		p->ReadyWeapon->WeaponFlags&WIF_POWERED_UP &&
-		p->PendingWeapon == p->ReadyWeapon->SisterWeapon)
-	{
-		// Unselect powered up weapons if the unpowered counterpart is pending
-		p->ReadyWeapon=p->PendingWeapon;
-	}
-	// reset invisibility to default
-	if (p->mo->GetDefault()->flags & MF_SHADOW)
-	{
-		p->mo->flags |= MF_SHADOW;
-	}
-	else
-	{
-		p->mo->flags &= ~MF_SHADOW;
-	}
-	p->mo->RenderStyle = p->mo->GetDefault()->RenderStyle;
-	p->mo->Alpha = p->mo->GetDefault()->Alpha;
-	p->extralight = 0;					// cancel gun flashes
-	p->fixedcolormap = NOFIXEDCOLORMAP;	// cancel ir goggles
-	p->fixedlightlevel = -1;
-	p->damagecount = 0; 				// no palette changes
-	p->bonuscount = 0;
-	p->poisoncount = 0;
-	p->inventorytics = 0;
-
-	if (mode != FINISH_SameHub)
-	{
-		// Take away flight and keys (and anything else with IF_INTERHUBSTRIP set)
-		item = p->mo->Inventory;
-		while (item != NULL)
-		{
-			next = item->Inventory;
-			if (item->InterHubAmount < 1)
-			{
-				item->Destroy ();
-			}
-			item = next;
-		}
-	}
-
-	if (mode == FINISH_NoHub && !(level.flags2 & LEVEL2_KEEPFULLINVENTORY))
-	{ // Reduce all owned (visible) inventory to defined maximum interhub amount
-		TArray<AInventory*> todelete;
-		for (item = p->mo->Inventory; item != NULL; item = item->Inventory)
-		{
-			// If the player is carrying more samples of an item than allowed, reduce amount accordingly
-			if (item->ItemFlags & IF_INVBAR && item->Amount > item->InterHubAmount)
-			{
-				item->Amount = item->InterHubAmount;
-				if ((level.flags3 & LEVEL3_REMOVEITEMS) && !(item->ItemFlags & IF_UNDROPPABLE))
-				{
-					todelete.Push(item);
-				}
-			}
-		}
-		for (auto it : todelete)
-		{
-			if (!(it->ObjectFlags & OF_EuthanizeMe))
-			{
-				it->DepleteOrDestroy();
-			}
-		}
-	}
-
-	// Resets player health to default if not dead.
-	if ((flags & CHANGELEVEL_RESETHEALTH) && p->playerstate != PST_DEAD)
-	{
-		p->health = p->mo->health = p->mo->SpawnHealth();
-	}
-
-	// Clears the entire inventory and gives back the defaults for starting a game
-	if ((flags & CHANGELEVEL_RESETINVENTORY) && p->playerstate != PST_DEAD)
-	{
-		p->mo->ClearInventory();
-		p->mo->GiveDefaultInventory();
+		VMValue params[] = { players[player].mo, mode, flags };
+		VMCall(func, params, 3, nullptr, 0);
 	}
 }
 
@@ -1649,7 +1549,7 @@ DEFINE_ACTION_FUNCTION(DObject, G_PickPlayerStart)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(playernum);
-	PARAM_INT_DEF(flags);
+	PARAM_INT(flags);
 	auto ps = G_PickPlayerStart(playernum, flags);
 	if (numret > 1)
 	{
@@ -1669,13 +1569,14 @@ DEFINE_ACTION_FUNCTION(DObject, G_PickPlayerStart)
 static void G_QueueBody (AActor *body)
 {
 	// flush an old corpse if needed
-	int modslot = bodyqueslot%BODYQUESIZE;
+	int modslot = level.bodyqueslot%level.BODYQUESIZE;
+	level.bodyqueslot = modslot + 1;
 
-	if (bodyqueslot >= BODYQUESIZE && bodyque[modslot] != NULL)
+	if (level.bodyqueslot >= level.BODYQUESIZE && level.bodyque[modslot] != NULL)
 	{
-		bodyque[modslot]->Destroy ();
+		level.bodyque[modslot]->Destroy ();
 	}
-	bodyque[modslot] = body;
+	level.bodyque[modslot] = body;
 
 	// Copy the player's translation, so that if they change their color later, only
 	// their current body will change and not all their old corpses.
@@ -1699,7 +1600,6 @@ static void G_QueueBody (AActor *body)
 		body->Scale.Y *= skin.Scale.Y / defaultActor->Scale.Y;
 	}
 
-	bodyqueslot++;
 }
 
 //
@@ -3023,7 +2923,7 @@ void G_StartSlideshow(FName whichone)
 DEFINE_ACTION_FUNCTION(FLevelLocals, StartSlideshow)
 {
 	PARAM_PROLOGUE;
-	PARAM_NAME_DEF(whichone);
+	PARAM_NAME(whichone);
 	G_StartSlideshow(whichone);
 	return 0;
 }
@@ -3045,3 +2945,4 @@ DEFINE_GLOBAL(gametic)
 DEFINE_GLOBAL(demoplayback)
 DEFINE_GLOBAL(automapactive);
 DEFINE_GLOBAL(Net_Arbitrator);
+DEFINE_GLOBAL(netgame);

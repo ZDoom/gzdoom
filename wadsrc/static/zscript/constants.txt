@@ -428,7 +428,7 @@ const ATTN_NORM = 1;
 const ATTN_IDLE = 1.001;
 const ATTN_STATIC = 3;
 
-// For SetPlayerProprty action special
+// For SetPlayerProperty action special
 enum EPlayerProperties
 {
 	PROP_FROZEN = 0,
@@ -884,6 +884,7 @@ enum EAimFlags
 	ALF_CHECKCONVERSATION = 8,
 	ALF_NOFRIENDS = 16,
 	ALF_PORTALRESTRICT = 32,	// only work through portals with a global offset (to be used for stuff that cannot remember the calculated FTranslatedLineTarget info)
+	ALF_NOWEAPONCHECK = 64,		// ignore NOAUTOAIM flag on a player's weapon.
 }
 
 enum ELineAttackFlags
@@ -1001,6 +1002,7 @@ enum EFSkillProperty	// floating point properties
 	SKILLP_Aggressiveness,
 	SKILLP_MonsterHealth,
 	SKILLP_FriendlyHealth,
+	SKILLP_KickbackFactor,
 };
 
 enum EWeaponPos
@@ -1247,3 +1249,49 @@ enum SPAC
 
 	SPAC_PlayerActivate = (SPAC_Cross|SPAC_Use|SPAC_Impact|SPAC_Push|SPAC_AnyCross|SPAC_UseThrough|SPAC_UseBack),
 };
+
+enum RadiusDamageFlags
+{
+	RADF_HURTSOURCE = 1,
+	RADF_NOIMPACTDAMAGE = 2,
+	RADF_SOURCEISSPOT = 4,
+	RADF_NODAMAGE = 8,
+	RADF_THRUSTZ = 16,
+	RADF_OLDRADIUSDAMAGE = 32
+};
+
+enum IntermissionSequenceType
+{
+	FSTATE_EndingGame = 0,
+	FSTATE_ChangingLevel = 1,
+	FSTATE_InLevel = 2
+};
+
+enum Bobbing
+{
+	Bob_Normal,
+	Bob_Inverse,
+	Bob_Alpha,
+	Bob_InverseAlpha,
+	Bob_Smooth,
+	Bob_InverseSmooth
+};
+
+enum EFinishLevelType
+{
+	FINISH_SameHub,
+	FINISH_NextHub,
+	FINISH_NoHub
+};
+
+enum EChangeLevelFlags
+{
+	CHANGELEVEL_KEEPFACING = 1,
+	CHANGELEVEL_RESETINVENTORY = 2,
+	CHANGELEVEL_NOMONSTERS = 4,
+	CHANGELEVEL_CHANGESKILL = 8,
+	CHANGELEVEL_NOINTERMISSION = 16,
+	CHANGELEVEL_RESETHEALTH = 32,
+	CHANGELEVEL_PRERAISEWEAPON = 64,
+};
+

@@ -21,6 +21,7 @@ class Centaur : Actor
 		HowlSound "PuppyBeat";
 		Obituary "$OB_CENTAUR";
 		DamageFactor "Electric", 3;
+		Tag "$FN_CENTAUR";
 	}
 	States
 	{
@@ -107,6 +108,7 @@ class CentaurLeader : Centaur
 		Speed 10;
 		Obituary "$OB_SLAUGHTAUR";
 		HitObituary "$OB_SLAUGHTAURHIT";
+		Tag "$FN_SLAUGHTAUR";
 	}
 	States
 	{

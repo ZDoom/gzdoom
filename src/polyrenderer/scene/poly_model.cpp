@@ -36,15 +36,69 @@
 void PolyRenderModel(PolyRenderThread *thread, const Mat4f &worldToClip, uint32_t stencilValue, float x, float y, float z, FSpriteModelFrame *smf, AActor *actor)
 {
 	PolyModelRenderer renderer(thread, worldToClip, stencilValue);
+
+	renderer.sector = actor->Sector;
+	renderer.RenderStyle = actor->RenderStyle;
+	renderer.RenderAlpha = (float)actor->Alpha;
+	if (!renderer.RenderStyle.IsVisible(renderer.RenderAlpha))
+		return;
+
+	bool foggy = false;
+	int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Viewpoint.extralight << 4;
+	bool fullbrightSprite = ((actor->renderflags & RF_FULLBRIGHT) || (actor->flags5 & MF5_BRIGHT));
+	renderer.lightlevel = fullbrightSprite ? 255 : actor->Sector->lightlevel + actualextralight;
+	renderer.visibility = PolyRenderer::Instance()->Light.SpriteGlobVis(foggy);
+
+	renderer.fillcolor = actor->fillcolor;
+	renderer.Translation = actor->Translation;
+
 	renderer.AddLights(actor);
 	renderer.RenderModel(x, y, z, smf, actor, r_viewpoint.TicFrac);
 	PolyTriangleDrawer::SetModelVertexShader(thread->DrawQueue, -1, -1, 0.0f);
 	PolyTriangleDrawer::SetTransform(thread->DrawQueue, thread->FrameMemory->NewObject<Mat4f>(worldToClip), nullptr);
 }
 
+static bool isBright(DPSprite *psp)
+{
+	if (psp != nullptr && psp->GetState() != nullptr)
+	{
+		bool disablefullbright = false;
+		FTextureID lump = sprites[psp->GetSprite()].GetSpriteFrame(psp->GetFrame(), 0, 0., nullptr);
+		if (lump.isValid())
+		{
+			FTexture * tex = TexMan(lump);
+			if (tex) disablefullbright = tex->bDisableFullbright;
+		}
+		return psp->GetState()->GetFullbright() && !disablefullbright;
+	}
+	return false;
+}
+
 void PolyRenderHUDModel(PolyRenderThread *thread, const Mat4f &worldToClip, uint32_t stencilValue, DPSprite *psp, float ofsx, float ofsy)
 {
 	PolyModelRenderer renderer(thread, worldToClip, stencilValue);
+
+	AActor *playermo = players[consoleplayer].camera;
+	auto rs = psp->GetRenderStyle(playermo->RenderStyle, playermo->Alpha);
+	renderer.sector = playermo->Sector;
+	renderer.RenderStyle = rs.first;
+	renderer.RenderAlpha = rs.second;
+	if (psp->Flags & PSPF_FORCEALPHA) renderer.RenderAlpha = 0.0f;
+	if (!renderer.RenderStyle.IsVisible(renderer.RenderAlpha))
+		return;
+
+	bool foggy = false;
+	int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Viewpoint.extralight << 4;
+	bool fullbrightSprite = isBright(psp);
+	renderer.lightlevel = fullbrightSprite ? 255 : playermo->Sector->lightlevel + actualextralight;
+	renderer.visibility = PolyRenderer::Instance()->Light.SpriteGlobVis(foggy);
+
+	PalEntry ThingColor = (playermo->RenderStyle.Flags & STYLEF_ColorIsFixed) ? playermo->fillcolor : 0xffffff;
+	ThingColor.a = 255;
+
+	renderer.fillcolor = fullbrightSprite ? ThingColor : ThingColor.Modulate(playermo->Sector->SpecialColors[sector_t::sprites]);
+	renderer.Translation = 0xffffffff;// playermo->Translation;
+
 	renderer.RenderHUDModel(psp, ofsx, ofsy);
 	PolyTriangleDrawer::SetModelVertexShader(thread->DrawQueue, -1, -1, 0.0f);
 }
@@ -121,7 +175,6 @@ void PolyModelRenderer::AddLights(AActor *actor)
 
 void PolyModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored)
 {
-	ModelActor = actor;
 	const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);
 	SetTransform();
 
@@ -135,8 +188,6 @@ void PolyModelRenderer::EndDrawModel(AActor *actor, FSpriteModelFrame *smf)
 	if (actor->RenderStyle == LegacyRenderStyles[STYLE_Normal] || !!(smf->flags & MDL_DONTCULLBACKFACES))
 		PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, false);
 	PolyTriangleDrawer::SetCullCCW(Thread->DrawQueue, true);
-
-	ModelActor = nullptr;
 }
 
 IModelVertexBuffer *PolyModelRenderer::CreateVertexBuffer(bool needindex, bool singleframe)
@@ -162,7 +213,6 @@ VSMatrix PolyModelRenderer::GetViewToWorldMatrix()
 
 void PolyModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix, bool mirrored)
 {
-	ModelActor = actor;
 	const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);
 	SetTransform();
 	PolyTriangleDrawer::SetWeaponScene(Thread->DrawQueue, true);
@@ -174,7 +224,6 @@ void PolyModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectT
 
 void PolyModelRenderer::EndDrawHUDModel(AActor *actor)
 {
-	ModelActor = nullptr;
 	PolyTriangleDrawer::SetWeaponScene(Thread->DrawQueue, false);
 
 	if (actor->RenderStyle == LegacyRenderStyles[STYLE_Normal])
@@ -206,21 +255,12 @@ void PolyModelRenderer::SetTransform()
 
 void PolyModelRenderer::DrawArrays(int start, int count)
 {
-	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
-
-	bool foggy = false;
-	int actualextralight = foggy ? 0 : viewpoint.extralight << 4;
-	sector_t *sector = ModelActor->Sector;
-
-	bool fullbrightSprite = ((ModelActor->renderflags & RF_FULLBRIGHT) || (ModelActor->flags5 & MF5_BRIGHT));
-	int lightlevel = fullbrightSprite ? 255 : ModelActor->Sector->lightlevel + actualextralight;
-
 	PolyDrawArgs args;
-	args.SetLight(GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true), lightlevel, PolyRenderer::Instance()->Light.SpriteGlobVis(foggy), fullbrightSprite);
+	args.SetLight(GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true), lightlevel, visibility, fullbrightSprite);
 	args.SetLights(Lights, NumLights);
 	args.SetStencilTestValue(StencilValue);
 	args.SetClipPlane(0, PolyClipPlane());
-	args.SetStyle(ModelActor->RenderStyle, ModelActor->Alpha, ModelActor->fillcolor, ModelActor->Translation, SkinTexture, fullbrightSprite);
+	args.SetStyle(RenderStyle, RenderAlpha, fillcolor, Translation, SkinTexture, fullbrightSprite);
 	args.SetDepthTest(true);
 	args.SetWriteDepth(true);
 	args.SetWriteStencil(false);
@@ -229,21 +269,12 @@ void PolyModelRenderer::DrawArrays(int start, int count)
 
 void PolyModelRenderer::DrawElements(int numIndices, size_t offset)
 {
-	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
-
-	bool foggy = false;
-	int actualextralight = foggy ? 0 : viewpoint.extralight << 4;
-	sector_t *sector = ModelActor->Sector;
-
-	bool fullbrightSprite = ((ModelActor->renderflags & RF_FULLBRIGHT) || (ModelActor->flags5 & MF5_BRIGHT));
-	int lightlevel = fullbrightSprite ? 255 : ModelActor->Sector->lightlevel + actualextralight;
-
 	PolyDrawArgs args;
-	args.SetLight(GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true), lightlevel, PolyRenderer::Instance()->Light.SpriteGlobVis(foggy), fullbrightSprite);
+	args.SetLight(GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true), lightlevel, visibility, fullbrightSprite);
 	args.SetLights(Lights, NumLights);
 	args.SetStencilTestValue(StencilValue);
 	args.SetClipPlane(0, PolyClipPlane());
-	args.SetStyle(ModelActor->RenderStyle, ModelActor->Alpha, ModelActor->fillcolor, ModelActor->Translation, SkinTexture, fullbrightSprite);
+	args.SetStyle(RenderStyle, RenderAlpha, fillcolor, Translation, SkinTexture, fullbrightSprite);
 	args.SetDepthTest(true);
 	args.SetWriteDepth(true);
 	args.SetWriteStencil(false);

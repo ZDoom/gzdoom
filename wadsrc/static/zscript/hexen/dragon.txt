@@ -19,6 +19,7 @@ class Dragon : Actor
 		DeathSound "DragonDeath";
 		ActiveSound "DragonActive";
 		Obituary "$OB_DRAGON";
+		Tag "$FN_DRAGON";
 	}
 
 	States

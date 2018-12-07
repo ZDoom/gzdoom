@@ -399,4 +399,80 @@ extend class PlayerPawn
 		}
 		return;
 	}
+	
+	virtual void CheatSetInv(String strng, int amount, bool beyond)
+	{
+		if (!(strng ~== "health"))
+		{
+			if (amount <= 0)
+			{
+				CheatSuicide();
+				return;
+			}
+			if (!beyond) amount = MIN(amount, player.mo.GetMaxHealth(true));
+			player.health = player.mo.health = amount;
+		}
+		else
+		{
+			class<Inventory> item = strng;
+			if (item != null)
+			{
+				player.mo.SetInventory(item, amount, beyond);
+				return;
+			}
+			Console.Printf("Unknown item \"%s\"\n", strng);
+		}
+	}
+	
+
+	virtual String CheatMorph(class<PlayerPawn> morphClass, bool quickundo)
+	{
+		let oldclass = GetClass();
+
+		// Set the standard morph style for the current game
+		int style = MRF_UNDOBYTOMEOFPOWER;
+		if (gameinfo.gametype == GAME_Hexen) style |= MRF_UNDOBYCHAOSDEVICE;
+
+		if (player.morphTics)
+		{
+			if (UndoPlayerMorph (player))
+			{
+				if (!quickundo && oldclass != morphclass && MorphPlayer (player, morphclass, 0, style))
+				{
+					return StringTable.Localize("$TXT_STRANGER");
+				}
+				return StringTable.Localize("$TXT_NOTSTRANGE");
+			}
+		}
+		else if (MorphPlayer (player, morphclass, 0, style))
+		{
+			return StringTable.Localize("$TXT_STRANGE");
+		}
+		return "";
+	}
+	
+	virtual void CheatTakeWeaps()
+	{
+		if (player.morphTics || health <= 0)
+		{
+			return;
+		}
+		// Do not mass-delete directly from the linked list. That can cause problems.
+		Array<Inventory> collect;
+		// Take away all weapons that are either non-wimpy or use ammo.
+		for(let item = Inv; item; item = item.Inv)
+		{
+			let weap = Weapon(item);
+			if (weap && (!weap.bWimpy_Weapon || weap.AmmoType1 != null))
+			{
+				collect.Push(item);
+			}
+		}
+		// Destroy them in a second loop. We have to look out for indirect destructions here as will happen with powered up weapons.
+		for(int i = 0; i < collect.Size(); i++)
+		{
+			let item = collect[i];
+			if (item) item.Destroy();
+		}
+	}
 }

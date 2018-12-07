@@ -163,6 +163,7 @@ option( NO_OPENAL "Disable OpenAL sound support" OFF )
 find_package( BZip2 )
 find_package( JPEG )
 find_package( ZLIB )
+find_package( asmjit )
 # GME
 find_path( GME_INCLUDE_DIR gme/gme.h )
 find_library( GME_LIBRARIES gme )
@@ -271,6 +272,7 @@ option(FORCE_INTERNAL_ZLIB "Use internal zlib")
 option(FORCE_INTERNAL_JPEG "Use internal jpeg")
 option(FORCE_INTERNAL_BZIP2 "Use internal bzip2")
 option(FORCE_INTERNAL_GME "Use internal gme")
+option(FORCE_INTERNAL_ASMJIT "Use internal asmjit")
 
 # Fast math flags, required by some subprojects
 set( ZD_FASTMATH_FLAG "" )
@@ -289,6 +291,17 @@ else()
 	set( ZLIB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/zlib )
 	set( ZLIB_LIBRARIES z )
 	set( ZLIB_LIBRARY z )
+endif()
+
+if( ASMJIT_FOUND AND NOT FORCE_INTERNAL_ASMJIT )
+	message( STATUS "Using system asmjit, includes found at ${ASMJIT_INCLUDE_DIR}" )
+else()
+	message( STATUS "Using internal asmjit" )
+	set( SKIP_INSTALL_ALL TRUE ) # Avoid installing asmjit alongside zdoom
+	add_subdirectory( asmjit )
+	set( ASMJIT_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/asmjit )
+	set( ASMJIT_LIBRARIES asmjit )
+	set( ASMJIT_LIBRARY asmjit )
 endif()
 
 if( JPEG_FOUND AND NOT FORCE_INTERNAL_JPEG )

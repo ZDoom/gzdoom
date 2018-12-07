@@ -359,7 +359,7 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, double speed, int delay, int lightTag
 	{
 	case doorClose:
 		m_Direction = -1;
-		height = sec->FindLowestCeilingSurrounding (&spot);
+		height = FindLowestCeilingSurrounding (sec, &spot);
 		m_TopDist = sec->ceilingplane.PointToDist (spot, height - 4);
 		DoorSound (false);
 		break;
@@ -367,7 +367,7 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, double speed, int delay, int lightTag
 	case doorOpen:
 	case doorRaise:
 		m_Direction = 1;
-		height = sec->FindLowestCeilingSurrounding (&spot);
+		height = FindLowestCeilingSurrounding (sec, &spot);
 		m_TopDist = sec->ceilingplane.PointToDist (spot, height - 4);
 		if (m_TopDist != sec->ceilingplane.fD())
 			DoorSound (true);
@@ -381,14 +381,14 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, double speed, int delay, int lightTag
 
 	case doorWaitRaise:
 		m_Direction = 2;
-		height = sec->FindLowestCeilingSurrounding (&spot);
+		height = FindLowestCeilingSurrounding (sec, &spot);
 		m_TopDist = sec->ceilingplane.PointToDist (spot, height - 4);
 		break;
 
 	case doorWaitClose:
 		m_Direction = 0;
 		m_Type = DDoor::doorRaise;
-		height = sec->FindHighestFloorPoint (&m_BotSpot);
+		height = FindHighestFloorPoint (sec, &m_BotSpot);
 		m_BotDist = sec->ceilingplane.PointToDist (m_BotSpot, height);
 		m_OldFloorDist = sec->floorplane.fD();
 		m_TopDist = sec->ceilingplane.fD();
@@ -399,12 +399,12 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, double speed, int delay, int lightTag
 	if (!m_Sector->floordata || !m_Sector->floordata->IsKindOf(RUNTIME_CLASS(DPlat)) ||
 		!(barrier_cast<DPlat*>(m_Sector->floordata))->IsLift())
 	{
-		height = sec->FindHighestFloorPoint (&m_BotSpot);
+		height = FindHighestFloorPoint (sec, &m_BotSpot);
 		m_BotDist = sec->ceilingplane.PointToDist (m_BotSpot, height);
 	}
 	else
 	{
-		height = sec->FindLowestCeilingPoint(&m_BotSpot);
+		height = FindLowestCeilingPoint(sec, &m_BotSpot);
 		m_BotDist = sec->ceilingplane.PointToDist (m_BotSpot, height);
 	}
 	m_OldFloorDist = sec->floorplane.fD();

@@ -129,9 +129,7 @@ AActor* actorvalue(const svalue_t &svalue)
 	if(svalue.type == svt_mobj) 
 	{
 		// Inventory items in the player's inventory have to be considered non-present.
-		if (svalue.value.mobj != NULL && 
-			svalue.value.mobj->IsKindOf(RUNTIME_CLASS(AInventory)) && 
-			static_cast<AInventory*>(svalue.value.mobj)->Owner != NULL)
+		if (svalue.value.mobj == NULL || !svalue.value.mobj->IsMapActor())
 		{
 			return NULL;
 		}
@@ -150,9 +148,7 @@ AActor* actorvalue(const svalue_t &svalue)
 			return NULL;
 		}
 		// Inventory items in the player's inventory have to be considered non-present.
-		if (SpawnedThings[intval] != NULL &&
-			SpawnedThings[intval]->IsKindOf(RUNTIME_CLASS(AInventory)) && 
-			barrier_cast<AInventory*>(SpawnedThings[intval])->Owner != NULL)
+		if (svalue.value.mobj == NULL || !svalue.value.mobj->IsMapActor())
 		{
 			return NULL;
 		}

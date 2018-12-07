@@ -903,21 +903,18 @@ static bool IsActorAMonster(AActor *mo)
 
 static bool IsActorAnItem(AActor *mo)
 {
-	return mo->IsKindOf(RUNTIME_CLASS(AInventory)) && mo->flags&MF_SPECIAL;
+	return mo->IsKindOf(NAME_Inventory) && mo->flags&MF_SPECIAL;
 }
 
 static bool IsActorACountItem(AActor *mo)
 {
-	return mo->IsKindOf(RUNTIME_CLASS(AInventory)) && mo->flags&MF_SPECIAL && mo->flags&MF_COUNTITEM;
+	return mo->IsKindOf(NAME_Inventory) && mo->flags&MF_SPECIAL && mo->flags&MF_COUNTITEM;
 }
 
 // [SP] for all actors
 static bool IsActor(AActor *mo)
 {
-	if (mo->IsKindOf(RUNTIME_CLASS(AInventory)))
-		return static_cast<AInventory *>(mo)->Owner == NULL; // [SP] Exclude inventory-owned items
-	else
-		return true;
+	return mo->IsMapActor();
 }
 
 // [SP] modified - now allows showing count only, new arg must be passed. Also now still counts regardless, if lists are printed.

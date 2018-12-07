@@ -36,6 +36,9 @@ class Key : Inventory
 		Inventory.InterHubAmount 0;
 		Inventory.PickupSound "misc/k_pkup";
 	}
+
+	static native clearscope int GetKeyTypeCount();
+	static native clearscope class<Key> GetKeyType(int index);
 	
 	override bool HandlePickup (Inventory item)
 	{
@@ -129,6 +132,9 @@ class PuzzleItem : Inventory
 		return false;
 	}
 
+	override void UseAll(Actor user)
+	{
+	}
 	
 	override bool ShouldStay ()
 	{

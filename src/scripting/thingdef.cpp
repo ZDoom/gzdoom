@@ -51,6 +51,8 @@
 #include "v_text.h"
 #include "backend/codegen.h"
 #include "stats.h"
+#include "info.h"
+#include "thingdef.h"
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 void InitThingdef();
@@ -59,6 +61,69 @@ void InitThingdef();
 
 static TMap<FState *, FScriptPosition> StateSourceLines;
 static FScriptPosition unknownstatesource("unknown file", 0);
+
+
+//==========================================================================
+//
+// PClassActor :: Finalize
+//
+// Installs the parsed states and does some sanity checking
+//
+//==========================================================================
+
+void FinalizeClass(PClass *ccls, FStateDefinitions &statedef)
+{
+	if (!ccls->IsDescendantOf(NAME_Actor)) return;
+	auto cls = static_cast<PClassActor*>(ccls);
+	try
+	{
+		statedef.FinishStates(cls);
+	}
+	catch (CRecoverableError &)
+	{
+		statedef.MakeStateDefines(nullptr);
+		throw;
+	}
+	auto def = GetDefaultByType(cls);
+	statedef.InstallStates(cls, def);
+	statedef.MakeStateDefines(nullptr);
+
+	if (cls->IsDescendantOf(NAME_Inventory))
+	{
+		def->flags |= MF_SPECIAL;
+	}
+
+	if (cls->IsDescendantOf(NAME_Weapon))
+	{
+		FState *ready = def->FindState(NAME_Ready);
+		FState *select = def->FindState(NAME_Select);
+		FState *deselect = def->FindState(NAME_Deselect);
+		FState *fire = def->FindState(NAME_Fire);
+		auto TypeName = cls->TypeName;
+
+		// Consider any weapon without any valid state abstract and don't output a warning
+		// This is for creating base classes for weapon groups that only set up some properties.
+		if (ready || select || deselect || fire)
+		{
+			if (!ready)
+			{
+				I_Error("Weapon %s doesn't define a ready state.", TypeName.GetChars());
+			}
+			if (!select)
+			{
+				I_Error("Weapon %s doesn't define a select state.", TypeName.GetChars());
+			}
+			if (!deselect)
+			{
+				I_Error("Weapon %s doesn't define a deselect state.", TypeName.GetChars());
+			}
+			if (!fire)
+			{
+				I_Error("Weapon %s doesn't define a fire state.", TypeName.GetChars());
+			}
+		}
+	}
+}
 
 //==========================================================================
 //
@@ -143,7 +208,7 @@ void SetImplicitArgs(TArray<PType *> *args, TArray<uint32_t> *argflags, TArray<F
 
 PFunction *CreateAnonymousFunction(PContainerType *containingclass, PType *returntype, int flags)
 {
-	TArray<PType *> rets(1);
+	TArray<PType *> rets;
 	TArray<PType *> args;
 	TArray<uint32_t> argflags;
 	TArray<FName> argnames;
@@ -155,7 +220,7 @@ PFunction *CreateAnonymousFunction(PContainerType *containingclass, PType *retur
 	//      (just give them VARF_Play, whatever)
 	fflags |= VARF_Play;
 
-	rets[0] = returntype != nullptr? returntype : TypeError;	// Use TypeError as placeholder if we do not know the return type yet.
+	if (returntype) rets.Push(returntype);
 	SetImplicitArgs(&args, &argflags, &argnames, containingclass, fflags, flags);
 
 	PFunction *sym = Create<PFunction>(containingclass, NAME_None);	// anonymous functions do not have names.
@@ -186,6 +251,7 @@ PFunction *FindClassMemberFunction(PContainerType *selfcls, PContainerType *func
 		auto cls_target = funcsym ? PType::toClass(funcsym->OwningClass) : nullptr;
 		if (funcsym == nullptr)
 		{
+			if (PClass::FindClass(name)) return nullptr;	// Special case when a class's member variable hides a global class name. This should still work.
 			sc.Message(MSG_ERROR, "%s is not a member function of %s", name.GetChars(), selfcls->TypeName.GetChars());
 		}
 		else if ((funcsym->Variants[0].Flags & VARF_Private) && symtable != &funccls->Symbols)
@@ -244,9 +310,10 @@ static void CheckForUnsafeStates(PClassActor *obj)
 	TMap<FState *, bool> checked;
 	ENamedName *test;
 
-	if (obj->IsDescendantOf(NAME_Weapon))
+	auto cwtype = PClass::FindActor(NAME_Weapon);
+	if (obj->IsDescendantOf(cwtype))
 	{
-		if (obj->Size == RUNTIME_CLASS(AWeapon)->Size) return;	// This class cannot have user variables.
+		if (obj->Size == cwtype->Size) return;	// This class cannot have user variables.
 		test = weaponstates;
 	}
 	else
@@ -257,7 +324,7 @@ static void CheckForUnsafeStates(PClassActor *obj)
 			if (obj->Size == citype->Size) return;	// This class cannot have user variables.
 			test = pickupstates;
 		}
-		else return;	// something else derived from AStateProvider. We do not know what this may be.
+		else return;	// something else derived from StateProvider. We do not know what this may be.
 	}
 
 	for (; *test != NAME_None; test++)
@@ -416,7 +483,7 @@ void LoadActors()
 
 		CheckStates(ti);
 
-		if (ti->bDecorateClass && ti->IsDescendantOf(RUNTIME_CLASS(AStateProvider)))
+		if (ti->bDecorateClass && ti->IsDescendantOf(NAME_StateProvider))
 		{
 			// either a DECORATE based weapon or CustomInventory. 
 			// These are subject to relaxed rules for user variables in states.

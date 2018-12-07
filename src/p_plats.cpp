@@ -279,7 +279,7 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, double height,
 		{
 		case DPlat::platRaiseAndStay:
 		case DPlat::platRaiseAndStayLockout:
-			newheight = sec->FindNextHighestFloor (&spot);
+			newheight = FindNextHighestFloor (sec, &spot);
 			plat->m_High = sec->floorplane.PointToDist (spot, newheight);
 			plat->m_Low = sec->floorplane.fD();
 			plat->m_Status = DPlat::up;
@@ -306,7 +306,7 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, double height,
 
 		case DPlat::platDownWaitUpStay:
 		case DPlat::platDownWaitUpStayStone:
-			newheight = sec->FindLowestFloorSurrounding (&spot) + lip;
+			newheight = FindLowestFloorSurrounding (sec, &spot) + lip;
 			plat->m_Low = sec->floorplane.PointToDist (spot, newheight);
 
 			if (plat->m_Low < sec->floorplane.fD())
@@ -318,13 +318,13 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, double height,
 			break;
 		
 		case DPlat::platUpNearestWaitDownStay:
-			newheight = sec->FindNextHighestFloor (&spot);
+			newheight = FindNextHighestFloor (sec, &spot);
 			// Intentional fall-through
 
 		case DPlat::platUpWaitDownStay:
 			if (type == DPlat::platUpWaitDownStay)
 			{
-				newheight = sec->FindHighestFloorSurrounding (&spot);
+				newheight = FindHighestFloorSurrounding (sec, &spot);
 			}
 			plat->m_High = sec->floorplane.PointToDist (spot, newheight);
 			plat->m_Low = sec->floorplane.fD();
@@ -337,13 +337,13 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, double height,
 			break;
 
 		case DPlat::platPerpetualRaise:
-			newheight = sec->FindLowestFloorSurrounding (&spot) + lip;
+			newheight = FindLowestFloorSurrounding (sec, &spot) + lip;
 			plat->m_Low =  sec->floorplane.PointToDist (spot, newheight);
 
 			if (plat->m_Low < sec->floorplane.fD())
 				plat->m_Low = sec->floorplane.fD();
 
-			newheight = sec->FindHighestFloorSurrounding (&spot);
+			newheight = FindHighestFloorSurrounding (sec, &spot);
 			plat->m_High =  sec->floorplane.PointToDist (spot, newheight);
 
 			if (plat->m_High > sec->floorplane.fD())
@@ -358,7 +358,7 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, double height,
 			plat->m_Crush = 10;	//jff 3/14/98 crush anything in the way
 
 			// set up toggling between ceiling, floor inclusive
-			newheight = sec->FindLowestCeilingPoint (&spot);
+			newheight = FindLowestCeilingPoint(sec, &spot);
 			plat->m_Low = sec->floorplane.PointToDist (spot, newheight);
 			plat->m_High = sec->floorplane.fD();
 			plat->m_Status = DPlat::down;
@@ -366,7 +366,7 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, double height,
 			break;
 
 		case DPlat::platDownToNearestFloor:
-			newheight = sec->FindNextLowestFloor (&spot) + lip;
+			newheight = FindNextLowestFloor (sec, &spot) + lip;
 			plat->m_Low = sec->floorplane.PointToDist (spot, newheight);
 			plat->m_Status = DPlat::down;
 			plat->m_High = sec->floorplane.fD();
@@ -374,7 +374,7 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, double height,
 			break;
 
 		case DPlat::platDownToLowestCeiling:
-			newheight = sec->FindLowestCeilingSurrounding (&spot);
+			newheight = FindLowestCeilingSurrounding (sec, &spot);
 		    plat->m_Low = sec->floorplane.PointToDist (spot, newheight);
 			plat->m_High = sec->floorplane.fD();
 

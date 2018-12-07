@@ -22,6 +22,7 @@ class Serpent : Actor
 		PainSound "SerpentPain";
 		DeathSound "SerpentDeath";
 		HitObituary "$OB_SERPENTHIT";
+		Tag "$FN_SERPENT";
 	}
 
 	States
@@ -286,6 +287,50 @@ class Serpent : Actor
 				mo.Floorclip = 6;
 			}
 		}
+	}
+}
+
+extend class Actor
+{
+	//----------------------------------------------------------------------------
+	//
+	// FUNC P_CheckMeleeRange2
+	//
+	// This belongs to the Serpent but was initially exported on Actor
+	// so it needs to remain there.
+	//
+	//----------------------------------------------------------------------------
+
+	bool CheckMeleeRange2 ()
+	{
+		Actor mo;
+		double dist;
+
+
+		if (!target || (CurSector.Flags & Sector.SECF_NOATTACK))
+		{
+			return false;
+		}
+		mo = target;
+		dist = mo.Distance2D (self);
+		if (dist >= 128 || dist < meleerange + mo.radius)
+		{
+			return false;
+		}
+		if (mo.pos.Z > pos.Z + height)
+		{ // Target is higher than the attacker
+			return false;
+		}
+		else if (pos.Z > mo.pos.Z + mo.height)
+		{ // Attacker is higher
+			return false;
+		}
+		else if (IsFriend(mo))
+		{
+			// killough 7/18/98: friendly monsters don't attack other friends
+			return false;
+		}
+		return CheckSight(mo);
 	}
 }
 

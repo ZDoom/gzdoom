@@ -258,18 +258,18 @@ int main (int argc, char **argv)
 		C_InitConsole (80*8, 25*8, false);
 		D_DoomMain ();
     }
-    catch (class CDoomError &error)
+    catch (std::exception &error)
     {
 		I_ShutdownJoysticks();
-		if (error.GetMessage ())
-			fprintf (stderr, "%s\n", error.GetMessage ());
+		if (error.what () && strcmp(error.what(), "NoRunExit"))
+			fprintf (stderr, "%s\n", error.what ());
 
 #ifdef __APPLE__
-		Mac_I_FatalError(error.GetMessage());
+		Mac_I_FatalError(error.what());
 #endif // __APPLE__
 
 #ifdef __linux__
-		Linux_I_FatalError(error.GetMessage());
+		Linux_I_FatalError(error.what());
 #endif // __linux__
 
 		exit (-1);

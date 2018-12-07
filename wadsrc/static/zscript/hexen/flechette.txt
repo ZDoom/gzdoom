@@ -347,7 +347,6 @@ class ArtiPoisonBag3 : ArtiPoisonBag
 			// is as set by the projectile. To accommodate self with a proper trajectory, we
 			// aim the projectile ~20 degrees higher than we're looking at and increase the
 			// speed we fire at accordingly.
-			double orgpitch = -Owner.Pitch;
 			double modpitch = clamp(-Owner.Pitch + 20, -89., 89.);
 			double ang = mo.angle;
 			double speed = (mo.Speed, 4.).Length();

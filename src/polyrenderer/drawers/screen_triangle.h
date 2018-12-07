@@ -45,21 +45,12 @@ struct ScreenTriangleStepVariables
 
 struct TriDrawTriangleArgs
 {
-	uint8_t *dest;
-	int32_t pitch;
 	ShadedTriVertex *v1;
 	ShadedTriVertex *v2;
 	ShadedTriVertex *v3;
-	int32_t clipright;
-	int32_t clipbottom;
-	uint8_t *stencilbuffer;
-	int stencilpitch;
-	float *zbuffer;
 	const PolyDrawArgs *uniforms;
-	bool destBgra;
 	ScreenTriangleStepVariables gradientX;
 	ScreenTriangleStepVariables gradientY;
-	float depthOffset;
 
 	bool CalculateGradients()
 	{
@@ -142,8 +133,10 @@ class ScreenTriangle
 public:
 	static void Draw(const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread);
 
-	static void(*SpanDrawers8[])(int y, int x0, int x1, const TriDrawTriangleArgs *args);
-	static void(*SpanDrawers32[])(int y, int x0, int x1, const TriDrawTriangleArgs *args);
+	static void(*TriangleDrawers[])(const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread, int16_t *edges, int topY, int bottomY);
+
+	static void(*SpanDrawers8[])(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread);
+	static void(*SpanDrawers32[])(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread);
 	static void(*RectDrawers8[])(const void *, int, int, int, const RectDrawArgs *, PolyTriangleThreadData *);
 	static void(*RectDrawers32[])(const void *, int, int, int, const RectDrawArgs *, PolyTriangleThreadData *);
 
@@ -216,4 +209,42 @@ namespace TriScreenDrawerModes
 		11,  6,  6, 11, 15,  6,  6, 11, 15, 18, 
 		21,  6,  6,  6,  6, 11,  6,  6, 11,  6, 
 	};
+
+	enum SWTriangleFlags
+	{
+		SWTRI_DepthTest = 1,
+		SWTRI_StencilTest = 2,
+		SWTRI_WriteColor = 4,
+		SWTRI_WriteDepth = 8,
+		SWTRI_WriteStencil = 16
+	};
+
+	struct TriangleOpt4 { static const int Flags = 4; };
+	struct TriangleOpt5 { static const int Flags = 5; };
+	struct TriangleOpt6 { static const int Flags = 6; };
+	struct TriangleOpt7 { static const int Flags = 7; };
+	struct TriangleOpt8 { static const int Flags = 8; };
+	struct TriangleOpt9 { static const int Flags = 9; };
+	struct TriangleOpt10 { static const int Flags = 10; };
+	struct TriangleOpt11 { static const int Flags = 11; };
+	struct TriangleOpt12 { static const int Flags = 12; };
+	struct TriangleOpt13 { static const int Flags = 13; };
+	struct TriangleOpt14 { static const int Flags = 14; };
+	struct TriangleOpt15 { static const int Flags = 15; };
+	struct TriangleOpt16 { static const int Flags = 16; };
+	struct TriangleOpt17 { static const int Flags = 17; };
+	struct TriangleOpt18 { static const int Flags = 18; };
+	struct TriangleOpt19 { static const int Flags = 19; };
+	struct TriangleOpt20 { static const int Flags = 20; };
+	struct TriangleOpt21 { static const int Flags = 21; };
+	struct TriangleOpt22 { static const int Flags = 22; };
+	struct TriangleOpt23 { static const int Flags = 23; };
+	struct TriangleOpt24 { static const int Flags = 24; };
+	struct TriangleOpt25 { static const int Flags = 25; };
+	struct TriangleOpt26 { static const int Flags = 26; };
+	struct TriangleOpt27 { static const int Flags = 27; };
+	struct TriangleOpt28 { static const int Flags = 28; };
+	struct TriangleOpt29 { static const int Flags = 29; };
+	struct TriangleOpt30 { static const int Flags = 30; };
+	struct TriangleOpt31 { static const int Flags = 31; };
 }

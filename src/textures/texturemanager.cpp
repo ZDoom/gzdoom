@@ -260,13 +260,18 @@ FTextureID FTextureManager::CheckForTexture (const char *name, ETextureType uset
 	return FTextureID(-1);
 }
 
-DEFINE_ACTION_FUNCTION(_TexMan, CheckForTexture)
+static int CheckForTexture(const FString &name, int type, int flags)
+{
+	return TexMan.CheckForTexture(name, static_cast<ETextureType>(type), flags).GetIndex();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, CheckForTexture, CheckForTexture)
 {
 	PARAM_PROLOGUE;
 	PARAM_STRING(name);
 	PARAM_INT(type);
-	PARAM_INT_DEF(flags);
-	ACTION_RETURN_INT(TexMan.CheckForTexture(name, static_cast<ETextureType>(type), flags).GetIndex());
+	PARAM_INT(flags);
+	ACTION_RETURN_INT(CheckForTexture(name, type, flags));
 }
 
 //==========================================================================
@@ -1412,10 +1417,8 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetName)
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION(_TexMan, GetSize)
+static int GetTextureSize(int texid, int *py)
 {
-	PARAM_PROLOGUE;
-	PARAM_INT(texid);
 	auto tex = TexMan.ByIndex(texid);
 	int x, y;
 	if (tex != nullptr)
@@ -1424,6 +1427,16 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetSize)
 		y = tex->GetHeight();
 	}
 	else x = y = -1;
+	if (py) *py = y;
+	return x;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, GetSize, GetTextureSize)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	int x, y;
+	x = GetTextureSize(texid, &y);
 	if (numret > 0) ret[0].SetInt(x);
 	if (numret > 1) ret[1].SetInt(y);
 	return MIN(numret, 2);
@@ -1434,17 +1447,61 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetSize)
 //
 //
 //==========================================================================
+static void GetScaledSize(int texid, DVector2 *pvec)
+{
+	auto tex = TexMan.ByIndex(texid);
+	double x, y;
+	if (tex != nullptr)
+	{
+		x = tex->GetScaledWidthDouble();
+		y = tex->GetScaledHeightDouble();
+	}
+	else x = y = -1;
+	if (pvec)
+	{
+		pvec->X = x;
+		pvec->Y = y;
+	}
+}
 
-DEFINE_ACTION_FUNCTION(_TexMan, GetScaledSize)
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, GetScaledSize, GetScaledSize)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(texid);
+	DVector2 vec;
+	GetScaledSize(texid, &vec);
+	ACTION_RETURN_VEC2(vec);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+static void GetScaledOffset(int texid, DVector2 *pvec)
+{
 	auto tex = TexMan.ByIndex(texid);
+	double x, y;
 	if (tex != nullptr)
 	{
-		ACTION_RETURN_VEC2(DVector2(tex->GetScaledWidthDouble(), tex->GetScaledHeightDouble()));
+		x = tex->GetScaledLeftOffsetDouble(0);
+		y = tex->GetScaledTopOffsetDouble(0);
 	}
-	ACTION_RETURN_VEC2(DVector2(-1, -1));
+	else x = y = -1;
+	if (pvec)
+	{
+		pvec->X = x;
+		pvec->Y = y;
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, GetScaledOffset, GetScaledOffset)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	DVector2 vec;
+	GetScaledOffset(texid, &vec);
+	ACTION_RETURN_VEC2(vec);
 }
 
 //==========================================================================
@@ -1453,34 +1510,18 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetScaledSize)
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION(_TexMan, GetScaledOffset)
+static int CheckRealHeight(int texid)
 {
-	PARAM_PROLOGUE;
-	PARAM_INT(texid);
 	auto tex = TexMan.ByIndex(texid);
-	if (tex != nullptr)
-	{
-		ACTION_RETURN_VEC2(DVector2(tex->GetScaledLeftOffsetDouble(0), tex->GetScaledTopOffsetDouble(0)));
-	}
-	ACTION_RETURN_VEC2(DVector2(-1, -1));
+	if (tex != nullptr) return tex->CheckRealHeight();
+	else return -1;
 }
 
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-DEFINE_ACTION_FUNCTION(_TexMan, CheckRealHeight)
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, CheckRealHeight, CheckRealHeight)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(texid);
-	auto tex = TexMan.ByIndex(texid);
-	if (tex != nullptr)
-	{
-		ACTION_RETURN_INT(tex->CheckRealHeight());
-	}
-	ACTION_RETURN_INT(-1);
+	ACTION_RETURN_INT(CheckRealHeight(texid));
 }
 
 //==========================================================================

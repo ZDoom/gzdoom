@@ -108,6 +108,7 @@ public:
 
     typedef TIterator<T>                       iterator;
     typedef TIterator<const T>                 const_iterator;
+	typedef T							value_type;
 
     iterator begin()
 	{
@@ -278,13 +279,32 @@ public:
 		return Count++;
 	}
 
-	void Append(const TArray<T> &item)
+	unsigned Append(const TArray<T> &item)
 	{
-		unsigned start = Reserve(item.Size());
+		unsigned start = Count;
+
+		Grow(item.Size());
+		Count += item.Size();
+
 		for (unsigned i = 0; i < item.Size(); i++)
 		{
-			Array[start + i] = item[i];
+			new(&Array[start + i]) T(item[i]);
 		}
+		return start;
+	}
+
+	unsigned Append(TArray<T> &&item)
+	{
+		unsigned start = Count;
+
+		Grow(item.Size());
+		Count += item.Size();
+
+		for (unsigned i = 0; i < item.Size(); i++)
+		{
+			new(&Array[start + i]) T(std::move(item[i]));
+		}
+		return start;
 	}
 
 	bool Pop ()

@@ -134,6 +134,7 @@ enum EZCCTreeNodeType
 	AST_ClassCast,
 	AST_StaticArrayStatement,
 	AST_Property,
+	AST_FlagDef,
 
 	NUM_AST_NODE_TYPES
 };
@@ -224,6 +225,12 @@ struct ZCC_Struct : ZCC_NamedNode
 struct ZCC_Property : ZCC_NamedNode
 {
 	ZCC_TreeNode *Body;
+};
+
+struct ZCC_FlagDef : ZCC_NamedNode
+{
+	ENamedName RefName;
+	int BitValue;
 };
 
 struct ZCC_Class : ZCC_Struct

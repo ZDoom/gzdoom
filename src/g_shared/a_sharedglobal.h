@@ -154,21 +154,4 @@ private:
 	DEarthquake ();
 };
 
-class AMorphedMonster : public AActor
-{
-	DECLARE_CLASS (AMorphedMonster, AActor)
-	HAS_OBJECT_POINTERS
-public:
-	void Tick ();
-	
-	void Serialize(FSerializer &arc);
-	void Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOfDeath) override;
-	void OnDestroy() override;
-
-	TObjPtr<AActor*> UnmorphedMe;
-	int UnmorphTime, MorphStyle;
-	PClassActor *MorphExitFlash;
-	ActorFlags FlagsSave;
-};
-
 #endif //__A_SHAREDGLOBAL_H__

@@ -392,7 +392,12 @@ void DThinker::ChangeStatNum (int statnum)
 	list->AddTail(this);
 }
 
-DEFINE_ACTION_FUNCTION(DThinker, ChangeStatNum)
+static void ChangeStatNum(DThinker *thinker, int statnum)
+{
+	thinker->ChangeStatNum(statnum);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DThinker, ChangeStatNum, ChangeStatNum)
 {
 	PARAM_SELF_PROLOGUE(DThinker);
 	PARAM_INT(stat);
@@ -955,46 +960,6 @@ DThinker *FThinkerIterator::Next (bool exact)
 		m_SearchingFresh = false;
 	} while (m_SearchStats && m_Stat != STAT_FIRST_THINKING);
 	return NULL;
-}
-
-//==========================================================================
-//
-// This is for scripting, which needs the iterator wrapped into an object with the needed functions exported.
-// Unfortunately we cannot have templated type conversions in scripts.
-//
-//==========================================================================
-
-class DThinkerIterator : public DObject, public FThinkerIterator
-{
-	DECLARE_ABSTRACT_CLASS(DThinkerIterator, DObject)
-
-public:
-	DThinkerIterator(PClass *cls, int statnum = MAX_STATNUM + 1)
-		: FThinkerIterator(cls, statnum)
-	{
-	}
-};
-
-IMPLEMENT_CLASS(DThinkerIterator, true, false);
-DEFINE_ACTION_FUNCTION(DThinkerIterator, Create)
-{
-	PARAM_PROLOGUE;
-	PARAM_CLASS_DEF(type, DThinker);
-	PARAM_INT_DEF(statnum);
-	ACTION_RETURN_OBJECT(Create<DThinkerIterator>(type, statnum));
-}
-
-DEFINE_ACTION_FUNCTION(DThinkerIterator, Next)
-{
-	PARAM_SELF_PROLOGUE(DThinkerIterator);
-	ACTION_RETURN_OBJECT(self->Next());
-}
-
-DEFINE_ACTION_FUNCTION(DThinkerIterator, Reinit)
-{
-	PARAM_SELF_PROLOGUE(DThinkerIterator);
-	self->Reinit();
-	return 0;
 }
 
 //==========================================================================

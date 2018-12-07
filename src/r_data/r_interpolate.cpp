@@ -67,7 +67,6 @@ public:
 	void Interpolate(double smoothratio);
 	
 	virtual void Serialize(FSerializer &arc);
-	size_t PointerSubstitution (DObject *old, DObject *notOld);
 	size_t PropagateMark();
 };
 
@@ -535,25 +534,6 @@ void DSectorPlaneInterpolation::Serialize(FSerializer &arc)
 		("attached", attached);
 }
 
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-size_t DSectorPlaneInterpolation::PointerSubstitution (DObject *old, DObject *notOld)
-{
-	int subst = 0;
-	for(unsigned i=0; i<attached.Size(); i++)
-	{
-		if (attached[i] == old) 
-		{
-			attached[i] = (DInterpolation*)notOld;
-			subst++;
-		}
-	}
-	return subst;
-}
 
 //==========================================================================
 //

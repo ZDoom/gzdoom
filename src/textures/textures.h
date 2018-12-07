@@ -211,6 +211,7 @@ enum FTextureFormat : uint32_t
 	TEX_Count
 };
 
+
 // Base texture class
 class FTexture
 {
@@ -753,7 +754,7 @@ protected:
 };
 
 // A texture that can be drawn to.
-class DSimpleCanvas;
+class DCanvas;
 class AActor;
 
 class FCanvasTexture : public FTexture
@@ -769,16 +770,16 @@ public:
 	bool CheckModified (FRenderStyle) override;
 	void NeedUpdate() { bNeedsUpdate=true; }
 	void SetUpdated() { bNeedsUpdate = false; bDidUpdate = true; bFirstUpdate = false; }
-	DSimpleCanvas *GetCanvas() { return Canvas; }
-	DSimpleCanvas *GetCanvasBgra() { return CanvasBgra; }
+	DCanvas *GetCanvas() { return Canvas; }
+	DCanvas *GetCanvasBgra() { return CanvasBgra; }
 	bool Mipmapped() override { return false; }
 	void MakeTexture (FRenderStyle style);
 	void MakeTextureBgra ();
 
 protected:
 
-	DSimpleCanvas *Canvas = nullptr;
-	DSimpleCanvas *CanvasBgra = nullptr;
+	DCanvas *Canvas = nullptr;
+	DCanvas *CanvasBgra = nullptr;
 	uint8_t *Pixels = nullptr;
 	uint32_t *PixelsBgra = nullptr;
 	Span DummySpans[2];
@@ -801,6 +802,24 @@ public:
 };
 
 extern FTextureManager TexMan;
+
+struct FTexCoordInfo
+{
+	int mRenderWidth;
+	int mRenderHeight;
+	int mWidth;
+	FVector2 mScale;
+	FVector2 mTempScale;
+	bool mWorldPanning;
+
+	float FloatToTexU(float v) const { return v / mRenderWidth; }
+	float FloatToTexV(float v) const { return v / mRenderHeight; }
+	float RowOffset(float ofs) const;
+	float TextureOffset(float ofs) const;
+	float TextureAdjustWidth() const;
+	void GetFromTexture(FTexture *tex, float x, float y);
+};
+
 
 #endif
 

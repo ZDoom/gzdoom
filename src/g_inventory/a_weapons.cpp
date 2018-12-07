@@ -47,49 +47,6 @@
 #include "serializer.h"
 #include "vm.h"
 
-IMPLEMENT_CLASS(AWeapon, false, true)
-
-IMPLEMENT_POINTERS_START(AWeapon)
-	IMPLEMENT_POINTER(Ammo1)
-	IMPLEMENT_POINTER(Ammo2)
-	IMPLEMENT_POINTER(SisterWeapon)
-IMPLEMENT_POINTERS_END
-
-DEFINE_FIELD(AWeapon, AmmoType1)
-DEFINE_FIELD(AWeapon, AmmoType2)	
-DEFINE_FIELD(AWeapon, AmmoGive1)
-DEFINE_FIELD(AWeapon, AmmoGive2)	
-DEFINE_FIELD(AWeapon, MinAmmo1)
-DEFINE_FIELD(AWeapon, MinAmmo2)		
-DEFINE_FIELD(AWeapon, AmmoUse1)
-DEFINE_FIELD(AWeapon, AmmoUse2)		
-DEFINE_FIELD(AWeapon, Kickback)
-DEFINE_FIELD(AWeapon, YAdjust)				
-DEFINE_FIELD(AWeapon, UpSound)
-DEFINE_FIELD(AWeapon, ReadySound)	
-DEFINE_FIELD(AWeapon, SisterWeaponType)		
-DEFINE_FIELD(AWeapon, ProjectileType)	
-DEFINE_FIELD(AWeapon, AltProjectileType)	
-DEFINE_FIELD(AWeapon, SelectionOrder)				
-DEFINE_FIELD(AWeapon, MinSelAmmo1)
-DEFINE_FIELD(AWeapon, MinSelAmmo2)	
-DEFINE_FIELD(AWeapon, MoveCombatDist)			
-DEFINE_FIELD(AWeapon, ReloadCounter)				
-DEFINE_FIELD(AWeapon, BobStyle)					
-DEFINE_FIELD(AWeapon, BobSpeed)					
-DEFINE_FIELD(AWeapon, BobRangeX)
-DEFINE_FIELD(AWeapon, BobRangeY)		
-DEFINE_FIELD(AWeapon, Ammo1)
-DEFINE_FIELD(AWeapon, Ammo2)
-DEFINE_FIELD(AWeapon, SisterWeapon)
-DEFINE_FIELD(AWeapon, FOVScale)
-DEFINE_FIELD(AWeapon, Crosshair)					
-DEFINE_FIELD(AWeapon, GivenAsMorphWeapon)
-DEFINE_FIELD(AWeapon, bAltFire)
-DEFINE_FIELD(AWeapon, SlotNumber)
-DEFINE_FIELD(AWeapon, WeaponFlags)
-DEFINE_FIELD_BIT(AWeapon, WeaponFlags, bDehAmmo, WIF_DEHAMMO)
-
 //===========================================================================
 //
 //
@@ -104,379 +61,6 @@ TArray<PClassActor *> Weapons_ntoh;
 TMap<PClassActor *, int> Weapons_hton;
 
 static int ntoh_cmp(const void *a, const void *b);
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-void AWeapon::Finalize(FStateDefinitions &statedef)
-{
-	Super::Finalize(statedef);
-	FState *ready = FindState(NAME_Ready);
-	FState *select = FindState(NAME_Select);
-	FState *deselect = FindState(NAME_Deselect);
-	FState *fire = FindState(NAME_Fire);
-	auto TypeName = GetClass()->TypeName;
-
-	// Consider any weapon without any valid state abstract and don't output a warning
-	// This is for creating base classes for weapon groups that only set up some properties.
-	if (ready || select || deselect || fire)
-	{
-		if (!ready)
-		{
-			I_Error("Weapon %s doesn't define a ready state.", TypeName.GetChars());
-		}
-		if (!select)
-		{
-			I_Error("Weapon %s doesn't define a select state.", TypeName.GetChars());
-		}
-		if (!deselect)
-		{
-			I_Error("Weapon %s doesn't define a deselect state.", TypeName.GetChars());
-		}
-		if (!fire)
-		{
-			I_Error("Weapon %s doesn't define a fire state.", TypeName.GetChars());
-		}
-	}
-}
-
-
-//===========================================================================
-//
-// AWeapon :: Serialize
-//
-//===========================================================================
-
-void AWeapon::Serialize(FSerializer &arc)
-{
-	Super::Serialize (arc);
-	auto def = (AWeapon*)GetDefault();
-	arc("weaponflags", WeaponFlags, def->WeaponFlags)
-		("ammogive1", AmmoGive1, def->AmmoGive1)
-		("ammogive2", AmmoGive2, def->AmmoGive2)
-		("minammo1", MinAmmo1, def->MinAmmo1)
-		("minammo2", MinAmmo2, def->MinAmmo2)
-		("ammouse1", AmmoUse1, def->AmmoUse1)
-		("ammouse2", AmmoUse2, def->AmmoUse2)
-		("kickback", Kickback, Kickback)
-		("yadjust", YAdjust, def->YAdjust)
-		("upsound", UpSound, def->UpSound)
-		("readysound", ReadySound, def->ReadySound)
-		("selectionorder", SelectionOrder, def->SelectionOrder)
-		("ammo1", Ammo1)
-		("ammo2", Ammo2)
-		("sisterweapon", SisterWeapon)
-		("givenasmorphweapon", GivenAsMorphWeapon, def->GivenAsMorphWeapon)
-		("altfire", bAltFire, def->bAltFire)
-		("reloadcounter", ReloadCounter, def->ReloadCounter)
-		("bobstyle", BobStyle, def->BobStyle)
-		("bobspeed", BobSpeed, def->BobSpeed)
-		("bobrangex", BobRangeX, def->BobRangeX)
-		("bobrangey", BobRangeY, def->BobRangeY)
-		("fovscale", FOVScale, def->FOVScale)
-		("crosshair", Crosshair, def->Crosshair)
-		("minselammo1", MinSelAmmo1, def->MinSelAmmo1)
-		("minselammo2", MinSelAmmo2, def->MinSelAmmo2);
-		/* these can never change
-		("ammotype1", AmmoType1, def->AmmoType1)
-		("ammotype2", AmmoType2, def->AmmoType2)
-		("sisterweapontype", SisterWeaponType, def->SisterWeaponType)
-		("projectiletype", ProjectileType, def->ProjectileType)
-		("altprojectiletype", AltProjectileType, def->AltProjectileType)
-		("movecombatdist", MoveCombatDist, def->MoveCombatDist)
-		*/
-
-}
-
-//===========================================================================
-//
-// AWeapon :: MarkPrecacheSounds
-//
-//===========================================================================
-
-void AWeapon::MarkPrecacheSounds() const
-{
-	Super::MarkPrecacheSounds();
-	UpSound.MarkUsed();
-	ReadySound.MarkUsed();
-}
-
-//===========================================================================
-//
-// AWeapon :: CheckAmmo
-//
-// Returns true if there is enough ammo to shoot.  If not, selects the
-// next weapon to use.
-//
-//===========================================================================
-
-bool AWeapon::CheckAmmo(int fireMode, bool autoSwitch, bool requireAmmo, int ammocount)
-{
-	IFVIRTUAL(AWeapon, CheckAmmo)
-	{
-		VMValue params[] = { (DObject*)this, fireMode, autoSwitch, requireAmmo, ammocount };
-		VMReturn ret;
-		int retval;
-		ret.IntAt(&retval);
-		VMCall(func, params, 5, &ret, 1);
-		return !!retval;
-	}
-	return DoCheckAmmo(fireMode, autoSwitch, requireAmmo, ammocount);
-}
-
-bool AWeapon::DoCheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo, int ammocount)
-{
-	int altFire;
-	int count1, count2;
-	int enough, enoughmask;
-	int lAmmoUse1;
-
-	if ((dmflags & DF_INFINITE_AMMO) || (Owner->FindInventory (PClass::FindActor(NAME_PowerInfiniteAmmo), true) != nullptr))
-	{
-		return true;
-	}
-	if (fireMode == EitherFire)
-	{
-		bool gotSome = CheckAmmo (PrimaryFire, false) || CheckAmmo (AltFire, false);
-		if (!gotSome && autoSwitch)
-		{
-			barrier_cast<APlayerPawn *>(Owner)->PickNewWeapon (nullptr);
-		}
-		return gotSome;
-	}
-	altFire = (fireMode == AltFire);
-	if (!requireAmmo && (WeaponFlags & (WIF_AMMO_OPTIONAL << altFire)))
-	{
-		return true;
-	}
-	count1 = (Ammo1 != nullptr) ? Ammo1->Amount : 0;
-	count2 = (Ammo2 != nullptr) ? Ammo2->Amount : 0;
-
-	if ((WeaponFlags & WIF_DEHAMMO) && (Ammo1 == nullptr))
-	{
-		lAmmoUse1 = 0;
-	}
-	else if (ammocount >= 0 && (WeaponFlags & WIF_DEHAMMO))
-	{
-		lAmmoUse1 = ammocount;
-	}
-	else
-	{
-		lAmmoUse1 = AmmoUse1;
-	}
-
-	enough = (count1 >= lAmmoUse1) | ((count2 >= AmmoUse2) << 1);
-	if (WeaponFlags & (WIF_PRIMARY_USES_BOTH << altFire))
-	{
-		enoughmask = 3;
-	}
-	else
-	{
-		enoughmask = 1 << altFire;
-	}
-	if (altFire && FindState(NAME_AltFire) == nullptr)
-	{ // If this weapon has no alternate fire, then there is never enough ammo for it
-		enough &= 1;
-	}
-	if (((enough & enoughmask) == enoughmask) || (enough && (WeaponFlags & WIF_AMMO_CHECKBOTH)))
-	{
-		return true;
-	}
-	// out of ammo, pick a weapon to change to
-	if (autoSwitch)
-	{
-		barrier_cast<APlayerPawn *>(Owner)->PickNewWeapon (nullptr);
-	}
-	return false;
-}
-
-DEFINE_ACTION_FUNCTION(AWeapon, CheckAmmo)
-{
-	PARAM_SELF_PROLOGUE(AWeapon);
-	PARAM_INT(mode);
-	PARAM_BOOL(autoswitch);
-	PARAM_BOOL_DEF(require);
-	PARAM_INT_DEF(ammocnt);
-	ACTION_RETURN_BOOL(self->DoCheckAmmo(mode, autoswitch, require, ammocnt));
-}
-
-//===========================================================================
-//
-// AWeapon :: DepleteAmmo
-//
-// Use up some of the weapon's ammo. Returns true if the ammo was successfully
-// depleted. If checkEnough is false, then the ammo will always be depleted,
-// even if it drops below zero.
-//
-//===========================================================================
-
-bool AWeapon::DepleteAmmo(bool altFire, bool checkEnough, int ammouse)
-{
-	IFVIRTUAL(AWeapon, DepleteAmmo)
-	{
-		VMValue params[] = { (DObject*)this, altFire, checkEnough, ammouse };
-		VMReturn ret;
-		int retval;
-		ret.IntAt(&retval);
-		VMCall(func, params, 4, &ret, 1);
-		return !!retval;
-	}
-	return DoDepleteAmmo(altFire, checkEnough, ammouse);
-}
-
-bool AWeapon::DoDepleteAmmo (bool altFire, bool checkEnough, int ammouse)
-{
-	if (!((dmflags & DF_INFINITE_AMMO) || (Owner->FindInventory (PClass::FindActor(NAME_PowerInfiniteAmmo), true) != nullptr)))
-	{
-		if (checkEnough && !CheckAmmo (altFire ? AltFire : PrimaryFire, false, false, ammouse))
-		{
-			return false;
-		}
-		if (!altFire)
-		{
-			if (Ammo1 != nullptr)
-			{
-				if (ammouse >= 0 && (WeaponFlags & WIF_DEHAMMO))
-				{
-					Ammo1->Amount -= ammouse;
-				}
-				else
-				{
-					Ammo1->Amount -= AmmoUse1;
-				}
-			}
-			if ((WeaponFlags & WIF_PRIMARY_USES_BOTH) && Ammo2 != nullptr)
-			{
-				Ammo2->Amount -= AmmoUse2;
-			}
-		}
-		else
-		{
-			if (Ammo2 != nullptr)
-			{
-				Ammo2->Amount -= AmmoUse2;
-			}
-			if ((WeaponFlags & WIF_ALT_USES_BOTH) && Ammo1 != nullptr)
-			{
-				Ammo1->Amount -= AmmoUse1;
-			}
-		}
-		if (Ammo1 != nullptr && Ammo1->Amount < 0)
-			Ammo1->Amount = 0;
-		if (Ammo2 != nullptr && Ammo2->Amount < 0)
-			Ammo2->Amount = 0;
-	}
-	return true;
-}
-
-DEFINE_ACTION_FUNCTION(AWeapon, DepleteAmmo)
-{
-	PARAM_SELF_PROLOGUE(AWeapon);
-	PARAM_BOOL(altfire);
-	PARAM_BOOL_DEF(checkenough);
-	PARAM_INT_DEF(ammouse);
-	ACTION_RETURN_BOOL(self->DoDepleteAmmo(altfire, checkenough, ammouse));
-}
-
-
-//===========================================================================
-//
-// AWeapon :: PostMorphWeapon
-//
-// Bring this weapon up after a player unmorphs.
-//
-//===========================================================================
-
-void AWeapon::PostMorphWeapon ()
-{
-	DPSprite *pspr;
-	if (Owner == nullptr)
-	{
-		return;
-	}
-	Owner->player->PendingWeapon = WP_NOCHANGE;
-	Owner->player->ReadyWeapon = this;
-	Owner->player->refire = 0;
-
-	pspr = Owner->player->GetPSprite(PSP_WEAPON);
-	pspr->y = WEAPONBOTTOM;
-	pspr->ResetInterpolation();
-	pspr->SetState(GetUpState());
-}
-
-//===========================================================================
-//
-// AWeapon :: GetUpState
-//
-//===========================================================================
-
-FState *AWeapon::GetUpState ()
-{
-	IFVIRTUAL(AWeapon, GetUpState)
-	{
-		VMValue params[1] = { (DObject*)this };
-		VMReturn ret;
-		FState *retval;
-		ret.PointerAt((void**)&retval);
-		VMCall(func, params, 1, &ret, 1);
-		return retval;
-	}
-	return nullptr;
-}
-
-//===========================================================================
-//
-// AWeapon :: GetDownState
-//
-//===========================================================================
-
-FState *AWeapon::GetDownState ()
-{
-	IFVIRTUAL(AWeapon, GetDownState)
-	{
-		VMValue params[1] = { (DObject*)this };
-		VMReturn ret;
-		FState *retval;
-		ret.PointerAt((void**)&retval);
-		VMCall(func, params, 1, &ret, 1);
-		return retval;
-	}
-	return nullptr;
-}
-
-//===========================================================================
-//
-// AWeapon :: GetReadyState
-//
-//===========================================================================
-
-FState *AWeapon::GetReadyState ()
-{
-	IFVIRTUAL(AWeapon, GetReadyState)
-	{
-		VMValue params[1] = { (DObject*)this };
-		VMReturn ret;
-		FState *retval;
-		ret.PointerAt((void**)&retval);
-		VMCall(func, params, 1, &ret, 1);
-		return retval;
-	}
-	return nullptr;
-}
-
-//===========================================================================
-//
-// AWeapon :: GetStateForButtonName
-//
-//===========================================================================
-
-FState *AWeapon::GetStateForButtonName (FName button)
-{
-	return FindState(button);
-}
 
 
 /* Weapon slots ***********************************************************/
@@ -567,73 +151,6 @@ int FWeaponSlot::LocateWeapon(PClassActor *type)
 		}
 	}
 	return -1;
-}
-
-//===========================================================================
-//
-// FWeaponSlot :: PickWeapon
-//
-// Picks a weapon from this slot. If no weapon is selected in this slot,
-// or the first weapon in this slot is selected, returns the last weapon.
-// Otherwise, returns the previous weapon in this slot. This means
-// precedence is given to the last weapon in the slot, which by convention
-// is probably the strongest. Does not return weapons you have no ammo
-// for or which you do not possess.
-//
-//===========================================================================
-
-AWeapon *FWeaponSlot::PickWeapon(player_t *player, bool checkammo)
-{
-	int i, j;
-
-	if (player->mo == nullptr)
-	{
-		return nullptr;
-	}
-	// Does this slot even have any weapons?
-	if (Weapons.Size() == 0)
-	{
-		return player->ReadyWeapon;
-	}
-	if (player->ReadyWeapon != nullptr)
-	{
-		for (i = 0; (unsigned)i < Weapons.Size(); i++)
-		{
-			if (Weapons[i].Type == player->ReadyWeapon->GetClass() ||
-				(player->ReadyWeapon->WeaponFlags & WIF_POWERED_UP &&
-				 player->ReadyWeapon->SisterWeapon != nullptr &&
-				 player->ReadyWeapon->SisterWeapon->GetClass() == Weapons[i].Type))
-			{
-				for (j = (i == 0 ? Weapons.Size() - 1 : i - 1);
-					j != i;
-					j = (j == 0 ? Weapons.Size() - 1 : j - 1))
-				{
-					AWeapon *weap = static_cast<AWeapon *> (player->mo->FindInventory(Weapons[j].Type));
-
-					if (weap != nullptr && weap->IsKindOf(NAME_Weapon))
-					{
-						if (!checkammo || weap->CheckAmmo(AWeapon::EitherFire, false))
-						{
-							return weap;
-						}
-					}
-				}
-			}
-		}
-	}
-	for (i = Weapons.Size() - 1; i >= 0; i--)
-	{
-		AWeapon *weap = static_cast<AWeapon *> (player->mo->FindInventory(Weapons[i].Type));
-
-		if (weap != nullptr && weap->IsKindOf(NAME_Weapon))
-		{
-			if (!checkammo || weap->CheckAmmo(AWeapon::EitherFire, false))
-			{
-				return weap;
-			}
-		}
-	}
-	return player->ReadyWeapon;
 }
 
 //===========================================================================
@@ -772,167 +289,6 @@ bool FWeaponSlots::LocateWeapon (PClassActor *type, int *const slot, int *const 
 	return false;
 }
 
-
-DEFINE_ACTION_FUNCTION(FWeaponSlots, LocateWeapon)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FWeaponSlots);
-	PARAM_CLASS(weap, AWeapon);
-	int slot = 0, index = 0;
-	bool retv = self->LocateWeapon(weap, &slot, &index);
-	if (numret >= 1) ret[0].SetInt(retv);
-	if (numret >= 2) ret[1].SetInt(slot);
-	if (numret >= 3) ret[2].SetInt(index);
-	return MIN(numret, 3);
-}
-
-//===========================================================================
-//
-// FindMostRecentWeapon
-//
-// Locates the slot and index for the most recently selected weapon. If the
-// player is in the process of switching to a new weapon, that is the most
-// recently selected weapon. Otherwise, the current weapon is the most recent
-// weapon.
-//
-//===========================================================================
-
-static bool FindMostRecentWeapon(player_t *player, int *slot, int *index)
-{
-	if (player->PendingWeapon != WP_NOCHANGE)
-	{
-		return player->weapons.LocateWeapon(player->PendingWeapon->GetClass(), slot, index);
-	}
-	else if (player->ReadyWeapon != nullptr)
-	{
-		AWeapon *weap = player->ReadyWeapon;
-		if (!player->weapons.LocateWeapon(weap->GetClass(), slot, index))
-		{
-			// If the current weapon wasn't found and is powered up,
-			// look for its non-powered up version.
-			if (weap->WeaponFlags & WIF_POWERED_UP && weap->SisterWeaponType != nullptr)
-			{
-				return player->weapons.LocateWeapon(weap->SisterWeaponType, slot, index);
-			}
-			return false;
-		}
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
-
-//===========================================================================
-//
-// FWeaponSlots :: PickNextWeapon
-//
-// Returns the "next" weapon for this player. If the current weapon is not
-// in a slot, then it just returns that weapon, since there's nothing to
-// consider it relative to.
-//
-//===========================================================================
-
-AWeapon *FWeaponSlots::PickNextWeapon(player_t *player)
-{
-	int startslot, startindex;
-	int slotschecked = 0;
-
-	if (player->mo == nullptr)
-	{
-		return nullptr;
-	}
-	if (player->ReadyWeapon == nullptr || FindMostRecentWeapon(player, &startslot, &startindex))
-	{
-		int slot;
-		int index;
-
-		if (player->ReadyWeapon == nullptr)
-		{
-			startslot = NUM_WEAPON_SLOTS - 1;
-			startindex = Slots[startslot].Size() - 1;
-		}
-
-		slot = startslot;
-		index = startindex;
-		do
-		{
-			if (++index >= Slots[slot].Size())
-			{
-				index = 0;
-				slotschecked++;
-				if (++slot >= NUM_WEAPON_SLOTS)
-				{
-					slot = 0;
-				}
-			}
-			PClassActor *type = Slots[slot].GetWeapon(index);
-			AWeapon *weap = static_cast<AWeapon *>(player->mo->FindInventory(type));
-			if (weap != nullptr && weap->CheckAmmo(AWeapon::EitherFire, false))
-			{
-				return weap;
-			}
-		}
-		while ((slot != startslot || index != startindex) && slotschecked <= NUM_WEAPON_SLOTS);
-	}
-	return player->ReadyWeapon;
-}
-
-//===========================================================================
-//
-// FWeaponSlots :: PickPrevWeapon
-//
-// Returns the "previous" weapon for this player. If the current weapon is
-// not in a slot, then it just returns that weapon, since there's nothing to
-// consider it relative to.
-//
-//===========================================================================
-
-AWeapon *FWeaponSlots::PickPrevWeapon (player_t *player)
-{
-	int startslot, startindex;
-	int slotschecked = 0;
-
-	if (player->mo == nullptr)
-	{
-		return nullptr;
-	}
-	if (player->ReadyWeapon == nullptr || FindMostRecentWeapon (player, &startslot, &startindex))
-	{
-		int slot;
-		int index;
-
-		if (player->ReadyWeapon == nullptr)
-		{
-			startslot = 0;
-			startindex = 0;
-		}
-
-		slot = startslot;
-		index = startindex;
-		do
-		{
-			if (--index < 0)
-			{
-				slotschecked++;
-				if (--slot < 0)
-				{
-					slot = NUM_WEAPON_SLOTS - 1;
-				}
-				index = Slots[slot].Size() - 1;
-			}
-			PClassActor *type = Slots[slot].GetWeapon(index);
-			AWeapon *weap = static_cast<AWeapon *>(player->mo->FindInventory(type));
-			if (weap != nullptr && weap->CheckAmmo(AWeapon::EitherFire, false))
-			{
-				return weap;
-			}
-		}
-		while ((slot != startslot || index != startindex) && slotschecked <= NUM_WEAPON_SLOTS);
-	}
-	return player->ReadyWeapon;
-}
-
 //===========================================================================
 //
 // FWeaponSlots :: AddExtraWeapons
@@ -961,18 +317,23 @@ void FWeaponSlots::AddExtraWeapons()
 		{
 			continue;
 		}
-		auto weapdef = ((AWeapon*)GetDefaultByType(cls));
-		auto gf = cls->ActorInfo()->GameFilter;
-		if ((gf == GAME_Any || (gf & gameinfo.gametype)) &&
-			cls->ActorInfo()->Replacement == nullptr &&		// Replaced weapons don't get slotted.
-			!(weapdef->WeaponFlags & WIF_POWERED_UP) &&
-			!LocateWeapon(cls, nullptr, nullptr)		// Don't duplicate it if it's already present.
-			)
+		if (LocateWeapon(cls, nullptr, nullptr))	// Do we already have it? Don't add it again.
 		{
-			int slot = weapdef->SlotNumber;
-			if ((unsigned)slot < NUM_WEAPON_SLOTS)
+			continue;
+		}
+		auto weapdef = GetDefaultByType(cls);
+
+		// Let the weapon decide for itself if it wants to get added to a slot.
+		IFVIRTUALPTRNAME(weapdef, NAME_Weapon, CheckAddToSlots)
+		{
+			VMValue param = weapdef;
+			int slot = -1, slotpriority;
+			VMReturn rets[]{ &slot, &slotpriority };
+			VMCall(func, &param, 1, rets, 2);
+
+			if (slot >= 0 && slot < NUM_WEAPON_SLOTS)
 			{
-				FWeaponSlot::WeaponInfo info = { cls, weapdef->SlotPriority };
+				FWeaponSlot::WeaponInfo info = { cls, slotpriority };
 				Slots[slot].Weapons.Push(info);
 			}
 		}
@@ -1228,10 +589,10 @@ CCMD (setslot)
 	}
 	else if (PlayingKeyConf != nullptr)
 	{
-		PlayingKeyConf->Slots[slot].Clear();
+		PlayingKeyConf->ClearSlot(slot);
 		for (int i = 2; i < argv.argc(); ++i)
 		{
-			PlayingKeyConf->Slots[slot].AddWeapon(argv[i]);
+			PlayingKeyConf->AddWeapon(slot, argv[i]);
 		}
 	}
 	else
@@ -1391,6 +752,41 @@ void P_PlaybackKeyConfWeapons(FWeaponSlots *slots)
 		AddCommandString(cmd.LockBuffer());
 	}
 	PlayingKeyConf = nullptr;
+}
+
+//===========================================================================
+//
+// APlayerPawn :: SetupWeaponSlots
+//
+// Sets up the default weapon slots for this player. If this is also the
+// local player, determines local modifications and sends those across the
+// network. Ignores voodoo dolls.
+//
+//===========================================================================
+
+void FWeaponSlots::SetupWeaponSlots(APlayerPawn *pp)
+{
+	auto player = pp->player;
+	if (player != nullptr && player->mo == pp)
+	{
+		player->weapons.StandardSetup(pp->GetClass());
+		// If we're the local player, then there's a bit more work to do.
+		// This also applies if we're a bot and this is the net arbitrator.
+		if (player - players == consoleplayer ||
+			(player->Bot != nullptr && consoleplayer == Net_Arbitrator))
+		{
+			FWeaponSlots local_slots(player->weapons);
+			if (player->Bot != nullptr)
+			{ // Bots only need weapons from KEYCONF, not INI modifications.
+				P_PlaybackKeyConfWeapons(&local_slots);
+			}
+			else
+			{
+				local_slots.LocalSetup(pp->GetClass());
+			}
+			local_slots.SendDifferences(int(player - players), player->weapons);
+		}
+	}
 }
 
 //===========================================================================

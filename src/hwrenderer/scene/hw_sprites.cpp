@@ -94,7 +94,7 @@ void GLSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 			gl_usecolorblending && !di->isFullbrightScene() && actor &&
 			fullbright && gltexture && !gltexture->tex->GetTranslucency())
 		{
-			RenderStyle = LegacyRenderStyles[STYLE_ColorBlend];
+			RenderStyle = LegacyRenderStyles[STYLE_ColorAdd];
 		}
 
 		state.SetRenderStyle(RenderStyle);
@@ -555,7 +555,7 @@ void GLSprite::SplitSprite(HWDrawInfo *di, sector_t * frontsector, bool transluc
 void GLSprite::PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingpos, float spriteheight)
 {
 	const float NO_VAL = 100000000.0f;
-	bool clipthing = (thing->player || thing->flags3&MF3_ISMONSTER || thing->IsKindOf(RUNTIME_CLASS(AInventory))) && (thing->flags&MF_ICECORPSE || !(thing->flags&MF_CORPSE));
+	bool clipthing = (thing->player || thing->flags3&MF3_ISMONSTER || thing->IsKindOf(NAME_Inventory)) && (thing->flags&MF_ICECORPSE || !(thing->flags&MF_CORPSE));
 	bool smarterclip = !clipthing && gl_spriteclip == 3;
 	if (clipthing || gl_spriteclip > 1)
 	{
@@ -932,7 +932,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 		if (di->isNightvision())
 		{
-			if ((thing->IsKindOf(RUNTIME_CLASS(AInventory)) || thing->flags3&MF3_ISMONSTER || thing->flags&MF_MISSILE || thing->flags&MF_CORPSE))
+			if ((thing->IsKindOf(NAME_Inventory) || thing->flags3&MF3_ISMONSTER || thing->flags&MF_MISSILE || thing->flags&MF_CORPSE))
 			{
 				RenderStyle.Flags |= STYLEF_InvertSource;
 			}
@@ -1029,7 +1029,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 			RenderStyle.DestAlpha = STYLEALPHA_InvSrc;
 		}
 	}
-	if ((gltexture && gltexture->tex->GetTranslucency()) || (RenderStyle.Flags & STYLEF_RedIsAlpha))
+	if ((gltexture && gltexture->tex->GetTranslucency()) || (RenderStyle.Flags & STYLEF_RedIsAlpha) || (modelframe && thing->RenderStyle != DefaultRenderStyle()))
 	{
 		if (hw_styleflags == STYLEHW_Solid)
 		{

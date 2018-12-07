@@ -899,10 +899,6 @@ DEFINE_ACTION_FUNCTION(FHealthGroup, SetHealth)
 	return 0;
 }
 
-// genuine hack. this essentially causes the engine to register a struct called Destructible, and enables use of DEFINE_ACTION_FUNCTION
-struct FDestructible { void* none; };
-DEFINE_FIELD_X(Destructible, FDestructible, none);
-
 DEFINE_ACTION_FUNCTION(FDestructible, DamageSector)
 {
 	PARAM_PROLOGUE;

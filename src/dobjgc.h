@@ -224,7 +224,10 @@ template<class T,class U> inline T barrier_cast(TObjPtr<U> &o)
 	return static_cast<T>(static_cast<U>(o));
 }
 
-template<class T> inline void GC::Mark(TObjPtr<T> &obj)
+namespace GC
 {
-	GC::Mark(&obj.o);
+	template<class T> inline void Mark(TObjPtr<T> &obj)
+	{
+		GC::Mark(&obj.o);
+	}
 }

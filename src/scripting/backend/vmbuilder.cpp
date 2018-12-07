@@ -35,6 +35,8 @@
 #include "vmbuilder.h"
 #include "codegen.h"
 #include "m_argv.h"
+#include "c_cvars.h"
+#include "scripting/vm/jit.h"
 
 struct VMRemap
 {
@@ -42,7 +44,7 @@ struct VMRemap
 };
 
 
-#define xx(op, name, mode, alt, kreg, ktype) {OP_##alt, kreg, ktype }
+#define xx(op, name, mode, alt, kreg, ktype) {OP_##alt, kreg, ktype },
 VMRemap opRemap[NUM_OPS] = {
 #include "vmops.h"
 };
@@ -487,7 +489,9 @@ void VMFunctionBuilder::RegAvailability::Return(int reg, int count)
 		mask <<= firstbit;
 		// If we are trying to return registers that are already free,
 		// it probably means that the caller messed up somewhere.
-		assert((Used[firstword] & mask) == mask);
+		// Unfortunately this can happen if an 'action' function gets called from a non-action context,
+		// because for that case it pushes the self pointer a second time without reallocating, so it gets freed twice.
+		//assert((Used[firstword] & mask) == mask);
 		Used[firstword] &= ~mask;
 	}
 	else
@@ -605,7 +609,7 @@ size_t VMFunctionBuilder::Emit(int opcode, int opa, int opb, int opc)
 		emit.Free(this);
 	}
 
-	if (opcode == OP_CALL || opcode == OP_CALL_K || opcode == OP_TAIL || opcode == OP_TAIL_K)
+	if (opcode == OP_CALL || opcode == OP_CALL_K)
 	{
 		ParamChange(-opb);
 	}
@@ -651,28 +655,6 @@ size_t VMFunctionBuilder::Emit(int opcode, int opabc)
 	op.op = opcode;
 	op.i24 = opabc;
 	return Code.Push(op);
-}
-
-//==========================================================================
-//
-// VMFunctionBuilder :: EmitParamInt
-//
-// Passes a constant integer parameter, using either PARAMI and an immediate
-// value or PARAM and a constant register, as appropriate.
-//
-//==========================================================================
-
-size_t VMFunctionBuilder::EmitParamInt(int value)
-{
-	// Immediates for PARAMI must fit in 24 bits.
-	if (((value << 8) >> 8) == value)
-	{
-		return Emit(OP_PARAMI, value);
-	}
-	else
-	{
-		return Emit(OP_PARAM, REGT_INT | REGT_KONST, GetConstantInt(value));
-	}
 }
 
 //==========================================================================
@@ -813,6 +795,7 @@ VMFunction *FFunctionBuildList::AddFunction(PNamespace *gnspc, const VersionInfo
 	if (it.Func->SymbolName != NAME_None)
 	{
 		it.Function->Proto = it.Func->Variants[0].Proto;
+		it.Function->ArgFlags = it.Func->Variants[0].ArgFlags;
 	}
 
 	mItems.Push(it);
@@ -822,7 +805,6 @@ VMFunction *FFunctionBuildList::AddFunction(PNamespace *gnspc, const VersionInfo
 
 void FFunctionBuildList::Build()
 {
-	int errorcount = 0;
 	int codesize = 0;
 	int datasize = 0;
 	FILE *dump = nullptr;
@@ -884,6 +866,7 @@ void FFunctionBuildList::Build()
 			if (sfunc->Proto == nullptr)
 			{
 				sfunc->Proto = NewPrototype(item.Proto->ReturnTypes, item.Func->Variants[0].Proto->ArgumentTypes);
+				sfunc->ArgFlags = item.Func->Variants[0].ArgFlags;
 			}
 
 			// Emit code
@@ -928,8 +911,197 @@ void FFunctionBuildList::Build()
 		fprintf(dump, "\n*************************************************************************\n%i code bytes\n%i data bytes", codesize * 4, datasize);
 		fclose(dump);
 	}
+	VMFunction::CreateRegUseInfo();
 	FScriptPosition::StrictErrors = false;
+
+	if (FScriptPosition::ErrorCounter == 0 && Args->CheckParm("-dumpjit")) DumpJit();
 	mItems.Clear();
 	mItems.ShrinkToFit();
 	FxAlloc.FreeAllBlocks();
 }
+
+void FFunctionBuildList::DumpJit()
+{
+	FILE *dump = fopen("dumpjit.txt", "w");
+	if (dump == nullptr)
+		return;
+
+	for (auto &item : mItems)
+	{
+		JitDumpLog(dump, item.Function);
+	}
+
+	fclose(dump);
+}
+
+
+void FunctionCallEmitter::AddParameter(VMFunctionBuilder *build, FxExpression *operand)
+{
+	ExpEmit where = operand->Emit(build);
+
+	if (where.RegType == REGT_NIL)
+	{
+		operand->ScriptPosition.Message(MSG_ERROR, "Attempted to pass a non-value");
+	}
+	numparams += where.RegCount;
+	if (target->VarFlags & VARF_VarArg)
+		for (unsigned i = 0; i < where.RegCount; i++) reginfo.Push(where.RegType & REGT_TYPE);
+
+	emitters.push_back([=](VMFunctionBuilder *build) -> int
+	{
+		auto op = where;
+		if (op.RegType == REGT_NIL)
+		{
+			build->Emit(OP_PARAM, op.RegType, op.RegNum);
+			return 1;
+		}
+		else
+		{
+			build->Emit(OP_PARAM, EncodeRegType(op), op.RegNum);
+			op.Free(build);
+			return op.RegCount;
+		}
+	});
+}
+
+void FunctionCallEmitter::AddParameter(ExpEmit &emit, bool reference)
+{
+	numparams += emit.RegCount;
+	if (target->VarFlags & VARF_VarArg)
+	{
+		if (reference) reginfo.Push(REGT_POINTER);
+		else for (unsigned i = 0; i < emit.RegCount; i++) reginfo.Push(emit.RegType & REGT_TYPE);
+	}
+	emitters.push_back([=](VMFunctionBuilder *build) ->int
+	{
+		build->Emit(OP_PARAM, emit.RegType + (reference * REGT_ADDROF), emit.RegNum);
+		auto op = emit;
+		op.Free(build);
+		return emit.RegCount;
+	});
+}
+
+void FunctionCallEmitter::AddParameterPointerConst(void *konst)
+{
+	numparams++;
+	if (target->VarFlags & VARF_VarArg)
+		reginfo.Push(REGT_POINTER);
+	emitters.push_back([=](VMFunctionBuilder *build) ->int
+	{
+		build->Emit(OP_PARAM, REGT_POINTER | REGT_KONST, build->GetConstantAddress(konst));
+		return 1;
+	});
+}
+
+void FunctionCallEmitter::AddParameterPointer(int index, bool konst)
+{
+	numparams++;
+	if (target->VarFlags & VARF_VarArg)
+		reginfo.Push(REGT_POINTER);
+	emitters.push_back([=](VMFunctionBuilder *build) ->int
+	{
+		build->Emit(OP_PARAM, konst ? REGT_POINTER | REGT_KONST : REGT_POINTER, index);
+		return 1;
+	});
+}
+
+void FunctionCallEmitter::AddParameterFloatConst(double konst)
+{
+	numparams++;
+	if (target->VarFlags & VARF_VarArg)
+		reginfo.Push(REGT_FLOAT);
+	emitters.push_back([=](VMFunctionBuilder *build) ->int
+	{
+		build->Emit(OP_PARAM, REGT_FLOAT | REGT_KONST, build->GetConstantFloat(konst));
+		return 1;
+	});
+}
+
+void FunctionCallEmitter::AddParameterIntConst(int konst)
+{
+	numparams++;
+	if (target->VarFlags & VARF_VarArg)
+		reginfo.Push(REGT_INT);
+	emitters.push_back([=](VMFunctionBuilder *build) ->int
+	{
+		// Immediates for PARAMI must fit in 24 bits.
+		if (((konst << 8) >> 8) == konst)
+		{
+			build->Emit(OP_PARAMI, konst);
+		}
+		else
+		{
+			build->Emit(OP_PARAM, REGT_INT | REGT_KONST, build->GetConstantInt(konst));
+		}
+		return 1;
+	});
+}
+
+void FunctionCallEmitter::AddParameterStringConst(const FString &konst)
+{
+	numparams++;
+	if (target->VarFlags & VARF_VarArg)
+		reginfo.Push(REGT_STRING);
+	emitters.push_back([=](VMFunctionBuilder *build) ->int
+	{
+		build->Emit(OP_PARAM, REGT_STRING | REGT_KONST, build->GetConstantString(konst));
+		return 1;
+	});
+}
+
+EXTERN_CVAR(Bool, vm_jit)
+
+ExpEmit FunctionCallEmitter::EmitCall(VMFunctionBuilder *build, TArray<ExpEmit> *ReturnRegs)
+{
+	unsigned paramcount = 0;
+	for (auto &func : emitters)
+	{
+		paramcount += func(build);
+	}
+	assert(paramcount == numparams);
+	if (target->VarFlags & VARF_VarArg)
+	{
+		// Pass a hidden type information parameter to vararg functions.
+		// It would really be nicer to actually pass real types but that'd require a far more complex interface on the compiler side than what we have.
+		uint8_t *regbuffer = (uint8_t*)ClassDataAllocator.Alloc(reginfo.Size());	// Allocate in the arena so that the pointer does not need to be maintained.
+		memcpy(regbuffer, reginfo.Data(), reginfo.Size());
+		build->Emit(OP_PARAM, REGT_POINTER | REGT_KONST, build->GetConstantAddress(regbuffer));
+		paramcount++;
+	}
+
+
+
+	if (virtualselfreg == -1)
+	{
+		build->Emit(OP_CALL_K, build->GetConstantAddress(target), paramcount, vm_jit ? target->Proto->ReturnTypes.Size() : returns.Size());
+	}
+	else
+	{
+		ExpEmit funcreg(build, REGT_POINTER);
+
+		build->Emit(OP_VTBL, funcreg.RegNum, virtualselfreg, target->VirtualIndex);
+		build->Emit(OP_CALL, funcreg.RegNum, paramcount, vm_jit? target->Proto->ReturnTypes.Size() : returns.Size());
+	}
+
+	assert(returns.Size() < 2 || ReturnRegs != nullptr);
+
+	ExpEmit retreg;
+	for (unsigned i = 0; i < returns.Size(); i++)
+	{
+		ExpEmit reg(build, returns[i].first, returns[i].second);
+		build->Emit(OP_RESULT, 0, EncodeRegType(reg), reg.RegNum);
+		if (ReturnRegs) ReturnRegs->Push(reg);
+		else retreg = reg;
+	}
+	if (vm_jit)	// The JIT compiler needs this, but the VM interpreter does not.
+	{
+		for (unsigned i = returns.Size(); i < target->Proto->ReturnTypes.Size(); i++)
+		{
+			ExpEmit reg(build, target->Proto->ReturnTypes[i]->RegType, target->Proto->ReturnTypes[i]->RegCount);
+			build->Emit(OP_RESULT, 0, EncodeRegType(reg), reg.RegNum);
+			reg.Free(build);
+		}
+	}
+	return retreg;
+}
+

@@ -46,13 +46,13 @@ void OriginalMainExcept(int argc, char** argv)
 	{
 		OriginalMainTry(argc, argv);
 	}
-	catch(const CDoomError& error)
+	catch(const std::exception& error)
 	{
-		const char* const message = error.GetMessage();
+		const char* const message = error.what();
 
 		if (NULL != message)
 		{
-			fprintf(stderr, "%s\n", message);
+			if (strcmp(message, "NoRunExit")) fprintf(stderr, "%s\n", message);
 			Mac_I_FatalError(message);
 		}
 

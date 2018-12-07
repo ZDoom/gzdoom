@@ -348,6 +348,17 @@ static void PrintProperty(FLispString &out, ZCC_TreeNode *node)
 	out.Close();
 }
 
+static void PrintFlagDef(FLispString &out, ZCC_TreeNode *node)
+{
+	ZCC_FlagDef *snode = (ZCC_FlagDef *)node;
+	out.Break();
+	out.Open("flagdef");
+	out.AddName(snode->NodeName);
+	out.AddName(snode->RefName);
+	out.AddInt(snode->BitValue);
+	out.Close();
+}
+
 static void PrintStaticArrayState(FLispString &out, ZCC_TreeNode *node)
 {
 	auto *snode = (ZCC_StaticArrayStatement *)node;
@@ -959,6 +970,7 @@ void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FLispString &, ZCC_TreeNode *
 	PrintExprClassCast,
 	PrintStaticArrayState,
 	PrintProperty,
+	PrintFlagDef,
 };
 
 FString ZCC_PrintAST(ZCC_TreeNode *root)

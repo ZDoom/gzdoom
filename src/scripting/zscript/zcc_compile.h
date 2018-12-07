@@ -54,6 +54,7 @@ struct ZCC_ClassWork : public ZCC_StructWork
 	TArray<ZCC_Default *> Defaults;
 	TArray<ZCC_States *> States;
 	TArray<ZCC_Property *> Properties;
+	TArray<ZCC_FlagDef *> FlagDefs;
 
 	ZCC_ClassWork(ZCC_Class * s, PSymbolTreeNode *n)
 	{
@@ -110,6 +111,7 @@ private:
 	bool CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *> &Fields, PClass *Outer, PSymbolTable *TreeNodes, bool forstruct, bool hasnativechildren = false);
 	void CompileAllProperties();
 	bool CompileProperties(PClass *type, TArray<ZCC_Property *> &Properties, FName prefix);
+	bool CompileFlagDefs(PClass *type, TArray<ZCC_FlagDef *> &FlagDefs, FName prefix);
 	FString FlagsToString(uint32_t flags);
 	PType *DetermineType(PType *outertype, ZCC_TreeNode *field, FName name, ZCC_Type *ztype, bool allowarraytypes, bool formember);
 	PType *ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PContainerType *cls);

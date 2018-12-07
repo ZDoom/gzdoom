@@ -44,6 +44,7 @@
 #include "cmdlib.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "sbar.h"
 
 
 // MACROS ------------------------------------------------------------------
@@ -91,8 +92,6 @@ enum EWRF_Options
 CVAR(Int, sv_fastweapons, false, CVAR_SERVERINFO);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static FRandom pr_wpnreadysnd ("WpnReadySnd");
 
 static const FGenericButtons ButtonChecks[] =
 {
@@ -240,7 +239,7 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, SetPSprite)	// the underscore is needed to g
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
 	PARAM_INT(id);
 	PARAM_POINTER(state, FState);
-	PARAM_BOOL_DEF(pending);
+	PARAM_BOOL(pending);
 	P_SetPsprite(self, (PSPLayers)id, state, pending);
 	return 0;
 }
@@ -540,7 +539,7 @@ DEFINE_ACTION_FUNCTION(DPSprite, SetState)
 {
 	PARAM_SELF_PROLOGUE(DPSprite);
 	PARAM_POINTER(state, FState);
-	PARAM_BOOL_DEF(pending);
+	PARAM_BOOL(pending);
 	self->SetState(state, pending);
 	return 0;
 }
@@ -556,86 +555,13 @@ DEFINE_ACTION_FUNCTION(DPSprite, SetState)
 
 void P_BringUpWeapon (player_t *player)
 {
-	AWeapon *weapon;
-
-	if (player->PendingWeapon == WP_NOCHANGE)
+	IFVM(PlayerPawn, BringUpWeapon)
 	{
-		if (player->ReadyWeapon != nullptr)
-		{
-			player->GetPSprite(PSP_WEAPON)->y = WEAPONTOP;
-			P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->GetReadyState());
-		}
-		return;
-	}
-
-	weapon = player->PendingWeapon;
-
-	// If the player has a tome of power, use this weapon's powered up
-	// version, if one is available.
-	if (weapon != nullptr &&
-		weapon->SisterWeapon &&
-		weapon->SisterWeapon->WeaponFlags & WIF_POWERED_UP &&
-		player->mo->FindInventory (PClass::FindActor(NAME_PowerWeaponLevel2), true))
-	{
-		weapon = weapon->SisterWeapon;
-	}
-
-	player->PendingWeapon = WP_NOCHANGE;
-	player->ReadyWeapon = weapon;
-	player->mo->weaponspecial = 0;
-
-	if (weapon != nullptr)
-	{
-		if (weapon->UpSound)
-		{
-			S_Sound (player->mo, CHAN_WEAPON, weapon->UpSound, 1, ATTN_NORM);
-		}
-		player->refire = 0;
-
-		player->GetPSprite(PSP_WEAPON)->y = player->cheats & CF_INSTANTWEAPSWITCH
-			? WEAPONTOP : WEAPONBOTTOM;
-		// make sure that the previous weapon's flash state is terminated.
-		// When coming here from a weapon drop it may still be active.
-		P_SetPsprite(player, PSP_FLASH, nullptr);
-		P_SetPsprite(player, PSP_WEAPON, weapon->GetUpState());
+		VMValue param = player->mo;
+		VMCall(func, &param, 1, nullptr, 0);
 	}
 }
 
-DEFINE_ACTION_FUNCTION(_PlayerInfo, BringUpWeapon)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(player_t);
-	P_BringUpWeapon(self);
-	return 0;
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC P_DropWeapon
-//
-// The player died, so put the weapon away.
-//
-//---------------------------------------------------------------------------
-
-void P_DropWeapon (player_t *player)
-{
-	if (player == nullptr)
-	{
-		return;
-	}
-	// Since the weapon is dropping, stop blocking switching.
-	player->WeaponState &= ~WF_DISABLESWITCH;
-	if ((player->ReadyWeapon != nullptr) && (player->health > 0 || !(player->ReadyWeapon->WeaponFlags & WIF_NODEATHDESELECT)))
-	{
-		P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->GetDownState());
-	}
-}
-
-DEFINE_ACTION_FUNCTION(_PlayerInfo, DropWeapon)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(player_t);
-	P_DropWeapon(self);
-	return 0;
-}
 //============================================================================
 //
 // P_BobWeapon
@@ -651,219 +577,17 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, DropWeapon)
 
 void P_BobWeapon (player_t *player, float *x, float *y, double ticfrac)
 {
-	static float curbob;
-	double xx[2], yy[2];
-
-	AWeapon *weapon;
-	float bobtarget;
-
-	weapon = player->ReadyWeapon;
-
-	if (weapon == nullptr || weapon->WeaponFlags & WIF_DONTBOB)
+	IFVIRTUALPTR(player->mo, APlayerPawn, BobWeapon)
 	{
-		*x = *y = 0;
+		VMValue param[] = { player->mo, ticfrac };
+		DVector2 result;
+		VMReturn ret(&result);
+		VMCall(func, param, 2, &ret, 1);
+		*x = (float)result.X;
+		*y = (float)result.Y;
 		return;
 	}
-
-	// [XA] Get the current weapon's bob properties.
-	int bobstyle = weapon->BobStyle;
-	float BobSpeed = (weapon->BobSpeed * 128);
-	float Rangex = weapon->BobRangeX;
-	float Rangey = weapon->BobRangeY;
-
-	for (int i = 0; i < 2; i++)
-	{
-		// Bob the weapon based on movement speed. ([SP] And user's bob speed setting)
-		FAngle angle = (BobSpeed * player->userinfo.GetWBobSpeed() * 35 /
-			TICRATE*(level.time - 1 + i)) * (360.f / 8192.f);
-
-		// [RH] Smooth transitions between bobbing and not-bobbing frames.
-		// This also fixes the bug where you can "stick" a weapon off-center by
-		// shooting it when it's at the peak of its swing.
-		bobtarget = float((player->WeaponState & WF_WEAPONBOBBING) ? player->bob : 0.);
-		if (curbob != bobtarget)
-		{
-			if (fabsf(bobtarget - curbob) <= 1)
-			{
-				curbob = bobtarget;
-			}
-			else
-			{
-				float zoom = MAX(1.f, fabsf(curbob - bobtarget) / 40);
-				if (curbob > bobtarget)
-				{
-					curbob -= zoom;
-				}
-				else
-				{
-					curbob += zoom;
-				}
-			}
-		}
-
-		if (curbob != 0)
-		{
-			//[SP] Added in decorate player.viewbob checks
-			float bobx = float(player->bob * Rangex * (float)player->mo->ViewBob);
-			float boby = float(player->bob * Rangey * (float)player->mo->ViewBob);
-			switch (bobstyle)
-			{
-			case AWeapon::BobNormal:
-				xx[i] = bobx * angle.Cos();
-				yy[i] = boby * fabsf(angle.Sin());
-				break;
-
-			case AWeapon::BobInverse:
-				xx[i] = bobx*angle.Cos();
-				yy[i] = boby * (1.f - fabsf(angle.Sin()));
-				break;
-
-			case AWeapon::BobAlpha:
-				xx[i] = bobx * angle.Sin();
-				yy[i] = boby * fabsf(angle.Sin());
-				break;
-
-			case AWeapon::BobInverseAlpha:
-				xx[i] = bobx * angle.Sin();
-				yy[i] = boby * (1.f - fabsf(angle.Sin()));
-				break;
-
-			case AWeapon::BobSmooth:
-				xx[i] = bobx*angle.Cos();
-				yy[i] = 0.5f * (boby * (1.f - ((angle * 2).Cos())));
-				break;
-
-			case AWeapon::BobInverseSmooth:
-				xx[i] = bobx*angle.Cos();
-				yy[i] = 0.5f * (boby * (1.f + ((angle * 2).Cos())));
-			}
-		}
-		else
-		{
-			xx[i] = 0;
-			yy[i] = 0;
-		}
-	}
-	*x = (float)(xx[0] * (1. - ticfrac) + xx[1] * ticfrac);
-	*y = (float)(yy[0] * (1. - ticfrac) + yy[1] * ticfrac);
-}
-
-//============================================================================
-//
-// PROC A_WeaponReady
-//
-// Readies a weapon for firing or bobbing with its three ancillary functions,
-// DoReadyWeaponToSwitch(), DoReadyWeaponToFire() and DoReadyWeaponToBob().
-// [XA] Added DoReadyWeaponToReload() and DoReadyWeaponToZoom()
-//
-//============================================================================
-
-void DoReadyWeaponToSwitch (AActor *self, bool switchable)
-{
-	// Prepare for switching action.
-	player_t *player;
-	if (self && (player = self->player))
-	{
-		if (switchable)
-		{
-			player->WeaponState |= WF_WEAPONSWITCHOK | WF_REFIRESWITCHOK;
-		}
-		else
-		{
-			// WF_WEAPONSWITCHOK is automatically cleared every tic by P_SetPsprite().
-			player->WeaponState &= ~WF_REFIRESWITCHOK;
-		}
-	}
-}
-
-void DoReadyWeaponDisableSwitch (AActor *self, INTBOOL disable)
-{
-	// Discard all switch attempts?
-	player_t *player;
-	if (self && (player = self->player))
-	{
-		if (disable)
-		{
-			player->WeaponState |= WF_DISABLESWITCH;
-			player->WeaponState &= ~WF_REFIRESWITCHOK;
-		}
-		else
-		{
-			player->WeaponState &= ~WF_DISABLESWITCH;
-		}
-	}
-}
-
-void DoReadyWeaponToFire (AActor *self, bool prim, bool alt)
-{
-	player_t *player;
-	AWeapon *weapon;
-
-	if (!self || !(player = self->player) || !(weapon = player->ReadyWeapon))
-	{
-		return;
-	}
-
-	// Change player from attack state
-	if (self->InStateSequence(self->state, self->MissileState) ||
-		self->InStateSequence(self->state, self->MeleeState))
-	{
-		static_cast<APlayerPawn *>(self)->PlayIdle ();
-	}
-
-	// Play ready sound, if any.
-	if (weapon->ReadySound && player->GetPSprite(PSP_WEAPON)->GetState() == weapon->FindState(NAME_Ready))
-	{
-		if (!(weapon->WeaponFlags & WIF_READYSNDHALF) || pr_wpnreadysnd() < 128)
-		{
-			S_Sound (self, CHAN_WEAPON, weapon->ReadySound, 1, ATTN_NORM);
-		}
-	}
-
-	// Prepare for firing action.
-	player->WeaponState |= ((prim ? WF_WEAPONREADY : 0) | (alt ? WF_WEAPONREADYALT : 0));
-	return;
-}
-
-void DoReadyWeaponToBob (AActor *self)
-{
-	if (self && self->player && self->player->ReadyWeapon)
-	{
-		// Prepare for bobbing action.
-		self->player->WeaponState |= WF_WEAPONBOBBING;
-		self->player->GetPSprite(PSP_WEAPON)->x = 0;
-		self->player->GetPSprite(PSP_WEAPON)->y = WEAPONTOP;
-	}
-}
-
-void DoReadyWeaponToGeneric(AActor *self, int paramflags)
-{
-	int flags = 0;
-
-	for (size_t i = 0; i < countof(ButtonChecks); ++i)
-	{
-		if (paramflags & ButtonChecks[i].ReadyFlag)
-		{
-			flags |= ButtonChecks[i].StateFlag;
-		}
-	}
-	if (self != NULL && self->player != NULL)
-	{
-		self->player->WeaponState |= flags;
-	}
-}
-
-DEFINE_ACTION_FUNCTION(AStateProvider, A_WeaponReady)
-{
-	PARAM_ACTION_PROLOGUE(AStateProvider);
-	PARAM_INT_DEF(flags);
-
-													DoReadyWeaponToSwitch(self, !(flags & WRF_NoSwitch));
-	if ((flags & WRF_NoFire) != WRF_NoFire)			DoReadyWeaponToFire(self, !(flags & WRF_NoPrimary), !(flags & WRF_NoSecondary));
-	if (!(flags & WRF_NoBob))						DoReadyWeaponToBob(self);
-													DoReadyWeaponToGeneric(self, flags);
-	DoReadyWeaponDisableSwitch(self, flags & WRF_DisableSwitch);
-	return 0;
+	*x = *y = 0;
 }
 
 //---------------------------------------------------------------------------
@@ -880,7 +604,7 @@ static void P_CheckWeaponButtons (player_t *player)
 	{
 		return;
 	}
-	AWeapon *weapon = player->ReadyWeapon;
+	auto weapon = player->ReadyWeapon;
 	if (weapon == nullptr)
 	{
 		return;
@@ -892,7 +616,7 @@ static void P_CheckWeaponButtons (player_t *player)
 		if ((player->WeaponState & ButtonChecks[i].StateFlag) &&
 			(player->cmd.ucmd.buttons & ButtonChecks[i].ButtonFlag))
 		{
-			FState *state = weapon->GetStateForButtonName(ButtonChecks[i].StateName);
+			FState *state = weapon->FindState(ButtonChecks[i].StateName);
 			// [XA] don't change state if still null, so if the modder
 			// sets WRF_xxx to true but forgets to define the corresponding
 			// state, the weapon won't disappear. ;)
@@ -972,10 +696,10 @@ void A_OverlayOffset(AActor *self, int layer, double wx, double wy, int flags)
 DEFINE_ACTION_FUNCTION(AActor, A_OverlayOffset)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
-	PARAM_INT_DEF(layer)
-	PARAM_FLOAT_DEF(wx)	
-	PARAM_FLOAT_DEF(wy)	
-	PARAM_INT_DEF(flags)
+	PARAM_INT(layer)
+	PARAM_FLOAT(wx)	
+	PARAM_FLOAT(wy)	
+	PARAM_INT(flags)
 	A_OverlayOffset(self, ((layer != 0) ? layer : stateinfo->mPSPIndex), wx, wy, flags);
 	return 0;
 }
@@ -983,9 +707,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayOffset)
 DEFINE_ACTION_FUNCTION(AActor, A_WeaponOffset)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT_DEF(wx)	
-	PARAM_FLOAT_DEF(wy)	
-	PARAM_INT_DEF(flags)
+	PARAM_FLOAT(wx)	
+	PARAM_FLOAT(wy)	
+	PARAM_INT(flags)
 	A_OverlayOffset(self, PSP_WEAPON, wx, wy, flags);
 	return 0;
 }
@@ -1042,7 +766,7 @@ static double GetOverlayPosition(AActor *self, int layer, bool gety)
 DEFINE_ACTION_FUNCTION(AActor, OverlayX)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
-	PARAM_INT_DEF(layer);
+	PARAM_INT(layer);
 
 	if (ACTION_CALL_FROM_PSPRITE())
 	{
@@ -1055,7 +779,7 @@ DEFINE_ACTION_FUNCTION(AActor, OverlayX)
 DEFINE_ACTION_FUNCTION(AActor, OverlayY)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
-	PARAM_INT_DEF(layer);
+	PARAM_INT(layer);
 
 	if (ACTION_CALL_FROM_PSPRITE())
 	{
@@ -1108,7 +832,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayAlpha)
 DEFINE_ACTION_FUNCTION(AActor, OverlayAlpha)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
-	PARAM_INT_DEF(layer);
+	PARAM_INT(layer);
 
 	if (ACTION_CALL_FROM_PSPRITE())
 	{
@@ -1156,8 +880,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_Overlay)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_INT		(layer);
-	PARAM_STATE_ACTION_DEF(state);
-	PARAM_BOOL_DEF(dontoverride);
+	PARAM_STATE_ACTION(state);
+	PARAM_BOOL(dontoverride);
 
 	player_t *player = self->player;
 
@@ -1175,9 +899,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Overlay)
 DEFINE_ACTION_FUNCTION(AActor, A_ClearOverlays)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT_DEF(start);
-	PARAM_INT_DEF(stop);
-	PARAM_BOOL_DEF(safety)
+	PARAM_INT(start);
+	PARAM_INT(stop);
+	PARAM_BOOL(safety)
 
 	if (self->player == nullptr)
 		ACTION_RETURN_INT(0);
@@ -1255,8 +979,8 @@ DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimfla
 DEFINE_ACTION_FUNCTION(AActor, BulletSlope)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_POINTER_DEF(t, FTranslatedLineTarget);
-	PARAM_INT_DEF(aimflags);
+	PARAM_POINTER(t, FTranslatedLineTarget);
+	PARAM_INT(aimflags);
 	ACTION_RETURN_FLOAT(P_BulletSlope(self, t, aimflags).Degrees);
 }
 
@@ -1333,12 +1057,13 @@ void player_t::DestroyPSprites()
 //
 //------------------------------------------------------------------------------------
 
-void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int index)
+void P_SetSafeFlash(AActor *weapon, player_t *player, FState *flashstate, int index)
 {
+	auto wcls = PClass::FindActor(NAME_Weapon);
 	if (flashstate != nullptr)
 	{
 		PClassActor *cls = weapon->GetClass();
-		while (cls != RUNTIME_CLASS(AWeapon))
+		while (cls != wcls)
 		{
 			if (cls->OwnsState(flashstate))
 			{
@@ -1376,7 +1101,7 @@ void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int i
 DEFINE_ACTION_FUNCTION(_PlayerInfo, SetSafeFlash)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
-	PARAM_OBJECT_NOT_NULL(weapon, AWeapon);
+	PARAM_OBJECT_NOT_NULL(weapon, AActor);
 	PARAM_POINTER(state, FState);
 	PARAM_INT(index);
 	P_SetSafeFlash(weapon, self, state, index);
@@ -1413,6 +1138,33 @@ void DPSprite::OnDestroy()
 		}
 	}
 	Super::OnDestroy();
+}
+
+//------------------------------------------------------------------------
+//
+//
+//
+//------------------------------------------------------------------------
+
+float DPSprite::GetYAdjust(bool fullscreen)
+{
+	auto weapon = GetCaller();
+	if (weapon != nullptr && weapon->IsKindOf(NAME_Weapon))
+	{
+		auto fYAd = weapon->FloatVar(NAME_YAdjust);
+		if (fYAd != 0)
+		{
+			if (fullscreen)
+			{
+				return (float)fYAd;
+			}
+			else
+			{
+				return (float)(StatusBar->GetDisplacement() * fYAd);
+			}
+		}
+	}
+	return 0;
 }
 
 //------------------------------------------------------------------------

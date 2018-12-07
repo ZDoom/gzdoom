@@ -194,7 +194,7 @@ extend class Actor
 		Actor owner = (flags & MSF_DontHurt) ? target : self;
 		aimtarget.Height = Height;
 		
-		bool shootmode = ((flags & MSF_Classic) || // Flag explicitely set, or no flags and compat options
+		bool shootmode = ((flags & MSF_Classic) || // Flag explicitly set, or no flags and compat options
 					(flags == 0 && CurState.bDehacked && compat_mushroom));
 
 		for (i = -numspawns; i <= numspawns; i += 8)

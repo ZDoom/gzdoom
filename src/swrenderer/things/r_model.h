@@ -78,7 +78,15 @@ namespace swrenderer
 		RenderThread *Thread = nullptr;
 		Fake3DTranslucent Clip3DFloor;
 
-		AActor *ModelActor = nullptr;
+		FRenderStyle RenderStyle;
+		float RenderAlpha;
+		sector_t *sector;
+		bool fullbrightSprite;
+		int lightlevel;
+		double visibility;
+		uint32_t fillcolor;
+		uint32_t Translation;
+
 		Mat4f ObjectToWorld;
 		PolyClipPlane ClipTop, ClipBottom;
 		FTexture *SkinTexture = nullptr;

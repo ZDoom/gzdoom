@@ -61,9 +61,9 @@ DEFINE_ACTION_FUNCTION(FState, GetSpriteTexture)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FState);
 	PARAM_INT(rotation);
-	PARAM_INT_DEF(skin);
-	PARAM_FLOAT_DEF(scalex);
-	PARAM_FLOAT_DEF(scaley);
+	PARAM_INT(skin);
+	PARAM_FLOAT(scalex);
+	PARAM_FLOAT(scaley);
 
 	spriteframe_t *sprframe;
 	if (skin == 0)
@@ -378,7 +378,7 @@ DEFINE_ACTION_FUNCTION(AActor, FindState)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(newstate);
-	PARAM_BOOL_DEF(exact)
+	PARAM_BOOL(exact)
 	ACTION_RETURN_STATE(StateLabels.GetState(newstate, self->GetClass(), exact));
 }
 

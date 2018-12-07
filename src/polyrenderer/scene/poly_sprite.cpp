@@ -336,7 +336,7 @@ FSoftwareTexture *RenderPolySprite::GetSpriteTexture(AActor *thing, /*out*/ bool
 				rot = (ang - thing->Angles.Yaw + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
 			}
 			flipX = (sprframe->Flip & (1 << rot)) != 0;
-			ttex = TexMan[sprframe->Texture[rot]];	// Do not animate the rotation
+			ttex = TexMan.GetPalettedTexture(sprframe->Texture[rot], false);	// Do not animate the rotation
 			tex = ttex->GetSoftwareTexture();
 			if (!ttex || !ttex->isValid())
 			{
@@ -371,7 +371,7 @@ FSoftwareTexture *RenderPolySprite::GetSpriteTexture(AActor *thing, /*out*/ bool
 			DAngle sprangle = thing->GetSpriteAngle((pos - viewpoint.Pos).Angle(), viewpoint.TicFrac);
 			FTextureID tex = sprdef->GetSpriteFrame(thing->frame, -1, sprangle, &flipX);
 			if (!tex.isValid()) return nullptr;
-			return TexMan[tex]->GetSoftwareTexture();
+			return TexMan.GetPalettedTexture(tex, false)->GetSoftwareTexture();
 		}
 	}
 }

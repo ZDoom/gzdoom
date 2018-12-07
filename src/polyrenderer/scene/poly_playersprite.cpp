@@ -227,7 +227,7 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 
 	picnum = sprframe->Texture[0];
 	flip = sprframe->Flip & 1;
-	ttex = TexMan.GetPalettedTexture(picnum, true);
+	ttex = TexMan.GetTexture(picnum);
 
 	if (!ttex->isValid())
 		return;

@@ -262,7 +262,7 @@ FTextureID DBaseDecal::StickToWall (side_t *wall, double x, double y, F3DFloor *
 	else return FNullTextureID();
 	CalcFracPos (wall, x, y);
 
-	FTexture *texture = TexMan[tex];
+	FTexture *texture = TexMan.GetTexture(tex);
 
 	if (texture == NULL || texture->allowNoDecals())
 	{
@@ -492,7 +492,7 @@ void DBaseDecal::Spread (const FDecalTemplate *tpl, side_t *wall, double x, doub
 	GetWallStuff (wall, v1, ldx, ldy);
 	rorg = Length (x - v1->fX(), y - v1->fY());
 
-	if ((tex = TexMan[PicNum]) == NULL)
+	if ((tex = TexMan.GetTexture(PicNum)) == NULL)
 	{
 		return;
 	}

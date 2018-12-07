@@ -1083,7 +1083,7 @@ void C_DrawConsole ()
 	else if (ConBottom)
 	{
 		int visheight;
-		FTexture *conpic = TexMan[conback];
+		FTexture *conpic = TexMan.GetTexture(conback);
 
 		visheight = ConBottom;
 

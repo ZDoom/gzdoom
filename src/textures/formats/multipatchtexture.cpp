@@ -1234,7 +1234,7 @@ void FMultiPatchTexture::ResolvePatches()
 				TexMan.ListTextures(Inits[i].TexName, list, true);
 				for (int i = list.Size() - 1; i >= 0; i--)
 				{
-					if (list[i] != id && !TexMan[list[i]]->bMultiPatch)
+					if (list[i] != id && !TexMan.GetTexture(list[i])->bMultiPatch)
 					{
 						texno = list[i];
 						break;
@@ -1263,7 +1263,7 @@ void FMultiPatchTexture::ResolvePatches()
 			}
 			else
 			{
-				Parts[i].Texture = TexMan[texno];
+				Parts[i].Texture = TexMan.GetTexture(texno);
 				bComplex |= Parts[i].Texture->bComplex;
 				Parts[i].Texture->bKeepAround = true;
 				if (Inits[i].UseOffsets)

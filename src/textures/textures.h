@@ -558,14 +558,6 @@ public:
 	FTextureManager ();
 	~FTextureManager ();
 
-	// Get texture without translation
-//private:
-	FTexture *operator[] (FTextureID texnum)
-	{
-		if ((unsigned)texnum.GetIndex() >= Textures.Size()) return NULL;
-		return Textures[texnum.GetIndex()].Texture;
-	}
-	
 	// This only gets used in UI code so we do not need PALVERS handling.
 	FTexture *GetTextureByName(const char *name, bool animate = false)
 	{
@@ -575,9 +567,9 @@ public:
 	 	else return Textures[Translation[texnum.GetIndex()]].Texture;
 	}
 	
-	FTexture *GetTexture(FTextureID texnum, bool animate)
+	FTexture *GetTexture(FTextureID texnum, bool animate = false)
 	{
-		if ((size_t)texnum.texnum >= Textures.Size()) return nullptr;
+		if ((size_t)texnum.GetIndex() >= Textures.Size()) return nullptr;
 		if (animate) texnum = Translation[texnum.GetIndex()];
 		return Textures[texnum.GetIndex()].Texture;
 	}

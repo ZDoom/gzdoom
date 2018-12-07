@@ -384,7 +384,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 				!TexMan.CheckForTexture("STCFN122", ETextureType::MiscPatch).isValid())
 			{
 				// insert the incorrectly named '|' graphic in its correct position.
-				if (count > 124-start) charLumps[124-start] = TexMan[lump];
+				if (count > 124-start) charLumps[124-start] = TexMan.GetTexture(lump);
 				lump.SetInvalid();
 				stcfn121 = true;
 			}
@@ -392,7 +392,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 
 		if (lump.isValid())
 		{
-			FTexture *pic = TexMan[lump];
+			FTexture *pic = TexMan.GetTexture(lump);
 			if (pic != NULL)
 			{
 				// set the lump here only if it represents a valid texture
@@ -994,7 +994,7 @@ FSingleLumpFont::FSingleLumpFont (const char *name, int lump) : FFont(lump)
 
 void FSingleLumpFont::CreateFontFromPic (FTextureID picnum)
 {
-	FTexture *pic = TexMan[picnum];
+	FTexture *pic = TexMan.GetTexture(picnum);
 
 	FontHeight = pic->GetDisplayHeight ();
 	SpaceWidth = pic->GetDisplayWidth ();
@@ -1492,7 +1492,7 @@ FSinglePicFont::FSinglePicFont(const char *picname) :
 		I_FatalError ("%s is not a font or texture", picname);
 	}
 
-	FTexture *pic = TexMan[picnum];
+	FTexture *pic = TexMan.GetTexture(picnum);
 
 	FontName = picname;
 	FontHeight = pic->GetDisplayHeight();
@@ -2143,7 +2143,7 @@ void V_InitCustomFonts()
 					FTextureID texid = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
 					if (texid.Exists())
 					{
-						*p = TexMan[texid];
+						*p = TexMan.GetTexture(texid);
 					}
 					else if (Wads.GetLumpFile(sc.LumpNum) >= Wads.GetIwadNum())
 					{

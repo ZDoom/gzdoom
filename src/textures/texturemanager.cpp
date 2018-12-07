@@ -1116,8 +1116,8 @@ void FTextureManager::InitPalettedVersions()
 			}
 			if (pic1.isValid() && pic2.isValid())
 			{
-				FTexture *owner = TexMan[pic1];
-				FTexture *owned = TexMan[pic2];
+				FTexture *owner = GetTexture(pic1);
+				FTexture *owned = GetTexture(pic2);
 
 				if (owner && owned) owner->PalVersion = owned;
 			}
@@ -1135,7 +1135,7 @@ FTextureID FTextureManager::PalCheck(FTextureID tex)
 {
 	// In any true color mode this shouldn't do anything.
 	if (vid_nopalsubstitutions || V_IsTrueColor()) return tex;
-	auto ftex = operator[](tex);
+	auto ftex = GetTexture(tex);
 	if (ftex != nullptr && ftex->PalVersion != nullptr) return ftex->PalVersion->id;
 	return tex;
 }
@@ -1259,7 +1259,7 @@ void FTextureManager::AdjustSpriteOffsets()
 			Wads.GetLumpName(str, i);
 			str[8] = 0;
 			FTextureID texid = TexMan.CheckForTexture(str, ETextureType::Sprite, 0);
-			if (texid.isValid() && Wads.GetLumpFile(TexMan[texid]->SourceLump) > Wads.GetIwadNum())
+			if (texid.isValid() && Wads.GetLumpFile(GetTexture(texid)->SourceLump) > Wads.GetIwadNum())
 			{
 				// This texture has been replaced by some PWAD.
 				memcpy(&sprid, str, 4);
@@ -1294,7 +1294,7 @@ void FTextureManager::AdjustSpriteOffsets()
 			}
 			if (texno.isValid())
 			{
-				FTexture * tex = TexMan[texno];
+				FTexture * tex = GetTexture(texno);
 
 				int lumpnum = tex->GetSourceLump();
 				// We only want to change texture offsets for sprites in the IWAD or the file this lump originated from.

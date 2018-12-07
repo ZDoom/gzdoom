@@ -519,7 +519,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 			texture = TexMan.GetTextureID("INTERPIC", ETextureType::MiscPatch);
 		}
 	}
-	background = TexMan[texture];
+	background = TexMan.GetTexture(texture);
 	return noautostartmap;
 }
 

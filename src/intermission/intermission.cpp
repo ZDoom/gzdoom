@@ -162,11 +162,11 @@ void DIntermissionScreen::Drawer ()
 	{
 		if (!mFlatfill)
 		{
-			screen->DrawTexture (TexMan[mBackground], 0, 0, DTA_Fullscreen, true, TAG_DONE);
+			screen->DrawTexture (TexMan.GetTexture(mBackground), 0, 0, DTA_Fullscreen, true, TAG_DONE);
 		}
 		else
 		{
-			screen->FlatFill (0,0, SCREENWIDTH, SCREENHEIGHT, TexMan[mBackground]);
+			screen->FlatFill (0,0, SCREENWIDTH, SCREENHEIGHT, TexMan.GetTexture(mBackground));
 		}
 	}
 	else
@@ -176,7 +176,7 @@ void DIntermissionScreen::Drawer ()
 	for (unsigned i=0; i < mOverlays.Size(); i++)
 	{
 		if (CheckOverlay(i))
-			screen->DrawTexture (TexMan[mOverlays[i].mPic], mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, TAG_DONE);
+			screen->DrawTexture (TexMan.GetTexture(mOverlays[i].mPic), mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, TAG_DONE);
 	}
 	if (!mFlatfill) screen->FillBorder (NULL);
 }
@@ -229,11 +229,11 @@ void DIntermissionScreenFader::Drawer ()
 		if (mType == FADE_In) factor = 1.0 - factor;
 		int color = MAKEARGB(int(factor*255), 0,0,0);
 
-		screen->DrawTexture (TexMan[mBackground], 0, 0, DTA_Fullscreen, true, DTA_ColorOverlay, color, TAG_DONE);
+		screen->DrawTexture (TexMan.GetTexture(mBackground), 0, 0, DTA_Fullscreen, true, DTA_ColorOverlay, color, TAG_DONE);
 		for (unsigned i=0; i < mOverlays.Size(); i++)
 		{
 			if (CheckOverlay(i))
-				screen->DrawTexture (TexMan[mOverlays[i].mPic], mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, DTA_ColorOverlay, color, TAG_DONE);
+				screen->DrawTexture (TexMan.GetTexture(mOverlays[i].mPic), mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, DTA_ColorOverlay, color, TAG_DONE);
 		}
 		screen->FillBorder (NULL);
 	}
@@ -611,8 +611,8 @@ int DIntermissionScreenScroller::Responder (event_t *ev)
 
 void DIntermissionScreenScroller::Drawer ()
 {
-	FTexture *tex = TexMan[mFirstPic];
-	FTexture *tex2 = TexMan[mSecondPic];
+	FTexture *tex = TexMan.GetTexture(mFirstPic);
+	FTexture *tex2 = TexMan.GetTexture(mSecondPic);
 	if (mTicker >= mScrollDelay && mTicker < mScrollDelay + mScrollTime && tex != NULL && tex2 != NULL)
 	{
 

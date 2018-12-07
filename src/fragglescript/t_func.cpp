@@ -1903,7 +1903,7 @@ void FParser::SF_FloorTexture(void)
 		}
 		
 		t_return.type = svt_string;
-		FTexture * tex = TexMan[sector->GetTexture(sector_t::floor)];
+		FTexture * tex = TexMan.GetTexture(sector->GetTexture(sector_t::floor));
 		t_return.string = tex? tex->GetName() : "";
 	}
 }
@@ -1993,7 +1993,7 @@ void FParser::SF_CeilingTexture(void)
 		}
 		
 		t_return.type = svt_string;
-		FTexture * tex = TexMan[sector->GetTexture(sector_t::ceiling)];
+		FTexture * tex = TexMan.GetTexture(sector->GetTexture(sector_t::ceiling));
 		t_return.string = tex? tex->GetName() : "";
 	}
 }

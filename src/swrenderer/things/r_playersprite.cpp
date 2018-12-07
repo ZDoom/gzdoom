@@ -224,7 +224,7 @@ namespace swrenderer
 
 		picnum = sprframe->Texture[0];
 		flip = sprframe->Flip & 1;
-		tex = TexMan.GetTexture(picnum, true);
+		tex = TexMan.GetTexture(picnum);
 
 		if (!tex->isValid())
 			return;

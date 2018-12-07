@@ -350,7 +350,7 @@ bool HWDrawInfo::DoOneSectorUpper(subsector_t * subsec, float Planez, area_t in_
 			if (sec->GetPlaneTexZ(sector_t::ceiling) == Planez)
 			{
 				// If there's a texture abort
-				FTexture * tex = TexMan[seg->sidedef->GetTexture(side_t::top)];
+				FTexture * tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::top));
 				if (!tex || !tex->isValid()) continue;
 				else return false;
 			}
@@ -408,7 +408,7 @@ bool HWDrawInfo::DoOneSectorLower(subsector_t * subsec, float Planez, area_t in_
 			if (sec->GetPlaneTexZ(sector_t::floor) == Planez)
 			{
 				// If there's a texture abort
-				FTexture * tex = TexMan[seg->sidedef->GetTexture(side_t::bottom)];
+				FTexture * tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::bottom));
 				if (!tex || !tex->isValid()) continue;
 				else return false;
 			}

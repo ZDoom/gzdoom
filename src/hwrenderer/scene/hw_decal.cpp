@@ -208,7 +208,7 @@ void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 	flipy = !!(decal->RenderFlags & RF_YFLIP);
 
 	
-	FTexture *texture = TexMan[decalTile];
+	FTexture *texture = TexMan.GetTexture(decalTile);
 	if (texture == NULL) return;
 
 	

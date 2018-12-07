@@ -1054,7 +1054,7 @@ namespace swrenderer
 				{
 					sprite.renderflags ^= RF_XFLIP;
 				}
-				sprite.tex = TexMan[sprite.picnum];	// Do not animate the rotation
+				sprite.tex = TexMan.GetPalettedTexture(sprite.picnum, false);	// Do not animate the rotation
 			}
 		}
 		else
@@ -1084,7 +1084,7 @@ namespace swrenderer
 					{
 						sprite.renderflags ^= RF_XFLIP;
 					}
-					sprite.tex = TexMan[tex];	// Do not animate the rotation
+					sprite.tex = TexMan.GetPalettedTexture(tex, false);	// Do not animate the rotation
 				}
 
 				if (r_drawvoxels)

@@ -203,7 +203,7 @@ void ST_LoadCrosshair(bool alwaysload)
 		}
 	}
 	CrosshairNum = num;
-	CrosshairImage = TexMan[texid];
+	CrosshairImage = TexMan.GetTexture(texid);
 }
 
 //---------------------------------------------------------------------------

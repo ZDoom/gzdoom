@@ -1194,7 +1194,7 @@ static void AM_ScrollParchment (double dmapx, double dmapy)
 
 	if (mapback.isValid())
 	{
-		FTexture *backtex = TexMan[mapback];
+		FTexture *backtex = TexMan.GetTexture(mapback);
 
 		if (backtex != NULL)
 		{
@@ -1689,7 +1689,7 @@ void AM_clearFB (const AMColor &color)
 	}
 	else
 	{
-		FTexture *backtex = TexMan[mapback];
+		FTexture *backtex = TexMan.GetTexture(mapback);
 		if (backtex != NULL)
 		{
 			int pwidth = backtex->GetDisplayWidth();
@@ -3189,7 +3189,7 @@ void AM_drawAuthorMarkers ()
 				spriteframe_t *sprframe = &SpriteFrames[tex->GetRotations()];
 				picnum = sprframe->Texture[0];
 				flip = sprframe->Flip & 1;
-				tex = TexMan[picnum];
+				tex = TexMan.GetTexture(picnum);
 			}
 		}
 		else
@@ -3204,7 +3204,7 @@ void AM_drawAuthorMarkers ()
 				spriteframe_t *sprframe = &SpriteFrames[sprdef->spriteframes + mark->frame];
 				picnum = sprframe->Texture[0];
 				flip = sprframe->Flip & 1;
-				tex = TexMan[picnum];
+				tex = TexMan.GetTexture(picnum);
 			}
 		}
 		FActorIterator it (mark->args[0]);

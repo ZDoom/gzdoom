@@ -856,7 +856,7 @@ void D_Display ()
 		D_DrawIcon = NULL;
 		if (picnum.isValid())
 		{
-			FTexture *tex = TexMan[picnum];
+			FTexture *tex = TexMan.GetTexture(picnum);
 			screen->DrawTexture (tex, 160 - tex->GetDisplayWidth()/2, 100 - tex->GetDisplayHeight()/2,
 				DTA_320x200, true, TAG_DONE);
 		}

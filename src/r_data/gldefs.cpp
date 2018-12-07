@@ -977,7 +977,7 @@ class GLDefsParser
 			sc.MustGetString();
 			if (facecount<6) 
 			{
-				sb->faces[facecount] = TexMan[TexMan.GetTextureID(sc.String, ETextureType::Wall, FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_Overridable)];
+				sb->faces[facecount] = TexMan.GetTexture(TexMan.GetTextureID(sc.String, ETextureType::Wall, FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_Overridable));
 			}
 			facecount++;
 		}
@@ -1008,7 +1008,7 @@ class GLDefsParser
 				{
 					sc.MustGetString();
 					FTextureID flump=TexMan.CheckForTexture(sc.String, ETextureType::Flat,FTextureManager::TEXMAN_TryAny);
-					FTexture *tex = TexMan[flump];
+					FTexture *tex = TexMan.GetTexture(flump);
 					if (tex) tex->bAutoGlowing = tex->bGlowing = tex->bFullbright = true;
 				}
 			}
@@ -1019,7 +1019,7 @@ class GLDefsParser
 				{
 					sc.MustGetString();
 					FTextureID flump=TexMan.CheckForTexture(sc.String, ETextureType::Wall,FTextureManager::TEXMAN_TryAny);
-					FTexture *tex = TexMan[flump];
+					FTexture *tex = TexMan.GetTexture(flump);
 					if (tex) tex->bAutoGlowing = tex->bGlowing = tex->bFullbright = true;
 				}
 			}
@@ -1028,7 +1028,7 @@ class GLDefsParser
 				sc.SetCMode(true);
 				sc.MustGetString();
 				FTextureID flump=TexMan.CheckForTexture(sc.String, ETextureType::Flat,FTextureManager::TEXMAN_TryAny);
-				FTexture *tex = TexMan[flump];
+				FTexture *tex = TexMan.GetTexture(flump);
 				sc.MustGetStringName(",");
 				sc.MustGetString();
 				PalEntry color = V_GetColor(NULL, sc.String);
@@ -1081,7 +1081,7 @@ class GLDefsParser
 
 		sc.MustGetString();
 		FTextureID no = TexMan.CheckForTexture(sc.String, type, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_Overridable);
-		FTexture *tex = TexMan[no];
+		FTexture *tex = TexMan.GetTexture(no);
 
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
@@ -1186,7 +1186,7 @@ class GLDefsParser
 
 		sc.MustGetString();
 		FTextureID no = TexMan.CheckForTexture(sc.String, type, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_Overridable);
-		FTexture *tex = TexMan[no];
+		FTexture *tex = TexMan.GetTexture(no);
 
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
@@ -1489,7 +1489,7 @@ class GLDefsParser
 
 			sc.MustGetString();
 			FTextureID no = TexMan.CheckForTexture(sc.String, type);
-			FTexture *tex = TexMan[no];
+			FTexture *tex = TexMan.GetTexture(no);
 
 			sc.MustGetToken('{');
 			while (!sc.CheckToken('}'))

@@ -477,7 +477,7 @@ static inline void CheckShortestTex (FTextureID texnum, double &minsize)
 {
 	if (texnum.isValid() || (texnum.isNull() && (i_compatflags & COMPATF_SHORTTEX)))
 	{
-		FTexture *tex = TexMan[texnum];
+		FTexture *tex = TexMan.GetTexture(texnum);
 		if (tex != NULL)
 		{
 			double h = tex->GetDisplayHeight();
@@ -1144,7 +1144,7 @@ double GetFriction(const sector_t *self, int plane, double *pMoveFac)
 	 auto c = planes[sector_t::floor].GlowColor;
 	 if (c == 0)
 	 {
-		 FTexture *tex = TexMan[GetTexture(sector_t::floor)];
+		 FTexture *tex = TexMan.GetTexture(GetTexture(sector_t::floor));
 		 if (tex != NULL && tex->isGlowing())
 		 {
 			 if (!tex->isAutoGlowing()) tex = TexMan.GetTexture(GetTexture(sector_t::floor), true);
@@ -1189,7 +1189,7 @@ double GetFriction(const sector_t *self, int plane, double *pMoveFac)
 	 auto c = planes[sector_t::ceiling].GlowColor;
 	 if (c == 0)
 	 {
-		 FTexture *tex = TexMan[GetTexture(sector_t::ceiling)];
+		 FTexture *tex = TexMan.GetTexture(GetTexture(sector_t::ceiling));
 		 if (tex != NULL && tex->isGlowing())
 		 {
 			 if (!tex->isAutoGlowing()) tex = TexMan.GetTexture(GetTexture(sector_t::ceiling), true);
@@ -1213,7 +1213,7 @@ double GetFriction(const sector_t *self, int plane, double *pMoveFac)
 	 c = planes[sector_t::floor].GlowColor;
 	 if (c == 0)
 	 {
-		 FTexture *tex = TexMan[GetTexture(sector_t::floor)];
+		 FTexture *tex = TexMan.GetTexture(GetTexture(sector_t::floor));
 		 if (tex != NULL && tex->isGlowing())
 		 {
 			 if (!tex->isAutoGlowing()) tex = TexMan.GetTexture(GetTexture(sector_t::floor), true);

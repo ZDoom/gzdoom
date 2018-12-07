@@ -4574,10 +4574,10 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 	{
 		return 0;
 	}
-	FTexture *tex = TexMan.FindTexture(FBehavior::StaticLookupString(string), ETextureType::Flat,
+	FTextureID tex = TexMan.CheckForTexture(FBehavior::StaticLookupString(string), ETextureType::Flat,
 			FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_DontCreate);
 
-	if (tex == NULL)
+	if (!tex.Exists())
 	{ // If the texture we want to check against doesn't exist, then
 	  // they're obviously not the same.
 		return 0;
@@ -4596,7 +4596,7 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 		NextHighestCeilingAt(actor->Sector, actor->X(), actor->Y(), actor->Z(), actor->Top(), 0, &resultsec, &resffloor);
 		secpic = resffloor ? *resffloor->bottom.texture : resultsec->planes[sector_t::ceiling].Texture;
 	}
-	return tex == TexMan[secpic];
+	return tex == secpic;
 }
 
 
@@ -6690,7 +6690,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			auto a = SingleActorFromTID(args[0], activator);
 			if (a != nullptr)
 			{
-				return GlobalACSStrings.AddString(TexMan[a->floorpic]->GetName());
+				return GlobalACSStrings.AddString(TexMan.GetTexture(a->floorpic)->GetName());
 			}
 			else
 			{

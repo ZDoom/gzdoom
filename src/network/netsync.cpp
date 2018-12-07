@@ -131,6 +131,8 @@ void NetSyncClass::WriteSyncUpdate(NetCommand &cmd, AActor *actor)
 		writer.Write(actor->syncdata.CompareData.Data() + compareoffset, ((uint8_t*)actor) + mSyncVars[i].offset, mSyncVars[i].size);
 		compareoffset += mSyncVars[i].size;
 	}
+
+	writer.WriteEnd();
 }
 
 void NetSyncClass::ReadSyncUpdate(ByteInputStream &stream, AActor *actor)

@@ -198,7 +198,7 @@ protected:
 	uint8_t *MakeTexture (FRenderStyle style);
 
 	// The getters must optionally redirect if it's a simple one-patch texture.
-	const uint8_t *GetPixels(FRenderStyle style) override { return bRedirect ? Parts->Texture->GetPixels(style) : FWorldTexture::GetPixels(style); }
+	const uint8_t *Get8BitPixels(FRenderStyle style) override { return bRedirect ? Parts->Texture->Get8BitPixels(style) : FWorldTexture::Get8BitPixels(style); }
 
 
 private:
@@ -1289,7 +1289,7 @@ void FMultiPatchTexture::ResolvePatches()
 	CheckForHacks();
 
 	// If this texture is just a wrapper around a single patch, we can simply
-	// forward GetPixels() and GetColumn() calls to that patch.
+	// forward getter calls to that patch.
 
 	if (NumParts == 1)
 	{

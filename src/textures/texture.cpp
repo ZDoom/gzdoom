@@ -256,7 +256,7 @@ void FTexture::SetFrontSkyLayer ()
 
 void FTexture::CopyToBlock (uint8_t *dest, int dwidth, int dheight, int xpos, int ypos, int rotate, const uint8_t *translation, FRenderStyle style)
 {
-	const uint8_t *pixels = GetPixels(style);
+	const uint8_t *pixels = Get8BitPixels(style);
 	int srcwidth = Width;
 	int srcheight = Height;
 	int step_x = Height;
@@ -435,7 +435,7 @@ void FTexture::FillBuffer(uint8_t *buff, int pitch, int height, FTextureFormat f
 	{
 	case TEX_Pal:
 	case TEX_Gray:
-		pix = GetPixels(fmt == TEX_Pal? DefaultRenderStyle() : LegacyRenderStyles[STYLE_Shaded]);
+		pix = Get8BitPixels(fmt == TEX_Pal? DefaultRenderStyle() : LegacyRenderStyles[STYLE_Shaded]);
 		stride = pitch - w;
 		for (y = 0; y < h; ++y)
 		{
@@ -479,14 +479,14 @@ int FTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyI
 {
 	PalEntry *palette = screen->GetPalette();
 	for(int i=1;i<256;i++) palette[i].a = 255;	// set proper alpha values
-	bmp->CopyPixelData(x, y, GetPixels(DefaultRenderStyle()), Width, Height, Height, 1, rotate, palette, inf);
+	bmp->CopyPixelData(x, y, Get8BitPixels(DefaultRenderStyle()), Width, Height, Height, 1, rotate, palette, inf);
 	for(int i=1;i<256;i++) palette[i].a = 0;
 	return 0;
 }
 
 int FTexture::CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, PalEntry *remap, FCopyInfo *inf)
 {
-	bmp->CopyPixelData(x, y, GetPixels(DefaultRenderStyle()), Width, Height, Height, 1, rotate, remap, inf);
+	bmp->CopyPixelData(x, y, Get8BitPixels(DefaultRenderStyle()), Width, Height, Height, 1, rotate, remap, inf);
 	return 0;
 }
 
@@ -596,7 +596,7 @@ PalEntry FTexture::GetSkyCapColor(bool bottom)
 
 int FTexture::CheckRealHeight()
 {
-	auto pixels = GetPixels(DefaultRenderStyle());
+	auto pixels = Get8BitPixels(DefaultRenderStyle());
 	
 	for(int h = GetHeight()-1; h>= 0; h--)
 	{
@@ -683,11 +683,11 @@ void FTexture::CreateDefaultBrightmap()
 		if (UseBasePalette() && TexMan.HasGlobalBrightmap &&
 			UseType != ETextureType::Decal && UseType != ETextureType::MiscPatch && UseType != ETextureType::FontChar &&
 			Brightmap == NULL && bWarped == 0 &&
-			GetPixels(DefaultRenderStyle())
+			Get8BitPixels(DefaultRenderStyle())
 			)
 		{
 			// May have one - let's check when we use this texture
-			const uint8_t *texbuf = GetPixels(DefaultRenderStyle());
+			const uint8_t *texbuf = Get8BitPixels(DefaultRenderStyle());
 			const int white = ColorMatcher.Pick(255, 255, 255);
 
 			int size = GetWidth() * GetHeight();
@@ -1054,7 +1054,7 @@ void FTexture::SetSpriteAdjust()
 //
 //===========================================================================
 
-const uint8_t *FTexture::GetPixels(FRenderStyle style)
+const uint8_t *FTexture::Get8BitPixels(FRenderStyle style)
 {
 	return nullptr;
 }
@@ -1211,4 +1211,27 @@ void FTexCoordInfo::GetFromTexture(FTexture *tex, float x, float y)
 	mWorldPanning = tex->bWorldPanning;
 	mWidth = tex->GetWidth();
 }
+
+/////////////
+
+
+class TextureCache
+{
+	struct ItemCacheInfo
+	{
+		int palettedCount;			// counts use of final paletted textures
+		int palettedCountCompose;	// counts use of images needed for composition (can be freed after precaching)
+		int rgbaCount;				// counts use of final true color software textures
+		int rawCount;				// counts use of raw images needed for composition (can be freed after precaching)
+		int textureCount;			// counts use of hardware textures
+	};
+	TMap<uint64_t, TArray<uint8_t>> pixelCachePaletted;	// 8 bit column major for composition and software rendering
+	TMap<uint64_t, TArray<uint8_t>> pixelCacheRgba;		// 32 bit column major for software true color rendering
+	TMap<uint64_t, TArray<uint8_t>> pixelCacheRaw;		// 32 bit row major for composition
+	TMap<uint64_t, IHardwareTexture *> hwTextureCache;	// native system textures.
+	
+	TMap<uint64_t, ItemCacheInfo> cacheMarker;
+	
+	void PrecacheLevel();
+};
 

@@ -59,9 +59,9 @@ FSkyBox::~FSkyBox()
 //
 //-----------------------------------------------------------------------------
 
-const uint8_t *FSkyBox::GetPixels (FRenderStyle style)
+const uint8_t *FSkyBox::Get8BitPixels (FRenderStyle style)
 {
-	if (faces[0]) return faces[0]->GetPixels(style);
+	if (faces[0]) return faces[0]->Get8BitPixels(style);
 	return NULL;
 }
 

@@ -171,7 +171,7 @@ class FFontChar1 : public FTexture
 {
 public:
    FFontChar1 (FTexture *sourcelump);
-   const uint8_t *GetPixels (FRenderStyle style);
+   const uint8_t *Get8BitPixels (FRenderStyle style);
    void SetSourceRemap(const uint8_t *sourceremap);
    void Unload ();
    ~FFontChar1 ();
@@ -191,7 +191,7 @@ public:
 	FFontChar2 (int sourcelump, int sourcepos, int width, int height, int leftofs=0, int topofs=0);
 	~FFontChar2 ();
 
-	const uint8_t *GetPixels (FRenderStyle style);
+	const uint8_t *Get8BitPixels (FRenderStyle style);
 	void SetSourceRemap(const uint8_t *sourceremap);
 	void Unload ();
 
@@ -530,7 +530,7 @@ void RecordTextureColors (FTexture *pic, uint8_t *usedcolors)
 {
 	int x;
 	
-	auto pixels = pic->GetPixels(DefaultRenderStyle());
+	auto pixels = pic->Get8BitPixels(DefaultRenderStyle());
 	auto size = pic->GetWidth() * pic->GetHeight();
 	
 	for(x = 0;x < size; x++)
@@ -1569,7 +1569,7 @@ FFontChar1::FFontChar1 (FTexture *sourcelump)
 //
 //==========================================================================
 
-const uint8_t *FFontChar1::GetPixels (FRenderStyle)
+const uint8_t *FFontChar1::Get8BitPixels (FRenderStyle)
 {
 	if (Pixels == NULL)
 	{
@@ -1589,7 +1589,7 @@ void FFontChar1::MakeTexture ()
 	// Make the texture as normal, then remap it so that all the colors
 	// are at the low end of the palette
 	Pixels = new uint8_t[Width*Height];
-	const uint8_t *pix = BaseTexture->GetPixels(DefaultRenderStyle());
+	const uint8_t *pix = BaseTexture->Get8BitPixels(DefaultRenderStyle());
 
 	if (!SourceRemap)
 	{
@@ -1690,13 +1690,13 @@ void FFontChar2::Unload ()
 
 //==========================================================================
 //
-// FFontChar2 :: GetPixels
+// FFontChar2 :: Get8BitPixels
 //
 // Like for FontChar1, the render style has no relevance here as well.
 //
 //==========================================================================
 
-const uint8_t *FFontChar2::GetPixels (FRenderStyle)
+const uint8_t *FFontChar2::Get8BitPixels (FRenderStyle)
 {
 	if (Pixels == NULL)
 	{

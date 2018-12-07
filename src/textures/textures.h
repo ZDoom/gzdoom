@@ -387,7 +387,7 @@ protected:
 
 
 	// Returns the whole texture, stored in column-major order
-	virtual const uint8_t *GetPixels(FRenderStyle style);
+	virtual const uint8_t *Get8BitPixels(FRenderStyle style);
 
 	// Returns true if GetPixelsBgra includes mipmaps
 	virtual bool Mipmapped() { return true; }
@@ -746,7 +746,7 @@ protected:
 	~FWorldTexture();
 
 	void Unload() override;
-	const uint8_t *GetPixels(FRenderStyle style) override;
+	const uint8_t *Get8BitPixels(FRenderStyle style) override;
 	virtual uint8_t *MakeTexture(FRenderStyle style) = 0;
 };
 
@@ -772,7 +772,7 @@ public:
 	//const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out);
 	//const uint32_t *GetPixelsBgra() override;
 
-	const uint8_t *GetPixels (FRenderStyle style);
+	const uint8_t *Get8BitPixels (FRenderStyle style);
 	void Unload ();
 	bool CheckModified (FRenderStyle) /*override*/;
 	void NeedUpdate() { bNeedsUpdate=true; }

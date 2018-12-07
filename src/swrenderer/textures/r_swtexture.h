@@ -96,7 +96,7 @@ public:
 	// Returns the whole texture, stored in column-major order
 	virtual const uint8_t *GetPixels(FRenderStyle style)
 	{
-		return mTexture->GetPixels(style);
+		return mTexture->Get8BitPixels(style);
 	}
 
 	void Unload()

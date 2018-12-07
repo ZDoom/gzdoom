@@ -56,7 +56,7 @@ FCanvasTexture::~FCanvasTexture ()
 	Unload ();
 }
 
-const uint8_t *FCanvasTexture::GetPixels (FRenderStyle style)
+const uint8_t *FCanvasTexture::Get8BitPixels (FRenderStyle style)
 {
 	bNeedsUpdate = true;
 	if (Canvas == NULL)

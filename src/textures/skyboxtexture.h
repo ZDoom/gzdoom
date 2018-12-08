@@ -16,9 +16,7 @@ public:
 	bool fliptop;
 
 	FSkyBox(const char *name = nullptr);
-	~FSkyBox();
-	//const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out);
-	const uint8_t *Get8BitPixels (FRenderStyle style);
+	TArray<uint8_t> Get8BitPixels(bool alphatex);
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf);
 	bool UseBasePalette();
 	void Unload ();

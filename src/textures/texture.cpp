@@ -225,11 +225,11 @@ FTexture::~FTexture ()
 		if (SystemTexture[i] != nullptr) delete SystemTexture[i];
 		SystemTexture[i] = nullptr;
 	}
-
-}
-
-void FTexture::Unload()
-{
+	if (SoftwareTexture != nullptr)
+	{
+		delete SoftwareTexture;
+		SoftwareTexture = nullptr;
+	}
 }
 
 //==========================================================================
@@ -254,15 +254,16 @@ void FTexture::SetFrontSkyLayer ()
 //
 //==========================================================================
 
-void FTexture::CopyToBlock (uint8_t *dest, int dwidth, int dheight, int xpos, int ypos, int rotate, const uint8_t *translation, FRenderStyle style)
+void FTexture::CopyToBlock (uint8_t *dest, int dwidth, int dheight, int xpos, int ypos, int rotate, const uint8_t *translation, bool style)
 {
-	const uint8_t *pixels = Get8BitPixels(style);
+	auto image = Get8BitPixels(style);	// should use composition cache
+	const uint8_t *pixels = image.Data();
 	int srcwidth = Width;
 	int srcheight = Height;
 	int step_x = Height;
 	int step_y = 1;
 	FClipRect cr = {0, 0, dwidth, dheight};
-	if (style.Flags & STYLEF_RedIsAlpha) translation = nullptr;	// do not apply translations to alpha textures.
+	if (style) translation = nullptr;	// do not apply translations to alpha textures.
 
 	if (ClipCopyPixelRect(&cr, xpos, ypos, pixels, srcwidth, srcheight, step_x, step_y, rotate))
 	{
@@ -425,7 +426,6 @@ void FTexture::FlipNonSquareBlockRemap (uint8_t *dst, const uint8_t *src, int x,
 
 void FTexture::FillBuffer(uint8_t *buff, int pitch, int height, FTextureFormat fmt)
 {
-	const uint8_t *pix;
 	int x, y, w, h, stride;
 
 	w = GetWidth();
@@ -435,7 +435,9 @@ void FTexture::FillBuffer(uint8_t *buff, int pitch, int height, FTextureFormat f
 	{
 	case TEX_Pal:
 	case TEX_Gray:
-		pix = Get8BitPixels(fmt == TEX_Pal? DefaultRenderStyle() : LegacyRenderStyles[STYLE_Shaded]);
+	{
+		auto ppix = Get8BitPixels(fmt == TEX_Gray);	// should use composition cache
+		auto pix = ppix.Data();
 		stride = pitch - w;
 		for (y = 0; y < h; ++y)
 		{
@@ -449,6 +451,7 @@ void FTexture::FillBuffer(uint8_t *buff, int pitch, int height, FTextureFormat f
 			buff += stride;
 		}
 		break;
+	}
 
 	case TEX_RGB:
 	{
@@ -479,14 +482,16 @@ int FTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyI
 {
 	PalEntry *palette = screen->GetPalette();
 	for(int i=1;i<256;i++) palette[i].a = 255;	// set proper alpha values
-	bmp->CopyPixelData(x, y, Get8BitPixels(DefaultRenderStyle()), Width, Height, Height, 1, rotate, palette, inf);
+	auto ppix = Get8BitPixels(false);	// should use composition cache
+	bmp->CopyPixelData(x, y, ppix.Data(), Width, Height, Height, 1, rotate, palette, inf);
 	for(int i=1;i<256;i++) palette[i].a = 0;
 	return 0;
 }
 
 int FTexture::CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, PalEntry *remap, FCopyInfo *inf)
 {
-	bmp->CopyPixelData(x, y, Get8BitPixels(DefaultRenderStyle()), Width, Height, Height, 1, rotate, remap, inf);
+	auto ppix = Get8BitPixels(false);	// should use composition cache
+	bmp->CopyPixelData(x, y, ppix.Data(), Width, Height, Height, 1, rotate, remap, inf);
 	return 0;
 }
 
@@ -596,7 +601,7 @@ PalEntry FTexture::GetSkyCapColor(bool bottom)
 
 int FTexture::CheckRealHeight()
 {
-	auto pixels = Get8BitPixels(DefaultRenderStyle());
+	auto pixels = Get8BitPixels(false);
 	
 	for(int h = GetHeight()-1; h>= 0; h--)
 	{
@@ -682,12 +687,10 @@ void FTexture::CreateDefaultBrightmap()
 		// Check for brightmaps
 		if (UseBasePalette() && TexMan.HasGlobalBrightmap &&
 			UseType != ETextureType::Decal && UseType != ETextureType::MiscPatch && UseType != ETextureType::FontChar &&
-			Brightmap == NULL && bWarped == 0 &&
-			Get8BitPixels(DefaultRenderStyle())
-			)
+			Brightmap == NULL && bWarped == 0)
 		{
 			// May have one - let's check when we use this texture
-			const uint8_t *texbuf = Get8BitPixels(DefaultRenderStyle());
+			auto texbuf = Get8BitPixels(false);
 			const int white = ColorMatcher.Pick(255, 255, 255);
 
 			int size = GetWidth() * GetHeight();
@@ -1050,13 +1053,15 @@ void FTexture::SetSpriteAdjust()
 
 //===========================================================================
 // 
-// empty stubs to be overloaded by child classes.
+// the default just returns an empty texture.
 //
 //===========================================================================
 
-const uint8_t *FTexture::Get8BitPixels(FRenderStyle style)
+TArray<uint8_t> FTexture::Get8BitPixels(bool alphatex)
 {
-	return nullptr;
+	TArray<uint8_t> Pixels(Width * Height, true);
+	memset(Pixels.Data(), 0, Width * Height);
+	return Pixels;
 }
 
 //===========================================================================
@@ -1212,26 +1217,4 @@ void FTexCoordInfo::GetFromTexture(FTexture *tex, float x, float y)
 	mWidth = tex->GetWidth();
 }
 
-/////////////
-
-
-class TextureCache
-{
-	struct ItemCacheInfo
-	{
-		int palettedCount;			// counts use of final paletted textures
-		int palettedCountCompose;	// counts use of images needed for composition (can be freed after precaching)
-		int rgbaCount;				// counts use of final true color software textures
-		int rawCount;				// counts use of raw images needed for composition (can be freed after precaching)
-		int textureCount;			// counts use of hardware textures
-	};
-	TMap<uint64_t, TArray<uint8_t>> pixelCachePaletted;	// 8 bit column major for composition and software rendering
-	TMap<uint64_t, TArray<uint8_t>> pixelCacheRgba;		// 32 bit column major for software true color rendering
-	TMap<uint64_t, TArray<uint8_t>> pixelCacheRaw;		// 32 bit row major for composition
-	TMap<uint64_t, IHardwareTexture *> hwTextureCache;	// native system textures.
-	
-	TMap<uint64_t, ItemCacheInfo> cacheMarker;
-	
-	void PrecacheLevel();
-};
 

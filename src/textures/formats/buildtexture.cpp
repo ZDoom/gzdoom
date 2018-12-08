@@ -56,7 +56,7 @@ class FBuildTexture : public FWorldTexture
 {
 public:
 	FBuildTexture (const FString &pathprefix, int tilenum, const uint8_t *pixels, int translation, int width, int height, int left, int top);
-	uint8_t *MakeTexture(FRenderStyle style) override;
+	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override;
 	bool UseBasePalette() override { return false; }
 	FTextureFormat GetFormat() override { return TEX_RGB; }
@@ -76,7 +76,6 @@ protected:
 FBuildTexture::FBuildTexture(const FString &pathprefix, int tilenum, const uint8_t *pixels, int translation, int width, int height, int left, int top)
 : RawPixels (pixels), Translation(translation)
 {
-	PixelsAreStatic = 3;
 	Width = width;
 	Height = height;
 	_LeftOffset[1] = _LeftOffset[0] = left;
@@ -85,16 +84,16 @@ FBuildTexture::FBuildTexture(const FString &pathprefix, int tilenum, const uint8
 	UseType = ETextureType::Override;
 }
 
-uint8_t *FBuildTexture::MakeTexture(FRenderStyle style)
+TArray<uint8_t> FBuildTexture::Get8BitPixels(bool alphatex)
 {
-	auto Pixels = new uint8_t[Width * Height];
+	TArray<uint8_t> Pixels(Width * Height, true);
 	FRemapTable *Remap = translationtables[TRANSLATION_Standard][Translation];
 	for (int i = 0; i < Width*Height; i++)
 	{
 		auto c = RawPixels[i];
-		Pixels[i] = (style.Flags & STYLEF_RedIsAlpha) ? Remap->Palette[c].Luminance() : Remap->Remap[c];
+		Pixels[i] = alphatex ? Remap->Palette[c].Luminance() : Remap->Remap[c];
 	}
-	return (uint8_t*)Pixels;
+	return Pixels;
 }
 
 int FBuildTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)

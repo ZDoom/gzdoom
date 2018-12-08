@@ -48,7 +48,7 @@ class FFlatTexture : public FWorldTexture
 {
 public:
 	FFlatTexture (int lumpnum);
-	uint8_t *MakeTexture (FRenderStyle style) override;
+	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 };
 
 
@@ -101,16 +101,16 @@ FFlatTexture::FFlatTexture (int lumpnum)
 //
 //==========================================================================
 
-uint8_t *FFlatTexture::MakeTexture (FRenderStyle style)
+TArray<uint8_t> FFlatTexture::Get8BitPixels(bool alphatex)
 {
 	auto lump = Wads.OpenLumpReader (SourceLump);
-	auto Pixels = new uint8_t[Width*Height];
-	auto numread = lump.Read (Pixels, Width*Height);
+	TArray<uint8_t> Pixels(Width*Height, true);
+	auto numread = lump.Read (Pixels.Data(), Width*Height);
 	if (numread < Width*Height)
 	{
-		memset (Pixels + numread, 0xBB, Width*Height - numread);
+		memset (Pixels.Data() + numread, 0xBB, Width*Height - numread);
 	}
-	FTexture::FlipSquareBlockRemap(Pixels, Width, Height, GetRemap(style));
+	FTexture::FlipSquareBlockRemap(Pixels.Data(), Width, Height, GetRemap(alphatex));
 	return Pixels;
 }
 

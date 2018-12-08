@@ -91,13 +91,17 @@ void PolyRenderThread::PrepareTexture(FSoftwareTexture *texture, FRenderStyle st
 
 	std::unique_lock<std::mutex> lock(loadmutex);
 
-	texture->GetPixels(style);
 	const FSoftwareTextureSpan *spans;
-	texture->GetColumn(style, 0, &spans);
 	if (PolyRenderer::Instance()->RenderTarget->IsBgra())
 	{
 		texture->GetPixelsBgra();
 		texture->GetColumnBgra(0, &spans);
+	}
+	else
+	{
+		bool alpha = !!(style.Flags & STYLEF_RedIsAlpha);
+		texture->GetPixels(alpha);
+		texture->GetColumn(alpha, 0, &spans);
 	}
 }
 

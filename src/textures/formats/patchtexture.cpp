@@ -62,7 +62,7 @@ class FPatchTexture : public FWorldTexture
 	bool isalpha = false;
 public:
 	FPatchTexture (int lumpnum, patch_t *header, bool isalphatex);
-	uint8_t *MakeTexture (FRenderStyle style) override;
+	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override;
 	void DetectBadPatches();
 
@@ -167,7 +167,7 @@ FPatchTexture::FPatchTexture (int lumpnum, patch_t * header, bool isalphatex)
 //
 //==========================================================================
 
-uint8_t *FPatchTexture::MakeTexture (FRenderStyle style)
+TArray<uint8_t> FPatchTexture::Get8BitPixels(bool alphatex)
 {
 	uint8_t *remap, remaptable[256];
 	int numspans;
@@ -179,7 +179,7 @@ uint8_t *FPatchTexture::MakeTexture (FRenderStyle style)
 
 	maxcol = (const column_t *)((const uint8_t *)patch + Wads.LumpLength (SourceLump) - 3);
 
-	remap = GetRemap(style, isalpha);
+	remap = GetRemap(alphatex, isalpha);
 	// Special case for skies
 	if (bNoRemap0 && remap == GPalette.Remap)
 	{
@@ -190,11 +190,11 @@ uint8_t *FPatchTexture::MakeTexture (FRenderStyle style)
 
 	if (badflag)
 	{
-		auto Pixels = new uint8_t[Width * Height];
+		TArray<uint8_t> Pixels(Width * Height, true);
 		uint8_t *out;
 
 		// Draw the image to the buffer
-		for (x = 0, out = Pixels; x < Width; ++x)
+		for (x = 0, out = Pixels.Data(); x < Width; ++x)
 		{
 			const uint8_t *in = (const uint8_t *)patch + LittleLong(patch->columnofs[x]) + 3;
 
@@ -211,13 +211,13 @@ uint8_t *FPatchTexture::MakeTexture (FRenderStyle style)
 
 	numspans = Width;
 
-	auto Pixels = new uint8_t[numpix];
-	memset (Pixels, 0, numpix);
+	TArray<uint8_t> Pixels(numpix, true);
+	memset (Pixels.Data(), 0, numpix);
 
 	// Draw the image to the buffer
 	for (x = 0; x < Width; ++x)
 	{
-		uint8_t *outtop = Pixels + x*Height;
+		uint8_t *outtop = Pixels.Data() + x*Height;
 		const column_t *column = (const column_t *)((const uint8_t *)patch + LittleLong(patch->columnofs[x]));
 		int top = -1;
 

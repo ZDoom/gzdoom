@@ -365,20 +365,6 @@ FTexture *FTextureManager::FindTexture(const char *texname, ETextureType usetype
 
 //==========================================================================
 //
-// FTextureManager :: UnloadAll
-//
-//==========================================================================
-
-void FTextureManager::UnloadAll ()
-{
-	for (unsigned int i = 0; i < Textures.Size(); ++i)
-	{
-		Textures[i].Texture->Unload ();
-	}
-}
-
-//==========================================================================
-//
 // FTextureManager :: AddTexture
 //
 //==========================================================================

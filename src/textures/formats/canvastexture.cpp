@@ -51,12 +51,9 @@ FCanvasTexture::FCanvasTexture (const char *name, int width, int height)
 	bPixelsAllocated = false;
 }
 
-FCanvasTexture::~FCanvasTexture ()
-{
-	Unload ();
-}
 
-const uint8_t *FCanvasTexture::Get8BitPixels (FRenderStyle style)
+#if 0
+const uint8_t *FCanvasTexture::Get8BitPixels(bool alphatex)
 {
 	bNeedsUpdate = true;
 	if (Canvas == NULL)
@@ -66,7 +63,6 @@ const uint8_t *FCanvasTexture::Get8BitPixels (FRenderStyle style)
 	return Pixels;
 }
 
-#if 0
 const uint32_t *FCanvasTexture::GetPixelsBgra()
 {
 	bNeedsUpdate = true;
@@ -76,7 +72,6 @@ const uint32_t *FCanvasTexture::GetPixelsBgra()
 	}
 	return PixelsBgra;
 }
-#endif
 
 void FCanvasTexture::MakeTexture (FRenderStyle)	// This ignores the render style because making it work as alpha texture is impractical.
 {
@@ -97,6 +92,7 @@ void FCanvasTexture::MakeTexture (FRenderStyle)	// This ignores the render style
 	memset (Pixels, 0, Width*Height/2);
 	memset (Pixels+Width*Height/2, 255, Width*Height/2);
 }
+#endif
 
 void FCanvasTexture::MakeTextureBgra()
 {
@@ -118,6 +114,7 @@ void FCanvasTexture::MakeTextureBgra()
 	memset(PixelsBgra + Width*Height / 2, 255, Width*Height / 2 * 4);
 }
 
+#if 0
 void FCanvasTexture::Unload ()
 {
 	if (bPixelsAllocated)
@@ -148,6 +145,7 @@ void FCanvasTexture::Unload ()
 
 	FTexture::Unload();
 }
+#endif
 
 bool FCanvasTexture::CheckModified (FRenderStyle)
 {

@@ -48,10 +48,9 @@
 
 class FEmptyTexture : public FWorldTexture
 {
-	uint8_t Pixel = 0;
 public:
 	FEmptyTexture (int lumpnum);
-	uint8_t *MakeTexture(FRenderStyle style) override;
+	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 };
 
 //==========================================================================
@@ -82,7 +81,6 @@ FEmptyTexture::FEmptyTexture (int lumpnum)
 {
 	bMasked = true;
 	Width = Height = 1;
-	PixelsAreStatic = 3;
 }
 
 //==========================================================================
@@ -91,8 +89,10 @@ FEmptyTexture::FEmptyTexture (int lumpnum)
 //
 //==========================================================================
 
-uint8_t *FEmptyTexture::MakeTexture(FRenderStyle style)
+TArray<uint8_t> FEmptyTexture::Get8BitPixels(bool alphatex)
 {
-	return &Pixel;
+	TArray<uint8_t> Pixel(1, true);
+	Pixel[0] = 0;
+	return Pixel;
 }
 

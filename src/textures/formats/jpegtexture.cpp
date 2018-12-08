@@ -186,7 +186,7 @@ public:
 	FTextureFormat GetFormat () override;
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override;
 	bool UseBasePalette() override;
-	uint8_t *MakeTexture (FRenderStyle style) override;
+	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 };
 
 //==========================================================================
@@ -272,17 +272,16 @@ FTextureFormat FJPEGTexture::GetFormat()
 //
 //==========================================================================
 
-uint8_t *FJPEGTexture::MakeTexture (FRenderStyle style)
+TArray<uint8_t> FJPEGTexture::Get8BitPixels(bool doalpha)
 {
 	auto lump = Wads.OpenLumpReader (SourceLump);
 	JSAMPLE *buff = NULL;
-	bool doalpha = !!(style.Flags & STYLEF_RedIsAlpha);
 
 	jpeg_decompress_struct cinfo;
 	jpeg_error_mgr jerr;
 
-	auto Pixels = new uint8_t[Width * Height];
-	memset (Pixels, 0xBA, Width * Height);
+	TArray<uint8_t> Pixels(Width * Height, true);
+	memset (Pixels.Data(), 0xBA, Width * Height);
 
 	cinfo.err = jpeg_std_error(&jerr);
 	cinfo.err->output_message = JPEG_OutputMessage;
@@ -311,7 +310,7 @@ uint8_t *FJPEGTexture::MakeTexture (FRenderStyle style)
 			{
 				int num_scanlines = jpeg_read_scanlines(&cinfo, &buff, 1);
 				uint8_t *in = buff;
-				uint8_t *out = Pixels + y;
+				uint8_t *out = Pixels.Data() + y;
 				switch (cinfo.out_color_space)
 				{
 				case JCS_RGB:
@@ -325,7 +324,7 @@ uint8_t *FJPEGTexture::MakeTexture (FRenderStyle style)
 
 				case JCS_GRAYSCALE:
 				{
-					auto remap = GetRemap(style, true);
+					auto remap = GetRemap(doalpha, true);
 					for (int x = Width; x > 0; --x)
 					{
 						*out = remap[in[0]];

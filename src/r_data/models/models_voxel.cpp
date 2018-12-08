@@ -53,7 +53,7 @@ public:
 
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override;
 	bool UseBasePalette() override { return false; }
-	uint8_t *MakeTexture(FRenderStyle style) override;
+	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 
 protected:
 	FVoxel *SourceVox;
@@ -79,10 +79,10 @@ FVoxelTexture::FVoxelTexture(FVoxel *vox)
 //
 //===========================================================================
 
-uint8_t *FVoxelTexture::MakeTexture (FRenderStyle style)
+TArray<uint8_t> FVoxelTexture::Get8BitPixels(bool alphatex)
 {
 	// GetPixels gets called when a translated palette is used so we still need to implement it here.
-	auto Pixels = new uint8_t[256];
+	TArray<uint8_t> Pixels(256, true);
 	uint8_t *pp = SourceVox->Palette;
 
 	if(pp != NULL)
@@ -94,7 +94,7 @@ uint8_t *FVoxelTexture::MakeTexture (FRenderStyle style)
 			pe.g = (pp[1] << 2) | (pp[1] >> 4);
 			pe.b = (pp[2] << 2) | (pp[2] >> 4);
 			// Alphatexture handling is just for completeness, but rather unlikely to be used ever.
-			Pixels[i] = (style.Flags & STYLEF_RedIsAlpha)? pe.r : ColorMatcher.Pick(pe);
+			Pixels[i] = alphatex? pe.r : ColorMatcher.Pick(pe);
 		}
 	}
 	else 

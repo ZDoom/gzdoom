@@ -48,21 +48,10 @@ FSkyBox::FSkyBox(const char *name)
 //
 //-----------------------------------------------------------------------------
 
-FSkyBox::~FSkyBox()
+TArray<uint8_t> FSkyBox::Get8BitPixels(bool alphatex)
 {
-	// The faces are only referenced but not owned so don't delete them.
-}
-
-//-----------------------------------------------------------------------------
-//
-//
-//
-//-----------------------------------------------------------------------------
-
-const uint8_t *FSkyBox::Get8BitPixels (FRenderStyle style)
-{
-	if (faces[0]) return faces[0]->Get8BitPixels(style);
-	return NULL;
+	if (faces[0]) return faces[0]->Get8BitPixels(alphatex);
+	return FTexture::Get8BitPixels(alphatex);
 }
 
 //-----------------------------------------------------------------------------
@@ -87,14 +76,4 @@ bool FSkyBox::UseBasePalette()
 { 
 	return false; // not really but here it's not important.
 }	
-
-//-----------------------------------------------------------------------------
-//
-//
-//
-//-----------------------------------------------------------------------------
-
-void FSkyBox::Unload () 
-{
-}
 

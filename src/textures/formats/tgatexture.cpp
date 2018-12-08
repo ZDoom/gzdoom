@@ -85,7 +85,7 @@ public:
 
 protected:
 	void ReadCompressed(FileReader &lump, uint8_t * buffer, int bytesperpixel);
-	uint8_t *MakeTexture (FRenderStyle style) override;
+	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 };
 
 //==========================================================================
@@ -191,7 +191,7 @@ void FTGATexture::ReadCompressed(FileReader &lump, uint8_t * buffer, int bytespe
 //
 //==========================================================================
 
-uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
+TArray<uint8_t> FTGATexture::Get8BitPixels(bool alphatex)
 {
 	uint8_t PaletteMap[256];
 	auto lump = Wads.OpenLumpReader (SourceLump);
@@ -199,9 +199,8 @@ uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
 	uint16_t w;
 	uint8_t r,g,b,a;
 	uint8_t * buffer;
-	bool alphatex = !!(style.Flags & STYLEF_RedIsAlpha);
 
-	auto Pixels = new uint8_t[Width*Height];
+	TArray<uint8_t> Pixels(Width*Height, true);
 	lump.Read(&hdr, sizeof(hdr));
 	lump.Seek(hdr.id_len, FileReader::SeekCur);
 	
@@ -356,7 +355,7 @@ uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
 	
 	case 3:	// Grayscale
 	{
-		auto remap = GetRemap(style, true);
+		auto remap = GetRemap(alphatex, true);
 		switch (hdr.bpp)
 		{
 		case 8:

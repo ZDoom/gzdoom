@@ -163,7 +163,7 @@ public:
 	FDDSTexture (FileReader &lump, int lumpnum, void *surfdesc);
 
 	FTextureFormat GetFormat () override;
-	uint8_t *MakeTexture(FRenderStyle style) override;
+	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 
 protected:
 	uint32_t Format;
@@ -398,30 +398,30 @@ FTextureFormat FDDSTexture::GetFormat()
 //
 //==========================================================================
 
-uint8_t *FDDSTexture::MakeTexture (FRenderStyle style)
+TArray<uint8_t> FDDSTexture::Get8BitPixels(bool alphatex)
 {
 	auto lump = Wads.OpenLumpReader (SourceLump);
 
-	auto Pixels = new uint8_t[Width*Height];
+	TArray<uint8_t> Pixels(Width*Height, true);
 
 	lump.Seek (sizeof(DDSURFACEDESC2) + 4, FileReader::SeekSet);
 
-	int pmode = (style.Flags & STYLEF_RedIsAlpha) ? PIX_Alphatex : PIX_Palette;
+	int pmode = alphatex ? PIX_Alphatex : PIX_Palette;
 	if (Format >= 1 && Format <= 4)		// RGB: Format is # of bytes per pixel
 	{
-		ReadRGB (lump, Pixels, pmode);
+		ReadRGB (lump, Pixels.Data(), pmode);
 	}
 	else if (Format == ID_DXT1)
 	{
-		DecompressDXT1 (lump, Pixels, pmode);
+		DecompressDXT1 (lump, Pixels.Data(), pmode);
 	}
 	else if (Format == ID_DXT3 || Format == ID_DXT2)
 	{
-		DecompressDXT3 (lump, Format == ID_DXT2, Pixels, pmode);
+		DecompressDXT3 (lump, Format == ID_DXT2, Pixels.Data(), pmode);
 	}
 	else if (Format == ID_DXT5 || Format == ID_DXT4)
 	{
-		DecompressDXT5 (lump, Format == ID_DXT4, Pixels, pmode);
+		DecompressDXT5 (lump, Format == ID_DXT4, Pixels.Data(), pmode);
 	}
 	return Pixels;
 }

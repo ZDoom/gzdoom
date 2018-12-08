@@ -195,10 +195,10 @@ protected:
 	bool bRedirect;
 	bool bTranslucentPatches;
 
-	uint8_t *MakeTexture (FRenderStyle style);
+	TArray<uint8_t> MakeTexture (bool alphatex);
 
 	// The getters must optionally redirect if it's a simple one-patch texture.
-	const uint8_t *Get8BitPixels(FRenderStyle style) override { return bRedirect ? Parts->Texture->Get8BitPixels(style) : FWorldTexture::Get8BitPixels(style); }
+	TArray<uint8_t> Get8BitPixels(bool alphatex) override { return bRedirect ? Parts->Texture->Get8BitPixels(alphatex) : MakeTexture(alphatex); }
 
 
 private:
@@ -305,7 +305,6 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchl
 
 FMultiPatchTexture::~FMultiPatchTexture ()
 {
-	Unload ();
 	if (Parts != NULL)
 	{
 		for(int i=0; i<NumParts;i++)
@@ -397,16 +396,16 @@ uint8_t *GetBlendMap(PalEntry blend, uint8_t *blendwork)
 //
 //==========================================================================
 
-uint8_t *FMultiPatchTexture::MakeTexture (FRenderStyle style)
+TArray<uint8_t> FMultiPatchTexture::MakeTexture (bool alphatex)
 {
 	int numpix = Width * Height;
 	uint8_t blendwork[256];
 	bool buildrgb = bComplex;
 
-	auto Pixels = new uint8_t[numpix];
-	memset (Pixels, 0, numpix);
+	TArray<uint8_t> Pixels(numpix, true);
+	memset (Pixels.Data(), 0, numpix);
 
-	if (style.Flags & STYLEF_RedIsAlpha)
+	if (alphatex)
 	{
 		buildrgb = !UseBasePalette();
 	}
@@ -434,7 +433,7 @@ uint8_t *FMultiPatchTexture::MakeTexture (FRenderStyle style)
 				{
 					trans = GetBlendMap(Parts[i].Blend, blendwork);
 				}
-				Parts[i].Texture->CopyToBlock (Pixels, Width, Height, Parts[i].OriginX, Parts[i].OriginY, Parts[i].Rotate, trans, style);
+				Parts[i].Texture->CopyToBlock (Pixels.Data(), Width, Height, Parts[i].OriginX, Parts[i].OriginY, Parts[i].Rotate, trans, alphatex);
 			}
 		}
 	}
@@ -448,12 +447,12 @@ uint8_t *FMultiPatchTexture::MakeTexture (FRenderStyle style)
 		for(int y = 0; y < Height; y++)
 		{
 			uint8_t *in = buffer + Width * y * 4;
-			uint8_t *out = Pixels + y;
+			uint8_t *out = Pixels.Data() + y;
 			for (int x = 0; x < Width; x++)
 			{
 				if (*out == 0 && in[3] != 0)
 				{
-					*out = RGBToPalette(style, in[2], in[1], in[0]);
+					*out = RGBToPalette(alphatex, in[2], in[1], in[0]);
 				}
 				out += Height;
 				in += 4;

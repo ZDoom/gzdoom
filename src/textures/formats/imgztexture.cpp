@@ -66,7 +66,7 @@ class FIMGZTexture : public FWorldTexture
 
 public:
 	FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int16_t t, bool isalpha);
-	uint8_t *MakeTexture (FRenderStyle style) override;
+	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override;
 
 	bool UseBasePalette() override { return !isalpha; }
@@ -121,7 +121,7 @@ FIMGZTexture::FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int1
 //
 //==========================================================================
 
-uint8_t *FIMGZTexture::MakeTexture (FRenderStyle style)
+TArray<uint8_t> FIMGZTexture::Get8BitPixels(bool alphatex)
 {
 	FMemLump lump = Wads.ReadLump (SourceLump);
 	const ImageHeader *imgz = (const ImageHeader *)lump.GetMem();
@@ -131,10 +131,10 @@ uint8_t *FIMGZTexture::MakeTexture (FRenderStyle style)
 	int dest_adv = Height;
 	int dest_rew = Width * Height - 1;
 
-	auto Pixels = new uint8_t[Width*Height];
-	dest_p = Pixels;
+	TArray<uint8_t> Pixels(Width*Height, true);
+	dest_p = Pixels.Data();
 
-	const uint8_t *remap = GetRemap(style, isalpha);
+	const uint8_t *remap = GetRemap(alphatex, isalpha);
 
 	// Convert the source image from row-major to column-major format and remap it
 	if (!imgz->Compression)

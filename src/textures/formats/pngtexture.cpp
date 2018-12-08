@@ -55,7 +55,7 @@ public:
 	FTextureFormat GetFormat () override;
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override;
 	bool UseBasePalette() override;
-	uint8_t *MakeTexture(FRenderStyle style) override;
+	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 
 protected:
 	void ReadAlphaRemap(FileReader *lump, uint8_t *alpharemap);
@@ -389,11 +389,10 @@ void FPNGTexture::ReadAlphaRemap(FileReader *lump, uint8_t *alpharemap)
 //
 //==========================================================================
 
-uint8_t *FPNGTexture::MakeTexture (FRenderStyle style)
+TArray<uint8_t> FPNGTexture::Get8BitPixels(bool alphatex)
 {
 	FileReader *lump;
 	FileReader lfr;
-	bool alphatex = !!(style.Flags & STYLEF_RedIsAlpha);
 
 	if (SourceLump >= 0)
 	{
@@ -405,10 +404,10 @@ uint8_t *FPNGTexture::MakeTexture (FRenderStyle style)
 		lump = &fr;
 	}
 
-	auto Pixels = new uint8_t[Width*Height];
+	TArray<uint8_t> Pixels(Width*Height, true);
 	if (StartOfIDAT == 0)
 	{
-		memset (Pixels, 0x99, Width*Height);
+		memset (Pixels.Data(), 0x99, Width*Height);
 	}
 	else
 	{
@@ -419,45 +418,43 @@ uint8_t *FPNGTexture::MakeTexture (FRenderStyle style)
 
 		if (ColorType == 0 || ColorType == 3)	/* Grayscale and paletted */
 		{
-			M_ReadIDAT (*lump, Pixels, Width, Height, Width, BitDepth, ColorType, Interlace, BigLong((unsigned int)len));
+			M_ReadIDAT (*lump, Pixels.Data(), Width, Height, Width, BitDepth, ColorType, Interlace, BigLong((unsigned int)len));
 
 			if (Width == Height)
 			{
 				if (!alphatex)
 				{
-					FTexture::FlipSquareBlockRemap (Pixels, Width, Height, PaletteMap);
+					FTexture::FlipSquareBlockRemap (Pixels.Data(), Width, Height, PaletteMap);
 				}
 				else if (ColorType == 0)
 				{
-					FTexture::FlipSquareBlock (Pixels, Width, Height);
+					FTexture::FlipSquareBlock (Pixels.Data(), Width, Height);
 				}
 				else
 				{
 					uint8_t alpharemap[256];
 					ReadAlphaRemap(lump, alpharemap);
-					FTexture::FlipSquareBlockRemap(Pixels, Width, Height, alpharemap);
+					FTexture::FlipSquareBlockRemap(Pixels.Data(), Width, Height, alpharemap);
 				}
 			}
 			else
 			{
-				uint8_t *newpix = new uint8_t[Width*Height];
+				TArray<uint8_t> newpix(Width*Height, true);
 				if (!alphatex)
 				{
-					FTexture::FlipNonSquareBlockRemap (newpix, Pixels, Width, Height, Width, PaletteMap);
+					FTexture::FlipNonSquareBlockRemap (newpix.Data(), Pixels.Data(), Width, Height, Width, PaletteMap);
 				}
 				else if (ColorType == 0)
 				{
-					FTexture::FlipNonSquareBlock (newpix, Pixels, Width, Height, Width);
+					FTexture::FlipNonSquareBlock (newpix.Data(), Pixels.Data(), Width, Height, Width);
 				}
 				else
 				{
 					uint8_t alpharemap[256];
 					ReadAlphaRemap(lump, alpharemap);
-					FTexture::FlipNonSquareBlockRemap(newpix, Pixels, Width, Height, Width, alpharemap);
+					FTexture::FlipNonSquareBlockRemap(newpix.Data(), Pixels.Data(), Width, Height, Width, alpharemap);
 				}
-				uint8_t *oldpix = Pixels;
-				Pixels = newpix;
-				delete[] oldpix;
+				return newpix;
 			}
 		}
 		else		/* RGB and/or Alpha present */
@@ -469,7 +466,7 @@ uint8_t *FPNGTexture::MakeTexture (FRenderStyle style)
 
 			M_ReadIDAT (*lump, tempix, Width, Height, Width*bytesPerPixel, BitDepth, ColorType, Interlace, BigLong((unsigned int)len));
 			in = tempix;
-			out = Pixels;
+			out = Pixels.Data();
 
 			// Convert from source format to paletted, column-major.
 			// Formats with alpha maps are reduced to only 1 bit of alpha.

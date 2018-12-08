@@ -39,7 +39,16 @@
 #include "m_alloc.h"
 
 
-
+FSoftwareTexture *FTexture::GetSoftwareTexture()
+{
+	if (!SoftwareTexture)
+	{
+		if (bWarped) SoftwareTexture = new FWarpTexture(this, bWarped);
+		// else if (GetRedirect() != this) ... must be decided later. The current data structures make it hard to do this without creating a mess.
+		else SoftwareTexture = new FSoftwareTexture(this);
+	}
+	return SoftwareTexture;
+}
 
 //==========================================================================
 //
@@ -74,32 +83,31 @@ void FSoftwareTexture::CalcBitSize ()
 	HeightBits = i;
 }
 
-
 //==========================================================================
 //
 // 
 //
 //==========================================================================
 
-const uint32_t *FSoftwareTexture::GetColumnBgra(unsigned int column, const FSoftwareTextureSpan **spans_out)
+const uint8_t *FSoftwareTexture::GetPixels(int style)
 {
-	const uint32_t *pixels = GetPixelsBgra();
-	if (pixels == nullptr) return nullptr;
-
-	column %= GetWidth();
-
-	if (spans_out != nullptr)
-		GetColumn(DefaultRenderStyle(), column, spans_out);	// This isn't the right way to create the spans.
-	return pixels + column * GetHeight();
+	if (Pixels.Size() == 0 || CheckModified(style))
+	{
+		Pixels = mSource->Get8BitPixels(style);
+	}
+	return Pixels.Data();
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 const uint32_t *FSoftwareTexture::GetPixelsBgra()
 {
-	if (PixelsBgra.Size() == 0 || CheckModified(DefaultRenderStyle()))
+	if (PixelsBgra.Size() == 0 || CheckModified(2))
 	{
-		if (!GetColumn(DefaultRenderStyle(), 0, nullptr))
-			return nullptr;
-
 		FBitmap bitmap;
 		bitmap.Create(GetWidth(), GetHeight());
 		mTexture->CopyTrueColorPixels(&bitmap, 0, 0);
@@ -110,11 +118,84 @@ const uint32_t *FSoftwareTexture::GetPixelsBgra()
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+const uint8_t *FSoftwareTexture::GetColumn(int index, unsigned int column, const FSoftwareTextureSpan **spans_out)
+{
+	auto Pixeldata = GetPixels(index);
+	if ((unsigned)column >= (unsigned)GetWidth())
+	{
+		if (WidthMask + 1 == GetWidth())
+		{
+			column &= WidthMask;
+		}
+		else
+		{
+			column %= GetWidth();
+		}
+	}
+	if (spans_out != nullptr)
+	{
+		if (Spandata[index] == nullptr)
+		{
+			Spandata[index] = CreateSpans(Pixeldata);
+		}
+		*spans_out = Spandata[index][column];
+	}
+	return Pixeldata + column * GetHeight();
+}
+
+//==========================================================================
+//
 // 
 //
 //==========================================================================
 
-FSoftwareTextureSpan **FSoftwareTexture::CreateSpans (const uint8_t *pixels)
+const uint32_t *FSoftwareTexture::GetColumnBgra(unsigned int column, const FSoftwareTextureSpan **spans_out)
+{
+	auto Pixeldata = GetPixelsBgra();
+	if ((unsigned)column >= (unsigned)GetWidth())
+	{
+		if (WidthMask + 1 == GetWidth())
+		{
+			column &= WidthMask;
+		}
+		else
+		{
+			column %= GetWidth();
+		}
+	}
+	if (spans_out != nullptr)
+	{
+		if (Spandata[2] == nullptr)
+		{
+			Spandata[2] = CreateSpans(Pixeldata);
+		}
+		*spans_out = Spandata[2][column];
+	}
+	return Pixeldata + column * GetHeight();
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+static bool isTranslucent(uint8_t val)
+{
+	return val == 0;
+}
+
+static bool isTranslucent(uint32_t val)
+{
+	return (val & 0xff000000) == 0;
+}
+
+template<class T>
+FSoftwareTextureSpan **FSoftwareTexture::CreateSpans (const T *pixels)
 {
 	FSoftwareTextureSpan **spans, *span;
 
@@ -136,7 +217,7 @@ FSoftwareTextureSpan **FSoftwareTexture::CreateSpans (const uint8_t *pixels)
 		int numcols = GetWidth();
 		int numrows = GetHeight();
 		int numspans = numcols;	// One span to terminate each column
-		const uint8_t *data_p;
+		const T *data_p;
 		bool newspan;
 		int x, y;
 
@@ -149,7 +230,7 @@ FSoftwareTextureSpan **FSoftwareTexture::CreateSpans (const uint8_t *pixels)
 			for (y = numrows; y > 0; --y)
 			{
 
-				if (*data_p++ == 0)
+				if (isTranslucent(*data_p++))
 				{
 					if (!newspan)
 					{
@@ -174,7 +255,7 @@ FSoftwareTextureSpan **FSoftwareTexture::CreateSpans (const uint8_t *pixels)
 			spans[x] = span;
 			for (y = 0; y < numrows; ++y)
 			{
-				if (*data_p++ == 0)
+				if (isTranslucent(*data_p++))
 				{
 					if (!newspan)
 					{
@@ -441,41 +522,9 @@ void FSoftwareTexture::GenerateBgraMipmapsFast()
 //
 //==========================================================================
 
-const uint8_t *FSoftwareTexture::GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out)
-{
-	int index = !!(style.Flags & STYLEF_RedIsAlpha);
-	auto Pixeldata = GetPixels(style);
-	if ((unsigned)column >= (unsigned)GetWidth())
-	{
-		if (WidthMask + 1 == GetWidth())
-		{
-			column &= WidthMask;
-		}
-		else
-		{
-			column %= GetWidth();
-		}
-	}
-	if (spans_out != nullptr)
-	{
-		if (Spandata[index] == nullptr)
-		{
-			Spandata[index] = CreateSpans (Pixeldata);
-		}
-		*spans_out = Spandata[index][column];
-	}
-	return Pixeldata + column*GetHeight();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 void FSoftwareTexture::FreeAllSpans()
 {
-	for(int i = 0; i < 2; i++)
+	for(int i = 0; i < 3; i++)
 	{
 		if (Spandata[i] != nullptr)
 		{

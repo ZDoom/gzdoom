@@ -94,7 +94,7 @@ protected:
 	void ReadPCX8bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr);
 	void ReadPCX24bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr, int planes);
 
-	uint8_t *MakeTexture (FRenderStyle style) override;
+	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 };
 
 
@@ -370,19 +370,18 @@ void FPCXTexture::ReadPCX24bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr
 //
 //==========================================================================
 
-uint8_t *FPCXTexture::MakeTexture(FRenderStyle style)
+TArray<uint8_t> FPCXTexture::Get8BitPixels(bool alphatex)
 {
 	uint8_t PaletteMap[256];
 	PCXHeader header;
 	int bitcount;
-	bool alphatex = !!(style.Flags & STYLEF_RedIsAlpha);
 
 	auto lump = Wads.OpenLumpReader(SourceLump);
 
 	lump.Read(&header, sizeof(header));
 
 	bitcount = header.bitsPerPixel * header.numColorPlanes;
-	auto Pixels = new uint8_t[Width*Height];
+	TArray<uint8_t> Pixels(Width*Height, true);
 
 	if (bitcount < 24)
 	{
@@ -394,7 +393,7 @@ uint8_t *FPCXTexture::MakeTexture(FRenderStyle style)
 			case 1:
 				PaletteMap[0] = alphatex? 0 : GrayMap[0];
 				PaletteMap[1] = alphatex? 255 : GrayMap[255];
-				ReadPCX1bit (Pixels, lump, &header);
+				ReadPCX1bit (Pixels.Data(), lump, &header);
 				break;
 
 			case 4:
@@ -402,7 +401,7 @@ uint8_t *FPCXTexture::MakeTexture(FRenderStyle style)
 				{
 					PaletteMap[i] = RGBToPalettePrecise(alphatex, header.palette[i * 3], header.palette[i * 3 + 1], header.palette[i * 3 + 2]);
 				}
-				ReadPCX4bits (Pixels, lump, &header);
+				ReadPCX4bits (Pixels.Data(), lump, &header);
 				break;
 			}
 		}
@@ -420,19 +419,17 @@ uint8_t *FPCXTexture::MakeTexture(FRenderStyle style)
 				PaletteMap[i] = RGBToPalettePrecise(alphatex, r, g, b);
 			}
 			lump.Seek(sizeof(header), FileReader::SeekSet);
-			ReadPCX8bits (Pixels, lump, &header);
+			ReadPCX8bits (Pixels.Data(), lump, &header);
 		}
 		if (Width == Height)
 		{
-			FlipSquareBlockRemap(Pixels, Width, Height, PaletteMap);
+			FlipSquareBlockRemap(Pixels.Data(), Width, Height, PaletteMap);
 		}
 		else
 		{
-			uint8_t *newpix = new uint8_t[Width*Height];
-			FlipNonSquareBlockRemap (newpix, Pixels, Width, Height, Width, PaletteMap);
-			uint8_t *oldpix = Pixels;
-			Pixels = newpix;
-			delete[] oldpix;
+			TArray<uint8_t> newpix(Width*Height, true);
+			FlipNonSquareBlockRemap (newpix.Data(), Pixels.Data(), Width, Height, Width, PaletteMap);
+			return newpix;
 		}
 	}
 	else

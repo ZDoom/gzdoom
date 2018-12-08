@@ -45,7 +45,6 @@ class FBrightmapTexture : public FWorldTexture
 public:
 	FBrightmapTexture (FTexture *source);
 
-	uint8_t *MakeTexture(FRenderStyle style) override;
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override;
 	bool UseBasePalette() override { return false; }
 
@@ -72,13 +71,6 @@ FBrightmapTexture::FBrightmapTexture (FTexture *source)
 	bMasked = false;
 	id.SetInvalid();
 	SourceLump = -1;
-}
-
-uint8_t *FBrightmapTexture::MakeTexture(FRenderStyle style)
-{
-	// This function is only necessary to satisfy the parent class's interface.
-	// This will never be called.
-	return nullptr;
 }
 
 int FBrightmapTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)

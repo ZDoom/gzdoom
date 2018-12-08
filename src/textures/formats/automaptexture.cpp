@@ -50,7 +50,7 @@ class FAutomapTexture : public FWorldTexture
 {
 public:
 	FAutomapTexture(int lumpnum);
-	uint8_t *MakeTexture (FRenderStyle style);
+	TArray<uint8_t> Get8BitPixels(bool alphatex);
 };
 
 
@@ -88,15 +88,15 @@ FAutomapTexture::FAutomapTexture (int lumpnum)
 //
 //==========================================================================
 
-uint8_t *FAutomapTexture::MakeTexture (FRenderStyle style)
+TArray<uint8_t> FAutomapTexture::Get8BitPixels(bool alphatex)
 {
 	int x, y;
 	FMemLump data = Wads.ReadLump (SourceLump);
 	const uint8_t *indata = (const uint8_t *)data.GetMem();
 
-	auto Pixels = new uint8_t[Width * Height];
+	TArray<uint8_t> Pixels(Width * Height, true);
 
-	const uint8_t *remap = GetRemap(style);
+	const uint8_t *remap = GetRemap(alphatex);
 	for (x = 0; x < Width; ++x)
 	{
 		for (y = 0; y < Height; ++y)

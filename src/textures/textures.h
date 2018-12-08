@@ -298,11 +298,9 @@ public:
 	bool isFullbright() const { return bFullbright; }
 	void CreateDefaultBrightmap();
 	bool FindHoles(const unsigned char * buffer, int w, int h);
-	uint64_t CacheID()
-	{
-		// Just a temporary placeholder. This needs to be done differently as things progress.
-		return (uint64_t)(intptr_t)GetRedirect();
-	}
+
+	// Returns the whole texture, stored in column-major order
+	virtual TArray<uint8_t> Get8BitPixels(bool alphatex);
 
 public:
 	static void FlipSquareBlock (uint8_t *block, int x, int y);
@@ -386,9 +384,6 @@ protected:
 
 
 
-	// Returns the whole texture, stored in column-major order
-	virtual const uint8_t *Get8BitPixels(FRenderStyle style);
-
 	// Returns true if GetPixelsBgra includes mipmaps
 	virtual bool Mipmapped() { return true; }
 
@@ -396,8 +391,6 @@ protected:
 	virtual int CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, PalEntry *remap, FCopyInfo *inf = NULL);
 	virtual bool UseBasePalette();
 	virtual FTexture *GetRedirect();
-
-	virtual void Unload ();
 
 	// Returns the native pixel format for this image
 	virtual FTextureFormat GetFormat();
@@ -446,7 +439,7 @@ protected:
 
 	virtual void SetFrontSkyLayer();
 
-	void CopyToBlock (uint8_t *dest, int dwidth, int dheight, int x, int y, int rotate, const uint8_t *translation, FRenderStyle style);
+	void CopyToBlock (uint8_t *dest, int dwidth, int dheight, int x, int y, int rotate, const uint8_t *translation, bool style);
 
 	static void InitGrayMap();
 
@@ -467,9 +460,9 @@ protected:
 	uint16_t Width, Height;
 	int16_t _LeftOffset[2], _TopOffset[2];
 	static uint8_t GrayMap[256];
-	uint8_t *GetRemap(FRenderStyle style, bool srcisgrayscale = false)
+	uint8_t *GetRemap(bool wantluminance, bool srcisgrayscale = false)
 	{
-		if (style.Flags & STYLEF_RedIsAlpha)
+		if (wantluminance)
 		{
 			return translationtables[TRANSLATION_Standard][srcisgrayscale ? STD_Gray : STD_Grayscale]->Remap;
 		}
@@ -651,8 +644,6 @@ public:
 	// This function can be used for such things as warping textures.
 	void ReplaceTexture (FTextureID picnum, FTexture *newtexture, bool free);
 
-	void UnloadAll ();
-
 	int NumTextures () const { return (int)Textures.Size(); }
 
 	void UpdateAnimations (uint64_t mstime);
@@ -739,15 +730,7 @@ public:
 class FWorldTexture : public FTexture
 {
 protected:
-	uint8_t *Pixeldata[2] = { nullptr, nullptr };
-	uint8_t PixelsAreStatic = 0;	// can be set by subclasses which provide static pixel buffers.
-
 	FWorldTexture(const char *name = nullptr, int lumpnum = -1);
-	~FWorldTexture();
-
-	void Unload() override;
-	const uint8_t *Get8BitPixels(FRenderStyle style) override;
-	virtual uint8_t *MakeTexture(FRenderStyle style) = 0;
 };
 
 // A texture that doesn't really exist
@@ -767,20 +750,17 @@ class FCanvasTexture : public FTexture
 {
 public:
 	FCanvasTexture (const char *name, int width, int height);
-	~FCanvasTexture ();
 
 	//const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out);
 	//const uint32_t *GetPixelsBgra() override;
 
-	const uint8_t *Get8BitPixels (FRenderStyle style);
-	void Unload ();
+	//const uint8_t *Get8BitPixels(bool alphatex);
 	bool CheckModified (FRenderStyle) /*override*/;
 	void NeedUpdate() { bNeedsUpdate=true; }
 	void SetUpdated() { bNeedsUpdate = false; bDidUpdate = true; bFirstUpdate = false; }
 	DCanvas *GetCanvas() { return Canvas; }
 	DCanvas *GetCanvasBgra() { return CanvasBgra; }
 	bool Mipmapped() override { return false; }
-	void MakeTexture (FRenderStyle style);
 	void MakeTextureBgra ();
 
 protected:
@@ -836,6 +816,7 @@ struct FTexCoordInfo
 	float TextureAdjustWidth() const;
 	void GetFromTexture(FTexture *tex, float x, float y);
 };
+
 
 
 #endif

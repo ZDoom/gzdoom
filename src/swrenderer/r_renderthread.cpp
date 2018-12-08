@@ -106,13 +106,17 @@ namespace swrenderer
 
 		std::unique_lock<std::mutex> lock(loadmutex);
 
-		texture->GetPixels(style);
 		const FSoftwareTextureSpan *spans;
-		texture->GetColumn(style, 0, &spans);
 		if (Viewport->RenderTarget->IsBgra())
 		{
 			texture->GetPixelsBgra();
 			texture->GetColumnBgra(0, &spans);
+		}
+		else
+		{
+			bool alpha = !!(style.Flags & STYLEF_RedIsAlpha);
+			texture->GetPixels(alpha);
+			texture->GetColumn(alpha, 0, &spans);
 		}
 	}
 

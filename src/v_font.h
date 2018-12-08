@@ -120,6 +120,7 @@ protected:
 	int GlobalKerning;
 	char Cursor;
 	bool noTranslate;
+	bool translateUntranslated;
 	struct CharData
 	{
 		FTexture *Pic;

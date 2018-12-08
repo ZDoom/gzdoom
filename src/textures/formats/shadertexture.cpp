@@ -53,7 +53,6 @@ public:
 		Height = vertical ? 256 : 2;
 		bMasked = false;
 		bTranslucent = false;
-		PixelsAreStatic = 2;	// The alpha buffer is static, but if this gets used as a regular texture, a separate buffer needs to be made.
 
 		// Fill the column/row with shading values.
 		// Vertical shaders have have minimum alpha at the top
@@ -100,24 +99,24 @@ public:
 		}
 	}
 
-	uint8_t *MakeTexture(FRenderStyle style) override
+	TArray<uint8_t> Get8BitPixels(bool alphatex) override
 	{
-		if (style.Flags & STYLEF_RedIsAlpha)
+		TArray<uint8_t> Pix(512, true);
+		if (alphatex)
 		{
-			return Pixels;
+			memcpy(Pix.Data(), Pixels, 512);
 		}
 		else
 		{
 			// Since this presents itself to the game as a regular named texture
 			// it can easily be used on walls and flats and should work as such, 
 			// even if it makes little sense.
-			auto Pix = new uint8_t[512];
 			for (int i = 0; i < 512; i++)
 			{
 				Pix[i] = GrayMap[Pixels[i]];
 			}
-			return Pix;
 		}
+		return Pix;
 	}
 
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override

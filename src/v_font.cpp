@@ -171,16 +171,12 @@ class FFontChar1 : public FTexture
 {
 public:
    FFontChar1 (FTexture *sourcelump);
-   const uint8_t *Get8BitPixels (FRenderStyle style);
+   TArray<uint8_t> Get8BitPixels(bool alphatex) override;
    void SetSourceRemap(const uint8_t *sourceremap);
-   void Unload ();
-   ~FFontChar1 ();
 
 protected:
-   void MakeTexture ();
 
    FTexture *BaseTexture;
-   uint8_t *Pixels;
    const uint8_t *SourceRemap;
 };
 
@@ -189,16 +185,13 @@ class FFontChar2 : public FTexture
 {
 public:
 	FFontChar2 (int sourcelump, int sourcepos, int width, int height, int leftofs=0, int topofs=0);
-	~FFontChar2 ();
 
-	const uint8_t *Get8BitPixels (FRenderStyle style);
+	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 	void SetSourceRemap(const uint8_t *sourceremap);
-	void Unload ();
 
 protected:
 	int SourceLump;
 	int SourcePos;
-	uint8_t *Pixels;
 	const uint8_t *SourceRemap;
 
 	void MakeTexture ();
@@ -365,6 +358,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	FirstFont = this;
 	Cursor = '_';
 	ActiveColors = 0;
+	translateUntranslated = false;
 
 	maxyoffs = 0;
 
@@ -530,14 +524,13 @@ void RecordTextureColors (FTexture *pic, uint8_t *usedcolors)
 {
 	int x;
 	
-	auto pixels = pic->Get8BitPixels(DefaultRenderStyle());
+	auto pixels = pic->Get8BitPixels(false);
 	auto size = pic->GetWidth() * pic->GetHeight();
 	
 	for(x = 0;x < size; x++)
 	{
 		usedcolors[pixels[x]]++;
 	}
-	pic->Unload();
 }
 
 //==========================================================================
@@ -738,6 +731,7 @@ FRemapTable *FFont::GetColorTranslation (EColorRange range, PalEntry *color) con
 		return NULL;
 	else if (range >= NumTextColors)
 		range = CR_UNTRANSLATED;
+	//if (range == CR_UNTRANSLATED && !translateUntranslated) return nullptr;
 	return &Ranges[range];
 }
 
@@ -913,6 +907,8 @@ void FFont::LoadTranslations()
 		}
 	}
 
+	// Fixme: This needs to build a translation based on the source palette, not some intermediate 'ordered' table.
+
 	ActiveColors = SimpleTranslation (usedcolors, PatchRemap, identity, &luminosity);
 
 	for (unsigned int i = 0; i < count; i++)
@@ -1078,6 +1074,7 @@ void FSingleLumpFont::LoadFON1 (int lump, const uint8_t *data)
 	FirstChar = 0;
 	LastChar = 255;
 	GlobalKerning = 0;
+	translateUntranslated = true;
 	PatchRemap = new uint8_t[256];
 
 	for(unsigned int i = 0;i < 256;++i)
@@ -1558,7 +1555,6 @@ FFontChar1::FFontChar1 (FTexture *sourcelump)
 	// now copy all the properties from the base texture
 	assert(BaseTexture != NULL);
 	CopySize(BaseTexture);
-	Pixels = NULL;
 }
 
 //==========================================================================
@@ -1569,39 +1565,21 @@ FFontChar1::FFontChar1 (FTexture *sourcelump)
 //
 //==========================================================================
 
-const uint8_t *FFontChar1::Get8BitPixels (FRenderStyle)
-{
-	if (Pixels == NULL)
-	{
-		MakeTexture ();
-	}
-	return Pixels;
-}
-
-//==========================================================================
-//
-// FFontChar1 :: MakeTexture
-//
-//==========================================================================
-
-void FFontChar1::MakeTexture ()	
+TArray<uint8_t> FFontChar1::Get8BitPixels (bool)
 {
 	// Make the texture as normal, then remap it so that all the colors
 	// are at the low end of the palette
-	Pixels = new uint8_t[Width*Height];
-	const uint8_t *pix = BaseTexture->Get8BitPixels(DefaultRenderStyle());
+	// Why? It only creates unnecessary work!
+	auto Pixels = BaseTexture->Get8BitPixels(false);
 
-	if (!SourceRemap)
-	{
-		memcpy(Pixels, pix, Width*Height);
-	}
-	else
+	if (SourceRemap)
 	{
 		for (int x = 0; x < Width*Height; ++x)
 		{
-			Pixels[x] = SourceRemap[pix[x]];
+			Pixels[x] = SourceRemap[Pixels[x]];
 		}
 	}
+	return Pixels;
 }
 
 //==========================================================================
@@ -1612,35 +1590,7 @@ void FFontChar1::MakeTexture ()
 
 void FFontChar1::SetSourceRemap(const uint8_t *sourceremap)
 {
-	Unload();
 	SourceRemap = sourceremap;
-}
-
-//==========================================================================
-//
-// FFontChar1 :: Unload
-//
-//==========================================================================
-
-void FFontChar1::Unload ()
-{
-	if (Pixels != NULL)
-	{
-		delete[] Pixels;
-		Pixels = NULL;
-	}
-	FTexture::Unload();
-}
-
-//==========================================================================
-//
-// FFontChar1 :: ~FFontChar1
-//
-//==========================================================================
-
-FFontChar1::~FFontChar1 ()
-{
-	Unload ();
 }
 
 //==========================================================================
@@ -1652,7 +1602,7 @@ FFontChar1::~FFontChar1 ()
 //==========================================================================
 
 FFontChar2::FFontChar2 (int sourcelump, int sourcepos, int width, int height, int leftofs, int topofs)
-: SourceLump (sourcelump), SourcePos (sourcepos), Pixels (0), SourceRemap(NULL)
+: SourceLump (sourcelump), SourcePos (sourcepos), SourceRemap(NULL)
 {
 	UseType = ETextureType::FontChar;
 	Width = width;
@@ -1663,29 +1613,13 @@ FFontChar2::FFontChar2 (int sourcelump, int sourcepos, int width, int height, in
 
 //==========================================================================
 //
-// FFontChar2 :: ~FFontChar2
+// FFontChar2 :: SetSourceRemap
 //
 //==========================================================================
 
-FFontChar2::~FFontChar2 ()
+void FFontChar2::SetSourceRemap(const uint8_t *sourceremap)
 {
-	Unload ();
-}
-
-//==========================================================================
-//
-// FFontChar2 :: Unload
-//
-//==========================================================================
-
-void FFontChar2::Unload ()
-{
-	if (Pixels != NULL)
-	{
-		delete[] Pixels;
-		Pixels = NULL;
-	}
-	FTexture::Unload();
+	SourceRemap = sourceremap;
 }
 
 //==========================================================================
@@ -1696,34 +1630,7 @@ void FFontChar2::Unload ()
 //
 //==========================================================================
 
-const uint8_t *FFontChar2::Get8BitPixels (FRenderStyle)
-{
-	if (Pixels == NULL)
-	{
-		MakeTexture ();
-	}
-	return Pixels;
-}
-
-//==========================================================================
-//
-// FFontChar2 :: SetSourceRemap
-//
-//==========================================================================
-
-void FFontChar2::SetSourceRemap(const uint8_t *sourceremap)
-{
-	Unload();
-	SourceRemap = sourceremap;
-}
-
-//==========================================================================
-//
-// FFontChar2 :: MakeTexture
-//
-//==========================================================================
-
-void FFontChar2::MakeTexture ()
+TArray<uint8_t> FFontChar2::Get8BitPixels(bool)
 {
 	auto lump = Wads.OpenLumpReader (SourceLump);
 	int destSize = Width * Height;
@@ -1753,11 +1660,11 @@ void FFontChar2::MakeTexture ()
 		}
 	}
 
-	Pixels = new uint8_t[destSize];
+	TArray<uint8_t> Pixels(destSize, true);
 
 	int runlen = 0, setlen = 0;
 	uint8_t setval = 0;  // Shut up, GCC!
-	uint8_t *dest_p = Pixels;
+	uint8_t *dest_p = Pixels.Data();
 	int dest_adv = Height;
 	int dest_rew = destSize - 1;
 
@@ -1838,6 +1745,7 @@ void FFontChar2::MakeTexture ()
 		name[8] = 0;
 		I_FatalError ("The font %s is corrupt", name);
 	}
+	return Pixels;
 }
 
 //==========================================================================

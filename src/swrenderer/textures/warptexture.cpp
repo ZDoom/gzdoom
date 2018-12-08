@@ -49,38 +49,32 @@ FWarpTexture::FWarpTexture (FTexture *source, int warptype)
 	bWarped = warptype;
 }
 
-bool FWarpTexture::CheckModified (FRenderStyle style)
+bool FWarpTexture::CheckModified (int style)
 {
-	return screen->FrameTime != GenTime[!!(style.Flags & STYLEF_RedIsAlpha)];
+	return screen->FrameTime != GenTime[style];
 }
 
 const uint32_t *FWarpTexture::GetPixelsBgra()
 {
-	auto Pixels = GetPixels(DefaultRenderStyle());
-	if (PixelsBgra.Size() == 0 || GenTime[0] != GenTimeBgra)
+	uint64_t time = screen->FrameTime;
+	if (time != GenTime[2])
 	{
-		CreatePixelsBgraWithMipmaps();
-		for (int i = 0; i < GetWidth() * GetHeight(); i++)
-		{
-			if (Pixels[i] != 0)
-				PixelsBgra[i] = 0xff000000 | GPalette.BaseColors[Pixels[i]].d;
-			else
-				PixelsBgra[i] = 0;
-		}
-		GenerateBgraMipmapsFast();
-		GenTimeBgra = GenTime[0];
+		auto otherpix = FSoftwareTexture::GetPixelsBgra();
+		WarpedPixelsRgba.Resize(GetWidth() * GetHeight());
+		WarpBuffer(WarpedPixelsRgba.Data(), otherpix, GetWidth(), GetHeight(), WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->shaderspeed, bWarped);
+		FreeAllSpans();
+		GenTime[2] = time;
 	}
-	return PixelsBgra.Data();
+	return WarpedPixelsRgba.Data();
 }
 
 
-const uint8_t *FWarpTexture::GetPixels(FRenderStyle style)
+const uint8_t *FWarpTexture::GetPixels(int index)
 {
-	int index = !!(style.Flags & STYLEF_RedIsAlpha);
 	uint64_t time = screen->FrameTime;
 	if (time != GenTime[index])
 	{
-		const uint8_t *otherpix = FSoftwareTexture::GetPixels(style);
+		const uint8_t *otherpix = FSoftwareTexture::GetPixels(index);
 		WarpedPixels[index].Resize(GetWidth() * GetHeight());
 		WarpBuffer(WarpedPixels[index].Data(), otherpix, GetWidth(), GetHeight(), WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->shaderspeed, bWarped);
 		FreeAllSpans();

@@ -53,7 +53,7 @@ public:
 	~FPNGTexture();
 
 	FTextureFormat GetFormat () override;
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override;
+	int CopyPixels(FBitmap *bmp) override;
 	bool UseBasePalette() override;
 	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 
@@ -529,11 +529,11 @@ TArray<uint8_t> FPNGTexture::Get8BitPixels(bool alphatex)
 
 //===========================================================================
 //
-// FPNGTexture::CopyTrueColorPixels
+// FPNGTexture::CopyPixels
 //
 //===========================================================================
 
-int FPNGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FPNGTexture::CopyPixels(FBitmap *bmp)
 {
 	// Parse pre-IDAT chunks. I skip the CRCs. Is that bad?
 	PalEntry pe[256];
@@ -618,29 +618,29 @@ int FPNGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 	{
 	case 0:
 	case 3:
-		bmp->CopyPixelData(x, y, Pixels, Width, Height, 1, Width, rotate, pe, inf);
+		bmp->CopyPixelData(0, 0, Pixels, Width, Height, 1, Width, 0, pe);
 		break;
 
 	case 2:
 		if (!HaveTrans)
 		{
-			bmp->CopyPixelDataRGB(x, y, Pixels, Width, Height, 3, pixwidth, rotate, CF_RGB, inf);
+			bmp->CopyPixelDataRGB(0, 0, Pixels, Width, Height, 3, pixwidth, 0, CF_RGB);
 		}
 		else
 		{
-			bmp->CopyPixelDataRGB(x, y, Pixels, Width, Height, 3, pixwidth, rotate, CF_RGBT, inf,
+			bmp->CopyPixelDataRGB(0, 0, Pixels, Width, Height, 3, pixwidth, 0, CF_RGBT, nullptr,
 				NonPaletteTrans[0], NonPaletteTrans[1], NonPaletteTrans[2]);
 			transpal = true;
 		}
 		break;
 
 	case 4:
-		bmp->CopyPixelDataRGB(x, y, Pixels, Width, Height, 2, pixwidth, rotate, CF_IA, inf);
+		bmp->CopyPixelDataRGB(0, 0, Pixels, Width, Height, 2, pixwidth, 0, CF_IA);
 		transpal = -1;
 		break;
 
 	case 6:
-		bmp->CopyPixelDataRGB(x, y, Pixels, Width, Height, 4, pixwidth, rotate, CF_RGBA, inf);
+		bmp->CopyPixelDataRGB(0, 0, Pixels, Width, Height, 4, pixwidth, 0, CF_RGBA);
 		transpal = -1;
 		break;
 

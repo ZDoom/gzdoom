@@ -53,7 +53,7 @@ class FRawPageTexture : public FWorldTexture
 public:
 	FRawPageTexture (int lumpnum);
 	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override;
+	int CopyPixels(FBitmap *bmp) override;
 };
 
 //==========================================================================
@@ -203,9 +203,9 @@ TArray<uint8_t> FRawPageTexture::Get8BitPixels(bool alphatex)
 	return Pixels;
 }
 
-int FRawPageTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FRawPageTexture::CopyPixels(FBitmap *bmp)
 {
-	if (mPaletteLump < 0) return FTexture::CopyTrueColorPixels(bmp, x, y, rotate, inf);
+	if (mPaletteLump < 0) return FTexture::CopyPixels(bmp);
 	else
 	{
 		FMemLump lump = Wads.ReadLump(SourceLump);
@@ -220,7 +220,7 @@ int FRawPageTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate,
 			pe.b = *psource++;
 			pe.a = 255;
 		}
-		bmp->CopyPixelData(x, y, source, 320, 200, 1, 320, 0, paldata, inf);
+		bmp->CopyPixelData(0, 0, source, 320, 200, 1, 320, 0, paldata);
 	}
 	return 0;
 }

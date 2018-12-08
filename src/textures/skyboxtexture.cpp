@@ -60,9 +60,9 @@ TArray<uint8_t> FSkyBox::Get8BitPixels(bool alphatex)
 //
 //-----------------------------------------------------------------------------
 
-int FSkyBox::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FSkyBox::CopyPixels(FBitmap *bmp)
 {
-	if (faces[0]) return faces[0]->CopyTrueColorPixels(bmp, x, y, rotate, inf);
+	if (faces[0]) return faces[0]->CopyPixels(bmp);
 	return 0;
 }
 

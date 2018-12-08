@@ -184,7 +184,7 @@ public:
 	FJPEGTexture (int lumpnum, int width, int height);
 
 	FTextureFormat GetFormat () override;
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override;
+	int CopyPixels(FBitmap *bmp) override;
 	bool UseBasePalette() override;
 	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 };
@@ -387,13 +387,13 @@ TArray<uint8_t> FJPEGTexture::Get8BitPixels(bool doalpha)
 
 //===========================================================================
 //
-// FJPEGTexture::CopyTrueColorPixels
+// FJPEGTexture::CopyPixels
 //
 // Preserves the full color information (unlike software mode)
 //
 //===========================================================================
 
-int FJPEGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FJPEGTexture::CopyPixels(FBitmap *bmp)
 {
 	PalEntry pe[256];
 
@@ -438,24 +438,24 @@ int FJPEGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FC
 			switch (cinfo.out_color_space)
 			{
 			case JCS_RGB:
-				bmp->CopyPixelDataRGB(x, y, buff, cinfo.output_width, cinfo.output_height,
-					3, cinfo.output_width * cinfo.output_components, rotate, CF_RGB, inf);
+				bmp->CopyPixelDataRGB(0, 0, buff, cinfo.output_width, cinfo.output_height,
+					3, cinfo.output_width * cinfo.output_components, 0, CF_RGB);
 				break;
 
 			case JCS_GRAYSCALE:
 				for (int i = 0; i < 256; i++) pe[i] = PalEntry(255, i, i, i);	// default to a gray map
-				bmp->CopyPixelData(x, y, buff, cinfo.output_width, cinfo.output_height,
-					1, cinfo.output_width, rotate, pe, inf);
+				bmp->CopyPixelData(0, 0, buff, cinfo.output_width, cinfo.output_height,
+					1, cinfo.output_width, 0, pe);
 				break;
 
 			case JCS_CMYK:
-				bmp->CopyPixelDataRGB(x, y, buff, cinfo.output_width, cinfo.output_height,
-					4, cinfo.output_width * cinfo.output_components, rotate, CF_CMYK, inf);
+				bmp->CopyPixelDataRGB(0, 0, buff, cinfo.output_width, cinfo.output_height,
+					4, cinfo.output_width * cinfo.output_components, 0, CF_CMYK);
 				break;
 
 			case JCS_YCbCr:
-				bmp->CopyPixelDataRGB(x, y, buff, cinfo.output_width, cinfo.output_height,
-					4, cinfo.output_width * cinfo.output_components, rotate, CF_YCbCr, inf);
+				bmp->CopyPixelDataRGB(0, 0, buff, cinfo.output_width, cinfo.output_height,
+					4, cinfo.output_width * cinfo.output_components, 0, CF_YCbCr);
 				break;
 
 			default:

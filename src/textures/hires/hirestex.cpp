@@ -381,8 +381,10 @@ unsigned char *FTexture::LoadHiresTexture(int *width, int *height)
 		memset(buffer, 0, w * (h + 1) * 4);
 
 		FBitmap bmp(buffer, w * 4, w, h);
+		int trans;
+		auto Pixels = HiresTexture->GetBgraBitmap(nullptr, &trans);
+		bmp.Blit(0, 0, Pixels);
 
-		int trans = HiresTexture->CopyTrueColorPixels(&bmp, 0, 0);
 		HiresTexture->CheckTrans(buffer, w*h, trans);
 
 		if (bHiresHasColorKey)

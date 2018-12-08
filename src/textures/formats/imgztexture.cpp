@@ -67,7 +67,7 @@ class FIMGZTexture : public FWorldTexture
 public:
 	FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int16_t t, bool isalpha);
 	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override;
+	int CopyPixels(FBitmap *bmp) override;
 
 	bool UseBasePalette() override { return !isalpha; }
 	FTextureFormat GetFormat() override { return isalpha ? TEX_RGB : TEX_Pal; } // should be TEX_Gray instead of TEX_RGB. Maybe later when all is working.
@@ -201,9 +201,9 @@ TArray<uint8_t> FIMGZTexture::Get8BitPixels(bool alphatex)
 //
 //==========================================================================
 
-int FIMGZTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FIMGZTexture::CopyPixels(FBitmap *bmp)
 {
-	if (!isalpha) return FTexture::CopyTrueColorPixels(bmp, x, y, rotate, inf);
-	else return CopyTrueColorTranslated(bmp, x, y, rotate, translationtables[TRANSLATION_Standard][STD_Grayscale]->Palette, inf);
+	if (!isalpha) return FTexture::CopyPixels(bmp);
+	else return CopyTranslatedPixels(bmp, translationtables[TRANSLATION_Standard][STD_Grayscale]->Palette);
 }
 

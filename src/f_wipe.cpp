@@ -41,9 +41,9 @@ public:
 		Height = h;
 	}
 	
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override
+	int CopyPixels(FBitmap *bmp) override
 	{
-		bmp->CopyPixelDataRGB(x, y, (uint8_t*)WorkBuffer.Data(), Width, Height, 4, Width*4, rotate, CF_RGBA, inf);
+		bmp->CopyPixelDataRGB(0, 0, (uint8_t*)WorkBuffer.Data(), Width, Height, 4, Width*4, 0, CF_RGBA, nullptr);
 		return 0;
 	}
 	

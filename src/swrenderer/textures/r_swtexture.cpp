@@ -108,9 +108,7 @@ const uint32_t *FSoftwareTexture::GetPixelsBgra()
 {
 	if (PixelsBgra.Size() == 0 || CheckModified(2))
 	{
-		FBitmap bitmap;
-		bitmap.Create(GetWidth(), GetHeight());
-		mTexture->CopyTrueColorPixels(&bitmap, 0, 0);
+		FBitmap bitmap = mTexture->GetBgraBitmap(nullptr);
 		GenerateBgraFromBitmap(bitmap);
 	}
 	return PixelsBgra.Data();

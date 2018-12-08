@@ -17,7 +17,7 @@ public:
 
 	FSkyBox(const char *name = nullptr);
 	TArray<uint8_t> Get8BitPixels(bool alphatex);
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf);
+	int CopyPixels(FBitmap *bmp);
 	bool UseBasePalette();
 	void Unload ();
 

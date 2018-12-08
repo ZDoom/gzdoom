@@ -51,7 +51,7 @@ public:
 		UseType = ETextureType::MiscPatch;
 	}
 
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+	int CopyPixels(FBitmap *bmp)
 	{
 		PalEntry *pe = (PalEntry*)bmp->GetPixels();
 		for (int i = 0; i < 256; i++)

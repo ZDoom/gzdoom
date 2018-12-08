@@ -56,6 +56,22 @@ enum
 	BLENDUNIT = (1<<BLENDBITS)
 };
 
+enum ColorType
+{
+	CF_RGB,
+	CF_RGBT,
+	CF_RGBA,
+	CF_IA,
+	CF_CMYK,
+	CF_YCbCr,
+	CF_BGR,
+	CF_BGRA,
+	CF_I16,
+	CF_RGB555,
+	CF_PalEntry
+};
+
+
 class FBitmap
 {
 protected:
@@ -201,6 +217,16 @@ public:
 								int step_x, int step_y, int rotate, PalEntry * palette, FCopyInfo *inf = NULL);
 
 
+	void Blit(int originx, int originy, const FBitmap &src, int width, int height, int rotate = 0, FCopyInfo *inf = NULL)
+	{
+		CopyPixelDataRGB(originx, originy, src.GetPixels(),  width, height, 4, src.GetWidth()*4, rotate, CF_BGRA, inf);
+	}
+
+	void Blit(int originx, int originy, const FBitmap &src, FCopyInfo *inf = NULL)
+	{
+		CopyPixelDataRGB(originx, originy, src.GetPixels(), src.GetWidth(), src.GetHeight(), 4, src.GetWidth()*4, 0, CF_BGRA, inf);
+	}
+
 };
 
 bool ClipCopyPixelRect(const FClipRect *cr, int &originx, int &originy,
@@ -340,21 +366,6 @@ struct cPalEntry
 	static __forceinline unsigned char B(const unsigned char * p) { return ((PalEntry*)p)->b; }
 	static __forceinline unsigned char A(const unsigned char * p, uint8_t x, uint8_t y, uint8_t z) { return ((PalEntry*)p)->a; }
 	static __forceinline int Gray(const unsigned char * p) { return (R(p)*77 + G(p)*143 + B(p)*36)>>8; }
-};
-
-enum ColorType
-{
-	CF_RGB,
-	CF_RGBT,
-	CF_RGBA,
-	CF_IA,
-	CF_CMYK,
-	CF_YCbCr,
-	CF_BGR,
-	CF_BGRA,
-	CF_I16,
-	CF_RGB555,
-	CF_PalEntry
 };
 
 enum EBlend

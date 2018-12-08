@@ -63,7 +63,7 @@ class FPatchTexture : public FWorldTexture
 public:
 	FPatchTexture (int lumpnum, patch_t *header, bool isalphatex);
 	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override;
+	int CopyPixels(FBitmap *bmp) override;
 	void DetectBadPatches();
 
 	bool UseBasePalette() override { return !isalpha; }
@@ -264,10 +264,10 @@ TArray<uint8_t> FPatchTexture::Get8BitPixels(bool alphatex)
 //
 //==========================================================================
 
-int FPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FPatchTexture::CopyPixels(FBitmap *bmp)
 {
-	if (!isalpha) return FTexture::CopyTrueColorPixels(bmp, x, y, rotate, inf);
-	else return CopyTrueColorTranslated(bmp, x, y, rotate, translationtables[TRANSLATION_Standard][STD_Grayscale]->Palette, inf);
+	if (!isalpha) return FTexture::CopyPixels(bmp);
+	else return CopyTranslatedPixels(bmp, translationtables[TRANSLATION_Standard][STD_Grayscale]->Palette);
 }
 
 //==========================================================================

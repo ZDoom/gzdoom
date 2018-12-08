@@ -156,7 +156,7 @@ public:
 	bool UseBasePalette() override;
 	virtual void SetFrontSkyLayer () override;
 
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override;
+	int CopyPixels(FBitmap *bmp) override;
 	int GetSourceLump() override { return DefinitionLump; }
 	FTexture *GetRedirect() override;
 	FTexture *GetRawTexture() override;
@@ -468,36 +468,13 @@ TArray<uint8_t> FMultiPatchTexture::MakeTexture (bool alphatex)
 //
 //===========================================================================
 
-int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FMultiPatchTexture::CopyPixels(FBitmap *bmp)
 {
 	int retv = -1;
 
 	if (bRedirect)
 	{ // Redirect straight to the real texture's routine.
-		return Parts[0].Texture->CopyTrueColorPixels(bmp, x, y, rotate, inf);
-	}
-
-	if (rotate != 0 || (inf != NULL && ((inf->op != OP_OVERWRITE && inf->op != OP_COPY) || inf->blend != BLEND_NONE)))
-	{ // We are doing some sort of fancy stuff to the destination bitmap, so composite to
-	  // a temporary bitmap, and copy that.
-		FBitmap tbmp;
-		if (tbmp.Create(Width, Height))
-		{
-			retv = MAX(retv, CopyTrueColorPixels(&tbmp, 0, 0, 0));
-			bmp->CopyPixelDataRGB(x, y, tbmp.GetPixels(), Width, Height,
-				4, tbmp.GetPitch(), rotate, CF_BGRA, inf);
-		}
-		return retv;
-	}
-
-	// When compositing a multipatch texture with multipatch parts,
-	// drawing must be restricted to the actual area which is covered by this texture.
-	FClipRect saved_cr = bmp->GetClipRect();
-	bmp->IntersectClipRect(x, y, Width, Height);
-
-	if (inf != NULL && inf->op == OP_OVERWRITE)
-	{
-		bmp->Zero();
+		return Parts[0].Texture->CopyPixels(bmp);
 	}
 
 	for(int i = 0; i < NumParts; i++)
@@ -536,20 +513,12 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 			}
 		}
 
-		if (Parts[i].Translation != NULL)
-		{ // Using a translation forces downconversion to the base palette
-			ret = Parts[i].Texture->CopyTrueColorTranslated(bmp, x+Parts[i].OriginX, y+Parts[i].OriginY, Parts[i].Rotate, Parts[i].Translation->Palette, &info);
-		}
-		else
-		{
-			ret = Parts[i].Texture->CopyTrueColorPixels(bmp, x+Parts[i].OriginX, y+Parts[i].OriginY, Parts[i].Rotate, &info);
-		}
+		auto Pixels = Parts[i].Texture->GetBgraBitmap(Parts[i].Translation ? Parts[i].Translation->Palette : nullptr, &ret);
+		bmp->Blit(Parts[i].OriginX, Parts[i].OriginY, Pixels, &info);
 		// treat -1 (i.e. unknown) as absolute. We have no idea if this may have overwritten previous info so a real check needs to be done.
 		if (ret == -1) retv = ret;
 		else if (retv != -1 && ret > retv) retv = ret;
 	}
-	// Restore previous clipping rectangle.
-	bmp->SetClipRect(saved_cr);
 	return retv;
 }
 

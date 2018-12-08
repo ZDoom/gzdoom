@@ -57,7 +57,7 @@ class FBuildTexture : public FWorldTexture
 public:
 	FBuildTexture (const FString &pathprefix, int tilenum, const uint8_t *pixels, int translation, int width, int height, int left, int top);
 	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override;
+	int CopyPixels(FBitmap *bmp) override;
 	bool UseBasePalette() override { return false; }
 	FTextureFormat GetFormat() override { return TEX_RGB; }
 
@@ -96,10 +96,10 @@ TArray<uint8_t> FBuildTexture::Get8BitPixels(bool alphatex)
 	return Pixels;
 }
 
-int FBuildTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FBuildTexture::CopyPixels(FBitmap *bmp)
 {
 	PalEntry *Remap = translationtables[TRANSLATION_Standard][Translation]->Palette;
-	bmp->CopyPixelData(x, y, RawPixels, Width, Height, Height, 1, rotate, Remap, inf);
+	bmp->CopyPixelData(0, 0, RawPixels, Width, Height, Height, 1, 0, Remap);
 	return -1;
 
 }

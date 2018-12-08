@@ -45,7 +45,7 @@ class FBrightmapTexture : public FWorldTexture
 public:
 	FBrightmapTexture (FTexture *source);
 
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override;
+	int CopyPixels(FBitmap *bmp) override;
 	bool UseBasePalette() override { return false; }
 
 protected:
@@ -73,9 +73,9 @@ FBrightmapTexture::FBrightmapTexture (FTexture *source)
 	SourceLump = -1;
 }
 
-int FBrightmapTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FBrightmapTexture::CopyPixels(FBitmap *bmp)
 {
-	SourcePic->CopyTrueColorTranslated(bmp, x, y, rotate, TexMan.GlobalBrightmap.Palette);
+	SourcePic->CopyTranslatedPixels(bmp, TexMan.GlobalBrightmap.Palette);
 	return 0;
 }
 

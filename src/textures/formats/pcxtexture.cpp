@@ -85,7 +85,7 @@ public:
 
 	FTextureFormat GetFormat () override;
 
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override;
+	int CopyPixels(FBitmap *bmp) override;
 	bool UseBasePalette() override;
 
 protected:
@@ -452,13 +452,13 @@ TArray<uint8_t> FPCXTexture::Get8BitPixels(bool alphatex)
 
 //===========================================================================
 //
-// FPCXTexture::CopyTrueColorPixels
+// FPCXTexture::CopyPixels
 //
 // Preserves the full color information (unlike software mode)
 //
 //===========================================================================
 
-int FPCXTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FPCXTexture::CopyPixels(FBitmap *bmp)
 {
 	PalEntry pe[256];
 	PCXHeader header;
@@ -513,13 +513,13 @@ int FPCXTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 			lump.Seek(sizeof(header), FileReader::SeekSet);
 			ReadPCX8bits (Pixels, lump, &header);
 		}
-		bmp->CopyPixelData(x, y, Pixels, Width, Height, 1, Width, rotate, pe, inf);
+		bmp->CopyPixelData(0, 0, Pixels, Width, Height, 1, Width, 0, pe);
 	}
 	else
 	{
 		Pixels = new uint8_t[Width*Height * 3];
 		ReadPCX24bits (Pixels, lump, &header, 3);
-		bmp->CopyPixelDataRGB(x, y, Pixels, Width, Height, 3, Width*3, rotate, CF_RGB, inf);
+		bmp->CopyPixelDataRGB(0, 0, Pixels, Width, Height, 3, Width*3, 0, CF_RGB);
 	}
 	delete [] Pixels;
 	return 0;

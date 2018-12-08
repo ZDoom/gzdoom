@@ -80,7 +80,7 @@ public:
 	FTGATexture (int lumpnum, TGAHeader *);
 
 	FTextureFormat GetFormat () override;
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override;
+	int CopyPixels(FBitmap *bmp) override;
 	bool UseBasePalette() override;
 
 protected:
@@ -396,11 +396,11 @@ TArray<uint8_t> FTGATexture::Get8BitPixels(bool alphatex)
 
 //===========================================================================
 //
-// FTGATexture::CopyTrueColorPixels
+// FTGATexture::CopyPixels
 //
 //===========================================================================
 
-int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FTGATexture::CopyPixels(FBitmap *bmp)
 {
 	PalEntry pe[256];
 	auto lump = Wads.OpenLumpReader (SourceLump);
@@ -490,7 +490,7 @@ int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
     switch (hdr.img_type & 7)
     {
 	case 1:	// paletted
-		bmp->CopyPixelData(x, y, ptr, Width, Height, step_x, Pitch, rotate, pe, inf);
+		bmp->CopyPixelData(0, 0, ptr, Width, Height, step_x, Pitch, 0, pe);
 		break;
 
 	case 2:	// RGB
@@ -498,21 +498,21 @@ int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 		{
 		case 15:
 		case 16:
-			bmp->CopyPixelDataRGB(x, y, ptr, Width, Height, step_x, Pitch, rotate, CF_RGB555, inf);
+			bmp->CopyPixelDataRGB(0, 0, ptr, Width, Height, step_x, Pitch, 0, CF_RGB555);
 			break;
 		
 		case 24:
-			bmp->CopyPixelDataRGB(x, y, ptr, Width, Height, step_x, Pitch, rotate, CF_BGR, inf);
+			bmp->CopyPixelDataRGB(0, 0, ptr, Width, Height, step_x, Pitch, 0, CF_BGR);
 			break;
 		
 		case 32:
 			if ((hdr.img_desc&15)!=8)	// 32 bits without a valid alpha channel
 			{
-				bmp->CopyPixelDataRGB(x, y, ptr, Width, Height, step_x, Pitch, rotate, CF_BGR, inf);
+				bmp->CopyPixelDataRGB(0, 0, ptr, Width, Height, step_x, Pitch, 0, CF_BGR);
 			}
 			else
 			{
-				bmp->CopyPixelDataRGB(x, y, ptr, Width, Height, step_x, Pitch, rotate, CF_BGRA, inf);
+				bmp->CopyPixelDataRGB(0, 0, ptr, Width, Height, step_x, Pitch, 9, CF_BGRA);
 				transval = -1;
 			}
 			break;
@@ -527,11 +527,11 @@ int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 		{
 		case 8:
 			for(int i=0;i<256;i++) pe[i]=PalEntry(255,i,i,i);	// gray map
-			bmp->CopyPixelData(x, y, ptr, Width, Height, step_x, Pitch, rotate, pe, inf);
+			bmp->CopyPixelData(0, 0, ptr, Width, Height, step_x, Pitch, 0, pe);
 			break;
 		
 		case 16:
-			bmp->CopyPixelDataRGB(x, y, ptr, Width, Height, step_x, Pitch, rotate, CF_I16, inf);
+			bmp->CopyPixelDataRGB(0, 0, ptr, Width, Height, step_x, Pitch, 0, CF_I16);
 			break;
 		
 		default:

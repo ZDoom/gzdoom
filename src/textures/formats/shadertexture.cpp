@@ -119,9 +119,9 @@ public:
 		return Pix;
 	}
 
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override
+	int CopyPixels(FBitmap *bmp) override
 	{
-		bmp->CopyPixelData(x, y, Pixels, Width, Height, Height, 1, rotate, translationtables[TRANSLATION_Standard][8]->Palette, inf);
+		bmp->CopyPixelData(0, 0, Pixels, Width, Height, Height, 1, 0, translationtables[TRANSLATION_Standard][8]->Palette);
 		return 0;
 	}
 

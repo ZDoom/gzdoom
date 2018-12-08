@@ -182,7 +182,7 @@ protected:
 	void DecompressDXT3 (FileReader &lump, bool premultiplied, uint8_t *buffer, int pixelmode);
 	void DecompressDXT5 (FileReader &lump, bool premultiplied, uint8_t *buffer, int pixelmode);
 
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
+	int CopyPixels(FBitmap *bmp) override;
 	bool UseBasePalette();
 
 	friend class FTexture;
@@ -485,9 +485,9 @@ void FDDSTexture::ReadRGB (FileReader &lump, uint8_t *buffer, int pixelmode)
 				uint32_t g = (c & GMask) << GShiftL; g |= g >> GShiftR;
 				uint32_t b = (c & BMask) << BShiftL; b |= b >> BShiftR;
 				uint32_t a = (c & AMask) << AShiftL; a |= a >> AShiftR;
-				pixelp[0] = (uint8_t)(r>>24);
+				pixelp[0] = (uint8_t)(b>>24);
 				pixelp[1] = (uint8_t)(g>>24);
-				pixelp[2] = (uint8_t)(b>>24);
+				pixelp[2] = (uint8_t)(r>>24);
 				pixelp[3] = (uint8_t)(a>>24);
 				pixelp+=4;
 			}
@@ -580,9 +580,9 @@ void FDDSTexture::DecompressDXT1 (FileReader &lump, uint8_t *buffer, int pixelmo
 					else
 					{
 						uint8_t * tcp = &buffer[(ox + x)*4 + (oy + y) * Width*4];
-						tcp[0] = color[ci].r;
+						tcp[0] = color[ci].b;
 						tcp[1] = color[ci].g;
-						tcp[2] = color[ci].b;
+						tcp[2] = color[ci].r;
 						tcp[3] = color[ci].a;
 					}
 				}
@@ -669,9 +669,9 @@ void FDDSTexture::DecompressDXT3 (FileReader &lump, bool premultiplied, uint8_t 
 					{
 						uint8_t * tcp = &buffer[(ox + x)*4 + (oy + y) * Width*4];
 						int c = (yslice >> (x + x)) & 3;
-						tcp[0] = color[c].r;
+						tcp[0] = color[c].b;
 						tcp[1] = color[c].g;
-						tcp[2] = color[c].b;
+						tcp[2] = color[c].r;
 						tcp[3] = ((yalphaslice >> (x * 4)) & 15) * 0x11;
 					}
 				}
@@ -788,9 +788,9 @@ void FDDSTexture::DecompressDXT5 (FileReader &lump, bool premultiplied, uint8_t 
 					{
 						uint8_t * tcp = &buffer[(ox + x)*4 + (oy + y) * Width*4];
 						int c = (yslice >> (x + x)) & 3;
-						tcp[0] = color[c].r;
+						tcp[0] = color[c].b;
 						tcp[1] = color[c].g;
-						tcp[2] = color[c].b;
+						tcp[2] = color[c].r;
 						tcp[3] = alpha[((yalphaslice >> (x*3)) & 7)];
 					}
 				}
@@ -803,15 +803,15 @@ void FDDSTexture::DecompressDXT5 (FileReader &lump, bool premultiplied, uint8_t 
 
 //===========================================================================
 //
-// FDDSTexture::CopyTrueColorPixels
+// FDDSTexture::CopyPixels
 //
 //===========================================================================
 
-int FDDSTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FDDSTexture::CopyPixels(FBitmap *bmp)
 {
 	auto lump = Wads.OpenLumpReader (SourceLump);
 
-	uint8_t *TexBuffer = new uint8_t[4*Width*Height];
+	uint8_t *TexBuffer = bmp->GetPixels();
 
 	lump.Seek (sizeof(DDSURFACEDESC2) + 4, FileReader::SeekSet);
 
@@ -832,9 +832,6 @@ int FDDSTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 		DecompressDXT5 (lump, Format == ID_DXT4, TexBuffer, PIX_ARGB);
 	}
 
-	// All formats decompress to RGBA.
-	bmp->CopyPixelDataRGB(x, y, TexBuffer, Width, Height, 4, Width*4, rotate, CF_RGBA, inf);
-	delete [] TexBuffer;
 	return -1;
 }	
 

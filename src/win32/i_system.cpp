@@ -105,8 +105,8 @@ extern void LayoutMainWindow(HWND hWnd, HWND pane);
 
 static void CalculateCPUSpeed();
 
-static HCURSOR CreateCompatibleCursor(FTexture *cursorpic);
-static HCURSOR CreateAlphaCursor(FTexture *cursorpic);
+static HCURSOR CreateCompatibleCursor(FBitmap &cursorpic, int leftofs, int topofs);
+static HCURSOR CreateAlphaCursor(FBitmap &cursorpic, int leftofs, int topofs);
 static HCURSOR CreateBitmapCursor(int xhot, int yhot, HBITMAP and_mask, HBITMAP color_mask);
 static void DestroyCustomCursor();
 
@@ -917,19 +917,22 @@ bool I_SetCursor(FTexture *cursorpic)
 {
 	HCURSOR cursor;
 
-#if 0
-	if (cursorpic != NULL && cursorpic->UseType != ETextureType::Null)
+	if (cursorpic != NULL && cursorpic->isValid())
 	{
-		// Must be no larger than 32x32.
-		if (cursorpic->GetWidth() > 32 || cursorpic->GetHeight() > 32)
+		auto image = cursorpic->GetBgraBitmap(nullptr);
+		// Must be no larger than 32x32. (is this still necessary?
+		if (image.GetWidth() > 32 || image.GetHeight() > 32)
 		{
 			return false;
 		}
+		// Fixme: This should get a raw image, not a texture. (Once raw images get implemented.)
+		int lo = cursorpic->GetDisplayLeftOffset();
+		int to = cursorpic->GetDisplayTopOffset();
 
-		cursor = CreateAlphaCursor(cursorpic);
+		cursor = CreateAlphaCursor(image, lo, to);
 		if (cursor == NULL)
 		{
-			cursor = CreateCompatibleCursor(cursorpic);
+			cursor = CreateCompatibleCursor(image, lo, to);
 		}
 		if (cursor == NULL)
 		{
@@ -941,7 +944,6 @@ bool I_SetCursor(FTexture *cursorpic)
 		atterm(DestroyCustomCursor);
 	}
 	else
-#endif
 	{
 		DestroyCustomCursor();
 		cursor = LoadCursor(NULL, IDC_ARROW);
@@ -975,11 +977,10 @@ bool I_SetCursor(FTexture *cursorpic)
 //
 //==========================================================================
 
-static HCURSOR CreateCompatibleCursor(FTexture *cursorpic)
+static HCURSOR CreateCompatibleCursor(FBitmap &bmp, int leftofs, int topofs)
 {
-#if 0
-	int picwidth = cursorpic->GetWidth();
-	int picheight = cursorpic->GetHeight();
+	int picwidth = bmp.GetWidth();
+	int picheight = bmp.GetHeight();
 
 	// Create bitmap masks for the cursor from the texture.
 	HDC dc = GetDC(NULL);
@@ -1004,12 +1005,7 @@ static HCURSOR CreateCompatibleCursor(FTexture *cursorpic)
 	SelectObject(xor_mask_dc, GetStockObject(BLACK_BRUSH));
 	Rectangle(xor_mask_dc, 0, 0, 32, 32);
 
-	FBitmap bmp;
-	const uint8_t *pixels;
-
-	bmp.Create(picwidth, picheight);
-	cursorpic->CopyTrueColorPixels(&bmp, 0, 0);
-	pixels = bmp.GetPixels();
+	const uint8_t *pixels = bmp.GetPixels();
 
 	// Copy color data from the source texture to the cursor bitmaps.
 	for (int y = 0; y < picheight; ++y)
@@ -1028,10 +1024,7 @@ static HCURSOR CreateCompatibleCursor(FTexture *cursorpic)
 	DeleteDC(xor_mask_dc);
 
 	// Create the cursor from the bitmaps.
-	return CreateBitmapCursor(cursorpic->GetLeftOffset(0), cursorpic->GetTopOffset(0), and_mask, xor_mask);
-#else
-	return nullptr;
-#endif
+	return CreateBitmapCursor(leftofs, topofs, and_mask, xor_mask);
 }
 
 //==========================================================================
@@ -1042,9 +1035,8 @@ static HCURSOR CreateCompatibleCursor(FTexture *cursorpic)
 //
 //==========================================================================
 
-static HCURSOR CreateAlphaCursor(FTexture *cursorpic)
+static HCURSOR CreateAlphaCursor(FBitmap &source, int leftofs, int topofs)
 {
-#if 0
 	HDC dc;
 	BITMAPV5HEADER bi;
 	HBITMAP color, mono;
@@ -1093,11 +1085,11 @@ static HCURSOR CreateAlphaCursor(FTexture *cursorpic)
 
 	// Copy cursor to the color bitmap. Note that GDI bitmaps are upside down compared
 	// to normal conventions, so we create the FBitmap pointing at the last row and use
-	// a negative pitch so that CopyTrueColorPixels will use GDI's orientation.
+	// a negative pitch so that Blit will use GDI's orientation.
 	if (scale == 1)
 	{
 		FBitmap bmp((uint8_t *)bits + 31 * 32 * 4, -32 * 4, 32, 32);
-		cursorpic->CopyTrueColorPixels(&bmp, 0, 0);
+		bmp.Blit(0, 0, source);
 	}
 	else
 	{
@@ -1105,7 +1097,7 @@ static HCURSOR CreateAlphaCursor(FTexture *cursorpic)
 		unscaled.Resize(32 * 32);
 		for (int i = 0; i < 32 * 32; i++) unscaled[i] = 0;
 		FBitmap bmp((uint8_t *)&unscaled[0] + 31 * 32 * 4, -32 * 4, 32, 32);
-		cursorpic->CopyTrueColorPixels(&bmp, 0, 0);
+		bmp.Blit(0, 0, source);
 		uint32_t *scaled = (uint32_t*)bits;
 		for (int y = 0; y < 32 * scale; y++)
 		{
@@ -1116,10 +1108,7 @@ static HCURSOR CreateAlphaCursor(FTexture *cursorpic)
 		}
 	}
 
-	return CreateBitmapCursor(cursorpic->GetLeftOffset(0) * scale, cursorpic->GetTopOffset(0) * scale, mono, color);
-#else
-	return nullptr;
-#endif
+	return CreateBitmapCursor(leftofs * scale, topofs * scale, mono, color);
 }
 
 //==========================================================================

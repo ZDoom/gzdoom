@@ -301,7 +301,7 @@ public:
 
 	// Returns the whole texture, stored in column-major order
 	virtual TArray<uint8_t> Get8BitPixels(bool alphatex);
-	/*virtual*/ FBitmap GetBgraBitmap(PalEntry *remap);
+	/*virtual*/ FBitmap GetBgraBitmap(PalEntry *remap, int *trans = nullptr);
 
 public:
 	static void FlipSquareBlock (uint8_t *block, int x, int y);
@@ -388,8 +388,9 @@ protected:
 	// Returns true if GetPixelsBgra includes mipmaps
 	virtual bool Mipmapped() { return true; }
 
-	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL);
-	virtual int CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, PalEntry *remap, FCopyInfo *inf = NULL);
+	virtual int CopyPixels(FBitmap *bmp);
+	int CopyTranslatedPixels(FBitmap *bmp, PalEntry *remap);
+
 	virtual bool UseBasePalette();
 	virtual FTexture *GetRedirect();
 

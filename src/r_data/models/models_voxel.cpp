@@ -51,7 +51,7 @@ class FVoxelTexture : public FWorldTexture
 public:
 	FVoxelTexture(FVoxel *voxel);
 
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override;
+	int CopyPixels(FBitmap *bmp) override;
 	bool UseBasePalette() override { return false; }
 	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 
@@ -109,14 +109,14 @@ TArray<uint8_t> FVoxelTexture::Get8BitPixels(bool alphatex)
 
 //===========================================================================
 //
-// FVoxelTexture::CopyTrueColorPixels
+// FVoxelTexture::CopyPixels
 //
 // This creates a dummy 16x16 paletted bitmap and converts that using the
 // voxel palette
 //
 //===========================================================================
 
-int FVoxelTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FVoxelTexture::CopyPixels(FBitmap *bmp)
 {
 	PalEntry pe[256];
 	uint8_t bitmap[256];
@@ -142,7 +142,7 @@ int FVoxelTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, F
 			pe[i].a = 255;
 		}
 	}    
-	bmp->CopyPixelData(x, y, bitmap, Width, Height, 1, 16, rotate, pe, inf);
+	bmp->CopyPixelData(0, 0, bitmap, Width, Height, 1, 16, 0, pe);
 	return 0;
 }	
 

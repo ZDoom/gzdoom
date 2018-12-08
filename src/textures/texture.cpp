@@ -421,7 +421,7 @@ void FTexture::FlipNonSquareBlockRemap (uint8_t *dst, const uint8_t *src, int x,
 
 //===========================================================================
 //
-// FTexture::CopyTrueColorPixels 
+// FTexture::CopyPixels 
 //
 // this is the generic case that can handle
 // any properly implemented texture for software rendering.
@@ -431,29 +431,32 @@ void FTexture::FlipNonSquareBlockRemap (uint8_t *dst, const uint8_t *src, int x,
 //
 //===========================================================================
 
-int FTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FTexture::CopyPixels(FBitmap *bmp)
 {
 	PalEntry *palette = screen->GetPalette();
 	for(int i=1;i<256;i++) palette[i].a = 255;	// set proper alpha values
 	auto ppix = Get8BitPixels(false);	// should use composition cache
-	bmp->CopyPixelData(x, y, ppix.Data(), Width, Height, Height, 1, rotate, palette, inf);
+	bmp->CopyPixelData(0, 0, ppix.Data(), Width, Height, Height, 1, 0, palette, nullptr);
 	for(int i=1;i<256;i++) palette[i].a = 0;
 	return 0;
 }
 
-int FTexture::CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, PalEntry *remap, FCopyInfo *inf)
+int FTexture::CopyTranslatedPixels(FBitmap *bmp, PalEntry *remap)
 {
 	auto ppix = Get8BitPixels(false);	// should use composition cache
-	bmp->CopyPixelData(x, y, ppix.Data(), Width, Height, Height, 1, rotate, remap, inf);
+	bmp->CopyPixelData(0, 0, ppix.Data(), Width, Height, Height, 1, 0, remap, nullptr);
 	return 0;
 }
 
-FBitmap FTexture::GetBgraBitmap(PalEntry *remap)
+FBitmap FTexture::GetBgraBitmap(PalEntry *remap, int *ptrans)
 {
 	FBitmap bmp;
+	int trans;
+
 	bmp.Create(GetWidth(), GetHeight());
-	if (!remap) CopyTrueColorPixels(&bmp, 0, 0, 0, nullptr);
-	else CopyTrueColorTranslated(&bmp, 0, 0, 0, remap, nullptr);
+	if (!remap) trans = CopyPixels(&bmp);
+	else trans = CopyTranslatedPixels(&bmp, remap);
+	if (ptrans) *ptrans = trans;
 	return bmp;
 }
 
@@ -532,11 +535,9 @@ PalEntry FTexture::GetSkyCapColor(bool bottom)
 	{
 		bSWSkyColorDone = true;
 
-		FBitmap bitmap;
-		bitmap.Create(GetWidth(), GetHeight());
-		CopyTrueColorPixels(&bitmap, 0, 0);
-		int w = GetWidth();
-		int h = GetHeight();
+		FBitmap bitmap = GetBgraBitmap(nullptr);
+		int w = bitmap.GetWidth();
+		int h = bitmap.GetHeight();
 
 		const uint32_t *buffer = (const uint32_t *)bitmap.GetPixels();
 		if (buffer)
@@ -938,25 +939,25 @@ unsigned char * FTexture::CreateTexBuffer(int translation, int & w, int & h, int
 	W = w = GetWidth() + 2 * exx;
 	H = h = GetHeight() + 2 * exx;
 
-
 	buffer = new unsigned char[W*(H + 1) * 4];
 	memset(buffer, 0, W * (H + 1) * 4);
 
+	auto remap = translation <= 0? nullptr : FUniquePalette::GetPalette(translation);
 	FBitmap bmp(buffer, W * 4, W, H);
 
-	if (translation <= 0)
+	int trans;
+	auto Pixels = GetBgraBitmap(remap, &trans);
+	bmp.Blit(exx, exx, Pixels);
+
+	if (remap == nullptr)
 	{
-		int trans = CopyTrueColorPixels(&bmp, exx, exx, 0, nullptr);
 		CheckTrans(buffer, W*H, trans);
 		isTransparent = bTranslucent;
 	}
 	else
 	{
-		// When using translations everything must be mapped to the base palette.
-		// so use CopyTrueColorTranslated
-		CopyTrueColorTranslated(&bmp, exx, exx, 0, FUniquePalette::GetPalette(translation));
 		isTransparent = 0;
-		// This is not conclusive for setting the texture's transparency info.
+		// A translated image is not conclusive for setting the texture's transparency info.
 	}
 
 	if (flags & CTF_ProcessData) 

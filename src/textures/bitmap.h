@@ -90,6 +90,36 @@ public:
 		ClipRect.height = height;
 	}
 
+	FBitmap(const FBitmap &other) = delete;	// disallow because in nearly all cases this creates an unwanted copy.
+
+	FBitmap(FBitmap &&other)
+	{
+		data = other.data;
+		Pitch = other.Pitch;
+		Width = other.Width;
+		Height = other.Height;
+		FreeBuffer = other.FreeBuffer;
+		ClipRect = other.ClipRect;
+		other.data = nullptr;
+		other.FreeBuffer = false;
+	}
+
+	FBitmap &operator=(const FBitmap &other) = delete;	// disallow because in nearly all cases this creates an unwanted copy.
+
+	FBitmap &operator=(FBitmap &&other)
+	{
+		if (data != nullptr && FreeBuffer) delete[] data;
+		data = other.data;
+		Pitch = other.Pitch;
+		Width = other.Width;
+		Height = other.Height;
+		FreeBuffer = other.FreeBuffer;
+		ClipRect = other.ClipRect;
+		other.data = nullptr;
+		other.FreeBuffer = false;
+		return *this;
+	}
+
 	virtual ~FBitmap()
 	{
 		Destroy();

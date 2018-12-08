@@ -47,6 +47,7 @@
 #include "m_fixed.h"
 #include "hwrenderer/textures/hw_material.h"
 #include "hwrenderer/textures/hw_ihwtexture.h"
+#include "swrenderer/textures/r_swtexture.h"
 
 FTexture *CreateBrightmapTexture(FTexture*);
 
@@ -418,54 +419,6 @@ void FTexture::FlipNonSquareBlockRemap (uint8_t *dst, const uint8_t *src, int x,
 	}
 }
 
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-void FTexture::FillBuffer(uint8_t *buff, int pitch, int height, FTextureFormat fmt)
-{
-	int x, y, w, h, stride;
-
-	w = GetWidth();
-	h = GetHeight();
-
-	switch (fmt)
-	{
-	case TEX_Pal:
-	case TEX_Gray:
-	{
-		auto ppix = Get8BitPixels(fmt == TEX_Gray);	// should use composition cache
-		auto pix = ppix.Data();
-		stride = pitch - w;
-		for (y = 0; y < h; ++y)
-		{
-			const uint8_t *pix2 = pix;
-			for (x = 0; x < w; ++x)
-			{
-				*buff++ = *pix2;
-				pix2 += h;
-			}
-			pix++;
-			buff += stride;
-		}
-		break;
-	}
-
-	case TEX_RGB:
-	{
-		FCopyInfo inf = {OP_OVERWRITE, BLEND_NONE, {0}, 0, 0};
-		FBitmap bmp(buff, pitch, pitch/4, height);
-		CopyTrueColorPixels(&bmp, 0, 0, 0, &inf); 
-		break;
-	}
-
-	default:
-		I_Error("FTexture::FillBuffer: Unsupported format %d", fmt);
-	}
-}
-
 //===========================================================================
 //
 // FTexture::CopyTrueColorPixels 
@@ -493,6 +446,15 @@ int FTexture::CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, Pa
 	auto ppix = Get8BitPixels(false);	// should use composition cache
 	bmp->CopyPixelData(x, y, ppix.Data(), Width, Height, Height, 1, rotate, remap, inf);
 	return 0;
+}
+
+FBitmap FTexture::GetBgraBitmap(PalEntry *remap)
+{
+	FBitmap bmp;
+	bmp.Create(GetWidth(), GetHeight());
+	if (!remap) CopyTrueColorPixels(&bmp, 0, 0, 0, nullptr);
+	else CopyTrueColorTranslated(&bmp, 0, 0, 0, remap, nullptr);
+	return bmp;
 }
 
 //==========================================================================
@@ -729,14 +691,8 @@ void FTexture::GetGlowColor(float *data)
 {
 	if (bGlowing && GlowColor == 0)
 	{
-		int w = Width, h = Height;
-		auto buffer = new uint8_t[w * h * 4];
-		if (buffer)
-		{
-			FillBuffer(buffer, w * 4, h, TEX_RGB);
-			GlowColor = averageColor((uint32_t *)buffer, w*h, 153);
-			delete[] buffer;
-		}
+		auto buffer = GetBgraBitmap(nullptr);
+		GlowColor = averageColor((uint32_t*)buffer.GetPixels(), buffer.GetWidth() * buffer.GetHeight(), 153);
 
 		// Black glow equals nothing so switch glowing off
 		if (GlowColor == 0) bGlowing = false;

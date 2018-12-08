@@ -301,6 +301,7 @@ public:
 
 	// Returns the whole texture, stored in column-major order
 	virtual TArray<uint8_t> Get8BitPixels(bool alphatex);
+	/*virtual*/ FBitmap GetBgraBitmap(PalEntry *remap);
 
 public:
 	static void FlipSquareBlock (uint8_t *block, int x, int y);
@@ -395,8 +396,6 @@ protected:
 	// Returns the native pixel format for this image
 	virtual FTextureFormat GetFormat();
 
-	// Fill the native texture buffer with pixel data for this image
-	virtual void FillBuffer(uint8_t *buff, int pitch, int height, FTextureFormat fmt);
 	void SetSpeed(float fac) { shaderspeed = fac; }
 
 	int GetWidth () { return Width; }

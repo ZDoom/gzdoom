@@ -441,12 +441,10 @@ TArray<uint8_t> FMultiPatchTexture::MakeTexture (bool alphatex)
 	{
 		// In case there are translucent patches let's do the composition in
 		// True color to keep as much precision as possible before downconverting to the palette.
-		uint8_t *buffer = new uint8_t[Width * Height * 4];
-		memset(buffer, 0, Width * Height * 4);
-		FillBuffer(buffer, Width * 4, Height, TEX_RGB);
+		auto buffer = GetBgraBitmap(nullptr);
 		for(int y = 0; y < Height; y++)
 		{
-			uint8_t *in = buffer + Width * y * 4;
+			uint8_t *in = buffer.GetPixels() + Width * y * 4;
 			uint8_t *out = Pixels.Data() + y;
 			for (int x = 0; x < Width; x++)
 			{
@@ -458,7 +456,6 @@ TArray<uint8_t> FMultiPatchTexture::MakeTexture (bool alphatex)
 				in += 4;
 			}
 		}
-		delete [] buffer;
 	}
 	return Pixels;
 }

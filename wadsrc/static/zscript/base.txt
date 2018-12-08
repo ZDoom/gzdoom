@@ -996,3 +996,25 @@ struct FRailParams
 	native int limit;
 };	// [RH] Shoot a railgun
 
+class BoundingBox : Object native
+{
+	native static BoundingBox CreateFromSides(double left, double bottom, double right, double top);
+	native static BoundingBox Create(Vector2 pos, double radius);
+
+	native void SetBox(Vector2 pos, double radius);
+	native void ClearBox();
+
+	native void AddToBox(Vector2 pos);
+
+	native double Top() const;
+	native double Bottom() const;
+	native double Left() const;
+	native double Right() const;
+
+	native bool InRange(Line ld) const;
+
+	native int BoxOnLineSide (Line ld) const;
+
+	native void Set(int index, double value);
+}
+

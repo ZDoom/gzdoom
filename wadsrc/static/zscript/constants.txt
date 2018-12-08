@@ -950,6 +950,15 @@ enum EReplace
 	ALLOW_REPLACE = 1
 }
 
+// Bounding box coordinate storage.
+enum BoundingBoxCoords
+{
+	BOXTOP,
+	BOXBOTTOM,
+	BOXLEFT,
+	BOXRIGHT
+};
+
 // This translucency value produces the closest match to Heretic's TINTTAB.
 // ~40% of the value of the overlaid image shows through.
 const HR_SHADOW = (0x6800 / 65536.);

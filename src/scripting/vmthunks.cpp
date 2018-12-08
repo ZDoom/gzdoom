@@ -2524,6 +2524,186 @@ DEFINE_ACTION_FUNCTION_NATIVE(_AltHUD, GetLatency, Net_GetLatency)
 	return numret;
 }
 
+//=====================================================================================
+//
+// FBoundingBox exports
+//
+//=====================================================================================
+
+class DBoundingBox : public FBoundingBox, public DObject
+{
+	DECLARE_ABSTRACT_CLASS(DBoundingBox, DObject)
+
+public:
+	DBoundingBox(double left, double bottom, double right, double top)
+	{
+		m_Box[BOXTOP] = top;
+		m_Box[BOXLEFT] = left;
+		m_Box[BOXRIGHT] = right;
+		m_Box[BOXBOTTOM] = bottom;
+	}
+
+	DBoundingBox(double x, double y, double radius)
+	{
+		setBox(x, y, radius);
+	}
+};
+IMPLEMENT_CLASS (DBoundingBox, true, false);
+
+static DBoundingBox *BoundingBox_CreateFromSides(double left, double bottom, double right, double top)
+{
+	return (Create<DBoundingBox>(left, bottom, right, top));
+}
+DEFINE_ACTION_FUNCTION_NATIVE(DBoundingBox, CreateFromSides, BoundingBox_CreateFromSides)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(left);
+	PARAM_FLOAT(bottom);
+	PARAM_FLOAT(right);
+	PARAM_FLOAT(top);
+
+	ACTION_RETURN_OBJECT(Create<DBoundingBox>(left, bottom, right, top));
+}
+
+static DBoundingBox *BoundingBox_Create(double x, double y, double radius)
+{
+	return (Create<DBoundingBox>(x, y, radius));
+}
+DEFINE_ACTION_FUNCTION_NATIVE(DBoundingBox, Create, BoundingBox_Create)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(radius);
+
+	ACTION_RETURN_OBJECT(Create<DBoundingBox>(x, y, radius));
+}
+
+static void BoundingBox_SetBox(DBoundingBox *self, double x, double y, double radius)
+{
+	self->setBox(x, y, radius);
+}
+DEFINE_ACTION_FUNCTION_NATIVE(DBoundingBox, SetBox, BoundingBox_SetBox)
+{
+	PARAM_SELF_PROLOGUE(DBoundingBox);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(radius);
+
+	self->setBox(x, y, radius);
+	return 0;
+}
+
+static void BoundingBox_ClearBox(DBoundingBox *self)
+{
+	self->ClearBox();
+}
+DEFINE_ACTION_FUNCTION_NATIVE(DBoundingBox, ClearBox, BoundingBox_ClearBox)
+{
+	PARAM_SELF_PROLOGUE(DBoundingBox);
+
+	self->ClearBox();
+	return 0;
+}
+
+static void BoundingBox_AddToBox(DBoundingBox *self, double x, double y)
+{
+	self->AddToBox(DVector2(x, y));
+}
+DEFINE_ACTION_FUNCTION_NATIVE(DBoundingBox, AddToBox, BoundingBox_AddToBox)
+{
+	PARAM_SELF_PROLOGUE(DBoundingBox);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+
+	self->AddToBox(DVector2(x, y));
+	return 0;
+}
+
+
+
+static double BoundingBox_Top(DBoundingBox *self)
+{
+	return self->Top();
+}
+DEFINE_ACTION_FUNCTION_NATIVE(DBoundingBox, Top, BoundingBox_Top)
+{
+	PARAM_SELF_PROLOGUE(DBoundingBox);
+
+	ACTION_RETURN_FLOAT(self->Top());
+}
+
+static double BoundingBox_Bottom(DBoundingBox *self)
+{
+	return self->Bottom();
+}
+DEFINE_ACTION_FUNCTION_NATIVE(DBoundingBox, Bottom, BoundingBox_Bottom)
+{
+	PARAM_SELF_PROLOGUE(DBoundingBox);
+
+	ACTION_RETURN_FLOAT(self->Bottom());
+}
+
+static double BoundingBox_Left(DBoundingBox *self)
+{
+	return self->Left();
+}
+DEFINE_ACTION_FUNCTION_NATIVE(DBoundingBox, Left, BoundingBox_Left)
+{
+	PARAM_SELF_PROLOGUE(DBoundingBox);
+
+	ACTION_RETURN_FLOAT(self->Left());
+}
+
+static double BoundingBox_Right(DBoundingBox *self)
+{
+	return self->Right();
+}
+DEFINE_ACTION_FUNCTION_NATIVE(DBoundingBox, Right, BoundingBox_Right)
+{
+	PARAM_SELF_PROLOGUE(DBoundingBox);
+
+	ACTION_RETURN_FLOAT(self->Right());
+}
+
+static int BoundingBox_InRange(DBoundingBox *self, line_t *line)
+{
+	return self->inRange(line);
+}
+DEFINE_ACTION_FUNCTION_NATIVE(DBoundingBox, InRange, BoundingBox_InRange)
+{
+	PARAM_SELF_PROLOGUE(DBoundingBox);
+	PARAM_POINTER(line, line_t);
+
+	ACTION_RETURN_BOOL(self->inRange(line));
+}
+
+static int BoundingBox_BoxOnLineSide(DBoundingBox *self, line_t *line)
+{
+	return self->BoxOnLineSide(line);
+}
+DEFINE_ACTION_FUNCTION_NATIVE(DBoundingBox, BoxOnLineSide, BoundingBox_BoxOnLineSide)
+{
+	PARAM_SELF_PROLOGUE(DBoundingBox);
+	PARAM_POINTER(line, line_t);
+
+	ACTION_RETURN_INT(self->BoxOnLineSide(line));
+}
+
+static void BoundingBox_Set(DBoundingBox *self, int index, double value)
+{
+	self->Set(index, value);
+}
+DEFINE_ACTION_FUNCTION_NATIVE(DBoundingBox, Set, BoundingBox_Set)
+{
+	PARAM_SELF_PROLOGUE(DBoundingBox);
+	PARAM_INT(index);
+	PARAM_FLOAT(value);
+
+	self->Set(index, value);
+	return 0;
+}
+
 DEFINE_FIELD_X(Sector, sector_t, floorplane)
 DEFINE_FIELD_X(Sector, sector_t, ceilingplane)
 DEFINE_FIELD_X(Sector, sector_t, Colormap)

@@ -1427,6 +1427,35 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, LookForPlayers, P_LookForPlayers)
 	ACTION_RETURN_BOOL(P_LookForPlayers(self, allaround, params));
 }
 
+static int CheckMonsterUseSpecials(AActor *self)
+{
+	spechit_t spec;
+	int good = 0;
+
+	if (!(self->flags6 & MF6_NOTRIGGER))
+	{
+		while (spechit.Pop (spec))
+		{
+			// [RH] let monsters push lines, as well as use them
+			if (((self->flags4 & MF4_CANUSEWALLS) && P_ActivateLine (spec.line, self, 0, SPAC_Use)) ||
+				((self->flags2 & MF2_PUSHWALL) && P_ActivateLine (spec.line, self, 0, SPAC_Push)))
+			{
+				good |= spec.line == self->BlockingLine ? 1 : 2;
+			}
+		}
+	}
+	else spechit.Clear();
+
+	return good;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckMonsterUseSpecials, CheckMonsterUseSpecials)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+
+	ACTION_RETURN_INT(CheckMonsterUseSpecials(self));
+}
+
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_Wander, A_Wander)
 {
 	PARAM_SELF_PROLOGUE(AActor);

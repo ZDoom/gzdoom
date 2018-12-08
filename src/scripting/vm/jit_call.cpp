@@ -1,7 +1,7 @@
 
 #include "jitintern.h"
-#include <map>
-#include <memory>
+
+ArgsCache* argsCache;
 
 void JitCompiler::EmitPARAM()
 {
@@ -657,8 +657,11 @@ asmjit::FuncSignature JitCompiler::CreateFuncSignature()
 	}
 
 	// FuncSignature only keeps a pointer to its args array. Store a copy of each args array variant.
-	static std::map<FString, std::unique_ptr<TArray<uint8_t>>> argsCache;
-	std::unique_ptr<TArray<uint8_t>> &cachedArgs = argsCache[key];
+	if (argsCache == nullptr)
+	{
+		argsCache = new ArgsCache;
+	}
+	CachedArgs &cachedArgs = (*argsCache)[key];
 	if (!cachedArgs) cachedArgs.reset(new TArray<uint8_t>(args));
 
 	FuncSignature signature;

@@ -768,4 +768,6 @@ void JitRelease()
 	JitBlocks.Clear();
 	JitBlockPos = 0;
 	JitBlockSize = 0;
+	delete argsCache;
+	argsCache = nullptr;
 }

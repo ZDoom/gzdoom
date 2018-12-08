@@ -12,6 +12,8 @@
 #include <asmjit/x86.h>
 #include <functional>
 #include <vector>
+#include <map>
+#include <memory>
 
 extern cycle_t VMCycles[10];
 extern int VMCalls[10];
@@ -310,3 +312,8 @@ public:
 
 void *AddJitFunction(asmjit::CodeHolder* code, asmjit::CCFunc *func);
 asmjit::CodeInfo GetHostCodeInfo();
+
+using CachedArgs = std::unique_ptr<TArray<uint8_t>>;
+using ArgsCache = std::map<FString, CachedArgs>;
+
+extern ArgsCache* argsCache;

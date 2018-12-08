@@ -1587,6 +1587,37 @@ DEFINE_ACTION_FUNCTION_NATIVE(AKey, GetKeyType, P_GetKeyType)
 	ACTION_RETURN_POINTER(P_GetKeyType(num));
 }
 
+//=====================================================================================
+//
+// 3D Floor exports
+//
+//=====================================================================================
+int CheckFor3DFloorHit(AActor *self, double z, bool trigger)
+{
+	return P_CheckFor3DFloorHit(self, z, trigger);
+}
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckFor3DFloorHit, CheckFor3DFloorHit)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(z);
+	PARAM_BOOL(trigger);
+
+	ACTION_RETURN_BOOL(P_CheckFor3DFloorHit(self, z, trigger));
+}
+
+int CheckFor3DCeilingHit(AActor *self, double z, bool trigger)
+{
+	return P_CheckFor3DCeilingHit(self, z, trigger);
+}
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckFor3DCeilingHit, CheckFor3DCeilingHit)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(z);
+	PARAM_BOOL(trigger);
+
+	ACTION_RETURN_BOOL(P_CheckFor3DCeilingHit(self, z, trigger));
+}
+
 
 
 DEFINE_FIELD(AActor, snext)

@@ -39,6 +39,7 @@
 #include "gi.h"
 #include "bitmap.h"
 #include "textures/textures.h"
+#include "imagehelpers.h"
 
 
 //==========================================================================
@@ -184,7 +185,7 @@ TArray<uint8_t> FRawPageTexture::Get8BitPixels(bool alphatex)
 	TArray<uint8_t> Pixels(Width*Height, true);
 	dest_p = Pixels.Data();
 
-	const uint8_t *remap = GetRemap(alphatex);
+	const uint8_t *remap = ImageHelpers::GetRemap(alphatex);
 
 	// This does not handle the custom palette. 
 	// User maps are encouraged to use a real image format when replacing E2END and the original could never be used anywhere else.

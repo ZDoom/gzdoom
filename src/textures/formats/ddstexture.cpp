@@ -53,6 +53,7 @@
 #include "w_wad.h"
 #include "bitmap.h"
 #include "v_video.h"
+#include "imagehelpers.h"
 
 // Since we want this to compile under Linux too, we need to define this
 // stuff ourselves instead of including a DirectX header.
@@ -470,7 +471,7 @@ void FDDSTexture::ReadRGB (FileReader &lump, uint8_t *buffer, int pixelmode)
 					uint32_t g = (c & GMask) << GShiftL; g |= g >> GShiftR;
 					uint32_t b = (c & BMask) << BShiftL; b |= b >> BShiftR;
 					uint32_t a = (c & AMask) << AShiftL; a |= a >> AShiftR;
-					*pixelp = RGBToPalette(pixelmode == PIX_Alphatex, r >> 24, g >> 24, b >> 24, a >> 24);
+					*pixelp = ImageHelpers::RGBToPalette(pixelmode == PIX_Alphatex, r >> 24, g >> 24, b >> 24, a >> 24);
 				}
 				else
 				{
@@ -556,7 +557,7 @@ void FDDSTexture::DecompressDXT1 (FileReader &lump, uint8_t *buffer, int pixelmo
 			// Pick colors from the palette for each of the four colors.
 			if (pixelmode != PIX_ARGB) for (i = 3; i >= 0; --i)
 			{
-				palcol[i] = RGBToPalette(pixelmode == PIX_Alphatex, color[i]);
+				palcol[i] = ImageHelpers::RGBToPalette(pixelmode == PIX_Alphatex, color[i]);
 			}
 			// Now decode this 4x4 block to the pixel buffer.
 			for (y = 0; y < 4; ++y)
@@ -636,7 +637,7 @@ void FDDSTexture::DecompressDXT3 (FileReader &lump, bool premultiplied, uint8_t 
 			// Pick colors from the palette for each of the four colors.
 			if (pixelmode != PIX_ARGB) for (i = 3; i >= 0; --i)
 			{
-				palcol[i] = RGBToPalette(pixelmode == PIX_Alphatex, color[i], false);
+				palcol[i] = ImageHelpers::RGBToPalette(pixelmode == PIX_Alphatex, color[i], false);
 			}
 
 			// Now decode this 4x4 block to the pixel buffer.
@@ -748,7 +749,7 @@ void FDDSTexture::DecompressDXT5 (FileReader &lump, bool premultiplied, uint8_t 
 			// Pick colors from the palette for each of the four colors.
 			if (pixelmode != PIX_ARGB) for (i = 3; i >= 0; --i)
 			{
-				palcol[i] = RGBToPalette(pixelmode == PIX_Alphatex, color[i], false);
+				palcol[i] = ImageHelpers::RGBToPalette(pixelmode == PIX_Alphatex, color[i], false);
 			}
 			// Now decode this 4x4 block to the pixel buffer.
 			for (y = 0; y < 4; ++y)

@@ -39,6 +39,7 @@
 #include "menu/menu.h"
 #include "w_wad.h"
 #include "bitmap.h"
+#include "imagehelpers.h"
 
 
 class FBarShader : public FWorldTexture
@@ -113,7 +114,7 @@ public:
 			// even if it makes little sense.
 			for (int i = 0; i < 512; i++)
 			{
-				Pix[i] = GrayMap[Pixels[i]];
+				Pix[i] = ImageHelpers::GrayMap[Pixels[i]];
 			}
 		}
 		return Pix;

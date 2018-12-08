@@ -39,6 +39,7 @@
 #include "templates.h"
 #include "m_png.h"
 #include "bitmap.h"
+#include "imagehelpers.h"
 
 //==========================================================================
 //
@@ -293,12 +294,12 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 			bMasked = true;
 			PaletteSize = 256;
 			PaletteMap = new uint8_t[256];
-			memcpy (PaletteMap, GrayMap, 256);
+			memcpy (PaletteMap, ImageHelpers::GrayMap, 256);
 			PaletteMap[NonPaletteTrans[0]] = 0;
 		}
 		else
 		{
-			PaletteMap = GrayMap;
+			PaletteMap = ImageHelpers::GrayMap;
 		}
 		break;
 
@@ -335,7 +336,7 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 
 FPNGTexture::~FPNGTexture ()
 {
-	if (PaletteMap != nullptr && PaletteMap != FTexture::GrayMap)
+	if (PaletteMap != nullptr && PaletteMap != ImageHelpers::GrayMap)
 	{
 		delete[] PaletteMap;
 		PaletteMap = nullptr;
@@ -424,17 +425,17 @@ TArray<uint8_t> FPNGTexture::Get8BitPixels(bool alphatex)
 			{
 				if (!alphatex)
 				{
-					FTexture::FlipSquareBlockRemap (Pixels.Data(), Width, Height, PaletteMap);
+					ImageHelpers::FlipSquareBlockRemap (Pixels.Data(), Width, PaletteMap);
 				}
 				else if (ColorType == 0)
 				{
-					FTexture::FlipSquareBlock (Pixels.Data(), Width, Height);
+					ImageHelpers::FlipSquareBlock (Pixels.Data(), Width);
 				}
 				else
 				{
 					uint8_t alpharemap[256];
 					ReadAlphaRemap(lump, alpharemap);
-					FTexture::FlipSquareBlockRemap(Pixels.Data(), Width, Height, alpharemap);
+					ImageHelpers::FlipSquareBlockRemap(Pixels.Data(), Width, alpharemap);
 				}
 			}
 			else
@@ -442,17 +443,17 @@ TArray<uint8_t> FPNGTexture::Get8BitPixels(bool alphatex)
 				TArray<uint8_t> newpix(Width*Height, true);
 				if (!alphatex)
 				{
-					FTexture::FlipNonSquareBlockRemap (newpix.Data(), Pixels.Data(), Width, Height, Width, PaletteMap);
+					ImageHelpers::FlipNonSquareBlockRemap (newpix.Data(), Pixels.Data(), Width, Height, Width, PaletteMap);
 				}
 				else if (ColorType == 0)
 				{
-					FTexture::FlipNonSquareBlock (newpix.Data(), Pixels.Data(), Width, Height, Width);
+					ImageHelpers::FlipNonSquareBlock (newpix.Data(), Pixels.Data(), Width, Height, Width);
 				}
 				else
 				{
 					uint8_t alpharemap[256];
 					ReadAlphaRemap(lump, alpharemap);
-					FTexture::FlipNonSquareBlockRemap(newpix.Data(), Pixels.Data(), Width, Height, Width, alpharemap);
+					ImageHelpers::FlipNonSquareBlockRemap(newpix.Data(), Pixels.Data(), Width, Height, Width, alpharemap);
 				}
 				return newpix;
 			}
@@ -485,7 +486,7 @@ TArray<uint8_t> FPNGTexture::Get8BitPixels(bool alphatex)
 						}
 						else
 						{
-							*out++ = RGBToPalette(alphatex, in[0], in[1], in[2]);
+							*out++ = ImageHelpers::RGBToPalette(alphatex, in[0], in[1], in[2]);
 						}
 						in += pitch;
 					}
@@ -514,7 +515,7 @@ TArray<uint8_t> FPNGTexture::Get8BitPixels(bool alphatex)
 				{
 					for (y = Height; y > 0; --y)
 					{
-						*out++ = RGBToPalette(alphatex, in[0], in[1], in[2], in[3]);
+						*out++ = ImageHelpers::RGBToPalette(alphatex, in[0], in[1], in[2], in[3]);
 						in += pitch;
 					}
 					in -= backstep;

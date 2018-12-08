@@ -37,6 +37,7 @@
 #include "files.h"
 #include "w_wad.h"
 #include "textures/textures.h"
+#include "imagehelpers.h"
 
 //==========================================================================
 //
@@ -110,7 +111,7 @@ TArray<uint8_t> FFlatTexture::Get8BitPixels(bool alphatex)
 	{
 		memset (Pixels.Data() + numread, 0xBB, Width*Height - numread);
 	}
-	FTexture::FlipSquareBlockRemap(Pixels.Data(), Width, Height, GetRemap(alphatex));
+	ImageHelpers::FlipSquareBlockRemap(Pixels.Data(), Width, ImageHelpers::GetRemap(alphatex));
 	return Pixels;
 }
 

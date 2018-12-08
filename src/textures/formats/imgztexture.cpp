@@ -38,6 +38,7 @@
 #include "w_wad.h"
 #include "v_video.h"
 #include "bitmap.h"
+#include "imagehelpers.h"
 
 bool checkIMGZPalette(FileReader &file);
 
@@ -134,7 +135,7 @@ TArray<uint8_t> FIMGZTexture::Get8BitPixels(bool alphatex)
 	TArray<uint8_t> Pixels(Width*Height, true);
 	dest_p = Pixels.Data();
 
-	const uint8_t *remap = GetRemap(alphatex, isalpha);
+	const uint8_t *remap = ImageHelpers::GetRemap(alphatex, isalpha);
 
 	// Convert the source image from row-major to column-major format and remap it
 	if (!imgz->Compression)

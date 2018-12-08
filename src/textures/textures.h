@@ -304,12 +304,14 @@ public:
 	/*virtual*/ FBitmap GetBgraBitmap(PalEntry *remap, int *trans = nullptr);
 
 public:
+	/*
 	static void FlipSquareBlock (uint8_t *block, int x, int y);
 	static void FlipSquareBlockBgra (uint32_t *block, int x, int y);
 	static void FlipSquareBlockRemap (uint8_t *block, int x, int y, const uint8_t *remap);
 	static void FlipNonSquareBlock (uint8_t *blockto, const uint8_t *blockfrom, int x, int y, int srcpitch);
 	static void FlipNonSquareBlockBgra (uint32_t *blockto, const uint32_t *blockfrom, int x, int y, int srcpitch);
 	static void FlipNonSquareBlockRemap (uint8_t *blockto, const uint8_t *blockfrom, int x, int y, int srcpitch, const uint8_t *remap);
+	*/
 	static bool SmoothEdges(unsigned char * buffer,int w, int h);
 	static PalEntry averageColor(const uint32_t *data, int size, int maxout);
 
@@ -459,53 +461,6 @@ protected:
 protected:
 	uint16_t Width, Height;
 	int16_t _LeftOffset[2], _TopOffset[2];
-	static uint8_t GrayMap[256];
-	uint8_t *GetRemap(bool wantluminance, bool srcisgrayscale = false)
-	{
-		if (wantluminance)
-		{
-			return translationtables[TRANSLATION_Standard][srcisgrayscale ? STD_Gray : STD_Grayscale]->Remap;
-		}
-		else
-		{
-			return srcisgrayscale ? GrayMap : GPalette.Remap;
-		}
-	}
-
-	uint8_t RGBToPalettePrecise(bool wantluminance, int r, int g, int b, int a = 255)
-	{
-		if (wantluminance)
-		{
-			return (uint8_t)Luminance(r, g, b) * a / 255;
-		}
-		else
-		{
-			return ColorMatcher.Pick(r, g, b);
-		}
-	}
-
-	uint8_t RGBToPalette(bool wantluminance, int r, int g, int b, int a = 255)
-	{
-		if (wantluminance)
-		{
-			// This is the same formula the OpenGL renderer uses for grayscale textures with an alpha channel.
-			return (uint8_t)(Luminance(r, g, b) * a / 255);
-		}
-		else
-		{
-			return a < 128? 0 : RGB256k.RGB[r >> 2][g >> 2][b >> 2];
-		}
-	}
-
-	uint8_t RGBToPalette(bool wantluminance, PalEntry pe, bool hasalpha = true)
-	{
-		return RGBToPalette(wantluminance, pe.r, pe.g, pe.b, hasalpha? pe.a : 255);
-	}
-
-	uint8_t RGBToPalette(FRenderStyle style, int r, int g, int b, int a = 255)
-	{
-		return RGBToPalette(!!(style.Flags & STYLEF_RedIsAlpha), r, g, b, a);
-	}
 
 	FTexture (const char *name = NULL, int lumpnum = -1);
 
@@ -635,13 +590,6 @@ public:
 	void DeleteAll();
 	void SpriteAdjustChanged();
 
-	// Replaces one texture with another. The new texture will be assigned
-	// the same name, slot, and use type as the texture it is replacing.
-	// The old texture will no longer be managed. Set free true if you want
-	// the old texture to be deleted or set it false if you want it to
-	// be left alone in memory. You will still need to delete it at some
-	// point, because the texture manager no longer knows about it.
-	// This function can be used for such things as warping textures.
 	void ReplaceTexture (FTextureID picnum, FTexture *newtexture, bool free);
 
 	int NumTextures () const { return (int)Textures.Size(); }

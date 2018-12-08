@@ -39,6 +39,7 @@
 #include "w_wad.h"
 #include "bitmap.h"
 #include "v_video.h"
+#include "imagehelpers.h"
 
 //==========================================================================
 //
@@ -391,15 +392,15 @@ TArray<uint8_t> FPCXTexture::Get8BitPixels(bool alphatex)
 			{
 			default:
 			case 1:
-				PaletteMap[0] = alphatex? 0 : GrayMap[0];
-				PaletteMap[1] = alphatex? 255 : GrayMap[255];
+				PaletteMap[0] = alphatex? 0 : ImageHelpers::GrayMap[0];
+				PaletteMap[1] = alphatex? 255 : ImageHelpers::GrayMap[255];
 				ReadPCX1bit (Pixels.Data(), lump, &header);
 				break;
 
 			case 4:
 				for (int i = 0; i < 16; i++)
 				{
-					PaletteMap[i] = RGBToPalettePrecise(alphatex, header.palette[i * 3], header.palette[i * 3 + 1], header.palette[i * 3 + 2]);
+					PaletteMap[i] = ImageHelpers::RGBToPalettePrecise(alphatex, header.palette[i * 3], header.palette[i * 3 + 1], header.palette[i * 3 + 2]);
 				}
 				ReadPCX4bits (Pixels.Data(), lump, &header);
 				break;
@@ -416,19 +417,19 @@ TArray<uint8_t> FPCXTexture::Get8BitPixels(bool alphatex)
 				uint8_t r = lump.ReadUInt8();
 				uint8_t g = lump.ReadUInt8();
 				uint8_t b = lump.ReadUInt8();
-				PaletteMap[i] = RGBToPalettePrecise(alphatex, r, g, b);
+				PaletteMap[i] = ImageHelpers::RGBToPalettePrecise(alphatex, r, g, b);
 			}
 			lump.Seek(sizeof(header), FileReader::SeekSet);
 			ReadPCX8bits (Pixels.Data(), lump, &header);
 		}
 		if (Width == Height)
 		{
-			FlipSquareBlockRemap(Pixels.Data(), Width, Height, PaletteMap);
+			ImageHelpers::FlipSquareBlockRemap(Pixels.Data(), Width, PaletteMap);
 		}
 		else
 		{
 			TArray<uint8_t> newpix(Width*Height, true);
-			FlipNonSquareBlockRemap (newpix.Data(), Pixels.Data(), Width, Height, Width, PaletteMap);
+			ImageHelpers::FlipNonSquareBlockRemap (newpix.Data(), Pixels.Data(), Width, Height, Width, PaletteMap);
 			return newpix;
 		}
 	}
@@ -441,7 +442,7 @@ TArray<uint8_t> FPCXTexture::Get8BitPixels(bool alphatex)
 		{
 			for(int x=0; x < Width; x++)
 			{
-				Pixels[y + Height * x] = RGBToPalette(alphatex, row[0], row[1], row[2]);
+				Pixels[y + Height * x] = ImageHelpers::RGBToPalette(alphatex, row[0], row[1], row[2]);
 				row+=3;
 			}
 		}

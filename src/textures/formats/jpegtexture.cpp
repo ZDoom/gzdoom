@@ -45,6 +45,7 @@ extern "C"
 #include "v_text.h"
 #include "bitmap.h"
 #include "v_video.h"
+#include "imagehelpers.h"
 
 
 struct FLumpSourceMgr : public jpeg_source_mgr
@@ -316,7 +317,7 @@ TArray<uint8_t> FJPEGTexture::Get8BitPixels(bool doalpha)
 				case JCS_RGB:
 					for (int x = Width; x > 0; --x)
 					{
-						*out = RGBToPalette(doalpha, in[0], in[1], in[2]);
+						*out = ImageHelpers::RGBToPalette(doalpha, in[0], in[1], in[2]);
 						out += Height;
 						in += 3;
 					}
@@ -324,7 +325,7 @@ TArray<uint8_t> FJPEGTexture::Get8BitPixels(bool doalpha)
 
 				case JCS_GRAYSCALE:
 				{
-					auto remap = GetRemap(doalpha, true);
+					auto remap = ImageHelpers::GetRemap(doalpha, true);
 					for (int x = Width; x > 0; --x)
 					{
 						*out = remap[in[0]];
@@ -342,7 +343,7 @@ TArray<uint8_t> FJPEGTexture::Get8BitPixels(bool doalpha)
 						int r = in[3] - (((256 - in[0])*in[3]) >> 8);
 						int g = in[3] - (((256 - in[1])*in[3]) >> 8);
 						int b = in[3] - (((256 - in[2])*in[3]) >> 8);
-						*out = RGBToPalette(doalpha, r, g, b);
+						*out = ImageHelpers::RGBToPalette(doalpha, r, g, b);
 						out += Height;
 						in += 4;
 					}
@@ -356,7 +357,7 @@ TArray<uint8_t> FJPEGTexture::Get8BitPixels(bool doalpha)
 						int r = clamp((int)(Y + 1.40200 * (Cr - 0x80)), 0, 255);
 						int g = clamp((int)(Y - 0.34414 * (Cb - 0x80) - 0.71414 * (Cr - 0x80)), 0, 255);
 						int b = clamp((int)(Y + 1.77200 * (Cb - 0x80)), 0, 255);
-						*out = RGBToPalette(doalpha, r, g, b);
+						*out = ImageHelpers::RGBToPalette(doalpha, r, g, b);
 						out += Height;
 						in += 4;
 					}

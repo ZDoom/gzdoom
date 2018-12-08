@@ -48,6 +48,7 @@
 #include "hwrenderer/textures/hw_material.h"
 #include "hwrenderer/textures/hw_ihwtexture.h"
 #include "swrenderer/textures/r_swtexture.h"
+#include "imagehelpers.h"
 
 FTexture *CreateBrightmapTexture(FTexture*);
 
@@ -66,13 +67,13 @@ CUSTOM_CVAR(Int, r_spriteadjust, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-uint8_t FTexture::GrayMap[256];
+uint8_t ImageHelpers::GrayMap[256];
 
 void FTexture::InitGrayMap()
 {
 	for (int i = 0; i < 256; ++i)
 	{
-		GrayMap[i] = ColorMatcher.Pick(i, i, i);
+		ImageHelpers::GrayMap[i] = ColorMatcher.Pick(i, i, i);
 	}
 }
 
@@ -293,128 +294,6 @@ void FTexture::CopyToBlock (uint8_t *dest, int dwidth, int dheight, int xpos, in
 					if (v != 0) dest[pos] = translation[v];
 				}
 			}
-		}
-	}
-}
-
-//==========================================================================
-//
-// Converts a texture between row-major and column-major format
-// by flipping it about the X=Y axis.
-//
-//==========================================================================
-
-void FTexture::FlipSquareBlock (uint8_t *block, int x, int y)
-{
-	int i, j;
-
-	if (x != y) return;
-
-	for (i = 0; i < x; ++i)
-	{
-		uint8_t *corner = block + x*i + i;
-		int count = x - i;
-		if (count & 1)
-		{
-			count--;
-			swapvalues<uint8_t> (corner[count], corner[count*x]);
-		}
-		for (j = 0; j < count; j += 2)
-		{
-			swapvalues<uint8_t> (corner[j], corner[j*x]);
-			swapvalues<uint8_t> (corner[j+1], corner[(j+1)*x]);
-		}
-	}
-}
-
-void FTexture::FlipSquareBlockBgra(uint32_t *block, int x, int y)
-{
-	int i, j;
-
-	if (x != y) return;
-
-	for (i = 0; i < x; ++i)
-	{
-		uint32_t *corner = block + x*i + i;
-		int count = x - i;
-		if (count & 1)
-		{
-			count--;
-			swapvalues<uint32_t>(corner[count], corner[count*x]);
-		}
-		for (j = 0; j < count; j += 2)
-		{
-			swapvalues<uint32_t>(corner[j], corner[j*x]);
-			swapvalues<uint32_t>(corner[j + 1], corner[(j + 1)*x]);
-		}
-	}
-}
-
-void FTexture::FlipSquareBlockRemap (uint8_t *block, int x, int y, const uint8_t *remap)
-{
-	int i, j;
-	uint8_t t;
-
-	if (x != y) return;
-
-	for (i = 0; i < x; ++i)
-	{
-		uint8_t *corner = block + x*i + i;
-		int count = x - i;
-		if (count & 1)
-		{
-			count--;
-			t = remap[corner[count]];
-			corner[count] = remap[corner[count*x]];
-			corner[count*x] = t;
-		}
-		for (j = 0; j < count; j += 2)
-		{
-			t = remap[corner[j]];
-			corner[j] = remap[corner[j*x]];
-			corner[j*x] = t;
-			t = remap[corner[j+1]];
-			corner[j+1] = remap[corner[(j+1)*x]];
-			corner[(j+1)*x] = t;
-		}
-	}
-}
-
-void FTexture::FlipNonSquareBlock (uint8_t *dst, const uint8_t *src, int x, int y, int srcpitch)
-{
-	int i, j;
-
-	for (i = 0; i < x; ++i)
-	{
-		for (j = 0; j < y; ++j)
-		{
-			dst[i*y+j] = src[i+j*srcpitch];
-		}
-	}
-}
-
-void FTexture::FlipNonSquareBlockBgra(uint32_t *dst, const uint32_t *src, int x, int y, int srcpitch)
-{
-	int i, j;
-
-	for (i = 0; i < x; ++i)
-	{
-		for (j = 0; j < y; ++j)
-		{
-			dst[i*y + j] = src[i + j*srcpitch];
-		}
-	}
-}
-
-void FTexture::FlipNonSquareBlockRemap (uint8_t *dst, const uint8_t *src, int x, int y, int srcpitch, const uint8_t *remap)
-{
-	int i, j;
-
-	for (i = 0; i < x; ++i)
-	{
-		for (j = 0; j < y; ++j)
-		{
-			dst[i*y+j] = remap[src[i+j*srcpitch]];
 		}
 	}
 }

@@ -39,6 +39,7 @@
 #include "files.h"
 #include "w_wad.h"
 #include "textures/textures.h"
+#include "imagehelpers.h"
 
 //==========================================================================
 //
@@ -96,7 +97,7 @@ TArray<uint8_t> FAutomapTexture::Get8BitPixels(bool alphatex)
 
 	TArray<uint8_t> Pixels(Width * Height, true);
 
-	const uint8_t *remap = GetRemap(alphatex);
+	const uint8_t *remap = ImageHelpers::GetRemap(alphatex);
 	for (x = 0; x < Width; ++x)
 	{
 		for (y = 0; y < Height; ++y)

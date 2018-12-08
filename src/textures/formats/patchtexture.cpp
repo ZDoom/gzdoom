@@ -39,6 +39,7 @@
 #include "v_palette.h"
 #include "v_video.h"
 #include "bitmap.h"
+#include "imagehelpers.h"
 
 
 // posts are runs of non masked source pixels
@@ -179,7 +180,7 @@ TArray<uint8_t> FPatchTexture::Get8BitPixels(bool alphatex)
 
 	maxcol = (const column_t *)((const uint8_t *)patch + Wads.LumpLength (SourceLump) - 3);
 
-	remap = GetRemap(alphatex, isalpha);
+	remap = ImageHelpers::GetRemap(alphatex, isalpha);
 	// Special case for skies
 	if (bNoRemap0 && remap == GPalette.Remap)
 	{

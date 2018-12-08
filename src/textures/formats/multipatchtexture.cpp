@@ -49,6 +49,7 @@
 #include "v_video.h"
 #include "v_text.h"
 #include "cmdlib.h"
+#include "imagehelpers.h"
 
 // On the Alpha, accessing the shorts directly if they aren't aligned on a
 // 4-byte boundary causes unaligned access warnings. Why it does this at
@@ -450,7 +451,7 @@ TArray<uint8_t> FMultiPatchTexture::MakeTexture (bool alphatex)
 			{
 				if (*out == 0 && in[3] != 0)
 				{
-					*out = RGBToPalette(alphatex, in[2], in[1], in[0]);
+					*out = ImageHelpers::RGBToPalette(alphatex, in[2], in[1], in[0]);
 				}
 				out += Height;
 				in += 4;

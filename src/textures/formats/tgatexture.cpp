@@ -39,6 +39,7 @@
 #include "templates.h"
 #include "bitmap.h"
 #include "v_video.h"
+#include "imagehelpers.h"
 
 
 //==========================================================================
@@ -244,7 +245,7 @@ TArray<uint8_t> FTGATexture::Get8BitPixels(bool alphatex)
 				r=g=b=a=0;
 				break;
 			}
-			PaletteMap[i] = RGBToPalettePrecise(alphatex, r, g, b, a);
+			PaletteMap[i] = ImageHelpers::RGBToPalettePrecise(alphatex, r, g, b, a);
 		}
     }
     
@@ -303,7 +304,7 @@ TArray<uint8_t> FTGATexture::Get8BitPixels(bool alphatex)
 				for(int x=0;x<Width;x++)
 				{
 					int v = LittleShort(*p);
-					Pixels[x*Height + y] = RGBToPalette(alphatex, ((v >> 10) & 0x1f) * 8, ((v >> 5) & 0x1f) * 8, (v & 0x1f) * 8);
+					Pixels[x*Height + y] = ImageHelpers::RGBToPalette(alphatex, ((v >> 10) & 0x1f) * 8, ((v >> 5) & 0x1f) * 8, (v & 0x1f) * 8);
 					p+=step_x;
 				}
 			}
@@ -315,7 +316,7 @@ TArray<uint8_t> FTGATexture::Get8BitPixels(bool alphatex)
 				uint8_t * p = ptr + y * Pitch;
 				for(int x=0;x<Width;x++)
 				{
-					Pixels[x*Height + y] = RGBToPalette(alphatex, p[2], p[1], p[0]);
+					Pixels[x*Height + y] = ImageHelpers::RGBToPalette(alphatex, p[2], p[1], p[0]);
 					p+=step_x;
 				}
 			}
@@ -329,7 +330,7 @@ TArray<uint8_t> FTGATexture::Get8BitPixels(bool alphatex)
 					uint8_t * p = ptr + y * Pitch;
 					for(int x=0;x<Width;x++)
 					{
-						Pixels[x*Height + y] = RGBToPalette(alphatex, p[2], p[1], p[0]);
+						Pixels[x*Height + y] = ImageHelpers::RGBToPalette(alphatex, p[2], p[1], p[0]);
 						p+=step_x;
 					}
 				}
@@ -341,7 +342,7 @@ TArray<uint8_t> FTGATexture::Get8BitPixels(bool alphatex)
 					uint8_t * p = ptr + y * Pitch;
 					for(int x=0;x<Width;x++)
 					{
-						Pixels[x*Height + y] = RGBToPalette(alphatex, p[2], p[1], p[0], p[3]);
+						Pixels[x*Height + y] = ImageHelpers::RGBToPalette(alphatex, p[2], p[1], p[0], p[3]);
 						p+=step_x;
 					}
 				}
@@ -355,7 +356,7 @@ TArray<uint8_t> FTGATexture::Get8BitPixels(bool alphatex)
 	
 	case 3:	// Grayscale
 	{
-		auto remap = GetRemap(alphatex, true);
+		auto remap = ImageHelpers::GetRemap(alphatex, true);
 		switch (hdr.bpp)
 		{
 		case 8:

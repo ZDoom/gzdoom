@@ -184,7 +184,6 @@ class FJPEGTexture : public FWorldTexture
 public:
 	FJPEGTexture (int lumpnum, int width, int height);
 
-	FTextureFormat GetFormat () override;
 	int CopyPixels(FBitmap *bmp) override;
 	bool UseBasePalette() override;
 	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
@@ -254,17 +253,6 @@ FJPEGTexture::FJPEGTexture (int lumpnum, int width, int height)
 
 	Width = width;
 	Height = height;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FTextureFormat FJPEGTexture::GetFormat()
-{
-	return TEX_RGB;
 }
 
 //==========================================================================

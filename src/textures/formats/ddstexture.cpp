@@ -163,7 +163,6 @@ class FDDSTexture : public FWorldTexture
 public:
 	FDDSTexture (FileReader &lump, int lumpnum, void *surfdesc);
 
-	FTextureFormat GetFormat () override;
 	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 
 protected:
@@ -367,30 +366,6 @@ void FDDSTexture::CalcBitShift (uint32_t mask, uint8_t *lshiftp, uint8_t *rshift
 		shift++;
 	}
 	*rshiftp = shift;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FTextureFormat FDDSTexture::GetFormat()
-{
-#if 0
-	switch (Format)
-	{
-	case ID_DXT1:	return TEX_DXT1;
-	case ID_DXT2:	return TEX_DXT2;
-	case ID_DXT3:	return TEX_DXT3;
-	case ID_DXT4:	return TEX_DXT4;
-	case ID_DXT5:	return TEX_DXT5;
-	default:		return TEX_RGB;
-	}
-#else
-	// For now, create a true color texture to preserve all colors.
-	return TEX_RGB;
-#endif
 }
 
 //==========================================================================

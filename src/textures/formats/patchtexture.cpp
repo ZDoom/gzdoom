@@ -39,6 +39,7 @@
 #include "v_palette.h"
 #include "v_video.h"
 #include "bitmap.h"
+#include "image.h"
 #include "imagehelpers.h"
 
 
@@ -57,18 +58,16 @@ bool checkPatchForAlpha(const void *buffer, uint32_t length);
 //
 //==========================================================================
 
-class FPatchTexture : public FWorldTexture
+class FPatchTexture : public FImageSource
 {
 	bool badflag = false;
 	bool isalpha = false;
+	bool bNoRemap0 = false;		// Unfortunately this was done as a very bad hack in ZDoom and will need impovement
 public:
 	FPatchTexture (int lumpnum, patch_t *header, bool isalphatex);
 	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 	int CopyPixels(FBitmap *bmp) override;
 	void DetectBadPatches();
-
-	bool UseBasePalette() override { return !isalpha; }
-	FTextureFormat GetFormat() override { return isalpha ? TEX_RGB : TEX_Pal; } // should be TEX_Gray instead of TEX_RGB. Maybe later when all is working.
 };
 
 //==========================================================================
@@ -81,11 +80,10 @@ static bool CheckIfPatch(FileReader & file, bool &isalpha)
 {
 	if (file.GetLength() < 13) return false;	// minimum length of a valid Doom patch
 	
-	uint8_t *data = new uint8_t[file.GetLength()];
 	file.Seek(0, FileReader::SeekSet);
-	file.Read(data, file.GetLength());
+	auto data = file.Read(file.GetLength());
 	
-	const patch_t *foo = (const patch_t *)data;
+	const patch_t *foo = (const patch_t *)data.Data();
 	
 	int height = LittleShort(foo->height);
 	int width = LittleShort(foo->width);
@@ -108,7 +106,6 @@ static bool CheckIfPatch(FileReader & file, bool &isalpha)
 			}
 			else if (ofs >= (uint32_t)(file.GetLength()))	// Need one byte for an empty column (but there's patches that don't know that!)
 			{
-				delete [] data;
 				return false;
 			}
 		}
@@ -116,12 +113,10 @@ static bool CheckIfPatch(FileReader & file, bool &isalpha)
 		{
 			// only check this if the texture passed validation.
 			// Here is a good point because we already have a valid buffer of the lump's data.
-			isalpha = checkPatchForAlpha(data, (uint32_t)file.GetLength());
+			isalpha = checkPatchForAlpha(data.Data(), (uint32_t)file.GetLength());
 		}
-		delete[] data;
 		return !gapAtStart;
 	}
-	delete [] data;
 	return false;
 }
 
@@ -142,7 +137,7 @@ FTexture *PatchTexture_TryCreate(FileReader & file, int lumpnum)
 	header.height = file.ReadUInt16();
 	header.leftoffset = file.ReadInt16();
 	header.topoffset = file.ReadInt16();
-	return new FPatchTexture(lumpnum, &header, isalpha);
+	return new FImageTexture(new FPatchTexture(lumpnum, &header, isalpha));
 }
 
 //==========================================================================
@@ -152,13 +147,14 @@ FTexture *PatchTexture_TryCreate(FileReader & file, int lumpnum)
 //==========================================================================
 
 FPatchTexture::FPatchTexture (int lumpnum, patch_t * header, bool isalphatex)
-: FWorldTexture(NULL, lumpnum)
+: FImageSource(lumpnum)
 {
+	bUseGamePalette = !isalphatex;
 	isalpha = isalphatex;
 	Width = header->width;
 	Height = header->height;
-	_LeftOffset[1] = _LeftOffset[0] = header->leftoffset;
-	_TopOffset[1] = _TopOffset[0] = header->topoffset;
+	LeftOffset = header->leftoffset;
+	TopOffset = header->topoffset;
 	DetectBadPatches();
 }
 
@@ -267,7 +263,7 @@ TArray<uint8_t> FPatchTexture::Get8BitPixels(bool alphatex)
 
 int FPatchTexture::CopyPixels(FBitmap *bmp)
 {
-	if (!isalpha) return FTexture::CopyPixels(bmp);
+	if (!isalpha) return FImageSource::CopyPixels(bmp);
 	else return CopyTranslatedPixels(bmp, translationtables[TRANSLATION_Standard][STD_Grayscale]->Palette);
 }
 
@@ -305,8 +301,8 @@ void FPatchTexture::DetectBadPatches ()
 				return;	// More than one post in a column!
 			}
 		}
-		_LeftOffset[1] = _LeftOffset[0] = 0;
-		_TopOffset[1] = _TopOffset[0] = 0;
+		LeftOffset = 0;
+		TopOffset = 0;
 		badflag = true;
 		bMasked = false;	// Hacked textures don't have transparent parts.
 	}

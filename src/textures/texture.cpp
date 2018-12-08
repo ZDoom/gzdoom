@@ -240,11 +240,6 @@ FTexture::~FTexture ()
 //
 //==========================================================================
 
-FTextureFormat FTexture::GetFormat()
-{
-	return TEX_Pal;
-}
-
 void FTexture::SetFrontSkyLayer ()
 {
 	bNoRemap0 = true;

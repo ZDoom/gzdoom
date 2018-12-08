@@ -386,6 +386,8 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 		{
 			noaccel = true;
 		}
+#if 0
+		// The HW 2D drawer should be able to handle this without problems
 		// If the main colormap has fixed lights, and this sprite is being drawn with that
 		// colormap, disable acceleration so that the lights can remain fixed.
 		PolyCameraLight *cameraLight = PolyCameraLight::Instance();
@@ -395,6 +397,7 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 		{
 			noaccel = true;
 		}
+#endif
 	}
 	else
 	{

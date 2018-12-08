@@ -53,7 +53,6 @@ public:
 	FPNGTexture (FileReader &lump, int lumpnum, const FString &filename, int width, int height, uint8_t bitdepth, uint8_t colortype, uint8_t interlace);
 	~FPNGTexture();
 
-	FTextureFormat GetFormat () override;
 	int CopyPixels(FBitmap *bmp) override;
 	bool UseBasePalette() override;
 	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
@@ -341,27 +340,6 @@ FPNGTexture::~FPNGTexture ()
 		delete[] PaletteMap;
 		PaletteMap = nullptr;
 	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FTextureFormat FPNGTexture::GetFormat()
-{
-#if 0
-	switch (ColorType)
-	{
-	case 3:		return TEX_Pal;
-	case 0:		return TEX_Gray;
-	default:	return TEX_RGB;
-	}
-#else
-	// For now, create a true color texture to preserve all colors.
-	return TEX_RGB;
-#endif
 }
 
 //==========================================================================

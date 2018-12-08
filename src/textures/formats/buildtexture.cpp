@@ -59,7 +59,6 @@ public:
 	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 	int CopyPixels(FBitmap *bmp) override;
 	bool UseBasePalette() override { return false; }
-	FTextureFormat GetFormat() override { return TEX_RGB; }
 
 protected:
 	const uint8_t *RawPixels;

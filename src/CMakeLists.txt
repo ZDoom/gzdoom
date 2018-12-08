@@ -1098,6 +1098,8 @@ set (PCH_SOURCES
 	textures/anim_switches.cpp
 	textures/bitmap.cpp
 	textures/texture.cpp
+	textures/image.cpp
+	textures/imagetexture.cpp
 	textures/texturemanager.cpp
 	textures/skyboxtexture.cpp
 	textures/formats/automaptexture.cpp

@@ -80,7 +80,6 @@ class FTGATexture : public FWorldTexture
 public:
 	FTGATexture (int lumpnum, TGAHeader *);
 
-	FTextureFormat GetFormat () override;
 	int CopyPixels(FBitmap *bmp) override;
 	bool UseBasePalette() override;
 
@@ -137,17 +136,6 @@ FTGATexture::FTGATexture (int lumpnum, TGAHeader * hdr)
 	Height = hdr->height;
 	// Alpha channel is used only for 32 bit RGBA and paletted images with RGBA palettes.
 	bMasked = (hdr->img_desc&15)==8 && (hdr->bpp==32 || (hdr->img_type==1 && hdr->cm_size==32));
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FTextureFormat FTGATexture::GetFormat()
-{
-	return TEX_RGB;
 }
 
 //==========================================================================

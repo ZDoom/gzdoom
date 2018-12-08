@@ -396,9 +396,6 @@ protected:
 	virtual bool UseBasePalette();
 	virtual FTexture *GetRedirect();
 
-	// Returns the native pixel format for this image
-	virtual FTextureFormat GetFormat();
-
 	void SetSpeed(float fac) { shaderspeed = fac; }
 
 	int GetWidth () { return Width; }

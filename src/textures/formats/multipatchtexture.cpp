@@ -153,7 +153,6 @@ public:
 	FMultiPatchTexture (FScanner &sc, ETextureType usetype);
 	~FMultiPatchTexture ();
 
-	FTextureFormat GetFormat() override;
 	bool UseBasePalette() override;
 	virtual void SetFrontSkyLayer () override;
 
@@ -522,22 +521,6 @@ int FMultiPatchTexture::CopyPixels(FBitmap *bmp)
 	}
 	return retv;
 }
-
-//==========================================================================
-//
-// FMultiPatchTexture :: GetFormat
-//
-// only returns 'paletted' if all patches use the base palette.
-//
-//==========================================================================
-
-FTextureFormat FMultiPatchTexture::GetFormat() 
-{ 
-	if (bComplex) return TEX_RGB;
-	if (NumParts == 1) return Parts[0].Texture->GetFormat();
-	return UseBasePalette() ? TEX_Pal : TEX_RGB;
-}
-
 
 //===========================================================================
 //

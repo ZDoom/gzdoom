@@ -84,8 +84,6 @@ class FPCXTexture : public FWorldTexture
 public:
 	FPCXTexture (int lumpnum, PCXHeader &);
 
-	FTextureFormat GetFormat () override;
-
 	int CopyPixels(FBitmap *bmp) override;
 	bool UseBasePalette() override;
 
@@ -149,17 +147,6 @@ FPCXTexture::FPCXTexture(int lumpnum, PCXHeader & hdr)
 	bMasked = false;
 	Width = LittleShort(hdr.xmax) - LittleShort(hdr.xmin) + 1;
 	Height = LittleShort(hdr.ymax) - LittleShort(hdr.ymin) + 1;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FTextureFormat FPCXTexture::GetFormat()
-{
-	return TEX_RGB;
 }
 
 //==========================================================================

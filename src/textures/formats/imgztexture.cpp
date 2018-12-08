@@ -71,7 +71,6 @@ public:
 	int CopyPixels(FBitmap *bmp) override;
 
 	bool UseBasePalette() override { return !isalpha; }
-	FTextureFormat GetFormat() override { return isalpha ? TEX_RGB : TEX_Pal; } // should be TEX_Gray instead of TEX_RGB. Maybe later when all is working.
 };
 
 

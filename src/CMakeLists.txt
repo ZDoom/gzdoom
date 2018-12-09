@@ -1109,6 +1109,7 @@ set (PCH_SOURCES
 	textures/formats/canvastexture.cpp
 	textures/formats/ddstexture.cpp
 	textures/formats/flattexture.cpp
+	textures/formats/fontchars.cpp
 	textures/formats/imgztexture.cpp
 	textures/formats/jpegtexture.cpp
 	textures/formats/md5check.cpp

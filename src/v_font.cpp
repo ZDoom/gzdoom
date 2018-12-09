@@ -90,13 +90,15 @@ The FON2 header is followed by variable length data:
 #include "gstrings.h"
 #include "v_text.h"
 #include "vm.h"
+#include "image.h"
+#include "textures/formats/fontchars.h"
 
 // MACROS ------------------------------------------------------------------
 
 #define DEFAULT_LOG_COLOR	PalEntry(223,223,223)
 
 // TYPES -------------------------------------------------------------------
-void RecordTextureColors (FTexture *pic, uint8_t *colorsused);
+void RecordTextureColors (FImageSource *pic, uint8_t *colorsused);
 
 // This structure is used by BuildTranslations() to hold color information.
 struct TranslationParm
@@ -164,37 +166,6 @@ public:
 
 protected:
 	bool notranslate[256];
-};
-
-// This is a font character that loads a texture and recolors it.
-class FFontChar1 : public FTexture
-{
-public:
-   FFontChar1 (FTexture *sourcelump);
-   TArray<uint8_t> Get8BitPixels(bool alphatex) override;
-   void SetSourceRemap(const uint8_t *sourceremap);
-
-protected:
-
-   FTexture *BaseTexture;
-   const uint8_t *SourceRemap;
-};
-
-// This is a font character that reads RLE compressed data.
-class FFontChar2 : public FTexture
-{
-public:
-	FFontChar2 (int sourcelump, int sourcepos, int width, int height, int leftofs=0, int topofs=0);
-
-	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
-	void SetSourceRemap(const uint8_t *sourceremap);
-
-protected:
-	int SourceLump;
-	int SourcePos;
-	const uint8_t *SourceRemap;
-
-	void MakeTexture ();
 };
 
 struct TempParmInfo
@@ -410,7 +381,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 
 		if (charLumps[i] != nullptr)
 		{
-			if (!noTranslate) Chars[i].Pic = new FFontChar1 (charLumps[i]);
+			if (!noTranslate) Chars[i].Pic = new FImageTexture(new FFontChar1 (charLumps[i]->GetImage()));
 			else Chars[i].Pic = charLumps[i];
 			Chars[i].XMove = Chars[i].Pic->GetDisplayWidth();
 		}
@@ -520,11 +491,11 @@ FFont *FFont::FindFont (FName name)
 //
 //==========================================================================
 
-void RecordTextureColors (FTexture *pic, uint8_t *usedcolors)
+void RecordTextureColors (FImageSource *pic, uint8_t *usedcolors)
 {
 	int x;
 	
-	auto pixels = pic->Get8BitPixels(false);
+	auto pixels = pic->GetPalettedPixels(false);
 	auto size = pic->GetWidth() * pic->GetHeight();
 	
 	for(x = 0;x < size; x++)
@@ -899,11 +870,14 @@ void FFont::LoadTranslations()
 	memset (usedcolors, 0, 256);
 	for (unsigned int i = 0; i < count; i++)
 	{
-		FFontChar1 *pic = static_cast<FFontChar1 *>(Chars[i].Pic);
-		if(pic)
+		if (Chars[i].Pic)
 		{
-			pic->SetSourceRemap(NULL); // Force the FFontChar1 to return the same pixels as the base texture
-			RecordTextureColors (pic, usedcolors);
+			FFontChar1 *pic = static_cast<FFontChar1 *>(Chars[i].Pic->GetImage());
+			if (pic)
+			{
+				pic->SetSourceRemap(NULL); // Force the FFontChar1 to return the same pixels as the base texture
+				RecordTextureColors(pic, usedcolors);
+			}
 		}
 	}
 
@@ -914,7 +888,7 @@ void FFont::LoadTranslations()
 	for (unsigned int i = 0; i < count; i++)
 	{
 		if(Chars[i].Pic)
-			static_cast<FFontChar1 *>(Chars[i].Pic)->SetSourceRemap(PatchRemap);
+			static_cast<FFontChar1 *>(Chars[i].Pic->GetImage())->SetSourceRemap(PatchRemap);
 	}
 
 	BuildTranslations (luminosity, identity, &TranslationParms[0][0], ActiveColors, NULL);
@@ -1045,7 +1019,7 @@ void FSingleLumpFont::LoadTranslations()
 	for(unsigned int i = 0;i < count;++i)
 	{
 		if(Chars[i].Pic)
-			static_cast<FFontChar2*>(Chars[i].Pic)->SetSourceRemap(PatchRemap);
+			static_cast<FFontChar2*>(Chars[i].Pic->GetImage())->SetSourceRemap(PatchRemap);
 	}
 
 	BuildTranslations (luminosity, useidentity ? identity : NULL, ranges, ActiveColors, usepalette ? local_palette : NULL);
@@ -1170,7 +1144,7 @@ void FSingleLumpFont::LoadFON2 (int lump, const uint8_t *data)
 		}
 		else
 		{
-			Chars[i].Pic = new FFontChar2 (lump, int(data_p - data), widths2[i], FontHeight);
+			Chars[i].Pic = new FImageTexture(new FFontChar2 (lump, int(data_p - data), widths2[i], FontHeight));
 			do
 			{
 				int8_t code = *data_p++;
@@ -1306,12 +1280,12 @@ void FSingleLumpFont::LoadBMF(int lump, const uint8_t *data)
 		{ // Empty character: skip it.
 			continue;
 		}
-		Chars[chardata[chari] - FirstChar].Pic = new FFontChar2(lump, int(chardata + chari + 6 - data),
+		Chars[chardata[chari] - FirstChar].Pic = new FImageTexture(new FFontChar2(lump, int(chardata + chari + 6 - data),
 			chardata[chari+1],	// width
 			chardata[chari+2],	// height
 			-(int8_t)chardata[chari+3],	// x offset
 			-(int8_t)chardata[chari+4]	// y offset
-		);
+		));
 	}
 
 	// If the font did not define a space character, determine a suitable space width now.
@@ -1376,7 +1350,7 @@ void FSingleLumpFont::CheckFON1Chars (double *luminosity)
 
 		if(!Chars[i].Pic)
 		{
-			Chars[i].Pic = new FFontChar2 (Lump, int(data_p - data), SpaceWidth, FontHeight);
+			Chars[i].Pic = new FImageTexture(new FFontChar2 (Lump, int(data_p - data), SpaceWidth, FontHeight));
 			Chars[i].XMove = SpaceWidth;
 		}
 
@@ -1540,216 +1514,6 @@ int FSinglePicFont::GetCharWidth (int code) const
 
 //==========================================================================
 //
-// FFontChar1 :: FFontChar1
-//
-// Used by fonts made from textures.
-//
-//==========================================================================
-
-FFontChar1::FFontChar1 (FTexture *sourcelump)
-: SourceRemap (NULL)
-{
-	UseType = ETextureType::FontChar;
-	BaseTexture = sourcelump;
-
-	// now copy all the properties from the base texture
-	assert(BaseTexture != NULL);
-	CopySize(BaseTexture);
-}
-
-//==========================================================================
-//
-// FFontChar1 :: GetPixels
-//
-// Render style is not relevant for fonts. This must not use it!
-//
-//==========================================================================
-
-TArray<uint8_t> FFontChar1::Get8BitPixels (bool)
-{
-	// Make the texture as normal, then remap it so that all the colors
-	// are at the low end of the palette
-	// Why? It only creates unnecessary work!
-	auto Pixels = BaseTexture->Get8BitPixels(false);
-
-	if (SourceRemap)
-	{
-		for (int x = 0; x < Width*Height; ++x)
-		{
-			Pixels[x] = SourceRemap[Pixels[x]];
-		}
-	}
-	return Pixels;
-}
-
-//==========================================================================
-//
-// FFontChar1 :: SetSourceRemap
-//
-//==========================================================================
-
-void FFontChar1::SetSourceRemap(const uint8_t *sourceremap)
-{
-	SourceRemap = sourceremap;
-}
-
-//==========================================================================
-//
-// FFontChar2 :: FFontChar2
-//
-// Used by FON1 and FON2 fonts.
-//
-//==========================================================================
-
-FFontChar2::FFontChar2 (int sourcelump, int sourcepos, int width, int height, int leftofs, int topofs)
-: SourceLump (sourcelump), SourcePos (sourcepos), SourceRemap(NULL)
-{
-	UseType = ETextureType::FontChar;
-	Width = width;
-	Height = height;
-	_LeftOffset[1] = _LeftOffset[0] = leftofs;
-	_TopOffset[1] = _TopOffset[0] = topofs;
-}
-
-//==========================================================================
-//
-// FFontChar2 :: SetSourceRemap
-//
-//==========================================================================
-
-void FFontChar2::SetSourceRemap(const uint8_t *sourceremap)
-{
-	SourceRemap = sourceremap;
-}
-
-//==========================================================================
-//
-// FFontChar2 :: Get8BitPixels
-//
-// Like for FontChar1, the render style has no relevance here as well.
-//
-//==========================================================================
-
-TArray<uint8_t> FFontChar2::Get8BitPixels(bool)
-{
-	auto lump = Wads.OpenLumpReader (SourceLump);
-	int destSize = Width * Height;
-	uint8_t max = 255;
-	bool rle = true;
-
-	// This is to "fix" bad fonts
-	{
-		uint8_t buff[16];
-		lump.Read (buff, 4);
-		if (buff[3] == '2')
-		{
-			lump.Read (buff, 7);
-			max = buff[6];
-			lump.Seek (SourcePos - 11, FileReader::SeekCur);
-		}
-		else if (buff[3] == 0x1A)
-		{
-			lump.Read(buff, 13);
-			max = buff[12] - 1;
-			lump.Seek (SourcePos - 17, FileReader::SeekCur);
-			rle = false;
-		}
-		else
-		{
-			lump.Seek (SourcePos - 4, FileReader::SeekCur);
-		}
-	}
-
-	TArray<uint8_t> Pixels(destSize, true);
-
-	int runlen = 0, setlen = 0;
-	uint8_t setval = 0;  // Shut up, GCC!
-	uint8_t *dest_p = Pixels.Data();
-	int dest_adv = Height;
-	int dest_rew = destSize - 1;
-
-	if (rle)
-	{
-		for (int y = Height; y != 0; --y)
-		{
-			for (int x = Width; x != 0; )
-			{
-				if (runlen != 0)
-				{
-					uint8_t color = lump.ReadUInt8();
-					color = MIN (color, max);
-					if (SourceRemap != NULL)
-					{
-						color = SourceRemap[color];
-					}
-					*dest_p = color;
-					dest_p += dest_adv;
-					x--;
-					runlen--;
-				}
-				else if (setlen != 0)
-				{
-					*dest_p = setval;
-					dest_p += dest_adv;
-					x--;
-					setlen--;
-				}
-				else
-				{
-					int8_t code = lump.ReadInt8();
-					if (code >= 0)
-					{
-						runlen = code + 1;
-					}
-					else if (code != -128)
-					{
-						uint8_t color = lump.ReadUInt8();
-						setlen = (-code) + 1;
-						setval = MIN (color, max);
-						if (SourceRemap != NULL)
-						{
-							setval = SourceRemap[setval];
-						}
-					}
-				}
-			}
-			dest_p -= dest_rew;
-		}
-	}
-	else
-	{
-		for (int y = Height; y != 0; --y)
-		{
-			for (int x = Width; x != 0; --x)
-			{
-				uint8_t color = lump.ReadUInt8();
-				if (color > max)
-				{
-					color = max;
-				}
-				if (SourceRemap != NULL)
-				{
-					color = SourceRemap[color];
-				}
-				*dest_p = color;
-				dest_p += dest_adv;
-			}
-			dest_p -= dest_rew;
-		}
-	}
-
-	if (destSize < 0)
-	{
-		char name[9];
-		Wads.GetLumpName (name, SourceLump);
-		name[8] = 0;
-		I_FatalError ("The font %s is corrupt", name);
-	}
-	return Pixels;
-}
-
-//==========================================================================
-//
 // FSpecialFont :: FSpecialFont
 //
 //==========================================================================
@@ -1798,7 +1562,7 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 
 		if (charlumps[i] != NULL)
 		{
-			if (!noTranslate) Chars[i].Pic = new FFontChar1 (charlumps[i]);
+			if (!noTranslate) Chars[i].Pic = new FImageTexture(new FFontChar1 (charlumps[i]->GetImage()));
 			else Chars[i].Pic = charlumps[i];
 			Chars[i].XMove = Chars[i].Pic->GetDisplayWidth();
 		}
@@ -1850,11 +1614,14 @@ void FSpecialFont::LoadTranslations()
 	memset (usedcolors, 0, 256);
 	for (i = 0; i < count; i++)
 	{
-		FFontChar1 *pic = static_cast<FFontChar1 *>(Chars[i].Pic);
-		if(pic)
+		if (Chars[i].Pic)
 		{
-			pic->SetSourceRemap(NULL); // Force the FFontChar1 to return the same pixels as the base texture
-			RecordTextureColors (pic, usedcolors);
+			FFontChar1 *pic = static_cast<FFontChar1 *>(Chars[i].Pic->GetImage());
+			if (pic)
+			{
+				pic->SetSourceRemap(NULL); // Force the FFontChar1 to return the same pixels as the base texture
+				RecordTextureColors(pic, usedcolors);
+			}
 		}
 	}
 
@@ -1879,7 +1646,7 @@ void FSpecialFont::LoadTranslations()
 	for (i = 0; i < count; i++)
 	{
 		if(Chars[i].Pic)
-			static_cast<FFontChar1 *>(Chars[i].Pic)->SetSourceRemap(PatchRemap);
+			static_cast<FFontChar1 *>(Chars[i].Pic->GetImage())->SetSourceRemap(PatchRemap);
 	}
 
 	BuildTranslations (luminosity, identity, &TranslationParms[0][0], TotalColors, NULL);

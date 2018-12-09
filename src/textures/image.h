@@ -21,6 +21,15 @@ protected:
 
 public:
 
+	void CopySize(FImageSource &other)
+	{
+		Width = other.Width;
+		Height = other.Height;
+		LeftOffset = other.LeftOffset;
+		TopOffset = other.TopOffset;
+		SourceLump = other.SourceLump;
+	}
+
 	// Images are statically allocated and freed in bulk. None of the subclasses may hold any destructible data.
 	void *operator new(size_t block) { return ImageArena.Alloc(block); }
 	void operator delete(void *block) {}

@@ -128,7 +128,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetPointer, COPY_AAPTR)
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopSound, S_StopSound)
+static void NativeStopSound(AActor *actor, int slot)
+{
+	S_StopSound(actor, slot);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopSound, NativeStopSound)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(slot);

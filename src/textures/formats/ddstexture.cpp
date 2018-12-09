@@ -164,7 +164,7 @@ class FDDSTexture : public FImageSource
 public:
 	FDDSTexture (FileReader &lump, int lumpnum, void *surfdesc);
 
-	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
+	TArray<uint8_t> GetPalettedPixels(int conversion) override;
 
 protected:
 	uint32_t Format;
@@ -183,7 +183,7 @@ protected:
 	void DecompressDXT3 (FileReader &lump, bool premultiplied, uint8_t *buffer, int pixelmode);
 	void DecompressDXT5 (FileReader &lump, bool premultiplied, uint8_t *buffer, int pixelmode);
 
-	int CopyPixels(FBitmap *bmp) override;
+	int CopyPixels(FBitmap *bmp, int conversion) override;
 	bool UseBasePalette();
 
 	friend class FTexture;
@@ -373,7 +373,7 @@ void FDDSTexture::CalcBitShift (uint32_t mask, uint8_t *lshiftp, uint8_t *rshift
 //
 //==========================================================================
 
-TArray<uint8_t> FDDSTexture::Get8BitPixels(bool alphatex)
+TArray<uint8_t> FDDSTexture::GetPalettedPixels(int conversion)
 {
 	auto lump = Wads.OpenLumpReader (SourceLump);
 
@@ -381,7 +381,7 @@ TArray<uint8_t> FDDSTexture::Get8BitPixels(bool alphatex)
 
 	lump.Seek (sizeof(DDSURFACEDESC2) + 4, FileReader::SeekSet);
 
-	int pmode = alphatex ? PIX_Alphatex : PIX_Palette;
+	int pmode = conversion == luminance ? PIX_Alphatex : PIX_Palette;
 	if (Format >= 1 && Format <= 4)		// RGB: Format is # of bytes per pixel
 	{
 		ReadRGB (lump, Pixels.Data(), pmode);
@@ -782,7 +782,7 @@ void FDDSTexture::DecompressDXT5 (FileReader &lump, bool premultiplied, uint8_t 
 //
 //===========================================================================
 
-int FDDSTexture::CopyPixels(FBitmap *bmp)
+int FDDSTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
 	auto lump = Wads.OpenLumpReader (SourceLump);
 

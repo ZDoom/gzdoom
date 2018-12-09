@@ -81,11 +81,11 @@ class FTGATexture : public FImageSource
 public:
 	FTGATexture (int lumpnum, TGAHeader *);
 
-	int CopyPixels(FBitmap *bmp) override;
+	int CopyPixels(FBitmap *bmp, int conversion) override;
 
 protected:
 	void ReadCompressed(FileReader &lump, uint8_t * buffer, int bytesperpixel);
-	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
+	TArray<uint8_t> GetPalettedPixels(int conversion) override;
 };
 
 //==========================================================================
@@ -179,7 +179,7 @@ void FTGATexture::ReadCompressed(FileReader &lump, uint8_t * buffer, int bytespe
 //
 //==========================================================================
 
-TArray<uint8_t> FTGATexture::Get8BitPixels(bool alphatex)
+TArray<uint8_t> FTGATexture::GetPalettedPixels(int conversion)
 {
 	uint8_t PaletteMap[256];
 	auto lump = Wads.OpenLumpReader (SourceLump);
@@ -232,7 +232,7 @@ TArray<uint8_t> FTGATexture::Get8BitPixels(bool alphatex)
 				r=g=b=a=0;
 				break;
 			}
-			PaletteMap[i] = ImageHelpers::RGBToPalettePrecise(alphatex, r, g, b, a);
+			PaletteMap[i] = ImageHelpers::RGBToPalettePrecise(conversion == luminance, r, g, b, a);
 		}
     }
     
@@ -291,7 +291,7 @@ TArray<uint8_t> FTGATexture::Get8BitPixels(bool alphatex)
 				for(int x=0;x<Width;x++)
 				{
 					int v = LittleShort(*p);
-					Pixels[x*Height + y] = ImageHelpers::RGBToPalette(alphatex, ((v >> 10) & 0x1f) * 8, ((v >> 5) & 0x1f) * 8, (v & 0x1f) * 8);
+					Pixels[x*Height + y] = ImageHelpers::RGBToPalette(conversion == luminance, ((v >> 10) & 0x1f) * 8, ((v >> 5) & 0x1f) * 8, (v & 0x1f) * 8);
 					p+=step_x;
 				}
 			}
@@ -303,7 +303,7 @@ TArray<uint8_t> FTGATexture::Get8BitPixels(bool alphatex)
 				uint8_t * p = ptr + y * Pitch;
 				for(int x=0;x<Width;x++)
 				{
-					Pixels[x*Height + y] = ImageHelpers::RGBToPalette(alphatex, p[2], p[1], p[0]);
+					Pixels[x*Height + y] = ImageHelpers::RGBToPalette(conversion == luminance, p[2], p[1], p[0]);
 					p+=step_x;
 				}
 			}
@@ -317,7 +317,7 @@ TArray<uint8_t> FTGATexture::Get8BitPixels(bool alphatex)
 					uint8_t * p = ptr + y * Pitch;
 					for(int x=0;x<Width;x++)
 					{
-						Pixels[x*Height + y] = ImageHelpers::RGBToPalette(alphatex, p[2], p[1], p[0]);
+						Pixels[x*Height + y] = ImageHelpers::RGBToPalette(conversion == luminance, p[2], p[1], p[0]);
 						p+=step_x;
 					}
 				}
@@ -329,7 +329,7 @@ TArray<uint8_t> FTGATexture::Get8BitPixels(bool alphatex)
 					uint8_t * p = ptr + y * Pitch;
 					for(int x=0;x<Width;x++)
 					{
-						Pixels[x*Height + y] = ImageHelpers::RGBToPalette(alphatex, p[2], p[1], p[0], p[3]);
+						Pixels[x*Height + y] = ImageHelpers::RGBToPalette(conversion == luminance, p[2], p[1], p[0], p[3]);
 						p+=step_x;
 					}
 				}
@@ -343,7 +343,7 @@ TArray<uint8_t> FTGATexture::Get8BitPixels(bool alphatex)
 	
 	case 3:	// Grayscale
 	{
-		auto remap = ImageHelpers::GetRemap(alphatex, true);
+		auto remap = ImageHelpers::GetRemap(conversion == luminance, true);
 		switch (hdr.bpp)
 		{
 		case 8:
@@ -388,7 +388,7 @@ TArray<uint8_t> FTGATexture::Get8BitPixels(bool alphatex)
 //
 //===========================================================================
 
-int FTGATexture::CopyPixels(FBitmap *bmp)
+int FTGATexture::CopyPixels(FBitmap *bmp, int conversion)
 {
 	PalEntry pe[256];
 	auto lump = Wads.OpenLumpReader (SourceLump);

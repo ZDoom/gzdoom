@@ -54,9 +54,8 @@ public:
 	FPNGTexture (FileReader &lump, int lumpnum, const FString &filename, int width, int height, uint8_t bitdepth, uint8_t colortype, uint8_t interlace);
 	~FPNGTexture();
 
-	int CopyPixels(FBitmap *bmp) override;
-	bool UseBasePalette() override;
-	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
+	int CopyPixels(FBitmap *bmp, int conversion) override;
+	TArray<uint8_t> GetPalettedPixels(int conversion) override;
 
 protected:
 	void ReadAlphaRemap(FileReader *lump, uint8_t *alpharemap);
@@ -182,7 +181,7 @@ FTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename)
 		return NULL;
 	}
 
-	return new FPNGTexture (png->File, -1, filename, width, height,	bitdepth, colortype, interlace);
+	return new FImageTexture(new FPNGTexture (png->File, -1, filename, width, height,	bitdepth, colortype, interlace));
 }
 
 //==========================================================================
@@ -193,7 +192,7 @@ FTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename)
 
 FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename, int width, int height,
 						  uint8_t depth, uint8_t colortype, uint8_t interlace)
-: FWorldTexture(NULL, lumpnum), SourceFile(filename),
+: FImageSource(lumpnum), SourceFile(filename),
   BitDepth(depth), ColorType(colortype), Interlace(interlace), HaveTrans(false)
 {
 	union
@@ -205,7 +204,6 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 	uint32_t len, id;
 	int i;
 
-	UseType = ETextureType::MiscPatch;
 	bMasked = false;
 
 	Width = width;
@@ -247,8 +245,8 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 					Printf ("Y-Offset for PNG texture %s is bad: %d (0x%08x)\n", Wads.GetLumpFullName (lumpnum), ihoty, ihoty);
 					ihoty = 0;
 				}
-				_LeftOffset[1] = _LeftOffset[0] = ihotx;
-				_TopOffset[1] = _TopOffset[0] = ihoty;
+				LeftOffset = ihotx;
+				TopOffset = ihoty;
 			}
 			break;
 
@@ -369,7 +367,7 @@ void FPNGTexture::ReadAlphaRemap(FileReader *lump, uint8_t *alpharemap)
 //
 //==========================================================================
 
-TArray<uint8_t> FPNGTexture::Get8BitPixels(bool alphatex)
+TArray<uint8_t> FPNGTexture::GetPalettedPixels(int conversion)
 {
 	FileReader *lump;
 	FileReader lfr;
@@ -396,13 +394,14 @@ TArray<uint8_t> FPNGTexture::Get8BitPixels(bool alphatex)
 		lump->Read(&len, 4);
 		lump->Read(&id, 4);
 
+		bool alphatex = conversion == luminance;
 		if (ColorType == 0 || ColorType == 3)	/* Grayscale and paletted */
 		{
 			M_ReadIDAT (*lump, Pixels.Data(), Width, Height, Width, BitDepth, ColorType, Interlace, BigLong((unsigned int)len));
 
 			if (Width == Height)
 			{
-				if (!alphatex)
+				if (conversion != luminance)
 				{
 					ImageHelpers::FlipSquareBlockRemap (Pixels.Data(), Width, PaletteMap);
 				}
@@ -420,7 +419,7 @@ TArray<uint8_t> FPNGTexture::Get8BitPixels(bool alphatex)
 			else
 			{
 				TArray<uint8_t> newpix(Width*Height, true);
-				if (!alphatex)
+				if (conversion != luminance)
 				{
 					ImageHelpers::FlipNonSquareBlockRemap (newpix.Data(), Pixels.Data(), Width, Height, Width, PaletteMap);
 				}
@@ -513,7 +512,7 @@ TArray<uint8_t> FPNGTexture::Get8BitPixels(bool alphatex)
 //
 //===========================================================================
 
-int FPNGTexture::CopyPixels(FBitmap *bmp)
+int FPNGTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
 	// Parse pre-IDAT chunks. I skip the CRCs. Is that bad?
 	PalEntry pe[256];
@@ -630,18 +629,4 @@ int FPNGTexture::CopyPixels(FBitmap *bmp)
 	}
 	delete[] Pixels;
 	return transpal;
-}
-
-
-//===========================================================================
-//
-// This doesn't check if the palette is identical with the base palette
-// I don't think it's worth the hassle because it's only of importance
-// when compositing multipatch textures.
-//
-//===========================================================================
-
-bool FPNGTexture::UseBasePalette() 
-{ 
-	return false; 
 }

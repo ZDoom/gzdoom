@@ -49,7 +49,7 @@
 //==========================================================================
 
 FImageTexture::FImageTexture(FImageSource *img, const char *name)
-: FWorldTexture(name, img->LumpNum())
+: FTexture(name, img->LumpNum())
 {
 	mImage = img;
 	Wads.GetLumpName (Name, img->LumpNum());
@@ -72,7 +72,7 @@ FImageTexture::FImageTexture(FImageSource *img, const char *name)
 
 int FImageTexture::CopyPixels(FBitmap *bmp)
 {
-	return mImage->CopyPixels(bmp);
+	return mImage->CopyPixels(bmp, bNoRemap0? FImageSource::noremap0 : FImageSource::normal);
 }	
 
 //===========================================================================
@@ -83,7 +83,7 @@ int FImageTexture::CopyPixels(FBitmap *bmp)
 
 TArray<uint8_t> FImageTexture::Get8BitPixels(bool alpha)
 {
-	return mImage->Get8BitPixels(alpha);
+	return mImage->GetPalettedPixels(alpha? alpha : bNoRemap0 ? FImageSource::noremap0 : FImageSource::normal);
 }	
 
 //===========================================================================

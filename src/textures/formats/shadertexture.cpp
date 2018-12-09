@@ -100,10 +100,10 @@ public:
 		}
 	}
 
-	TArray<uint8_t> Get8BitPixels(bool alphatex) override
+	TArray<uint8_t> GetPalettedPixels(int conversion) override
 	{
 		TArray<uint8_t> Pix(512, true);
-		if (alphatex)
+		if (conversion == luminance)
 		{
 			memcpy(Pix.Data(), Pixels, 512);
 		}
@@ -120,7 +120,7 @@ public:
 		return Pix;
 	}
 
-	int CopyPixels(FBitmap *bmp) override
+	int CopyPixels(FBitmap *bmp, int conversion) override
 	{
 		bmp->CopyPixelData(0, 0, Pixels, Width, Height, Height, 1, 0, translationtables[TRANSLATION_Standard][8]->Palette);
 		return 0;
@@ -134,5 +134,6 @@ private:
 FTexture *CreateShaderTexture(bool vertical, bool reverse)
 {
 	FStringf name("BarShader%c%c", vertical ? 'v' : 'h', reverse ? 'r' : 'f');
-	auto tex = new FImageTexture(new FBarShader(vertical, reverse), name.GetChars());
+	return new FImageTexture(new FBarShader(vertical, reverse), name.GetChars());
+
 }

@@ -68,8 +68,8 @@ class FIMGZTexture : public FImageSource
 
 public:
 	FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int16_t t, bool isalpha);
-	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
-	int CopyPixels(FBitmap *bmp) override;
+	TArray<uint8_t> GetPalettedPixels(int conversion) override;
+	int CopyPixels(FBitmap *bmp, int conversion) override;
 };
 
 
@@ -120,7 +120,7 @@ FIMGZTexture::FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int1
 //
 //==========================================================================
 
-TArray<uint8_t> FIMGZTexture::Get8BitPixels(bool alphatex)
+TArray<uint8_t> FIMGZTexture::GetPalettedPixels(int conversion)
 {
 	FMemLump lump = Wads.ReadLump (SourceLump);
 	const ImageHeader *imgz = (const ImageHeader *)lump.GetMem();
@@ -133,7 +133,7 @@ TArray<uint8_t> FIMGZTexture::Get8BitPixels(bool alphatex)
 	TArray<uint8_t> Pixels(Width*Height, true);
 	dest_p = Pixels.Data();
 
-	const uint8_t *remap = ImageHelpers::GetRemap(alphatex, isalpha);
+	const uint8_t *remap = ImageHelpers::GetRemap(conversion == luminance, isalpha);
 
 	// Convert the source image from row-major to column-major format and remap it
 	if (!imgz->Compression)
@@ -200,9 +200,9 @@ TArray<uint8_t> FIMGZTexture::Get8BitPixels(bool alphatex)
 //
 //==========================================================================
 
-int FIMGZTexture::CopyPixels(FBitmap *bmp)
+int FIMGZTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
-	if (!isalpha) return FImageSource::CopyPixels(bmp);
+	if (!isalpha) return FImageSource::CopyPixels(bmp, conversion);
 	else return CopyTranslatedPixels(bmp, translationtables[TRANSLATION_Standard][STD_Grayscale]->Palette);
 }
 

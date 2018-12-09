@@ -52,8 +52,8 @@ class FVoxelTexture : public FImageSource
 public:
 	FVoxelTexture(FVoxel *voxel);
 
-	int CopyPixels(FBitmap *bmp) override;
-	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
+	int CopyPixels(FBitmap *bmp, int conversion) override;
+	TArray<uint8_t> GetPalettedPixels(int conversion) override;
 
 protected:
 	FVoxel *SourceVox;
@@ -79,7 +79,7 @@ FVoxelTexture::FVoxelTexture(FVoxel *vox)
 //
 //===========================================================================
 
-TArray<uint8_t> FVoxelTexture::Get8BitPixels(bool alphatex)
+TArray<uint8_t> FVoxelTexture::GetPalettedPixels(int conversion)
 {
 	// GetPixels gets called when a translated palette is used so we still need to implement it here.
 	TArray<uint8_t> Pixels(256, true);
@@ -94,7 +94,7 @@ TArray<uint8_t> FVoxelTexture::Get8BitPixels(bool alphatex)
 			pe.g = (pp[1] << 2) | (pp[1] >> 4);
 			pe.b = (pp[2] << 2) | (pp[2] >> 4);
 			// Alphatexture handling is just for completeness, but rather unlikely to be used ever.
-			Pixels[i] = alphatex? pe.r : ColorMatcher.Pick(pe);
+			Pixels[i] = conversion == luminance ? pe.r : ColorMatcher.Pick(pe);
 		}
 	}
 	else 
@@ -116,7 +116,7 @@ TArray<uint8_t> FVoxelTexture::Get8BitPixels(bool alphatex)
 //
 //===========================================================================
 
-int FVoxelTexture::CopyPixels(FBitmap *bmp)
+int FVoxelTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
 	PalEntry pe[256];
 	uint8_t bitmap[256];

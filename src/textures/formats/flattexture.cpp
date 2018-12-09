@@ -50,7 +50,7 @@ class FFlatTexture : public FImageSource
 {
 public:
 	FFlatTexture (int lumpnum);
-	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
+	TArray<uint8_t> GetPalettedPixels(int conversion) override;
 };
 
 
@@ -104,7 +104,7 @@ FFlatTexture::FFlatTexture (int lumpnum)
 //
 //==========================================================================
 
-TArray<uint8_t> FFlatTexture::Get8BitPixels(bool alphatex)
+TArray<uint8_t> FFlatTexture::GetPalettedPixels(int conversion)
 {
 	auto lump = Wads.OpenLumpReader (SourceLump);
 	TArray<uint8_t> Pixels(Width*Height, true);
@@ -113,7 +113,7 @@ TArray<uint8_t> FFlatTexture::Get8BitPixels(bool alphatex)
 	{
 		memset (Pixels.Data() + numread, 0xBB, Width*Height - numread);
 	}
-	ImageHelpers::FlipSquareBlockRemap(Pixels.Data(), Width, ImageHelpers::GetRemap(alphatex));
+	ImageHelpers::FlipSquareBlockRemap(Pixels.Data(), Width, ImageHelpers::GetRemap(conversion == luminance));
 	return Pixels;
 }
 

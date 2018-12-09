@@ -57,8 +57,8 @@ class FBuildTexture : public FImageSource
 {
 public:
 	FBuildTexture (const FString &pathprefix, int tilenum, const uint8_t *pixels, int translation, int width, int height, int left, int top);
-	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
-	int CopyPixels(FBitmap *bmp) override;
+	TArray<uint8_t> GetPalettedPixels(int conversion) override;
+	int CopyPixels(FBitmap *bmp, int conversion) override;
 
 protected:
 	const uint8_t *RawPixels;
@@ -81,19 +81,19 @@ FBuildTexture::FBuildTexture(const FString &pathprefix, int tilenum, const uint8
 	TopOffset = top;
 }
 
-TArray<uint8_t> FBuildTexture::Get8BitPixels(bool alphatex)
+TArray<uint8_t> FBuildTexture::GetPalettedPixels(int conversion)
 {
 	TArray<uint8_t> Pixels(Width * Height, true);
 	FRemapTable *Remap = translationtables[TRANSLATION_Standard][Translation];
 	for (int i = 0; i < Width*Height; i++)
 	{
 		auto c = RawPixels[i];
-		Pixels[i] = alphatex ? Remap->Palette[c].Luminance() : Remap->Remap[c];
+		Pixels[i] = conversion == luminance ? Remap->Palette[c].Luminance() : Remap->Remap[c];
 	}
 	return Pixels;
 }
 
-int FBuildTexture::CopyPixels(FBitmap *bmp)
+int FBuildTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
 	PalEntry *Remap = translationtables[TRANSLATION_Standard][Translation]->Palette;
 	bmp->CopyPixelData(0, 0, RawPixels, Width, Height, Height, 1, 0, Remap);

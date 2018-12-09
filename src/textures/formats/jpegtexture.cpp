@@ -185,8 +185,8 @@ class FJPEGTexture : public FImageSource
 public:
 	FJPEGTexture (int lumpnum, int width, int height);
 
-	int CopyPixels(FBitmap *bmp) override;
-	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
+	int CopyPixels(FBitmap *bmp, int conversion) override;
+	TArray<uint8_t> GetPalettedPixels(int conversion) override;
 };
 
 //==========================================================================
@@ -260,7 +260,7 @@ FJPEGTexture::FJPEGTexture (int lumpnum, int width, int height)
 //
 //==========================================================================
 
-TArray<uint8_t> FJPEGTexture::Get8BitPixels(bool doalpha)
+TArray<uint8_t> FJPEGTexture::GetPalettedPixels(int conversion)
 {
 	auto lump = Wads.OpenLumpReader (SourceLump);
 	JSAMPLE *buff = NULL;
@@ -279,6 +279,7 @@ TArray<uint8_t> FJPEGTexture::Get8BitPixels(bool doalpha)
 	FLumpSourceMgr sourcemgr(&lump, &cinfo);
 	try
 	{
+		bool doalpha = conversion == luminance;
 		jpeg_read_header(&cinfo, TRUE);
 		if (!((cinfo.out_color_space == JCS_RGB && cinfo.num_components == 3) ||
 			(cinfo.out_color_space == JCS_CMYK && cinfo.num_components == 4) ||
@@ -381,7 +382,7 @@ TArray<uint8_t> FJPEGTexture::Get8BitPixels(bool doalpha)
 //
 //===========================================================================
 
-int FJPEGTexture::CopyPixels(FBitmap *bmp)
+int FJPEGTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
 	PalEntry pe[256];
 

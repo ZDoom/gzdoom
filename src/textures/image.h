@@ -16,16 +16,14 @@ protected:
 	int LeftOffset = 0, TopOffset = 0;			// Offsets stored in the image.
 	bool bUseGamePalette = false;				// true if this is an image without its own color set.
 
-	// internal builder functions for true color textures.
-
 public:
 
 	bool bMasked = true;						// Image (might) have holes (Assume true unless proven otherwise!)
 	int8_t bTranslucent = -1;					// Image has pixels with a non-0/1 value. (-1 means the user needs to do a real check)
 
 	// Returns the whole texture, paletted and true color versions respectively.
-	virtual TArray<uint8_t> Get8BitPixels(bool alphatex);
-	virtual int CopyPixels(FBitmap *bmp);
+	virtual TArray<uint8_t> GetPalettedPixels(int conversion);		// 'noremap0' will only be looked at by FPatchTexture and forwarded by FMultipatchTexture.
+	virtual int CopyPixels(FBitmap *bmp, int conversion);			// This will always ignore 'luminance'.
 	int CopyTranslatedPixels(FBitmap *bmp, PalEntry *remap);
 	
 	// Conversion option

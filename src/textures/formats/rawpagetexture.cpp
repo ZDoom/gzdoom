@@ -54,8 +54,8 @@ class FRawPageTexture : public FImageSource
 	int mPaletteLump = -1;
 public:
 	FRawPageTexture (int lumpnum);
-	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
-	int CopyPixels(FBitmap *bmp) override;
+	TArray<uint8_t> GetPalettedPixels(int conversion) override;
+	int CopyPixels(FBitmap *bmp, int conversion) override;
 };
 
 //==========================================================================
@@ -173,7 +173,7 @@ FRawPageTexture::FRawPageTexture (int lumpnum)
 //
 //==========================================================================
 
-TArray<uint8_t> FRawPageTexture::Get8BitPixels(bool alphatex)
+TArray<uint8_t> FRawPageTexture::GetPalettedPixels(int conversion)
 {
 	FMemLump lump = Wads.ReadLump (SourceLump);
 	const uint8_t *source = (const uint8_t *)lump.GetMem();
@@ -183,7 +183,7 @@ TArray<uint8_t> FRawPageTexture::Get8BitPixels(bool alphatex)
 	TArray<uint8_t> Pixels(Width*Height, true);
 	dest_p = Pixels.Data();
 
-	const uint8_t *remap = ImageHelpers::GetRemap(alphatex);
+	const uint8_t *remap = ImageHelpers::GetRemap(conversion == luminance);
 
 	// This does not handle the custom palette. 
 	// User maps are encouraged to use a real image format when replacing E2END and the original could never be used anywhere else.
@@ -202,9 +202,9 @@ TArray<uint8_t> FRawPageTexture::Get8BitPixels(bool alphatex)
 	return Pixels;
 }
 
-int FRawPageTexture::CopyPixels(FBitmap *bmp)
+int FRawPageTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
-	if (mPaletteLump < 0) return FImageSource::CopyPixels(bmp);
+	if (mPaletteLump < 0) return FImageSource::CopyPixels(bmp, conversion);
 	else
 	{
 		FMemLump lump = Wads.ReadLump(SourceLump);

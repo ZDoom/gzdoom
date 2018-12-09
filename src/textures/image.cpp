@@ -45,7 +45,7 @@
 //
 //===========================================================================
 
-TArray<uint8_t> FImageSource::Get8BitPixels(bool alphatex)
+TArray<uint8_t> FImageSource::GetPalettedPixels(int conversion)
 {
 	TArray<uint8_t> Pixels(Width * Height, true);
 	memset(Pixels.Data(), 0, Width * Height);
@@ -65,11 +65,12 @@ TArray<uint8_t> FImageSource::Get8BitPixels(bool alphatex)
 //
 //===========================================================================
 
-int FImageSource::CopyPixels(FBitmap *bmp)
+int FImageSource::CopyPixels(FBitmap *bmp, int conversion)
 {
+	if (conversion == luminance) conversion = normal;	// luminance images have no use as an RGB source.
 	PalEntry *palette = screen->GetPalette();
 	for(int i=1;i<256;i++) palette[i].a = 255;	// set proper alpha values
-	auto ppix = Get8BitPixels(false);	// should use composition cache
+	auto ppix = GetPalettedPixels(conversion);	// should use composition cache
 	bmp->CopyPixelData(0, 0, ppix.Data(), Width, Height, Height, 1, 0, palette, nullptr);
 	for(int i=1;i<256;i++) palette[i].a = 0;
 	return 0;
@@ -77,8 +78,7 @@ int FImageSource::CopyPixels(FBitmap *bmp)
 
 int FImageSource::CopyTranslatedPixels(FBitmap *bmp, PalEntry *remap)
 {
-	auto ppix = Get8BitPixels(false);	// should use composition cache
+	auto ppix = GetPalettedPixels(false);	// should use composition cache
 	bmp->CopyPixelData(0, 0, ppix.Data(), Width, Height, Height, 1, 0, remap, nullptr);
 	return 0;
 }
-

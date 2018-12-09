@@ -62,11 +62,10 @@ class FPatchTexture : public FImageSource
 {
 	bool badflag = false;
 	bool isalpha = false;
-	bool bNoRemap0 = false;		// Unfortunately this was done as a very bad hack in ZDoom and will need impovement
 public:
 	FPatchTexture (int lumpnum, patch_t *header, bool isalphatex);
-	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
-	int CopyPixels(FBitmap *bmp) override;
+	TArray<uint8_t> GetPalettedPixels(int conversion) override;
+	int CopyPixels(FBitmap *bmp, int conversion) override;
 	void DetectBadPatches();
 };
 
@@ -164,7 +163,7 @@ FPatchTexture::FPatchTexture (int lumpnum, patch_t * header, bool isalphatex)
 //
 //==========================================================================
 
-TArray<uint8_t> FPatchTexture::Get8BitPixels(bool alphatex)
+TArray<uint8_t> FPatchTexture::GetPalettedPixels(int conversion)
 {
 	uint8_t *remap, remaptable[256];
 	int numspans;
@@ -176,9 +175,9 @@ TArray<uint8_t> FPatchTexture::Get8BitPixels(bool alphatex)
 
 	maxcol = (const column_t *)((const uint8_t *)patch + Wads.LumpLength (SourceLump) - 3);
 
-	remap = ImageHelpers::GetRemap(alphatex, isalpha);
+	remap = ImageHelpers::GetRemap(conversion == luminance, isalpha);
 	// Special case for skies
-	if (bNoRemap0 && remap == GPalette.Remap)
+	if (conversion == noremap0 && remap == GPalette.Remap)
 	{
 		memcpy(remaptable, GPalette.Remap, 256);
 		remaptable[0] = 0;
@@ -261,9 +260,9 @@ TArray<uint8_t> FPatchTexture::Get8BitPixels(bool alphatex)
 //
 //==========================================================================
 
-int FPatchTexture::CopyPixels(FBitmap *bmp)
+int FPatchTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
-	if (!isalpha) return FImageSource::CopyPixels(bmp);
+	if (!isalpha) return FImageSource::CopyPixels(bmp, conversion);
 	else return CopyTranslatedPixels(bmp, translationtables[TRANSLATION_Standard][STD_Grayscale]->Palette);
 }
 

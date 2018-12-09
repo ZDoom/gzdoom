@@ -85,7 +85,7 @@ class FPCXTexture : public FImageSource
 public:
 	FPCXTexture (int lumpnum, PCXHeader &);
 
-	int CopyPixels(FBitmap *bmp) override;
+	int CopyPixels(FBitmap *bmp, int conversion) override;
 
 protected:
 	void ReadPCX1bit (uint8_t *dst, FileReader & lump, PCXHeader *hdr);
@@ -93,7 +93,7 @@ protected:
 	void ReadPCX8bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr);
 	void ReadPCX24bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr, int planes);
 
-	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
+	TArray<uint8_t> GetPalettedPixels(int conversion) override;
 };
 
 
@@ -358,7 +358,7 @@ void FPCXTexture::ReadPCX24bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr
 //
 //==========================================================================
 
-TArray<uint8_t> FPCXTexture::Get8BitPixels(bool alphatex)
+TArray<uint8_t> FPCXTexture::GetPalettedPixels(int conversion)
 {
 	uint8_t PaletteMap[256];
 	PCXHeader header;
@@ -371,6 +371,7 @@ TArray<uint8_t> FPCXTexture::Get8BitPixels(bool alphatex)
 	bitcount = header.bitsPerPixel * header.numColorPlanes;
 	TArray<uint8_t> Pixels(Width*Height, true);
 
+	bool alphatex = conversion == luminance;
 	if (bitcount < 24)
 	{
 		if (bitcount < 8)
@@ -446,7 +447,7 @@ TArray<uint8_t> FPCXTexture::Get8BitPixels(bool alphatex)
 //
 //===========================================================================
 
-int FPCXTexture::CopyPixels(FBitmap *bmp)
+int FPCXTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
 	PalEntry pe[256];
 	PCXHeader header;

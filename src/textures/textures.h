@@ -48,6 +48,7 @@
 #define MAX_CUSTOM_HW_SHADER_TEXTURES 15
 
 typedef TMap<int, bool> SpriteHits;
+class FImageSource;
 
 enum MaterialShaderIndex
 {
@@ -230,6 +231,7 @@ class FTexture
 	friend void R_InitSpriteDefs ();
 	friend void R_InstallSprite (int num, spriteframewithrotate *sprtemp, int &maxframe);
 	friend class GLDefsParser;
+	friend class FMultipatchTextureBuilder;
 	
 	// The serializer also needs access to more specific info that shouldn't be accessible through the interface.
 	friend FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTextureID *defval);
@@ -252,6 +254,7 @@ public:
 	static FTexture *CreateTexture(const char *name, int lumpnum, ETextureType usetype);
 	static FTexture *CreateTexture(int lumpnum, ETextureType usetype);
 	virtual ~FTexture ();
+	virtual FImageSource *GetImage() const { return nullptr; }
 	void AddAutoMaterials();
 	unsigned char *CreateUpsampledTextureBuffer(unsigned char *inputBuffer, const int inWidth, const int inHeight, int &outWidth, int &outHeight, bool hasAlpha);
 
@@ -298,6 +301,7 @@ public:
 	bool isFullbright() const { return bFullbright; }
 	void CreateDefaultBrightmap();
 	bool FindHoles(const unsigned char * buffer, int w, int h);
+	void SetUseType(ETextureType type) { UseType = type; }
 
 	// Returns the whole texture, stored in column-major order
 	virtual TArray<uint8_t> Get8BitPixels(bool alphatex);
@@ -393,9 +397,6 @@ protected:
 	virtual int CopyPixels(FBitmap *bmp);
 	int CopyTranslatedPixels(FBitmap *bmp, PalEntry *remap);
 
-	virtual bool UseBasePalette();
-	virtual FTexture *GetRedirect();
-
 	void SetSpeed(float fac) { shaderspeed = fac; }
 
 	int GetWidth () { return Width; }
@@ -437,8 +438,6 @@ protected:
 	virtual void ResolvePatches() {}
 
 	virtual void SetFrontSkyLayer();
-
-	void CopyToBlock (uint8_t *dest, int dwidth, int dheight, int x, int y, int rotate, const uint8_t *translation, bool style);
 
 	static void InitGrayMap();
 
@@ -566,14 +565,11 @@ public:
 	FTextureID GetTextureID (const char *name, ETextureType usetype, BITFIELD flags=0);
 	int ListTextures (const char *name, TArray<FTextureID> &list, bool listall = false);
 
-	void AddTexturesLump (const void *lumpdata, int lumpsize, int deflumpnum, int patcheslump, int firstdup=0, bool texture1=false);
-	void AddTexturesLumps (int lump1, int lump2, int patcheslump);
 	void AddGroup(int wadnum, int ns, ETextureType usetype);
 	void AddPatches (int lumpnum);
 	void AddHiresTextures (int wadnum);
-	void LoadTextureDefs(int wadnum, const char *lumpname);
-	void ParseTextureDef(int remapLump);
-	void ParseXTexture(FScanner &sc, ETextureType usetype);
+	void LoadTextureDefs(int wadnum, const char *lumpname, FMultipatchTextureBuilder &build);
+	void ParseTextureDef(int remapLump, FMultipatchTextureBuilder &build);
 	void SortTexturesByType(int start, int end);
 	bool AreTexturesCompatible (FTextureID picnum1, FTextureID picnum2);
 
@@ -581,8 +577,8 @@ public:
 	FTextureID AddTexture (FTexture *texture);
 	FTextureID GetDefaultTexture() const { return DefaultTexture; }
 
-	void LoadTextureX(int wadnum);
-	void AddTexturesForWad(int wadnum);
+	void LoadTextureX(int wadnum, FMultipatchTextureBuilder &build);
+	void AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &build);
 	void Init();
 	void DeleteAll();
 	void SpriteAdjustChanged();

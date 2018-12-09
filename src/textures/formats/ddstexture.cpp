@@ -184,7 +184,6 @@ protected:
 	void DecompressDXT5 (FileReader &lump, bool premultiplied, uint8_t *buffer, int pixelmode);
 
 	int CopyPixels(FBitmap *bmp, int conversion) override;
-	bool UseBasePalette();
 
 	friend class FTexture;
 };
@@ -809,13 +808,3 @@ int FDDSTexture::CopyPixels(FBitmap *bmp, int conversion)
 
 	return -1;
 }	
-
-//===========================================================================
-//
-//
-//===========================================================================
-
-bool FDDSTexture::UseBasePalette() 
-{ 
-	return false; 
-}

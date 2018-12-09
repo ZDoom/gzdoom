@@ -18,8 +18,6 @@ public:
 	FSkyBox(const char *name = nullptr);
 	TArray<uint8_t> Get8BitPixels(bool alphatex);
 	int CopyPixels(FBitmap *bmp);
-	bool UseBasePalette();
-	void Unload ();
 
 	void SetSize()
 	{
@@ -31,11 +29,16 @@ public:
 
 	bool Is3Face() const
 	{
-		return faces[5]==NULL;
+		return faces[5] == nullptr;
 	}
 
 	bool IsFlipped() const
 	{
 		return fliptop;
+	}
+
+	FImageSource *GetImage() const override
+	{
+		return faces[0] ? faces[0]->GetImage() : nullptr;
 	}
 };

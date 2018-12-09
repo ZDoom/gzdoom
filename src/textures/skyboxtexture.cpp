@@ -66,14 +66,3 @@ int FSkyBox::CopyPixels(FBitmap *bmp)
 	return 0;
 }
 
-//-----------------------------------------------------------------------------
-//
-//
-//
-//-----------------------------------------------------------------------------
-
-bool FSkyBox::UseBasePalette() 
-{ 
-	return false; // not really but here it's not important.
-}	
-

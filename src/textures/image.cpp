@@ -38,7 +38,7 @@
 #include "bitmap.h"
 #include "image.h"
 
-
+FMemArena FImageSource::ImageArena(32768);
 //===========================================================================
 // 
 // the default just returns an empty texture.

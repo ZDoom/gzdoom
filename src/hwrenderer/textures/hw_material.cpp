@@ -237,14 +237,6 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	mSpriteU[0] = mSpriteV[0] = 0.f;
 	mSpriteU[1] = mSpriteV[1] = 1.f;
 
-	FTexture *basetex = tx->GetRedirect();
-	// allow the redirect only if the texture is not expanded or the scale matches.
-	if (!expanded || (tx->Scale.X == basetex->Scale.X && tx->Scale.Y == basetex->Scale.Y))
-	{
-		sourcetex = basetex;
-		mBaseLayer = ValidateSysTexture(basetex, expanded);
-	}
-
 	mExpanded = expanded;
 	if (expanded)
 	{

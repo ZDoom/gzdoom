@@ -1101,6 +1101,7 @@ set (PCH_SOURCES
 	textures/image.cpp
 	textures/imagetexture.cpp
 	textures/texturemanager.cpp
+	textures/multipatchtexturebuilder.cpp
 	textures/skyboxtexture.cpp
 	textures/formats/automaptexture.cpp
 	textures/formats/brightmaptexture.cpp

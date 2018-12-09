@@ -52,6 +52,8 @@
 #include "r_renderer.h"
 #include "r_sky.h"
 #include "vm.h"
+#include "image.h"
+#include "formats/multipatchtexture.h"
 
 FTextureManager TexMan;
 
@@ -96,6 +98,7 @@ FTextureManager::~FTextureManager ()
 
 void FTextureManager::DeleteAll()
 {
+	FImageSource::ClearImages();
 	for (unsigned int i = 0; i < Textures.Size(); ++i)
 	{
 		delete Textures[i].Texture;
@@ -595,7 +598,7 @@ void FTextureManager::AddHiresTextures (int wadnum)
 //
 //==========================================================================
 
-void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname)
+void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname, FMultipatchTextureBuilder &build)
 {
 	int remapLump, lastLump;
 
@@ -605,12 +608,12 @@ void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname)
 	{
 		if (Wads.GetLumpFile(remapLump) == wadnum)
 		{
-			ParseTextureDef(remapLump);
+			ParseTextureDef(remapLump, build);
 		}
 	}
 }
 
-void FTextureManager::ParseTextureDef(int lump)
+void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build)
 {
 	TArray<FTextureID> tlist;
 
@@ -728,23 +731,23 @@ void FTextureManager::ParseTextureDef(int lump)
 		}
 		else if (sc.Compare("texture"))
 		{
-			ParseXTexture(sc, ETextureType::Override);
+			build.ParseTexture(sc, ETextureType::Override);
 		}
 		else if (sc.Compare("sprite"))
 		{
-			ParseXTexture(sc, ETextureType::Sprite);
+		build.ParseTexture(sc, ETextureType::Sprite);
 		}
 		else if (sc.Compare("walltexture"))
 		{
-			ParseXTexture(sc, ETextureType::Wall);
+		build.ParseTexture(sc, ETextureType::Wall);
 		}
 		else if (sc.Compare("flat"))
 		{
-			ParseXTexture(sc, ETextureType::Flat);
+		build.ParseTexture(sc, ETextureType::Flat);
 		}
 		else if (sc.Compare("graphic"))
 		{
-			ParseXTexture(sc, ETextureType::MiscPatch);
+		build.ParseTexture(sc, ETextureType::MiscPatch);
 		}
 		else if (sc.Compare("#include"))
 		{
@@ -758,7 +761,7 @@ void FTextureManager::ParseTextureDef(int lump)
 			}
 			else
 			{
-				ParseTextureDef(includelump);
+				ParseTextureDef(includelump, build);
 			}
 		}
 		else
@@ -804,7 +807,7 @@ void FTextureManager::AddPatches (int lumpnum)
 //
 //==========================================================================
 
-void FTextureManager::LoadTextureX(int wadnum)
+void FTextureManager::LoadTextureX(int wadnum, FMultipatchTextureBuilder &build)
 {
 	// Use the most recent PNAMES for this WAD.
 	// Multiple PNAMES in a WAD will be ignored.
@@ -822,7 +825,7 @@ void FTextureManager::LoadTextureX(int wadnum)
 
 	int texlump1 = Wads.CheckNumForName ("TEXTURE1", ns_global, wadnum);
 	int texlump2 = Wads.CheckNumForName ("TEXTURE2", ns_global, wadnum);
-	AddTexturesLumps (texlump1, texlump2, pnames);
+	build.AddTexturesLumps (texlump1, texlump2, pnames);
 }
 
 //==========================================================================
@@ -831,7 +834,7 @@ void FTextureManager::LoadTextureX(int wadnum)
 //
 //==========================================================================
 
-void FTextureManager::AddTexturesForWad(int wadnum)
+void FTextureManager::AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &build)
 {
 	int firsttexture = Textures.Size();
 	int lumpcount = Wads.GetNumLumps();
@@ -846,7 +849,7 @@ void FTextureManager::AddTexturesForWad(int wadnum)
 	AddGroup(wadnum, ns_patches, ETextureType::WallPatch);
 
 	// Second step: TEXTUREx lumps
-	LoadTextureX(wadnum);
+	LoadTextureX(wadnum, build);
 
 	// Third step: Flats
 	AddGroup(wadnum, ns_flats, ETextureType::Flat);
@@ -917,8 +920,8 @@ void FTextureManager::AddTexturesForWad(int wadnum)
 	}
 
 	// Check for text based texture definitions
-	LoadTextureDefs(wadnum, "TEXTURES");
-	LoadTextureDefs(wadnum, "HIRESTEX");
+	LoadTextureDefs(wadnum, "TEXTURES", build);
+	LoadTextureDefs(wadnum, "HIRESTEX", build);
 
 	// Seventh step: Check for hires replacements.
 	AddHiresTextures(wadnum);
@@ -1007,14 +1010,14 @@ void FTextureManager::Init()
 	AddTexture(CreateShaderTexture(true, true));
 
 	int wadcnt = Wads.GetNumWads();
+
+	FMultipatchTextureBuilder build(*this);
+
 	for(int i = 0; i< wadcnt; i++)
 	{
-		AddTexturesForWad(i);
+		AddTexturesForWad(i, build);
 	}
-	for (unsigned i = 0; i < Textures.Size(); i++)
-	{
-		Textures[i].Texture->ResolvePatches();
-	}
+	build.ResolveAllPatches();
 
 	// Add one marker so that the last WAD is easier to handle and treat
 	// Build tiles as a completely separate block.

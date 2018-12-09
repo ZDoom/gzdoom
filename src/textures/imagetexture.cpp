@@ -49,19 +49,22 @@
 //==========================================================================
 
 FImageTexture::FImageTexture(FImageSource *img, const char *name)
-: FTexture(name, img->LumpNum())
+: FTexture(name, img? img->LumpNum() : 0)
 {
 	mImage = img;
-	Wads.GetLumpName (Name, img->LumpNum());
-	Width = img->GetWidth();
-	Height = img->GetHeight();
-	
-	auto offsets = img->GetOffsets();
-	_LeftOffset[1] = _LeftOffset[0] = offsets.first;;
-	_TopOffset[1] = _TopOffset[0] = offsets.second;
-	
-	bMasked = img->bMasked;
-	bTranslucent = img->bTranslucent;
+	if (img != nullptr)
+	{
+		if (name == nullptr) Wads.GetLumpName(Name, img->LumpNum());
+		Width = img->GetWidth();
+		Height = img->GetHeight();
+
+		auto offsets = img->GetOffsets();
+		_LeftOffset[1] = _LeftOffset[0] = offsets.first;
+		_TopOffset[1] = _TopOffset[0] = offsets.second;
+
+		bMasked = img->bMasked;
+		bTranslucent = img->bTranslucent;
+	}
 }
 
 //===========================================================================
@@ -86,12 +89,3 @@ TArray<uint8_t> FImageTexture::Get8BitPixels(bool alpha)
 	return mImage->GetPalettedPixels(alpha? alpha : bNoRemap0 ? FImageSource::noremap0 : FImageSource::normal);
 }	
 
-//===========================================================================
-//
-//
-//===========================================================================
-
-bool FImageTexture::UseBasePalette()
-{ 
-	return mImage->UseGamePalette(); 
-}

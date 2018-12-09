@@ -385,6 +385,7 @@ namespace swrenderer
 			{
 				noaccel = true;
 			}
+#if 0
 			// If the main colormap has fixed lights, and this sprite is being drawn with that
 			// colormap, disable acceleration so that the lights can remain fixed.
 			CameraLight *cameraLight = CameraLight::Instance();
@@ -394,6 +395,7 @@ namespace swrenderer
 			{
 				noaccel = true;
 			}
+#endif
 		}
 		else
 		{

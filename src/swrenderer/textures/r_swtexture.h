@@ -55,7 +55,6 @@ public:
 		return mTexture->bMasked;
 	}
 	
-	bool UseBasePalette() const { return mTexture->UseBasePalette(); }
 	int GetSkyOffset() const { return mTexture->GetSkyOffset(); }
 	PalEntry GetSkyCapColor(bool bottom) const { return mTexture->GetSkyCapColor(bottom); }
 	

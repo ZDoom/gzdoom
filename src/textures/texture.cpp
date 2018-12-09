@@ -246,54 +246,6 @@ void FTexture::SetFrontSkyLayer ()
 	bNoRemap0 = true;
 }
 
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-void FTexture::CopyToBlock (uint8_t *dest, int dwidth, int dheight, int xpos, int ypos, int rotate, const uint8_t *translation, bool style)
-{
-	auto image = Get8BitPixels(style);	// should use composition cache
-	const uint8_t *pixels = image.Data();
-	int srcwidth = Width;
-	int srcheight = Height;
-	int step_x = Height;
-	int step_y = 1;
-	FClipRect cr = {0, 0, dwidth, dheight};
-	if (style) translation = nullptr;	// do not apply translations to alpha textures.
-
-	if (ClipCopyPixelRect(&cr, xpos, ypos, pixels, srcwidth, srcheight, step_x, step_y, rotate))
-	{
-		dest += ypos + dheight * xpos;
-		if (translation == NULL)
-		{
-			for (int x = 0; x < srcwidth; x++)
-			{
-				int pos = x * dheight;
-				for (int y = 0; y < srcheight; y++, pos++)
-				{
-					// the optimizer is doing a good enough job here so there's no need to optimize this by hand
-					uint8_t v = pixels[y * step_y + x * step_x]; 
-					if (v != 0) dest[pos] = v;
-				}
-			}
-		}
-		else
-		{
-			for (int x = 0; x < srcwidth; x++)
-			{
-				int pos = x * dheight;
-				for (int y = 0; y < srcheight; y++, pos++)
-				{
-					uint8_t v = pixels[y * step_y + x * step_x]; 
-					if (v != 0) dest[pos] = translation[v];
-				}
-			}
-		}
-	}
-}
-
 //===========================================================================
 //
 // FTexture::CopyPixels 
@@ -340,16 +292,6 @@ FBitmap FTexture::GetBgraBitmap(PalEntry *remap, int *ptrans)
 // 
 //
 //==========================================================================
-
-bool FTexture::UseBasePalette()
-{ 
-	return true; 
-}
-
-FTexture *FTexture::GetRedirect()
-{
-	return this;
-}
 
 FTexture *FTexture::GetRawTexture()
 {
@@ -523,7 +465,7 @@ void FTexture::CreateDefaultBrightmap()
 	if (!bBrightmapChecked)
 	{
 		// Check for brightmaps
-		if (UseBasePalette() && TexMan.HasGlobalBrightmap &&
+		if (GetImage() && GetImage()->UseGamePalette() && TexMan.HasGlobalBrightmap &&
 			UseType != ETextureType::Decal && UseType != ETextureType::MiscPatch && UseType != ETextureType::FontChar &&
 			Brightmap == NULL && bWarped == 0)
 		{
@@ -779,11 +721,6 @@ bool FTexture::ProcessData(unsigned char * buffer, int w, int h, bool ispatch)
 	if (bMasked)
 	{
 		bMasked = SmoothEdges(buffer, w, h);
-		if (!bMasked)
-		{
-			auto stex = GetRedirect();
-			stex->bMasked = false;	// also clear in the base texture if there is a redirection.
-		}
 		if (bMasked && !ispatch) FindHoles(buffer, w, h);
 	}
 	return true;
@@ -800,7 +737,6 @@ unsigned char * FTexture::CreateTexBuffer(int translation, int & w, int & h, int
 	unsigned char * buffer = nullptr;
 	int W, H;
 	int isTransparent = -1;
-
 
 	if (flags & CTF_CheckHires)
 	{

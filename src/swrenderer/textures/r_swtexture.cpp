@@ -44,7 +44,6 @@ FSoftwareTexture *FTexture::GetSoftwareTexture()
 	if (!SoftwareTexture)
 	{
 		if (bWarped) SoftwareTexture = new FWarpTexture(this, bWarped);
-		// else if (GetRedirect() != this) ... must be decided later. The current data structures make it hard to do this without creating a mess.
 		else SoftwareTexture = new FSoftwareTexture(this);
 	}
 	return SoftwareTexture;

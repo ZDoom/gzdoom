@@ -60,7 +60,7 @@ public:
 //
 //==========================================================================
 
-FTexture *EmptyTexture_TryCreate(FileReader & file, int lumpnum)
+FImageSource *EmptyImage_TryCreate(FileReader & file, int lumpnum)
 {
 	char check[8];
 	if (file.GetLength() != 8) return NULL;
@@ -68,7 +68,7 @@ FTexture *EmptyTexture_TryCreate(FileReader & file, int lumpnum)
 	if (file.Read(check, 8) != 8) return NULL;
 	if (memcmp(check, "\0\0\0\0\0\0\0\0", 8)) return NULL;
 
-	return new FImageTexture(new FEmptyTexture(lumpnum));
+	return new FEmptyTexture(lumpnum);
 }
 
 //==========================================================================

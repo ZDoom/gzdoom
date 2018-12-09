@@ -37,8 +37,13 @@
 #include "v_video.h"
 #include "bitmap.h"
 #include "image.h"
+#include "w_wad.h"
+#include "files.h"
 
 FMemArena FImageSource::ImageArena(32768);
+TArray<FImageSource *>FImageSource::ImageForLump;
+int FImageSource::NextID;
+
 //===========================================================================
 // 
 // the default just returns an empty texture.
@@ -81,4 +86,79 @@ int FImageSource::CopyTranslatedPixels(FBitmap *bmp, PalEntry *remap)
 	auto ppix = GetPalettedPixels(false);	// should use composition cache
 	bmp->CopyPixelData(0, 0, ppix.Data(), Width, Height, Height, 1, 0, remap, nullptr);
 	return 0;
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+typedef FImageSource * (*CreateFunc)(FileReader & file, int lumpnum);
+
+struct TexCreateInfo
+{
+	CreateFunc TryCreate;
+	ETextureType usetype;
+};
+
+FImageSource *IMGZImage_TryCreate(FileReader &, int lumpnum);
+FImageSource *PNGImage_TryCreate(FileReader &, int lumpnum);
+FImageSource *JPEGImage_TryCreate(FileReader &, int lumpnum);
+FImageSource *DDSImage_TryCreate(FileReader &, int lumpnum);
+FImageSource *PCXImage_TryCreate(FileReader &, int lumpnum);
+FImageSource *TGAImage_TryCreate(FileReader &, int lumpnum);
+FImageSource *RawPageImage_TryCreate(FileReader &, int lumpnum);
+FImageSource *FlatImage_TryCreate(FileReader &, int lumpnum);
+FImageSource *PatchImage_TryCreate(FileReader &, int lumpnum);
+FImageSource *EmptyImage_TryCreate(FileReader &, int lumpnum);
+FImageSource *AutomapImage_TryCreate(FileReader &, int lumpnum);
+
+
+// Examines the lump contents to decide what type of texture to create,
+// and creates the texture.
+FImageSource * FImageSource::GetImage(int lumpnum, ETextureType usetype)
+{
+	static TexCreateInfo CreateInfo[] = {
+		{ IMGZImage_TryCreate,			ETextureType::Any },
+		{ PNGImage_TryCreate,			ETextureType::Any },
+		{ JPEGImage_TryCreate,			ETextureType::Any },
+		{ DDSImage_TryCreate,			ETextureType::Any },
+		{ PCXImage_TryCreate,			ETextureType::Any },
+		{ TGAImage_TryCreate,			ETextureType::Any },
+		{ RawPageImage_TryCreate,		ETextureType::MiscPatch },
+		{ FlatImage_TryCreate,			ETextureType::Flat },
+		{ PatchImage_TryCreate,			ETextureType::Any },
+		{ EmptyImage_TryCreate,			ETextureType::Any },
+		{ AutomapImage_TryCreate,		ETextureType::MiscPatch },
+	};
+
+	if (lumpnum == -1) return nullptr;
+
+	unsigned size = ImageForLump.Size();
+	if (size <= (unsigned)lumpnum)
+	{
+		// Hires textures can be added dynamically to the end of the lump array, so this must be checked each time.
+		ImageForLump.Resize(lumpnum + 1);
+		for (; size < ImageForLump.Size(); size++) ImageForLump[size] = nullptr;
+	}
+	// An image for this lump already exists. We do not need another one.
+	if (ImageForLump[lumpnum] != nullptr) return ImageForLump[lumpnum];
+
+	auto data = Wads.OpenLumpReader(lumpnum);
+
+	for (size_t i = 0; i < countof(CreateInfo); i++)
+	{
+		if ((CreateInfo[i].usetype == usetype || CreateInfo[i].usetype == ETextureType::Any))
+		{
+			auto image = CreateInfo[i].TryCreate(data, lumpnum);
+			if (image != nullptr)
+			{
+				ImageForLump[lumpnum] = image;
+				return image;
+			}
+		}
+	}
+	return nullptr;
 }

@@ -85,91 +85,45 @@ void FTexture::InitGrayMap()
 //
 //==========================================================================
 
-typedef FTexture * (*CreateFunc)(FileReader & file, int lumpnum);
-
-struct TexCreateInfo
-{
-	CreateFunc TryCreate;
-	ETextureType usetype;
-};
-
-FTexture *IMGZTexture_TryCreate(FileReader &, int lumpnum);
-FTexture *PNGTexture_TryCreate(FileReader &, int lumpnum);
-FTexture *JPEGTexture_TryCreate(FileReader &, int lumpnum);
-FTexture *DDSTexture_TryCreate(FileReader &, int lumpnum);
-FTexture *PCXTexture_TryCreate(FileReader &, int lumpnum);
-FTexture *TGATexture_TryCreate(FileReader &, int lumpnum);
-FTexture *RawPageTexture_TryCreate(FileReader &, int lumpnum);
-FTexture *FlatTexture_TryCreate(FileReader &, int lumpnum);
-FTexture *PatchTexture_TryCreate(FileReader &, int lumpnum);
-FTexture *EmptyTexture_TryCreate(FileReader &, int lumpnum);
-FTexture *AutomapTexture_TryCreate(FileReader &, int lumpnum);
-
 
 // Examines the lump contents to decide what type of texture to create,
 // and creates the texture.
-FTexture * FTexture::CreateTexture (int lumpnum, ETextureType usetype)
+FTexture * FTexture::CreateTexture(const char *name, int lumpnum, ETextureType usetype)
 {
-	static TexCreateInfo CreateInfo[]={
-		{ IMGZTexture_TryCreate,		ETextureType::Any },
-		{ PNGTexture_TryCreate,			ETextureType::Any },
-		{ JPEGTexture_TryCreate,		ETextureType::Any },
-		{ DDSTexture_TryCreate,			ETextureType::Any },
-		{ PCXTexture_TryCreate,			ETextureType::Any },
-		{ TGATexture_TryCreate,			ETextureType::Any },
-		{ RawPageTexture_TryCreate,		ETextureType::MiscPatch },
-		{ FlatTexture_TryCreate,		ETextureType::Flat },
-		{ PatchTexture_TryCreate,		ETextureType::Any },
-		{ EmptyTexture_TryCreate,		ETextureType::Any },
-		{ AutomapTexture_TryCreate,		ETextureType::MiscPatch },
-	};
+	if (lumpnum == -1) return nullptr;
 
-	if (lumpnum == -1) return NULL;
-
-	auto data = Wads.OpenLumpReader (lumpnum);
-
-	for(size_t i = 0; i < countof(CreateInfo); i++)
+	auto image = FImageSource::GetImage(lumpnum, usetype);
+	if (image != nullptr)
 	{
-		if ((CreateInfo[i].usetype == usetype || CreateInfo[i].usetype == ETextureType::Any))
+		FTexture *tex = new FImageTexture(image);
+		if (tex != nullptr) 
 		{
-			FTexture * tex = CreateInfo[i].TryCreate(data, lumpnum);
-			if (tex != NULL) 
+			tex->UseType = usetype;
+			if (usetype == ETextureType::Flat) 
 			{
-				tex->UseType = usetype;
-				if (usetype == ETextureType::Flat) 
-				{
-					int w = tex->GetWidth();
-					int h = tex->GetHeight();
+				int w = tex->GetWidth();
+				int h = tex->GetHeight();
 
-					// Auto-scale flats with dimensions 128x128 and 256x256.
-					// In hindsight, a bad idea, but RandomLag made it sound better than it really is.
-					// Now we're stuck with this stupid behaviour.
-					if (w==128 && h==128) 
-					{
-						tex->Scale.X = tex->Scale.Y = 2;
-						tex->bWorldPanning = true;
-					}
-					else if (w==256 && h==256) 
-					{
-						tex->Scale.X = tex->Scale.Y = 4;
-						tex->bWorldPanning = true;
-					}
+				// Auto-scale flats with dimensions 128x128 and 256x256.
+				// In hindsight, a bad idea, but RandomLag made it sound better than it really is.
+				// Now we're stuck with this stupid behaviour.
+				if (w==128 && h==128) 
+				{
+					tex->Scale.X = tex->Scale.Y = 2;
+					tex->bWorldPanning = true;
 				}
-				return tex;
+				else if (w==256 && h==256) 
+				{
+					tex->Scale.X = tex->Scale.Y = 4;
+					tex->bWorldPanning = true;
+				}
 			}
+			tex->Name = name;
+			tex->Name.ToUpper();
+			return tex;
 		}
 	}
-	return NULL;
-}
-
-FTexture * FTexture::CreateTexture (const char *name, int lumpnum, ETextureType usetype)
-{
-	FTexture *tex = CreateTexture(lumpnum, usetype);
-	if (tex != NULL && name != NULL) {
-		tex->Name = name;
-		tex->Name.ToUpper();
-	}
-	return tex;
+	return nullptr;
 }
 
 //==========================================================================

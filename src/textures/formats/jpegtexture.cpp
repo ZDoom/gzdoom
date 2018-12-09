@@ -195,7 +195,7 @@ public:
 //
 //==========================================================================
 
-FTexture *JPEGTexture_TryCreate(FileReader & data, int lumpnum)
+FImageSource *JPEGImage_TryCreate(FileReader & data, int lumpnum)
 {
 	union
 	{
@@ -236,7 +236,7 @@ FTexture *JPEGTexture_TryCreate(FileReader & data, int lumpnum)
 	{
 		return NULL;
 	}
-	return new FImageTexture(new FJPEGTexture (lumpnum, BigShort(first4bytes.w[1]), BigShort(first4bytes.w[0])));
+	return new FJPEGTexture (lumpnum, BigShort(first4bytes.w[1]), BigShort(first4bytes.w[0]));
 }
 
 //==========================================================================

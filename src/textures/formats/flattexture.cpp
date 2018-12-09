@@ -62,9 +62,9 @@ public:
 //
 //==========================================================================
 
-FTexture *FlatTexture_TryCreate(FileReader & file, int lumpnum)
+FImageSource *FlatImage_TryCreate(FileReader & file, int lumpnum)
 {
-	return new FImageTexture(new FFlatTexture(lumpnum));
+	return new FFlatTexture(lumpnum);
 }
 
 //==========================================================================

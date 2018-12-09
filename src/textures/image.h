@@ -14,10 +14,14 @@ class FImageSource
 protected:
 
 	static FMemArena ImageArena;
+	static TArray<FImageSource *>ImageForLump;
+	static int NextID;
+
 	int SourceLump;
 	int Width = 0, Height = 0;
 	int LeftOffset = 0, TopOffset = 0;			// Offsets stored in the image.
 	bool bUseGamePalette = false;				// true if this is an image without its own color set.
+	int ImageID = -1;
 
 public:
 
@@ -41,8 +45,9 @@ public:
 	virtual TArray<uint8_t> GetPalettedPixels(int conversion);		// 'noremap0' will only be looked at by FPatchTexture and forwarded by FMultipatchTexture.
 	virtual int CopyPixels(FBitmap *bmp, int conversion);			// This will always ignore 'luminance'.
 	int CopyTranslatedPixels(FBitmap *bmp, PalEntry *remap);
-	static void ClearImages() { ImageArena.FreeAll(); }
-	
+	static void ClearImages() { ImageArena.FreeAll(); ImageForLump.Clear(); NextID = 0; }
+	static FImageSource * FImageSource::GetImage(int lumpnum, ETextureType usetype);
+
 	// Conversion option
 	enum EType
 	{
@@ -51,7 +56,7 @@ public:
 		noremap0 = 2
 	};
 	
-	FImageSource(int sourcelump = -1) : SourceLump(sourcelump) {}
+	FImageSource(int sourcelump = -1) : SourceLump(sourcelump) { ImageID = ++NextID; }
 	virtual ~FImageSource() {}
 	
 	// Creates an image from the given lump.

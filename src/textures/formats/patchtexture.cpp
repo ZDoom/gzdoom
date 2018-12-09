@@ -125,7 +125,7 @@ static bool CheckIfPatch(FileReader & file, bool &isalpha)
 //
 //==========================================================================
 
-FTexture *PatchTexture_TryCreate(FileReader & file, int lumpnum)
+FImageSource *PatchImage_TryCreate(FileReader & file, int lumpnum)
 {
 	patch_t header;
 	bool isalpha;
@@ -136,7 +136,7 @@ FTexture *PatchTexture_TryCreate(FileReader & file, int lumpnum)
 	header.height = file.ReadUInt16();
 	header.leftoffset = file.ReadInt16();
 	header.topoffset = file.ReadInt16();
-	return new FImageTexture(new FPatchTexture(lumpnum, &header, isalpha));
+	return new FPatchTexture(lumpnum, &header, isalpha);
 }
 
 //==========================================================================

@@ -82,7 +82,7 @@ protected:
 //
 //==========================================================================
 
-FTexture *PNGTexture_TryCreate(FileReader & data, int lumpnum)
+FImageSource *PNGImage_TryCreate(FileReader & data, int lumpnum)
 {
 	union
 	{
@@ -141,7 +141,7 @@ FTexture *PNGTexture_TryCreate(FileReader & data, int lumpnum)
 		}
 	}
 
-	return new FImageTexture(new FPNGTexture (data, lumpnum, FString(), width, height, bitdepth, colortype, interlace));
+	return new FPNGTexture (data, lumpnum, FString(), width, height, bitdepth, colortype, interlace);
 }
 
 //==========================================================================

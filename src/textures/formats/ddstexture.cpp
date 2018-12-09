@@ -218,7 +218,7 @@ static bool CheckDDS (FileReader &file)
 //
 //==========================================================================
 
-FTexture *DDSTexture_TryCreate (FileReader &data, int lumpnum)
+FImageSource *DDSImage_TryCreate (FileReader &data, int lumpnum)
 {
 	union
 	{
@@ -273,7 +273,7 @@ FTexture *DDSTexture_TryCreate (FileReader &data, int lumpnum)
 	{
 		return NULL;
 	}
-	return new FImageTexture(new FDDSTexture (data, lumpnum, &surfdesc));
+	return new FDDSTexture (data, lumpnum, &surfdesc);
 }
 
 //==========================================================================

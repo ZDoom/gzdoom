@@ -252,7 +252,6 @@ class FTexture
 
 public:
 	static FTexture *CreateTexture(const char *name, int lumpnum, ETextureType usetype);
-	static FTexture *CreateTexture(int lumpnum, ETextureType usetype);
 	virtual ~FTexture ();
 	virtual FImageSource *GetImage() const { return nullptr; }
 	void AddAutoMaterials();

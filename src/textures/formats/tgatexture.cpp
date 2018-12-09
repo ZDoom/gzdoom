@@ -94,7 +94,7 @@ protected:
 //
 //==========================================================================
 
-FTexture *TGATexture_TryCreate(FileReader & file, int lumpnum)
+FImageSource *TGAImage_TryCreate(FileReader & file, int lumpnum)
 {
 	TGAHeader hdr;
 
@@ -119,7 +119,7 @@ FTexture *TGATexture_TryCreate(FileReader & file, int lumpnum)
 	hdr.width = LittleShort(hdr.width);
 	hdr.height = LittleShort(hdr.height);
 
-	return new FImageTexture(new FTGATexture(lumpnum, &hdr));
+	return new FTGATexture(lumpnum, &hdr);
 }
 
 //==========================================================================

@@ -367,8 +367,7 @@ unsigned char *FTexture::LoadHiresTexture(int *width, int *height)
 
 		if (HiresLump >= 0)
 		{
-			HiresTexture = FTexture::CreateTexture(HiresLump, ETextureType::Any);
-			HiresTexture->Name = "";
+			HiresTexture = FTexture::CreateTexture("", HiresLump, ETextureType::Any);
 			TexMan.AddTexture(HiresTexture);	// let the texture manager manage this.
 		}
 	}

@@ -103,7 +103,7 @@ protected:
 //
 //==========================================================================
 
-FTexture * PCXTexture_TryCreate(FileReader & file, int lumpnum)
+FImageSource * PCXImage_TryCreate(FileReader & file, int lumpnum)
 {
 	PCXHeader hdr;
 
@@ -132,7 +132,7 @@ FTexture * PCXTexture_TryCreate(FileReader & file, int lumpnum)
 	file.Seek(0, FileReader::SeekSet);
 	file.Read(&hdr, sizeof(hdr));
 
-	return new FImageTexture(new FPCXTexture(lumpnum, hdr));
+	return new FPCXTexture(lumpnum, hdr);
 }
 
 //==========================================================================

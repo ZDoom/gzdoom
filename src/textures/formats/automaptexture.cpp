@@ -64,11 +64,11 @@ public:
 //
 //==========================================================================
 
-FTexture *AutomapTexture_TryCreate(FileReader &data, int lumpnum)
+FImageSource *AutomapImage_TryCreate(FileReader &data, int lumpnum)
 {
 	if (data.GetLength() < 320) return nullptr;
 	if (!Wads.CheckLumpName(lumpnum, "AUTOPAGE")) return nullptr;
-	return new FImageTexture(new FAutomapTexture(lumpnum));
+	return new FAutomapTexture(lumpnum);
 }
 
 //==========================================================================

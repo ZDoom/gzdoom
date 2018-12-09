@@ -79,7 +79,7 @@ public:
 //
 //==========================================================================
 
-FTexture *IMGZTexture_TryCreate(FileReader & file, int lumpnum)
+FImageSource *IMGZImage_TryCreate(FileReader & file, int lumpnum)
 {
 	uint32_t magic = 0;
 	uint16_t w, h;
@@ -94,7 +94,7 @@ FTexture *IMGZTexture_TryCreate(FileReader & file, int lumpnum)
 	l = file.ReadInt16();
 	t = file.ReadInt16();
 	ispalette = checkIMGZPalette(file);
-	return new FImageTexture(new FIMGZTexture(lumpnum, w, h, l, t, !ispalette));
+	return new FIMGZTexture(lumpnum, w, h, l, t, !ispalette);
 }
 
 //==========================================================================

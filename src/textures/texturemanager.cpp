@@ -412,7 +412,9 @@ FTextureID FTextureManager::CreateTexture (int lumpnum, ETextureType usetype)
 {
 	if (lumpnum != -1)
 	{
-		FTexture *out = FTexture::CreateTexture(lumpnum, usetype);
+		FString str;
+		Wads.GetLumpName(str, lumpnum);
+		FTexture *out = FTexture::CreateTexture(str, lumpnum, usetype);
 
 		if (out != NULL) return AddTexture (out);
 		else
@@ -559,7 +561,7 @@ void FTextureManager::AddHiresTextures (int wadnum)
 				if (amount == 0)
 				{
 					// A texture with this name does not yet exist
-					FTexture * newtex = FTexture::CreateTexture (firsttx, ETextureType::Any);
+					FTexture * newtex = FTexture::CreateTexture (Name, firsttx, ETextureType::Any);
 					if (newtex != NULL)
 					{
 						newtex->UseType=ETextureType::Override;
@@ -570,7 +572,7 @@ void FTextureManager::AddHiresTextures (int wadnum)
 				{
 					for(unsigned int i = 0; i < tlist.Size(); i++)
 					{
-						FTexture * newtex = FTexture::CreateTexture (firsttx, ETextureType::Any);
+						FTexture * newtex = FTexture::CreateTexture ("", firsttx, ETextureType::Any);
 						if (newtex != NULL)
 						{
 							FTexture * oldtex = Textures[tlist[i].GetIndex()].Texture;
@@ -669,7 +671,7 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 						(sl=oldtex->GetSourceLump()) >= 0 && Wads.GetLumpNamespace(sl) == ns_sprites)
 						)
 					{
-						FTexture * newtex = FTexture::CreateTexture (lumpnum, ETextureType::Any);
+						FTexture * newtex = FTexture::CreateTexture ("", lumpnum, ETextureType::Any);
 						if (newtex != NULL)
 						{
 							// Replace the entire texture and adjust the scaling and offset factors.
@@ -708,14 +710,13 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 
 				if (lumpnum>=0)
 				{
-					FTexture *newtex = FTexture::CreateTexture(lumpnum, ETextureType::Override);
+					FTexture *newtex = FTexture::CreateTexture(src, lumpnum, ETextureType::Override);
 
 					if (newtex != NULL)
 					{
 						// Replace the entire texture and adjust the scaling and offset factors.
 						newtex->bWorldPanning = true;
 						newtex->SetScaledSize(width, height);
-						newtex->Name = src;
 
 						FTextureID oldtex = TexMan.CheckForTexture(src, ETextureType::MiscPatch);
 						if (oldtex.isValid()) 
@@ -911,7 +912,7 @@ void FTextureManager::AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &b
 
 		// Try to create a texture from this lump and add it.
 		// Unfortunately we have to look at everything that comes through here...
-		FTexture *out = FTexture::CreateTexture(i, skin ? ETextureType::SkinGraphic : ETextureType::MiscPatch);
+		FTexture *out = FTexture::CreateTexture(Name, i, skin ? ETextureType::SkinGraphic : ETextureType::MiscPatch);
 
 		if (out != NULL) 
 		{

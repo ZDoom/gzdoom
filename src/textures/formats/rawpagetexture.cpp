@@ -137,10 +137,10 @@ static bool CheckIfRaw(FileReader & data)
 //
 //==========================================================================
 
-FTexture *RawPageTexture_TryCreate(FileReader & file, int lumpnum)
+FImageSource *RawPageImage_TryCreate(FileReader & file, int lumpnum)
 {
 	if (!CheckIfRaw(file)) return nullptr;
-	return new FImageTexture(new FRawPageTexture(lumpnum));
+	return new FRawPageTexture(lumpnum);
 }
 
 

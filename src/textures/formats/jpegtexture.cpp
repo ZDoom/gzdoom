@@ -46,6 +46,7 @@ extern "C"
 #include "bitmap.h"
 #include "v_video.h"
 #include "imagehelpers.h"
+#include "image.h"
 
 
 struct FLumpSourceMgr : public jpeg_source_mgr
@@ -179,13 +180,12 @@ void JPEG_OutputMessage (j_common_ptr cinfo)
 //
 //==========================================================================
 
-class FJPEGTexture : public FWorldTexture
+class FJPEGTexture : public FImageSource
 {
 public:
 	FJPEGTexture (int lumpnum, int width, int height);
 
 	int CopyPixels(FBitmap *bmp) override;
-	bool UseBasePalette() override;
 	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 };
 
@@ -236,7 +236,7 @@ FTexture *JPEGTexture_TryCreate(FileReader & data, int lumpnum)
 	{
 		return NULL;
 	}
-	return new FJPEGTexture (lumpnum, BigShort(first4bytes.w[1]), BigShort(first4bytes.w[0]));
+	return new FImageTexture(new FJPEGTexture (lumpnum, BigShort(first4bytes.w[1]), BigShort(first4bytes.w[0])));
 }
 
 //==========================================================================
@@ -246,9 +246,8 @@ FTexture *JPEGTexture_TryCreate(FileReader & data, int lumpnum)
 //==========================================================================
 
 FJPEGTexture::FJPEGTexture (int lumpnum, int width, int height)
-: FWorldTexture(NULL, lumpnum)
+: FImageSource(lumpnum)
 {
-	UseType = ETextureType::MiscPatch;
 	bMasked = false;
 
 	Width = width;
@@ -463,13 +462,3 @@ int FJPEGTexture::CopyPixels(FBitmap *bmp)
 	return 0;
 }
 
-
-//===========================================================================
-//
-//
-//===========================================================================
-
-bool FJPEGTexture::UseBasePalette() 
-{ 
-	return false; 
-}

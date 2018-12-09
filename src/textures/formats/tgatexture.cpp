@@ -40,6 +40,7 @@
 #include "bitmap.h"
 #include "v_video.h"
 #include "imagehelpers.h"
+#include "image.h"
 
 
 //==========================================================================
@@ -75,13 +76,12 @@ struct TGAHeader
 //
 //==========================================================================
 
-class FTGATexture : public FWorldTexture
+class FTGATexture : public FImageSource
 {
 public:
 	FTGATexture (int lumpnum, TGAHeader *);
 
 	int CopyPixels(FBitmap *bmp) override;
-	bool UseBasePalette() override;
 
 protected:
 	void ReadCompressed(FileReader &lump, uint8_t * buffer, int bytesperpixel);
@@ -119,7 +119,7 @@ FTexture *TGATexture_TryCreate(FileReader & file, int lumpnum)
 	hdr.width = LittleShort(hdr.width);
 	hdr.height = LittleShort(hdr.height);
 
-	return new FTGATexture(lumpnum, &hdr);
+	return new FImageTexture(new FTGATexture(lumpnum, &hdr));
 }
 
 //==========================================================================
@@ -129,9 +129,8 @@ FTexture *TGATexture_TryCreate(FileReader & file, int lumpnum)
 //==========================================================================
 
 FTGATexture::FTGATexture (int lumpnum, TGAHeader * hdr)
-: FWorldTexture(NULL, lumpnum)
+: FImageSource(lumpnum)
 {
-	Wads.GetLumpName (Name, lumpnum);
 	Width = hdr->width;
 	Height = hdr->height;
 	// Alpha channel is used only for 32 bit RGBA and paletted images with RGBA palettes.
@@ -534,13 +533,3 @@ int FTGATexture::CopyPixels(FBitmap *bmp)
 	delete [] sbuffer;
 	return transval;
 }	
-
-//===========================================================================
-//
-//
-//===========================================================================
-
-bool FTGATexture::UseBasePalette() 
-{ 
-	return false; 
-}

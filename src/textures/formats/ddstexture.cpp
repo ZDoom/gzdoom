@@ -54,6 +54,7 @@
 #include "bitmap.h"
 #include "v_video.h"
 #include "imagehelpers.h"
+#include "image.h"
 
 // Since we want this to compile under Linux too, we need to define this
 // stuff ourselves instead of including a DirectX header.
@@ -152,7 +153,7 @@ struct DDSFileHeader
 //
 //==========================================================================
 
-class FDDSTexture : public FWorldTexture
+class FDDSTexture : public FImageSource
 {
 	enum
 	{
@@ -273,7 +274,7 @@ FTexture *DDSTexture_TryCreate (FileReader &data, int lumpnum)
 	{
 		return NULL;
 	}
-	return new FDDSTexture (data, lumpnum, &surfdesc);
+	return new FImageTexture(new FDDSTexture (data, lumpnum, &surfdesc));
 }
 
 //==========================================================================
@@ -283,13 +284,11 @@ FTexture *DDSTexture_TryCreate (FileReader &data, int lumpnum)
 //==========================================================================
 
 FDDSTexture::FDDSTexture (FileReader &lump, int lumpnum, void *vsurfdesc)
-: FWorldTexture(NULL, lumpnum)
+: FImageSource(lumpnum)
 {
 	DDSURFACEDESC2 *surf = (DDSURFACEDESC2 *)vsurfdesc;
 
-	UseType = ETextureType::MiscPatch;
 	bMasked = false;
-
 	Width = uint16_t(surf->Width);
 	Height = uint16_t(surf->Height);
 

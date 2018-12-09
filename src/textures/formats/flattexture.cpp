@@ -38,6 +38,7 @@
 #include "w_wad.h"
 #include "textures/textures.h"
 #include "imagehelpers.h"
+#include "image.h"
 
 //==========================================================================
 //
@@ -45,7 +46,7 @@
 //
 //==========================================================================
 
-class FFlatTexture : public FWorldTexture
+class FFlatTexture : public FImageSource
 {
 public:
 	FFlatTexture (int lumpnum);
@@ -63,7 +64,7 @@ public:
 
 FTexture *FlatTexture_TryCreate(FileReader & file, int lumpnum)
 {
-	return new FFlatTexture(lumpnum);
+	return new FImageTexture(new FFlatTexture(lumpnum));
 }
 
 //==========================================================================
@@ -73,7 +74,7 @@ FTexture *FlatTexture_TryCreate(FileReader & file, int lumpnum)
 //==========================================================================
 
 FFlatTexture::FFlatTexture (int lumpnum)
-: FWorldTexture(NULL, lumpnum)
+: FImageSource(lumpnum)
 {
 	int area;
 	int bits;
@@ -91,6 +92,7 @@ FFlatTexture::FFlatTexture (int lumpnum)
 	case 256*256:	bits = 8;	break;
 	}
 
+	bUseGamePalette = true;
 	bMasked = false;
 	bTranslucent = false;
 	Width = Height = 1 << bits;

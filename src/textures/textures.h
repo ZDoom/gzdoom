@@ -670,14 +670,6 @@ public:
 
 };
 
-// base class for everything that can be used as a world texture. 
-// This intermediate class encapsulates the buffers for the software renderer.
-class FWorldTexture : public FTexture
-{
-protected:
-	FWorldTexture(const char *name = nullptr, int lumpnum = -1);
-};
-
 // A texture that doesn't really exist
 class FDummyTexture : public FTexture
 {

@@ -39,17 +39,17 @@
 #include "r_data/r_translate.h"
 #include "bitmap.h"
 #include "v_video.h"
+#include "image.h"
 
-class FBrightmapTexture : public FWorldTexture
+class FBrightmapTexture : public FImageSource
 {
 public:
-	FBrightmapTexture (FTexture *source);
+	FBrightmapTexture (FImageSource *source);
 
 	int CopyPixels(FBitmap *bmp) override;
-	bool UseBasePalette() override { return false; }
 
 protected:
-	FTexture *SourcePic;
+	FImageSource *SourcePic;
 };
 
 //===========================================================================
@@ -60,17 +60,12 @@ protected:
 //
 //===========================================================================
 
-FBrightmapTexture::FBrightmapTexture (FTexture *source)
+FBrightmapTexture::FBrightmapTexture (FImageSource *source)
 {
-	Name = "";
 	SourcePic = source;
-	CopySize(source);
-	bNoDecals = true;
-	Rotations = 0xffff;
-	UseType = ETextureType::Override;
+	Width = source->GetWidth();
+	Height = source->GetHeight();
 	bMasked = false;
-	id.SetInvalid();
-	SourceLump = -1;
 }
 
 int FBrightmapTexture::CopyPixels(FBitmap *bmp)
@@ -79,7 +74,7 @@ int FBrightmapTexture::CopyPixels(FBitmap *bmp)
 	return 0;
 }
 
-FTexture *CreateBrightmapTexture(FTexture *tex)
+FTexture *CreateBrightmapTexture(FImageSource *tex)
 {
-	return new FBrightmapTexture(tex);
+	return new FImageTexture(new FBrightmapTexture(tex));
 }

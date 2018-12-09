@@ -32,6 +32,7 @@
 #include "textures/bitmap.h"
 #include "g_levellocals.h"
 #include "models.h"
+#include "image.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244) // warning C4244: conversion from 'double' to 'float', possible loss of data
@@ -46,13 +47,12 @@
 //
 //===========================================================================
 
-class FVoxelTexture : public FWorldTexture
+class FVoxelTexture : public FImageSource
 {
 public:
 	FVoxelTexture(FVoxel *voxel);
 
 	int CopyPixels(FBitmap *bmp) override;
-	bool UseBasePalette() override { return false; }
 	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 
 protected:
@@ -70,7 +70,7 @@ FVoxelTexture::FVoxelTexture(FVoxel *vox)
 	SourceVox = vox;
 	Width = 16;
 	Height = 16;
-	bNoCompress = true;
+	//bNoCompress = true;
 }
 
 //===========================================================================
@@ -156,7 +156,7 @@ FVoxelModel::FVoxelModel(FVoxel *voxel, bool owned)
 {
 	mVoxel = voxel;
 	mOwningVoxel = owned;
-	mPalette = TexMan.AddTexture(new FVoxelTexture(voxel));
+	mPalette = TexMan.AddTexture(new FImageTexture(new FVoxelTexture(voxel)));
 }
 
 //===========================================================================

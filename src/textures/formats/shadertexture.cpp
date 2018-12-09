@@ -40,16 +40,16 @@
 #include "w_wad.h"
 #include "bitmap.h"
 #include "imagehelpers.h"
+#include "image.h"
 
 
-class FBarShader : public FWorldTexture
+class FBarShader : public FImageSource
 {
 public:
 	FBarShader(bool vertical, bool reverse)
 	{
 		int i;
 
-		Name.Format("BarShader%c%c", vertical ? 'v' : 'h', reverse ? 'r' : 'f');
 		Width = vertical ? 2 : 256;
 		Height = vertical ? 256 : 2;
 		bMasked = false;
@@ -126,12 +126,6 @@ public:
 		return 0;
 	}
 
-	bool UseBasePalette() override
-	{
-		return false;
-	}
-
-
 private:
 	uint8_t Pixels[512];
 };
@@ -139,5 +133,6 @@ private:
 
 FTexture *CreateShaderTexture(bool vertical, bool reverse)
 {
-	return new FBarShader(vertical, reverse);	
+	FStringf name("BarShader%c%c", vertical ? 'v' : 'h', reverse ? 'r' : 'f');
+	auto tex = new FImageTexture(new FBarShader(vertical, reverse), name.GetChars());
 }

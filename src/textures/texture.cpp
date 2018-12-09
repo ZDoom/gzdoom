@@ -49,8 +49,9 @@
 #include "hwrenderer/textures/hw_ihwtexture.h"
 #include "swrenderer/textures/r_swtexture.h"
 #include "imagehelpers.h"
+#include "image.h"
 
-FTexture *CreateBrightmapTexture(FTexture*);
+FTexture *CreateBrightmapTexture(FImageSource*);
 
 // Make sprite offset adjustment user-configurable per renderer.
 int r_spriteadjustSW, r_spriteadjustHW;
@@ -537,7 +538,7 @@ void FTexture::CreateDefaultBrightmap()
 				{
 					// Create a brightmap
 					DPrintf(DMSG_NOTIFY, "brightmap created for texture '%s'\n", Name.GetChars());
-					Brightmap = CreateBrightmapTexture(this);
+					Brightmap = CreateBrightmapTexture(static_cast<FImageTexture*>(this)->GetImage());
 					bBrightmapChecked = true;
 					TexMan.AddTexture(Brightmap);
 					return;

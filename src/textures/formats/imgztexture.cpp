@@ -39,6 +39,7 @@
 #include "v_video.h"
 #include "bitmap.h"
 #include "imagehelpers.h"
+#include "image.h"
 
 bool checkIMGZPalette(FileReader &file);
 
@@ -50,7 +51,7 @@ bool checkIMGZPalette(FileReader &file);
 //
 //==========================================================================
 
-class FIMGZTexture : public FWorldTexture
+class FIMGZTexture : public FImageSource
 {
 	struct ImageHeader
 	{
@@ -69,8 +70,6 @@ public:
 	FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int16_t t, bool isalpha);
 	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 	int CopyPixels(FBitmap *bmp) override;
-
-	bool UseBasePalette() override { return !isalpha; }
 };
 
 
@@ -95,7 +94,7 @@ FTexture *IMGZTexture_TryCreate(FileReader & file, int lumpnum)
 	l = file.ReadInt16();
 	t = file.ReadInt16();
 	ispalette = checkIMGZPalette(file);
-	return new FIMGZTexture(lumpnum, w, h, l, t, !ispalette);
+	return new FImageTexture(new FIMGZTexture(lumpnum, w, h, l, t, !ispalette));
 }
 
 //==========================================================================
@@ -105,14 +104,14 @@ FTexture *IMGZTexture_TryCreate(FileReader & file, int lumpnum)
 //==========================================================================
 
 FIMGZTexture::FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int16_t t, bool _isalpha)
-	: FWorldTexture(NULL, lumpnum)
+	: FImageSource(lumpnum)
 {
-	Wads.GetLumpName (Name, lumpnum);
 	Width = w;
 	Height = h;
-	_LeftOffset[1] = _LeftOffset[0] = l;
-	_TopOffset[1] = _TopOffset[0] = t;
+	LeftOffset = l;
+	TopOffset = t;
 	isalpha = _isalpha;
+	bUseGamePalette = !isalpha;
 }
 
 //==========================================================================
@@ -203,7 +202,7 @@ TArray<uint8_t> FIMGZTexture::Get8BitPixels(bool alphatex)
 
 int FIMGZTexture::CopyPixels(FBitmap *bmp)
 {
-	if (!isalpha) return FTexture::CopyPixels(bmp);
+	if (!isalpha) return FImageSource::CopyPixels(bmp);
 	else return CopyTranslatedPixels(bmp, translationtables[TRANSLATION_Standard][STD_Grayscale]->Palette);
 }
 

@@ -40,6 +40,7 @@
 #include "m_png.h"
 #include "bitmap.h"
 #include "imagehelpers.h"
+#include "image.h"
 
 //==========================================================================
 //
@@ -47,7 +48,7 @@
 //
 //==========================================================================
 
-class FPNGTexture : public FWorldTexture
+class FPNGTexture : public FImageSource
 {
 public:
 	FPNGTexture (FileReader &lump, int lumpnum, const FString &filename, int width, int height, uint8_t bitdepth, uint8_t colortype, uint8_t interlace);
@@ -141,7 +142,7 @@ FTexture *PNGTexture_TryCreate(FileReader & data, int lumpnum)
 		}
 	}
 
-	return new FPNGTexture (data, lumpnum, FString(), width, height, bitdepth, colortype, interlace);
+	return new FImageTexture(new FPNGTexture (data, lumpnum, FString(), width, height, bitdepth, colortype, interlace));
 }
 
 //==========================================================================

@@ -146,7 +146,7 @@ struct FPatchLookup
 //
 //==========================================================================
 
-class FMultiPatchTexture : public FWorldTexture
+class FMultiPatchTexture : public FTexture
 {
 public:
 	FMultiPatchTexture (const void *texdef, FPatchLookup *patchlookup, int maxpatchnum, bool strife, int deflump);

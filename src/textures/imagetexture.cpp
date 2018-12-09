@@ -48,8 +48,8 @@
 //
 //==========================================================================
 
-FImageTexture::FImageTexture(FImageSource *img)
-: FWorldTexture(nullptr, img->LumpNum())
+FImageTexture::FImageTexture(FImageSource *img, const char *name)
+: FWorldTexture(name, img->LumpNum())
 {
 	mImage = img;
 	Wads.GetLumpName (Name, img->LumpNum());

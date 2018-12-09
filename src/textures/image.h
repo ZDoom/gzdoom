@@ -81,12 +81,13 @@ public:
 //
 //==========================================================================
 
-class FImageTexture : public FWorldTexture
+class FImageTexture : public FTexture
 {
 	FImageSource *mImage;
 public:
-	FImageTexture (FImageSource *image);
+	FImageTexture (FImageSource *image, const char *name = nullptr);
 	virtual TArray<uint8_t> Get8BitPixels(bool alphatex);
+	FImageSource *GetImage() const { return mImage; }
 
 	bool UseBasePalette() override;
 

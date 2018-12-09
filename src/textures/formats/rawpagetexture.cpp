@@ -40,6 +40,7 @@
 #include "bitmap.h"
 #include "textures/textures.h"
 #include "imagehelpers.h"
+#include "image.h"
 
 
 //==========================================================================
@@ -48,7 +49,7 @@
 //
 //==========================================================================
 
-class FRawPageTexture : public FWorldTexture
+class FRawPageTexture : public FImageSource
 {
 	int mPaletteLump = -1;
 public:
@@ -73,9 +74,9 @@ static bool CheckIfRaw(FileReader & data)
 	int height;
 	int width;
 
-	foo = (patch_t *)M_Malloc (data.GetLength());
-	data.Seek (0, FileReader::SeekSet);
-	data.Read (foo, data.GetLength());
+	data.Seek(0, FileReader::SeekSet);
+	auto bits = data.Read(data.GetLength());
+	foo = (patch_t *)bits.Data();;
 
 	height = LittleShort(foo->height);
 	width = LittleShort(foo->width);
@@ -98,7 +99,6 @@ static bool CheckIfRaw(FileReader & data)
 			}
 			else if (ofs >= 64000-1)	// Need one byte for an empty column
 			{
-				M_Free (foo);
 				return true;
 			}
 			else
@@ -109,29 +109,24 @@ static bool CheckIfRaw(FileReader & data)
 				{
 					if (foo2[ofs] == 255)
 					{
-						M_Free (foo);
 						return true;
 					}
 					ofs += foo2[ofs+1] + 4;
 				}
 				if (ofs >= 64000)
 				{
-					M_Free (foo);
 					return true;
 				}
 			}
 		}
 		if (gapAtStart || (x != width))
 		{
-			M_Free (foo);
 			return true;
 		}
-		M_Free(foo);
 		return false;
 	}
 	else
 	{
-		M_Free (foo);
 		return true;
 	}
 }
@@ -144,8 +139,8 @@ static bool CheckIfRaw(FileReader & data)
 
 FTexture *RawPageTexture_TryCreate(FileReader & file, int lumpnum)
 {
-	if (!CheckIfRaw(file)) return NULL;
-	return new FRawPageTexture(lumpnum);
+	if (!CheckIfRaw(file)) return nullptr;
+	return new FImageTexture(new FRawPageTexture(lumpnum));
 }
 
 
@@ -156,17 +151,20 @@ FTexture *RawPageTexture_TryCreate(FileReader & file, int lumpnum)
 //==========================================================================
 
 FRawPageTexture::FRawPageTexture (int lumpnum)
-: FWorldTexture(NULL, lumpnum)
+: FImageSource(lumpnum)
 {
 	Width = 320;
 	Height = 200;
 
 	// Special case hack for Heretic's E2 end pic. This is not going to be exposed as an editing feature because the implications would be horrible.
+	FString Name;
+	Wads.GetLumpName(Name, lumpnum);
 	if (Name.CompareNoCase("E2END") == 0 && gameinfo.gametype == GAME_Heretic)
 	{
 		mPaletteLump = Wads.CheckNumForName("E2PAL");
 		if (Wads.LumpLength(mPaletteLump) < 768) mPaletteLump = -1;
 	}
+	else bUseGamePalette = true;
 }
 
 //==========================================================================
@@ -206,7 +204,7 @@ TArray<uint8_t> FRawPageTexture::Get8BitPixels(bool alphatex)
 
 int FRawPageTexture::CopyPixels(FBitmap *bmp)
 {
-	if (mPaletteLump < 0) return FTexture::CopyPixels(bmp);
+	if (mPaletteLump < 0) return FImageSource::CopyPixels(bmp);
 	else
 	{
 		FMemLump lump = Wads.ReadLump(SourceLump);

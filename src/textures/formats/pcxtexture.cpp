@@ -40,6 +40,7 @@
 #include "bitmap.h"
 #include "v_video.h"
 #include "imagehelpers.h"
+#include "image.h"
 
 //==========================================================================
 //
@@ -79,13 +80,12 @@ struct PCXHeader
 //
 //==========================================================================
 
-class FPCXTexture : public FWorldTexture
+class FPCXTexture : public FImageSource
 {
 public:
 	FPCXTexture (int lumpnum, PCXHeader &);
 
 	int CopyPixels(FBitmap *bmp) override;
-	bool UseBasePalette() override;
 
 protected:
 	void ReadPCX1bit (uint8_t *dst, FileReader & lump, PCXHeader *hdr);
@@ -132,7 +132,7 @@ FTexture * PCXTexture_TryCreate(FileReader & file, int lumpnum)
 	file.Seek(0, FileReader::SeekSet);
 	file.Read(&hdr, sizeof(hdr));
 
-	return new FPCXTexture(lumpnum, hdr);
+	return new FImageTexture(new FPCXTexture(lumpnum, hdr));
 }
 
 //==========================================================================
@@ -142,7 +142,7 @@ FTexture * PCXTexture_TryCreate(FileReader & file, int lumpnum)
 //==========================================================================
 
 FPCXTexture::FPCXTexture(int lumpnum, PCXHeader & hdr)
-: FWorldTexture(NULL, lumpnum)
+: FImageSource(lumpnum)
 {
 	bMasked = false;
 	Width = LittleShort(hdr.xmax) - LittleShort(hdr.xmin) + 1;
@@ -513,13 +513,3 @@ int FPCXTexture::CopyPixels(FBitmap *bmp)
 	return 0;
 }
 
-
-//===========================================================================
-//
-//
-//===========================================================================
-
-bool FPCXTexture::UseBasePalette() 
-{ 
-	return false; 
-}

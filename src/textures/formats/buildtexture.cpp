@@ -44,6 +44,7 @@
 #include "textures/textures.h"
 #include "r_data/sprites.h"
 #include "resourcefiles/resourcefile.h"
+#include "image.h"
 
 
 //==========================================================================
@@ -52,13 +53,12 @@
 //
 //==========================================================================
 
-class FBuildTexture : public FWorldTexture
+class FBuildTexture : public FImageSource
 {
 public:
 	FBuildTexture (const FString &pathprefix, int tilenum, const uint8_t *pixels, int translation, int width, int height, int left, int top);
 	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 	int CopyPixels(FBitmap *bmp) override;
-	bool UseBasePalette() override { return false; }
 
 protected:
 	const uint8_t *RawPixels;
@@ -77,10 +77,8 @@ FBuildTexture::FBuildTexture(const FString &pathprefix, int tilenum, const uint8
 {
 	Width = width;
 	Height = height;
-	_LeftOffset[1] = _LeftOffset[0] = left;
-	_TopOffset[1] = _TopOffset[0] = top;
-	Name.Format("%sBTIL%04d", pathprefix.GetChars(), tilenum);
-	UseType = ETextureType::Override;
+	LeftOffset = left;
+	TopOffset = top;
 }
 
 TArray<uint8_t> FBuildTexture::Get8BitPixels(bool alphatex)
@@ -136,9 +134,12 @@ void FTextureManager::AddTiles (const FString &pathprefix, const void *tiles, in
 
 		if (width <= 0 || height <= 0) continue;
 
-		tex = new FBuildTexture (pathprefix, i, tiledata, translation, width, height, xoffs, yoffs);
+		tex = new FImageTexture(new FBuildTexture (pathprefix, i, tiledata, translation, width, height, xoffs, yoffs));
 		texnum = AddTexture (tex);
 		tiledata += size;
+		tex->Name.Format("%sBTIL%04d", pathprefix.GetChars(), i);
+		tex->UseType = ETextureType::Override;
+
 
 		// reactivate only if the texture counter works here.
 		//StartScreen->Progress();

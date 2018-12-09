@@ -39,6 +39,7 @@
 #include "files.h"
 #include "w_wad.h"
 #include "textures/textures.h"
+#include "image.h"
 
 //==========================================================================
 //
@@ -46,7 +47,7 @@
 //
 //==========================================================================
 
-class FEmptyTexture : public FWorldTexture
+class FEmptyTexture : public FImageSource
 {
 public:
 	FEmptyTexture (int lumpnum);
@@ -67,7 +68,7 @@ FTexture *EmptyTexture_TryCreate(FileReader & file, int lumpnum)
 	if (file.Read(check, 8) != 8) return NULL;
 	if (memcmp(check, "\0\0\0\0\0\0\0\0", 8)) return NULL;
 
-	return new FEmptyTexture(lumpnum);
+	return new FImageTexture(new FEmptyTexture(lumpnum));
 }
 
 //==========================================================================
@@ -77,10 +78,11 @@ FTexture *EmptyTexture_TryCreate(FileReader & file, int lumpnum)
 //==========================================================================
 
 FEmptyTexture::FEmptyTexture (int lumpnum)
-: FWorldTexture(NULL, lumpnum)
+: FImageSource(lumpnum)
 {
 	bMasked = true;
 	Width = Height = 1;
+	bUseGamePalette = true;
 }
 
 //==========================================================================

@@ -40,6 +40,7 @@
 #include "w_wad.h"
 #include "textures/textures.h"
 #include "imagehelpers.h"
+#include "image.h"
 
 //==========================================================================
 //
@@ -47,7 +48,7 @@
 //
 //==========================================================================
 
-class FAutomapTexture : public FWorldTexture
+class FAutomapTexture : public FImageSource
 {
 public:
 	FAutomapTexture(int lumpnum);
@@ -65,9 +66,9 @@ public:
 
 FTexture *AutomapTexture_TryCreate(FileReader &data, int lumpnum)
 {
-	if (data.GetLength() < 320) return NULL;
-	if (!Wads.CheckLumpName(lumpnum, "AUTOPAGE")) return NULL;
-	return new FAutomapTexture(lumpnum);
+	if (data.GetLength() < 320) return nullptr;
+	if (!Wads.CheckLumpName(lumpnum, "AUTOPAGE")) return nullptr;
+	return new FImageTexture(new FAutomapTexture(lumpnum));
 }
 
 //==========================================================================
@@ -77,10 +78,11 @@ FTexture *AutomapTexture_TryCreate(FileReader &data, int lumpnum)
 //==========================================================================
 
 FAutomapTexture::FAutomapTexture (int lumpnum)
-: FWorldTexture(NULL, lumpnum)
+: FImageSource(lumpnum)
 {
 	Width = 320;
 	Height = uint16_t(Wads.LumpLength(lumpnum) / 320);
+	bUseGamePalette = true;
 }
 
 //==========================================================================

@@ -1119,7 +1119,6 @@ set (PCH_SOURCES
 	textures/formats/emptytexture.cpp
 	textures/formats/shadertexture.cpp
 	textures/formats/tgatexture.cpp
-	textures/formats/worldtexture.cpp
 	textures/hires/hqresize.cpp
 	textures/hires/hirestex.cpp
 	xlat/parse_xlat.cpp

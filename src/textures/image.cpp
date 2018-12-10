@@ -55,6 +55,8 @@ struct PrecacheDataPaletted
 struct PrecacheDataRgba
 {
 	FBitmap Pixels;
+	int TransInfo;
+	int RefCount;
 	int ImageID;
 };
 
@@ -81,36 +83,32 @@ PalettedPixels FImageSource::GetCachedPalettedPixels(int conversion)
 
 	FString name;
 	Wads.GetLumpName(name, SourceLump);
-	if (name.CompareNoCase("W_136") == 0)
-	{
-		int a = 0;
-	}
 
 	std::pair<int, int> *info = nullptr;
 	auto imageID = ImageID;
 
 	// Do we have this image in the cache?
-	unsigned index = precacheDataPaletted.FindEx([=](PrecacheDataPaletted &entry) { return entry.ImageID == imageID; });
+	unsigned index = conversion != normal? UINT_MAX : precacheDataPaletted.FindEx([=](PrecacheDataPaletted &entry) { return entry.ImageID == imageID; });
 	if (index < precacheDataPaletted.Size())
 	{
 		auto cache = &precacheDataPaletted[index];
 
 		if (cache->RefCount > 1)
 		{
-			Printf("returning reference to %s, refcount = %d\n", name.GetChars(), cache->RefCount);
+			//Printf("returning reference to %s, refcount = %d\n", name.GetChars(), cache->RefCount);
 			ret.Pixels.Set(cache->Pixels.Data(), cache->Pixels.Size());
 			cache->RefCount--;
 		}
 		else if (cache->Pixels.Size() > 0)
 		{
-			Printf("returning contents of %s, refcount = %d\n", name.GetChars(), cache->RefCount);
+			//Printf("returning contents of %s, refcount = %d\n", name.GetChars(), cache->RefCount);
 			ret.PixelStore = std::move(cache->Pixels);
 			ret.Pixels.Set(ret.PixelStore.Data(), ret.PixelStore.Size());
 			precacheDataPaletted.Delete(index);
 		}
 		else
 		{
-			Printf("something bad happened for %s, refcount = %d\n", name.GetChars(), cache->RefCount);
+			//Printf("something bad happened for %s, refcount = %d\n", name.GetChars(), cache->RefCount);
 		}
 	}
 	else
@@ -120,13 +118,13 @@ PalettedPixels FImageSource::GetCachedPalettedPixels(int conversion)
 		if (!info || info->second <= 1 || conversion != normal)
 		{
 			// This is either the only copy needed or some access outside the caching block. In these cases create a new one and directly return it.
-			Printf("returning fresh copy of %s\n", name.GetChars());
+			//Printf("returning fresh copy of %s\n", name.GetChars());
 			ret.PixelStore = CreatePalettedPixels(conversion);
 			ret.Pixels.Set(ret.PixelStore.Data(), ret.PixelStore.Size());
 		}
 		else
 		{
-			Printf("creating cached entry for %s, refcount = %d\n", name.GetChars(), info->second);
+			//Printf("creating cached entry for %s, refcount = %d\n", name.GetChars(), info->second);
 			// This is the first time it gets accessed and needs to be placed in the cache.
 			PrecacheDataPaletted *pdp = &precacheDataPaletted[precacheDataPaletted.Reserve(1)];
 
@@ -162,7 +160,7 @@ TArray<uint8_t> FImageSource::GetPalettedPixels(int conversion)
 
 //===========================================================================
 //
-// FImageSource::CopyPixels 
+// FImageSource::CopyPixels
 //
 // this is the generic case that can handle
 // any properly implemented texture for software rendering.
@@ -188,6 +186,90 @@ int FImageSource::CopyTranslatedPixels(FBitmap *bmp, PalEntry *remap)
 	auto ppix = CreatePalettedPixels(false);
 	bmp->CopyPixelData(0, 0, ppix.Data(), Width, Height, Height, 1, 0, remap, nullptr);
 	return 0;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FBitmap FImageSource::GetCachedBitmap(PalEntry *remap, int conversion, int *ptrans)
+{
+	FBitmap ret;
+	
+	FString name;
+	int trans = -1;
+	Wads.GetLumpName(name, SourceLump);
+	
+	std::pair<int, int> *info = nullptr;
+	auto imageID = ImageID;
+	
+	if (remap != nullptr)
+	{
+		// Remapped images are never run through the cache because they would complicate matters too much for very little gain.
+		// Translated images are normally sprites which normally just consist of a single image and use no composition.
+		// Additionally, since translation requires the base palette, the really time consuming stuff will never be subjected to it.
+		ret.Create(Width, Height);
+		trans = CopyTranslatedPixels(&ret, remap);
+	}
+	else
+	{
+		if (conversion == luminance) conversion = normal;	// luminance has no meaning for true color.
+		// Do we have this image in the cache?
+		unsigned index = conversion != normal? UINT_MAX : precacheDataRgba.FindEx([=](PrecacheDataRgba &entry) { return entry.ImageID == imageID; });
+		if (index < precacheDataRgba.Size())
+		{
+			auto cache = &precacheDataRgba[index];
+			
+			trans = cache->TransInfo;
+			if (cache->RefCount > 1)
+			{
+				Printf("returning reference to %s, refcount = %d\n", name.GetChars(), cache->RefCount);
+				ret.Copy(cache->Pixels, false);
+				cache->RefCount--;
+			}
+			else if (cache->Pixels.GetPixels())
+			{
+				Printf("returning contents of %s, refcount = %d\n", name.GetChars(), cache->RefCount);
+				ret = std::move(cache->Pixels);
+				precacheDataRgba.Delete(index);
+			}
+			else
+			{
+				// This should never happen if the function is implemented correctly
+				Printf("something bad happened for %s, refcount = %d\n", name.GetChars(), cache->RefCount);
+				ret.Create(Width, Height);
+				trans = CopyPixels(&ret, normal);
+			}
+		}
+		else
+		{
+			// The image wasn't cached. Now there's two possibilities:
+			auto info = precacheInfo.CheckKey(ImageID);
+			if (!info || info->first <= 1 || conversion != normal)
+			{
+				// This is either the only copy needed or some access outside the caching block. In these cases create a new one and directly return it.
+				Printf("returning fresh copy of %s\n", name.GetChars());
+				ret.Create(Width, Height);
+				trans = CopyPixels(&ret, conversion);
+			}
+			else
+			{
+				Printf("creating cached entry for %s, refcount = %d\n", name.GetChars(), info->first);
+				// This is the first time it gets accessed and needs to be placed in the cache.
+				PrecacheDataRgba *pdr = &precacheDataRgba[precacheDataRgba.Reserve(1)];
+				
+				pdr->ImageID = imageID;
+				pdr->RefCount = info->first - 1;
+				info->first = 0;
+				pdr->Pixels.Create(Width, Height);
+				trans = pdr->TransInfo = CopyPixels(&pdr->Pixels, normal);
+				ret.Copy(pdr->Pixels, false);
+			}
+		}
+	}
+	return ret;
 }
 
 //==========================================================================
@@ -227,12 +309,6 @@ void FImageSource::RegisterForPrecache(FImageSource *img)
 {
 	img->CollectForPrecache(precacheInfo);
 }
-
-FBitmap FImageSource::GetPixelsWithCache(int conversion)
-{
-	return FBitmap();
-}
-
 
 //==========================================================================
 //

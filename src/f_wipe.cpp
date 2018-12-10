@@ -41,10 +41,13 @@ public:
 		Height = h;
 	}
 	
-	int CopyPixels(FBitmap *bmp) override
+	FBitmap GetBgraBitmap(PalEntry*, int *trans) override
 	{
-		bmp->CopyPixelDataRGB(0, 0, (uint8_t*)WorkBuffer.Data(), Width, Height, 4, Width*4, 0, CF_RGBA, nullptr);
-		return 0;
+		FBitmap bmp;
+		bmp.Create(Width, Height);
+		bmp.CopyPixelDataRGB(0, 0, (uint8_t*)WorkBuffer.Data(), Width, Height, 4, Width*4, 0, CF_RGBA, nullptr);
+		if (trans) *trans = 0;
+		return bmp;
 	}
 	
 	uint32_t *GetBuffer()

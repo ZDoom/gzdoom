@@ -73,9 +73,9 @@ FImageTexture::FImageTexture(FImageSource *img, const char *name)
 //
 //===========================================================================
 
-int FImageTexture::CopyPixels(FBitmap *bmp)
+FBitmap FImageTexture::GetBgraBitmap(PalEntry *p, int *trans)
 {
-	return mImage->CopyPixels(bmp, bNoRemap0? FImageSource::noremap0 : FImageSource::normal);
+	return mImage->GetCachedBitmap(p, bNoRemap0? FImageSource::noremap0 : FImageSource::normal, trans);
 }	
 
 //===========================================================================

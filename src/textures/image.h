@@ -25,7 +25,7 @@ private:
 // All it can do is provide raw image data to its users.
 class FImageSource
 {
-	friend class FBrightmapImage;
+	friend class FBrightmapTexture;
 protected:
 
 	static FMemArena ImageArena;
@@ -37,6 +37,14 @@ protected:
 	int LeftOffset = 0, TopOffset = 0;			// Offsets stored in the image.
 	bool bUseGamePalette = false;				// true if this is an image without its own color set.
 	int ImageID = -1;
+
+	// Internal image creation functions. All external access should go through the cache interface,
+	// so that all code can benefit from future improvements to that.
+
+	virtual TArray<uint8_t> CreatePalettedPixels(int conversion);
+	virtual int CopyPixels(FBitmap *bmp, int conversion);			// This will always ignore 'luminance'.
+	int CopyTranslatedPixels(FBitmap *bmp, PalEntry *remap);
+
 
 public:
 
@@ -59,22 +67,19 @@ public:
 	
 	// 'noremap0' will only be looked at by FPatchTexture and forwarded by FMultipatchTexture.
 
-	// Always creates a new pixel buffer for the texture
-	virtual TArray<uint8_t> CreatePalettedPixels(int conversion);		
-
 	// Either returns a reference to the cache, or a newly created item. The return of this has to be considered transient. If you need to store the result, use GetPalettedPixels
 	PalettedPixels GetCachedPalettedPixels(int conversion);
 
 	// tries to get a buffer from the cache. If not available, create a new one. If further references are pending, create a copy.
 	TArray<uint8_t> GetPalettedPixels(int conversion);
 
-	virtual int CopyPixels(FBitmap *bmp, int conversion);			// This will always ignore 'luminance'.
-	int CopyTranslatedPixels(FBitmap *bmp, PalEntry *remap);
-	static void ClearImages() { ImageArena.FreeAll(); ImageForLump.Clear(); NextID = 0; }
-	static FImageSource * FImageSource::GetImage(int lumpnum, ETextureType usetype);
+	
+	// Unlile for paletted images there is no variant here that returns a persistent bitmap, because all users have to process the returned image into another format.
+	FBitmap GetCachedBitmap(PalEntry *remap, int conversion, int *trans = nullptr);
 
-	// These functions either allocate a new buffer or reuse the last one, if its reference count was greater than 1 when last used.
-	FBitmap GetPixelsWithCache(int conversion);
+	static void ClearImages() { ImageArena.FreeAll(); ImageForLump.Clear(); NextID = 0; }
+	static FImageSource * GetImage(int lumpnum, ETextureType usetype);
+
 
 
 	// Conversion option
@@ -143,9 +148,7 @@ public:
 	}
 
 	FImageSource *GetImage() const override { return mImage; }
+	FBitmap GetBgraBitmap(PalEntry *p, int *trans) override;
 
-protected:
-	int CopyPixels(FBitmap *bmp) override;
-	
 };
 

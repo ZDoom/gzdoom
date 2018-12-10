@@ -73,7 +73,7 @@ TArray<uint8_t> FFontChar1::CreatePalettedPixels (int)
 	// Make the texture as normal, then remap it so that all the colors
 	// are at the low end of the palette
 	// Why? It only creates unnecessary work!
-	auto Pixels = BaseTexture->CreatePalettedPixels(normal);
+	auto Pixels = BaseTexture->GetPalettedPixels(normal);
 
 	if (SourceRemap)
 	{

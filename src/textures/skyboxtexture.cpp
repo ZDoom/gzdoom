@@ -24,6 +24,7 @@
 #include "w_wad.h"
 #include "textures.h"
 #include "skyboxtexture.h"
+#include "bitmap.h"
 
 
 
@@ -60,9 +61,9 @@ TArray<uint8_t> FSkyBox::Get8BitPixels(bool alphatex)
 //
 //-----------------------------------------------------------------------------
 
-int FSkyBox::CopyPixels(FBitmap *bmp)
+FBitmap FSkyBox::GetBgraBitmap(PalEntry *p, int *trans)
 {
-	if (faces[0]) return faces[0]->CopyPixels(bmp);
-	return 0;
+	if (faces[0]) return faces[0]->GetBgraBitmap(p, trans);
+	return FTexture::GetBgraBitmap(p, trans);
 }
 

@@ -120,7 +120,7 @@ public:
 		other.FreeBuffer = false;
 	}
 
-	FBitmap &operator=(const FBitmap &other) = delete;	// disallow because in nearly all cases this creates an unwanted copy.
+	FBitmap &operator=(const FBitmap &other) = delete;	// disallow because in nearly all cases this creates an unwanted copy. Use Copy instead.
 
 	FBitmap &operator=(FBitmap &&other)
 	{
@@ -136,7 +136,27 @@ public:
 		return *this;
 	}
 
-	virtual ~FBitmap()
+	void Copy(const FBitmap &other, bool deep = true)
+	{
+		if (data != nullptr && FreeBuffer) delete[] data;
+		Pitch = other.Pitch;
+		Width = other.Width;
+		Height = other.Height;
+		FreeBuffer = deep;
+		ClipRect = other.ClipRect;
+		if (deep)
+		{
+			data = new uint8_t[Pitch * Height];
+			memcpy(data, other.data, Pitch * Height);
+		}
+		else
+		{
+			data = other.data;
+		}
+	}
+
+	
+	~FBitmap()
 	{
 		Destroy();
 	}
@@ -210,10 +230,10 @@ public:
 	void Zero();
 
 
-	virtual void CopyPixelDataRGB(int originx, int originy, const uint8_t *patch, int srcwidth, 
+	void CopyPixelDataRGB(int originx, int originy, const uint8_t *patch, int srcwidth,
 								int srcheight, int step_x, int step_y, int rotate, int ct, FCopyInfo *inf = NULL,
 		/* for PNG tRNS */		int r=0, int g=0, int b=0);
-	virtual void CopyPixelData(int originx, int originy, const uint8_t * patch, int srcwidth, int srcheight, 
+	void CopyPixelData(int originx, int originy, const uint8_t * patch, int srcwidth, int srcheight,
 								int step_x, int step_y, int rotate, PalEntry * palette, FCopyInfo *inf = NULL);
 
 

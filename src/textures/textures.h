@@ -123,6 +123,8 @@ class FTextureManager;
 class FTerrainTypeArray;
 class IHardwareTexture;
 class FMaterial;
+class FMultipatchTextureBuilder;
+
 extern int r_spriteadjustSW, r_spriteadjustHW;
 
 class FNullTextureID : public FTextureID
@@ -304,7 +306,7 @@ public:
 
 	// Returns the whole texture, stored in column-major order
 	virtual TArray<uint8_t> Get8BitPixels(bool alphatex);
-	/*virtual*/ FBitmap GetBgraBitmap(PalEntry *remap, int *trans = nullptr);
+	virtual FBitmap GetBgraBitmap(PalEntry *remap, int *trans = nullptr);
 
 public:
 	static bool SmoothEdges(unsigned char * buffer,int w, int h);
@@ -384,9 +386,6 @@ protected:
 
 	// Returns true if GetPixelsBgra includes mipmaps
 	virtual bool Mipmapped() { return true; }
-
-	virtual int CopyPixels(FBitmap *bmp);
-	int CopyTranslatedPixels(FBitmap *bmp, PalEntry *remap);
 
 	void SetSpeed(float fac) { shaderspeed = fac; }
 

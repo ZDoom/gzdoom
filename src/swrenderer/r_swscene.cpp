@@ -51,14 +51,17 @@ public:
 		UseType = ETextureType::MiscPatch;
 	}
 
-	int CopyPixels(FBitmap *bmp)
+	FBitmap GetBgraBitmap(PalEntry *, int *trans) override
 	{
-		PalEntry *pe = (PalEntry*)bmp->GetPixels();
+		FBitmap bmp;
+		bmp.Create(256, 1);
+		PalEntry *pe = (PalEntry*)bmp.GetPixels();
 		for (int i = 0; i < 256; i++)
 		{
 			pe[i] = GPalette.BaseColors[i].d | 0xff000000;
 		}
-		return 0;
+		if (trans) *trans = 0;
+		return bmp;
 	}
 };
 

@@ -202,42 +202,17 @@ void FTexture::SetFrontSkyLayer ()
 
 //===========================================================================
 //
-// FTexture::CopyPixels 
+// FTexture::GetBgraBitmap
 //
-// this is the generic case that can handle
-// any properly implemented texture for software rendering.
-// Its drawback is that it is limited to the base palette which is
-// why all classes that handle different palettes should subclass this
-// method
+// Default returns just an empty bitmap. This needs to be overridden by
+// any subclass that actually does return a software pixel buffer.
 //
 //===========================================================================
-
-int FTexture::CopyPixels(FBitmap *bmp)
-{
-	PalEntry *palette = screen->GetPalette();
-	for(int i=1;i<256;i++) palette[i].a = 255;	// set proper alpha values
-	auto ppix = Get8BitPixels(false);	// should use composition cache
-	bmp->CopyPixelData(0, 0, ppix.Data(), Width, Height, Height, 1, 0, palette, nullptr);
-	for(int i=1;i<256;i++) palette[i].a = 0;
-	return 0;
-}
-
-int FTexture::CopyTranslatedPixels(FBitmap *bmp, PalEntry *remap)
-{
-	auto ppix = Get8BitPixels(false);	// should use composition cache
-	bmp->CopyPixelData(0, 0, ppix.Data(), Width, Height, Height, 1, 0, remap, nullptr);
-	return 0;
-}
 
 FBitmap FTexture::GetBgraBitmap(PalEntry *remap, int *ptrans)
 {
 	FBitmap bmp;
-	int trans;
-
-	bmp.Create(GetWidth(), GetHeight());
-	if (!remap) trans = CopyPixels(&bmp);
-	else trans = CopyTranslatedPixels(&bmp, remap);
-	if (ptrans) *ptrans = trans;
+	bmp.Create(Width, Height);
 	return bmp;
 }
 

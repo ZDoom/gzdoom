@@ -5,6 +5,21 @@
 #include "textures/bitmap.h"
 #include "memarena.h"
 
+class FImageSource;
+using PrecacheInfo = TMap<int, std::pair<int, int>>;
+
+struct PalettedPixels
+{
+	friend class FImageSource;
+	TArrayView<uint8_t> Pixels;
+private:
+	TArray<uint8_t> PixelStore;
+
+	bool ownsPixels() const
+	{
+		return Pixels.Data() == PixelStore.Data();
+	}
+};
 
 // This represents a naked image. It has no high level logic attached to it.
 // All it can do is provide raw image data to its users.
@@ -41,12 +56,26 @@ public:
 	bool bMasked = true;						// Image (might) have holes (Assume true unless proven otherwise!)
 	int8_t bTranslucent = -1;					// Image has pixels with a non-0/1 value. (-1 means the user needs to do a real check)
 
-	// Returns the whole texture, paletted and true color versions respectively.
-	virtual TArray<uint8_t> GetPalettedPixels(int conversion);		// 'noremap0' will only be looked at by FPatchTexture and forwarded by FMultipatchTexture.
+	
+	// 'noremap0' will only be looked at by FPatchTexture and forwarded by FMultipatchTexture.
+
+	// Always creates a new pixel buffer for the texture
+	virtual TArray<uint8_t> CreatePalettedPixels(int conversion);		
+
+	// Either returns a reference to the cache, or a newly created item. The return of this has to be considered transient. If you need to store the result, use GetPalettedPixels
+	PalettedPixels GetCachedPalettedPixels(int conversion);
+
+	// tries to get a buffer from the cache. If not available, create a new one. If further references are pending, create a copy.
+	TArray<uint8_t> GetPalettedPixels(int conversion);
+
 	virtual int CopyPixels(FBitmap *bmp, int conversion);			// This will always ignore 'luminance'.
 	int CopyTranslatedPixels(FBitmap *bmp, PalEntry *remap);
 	static void ClearImages() { ImageArena.FreeAll(); ImageForLump.Clear(); NextID = 0; }
 	static FImageSource * FImageSource::GetImage(int lumpnum, ETextureType usetype);
+
+	// These functions either allocate a new buffer or reuse the last one, if its reference count was greater than 1 when last used.
+	FBitmap GetPixelsWithCache(int conversion);
+
 
 	// Conversion option
 	enum EType
@@ -59,9 +88,6 @@ public:
 	FImageSource(int sourcelump = -1) : SourceLump(sourcelump) { ImageID = ++NextID; }
 	virtual ~FImageSource() {}
 	
-	// Creates an image from the given lump.
-	static FImageSource *CreateImageSource(int lumpnum);
-
 	int GetWidth() const
 	{
 		return Width;
@@ -91,6 +117,11 @@ public:
 	{
 		return bUseGamePalette;
 	}
+
+	virtual void CollectForPrecache(PrecacheInfo &info, bool requiretruecolor = false);
+	static void BeginPrecaching();
+	static void EndPrecaching();
+	static void RegisterForPrecache(FImageSource *img);
 };
 
 //==========================================================================

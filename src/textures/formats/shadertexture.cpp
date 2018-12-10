@@ -100,7 +100,7 @@ public:
 		}
 	}
 
-	TArray<uint8_t> GetPalettedPixels(int conversion) override
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override
 	{
 		TArray<uint8_t> Pix(512, true);
 		if (conversion == luminance)

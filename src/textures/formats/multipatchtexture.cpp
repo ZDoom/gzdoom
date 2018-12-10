@@ -53,6 +53,7 @@
 #include "image.h"
 #include "multipatchtexture.h"
 
+
 //==========================================================================
 //
 // FMultiPatchTexture :: FMultiPatchTexture
@@ -142,7 +143,8 @@ static uint8_t *GetBlendMap(PalEntry blend, uint8_t *blendwork)
 
 void FMultiPatchTexture::CopyToBlock(uint8_t *dest, int dwidth, int dheight, FImageSource *source, int xpos, int ypos, int rotate, const uint8_t *translation, int style)
 {
-	auto image = source->GetPalettedPixels(style);	// should use composition cache
+	auto cimage = source->GetCachedPalettedPixels(style);	// should use composition cache
+	auto &image = cimage.Pixels;
 	const uint8_t *pixels = image.Data();
 	int srcwidth = source->GetWidth();
 	int srcheight = source->GetHeight();
@@ -188,7 +190,7 @@ void FMultiPatchTexture::CopyToBlock(uint8_t *dest, int dwidth, int dheight, FIm
 //
 //==========================================================================
 
-TArray<uint8_t> FMultiPatchTexture::GetPalettedPixels(int conversion)
+TArray<uint8_t> FMultiPatchTexture::CreatePalettedPixels(int conversion)
 {
 	int numpix = Width * Height;
 	uint8_t blendwork[256];
@@ -323,4 +325,30 @@ int FMultiPatchTexture::CopyPixels(FBitmap *bmp, int conversion)
 	}
 	return retv;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FMultiPatchTexture::CollectForPrecache(PrecacheInfo &info, bool requiretruecolor)
+{
+	FImageSource::CollectForPrecache(info, requiretruecolor);
+
+	if (!requiretruecolor)
+	{
+		requiretruecolor = bComplex;
+
+		if (!requiretruecolor) for (int i = 0; i < NumParts; ++i)
+		{
+			if (Parts[i].op != OP_COPY)	requiretruecolor = true;
+		}
+	}
+	for (int i = 0; i < NumParts; ++i)
+	{
+		Parts[i].Image->CollectForPrecache(info, requiretruecolor);
+	}
+}
+
 

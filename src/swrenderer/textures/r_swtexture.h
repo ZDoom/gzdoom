@@ -1,6 +1,6 @@
 #pragma once
 #include "textures/textures.h"
-
+#include "v_video.h"
 
 struct FSoftwareTextureSpan
 {
@@ -128,6 +128,12 @@ public:
 	{
 		bool alpha = !!(style.Flags & STYLEF_RedIsAlpha);
 		return GetPixels(alpha);
+	}
+
+	// Checks if the pixel data is loaded.
+	bool CheckPixels() const
+	{
+		return V_IsTrueColor() ? PixelsBgra.Size() > 0 : Pixels.Size() > 0;
 	}
 
 	const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out)

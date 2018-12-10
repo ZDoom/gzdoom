@@ -54,7 +54,7 @@ class FRawPageTexture : public FImageSource
 	int mPaletteLump = -1;
 public:
 	FRawPageTexture (int lumpnum);
-	TArray<uint8_t> GetPalettedPixels(int conversion) override;
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
 	int CopyPixels(FBitmap *bmp, int conversion) override;
 };
 
@@ -173,7 +173,7 @@ FRawPageTexture::FRawPageTexture (int lumpnum)
 //
 //==========================================================================
 
-TArray<uint8_t> FRawPageTexture::GetPalettedPixels(int conversion)
+TArray<uint8_t> FRawPageTexture::CreatePalettedPixels(int conversion)
 {
 	FMemLump lump = Wads.ReadLump (SourceLump);
 	const uint8_t *source = (const uint8_t *)lump.GetMem();

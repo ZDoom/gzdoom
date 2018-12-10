@@ -36,6 +36,7 @@ public:
 	void SetTextureFilterMode() override;
 	IHardwareTexture *CreateHardwareTexture(FTexture *tex) override;
 	void PrecacheMaterial(FMaterial *mat, int translation) override;
+	bool CheckPrecacheMaterial(FMaterial *mat) override;
 	FModelRenderer *CreateModelRenderer(int mli) override;
 	void TextureFilterChanged() override;
 	void BeginFrame() override;

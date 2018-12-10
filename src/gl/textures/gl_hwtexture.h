@@ -81,6 +81,7 @@ public:
 
 	unsigned int Bind(int texunit, int translation, bool needmipmap);
 	bool BindOrCreate(FTexture *tex, int texunit, int clampmode, int translation, int flags);
+	bool Exists(int translation);
 
 	void AllocateBuffer(int w, int h, int texelsize);
 	uint8_t *MapBuffer();

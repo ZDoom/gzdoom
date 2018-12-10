@@ -50,7 +50,7 @@ class FFlatTexture : public FImageSource
 {
 public:
 	FFlatTexture (int lumpnum);
-	TArray<uint8_t> GetPalettedPixels(int conversion) override;
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
 };
 
 
@@ -104,7 +104,7 @@ FFlatTexture::FFlatTexture (int lumpnum)
 //
 //==========================================================================
 
-TArray<uint8_t> FFlatTexture::GetPalettedPixels(int conversion)
+TArray<uint8_t> FFlatTexture::CreatePalettedPixels(int conversion)
 {
 	auto lump = Wads.OpenLumpReader (SourceLump);
 	TArray<uint8_t> Pixels(Width*Height, true);

@@ -186,7 +186,7 @@ public:
 	FJPEGTexture (int lumpnum, int width, int height);
 
 	int CopyPixels(FBitmap *bmp, int conversion) override;
-	TArray<uint8_t> GetPalettedPixels(int conversion) override;
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
 };
 
 //==========================================================================
@@ -260,7 +260,7 @@ FJPEGTexture::FJPEGTexture (int lumpnum, int width, int height)
 //
 //==========================================================================
 
-TArray<uint8_t> FJPEGTexture::GetPalettedPixels(int conversion)
+TArray<uint8_t> FJPEGTexture::CreatePalettedPixels(int conversion)
 {
 	auto lump = Wads.OpenLumpReader (SourceLump);
 	JSAMPLE *buff = NULL;

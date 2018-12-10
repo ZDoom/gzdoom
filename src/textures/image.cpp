@@ -43,6 +43,24 @@
 FMemArena FImageSource::ImageArena(32768);
 TArray<FImageSource *>FImageSource::ImageForLump;
 int FImageSource::NextID;
+static PrecacheInfo precacheInfo;
+
+struct PrecacheDataPaletted
+{
+	TArray<uint8_t> Pixels;
+	int RefCount;
+	int ImageID;
+};
+
+struct PrecacheDataRgba
+{
+	FBitmap Pixels;
+	int ImageID;
+};
+
+// TMap doesn't handle this kind of data well.  std::map neither. The linear search is still faster, even for a few 100 entries because it doesn't have to access the heap as often..
+TArray<PrecacheDataPaletted> precacheDataPaletted;
+TArray<PrecacheDataRgba> precacheDataRgba;
 
 //===========================================================================
 // 
@@ -50,12 +68,96 @@ int FImageSource::NextID;
 //
 //===========================================================================
 
-TArray<uint8_t> FImageSource::GetPalettedPixels(int conversion)
+TArray<uint8_t> FImageSource::CreatePalettedPixels(int conversion)
 {
 	TArray<uint8_t> Pixels(Width * Height, true);
 	memset(Pixels.Data(), 0, Width * Height);
 	return Pixels;
 }
+
+PalettedPixels FImageSource::GetCachedPalettedPixels(int conversion)
+{
+	PalettedPixels ret;
+
+	FString name;
+	Wads.GetLumpName(name, SourceLump);
+	if (name.CompareNoCase("W_136") == 0)
+	{
+		int a = 0;
+	}
+
+	std::pair<int, int> *info = nullptr;
+	auto imageID = ImageID;
+
+	// Do we have this image in the cache?
+	unsigned index = precacheDataPaletted.FindEx([=](PrecacheDataPaletted &entry) { return entry.ImageID == imageID; });
+	if (index < precacheDataPaletted.Size())
+	{
+		auto cache = &precacheDataPaletted[index];
+
+		if (cache->RefCount > 1)
+		{
+			Printf("returning reference to %s, refcount = %d\n", name.GetChars(), cache->RefCount);
+			ret.Pixels.Set(cache->Pixels.Data(), cache->Pixels.Size());
+			cache->RefCount--;
+		}
+		else if (cache->Pixels.Size() > 0)
+		{
+			Printf("returning contents of %s, refcount = %d\n", name.GetChars(), cache->RefCount);
+			ret.PixelStore = std::move(cache->Pixels);
+			ret.Pixels.Set(ret.PixelStore.Data(), ret.PixelStore.Size());
+			precacheDataPaletted.Delete(index);
+		}
+		else
+		{
+			Printf("something bad happened for %s, refcount = %d\n", name.GetChars(), cache->RefCount);
+		}
+	}
+	else
+	{
+		// The image wasn't cached. Now there's two possibilities: 
+		auto info = precacheInfo.CheckKey(ImageID);
+		if (!info || info->second <= 1 || conversion != normal)
+		{
+			// This is either the only copy needed or some access outside the caching block. In these cases create a new one and directly return it.
+			Printf("returning fresh copy of %s\n", name.GetChars());
+			ret.PixelStore = CreatePalettedPixels(conversion);
+			ret.Pixels.Set(ret.PixelStore.Data(), ret.PixelStore.Size());
+		}
+		else
+		{
+			Printf("creating cached entry for %s, refcount = %d\n", name.GetChars(), info->second);
+			// This is the first time it gets accessed and needs to be placed in the cache.
+			PrecacheDataPaletted *pdp = &precacheDataPaletted[precacheDataPaletted.Reserve(1)];
+
+			pdp->ImageID = imageID;
+			pdp->RefCount = info->second - 1;
+			info->second = 0;
+			pdp->Pixels = CreatePalettedPixels(normal);
+			ret.Pixels.Set(pdp->Pixels.Data(), pdp->Pixels.Size());
+		}
+	}
+	return ret;
+}
+
+TArray<uint8_t> FImageSource::GetPalettedPixels(int conversion)
+{
+	auto pix = GetCachedPalettedPixels(conversion);
+	if (pix.ownsPixels())
+	{
+		// return the pixel store of the returned data directly if this was the last reference.
+		auto array = std::move(pix.PixelStore);
+		return array;
+	}
+	else
+	{
+		// If there are pending references, make a copy.
+		TArray<uint8_t> array(pix.Pixels.Size(), true);
+		memcpy(array.Data(), pix.Pixels.Data(), array.Size());
+		return array;
+	}
+}
+
 
 
 //===========================================================================
@@ -75,7 +177,7 @@ int FImageSource::CopyPixels(FBitmap *bmp, int conversion)
 	if (conversion == luminance) conversion = normal;	// luminance images have no use as an RGB source.
 	PalEntry *palette = screen->GetPalette();
 	for(int i=1;i<256;i++) palette[i].a = 255;	// set proper alpha values
-	auto ppix = GetPalettedPixels(conversion);	// should use composition cache
+	auto ppix = CreatePalettedPixels(conversion);
 	bmp->CopyPixelData(0, 0, ppix.Data(), Width, Height, Height, 1, 0, palette, nullptr);
 	for(int i=1;i<256;i++) palette[i].a = 0;
 	return 0;
@@ -83,9 +185,52 @@ int FImageSource::CopyPixels(FBitmap *bmp, int conversion)
 
 int FImageSource::CopyTranslatedPixels(FBitmap *bmp, PalEntry *remap)
 {
-	auto ppix = GetPalettedPixels(false);	// should use composition cache
+	auto ppix = CreatePalettedPixels(false);
 	bmp->CopyPixelData(0, 0, ppix.Data(), Width, Height, Height, 1, 0, remap, nullptr);
 	return 0;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FImageSource::CollectForPrecache(PrecacheInfo &info, bool requiretruecolor)
+{
+	auto val = info.CheckKey(ImageID);
+	bool tc = requiretruecolor || V_IsTrueColor();
+	if (val)
+	{
+		val->first += tc;
+		val->second += !tc;
+	}
+	else
+	{
+		auto pair = std::make_pair(tc, !tc);
+		info.Insert(ImageID, pair);
+	}
+}
+
+void FImageSource::BeginPrecaching()
+{
+	precacheInfo.Clear();
+}
+
+void FImageSource::EndPrecaching()
+{
+	precacheDataPaletted.Clear();
+	precacheDataRgba.Clear();
+}
+
+void FImageSource::RegisterForPrecache(FImageSource *img)
+{
+	img->CollectForPrecache(precacheInfo);
+}
+
+FBitmap FImageSource::GetPixelsWithCache(int conversion)
+{
+	return FBitmap();
 }
 
 

@@ -373,7 +373,14 @@ void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 	FHardwareTexture::UnbindAll();
 }
 
-FModelRenderer *OpenGLFrameBuffer::CreateModelRenderer(int mli) 
+bool OpenGLFrameBuffer::CheckPrecacheMaterial(FMaterial *mat)
+{
+	if (!mat->tex->GetImage()) return true;
+	auto base = static_cast<FHardwareTexture*>(mat->GetLayer(0));
+	return base->Exists(0);
+}
+
+FModelRenderer *OpenGLFrameBuffer::CreateModelRenderer(int mli)
 {
 	return new FGLModelRenderer(nullptr, gl_RenderState, mli);
 }

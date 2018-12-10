@@ -307,14 +307,6 @@ public:
 	/*virtual*/ FBitmap GetBgraBitmap(PalEntry *remap, int *trans = nullptr);
 
 public:
-	/*
-	static void FlipSquareBlock (uint8_t *block, int x, int y);
-	static void FlipSquareBlockBgra (uint32_t *block, int x, int y);
-	static void FlipSquareBlockRemap (uint8_t *block, int x, int y, const uint8_t *remap);
-	static void FlipNonSquareBlock (uint8_t *blockto, const uint8_t *blockfrom, int x, int y, int srcpitch);
-	static void FlipNonSquareBlockBgra (uint32_t *blockto, const uint32_t *blockfrom, int x, int y, int srcpitch);
-	static void FlipNonSquareBlockRemap (uint8_t *blockto, const uint8_t *blockfrom, int x, int y, int srcpitch, const uint8_t *remap);
-	*/
 	static bool SmoothEdges(unsigned char * buffer,int w, int h);
 	static PalEntry averageColor(const uint32_t *data, int size, int maxout);
 
@@ -436,7 +428,7 @@ protected:
 
 	virtual void ResolvePatches() {}
 
-	virtual void SetFrontSkyLayer();
+	void SetFrontSkyLayer();
 
 	static void InitGrayMap();
 
@@ -645,11 +637,12 @@ private:
 	TArray<int> FirstTextureForFile;
 	TArray<TArray<uint8_t> > BuildTileData;
 
-	TArray<FAnimDef *> mAnimations;
 	TArray<FSwitchDef *> mSwitchDefs;
 	TArray<FDoorAnimation> mAnimatedDoors;
 
 public:
+	TArray<FAnimDef *> mAnimations;
+
 	bool HasGlobalBrightmap;
 	FRemapTable GlobalBrightmap;
 	short sintable[2048];	// for texture warping

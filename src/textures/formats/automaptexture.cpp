@@ -52,7 +52,7 @@ class FAutomapTexture : public FImageSource
 {
 public:
 	FAutomapTexture(int lumpnum);
-	TArray<uint8_t> GetPalettedPixels(int conversion) override;
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
 };
 
 
@@ -91,7 +91,7 @@ FAutomapTexture::FAutomapTexture (int lumpnum)
 //
 //==========================================================================
 
-TArray<uint8_t> FAutomapTexture::GetPalettedPixels(int conversion)
+TArray<uint8_t> FAutomapTexture::CreatePalettedPixels(int conversion)
 {
 	int x, y;
 	FMemLump data = Wads.ReadLump (SourceLump);

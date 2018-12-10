@@ -27,6 +27,7 @@ struct FSoftwareRenderer : public FRenderer
 	void Init() override;
 
 private:
+	void PreparePrecache(FTexture *tex, int cache);
 	void PrecacheTexture(FTexture *tex, int cache);
 
 	swrenderer::RenderScene mScene;

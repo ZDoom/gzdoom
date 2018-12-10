@@ -93,7 +93,7 @@ protected:
 	void ReadPCX8bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr);
 	void ReadPCX24bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr, int planes);
 
-	TArray<uint8_t> GetPalettedPixels(int conversion) override;
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
 };
 
 
@@ -358,7 +358,7 @@ void FPCXTexture::ReadPCX24bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr
 //
 //==========================================================================
 
-TArray<uint8_t> FPCXTexture::GetPalettedPixels(int conversion)
+TArray<uint8_t> FPCXTexture::CreatePalettedPixels(int conversion)
 {
 	uint8_t PaletteMap[256];
 	PCXHeader header;

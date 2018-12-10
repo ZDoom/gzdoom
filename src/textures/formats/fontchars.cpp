@@ -68,12 +68,12 @@ FFontChar1::FFontChar1 (FImageSource *sourcelump)
 //
 //==========================================================================
 
-TArray<uint8_t> FFontChar1::GetPalettedPixels (int)
+TArray<uint8_t> FFontChar1::CreatePalettedPixels (int)
 {
 	// Make the texture as normal, then remap it so that all the colors
 	// are at the low end of the palette
 	// Why? It only creates unnecessary work!
-	auto Pixels = BaseTexture->GetPalettedPixels(normal);
+	auto Pixels = BaseTexture->CreatePalettedPixels(normal);
 
 	if (SourceRemap)
 	{
@@ -132,7 +132,7 @@ void FFontChar2::SetSourceRemap(const uint8_t *sourceremap)
 //
 //==========================================================================
 
-TArray<uint8_t> FFontChar2::GetPalettedPixels(int)
+TArray<uint8_t> FFontChar2::CreatePalettedPixels(int)
 {
 	auto lump = Wads.OpenLumpReader (SourceLump);
 	int destSize = Width * Height;

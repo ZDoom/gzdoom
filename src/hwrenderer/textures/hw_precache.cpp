@@ -33,6 +33,7 @@
 #include "r_data/models/models.h"
 #include "textures/skyboxtexture.h"
 #include "hwrenderer/textures/hw_material.h"
+#include "image.h"
 
 
 //==========================================================================
@@ -189,6 +190,31 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 
 	if (gl_precache)
 	{
+		FImageSource::BeginPrecaching();
+
+		// cache all used textures
+		for (int i = cnt - 1; i >= 0; i--)
+		{
+			FTexture *tex = TexMan.ByIndex(i);
+			if (tex != nullptr && tex->GetImage() != nullptr)
+			{
+				if (texhitlist[i] & (FTextureManager::HIT_Wall | FTextureManager::HIT_Flat | FTextureManager::HIT_Sky))
+				{
+					FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
+					if (gltex && !screen->CheckPrecacheMaterial(gltex))
+					{
+						FImageSource::RegisterForPrecache(tex->GetImage());
+					}
+				}
+
+				// Only register untranslated sprites. Translated ones are very unlikely to require data that can be reused.
+				if (spritehitlist[i] != nullptr && (*spritehitlist[i]).CheckKey(0))
+				{
+					FImageSource::RegisterForPrecache(tex->GetImage());
+				}
+			}
+		}
+
 		// cache all used textures
 		for (int i = cnt - 1; i >= 0; i--)
 		{
@@ -202,6 +228,9 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 				}
 			}
 		}
+
+
+		FImageSource::EndPrecaching();
 
 		// cache all used models
 		FModelRenderer *renderer = screen->CreateModelRenderer(-1);

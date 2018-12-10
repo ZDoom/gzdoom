@@ -57,7 +57,7 @@ class FBuildTexture : public FImageSource
 {
 public:
 	FBuildTexture (const FString &pathprefix, int tilenum, const uint8_t *pixels, int translation, int width, int height, int left, int top);
-	TArray<uint8_t> GetPalettedPixels(int conversion) override;
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
 	int CopyPixels(FBitmap *bmp, int conversion) override;
 
 protected:
@@ -81,7 +81,7 @@ FBuildTexture::FBuildTexture(const FString &pathprefix, int tilenum, const uint8
 	TopOffset = top;
 }
 
-TArray<uint8_t> FBuildTexture::GetPalettedPixels(int conversion)
+TArray<uint8_t> FBuildTexture::CreatePalettedPixels(int conversion)
 {
 	TArray<uint8_t> Pixels(Width * Height, true);
 	FRemapTable *Remap = translationtables[TRANSLATION_Standard][Translation];

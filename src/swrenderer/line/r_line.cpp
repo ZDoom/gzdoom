@@ -818,6 +818,7 @@ namespace swrenderer
 		
 		FTexture *tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::top), true);
 		mTopPart.Texture = tex && tex->isValid() ? tex->GetSoftwareTexture() : nullptr;
+		if (mTopPart.Texture == nullptr) return;
 
 		mTopPart.TextureOffsetU = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::top));
 		double rowoffset = sidedef->GetTextureYOffset(side_t::top);

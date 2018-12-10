@@ -467,4 +467,29 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 	return true;
 }
 
+//===========================================================================
+// 
+//	Binds a texture to the renderer
+//
+//===========================================================================
+
+bool FHardwareTexture::Exists(int translation)
+{
+	int usebright = false;
+
+	if (translation <= 0)
+	{
+		translation = -translation;
+	}
+	else
+	{
+		auto remap = TranslationToTable(translation);
+		translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
+	}
+
+	TranslatedTexture *pTex = GetTexID(translation);
+	return (pTex->glTexID != 0);
+}
+
+
 }

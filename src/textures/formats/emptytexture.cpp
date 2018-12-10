@@ -51,7 +51,7 @@ class FEmptyTexture : public FImageSource
 {
 public:
 	FEmptyTexture (int lumpnum);
-	TArray<uint8_t> GetPalettedPixels(int conversion) override;
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
 };
 
 //==========================================================================
@@ -91,7 +91,7 @@ FEmptyTexture::FEmptyTexture (int lumpnum)
 //
 //==========================================================================
 
-TArray<uint8_t> FEmptyTexture::GetPalettedPixels(int conversion)
+TArray<uint8_t> FEmptyTexture::CreatePalettedPixels(int conversion)
 {
 	TArray<uint8_t> Pixel(1, true);
 	Pixel[0] = 0;

@@ -55,7 +55,7 @@ public:
 	~FPNGTexture();
 
 	int CopyPixels(FBitmap *bmp, int conversion) override;
-	TArray<uint8_t> GetPalettedPixels(int conversion) override;
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
 
 protected:
 	void ReadAlphaRemap(FileReader *lump, uint8_t *alpharemap);
@@ -367,7 +367,7 @@ void FPNGTexture::ReadAlphaRemap(FileReader *lump, uint8_t *alpharemap)
 //
 //==========================================================================
 
-TArray<uint8_t> FPNGTexture::GetPalettedPixels(int conversion)
+TArray<uint8_t> FPNGTexture::CreatePalettedPixels(int conversion)
 {
 	FileReader *lump;
 	FileReader lfr;

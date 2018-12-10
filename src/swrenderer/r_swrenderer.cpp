@@ -51,6 +51,7 @@
 #include "polyrenderer/poly_renderer.h"
 #include "p_setup.h"
 #include "g_levellocals.h"
+#include "image.h"
 
 // [BB] Use ZDoom's freelook limit for the sotfware renderer.
 // Note: ZDoom's limit is chosen such that the sky is rendered properly.
@@ -80,6 +81,25 @@ FRenderer *CreateSWRenderer()
 	return new FSoftwareRenderer;
 }
 
+void FSoftwareRenderer::PreparePrecache(FTexture *ttex, int cache)
+{
+	bool isbgra = V_IsTrueColor();
+
+	if (ttex != NULL && ttex->isValid())
+	{
+		FSoftwareTexture *tex = ttex->GetSoftwareTexture();
+
+		if (tex->CheckPixels())
+		{
+			if (cache == 0) tex->Unload();
+		}
+		else if (cache != 0)
+		{
+			FImageSource::RegisterForPrecache(ttex->GetImage());
+		}
+	}
+}
+
 void FSoftwareRenderer::PrecacheTexture(FTexture *ttex, int cache)
 {
 	bool isbgra = V_IsTrueColor();
@@ -101,10 +121,6 @@ void FSoftwareRenderer::PrecacheTexture(FTexture *ttex, int cache)
 				tex->GetPixelsBgra();
 			else
 				tex->GetPixels (DefaultRenderStyle());
-		}
-		else
-		{
-			tex->Unload ();
 		}
 	}
 }
@@ -152,10 +168,18 @@ void FSoftwareRenderer::Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &
 	delete[] spritelist;
 
 	int cnt = TexMan.NumTextures();
+
+	FImageSource::BeginPrecaching();
+	for (int i = cnt - 1; i >= 0; i--)
+	{
+		PreparePrecache(TexMan.ByIndex(i), texhitlist[i]);
+	}
+
 	for (int i = cnt - 1; i >= 0; i--)
 	{
 		PrecacheTexture(TexMan.ByIndex(i), texhitlist[i]);
 	}
+	FImageSource::EndPrecaching();
 }
 
 void FSoftwareRenderer::RenderView(player_t *player, DCanvas *target, void *videobuffer)

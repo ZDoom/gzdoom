@@ -1285,6 +1285,7 @@ void G_PlayerReborn (int player)
 	log = p->LogText;
 	chasecam = p->cheats & CF_CHASECAM;
 	Bot = p->Bot;			//Added by MC:
+	const bool settings_controller = p->settings_controller;
 
 	// Reset player structure to its defaults
 	p->~player_t();
@@ -1303,6 +1304,7 @@ void G_PlayerReborn (int player)
 	p->LogText = log;
 	p->cheats |= chasecam;
 	p->Bot = Bot;			//Added by MC:
+	p->settings_controller = settings_controller;
 
 	p->oldbuttons = ~0, p->attackdown = true; p->usedown = true;	// don't do anything immediately
 	p->original_oldbuttons = ~0;

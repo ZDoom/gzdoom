@@ -219,8 +219,6 @@ void DFrameBuffer::DrawTextCommon(FFont *font, int normalcolor, double x, double
 	int			kerning;
 	FTexture *pic;
 
-	assert(string[0] != '$');
-
 	if (parms.celly == 0) parms.celly = font->GetHeight() + 1;
 	parms.celly *= parms.scaley;
 

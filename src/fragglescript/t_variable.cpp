@@ -148,7 +148,7 @@ AActor* actorvalue(const svalue_t &svalue)
 			return NULL;
 		}
 		// Inventory items in the player's inventory have to be considered non-present.
-		if (svalue.value.mobj == NULL || !svalue.value.mobj->IsMapActor())
+		if (SpawnedThings[intval] == nullptr || !SpawnedThings[intval]->IsMapActor())
 		{
 			return NULL;
 		}

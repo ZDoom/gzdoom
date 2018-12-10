@@ -271,6 +271,22 @@ Error X86RAPass::emitSwapGp(VirtReg* dstReg, VirtReg* srcReg, uint32_t dstPhysId
   return kErrorOk;
 }
 
+Error X86RAPass::emitSwapVec(VirtReg* dstReg, VirtReg* srcReg, uint32_t dstPhysId, uint32_t srcPhysId, const char* reason) noexcept {
+  ASMJIT_ASSERT(dstPhysId != Globals::kInvalidRegId);
+  ASMJIT_ASSERT(srcPhysId != Globals::kInvalidRegId);
+  ASMJIT_ASSERT(dstPhysId != srcPhysId);
+
+  X86Reg a = X86Reg::fromSignature(dstReg->getSignature(), dstPhysId);
+  X86Reg b = X86Reg::fromSignature(srcReg->getSignature(), srcPhysId);
+
+  ASMJIT_PROPAGATE(cc()->emit(X86Inst::kIdXorps, a, b));
+  if (_emitComments)
+    cc()->getCursor()->setInlineComment(cc()->_cbDataZone.sformat("[%s] %s, %s", reason, dstReg->getName(), srcReg->getName()));
+  ASMJIT_PROPAGATE(cc()->emit(X86Inst::kIdXorps, b, a));
+  ASMJIT_PROPAGATE(cc()->emit(X86Inst::kIdXorps, a, b));
+  return kErrorOk;
+}
+
 Error X86RAPass::emitImmToReg(uint32_t dstTypeId, uint32_t dstPhysId, const Imm* src) noexcept {
   ASMJIT_ASSERT(dstPhysId != Globals::kInvalidRegId);
 
@@ -778,6 +794,9 @@ _MoveOrLoad:
               if (C == X86Reg::kKindGp) {
                 self->swapGp(dVReg, sVd);
               }
+              else if (C == X86Reg::kKindVec) {
+                self->swapVec(dVReg, sVd);
+              }
               else {
                 self->spill<C>(dVReg);
                 self->move<C>(sVd, physId);
@@ -932,10 +951,13 @@ static ASMJIT_INLINE void X86RAPass_intersectStateVars(X86RAPass* self, X86RASta
           didWork = true;
           continue;
         }
-        else if (C == X86Reg::kKindGp) {
+        else if (C == X86Reg::kKindGp || C == X86Reg::kKindVec) {
           if (aCell.getState() == VirtReg::kStateReg) {
             if (dVReg->getPhysId() != Globals::kInvalidRegId && aVReg->getPhysId() != Globals::kInvalidRegId) {
-              self->swapGp(dVReg, aVReg);
+              if (C == X86Reg::kKindGp)
+                self->swapGp(dVReg, aVReg);
+              else
+                self->swapVec(dVReg, aVReg);
 
               didWork = true;
               continue;
@@ -2787,9 +2809,13 @@ ASMJIT_INLINE void X86VarAlloc::alloc() {
         // allocation tasks by a single 'xchg' instruction, swapping
         // two registers required by the instruction/node or one register
         // required with another non-required.
-        if (C == X86Reg::kKindGp && aPhysId != Globals::kInvalidRegId) {
+        // Uses xor swap for Vec registers.
+        if ((C == X86Reg::kKindGp || C == X86Reg::kKindVec) && aPhysId != Globals::kInvalidRegId) {
           TiedReg* bTied = bVReg->_tied;
-          _context->swapGp(aVReg, bVReg);
+          if (C == X86Reg::kKindGp)
+            _context->swapGp(aVReg, bVReg);
+          else
+            _context->swapVec(aVReg, bVReg);
 
           aTied->flags |= TiedReg::kRDone;
           addTiedDone(C);
@@ -3341,8 +3367,11 @@ ASMJIT_INLINE void X86CallAlloc::alloc() {
         // allocation tasks by a single 'xchg' instruction, swapping
         // two registers required by the instruction/node or one register
         // required with another non-required.
-        if (C == X86Reg::kKindGp && sPhysId != Globals::kInvalidRegId) {
-          _context->swapGp(aVReg, bVReg);
+        if ((C == X86Reg::kKindGp || C == X86Reg::kKindVec) && sPhysId != Globals::kInvalidRegId) {
+          if (C == X86Reg::kKindGp)
+            _context->swapGp(aVReg, bVReg);
+          else
+            _context->swapVec(aVReg, bVReg);
 
           aTied->flags |= TiedReg::kRDone;
           addTiedDone(C);

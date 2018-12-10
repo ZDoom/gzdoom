@@ -169,16 +169,28 @@ void JitCompiler::EmitRET()
 			if (cc.is64Bit())
 			{
 				if (regtype & REGT_KONST)
-					cc.mov(x86::qword_ptr(location), asmjit::imm_ptr(konsta[regnum].v));
+				{
+					auto ptr = newTempIntPtr();
+					cc.mov(ptr, asmjit::imm_ptr(konsta[regnum].v));
+					cc.mov(x86::qword_ptr(location), ptr);
+				}
 				else
+				{
 					cc.mov(x86::qword_ptr(location), regA[regnum]);
+				}
 			}
 			else
 			{
 				if (regtype & REGT_KONST)
-					cc.mov(x86::dword_ptr(location), asmjit::imm_ptr(konsta[regnum].v));
+				{
+					auto ptr = newTempIntPtr();
+					cc.mov(ptr, asmjit::imm_ptr(konsta[regnum].v));
+					cc.mov(x86::dword_ptr(location), ptr);
+				}
 				else
+				{
 					cc.mov(x86::dword_ptr(location), regA[regnum]);
+				}
 			}
 			break;
 		}

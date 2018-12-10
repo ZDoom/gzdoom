@@ -268,7 +268,7 @@ void JitCompiler::SetupSimpleFrame()
 	for (unsigned int i = 0; i < sfunc->Proto->ArgumentTypes.Size(); i++)
 	{
 		const PType *type = sfunc->Proto->ArgumentTypes[i];
-		if (sfunc->ArgFlags[i] & (VARF_Out | VARF_Ref))
+		if (sfunc->ArgFlags.Size() && sfunc->ArgFlags[i] & (VARF_Out | VARF_Ref))
 		{
 			cc.mov(regA[rega++], x86::ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, a)));
 		}

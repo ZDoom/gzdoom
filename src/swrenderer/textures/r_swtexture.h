@@ -2,6 +2,7 @@
 #include "textures/textures.h"
 #include "v_video.h"
 
+
 struct FSoftwareTextureSpan
 {
 	uint16_t TopOffset;
@@ -62,7 +63,6 @@ public:
 	int GetHeight () { return mTexture->GetHeight(); }
 	int GetWidthBits() { return WidthBits; }
 	int GetHeightBits() { return HeightBits; }
-	bool Mipmapped() { return mTexture->Mipmapped(); }
 
 	int GetScaledWidth () { return mTexture->GetScaledWidth(); }
 	int GetScaledHeight () { return mTexture->GetScaledHeight(); }
@@ -95,7 +95,7 @@ public:
 	
 	DVector2 GetScale() const { return mTexture->Scale; }
 	
-	void Unload()
+	virtual void Unload()
 	{
 		Pixels.Reset();
 		PixelsBgra.Reset();
@@ -112,6 +112,9 @@ public:
 	void GenerateBgraMipmapsFast();
 	int MipmapLevels();
 	
+	// Returns true if GetPixelsBgra includes mipmaps
+	virtual bool Mipmapped() { return true; }
+
 	// Returns a single column of the texture
 	virtual const uint8_t *GetColumn(int style, unsigned int column, const FSoftwareTextureSpan **spans_out);
 
@@ -165,4 +168,30 @@ private:
 
 	int NextPo2 (int v); // [mxd]
 	void SetupMultipliers (int width, int height); // [mxd]
+};
+
+class FSWCanvasTexture : public FSoftwareTexture
+{
+	void MakeTexture();
+	void MakeTextureBgra();
+
+	DCanvas *Canvas = nullptr;
+	DCanvas *CanvasBgra = nullptr;
+
+public:
+
+	FSWCanvasTexture(FTexture *source) : FSoftwareTexture(source) {}
+	~FSWCanvasTexture();
+
+	// Returns the whole texture, stored in column-major order
+	const uint32_t *GetPixelsBgra() override;
+	const uint8_t *GetPixels(int style) override;
+
+	virtual void Unload() override;
+	void UpdatePixels(bool truecolor);
+
+	DCanvas *GetCanvas() { return Canvas; }
+	DCanvas *GetCanvasBgra() { return CanvasBgra; }
+	bool Mipmapped() override { return false; }
+
 };

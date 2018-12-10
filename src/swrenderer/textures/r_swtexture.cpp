@@ -43,7 +43,8 @@ FSoftwareTexture *FTexture::GetSoftwareTexture()
 {
 	if (!SoftwareTexture)
 	{
-		if (bWarped) SoftwareTexture = new FWarpTexture(this, bWarped);
+		if (bHasCanvas) SoftwareTexture = new FSWCanvasTexture(this);
+		else if (bWarped) SoftwareTexture = new FWarpTexture(this, bWarped);
 		else SoftwareTexture = new FSoftwareTexture(this);
 	}
 	return SoftwareTexture;

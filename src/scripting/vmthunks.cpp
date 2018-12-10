@@ -1584,6 +1584,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, ReplaceTextures, ReplaceTextures)
 	return 0;
 }
 
+void SetCameraToTexture(AActor *viewpoint, const FString &texturename, double fov);
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraToTexture, SetCameraToTexture)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(viewpoint, AActor);
+	PARAM_STRING(texturename); // [ZZ] there is no point in having this as FTextureID because it's easier to refer to a cameratexture by name and it isn't executed too often to cache it.
+	PARAM_FLOAT(fov);
+	SetCameraToTexture(viewpoint, texturename, fov);
+	return 0;
+}
+
+
 //=====================================================================================
 //
 // secplane_t exports

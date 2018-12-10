@@ -52,6 +52,7 @@
 #include "p_setup.h"
 #include "g_levellocals.h"
 #include "image.h"
+#include "imagehelpers.h"
 
 // [BB] Use ZDoom's freelook limit for the sotfware renderer.
 // Note: ZDoom's limit is chosen such that the sky is rendered properly.
@@ -201,7 +202,10 @@ void FSoftwareRenderer::RenderView(player_t *player, DCanvas *target, void *vide
 		r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
 	}
 
-	FCanvasTextureInfo::UpdateAll();
+	level.canvasTextureInfo.UpdateAll([&](AActor *camera, FCanvasTexture *camtex, double fov)
+	{
+		RenderTextureView(camtex, camera, fov);
+	});
 }
 
 void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, int height)
@@ -255,9 +259,8 @@ void FSoftwareRenderer::SetClearColor(int color)
 	mScene.SetClearColor(color);
 }
 
-void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, double fov)
+void FSoftwareRenderer::RenderTextureView (FCanvasTexture *camtex, AActor *viewpoint, double fov)
 {
-#if 0	// This will require a complete redesign.
 	auto renderTarget = V_IsPolyRenderer() ? PolyRenderer::Instance()->RenderTarget : mScene.MainThread()->Viewport->RenderTarget;
 	auto &cameraViewpoint = V_IsPolyRenderer() ? PolyRenderer::Instance()->Viewpoint : mScene.MainThread()->Viewport->viewpoint;
 	auto &cameraViewwindow = V_IsPolyRenderer() ? PolyRenderer::Instance()->Viewwindow : mScene.MainThread()->Viewport->viewwindow;
@@ -265,8 +268,9 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 	// Grab global state shared with rest of zdoom
 	cameraViewpoint = r_viewpoint;
 	cameraViewwindow = r_viewwindow;
+
+	auto tex = static_cast<FSWCanvasTexture*>(camtex->GetSoftwareTexture());
 	
-	uint8_t *Pixels = renderTarget->IsBgra() ? (uint8_t*)tex->GetPixelsBgra() : (uint8_t*)tex->GetPixels(DefaultRenderStyle());
 	DCanvas *Canvas = renderTarget->IsBgra() ? tex->GetCanvasBgra() : tex->GetCanvas();
 
 	// curse Doom's overuse of global variables in the renderer.
@@ -277,66 +281,19 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 	R_SetFOV (cameraViewpoint, fov);
 
 	if (V_IsPolyRenderer())
-		PolyRenderer::Instance()->RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
+		PolyRenderer::Instance()->RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), camtex->bFirstUpdate);
 	else
-		mScene.RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
+		mScene.RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), camtex->bFirstUpdate);
 
 	R_SetFOV (cameraViewpoint, savedfov);
 
-	if (Canvas->IsBgra())
-	{
-		if (Pixels == Canvas->GetPixels())
-		{
-			FTexture::FlipSquareBlockBgra((uint32_t*)Pixels, tex->GetWidth(), tex->GetHeight());
-		}
-		else
-		{
-			FTexture::FlipNonSquareBlockBgra((uint32_t*)Pixels, (const uint32_t*)Canvas->GetPixels(), tex->GetWidth(), tex->GetHeight(), Canvas->GetPitch());
-		}
-	}
-	else
-	{
-		if (Pixels == Canvas->GetPixels())
-		{
-			FTexture::FlipSquareBlockRemap(Pixels, tex->GetWidth(), tex->GetHeight(), GPalette.Remap);
-		}
-		else
-		{
-			FTexture::FlipNonSquareBlockRemap(Pixels, Canvas->GetPixels(), tex->GetWidth(), tex->GetHeight(), Canvas->GetPitch(), GPalette.Remap);
-		}
-	}
-
-	if (renderTarget->IsBgra())
-	{
-		// True color render still sometimes uses palette textures (for sprites, mostly).
-		// We need to make sure that both pixel buffers contain data:
-		int width = tex->GetWidth();
-		int height = tex->GetHeight();
-		uint8_t *palbuffer = (uint8_t *)tex->GetPixels(DefaultRenderStyle());
-		uint32_t *bgrabuffer = (uint32_t*)tex->GetPixelsBgra();
-		for (int x = 0; x < width; x++)
-		{
-			for (int y = 0; y < height; y++)
-			{
-				uint32_t color = bgrabuffer[y];
-				int r = RPART(color);
-				int g = GPART(color);
-				int b = BPART(color);
-				palbuffer[y] = RGB32k.RGB[r >> 3][g >> 3][b >> 3];
-			}
-			palbuffer += height;
-			bgrabuffer += height;
-		}
-	}
-
-	tex->SetUpdated();
+	tex->UpdatePixels(renderTarget->IsBgra());
 
 	*CameraLight::Instance() = savedCameraLight;
 
 	// Sync state back to zdoom
 	r_viewpoint = cameraViewpoint;
 	r_viewwindow = cameraViewwindow;
-#endif
 }
 
 void FSoftwareRenderer::SetColormap()

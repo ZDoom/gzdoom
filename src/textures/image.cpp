@@ -225,20 +225,20 @@ FBitmap FImageSource::GetCachedBitmap(PalEntry *remap, int conversion, int *ptra
 			trans = cache->TransInfo;
 			if (cache->RefCount > 1)
 			{
-				Printf("returning reference to %s, refcount = %d\n", name.GetChars(), cache->RefCount);
+				//Printf("returning reference to %s, refcount = %d\n", name.GetChars(), cache->RefCount);
 				ret.Copy(cache->Pixels, false);
 				cache->RefCount--;
 			}
 			else if (cache->Pixels.GetPixels())
 			{
-				Printf("returning contents of %s, refcount = %d\n", name.GetChars(), cache->RefCount);
+				//Printf("returning contents of %s, refcount = %d\n", name.GetChars(), cache->RefCount);
 				ret = std::move(cache->Pixels);
 				precacheDataRgba.Delete(index);
 			}
 			else
 			{
 				// This should never happen if the function is implemented correctly
-				Printf("something bad happened for %s, refcount = %d\n", name.GetChars(), cache->RefCount);
+				//Printf("something bad happened for %s, refcount = %d\n", name.GetChars(), cache->RefCount);
 				ret.Create(Width, Height);
 				trans = CopyPixels(&ret, normal);
 			}
@@ -250,13 +250,13 @@ FBitmap FImageSource::GetCachedBitmap(PalEntry *remap, int conversion, int *ptra
 			if (!info || info->first <= 1 || conversion != normal)
 			{
 				// This is either the only copy needed or some access outside the caching block. In these cases create a new one and directly return it.
-				Printf("returning fresh copy of %s\n", name.GetChars());
+				//Printf("returning fresh copy of %s\n", name.GetChars());
 				ret.Create(Width, Height);
 				trans = CopyPixels(&ret, conversion);
 			}
 			else
 			{
-				Printf("creating cached entry for %s, refcount = %d\n", name.GetChars(), info->first);
+				//Printf("creating cached entry for %s, refcount = %d\n", name.GetChars(), info->first);
 				// This is the first time it gets accessed and needs to be placed in the cache.
 				PrecacheDataRgba *pdr = &precacheDataRgba[precacheDataRgba.Reserve(1)];
 				

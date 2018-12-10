@@ -44,6 +44,7 @@
 #include "p_local.h"
 #include "p_destructible.h"
 #include "r_data/r_sections.h"
+#include "r_data/r_canvastexture.h"
 
 struct FLevelLocals
 {
@@ -103,6 +104,7 @@ struct FLevelLocals
 	TArray<FSectorPortalGroup *> portalGroups;	
 	TArray<FLinePortalSpan> linePortalSpans;
 	FSectionContainer sections;
+	FCanvasTextureInfo canvasTextureInfo;
 
 	int NumMapSections;
 

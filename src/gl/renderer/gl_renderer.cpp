@@ -254,7 +254,10 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 		bool saved_niv = NoInterpolateView;
 		NoInterpolateView = false;
 		// prepare all camera textures that have been used in the last frame
-		FCanvasTextureInfo::UpdateAll();
+		level.canvasTextureInfo.UpdateAll([&](AActor *camera, FCanvasTexture *camtex, double fov)
+		{
+			RenderTextureView(camtex, camera, fov);
+		});
 		NoInterpolateView = saved_niv;
 
 
@@ -324,7 +327,8 @@ void FGLRenderer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, doub
 
 	EndOffscreen();
 
-	tex->SetUpdated();
+	tex->SetUpdated(true);
+	static_cast<OpenGLFrameBuffer*>(screen)->camtexcount++;
 }
 
 //===========================================================================

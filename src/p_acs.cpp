@@ -9900,7 +9900,7 @@ scriptwait:
 					}
 					else
 					{
-						FCanvasTextureInfo::Add (camera, picnum, STACK(1));
+						level.canvasTextureInfo.Add(camera, picnum, STACK(1));
 					}
 				}
 				sp -= 3;

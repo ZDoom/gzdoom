@@ -1959,6 +1959,7 @@ void FLevelLocals::Tick ()
 
 void FLevelLocals::Mark()
 {
+	canvasTextureInfo.Mark();
 	for (auto &s : sectorPortals)
 	{
 		GC::Mark(s.mSkybox);

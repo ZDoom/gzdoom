@@ -188,25 +188,6 @@ void OpenGLFrameBuffer::Update()
 
 //===========================================================================
 //
-// 
-//
-//===========================================================================
-
-void OpenGLFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV)
-{
-	if (!V_IsHardwareRenderer())
-	{
-		Super::RenderTextureView(tex, Viewpoint, FOV);
-	}
-	else if (GLRenderer != nullptr)
-	{
-		GLRenderer->RenderTextureView(tex, Viewpoint, FOV);
-		camtexcount++;
-	}
-}
-
-//===========================================================================
-//
 // Render the view to a savegame picture
 //
 //===========================================================================

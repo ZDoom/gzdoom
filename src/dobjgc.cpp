@@ -322,7 +322,6 @@ static void MarkRoot()
 	M_MarkMenus();
 	Mark(DIntermissionController::CurrentIntermission);
 	DThinker::MarkRoots();
-	FCanvasTextureInfo::Mark();
 	Mark(E_FirstEventHandler);
 	Mark(E_LastEventHandler);
 	level.Mark();

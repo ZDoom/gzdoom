@@ -21,7 +21,7 @@ struct FSoftwareRenderer : public FRenderer
 	void DrawRemainingPlayerSprites() override;
 
 	void SetClearColor(int color) override;
-	void RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, double fov) override;
+	void RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, double fov);
 
 	void SetColormap() override;
 	void Init() override;

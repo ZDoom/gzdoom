@@ -392,9 +392,6 @@ protected:
 		}
 	}
 
-	// Returns true if GetPixelsBgra includes mipmaps
-	virtual bool Mipmapped() { return true; }
-
 	void SetSpeed(float fac) { shaderspeed = fac; }
 
 	int GetWidth () { return Width; }
@@ -673,34 +670,27 @@ class AActor;
 class FCanvasTexture : public FTexture
 {
 public:
-	FCanvasTexture (const char *name, int width, int height);
+	FCanvasTexture(const char *name, int width, int height)
+	{
+		Name = name;
+		Width = width;
+		Height = height;
 
-	//const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const FSoftwareTextureSpan **spans_out);
-	//const uint32_t *GetPixelsBgra() override;
+		bMasked = false;
+		bHasCanvas = true;
+		bTranslucent = false;
+		UseType = ETextureType::Wall;
+	}
 
-	//const uint8_t *Get8BitPixels(bool alphatex);
-	bool CheckModified (FRenderStyle) /*override*/;
-	void NeedUpdate() { bNeedsUpdate=true; }
-	void SetUpdated() { bNeedsUpdate = false; bDidUpdate = true; bFirstUpdate = false; }
-	DCanvas *GetCanvas() { return Canvas; }
-	DCanvas *GetCanvasBgra() { return CanvasBgra; }
-	bool Mipmapped() override { return false; }
-	void MakeTextureBgra ();
+	void NeedUpdate() { bNeedsUpdate = true; }
+	void SetUpdated(bool rendertype) { bNeedsUpdate = false; bFirstUpdate = false; bLastUpdateType = rendertype; }
 
 protected:
 
-	DCanvas *Canvas = nullptr;
-	DCanvas *CanvasBgra = nullptr;
-	uint8_t *Pixels = nullptr;
-	uint32_t *PixelsBgra = nullptr;
-	//FSoftwareTextureSpan DummySpans[2];
+	bool bLastUpdateType = false;
 	bool bNeedsUpdate = true;
-	bool bDidUpdate = false;
-	bool bPixelsAllocated = false;
-	bool bPixelsAllocatedBgra = false;
 public:
-	bool bFirstUpdate;
-
+	bool bFirstUpdate = true;
 
 	friend struct FCanvasTextureInfo;
 };

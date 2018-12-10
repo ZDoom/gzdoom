@@ -104,7 +104,7 @@ namespace ImageHelpers
 	{
 		for (int i = 0; i < x; ++i)
 		{
-			uint8_t *corner = block + x*i + i;
+			T *corner = block + x*i + i;
 			int count = x - i;
 			for (int j = 0; j < count; j++)
 			{

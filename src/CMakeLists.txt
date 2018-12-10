@@ -1144,6 +1144,7 @@ set (PCH_SOURCES
 	r_data/voxels.cpp
 	r_data/renderinfo.cpp
 	r_data/renderstyle.cpp
+	r_data/r_canvastexture.cpp
 	r_data/r_interpolate.cpp
 	r_data/r_vanillatrans.cpp
 	r_data/r_sections.cpp
@@ -1249,6 +1250,7 @@ set (PCH_SOURCES
 	sound/wildmidi/wm_error.cpp
 	swrenderer/textures/r_swtexture.cpp
 	swrenderer/textures/warptexture.cpp
+	swrenderer/textures/swcanvastexture.cpp
 	events.cpp
 )
 

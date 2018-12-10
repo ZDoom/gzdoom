@@ -761,26 +761,6 @@ TArray<uint8_t> FTexture::Get8BitPixels(bool alphatex)
 	return Pixels;
 }
 
-//===========================================================================
-// 
-// Dummy texture for the 0-entry.
-//
-//===========================================================================
-
-FDummyTexture::FDummyTexture ()
-{
-	Width = 64;
-	Height = 64;
-	UseType = ETextureType::Null;
-}
-
-void FDummyTexture::SetSize (int width, int height)
-{
-	Width = width;
-	Height = height;
-}
-
-
 //==========================================================================
 //
 // 

@@ -364,7 +364,7 @@ void FMultipatchTextureBuilder::AddTexturesLump(const void *lumpdata, int lumpsi
 			// It still needs to be created in case someone uses it by name.
 			offset = LittleLong(directory[1]);
 			const maptexture_t *tex = (const maptexture_t *)((const uint8_t *)maptex + offset);
-			FDummyTexture *tex0 = static_cast<FDummyTexture *>(TexMan.ByIndex(0));
+			FTexture *tex0 = TexMan.ByIndex(0);
 			tex0->SetSize(SAFESHORT(tex->width), SAFESHORT(tex->height));
 		}
 

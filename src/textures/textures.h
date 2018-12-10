@@ -382,7 +382,15 @@ protected:
 	float shaderspeed = 1.f;
 	int shaderindex = 0;
 
-
+	// This is only legal for the null texture!
+	void SetSize(int w, int h)
+	{
+		if (UseType == ETextureType::Null)
+		{
+			Width = w;
+			Height = h;
+		}
+	}
 
 	// Returns true if GetPixelsBgra includes mipmaps
 	virtual bool Mipmapped() { return true; }
@@ -655,14 +663,6 @@ public:
 	FTextureID glPart;
 	FTextureID mirrorTexture;
 
-};
-
-// A texture that doesn't really exist
-class FDummyTexture : public FTexture
-{
-public:
-	FDummyTexture ();
-	void SetSize (int width, int height);
 };
 
 

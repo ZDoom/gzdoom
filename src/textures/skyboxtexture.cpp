@@ -36,8 +36,14 @@
 
 FSkyBox::FSkyBox(const char *name)
 : FTexture(name)
-{ 
-	faces[0]=faces[1]=faces[2]=faces[3]=faces[4]=faces[5]=NULL; 
+{
+	FTextureID texid = TexMan.CheckForTexture(name, ETextureType::Wall);
+	if (texid.isValid())
+	{
+		previous = TexMan.GetTexture(texid);
+		CopySize(previous);
+	}
+	faces[0]=faces[1]=faces[2]=faces[3]=faces[4]=faces[5] = nullptr;
 	UseType = ETextureType::Override;
 	bSkybox = true;
 	fliptop = false;
@@ -51,8 +57,7 @@ FSkyBox::FSkyBox(const char *name)
 
 TArray<uint8_t> FSkyBox::Get8BitPixels(bool alphatex)
 {
-	if (faces[0]) return faces[0]->Get8BitPixels(alphatex);
-	return FTexture::Get8BitPixels(alphatex);
+	return previous->Get8BitPixels(alphatex);
 }
 
 //-----------------------------------------------------------------------------
@@ -63,7 +68,16 @@ TArray<uint8_t> FSkyBox::Get8BitPixels(bool alphatex)
 
 FBitmap FSkyBox::GetBgraBitmap(PalEntry *p, int *trans)
 {
-	if (faces[0]) return faces[0]->GetBgraBitmap(p, trans);
-	return FTexture::GetBgraBitmap(p, trans);
+	return previous->GetBgraBitmap(p, trans);
 }
 
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+FImageSource *FSkyBox::GetImage() const
+{
+	return previous->GetImage();
+}

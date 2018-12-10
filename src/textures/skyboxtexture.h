@@ -12,18 +12,22 @@ class FSkyBox : public FTexture
 {
 public:
 
+	FTexture *previous;
 	FTexture * faces[6];
 	bool fliptop;
 
-	FSkyBox(const char *name = nullptr);
+	FSkyBox(const char *name);
 	TArray<uint8_t> Get8BitPixels(bool alphatex);
 	FBitmap GetBgraBitmap(PalEntry *, int *trans) override;
+	FImageSource *GetImage() const override;
+
 
 	void SetSize()
 	{
-		if (faces[0]) 
+		if (!previous && faces[0]) previous = faces[0];
+		if (previous)
 		{
-			CopySize(faces[0]);
+			CopySize(previous);
 		}
 	}
 
@@ -35,10 +39,5 @@ public:
 	bool IsFlipped() const
 	{
 		return fliptop;
-	}
-
-	FImageSource *GetImage() const override
-	{
-		return faces[0] ? faces[0]->GetImage() : nullptr;
 	}
 };

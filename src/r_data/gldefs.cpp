@@ -102,7 +102,10 @@ static void ParseVavoomSkybox()
 			sc.ScriptError("%s: Skybox definition requires 6 faces", sb->GetName().GetChars());
 		}
 		sb->SetSize();
-		if (!error) TexMan.AddTexture(sb);
+		if (!error)
+		{
+			TexMan.AddTexture(sb);
+		}
 	}
 }
 
@@ -964,8 +967,7 @@ class GLDefsParser
 
 		sc.MustGetString();
 
-		FSkyBox * sb = new FSkyBox;
-		sb->Name = sc.String;
+		FSkyBox * sb = new FSkyBox(sc.String);
 		sb->Name.ToUpper();
 		if (sc.CheckString("fliptop"))
 		{

@@ -33,6 +33,7 @@
 #include "d_player.h"
 #include "textures/bitmap.h"
 #include "swrenderer/scene/r_light.h"
+#include "image.h"
 
 // [RH] Base blending values (for e.g. underwater)
 int BaseBlendR, BaseBlendG, BaseBlendB;
@@ -41,27 +42,23 @@ void InitSoftwareSky();
 
 
 
-class FSWPaletteTexture : public FTexture
+class FSWPaletteTexture : public FImageSource
 {
 public:
 	FSWPaletteTexture()
 	{
 		Width = 256;
 		Height = 1;
-		UseType = ETextureType::MiscPatch;
 	}
 
-	FBitmap GetBgraBitmap(PalEntry *, int *trans) override
+	int CopyPixels(FBitmap *bmp, int conversion) override
 	{
-		FBitmap bmp;
-		bmp.Create(256, 1);
-		PalEntry *pe = (PalEntry*)bmp.GetPixels();
+		PalEntry *pe = (PalEntry*)bmp->GetPixels();
 		for (int i = 0; i < 256; i++)
 		{
 			pe[i] = GPalette.BaseColors[i].d | 0xff000000;
 		}
-		if (trans) *trans = 0;
-		return bmp;
+		return 0;
 	}
 };
 
@@ -74,7 +71,13 @@ public:
 
 SWSceneDrawer::SWSceneDrawer()
 {
-	PaletteTexture.reset(new FSWPaletteTexture);
+	auto texid = TexMan.CheckForTexture("@@palette@@", ETextureType::Any);
+	if (!texid.Exists())
+	{
+		auto tex = new FImageTexture(new FSWPaletteTexture, "@@palette@@");
+		texid = TexMan.AddTexture(tex);
+	}
+	PaletteTexture = TexMan.GetTexture(texid);
 }
 
 SWSceneDrawer::~SWSceneDrawer()
@@ -98,7 +101,7 @@ sector_t *SWSceneDrawer::RenderView(player_t *player)
 		fbtex.reset(new FWrapperTexture(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor()));
 		fbtex->GetSystemTexture(0)->AllocateBuffer(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor() ? 4 : 1);
 		auto mat = FMaterial::ValidateTexture(fbtex.get(), false);
-		mat->AddTextureLayer(PaletteTexture.get());
+		mat->AddTextureLayer(PaletteTexture);
 
 		Canvas.reset();
 		Canvas.reset(new DCanvas(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor()));

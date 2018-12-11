@@ -671,7 +671,8 @@ FTextureBuffer FTexture::CreateTexBuffer(int translation, int flags)
 
 	if (flags & CTF_CheckHires)
 	{
-		if (LoadHiresTexture(result)) return result;
+		// No image means that this cannot be checked,
+		if (GetImage() && LoadHiresTexture(result)) return result;
 	}
 	int exx = !!(flags & CTF_Expand);
 
@@ -699,18 +700,23 @@ FTextureBuffer FTexture::CreateTexBuffer(int translation, int flags)
 		// A translated image is not conclusive for setting the texture's transparency info.
 	}
 
-	FContentId builder;
-	builder.id = 0;
-	builder.imageID = GetImage()->GetId();
-	builder.translation = MAX(0, translation);
-	builder.expand = exx;
+	if (GetImage())
+	{
+		FContentIdBuilder builder;
+		builder.id = 0;
+		builder.imageID = GetImage()->GetId();
+		builder.translation = MAX(0, translation);
+		builder.expand = exx;
+		result.mContentId = builder.id;
+	}
+	else result.mContentId = 0;	// for non-image backed textures this has no meaning so leave it at 0.
 
 	result.mBuffer = buffer;
 	result.mWidth = W;
 	result.mHeight = H;
-	result.mContentId = builder.id;
 
-	if (flags & CTF_ProcessData) 
+	// Only do postprocessing for image-backed textures. (i.e. not for the burn texture which can also pass through here.)
+	if (GetImage() && flags & CTF_ProcessData) 
 	{
 		CreateUpsampledTextureBuffer(result, !!isTransparent);
 		ProcessData(result.mBuffer, result.mWidth, result.mHeight, false);
@@ -731,9 +737,8 @@ bool FTexture::GetTranslucency()
 	{
 		if (!bHasCanvas)
 		{
-			int w, h;
-			unsigned char *buffer = CreateTexBuffer(0, w, h);
-			delete[] buffer;
+			// This will calculate all we need, so just discard the result.
+			CreateTexBuffer(0);
 		}
 		else
 		{

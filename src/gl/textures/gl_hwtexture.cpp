@@ -100,7 +100,7 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 	bool firstCall = glTex->glTexID == 0;
 	if (firstCall) glGenTextures(1,&glTex->glTexID);
 
-	unsigned textureBinding = UINT_MAX;
+	int textureBinding = UINT_MAX;
 	if (texunit == -1)	glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding);
 	if (texunit > 0) glActiveTexture(GL_TEXTURE0+texunit);
 	if (texunit >= 0) lastbound[texunit] = glTex->glTexID;
@@ -448,24 +448,25 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 		int w = 0, h = 0;
 
 		// Create this texture
-		unsigned char * buffer = nullptr;
+		
+		FTextureBuffer texbuffer;
 
 		if (!tex->isHardwareCanvas())
 		{
-			buffer = tex->CreateTexBuffer(translation, w, h, flags | CTF_ProcessData);
+			texbuffer = tex->CreateTexBuffer(translation, flags | CTF_ProcessData);
+			w = texbuffer.mWidth;
+			h = texbuffer.mHeight;
 		}
 		else
 		{
 			w = tex->GetWidth();
 			h = tex->GetHeight();
 		}
-		if (!CreateTexture(buffer, w, h, texunit, needmipmap, translation, "FHardwareTexture.BindOrCreate"))
+		if (!CreateTexture(texbuffer.mBuffer, w, h, texunit, needmipmap, translation, "FHardwareTexture.BindOrCreate"))
 		{
 			// could not create texture
-			delete[] buffer;
 			return false;
 		}
-		delete[] buffer;
 	}
 	if (tex->isHardwareCanvas()) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
 	GLRenderer->mSamplerManager->Bind(texunit, clampmode, 255);

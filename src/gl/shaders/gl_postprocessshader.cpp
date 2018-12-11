@@ -226,16 +226,15 @@ void PostProcessShaderInstance::BindTextures()
 			if (it == mTextureHandles.end())
 			{
 				// Why does this completely circumvent the normal way of handling textures?
-				int width, height;
-				auto buffer = tex->CreateTexBuffer(0, width, height);
+				// This absolutely needs fixing because it will also circumvent any potential caching system that may get implemented.
+				auto buffer = tex->CreateTexBuffer(0);
 
 				GLuint handle = 0;
 				glGenTextures(1, &handle);
 				glBindTexture(GL_TEXTURE_2D, handle);
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, buffer);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, buffer.mWidth, buffer.mHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, buffer.mBuffer);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				delete[] buffer;
 				mTextureHandles[tex] = handle;
 			}
 			else

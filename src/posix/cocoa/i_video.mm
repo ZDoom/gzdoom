@@ -656,12 +656,11 @@ bool I_SetCursor(FTexture *cursorpic)
 	{
 		// Create bitmap image representation
 		
-		int w, h;
-		auto sbuffer = cursorpic->CreateTexBuffer(0, w, h);
+		auto sbuffer = cursorpic->CreateTexBuffer(0);
 
-		const NSInteger imageWidth  = w;
-		const NSInteger imageHeight = h;
-		const NSInteger imagePitch  = w * 4;
+		const NSInteger imageWidth  = sbuffer.mWidth;
+		const NSInteger imageHeight = sbuffer.mHeight;
+		const NSInteger imagePitch  = sbuffer.mWidth * 4;
 
 		NSBitmapImageRep* bitmapImageRep = [NSBitmapImageRep alloc];
 		[bitmapImageRep initWithBitmapDataPlanes:NULL
@@ -678,8 +677,7 @@ bool I_SetCursor(FTexture *cursorpic)
 		// Load bitmap data to representation
 
 		uint8_t* buffer = [bitmapImageRep bitmapData];
-		memcpy(buffer, sbuffer, imagePitch * imageHeight);
-		delete [] sbuffer;
+		memcpy(buffer, sbuffer.mBuffer, imagePitch * imageHeight);
 
 		// Swap red and blue components in each pixel
 

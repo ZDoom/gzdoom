@@ -348,23 +348,23 @@ static void xbrzOldScale(size_t factor, const uint32_t* src, uint32_t* trg, int 
 
 //===========================================================================
 // 
-// [BB] Upsamples the texture in inputBuffer, frees inputBuffer and returns
+// [BB] Upsamples the texture in texbuffer.mBuffer, frees texbuffer.mBuffer and returns
 //  the upsampled buffer.
 //
 //===========================================================================
 void FTexture::CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasAlpha)
 {
-	// [BB] Make sure that outWidth and outHeight denote the size of
+	// [BB] Make sure that inWidth and inHeight denote the size of
 	// the returned buffer even if we don't upsample the input buffer.
-	int outWidth = texbuffer.mWidth;
-	int outHeight = texbuffer.mHeight;
+	int inWidth = texbuffer.mWidth;
+	int inHeight = texbuffer.mHeight;
 
 	// [BB] Don't resample if the width or height of the input texture is bigger than gl_texture_hqresize_maxinputsize.
-	if ( ( outWidth > gl_texture_hqresize_maxinputsize ) || ( outHeight > gl_texture_hqresize_maxinputsize ) )
+	if ((inWidth > gl_texture_hqresize_maxinputsize) || (inHeight > gl_texture_hqresize_maxinputsize))
 		return;
 
 	// [BB] Don't try to upsample textures based off FCanvasTexture. (This should never get here in the first place!)
-	if ( bHasCanvas )
+	if (bHasCanvas)
 		return;
 
 	// already scaled?
@@ -401,47 +401,53 @@ void FTexture::CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasA
 		if (mult < 2)
 			type = 0;
 
-		switch (type)
+
+		if (type == 1)
 		{
-		case 1:
-			switch(mult)
-			{
-			case 2:
-				return scaleNxHelper( &scale2x, 2, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-			case 3:
-				return scaleNxHelper( &scale3x, 3, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-			default:
-				return scaleNxHelper( &scale4x, 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-			}
-		case 2:
-			switch(mult)
-			{
-			case 2:
-				return hqNxHelper( &hq2x_32, 2, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-			case 3:
-				return hqNxHelper( &hq3x_32, 3, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-			default:
-				return hqNxHelper( &hq4x_32, 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-			}
-#ifdef HAVE_MMX
-		case 3:
-			switch(mult)
-			{
-			case 2:
-				return hqNxAsmHelper( &HQnX_asm::hq2x_32, 2, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-			case 3:
-				return hqNxAsmHelper( &HQnX_asm::hq3x_32, 3, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-			default:
-				return hqNxAsmHelper( &HQnX_asm::hq4x_32, 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-			}
-#endif
-		case 4:
-			return xbrzHelper(xbrz::scale, mult, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-		case 5:			
-			return xbrzHelper(xbrzOldScale, mult, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-		case 6:
-			return normalNxHelper( &normalNx, mult, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+			if (mult == 2)
+				texbuffer.mBuffer = scaleNxHelper(&scale2x, 2, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+			else if (mult == 3)
+				texbuffer.mBuffer = scaleNxHelper(&scale3x, 3, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+			else if (mult == 4)
+				texbuffer.mBuffer = scaleNxHelper(&scale4x, 4, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+			else return;
 		}
+		else if (type == 2)
+		{
+			if (mult == 2)
+				texbuffer.mBuffer = hqNxHelper(&hq2x_32, 2, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+			else if (mult == 3)
+				texbuffer.mBuffer = hqNxHelper(&hq3x_32, 3, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+			else if (mult == 4)
+				texbuffer.mBuffer = hqNxHelper(&hq4x_32, 4, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+			else return;
+		}
+#ifdef HAVE_MMX
+		else if (type == 3)
+		{
+			if (mult == 2)
+				texbuffer.mBuffer = hqNxAsmHelper(&HQnX_asm::hq2x_32, 2, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+			else if (mult == 3)
+				texbuffer.mBuffer = hqNxAsmHelper(&HQnX_asm::hq3x_32, 3, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+			else if (mult == 4)
+				texbuffer.mBuffer = hqNxAsmHelper(&HQnX_asm::hq4x_32, 4, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+			else return;
+		}
+#endif
+		else if (type == 4)
+			texbuffer.mBuffer = xbrzHelper(xbrz::scale, mult, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+		else if (type == 5)
+			texbuffer.mBuffer = xbrzHelper(xbrzOldScale, mult, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+		else if (type == 6)
+			texbuffer.mBuffer = normalNxHelper(&normalNx, mult, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+		else
+			return;
+
+		// Encode the scaling method in the content ID.
+		FContentIdBuilder contentId;
+		contentId.id = texbuffer.mContentId;
+		contentId.scaler = type;
+		contentId.scalefactor = mult;
+		texbuffer.mContentId = contentId.id;
 	}
-	return inputBuffer;
 }

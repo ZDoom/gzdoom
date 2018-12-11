@@ -341,19 +341,19 @@ void FMaterial::SetSpriteRect()
 
 bool FMaterial::TrimBorders(uint16_t *rect)
 {
-	int w;
-	int h;
 
-	unsigned char *buffer = sourcetex->CreateTexBuffer(0, w, h);
+	auto texbuffer = sourcetex->CreateTexBuffer(0);
+	int w = texbuffer.mWidth;
+	int h = texbuffer.mHeight;
+	auto Buffer = texbuffer.mBuffer;
 
-	if (buffer == NULL) 
+	if (texbuffer.mBuffer == nullptr) 
 	{
 		return false;
 	}
 	if (w != mWidth || h != mHeight)
 	{
 		// external Hires replacements cannot be trimmed.
-		delete [] buffer;
 		return false;
 	}
 
@@ -365,14 +365,13 @@ bool FMaterial::TrimBorders(uint16_t *rect)
 		rect[1] = 0;
 		rect[2] = 1;
 		rect[3] = 1;
-		delete[] buffer;
 		return true;
 	}
 	int first, last;
 
 	for(first = 0; first < size; first++)
 	{
-		if (buffer[first*4+3] != 0) break;
+		if (Buffer[first*4+3] != 0) break;
 	}
 	if (first >= size)
 	{
@@ -381,13 +380,12 @@ bool FMaterial::TrimBorders(uint16_t *rect)
 		rect[1] = 0;
 		rect[2] = 1;
 		rect[3] = 1;
-		delete [] buffer;
 		return true;
 	}
 
 	for(last = size-1; last >= first; last--)
 	{
-		if (buffer[last*4+3] != 0) break;
+		if (Buffer[last*4+3] != 0) break;
 	}
 
 	rect[1] = first / w;
@@ -396,7 +394,7 @@ bool FMaterial::TrimBorders(uint16_t *rect)
 	rect[0] = 0;
 	rect[2] = w;
 
-	unsigned char *bufferoff = buffer + (rect[1] * w * 4);
+	unsigned char *bufferoff = Buffer + (rect[1] * w * 4);
 	h = rect[3];
 
 	for(int x = 0; x < w; x++)
@@ -416,13 +414,11 @@ outl:
 		{
 			if (bufferoff[(x+y*w)*4+3] != 0) 
 			{
-				delete [] buffer;
 				return true;
 			}
 		}
 		rect[2]--;
 	}
-	delete [] buffer;
 	return true;
 }
 

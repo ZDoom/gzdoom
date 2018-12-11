@@ -42,7 +42,6 @@
 #include "colormatcher.h"
 #include "r_data/renderstyle.h"
 #include "r_data/r_translate.h"
-#include "hwrenderer/textures/hw_texmanager.h"
 #include <vector>
 
 // 15 because 0th texture is our texture
@@ -226,7 +225,7 @@ namespace OpenGLRenderer
 	class FHardwareTexture;
 }
 
-union FContentId
+union FContentIdBuilder
 {
 	uint64_t id;
 	struct

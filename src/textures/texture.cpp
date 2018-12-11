@@ -668,6 +668,7 @@ FTextureBuffer FTexture::CreateTexBuffer(int translation, int flags)
 	unsigned char * buffer = nullptr;
 	int W, H;
 	int isTransparent = -1;
+	bool checkonly = !!(flags & CTF_CheckOnly);
 
 	if (flags & CTF_CheckHires)
 	{
@@ -679,25 +680,28 @@ FTextureBuffer FTexture::CreateTexBuffer(int translation, int flags)
 	W = GetWidth() + 2 * exx;
 	H = GetHeight() + 2 * exx;
 
-	buffer = new unsigned char[W*(H + 1) * 4];
-	memset(buffer, 0, W * (H + 1) * 4);
-
-	auto remap = translation <= 0? nullptr : FUniquePalette::GetPalette(translation);
-	FBitmap bmp(buffer, W * 4, W, H);
-
-	int trans;
-	auto Pixels = GetBgraBitmap(remap, &trans);
-	bmp.Blit(exx, exx, Pixels);
-
-	if (remap == nullptr)
+	if (!checkonly)
 	{
-		CheckTrans(buffer, W*H, trans);
-		isTransparent = bTranslucent;
-	}
-	else
-	{
-		isTransparent = 0;
-		// A translated image is not conclusive for setting the texture's transparency info.
+		buffer = new unsigned char[W*(H + 1) * 4];
+		memset(buffer, 0, W * (H + 1) * 4);
+
+		auto remap = translation <= 0 ? nullptr : FUniquePalette::GetPalette(translation);
+		FBitmap bmp(buffer, W * 4, W, H);
+
+		int trans;
+		auto Pixels = GetBgraBitmap(remap, &trans);
+		bmp.Blit(exx, exx, Pixels);
+
+		if (remap == nullptr)
+		{
+			CheckTrans(buffer, W*H, trans);
+			isTransparent = bTranslucent;
+		}
+		else
+		{
+			isTransparent = 0;
+			// A translated image is not conclusive for setting the texture's transparency info.
+		}
 	}
 
 	if (GetImage())
@@ -718,8 +722,8 @@ FTextureBuffer FTexture::CreateTexBuffer(int translation, int flags)
 	// Only do postprocessing for image-backed textures. (i.e. not for the burn texture which can also pass through here.)
 	if (GetImage() && flags & CTF_ProcessData) 
 	{
-		CreateUpsampledTextureBuffer(result, !!isTransparent);
-		ProcessData(result.mBuffer, result.mWidth, result.mHeight, false);
+		CreateUpsampledTextureBuffer(result, !!isTransparent, checkonly);
+		if (!checkonly) ProcessData(result.mBuffer, result.mWidth, result.mHeight, false);
 	}
 
 	return result;

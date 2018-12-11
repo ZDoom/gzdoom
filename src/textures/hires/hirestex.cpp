@@ -358,7 +358,7 @@ int FTexture::CheckExternalFile(bool & hascolorkey)
 //
 //==========================================================================
 
-bool FTexture::LoadHiresTexture(FTextureBuffer &texbuffer)
+bool FTexture::LoadHiresTexture(FTextureBuffer &texbuffer, bool checkonly)
 {
 	if (HiresLump == -1)
 	{
@@ -377,24 +377,27 @@ bool FTexture::LoadHiresTexture(FTextureBuffer &texbuffer)
 		int w = HiresTexture->GetWidth();
 		int h = HiresTexture->GetHeight();
 
-		unsigned char * buffer = new unsigned char[w*(h + 1) * 4];
-		memset(buffer, 0, w * (h + 1) * 4);
-
-		FBitmap bmp(buffer, w * 4, w, h);
-		int trans;
-		auto Pixels = HiresTexture->GetBgraBitmap(nullptr, &trans);
-		bmp.Blit(0, 0, Pixels);
-
-		HiresTexture->CheckTrans(buffer, w*h, trans);
-
-		if (bHiresHasColorKey)
+		if (!checkonly)
 		{
-			// This is a crappy Doomsday color keyed image
-			// We have to remove the key manually. :(
-			uint32_t * dwdata = (uint32_t*)buffer;
-			for (int i = (w*h); i>0; i--)
+			unsigned char * buffer = new unsigned char[w*(h + 1) * 4];
+			memset(buffer, 0, w * (h + 1) * 4);
+
+			FBitmap bmp(buffer, w * 4, w, h);
+			int trans;
+			auto Pixels = HiresTexture->GetBgraBitmap(nullptr, &trans);
+			bmp.Blit(0, 0, Pixels);
+
+			HiresTexture->CheckTrans(buffer, w*h, trans);
+
+			if (bHiresHasColorKey)
 			{
-				if (dwdata[i] == 0xffffff00 || dwdata[i] == 0xffff00ff) dwdata[i] = 0;
+				// This is a crappy Doomsday color keyed image
+				// We have to remove the key manually. :(
+				uint32_t * dwdata = (uint32_t*)buffer;
+				for (int i = (w*h); i > 0; i--)
+				{
+					if (dwdata[i] == 0xffffff00 || dwdata[i] == 0xffff00ff) dwdata[i] = 0;
+				}
 			}
 		}
 		FContentIdBuilder contentId;

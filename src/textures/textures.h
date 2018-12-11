@@ -109,6 +109,7 @@ enum ECreateTexBufferFlags
 	CTF_CheckHires = 1,		// use external hires replacement if found
 	CTF_Expand = 2,			// create buffer with a one-pixel wide border
 	CTF_ProcessData = 4,	// run postprocessing on the generated buffer. This is only needed when using the data for a hardware texture.
+	CTF_CheckOnly = 8,		// Only runs the code to get a content ID but does not create a texture. Can be used to access a caching system for the hardware textures.
 };
 
 
@@ -282,7 +283,7 @@ public:
 	virtual ~FTexture ();
 	virtual FImageSource *GetImage() const { return nullptr; }
 	void AddAutoMaterials();
-	void CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasAlpha);
+	void CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasAlpha, bool checkonly);
 
 	// These are mainly meant for 2D code which only needs logical information about the texture to position it properly.
 	int GetDisplayWidth() { return GetScaledWidth(); }
@@ -491,7 +492,7 @@ public:
 private:
 	int CheckDDPK3();
 	int CheckExternalFile(bool & hascolorkey);
-	bool LoadHiresTexture(FTextureBuffer &texbuffer);
+	bool LoadHiresTexture(FTextureBuffer &texbuffer, bool checkonly);
 
 	bool bSWSkyColorDone = false;
 	PalEntry FloorSkyColor;

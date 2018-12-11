@@ -348,46 +348,44 @@ static void xbrzOldScale(size_t factor, const uint32_t* src, uint32_t* trg, int 
 //  the upsampled buffer.
 //
 //===========================================================================
-unsigned char *FTexture::CreateUpsampledTextureBuffer (unsigned char *inputBuffer, const int inWidth, const int inHeight, int &outWidth, int &outHeight, bool hasAlpha )
+void FTexture::CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasAlpha)
 {
 	// [BB] Make sure that outWidth and outHeight denote the size of
 	// the returned buffer even if we don't upsample the input buffer.
-	outWidth = inWidth;
-	outHeight = inHeight;
+	int outWidth = texbuffer.mWidth;
+	int outHeight = texbuffer.mHeight;
 
 	// [BB] Don't resample if the width or height of the input texture is bigger than gl_texture_hqresize_maxinputsize.
-	if ( ( inWidth > gl_texture_hqresize_maxinputsize ) || ( inHeight > gl_texture_hqresize_maxinputsize ) )
-		return inputBuffer;
+	if ( ( outWidth > gl_texture_hqresize_maxinputsize ) || ( outHeight > gl_texture_hqresize_maxinputsize ) )
+		return;
 
-	// [BB] Don't try to upsample textures based off FCanvasTexture.
+	// [BB] Don't try to upsample textures based off FCanvasTexture. (This should never get here in the first place!)
 	if ( bHasCanvas )
-		return inputBuffer;
+		return;
 
 	// already scaled?
 	if (Scale.X >= 2 && Scale.Y >= 2)
-		return inputBuffer;
+		return;
 
 	switch (UseType)
 	{
 	case ETextureType::Sprite:
 	case ETextureType::SkinSprite:
-		if (!(gl_texture_hqresize_targets & 2)) return inputBuffer;
+		if (!(gl_texture_hqresize_targets & 2)) return;
 		break;
 
 	case ETextureType::FontChar:
-		if (!(gl_texture_hqresize_targets & 4)) return inputBuffer;
+		if (!(gl_texture_hqresize_targets & 4)) return;
 		break;
 
 	default:
-		if (!(gl_texture_hqresize_targets & 1)) return inputBuffer;
+		if (!(gl_texture_hqresize_targets & 1)) return;
 		break;
 	}
 
-	if (inputBuffer)
+	if (texbuffer.mBuffer)
 	{
 		int type = gl_texture_hqresize;
-		outWidth = inWidth;
-		outHeight = inHeight;
 #ifdef HAVE_MMX
 		// hqNx MMX does not preserve the alpha channel so fall back to C-version for such textures
 		if (hasAlpha && type > 6 && type <= 9)

@@ -33,7 +33,7 @@ public:
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height) override;
 	sector_t *RenderView(player_t *player) override;
 	void SetTextureFilterMode() override;
-	IHardwareTexture *CreateHardwareTexture(FTexture *tex) override;
+	IHardwareTexture *CreateHardwareTexture() override;
 	void PrecacheMaterial(FMaterial *mat, int translation) override;
 	bool CheckPrecacheMaterial(FMaterial *mat) override;
 	FModelRenderer *CreateModelRenderer(int mli) override;

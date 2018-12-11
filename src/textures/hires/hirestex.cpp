@@ -36,6 +36,7 @@
 #include "gi.h"
 #include "cmdlib.h"
 #include "bitmap.h"
+#include "image.h"
 
 #ifndef _WIN32
 #define _access(a,b) access(a,b)
@@ -357,7 +358,7 @@ int FTexture::CheckExternalFile(bool & hascolorkey)
 //
 //==========================================================================
 
-unsigned char *FTexture::LoadHiresTexture(int *width, int *height)
+bool FTexture::LoadHiresTexture(FTextureBuffer &texbuffer)
 {
 	if (HiresLump == -1)
 	{
@@ -396,10 +397,15 @@ unsigned char *FTexture::LoadHiresTexture(int *width, int *height)
 				if (dwdata[i] == 0xffffff00 || dwdata[i] == 0xffff00ff) dwdata[i] = 0;
 			}
 		}
-		*width = w;
-		*height = h;
-		return buffer;
+		FContentId contentId;
+		contentId.id = 0;
+		contentId.imageID = HiresTexture->GetImage()->GetId();
+		texbuffer.mBuffer = buffer;
+		texbuffer.mWidth = w;
+		texbuffer.mHeight = h;
+		texbuffer.mContentId = contentId.id;
+		return true;
 	}
-	return nullptr;
+	return false;
 }
 

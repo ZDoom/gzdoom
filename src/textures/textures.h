@@ -226,6 +226,31 @@ namespace OpenGLRenderer
 	class FHardwareTexture;
 }
 
+union FContentId
+{
+	uint64_t id;
+	struct
+	{
+		unsigned imageID : 24;
+		unsigned translation : 16;
+		unsigned expand : 1;
+		unsigned scaler : 4;
+		unsigned scalefactor : 4;
+	};
+};
+
+struct FTextureBuffer
+{
+	uint8_t *mBuffer = nullptr;
+	int mWidth = 0;
+	int mHeight = 0;
+	uint64_t mContentId = 0;	// unique content identifier. (Two images created from the same image source with the same settings will return the same value.)
+
+	FTextureBuffer()
+	{
+		if (mBuffer) delete[] mBuffer;
+	}
+};
 
 // Base texture class
 class FTexture
@@ -258,12 +283,7 @@ public:
 	virtual ~FTexture ();
 	virtual FImageSource *GetImage() const { return nullptr; }
 	void AddAutoMaterials();
-	unsigned char *CreateUpsampledTextureBuffer(unsigned char *inputBuffer, const int inWidth, const int inHeight, int &outWidth, int &outHeight, bool hasAlpha);
-
-	// These should only be used in places where the texture scaling must be ignored and absolutely nowhere else!
-	// Preferably all code depending on the physical texture size should be rewritten, unless it is part of the software rasterizer.
-	//int GetPixelWidth() { return GetWidth(); }
-	//int GetPixelHeight() { return GetHeight(); }
+	void CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasAlpha);
 
 	// These are mainly meant for 2D code which only needs logical information about the texture to position it properly.
 	int GetDisplayWidth() { return GetScaledWidth(); }
@@ -466,13 +486,13 @@ protected:
 
 
 public:
-	unsigned char * CreateTexBuffer(int translation, int & w, int & h, int flags = 0);
+	FTextureBuffer CreateTexBuffer(int translation, int flags = 0);
 	bool GetTranslucency();
 
 private:
 	int CheckDDPK3();
 	int CheckExternalFile(bool & hascolorkey);
-	unsigned char *LoadHiresTexture(int *width, int *height);
+	bool LoadHiresTexture(FTextureBuffer &texbuffer);
 
 	bool bSWSkyColorDone = false;
 	PalEntry FloorSkyColor;

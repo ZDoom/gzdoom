@@ -661,23 +661,22 @@ bool FTexture::ProcessData(unsigned char * buffer, int w, int h, bool ispatch)
 //
 //===========================================================================
 
-unsigned char * FTexture::CreateTexBuffer(int translation, int & w, int & h, int flags)
+FTextureBuffer FTexture::CreateTexBuffer(int translation, int flags)
 {
+	FTextureBuffer result;
+
 	unsigned char * buffer = nullptr;
 	int W, H;
 	int isTransparent = -1;
 
 	if (flags & CTF_CheckHires)
 	{
-		buffer = LoadHiresTexture(&w, &h);
-		if (buffer != nullptr)
-			return buffer;
+		if (LoadHiresTexture(result)) return result;
 	}
-
 	int exx = !!(flags & CTF_Expand);
 
-	W = w = GetWidth() + 2 * exx;
-	H = h = GetHeight() + 2 * exx;
+	W = GetWidth() + 2 * exx;
+	H = GetHeight() + 2 * exx;
 
 	buffer = new unsigned char[W*(H + 1) * 4];
 	memset(buffer, 0, W * (H + 1) * 4);
@@ -700,13 +699,24 @@ unsigned char * FTexture::CreateTexBuffer(int translation, int & w, int & h, int
 		// A translated image is not conclusive for setting the texture's transparency info.
 	}
 
+	FContentId builder;
+	builder.id = 0;
+	builder.imageID = GetImage()->GetId();
+	builder.translation = MAX(0, translation);
+	builder.expand = exx;
+
+	result.mBuffer = buffer;
+	result.mWidth = W;
+	result.mHeight = H;
+	result.mContentId = builder.id;
+
 	if (flags & CTF_ProcessData) 
 	{
-		buffer = CreateUpsampledTextureBuffer(buffer, W, H, w, h, !!isTransparent);
-		ProcessData(buffer, w, h, false);
+		CreateUpsampledTextureBuffer(result, !!isTransparent);
+		ProcessData(result.mBuffer, result.mWidth, result.mHeight, false);
 	}
 
-	return buffer;
+	return result;
 }
 
 //===========================================================================

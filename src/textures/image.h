@@ -64,6 +64,7 @@ public:
 	bool bMasked = true;						// Image (might) have holes (Assume true unless proven otherwise!)
 	int8_t bTranslucent = -1;					// Image has pixels with a non-0/1 value. (-1 means the user needs to do a real check)
 
+	int GetId() const { return ImageID; }
 	
 	// 'noremap0' will only be looked at by FPatchTexture and forwarded by FMultipatchTexture.
 

@@ -99,10 +99,14 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 	TranslatedTexture * glTex=GetTexID(translation);
 	bool firstCall = glTex->glTexID == 0;
 	if (firstCall) glGenTextures(1,&glTex->glTexID);
-	if (texunit != 0) glActiveTexture(GL_TEXTURE0+texunit);
+
+	unsigned textureBinding = UINT_MAX;
+	if (texunit == -1)	glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding);
+	if (texunit > 0) glActiveTexture(GL_TEXTURE0+texunit);
+	if (texunit >= 0) lastbound[texunit] = glTex->glTexID;
 	glBindTexture(GL_TEXTURE_2D, glTex->glTexID);
+
 	FGLDebug::LabelObject(GL_TEXTURE, glTex->glTexID, name);
-	lastbound[texunit] = glTex->glTexID;
 
 	rw = GetTexDimension(w);
 	rh = GetTexDimension(h);
@@ -168,7 +172,8 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 		glTex->mipmapped = true;
 	}
 
-	if (texunit != 0) glActiveTexture(GL_TEXTURE0);
+	if (texunit > 0) glActiveTexture(GL_TEXTURE0);
+	else if (texunit == -1) glBindTexture(GL_TEXTURE_2D, textureBinding);
 	return glTex->glTexID;
 }
 

@@ -774,7 +774,7 @@ FWrapperTexture::FWrapperTexture(int w, int h, int bits)
 	Format = bits;
 	UseType = ETextureType::SWCanvas;
 	bNoCompress = true;
-	SystemTexture[0] = screen->CreateHardwareTexture(this);
+	SystemTexture[0] = screen->CreateHardwareTexture();
 }
 
 //===========================================================================

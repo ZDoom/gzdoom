@@ -140,7 +140,7 @@ IHardwareTexture * FMaterial::ValidateSysTexture(FTexture * tex, bool expand)
 		IHardwareTexture *gltex = tex->SystemTexture[expand];
 		if (gltex == nullptr) 
 		{
-			gltex = tex->SystemTexture[expand] = screen->CreateHardwareTexture(tex);
+			gltex = tex->SystemTexture[expand] = screen->CreateHardwareTexture();
 		}
 		return gltex;
 	}

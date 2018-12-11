@@ -89,6 +89,7 @@ namespace swrenderer
 			return pal_drawers.get();
 	}
 
+	static std::mutex loadmutex;
 	void RenderThread::PrepareTexture(FTexture *texture, FRenderStyle style)
 	{
 		if (texture == nullptr)
@@ -102,8 +103,6 @@ namespace swrenderer
 		// It is critical that this function is called before any direct
 		// calls to GetPixels for this to work.
 
-		static std::mutex loadmutex;
-
 		std::unique_lock<std::mutex> lock(loadmutex);
 
 		texture->GetPixels(style);
@@ -116,10 +115,9 @@ namespace swrenderer
 		}
 	}
 
+	static std::mutex polyobjmutex;
 	void RenderThread::PreparePolyObject(subsector_t *sub)
 	{
-		static std::mutex polyobjmutex;
-
 		std::unique_lock<std::mutex> lock(polyobjmutex);
 
 		if (sub->BSP == nullptr || sub->BSP->bDirty)

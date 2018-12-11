@@ -579,47 +579,9 @@ class GLTextureGLOptions : OptionMenu
 		{
 			string message;
 
-			if (gl_texture_hqresize > 0)
+			if (gl_texture_hqresizemult > 1 && gl_texture_hqresizemode > 0)
 			{
-				int multiplier;
-
-				switch (gl_texture_hqresize)
-				{
-				case 1:
-				case 4:
-				case 7:
-				case 10:
-				case 13:
-				case 20:
-					multiplier = 4;
-					break;
-				case 2:
-				case 5:
-				case 8:
-				case 11:
-				case 14:
-				case 21:
-					multiplier = 9;
-					break;
-				case 3:
-				case 6:
-				case 9:
-				case 12:
-				case 15:
-				case 22:
-					multiplier = 16;
-					break;
-				case 16:
-				case 18:
-				case 23:
-					multiplier = 25;
-					break;
-				case 17:
-				case 19:
-				case 24:
-					multiplier = 36;
-					break;
-				}
+				int multiplier = gl_texture_hqresizemult * gl_texture_hqresizemult;
 
 				string localized = StringTable.Localize("$GLTEXMNU_HQRESIZEWARN");
 				message = String.Format(localized, multiplier);

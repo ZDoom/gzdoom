@@ -121,9 +121,9 @@ template<class T, int fill = 1> void ArrayResize(T *self, int amount)
 	}
 }
 
-template<class T> void ArrayReserve(T *self, int amount)
+template<class T> unsigned int ArrayReserve(T *self, int amount)
 {
-	self->Reserve(amount);
+	return self->Reserve(amount);
 }
 
 template<class T> int ArrayMax(T *self)

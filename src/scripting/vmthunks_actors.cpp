@@ -128,7 +128,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetPointer, COPY_AAPTR)
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopSound, S_StopSound)
+static void NativeStopSound(AActor *actor, int slot)
+{
+	S_StopSound(actor, slot);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopSound, NativeStopSound)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(slot);
@@ -475,7 +480,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec2To, Vec2To)
 	ACTION_RETURN_VEC2(self->Vec2To(t));
 }
 
-static void Vec3Angle(AActor *self, double length, double angle, double z, bool absolute, DVector2 *result)
+static void Vec3Angle(AActor *self, double length, double angle, double z, bool absolute, DVector3 *result)
 {
 	*result = self->Vec3Angle(length, angle, z, absolute);
 }

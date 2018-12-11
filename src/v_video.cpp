@@ -93,6 +93,11 @@ CUSTOM_CVAR(Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Int, vid_rendermode, 4, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
+	if (self < 0 || self > 4)
+	{
+		self = 4;
+	}
+
 	if (usergame)
 	{
 		// [SP] Update pitch limits to the netgame/gamesim.

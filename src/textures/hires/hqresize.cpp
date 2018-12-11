@@ -45,18 +45,22 @@
 #include "parallel_for.h"
 #include "hwrenderer/textures/hw_material.h"
 
-CUSTOM_CVAR(Int, gl_texture_hqresize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+EXTERN_CVAR(Int, gl_texture_hqresizemult)
+CUSTOM_CVAR(Int, gl_texture_hqresizemode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	if (self < 0 || self > 24)
-	{
+	if (self < 0 || self > 6)
 		self = 0;
-	}
-	#ifndef HAVE_MMX
-		// This is to allow the menu option to work properly so that these filters can be skipped while cycling through them.
-		if (self == 7) self = 10;
-		if (self == 8) self = 10;
-		if (self == 9) self = 6;
-	#endif
+	if ((gl_texture_hqresizemult > 4) && (self < 4) && (self > 0))
+		gl_texture_hqresizemult = 4;
+	FMaterial::FlushAll();
+}
+
+CUSTOM_CVAR(Int, gl_texture_hqresizemult, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (self < 1 || self > 6)
+		self = 1;
+	if ((self > 4) && (gl_texture_hqresizemode < 4) && (gl_texture_hqresizemode > 0))
+		self = 4;
 	FMaterial::FlushAll();
 }
 
@@ -385,62 +389,58 @@ void FTexture::CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasA
 
 	if (texbuffer.mBuffer)
 	{
-		int type = gl_texture_hqresize;
+		int type = gl_texture_hqresizemode;
+		int mult = gl_texture_hqresizemult;
 #ifdef HAVE_MMX
 		// hqNx MMX does not preserve the alpha channel so fall back to C-version for such textures
-		if (hasAlpha && type > 6 && type <= 9)
+		if (hasAlpha && type == 3)
 		{
-			type -= 3;
+			type = 2;
 		}
 #endif
+		if (mult < 2)
+			type = 0;
 
 		switch (type)
 		{
 		case 1:
-			return scaleNxHelper( &scale2x, 2, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+			switch(mult)
+			{
+			case 2:
+				return scaleNxHelper( &scale2x, 2, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+			case 3:
+				return scaleNxHelper( &scale3x, 3, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+			default:
+				return scaleNxHelper( &scale4x, 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+			}
 		case 2:
-			return scaleNxHelper( &scale3x, 3, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-		case 3:
-			return scaleNxHelper( &scale4x, 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-		case 4:
-			return hqNxHelper( &hq2x_32, 2, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-		case 5:
-			return hqNxHelper( &hq3x_32, 3, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-		case 6:
-			return hqNxHelper( &hq4x_32, 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+			switch(mult)
+			{
+			case 2:
+				return hqNxHelper( &hq2x_32, 2, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+			case 3:
+				return hqNxHelper( &hq3x_32, 3, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+			default:
+				return hqNxHelper( &hq4x_32, 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+			}
 #ifdef HAVE_MMX
-		case 7:
-			return hqNxAsmHelper( &HQnX_asm::hq2x_32, 2, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-		case 8:
-			return hqNxAsmHelper( &HQnX_asm::hq3x_32, 3, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-		case 9:
-			return hqNxAsmHelper( &HQnX_asm::hq4x_32, 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+		case 3:
+			switch(mult)
+			{
+			case 2:
+				return hqNxAsmHelper( &HQnX_asm::hq2x_32, 2, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+			case 3:
+				return hqNxAsmHelper( &HQnX_asm::hq3x_32, 3, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+			default:
+				return hqNxAsmHelper( &HQnX_asm::hq4x_32, 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+			}
 #endif
-		case 10:
-		case 11:
-		case 12:
-			return xbrzHelper(xbrz::scale, type - 8, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-			
-		case 13:
-		case 14:
-		case 15:
-		case 16:
-		case 17:
-			return xbrzHelper(xbrzOldScale, type - 11, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-
-		case 18:
-		case 19:
-			return xbrzHelper(xbrz::scale, type - 13, inputBuffer, inWidth, inHeight, outWidth, outHeight);
-		case 20:
-			return normalNxHelper( &normalNx, 2, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-		case 21:
-			return normalNxHelper( &normalNx, 3, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-		case 22:
-			return normalNxHelper( &normalNx, 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-		case 23:
-			return normalNxHelper( &normalNx, 5, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-		case 24:
-			return normalNxHelper( &normalNx, 6, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+		case 4:
+			return xbrzHelper(xbrz::scale, mult, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+		case 5:			
+			return xbrzHelper(xbrzOldScale, mult, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+		case 6:
+			return normalNxHelper( &normalNx, mult, inputBuffer, inWidth, inHeight, outWidth, outHeight );
 		}
 	}
 	return inputBuffer;

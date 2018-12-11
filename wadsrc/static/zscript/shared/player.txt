@@ -2431,6 +2431,11 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 			mo.DropWeapon();
 		}
 	}
+
+	deprecated("3.7") void BringUpWeapon()
+	{
+		if (mo) mo.BringUpWeapon();
+	}
 	
 	bool IsTotallyFrozen()
 	{

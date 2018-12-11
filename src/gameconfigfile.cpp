@@ -60,6 +60,8 @@ EXTERN_CVAR (Color, am_fdwallcolor)
 EXTERN_CVAR (Color, am_cdwallcolor)
 EXTERN_CVAR (Float, spc_amp)
 EXTERN_CVAR (Bool, wi_percents)
+EXTERN_CVAR (Int, gl_texture_hqresizemode)
+EXTERN_CVAR (Int, gl_texture_hqresizemult)
 
 FGameConfigFile::FGameConfigFile ()
 {
@@ -394,6 +396,93 @@ void FGameConfigFile::DoGlobalSetup ()
 				// Previously a true/false boolean. Now an on/off/auto tri-state with auto as the default.
 				FBaseCVar *var = FindCVar("snd_hrtf", NULL);
 				if (var != NULL) var->ResetToDefault();
+			}
+			if (last < 216)
+			{
+				FBaseCVar *var = FindCVar("gl_texture_hqresize", NULL);
+				if (var != NULL)
+				{
+					auto v = var->GetGenericRep(CVAR_Int);
+					switch (v.Int)
+					{
+					case 1:
+						gl_texture_hqresizemode = 1; gl_texture_hqresizemult = 2;
+						break;
+					case 2:
+						gl_texture_hqresizemode = 1; gl_texture_hqresizemult = 3;
+						break;
+					case 3:
+						gl_texture_hqresizemode = 1; gl_texture_hqresizemult = 4;
+						break;
+					case 4:
+						gl_texture_hqresizemode = 2; gl_texture_hqresizemult = 2;
+						break;
+					case 5:
+						gl_texture_hqresizemode = 2; gl_texture_hqresizemult = 3;
+						break;
+					case 6:
+						gl_texture_hqresizemode = 2; gl_texture_hqresizemult = 4;
+						break;
+					case 7:
+						gl_texture_hqresizemode = 3; gl_texture_hqresizemult = 2;
+						break;
+					case 8:
+						gl_texture_hqresizemode = 3; gl_texture_hqresizemult = 3;
+						break;
+					case 9:
+						gl_texture_hqresizemode = 3; gl_texture_hqresizemult = 4;
+						break;
+					case 10:
+						gl_texture_hqresizemode = 4; gl_texture_hqresizemult = 2;
+						break;
+					case 11:
+						gl_texture_hqresizemode = 4; gl_texture_hqresizemult = 3;
+						break;
+					case 12:
+						gl_texture_hqresizemode = 4; gl_texture_hqresizemult = 4;
+						break;
+					case 18:
+						gl_texture_hqresizemode = 4; gl_texture_hqresizemult = 5;
+						break;
+					case 19:
+						gl_texture_hqresizemode = 4; gl_texture_hqresizemult = 6;
+						break;
+					case 13:
+						gl_texture_hqresizemode = 5; gl_texture_hqresizemult = 2;
+						break;
+					case 14:
+						gl_texture_hqresizemode = 5; gl_texture_hqresizemult = 3;
+						break;
+					case 15:
+						gl_texture_hqresizemode = 5; gl_texture_hqresizemult = 4;
+						break;
+					case 16:
+						gl_texture_hqresizemode = 5; gl_texture_hqresizemult = 5;
+						break;
+					case 17:
+						gl_texture_hqresizemode = 5; gl_texture_hqresizemult = 6;
+						break;
+					case 20:
+						gl_texture_hqresizemode = 6; gl_texture_hqresizemult = 2;
+						break;
+					case 21:
+						gl_texture_hqresizemode = 6; gl_texture_hqresizemult = 3;
+						break;
+					case 22:
+						gl_texture_hqresizemode = 6; gl_texture_hqresizemult = 4;
+						break;
+					case 23:
+						gl_texture_hqresizemode = 6; gl_texture_hqresizemult = 5;
+						break;
+					case 24:
+						gl_texture_hqresizemode = 6; gl_texture_hqresizemult = 6;
+						break;
+					case 0:
+					default:
+						gl_texture_hqresizemode = 0; gl_texture_hqresizemult = 1;
+						break;
+					}
+				}
 			}
 		}
 	}

@@ -404,17 +404,21 @@ outl:
 
 IHardwareTexture *FMaterial::GetLayer(int i, int translation, FTexture **pLayer)
 {
-	FTexture *texture = i == 0 ? tex : mTextureLayers[i - 1];
-	if (pLayer) *pLayer = tex;
-
-	auto hwtex = tex->SystemTextures.GetHardwareTexture(translation, mExpanded);
-	if (hwtex == nullptr)
+	FTexture *layer = i == 0 ? tex : mTextureLayers[i - 1];
+	if (pLayer) *pLayer = layer;
+	
+	if (layer && layer->UseType!=ETextureType::Null)
 	{
-		hwtex = screen->CreateHardwareTexture();
-		// Fixme: This needs to create the texture here and not implicitly in BindOrCreate!
-		tex->SystemTextures.AddHardwareTexture(translation, mExpanded, hwtex);
+		IHardwareTexture *hwtex = layer->SystemTextures.GetHardwareTexture(0, mExpanded);
+		if (hwtex == nullptr) 
+		{
+			hwtex = screen->CreateHardwareTexture();
+			layer->SystemTextures.AddHardwareTexture(0, mExpanded, hwtex);
+			hwtex = tex->SystemTextures.GetHardwareTexture(0, mExpanded);
+		}
+		return hwtex;
 	}
-	return hwtex;
+	return nullptr;
 }
 
 //===========================================================================
@@ -473,8 +477,8 @@ again:
 	{
 		if (tex->bNoExpand) expand = false;
 
-		FMaterial *gltex = tex->Material[expand];
-		if (gltex == NULL && create)
+		FMaterial *hwtex = tex->Material[expand];
+		if (hwtex == NULL && create)
 		{
 			if (expand)
 			{
@@ -493,9 +497,9 @@ again:
 					goto again;
 				}
 			}
-			gltex = new FMaterial(tex, expand);
+			hwtex = new FMaterial(tex, expand);
 		}
-		return gltex;
+		return hwtex;
 	}
 	return NULL;
 }

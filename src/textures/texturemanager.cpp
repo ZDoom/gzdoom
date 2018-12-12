@@ -54,6 +54,7 @@
 #include "vm.h"
 #include "image.h"
 #include "formats/multipatchtexture.h"
+#include "swrenderer/textures/r_swtexture.h"
 
 FTextureManager TexMan;
 
@@ -159,11 +160,11 @@ void FTextureManager::FlushAll()
 	{
 		for (int j = 0; j < 2; j++)
 		{
-			TexMan.ByIndex(i)->SystemTextures.Clean(true, true);
-			delete TexMan.ByIndex(i)->SoftwareTexture;
+			Textures[i].Texture->SystemTextures.Clean(true, true);
+			delete Textures[i].Texture->SoftwareTexture;
+			Textures[i].Texture->SoftwareTexture = nullptr;
 		}
 	}
-	// This must also delete the software renderer's canvas.
 }
 
 //==========================================================================

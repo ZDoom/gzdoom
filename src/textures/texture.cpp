@@ -790,7 +790,9 @@ FWrapperTexture::FWrapperTexture(int w, int h, int bits)
 	Format = bits;
 	UseType = ETextureType::SWCanvas;
 	bNoCompress = true;
-	SystemTextures.AddHardwareTexture(0, false, screen->CreateHardwareTexture());
+	auto hwtex = screen->CreateHardwareTexture();
+	// todo: Initialize here.
+	SystemTextures.AddHardwareTexture(0, false, hwtex);
 }
 
 //===========================================================================

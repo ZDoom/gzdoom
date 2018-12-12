@@ -52,7 +52,7 @@ CUSTOM_CVAR(Int, gl_texture_hqresizemode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | 
 		self = 0;
 	if ((gl_texture_hqresizemult > 4) && (self < 4) && (self > 0))
 		gl_texture_hqresizemult = 4;
-	FMaterial::FlushAll();
+	TexMan.FlushAll();
 }
 
 CUSTOM_CVAR(Int, gl_texture_hqresizemult, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
@@ -61,18 +61,18 @@ CUSTOM_CVAR(Int, gl_texture_hqresizemult, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | 
 		self = 1;
 	if ((self > 4) && (gl_texture_hqresizemode < 4) && (gl_texture_hqresizemode > 0))
 		self = 4;
-	FMaterial::FlushAll();
+	TexMan.FlushAll();
 }
 
 CUSTOM_CVAR(Int, gl_texture_hqresize_maxinputsize, 512, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	if (self > 1024) self = 1024;
-	FMaterial::FlushAll();
+	TexMan.FlushAll();
 }
 
 CUSTOM_CVAR(Int, gl_texture_hqresize_targets, 7, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	FMaterial::FlushAll();
+	TexMan.FlushAll();
 }
 
 CVAR (Flag, gl_texture_hqresize_textures, gl_texture_hqresize_targets, 1);

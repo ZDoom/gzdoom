@@ -39,7 +39,6 @@ class FMaterial
 	static TArray<FMaterial *> mMaterials;
 	static int mMaxBound;
 
-	IHardwareTexture *mBaseLayer;	
 	TArray<FTexture*> mTextureLayers;
 	int mShaderIndex;
 
@@ -68,7 +67,6 @@ public:
 	void Precache();
 	void PrecacheList(SpriteHits &translations);
 	int GetShaderIndex() const { return mShaderIndex; }
-	IHardwareTexture * ValidateSysTexture(FTexture * tex, int translation, bool expand);
 	void AddTextureLayer(FTexture *tex)
 	{
 		ValidateTexture(tex, false);
@@ -93,23 +91,7 @@ public:
 		return tex->isHardwareCanvas();
 	}
 
-	IHardwareTexture *GetLayer(int i, FTexture **pLayer = nullptr)
-	{
-		if (i == 0)
-		{
-			if (pLayer) *pLayer = tex;
-			return mBaseLayer;
-		}
-		else
-		{
-			i--;
-			FTexture *layer = mTextureLayers[i];
-			if (pLayer) *pLayer = layer;
-			return ValidateSysTexture(layer, 0, isExpanded());
-		}
-	}
-
-	void Clean(bool f);
+	IHardwareTexture *GetLayer(int i, int translation, FTexture **pLayer = nullptr);
 
 	// Patch drawing utilities
 
@@ -168,8 +150,6 @@ public:
 	float GetSpriteVB() const { return mSpriteV[1]; }
 
 
-	static void DeleteAll();
-	static void FlushAll();
 	static FMaterial *ValidateTexture(FTexture * tex, bool expand, bool create = true);
 	static FMaterial *ValidateTexture(FTextureID no, bool expand, bool trans, bool create = true);
 };

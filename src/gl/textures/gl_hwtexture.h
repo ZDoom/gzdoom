@@ -91,7 +91,6 @@ public:
 	unsigned int GetTextureHandle(int translation);
 
 	void Clean(bool all);
-	void CleanUnused(SpriteHits &usedtranslations);
 };
 
 }

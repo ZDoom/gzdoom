@@ -117,7 +117,7 @@ FGLRenderer::~FGLRenderer()
 {
 	FlushModels();
 	AActor::DeleteAllAttachedLights();
-	FMaterial::FlushAll();
+	TexMan.FlushAll();
 	if (mShaderManager != nullptr) delete mShaderManager;
 	if (mSamplerManager != nullptr) delete mSamplerManager;
 	if (mFBID != 0) glDeleteFramebuffers(1, &mFBID);
@@ -288,7 +288,7 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 
 void FGLRenderer::BindToFrameBuffer(FMaterial *mat)
 {
-	auto BaseLayer = static_cast<FHardwareTexture*>(mat->GetLayer(0));
+	auto BaseLayer = static_cast<FHardwareTexture*>(mat->GetLayer(0, 0));
 
 	if (BaseLayer == nullptr)
 	{

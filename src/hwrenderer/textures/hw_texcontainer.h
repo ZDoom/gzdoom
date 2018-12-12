@@ -65,15 +65,15 @@ private:
 
 public:
 
-	void Clean(bool all)
+	void Clean(bool cleannormal, bool cleanexpanded)
 	{
-		if (all)
+		if (cleannormal) hwDefTex[0].Delete();
+		if (cleanexpanded) hwDefTex[1].Delete();
+		for (int i = hwTex_Translated.Size() - 1; i >= 0; i--)
 		{
-			hwDefTex[0].Delete();
-			hwDefTex[1].Delete();
+			if (cleannormal && hwTex_Translated[i].translation > 0) hwTex_Translated.Delete(i);
+			else if (cleanexpanded && hwTex_Translated[i].translation < 0) hwTex_Translated.Delete(i);
 		}
-		hwTex_Translated.Clear();
-			
 	}
 	
 	IHardwareTexture * GetHardwareTexture(int translation, bool expanded)
@@ -102,9 +102,10 @@ public:
 		{
 			hwDefTex[expanded].Delete();
 		}
+		int fac = expanded ? -1 : 1;
 		for (int i = hwTex_Translated.Size()-1; i>= 0; i--)
 		{
-			if (usedtranslations.CheckKey(hwTex_Translated[i].translation) == nullptr)
+			if (usedtranslations.CheckKey(hwTex_Translated[i].translation * fac) == nullptr)
 			{
 				hwTex_Translated.Delete(i);
 			}

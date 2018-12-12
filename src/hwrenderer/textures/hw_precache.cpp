@@ -177,13 +177,11 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		{
 			if (!texhitlist[i])
 			{
-				auto mat = FMaterial::ValidateTexture(tex, false, false);
-				if (mat) mat->Clean(true);
+				tex->SystemTextures.Clean(true, false);
 			}
 			if (spritehitlist[i] == nullptr || (*spritehitlist[i]).CountUsed() == 0)
 			{
-				auto mat = FMaterial::ValidateTexture(tex, true, false);
-				if (mat) mat->Clean(true);
+				tex->SystemTextures.Clean(false, true);
 			}
 		}
 	}
@@ -200,8 +198,7 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 			{
 				if (texhitlist[i] & (FTextureManager::HIT_Wall | FTextureManager::HIT_Flat | FTextureManager::HIT_Sky))
 				{
-					FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
-					if (gltex && !screen->CheckPrecacheMaterial(gltex))
+					if (tex->GetImage() && tex->SystemTextures.GetHardwareTexture(0, false) == nullptr)
 					{
 						FImageSource::RegisterForPrecache(tex->GetImage());
 					}

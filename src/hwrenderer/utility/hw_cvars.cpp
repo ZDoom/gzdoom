@@ -92,7 +92,7 @@ CUSTOM_CVAR(Float,gl_texture_filter_anisotropic,8.0f,CVAR_ARCHIVE|CVAR_GLOBALCON
 
 CCMD(gl_flush)
 {
-	FMaterial::FlushAll();
+	TexMan.FlushAll();
 }
 
 CUSTOM_CVAR(Int, gl_texture_filter, 4, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
@@ -103,7 +103,7 @@ CUSTOM_CVAR(Int, gl_texture_filter, 4, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINI
 
 CUSTOM_CVAR(Bool, gl_texture_usehires, true, CVAR_ARCHIVE|CVAR_NOINITCALL)
 {
-	FMaterial::FlushAll();
+	TexMan.FlushAll();
 }
 
 CVAR(Bool, gl_precache, false, CVAR_ARCHIVE)

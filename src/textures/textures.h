@@ -345,7 +345,9 @@ protected:
 	FTextureID id;
 
 	FMaterial *Material[2] = { nullptr, nullptr };
+public:
 	FHardwareTextureContainer SystemTextures;
+protected:
 	//IHardwareTexture *SystemTexture[2] = { nullptr, nullptr };
 	FSoftwareTexture *SoftwareTexture = nullptr;
 
@@ -540,6 +542,7 @@ public:
 	}
 	FTexture *FindTexture(const char *texname, ETextureType usetype = ETextureType::MiscPatch, BITFIELD flags = TEXMAN_TryAny);
 
+	void FlushAll();
 
 
 //public:

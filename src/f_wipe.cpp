@@ -372,9 +372,8 @@ bool Wiper_Burn::Run(int ticks)
 		Density = wipe_CalcBurn(BurnArray, WIDTH, HEIGHT, Density);
 		done = (Density < 0);
 	}
-	
-	auto mat = FMaterial::ValidateTexture(BurnTexture, false);
-	mat->Clean(true);
+
+	BurnTexture->SystemTextures.Clean(true, true);
 	const uint8_t *src = BurnArray;
 	uint32_t *dest = (uint32_t *)BurnTexture->GetBuffer();
 	for (int y = HEIGHT; y != 0; --y)

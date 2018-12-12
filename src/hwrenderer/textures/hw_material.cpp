@@ -130,26 +130,6 @@ void IHardwareTexture::Resize(int swidth, int sheight, int width, int height, un
 
 //===========================================================================
 //
-//
-//
-//===========================================================================
-IHardwareTexture * FMaterial::ValidateSysTexture(FTexture * tex, int translation, bool expand)
-{
-	if (tex	&& tex->UseType!=ETextureType::Null)
-	{
-		IHardwareTexture *gltex = tex->SystemTextures.GetHardwareTexture(0, expand);
-		if (gltex == nullptr) 
-		{
-			tex->SystemTextures.AddHardwareTexture(0, expand, screen->CreateHardwareTexture());
-			gltex = tex->SystemTextures.GetHardwareTexture(0, expand);
-		}
-		return gltex;
-	}
-	return nullptr;
-}
-
-//===========================================================================
-//
 // Constructor
 //
 //===========================================================================
@@ -183,7 +163,6 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		{
 			for (auto &texture : { tx->Normal, tx->Specular })
 			{
-				ValidateSysTexture(texture, 0, expanded);
 				mTextureLayers.Push(texture);
 			}
 			mShaderIndex = SHADER_Specular;
@@ -192,7 +171,6 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		{
 			for (auto &texture : { tx->Normal, tx->Metallic, tx->Roughness, tx->AmbientOcclusion })
 			{
-				ValidateSysTexture(texture, 0, expanded);
 				mTextureLayers.Push(texture);
 			}
 			mShaderIndex = SHADER_PBR;
@@ -201,7 +179,6 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		tx->CreateDefaultBrightmap();
 		if (tx->Brightmap)
 		{
-			ValidateSysTexture(tx->Brightmap, 0, expanded);
 			mTextureLayers.Push(tx->Brightmap);
 			if (mShaderIndex == SHADER_Specular)
 				mShaderIndex = SHADER_SpecularBrightmap;
@@ -219,16 +196,12 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 				for (auto &texture : tx->CustomShaderTextures)
 				{
 					if (texture == nullptr) continue;
-					ValidateSysTexture(texture, 0, expanded);
 					mTextureLayers.Push(texture);
 				}
 				mShaderIndex = tx->shaderindex;
 			}
 		}
 	}
-	mBaseLayer = ValidateSysTexture(tx, 0, expanded);
-
-
 	mWidth = tx->GetWidth();
 	mHeight = tx->GetHeight();
 	mLeftOffset = tx->GetLeftOffset(0);	// These only get used by decals and decals should not use renderer-specific offsets.
@@ -428,6 +401,27 @@ outl:
 //
 //
 //===========================================================================
+
+IHardwareTexture *FMaterial::GetLayer(int i, int translation, FTexture **pLayer)
+{
+	FTexture *texture = i == 0 ? tex : mTextureLayers[i - 1];
+	if (pLayer) *pLayer = tex;
+
+	auto hwtex = tex->SystemTextures.GetHardwareTexture(translation, mExpanded);
+	if (hwtex == nullptr)
+	{
+		hwtex = screen->CreateHardwareTexture();
+		// Fixme: This needs to create the texture here and not implicitly in BindOrCreate!
+		tex->SystemTextures.AddHardwareTexture(translation, mExpanded, hwtex);
+	}
+	return hwtex;
+}
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
 void FMaterial::Precache()
 {
 	screen->PrecacheMaterial(this, 0);
@@ -440,7 +434,7 @@ void FMaterial::Precache()
 //===========================================================================
 void FMaterial::PrecacheList(SpriteHits &translations)
 {
-	if (mBaseLayer != nullptr) mBaseLayer->CleanUnused(translations);
+	tex->SystemTextures.CleanUnused(translations, mExpanded);
 	SpriteHits::Iterator it(translations);
 	SpriteHits::Pair *pair;
 	while(it.NextPair(pair)) screen->PrecacheMaterial(this, pair->Key);
@@ -510,31 +504,3 @@ FMaterial * FMaterial::ValidateTexture(FTextureID no, bool expand, bool translat
 {
 	return ValidateTexture(TexMan.GetTexture(no, translate), expand, create);
 }
-
-
-//==========================================================================
-//
-// Flushes all hardware dependent data.
-// Thia must not, under any circumstances, delete the wipe textures, because
-// all CCMDs triggering a flush can be executed while a wipe is in progress
-//
-//==========================================================================
-
-void FMaterial::FlushAll()
-{
-	for(int i=TexMan.NumTextures()-1;i>=0;i--)
-	{
-		for (int j = 0; j < 2; j++)
-		{
-			TexMan.ByIndex(i)->SystemTextures.Clean(true);
-		}
-	}
-	// This must also delete the software renderer's canvas.
-}
-
-void FMaterial::Clean(bool f)
-{
-	// This somehow needs to deal with the other layers as well, but they probably need some form of reference counting to work properly...
-	mBaseLayer->Clean(f);
-}
-

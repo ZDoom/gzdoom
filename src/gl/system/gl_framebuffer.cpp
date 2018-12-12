@@ -339,26 +339,19 @@ void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
 	int flags = mat->isExpanded() ? CTF_Expand : (gl_texture_usehires && !tex->isScaled()) ? CTF_CheckHires : 0;
 	int numLayers = mat->GetLayers();
-	auto base = static_cast<FHardwareTexture*>(mat->GetLayer(0));
+	auto base = static_cast<FHardwareTexture*>(mat->GetLayer(0, translation));
 
 	if (base->BindOrCreate(tex, 0, CLAMP_NONE, translation, flags))
 	{
 		for (int i = 1; i < numLayers; i++)
 		{
 			FTexture *layer;
-			auto systex = static_cast<FHardwareTexture*>(mat->GetLayer(i, &layer));
+			auto systex = static_cast<FHardwareTexture*>(mat->GetLayer(i, 0, &layer));
 			systex->BindOrCreate(layer, i, CLAMP_NONE, 0, mat->isExpanded() ? CTF_Expand : 0);
 		}
 	}
 	// unbind everything. 
 	FHardwareTexture::UnbindAll();
-}
-
-bool OpenGLFrameBuffer::CheckPrecacheMaterial(FMaterial *mat)
-{
-	if (!mat->tex->GetImage()) return true;
-	auto base = static_cast<FHardwareTexture*>(mat->GetLayer(0));
-	return base->Exists(0);
 }
 
 FModelRenderer *OpenGLFrameBuffer::CreateModelRenderer(int mli)

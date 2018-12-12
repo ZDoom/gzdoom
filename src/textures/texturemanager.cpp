@@ -143,6 +143,31 @@ void FTextureManager::DeleteAll()
 
 //==========================================================================
 //
+// Flushes all hardware dependent data.
+// Thia must not, under any circumstances, delete the wipe textures, because
+// all CCMDs triggering a flush can be executed while a wipe is in progress
+//
+// This now also deletes the software textures because having the software
+// renderer use the texture scalers is a planned feature and that is the
+// main reason to call this outside of the destruction code.
+//
+//==========================================================================
+
+void FTextureManager::FlushAll()
+{
+	for (int i = TexMan.NumTextures() - 1; i >= 0; i--)
+	{
+		for (int j = 0; j < 2; j++)
+		{
+			TexMan.ByIndex(i)->SystemTextures.Clean(true, true);
+			delete TexMan.ByIndex(i)->SoftwareTexture;
+		}
+	}
+	// This must also delete the software renderer's canvas.
+}
+
+//==========================================================================
+//
 // FTextureManager :: CheckForTexture
 //
 //==========================================================================

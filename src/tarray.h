@@ -272,7 +272,7 @@ public:
         return i;
     }
 
-	template<class Func> const
+	template<class Func> 
 	unsigned int FindEx(Func compare) const
 	{
 		unsigned int i;

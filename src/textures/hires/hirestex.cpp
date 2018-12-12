@@ -399,11 +399,11 @@ bool FTexture::LoadHiresTexture(FTextureBuffer &texbuffer, bool checkonly)
 					if (dwdata[i] == 0xffffff00 || dwdata[i] == 0xffff00ff) dwdata[i] = 0;
 				}
 			}
+			texbuffer.mBuffer = buffer;
 		}
 		FContentIdBuilder contentId;
 		contentId.id = 0;
 		contentId.imageID = HiresTexture->GetImage()->GetId();
-		texbuffer.mBuffer = buffer;
 		texbuffer.mWidth = w;
 		texbuffer.mHeight = h;
 		texbuffer.mContentId = contentId.id;

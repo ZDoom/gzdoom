@@ -4,7 +4,6 @@ class FCanvasTexture;
 // This list keeps track of the cameras that draw into canvas textures.
 struct FCanvasTextureEntry
 {
-	FCanvasTextureInfo *Next;
 	TObjPtr<AActor*> Viewpoint;
 	FCanvasTexture *Texture;
 	FTextureID PicNum;

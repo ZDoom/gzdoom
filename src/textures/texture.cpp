@@ -673,7 +673,7 @@ FTextureBuffer FTexture::CreateTexBuffer(int translation, int flags)
 	if (flags & CTF_CheckHires)
 	{
 		// No image means that this cannot be checked,
-		if (GetImage() && LoadHiresTexture(result)) return result;
+		if (GetImage() && LoadHiresTexture(result, checkonly)) return result;
 	}
 	int exx = !!(flags & CTF_Expand);
 

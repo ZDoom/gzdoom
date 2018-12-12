@@ -337,7 +337,6 @@ public:
 	FSoftwareTexture *GetSoftwareTexture();
 
 protected:
-	//int16_t LeftOffset, TopOffset;
 
 	DVector2 Scale;
 
@@ -435,19 +434,7 @@ protected:
 	// Interfaces for the different renderers. Everything that needs to check renderer-dependent offsets
 	// should use these, so that if changes are needed, this is the only place to edit.
 
-	// For the original software renderer
-	int GetLeftOffsetSW() { return _LeftOffset[r_spriteadjustSW]; }
-	int GetTopOffsetSW() { return _TopOffset[r_spriteadjustSW]; }
-	int GetScaledLeftOffsetSW() { return GetScaledLeftOffset(r_spriteadjustSW); }
-	int GetScaledTopOffsetSW() { return GetScaledTopOffset(r_spriteadjustSW); }
-
-	// For the softpoly renderer, in case it wants adjustment
-	int GetLeftOffsetPo() { return _LeftOffset[r_spriteadjustSW]; }
-	int GetTopOffsetPo() { return _TopOffset[r_spriteadjustSW]; }
-	int GetScaledLeftOffsetPo() { return GetScaledLeftOffset(r_spriteadjustSW); }
-	int GetScaledTopOffsetPo() { return GetScaledTopOffset(r_spriteadjustSW); }
-
-	// For the hardware renderer
+	// For the hardware renderer. The software renderer's have been offloaded to FSoftwareTexture
 	int GetLeftOffsetHW() { return _LeftOffset[r_spriteadjustHW]; }
 	int GetTopOffsetHW() { return _TopOffset[r_spriteadjustHW]; }
 

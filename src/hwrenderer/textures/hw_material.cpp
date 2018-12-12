@@ -133,14 +133,15 @@ void IHardwareTexture::Resize(int swidth, int sheight, int width, int height, un
 //
 //
 //===========================================================================
-IHardwareTexture * FMaterial::ValidateSysTexture(FTexture * tex, bool expand)
+IHardwareTexture * FMaterial::ValidateSysTexture(FTexture * tex, int translation, bool expand)
 {
 	if (tex	&& tex->UseType!=ETextureType::Null)
 	{
-		IHardwareTexture *gltex = tex->SystemTexture[expand];
+		IHardwareTexture *gltex = tex->SystemTextures.GetHardwareTexture(0, expand);
 		if (gltex == nullptr) 
 		{
-			gltex = tex->SystemTexture[expand] = screen->CreateHardwareTexture();
+			tex->SystemTextures.AddHardwareTexture(0, expand, screen->CreateHardwareTexture());
+			gltex = tex->SystemTextures.GetHardwareTexture(0, expand);
 		}
 		return gltex;
 	}
@@ -182,7 +183,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		{
 			for (auto &texture : { tx->Normal, tx->Specular })
 			{
-				ValidateSysTexture(texture, expanded);
+				ValidateSysTexture(texture, 0, expanded);
 				mTextureLayers.Push(texture);
 			}
 			mShaderIndex = SHADER_Specular;
@@ -191,7 +192,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		{
 			for (auto &texture : { tx->Normal, tx->Metallic, tx->Roughness, tx->AmbientOcclusion })
 			{
-				ValidateSysTexture(texture, expanded);
+				ValidateSysTexture(texture, 0, expanded);
 				mTextureLayers.Push(texture);
 			}
 			mShaderIndex = SHADER_PBR;
@@ -200,7 +201,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		tx->CreateDefaultBrightmap();
 		if (tx->Brightmap)
 		{
-			ValidateSysTexture(tx->Brightmap, expanded);
+			ValidateSysTexture(tx->Brightmap, 0, expanded);
 			mTextureLayers.Push(tx->Brightmap);
 			if (mShaderIndex == SHADER_Specular)
 				mShaderIndex = SHADER_SpecularBrightmap;
@@ -218,14 +219,14 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 				for (auto &texture : tx->CustomShaderTextures)
 				{
 					if (texture == nullptr) continue;
-					ValidateSysTexture(texture, expanded);
+					ValidateSysTexture(texture, 0, expanded);
 					mTextureLayers.Push(texture);
 				}
 				mShaderIndex = tx->shaderindex;
 			}
 		}
 	}
-	mBaseLayer = ValidateSysTexture(tx, expanded);
+	mBaseLayer = ValidateSysTexture(tx, 0, expanded);
 
 
 	mWidth = tx->GetWidth();
@@ -513,26 +514,22 @@ FMaterial * FMaterial::ValidateTexture(FTextureID no, bool expand, bool translat
 
 //==========================================================================
 //
-// Flushes all hardware dependent data
+// Flushes all hardware dependent data.
+// Thia must not, under any circumstances, delete the wipe textures, because
+// all CCMDs triggering a flush can be executed while a wipe is in progress
 //
 //==========================================================================
 
 void FMaterial::FlushAll()
 {
-	for(int i=mMaterials.Size()-1;i>=0;i--)
-	{
-		mMaterials[i]->mBaseLayer->Clean(true);
-	}
-	// This is for shader layers. All shader layers must be managed by the texture manager
-	// so this will catch everything.
 	for(int i=TexMan.NumTextures()-1;i>=0;i--)
 	{
 		for (int j = 0; j < 2; j++)
 		{
-			auto gltex = TexMan.ByIndex(i)->SystemTexture[j];
-			if (gltex != nullptr) gltex->Clean(true);
+			TexMan.ByIndex(i)->SystemTextures.Clean(true);
 		}
 	}
+	// This must also delete the software renderer's canvas.
 }
 
 void FMaterial::Clean(bool f)

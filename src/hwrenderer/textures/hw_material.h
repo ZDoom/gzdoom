@@ -68,7 +68,7 @@ public:
 	void Precache();
 	void PrecacheList(SpriteHits &translations);
 	int GetShaderIndex() const { return mShaderIndex; }
-	IHardwareTexture * ValidateSysTexture(FTexture * tex, bool expand);
+	IHardwareTexture * ValidateSysTexture(FTexture * tex, int translation, bool expand);
 	void AddTextureLayer(FTexture *tex)
 	{
 		ValidateTexture(tex, false);
@@ -105,7 +105,7 @@ public:
 			i--;
 			FTexture *layer = mTextureLayers[i];
 			if (pLayer) *pLayer = layer;
-			return ValidateSysTexture(layer, isExpanded());
+			return ValidateSysTexture(layer, 0, isExpanded());
 		}
 	}
 

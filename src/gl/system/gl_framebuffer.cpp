@@ -510,7 +510,7 @@ FTexture *OpenGLFrameBuffer::WipeStartScreen()
 	auto tex = new FWrapperTexture(viewport.width, viewport.height, 1);
 	tex->GetSystemTexture()->CreateTexture(nullptr, viewport.width, viewport.height, 0, false, 0, "WipeStartScreen");
 	glFinish();
-	static_cast<FHardwareTexture*>(tex->GetSystemTexture())->Bind(0, false, false);
+	static_cast<FHardwareTexture*>(tex->GetSystemTexture())->Bind(0, false);
 
 	GLRenderer->mBuffers->BindCurrentFB();
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewport.left, viewport.top, viewport.width, viewport.height);
@@ -532,7 +532,7 @@ FTexture *OpenGLFrameBuffer::WipeEndScreen()
 	auto tex = new FWrapperTexture(viewport.width, viewport.height, 1);
 	tex->GetSystemTexture()->CreateTexture(NULL, viewport.width, viewport.height, 0, false, 0, "WipeEndScreen");
 	glFinish();
-	static_cast<FHardwareTexture*>(tex->GetSystemTexture())->Bind(0, false, false);
+	static_cast<FHardwareTexture*>(tex->GetSystemTexture())->Bind(0, false);
 	GLRenderer->mBuffers->BindCurrentFB();
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewport.left, viewport.top, viewport.width, viewport.height);
 	return tex;

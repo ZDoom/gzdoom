@@ -1,8 +1,10 @@
 #pragma once
 
 #include "tarray.h"
+#include "hwrenderer/textures/hw_ihwtexture.h"
 
 struct FTextureBuffer;
+class IHardwareTexture;
 
 class FHardwareTextureContainer
 {
@@ -49,10 +51,10 @@ private:
 		unsigned index = hwTex_Translated.FindEx([=](auto &element)
 		{
 			return element.translation == translation;
-		}
+		});
 		if (index < hwTex_Translated.Size())
 		{
-			return &hwTex_Translated[i];
+			return &hwTex_Translated[index];
 		}
 
 		int add = hwTex_Translated.Reserve(1);
@@ -65,7 +67,11 @@ public:
 
 	void Clean(bool all)
 	{
-		if (all) hwDefTex.Delete();
+		if (all)
+		{
+			hwDefTex[0].Delete();
+			hwDefTex[1].Delete();
+		}
 		hwTex_Translated.Clear();
 			
 	}
@@ -90,7 +96,7 @@ public:
 	//
 	//===========================================================================
 
-	void FHardwareTexture::CleanUnused(SpriteHits &usedtranslations, bool expanded)
+	void CleanUnused(SpriteHits &usedtranslations, bool expanded)
 	{
 		if (usedtranslations.CheckKey(0) == nullptr)
 		{

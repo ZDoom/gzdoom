@@ -42,6 +42,7 @@
 #include "colormatcher.h"
 #include "r_data/renderstyle.h"
 #include "r_data/r_translate.h"
+#include "hwrenderer/textures/hw_texcontainer.h"
 #include <vector>
 
 // 15 because 0th texture is our texture
@@ -344,7 +345,8 @@ protected:
 	FTextureID id;
 
 	FMaterial *Material[2] = { nullptr, nullptr };
-	IHardwareTexture *SystemTexture[2] = { nullptr, nullptr };
+	FHardwareTextureContainer SystemTextures;
+	//IHardwareTexture *SystemTexture[2] = { nullptr, nullptr };
 	FSoftwareTexture *SoftwareTexture = nullptr;
 
 	// None of the following pointers are owned by this texture, they are all controlled by the texture manager.
@@ -710,9 +712,9 @@ class FWrapperTexture : public FTexture
 	int Format;
 public:
 	FWrapperTexture(int w, int h, int bits = 1);
-	IHardwareTexture *GetSystemTexture(int slot)
+	IHardwareTexture *GetSystemTexture()
 	{
-		return SystemTexture[slot];
+		return SystemTextures.GetHardwareTexture(0, false);
 	}
 
 	int GetColorFormat() const

@@ -91,7 +91,7 @@ sector_t *SWSceneDrawer::RenderView(player_t *player)
 	FBTextureIndex = (FBTextureIndex + 1) % 2;
 	auto &fbtex = FBTexture[FBTextureIndex];
 
-	if (fbtex == nullptr || fbtex->GetSystemTexture(0) == nullptr || 
+	if (fbtex == nullptr || fbtex->GetSystemTexture() == nullptr ||
 		fbtex->GetDisplayWidth() != screen->GetWidth() || 
 		fbtex->GetDisplayHeight() != screen->GetHeight() || 
 		(V_IsTrueColor() ? 1:0) != fbtex->GetColorFormat())
@@ -99,7 +99,7 @@ sector_t *SWSceneDrawer::RenderView(player_t *player)
 		// This manually constructs its own material here.
 		fbtex.reset();
 		fbtex.reset(new FWrapperTexture(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor()));
-		fbtex->GetSystemTexture(0)->AllocateBuffer(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor() ? 4 : 1);
+		fbtex->GetSystemTexture()->AllocateBuffer(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor() ? 4 : 1);
 		auto mat = FMaterial::ValidateTexture(fbtex.get(), false);
 		mat->AddTextureLayer(PaletteTexture);
 
@@ -107,10 +107,10 @@ sector_t *SWSceneDrawer::RenderView(player_t *player)
 		Canvas.reset(new DCanvas(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor()));
 	}
 
-	auto buf = fbtex->GetSystemTexture(0)->MapBuffer();
+	auto buf = fbtex->GetSystemTexture()->MapBuffer();
 	if (!buf) I_FatalError("Unable to map buffer for software rendering");
 	SWRenderer->RenderView(player, Canvas.get(), buf);
-	fbtex->GetSystemTexture(0)->CreateTexture(nullptr, screen->GetWidth(), screen->GetHeight(), 0, false, 0, "swbuffer");
+	fbtex->GetSystemTexture()->CreateTexture(nullptr, screen->GetWidth(), screen->GetHeight(), 0, false, 0, "swbuffer");
 
 	auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
 	screen->DrawTexture(fbtex.get(), 0, 0, DTA_SpecialColormap, map, TAG_DONE);

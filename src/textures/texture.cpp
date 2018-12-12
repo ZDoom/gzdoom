@@ -178,9 +178,6 @@ FTexture::~FTexture ()
 	{
 		if (Material[i] != nullptr) delete Material[i];
 		Material[i] = nullptr;
-
-		if (SystemTexture[i] != nullptr) delete SystemTexture[i];
-		SystemTexture[i] = nullptr;
 	}
 	if (SoftwareTexture != nullptr)
 	{
@@ -793,7 +790,7 @@ FWrapperTexture::FWrapperTexture(int w, int h, int bits)
 	Format = bits;
 	UseType = ETextureType::SWCanvas;
 	bNoCompress = true;
-	SystemTexture[0] = screen->CreateHardwareTexture();
+	SystemTextures.AddHardwareTexture(0, false, screen->CreateHardwareTexture());
 }
 
 //===========================================================================

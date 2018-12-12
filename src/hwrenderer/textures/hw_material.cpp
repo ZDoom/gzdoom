@@ -409,12 +409,12 @@ IHardwareTexture *FMaterial::GetLayer(int i, int translation, FTexture **pLayer)
 	
 	if (layer && layer->UseType!=ETextureType::Null)
 	{
-		IHardwareTexture *hwtex = layer->SystemTextures.GetHardwareTexture(0, mExpanded);
+		IHardwareTexture *hwtex = layer->SystemTextures.GetHardwareTexture(translation, mExpanded);
 		if (hwtex == nullptr) 
 		{
 			hwtex = screen->CreateHardwareTexture();
-			layer->SystemTextures.AddHardwareTexture(0, mExpanded, hwtex);
-			hwtex = tex->SystemTextures.GetHardwareTexture(0, mExpanded);
+			layer->SystemTextures.AddHardwareTexture(translation, mExpanded, hwtex);
+			hwtex = tex->SystemTextures.GetHardwareTexture(translation, mExpanded);
 		}
 		return hwtex;
 	}

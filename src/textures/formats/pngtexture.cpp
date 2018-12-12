@@ -51,17 +51,13 @@
 class FPNGTexture : public FImageSource
 {
 public:
-	FPNGTexture (FileReader &lump, int lumpnum, const FString &filename, int width, int height, uint8_t bitdepth, uint8_t colortype, uint8_t interlace);
-	~FPNGTexture();
+	FPNGTexture (FileReader &lump, int lumpnum, int width, int height, uint8_t bitdepth, uint8_t colortype, uint8_t interlace);
 
 	int CopyPixels(FBitmap *bmp, int conversion) override;
 	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
 
 protected:
 	void ReadAlphaRemap(FileReader *lump, uint8_t *alpharemap);
-
-	FString SourceFile;
-	FileReader fr;
 
 	uint8_t BitDepth;
 	uint8_t ColorType;
@@ -141,7 +137,7 @@ FImageSource *PNGImage_TryCreate(FileReader & data, int lumpnum)
 		}
 	}
 
-	return new FPNGTexture (data, lumpnum, FString(), width, height, bitdepth, colortype, interlace);
+	return new FPNGTexture (data, lumpnum, width, height, bitdepth, colortype, interlace);
 }
 
 //==========================================================================
@@ -150,49 +146,9 @@ FImageSource *PNGImage_TryCreate(FileReader & data, int lumpnum)
 //
 //==========================================================================
 
-FTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename)
-{
-
-	if (M_FindPNGChunk(png, MAKE_ID('I','H','D','R')) == 0)
-	{
-		return NULL;
-	}
-
-	// Check the IHDR to make sure it's a type of PNG we support.
-	auto &data = png->File;
-	int width = data.ReadInt32BE();
-	int height = data.ReadInt32BE();
-	uint8_t bitdepth = data.ReadUInt8();
-	uint8_t colortype = data.ReadUInt8();
-	uint8_t compression = data.ReadUInt8();
-	uint8_t filter = data.ReadUInt8();
-	uint8_t interlace = data.ReadUInt8();
-
-	if (compression != 0 || filter != 0 || interlace > 1)
-	{
-		return NULL;
-	}
-	if (!((1 << colortype) & 0x5D))
-	{
-		return NULL;
-	}
-	if (!((1 << bitdepth) & 0x116))
-	{
-		return NULL;
-	}
-
-	return new FImageTexture(new FPNGTexture (png->File, -1, filename, width, height,	bitdepth, colortype, interlace));
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename, int width, int height,
+FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, int width, int height,
 						  uint8_t depth, uint8_t colortype, uint8_t interlace)
-: FImageSource(lumpnum), SourceFile(filename),
+: FImageSource(lumpnum),
   BitDepth(depth), ColorType(colortype), Interlace(interlace), HaveTrans(false)
 {
 	union
@@ -291,7 +247,7 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 		{
 			bMasked = true;
 			PaletteSize = 256;
-			PaletteMap = new uint8_t[256];
+			PaletteMap = (uint8_t*)ImageArena.Alloc(PaletteSize);
 			memcpy (PaletteMap, ImageHelpers::GrayMap, 256);
 			PaletteMap[NonPaletteTrans[0]] = 0;
 		}
@@ -302,7 +258,7 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 		break;
 
 	case 3:		// Paletted
-		PaletteMap = new uint8_t[PaletteSize];
+		PaletteMap = (uint8_t*)ImageArena.Alloc(PaletteSize);
 		GPalette.MakeRemap (p.palette, PaletteMap, trans, PaletteSize);
 		for (i = 0; i < PaletteSize; ++i)
 		{
@@ -321,23 +277,6 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 	case 2:		// RGB
 		bMasked = HaveTrans;
 		break;
-	}
-	// If this is a savegame we must keep the reader.
-	if (lumpnum == -1) fr = std::move(lump);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FPNGTexture::~FPNGTexture ()
-{
-	if (PaletteMap != nullptr && PaletteMap != ImageHelpers::GrayMap)
-	{
-		delete[] PaletteMap;
-		PaletteMap = nullptr;
 	}
 }
 
@@ -372,15 +311,8 @@ TArray<uint8_t> FPNGTexture::CreatePalettedPixels(int conversion)
 	FileReader *lump;
 	FileReader lfr;
 
-	if (SourceLump >= 0)
-	{
-		lfr = Wads.OpenLumpReader(SourceLump);
-		lump = &lfr;
-	}
-	else
-	{
-		lump = &fr;
-	}
+	lfr = Wads.OpenLumpReader(SourceLump);
+	lump = &lfr;
 
 	TArray<uint8_t> Pixels(Width*Height, true);
 	if (StartOfIDAT == 0)
@@ -524,15 +456,8 @@ int FPNGTexture::CopyPixels(FBitmap *bmp, int conversion)
 	FileReader *lump;
 	FileReader lfr;
 
-	if (SourceLump >= 0)
-	{
-		lfr = Wads.OpenLumpReader(SourceLump);
-		lump = &lfr;
-	}
-	else
-	{
-		lump = &fr;
-	}
+	lfr = Wads.OpenLumpReader(SourceLump);
+	lump = &lfr;
 
 	lump->Seek(33, FileReader::SeekSet);
 	for(int i = 0; i < 256; i++)	// default to a gray map
@@ -629,4 +554,132 @@ int FPNGTexture::CopyPixels(FBitmap *bmp, int conversion)
 	}
 	delete[] Pixels;
 	return transpal;
+}
+
+
+
+//==========================================================================
+//
+// A savegame picture
+// This is essentially a stripped down version of the PNG texture
+// only supporting the features actually present in a savegame
+// that does not use an image source, because image sources are not
+// meant to be transient data like the savegame picture.
+//
+//==========================================================================
+
+class FPNGFileTexture : public FTexture
+{
+public:
+	FPNGFileTexture (FileReader &lump, int width, int height, uint8_t colortype);
+	virtual FBitmap GetBgraBitmap(PalEntry *remap, int *trans);
+
+protected:
+	
+	FileReader fr;
+	uint8_t ColorType;
+	int PaletteSize;
+};
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename)
+{
+	if (M_FindPNGChunk(png, MAKE_ID('I','H','D','R')) == 0)
+	{
+		return nullptr;
+	}
+	
+	// Savegame images can only be either 8 bit paletted or 24 bit RGB
+	auto &data = png->File;
+	int width = data.ReadInt32BE();
+	int height = data.ReadInt32BE();
+	uint8_t bitdepth = data.ReadUInt8();
+	uint8_t colortype = data.ReadUInt8();
+	uint8_t compression = data.ReadUInt8();
+	uint8_t filter = data.ReadUInt8();
+	uint8_t interlace = data.ReadUInt8();
+	
+	// Reject anything that cannot be put into a savegame picture by GZDoom itself.
+	if (compression != 0 || filter != 0 || interlace > 0 || bitdepth != 8 || (colortype != 2 && colortype != 3)) return nullptr;
+	else return new FPNGFileTexture (png->File, width, height, colortype);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FPNGFileTexture::FPNGFileTexture (FileReader &lump, int width, int height, uint8_t colortype)
+: ColorType(colortype)
+{
+	Width = width;
+	Height = height;
+	fr = std::move(lump);
+}
+
+//===========================================================================
+//
+// FPNGTexture::CopyPixels
+//
+//===========================================================================
+
+FBitmap FPNGFileTexture::GetBgraBitmap(PalEntry *remap, int *trans)
+{
+	FBitmap bmp;
+	// Parse pre-IDAT chunks. I skip the CRCs. Is that bad?
+	PalEntry pe[256];
+	uint32_t len, id;
+	int pixwidth = Width * (ColorType == 2? 3:1);
+	
+	FileReader *lump = &fr;
+	
+	bmp.Create(Width, Height);
+	lump->Seek(33, FileReader::SeekSet);
+	lump->Read(&len, 4);
+	lump->Read(&id, 4);
+	while (id != MAKE_ID('I','D','A','T') && id != MAKE_ID('I','E','N','D'))
+	{
+		len = BigLong((unsigned int)len);
+		if (id != MAKE_ID('P','L','T','E'))
+			lump->Seek (len, FileReader::SeekCur);
+		else
+		{
+			PaletteSize = MIN<int> (len / 3, 256);
+			for(int i = 0; i < PaletteSize; i++)
+			{
+				pe[i].r = lump->ReadUInt8();
+				pe[i].g = lump->ReadUInt8();
+				pe[i].b = lump->ReadUInt8();
+			}
+		}
+		lump->Seek(4, FileReader::SeekCur);	// Skip CRC
+		lump->Read(&len, 4);
+		id = MAKE_ID('I','E','N','D');
+		lump->Read(&id, 4);
+	}
+	auto StartOfIDAT = (uint32_t)lump->Tell() - 8;
+
+	TArray<uint8_t> Pixels(pixwidth * Height);
+	
+	lump->Seek (StartOfIDAT, FileReader::SeekSet);
+	lump->Read(&len, 4);
+	lump->Read(&id, 4);
+	M_ReadIDAT (*lump, Pixels.Data(), Width, Height, pixwidth, 8, ColorType, 0, BigLong((unsigned int)len));
+	
+	if (ColorType == 3)
+	{
+		bmp.CopyPixelData(0, 0, Pixels.Data(), Width, Height, 1, Width, 0, pe);
+	}
+	else
+	{
+		bmp.CopyPixelDataRGB(0, 0, Pixels.Data(), Width, Height, 3, pixwidth, 0, CF_RGB);
+	}
+	return bmp;
 }

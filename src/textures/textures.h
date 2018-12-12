@@ -687,6 +687,7 @@ public:
 		bMasked = false;
 		bHasCanvas = true;
 		bTranslucent = false;
+		bNoExpand = true;
 		UseType = ETextureType::Wall;
 	}
 

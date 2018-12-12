@@ -381,7 +381,11 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 
 		if (charLumps[i] != nullptr)
 		{
-			if (!noTranslate) Chars[i].Pic = new FImageTexture(new FFontChar1 (charLumps[i]->GetImage()));
+			if (!noTranslate)
+			{
+				Chars[i].Pic = new FImageTexture(new FFontChar1 (charLumps[i]->GetImage()));
+				TexMan.AddTexture(Chars[i].Pic);
+			}
 			else Chars[i].Pic = charLumps[i];
 			Chars[i].XMove = Chars[i].Pic->GetDisplayWidth();
 		}
@@ -422,17 +426,6 @@ FFont::~FFont ()
 	{
 		int count = LastChar - FirstChar + 1;
 
-		// A noTranslate font directly references the original textures.
-		if (!noTranslate)
-		{
-			for (int i = 0; i < count; ++i)
-			{
-				if (Chars[i].Pic != nullptr && Chars[i].Pic->GetName().IsEmpty())
-				{
-					delete Chars[i].Pic;
-				}
-			}
-		}
 		delete[] Chars;
 		Chars = NULL;
 	}
@@ -1145,6 +1138,7 @@ void FSingleLumpFont::LoadFON2 (int lump, const uint8_t *data)
 		else
 		{
 			Chars[i].Pic = new FImageTexture(new FFontChar2 (lump, int(data_p - data), widths2[i], FontHeight));
+			TexMan.AddTexture(Chars[i].Pic);
 			do
 			{
 				int8_t code = *data_p++;
@@ -1280,12 +1274,14 @@ void FSingleLumpFont::LoadBMF(int lump, const uint8_t *data)
 		{ // Empty character: skip it.
 			continue;
 		}
-		Chars[chardata[chari] - FirstChar].Pic = new FImageTexture(new FFontChar2(lump, int(chardata + chari + 6 - data),
+		auto tex = new FImageTexture(new FFontChar2(lump, int(chardata + chari + 6 - data),
 			chardata[chari+1],	// width
 			chardata[chari+2],	// height
 			-(int8_t)chardata[chari+3],	// x offset
 			-(int8_t)chardata[chari+4]	// y offset
 		));
+		Chars[chardata[chari] - FirstChar].Pic = tex;
+		TexMan.AddTexture(tex);
 	}
 
 	// If the font did not define a space character, determine a suitable space width now.
@@ -1352,6 +1348,7 @@ void FSingleLumpFont::CheckFON1Chars (double *luminosity)
 		{
 			Chars[i].Pic = new FImageTexture(new FFontChar2 (Lump, int(data_p - data), SpaceWidth, FontHeight));
 			Chars[i].XMove = SpaceWidth;
+			TexMan.AddTexture(Chars[i].Pic);
 		}
 
 		// Advance to next char's data and count the used colors.
@@ -1562,7 +1559,11 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 
 		if (charlumps[i] != NULL)
 		{
-			if (!noTranslate) Chars[i].Pic = new FImageTexture(new FFontChar1 (charlumps[i]->GetImage()));
+			if (!noTranslate)
+			{
+				Chars[i].Pic = new FImageTexture(new FFontChar1 (charlumps[i]->GetImage()));
+				TexMan.AddTexture(Chars[i].Pic);
+			}
 			else Chars[i].Pic = charlumps[i];
 			Chars[i].XMove = Chars[i].Pic->GetDisplayWidth();
 		}

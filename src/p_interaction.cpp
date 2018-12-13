@@ -788,6 +788,7 @@ void P_AutoUseStrifeHealth (player_t *player)
 // ReactToDamage
 //
 //==========================================================================
+static bool TriggerPainChance(AActor *target, FName mod, bool forcedPain, bool zscript);
 
 static inline bool MustForcePain(AActor *target, AActor *inflictor)
 {
@@ -809,7 +810,7 @@ static void ReactToDamage(AActor *target, AActor *inflictor, AActor *source, int
 	bool forcedPain = false;
 	bool noPain = false;
 
-	// Dead or non-existent entity, do not react.
+	// Dead or non-existent entity, do not react. Especially if the damage is cancelled.
 	if (target == nullptr || target->health < 1 || damage < 0)
 		return;
 
@@ -848,53 +849,14 @@ static void ReactToDamage(AActor *target, AActor *inflictor, AActor *source, int
 	}
 
 	if (!noPain &&
-		(target->player != nullptr || !G_SkillProperty(SKILLP_NoPain)) && !(target->flags & MF_SKULLFLY))
+		((target->player != nullptr || !G_SkillProperty(SKILLP_NoPain)) && !(target->flags & MF_SKULLFLY))
+		&& damage >= target->PainThreshold)
 	{
-		painchance = target->PainChance;
-		for (auto & pc : target->GetInfo()->PainChances)
-		{
-			if (pc.first == mod)
-			{
-				painchance = pc.second;
-				break;
-			}
-		}
+		if (inflictor && inflictor->PainType != NAME_None)
+			mod = inflictor->PainType;
 
-		if (forcedPain || ((damage >= target->PainThreshold) && (pr_damagemobj() < painchance)))
-		{
-			if (mod == NAME_Electric)
-			{
-				if (pr_lightning() < 96)
-				{
-					justhit = true;
-					FState *painstate = target->FindState(NAME_Pain, mod);
-					if (painstate != NULL)
-						target->SetState(painstate);
-				}
-				else
-				{ // "electrocute" the target
-					target->renderflags |= RF_FULLBRIGHT;
-					if ((target->flags3 & MF3_ISMONSTER) && pr_lightning() < 128)
-					{
-						target->Howl();
-					}
-				}
-			}
-			else
-			{
-				justhit = true;
-				FState *painstate = target->FindState(NAME_Pain, ((inflictor && inflictor->PainType != NAME_None) ? inflictor->PainType : mod));
-				if (painstate != NULL)
-					target->SetState(painstate);
-				if (mod == NAME_PoisonCloud)
-				{
-					if ((target->flags3 & MF3_ISMONSTER) && pr_poison() < 128)
-					{
-						target->Howl();
-					}
-				}
-			}
-		}
+		// Not called from ZScript.
+		justhit = TriggerPainChance(target, mod, forcedPain, false);
 	}
 
 	if (target->player == nullptr) target->reactiontime = 0;			// we're awake now...	
@@ -933,6 +895,77 @@ static void ReactToDamage(AActor *target, AActor *inflictor, AActor *source, int
 	// killough 11/98: Don't attack a friend, unless hit by that friend.
 	if (justhit && (target->target == source || !target->target || !target->IsFriend(target->target)))
 		target->flags |= MF_JUSTHIT;    // fight back!
+}
+
+static bool TriggerPainChance(AActor *target, FName mod = NAME_None, bool forcedPain = false, bool zscript = false)
+{
+	if (target == nullptr || target->flags5 & MF5_NOPAIN || target->health < 1)
+		return false;
+
+	bool justhit = false, flinched = false;
+	int painchance = target->PainChance;
+	for (auto & pc : target->GetInfo()->PainChances)
+	{
+		if (pc.first == mod)
+		{
+			painchance = pc.second;
+			break;
+		}
+	}
+
+	if (forcedPain || (pr_damagemobj() < painchance))
+	{
+		if (mod == NAME_Electric)
+		{
+			if (pr_lightning() < 96)
+			{
+				justhit = true;
+				FState *painstate = target->FindState(NAME_Pain, mod);
+				if (painstate != NULL)
+				{
+					flinched = true;
+					target->SetState(painstate);
+				}
+			}
+			else
+			{ // "electrocute" the target
+				target->renderflags |= RF_FULLBRIGHT;
+				if ((target->flags3 & MF3_ISMONSTER) && pr_lightning() < 128)
+				{
+					target->Howl();
+				}
+			}
+		}
+		else
+		{
+			justhit = true;
+			FState *painstate = target->FindState(NAME_Pain, mod);
+			if (painstate != NULL)
+			{
+				flinched = true;
+				target->SetState(painstate);
+			}
+			if (mod == NAME_PoisonCloud)
+			{
+				if ((target->flags3 & MF3_ISMONSTER) && pr_poison() < 128)
+				{
+					target->Howl();
+				}
+			}
+		}
+	}
+	return (zscript) ? flinched : justhit;
+}
+
+// TriggerPainChance directly from DECORATE/ZScript will return if the
+// entity flinched or not.
+
+DEFINE_ACTION_FUNCTION(AActor, TriggerPainChance)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(mod);
+	PARAM_BOOL(forcedPain);
+	ACTION_RETURN_BOOL(TriggerPainChance(self, mod, forcedPain, true));
 }
 
 /*

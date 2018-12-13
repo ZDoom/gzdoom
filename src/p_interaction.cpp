@@ -1450,6 +1450,23 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 	return MAX(0, damage);
 }
 
+static int DoDamageMobj(AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags, DAngle angle)
+{
+	// [ZZ] event handlers need the result.
+	bool needevent = true;
+	int realdamage = DamageMobj(target, inflictor, source, damage, mod, flags, angle, needevent);
+	if (realdamage >= 0) //Keep this check separated. Mods relying upon negative numbers may break otherwise.
+		ReactToDamage(target, inflictor, source, realdamage, mod, flags);
+
+	if (realdamage > 0 && needevent)
+	{
+		// [ZZ] event handlers only need the resultant damage (they can't do anything about it anyway)
+		E_WorldThingDamaged(target, inflictor, source, realdamage, mod, flags, angle);
+	}
+
+	return MAX(0, realdamage);
+}
+
 DEFINE_ACTION_FUNCTION(AActor, DamageMobj)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -1459,19 +1476,7 @@ DEFINE_ACTION_FUNCTION(AActor, DamageMobj)
 	PARAM_NAME(mod);
 	PARAM_INT(flags);
 	PARAM_FLOAT(angle);
-
-	// [ZZ] event handlers need the result.
-	bool needevent = true;
-	int realdamage = DamageMobj(self, inflictor, source, damage, mod, flags, angle, needevent);
-	if (realdamage >= 0)
-		ReactToDamage(self, inflictor, source, realdamage, mod, flags);
-		
-	if (realdamage > 0 && needevent)
-	{
-		E_WorldThingDamaged(self, inflictor, source, realdamage, mod, flags, angle);
-	}
-	
-	ACTION_RETURN_INT(MAX(0,realdamage));
+	ACTION_RETURN_INT(DoDamageMobj(self, inflictor, source, damage, mod, flags, angle));
 }
 
 int P_DamageMobj(AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags, DAngle angle)
@@ -1487,18 +1492,7 @@ int P_DamageMobj(AActor *target, AActor *inflictor, AActor *source, int damage, 
 	}
 	else
 	{
-		bool needevent = true;
-		int realdamage = DamageMobj(target, inflictor, source, damage, mod, flags, angle, needevent);
-		if (realdamage >= 0) //Keep this check separated. Mods relying upon negative numbers may break otherwise.
-			ReactToDamage(target, inflictor, source, realdamage, mod, flags);
-
-		if (realdamage > 0 && needevent)
-		{
-			// [ZZ] event handlers only need the resultant damage (they can't do anything about it anyway)
-			E_WorldThingDamaged(target, inflictor, source, realdamage, mod, flags, angle);
-		}
-		
-		return MAX(0,realdamage);
+		return DoDamageMobj(target, inflictor, source, damage, mod, flags, angle);
 	}
 }
 

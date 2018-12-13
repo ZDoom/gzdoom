@@ -160,7 +160,6 @@ void FMultipatchTextureBuilder::MakeTexture(BuildInfo &buildinfo, ETextureType u
 	tex->bWorldPanning = buildinfo.bWorldPanning;
 	tex->bNoDecals = buildinfo.bNoDecals;
 	tex->SourceLump = buildinfo.DefinitionLump;
-	buildinfo.id = TexMan.AddTexture(tex);
 	buildinfo.tex = tex;
 }
 
@@ -833,19 +832,19 @@ void FMultipatchTextureBuilder::ResolvePatches(BuildInfo &buildinfo)
 	for (unsigned i = 0; i < buildinfo.Inits.Size(); i++)
 	{
 		FTextureID texno = TexMan.CheckForTexture(buildinfo.Inits[i].TexName, buildinfo.Inits[i].UseType);
-		if (texno == buildinfo.id)	// we found ourselves. Try looking for another one with the same name which is not a multipatch texture itself.
+		if (texno == buildinfo.tex->id)	// we found ourselves. Try looking for another one with the same name which is not a multipatch texture itself.
 		{
 			TArray<FTextureID> list;
 			TexMan.ListTextures(buildinfo.Inits[i].TexName, list, true);
 			for (int i = list.Size() - 1; i >= 0; i--)
 			{
-				if (list[i] != buildinfo.id && !TexMan.GetTexture(list[i])->bMultiPatch)
+				if (list[i] != buildinfo.tex->id && !TexMan.GetTexture(list[i])->bMultiPatch)
 				{
 					texno = list[i];
 					break;
 				}
 			}
-			if (texno == buildinfo.id)
+			if (texno == buildinfo.tex->id)
 			{
 				if (buildinfo.Inits[i].HasLine) buildinfo.Inits[i].sc.Message(MSG_WARNING, "Texture '%s' references itself as patch\n", buildinfo.Inits[i].TexName.GetChars());
 				else Printf(TEXTCOLOR_YELLOW  "Texture '%s' references itself as patch\n", buildinfo.Inits[i].TexName.GetChars());
@@ -964,10 +963,10 @@ void FMultipatchTextureBuilder::ResolveAllPatches()
 		}
 		if (!donesomething)
 		{
-			Printf(PRINT_LOG, "%d Unresolved textures remain\n", BuiltTextures.Size());
+			Printf("%d Unresolved textures remain\n", BuiltTextures.Size());
 			for (auto &b : BuiltTextures)
 			{
-				Printf(PRINT_LOG, "%s\n", b.Name.GetChars());
+				Printf("%s\n", b.Name.GetChars());
 			}
 			break;
 		}

@@ -86,7 +86,6 @@ struct BuildInfo
 	bool bNoDecals = false;
 	int LeftOffset[2] = {};
 	int TopOffset[2] = {};
-	FTextureID id = {};
 	FImageTexture *tex = nullptr;
 };
 

@@ -453,10 +453,10 @@ namespace swrenderer
 						swal = draw_segment->swall;
 						FTexture *tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
 						FSoftwareTexture *pic = tex && tex->isValid()? tex->GetSoftwareTexture() : nullptr;
-						double yscale = pic->GetScale().Y * sidedef->GetTextureYScale(side_t::mid);
+						double yscale = (pic? pic->GetScale().Y : 1.0) * sidedef->GetTextureYScale(side_t::mid);
 						fixed_t xoffset = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
 
-						if (pic->useWorldPanning())
+						if (pic && pic->useWorldPanning())
 						{
 							xoffset = xs_RoundToInt(xoffset * lwallscale);
 						}
@@ -877,6 +877,7 @@ namespace swrenderer
 			
 		auto tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
 		mMiddlePart.Texture = tex && tex->isValid() ? tex->GetSoftwareTexture() : nullptr;
+		if (mMiddlePart.Texture == nullptr) return;
 		mMiddlePart.TextureOffsetU = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
 		double rowoffset = sidedef->GetTextureYOffset(side_t::mid);
 		mMiddlePart.TextureScaleU = sidedef->GetTextureXScale(side_t::mid);

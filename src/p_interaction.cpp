@@ -783,6 +783,158 @@ void P_AutoUseStrifeHealth (player_t *player)
 	}
 }
 
+//==========================================================================
+//
+// ReactToDamage
+//
+//==========================================================================
+
+static inline bool MustForcePain(AActor *target, AActor *inflictor)
+{
+	return (inflictor && (inflictor->flags6 & MF6_FORCEPAIN));
+}
+
+static inline bool isFakePain(AActor *target, AActor *inflictor, int damage)
+{
+	return ((target->flags7 & MF7_ALLOWPAIN && damage > 0) || (inflictor && (inflictor->flags7 & MF7_CAUSEPAIN)));
+}
+
+// [MC] Completely ripped out of DamageMobj to make it less messy.
+static void ReactToDamage(AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags)
+{
+	bool justhit = false;
+	int painchance = 0;
+	FState *woundstate = nullptr;
+	bool fakedPain = false;
+	bool forcedPain = false;
+	bool noPain = false;
+
+	// Dead or non-existent entity, do not react.
+	if (target == nullptr || target->health < 1 || damage < 0)
+		return;
+
+	player_t *player = target->player;
+	if (player)
+	{
+		if ((player->cheats & CF_GODMODE2) || (player->mo->flags5 & MF5_NOPAIN) ||
+			((player->cheats & CF_GODMODE) && damage < TELEFRAG_DAMAGE))
+			return;
+	}
+
+	noPain = (flags & DMG_NO_PAIN) || (target->flags5 & MF5_NOPAIN) || (inflictor && (inflictor->flags5 & MF5_PAINLESS));
+
+	// Are we attempting to cause pain?
+	if (!noPain)
+	{
+		fakedPain = (isFakePain(target, inflictor, damage));
+		forcedPain = (MustForcePain(target, inflictor));
+	}
+
+	// [MC] No forced or faked pain so skip it.
+	// However the rest of the function must carry on.
+	if (!noPain && damage < 1 && !fakedPain && !forcedPain)
+		noPain = true;
+
+	woundstate = target->FindState(NAME_Wound, mod);
+	if (woundstate != NULL)
+	{
+		int woundhealth = target->WoundHealth;
+
+		if (target->health <= woundhealth)
+		{
+			target->SetState(woundstate);
+			return;
+		}
+	}
+
+	if (!noPain &&
+		(target->player != nullptr || !G_SkillProperty(SKILLP_NoPain)) && !(target->flags & MF_SKULLFLY))
+	{
+		painchance = target->PainChance;
+		for (auto & pc : target->GetInfo()->PainChances)
+		{
+			if (pc.first == mod)
+			{
+				painchance = pc.second;
+				break;
+			}
+		}
+
+		if (forcedPain || ((damage >= target->PainThreshold) && (pr_damagemobj() < painchance)))
+		{
+			if (mod == NAME_Electric)
+			{
+				if (pr_lightning() < 96)
+				{
+					justhit = true;
+					FState *painstate = target->FindState(NAME_Pain, mod);
+					if (painstate != NULL)
+						target->SetState(painstate);
+				}
+				else
+				{ // "electrocute" the target
+					target->renderflags |= RF_FULLBRIGHT;
+					if ((target->flags3 & MF3_ISMONSTER) && pr_lightning() < 128)
+					{
+						target->Howl();
+					}
+				}
+			}
+			else
+			{
+				justhit = true;
+				FState *painstate = target->FindState(NAME_Pain, ((inflictor && inflictor->PainType != NAME_None) ? inflictor->PainType : mod));
+				if (painstate != NULL)
+					target->SetState(painstate);
+				if (mod == NAME_PoisonCloud)
+				{
+					if ((target->flags3 & MF3_ISMONSTER) && pr_poison() < 128)
+					{
+						target->Howl();
+					}
+				}
+			}
+		}
+	}
+
+	if (target->player == nullptr) target->reactiontime = 0;			// we're awake now...	
+	if (source)
+	{
+		if (source == target->target)
+		{
+			target->threshold = target->DefThreshold;
+			if (target->state == target->SpawnState && target->SeeState != NULL)
+			{
+				target->SetState(target->SeeState);
+			}
+		}
+		else if (source != target->target && target->CallOkayToSwitchTarget(source))
+		{
+			// Target actor is not intent on another actor,
+			// so make him chase after source
+
+			// killough 2/15/98: remember last enemy, to prevent
+			// sleeping early; 2/21/98: Place priority on players
+
+			if (target->lastenemy == NULL ||
+				(target->lastenemy->player == NULL && target->TIDtoHate == 0) ||
+				target->lastenemy->health <= 0)
+			{
+				target->lastenemy = target->target; // remember last enemy - killough
+			}
+			target->target = source;
+			target->threshold = target->DefThreshold;
+			if (target->state == target->SpawnState && target->SeeState != NULL)
+			{
+				target->SetState(target->SeeState);
+			}
+		}
+	}
+	// killough 11/98: Don't attack a friend, unless hit by that friend.
+	if (justhit && (target->target == source || !target->target || !target->IsFriend(target->target)))
+		target->flags |= MF_JUSTHIT;    // fight back!
+}
+
 /*
 =================
 =
@@ -798,16 +950,6 @@ void P_AutoUseStrifeHealth (player_t *player)
 ==================
 */
 
-static inline bool MustForcePain(AActor *target, AActor *inflictor)
-{
-	return (inflictor && (inflictor->flags6 & MF6_FORCEPAIN));
-}
-
-static inline bool isFakePain(AActor *target, AActor *inflictor, int damage)
-{
-	return ((target->flags7 & MF7_ALLOWPAIN && damage > 0) || ((inflictor != NULL) && (inflictor->flags7 & MF7_CAUSEPAIN)));
-}
-
 
 // Returns the amount of damage actually inflicted upon the target, or -1 if
 // the damage was cancelled.
@@ -815,16 +957,8 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 {
 	player_t *player = NULL;
 	int temp;
-	int painchance = 0;
-	FState * woundstate = NULL;
 	bool justhit = false;
 	bool plrDontThrust = false;
-	bool invulpain = false;
-	bool fakedPain = false;
-	bool forcedPain = false;
-	bool noPain = false;
-	int fakeDamage = 0;
-	int holdDamage = 0;
 	const int rawdamage = damage;
 	const bool telefragDamage = (rawdamage >= TELEFRAG_DAMAGE);
 	
@@ -832,32 +966,23 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 
 	if (target == NULL || !((target->flags & MF_SHOOTABLE) || (target->flags6 & MF6_VULNERABLE)))
 	{ // Shouldn't happen
-		return 0;
+		return -1;
 	}
 	FName MeansOfDeath = mod;
-
-	// Rather than unnecessarily call the function over and over again, let's be a little more efficient.
-	// But first, check and see if it's even needed, which it won't be if pain must not be triggered.
-	noPain = ((flags & DMG_NO_PAIN) || (target->flags5 & MF5_NOPAIN) || (inflictor && (inflictor->flags5 & MF5_PAINLESS)));
-	if (!noPain)
-	{
-		fakedPain = (isFakePain(target, inflictor, damage));
-		forcedPain = (MustForcePain(target, inflictor));
-	}
 
 	// Spectral targets only take damage from spectral projectiles.
 	if (target->flags4 & MF4_SPECTRAL && !telefragDamage)
 	{
 		if (inflictor == NULL || !(inflictor->flags4 & MF4_SPECTRAL))
 		{
-			return 0;
+			return -1;
 		}
 	}
 	if (target->health <= 0)
 	{
 		if (inflictor && mod == NAME_Ice && !(inflictor->flags7 & MF7_ICESHATTER))
 		{
-			return 0;
+			return -1;
 		}
 		else if (target->flags & MF_ICECORPSE) // frozen
 		{
@@ -865,7 +990,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 			target->flags6 |= MF6_SHATTERING;
 			target->Vel.Zero();
 		}
-		return 0;
+		return -1;
 	}
 	if (target == source && (!telefragDamage || target->flags7 & MF7_LAXTELEFRAGDMG))
 	{
@@ -882,16 +1007,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 		{
 			if (inflictor == NULL || (!(inflictor->flags3 & MF3_FOILINVUL) && !(flags & DMG_FOILINVUL)))
 			{
-				if (fakedPain)
-				{
-					// big mess here: What do we use for the pain threshold?
-					// We cannot run the various damage filters below so for consistency it needs to be 0.
-					damage = 0;
-					invulpain = true;
-					goto fakepain;
-				}
-				else
-					return 0;
+				return 0;
 			}
 		}
 		else
@@ -899,10 +1015,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 			// Players are optionally excluded from getting thrust by damage.
 			if (static_cast<APlayerPawn *>(target)->PlayerFlags & PPF_NOTHRUSTWHENINVUL)
 			{
-				if (fakedPain)
-					plrDontThrust = 1;
-				else
-					return 0;
+				return 0;
 			}
 		}
 		
@@ -931,7 +1044,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 		if (target->flags2 & MF2_DORMANT)
 		{
 			// Invulnerable, and won't wake up
-			return 0;
+			return -1;
 		}
 
 		if (!telefragDamage || (target->flags7 & MF7_LAXTELEFRAGDMG)) // TELEFRAG_DAMAGE may only be reduced with LAXTELEFRAGDMG or it may not guarantee its effect.
@@ -959,19 +1072,19 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 					if (player != NULL)
 					{
 						if (!deathmatch && inflictor->FriendPlayer > 0)
-							return 0;
+							return -1;
 					}
 					else if (target->flags4 & MF4_SPECTRAL)
 					{
 						if (inflictor->FriendPlayer == 0 && !target->IsHostile(inflictor))
-							return 0;
+							return -1;
 					}
 				}
 
 				damage = inflictor->CallDoSpecialDamage(target, damage, mod);
 				if (damage < 0)
 				{
-					return 0;
+					return -1;
 				}
 			}
 
@@ -1005,17 +1118,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 			// '<0' is handled below. This only handles the case where damage gets reduced to 0.
 			if (damage == 0 && olddam > 0)
 			{
-				{ // Still allow FORCEPAIN
-					if (forcedPain)
-					{
-						goto dopain;
-					}
-					else if (fakedPain)
-					{
-						goto fakepain;
-					}
-					return 0;
-				}
+				return 0;
 			}
 		}
 		if (target->flags5 & MF5_NODAMAGE)
@@ -1026,7 +1129,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 	if (damage < 0)
 	{
 		// any negative value means that something in the above chain has cancelled out all damage and all damage effects, including pain.
-		return 0;
+		return -1;
 	}
 
 
@@ -1092,21 +1195,9 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 		if (!telefragDamage || (target->flags7 & MF7_LAXTELEFRAGDMG))
 		{ // Still allow telefragging :-(
 			damage = (int)(damage * level.teamdamage);
-			if (damage < 0)
+			if (damage <= 0)
 			{
-				return 0;
-			}
-			else if (damage == 0)
-			{
-				if (forcedPain)
-				{
-					goto dopain;
-				}
-				else if (fakedPain)
-				{
-					goto fakepain;
-				}
-				return 0;
+				return (damage < 0) ? -1 : 0;
 			}
 		}
 	}
@@ -1141,17 +1232,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 				(player->cheats & CF_GODMODE2) || (player->mo->flags5 & MF5_NODAMAGE))
 				//Absolutely no hurting if NODAMAGE is involved. Same for GODMODE2.
 			{ // player is invulnerable, so don't hurt him
-				//Make sure no godmodes and NOPAIN flags are found first.
-				//Then, check to see if the player has NODAMAGE or ALLOWPAIN, or inflictor has CAUSEPAIN.
-				if ((flags & DMG_NO_PAIN) || (player->cheats & CF_GODMODE) || (player->cheats & CF_GODMODE2) || (player->mo->flags5 & MF5_NOPAIN))
-					return 0;
-				else if ((((player->mo->flags7 & MF7_ALLOWPAIN) || (player->mo->flags5 & MF5_NODAMAGE)) || ((inflictor != NULL) && (inflictor->flags7 & MF7_CAUSEPAIN))))
-				{
-					invulpain = true;
-					goto fakepain;
-				}
-				else
-					return 0;
+				return 0;
 			}
 			// Armor for players.
 			if (!(flags & DMG_NO_ARMOR) && player->mo->Inventory != NULL)
@@ -1169,20 +1250,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 				
 				if (damage <= 0)
 				{
-					// [MC] Godmode doesn't need checking here, it's already being handled above.
-					if (noPain)
-						return 0;
-					
-					// If MF6_FORCEPAIN is set, make the player enter the pain state.
-					if ((inflictor && (inflictor->flags6 & MF6_FORCEPAIN)))
-						goto dopain;
-					else if (((player->mo->flags7 & MF7_ALLOWPAIN) && (rawdamage > 0)) ||
-							(inflictor && (inflictor->flags7 & MF7_CAUSEPAIN)))
-					{
-						invulpain = true;
-						goto fakepain;
-					}
-					return 0;
+					return (damage < 0) ? -1 : 0;
 				}
 			}
 			
@@ -1246,10 +1314,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 			damage = newdam;
 			if (damage <= 0)
 			{
-				if (fakedPain)
-					goto fakepain;
-				else
-					return 0;
+				return (damage < 0) ? -1 : 0;
 			}
 		}
 	
@@ -1294,7 +1359,6 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 			}
 		}
 	}
-
 
 	if (target->health <= 0)
 	{ 
@@ -1350,115 +1414,6 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 			return realdamage;
 		}
 	}
-
-	woundstate = target->FindState(NAME_Wound, mod);
-	if (woundstate != NULL)
-	{
-		int woundhealth = target->WoundHealth;
-
-		if (target->health <= woundhealth)
-		{
-			target->SetState (woundstate);
-			return MAX(0, damage);
-		}
-	}
-
-fakepain: //Needed so we can skip the rest of the above, but still obey the original rules.
-
-	if (!noPain &&
-		(target->player != NULL || !G_SkillProperty(SKILLP_NoPain)) && !(target->flags & MF_SKULLFLY))
-	{
-		painchance = target->PainChance;
-		for (auto & pc : target->GetInfo()->PainChances)
-		{
-			if (pc.first == mod)
-			{
-				painchance = pc.second;
-				break;
-			}
-		}
-
-		if (((damage >= target->PainThreshold) && (pr_damagemobj() < painchance)) 
-			|| (inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN)))
-		{
-dopain:	
-			if (mod == NAME_Electric)
-			{
-				if (pr_lightning() < 96)
-				{
-					justhit = true;
-					FState *painstate = target->FindState(NAME_Pain, mod);
-					if (painstate != NULL)
-						target->SetState(painstate);
-				}
-				else
-				{ // "electrocute" the target
-					target->renderflags |= RF_FULLBRIGHT;
-					if ((target->flags3 & MF3_ISMONSTER) && pr_lightning() < 128)
-					{
-						target->Howl ();
-					}
-				}
-			}
-			else
-			{
-				justhit = true;
-				FState *painstate = target->FindState(NAME_Pain, ((inflictor && inflictor->PainType != NAME_None) ? inflictor->PainType : mod));
-				if (painstate != NULL)
-					target->SetState(painstate);
-				if (mod == NAME_PoisonCloud)
-				{
-					if ((target->flags3 & MF3_ISMONSTER) && pr_poison() < 128)
-					{
-						target->Howl ();
-					}
-				}
-			}
-		}
-	}
-	//ALLOWPAIN and CAUSEPAIN can still trigger infighting, even if no pain state is worked out.
-	if (target->player == nullptr) target->reactiontime = 0;			// we're awake now...	
-	if (source)
-	{
-		if (source == target->target)
-		{
-			target->threshold = target->DefThreshold;
-			if (target->state == target->SpawnState && target->SeeState != NULL)
-			{
-				target->SetState (target->SeeState);
-			}
-		}
-		else if (source != target->target && target->CallOkayToSwitchTarget (source))
-		{
-			// Target actor is not intent on another actor,
-			// so make him chase after source
-
-			// killough 2/15/98: remember last enemy, to prevent
-			// sleeping early; 2/21/98: Place priority on players
-
-			if (target->lastenemy == NULL ||
-				(target->lastenemy->player == NULL && target->TIDtoHate == 0) ||
-				target->lastenemy->health <= 0)
-			{
-				target->lastenemy = target->target; // remember last enemy - killough
-			}
-			target->target = source;
-			target->threshold = target->DefThreshold;
-			if (target->state == target->SpawnState && target->SeeState != NULL)
-			{
-				target->SetState (target->SeeState);
-			}
-		}
-	}
-
-	// killough 11/98: Don't attack a friend, unless hit by that friend.
-	if (justhit && (target->target == source || !target->target || !target->IsFriend(target->target)))
-		target->flags |= MF_JUSTHIT;    // fight back!
-
-	if (invulpain) //Note that this takes into account all the cheats a player has, in terms of invulnerability.
-	{
-		return 0; //NOW we return -1!
-	}
 	return MAX(0, damage);
 }
 
@@ -1475,11 +1430,15 @@ DEFINE_ACTION_FUNCTION(AActor, DamageMobj)
 	// [ZZ] event handlers need the result.
 	bool needevent = true;
 	int realdamage = DamageMobj(self, inflictor, source, damage, mod, flags, angle, needevent);
-	if (realdamage && needevent)
+	if (realdamage >= 0)
+		ReactToDamage(self, inflictor, source, realdamage, mod, flags);
+		
+	if (realdamage > 0 && needevent)
 	{
-	E_WorldThingDamaged(self, inflictor, source, realdamage, mod, flags, angle);
+		E_WorldThingDamaged(self, inflictor, source, realdamage, mod, flags, angle);
 	}
-	ACTION_RETURN_INT(realdamage);
+	
+	ACTION_RETURN_INT(MAX(0,realdamage));
 }
 
 int P_DamageMobj(AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags, DAngle angle)
@@ -1497,12 +1456,16 @@ int P_DamageMobj(AActor *target, AActor *inflictor, AActor *source, int damage, 
 	{
 		bool needevent = true;
 		int realdamage = DamageMobj(target, inflictor, source, damage, mod, flags, angle, needevent);
-		if (realdamage && needevent)
+		if (realdamage >= 0) //Keep this check separated. Mods relying upon negative numbers may break otherwise.
+			ReactToDamage(target, inflictor, source, realdamage, mod, flags);
+
+		if (realdamage > 0 && needevent)
 		{
-		// [ZZ] event handlers only need the resultant damage (they can't do anything about it anyway)
-		E_WorldThingDamaged(target, inflictor, source, realdamage, mod, flags, angle);
+			// [ZZ] event handlers only need the resultant damage (they can't do anything about it anyway)
+			E_WorldThingDamaged(target, inflictor, source, realdamage, mod, flags, angle);
 		}
-		return realdamage;
+		
+		return MAX(0,realdamage);
 	}
 }
 

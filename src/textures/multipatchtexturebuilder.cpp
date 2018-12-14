@@ -161,6 +161,7 @@ void FMultipatchTextureBuilder::MakeTexture(BuildInfo &buildinfo, ETextureType u
 	tex->bNoDecals = buildinfo.bNoDecals;
 	tex->SourceLump = buildinfo.DefinitionLump;
 	buildinfo.tex = tex;
+	TexMan.AddTexture(tex);
 }
 
 //==========================================================================

@@ -1566,19 +1566,9 @@ CCMD (printspans)
 
 float FTexCoordInfo::RowOffset(float rowoffset) const
 {
-	float tscale = fabs(mTempScale.Y);
 	float scale = fabs(mScale.Y);
-
-	if (tscale == 1.f)
-	{
-		if (scale == 1.f || mWorldPanning) return rowoffset;
-		else return rowoffset / scale;
-	}
-	else
-	{
-		if (mWorldPanning) return rowoffset;
-		else return rowoffset / scale;
-	}
+	if (scale == 1.f || mWorldPanning) return rowoffset;
+	else return rowoffset / scale;
 }
 
 //===========================================================================
@@ -1589,18 +1579,9 @@ float FTexCoordInfo::RowOffset(float rowoffset) const
 
 float FTexCoordInfo::TextureOffset(float textureoffset) const
 {
-	float tscale = fabs(mTempScale.X);
 	float scale = fabs(mScale.X);
-	if (tscale == 1.f)
-	{
-		if (scale == 1.f || mWorldPanning) return textureoffset;
-		else return textureoffset / scale;
-	}
-	else
-	{
-		if (mWorldPanning) return textureoffset;
-		else return textureoffset / scale;
-	}
+	if (scale == 1.f || mWorldPanning) return textureoffset;
+	else return textureoffset / scale;
 }
 
 //===========================================================================

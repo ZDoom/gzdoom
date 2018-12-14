@@ -198,6 +198,10 @@ int WinMIDIDevice::Open(MidiCallback callback, void *userdata)
 				}
 			}
 		}
+		else
+		{
+			return 1;
+		}
 	}
 	return 0;
 }

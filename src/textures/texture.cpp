@@ -823,7 +823,7 @@ float FTexCoordInfo::RowOffset(float rowoffset) const
 	}
 	else
 	{
-		if (mWorldPanning) return rowoffset / tscale;
+		if (mWorldPanning) return rowoffset;
 		else return rowoffset / scale;
 	}
 }
@@ -845,7 +845,7 @@ float FTexCoordInfo::TextureOffset(float textureoffset) const
 	}
 	else
 	{
-		if (mWorldPanning) return textureoffset / tscale;
+		if (mWorldPanning) return textureoffset;
 		else return textureoffset / scale;
 	}
 }

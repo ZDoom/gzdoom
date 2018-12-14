@@ -37,6 +37,9 @@
 #include "r_swtexture.h"
 #include "bitmap.h"
 #include "m_alloc.h"
+#include "imagehelpers.h"
+
+EXTERN_CVAR(Bool, gl_texture_usehires)
 
 
 FSoftwareTexture *FTexture::GetSoftwareTexture()
@@ -48,6 +51,25 @@ FSoftwareTexture *FTexture::GetSoftwareTexture()
 		else SoftwareTexture = new FSoftwareTexture(this);
 	}
 	return SoftwareTexture;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FSoftwareTexture::FSoftwareTexture(FTexture *tex)
+{
+	mTexture = tex;
+	mSource = tex;
+
+	mBufferFlags = (gl_texture_usehires && !tex->isScaled() && tex->GetImage() && !tex->isSprite() ) ? CTF_CheckHires|CTF_ProcessData : CTF_ProcessData;
+	auto info = tex->CreateTexBuffer(0, CTF_CheckOnly| mBufferFlags);
+	mPhysicalWidth = info.mWidth;
+	mPhysicalHeight = info.mHeight;
+	mPhysicalScale = mPhysicalWidth / tex->Width;;
+	CalcBitSize();
 }
 
 //==========================================================================
@@ -93,7 +115,23 @@ const uint8_t *FSoftwareTexture::GetPixels(int style)
 {
 	if (Pixels.Size() == 0 || CheckModified(style))
 	{
-		Pixels = mSource->Get8BitPixels(style);
+		if (mPhysicalScale == 1)
+		{
+			Pixels = mSource->Get8BitPixels(style);
+		}
+		else
+		{
+			auto tempbuffer = mTexture->CreateTexBuffer(0, mBufferFlags);
+			Pixels.Resize(GetWidth()*GetHeight());
+			PalEntry *pe = (PalEntry*)tempbuffer.mBuffer;
+			for (int y = 0; y < GetHeight(); y++)
+			{
+				for (int x = 0; x < GetWidth(); x++)
+				{
+					Pixels[y + x * GetHeight()] = ImageHelpers::RGBToPalette(false, pe[x + y * GetWidth()], true);
+				}
+			}
+		}
 	}
 	return Pixels.Data();
 }

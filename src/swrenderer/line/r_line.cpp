@@ -858,7 +858,7 @@ namespace swrenderer
 		}
 		else
 		{
-			mTopPart.TextureMid += rowoffset;
+			mTopPart.TextureMid += rowoffset * mTopPart.Texture->GetPhysicalScale();
 		}
 	}
 	
@@ -918,7 +918,7 @@ namespace swrenderer
 		{
 			// rowoffset is added outside the multiply so that it positions the texture
 			// by texels instead of world units.
-			mMiddlePart.TextureMid += rowoffset;
+			mMiddlePart.TextureMid += rowoffset * mMiddlePart.Texture->GetPhysicalScale();
 		}
 	}
 	
@@ -983,7 +983,7 @@ namespace swrenderer
 		}
 		else
 		{
-			mBottomPart.TextureMid += rowoffset;
+			mBottomPart.TextureMid += rowoffset * mBottomPart.Texture->GetPhysicalScale();
 		}
 	}
 
@@ -1158,7 +1158,7 @@ namespace swrenderer
 		}
 		else
 		{
-			offset = mTopPart.TextureOffsetU;
+			offset = mTopPart.TextureOffsetU * mTopPart.Texture->GetPhysicalScale();
 		}
 		if (xscale < 0)
 		{
@@ -1205,7 +1205,7 @@ namespace swrenderer
 		}
 		else
 		{
-			offset = mMiddlePart.TextureOffsetU;
+			offset = mMiddlePart.TextureOffsetU * mMiddlePart.Texture->GetPhysicalScale();
 		}
 		if (xscale < 0)
 		{
@@ -1253,7 +1253,7 @@ namespace swrenderer
 		}
 		else
 		{
-			offset = mBottomPart.TextureOffsetU;
+			offset = mBottomPart.TextureOffsetU * mBottomPart.Texture->GetPhysicalScale();
 		}
 		if (xscale < 0)
 		{

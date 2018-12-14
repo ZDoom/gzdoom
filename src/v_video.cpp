@@ -924,7 +924,7 @@ void ScaleWithAspect (int &w, int &h, int Width, int Height)
 
 CCMD(vid_setsize)
 {
-	if (argv.argc() < 2)
+	if (argv.argc() < 3)
 	{
 		Printf("Usage: vid_setsize width height\n");
 	}

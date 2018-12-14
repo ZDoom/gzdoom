@@ -247,10 +247,33 @@ struct FTextureBuffer
 	int mHeight = 0;
 	uint64_t mContentId = 0;	// unique content identifier. (Two images created from the same image source with the same settings will return the same value.)
 
-	FTextureBuffer()
+	FTextureBuffer() = default;
+
+	~FTextureBuffer()
 	{
 		if (mBuffer) delete[] mBuffer;
 	}
+
+	FTextureBuffer(const FTextureBuffer &other) = delete;
+	FTextureBuffer(FTextureBuffer &&other)
+	{
+		mBuffer = other.mBuffer;
+		mWidth = other.mWidth;
+		mHeight = other.mHeight;
+		mContentId = other.mContentId;
+		other.mBuffer = nullptr;
+	}
+
+	FTextureBuffer& operator=(FTextureBuffer &&other)
+	{
+		mBuffer = other.mBuffer;
+		mWidth = other.mWidth;
+		mHeight = other.mHeight;
+		mContentId = other.mContentId;
+		other.mBuffer = nullptr;
+		return *this;
+	}
+
 };
 
 // Base texture class

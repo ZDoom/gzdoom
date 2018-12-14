@@ -335,7 +335,7 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 
 		if (!tex->isHardwareCanvas())
 		{
-			texbuffer = tex->CreateTexBuffer(translation, flags | CTF_ProcessData);
+			texbuffer = std::move(tex->CreateTexBuffer(translation, flags | CTF_ProcessData));
 			w = texbuffer.mWidth;
 			h = texbuffer.mHeight;
 		}

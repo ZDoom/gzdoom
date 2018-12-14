@@ -773,13 +773,13 @@ namespace swrenderer
 		FTexture *ftex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
 		FSoftwareTexture *midtex = ftex && ftex->isValid() ? ftex->GetSoftwareTexture() : nullptr;
 
-		bool segtextured = midtex != NULL || mTopPart.Texture != NULL || mBottomPart.Texture != NULL;
+		bool segtextured = ftex != NULL || mTopPart.Texture != NULL || mBottomPart.Texture != NULL;
 
 		// calculate light table
 		if (needlights && (segtextured || (mBackSector && IsFogBoundary(mFrontSector, mBackSector))))
 		{
 			lwallscale =
-				midtex ? (midtex->GetScale().X * sidedef->GetTextureXScale(side_t::mid)) :
+				ftex ? ((midtex? midtex->GetScale().X : 1.0) * sidedef->GetTextureXScale(side_t::mid)) :
 				mTopPart.Texture ? (mTopPart.Texture->GetScale().X * sidedef->GetTextureXScale(side_t::top)) :
 				mBottomPart.Texture ? (mBottomPart.Texture->GetScale().X * sidedef->GetTextureXScale(side_t::bottom)) :
 				1.;

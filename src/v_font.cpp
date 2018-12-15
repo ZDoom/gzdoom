@@ -899,6 +899,8 @@ FFont::FFont (int lump)
 	FontName = NAME_None;
 	Cursor = '_';
 	noTranslate = false;
+	uint8_t pp = 0;
+	for (auto &p : PatchRemap) p = pp++;
 }
 
 //==========================================================================

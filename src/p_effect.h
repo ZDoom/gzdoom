@@ -62,7 +62,7 @@ struct particle_t
 	uint16_t	snext;
 };
 
-extern particle_t *Particles;
+extern TArray<particle_t>	Particles;
 extern TArray<uint16_t>		ParticlesInSubsec;
 
 const uint16_t NO_PARTICLE = 0xffff;

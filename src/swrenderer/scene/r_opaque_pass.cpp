@@ -616,7 +616,7 @@ namespace swrenderer
 			int shade = LightVisibility::LightLevelToShade((floorlightlevel + ceilinglightlevel) / 2 + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()), foggy);
 			for (int i = ParticlesInSubsec[sub->Index()]; i != NO_PARTICLE; i = Particles[i].snext)
 			{
-				RenderParticle::Project(Thread, Particles + i, sub->sector, shade, FakeSide, foggy);
+				RenderParticle::Project(Thread, &Particles[i], sub->sector, shade, FakeSide, foggy);
 			}
 		}
 

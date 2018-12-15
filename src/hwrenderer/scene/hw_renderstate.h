@@ -326,7 +326,7 @@ public:
 
 	void SetSoftLightLevel(int llevel, int blendfactor = 0)
 	{
-		if (level.lightmode == 8 && blendfactor == 0) mLightParms[3] = llevel / 255.f;
+		if (level.isSoftwareLighting() && blendfactor == 0) mLightParms[3] = llevel / 255.f;
 		else mLightParms[3] = -1.f;
 	}
 

@@ -51,6 +51,7 @@
 #include "imagehelpers.h"
 #include "image.h"
 #include "formats/multipatchtexture.h"
+#include "g_levellocals.h"
 
 FTexture *CreateBrightmapTexture(FImageSource*);
 
@@ -903,7 +904,7 @@ void FTexCoordInfo::GetFromTexture(FTexture *tex, float x, float y)
 		mScale.Y = -mScale.Y;
 		mRenderHeight = -mRenderHeight;
 	}
-	mWorldPanning = tex->bWorldPanning;
+	mWorldPanning = tex->bWorldPanning || (level.flags3 & LEVEL3_FORCEWORLDPANNING);
 	mWidth = tex->GetWidth();
 }
 

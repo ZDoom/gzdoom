@@ -126,9 +126,9 @@ float R_WallColormap(float lightnum, float z)
 {
 	// R_ScaleFromGlobalAngle calculation
 	float projection = 160.0; // projection depends on SCREENBLOCKS!! 160 is the fullscreen value
-	vec3 line_v1 = pixelpos.xyz; // in vanilla this is the first curline vertex
-	vec3 line_normal = vWorldNormal.xyz;
-	float texscale = projection * clamp(dot(normalize(uCameraPos.xyz - line_v1), line_normal), 0.0, 1.0) / z;
+	vec2 line_v1 = pixelpos.xz; // in vanilla this is the first curline vertex
+	vec2 line_normal = vWorldNormal.xz;
+	float texscale = projection * clamp(dot(normalize(uCameraPos.xz - line_v1), line_normal), 0.0, 1.0) / z;
 
 	float lightz = clamp(16.0 * texscale, 0.0, 47.0);
 

@@ -123,9 +123,9 @@ protected:
 	bool translateUntranslated;
 	struct CharData
 	{
-		FTexture *TranslatedPic;	// Texture for use with font translations.
-		FTexture *OriginalPic;		// Texture for use with CR_UNTRANSLATED or font colorization. 
-		int XMove;
+		FTexture *TranslatedPic = nullptr;	// Texture for use with font translations.
+		FTexture *OriginalPic = nullptr;	// Texture for use with CR_UNTRANSLATED or font colorization. 
+		int XMove = INT_MIN;
 	};
 	TArray<CharData> Chars;
 	int ActiveColors;

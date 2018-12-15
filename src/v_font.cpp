@@ -381,20 +381,19 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 
 		if (charLumps[i] != nullptr)
 		{
-			Chars[i].OriginalPic = charLumps[i];
-
 			if (!noTranslate)
 			{
+				Chars[i].OriginalPic = charLumps[i];
 				Chars[i].TranslatedPic = new FImageTexture(new FFontChar1 (charLumps[i]->GetImage()), "");
 				TexMan.AddTexture(Chars[i].TranslatedPic);
 			}
 			else Chars[i].TranslatedPic = charLumps[i];
 
-			Chars[i].XMove = Chars[i].OriginalPic->GetDisplayWidth();
+			Chars[i].XMove = Chars[i].TranslatedPic->GetDisplayWidth();
 		}
 		else
 		{
-			Chars[i].TranslatedPic = Chars[i].OriginalPic = nullptr;
+			Chars[i].TranslatedPic = nullptr;
 			Chars[i].XMove = INT_MIN;
 		}
 	}
@@ -403,7 +402,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	{
 		SpaceWidth = spacewidth;
 	}
-	else if ('N'-first >= 0 && 'N'-first < count && Chars['N' - first].OriginalPic != nullptr)
+	else if ('N'-first >= 0 && 'N'-first < count && Chars['N' - first].TranslatedPic != nullptr)
 	{
 		SpaceWidth = (Chars['N' - first].XMove + 1) / 2;
 	}
@@ -706,7 +705,7 @@ int FFont::GetCharCode(int code, bool needpic) const
 		// regular chars turn negative when the 8th bit is set.
 		code &= 255;
 	}
-	if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].OriginalPic != nullptr))
+	if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].TranslatedPic != nullptr))
 	{
 		return code;
 	}
@@ -714,7 +713,7 @@ int FFont::GetCharCode(int code, bool needpic) const
 	if (myislower(code))
 	{
 		code -= 32;
-		if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].OriginalPic != nullptr))
+		if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].TranslatedPic != nullptr))
 		{
 			return code;
 		}
@@ -724,7 +723,7 @@ int FFont::GetCharCode(int code, bool needpic) const
 	if (newcode != code)
 	{
 		code = newcode;
-		if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].OriginalPic != nullptr))
+		if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].TranslatedPic != nullptr))
 		{
 			return code;
 		}
@@ -747,7 +746,7 @@ FTexture *FFont::GetChar (int code, int translation, int *const width, bool *red
 	{
 		code -= FirstChar;
 		xmove = Chars[code].XMove;
-		if (Chars[code].OriginalPic == nullptr)
+		if (Chars[code].TranslatedPic == nullptr)
 		{
 			code = GetCharCode(code + FirstChar, true);
 			if (code >= 0)
@@ -766,9 +765,10 @@ FTexture *FFont::GetChar (int code, int translation, int *const width, bool *red
 
 	if (translation == CR_UNTRANSLATED)
 	{
-		if (redirected) 
-			*redirected = Chars[code].OriginalPic != Chars[code].TranslatedPic;
-		return Chars[code].OriginalPic;
+		bool redirect = Chars[code].OriginalPic && Chars[code].OriginalPic != Chars[code].TranslatedPic;
+		if (redirected) *redirected = redirect;
+		if (redirect) 
+			return Chars[code].OriginalPic;
 	}
 	if (redirected) *redirected = false;
 	return Chars[code].TranslatedPic;
@@ -963,7 +963,7 @@ void FSingleLumpFont::CreateFontFromPic (FTextureID picnum)
 
 	FirstChar = LastChar = 'A';
 	Chars.Resize(1);
-	Chars[0].TranslatedPic = Chars[0].OriginalPic = pic;
+	Chars[0].TranslatedPic = pic;
 
 	// Only one color range. Don't bother with the others.
 	ActiveColors = 0;
@@ -1040,10 +1040,6 @@ void FSingleLumpFont::LoadFON1 (int lump, const uint8_t *data)
 	LastChar = 255;
 	GlobalKerning = 0;
 	translateUntranslated = true;
-
-	for(unsigned int i = 0;i < 256;++i)
-		Chars[i].TranslatedPic = Chars[i].OriginalPic = nullptr;
-
 	LoadTranslations();
 }
 
@@ -1128,12 +1124,12 @@ void FSingleLumpFont::LoadFON2 (int lump, const uint8_t *data)
 		Chars[i].XMove = widths2[i];
 		if (destSize <= 0)
 		{
-			Chars[i].TranslatedPic = Chars[i].OriginalPic = nullptr;
+			Chars[i].TranslatedPic = nullptr;
 		}
 		else
 		{
-			Chars[i].TranslatedPic = Chars[i].OriginalPic = new FImageTexture(new FFontChar2 (lump, int(data_p - data), widths2[i], FontHeight));
-			TexMan.AddTexture(Chars[i].OriginalPic);
+			Chars[i].TranslatedPic = new FImageTexture(new FFontChar2 (lump, int(data_p - data), widths2[i], FontHeight));
+			TexMan.AddTexture(Chars[i].TranslatedPic);
 			do
 			{
 				int8_t code = *data_p++;
@@ -1216,12 +1212,6 @@ void FSingleLumpFont::LoadBMF(int lump, const uint8_t *data)
 	}
 	count = LastChar - FirstChar + 1;
 	Chars.Resize(count);
-	for (i = 0; i < count; ++i)
-	{
-		Chars[i].TranslatedPic = Chars[i].OriginalPic = nullptr;
-		Chars[i].XMove = INT_MIN;
-	}
-
 	// BMF palettes are only six bits per component. Fix that.
 	for (i = 0; i < ActiveColors*3; ++i)
 	{
@@ -1273,7 +1263,7 @@ void FSingleLumpFont::LoadBMF(int lump, const uint8_t *data)
 			-(int8_t)chardata[chari+3],	// x offset
 			-(int8_t)chardata[chari+4]	// y offset
 		));
-		Chars[chardata[chari] - FirstChar].TranslatedPic = Chars[chardata[chari] - FirstChar].OriginalPic = tex;
+		Chars[chardata[chari] - FirstChar].TranslatedPic = tex;
 		TexMan.AddTexture(tex);
 	}
 
@@ -1337,13 +1327,12 @@ void FSingleLumpFont::CheckFON1Chars (double *luminosity)
 	{
 		int destSize = SpaceWidth * FontHeight;
 
-		if(!Chars[i].OriginalPic)
+		if(!Chars[i].TranslatedPic)
 		{
-			Chars[i].OriginalPic = new FImageTexture(new FFontChar2 (Lump, int(data_p - data), SpaceWidth, FontHeight));
+			Chars[i].TranslatedPic = new FImageTexture(new FFontChar2 (Lump, int(data_p - data), SpaceWidth, FontHeight));
 			Chars[i].XMove = SpaceWidth;
-			TexMan.AddTexture(Chars[i].OriginalPic);
+			TexMan.AddTexture(Chars[i].TranslatedPic);
 		}
-		Chars[i].TranslatedPic = Chars[i].OriginalPic;
 
 		// Advance to next char's data and count the used colors.
 		do
@@ -1552,24 +1541,24 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 
 		if (charlumps[i] != nullptr)
 		{
+			Chars[i].OriginalPic = charlumps[i];
 			if (!noTranslate)
 			{
 				Chars[i].TranslatedPic = new FImageTexture(new FFontChar1 (charlumps[i]->GetImage()), "");
 				TexMan.AddTexture(Chars[i].TranslatedPic);
 			}
 			else Chars[i].TranslatedPic = charlumps[i];
-			Chars[i].OriginalPic = Chars[i].TranslatedPic;
-			Chars[i].XMove = Chars[i].OriginalPic->GetDisplayWidth();
+			Chars[i].XMove = Chars[i].TranslatedPic->GetDisplayWidth();
 		}
 		else
 		{
-			Chars[i].TranslatedPic = Chars[i].OriginalPic = nullptr;
+			Chars[i].TranslatedPic = nullptr;
 			Chars[i].XMove = INT_MIN;
 		}
 	}
 
 	// Special fonts normally don't have all characters so be careful here!
-	if ('N'-first >= 0 && 'N'-first < count && Chars['N' - first].OriginalPic != nullptr)
+	if ('N'-first >= 0 && 'N'-first < count && Chars['N' - first].TranslatedPic != nullptr)
 	{
 		SpaceWidth = (Chars['N' - first].XMove + 1) / 2;
 	}

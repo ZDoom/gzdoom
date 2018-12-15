@@ -966,11 +966,11 @@ void FGLRenderBuffers::RenderEffect(const FString &name)
 		auto &shader = GLShaders[step.ShaderName];
 
 		// Set uniforms
-		if (step.Uniforms.Size > 0)
+		if (step.Uniforms.Data.Size() > 0)
 		{
 			if (!shader->Uniforms)
 				shader->Uniforms.reset(screen->CreateDataBuffer(POSTPROCESS_BINDINGPOINT, false));
-			shader->Uniforms->SetData(step.Uniforms.Size, step.Uniforms.Data);
+			shader->Uniforms->SetData(step.Uniforms.Data.Size(), step.Uniforms.Data.Data());
 			shader->Uniforms->BindBase();
 		}
 

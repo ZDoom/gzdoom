@@ -59,10 +59,9 @@ FRandom pr_railtrail("RailTrail");
 #define FADEFROMTTL(a)	(1.f/(a))
 
 // [RH] particle globals
-uint16_t			NumParticles;
-uint16_t			ActiveParticles;
-uint16_t			InactiveParticles;
-particle_t		*Particles;
+uint32_t			ActiveParticles;
+uint32_t			InactiveParticles;
+TArray<particle_t>	Particles;
 TArray<uint16_t>	ParticlesInSubsec;
 
 static int grey1, grey2, grey3, grey4, red, green, blue, yellow, black,
@@ -105,13 +104,13 @@ static const struct ColorList {
 
 inline particle_t *NewParticle (void)
 {
-	particle_t *result = NULL;
+	particle_t *result = nullptr;
 	if (InactiveParticles != NO_PARTICLE)
 	{
-		result = Particles + InactiveParticles;
+		result = &Particles[InactiveParticles];
 		InactiveParticles = result->tnext;
 		result->tnext = ActiveParticles;
-		ActiveParticles = uint16_t(result - Particles);
+		ActiveParticles = uint32_t(result - Particles.Data());
 	}
 	return result;
 }
@@ -120,7 +119,6 @@ inline particle_t *NewParticle (void)
 // [RH] Particle functions
 //
 void P_InitParticles ();
-void P_DeinitParticles ();
 
 // [BC] Allow the maximum number of particles to be specified by a cvar (so people
 // with lots of nice hardware can have lots of particles!).
@@ -135,7 +133,6 @@ CUSTOM_CVAR( Int, r_maxparticles, 4000, CVAR_ARCHIVE )
 
 	if ( gamestate != GS_STARTUP )
 	{
-		P_DeinitParticles( );
 		P_InitParticles( );
 	}
 }
@@ -152,33 +149,21 @@ void P_InitParticles ()
 		num = r_maxparticles;
 
 	// This should be good, but eh...
-	NumParticles = (uint16_t)clamp<int>(num, 100, 65535);
+	int NumParticles = clamp<int>(num, 100, 65535);
 
-	P_DeinitParticles();
-	Particles = new particle_t[NumParticles];
+	Particles.Resize(NumParticles);
 	P_ClearParticles ();
-	atterm (P_DeinitParticles);
-}
-
-void P_DeinitParticles()
-{
-	if (Particles != NULL)
-	{
-		delete[] Particles;
-		Particles = NULL;
-	}
 }
 
 void P_ClearParticles ()
 {
-	int i;
-
-	memset (Particles, 0, NumParticles * sizeof(particle_t));
+	int i = 0;
+	memset (Particles.Data(), 0, Particles.Size() * sizeof(particle_t));
 	ActiveParticles = NO_PARTICLE;
 	InactiveParticles = 0;
-	for (i = 0; i < NumParticles-1; i++)
-		Particles[i].tnext = i + 1;
-	Particles[i].tnext = NO_PARTICLE;
+	for (auto &p : Particles)
+		p.tnext = ++i;
+	Particles.Last().tnext = NO_PARTICLE;
 }
 
 // Group particles by subsectors. Because particles are always
@@ -255,7 +240,7 @@ void P_ThinkParticles ()
 	prev = NULL;
 	while (i != NO_PARTICLE)
 	{
-		particle = Particles + i;
+		particle = &Particles[i];
 		i = particle->tnext;
 		if (!particle->notimefreeze && ((bglobal.freeze) || (level.flags2 & LEVEL2_FROZEN)))
 		{
@@ -274,7 +259,7 @@ void P_ThinkParticles ()
 			else
 				ActiveParticles = i;
 			particle->tnext = InactiveParticles;
-			InactiveParticles = (int)(particle - Particles);
+			InactiveParticles = (int)(particle - Particles.Data());
 			continue;
 		}
 

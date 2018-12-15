@@ -1379,7 +1379,8 @@ public:
 				width = font->GetCharWidth((unsigned char) *str);
 			else
 				width = font->GetCharWidth((unsigned char) script->spacingCharacter);
-			FTexture* c = font->GetChar((unsigned char) *str, &width);
+			bool redirected = false;
+			FTexture* c = font->GetChar((unsigned char) *str, fontcolor, &width);
 			if(c == NULL) //missing character.
 			{
 				str++;

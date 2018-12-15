@@ -195,7 +195,7 @@ extern int PrintColors[];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-FFont *FFont::FirstFont = NULL;
+FFont *FFont::FirstFont = nullptr;
 int NumTextColors;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -266,7 +266,7 @@ static int stripaccent(int code)
 FFont *V_GetFont(const char *name)
 {
 	FFont *font = FFont::FindFont (name);
-	if (font == NULL)
+	if (font == nullptr)
 	{
 		int lump = -1;
 
@@ -285,7 +285,7 @@ FFont *V_GetFont(const char *name)
 				font = new FSingleLumpFont (name, lump);
 			}
 		}
-		if (font == NULL)
+		if (font == nullptr)
 		{
 			FTextureID picnum = TexMan.CheckForTexture (name, ETextureType::Any);
 			if (picnum.isValid())
@@ -310,16 +310,14 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	int i;
 	FTextureID lump;
 	char buffer[12];
-	TArray<FTexture*> charLumps;
+	TArray<FTexture*> charLumps(count, true);
 	int maxyoffs;
 	bool doomtemplate = gameinfo.gametype & GAME_DoomChex ? strncmp (nametemplate, "STCFN", 5) == 0 : false;
 	bool stcfn121 = false;
 
 	noTranslate = notranslate;
 	Lump = fdlump;
-	Chars = new CharData[count];
-	charLumps.Resize(count);
-	PatchRemap = new uint8_t[256];
+	Chars.Resize(count);
 	FirstChar = first;
 	LastChar = first + count - 1;
 	FontHeight = 0;
@@ -329,13 +327,15 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	FirstFont = this;
 	Cursor = '_';
 	ActiveColors = 0;
+	uint8_t pp = 0;
+	for (auto &p : PatchRemap) p = pp++;
 	translateUntranslated = false;
 
 	maxyoffs = 0;
 
 	for (i = 0; i < count; i++)
 	{
-		charLumps[i] = NULL;
+		charLumps[i] = nullptr;
 		mysnprintf (buffer, countof(buffer), nametemplate, i + start);
 
 		lump = TexMan.CheckForTexture(buffer, ETextureType::MiscPatch);
@@ -358,7 +358,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 		if (lump.isValid())
 		{
 			FTexture *pic = TexMan.GetTexture(lump);
-			if (pic != NULL)
+			if (pic != nullptr)
 			{
 				// set the lump here only if it represents a valid texture
 				if (i != 124-start || !stcfn121)
@@ -381,17 +381,20 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 
 		if (charLumps[i] != nullptr)
 		{
+			Chars[i].OriginalPic = charLumps[i];
+
 			if (!noTranslate)
 			{
-				Chars[i].Pic = new FImageTexture(new FFontChar1 (charLumps[i]->GetImage()));
-				TexMan.AddTexture(Chars[i].Pic);
+				Chars[i].TranslatedPic = new FImageTexture(new FFontChar1 (charLumps[i]->GetImage()), "");
+				TexMan.AddTexture(Chars[i].TranslatedPic);
 			}
-			else Chars[i].Pic = charLumps[i];
-			Chars[i].XMove = Chars[i].Pic->GetDisplayWidth();
+			else Chars[i].TranslatedPic = charLumps[i];
+
+			Chars[i].XMove = Chars[i].OriginalPic->GetDisplayWidth();
 		}
 		else
 		{
-			Chars[i].Pic = NULL;
+			Chars[i].TranslatedPic = Chars[i].OriginalPic = nullptr;
 			Chars[i].XMove = INT_MIN;
 		}
 	}
@@ -400,7 +403,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	{
 		SpaceWidth = spacewidth;
 	}
-	else if ('N'-first >= 0 && 'N'-first < count && Chars['N' - first].Pic != NULL)
+	else if ('N'-first >= 0 && 'N'-first < count && Chars['N' - first].OriginalPic != nullptr)
 	{
 		SpaceWidth = (Chars['N' - first].XMove + 1) / 2;
 	}
@@ -422,29 +425,16 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 
 FFont::~FFont ()
 {
-	if (Chars)
-	{
-		int count = LastChar - FirstChar + 1;
-
-		delete[] Chars;
-		Chars = NULL;
-	}
-	if (PatchRemap)
-	{
-		delete[] PatchRemap;
-		PatchRemap = NULL;
-	}
-
 	FFont **prev = &FirstFont;
 	FFont *font = *prev;
 
-	while (font != NULL && font != this)
+	while (font != nullptr && font != this)
 	{
 		prev = &font->Next;
 		font = *prev;
 	}
 
-	if (font != NULL)
+	if (font != nullptr)
 	{
 		*prev = font->Next;
 	}
@@ -537,7 +527,7 @@ static int compare (const void *arg1, const void *arg2)
 //
 //==========================================================================
 
-int FFont::SimpleTranslation (uint8_t *colorsused, uint8_t *translation, uint8_t *reverse, double **luminosity)
+int FFont::SimpleTranslation (uint8_t *colorsused, uint8_t *translation, uint8_t *reverse, TArray<double> &Luminosity)
 {
 	double min, max, diver;
 	int i, j;
@@ -555,26 +545,26 @@ int FFont::SimpleTranslation (uint8_t *colorsused, uint8_t *translation, uint8_t
 
 	qsort (reverse+1, j-1, 1, compare);
 
-	*luminosity = new double[j];
-	(*luminosity)[0] = 0.0; // [BL] Prevent uninitalized memory
+	Luminosity.Resize(j);
+	Luminosity[0] = 0.0; // [BL] Prevent uninitalized memory
 	max = 0.0;
 	min = 100000000.0;
 	for (i = 1; i < j; i++)
 	{
 		translation[reverse[i]] = i;
 
-		(*luminosity)[i] = RPART(GPalette.BaseColors[reverse[i]]) * 0.299 +
+		Luminosity[i] = RPART(GPalette.BaseColors[reverse[i]]) * 0.299 +
 						   GPART(GPalette.BaseColors[reverse[i]]) * 0.587 +
 						   BPART(GPalette.BaseColors[reverse[i]]) * 0.114;
-		if ((*luminosity)[i] > max)
-			max = (*luminosity)[i];
-		if ((*luminosity)[i] < min)
-			min = (*luminosity)[i];
+		if (Luminosity[i] > max)
+			max = Luminosity[i];
+		if (Luminosity[i] < min)
+			min = Luminosity[i];
 	}
 	diver = 1.0 / (max - min);
 	for (i = 1; i < j; i++)
 	{
-		(*luminosity)[i] = ((*luminosity)[i] - min) * diver;
+		Luminosity[i] = (Luminosity[i] - min) * diver;
 	}
 
 	return j;
@@ -608,10 +598,10 @@ void FFont::BuildTranslations (const double *luminosity, const uint8_t *identity
 	{
 		if (i == CR_UNTRANSLATED)
 		{
-			if (identity != NULL)
+			if (identity != nullptr)
 			{
 				memcpy (remap.Remap, identity, ActiveColors);
-				if (palette != NULL)
+				if (palette != nullptr)
 				{
 					memcpy (remap.Palette, palette, ActiveColors*sizeof(PalEntry));
 				}
@@ -692,7 +682,7 @@ FRemapTable *FFont::GetColorTranslation (EColorRange range, PalEntry *color) con
 		if (color != nullptr) *color = retcolor;
 	}
 	if (ActiveColors == 0)
-		return NULL;
+		return nullptr;
 	else if (range >= NumTextColors)
 		range = CR_UNTRANSLATED;
 	//if (range == CR_UNTRANSLATED && !translateUntranslated) return nullptr;
@@ -716,7 +706,7 @@ int FFont::GetCharCode(int code, bool needpic) const
 		// regular chars turn negative when the 8th bit is set.
 		code &= 255;
 	}
-	if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].Pic != NULL))
+	if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].OriginalPic != nullptr))
 	{
 		return code;
 	}
@@ -724,7 +714,7 @@ int FFont::GetCharCode(int code, bool needpic) const
 	if (myislower(code))
 	{
 		code -= 32;
-		if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].Pic != NULL))
+		if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].OriginalPic != nullptr))
 		{
 			return code;
 		}
@@ -734,7 +724,7 @@ int FFont::GetCharCode(int code, bool needpic) const
 	if (newcode != code)
 	{
 		code = newcode;
-		if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].Pic != NULL))
+		if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].OriginalPic != nullptr))
 		{
 			return code;
 		}
@@ -748,7 +738,7 @@ int FFont::GetCharCode(int code, bool needpic) const
 //
 //==========================================================================
 
-FTexture *FFont::GetChar (int code, int *const width) const
+FTexture *FFont::GetChar (int code, int translation, int *const width, bool *redirected) const
 {
 	code = GetCharCode(code, false);
 	int xmove = SpaceWidth;
@@ -757,7 +747,7 @@ FTexture *FFont::GetChar (int code, int *const width) const
 	{
 		code -= FirstChar;
 		xmove = Chars[code].XMove;
-		if (Chars[code].Pic == NULL)
+		if (Chars[code].OriginalPic == nullptr)
 		{
 			code = GetCharCode(code + FirstChar, true);
 			if (code >= 0)
@@ -767,11 +757,21 @@ FTexture *FFont::GetChar (int code, int *const width) const
 			}
 		}
 	}
-	if (width != NULL)
+	if (width != nullptr)
 	{
 		*width = xmove;
 	}
-	return (code < 0) ? NULL : Chars[code].Pic;
+	if (code < 0) return nullptr;
+
+
+	if (translation == CR_UNTRANSLATED)
+	{
+		if (redirected) 
+			*redirected = Chars[code].OriginalPic != Chars[code].TranslatedPic;
+		return Chars[code].OriginalPic;
+	}
+	if (redirected) *redirected = false;
+	return Chars[code].TranslatedPic;
 }
 
 //==========================================================================
@@ -795,8 +795,8 @@ int FFont::GetCharWidth (int code) const
 double GetBottomAlignOffset(FFont *font, int c)
 {
 	int w;
-	FTexture *tex_zero = font->GetChar('0', &w);
-	FTexture *texc = font->GetChar(c, &w);
+	FTexture *tex_zero = font->GetChar('0', CR_UNDEFINED, &w);
+	FTexture *texc = font->GetChar(c, CR_UNDEFINED, &w);
 	double offset = 0;
 	if (texc) offset += texc->GetDisplayTopOffsetDouble();
 	if (tex_zero) offset += -tex_zero->GetDisplayTopOffsetDouble() + tex_zero->GetDisplayHeightDouble();
@@ -858,17 +858,17 @@ void FFont::LoadTranslations()
 {
 	unsigned int count = LastChar - FirstChar + 1;
 	uint8_t usedcolors[256], identity[256];
-	double *luminosity;
+	TArray<double> Luminosity;
 
 	memset (usedcolors, 0, 256);
 	for (unsigned int i = 0; i < count; i++)
 	{
-		if (Chars[i].Pic)
+		if (Chars[i].TranslatedPic)
 		{
-			FFontChar1 *pic = static_cast<FFontChar1 *>(Chars[i].Pic->GetImage());
+			FFontChar1 *pic = static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetImage());
 			if (pic)
 			{
-				pic->SetSourceRemap(NULL); // Force the FFontChar1 to return the same pixels as the base texture
+				pic->SetSourceRemap(nullptr); // Force the FFontChar1 to return the same pixels as the base texture
 				RecordTextureColors(pic, usedcolors);
 			}
 		}
@@ -876,17 +876,15 @@ void FFont::LoadTranslations()
 
 	// Fixme: This needs to build a translation based on the source palette, not some intermediate 'ordered' table.
 
-	ActiveColors = SimpleTranslation (usedcolors, PatchRemap, identity, &luminosity);
+	ActiveColors = SimpleTranslation (usedcolors, PatchRemap, identity, Luminosity);
 
 	for (unsigned int i = 0; i < count; i++)
 	{
-		if(Chars[i].Pic)
-			static_cast<FFontChar1 *>(Chars[i].Pic->GetImage())->SetSourceRemap(PatchRemap);
+		if(Chars[i].TranslatedPic)
+			static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetImage())->SetSourceRemap(PatchRemap);
 	}
 
-	BuildTranslations (luminosity, identity, &TranslationParms[0][0], ActiveColors, NULL);
-
-	delete[] luminosity;
+	BuildTranslations (Luminosity.Data(), identity, &TranslationParms[0][0], ActiveColors, nullptr);
 }
 
 //==========================================================================
@@ -898,8 +896,6 @@ void FFont::LoadTranslations()
 FFont::FFont (int lump)
 {
 	Lump = lump;
-	Chars = NULL;
-	PatchRemap = NULL;
 	FontName = NAME_None;
 	Cursor = '_';
 	noTranslate = false;
@@ -964,8 +960,8 @@ void FSingleLumpFont::CreateFontFromPic (FTextureID picnum)
 	GlobalKerning = 0;
 
 	FirstChar = LastChar = 'A';
-	Chars = new CharData[1];
-	Chars->Pic = pic;
+	Chars.Resize(1);
+	Chars[0].TranslatedPic = Chars[0].OriginalPic = pic;
 
 	// Only one color range. Don't bother with the others.
 	ActiveColors = 0;
@@ -1011,11 +1007,11 @@ void FSingleLumpFont::LoadTranslations()
 
 	for(unsigned int i = 0;i < count;++i)
 	{
-		if(Chars[i].Pic)
-			static_cast<FFontChar2*>(Chars[i].Pic->GetImage())->SetSourceRemap(PatchRemap);
+		if(Chars[i].TranslatedPic)
+			static_cast<FFontChar2*>(Chars[i].TranslatedPic->GetImage())->SetSourceRemap(PatchRemap);
 	}
 
-	BuildTranslations (luminosity, useidentity ? identity : NULL, ranges, ActiveColors, usepalette ? local_palette : NULL);
+	BuildTranslations (luminosity, useidentity ? identity : nullptr, ranges, ActiveColors, usepalette ? local_palette : nullptr);
 }
 
 //==========================================================================
@@ -1030,7 +1026,7 @@ void FSingleLumpFont::LoadFON1 (int lump, const uint8_t *data)
 {
 	int w, h;
 
-	Chars = new CharData[256];
+	Chars.Resize(256);
 
 	w = data[4] + data[5]*256;
 	h = data[6] + data[7]*256;
@@ -1042,10 +1038,9 @@ void FSingleLumpFont::LoadFON1 (int lump, const uint8_t *data)
 	LastChar = 255;
 	GlobalKerning = 0;
 	translateUntranslated = true;
-	PatchRemap = new uint8_t[256];
 
 	for(unsigned int i = 0;i < 256;++i)
-		Chars[i].Pic = NULL;
+		Chars[i].TranslatedPic = Chars[i].OriginalPic = nullptr;
 
 	LoadTranslations();
 }
@@ -1062,7 +1057,6 @@ void FSingleLumpFont::LoadFON1 (int lump, const uint8_t *data)
 void FSingleLumpFont::LoadFON2 (int lump, const uint8_t *data)
 {
 	int count, i, totalwidth;
-	int *widths2;
 	uint16_t *widths;
 	const uint8_t *palette;
 	const uint8_t *data_p;
@@ -1072,12 +1066,11 @@ void FSingleLumpFont::LoadFON2 (int lump, const uint8_t *data)
 	FirstChar = data[6];
 	LastChar = data[7];
 	ActiveColors = data[10]+1;
-	PatchRemap = NULL;
 	RescalePalette = data[9] == 0;
 	
 	count = LastChar - FirstChar + 1;
-	Chars = new CharData[count];
-	widths2 = new int[count];
+	Chars.Resize(count);
+	TArray<int> widths2(count, true);
 	if (data[11] & 1)
 	{ // Font specifies a kerning value.
 		GlobalKerning = LittleShort(*(int16_t *)&data[12]);
@@ -1133,12 +1126,12 @@ void FSingleLumpFont::LoadFON2 (int lump, const uint8_t *data)
 		Chars[i].XMove = widths2[i];
 		if (destSize <= 0)
 		{
-			Chars[i].Pic = NULL;
+			Chars[i].TranslatedPic = Chars[i].OriginalPic = nullptr;
 		}
 		else
 		{
-			Chars[i].Pic = new FImageTexture(new FFontChar2 (lump, int(data_p - data), widths2[i], FontHeight));
-			TexMan.AddTexture(Chars[i].Pic);
+			Chars[i].TranslatedPic = Chars[i].OriginalPic = new FImageTexture(new FFontChar2 (lump, int(data_p - data), widths2[i], FontHeight));
+			TexMan.AddTexture(Chars[i].OriginalPic);
 			do
 			{
 				int8_t code = *data_p++;
@@ -1162,7 +1155,6 @@ void FSingleLumpFont::LoadFON2 (int lump, const uint8_t *data)
 	}
 
 	LoadTranslations();
-	delete[] widths2;
 }
 
 //==========================================================================
@@ -1221,10 +1213,10 @@ void FSingleLumpFont::LoadBMF(int lump, const uint8_t *data)
 		I_FatalError("BMF font defines no characters");
 	}
 	count = LastChar - FirstChar + 1;
-	Chars = new CharData[count];
+	Chars.Resize(count);
 	for (i = 0; i < count; ++i)
 	{
-		Chars[i].Pic = NULL;
+		Chars[i].TranslatedPic = Chars[i].OriginalPic = nullptr;
 		Chars[i].XMove = INT_MIN;
 	}
 
@@ -1247,7 +1239,6 @@ void FSingleLumpFont::LoadBMF(int lump, const uint8_t *data)
 	qsort(sort_palette + 1, ActiveColors - 1, sizeof(PalEntry), BMFCompare);
 
 	// Create the PatchRemap table from the sorted "alpha" values.
-	PatchRemap = new uint8_t[ActiveColors];
 	PatchRemap[0] = 0;
 	for (i = 1; i < ActiveColors; ++i)
 	{
@@ -1280,7 +1271,7 @@ void FSingleLumpFont::LoadBMF(int lump, const uint8_t *data)
 			-(int8_t)chardata[chari+3],	// x offset
 			-(int8_t)chardata[chari+4]	// y offset
 		));
-		Chars[chardata[chari] - FirstChar].Pic = tex;
+		Chars[chardata[chari] - FirstChar].TranslatedPic = Chars[chardata[chari] - FirstChar].OriginalPic = tex;
 		TexMan.AddTexture(tex);
 	}
 
@@ -1344,12 +1335,13 @@ void FSingleLumpFont::CheckFON1Chars (double *luminosity)
 	{
 		int destSize = SpaceWidth * FontHeight;
 
-		if(!Chars[i].Pic)
+		if(!Chars[i].OriginalPic)
 		{
-			Chars[i].Pic = new FImageTexture(new FFontChar2 (Lump, int(data_p - data), SpaceWidth, FontHeight));
+			Chars[i].OriginalPic = new FImageTexture(new FFontChar2 (Lump, int(data_p - data), SpaceWidth, FontHeight));
 			Chars[i].XMove = SpaceWidth;
-			TexMan.AddTexture(Chars[i].Pic);
+			TexMan.AddTexture(Chars[i].OriginalPic);
 		}
+		Chars[i].TranslatedPic = Chars[i].OriginalPic;
 
 		// Advance to next char's data and count the used colors.
 		do
@@ -1478,7 +1470,7 @@ FSinglePicFont::FSinglePicFont(const char *picname) :
 //
 // FSinglePicFont :: GetChar
 //
-// Returns the texture if code is 'a' or 'A', otherwise NULL.
+// Returns the texture if code is 'a' or 'A', otherwise nullptr.
 //
 //==========================================================================
 
@@ -1491,7 +1483,7 @@ FTexture *FSinglePicFont::GetChar (int code, int *const width) const
 	}
 	else
 	{
-		return NULL;
+		return nullptr;
 	}
 }
 
@@ -1515,10 +1507,11 @@ int FSinglePicFont::GetCharWidth (int code) const
 //
 //==========================================================================
 
-FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **lumplist, const bool *notranslate, int lump, bool donttranslate) : FFont(lump)
+FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **lumplist, const bool *notranslate, int lump, bool donttranslate) 
+	: FFont(lump)
 {
 	int i;
-	FTexture **charlumps;
+	TArray<FTexture *> charlumps(count, true);
 	int maxyoffs;
 	FTexture *pic;
 
@@ -1526,9 +1519,7 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 
 	noTranslate = donttranslate;
 	FontName = name;
-	Chars = new CharData[count];
-	charlumps = new FTexture*[count];
-	PatchRemap = new uint8_t[256];
+	Chars.Resize(count);
 	FirstChar = first;
 	LastChar = first + count - 1;
 	FontHeight = 0;
@@ -1541,7 +1532,7 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 	for (i = 0; i < count; i++)
 	{
 		pic = charlumps[i] = lumplist[i];
-		if (pic != NULL)
+		if (pic != nullptr)
 		{
 			int height = pic->GetDisplayHeight();
 			int yoffs = pic->GetDisplayTopOffset();
@@ -1557,25 +1548,26 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 			}
 		}
 
-		if (charlumps[i] != NULL)
+		if (charlumps[i] != nullptr)
 		{
+			Chars[i].OriginalPic = charlumps[i];
 			if (!noTranslate)
 			{
-				Chars[i].Pic = new FImageTexture(new FFontChar1 (charlumps[i]->GetImage()));
-				TexMan.AddTexture(Chars[i].Pic);
+				Chars[i].TranslatedPic = new FImageTexture(new FFontChar1 (charlumps[i]->GetImage()), "");
+				TexMan.AddTexture(Chars[i].TranslatedPic);
 			}
-			else Chars[i].Pic = charlumps[i];
-			Chars[i].XMove = Chars[i].Pic->GetDisplayWidth();
+			else Chars[i].TranslatedPic = charlumps[i];
+			Chars[i].XMove = Chars[i].OriginalPic->GetDisplayWidth();
 		}
 		else
 		{
-			Chars[i].Pic = NULL;
+			Chars[i].TranslatedPic = Chars[i].OriginalPic = nullptr;
 			Chars[i].XMove = INT_MIN;
 		}
 	}
 
 	// Special fonts normally don't have all characters so be careful here!
-	if ('N'-first >= 0 && 'N'-first < count && Chars['N' - first].Pic != NULL)
+	if ('N'-first >= 0 && 'N'-first < count && Chars['N' - first].OriginalPic != nullptr)
 	{
 		SpaceWidth = (Chars['N' - first].XMove + 1) / 2;
 	}
@@ -1594,8 +1586,6 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 	{
 		LoadTranslations();
 	}
-
-	delete[] charlumps;
 }
 
 //==========================================================================
@@ -1608,19 +1598,19 @@ void FSpecialFont::LoadTranslations()
 {
 	int count = LastChar - FirstChar + 1;
 	uint8_t usedcolors[256], identity[256];
-	double *luminosity;
+	TArray<double> Luminosity;
 	int TotalColors;
 	int i, j;
 
 	memset (usedcolors, 0, 256);
 	for (i = 0; i < count; i++)
 	{
-		if (Chars[i].Pic)
+		if (Chars[i].TranslatedPic)
 		{
-			FFontChar1 *pic = static_cast<FFontChar1 *>(Chars[i].Pic->GetImage());
+			FFontChar1 *pic = static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetImage());
 			if (pic)
 			{
-				pic->SetSourceRemap(NULL); // Force the FFontChar1 to return the same pixels as the base texture
+				pic->SetSourceRemap(nullptr); // Force the FFontChar1 to return the same pixels as the base texture
 				RecordTextureColors(pic, usedcolors);
 			}
 		}
@@ -1631,7 +1621,7 @@ void FSpecialFont::LoadTranslations()
 		if (notranslate[i])
 			usedcolors[i] = false;
 
-	TotalColors = ActiveColors = SimpleTranslation (usedcolors, PatchRemap, identity, &luminosity);
+	TotalColors = ActiveColors = SimpleTranslation (usedcolors, PatchRemap, identity, Luminosity);
 
 	// Map all untranslated colors into the table of used colors
 	for (i = 0; i < 256; i++) 
@@ -1646,11 +1636,11 @@ void FSpecialFont::LoadTranslations()
 
 	for (i = 0; i < count; i++)
 	{
-		if(Chars[i].Pic)
-			static_cast<FFontChar1 *>(Chars[i].Pic->GetImage())->SetSourceRemap(PatchRemap);
+		if(Chars[i].TranslatedPic)
+			static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetImage())->SetSourceRemap(PatchRemap);
 	}
 
-	BuildTranslations (luminosity, identity, &TranslationParms[0][0], TotalColors, NULL);
+	BuildTranslations (Luminosity.Data(), identity, &TranslationParms[0][0], TotalColors, nullptr);
 
 	// add the untranslated colors to the Ranges tables
 	if (ActiveColors < TotalColors)
@@ -1667,8 +1657,6 @@ void FSpecialFont::LoadTranslations()
 		}
 	}
 	ActiveColors = TotalColors;
-
-	delete[] luminosity;
 }
 
 //==========================================================================
@@ -1838,7 +1826,7 @@ void V_InitCustomFonts()
 			{
 				for (i = 0; i < 256; i++)
 				{
-					if (lumplist[i] != NULL)
+					if (lumplist[i] != nullptr)
 					{
 						first = i;
 						break;
@@ -1846,7 +1834,7 @@ void V_InitCustomFonts()
 				}
 				for (i = 255; i >= 0; i--)
 				{
-					if (lumplist[i] != NULL)
+					if (lumplist[i] != nullptr)
 					{
 						count = i - first + 1;
 						break;
@@ -1950,19 +1938,19 @@ void V_InitFontColors ()
 				else if (sc.Compare ("Flat:"))
 				{
 					sc.MustGetString();
-					logcolor = V_GetColor (NULL, sc);
+					logcolor = V_GetColor (nullptr, sc);
 				}
 				else
 				{
 					// Get first color
-					c = V_GetColor (NULL, sc);
+					c = V_GetColor (nullptr, sc);
 					tparm.Start[0] = RPART(c);
 					tparm.Start[1] = GPART(c);
 					tparm.Start[2] = BPART(c);
 
 					// Get second color
 					sc.MustGetString();
-					c = V_GetColor (NULL, sc);
+					c = V_GetColor (nullptr, sc);
 					tparm.End[0] = RPART(c);
 					tparm.End[1] = GPART(c);
 					tparm.End[2] = BPART(c);
@@ -2290,7 +2278,7 @@ void V_InitFonts()
 		{
 			IntermissionFont = FFont::FindFont("IntermissionFont_Doom");
 		}
-		if (IntermissionFont == NULL)
+		if (IntermissionFont == nullptr)
 		{
 			IntermissionFont = BigFont;
 		}
@@ -2299,11 +2287,11 @@ void V_InitFonts()
 
 void V_ClearFonts()
 {
-	while (FFont::FirstFont != NULL)
+	while (FFont::FirstFont != nullptr)
 	{
 		delete FFont::FirstFont;
 	}
-	FFont::FirstFont = NULL;
-	SmallFont = SmallFont2 = BigFont = ConFont = IntermissionFont = NULL;
+	FFont::FirstFont = nullptr;
+	SmallFont = SmallFont2 = BigFont = ConFont = IntermissionFont = nullptr;
 }
 

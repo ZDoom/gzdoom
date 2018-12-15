@@ -146,8 +146,24 @@ const uint32_t *FSoftwareTexture::GetPixelsBgra()
 {
 	if (PixelsBgra.Size() == 0 || CheckModified(2))
 	{
-		FBitmap bitmap = mTexture->GetBgraBitmap(nullptr);
-		GenerateBgraFromBitmap(bitmap);
+		if (mPhysicalScale == 1)
+		{
+			FBitmap bitmap = mTexture->GetBgraBitmap(nullptr);
+			GenerateBgraFromBitmap(bitmap);
+		}
+		else
+		{
+			auto tempbuffer = mTexture->CreateTexBuffer(0, mBufferFlags);
+			PixelsBgra.Resize(GetWidth()*GetHeight());
+			PalEntry *pe = (PalEntry*)tempbuffer.mBuffer;
+			for (int y = 0; y < GetHeight(); y++)
+			{
+				for (int x = 0; x < GetWidth(); x++)
+				{
+					PixelsBgra[y + x * GetHeight()] = pe[x + y * GetWidth()];
+				}
+			}
+		}
 	}
 	return PixelsBgra.Data();
 }

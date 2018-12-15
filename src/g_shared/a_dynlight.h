@@ -85,7 +85,7 @@ public:
 	}
 
 protected:
-	FName m_Name;
+	FName m_Name = NAME_None;
 	int m_Args[5] = { 0,0,0,0,0 };
 	double m_Param = 0;
 	DVector3 m_Pos = { 0,0,0 };

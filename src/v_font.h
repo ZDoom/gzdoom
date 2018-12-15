@@ -82,7 +82,7 @@ public:
 	FFont (const char *fontname, const char *nametemplate, int first, int count, int base, int fdlump, int spacewidth=-1, bool notranslate = false);
 	virtual ~FFont ();
 
-	virtual FTexture *GetChar (int code, int *const width) const;
+	FTexture *GetChar (int code, int *const width) const;
 	virtual int GetCharWidth (int code) const;
 	FRemapTable *GetColorTranslation (EColorRange range, PalEntry *color = nullptr) const;
 	int GetLump() const { return Lump; }
@@ -112,7 +112,7 @@ protected:
 	void FixXMoves();
 
 	static int SimpleTranslation (uint8_t *colorsused, uint8_t *translation,
-		uint8_t *identity, double **luminosity);
+		uint8_t *identity, TArray<double> &Luminosity);
 
 	int FirstChar, LastChar;
 	int SpaceWidth;
@@ -125,10 +125,11 @@ protected:
 	{
 		FTexture *Pic;
 		int XMove;
-	} *Chars;
+	};
+	TArray<CharData> Chars;
 	int ActiveColors;
 	TArray<FRemapTable> Ranges;
-	uint8_t *PatchRemap;
+	uint8_t PatchRemap[256];
 
 	int Lump;
 	FName FontName = NAME_None;

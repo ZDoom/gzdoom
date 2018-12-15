@@ -149,7 +149,7 @@ public:
 	FSinglePicFont(const char *picname);
 
 	// FFont interface
-	FTexture *GetChar (int code, int *const width) const;
+	FTexture *GetChar(int code, int translation, int *const width, bool *redirected = nullptr) const override;
 	int GetCharWidth (int code) const;
 
 protected:
@@ -1465,9 +1465,10 @@ FSinglePicFont::FSinglePicFont(const char *picname) :
 //
 //==========================================================================
 
-FTexture *FSinglePicFont::GetChar (int code, int *const width) const
+FTexture *FSinglePicFont::GetChar (int code, int translation, int *const width, bool *redirected) const
 {
 	*width = SpaceWidth;
+	if (redirected) *redirected = false;
 	if (code == 'a' || code == 'A')
 	{
 		return TexMan.GetPalettedTexture(PicNum, true);

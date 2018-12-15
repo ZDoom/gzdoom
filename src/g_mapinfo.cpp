@@ -284,7 +284,7 @@ void level_info_t::Reset()
 	PrecacheSounds.Clear();
 
 	brightfog = -1;
-	lightmode = -1;
+	lightmode = ELightMode::NotSet;
 	notexturefill = -1;
 	lightadditivesurfaces = -1;
 	skyrotatevector = FVector3(0, 0, 1);
@@ -1381,9 +1381,9 @@ DEFINE_MAP_OPTION(lightmode, false)
 	parse.ParseAssign();
 	parse.sc.MustGetNumber();
 
-	if ((parse.sc.Number >= 0 && parse.sc.Number <= 4) || parse.sc.Number == 8)
+	if ((parse.sc.Number >= 0 && parse.sc.Number <= 4) || parse.sc.Number == 8 || parse.sc.Number == 16)
 	{
-		info->lightmode = uint8_t(parse.sc.Number);
+		info->lightmode = ELightMode(parse.sc.Number);
 	}
 	else
 	{

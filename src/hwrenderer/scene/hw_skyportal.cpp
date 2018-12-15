@@ -165,7 +165,7 @@ void HWSkyPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 
 	// We have no use for Doom lighting special handling here, so disable it for this function.
 	int oldlightmode = ::level.lightmode;
-	if (::level.lightmode == 8)
+	if (::level.lightmode >= 8)
 	{
 		::level.lightmode = 2;
 		state.SetSoftLightLevel(-1);

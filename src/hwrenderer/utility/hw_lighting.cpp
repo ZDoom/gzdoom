@@ -88,7 +88,7 @@ int hw_CalcLightLevel(int lightlevel, int rellight, bool weapon, int blendfactor
 
 	if (lightlevel == 0) return 0;
 
-	bool darklightmode = (level.lightmode & 2) || (level.lightmode == 8 && blendfactor > 0);
+	bool darklightmode = (level.lightmode & 2) || (level.lightmode >= 8 && blendfactor > 0);
 
 	if (darklightmode && lightlevel < 192 && !weapon) 
 	{
@@ -130,7 +130,7 @@ PalEntry hw_CalcLightColor(int light, PalEntry pe, int blendfactor)
 
 	if (blendfactor == 0)
 	{
-		if (level.lightmode == 8)
+		if (level.lightmode >= 8)
 		{
 			return pe;
 		}
@@ -175,7 +175,7 @@ float hw_GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity, 
 	float density;
 
 	int lightmode = level.lightmode;
-	if (lightmode == 8 && blendfactor > 0) lightmode = 2;	// The blendfactor feature does not work with software-style lighting.
+	if (lightmode >= 8 && blendfactor > 0) lightmode = 2;	// The blendfactor feature does not work with software-style lighting.
 
 	if (lightmode & 4)
 	{
@@ -190,7 +190,7 @@ float hw_GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity, 
 	else if ((fogcolor.d & 0xffffff) == 0)
 	{
 		// case 2: black fog
-		if ((lightmode != 8 || blendfactor > 0) && !(level.flags3 & LEVEL3_NOLIGHTFADE))
+		if ((lightmode < 8 || blendfactor > 0) && !(level.flags3 & LEVEL3_NOLIGHTFADE))
 		{
 			density = distfogtable[level.lightmode != 0][hw_ClampLight(lightlevel)];
 		}

@@ -223,8 +223,7 @@ DEFINE_FIELD_X(DehInfo, DehInfo, BlueAC)
 
 TArray<PClassActor *> TouchedActors;
 
-char *UnchangedSpriteNames;
-int NumUnchangedSprites;
+TArray<uint32_t> UnchangedSpriteNames;
 bool changedStates;
 
 // Sprite<->Class map for DehackedPickup::DetermineType
@@ -395,17 +394,10 @@ static bool HandleKey (const struct Key *keys, void *structure, const char *key,
 
 static int FindSprite (const char *sprname)
 {
-	int i;
-	uint32_t nameint = *((uint32_t *)sprname);
-
-	for (i = 0; i < NumUnchangedSprites; ++i)
-	{
-		if (*((uint32_t *)&UnchangedSpriteNames[i*4]) == nameint)
-		{
-			return i;
-		}
-	}
-	return -1;
+	uint32_t nameint;
+	memcpy(&nameint, sprname, 4);
+	auto f = UnchangedSpriteNames.Find(nameint);
+	return f == UnchangedSpriteNames.Size() ? -1 : f;
 }
 
 static FState *FindState (int statenum)
@@ -2665,31 +2657,16 @@ static void UnloadDehSupp ()
 		// that was altered by the first. So we need to keep the
 		// StateMap around until all patches have been applied.
 		DehUseCount = 0;
-		Actions.Clear();
-		Actions.ShrinkToFit();
-		OrgHeights.Clear();
-		OrgHeights.ShrinkToFit();
-		CodePConv.Clear();
-		CodePConv.ShrinkToFit();
-		OrgSprNames.Clear();
-		OrgSprNames.ShrinkToFit();
-		SoundMap.Clear();
-		SoundMap.ShrinkToFit();
-		InfoNames.Clear();
-		InfoNames.ShrinkToFit();
-		BitNames.Clear();
-		BitNames.ShrinkToFit();
-		StyleNames.Clear();
-		StyleNames.ShrinkToFit();
-		AmmoNames.Clear();
-		AmmoNames.ShrinkToFit();
-
-		if (UnchangedSpriteNames != NULL)
-		{
-			delete[] UnchangedSpriteNames;
-			UnchangedSpriteNames = NULL;
-			NumUnchangedSprites = 0;
-		}
+		Actions.Reset();
+		OrgHeights.Reset();
+		CodePConv.Reset();
+		OrgSprNames.Reset();
+		SoundMap.Reset();
+		InfoNames.Reset();
+		BitNames.Reset();
+		StyleNames.Reset();
+		AmmoNames.Reset();
+		UnchangedSpriteNames.Reset();
 		if (EnglishStrings != NULL)
 		{
 			delete EnglishStrings;
@@ -2731,14 +2708,11 @@ static bool LoadDehSupp ()
 			EnglishStrings->LoadStrings (true);
 		}
 
-		if (UnchangedSpriteNames == NULL)
+
+		UnchangedSpriteNames.Resize(sprites.Size());
+		for (unsigned i = 0; i < UnchangedSpriteNames.Size(); ++i)
 		{
-			UnchangedSpriteNames = new char[sprites.Size()*4];
-			NumUnchangedSprites = sprites.Size();
-			for (i = 0; i < NumUnchangedSprites; ++i)
-			{
-				memcpy (UnchangedSpriteNames+i*4, &sprites[i].name, 4);
-			}
+			memcpy (&UnchangedSpriteNames[i], &sprites[i].name, 4);
 		}
 
 		FScanner sc;

@@ -1552,13 +1552,13 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 
 		if (charlumps[i] != nullptr)
 		{
-			Chars[i].OriginalPic = charlumps[i];
 			if (!noTranslate)
 			{
 				Chars[i].TranslatedPic = new FImageTexture(new FFontChar1 (charlumps[i]->GetImage()), "");
 				TexMan.AddTexture(Chars[i].TranslatedPic);
 			}
 			else Chars[i].TranslatedPic = charlumps[i];
+			Chars[i].OriginalPic = Chars[i].TranslatedPic;
 			Chars[i].XMove = Chars[i].OriginalPic->GetDisplayWidth();
 		}
 		else

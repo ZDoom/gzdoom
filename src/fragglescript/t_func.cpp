@@ -2453,7 +2453,7 @@ void FParser::SF_PlayerKeys(void)
 		else
 		{
 			givetake = intvalue(t_argv[2]);
-			ScriptUtil::Exec(givetake?NAME_GiveInventory : NAME_TakeInventory, players[playernum].mo, keyname.GetIndex(), 1);
+			ScriptUtil::Exec(givetake?NAME_GiveInventory : NAME_TakeInventory, ScriptUtil::Pointer, players[playernum].mo, ScriptUtil::Int, keyname.GetIndex(), ScriptUtil::Int, 1, ScriptUtil::End);
 			t_return.type = svt_int;
 			t_return.value.i = 0;
 		}
@@ -2648,7 +2648,7 @@ void FParser::SF_GiveInventory(void)
 
 		if(t_argc == 2) count=1;
 		else count=intvalue(t_argv[2]);
-		ScriptUtil::Exec(NAME_GiveInventory, ScriptUtil::Pointer, players[playernum].mo, FName(stringvalue(t_argv[1])).GetIndex(), count);
+		ScriptUtil::Exec(NAME_GiveInventory, ScriptUtil::Pointer, players[playernum].mo, ScriptUtil::Int, FName(stringvalue(t_argv[1])).GetIndex(), ScriptUtil::Int, count, ScriptUtil::End);
 		t_return.type = svt_int;
 		t_return.value.i = 0;
 	}
@@ -2671,7 +2671,7 @@ void FParser::SF_TakeInventory(void)
 
 		if(t_argc == 2) count=32767;
 		else count=intvalue(t_argv[2]);
-		ScriptUtil::Exec(NAME_TakeInventory, ScriptUtil::Pointer, players[playernum].mo, FName(stringvalue(t_argv[1])).GetIndex(), count);
+		ScriptUtil::Exec(NAME_TakeInventory, ScriptUtil::Pointer, players[playernum].mo, ScriptUtil::Int, FName(stringvalue(t_argv[1])).GetIndex(), ScriptUtil::Int, count, ScriptUtil::End);
 		t_return.type = svt_int;
 		t_return.value.i = 0;
 	}

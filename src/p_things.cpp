@@ -582,7 +582,7 @@ static void DumpClassMap(FClassMap &themap)
 	{
 		allpairs[i++] = pair;
 	}
-	qsort(allpairs.Data, i, sizeof(allpairs[0]), SpawnableSort);
+	qsort(allpairs.Data(), i, sizeof(allpairs[0]), SpawnableSort);
 	for (int j = 0; j < i; ++j)
 	{
 		pair = allpairs[j];

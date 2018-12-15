@@ -47,9 +47,9 @@
 
 struct FLevelLocals
 {
-	void Tick ();
+	void Tick();
 	void Mark();
-	void AddScroller (int secnum);
+	void AddScroller(int secnum);
 	void SetInterMusic(const char *nextmap);
 	void SetMusicVolume(float v);
 
@@ -87,7 +87,7 @@ struct FLevelLocals
 	TArray<node_t> gamenodes;
 	node_t *headgamenode;
 	TArray<uint8_t> rejectmatrix;
-	
+
 	static const int BODYQUESIZE = 32;
 	TObjPtr<AActor*> bodyque[BODYQUESIZE];
 	int bodyqueslot;
@@ -100,7 +100,7 @@ struct FLevelLocals
 	FDisplacementTable Displacements;
 	FPortalBlockmap PortalBlockmap;
 	TArray<FLinePortal*> linkedPortals;	// only the linked portals, this is used to speed up looking for them in P_CollectConnectedGroups.
-	TArray<FSectorPortalGroup *> portalGroups;	
+	TArray<FSectorPortalGroup *> portalGroups;
 	TArray<FLinePortalSpan> linePortalSpans;
 	FSectionContainer sections;
 
@@ -181,7 +181,7 @@ struct FLevelLocals
 	float		MusicVolume;
 
 	// Hardware render stuff that can either be set via CVAR or MAPINFO
-	int			lightmode;
+	ELightMode	lightmode;
 	bool		brightfog;
 	bool		lightadditivesurfaces;
 	bool		notexturefill;
@@ -192,7 +192,7 @@ struct FLevelLocals
 
 	node_t		*HeadNode() const
 	{
-		return nodes.Size() == 0? nullptr : &nodes[nodes.Size() - 1];
+		return nodes.Size() == 0 ? nullptr : &nodes[nodes.Size() - 1];
 	}
 	node_t		*HeadGamenode() const
 	{
@@ -202,8 +202,23 @@ struct FLevelLocals
 	// Returns true if level is loaded from saved game or is being revisited as a part of a hub
 	bool		IsReentering() const
 	{
-		return savegamerestore 
+		return savegamerestore
 			|| (info != nullptr && info->Snapshot.mBuffer != nullptr && info->isValid());
+	}
+
+	bool isSoftwareLighting() const
+	{
+		return lightmode >= ELightMode::ZDoomSoftware;
+	}
+
+	bool isDarkLightMode() const
+	{
+		return !!((int)lightmode & (int)ELightMode::Doom);
+	}
+
+	void SetFallbackLightMode()
+	{
+		lightmode = ELightMode::Doom;
 	}
 };
 

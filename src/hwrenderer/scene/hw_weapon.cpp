@@ -106,8 +106,8 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 
 void HWDrawInfo::DrawPlayerSprites(bool hudModelStep, FRenderState &state)
 {
-	int oldlightmode = level.lightmode;
-	if (!hudModelStep && level.lightmode >= 8) level.lightmode = 2;	// Software lighting cannot handle 2D content so revert to lightmode 2 for that.
+	auto oldlightmode = level.lightmode;
+	if (!hudModelStep && level.isSoftwareLighting()) level.SetFallbackLightMode();	// Software lighting cannot handle 2D content.
 	for (auto &hudsprite : hudsprites)
 	{
 		if ((!!hudsprite.mframe) == hudModelStep)
@@ -260,7 +260,7 @@ static WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &po
 
 		l.lightlevel = hw_CalcLightLevel(l.lightlevel, getExtraLight(), true, 0);
 
-		if (level.lightmode >= 8 || l.lightlevel < 92)
+		if (level.isSoftwareLighting() || l.lightlevel < 92)
 		{
 			// Korshun: the way based on max possible light level for sector like in software renderer.
 			double min_L = 36.0 / 31.0 - ((l.lightlevel / 255.0) * (63.0 / 31.0)); // Lightlevel in range 0-63
@@ -498,8 +498,8 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 
 	// hack alert! Rather than changing everything in the underlying lighting code let's just temporarily change
 	// light mode here to draw the weapon sprite.
-	int oldlightmode = level.lightmode;
-	if (level.lightmode >= 8) level.lightmode = 2;
+	auto oldlightmode = level.lightmode;
+	if (level.isSoftwareLighting()) level.SetFallbackLightMode();
 
 	for (DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
 	{

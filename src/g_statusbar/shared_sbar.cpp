@@ -1513,7 +1513,7 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 		}
 
 		int width;
-		FTexture* c = font->GetChar((unsigned char)ch, &width);
+		FTexture* c = font->GetChar((unsigned char)ch, fontcolor, &width);
 		if (c == NULL) //missing character.
 		{
 			continue;

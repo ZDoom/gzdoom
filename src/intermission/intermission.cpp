@@ -337,7 +337,7 @@ void DIntermissionScreenText::Drawer ()
 				continue;
 			}
 
-			pic = SmallFont->GetChar (c, &w);
+			pic = SmallFont->GetChar (c, mTextColor, &w);
 			w += kerning;
 			w *= CleanXfac;
 			if (cx + w > SCREENWIDTH)

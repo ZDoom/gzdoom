@@ -646,7 +646,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 		sector->validcount = validcount;
 		sector->MoreFlags |= SECMF_DRAWN;
 
-		if (gl_render_things && sector->touching_renderthings)
+		if (gl_render_things && (sector->touching_renderthings || sector->sectorportal_thinglist))
 		{
 			if (multithread)
 			{

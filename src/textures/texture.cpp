@@ -50,6 +50,7 @@
 #include "swrenderer/textures/r_swtexture.h"
 #include "imagehelpers.h"
 #include "image.h"
+#include "formats/multipatchtexture.h"
 
 FTexture *CreateBrightmapTexture(FImageSource*);
 
@@ -221,7 +222,20 @@ FBitmap FTexture::GetBgraBitmap(PalEntry *remap, int *ptrans)
 
 FTexture *FTexture::GetRawTexture()
 {
-	return this;
+	if (OffsetLess) return OffsetLess;
+	// Reject anything that cannot have been a single-patch multipatch texture in vanilla.
+	auto image = static_cast<FMultiPatchTexture *>(GetImage());
+	if (bMultiPatch != 1 || UseType != ETextureType::Wall || Scale.X != 1 || Scale.Y != 1 || bWorldPanning || image == nullptr || image->NumParts != 1)
+	{
+		OffsetLess = this;
+		return this;
+	}
+	// Set up a new texture that directly references the underlying patch.
+	// From here we cannot retrieve the original texture made for it, so just create a new one.
+	FImageSource *source = image->Parts[0].Image;
+	OffsetLess = new FImageTexture(source, "");
+	TexMan.AddTexture(OffsetLess);
+	return OffsetLess;
 }
 
 void FTexture::SetScaledSize(int fitwidth, int fitheight)

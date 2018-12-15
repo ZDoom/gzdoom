@@ -154,7 +154,7 @@ const uint32_t *FSoftwareTexture::GetPixelsBgra()
 		else
 		{
 			auto tempbuffer = mTexture->CreateTexBuffer(0, mBufferFlags);
-			PixelsBgra.Resize(GetWidth()*GetHeight());
+			CreatePixelsBgraWithMipmaps();
 			PalEntry *pe = (PalEntry*)tempbuffer.mBuffer;
 			for (int y = 0; y < GetHeight(); y++)
 			{
@@ -163,6 +163,7 @@ const uint32_t *FSoftwareTexture::GetPixelsBgra()
 					PixelsBgra[y + x * GetHeight()] = pe[x + y * GetWidth()];
 				}
 			}
+			GenerateBgraMipmaps();
 		}
 	}
 	return PixelsBgra.Data();

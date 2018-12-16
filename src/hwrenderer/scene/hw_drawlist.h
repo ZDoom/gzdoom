@@ -101,7 +101,7 @@ public:
 	void SortWallIntoPlane(SortNode * head,SortNode * sort);
 	void SortSpriteIntoPlane(SortNode * head,SortNode * sort);
 	void SortWallIntoWall(HWDrawInfo *di, SortNode * head,SortNode * sort);
-	void SortSpriteIntoWall(SortNode * head,SortNode * sort);
+	void SortSpriteIntoWall(HWDrawInfo *di, SortNode * head,SortNode * sort);
 	int CompareSprites(SortNode * a,SortNode * b);
 	SortNode * SortSpriteList(SortNode * head);
 	SortNode * DoSort(HWDrawInfo *di, SortNode * head);

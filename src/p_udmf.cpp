@@ -1625,6 +1625,10 @@ public:
 					sec->SpecialColors[sector_t::sprites] = CheckInt(key) | 0xff000000;
 					break;
 
+				case NAME_Color_Add:
+					sec->SpecialColors[sector_t::add] = CheckInt(key) | 0xff000000;
+					break;
+
 				case NAME_Desaturation:
 					desaturation = int(255*CheckFloat(key) + FLT_EPSILON);	// FLT_EPSILON to avoid rounding errors with numbers slightly below a full integer.
 					continue;

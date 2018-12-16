@@ -49,6 +49,7 @@
 #include "v_video.h"
 #include "v_text.h"
 #include "cmdlib.h"
+#include "doomerrors.h"
 
 // On the Alpha, accessing the shorts directly if they aren't aligned on a
 // 4-byte boundary causes unaligned access warnings. Why it does this at
@@ -954,7 +955,15 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part, TexInit &init)
 					do
 					{
 						sc.MustGetString();
-						part.Translation->AddToTranslation(sc.String);
+
+						try
+						{
+							part.Translation->AddToTranslation(sc.String);
+						}
+						catch (CRecoverableError &err)
+						{
+							sc.ScriptMessage("Error in translation '%s':\n" TEXTCOLOR_YELLOW "%s\n", sc.String, err.GetMessage());
+						}
 					}
 					while (sc.CheckString(","));
 				}

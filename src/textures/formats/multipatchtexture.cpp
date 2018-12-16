@@ -315,7 +315,8 @@ int FMultiPatchTexture::CopyPixels(FBitmap *bmp, int conversion)
 			}
 		}
 
-		FBitmap Pixels = Parts[i].Image->GetCachedBitmap(nullptr, conversion, &ret);
+		auto trans = Parts[i].Translation ? Parts[i].Translation->Palette : nullptr;
+		FBitmap Pixels = Parts[i].Image->GetCachedBitmap(trans, conversion, &ret);
 		bmp->Blit(Parts[i].OriginX, Parts[i].OriginY, Pixels, &info);
 		// treat -1 (i.e. unknown) as absolute. We have no idea if this may have overwritten previous info so a real check needs to be done.
 		if (ret == -1) retv = ret;

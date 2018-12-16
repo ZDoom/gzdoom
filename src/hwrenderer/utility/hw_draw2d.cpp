@@ -169,7 +169,7 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 			state.EnableTexture(true);
 
 			// Canvas textures are stored upside down
-			if (cmd.mTexture->bHasCanvas)
+			if (cmd.mTexture->isHardwareCanvas())
 			{
 				state.mTextureMatrix.loadIdentity();
 				state.mTextureMatrix.scale(1.f, -1.f, 1.f);

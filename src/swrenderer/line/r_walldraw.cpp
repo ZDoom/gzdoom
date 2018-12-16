@@ -54,7 +54,7 @@
 
 namespace swrenderer
 {
-	WallSampler::WallSampler(RenderViewport *viewport, int y1, double texturemid, float swal, double yrepeat, fixed_t xoffset, double xmagnitude, FTexture *texture)
+	WallSampler::WallSampler(RenderViewport *viewport, int y1, double texturemid, float swal, double yrepeat, fixed_t xoffset, double xmagnitude, FSoftwareTexture *texture)
 	{
 		xoffset += FLOAT2FIXED(xmagnitude * 0.5);
 
@@ -62,7 +62,7 @@ namespace swrenderer
 		{
 			height = texture->GetHeight();
 
-			int uv_fracbits = 32 - texture->HeightBits;
+			int uv_fracbits = 32 - texture->GetHeightBits();
 			if (uv_fracbits != 32)
 			{
 				uv_max = height << uv_fracbits;
@@ -92,7 +92,7 @@ namespace swrenderer
 			// If the texture's width isn't a power of 2, then we need to make it a
 			// positive offset for proper clamping.
 			int width;
-			if (col < 0 && (width = texture->GetWidth()) != (1 << texture->WidthBits))
+			if (col < 0 && (width = texture->GetWidth()) != (1 << texture->GetWidthBits()))
 			{
 				col = width + (col % width);
 			}
@@ -332,10 +332,10 @@ namespace swrenderer
 
 	void RenderWallPart::ProcessWallWorker(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal)
 	{
-		if (rw_pic->UseType == ETextureType::Null)
+		if (rw_pic == nullptr)
 			return;
 
-		int fracbits = 32 - rw_pic->HeightBits;
+		int fracbits = 32 - rw_pic->GetHeightBits();
 		if (fracbits == 32)
 		{ // Hack for one pixel tall textures
 			fracbits = 0;
@@ -428,7 +428,7 @@ namespace swrenderer
 	void RenderWallPart::ProcessWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal)
 	{
 		// Textures that aren't masked can use the faster ProcessNormalWall.
-		if (!rw_pic->bMasked && drawerargs.IsMaskedDrawer())
+		if (!rw_pic->GetTexture()->isMasked() && drawerargs.IsMaskedDrawer())
 		{
 			drawerargs.SetStyle(true, false, OPAQUE);
 		}
@@ -516,7 +516,7 @@ namespace swrenderer
 		}
 	}
 
-	void RenderWallPart::Render(const WallDrawerArgs &drawerargs, sector_t *frontsector, seg_t *curline, const FWallCoords &WallC, FTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, double texturemid, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, int wallshade, fixed_t xoffset, float light, float lightstep, FLightNode *light_list, bool foggy, FDynamicColormap *basecolormap)
+	void RenderWallPart::Render(const WallDrawerArgs &drawerargs, sector_t *frontsector, seg_t *curline, const FWallCoords &WallC, FSoftwareTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, double texturemid, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, int wallshade, fixed_t xoffset, float light, float lightstep, FLightNode *light_list, bool foggy, FDynamicColormap *basecolormap)
 	{
 		this->drawerargs = drawerargs;
 		this->x1 = x1;
@@ -537,7 +537,7 @@ namespace swrenderer
 
 		Thread->PrepareTexture(pic, DefaultRenderStyle()); // Get correct render style? Shaded won't get here.
 
-		if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
+		if (rw_pic->GetHeight() != 1 << rw_pic->GetHeightBits())
 		{
 			ProcessWallNP2(walltop, wallbottom, texturemid, swall, lwall, top, bottom);
 		}

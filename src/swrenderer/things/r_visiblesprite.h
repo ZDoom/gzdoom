@@ -55,7 +55,7 @@ namespace swrenderer
 
 		virtual void Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ, Fake3DTranslucent clip3DFloor) = 0;
 
-		FTexture *pic = nullptr;
+		FSoftwareTexture *pic = nullptr;
 
 		short x1 = 0, x2 = 0;
 		float gzb = 0.0f, gzt = 0.0f; // global bottom / top for silhouette clipping

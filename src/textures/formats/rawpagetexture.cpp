@@ -39,6 +39,8 @@
 #include "gi.h"
 #include "bitmap.h"
 #include "textures/textures.h"
+#include "imagehelpers.h"
+#include "image.h"
 
 
 //==========================================================================
@@ -47,13 +49,13 @@
 //
 //==========================================================================
 
-class FRawPageTexture : public FWorldTexture
+class FRawPageTexture : public FImageSource
 {
 	int mPaletteLump = -1;
 public:
 	FRawPageTexture (int lumpnum);
-	uint8_t *MakeTexture (FRenderStyle style) override;
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override;
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	int CopyPixels(FBitmap *bmp, int conversion) override;
 };
 
 //==========================================================================
@@ -72,9 +74,9 @@ static bool CheckIfRaw(FileReader & data)
 	int height;
 	int width;
 
-	foo = (patch_t *)M_Malloc (data.GetLength());
-	data.Seek (0, FileReader::SeekSet);
-	data.Read (foo, data.GetLength());
+	data.Seek(0, FileReader::SeekSet);
+	auto bits = data.Read(data.GetLength());
+	foo = (patch_t *)bits.Data();;
 
 	height = LittleShort(foo->height);
 	width = LittleShort(foo->width);
@@ -97,7 +99,6 @@ static bool CheckIfRaw(FileReader & data)
 			}
 			else if (ofs >= 64000-1)	// Need one byte for an empty column
 			{
-				M_Free (foo);
 				return true;
 			}
 			else
@@ -108,29 +109,24 @@ static bool CheckIfRaw(FileReader & data)
 				{
 					if (foo2[ofs] == 255)
 					{
-						M_Free (foo);
 						return true;
 					}
 					ofs += foo2[ofs+1] + 4;
 				}
 				if (ofs >= 64000)
 				{
-					M_Free (foo);
 					return true;
 				}
 			}
 		}
 		if (gapAtStart || (x != width))
 		{
-			M_Free (foo);
 			return true;
 		}
-		M_Free(foo);
 		return false;
 	}
 	else
 	{
-		M_Free (foo);
 		return true;
 	}
 }
@@ -141,9 +137,9 @@ static bool CheckIfRaw(FileReader & data)
 //
 //==========================================================================
 
-FTexture *RawPageTexture_TryCreate(FileReader & file, int lumpnum)
+FImageSource *RawPageImage_TryCreate(FileReader & file, int lumpnum)
 {
-	if (!CheckIfRaw(file)) return NULL;
+	if (!CheckIfRaw(file)) return nullptr;
 	return new FRawPageTexture(lumpnum);
 }
 
@@ -155,20 +151,20 @@ FTexture *RawPageTexture_TryCreate(FileReader & file, int lumpnum)
 //==========================================================================
 
 FRawPageTexture::FRawPageTexture (int lumpnum)
-: FWorldTexture(NULL, lumpnum)
+: FImageSource(lumpnum)
 {
 	Width = 320;
 	Height = 200;
-	WidthBits = 8;
-	HeightBits = 8;
-	WidthMask = 255;
 
 	// Special case hack for Heretic's E2 end pic. This is not going to be exposed as an editing feature because the implications would be horrible.
+	FString Name;
+	Wads.GetLumpName(Name, lumpnum);
 	if (Name.CompareNoCase("E2END") == 0 && gameinfo.gametype == GAME_Heretic)
 	{
 		mPaletteLump = Wads.CheckNumForName("E2PAL");
 		if (Wads.LumpLength(mPaletteLump) < 768) mPaletteLump = -1;
 	}
+	else bUseGamePalette = true;
 }
 
 //==========================================================================
@@ -177,17 +173,17 @@ FRawPageTexture::FRawPageTexture (int lumpnum)
 //
 //==========================================================================
 
-uint8_t *FRawPageTexture::MakeTexture (FRenderStyle style)
+TArray<uint8_t> FRawPageTexture::CreatePalettedPixels(int conversion)
 {
 	FMemLump lump = Wads.ReadLump (SourceLump);
 	const uint8_t *source = (const uint8_t *)lump.GetMem();
 	const uint8_t *source_p = source;
 	uint8_t *dest_p;
 
-	auto Pixels = new uint8_t[Width*Height];
-	dest_p = Pixels;
+	TArray<uint8_t> Pixels(Width*Height, true);
+	dest_p = Pixels.Data();
 
-	const uint8_t *remap = GetRemap(style);
+	const uint8_t *remap = ImageHelpers::GetRemap(conversion == luminance);
 
 	// This does not handle the custom palette. 
 	// User maps are encouraged to use a real image format when replacing E2END and the original could never be used anywhere else.
@@ -206,9 +202,9 @@ uint8_t *FRawPageTexture::MakeTexture (FRenderStyle style)
 	return Pixels;
 }
 
-int FRawPageTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FRawPageTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
-	if (mPaletteLump < 0) return FTexture::CopyTrueColorPixels(bmp, x, y, rotate, inf);
+	if (mPaletteLump < 0) return FImageSource::CopyPixels(bmp, conversion);
 	else
 	{
 		FMemLump lump = Wads.ReadLump(SourceLump);
@@ -223,7 +219,7 @@ int FRawPageTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate,
 			pe.b = *psource++;
 			pe.a = 255;
 		}
-		bmp->CopyPixelData(x, y, source, 320, 200, 1, 320, 0, paldata, inf);
+		bmp->CopyPixelData(0, 0, source, 320, 200, 1, 320, 0, paldata);
 	}
 	return 0;
 }

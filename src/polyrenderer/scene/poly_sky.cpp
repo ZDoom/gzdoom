@@ -32,6 +32,11 @@
 
 EXTERN_CVAR(Float, skyoffset)
 
+extern double	skytexturemid;
+extern float	skyiscale;
+extern double	skyscale;
+extern fixed_t		sky1cyl, sky2cyl;
+
 
 PolySkyDome::PolySkyDome()
 {
@@ -63,7 +68,7 @@ void PolySkyDome::Render(PolyRenderThread *thread, const Mat4f &worldToView, con
 		float offsetBaseV = 0.25f;
 
 		float scaleFrontU = frameSetup.frontcyl / (float)frameSetup.frontskytex->GetWidth();
-		float scaleFrontV = (float)frameSetup.frontskytex->Scale.Y * scaleBaseV;
+		float scaleFrontV = (float)frameSetup.frontskytex->GetScale().Y * scaleBaseV;
 		float offsetFrontU = (float)((frameSetup.frontpos / 65536.0 + frameSetup.frontcyl / 2) / frameSetup.frontskytex->GetWidth());
 		float offsetFrontV = (float)((frameSetup.skymid / frameSetup.frontskytex->GetHeight() + offsetBaseV) * scaleBaseV);
 
@@ -115,7 +120,7 @@ void PolySkyDome::RenderRow(PolyRenderThread *thread, PolyDrawArgs &args, int ro
 	PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], PolyDrawMode::TriangleStrip);
 }
 
-void PolySkyDome::RenderCapColorRow(PolyRenderThread *thread, PolyDrawArgs &args, FTexture *skytex, int row, bool bottomCap)
+void PolySkyDome::RenderCapColorRow(PolyRenderThread *thread, PolyDrawArgs &args, FSoftwareTexture *skytex, int row, bool bottomCap)
 {
 	uint32_t solid = skytex->GetSkyCapColor(bottomCap);
 	uint8_t palsolid = RGB32k.RGB[(RPART(solid) >> 3)][(GPART(solid) >> 3)][(BPART(solid) >> 3)];
@@ -214,7 +219,7 @@ Mat4f PolySkyDome::GLSkyMath()
 	float x_offset = 0.0f;
 	float y_offset = 0.0f;
 	bool mirror = false;
-	FTexture *tex = mCurrentSetup.frontskytex;
+	FSoftwareTexture *tex = mCurrentSetup.frontskytex;
 
 	int texh = 0;
 	int texw = 0;
@@ -231,7 +236,7 @@ Mat4f PolySkyDome::GLSkyMath()
 		float yscale = 1.f;
 		if (texh <= 128 && (level.flags & LEVEL_FORCETILEDSKY))
 		{
-			modelMatrix = modelMatrix * Mat4f::Translate(0.f, 0.f, (-40 + tex->SkyOffset + skyoffset)*skyoffsetfactor);
+			modelMatrix = modelMatrix * Mat4f::Translate(0.f, 0.f, (-40 + tex->GetSkyOffset() + skyoffset)*skyoffsetfactor);
 			modelMatrix = modelMatrix * Mat4f::Scale(1.f, 1.f, 1.2f * 1.17f);
 			yscale = 240.f / texh;
 		}
@@ -249,12 +254,12 @@ Mat4f PolySkyDome::GLSkyMath()
 		}
 		else if (texh <= 240)
 		{
-			modelMatrix = modelMatrix * Mat4f::Translate(0.f, 0.f, (200 - texh + tex->SkyOffset + skyoffset)*skyoffsetfactor);
+			modelMatrix = modelMatrix * Mat4f::Translate(0.f, 0.f, (200 - texh + tex->GetSkyOffset() + skyoffset)*skyoffsetfactor);
 			modelMatrix = modelMatrix * Mat4f::Scale(1.f, 1.f, 1.f + ((texh - 200.f) / 200.f) * 1.17f);
 		}
 		else
 		{
-			modelMatrix = modelMatrix * Mat4f::Translate(0.f, 0.f, (-40 + tex->SkyOffset + skyoffset)*skyoffsetfactor);
+			modelMatrix = modelMatrix * Mat4f::Translate(0.f, 0.f, (-40 + tex->GetSkyOffset() + skyoffset)*skyoffsetfactor);
 			modelMatrix = modelMatrix * Mat4f::Scale(1.f, 1.f, 1.2f * 1.17f);
 			yscale = 240.f / texh;
 		}
@@ -276,6 +281,14 @@ Mat4f PolySkyDome::GLSkyMath()
 }
 
 /////////////////////////////////////////////////////////////////////////////
+
+static FSoftwareTexture *GetSWTex(FTextureID texid, bool allownull = true)
+{
+	auto tex = TexMan.GetPalettedTexture(texid, true);
+	if (tex == nullptr) return nullptr;
+	if (!allownull && !tex->isValid()) return nullptr;
+	return tex->GetSoftwareTexture();
+}
 
 void PolySkySetup::Update()
 {
@@ -299,9 +312,9 @@ void PolySkySetup::Update()
 	if (!(sectorSky & PL_SKYFLAT))
 	{	// use sky1
 	sky1:
-		frontskytex = TexMan(sky1tex, true);
+		frontskytex = GetSWTex(sky1tex);
 		if (level.flags & LEVEL_DOUBLESKY)
-			backskytex = TexMan(sky2tex, true);
+			backskytex = GetSWTex(sky2tex);
 		else
 			backskytex = nullptr;
 		skyflip = false;
@@ -312,7 +325,7 @@ void PolySkySetup::Update()
 	}
 	else if (sectorSky == PL_SKYFLAT)
 	{	// use sky2
-		frontskytex = TexMan(sky2tex, true);
+		frontskytex = GetSWTex(sky2tex);
 		backskytex = nullptr;
 		frontcyl = sky2cyl;
 		skyflip = false;
@@ -338,8 +351,8 @@ void PolySkySetup::Update()
 			pos = side_t::top;
 		}
 
-		frontskytex = TexMan(s->GetTexture(pos), true);
-		if (frontskytex == nullptr || frontskytex->UseType == ETextureType::Null)
+		frontskytex = GetSWTex(s->GetTexture(pos), false);
+		if (frontskytex == nullptr)
 		{ // [RH] The blank texture: Use normal sky instead.
 			goto sky1;
 		}
@@ -361,7 +374,7 @@ void PolySkySetup::Update()
 		// allow old sky textures to be used.
 		skyflip = l->args[2] ? false : true;
 
-		int frontxscale = int(frontskytex->Scale.X * 1024);
+		int frontxscale = int(frontskytex->GetScale().X * 1024);
 		frontcyl = MAX(frontskytex->GetWidth(), frontxscale);
 	}
 

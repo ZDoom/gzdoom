@@ -39,6 +39,8 @@
 #include "w_wad.h"
 #include "bitmap.h"
 #include "v_video.h"
+#include "imagehelpers.h"
+#include "image.h"
 
 //==========================================================================
 //
@@ -78,15 +80,12 @@ struct PCXHeader
 //
 //==========================================================================
 
-class FPCXTexture : public FWorldTexture
+class FPCXTexture : public FImageSource
 {
 public:
 	FPCXTexture (int lumpnum, PCXHeader &);
 
-	FTextureFormat GetFormat () override;
-
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override;
-	bool UseBasePalette() override;
+	int CopyPixels(FBitmap *bmp, int conversion) override;
 
 protected:
 	void ReadPCX1bit (uint8_t *dst, FileReader & lump, PCXHeader *hdr);
@@ -94,7 +93,7 @@ protected:
 	void ReadPCX8bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr);
 	void ReadPCX24bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr, int planes);
 
-	uint8_t *MakeTexture (FRenderStyle style) override;
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
 };
 
 
@@ -104,7 +103,7 @@ protected:
 //
 //==========================================================================
 
-FTexture * PCXTexture_TryCreate(FileReader & file, int lumpnum)
+FImageSource * PCXImage_TryCreate(FileReader & file, int lumpnum)
 {
 	PCXHeader hdr;
 
@@ -143,23 +142,11 @@ FTexture * PCXTexture_TryCreate(FileReader & file, int lumpnum)
 //==========================================================================
 
 FPCXTexture::FPCXTexture(int lumpnum, PCXHeader & hdr)
-: FWorldTexture(NULL, lumpnum)
+: FImageSource(lumpnum)
 {
 	bMasked = false;
 	Width = LittleShort(hdr.xmax) - LittleShort(hdr.xmin) + 1;
 	Height = LittleShort(hdr.ymax) - LittleShort(hdr.ymin) + 1;
-	CalcBitSize();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FTextureFormat FPCXTexture::GetFormat()
-{
-	return TEX_RGB;
 }
 
 //==========================================================================
@@ -371,20 +358,20 @@ void FPCXTexture::ReadPCX24bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr
 //
 //==========================================================================
 
-uint8_t *FPCXTexture::MakeTexture(FRenderStyle style)
+TArray<uint8_t> FPCXTexture::CreatePalettedPixels(int conversion)
 {
 	uint8_t PaletteMap[256];
 	PCXHeader header;
 	int bitcount;
-	bool alphatex = !!(style.Flags & STYLEF_RedIsAlpha);
 
 	auto lump = Wads.OpenLumpReader(SourceLump);
 
 	lump.Read(&header, sizeof(header));
 
 	bitcount = header.bitsPerPixel * header.numColorPlanes;
-	auto Pixels = new uint8_t[Width*Height];
+	TArray<uint8_t> Pixels(Width*Height, true);
 
+	bool alphatex = conversion == luminance;
 	if (bitcount < 24)
 	{
 		if (bitcount < 8)
@@ -393,17 +380,17 @@ uint8_t *FPCXTexture::MakeTexture(FRenderStyle style)
 			{
 			default:
 			case 1:
-				PaletteMap[0] = alphatex? 0 : GrayMap[0];
-				PaletteMap[1] = alphatex? 255 : GrayMap[255];
-				ReadPCX1bit (Pixels, lump, &header);
+				PaletteMap[0] = alphatex? 0 : ImageHelpers::GrayMap[0];
+				PaletteMap[1] = alphatex? 255 : ImageHelpers::GrayMap[255];
+				ReadPCX1bit (Pixels.Data(), lump, &header);
 				break;
 
 			case 4:
 				for (int i = 0; i < 16; i++)
 				{
-					PaletteMap[i] = RGBToPalettePrecise(alphatex, header.palette[i * 3], header.palette[i * 3 + 1], header.palette[i * 3 + 2]);
+					PaletteMap[i] = ImageHelpers::RGBToPalettePrecise(alphatex, header.palette[i * 3], header.palette[i * 3 + 1], header.palette[i * 3 + 2]);
 				}
-				ReadPCX4bits (Pixels, lump, &header);
+				ReadPCX4bits (Pixels.Data(), lump, &header);
 				break;
 			}
 		}
@@ -418,22 +405,20 @@ uint8_t *FPCXTexture::MakeTexture(FRenderStyle style)
 				uint8_t r = lump.ReadUInt8();
 				uint8_t g = lump.ReadUInt8();
 				uint8_t b = lump.ReadUInt8();
-				PaletteMap[i] = RGBToPalettePrecise(alphatex, r, g, b);
+				PaletteMap[i] = ImageHelpers::RGBToPalettePrecise(alphatex, r, g, b);
 			}
 			lump.Seek(sizeof(header), FileReader::SeekSet);
-			ReadPCX8bits (Pixels, lump, &header);
+			ReadPCX8bits (Pixels.Data(), lump, &header);
 		}
 		if (Width == Height)
 		{
-			FlipSquareBlockRemap(Pixels, Width, Height, PaletteMap);
+			ImageHelpers::FlipSquareBlockRemap(Pixels.Data(), Width, PaletteMap);
 		}
 		else
 		{
-			uint8_t *newpix = new uint8_t[Width*Height];
-			FlipNonSquareBlockRemap (newpix, Pixels, Width, Height, Width, PaletteMap);
-			uint8_t *oldpix = Pixels;
-			Pixels = newpix;
-			delete[] oldpix;
+			TArray<uint8_t> newpix(Width*Height, true);
+			ImageHelpers::FlipNonSquareBlockRemap (newpix.Data(), Pixels.Data(), Width, Height, Width, PaletteMap);
+			return newpix;
 		}
 	}
 	else
@@ -445,7 +430,7 @@ uint8_t *FPCXTexture::MakeTexture(FRenderStyle style)
 		{
 			for(int x=0; x < Width; x++)
 			{
-				Pixels[y + Height * x] = RGBToPalette(alphatex, row[0], row[1], row[2]);
+				Pixels[y + Height * x] = ImageHelpers::RGBToPalette(alphatex, row[0], row[1], row[2]);
 				row+=3;
 			}
 		}
@@ -456,13 +441,13 @@ uint8_t *FPCXTexture::MakeTexture(FRenderStyle style)
 
 //===========================================================================
 //
-// FPCXTexture::CopyTrueColorPixels
+// FPCXTexture::CopyPixels
 //
 // Preserves the full color information (unlike software mode)
 //
 //===========================================================================
 
-int FPCXTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FPCXTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
 	PalEntry pe[256];
 	PCXHeader header;
@@ -517,25 +502,15 @@ int FPCXTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 			lump.Seek(sizeof(header), FileReader::SeekSet);
 			ReadPCX8bits (Pixels, lump, &header);
 		}
-		bmp->CopyPixelData(x, y, Pixels, Width, Height, 1, Width, rotate, pe, inf);
+		bmp->CopyPixelData(0, 0, Pixels, Width, Height, 1, Width, 0, pe);
 	}
 	else
 	{
 		Pixels = new uint8_t[Width*Height * 3];
 		ReadPCX24bits (Pixels, lump, &header, 3);
-		bmp->CopyPixelDataRGB(x, y, Pixels, Width, Height, 3, Width*3, rotate, CF_RGB, inf);
+		bmp->CopyPixelDataRGB(0, 0, Pixels, Width, Height, 3, Width*3, 0, CF_RGB);
 	}
 	delete [] Pixels;
 	return 0;
 }
 
-
-//===========================================================================
-//
-//
-//===========================================================================
-
-bool FPCXTexture::UseBasePalette() 
-{ 
-	return false; 
-}

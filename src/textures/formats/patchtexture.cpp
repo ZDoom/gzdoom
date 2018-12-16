@@ -39,6 +39,8 @@
 #include "v_palette.h"
 #include "v_video.h"
 #include "bitmap.h"
+#include "image.h"
+#include "imagehelpers.h"
 
 
 // posts are runs of non masked source pixels
@@ -56,18 +58,15 @@ bool checkPatchForAlpha(const void *buffer, uint32_t length);
 //
 //==========================================================================
 
-class FPatchTexture : public FWorldTexture
+class FPatchTexture : public FImageSource
 {
 	bool badflag = false;
 	bool isalpha = false;
 public:
 	FPatchTexture (int lumpnum, patch_t *header, bool isalphatex);
-	uint8_t *MakeTexture (FRenderStyle style) override;
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override;
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	int CopyPixels(FBitmap *bmp, int conversion) override;
 	void DetectBadPatches();
-
-	bool UseBasePalette() override { return !isalpha; }
-	FTextureFormat GetFormat() override { return isalpha ? TEX_RGB : TEX_Pal; } // should be TEX_Gray instead of TEX_RGB. Maybe later when all is working.
 };
 
 //==========================================================================
@@ -80,11 +79,10 @@ static bool CheckIfPatch(FileReader & file, bool &isalpha)
 {
 	if (file.GetLength() < 13) return false;	// minimum length of a valid Doom patch
 	
-	uint8_t *data = new uint8_t[file.GetLength()];
 	file.Seek(0, FileReader::SeekSet);
-	file.Read(data, file.GetLength());
+	auto data = file.Read(file.GetLength());
 	
-	const patch_t *foo = (const patch_t *)data;
+	const patch_t *foo = (const patch_t *)data.Data();
 	
 	int height = LittleShort(foo->height);
 	int width = LittleShort(foo->width);
@@ -107,7 +105,6 @@ static bool CheckIfPatch(FileReader & file, bool &isalpha)
 			}
 			else if (ofs >= (uint32_t)(file.GetLength()))	// Need one byte for an empty column (but there's patches that don't know that!)
 			{
-				delete [] data;
 				return false;
 			}
 		}
@@ -115,12 +112,10 @@ static bool CheckIfPatch(FileReader & file, bool &isalpha)
 		{
 			// only check this if the texture passed validation.
 			// Here is a good point because we already have a valid buffer of the lump's data.
-			isalpha = checkPatchForAlpha(data, (uint32_t)file.GetLength());
+			isalpha = checkPatchForAlpha(data.Data(), (uint32_t)file.GetLength());
 		}
-		delete[] data;
 		return !gapAtStart;
 	}
-	delete [] data;
 	return false;
 }
 
@@ -130,7 +125,7 @@ static bool CheckIfPatch(FileReader & file, bool &isalpha)
 //
 //==========================================================================
 
-FTexture *PatchTexture_TryCreate(FileReader & file, int lumpnum)
+FImageSource *PatchImage_TryCreate(FileReader & file, int lumpnum)
 {
 	patch_t header;
 	bool isalpha;
@@ -151,15 +146,15 @@ FTexture *PatchTexture_TryCreate(FileReader & file, int lumpnum)
 //==========================================================================
 
 FPatchTexture::FPatchTexture (int lumpnum, patch_t * header, bool isalphatex)
-: FWorldTexture(NULL, lumpnum)
+: FImageSource(lumpnum)
 {
+	bUseGamePalette = !isalphatex;
 	isalpha = isalphatex;
 	Width = header->width;
 	Height = header->height;
-	_LeftOffset[1] = _LeftOffset[0] = header->leftoffset;
-	_TopOffset[1] = _TopOffset[0] = header->topoffset;
+	LeftOffset = header->leftoffset;
+	TopOffset = header->topoffset;
 	DetectBadPatches();
-	CalcBitSize ();
 }
 
 //==========================================================================
@@ -168,7 +163,7 @@ FPatchTexture::FPatchTexture (int lumpnum, patch_t * header, bool isalphatex)
 //
 //==========================================================================
 
-uint8_t *FPatchTexture::MakeTexture (FRenderStyle style)
+TArray<uint8_t> FPatchTexture::CreatePalettedPixels(int conversion)
 {
 	uint8_t *remap, remaptable[256];
 	int numspans;
@@ -180,9 +175,9 @@ uint8_t *FPatchTexture::MakeTexture (FRenderStyle style)
 
 	maxcol = (const column_t *)((const uint8_t *)patch + Wads.LumpLength (SourceLump) - 3);
 
-	remap = GetRemap(style, isalpha);
+	remap = ImageHelpers::GetRemap(conversion == luminance, isalpha);
 	// Special case for skies
-	if (bNoRemap0 && remap == GPalette.Remap)
+	if (conversion == noremap0 && remap == GPalette.Remap)
 	{
 		memcpy(remaptable, GPalette.Remap, 256);
 		remaptable[0] = 0;
@@ -191,11 +186,11 @@ uint8_t *FPatchTexture::MakeTexture (FRenderStyle style)
 
 	if (badflag)
 	{
-		auto Pixels = new uint8_t[Width * Height];
+		TArray<uint8_t> Pixels(Width * Height, true);
 		uint8_t *out;
 
 		// Draw the image to the buffer
-		for (x = 0, out = Pixels; x < Width; ++x)
+		for (x = 0, out = Pixels.Data(); x < Width; ++x)
 		{
 			const uint8_t *in = (const uint8_t *)patch + LittleLong(patch->columnofs[x]) + 3;
 
@@ -208,19 +203,17 @@ uint8_t *FPatchTexture::MakeTexture (FRenderStyle style)
 		return Pixels;
 	}
 
-	// Add a little extra space at the end if the texture's height is not
-	// a power of 2, in case somebody accidentally makes it repeat vertically.
-	int numpix = Width * Height + (1 << HeightBits) - Height;
+	int numpix = Width * Height;
 
 	numspans = Width;
 
-	auto Pixels = new uint8_t[numpix];
-	memset (Pixels, 0, numpix);
+	TArray<uint8_t> Pixels(numpix, true);
+	memset (Pixels.Data(), 0, numpix);
 
 	// Draw the image to the buffer
 	for (x = 0; x < Width; ++x)
 	{
-		uint8_t *outtop = Pixels + x*Height;
+		uint8_t *outtop = Pixels.Data() + x*Height;
 		const column_t *column = (const column_t *)((const uint8_t *)patch + LittleLong(patch->columnofs[x]));
 		int top = -1;
 
@@ -267,10 +260,10 @@ uint8_t *FPatchTexture::MakeTexture (FRenderStyle style)
 //
 //==========================================================================
 
-int FPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FPatchTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
-	if (!isalpha) return FTexture::CopyTrueColorPixels(bmp, x, y, rotate, inf);
-	else return CopyTrueColorTranslated(bmp, x, y, rotate, translationtables[TRANSLATION_Standard][STD_Grayscale]->Palette, inf);
+	if (!isalpha) return FImageSource::CopyPixels(bmp, conversion);
+	else return CopyTranslatedPixels(bmp, translationtables[TRANSLATION_Standard][STD_Grayscale]->Palette);
 }
 
 //==========================================================================
@@ -307,8 +300,8 @@ void FPatchTexture::DetectBadPatches ()
 				return;	// More than one post in a column!
 			}
 		}
-		_LeftOffset[1] = _LeftOffset[0] = 0;
-		_TopOffset[1] = _TopOffset[0] = 0;
+		LeftOffset = 0;
+		TopOffset = 0;
 		badflag = true;
 		bMasked = false;	// Hacked textures don't have transparent parts.
 	}

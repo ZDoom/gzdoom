@@ -39,6 +39,7 @@
 #include "files.h"
 #include "w_wad.h"
 #include "textures/textures.h"
+#include "image.h"
 
 //==========================================================================
 //
@@ -46,12 +47,11 @@
 //
 //==========================================================================
 
-class FEmptyTexture : public FWorldTexture
+class FEmptyTexture : public FImageSource
 {
-	uint8_t Pixel = 0;
 public:
 	FEmptyTexture (int lumpnum);
-	uint8_t *MakeTexture(FRenderStyle style) override;
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
 };
 
 //==========================================================================
@@ -60,7 +60,7 @@ public:
 //
 //==========================================================================
 
-FTexture *EmptyTexture_TryCreate(FileReader & file, int lumpnum)
+FImageSource *EmptyImage_TryCreate(FileReader & file, int lumpnum)
 {
 	char check[8];
 	if (file.GetLength() != 8) return NULL;
@@ -78,13 +78,11 @@ FTexture *EmptyTexture_TryCreate(FileReader & file, int lumpnum)
 //==========================================================================
 
 FEmptyTexture::FEmptyTexture (int lumpnum)
-: FWorldTexture(NULL, lumpnum)
+: FImageSource(lumpnum)
 {
 	bMasked = true;
-	WidthBits = HeightBits = 1;
 	Width = Height = 1;
-	WidthMask = 0;
-	PixelsAreStatic = 3;
+	bUseGamePalette = true;
 }
 
 //==========================================================================
@@ -93,8 +91,10 @@ FEmptyTexture::FEmptyTexture (int lumpnum)
 //
 //==========================================================================
 
-uint8_t *FEmptyTexture::MakeTexture(FRenderStyle style)
+TArray<uint8_t> FEmptyTexture::CreatePalettedPixels(int conversion)
 {
-	return &Pixel;
+	TArray<uint8_t> Pixel(1, true);
+	Pixel[0] = 0;
+	return Pixel;
 }
 

@@ -64,7 +64,7 @@ namespace swrenderer
 		Thread = thread;
 	}
 
-	void RenderSlopePlane::Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *colormap, FTexture *texture)
+	void RenderSlopePlane::Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *colormap, FSoftwareTexture *texture)
 	{
 		static const float ifloatpow2[16] =
 		{

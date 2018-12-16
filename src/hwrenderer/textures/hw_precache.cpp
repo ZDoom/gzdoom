@@ -33,6 +33,7 @@
 #include "r_data/models/models.h"
 #include "textures/skyboxtexture.h"
 #include "hwrenderer/textures/hw_material.h"
+#include "image.h"
 
 
 //==========================================================================
@@ -47,11 +48,6 @@ static void PrecacheTexture(FTexture *tex, int cache)
 	{
 		FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
 		if (gltex) gltex->Precache();
-	}
-	else
-	{
-		// make sure that software pixel buffers do not stick around for unneeded textures.
-		tex->Unload();
 	}
 }
 
@@ -91,14 +87,14 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		if (texhitlist[i] & (FTextureManager::HIT_Sky | FTextureManager::HIT_Wall))
 		{
 			FTexture *tex = TexMan.ByIndex(i);
-			if (tex->bSkybox)
+			if (tex->isSkybox())
 			{
 				FSkyBox *sb = static_cast<FSkyBox*>(tex);
 				for (int i = 0; i<6; i++)
 				{
 					if (sb->faces[i])
 					{
-						int index = sb->faces[i]->id.GetIndex();
+						int index = sb->faces[i]->GetID().GetIndex();
 						texhitlist[index] |= FTextureManager::HIT_Flat;
 					}
 				}
@@ -181,17 +177,41 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		{
 			if (!texhitlist[i])
 			{
-				if (tex->Material[0]) tex->Material[0]->Clean(true);
+				tex->SystemTextures.Clean(true, false);
 			}
 			if (spritehitlist[i] == nullptr || (*spritehitlist[i]).CountUsed() == 0)
 			{
-				if (tex->Material[1]) tex->Material[1]->Clean(true);
+				tex->SystemTextures.Clean(false, true);
 			}
 		}
 	}
 
 	if (gl_precache)
 	{
+		FImageSource::BeginPrecaching();
+
+		// cache all used textures
+		for (int i = cnt - 1; i >= 0; i--)
+		{
+			FTexture *tex = TexMan.ByIndex(i);
+			if (tex != nullptr && tex->GetImage() != nullptr)
+			{
+				if (texhitlist[i] & (FTextureManager::HIT_Wall | FTextureManager::HIT_Flat | FTextureManager::HIT_Sky))
+				{
+					if (tex->GetImage() && tex->SystemTextures.GetHardwareTexture(0, false) == nullptr)
+					{
+						FImageSource::RegisterForPrecache(tex->GetImage());
+					}
+				}
+
+				// Only register untranslated sprites. Translated ones are very unlikely to require data that can be reused.
+				if (spritehitlist[i] != nullptr && (*spritehitlist[i]).CheckKey(0))
+				{
+					FImageSource::RegisterForPrecache(tex->GetImage());
+				}
+			}
+		}
+
 		// cache all used textures
 		for (int i = cnt - 1; i >= 0; i--)
 		{
@@ -205,6 +225,9 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 				}
 			}
 		}
+
+
+		FImageSource::EndPrecaching();
 
 		// cache all used models
 		FModelRenderer *renderer = screen->CreateModelRenderer(-1);

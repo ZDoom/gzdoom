@@ -216,8 +216,8 @@ void PostProcessShaderInstance::BindTextures()
 			continue;
 
 		FString name = pair->Value;
-		FTexture *tex = TexMan(TexMan.CheckForTexture(name, ETextureType::Any));
-		if (tex && tex->UseType != ETextureType::Null)
+		FTexture *tex = TexMan.GetTexture(TexMan.CheckForTexture(name, ETextureType::Any), true);
+		if (tex && tex->isValid())
 		{
 			glUniform1i(location, textureUnit);
 
@@ -225,14 +225,14 @@ void PostProcessShaderInstance::BindTextures()
 			auto it = mTextureHandles.find(tex);
 			if (it == mTextureHandles.end())
 			{
-				FBitmap bitmap;
-				bitmap.Create(tex->GetWidth(), tex->GetHeight());
-				tex->CopyTrueColorPixels(&bitmap, 0, 0);
+				// Why does this completely circumvent the normal way of handling textures?
+				// This absolutely needs fixing because it will also circumvent any potential caching system that may get implemented.
+				auto buffer = tex->CreateTexBuffer(0);
 
 				GLuint handle = 0;
 				glGenTextures(1, &handle);
 				glBindTexture(GL_TEXTURE_2D, handle);
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tex->GetWidth(), tex->GetHeight(), 0, GL_BGRA, GL_UNSIGNED_BYTE, bitmap.GetPixels());
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, buffer.mWidth, buffer.mHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, buffer.mBuffer);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 				mTextureHandles[tex] = handle;

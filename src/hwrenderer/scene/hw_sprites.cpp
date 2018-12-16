@@ -789,9 +789,9 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		if (isPicnumOverride)
 		{
 			// Animate picnum overrides.
-			auto tex = TexMan(thing->picnum);
+			auto tex = TexMan.GetTexture(thing->picnum, true);
 			if (tex == nullptr) return;
-			patch =  tex->id;
+			patch =  tex->GetID();
 			mirror = false;
 		}
 		else
@@ -910,7 +910,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	// allow disabling of the fullbright flag by a brightmap definition
 	// (e.g. to do the gun flashes of Doom's zombies correctly.
 	fullbright = (thing->flags5 & MF5_BRIGHT) ||
-		((thing->renderflags & RF_FULLBRIGHT) && (!gltexture || !gltexture->tex->bDisableFullbright));
+		((thing->renderflags & RF_FULLBRIGHT) && (!gltexture || !gltexture->tex->isFullbrightDisabled()));
 
 	lightlevel = fullbright ? 255 :
 		hw_ClampLight(rendersector->GetTexture(sector_t::ceiling) == skyflatnum ?

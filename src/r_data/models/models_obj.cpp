@@ -636,11 +636,11 @@ void FOBJModel::RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame
 		{
 			if (i < MD3_MAX_SURFACES && curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].isValid())
 			{
-				userSkin = TexMan(curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i]);
+				userSkin = TexMan.GetTexture(curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i], true);
 			}
 			else if (surf->skin.isValid())
 			{
-				userSkin = TexMan(surf->skin);
+				userSkin = TexMan.GetTexture(surf->skin, true);
 			}
 		}
 

@@ -1194,12 +1194,12 @@ static void AM_ScrollParchment (double dmapx, double dmapy)
 
 	if (mapback.isValid())
 	{
-		FTexture *backtex = TexMan[mapback];
+		FTexture *backtex = TexMan.GetTexture(mapback);
 
 		if (backtex != NULL)
 		{
-			int pwidth = backtex->GetWidth();
-			int pheight = backtex->GetHeight();
+			int pwidth = backtex->GetDisplayWidth();
+			int pheight = backtex->GetDisplayHeight();
 
 			while(mapxstart > 0)
 				mapxstart -= pwidth;
@@ -1689,11 +1689,11 @@ void AM_clearFB (const AMColor &color)
 	}
 	else
 	{
-		FTexture *backtex = TexMan[mapback];
+		FTexture *backtex = TexMan.GetTexture(mapback);
 		if (backtex != NULL)
 		{
-			int pwidth = backtex->GetWidth();
-			int pheight = backtex->GetHeight();
+			int pwidth = backtex->GetDisplayWidth();
+			int pheight = backtex->GetDisplayHeight();
 			int x, y;
 
 			//blit the automap background to the screen.
@@ -2212,8 +2212,7 @@ void AM_drawSubsectors()
 		}
 
 		// Draw the polygon.
-		FTexture *pic = TexMan(maptex);
-		if (pic != nullptr && pic->UseType != ETextureType::Null)
+		if (maptex.isValid())
 		{
 			// Hole filling "subsectors" are not necessarily convex so they require real triangulation.
 			// These things are extremely rare so performance is secondary here.
@@ -2235,7 +2234,7 @@ void AM_drawSubsectors()
 			}
 			else indices.clear();
 
-			screen->FillSimplePoly(TexMan(maptex),
+			screen->FillSimplePoly(TexMan.GetTexture(maptex, true),
 				&points[0], points.Size(),
 				originx, originy,
 				scale / scalex,
@@ -3020,7 +3019,7 @@ void AM_drawThings ()
 						rotation = int((angle.Normalized360() * (16. / 360.)).Degrees);
 
 						const FTextureID textureID = frame->Texture[show > 2 ? rotation : 0];
-						texture = TexMan(textureID);
+						texture = TexMan.GetTexture(textureID, true);
 					}
 
 					if (texture == NULL) goto drawTriangle;	// fall back to standard display if no sprite can be found.
@@ -3116,7 +3115,7 @@ void AM_drawThings ()
 static void DrawMarker (FTexture *tex, double x, double y, int yadjust,
 	INTBOOL flip, double xscale, double yscale, int translation, double alpha, uint32_t fillcolor, FRenderStyle renderstyle)
 {
-	if (tex == NULL || tex->UseType == ETextureType::Null)
+	if (tex == NULL || !tex->isValid())
 	{
 		return;
 	}
@@ -3125,8 +3124,8 @@ static void DrawMarker (FTexture *tex, double x, double y, int yadjust,
 		AM_rotatePoint (&x, &y);
 	}
 	screen->DrawTexture (tex, CXMTOF(x) + f_x, CYMTOF(y) + yadjust + f_y,
-		DTA_DestWidthF, tex->GetScaledWidthDouble() * CleanXfac * xscale,
-		DTA_DestHeightF, tex->GetScaledHeightDouble() * CleanYfac * yscale,
+		DTA_DestWidthF, tex->GetDisplayWidthDouble() * CleanXfac * xscale,
+		DTA_DestHeightF, tex->GetDisplayHeightDouble() * CleanYfac * yscale,
 		DTA_ClipTop, f_y,
 		DTA_ClipBottom, f_y + f_h,
 		DTA_ClipLeft, f_x,
@@ -3151,7 +3150,7 @@ void AM_drawMarks ()
 	{
 		if (markpoints[i].x != -1)
 		{
-			DrawMarker (TexMan(marknums[i]), markpoints[i].x, markpoints[i].y, -3, 0,
+			DrawMarker (TexMan.GetTexture(marknums[i], true), markpoints[i].x, markpoints[i].y, -3, 0,
 				1, 1, 0, 1, 0, LegacyRenderStyles[STYLE_Normal]);
 		}
 	}
@@ -3184,13 +3183,13 @@ void AM_drawAuthorMarkers ()
 
 		if (mark->picnum.isValid())
 		{
-			tex = TexMan(mark->picnum);
-			if (tex->Rotations != 0xFFFF)
+			tex = TexMan.GetTexture(mark->picnum, true);
+			if (tex->GetRotations() != 0xFFFF)
 			{
-				spriteframe_t *sprframe = &SpriteFrames[tex->Rotations];
+				spriteframe_t *sprframe = &SpriteFrames[tex->GetRotations()];
 				picnum = sprframe->Texture[0];
 				flip = sprframe->Flip & 1;
-				tex = TexMan[picnum];
+				tex = TexMan.GetTexture(picnum);
 			}
 		}
 		else
@@ -3205,7 +3204,7 @@ void AM_drawAuthorMarkers ()
 				spriteframe_t *sprframe = &SpriteFrames[sprdef->spriteframes + mark->frame];
 				picnum = sprframe->Texture[0];
 				flip = sprframe->Flip & 1;
-				tex = TexMan[picnum];
+				tex = TexMan.GetTexture(picnum);
 			}
 		}
 		FActorIterator it (mark->args[0]);

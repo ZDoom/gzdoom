@@ -90,8 +90,7 @@ namespace swrenderer
 	}
 
 	static std::mutex loadmutex;
-	void RenderThread::PrepareTexture(FTexture *texture, FRenderStyle style)
-	{
+	void RenderThread::PrepareTexture(FSoftwareTexture *texture, FRenderStyle style)	{
 		if (texture == nullptr)
 			return;
 
@@ -105,14 +104,18 @@ namespace swrenderer
 
 		std::unique_lock<std::mutex> lock(loadmutex);
 
-		texture->GetPixels(style);
-		const FTexture::Span *spans;
-		texture->GetColumn(style, 0, &spans);
+		const FSoftwareTextureSpan *spans;
 		if (Viewport->RenderTarget->IsBgra())
 		{
 			texture->GetPixelsBgra();
 			texture->GetColumnBgra(0, &spans);
 		}
+		else
+		{
+			bool alpha = !!(style.Flags & STYLEF_RedIsAlpha);
+			texture->GetPixels(alpha);
+			texture->GetColumn(alpha, 0, &spans);
+	}
 	}
 
 	static std::mutex polyobjmutex;

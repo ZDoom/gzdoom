@@ -616,7 +616,7 @@ namespace swrenderer
 			int shade = LightVisibility::LightLevelToShade((floorlightlevel + ceilinglightlevel) / 2 + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()), foggy);
 			for (int i = ParticlesInSubsec[sub->Index()]; i != NO_PARTICLE; i = Particles[i].snext)
 			{
-				RenderParticle::Project(Thread, Particles + i, sub->sector, shade, FakeSide, foggy);
+				RenderParticle::Project(Thread, &Particles[i], sub->sector, shade, FakeSide, foggy);
 			}
 		}
 
@@ -1023,16 +1023,16 @@ namespace swrenderer
 		{
 			sprite.picnum = thing->picnum;
 
-			sprite.tex = TexMan(sprite.picnum);
-			if (sprite.tex->UseType == ETextureType::Null)
+			sprite.tex = TexMan.GetPalettedTexture(sprite.picnum, true);
+			if (!sprite.tex->isValid())
 			{
 				return false;
 			}
 
-			if (sprite.tex->Rotations != 0xFFFF)
+			if (sprite.tex->GetRotations() != 0xFFFF)
 			{
 				// choose a different rotation based on player view
-				spriteframe_t *sprframe = &SpriteFrames[sprite.tex->Rotations];
+				spriteframe_t *sprframe = &SpriteFrames[sprite.tex->GetRotations()];
 				DAngle ang = (sprite.pos - Thread->Viewport->viewpoint.Pos).Angle();
 				angle_t rot;
 				if (sprframe->Texture[0] == sprframe->Texture[1])
@@ -1054,7 +1054,7 @@ namespace swrenderer
 				{
 					sprite.renderflags ^= RF_XFLIP;
 				}
-				sprite.tex = TexMan[sprite.picnum];	// Do not animate the rotation
+				sprite.tex = TexMan.GetPalettedTexture(sprite.picnum, false);	// Do not animate the rotation
 			}
 		}
 		else
@@ -1084,7 +1084,7 @@ namespace swrenderer
 					{
 						sprite.renderflags ^= RF_XFLIP;
 					}
-					sprite.tex = TexMan[tex];	// Do not animate the rotation
+					sprite.tex = TexMan.GetPalettedTexture(tex, false);	// Do not animate the rotation
 				}
 
 				if (r_drawvoxels)
@@ -1096,7 +1096,7 @@ namespace swrenderer
 					return false;
 			}
 
-			if (sprite.voxel == nullptr && (sprite.tex == nullptr || sprite.tex->UseType == ETextureType::Null))
+			if (sprite.voxel == nullptr && (sprite.tex == nullptr || !sprite.tex->isValid()))
 			{
 				return false;
 			}

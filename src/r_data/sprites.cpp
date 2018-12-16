@@ -122,7 +122,7 @@ static bool R_InstallSpriteLump (FTextureID lump, unsigned frame, char rot, bool
 
 	if (frame >= MAX_SPRITE_FRAMES || rotation > 16)
 	{
-		Printf (TEXTCOLOR_RED "R_InstallSpriteLump: Bad frame characters in lump %s\n", TexMan[lump]->Name.GetChars());
+		Printf (TEXTCOLOR_RED "R_InstallSpriteLump: Bad frame characters in lump %s\n", TexMan.GetTexture(lump)->GetName().GetChars());
 		return false;
 	}
 
@@ -176,7 +176,7 @@ static bool R_InstallSpriteLump (FTextureID lump, unsigned frame, char rot, bool
 
 
 // [RH] Seperated out of R_InitSpriteDefs()
-static void R_InstallSprite (int num, spriteframewithrotate *sprtemp, int &maxframe)
+void R_InstallSprite (int num, spriteframewithrotate *sprtemp, int &maxframe)
 {
 	int frame;
 	int framestart;
@@ -286,7 +286,7 @@ static void R_InstallSprite (int num, spriteframewithrotate *sprtemp, int &maxfr
 		{
 			for (int rot = 0; rot < 16; ++rot)
 			{
-				TexMan[sprtemp[frame].Texture[rot]]->Rotations = framestart + frame;
+				TexMan.GetTexture(sprtemp[frame].Texture[rot])->Rotations = framestart + frame;
 			}
 		}
 	}
@@ -414,7 +414,7 @@ void R_InitSpriteDefs ()
 		int hash = hashes[intname % smax].Head;
 		while (hash != -1)
 		{
-			FTexture *tex = TexMan[hash];
+			FTexture *tex = TexMan.GetTexture(hash);
 			if (TEX_DWNAME(tex) == intname)
 			{
 				bool res = R_InstallSpriteLump (FTextureID(hash), tex->Name[4] - 'A', tex->Name[5], false, sprtemp, maxframe);

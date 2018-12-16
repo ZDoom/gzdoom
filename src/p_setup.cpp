@@ -3408,6 +3408,45 @@ void P_GetPolySpots (MapData * map, TArray<FNodeBuilder::FPolyStart> &spots, TAr
 //===========================================================================
 void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist);
 
+static void AddToList(uint8_t *hitlist, FTextureID texid, int bitmask)
+{
+	if (hitlist[texid.GetIndex()] & bitmask) return;	// already done, no need to process everything again.
+	hitlist[texid.GetIndex()] |= (uint8_t)bitmask;
+
+	for (auto anim : TexMan.mAnimations)
+	{
+		if (texid == anim->BasePic || (!anim->bDiscrete && anim->BasePic < texid && texid < anim->BasePic + anim->NumFrames))
+		{
+			for (int i = anim->BasePic.GetIndex(); i < anim->BasePic.GetIndex() + anim->NumFrames; i++)
+			{
+				hitlist[i] |= (uint8_t)bitmask;
+			}
+		}
+	}
+
+	auto switchdef = TexMan.FindSwitch(texid);
+	if (switchdef)
+	{
+		for (int i = 0; i < switchdef->NumFrames; i++)
+		{
+			hitlist[switchdef->frames[i].Texture.GetIndex()] |= (uint8_t)bitmask;
+		}
+		for (int i = 0; i < switchdef->PairDef->NumFrames; i++)
+		{
+			hitlist[switchdef->frames[i].Texture.GetIndex()] |= (uint8_t)bitmask;
+		}
+	}
+
+	auto adoor = TexMan.FindAnimatedDoor(texid);
+	if (adoor)
+	{
+		for (int i = 0; i < adoor->NumTextureFrames; i++)
+		{
+			hitlist[adoor->TextureFrames[i].GetIndex()] |= (uint8_t)bitmask;
+		}
+	}
+}
+
 static void P_PrecacheLevel()
 {
 	int i;
@@ -3443,15 +3482,15 @@ static void P_PrecacheLevel()
 
 	for (i = level.sectors.Size() - 1; i >= 0; i--)
 	{
-		hitlist[level.sectors[i].GetTexture(sector_t::floor).GetIndex()] |= FTextureManager::HIT_Flat;
-		hitlist[level.sectors[i].GetTexture(sector_t::ceiling).GetIndex()] |= FTextureManager::HIT_Flat;
+		AddToList(hitlist, level.sectors[i].GetTexture(sector_t::floor), FTextureManager::HIT_Flat);
+		AddToList(hitlist, level.sectors[i].GetTexture(sector_t::ceiling), FTextureManager::HIT_Flat);
 	}
 
 	for (i = level.sides.Size() - 1; i >= 0; i--)
 	{
-		hitlist[level.sides[i].GetTexture(side_t::top).GetIndex()] |= FTextureManager::HIT_Wall;
-		hitlist[level.sides[i].GetTexture(side_t::mid).GetIndex()] |= FTextureManager::HIT_Wall;
-		hitlist[level.sides[i].GetTexture(side_t::bottom).GetIndex()] |= FTextureManager::HIT_Wall;
+		AddToList(hitlist, level.sides[i].GetTexture(side_t::top), FTextureManager::HIT_Wall);
+		AddToList(hitlist, level.sides[i].GetTexture(side_t::mid), FTextureManager::HIT_Wall);
+		AddToList(hitlist, level.sides[i].GetTexture(side_t::bottom), FTextureManager::HIT_Wall);
 	}
 
 	// Sky texture is always present.
@@ -3463,22 +3502,22 @@ static void P_PrecacheLevel()
 
 	if (sky1texture.isValid())
 	{
-		hitlist[sky1texture.GetIndex()] |= FTextureManager::HIT_Sky;
+		AddToList(hitlist, sky1texture, FTextureManager::HIT_Sky);
 	}
 	if (sky2texture.isValid())
 	{
-		hitlist[sky2texture.GetIndex()] |= FTextureManager::HIT_Sky;
+		AddToList(hitlist, sky2texture, FTextureManager::HIT_Sky);
 	}
 
 	for (auto n : gameinfo.PrecachedTextures)
 	{
 		FTextureID tex = TexMan.CheckForTexture(n, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
-		if (tex.Exists()) hitlist[tex.GetIndex()] |= FTextureManager::HIT_Wall;
+		if (tex.Exists()) AddToList(hitlist, tex, FTextureManager::HIT_Wall);
 	}
 	for (unsigned i = 0; i < level.info->PrecacheTextures.Size(); i++)
 	{
 		FTextureID tex = TexMan.CheckForTexture(level.info->PrecacheTextures[i], ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
-		if (tex.Exists()) hitlist[tex.GetIndex()] |= FTextureManager::HIT_Wall;
+		if (tex.Exists()) AddToList(hitlist, tex, FTextureManager::HIT_Wall);
 	}
 
 	// This is just a temporary solution, until the hardware renderer's texture manager is in a better state.
@@ -3516,7 +3555,6 @@ void P_FreeLevelData ()
 	MapThingsUserDataIndex.Clear();
 	MapThingsUserData.Clear();
 	linemap.Clear();
-	FCanvasTextureInfo::EmptyList();
 	R_FreePastViewers();
 	P_ClearUDMFKeys();
 
@@ -3555,6 +3593,7 @@ void P_FreeLevelData ()
 
 
 	FBehavior::StaticUnloadModules ();
+	level.canvasTextureInfo.EmptyList();
 	level.sections.Clear();
 	level.segs.Clear();
 	level.sectors.Clear();

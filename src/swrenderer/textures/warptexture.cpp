@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2004-2006 Randy Heit
+** Copyright 2006-2018 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -35,67 +36,51 @@
 
 #include "doomtype.h"
 #include "r_utility.h"
-#include "textures/textures.h"
+#include "r_swtexture.h"
 #include "warpbuffer.h"
 #include "v_video.h"
 
 
 FWarpTexture::FWarpTexture (FTexture *source, int warptype)
-	: SourcePic (source)
+	: FSoftwareTexture (source)
 {
-	CopyInfo(source);
 	if (warptype == 2) SetupMultipliers(256, 128); 
 	SetupMultipliers(128, 128); // [mxd]
 	bWarped = warptype;
 }
 
-FWarpTexture::~FWarpTexture ()
+bool FWarpTexture::CheckModified (int style)
 {
-	Unload ();
-	delete SourcePic;
-}
-
-void FWarpTexture::Unload ()
-{
-	SourcePic->Unload ();
-	FWorldTexture::Unload();
-	FreeAllSpans();
-}
-
-bool FWarpTexture::CheckModified (FRenderStyle style)
-{
-	return screen->FrameTime != GenTime[!!(style.Flags & STYLEF_RedIsAlpha)];
+	return screen->FrameTime != GenTime[style];
 }
 
 const uint32_t *FWarpTexture::GetPixelsBgra()
 {
-	auto Pixels = GetPixels(DefaultRenderStyle());
-	if (PixelsBgra.empty() || GenTime[0] != GenTimeBgra)
+	uint64_t time = screen->FrameTime;
+	if (time != GenTime[2])
 	{
-		CreatePixelsBgraWithMipmaps();
-		for (int i = 0; i < Width * Height; i++)
-		{
-			if (Pixels[i] != 0)
-				PixelsBgra[i] = 0xff000000 | GPalette.BaseColors[Pixels[i]].d;
-			else
-				PixelsBgra[i] = 0;
-		}
-		GenerateBgraMipmapsFast();
-		GenTimeBgra = GenTime[0];
+		auto otherpix = FSoftwareTexture::GetPixelsBgra();
+		WarpedPixelsRgba.Resize(GetWidth() * GetHeight());
+		WarpBuffer(WarpedPixelsRgba.Data(), otherpix, GetWidth(), GetHeight(), WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->shaderspeed, bWarped);
+		FreeAllSpans();
+		GenTime[2] = time;
 	}
-	return PixelsBgra.data();
+	return WarpedPixelsRgba.Data();
 }
 
 
-uint8_t *FWarpTexture::MakeTexture(FRenderStyle style)
+const uint8_t *FWarpTexture::GetPixels(int index)
 {
 	uint64_t time = screen->FrameTime;
-	const uint8_t *otherpix = SourcePic->GetPixels(style);
-	auto Pixels = new uint8_t[Width * Height];
-	WarpBuffer(Pixels, otherpix, Width, Height, WidthOffsetMultiplier, HeightOffsetMultiplier, time, Speed, bWarped);
-	FreeAllSpans();
-	GenTime[!!(style.Flags & STYLEF_RedIsAlpha)] = time;
-	return Pixels;
+	if (time != GenTime[index])
+	{
+		const uint8_t *otherpix = FSoftwareTexture::GetPixels(index);
+		WarpedPixels[index].Resize(GetWidth() * GetHeight());
+		WarpBuffer(WarpedPixels[index].Data(), otherpix, GetWidth(), GetHeight(), WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->shaderspeed, bWarped);
+		FreeAllSpans();
+		GenTime[index] = time;
+	}
+	return WarpedPixels[index].Data();
 }
 
 // [mxd] Non power of 2 textures need different offset multipliers, otherwise warp animation won't sync across texture
@@ -103,10 +88,10 @@ void FWarpTexture::SetupMultipliers (int width, int height)
 {
 	WidthOffsetMultiplier = width;
 	HeightOffsetMultiplier = height;
-	int widthpo2 = NextPo2(Width);
-	int heightpo2 = NextPo2(Height);
-	if(widthpo2 != Width) WidthOffsetMultiplier = (int)(WidthOffsetMultiplier * ((float)widthpo2 / Width));
-	if(heightpo2 != Height) HeightOffsetMultiplier = (int)(HeightOffsetMultiplier * ((float)heightpo2 / Height));
+	int widthpo2 = NextPo2(GetWidth());
+	int heightpo2 = NextPo2(GetHeight());
+	if(widthpo2 != GetWidth()) WidthOffsetMultiplier = (int)(WidthOffsetMultiplier * ((float)widthpo2 / GetWidth()));
+	if(heightpo2 != GetHeight()) HeightOffsetMultiplier = (int)(HeightOffsetMultiplier * ((float)heightpo2 / GetHeight()));
 }
 
 int FWarpTexture::NextPo2 (int v)
@@ -119,24 +104,3 @@ int FWarpTexture::NextPo2 (int v)
 	v |= v >> 16;
 	return ++v;
 }
-
-//==========================================================================
-//
-// FMultiPatchTexture :: CopyTrueColorPixels
-//
-// True color texture generation must never hit the paletted path which
-// always warps the buffer.
-// As a result even CopyTrueColorTranslated must be overrideen here.
-//
-//==========================================================================
-
-int FWarpTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
-{
-	return SourcePic->CopyTrueColorPixels(bmp, x, y, rotate, inf);
-}
-
-int FWarpTexture::CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, PalEntry *remap, FCopyInfo *inf)
-{
-	return SourcePic->CopyTrueColorTranslated(bmp, x, y, rotate, remap, inf);
-}
-

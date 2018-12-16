@@ -1000,7 +1000,7 @@ bool GLWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 	if (gltexture != NULL)
 	{
 		bool normalize = false;
-		if (gltexture->tex->bHasCanvas) normalize = true;
+		if (gltexture->tex->isHardwareCanvas()) normalize = true;
 		else if (flags & GLWF_CLAMPY)
 		{
 			// for negative scales we can get negative coordinates here.
@@ -1029,7 +1029,7 @@ void GLWall::CheckTexturePosition(FTexCoordInfo *tci)
 {
 	float sub;
 
-	if (gltexture->tex->bHasCanvas) return;
+	if (gltexture->tex->isHardwareCanvas()) return;
 
 	// clamp texture coordinates to a reasonable range.
 	// Extremely large values can cause visual problems
@@ -1222,8 +1222,8 @@ void GLWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 		// Set up the top
 		//
 		//
-		FTexture * tex = TexMan(seg->sidedef->GetTexture(side_t::top));
-		if (!tex || tex->UseType==ETextureType::Null)
+		FTexture * tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::top), true);
+		if (!tex || !tex->isValid())
 		{
 			if (front->GetTexture(sector_t::ceiling) == skyflatnum &&
 				back->GetTexture(sector_t::ceiling) == skyflatnum && !wrap)
@@ -1258,8 +1258,8 @@ void GLWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 		// Set up the bottom
 		//
 		//
-		tex = TexMan(seg->sidedef->GetTexture(side_t::bottom));
-		if (!tex || tex->UseType==ETextureType::Null)
+		tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::bottom), true);
+		if (!tex || !tex->isValid())
 		{
 			// texture is missing - use the lower plane
 			bottomleft = MIN(bfh1,ffh1);
@@ -2057,7 +2057,7 @@ void GLWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 		sector_t *backsec = isportal? seg->linedef->getPortalDestination()->frontsector : backsector;
 
 		bool drawfogboundary = !di->isFullbrightScene() && hw_CheckFog(frontsector, backsec);
-		FTexture *tex = TexMan(seg->sidedef->GetTexture(side_t::mid));
+		FTexture *tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::mid), true);
 		if (tex != NULL)
 		{
 			if (i_compatflags & COMPATF_MASKEDMIDTEX)

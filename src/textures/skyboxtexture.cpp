@@ -24,6 +24,7 @@
 #include "w_wad.h"
 #include "textures.h"
 #include "skyboxtexture.h"
+#include "bitmap.h"
 
 
 
@@ -33,9 +34,17 @@
 //
 //-----------------------------------------------------------------------------
 
-FSkyBox::FSkyBox() 
-{ 
-	faces[0]=faces[1]=faces[2]=faces[3]=faces[4]=faces[5]=NULL; 
+FSkyBox::FSkyBox(const char *name)
+: FTexture(name)
+{
+	FTextureID texid = TexMan.CheckForTexture(name, ETextureType::Wall);
+	previous = nullptr;
+	if (texid.isValid())
+	{
+		previous = TexMan.GetTexture(texid);
+		CopySize(previous);
+	}
+	faces[0]=faces[1]=faces[2]=faces[3]=faces[4]=faces[5] = nullptr;
 	UseType = ETextureType::Override;
 	bSkybox = true;
 	fliptop = false;
@@ -47,21 +56,9 @@ FSkyBox::FSkyBox()
 //
 //-----------------------------------------------------------------------------
 
-FSkyBox::~FSkyBox()
+TArray<uint8_t> FSkyBox::Get8BitPixels(bool alphatex)
 {
-	// The faces are only referenced but not owned so don't delete them.
-}
-
-//-----------------------------------------------------------------------------
-//
-// If something attempts to use this as a texture just pass the information of the first face.
-//
-//-----------------------------------------------------------------------------
-
-const uint8_t *FSkyBox::GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out)
-{
-	if (faces[0]) return faces[0]->GetColumn(style, column, spans_out);
-	return NULL;
+	return previous->Get8BitPixels(alphatex);
 }
 
 //-----------------------------------------------------------------------------
@@ -70,10 +67,9 @@ const uint8_t *FSkyBox::GetColumn(FRenderStyle style, unsigned int column, const
 //
 //-----------------------------------------------------------------------------
 
-const uint8_t *FSkyBox::GetPixels (FRenderStyle style)
+FBitmap FSkyBox::GetBgraBitmap(PalEntry *p, int *trans)
 {
-	if (faces[0]) return faces[0]->GetPixels(style);
-	return NULL;
+	return previous->GetBgraBitmap(p, trans);
 }
 
 //-----------------------------------------------------------------------------
@@ -82,30 +78,7 @@ const uint8_t *FSkyBox::GetPixels (FRenderStyle style)
 //
 //-----------------------------------------------------------------------------
 
-int FSkyBox::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+FImageSource *FSkyBox::GetImage() const
 {
-	if (faces[0]) return faces[0]->CopyTrueColorPixels(bmp, x, y, rotate, inf);
-	return 0;
+	return previous->GetImage();
 }
-
-//-----------------------------------------------------------------------------
-//
-//
-//
-//-----------------------------------------------------------------------------
-
-bool FSkyBox::UseBasePalette() 
-{ 
-	return false; // not really but here it's not important.
-}	
-
-//-----------------------------------------------------------------------------
-//
-//
-//
-//-----------------------------------------------------------------------------
-
-void FSkyBox::Unload () 
-{
-}
-

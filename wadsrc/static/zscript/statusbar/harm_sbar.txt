@@ -1,6 +1,6 @@
 class HarmonyStatusBar : DoomStatusBar
 {
-	int scalestate;
+	double scaleFactor;
 	
 	override void Init()
 	{
@@ -10,22 +10,14 @@ class HarmonyStatusBar : DoomStatusBar
 		let tex = TexMan.CheckForTexture("MEDIA0", TexMan.Type_Sprite);
 		if (tex.isValid())
 		{
-			int size = TexMan.GetSize(tex);
 			Vector2 ssize = TexMan.GetScaledSize(tex);
-			if (ssize.X ~== size) scalestate = 1;
-			else scalestate = 0;
+			Vector2 facs = (ssize.X / 31, ssize.Y /  18);
+			scaleFactor = min(facs.X, facs.Y, 1);
 		}
-		else scalestate = 1;
 	}
 	
 	override void Draw (int state, double TicFrac)
 	{
-		if (!scalestate)
-		{
-			Super.Draw(state, TicFrac);
-			return;
-		}
-		
 		BaseStatusBar.Draw (state, TicFrac);
 
 		if (state == HUD_StatusBar)
@@ -44,13 +36,13 @@ class HarmonyStatusBar : DoomStatusBar
 	{
 		Vector2 iconbox = (40, 20);
 		// Draw health
-		DrawImage("MEDIA0", (20, -2), scale:(0.3, 0.3));
+		DrawImage("MEDIA0", (20, -2), scale:(scaleFactor, scaleFactor));
 		DrawString(mHUDFont, FormatNumber(CPlayer.health, 3), (44, -20));
 		
 		let armor = CPlayer.mo.FindInventory("BasicArmor");
 		if (armor != null && armor.Amount > 0)
 		{
-			DrawInventoryIcon(armor, (20, -22), scale:(0.3, 0.3));
+			DrawInventoryIcon(armor, (20, -22), scale:(scaleFactor, scaleFactor));
 			DrawString(mHUDFont, FormatNumber(armor.Amount, 3), (44, -40));
 		}
 		Inventory ammotype1, ammotype2;
@@ -58,13 +50,13 @@ class HarmonyStatusBar : DoomStatusBar
 		int invY = -20;
 		if (ammotype1 != null)
 		{
-			DrawInventoryIcon(ammotype1, (-14, -4), scale:(0.3, 0.3));
+			DrawInventoryIcon(ammotype1, (-14, -4), scale:(scaleFactor, scaleFactor));
 			DrawString(mHUDFont, FormatNumber(ammotype1.Amount, 3), (-30, -20), DI_TEXT_ALIGN_RIGHT);
 			invY -= 20;
 		}
 		if (ammotype2 != null && ammotype2 != ammotype1)
 		{
-			DrawInventoryIcon(ammotype2, (-14, invY + 17), scale:(0.3, 0.3));
+			DrawInventoryIcon(ammotype2, (-14, invY + 17), scale:(scaleFactor, scaleFactor));
 			DrawString(mHUDFont, FormatNumber(ammotype2.Amount, 3), (-30, invY), DI_TEXT_ALIGN_RIGHT);
 			invY -= 20;
 		}

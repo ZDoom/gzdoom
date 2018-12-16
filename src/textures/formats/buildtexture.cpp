@@ -44,6 +44,7 @@
 #include "textures/textures.h"
 #include "r_data/sprites.h"
 #include "resourcefiles/resourcefile.h"
+#include "image.h"
 
 
 //==========================================================================
@@ -52,14 +53,12 @@
 //
 //==========================================================================
 
-class FBuildTexture : public FWorldTexture
+class FBuildTexture : public FImageSource
 {
 public:
 	FBuildTexture (const FString &pathprefix, int tilenum, const uint8_t *pixels, int translation, int width, int height, int left, int top);
-	uint8_t *MakeTexture(FRenderStyle style) override;
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override;
-	bool UseBasePalette() override { return false; }
-	FTextureFormat GetFormat() override { return TEX_RGB; }
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	int CopyPixels(FBitmap *bmp, int conversion) override;
 
 protected:
 	const uint8_t *RawPixels;
@@ -76,32 +75,28 @@ protected:
 FBuildTexture::FBuildTexture(const FString &pathprefix, int tilenum, const uint8_t *pixels, int translation, int width, int height, int left, int top)
 : RawPixels (pixels), Translation(translation)
 {
-	PixelsAreStatic = 3;
 	Width = width;
 	Height = height;
-	_LeftOffset[1] = _LeftOffset[0] = left;
-	_TopOffset[1] = _TopOffset[0] = top;
-	CalcBitSize ();
-	Name.Format("%sBTIL%04d", pathprefix.GetChars(), tilenum);
-	UseType = ETextureType::Override;
+	LeftOffset = left;
+	TopOffset = top;
 }
 
-uint8_t *FBuildTexture::MakeTexture(FRenderStyle style)
+TArray<uint8_t> FBuildTexture::CreatePalettedPixels(int conversion)
 {
-	auto Pixels = new uint8_t[Width * Height];
+	TArray<uint8_t> Pixels(Width * Height, true);
 	FRemapTable *Remap = translationtables[TRANSLATION_Standard][Translation];
 	for (int i = 0; i < Width*Height; i++)
 	{
 		auto c = RawPixels[i];
-		Pixels[i] = (style.Flags & STYLEF_RedIsAlpha) ? Remap->Palette[c].Luminance() : Remap->Remap[c];
+		Pixels[i] = conversion == luminance ? Remap->Palette[c].Luminance() : Remap->Remap[c];
 	}
-	return (uint8_t*)Pixels;
+	return Pixels;
 }
 
-int FBuildTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FBuildTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
 	PalEntry *Remap = translationtables[TRANSLATION_Standard][Translation]->Palette;
-	bmp->CopyPixelData(x, y, RawPixels, Width, Height, Height, 1, rotate, Remap, inf);
+	bmp->CopyPixelData(0, 0, RawPixels, Width, Height, Height, 1, 0, Remap);
 	return -1;
 
 }
@@ -139,9 +134,12 @@ void FTextureManager::AddTiles (const FString &pathprefix, const void *tiles, in
 
 		if (width <= 0 || height <= 0) continue;
 
-		tex = new FBuildTexture (pathprefix, i, tiledata, translation, width, height, xoffs, yoffs);
+		tex = new FImageTexture(new FBuildTexture (pathprefix, i, tiledata, translation, width, height, xoffs, yoffs));
 		texnum = AddTexture (tex);
 		tiledata += size;
+		tex->Name.Format("%sBTIL%04d", pathprefix.GetChars(), i);
+		tex->UseType = ETextureType::Override;
+
 
 		// reactivate only if the texture counter works here.
 		//StartScreen->Progress();

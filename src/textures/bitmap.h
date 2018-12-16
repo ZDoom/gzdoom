@@ -56,6 +56,22 @@ enum
 	BLENDUNIT = (1<<BLENDBITS)
 };
 
+enum ColorType
+{
+	CF_RGB,
+	CF_RGBT,
+	CF_RGBA,
+	CF_IA,
+	CF_CMYK,
+	CF_YCbCr,
+	CF_BGR,
+	CF_BGRA,
+	CF_I16,
+	CF_RGB555,
+	CF_PalEntry
+};
+
+
 class FBitmap
 {
 protected:
@@ -90,7 +106,57 @@ public:
 		ClipRect.height = height;
 	}
 
-	virtual ~FBitmap()
+	FBitmap(const FBitmap &other) = delete;	// disallow because in nearly all cases this creates an unwanted copy.
+
+	FBitmap(FBitmap &&other)
+	{
+		data = other.data;
+		Pitch = other.Pitch;
+		Width = other.Width;
+		Height = other.Height;
+		FreeBuffer = other.FreeBuffer;
+		ClipRect = other.ClipRect;
+		other.data = nullptr;
+		other.FreeBuffer = false;
+	}
+
+	FBitmap &operator=(const FBitmap &other) = delete;	// disallow because in nearly all cases this creates an unwanted copy. Use Copy instead.
+
+	FBitmap &operator=(FBitmap &&other)
+	{
+		if (data != nullptr && FreeBuffer) delete[] data;
+		data = other.data;
+		Pitch = other.Pitch;
+		Width = other.Width;
+		Height = other.Height;
+		FreeBuffer = other.FreeBuffer;
+		ClipRect = other.ClipRect;
+		other.data = nullptr;
+		other.FreeBuffer = false;
+		return *this;
+	}
+
+	void Copy(const FBitmap &other, bool deep = true)
+	{
+		if (data != nullptr && FreeBuffer) delete[] data;
+		Pitch = other.Pitch;
+		Width = other.Width;
+		Height = other.Height;
+		FreeBuffer = deep;
+		ClipRect = other.ClipRect;
+		if (deep)
+		{
+			data = new uint8_t[Pitch * Height];
+			memcpy(data, other.data, Pitch * Height);
+		}
+		else
+		{
+			data = other.data;
+		}
+	}
+
+	
+	~FBitmap()
 	{
 		Destroy();
 	}
@@ -164,12 +230,22 @@ public:
 	void Zero();
 
 
-	virtual void CopyPixelDataRGB(int originx, int originy, const uint8_t *patch, int srcwidth, 
+	void CopyPixelDataRGB(int originx, int originy, const uint8_t *patch, int srcwidth,
 								int srcheight, int step_x, int step_y, int rotate, int ct, FCopyInfo *inf = NULL,
 		/* for PNG tRNS */		int r=0, int g=0, int b=0);
-	virtual void CopyPixelData(int originx, int originy, const uint8_t * patch, int srcwidth, int srcheight, 
+	void CopyPixelData(int originx, int originy, const uint8_t * patch, int srcwidth, int srcheight,
 								int step_x, int step_y, int rotate, PalEntry * palette, FCopyInfo *inf = NULL);
 
+
+	void Blit(int originx, int originy, const FBitmap &src, int width, int height, int rotate = 0, FCopyInfo *inf = NULL)
+	{
+		CopyPixelDataRGB(originx, originy, src.GetPixels(),  width, height, 4, src.GetWidth()*4, rotate, CF_BGRA, inf);
+	}
+
+	void Blit(int originx, int originy, const FBitmap &src, FCopyInfo *inf = NULL)
+	{
+		CopyPixelDataRGB(originx, originy, src.GetPixels(), src.GetWidth(), src.GetHeight(), 4, src.GetWidth()*4, 0, CF_BGRA, inf);
+	}
 
 };
 
@@ -310,21 +386,6 @@ struct cPalEntry
 	static __forceinline unsigned char B(const unsigned char * p) { return ((PalEntry*)p)->b; }
 	static __forceinline unsigned char A(const unsigned char * p, uint8_t x, uint8_t y, uint8_t z) { return ((PalEntry*)p)->a; }
 	static __forceinline int Gray(const unsigned char * p) { return (R(p)*77 + G(p)*143 + B(p)*36)>>8; }
-};
-
-enum ColorType
-{
-	CF_RGB,
-	CF_RGBT,
-	CF_RGBA,
-	CF_IA,
-	CF_CMYK,
-	CF_YCbCr,
-	CF_BGR,
-	CF_BGRA,
-	CF_I16,
-	CF_RGB555,
-	CF_PalEntry
 };
 
 enum EBlend

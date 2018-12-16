@@ -318,9 +318,6 @@ class FUniquePalette;
 class IHardwareTexture;
 class FTexture;
 
-// A canvas that represents the actual display. The video code is responsible
-// for actually implementing this. Built on top of SimpleCanvas, because it
-// needs a system memory buffer when buffered output is enabled.
 
 class DFrameBuffer
 {
@@ -427,7 +424,7 @@ public:
 	// Delete any resources that need to be deleted after restarting with a different IWAD
 	virtual void CleanForRestart() {}
 	virtual void SetTextureFilterMode() {}
-	virtual IHardwareTexture *CreateHardwareTexture(FTexture *tex) { return nullptr; }
+	virtual IHardwareTexture *CreateHardwareTexture() { return nullptr; }
 	virtual void PrecacheMaterial(FMaterial *mat, int translation) {}
 	virtual FModelRenderer *CreateModelRenderer(int mli) { return nullptr; }
 	virtual void UnbindTexUnit(int no) {}
@@ -471,7 +468,6 @@ public:
 	void InitPalette();
 	void SetClearColor(int color);
 	virtual uint32_t GetCaps();
-	virtual void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV);
 	virtual void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
 	virtual sector_t *RenderView(player_t *player) { return nullptr;  }
 

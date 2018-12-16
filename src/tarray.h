@@ -272,6 +272,18 @@ public:
         return i;
     }
 
+	template<class Func> 
+	unsigned int FindEx(Func compare) const
+	{
+		unsigned int i;
+		for (i = 0; i < Count; ++i)
+		{
+			if (compare(Array[i]))
+				break;
+		}
+		return i;
+	}
+
 	unsigned int Push (const T &item)
 	{
 		Grow (1);
@@ -1019,7 +1031,7 @@ protected:
 			if (!nold[i].IsNil())
 			{
 				Node *n = NewKey(nold[i].Pair.Key);
-				::new(&n->Pair.Value) VT(nold[i].Pair.Value);
+				::new(&n->Pair.Value) VT(std::move(nold[i].Pair.Value));
 				nold[i].~Node();
 			}
 		}

@@ -175,7 +175,7 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawTexture)
 
 	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 
-	FTexture *tex = animate ? TexMan(FSetTextureID(texid)) : TexMan[FSetTextureID(texid)];
+	FTexture *tex = TexMan.ByIndex(texid, animate);
 	VMVa_List args = { param + 4, 0, numparam - 5, va_reginfo + 4 };
 	screen->DrawTexture(tex, x, y, args);
 	return 0;
@@ -231,7 +231,7 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawShape)
 
 	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 
-	FTexture *tex = animate ? TexMan(FSetTextureID(texid)) : TexMan[FSetTextureID(texid)];
+	FTexture *tex = TexMan.ByIndex(texid, animate);
 	VMVa_List args = { param + 3, 0, numparam - 4, va_reginfo + 3 };
 
 	screen->DrawShape(tex, shape, args);
@@ -312,23 +312,23 @@ bool DFrameBuffer::SetTextureParms(DrawParms *parms, FTexture *img, double xx, d
 	{
 		parms->x = xx;
 		parms->y = yy;
-		parms->texwidth = img->GetScaledWidthDouble();
-		parms->texheight = img->GetScaledHeightDouble();
+		parms->texwidth = img->GetDisplayWidthDouble();
+		parms->texheight = img->GetDisplayHeightDouble();
 		if (parms->top == INT_MAX || parms->fortext)
 		{
-			parms->top = img->GetScaledTopOffset(0);
+			parms->top = img->GetDisplayTopOffset();
 		}
 		if (parms->left == INT_MAX || parms->fortext)
 		{
-			parms->left = img->GetScaledLeftOffset(0);
+			parms->left = img->GetDisplayLeftOffset();
 		}
 		if (parms->destwidth == INT_MAX || parms->fortext)
 		{
-			parms->destwidth = img->GetScaledWidthDouble();
+			parms->destwidth = img->GetDisplayWidthDouble();
 		}
 		if (parms->destheight == INT_MAX || parms->fortext)
 		{
-			parms->destheight = img->GetScaledHeightDouble();
+			parms->destheight = img->GetDisplayHeightDouble();
 		}
 
 		switch (parms->cleanmode)
@@ -470,7 +470,7 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 
 	if (!fortext)
 	{
-		if (img == NULL || img->UseType == ETextureType::Null)
+		if (img == NULL || !img->isValid())
 		{
 			ListEnd(tags);
 			return false;
@@ -650,8 +650,8 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 				assert(fortext == false);
 				if (img == NULL) return false;
 				parms->cleanmode = DTA_Fullscreen;
-				parms->virtWidth = img->GetScaledWidthDouble();
-				parms->virtHeight = img->GetScaledHeightDouble();
+				parms->virtWidth = img->GetDisplayWidthDouble();
+				parms->virtHeight = img->GetDisplayHeightDouble();
 			}
 			break;
 
@@ -697,19 +697,19 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 			break;
 
 		case DTA_SrcX:
-			parms->srcx = ListGetDouble(tags) / img->GetScaledWidthDouble();
+			parms->srcx = ListGetDouble(tags) / img->GetDisplayWidthDouble();
 			break;
 
 		case DTA_SrcY:
-			parms->srcy = ListGetDouble(tags) / img->GetScaledHeightDouble();
+			parms->srcy = ListGetDouble(tags) / img->GetDisplayHeightDouble();
 			break;
 
 		case DTA_SrcWidth:
-			parms->srcwidth = ListGetDouble(tags) / img->GetScaledWidthDouble();
+			parms->srcwidth = ListGetDouble(tags) / img->GetDisplayWidthDouble();
 			break;
 
 		case DTA_SrcHeight:
-			parms->srcheight = ListGetDouble(tags) / img->GetScaledHeightDouble();
+			parms->srcheight = ListGetDouble(tags) / img->GetDisplayHeightDouble();
 			break;
 
 		case DTA_TopOffset:
@@ -741,8 +741,8 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 			if (fortext) return false;
 			if (ListGetInt(tags))
 			{
-				parms->left = img->GetScaledWidthDouble() * 0.5;
-				parms->top = img->GetScaledHeightDouble() * 0.5;
+				parms->left = img->GetDisplayWidthDouble() * 0.5;
+				parms->top = img->GetDisplayHeightDouble() * 0.5;
 			}
 			break;
 
@@ -751,8 +751,8 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 			if (fortext) return false;
 			if (ListGetInt(tags))
 			{
-				parms->left = img->GetScaledWidthDouble() * 0.5;
-				parms->top = img->GetScaledHeightDouble();
+				parms->left = img->GetDisplayWidthDouble() * 0.5;
+				parms->top = img->GetDisplayHeightDouble();
 			}
 			break;
 
@@ -1304,22 +1304,22 @@ void DFrameBuffer::DrawFrame (int left, int top, int width, int height)
 	int bottom = top + height;
 
 	// Draw top and bottom sides.
-	p = TexMan[border->t];
-	FlatFill(left, top - p->GetHeight(), right, top, p, true);
-	p = TexMan[border->b];
-	FlatFill(left, bottom, right, bottom + p->GetHeight(), p, true);
+	p = TexMan.GetTextureByName(border->t);
+	FlatFill(left, top - p->GetDisplayHeight(), right, top, p, true);
+	p = TexMan.GetTextureByName(border->b);
+	FlatFill(left, bottom, right, bottom + p->GetDisplayHeight(), p, true);
 
 	// Draw left and right sides.
-	p = TexMan[border->l];
-	FlatFill(left - p->GetWidth(), top, left, bottom, p, true);
-	p = TexMan[border->r];
-	FlatFill(right, top, right + p->GetWidth(), bottom, p, true);
+	p = TexMan.GetTextureByName(border->l);
+	FlatFill(left - p->GetDisplayWidth(), top, left, bottom, p, true);
+	p = TexMan.GetTextureByName(border->r);
+	FlatFill(right, top, right + p->GetDisplayWidth(), bottom, p, true);
 
 	// Draw beveled corners.
-	DrawTexture (TexMan[border->tl], left-offset, top-offset, TAG_DONE);
-	DrawTexture (TexMan[border->tr], left+width, top-offset, TAG_DONE);
-	DrawTexture (TexMan[border->bl], left-offset, top+height, TAG_DONE);
-	DrawTexture (TexMan[border->br], left+width, top+height, TAG_DONE);
+	DrawTexture (TexMan.GetTextureByName(border->tl), left-offset, top-offset, TAG_DONE);
+	DrawTexture (TexMan.GetTextureByName(border->tr), left+width, top-offset, TAG_DONE);
+	DrawTexture (TexMan.GetTextureByName(border->bl), left-offset, top+height, TAG_DONE);
+	DrawTexture (TexMan.GetTextureByName(border->br), left+width, top+height, TAG_DONE);
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, DrawFrame)
@@ -1354,7 +1354,7 @@ void DFrameBuffer::DrawBorder (int x1, int y1, int x2, int y2)
 
 	if (picnum.isValid())
 	{
-		FlatFill (x1, y1, x2, y2, TexMan(picnum));
+		FlatFill (x1, y1, x2, y2, TexMan.GetTexture(picnum, false));
 	}
 	else
 	{

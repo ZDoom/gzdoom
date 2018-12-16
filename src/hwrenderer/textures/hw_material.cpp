@@ -130,25 +130,6 @@ void IHardwareTexture::Resize(int swidth, int sheight, int width, int height, un
 
 //===========================================================================
 //
-//
-//
-//===========================================================================
-IHardwareTexture * FMaterial::ValidateSysTexture(FTexture * tex, bool expand)
-{
-	if (tex	&& tex->UseType!=ETextureType::Null)
-	{
-		IHardwareTexture *gltex = tex->SystemTexture[expand];
-		if (gltex == nullptr) 
-		{
-			gltex = tex->SystemTexture[expand] = screen->CreateHardwareTexture(tex);
-		}
-		return gltex;
-	}
-	return nullptr;
-}
-
-//===========================================================================
-//
 // Constructor
 //
 //===========================================================================
@@ -160,16 +141,15 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	mShaderIndex = SHADER_Default;
 	sourcetex = tex = tx;
 
-	if (tx->UseType == ETextureType::SWCanvas && tx->WidthBits == 0)
+	if (tx->UseType == ETextureType::SWCanvas && static_cast<FWrapperTexture*>(tx)->GetColorFormat() == 0)
 	{
 		mShaderIndex = SHADER_Paletted;
 	}
-	else if (tx->bWarped)
+	else if (tx->isWarped())
 	{
-		mShaderIndex = tx->bWarped; // This picks SHADER_Warp1 or SHADER_Warp2
-		tx->shaderspeed = static_cast<FWarpTexture*>(tx)->GetSpeed();
+		mShaderIndex = tx->isWarped(); // This picks SHADER_Warp1 or SHADER_Warp2
 	}
-	else if (tx->bHasCanvas)
+	else if (tx->isHardwareCanvas())
 	{
 		if (tx->shaderindex >= FIRST_USER_SHADER)
 		{
@@ -183,7 +163,6 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		{
 			for (auto &texture : { tx->Normal, tx->Specular })
 			{
-				ValidateSysTexture(texture, expanded);
 				mTextureLayers.Push(texture);
 			}
 			mShaderIndex = SHADER_Specular;
@@ -192,7 +171,6 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		{
 			for (auto &texture : { tx->Normal, tx->Metallic, tx->Roughness, tx->AmbientOcclusion })
 			{
-				ValidateSysTexture(texture, expanded);
 				mTextureLayers.Push(texture);
 			}
 			mShaderIndex = SHADER_PBR;
@@ -201,7 +179,6 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		tx->CreateDefaultBrightmap();
 		if (tx->Brightmap)
 		{
-			ValidateSysTexture(tx->Brightmap, expanded);
 			mTextureLayers.Push(tx->Brightmap);
 			if (mShaderIndex == SHADER_Specular)
 				mShaderIndex = SHADER_SpecularBrightmap;
@@ -219,16 +196,12 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 				for (auto &texture : tx->CustomShaderTextures)
 				{
 					if (texture == nullptr) continue;
-					ValidateSysTexture(texture, expanded);
 					mTextureLayers.Push(texture);
 				}
 				mShaderIndex = tx->shaderindex;
 			}
 		}
 	}
-	mBaseLayer = ValidateSysTexture(tx, expanded);
-
-
 	mWidth = tx->GetWidth();
 	mHeight = tx->GetHeight();
 	mLeftOffset = tx->GetLeftOffset(0);	// These only get used by decals and decals should not use renderer-specific offsets.
@@ -237,14 +210,6 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	mRenderHeight = tx->GetScaledHeight();
 	mSpriteU[0] = mSpriteV[0] = 0.f;
 	mSpriteU[1] = mSpriteV[1] = 1.f;
-
-	FTexture *basetex = tx->GetRedirect();
-	// allow the redirect only if the texture is not expanded or the scale matches.
-	if (!expanded || (tx->Scale.X == basetex->Scale.X && tx->Scale.Y == basetex->Scale.Y))
-	{
-		sourcetex = basetex;
-		mBaseLayer = ValidateSysTexture(basetex, expanded);
-	}
 
 	mExpanded = expanded;
 	if (expanded)
@@ -265,7 +230,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	mMaxBound = -1;
 	mMaterials.Push(this);
 	tx->Material[expanded] = this;
-	if (tx->bHasCanvas) tx->bTranslucent = 0;
+	if (tx->isHardwareCanvas()) tx->bTranslucent = 0;
 }
 
 //===========================================================================
@@ -350,19 +315,19 @@ void FMaterial::SetSpriteRect()
 
 bool FMaterial::TrimBorders(uint16_t *rect)
 {
-	int w;
-	int h;
 
-	unsigned char *buffer = sourcetex->CreateTexBuffer(0, w, h);
+	auto texbuffer = sourcetex->CreateTexBuffer(0);
+	int w = texbuffer.mWidth;
+	int h = texbuffer.mHeight;
+	auto Buffer = texbuffer.mBuffer;
 
-	if (buffer == NULL) 
+	if (texbuffer.mBuffer == nullptr) 
 	{
 		return false;
 	}
 	if (w != mWidth || h != mHeight)
 	{
 		// external Hires replacements cannot be trimmed.
-		delete [] buffer;
 		return false;
 	}
 
@@ -374,14 +339,13 @@ bool FMaterial::TrimBorders(uint16_t *rect)
 		rect[1] = 0;
 		rect[2] = 1;
 		rect[3] = 1;
-		delete[] buffer;
 		return true;
 	}
 	int first, last;
 
 	for(first = 0; first < size; first++)
 	{
-		if (buffer[first*4+3] != 0) break;
+		if (Buffer[first*4+3] != 0) break;
 	}
 	if (first >= size)
 	{
@@ -390,13 +354,12 @@ bool FMaterial::TrimBorders(uint16_t *rect)
 		rect[1] = 0;
 		rect[2] = 1;
 		rect[3] = 1;
-		delete [] buffer;
 		return true;
 	}
 
 	for(last = size-1; last >= first; last--)
 	{
-		if (buffer[last*4+3] != 0) break;
+		if (Buffer[last*4+3] != 0) break;
 	}
 
 	rect[1] = first / w;
@@ -405,7 +368,7 @@ bool FMaterial::TrimBorders(uint16_t *rect)
 	rect[0] = 0;
 	rect[2] = w;
 
-	unsigned char *bufferoff = buffer + (rect[1] * w * 4);
+	unsigned char *bufferoff = Buffer + (rect[1] * w * 4);
 	h = rect[3];
 
 	for(int x = 0; x < w; x++)
@@ -425,14 +388,36 @@ outl:
 		{
 			if (bufferoff[(x+y*w)*4+3] != 0) 
 			{
-				delete [] buffer;
 				return true;
 			}
 		}
 		rect[2]--;
 	}
-	delete [] buffer;
 	return true;
+}
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
+
+IHardwareTexture *FMaterial::GetLayer(int i, int translation, FTexture **pLayer)
+{
+	FTexture *layer = i == 0 ? tex : mTextureLayers[i - 1];
+	if (pLayer) *pLayer = layer;
+	
+	if (layer && layer->UseType!=ETextureType::Null)
+	{
+		IHardwareTexture *hwtex = layer->SystemTextures.GetHardwareTexture(translation, mExpanded);
+		if (hwtex == nullptr) 
+		{
+			hwtex = screen->CreateHardwareTexture();
+			layer->SystemTextures.AddHardwareTexture(translation, mExpanded, hwtex);
+ 		}
+		return hwtex;
+	}
+	return nullptr;
 }
 
 //===========================================================================
@@ -452,7 +437,7 @@ void FMaterial::Precache()
 //===========================================================================
 void FMaterial::PrecacheList(SpriteHits &translations)
 {
-	if (mBaseLayer != nullptr) mBaseLayer->CleanUnused(translations);
+	tex->SystemTextures.CleanUnused(translations, mExpanded);
 	SpriteHits::Iterator it(translations);
 	SpriteHits::Pair *pair;
 	while(it.NextPair(pair)) screen->PrecacheMaterial(this, pair->Key);
@@ -484,19 +469,19 @@ int FMaterial::GetAreas(FloatRect **pAreas) const
 //
 //==========================================================================
 
-FMaterial * FMaterial::ValidateTexture(FTexture * tex, bool expand)
+FMaterial * FMaterial::ValidateTexture(FTexture * tex, bool expand, bool create)
 {
 again:
-	if (tex	&& tex->UseType!=ETextureType::Null)
+	if (tex	&& tex->isValid())
 	{
 		if (tex->bNoExpand) expand = false;
 
-		FMaterial *gltex = tex->Material[expand];
-		if (gltex == NULL) 
+		FMaterial *hwtex = tex->Material[expand];
+		if (hwtex == NULL && create)
 		{
 			if (expand)
 			{
-				if (tex->bWarped || tex->bHasCanvas || tex->shaderindex >= FIRST_USER_SHADER || (tex->shaderindex >= SHADER_Specular && tex->shaderindex <= SHADER_PBRBrightmap))
+				if (tex->isWarped() || tex->isHardwareCanvas() || tex->shaderindex >= FIRST_USER_SHADER || (tex->shaderindex >= SHADER_Specular && tex->shaderindex <= SHADER_PBRBrightmap))
 				{
 					tex->bNoExpand = true;
 					goto again;
@@ -511,84 +496,14 @@ again:
 					goto again;
 				}
 			}
-			gltex = new FMaterial(tex, expand);
+			hwtex = new FMaterial(tex, expand);
 		}
-		return gltex;
+		return hwtex;
 	}
 	return NULL;
 }
 
-FMaterial * FMaterial::ValidateTexture(FTextureID no, bool expand, bool translate)
+FMaterial * FMaterial::ValidateTexture(FTextureID no, bool expand, bool translate, bool create)
 {
-	return ValidateTexture(translate? TexMan(no) : TexMan[no], expand);
+	return ValidateTexture(TexMan.GetTexture(no, translate), expand, create);
 }
-
-
-//==========================================================================
-//
-// Flushes all hardware dependent data
-//
-//==========================================================================
-
-void FMaterial::FlushAll()
-{
-	for(int i=mMaterials.Size()-1;i>=0;i--)
-	{
-		mMaterials[i]->mBaseLayer->Clean(true);
-	}
-	// This is for shader layers. All shader layers must be managed by the texture manager
-	// so this will catch everything.
-	for(int i=TexMan.NumTextures()-1;i>=0;i--)
-	{
-		for (int j = 0; j < 2; j++)
-		{
-			auto gltex = TexMan.ByIndex(i)->SystemTexture[j];
-			if (gltex != nullptr) gltex->Clean(true);
-		}
-	}
-}
-
-void FMaterial::Clean(bool f)
-{
-	// This somehow needs to deal with the other layers as well, but they probably need some form of reference counting to work properly...
-	mBaseLayer->Clean(f);
-}
-
-//==========================================================================
-//
-// Prints some texture info
-//
-//==========================================================================
-
-CCMD(textureinfo)
-{
-	int cntt = 0;
-	for (int i = 0; i < TexMan.NumTextures(); i++)
-	{
-		FTexture *tex = TexMan.ByIndex(i);
-		if (tex->SystemTexture[0] || tex->SystemTexture[1] || tex->Material[0] || tex->Material[1])
-		{
-			int lump = tex->GetSourceLump();
-			Printf(PRINT_LOG, "Texture '%s' (Index %d, Lump %d, Name '%s'):\n", tex->Name.GetChars(), i, lump, Wads.GetLumpFullName(lump));
-			if (tex->Material[0])
-			{
-				Printf(PRINT_LOG, "in use (normal)\n");
-			}
-			else if (tex->SystemTexture[0])
-			{
-				Printf(PRINT_LOG, "referenced (normal)\n");
-			}
-			if (tex->Material[1])
-			{
-				Printf(PRINT_LOG, "in use (expanded)\n");
-			}
-			else if (tex->SystemTexture[1])
-			{
-				Printf(PRINT_LOG, "referenced (normal)\n");
-			}
-			cntt++;
-		}
-	}
-	Printf(PRINT_LOG, "%d system textures\n", cntt);
-}
-

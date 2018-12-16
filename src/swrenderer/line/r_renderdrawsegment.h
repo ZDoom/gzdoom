@@ -55,7 +55,7 @@ namespace swrenderer
 		float rw_light = 0.0f;
 		float rw_lightstep = 0.0f;
 		fixed_t rw_offset = 0;
-		FTexture *rw_pic = nullptr;
+		FSoftwareTexture *rw_pic = nullptr;
 
 		ProjectedWallLine wallupper;
 		ProjectedWallLine walllower;

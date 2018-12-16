@@ -162,11 +162,12 @@ namespace swrenderer
 		if (curline->sidedef->GetTexture(side_t::mid).isNull())
 			return false;
 
-		FTexture *tex = TexMan(curline->sidedef->GetTexture(side_t::mid), true);
+		FTexture *ttex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::mid), true);
 		if (i_compatflags & COMPATF_MASKEDMIDTEX)
 		{
-			tex = tex->GetRawTexture();
+			ttex = ttex->GetRawTexture();
 		}
+		FSoftwareTexture *tex = ttex->GetSoftwareTexture();
 
 		const short *mfloorclip = ds->sprbottomclip - ds->x1;
 		const short *mceilingclip = ds->sprtopclip - ds->x1;
@@ -221,7 +222,7 @@ namespace swrenderer
 				MaskedScaleY = -MaskedScaleY;
 				sprflipvert = true;
 			}
-			if (tex->bWorldPanning)
+			if (tex->useWorldPanning())
 			{
 				// rowoffset is added before the multiply so that the masked texture will
 				// still be positioned in world units rather than texels.
@@ -354,7 +355,7 @@ namespace swrenderer
 		}
 		else
 		{ // Texture does wrap vertically.
-			if (tex->bWorldPanning)
+			if (tex->useWorldPanning())
 			{
 				// rowoffset is added before the multiply so that the masked texture will
 				// still be positioned in world units rather than texels.
@@ -459,8 +460,8 @@ namespace swrenderer
 			scaledside = rover->master->sidedef[0];
 			scaledpart = side_t::mid;
 		}
-		xscale = rw_pic->Scale.X * scaledside->GetTextureXScale(scaledpart);
-		yscale = rw_pic->Scale.Y * scaledside->GetTextureYScale(scaledpart);
+		xscale = rw_pic->GetScale().X * scaledside->GetTextureXScale(scaledpart);
+		yscale = rw_pic->GetScale().Y * scaledside->GetTextureYScale(scaledpart);
 
 		double rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureYOffset(side_t::mid);
 		double planez = rover->model->GetPlaneTexZ(sector_t::ceiling);
@@ -470,7 +471,7 @@ namespace swrenderer
 			rowoffset += rw_pic->GetHeight();
 		}
 		double texturemid = (planez - Thread->Viewport->viewpoint.Pos.Z) * yscale;
-		if (rw_pic->bWorldPanning)
+		if (rw_pic->useWorldPanning())
 		{
 			// rowoffset is added before the multiply so that the masked texture will
 			// still be positioned in world units rather than texels.
@@ -531,7 +532,7 @@ namespace swrenderer
 	// kg3D - walls of fake floors
 	void RenderDrawSegment::RenderFakeWallRange(DrawSegment *ds, int x1, int x2, int wallshade)
 	{
-		FTexture *const DONT_DRAW = ((FTexture*)(intptr_t)-1);
+		FSoftwareTexture *const DONT_DRAW = ((FSoftwareTexture*)(intptr_t)-1);
 		int i, j;
 		F3DFloor *rover, *fover = nullptr;
 		int passed, last;
@@ -637,17 +638,22 @@ namespace swrenderer
 					{	// don't ever draw (but treat as something has been found)
 						rw_pic = DONT_DRAW;
 					}
-					else if (fover->flags & FF_UPPERTEXTURE)
-					{
-						rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top), true);
-					}
-					else if (fover->flags & FF_LOWERTEXTURE)
-					{
-						rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom), true);
-					}
 					else
 					{
-						rw_pic = TexMan(fover->master->sidedef[0]->GetTexture(side_t::mid), true);
+						FTexture *rw_tex = nullptr;
+						if (fover->flags & FF_UPPERTEXTURE)
+						{
+							rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::top), true);
+						}
+						else if (fover->flags & FF_LOWERTEXTURE)
+						{
+							rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::bottom), true);
+						}
+						else
+						{
+							rw_tex = TexMan.GetPalettedTexture(fover->master->sidedef[0]->GetTexture(side_t::mid), true);
+						}
+						rw_pic = rw_tex && rw_tex->isValid() ? rw_tex->GetSoftwareTexture() : nullptr;
 					}
 				}
 				else if (frontsector->e->XFloor.ffloors.Size())
@@ -696,18 +702,20 @@ namespace swrenderer
 				if (!rw_pic)
 				{
 					fover = nullptr;
+					FTexture *rw_tex;
 					if (rover->flags & FF_UPPERTEXTURE)
 					{
-						rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top), true);
+						rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::top), true);
 					}
 					else if (rover->flags & FF_LOWERTEXTURE)
 					{
-						rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom), true);
+						rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::bottom), true);
 					}
 					else
 					{
-						rw_pic = TexMan(rover->master->sidedef[0]->GetTexture(side_t::mid), true);
+						rw_tex = TexMan.GetPalettedTexture(rover->master->sidedef[0]->GetTexture(side_t::mid), true);
 					}
+					rw_pic = rw_tex && rw_tex->isValid() ? rw_tex->GetSoftwareTexture() : nullptr;
 				}
 				// correct colors now
 				FDynamicColormap *basecolormap = nullptr;
@@ -819,17 +827,22 @@ namespace swrenderer
 					{
 						rw_pic = DONT_DRAW;	// don't ever draw (but treat as something has been found)
 					}
-					else if (fover->flags & FF_UPPERTEXTURE)
-					{
-						rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top), true);
-					}
-					else if (fover->flags & FF_LOWERTEXTURE)
-					{
-						rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom), true);
-					}
 					else
 					{
-						rw_pic = TexMan(fover->master->sidedef[0]->GetTexture(side_t::mid), true);
+						FTexture *rw_tex;
+						if (fover->flags & FF_UPPERTEXTURE)
+						{
+							rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::top), true);
+						}
+						else if (fover->flags & FF_LOWERTEXTURE)
+						{
+							rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::bottom), true);
+						}
+						else
+						{
+							rw_tex = TexMan.GetPalettedTexture(fover->master->sidedef[0]->GetTexture(side_t::mid), true);
+						}
+						rw_pic = rw_tex && rw_tex->isValid() ? rw_tex->GetSoftwareTexture() : nullptr;
 					}
 				}
 				else if (frontsector->e->XFloor.ffloors.Size())
@@ -875,18 +888,20 @@ namespace swrenderer
 				if (rw_pic == nullptr)
 				{
 					fover = nullptr;
+					FTexture *rw_tex;
 					if (rover->flags & FF_UPPERTEXTURE)
 					{
-						rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top), true);
+						rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::top), true);
 					}
 					else if (rover->flags & FF_LOWERTEXTURE)
 					{
-						rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom), true);
+						rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::bottom), true);
 					}
 					else
 					{
-						rw_pic = TexMan(rover->master->sidedef[0]->GetTexture(side_t::mid), true);
+						rw_tex = TexMan.GetPalettedTexture(rover->master->sidedef[0]->GetTexture(side_t::mid), true);
 					}
+					rw_pic = rw_tex && rw_tex->isValid() ? rw_tex->GetSoftwareTexture() : nullptr;
 				}
 				// correct colors now
 				FDynamicColormap *basecolormap = nullptr;

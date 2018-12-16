@@ -53,6 +53,8 @@
 #include "w_wad.h"
 #include "bitmap.h"
 #include "v_video.h"
+#include "imagehelpers.h"
+#include "image.h"
 
 // Since we want this to compile under Linux too, we need to define this
 // stuff ourselves instead of including a DirectX header.
@@ -151,7 +153,7 @@ struct DDSFileHeader
 //
 //==========================================================================
 
-class FDDSTexture : public FWorldTexture
+class FDDSTexture : public FImageSource
 {
 	enum
 	{
@@ -162,8 +164,7 @@ class FDDSTexture : public FWorldTexture
 public:
 	FDDSTexture (FileReader &lump, int lumpnum, void *surfdesc);
 
-	FTextureFormat GetFormat () override;
-	uint8_t *MakeTexture(FRenderStyle style) override;
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
 
 protected:
 	uint32_t Format;
@@ -182,8 +183,7 @@ protected:
 	void DecompressDXT3 (FileReader &lump, bool premultiplied, uint8_t *buffer, int pixelmode);
 	void DecompressDXT5 (FileReader &lump, bool premultiplied, uint8_t *buffer, int pixelmode);
 
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
-	bool UseBasePalette();
+	int CopyPixels(FBitmap *bmp, int conversion) override;
 
 	friend class FTexture;
 };
@@ -218,7 +218,7 @@ static bool CheckDDS (FileReader &file)
 //
 //==========================================================================
 
-FTexture *DDSTexture_TryCreate (FileReader &data, int lumpnum)
+FImageSource *DDSImage_TryCreate (FileReader &data, int lumpnum)
 {
 	union
 	{
@@ -283,16 +283,13 @@ FTexture *DDSTexture_TryCreate (FileReader &data, int lumpnum)
 //==========================================================================
 
 FDDSTexture::FDDSTexture (FileReader &lump, int lumpnum, void *vsurfdesc)
-: FWorldTexture(NULL, lumpnum)
+: FImageSource(lumpnum)
 {
 	DDSURFACEDESC2 *surf = (DDSURFACEDESC2 *)vsurfdesc;
 
-	UseType = ETextureType::MiscPatch;
 	bMasked = false;
-
 	Width = uint16_t(surf->Width);
 	Height = uint16_t(surf->Height);
-	CalcBitSize ();
 
 	if (surf->PixelFormat.Flags & DDPF_FOURCC)
 	{
@@ -375,54 +372,30 @@ void FDDSTexture::CalcBitShift (uint32_t mask, uint8_t *lshiftp, uint8_t *rshift
 //
 //==========================================================================
 
-FTextureFormat FDDSTexture::GetFormat()
-{
-#if 0
-	switch (Format)
-	{
-	case ID_DXT1:	return TEX_DXT1;
-	case ID_DXT2:	return TEX_DXT2;
-	case ID_DXT3:	return TEX_DXT3;
-	case ID_DXT4:	return TEX_DXT4;
-	case ID_DXT5:	return TEX_DXT5;
-	default:		return TEX_RGB;
-	}
-#else
-	// For now, create a true color texture to preserve all colors.
-	return TEX_RGB;
-#endif
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-uint8_t *FDDSTexture::MakeTexture (FRenderStyle style)
+TArray<uint8_t> FDDSTexture::CreatePalettedPixels(int conversion)
 {
 	auto lump = Wads.OpenLumpReader (SourceLump);
 
-	auto Pixels = new uint8_t[Width*Height];
+	TArray<uint8_t> Pixels(Width*Height, true);
 
 	lump.Seek (sizeof(DDSURFACEDESC2) + 4, FileReader::SeekSet);
 
-	int pmode = (style.Flags & STYLEF_RedIsAlpha) ? PIX_Alphatex : PIX_Palette;
+	int pmode = conversion == luminance ? PIX_Alphatex : PIX_Palette;
 	if (Format >= 1 && Format <= 4)		// RGB: Format is # of bytes per pixel
 	{
-		ReadRGB (lump, Pixels, pmode);
+		ReadRGB (lump, Pixels.Data(), pmode);
 	}
 	else if (Format == ID_DXT1)
 	{
-		DecompressDXT1 (lump, Pixels, pmode);
+		DecompressDXT1 (lump, Pixels.Data(), pmode);
 	}
 	else if (Format == ID_DXT3 || Format == ID_DXT2)
 	{
-		DecompressDXT3 (lump, Format == ID_DXT2, Pixels, pmode);
+		DecompressDXT3 (lump, Format == ID_DXT2, Pixels.Data(), pmode);
 	}
 	else if (Format == ID_DXT5 || Format == ID_DXT4)
 	{
-		DecompressDXT5 (lump, Format == ID_DXT4, Pixels, pmode);
+		DecompressDXT5 (lump, Format == ID_DXT4, Pixels.Data(), pmode);
 	}
 	return Pixels;
 }
@@ -471,7 +444,7 @@ void FDDSTexture::ReadRGB (FileReader &lump, uint8_t *buffer, int pixelmode)
 					uint32_t g = (c & GMask) << GShiftL; g |= g >> GShiftR;
 					uint32_t b = (c & BMask) << BShiftL; b |= b >> BShiftR;
 					uint32_t a = (c & AMask) << AShiftL; a |= a >> AShiftR;
-					*pixelp = RGBToPalette(pixelmode == PIX_Alphatex, r >> 24, g >> 24, b >> 24, a >> 24);
+					*pixelp = ImageHelpers::RGBToPalette(pixelmode == PIX_Alphatex, r >> 24, g >> 24, b >> 24, a >> 24);
 				}
 				else
 				{
@@ -486,9 +459,9 @@ void FDDSTexture::ReadRGB (FileReader &lump, uint8_t *buffer, int pixelmode)
 				uint32_t g = (c & GMask) << GShiftL; g |= g >> GShiftR;
 				uint32_t b = (c & BMask) << BShiftL; b |= b >> BShiftR;
 				uint32_t a = (c & AMask) << AShiftL; a |= a >> AShiftR;
-				pixelp[0] = (uint8_t)(r>>24);
+				pixelp[0] = (uint8_t)(b>>24);
 				pixelp[1] = (uint8_t)(g>>24);
-				pixelp[2] = (uint8_t)(b>>24);
+				pixelp[2] = (uint8_t)(r>>24);
 				pixelp[3] = (uint8_t)(a>>24);
 				pixelp+=4;
 			}
@@ -557,7 +530,7 @@ void FDDSTexture::DecompressDXT1 (FileReader &lump, uint8_t *buffer, int pixelmo
 			// Pick colors from the palette for each of the four colors.
 			if (pixelmode != PIX_ARGB) for (i = 3; i >= 0; --i)
 			{
-				palcol[i] = RGBToPalette(pixelmode == PIX_Alphatex, color[i]);
+				palcol[i] = ImageHelpers::RGBToPalette(pixelmode == PIX_Alphatex, color[i]);
 			}
 			// Now decode this 4x4 block to the pixel buffer.
 			for (y = 0; y < 4; ++y)
@@ -581,9 +554,9 @@ void FDDSTexture::DecompressDXT1 (FileReader &lump, uint8_t *buffer, int pixelmo
 					else
 					{
 						uint8_t * tcp = &buffer[(ox + x)*4 + (oy + y) * Width*4];
-						tcp[0] = color[ci].r;
+						tcp[0] = color[ci].b;
 						tcp[1] = color[ci].g;
-						tcp[2] = color[ci].b;
+						tcp[2] = color[ci].r;
 						tcp[3] = color[ci].a;
 					}
 				}
@@ -637,7 +610,7 @@ void FDDSTexture::DecompressDXT3 (FileReader &lump, bool premultiplied, uint8_t 
 			// Pick colors from the palette for each of the four colors.
 			if (pixelmode != PIX_ARGB) for (i = 3; i >= 0; --i)
 			{
-				palcol[i] = RGBToPalette(pixelmode == PIX_Alphatex, color[i], false);
+				palcol[i] = ImageHelpers::RGBToPalette(pixelmode == PIX_Alphatex, color[i], false);
 			}
 
 			// Now decode this 4x4 block to the pixel buffer.
@@ -670,9 +643,9 @@ void FDDSTexture::DecompressDXT3 (FileReader &lump, bool premultiplied, uint8_t 
 					{
 						uint8_t * tcp = &buffer[(ox + x)*4 + (oy + y) * Width*4];
 						int c = (yslice >> (x + x)) & 3;
-						tcp[0] = color[c].r;
+						tcp[0] = color[c].b;
 						tcp[1] = color[c].g;
-						tcp[2] = color[c].b;
+						tcp[2] = color[c].r;
 						tcp[3] = ((yalphaslice >> (x * 4)) & 15) * 0x11;
 					}
 				}
@@ -749,7 +722,7 @@ void FDDSTexture::DecompressDXT5 (FileReader &lump, bool premultiplied, uint8_t 
 			// Pick colors from the palette for each of the four colors.
 			if (pixelmode != PIX_ARGB) for (i = 3; i >= 0; --i)
 			{
-				palcol[i] = RGBToPalette(pixelmode == PIX_Alphatex, color[i], false);
+				palcol[i] = ImageHelpers::RGBToPalette(pixelmode == PIX_Alphatex, color[i], false);
 			}
 			// Now decode this 4x4 block to the pixel buffer.
 			for (y = 0; y < 4; ++y)
@@ -789,9 +762,9 @@ void FDDSTexture::DecompressDXT5 (FileReader &lump, bool premultiplied, uint8_t 
 					{
 						uint8_t * tcp = &buffer[(ox + x)*4 + (oy + y) * Width*4];
 						int c = (yslice >> (x + x)) & 3;
-						tcp[0] = color[c].r;
+						tcp[0] = color[c].b;
 						tcp[1] = color[c].g;
-						tcp[2] = color[c].b;
+						tcp[2] = color[c].r;
 						tcp[3] = alpha[((yalphaslice >> (x*3)) & 7)];
 					}
 				}
@@ -804,15 +777,15 @@ void FDDSTexture::DecompressDXT5 (FileReader &lump, bool premultiplied, uint8_t 
 
 //===========================================================================
 //
-// FDDSTexture::CopyTrueColorPixels
+// FDDSTexture::CopyPixels
 //
 //===========================================================================
 
-int FDDSTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FDDSTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
 	auto lump = Wads.OpenLumpReader (SourceLump);
 
-	uint8_t *TexBuffer = new uint8_t[4*Width*Height];
+	uint8_t *TexBuffer = bmp->GetPixels();
 
 	lump.Seek (sizeof(DDSURFACEDESC2) + 4, FileReader::SeekSet);
 
@@ -833,18 +806,5 @@ int FDDSTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 		DecompressDXT5 (lump, Format == ID_DXT4, TexBuffer, PIX_ARGB);
 	}
 
-	// All formats decompress to RGBA.
-	bmp->CopyPixelDataRGB(x, y, TexBuffer, Width, Height, 4, Width*4, rotate, CF_RGBA, inf);
-	delete [] TexBuffer;
 	return -1;
 }	
-
-//===========================================================================
-//
-//
-//===========================================================================
-
-bool FDDSTexture::UseBasePalette() 
-{ 
-	return false; 
-}

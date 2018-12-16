@@ -969,7 +969,7 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 	//	a flat. The data is in the WAD only because
 	//	we look for an actual index, instead of simply
 	//	setting one.
-	skyflatnum = TexMan.GetTexture (gameinfo.SkyFlatName, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
+	skyflatnum = TexMan.GetTextureID (gameinfo.SkyFlatName, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
 
 	// DOOM determines the sky texture to be used
 	// depending on the current episode and the game version.
@@ -1456,8 +1456,8 @@ void G_InitLevelLocals ()
 	level.info = info;
 	level.skyspeed1 = info->skyspeed1;
 	level.skyspeed2 = info->skyspeed2;
-	level.skytexture1 = TexMan.GetTexture(info->SkyPic1, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
-	level.skytexture2 = TexMan.GetTexture(info->SkyPic2, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
+	level.skytexture1 = TexMan.GetTextureID(info->SkyPic1, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
+	level.skytexture2 = TexMan.GetTextureID(info->SkyPic2, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
 	level.fadeto = info->fadeto;
 	level.cdtrack = info->cdtrack;
 	level.cdid = info->cdid;
@@ -1960,6 +1960,7 @@ void FLevelLocals::Tick ()
 
 void FLevelLocals::Mark()
 {
+	canvasTextureInfo.Mark();
 	for (auto &s : sectorPortals)
 	{
 		GC::Mark(s.mSkybox);

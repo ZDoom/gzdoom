@@ -359,11 +359,6 @@ uint32_t DFrameBuffer::GetCaps()
 	return (uint32_t)FlagSet;
 }
 
-void DFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV)
-{
-	SWRenderer->RenderTextureView(tex, Viewpoint, FOV);
-}
-
 void DFrameBuffer::WriteSavePic(player_t *player, FileWriter *file, int width, int height)
 {
 	SWRenderer->WriteSavePic(player, file, width, height);

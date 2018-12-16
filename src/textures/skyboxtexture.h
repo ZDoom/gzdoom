@@ -12,30 +12,28 @@ class FSkyBox : public FTexture
 {
 public:
 
+	FTexture *previous;
 	FTexture * faces[6];
 	bool fliptop;
 
-	FSkyBox();
-	~FSkyBox();
-	const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out);
-	const uint8_t *GetPixels (FRenderStyle style);
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf);
-	bool UseBasePalette();
-	void Unload ();
+	FSkyBox(const char *name);
+	TArray<uint8_t> Get8BitPixels(bool alphatex);
+	FBitmap GetBgraBitmap(PalEntry *, int *trans) override;
+	FImageSource *GetImage() const override;
+
 
 	void SetSize()
 	{
-		if (faces[0]) 
+		if (!previous && faces[0]) previous = faces[0];
+		if (previous)
 		{
-			Width=faces[0]->GetWidth();
-			Height=faces[0]->GetHeight();
-			CalcBitSize();
+			CopySize(previous);
 		}
 	}
 
 	bool Is3Face() const
 	{
-		return faces[5]==NULL;
+		return faces[5] == nullptr;
 	}
 
 	bool IsFlipped() const

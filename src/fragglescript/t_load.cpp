@@ -189,7 +189,7 @@ void FScriptLoader::ParseInfoCmd(char *line, FString &scriptsrc)
 			sc.MustGetStringName("=");
 			sc.MustGetString();
 		
-			sky2texture = sky1texture = level.skytexture1 = level.skytexture2 = TexMan.GetTexture (sc.String, ETextureType::Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
+			sky2texture = sky1texture = level.skytexture1 = level.skytexture2 = TexMan.GetTextureID (sc.String, ETextureType::Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
 			R_InitSkyMap ();
 		}
 		else if (sc.Compare("interpic"))

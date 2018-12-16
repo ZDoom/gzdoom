@@ -39,6 +39,8 @@
 #include "files.h"
 #include "w_wad.h"
 #include "textures/textures.h"
+#include "imagehelpers.h"
+#include "image.h"
 
 //==========================================================================
 //
@@ -46,11 +48,11 @@
 //
 //==========================================================================
 
-class FAutomapTexture : public FWorldTexture
+class FAutomapTexture : public FImageSource
 {
 public:
 	FAutomapTexture(int lumpnum);
-	uint8_t *MakeTexture (FRenderStyle style);
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
 };
 
 
@@ -62,10 +64,10 @@ public:
 //
 //==========================================================================
 
-FTexture *AutomapTexture_TryCreate(FileReader &data, int lumpnum)
+FImageSource *AutomapImage_TryCreate(FileReader &data, int lumpnum)
 {
-	if (data.GetLength() < 320) return NULL;
-	if (!Wads.CheckLumpName(lumpnum, "AUTOPAGE")) return NULL;
+	if (data.GetLength() < 320) return nullptr;
+	if (!Wads.CheckLumpName(lumpnum, "AUTOPAGE")) return nullptr;
 	return new FAutomapTexture(lumpnum);
 }
 
@@ -76,11 +78,11 @@ FTexture *AutomapTexture_TryCreate(FileReader &data, int lumpnum)
 //==========================================================================
 
 FAutomapTexture::FAutomapTexture (int lumpnum)
-: FWorldTexture(NULL, lumpnum)
+: FImageSource(lumpnum)
 {
 	Width = 320;
 	Height = uint16_t(Wads.LumpLength(lumpnum) / 320);
-	CalcBitSize ();
+	bUseGamePalette = true;
 }
 
 //==========================================================================
@@ -89,15 +91,15 @@ FAutomapTexture::FAutomapTexture (int lumpnum)
 //
 //==========================================================================
 
-uint8_t *FAutomapTexture::MakeTexture (FRenderStyle style)
+TArray<uint8_t> FAutomapTexture::CreatePalettedPixels(int conversion)
 {
 	int x, y;
 	FMemLump data = Wads.ReadLump (SourceLump);
 	const uint8_t *indata = (const uint8_t *)data.GetMem();
 
-	auto Pixels = new uint8_t[Width * Height];
+	TArray<uint8_t> Pixels(Width * Height, true);
 
-	const uint8_t *remap = GetRemap(style);
+	const uint8_t *remap = ImageHelpers::GetRemap(conversion == luminance);
 	for (x = 0; x < Width; ++x)
 	{
 		for (y = 0; y < Height; ++y)

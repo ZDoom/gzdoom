@@ -31,7 +31,7 @@ public:
 
 	static bool GetLine(AActor *thing, DVector2 &left, DVector2 &right);
 	static bool IsThingCulled(AActor *thing);
-	static FTexture *GetSpriteTexture(AActor *thing, /*out*/ bool &flipX);
+	static FSoftwareTexture *GetSpriteTexture(AActor *thing, /*out*/ bool &flipX);
 
 private:
 	static double PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingpos, double spriteheight, double z);

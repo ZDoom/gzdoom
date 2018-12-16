@@ -129,13 +129,14 @@ namespace swrenderer
 			}
 		}
 
-		FTexture *WallSpriteTile = TexMan(decal->PicNum, true);
+		FTexture *tex = TexMan.GetPalettedTexture(decal->PicNum, true);
 		flipx = (uint8_t)(decal->RenderFlags & RF_XFLIP);
 
-		if (WallSpriteTile == NULL || WallSpriteTile->UseType == ETextureType::Null)
+		if (tex == NULL || !tex->isValid())
 		{
 			return;
 		}
+		FSoftwareTexture *WallSpriteTile = tex->GetSoftwareTexture();
 
 		// Determine left and right edges of sprite. Since this sprite is bound
 		// to a wall, we use the wall's angle instead of the decal's. This is
@@ -333,7 +334,7 @@ namespace swrenderer
 		} while (needrepeat--);
 	}
 
-	void RenderDecal::DrawColumn(RenderThread *thread, SpriteDrawerArgs &drawerargs, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, FRenderStyle style)
+	void RenderDecal::DrawColumn(RenderThread *thread, SpriteDrawerArgs &drawerargs, int x, FSoftwareTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, FRenderStyle style)
 	{
 		auto viewport = thread->Viewport.get();
 		

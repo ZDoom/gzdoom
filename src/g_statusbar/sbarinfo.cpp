@@ -1188,12 +1188,11 @@ public:
 
 		if((offsetflags & SBarInfoCommand::CENTER) == SBarInfoCommand::CENTER)
 		{
-			if (forceWidth < 0)	dx -= (texture->GetScaledWidthDouble()/2.0)-texture->GetScaledLeftOffsetDouble(0);
-			else	dx -= forceWidth*(0.5-(texture->GetScaledLeftOffsetDouble(0)/texture->GetScaledWidthDouble()));
-			//Unoptimalized ^^formula is dx -= forceWidth/2.0-(texture->GetScaledLeftOffsetDouble()*forceWidth/texture->GetScaledWidthDouble());
+			if (forceWidth < 0)	dx -= (texture->GetDisplayWidthDouble()/2.0)-texture->GetDisplayLeftOffsetDouble();
+			else	dx -= forceWidth*(0.5-(texture->GetDisplayLeftOffsetDouble()/texture->GetDisplayWidthDouble()));
 			
-			if (forceHeight < 0)	dy -= (texture->GetScaledHeightDouble()/2.0)-texture->GetScaledTopOffsetDouble(0);
-			else	dy -= forceHeight*(0.5-(texture->GetScaledTopOffsetDouble(0)/texture->GetScaledHeightDouble()));
+			if (forceHeight < 0)	dy -= (texture->GetDisplayHeightDouble()/2.0)-texture->GetDisplayTopOffsetDouble();
+			else	dy -= forceHeight*(0.5-(texture->GetDisplayTopOffsetDouble()/texture->GetDisplayHeightDouble()));
 		}
 
 		dx += xOffset;
@@ -1202,12 +1201,12 @@ public:
 		if(!fullScreenOffsets)
 		{
 			double tmp = 0;
-			w = forceWidth < 0 ? texture->GetScaledWidthDouble() : forceWidth;
-			h = forceHeight < 0 ? texture->GetScaledHeightDouble() : forceHeight;
-			double dcx = clip[0] == 0 ? 0 : dx + clip[0] - texture->GetScaledLeftOffsetDouble(0);
-			double dcy = clip[1] == 0 ? 0 : dy + clip[1] - texture->GetScaledTopOffsetDouble(0);
-			double dcr = clip[2] == 0 ? INT_MAX : dx + w - clip[2] - texture->GetScaledLeftOffsetDouble(0);
-			double dcb = clip[3] == 0 ? INT_MAX : dy + h - clip[3] - texture->GetScaledTopOffsetDouble(0);
+			w = forceWidth < 0 ? texture->GetDisplayWidthDouble() : forceWidth;
+			h = forceHeight < 0 ? texture->GetDisplayHeightDouble() : forceHeight;
+			double dcx = clip[0] == 0 ? 0 : dx + clip[0] - texture->GetDisplayLeftOffsetDouble();
+			double dcy = clip[1] == 0 ? 0 : dy + clip[1] - texture->GetDisplayTopOffsetDouble();
+			double dcr = clip[2] == 0 ? INT_MAX : dx + w - clip[2] - texture->GetDisplayLeftOffsetDouble();
+			double dcb = clip[3] == 0 ? INT_MAX : dy + h - clip[3] - texture->GetDisplayTopOffsetDouble();
 
 			if(clip[0] != 0 || clip[1] != 0)
 			{
@@ -1271,8 +1270,8 @@ public:
 			bool xright = *x < 0 && !x.RelCenter();
 			bool ybot = *y < 0 && !y.RelCenter();
 
-			w = (forceWidth < 0 ? texture->GetScaledWidthDouble() : forceWidth);
-			h = (forceHeight < 0 ? texture->GetScaledHeightDouble() : forceHeight);
+			w = (forceWidth < 0 ? texture->GetDisplayWidthDouble() : forceWidth);
+			h = (forceHeight < 0 ? texture->GetDisplayHeightDouble() : forceHeight);
 			if(vid_fps && rx < 0 && ry >= 0)
 				ry += 10;
 
@@ -1289,10 +1288,10 @@ public:
 			// Check for clipping
 			if(clip[0] != 0 || clip[1] != 0 || clip[2] != 0 || clip[3] != 0)
 			{
-				rcx = clip[0] == 0 ? 0 : rx+((clip[0] - texture->GetScaledLeftOffsetDouble(0))*Scale.X);
-				rcy = clip[1] == 0 ? 0 : ry+((clip[1] - texture->GetScaledTopOffsetDouble(0))*Scale.Y);
-				rcr = clip[2] == 0 ? INT_MAX : rx+w-((clip[2] + texture->GetScaledLeftOffsetDouble(0))*Scale.X);
-				rcb = clip[3] == 0 ? INT_MAX : ry+h-((clip[3] + texture->GetScaledTopOffsetDouble(0))*Scale.Y);
+				rcx = clip[0] == 0 ? 0 : rx+((clip[0] - texture->GetDisplayLeftOffsetDouble())*Scale.X);
+				rcy = clip[1] == 0 ? 0 : ry+((clip[1] - texture->GetDisplayTopOffsetDouble())*Scale.Y);
+				rcr = clip[2] == 0 ? INT_MAX : rx+w-((clip[2] + texture->GetDisplayLeftOffsetDouble())*Scale.X);
+				rcb = clip[3] == 0 ? INT_MAX : ry+h-((clip[3] + texture->GetDisplayTopOffsetDouble())*Scale.Y);
 			}
 
 			if(clearDontDraw)
@@ -1380,7 +1379,8 @@ public:
 				width = font->GetCharWidth((unsigned char) *str);
 			else
 				width = font->GetCharWidth((unsigned char) script->spacingCharacter);
-			FTexture* c = font->GetChar((unsigned char) *str, &width);
+			bool redirected = false;
+			FTexture* c = font->GetChar((unsigned char) *str, fontcolor, &width);
 			if(c == NULL) //missing character.
 			{
 				str++;
@@ -1389,13 +1389,13 @@ public:
 			int character = (unsigned char)*str;
 
 			if (script->spacingCharacter == '\0') //If we are monospaced lets use the offset
-				ax += (c->GetLeftOffset(0) + 1); //ignore x offsets since we adapt to character size
+				ax += (c->GetDisplayLeftOffset() + 1); //ignore x offsets since we adapt to character size
 
 			double rx, ry, rw, rh;
 			rx = ax + xOffset;
 			ry = ay + yOffset;
-			rw = c->GetScaledWidthDouble();
-			rh = c->GetScaledHeightDouble();
+			rw = c->GetDisplayWidthDouble();
+			rh = c->GetDisplayHeightDouble();
 
 			if(script->spacingCharacter != '\0')
 			{
@@ -1453,7 +1453,7 @@ public:
 				DTA_Alpha, Alpha,
 				TAG_DONE);
 			if (script->spacingCharacter == '\0')
-				ax += width + spacing - (c->GetLeftOffset(0) + 1);
+				ax += width + spacing - (c->GetDisplayLeftOffsetDouble() + 1);
 			else //width gets changed at the call to GetChar()
 				ax += font->GetCharWidth((unsigned char) script->spacingCharacter) + spacing;
 			str++;

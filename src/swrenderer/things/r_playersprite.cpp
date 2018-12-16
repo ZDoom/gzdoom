@@ -224,9 +224,9 @@ namespace swrenderer
 
 		picnum = sprframe->Texture[0];
 		flip = sprframe->Flip & 1;
-		tex = TexMan(picnum);
+		tex = TexMan.GetTexture(picnum);
 
-		if (tex->UseType == ETextureType::Null)
+		if (!tex->isValid())
 			return;
 
 		if (pspr->firstTic)
@@ -263,8 +263,8 @@ namespace swrenderer
 		double pspriteyscale = pspritexscale * viewport->BaseYaspectMul * ((double)SCREENHEIGHT / SCREENWIDTH) * r_viewwindow.WidescreenRatio;
 		double pspritexiscale = 1 / pspritexscale;
 
-		int tleft = tex->GetScaledLeftOffset(0);
-		int twidth = tex->GetScaledWidth();
+		int tleft = tex->GetDisplayLeftOffset();
+		int twidth = tex->GetDisplayWidth();
 
 		// calculate edges of the shape
 		tx = (pspr->Flags & PSPF_MIRROR) ? ((BASEXCENTER - twidth) - (sx - tleft)) : ((sx - BASEXCENTER) - tleft);
@@ -286,7 +286,8 @@ namespace swrenderer
 
 		vis.renderflags = owner->renderflags;
 
-		vis.texturemid = (BASEYCENTER - sy) * tex->Scale.Y + tex->GetTopOffset(0);
+		FSoftwareTexture *stex = tex->GetSoftwareTexture();
+		vis.texturemid = (BASEYCENTER - sy) * stex->GetScale().Y + stex->GetTopOffset(0);
 
 		// Force it to use software rendering when drawing to a canvas texture.
 		bool renderToCanvas = viewport->RenderingToCanvas;
@@ -303,20 +304,20 @@ namespace swrenderer
 		}
 		vis.x1 = x1 < 0 ? 0 : x1;
 		vis.x2 = x2 >= viewwidth ? viewwidth : x2;
-		vis.xscale = FLOAT2FIXED(pspritexscale / tex->Scale.X);
-		vis.yscale = float(pspriteyscale / tex->Scale.Y);
-		vis.pic = tex;
+		vis.xscale = FLOAT2FIXED(pspritexscale / stex->GetScale().X);
+		vis.yscale = float(pspriteyscale / stex->GetScale().Y);
+		vis.pic = stex;
 
 		// If flip is used, provided that it's not already flipped (that would just invert itself)
 		// (It's an XOR...)
 		if (!(flip) != !(pspr->Flags & PSPF_FLIP))
 		{
-			vis.xiscale = -FLOAT2FIXED(pspritexiscale * tex->Scale.X);
-			vis.startfrac = (tex->GetWidth() << FRACBITS) - 1;
+			vis.xiscale = -FLOAT2FIXED(pspritexiscale * stex->GetScale().X);
+			vis.startfrac = (stex->GetWidth() << FRACBITS) - 1;
 		}
 		else
 		{
-			vis.xiscale = FLOAT2FIXED(pspritexiscale * tex->Scale.X);
+			vis.xiscale = FLOAT2FIXED(pspritexiscale * stex->GetScale().X);
 			vis.startfrac = 0;
 		}
 
@@ -384,6 +385,7 @@ namespace swrenderer
 			{
 				noaccel = true;
 			}
+#if 0
 			// If the main colormap has fixed lights, and this sprite is being drawn with that
 			// colormap, disable acceleration so that the lights can remain fixed.
 			CameraLight *cameraLight = CameraLight::Instance();
@@ -393,6 +395,7 @@ namespace swrenderer
 			{
 				noaccel = true;
 			}
+#endif
 		}
 		else
 		{
@@ -455,7 +458,7 @@ namespace swrenderer
 	{
 		for (const HWAccelPlayerSprite &sprite : AcceleratedSprites)
 		{
-			screen->DrawTexture(sprite.pic,
+			screen->DrawTexture(sprite.pic->GetTexture(),
 				viewwindowx + sprite.x1,
 				viewwindowy + viewheight / 2 - sprite.texturemid * sprite.yscale - 0.5,
 				DTA_DestWidthF, FIXED2DBL(sprite.pic->GetWidth() * sprite.xscale),

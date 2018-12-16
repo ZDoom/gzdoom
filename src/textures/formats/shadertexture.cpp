@@ -39,22 +39,21 @@
 #include "menu/menu.h"
 #include "w_wad.h"
 #include "bitmap.h"
+#include "imagehelpers.h"
+#include "image.h"
 
 
-class FBarShader : public FWorldTexture
+class FBarShader : public FImageSource
 {
 public:
 	FBarShader(bool vertical, bool reverse)
 	{
 		int i;
 
-		Name.Format("BarShader%c%c", vertical ? 'v' : 'h', reverse ? 'r' : 'f');
 		Width = vertical ? 2 : 256;
 		Height = vertical ? 256 : 2;
-		CalcBitSize();
 		bMasked = false;
 		bTranslucent = false;
-		PixelsAreStatic = 2;	// The alpha buffer is static, but if this gets used as a regular texture, a separate buffer needs to be made.
 
 		// Fill the column/row with shading values.
 		// Vertical shaders have have minimum alpha at the top
@@ -101,37 +100,31 @@ public:
 		}
 	}
 
-	uint8_t *MakeTexture(FRenderStyle style) override
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override
 	{
-		if (style.Flags & STYLEF_RedIsAlpha)
+		TArray<uint8_t> Pix(512, true);
+		if (conversion == luminance)
 		{
-			return Pixels;
+			memcpy(Pix.Data(), Pixels, 512);
 		}
 		else
 		{
 			// Since this presents itself to the game as a regular named texture
 			// it can easily be used on walls and flats and should work as such, 
 			// even if it makes little sense.
-			auto Pix = new uint8_t[512];
 			for (int i = 0; i < 512; i++)
 			{
-				Pix[i] = GrayMap[Pixels[i]];
+				Pix[i] = ImageHelpers::GrayMap[Pixels[i]];
 			}
-			return Pix;
 		}
+		return Pix;
 	}
 
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override
+	int CopyPixels(FBitmap *bmp, int conversion) override
 	{
-		bmp->CopyPixelData(x, y, Pixels, Width, Height, Height, 1, rotate, translationtables[TRANSLATION_Standard][8]->Palette, inf);
+		bmp->CopyPixelData(0, 0, Pixels, Width, Height, Height, 1, 0, translationtables[TRANSLATION_Standard][8]->Palette);
 		return 0;
 	}
-
-	bool UseBasePalette() override
-	{
-		return false;
-	}
-
 
 private:
 	uint8_t Pixels[512];
@@ -140,5 +133,7 @@ private:
 
 FTexture *CreateShaderTexture(bool vertical, bool reverse)
 {
-	return new FBarShader(vertical, reverse);	
+	FStringf name("BarShader%c%c", vertical ? 'v' : 'h', reverse ? 'r' : 'f');
+	return new FImageTexture(new FBarShader(vertical, reverse), name.GetChars());
+
 }

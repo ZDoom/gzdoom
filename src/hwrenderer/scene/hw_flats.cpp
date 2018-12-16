@@ -70,7 +70,7 @@ bool hw_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * glte
 
 		float xscale1 = secplane->Scale.X;
 		float yscale1 = secplane->Scale.Y;
-		if (gltexture->tex->bHasCanvas)
+		if (gltexture->hasCanvas())
 		{
 			yscale1 = 0 - yscale1;
 		}

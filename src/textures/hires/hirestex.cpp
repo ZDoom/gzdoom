@@ -36,6 +36,7 @@
 #include "gi.h"
 #include "cmdlib.h"
 #include "bitmap.h"
+#include "image.h"
 
 #ifndef _WIN32
 #define _access(a,b) access(a,b)
@@ -357,7 +358,7 @@ int FTexture::CheckExternalFile(bool & hascolorkey)
 //
 //==========================================================================
 
-unsigned char *FTexture::LoadHiresTexture(int *width, int *height)
+bool FTexture::LoadHiresTexture(FTextureBuffer &texbuffer, bool checkonly)
 {
 	if (HiresLump == -1)
 	{
@@ -367,8 +368,7 @@ unsigned char *FTexture::LoadHiresTexture(int *width, int *height)
 
 		if (HiresLump >= 0)
 		{
-			HiresTexture = FTexture::CreateTexture(HiresLump, ETextureType::Any);
-			HiresTexture->Name = "";
+			HiresTexture = FTexture::CreateTexture("", HiresLump, ETextureType::Any);
 			TexMan.AddTexture(HiresTexture);	// let the texture manager manage this.
 		}
 	}
@@ -377,28 +377,38 @@ unsigned char *FTexture::LoadHiresTexture(int *width, int *height)
 		int w = HiresTexture->GetWidth();
 		int h = HiresTexture->GetHeight();
 
-		unsigned char * buffer = new unsigned char[w*(h + 1) * 4];
-		memset(buffer, 0, w * (h + 1) * 4);
-
-		FBitmap bmp(buffer, w * 4, w, h);
-
-		int trans = HiresTexture->CopyTrueColorPixels(&bmp, 0, 0);
-		HiresTexture->CheckTrans(buffer, w*h, trans);
-
-		if (bHiresHasColorKey)
+		if (!checkonly)
 		{
-			// This is a crappy Doomsday color keyed image
-			// We have to remove the key manually. :(
-			uint32_t * dwdata = (uint32_t*)buffer;
-			for (int i = (w*h); i>0; i--)
+			unsigned char * buffer = new unsigned char[w*(h + 1) * 4];
+			memset(buffer, 0, w * (h + 1) * 4);
+
+			FBitmap bmp(buffer, w * 4, w, h);
+			int trans;
+			auto Pixels = HiresTexture->GetBgraBitmap(nullptr, &trans);
+			bmp.Blit(0, 0, Pixels);
+
+			HiresTexture->CheckTrans(buffer, w*h, trans);
+
+			if (bHiresHasColorKey)
 			{
-				if (dwdata[i] == 0xffffff00 || dwdata[i] == 0xffff00ff) dwdata[i] = 0;
+				// This is a crappy Doomsday color keyed image
+				// We have to remove the key manually. :(
+				uint32_t * dwdata = (uint32_t*)buffer;
+				for (int i = (w*h); i > 0; i--)
+				{
+					if (dwdata[i] == 0xffffff00 || dwdata[i] == 0xffff00ff) dwdata[i] = 0;
+				}
 			}
+			texbuffer.mBuffer = buffer;
 		}
-		*width = w;
-		*height = h;
-		return buffer;
+		FContentIdBuilder contentId;
+		contentId.id = 0;
+		contentId.imageID = HiresTexture->GetImage()->GetId();
+		texbuffer.mWidth = w;
+		texbuffer.mHeight = h;
+		texbuffer.mContentId = contentId.id;
+		return true;
 	}
-	return nullptr;
+	return false;
 }
 

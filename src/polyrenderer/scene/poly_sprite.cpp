@@ -49,13 +49,13 @@ bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
 	DVector3 pos = thing->InterpolatedPosition(viewpoint.TicFrac);
 
 	bool flipTextureX = false;
-	FTexture *tex = GetSpriteTexture(thing, flipTextureX);
+	FSoftwareTexture *tex = GetSpriteTexture(thing, flipTextureX);
 	if (tex == nullptr)
 		return false;
 
 	DVector2 spriteScale = thing->Scale;
-	double thingxscalemul = spriteScale.X / tex->Scale.X;
-	double thingyscalemul = spriteScale.Y / tex->Scale.Y;
+	double thingxscalemul = spriteScale.X / tex->GetScale().X;
+	double thingyscalemul = spriteScale.Y / tex->GetScale().Y;
 
 	double spriteWidth = thingxscalemul * tex->GetWidth();
 	double spriteHeight = thingyscalemul * tex->GetHeight();
@@ -105,11 +105,11 @@ void RenderPolySprite::Render(PolyRenderThread *thread, AActor *thing, subsector
 		posZ += thing->GetBobOffset(viewpoint.TicFrac);
 
 	bool flipTextureX = false;
-	FTexture *tex = GetSpriteTexture(thing, flipTextureX);
-	if (tex == nullptr || tex->UseType == ETextureType::Null)
+	FSoftwareTexture *tex = GetSpriteTexture(thing, flipTextureX);
+	if (tex == nullptr)
 		return;
 
-	double thingyscalemul = thing->Scale.Y / tex->Scale.Y;
+	double thingyscalemul = thing->Scale.Y / tex->GetScale().Y;
 	double spriteHeight = thingyscalemul * tex->GetHeight();
 
 	posZ -= (tex->GetHeight() - tex->GetTopOffsetPo()) * thingyscalemul;
@@ -302,7 +302,7 @@ bool RenderPolySprite::IsThingCulled(AActor *thing)
 	return false;
 }
 
-FTexture *RenderPolySprite::GetSpriteTexture(AActor *thing, /*out*/ bool &flipX)
+FSoftwareTexture *RenderPolySprite::GetSpriteTexture(AActor *thing, /*out*/ bool &flipX)
 {
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 	flipX = false;
@@ -312,16 +312,17 @@ FTexture *RenderPolySprite::GetSpriteTexture(AActor *thing, /*out*/ bool &flipX)
 
 	if (thing->picnum.isValid())
 	{
-		FTexture *tex = TexMan(thing->picnum);
-		if (tex->UseType == ETextureType::Null)
+		FTexture *ttex = TexMan.GetPalettedTexture(thing->picnum, true);
+		if (!ttex || !ttex->isValid())
 		{
 			return nullptr;
 		}
+		FSoftwareTexture *tex = ttex->GetSoftwareTexture();
 
-		if (tex->Rotations != 0xFFFF)
+		if (ttex->GetRotations() != 0xFFFF)
 		{
 			// choose a different rotation based on player view
-			spriteframe_t *sprframe = &SpriteFrames[tex->Rotations];
+			spriteframe_t *sprframe = &SpriteFrames[ttex->GetRotations()];
 			DVector3 pos = thing->InterpolatedPosition(viewpoint.TicFrac);
 			pos.Z += thing->GetBobOffset(viewpoint.TicFrac);
 			DAngle ang = (pos - viewpoint.Pos).Angle();
@@ -335,7 +336,13 @@ FTexture *RenderPolySprite::GetSpriteTexture(AActor *thing, /*out*/ bool &flipX)
 				rot = (ang - thing->Angles.Yaw + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
 			}
 			flipX = (sprframe->Flip & (1 << rot)) != 0;
-			tex = TexMan[sprframe->Texture[rot]];	// Do not animate the rotation
+			ttex = TexMan.GetPalettedTexture(sprframe->Texture[rot], false);	// Do not animate the rotation
+			tex = ttex->GetSoftwareTexture();
+			if (!ttex || !ttex->isValid())
+			{
+				return nullptr;
+			}
+			FSoftwareTexture *tex = ttex->GetSoftwareTexture();
 		}
 		return tex;
 	}
@@ -364,7 +371,7 @@ FTexture *RenderPolySprite::GetSpriteTexture(AActor *thing, /*out*/ bool &flipX)
 			DAngle sprangle = thing->GetSpriteAngle((pos - viewpoint.Pos).Angle(), viewpoint.TicFrac);
 			FTextureID tex = sprdef->GetSpriteFrame(thing->frame, -1, sprangle, &flipX);
 			if (!tex.isValid()) return nullptr;
-			return TexMan[tex];
+			return TexMan.GetPalettedTexture(tex, false)->GetSoftwareTexture();
 		}
 	}
 }

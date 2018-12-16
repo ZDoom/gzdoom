@@ -269,6 +269,7 @@ FBitmap FImageSource::GetCachedBitmap(PalEntry *remap, int conversion, int *ptra
 			}
 		}
 	}
+	if (ptrans) *ptrans = trans;
 	return ret;
 }
 

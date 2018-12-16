@@ -169,15 +169,16 @@ void DFrameBuffer::DrawChar(FFont *font, int normalcolor, double x, double y, in
 
 	FTexture *pic;
 	int dummy;
+	bool redirected;
 
-	if (NULL != (pic = font->GetChar(character, normalcolor, &dummy)))
+	if (NULL != (pic = font->GetChar(character, normalcolor, &dummy, &redirected)))
 	{
 		DrawParms parms;
 		uint32_t tag = ListGetInt(args);
 		bool res = ParseDrawTextureTags(pic, x, y, tag, args, &parms, false);
 		if (!res) return;
 		PalEntry color = 0xffffffff;
-		parms.remap = font->GetColorTranslation((EColorRange)normalcolor, &color);
+		parms.remap = redirected ? nullptr : font->GetColorTranslation((EColorRange)normalcolor, &color);
 		parms.color = PalEntry((color.a * parms.color.a) / 255, (color.r * parms.color.r) / 255, (color.g * parms.color.g) / 255, (color.b * parms.color.b) / 255);
 		DrawTextureParms(pic, parms);
 	}

@@ -572,23 +572,22 @@ static int SpawnableSort(const void *a, const void *b)
 static void DumpClassMap(FClassMap &themap)
 {
 	FClassMap::Iterator it(themap);
-	FClassMap::Pair *pair, **allpairs;
+	FClassMap::Pair *pair;
+	TArray<FClassMap::Pair*> allpairs(themap.CountUsed(), true);
 	int i = 0;
 
 	// Sort into numerical order, since their arrangement in the map can
 	// be in an unspecified order.
-	allpairs = new FClassMap::Pair *[themap.CountUsed()];
 	while (it.NextPair(pair))
 	{
 		allpairs[i++] = pair;
 	}
-	qsort(allpairs, i, sizeof(*allpairs), SpawnableSort);
+	qsort(allpairs.Data(), i, sizeof(allpairs[0]), SpawnableSort);
 	for (int j = 0; j < i; ++j)
 	{
 		pair = allpairs[j];
 		Printf ("%d %s\n", pair->Key, pair->Value->TypeName.GetChars());
 	}
-	delete[] allpairs;
 }
 
 CCMD(dumpspawnables)

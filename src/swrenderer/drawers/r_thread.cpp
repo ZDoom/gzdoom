@@ -140,6 +140,8 @@ void DrawerThreads::WorkerMain(DrawerThread *thread)
 		// Grab the commands
 		DrawerCommandQueuePtr list = active_commands[thread->current_queue];
 		thread->current_queue++;
+		thread->numa_start_y = thread->numa_node * viewheight / thread->num_numa_nodes;
+		thread->numa_end_y = (thread->numa_node + 1) * viewheight / thread->num_numa_nodes;
 		start_lock.unlock();
 
 		// Do the work:
@@ -206,8 +208,6 @@ void DrawerThreads::StartThreads()
 					thread->num_cores = I_GetNumaNodeThreadCount(numaNode);
 					thread->numa_node = numaNode;
 					thread->num_numa_nodes = I_GetNumaNodeCount();
-					thread->numa_start_y = numaNode * viewheight / I_GetNumaNodeCount();
-					thread->numa_end_y = (numaNode + 1) * viewheight / I_GetNumaNodeCount();
 					thread->thread = std::thread([=]() { queue->WorkerMain(thread); });
 					I_SetThreadNumaNode(thread->thread, numaNode);
 				}
@@ -223,8 +223,6 @@ void DrawerThreads::StartThreads()
 				thread->num_cores = num_threads;
 				thread->numa_node = 0;
 				thread->num_numa_nodes = 1;
-				thread->numa_start_y = 0;
-				thread->numa_end_y = viewheight;
 				thread->thread = std::thread([=]() { queue->WorkerMain(thread); });
 				I_SetThreadNumaNode(thread->thread, 0);
 			}
@@ -288,7 +286,4 @@ void MemcpyCommand::Execute(DrawerThread *thread)
 		d += dstep;
 		s += sstep;
 	}
-
-	thread->numa_start_y = thread->numa_node * viewheight / thread->num_numa_nodes;
-	thread->numa_end_y = (thread->numa_node + 1) * viewheight / thread->num_numa_nodes;
 }

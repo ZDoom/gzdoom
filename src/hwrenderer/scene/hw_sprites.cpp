@@ -244,6 +244,7 @@ void GLSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 		{
 			state.SetNormal(0, 0, 0);
 
+
 			if (screen->BuffersArePersistent())
 			{
 				CreateVertices(di);

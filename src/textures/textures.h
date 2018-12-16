@@ -339,7 +339,7 @@ public:
 	int GetSkyOffset() const { return SkyOffset; }
 	FTextureID GetID() const { return id; }
 	PalEntry GetSkyCapColor(bool bottom);
-	virtual FTexture *GetRawTexture();		// for FMultiPatchTexture to override
+	FTexture *GetRawTexture();
 	virtual int GetSourceLump() { return SourceLump; }	// needed by the scripted GetName method.
 	void GetGlowColor(float *data);
 	bool isGlowing() const { return bGlowing; }
@@ -372,11 +372,12 @@ protected:
 public:
 	FHardwareTextureContainer SystemTextures;
 protected:
-	//IHardwareTexture *SystemTexture[2] = { nullptr, nullptr };
 	FSoftwareTexture *SoftwareTexture = nullptr;
 
 	// None of the following pointers are owned by this texture, they are all controlled by the texture manager.
 
+	// Offset-less version for COMPATF_MASKEDMIDTEX
+	FTexture *OffsetLess = nullptr;
 	// Paletted variant
 	FTexture *PalVersion = nullptr;
 	// External hires texture

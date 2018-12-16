@@ -1,6 +1,7 @@
 #pragma once
 #include "textures/textures.h"
 #include "v_video.h"
+#include "g_levellocals.h"
 
 
 struct FSoftwareTextureSpan
@@ -46,7 +47,7 @@ public:
 	// The feature from hell... :(
 	bool useWorldPanning() const
 	{
-		return mTexture->bWorldPanning;
+		return mTexture->bWorldPanning || (level.flags3 & LEVEL3_FORCEWORLDPANNING);
 	}
 
 	bool isMasked()

@@ -38,6 +38,7 @@ FSkyBox::FSkyBox(const char *name)
 : FTexture(name)
 {
 	FTextureID texid = TexMan.CheckForTexture(name, ETextureType::Wall);
+	previous = nullptr;
 	if (texid.isValid())
 	{
 		previous = TexMan.GetTexture(texid);

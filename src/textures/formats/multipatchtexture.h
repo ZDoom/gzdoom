@@ -1,4 +1,5 @@
 #pragma once
+#include "sc_man.h"
 
 //==========================================================================
 //
@@ -28,6 +29,7 @@ struct TexPart
 
 class FMultiPatchTexture : public FImageSource
 {
+	friend class FTexture;
 public:
 	FMultiPatchTexture(int w, int h, const TArray<TexPart> &parts, bool complex, bool textual);
 

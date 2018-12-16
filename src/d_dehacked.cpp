@@ -2694,7 +2694,6 @@ static bool LoadDehSupp ()
 			return false;
 		}
 		bool gotnames = false;
-		int i;
 
 
 		if (++DehUseCount > 1)

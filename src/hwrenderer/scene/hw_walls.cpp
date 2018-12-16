@@ -165,7 +165,7 @@ void GLWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 		}
 		state.SetFog(255, 0, di->isFullbrightScene(), nullptr, false);
 	}
-	if (type != RENDERWALL_COLOR)
+	if (type != RENDERWALL_COLOR && seg->sidedef != nullptr)
 	{
 		auto side = seg->sidedef;
 		auto tierndx = renderwalltotier[type];

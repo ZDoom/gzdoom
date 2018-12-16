@@ -429,12 +429,8 @@ void player_t::SetLogNumber (int num)
 	}
 	else
 	{
-		int length=Wads.LumpLength(lumpnum);
-		char *data= new char[length+1];
-		Wads.ReadLump (lumpnum, data);
-		data[length]=0;
-		SetLogText (data);
-		delete[] data;
+		auto lump = Wads.ReadLump(lumpnum);
+		SetLogText (lump.GetString());
 	}
 }
 

@@ -82,7 +82,7 @@ public:
 	FFont (const char *fontname, const char *nametemplate, int first, int count, int base, int fdlump, int spacewidth=-1, bool notranslate = false);
 	virtual ~FFont ();
 
-	FTexture *GetChar (int code, int translation, int *const width, bool *redirected = nullptr) const;
+	virtual FTexture *GetChar (int code, int translation, int *const width, bool *redirected = nullptr) const;
 	virtual int GetCharWidth (int code) const;
 	FRemapTable *GetColorTranslation (EColorRange range, PalEntry *color = nullptr) const;
 	int GetLump() const { return Lump; }
@@ -123,9 +123,9 @@ protected:
 	bool translateUntranslated;
 	struct CharData
 	{
-		FTexture *TranslatedPic;	// Texture for use with font translations.
-		FTexture *OriginalPic;		// Texture for use with CR_UNTRANSLATED or font colorization. 
-		int XMove;
+		FTexture *TranslatedPic = nullptr;	// Texture for use with font translations.
+		FTexture *OriginalPic = nullptr;	// Texture for use with CR_UNTRANSLATED or font colorization. 
+		int XMove = INT_MIN;
 	};
 	TArray<CharData> Chars;
 	int ActiveColors;

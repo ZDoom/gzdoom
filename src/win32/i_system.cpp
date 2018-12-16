@@ -912,7 +912,6 @@ int I_PickIWad(WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 //
 //==========================================================================
 
-// Custom cursors temporarily disabled until this can directly reference a texture's backing image.
 bool I_SetCursor(FTexture *cursorpic)
 {
 	HCURSOR cursor;

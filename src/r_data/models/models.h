@@ -309,40 +309,23 @@ class FMD3Model : public FModel
 
 	struct MD3Surface
 	{
-		int numVertices;
-		int numTriangles;
-		int numSkins;
+		unsigned numVertices;
+		unsigned numTriangles;
+		unsigned numSkins;
 
-		FTextureID * skins;
-		MD3Triangle * tris;
-		MD3TexCoord * texcoords;
-		MD3Vertex * vertices;
+		TArray<FTextureID> Skins;
+		TArray<MD3Triangle> Tris;
+		TArray<MD3TexCoord> Texcoords;
+		TArray<MD3Vertex> Vertices;
 
-		unsigned int vindex;	// contains numframes arrays of vertices
-		unsigned int iindex;
-
-		MD3Surface()
-		{
-			tris=NULL;
-			vertices=NULL;
-			texcoords=NULL;
-			vindex = iindex = UINT_MAX;
-		}
-
-		~MD3Surface()
-		{
-			if (skins) delete [] skins;
-			UnloadGeometry();
-		}
+		unsigned int vindex = UINT_MAX;	// contains numframes arrays of vertices
+		unsigned int iindex = UINT_MAX;
 
 		void UnloadGeometry()
 		{
-			if (tris) delete [] tris;
-			if (vertices) delete [] vertices;
-			if (texcoords) delete [] texcoords;
-			tris = NULL;
-			vertices = NULL;
-			texcoords = NULL;
+			Tris.Reset();
+			Vertices.Reset();
+			Texcoords.Reset();
 		}
 	};
 
@@ -354,17 +337,14 @@ class FMD3Model : public FModel
 		float origin[3];
 	};
 
-	int numFrames;
 	int numTags;
-	int numSurfaces;
 	int mLumpNum;
 
-	MD3Frame * frames;
-	MD3Surface * surfaces;
+	TArray<MD3Frame> Frames;
+	TArray<MD3Surface> Surfaces;
 
 public:
-	FMD3Model() { }
-	virtual ~FMD3Model();
+	FMD3Model() = default;
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length);
 	virtual int FindFrame(const char * name);

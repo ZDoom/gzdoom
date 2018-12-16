@@ -58,8 +58,8 @@ public:
 	int GetSkyOffset() const { return mTexture->GetSkyOffset(); }
 	PalEntry GetSkyCapColor(bool bottom) const { return mTexture->GetSkyCapColor(bottom); }
 	
-	int GetWidth () { return mPhysicalWidth; }
-	int GetHeight () { return mPhysicalHeight; }
+	int GetWidth () { return mTexture->GetWidth(); }
+	int GetHeight () { return mTexture->GetHeight(); }
 	int GetWidthBits() { return WidthBits; }
 	int GetHeightBits() { return HeightBits; }
 
@@ -69,12 +69,12 @@ public:
 	double GetScaledHeightDouble () { return mTexture->GetScaledHeightDouble(); }
 	
 	// Now with improved offset adjustment.
-	int GetLeftOffset(int adjusted) { return mTexture->GetLeftOffset(adjusted) * mPhysicalScale; }
-	int GetTopOffset(int adjusted) { return mTexture->GetTopOffset(adjusted) * mPhysicalScale; }
-	int GetScaledLeftOffset (int adjusted) { return mTexture->GetScaledLeftOffset(adjusted) * mPhysicalScale; }
-	int GetScaledTopOffset (int adjusted) { return mTexture->GetScaledTopOffset(adjusted) * mPhysicalScale; }
-	double GetScaledLeftOffsetDouble(int adjusted) { return mTexture->GetScaledLeftOffsetDouble(adjusted) * mPhysicalScale; }
-	double GetScaledTopOffsetDouble(int adjusted) { return mTexture->GetScaledTopOffsetDouble(adjusted) * mPhysicalScale; }
+	int GetLeftOffset(int adjusted) { return mTexture->GetLeftOffset(adjusted); }
+	int GetTopOffset(int adjusted) { return mTexture->GetTopOffset(adjusted); }
+	int GetScaledLeftOffset (int adjusted) { return mTexture->GetScaledLeftOffset(adjusted); }
+	int GetScaledTopOffset (int adjusted) { return mTexture->GetScaledTopOffset(adjusted); }
+	double GetScaledLeftOffsetDouble(int adjusted) { return mTexture->GetScaledLeftOffsetDouble(adjusted); }
+	double GetScaledTopOffsetDouble(int adjusted) { return mTexture->GetScaledTopOffsetDouble(adjusted); }
 	
 	// Interfaces for the different renderers. Everything that needs to check renderer-dependent offsets
 	// should use these, so that if changes are needed, this is the only place to edit.
@@ -91,7 +91,9 @@ public:
 	int GetScaledLeftOffsetPo() { return GetScaledLeftOffset(r_spriteadjustSW); }
 	int GetScaledTopOffsetPo() { return GetScaledTopOffset(r_spriteadjustSW); }
 	
-	DVector2 GetScale() const { return mTexture->Scale * mPhysicalScale; }
+	DVector2 GetScale() const { return mTexture->Scale; }
+	int GetPhysicalWidth() { return mPhysicalWidth; }
+	int GetPhysicalHeight() { return mPhysicalHeight; }
 	int GetPhysicalScale() const { return mPhysicalScale; }
 	
 	virtual void Unload()

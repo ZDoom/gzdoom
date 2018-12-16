@@ -57,10 +57,11 @@ namespace swrenderer
 	WallSampler::WallSampler(RenderViewport *viewport, int y1, double texturemid, float swal, double yrepeat, fixed_t xoffset, double xmagnitude, FSoftwareTexture *texture)
 	{
 		xoffset += FLOAT2FIXED(xmagnitude * 0.5);
+		xoffset *= texture->GetPhysicalScale();
 
 		if (!viewport->RenderTarget->IsBgra())
 		{
-			height = texture->GetHeight();
+			height = texture->GetPhysicalHeight();
 
 			int uv_fracbits = 32 - texture->GetHeightBits();
 			if (uv_fracbits != 32)
@@ -70,13 +71,13 @@ namespace swrenderer
 				// Find start uv in [0-base_height[ range.
 				// Not using xs_ToFixed because it rounds the result and we need something that always rounds down to stay within the range.
 				double uv_stepd = swal * yrepeat;
-				double v = (texturemid + uv_stepd * (y1 - viewport->CenterY + 0.5)) / height;
+				double v = (texturemid + uv_stepd * (y1 - viewport->CenterY + 0.5)) / texture->GetHeight();
 				v = v - floor(v);
 				v *= height;
 				v *= (1 << uv_fracbits);
 
 				uv_pos = (uint32_t)(int64_t)v;
-				uv_step = xs_ToFixed(uv_fracbits, uv_stepd);
+				uv_step = xs_ToFixed(uv_fracbits, uv_stepd * texture->GetPhysicalScale());
 				if (uv_step == 0) // To prevent divide by zero elsewhere
 					uv_step = 1;
 			}
@@ -92,7 +93,7 @@ namespace swrenderer
 			// If the texture's width isn't a power of 2, then we need to make it a
 			// positive offset for proper clamping.
 			int width;
-			if (col < 0 && (width = texture->GetWidth()) != (1 << texture->GetWidthBits()))
+			if (col < 0 && (width = texture->GetPhysicalWidth()) != (1 << texture->GetWidthBits()))
 			{
 				col = width + (col % width);
 			}
@@ -129,8 +130,8 @@ namespace swrenderer
 			bool magnifying = lod < 0.0f;
 
 			int mipmap_offset = 0;
-			int mip_width = texture->GetWidth();
-			int mip_height = texture->GetHeight();
+			int mip_width = texture->GetPhysicalWidth();
+			int mip_height = texture->GetPhysicalHeight();
 			if (r_mipmap && texture->Mipmapped() && mip_width > 1 && mip_height > 1)
 			{
 				uint32_t xpos = (uint32_t)((((uint64_t)xoffset) << FRACBITS) / mip_width);

@@ -248,11 +248,9 @@ namespace swrenderer
 		RenderPortal *renderportal = Thread->Portal.get();
 		auto viewport = Thread->Viewport.get();
 
-		uint32_t height = frontskytex->GetHeight();
-
 		double uv_stepd = skyiscale * yrepeat;
-		double v = (texturemid + uv_stepd * (y1 - viewport->CenterY + 0.5)) / height;
-		double v_step = uv_stepd / height;
+		double v = (texturemid + uv_stepd * (y1 - viewport->CenterY + 0.5)) / frontskytex->GetHeight();
+		double v_step = uv_stepd / frontskytex->GetHeight();
 
 		uint32_t uv_pos = (uint32_t)(int32_t)(v * 0x01000000);
 		uint32_t uv_step = (uint32_t)(int32_t)(v_step * 0x01000000);
@@ -272,8 +270,8 @@ namespace swrenderer
 		{
 			ang = (skyangle + viewport->xtoviewangle[x]) ^ skyflip;
 		}
-		angle1 = (uint32_t)((UMulScale16(ang, frontcyl) + frontpos) >> FRACBITS);
-		angle2 = (uint32_t)((UMulScale16(ang, backcyl) + backpos) >> FRACBITS);
+		angle1 = UMulScale16(ang, frontcyl) + frontpos;
+		angle2 = UMulScale16(ang, backcyl) + backpos;
 
 		drawerargs.SetFrontTexture(Thread, frontskytex, angle1);
 		drawerargs.SetBackTexture(Thread, backskytex, angle2);
@@ -296,7 +294,7 @@ namespace swrenderer
 
 	void RenderSkyPlane::DrawSkyColumn(int start_x, int y1, int y2)
 	{
-		if (1 << frontskytex->GetHeightBits() == frontskytex->GetHeight())
+		if (1 << frontskytex->GetHeightBits() == frontskytex->GetPhysicalHeight())
 		{
 			double texturemid = skymid * frontskytex->GetScale().Y + frontskytex->GetHeight();
 			DrawSkyColumnStripe(start_x, y1, y2, frontskytex->GetScale().Y, texturemid, frontskytex->GetScale().Y);

@@ -98,6 +98,9 @@ namespace swrenderer
 		drawerargs.SetSolidColor(3);
 		drawerargs.SetTexture(Thread, texture);
 
+		_xscale /= texture->GetPhysicalScale();
+		_yscale /= texture->GetPhysicalScale();
+
 		lxscale = _xscale * ifloatpow2[drawerargs.TextureWidthBits()];
 		lyscale = _yscale * ifloatpow2[drawerargs.TextureHeightBits()];
 		xscale = 64.f / lxscale;

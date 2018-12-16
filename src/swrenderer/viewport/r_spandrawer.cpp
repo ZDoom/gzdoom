@@ -34,21 +34,21 @@ namespace swrenderer
 	{
 		thread->PrepareTexture(tex, DefaultRenderStyle());
 
-		ds_texwidth = tex->GetWidth();
-		ds_texheight = tex->GetHeight();
+		ds_texwidth = tex->GetPhysicalWidth();
+		ds_texheight = tex->GetPhysicalHeight();
 		ds_xbits = tex->GetWidthBits();
 		ds_ybits = tex->GetHeightBits();
-		if ((1 << ds_xbits) > tex->GetWidth())
+		if ((1 << ds_xbits) > tex->GetPhysicalWidth())
 		{
 			ds_xbits--;
 		}
-		if ((1 << ds_ybits) > tex->GetHeight())
+		if ((1 << ds_ybits) > tex->GetPhysicalHeight())
 		{
 			ds_ybits--;
 		}
 
 		ds_source = thread->Viewport->RenderTarget->IsBgra() ? (const uint8_t*)tex->GetPixelsBgra() : tex->GetPixels(DefaultRenderStyle()); // Get correct render style? Shaded won't get here.
-		ds_source_mipmapped = tex->Mipmapped() && tex->GetWidth() > 1 && tex->GetHeight() > 1;
+		ds_source_mipmapped = tex->Mipmapped() && tex->GetPhysicalWidth() > 1 && tex->GetPhysicalHeight() > 1;
 	}
 
 	void SpanDrawerArgs::SetStyle(bool masked, bool additive, fixed_t alpha)

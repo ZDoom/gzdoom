@@ -144,7 +144,7 @@ protected:
 	float mInterpolationFactor;
 
 	FStateVec4 mNormal;
-	FStateVec4 mColor;
+	FStateVec4 mColor, mColorAdd;
 	FStateVec4 mGlowTop, mGlowBottom;
 	FStateVec4 mGlowTopPlane, mGlowBottomPlane;
 	FStateVec4 mGradientTopPlane, mGradientBottomPlane;

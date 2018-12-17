@@ -22,19 +22,17 @@ protected:
 	FSoftwareTextureSpan **Spandata[3] = { };
 	uint8_t WidthBits = 0, HeightBits = 0;
 	uint16_t WidthMask = 0;
-	
+	int mPhysicalWidth, mPhysicalHeight;
+	int mPhysicalScale;
+	int mBufferFlags;
+
 	void FreeAllSpans();
 	template<class T> FSoftwareTextureSpan **CreateSpans(const T *pixels);
 	void FreeSpans(FSoftwareTextureSpan **spans);
 	void CalcBitSize();
 
 public:
-	FSoftwareTexture(FTexture *tex)
-	{
-		mTexture = tex;
-		mSource = tex;
-		CalcBitSize();
-	}
+	FSoftwareTexture(FTexture *tex);
 	
 	virtual ~FSoftwareTexture()
 	{
@@ -69,7 +67,6 @@ public:
 	int GetScaledHeight () { return mTexture->GetScaledHeight(); }
 	double GetScaledWidthDouble () { return mTexture->GetScaledWidthDouble(); }
 	double GetScaledHeightDouble () { return mTexture->GetScaledHeightDouble(); }
-	double GetScaleY() const { return mTexture->GetScaleY(); }
 	
 	// Now with improved offset adjustment.
 	int GetLeftOffset(int adjusted) { return mTexture->GetLeftOffset(adjusted); }
@@ -95,6 +92,9 @@ public:
 	int GetScaledTopOffsetPo() { return GetScaledTopOffset(r_spriteadjustSW); }
 	
 	DVector2 GetScale() const { return mTexture->Scale; }
+	int GetPhysicalWidth() { return mPhysicalWidth; }
+	int GetPhysicalHeight() { return mPhysicalHeight; }
+	int GetPhysicalScale() const { return mPhysicalScale; }
 	
 	virtual void Unload()
 	{

@@ -330,6 +330,7 @@ public:
 	int isWarped() const { return bWarped; }
 	int GetRotations() const { return Rotations; }
 	void SetRotations(int rot) { Rotations = int16_t(rot); }
+	bool isSprite() const { return UseType == ETextureType::Sprite || UseType == ETextureType::SkinSprite || UseType == ETextureType::Decal; }
 	
 	const FString &GetName() const { return Name; }
 	bool allowNoDecals() const { return bNoDecals; }

@@ -37,6 +37,9 @@
 #include "r_swtexture.h"
 #include "bitmap.h"
 #include "m_alloc.h"
+#include "imagehelpers.h"
+
+EXTERN_CVAR(Bool, gl_texture_usehires)
 
 
 FSoftwareTexture *FTexture::GetSoftwareTexture()
@@ -56,12 +59,31 @@ FSoftwareTexture *FTexture::GetSoftwareTexture()
 //
 //==========================================================================
 
+FSoftwareTexture::FSoftwareTexture(FTexture *tex)
+{
+	mTexture = tex;
+	mSource = tex;
+
+	mBufferFlags = (gl_texture_usehires && !tex->isScaled() && tex->GetImage() && !tex->isSprite() ) ? CTF_CheckHires|CTF_ProcessData : CTF_ProcessData;
+	auto info = tex->CreateTexBuffer(0, CTF_CheckOnly| mBufferFlags);
+	mPhysicalWidth = info.mWidth;
+	mPhysicalHeight = info.mHeight;
+	mPhysicalScale = mPhysicalWidth / tex->Width;
+	CalcBitSize();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void FSoftwareTexture::CalcBitSize ()
 {
 	// WidthBits is rounded down, and HeightBits is rounded up
 	int i;
 	
-	for (i = 0; (1 << i) < GetWidth(); ++i)
+	for (i = 0; (1 << i) < GetPhysicalWidth(); ++i)
 	{ }
 	
 	WidthBits = i;
@@ -69,7 +91,7 @@ void FSoftwareTexture::CalcBitSize ()
 	// Having WidthBits that would allow for columns past the end of the
 	// texture is not allowed, even if it means the entire texture is
 	// not drawn.
-	if (GetWidth() < (1 << WidthBits))
+	if (GetPhysicalWidth() < (1 << WidthBits))
 	{
 		WidthBits--;
 	}
@@ -77,7 +99,7 @@ void FSoftwareTexture::CalcBitSize ()
 	
 	// <hr>The minimum height is 2, because we cannot shift right 32 bits.</hr>
 	// Scratch that. Somebody actually made a 1x1 texture, so now we have to handle it.
-	for (i = 0; (1 << i) < GetHeight(); ++i)
+	for (i = 0; (1 << i) < GetPhysicalHeight(); ++i)
 	{ }
 	
 	HeightBits = i;
@@ -93,7 +115,36 @@ const uint8_t *FSoftwareTexture::GetPixels(int style)
 {
 	if (Pixels.Size() == 0 || CheckModified(style))
 	{
-		Pixels = mSource->Get8BitPixels(style);
+		if (mPhysicalScale == 1)
+		{
+			Pixels = mSource->Get8BitPixels(style);
+		}
+		else
+		{
+			auto tempbuffer = mTexture->CreateTexBuffer(0, mBufferFlags);
+			Pixels.Resize(GetPhysicalWidth()*GetPhysicalHeight());
+			PalEntry *pe = (PalEntry*)tempbuffer.mBuffer;
+			if (!style)
+			{
+				for (int y = 0; y < GetPhysicalHeight(); y++)
+				{
+					for (int x = 0; x < GetPhysicalWidth(); x++)
+					{
+						Pixels[y + x * GetPhysicalHeight()] = ImageHelpers::RGBToPalette(false, pe[x + y * GetPhysicalWidth()], true);
+					}
+				}
+			}
+			else
+			{
+				for (int y = 0; y < GetPhysicalHeight(); y++)
+				{
+					for (int x = 0; x < GetPhysicalWidth(); x++)
+					{
+						Pixels[y + x * GetPhysicalHeight()] = pe[x + y * GetPhysicalWidth()].r;
+					}
+				}
+			}
+		}
 	}
 	return Pixels.Data();
 }
@@ -108,8 +159,25 @@ const uint32_t *FSoftwareTexture::GetPixelsBgra()
 {
 	if (PixelsBgra.Size() == 0 || CheckModified(2))
 	{
-		FBitmap bitmap = mTexture->GetBgraBitmap(nullptr);
-		GenerateBgraFromBitmap(bitmap);
+		if (mPhysicalScale == 1)
+		{
+			FBitmap bitmap = mTexture->GetBgraBitmap(nullptr);
+			GenerateBgraFromBitmap(bitmap);
+		}
+		else
+		{
+			auto tempbuffer = mTexture->CreateTexBuffer(0, mBufferFlags);
+			CreatePixelsBgraWithMipmaps();
+			PalEntry *pe = (PalEntry*)tempbuffer.mBuffer;
+			for (int y = 0; y < GetPhysicalHeight(); y++)
+			{
+				for (int x = 0; x < GetPhysicalWidth(); x++)
+				{
+					PixelsBgra[y + x * GetPhysicalHeight()] = pe[x + y * GetPhysicalWidth()];
+				}
+			}
+			GenerateBgraMipmaps();
+		}
 	}
 	return PixelsBgra.Data();
 }
@@ -123,15 +191,15 @@ const uint32_t *FSoftwareTexture::GetPixelsBgra()
 const uint8_t *FSoftwareTexture::GetColumn(int index, unsigned int column, const FSoftwareTextureSpan **spans_out)
 {
 	auto Pixeldata = GetPixels(index);
-	if ((unsigned)column >= (unsigned)GetWidth())
+	if ((unsigned)column >= (unsigned)GetPhysicalWidth())
 	{
-		if (WidthMask + 1 == GetWidth())
+		if (WidthMask + 1 == GetPhysicalWidth())
 		{
 			column &= WidthMask;
 		}
 		else
 		{
-			column %= GetWidth();
+			column %= GetPhysicalWidth();
 		}
 	}
 	if (spans_out != nullptr)
@@ -142,7 +210,7 @@ const uint8_t *FSoftwareTexture::GetColumn(int index, unsigned int column, const
 		}
 		*spans_out = Spandata[index][column];
 	}
-	return Pixeldata + column * GetHeight();
+	return Pixeldata + column * GetPhysicalHeight();
 }
 
 //==========================================================================
@@ -154,15 +222,15 @@ const uint8_t *FSoftwareTexture::GetColumn(int index, unsigned int column, const
 const uint32_t *FSoftwareTexture::GetColumnBgra(unsigned int column, const FSoftwareTextureSpan **spans_out)
 {
 	auto Pixeldata = GetPixelsBgra();
-	if ((unsigned)column >= (unsigned)GetWidth())
+	if ((unsigned)column >= (unsigned)GetPhysicalWidth())
 	{
-		if (WidthMask + 1 == GetWidth())
+		if (WidthMask + 1 == GetPhysicalWidth())
 		{
 			column &= WidthMask;
 		}
 		else
 		{
-			column %= GetWidth();
+			column %= GetPhysicalWidth();
 		}
 	}
 	if (spans_out != nullptr)
@@ -173,7 +241,7 @@ const uint32_t *FSoftwareTexture::GetColumnBgra(unsigned int column, const FSoft
 		}
 		*spans_out = Spandata[2][column];
 	}
-	return Pixeldata + column * GetHeight();
+	return Pixeldata + column * GetPhysicalHeight();
 }
 
 //==========================================================================
@@ -199,21 +267,21 @@ FSoftwareTextureSpan **FSoftwareTexture::CreateSpans (const T *pixels)
 
 	if (!mTexture->isMasked())
 	{ // Texture does not have holes, so it can use a simpler span structure
-		spans = (FSoftwareTextureSpan **)M_Malloc (sizeof(FSoftwareTextureSpan*)*GetWidth() + sizeof(FSoftwareTextureSpan)*2);
-		span = (FSoftwareTextureSpan *)&spans[GetWidth()];
-		for (int x = 0; x < GetWidth(); ++x)
+		spans = (FSoftwareTextureSpan **)M_Malloc (sizeof(FSoftwareTextureSpan*)*GetPhysicalWidth() + sizeof(FSoftwareTextureSpan)*2);
+		span = (FSoftwareTextureSpan *)&spans[GetPhysicalWidth()];
+		for (int x = 0; x < GetPhysicalWidth(); ++x)
 		{
 			spans[x] = span;
 		}
-		span[0].Length = GetHeight();
+		span[0].Length = GetPhysicalHeight();
 		span[0].TopOffset = 0;
 		span[1].Length = 0;
 		span[1].TopOffset = 0;
 	}
 	else
 	{ // Texture might have holes, so build a complete span structure
-		int numcols = GetWidth();
-		int numrows = GetHeight();
+		int numcols = GetPhysicalWidth();
+		int numrows = GetPhysicalHeight();
 		int numspans = numcols;	// One span to terminate each column
 		const T *data_p;
 		bool newspan;
@@ -305,11 +373,11 @@ void FSoftwareTexture::GenerateBgraFromBitmap(const FBitmap &bitmap)
 	// Transpose
 	const uint32_t *src = (const uint32_t *)bitmap.GetPixels();
 	uint32_t *dest = PixelsBgra.Data();
-	for (int x = 0; x < GetWidth(); x++)
+	for (int x = 0; x < GetPhysicalWidth(); x++)
 	{
-		for (int y = 0; y < GetHeight(); y++)
+		for (int y = 0; y < GetPhysicalHeight(); y++)
 		{
-			dest[y + x * GetHeight()] = src[x + y * GetWidth()];
+			dest[y + x * GetPhysicalHeight()] = src[x + y * GetPhysicalWidth()];
 		}
 	}
 
@@ -322,8 +390,8 @@ void FSoftwareTexture::CreatePixelsBgraWithMipmaps()
 	int buffersize = 0;
 	for (int i = 0; i < levels; i++)
 	{
-		int w = MAX(GetWidth() >> i, 1);
-		int h = MAX(GetHeight() >> i, 1);
+		int w = MAX(GetPhysicalWidth() >> i, 1);
+		int h = MAX(GetPhysicalHeight() >> i, 1);
 		buffersize += w * h;
 	}
 	PixelsBgra.Resize(buffersize);
@@ -332,10 +400,10 @@ void FSoftwareTexture::CreatePixelsBgraWithMipmaps()
 int FSoftwareTexture::MipmapLevels()
 {
 	int widthbits = 0;
-	while ((GetWidth() >> widthbits) != 0) widthbits++;
+	while ((GetPhysicalWidth() >> widthbits) != 0) widthbits++;
 
 	int heightbits = 0;
-	while ((GetHeight() >> heightbits) != 0) heightbits++;
+	while ((GetPhysicalHeight() >> heightbits) != 0) heightbits++;
 
 	return MAX(widthbits, heightbits);
 }
@@ -366,32 +434,32 @@ void FSoftwareTexture::GenerateBgraMipmaps()
 
 	// Convert to normalized linear colorspace
 	{
-		for (int x = 0; x < GetWidth(); x++)
+		for (int x = 0; x < GetPhysicalWidth(); x++)
 		{
-			for (int y = 0; y < GetHeight(); y++)
+			for (int y = 0; y < GetPhysicalHeight(); y++)
 			{
-				uint32_t c8 = PixelsBgra[x * GetHeight() + y];
+				uint32_t c8 = PixelsBgra[x * GetPhysicalHeight() + y];
 				Color4f c;
 				c.a = powf(APART(c8) * (1.0f / 255.0f), 2.2f);
 				c.r = powf(RPART(c8) * (1.0f / 255.0f), 2.2f);
 				c.g = powf(GPART(c8) * (1.0f / 255.0f), 2.2f);
 				c.b = powf(BPART(c8) * (1.0f / 255.0f), 2.2f);
-				image[x * GetHeight() + y] = c;
+				image[x * GetPhysicalHeight() + y] = c;
 			}
 		}
 	}
 
 	// Generate mipmaps
 	{
-		std::vector<Color4f> smoothed(GetWidth() * GetHeight());
+		std::vector<Color4f> smoothed(GetPhysicalWidth() * GetPhysicalHeight());
 		Color4f *src = image.data();
-		Color4f *dest = src + GetWidth() * GetHeight();
+		Color4f *dest = src + GetPhysicalWidth() * GetPhysicalHeight();
 		for (int i = 1; i < levels; i++)
 		{
-			int srcw = MAX(GetWidth() >> (i - 1), 1);
-			int srch = MAX(GetHeight() >> (i - 1), 1);
-			int w = MAX(GetWidth() >> i, 1);
-			int h = MAX(GetHeight() >> i, 1);
+			int srcw = MAX(GetPhysicalWidth() >> (i - 1), 1);
+			int srch = MAX(GetPhysicalHeight() >> (i - 1), 1);
+			int w = MAX(GetPhysicalWidth() >> i, 1);
+			int h = MAX(GetPhysicalHeight() >> i, 1);
 
 			// Downscale
 			for (int x = 0; x < w; x++)
@@ -447,12 +515,12 @@ void FSoftwareTexture::GenerateBgraMipmaps()
 
 	// Convert to bgra8 sRGB colorspace
 	{
-		Color4f *src = image.data() + GetWidth() * GetHeight();
-		uint32_t *dest = PixelsBgra.Data() + GetWidth() * GetHeight();
+		Color4f *src = image.data() + GetPhysicalWidth() * GetPhysicalHeight();
+		uint32_t *dest = PixelsBgra.Data() + GetPhysicalWidth() * GetPhysicalHeight();
 		for (int i = 1; i < levels; i++)
 		{
-			int w = MAX(GetWidth() >> i, 1);
-			int h = MAX(GetHeight() >> i, 1);
+			int w = MAX(GetPhysicalWidth() >> i, 1);
+			int h = MAX(GetPhysicalHeight() >> i, 1);
 			for (int j = 0; j < w * h; j++)
 			{
 				uint32_t a = (uint32_t)clamp(powf(MAX(src[j].a, 0.0f), 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
@@ -476,14 +544,14 @@ void FSoftwareTexture::GenerateBgraMipmaps()
 void FSoftwareTexture::GenerateBgraMipmapsFast()
 {
 	uint32_t *src = PixelsBgra.Data();
-	uint32_t *dest = src + GetWidth() * GetHeight();
+	uint32_t *dest = src + GetPhysicalWidth() * GetPhysicalHeight();
 	int levels = MipmapLevels();
 	for (int i = 1; i < levels; i++)
 	{
-		int srcw = MAX(GetWidth() >> (i - 1), 1);
-		int srch = MAX(GetHeight() >> (i - 1), 1);
-		int w = MAX(GetWidth() >> i, 1);
-		int h = MAX(GetHeight() >> i, 1);
+		int srcw = MAX(GetPhysicalWidth() >> (i - 1), 1);
+		int srch = MAX(GetPhysicalHeight() >> (i - 1), 1);
+		int w = MAX(GetPhysicalWidth() >> i, 1);
+		int h = MAX(GetPhysicalHeight() >> i, 1);
 
 		for (int x = 0; x < w; x++)
 		{

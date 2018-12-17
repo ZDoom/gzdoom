@@ -48,6 +48,10 @@ namespace swrenderer
 		if (x < thread->X1 || x >= thread->X2)
 			return;
 
+		col *= tex->GetPhysicalScale();
+		iscale *= tex->GetPhysicalScale();
+		spryscale /= tex->GetPhysicalScale();
+
 		auto viewport = thread->Viewport.get();
 
 		// Handle the linear filtered version in a different function to reduce chances of merge conflicts from zdoom.
@@ -60,7 +64,7 @@ namespace swrenderer
 		dc_viewport = viewport;
 		dc_x = x;
 		dc_iscale = iscale;
-		dc_textureheight = tex->GetHeight();
+		dc_textureheight = tex->GetPhysicalHeight();
 
 		const FSoftwareTextureSpan *span;
 		const uint8_t *column;
@@ -74,7 +78,7 @@ namespace swrenderer
 		{
 			span = unmaskedSpan;
 			unmaskedSpan[0].TopOffset = 0;
-			unmaskedSpan[0].Length = tex->GetHeight();
+			unmaskedSpan[0].Length = tex->GetPhysicalHeight();
 			unmaskedSpan[1].TopOffset = 0;
 			unmaskedSpan[1].Length = 0;
 		}
@@ -134,7 +138,7 @@ namespace swrenderer
 
 		// Normalize to 0-1 range:
 		double uv_stepd = FIXED2DBL(dc_iscale);
-		double v_step = uv_stepd / tex->GetHeight();
+		double v_step = uv_stepd / tex->GetPhysicalHeight();
 
 		// Convert to uint32_t:
 		dc_iscale = (uint32_t)(v_step * (1 << 30));
@@ -150,8 +154,8 @@ namespace swrenderer
 		bool magnifying = lod < 0.0f;
 
 		int mipmap_offset = 0;
-		int mip_width = tex->GetWidth();
-		int mip_height = tex->GetHeight();
+		int mip_width = tex->GetPhysicalWidth();
+		int mip_height = tex->GetPhysicalHeight();
 		uint32_t xpos = (uint32_t)((((uint64_t)xoffset) << FRACBITS) / mip_width);
 		if (r_mipmap && tex->Mipmapped() && mip_width > 1 && mip_height > 1)
 		{
@@ -199,7 +203,7 @@ namespace swrenderer
 		{
 			span = unmaskedSpan;
 			unmaskedSpan[0].TopOffset = 0;
-			unmaskedSpan[0].Length = tex->GetHeight();
+			unmaskedSpan[0].Length = tex->GetPhysicalHeight();
 			unmaskedSpan[1].TopOffset = 0;
 			unmaskedSpan[1].Length = 0;
 		}
@@ -233,7 +237,7 @@ namespace swrenderer
 				SetDest(dc_viewport, dc_x, dc_yl);
 				dc_count = dc_yh - dc_yl + 1;
 
-				double v = ((dc_yl + 0.5 - sprtopscreen) / spryscale) / tex->GetHeight();
+				double v = ((dc_yl + 0.5 - sprtopscreen) / spryscale) / tex->GetPhysicalHeight();
 				dc_texturefrac = (uint32_t)(v * (1 << 30));
 
 				(thread->Drawers(dc_viewport)->*colfunc)(*this);

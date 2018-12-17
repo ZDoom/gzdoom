@@ -387,69 +387,71 @@ void FTexture::CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasA
 		break;
 	}
 
-	if (texbuffer.mBuffer)
+	int type = gl_texture_hqresizemode;
+	int mult = gl_texture_hqresizemult;
+#ifdef HAVE_MMX
+	// hqNx MMX does not preserve the alpha channel so fall back to C-version for such textures
+	if (hasAlpha && type == 3)
 	{
-		int type = gl_texture_hqresizemode;
-		int mult = gl_texture_hqresizemult;
-#ifdef HAVE_MMX
-		// hqNx MMX does not preserve the alpha channel so fall back to C-version for such textures
-		if (hasAlpha && type == 3)
-		{
-			type = 2;
-		}
-#endif
-		// These checks are to ensure consistency of the content ID.
-		if (mult < 2 || mult > 6 || type < 1 || type > 6) return;
-		if (type < 4 && mult > 4) mult = 4;
-
-		if (!checkonly)
-		{
-			if (type == 1)
-			{
-				if (mult == 2)
-					texbuffer.mBuffer = scaleNxHelper(&scale2x, 2, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
-				else if (mult == 3)
-					texbuffer.mBuffer = scaleNxHelper(&scale3x, 3, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
-				else if (mult == 4)
-					texbuffer.mBuffer = scaleNxHelper(&scale4x, 4, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
-				else return;
-			}
-			else if (type == 2)
-			{
-				if (mult == 2)
-					texbuffer.mBuffer = hqNxHelper(&hq2x_32, 2, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
-				else if (mult == 3)
-					texbuffer.mBuffer = hqNxHelper(&hq3x_32, 3, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
-				else if (mult == 4)
-					texbuffer.mBuffer = hqNxHelper(&hq4x_32, 4, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
-				else return;
-			}
-#ifdef HAVE_MMX
-			else if (type == 3)
-			{
-				if (mult == 2)
-					texbuffer.mBuffer = hqNxAsmHelper(&HQnX_asm::hq2x_32, 2, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
-				else if (mult == 3)
-					texbuffer.mBuffer = hqNxAsmHelper(&HQnX_asm::hq3x_32, 3, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
-				else if (mult == 4)
-					texbuffer.mBuffer = hqNxAsmHelper(&HQnX_asm::hq4x_32, 4, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
-				else return;
-			}
-#endif
-			else if (type == 4)
-				texbuffer.mBuffer = xbrzHelper(xbrz::scale, mult, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
-			else if (type == 5)
-				texbuffer.mBuffer = xbrzHelper(xbrzOldScale, mult, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
-			else if (type == 6)
-				texbuffer.mBuffer = normalNxHelper(&normalNx, mult, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
-			else
-				return;
-		}
-		// Encode the scaling method in the content ID.
-		FContentIdBuilder contentId;
-		contentId.id = texbuffer.mContentId;
-		contentId.scaler = type;
-		contentId.scalefactor = mult;
-		texbuffer.mContentId = contentId.id;
+		type = 2;
 	}
+#endif
+	// These checks are to ensure consistency of the content ID.
+	if (mult < 2 || mult > 6 || type < 1 || type > 6) return;
+	if (type < 4 && mult > 4) mult = 4;
+
+	if (!checkonly)
+	{
+		if (type == 1)
+		{
+			if (mult == 2)
+				texbuffer.mBuffer = scaleNxHelper(&scale2x, 2, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+			else if (mult == 3)
+				texbuffer.mBuffer = scaleNxHelper(&scale3x, 3, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+			else if (mult == 4)
+				texbuffer.mBuffer = scaleNxHelper(&scale4x, 4, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+			else return;
+		}
+		else if (type == 2)
+		{
+			if (mult == 2)
+				texbuffer.mBuffer = hqNxHelper(&hq2x_32, 2, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+			else if (mult == 3)
+				texbuffer.mBuffer = hqNxHelper(&hq3x_32, 3, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+			else if (mult == 4)
+				texbuffer.mBuffer = hqNxHelper(&hq4x_32, 4, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+			else return;
+		}
+#ifdef HAVE_MMX
+		else if (type == 3)
+		{
+			if (mult == 2)
+				texbuffer.mBuffer = hqNxAsmHelper(&HQnX_asm::hq2x_32, 2, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+			else if (mult == 3)
+				texbuffer.mBuffer = hqNxAsmHelper(&HQnX_asm::hq3x_32, 3, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+			else if (mult == 4)
+				texbuffer.mBuffer = hqNxAsmHelper(&HQnX_asm::hq4x_32, 4, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+			else return;
+		}
+#endif
+		else if (type == 4)
+			texbuffer.mBuffer = xbrzHelper(xbrz::scale, mult, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+		else if (type == 5)
+			texbuffer.mBuffer = xbrzHelper(xbrzOldScale, mult, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+		else if (type == 6)
+			texbuffer.mBuffer = normalNxHelper(&normalNx, mult, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+		else
+			return;
+	}
+	else
+	{
+		texbuffer.mWidth *= mult;
+		texbuffer.mHeight *= mult;
+	}
+	// Encode the scaling method in the content ID.
+	FContentIdBuilder contentId;
+	contentId.id = texbuffer.mContentId;
+	contentId.scaler = type;
+	contentId.scalefactor = mult;
+	texbuffer.mContentId = contentId.id;
 }

@@ -51,6 +51,7 @@ namespace swrenderer
 		double xstepscale, ystepscale;
 		double basexfrac, baseyfrac;
 		VisiblePlaneLight *light_list;
+		FSoftwareTexture *tex;
 
 		SpanDrawerArgs drawerargs;
 	};

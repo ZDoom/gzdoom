@@ -158,25 +158,25 @@ void RenderPolyDecal::Render(PolyRenderThread *thread, DBaseDecal *decal, const 
 	vertices[0].z = (float)ztop;
 	vertices[0].w = 1.0f;
 	vertices[0].u = (float)u_left;
-	vertices[0].v = (float)v_top;
+	vertices[0].v = 1.0f - (float)v_top;
 	vertices[1].x = (float)decal_right.X;
 	vertices[1].y = (float)decal_right.Y;
 	vertices[1].z = (float)ztop;
 	vertices[1].w = 1.0f;
 	vertices[1].u = (float)u_right;
-	vertices[1].v = (float)v_top;
+	vertices[1].v = 1.0f - (float)v_top;
 	vertices[2].x = (float)decal_right.X;
 	vertices[2].y = (float)decal_right.Y;
 	vertices[2].z = (float)zbottom;
 	vertices[2].w = 1.0f;
 	vertices[2].u = (float)u_right;
-	vertices[2].v = (float)v_bottom;
+	vertices[2].v = 1.0f - (float)v_bottom;
 	vertices[3].x = (float)decal_left.X;
 	vertices[3].y = (float)decal_left.Y;
 	vertices[3].z = (float)zbottom;
 	vertices[3].w = 1.0f;
 	vertices[3].u = (float)u_left;
-	vertices[3].v = (float)v_bottom;
+	vertices[3].v = 1.0f - (float)v_bottom;
 
 	// Light calculations
 

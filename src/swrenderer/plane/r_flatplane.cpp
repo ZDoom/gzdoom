@@ -67,6 +67,8 @@ namespace swrenderer
 			return;
 		}
 
+		tex = texture;
+
 		drawerargs.SetSolidColor(3);
 		drawerargs.SetTexture(Thread, texture);
 
@@ -181,11 +183,11 @@ namespace swrenderer
 
 		float zbufferdepth = (float)(1.0 / fabs(planeheight / Thread->Viewport->ScreenToViewY(y, 1.0)));
 
-		drawerargs.SetTextureUStep(distance * xstepscale / drawerargs.TextureWidth());
-		drawerargs.SetTextureUPos((distance * curxfrac + pviewx) / drawerargs.TextureWidth());
+		drawerargs.SetTextureUStep(distance * xstepscale / tex->GetWidth());
+		drawerargs.SetTextureUPos((distance * curxfrac + pviewx) / tex->GetWidth());
 
-		drawerargs.SetTextureVStep(distance * ystepscale / drawerargs.TextureHeight());
-		drawerargs.SetTextureVPos((distance * curyfrac + pviewy) / drawerargs.TextureHeight());
+		drawerargs.SetTextureVStep(distance * ystepscale / tex->GetHeight());
+		drawerargs.SetTextureVPos((distance * curyfrac + pviewy) / tex->GetHeight());
 		
 		if (viewport->RenderTarget->IsBgra())
 		{

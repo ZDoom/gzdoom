@@ -50,8 +50,8 @@ void PolyDrawArgs::SetTexture(const uint8_t *texels, int width, int height)
 void PolyDrawArgs::SetTexture(FSoftwareTexture *texture, FRenderStyle style)
 {
 	mTexture = texture;
-	mTextureWidth = texture->GetWidth();
-	mTextureHeight = texture->GetHeight();
+	mTextureWidth = texture->GetPhysicalWidth();
+	mTextureHeight = texture->GetPhysicalHeight();
 	if (PolyTriangleDrawer::IsBgra())
 		mTexturePixels = (const uint8_t *)texture->GetPixelsBgra();
 	else
@@ -73,8 +73,8 @@ void PolyDrawArgs::SetTexture(FSoftwareTexture *texture, uint32_t translationID,
 				mTranslation = table->Remap;
 
 			mTexture = texture;
-			mTextureWidth = texture->GetWidth();
-			mTextureHeight = texture->GetHeight();
+			mTextureWidth = texture->GetPhysicalWidth();
+			mTextureHeight = texture->GetPhysicalHeight();
 			mTexturePixels = texture->GetPixels(style);
 			return;
 		}
@@ -83,8 +83,8 @@ void PolyDrawArgs::SetTexture(FSoftwareTexture *texture, uint32_t translationID,
 	if (style.Flags & STYLEF_RedIsAlpha)
 	{
 		mTexture = texture;
-		mTextureWidth = texture->GetWidth();
-		mTextureHeight = texture->GetHeight();
+		mTextureWidth = texture->GetPhysicalWidth();
+		mTextureHeight = texture->GetPhysicalHeight();
 		mTexturePixels = texture->GetPixels(style);
 	}
 	else

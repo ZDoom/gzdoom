@@ -142,7 +142,7 @@ namespace swrenderer
 		NoLightFade = !!(level.flags3 & LEVEL3_NOLIGHTFADE);
 	}
 
-	fixed_t LightVisibility::LightLevelToShade(int lightlevel, bool foggy)
+	fixed_t LightVisibility::LightLevelToShadeImpl(int lightlevel, bool foggy)
 	{
 		bool nolightfade = !foggy && ((level.flags3 & LEVEL3_NOLIGHTFADE));
 		if (nolightfade)

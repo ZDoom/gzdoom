@@ -80,7 +80,6 @@ namespace swrenderer
 	void RenderPlayerSprites::Render()
 	{
 		int 		i;
-		int 		lightnum;
 		DPSprite*	psp;
 		DPSprite*	weapon;
 		sector_t*	sec = NULL;
@@ -138,8 +137,7 @@ namespace swrenderer
 		bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE));
 
 		// get light level
-		lightnum = ((floorlight + ceilinglight) >> 1) + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get());
-		int spriteshade = LightVisibility::LightLevelToShade(lightnum, foggy) - 24 * FRACUNIT;
+		int spriteshade = LightVisibility::LightLevelToShade((floorlight + ceilinglight) >> 1, foggy, Thread->Viewport.get()) - 24 * FRACUNIT;
 
 		if (Thread->Viewport->viewpoint.camera->player != NULL)
 		{

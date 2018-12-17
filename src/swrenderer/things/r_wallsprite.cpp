@@ -190,10 +190,9 @@ namespace swrenderer
 
 		SpriteDrawerArgs drawerargs;
 
-		int shade = LightVisibility::LightLevelToShade(spr->sector->lightlevel + LightVisibility::ActualExtraLight(spr->foggy, thread->Viewport.get()), spr->foggy);
-		double GlobVis = thread->Light->WallGlobVis(foggy);
-		float lightleft = float(GlobVis / spr->wallc.sz1);
-		float lightstep = float((GlobVis / spr->wallc.sz2 - lightleft) / (spr->wallc.sx2 - spr->wallc.sx1));
+		int shade = LightVisibility::LightLevelToShade(spr->sector->lightlevel, spr->foggy, thread->Viewport.get());
+		float lightleft = float(thread->Light->WallVis(spr->wallc.sz1, foggy));
+		float lightstep = float((thread->Light->WallVis(spr->wallc.sz2, foggy) - lightleft) / (spr->wallc.sx2 - spr->wallc.sx1));
 		float light = lightleft + (x1 - spr->wallc.sx1) * lightstep;
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedLightLevel() >= 0)

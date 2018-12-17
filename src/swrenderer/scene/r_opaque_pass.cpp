@@ -548,7 +548,7 @@ namespace swrenderer
 			ceilingplane = Thread->PlaneList->FindPlane(
 				frontsector->ceilingplane,
 				frontsector->GetTexture(sector_t::ceiling),
-				adjusted_ceilinglightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()),
+				adjusted_ceilinglightlevel, foggy,
 				frontsector->GetAlpha(sector_t::ceiling),
 				!!(frontsector->GetFlags(sector_t::ceiling) & PLANEF_ADDITIVE),
 				frontsector->planes[sector_t::ceiling].xform,
@@ -588,7 +588,7 @@ namespace swrenderer
 		{
 			floorplane = Thread->PlaneList->FindPlane(frontsector->floorplane,
 				frontsector->GetTexture(sector_t::floor),
-				adjusted_floorlightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()),
+				adjusted_floorlightlevel, foggy,
 				frontsector->GetAlpha(sector_t::floor),
 				!!(frontsector->GetFlags(sector_t::floor) & PLANEF_ADDITIVE),
 				frontsector->planes[sector_t::floor].xform,
@@ -613,7 +613,7 @@ namespace swrenderer
 		// [RH] Add particles
 		if ((unsigned int)(sub->Index()) < level.subsectors.Size())
 		{ // Only do it for the main BSP.
-			int shade = LightVisibility::LightLevelToShade((floorlightlevel + ceilinglightlevel) / 2 + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()), foggy);
+			int shade = LightVisibility::LightLevelToShade((floorlightlevel + ceilinglightlevel) / 2, foggy, Thread->Viewport.get());
 			for (int i = ParticlesInSubsec[sub->Index()]; i != NO_PARTICLE; i = Particles[i].snext)
 			{
 				RenderParticle::Project(Thread, &Particles[i], sub->sector, shade, FakeSide, foggy);
@@ -732,7 +732,7 @@ namespace swrenderer
 					VisiblePlane *floorplane3d = Thread->PlaneList->FindPlane(
 						tempsec.floorplane,
 						tempsec.GetTexture(sector_t::floor),
-						floorlightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()),
+						floorlightlevel, foggy,
 						tempsec.GetAlpha(sector_t::floor),
 						!!(clip3d->fakeFloor->fakeFloor->flags & FF_ADDITIVETRANS),
 						tempsec.planes[position].xform,
@@ -800,7 +800,7 @@ namespace swrenderer
 					VisiblePlane *ceilingplane3d = Thread->PlaneList->FindPlane(
 						tempsec.ceilingplane,
 						tempsec.GetTexture(sector_t::ceiling),
-						ceilinglightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()),
+						ceilinglightlevel, foggy,
 						tempsec.GetAlpha(sector_t::ceiling),
 						!!(clip3d->fakeFloor->fakeFloor->flags & FF_ADDITIVETRANS),
 						tempsec.planes[position].xform,
@@ -891,7 +891,7 @@ namespace swrenderer
 		//sec->validcount = validcount;
 		SeenSpriteSectors.insert(sec);
 
-		int spriteshade = LightVisibility::LightLevelToShade(lightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()), foggy);
+		int spriteshade = LightVisibility::LightLevelToShade(lightlevel, foggy, Thread->Viewport.get());
 
 		// Handle all things in sector.
 		for (auto p = sec->touching_renderthings; p != nullptr; p = p->m_snext)
@@ -951,7 +951,7 @@ namespace swrenderer
 					if (sec->sectornum != thing->Sector->sectornum)	// compare sectornums to account for R_FakeFlat copies.
 					{
 						int lightlevel = thing->Sector->GetTexture(sector_t::ceiling) == skyflatnum ? thing->Sector->GetCeilingLight() : thing->Sector->GetFloorLight();
-						thingShade = LightVisibility::LightLevelToShade(lightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()), foggy);
+						thingShade = LightVisibility::LightLevelToShade(lightlevel, foggy, Thread->Viewport.get());
 						thingColormap = GetColorTable(thing->Sector->Colormap, thing->Sector->SpecialColors[sector_t::sprites], true);
 					}
 

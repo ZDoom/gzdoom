@@ -349,7 +349,9 @@ namespace swrenderer
 		CameraLight *cameraLight = CameraLight::Instance();
 		bool fixed = (cameraLight->FixedColormap() != NULL || cameraLight->FixedLightLevel() >= 0);
 
-		if (cameraLight->FixedColormap())
+		if (cameraLight->FixedLightLevel() >= 0)
+			drawerargs.SetLight(cameraLight->FixedColormap(), 0, cameraLight->FixedLightLevelShade());
+		else if (cameraLight->FixedColormap())
 			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
 		else
 			drawerargs.SetLight(basecolormap, 0, 0);
@@ -420,7 +422,7 @@ namespace swrenderer
 
 			lightlist_t *lit = &frontsector->e->XFloor.lightlist[i];
 			basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
-			wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, lit->lightsource != NULL) + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()), foggy);
+			wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, lit->lightsource != NULL), foggy, Thread->Viewport.get());
 		}
 
 		ProcessNormalWall(up, dwal, texturemid, swal, lwal);

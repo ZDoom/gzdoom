@@ -153,7 +153,7 @@ namespace swrenderer
 		else
 		{
 			plane_shade = true;
-			planeshade = LightVisibility::LightLevelToShade(pl->lightlevel, foggy);
+			planeshade = LightVisibility::LightLevelToShade(pl->lightlevel, foggy, viewport);
 		}
 
 		drawerargs.SetStyle(masked, additive, alpha);

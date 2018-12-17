@@ -40,7 +40,7 @@ namespace swrenderer
 		void Clear();
 		void ClearKeepFakePlanes();
 
-		VisiblePlane *FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal, FDynamicColormap *basecolormap, Fake3DOpaque::Type fakeFloorType, fixed_t fakeAlpha);
+		VisiblePlane *FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, bool foggy, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal, FDynamicColormap *basecolormap, Fake3DOpaque::Type fakeFloorType, fixed_t fakeAlpha);
 		VisiblePlane *GetRange(VisiblePlane *pl, int start, int stop);
 
 		bool HasPortalPlanes() const;

@@ -60,7 +60,7 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 namespace swrenderer
 {
-	void RenderVoxel::Project(RenderThread *thread, AActor *thing, DVector3 pos, FVoxelDef *voxel, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy, FDynamicColormap *basecolormap)
+	void RenderVoxel::Project(RenderThread *thread, AActor *thing, DVector3 pos, FVoxelDef *voxel, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int lightlevel, bool foggy, FDynamicColormap *basecolormap)
 	{
 		// transform the origin point
 		double tr_x = pos.X - thread->Viewport->viewpoint.Pos.X;
@@ -188,7 +188,7 @@ namespace swrenderer
 		bool fullbright = !vis->foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
 		bool fadeToBlack = (vis->RenderStyle.Flags & STYLEF_FadeToBlack) != 0;
 
-		vis->Light.SetColormap(thread->Light->SpriteVis(tz, foggy), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
+		vis->Light.SetColormap(thread, tz, lightlevel, foggy, basecolormap, fullbright, invertcolormap, fadeToBlack, false, false);
 
 		// Fake a voxel drawing to find its extents..
 		SpriteDrawerArgs drawerargs;

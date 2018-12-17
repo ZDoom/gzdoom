@@ -153,7 +153,7 @@ namespace swrenderer
 		else
 		{
 			plane_shade = true;
-			planeshade = LightVisibility::LightLevelToShade(pl->lightlevel, foggy, viewport);
+			lightlevel = pl->lightlevel;
 		}
 
 		drawerargs.SetStyle(masked, additive, alpha);
@@ -200,7 +200,7 @@ namespace swrenderer
 		if (plane_shade)
 		{
 			// Determine lighting based on the span's distance from the viewer.
-			drawerargs.SetLight(basecolormap, (float)Thread->Light->FlatPlaneVis(y, planeheight, foggy, viewport), planeshade);
+			drawerargs.SetLight(basecolormap, (float)Thread->Light->FlatPlaneVis(y, planeheight, foggy, viewport), lightlevel, foggy, viewport);
 		}
 
 		if (r_dynlights)

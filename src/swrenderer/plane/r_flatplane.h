@@ -44,7 +44,7 @@ namespace swrenderer
 		int minx;
 		double planeheight;
 		bool plane_shade;
-		int planeshade;
+		int lightlevel;
 		bool foggy;
 		FDynamicColormap *basecolormap;
 		double pviewx, pviewy;

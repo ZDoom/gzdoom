@@ -31,7 +31,7 @@ namespace swrenderer
 	class RenderFogBoundary
 	{
 	public:
-		void Render(RenderThread *thread, int x1, int x2, const short *uclip, const short *dclip, int wallshade, float lightleft, float lightstep, FDynamicColormap *basecolormap);
+		void Render(RenderThread *thread, int x1, int x2, const short *uclip, const short *dclip, int lightlevel, bool foggy, float lightleft, float lightstep, FDynamicColormap *basecolormap);
 
 	private:
 		void RenderSection(RenderThread *thread, int y, int y2, int x1);

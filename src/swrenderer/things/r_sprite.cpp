@@ -72,7 +72,7 @@ EXTERN_CVAR(Bool, gl_light_sprites)
 
 namespace swrenderer
 {
-	void RenderSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FTexture *ttex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy, FDynamicColormap *basecolormap)
+	void RenderSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FTexture *ttex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int lightlevel, bool foggy, FDynamicColormap *basecolormap)
 	{
 		FSoftwareTexture *tex = ttex->GetSoftwareTexture();
 		// transform the origin point
@@ -300,7 +300,7 @@ namespace swrenderer
 			vis->dynlightcolor = 0;
 		}
 
-		vis->Light.SetColormap(thread->Light->SpriteVis(tz, foggy), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
+		vis->Light.SetColormap(thread, tz, lightlevel, foggy, basecolormap, fullbright, invertcolormap, fadeToBlack, false, false);
 
 		thread->SpriteList->Push(vis);
 	}

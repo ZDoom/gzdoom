@@ -129,7 +129,7 @@ namespace swrenderer
 			const short *mceilingclip = ds->sprtopclip - ds->x1;
 
 			RenderFogBoundary renderfog;
-			renderfog.Render(Thread, x1, x2, mceilingclip, mfloorclip, LightVisibility::LightLevelToShade(lightlevel, ds->foggy, Thread->Viewport.get()), rw_light, rw_lightstep, basecolormap);
+			renderfog.Render(Thread, x1, x2, mceilingclip, mfloorclip, lightlevel, ds->foggy, rw_light, rw_lightstep, basecolormap);
 
 			if (ds->maskedtexturecol == nullptr)
 				renderwall = false;

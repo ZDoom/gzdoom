@@ -163,9 +163,7 @@ namespace swrenderer
 				bool isFullBright = !foggy && (renderflags & RF_FULLBRIGHT);
 				bool fadeToBlack = spr->RenderStyle == LegacyRenderStyles[STYLE_Add] && mybasecolormap->Fade != 0;
 
-				int spriteshade = LightVisibility::LightLevelToShade(sec->lightlevel, foggy, thread->Viewport.get());
-
-				Light.SetColormap(thread->Light->SpriteVis(spr->depth, foggy), spriteshade, mybasecolormap, isFullBright, invertcolormap, fadeToBlack);
+				Light.SetColormap(thread, spr->depth, sec->lightlevel, foggy, mybasecolormap, isFullBright, invertcolormap, fadeToBlack, false, false);
 			}
 		}
 

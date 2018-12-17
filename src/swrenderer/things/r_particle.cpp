@@ -69,7 +69,7 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void RenderParticle::Project(RenderThread *thread, particle_t *particle, const sector_t *sector, int shade, WaterFakeSide fakeside, bool foggy)
+	void RenderParticle::Project(RenderThread *thread, particle_t *particle, const sector_t *sector, int lightlevel, WaterFakeSide fakeside, bool foggy)
 	{
 		double 				tr_x, tr_y;
 		double 				tx, ty;
@@ -220,7 +220,7 @@ namespace swrenderer
 		vis->floorclip = 0;
 		vis->foggy = foggy;
 
-		vis->Light.SetColormap(thread->Light->ParticleVis(tz, foggy), shade, map, particle->bright != 0, false, false);
+		vis->Light.SetColormap(thread, tz, lightlevel, foggy, map, particle->bright != 0, false, false, false, true);
 
 		thread->SpriteList->Push(vis);
 	}

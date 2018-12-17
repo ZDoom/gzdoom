@@ -83,7 +83,6 @@ namespace swrenderer
 		// The vis value to pass into the GETPALOOKUP or LIGHTSCALE macros
 		double WallVis(double screenZ, bool foggy) const { return WallGlobVis(foggy) / screenZ; }
 		double SpriteVis(double screenZ, bool foggy) const { return SpriteGlobVis(foggy) / MAX(screenZ, MINZ); }
-		double ParticleVis(double screenZ, bool foggy) const { return ParticleGlobVis(foggy) / screenZ; }
 		double FlatPlaneVis(int screenY, double planeheight, bool foggy, RenderViewport *viewport) const { return FlatPlaneGlobVis(foggy) / planeheight * fabs(viewport->CenterY - screenY); }
 
 		double SlopePlaneGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0f : TiltVisibility; }
@@ -95,7 +94,6 @@ namespace swrenderer
 	private:
 		double WallGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0f : WallVisibility; }
 		double SpriteGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0f : WallVisibility; }
-		double ParticleGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0f : (WallVisibility * 0.5); }
 		double FlatPlaneGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0f : FloorVisibility; }
 
 		static fixed_t LightLevelToShadeImpl(int lightlevel, bool foggy);
@@ -118,6 +116,6 @@ namespace swrenderer
 		int ColormapNum = 0;
 		FSWColormap *BaseColormap = nullptr;
 
-		void SetColormap(double visibility, int shade, FDynamicColormap *basecolormap, bool fullbright, bool invertColormap, bool fadeToBlack);
+		void SetColormap(RenderThread *thread, double z, int lightlevel, bool foggy, FDynamicColormap *basecolormap, bool fullbright, bool invertColormap, bool fadeToBlack, bool psprite, bool particle);
 	};
 }

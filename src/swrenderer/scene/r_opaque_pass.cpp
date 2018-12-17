@@ -613,10 +613,10 @@ namespace swrenderer
 		// [RH] Add particles
 		if ((unsigned int)(sub->Index()) < level.subsectors.Size())
 		{ // Only do it for the main BSP.
-			int shade = LightVisibility::LightLevelToShade((floorlightlevel + ceilinglightlevel) / 2, foggy, Thread->Viewport.get());
+			int lightlevel = (floorlightlevel + ceilinglightlevel) / 2;
 			for (int i = ParticlesInSubsec[sub->Index()]; i != NO_PARTICLE; i = Particles[i].snext)
 			{
-				RenderParticle::Project(Thread, &Particles[i], sub->sector, shade, FakeSide, foggy);
+				RenderParticle::Project(Thread, &Particles[i], sub->sector, lightlevel, FakeSide, foggy);
 			}
 		}
 
@@ -891,8 +891,6 @@ namespace swrenderer
 		//sec->validcount = validcount;
 		SeenSpriteSectors.insert(sec);
 
-		int spriteshade = LightVisibility::LightLevelToShade(lightlevel, foggy, Thread->Viewport.get());
-
 		// Handle all things in sector.
 		for (auto p = sec->touching_renderthings; p != nullptr; p = p->m_snext)
 		{
@@ -947,25 +945,24 @@ namespace swrenderer
 				else if (GetThingSprite(thing, sprite))
 				{
 					FDynamicColormap *thingColormap = basecolormap;
-					int thingShade = spriteshade;
+					int thinglightlevel = lightlevel;
 					if (sec->sectornum != thing->Sector->sectornum)	// compare sectornums to account for R_FakeFlat copies.
 					{
-						int lightlevel = thing->Sector->GetTexture(sector_t::ceiling) == skyflatnum ? thing->Sector->GetCeilingLight() : thing->Sector->GetFloorLight();
-						thingShade = LightVisibility::LightLevelToShade(lightlevel, foggy, Thread->Viewport.get());
+						thinglightlevel = thing->Sector->GetTexture(sector_t::ceiling) == skyflatnum ? thing->Sector->GetCeilingLight() : thing->Sector->GetFloorLight();
 						thingColormap = GetColorTable(thing->Sector->Colormap, thing->Sector->SpecialColors[sector_t::sprites], true);
 					}
 
 					if ((sprite.renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 					{
-						RenderWallSprite::Project(Thread, thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, thingShade, foggy, thingColormap);
+						RenderWallSprite::Project(Thread, thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, thinglightlevel, foggy, thingColormap);
 					}
 					else if (sprite.voxel)
 					{
-						RenderVoxel::Project(Thread, thing, sprite.pos, sprite.voxel, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thingShade, foggy, thingColormap);
+						RenderVoxel::Project(Thread, thing, sprite.pos, sprite.voxel, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thinglightlevel, foggy, thingColormap);
 					}
 					else
 					{
-						RenderSprite::Project(Thread, thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thingShade, foggy, thingColormap);
+						RenderSprite::Project(Thread, thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thinglightlevel, foggy, thingColormap);
 					}
 				}
 			}

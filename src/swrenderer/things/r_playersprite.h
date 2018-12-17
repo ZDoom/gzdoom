@@ -90,7 +90,7 @@ namespace swrenderer
 		RenderThread *Thread = nullptr;
 
 	private:
-		void RenderSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int spriteshade, FDynamicColormap *basecolormap, bool foggy);
+		void RenderSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int lightlevel, FDynamicColormap *basecolormap, bool foggy);
 
 		enum { BASEXCENTER = 160 };
 		enum { BASEYCENTER = 100 };

@@ -43,7 +43,8 @@ namespace swrenderer
 		FVector3 plane_sz, plane_su, plane_sv;
 		float planelightfloat;
 		bool plane_shade;
-		int planeshade;
+		int lightlevel;
+		bool foggy;
 		fixed_t pviewx, pviewy;
 		fixed_t xscale, yscale;
 		FDynamicColormap *basecolormap;

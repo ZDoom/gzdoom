@@ -140,8 +140,8 @@ void DrawerThreads::WorkerMain(DrawerThread *thread)
 		// Grab the commands
 		DrawerCommandQueuePtr list = active_commands[thread->current_queue];
 		thread->current_queue++;
-		thread->numa_start_y = thread->numa_node * viewheight / thread->num_numa_nodes;
-		thread->numa_end_y = (thread->numa_node + 1) * viewheight / thread->num_numa_nodes;
+		thread->numa_start_y = thread->numa_node * screen->GetHeight() / thread->num_numa_nodes;
+		thread->numa_end_y = (thread->numa_node + 1) * screen->GetHeight() / thread->num_numa_nodes;
 		start_lock.unlock();
 
 		// Do the work:

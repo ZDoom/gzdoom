@@ -124,11 +124,24 @@ const uint8_t *FSoftwareTexture::GetPixels(int style)
 			auto tempbuffer = mTexture->CreateTexBuffer(0, mBufferFlags);
 			Pixels.Resize(GetPhysicalWidth()*GetPhysicalHeight());
 			PalEntry *pe = (PalEntry*)tempbuffer.mBuffer;
-			for (int y = 0; y < GetPhysicalHeight(); y++)
+			if (!style)
 			{
-				for (int x = 0; x < GetPhysicalWidth(); x++)
+				for (int y = 0; y < GetPhysicalHeight(); y++)
 				{
-					Pixels[y + x * GetPhysicalHeight()] = ImageHelpers::RGBToPalette(false, pe[x + y * GetPhysicalWidth()], true);
+					for (int x = 0; x < GetPhysicalWidth(); x++)
+					{
+						Pixels[y + x * GetPhysicalHeight()] = ImageHelpers::RGBToPalette(false, pe[x + y * GetPhysicalWidth()], true);
+					}
+				}
+			}
+			else
+			{
+				for (int y = 0; y < GetPhysicalHeight(); y++)
+				{
+					for (int x = 0; x < GetPhysicalWidth(); x++)
+					{
+						Pixels[y + x * GetPhysicalHeight()] = pe[x + y * GetPhysicalWidth()].r;
+					}
 				}
 			}
 		}

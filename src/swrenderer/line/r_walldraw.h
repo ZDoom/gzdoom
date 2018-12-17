@@ -62,7 +62,7 @@ namespace swrenderer
 			double top,
 			double bottom,
 			bool mask,
-			int wallshade,
+			int lightlevel,
 			fixed_t xoffset,
 			float light,
 			float lightstep,
@@ -88,7 +88,7 @@ namespace swrenderer
 		FWallCoords WallC;
 
 		double yrepeat = 0.0;
-		int wallshade = 0;
+		int lightlevel = 0;
 		fixed_t xoffset = 0;
 		float light = 0.0f;
 		float lightstep = 0.0f;

@@ -37,10 +37,10 @@ namespace swrenderer
 		RenderThread *Thread = nullptr;
 
 	private:
-		bool RenderWall(DrawSegment *ds, int x1, int x2, WallDrawerArgs &walldrawerargs, SpriteDrawerArgs &columndrawerargs, bool visible, FDynamicColormap *basecolormap, int wallshade);
+		bool RenderWall(DrawSegment *ds, int x1, int x2, WallDrawerArgs &walldrawerargs, SpriteDrawerArgs &columndrawerargs, bool visible, FDynamicColormap *basecolormap, int lightlevel);
 		void ClipMidtex(int x1, int x2);
-		void RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int wallshade, FDynamicColormap *basecolormap, double clipTop, double clipBottom);
-		void RenderFakeWallRange(DrawSegment *ds, int x1, int x2, int wallshade);
+		void RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int lightlevel, FDynamicColormap *basecolormap, double clipTop, double clipBottom);
+		void RenderFakeWallRange(DrawSegment *ds, int x1, int x2);
 		void GetMaskedWallTopBottom(DrawSegment *ds, double &top, double &bot);
 
 		sector_t *frontsector = nullptr;

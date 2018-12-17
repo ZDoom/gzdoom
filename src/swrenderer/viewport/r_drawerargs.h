@@ -31,6 +31,7 @@ namespace swrenderer
 	{
 	public:
 		void SetLight(FSWColormap *base_colormap, float light, int shade);
+		void SetLight(FSWColormap *base_colormap, float light, int lightlevel, bool foggy, RenderViewport *viewport);
 		void SetTranslationMap(lighttable_t *translation);
 
 		uint8_t *Colormap(RenderViewport *viewport) const;

@@ -133,7 +133,7 @@ namespace swrenderer
 
 		bool rw_prepped;
 
-		int wallshade;
+		int lightlevel;
 		float rw_lightstep;
 		float rw_lightleft;
 

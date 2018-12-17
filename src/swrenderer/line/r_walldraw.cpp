@@ -374,7 +374,7 @@ namespace swrenderer
 				continue;
 
 			if (!fixed)
-				drawerargs.SetLight(basecolormap, curlight, wallshade);
+				drawerargs.SetLight(basecolormap, curlight, lightlevel, foggy, Thread->Viewport.get());
 
 			if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
 
@@ -422,7 +422,7 @@ namespace swrenderer
 
 			lightlist_t *lit = &frontsector->e->XFloor.lightlist[i];
 			basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
-			wallshade = LightVisibility::LightLevelToShade(curline->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, lit->lightsource != NULL), foggy, Thread->Viewport.get());
+			lightlevel = curline->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, lit->lightsource != NULL);
 		}
 
 		ProcessNormalWall(up, dwal, texturemid, swal, lwal);
@@ -519,7 +519,7 @@ namespace swrenderer
 		}
 	}
 
-	void RenderWallPart::Render(const WallDrawerArgs &drawerargs, sector_t *frontsector, seg_t *curline, const FWallCoords &WallC, FSoftwareTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, double texturemid, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, int wallshade, fixed_t xoffset, float light, float lightstep, FLightNode *light_list, bool foggy, FDynamicColormap *basecolormap)
+	void RenderWallPart::Render(const WallDrawerArgs &drawerargs, sector_t *frontsector, seg_t *curline, const FWallCoords &WallC, FSoftwareTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, double texturemid, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, int lightlevel, fixed_t xoffset, float light, float lightstep, FLightNode *light_list, bool foggy, FDynamicColormap *basecolormap)
 	{
 		this->drawerargs = drawerargs;
 		this->x1 = x1;
@@ -528,7 +528,7 @@ namespace swrenderer
 		this->curline = curline;
 		this->WallC = WallC;
 		this->yrepeat = yscale;
-		this->wallshade = wallshade;
+		this->lightlevel = lightlevel;
 		this->xoffset = xoffset;
 		this->light = light;
 		this->lightstep = lightstep;

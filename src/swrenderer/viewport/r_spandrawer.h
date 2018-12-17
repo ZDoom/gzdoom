@@ -15,7 +15,7 @@ namespace swrenderer
 	public:
 		SpanDrawerArgs();
 
-		void SetStyle(bool masked, bool additive, fixed_t alpha);
+		void SetStyle(bool masked, bool additive, fixed_t alpha, FDynamicColormap *basecolormap);
 		void SetDestY(RenderViewport *viewport, int y) { ds_viewport = viewport; ds_y = y; }
 		void SetDestX1(int x) { ds_x1 = x; }
 		void SetDestX2(int x) { ds_x2 = x; }

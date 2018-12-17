@@ -13,6 +13,7 @@ namespace swrenderer
 	class SkyDrawerArgs : public DrawerArgs
 	{
 	public:
+		void SetStyle();
 		void SetDest(RenderViewport *viewport, int x, int y);
 		void SetCount(int count) { dc_count = count; }
 		void SetFrontTexture(RenderThread *thread, FSoftwareTexture *texture, fixed_t column);

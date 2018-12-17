@@ -51,7 +51,7 @@ namespace swrenderer
 		ds_source_mipmapped = tex->Mipmapped() && tex->GetPhysicalWidth() > 1 && tex->GetPhysicalHeight() > 1;
 	}
 
-	void SpanDrawerArgs::SetStyle(bool masked, bool additive, fixed_t alpha)
+	void SpanDrawerArgs::SetStyle(bool masked, bool additive, fixed_t alpha, FDynamicColormap *basecolormap)
 	{
 		if (masked)
 		{
@@ -104,6 +104,22 @@ namespace swrenderer
 			{
 				spanfunc = &SWPixelFormatDrawers::DrawSpan;
 			}
+		}
+
+		CameraLight *cameraLight = CameraLight::Instance();
+		if (cameraLight->FixedLightLevel() >= 0)
+		{
+			SetBaseColormap((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap);
+			SetLight(0, cameraLight->FixedLightLevelShade());
+		}
+		else if (cameraLight->FixedColormap())
+		{
+			SetBaseColormap(cameraLight->FixedColormap());
+			SetLight(0, 0);
+		}
+		else
+		{
+			SetBaseColormap(basecolormap);
 		}
 	}
 

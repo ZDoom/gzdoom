@@ -74,8 +74,6 @@ namespace swrenderer
 		double zpos;
 		int needrepeat = 0;
 		sector_t *back;
-		bool calclighting;
-		bool rereadcolormap;
 		FDynamicColormap *usecolormap;
 		float light = 0;
 		const short *mfloorclip;
@@ -259,15 +257,12 @@ namespace swrenderer
 		}
 
 		// Prepare lighting
-		calclighting = false;
 		usecolormap = basecolormap;
-		rereadcolormap = true;
 
 		// Decals that are added to the scene must fade to black.
 		if (decal->RenderStyle == LegacyRenderStyles[STYLE_Add] && usecolormap->Fade != 0)
 		{
 			usecolormap = GetSpecialLights(usecolormap->Color, 0, usecolormap->Desaturate);
-			rereadcolormap = false;
 		}
 
 		light = lightleft + (x1 - savecoord.sx1) * lightstep;
@@ -292,24 +287,12 @@ namespace swrenderer
 		{
 			int x = x1;
 
+			ColormapLight cmlight;
+			cmlight.SetColormap(thread, MINZ, lightlevel, foggy, usecolormap, decal->RenderFlags & RF_FULLBRIGHT, false, false, false, false);
+
 			SpriteDrawerArgs drawerargs;
-
-			if (cameraLight->FixedLightLevel() >= 0)
-				drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, cameraLight->FixedLightLevelShade());
-			else if (cameraLight->FixedColormap() != NULL)
-				drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
-			else if (!foggy && (decal->RenderFlags & RF_FULLBRIGHT))
-				drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, 0);
-			else
-				calclighting = true;
-
-			bool visible = drawerargs.SetStyle(thread->Viewport.get(), decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor, basecolormap);
-
-			// R_SetPatchStyle can modify basecolormap.
-			if (rereadcolormap)
-			{
-				usecolormap = basecolormap;
-			}
+			bool visible = drawerargs.SetStyle(thread->Viewport.get(), decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor, cmlight);
+			bool calclighting = cameraLight->FixedLightLevel() < 0 && !cameraLight->FixedColormap();
 
 			if (visible)
 			{
@@ -318,7 +301,7 @@ namespace swrenderer
 				{
 					if (calclighting)
 					{ // calculate lighting
-						drawerargs.SetLight(usecolormap, light, lightlevel, foggy, thread->Viewport.get());
+						drawerargs.SetLight(light, lightlevel, foggy, thread->Viewport.get());
 					}
 					DrawColumn(thread, drawerargs, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip, decal->RenderStyle);
 					light += lightstep;

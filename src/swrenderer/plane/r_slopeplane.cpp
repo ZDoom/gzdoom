@@ -174,31 +174,19 @@ namespace swrenderer
 
 		// [RH] set foggy flag
 		basecolormap = colormap;
-		foggy = level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE);;
+		foggy = level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE);
 
 		planelightfloat = (Thread->Light->SlopePlaneGlobVis(foggy) * lxscale * lyscale) / (fabs(pl->height.ZatPoint(Thread->Viewport->viewpoint.Pos) - Thread->Viewport->viewpoint.Pos.Z)) / 65536.f;
 
 		if (pl->height.fC() > 0)
 			planelightfloat = -planelightfloat;
 
+		drawerargs.SetStyle(false, false, OPAQUE, basecolormap);
 
 		CameraLight *cameraLight = CameraLight::Instance();
-		if (cameraLight->FixedLightLevel() >= 0)
-		{
-			drawerargs.SetLight(basecolormap, 0, cameraLight->FixedLightLevelShade());
-			plane_shade = false;
-		}
-		else if (cameraLight->FixedColormap())
-		{
-			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
-			plane_shade = false;
-		}
-		else
-		{
-			drawerargs.SetLight(basecolormap, 0, 0);
-			plane_shade = true;
-			lightlevel = pl->lightlevel;
-		}
+		plane_shade = cameraLight->FixedLightLevel() < 0 && !cameraLight->FixedColormap();
+
+		lightlevel = pl->lightlevel;
 
 		// Hack in support for 1 x Z and Z x 1 texture sizes
 		if (drawerargs.TextureHeightBits() == 0)

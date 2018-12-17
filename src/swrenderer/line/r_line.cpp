@@ -1164,24 +1164,10 @@ namespace swrenderer
 			offset = -offset;
 		}
 
-		WallDrawerArgs drawerargs;
-		drawerargs.SetStyle(false, false, OPAQUE);
-
-		CameraLight *cameraLight = CameraLight::Instance();
-		if (cameraLight->FixedLightLevel() >= 0)
-			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, cameraLight->FixedLightLevelShade());
-		else if (cameraLight->FixedColormap() != nullptr)
-			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
-
 		float rw_light = rw_lightleft + rw_lightstep * (x1 - WallC.sx1);
 
-		FLightNode *light_list = (mLineSegment && mLineSegment->sidedef) ? mLineSegment->sidedef->lighthead : nullptr;
-
-		if ((cameraLight->FixedLightLevel() >= 0) || (cameraLight->FixedColormap() != nullptr))
-			light_list = nullptr; // [SP] Don't draw dynlights if invul/lightamp active
-
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(drawerargs, mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallupper.ScreenY, mTopPart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mBackCeilingZ1, mBackCeilingZ2), false, lightlevel, offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
+		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallupper.ScreenY, mTopPart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mBackCeilingZ1, mBackCeilingZ2), false, false, OPAQUE, lightlevel, offset, rw_light, rw_lightstep, GetLightList(), foggy, basecolormap);
 	}
 
 	void SWRenderLine::RenderMiddleTexture(int x1, int x2)
@@ -1211,24 +1197,10 @@ namespace swrenderer
 			offset = -offset;
 		}
 
-		WallDrawerArgs drawerargs;
-		drawerargs.SetStyle(false, false, OPAQUE);
-
-		CameraLight *cameraLight = CameraLight::Instance();
-		if (cameraLight->FixedLightLevel() >= 0)
-			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, cameraLight->FixedLightLevelShade());
-		else if (cameraLight->FixedColormap() != nullptr)
-			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
-
 		float rw_light = rw_lightleft + rw_lightstep * (x1 - WallC.sx1);
 
-		FLightNode *light_list = (mLineSegment && mLineSegment->sidedef) ? mLineSegment->sidedef->lighthead : nullptr;
-
-		if ((cameraLight->FixedLightLevel() >= 0) || (cameraLight->FixedColormap() != nullptr))
-			light_list = nullptr; // [SP] Don't draw dynlights if invul/lightamp active
-
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(drawerargs, mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallbottom.ScreenY, mMiddlePart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, lightlevel, offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
+		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallbottom.ScreenY, mMiddlePart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, lightlevel, offset, rw_light, rw_lightstep, GetLightList(), foggy, basecolormap);
 	}
 
 	void SWRenderLine::RenderBottomTexture(int x1, int x2)
@@ -1259,24 +1231,21 @@ namespace swrenderer
 			offset = -offset;
 		}
 
-		WallDrawerArgs drawerargs;
-		drawerargs.SetStyle(false, false, OPAQUE);
-
-		CameraLight *cameraLight = CameraLight::Instance();
-		if (cameraLight->FixedLightLevel() >= 0)
-			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, cameraLight->FixedLightLevelShade());
-		else if (cameraLight->FixedColormap() != nullptr)
-			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
-
 		float rw_light = rw_lightleft + rw_lightstep * (x1 - WallC.sx1);
 
-		FLightNode *light_list = (mLineSegment && mLineSegment->sidedef) ? mLineSegment->sidedef->lighthead : nullptr;
-
-		if ((cameraLight->FixedLightLevel() >= 0) || (cameraLight->FixedColormap() != nullptr))
-			light_list = nullptr; // [SP] Don't draw dynlights if invul/lightamp active
-
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(drawerargs, mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walllower.ScreenY, wallbottom.ScreenY, mBottomPart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mBackFloorZ1, mBackFloorZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, lightlevel, offset, rw_light, rw_lightstep, light_list, foggy, basecolormap);
+		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walllower.ScreenY, wallbottom.ScreenY, mBottomPart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mBackFloorZ1, mBackFloorZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, lightlevel, offset, rw_light, rw_lightstep, GetLightList(), foggy, basecolormap);
+	}
+
+	FLightNode *SWRenderLine::GetLightList()
+	{
+		CameraLight *cameraLight = CameraLight::Instance();
+		if ((cameraLight->FixedLightLevel() >= 0) || cameraLight->FixedColormap())
+			return nullptr; // [SP] Don't draw dynlights if invul/lightamp active
+		else if (mLineSegment && mLineSegment->sidedef)
+			return mLineSegment->sidedef->lighthead;
+		else
+			return nullptr;
 	}
 
 	////////////////////////////////////////////////////////////////////////////

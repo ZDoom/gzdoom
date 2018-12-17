@@ -176,32 +176,27 @@ namespace swrenderer
 				walltexcoords.UPos[i] = right - walltexcoords.UPos[i];
 			}
 		}
+
 		// Prepare lighting
-		bool calclighting = false;
-		FSWColormap *usecolormap = spr->Light.BaseColormap;
-		bool rereadcolormap = true;
 
 		// Decals that are added to the scene must fade to black.
-		if (spr->RenderStyle == LegacyRenderStyles[STYLE_Add] && usecolormap->Fade != 0)
+		ColormapLight cmlight;
+		if (spr->RenderStyle == LegacyRenderStyles[STYLE_Add] && cmlight.BaseColormap->Fade != 0)
 		{
-			usecolormap = GetSpecialLights(usecolormap->Color, 0, usecolormap->Desaturate);
-			rereadcolormap = false;
+			cmlight.BaseColormap = GetSpecialLights(cmlight.BaseColormap->Color, 0, cmlight.BaseColormap->Desaturate);
 		}
 
 		SpriteDrawerArgs drawerargs;
+
+		bool visible = drawerargs.SetStyle(thread->Viewport.get(), spr->RenderStyle, spr->Alpha, spr->Translation, spr->FillColor, cmlight);
+		if (!visible)
+			return;
 
 		float lightleft = float(thread->Light->WallVis(spr->wallc.sz1, foggy));
 		float lightstep = float((thread->Light->WallVis(spr->wallc.sz2, foggy) - lightleft) / (spr->wallc.sx2 - spr->wallc.sx1));
 		float light = lightleft + (x1 - spr->wallc.sx1) * lightstep;
 		CameraLight *cameraLight = CameraLight::Instance();
-		if (cameraLight->FixedLightLevel() >= 0)
-			drawerargs.SetLight(usecolormap, 0, cameraLight->FixedLightLevelShade());
-		else if (cameraLight->FixedColormap() != NULL)
-			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
-		else if (!spr->foggy && (spr->renderflags & RF_FULLBRIGHT))
-			drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, 0);
-		else
-			calclighting = true;
+		bool calclighting = cameraLight->FixedLightLevel() < 0 && !cameraLight->FixedColormap();
 
 		// Draw it
 		auto WallSpriteTile = spr->pic;
@@ -220,36 +215,19 @@ namespace swrenderer
 
 		int x = x1;
 
-		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(spr->Light.BaseColormap);
+		RenderTranslucentPass *translucentPass = thread->TranslucentPass.get();
 
-		bool visible = drawerargs.SetStyle(thread->Viewport.get(), spr->RenderStyle, spr->Alpha, spr->Translation, spr->FillColor, basecolormap);
-
-		// R_SetPatchStyle can modify basecolormap.
-		if (rereadcolormap)
+		thread->PrepareTexture(WallSpriteTile, spr->RenderStyle);
+		while (x < x2)
 		{
-			usecolormap = spr->Light.BaseColormap;
-		}
-
-		if (!visible)
-		{
-			return;
-		}
-		else
-		{
-			RenderTranslucentPass *translucentPass = thread->TranslucentPass.get();
-
-			thread->PrepareTexture(WallSpriteTile, spr->RenderStyle);
-			while (x < x2)
+			if (calclighting)
 			{
-				if (calclighting)
-				{ // calculate lighting
-					drawerargs.SetLight(usecolormap, light, spr->sector->lightlevel, spr->foggy, thread->Viewport.get());
-				}
-				if (!translucentPass->ClipSpriteColumnWithPortals(x, spr))
-					DrawColumn(thread, drawerargs, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip, spr->RenderStyle);
-				light += lightstep;
-				x++;
+				drawerargs.SetLight(light, spr->sector->lightlevel, spr->foggy, thread->Viewport.get());
 			}
+			if (!translucentPass->ClipSpriteColumnWithPortals(x, spr))
+				DrawColumn(thread, drawerargs, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip, spr->RenderStyle);
+			light += lightstep;
+			x++;
 		}
 	}
 

@@ -323,12 +323,8 @@ namespace swrenderer
 		}
 
 		SpriteDrawerArgs drawerargs;
-		drawerargs.SetLight(vis->Light.BaseColormap, 0, vis->Light.ColormapNum << FRACBITS);
 		drawerargs.SetDynamicLight(dynlightcolor);
-
-		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(vis->Light.BaseColormap);
-
-		bool visible = drawerargs.SetStyle(thread->Viewport.get(), vis->RenderStyle, vis->Alpha, vis->Translation, vis->FillColor, basecolormap, vis->Light.ColormapNum << FRACBITS);
+		bool visible = drawerargs.SetStyle(thread->Viewport.get(), vis->RenderStyle, vis->Alpha, vis->Translation, vis->FillColor, vis->Light);
 
 		if (visible)
 		{

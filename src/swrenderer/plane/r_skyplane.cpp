@@ -227,15 +227,7 @@ namespace swrenderer
 			backpos = int(fmod(backdpos, sky2cyl * 65536.0));
 		}
 
-		CameraLight *cameraLight = CameraLight::Instance();
-		if (cameraLight->FixedColormap())
-		{
-			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
-		}
-		else
-		{
-			drawerargs.SetLight(&NormalLight, 0, 0);
-		}
+		drawerargs.SetStyle();
 
 		Thread->PrepareTexture(frontskytex, DefaultRenderStyle());
 		Thread->PrepareTexture(backskytex, DefaultRenderStyle());

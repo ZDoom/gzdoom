@@ -40,6 +40,21 @@ namespace swrenderer
 		thread->Drawers(dc_viewport)->DrawDoubleSkyColumn(*this);
 	}
 
+	void SkyDrawerArgs::SetStyle()
+	{
+		CameraLight *cameraLight = CameraLight::Instance();
+		if (cameraLight->FixedColormap())
+		{
+			SetBaseColormap(cameraLight->FixedColormap());
+			SetLight(0, 0);
+		}
+		else
+		{
+			SetBaseColormap(&NormalLight);
+			SetLight(0, 0);
+		}
+	}
+
 	void SkyDrawerArgs::SetDest(RenderViewport *viewport, int x, int y)
 	{
 		dc_dest = viewport->GetDest(x, y);

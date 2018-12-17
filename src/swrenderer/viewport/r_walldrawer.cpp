@@ -42,7 +42,7 @@ namespace swrenderer
 		(thread->Drawers(dc_viewport)->*wallfunc)(*this);
 	}
 
-	void WallDrawerArgs::SetStyle(bool masked, bool additive, fixed_t alpha)
+	void WallDrawerArgs::SetStyle(bool masked, bool additive, fixed_t alpha, FDynamicColormap *basecolormap)
 	{
 		if (alpha < OPAQUE || additive)
 		{
@@ -71,10 +71,21 @@ namespace swrenderer
 		{
 			wallfunc = &SWPixelFormatDrawers::DrawWallColumn;
 		}
-	}
 
-	bool WallDrawerArgs::IsMaskedDrawer() const
-	{
-		return wallfunc == &SWPixelFormatDrawers::DrawWallMaskedColumn;
+		CameraLight *cameraLight = CameraLight::Instance();
+		if (cameraLight->FixedLightLevel() >= 0)
+		{
+			SetBaseColormap((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap);
+			SetLight(0.0f, cameraLight->FixedLightLevelShade());
+		}
+		else if (cameraLight->FixedColormap() != nullptr)
+		{
+			SetBaseColormap(cameraLight->FixedColormap());
+			SetLight(0.0f, 0);
+		}
+		else
+		{
+			SetBaseColormap(basecolormap);
+		}
 	}
 }

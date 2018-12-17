@@ -37,7 +37,7 @@ namespace swrenderer
 		RenderThread *Thread = nullptr;
 
 	private:
-		bool RenderWall(DrawSegment *ds, int x1, int x2, WallDrawerArgs &walldrawerargs, SpriteDrawerArgs &columndrawerargs, bool visible, FDynamicColormap *basecolormap, int lightlevel);
+		bool RenderWall(DrawSegment *ds, int x1, int x2, FDynamicColormap *basecolormap, SpriteDrawerArgs &columndrawerargs, bool visible, int lightlevel, bool foggy);
 		void ClipMidtex(int x1, int x2);
 		void RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int lightlevel, FDynamicColormap *basecolormap, double clipTop, double clipBottom);
 		void RenderFakeWallRange(DrawSegment *ds, int x1, int x2);

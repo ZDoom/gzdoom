@@ -346,15 +346,18 @@ namespace swrenderer
 
 		drawerargs.SetTextureFracBits(Thread->Viewport->RenderTarget->IsBgra() ? FRACBITS : fracbits);
 
+		// Textures that aren't masked can use the faster opaque drawer
+		if (!rw_pic->GetTexture()->isMasked() && mask && alpha >= OPAQUE && !additive)
+		{
+			drawerargs.SetStyle(true, false, OPAQUE, basecolormap);
+		}
+		else
+		{
+			drawerargs.SetStyle(mask, additive, alpha, basecolormap);
+		}
+
 		CameraLight *cameraLight = CameraLight::Instance();
 		bool fixed = (cameraLight->FixedColormap() != NULL || cameraLight->FixedLightLevel() >= 0);
-
-		if (cameraLight->FixedLightLevel() >= 0)
-			drawerargs.SetLight(cameraLight->FixedColormap(), 0, cameraLight->FixedLightLevelShade());
-		else if (cameraLight->FixedColormap())
-			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
-		else
-			drawerargs.SetLight(basecolormap, 0, 0);
 
 		float dx = WallC.tright.X - WallC.tleft.X;
 		float dy = WallC.tright.Y - WallC.tleft.Y;
@@ -374,7 +377,7 @@ namespace swrenderer
 				continue;
 
 			if (!fixed)
-				drawerargs.SetLight(basecolormap, curlight, lightlevel, foggy, Thread->Viewport.get());
+				drawerargs.SetLight(curlight, lightlevel, foggy, Thread->Viewport.get());
 
 			if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
 
@@ -430,12 +433,6 @@ namespace swrenderer
 
 	void RenderWallPart::ProcessWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal)
 	{
-		// Textures that aren't masked can use the faster ProcessNormalWall.
-		if (!rw_pic->GetTexture()->isMasked() && drawerargs.IsMaskedDrawer())
-		{
-			drawerargs.SetStyle(true, false, OPAQUE);
-		}
-
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedColormap() != NULL || cameraLight->FixedLightLevel() >= 0 || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
 		{
@@ -519,9 +516,8 @@ namespace swrenderer
 		}
 	}
 
-	void RenderWallPart::Render(const WallDrawerArgs &drawerargs, sector_t *frontsector, seg_t *curline, const FWallCoords &WallC, FSoftwareTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, double texturemid, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, int lightlevel, fixed_t xoffset, float light, float lightstep, FLightNode *light_list, bool foggy, FDynamicColormap *basecolormap)
+	void RenderWallPart::Render(sector_t *frontsector, seg_t *curline, const FWallCoords &WallC, FSoftwareTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, double texturemid, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, bool additive, fixed_t alpha, int lightlevel, fixed_t xoffset, float light, float lightstep, FLightNode *light_list, bool foggy, FDynamicColormap *basecolormap)
 	{
-		this->drawerargs = drawerargs;
 		this->x1 = x1;
 		this->x2 = x2;
 		this->frontsector = frontsector;
@@ -537,6 +533,8 @@ namespace swrenderer
 		this->light_list = light_list;
 		this->rw_pic = pic;
 		this->mask = mask;
+		this->additive = additive;
+		this->alpha = alpha;
 
 		Thread->PrepareTexture(pic, DefaultRenderStyle()); // Get correct render style? Shaded won't get here.
 

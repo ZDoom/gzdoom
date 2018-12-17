@@ -45,7 +45,7 @@ namespace swrenderer
 		double planeheight;
 		bool plane_shade;
 		int planeshade;
-		double GlobVis;
+		bool foggy;
 		FDynamicColormap *basecolormap;
 		double pviewx, pviewy;
 		double xstepscale, ystepscale;

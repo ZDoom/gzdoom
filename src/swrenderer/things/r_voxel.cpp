@@ -188,7 +188,7 @@ namespace swrenderer
 		bool fullbright = !vis->foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
 		bool fadeToBlack = (vis->RenderStyle.Flags & STYLEF_FadeToBlack) != 0;
 
-		vis->Light.SetColormap(thread->Light->SpriteGlobVis(foggy) / MAX(tz, MINZ), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
+		vis->Light.SetColormap(thread->Light->SpriteVis(tz, foggy), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
 
 		// Fake a voxel drawing to find its extents..
 		SpriteDrawerArgs drawerargs;

@@ -7,6 +7,8 @@
 #include "r_defs.h"
 #include "polyrenderer/math/gpu_types.h"
 
+#define MINZ double((2048*4) / double(1 << 20))
+
 namespace swrenderer
 {
 	class RenderThread;

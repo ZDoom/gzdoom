@@ -137,9 +137,7 @@ namespace swrenderer
 		basecolormap = colormap;
 
 		// [RH] set foggy flag
-		bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE));
-
-		GlobVis = Thread->Light->FlatPlaneGlobVis(foggy) / planeheight;
+		foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE));
 
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedLightLevel() >= 0)
@@ -202,7 +200,7 @@ namespace swrenderer
 		if (plane_shade)
 		{
 			// Determine lighting based on the span's distance from the viewer.
-			drawerargs.SetLight(basecolormap, (float)(GlobVis * fabs(viewport->CenterY - y)), planeshade);
+			drawerargs.SetLight(basecolormap, (float)Thread->Light->FlatPlaneVis(y, planeheight, foggy, viewport), planeshade);
 		}
 
 		if (r_dynlights)

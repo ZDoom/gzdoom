@@ -88,9 +88,9 @@ namespace swrenderer
 
 		// The vis value to pass into the GETPALOOKUP or LIGHTSCALE macros
 		double WallVis(double screenZ, bool foggy) const { return WallGlobVis(foggy) / screenZ; }
-		double SpriteVis(double screenZ, bool foggy) const { return SpriteGlobVis(foggy) / screenZ; }
+		double SpriteVis(double screenZ, bool foggy) const { return SpriteGlobVis(foggy) / MAX(screenZ, MINZ); }
 		double ParticleVis(double screenZ, bool foggy) const { return ParticleGlobVis(foggy) / screenZ; }
-		double FlatPlaneVis(int screenY, double planeZ, bool foggy, RenderViewport *viewport) const { return FlatPlaneGlobVis(foggy) / fabs(planeZ - viewport->viewpoint.Pos.Z) * fabs(viewport->CenterY - screenY); }
+		double FlatPlaneVis(int screenY, double planeheight, bool foggy, RenderViewport *viewport) const { return FlatPlaneGlobVis(foggy) / planeheight * fabs(viewport->CenterY - screenY); }
 
 		static fixed_t LightLevelToShade(int lightlevel, bool foggy);
 		static int ActualExtraLight(bool fog, RenderViewport *viewport) { return fog ? 0 : viewport->viewpoint.extralight << 4; }

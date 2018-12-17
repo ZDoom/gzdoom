@@ -220,7 +220,7 @@ namespace swrenderer
 		vis->floorclip = 0;
 		vis->foggy = foggy;
 
-		vis->Light.SetColormap(tiz * thread->Light->ParticleGlobVis(foggy), shade, map, particle->bright != 0, false, false);
+		vis->Light.SetColormap(thread->Light->ParticleVis(tz, foggy), shade, map, particle->bright != 0, false, false);
 
 		thread->SpriteList->Push(vis);
 	}

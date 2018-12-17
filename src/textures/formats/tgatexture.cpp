@@ -186,7 +186,6 @@ TArray<uint8_t> FTGATexture::CreatePalettedPixels(int conversion)
 	TGAHeader hdr;
 	uint16_t w;
 	uint8_t r,g,b,a;
-	uint8_t * buffer;
 
 	TArray<uint8_t> Pixels(Width*Height, true);
 	lump.Read(&hdr, sizeof(hdr));
@@ -237,18 +236,18 @@ TArray<uint8_t> FTGATexture::CreatePalettedPixels(int conversion)
     }
     
     int Size = Width * Height * (hdr.bpp>>3);
-   	buffer = new uint8_t[Size];
+	TArray<uint8_t> buffer(Size, true);
    	
     if (hdr.img_type < 4)	// uncompressed
     {
-    	lump.Read(buffer, Size);
+    	lump.Read(buffer.Data(), Size);
     }
     else				// compressed
     {
-    	ReadCompressed(lump, buffer, hdr.bpp>>3);
+    	ReadCompressed(lump, buffer.Data(), hdr.bpp>>3);
     }
     
-	uint8_t * ptr = buffer;
+	uint8_t * ptr = buffer.Data();
 	int step_x = (hdr.bpp>>3);
 	int Pitch = Width * step_x;
 
@@ -378,7 +377,6 @@ TArray<uint8_t> FTGATexture::CreatePalettedPixels(int conversion)
 	default:
 		break;
     }
-	delete [] buffer;
 	return Pixels;
 }	
 
@@ -395,7 +393,6 @@ int FTGATexture::CopyPixels(FBitmap *bmp, int conversion)
 	TGAHeader hdr;
 	uint16_t w;
 	uint8_t r,g,b,a;
-	uint8_t * sbuffer;
 	int transval = 0;
 
 	lump.Read(&hdr, sizeof(hdr));
@@ -447,18 +444,18 @@ int FTGATexture::CopyPixels(FBitmap *bmp, int conversion)
     }
     
     int Size = Width * Height * (hdr.bpp>>3);
-   	sbuffer = new uint8_t[Size];
+	TArray<uint8_t> sbuffer(Size);
    	
     if (hdr.img_type < 4)	// uncompressed
     {
-    	lump.Read(sbuffer, Size);
+    	lump.Read(sbuffer.Data(), Size);
     }
     else				// compressed
     {
-    	ReadCompressed(lump, sbuffer, hdr.bpp>>3);
+    	ReadCompressed(lump, sbuffer.Data(), hdr.bpp>>3);
     }
     
-	uint8_t * ptr = sbuffer;
+	uint8_t * ptr = sbuffer.Data();
 	int step_x = (hdr.bpp>>3);
 	int Pitch = Width * step_x;
 
@@ -530,6 +527,5 @@ int FTGATexture::CopyPixels(FBitmap *bmp, int conversion)
 	default:
 		break;
     }
-	delete [] sbuffer;
 	return transval;
 }	

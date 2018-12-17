@@ -161,9 +161,8 @@ void FPCXTexture::ReadPCX1bit (uint8_t *dst, FileReader & lump, PCXHeader *hdr)
 	int rle_count = 0;
 	uint8_t rle_value = 0;
 
-	uint8_t * srcp = new uint8_t[lump.GetLength() - sizeof(PCXHeader)];
-	lump.Read(srcp, lump.GetLength() - sizeof(PCXHeader));
-	uint8_t * src = srcp;
+	TArray<uint8_t> srcp = lump.Read(lump.GetLength() - sizeof(PCXHeader));
+	uint8_t * src = srcp.Data();
 
 	for (y = 0; y < Height; ++y)
 	{
@@ -196,7 +195,6 @@ void FPCXTexture::ReadPCX1bit (uint8_t *dst, FileReader & lump, PCXHeader *hdr)
 			}
 		}
 	}
-	delete [] srcp;
 }
 
 //==========================================================================
@@ -210,12 +208,11 @@ void FPCXTexture::ReadPCX4bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr)
 	int rle_count = 0, rle_value = 0;
 	int x, y, c;
 	int bytes;
-	uint8_t * line = new uint8_t[hdr->bytesPerScanLine];
-	uint8_t * colorIndex = new uint8_t[Width];
+	TArray<uint8_t> line(hdr->bytesPerScanLine, true);
+	TArray<uint8_t> colorIndex(Width, true);
 
-	uint8_t * srcp = new uint8_t[lump.GetLength() - sizeof(PCXHeader)];
-	lump.Read(srcp, lump.GetLength() - sizeof(PCXHeader));
-	uint8_t * src = srcp;
+	TArray<uint8_t> srcp = lump.Read(lump.GetLength() - sizeof(PCXHeader));
+	uint8_t * src = srcp.Data();
 
 	for (y = 0; y < Height; ++y)
 	{
@@ -224,7 +221,7 @@ void FPCXTexture::ReadPCX4bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr)
 
 		for (c = 0; c < 4; ++c)
 		{
-			uint8_t * pLine = line;
+			uint8_t * pLine = line.Data();
 
 			bytes = hdr->bytesPerScanLine;
 
@@ -255,11 +252,6 @@ void FPCXTexture::ReadPCX4bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr)
 				ptr[x] += (1 << c);
 		}
 	}
-
-	/* release memory */
-	delete [] colorIndex;
-	delete [] line;
-	delete [] srcp;
 }
 
 //==========================================================================
@@ -273,9 +265,8 @@ void FPCXTexture::ReadPCX8bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr)
 	int rle_count = 0, rle_value = 0;
 	int y, bytes;
 
-	uint8_t * srcp = new uint8_t[lump.GetLength() - sizeof(PCXHeader)];
-	lump.Read(srcp, lump.GetLength() - sizeof(PCXHeader));
-	uint8_t * src = srcp;
+	auto srcp = lump.Read(lump.GetLength() - sizeof(PCXHeader));
+	uint8_t * src = srcp.Data();
 
 	for (y = 0; y < Height; ++y)
 	{
@@ -301,7 +292,6 @@ void FPCXTexture::ReadPCX8bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr)
 			*ptr++ = rle_value;
 		}
 	}
-	delete [] srcp;
 }
 
 //==========================================================================
@@ -316,9 +306,8 @@ void FPCXTexture::ReadPCX24bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr
 	int y, c;
 	int bytes;
 
-	uint8_t * srcp = new uint8_t[lump.GetLength() - sizeof(PCXHeader)];
-	lump.Read(srcp, lump.GetLength() - sizeof(PCXHeader));
-	uint8_t * src = srcp;
+	auto srcp = lump.Read(lump.GetLength() - sizeof(PCXHeader));
+	uint8_t * src = srcp.Data();
 
 	for (y = 0; y < Height; ++y)
 	{
@@ -349,7 +338,6 @@ void FPCXTexture::ReadPCX24bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr
 			}
 		}
 	}
-	delete [] srcp;
 }
 
 //==========================================================================
@@ -423,9 +411,9 @@ TArray<uint8_t> FPCXTexture::CreatePalettedPixels(int conversion)
 	}
 	else
 	{
-		uint8_t * buffer = new uint8_t[Width*Height * 3];
-		uint8_t * row = buffer;
-		ReadPCX24bits (buffer, lump, &header, 3);
+		TArray<uint8_t> buffer(Width*Height * 3, true);
+		uint8_t * row = buffer.Data();
+		ReadPCX24bits (row, lump, &header, 3);
 		for(int y=0; y<Height; y++)
 		{
 			for(int x=0; x < Width; x++)
@@ -434,7 +422,6 @@ TArray<uint8_t> FPCXTexture::CreatePalettedPixels(int conversion)
 				row+=3;
 			}
 		}
-		delete [] buffer;
 	}
 	return Pixels;
 }
@@ -452,7 +439,7 @@ int FPCXTexture::CopyPixels(FBitmap *bmp, int conversion)
 	PalEntry pe[256];
 	PCXHeader header;
 	int bitcount;
-	uint8_t * Pixels;
+	TArray<uint8_t> Pixels;
 
 	auto lump = Wads.OpenLumpReader(SourceLump);
 
@@ -462,7 +449,7 @@ int FPCXTexture::CopyPixels(FBitmap *bmp, int conversion)
 
 	if (bitcount < 24)
 	{
-		Pixels = new uint8_t[Width*Height];
+		Pixels.Resize(Width*Height);
 		if (bitcount < 8)
 		{
 			switch (bitcount)
@@ -471,7 +458,7 @@ int FPCXTexture::CopyPixels(FBitmap *bmp, int conversion)
 			case 1:
 				pe[0] = PalEntry(255, 0, 0, 0);
 				pe[1] = PalEntry(255, 255, 255, 255);
-				ReadPCX1bit (Pixels, lump, &header);
+				ReadPCX1bit (Pixels.Data(), lump, &header);
 				break;
 
 			case 4:
@@ -479,7 +466,7 @@ int FPCXTexture::CopyPixels(FBitmap *bmp, int conversion)
 				{
 					pe[i] = PalEntry(255, header.palette[i * 3], header.palette[i * 3 + 1], header.palette[i * 3 + 2]);
 				}
-				ReadPCX4bits (Pixels, lump, &header);
+				ReadPCX4bits (Pixels.Data(), lump, &header);
 				break;
 			}
 		}
@@ -500,17 +487,16 @@ int FPCXTexture::CopyPixels(FBitmap *bmp, int conversion)
 				pe[i] = PalEntry(255, r,g,b);
 			}
 			lump.Seek(sizeof(header), FileReader::SeekSet);
-			ReadPCX8bits (Pixels, lump, &header);
+			ReadPCX8bits (Pixels.Data(), lump, &header);
 		}
-		bmp->CopyPixelData(0, 0, Pixels, Width, Height, 1, Width, 0, pe);
+		bmp->CopyPixelData(0, 0, Pixels.Data(), Width, Height, 1, Width, 0, pe);
 	}
 	else
 	{
-		Pixels = new uint8_t[Width*Height * 3];
-		ReadPCX24bits (Pixels, lump, &header, 3);
-		bmp->CopyPixelDataRGB(0, 0, Pixels, Width, Height, 3, Width*3, 0, CF_RGB);
+		Pixels.Resize(Width*Height*4);
+		ReadPCX24bits (Pixels.Data(), lump, &header, 3);
+		bmp->CopyPixelDataRGB(0, 0, Pixels.Data(), Width, Height, 3, Width*3, 0, CF_RGB);
 	}
-	delete [] Pixels;
 	return 0;
 }
 

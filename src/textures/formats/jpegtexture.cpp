@@ -387,7 +387,6 @@ int FJPEGTexture::CopyPixels(FBitmap *bmp, int conversion)
 	PalEntry pe[256];
 
 	auto lump = Wads.OpenLumpReader (SourceLump);
-	JSAMPLE *buff = NULL;
 
 	jpeg_decompress_struct cinfo;
 	jpeg_error_mgr jerr;
@@ -414,12 +413,11 @@ int FJPEGTexture::CopyPixels(FBitmap *bmp, int conversion)
 			jpeg_start_decompress(&cinfo);
 
 			int yc = 0;
-			buff = new uint8_t[cinfo.output_height * cinfo.output_width * cinfo.output_components];
-
+			TArray<uint8_t>	buff(cinfo.output_height * cinfo.output_width * cinfo.output_components, true);
 
 			while (cinfo.output_scanline < cinfo.output_height)
 			{
-				uint8_t * ptr = buff + cinfo.output_width * cinfo.output_components * yc;
+				uint8_t * ptr = buff.Data() + cinfo.output_width * cinfo.output_components * yc;
 				jpeg_read_scanlines(&cinfo, &ptr, 1);
 				yc++;
 			}
@@ -427,23 +425,23 @@ int FJPEGTexture::CopyPixels(FBitmap *bmp, int conversion)
 			switch (cinfo.out_color_space)
 			{
 			case JCS_RGB:
-				bmp->CopyPixelDataRGB(0, 0, buff, cinfo.output_width, cinfo.output_height,
+				bmp->CopyPixelDataRGB(0, 0, buff.Data(), cinfo.output_width, cinfo.output_height,
 					3, cinfo.output_width * cinfo.output_components, 0, CF_RGB);
 				break;
 
 			case JCS_GRAYSCALE:
 				for (int i = 0; i < 256; i++) pe[i] = PalEntry(255, i, i, i);	// default to a gray map
-				bmp->CopyPixelData(0, 0, buff, cinfo.output_width, cinfo.output_height,
+				bmp->CopyPixelData(0, 0, buff.Data(), cinfo.output_width, cinfo.output_height,
 					1, cinfo.output_width, 0, pe);
 				break;
 
 			case JCS_CMYK:
-				bmp->CopyPixelDataRGB(0, 0, buff, cinfo.output_width, cinfo.output_height,
+				bmp->CopyPixelDataRGB(0, 0, buff.Data(), cinfo.output_width, cinfo.output_height,
 					4, cinfo.output_width * cinfo.output_components, 0, CF_CMYK);
 				break;
 
 			case JCS_YCbCr:
-				bmp->CopyPixelDataRGB(0, 0, buff, cinfo.output_width, cinfo.output_height,
+				bmp->CopyPixelDataRGB(0, 0, buff.Data(), cinfo.output_width, cinfo.output_height,
 					4, cinfo.output_width * cinfo.output_components, 0, CF_YCbCr);
 				break;
 
@@ -459,7 +457,6 @@ int FJPEGTexture::CopyPixels(FBitmap *bmp, int conversion)
 		Printf(TEXTCOLOR_ORANGE "JPEG error in %s\n", Wads.GetLumpFullPath(SourceLump).GetChars());
 	}
 	jpeg_destroy_decompress(&cinfo);
-	if (buff != NULL) delete [] buff;
 	return 0;
 }
 

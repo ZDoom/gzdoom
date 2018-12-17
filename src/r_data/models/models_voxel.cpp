@@ -83,7 +83,7 @@ TArray<uint8_t> FVoxelTexture::CreatePalettedPixels(int conversion)
 {
 	// GetPixels gets called when a translated palette is used so we still need to implement it here.
 	TArray<uint8_t> Pixels(256, true);
-	uint8_t *pp = SourceVox->Palette;
+	uint8_t *pp = SourceVox->Palette.Data();
 
 	if(pp != NULL)
 	{
@@ -120,9 +120,9 @@ int FVoxelTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
 	PalEntry pe[256];
 	uint8_t bitmap[256];
-	uint8_t *pp = SourceVox->Palette;
+	uint8_t *pp = SourceVox->Palette.Data();
 
-	if(pp != NULL)
+	if(pp != nullptr)
 	{
 		for(int i=0;i<256;i++, pp+=3)
 		{

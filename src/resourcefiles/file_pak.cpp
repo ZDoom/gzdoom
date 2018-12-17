@@ -96,9 +96,9 @@ bool FPakFile::Open(bool quiet)
 	NumLumps = LittleLong(header.dirlen) / sizeof(dpackfile_t);
 	header.dirofs = LittleLong(header.dirofs);
 	
-	dpackfile_t *fileinfo = new dpackfile_t[NumLumps];
+	TArray<dpackfile_t> fileinfo(NumLumps, true);
 	Reader.Seek (header.dirofs, FileReader::SeekSet);
-	Reader.Read (fileinfo, NumLumps * sizeof(dpackfile_t));
+	Reader.Read (fileinfo.Data(), NumLumps * sizeof(dpackfile_t));
 
 	Lumps.Resize(NumLumps);
 
@@ -113,7 +113,6 @@ bool FPakFile::Open(bool quiet)
 		Lumps[i].CheckEmbedded();
 	}
 
-	delete [] fileinfo;
 	return true;
 }
 

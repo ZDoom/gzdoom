@@ -140,7 +140,7 @@ const uint8_t *FSoftwareTexture::GetPixels(int style)
 				{
 					for (int x = 0; x < GetPhysicalWidth(); x++)
 					{
-						Pixels[y + x * GetPhysicalHeight()] = pe[x + y * GetPhysicalWidth()].r;
+						Pixels[y + x * GetPhysicalHeight()] = pe[x + y * GetPhysicalWidth()].Luminance();
 					}
 				}
 			}

@@ -2,8 +2,13 @@
 #include "jit.h"
 #include "jitintern.h"
 
-#ifndef WIN32
+#ifdef WIN32
+#include <DbgHelp.h>
+#else
 #include <execinfo.h>
+#include <cxxabi.h>
+#include <cstring>
+#include <cstdlib>
 #endif
 
 struct JitFuncInfo
@@ -291,9 +296,9 @@ void *AddJitFunction(asmjit::CodeHolder* code, JitCompiler *compiler)
 	JitFrames.Push((uint8_t*)table);
 	if (result == 0)
 		I_Error("RtlAddFunctionTable failed");
-#endif
 
 	JitDebugInfo.Push({ compiler->GetScriptFunction()->PrintableName, compiler->GetScriptFunction()->SourceFileName, startaddr, endaddr });
+#endif
 
 	return p;
 }
@@ -840,10 +845,114 @@ static int CaptureStackTrace(int max_frames, void **out_frames)
 #endif
 }
 
-FString JitGetStackFrameName(void *pc)
+#ifdef WIN32
+#pragma comment(lib, "dbghelp.lib")
+class NativeSymbolResolver
 {
-	FString s;
+public:
+	NativeSymbolResolver() { SymInitialize(GetCurrentProcess(), nullptr, TRUE); }
+	~NativeSymbolResolver() { SymCleanup(GetCurrentProcess()); }
 
+	FString GetName(void *frame)
+	{
+		FString s;
+
+		unsigned char buffer[sizeof(IMAGEHLP_SYMBOL64) + 128];
+		IMAGEHLP_SYMBOL64 *symbol64 = reinterpret_cast<IMAGEHLP_SYMBOL64*>(buffer);
+		memset(symbol64, 0, sizeof(IMAGEHLP_SYMBOL64) + 128);
+		symbol64->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL64);
+		symbol64->MaxNameLength = 128;
+
+		DWORD64 displacement = 0;
+		BOOL result = SymGetSymFromAddr64(GetCurrentProcess(), (DWORD64)frame, &displacement, symbol64);
+		if (result)
+		{
+			IMAGEHLP_LINE64 line64;
+			DWORD displacement = 0;
+			memset(&line64, 0, sizeof(IMAGEHLP_LINE64));
+			line64.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+			result = SymGetLineFromAddr64(GetCurrentProcess(), (DWORD64)frame, &displacement, &line64);
+			if (result)
+			{
+				s.Format("Called from %s at %s, line %d\n", symbol64->Name, line64.FileName, (int)line64.LineNumber);
+			}
+			else
+			{
+				s.Format("Called from %s\n", symbol64->Name);
+			}
+		}
+
+		return s;
+	}
+};
+#else
+class NativeSymbolResolver
+{
+public:
+	FString GetName(void *frame)
+	{
+		FString s;
+		char **strings;
+		strings = backtrace_symbols(frames, 1);
+
+		// Decode the strings
+		char *ptr = strings[cnt];
+		char *filename = ptr;
+		const char *function = "";
+
+		// Find function name
+		while (*ptr)
+		{
+			if (*ptr == '(')	// Found function name
+			{
+				*(ptr++) = 0;
+				function = ptr;
+				break;
+			}
+			ptr++;
+		}
+
+		// Find offset
+		if (function[0])	// Only if function was found
+		{
+			while (*ptr)
+			{
+				if (*ptr == '+')	// Found function offset
+				{
+					*(ptr++) = 0;
+					break;
+				}
+				if (*ptr == ')')	// Not found function offset, but found, end of function
+				{
+					*(ptr++) = 0;
+					break;
+				}
+				ptr++;
+			}
+		}
+
+		int status;
+		char *new_function = abi::__cxa_demangle(function, nullptr, nullptr, &status);
+		if (new_function)	// Was correctly decoded
+		{
+			function = new_function;
+		}
+
+		s.Format("Called from %s at %s\n", function, filename);
+
+		if (new_function)
+		{
+			free(new_function);
+		}
+
+		free(strings);
+		return s;
+	}
+};
+#endif
+
+FString JitGetStackFrameName(NativeSymbolResolver *nativeSymbols, void *pc)
+{
 	for (unsigned int i = 0; i < JitDebugInfo.Size(); i++)
 	{
 		const auto &info = JitDebugInfo[i];
@@ -856,25 +965,31 @@ FString JitGetStackFrameName(void *pc)
 					line = info.lines[j].line;
 			}*/
 
+			FString s;
+
 			if (line == -1)
 				s.Format("Called from %s at %s\n", info.name.GetChars(), info.filename.GetChars());
 			else
 				s.Format("Called from %s at %s, line %d\n", info.name.GetChars(), info.filename.GetChars(), line);
+
+			return s;
 		}
 	}
 
-	return s;
+	return nativeSymbols->GetName(pc);
 }
 
-FString JitCaptureStackTrace()
+FString JitCaptureStackTrace(int framesToSkip)
 {
 	void *frames[32];
 	int numframes = CaptureStackTrace(32, frames);
 
+	NativeSymbolResolver nativeSymbols;
+
 	FString s;
-	for (int i = 0; i < numframes; i++)
+	for (int i = framesToSkip + 1; i < numframes; i++)
 	{
-		s += JitGetStackFrameName(frames[i]);
+		s += JitGetStackFrameName(&nativeSymbols, frames[i]);
 	}
 	return s;
 }

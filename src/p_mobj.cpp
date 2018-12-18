@@ -440,7 +440,7 @@ static int InStateSequence(FState * newstate, FState * basestate)
 	return false;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, InStateSequence, InStateSequence)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, InStateSequence, InStateSequence)
 {
 	PARAM_PROLOGUE;
 	PARAM_POINTER(newstate, FState);
@@ -448,7 +448,7 @@ DEFINE_ACTION_FUNCTION(AActor, InStateSequence, InStateSequence)
 	ACTION_RETURN_BOOL(InStateSequence(newstate, basestate));
 }
 
-DEFINE_ACTION_FUNCTION(FState, InStateSequence, InStateSequence)
+DEFINE_ACTION_FUNCTION_NATIVE(FState, InStateSequence, InStateSequence)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FState);
 	PARAM_POINTER(basestate, FState);

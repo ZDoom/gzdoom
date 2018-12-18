@@ -771,6 +771,8 @@ void *AddJitFunction(asmjit::CodeHolder* code, JitCompiler *compiler)
 #endif
 	}
 
+	JitDebugInfo.Push({ compiler->GetScriptFunction()->PrintableName, compiler->GetScriptFunction()->SourceFileName, startaddr, endaddr });
+
 	return p;
 }
 #endif
@@ -850,7 +852,6 @@ static int CaptureStackTrace(int max_frames, void **out_frames)
 }
 
 #ifdef WIN32
-#pragma comment(lib, "dbghelp.lib")
 class NativeSymbolResolver
 {
 public:
@@ -897,7 +898,7 @@ public:
 	{
 		FString s;
 		char **strings;
-		void **frames;
+		void *frames[1] = { frame };
 		strings = backtrace_symbols(frames, 1);
 
 		// Decode the strings

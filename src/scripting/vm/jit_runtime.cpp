@@ -314,52 +314,6 @@ extern "C"
 {
 	void __register_frame(const void*);
 	void __deregister_frame(const void*);
-
-#if 0 // Someone needs to implement this if GDB/LLDB should produce correct call stacks
-	
-	// GDB JIT interface (GG guys! Thank you SO MUCH for not hooking into the above functions. Really appreciate it!)
-	
-	// To register code with GDB, the JIT should follow this protocol:
-	//
-	// * Generate an object file in memory with symbols and other desired debug information.
-	//   The file must include the virtual addresses of the sections. 
-	// * Create a code entry for the file, which gives the start and size of the symbol file. 
-	// * Add it to the linked list in the JIT descriptor.
-	// * Point the relevant_entry field of the descriptor at the entry.
-	// * Set action_flag to JIT_REGISTER and call __jit_debug_register_code.
-	
-	// Pure beauty! Now a JIT also has to create a full ELF object file. And is it a MACH-O on macOS? You guys ROCK!
-
-	typedef enum
-	{
-	  JIT_NOACTION = 0,
-	  JIT_REGISTER_FN,
-	  JIT_UNREGISTER_FN
-	} jit_actions_t;
-
-	struct jit_code_entry
-	{
-	  struct jit_code_entry *next_entry;
-	  struct jit_code_entry *prev_entry;
-	  const char *symfile_addr;
-	  uint64_t symfile_size;
-	};
-
-	struct jit_descriptor
-	{
-	  uint32_t version;
-	  // This type should be jit_actions_t, but we use uint32_t to be explicit about the bitwidth.
-	  uint32_t action_flag;
-	  struct jit_code_entry *relevant_entry;
-	  struct jit_code_entry *first_entry;
-	};
-
-	// GDB puts a breakpoint in this function.
-	void __attribute__((noinline)) __jit_debug_register_code() { };
-
-	// Make sure to specify the version statically, because the debugger may check the version before we can set it.
-	struct jit_descriptor __jit_debug_descriptor = { 1, 0, 0, 0 };
-#endif
 }
 
 static void WriteLength(TArray<uint8_t> &stream, unsigned int pos, unsigned int v)

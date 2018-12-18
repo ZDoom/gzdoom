@@ -10,6 +10,7 @@ struct JitFuncInfo
 {
 	FString name;
 	FString filename;
+	TArray<JitLineInfo> LineInfo;
 	void *start;
 	void *end;
 };
@@ -293,7 +294,7 @@ void *AddJitFunction(asmjit::CodeHolder* code, JitCompiler *compiler)
 		I_Error("RtlAddFunctionTable failed");
 #endif
 
-	JitDebugInfo.Push({ compiler->GetScriptFunction()->PrintableName, compiler->GetScriptFunction()->SourceFileName, startaddr, endaddr });
+	JitDebugInfo.Push({ compiler->GetScriptFunction()->PrintableName, compiler->GetScriptFunction()->SourceFileName, compiler->LineInfo, startaddr, endaddr });
 
 	return p;
 }
@@ -840,6 +841,20 @@ static int CaptureStackTrace(int max_frames, void **out_frames)
 #endif
 }
 
+int JITPCToLine(uint8_t *pc, const JitFuncInfo *info)
+{
+	int PCIndex = int(pc - ((uint8_t *) (info->start)));
+	if (info->LineInfo.Size () == 1) return info->LineInfo[0].LineNumber;
+	for (unsigned i = 1; i < info->LineInfo.Size (); i++)
+	{
+		if (info->LineInfo[i].InstructionIndex >= PCIndex)
+		{
+			return info->LineInfo[i - 1].LineNumber;
+		}
+	}
+	return -1;
+}
+
 FString JitGetStackFrameName(void *pc)
 {
 	FString s;
@@ -850,6 +865,7 @@ FString JitGetStackFrameName(void *pc)
 		if (pc >= info.start && pc < info.end)
 		{
 			int line = -1;
+			line = JITPCToLine ((uint8_t *)pc, &info);
 			/*for (unsigned int j = 0; j < info.lines.Size(); j++)
 			{
 				if (info.lines[j].pc <= pc)

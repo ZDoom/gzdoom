@@ -982,20 +982,22 @@ FString JitGetStackFrameName(NativeSymbolResolver *nativeSymbols, void *pc)
 		}
 	}
 
-	return nativeSymbols->GetName(pc);
+	return nativeSymbols ? nativeSymbols->GetName(pc) : FString();
 }
 
-FString JitCaptureStackTrace(int framesToSkip)
+FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames)
 {
 	void *frames[32];
 	int numframes = CaptureStackTrace(32, frames);
 
-	NativeSymbolResolver nativeSymbols;
+	std::unique_ptr<NativeSymbolResolver> nativeSymbols;
+	if (includeNativeFrames)
+		nativeSymbols.reset(new NativeSymbolResolver());
 
 	FString s;
 	for (int i = framesToSkip + 1; i < numframes; i++)
 	{
-		s += JitGetStackFrameName(&nativeSymbols, frames[i]);
+		s += JitGetStackFrameName(nativeSymbols.get(), frames[i]);
 	}
 	return s;
 }

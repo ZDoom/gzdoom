@@ -98,6 +98,8 @@ asmjit::CCFunc *JitCompiler::Codegen()
 {
 	Setup();
 
+	LatestLine = { 0, (ptrdiff_t)0, -1, {} };
+
 	pc = sfunc->Code;
 	auto end = pc + sfunc->CodeSize;
 	while (pc != end)
@@ -105,10 +107,21 @@ asmjit::CCFunc *JitCompiler::Codegen()
 		int i = (int)(ptrdiff_t)(pc - sfunc->Code);
 		op = pc->op;
 
+		int curLine = sfunc->PCToLine(pc);
+		auto label = cc.newLabel ();
+		cc.bind (label);
+		LatestLine.Label = label;
+		if (curLine != LatestLine.LineNumber)
+		{
+			LatestLine.LineNumber = curLine;
+			LatestLine.VMInstructionIndex = i;
+			LineInfo.Push (LatestLine);
+		}
+
 		if (op != OP_PARAM && op != OP_PARAMI && op != OP_VTBL)
 		{
 			FString lineinfo;
-			lineinfo.Format("; line %d: %02x%02x%02x%02x %s", sfunc->PCToLine(pc), pc->op, pc->a, pc->b, pc->c, OpNames[op]);
+			lineinfo.Format("; line %d: %02x%02x%02x%02x %s", curLine, pc->op, pc->a, pc->b, pc->c, OpNames[op]);
 			cc.comment("", 0);
 			cc.comment(lineinfo.GetChars(), lineinfo.Len());
 		}
@@ -124,6 +137,21 @@ asmjit::CCFunc *JitCompiler::Codegen()
 
 	cc.endFunc();
 	cc.finalize();
+
+	auto code = cc.getCode ();
+	for (unsigned int j = 0; j < LineInfo.Size (); j++)
+	{
+		auto info = LineInfo[j];
+
+		if (!code->isLabelValid (info.Label))
+		{
+			continue;
+		}
+
+		info.InstructionIndex = code->getLabelOffset (info.Label);
+
+		LineInfo[j] = info;
+	}
 
 	return func;
 }

@@ -25,6 +25,14 @@ extern int VMCalls[10];
 #define ABCs			(pc[0].i24)
 #define JMPOFS(x)		((x)->i24)
 
+struct JitLineInfo
+{
+	uint16_t VMInstructionIndex;
+	ptrdiff_t InstructionIndex;
+	int32_t LineNumber;
+	asmjit::Label Label;
+};
+
 class JitCompiler
 {
 public:
@@ -32,6 +40,8 @@ public:
 
 	asmjit::CCFunc *Codegen();
 	VMScriptFunction *GetScriptFunction() { return sfunc; }
+
+	TArray<JitLineInfo> LineInfo;
 
 private:
 	// Declare EmitXX functions for the opcodes:
@@ -259,6 +269,8 @@ private:
 	TArray<asmjit::X86Xmm> regF;
 	TArray<asmjit::X86Gp> regA;
 	TArray<asmjit::X86Gp> regS;
+
+	JitLineInfo LatestLine;
 
 	struct OpcodeLabel
 	{

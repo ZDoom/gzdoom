@@ -1259,7 +1259,6 @@ public:
 	void LinkToWorld (FLinkContext *ctx, bool spawningmapthing=false, sector_t *sector = NULL);
 	void UnlinkFromWorld(FLinkContext *ctx);
 	void AdjustFloorClip ();
-	bool InStateSequence(FState * newstate, FState * basestate);
 	bool IsMapActor();
 	int GetTics(FState * newstate);
 	bool SetState (FState *newstate, bool nofunction=false);

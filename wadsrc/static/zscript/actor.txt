@@ -680,7 +680,7 @@ class Actor : Thinker native
 	native void FindFloorCeiling(int flags = 0);
 	native double, double GetFriction();
 	native bool, Actor TestMobjZ(bool quick = false);
-	native bool InStateSequence(State newstate, State basestate);
+	native static bool InStateSequence(State newstate, State basestate);
 	
 	bool TryWalk ()
 	{

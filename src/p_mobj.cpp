@@ -425,7 +425,7 @@ AActor &AActor::operator= (const AActor &other)
 //
 //==========================================================================
 
-bool AActor::InStateSequence(FState * newstate, FState * basestate)
+static int InStateSequence(FState * newstate, FState * basestate)
 {
 	if (basestate == NULL) return false;
 
@@ -440,12 +440,19 @@ bool AActor::InStateSequence(FState * newstate, FState * basestate)
 	return false;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, InStateSequence)
+DEFINE_ACTION_FUNCTION(AActor, InStateSequence, InStateSequence)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_PROLOGUE;
 	PARAM_POINTER(newstate, FState);
 	PARAM_POINTER(basestate, FState);
-	ACTION_RETURN_BOOL(self->InStateSequence(newstate, basestate));
+	ACTION_RETURN_BOOL(InStateSequence(newstate, basestate));
+}
+
+DEFINE_ACTION_FUNCTION(FState, InStateSequence, InStateSequence)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FState);
+	PARAM_POINTER(basestate, FState);
+	ACTION_RETURN_BOOL(InStateSequence(self, basestate));
 }
 
 

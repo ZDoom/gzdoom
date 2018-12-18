@@ -772,7 +772,7 @@ void *AddJitFunction(asmjit::CodeHolder* code, JitCompiler *compiler)
 #endif
 	}
 
-	JitDebugInfo.Push({ compiler->GetScriptFunction()->PrintableName, compiler->GetScriptFunction()->SourceFileName, startaddr, endaddr });
+	JitDebugInfo.Push({ compiler->GetScriptFunction()->PrintableName, compiler->GetScriptFunction()->SourceFileName, compiler->LineInfo, startaddr, endaddr });
 
 	return p;
 }

@@ -897,10 +897,11 @@ public:
 	{
 		FString s;
 		char **strings;
+		void **frames;
 		strings = backtrace_symbols(frames, 1);
 
 		// Decode the strings
-		char *ptr = strings[cnt];
+		char *ptr = strings[0];
 		char *filename = ptr;
 		const char *function = "";
 

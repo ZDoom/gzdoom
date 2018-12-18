@@ -298,7 +298,8 @@ class FTexture
 	friend class FMultiPatchTexture;
 	friend class FSkyBox;
 	friend class FBrightmapTexture;
-	friend class FFontChar1;
+	friend class FFont;
+	friend class FSpecialFont;
 	friend void RecordTextureColors (FTexture *pic, uint8_t *usedcolors);
 
 
@@ -491,15 +492,6 @@ protected:
 	int16_t _LeftOffset[2], _TopOffset[2];
 
 	FTexture (const char *name = NULL, int lumpnum = -1);
-
-	void CopyInfo(FTexture *other)
-	{
-		CopySize(other);
-		bNoDecals = other->bNoDecals;
-		Rotations = other->Rotations;
-	}
-
-
 
 public:
 	FTextureBuffer CreateTexBuffer(int translation, int flags = 0);

@@ -871,6 +871,7 @@ class GLDefsParser
 			sc.ScriptError("Name longer than 8 characters: %s\n", sc.String);
 		}
 		frameName = sc.String;
+		frameName.ToUpper();
 
 		startDepth = ScriptDepth;
 

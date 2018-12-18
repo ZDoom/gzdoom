@@ -26,9 +26,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 		code.setLogger(&logger);
 
 		JitCompiler compiler(&code, sfunc);
-		CCFunc *func = compiler.Codegen();
-
-		return reinterpret_cast<JitFuncPtr>(AddJitFunction(&code, func));
+		return reinterpret_cast<JitFuncPtr>(AddJitFunction(&code, &compiler));
 	}
 	catch (const CRecoverableError &e)
 	{

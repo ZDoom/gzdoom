@@ -31,6 +31,7 @@ public:
 	JitCompiler(asmjit::CodeHolder *code, VMScriptFunction *sfunc) : cc(code), sfunc(sfunc) { }
 
 	asmjit::CCFunc *Codegen();
+	VMScriptFunction *GetScriptFunction() { return sfunc; }
 
 private:
 	// Declare EmitXX functions for the opcodes:
@@ -308,5 +309,5 @@ public:
 	}
 };
 
-void *AddJitFunction(asmjit::CodeHolder* code, asmjit::CCFunc *func);
+void *AddJitFunction(asmjit::CodeHolder* code, JitCompiler *compiler);
 asmjit::CodeInfo GetHostCodeInfo();

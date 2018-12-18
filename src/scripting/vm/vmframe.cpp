@@ -658,7 +658,11 @@ CVMAbortException::CVMAbortException(EVMAbortException reason, const char *morei
 		size_t len = strlen(m_Message);
 		myvsnprintf(m_Message + len, MAX_ERRORTEXT - len, moreinfo, ap);
 	}
-	stacktrace = "";
+
+	if (vm_jit)
+		stacktrace = JitCaptureStackTrace();
+	else
+		stacktrace = "";
 }
 
 // Print this only once on the first catch block.

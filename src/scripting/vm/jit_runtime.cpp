@@ -2,6 +2,19 @@
 #include "jit.h"
 #include "jitintern.h"
 
+#ifndef WIN32
+#include <execinfo.h>
+#endif
+
+struct JitFuncInfo
+{
+	FString name;
+	FString filename;
+	void *start;
+	void *end;
+};
+
+static TArray<JitFuncInfo> JitDebugInfo;
 static TArray<uint8_t*> JitBlocks;
 static TArray<uint8_t*> JitFrames;
 static size_t JitBlockPos = 0;
@@ -230,9 +243,11 @@ static TArray<uint16_t> CreateUnwindInfoWindows(asmjit::CCFunc *func)
 	return info;
 }
 
-void *AddJitFunction(asmjit::CodeHolder* code, asmjit::CCFunc *func)
+void *AddJitFunction(asmjit::CodeHolder* code, JitCompiler *compiler)
 {
 	using namespace asmjit;
+
+	CCFunc *func = compiler->Codegen();
 
 	size_t codeSize = code->getCodeSize();
 	if (codeSize == 0)
@@ -277,6 +292,8 @@ void *AddJitFunction(asmjit::CodeHolder* code, asmjit::CCFunc *func)
 	if (result == 0)
 		I_Error("RtlAddFunctionTable failed");
 #endif
+
+	JitDebugInfo.Push({ compiler->GetScriptFunction()->PrintableName, compiler->GetScriptFunction()->SourceFileName, startaddr, endaddr });
 
 	return p;
 }
@@ -664,9 +681,11 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 	return stream;
 }
 
-void *AddJitFunction(asmjit::CodeHolder* code, asmjit::CCFunc *func)
+void *AddJitFunction(asmjit::CodeHolder* code, JitCompiler *compiler)
 {
 	using namespace asmjit;
+
+	CCFunc *func = compiler->Codegen();
 
 	size_t codeSize = code->getCodeSize();
 	if (codeSize == 0)
@@ -764,8 +783,98 @@ void JitRelease()
 	{
 		asmjit::OSUtils::releaseVirtualMemory(p, 1024 * 1024);
 	}
+	JitDebugInfo.Clear();
 	JitFrames.Clear();
 	JitBlocks.Clear();
 	JitBlockPos = 0;
 	JitBlockSize = 0;
+}
+
+static int CaptureStackTrace(int max_frames, void **out_frames)
+{
+	memset(out_frames, 0, sizeof(void *) * max_frames);
+
+#ifdef _WIN64
+	// RtlCaptureStackBackTrace doesn't support RtlAddFunctionTable..
+
+	CONTEXT context;
+	RtlCaptureContext(&context);
+
+	UNWIND_HISTORY_TABLE history;
+	memset(&history, 0, sizeof(UNWIND_HISTORY_TABLE));
+
+	ULONG64 establisherframe = 0;
+	PVOID handlerdata = nullptr;
+
+	int frame;
+	for (frame = 0; frame < max_frames; frame++)
+	{
+		ULONG64 imagebase;
+		PRUNTIME_FUNCTION rtfunc = RtlLookupFunctionEntry(context.Rip, &imagebase, &history);
+
+		KNONVOLATILE_CONTEXT_POINTERS nvcontext;
+		memset(&nvcontext, 0, sizeof(KNONVOLATILE_CONTEXT_POINTERS));
+		if (!rtfunc)
+		{
+			// Leaf function
+			context.Rip = (ULONG64)(*(PULONG64)context.Rsp);
+			context.Rsp += 8;
+		}
+		else
+		{
+			RtlVirtualUnwind(UNW_FLAG_NHANDLER, imagebase, context.Rip, rtfunc, &context, &handlerdata, &establisherframe, &nvcontext);
+		}
+
+		if (!context.Rip)
+			break;
+
+		out_frames[frame] = (void*)context.Rip;
+	}
+	return frame;
+
+#elif defined(WIN32)
+	// JIT isn't supported here, so just do nothing.
+	return 0;//return RtlCaptureStackBackTrace(0, MIN(max_frames, 32), out_frames, nullptr);
+#else
+	return backtrace(out_frames, max_frames);
+#endif
+}
+
+FString JitGetStackFrameName(void *pc)
+{
+	FString s;
+
+	for (unsigned int i = 0; i < JitDebugInfo.Size(); i++)
+	{
+		const auto &info = JitDebugInfo[i];
+		if (pc >= info.start && pc < info.end)
+		{
+			int line = -1;
+			/*for (unsigned int j = 0; j < info.lines.Size(); j++)
+			{
+				if (info.lines[j].pc <= pc)
+					line = info.lines[j].line;
+			}*/
+
+			if (line == -1)
+				s.Format("Called from %s at %s\n", info.name.GetChars(), info.filename.GetChars());
+			else
+				s.Format("Called from %s at %s, line %d\n", info.name.GetChars(), info.filename.GetChars(), line);
+		}
+	}
+
+	return s;
+}
+
+FString JitCaptureStackTrace()
+{
+	void *frames[32];
+	int numframes = CaptureStackTrace(32, frames);
+
+	FString s;
+	for (int i = 0; i < numframes; i++)
+	{
+		s += JitGetStackFrameName(frames[i]);
+	}
+	return s;
 }

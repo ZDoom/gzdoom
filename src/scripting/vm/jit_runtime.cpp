@@ -15,6 +15,7 @@ struct JitFuncInfo
 {
 	FString name;
 	FString filename;
+	TArray<JitLineInfo> LineInfo;
 	void *start;
 	void *end;
 };
@@ -301,7 +302,7 @@ void *AddJitFunction(asmjit::CodeHolder* code, JitCompiler *compiler)
 	if (result == 0)
 		I_Error("RtlAddFunctionTable failed");
 
-	JitDebugInfo.Push({ compiler->GetScriptFunction()->PrintableName, compiler->GetScriptFunction()->SourceFileName, startaddr, endaddr });
+	JitDebugInfo.Push({ compiler->GetScriptFunction()->PrintableName, compiler->GetScriptFunction()->SourceFileName, compiler->LineInfo, startaddr, endaddr });
 #endif
 
 	return p;
@@ -957,6 +958,20 @@ public:
 };
 #endif
 
+int JITPCToLine(uint8_t *pc, const JitFuncInfo *info)
+{
+	int PCIndex = int(pc - ((uint8_t *) (info->start)));
+	if (info->LineInfo.Size () == 1) return info->LineInfo[0].LineNumber;
+	for (unsigned i = 1; i < info->LineInfo.Size (); i++)
+	{
+		if (info->LineInfo[i].InstructionIndex >= PCIndex)
+		{
+			return info->LineInfo[i - 1].LineNumber;
+		}
+	}
+	return -1;
+}
+
 FString JitGetStackFrameName(NativeSymbolResolver *nativeSymbols, void *pc)
 {
 	for (unsigned int i = 0; i < JitDebugInfo.Size(); i++)
@@ -964,12 +979,7 @@ FString JitGetStackFrameName(NativeSymbolResolver *nativeSymbols, void *pc)
 		const auto &info = JitDebugInfo[i];
 		if (pc >= info.start && pc < info.end)
 		{
-			int line = -1;
-			/*for (unsigned int j = 0; j < info.lines.Size(); j++)
-			{
-				if (info.lines[j].pc <= pc)
-					line = info.lines[j].line;
-			}*/
+			int line = JITPCToLine ((uint8_t *)pc, &info);
 
 			FString s;
 

@@ -2506,6 +2506,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetUDMFString, ZGetUDMFString)
 	ACTION_RETURN_STRING(GetUDMFString(type, index, key));
 }
 
+DEFINE_ACTION_FUNCTION(FLevelLocals, GetChecksum)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	char md5string[33];
+
+	for (int j = 0; j < 16; ++j)
+	{
+		sprintf(md5string + j * 2, "%02x", level.md5[j]);
+	}
+
+	ACTION_RETURN_STRING((const char*)md5string);
+}
+
 //=====================================================================================
 //
 //

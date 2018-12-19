@@ -963,6 +963,7 @@ set (PCH_SOURCES
 	p_map.cpp
 	p_maputl.cpp
 	p_mobj.cpp
+	p_openmap.cpp
 	p_pillar.cpp
 	p_plats.cpp
 	p_pspr.cpp

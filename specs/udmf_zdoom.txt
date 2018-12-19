@@ -272,6 +272,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       color_walltop = <int>;          // Material color of top of sector's sidedefs. In OpenGL 2.x and the software renderer this will define the entire wall's color) Default is white (0xffffff)
       color_wallbottom = <int>;       // Material color of bottom of sector's sidedefs (OpenGL 3.x and later only) Default is white (0xffffff)
       color_sprites = <int>;          // Material color of sprites in sector. Default is white (0xffffff)
+      color_add = <int>;              // Additive material color applied to all walls, flats, and sprites within the sector. Default is black (0x0)
 
 
       portal_ceil_blocksound = <bool>;     // ceiling portal blocks sound.

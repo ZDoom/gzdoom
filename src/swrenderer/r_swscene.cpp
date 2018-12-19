@@ -38,7 +38,6 @@
 // [RH] Base blending values (for e.g. underwater)
 int BaseBlendR, BaseBlendG, BaseBlendB;
 float BaseBlendA;
-void InitSoftwareSky();
 
 
 
@@ -87,7 +86,6 @@ SWSceneDrawer::~SWSceneDrawer()
 sector_t *SWSceneDrawer::RenderView(player_t *player)
 {
 	// Avoid using the pixel buffer from the last frame
-	InitSoftwareSky();	// do this here to avoid problems when texture modes are changed on the fly.
 	FBTextureIndex = (FBTextureIndex + 1) % 2;
 	auto &fbtex = FBTexture[FBTextureIndex];
 

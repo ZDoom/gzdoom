@@ -31,12 +31,7 @@
 #include "polyrenderer/scene/poly_light.h"
 
 EXTERN_CVAR(Float, skyoffset)
-
-extern double	skytexturemid;
-extern float	skyiscale;
-extern double	skyscale;
-extern fixed_t		sky1cyl, sky2cyl;
-
+EXTERN_CVAR(Int, r_skymode)
 
 PolySkyDome::PolySkyDome()
 {
@@ -292,6 +287,53 @@ static FSoftwareTexture *GetSWTex(FTextureID texid, bool allownull = true)
 
 void PolySkySetup::Update()
 {
+	double skytexturemid = 0.0;
+	double skyscale = 0.0;
+	float skyiscale = 0.0f;
+	fixed_t sky1cyl = 0, sky2cyl = 0;
+
+	auto skytex1 = TexMan.GetPalettedTexture(sky1texture, true);
+	auto skytex2 = TexMan.GetPalettedTexture(sky2texture, true);
+
+	if (skytex1)
+	{
+		FSoftwareTexture *sskytex1 = skytex1->GetSoftwareTexture();
+		FSoftwareTexture *sskytex2 = skytex2->GetSoftwareTexture();
+		skytexturemid = 0;
+		int skyheight = skytex1->GetDisplayHeight();
+		if (skyheight >= 128 && skyheight < 200)
+		{
+			skytexturemid = -28;
+		}
+		else if (skyheight > 200)
+		{
+			skytexturemid = (200 - skyheight) * sskytex1->GetScale().Y + ((r_skymode == 2 && !(level.flags & LEVEL_FORCETILEDSKY)) ? skytex1->GetSkyOffset() : 0);
+		}
+
+		if (viewwidth != 0 && viewheight != 0)
+		{
+			skyiscale = float(r_Yaspect / freelookviewheight);
+			skyscale = freelookviewheight / r_Yaspect;
+
+			skyiscale *= float(r_viewpoint.FieldOfView.Degrees / 90.);
+			skyscale *= float(90. / r_viewpoint.FieldOfView.Degrees);
+		}
+
+		if (skystretch)
+		{
+			skyscale *= (double)SKYSTRETCH_HEIGHT / skyheight;
+			skyiscale *= skyheight / (float)SKYSTRETCH_HEIGHT;
+			skytexturemid *= skyheight / (double)SKYSTRETCH_HEIGHT;
+		}
+
+		// The standard Doom sky texture is 256 pixels wide, repeated 4 times over 360 degrees,
+		// giving a total sky width of 1024 pixels. So if the sky texture is no wider than 1024,
+		// we map it to a cylinder with circumfrence 1024. For larger ones, we use the width of
+		// the texture as the cylinder's circumfrence.
+		sky1cyl = MAX(sskytex1->GetWidth(), fixed_t(sskytex1->GetScale().X * 1024));
+		sky2cyl = MAX(sskytex2->GetWidth(), fixed_t(sskytex2->GetScale().Y * 1024));
+	}
+
 	FTextureID sky1tex, sky2tex;
 	double frontdpos = 0, backdpos = 0;
 

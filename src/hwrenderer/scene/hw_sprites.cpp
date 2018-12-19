@@ -159,7 +159,7 @@ void GLSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 				: ThingColor.Modulate(cursec->SpecialColors[sector_t::sprites]);
 
 			state.SetObjectColor(finalcol);
-			state.SetAddColor(cursec->SpecialColors[sector_t::add]);
+			state.SetAddColor(cursec->SpecialColors[sector_t::add] | 0xff000000);
 		}
 		state.SetColor(lightlevel, rel, di->isFullbrightScene(), Colormap, trans);
 	}

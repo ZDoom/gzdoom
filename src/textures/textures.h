@@ -432,14 +432,11 @@ protected:
 	float shaderspeed = 1.f;
 	int shaderindex = 0;
 
-	// This is only legal for the null texture!
+	// This is only used for the null texture and for Heretic's skies.
 	void SetSize(int w, int h)
 	{
-		if (UseType == ETextureType::Null)
-		{
-			Width = w;
-			Height = h;
-		}
+		Width = w;
+		Height = h;
 	}
 
 	void SetSpeed(float fac) { shaderspeed = fac; }

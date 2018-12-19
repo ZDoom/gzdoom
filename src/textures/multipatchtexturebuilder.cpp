@@ -797,6 +797,7 @@ void FMultipatchTextureBuilder::CheckForHacks(BuildInfo &buildinfo)
 		buildinfo.Height == 128)
 	{
 		buildinfo.Height = 200;
+		buildinfo.tex->SetSize(buildinfo.tex->Width, 200);
 		return;
 	}
 
@@ -924,6 +925,7 @@ void FMultipatchTextureBuilder::ResolveAllPatches()
 	while (BuiltTextures.Size() > 0)
 	{
 		bool donesomething = false;
+
 		for (unsigned i = 0; i < BuiltTextures.Size(); i++)
 		{
 			auto &buildinfo = BuiltTextures[i];

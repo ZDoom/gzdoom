@@ -144,11 +144,12 @@ protected:
 	float mInterpolationFactor;
 
 	FStateVec4 mNormal;
-	FStateVec4 mColor, mColorAdd;
+	FStateVec4 mColor;
 	FStateVec4 mGlowTop, mGlowBottom;
 	FStateVec4 mGlowTopPlane, mGlowBottomPlane;
 	FStateVec4 mGradientTopPlane, mGradientBottomPlane;
 	FStateVec4 mSplitTopPlane, mSplitBottomPlane;
+	PalEntry mAddColor;
 	PalEntry mFogColor;
 	PalEntry mObjectColor;
 	PalEntry mObjectColor2;
@@ -181,6 +182,7 @@ public:
 		mModelMatrixEnabled = false;
 		mTextureMatrixEnabled = false;
 		mSplitEnabled = false;
+		mAddColor = 0;
 		mObjectColor = 0xffffffff;
 		mObjectColor2 = 0;
 		mSoftLight = 0;
@@ -367,6 +369,11 @@ public:
 	void SetObjectColor2(PalEntry pe)
 	{
 		mObjectColor2 = pe;
+	}
+
+	void SetAddColor(PalEntry pe)
+	{
+		mAddColor = pe;
 	}
 
 	void SetFog(PalEntry c, float d)

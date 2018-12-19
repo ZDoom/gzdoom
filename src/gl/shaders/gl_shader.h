@@ -245,6 +245,7 @@ class FShader
 	FBufferedUniform4f muDynLightColor;
 	FBufferedUniformPE muObjectColor;
 	FBufferedUniformPE muObjectColor2;
+	FBufferedUniformPE muAddColor;
 	FUniform4f muGlowBottomColor;
 	FUniform4f muGlowTopColor;
 	FUniform4f muGlowBottomPlane;

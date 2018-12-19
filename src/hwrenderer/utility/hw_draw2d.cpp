@@ -203,6 +203,7 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 		}
 		state.SetObjectColor(0xffffffff);
 		state.SetObjectColor2(0);
+		state.SetAddColor(0);
 		state.EnableTextureMatrix(false);
 		state.SetEffect(EFF_NONE);
 

@@ -81,6 +81,8 @@ struct FStartupInfo
 	uint32_t BkColor;			// Background color for title banner
 	FString Song;
 	int Type;
+	int LoadLights = -1;
+	int LoadBrightmaps = -1;
 	enum
 	{
 		DefaultStartup,

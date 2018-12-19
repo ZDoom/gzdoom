@@ -1853,6 +1853,16 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 			sc.MustGetString();
 			DoomStartupInfo.Song = sc.String;
 		}
+		else if (!nextKey.CompareNoCase("LOADLIGHTS"))
+		{
+			sc.MustGetNumber();
+			DoomStartupInfo.LoadLights = !!sc.Number;
+		}
+		else if (!nextKey.CompareNoCase("LOADBRIGHTMAPS"))
+		{
+			sc.MustGetNumber();
+			DoomStartupInfo.LoadBrightmaps = !!sc.Number;
+		}
 		else
 		{
 			// Silently ignore unknown properties
@@ -2022,13 +2032,13 @@ static void AddAutoloadFiles(const char *autoname)
 	// [SP] Dialog reaction - load lights.pk3 and brightmaps.pk3 based on user choices
 	if (!(gameinfo.flags & GI_SHAREWARE))
 	{
-		if (autoloadlights)
+		if (DoomStartupInfo.LoadLights == 1 || (DoomStartupInfo.LoadLights != 0 && autoloadlights))
 		{
 			const char *lightswad = BaseFileSearch ("lights.pk3", NULL);
 			if (lightswad)
 				D_AddFile (allwads, lightswad);
 		}
-		if (autoloadbrightmaps)
+		if (DoomStartupInfo.LoadBrightmaps == 1 || (DoomStartupInfo.LoadBrightmaps != 0 && autoloadbrightmaps))
 		{
 			const char *bmwad = BaseFileSearch ("brightmaps.pk3", NULL);
 			if (bmwad)
@@ -2712,8 +2722,9 @@ void D_DoomMain (void)
 		LightDefaults.DeleteAndClear();			// this can leak heap memory if it isn't cleared.
 
 		// delete DoomStartupInfo data
-		DoomStartupInfo.Name = (const char*)0;
+		DoomStartupInfo.Name = "";
 		DoomStartupInfo.BkColor = DoomStartupInfo.FgColor = DoomStartupInfo.Type = 0;
+		DoomStartupInfo.LoadLights = DoomStartupInfo.LoadBrightmaps = -1;
 
 		GC::FullGC();					// clean up before taking down the object list.
 

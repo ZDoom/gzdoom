@@ -300,6 +300,7 @@ public:
 
 	FColormap Colormap;	// light and fog
 	PalEntry FlatColor;
+	PalEntry AddColor;
 	ERenderStyle renderstyle;
 
 	float alpha;

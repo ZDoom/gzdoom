@@ -307,6 +307,7 @@ void GLFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 	state.SetColor(lightlevel, rel, di->isFullbrightScene(), Colormap, alpha);
 	state.SetFog(lightlevel, rel, di->isFullbrightScene(), &Colormap, false);
 	state.SetObjectColor(FlatColor | 0xff000000);
+	state.SetAddColor(AddColor | 0xff000000);
 
 	if (hacktype & SSRF_PLANEHACK)
 	{
@@ -357,6 +358,7 @@ void GLFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 		state.SetRenderStyle(DefaultRenderStyle());
 		state.SetObjectColor(0xffffffff);
 	}
+	state.SetAddColor(0);
 }
 
 //==========================================================================
@@ -441,16 +443,18 @@ void GLFlat::SetFrom3DFloor(F3DFloor *rover, bool top, bool underside)
 	// FF_FOG requires an inverted logic where to get the light from
 	lightlist_t *light = P_GetPlaneLight(sector, plane.plane, underside);
 	lightlevel = hw_ClampLight(*light->p_lightlevel);
-	
+
 	if (rover->flags & FF_FOG)
 	{
 		Colormap.LightColor = light->extra_colormap.FadeColor;
 		FlatColor = 0xffffffff;
+		AddColor = 0;
 	}
 	else
 	{
 		Colormap.CopyFrom3DLight(light);
 		FlatColor = *plane.flatcolor;
+		// AddColor = sector->SpecialColors[sector_t::add];
 	}
 
 
@@ -505,6 +509,7 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 		lightlevel = hw_ClampLight(frontsector->GetFloorLight());
 		Colormap = frontsector->Colormap;
 		FlatColor = frontsector->SpecialColors[sector_t::floor];
+		AddColor = frontsector->SpecialColors[sector_t::add];
 		port = frontsector->ValidatePortal(sector_t::floor);
 		if ((stack = (port != NULL)))
 		{
@@ -560,6 +565,7 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 		lightlevel = hw_ClampLight(frontsector->GetCeilingLight());
 		Colormap = frontsector->Colormap;
 		FlatColor = frontsector->SpecialColors[sector_t::ceiling];
+		AddColor = frontsector->SpecialColors[sector_t::add];
 		port = frontsector->ValidatePortal(sector_t::ceiling);
 		if ((stack = (port != NULL)))
 		{

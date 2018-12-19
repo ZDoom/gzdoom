@@ -235,7 +235,7 @@ struct Sector native play
 {
 
 	native readonly FColormap 	ColorMap;
-	native readonly Color		SpecialColors[5];
+	native readonly Color		SpecialColors[6];
 
 	native Actor 		SoundTarget;
 

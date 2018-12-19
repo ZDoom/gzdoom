@@ -293,7 +293,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t 
 			("linked_floor", p.e->Linked.Floor.Sectors)
 			("linked_ceiling", p.e->Linked.Ceiling.Sectors)
 			("colormap", p.Colormap, def->Colormap)
-			.Array("specialcolors", p.SpecialColors, def->SpecialColors, 5, true)
+			.Array("specialcolors", p.SpecialColors, def->SpecialColors, 6, true)
 			("gravity", p.gravity, def->gravity)
 			.Terrain("floorterrain", p.terrainnum[0], &def->terrainnum[0])
 			.Terrain("ceilingterrain", p.terrainnum[1], &def->terrainnum[1])

@@ -114,6 +114,8 @@ vec4 getTexel(vec2 st)
 	if (uObjectColor2.a == 0.0) texel *= uObjectColor;
 	else texel *= mix(uObjectColor, uObjectColor2, gradientdist.z);
 
+	texel += uAddColor;
+
 	return desaturate(texel);
 }
 

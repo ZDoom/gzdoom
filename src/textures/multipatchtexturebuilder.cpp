@@ -922,11 +922,21 @@ void FMultipatchTextureBuilder::ResolveAllPatches()
 	}
 	// Now try to resolve the images. We only can do this at the end when all multipatch textures are set up.
 	int i = 0;
+
+	// reverse the list so that the Delete operation in the loop below deletes at the end.
+	// For normal sized lists this is of no real concern, but Total Chaos has over 250000 textures where this becomes a performance issue.
+	for (unsigned i = 0; i < BuiltTextures.Size() / 2; i++)
+	{
+		// std::swap is VERY inefficient here...
+		BuiltTextures[i].swap(BuiltTextures[BuiltTextures.Size() - 1 - i]);
+	}
+
+
 	while (BuiltTextures.Size() > 0)
 	{
 		bool donesomething = false;
 
-		for (unsigned i = 0; i < BuiltTextures.Size(); i++)
+		for (int i = BuiltTextures.Size()-1; i>= 0; i--)
 		{
 			auto &buildinfo = BuiltTextures[i];
 			bool hasEmpty = false;
@@ -969,7 +979,6 @@ void FMultipatchTextureBuilder::ResolveAllPatches()
 				}
 
 				BuiltTextures.Delete(i);
-				i--;
 				donesomething = true;
 			}
 		}

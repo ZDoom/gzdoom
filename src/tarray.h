@@ -497,6 +497,14 @@ public:
 			Array = nullptr;
 		}
 	}
+
+	void Swap(TArray<T, TT> &other)
+	{
+		std::swap(Array, other.Array);
+		std::swap(Count, other.Count);
+		std::swap(Most, other.Most);
+	}
+
 private:
 	T *Array;
 	unsigned int Count;
@@ -760,6 +768,7 @@ struct FMap
 	hash_t NumUsed;
 };
 
+
 template<class KT, class VT, class MapType> class TMapIterator;
 template<class KT, class VT, class MapType> class TMapConstIterator;
 
@@ -945,6 +954,14 @@ public:
 	void Remove(const KT key)
 	{
 		DelKey(key);
+	}
+
+	void Swap(MyType &other)
+	{
+		std::swap(Nodes, other.Nodes);
+		std::swap(LastFree, other.LastFree);
+		std::swap(Size, other.Size);
+		std::swap(NumUsed, other.NumUsed);
 	}
 
 protected:
@@ -1518,4 +1535,3 @@ private:
 	T *Array;
 	unsigned int Count;
 };
-

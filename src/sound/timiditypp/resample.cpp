@@ -247,7 +247,6 @@ void initialize_resampler_coeffs(void)
 	static bool done = false;
 	if (done) return;
 	done = true;
-	// atterm(free_gauss_table);
 
 	initialize_newton_coeffs();
 	initialize_gauss_table(gauss_n);

@@ -27,9 +27,8 @@ extern int VMCalls[10];
 
 struct JitLineInfo
 {
-	uint16_t VMInstructionIndex;
-	ptrdiff_t InstructionIndex;
-	int32_t LineNumber;
+	ptrdiff_t InstructionIndex = 0;
+	int32_t LineNumber = -1;
 	asmjit::Label Label;
 };
 
@@ -269,8 +268,6 @@ private:
 	TArray<asmjit::X86Xmm> regF;
 	TArray<asmjit::X86Gp> regA;
 	TArray<asmjit::X86Gp> regS;
-
-	JitLineInfo LatestLine;
 
 	struct OpcodeLabel
 	{

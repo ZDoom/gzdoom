@@ -98,7 +98,7 @@ asmjit::CCFunc *JitCompiler::Codegen()
 {
 	Setup();
 
-	LatestLine = { 0, (ptrdiff_t)0, -1, {} };
+	int lastLine = -1;
 
 	pc = sfunc->Code;
 	auto end = pc + sfunc->CodeSize;
@@ -108,14 +108,17 @@ asmjit::CCFunc *JitCompiler::Codegen()
 		op = pc->op;
 
 		int curLine = sfunc->PCToLine(pc);
-		auto label = cc.newLabel ();
-		cc.bind (label);
-		LatestLine.Label = label;
-		if (curLine != LatestLine.LineNumber)
+		if (curLine != lastLine)
 		{
-			LatestLine.LineNumber = curLine;
-			LatestLine.VMInstructionIndex = i;
-			LineInfo.Push (LatestLine);
+			lastLine = curLine;
+
+			auto label = cc.newLabel();
+			cc.bind(label);
+
+			JitLineInfo info;
+			info.Label = label;
+			info.LineNumber = curLine;
+			LineInfo.Push(info);
 		}
 
 		if (op != OP_PARAM && op != OP_PARAMI && op != OP_VTBL)

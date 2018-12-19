@@ -151,8 +151,8 @@ void PolyTriangleThreadData::SetViewport(int x, int y, int width, int height, ui
 	dest_height = new_dest_height;
 	dest_pitch = new_dest_pitch;
 	dest_bgra = new_dest_bgra;
-	numa_start_y = numa_node * dest_height / num_numa_nodes;
-	numa_end_y = (numa_node + 1) * dest_height / num_numa_nodes;
+	numa_start_y = numa_node * screen->GetHeight() / num_numa_nodes;
+	numa_end_y = (numa_node + 1) * screen->GetHeight() / num_numa_nodes;
 	ccw = true;
 	weaponScene = false;
 }

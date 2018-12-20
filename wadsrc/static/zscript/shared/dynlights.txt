@@ -28,7 +28,9 @@ class DynamicLight : Actor native
 		ColorFlickerLight, 
 		RandomColorFlickerLight
 	};
-	
+
+	native void SetOffset(Vector3 offset);
+
 	Default
 	{
 		Height 0;

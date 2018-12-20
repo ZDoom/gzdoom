@@ -219,8 +219,8 @@ private:
 	void EmitThrowException(EVMAbortException reason);
 	asmjit::Label EmitThrowExceptionLabel(EVMAbortException reason);
 
-	static void ThrowArrayOutOfBounds(VMScriptFunction *func, VMOP *line, int index, int size);
-	static void ThrowException(VMScriptFunction *func, VMOP *line, int reason);
+	static void ThrowArrayOutOfBounds(int index, int size);
+	static void ThrowException(int reason);
 
 	asmjit::X86Gp CheckRegD(int r0, int r1);
 	asmjit::X86Xmm CheckRegF(int r0, int r1);

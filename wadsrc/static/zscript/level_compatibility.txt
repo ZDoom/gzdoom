@@ -1155,6 +1155,13 @@ class LevelCompatibility play
 				SetLineFlags(4884, Line.ML_REPEAT_SPECIAL);
 				break;
 			}
+			
+			case '7FB847B522DE80D0B2A217E1EF8D1A15': // av.wad map28
+			{
+				// Fix the soulsphere in a secret area (sector 324)
+				// so that it doesn't end up in an unreachable position.
+				SetThingXY(516, -934, 48);
+			}
 		}
 	}
 

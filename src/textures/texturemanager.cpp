@@ -468,10 +468,10 @@ void FTextureManager::ReplaceTexture (FTextureID picnum, FTexture *newtexture, b
 
 	newtexture->Name = oldtexture->Name;
 	newtexture->UseType = oldtexture->UseType;
-	// Add the new texture at the end of the texture list and clear the old one's name to ensure it won't be found anymore
-	// We cannot actually replace it because it may be referenced by some other texture.
+	Textures[index].Texture = newtexture;
+	newtexture->id = oldtexture->id;
 	oldtexture->Name = "";
-	AddTexture(newtexture);
+	AddTexture(oldtexture);
 }
 
 //==========================================================================

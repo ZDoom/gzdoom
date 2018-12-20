@@ -197,33 +197,6 @@ bool DirEntryExists(const char *pathname, bool *isdir)
 
 //==========================================================================
 //
-// DefaultExtension		-- char array version
-//
-// Appends the extension to a pathname if it does not already have one.
-//
-//==========================================================================
-
-void DefaultExtension (char *path, const char *extension)
-{
-	char *src;
-//
-// if path doesn't have a .EXT, append extension
-// (extension should include the .)
-//
-	src = path + strlen(path) - 1;
-
-	while (src != path && !IsSeperator(*src))
-	{
-		if (*src == '.')
-			return;                 // it has an extension
-		src--;
-	}
-
-	strcat (path, extension);
-}
-
-//==========================================================================
-//
 // DefaultExtension		-- FString version
 //
 // Appends the extension to a pathname if it does not already have one.

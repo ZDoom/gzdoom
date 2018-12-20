@@ -171,7 +171,7 @@ namespace swrenderer
 		{
 			// When using GL nodes, do a clipping test for these lines so we can
 			// mark their subsectors as visible for automap texturing.
-			if (hasglnodes && !(mSubsector->flags & SSECMF_DRAWN))
+			if (!(mSubsector->flags & SSECMF_DRAWN))
 			{
 				if (Thread->ClipSegments->Check(WallC.sx1, WallC.sx2))
 				{

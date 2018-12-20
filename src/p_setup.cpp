@@ -148,8 +148,6 @@ inline bool P_LoadBuildMap(uint8_t *mapdata, size_t len, FMapThing **things, int
 //
 TArray<vertexdata_t> vertexdatas;
 
-bool			hasglnodes;
-
 TArray<FMapThing> MapThingsConverted;
 TMap<unsigned,unsigned>  MapThingsUserDataIndex;	// from mapthing idx -> user data idx
 TArray<FUDMFKey> MapThingsUserData;
@@ -3371,7 +3369,6 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 	map->GetChecksum(level.md5);
 	// find map num
 	level.lumpnum = map->lumpnum;
-	hasglnodes = false;
 
 	if (newGame)
 	{
@@ -3678,11 +3675,10 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 		// use in P_PointInSubsector to avoid problems with maps that depend on the specific
 		// nodes they were built with (P:AR E1M3 is a good example for a map where this is the case.)
 		reloop |= P_CheckNodes(map, BuildGLNodes, (uint32_t)(endTime - startTime));
-		hasglnodes = true;
 	}
 	else
 	{
-		hasglnodes = P_CheckForGLNodes();
+		P_CheckForGLNodes();
 	}
 
 	// set the head node for gameplay purposes. If the separate gamenodes array is not empty, use that, otherwise use the render nodes.
@@ -3704,12 +3700,9 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 	P_FloodZones();
 	times[13].Unclock();
 
-	if (hasglnodes)
-	{
-		P_SetRenderSector();
-		FixMinisegReferences();
-		FixHoles();
-	}
+	P_SetRenderSector();
+	FixMinisegReferences();
+	FixHoles();
 
 	level.bodyqueslot = 0;
 	// phares 8/10/98: Clear body queue so the corpses from previous games are

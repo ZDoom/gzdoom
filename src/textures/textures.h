@@ -407,7 +407,6 @@ protected:
 							// fully composited before subjected to any kind of postprocessing instead of
 							// doing it per patch.
 	uint8_t bMultiPatch:2;		// This is a multipatch texture (we really could use real type info for textures...)
-	uint8_t bKeepAround:1;		// This texture was used as part of a multi-patch texture. Do not free it.
 	uint8_t bFullNameTexture : 1;
 	uint8_t bBrightmapChecked : 1;				// Set to 1 if brightmap has been checked
 	uint8_t bGlowing : 1;						// Texture glow color

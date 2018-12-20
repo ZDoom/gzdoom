@@ -277,10 +277,10 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       color_wallbottom = <int>;       // Material color of bottom of sector's sidedefs (OpenGL 3.x and later only) Default is white (0xffffff)
       color_sprites = <int>;          // Material color of sprites in sector. Default is white (0xffffff)
 
-      color_flooradd = <int>;         // Additive material color applied to the sector floor. Default is black (0x000000)
-      color_ceilingadd = <int>;       // Additive material color applied to the sector ceiling. Default is black (0x000000)
-      color_spritesadd = <int>;       // Additive material color applied to sprites within the sector. Default is black (0x000000)
-      color_walladd = <int>;          // Additive material color applied to walls within the sector. Default is black (0x000000)
+      coloradd_floor = <int>;         // Additive material color applied to the sector floor. Default is black (0x000000)
+      coloradd_ceiling = <int>;       // Additive material color applied to the sector ceiling. Default is black (0x000000)
+      coloradd_sprites = <int>;       // Additive material color applied to sprites within the sector. Default is black (0x000000)
+      coloradd_walls = <int>;          // Additive material color applied to walls within the sector. Default is black (0x000000)
 
       portal_ceil_blocksound = <bool>;     // ceiling portal blocks sound.
       portal_ceil_disabled = <bool>;       // ceiling portal disabled.

@@ -229,7 +229,7 @@ class Korax : Actor
 		spirit.health = KORAX_SPIRIT_LIFETIME;
 
 		spirit.tracer = self;						// Swarm around korax
-		spirit.WeaveIndexZ = 32 + (random[Kspiritnit]() & 7);	// Float bob index
+		spirit.WeaveIndexZ = random[Kspiritnit](32, 39);	// Float bob index
 		spirit.args[0] = 10; 						// initial turn value
 		spirit.args[1] = 0; 						// initial look angle
 
@@ -258,7 +258,7 @@ class Korax : Actor
 		{
 			"WraithMissileFire", "DemonMissileFire", "DemonMissileFire", "FireDemonAttack", "CentaurLeaderAttack", "SerpentLeaderAttack"
 		};
-		int type = random[KoraxMissile]() % 6;
+		int type = random[KoraxMissile](0, 5);
 
 		A_PlaySound("KoraxAttack", CHAN_VOICE);
 
@@ -370,7 +370,7 @@ class Korax : Actor
 			numcommands = 4;
 		}
 
-		ACS_Execute(250 + (random[KoraxCommand]()%numcommands), 0);
+		ACS_Execute(250 + (random[KoraxCommand](0, numcommands)), 0);
 	}
 }
 
@@ -471,8 +471,8 @@ class KoraxSpirit : Actor
 			{
 				KSpiritSeeker(args[0], args[0] * 2.);
 			}
-			int xyspeed = (random[KoraxRoam]() % 5);
-			int zspeed = (random[KoraxRoam]() % 5);
+			int xyspeed = random[KoraxRoam](0, 4);
+			int zspeed = random[KoraxRoam](0, 4);
 			A_Weave(xyspeed, zspeed, 4., 2.);
 
 			if (random[KoraxRoam]() < 50)

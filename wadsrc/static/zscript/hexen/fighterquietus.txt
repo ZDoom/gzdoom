@@ -208,7 +208,7 @@ class FSwordMissile : Actor
 
 	void A_FSwordFlames()
 	{
-		for (int i = 1+(random[FSwordFlame]()&3); i; i--)
+		for (int i = random[FSwordFlame](1, 4); i; i--)
 		{
 			double xo = (random[FSwordFlame]() - 128) / 16.;
 			double yo = (random[FSwordFlame]() - 128) / 16.;

@@ -74,9 +74,9 @@ class Mace : HereticWeapon
 		}
 		else
 		{
-			player.GetPSprite(PSP_WEAPON).x = ((random[MaceAtk]() & 3) - 2);
-			player.GetPSprite(PSP_WEAPON).y = WEAPONTOP + (random[MaceAtk]() & 3);
-			Actor ball = SpawnPlayerMissile("MaceFX1", angle + (((random[MaceAtk]() & 7) - 4) * (360. / 256)));
+			player.GetPSprite(PSP_WEAPON).x = random[MaceAtk](-2, 1);
+			player.GetPSprite(PSP_WEAPON).y = WEAPONTOP + random[MaceAtk](0, 3);
+			Actor ball = SpawnPlayerMissile("MaceFX1", angle + (random[MaceAtk](-4, 3) * (360. / 256)));
 			if (ball)
 			{
 				ball.special1 = 16; // tics till dropoff

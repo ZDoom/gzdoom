@@ -49,7 +49,7 @@ class PunchDagger : StrifeWeapon
 		else
 		{
 			int power = MIN(10, stamina / 10);
-			damage = (random[JabDagger]() % (power + 8)) * (power + 2);
+			damage = random[JabDagger](0, power + 7) * (power + 2);
 
 			if (FindInventory("PowerStrength"))
 			{

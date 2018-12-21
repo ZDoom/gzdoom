@@ -495,7 +495,7 @@ extend class Actor
 			bo.PlaySpawnSound(self);
 			if (xyvel != 0)
 				bo.Speed = xyvel;
-			bo.Angle = Angle + (((random[grenade]()&7) - 4) * (360./256.));
+			bo.Angle = Angle + (random[grenade](-4, 3) * (360./256.));
 
 			let pitch = -self.Pitch;
 			let angle = bo.Angle;

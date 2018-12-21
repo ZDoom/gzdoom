@@ -47,7 +47,7 @@ extend class Actor
 			// make fall forwards sometimes
 			if ((damage < 40) && (damage > health)
 				&& (pos.Z - origin.pos.Z > 64)
-				&& (random[Kickback]() & 1)
+				&& random[Kickback](0, 1)
 				// [RH] But only if not too fast and not flying
 				&& thrust < 10
 				&& !bNoGravity

@@ -118,7 +118,7 @@ class Stalker : Actor
 			if (CheckMeleeRange ())
 			{
 				let targ = target;
-				int damage = (random[Stalker]() & 7) * 2 + 2;
+				int damage = random[Stalker](1, 8) * 2;
 
 				int newdam = targ.DamageMobj (self, self, damage, 'Melee');
 				targ.TraceBleed (newdam > 0 ? newdam : damage, self);

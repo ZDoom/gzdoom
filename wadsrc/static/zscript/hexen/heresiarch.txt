@@ -245,9 +245,9 @@ class Heresiarch : Actor
 			Actor mo = Spawn("SorcSpark1", pos, ALLOW_REPLACE);
 			if (mo)
 			{
-				double rangle = Angle + (random[Heresiarch]() % 5) * (4096 / 360.);
-				mo.Vel.X = (random[Heresiarch]() % speed) * cos(rangle);
-				mo.Vel.Y = (random[Heresiarch]() % speed) * sin(rangle);
+				double rangle = Angle + random[Heresiarch](0, 4) * (4096 / 360.);
+				mo.Vel.X = random[Heresiarch](0, speed - 1) * cos(rangle);
+				mo.Vel.Y = random[Heresiarch](0, speed - 1) * sin(rangle);
 				mo.Vel.Z = 2;
 			}
 		}
@@ -529,9 +529,9 @@ class SorcBall : Actor
 		bNoGravity = false;
 		Gravity = 1. / 8;
 
-		Vel.X = ((random[Heresiarch]()%10)-5);
-		Vel.Y = ((random[Heresiarch]()%10)-5);
-		Vel.Z = (2+(random[Heresiarch]()%3));
+		Vel.X = random[Heresiarch](-5, 4);
+		Vel.Y = random[Heresiarch](-5, 4);
+		Vel.Z = random[Heresiarch](2, 4);
 		args[4] = Heresiarch.BOUNCE_TIME_UNIT;	// Bounce time unit
 		args[3] = 5;					// Bounce time in seconds
 	}

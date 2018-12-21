@@ -113,7 +113,7 @@ class FlameMissile : Actor
 	void A_FlameDie ()
 	{
 		bNoGravity = true;
-		Vel.Z = random[FlameDie]() & 3;
+		Vel.Z = random[FlameDie](0, 3);
 	}
 }
 

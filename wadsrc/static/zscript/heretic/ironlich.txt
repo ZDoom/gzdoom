@@ -345,7 +345,7 @@ class Whirlwind : Actor
 		}
 		if ((threshold -= 3) < 0)
 		{
-			threshold = 58 + (random[WhirlwindSeek]() & 31);
+			threshold = random[WhirlwindSeek](58, 89);
 			A_PlaySound("ironlich/attack3", CHAN_BODY);
 		}
 		if (tracer && tracer.bShadow)

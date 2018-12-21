@@ -117,15 +117,15 @@ class Pottery1 : Actor
 		Actor mo = null;
 		int i;
 
-		for(i = (random[Pottery]()&3)+3; i; i--)
+		for(i = random[Pottery](3, 6); i; i--)
 		{
 			mo = Spawn ("PotteryBit", Pos, ALLOW_REPLACE);
 			if (mo)
 			{
-				mo.SetState (mo.SpawnState + (random[Pottery]()%5));
+				mo.SetState (mo.SpawnState + random[Pottery](0, 4));
 				mo.Vel.X = random2[Pottery]() / 64.;
 				mo.Vel.Y = random2[Pottery]() / 64.;
-				mo.Vel.Z = ((random[Pottery]() & 7) + 5) * 0.75;
+				mo.Vel.Z = random[Pottery](5, 12) * 0.75;
 			}
 		}
 		mo.A_PlaySound ("PotteryExplode", CHAN_BODY);
@@ -227,7 +227,7 @@ class PotteryBit : Actor
 	void A_PotteryChooseBit()
 	{
 		static const statelabel bits[] = { "Pottery1", "Pottery2", "Pottery3", "Pottery4", "Pottery5" };
-		LoopState = FindState(bits[random[PotteryBit]() % 5]);	// Save the state for jumping back to.
+		LoopState = FindState(bits[random[PotteryBit](0, 4)]);	// Save the state for jumping back to.
 		SetState (LoopState);
 		tics = 256 + (random[PotteryBit]() << 1);
 	}
@@ -395,15 +395,15 @@ class ZCorpseSitting : Actor
 	{
 		Actor mo;
 
-		for (int i = (random[CorpseExplode]() & 3) + 3; i; i--)
+		for (int i = random[CorpseExplode](3, 6); i; i--)
 		{
 			mo = Spawn ("CorpseBit", Pos, ALLOW_REPLACE);
 			if (mo)
 			{
-				mo.SetState (mo.SpawnState + (random[CorpseExplode]() % 3));
+				mo.SetState (mo.SpawnState + random[CorpseExplode](0, 2));
 				mo.Vel.X = random2[CorpseExplode]() / 64.;
 				mo.Vel.Y = random2[CorpseExplode]() / 64.;
-				mo.Vel.Z = ((random[CorpseExplode]() & 7) + 5) * 0.75;
+				mo.Vel.Z = random[CorpseExplode](5, 12) * 0.75;
 			}
 		}
 		// Spawn a skull
@@ -413,7 +413,7 @@ class ZCorpseSitting : Actor
 			mo.SetState (mo.SpawnState + 3);
 			mo.Vel.X = random2[CorpseExplode]() / 64.;
 			mo.Vel.Y = random2[CorpseExplode]() / 64.;
-			mo.Vel.Z = ((random[CorpseExplode]() & 7) + 5) * 0.75;
+			mo.Vel.Z = random[CorpseExplode](5, 12) * 0.75;
 		}
 		A_PlaySound (DeathSound, CHAN_BODY);
 		Destroy ();
@@ -449,12 +449,12 @@ class LeafSpawner : Actor
 	{
 		static const class<Actor> leaves[] = { "Leaf1", "Leaf2" };
 
-		for (int i = (random[LeafSpawn]() & 3) + 1; i; i--)
+		for (int i = random[LeafSpawn](1, 4); i; i--)
 		{
 			double xo = random2[LeafSpawn]() / 4.;
 			double yo = random2[LeafSpawn]() / 4.;
 			double zo = random[LeafSpawn]() / 4.;
-			Actor mo = Spawn (leaves[random[LeafSpawn]()&1], Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
+			Actor mo = Spawn (leaves[random[LeafSpawn](0, 1)], Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 
 			if (mo)
 			{
@@ -769,7 +769,7 @@ class ZSuitOfArmor : Actor
 				mo.SetState (mo.SpawnState + i);
 				mo.Vel.X = random2[SoAExplode]() / 64.;
 				mo.Vel.Y = random2[SoAExplode]() / 64.;
-				mo.Vel.Z = (random[SoAExplode]() & 7) + 5;
+				mo.Vel.Z = random[SoAExplode](5, 12);
 			}
 		}
 		// Spawn an item?

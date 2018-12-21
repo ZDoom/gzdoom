@@ -59,7 +59,7 @@ class GoldWand : HereticWeapon
 				return;
 		}
 		double pitch = BulletSlope();
-		int damage = 7 + (random[FireGoldWand]() & 7);
+		int damage = random[FireGoldWand](7, 14);
 		double ang = angle;
 		if (player.refire)
 		{

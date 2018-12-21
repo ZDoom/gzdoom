@@ -228,17 +228,17 @@ class HolyMissile : Actor
 			{ // float bob index
 
 				case 0:
-					mo.WeaveIndexZ = random[HolyAtk2]() & 7; // upper-left
+					mo.WeaveIndexZ = random[HolyAtk2](0, 7); // upper-left
 					break;
 				case 1:
-					mo.WeaveIndexZ = 32 + (random[HolyAtk2]() & 7); // upper-right
+					mo.WeaveIndexZ = random[HolyAtk2](32, 39); // upper-right
 					break;
 				case 2:
-					mo.WeaveIndexXY = 32 + (random[HolyAtk2]() & 7); // lower-left
+					mo.WeaveIndexXY = random[HolyAtk2](32, 39); // lower-left
 					break;
 				case 3:
-					mo.WeaveIndexXY = 32 + (random[HolyAtk2]() & 7);
-					mo.WeaveIndexZ = 32 + (random[HolyAtk2]() & 7);
+					mo.WeaveIndexXY = random[HolyAtk2](32, 39);
+					mo.WeaveIndexZ = random[HolyAtk2](32, 39);
 					break;
 			}
 			mo.SetZ(pos.z);
@@ -497,7 +497,7 @@ class HolySpirit : Actor
 			Vel.Y /= 4;
 			Vel.Z = 0;
 			SetStateLabel ("Death");
-			tics -= random[HolySeeker]()&3;
+			tics -= random[HolySeeker](0, 3);
 			return;
 		}
 		if (tracer)
@@ -509,8 +509,8 @@ class HolySpirit : Actor
 			}
 		}
 
-		int xyspeed = (random[HolySeeker]() % 5);
-		int zspeed = (random[HolySeeker]() % 5);
+		int xyspeed = random[HolySeeker](0, 4);
+		int zspeed = random[HolySeeker](0, 4);
 		A_Weave(xyspeed, zspeed, 4., 2.);
 	}
 

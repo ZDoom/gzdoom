@@ -67,7 +67,7 @@ class ArtiHealingRadius : Inventory
 
 				case 'Mana':
 				{
-					int amount = 50 + (random[HealRadius]() % 50);
+					int amount = random[HealRadius](50, 99);
 
 					if (mo.GiveAmmo ("Mana1", amount) ||
 						mo.GiveAmmo ("Mana2", amount))
@@ -79,7 +79,7 @@ class ArtiHealingRadius : Inventory
 
 				default:
 				//case NAME_Health:
-					gotsome = mo.GiveBody (50 + (random[HealRadius]() % 50));
+					gotsome = mo.GiveBody (random[HealRadius](50, 99));
 					break;
 				}
 				if (gotsome)

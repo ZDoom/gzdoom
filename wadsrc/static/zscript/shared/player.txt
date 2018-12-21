@@ -1924,7 +1924,12 @@ class PlayerPawn : Actor native
 		let ReadyWeapon = player.ReadyWeapon;
 		if (player.PendingWeapon != WP_NOCHANGE)
 		{
-			return player.weapons.LocateWeapon(player.PendingWeapon.GetClass());
+			// Workaround for the current inability 
+			bool found;
+			int slot;
+			int index;
+			[found, slot, index] = player.weapons.LocateWeapon(player.PendingWeapon.GetClass());
+			return found, slot, index;
 		}
 		else if (ReadyWeapon != null)
 		{

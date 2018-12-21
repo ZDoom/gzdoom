@@ -425,7 +425,7 @@ void OpenGLFrameBuffer::BeginFrame()
 //
 //===========================================================================
 
-void OpenGLFrameBuffer::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma)
+TArray<uint8_t> OpenGLFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &color_type, float &gamma)
 {
 	const auto &viewport = mOutputLetterbox;
 
@@ -441,7 +441,7 @@ void OpenGLFrameBuffer::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, 
 	int w = SCREENWIDTH;
 	int h = SCREENHEIGHT;
 
-	auto ScreenshotBuffer = new uint8_t[w * h * 3];
+	TArray<uint8_t> ScreenshotBuffer(w * h * 3, true);
 
 	float rcpWidth = 1.0f / w;
 	float rcpHeight = 1.0f / h;
@@ -463,10 +463,10 @@ void OpenGLFrameBuffer::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, 
 
 	pitch = w * 3;
 	color_type = SS_RGB;
-	buffer = ScreenshotBuffer;
 
 	// Screenshot should not use gamma correction if it was already applied to rendered image
 	gamma = 1 == vid_hwgamma || (2 == vid_hwgamma && !fullscreen) ? 1.0f : Gamma;
+	return ScreenshotBuffer;
 }
 
 //===========================================================================

@@ -99,7 +99,7 @@ class FWeapFist : FighterWeapon
 			return;
 		}
 
-		int damage = 40 + (random[FighterAtk]() & 15);
+		int damage = random[FighterAtk](40, 55);
 		for (int i = 0; i < 16; i++)
 		{
 			if (TryPunch(angle + i*(45./16), damage, 2) ||

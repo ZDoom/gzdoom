@@ -138,7 +138,7 @@ FTexture::FTexture (const char *name, int lumpnum)
 	: 
   Scale(1,1), SourceLump(lumpnum),
   UseType(ETextureType::Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
-  bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false), bMultiPatch(false), bKeepAround(false), bFullNameTexture(false),
+  bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false), bMultiPatch(false), bFullNameTexture(false),
 	Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0)
 {
 	bBrightmapChecked = false;

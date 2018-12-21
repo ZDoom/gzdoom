@@ -59,10 +59,10 @@ class FogSpawner : Actor
 		{
 			int delta = args[1];
 			if (delta == 0) delta = 1;
-			mo.angle = angle + (((random[FogSpawn]() % delta) - (delta >> 1)) * (360 / 256.));
+			mo.angle = angle + ((random[FogSpawn](0, delta-1) - (delta >> 1)) * (360 / 256.));
 			mo.target = self;
 			if (args[0] < 1) args[0] = 1;
-			mo.args[0] = (random[FogSpawn]() % (args[0]))+1;	// Random speed
+			mo.args[0] = random[FogSpawn](1, args[0]);	// Random speed
 			mo.args[3] = args[3];						// Set lifetime
 			mo.args[4] = 1;									// Set to moving
 			mo.WeaveIndexZ = random[FogSpawn](0, 63);

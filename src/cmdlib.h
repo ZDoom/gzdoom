@@ -27,7 +27,6 @@ extern	FString progdir;
 void	FixPathSeperator (char *path);
 static void	inline FixPathSeperator (FString &path) { path.ReplaceChars('\\', '/'); }
 
-void 	DefaultExtension (char *path, const char *extension);
 void 	DefaultExtension (FString &path, const char *extension);
 
 FString	ExtractFilePath (const char *path);

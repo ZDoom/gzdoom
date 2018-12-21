@@ -426,6 +426,20 @@ void ADynamicLight::SetOffset(const DVector3 &pos)
 	UpdateLocation();
 }
 
+static void SetOffset(ADynamicLight *self, const DVector3 &pos)
+{
+	self->SetOffset(pos);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(ADynamicLight, SetOffset, SetOffset)
+{
+	PARAM_SELF_PROLOGUE(ADynamicLight)
+	PARAM_FLOAT(x)
+	PARAM_FLOAT(y)
+	PARAM_FLOAT(z)
+	self->SetOffset(DVector3(x, y, z));
+	return 0;
+}
 
 //==========================================================================
 //

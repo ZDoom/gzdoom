@@ -820,6 +820,10 @@ DVector2 P_GetOffsetPosition(double x, double y, double dx, double dy)
 	return dest;
 }
 
+static void GetOffsetPosition(double x, double y, double dx, double dy, DVector2 *result)
+{
+	*result = P_GetOffsetPosition(x, y, dx, dy);
+}
 
 //============================================================================
 //

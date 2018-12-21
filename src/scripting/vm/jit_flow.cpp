@@ -330,15 +330,18 @@ void JitCompiler::EmitBOUND()
 	auto cursor = cc.getCursor();
 	auto label = cc.newLabel();
 	cc.bind(label);
-	auto call = CreateCall<void, VMScriptFunction *, VMOP *, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
-	call->setArg(0, asmjit::imm_ptr(sfunc));
-	call->setArg(1, asmjit::imm_ptr(pc));
-	call->setArg(2, regD[A]);
-	call->setArg(3, asmjit::imm(BC));
+	auto call = CreateCall<void, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
+	call->setArg(0, regD[A]);
+	call->setArg(1, asmjit::imm(BC));
 	cc.setCursor(cursor);
 
 	cc.cmp(regD[A], (int)BC);
 	cc.jae(label);
+
+	JitLineInfo info;
+	info.Label = label;
+	info.LineNumber = sfunc->PCToLine(pc);
+	LineInfo.Push(info);
 }
 
 void JitCompiler::EmitBOUND_K()
@@ -346,15 +349,18 @@ void JitCompiler::EmitBOUND_K()
 	auto cursor = cc.getCursor();
 	auto label = cc.newLabel();
 	cc.bind(label);
-	auto call = CreateCall<void, VMScriptFunction *, VMOP *, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
-	call->setArg(0, asmjit::imm_ptr(sfunc));
-	call->setArg(1, asmjit::imm_ptr(pc));
-	call->setArg(2, regD[A]);
-	call->setArg(3, asmjit::imm(konstd[BC]));
+	auto call = CreateCall<void, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
+	call->setArg(0, regD[A]);
+	call->setArg(1, asmjit::imm(konstd[BC]));
 	cc.setCursor(cursor);
 
 	cc.cmp(regD[A], (int)konstd[BC]);
 	cc.jae(label);
+
+	JitLineInfo info;
+	info.Label = label;
+	info.LineNumber = sfunc->PCToLine(pc);
+	LineInfo.Push(info);
 }
 
 void JitCompiler::EmitBOUND_R()
@@ -362,18 +368,21 @@ void JitCompiler::EmitBOUND_R()
 	auto cursor = cc.getCursor();
 	auto label = cc.newLabel();
 	cc.bind(label);
-	auto call = CreateCall<void, VMScriptFunction *, VMOP *, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
-	call->setArg(0, asmjit::imm_ptr(sfunc));
-	call->setArg(1, asmjit::imm_ptr(pc));
-	call->setArg(2, regD[A]);
-	call->setArg(3, regD[B]);
+	auto call = CreateCall<void, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
+	call->setArg(0, regD[A]);
+	call->setArg(1, regD[B]);
 	cc.setCursor(cursor);
 
 	cc.cmp(regD[A], regD[B]);
 	cc.jae(label);
+
+	JitLineInfo info;
+	info.Label = label;
+	info.LineNumber = sfunc->PCToLine(pc);
+	LineInfo.Push(info);
 }
 
-void JitCompiler::ThrowArrayOutOfBounds(VMScriptFunction *func, VMOP *line, int index, int size)
+void JitCompiler::ThrowArrayOutOfBounds(int index, int size)
 {
 	if (index >= size)
 	{

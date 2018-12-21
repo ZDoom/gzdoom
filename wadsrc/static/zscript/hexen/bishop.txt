@@ -96,7 +96,7 @@ class Bishop : Actor
 			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
 			return;
 		}
-		missilecount = (random[BishopAttack]() & 3) + 5;
+		missilecount = random[BishopAttack](5, 8);
 	}
 
 	//============================================================================
@@ -145,7 +145,7 @@ class Bishop : Actor
 
 	void A_BishopDoBlur()
 	{
-		missilecount = (random[BishopDoBlur]() & 3) + 3; // Random number of blurs
+		missilecount = random[BishopDoBlur](3, 6); // Random number of blurs
 		if (random[BishopDoBlur]() < 120)
 		{
 			Thrust(11, Angle + 90);

@@ -315,12 +315,12 @@ void R_InitSpriteDefs ()
 	struct Hasher
 	{
 		int Head, Next;
-	} *hashes;
+	};
 	struct VHasher
 	{
 		int Head, Next, Name, Spin;
 		char Frame;
-	} *vhashes;
+	};
 	unsigned int i, j, smax, vmax;
 	uint32_t intname;
 
@@ -328,8 +328,8 @@ void R_InitSpriteDefs ()
 
 	// Create a hash table to speed up the process
 	smax = TexMan.NumTextures();
-	hashes = new Hasher[smax];
-	memset(hashes, -1, sizeof(Hasher)*smax);
+	TArray<Hasher> hashes(smax, true);
+	memset(hashes.Data(), -1, sizeof(Hasher)*smax);
 	for (i = 0; i < smax; ++i)
 	{
 		FTexture *tex = TexMan.ByIndex(i);
@@ -343,8 +343,8 @@ void R_InitSpriteDefs ()
 
 	// Repeat, for voxels
 	vmax = Wads.GetNumLumps();
-	vhashes = new VHasher[vmax];
-	memset(vhashes, -1, sizeof(VHasher)*vmax);
+	TArray<VHasher> vhashes(vmax, true);
+	memset(vhashes.Data(), -1, sizeof(VHasher)*vmax);
 	for (i = 0; i < vmax; ++i)
 	{
 		if (Wads.GetLumpNamespace(i) == ns_voxels)
@@ -459,9 +459,6 @@ void R_InitSpriteDefs ()
 		
 		R_InstallSprite ((int)i, sprtemp, maxframe);
 	}
-
-	delete[] hashes;
-	delete[] vhashes;
 }
 
 //==========================================================================

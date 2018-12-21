@@ -532,8 +532,8 @@ void InitRenderInfo()
 	PrepareSegs();
 	PrepareSectorData();
 	InitVertexData();
-	int *checkmap = new int[level.vertexes.Size()];
-	memset(checkmap, -1, sizeof(int)*level.vertexes.Size());
+	TArray<int> checkmap(level.vertexes.Size());
+	memset(checkmap.Data(), -1, sizeof(int)*level.vertexes.Size());
 	for(auto &sec : level.sectors) 
 	{
 		int i = sec.sectornum;
@@ -562,11 +562,6 @@ void InitRenderInfo()
 			}
 		}
 	}
-	delete[] checkmap;
-
-#if 0
-	gl_CreateSections();
-#endif
 }
 
 

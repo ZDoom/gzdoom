@@ -283,7 +283,7 @@ class Volcano : Actor
 
 	void A_VolcanoSet ()
 	{
-		tics = 105 + (random[VolcanoSet]() & 127);
+		tics = random[VolcanoSet](105, 232);
 	}
 
 	//----------------------------------------------------------------------------

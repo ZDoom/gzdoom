@@ -24,7 +24,7 @@ class IceChunk : Actor
 	
 	void A_IceSetTics ()
 	{
-		tics = 70 + (random[IceTics]() & 63);
+		tics = random[IceTics](70, 133);
 		Name dtype = GetFloorTerrain().DamageMOD;
 		if (dtype == 'Fire')
 		{
@@ -134,7 +134,7 @@ extend class Actor
 		// things break up into more shards than smaller things.
 		// An actor with radius 20 and height 64 creates ~40 chunks.
 		int numChunks = max(4, int(radius * Height)/32);
-		int i = Random[FreezeDeathChunks]() % (numChunks/4);
+		int i = Random[FreezeDeathChunks](0, numChunks/4 - 1);
 		for (i = max(24, numChunks + i); i >= 0; i--)
 		{
 			double xo = (random[FreezeDeathChunks]() - 128)*radius / 128;
@@ -144,7 +144,7 @@ extend class Actor
 			Actor mo = Spawn("IceChunk", Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 			if (mo)
 			{
-				mo.SetState (mo.SpawnState + (random[FreezeDeathChunks]()%3));
+				mo.SetState (mo.SpawnState + random[FreezeDeathChunks](0, 2));
 				mo.Vel.X = random2[FreezeDeathChunks]() / 128.;
 				mo.Vel.Y = random2[FreezeDeathChunks]() / 128.;
 				mo.Vel.Z = (mo.pos.Z - pos.Z) / Height * 4;

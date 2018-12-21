@@ -475,7 +475,7 @@ class ScriptedMarine : Actor
 		double pitch = AimLineAttack (angle, MISSILERANGE);
 		for (int i = 0; i < 20; ++i)
 		{
-			int damage = 5*(random[SMarineFireSSG]()%3+1);
+			int damage = 5*(random[SMarineFireSSG](1, 3));
 			double ang = angle + Random2[SMarineFireSSG]() * (11.25 / 256);
 
 			LineAttack (ang, MISSILERANGE, pitch + Random2[SMarineFireSSG]() * (7.097 / 256), damage, 'Hitscan', "BulletPuff");

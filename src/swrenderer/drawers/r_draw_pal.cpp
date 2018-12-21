@@ -1385,9 +1385,12 @@ namespace swrenderer
 			do
 			{
 				uint32_t val = colormap[source[frac >> FRACBITS]];
-				uint32_t fg = fgstart[val << 8];
-				val = (Col2RGB8[64 - val][*dest] + fg) | 0x1f07c1f;
-				*dest = RGB32k.All[val & (val >> 15)];
+				if (val != 0)
+				{
+					uint32_t fg = fgstart[val << 8];
+					val = (Col2RGB8[64 - val][*dest] + fg) | 0x1f07c1f;
+					*dest = RGB32k.All[val & (val >> 15)];
+				}
 
 				dest += pitch;
 				frac += fracstep;
@@ -1400,10 +1403,13 @@ namespace swrenderer
 			{
 				uint32_t val = colormap[source[frac >> FRACBITS]] << 2;
 
-				int r = (palette[*dest].r * (256-val) + palette[color].r * val) >> 10;
-				int g = (palette[*dest].g * (256-val) + palette[color].g * val) >> 10;
-				int b = (palette[*dest].b * (256-val) + palette[color].b * val) >> 10;
-				*dest = RGB256k.RGB[clamp(r,0,63)][clamp(g,0,63)][clamp(b,0,63)];
+				if (val != 0)
+				{
+					int r = (palette[*dest].r * (256 - val) + palette[color].r * val) >> 10;
+					int g = (palette[*dest].g * (256 - val) + palette[color].g * val) >> 10;
+					int b = (palette[*dest].b * (256 - val) + palette[color].b * val) >> 10;
+					*dest = RGB256k.RGB[clamp(r, 0, 63)][clamp(g, 0, 63)][clamp(b, 0, 63)];
+				}
 
 				dest += pitch;
 				frac += fracstep;

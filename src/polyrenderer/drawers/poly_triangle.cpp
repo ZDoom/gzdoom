@@ -68,17 +68,16 @@ void PolyTriangleDrawer::SetViewport(const DrawerCommandQueuePtr &queue, int x, 
 	isBgraRenderTarget = dest_bgra;
 
 	int offsetx = clamp(x, 0, dest_width);
-	int offsety = clamp(y, 0, dest_height);
 	int pixelsize = dest_bgra ? 4 : 1;
 
 	int viewport_x = x - offsetx;
-	int viewport_y = y - offsety;
+	int viewport_y = y;
 	int viewport_width = width;
 	int viewport_height = height;
 
-	dest += (offsetx + offsety * dest_pitch) * pixelsize;
+	dest += offsetx * pixelsize;
 	dest_width = clamp(viewport_x + viewport_width, 0, dest_width - offsetx);
-	dest_height = clamp(viewport_y + viewport_height, 0, dest_height - offsety);
+	dest_height = clamp(viewport_y + viewport_height, 0, dest_height);
 
 	queue->Push<PolySetViewportCommand>(viewport_x, viewport_y, viewport_width, viewport_height, dest, dest_width, dest_height, dest_pitch, dest_bgra);
 }
@@ -127,13 +126,11 @@ void PolyTriangleThreadData::ClearStencil(uint8_t value)
 	int height = buffer->Height();
 	uint8_t *data = buffer->Values();
 
-	int start_y = numa_node * height / num_numa_nodes;
-	int end_y = (numa_node + 1) * height / num_numa_nodes;
-	int core_skip = (num_cores - (start_y - core) % num_cores) % num_cores;
-	start_y += core_skip;
+	int skip = skipped_by_thread(0);
+	int count = count_for_thread(0, height);
 
-	data += start_y * width;
-	for (int y = start_y; y < end_y; y += num_cores)
+	data += skip * width;
+	for (int i = 0; i < count; i++)
 	{
 		memset(data, value, width);
 		data += num_cores * width;
@@ -151,8 +148,6 @@ void PolyTriangleThreadData::SetViewport(int x, int y, int width, int height, ui
 	dest_height = new_dest_height;
 	dest_pitch = new_dest_pitch;
 	dest_bgra = new_dest_bgra;
-	numa_start_y = numa_node * screen->GetHeight() / num_numa_nodes;
-	numa_end_y = (numa_node + 1) * screen->GetHeight() / num_numa_nodes;
 	ccw = true;
 	weaponScene = false;
 }

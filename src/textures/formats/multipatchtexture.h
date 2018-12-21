@@ -89,7 +89,29 @@ struct BuildInfo
 	int LeftOffset[2] = {};
 	int TopOffset[2] = {};
 	FImageTexture *tex = nullptr;
+
+	void swap(BuildInfo &other)
+	{
+		Name.Swap(other.Name);
+		Parts.Swap(other.Parts);
+		Inits.Swap(other.Inits);
+		std::swap(Width, other.Width);
+		std::swap(Height, other.Height);
+		std::swap(Scale, other.Scale);
+		std::swap(bWorldPanning, other.bWorldPanning);
+		std::swap(DefinitionLump, other.DefinitionLump);
+		std::swap(bComplex, bComplex);
+		std::swap(textual, other.textual);
+		std::swap(bNoDecals, other.bNoDecals);
+		std::swap(LeftOffset[0], other.LeftOffset[0]);
+		std::swap(LeftOffset[1], other.LeftOffset[1]);
+		std::swap(TopOffset[0], other.TopOffset[0]);
+		std::swap(TopOffset[1], other.TopOffset[1]);
+		std::swap(tex, other.tex);
+	}
 };
+
+
 
 class FMultipatchTextureBuilder
 {

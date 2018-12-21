@@ -66,7 +66,7 @@ class Ammo : Inventory
 	//
 	//===========================================================================
 
-	Class<Ammo> GetParentAmmo ()
+	virtual Class<Ammo> GetParentAmmo ()
 	{
 		class<Object> type = GetClass();
 

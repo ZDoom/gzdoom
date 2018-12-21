@@ -312,7 +312,7 @@ class PhosphorousFire : Actor
 				drop.Vel.X = Vel.X + random2[PHBurn] (7);
 				drop.Vel.Y = Vel.Y + random2[PHBurn] (7);
 				drop.Vel.Z = Vel.Z - 1;
-				drop.reactiontime = (random[PHBurn]() & 3) + 2;
+				drop.reactiontime = random[PHBurn](2, 5);
 				drop.bDropped = true;
 			}
 		}

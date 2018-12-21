@@ -756,8 +756,8 @@ void ProcessEDSectors()
 
 	// collect all Extradata sector records up front so we do not need to search the complete line array for each sector separately.
 	auto numsectors = level.sectors.Size();
-	int *sectorrecord = new int[numsectors];
-	memset(sectorrecord, -1, numsectors * sizeof(int));
+	TArray<int> sectorrecord(numsectors, true);
+	memset(sectorrecord.Data(), -1, numsectors * sizeof(int));
 	for (auto &line : level.lines)
 	{
 		if (line.special == Static_Init && line.args[1] == Init_EDSector)
@@ -773,7 +773,6 @@ void ProcessEDSectors()
 			ProcessEDSector(&level.sectors[i], sectorrecord[i]);
 		}
 	}
-	delete[] sectorrecord;
 }
 
 void LoadMapinfoACSLump()

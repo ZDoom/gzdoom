@@ -132,7 +132,7 @@ class BlasterFX1 : FastProjectile
 	{
 		if (target is "Ironlich")
 		{ // Less damage to Ironlich bosses
-			damage = random[BlasterFX]() & 1;
+			damage = random[BlasterFX](0, 1);
 			if (!damage)
 			{
 				return -1;
@@ -224,7 +224,7 @@ class Ripper : Actor
 	{
 		if (target is "Ironlich")
 		{ // Less damage to Ironlich bosses
-			damage = random[Ripper]() & 1;
+			damage = random[Ripper](0, 1);
 			if (!damage)
 			{
 				return -1;

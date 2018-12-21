@@ -469,16 +469,9 @@ void FTextureManager::ReplaceTexture (FTextureID picnum, FTexture *newtexture, b
 	newtexture->Name = oldtexture->Name;
 	newtexture->UseType = oldtexture->UseType;
 	Textures[index].Texture = newtexture;
-
 	newtexture->id = oldtexture->id;
-	if (free && !oldtexture->bKeepAround)
-	{
-		delete oldtexture;
-	}
-	else
-	{
-		oldtexture->id.SetInvalid();
-	}
+	oldtexture->Name = "";
+	AddTexture(oldtexture);
 }
 
 //==========================================================================

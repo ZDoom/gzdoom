@@ -356,37 +356,34 @@ FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
 	auto numsubsectors = level.subsectors.Size();
 	if (arc.isWriting())
 	{
-		if (hasglnodes)
+		TArray<char> encoded(1 + (numsubsectors + 5) / 6);
+		int p = 0;
+		for (unsigned i = 0; i < numsubsectors; i += 6)
 		{
-			TArray<char> encoded(1 + (numsubsectors + 5) / 6);
-			int p = 0;
-			for (unsigned i = 0; i < numsubsectors; i += 6)
+			by = 0;
+			for (unsigned j = 0; j < 6; j++)
 			{
-				by = 0;
-				for (unsigned j = 0; j < 6; j++)
+				if (i + j < numsubsectors && (level.subsectors[i + j].flags & SSECMF_DRAWN))
 				{
-					if (i + j < numsubsectors && (level.subsectors[i + j].flags & SSECMF_DRAWN))
-					{
-						by |= (1 << j);
-					}
+					by |= (1 << j);
 				}
-				if (by < 10) by += '0';
-				else if (by < 36) by += 'A' - 10;
-				else if (by < 62) by += 'a' - 36;
-				else if (by == 62) by = '-';
-				else if (by == 63) by = '+';
-				encoded[p++] = by;
 			}
-			encoded[p] = 0;
-			str = &encoded[0];
-			if (arc.BeginArray(key))
-			{
-				auto numvertexes = level.vertexes.Size();
-				arc(nullptr, numvertexes)
-					(nullptr, numsubsectors)
-					.StringPtr(nullptr, str)
-					.EndArray();
-			}
+			if (by < 10) by += '0';
+			else if (by < 36) by += 'A' - 10;
+			else if (by < 62) by += 'a' - 36;
+			else if (by == 62) by = '-';
+			else if (by == 63) by = '+';
+			encoded[p++] = by;
+		}
+		encoded[p] = 0;
+		str = &encoded[0];
+		if (arc.BeginArray(key))
+		{
+			auto numvertexes = level.vertexes.Size();
+			arc(nullptr, numvertexes)
+				(nullptr, numsubsectors)
+				.StringPtr(nullptr, str)
+				.EndArray();
 		}
 	}
 	else
@@ -400,7 +397,7 @@ FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
 				.StringPtr(nullptr, str)
 				.EndArray();
 
-			if (num_verts == (int)level.vertexes.Size() && num_subs == (int)numsubsectors && hasglnodes)
+			if (num_verts == (int)level.vertexes.Size() && num_subs == (int)numsubsectors)
 			{
 				success = true;
 				int sub = 0;
@@ -427,7 +424,7 @@ FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
 					sub += 6;
 				}
 			}
-			if (hasglnodes && !success)
+			if (!success)
 			{
 				RecalculateDrawnSubsectors();
 			}

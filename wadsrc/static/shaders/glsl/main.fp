@@ -122,12 +122,12 @@ vec4 getTexel(vec2 st)
 // Vanilla Doom wall colormap equation
 //
 //===========================================================================
-float R_WallColormap(float lightnum, float z)
+float R_WallColormap(float lightnum, float z, vec3 normal)
 {
 	// R_ScaleFromGlobalAngle calculation
 	float projection = 160.0; // projection depends on SCREENBLOCKS!! 160 is the fullscreen value
 	vec2 line_v1 = pixelpos.xz; // in vanilla this is the first curline vertex
-	vec2 line_normal = vWorldNormal.xz;
+	vec2 line_normal = normal.xz;
 	float texscale = projection * clamp(dot(normalize(uCameraPos.xz - line_v1), line_normal), 0.0, 1.0) / z;
 
 	float lightz = clamp(16.0 * texscale, 0.0, 47.0);
@@ -174,7 +174,8 @@ float R_DoomColormap(float light, float z)
 
 		if (dot(vWorldNormal.xyz, vWorldNormal.xyz) > 0.5)
 		{
-			return mix(R_WallColormap(lightnum, z), R_PlaneColormap(lightnum, z), abs(vWorldNormal.y));
+			vec3 normal = normalize(vWorldNormal.xyz);
+			return mix(R_WallColormap(lightnum, z, normal), R_PlaneColormap(lightnum, z), abs(normal.y));
 		}
 		else // vWorldNormal is not set on sprites
 		{

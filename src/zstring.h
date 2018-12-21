@@ -148,6 +148,11 @@ public:
 	char *LockBuffer();		// Obtain write access to the character buffer
 	void UnlockBuffer();	// Allow shared access to the character buffer
 
+	void Swap(FString &other)
+	{
+		std::swap(Chars, other.Chars);
+	}
+
 	operator const char *() const { return Chars; }
 
 	const char *GetChars() const { return Chars; }

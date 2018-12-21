@@ -327,8 +327,8 @@ class HornRodFX2 : Actor
 		{ // Fudge rain frequency
 			return;
 		}
-		double xo = ((Random[SkullRodStorm]() & 127) - 64);
-		double yo = ((Random[SkullRodStorm]() & 127) - 64);
+		double xo = Random[SkullRodStorm](-64, 63);
+		double yo = Random[SkullRodStorm](-64, 63);
 		Vector3 spawnpos = Vec2OffsetZ(xo, yo, pos.z);
 		Actor mo = Spawn("RainPillar", spawnpos, ALLOW_REPLACE);
 		if (!mo) return;

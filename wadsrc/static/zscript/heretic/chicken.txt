@@ -331,7 +331,7 @@ extend class Actor
 		}
 		else
 		{ // Death
-			count = 5 + (random[Feathers]()&3);
+			count = 5 + (random[Feathers](0, 3));
 		}
 		for (int i = 0; i < count; i++)
 		{
@@ -342,7 +342,7 @@ extend class Actor
 				mo.Vel.X = Random2[Feathers]() / 256.;
 				mo.Vel.Y = Random2[Feathers]() / 256.;
 				mo.Vel.Z = 1. + random[Feathers]() / 128.;
-				mo.SetState (mo.SpawnState + (random[Feathers]()&7));
+				mo.SetState (mo.SpawnState + (random[Feathers](0, 7)));
 			}
 		}
 	}

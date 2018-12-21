@@ -73,7 +73,7 @@ extend class Actor
 			{
 				piece.Vel = self.Vel + AngleToVector(i * 120., 1);
 				piece.bDropped = true;
-				j = (j == 0) ? (random[PieceDrop]() & 1) + 1 : 3-j;
+				j = (j == 0) ? random[PieceDrop](1, 2) : 3-j;
 			}
 		}
 	}	

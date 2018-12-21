@@ -66,9 +66,9 @@ extend class Actor
 			return;
 		}
 
-		gib.Angle = random[GibTosser]() * (360 / 256.f);
-		gib.VelFromAngle(random[GibTosser]() & 15);
-		gib.Vel.Z = random[GibTosser]() & 15;
+		gib.Angle = random[GibTosser]() * (360 / 256.);
+		gib.VelFromAngle(random[GibTosser](0, 15));
+		gib.Vel.Z = random[GibTosser](0, 15);
 	}
 
 	//==========================================================================
@@ -83,7 +83,7 @@ extend class Actor
 		A_PlaySound ("monsters/rifle", CHAN_WEAPON);
 		A_FaceTarget ();
 		double pitch = AimLineAttack (angle, MISSILERANGE);
-		LineAttack (Angle + Random2[ShootGun]() * (11.25 / 256), MISSILERANGE, pitch, 3*(random[ShootGun]() % 5 + 1), 'Hitscan', "StrifePuff");
+		LineAttack (Angle + Random2[ShootGun]() * (11.25 / 256), MISSILERANGE, pitch, 3*random[ShootGun](1, 5), 'Hitscan', "StrifePuff");
 	}
 	
 	//==========================================================================
@@ -113,7 +113,7 @@ extend class Actor
 	void A_GetHurt()
 	{
 		bInCombat = true;
-		if ((random[HurtMe]() % 5) == 0)
+		if (random[HurtMe](0, 4) == 0)
 		{
 			A_PlaySound (PainSound, CHAN_VOICE);
 			health--;

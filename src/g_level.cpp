@@ -365,14 +365,14 @@ void G_NewInit ()
 	{
 		player_t *p = &players[i];
 		userinfo_t saved_ui;
-		saved_ui.TransferFrom(players[i].userinfo);
-		int chasecam = p->cheats & CF_CHASECAM;
+		saved_ui.TransferFrom(p->userinfo);
+		const int chasecam = p->cheats & CF_CHASECAM;
 		p->~player_t();
 		::new(p) player_t;
-		players[i].cheats |= chasecam;
-		players[i].playerstate = PST_DEAD;
-		playeringame[i] = 0;
-		players[i].userinfo.TransferFrom(saved_ui);
+		p->cheats |= chasecam;
+		p->playerstate = PST_DEAD;
+		p->userinfo.TransferFrom(saved_ui);
+		playeringame[i] = false;
 	}
 	BackupSaveName = "";
 	consoleplayer = 0;

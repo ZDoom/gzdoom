@@ -367,8 +367,10 @@ void G_NewInit ()
 		userinfo_t saved_ui;
 		saved_ui.TransferFrom(p->userinfo);
 		const int chasecam = p->cheats & CF_CHASECAM;
+		const bool settings_controller = p->settings_controller;
 		p->~player_t();
 		::new(p) player_t;
+		p->settings_controller = settings_controller;
 		p->cheats |= chasecam;
 		p->playerstate = PST_DEAD;
 		p->userinfo.TransferFrom(saved_ui);

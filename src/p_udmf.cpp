@@ -1388,6 +1388,18 @@ public:
 				sd->SetSpecialColor(side_t::bottom, 1, CheckInt(key));
 				break;
 
+			case NAME_coloradd_top:
+				sd->SetAdditiveColor(side_t::top, CheckInt(key));
+				break;
+
+			case NAME_coloradd_mid:
+				sd->SetAdditiveColor(side_t::mid, CheckInt(key));
+				break;
+
+			case NAME_coloradd_bottom:
+				sd->SetAdditiveColor(side_t::bottom, CheckInt(key));
+				break;
+
 
 			default:
 				break;
@@ -1453,7 +1465,7 @@ public:
 		sec->terrainnum[sector_t::ceiling] = sec->terrainnum[sector_t::floor] = -1;
 		sec->ibocount = -1;
 		memset(sec->SpecialColors, -1, sizeof(sec->SpecialColors));
-		sec->SpecialColors[sector_t::add] = 0;
+		memset(sec->AdditiveColors, 0, sizeof(sec->AdditiveColors));
 		if (floordrop) sec->Flags = SECF_FLOORDROP;
 		// killough 3/7/98: end changes
 
@@ -1626,8 +1638,20 @@ public:
 					sec->SpecialColors[sector_t::sprites] = CheckInt(key) | 0xff000000;
 					break;
 
-				case NAME_Color_Add:
-					sec->SpecialColors[sector_t::add] = CheckInt(key) | 0xff000000;
+				case NAME_ColorAdd_Floor:
+					sec->AdditiveColors[sector_t::floor] = CheckInt(key) | 0xff000000; // Alpha is used to decide whether or not to use the color
+					break;
+
+				case NAME_ColorAdd_Ceiling:
+					sec->AdditiveColors[sector_t::ceiling] = CheckInt(key) | 0xff000000;
+					break;
+
+				case NAME_ColorAdd_Walls:
+					sec->AdditiveColors[sector_t::walltop] = CheckInt(key) | 0xff000000;
+					break;
+
+				case NAME_ColorAdd_Sprites:
+					sec->AdditiveColors[sector_t::sprites] = CheckInt(key) | 0xff000000;
 					break;
 
 				case NAME_Desaturation:

@@ -660,8 +660,8 @@ public:
 		// only used for specialcolors array
 		walltop,
 		wallbottom,
-		sprites,
-		add
+		sprites
+
 	};
 
 	struct splane
@@ -914,6 +914,12 @@ public:
 		SpecialColors[slot] = rgb;
 	}
 
+	void SetAdditiveColor(int slot, PalEntry rgb)
+	{
+		rgb.a = 255;
+		AdditiveColors[slot] = rgb;
+	}
+
 	inline bool PortalBlocksView(int plane);
 	inline bool PortalBlocksSight(int plane);
 	inline bool PortalBlocksMovement(int plane);
@@ -974,7 +980,8 @@ public:
 	secplane_t	floorplane, ceilingplane;
 
 	// [RH] give floor and ceiling even more properties
-	PalEntry SpecialColors[6];
+	PalEntry SpecialColors[5];
+	PalEntry AdditiveColors[5];
 	FColormap Colormap;
 
 	TObjPtr<AActor*> SoundTarget;
@@ -1153,6 +1160,7 @@ struct side_t
 		FTextureID texture;
 		int flags;
 		PalEntry SpecialColors[2];
+		PalEntry AdditiveColor;
 
 		void InitFrom(const part &other)
 		{
@@ -1296,6 +1304,20 @@ struct side_t
 		return (part.flags & part::UseOwnColors) ? part.SpecialColors[slot] : frontsector->SpecialColors[sector_t::walltop + slot];
 	}
 
+	void SetAdditiveColor(int which, PalEntry rgb)
+	{
+		rgb.a = 255;
+		textures[which].AdditiveColor = rgb;
+	}
+
+	PalEntry GetAdditiveColor(int which, sector_t *frontsector) const
+	{
+		auto &color = textures[which].AdditiveColor;
+		if (color.a == 0) {
+			return frontsector->AdditiveColors[sector_t::walltop]; // Used as additive color for all walls
+		}
+		return color;
+	}
 
 	DInterpolation *SetInterpolation(int position);
 	void StopInterpolation(int position);

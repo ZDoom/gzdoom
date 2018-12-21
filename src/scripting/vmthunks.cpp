@@ -2519,6 +2519,88 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, GetChecksum)
 	ACTION_RETURN_STRING((const char*)md5string);
 }
 
+static void Vec2Offset(double x, double y, double dx, double dy, bool absolute, DVector2 *result)
+{
+	if (absolute)
+	{
+		*result = (DVector2(x + dx, y + dy));
+	}
+	else
+	{
+		*result = P_GetOffsetPosition(x, y, dx, dy);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, Vec2Offset, Vec2Offset)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(dx);
+	PARAM_FLOAT(dy);
+	PARAM_BOOL(absolute);
+	DVector2 result;
+	Vec2Offset(x, y, dx, dy, absolute, &result);
+	ACTION_RETURN_VEC2(result);
+}
+
+static void Vec2OffsetZ(double x, double y, double dx, double dy, double atz, bool absolute, DVector3 *result)
+{
+	if (absolute)
+	{
+		*result = (DVector3(x + dx, y + dy, atz));
+	}
+	else
+	{
+		DVector2 v = P_GetOffsetPosition(x, y, dx, dy);
+		*result = (DVector3(v, atz));
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, Vec2OffsetZ, Vec2OffsetZ)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(dx);
+	PARAM_FLOAT(dy);
+	PARAM_FLOAT(atz);
+	PARAM_BOOL(absolute);
+	DVector3 result;
+	Vec2OffsetZ(x, y, dx, dy, atz, absolute, &result);
+	ACTION_RETURN_VEC3(result);
+}
+
+static void Vec3Offset(double x, double y, double z, double dx, double dy, double dz, bool absolute, DVector3 *result)
+{
+	if (absolute)
+	{
+		*result = (DVector3(x + dx, y + dy, z + dz));
+	}
+	else
+	{
+		DVector2 v = P_GetOffsetPosition(x, y, dx, dy);
+		*result = (DVector3(v, z + dz));
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, Vec3Offset, Vec3Offset)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_FLOAT(dx);
+	PARAM_FLOAT(dy);
+	PARAM_FLOAT(dz);
+	PARAM_BOOL(absolute);
+	DVector3 result;
+	Vec3Offset(x, y, z, dx, dy, dz, absolute, &result);
+	ACTION_RETURN_VEC3(result);
+}
+
+
+
 //=====================================================================================
 //
 //
@@ -2549,6 +2631,71 @@ DEFINE_ACTION_FUNCTION_NATIVE(_AltHUD, GetLatency, Net_GetLatency)
 	if (numret > 2) ret[2].SetInt(ad);
 	return numret;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+DEFINE_GLOBAL(level);
+DEFINE_FIELD(FLevelLocals, sectors)
+DEFINE_FIELD(FLevelLocals, lines)
+DEFINE_FIELD(FLevelLocals, sides)
+DEFINE_FIELD(FLevelLocals, vertexes)
+DEFINE_FIELD(FLevelLocals, sectorPortals)
+DEFINE_FIELD(FLevelLocals, time)
+DEFINE_FIELD(FLevelLocals, maptime)
+DEFINE_FIELD(FLevelLocals, totaltime)
+DEFINE_FIELD(FLevelLocals, starttime)
+DEFINE_FIELD(FLevelLocals, partime)
+DEFINE_FIELD(FLevelLocals, sucktime)
+DEFINE_FIELD(FLevelLocals, cluster)
+DEFINE_FIELD(FLevelLocals, clusterflags)
+DEFINE_FIELD(FLevelLocals, levelnum)
+DEFINE_FIELD(FLevelLocals, LevelName)
+DEFINE_FIELD(FLevelLocals, MapName)
+DEFINE_FIELD(FLevelLocals, NextMap)
+DEFINE_FIELD(FLevelLocals, NextSecretMap)
+DEFINE_FIELD(FLevelLocals, F1Pic)
+DEFINE_FIELD(FLevelLocals, maptype)
+DEFINE_FIELD(FLevelLocals, Music)
+DEFINE_FIELD(FLevelLocals, musicorder)
+DEFINE_FIELD(FLevelLocals, skytexture1)
+DEFINE_FIELD(FLevelLocals, skytexture2)
+DEFINE_FIELD(FLevelLocals, skyspeed1)
+DEFINE_FIELD(FLevelLocals, skyspeed2)
+DEFINE_FIELD(FLevelLocals, total_secrets)
+DEFINE_FIELD(FLevelLocals, found_secrets)
+DEFINE_FIELD(FLevelLocals, total_items)
+DEFINE_FIELD(FLevelLocals, found_items)
+DEFINE_FIELD(FLevelLocals, total_monsters)
+DEFINE_FIELD(FLevelLocals, killed_monsters)
+DEFINE_FIELD(FLevelLocals, gravity)
+DEFINE_FIELD(FLevelLocals, aircontrol)
+DEFINE_FIELD(FLevelLocals, airfriction)
+DEFINE_FIELD(FLevelLocals, airsupply)
+DEFINE_FIELD(FLevelLocals, teamdamage)
+DEFINE_FIELD(FLevelLocals, fogdensity)
+DEFINE_FIELD(FLevelLocals, outsidefogdensity)
+DEFINE_FIELD(FLevelLocals, skyfog)
+DEFINE_FIELD(FLevelLocals, pixelstretch)
+DEFINE_FIELD(FLevelLocals, deathsequence)
+DEFINE_FIELD_BIT(FLevelLocals, flags, noinventorybar, LEVEL_NOINVENTORYBAR)
+DEFINE_FIELD_BIT(FLevelLocals, flags, monsterstelefrag, LEVEL_MONSTERSTELEFRAG)
+DEFINE_FIELD_BIT(FLevelLocals, flags, actownspecial, LEVEL_ACTOWNSPECIAL)
+DEFINE_FIELD_BIT(FLevelLocals, flags, sndseqtotalctrl, LEVEL_SNDSEQTOTALCTRL)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, allmap, LEVEL2_ALLMAP)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, missilesactivateimpact, LEVEL2_MISSILESACTIVATEIMPACT)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, monsterfallingdamage, LEVEL2_MONSTERFALLINGDAMAGE)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, checkswitchrange, LEVEL2_CHECKSWITCHRANGE)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, polygrind, LEVEL2_POLYGRIND)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, allowrespawn, LEVEL2_ALLOWRESPAWN)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, nomonsters, LEVEL2_NOMONSTERS)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, frozen, LEVEL2_FROZEN)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, infinite_flight, LEVEL2_INFINITE_FLIGHT)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, no_dlg_freeze, LEVEL2_CONV_SINGLE_UNFREEZE)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, keepfullinventory, LEVEL2_KEEPFULLINVENTORY)
+DEFINE_FIELD_BIT(FLevelLocals, flags3, removeitems, LEVEL3_REMOVEITEMS)
 
 DEFINE_FIELD_X(Sector, sector_t, floorplane)
 DEFINE_FIELD_X(Sector, sector_t, ceilingplane)

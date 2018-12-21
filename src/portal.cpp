@@ -825,16 +825,6 @@ static void GetOffsetPosition(double x, double y, double dx, double dy, DVector2
 	*result = P_GetOffsetPosition(x, y, dx, dy);
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(DObject, GetOffsetPosition, GetOffsetPosition)
-{
-	PARAM_PROLOGUE;
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-	PARAM_FLOAT(dx);
-	PARAM_FLOAT(dy);
-	ACTION_RETURN_VEC2(P_GetOffsetPosition(x, y, dx, dy));
-}
-
 //============================================================================
 //
 // CollectSectors

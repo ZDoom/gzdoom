@@ -72,9 +72,12 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 	state.SetRenderStyle(huds->RenderStyle);
 	state.SetTextureMode(huds->RenderStyle);
 	state.SetObjectColor(huds->ObjectColor);
-	if (huds->owner->Sector) {
-		state.SetAddColor(huds->owner->Sector->SpecialColors[sector_t::add] | 0xff000000);
-	} else {
+	if (huds->owner->Sector)
+	{
+		state.SetAddColor(huds->owner->Sector->AdditiveColors[sector_t::sprites] | 0xff000000);
+	}
+	else
+	{
 		state.SetAddColor(0);
 	}
 	state.SetDynLight(huds->dynrgb[0], huds->dynrgb[1], huds->dynrgb[2]);

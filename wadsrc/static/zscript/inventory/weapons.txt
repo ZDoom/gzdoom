@@ -717,10 +717,10 @@ class Weapon : StateProvider
 			ammoitem.Amount = MIN (amount, ammoitem.MaxAmount);
 			ammoitem.AttachToOwner (other);
 		}
-		else if (ammoitem.Amount < ammoitem.MaxAmount)
+		else if (ammoitem.Amount < ammoitem.MaxAmount || sv_unlimited_pickup)
 		{
 			ammoitem.Amount += amount;
-			if (ammoitem.Amount > ammoitem.MaxAmount)
+			if (ammoitem.Amount > ammoitem.MaxAmount && !sv_unlimited_pickup)
 			{
 				ammoitem.Amount = ammoitem.MaxAmount;
 			}

@@ -2829,16 +2829,15 @@ bool G_CheckDemoStatus (void)
 			// uncompressed size of the BODY.
 			uLong len = uLong(demo_p - demobodyspot);
 			uLong outlen = (len + len/100 + 12);
-			Byte *compressed = new Byte[outlen];
-			int r = compress2 (compressed, &outlen, demobodyspot, len, 9);
+			TArray<Byte> compressed(outlen, true);
+			int r = compress2 (compressed.Data(), &outlen, demobodyspot, len, 9);
 			if (r == Z_OK && outlen < len)
 			{
 				formlen = democompspot;
 				WriteLong (len, &democompspot);
-				memcpy (demobodyspot, compressed, outlen);
+				memcpy (demobodyspot, compressed.Data(), outlen);
 				demo_p = demobodyspot + outlen;
 			}
-			delete[] compressed;
 		}
 		FinishChunk (&demo_p);
 		formlen = demobuffer + 4;

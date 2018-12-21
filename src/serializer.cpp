@@ -464,10 +464,9 @@ bool FSerializer::OpenReader(FCompressedBuffer *input)
 	}
 	else
 	{
-		char *unpacked = new char[input->mSize];
-		input->Decompress(unpacked);
-		r = new FReader(unpacked, input->mSize);
-		delete[] unpacked;
+		TArray<char> unpacked(input->mSize);
+		input->Decompress(unpacked.Data());
+		r = new FReader(unpacked.Data(), input->mSize);
 	}
 	return true;
 }

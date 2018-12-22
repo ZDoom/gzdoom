@@ -155,7 +155,7 @@ class FWarpTexture : public FSoftwareTexture
 	TArray<uint32_t> WarpedPixelsRgba;
 
 	int bWarped = 0;
-	uint64_t GenTime[3] = { 0, 0, 0 };
+	uint64_t GenTime[3] = { UINT64_MAX, UINT64_MAX, UINT64_MAX };
 	int WidthOffsetMultiplier, HeightOffsetMultiplier;  // [mxd]
 
 public:

@@ -190,7 +190,7 @@ class StateProvider : Inventory
 	//
 	//==========================================================================
 
-	action Actor A_FireProjectile(class<Actor> ti, double spawnangle = 0, bool useammo = true, double spawnofs_xy = 0, double spawnheight = 0, int flags = 0, double pitch = 0)
+	action Actor A_FireProjectile(class<Actor> missiletype, double angle = 0, bool useammo = true, double spawnofs_xy = 0, double spawnheight = 0, int flags = 0, double pitch = 0)	
 	{
 		let player = self.player;
 		if (!player) return null;
@@ -206,18 +206,18 @@ class StateProvider : Inventory
 				return null;	// out of ammo
 		}
 
-		if (ti) 
+		if (missiletype) 
 		{
-			double ang = Angle - 90;
+			double ang = self.Angle - 90;
 			Vector2 ofs = AngleToVector(ang, spawnofs_xy);
-			double shootangle = Angle;
+			double shootangle = self.Angle;
 
-			if (flags & FPF_AIMATANGLE) shootangle += spawnangle;
+			if (flags & FPF_AIMATANGLE) shootangle += angle;
 
 			// Temporarily adjusts the pitch
 			double saved_player_pitch = self.Pitch;
 			self.Pitch += pitch;
-			let misl = SpawnPlayerMissile (ti, shootangle, ofs.X, ofs.Y, spawnheight, t, NULL, false, (flags & FPF_NOAUTOAIM) != 0);
+			let misl = SpawnPlayerMissile (missiletype, shootangle, ofs.X, ofs.Y, spawnheight, t, NULL, false, (flags & FPF_NOAUTOAIM) != 0);
 			self.Pitch = saved_player_pitch;
 
 			// automatic handling of seeker missiles

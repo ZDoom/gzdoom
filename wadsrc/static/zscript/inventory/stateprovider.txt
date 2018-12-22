@@ -231,7 +231,7 @@ class StateProvider : Inventory
 				{
 					// This original implementation is to aim straight ahead and then offset
 					// the angle from the resulting direction. 
-					misl.Angle += spawnangle;
+					misl.Angle += angle;
 					misl.VelFromAngle(misl.Vel.XY.Length());
 				}
 			}

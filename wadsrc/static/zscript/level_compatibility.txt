@@ -661,6 +661,8 @@ class LevelCompatibility play
 				ClearSectorTags(85);
 				// Visually align floors between crushers
 				SetLineSpecial(3, Transfer_Heights, 14, 6);
+				// Set lighting from 35 to 80 to match with surrounding sectors
+				SetLineSpecial(429, Light_ChangeToValue, 9, 80);
 				break;
 			}
 			
@@ -686,8 +688,42 @@ class LevelCompatibility play
 			
 			case '66C46385EB1A23D60839D1532522076B':  // doom2.wad map08
 			{
-				// Missing texture
+				// Missing textures
 				SetWallTexture(101, Line.back, Side.top, "BRICK7");
+				SetWallTexture(270, Line.back, Side.top, "COMPTALL");
+				SetWallTexture(276, Line.back, Side.top, "COMPTALL");
+				// Wrong textures
+				SetWallTexture(232, Line.front, Side.bottom, "STEP2");
+				SetWallTexture(598, Line.front, Side.mid, "GRAY5");
+				// Unpegged bottom textures
+				SetLineFlags(270, 0, Line.ML_DONTPEGBOTTOM);
+				SetLineFlags(276, 0, Line.ML_DONTPEGBOTTOM);
+				break;
+			}
+			
+			case '6C620F43705BEC0ABBABBF46AC3E62D2': // Doom II MAP10
+			{
+				// Allow player to leave exit room
+				SetLineSpecial(786, Door_Raise, 0, 16, 150, 0);
+				SetLineActivation(786, SPAC_Use);
+				SetLineFlags(786, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
+			
+			case '1AF4DEC2627360A55B3EB397BC15C39D': // Doom II MAP12
+			{
+				// Missing texture
+				SetWallTexture(648, Line.back, Side.bottom, "PIPES");
+				SetWallTexture(773, Line.back, Side.bottom, "PANCASE2");
+				// Change locked door at last room to a repeatable Door_LockedRaise
+				// instead of a one-shot Door_Open (red keycard only on deathmatch)
+				SetLineSpecial(632, Door_LockedRaise, 0, 16, 150, 129);
+				SetLineFlags(632, Line.ML_REPEAT_SPECIAL);
+				// Remove erroneous tag for teleporter at the south building
+				ClearSectorTags(149);
+				// Wrong textures
+				SetSectorTexture(134, Sector.ceiling, "FLOOR4_6");
+				SetWallTexture(269, Line.front, Side.mid, "PANEL6");
 				break;
 			}
 			
@@ -726,14 +762,14 @@ class LevelCompatibility play
 					SetWallTextureID(1137+i, Line.back, Side.top, BSTONE1);
 					SetWallTextureID(1140+i, Line.back, Side.top, BSTONE1);
 				}
-				
-				// Raise floor between lifts to correspond with others.
+				// Raise floor between lifts to fix HOMs
 				OffsetSectorPlane(106, Sector.floor, 16);
 				break;
 			}
 			
 			case '1A540BA717BF9EC85F8522594C352F2A': // Doom II, map15
 			{
+				// Remove unreachable secret
 				SetSectorSpecial(147, 0);
 				// Missing textures
 				SetWallTexture(94, Line.back, Side.top, "METAL");
@@ -748,6 +784,9 @@ class LevelCompatibility play
 				SetWallTexture(162, Line.back, Side.top, "BRICK6");
 				SetWallTexture(303, Line.front, Side.top, "STUCCO");
 				SetWallTexture(304, Line.front, Side.top, "STUCCO");
+				// Monster trap can be seen, cover it up better
+				SetSectorTexture(64, Sector.floor, "NUKAGE3");
+				SetWallTexture(519, Line.front, Side.mid, "ASHWALL2");
 				break;
 			}
 			
@@ -755,30 +794,45 @@ class LevelCompatibility play
 			{
 				// Missing texture
 				SetWallTexture(379, Line.back, Side.top, "METAL2");
+				// Unpegged lower textures on bridges
+				SetLineFlags(497, 0, Line.ML_DONTPEGBOTTOM);
+				SetLineFlags(498, 0, Line.ML_DONTPEGBOTTOM);
+				SetLineFlags(503, 0, Line.ML_DONTPEGBOTTOM);
+				SetLineFlags(504, 0, Line.ML_DONTPEGBOTTOM);
 				break;
 			}
 			
 			case '0D491365C1B88B7D1B603890100DD03E': // doom2.wad map18
 			{
 				// missing textures
-				SetWallTexture(451, Line.front, Side.mid, "metal");
-				SetWallTexture(459, Line.front, Side.mid, "metal");
-				SetWallTexture(574, Line.front, Side.top, "grayvine");
+				SetWallTexture(451, Line.front, Side.mid, "WOOD1");
+				SetWallTexture(459, Line.front, Side.mid, "WOOD1");
+				SetWallTexture(574, Line.front, Side.top, "GRAYVINE");
 				break;
 			}
 			
 			case 'B5506B1E8F2FC272AD0C77B9E0DF5491': // doom2.wad map19
 			{
 				// missing textures
-				SetWallTexture(355, Line.back, Side.top, "STONE2");
-				SetWallTexture(736, Line.front, Side.top, "SLADWALL");
-				SetWallTexture(1181, Line.back, Side.top, "MARBLE1");
-				
 				TextureID step4 = TexMan.CheckForTexture("STEP4", TexMan.Type_Wall);
 				for(int i=0; i<3; i++)
 				{
 					SetWallTextureID(286+i, Line.back, Side.bottom, STEP4);
 				}
+				SetWallTexture(355, Line.back, Side.top, "STONE2");
+				SetWallTexture(736, Line.front, Side.top, "SLADWALL");
+				SetWallTexture(1181, Line.back, Side.top, "MARBLE1");
+				// Southwest teleporter in the teleporter room now works on
+				// easier difficulties
+				SetThingSkills(112, 31);
+				break;
+			}
+			
+			case '8898F5EC9CBDCD98019A1BC1BF892A8A': // Doom II MAP20
+			{
+				// Missing textures
+				SetWallTexture(453, Line.back, Side.bottom, "STONE7");
+				SetWallTexture(814, Line.back, Side.bottom, "TANROCK5");
 				break;
 			}
 			
@@ -787,6 +841,21 @@ class LevelCompatibility play
 				// push ceiling down in glitchy sectors above the stair switches
 				OffsetSectorPlane(50, Sector.ceiling, -56);
 				OffsetSectorPlane(54, Sector.ceiling, -56);
+				break;
+			}
+			
+			case '4AA9B3CE449FB614497756E96509F096': // Doom II MAP22
+			{
+				// Only use switch once to raise sector to rocket launcher
+				SetLineFlags(120, 0, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
+			
+			case '3EFF15C64A03B36E8E47926C6DF9EF70': // Doom II MAP24
+			{
+				// Missing textures
+				SetWallTexture(687, Line.back, Side.bottom, "SILVER2");
+				SetWallTexture(688, Line.back, Side.bottom, "SILVER2");
 				break;
 			}
 			
@@ -801,13 +870,27 @@ class LevelCompatibility play
 			{
 				// Missing texture at level exit
 				SetWallTexture(761, Line.back, Side.top, "METAL2");
+				// Oddly raised ceiling with wrong texture
+				SetSectorTexture(12, Sector.ceiling, "F_SKY1");
+				OffsetSectorPlane(12, Sector.ceiling, -72);
 				break;
 			}
 			
 			case '110F84DE041052B59307FAF0293E6BC0': // Doom II, map27
 			{
+				// Remove unreachable secret
 				SetSectorSpecial(93, 0);
+				// Missing texture
 				SetWallTexture(582, Line.back, Side.top, "ZIMMER3");
+				// Wrong ceiling texture
+				SetSectorTexture(80, Sector.ceiling, "FLAT5_2");
+				// Make line passable near skull switch that lowers to level exit
+				SetLineFlags(342, 0, Line.ML_BLOCKING);
+				// Can leave Pain Elemental and BFG ledge from inside if stuck
+				SetLineSpecial(580, Door_Open, 0, 16);
+				SetLineActivation(580, SPAC_Use);
+				SetLineSpecial(581, Door_Open, 0, 16);
+				SetLineActivation(581, SPAC_Use);
 				break;
 			}
 			
@@ -819,11 +902,30 @@ class LevelCompatibility play
 				{
 					SetWallTextureID(103+i, Line.front, Side.top, ASHWALL6);
 				}
+				TextureID zimmer8 = TexMan.CheckForTexture("ZIMMER8", TexMan.Type_Wall);
+				for(int i=0; i<3; i++)
+				{
+					SetWallTextureID(213+i, Line.back, Side.bottom, ZIMMER8);
+				}
+				SetWallTexture(38, Line.back, Side.bottom, "ZIMMER8");
+				SetWallTexture(39, Line.back, Side.bottom, "ZIMMER8");
+				SetWallTexture(161, Line.back, Side.bottom, "ZIMMER8");
+				SetWallTexture(170, Line.back, Side.bottom, "ZIMMER8");
 				SetWallTexture(221, Line.front, Side.bottom, "BFALL1");
+				SetWallTexture(388, Line.back, Side.bottom, "FIREBLU2");
 				SetWallTexture(391, Line.front, Side.top, "BIGDOOR5");
 				SetWallTexture(531, Line.back, Side.top, "WOOD8");
 				SetWallTexture(547, Line.back, Side.top, "WOOD8");
 				SetWallTexture(548, Line.back, Side.top, "WOOD8");
+				// Out of place texture
+				SetWallTexture(256, Line.back, Side.bottom, "ZIMMER8");
+				// Can get stuck in holes near level exit, raise them when walking
+				// over them.
+				for(int i=0; i<12; i++)
+				{
+					SetLineSpecial(584+i, Floor_RaiseToNearest, 5, 8);
+					SetLineActivation(584+i, SPAC_Cross);
+				}
 				break;
 			}
 			
@@ -842,6 +944,8 @@ class LevelCompatibility play
 				// Fix missing textures at switch with Arch-Vile.
 				OffsetSectorPlane(152, Sector.ceiling, -32);
 				SetWallTexture(603, Line.back, Side.top, "WOOD5");
+				// Unpegged lower texture
+				SetLineFlags(728, 0, Line.ML_DONTPEGBOTTOM);
 				break;
 			}
 			

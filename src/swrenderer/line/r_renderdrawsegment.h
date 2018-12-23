@@ -39,7 +39,7 @@ namespace swrenderer
 	private:
 		bool RenderWall(DrawSegment *ds, int x1, int x2, FDynamicColormap *basecolormap, SpriteDrawerArgs &columndrawerargs, bool visible, int lightlevel, bool foggy);
 		void ClipMidtex(int x1, int x2);
-		void RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int lightlevel, FDynamicColormap *basecolormap, double clipTop, double clipBottom);
+		void RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int lightlevel, FDynamicColormap *basecolormap, double clipTop, double clipBottom, FSoftwareTexture *rw_pic);
 		void RenderFakeWallRange(DrawSegment *ds, int x1, int x2);
 		void GetMaskedWallTopBottom(DrawSegment *ds, double &top, double &bot);
 
@@ -55,7 +55,6 @@ namespace swrenderer
 		float rw_light = 0.0f;
 		float rw_lightstep = 0.0f;
 		fixed_t rw_offset = 0;
-		FSoftwareTexture *rw_pic = nullptr;
 
 		ProjectedWallLine wallupper;
 		ProjectedWallLine walllower;

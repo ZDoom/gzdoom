@@ -390,7 +390,7 @@ namespace swrenderer
 			}
 
 			rw_offset = 0;
-			rw_pic = tex;
+			FSoftwareTexture *rw_pic = tex;
 
 			double top, bot;
 			GetMaskedWallTopBottom(ds, top, bot);
@@ -406,7 +406,7 @@ namespace swrenderer
 	}
 
 	// kg3D - render one fake wall
-	void RenderDrawSegment::RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int lightlevel, FDynamicColormap *basecolormap, double clipTop, double clipBottom)
+	void RenderDrawSegment::RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int lightlevel, FDynamicColormap *basecolormap, double clipTop, double clipBottom, FSoftwareTexture *rw_pic)
 	{
 		int i;
 		double xscale;
@@ -509,7 +509,6 @@ namespace swrenderer
 	// kg3D - walls of fake floors
 	void RenderDrawSegment::RenderFakeWallRange(DrawSegment *ds, int x1, int x2)
 	{
-		FSoftwareTexture *const DONT_DRAW = ((FSoftwareTexture*)(intptr_t)-1);
 		int i, j;
 		F3DFloor *rover, *fover = nullptr;
 		int passed, last;
@@ -569,7 +568,9 @@ namespace swrenderer
 					}
 				}
 
-				rw_pic = nullptr;
+				FSoftwareTexture *rw_pic = nullptr;
+				bool swimmable_found = false;
+
 				if (rover->bottom.plane->Zat0() >= clipTop || passed)
 				{
 					if (last)
@@ -613,7 +614,7 @@ namespace swrenderer
 					// correct texture
 					if (fover->flags & rover->flags & FF_SWIMMABLE)
 					{	// don't ever draw (but treat as something has been found)
-						rw_pic = DONT_DRAW;
+						swimmable_found = true;
 					}
 					else
 					{
@@ -664,7 +665,7 @@ namespace swrenderer
 						}
 						if (fover->flags & rover->flags & FF_SWIMMABLE)
 						{ // don't ever draw (but treat as something has been found)
-							rw_pic = DONT_DRAW;
+							swimmable_found = true;
 						}
 						fover = nullptr; // visible
 						break;
@@ -676,7 +677,7 @@ namespace swrenderer
 						continue; // not visible
 					}
 				}
-				if (!rw_pic)
+				if (!rw_pic && !swimmable_found)
 				{
 					fover = nullptr;
 					FTexture *rw_tex;
@@ -731,11 +732,10 @@ namespace swrenderer
 				}
 				if (basecolormap == nullptr) basecolormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::walltop]);
 
-				if (rw_pic != DONT_DRAW)
+				if (rw_pic && !swimmable_found)
 				{
-					RenderFakeWall(ds, x1, x2, fover ? fover : rover, lightlevel, basecolormap, clipTop, clipBottom);
+					RenderFakeWall(ds, x1, x2, fover ? fover : rover, lightlevel, basecolormap, clipTop, clipBottom, rw_pic);
 				}
-				else rw_pic = nullptr;
 				break;
 			}
 		}
@@ -763,7 +763,9 @@ namespace swrenderer
 						continue;
 					}
 				}
-				rw_pic = nullptr;
+				FSoftwareTexture *rw_pic = nullptr;
+				bool swimmable_found = false;
+
 				if (rover->top.plane->Zat0() <= clipBottom || passed)
 				{ // maybe wall from inside rendering?
 					fover = nullptr;
@@ -802,7 +804,7 @@ namespace swrenderer
 					// correct texture
 					if (fover->flags & rover->flags & FF_SWIMMABLE)
 					{
-						rw_pic = DONT_DRAW;	// don't ever draw (but treat as something has been found)
+						swimmable_found = true; // don't ever draw (but treat as something has been found)
 					}
 					else
 					{
@@ -852,7 +854,7 @@ namespace swrenderer
 						}
 						if (fover->flags & rover->flags & FF_SWIMMABLE)
 						{ // don't ever draw (but treat as something has been found)
-							rw_pic = DONT_DRAW;
+							swimmable_found = true;
 						}
 						fover = nullptr; // visible
 						break;
@@ -862,7 +864,7 @@ namespace swrenderer
 						break;
 					}
 				}
-				if (rw_pic == nullptr)
+				if (!rw_pic && !swimmable_found)
 				{
 					fover = nullptr;
 					FTexture *rw_tex;
@@ -917,13 +919,9 @@ namespace swrenderer
 				}
 				if (basecolormap == nullptr) basecolormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::walltop]);
 
-				if (rw_pic != DONT_DRAW)
+				if (rw_pic && !swimmable_found)
 				{
-					RenderFakeWall(ds, x1, x2, fover ? fover : rover, lightlevel, basecolormap, clipTop, clipBottom);
-				}
-				else
-				{
-					rw_pic = nullptr;
+					RenderFakeWall(ds, x1, x2, fover ? fover : rover, lightlevel, basecolormap, clipTop, clipBottom, rw_pic);
 				}
 				break;
 			}

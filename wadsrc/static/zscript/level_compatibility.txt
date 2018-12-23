@@ -4,9 +4,25 @@ class LevelCompatibility play
 	private static void Apply(Name checksum)
 	{
 		switch (checksum)
-		{			
+		{
+			case '2A175CA2855E0B10E64D059819374125': // HACX.WAD map03 from 21.10.2010
+			{
+				// Missing textures
+				SetWallTexture(492, Line.back, side.top, "HW209");
+				SetWallTexture(493, Line.back, side.top, "HW209");
+				SetWallTexture(495, Line.back, side.top, "HW209");
+				SetWallTexture(578, Line.back, side.top, "MARBFAC4");
+				SetWallTexture(592, Line.back, side.top, "MARBFAC4");
+				SetWallTexture(600, Line.back, side.top, "MARBFAC4");
+				SetWallTexture(1944, Line.front, side.top, "PIPE2");
+				SetWallTexture(1945, Line.front, side.top, "PIPE2");
+				SetWallTexture(2006, Line.front, side.top, "PIPE2");
+				SetWallTexture(2019, Line.front, side.top, "PIPE2");
+				break;
+			}
+			
 			case '9BC9E12781903D7C2D5697A5E0AEFD6F': // HACX.WAD map05 from 21.10.2010
-			case '9527DD0809FDA39CCFC316A21D135783': // HACX.WAD map05 from 20.10.2010
+			case '9527DD0809FDA39CCFC316A21D135783': // HACX.WAD map05 from 10.10.2010
 			{
 				// fix non-functional self-referencing sector hack.
 				for(int i = 578; i < 582; i++) 
@@ -21,7 +37,30 @@ class LevelCompatibility play
 				break;
 			}
 			
-		
+			case 'E1CEA2E1783B38491D2F0A36A5FCFDE9': // HACX.WAD map16 from 21.10.2010
+			{
+				// Missing textures
+				SetWallTexture(91, Line.back, Side.top, "HW209");
+				SetWallTexture(199, Line.back, Side.top, "HW209");
+				SetWallTexture(201, Line.back, Side.top, "HW209");
+				SetWallTexture(203, Line.back, Side.top, "HW209");
+				SetWallTexture(310, Line.back, Side.top, "HW209");
+				SetWallTexture(313, Line.back, Side.top, "HW209");
+				SetWallTexture(391, Line.back, Side.top, "HW209");
+				SetWallTexture(392, Line.back, Side.top, "HW209");
+				SetWallTexture(406, Line.back, Side.top, "HW209");
+				SetWallTexture(408, Line.back, Side.top, "HW209");
+				break;
+			}
+			
+			case '9F110648A16D988F77076879250F2918': // HACX.WAD map17 from 21.10.2010
+			{
+				// Textures on wrong side
+				SetWallTexture(360, Line.front, Side.top, "MARBFAC4");
+				SetWallTexture(361, Line.front, Side.top, "MARBFAC4");
+				break;
+			}
+			
 			case 'E2B5D1400279335811C1C1C0B437D9C8': // Deathknights of the Dark Citadel, map54
 			{
 				// This map has two gear boxes which are flagged for player cross

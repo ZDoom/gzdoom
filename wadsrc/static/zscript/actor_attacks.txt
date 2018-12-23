@@ -95,6 +95,7 @@ extend class Actor
 					double x = Spawnofs_xy * cos(pangle);
 					double y = Spawnofs_xy * sin(pangle);
 					
+					let pos = self.pos;
 					SetXYZ(Vec3Offset(x, y, 0.));
 					let proj = SpawnMissileAngleZSpeed(Pos.Z + GetBobOffset() + Spawnheight, missile, self.Angle, 0, GetDefaultByType(missile).Speed, self, false);
 					SetXYZ(pos);

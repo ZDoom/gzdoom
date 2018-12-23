@@ -334,6 +334,7 @@ float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
 		return 1.0; // No shadowmap available for this light
 
 	vec3 planePoint = pixelpos.xyz - lightpos.xyz;
+	planePoint += 0.01; // nudge light position slightly as Doom maps tend to have their lights perfectly aligned with planes
 
 	if (dot(planePoint.xz, planePoint.xz) < 1.0)
 		return 1.0; // Light is too close

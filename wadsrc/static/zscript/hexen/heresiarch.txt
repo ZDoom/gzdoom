@@ -246,8 +246,8 @@ class Heresiarch : Actor
 			if (mo)
 			{
 				double rangle = Angle + random[Heresiarch](0, 4) * (4096 / 360.);
-				mo.Vel.X = random[Heresiarch](0, speed - 1) * cos(rangle);
-				mo.Vel.Y = random[Heresiarch](0, speed - 1) * sin(rangle);
+				mo.Vel.X = random[Heresiarch](0, int(speed) - 1) * cos(rangle);
+				mo.Vel.Y = random[Heresiarch](0, int(speed) - 1) * sin(rangle);
 				mo.Vel.Z = 2;
 			}
 		}

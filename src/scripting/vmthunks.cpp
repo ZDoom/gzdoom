@@ -1558,11 +1558,11 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
- static void SetSideAdditiveColor(side_t *self, int tier, int color, bool use)
+ static void SetSideAdditiveColor(side_t *self, int tier, int color)
  {
 	 if (tier >= 0 && tier < 3)
 	 {
-		 self->SetAdditiveColor(tier, color, use);
+		 self->SetAdditiveColor(tier, color);
 	 }
  }
 
@@ -1571,8 +1571,24 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
 	 PARAM_INT(tier);
 	 PARAM_COLOR(color);
-	 PARAM_BOOL(use);
-	 SetSideAdditiveColor(self, tier, color, use);
+	 SetSideAdditiveColor(self, tier, color);
+	 return 0;
+ }
+
+ static void EnableSideAdditiveColor(side_t *self, int tier, bool enable)
+ {
+	 if (tier >= 0 && tier < 3)
+	 {
+		 self->EnableAdditiveColor(tier, enable);
+	 }
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, EnableAdditiveColor, EnableSideAdditiveColor)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(tier);
+	 PARAM_BOOL(enable);
+	 EnableSideAdditiveColor(self, tier, enable);
 	 return 0;
  }
 

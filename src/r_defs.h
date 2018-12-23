@@ -1150,7 +1150,8 @@ struct side_t
 			NoGradient = 1,
 			FlipGradient = 2,
 			ClampGradient = 4,
-			UseOwnColors = 8,
+			UseOwnSpecialColors = 8,
+			UseOwnAdditiveColor = 16,
 		};
 		double xOffset;
 		double yOffset;
@@ -1301,22 +1302,37 @@ struct side_t
 		auto &part = textures[which];
 		if (part.flags & part::NoGradient) slot = 0;
 		if (part.flags & part::FlipGradient) slot ^= 1;
-		return (part.flags & part::UseOwnColors) ? part.SpecialColors[slot] : frontsector->SpecialColors[sector_t::walltop + slot];
+		return (part.flags & part::UseOwnSpecialColors) ? part.SpecialColors[slot] : frontsector->SpecialColors[sector_t::walltop + slot];
 	}
 
-	void SetAdditiveColor(int which, PalEntry rgb, bool use = true)
+	void EnableAdditiveColor(int which, bool enable)
 	{
-		rgb.a = use ? 255 : 0;
+		int flag = enable ? part::UseOwnAdditiveColor : 0;
+		if (enable)
+		{
+			textures[which].flags |= flag;
+		}
+		else
+		{
+			textures[which].flags &= (~flag);
+		}
+	}
+
+	void SetAdditiveColor(int which, PalEntry rgb)
+	{
+		rgb.a = 255;
 		textures[which].AdditiveColor = rgb;
 	}
 
 	PalEntry GetAdditiveColor(int which, sector_t *frontsector) const
 	{
-		auto &color = textures[which].AdditiveColor;
-		if (color.a == 0) {
+		if (textures[which].flags & part::UseOwnAdditiveColor) {
+			return textures[which].AdditiveColor;
+		}
+		else
+		{
 			return frontsector->AdditiveColors[sector_t::walltop]; // Used as additive color for all walls
 		}
-		return color;
 	}
 
 	DInterpolation *SetInterpolation(int position);

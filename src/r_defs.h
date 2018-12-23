@@ -1304,9 +1304,9 @@ struct side_t
 		return (part.flags & part::UseOwnColors) ? part.SpecialColors[slot] : frontsector->SpecialColors[sector_t::walltop + slot];
 	}
 
-	void SetAdditiveColor(int which, PalEntry rgb)
+	void SetAdditiveColor(int which, PalEntry rgb, bool use = true)
 	{
-		rgb.a = 255;
+		rgb.a = use ? 255 : 0;
 		textures[which].AdditiveColor = rgb;
 	}
 

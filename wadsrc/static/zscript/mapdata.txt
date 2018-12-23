@@ -87,7 +87,7 @@ struct Side native play
 	native void MultiplyTextureYScale(int which, double delta);
 	native void SetSpecialColor(int tier, int position, Color scolor);
 	native Color GetAdditiveColor(int tier);
-	native void SetAdditiveColor(int tier, Color color);
+	native void SetAdditiveColor(int tier, Color color, bool use = true);
 	//native DInterpolation *SetInterpolation(int position);
 	//native void StopInterpolation(int position);
 

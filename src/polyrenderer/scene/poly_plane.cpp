@@ -430,17 +430,15 @@ void Render3DFloorPlane::RenderPlanes(PolyRenderThread *thread, subsector_t *sub
 	for (int i = 0; i < (int)ffloors.Size(); i++)
 	{
 		F3DFloor *fakeFloor = ffloors[i];
+		F3DFloor *prevFloor = i > 0 ? ffloors[i - 1] : nullptr;
 		if (!(fakeFloor->flags & FF_EXISTS)) continue;
 		if (!fakeFloor->model) continue;
-		//if (!(fakeFloor->flags & FF_NOSHADE) || (fakeFloor->flags & (FF_RENDERPLANES | FF_RENDERSIDES)))
-		//	R_3D_AddHeight(fakeFloor->top.plane, frontsector);
 		if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
 		if (fakeFloor->alpha == 0) continue;
-		if (fakeFloor->flags & FF_THISINSIDE && fakeFloor->flags & FF_INVERTSECTOR) continue;
-		//fakeFloor->alpha
+		if (prevFloor && (prevFloor->flags & fakeFloor->flags & FF_SWIMMABLE)) continue;
 
 		double fakeHeight = fakeFloor->top.plane->ZatPoint(frontsector->centerspot);
-		if (fakeFloor->bottom.plane->isSlope() || (fakeHeight < viewpoint.Pos.Z && fakeHeight > frontsector->floorplane.ZatPoint(frontsector->centerspot)))
+		if (fakeFloor->top.plane->isSlope() || (fakeHeight < viewpoint.Pos.Z && fakeHeight > frontsector->floorplane.ZatPoint(frontsector->centerspot)))
 		{
 			Render3DFloorPlane plane;
 			plane.sub = sub;
@@ -470,14 +468,12 @@ void Render3DFloorPlane::RenderPlanes(PolyRenderThread *thread, subsector_t *sub
 	for (int i = 0; i < (int)ffloors.Size(); i++)
 	{
 		F3DFloor *fakeFloor = ffloors[i];
+		F3DFloor *prevFloor = i > 0 ? ffloors[i - 1] : nullptr;
 		if (!(fakeFloor->flags & FF_EXISTS)) continue;
 		if (!fakeFloor->model) continue;
-		//if (!(fakeFloor->flags & FF_NOSHADE) || (fakeFloor->flags & (FF_RENDERPLANES | FF_RENDERSIDES)))
-		//	R_3D_AddHeight(fakeFloor->bottom.plane, frontsector);
 		if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
 		if (fakeFloor->alpha == 0) continue;
-		if (!(fakeFloor->flags & FF_THISINSIDE) && (fakeFloor->flags & (FF_SWIMMABLE | FF_INVERTSECTOR)) == (FF_SWIMMABLE | FF_INVERTSECTOR)) continue;
-		//fakeFloor->alpha
+		if (prevFloor && (prevFloor->flags & fakeFloor->flags & FF_SWIMMABLE)) continue;
 
 		double fakeHeight = fakeFloor->bottom.plane->ZatPoint(frontsector->centerspot);
 		if (fakeFloor->bottom.plane->isSlope() || (fakeHeight > viewpoint.Pos.Z && fakeHeight < frontsector->ceilingplane.ZatPoint(frontsector->centerspot)))
@@ -520,7 +516,7 @@ void Render3DFloorPlane::Render(PolyRenderThread *thread)
 	bool foggy = false;
 	if (cameraLight->FixedLightLevel() < 0 && sub->sector->e->XFloor.lightlist.Size())
 	{
-		lightlist_t *light = P_GetPlaneLight(sub->sector, &sub->sector->ceilingplane, false);
+		lightlist_t *light = P_GetPlaneLight(sub->sector, ceiling ? fakeFloor->bottom.plane : fakeFloor->top.plane, ceiling);
 		//basecolormap = light->extra_colormap;
 		lightlevel = *light->p_lightlevel;
 	}
@@ -553,15 +549,17 @@ void Render3DFloorPlane::Render(PolyRenderThread *thread)
 	if (!Masked)
 	{
 		args.SetStyle(TriBlendMode::Opaque);
+		args.SetStencilTestValue(stencilValue);
+		args.SetWriteStencil(true, stencilValue + 1);
 	}
 	else
 	{
 		args.SetStyle(Additive ? TriBlendMode::Add : TriBlendMode::Normal, MIN(Alpha, 1.0));
+		args.SetStencilTestValue(stencilValue + 1);
+		args.SetWriteStencil(false);
 		args.SetDepthTest(true);
 		args.SetWriteDepth(true);
 	}
-	args.SetStencilTestValue(stencilValue);
-	args.SetWriteStencil(true, stencilValue + 1);
 	args.SetTexture(tex->GetSoftwareTexture(), DefaultRenderStyle());
 	PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, sub->numlines, PolyDrawMode::TriangleFan);
 }

@@ -196,7 +196,6 @@ void RenderPolyWall::Render3DFloorLine(PolyRenderThread *thread, seg_t *line, se
 {
 	if (!(fakeFloor->flags & FF_EXISTS)) return;
 	if (!(fakeFloor->flags & FF_RENDERPLANES)) return;
-	if (fakeFloor->flags & FF_SWIMMABLE) return;
 	if (!fakeFloor->model) return;
 	if (fakeFloor->alpha == 0) return;
 
@@ -210,12 +209,29 @@ void RenderPolyWall::Render3DFloorLine(PolyRenderThread *thread, seg_t *line, se
 	if (frontceilz1 <= frontfloorz1 || frontceilz2 <= frontfloorz2)
 		return;
 
+	if (fakeFloor->flags & FF_SWIMMABLE) // Only draw swimmable boundary if not swimmable on both sides
+	{
+		DVector2 c = (line->v1->fPos() + line->v2->fPos()) * 0.5;
+		double cz = (frontceilz1 + frontceilz2 + frontfloorz1 + frontfloorz2) * 0.25;
+		for (unsigned i = 0; i < frontsector->e->XFloor.ffloors.Size(); i++)
+		{
+			F3DFloor *frontFloor = frontsector->e->XFloor.ffloors[i];
+			if (!(frontFloor->flags & FF_EXISTS)) continue;
+			if (!(frontFloor->flags & FF_RENDERPLANES)) continue;
+			if (!frontFloor->model) continue;
+			if (frontFloor->alpha == 0) continue;
+			if (frontFloor->top.plane->ZatPoint(c) >= cz && frontFloor->bottom.plane->ZatPoint(c) <= cz && (frontFloor->flags & FF_SWIMMABLE))
+			{
+				return;
+			}
+		}
+	}
+
 	RenderPolyWall wall;
 	wall.LineSeg = line;
 	wall.LineSegLine = line->linedef;
 	wall.Line = fakeFloor->master;
 	wall.Side = fakeFloor->master->sidedef[0];
-	wall.SectorLightLevel = frontsector->lightlevel;
 	wall.Additive = !!(fakeFloor->flags & FF_ADDITIVETRANS);
 	if (!wall.Additive && fakeFloor->alpha == 255)
 	{
@@ -240,6 +256,18 @@ void RenderPolyWall::Render3DFloorLine(PolyRenderThread *thread, seg_t *line, se
 		wall.Texture = GetTexture(line->linedef, line->sidedef, side_t::bottom);
 	else
 		wall.Texture = GetTexture(wall.Line, wall.Side, side_t::mid);
+
+	if (frontsector->e->XFloor.lightlist.Size())
+	{
+		lightlist_t *light = P_GetPlaneLight(frontsector, fakeFloor->top.plane, true);
+		wall.Colormap = GetColorTable(light->extra_colormap, wall.Side->GetSpecialColor(wall.Wallpart, side_t::walltop, frontsector));
+		wall.SectorLightLevel = *light->p_lightlevel;
+	}
+	else
+	{
+
+		wall.SectorLightLevel = frontsector->lightlevel;
+	}
 
 	if (!wall.Masked)
 		wall.Render(thread);

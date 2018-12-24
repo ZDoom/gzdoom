@@ -108,6 +108,7 @@ struct FLevelLocals : public FLevelData
 	int			starttime;
 	int			partime;
 	int			sucktime;
+	uint32_t	spawnindex;
 
 	level_info_t *info;
 	int			cluster;

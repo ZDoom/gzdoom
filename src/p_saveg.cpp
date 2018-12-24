@@ -971,6 +971,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		("level.skyfog", level.skyfog)
 		("level.deathsequence", level.deathsequence)
 		("level.bodyqueslot", level.bodyqueslot)
+		("level.spawnindex", level.spawnindex)
 		.Array("level.bodyque", level.bodyque, level.BODYQUESIZE);
 
 	// Hub transitions must keep the current total time

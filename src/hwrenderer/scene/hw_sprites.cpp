@@ -1062,7 +1062,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	// end of light calculation
 
 	actor = thing;
-	index = di->spriteindex++;	// this assumes that sprites from the same sector are added sequentially, i.e. by the same thread.
+	index = thing->SpawnOrder;
 	particle = nullptr;
 
 	const bool drawWithXYBillboard = (!(actor->renderflags & RF_FORCEYBILLBOARD)

@@ -362,6 +362,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("renderrequired", RenderRequired)
 		A("friendlyseeblocks", friendlyseeblocks)
 		A("spawntime", SpawnTime)
+		A("spawnorder", SpawnOrder)
 		A("friction", Friction);
 }
 
@@ -4409,6 +4410,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 	
 	actor = static_cast<AActor *>(const_cast<PClassActor *>(type)->CreateNew ());
 	actor->SpawnTime = level.totaltime;
+	actor->SpawnOrder = level.spawnindex++;
 
 	// Set default dialogue
 	actor->ConversationRoot = GetConversation(actor->GetClass()->TypeName);

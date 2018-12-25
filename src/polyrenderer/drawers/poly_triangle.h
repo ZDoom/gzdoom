@@ -50,7 +50,7 @@ public:
 class PolyTriangleThreadData
 {
 public:
-	PolyTriangleThreadData(int32_t core, int32_t num_cores, int32_t numa_node, int32_t num_numa_nodes) : core(core), num_cores(num_cores), numa_node(numa_node), num_numa_nodes(num_numa_nodes) { }
+	PolyTriangleThreadData(int32_t core, int32_t num_cores, int32_t numa_node, int32_t num_numa_nodes, int numa_start_y, int numa_end_y) : core(core), num_cores(num_cores), numa_node(numa_node), num_numa_nodes(num_numa_nodes), numa_start_y(numa_start_y), numa_end_y(numa_end_y) { }
 
 	void ClearStencil(uint8_t value);
 	void SetViewport(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra);

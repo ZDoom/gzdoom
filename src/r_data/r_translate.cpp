@@ -323,6 +323,44 @@ void FRemapTable::StaticSerializeTranslations(FSerializer &arc)
 		}
 		arc.EndArray();
 	}
+	if (arc.BeginArray("scriptedtranslations"))
+	{
+		// Preserve any zscript-created translations
+		FRemapTable *trans;
+		int w;
+		if (arc.isWriting())
+		{
+			for (unsigned int i = 0; i < translationtables[TRANSLATION_ZScript].Size(); ++i)
+			{
+				trans = translationtables[TRANSLATION_ZScript][i];
+				if (trans != NULL && !trans->IsIdentity())
+				{
+					if (arc.BeginObject(nullptr))
+					{
+						arc("index", i);
+						trans->Serialize(arc);
+						arc.EndObject();
+					}
+				}
+			}
+		}
+		else
+		{
+			while (arc.BeginObject(nullptr))
+			{
+				arc("index", w);
+				trans = translationtables[TRANSLATION_ZScript].GetVal(w);
+				if (trans == NULL)
+				{
+					trans = new FRemapTable;
+					translationtables[TRANSLATION_ZScript].SetVal(w, trans);
+				}
+				trans->Serialize(arc);
+				arc.EndObject();
+			}
+		}
+		arc.EndArray();
+	}
 }
 
 //----------------------------------------------------------------------------
@@ -1560,7 +1598,7 @@ DEFINE_ACTION_FUNCTION(_Translation, AddTranslation)
 	{
 		NewTranslation.Remap[i] = ColorMatcher.Pick(self->colors[i]);
 	}
-	int trans = NewTranslation.StoreTranslation(TRANSLATION_Custom);
+	int trans = NewTranslation.StoreTranslation(TRANSLATION_ZScript);
 	ACTION_RETURN_INT(trans);
 }
 

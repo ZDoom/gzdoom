@@ -171,6 +171,8 @@ public:
 	void SetSlopes();
 	void CopySlopes();
 
+	void LoadLevel(MapData *map, const char *lumpname, int position);
+
 	MapLoader(FLevelLocals *lev)
 	{
 		Level = lev;

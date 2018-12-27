@@ -3,7 +3,7 @@
 // Copyright 1993-1996 id Software
 // Copyright 1994-1996 Raven Software
 // Copyright 1999-2016 Randy Heit
-// Copyright 2002-2016 Christoph Oelckers
+// Copyright 2002-2018 Christoph Oelckers
 // Copyright 2010 James Haley
 //
 // This program is free software: you can redistribute it and/or modify
@@ -3038,6 +3038,339 @@ void MapLoader::PrecacheLevel()
 
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
+{
+	const int *oldvertextable  = nullptr;
+
+	// note: most of this ordering is important 
+	ForceNodeBuild = gennodes;
+
+	// [RH] Load in the BEHAVIOR lump
+	FBehavior::StaticUnloadModules();
+	if (map->HasBehavior)
+	{
+		LoadBehavior(map);
+		Level->maptype = MAPTYPE_HEXEN;
+	}
+	else
+	{
+		// We need translators only for Doom format maps.
+		const char *translator;
+
+		if (!Level->info->Translator.IsEmpty())
+		{
+			// The map defines its own translator.
+			translator = Level->info->Translator.GetChars();
+		}
+		else
+		{
+			// Has the user overridden the game's default translator with a commandline parameter?
+			translator = Args->CheckValue("-xlat");
+			if (translator == nullptr)
+			{
+				// Use the game's default.
+				translator = gameinfo.translator.GetChars();
+			}
+		}
+		P_LoadTranslator(translator);
+		Level->maptype = MAPTYPE_DOOM;
+	}
+	if (map->isText)
+	{
+		Level->maptype = MAPTYPE_UDMF;
+	}
+	FName checksum = CheckCompatibility(map);
+	if (ib_compatflags & BCOMPATF_REBUILDNODES)
+	{
+		ForceNodeBuild = true;
+	}
+	T_LoadScripts(map);
+
+	if (!map->HasBehavior || map->isText)
+	{
+		// Doom format and UDMF text maps get strict monster activation unless the mapinfo
+		// specifies differently.
+		if (!(Level->flags2 & LEVEL2_LAXACTIVATIONMAPINFO))
+		{
+			Level->flags2 &= ~LEVEL2_LAXMONSTERACTIVATION;
+		}
+	}
+
+	if (!map->HasBehavior && !map->isText)
+	{
+		// set compatibility flags
+		if (gameinfo.gametype == GAME_Strife)
+		{
+			Level->flags2 |= LEVEL2_RAILINGHACK;
+		}
+		Level->flags2 |= LEVEL2_DUMMYSWITCHES;
+	}
+
+	FBehavior::StaticLoadDefaultModules();
+	LoadMapinfoACSLump();
+
+
+	P_LoadStrifeConversations(map, lumpname);
+
+	FMissingTextureTracker missingtex;
+
+	if (!map->isText)
+	{
+		LoadVertexes(map);
+
+		// Check for maps without any BSP data at all (e.g. SLIGE)
+		LoadSectors(map, missingtex);
+
+		if (!map->HasBehavior)
+			LoadLineDefs(map);
+		else
+			LoadLineDefs2(map);	// [RH] Load Hexen-style linedefs
+
+		LoadSideDefs2(map, missingtex);
+
+		FinishLoadingLineDefs();
+
+		if (!map->HasBehavior)
+			LoadThings(map);
+		else
+			LoadThings2(map);	// [RH] Load Hexen-style things
+	}
+	else
+	{
+		ParseTextMap(map, missingtex);
+	}
+
+	SetCompatibilityParams(checksum);
+
+	LoopSidedefs(true);
+
+	SummarizeMissingTextures(missingtex);
+	bool reloop = false;
+
+	if (!ForceNodeBuild)
+	{
+		// Check for compressed nodes first, then uncompressed nodes
+		FileReader *fr = nullptr;
+		uint32_t id = MAKE_ID('X', 'x', 'X', 'x'), idcheck = 0, idcheck2 = 0, idcheck3 = 0, idcheck4 = 0, idcheck5 = 0, idcheck6 = 0;
+
+		if (map->Size(ML_ZNODES) != 0)
+		{
+			// Test normal nodes first
+			fr = &map->Reader(ML_ZNODES);
+			idcheck = MAKE_ID('Z', 'N', 'O', 'D');
+			idcheck2 = MAKE_ID('X', 'N', 'O', 'D');
+		}
+		else if (map->Size(ML_GLZNODES) != 0)
+		{
+			fr = &map->Reader(ML_GLZNODES);
+			idcheck = MAKE_ID('Z', 'G', 'L', 'N');
+			idcheck2 = MAKE_ID('Z', 'G', 'L', '2');
+			idcheck3 = MAKE_ID('Z', 'G', 'L', '3');
+			idcheck4 = MAKE_ID('X', 'G', 'L', 'N');
+			idcheck5 = MAKE_ID('X', 'G', 'L', '2');
+			idcheck6 = MAKE_ID('X', 'G', 'L', '3');
+		}
+
+		if (fr != nullptr && fr->isOpen()) fr->Read(&id, 4);
+		if (id != 0 && (id == idcheck || id == idcheck2 || id == idcheck3 || id == idcheck4 || id == idcheck5 || id == idcheck6))
+		{
+			try
+			{
+				LoadExtendedNodes(*fr, id);
+			}
+			catch (CRecoverableError &error)
+			{
+				Printf("Error loading nodes: %s\n", error.GetMessage());
+
+				ForceNodeBuild = true;
+				Level->subsectors.Clear();
+				Level->segs.Clear();
+				Level->nodes.Clear();
+			}
+		}
+		else if (!map->isText)	// regular nodes are not supported for text maps
+		{
+			// If all 3 node related lumps are empty there's no need to output a message.
+			// This just means that the map has no nodes and the engine is supposed to build them.
+			if (map->Size(ML_SEGS) != 0 || map->Size(ML_SSECTORS) != 0 || map->Size(ML_NODES) != 0)
+			{
+				if (!P_CheckV4Nodes(map))
+				{
+					LoadSubsectors<mapsubsector_t, mapseg_t>(map);
+					if (!ForceNodeBuild) LoadNodes<mapnode_t, mapsubsector_t>(map);
+					if (!ForceNodeBuild) LoadSegs<mapseg_t>(map);
+				}
+				else
+				{
+					LoadSubsectors<mapsubsector4_t, mapseg4_t>(map);
+					if (!ForceNodeBuild) LoadNodes<mapnode4_t, mapsubsector4_t>(map);
+					if (!ForceNodeBuild) LoadSegs<mapseg4_t>(map);
+				}
+			}
+			else ForceNodeBuild = true;
+		}
+		else ForceNodeBuild = true;
+
+		// If loading the regular nodes failed try GL nodes before considering a rebuild
+		if (ForceNodeBuild)
+		{
+			if (LoadGLNodes(map))
+			{
+				ForceNodeBuild = false;
+				reloop = true;
+			}
+		}
+	}
+	else reloop = true;
+
+	uint64_t startTime = 0, endTime = 0;
+
+	bool BuildGLNodes;
+	if (ForceNodeBuild)
+	{
+		BuildGLNodes = true;
+
+		startTime = I_msTime();
+		TArray<FNodeBuilder::FPolyStart> polyspots, anchors;
+		GetPolySpots(map, polyspots, anchors);
+		FNodeBuilder::FLevel leveldata =
+		{
+			&Level->vertexes[0], (int)Level->vertexes.Size(),
+			&Level->sides[0], (int)Level->sides.Size(),
+			&Level->lines[0], (int)Level->lines.Size(),
+			0, 0, 0, 0
+		};
+		leveldata.FindMapBounds();
+		// We need GL nodes if am_textured is on.
+		// In case a sync critical game mode is started, also build GL nodes to avoid problems
+		// if the different machines' am_textured setting differs.
+		FNodeBuilder builder(leveldata, polyspots, anchors, BuildGLNodes);
+		builder.Extract(*Level);
+		endTime = I_msTime();
+		DPrintf(DMSG_NOTIFY, "BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, Level->segs.Size());
+		oldvertextable = builder.GetOldVertexTable();
+		reloop = true;
+	}
+	else
+	{
+		BuildGLNodes = false;
+		// Older ZDBSPs had problems with compressed sidedefs and assigned wrong sides to the segs if both sides were the same sidedef.
+		for (auto &seg : Level->segs)
+		{
+			if (seg.backsector == seg.frontsector && seg.linedef)
+			{
+				double d1 = (seg.v1->fPos() - seg.linedef->v1->fPos()).LengthSquared();
+				double d2 = (seg.v2->fPos() - seg.linedef->v1->fPos()).LengthSquared();
+
+				if (d2 < d1)	// backside
+				{
+					seg.sidedef = seg.linedef->sidedef[1];
+				}
+				else	// front side
+				{
+					seg.sidedef = seg.linedef->sidedef[0];
+				}
+			}
+		}
+	}
+
+	// Build GL nodes if we want a textured automap or GL nodes are forced to be built.
+	// If the original nodes being loaded are not GL nodes they will be kept around for
+	// use in P_PointInSubsector to avoid problems with maps that depend on the specific
+	// nodes they were built with (P:AR E1M3 is a good example for a map where this is the case.)
+	reloop |= CheckNodes(map, BuildGLNodes, (uint32_t)(endTime - startTime));
+
+	// set the head node for gameplay purposes. If the separate gamenodes array is not empty, use that, otherwise use the render nodes.
+	Level->headgamenode = Level->gamenodes.Size() > 0 ? &Level->gamenodes[Level->gamenodes.Size() - 1] : Level->nodes.Size() ? &Level->nodes[Level->nodes.Size() - 1] : nullptr;
+
+	LoadBlockMap(map);
+
+	LoadReject(map, false);
+	GroupLines(false);
+	FloodZones();
+	SetRenderSector();
+	FixMinisegReferences();
+	FixHoles();
+
+	Level->bodyqueslot = 0;
+	// phares 8/10/98: Clear body queue so the corpses from previous games are
+	// not assumed to be from this one.
+
+	for (auto & p : Level->bodyque)
+		p = nullptr;
+
+	CreateSections(Level->sections);
+
+	// [RH] Spawn slope creating things first.
+	SpawnSlopeMakers(&MapThingsConverted[0], &MapThingsConverted[MapThingsConverted.Size()], oldvertextable);
+	CopySlopes();
+
+	// Spawn 3d floors - must be done before spawning things so it can't be done in P_SpawnSpecials
+	P_Spawn3DFloors();
+
+	SpawnThings(position);
+
+	for (int i = 0; i < MAXPLAYERS; ++i)
+	{
+		if (playeringame[i] && players[i].mo != nullptr)
+			players[i].health = players[i].mo->health;
+	}
+	if (!map->HasBehavior && !map->isText)
+		P_TranslateTeleportThings();	// [RH] Assign teleport destination TIDs
+
+	if (oldvertextable != nullptr)
+	{
+		delete[] oldvertextable;
+	}
+
+	// set up world state
+	P_SpawnSpecials(this);
+
+	// disable reflective planes on sloped sectors.
+	for (auto &sec : Level->sectors)
+	{
+		if (sec.floorplane.isSlope()) sec.reflect[sector_t::floor] = 0;
+		if (sec.ceilingplane.isSlope()) sec.reflect[sector_t::ceiling] = 0;
+	}
+	for (auto &node : Level->nodes)
+	{
+		double fdx = FIXED2DBL(node.dx);
+		double fdy = FIXED2DBL(node.dy);
+		node.len = (float)g_sqrt(fdx * fdx + fdy * fdy);
+	}
+
+	// CreateVBO must be run on the plain 3D floor data.
+	P_ClearDynamic3DFloorData();
+
+	// This must be done BEFORE the PolyObj Spawn!!!
+	InitRenderInfo();			// create hardware independent renderer resources for the Level->
+	screen->mVertexData->CreateVBO();
+
+	for (auto &sec : Level->sectors)
+	{
+		P_Recalculate3DFloors(&sec);
+	}
+
+	SWRenderer->SetColormap();	//The SW renderer needs to do some special setup for the level's default colormap.
+	InitPortalGroups();
+	P_InitHealthGroups();
+
+	if (reloop) LoopSidedefs(false);
+	PO_Init();				// Initialize the polyobjs
+	if (!Level->IsReentering())
+		P_FinalizePortals();	// finalize line portals after polyobjects have been initialized. This info is needed for properly flagging them.
+
+	assert(sidetemp != nullptr);
+	delete[] sidetemp;
+	sidetemp = nullptr;
+}
+
 extern polyblock_t **PolyBlockMap;
 
 
@@ -3158,25 +3491,11 @@ void P_FreeLevelData ()
 
 void P_SetupLevel(const char *lumpname, int position, bool newGame)
 {
-	cycle_t times[20];
-#if 0
-	FMapThing *buildthings;
-	int numbuildthings;
-#endif
 	int i;
-	bool buildmap;
-	const int *oldvertextable = nullptr;
 
 	level.ShaderStartTime = I_msTimeFS(); // indicate to the shader system that the level just started
 
 	// This is motivated as follows:
-
-	bool RequireGLNodes = true;	// Even the software renderer needs GL nodes now.
-
-	for (i = 0; i < (int)countof(times); ++i)
-	{
-		times[i].Reset();
-	}
 
 	level.maptype = MAPTYPE_UNKNOWN;
 	wminfo.partime = 180;
@@ -3238,423 +3557,9 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 		E_NewGame(EventHandlerType::PerMap);
 	}
 
-	// [RH] Support loading Build maps (because I felt like it. :-)
-	buildmap = false;
-#if 0
-	// deactivated because broken.
-	if (map->Size(0) > 0)
-	{
-		uint8_t *mapdata = new uint8_t[map->Size(0)];
-		map->Read(0, mapdata);
-		times[0].Clock();
-		buildmap = P_LoadBuildMap(mapdata, map->Size(0), &buildthings, &numbuildthings);
-		times[0].Unclock();
-		delete[] mapdata;
-	}
-#endif
-
 	MapLoader loader(&level);
-
-	if (!buildmap)
-	{
-		// note: most of this ordering is important 
-		ForceNodeBuild = gennodes;
-
-		// [RH] Load in the BEHAVIOR lump
-		FBehavior::StaticUnloadModules();
-		if (map->HasBehavior)
-		{
-			loader.LoadBehavior(map);
-			level.maptype = MAPTYPE_HEXEN;
-		}
-		else
-		{
-			// We need translators only for Doom format maps.
-			const char *translator;
-
-			if (!level.info->Translator.IsEmpty())
-			{
-				// The map defines its own translator.
-				translator = level.info->Translator.GetChars();
-			}
-			else
-			{
-				// Has the user overridden the game's default translator with a commandline parameter?
-				translator = Args->CheckValue("-xlat");
-				if (translator == nullptr)
-				{
-					// Use the game's default.
-					translator = gameinfo.translator.GetChars();
-				}
-			}
-			P_LoadTranslator(translator);
-			level.maptype = MAPTYPE_DOOM;
-		}
-		if (map->isText)
-		{
-			level.maptype = MAPTYPE_UDMF;
-		}
-		FName checksum = CheckCompatibility(map);
-		if (ib_compatflags & BCOMPATF_REBUILDNODES)
-		{
-			ForceNodeBuild = true;
-		}
-		T_LoadScripts(map);
-
-		if (!map->HasBehavior || map->isText)
-		{
-			// Doom format and UDMF text maps get strict monster activation unless the mapinfo
-			// specifies differently.
-			if (!(level.flags2 & LEVEL2_LAXACTIVATIONMAPINFO))
-			{
-				level.flags2 &= ~LEVEL2_LAXMONSTERACTIVATION;
-			}
-		}
-
-		if (!map->HasBehavior && !map->isText)
-		{
-			// set compatibility flags
-			if (gameinfo.gametype == GAME_Strife)
-			{
-				level.flags2 |= LEVEL2_RAILINGHACK;
-			}
-			level.flags2 |= LEVEL2_DUMMYSWITCHES;
-		}
-
-		FBehavior::StaticLoadDefaultModules();
-		loader.LoadMapinfoACSLump();
-
-
-		P_LoadStrifeConversations(map, lumpname);
-
-		FMissingTextureTracker missingtex;
-
-		if (!map->isText)
-		{
-			times[0].Clock();
-			loader.LoadVertexes(map);
-			times[0].Unclock();
-
-			// Check for maps without any BSP data at all (e.g. SLIGE)
-			times[1].Clock();
-			loader.LoadSectors(map, missingtex);
-			times[1].Unclock();
-
-			times[2].Clock();
-			times[2].Unclock();
-
-			times[3].Clock();
-			if (!map->HasBehavior)
-				loader.LoadLineDefs(map);
-			else
-				loader.LoadLineDefs2(map);	// [RH] Load Hexen-style linedefs
-			times[3].Unclock();
-
-			times[4].Clock();
-			loader.LoadSideDefs2(map, missingtex);
-			times[4].Unclock();
-
-			times[5].Clock();
-			loader.FinishLoadingLineDefs();
-			times[5].Unclock();
-
-			if (!map->HasBehavior)
-				loader.LoadThings(map);
-			else
-				loader.LoadThings2(map);	// [RH] Load Hexen-style things
-		}
-		else
-		{
-			times[0].Clock();
-			loader.ParseTextMap(map, missingtex);
-			times[0].Unclock();
-		}
-
-		SetCompatibilityParams(checksum);
-
-		times[6].Clock();
-		loader.LoopSidedefs(true);
-		times[6].Unclock();
-
-		loader.SummarizeMissingTextures(missingtex);
-	}
-	else
-	{
-		ForceNodeBuild = true;
-		level.maptype = MAPTYPE_BUILD;
-	}
-	bool reloop = false;
-
-	if (!ForceNodeBuild)
-	{
-		// Check for compressed nodes first, then uncompressed nodes
-		FileReader *fr = nullptr;
-		uint32_t id = MAKE_ID('X', 'x', 'X', 'x'), idcheck = 0, idcheck2 = 0, idcheck3 = 0, idcheck4 = 0, idcheck5 = 0, idcheck6 = 0;
-
-		if (map->Size(ML_ZNODES) != 0)
-		{
-			// Test normal nodes first
-			fr = &map->Reader(ML_ZNODES);
-			idcheck = MAKE_ID('Z', 'N', 'O', 'D');
-			idcheck2 = MAKE_ID('X', 'N', 'O', 'D');
-		}
-		else if (map->Size(ML_GLZNODES) != 0)
-		{
-			fr = &map->Reader(ML_GLZNODES);
-			idcheck = MAKE_ID('Z', 'G', 'L', 'N');
-			idcheck2 = MAKE_ID('Z', 'G', 'L', '2');
-			idcheck3 = MAKE_ID('Z', 'G', 'L', '3');
-			idcheck4 = MAKE_ID('X', 'G', 'L', 'N');
-			idcheck5 = MAKE_ID('X', 'G', 'L', '2');
-			idcheck6 = MAKE_ID('X', 'G', 'L', '3');
-		}
-
-		if (fr != nullptr && fr->isOpen()) fr->Read(&id, 4);
-		if (id != 0 && (id == idcheck || id == idcheck2 || id == idcheck3 || id == idcheck4 || id == idcheck5 || id == idcheck6))
-		{
-			try
-			{
-				loader.LoadExtendedNodes(*fr, id);
-			}
-			catch (CRecoverableError &error)
-			{
-				Printf("Error loading nodes: %s\n", error.GetMessage());
-
-				ForceNodeBuild = true;
-				level.subsectors.Clear();
-				level.segs.Clear();
-				level.nodes.Clear();
-			}
-		}
-		else if (!map->isText)	// regular nodes are not supported for text maps
-		{
-			// If all 3 node related lumps are empty there's no need to output a message.
-			// This just means that the map has no nodes and the engine is supposed to build them.
-			if (map->Size(ML_SEGS) != 0 || map->Size(ML_SSECTORS) != 0 || map->Size(ML_NODES) != 0)
-			{
-				if (!P_CheckV4Nodes(map))
-				{
-					times[7].Clock();
-					loader.LoadSubsectors<mapsubsector_t, mapseg_t>(map);
-					times[7].Unclock();
-
-					times[8].Clock();
-					if (!ForceNodeBuild) loader.LoadNodes<mapnode_t, mapsubsector_t>(map);
-					times[8].Unclock();
-
-					times[9].Clock();
-					if (!ForceNodeBuild) loader.LoadSegs<mapseg_t>(map);
-					times[9].Unclock();
-				}
-				else
-				{
-					times[7].Clock();
-					loader.LoadSubsectors<mapsubsector4_t, mapseg4_t>(map);
-					times[7].Unclock();
-
-					times[8].Clock();
-					if (!ForceNodeBuild) loader.LoadNodes<mapnode4_t, mapsubsector4_t>(map);
-					times[8].Unclock();
-
-					times[9].Clock();
-					if (!ForceNodeBuild) loader.LoadSegs<mapseg4_t>(map);
-					times[9].Unclock();
-				}
-			}
-			else ForceNodeBuild = true;
-		}
-		else ForceNodeBuild = true;
-
-		// If loading the regular nodes failed try GL nodes before considering a rebuild
-		if (ForceNodeBuild)
-		{
-			if (loader.LoadGLNodes(map))
-			{
-				ForceNodeBuild = false;
-				reloop = true;
-			}
-		}
-	}
-	else reloop = true;
-
-	uint64_t startTime = 0, endTime = 0;
-
-	bool BuildGLNodes;
-	if (ForceNodeBuild)
-	{
-		BuildGLNodes = RequireGLNodes || multiplayer || demoplayback || demorecording || genglnodes;
-
-		startTime = I_msTime();
-		TArray<FNodeBuilder::FPolyStart> polyspots, anchors;
-		loader.GetPolySpots(map, polyspots, anchors);
-		FNodeBuilder::FLevel leveldata =
-		{
-			&level.vertexes[0], (int)level.vertexes.Size(),
-			&level.sides[0], (int)level.sides.Size(),
-			&level.lines[0], (int)level.lines.Size(),
-			0, 0, 0, 0
-		};
-		leveldata.FindMapBounds();
-		// We need GL nodes if am_textured is on.
-		// In case a sync critical game mode is started, also build GL nodes to avoid problems
-		// if the different machines' am_textured setting differs.
-		FNodeBuilder builder(leveldata, polyspots, anchors, BuildGLNodes);
-		builder.Extract(level);
-		endTime = I_msTime();
-		DPrintf(DMSG_NOTIFY, "BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, level.segs.Size());
-		oldvertextable = builder.GetOldVertexTable();
-		reloop = true;
-	}
-	else
-	{
-		BuildGLNodes = false;
-		// Older ZDBSPs had problems with compressed sidedefs and assigned wrong sides to the segs if both sides were the same sidedef.
-		for (auto &seg : level.segs)
-		{
-			if (seg.backsector == seg.frontsector && seg.linedef)
-			{
-				double d1 = (seg.v1->fPos() - seg.linedef->v1->fPos()).LengthSquared();
-				double d2 = (seg.v2->fPos() - seg.linedef->v1->fPos()).LengthSquared();
-
-				if (d2 < d1)	// backside
-				{
-					seg.sidedef = seg.linedef->sidedef[1];
-				}
-				else	// front side
-				{
-					seg.sidedef = seg.linedef->sidedef[0];
-				}
-			}
-		}
-	}
-
-	if (RequireGLNodes)
-	{
-		// Build GL nodes if we want a textured automap or GL nodes are forced to be built.
-		// If the original nodes being loaded are not GL nodes they will be kept around for
-		// use in P_PointInSubsector to avoid problems with maps that depend on the specific
-		// nodes they were built with (P:AR E1M3 is a good example for a map where this is the case.)
-		reloop |= loader.CheckNodes(map, BuildGLNodes, (uint32_t)(endTime - startTime));
-	}
-	else
-	{
-		loader.CheckForGLNodes();
-	}
-
-	// set the head node for gameplay purposes. If the separate gamenodes array is not empty, use that, otherwise use the render nodes.
-	level.headgamenode = level.gamenodes.Size() > 0 ? &level.gamenodes[level.gamenodes.Size() - 1] : level.nodes.Size() ? &level.nodes[level.nodes.Size() - 1] : nullptr;
-
-	times[10].Clock();
-	loader.LoadBlockMap(map);
-	times[10].Unclock();
-
-	times[11].Clock();
-	loader.LoadReject(map, buildmap);
-	times[11].Unclock();
-
-	times[12].Clock();
-	loader.GroupLines(buildmap);
-	times[12].Unclock();
-
-	times[13].Clock();
-	loader.FloodZones();
-	times[13].Unclock();
-
-	loader.SetRenderSector();
-	FixMinisegReferences();
-	FixHoles();
-
-	level.bodyqueslot = 0;
-	// phares 8/10/98: Clear body queue so the corpses from previous games are
-	// not assumed to be from this one.
-
-	for(auto & p : level.bodyque)
-		p = nullptr;
-
-	CreateSections(level.sections);
-
-	if (!buildmap)
-	{
-		// [RH] Spawn slope creating things first.
-		loader.SpawnSlopeMakers(&MapThingsConverted[0], &MapThingsConverted[MapThingsConverted.Size()], oldvertextable);
-		loader.CopySlopes();
-
-		// Spawn 3d floors - must be done before spawning things so it can't be done in P_SpawnSpecials
-		P_Spawn3DFloors();
-
-		times[14].Clock();
-		loader.SpawnThings(position);
-
-		for (i = 0; i < MAXPLAYERS; ++i)
-		{
-			if (playeringame[i] && players[i].mo != nullptr)
-				players[i].health = players[i].mo->health;
-		}
-		times[14].Unclock();
-
-		times[15].Clock();
-		if (!map->HasBehavior && !map->isText)
-			P_TranslateTeleportThings();	// [RH] Assign teleport destination TIDs
-		times[15].Unclock();
-	}
-#if 0	// There is no such thing as a build map.
-	else
-	{
-		for (i = 0; i < numbuildthings; ++i)
-		{
-			SpawnMapThing(i, &buildthings[i], 0);
-		}
-		delete[] buildthings;
-	}
-#endif
+	loader.LoadLevel(map, lumpname, position);
 	delete map;
-	if (oldvertextable != nullptr)
-	{
-		delete[] oldvertextable;
-	}
-
-	// set up world state
-	P_SpawnSpecials(&loader);
-
-	// disable reflective planes on sloped sectors.
-	for (auto &sec : level.sectors)
-	{
-		if (sec.floorplane.isSlope()) sec.reflect[sector_t::floor] = 0;
-		if (sec.ceilingplane.isSlope()) sec.reflect[sector_t::ceiling] = 0;
-	}
-	for (auto &node : level.nodes)
-	{
-		double fdx = FIXED2DBL(node.dx);
-		double fdy = FIXED2DBL(node.dy);
-		node.len = (float)g_sqrt(fdx * fdx + fdy * fdy);
-	}
-
-	// CreateVBO must be run on the plain 3D floor data.
-	P_ClearDynamic3DFloorData();
-
-	// This must be done BEFORE the PolyObj Spawn!!!
-	InitRenderInfo();			// create hardware independent renderer resources for the level.
-	screen->mVertexData->CreateVBO();
-
-	for (auto &sec : level.sectors)
-	{
-		P_Recalculate3DFloors(&sec);
-	}
-
-	SWRenderer->SetColormap();	//The SW renderer needs to do some special setup for the level's default colormap.
-	InitPortalGroups();
-	P_InitHealthGroups();
-
-	times[16].Clock();
-	if (reloop) loader.LoopSidedefs(false);
-	PO_Init();				// Initialize the polyobjs
-	if (!level.IsReentering())
-		P_FinalizePortals();	// finalize line portals after polyobjects have been initialized. This info is needed for properly flagging them.
-	times[16].Unclock();
-
-	assert(sidetemp != nullptr);
-	delete[] sidetemp;
-	sidetemp = nullptr;
 
 	// if deathmatch, randomly spawn the active players
 	if (deathmatch)
@@ -3729,14 +3634,12 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 	// [RH] Remove all particles
 	P_ClearParticles();
 
-	times[17].Clock();
 	// preload graphics and sounds
 	if (precache)
 	{
 		loader.PrecacheLevel();
 		S_PrecacheLevel();
 	}
-	times[17].Unclock();
 
 	if (deathmatch)
 	{
@@ -3761,37 +3664,6 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 	}
 
 	P_ResetSightCounters(true);
-	//Printf ("free memory: 0x%x\n", Z_FreeMemory());
-
-	if (showloadtimes)
-	{
-		Printf("---Total load times---\n");
-		for (i = 0; i < 18; ++i)
-		{
-			static const char *timenames[] =
-			{
-				"load vertexes",
-				"load sectors",
-				"load sides",
-				"load lines",
-				"load sides 2",
-				"load lines 2",
-				"loop sides",
-				"load subsectors",
-				"load nodes",
-				"load segs",
-				"load blockmap",
-				"load reject",
-				"group lines",
-				"flood zones",
-				"load things",
-				"translate teleports",
-				"init polys",
-				"precache"
-			};
-			Printf("Time%3d:%9.4f ms (%s)\n", i, times[i].TimeMS(), timenames[i]);
-		}
-	}
 	MapThingsConverted.Clear();
 
 	// Create a backup of the map data so the savegame code can toss out all fields that haven't changed in order to reduce processing time and file size.

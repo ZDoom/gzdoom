@@ -165,8 +165,6 @@ int GetUDMFInt(int type, int index, FName key);
 double GetUDMFFloat(int type, int index, FName key);
 FString GetUDMFString(int type, int index, FName key);
 
-bool P_CheckForGLNodes();
-void P_SetRenderSector();
 void FixMinisegReferences();
 void FixHoles();
 void ReportUnpairedMinisegs();
@@ -213,6 +211,20 @@ class MapLoader
 	void *level;	// this is to hide the global variable and produce an error for referencing it.
 	FLevelLocals *Level;
 
+	int firstglvertex;	// helpers for loading GL nodes from GWA files.
+	bool format5;
+
+
+	int checkGLVertex(int num);
+	int checkGLVertex3(int num);
+	int CheckForMissingSegs();
+	bool LoadGLVertexes(FileReader &lump);
+	bool LoadGLSegs(FileReader &lump);
+	bool LoadGLSubsectors(FileReader &lump);
+	bool LoadNodes(FileReader &lump);
+	bool DoLoadGLNodes(FileReader * lumps);
+	void CreateCachedNodes(MapData *map);
+
 	void SetTexture(side_t *side, int position, const char *name, FMissingTextureTracker &track);
 	void SetTexture(sector_t *sector, int index, int position, const char *name, FMissingTextureTracker &track, bool truncate);
 	void SetTexture(side_t *side, int position, uint32_t *blend, const char *name);
@@ -245,6 +257,7 @@ public:
 	bool LoadGLNodes(MapData * map);
 	bool CheckCachedNodes(MapData *map);
 	bool CheckNodes(MapData * map, bool rebuilt, int buildtime);
+	bool CheckForGLNodes();
 
 	void LoadSectors(MapData *map, FMissingTextureTracker &missingtex);
 	void LoadThings(MapData * map);
@@ -264,6 +277,7 @@ public:
 	void PrecacheLevel();
 	void ParseTextMap(MapData *map, FMissingTextureTracker &missingtex);
 	void SummarizeMissingTextures(const FMissingTextureTracker &missing);
+	void SetRenderSector();
 
 	MapLoader(FLevelLocals *lev)
 	{

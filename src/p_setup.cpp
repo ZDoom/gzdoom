@@ -3011,16 +3011,15 @@ void MapLoader::AddToList(uint8_t *hitlist, FTextureID texid, int bitmask)
 
 void MapLoader::PrecacheLevel()
 {
-	int i;
-	uint8_t *hitlist;
-	TMap<PClassActor *, bool> actorhitlist;
-	int cnt = TexMan.NumTextures();
-
 	if (demoplayback)
 		return;
 
-	hitlist = new uint8_t[cnt];
-	memset(hitlist, 0, cnt);
+	int i;
+	TMap<PClassActor *, bool> actorhitlist;
+	int cnt = TexMan.NumTextures();
+	TArray<uint8_t> hitlist(cnt, true);
+
+	memset(hitlist.Data(), 0, cnt);
 
 	AActor *actor;
 	TThinkerIterator<AActor> iterator;
@@ -3044,15 +3043,15 @@ void MapLoader::PrecacheLevel()
 
 	for (i = Level->sectors.Size() - 1; i >= 0; i--)
 	{
-		AddToList(hitlist, Level->sectors[i].GetTexture(sector_t::floor), FTextureManager::HIT_Flat);
-		AddToList(hitlist, Level->sectors[i].GetTexture(sector_t::ceiling), FTextureManager::HIT_Flat);
+		AddToList(hitlist.Data(), Level->sectors[i].GetTexture(sector_t::floor), FTextureManager::HIT_Flat);
+		AddToList(hitlist.Data(), Level->sectors[i].GetTexture(sector_t::ceiling), FTextureManager::HIT_Flat);
 	}
 
 	for (i = Level->sides.Size() - 1; i >= 0; i--)
 	{
-		AddToList(hitlist, Level->sides[i].GetTexture(side_t::top), FTextureManager::HIT_Wall);
-		AddToList(hitlist, Level->sides[i].GetTexture(side_t::mid), FTextureManager::HIT_Wall);
-		AddToList(hitlist, Level->sides[i].GetTexture(side_t::bottom), FTextureManager::HIT_Wall);
+		AddToList(hitlist.Data(), Level->sides[i].GetTexture(side_t::top), FTextureManager::HIT_Wall);
+		AddToList(hitlist.Data(), Level->sides[i].GetTexture(side_t::mid), FTextureManager::HIT_Wall);
+		AddToList(hitlist.Data(), Level->sides[i].GetTexture(side_t::bottom), FTextureManager::HIT_Wall);
 	}
 
 	// Sky texture is always present.
@@ -3064,31 +3063,30 @@ void MapLoader::PrecacheLevel()
 
 	if (sky1texture.isValid())
 	{
-		AddToList(hitlist, sky1texture, FTextureManager::HIT_Sky);
+		AddToList(hitlist.Data(), sky1texture, FTextureManager::HIT_Sky);
 	}
 	if (sky2texture.isValid())
 	{
-		AddToList(hitlist, sky2texture, FTextureManager::HIT_Sky);
+		AddToList(hitlist.Data(), sky2texture, FTextureManager::HIT_Sky);
 	}
 
 	for (auto n : gameinfo.PrecachedTextures)
 	{
 		FTextureID tex = TexMan.CheckForTexture(n, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
-		if (tex.Exists()) AddToList(hitlist, tex, FTextureManager::HIT_Wall);
+		if (tex.Exists()) AddToList(hitlist.Data(), tex, FTextureManager::HIT_Wall);
 	}
 	for (unsigned i = 0; i < Level->info->PrecacheTextures.Size(); i++)
 	{
 		FTextureID tex = TexMan.CheckForTexture(Level->info->PrecacheTextures[i], ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
-		if (tex.Exists()) AddToList(hitlist, tex, FTextureManager::HIT_Wall);
+		if (tex.Exists()) AddToList(hitlist.Data(), tex, FTextureManager::HIT_Wall);
 	}
 
 	// This is just a temporary solution, until the hardware renderer's texture manager is in a better state.
 	if (!V_IsHardwareRenderer())
-		SWRenderer->Precache(hitlist, actorhitlist);
+		SWRenderer->Precache(hitlist.Data(), actorhitlist);
 	else
-		hw_PrecacheTexture(hitlist, actorhitlist);
+		hw_PrecacheTexture(hitlist.Data(), actorhitlist);
 
-	delete[] hitlist;
 }
 
 extern polyblock_t **PolyBlockMap;
@@ -3628,7 +3626,7 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 	}
 	else
 	{
-		P_CheckForGLNodes();
+		loader.CheckForGLNodes();
 	}
 
 	// set the head node for gameplay purposes. If the separate gamenodes array is not empty, use that, otherwise use the render nodes.
@@ -3650,7 +3648,7 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 	loader.FloodZones();
 	times[13].Unclock();
 
-	P_SetRenderSector();
+	loader.SetRenderSector();
 	FixMinisegReferences();
 	FixHoles();
 

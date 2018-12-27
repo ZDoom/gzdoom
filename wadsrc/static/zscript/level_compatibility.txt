@@ -144,6 +144,12 @@ class LevelCompatibility play
 				SetLineActivation(959, SPAC_Cross);
 				SetLineSpecial(960, Floor_RaiseToNearest, 16, 32);
 				SetLineActivation(960, SPAC_Cross);
+				// Dropping into the holes themselves raises sectors
+				for(int i=0; i<9; i++)
+				{
+					SetLineSpecial(999+i, Floor_RaiseToNearest, 16, 32);
+					SetLineActivation(999+i, SPAC_Cross);
+				}
 				break;
 			}
 			
@@ -177,6 +183,7 @@ class LevelCompatibility play
 			}
 
 			case 'A53AE580A4AF2B5D0B0893F86914781E': // TNT: Evilution map31
+			case '55192065F7FAA7D161767145DA008293': // TNT Anthology/GOG MAP31
 			{
 				// The famous missing yellow key...
 				SetThingFlags(470, 2016);

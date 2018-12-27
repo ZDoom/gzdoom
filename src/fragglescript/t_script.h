@@ -681,8 +681,6 @@ public:
 	TObjPtr<DFsScript*> LevelScript;
 	TObjPtr<DRunningScript*> RunningScripts;
 	TArray<TObjPtr<AActor*> > SpawnedThings;
-	bool nocheckposition = false;
-	bool setcolormaterial = false;
 
 	DFraggleThinker();
 	void OnDestroy() override;

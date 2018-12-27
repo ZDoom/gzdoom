@@ -1445,6 +1445,34 @@ DEFINE_MAP_OPTION(skyrotate2, false)
 	info->skyrotatevector2.MakeUnit();
 }
 
+DEFINE_MAP_OPTION(fs_nocheckposition, false)
+{
+	if (parse.CheckAssign())
+	{
+		parse.sc.MustGetNumber();
+		info->fs_nocheckposition = !!parse.sc.Number;
+	}
+	else
+	{
+		info->fs_nocheckposition = true;
+	}
+}
+
+DEFINE_MAP_OPTION(edata, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	info->EDName = parse.sc.String;
+}
+
+DEFINE_MAP_OPTION(loadacs, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	info->acsName = parse.sc.String;
+}
+
+
 //==========================================================================
 //
 // All flag based map options 

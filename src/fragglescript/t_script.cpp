@@ -394,7 +394,6 @@ DFraggleThinker::DFraggleThinker()
 		LevelScript->parent = global_script;
 		GC::WriteBarrier(this, RunningScripts);
 		GC::WriteBarrier(this, LevelScript);
-		nocheckposition = false;
 	}
 }
 
@@ -435,8 +434,7 @@ void DFraggleThinker::Serialize(FSerializer &arc)
 	Super::Serialize(arc);
 	arc("levelscript", LevelScript)
 		("runningscripts", RunningScripts)
-		("spawnedthings", SpawnedThings)
-		("nocheckposition", nocheckposition);
+		("spawnedthings", SpawnedThings);
 }
 
 //==========================================================================

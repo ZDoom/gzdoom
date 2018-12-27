@@ -50,42 +50,6 @@
 #include "maploader.h"
 
 
-struct FEDOptions : public FOptionalMapinfoData
-{
-	FEDOptions()
-	{
-		identifier = "EData";
-	}
-	virtual FOptionalMapinfoData *Clone() const
-	{
-		FEDOptions *newopt = new FEDOptions;
-		newopt->identifier = identifier;
-		newopt->EDName = EDName;
-		newopt->acsName = acsName;
-		return newopt;
-	}
-	FString EDName;
-	FString acsName;
-};
-
-DEFINE_MAP_OPTION(edata, false)
-{
-	FEDOptions *opt = info->GetOptData<FEDOptions>("EData");
-
-	parse.ParseAssign();
-	parse.sc.MustGetString();
-	opt->EDName = parse.sc.String;
-}
-
-DEFINE_MAP_OPTION(loadacs, false)
-{
-	FEDOptions *opt = info->GetOptData<FEDOptions>("EData");
-
-	parse.ParseAssign();
-	parse.sc.MustGetString();
-	opt->acsName = parse.sc.String;
-}
-
 static void parseLinedef(FScanner &sc, TMap<int, EDLinedef> &EDLines)
 {
 	EDLinedef ld;
@@ -552,20 +516,8 @@ static void parseMapthing(FScanner &sc, TMap<int, EDMapthing> &EDThings)
 
 void MapLoader::InitED()
 {
-	FString filename;
+	FString filename = Level->info->EDName;
 	FScanner sc;
-
-	const char *arg = Args->CheckValue("-edf");
-
-	if (arg != nullptr) filename = arg;
-	else
-	{
-		FEDOptions *opt = Level->info->GetOptData<FEDOptions>("EData", false);
-		if (opt != nullptr)
-		{
-			filename = opt->EDName;
-		}
-	}
 
 	if (filename.IsEmpty()) return;
 	int lump = Wads.CheckNumForFullName(filename, true, ns_global);
@@ -705,10 +657,9 @@ void MapLoader::ProcessEDSectors()
 
 void MapLoader::LoadMapinfoACSLump()
 {
-	FEDOptions *opt = Level->info->GetOptData<FEDOptions>("EData", false);
-	if (opt != nullptr)
+	if (Level->info->acsName.IsNotEmpty())
 	{
-		int lump = Wads.CheckNumForName(opt->acsName);
+		int lump = Wads.CheckNumForName(Level->info->acsName);
 		if (lump >= 0) FBehavior::StaticLoadModule(lump);
 	}
 }

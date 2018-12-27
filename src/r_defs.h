@@ -1406,6 +1406,7 @@ struct line_t
 	}
 
 	FSectorPortal *GetTransferredPortal();
+	void AdjustLine();
 
 	inline FLinePortal *getPortal() const;
 	inline bool isLinePortal() const;

@@ -98,6 +98,7 @@
 #include "events.h"
 #include "actorinlines.h"
 #include "a_dynlight.h"
+#include "fragglescript/t_fs.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -5575,6 +5576,26 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		mobj->StartHealth = mobj->health;
 
 	return mobj;
+}
+
+//===========================================================================
+//
+// SpawnMapThing
+//
+//===========================================================================
+CVAR(Bool, dumpspawnedthings, false, 0)
+
+AActor *SpawnMapThing(int index, FMapThing *mt, int position)
+{
+	AActor *spawned = P_SpawnMapThing(mt, position);
+	if (dumpspawnedthings)
+	{
+		Printf("%5d: (%5f, %5f, %5f), doomednum = %5d, flags = %04x, type = %s\n",
+			index, mt->pos.X, mt->pos.Y, mt->pos.Z, mt->EdNum, mt->flags,
+			spawned ? spawned->GetClass()->TypeName.GetChars() : "(none)");
+	}
+	T_AddSpawnedThing(spawned);
+	return spawned;
 }
 
 

@@ -63,13 +63,9 @@
 #include "g_levellocals.h"
 #include "i_time.h"
 
-void P_GetPolySpots (MapData * lump, TArray<FNodeBuilder::FPolyStart> &spots, TArray<FNodeBuilder::FPolyStart> &anchors);
-
 CVAR(Bool, gl_cachenodes, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_cachetime, 0.6f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
-void P_LoadZNodes (FileReader &dalump, uint32_t id);
-static bool CheckCachedNodes(MapData *map);
 static void CreateCachedNodes(MapData *map);
 
 
@@ -775,7 +771,7 @@ static int FindGLNodesInFile(FResourceFile * f, const char * label)
 //
 //==========================================================================
 
-bool P_LoadGLNodes(MapData * map)
+bool MapLoader::LoadGLNodes(MapData * map)
 {
 	if (map->Size(ML_GLZNODES) != 0)
 	{
@@ -794,17 +790,17 @@ bool P_LoadGLNodes(MapData * map)
 		{
 			try
 			{
-				level.subsectors.Clear();
-				level.segs.Clear();
-				level.nodes.Clear();
-				P_LoadZNodes (file, id);
+				Level->subsectors.Clear();
+				Level->segs.Clear();
+				Level->nodes.Clear();
+				LoadExtendedNodes (file, id);
 				return true;
 			}
 			catch (CRecoverableError &)
 			{
-				level.subsectors.Clear();
-				level.segs.Clear();
-				level.nodes.Clear();
+				Level->subsectors.Clear();
+				Level->segs.Clear();
+				Level->nodes.Clear();
 			}
 		}
 	}
@@ -883,7 +879,7 @@ bool P_LoadGLNodes(MapData * map)
 //
 //==========================================================================
 
-bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
+bool MapLoader::CheckNodes(MapData * map, bool rebuilt, int buildtime)
 {
 	bool ret = false;
 	bool loaded = false;
@@ -892,18 +888,18 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 	if (!rebuilt && !P_CheckForGLNodes())
 	{
 		ret = true;	// we are not using the level's original nodes if we get here.
-		for (auto &sub : level.subsectors)
+		for (auto &sub : Level->subsectors)
 		{
 			sub.sector = sub.firstline->sidedef->sector;
 		}
 
 		// The nodes and subsectors need to be preserved for gameplay related purposes.
-		level.gamenodes = std::move(level.nodes);
-		level.gamesubsectors = std::move(level.subsectors);
-		level.segs.Clear();
+		Level->gamenodes = std::move(Level->nodes);
+		Level->gamesubsectors = std::move(Level->subsectors);
+		Level->segs.Clear();
 
 		// Try to load GL nodes (cached or GWA)
-		loaded = P_LoadGLNodes(map);
+		loaded = LoadGLNodes(map);
 		if (!loaded)
 		{
 			// none found - we have to build new ones!
@@ -911,20 +907,20 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 
 			startTime = I_msTime ();
 			TArray<FNodeBuilder::FPolyStart> polyspots, anchors;
-			P_GetPolySpots (map, polyspots, anchors);
+			GetPolySpots (map, polyspots, anchors);
 			FNodeBuilder::FLevel leveldata =
 			{
-				&level.vertexes[0], (int)level.vertexes.Size(),
-				&level.sides[0], (int)level.sides.Size(),
-				&level.lines[0], (int)level.lines.Size(),
+				&Level->vertexes[0], (int)Level->vertexes.Size(),
+				&Level->sides[0], (int)Level->sides.Size(),
+				&Level->lines[0], (int)Level->lines.Size(),
 				0, 0, 0, 0
 			};
 			leveldata.FindMapBounds ();
 			FNodeBuilder builder (leveldata, polyspots, anchors, true);
 			
-			builder.Extract (level);
+			builder.Extract (*Level);
 			endTime = I_msTime ();
-			DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%u segs)\n", (endTime - startTime) * 0.001, level.segs.Size());
+			DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%u segs)\n", (endTime - startTime) * 0.001, Level->segs.Size());
 			buildtime = (int32_t)(endTime - startTime);
 		}
 	}
@@ -935,7 +931,7 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 		// Building nodes in debug is much slower so let's cache them only if cachetime is 0
 		buildtime = 0;
 #endif
-		if (level.maptype != MAPTYPE_BUILD && gl_cachenodes && buildtime/1000.f >= gl_cachetime)
+		if (Level->maptype != MAPTYPE_BUILD && gl_cachenodes && buildtime/1000.f >= gl_cachetime)
 		{
 			DPrintf(DMSG_NOTIFY, "Caching nodes\n");
 			CreateCachedNodes(map);
@@ -1102,7 +1098,7 @@ static void CreateCachedNodes(MapData *map)
 }
 
 
-static bool CheckCachedNodes(MapData *map)
+bool MapLoader::CheckCachedNodes(MapData *map)
 {
 	char magic[4] = {0,0,0,0};
 	uint8_t md5[16];
@@ -1120,7 +1116,7 @@ static bool CheckCachedNodes(MapData *map)
 
 	if (fr.Read(&numlin, 4) != 4) return false; 
 	numlin = LittleLong(numlin);
-	if (numlin != level.lines.Size()) return false;
+	if (numlin != Level->lines.Size()) return false;
 
 	if (fr.Read(md5, 16) != 16) return false;
 	map->GetChecksum(md5map);
@@ -1135,23 +1131,23 @@ static bool CheckCachedNodes(MapData *map)
 
 	try
 	{
-		P_LoadZNodes (fr, MAKE_ID(magic[0],magic[1],magic[2],magic[3]));
+		LoadExtendedNodes (fr, MAKE_ID(magic[0],magic[1],magic[2],magic[3]));
 	}
 	catch (CRecoverableError &error)
 	{
 		Printf ("Error loading nodes: %s\n", error.GetMessage());
 
-		level.subsectors.Clear();
-		level.segs.Clear();
-		level.nodes.Clear();
+		Level->subsectors.Clear();
+		Level->segs.Clear();
+		Level->nodes.Clear();
 		return false;
 	}
 
-	for(auto &line : level.lines)
+	for(auto &line : Level->lines)
 	{
 		int i = line.Index();
-		line.v1 = &level.vertexes[LittleLong(verts[i*2])];
-		line.v2 = &level.vertexes[LittleLong(verts[i*2+1])];
+		line.v1 = &Level->vertexes[LittleLong(verts[i*2])];
+		line.v2 = &Level->vertexes[LittleLong(verts[i*2+1])];
 	}
 	return true;
 }

@@ -121,11 +121,6 @@ enum
 	// namespace for each game
 };
 
-void SetTexture (sector_t *sector, int index, int position, const char *name, FMissingTextureTracker &, bool truncate);
-void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmapsidedef_t *msd, int special, int tag, short *alpha, FMissingTextureTracker &);
-void P_AdjustLine (line_t *ld);
-void P_FinishLoadingLineDef(line_t *ld, int alpha);
-void SpawnMapThing(int index, FMapThing *mt, int position);
 extern bool		ForceNodeBuild;
 extern TArray<FMapThing> MapThingsConverted;
 extern TArray<int>		linemap;
@@ -426,6 +421,7 @@ class UDMFParser : public UDMFParserBase
 	bool isTranslated;
 	bool isExtended;
 	bool floordrop;
+	MapLoader *loader;
 
 	TArray<line_t> ParsedLines;
 	TArray<side_t> ParsedSides;
@@ -438,8 +434,8 @@ class UDMFParser : public UDMFParserBase
 	FMissingTextureTracker &missingTex;
 
 public:
-	UDMFParser(FMissingTextureTracker &missing)
-		: missingTex(missing)
+	UDMFParser(MapLoader *ld, FMissingTextureTracker &missing)
+		: loader(ld), missingTex(missing)
 	{
 		linemap.Clear();
 	}
@@ -1499,11 +1495,11 @@ public:
 				continue;
 
 			case NAME_Texturefloor:
-				SetTexture(sec, index, sector_t::floor, CheckString(key), missingTex, false);
+				loader->SetTexture(sec, index, sector_t::floor, CheckString(key), missingTex, false);
 				continue;
 
 			case NAME_Textureceiling:
-				SetTexture(sec, index, sector_t::ceiling, CheckString(key), missingTex, false);
+				loader->SetTexture(sec, index, sector_t::ceiling, CheckString(key), missingTex, false);
 				continue;
 
 			case NAME_Lightlevel:
@@ -2100,7 +2096,7 @@ public:
 						sides[side].sector = &level.sectors[intptr_t(sides[side].sector)];
 						lines[line].sidedef[sd] = &sides[side];
 
-						P_ProcessSideTextures(!isExtended, &sides[side], sides[side].sector, &ParsedSideTextures[mapside],
+						loader->ProcessSideTextures(!isExtended, &sides[side], sides[side].sector, &ParsedSideTextures[mapside],
 							lines[line].special, lines[line].args[0], &tempalpha[sd], missingTex);
 
 						side++;
@@ -2112,8 +2108,8 @@ public:
 				}
 			}
 
-			P_AdjustLine(&lines[line]);
-			P_FinishLoadingLineDef(&lines[line], tempalpha[0]);
+			lines[line].AdjustLine();
+			loader->FinishLoadingLineDef(&lines[line], tempalpha[0]);
 		}
 
 		const int sideDelta = level.sides.Size() - side;
@@ -2307,9 +2303,9 @@ public:
 	}
 };
 
-void P_ParseTextMap(MapData *map, FMissingTextureTracker &missingtex)
+void MapLoader::ParseTextMap(MapData *map, FMissingTextureTracker &missingtex)
 {
-	UDMFParser parse(missingtex);
+	UDMFParser parse(this, missingtex);
 
 	parse.ParseTextMap(map);
 }

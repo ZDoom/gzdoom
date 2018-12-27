@@ -124,7 +124,6 @@ public:
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void PO_Init (void);
-void P_AdjustLine(line_t *ld);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -912,7 +911,7 @@ void FPolyObj::UpdateBBox ()
 {
 	for(unsigned i=0;i<Linedefs.Size(); i++)
 	{
-		P_AdjustLine(Linedefs[i]);
+		Linedefs[i]->AdjustLine();
 	}
 	CalcCenter();
 }

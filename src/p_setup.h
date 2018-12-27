@@ -31,6 +31,7 @@
 #include "resourcefiles/resourcefile.h"
 #include "doomdata.h"
 #include "r_defs.h"
+#include "nodebuild.h"
 
 
 struct MapData
@@ -131,7 +132,7 @@ public:
 
 	void GetChecksum(uint8_t cksum[16]);
 
-	friend bool P_LoadGLNodes(MapData * map);
+	friend class MapLoader;
 	friend MapData *P_OpenMapData(const char * mapname, bool justcheck);
 
 };
@@ -164,8 +165,6 @@ int GetUDMFInt(int type, int index, FName key);
 double GetUDMFFloat(int type, int index, FName key);
 FString GetUDMFString(int type, int index, FName key);
 
-bool P_LoadGLNodes(MapData * map);
-bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime);
 bool P_CheckForGLNodes();
 void P_SetRenderSector();
 void FixMinisegReferences();
@@ -206,5 +205,70 @@ typedef TMap<FString,FMissingCount> FMissingTextureTracker;
 extern TMap<unsigned,unsigned> MapThingsUserDataIndex;	// from mapthing idx -> user data idx
 extern TArray<FUDMFKey> MapThingsUserData;
 
+struct FLevelLocals;
+
+class MapLoader
+{
+	friend class UDMFParser;
+	void *level;	// this is to hide the global variable and produce an error for referencing it.
+	FLevelLocals *Level;
+
+	void SetTexture(side_t *side, int position, const char *name, FMissingTextureTracker &track);
+	void SetTexture(sector_t *sector, int index, int position, const char *name, FMissingTextureTracker &track, bool truncate);
+	void SetTexture(side_t *side, int position, uint32_t *blend, const char *name);
+	void SetTextureNoErr(side_t *side, int position, uint32_t *color, const char *name, bool *validcolor, bool isFog);
+
+	void FloodZone(sector_t *sec, int zonenum);
+	void LoadGLZSegs(FileReader &data, int type);
+	void LoadZSegs(FileReader &data);
+	void LoadZNodes(FileReader &data, int glnodes);
+
+	int DetermineTranslucency(int lumpnum);
+	void SetLineID(int i, line_t *ld);
+	void SaveLineSpecial(line_t *ld);
+	void FinishLoadingLineDef(line_t *ld, int alpha);
+	void SetSideNum(side_t **sidenum_p, uint16_t sidenum);
+	void AllocateSideDefs(MapData *map, int count);
+	void ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmapsidedef_t *msd, int special, int tag, short *alpha, FMissingTextureTracker &missingtex);
+	void CreateBlockMap();
+
+	void AddToList(uint8_t *hitlist, FTextureID texid, int bitmask);
+
+public:
+
+	void FloodZones();
+	void LoadVertexes(MapData * map);
+	void LoadExtendedNodes(FileReader &dalump, uint32_t id);
+	template<class segtype> void LoadSegs(MapData * map);
+	template<class subsectortype, class segtype> void LoadSubsectors(MapData * map);
+	template<class nodetype, class subsectortype> void LoadNodes(MapData * map);
+	bool LoadGLNodes(MapData * map);
+	bool CheckCachedNodes(MapData *map);
+	bool CheckNodes(MapData * map, bool rebuilt, int buildtime);
+
+	void LoadSectors(MapData *map, FMissingTextureTracker &missingtex);
+	void LoadThings(MapData * map);
+	void LoadThings2(MapData * map);
+
+	void SpawnThings(int position);
+	void FinishLoadingLineDefs();
+	void LoadLineDefs(MapData * map);
+	void LoadLineDefs2(MapData * map);
+	void LoopSidedefs(bool firstloop);
+	void LoadSideDefs2(MapData *map, FMissingTextureTracker &missingtex);
+	void LoadBlockMap(MapData * map);
+	void LoadReject(MapData * map, bool junk);
+	void LoadBehavior(MapData * map);
+	void GetPolySpots(MapData * map, TArray<FNodeBuilder::FPolyStart> &spots, TArray<FNodeBuilder::FPolyStart> &anchors);
+	void GroupLines(bool buildmap);
+	void PrecacheLevel();
+	void ParseTextMap(MapData *map, FMissingTextureTracker &missingtex);
+	void SummarizeMissingTextures(const FMissingTextureTracker &missing);
+
+	MapLoader(FLevelLocals *lev)
+	{
+		Level = lev;
+	}
+};
 
 #endif

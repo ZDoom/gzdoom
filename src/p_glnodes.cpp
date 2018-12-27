@@ -66,9 +66,6 @@
 CVAR(Bool, gl_cachenodes, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_cachetime, 0.6f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
-static void CreateCachedNodes(MapData *map);
-
-
 // fixed 32 bit gl_vert format v2.0+ (glBsp 1.91)
 struct mapglvertex_t
 {

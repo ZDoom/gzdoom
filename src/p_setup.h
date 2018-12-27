@@ -192,17 +192,15 @@ struct sidei_t	// [RH] Only keep BOOM sidedef init stuff around for init
 	};
 };
 extern sidei_t *sidetemp;
+extern TArray<FMapThing> MapThingsConverted;
+extern bool ForceNodeBuild;
 
 struct FMissingCount
 {
-	FMissingCount() : Count(0) {}
-	int Count;
+	int Count = 0;
 };
+
 typedef TMap<FString,FMissingCount> FMissingTextureTracker;
-
-extern TMap<unsigned,unsigned> MapThingsUserDataIndex;	// from mapthing idx -> user data idx
-extern TArray<FUDMFKey> MapThingsUserData;
-
 struct FLevelLocals;
 
 class MapLoader
@@ -214,6 +212,20 @@ class MapLoader
 	int firstglvertex;	// helpers for loading GL nodes from GWA files.
 	bool format5;
 
+	TArray<vertexdata_t> vertexdatas;
+
+	TMap<unsigned, unsigned>  MapThingsUserDataIndex;	// from mapthing idx -> user data idx
+	TArray<FUDMFKey> MapThingsUserData;
+	int sidecount;
+	TArray<int>		linemap;
+
+	void SlopeLineToPoint(int lineid, const DVector3 &pos, bool slopeCeil);
+	void CopyPlane(int tag, sector_t *dest, bool copyCeil);
+	void CopyPlane(int tag, const DVector2 &pos, bool copyCeil);
+	void SetSlope(secplane_t *plane, bool setCeil, int xyangi, int zangi, const DVector3 &pos);
+	void VavoomSlope(sector_t * sec, int id, const DVector3 &pos, int which);
+	void SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, const int *oldvertextable);
+	void AlignPlane(sector_t *sec, line_t *line, int which);
 
 	int checkGLVertex(int num);
 	int checkGLVertex3(int num);
@@ -242,6 +254,7 @@ class MapLoader
 	void SetSideNum(side_t **sidenum_p, uint16_t sidenum);
 	void AllocateSideDefs(MapData *map, int count);
 	void ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmapsidedef_t *msd, int special, int tag, short *alpha, FMissingTextureTracker &missingtex);
+	void SetMapThingUserData(AActor *actor, unsigned udi);
 	void CreateBlockMap();
 
 	void AddToList(uint8_t *hitlist, FTextureID texid, int bitmask);
@@ -278,6 +291,9 @@ public:
 	void ParseTextMap(MapData *map, FMissingTextureTracker &missingtex);
 	void SummarizeMissingTextures(const FMissingTextureTracker &missing);
 	void SetRenderSector();
+	void SpawnSlopeMakers(FMapThing *firstmt, FMapThing *lastmt, const int *oldvertextable);
+	void SetSlopes();
+	void CopySlopes();
 
 	MapLoader(FLevelLocals *lev)
 	{

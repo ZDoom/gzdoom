@@ -123,7 +123,6 @@ enum
 
 extern bool		ForceNodeBuild;
 extern TArray<FMapThing> MapThingsConverted;
-extern TArray<int>		linemap;
 
 
 #define CHECK_N(f) if (!(namespace_bits&(f))) break;
@@ -437,7 +436,7 @@ public:
 	UDMFParser(MapLoader *ld, FMissingTextureTracker &missing)
 		: loader(ld), missingTex(missing)
 	{
-		linemap.Clear();
+		loader->linemap.Clear();
 	}
 
   void ReadUserKey(FUDMFKey &ukey) {
@@ -770,7 +769,7 @@ public:
 					FUDMFKey ukey;
 					ukey.Key = key;
 					ReadUserKey(ukey);
-					MapThingsUserData.Push(ukey);
+					loader->MapThingsUserData.Push(ukey);
 				}
 				break;
 			}
@@ -2067,7 +2066,7 @@ public:
 					sidecount++;
 				if (ParsedLines[i].sidedef[1] != NULL)
 					sidecount++;
-				linemap.Push(i+skipped);
+				loader->linemap.Push(i+skipped);
 				i++;
 			}
 		}
@@ -2216,17 +2215,17 @@ public:
 			if (sc.Compare("thing"))
 			{
 				FMapThing th;
-				unsigned userdatastart = MapThingsUserData.Size();
+				unsigned userdatastart = loader->MapThingsUserData.Size();
 				ParseThing(&th);
 				MapThingsConverted.Push(th);
-				if (userdatastart < MapThingsUserData.Size())
+				if (userdatastart < loader->MapThingsUserData.Size())
 				{ // User data added
-					MapThingsUserDataIndex[MapThingsConverted.Size()-1] = userdatastart;
+					loader->MapThingsUserDataIndex[MapThingsConverted.Size()-1] = userdatastart;
 					// Mark end of the user data for this map thing
 					FUDMFKey ukey;
 					ukey.Key = NAME_None;
 					ukey = 0;
-					MapThingsUserData.Push(ukey);
+					loader->MapThingsUserData.Push(ukey);
 				}
 			}
 			else if (sc.Compare("linedef"))
@@ -2256,7 +2255,7 @@ public:
 				vertexdata_t vd;
 				ParseVertex(&vt, &vd);
 				ParsedVertices.Push(vt);
-				vertexdatas.Push(vd);
+				loader->vertexdatas.Push(vd);
 			}
 			else
 			{

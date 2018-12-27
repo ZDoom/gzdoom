@@ -40,6 +40,7 @@
 #include "p_spec.h"
 #include "g_levellocals.h"
 #include "actor.h"
+#include "p_setup.h"
 
 //===========================================================================
 //
@@ -47,14 +48,14 @@
 //
 //===========================================================================
 
-static void P_SlopeLineToPoint (int lineid, const DVector3 &pos, bool slopeCeil)
+void MapLoader::SlopeLineToPoint (int lineid, const DVector3 &pos, bool slopeCeil)
 {
 	int linenum;
 
 	FLineIdIterator itr(lineid);
 	while ((linenum = itr.Next()) >= 0)
 	{
-		const line_t *line = &level.lines[linenum];
+		const line_t *line = &Level->lines[linenum];
 		sector_t *sec;
 		secplane_t *plane;
 		
@@ -116,7 +117,7 @@ static void P_SlopeLineToPoint (int lineid, const DVector3 &pos, bool slopeCeil)
 //
 //===========================================================================
 
-static void P_CopyPlane (int tag, sector_t *dest, bool copyCeil)
+void MapLoader::CopyPlane (int tag, sector_t *dest, bool copyCeil)
 {
 	sector_t *source;
 	int secnum;
@@ -127,7 +128,7 @@ static void P_CopyPlane (int tag, sector_t *dest, bool copyCeil)
 		return;
 	}
 
-	source = &level.sectors[secnum];
+	source = &Level->sectors[secnum];
 
 	if (copyCeil)
 	{
@@ -139,10 +140,10 @@ static void P_CopyPlane (int tag, sector_t *dest, bool copyCeil)
 	}
 }
 
-static void P_CopyPlane (int tag, const DVector2 &pos, bool copyCeil)
+void MapLoader::CopyPlane (int tag, const DVector2 &pos, bool copyCeil)
 {
 	sector_t *dest = P_PointInSector (pos);
-	P_CopyPlane(tag, dest, copyCeil);
+	CopyPlane(tag, dest, copyCeil);
 }
 
 //===========================================================================
@@ -151,7 +152,7 @@ static void P_CopyPlane (int tag, const DVector2 &pos, bool copyCeil)
 //
 //===========================================================================
 
-void P_SetSlope (secplane_t *plane, bool setCeil, int xyangi, int zangi, const DVector3 &pos)
+void MapLoader::SetSlope (secplane_t *plane, bool setCeil, int xyangi, int zangi, const DVector3 &pos)
 {
 	DAngle xyang;
 	DAngle zang;
@@ -201,7 +202,7 @@ void P_SetSlope (secplane_t *plane, bool setCeil, int xyangi, int zangi, const D
 //
 //===========================================================================
 
-void P_VavoomSlope(sector_t * sec, int id, const DVector3 &pos, int which)
+void MapLoader::VavoomSlope(sector_t * sec, int id, const DVector3 &pos, int which)
 {
 	for(auto l : sec->Lines)
 	{
@@ -247,7 +248,7 @@ void P_VavoomSlope(sector_t * sec, int id, const DVector3 &pos, int which)
 //
 //==========================================================================
 
-static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, const int *oldvertextable)
+void MapLoader::SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, const int *oldvertextable)
 {
 	TMap<int, double> vt_heights[2];
 	FMapThing *mt;
@@ -259,9 +260,9 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 		{
 			if (mt->info->Special == SMT_VertexFloorZ || mt->info->Special == SMT_VertexCeilingZ)
 			{
-				for (unsigned i = 0; i < level.vertexes.Size(); i++)
+				for (unsigned i = 0; i < Level->vertexes.Size(); i++)
 				{
-					if (level.vertexes[i].fX() == mt->pos.X && level.vertexes[i].fY() == mt->pos.Y)
+					if (Level->vertexes[i].fX() == mt->pos.X && Level->vertexes[i].fY() == mt->pos.Y)
 					{
 						if (mt->info->Special == SMT_VertexFloorZ)
 						{
@@ -302,7 +303,7 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 
 	if (vt_found)
 	{
-		for (auto &sec : level.sectors)
+		for (auto &sec : Level->sectors)
 		{
 			if (sec.Lines.Size() != 3) continue;	// only works with triangular sectors
 
@@ -315,9 +316,9 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 			vi3 = (sec.Lines[1]->v1 == sec.Lines[0]->v1 || sec.Lines[1]->v1 == sec.Lines[0]->v2)?
 				sec.Lines[1]->v2->Index() : sec.Lines[1]->v1->Index();
 
-			vt1 = DVector3(level.vertexes[vi1].fPos(), 0);
-			vt2 = DVector3(level.vertexes[vi2].fPos(), 0);
-			vt3 = DVector3(level.vertexes[vi3].fPos(), 0);
+			vt1 = DVector3(Level->vertexes[vi1].fPos(), 0);
+			vt2 = DVector3(Level->vertexes[vi2].fPos(), 0);
+			vt3 = DVector3(Level->vertexes[vi3].fPos(), 0);
 
 			for(int j=0; j<2; j++)
 			{
@@ -330,7 +331,7 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 				vt2.Z = h2? *h2 : j==0? sec.GetPlaneTexZ(sector_t::floor) : sec.GetPlaneTexZ(sector_t::ceiling);
 				vt3.Z = h3? *h3 : j==0? sec.GetPlaneTexZ(sector_t::floor) : sec.GetPlaneTexZ(sector_t::ceiling);
 
-				if (P_PointOnLineSidePrecise(level.vertexes[vi3].fX(), level.vertexes[vi3].fY(), sec.Lines[0]) == 0)
+				if (P_PointOnLineSidePrecise(Level->vertexes[vi3].fX(), Level->vertexes[vi3].fY(), sec.Lines[0]) == 0)
 				{
 					vec1 = vt2 - vt3;
 					vec2 = vt1 - vt3;
@@ -360,7 +361,7 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 
 				secplane_t *plane = j==0? &sec.floorplane : &sec.ceilingplane;
 
-				double dist = -cross[0] * level.vertexes[vi3].fX() - cross[1] * level.vertexes[vi3].fY() - cross[2] * vt3.Z;
+				double dist = -cross[0] * Level->vertexes[vi3].fX() - cross[1] * Level->vertexes[vi3].fY() - cross[2] * vt3.Z;
 				plane->set(cross[0], cross[1], cross[2], dist);
 			}
 		}
@@ -373,7 +374,7 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 //
 //===========================================================================
 
-void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldvertextable)
+void MapLoader::SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldvertextable)
 {
 	FMapThing *mt;
 
@@ -402,15 +403,15 @@ void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldve
 
 			if (mt->info->Special <= SMT_SlopeCeilingPointLine)
 			{ // SlopeFloorPointLine and SlopCeilingPointLine
-				P_SlopeLineToPoint (mt->args[0], pos, ceiling);
+				SlopeLineToPoint (mt->args[0], pos, ceiling);
 			}
 			else if (mt->info->Special <= SMT_SetCeilingSlope)
 			{ // SetFloorSlope and SetCeilingSlope
-				P_SetSlope (refplane, ceiling, mt->angle, mt->args[0], pos);
+				SetSlope (refplane, ceiling, mt->angle, mt->args[0], pos);
 			}
 			else 
 			{ // VavoomFloor and VavoomCeiling (these do not perform any sector height adjustment - z is absolute)
-				P_VavoomSlope(sec, mt->thingid, mt->pos, ceiling); 
+				VavoomSlope(sec, mt->thingid, mt->pos, ceiling); 
 			}
 			mt->EdNum = 0;
 		}
@@ -421,12 +422,12 @@ void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldve
 		if (mt->info != NULL && mt->info->Type == NULL &&
 			(mt->info->Special == SMT_CopyFloorPlane || mt->info->Special == SMT_CopyCeilingPlane))
 		{
-			P_CopyPlane (mt->args[0], mt->pos, mt->info->Special == SMT_CopyCeilingPlane);
+			CopyPlane (mt->args[0], mt->pos, mt->info->Special == SMT_CopyCeilingPlane);
 			mt->EdNum = 0;
 		}
 	}
 
-	P_SetSlopesFromVertexHeights(firstmt, lastmt, oldvertextable);
+	SetSlopesFromVertexHeights(firstmt, lastmt, oldvertextable);
 }
 
 
@@ -445,7 +446,7 @@ void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldve
 //
 //===========================================================================
 
-static void P_AlignPlane(sector_t *sec, line_t *line, int which)
+void MapLoader::AlignPlane(sector_t *sec, line_t *line, int which)
 {
 	sector_t *refsec;
 	double bestdist;
@@ -515,11 +516,11 @@ static void P_AlignPlane(sector_t *sec, line_t *line, int which)
 //
 //===========================================================================
 
-void P_SetSlopes ()
+void MapLoader::SetSlopes ()
 {
 	int s;
 
-	for (auto &line : level.lines)
+	for (auto &line : Level->lines)
 	{
 		if (line.special == Plane_Align)
 		{
@@ -538,9 +539,9 @@ void P_SetSlopes ()
 						bits = (line.args[0] >> 2) & 3;
 
 					if (bits == 1)			// align front side to back
-						P_AlignPlane (line.frontsector, &line, s);
+						AlignPlane (line.frontsector, &line, s);
 					else if (bits == 2)		// align back side to front
-						P_AlignPlane (line.backsector, &line, s);
+						AlignPlane (line.backsector, &line, s);
 				}
 			}
 		}
@@ -553,9 +554,9 @@ void P_SetSlopes ()
 //
 //===========================================================================
 
-void P_CopySlopes()
+void MapLoader::CopySlopes()
 {
-	for (auto &line : level.lines)
+	for (auto &line : Level->lines)
 	{
 		if (line.special == Plane_Copy)
 		{
@@ -569,7 +570,7 @@ void P_CopySlopes()
 			for (int s = 0; s < (line.backsector ? 4 : 2); s++)
 			{
 				if (line.args[s])
-					P_CopyPlane(line.args[s], 
+					CopyPlane(line.args[s], 
 					(s & 2 ? line.backsector : line.frontsector), s & 1);
 			}
 

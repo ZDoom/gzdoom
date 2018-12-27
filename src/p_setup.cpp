@@ -109,11 +109,13 @@
 
 #include "fragglescript/t_fs.h"
 
+sidei_t *sidetemp;
+TArray<FMapThing> MapThingsConverted;
+bool ForceNodeBuild;
+
+
 #define MISSING_TEXTURE_WARN_LIMIT		20
 
-void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldvertextable);
-void P_SetSlopes ();
-void P_CopySlopes();
 void BloodCrypt (void *data, int key, int len);
 void P_ClearUDMFKeys();
 void InitRenderInfo();
@@ -138,24 +140,6 @@ inline bool P_LoadBuildMap(uint8_t *mapdata, size_t len, FMapThing **things, int
 {
 	return false;
 }
-
-
-//
-// MAP related Lookup tables.
-// Store VERTEXES, LINEDEFS, SIDEDEFS, etc.
-//
-TArray<vertexdata_t> vertexdatas;
-
-TArray<FMapThing> MapThingsConverted;
-TMap<unsigned,unsigned>  MapThingsUserDataIndex;	// from mapthing idx -> user data idx
-TArray<FUDMFKey> MapThingsUserData;
-
-int sidecount;
-sidei_t *sidetemp;
-
-TArray<int>		linemap;
-
-bool		ForceNodeBuild;
 
 //===========================================================================
 //
@@ -1235,7 +1219,7 @@ void MapLoader::LoadNodes (MapData * map)
 //
 //===========================================================================
 
-static void SetMapThingUserData(AActor *actor, unsigned udi)
+void MapLoader::SetMapThingUserData(AActor *actor, unsigned udi)
 {
 	if (actor == nullptr)
 	{
@@ -2831,7 +2815,7 @@ void MapLoader::GroupLines (bool buildmap)
 	times[5].Clock();
 	if (!buildmap)
 	{
-		P_SetSlopes ();
+		SetSlopes ();
 	}
 	times[5].Unclock();
 
@@ -3112,9 +3096,6 @@ void P_FreeLevelData ()
 	// [ZZ] delete per-map event handlers
 	E_Shutdown(true);
 	MapThingsConverted.Clear();
-	MapThingsUserDataIndex.Clear();
-	MapThingsUserData.Clear();
-	linemap.Clear();
 	R_FreePastViewers();
 	P_ClearUDMFKeys();
 
@@ -3461,9 +3442,6 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 		loader.LoopSidedefs(true);
 		times[6].Unclock();
 
-		linemap.Clear();
-		linemap.ShrinkToFit();
-
 		loader.SummarizeMissingTextures(missingtex);
 	}
 	else
@@ -3664,8 +3642,8 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 	if (!buildmap)
 	{
 		// [RH] Spawn slope creating things first.
-		P_SpawnSlopeMakers(&MapThingsConverted[0], &MapThingsConverted[MapThingsConverted.Size()], oldvertextable);
-		P_CopySlopes();
+		loader.SpawnSlopeMakers(&MapThingsConverted[0], &MapThingsConverted[MapThingsConverted.Size()], oldvertextable);
+		loader.CopySlopes();
 
 		// Spawn 3d floors - must be done before spawning things so it can't be done in P_SpawnSpecials
 		P_Spawn3DFloors();
@@ -3881,8 +3859,6 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 		}
 	}
 	MapThingsConverted.Clear();
-	MapThingsUserDataIndex.Clear();
-	MapThingsUserData.Clear();
 
 	// Create a backup of the map data so the savegame code can toss out all fields that haven't changed in order to reduce processing time and file size.
 	// Note that we want binary identity here, so assignment is not sufficient because it won't initialize any padding bytes.

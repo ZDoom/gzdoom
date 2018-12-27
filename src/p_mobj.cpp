@@ -2530,9 +2530,13 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 		{
 			mo->AddZ(DAngle(360 / 80.f * level.maptime).Sin() / 8);
 		}
-		mo->Vel.Z *= FRICTION_FLY;
+
+		if (!(mo->flags8 & MF8_NOFRICTION))
+		{
+			mo->Vel.Z *= FRICTION_FLY;
+		}
 	}
-	if (mo->waterlevel && !(mo->flags & MF_NOGRAVITY))
+	if (mo->waterlevel && !(mo->flags & MF_NOGRAVITY) && !(mo->flags8 & MF8_NOFRICTION))
 	{
 		double friction = -1;
 

@@ -80,12 +80,11 @@ namespace swrenderer
 		sector_t tempsec;
 		const sector_t *sec = Thread->OpaquePass->FakeFlat(frontsector, &tempsec, nullptr, nullptr, nullptr, 0, 0, 0, 0);
 
-		FDynamicColormap *basecolormap = GetColorTable(sec->Colormap, sec->SpecialColors[sector_t::walltop]);	// [RH] Set basecolormap
-
-		bool foggy = ds->foggy;
-		int lightlevel = ds->lightlevel;
-		rw_lightstep = ds->lightstep;
-		rw_light = ds->light + (x1 - ds->x1) * rw_lightstep;
+		mLight.basecolormap = GetColorTable(sec->Colormap, sec->SpecialColors[sector_t::walltop]);	// [RH] Set basecolormap
+		mLight.foggy = ds->foggy;
+		mLight.lightlevel = ds->lightlevel;
+		mLight.lightstep = ds->lightstep;
+		mLight.light = ds->light + (x1 - ds->x1) * mLight.lightstep;
 
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
 
@@ -95,9 +94,9 @@ namespace swrenderer
 			if (clipTop <= frontsector->e->XFloor.lightlist[i].plane.Zat0())
 			{
 				lightlist_t *lit = &frontsector->e->XFloor.lightlist[i];
-				basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
-				foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
-				lightlevel = curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr);
+				mLight.basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
+				mLight.foggy = (level.fadeto || mLight.basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
+				mLight.lightlevel = curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr);
 				break;
 			}
 		}
@@ -107,7 +106,7 @@ namespace swrenderer
 
 		SpriteDrawerArgs columndrawerargs;
 		ColormapLight cmlight;
-		cmlight.SetColormap(Thread, MINZ, lightlevel, foggy, basecolormap, false, false, false, false, false);
+		cmlight.SetColormap(Thread, MINZ, mLight.lightlevel, mLight.foggy, mLight.basecolormap, false, false, false, false, false);
 		bool visible = columndrawerargs.SetStyle(viewport, LegacyRenderStyles[additive ? STYLE_Add : STYLE_Translucent], alpha, 0, 0, cmlight);
 		if (!visible && !ds->bFogBoundary && !ds->Has3DFloorWalls())
 		{
@@ -123,7 +122,7 @@ namespace swrenderer
 			const short *mceilingclip = ds->sprtopclip - ds->x1;
 
 			RenderFogBoundary renderfog;
-			renderfog.Render(Thread, x1, x2, mceilingclip, mfloorclip, lightlevel, ds->foggy, rw_light, rw_lightstep, basecolormap);
+			renderfog.Render(Thread, x1, x2, mceilingclip, mfloorclip, mLight.lightlevel, ds->foggy, mLight.light, mLight.lightstep, mLight.basecolormap);
 
 			if (ds->maskedtexturecol == nullptr)
 				renderwall = false;
@@ -134,7 +133,7 @@ namespace swrenderer
 		}
 
 		if (renderwall)
-			notrelevant = RenderWall(ds, x1, x2, basecolormap, columndrawerargs, visible, lightlevel, foggy);
+			notrelevant = RenderWall(ds, x1, x2, columndrawerargs, visible);
 
 		if (ds->Has3DFloorFrontSectorWalls() || ds->Has3DFloorBackSectorWalls())
 		{
@@ -147,7 +146,7 @@ namespace swrenderer
 		}
 	}
 
-	bool RenderDrawSegment::RenderWall(DrawSegment *ds, int x1, int x2, FDynamicColormap *basecolormap, SpriteDrawerArgs &columndrawerargs, bool visible, int lightlevel, bool foggy)
+	bool RenderDrawSegment::RenderWall(DrawSegment *ds, int x1, int x2, SpriteDrawerArgs &columndrawerargs, bool visible)
 	{
 		auto renderstyle = DefaultRenderStyle();
 		auto viewport = Thread->Viewport.get();
@@ -320,7 +319,7 @@ namespace swrenderer
 				for (int x = x1; x < x2; ++x)
 				{
 					if (needslight)
-						columndrawerargs.SetLight(rw_light, lightlevel, foggy, Thread->Viewport.get());
+						columndrawerargs.SetLight(mLight.light, mLight.lightlevel, mLight.foggy, Thread->Viewport.get());
 
 					fixed_t iscale = xs_Fix<16>::ToFix(MaskedSWall[x] * MaskedScaleY);
 					double sprtopscreen;
@@ -331,7 +330,7 @@ namespace swrenderer
 
 					columndrawerargs.DrawMaskedColumn(Thread, x, iscale, tex, maskedtexturecol[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, renderstyle);
 
-					rw_light += rw_lightstep;
+					mLight.light += mLight.lightstep;
 					spryscale += rw_scalestep;
 				}
 			}
@@ -399,14 +398,14 @@ namespace swrenderer
 			bool additive = (curline->linedef->flags & ML_ADDTRANS) != 0;
 
 			RenderWallPart renderWallpart(Thread);
-			renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, mceilingclip, mfloorclip, texturemid, MaskedSWall, maskedtexturecol, ds->yscale, top, bot, true, additive, alpha, lightlevel, rw_offset, rw_light, rw_lightstep, nullptr, ds->foggy, basecolormap);
+			renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, mceilingclip, mfloorclip, texturemid, MaskedSWall, maskedtexturecol, ds->yscale, top, bot, true, additive, alpha, rw_offset, mLight, nullptr);
 		}
 
 		return false;
 	}
 
 	// kg3D - render one fake wall
-	void RenderDrawSegment::RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int lightlevel, FDynamicColormap *basecolormap, double clipTop, double clipBottom, FSoftwareTexture *rw_pic)
+	void RenderDrawSegment::RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, double clipTop, double clipBottom, FSoftwareTexture *rw_pic)
 	{
 		int i;
 		double xscale;
@@ -416,8 +415,8 @@ namespace swrenderer
 		if (Alpha <= 0)
 			return;
 
-		rw_lightstep = ds->lightstep;
-		rw_light = ds->light + (x1 - ds->x1) * rw_lightstep;
+		mLight.lightstep = ds->lightstep;
+		mLight.light = ds->light + (x1 - ds->x1) * mLight.lightstep;
 
 		const short *mfloorclip = ds->sprbottomclip - ds->x1;
 		const short *mceilingclip = ds->sprtopclip - ds->x1;
@@ -501,9 +500,9 @@ namespace swrenderer
 		GetMaskedWallTopBottom(ds, top, bot);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, texturemid, MaskedSWall, walltexcoords.UPos, yscale, top, bot, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha, lightlevel, rw_offset, rw_light, rw_lightstep, nullptr, ds->foggy, basecolormap);
+		renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, texturemid, MaskedSWall, walltexcoords.UPos, yscale, top, bot, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha, rw_offset, mLight, nullptr);
 
-		RenderDecal::RenderDecals(Thread, curline->sidedef, ds, lightlevel, rw_light, rw_lightstep, curline, WallC, ds->foggy, basecolormap, wallupper.ScreenY, walllower.ScreenY, true);
+		RenderDecal::RenderDecals(Thread, curline->sidedef, ds, curline, WallC, mLight, wallupper.ScreenY, walllower.ScreenY, true);
 	}
 
 	// kg3D - walls of fake floors
@@ -696,8 +695,8 @@ namespace swrenderer
 					rw_pic = rw_tex && rw_tex->isValid() ? rw_tex->GetSoftwareTexture() : nullptr;
 				}
 				// correct colors now
-				FDynamicColormap *basecolormap = nullptr;
-				int lightlevel = ds->lightlevel;
+				mLight.basecolormap = nullptr;
+				mLight.lightlevel = ds->lightlevel;
 				CameraLight *cameraLight = CameraLight::Instance();
 				if (cameraLight->FixedLightLevel() < 0)
 				{
@@ -708,9 +707,9 @@ namespace swrenderer
 							if (clipTop <= backsector->e->XFloor.lightlist[j].plane.Zat0())
 							{
 								lightlist_t *lit = &backsector->e->XFloor.lightlist[j];
-								basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
-								//bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
-								lightlevel = curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr);
+								mLight.basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
+								mLight.foggy = (level.fadeto || mLight.basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
+								mLight.lightlevel = curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr);
 								break;
 							}
 						}
@@ -722,19 +721,19 @@ namespace swrenderer
 							if (clipTop <= frontsector->e->XFloor.lightlist[j].plane.Zat0())
 							{
 								lightlist_t *lit = &frontsector->e->XFloor.lightlist[j];
-								basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
-								//bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
-								lightlevel = curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr);
+								mLight.basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
+								mLight.foggy = (level.fadeto || mLight.basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
+								mLight.lightlevel = curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr);
 								break;
 							}
 						}
 					}
 				}
-				if (basecolormap == nullptr) basecolormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::walltop]);
+				if (mLight.basecolormap == nullptr) mLight.basecolormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::walltop]);
 
 				if (rw_pic && !swimmable_found)
 				{
-					RenderFakeWall(ds, x1, x2, fover ? fover : rover, lightlevel, basecolormap, clipTop, clipBottom, rw_pic);
+					RenderFakeWall(ds, x1, x2, fover ? fover : rover, clipTop, clipBottom, rw_pic);
 				}
 				break;
 			}
@@ -883,8 +882,8 @@ namespace swrenderer
 					rw_pic = rw_tex && rw_tex->isValid() ? rw_tex->GetSoftwareTexture() : nullptr;
 				}
 				// correct colors now
-				FDynamicColormap *basecolormap = nullptr;
-				int lightlevel = ds->lightlevel;
+				mLight.basecolormap = nullptr;
+				mLight.lightlevel = ds->lightlevel;
 				CameraLight *cameraLight = CameraLight::Instance();
 				if (cameraLight->FixedLightLevel() < 0)
 				{
@@ -895,9 +894,9 @@ namespace swrenderer
 							if (clipTop <= backsector->e->XFloor.lightlist[j].plane.Zat0())
 							{
 								lightlist_t *lit = &backsector->e->XFloor.lightlist[j];
-								basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
-								bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
-								lightlevel = curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr);
+								mLight.basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
+								mLight.foggy = (level.fadeto || mLight.basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
+								mLight.lightlevel = curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr);
 								break;
 							}
 						}
@@ -909,19 +908,19 @@ namespace swrenderer
 							if (clipTop <= frontsector->e->XFloor.lightlist[j].plane.Zat0())
 							{
 								lightlist_t *lit = &frontsector->e->XFloor.lightlist[j];
-								basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
-								bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
-								lightlevel = curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr);
+								mLight.basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
+								mLight.foggy = (level.fadeto || mLight.basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE)); // [RH] set foggy flag
+								mLight.lightlevel = curline->sidedef->GetLightLevel(ds->foggy, *lit->p_lightlevel, lit->lightsource != nullptr);
 								break;
 							}
 						}
 					}
 				}
-				if (basecolormap == nullptr) basecolormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::walltop]);
+				if (mLight.basecolormap == nullptr) mLight.basecolormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::walltop]);
 
 				if (rw_pic && !swimmable_found)
 				{
-					RenderFakeWall(ds, x1, x2, fover ? fover : rover, lightlevel, basecolormap, clipTop, clipBottom, rw_pic);
+					RenderFakeWall(ds, x1, x2, fover ? fover : rover, clipTop, clipBottom, rw_pic);
 				}
 				break;
 			}

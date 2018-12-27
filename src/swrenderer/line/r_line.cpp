@@ -78,8 +78,8 @@ namespace swrenderer
 		mBackSector = fakebacksector;
 		mFloorPlane = linefloorplane;
 		mCeilingPlane = lineceilingplane;
-		foggy = infog;
-		basecolormap = colormap;
+		mLight.foggy = infog;
+		mLight.basecolormap = colormap;
 		mLineSegment = line;
 		m3DFloor = opaque3dfloor;
 
@@ -345,7 +345,7 @@ namespace swrenderer
 		draw_segment->x1 = start;
 		draw_segment->x2 = stop;
 		draw_segment->curline = mLineSegment;
-		draw_segment->foggy = foggy;
+		draw_segment->foggy = mLight.foggy;
 		draw_segment->SubsectorDepth = Thread->OpaquePass->GetSubsectorDepth(mSubsector->Index());
 
 		bool markportal = ShouldMarkPortal();
@@ -490,8 +490,8 @@ namespace swrenderer
 							draw_segment->iscalestep = 0;
 						}
 					}
-					draw_segment->light = rw_lightleft + rw_lightstep * (start - WallC.sx1);
-					draw_segment->lightstep = rw_lightstep;
+					draw_segment->light = mLight.lightleft + mLight.lightstep * (start - WallC.sx1);
+					draw_segment->lightstep = mLight.lightstep;
 
 					// Masked mMiddlePart.Textures should get the light level from the sector they reference,
 					// not from the current subsector, which is what the current lightlevel value
@@ -499,11 +499,11 @@ namespace swrenderer
 					// sector should be whichever one they move into.
 					if (mLineSegment->sidedef->Flags & WALLF_POLYOBJ)
 					{
-						draw_segment->lightlevel = lightlevel;
+						draw_segment->lightlevel = mLight.lightlevel;
 					}
 					else
 					{
-						draw_segment->lightlevel = mLineSegment->sidedef->GetLightLevel(foggy, mLineSegment->frontsector->lightlevel);
+						draw_segment->lightlevel = mLineSegment->sidedef->GetLightLevel(mLight.foggy, mLineSegment->frontsector->lightlevel);
 					}
 
 					if (draw_segment->bFogBoundary || draw_segment->maskedtexturecol != nullptr)
@@ -552,7 +552,7 @@ namespace swrenderer
 		// [ZZ] Only if not an active mirror
 		if (!markportal)
 		{
-			RenderDecal::RenderDecals(Thread, mLineSegment->sidedef, draw_segment, lightlevel, rw_lightleft, rw_lightstep, mLineSegment, WallC, foggy, basecolormap, walltop.ScreenY, wallbottom.ScreenY, false);
+			RenderDecal::RenderDecals(Thread, mLineSegment->sidedef, draw_segment, mLineSegment, WallC, mLight, walltop.ScreenY, wallbottom.ScreenY, false);
 		}
 
 		if (markportal)
@@ -789,14 +789,14 @@ namespace swrenderer
 			CameraLight *cameraLight = CameraLight::Instance();
 			if (cameraLight->FixedColormap() == nullptr && cameraLight->FixedLightLevel() < 0)
 			{
-				lightlevel = mLineSegment->sidedef->GetLightLevel(foggy, mFrontSector->lightlevel);
-				rw_lightleft = float(Thread->Light->WallVis(WallC.sz1, foggy));
-				rw_lightstep = float((Thread->Light->WallVis(WallC.sz2, foggy) - rw_lightleft) / (WallC.sx2 - WallC.sx1));
+				mLight.lightlevel = mLineSegment->sidedef->GetLightLevel(mLight.foggy, mFrontSector->lightlevel);
+				mLight.lightleft = float(Thread->Light->WallVis(WallC.sz1, mLight.foggy));
+				mLight.lightstep = float((Thread->Light->WallVis(WallC.sz2, mLight.foggy) - mLight.lightleft) / (WallC.sx2 - WallC.sx1));
 			}
 			else
 			{
-				rw_lightleft = 1;
-				rw_lightstep = 0;
+				mLight.lightleft = 1;
+				mLight.lightstep = 0;
 			}
 		}
 	}
@@ -1164,10 +1164,10 @@ namespace swrenderer
 			offset = -offset;
 		}
 
-		float rw_light = rw_lightleft + rw_lightstep * (x1 - WallC.sx1);
+		mLight.light = mLight.lightleft + mLight.lightstep * (x1 - WallC.sx1);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallupper.ScreenY, mTopPart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mBackCeilingZ1, mBackCeilingZ2), false, false, OPAQUE, lightlevel, offset, rw_light, rw_lightstep, GetLightList(), foggy, basecolormap);
+		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallupper.ScreenY, mTopPart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mBackCeilingZ1, mBackCeilingZ2), false, false, OPAQUE, offset, mLight, GetLightList());
 	}
 
 	void SWRenderLine::RenderMiddleTexture(int x1, int x2)
@@ -1197,10 +1197,10 @@ namespace swrenderer
 			offset = -offset;
 		}
 
-		float rw_light = rw_lightleft + rw_lightstep * (x1 - WallC.sx1);
+		mLight.light = mLight.lightleft + mLight.lightstep * (x1 - WallC.sx1);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallbottom.ScreenY, mMiddlePart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, lightlevel, offset, rw_light, rw_lightstep, GetLightList(), foggy, basecolormap);
+		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallbottom.ScreenY, mMiddlePart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, offset, mLight, GetLightList());
 	}
 
 	void SWRenderLine::RenderBottomTexture(int x1, int x2)
@@ -1231,10 +1231,10 @@ namespace swrenderer
 			offset = -offset;
 		}
 
-		float rw_light = rw_lightleft + rw_lightstep * (x1 - WallC.sx1);
+		mLight.light = mLight.lightleft + mLight.lightstep * (x1 - WallC.sx1);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walllower.ScreenY, wallbottom.ScreenY, mBottomPart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mBackFloorZ1, mBackFloorZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, lightlevel, offset, rw_light, rw_lightstep, GetLightList(), foggy, basecolormap);
+		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walllower.ScreenY, wallbottom.ScreenY, mBottomPart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mBackFloorZ1, mBackFloorZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, offset, mLight, GetLightList());
 	}
 
 	FLightNode *SWRenderLine::GetLightList()

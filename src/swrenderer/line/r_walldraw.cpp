@@ -349,11 +349,11 @@ namespace swrenderer
 		// Textures that aren't masked can use the faster opaque drawer
 		if (!rw_pic->GetTexture()->isMasked() && mask && alpha >= OPAQUE && !additive)
 		{
-			drawerargs.SetStyle(true, false, OPAQUE, basecolormap);
+			drawerargs.SetStyle(true, false, OPAQUE, mLight.basecolormap);
 		}
 		else
 		{
-			drawerargs.SetStyle(mask, additive, alpha, basecolormap);
+			drawerargs.SetStyle(mask, additive, alpha, mLight.basecolormap);
 		}
 
 		CameraLight *cameraLight = CameraLight::Instance();
@@ -368,8 +368,8 @@ namespace swrenderer
 
 		double xmagnitude = 1.0;
 
-		float curlight = light;
-		for (int x = x1; x < x2; x++, curlight += lightstep)
+		float curlight = mLight.light;
+		for (int x = x1; x < x2; x++, curlight += mLight.lightstep)
 		{
 			int y1 = uwal[x];
 			int y2 = dwal[x];
@@ -377,7 +377,7 @@ namespace swrenderer
 				continue;
 
 			if (!fixed)
-				drawerargs.SetLight(curlight, lightlevel, foggy, Thread->Viewport.get());
+				drawerargs.SetLight(curlight, mLight.lightlevel, mLight.foggy, Thread->Viewport.get());
 
 			if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
 
@@ -424,8 +424,8 @@ namespace swrenderer
 			}
 
 			lightlist_t *lit = &frontsector->e->XFloor.lightlist[i];
-			basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
-			lightlevel = curline->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, lit->lightsource != NULL);
+			mLight.basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
+			mLight.lightlevel = curline->sidedef->GetLightLevel(mLight.foggy, *lit->p_lightlevel, lit->lightsource != NULL);
 		}
 
 		ProcessNormalWall(up, dwal, texturemid, swal, lwal);
@@ -516,7 +516,7 @@ namespace swrenderer
 		}
 	}
 
-	void RenderWallPart::Render(sector_t *frontsector, seg_t *curline, const FWallCoords &WallC, FSoftwareTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, double texturemid, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, bool additive, fixed_t alpha, int lightlevel, fixed_t xoffset, float light, float lightstep, FLightNode *light_list, bool foggy, FDynamicColormap *basecolormap)
+	void RenderWallPart::Render(sector_t *frontsector, seg_t *curline, const FWallCoords &WallC, FSoftwareTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, double texturemid, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, bool additive, fixed_t alpha, fixed_t xoffset, const ProjectedWallLight &light, FLightNode *light_list)
 	{
 		this->x1 = x1;
 		this->x2 = x2;
@@ -524,12 +524,8 @@ namespace swrenderer
 		this->curline = curline;
 		this->WallC = WallC;
 		this->yrepeat = yscale;
-		this->lightlevel = lightlevel;
+		this->mLight = light;
 		this->xoffset = xoffset;
-		this->light = light;
-		this->lightstep = lightstep;
-		this->foggy = foggy;
-		this->basecolormap = basecolormap;
 		this->light_list = light_list;
 		this->rw_pic = pic;
 		this->mask = mask;

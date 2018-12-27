@@ -56,4 +56,16 @@ namespace swrenderer
 		void Project(RenderViewport *viewport, double walxrepeat, int x1, int x2, const FWallTmapVals &WallT);
 		void ProjectPos(RenderViewport *viewport, double walxrepeat, int x1, int x2, const FWallTmapVals &WallT);
 	};
+
+	class ProjectedWallLight
+	{
+	public:
+		int lightlevel;
+		bool foggy;
+		FDynamicColormap *basecolormap;
+
+		float lightleft;
+		float lightstep;
+		float light;
+	};
 }

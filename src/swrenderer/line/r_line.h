@@ -128,16 +128,11 @@ namespace swrenderer
 		FWallCoords WallC;
 		FWallTmapVals WallT;
 
-		bool foggy;
-		FDynamicColormap *basecolormap;
-
 		// Wall segment variables:
 
 		bool rw_prepped;
 
-		int lightlevel;
-		float rw_lightstep;
-		float rw_lightleft;
+		ProjectedWallLight mLight;
 
 		double lwallscale;
 

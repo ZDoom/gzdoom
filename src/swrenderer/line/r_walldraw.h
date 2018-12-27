@@ -63,13 +63,9 @@ namespace swrenderer
 			bool mask,
 			bool additive,
 			fixed_t alpha,
-			int lightlevel,
 			fixed_t xoffset,
-			float light,
-			float lightstep,
-			FLightNode *light_list,
-			bool foggy,
-			FDynamicColormap *basecolormap);
+			const ProjectedWallLight &light,
+			FLightNode *light_list);
 
 		RenderThread *Thread = nullptr;
 
@@ -88,13 +84,10 @@ namespace swrenderer
 		seg_t *curline = nullptr;
 		FWallCoords WallC;
 
+		ProjectedWallLight mLight;
+
 		double yrepeat = 0.0;
-		int lightlevel = 0;
 		fixed_t xoffset = 0;
-		float light = 0.0f;
-		float lightstep = 0.0f;
-		bool foggy = false;
-		FDynamicColormap *basecolormap = nullptr;
 		FLightNode *light_list = nullptr;
 		bool mask = false;
 		bool additive = false;

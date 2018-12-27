@@ -88,12 +88,6 @@ class PClassActor;
 #define NATIVE_TYPE(object)			(object->StaticType())			// Passed an object, returns the type of the C++ class representing the object
 
 // Enumerations for the meta classes created by ClassReg::RegisterClass()
-enum
-{
-	CLASSREG_PClass,
-	CLASSREG_PClassActor,
-};
-
 struct ClassReg
 {
 	PClass *MyClass;
@@ -103,8 +97,7 @@ struct ClassReg
 	const size_t *Pointers;
 	void (*ConstructNative)(void *);
 	void(*InitNatives)();
-	unsigned int SizeOf:28;
-	unsigned int MetaClassNum:4;
+	unsigned int SizeOf;
 
 	PClass *RegisterClass();
 	void SetupClass(PClass *cls);
@@ -124,9 +117,7 @@ private: \
 	DECLARE_ABSTRACT_CLASS(cls,parent) \
 public: \
 	typedef meta MetaClass; \
-	MetaClass *GetClass() const { return static_cast<MetaClass *>(DObject::GetClass()); } \
-protected: \
-	enum { MetaClassNum = CLASSREG_##meta }; private: \
+	MetaClass *GetClass() const { return static_cast<MetaClass *>(DObject::GetClass()); }
 
 #define DECLARE_CLASS(cls,parent) \
 	DECLARE_ABSTRACT_CLASS(cls,parent) \
@@ -155,8 +146,7 @@ protected: \
 		ptrs, \
 		create, \
 		nullptr, \
-		sizeof(cls), \
-		cls::MetaClassNum }; \
+		sizeof(cls) }; \
 	_DECLARE_TI(cls) \
 	PClass *cls::StaticType() const { return RegistrationInfo.MyClass; }
 
@@ -197,7 +187,6 @@ public:
 private:
 	typedef DObject ThisClass;
 protected:
-	enum { MetaClassNum = CLASSREG_PClass };
 
 	// Per-instance variables. There are four.
 #ifndef NDEBUG

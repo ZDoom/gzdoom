@@ -426,10 +426,7 @@ void P_Recalculate3DFloors(sector_t * sector)
 	// Translucent and swimmable floors are split if they overlap with solid ones.
 	if (ffloors.Size()>1)
 	{
-		TArray<F3DFloor*> oldlist;
-		
-		oldlist = ffloors;
-		ffloors.Clear();
+		TArray<F3DFloor*> oldlist = std::move(ffloors);
 
 		// first delete the old dynamic stuff
 		for(i=0;i<oldlist.Size();i++)
@@ -648,6 +645,40 @@ void P_Recalculate3DFloors(sector_t * sector)
 					newlight.flags = rover->flags;
 					lightlist.Push(newlight);
 				}
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
+// removes all dynamic data. This needs to be done once before creating
+// the vertex buffer.
+//
+//==========================================================================
+
+void P_ClearDynamic3DFloorData()
+{
+	for (auto &sec : level.sectors)
+	{
+		TArray<F3DFloor*> & ffloors = sec.e->XFloor.ffloors;
+
+		// delete the dynamic stuff
+		for (unsigned i = 0; i < ffloors.Size(); i++)
+		{
+			F3DFloor * rover = ffloors[i];
+
+			if (rover->flags&FF_DYNAMIC)
+			{
+				delete rover;
+				ffloors.Delete(i);
+				i--;
+				continue;
+			}
+			if (rover->flags&FF_CLIPPED)
+			{
+				rover->flags &= ~FF_CLIPPED;
+				rover->flags |= FF_EXISTS;
 			}
 		}
 	}
@@ -890,6 +921,11 @@ void P_Spawn3DFloors (void)
 		}
 		line.special=0;
 		line.args[0] = line.args[1] = line.args[2] = line.args[3] = line.args[4] = 0;
+	}
+
+	for (auto &sec : level.sectors)
+	{
+		P_Recalculate3DFloors(&sec);
 	}
 }
 

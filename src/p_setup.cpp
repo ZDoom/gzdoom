@@ -3770,6 +3770,9 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 		node.len = (float)g_sqrt(fdx * fdx + fdy * fdy);
 	}
 
+	// CreateVBO must be run on the plain 3D floor data.
+	P_ClearDynamic3DFloorData();
+
 	// This must be done BEFORE the PolyObj Spawn!!!
 	InitRenderInfo();			// create hardware independent renderer resources for the level.
 	screen->mVertexData->CreateVBO();

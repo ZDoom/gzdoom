@@ -123,6 +123,7 @@ void P_Recalculate3DFloors(sector_t *);
 void P_RecalculateAttached3DFloors(sector_t * sec);
 void P_RecalculateLights(sector_t *sector);
 void P_RecalculateAttachedLights(sector_t *sector);
+void P_ClearDynamic3DFloorData();
 
 lightlist_t * P_GetPlaneLight(sector_t * , secplane_t * plane, bool underside);
 void P_Spawn3DFloors( void );

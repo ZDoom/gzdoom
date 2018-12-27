@@ -71,15 +71,13 @@ namespace swrenderer
 		Thread = thread;
 	}
 
-	void SWRenderLine::Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, VisiblePlane *linefloorplane, VisiblePlane *lineceilingplane, bool infog, FDynamicColormap *colormap, Fake3DOpaque opaque3dfloor)
+	void SWRenderLine::Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, VisiblePlane *linefloorplane, VisiblePlane *lineceilingplane, Fake3DOpaque opaque3dfloor)
 	{
 		mSubsector = subsector;
 		mFrontSector = sector;
 		mBackSector = fakebacksector;
 		mFloorPlane = linefloorplane;
 		mCeilingPlane = lineceilingplane;
-		mLight.foggy = infog;
-		mLight.basecolormap = colormap;
 		mLineSegment = line;
 		m3DFloor = opaque3dfloor;
 
@@ -314,7 +312,7 @@ namespace swrenderer
 		if (!rw_prepped)
 		{
 			rw_prepped = true;
-			SetWallVariables(true);
+			SetWallVariables();
 		}
 
 		side_t *sidedef = mLineSegment->sidedef;
@@ -326,8 +324,7 @@ namespace swrenderer
 
 		// 3D floors code abuses the line render code to update plane clipping
 		// lists but doesn't actually draw anything.
-		bool onlyUpdatePlaneClip = (m3DFloor.type != Fake3DOpaque::Normal);
-		if (!onlyUpdatePlaneClip)
+		if (m3DFloor.type == Fake3DOpaque::Normal)
 			Thread->DrawSegments->Push(draw_segment);
 
 		draw_segment->CurrentPortalUniq = renderportal->CurrentPortalUniq;
@@ -345,7 +342,6 @@ namespace swrenderer
 		draw_segment->x1 = start;
 		draw_segment->x2 = stop;
 		draw_segment->curline = mLineSegment;
-		draw_segment->foggy = mLight.foggy;
 		draw_segment->SubsectorDepth = Thread->OpaquePass->GetSubsectorDepth(mSubsector->Index());
 
 		bool markportal = ShouldMarkPortal();
@@ -400,29 +396,30 @@ namespace swrenderer
 				}
 			}
 
-			if (!onlyUpdatePlaneClip && r_3dfloors)
+			if (m3DFloor.type == Fake3DOpaque::Normal)
 			{
-				if (mBackSector->e && mBackSector->e->XFloor.ffloors.Size()) {
-					for (i = 0; i < (int)mBackSector->e->XFloor.ffloors.Size(); i++) {
-						F3DFloor *rover = mBackSector->e->XFloor.ffloors[i];
-						if (rover->flags & FF_RENDERSIDES && (!(rover->flags & FF_INVERTSIDES) || rover->flags & FF_ALLSIDES)) {
-							draw_segment->SetHas3DFloorBackSectorWalls();
-							break;
+				if (r_3dfloors)
+				{
+					if (mBackSector->e && mBackSector->e->XFloor.ffloors.Size()) {
+						for (i = 0; i < (int)mBackSector->e->XFloor.ffloors.Size(); i++) {
+							F3DFloor *rover = mBackSector->e->XFloor.ffloors[i];
+							if (rover->flags & FF_RENDERSIDES && (!(rover->flags & FF_INVERTSIDES) || rover->flags & FF_ALLSIDES)) {
+								draw_segment->SetHas3DFloorBackSectorWalls();
+								break;
+							}
+						}
+					}
+					if (mFrontSector->e && mFrontSector->e->XFloor.ffloors.Size()) {
+						for (i = 0; i < (int)mFrontSector->e->XFloor.ffloors.Size(); i++) {
+							F3DFloor *rover = mFrontSector->e->XFloor.ffloors[i];
+							if (rover->flags & FF_RENDERSIDES && (rover->flags & FF_ALLSIDES || rover->flags & FF_INVERTSIDES)) {
+								draw_segment->SetHas3DFloorFrontSectorWalls();
+								break;
+							}
 						}
 					}
 				}
-				if (mFrontSector->e && mFrontSector->e->XFloor.ffloors.Size()) {
-					for (i = 0; i < (int)mFrontSector->e->XFloor.ffloors.Size(); i++) {
-						F3DFloor *rover = mFrontSector->e->XFloor.ffloors[i];
-						if (rover->flags & FF_RENDERSIDES && (rover->flags & FF_ALLSIDES || rover->flags & FF_INVERTSIDES)) {
-							draw_segment->SetHas3DFloorFrontSectorWalls();
-							break;
-						}
-					}
-				}
-			}
 
-			if (!onlyUpdatePlaneClip)
 				// allocate space for masked texture tables, if needed
 				// [RH] Don't just allocate the space; fill it in too.
 				if ((sidedef->GetTexture(side_t::mid).isValid() || draw_segment->Has3DFloorWalls() || IsFogBoundary(mFrontSector, mBackSector)) &&
@@ -452,8 +449,8 @@ namespace swrenderer
 						lwal = draw_segment->maskedtexturecol;
 						swal = draw_segment->swall;
 						FTexture *tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
-						FSoftwareTexture *pic = tex && tex->isValid()? tex->GetSoftwareTexture() : nullptr;
-						double yscale = (pic? pic->GetScale().Y : 1.0) * sidedef->GetTextureYScale(side_t::mid);
+						FSoftwareTexture *pic = tex && tex->isValid() ? tex->GetSoftwareTexture() : nullptr;
+						double yscale = (pic ? pic->GetScale().Y : 1.0) * sidedef->GetTextureYScale(side_t::mid);
 						fixed_t xoffset = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
 
 						if (pic && pic->useWorldPanning())
@@ -490,27 +487,16 @@ namespace swrenderer
 							draw_segment->iscalestep = 0;
 						}
 					}
+
 					draw_segment->light = mLight.GetLightPos(start);
 					draw_segment->lightstep = mLight.GetLightStep();
-
-					// Masked mMiddlePart.Textures should get the light level from the sector they reference,
-					// not from the current subsector, which is what the current lightlevel value
-					// comes from. We make an exeption for polyobjects, however, since their "home"
-					// sector should be whichever one they move into.
-					if (mLineSegment->sidedef->Flags & WALLF_POLYOBJ)
-					{
-						draw_segment->lightlevel = mLight.lightlevel;
-					}
-					else
-					{
-						draw_segment->lightlevel = mLineSegment->sidedef->GetLightLevel(mLight.foggy, mLineSegment->frontsector->lightlevel);
-					}
 
 					if (draw_segment->bFogBoundary || draw_segment->maskedtexturecol != nullptr)
 					{
 						Thread->DrawSegments->PushTranslucent(draw_segment);
 					}
 				}
+			}
 		}
 
 		ClipSegmentTopBottom(start, stop);
@@ -700,7 +686,7 @@ namespace swrenderer
 		}
 	}
 	
-	void SWRenderLine::SetWallVariables(bool needlights)
+	void SWRenderLine::SetWallVariables()
 	{
 		RenderPortal *renderportal = Thread->Portal.get();
 
@@ -775,8 +761,13 @@ namespace swrenderer
 
 		bool segtextured = ftex != NULL || mTopPart.Texture != NULL || mBottomPart.Texture != NULL;
 
+		if (m3DFloor.type == Fake3DOpaque::Normal)
+		{
+			mLight.SetColormap(mFrontSector, mLineSegment);
+		}
+
 		// calculate light table
-		if (needlights && (segtextured || (mBackSector && IsFogBoundary(mFrontSector, mBackSector))))
+		if (segtextured || (mBackSector && IsFogBoundary(mFrontSector, mBackSector)))
 		{
 			lwallscale =
 				ftex ? ((midtex? midtex->GetScale().X : 1.0) * sidedef->GetTextureXScale(side_t::mid)) :
@@ -786,7 +777,7 @@ namespace swrenderer
 
 			walltexcoords.Project(Thread->Viewport.get(), sidedef->TexelLength * lwallscale, WallC.sx1, WallC.sx2, WallT);
 
-			mLight.SetLightLeft(Thread, mLineSegment, mFrontSector, WallC);
+			mLight.SetLightLeft(Thread, WallC);
 		}
 	}
 

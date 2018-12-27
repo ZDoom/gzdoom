@@ -349,11 +349,11 @@ namespace swrenderer
 		// Textures that aren't masked can use the faster opaque drawer
 		if (!rw_pic->GetTexture()->isMasked() && mask && alpha >= OPAQUE && !additive)
 		{
-			drawerargs.SetStyle(true, false, OPAQUE, mLight.basecolormap);
+			drawerargs.SetStyle(true, false, OPAQUE, mLight.GetBaseColormap());
 		}
 		else
 		{
-			drawerargs.SetStyle(mask, additive, alpha, mLight.basecolormap);
+			drawerargs.SetStyle(mask, additive, alpha, mLight.GetBaseColormap());
 		}
 
 		CameraLight *cameraLight = CameraLight::Instance();
@@ -377,7 +377,7 @@ namespace swrenderer
 				continue;
 
 			if (!fixed)
-				drawerargs.SetLight(curlight, mLight.lightlevel, mLight.foggy, Thread->Viewport.get());
+				drawerargs.SetLight(curlight, mLight.GetLightLevel(), mLight.GetFoggy(), Thread->Viewport.get());
 
 			if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
 
@@ -423,9 +423,7 @@ namespace swrenderer
 				down = (down == most1.ScreenY) ? most2.ScreenY : most1.ScreenY;
 			}
 
-			lightlist_t *lit = &frontsector->e->XFloor.lightlist[i];
-			mLight.basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
-			mLight.lightlevel = curline->sidedef->GetLightLevel(mLight.foggy, *lit->p_lightlevel, lit->lightsource != NULL);
+			mLight.SetColormap(frontsector, curline, &frontsector->e->XFloor.lightlist[i]);
 		}
 
 		ProcessNormalWall(up, dwal, texturemid, swal, lwal);

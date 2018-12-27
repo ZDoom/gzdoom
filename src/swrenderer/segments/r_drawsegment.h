@@ -38,8 +38,6 @@ namespace swrenderer
 		float yscale;
 		uint8_t silhouette = 0; // 0=none, 1=bottom, 2=top, 3=both
 		bool bFogBoundary = false;
-		int lightlevel = 0;
-		bool foggy = false;
 
 		// Pointers to lists for sprite clipping, all three adjusted so [x1] is first value.
 		short *sprtopclip = nullptr;

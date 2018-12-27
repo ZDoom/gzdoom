@@ -60,17 +60,23 @@ namespace swrenderer
 	class ProjectedWallLight
 	{
 	public:
-		int lightlevel;
-		bool foggy;
-		FDynamicColormap *basecolormap;
+		int GetLightLevel() const { return lightlevel; }
+		bool GetFoggy() const { return foggy; }
+		FDynamicColormap *GetBaseColormap() const { return basecolormap; }
 
 		float GetLightPos(int x) const { return lightleft + lightstep * (x - x1); }
 		float GetLightStep() const { return lightstep; }
 
+		void SetColormap(const sector_t *frontsector, seg_t *lineseg, lightlist_t *lit = nullptr);
+
 		void SetLightLeft(float left, float step, int startx) { lightleft = left; lightstep = step; x1 = startx; }
-		void SetLightLeft(RenderThread *thread, seg_t *lineseg, sector_t *frontsector, const FWallCoords &wallc);
+		void SetLightLeft(RenderThread *thread, const FWallCoords &wallc);
 
 	private:
+		int lightlevel;
+		bool foggy;
+		FDynamicColormap *basecolormap;
+
 		int x1;
 		float lightleft;
 		float lightstep;

@@ -149,7 +149,6 @@ bool P_CheckMapData(const char * mapname);
 void P_SetupLevel (const char *mapname, int position, bool newGame);
 
 void P_FreeLevelData();
-void P_FreeExtraLevelData();
 
 // Called by startup code.
 void P_Init (void);

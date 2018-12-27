@@ -2702,7 +2702,6 @@ void D_DoomMain (void)
 		DThinker::DestroyThinkersInList(STAT_STATIC);
 		E_Shutdown(false);
 		P_FreeLevelData();
-		P_FreeExtraLevelData();
 
 		M_SaveDefaults(NULL);			// save config before the restart
 

@@ -765,16 +765,15 @@ struct badseg
 template<class segtype>
 void MapLoader::LoadSegs (MapData * map)
 {
-	uint8_t *data;
 	uint32_t numvertexes = Level->vertexes.Size();
-	uint8_t *vertchanged = new uint8_t[numvertexes];	// phares 10/4/98
+	TArray<uint8_t> vertchanged(numvertexes, true);
 	uint32_t segangle;
 	//int ptp_angle;		// phares 10/4/98
 	//int delta_angle;	// phares 10/4/98
 	uint32_t vnum1,vnum2;	// phares 10/4/98
 	int lumplen = map->Size(ML_SEGS);
 
-	memset (vertchanged,0,numvertexes); // phares 10/4/98
+	memset(vertchanged.Data(), 0, numvertexes); // phares 10/4/98
 
 	unsigned numsegs = lumplen / sizeof(segtype);
 
@@ -783,7 +782,6 @@ void MapLoader::LoadSegs (MapData * map)
 		Printf ("This map has no segs.\n");
 		Level->subsectors.Clear();
 		Level->nodes.Clear();
-		delete[] vertchanged;
 		ForceNodeBuild = true;
 		return;
 	}
@@ -792,8 +790,7 @@ void MapLoader::LoadSegs (MapData * map)
 	auto &segs = Level->segs;
 	memset (&segs[0], 0, numsegs*sizeof(seg_t));
 
-	data = new uint8_t[lumplen];
-	map->Read(ML_SEGS, data);
+	auto data = map->Read(ML_SEGS);
 
 	for (auto &sub : Level->subsectors)
 	{
@@ -814,7 +811,7 @@ void MapLoader::LoadSegs (MapData * map)
 		for (unsigned i = 0; i < numsegs; i++)
 		{
 			seg_t *li = &segs[i];
-			segtype *ml = ((segtype *) data) + i;
+			segtype *ml = ((segtype *) data.Data()) + i;
 
 			int side, linedef;
 			line_t *ldef;
@@ -939,9 +936,6 @@ void MapLoader::LoadSegs (MapData * map)
 		Level->nodes.Clear();
 		ForceNodeBuild = true;
 	}
-
-	delete[] vertchanged; // phares 10/4/98
-	delete[] data;
 }
 
 
@@ -1023,7 +1017,6 @@ void MapLoader::LoadSubsectors (MapData * map)
 
 void MapLoader::LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 {
-	char				*msp;
 	mapsector_t			*ms;
 	sector_t*			ss;
 	int					defSeqType;
@@ -1039,9 +1032,8 @@ void MapLoader::LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 	else
 		defSeqType = -1;
 
-	msp = new char[lumplen];
-	map->Read(ML_SECTORS, msp);
-	ms = (mapsector_t*)msp;
+	auto msp = map->Read(ML_SECTORS);
+	ms = (mapsector_t*)msp.Data();
 	ss = sectors;
 	
 	// Extended properties
@@ -1113,7 +1105,6 @@ void MapLoader::LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 		ss->sectornum = i;
 		ss->ibocount = -1;
 	}
-	delete[] msp;
 }
 
 
@@ -1129,7 +1120,6 @@ void MapLoader::LoadNodes (MapData * map)
 	FMemLump	data;
 	int 		j;
 	int 		k;
-	char		*mnp;
 	nodetype	*mn;
 	node_t* 	no;
 	uint16_t*		used;
@@ -1149,9 +1139,8 @@ void MapLoader::LoadNodes (MapData * map)
 	used = (uint16_t *)alloca (sizeof(uint16_t)*numnodes);
 	memset (used, 0, sizeof(uint16_t)*numnodes);
 
-	mnp = new char[lumplen];
-	mn = (nodetype*)(mnp + nodetype::NF_LUMPOFFSET);
-	map->Read(ML_NODES, mnp);
+	auto mnp = map->Read(ML_NODES);
+	mn = (nodetype*)(mnp.Data() + nodetype::NF_LUMPOFFSET);
 	no = &nodes[0];
 	
 	for (unsigned i = 0; i < numnodes; i++, no++, mn++)
@@ -1172,7 +1161,6 @@ void MapLoader::LoadNodes (MapData * map)
 						"The BSP will be rebuilt.\n", i, child);
 					ForceNodeBuild = true;
 					Level->nodes.Clear();
-					delete[] mnp;
 					return;
 				}
 				no->children[j] = (uint8_t *)&Level->subsectors[child] + 1;
@@ -1183,7 +1171,6 @@ void MapLoader::LoadNodes (MapData * map)
 					"The BSP will be rebuilt.\n", i, ((node_t *)no->children[j])->Index());
 				ForceNodeBuild = true;
 				Level->nodes.Clear();
-				delete[] mnp;
 				return;
 			}
 			else if (used[child])
@@ -1193,7 +1180,6 @@ void MapLoader::LoadNodes (MapData * map)
 					"The BSP will be rebuilt.\n", i, child, used[child]-1);
 				ForceNodeBuild = true;
 				Level->nodes.Clear();
-				delete[] mnp;
 				return;
 			}
 			else
@@ -1207,7 +1193,6 @@ void MapLoader::LoadNodes (MapData * map)
 			}
 		}
 	}
-	delete[] mnp;
 }
 
 //===========================================================================
@@ -1360,14 +1345,11 @@ void MapLoader::LoadThings2 (MapData * map)
 	int	lumplen = map->Size(ML_THINGS);
 	int numthings = lumplen / sizeof(mapthinghexen_t);
 
-	char *mtp;
-
 	MapThingsConverted.Resize(numthings);
 	FMapThing *mti = &MapThingsConverted[0];
 
-	mtp = new char[lumplen];
-	map->Read(ML_THINGS, mtp);
-	mapthinghexen_t *mth = (mapthinghexen_t*)mtp;
+	auto mtp = map->Read(ML_THINGS);
+	mapthinghexen_t *mth = (mapthinghexen_t*)mtp.Data();
 
 	for(int i = 0; i< numthings; i++)
 	{
@@ -1398,7 +1380,6 @@ void MapLoader::LoadThings2 (MapData * map)
 		mti[i].FloatbobPhase = -1;
 		mti[i].friendlyseeblocks = -1;
 	}
-	delete[] mtp;
 }
 
 //===========================================================================
@@ -1752,19 +1733,17 @@ void MapLoader::LoadLineDefs2 (MapData * map)
 	int i, skipped;
 	line_t *ld;
 	int lumplen = map->Size(ML_LINEDEFS);
-	char * mldf;
 	maplinedef2_t *mld;
 		
 	int numlines = lumplen / sizeof(maplinedef2_t);
 	linemap.Resize(numlines);
 
-	mldf = new char[lumplen];
-	map->Read(ML_LINEDEFS, mldf);
+	auto mldf =	map->Read(ML_LINEDEFS);
 
 	// [RH] Remove any lines that have 0 length and count sidedefs used
 	for (skipped = sidecount = i = 0; i < numlines; )
 	{
-		mld = ((maplinedef2_t*)mldf) + i;
+		mld = ((maplinedef2_t*)mldf.Data()) + i;
 
 		if (mld->v1 == mld->v2 ||
 			(Level->vertexes[LittleShort(mld->v1)].fX() == Level->vertexes[LittleShort(mld->v2)].fX() &&
@@ -1800,7 +1779,7 @@ void MapLoader::LoadLineDefs2 (MapData * map)
 
 	AllocateSideDefs (map, sidecount);
 
-	mld = (maplinedef2_t *)mldf;
+	mld = (maplinedef2_t *)mldf.Data();
 	ld = &Level->lines[0];
 	for (i = 0; i < numlines; i++, mld++, ld++)
 	{
@@ -1841,7 +1820,6 @@ void MapLoader::LoadLineDefs2 (MapData * map)
 		}
 		ld->flags &= ~ML_SPAC_MASK;
 	}
-	delete[] mldf;
 }
 
 
@@ -2174,12 +2152,11 @@ void MapLoader::ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec
 
 void MapLoader::LoadSideDefs2 (MapData *map, FMissingTextureTracker &missingtex)
 {
-	char * msdf = new char[map->Size(ML_SIDEDEFS)];
-	map->Read(ML_SIDEDEFS, msdf);
+	auto msdf = map->Read(ML_SIDEDEFS);
 
 	for (unsigned i = 0; i < Level->sides.Size(); i++)
 	{
-		mapsidedef_t *msd = ((mapsidedef_t*)msdf) + sidetemp[i].a.map;
+		mapsidedef_t *msd = ((mapsidedef_t*)msdf.Data()) + sidetemp[i].a.map;
 		side_t *sd = &Level->sides[i];
 		sector_t *sec;
 
@@ -2221,7 +2198,6 @@ void MapLoader::LoadSideDefs2 (MapData *map, FMissingTextureTracker &missingtex)
 		ProcessSideTextures(!map->HasBehavior, sd, sec, &imsd, 
 							  sidetemp[i].a.special, sidetemp[i].a.tag, &sidetemp[i].a.alpha, missingtex);
 	}
-	delete[] msdf;
 }
 
 
@@ -2279,7 +2255,7 @@ static bool BlockCompare (TArray<int> *block1, TArray<int> *block2)
 static void CreatePackedBlockmap (TArray<int> &BlockMap, TArray<int> *blocks, int bmapwidth, int bmapheight)
 {
 	int buckets[4096];
-	int *hashes, hashblock;
+	int hashblock;
 	TArray<int> *block;
 	int zero = 0;
 	int terminator = -1;
@@ -2287,9 +2263,9 @@ static void CreatePackedBlockmap (TArray<int> &BlockMap, TArray<int> *blocks, in
 	int i, hash;
 	int hashed = 0, nothashed = 0;
 
-	hashes = new int[bmapwidth * bmapheight];
+	TArray<int> hashes(bmapwidth * bmapheight, true);
 
-	memset (hashes, 0xff, sizeof(int)*bmapwidth*bmapheight);
+	memset (hashes.Data(), 0xff, sizeof(int)*bmapwidth*bmapheight);
 	memset (buckets, 0xff, sizeof(buckets));
 
 	for (i = 0; i < bmapwidth * bmapheight; ++i)
@@ -2325,10 +2301,6 @@ static void CreatePackedBlockmap (TArray<int> &BlockMap, TArray<int> *blocks, in
 			nothashed++;
 		}
 	}
-
-	delete[] hashes;
-
-//	printf ("%d blocks written, %d blocks saved\n", nothashed, hashed);
 }
 
 
@@ -2340,7 +2312,8 @@ void MapLoader::CreateBlockMap ()
 		BLOCKSIZE = 128
 	};
 
-	TArray<int> *BlockLists, *block, *endblock;
+	TArray<int> *block, *endblock;
+	TArray<TArray<int>> BlockLists;
 	int adder;
 	int bmapwidth, bmapheight;
 	double dminx, dmaxx, dminy, dmaxy;
@@ -2377,7 +2350,7 @@ void MapLoader::CreateBlockMap ()
 	adder = bmapwidth;		BlockMap.Push (adder);
 	adder = bmapheight;		BlockMap.Push (adder);
 
-	BlockLists = new TArray<int>[bmapwidth * bmapheight];
+	BlockLists.Resize(bmapwidth * bmapheight);
 
 	for (line = 0; line < (int)Level->lines.Size(); ++line)
 	{
@@ -2496,8 +2469,7 @@ void MapLoader::CreateBlockMap ()
 	}
 
 	BlockMap.Reserve (bmapwidth * bmapheight);
-	CreatePackedBlockmap (BlockMap, BlockLists, bmapwidth, bmapheight);
-	delete[] BlockLists;
+	CreatePackedBlockmap (BlockMap, BlockLists.Data(), bmapwidth, bmapheight);
 
 	Level->blockmap.blockmaplump = new int[BlockMap.Size()];
 	for (unsigned int ii = 0; ii < BlockMap.Size(); ++ii)
@@ -2616,9 +2588,8 @@ void MapLoader::LoadBlockMap (MapData * map)
 	}
 	else
 	{
-		uint8_t *data = new uint8_t[count];
-		map->Read(ML_BLOCKMAP, data);
-		const short *wadblockmaplump = (short *)data;
+		auto data = map->Read(ML_BLOCKMAP);
+		const short *wadblockmaplump = (short *)data.Data();
 		int i;
 
 		count/=2;
@@ -2639,7 +2610,6 @@ void MapLoader::LoadBlockMap (MapData * map)
 			short t = LittleShort(wadblockmaplump[i]);          // killough 3/1/98
 			Level->blockmap.blockmaplump[i] = t == -1 ? (uint32_t)0xffffffff : (uint32_t) t & 0xffff;
 		}
-		delete[] data;
 
 		if (!Level->blockmap.VerifyBlockMap(count, Level->lines.Size()))
 		{
@@ -2672,7 +2642,6 @@ void MapLoader::LoadBlockMap (MapData * map)
 void MapLoader::GroupLines (bool buildmap)
 {
 	cycle_t times[16];
-	unsigned int*		linesDoneInEachSector;
 	int 				total;
 	sector_t*			sector;
 	FBoundingBox		bbox;
@@ -2737,8 +2706,8 @@ void MapLoader::GroupLines (bool buildmap)
 	Level->linebuffer.Alloc(total);
 	line_t **lineb_p = &Level->linebuffer[0];
 	auto numsectors = Level->sectors.Size();
-	linesDoneInEachSector = new unsigned int[numsectors];
-	memset (linesDoneInEachSector, 0, sizeof(int)*numsectors);
+	TArray<unsigned> linesDoneInEachSector(numsectors, true);
+	memset (linesDoneInEachSector.Data(), 0, sizeof(int)*numsectors);
 
 	sector = &Level->sectors[0];
 	for (unsigned i = 0; i < numsectors; i++, sector++)
@@ -2800,7 +2769,6 @@ void MapLoader::GroupLines (bool buildmap)
 			sector->centerspot = pos / (2 * sector->Lines.Size());
 		}
 	}
-	delete[] linesDoneInEachSector;
 	times[3].Unclock();
 
 	// [RH] Moved this here
@@ -3179,35 +3147,6 @@ void P_FreeLevelData ()
 	level.Scrolls.Clear();
 	P_ClearUDMFKeys();
 }
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-extern FMemArena secnodearena;
-extern msecnode_t *headsecnode;
-
-void P_FreeExtraLevelData()
-{
-	// Free all blocknodes and msecnodes.
-	// *NEVER* call this function without calling
-	// P_FreeLevelData() first, or they might not all be freed.
-	{
-		FBlockNode *node = FBlockNode::FreeBlocks;
-		while (node != nullptr)
-		{
-			FBlockNode *next = node->NextBlock;
-			delete node;
-			node = next;
-		}
-		FBlockNode::FreeBlocks = nullptr;
-	}
-	secnodearena.FreeAllBlocks();
-	headsecnode = nullptr;
-}
-
 
 //===========================================================================
 //
@@ -3884,7 +3823,6 @@ static void P_Shutdown ()
 	DThinker::DestroyThinkersInList(STAT_STATIC);	
 	P_DeinitKeyMessages ();
 	P_FreeLevelData ();
-	P_FreeExtraLevelData ();
 	// [ZZ] delete global event handlers
 	E_Shutdown(false);
 	ST_Clear();

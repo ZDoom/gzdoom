@@ -94,10 +94,8 @@
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
-#ifndef NO_EDATA
-#include "edata.h"
-#endif
 #include "vm.h"
+#include "p_setup.h"
 
 #include "c_console.h"
 
@@ -1299,7 +1297,7 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 // After the map has been loaded, scan for specials that spawn thinkers
 //
 
-void P_SpawnSpecials (void)
+void P_SpawnSpecials (MapLoader *ml)
 {
 	P_SetupPortals();
 
@@ -1312,7 +1310,7 @@ void P_SpawnSpecials (void)
 	}
 
 #ifndef NO_EDATA
-	ProcessEDSectors();
+	ml->ProcessEDSectors();
 #endif
 
 	

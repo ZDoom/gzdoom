@@ -97,9 +97,6 @@
 #include "g_levellocals.h"
 #include "c_dispatch.h"
 #include "a_dynlight.h"
-#ifndef NO_EDATA
-#include "edata.h"
-#endif
 #include "events.h"
 #include "p_destructible.h"
 #include "types.h"
@@ -3386,9 +3383,7 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 		}
 
 		FBehavior::StaticLoadDefaultModules();
-#ifndef NO_EDATA
-		LoadMapinfoACSLump();
-#endif
+		loader.LoadMapinfoACSLump();
 
 
 		P_LoadStrifeConversations(map, lumpname);
@@ -3680,7 +3675,7 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 	}
 
 	// set up world state
-	P_SpawnSpecials();
+	P_SpawnSpecials(&loader);
 
 	// disable reflective planes on sloped sectors.
 	for (auto &sec : level.sectors)

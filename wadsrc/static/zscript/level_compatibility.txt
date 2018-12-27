@@ -232,6 +232,15 @@ class LevelCompatibility play
 				break;
 			}
 			
+			case 'ECA0559E85EFFB6966ECB8DE01E3A35B': // Plutonia Experiment MAP16
+			{
+				// Have it so that the slime pit at the end of the level can
+				// actually kill the player.
+				SetSectorSpecial(95, 768);
+				SetSectorSpecial(96, 768);
+				break;
+			}
+			
 			case '9D84B423D8FD28553DDE23B55F97CF4A': // Plutonia Experiment MAP25
 			{
 				// Missing texture at level exit.

@@ -44,8 +44,6 @@ LevelAABBTree::LevelAABBTree()
 	{
 		if (!level.lines[i].backsector)
 		{
-			if (level.lines[i].sidedef[0] && (level.lines[i].sidedef[0]->Flags & WALLF_POLYOBJ))
-				polylines.Push(i);
 			line_elements.Push(i);
 		}
 	}
@@ -69,82 +67,6 @@ LevelAABBTree::LevelAABBTree()
 		treeline.dx = (float)line.v2->fX() - treeline.x;
 		treeline.dy = (float)line.v2->fY() - treeline.y;
 	}
-}
-
-bool LevelAABBTree::Update()
-{
-	bool modified = false;
-	for (unsigned int ii = 0; ii < polylines.Size(); ii++)
-	{
-		int i = polylines[ii];
-		const auto &line = level.lines[i];
-
-		AABBTreeLine treeline;
-		treeline.x = (float)line.v1->fX();
-		treeline.y = (float)line.v1->fY();
-		treeline.dx = (float)line.v2->fX() - treeline.x;
-		treeline.dy = (float)line.v2->fY() - treeline.y;
-
-		if (memcmp(&lines[i], &treeline, sizeof(AABBTreeLine)))
-		{
-			TArray<int> path = FindNodePath(i, nodes.Size() - 1);
-			if (path.Size())
-			{
-				float x1 = (float)level.lines[i].v1->fX();
-				float y1 = (float)level.lines[i].v1->fY();
-				float x2 = (float)level.lines[i].v2->fX();
-				float y2 = (float)level.lines[i].v2->fY();
-
-				int nodeIndex = path[0];
-				nodes[nodeIndex].aabb_left = MIN(x1, x2);
-				nodes[nodeIndex].aabb_right = MAX(x1, x2);
-				nodes[nodeIndex].aabb_top = MIN(y1, y2);
-				nodes[nodeIndex].aabb_bottom = MAX(y1, y2);
-
-				for (unsigned int j = 1; j < path.Size(); j++)
-				{
-					auto &cur = nodes[path[j]];
-					const auto &left = nodes[cur.left_node];
-					const auto &right = nodes[cur.right_node];
-					cur.aabb_left = MIN(left.aabb_left, right.aabb_left);
-					cur.aabb_top = MIN(left.aabb_top, right.aabb_top);
-					cur.aabb_right = MAX(left.aabb_right, right.aabb_right);
-					cur.aabb_bottom = MAX(left.aabb_bottom, right.aabb_bottom);
-				}
-
-				lines[i] = treeline;
-				modified = true;
-			}
-		}
-	}
-	return modified;
-}
-
-TArray<int> LevelAABBTree::FindNodePath(unsigned int line, unsigned int node)
-{
-	const AABBTreeNode &n = nodes[node];
-
-	if (n.aabb_left > lines[line].x || n.aabb_right < lines[line].x ||
-		n.aabb_top > lines[line].y || n.aabb_bottom < lines[line].y)
-	{
-		return {};
-	}
-
-	TArray<int> path;
-	if (n.line_index == -1)
-	{
-		path = FindNodePath(line, n.left_node);
-		if (path.Size() == 0)
-			path = FindNodePath(line, n.right_node);
-
-		if (path.Size())
-			path.Push(node);
-	}
-	else if (n.line_index == line)
-	{
-		path.Push(node);
-	}
-	return path;
 }
 
 double LevelAABBTree::RayTest(const DVector3 &ray_start, const DVector3 &ray_end)

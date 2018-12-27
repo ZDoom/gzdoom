@@ -103,8 +103,8 @@
 #include "i_time.h"
 #include "scripting/vm/vm.h"
 #include "hwrenderer/data/flatvertices.h"
-
 #include "fragglescript/t_fs.h"
+#include "maploader.h"
 
 sidei_t *sidetemp;
 TArray<FMapThing> MapThingsConverted;

@@ -41,6 +41,7 @@
 #include "g_levellocals.h"
 #include "actor.h"
 #include "p_setup.h"
+#include "maploader.h"
 
 //===========================================================================
 //

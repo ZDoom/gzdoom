@@ -47,6 +47,7 @@
 #include "p_terrain.h"
 #include "p_acs.h"
 #include "g_levellocals.h"
+#include "maploader.h"
 
 
 struct FEDOptions : public FOptionalMapinfoData

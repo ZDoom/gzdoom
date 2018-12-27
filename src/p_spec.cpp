@@ -98,6 +98,7 @@
 #include "p_setup.h"
 
 #include "c_console.h"
+#include "maploader/maploader.h"
 
 static FRandom pr_playerinspecialsector ("PlayerInSpecialSector");
 

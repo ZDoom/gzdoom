@@ -649,6 +649,7 @@ file( GLOB HEADER_FILES
 	g_statusbar/*.h
 	g_inventory/*.h
 	intermission/*.h
+	maploader/*.h
 	menu/*.h
 	sound/adlmidi/*.h*
 	sound/opnmidi/*.h*
@@ -908,7 +909,6 @@ set (PCH_SOURCES
 	doomstat.cpp
 	dsectoreffect.cpp
 	dthinker.cpp
-	edata.cpp
 	f_wipe.cpp
 	files.cpp
 	files_decompress.cpp
@@ -955,7 +955,6 @@ set (PCH_SOURCES
 	p_effect.cpp
 	p_enemy.cpp
 	p_floor.cpp
-	p_glnodes.cpp
 	p_interaction.cpp
 	p_lights.cpp
 	p_linkedsectors.cpp
@@ -972,9 +971,7 @@ set (PCH_SOURCES
 	p_scroll.cpp
 	p_secnodes.cpp
 	p_sectors.cpp
-	p_setup.cpp
 	p_sight.cpp
-	p_slopes.cpp
 	p_spec.cpp
 	p_states.cpp
 	p_switch.cpp
@@ -984,7 +981,6 @@ set (PCH_SOURCES
 	p_things.cpp
 	p_tick.cpp
 	p_trace.cpp
-	p_udmf.cpp
 	p_usdf.cpp
 	p_user.cpp
 	p_xlat.cpp
@@ -1077,7 +1073,11 @@ set (PCH_SOURCES
 	hwrenderer/utility/hw_lighting.cpp
 	hwrenderer/utility/hw_shaderpatcher.cpp
 	hwrenderer/utility/hw_vrmodes.cpp
-
+	maploader/edata.cpp
+	maploader/maploader.cpp
+	maploader/slopes.cpp
+	maploader/glnodes.cpp
+	maploader/udmf.cpp
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp
 	menu/menu.cpp
@@ -1422,7 +1422,7 @@ source_group("External\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_D
 source_group("External\\SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sfmt/.+")
 source_group("FraggleScript" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/fragglescript/.+")
 source_group("Intermission" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/intermission/.+")
-source_group("Inventory" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_inventory/.+")
+source_group("Map Loader" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/maploader/.+")
 source_group("Menu" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/menu/.+")
 source_group("Hardware Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/.+")
 source_group("Hardware Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/data/.+")

@@ -31,9 +31,6 @@
 **
 */
 #include <math.h>
-#ifdef _MSC_VER
-#include <malloc.h>		// for alloca()
-#endif
 
 #ifndef _WIN32
 #include <unistd.h>
@@ -62,6 +59,7 @@
 #include "cmdlib.h"
 #include "g_levellocals.h"
 #include "i_time.h"
+#include "maploader.h"
 
 CVAR(Bool, gl_cachenodes, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_cachetime, 0.6f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)

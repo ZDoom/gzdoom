@@ -241,4 +241,24 @@ namespace swrenderer
 			}
 		}
 	}
+
+	/////////////////////////////////////////////////////////////////////////
+
+	void ProjectedWallLight::SetLightLeft(RenderThread *thread, seg_t *lineseg, sector_t *frontsector, const FWallCoords &wallc)
+	{
+		x1 = wallc.sx1;
+
+		CameraLight *cameraLight = CameraLight::Instance();
+		if (cameraLight->FixedColormap() == nullptr && cameraLight->FixedLightLevel() < 0)
+		{
+			lightlevel = lineseg->sidedef->GetLightLevel(foggy, frontsector->lightlevel);
+			lightleft = float(thread->Light->WallVis(wallc.sz1, foggy));
+			lightstep = float((thread->Light->WallVis(wallc.sz2, foggy) - lightleft) / (wallc.sx2 - wallc.sx1));
+		}
+		else
+		{
+			lightleft = 1;
+			lightstep = 0;
+		}
+	}
 }

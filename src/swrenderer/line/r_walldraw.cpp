@@ -368,8 +368,8 @@ namespace swrenderer
 
 		double xmagnitude = 1.0;
 
-		float curlight = mLight.light;
-		for (int x = x1; x < x2; x++, curlight += mLight.lightstep)
+		float curlight = mLight.GetLightPos(x1);
+		for (int x = x1; x < x2; x++, curlight += mLight.GetLightStep())
 		{
 			int y1 = uwal[x];
 			int y2 = dwal[x];

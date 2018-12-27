@@ -57,15 +57,15 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void RenderDecal::RenderDecals(RenderThread *thread, side_t *sidedef, DrawSegment *draw_segment, seg_t *curline, const FWallCoords &wallC, const ProjectedWallLight &light, const short *walltop, const short *wallbottom, bool drawsegPass)
+	void RenderDecal::RenderDecals(RenderThread *thread, side_t *sidedef, DrawSegment *draw_segment, seg_t *curline, const ProjectedWallLight &light, const short *walltop, const short *wallbottom, bool drawsegPass)
 	{
 		for (DBaseDecal *decal = sidedef->AttachedDecals; decal != NULL; decal = decal->WallNext)
 		{
-			Render(thread, sidedef, decal, draw_segment, curline, wallC, light, walltop, wallbottom, drawsegPass);
+			Render(thread, sidedef, decal, draw_segment, curline, light, walltop, wallbottom, drawsegPass);
 		}
 	}
 
-	void RenderDecal::Render(RenderThread *thread, side_t *wall, DBaseDecal *decal, DrawSegment *clipper, seg_t *curline, const FWallCoords &savecoord, const ProjectedWallLight &light, const short *walltop, const short *wallbottom, bool drawsegPass)
+	void RenderDecal::Render(RenderThread *thread, side_t *wall, DBaseDecal *decal, DrawSegment *clipper, seg_t *curline, const ProjectedWallLight &light, const short *walltop, const short *wallbottom, bool drawsegPass)
 	{
 		DVector2 decal_left, decal_right, decal_pos;
 		int x1, x2;
@@ -264,7 +264,7 @@ namespace swrenderer
 			usecolormap = GetSpecialLights(usecolormap->Color, 0, usecolormap->Desaturate);
 		}
 
-		float lightpos = light.lightleft + (x1 - savecoord.sx1) * light.lightstep;
+		float lightpos = light.GetLightPos(x1);
 
 		cameraLight = CameraLight::Instance();
 
@@ -303,7 +303,7 @@ namespace swrenderer
 						drawerargs.SetLight(lightpos, light.lightlevel, light.foggy, thread->Viewport.get());
 					}
 					DrawColumn(thread, drawerargs, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip, decal->RenderStyle);
-					lightpos += light.lightstep;
+					lightpos += light.GetLightStep();
 					x++;
 				}
 			}

@@ -64,8 +64,15 @@ namespace swrenderer
 		bool foggy;
 		FDynamicColormap *basecolormap;
 
+		float GetLightPos(int x) const { return lightleft + lightstep * (x - x1); }
+		float GetLightStep() const { return lightstep; }
+
+		void SetLightLeft(float left, float step, int startx) { lightleft = left; lightstep = step; x1 = startx; }
+		void SetLightLeft(RenderThread *thread, seg_t *lineseg, sector_t *frontsector, const FWallCoords &wallc);
+
+	private:
+		int x1;
 		float lightleft;
 		float lightstep;
-		float light;
 	};
 }

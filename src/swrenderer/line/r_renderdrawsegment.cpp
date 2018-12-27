@@ -83,8 +83,7 @@ namespace swrenderer
 		mLight.basecolormap = GetColorTable(sec->Colormap, sec->SpecialColors[sector_t::walltop]);	// [RH] Set basecolormap
 		mLight.foggy = ds->foggy;
 		mLight.lightlevel = ds->lightlevel;
-		mLight.lightstep = ds->lightstep;
-		mLight.light = ds->light + (x1 - ds->x1) * mLight.lightstep;
+		mLight.SetLightLeft(ds->light, ds->lightstep, ds->x1);
 
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
 
@@ -122,7 +121,7 @@ namespace swrenderer
 			const short *mceilingclip = ds->sprtopclip - ds->x1;
 
 			RenderFogBoundary renderfog;
-			renderfog.Render(Thread, x1, x2, mceilingclip, mfloorclip, mLight.lightlevel, ds->foggy, mLight.light, mLight.lightstep, mLight.basecolormap);
+			renderfog.Render(Thread, x1, x2, mceilingclip, mfloorclip, mLight.lightlevel, ds->foggy, mLight.GetLightPos(x1), mLight.GetLightStep(), mLight.basecolormap);
 
 			if (ds->maskedtexturecol == nullptr)
 				renderwall = false;
@@ -316,10 +315,11 @@ namespace swrenderer
 			if (visible)
 			{
 				Thread->PrepareTexture(tex, renderstyle);
+				float lightpos = mLight.GetLightPos(x1);
 				for (int x = x1; x < x2; ++x)
 				{
 					if (needslight)
-						columndrawerargs.SetLight(mLight.light, mLight.lightlevel, mLight.foggy, Thread->Viewport.get());
+						columndrawerargs.SetLight(lightpos, mLight.lightlevel, mLight.foggy, Thread->Viewport.get());
 
 					fixed_t iscale = xs_Fix<16>::ToFix(MaskedSWall[x] * MaskedScaleY);
 					double sprtopscreen;
@@ -330,7 +330,7 @@ namespace swrenderer
 
 					columndrawerargs.DrawMaskedColumn(Thread, x, iscale, tex, maskedtexturecol[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, renderstyle);
 
-					mLight.light += mLight.lightstep;
+					lightpos += mLight.GetLightStep();
 					spryscale += rw_scalestep;
 				}
 			}
@@ -415,8 +415,7 @@ namespace swrenderer
 		if (Alpha <= 0)
 			return;
 
-		mLight.lightstep = ds->lightstep;
-		mLight.light = ds->light + (x1 - ds->x1) * mLight.lightstep;
+		mLight.SetLightLeft(ds->light, ds->lightstep, ds->x1);
 
 		const short *mfloorclip = ds->sprbottomclip - ds->x1;
 		const short *mceilingclip = ds->sprtopclip - ds->x1;
@@ -502,7 +501,7 @@ namespace swrenderer
 		RenderWallPart renderWallpart(Thread);
 		renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, texturemid, MaskedSWall, walltexcoords.UPos, yscale, top, bot, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha, rw_offset, mLight, nullptr);
 
-		RenderDecal::RenderDecals(Thread, curline->sidedef, ds, curline, WallC, mLight, wallupper.ScreenY, walllower.ScreenY, true);
+		RenderDecal::RenderDecals(Thread, curline->sidedef, ds, curline, mLight, wallupper.ScreenY, walllower.ScreenY, true);
 	}
 
 	// kg3D - walls of fake floors

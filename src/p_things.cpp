@@ -993,5 +993,7 @@ DEFINE_ACTION_FUNCTION(AActor, Warp)
 	PARAM_FLOAT(radiusoffset)		
 	PARAM_ANGLE(pitch)				
 
-	ACTION_RETURN_INT(!!P_Thing_Warp(self, destination, xofs, yofs, zofs, angle, flags, heightoffset, radiusoffset, pitch));
+	const int result = destination == nullptr ? 0 :
+		P_Thing_Warp(self, destination, xofs, yofs, zofs, angle, flags, heightoffset, radiusoffset, pitch);
+	ACTION_RETURN_INT(result);
 }

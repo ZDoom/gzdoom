@@ -3206,11 +3206,8 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 		node.len = (float)g_sqrt(fdx * fdx + fdy * fdy);
 	}
 
-	// CreateVBO must be run on the plain 3D floor data.
-	P_ClearDynamic3DFloorData();
-
-	// This must be done BEFORE the PolyObj Spawn!!!
-	InitRenderInfo();			// create hardware independent renderer resources for the Level->
+	InitRenderInfo();				// create hardware independent renderer resources for the level. This must be done BEFORE the PolyObj Spawn!!!	
+	P_ClearDynamic3DFloorData();	// CreateVBO must be run on the plain 3D floor data.
 	screen->mVertexData->CreateVBO();
 
 	for (auto &sec : Level->sectors)

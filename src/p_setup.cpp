@@ -567,3 +567,25 @@ CCMD(dumpgeometry)
 		}
 	}
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+CCMD(listmapsections)
+{
+	for (int i = 0; i < 100; i++)
+	{
+		for (auto &sub : level.subsectors)
+		{
+			if (sub.mapsection == i)
+			{
+				Printf("Mapsection %d, sector %d, line %d\n", i, sub.render_sector->Index(), sub.firstline->linedef->Index());
+				break;
+			}
+		}
+	}
+}
+

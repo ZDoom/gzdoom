@@ -114,6 +114,7 @@ class MapLoader
 	// Polyobject init
 	TArray<int32_t> KnownPolySides;
 
+	// Slopes
 	void SlopeLineToPoint(int lineid, const DVector3 &pos, bool slopeCeil);
 	void CopyPlane(int tag, sector_t *dest, bool copyCeil);
 	void CopyPlane(int tag, const DVector2 &pos, bool copyCeil);
@@ -122,17 +123,20 @@ class MapLoader
 	void SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, const int *oldvertextable);
 	void AlignPlane(sector_t *sec, line_t *line, int which);
 
+	// Extradata
 	void InitED();
 	void ProcessEDMapthing(FMapThing *mt, int recordnum);
 	void ProcessEDLinedef(line_t *line, int recordnum);
 	void ProcessEDSector(sector_t *sec, int recordnum);
 
+	// Polyobjects
 	void InitSideLists();
 	void IterFindPolySides(FPolyObj *po, side_t *side);
 	void SpawnPolyobj(int index, int tag, int type);
 	void TranslateToStartSpot(int tag, const DVector2 &origin);
 	void InitPolyBlockMap(void);
 
+	// GL nodes
 	int checkGLVertex(int num);
 	int checkGLVertex3(int num);
 	int CheckForMissingSegs();
@@ -142,6 +146,17 @@ class MapLoader
 	bool LoadNodes(FileReader &lump);
 	bool DoLoadGLNodes(FileReader * lumps);
 	void CreateCachedNodes(MapData *map);
+
+	// Render info
+	void PrepareSectorData();
+	void PrepareTransparentDoors(sector_t * sector);
+	void InitVertexData();
+	void GetSideVertices(int sdnum, DVector2 *v1, DVector2 *v2);
+	void PrepareSegs();
+	void InitRenderInfo();
+	void FixMinisegReferences();
+	void FixHoles();
+	void ReportUnpairedMinisegs();
 
 	void SetTexture(side_t *side, int position, const char *name, FMissingTextureTracker &track);
 	void SetTexture(sector_t *sector, int index, int position, const char *name, FMissingTextureTracker &track, bool truncate);

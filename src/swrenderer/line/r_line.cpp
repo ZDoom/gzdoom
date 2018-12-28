@@ -328,17 +328,8 @@ namespace swrenderer
 			Thread->DrawSegments->Push(draw_segment);
 
 		draw_segment->CurrentPortalUniq = renderportal->CurrentPortalUniq;
-		draw_segment->sx1 = WallC.sx1;
-		draw_segment->sx2 = WallC.sx2;
-		draw_segment->sz1 = WallC.sz1;
-		draw_segment->sz2 = WallC.sz2;
-		draw_segment->cx = WallC.tleft.X;
-		draw_segment->cy = WallC.tleft.Y;
-		draw_segment->cdx = WallC.tright.X - WallC.tleft.X;
-		draw_segment->cdy = WallC.tright.Y - WallC.tleft.Y;
+		draw_segment->WallC = WallC;
 		draw_segment->tmapvals = WallT;
-		draw_segment->siz1 = 1 / WallC.sz1;
-		draw_segment->siz2 = 1 / WallC.sz2;
 		draw_segment->x1 = start;
 		draw_segment->x2 = stop;
 		draw_segment->curline = mLineSegment;

@@ -219,12 +219,12 @@ namespace swrenderer
 			}
 
 			// [RH] Don't bother drawing segs that are completely offscreen
-			if (viewport->globaldclip * ds->sz1 < -textop && viewport->globaldclip * ds->sz2 < -textop)
+			if (viewport->globaldclip * ds->WallC.sz1 < -textop && viewport->globaldclip * ds->WallC.sz2 < -textop)
 			{ // Texture top is below the bottom of the screen
 				return false;
 			}
 
-			if (viewport->globaluclip * ds->sz1 > texheight - textop && viewport->globaluclip * ds->sz2 > texheight - textop)
+			if (viewport->globaluclip * ds->WallC.sz1 > texheight - textop && viewport->globaluclip * ds->WallC.sz2 > texheight - textop)
 			{ // Texture bottom is above the top of the screen
 				return false;
 			}
@@ -238,10 +238,10 @@ namespace swrenderer
 				return true;
 			}
 
-			WallC.sz1 = ds->sz1;
-			WallC.sz2 = ds->sz2;
-			WallC.sx1 = ds->sx1;
-			WallC.sx2 = ds->sx2;
+			WallC.sz1 = ds->WallC.sz1;
+			WallC.sz2 = ds->WallC.sz2;
+			WallC.sx1 = ds->WallC.sx1;
+			WallC.sx2 = ds->WallC.sx2;
 
 			// Unclipped vanilla Doom range for the wall. Relies on ceiling/floor clip to clamp the wall in range.
 			double ceilZ = textop;
@@ -345,10 +345,10 @@ namespace swrenderer
 				texturemid = (texturemid - Thread->Viewport->viewpoint.Pos.Z) * MaskedScaleY + rowoffset;
 			}
 
-			WallC.sz1 = ds->sz1;
-			WallC.sz2 = ds->sz2;
-			WallC.sx1 = ds->sx1;
-			WallC.sx2 = ds->sx2;
+			WallC.sz1 = ds->WallC.sz1;
+			WallC.sz2 = ds->WallC.sz2;
+			WallC.sx1 = ds->WallC.sx1;
+			WallC.sx2 = ds->WallC.sx2;
 
 			if (clip3d->CurrentSkybox)
 			{ // Midtex clipping doesn't work properly with skyboxes, since you're normally below the floor
@@ -462,14 +462,7 @@ namespace swrenderer
 			texturemid += rowoffset;
 		}
 
-		WallC.sz1 = ds->sz1;
-		WallC.sz2 = ds->sz2;
-		WallC.sx1 = ds->sx1;
-		WallC.sx2 = ds->sx2;
-		WallC.tleft.X = ds->cx;
-		WallC.tleft.Y = ds->cy;
-		WallC.tright.X = ds->cx + ds->cdx;
-		WallC.tright.Y = ds->cy + ds->cdy;
+		WallC = ds->WallC;
 		WallT = ds->tmapvals;
 
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
@@ -488,7 +481,7 @@ namespace swrenderer
 		}
 
 		ProjectedWallTexcoords walltexcoords;
-		walltexcoords.ProjectPos(Thread->Viewport.get(), curline->sidedef->TexelLength*xscale, ds->sx1, ds->sx2, WallT);
+		walltexcoords.ProjectPos(Thread->Viewport.get(), curline->sidedef->TexelLength*xscale, ds->WallC.sx1, ds->WallC.sx2, WallT);
 
 		double top, bot;
 		GetMaskedWallTopBottom(ds, top, bot);

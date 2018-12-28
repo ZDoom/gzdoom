@@ -935,7 +935,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		if (arc.GetSize("linedefs") != level.lines.Size() ||
 			arc.GetSize("sidedefs") != level.sides.Size() ||
 			arc.GetSize("sectors") != level.sectors.Size() ||
-			arc.GetSize("polyobjs") != (unsigned)po_NumPolyobjs ||
+			arc.GetSize("polyobjs") != level.Polyobjects.Size() ||
 			memcmp(chk, level.md5, 16))
 		{
 			I_Error("Savegame is from a different level");
@@ -1007,7 +1007,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	// [ZZ] serialize events
 	E_SerializeEvents(arc);
 	DThinker::SerializeThinkers(arc, hubload);
-	arc.Array("polyobjs", polyobjs, po_NumPolyobjs);
+	arc("polyobjs", level.Polyobjects);
 	SerializeSubsectors(arc, "subsectors");
 	StatusBar->SerializeMessages(arc);
 	AM_SerializeMarkers(arc);

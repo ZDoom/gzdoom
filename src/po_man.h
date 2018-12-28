@@ -116,7 +116,6 @@ private:
 	bool CheckMobjBlocking (side_t *sd);
 
 };
-extern FPolyObj *polyobjs;		// list of all poly-objects on the level
 
 struct polyblock_t
 {
@@ -144,22 +143,6 @@ bool EV_MovePolyTo (line_t *line, int polyNum, double speed, const DVector2 &pos
 bool EV_OpenPolyDoor (line_t *line, int polyNum, double speed, DAngle angle, int delay, double distance, podoortype_t type);
 bool EV_StopPoly (int polyNum);
 
-
-// [RH] Data structure for P_SpawnMapThing() to keep track
-//		of polyobject-related things.
-struct polyspawns_t
-{
-	polyspawns_t *next;
-	DVector2 pos;
-	short angle;
-	short type;
-};
-
-extern int po_NumPolyobjs;
-extern polyspawns_t *polyspawns;	// [RH] list of polyobject things to spawn
-
-
-void PO_Init ();
 bool PO_Busy (int polyobj);
 FPolyObj *PO_GetPolyobj(int polyNum);
 

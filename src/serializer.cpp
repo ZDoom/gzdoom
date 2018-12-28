@@ -1449,12 +1449,12 @@ FSerializer &SerializePointer(FSerializer &arc, const char *key, T *&value, T **
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FPolyObj *&value, FPolyObj **defval)
 {
-	return SerializePointer(arc, key, value, defval, polyobjs);
+	return SerializePointer(arc, key, value, defval, level.Polyobjects.Data());
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, const FPolyObj *&value, const FPolyObj **defval)
 {
-	return SerializePointer<const FPolyObj>(arc, key, value, defval, polyobjs);
+	return SerializePointer<const FPolyObj>(arc, key, value, defval, level.Polyobjects.Data());
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, side_t *&value, side_t **defval)

@@ -5251,17 +5251,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		case SMT_PolySpawn:
 		case SMT_PolySpawnCrush:
 		case SMT_PolySpawnHurt:
-	{
-		polyspawns_t *polyspawn = new polyspawns_t;
-		polyspawn->next = polyspawns;
-		polyspawn->pos = mthing->pos;
-		polyspawn->angle = mthing->angle;
-		polyspawn->type = mentry->Special;
-		polyspawns = polyspawn;
-			if (mentry->Special != SMT_PolyAnchor)
-			po_NumPolyobjs++;
-		return NULL;
-	}
+			return nullptr;
 
 		case SMT_Player1Start:
 		case SMT_Player2Start:

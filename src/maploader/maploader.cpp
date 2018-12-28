@@ -108,6 +108,8 @@ TArray<FMapThing> MapThingsConverted;
 bool ForceNodeBuild;
 
 
+void PO_Init();
+
 #define MISSING_TEXTURE_WARN_LIMIT		20
 
 void BloodCrypt (void *data, int key, int len);

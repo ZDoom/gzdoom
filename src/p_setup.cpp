@@ -285,6 +285,7 @@ void P_FreeLevelData ()
 	level.rejectmatrix.Clear();
 	level.Zones.Clear();
 	level.blockmap.Clear();
+	level.Polyobjects.Clear();
 
 	if (PolyBlockMap != nullptr)
 	{
@@ -301,12 +302,6 @@ void P_FreeLevelData ()
 		delete[] PolyBlockMap;
 		PolyBlockMap = nullptr;
 	}
-	if (polyobjs != nullptr)
-	{
-		delete[] polyobjs;
-		polyobjs = nullptr;
-	}
-	po_NumPolyobjs = 0;
 
 	level.deathmatchstarts.Clear();
 	level.AllPlayerStarts.Clear();

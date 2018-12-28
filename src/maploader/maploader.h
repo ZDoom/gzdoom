@@ -81,7 +81,7 @@ class MapLoader
 
 	TMap<unsigned, unsigned>  MapThingsUserDataIndex;	// from mapthing idx -> user data idx
 	TArray<FUDMFKey> MapThingsUserData;
-	int sidecount;
+	int sidecount = 0;
 	TArray<int>		linemap;
 
 	TMap<int, EDLinedef> EDLines;
@@ -130,6 +130,7 @@ class MapLoader
 	void ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmapsidedef_t *msd, int special, int tag, short *alpha, FMissingTextureTracker &missingtex);
 	void SetMapThingUserData(AActor *actor, unsigned udi);
 	void CreateBlockMap();
+	void PO_Init(void);
 
 public:
 	void LoadMapinfoACSLump();

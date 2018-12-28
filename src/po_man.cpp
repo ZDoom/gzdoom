@@ -40,6 +40,8 @@
 #include "actorinlines.h"
 #include "v_text.h"
 
+#include "maploader/maploader.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define PO_MAXPOLYSEGS 64
@@ -146,9 +148,6 @@ static void ReleaseAllPolyNodes();
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 polyblock_t **PolyBlockMap;
-FPolyObj *polyobjs; // list of all poly-objects on the level
-int po_NumPolyobjs;
-polyspawns_t *polyspawns; // [RH] Let P_SpawnMapThings() find our thingies for us
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -770,16 +769,14 @@ bool EV_StopPoly(int polynum)
 
 FPolyObj *PO_GetPolyobj (int polyNum)
 {
-	int i;
-
-	for (i = 0; i < po_NumPolyobjs; i++)
+	for(auto &poly : level.Polyobjects)
 	{
-		if (polyobjs[i].tag == polyNum)
+		if (poly.tag == polyNum)
 		{
-			return &polyobjs[i];
+			return &poly;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 
@@ -1405,16 +1402,15 @@ void FPolyObj::ClosestPoint(const DVector2 &fpos, DVector2 &out, side_t **side) 
 
 static void InitBlockMap (void)
 {
-	int i;
 	int bmapwidth = level.blockmap.bmapwidth;
 	int bmapheight = level.blockmap.bmapheight;
 
 	PolyBlockMap = new polyblock_t *[bmapwidth*bmapheight];
 	memset (PolyBlockMap, 0, bmapwidth*bmapheight*sizeof(polyblock_t *));
 
-	for (i = 0; i < po_NumPolyobjs; i++)
+	for(auto &poly : level.Polyobjects)
 	{
-		polyobjs[i].LinkPolyobj();
+		poly.LinkPolyobj();
 	}
 }
 
@@ -1521,7 +1517,7 @@ static void SpawnPolyobj (int index, int tag, int type)
 {
 	unsigned int ii;
 	int i;
-	FPolyObj *po = &polyobjs[index];
+	FPolyObj *po = &level.Polyobjects[index];
 
 	for (ii = 0; ii < KnownPolySides.Size(); ++ii)
 	{
@@ -1547,7 +1543,7 @@ static void SpawnPolyobj (int index, int tag, int type)
 			{
 				sd->linedef->special = 0;
 				sd->linedef->args[0] = 0;
-				IterFindPolySides(&polyobjs[index], sd);
+				IterFindPolySides(&level.Polyobjects[index], sd);
 				po->MirrorNum = sd->linedef->args[1];
 				po->crush = (type != SMT_PolySpawn) ? 3 : 0;
 				po->bHurtOnTouch = (type == SMT_PolySpawnHurt);
@@ -1652,16 +1648,8 @@ static void TranslateToStartSpot (int tag, const DVector2 &origin)
 	FPolyObj *po;
 	DVector2 delta;
 
-	po = NULL;
-	for (int i = 0; i < po_NumPolyobjs; i++)
-	{
-		if (polyobjs[i].tag == tag)
-		{
-			po = &polyobjs[i];
-			break;
-		}
-	}
-	if (po == NULL)
+	po = PO_GetPolyobj(tag);
+	if (po == nullptr)
 	{ // didn't match the tag with a polyobj tag
 		Printf(TEXTCOLOR_RED "TranslateToStartSpot: Unable to match polyobj tag: %d\n", tag);
 		return;
@@ -1702,60 +1690,64 @@ static void TranslateToStartSpot (int tag, const DVector2 &origin)
 //
 //==========================================================================
 
-void PO_Init (void)
+void MapLoader::PO_Init (void)
 {
-	// [RH] Hexen found the polyobject-related things by reloading the map's
-	//		THINGS lump here and scanning through it. I have P_SpawnMapThing()
-	//		record those things instead, so that in here we simply need to
-	//		look at the polyspawns list.
-	polyspawns_t *polyspawn, **prev;
+	int NumPolyobjs = 0;
+	TArray<FMapThing *> polythings;
+	for (auto &mthing : MapThingsConverted)
+	{
+		if (mthing.EdNum == 0 || mthing.EdNum == -1) continue;
+
+		FDoomEdEntry *mentry = mthing.info;
+		switch (mentry->Special)
+		{
+		case SMT_PolyAnchor:
+		case SMT_PolySpawn:
+		case SMT_PolySpawnCrush:
+		case SMT_PolySpawnHurt:
+			polythings.Push(&mthing);
+			if (mentry->Special != SMT_PolyAnchor)
+				NumPolyobjs++;
+		}
+	}
+
 	int polyIndex;
 
 	// [RH] Make this faster
 	InitSideLists ();
 
-	polyobjs = new FPolyObj[po_NumPolyobjs];
+	Level->Polyobjects.Resize(NumPolyobjs);
 
 	polyIndex = 0; // index polyobj number
 	// Find the startSpot points, and spawn each polyobj
-	for (polyspawn = polyspawns, prev = &polyspawns; polyspawn;)
+	for (int i=polythings.Size()-1; i >= 0; i--)
 	{
 		// 9301 (3001) = no crush, 9302 (3002) = crushing, 9303 = hurting touch
-		if (polyspawn->type >= SMT_PolySpawn &&	polyspawn->type <= SMT_PolySpawnHurt)
+		int type = polythings[i]->info->Special;
+		if (type >= SMT_PolySpawn && type <= SMT_PolySpawnHurt)
 		{ 
 			// Polyobj StartSpot Pt.
-			polyobjs[polyIndex].StartSpot.pos = polyspawn->pos;
-			SpawnPolyobj(polyIndex, polyspawn->angle, polyspawn->type);
+			Level->Polyobjects[polyIndex].StartSpot.pos = polythings[i]->pos;
+			SpawnPolyobj(polyIndex, polythings[i]->angle, type);
 			polyIndex++;
-			*prev = polyspawn->next;
-			delete polyspawn;
-			polyspawn = *prev;
 		} 
-		else 
-		{
-			prev = &polyspawn->next;
-			polyspawn = polyspawn->next;
-		}
 	}
-	for (polyspawn = polyspawns; polyspawn;)
+	for (int i = polythings.Size() - 1; i >= 0; i--)
 	{
-		polyspawns_t *next = polyspawn->next;
-		if (polyspawn->type == SMT_PolyAnchor)
+		int type = polythings[i]->info->Special;
+		if (type == SMT_PolyAnchor)
 		{ 
 			// Polyobj Anchor Pt.
-			TranslateToStartSpot (polyspawn->angle, polyspawn->pos);
+			TranslateToStartSpot (polythings[i]->angle, polythings[i]->pos);
 		}
-		delete polyspawn;
-		polyspawn = next;
 	}
-	polyspawns = NULL;
 
 	// check for a startspot without an anchor point
-	for (polyIndex = 0; polyIndex < po_NumPolyobjs; polyIndex++)
+	for (auto &poly : Level->Polyobjects)
 	{
-		if (polyobjs[polyIndex].OriginalPts.Size() == 0)
+		if (poly.OriginalPts.Size() == 0)
 		{
-			Printf (TEXTCOLOR_RED "PO_Init: StartSpot located without an Anchor point: %d\n", polyobjs[polyIndex].tag);
+			Printf (TEXTCOLOR_RED "PO_Init: StartSpot located without an Anchor point: %d\n", poly.tag);
 		}
 	}
 	InitBlockMap();
@@ -1765,7 +1757,7 @@ void PO_Init (void)
 
 	// mark all subsectors which have a seg belonging to a polyobj
 	// These ones should not be rendered on the textured automap.
-	for (auto &ss : level.subsectors)
+	for (auto &ss : Level->subsectors)
 	{
 		for(uint32_t j=0;j<ss.numlines; j++)
 		{
@@ -1778,7 +1770,7 @@ void PO_Init (void)
 		}
 	}
 	// clear all polyobj specials so that they do not obstruct using other lines.
-	for (auto &line : level.lines)
+	for (auto &line : Level->lines)
 	{
 		if (line.special == Polyobj_ExplicitLine || line.special == Polyobj_StartLine)
 		{
@@ -1847,9 +1839,9 @@ void FPolyObj::ClearSubsectorLinks()
 
 void FPolyObj::ClearAllSubsectorLinks()
 {
-	for (int i = 0; i < po_NumPolyobjs; i++)
+	for(auto &poly : level.Polyobjects)
 	{
-		polyobjs[i].ClearSubsectorLinks();
+		poly.ClearSubsectorLinks();
 	}
 	ReleaseAllPolyNodes();
 }
@@ -2173,11 +2165,11 @@ void FPolyObj::CreateSubsectorLinks()
 
 void PO_LinkToSubsectors()
 {
-	for (int i = 0; i < po_NumPolyobjs; i++)
+	for(auto &poly : level.Polyobjects)
 	{
-		if (polyobjs[i].subsectorlinks == NULL)
+		if (poly.subsectorlinks == nullptr)
 		{
-			polyobjs[i].CreateSubsectorLinks();
+			poly.CreateSubsectorLinks();
 		}
 	}
 }

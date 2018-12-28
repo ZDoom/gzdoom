@@ -42,6 +42,7 @@
 #include "portal.h"
 #include "p_blockmap.h"
 #include "p_local.h"
+#include "po_man.h"
 #include "p_destructible.h"
 #include "r_data/r_sections.h"
 #include "r_data/r_canvastexture.h"
@@ -62,6 +63,7 @@ struct FLevelData
 	node_t *headgamenode;
 	TArray<uint8_t> rejectmatrix;
 	TArray<zone_t>	Zones;
+	TArray<FPolyObj> Polyobjects;
 
 	TArray<FSectorPortal> sectorPortals;
 	TArray<FLinePortal> linePortals;

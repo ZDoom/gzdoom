@@ -1079,6 +1079,7 @@ set (PCH_SOURCES
 	maploader/slopes.cpp
 	maploader/glnodes.cpp
 	maploader/udmf.cpp
+	maploader/polyobjects.cpp
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp
 	menu/menu.cpp

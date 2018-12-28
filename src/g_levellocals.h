@@ -83,6 +83,7 @@ struct FLevelData
 	TMap<int, FHealthGroup> healthGroups;
 
 	FBlockmap blockmap;
+	TArray<polyblock_t *> PolyBlockMap;
 
 	// These are copies of the loaded map data that get used by the savegame code to skip unaltered fields
 	// Without such a mechanism the savegame format would become too slow and large because more than 80-90% are normally still unaltered.

@@ -80,8 +80,6 @@ extern unsigned int R_OldBlend;
 
 static void P_Shutdown ();
 
-extern polyblock_t **PolyBlockMap;
-
 //===========================================================================
 //
 // P_PrecacheLevel
@@ -279,21 +277,17 @@ void P_FreeLevelData ()
 	level.blockmap.Clear();
 	level.Polyobjects.Clear();
 
-	if (PolyBlockMap != nullptr)
+	for(auto &pb : level.PolyBlockMap)
 	{
-		for (int i = level.blockmap.bmapwidth*level.blockmap.bmapheight-1; i >= 0; --i)
+		polyblock_t *link = pb;
+		while (link != nullptr)
 		{
-			polyblock_t *link = PolyBlockMap[i];
-			while (link != nullptr)
-			{
-				polyblock_t *next = link->next;
-				delete link;
-				link = next;
-			}
+			polyblock_t *next = link->next;
+			delete link;
+			link = next;
 		}
-		delete[] PolyBlockMap;
-		PolyBlockMap = nullptr;
 	}
+	level.PolyBlockMap.Reset();
 
 	level.deathmatchstarts.Clear();
 	level.AllPlayerStarts.Clear();

@@ -581,7 +581,6 @@ void AActor::SetOrigin(double x, double y, double z, bool moving)
 // FBlockLinesIterator
 //
 //===========================================================================
-extern polyblock_t **PolyBlockMap;
 
 FBlockLinesIterator::FBlockLinesIterator(int _minx, int _miny, int _maxx, int _maxy, bool keepvalidcount)
 {
@@ -621,7 +620,7 @@ void FBlockLinesIterator::StartBlock(int x, int y)
 	if (level.blockmap.isValidBlock(x, y))
 	{
 		int offset = y*level.blockmap.bmapwidth + x;
-		polyLink = PolyBlockMap? PolyBlockMap[offset] : NULL;
+		polyLink = level.PolyBlockMap.Size() > offset? level.PolyBlockMap[offset] : nullptr;
 		polyIndex = 0;
 
 		list = level.blockmap.GetLines(x, y);

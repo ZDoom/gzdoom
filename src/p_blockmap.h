@@ -77,16 +77,21 @@ struct FBlockmap
 
 	void Clear()
 	{
-		if (blockmaplump != NULL)
+		if (blockmaplump != nullptr)
 		{
 			delete[] blockmaplump;
-			blockmaplump = NULL;
+			blockmaplump = nullptr;
 		}
-		if (blocklinks != NULL)
+		if (blocklinks != nullptr)
 		{
 			delete[] blocklinks;
-			blocklinks = NULL;
+			blocklinks = nullptr;
 		}
+	}
+
+	~FBlockmap()
+	{
+		Clear();
 	}
 
 };

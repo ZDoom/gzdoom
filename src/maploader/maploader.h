@@ -84,9 +84,13 @@ class MapLoader
 	int sidecount = 0;
 	TArray<int>		linemap;
 
+	// Extradata loader
 	TMap<int, EDLinedef> EDLines;
 	TMap<int, EDSector> EDSectors;
 	TMap<int, EDMapthing> EDThings;
+
+	// Polyobject init
+	TArray<int32_t> KnownPolySides;
 
 	void SlopeLineToPoint(int lineid, const DVector3 &pos, bool slopeCeil);
 	void CopyPlane(int tag, sector_t *dest, bool copyCeil);
@@ -100,6 +104,12 @@ class MapLoader
 	void ProcessEDMapthing(FMapThing *mt, int recordnum);
 	void ProcessEDLinedef(line_t *line, int recordnum);
 	void ProcessEDSector(sector_t *sec, int recordnum);
+
+	void InitSideLists();
+	void IterFindPolySides(FPolyObj *po, side_t *side);
+	void SpawnPolyobj(int index, int tag, int type);
+	void TranslateToStartSpot(int tag, const DVector2 &origin);
+	void InitPolyBlockMap(void);
 
 	int checkGLVertex(int num);
 	int checkGLVertex3(int num);

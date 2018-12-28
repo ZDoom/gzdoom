@@ -103,7 +103,6 @@
 #include "fragglescript/t_fs.h"
 #include "maploader.h"
 
-sidei_t *sidetemp;
 TArray<FMapThing> MapThingsConverted;
 bool ForceNodeBuild;
 
@@ -1830,7 +1829,7 @@ void MapLoader::LoadLineDefs2 (MapData * map)
 	Level->sides.Alloc(count);
 	memset(&Level->sides[0], 0, count * sizeof(side_t));
 
-	sidetemp = new sidei_t[MAX<int>(count, Level->vertexes.Size())];
+	sidetemp.Resize(MAX<int>(count, Level->vertexes.Size()));
 	for (i = 0; i < count; i++)
 	{
 		sidetemp[i].a.special = sidetemp[i].a.tag = 0;
@@ -1857,12 +1856,8 @@ void MapLoader::LoopSidedefs (bool firstloop)
 {
 	int i;
 
-	if (sidetemp != nullptr)
-	{
-		delete[] sidetemp;
-	}
 	int numsides = Level->sides.Size();
-	sidetemp = new sidei_t[MAX<int>(Level->vertexes.Size(), numsides)];
+	sidetemp.Resize(MAX<int>(Level->vertexes.Size(), numsides));
 
 	for (i = 0; i < (int)Level->vertexes.Size(); ++i)
 	{
@@ -3231,8 +3226,4 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	PO_Init();				// Initialize the polyobjs
 	if (!Level->IsReentering())
 		P_FinalizePortals();	// finalize line portals after polyobjects have been initialized. This info is needed for properly flagging them.
-
-	assert(sidetemp != nullptr);
-	delete[] sidetemp;
-	sidetemp = nullptr;
 }

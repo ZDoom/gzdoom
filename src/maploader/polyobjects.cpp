@@ -117,7 +117,7 @@ void MapLoader::IterFindPolySides (FPolyObj *po, side_t *side)
 	static TArray<uint32_t> vnum;
 	unsigned int vnumat;
 
-	assert(sidetemp != NULL);
+	assert(sidetemp.Size() > 0);
 
 	vnum.Clear();
 	vnum.Push(uint32_t(side->V1()->Index()));

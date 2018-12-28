@@ -59,6 +59,27 @@ struct EDSector
 	double Overlayalpha[2];
 };
 
+struct sidei_t	// [RH] Only keep BOOM sidedef init stuff around for init
+{
+	union
+	{
+		// Used when unpacking sidedefs and assigning
+		// properties based on linedefs.
+		struct
+		{
+			short tag, special;
+			short alpha;
+			uint32_t map;
+		} a;
+
+		// Used when grouping sidedefs into loops.
+		struct
+		{
+			uint32_t first, next;
+			char lineside;
+		} b;
+	};
+};
 
 struct FMissingCount
 {
@@ -83,6 +104,7 @@ class MapLoader
 	TArray<FUDMFKey> MapThingsUserData;
 	int sidecount = 0;
 	TArray<int>		linemap;
+	TArray<sidei_t> sidetemp;
 
 	// Extradata loader
 	TMap<int, EDLinedef> EDLines;

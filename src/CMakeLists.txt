@@ -971,6 +971,7 @@ set (PCH_SOURCES
 	p_scroll.cpp
 	p_secnodes.cpp
 	p_sectors.cpp
+	p_setup.cpp
 	p_sight.cpp
 	p_spec.cpp
 	p_states.cpp

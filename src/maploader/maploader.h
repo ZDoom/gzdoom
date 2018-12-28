@@ -131,8 +131,6 @@ class MapLoader
 	void SetMapThingUserData(AActor *actor, unsigned udi);
 	void CreateBlockMap();
 
-	void AddToList(uint8_t *hitlist, FTextureID texid, int bitmask);
-
 public:
 	void LoadMapinfoACSLump();
 	void ProcessEDSectors();
@@ -163,7 +161,6 @@ public:
 	void LoadBehavior(MapData * map);
 	void GetPolySpots(MapData * map, TArray<FNodeBuilder::FPolyStart> &spots, TArray<FNodeBuilder::FPolyStart> &anchors);
 	void GroupLines(bool buildmap);
-	void PrecacheLevel();
 	void ParseTextMap(MapData *map, FMissingTextureTracker &missingtex);
 	void SummarizeMissingTextures(const FMissingTextureTracker &missing);
 	void SetRenderSector();

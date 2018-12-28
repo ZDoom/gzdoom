@@ -1,7 +1,9 @@
 
-class LevelCompatibility play
+class LevelCompatibility native play
 {
-	private static void Apply(Name checksum)
+	native LevelLocals level;
+	
+	protected void Apply(Name checksum)
 	{
 		switch (checksum)
 		{			
@@ -1165,43 +1167,43 @@ class LevelCompatibility play
 		}
 	}
 
-	private static native void ClearSectorTags(int sector);
-	private static native void AddSectorTag(int sector, int tag);
-	private static native void OffsetSectorPlane(int sector, int plane, double offset);
-	private static native void SetThingSkills(int thing, int skills);
-	private static native void SetThingXY(int thing, double x, double y);
-	private static native void SetThingZ(int thing, double z);
-	private static native void SetThingFlags(int thing, int flags);
-	private static native void SetVertex(uint vertex, double x, double y);
-	private static native void SetLineSectorRef(uint line, uint side, uint sector);
-	private static native Actor GetDefaultActor(Name actorclass);
+	protected native void ClearSectorTags(int sector);
+	protected native void AddSectorTag(int sector, int tag);
+	protected native void OffsetSectorPlane(int sector, int plane, double offset);
+	protected native void SetThingSkills(int thing, int skills);
+	protected native void SetThingXY(int thing, double x, double y);
+	protected native void SetThingZ(int thing, double z);
+	protected native void SetThingFlags(int thing, int flags);
+	protected native void SetVertex(uint vertex, double x, double y);
+	protected native void SetLineSectorRef(uint line, uint side, uint sector);
+	protected native Actor GetDefaultActor(Name actorclass);
 	
-	private static void SetWallTexture(int line, int side, int texpart, String texture)
+	protected void SetWallTexture(int line, int side, int texpart, String texture)
 	{
 		SetWallTextureID(line, side, texpart, TexMan.CheckForTexture(texture, TexMan.Type_Wall));
 	}
 
-	private static void SetWallTextureID(int line, int side, int texpart, TextureID texture)
+	protected void SetWallTextureID(int line, int side, int texpart, TextureID texture)
 	{
 		level.Lines[line].sidedef[side].SetTexture(texpart, texture);
 	}
 	
-	private static void SetLineFlags(int line, int setflags, int clearflags = 0)
+	protected void SetLineFlags(int line, int setflags, int clearflags = 0)
 	{
 		level.Lines[line].flags = (level.Lines[line].flags & ~clearflags) | setflags;
 	}
 	
-	private static void SetLineActivation(int line, int acttype)
+	protected void SetLineActivation(int line, int acttype)
 	{
 		level.Lines[line].activation = acttype;
 	}
 	
-	private static void ClearLineSpecial(int line)
+	protected void ClearLineSpecial(int line)
 	{
 		level.Lines[line].special = 0;
 	}
 	
-	private static void SetLineSpecial(int line, int special, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0, int arg5 = 0)
+	protected void SetLineSpecial(int line, int special, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0, int arg5 = 0)
 	{
 		level.Lines[line].special = special;
 		level.Lines[line].args[0] = arg1;
@@ -1211,27 +1213,27 @@ class LevelCompatibility play
 		level.Lines[line].args[4] = arg5;
 	}
 	
-	private static void SetSectorSpecial(int sectornum, int special)
+	protected void SetSectorSpecial(int sectornum, int special)
 	{
 		level.sectors[sectornum].special = special;
 	}
 
-	private static void SetSectorTextureID(int sectornum, int plane, TextureID texture)
+	protected void SetSectorTextureID(int sectornum, int plane, TextureID texture)
 	{
 		level.sectors[sectornum].SetTexture(plane, texture);
 	}
 
-	private static void SetSectorTexture(int sectornum, int plane, String texture)
+	protected void SetSectorTexture(int sectornum, int plane, String texture)
 	{
 		SetSectorTextureID(sectornum, plane, TexMan.CheckForTexture(texture, TexMan.Type_Flat));
 	}
 
-	private static void SetSectorLight(int sectornum, int newval)
+	protected void SetSectorLight(int sectornum, int newval)
 	{
 		level.sectors[sectornum].SetLightLevel(newval);
 	}
 
-	private static void SetWallYScale(int line, int side, int texpart, double scale)
+	protected void SetWallYScale(int line, int side, int texpart, double scale)
 	{
 		level.lines[line].sidedef[side].SetTextureYScale(texpart, scale);
 	}

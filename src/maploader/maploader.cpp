@@ -85,7 +85,6 @@
 #include "r_sky.h"
 #include "cmdlib.h"
 #include "md5.h"
-#include "compatibility.h"
 #include "po_man.h"
 #include "r_renderer.h"
 #include "p_blockmap.h"
@@ -102,9 +101,6 @@
 #include "hwrenderer/data/flatvertices.h"
 #include "fragglescript/t_fs.h"
 #include "maploader.h"
-
-TArray<FMapThing> MapThingsConverted;
-bool ForceNodeBuild;
 
 
 void PO_Init();

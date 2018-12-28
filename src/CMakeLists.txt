@@ -891,7 +891,6 @@ set (PCH_SOURCES
 	c_functions.cpp
 	cmdlib.cpp
 	colormatcher.cpp
-	compatibility.cpp
 	configfile.cpp
 	ct_chat.cpp
 	cycler.cpp
@@ -1081,6 +1080,7 @@ set (PCH_SOURCES
 	maploader/udmf.cpp
 	maploader/polyobjects.cpp
 	maploader/renderinfo.cpp
+	maploader/compatibility.cpp
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp
 	menu/menu.cpp

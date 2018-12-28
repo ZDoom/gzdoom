@@ -168,9 +168,4 @@ void FixMinisegReferences();
 void FixHoles();
 void ReportUnpairedMinisegs();
 
-// To be moved to maploader later!
-
-extern TArray<FMapThing> MapThingsConverted;
-extern bool ForceNodeBuild;
-
 #endif

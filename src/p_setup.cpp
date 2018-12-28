@@ -55,7 +55,6 @@
 #include "r_sky.h"
 #include "cmdlib.h"
 #include "md5.h"
-#include "compatibility.h"
 #include "po_man.h"
 #include "r_renderer.h"
 #include "p_blockmap.h"
@@ -227,7 +226,6 @@ void P_FreeLevelData ()
 
 	// [ZZ] delete per-map event handlers
 	E_Shutdown(true);
-	MapThingsConverted.Clear();
 	R_FreePastViewers();
 	P_ClearUDMFKeys();
 
@@ -481,7 +479,6 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 	}
 
 	P_ResetSightCounters(true);
-	MapThingsConverted.Clear();
 
 	// Create a backup of the map data so the savegame code can toss out all fields that haven't changed in order to reduce processing time and file size.
 	// Note that we want binary identity here, so assignment is not sufficient because it won't initialize any padding bytes.

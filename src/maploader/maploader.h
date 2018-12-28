@@ -1,5 +1,7 @@
 #pragma once
 
+#include "nodebuild.h"
+
 struct EDMapthing
 {
 	int recordnum;
@@ -88,6 +90,7 @@ struct FMissingCount
 
 typedef TMap<FString,FMissingCount> FMissingTextureTracker;
 struct FLevelLocals;
+struct MapData;
 
 class MapLoader
 {
@@ -105,6 +108,10 @@ class MapLoader
 	int sidecount = 0;
 	TArray<int>		linemap;
 	TArray<sidei_t> sidetemp;
+public:	// for the scripted compatibility system these two members need to be public.
+	TArray<FMapThing> MapThingsConverted;
+	bool ForceNodeBuild = false;
+private:
 
 	// Extradata loader
 	TMap<int, EDLinedef> EDLines;
@@ -113,6 +120,9 @@ class MapLoader
 
 	// Polyobject init
 	TArray<int32_t> KnownPolySides;
+
+	FName CheckCompatibility(MapData *map);
+	void SetCompatibilityParams(FName checksum);
 
 	// Slopes
 	void SlopeLineToPoint(int lineid, const DVector3 &pos, bool slopeCeil);

@@ -89,7 +89,6 @@
 #include "d_event.h"
 #include "d_netinf.h"
 #include "m_cheat.h"
-#include "compatibility.h"
 #include "m_joy.h"
 #include "po_man.h"
 #include "r_renderer.h"
@@ -2431,8 +2430,6 @@ void D_DoomMain (void)
 		{
 			StartScreen = new FStartupScreen(0);
 		}
-
-		ParseCompatibility();
 
 		CheckCmdLine();
 

@@ -340,8 +340,8 @@ namespace swrenderer
 					continue;
 				}
 
-				float neardepth = MIN(ds->sz1, ds->sz2);
-				float fardepth = MAX(ds->sz1, ds->sz2);
+				float neardepth = MIN(ds->WallC.sz1, ds->WallC.sz2);
+				float fardepth = MAX(ds->WallC.sz1, ds->WallC.sz2);
 
 				// Check if sprite is in front of draw seg:
 				if ((!spr->IsWallSprite() && neardepth > spr->depth) || ((spr->IsWallSprite() || fardepth > spr->depth) &&
@@ -414,8 +414,8 @@ namespace swrenderer
 					int r1 = MAX<int>(ds->x1, x1);
 					int r2 = MIN<int>(ds->x2, x2);
 
-					float neardepth = MIN(ds->sz1, ds->sz2);
-					float fardepth = MAX(ds->sz1, ds->sz2);
+					float neardepth = MIN(ds->WallC.sz1, ds->WallC.sz2);
+					float fardepth = MAX(ds->WallC.sz1, ds->WallC.sz2);
 
 					// Check if sprite is in front of draw seg:
 					if ((!spr->IsWallSprite() && neardepth > spr->depth) || ((spr->IsWallSprite() || fardepth > spr->depth) &&

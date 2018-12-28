@@ -54,19 +54,20 @@
 
 namespace swrenderer
 {
-	void RenderFogBoundary::Render(RenderThread *thread, int x1, int x2, const short *uclip, const short *dclip, int lightlevel, bool foggy, float lightleft, float lightstep, FDynamicColormap *basecolormap)
+	void RenderFogBoundary::Render(RenderThread *thread, int x1, int x2, const short *uclip, const short *dclip, const ProjectedWallLight &wallLight)
 	{
 		// This is essentially the same as R_MapVisPlane but with an extra step
 		// to create new horizontal spans whenever the light changes enough that
 		// we need to use a new colormap.
 
-		int wallshade = LightVisibility::LightLevelToShade(lightlevel, foggy, thread->Viewport.get());
-		float light = lightleft + lightstep*(x2 - x1 - 1);
+		int wallshade = LightVisibility::LightLevelToShade(wallLight.GetLightLevel(), wallLight.GetFoggy(), thread->Viewport.get());
 		int x = x2 - 1;
 		int t2 = uclip[x];
 		int b2 = dclip[x];
+		float light = wallLight.GetLightPos(x);
 		int rcolormap = GETPALOOKUP(light, wallshade);
 		int lcolormap;
+		FDynamicColormap *basecolormap = wallLight.GetBaseColormap();
 		uint8_t *basecolormapdata = basecolormap->Maps;
 
 		if (b2 > t2)
@@ -75,7 +76,7 @@ namespace swrenderer
 		}
 
 		drawerargs.SetBaseColormap(basecolormap);
-		drawerargs.SetLight(light, lightlevel, foggy, thread->Viewport.get());
+		drawerargs.SetLight(light, wallLight.GetLightLevel(), wallLight.GetFoggy(), thread->Viewport.get());
 
 		uint8_t *fake_dc_colormap = basecolormap->Maps + (GETPALOOKUP(light, wallshade) << COLORMAPSHIFT);
 
@@ -86,7 +87,7 @@ namespace swrenderer
 			const int xr = x + 1;
 			int stop;
 
-			light -= lightstep;
+			light -= wallLight.GetLightStep();
 			lcolormap = GETPALOOKUP(light, wallshade);
 			if (lcolormap != rcolormap)
 			{

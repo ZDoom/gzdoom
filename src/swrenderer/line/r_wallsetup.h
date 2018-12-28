@@ -56,4 +56,29 @@ namespace swrenderer
 		void Project(RenderViewport *viewport, double walxrepeat, int x1, int x2, const FWallTmapVals &WallT);
 		void ProjectPos(RenderViewport *viewport, double walxrepeat, int x1, int x2, const FWallTmapVals &WallT);
 	};
+
+	class ProjectedWallLight
+	{
+	public:
+		int GetLightLevel() const { return lightlevel; }
+		bool GetFoggy() const { return foggy; }
+		FDynamicColormap *GetBaseColormap() const { return basecolormap; }
+
+		float GetLightPos(int x) const { return lightleft + lightstep * (x - x1); }
+		float GetLightStep() const { return lightstep; }
+
+		void SetColormap(const sector_t *frontsector, seg_t *lineseg, lightlist_t *lit = nullptr);
+
+		void SetLightLeft(float left, float step, int startx) { lightleft = left; lightstep = step; x1 = startx; }
+		void SetLightLeft(RenderThread *thread, const FWallCoords &wallc);
+
+	private:
+		int lightlevel;
+		bool foggy;
+		FDynamicColormap *basecolormap;
+
+		int x1;
+		float lightleft;
+		float lightstep;
+	};
 }

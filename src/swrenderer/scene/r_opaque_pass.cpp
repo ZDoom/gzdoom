@@ -451,7 +451,7 @@ namespace swrenderer
 	}
 
 	// kg3D - add fake segs, never rendered
-	void RenderOpaquePass::FakeDrawLoop(subsector_t *sub, sector_t *frontsector, VisiblePlane *floorplane, VisiblePlane *ceilingplane, bool foggy, FDynamicColormap *basecolormap, Fake3DOpaque opaque3dfloor)
+	void RenderOpaquePass::FakeDrawLoop(subsector_t *sub, sector_t *frontsector, VisiblePlane *floorplane, VisiblePlane *ceilingplane, Fake3DOpaque opaque3dfloor)
 	{
 		int 		 count;
 		seg_t*		 line;
@@ -463,7 +463,7 @@ namespace swrenderer
 		{
 			if ((line->sidedef) && !(line->sidedef->Flags & WALLF_POLYOBJ))
 			{
-				renderline.Render(line, InSubsector, frontsector, nullptr, floorplane, ceilingplane, foggy, basecolormap, opaque3dfloor);
+				renderline.Render(line, InSubsector, frontsector, nullptr, floorplane, ceilingplane, opaque3dfloor);
 			}
 			line++;
 		}
@@ -622,8 +622,6 @@ namespace swrenderer
 
 		DVector2 viewpointPos = Thread->Viewport->viewpoint.Pos.XY();
 
-		basecolormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::walltop]);
-
 		seg_t *line = sub->firstline;
 		int count = sub->numlines;
 		while (count--)
@@ -637,8 +635,8 @@ namespace swrenderer
 			}
 			else if (!outersubsector || line->sidedef == nullptr || !(line->sidedef->Flags & WALLF_POLYOBJ))
 			{
-				Add3DFloorLine(line, frontsector, basecolormap, foggy);
-				renderline.Render(line, InSubsector, frontsector, nullptr, floorplane, ceilingplane, foggy, basecolormap, Fake3DOpaque::Normal); // now real
+				Add3DFloorLine(line, frontsector);
+				renderline.Render(line, InSubsector, frontsector, nullptr, floorplane, ceilingplane, Fake3DOpaque::Normal); // now real
 			}
 			line++;
 		}
@@ -648,7 +646,7 @@ namespace swrenderer
 		}
 	}
 
-	void RenderOpaquePass::Add3DFloorLine(seg_t *line, sector_t *frontsector, FDynamicColormap *basecolormap, bool foggy)
+	void RenderOpaquePass::Add3DFloorLine(seg_t *line, sector_t *frontsector)
 	{
 		// kg3D - fake planes bounding calculation
 		if (r_3dfloors && line->backsector && frontsector->e && line->backsector->e->XFloor.ffloors.Size())
@@ -669,7 +667,7 @@ namespace swrenderer
 					clip3d->fakeFloor->validcount = validcount;
 					clip3d->NewClip();
 				}
-				renderline.Render(line, InSubsector, frontsector, &tempsec, nullptr, nullptr, foggy, basecolormap, opaque3dfloor); // fake
+				renderline.Render(line, InSubsector, frontsector, &tempsec, nullptr, nullptr, opaque3dfloor); // fake
 			}
 			clip3d->fakeFloor = nullptr;
 		}
@@ -744,7 +742,7 @@ namespace swrenderer
 
 					floorplane3d->AddLights(Thread, sub->section->lighthead);
 
-					FakeDrawLoop(sub, &tempsec, floorplane3d, nullptr, foggy, basecolormap, Fake3DOpaque::FakeFloor);
+					FakeDrawLoop(sub, &tempsec, floorplane3d, nullptr, Fake3DOpaque::FakeFloor);
 				}
 			}
 			// and now ceilings
@@ -812,7 +810,7 @@ namespace swrenderer
 
 					ceilingplane3d->AddLights(Thread, sub->section->lighthead);
 
-					FakeDrawLoop(sub, &tempsec, nullptr, ceilingplane3d, foggy, basecolormap, Fake3DOpaque::FakeCeiling);
+					FakeDrawLoop(sub, &tempsec, nullptr, ceilingplane3d, Fake3DOpaque::FakeCeiling);
 				}
 			}
 			clip3d->fakeFloor = nullptr;

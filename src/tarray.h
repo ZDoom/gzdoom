@@ -1460,17 +1460,9 @@ public:
 		Count = count;
 		Array = data;
 	}
-	TArrayView(const TArrayView<T> &other)
-	{
-		Count = other.Count;
-		Array = other.Array;
-	}
-	TArrayView<T> &operator= (const TArrayView<T> &other)
-	{
-		Count = other.Count;
-		Array = other.Array;
-		return *this;
-	}
+	TArrayView(const TArrayView<T> &other) = default;
+	TArrayView<T> &operator= (const TArrayView<T> &other) = default;
+
 	// Check equality of two arrays
 	bool operator==(const TArrayView<T> &other) const
 	{

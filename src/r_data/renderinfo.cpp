@@ -243,13 +243,14 @@ static void PrepareSectorData()
 	TArray<subsector_t *> undetermined;
 
 	// now group the subsectors by sector
-	subsector_t ** subsectorbuffer = new subsector_t * [level.subsectors.Size()];
+	level.subsectorbuffer.Resize(level.subsectors.Size());
 
 	for (auto &sub : level.subsectors)
 	{
 		sub.render_sector->subsectorcount++;
 	}
 
+	auto subsectorbuffer = level.subsectorbuffer.Data();
 	for (auto &sec : level.sectors) 
 	{
 		sec.subsectors = subsectorbuffer;
@@ -499,7 +500,8 @@ static void PrepareSegs()
 	}
 
 	// allocate memory
-	level.sides[0].segs = new seg_t*[realsegs];
+	level.segbuffer.Resize(realsegs);
+	level.sides[0].segs = level.segbuffer.Data();
 	level.sides[0].numsegs = 0;
 
 	for(unsigned i = 1; i < numsides; i++)

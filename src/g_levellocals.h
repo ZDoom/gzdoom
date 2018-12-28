@@ -53,8 +53,10 @@ struct FLevelData
 	TArray<vertex_t> vertexes;
 	TArray<sector_t> sectors;
 	TArray<line_t*> linebuffer;	// contains the line lists for the sectors.
+	TArray<subsector_t*> subsectorbuffer;	// contains the subsector lists for the sectors.
 	TArray<line_t> lines;
 	TArray<side_t> sides;
+	TArray<seg_t *> segbuffer;	// contains the seg links for the sidedefs.
 	TArray<seg_t> segs;
 	TArray<subsector_t> subsectors;
 	TArray<node_t> nodes;

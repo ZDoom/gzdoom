@@ -250,30 +250,22 @@ void P_FreeLevelData ()
 	if (level.sectors.Size() > 0)
 	{
 		delete[] level.sectors[0].e;
-		if (level.sectors[0].subsectors)
-		{
-			delete[] level.sectors[0].subsectors;
-			level.sectors[0].subsectors = nullptr;
-		}
 	}
 	for (auto &sub : level.subsectors)
 	{
 		if (sub.BSP != nullptr) delete sub.BSP;
 	}
-	if (level.sides.Size() > 0 && level.sides[0].segs)
-	{
-		delete[] level.sides[0].segs;
-		level.sides[0].segs = nullptr;
-	}
-
 
 	FBehavior::StaticUnloadModules ();
 	level.canvasTextureInfo.EmptyList();
 	level.sections.Clear();
 	level.segs.Clear();
 	level.sectors.Clear();
+	level.linebuffer.Clear();
+	level.subsectorbuffer.Clear();
 	level.lines.Clear();
 	level.sides.Clear();
+	level.segbuffer.Clear();
 	level.loadsectors.Clear();
 	level.loadlines.Clear();
 	level.loadsides.Clear();

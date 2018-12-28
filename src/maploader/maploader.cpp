@@ -119,8 +119,6 @@ EXTERN_CVAR(Bool, am_textured)
 
 CVAR (Bool, genblockmap, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
 CVAR (Bool, gennodes, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
-CVAR (Bool, genglnodes, false, CVAR_SERVERINFO);
-CVAR (Bool, showloadtimes, false, 0);
 
 inline bool P_LoadBuildMap(uint8_t *mapdata, size_t len, FMapThing **things, int *numthings)
 {
@@ -2626,20 +2624,13 @@ void MapLoader::LoadBlockMap (MapData * map)
 
 void MapLoader::GroupLines (bool buildmap)
 {
-	cycle_t times[16];
 	int 				total;
 	sector_t*			sector;
 	FBoundingBox		bbox;
 	bool				flaggedNoFronts = false;
 	unsigned int		jj;
 
-	for (unsigned i = 0; i < countof(times); ++i)
-	{
-		times[i].Reset();
-	}
-
 	// look up sector number for each subsector
-	times[0].Clock();
 	for (auto &sub : Level->subsectors)
 	{
 		sub.sector = sub.firstline->sidedef->sector;
@@ -2651,10 +2642,8 @@ void MapLoader::GroupLines (bool buildmap)
 			sub.firstline[jj].Subsector = &sub;
 		}
 	}
-	times[0].Unclock();
 
 	// count number of lines in each sector
-	times[1].Clock();
 	total = 0;
 	for (unsigned i = 0; i < Level->lines.Size(); i++)
 	{
@@ -2684,10 +2673,8 @@ void MapLoader::GroupLines (bool buildmap)
 	{
 		I_Error ("You need to fix these lines to play this map.\n");
 	}
-	times[1].Unclock();
 
 	// build line tables for each sector
-	times[3].Clock();
 	Level->linebuffer.Alloc(total);
 	line_t **lineb_p = &Level->linebuffer[0];
 	auto numsectors = Level->sectors.Size();
@@ -2754,28 +2741,13 @@ void MapLoader::GroupLines (bool buildmap)
 			sector->centerspot = pos / (2 * sector->Lines.Size());
 		}
 	}
-	times[3].Unclock();
 
-	// [RH] Moved this here
-	times[4].Clock();
 	// killough 1/30/98: Create xref tables for tags
 	tagManager.HashTags();
-	times[4].Unclock();
 
-	times[5].Clock();
 	if (!buildmap)
 	{
 		SetSlopes ();
-	}
-	times[5].Unclock();
-
-	if (showloadtimes)
-	{
-		Printf ("---Group Lines Times---\n");
-		for (int i = 0; i < 7; ++i)
-		{
-			Printf (" time %d:%9.4f ms\n", i, times[i].TimeMS());
-		}
 	}
 }
 

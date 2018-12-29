@@ -426,9 +426,9 @@ void ADynamicLight::SetOffset(const DVector3 &pos)
 	UpdateLocation();
 }
 
-static void SetOffset(ADynamicLight *self, const DVector3 &pos)
+static void SetOffset(ADynamicLight *self, double x, double y, double z)
 {
-	self->SetOffset(pos);
+	self->SetOffset(DVector3(x, y, z));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(ADynamicLight, SetOffset, SetOffset)

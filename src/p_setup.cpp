@@ -113,7 +113,7 @@ static void AddToList(uint8_t *hitlist, FTextureID texid, int bitmask)
 		}
 		for (int i = 0; i < switchdef->PairDef->NumFrames; i++)
 		{
-			hitlist[switchdef->frames[i].Texture.GetIndex()] |= (uint8_t)bitmask;
+			hitlist[switchdef->PairDef->frames[i].Texture.GetIndex()] |= (uint8_t)bitmask;
 		}
 	}
 

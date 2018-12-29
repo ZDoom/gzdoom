@@ -920,9 +920,10 @@ unsigned FSerializer::GetSize(const char *group)
 {
 	if (isWriting()) return -1;	// we do not know this when writing.
 
-	const rapidjson::Value &val = r->mDoc[group];
-	if (!val.IsArray()) return -1;
-	return val.Size();
+	const rapidjson::Value *val = r->FindKey(group);
+	if (!val) return 0;
+	if (!val->IsArray()) return -1;
+	return val->Size();
 }
 
 //==========================================================================

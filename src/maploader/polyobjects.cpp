@@ -330,7 +330,7 @@ void MapLoader::PO_Init (void)
 	TArray<FMapThing *> polythings;
 	for (auto &mthing : MapThingsConverted)
 	{
-		if (mthing.EdNum == 0 || mthing.EdNum == -1) continue;
+		if (mthing.EdNum == 0 || mthing.EdNum == -1 || mthing.info == nullptr) continue;
 
 		FDoomEdEntry *mentry = mthing.info;
 		switch (mentry->Special)

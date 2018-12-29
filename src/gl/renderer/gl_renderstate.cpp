@@ -48,7 +48,6 @@ namespace OpenGLRenderer
 FGLRenderState gl_RenderState;
 
 static VSMatrix identityMatrix(1);
-TArray<VSMatrix> gl_MatrixStack;
 
 static void matrixToGL(const VSMatrix &mat, int loc)
 {

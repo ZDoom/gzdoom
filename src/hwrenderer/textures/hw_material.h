@@ -33,12 +33,6 @@ enum
 
 class FMaterial
 {
-	// This array is needed because not all textures are managed by the texture manager
-	// but some code needs to discard all hardware dependent data attached to any created texture.
-	// Font characters are not, for example.
-	static TArray<FMaterial *> mMaterials;
-	static int mMaxBound;
-
 	TArray<FTexture*> mTextureLayers;
 	int mShaderIndex;
 

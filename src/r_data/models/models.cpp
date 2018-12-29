@@ -53,7 +53,7 @@ EXTERN_CVAR (Bool, r_drawvoxels)
 extern TDeletingArray<FVoxel *> Voxels;
 extern TDeletingArray<FVoxelDef *> VoxelDefs;
 
-DeletingModelArray Models;
+TDeletingArray<FModel*> Models;
 
 void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *smf, AActor *actor, double ticFrac)
 {
@@ -314,14 +314,8 @@ void FModel::DestroyVertexBuffer()
 }
 
 static TArray<FSpriteModelFrame> SpriteModelFrames;
-static int * SpriteModelHash;
+static TArray<int> SpriteModelHash;
 //TArray<FStateModelFrame> StateModelFrames;
-
-static void DeleteModelHash()
-{
-	if (SpriteModelHash != nullptr) delete [] SpriteModelHash;
-	SpriteModelHash = nullptr;
-}
 
 //===========================================================================
 //
@@ -489,13 +483,9 @@ static void ParseModelDefLump(int Lump);
 
 void InitModels()
 {
-	for (unsigned i = 0; i < Models.Size(); i++)
-	{
-		delete Models[i];
-	}
-	Models.Clear();
+	Models.DeleteAndClear();
 	SpriteModelFrames.Clear();
-	DeleteModelHash();
+	SpriteModelHash.Clear();
 
 	// First, create models for each voxel
 	for (unsigned i = 0; i < Voxels.Size(); i++)
@@ -548,9 +538,8 @@ void InitModels()
 	}
 
 	// create a hash table for quick access
-	SpriteModelHash = new int[SpriteModelFrames.Size ()];
-	atterm(DeleteModelHash);
-	memset(SpriteModelHash, 0xff, SpriteModelFrames.Size () * sizeof(int));
+	SpriteModelHash.Resize(SpriteModelFrames.Size ());
+	memset(SpriteModelHash.Data(), 0xff, SpriteModelFrames.Size () * sizeof(int));
 
 	for (unsigned int i = 0; i < SpriteModelFrames.Size (); i++)
 	{

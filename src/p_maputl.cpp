@@ -619,7 +619,7 @@ void FBlockLinesIterator::StartBlock(int x, int y)
 	cury = y; 
 	if (level.blockmap.isValidBlock(x, y))
 	{
-		int offset = y*level.blockmap.bmapwidth + x;
+		unsigned offset = y*level.blockmap.bmapwidth + x;
 		polyLink = level.PolyBlockMap.Size() > offset? level.PolyBlockMap[offset] : nullptr;
 		polyIndex = 0;
 

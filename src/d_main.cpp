@@ -2713,7 +2713,6 @@ void D_DoomMain (void)
 		S_Shutdown();					// free all channels and delete playlist
 		C_ClearAliases();				// CCMDs won't be reinitialized so these need to be deleted here
 		DestroyCVarsFlagged(CVAR_MOD);	// Delete any cvar left by mods
-		FS_Close();						// destroy the global FraggleScript.
 		DeinitMenus();
 		LightDefaults.DeleteAndClear();			// this can leak heap memory if it isn't cleared.
 

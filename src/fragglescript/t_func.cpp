@@ -4046,16 +4046,16 @@ void FParser::SF_ScriptRunning()
 //
 //==========================================================================
 
-static int zoom=1;	// Dummy - no longer needed!
-
-void init_functions(void)
+void DFraggleThinker::InitFunctions()
 {
+	cycle_t clock;
+
 	for(unsigned i=0;i<countof(ActorNames_init);i++)
 	{
 		ActorTypes[i]=PClass::FindActor(ActorNames_init[i]);
 	}
 
-	DFsScript * gscr = global_script;
+	DFsScript * gscr = GlobalScript;
 
 	// add all the functions
 	gscr->NewVariable("consoleplayer", svt_pInt)->value.pI = &consoleplayer;

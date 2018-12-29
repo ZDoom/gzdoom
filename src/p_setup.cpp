@@ -512,7 +512,6 @@ static void P_Shutdown ()
 	// [ZZ] delete global event handlers
 	E_Shutdown(false);
 	ST_Clear();
-	FS_Close();
 	for (auto &p : players)
 	{
 		if (p.psprites != nullptr) p.psprites->Destroy();

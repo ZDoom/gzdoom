@@ -678,6 +678,9 @@ class DFraggleThinker : public DThinker
 	HAS_OBJECT_POINTERS
 public:
 
+	int zoom = 1;
+	AActor *trigger_obj;	// this is a transient pointer not being subjected to GC.
+	TObjPtr<DFsScript*> GlobalScript;
 	TObjPtr<DFsScript*> LevelScript;
 	TObjPtr<DRunningScript*> RunningScripts;
 	TArray<TObjPtr<AActor*> > SpawnedThings;
@@ -688,6 +691,7 @@ public:
 
 	void Serialize(FSerializer & arc);
 	void Tick();
+	void InitFunctions();
 	size_t PropagateMark();
 	size_t PointerSubstitution (DObject *old, DObject *notOld);
 	bool wait_finished(DRunningScript *script);
@@ -706,10 +710,6 @@ public:
 
 void script_error(const char *s, ...) GCCPRINTF(1,2);
 void FS_EmulateCmd(char * string);
-
-extern AActor *trigger_obj;
-extern DFsScript *global_script; 
-
 
 #endif
 

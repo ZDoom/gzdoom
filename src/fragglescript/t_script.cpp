@@ -42,19 +42,6 @@
 
 //==========================================================================
 //
-// global variables
-// These two are the last remaining ones:
-// - The global script contains static data so it must be global
-// - The trigger is referenced by a global variable. However, it is set 
-//   each time a script is started so that's not a problem.
-//
-//==========================================================================
-
-DFsScript *global_script;
-AActor *trigger_obj;
-
-//==========================================================================
-//
 //
 //
 //==========================================================================
@@ -190,7 +177,7 @@ void DFsScript::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
 	// don't save a reference to the global script
-	if (parent == global_script) parent = nullptr;
+	if (parent == DFraggleThinker::ActiveThinker->GlobalScript) parent = nullptr;
 
 	arc("data", data)
 		("scriptnum", scriptnum)
@@ -202,7 +189,7 @@ void DFsScript::Serialize(FSerializer &arc)
 		.Array("variables", variables, VARIABLESLOTS)
 		.Array("children", children, MAXSCRIPTS);
 
-	if (parent == nullptr) parent = global_script;
+	if (parent == nullptr) parent = DFraggleThinker::ActiveThinker->GlobalScript;
 }
 
 //==========================================================================
@@ -228,7 +215,7 @@ void DFsScript::ParseScript(char *position)
 		return;
     }
 	
-	trigger_obj = trigger;  // set trigger
+	DFraggleThinker::ActiveThinker->trigger_obj = trigger;  // set trigger
 	
 	try
 	{
@@ -369,6 +356,7 @@ IMPLEMENT_CLASS(DFraggleThinker, false, true)
 IMPLEMENT_POINTERS_START(DFraggleThinker)
 	IMPLEMENT_POINTER(RunningScripts)
 	IMPLEMENT_POINTER(LevelScript)
+	IMPLEMENT_POINTER(GlobalScript)
 IMPLEMENT_POINTERS_END
 
 TObjPtr<DFraggleThinker*> DFraggleThinker::ActiveThinker;
@@ -390,10 +378,13 @@ DFraggleThinker::DFraggleThinker()
 	{
 		ActiveThinker = this;
 		RunningScripts = Create<DRunningScript>();
-		LevelScript = Create<DFsScript>();
-		LevelScript->parent = global_script;
 		GC::WriteBarrier(this, RunningScripts);
+		GlobalScript = Create<DFsScript>();
+		GC::WriteBarrier(this, GlobalScript);
+		LevelScript = Create<DFsScript>();
+		LevelScript->parent = GlobalScript;
 		GC::WriteBarrier(this, LevelScript);
+		InitFunctions();
 	}
 }
 
@@ -415,6 +406,9 @@ void DFraggleThinker::OnDestroy()
 	}
 	RunningScripts = NULL;
 
+	GlobalScript->Destroy();
+	GlobalScript = NULL;
+
 	LevelScript->Destroy();
 	LevelScript = NULL;
 
@@ -431,6 +425,7 @@ void DFraggleThinker::OnDestroy()
 
 void DFraggleThinker::Serialize(FSerializer &arc)
 {
+	// The global script is not serialized because the data it points to is not serializable.
 	Super::Serialize(arc);
 	arc("levelscript", LevelScript)
 		("runningscripts", RunningScripts)
@@ -656,34 +651,6 @@ bool T_RunScript(int snum, AActor * t_trigger)
 		return true;
 	}
 	return false;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FS_Close()
-{
-	if (global_script != NULL)
-	{
-		GC::DelSoftRoot(global_script);
-		global_script->Destroy();
-		global_script = NULL;
-	}
-}
-
-void T_Init()
-{
-	void init_functions();
-
-	if (global_script == NULL)
-	{
-		global_script = Create<DFsScript>();
-		GC::AddSoftRoot(global_script);
-		init_functions();
-	}
 }
 
 //==========================================================================

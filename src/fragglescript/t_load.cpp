@@ -34,8 +34,6 @@
 #include "g_levellocals.h"
 #include "xlat/xlat.h"
 
-void T_Init();
-
 class FScriptLoader
 {
 	enum
@@ -253,8 +251,8 @@ bool FScriptLoader::ParseInfo(MapData * map)
     }
 	if (HasScripts) 
 	{
-		Create<DFraggleThinker>();
-		DFraggleThinker::ActiveThinker->LevelScript->data = copystring(scriptsrc.GetChars());
+		auto th = Create<DFraggleThinker>();
+		th->LevelScript->data = copystring(scriptsrc.GetChars());
 
 		if (drownflag==-1) drownflag = (level.maptype != MAPTYPE_DOOM || fsglobal);
 		if (!drownflag) level.airsupply=0;	// Legacy doesn't to water damage so we need to check if it has to be disabled here.
@@ -276,8 +274,6 @@ void T_LoadScripts(MapData *map)
 {
 	FScriptLoader parser;
 	
-	T_Init();
-
 	bool HasScripts = parser.ParseInfo(map);
 
 	// Hack for Legacy compatibility: Since 272 is normally an MBF sky transfer we have to patch it.
@@ -289,9 +285,7 @@ void T_LoadScripts(MapData *map)
 	if ((gameinfo.gametype == GAME_Doom || gameinfo.gametype == GAME_Heretic) && level.info->Translator.IsEmpty() &&
 		level.maptype == MAPTYPE_DOOM && SimpleLineTranslations.Size() > 272 && SimpleLineTranslations[272 - 2*HasScripts].special == FS_Execute)
 	{
-		FLineTrans t = SimpleLineTranslations[270];
-		SimpleLineTranslations[270] = SimpleLineTranslations[272];
-		SimpleLineTranslations[272] = t;
+		std::swap(SimpleLineTranslations[270], SimpleLineTranslations[272]);
 	}
 }
 

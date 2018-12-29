@@ -405,11 +405,7 @@ void S_Start ()
 		if (level.info)
 		{
 			LocalSndInfo = level.info->SoundInfo;
-		}
-
-		if (level.info)
-		{
-			LocalSndSeq  = level.info->SndSeq;
+			LocalSndSeq = level.info->SndSeq;
 		}
 
 		bool parse_ss = false;

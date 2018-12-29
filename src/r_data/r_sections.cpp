@@ -93,6 +93,7 @@ struct Group
 
 class FSectionCreator
 {
+	FLevelLocals *Level;
 	FMemArena allocator;
 	TArray<WorkSectionLine *>AllAllocatedLines;
 
@@ -107,8 +108,9 @@ class FSectionCreator
 
 public:
 
-	FSectionCreator()
+	FSectionCreator(FLevelLocals *l)
 	{
+		Level = l;
 		// These must be manually destroyed but not deleted.
 		for (auto line : AllAllocatedLines)
 		{
@@ -160,7 +162,7 @@ public:
 
 	void GroupSubsectors()
 	{
-		for (auto &sub : level.subsectors)
+		for (auto &sub : Level->subsectors)
 		{
 			int key = MakeKey(sub);
 			auto &array = subsectormap[key];
@@ -188,14 +190,14 @@ public:
 
 		// Make sure that all subsectors have a sector. In some degenerate cases a subsector may come up empty.
 		// An example is in Doom.wad E3M4 near linedef 1087. With the grouping data here this is relatively easy to fix.
-		sector_t *lastsector = &level.sectors[0];
+		sector_t *lastsector = &Level->sectors[0];
 		for (auto &rawsection : rawsections)
 		{
 			sector_t *mysector = nullptr;
 			bool missing = false;
 			for (auto num : rawsection)
 			{
-				auto &sub = level.subsectors[num];
+				auto &sub = Level->subsectors[num];
 				if (sub.sector == nullptr) missing = true;
 				else mysector = sub.sector;
 			}
@@ -204,7 +206,7 @@ public:
 			else lastsector = mysector;
 			for (auto num : rawsection)
 			{
-				auto &sub = level.subsectors[num];
+				auto &sub = Level->subsectors[num];
 				if (sub.sector == nullptr)
 				{
 					sub.sector = mysector;
@@ -232,7 +234,7 @@ public:
 			seglist.Clear();
 			int index;
 			list.Pop(index);
-			auto sub = &level.subsectors[index];
+			auto sub = &Level->subsectors[index];
 
 			auto collect = [&](subsector_t *sub)
 			{
@@ -256,7 +258,7 @@ public:
 				{
 					if (subi == list[j])
 					{
-						collect(&level.subsectors[subi]);
+						collect(&Level->subsectors[subi]);
 						list.Delete(j);
 						j--;
 					}
@@ -275,8 +277,8 @@ public:
 	void MakeOutlines()
 	{
 		auto rawsections = CompileSections();
-		TArray<WorkSectionLine *> lineForSeg(level.segs.Size(), true);
-		memset(lineForSeg.Data(), 0, sizeof(WorkSectionLine*) * level.segs.Size());
+		TArray<WorkSectionLine *> lineForSeg(Level->segs.Size(), true);
+		memset(lineForSeg.Data(), 0, sizeof(WorkSectionLine*) * Level->segs.Size());
 		for (auto &list : rawsections)
 		{
 			MakeOutline(list, lineForSeg);
@@ -313,7 +315,7 @@ public:
 		// Collect all the segs that make up the outline of this section.
 		for (auto j : rawsection)
 		{
-			auto sub = &level.subsectors[j];
+			auto sub = &Level->subsectors[j];
 
 			for (unsigned i = 0; i < sub->numlines; i++)
 			{
@@ -661,11 +663,11 @@ public:
 	void ConstructOutput(FSectionContainer &output)
 	{
 		output.allSections.Resize(groups.Size());
-		output.allIndices.Resize(2*level.sectors.Size());
+		output.allIndices.Resize(2*Level->sectors.Size());
 		output.firstSectionForSectorPtr = &output.allIndices[0];
-		output.numberOfSectionForSectorPtr = &output.allIndices[level.sectors.Size()];
-		memset(output.firstSectionForSectorPtr, -1, sizeof(int) * level.sectors.Size());
-		memset(output.numberOfSectionForSectorPtr, 0, sizeof(int) * level.sectors.Size());
+		output.numberOfSectionForSectorPtr = &output.allIndices[Level->sectors.Size()];
+		memset(output.firstSectionForSectorPtr, -1, sizeof(int) * Level->sectors.Size());
+		memset(output.numberOfSectionForSectorPtr, 0, sizeof(int) * Level->sectors.Size());
 
 		unsigned numsegments = 0;
 		unsigned numsides = 0;
@@ -695,7 +697,7 @@ public:
 		}
 		output.allLines.Resize(numsegments);
 		output.allSides.Resize(numsides);
-		output.allSubsectors.Resize(level.subsectors.Size());
+		output.allSubsectors.Resize(Level->subsectors.Size());
 
 		numsegments = 0;
 		numsides = 0;
@@ -706,7 +708,7 @@ public:
 		for (auto &group : groups)
 		{
 			FSection &dest = output.allSections[curgroup];
-			dest.sector = &level.sectors[group.groupedSections[0].section->sectorindex];
+			dest.sector = &Level->sectors[group.groupedSections[0].section->sectorindex];
 			dest.mapsection = (short)group.groupedSections[0].section->mapsection;
 			dest.hacked = false;
 			dest.lighthead = nullptr;
@@ -740,12 +742,12 @@ public:
 			TMap<int, bool>::Pair *pair;
 			while (it.NextPair(pair))
 			{
-				output.allSides[numsides++] = &level.sides[pair->Key];
+				output.allSides[numsides++] = &Level->sides[pair->Key];
 			}
 			for (auto ssi : group.subsectors)
 			{
-				output.allSubsectors[numsubsectors++] = &level.subsectors[ssi];
-				level.subsectors[ssi].section = &output.allSections[curgroup];
+				output.allSubsectors[numsubsectors++] = &Level->subsectors[ssi];
+				Level->subsectors[ssi].section = &output.allSections[curgroup];
 			}
 			curgroup++;
 		}
@@ -762,13 +764,13 @@ public:
 
 	void FixMissingReferences()
 	{
-		for (auto &sub : level.subsectors)
+		for (auto &sub : Level->subsectors)
 		{
 			if (sub.section == nullptr)
 			{
 				int sector = sub.sector->Index();
 				int mapsection = sub.mapsection;
-				auto sections = level.sections.SectionsForSector(sector);
+				auto sections = Level->sections.SectionsForSector(sector);
 				FSection *bestfit = nullptr;
 				for (auto &section : sections)
 				{
@@ -796,7 +798,7 @@ public:
 					}
 				}
 				// This should really never happen, but better be safe than sorry and assign at least something.
-				if (bestfit == nullptr) bestfit = &level.sections.allSections[0];
+				if (bestfit == nullptr) bestfit = &Level->sections.allSections[0];
 				sub.section = bestfit;
 			}
 		}
@@ -849,7 +851,7 @@ void PrintSections(FSectionContainer &container)
 			}
 		}
 	}
-	Printf(PRINT_LOG, "%d sectors, %d subsectors, %d sections\n", level.sectors.Size(), level.subsectors.Size(), container.allSections.Size());
+	Printf(PRINT_LOG, "%d sectors, %d subsectors, %d sections\n", Level->sectors.Size(), Level->subsectors.Size(), container.allSections.Size());
 }
 
 
@@ -873,7 +875,7 @@ void CreateSections(FSectionContainer &container)
 
 CCMD(printsections)
 {
-	PrintSections(level.sections);
+	PrintSections(Level->sections);
 }
 
 

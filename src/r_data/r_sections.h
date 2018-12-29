@@ -161,6 +161,6 @@ public:
 };
 
 
-void CreateSections(FSectionContainer &container);
+void CreateSections(FLevelLocals *l);
 
 #endif

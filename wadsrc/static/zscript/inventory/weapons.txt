@@ -898,7 +898,7 @@ class Weapon : StateProvider
 		}
 		let altFire = (fireMode == AltFire);
 		let optional = (altFire? bAlt_Ammo_Optional : bAmmo_Optional);
-		let useboth = (altFire? bPrimary_Uses_Both : bAlt_Uses_Both);
+		let useboth = (altFire? bAlt_Uses_Both : bPrimary_Uses_Both);
 
 		if (!requireAmmo && optional)
 		{

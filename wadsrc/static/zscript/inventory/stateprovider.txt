@@ -317,7 +317,7 @@ class StateProvider : Inventory
 			if (weapon != NULL)
 			{
 				if (MeleeSound) A_PlaySound(MeleeSound, CHAN_WEAPON);
-				else			A_PlaySound(AttackSound, CHAN_WEAPON);
+				else			A_PlaySound(weapon.AttackSound, CHAN_WEAPON);
 			}
 
 			if (!(flags & CPF_NOTURN))

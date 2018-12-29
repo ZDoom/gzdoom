@@ -943,6 +943,36 @@ public:
 		return n->Pair.Value;
 	}
 
+	VT &Insert(const KT key, VT &&value)
+	{
+		Node *n = FindKey(key);
+		if (n != NULL)
+		{
+			n->Pair.Value = value;
+		}
+		else
+		{
+			n = NewKey(key);
+			::new(&n->Pair.Value) VT(value);
+		}
+		return n->Pair.Value;
+	}
+
+	VT &InsertNew(const KT key)
+	{
+		Node *n = FindKey(key);
+		if (n != NULL)
+		{
+			n->Pair.Value.~VT();
+		}
+		else
+		{
+			n = NewKey(key);
+		}
+		::new(&n->Pair.Value) VT;
+		return n->Pair.Value;
+	}
+
 	//=======================================================================
 	//
 	// Remove

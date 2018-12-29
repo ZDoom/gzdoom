@@ -507,7 +507,6 @@ void P_Init ()
 static void P_Shutdown ()
 {	
 	DThinker::DestroyThinkersInList(STAT_STATIC);	
-	P_DeinitKeyMessages ();
 	P_FreeLevelData ();
 	// [ZZ] delete global event handlers
 	E_Shutdown(false);

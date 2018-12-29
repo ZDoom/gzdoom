@@ -4048,8 +4048,6 @@ void FParser::SF_ScriptRunning()
 
 void DFraggleThinker::InitFunctions()
 {
-	cycle_t clock;
-
 	for(unsigned i=0;i<countof(ActorNames_init);i++)
 	{
 		ActorTypes[i]=PClass::FindActor(ActorNames_init[i]);

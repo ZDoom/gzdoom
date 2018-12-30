@@ -3134,7 +3134,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	for (auto & p : Level->bodyque)
 		p = nullptr;
 
-	CreateSections(Level->sections);
+	CreateSections(Level);
 
 	// [RH] Spawn slope creating things first.
 	SpawnSlopeMakers(&MapThingsConverted[0], &MapThingsConverted[MapThingsConverted.Size()], oldvertextable);
@@ -3184,7 +3184,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	}
 
 	SWRenderer->SetColormap();	//The SW renderer needs to do some special setup for the level's default colormap.
-	InitPortalGroups();
+	InitPortalGroups(Level);
 	P_InitHealthGroups();
 
 	if (reloop) LoopSidedefs(false);

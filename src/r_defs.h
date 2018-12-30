@@ -52,6 +52,7 @@ struct seg_t;
 struct sector_t;
 class AActor;
 struct FSection;
+struct FLevelLocals;
 
 #define MAXWIDTH 12000
 #define MAXHEIGHT 5000
@@ -1513,7 +1514,7 @@ struct FPortalCoverage
 	int			sscount;
 };
 
-void BuildPortalCoverage(FPortalCoverage *coverage, subsector_t *subsector, const DVector2 &displacement);
+void BuildPortalCoverage(FLevelLocals *Level, FPortalCoverage *coverage, subsector_t *subsector, const DVector2 &displacement);
 
 struct subsector_t
 {

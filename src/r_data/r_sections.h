@@ -160,7 +160,7 @@ public:
 	}
 };
 
-
+struct FLevelLocals;
 void CreateSections(FLevelLocals *l);
 
 #endif

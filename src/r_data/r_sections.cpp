@@ -815,6 +815,7 @@ public:
 
 void PrintSections(FSectionContainer &container)
 {
+	auto Level = &level;
 	for (unsigned i = 0; i < container.allSections.Size(); i++)
 	{
 		auto &section = container.allSections[i];
@@ -861,21 +862,21 @@ void PrintSections(FSectionContainer &container)
 //
 //=============================================================================
 
-void CreateSections(FSectionContainer &container)
+void CreateSections(FLevelLocals *Level)
 {
-	FSectionCreator creat;
+	FSectionCreator creat(Level);
 	creat.GroupSubsectors();
 	creat.MakeOutlines();
 	creat.MergeLines();
 	creat.FindOuterLoops();
 	creat.GroupSections();
-	creat.ConstructOutput(container);
+	creat.ConstructOutput(Level->sections);
 	creat.FixMissingReferences();
 }
 
 CCMD(printsections)
 {
-	PrintSections(Level->sections);
+	PrintSections(level.sections);
 }
 
 

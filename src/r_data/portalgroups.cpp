@@ -373,7 +373,7 @@ static void GroupSectorPortals(FLevelLocals *Level)
 						for (int k = 0; k < sec->subsectorcount; k++)
 						{
 							subsector_t *sub = sec->subsectors[k];
-							BuildPortalCoverage(&sub->portalcoverage[plane], sub, pair->Key.mDisplacement);
+							BuildPortalCoverage(Level, &sub->portalcoverage[plane], sub, pair->Key.mDisplacement);
 						}
 						sec->portals[plane] = portal;
 					}

@@ -423,7 +423,7 @@ void P_RemoveThing(AActor * actor)
 	if (actor->player == NULL || actor != actor->player->mo)
 	{
 		// Don't also remove owned inventory items
-		if (!actor->IsMapActor())
+		if (!actor->IsMapActor()) return;
 
 		// be friendly to the level statistics. ;)
 		actor->ClearCounters();

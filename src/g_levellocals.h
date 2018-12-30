@@ -42,44 +42,21 @@
 #include "portal.h"
 #include "p_blockmap.h"
 #include "p_local.h"
+#include "po_man.h"
 #include "p_destructible.h"
 #include "r_data/r_sections.h"
+#include "r_data/r_canvastexture.h"
 
-struct FLevelLocals
+
+struct FLevelData
 {
-	void Tick ();
-	void Mark();
-	void AddScroller (int secnum);
-	void SetInterMusic(const char *nextmap);
-	void SetMusicVolume(float v);
-
-	uint8_t		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
-	int			time;			// time in the hub
-	int			maptime;		// time in the map
-	int			totaltime;		// time in the game
-	int			starttime;
-	int			partime;
-	int			sucktime;
-
-	level_info_t *info;
-	int			cluster;
-	int			clusterflags;
-	int			levelnum;
-	int			lumpnum;
-	FString		LevelName;
-	FString		MapName;			// the lump name (E1M1, MAP01, etc)
-	FString		NextMap;			// go here when using the regular exit
-	FString		NextSecretMap;		// map to go to when used secret exit
-	FString		F1Pic;
-	EMapType	maptype;
-
-	uint64_t	ShaderStartTime = 0;	// tell the shader system when we started the level (forces a timer restart)
-
 	TArray<vertex_t> vertexes;
 	TArray<sector_t> sectors;
 	TArray<line_t*> linebuffer;	// contains the line lists for the sectors.
+	TArray<subsector_t*> subsectorbuffer;	// contains the subsector lists for the sectors.
 	TArray<line_t> lines;
 	TArray<side_t> sides;
+	TArray<seg_t *> segbuffer;	// contains the seg links for the sidedefs.
 	TArray<seg_t> segs;
 	TArray<subsector_t> subsectors;
 	TArray<node_t> nodes;
@@ -87,11 +64,8 @@ struct FLevelLocals
 	TArray<node_t> gamenodes;
 	node_t *headgamenode;
 	TArray<uint8_t> rejectmatrix;
-	
-	static const int BODYQUESIZE = 32;
-	TObjPtr<AActor*> bodyque[BODYQUESIZE];
-	int bodyqueslot;
-
+	TArray<zone_t>	Zones;
+	TArray<FPolyObj> Polyobjects;
 
 	TArray<FSectorPortal> sectorPortals;
 	TArray<FLinePortal> linePortals;
@@ -117,18 +91,16 @@ struct FLevelLocals
 	FDisplacementTable Displacements;
 	FPortalBlockmap PortalBlockmap;
 	TArray<FLinePortal*> linkedPortals;	// only the linked portals, this is used to speed up looking for them in P_CollectConnectedGroups.
-	TArray<FSectorPortalGroup *> portalGroups;	
+	TArray<FSectorPortalGroup *> portalGroups;
 	TArray<FLinePortalSpan> linePortalSpans;
 	FSectionContainer sections;
-
-	int NumMapSections;
-
-	TArray<zone_t>	Zones;
+	FCanvasTextureInfo canvasTextureInfo;
 
 	// [ZZ] Destructible geometry information
 	TMap<int, FHealthGroup> healthGroups;
 
 	FBlockmap blockmap;
+	TArray<polyblock_t *> PolyBlockMap;
 
 	// These are copies of the loaded map data that get used by the savegame code to skip unaltered fields
 	// Without such a mechanism the savegame format would become too slow and large because more than 80-90% are normally still unaltered.
@@ -141,6 +113,44 @@ struct FLevelLocals
 	FPlayerStart		playerstarts[MAXPLAYERS];
 	TArray<FPlayerStart> AllPlayerStarts;
 
+};
+
+struct FLevelLocals : public FLevelData
+{
+	void Tick();
+	void Mark();
+	void AddScroller(int secnum);
+	void SetInterMusic(const char *nextmap);
+	void SetMusicVolume(float v);
+
+	uint8_t		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
+	int			time;			// time in the hub
+	int			maptime;		// time in the map
+	int			totaltime;		// time in the game
+	int			starttime;
+	int			partime;
+	int			sucktime;
+	uint32_t	spawnindex;
+
+	level_info_t *info;
+	int			cluster;
+	int			clusterflags;
+	int			levelnum;
+	int			lumpnum;
+	FString		LevelName;
+	FString		MapName;			// the lump name (E1M1, MAP01, etc)
+	FString		NextMap;			// go here when using the regular exit
+	FString		NextSecretMap;		// map to go to when used secret exit
+	FString		F1Pic;
+	EMapType	maptype;
+
+	uint64_t	ShaderStartTime = 0;	// tell the shader system when we started the level (forces a timer restart)
+
+	static const int BODYQUESIZE = 32;
+	TObjPtr<AActor*> bodyque[BODYQUESIZE];
+	int bodyqueslot;
+
+	int NumMapSections;
 
 	uint32_t		flags;
 	uint32_t		flags2;
@@ -198,7 +208,7 @@ struct FLevelLocals
 	float		MusicVolume;
 
 	// Hardware render stuff that can either be set via CVAR or MAPINFO
-	int			lightmode;
+	ELightMode	lightmode;
 	bool		brightfog;
 	bool		lightadditivesurfaces;
 	bool		notexturefill;
@@ -209,7 +219,7 @@ struct FLevelLocals
 
 	node_t		*HeadNode() const
 	{
-		return nodes.Size() == 0? nullptr : &nodes[nodes.Size() - 1];
+		return nodes.Size() == 0 ? nullptr : &nodes[nodes.Size() - 1];
 	}
 	node_t		*HeadGamenode() const
 	{
@@ -219,10 +229,27 @@ struct FLevelLocals
 	// Returns true if level is loaded from saved game or is being revisited as a part of a hub
 	bool		IsReentering() const
 	{
-		return savegamerestore 
+		return savegamerestore
 			|| (info != nullptr && info->Snapshot.mBuffer != nullptr && info->isValid());
 	}
+
+	bool isSoftwareLighting() const
+	{
+		return lightmode >= ELightMode::ZDoomSoftware;
+	}
+
+	bool isDarkLightMode() const
+	{
+		return !!((int)lightmode & (int)ELightMode::Doom);
+	}
+
+	void SetFallbackLightMode()
+	{
+		lightmode = ELightMode::Doom;
+	}
 };
+
+#ifndef NO_DEFINE_LEVEL
 
 extern FLevelLocals level;
 
@@ -350,3 +377,4 @@ inline bool line_t::hitSkyWall(AActor* mo) const
 		backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
 		mo->Z() >= backsector->ceilingplane.ZatPoint(mo->PosRelative(this));
 }
+#endif

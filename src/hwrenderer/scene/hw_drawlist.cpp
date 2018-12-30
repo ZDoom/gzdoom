@@ -483,7 +483,7 @@ inline double CalcIntersectionVertex(GLSprite *s, GLWall * w2)
 	return ((ay - cy)*(dx - cx) - (ax - cx)*(dy - cy)) / ((bx - ax)*(dy - cy) - (by - ay)*(dx - cx));
 }
 
-void HWDrawList::SortSpriteIntoWall(SortNode * head,SortNode * sort)
+void HWDrawList::SortSpriteIntoWall(HWDrawInfo *di, SortNode * head,SortNode * sort)
 {
 	GLWall *wh= walls[drawitems[head->itemindex].index];
 	GLSprite * ss= sprites[drawitems[sort->itemindex].index];
@@ -560,6 +560,16 @@ void HWDrawList::SortSpriteIntoWall(SortNode * head,SortNode * sort)
 			head->AddToLeft(sort);
 			head->AddToRight(sort2);
 		}
+		if (screen->BuffersArePersistent())
+		{
+			s->vertexindex = ss->vertexindex = -1;
+		}
+		else
+		{
+			s->CreateVertices(di);
+			ss->CreateVertices(di);
+		}
+
 	}
 }
 
@@ -578,7 +588,7 @@ inline int HWDrawList::CompareSprites(SortNode * a,SortNode * b)
 	int res = s1->depth - s2->depth;
 
 	if (res != 0) return -res;
-	else return (i_compatflags & COMPATF_SPRITESORT)? s1->index-s2->index : s2->index-s1->index;
+	else return (i_compatflags & COMPATF_SPRITESORT)? s2->index-s1->index : s1->index-s2->index;
 }
 
 //==========================================================================
@@ -667,7 +677,7 @@ SortNode * HWDrawList::DoSort(HWDrawInfo *di, SortNode * head)
 					break;
 
 				case GLDIT_SPRITE:
-					SortSpriteIntoWall(head,node);
+					SortSpriteIntoWall(di, head, node);
 					break;
 
 				case GLDIT_FLAT: break;

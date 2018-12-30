@@ -33,13 +33,6 @@ enum
 
 class FMaterial
 {
-	// This array is needed because not all textures are managed by the texture manager
-	// but some code needs to discard all hardware dependent data attached to any created texture.
-	// Font characters are not, for example.
-	static TArray<FMaterial *> mMaterials;
-	static int mMaxBound;
-
-	IHardwareTexture *mBaseLayer;	
 	TArray<FTexture*> mTextureLayers;
 	int mShaderIndex;
 
@@ -68,7 +61,6 @@ public:
 	void Precache();
 	void PrecacheList(SpriteHits &translations);
 	int GetShaderIndex() const { return mShaderIndex; }
-	IHardwareTexture * ValidateSysTexture(FTexture * tex, bool expand);
 	void AddTextureLayer(FTexture *tex)
 	{
 		ValidateTexture(tex, false);
@@ -87,24 +79,13 @@ public:
 	{
 		return mTextureLayers.Size() + 1;
 	}
-
-	IHardwareTexture *GetLayer(int i, FTexture **pLayer = nullptr)
+	
+	bool hasCanvas()
 	{
-		if (i == 0)
-		{
-			if (pLayer) *pLayer = tex;
-			return mBaseLayer;
-		}
-		else
-		{
-			i--;
-			FTexture *layer = mTextureLayers[i];
-			if (pLayer) *pLayer = layer;
-			return ValidateSysTexture(layer, isExpanded());
-		}
+		return tex->isHardwareCanvas();
 	}
 
-	void Clean(bool f);
+	IHardwareTexture *GetLayer(int i, int translation, FTexture **pLayer = nullptr);
 
 	// Patch drawing utilities
 
@@ -163,10 +144,8 @@ public:
 	float GetSpriteVB() const { return mSpriteV[1]; }
 
 
-	static void DeleteAll();
-	static void FlushAll();
-	static FMaterial *ValidateTexture(FTexture * tex, bool expand);
-	static FMaterial *ValidateTexture(FTextureID no, bool expand, bool trans);
+	static FMaterial *ValidateTexture(FTexture * tex, bool expand, bool create = true);
+	static FMaterial *ValidateTexture(FTextureID no, bool expand, bool trans, bool create = true);
 };
 
 #endif

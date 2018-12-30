@@ -409,13 +409,13 @@ class Minotaur : Actor
 		if (random[MinotaurRoam]() < 6)
 		{
 			//Choose new direction
-			movedir = random[MinotaurRoam]() % 8;
+			movedir = random[MinotaurRoam](0, 7);
 			FaceMovementDirection ();
 		}
 		if (!MonsterMove())
 		{
 			// Turn
-			if (random[MinotaurRoam]() & 1)
+			if (random[MinotaurRoam](0, 1))
 				movedir = (movedir + 1) % 8;
 			else
 				movedir = (movedir + 7) % 8;

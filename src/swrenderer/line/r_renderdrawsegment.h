@@ -37,10 +37,10 @@ namespace swrenderer
 		RenderThread *Thread = nullptr;
 
 	private:
-		bool RenderWall(DrawSegment *ds, int x1, int x2, WallDrawerArgs &walldrawerargs, SpriteDrawerArgs &columndrawerargs, bool visible, FDynamicColormap *basecolormap, int wallshade);
+		bool RenderWall(DrawSegment *ds, int x1, int x2, SpriteDrawerArgs &columndrawerargs, bool visible);
 		void ClipMidtex(int x1, int x2);
-		void RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int wallshade, FDynamicColormap *basecolormap, double clipTop, double clipBottom);
-		void RenderFakeWallRange(DrawSegment *ds, int x1, int x2, int wallshade);
+		void RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, double clipTop, double clipBottom, FSoftwareTexture *rw_pic);
+		void RenderFakeWallRange(DrawSegment *ds, int x1, int x2);
 		void GetMaskedWallTopBottom(DrawSegment *ds, double &top, double &bot);
 
 		sector_t *frontsector = nullptr;
@@ -52,10 +52,9 @@ namespace swrenderer
 		FWallCoords WallC;
 		FWallTmapVals WallT;
 
-		float rw_light = 0.0f;
-		float rw_lightstep = 0.0f;
+		ProjectedWallLight mLight;
+
 		fixed_t rw_offset = 0;
-		FTexture *rw_pic = nullptr;
 
 		ProjectedWallLine wallupper;
 		ProjectedWallLine walllower;

@@ -31,8 +31,8 @@ public:
 	bool operator==(const PolySkySetup &that) const { return memcmp(this, &that, sizeof(PolySkySetup)) == 0; }
 	bool operator!=(const PolySkySetup &that) const { return memcmp(this, &that, sizeof(PolySkySetup)) != 0; }
 
-	FTexture *frontskytex = nullptr;
-	FTexture *backskytex = nullptr;
+	FSoftwareTexture *frontskytex = nullptr;
+	FSoftwareTexture *backskytex = nullptr;
 	bool skyflip = 0;
 	int frontpos = 0;
 	int backpos = 0;
@@ -58,7 +58,7 @@ private:
 	void CreateSkyHemisphere(bool zflip);
 	void CreateDome();
 	void RenderRow(PolyRenderThread *thread, PolyDrawArgs &args, int row, uint32_t capcolor, uint8_t capcolorindex);
-	void RenderCapColorRow(PolyRenderThread *thread, PolyDrawArgs &args, FTexture *skytex, int row, bool bottomCap);
+	void RenderCapColorRow(PolyRenderThread *thread, PolyDrawArgs &args, FSoftwareTexture *skytex, int row, bool bottomCap);
 
 	TriVertex SetVertexXYZ(float xx, float yy, float zz, float uu = 0, float vv = 0);
 

@@ -95,6 +95,7 @@ extend class Actor
 					double x = Spawnofs_xy * cos(pangle);
 					double y = Spawnofs_xy * sin(pangle);
 					
+					let pos = self.pos;
 					SetXYZ(Vec3Offset(x, y, 0.));
 					let proj = SpawnMissileAngleZSpeed(Pos.Z + GetBobOffset() + Spawnheight, missile, self.Angle, 0, GetDefaultByType(missile).Speed, self, false);
 					SetXYZ(pos);
@@ -495,7 +496,7 @@ extend class Actor
 			bo.PlaySpawnSound(self);
 			if (xyvel != 0)
 				bo.Speed = xyvel;
-			bo.Angle = Angle + (((random[grenade]()&7) - 4) * (360./256.));
+			bo.Angle = Angle + (random[grenade](-4, 3) * (360./256.));
 
 			let pitch = -self.Pitch;
 			let angle = bo.Angle;

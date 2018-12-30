@@ -28,13 +28,13 @@ class SpectralMonster : Actor
 		{
 			int t;
 
-			t = random[SpectreChunk]() & 15;
-			foo.Vel.X = (t - (random[SpectreChunk]() & 7));
-			
-			t = random[SpectreChunk]() & 15;
-			foo.Vel.Y = (t - (random[SpectreChunk]() & 7));
+			t = random[SpectreChunk](0, 7);
+			foo.Vel.X = t - random[SpectreChunk](0, 15);
 
-			foo.Vel.Z = (random[SpectreChunk]() & 15);
+			t = random[SpectreChunk](0, 7);
+			foo.Vel.Y = t - random[SpectreChunk](0, 15);
+
+			foo.Vel.Z = random[SpectreChunk](0, 15);
 		}
 	}
 
@@ -46,13 +46,13 @@ class SpectralMonster : Actor
 		{
 			int t;
 
-			t = random[SpectreChunk]() & 7;
-			foo.Vel.X = (t - (random[SpectreChunk]() & 15));
+			t = random[SpectreChunk](0, 7);
+			foo.Vel.X = t - random[SpectreChunk](0, 15);
 			
-			t = random[SpectreChunk]() & 7;
-			foo.Vel.Y = (t - (random[SpectreChunk]() & 15));
+			t = random[SpectreChunk](0, 7);
+			foo.Vel.Y = t - random[SpectreChunk](0, 15);
 
-			foo.Vel.Z = (random[SpectreChunk]() & 7);
+			foo.Vel.Z = random[SpectreChunk](0, 7);
 		}
 	}
 

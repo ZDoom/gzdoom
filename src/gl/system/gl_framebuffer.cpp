@@ -189,25 +189,6 @@ void OpenGLFrameBuffer::Update()
 
 //===========================================================================
 //
-// 
-//
-//===========================================================================
-
-void OpenGLFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV)
-{
-	if (!V_IsHardwareRenderer())
-	{
-		Super::RenderTextureView(tex, Viewpoint, FOV);
-	}
-	else if (GLRenderer != nullptr)
-	{
-		GLRenderer->RenderTextureView(tex, Viewpoint, FOV);
-		camtexcount++;
-	}
-}
-
-//===========================================================================
-//
 // Render the view to a savegame picture
 //
 //===========================================================================
@@ -346,27 +327,27 @@ void OpenGLFrameBuffer::SetTextureFilterMode()
 	if (GLRenderer != nullptr && GLRenderer->mSamplerManager != nullptr) GLRenderer->mSamplerManager->SetTextureFilterMode();
 }
 
-IHardwareTexture *OpenGLFrameBuffer::CreateHardwareTexture(FTexture *tex) 
+IHardwareTexture *OpenGLFrameBuffer::CreateHardwareTexture() 
 { 
-	return new FHardwareTexture(tex->bNoCompress);
+	return new FHardwareTexture(true/*tex->bNoCompress*/);
 }
 
 void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 {
 	auto tex = mat->tex;
-	if (tex->UseType == ETextureType::SWCanvas) return;
+	if (tex->isSWCanvas()) return;
 
 	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
-	int flags = mat->isExpanded() ? CTF_Expand : (gl_texture_usehires && tex->Scale.X == 1 && tex->Scale.Y == 1) ? CTF_CheckHires : 0;
+	int flags = mat->isExpanded() ? CTF_Expand : (gl_texture_usehires && !tex->isScaled()) ? CTF_CheckHires : 0;
 	int numLayers = mat->GetLayers();
-	auto base = static_cast<FHardwareTexture*>(mat->GetLayer(0));
+	auto base = static_cast<FHardwareTexture*>(mat->GetLayer(0, translation));
 
 	if (base->BindOrCreate(tex, 0, CLAMP_NONE, translation, flags))
 	{
 		for (int i = 1; i < numLayers; i++)
 		{
 			FTexture *layer;
-			auto systex = static_cast<FHardwareTexture*>(mat->GetLayer(i, &layer));
+			auto systex = static_cast<FHardwareTexture*>(mat->GetLayer(i, 0, &layer));
 			systex->BindOrCreate(layer, i, CLAMP_NONE, 0, mat->isExpanded() ? CTF_Expand : 0);
 		}
 	}
@@ -374,7 +355,7 @@ void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 	FHardwareTexture::UnbindAll();
 }
 
-FModelRenderer *OpenGLFrameBuffer::CreateModelRenderer(int mli) 
+FModelRenderer *OpenGLFrameBuffer::CreateModelRenderer(int mli)
 {
 	return new FGLModelRenderer(nullptr, gl_RenderState, mli);
 }
@@ -468,7 +449,7 @@ void OpenGLFrameBuffer::BeginFrame()
 //
 //===========================================================================
 
-void OpenGLFrameBuffer::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma)
+TArray<uint8_t> OpenGLFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &color_type, float &gamma)
 {
 	const auto &viewport = mOutputLetterbox;
 
@@ -484,7 +465,7 @@ void OpenGLFrameBuffer::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, 
 	int w = SCREENWIDTH;
 	int h = SCREENHEIGHT;
 
-	auto ScreenshotBuffer = new uint8_t[w * h * 3];
+	TArray<uint8_t> ScreenshotBuffer(w * h * 3, true);
 
 	float rcpWidth = 1.0f / w;
 	float rcpHeight = 1.0f / h;
@@ -506,10 +487,10 @@ void OpenGLFrameBuffer::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, 
 
 	pitch = w * 3;
 	color_type = SS_RGB;
-	buffer = ScreenshotBuffer;
 
 	// Screenshot should not use gamma correction if it was already applied to rendered image
 	gamma = 1 == vid_hwgamma || (2 == vid_hwgamma && !fullscreen) ? 1.0f : Gamma;
+	return ScreenshotBuffer;
 }
 
 //===========================================================================
@@ -551,9 +532,9 @@ FTexture *OpenGLFrameBuffer::WipeStartScreen()
 	const auto &viewport = screen->mScreenViewport;
 
 	auto tex = new FWrapperTexture(viewport.width, viewport.height, 1);
-	tex->SystemTexture[0]->CreateTexture(nullptr, viewport.width, viewport.height, 0, false, 0, "WipeStartScreen");
+	tex->GetSystemTexture()->CreateTexture(nullptr, viewport.width, viewport.height, 0, false, 0, "WipeStartScreen");
 	glFinish();
-	static_cast<FHardwareTexture*>(tex->SystemTexture[0])->Bind(0, false, false);
+	static_cast<FHardwareTexture*>(tex->GetSystemTexture())->Bind(0, false);
 
 	GLRenderer->mBuffers->BindCurrentFB();
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewport.left, viewport.top, viewport.width, viewport.height);
@@ -573,9 +554,9 @@ FTexture *OpenGLFrameBuffer::WipeEndScreen()
 	GLRenderer->Flush();
 	const auto &viewport = screen->mScreenViewport;
 	auto tex = new FWrapperTexture(viewport.width, viewport.height, 1);
-	tex->SystemTexture[0]->CreateTexture(NULL, viewport.width, viewport.height, 0, false, 0, "WipeEndScreen");
+	tex->GetSystemTexture()->CreateTexture(NULL, viewport.width, viewport.height, 0, false, 0, "WipeEndScreen");
 	glFinish();
-	static_cast<FHardwareTexture*>(tex->SystemTexture[0])->Bind(0, false, false);
+	static_cast<FHardwareTexture*>(tex->GetSystemTexture())->Bind(0, false);
 	GLRenderer->mBuffers->BindCurrentFB();
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewport.left, viewport.top, viewport.width, viewport.height);
 	return tex;

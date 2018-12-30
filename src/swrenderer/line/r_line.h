@@ -65,20 +65,20 @@ namespace swrenderer
 		double TextureMid;
 		double TextureScaleU;
 		double TextureScaleV;
-		FTexture *Texture;
+		FSoftwareTexture *Texture;
 	};
 
 	class SWRenderLine : VisibleSegmentRenderer
 	{
 	public:
 		SWRenderLine(RenderThread *thread);
-		void Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, VisiblePlane *floorplane, VisiblePlane *ceilingplane, bool foggy, FDynamicColormap *basecolormap, Fake3DOpaque fake3DOpaque);
+		void Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, VisiblePlane *floorplane, VisiblePlane *ceilingplane, Fake3DOpaque fake3DOpaque);
 
 		RenderThread *Thread = nullptr;
 
 	private:
 		bool RenderWallSegment(int x1, int x2) override;
-		void SetWallVariables(bool needlights);
+		void SetWallVariables();
 		void SetTopTexture();
 		void SetMiddleTexture();
 		void SetBottomTexture();
@@ -90,6 +90,8 @@ namespace swrenderer
 		void RenderTopTexture(int x1, int x2);
 		void RenderMiddleTexture(int x1, int x2);
 		void RenderBottomTexture(int x1, int x2);
+
+		FLightNode *GetLightList();
 
 		bool IsFogBoundary(sector_t *front, sector_t *back) const;
 		bool SkyboxCompare(sector_t *frontsector, sector_t *backsector) const;
@@ -126,16 +128,11 @@ namespace swrenderer
 		FWallCoords WallC;
 		FWallTmapVals WallT;
 
-		bool foggy;
-		FDynamicColormap *basecolormap;
-
 		// Wall segment variables:
 
 		bool rw_prepped;
 
-		int wallshade;
-		float rw_lightstep;
-		float rw_lightleft;
+		ProjectedWallLight mLight;
 
 		double lwallscale;
 

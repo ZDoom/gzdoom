@@ -104,22 +104,11 @@ struct Keygroup
 
 struct Lock
 {
-	TArray<Keygroup *> keylist;
+	TArray<Keygroup> keylist;
 	TArray<FSoundID> locksound;
 	FString Message;
 	FString RemoteMsg;
-	int	rgb;
-
-	Lock()
-	{
-		rgb=0;
-	}
-
-	~Lock()
-	{
-		for(unsigned int i=0;i<keylist.Size();i++) delete keylist[i];
-		keylist.Clear();
-	}
+	int	rgb = 0;
 
 	bool check(AActor * owner)
 	{
@@ -138,24 +127,20 @@ struct Lock
 		}
 		else for(unsigned int i=0;i<keylist.Size();i++)
 		{
-			if (!keylist[i]->check(owner)) return false;
+			if (!keylist[i].check(owner)) return false;
 		}
 		return true;
 	}
 };
 
+static TMap<int, Lock> Locks;
+static bool keysdone = false;		// have the locks been initialized?
+static TArray<PClassActor *> KeyTypes;	// List of all keys sorted by lock. This is for use by the status bar to draw ordered key lists.
+
 //===========================================================================
 //
 //
 //===========================================================================
-
-static Lock *locks[256];		// all valid locks
-static bool keysdone=false;		// have the locks been initialized?
-static int currentnumber;		// number to be assigned to next key
-static bool ignorekey;			// set to true when the current lock is not being used
-static TArray<PClassActor *> KeyTypes;	// List of all keys sorted by lock.
-
-static void ClearLocks();
 
 static const char * keywords_lock[]={
 	"ANY",
@@ -171,7 +156,7 @@ static const char * keywords_lock[]={
 //
 //===========================================================================
 
-static void AddOneKey(Keygroup *keygroup, PClassActor *mi, FScanner &sc)
+static void AddOneKey(Keygroup *keygroup, PClassActor *mi, FScanner &sc, bool ignorekey, int &currentnumber)
 {
 	if (mi)
 	{
@@ -208,26 +193,18 @@ static void AddOneKey(Keygroup *keygroup, PClassActor *mi, FScanner &sc)
 //
 //===========================================================================
 
-static Keygroup *ParseKeygroup(FScanner &sc)
+static void ParseKeygroup(Keygroup *keygroup, FScanner &sc, bool ignorekey, int &currentnumber)
 {
-	Keygroup *keygroup;
 	PClassActor *mi;
 
 	sc.MustGetStringName("{");
-	keygroup = new Keygroup;
 	while (!sc.CheckString("}"))
 	{
 		sc.MustGetString();
 		mi = PClass::FindActor(sc.String);
-		AddOneKey(keygroup, mi, sc);
-	}
-	if (keygroup->anykeylist.Size() == 0)
-	{
-		delete keygroup;
-		return NULL;
+		AddOneKey(keygroup, mi, sc, ignorekey, currentnumber);
 	}
 	keygroup->anykeylist.ShrinkToFit();
-	return keygroup;
 }
 
 //===========================================================================
@@ -257,8 +234,6 @@ static void ParseLock(FScanner &sc)
 	int i,r,g,b;
 	int keynum;
 	Lock sink;
-	Lock *lock = &sink;
-	Keygroup *keygroup;
 	PClassActor *mi;
 
 	sc.MustGetNumber();
@@ -271,23 +246,17 @@ static void ParseLock(FScanner &sc)
 		sc.MustGetStringName("{");
 	}
 
-	ignorekey = true;
-	if (keynum > 0 && keynum <= 255) 
-	{
-		lock = new Lock;
-		if (locks[keynum])
-		{
-			delete locks[keynum];
-		}
-		locks[keynum] = lock;
-		locks[keynum]->locksound.Push("*keytry");
-		locks[keynum]->locksound.Push("misc/keytry");
-		ignorekey=false;
-	}
-	else if (keynum != -1)
+	int currentnumber = 0;
+	if (keynum == 0 || keynum < -1)
 	{
 		sc.ScriptError("Lock index %d out of range", keynum);
 	}
+	bool ignorekey = keynum == -1;	// tell the parsing functions to ignore what they read for other games' keys.
+
+	auto lock = keynum == -1? &sink : &Locks.InsertNew(keynum);
+
+	lock->locksound.Push("*keytry");
+	lock->locksound.Push("misc/keytry");
 
 	while (!sc.CheckString("}"))
 	{
@@ -295,12 +264,15 @@ static void ParseLock(FScanner &sc)
 		switch(i = sc.MatchString(keywords_lock))
 		{
 		case 0:	// Any
-			keygroup = ParseKeygroup(sc);
-			if (keygroup)
+		{
+			lock->keylist.Reserve(1);
+			ParseKeygroup(&lock->keylist.Last(), sc, ignorekey, currentnumber);
+			if (lock->keylist.Last().anykeylist.Size() == 0)
 			{
-				lock->keylist.Push(keygroup);
+				lock->keylist.Pop();
 			}
 			break;
+		}
 
 		case 1:	// message
 			sc.MustGetString();
@@ -344,12 +316,11 @@ static void ParseLock(FScanner &sc)
 			mi = PClass::FindActor(sc.String);
 			if (mi) 
 			{
-				keygroup = new Keygroup;
-				AddOneKey(keygroup, mi, sc);
-				if (keygroup) 
+				lock->keylist.Reserve(1);
+				AddOneKey(&lock->keylist.Last(), mi, sc, ignorekey, currentnumber);
+				if (lock->keylist.Last().anykeylist.Size() == 0)
 				{
-					keygroup->anykeylist.ShrinkToFit();
-					lock->keylist.Push(keygroup);
+					lock->keylist.Pop();
 				}
 			}
 			break;
@@ -389,15 +360,7 @@ static void ClearLocks()
 			}
 		}
 	}
-	for(i = 0; i < 256; i++)
-	{
-		if (locks[i] != NULL) 
-		{
-			delete locks[i];
-			locks[i] = NULL;
-		}
-	}
-	currentnumber = 0;
+	Locks.Clear();
 	keysdone = false;
 }
 
@@ -487,17 +450,6 @@ void P_InitKeyMessages()
 
 //===========================================================================
 //
-// P_DeinitKeyMessages
-//
-//===========================================================================
-
-void P_DeinitKeyMessages()
-{
-	ClearLocks();
-}
-
-//===========================================================================
-//
 // P_CheckKeys
 //
 // Returns true if the actor has the required key. If not, a message is
@@ -513,13 +465,14 @@ int P_CheckKeys (AActor *owner, int keynum, bool remote, bool quiet)
 	int numfailsounds;
 
 	if (owner == NULL) return false;
-	if (keynum<=0 || keynum>255) return true;
+	if (keynum<=0) return true;
 	// Just a safety precaution. The messages should have been initialized upon game start.
 	if (!keysdone) P_InitKeyMessages();
 
 	FSoundID failage[2] = { "*keytry", "misc/keytry" };
 
-	if (!locks[keynum]) 
+	auto lock = Locks.CheckKey(keynum);
+	if (!lock) 
 	{
 		if (quiet) return false;
 		if (keynum == 103 && (gameinfo.flags & GI_SHAREWARE))
@@ -532,11 +485,11 @@ int P_CheckKeys (AActor *owner, int keynum, bool remote, bool quiet)
 	}
 	else
 	{
-		if (locks[keynum]->check(owner)) return true;
+		if (lock->check(owner)) return true;
 		if (quiet) return false;
-		failtext = remote? locks[keynum]->RemoteMsg : locks[keynum]->Message;
-		failsound = &locks[keynum]->locksound[0];
-		numfailsounds = locks[keynum]->locksound.Size();
+		failtext = remote? lock->RemoteMsg : lock->Message;
+		failsound = &lock->locksound[0];
+		numfailsounds = lock->locksound.Size();
 	}
 
 	// If we get here, that means the actor isn't holding an appropriate key.
@@ -570,11 +523,13 @@ int P_CheckKeys (AActor *owner, int keynum, bool remote, bool quiet)
 //
 //==========================================================================
 
-int P_GetMapColorForLock (int lock)
+int P_GetMapColorForLock (int locknum)
 {
-	if (lock > 0 && lock < 256)
+	if (locknum > 0)
 	{
-		if (locks[lock]) return locks[lock]->rgb;
+		auto lock = Locks.CheckKey(locknum);
+
+		if (lock) return lock->rgb;
 	}
 	return -1;
 }
@@ -587,11 +542,18 @@ int P_GetMapColorForLock (int lock)
 
 int P_GetMapColorForKey (AActor * key)
 {
-	int i;
+	decltype(Locks)::Iterator it(Locks);
+	decltype(Locks)::Pair *pair;
 
-	for (i = 0; i < 256; i++)
+	int foundlock = INT_MAX;
+	int rgb = 0;
+	while (it.NextPair(pair))
 	{
-		if (locks[i] && locks[i]->check(key)) return locks[i]->rgb;
+		if (pair->Key < foundlock && pair->Value.check(key))
+		{
+			rgb = pair->Value.rgb;
+			foundlock = pair->Key;
+		}
 	}
 	return 0;
 }

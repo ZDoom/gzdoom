@@ -426,6 +426,20 @@ void ADynamicLight::SetOffset(const DVector3 &pos)
 	UpdateLocation();
 }
 
+static void SetOffset(ADynamicLight *self, double x, double y, double z)
+{
+	self->SetOffset(DVector3(x, y, z));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(ADynamicLight, SetOffset, SetOffset)
+{
+	PARAM_SELF_PROLOGUE(ADynamicLight)
+	PARAM_FLOAT(x)
+	PARAM_FLOAT(y)
+	PARAM_FLOAT(z)
+	self->SetOffset(DVector3(x, y, z));
+	return 0;
+}
 
 //==========================================================================
 //
@@ -937,7 +951,7 @@ CCMD(listlights)
 		if (dl->target)
 		{
 			FTextureID spr = sprites[dl->target->sprite].GetSpriteFrame(dl->target->frame, 0, 0., nullptr);
-			Printf(", frame = %s ", TexMan[spr]->Name.GetChars());
+			Printf(", frame = %s ", TexMan.GetTexture(spr)->GetName().GetChars());
 		}
 
 

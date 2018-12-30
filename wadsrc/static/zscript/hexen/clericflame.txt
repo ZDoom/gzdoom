@@ -305,7 +305,7 @@ class CFlameMissile : FastProjectile
 					mo.VelFromAngle(CircleFlame.FLAMESPEED);
 					mo.specialf1 = mo.Vel.X;
 					mo.specialf2 = mo.Vel.Y;
-					mo.tics -= random[FlameMissile]()&3;
+					mo.tics -= random[FlameMissile](0, 3);
 				}
 				an += 180;
 				mo = Spawn("CircleFlame", BlockingMobj.Vec3Angle(dist, an, 5), ALLOW_REPLACE);
@@ -316,7 +316,7 @@ class CFlameMissile : FastProjectile
 					mo.VelFromAngle(-CircleFlame.FLAMESPEED);
 					mo.specialf1 = mo.Vel.X;
 					mo.specialf2 = mo.Vel.Y;
-					mo.tics -= random[FlameMissile]()&3;
+					mo.tics -= random[FlameMissile](0, 3);
 				}
 			}
 			SetState (SpawnState);

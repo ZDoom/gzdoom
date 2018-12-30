@@ -1285,6 +1285,7 @@ void G_PlayerReborn (int player)
 	log = p->LogText;
 	chasecam = p->cheats & CF_CHASECAM;
 	Bot = p->Bot;			//Added by MC:
+	const bool settings_controller = p->settings_controller;
 
 	// Reset player structure to its defaults
 	p->~player_t();
@@ -1303,6 +1304,7 @@ void G_PlayerReborn (int player)
 	p->LogText = log;
 	p->cheats |= chasecam;
 	p->Bot = Bot;			//Added by MC:
+	p->settings_controller = settings_controller;
 
 	p->oldbuttons = ~0, p->attackdown = true; p->usedown = true;	// don't do anything immediately
 	p->original_oldbuttons = ~0;
@@ -2827,16 +2829,15 @@ bool G_CheckDemoStatus (void)
 			// uncompressed size of the BODY.
 			uLong len = uLong(demo_p - demobodyspot);
 			uLong outlen = (len + len/100 + 12);
-			Byte *compressed = new Byte[outlen];
-			int r = compress2 (compressed, &outlen, demobodyspot, len, 9);
+			TArray<Byte> compressed(outlen, true);
+			int r = compress2 (compressed.Data(), &outlen, demobodyspot, len, 9);
 			if (r == Z_OK && outlen < len)
 			{
 				formlen = democompspot;
 				WriteLong (len, &democompspot);
-				memcpy (demobodyspot, compressed, outlen);
+				memcpy (demobodyspot, compressed.Data(), outlen);
 				demo_p = demobodyspot + outlen;
 			}
-			delete[] compressed;
 		}
 		FinishChunk (&demo_p);
 		formlen = demobuffer + 4;

@@ -293,8 +293,8 @@ void DDoor::DoorSound(bool raise, DSeqNode *curseq) const
 				if (line->backsector == NULL)
 					continue;
 
-				FTexture *tex = TexMan[line->sidedef[0]->GetTexture(side_t::top)];
-				texname = tex ? tex->Name.GetChars() : NULL;
+				FTexture *tex = TexMan.GetTexture(line->sidedef[0]->GetTexture(side_t::top));
+				texname = tex ? tex->GetName().GetChars() : NULL;
 				if (texname != NULL && texname[0] == 'D' && texname[1] == 'O' && texname[2] == 'R')
 				{
 					switch (texname[3])
@@ -715,9 +715,8 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay,
 
 	picnum = tex1[side_t::top].texture;
 
-	// don't forget texture scaling here!
-	FTexture *tex = TexMan[picnum];
-	topdist = tex ? tex->GetScaledHeight() : 64;
+	FTexture *tex = TexMan.GetTexture(picnum);
+	topdist = tex ? tex->GetDisplayHeight() : 64;
 
 	topdist = m_Sector->ceilingplane.fD() - topdist * m_Sector->ceilingplane.fC();
 

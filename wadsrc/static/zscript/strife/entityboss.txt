@@ -160,7 +160,7 @@ class EntityBoss : SpectralMonster
 	{
 		// Apparent Strife bug: Case 5 was unreachable because they used % 5 instead of % 6.
 		// I've fixed that by making case 1 duplicate it, since case 1 did nothing.
-		switch (random[Entity]() % 5)
+		switch (random[Entity](0, 4))
 		{
 		case 0:
 			A_SpotLightning();

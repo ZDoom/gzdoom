@@ -30,11 +30,10 @@ public:
 	void CleanForRestart() override;
 	void UpdatePalette() override;
 	uint32_t GetCaps() override;
-	void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV) override;
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height) override;
 	sector_t *RenderView(player_t *player) override;
 	void SetTextureFilterMode() override;
-	IHardwareTexture *CreateHardwareTexture(FTexture *tex) override;
+	IHardwareTexture *CreateHardwareTexture() override;
 	void PrecacheMaterial(FMaterial *mat, int translation) override;
 	FModelRenderer *CreateModelRenderer(int mli) override;
 	void TextureFilterChanged() override;
@@ -50,7 +49,7 @@ public:
 	// Retrieves a buffer containing image data for a screenshot.
 	// Hint: Pitch can be negative for upside-down images, in which case buffer
 	// points to the last row in the buffer, which will be the first row output.
-	virtual void GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma) override;
+	virtual TArray<uint8_t> GetScreenshotBuffer(int &pitch, ESSType &color_type, float &gamma) override;
 
 	void Swap();
 	bool IsHWGammaActive() const { return HWGammaActive; }
@@ -65,7 +64,7 @@ public:
     
     FTexture *WipeStartScreen() override;
     FTexture *WipeEndScreen() override;
-private:
+
 	int camtexcount = 0;
 };
 

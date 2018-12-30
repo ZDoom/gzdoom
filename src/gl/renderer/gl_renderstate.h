@@ -39,7 +39,6 @@ namespace OpenGLRenderer
 
 class FShader;
 struct GLSectorPlane;
-extern TArray<VSMatrix> gl_MatrixStack;
 
 enum EPassType
 {

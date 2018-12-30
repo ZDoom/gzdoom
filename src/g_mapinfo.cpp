@@ -284,7 +284,7 @@ void level_info_t::Reset()
 	PrecacheSounds.Clear();
 
 	brightfog = -1;
-	lightmode = -1;
+	lightmode = ELightMode::NotSet;
 	notexturefill = -1;
 	lightadditivesurfaces = -1;
 	skyrotatevector = FVector3(0, 0, 1);
@@ -1381,9 +1381,9 @@ DEFINE_MAP_OPTION(lightmode, false)
 	parse.ParseAssign();
 	parse.sc.MustGetNumber();
 
-	if ((parse.sc.Number >= 0 && parse.sc.Number <= 4) || parse.sc.Number == 8)
+	if ((parse.sc.Number >= 0 && parse.sc.Number <= 4) || parse.sc.Number == 8 || parse.sc.Number == 16)
 	{
-		info->lightmode = uint8_t(parse.sc.Number);
+		info->lightmode = ELightMode(parse.sc.Number);
 	}
 	else
 	{
@@ -1444,6 +1444,34 @@ DEFINE_MAP_OPTION(skyrotate2, false)
 	info->skyrotatevector2.Z = (float)parse.sc.Float;
 	info->skyrotatevector2.MakeUnit();
 }
+
+DEFINE_MAP_OPTION(fs_nocheckposition, false)
+{
+	if (parse.CheckAssign())
+	{
+		parse.sc.MustGetNumber();
+		info->fs_nocheckposition = !!parse.sc.Number;
+	}
+	else
+	{
+		info->fs_nocheckposition = true;
+	}
+}
+
+DEFINE_MAP_OPTION(edata, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	info->EDName = parse.sc.String;
+}
+
+DEFINE_MAP_OPTION(loadacs, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	info->acsName = parse.sc.String;
+}
+
 
 //==========================================================================
 //
@@ -1553,6 +1581,7 @@ MapFlagHandlers[] =
 	{ "forcefakecontrast",				MITYPE_SETFLAG3,	LEVEL3_FORCEFAKECONTRAST, 0 },
 	{ "nolightfade",					MITYPE_SETFLAG3,	LEVEL3_NOLIGHTFADE, 0 },
 	{ "nocoloredspritelighting",		MITYPE_SETFLAG3,	LEVEL3_NOCOLOREDSPRITELIGHTING, 0 },
+	{ "forceworldpanning",				MITYPE_SETFLAG3,	LEVEL3_FORCEWORLDPANNING, 0 },
 	{ "nobotnodes",						MITYPE_IGNORE,	0, 0 },		// Skulltag option: nobotnodes
 	{ "compat_shorttex",				MITYPE_COMPATFLAG, COMPATF_SHORTTEX, 0 },
 	{ "compat_stairs",					MITYPE_COMPATFLAG, COMPATF_STAIRINDEX, 0 },

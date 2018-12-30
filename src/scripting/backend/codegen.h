@@ -2104,6 +2104,7 @@ public:
 		: FxExpression(EFX_Nop, p)
 	{
 		isresolved = true;
+		ValueType = TypeError;
 	}
 	ExpEmit Emit(VMFunctionBuilder *build)
 	{

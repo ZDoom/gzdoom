@@ -144,7 +144,7 @@ bool			setsizeneeded;
 unsigned int	R_OldBlend = ~0;
 int 			validcount = 1; 	// increment every time a check is made
 int 			dl_validcount = 1; 	// increment every time a check is made
-FCanvasTextureInfo *FCanvasTextureInfo::List;
+int			freelookviewheight;
 
 DVector3a view;
 DAngle viewpitch;
@@ -431,7 +431,6 @@ static void R_Shutdown ()
 	SWRenderer = nullptr;
 	R_DeinitTranslationTables();
 	R_DeinitColormaps ();
-	FCanvasTextureInfo::EmptyList();
 }
 
 //==========================================================================
@@ -1047,195 +1046,6 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		viewpoint.ViewActor = actor;
 	}
 	
-}
-
-
-//==========================================================================
-//
-// FCanvasTextureInfo :: Add
-//
-// Assigns a camera to a canvas texture.
-//
-//==========================================================================
-
-void FCanvasTextureInfo::Add (AActor *viewpoint, FTextureID picnum, double fov)
-{
-	FCanvasTextureInfo *probe;
-	FCanvasTexture *texture;
-
-	if (!picnum.isValid())
-	{
-		return;
-	}
-	texture = static_cast<FCanvasTexture *>(TexMan[picnum]);
-	if (!texture->bHasCanvas)
-	{
-		Printf ("%s is not a valid target for a camera\n", texture->Name.GetChars());
-		return;
-	}
-
-	// Is this texture already assigned to a camera?
-	for (probe = List; probe != NULL; probe = probe->Next)
-	{
-		if (probe->Texture == texture)
-		{
-			// Yes, change its assignment to this new camera
-			if (probe->Viewpoint != viewpoint || probe->FOV != fov)
-			{
-				texture->bFirstUpdate = true;
-			}
-			probe->Viewpoint = viewpoint;
-			probe->FOV = fov;
-			return;
-		}
-	}
-	// No, create a new assignment
-	probe = new FCanvasTextureInfo;
-	probe->Viewpoint = viewpoint;
-	probe->Texture = texture;
-	probe->PicNum = picnum;
-	probe->FOV = fov;
-	probe->Next = List;
-	texture->bFirstUpdate = true;
-	List = probe;
-}
-
-// [ZZ] expose this to ZScript
-void SetCameraToTexture(AActor *viewpoint, const FString &texturename, double fov)
-{
-	FTextureID textureid = TexMan.CheckForTexture(texturename, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
-	if (textureid.isValid())
-	{
-		// Only proceed if the texture actually has a canvas.
-		FTexture *tex = TexMan[textureid];
-		if (tex && tex->bHasCanvas)
-		{
-			FCanvasTextureInfo::Add(viewpoint, textureid, fov);
-		}
-	}
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraToTexture, SetCameraToTexture)
-{
-	PARAM_PROLOGUE;
-	PARAM_OBJECT(viewpoint, AActor);
-	PARAM_STRING(texturename); // [ZZ] there is no point in having this as FTextureID because it's easier to refer to a cameratexture by name and it isn't executed too often to cache it.
-	PARAM_FLOAT(fov);
-	SetCameraToTexture(viewpoint, texturename, fov);
-	return 0;
-}
-
-//==========================================================================
-//
-// FCanvasTextureInfo :: UpdateAll
-//
-// Updates all canvas textures that were visible in the last frame.
-//
-//==========================================================================
-
-void FCanvasTextureInfo::UpdateAll ()
-{
-	FCanvasTextureInfo *probe;
-
-	for (probe = List; probe != NULL; probe = probe->Next)
-	{
-		if (probe->Viewpoint != NULL && probe->Texture->bNeedsUpdate)
-		{
-			screen->RenderTextureView(probe->Texture, probe->Viewpoint, probe->FOV);
-		}
-	}
-}
-
-//==========================================================================
-//
-// FCanvasTextureInfo :: EmptyList
-//
-// Removes all camera->texture assignments.
-//
-//==========================================================================
-
-void FCanvasTextureInfo::EmptyList ()
-{
-	FCanvasTextureInfo *probe, *next;
-
-	for (probe = List; probe != NULL; probe = next)
-	{
-		next = probe->Next;
-		probe->Texture->Unload();
-		delete probe;
-	}
-	List = NULL;
-}
-
-//==========================================================================
-//
-// FCanvasTextureInfo :: Serialize
-//
-// Reads or writes the current set of mappings in an archive.
-//
-//==========================================================================
-
-void FCanvasTextureInfo::Serialize(FSerializer &arc)
-{
-	if (arc.isWriting())
-	{
-		if (List != nullptr)
-		{
-			if (arc.BeginArray("canvastextures"))
-			{
-				FCanvasTextureInfo *probe;
-
-				for (probe = List; probe != nullptr; probe = probe->Next)
-				{
-					if (probe->Texture != nullptr && probe->Viewpoint != nullptr)
-					{
-						if (arc.BeginObject(nullptr))
-						{
-							arc("viewpoint", probe->Viewpoint)
-								("fov", probe->FOV)
-								("texture", probe->PicNum)
-								.EndObject();
-						}
-					}
-				}
-				arc.EndArray();
-			}
-		}
-	}
-	else
-	{
-		if (arc.BeginArray("canvastextures"))
-		{
-			AActor *viewpoint = nullptr;
-			double fov;
-			FTextureID picnum;
-			while (arc.BeginObject(nullptr))
-			{
-				arc("viewpoint", viewpoint)
-					("fov", fov)
-					("texture", picnum)
-					.EndObject();
-				Add(viewpoint, picnum, fov);
-			}
-			arc.EndArray();
-		}
-	}
-}
-
-//==========================================================================
-//
-// FCanvasTextureInfo :: Mark
-//
-// Marks all viewpoints in the list for the collector.
-//
-//==========================================================================
-
-void FCanvasTextureInfo::Mark()
-{
-	for (FCanvasTextureInfo *probe = List; probe != NULL; probe = probe->Next)
-	{
-		GC::Mark(probe->Viewpoint);
-	}
 }
 
 

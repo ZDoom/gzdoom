@@ -43,10 +43,14 @@ namespace swrenderer
 		colfunc = &SWPixelFormatDrawers::DrawColumn;
 	}
 
-	void SpriteDrawerArgs::DrawMaskedColumn(RenderThread *thread, int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, FRenderStyle style, bool unmasked)
+	void SpriteDrawerArgs::DrawMaskedColumn(RenderThread *thread, int x, fixed_t iscale, FSoftwareTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, FRenderStyle style, bool unmasked)
 	{
 		if (x < thread->X1 || x >= thread->X2)
 			return;
+
+		col *= tex->GetPhysicalScale();
+		iscale *= tex->GetPhysicalScale();
+		spryscale /= tex->GetPhysicalScale();
 
 		auto viewport = thread->Viewport.get();
 
@@ -60,21 +64,21 @@ namespace swrenderer
 		dc_viewport = viewport;
 		dc_x = x;
 		dc_iscale = iscale;
-		dc_textureheight = tex->GetHeight();
+		dc_textureheight = tex->GetPhysicalHeight();
 
-		const FTexture::Span *span;
+		const FSoftwareTextureSpan *span;
 		const uint8_t *column;
 		if (viewport->RenderTarget->IsBgra() && !drawer_needs_pal_input)
 			column = (const uint8_t *)tex->GetColumnBgra(col >> FRACBITS, &span);
 		else
 			column = tex->GetColumn(style, col >> FRACBITS, &span);
 
-		FTexture::Span unmaskedSpan[2];
+		FSoftwareTextureSpan unmaskedSpan[2];
 		if (unmasked)
 		{
 			span = unmaskedSpan;
 			unmaskedSpan[0].TopOffset = 0;
-			unmaskedSpan[0].Length = tex->GetHeight();
+			unmaskedSpan[0].Length = tex->GetPhysicalHeight();
 			unmaskedSpan[1].TopOffset = 0;
 			unmaskedSpan[1].Length = 0;
 		}
@@ -126,7 +130,7 @@ namespace swrenderer
 		}
 	}
 
-	void SpriteDrawerArgs::DrawMaskedColumnBgra(RenderThread *thread, int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
+	void SpriteDrawerArgs::DrawMaskedColumnBgra(RenderThread *thread, int x, fixed_t iscale, FSoftwareTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
 	{
 		dc_viewport = thread->Viewport.get();
 		dc_x = x;
@@ -134,7 +138,7 @@ namespace swrenderer
 
 		// Normalize to 0-1 range:
 		double uv_stepd = FIXED2DBL(dc_iscale);
-		double v_step = uv_stepd / tex->GetHeight();
+		double v_step = uv_stepd / tex->GetPhysicalHeight();
 
 		// Convert to uint32_t:
 		dc_iscale = (uint32_t)(v_step * (1 << 30));
@@ -150,8 +154,8 @@ namespace swrenderer
 		bool magnifying = lod < 0.0f;
 
 		int mipmap_offset = 0;
-		int mip_width = tex->GetWidth();
-		int mip_height = tex->GetHeight();
+		int mip_width = tex->GetPhysicalWidth();
+		int mip_height = tex->GetPhysicalHeight();
 		uint32_t xpos = (uint32_t)((((uint64_t)xoffset) << FRACBITS) / mip_width);
 		if (r_mipmap && tex->Mipmapped() && mip_width > 1 && mip_height > 1)
 		{
@@ -192,14 +196,14 @@ namespace swrenderer
 		}
 
 		// Grab the posts we need to draw
-		const FTexture::Span *span;
+		const FSoftwareTextureSpan *span;
 		tex->GetColumnBgra(col >> FRACBITS, &span);
-		FTexture::Span unmaskedSpan[2];
+		FSoftwareTextureSpan unmaskedSpan[2];
 		if (unmasked)
 		{
 			span = unmaskedSpan;
 			unmaskedSpan[0].TopOffset = 0;
-			unmaskedSpan[0].Length = tex->GetHeight();
+			unmaskedSpan[0].Length = tex->GetPhysicalHeight();
 			unmaskedSpan[1].TopOffset = 0;
 			unmaskedSpan[1].Length = 0;
 		}
@@ -233,7 +237,7 @@ namespace swrenderer
 				SetDest(dc_viewport, dc_x, dc_yl);
 				dc_count = dc_yh - dc_yl + 1;
 
-				double v = ((dc_yl + 0.5 - sprtopscreen) / spryscale) / tex->GetHeight();
+				double v = ((dc_yl + 0.5 - sprtopscreen) / spryscale) / tex->GetPhysicalHeight();
 				dc_texturefrac = (uint32_t)(v * (1 << 30));
 
 				(thread->Drawers(dc_viewport)->*colfunc)(*this);
@@ -378,8 +382,14 @@ namespace swrenderer
 		}
 	}
 
-	bool SpriteDrawerArgs::SetStyle(RenderViewport *viewport, FRenderStyle style, fixed_t alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade)
+	bool SpriteDrawerArgs::SetStyle(RenderViewport *viewport, FRenderStyle style, fixed_t alpha, int translation, uint32_t color, const ColormapLight &light)
 	{
+		if (light.BaseColormap)
+			SetLight(light);
+
+		FDynamicColormap *basecolormap = light.BaseColormap ? static_cast<FDynamicColormap*>(light.BaseColormap) : nullptr;
+		fixed_t shadedlightshade = light.ColormapNum << FRACBITS;
+
 		fixed_t fglevel, bglevel;
 
 		drawer_needs_pal_input = false;
@@ -446,11 +456,13 @@ namespace swrenderer
 			{
 				fixed_t shade = shadedlightshade;
 				if (shade == 0) shade = cameraLight->FixedLightLevelShade();
-				SetLight(basecolormap, 0, shade);
+				SetBaseColormap(basecolormap);
+				SetLight(0, shade);
 			}
 			else
 			{
-				SetLight(basecolormap, 0, shadedlightshade);
+				SetBaseColormap(basecolormap);
+				SetLight(0, shadedlightshade);
 			}
 			return true;
 		}
@@ -478,15 +490,16 @@ namespace swrenderer
 			// dc_srccolor is used by the R_Fill* routines. It is premultiplied
 			// with the alpha.
 			dc_srccolor = ((((r*x) >> 4) << 20) | ((g*x) >> 4) | ((((b)*x) >> 4) << 10)) & 0x3feffbff;
-			SetLight(&identitycolormap, 0, 0);
+			SetBaseColormap(&identitycolormap);
+			SetLight(0, 0);
 		}
 
 		return SpriteDrawerArgs::SetBlendFunc(style.BlendOp, fglevel, bglevel, style.Flags);
 	}
 
-	bool SpriteDrawerArgs::SetStyle(RenderViewport *viewport, FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade)
+	bool SpriteDrawerArgs::SetStyle(RenderViewport *viewport, FRenderStyle style, float alpha, int translation, uint32_t color, const ColormapLight &light)
 	{
-		return SetStyle(viewport, style, FLOAT2FIXED(alpha), translation, color, basecolormap, shadedlightshade);
+		return SetStyle(viewport, style, FLOAT2FIXED(alpha), translation, color, light);
 	}
 
 	void SpriteDrawerArgs::FillColumn(RenderThread *thread)

@@ -717,10 +717,10 @@ class Weapon : StateProvider
 			ammoitem.Amount = MIN (amount, ammoitem.MaxAmount);
 			ammoitem.AttachToOwner (other);
 		}
-		else if (ammoitem.Amount < ammoitem.MaxAmount)
+		else if (ammoitem.Amount < ammoitem.MaxAmount || sv_unlimited_pickup)
 		{
 			ammoitem.Amount += amount;
-			if (ammoitem.Amount > ammoitem.MaxAmount)
+			if (ammoitem.Amount > ammoitem.MaxAmount && !sv_unlimited_pickup)
 			{
 				ammoitem.Amount = ammoitem.MaxAmount;
 			}
@@ -811,24 +811,32 @@ class Weapon : StateProvider
 		let player = Owner.player;
 		if (SisterWeapon != NULL && bPowered_Up)
 		{
-			if (GetReadyState() != SisterWeapon.GetReadyState())
+			let ready = GetReadyState();
+			if (ready != SisterWeapon.GetReadyState())
 			{
 				if (player.PendingWeapon == NULL ||	player.PendingWeapon == WP_NOCHANGE)
+				{
 					player.PendingWeapon = SisterWeapon;
+				}
+				player.WeaponState |= WF_REFIRESWITCHOK;
 			}
 			else
 			{
 				let psp = player.FindPSprite(PSP_WEAPON);
-				if (psp != null && psp.Caller == player.ReadyWeapon)
+				if (psp != null && psp.Caller == player.ReadyWeapon && psp.CurState.InStateSequence(ready))
 				{
 					// If the weapon changes but the state does not, we have to manually change the PSprite's caller here.
 					psp.Caller = SisterWeapon;
 					player.ReadyWeapon = SisterWeapon;
 				}
-				else
+				else 
 				{
-					// Something went wrong. Initiate a regular weapon change.
-					player.PendingWeapon = SisterWeapon;
+					if (player.PendingWeapon == NULL || player.PendingWeapon == WP_NOCHANGE)
+					{
+						// Something went wrong. Initiate a regular weapon change.
+						player.PendingWeapon = SisterWeapon;
+					}
+					player.WeaponState |= WF_REFIRESWITCHOK;
 				}
 			}
 		}
@@ -890,7 +898,7 @@ class Weapon : StateProvider
 		}
 		let altFire = (fireMode == AltFire);
 		let optional = (altFire? bAlt_Ammo_Optional : bAmmo_Optional);
-		let useboth = (altFire? bPrimary_Uses_Both : bAlt_Uses_Both);
+		let useboth = (altFire? bAlt_Uses_Both : bPrimary_Uses_Both);
 
 		if (!requireAmmo && optional)
 		{

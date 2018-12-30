@@ -477,10 +477,10 @@ static inline void CheckShortestTex (FTextureID texnum, double &minsize)
 {
 	if (texnum.isValid() || (texnum.isNull() && (i_compatflags & COMPATF_SHORTTEX)))
 	{
-		FTexture *tex = TexMan[texnum];
+		FTexture *tex = TexMan.GetTexture(texnum);
 		if (tex != NULL)
 		{
-			double h = tex->GetScaledHeight();
+			double h = tex->GetDisplayHeight();
 			if (h < minsize)
 			{
 				minsize = h;
@@ -501,7 +501,7 @@ double FindShortestTextureAround (sector_t *sec)
 			CheckShortestTex (check->sidedef[1]->GetTexture(side_t::bottom), minsize);
 		}
 	}
-	return minsize < FLT_MAX ? minsize : TexMan[0]->GetHeight();
+	return minsize < FLT_MAX ? minsize : TexMan.ByIndex(0)->GetDisplayHeight();
 }
 
 //
@@ -526,7 +526,7 @@ double FindShortestUpperAround (sector_t *sec)
 			CheckShortestTex (check->sidedef[1]->GetTexture(side_t::top), minsize);
 		}
 	}
-	return minsize < FLT_MAX ? minsize : TexMan[0]->GetHeight();
+	return minsize < FLT_MAX ? minsize : TexMan.ByIndex(0)->GetDisplayHeight();
 }
 
 //
@@ -1144,14 +1144,14 @@ double GetFriction(const sector_t *self, int plane, double *pMoveFac)
 	 auto c = planes[sector_t::floor].GlowColor;
 	 if (c == 0)
 	 {
-		 FTexture *tex = TexMan[GetTexture(sector_t::floor)];
+		 FTexture *tex = TexMan.GetTexture(GetTexture(sector_t::floor));
 		 if (tex != NULL && tex->isGlowing())
 		 {
-			 if (!tex->bAutoGlowing) tex = TexMan(GetTexture(sector_t::floor));
+			 if (!tex->isAutoGlowing()) tex = TexMan.GetTexture(GetTexture(sector_t::floor), true);
 			 if (tex->isGlowing())	// recheck the current animation frame.
 			 {
 				 tex->GetGlowColor(bottomglowcolor);
-				 bottomglowcolor[3] = (float)tex->GlowHeight;
+				 bottomglowcolor[3] = (float)tex->GetGlowHeight();
 			 }
 		 }
 	 }
@@ -1189,15 +1189,15 @@ double GetFriction(const sector_t *self, int plane, double *pMoveFac)
 	 auto c = planes[sector_t::ceiling].GlowColor;
 	 if (c == 0)
 	 {
-		 FTexture *tex = TexMan[GetTexture(sector_t::ceiling)];
+		 FTexture *tex = TexMan.GetTexture(GetTexture(sector_t::ceiling));
 		 if (tex != NULL && tex->isGlowing())
 		 {
-			 if (!tex->bAutoGlowing) tex = TexMan(GetTexture(sector_t::ceiling));
+			 if (!tex->isAutoGlowing()) tex = TexMan.GetTexture(GetTexture(sector_t::ceiling), true);
 			 if (tex->isGlowing())	// recheck the current animation frame.
 			 {
 				 ret = true;
 				 tex->GetGlowColor(topglowcolor);
-				 topglowcolor[3] = (float)tex->GlowHeight;
+				 topglowcolor[3] = (float)tex->GetGlowHeight();
 			 }
 		 }
 	 }
@@ -1213,15 +1213,15 @@ double GetFriction(const sector_t *self, int plane, double *pMoveFac)
 	 c = planes[sector_t::floor].GlowColor;
 	 if (c == 0)
 	 {
-		 FTexture *tex = TexMan[GetTexture(sector_t::floor)];
+		 FTexture *tex = TexMan.GetTexture(GetTexture(sector_t::floor));
 		 if (tex != NULL && tex->isGlowing())
 		 {
-			 if (!tex->bAutoGlowing) tex = TexMan(GetTexture(sector_t::floor));
+			 if (!tex->isAutoGlowing()) tex = TexMan.GetTexture(GetTexture(sector_t::floor), true);
 			 if (tex->isGlowing())	// recheck the current animation frame.
 			 {
 				 ret = true;
 				 tex->GetGlowColor(bottomglowcolor);
-				 bottomglowcolor[3] = (float)tex->GlowHeight;
+				 bottomglowcolor[3] = (float)tex->GetGlowHeight();
 			 }
 		 }
 	 }
@@ -1397,8 +1397,8 @@ void P_ReplaceTextures(const char *fromname, const char *toname, int flags)
 
 	if ((flags ^ (NOT_BOTTOM | NOT_MIDDLE | NOT_TOP)) != 0)
 	{
-		picnum1 = TexMan.GetTexture(fromname, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
-		picnum2 = TexMan.GetTexture(toname, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
+		picnum1 = TexMan.GetTextureID(fromname, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
+		picnum2 = TexMan.GetTextureID(toname, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
 
 		for (auto &side : level.sides)
 		{
@@ -1414,8 +1414,8 @@ void P_ReplaceTextures(const char *fromname, const char *toname, int flags)
 	}
 	if ((flags ^ (NOT_FLOOR | NOT_CEILING)) != 0)
 	{
-		picnum1 = TexMan.GetTexture(fromname, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
-		picnum2 = TexMan.GetTexture(toname, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
+		picnum1 = TexMan.GetTextureID(fromname, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
+		picnum2 = TexMan.GetTextureID(toname, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
 
 		for (auto &sec : level.sectors)
 		{
@@ -1475,6 +1475,39 @@ CUSTOM_CVAR(Int, r_fakecontrast, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (self < 0) self = 1;
 	else if (self > 2) self = 2;
+}
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
+
+void line_t::AdjustLine()
+{
+	setDelta(v2->fX() - v1->fX(), v2->fY() - v1->fY());
+
+	if (v1->fX() < v2->fX())
+	{
+		bbox[BOXLEFT] = v1->fX();
+		bbox[BOXRIGHT] = v2->fX();
+	}
+	else
+	{
+		bbox[BOXLEFT] = v2->fX();
+		bbox[BOXRIGHT] = v1->fX();
+	}
+
+	if (v1->fY() < v2->fY())
+	{
+		bbox[BOXBOTTOM] = v1->fY();
+		bbox[BOXTOP] = v2->fY();
+	}
+	else
+	{
+		bbox[BOXBOTTOM] = v2->fY();
+		bbox[BOXTOP] = v1->fY();
+	}
 }
 
 //==========================================================================

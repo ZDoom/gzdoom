@@ -33,7 +33,7 @@ namespace swrenderer
 	{
 	public:
 		RenderSlopePlane(RenderThread *thread);
-		void Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *basecolormap, FTexture *texture);
+		void Render(VisiblePlane *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked, FDynamicColormap *basecolormap, FSoftwareTexture *texture);
 
 		RenderThread *Thread = nullptr;
 
@@ -43,7 +43,8 @@ namespace swrenderer
 		FVector3 plane_sz, plane_su, plane_sv;
 		float planelightfloat;
 		bool plane_shade;
-		int planeshade;
+		int lightlevel;
+		bool foggy;
 		fixed_t pviewx, pviewy;
 		fixed_t xscale, yscale;
 		FDynamicColormap *basecolormap;

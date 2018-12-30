@@ -59,9 +59,59 @@ EXTERN_CVAR(Int, r_skymode)
 
 namespace swrenderer
 {
+	static FSoftwareTexture *GetSWTex(FTextureID texid, bool allownull = true)
+	{
+		auto tex = TexMan.GetPalettedTexture(texid, true);
+		if (tex == nullptr) return nullptr;
+		if (!allownull && !tex->isValid()) return nullptr;
+		return tex->GetSoftwareTexture();
+	}
+
 	RenderSkyPlane::RenderSkyPlane(RenderThread *thread)
 	{
 		Thread = thread;
+
+		auto skytex1 = TexMan.GetPalettedTexture(sky1texture, true);
+		auto skytex2 = TexMan.GetPalettedTexture(sky2texture, true);
+
+		if (skytex1 == nullptr)
+			return;
+
+		FSoftwareTexture *sskytex1 = skytex1->GetSoftwareTexture();
+		FSoftwareTexture *sskytex2 = skytex2->GetSoftwareTexture();
+		skytexturemid = 0;
+		int skyheight = skytex1->GetDisplayHeight();
+		if (skyheight >= 128 && skyheight < 200)
+		{
+			skytexturemid = -28;
+		}
+		else if (skyheight > 200)
+		{
+			skytexturemid = (200 - skyheight) * sskytex1->GetScale().Y + ((r_skymode == 2 && !(level.flags & LEVEL_FORCETILEDSKY)) ? skytex1->GetSkyOffset() : 0);
+		}
+
+		if (viewwidth != 0 && viewheight != 0)
+		{
+			skyiscale = float(r_Yaspect / freelookviewheight);
+			skyscale = freelookviewheight / r_Yaspect;
+
+			skyiscale *= float(r_viewpoint.FieldOfView.Degrees / 90.);
+			skyscale *= float(90. / r_viewpoint.FieldOfView.Degrees);
+		}
+
+		if (skystretch)
+		{
+			skyscale *= (double)SKYSTRETCH_HEIGHT / skyheight;
+			skyiscale *= skyheight / (float)SKYSTRETCH_HEIGHT;
+			skytexturemid *= skyheight / (double)SKYSTRETCH_HEIGHT;
+		}
+
+		// The standard Doom sky texture is 256 pixels wide, repeated 4 times over 360 degrees,
+		// giving a total sky width of 1024 pixels. So if the sky texture is no wider than 1024,
+		// we map it to a cylinder with circumfrence 1024. For larger ones, we use the width of
+		// the texture as the cylinder's circumfrence.
+		sky1cyl = MAX(sskytex1->GetWidth(), fixed_t(sskytex1->GetScale().X * 1024));
+		sky2cyl = MAX(sskytex2->GetWidth(), fixed_t(sskytex2->GetScale().Y * 1024));
 	}
 
 	void RenderSkyPlane::Render(VisiblePlane *pl)
@@ -86,9 +136,9 @@ namespace swrenderer
 			if (!(pl->sky & PL_SKYFLAT))
 			{	// use sky1
 			sky1:
-				frontskytex = TexMan(sky1tex, true);
+				frontskytex = GetSWTex(sky1tex);
 				if (level.flags & LEVEL_DOUBLESKY)
-					backskytex = TexMan(sky2tex, true);
+					backskytex = GetSWTex(sky2tex);
 				else
 					backskytex = NULL;
 				skyflip = 0;
@@ -99,7 +149,7 @@ namespace swrenderer
 			}
 			else if (pl->sky == PL_SKYFLAT)
 			{	// use sky2
-				frontskytex = TexMan(sky2tex, true);
+				frontskytex = GetSWTex(sky2tex);
 				backskytex = NULL;
 				frontcyl = sky2cyl;
 				skyflip = 0;
@@ -125,8 +175,8 @@ namespace swrenderer
 					pos = side_t::top;
 				}
 
-				frontskytex = TexMan(s->GetTexture(pos), true);
-				if (frontskytex == NULL || frontskytex->UseType == ETextureType::Null)
+				frontskytex = GetSWTex(s->GetTexture(pos));
+				if (frontskytex == nullptr)
 				{ // [RH] The blank texture: Use normal sky instead.
 					goto sky1;
 				}
@@ -148,7 +198,7 @@ namespace swrenderer
 				// allow old sky textures to be used.
 				skyflip = l->args[2] ? 0u : ~0u;
 
-				int frontxscale = int(frontskytex->Scale.X * 1024);
+				int frontxscale = int(frontskytex->GetScale().X * 1024);
 				frontcyl = MAX(frontskytex->GetWidth(), frontxscale);
 				if (skystretch)
 				{
@@ -162,15 +212,7 @@ namespace swrenderer
 			backpos = int(fmod(backdpos, sky2cyl * 65536.0));
 		}
 
-		CameraLight *cameraLight = CameraLight::Instance();
-		if (cameraLight->FixedColormap())
-		{
-			drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
-		}
-		else
-		{
-			drawerargs.SetLight(&NormalLight, 0, 0);
-		}
+		drawerargs.SetStyle();
 
 		Thread->PrepareTexture(frontskytex, DefaultRenderStyle());
 		Thread->PrepareTexture(backskytex, DefaultRenderStyle());
@@ -183,11 +225,9 @@ namespace swrenderer
 		RenderPortal *renderportal = Thread->Portal.get();
 		auto viewport = Thread->Viewport.get();
 
-		uint32_t height = frontskytex->GetHeight();
-
 		double uv_stepd = skyiscale * yrepeat;
-		double v = (texturemid + uv_stepd * (y1 - viewport->CenterY + 0.5)) / height;
-		double v_step = uv_stepd / height;
+		double v = (texturemid + uv_stepd * (y1 - viewport->CenterY + 0.5)) / frontskytex->GetHeight();
+		double v_step = uv_stepd / frontskytex->GetHeight();
 
 		uint32_t uv_pos = (uint32_t)(int32_t)(v * 0x01000000);
 		uint32_t uv_step = (uint32_t)(int32_t)(v_step * 0x01000000);
@@ -207,8 +247,8 @@ namespace swrenderer
 		{
 			ang = (skyangle + viewport->xtoviewangle[x]) ^ skyflip;
 		}
-		angle1 = (uint32_t)((UMulScale16(ang, frontcyl) + frontpos) >> FRACBITS);
-		angle2 = (uint32_t)((UMulScale16(ang, backcyl) + backpos) >> FRACBITS);
+		angle1 = UMulScale16(ang, frontcyl) + frontpos;
+		angle2 = UMulScale16(ang, backcyl) + backpos;
 
 		drawerargs.SetFrontTexture(Thread, frontskytex, angle1);
 		drawerargs.SetBackTexture(Thread, backskytex, angle2);
@@ -231,16 +271,16 @@ namespace swrenderer
 
 	void RenderSkyPlane::DrawSkyColumn(int start_x, int y1, int y2)
 	{
-		if (1 << frontskytex->HeightBits == frontskytex->GetHeight())
+		if (1 << frontskytex->GetHeightBits() == frontskytex->GetPhysicalHeight())
 		{
-			double texturemid = skymid * frontskytex->Scale.Y + frontskytex->GetHeight();
-			DrawSkyColumnStripe(start_x, y1, y2, frontskytex->Scale.Y, texturemid, frontskytex->Scale.Y);
+			double texturemid = skymid * frontskytex->GetScale().Y + frontskytex->GetHeight();
+			DrawSkyColumnStripe(start_x, y1, y2, frontskytex->GetScale().Y, texturemid, frontskytex->GetScale().Y);
 		}
 		else
 		{
 			auto viewport = Thread->Viewport.get();
-			double yrepeat = frontskytex->Scale.Y;
-			double scale = frontskytex->Scale.Y * skyscale;
+			double yrepeat = frontskytex->GetScale().Y;
+			double scale = frontskytex->GetScale().Y * skyscale;
 			double iscale = 1 / scale;
 			short drawheight = short(frontskytex->GetHeight() * scale);
 			double topfrac = fmod(skymid + iscale * (1 - viewport->CenterY), frontskytex->GetHeight());

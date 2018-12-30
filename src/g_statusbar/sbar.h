@@ -251,7 +251,6 @@ struct FMugShotState
 	TArray<FMugShotFrame> Frames;
 
 	FMugShotState(FName name);
-	~FMugShotState();
 	void Tick();
 	void Reset();
 	FMugShotFrame &GetCurrentFrame() { return Frames[Position]; }

@@ -74,7 +74,7 @@ class Templar : Actor
 
 			for (int i = 0; i < 10; ++i)
 			{
-				int damage = (random[Templar]() & 4) * 2;
+				int damage = random[Templar](1, 4) * 2;
 				double ang = angle + random2[Templar]() * (11.25 / 256);
 				LineAttack (ang, MISSILERANGE+64., pitch + random2[Templar]() * (7.097 / 256), damage, 'Hitscan', "MaulerPuff");
 			}

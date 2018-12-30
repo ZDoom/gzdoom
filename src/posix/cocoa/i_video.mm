@@ -647,18 +647,20 @@ CUSTOM_CVAR(Bool, vid_hidpi, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINI
 // ---------------------------------------------------------------------------
 
 
-bool I_SetCursor(FTexture* cursorpic)
+bool I_SetCursor(FTexture *cursorpic)
 {
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 	NSCursor* cursor = nil;
 
-	if (NULL != cursorpic && ETextureType::Null != cursorpic->UseType)
+	if (NULL != cursorpic && cursorpic->isValid())
 	{
 		// Create bitmap image representation
+		
+		auto sbuffer = cursorpic->CreateTexBuffer(0);
 
-		const NSInteger imageWidth  = cursorpic->GetWidth();
-		const NSInteger imageHeight = cursorpic->GetHeight();
-		const NSInteger imagePitch  = imageWidth * 4;
+		const NSInteger imageWidth  = sbuffer.mWidth;
+		const NSInteger imageHeight = sbuffer.mHeight;
+		const NSInteger imagePitch  = sbuffer.mWidth * 4;
 
 		NSBitmapImageRep* bitmapImageRep = [NSBitmapImageRep alloc];
 		[bitmapImageRep initWithBitmapDataPlanes:NULL
@@ -675,20 +677,14 @@ bool I_SetCursor(FTexture* cursorpic)
 		// Load bitmap data to representation
 
 		uint8_t* buffer = [bitmapImageRep bitmapData];
-		memset(buffer, 0, imagePitch * imageHeight);
-
-		FBitmap bitmap(buffer, imagePitch, imageWidth, imageHeight);
-		cursorpic->CopyTrueColorPixels(&bitmap, 0, 0);
+		memcpy(buffer, sbuffer.mBuffer, imagePitch * imageHeight);
 
 		// Swap red and blue components in each pixel
 
 		for (size_t i = 0; i < size_t(imageWidth * imageHeight); ++i)
 		{
 			const size_t offset = i * 4;
-
-			const uint8_t temp    = buffer[offset    ];
-			buffer[offset    ] = buffer[offset + 2];
-			buffer[offset + 2] = temp;
+			std::swap(buffer[offset    ], buffer[offset + 2]);
 		}
 
 		// Create image from representation and set it as cursor

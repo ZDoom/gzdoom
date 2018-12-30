@@ -247,6 +247,7 @@ enum ELevelFlags : unsigned int
 	LEVEL3_NOCOLOREDSPRITELIGHTING = 0x00000010,	// draw sprites only with color-less light
 	LEVEL3_EXITNORMALUSED		= 0x00000020,
 	LEVEL3_EXITSECRETUSED		= 0x00000040,
+	LEVEL3_FORCEWORLDPANNING	= 0x00000080,	// Forces the world panning flag for all textures, even those without it explicitly set.
 };
 
 
@@ -262,25 +263,6 @@ class DScroller;
 class FScanner;
 struct level_info_t;
 
-struct FOptionalMapinfoData
-{
-	FOptionalMapinfoData *Next = nullptr;
-	FName identifier = NAME_None;
-	virtual ~FOptionalMapinfoData() {}
-	virtual FOptionalMapinfoData *Clone() const = 0;
-};
-
-struct FOptionalMapinfoDataPtr
-{
-	FOptionalMapinfoData *Ptr;
-
-	FOptionalMapinfoDataPtr() throw() : Ptr(NULL) {}
-	~FOptionalMapinfoDataPtr() { if (Ptr!=NULL) delete Ptr; }
-	FOptionalMapinfoDataPtr(const FOptionalMapinfoDataPtr &p) throw() : Ptr(p.Ptr->Clone()) {}
-	FOptionalMapinfoDataPtr &operator= (FOptionalMapinfoDataPtr &p) throw() { Ptr = p.Ptr->Clone(); return *this; }
-};
-
-typedef TMap<FName, FOptionalMapinfoDataPtr> FOptData;
 typedef TMap<int, FName> FMusicMap;
 
 enum EMapType : int
@@ -313,6 +295,19 @@ struct FExitText
 	{
 	}
 };
+
+enum class ELightMode : int8_t
+{
+	NotSet = -1,
+	LinearStandard = 0,
+	DoomBright = 1,
+	Doom = 2,
+	DoomDark = 3,
+	DoomLegacy = 4,
+	ZDoomSoftware = 8,
+	DoomSoftware = 16
+};
+
 
 struct level_info_t
 {
@@ -384,7 +379,6 @@ struct level_info_t
 
 	double		teamdamage;
 
-	FOptData	optdata;
 	FMusicMap	MusicMap;
 
 	TArray<FSpecialAction> specialactions;
@@ -395,12 +389,16 @@ struct level_info_t
 	
 	TArray<FString> EventHandlers;
 
-	int8_t		lightmode;
+	ELightMode	lightmode;
 	int8_t		brightfog;
 	int8_t		lightadditivesurfaces;
 	int8_t		notexturefill;
 	FVector3	skyrotatevector;
 	FVector3	skyrotatevector2;
+
+	FString		EDName;
+	FString		acsName;
+	bool		fs_nocheckposition;
 
 
 	level_info_t() 
@@ -420,24 +418,6 @@ struct level_info_t
 		deferred.Clear();
 	}
 	level_info_t *CheckLevelRedirect ();
-
-	template<class T>
-	T *GetOptData(FName id, bool create = true)
-	{
-		FOptionalMapinfoDataPtr *pdat = optdata.CheckKey(id);
-		
-		if (pdat != NULL)
-		{
-			return static_cast<T*>(pdat->Ptr);
-		}
-		else if (create)
-		{
-			T *newobj = new T;
-			optdata[id].Ptr = newobj;
-			return newobj;
-		}
-		else return NULL;
-	}
 };
 
 

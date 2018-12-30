@@ -45,6 +45,8 @@ extern "C"
 #include "v_text.h"
 #include "bitmap.h"
 #include "v_video.h"
+#include "imagehelpers.h"
+#include "image.h"
 
 
 struct FLumpSourceMgr : public jpeg_source_mgr
@@ -178,15 +180,13 @@ void JPEG_OutputMessage (j_common_ptr cinfo)
 //
 //==========================================================================
 
-class FJPEGTexture : public FWorldTexture
+class FJPEGTexture : public FImageSource
 {
 public:
 	FJPEGTexture (int lumpnum, int width, int height);
 
-	FTextureFormat GetFormat () override;
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override;
-	bool UseBasePalette() override;
-	uint8_t *MakeTexture (FRenderStyle style) override;
+	int CopyPixels(FBitmap *bmp, int conversion) override;
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
 };
 
 //==========================================================================
@@ -195,7 +195,7 @@ public:
 //
 //==========================================================================
 
-FTexture *JPEGTexture_TryCreate(FileReader & data, int lumpnum)
+FImageSource *JPEGImage_TryCreate(FileReader & data, int lumpnum)
 {
 	union
 	{
@@ -246,14 +246,12 @@ FTexture *JPEGTexture_TryCreate(FileReader & data, int lumpnum)
 //==========================================================================
 
 FJPEGTexture::FJPEGTexture (int lumpnum, int width, int height)
-: FWorldTexture(NULL, lumpnum)
+: FImageSource(lumpnum)
 {
-	UseType = ETextureType::MiscPatch;
 	bMasked = false;
 
 	Width = width;
 	Height = height;
-	CalcBitSize ();
 }
 
 //==========================================================================
@@ -262,28 +260,16 @@ FJPEGTexture::FJPEGTexture (int lumpnum, int width, int height)
 //
 //==========================================================================
 
-FTextureFormat FJPEGTexture::GetFormat()
-{
-	return TEX_RGB;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-uint8_t *FJPEGTexture::MakeTexture (FRenderStyle style)
+TArray<uint8_t> FJPEGTexture::CreatePalettedPixels(int conversion)
 {
 	auto lump = Wads.OpenLumpReader (SourceLump);
 	JSAMPLE *buff = NULL;
-	bool doalpha = !!(style.Flags & STYLEF_RedIsAlpha);
 
 	jpeg_decompress_struct cinfo;
 	jpeg_error_mgr jerr;
 
-	auto Pixels = new uint8_t[Width * Height];
-	memset (Pixels, 0xBA, Width * Height);
+	TArray<uint8_t> Pixels(Width * Height, true);
+	memset (Pixels.Data(), 0xBA, Width * Height);
 
 	cinfo.err = jpeg_std_error(&jerr);
 	cinfo.err->output_message = JPEG_OutputMessage;
@@ -293,6 +279,7 @@ uint8_t *FJPEGTexture::MakeTexture (FRenderStyle style)
 	FLumpSourceMgr sourcemgr(&lump, &cinfo);
 	try
 	{
+		bool doalpha = conversion == luminance;
 		jpeg_read_header(&cinfo, TRUE);
 		if (!((cinfo.out_color_space == JCS_RGB && cinfo.num_components == 3) ||
 			(cinfo.out_color_space == JCS_CMYK && cinfo.num_components == 4) ||
@@ -312,13 +299,13 @@ uint8_t *FJPEGTexture::MakeTexture (FRenderStyle style)
 			{
 				int num_scanlines = jpeg_read_scanlines(&cinfo, &buff, 1);
 				uint8_t *in = buff;
-				uint8_t *out = Pixels + y;
+				uint8_t *out = Pixels.Data() + y;
 				switch (cinfo.out_color_space)
 				{
 				case JCS_RGB:
 					for (int x = Width; x > 0; --x)
 					{
-						*out = RGBToPalette(doalpha, in[0], in[1], in[2]);
+						*out = ImageHelpers::RGBToPalette(doalpha, in[0], in[1], in[2]);
 						out += Height;
 						in += 3;
 					}
@@ -326,7 +313,7 @@ uint8_t *FJPEGTexture::MakeTexture (FRenderStyle style)
 
 				case JCS_GRAYSCALE:
 				{
-					auto remap = GetRemap(style, true);
+					auto remap = ImageHelpers::GetRemap(doalpha, true);
 					for (int x = Width; x > 0; --x)
 					{
 						*out = remap[in[0]];
@@ -344,7 +331,7 @@ uint8_t *FJPEGTexture::MakeTexture (FRenderStyle style)
 						int r = in[3] - (((256 - in[0])*in[3]) >> 8);
 						int g = in[3] - (((256 - in[1])*in[3]) >> 8);
 						int b = in[3] - (((256 - in[2])*in[3]) >> 8);
-						*out = RGBToPalette(doalpha, r, g, b);
+						*out = ImageHelpers::RGBToPalette(doalpha, r, g, b);
 						out += Height;
 						in += 4;
 					}
@@ -358,7 +345,7 @@ uint8_t *FJPEGTexture::MakeTexture (FRenderStyle style)
 						int r = clamp((int)(Y + 1.40200 * (Cr - 0x80)), 0, 255);
 						int g = clamp((int)(Y - 0.34414 * (Cb - 0x80) - 0.71414 * (Cr - 0x80)), 0, 255);
 						int b = clamp((int)(Y + 1.77200 * (Cb - 0x80)), 0, 255);
-						*out = RGBToPalette(doalpha, r, g, b);
+						*out = ImageHelpers::RGBToPalette(doalpha, r, g, b);
 						out += Height;
 						in += 4;
 					}
@@ -389,18 +376,17 @@ uint8_t *FJPEGTexture::MakeTexture (FRenderStyle style)
 
 //===========================================================================
 //
-// FJPEGTexture::CopyTrueColorPixels
+// FJPEGTexture::CopyPixels
 //
 // Preserves the full color information (unlike software mode)
 //
 //===========================================================================
 
-int FJPEGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FJPEGTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
 	PalEntry pe[256];
 
 	auto lump = Wads.OpenLumpReader (SourceLump);
-	JSAMPLE *buff = NULL;
 
 	jpeg_decompress_struct cinfo;
 	jpeg_error_mgr jerr;
@@ -427,12 +413,11 @@ int FJPEGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FC
 			jpeg_start_decompress(&cinfo);
 
 			int yc = 0;
-			buff = new uint8_t[cinfo.output_height * cinfo.output_width * cinfo.output_components];
-
+			TArray<uint8_t>	buff(cinfo.output_height * cinfo.output_width * cinfo.output_components, true);
 
 			while (cinfo.output_scanline < cinfo.output_height)
 			{
-				uint8_t * ptr = buff + cinfo.output_width * cinfo.output_components * yc;
+				uint8_t * ptr = buff.Data() + cinfo.output_width * cinfo.output_components * yc;
 				jpeg_read_scanlines(&cinfo, &ptr, 1);
 				yc++;
 			}
@@ -440,24 +425,24 @@ int FJPEGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FC
 			switch (cinfo.out_color_space)
 			{
 			case JCS_RGB:
-				bmp->CopyPixelDataRGB(x, y, buff, cinfo.output_width, cinfo.output_height,
-					3, cinfo.output_width * cinfo.output_components, rotate, CF_RGB, inf);
+				bmp->CopyPixelDataRGB(0, 0, buff.Data(), cinfo.output_width, cinfo.output_height,
+					3, cinfo.output_width * cinfo.output_components, 0, CF_RGB);
 				break;
 
 			case JCS_GRAYSCALE:
 				for (int i = 0; i < 256; i++) pe[i] = PalEntry(255, i, i, i);	// default to a gray map
-				bmp->CopyPixelData(x, y, buff, cinfo.output_width, cinfo.output_height,
-					1, cinfo.output_width, rotate, pe, inf);
+				bmp->CopyPixelData(0, 0, buff.Data(), cinfo.output_width, cinfo.output_height,
+					1, cinfo.output_width, 0, pe);
 				break;
 
 			case JCS_CMYK:
-				bmp->CopyPixelDataRGB(x, y, buff, cinfo.output_width, cinfo.output_height,
-					4, cinfo.output_width * cinfo.output_components, rotate, CF_CMYK, inf);
+				bmp->CopyPixelDataRGB(0, 0, buff.Data(), cinfo.output_width, cinfo.output_height,
+					4, cinfo.output_width * cinfo.output_components, 0, CF_CMYK);
 				break;
 
 			case JCS_YCbCr:
-				bmp->CopyPixelDataRGB(x, y, buff, cinfo.output_width, cinfo.output_height,
-					4, cinfo.output_width * cinfo.output_components, rotate, CF_YCbCr, inf);
+				bmp->CopyPixelDataRGB(0, 0, buff.Data(), cinfo.output_width, cinfo.output_height,
+					4, cinfo.output_width * cinfo.output_components, 0, CF_YCbCr);
 				break;
 
 			default:
@@ -472,17 +457,6 @@ int FJPEGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FC
 		Printf(TEXTCOLOR_ORANGE "JPEG error in %s\n", Wads.GetLumpFullPath(SourceLump).GetChars());
 	}
 	jpeg_destroy_decompress(&cinfo);
-	if (buff != NULL) delete [] buff;
 	return 0;
 }
 
-
-//===========================================================================
-//
-//
-//===========================================================================
-
-bool FJPEGTexture::UseBasePalette() 
-{ 
-	return false; 
-}

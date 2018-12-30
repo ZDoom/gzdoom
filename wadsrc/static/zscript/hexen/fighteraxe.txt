@@ -224,8 +224,8 @@ class FWeapAxe : FighterWeapon
 			return;
 		}
 
-		int damage = 40+(random[AxeAtk]() & 15);
-		damage += random[AxeAtk]() & 7;
+		int damage = random[AxeAtk](40, 55);
+		damage += random[AxeAtk](0, 7);
 		int power = 0;
 		Weapon weapon = player.ReadyWeapon;
 		class<Actor> pufftype;

@@ -128,7 +128,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetPointer, COPY_AAPTR)
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopSound, S_StopSound)
+static void NativeStopSound(AActor *actor, int slot)
+{
+	S_StopSound(actor, slot);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopSound, NativeStopSound)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(slot);
@@ -475,7 +480,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec2To, Vec2To)
 	ACTION_RETURN_VEC2(self->Vec2To(t));
 }
 
-static void Vec3Angle(AActor *self, double length, double angle, double z, bool absolute, DVector2 *result)
+static void Vec3Angle(AActor *self, double length, double angle, double z, bool absolute, DVector3 *result)
 {
 	*result = self->Vec3Angle(length, angle, z, absolute);
 }
@@ -1422,6 +1427,35 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, LookForPlayers, P_LookForPlayers)
 	ACTION_RETURN_BOOL(P_LookForPlayers(self, allaround, params));
 }
 
+static int CheckMonsterUseSpecials(AActor *self)
+{
+	spechit_t spec;
+	int good = 0;
+
+	if (!(self->flags6 & MF6_NOTRIGGER))
+	{
+		while (spechit.Pop (spec))
+		{
+			// [RH] let monsters push lines, as well as use them
+			if (((self->flags4 & MF4_CANUSEWALLS) && P_ActivateLine (spec.line, self, 0, SPAC_Use)) ||
+				((self->flags2 & MF2_PUSHWALL) && P_ActivateLine (spec.line, self, 0, SPAC_Push)))
+			{
+				good |= spec.line == self->BlockingLine ? 1 : 2;
+			}
+		}
+	}
+	else spechit.Clear();
+
+	return good;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckMonsterUseSpecials, CheckMonsterUseSpecials)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+
+	ACTION_RETURN_INT(CheckMonsterUseSpecials(self));
+}
+
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_Wander, A_Wander)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -1580,6 +1614,37 @@ DEFINE_ACTION_FUNCTION_NATIVE(AKey, GetKeyType, P_GetKeyType)
 	PARAM_PROLOGUE;
 	PARAM_INT(num);
 	ACTION_RETURN_POINTER(P_GetKeyType(num));
+}
+
+//=====================================================================================
+//
+// 3D Floor exports
+//
+//=====================================================================================
+int CheckFor3DFloorHit(AActor *self, double z, bool trigger)
+{
+	return P_CheckFor3DFloorHit(self, z, trigger);
+}
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckFor3DFloorHit, CheckFor3DFloorHit)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(z);
+	PARAM_BOOL(trigger);
+
+	ACTION_RETURN_BOOL(P_CheckFor3DFloorHit(self, z, trigger));
+}
+
+int CheckFor3DCeilingHit(AActor *self, double z, bool trigger)
+{
+	return P_CheckFor3DCeilingHit(self, z, trigger);
+}
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckFor3DCeilingHit, CheckFor3DCeilingHit)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(z);
+	PARAM_BOOL(trigger);
+
+	ACTION_RETURN_BOOL(P_CheckFor3DCeilingHit(self, z, trigger));
 }
 
 

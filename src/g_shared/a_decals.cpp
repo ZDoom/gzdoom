@@ -45,11 +45,14 @@
 #include "g_levellocals.h"
 #include "vm.h"
 
-static double DecalWidth, DecalLeft, DecalRight;
-static double SpreadZ;
-static const DBaseDecal *SpreadSource;
-static const FDecalTemplate *SpreadTemplate;
-static TArray<side_t *> SpreadStack;
+struct SpreadInfo
+{
+	double DecalWidth, DecalLeft, DecalRight;
+	double SpreadZ;
+	const DBaseDecal *SpreadSource;
+	const FDecalTemplate *SpreadTemplate;
+	TArray<side_t *> SpreadStack;
+};
 
 static int ImpactCount;
 
@@ -262,9 +265,9 @@ FTextureID DBaseDecal::StickToWall (side_t *wall, double x, double y, F3DFloor *
 	else return FNullTextureID();
 	CalcFracPos (wall, x, y);
 
-	FTexture *texture = TexMan[tex];
+	FTexture *texture = TexMan.GetTexture(tex);
 
-	if (texture == NULL || texture->bNoDecals)
+	if (texture == NULL || texture->allowNoDecals())
 	{
 		return FNullTextureID();
 	}
@@ -399,11 +402,11 @@ static side_t *NextWall (const side_t *wall)
 	return NULL;
 }
 
-void DBaseDecal::SpreadLeft (double r, vertex_t *v1, side_t *feelwall, F3DFloor *ffloor)
+void DBaseDecal::SpreadLeft (double r, vertex_t *v1, side_t *feelwall, F3DFloor *ffloor, SpreadInfo *spread)
 {
 	double ldx, ldy;
 
-	SpreadStack.Push (feelwall);
+	spread->SpreadStack.Push (feelwall);
 
 	while (r < 0 && feelwall->LeftSide != NO_SIDE)
 	{
@@ -415,21 +418,21 @@ void DBaseDecal::SpreadLeft (double r, vertex_t *v1, side_t *feelwall, F3DFloor 
 		feelwall = &level.sides[feelwall->LeftSide];
 		GetWallStuff (feelwall, v1, ldx, ldy);
 		double wallsize = Length (ldx, ldy);
-		r += DecalLeft;
+		r += spread->DecalLeft;
 		x += r*ldx / wallsize;
 		y += r*ldy / wallsize;
 		r = wallsize + startr;
-		SpreadSource->CloneSelf (SpreadTemplate, x, y, SpreadZ, feelwall, ffloor);
-		SpreadStack.Push (feelwall);
+		spread->SpreadSource->CloneSelf (spread->SpreadTemplate, x, y, spread->SpreadZ, feelwall, ffloor);
+		spread->SpreadStack.Push (feelwall);
 
 		side_t *nextwall = NextWall (feelwall);
 		if (nextwall != NULL && nextwall->LeftSide != NO_SIDE)
 		{
 			int i;
 
-			for (i = SpreadStack.Size(); i-- > 0; )
+			for (i = spread->SpreadStack.Size(); i-- > 0; )
 			{
-				if (SpreadStack[i] == nextwall)
+				if (spread->SpreadStack[i] == nextwall)
 					break;
 			}
 			if (i == -1)
@@ -437,18 +440,18 @@ void DBaseDecal::SpreadLeft (double r, vertex_t *v1, side_t *feelwall, F3DFloor 
 				vertex_t *v2;
 
 				GetWallStuff (nextwall, v2, ldx, ldy);
-				SpreadLeft (startr, v2, nextwall, ffloor);
+				SpreadLeft (startr, v2, nextwall, ffloor, spread);
 			}
 		}
 	}
 }
 
-void DBaseDecal::SpreadRight (double r, side_t *feelwall, double wallsize, F3DFloor *ffloor)
+void DBaseDecal::SpreadRight (double r, side_t *feelwall, double wallsize, F3DFloor *ffloor, SpreadInfo *spread)
 {
 	vertex_t *v1;
 	double x, y, ldx, ldy;
 
-	SpreadStack.Push (feelwall);
+	spread->SpreadStack.Push (feelwall);
 
 	while (r > wallsize && feelwall->RightSide != NO_SIDE)
 	{
@@ -459,32 +462,33 @@ void DBaseDecal::SpreadRight (double r, side_t *feelwall, double wallsize, F3DFl
 		{
 			int i;
 
-			for (i = SpreadStack.Size(); i-- > 0; )
+			for (i = spread->SpreadStack.Size(); i-- > 0; )
 			{
-				if (SpreadStack[i] == nextwall)
+				if (spread->SpreadStack[i] == nextwall)
 					break;
 			}
 			if (i == -1)
 			{
-				SpreadRight (r, nextwall, wallsize, ffloor);
+				SpreadRight (r, nextwall, wallsize, ffloor, spread);
 			}
 		}
 
-		r = DecalWidth - r + wallsize - DecalLeft;
+		r = spread->DecalWidth - r + wallsize - spread->DecalLeft;
 		GetWallStuff (feelwall, v1, ldx, ldy);
 		x = v1->fX();
 		y = v1->fY();
 		wallsize = Length (ldx, ldy);
 		x -= r*ldx / wallsize;
 		y -= r*ldy / wallsize;
-		r = DecalRight - r;
-		SpreadSource->CloneSelf (SpreadTemplate, x, y, SpreadZ, feelwall, ffloor);
-		SpreadStack.Push (feelwall);
+		r = spread->DecalRight - r;
+		spread->SpreadSource->CloneSelf (spread->SpreadTemplate, x, y, spread->SpreadZ, feelwall, ffloor);
+		spread->SpreadStack.Push (feelwall);
 	}
 }
 
 void DBaseDecal::Spread (const FDecalTemplate *tpl, side_t *wall, double x, double y, double z, F3DFloor * ffloor)
 {
+	SpreadInfo spread;
 	FTexture *tex;
 	vertex_t *v1;
 	double rorg, ldx, ldy;
@@ -492,28 +496,27 @@ void DBaseDecal::Spread (const FDecalTemplate *tpl, side_t *wall, double x, doub
 	GetWallStuff (wall, v1, ldx, ldy);
 	rorg = Length (x - v1->fX(), y - v1->fY());
 
-	if ((tex = TexMan[PicNum]) == NULL)
+	if ((tex = TexMan.GetTexture(PicNum)) == NULL)
 	{
 		return;
 	}
 
-	int dwidth = tex->GetWidth ();
+	int dwidth = tex->GetDisplayWidth ();
 
-	DecalWidth = dwidth * ScaleX;
-	DecalLeft = tex->GetLeftOffset(0) * ScaleX;
-	DecalRight = DecalWidth - DecalLeft;
-	SpreadSource = this;
-	SpreadTemplate = tpl;
-	SpreadZ = z;
+	spread.DecalWidth = dwidth * ScaleX;
+	spread.DecalLeft = tex->GetDisplayLeftOffset() * ScaleX;
+	spread.DecalRight = spread.DecalWidth - spread.DecalLeft;
+	spread.SpreadSource = this;
+	spread.SpreadTemplate = tpl;
+	spread.SpreadZ = z;
 
 	// Try spreading left first
-	SpreadLeft (rorg - DecalLeft, v1, wall, ffloor);
-	SpreadStack.Clear ();
+	SpreadLeft (rorg - spread.DecalLeft, v1, wall, ffloor, &spread);
+	spread.SpreadStack.Clear ();
 
 	// Then try spreading right
-	SpreadRight (rorg + DecalRight, wall,
-			Length (wall->linedef->Delta().X, wall->linedef->Delta().Y), ffloor);
-	SpreadStack.Clear ();
+	SpreadRight (rorg + spread.DecalRight, wall,
+			Length (wall->linedef->Delta().X, wall->linedef->Delta().Y), ffloor, &spread);
 }
 
 DBaseDecal *DBaseDecal::CloneSelf (const FDecalTemplate *tpl, double ix, double iy, double iz, side_t *wall, F3DFloor * ffloor) const

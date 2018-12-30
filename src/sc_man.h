@@ -1,6 +1,8 @@
 #ifndef __SC_MAN_H__
 #define __SC_MAN_H__
 
+#include "doomtype.h"
+
 class FScanner
 {
 public:

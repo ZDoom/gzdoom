@@ -542,6 +542,23 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetSpecialColor, SetSpecialColor)
 	return 0;
 }
 
+static void SetAdditiveColor(sector_t *self, int pos, int color)
+{
+	if (pos >= 0 && pos < 5)
+	{
+		self->SetAdditiveColor(pos, color);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetAdditiveColor, SetAdditiveColor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(pos);
+	PARAM_COLOR(color);
+	SetAdditiveColor(self, pos, color);
+	return 0;
+}
+
 static void SetFogDensity(sector_t *self, int dens)
 {
 	self->Colormap.FogDensity = dens;
@@ -1524,6 +1541,57 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
+ static int GetSideAdditiveColor(side_t *self, int tier)
+ {
+	 if (tier >= 0 && tier < 3)
+	 {
+		 return self->GetAdditiveColor(tier, self->sector);
+	 }
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, GetAdditiveColor, GetSideAdditiveColor)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(tier);
+	 ACTION_RETURN_INT(GetSideAdditiveColor(self, tier));
+	 return 0;
+ }
+
+ static void SetSideAdditiveColor(side_t *self, int tier, int color)
+ {
+	 if (tier >= 0 && tier < 3)
+	 {
+		 self->SetAdditiveColor(tier, color);
+	 }
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, SetAdditiveColor, SetSideAdditiveColor)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(tier);
+	 PARAM_COLOR(color);
+	 SetSideAdditiveColor(self, tier, color);
+	 return 0;
+ }
+
+ static void EnableSideAdditiveColor(side_t *self, int tier, bool enable)
+ {
+	 if (tier >= 0 && tier < 3)
+	 {
+		 self->EnableAdditiveColor(tier, enable);
+	 }
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, EnableAdditiveColor, EnableSideAdditiveColor)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(tier);
+	 PARAM_BOOL(enable);
+	 EnableSideAdditiveColor(self, tier, enable);
+	 return 0;
+ }
+
  static int SideIndex(side_t *self)
  {
 	 unsigned ndx = self->Index();
@@ -1583,6 +1651,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, ReplaceTextures, ReplaceTextures)
 	P_ReplaceTextures(from, to, flags);
 	return 0;
 }
+
+void SetCameraToTexture(AActor *viewpoint, const FString &texturename, double fov);
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraToTexture, SetCameraToTexture)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(viewpoint, AActor);
+	PARAM_STRING(texturename); // [ZZ] there is no point in having this as FTextureID because it's easier to refer to a cameratexture by name and it isn't executed too often to cache it.
+	PARAM_FLOAT(fov);
+	SetCameraToTexture(viewpoint, texturename, fov);
+	return 0;
+}
+
 
 //=====================================================================================
 //
@@ -2372,7 +2453,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, ReceivedWeapon, ReceivedWeapon)
 static int GetMugshot(DBaseStatusBar *self, int accuracy, int stateflags, const FString &def_face)
 {
 	auto tex = self->mugshot.GetFace(self->CPlayer, def_face, accuracy, (FMugShot::StateFlags)stateflags);
-	return (tex ? tex->id.GetIndex() : -1);
+	return (tex ? tex->GetID().GetIndex() : -1);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetMugshot, GetMugshot)
@@ -2493,6 +2574,101 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetUDMFString, ZGetUDMFString)
 	ACTION_RETURN_STRING(GetUDMFString(type, index, key));
 }
 
+DEFINE_ACTION_FUNCTION(FLevelLocals, GetChecksum)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	char md5string[33];
+
+	for (int j = 0; j < 16; ++j)
+	{
+		sprintf(md5string + j * 2, "%02x", level.md5[j]);
+	}
+
+	ACTION_RETURN_STRING((const char*)md5string);
+}
+
+static void Vec2Offset(double x, double y, double dx, double dy, bool absolute, DVector2 *result)
+{
+	if (absolute)
+	{
+		*result = (DVector2(x + dx, y + dy));
+	}
+	else
+	{
+		*result = P_GetOffsetPosition(x, y, dx, dy);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, Vec2Offset, Vec2Offset)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(dx);
+	PARAM_FLOAT(dy);
+	PARAM_BOOL(absolute);
+	DVector2 result;
+	Vec2Offset(x, y, dx, dy, absolute, &result);
+	ACTION_RETURN_VEC2(result);
+}
+
+static void Vec2OffsetZ(double x, double y, double dx, double dy, double atz, bool absolute, DVector3 *result)
+{
+	if (absolute)
+	{
+		*result = (DVector3(x + dx, y + dy, atz));
+	}
+	else
+	{
+		DVector2 v = P_GetOffsetPosition(x, y, dx, dy);
+		*result = (DVector3(v, atz));
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, Vec2OffsetZ, Vec2OffsetZ)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(dx);
+	PARAM_FLOAT(dy);
+	PARAM_FLOAT(atz);
+	PARAM_BOOL(absolute);
+	DVector3 result;
+	Vec2OffsetZ(x, y, dx, dy, atz, absolute, &result);
+	ACTION_RETURN_VEC3(result);
+}
+
+static void Vec3Offset(double x, double y, double z, double dx, double dy, double dz, bool absolute, DVector3 *result)
+{
+	if (absolute)
+	{
+		*result = (DVector3(x + dx, y + dy, z + dz));
+	}
+	else
+	{
+		DVector2 v = P_GetOffsetPosition(x, y, dx, dy);
+		*result = (DVector3(v, z + dz));
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, Vec3Offset, Vec3Offset)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_FLOAT(dx);
+	PARAM_FLOAT(dy);
+	PARAM_FLOAT(dz);
+	PARAM_BOOL(absolute);
+	DVector3 result;
+	Vec3Offset(x, y, z, dx, dy, dz, absolute, &result);
+	ACTION_RETURN_VEC3(result);
+}
+
+
+
 //=====================================================================================
 //
 //
@@ -2524,10 +2700,76 @@ DEFINE_ACTION_FUNCTION_NATIVE(_AltHUD, GetLatency, Net_GetLatency)
 	return numret;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+DEFINE_GLOBAL(level);
+DEFINE_FIELD(FLevelLocals, sectors)
+DEFINE_FIELD(FLevelLocals, lines)
+DEFINE_FIELD(FLevelLocals, sides)
+DEFINE_FIELD(FLevelLocals, vertexes)
+DEFINE_FIELD(FLevelLocals, sectorPortals)
+DEFINE_FIELD(FLevelLocals, time)
+DEFINE_FIELD(FLevelLocals, maptime)
+DEFINE_FIELD(FLevelLocals, totaltime)
+DEFINE_FIELD(FLevelLocals, starttime)
+DEFINE_FIELD(FLevelLocals, partime)
+DEFINE_FIELD(FLevelLocals, sucktime)
+DEFINE_FIELD(FLevelLocals, cluster)
+DEFINE_FIELD(FLevelLocals, clusterflags)
+DEFINE_FIELD(FLevelLocals, levelnum)
+DEFINE_FIELD(FLevelLocals, LevelName)
+DEFINE_FIELD(FLevelLocals, MapName)
+DEFINE_FIELD(FLevelLocals, NextMap)
+DEFINE_FIELD(FLevelLocals, NextSecretMap)
+DEFINE_FIELD(FLevelLocals, F1Pic)
+DEFINE_FIELD(FLevelLocals, maptype)
+DEFINE_FIELD(FLevelLocals, Music)
+DEFINE_FIELD(FLevelLocals, musicorder)
+DEFINE_FIELD(FLevelLocals, skytexture1)
+DEFINE_FIELD(FLevelLocals, skytexture2)
+DEFINE_FIELD(FLevelLocals, skyspeed1)
+DEFINE_FIELD(FLevelLocals, skyspeed2)
+DEFINE_FIELD(FLevelLocals, total_secrets)
+DEFINE_FIELD(FLevelLocals, found_secrets)
+DEFINE_FIELD(FLevelLocals, total_items)
+DEFINE_FIELD(FLevelLocals, found_items)
+DEFINE_FIELD(FLevelLocals, total_monsters)
+DEFINE_FIELD(FLevelLocals, killed_monsters)
+DEFINE_FIELD(FLevelLocals, gravity)
+DEFINE_FIELD(FLevelLocals, aircontrol)
+DEFINE_FIELD(FLevelLocals, airfriction)
+DEFINE_FIELD(FLevelLocals, airsupply)
+DEFINE_FIELD(FLevelLocals, teamdamage)
+DEFINE_FIELD(FLevelLocals, fogdensity)
+DEFINE_FIELD(FLevelLocals, outsidefogdensity)
+DEFINE_FIELD(FLevelLocals, skyfog)
+DEFINE_FIELD(FLevelLocals, pixelstretch)
+DEFINE_FIELD(FLevelLocals, deathsequence)
+DEFINE_FIELD_BIT(FLevelLocals, flags, noinventorybar, LEVEL_NOINVENTORYBAR)
+DEFINE_FIELD_BIT(FLevelLocals, flags, monsterstelefrag, LEVEL_MONSTERSTELEFRAG)
+DEFINE_FIELD_BIT(FLevelLocals, flags, actownspecial, LEVEL_ACTOWNSPECIAL)
+DEFINE_FIELD_BIT(FLevelLocals, flags, sndseqtotalctrl, LEVEL_SNDSEQTOTALCTRL)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, allmap, LEVEL2_ALLMAP)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, missilesactivateimpact, LEVEL2_MISSILESACTIVATEIMPACT)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, monsterfallingdamage, LEVEL2_MONSTERFALLINGDAMAGE)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, checkswitchrange, LEVEL2_CHECKSWITCHRANGE)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, polygrind, LEVEL2_POLYGRIND)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, allowrespawn, LEVEL2_ALLOWRESPAWN)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, nomonsters, LEVEL2_NOMONSTERS)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, frozen, LEVEL2_FROZEN)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, infinite_flight, LEVEL2_INFINITE_FLIGHT)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, no_dlg_freeze, LEVEL2_CONV_SINGLE_UNFREEZE)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, keepfullinventory, LEVEL2_KEEPFULLINVENTORY)
+DEFINE_FIELD_BIT(FLevelLocals, flags3, removeitems, LEVEL3_REMOVEITEMS)
+
 DEFINE_FIELD_X(Sector, sector_t, floorplane)
 DEFINE_FIELD_X(Sector, sector_t, ceilingplane)
 DEFINE_FIELD_X(Sector, sector_t, Colormap)
 DEFINE_FIELD_X(Sector, sector_t, SpecialColors)
+DEFINE_FIELD_X(Sector, sector_t, AdditiveColors)
 DEFINE_FIELD_X(Sector, sector_t, SoundTarget)
 DEFINE_FIELD_X(Sector, sector_t, special)
 DEFINE_FIELD_X(Sector, sector_t, lightlevel)

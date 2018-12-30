@@ -47,11 +47,11 @@ void PolyDrawArgs::SetTexture(const uint8_t *texels, int width, int height)
 	mTranslation = nullptr;
 }
 
-void PolyDrawArgs::SetTexture(FTexture *texture, FRenderStyle style)
+void PolyDrawArgs::SetTexture(FSoftwareTexture *texture, FRenderStyle style)
 {
 	mTexture = texture;
-	mTextureWidth = texture->GetWidth();
-	mTextureHeight = texture->GetHeight();
+	mTextureWidth = texture->GetPhysicalWidth();
+	mTextureHeight = texture->GetPhysicalHeight();
 	if (PolyTriangleDrawer::IsBgra())
 		mTexturePixels = (const uint8_t *)texture->GetPixelsBgra();
 	else
@@ -59,7 +59,7 @@ void PolyDrawArgs::SetTexture(FTexture *texture, FRenderStyle style)
 	mTranslation = nullptr;
 }
 
-void PolyDrawArgs::SetTexture(FTexture *texture, uint32_t translationID, FRenderStyle style)
+void PolyDrawArgs::SetTexture(FSoftwareTexture *texture, uint32_t translationID, FRenderStyle style)
 {
 	// Alphatexture overrides translations.
 	if (translationID != 0xffffffff && translationID != 0 && !(style.Flags & STYLEF_RedIsAlpha))
@@ -73,8 +73,8 @@ void PolyDrawArgs::SetTexture(FTexture *texture, uint32_t translationID, FRender
 				mTranslation = table->Remap;
 
 			mTexture = texture;
-			mTextureWidth = texture->GetWidth();
-			mTextureHeight = texture->GetHeight();
+			mTextureWidth = texture->GetPhysicalWidth();
+			mTextureHeight = texture->GetPhysicalHeight();
 			mTexturePixels = texture->GetPixels(style);
 			return;
 		}
@@ -83,8 +83,8 @@ void PolyDrawArgs::SetTexture(FTexture *texture, uint32_t translationID, FRender
 	if (style.Flags & STYLEF_RedIsAlpha)
 	{
 		mTexture = texture;
-		mTextureWidth = texture->GetWidth();
-		mTextureHeight = texture->GetHeight();
+		mTextureWidth = texture->GetPhysicalWidth();
+		mTextureHeight = texture->GetPhysicalHeight();
 		mTexturePixels = texture->GetPixels(style);
 	}
 	else
@@ -140,7 +140,7 @@ void PolyDrawArgs::SetColor(uint32_t bgra, uint8_t palindex)
 	}
 }
 
-void PolyDrawArgs::SetStyle(const FRenderStyle &renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FTexture *tex, bool fullbright)
+void PolyDrawArgs::SetStyle(const FRenderStyle &renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FSoftwareTexture *tex, bool fullbright)
 {
 	SetTexture(tex, translationID, renderstyle);
 	SetColor(0xff000000 | fillcolor, fillcolor >> 24);
@@ -203,7 +203,7 @@ void PolyDrawArgs::SetStyle(const FRenderStyle &renderstyle, double alpha, uint3
 
 /////////////////////////////////////////////////////////////////////////////
 
-void RectDrawArgs::SetTexture(FTexture *texture, FRenderStyle style)
+void RectDrawArgs::SetTexture(FSoftwareTexture *texture, FRenderStyle style)
 {
 	mTexture = texture;
 	mTextureWidth = texture->GetWidth();
@@ -215,7 +215,7 @@ void RectDrawArgs::SetTexture(FTexture *texture, FRenderStyle style)
 	mTranslation = nullptr;
 }
 
-void RectDrawArgs::SetTexture(FTexture *texture, uint32_t translationID, FRenderStyle style)
+void RectDrawArgs::SetTexture(FSoftwareTexture *texture, uint32_t translationID, FRenderStyle style)
 {
 	// Alphatexture overrides translations.
 	if (translationID != 0xffffffff && translationID != 0 && !(style.Flags & STYLEF_RedIsAlpha))
@@ -291,7 +291,7 @@ void RectDrawArgs::Draw(PolyRenderThread *thread, double x0, double x1, double y
 	thread->DrawQueue->Push<DrawRectCommand>(*this);
 }
 
-void RectDrawArgs::SetStyle(const FRenderStyle &renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FTexture *tex, bool fullbright)
+void RectDrawArgs::SetStyle(const FRenderStyle &renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FSoftwareTexture *tex, bool fullbright)
 {
 	SetTexture(tex, translationID, renderstyle);
 	SetColor(0xff000000 | fillcolor, fillcolor >> 24);

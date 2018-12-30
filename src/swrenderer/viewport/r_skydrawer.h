@@ -13,10 +13,11 @@ namespace swrenderer
 	class SkyDrawerArgs : public DrawerArgs
 	{
 	public:
+		void SetStyle();
 		void SetDest(RenderViewport *viewport, int x, int y);
 		void SetCount(int count) { dc_count = count; }
-		void SetFrontTexture(RenderThread *thread, FTexture *texture, uint32_t column);
-		void SetBackTexture(RenderThread *thread, FTexture *texture, uint32_t column);
+		void SetFrontTexture(RenderThread *thread, FSoftwareTexture *texture, fixed_t column);
+		void SetBackTexture(RenderThread *thread, FSoftwareTexture *texture, fixed_t column);
 		void SetTextureVPos(uint32_t texturefrac) { dc_texturefrac = texturefrac; }
 		void SetTextureVStep(uint32_t iscale) { dc_iscale = iscale; }
 		void SetSolidTop(uint32_t color) { solid_top = color; }

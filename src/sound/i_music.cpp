@@ -73,6 +73,7 @@ enum EMIDIType
 
 extern int MUSHeaderSearch(const uint8_t *head, int len);
 void I_InitSoundFonts();
+extern "C" void dumb_exit();
 
 EXTERN_CVAR (Int, snd_samplerate)
 EXTERN_CVAR (Int, snd_mididevice)
@@ -127,8 +128,6 @@ CUSTOM_CVAR (Float, snd_musicvolume, 0.5f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 void I_InitMusic (void)
 {
-	static bool setatterm = false;
-
     I_InitSoundFonts();
 
 	snd_musicvolume.Callback ();
@@ -139,12 +138,6 @@ void I_InitMusic (void)
 	I_InitMusicWin32 ();
 #endif // _WIN32
 	
-	if (!setatterm)
-	{
-		setatterm = true;
-		atterm (I_ShutdownMusicExit);
-	
-	}
 	MusicDown = false;
 }
 
@@ -170,14 +163,9 @@ void I_ShutdownMusic(bool onexit)
 	{
 		WildMidi_Shutdown();
 		TimidityPP_Shutdown();
+		dumb_exit();
 	}
 }
-
-void I_ShutdownMusicExit()
-{
-	I_ShutdownMusic(true);
-}
-
 
 //==========================================================================
 //

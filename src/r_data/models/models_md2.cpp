@@ -364,7 +364,7 @@ void FDMDModel::RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame
 	if (!skin)
 	{
 		if (info.numSkins == 0 || !skins[0].isValid()) return;
-		skin = TexMan(skins[0]);
+		skin = TexMan.GetTexture(skins[0], true);
 		if (!skin) return;
 	}
 

@@ -60,7 +60,7 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 namespace swrenderer
 {
-	void RenderVoxel::Project(RenderThread *thread, AActor *thing, DVector3 pos, FVoxelDef *voxel, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy, FDynamicColormap *basecolormap)
+	void RenderVoxel::Project(RenderThread *thread, AActor *thing, DVector3 pos, FVoxelDef *voxel, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int lightlevel, bool foggy, FDynamicColormap *basecolormap)
 	{
 		// transform the origin point
 		double tr_x = pos.X - thread->Viewport->viewpoint.Pos.X;
@@ -162,7 +162,6 @@ namespace swrenderer
 		vis->Alpha = float(thing->Alpha);
 		vis->fakefloor = fakefloor;
 		vis->fakeceiling = fakeceiling;
-		vis->Light.ColormapNum = 0;
 		vis->bInMirror = renderportal->MirrorFlags & RF_XFLIP;
 		//vis->bSplitSprite = false;
 
@@ -188,13 +187,11 @@ namespace swrenderer
 		bool fullbright = !vis->foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
 		bool fadeToBlack = (vis->RenderStyle.Flags & STYLEF_FadeToBlack) != 0;
 
-		vis->Light.SetColormap(thread->Light->SpriteGlobVis(foggy) / MAX(tz, MINZ), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
+		vis->Light.SetColormap(thread, tz, lightlevel, foggy, basecolormap, fullbright, invertcolormap, fadeToBlack, false, false);
 
 		// Fake a voxel drawing to find its extents..
 		SpriteDrawerArgs drawerargs;
-		drawerargs.SetLight(vis->Light.BaseColormap, 0, vis->Light.ColormapNum << FRACBITS);
-		basecolormap = (FDynamicColormap*)vis->Light.BaseColormap;
-		bool visible = drawerargs.SetStyle(thread->Viewport.get(), vis->RenderStyle, vis->Alpha, vis->Translation, vis->FillColor, basecolormap);
+		bool visible = drawerargs.SetStyle(thread->Viewport.get(), vis->RenderStyle, vis->Alpha, vis->Translation, vis->FillColor, vis->Light);
 		if (!visible)
 			return;
 		int flags = vis->bInMirror ? (DVF_MIRRORED | DVF_FIND_X1X2) : DVF_FIND_X1X2;
@@ -211,10 +208,7 @@ namespace swrenderer
 		auto viewport = thread->Viewport.get();
 
 		SpriteDrawerArgs drawerargs;
-		drawerargs.SetLight(spr->Light.BaseColormap, 0, spr->Light.ColormapNum << FRACBITS);
-
-		FDynamicColormap *basecolormap = (FDynamicColormap*)spr->Light.BaseColormap;
-		bool visible = drawerargs.SetStyle(viewport, spr->RenderStyle, spr->Alpha, spr->Translation, spr->FillColor, basecolormap);
+		bool visible = drawerargs.SetStyle(viewport, spr->RenderStyle, spr->Alpha, spr->Translation, spr->FillColor, spr->Light);
 		if (!visible)
 			return;
 
@@ -908,12 +902,8 @@ namespace swrenderer
 		auto sprite = this;
 		auto viewport = RenderViewport::Instance();
 
-		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(sprite->Light.BaseColormap);
-
 		SpriteDrawerArgs drawerargs;
-		drawerargs.SetLight(sprite->Light.BaseColormap, 0, sprite->Light.ColormapNum << FRACBITS);
-
-		bool visible = drawerargs.SetStyle(sprite->RenderStyle, sprite->Alpha, sprite->Translation, sprite->FillColor, basecolormap);
+		bool visible = drawerargs.SetStyle(sprite->RenderStyle, sprite->Alpha, sprite->Translation, sprite->FillColor, sprite->Light);
 		if (!visible)
 			return;
 

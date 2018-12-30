@@ -1,3 +1,4 @@
+#include "textures/r_swtexture.h"
 #include "r_memory.cpp"
 #include "r_renderthread.cpp"
 #include "r_swrenderer.cpp"

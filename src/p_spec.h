@@ -92,8 +92,9 @@ const double CARRYFACTOR = 3 / 32.;
 //		it returns true, and the player is allowed to live.
 bool	CheckIfExitIsGood (AActor *self, level_info_t *info);
 
+class MapLoader;
 // at map load
-void	P_SpawnSpecials (void);
+void	P_SpawnSpecials (MapLoader *ml);
 
 // every tic
 void	P_UpdateSpecials (void);

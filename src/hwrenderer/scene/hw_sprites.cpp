@@ -166,6 +166,7 @@ void GLSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 				: ThingColor.Modulate(cursec->SpecialColors[sector_t::sprites]);
 
 			state.SetObjectColor(finalcol);
+			state.SetAddColor(cursec->AdditiveColors[sector_t::sprites] | 0xff000000);
 		}
 		state.SetColor(lightlevel, rel, di->isFullbrightScene(), Colormap, trans);
 	}
@@ -251,6 +252,7 @@ void GLSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 		{
 			state.SetNormal(0, 0, 0);
 
+
 			if (screen->BuffersArePersistent())
 			{
 				CreateVertices(di);
@@ -301,6 +303,7 @@ void GLSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 	}
 
 	state.SetObjectColor(0xffffffff);
+	state.SetAddColor(0);
 	state.EnableTexture(true);
 	state.SetDynLight(0, 0, 0);
 }
@@ -796,9 +799,9 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		if (isPicnumOverride)
 		{
 			// Animate picnum overrides.
-			auto tex = TexMan(thing->picnum);
+			auto tex = TexMan.GetTexture(thing->picnum, true);
 			if (tex == nullptr) return;
-			patch =  tex->id;
+			patch =  tex->GetID();
 			mirror = false;
 		}
 		else
@@ -917,7 +920,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	// allow disabling of the fullbright flag by a brightmap definition
 	// (e.g. to do the gun flashes of Doom's zombies correctly.
 	fullbright = (thing->flags5 & MF5_BRIGHT) ||
-		((thing->renderflags & RF_FULLBRIGHT) && (!gltexture || !gltexture->tex->bDisableFullbright));
+		((thing->renderflags & RF_FULLBRIGHT) && (!gltexture || !gltexture->tex->isFullbrightDisabled()));
 
 	lightlevel = fullbright ? 255 :
 		hw_ClampLight(rendersector->GetTexture(sector_t::ceiling) == skyflatnum ?
@@ -1068,7 +1071,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	// end of light calculation
 
 	actor = thing;
-	index = di->spriteindex++;	// this assumes that sprites from the same sector are added sequentially, i.e. by the same thread.
+	index = thing->SpawnOrder;
 	particle = nullptr;
 
 	const bool drawWithXYBillboard = (!(actor->renderflags & RF_FORCEYBILLBOARD)
@@ -1170,6 +1173,7 @@ void GLSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	gltexture=nullptr;
 	topclip = LARGE_VALUE;
 	bottomclip = -LARGE_VALUE;
+	index = 0;
 
 	// [BB] Load the texture for round or smooth particles
 	if (gl_particles_style)

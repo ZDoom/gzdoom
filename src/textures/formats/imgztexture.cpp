@@ -38,6 +38,8 @@
 #include "w_wad.h"
 #include "v_video.h"
 #include "bitmap.h"
+#include "imagehelpers.h"
+#include "image.h"
 
 bool checkIMGZPalette(FileReader &file);
 
@@ -49,7 +51,7 @@ bool checkIMGZPalette(FileReader &file);
 //
 //==========================================================================
 
-class FIMGZTexture : public FWorldTexture
+class FIMGZTexture : public FImageSource
 {
 	struct ImageHeader
 	{
@@ -66,11 +68,8 @@ class FIMGZTexture : public FWorldTexture
 
 public:
 	FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int16_t t, bool isalpha);
-	uint8_t *MakeTexture (FRenderStyle style) override;
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override;
-
-	bool UseBasePalette() override { return !isalpha; }
-	FTextureFormat GetFormat() override { return isalpha ? TEX_RGB : TEX_Pal; } // should be TEX_Gray instead of TEX_RGB. Maybe later when all is working.
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	int CopyPixels(FBitmap *bmp, int conversion) override;
 };
 
 
@@ -80,7 +79,7 @@ public:
 //
 //==========================================================================
 
-FTexture *IMGZTexture_TryCreate(FileReader & file, int lumpnum)
+FImageSource *IMGZImage_TryCreate(FileReader & file, int lumpnum)
 {
 	uint32_t magic = 0;
 	uint16_t w, h;
@@ -105,15 +104,14 @@ FTexture *IMGZTexture_TryCreate(FileReader & file, int lumpnum)
 //==========================================================================
 
 FIMGZTexture::FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int16_t t, bool _isalpha)
-	: FWorldTexture(NULL, lumpnum)
+	: FImageSource(lumpnum)
 {
-	Wads.GetLumpName (Name, lumpnum);
 	Width = w;
 	Height = h;
-	_LeftOffset[1] = _LeftOffset[0] = l;
-	_TopOffset[1] = _TopOffset[0] = t;
+	LeftOffset = l;
+	TopOffset = t;
 	isalpha = _isalpha;
-	CalcBitSize ();
+	bUseGamePalette = !isalpha;
 }
 
 //==========================================================================
@@ -122,7 +120,7 @@ FIMGZTexture::FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int1
 //
 //==========================================================================
 
-uint8_t *FIMGZTexture::MakeTexture (FRenderStyle style)
+TArray<uint8_t> FIMGZTexture::CreatePalettedPixels(int conversion)
 {
 	FMemLump lump = Wads.ReadLump (SourceLump);
 	const ImageHeader *imgz = (const ImageHeader *)lump.GetMem();
@@ -132,11 +130,10 @@ uint8_t *FIMGZTexture::MakeTexture (FRenderStyle style)
 	int dest_adv = Height;
 	int dest_rew = Width * Height - 1;
 
-	CalcBitSize ();
-	auto Pixels = new uint8_t[Width*Height];
-	dest_p = Pixels;
+	TArray<uint8_t> Pixels(Width*Height, true);
+	dest_p = Pixels.Data();
 
-	const uint8_t *remap = GetRemap(style, isalpha);
+	const uint8_t *remap = ImageHelpers::GetRemap(conversion == luminance, isalpha);
 
 	// Convert the source image from row-major to column-major format and remap it
 	if (!imgz->Compression)
@@ -203,9 +200,9 @@ uint8_t *FIMGZTexture::MakeTexture (FRenderStyle style)
 //
 //==========================================================================
 
-int FIMGZTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FIMGZTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
-	if (!isalpha) return FTexture::CopyTrueColorPixels(bmp, x, y, rotate, inf);
-	else return CopyTrueColorTranslated(bmp, x, y, rotate, translationtables[TRANSLATION_Standard][STD_Grayscale]->Palette, inf);
+	if (!isalpha) return FImageSource::CopyPixels(bmp, conversion);
+	else return CopyTranslatedPixels(bmp, translationtables[TRANSLATION_Standard][STD_Grayscale]->Palette);
 }
 

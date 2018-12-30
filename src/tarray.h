@@ -272,6 +272,18 @@ public:
         return i;
     }
 
+	template<class Func> 
+	unsigned int FindEx(Func compare) const
+	{
+		unsigned int i;
+		for (i = 0; i < Count; ++i)
+		{
+			if (compare(Array[i]))
+				break;
+		}
+		return i;
+	}
+
 	unsigned int Push (const T &item)
 	{
 		Grow (1);
@@ -485,6 +497,14 @@ public:
 			Array = nullptr;
 		}
 	}
+
+	void Swap(TArray<T, TT> &other)
+	{
+		std::swap(Array, other.Array);
+		std::swap(Count, other.Count);
+		std::swap(Most, other.Most);
+	}
+
 private:
 	T *Array;
 	unsigned int Count;
@@ -748,6 +768,7 @@ struct FMap
 	hash_t NumUsed;
 };
 
+
 template<class KT, class VT, class MapType> class TMapIterator;
 template<class KT, class VT, class MapType> class TMapConstIterator;
 
@@ -922,6 +943,36 @@ public:
 		return n->Pair.Value;
 	}
 
+	VT &Insert(const KT key, VT &&value)
+	{
+		Node *n = FindKey(key);
+		if (n != NULL)
+		{
+			n->Pair.Value = value;
+		}
+		else
+		{
+			n = NewKey(key);
+			::new(&n->Pair.Value) VT(value);
+		}
+		return n->Pair.Value;
+	}
+
+	VT &InsertNew(const KT key)
+	{
+		Node *n = FindKey(key);
+		if (n != NULL)
+		{
+			n->Pair.Value.~VT();
+		}
+		else
+		{
+			n = NewKey(key);
+		}
+		::new(&n->Pair.Value) VT;
+		return n->Pair.Value;
+	}
+
 	//=======================================================================
 	//
 	// Remove
@@ -933,6 +984,14 @@ public:
 	void Remove(const KT key)
 	{
 		DelKey(key);
+	}
+
+	void Swap(MyType &other)
+	{
+		std::swap(Nodes, other.Nodes);
+		std::swap(LastFree, other.LastFree);
+		std::swap(Size, other.Size);
+		std::swap(NumUsed, other.NumUsed);
 	}
 
 protected:
@@ -1019,7 +1078,7 @@ protected:
 			if (!nold[i].IsNil())
 			{
 				Node *n = NewKey(nold[i].Pair.Key);
-				::new(&n->Pair.Value) VT(nold[i].Pair.Value);
+				::new(&n->Pair.Value) VT(std::move(nold[i].Pair.Value));
 				nold[i].~Node();
 			}
 		}
@@ -1431,17 +1490,9 @@ public:
 		Count = count;
 		Array = data;
 	}
-	TArrayView(const TArrayView<T> &other)
-	{
-		Count = other.Count;
-		Array = other.Array;
-	}
-	TArrayView<T> &operator= (const TArrayView<T> &other)
-	{
-		Count = other.Count;
-		Array = other.Array;
-		return *this;
-	}
+	TArrayView(const TArrayView<T> &other) = default;
+	TArrayView<T> &operator= (const TArrayView<T> &other) = default;
+
 	// Check equality of two arrays
 	bool operator==(const TArrayView<T> &other) const
 	{
@@ -1506,4 +1557,3 @@ private:
 	T *Array;
 	unsigned int Count;
 };
-

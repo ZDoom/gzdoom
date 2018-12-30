@@ -282,7 +282,8 @@ void P_TranslatePortalVXVY(line_t* src, double &velx, double &vely);
 void P_TranslatePortalAngle(line_t* src, DAngle& angle);
 void P_TranslatePortalZ(line_t* src, double& vz);
 DVector2 P_GetOffsetPosition(double x, double y, double dx, double dy);
-void InitPortalGroups();
+struct FLevelLocals;
+void InitPortalGroups(FLevelLocals *Level);
 
 
 #endif

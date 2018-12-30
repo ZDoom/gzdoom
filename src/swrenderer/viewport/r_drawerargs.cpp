@@ -24,10 +24,26 @@
 
 namespace swrenderer
 {
-	void DrawerArgs::SetLight(FSWColormap *base_colormap, float light, int shade)
+	void DrawerArgs::SetBaseColormap(FSWColormap *base_colormap)
 	{
 		mBaseColormap = base_colormap;
 		assert(mBaseColormap->Maps != nullptr);
+	}
+
+	void DrawerArgs::SetLight(float light, int lightlevel, bool foggy, RenderViewport *viewport)
+	{
+		mLight = light;
+		mShade = LightVisibility::LightLevelToShade(lightlevel, foggy, viewport);
+	}
+
+	void DrawerArgs::SetLight(const ColormapLight &light)
+	{
+		SetBaseColormap(light.BaseColormap);
+		SetLight(0.0f, light.ColormapNum << FRACBITS);
+	}
+
+	void DrawerArgs::SetLight(float light, int shade)
+	{
 		mLight = light;
 		mShade = shade;
 	}

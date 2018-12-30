@@ -911,7 +911,7 @@ class PowerTorch : PowerLightAmp
 				}
 				else
 				{
-					NewTorch = (random[torch]() & 7) + 1;
+					NewTorch = random[torch](1, 8);
 					NewTorchDelta = (NewTorch == Owner.player.fixedlightlevel) ?
 						0 : ((NewTorch > player.fixedlightlevel) ? 1 : -1);
 				}

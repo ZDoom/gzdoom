@@ -1927,7 +1927,7 @@ class Meat : Actor
 	override void BeginPlay ()
 	{
 		// Strife used mod 19, but there are 20 states. Hmm.
-		SetState (SpawnState + random[GibTosser]() % 20);
+		SetState (SpawnState + random[GibTosser](0, 19));
 	}
 	
 }

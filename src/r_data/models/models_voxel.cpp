@@ -32,6 +32,7 @@
 #include "textures/bitmap.h"
 #include "g_levellocals.h"
 #include "models.h"
+#include "image.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244) // warning C4244: conversion from 'double' to 'float', possible loss of data
@@ -46,14 +47,13 @@
 //
 //===========================================================================
 
-class FVoxelTexture : public FWorldTexture
+class FVoxelTexture : public FImageSource
 {
 public:
 	FVoxelTexture(FVoxel *voxel);
 
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override;
-	bool UseBasePalette() override { return false; }
-	uint8_t *MakeTexture(FRenderStyle style) override;
+	int CopyPixels(FBitmap *bmp, int conversion) override;
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
 
 protected:
 	FVoxel *SourceVox;
@@ -70,10 +70,7 @@ FVoxelTexture::FVoxelTexture(FVoxel *vox)
 	SourceVox = vox;
 	Width = 16;
 	Height = 16;
-	WidthBits = 4;
-	HeightBits = 4;
-	WidthMask = 15;
-	bNoCompress = true;
+	//bNoCompress = true;
 }
 
 //===========================================================================
@@ -82,11 +79,11 @@ FVoxelTexture::FVoxelTexture(FVoxel *vox)
 //
 //===========================================================================
 
-uint8_t *FVoxelTexture::MakeTexture (FRenderStyle style)
+TArray<uint8_t> FVoxelTexture::CreatePalettedPixels(int conversion)
 {
 	// GetPixels gets called when a translated palette is used so we still need to implement it here.
-	auto Pixels = new uint8_t[256];
-	uint8_t *pp = SourceVox->Palette;
+	TArray<uint8_t> Pixels(256, true);
+	uint8_t *pp = SourceVox->Palette.Data();
 
 	if(pp != NULL)
 	{
@@ -97,7 +94,7 @@ uint8_t *FVoxelTexture::MakeTexture (FRenderStyle style)
 			pe.g = (pp[1] << 2) | (pp[1] >> 4);
 			pe.b = (pp[2] << 2) | (pp[2] >> 4);
 			// Alphatexture handling is just for completeness, but rather unlikely to be used ever.
-			Pixels[i] = (style.Flags & STYLEF_RedIsAlpha)? pe.r : ColorMatcher.Pick(pe);
+			Pixels[i] = conversion == luminance ? pe.r : ColorMatcher.Pick(pe);
 		}
 	}
 	else 
@@ -112,20 +109,20 @@ uint8_t *FVoxelTexture::MakeTexture (FRenderStyle style)
 
 //===========================================================================
 //
-// FVoxelTexture::CopyTrueColorPixels
+// FVoxelTexture::CopyPixels
 //
 // This creates a dummy 16x16 paletted bitmap and converts that using the
 // voxel palette
 //
 //===========================================================================
 
-int FVoxelTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FVoxelTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
 	PalEntry pe[256];
 	uint8_t bitmap[256];
-	uint8_t *pp = SourceVox->Palette;
+	uint8_t *pp = SourceVox->Palette.Data();
 
-	if(pp != NULL)
+	if(pp != nullptr)
 	{
 		for(int i=0;i<256;i++, pp+=3)
 		{
@@ -145,7 +142,7 @@ int FVoxelTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, F
 			pe[i].a = 255;
 		}
 	}    
-	bmp->CopyPixelData(x, y, bitmap, Width, Height, 1, 16, rotate, pe, inf);
+	bmp->CopyPixelData(0, 0, bitmap, Width, Height, 1, 16, 0, pe);
 	return 0;
 }	
 
@@ -159,7 +156,7 @@ FVoxelModel::FVoxelModel(FVoxel *voxel, bool owned)
 {
 	mVoxel = voxel;
 	mOwningVoxel = owned;
-	mPalette = TexMan.AddTexture(new FVoxelTexture(voxel));
+	mPalette = TexMan.AddTexture(new FImageTexture(new FVoxelTexture(voxel)));
 }
 
 //===========================================================================

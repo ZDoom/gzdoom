@@ -67,7 +67,7 @@ class CWeapStaff : ClericWeapon
 		}
 		Weapon weapon = player.ReadyWeapon;
 
-		int damage = 20 + (random[StaffCheck]() & 15);
+		int damage = random[StaffCheck](20, 35);
 		int max = player.mo.GetMaxHealth();
 		for (int i = 0; i < 3; i++)
 		{

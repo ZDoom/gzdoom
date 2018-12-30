@@ -51,12 +51,12 @@ class BatSpawner : SwitchableDecoration
 		int delta = args[1];
 		if (delta == 0) delta = 1;
 
-		double ang = Angle + (((random[BatSpawn]() % delta) - (delta >> 1)) * (360 / 256.));
+		double ang = Angle + ((random[BatSpawn](0, delta-1) - (delta >> 1)) * (360 / 256.));
 
 		Actor mo = SpawnMissileAngle ("Bat", ang, 0);
 		if (mo)
 		{
-			mo.args[0] = random[BatSpawn]() & 63;			// floatbob index
+			mo.args[0] = random[BatSpawn](0, 63);			// floatbob index
 			mo.args[4] = args[4];							// turn degrees
 			mo.special2 = args[3] << 3;						// Set lifetime
 			mo.target = self;

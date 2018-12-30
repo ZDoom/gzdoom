@@ -47,110 +47,10 @@
 #include "p_terrain.h"
 #include "p_acs.h"
 #include "g_levellocals.h"
+#include "maploader.h"
 
 
-struct FEDOptions : public FOptionalMapinfoData
-{
-	FEDOptions()
-	{
-		identifier = "EData";
-	}
-	virtual FOptionalMapinfoData *Clone() const
-	{
-		FEDOptions *newopt = new FEDOptions;
-		newopt->identifier = identifier;
-		newopt->EDName = EDName;
-		newopt->acsName = acsName;
-		return newopt;
-	}
-	FString EDName;
-	FString acsName;
-};
-
-DEFINE_MAP_OPTION(edata, false)
-{
-	FEDOptions *opt = info->GetOptData<FEDOptions>("EData");
-
-	parse.ParseAssign();
-	parse.sc.MustGetString();
-	opt->EDName = parse.sc.String;
-}
-
-DEFINE_MAP_OPTION(loadacs, false)
-{
-	FEDOptions *opt = info->GetOptData<FEDOptions>("EData");
-
-	parse.ParseAssign();
-	parse.sc.MustGetString();
-	opt->acsName = parse.sc.String;
-}
-
-struct EDMapthing
-{
-	int recordnum;
-	int tid;
-	int type;
-	double height;
-	int args[5];
-	uint16_t skillfilter;
-	uint32_t flags;
-};
-
-struct EDLinedef
-{
-	int recordnum;
-	int special;
-	int tag;
-	int id;
-	int args[5];
-	double alpha;
-	uint32_t flags;
-	uint32_t activation;
-};
-
-
-
-struct EDSector
-{
-	int recordnum;
-
-	uint32_t flags;
-	uint32_t flagsRemove;
-	uint32_t flagsAdd;
-
-	int damageamount;
-	int damageinterval;
-	FName damagetype;
-	uint8_t leaky;
-	uint8_t leakyadd;
-	uint8_t leakyremove;
-	int floorterrain;
-	int ceilingterrain;
-
-	uint32_t color;
-
-	uint32_t damageflags;
-	uint32_t damageflagsAdd;
-	uint32_t damageflagsRemove;
-
-	bool flagsSet;
-	bool damageflagsSet;
-	bool colorSet;
-
-	// colormaptop//bottom cannot be used because ZDoom has no corresponding properties.
-	double xoffs[2], yoffs[2];
-	DAngle angle[2];
-	uint32_t portalflags[2];
-	double Overlayalpha[2];
-};
-
-static FString EDMap;
-static TMap<int, EDLinedef> EDLines;
-static TMap<int, EDSector> EDSectors;
-static TMap<int, EDMapthing> EDThings;
-
-
-static void parseLinedef(FScanner &sc)
+static void parseLinedef(FScanner &sc, TMap<int, EDLinedef> &EDLines)
 {
 	EDLinedef ld;
 	bool argsset = false;
@@ -225,7 +125,7 @@ static void parseLinedef(FScanner &sc)
 			{
 				sc.CheckString("=");
 				sc.MustGetString();
-				for (const char *tok = strtok(sc.String, ",+ \t"); tok != NULL; tok = strtok(NULL, ",+ \t"))
+				for (const char *tok = strtok(sc.String, ",+ \t"); tok != nullptr; tok = strtok(nullptr, ",+ \t"))
 				{
 					if (!stricmp(tok, "USE")) actmethod |= SPAC_Use | SPAC_MUse;
 					else if (!stricmp(tok, "CROSS")) actmethod |= SPAC_Cross | SPAC_MCross | SPAC_PCross;
@@ -268,7 +168,7 @@ static void parseLinedef(FScanner &sc)
 	 EDLines[ld.recordnum] = ld;
 }
 
-static void parseSector(FScanner &sc)
+static void parseSector(FScanner &sc, TMap<int, EDSector> &EDSectors)
 {
 	EDSector sec;
 
@@ -288,7 +188,7 @@ static void parseSector(FScanner &sc)
 		}
 		else if (sc.Compare("flags"))
 		{
-			uint32_t *flagvar = NULL;
+			uint32_t *flagvar = nullptr;
 			if (sc.CheckString("."))
 			{
 				sc.MustGetString();
@@ -314,7 +214,7 @@ static void parseSector(FScanner &sc)
 			do
 			{
 				sc.MustGetString();
-				for (const char *tok = strtok(sc.String, ",+ \t"); tok != NULL; tok = strtok(NULL, ",+ \t"))
+				for (const char *tok = strtok(sc.String, ",+ \t"); tok != nullptr; tok = strtok(nullptr, ",+ \t"))
 				{
 					if (!stricmp(tok, "SECRET")) *flagvar |= SECF_SECRET | SECF_WASSECRET;
 					else if (!stricmp(tok, "FRICTION")) *flagvar |= SECF_FRICTION;
@@ -345,8 +245,8 @@ static void parseSector(FScanner &sc)
 		}
 		else if (sc.Compare("damageflags"))
 		{
-			uint32_t *flagvar = NULL;
-			uint8_t *leakvar = NULL;
+			uint32_t *flagvar = nullptr;
+			uint8_t *leakvar = nullptr;
 			if (sc.CheckString("."))
 			{
 				sc.MustGetString();
@@ -375,7 +275,7 @@ static void parseSector(FScanner &sc)
 			do
 			{
 				sc.MustGetString();
-				for (const char *tok = strtok(sc.String, ",+ \t"); tok != NULL; tok = strtok(NULL, ",+ \t"))
+				for (const char *tok = strtok(sc.String, ",+ \t"); tok != nullptr; tok = strtok(nullptr, ",+ \t"))
 				{
 					if (!stricmp(tok, "LEAKYSUIT")) *leakvar |= 1;
 					else if (!stricmp(tok, "IGNORESUIT")) *leakvar |= 2;	// these 2 bits will be used to set 'leakychance', but this can only be done when the sector gets initialized
@@ -485,7 +385,7 @@ static void parseSector(FScanner &sc)
 			do
 			{
 				sc.MustGetString();
-				for (const char *tok = strtok(sc.String, ",+ \t"); tok != NULL; tok = strtok(NULL, ",+ \t"))
+				for (const char *tok = strtok(sc.String, ",+ \t"); tok != nullptr; tok = strtok(nullptr, ",+ \t"))
 				{
 					if (!stricmp(tok, "DISABLED")) sec.portalflags[dest] |= PLANEF_DISABLED;
 					else if (!stricmp(tok, "NORENDER")) sec.portalflags[dest] |= PLANEF_NORENDER;
@@ -506,7 +406,7 @@ static void parseSector(FScanner &sc)
 	EDSectors[sec.recordnum] = sec;
 }
 
-static void parseMapthing(FScanner &sc)
+static void parseMapthing(FScanner &sc, TMap<int, EDMapthing> &EDThings)
 {
 	EDMapthing mt;
 
@@ -545,7 +445,7 @@ static void parseMapthing(FScanner &sc)
 				if (pos) pos++;
 				else pos = sc.String;
 				const PClass *cls = PClass::FindClass(pos);
-				if (cls != NULL)
+				if (cls != nullptr)
 				{
 					FDoomEdMap::Iterator it(DoomEdMap);
 					FDoomEdMap::Pair *pair;
@@ -591,7 +491,7 @@ static void parseMapthing(FScanner &sc)
 			do
 			{
 				sc.MustGetString();
-				for (const char *tok = strtok(sc.String, ",+ \t"); tok != NULL; tok = strtok(NULL, ",+ \t"))
+				for (const char *tok = strtok(sc.String, ",+ \t"); tok != nullptr; tok = strtok(nullptr, ",+ \t"))
 				{
 					if (!stricmp(tok, "EASY")) mt.skillfilter |= 3;
 					else if (!stricmp(tok, "NORMAL")) mt.skillfilter |= 4;
@@ -614,64 +514,44 @@ static void parseMapthing(FScanner &sc)
 	EDThings[mt.recordnum] = mt;
 }
 
-void InitED()
+void MapLoader::InitED()
 {
-	FString filename;
+	FString filename = Level->info->EDName;
 	FScanner sc;
 
-	if (EDMap.CompareNoCase(level.MapName) != 0)
+	if (filename.IsEmpty()) return;
+	int lump = Wads.CheckNumForFullName(filename, true, ns_global);
+	if (lump == -1) return;
+	sc.OpenLumpNum(lump);
+
+	sc.SetCMode(true);
+	while (sc.GetString())
 	{
-		EDLines.Clear();
-		EDSectors.Clear();
-		EDThings.Clear();
-		EDMap = level.MapName;
-
-		const char *arg = Args->CheckValue("-edf");
-
-		if (arg != NULL) filename = arg;
+		if (sc.Compare("linedef"))
+		{
+			parseLinedef(sc, EDLines);
+		}
+		else if (sc.Compare("mapthing"))
+		{
+			parseMapthing(sc, EDThings);
+		}
+		else if (sc.Compare("sector"))
+		{
+			parseSector(sc, EDSectors);
+		}
 		else
 		{
-			FEDOptions *opt = level.info->GetOptData<FEDOptions>("EData", false);
-			if (opt != NULL)
-			{
-				filename = opt->EDName;
-			}
-		}
-
-		if (filename.IsEmpty()) return;
-		int lump = Wads.CheckNumForFullName(filename, true, ns_global);
-		if (lump == -1) return;
-		sc.OpenLumpNum(lump);
-
-		sc.SetCMode(true);
-		while (sc.GetString())
-		{
-			if (sc.Compare("linedef"))
-			{
-				parseLinedef(sc);
-			}
-			else if (sc.Compare("mapthing"))
-			{
-				parseMapthing(sc);
-			}
-			else if (sc.Compare("sector"))
-			{
-				parseSector(sc);
-			}
-			else
-			{
-				sc.ScriptError("Unknown keyword '%s'", sc.String);
-			}
+			sc.ScriptError("Unknown keyword '%s'", sc.String);
 		}
 	}
 }
 
-void ProcessEDMapthing(FMapThing *mt, int recordnum)
+void MapLoader::ProcessEDMapthing(FMapThing *mt, int recordnum)
 {
 	InitED();
 
 	EDMapthing *emt = EDThings.CheckKey(recordnum);
-	if (emt == NULL)
+	if (emt == nullptr)
 	{
 		Printf("EDF Mapthing record %d not found\n", recordnum);
 		mt->EdNum = 0;
@@ -686,12 +566,12 @@ void ProcessEDMapthing(FMapThing *mt, int recordnum)
 	mt->flags = emt->flags;
 }
 
-void ProcessEDLinedef(line_t *ld, int recordnum)
+void MapLoader::ProcessEDLinedef(line_t *ld, int recordnum)
 {
 	InitED();
 
 	EDLinedef *eld = EDLines.CheckKey(recordnum);
-	if (eld == NULL)
+	if (eld == nullptr)
 	{
 		Printf("EDF Linedef record %d not found\n", recordnum);
 		ld->special = 0;
@@ -706,10 +586,10 @@ void ProcessEDLinedef(line_t *ld, int recordnum)
 	tagManager.AddLineID(ld->Index(), eld->tag);
 }
 
-void ProcessEDSector(sector_t *sec, int recordnum)
+void MapLoader::ProcessEDSector(sector_t *sec, int recordnum)
 {
 	EDSector *esec = EDSectors.CheckKey(recordnum);
-	if (esec == NULL)
+	if (esec == nullptr)
 	{
 		Printf("EDF Sector record %d not found\n", recordnum);
 		return;
@@ -749,16 +629,16 @@ void ProcessEDSector(sector_t *sec, int recordnum)
 }
 
 
-void ProcessEDSectors()
+void MapLoader::ProcessEDSectors()
 {
 	InitED();
 	if (EDSectors.CountUsed() == 0) return;	// don't waste time if there's no records.
 
 	// collect all Extradata sector records up front so we do not need to search the complete line array for each sector separately.
-	auto numsectors = level.sectors.Size();
-	int *sectorrecord = new int[numsectors];
-	memset(sectorrecord, -1, numsectors * sizeof(int));
-	for (auto &line : level.lines)
+	auto numsectors = Level->sectors.Size();
+	TArray<int> sectorrecord(numsectors, true);
+	memset(sectorrecord.Data(), -1, numsectors * sizeof(int));
+	for (auto &line : Level->lines)
 	{
 		if (line.special == Static_Init && line.args[1] == Init_EDSector)
 		{
@@ -770,18 +650,16 @@ void ProcessEDSectors()
 	{
 		if (sectorrecord[i] >= 0)
 		{
-			ProcessEDSector(&level.sectors[i], sectorrecord[i]);
+			ProcessEDSector(&Level->sectors[i], sectorrecord[i]);
 		}
 	}
-	delete[] sectorrecord;
 }
 
-void LoadMapinfoACSLump()
+void MapLoader::LoadMapinfoACSLump()
 {
-	FEDOptions *opt = level.info->GetOptData<FEDOptions>("EData", false);
-	if (opt != NULL)
+	if (Level->info->acsName.IsNotEmpty())
 	{
-		int lump = Wads.CheckNumForName(opt->acsName);
+		int lump = Wads.CheckNumForName(Level->info->acsName);
 		if (lump >= 0) FBehavior::StaticLoadModule(lump);
 	}
 }

@@ -48,20 +48,20 @@ void PPBloom::UpdateTextures()
 
 	for (int i = 0; i < NumBloomLevels; i++)
 	{
-		auto &level = levels[i];
-		level.VTexture.Format("Bloom.VTexture.%d", i);
-		level.HTexture.Format("Bloom.HTexture.%d", i);
-		level.Viewport.left = 0;
-		level.Viewport.top = 0;
-		level.Viewport.width = (bloomWidth + 1) / 2;
-		level.Viewport.height = (bloomHeight + 1) / 2;
+		auto &blevel = levels[i];
+		blevel.VTexture.Format("Bloom.VTexture.%d", i);
+		blevel.HTexture.Format("Bloom.HTexture.%d", i);
+		blevel.Viewport.left = 0;
+		blevel.Viewport.top = 0;
+		blevel.Viewport.width = (bloomWidth + 1) / 2;
+		blevel.Viewport.height = (bloomHeight + 1) / 2;
 
-		PPTextureDesc texture = { level.Viewport.width, level.Viewport.height, PixelFormat::Rgba16f };
-		hw_postprocess.Textures[level.VTexture] = texture;
-		hw_postprocess.Textures[level.HTexture] = texture;
+		PPTextureDesc texture = { blevel.Viewport.width, blevel.Viewport.height, PixelFormat::Rgba16f };
+		hw_postprocess.Textures[blevel.VTexture] = texture;
+		hw_postprocess.Textures[blevel.HTexture] = texture;
 
-		bloomWidth = level.Viewport.width;
-		bloomHeight = level.Viewport.height;
+		bloomWidth = blevel.Viewport.width;
+		bloomHeight = blevel.Viewport.height;
 	}
 }
 
@@ -102,17 +102,17 @@ void PPBloom::UpdateSteps()
 	// Blur and downscale:
 	for (int i = 0; i < NumBloomLevels - 1; i++)
 	{
-		auto &level = levels[i];
+		auto &blevel = levels[i];
 		auto &next = levels[i + 1];
 
-		steps.Push(BlurStep(blurUniforms, level.VTexture, level.HTexture, level.Viewport, false));
-		steps.Push(BlurStep(blurUniforms, level.HTexture, level.VTexture, level.Viewport, true));
+		steps.Push(BlurStep(blurUniforms, blevel.VTexture, blevel.HTexture, blevel.Viewport, false));
+		steps.Push(BlurStep(blurUniforms, blevel.HTexture, blevel.VTexture, blevel.Viewport, true));
 
 		// Linear downscale:
 		step.ShaderName = "BloomCombine";
 		step.Uniforms.Clear();
 		step.Viewport = next.Viewport;
-		step.SetInputTexture(0, level.VTexture, PPFilterMode::Linear);
+		step.SetInputTexture(0, blevel.VTexture, PPFilterMode::Linear);
 		step.SetOutputTexture(next.VTexture);
 		step.SetNoBlend();
 		steps.Push(step);
@@ -121,17 +121,17 @@ void PPBloom::UpdateSteps()
 	// Blur and upscale:
 	for (int i = NumBloomLevels - 1; i > 0; i--)
 	{
-		auto &level = levels[i];
+		auto &blevel = levels[i];
 		auto &next = levels[i - 1];
 
-		steps.Push(BlurStep(blurUniforms, level.VTexture, level.HTexture, level.Viewport, false));
-		steps.Push(BlurStep(blurUniforms, level.HTexture, level.VTexture, level.Viewport, true));
+		steps.Push(BlurStep(blurUniforms, blevel.VTexture, blevel.HTexture, blevel.Viewport, false));
+		steps.Push(BlurStep(blurUniforms, blevel.HTexture, blevel.VTexture, blevel.Viewport, true));
 
 		// Linear upscale:
 		step.ShaderName = "BloomCombine";
 		step.Uniforms.Clear();
 		step.Viewport = next.Viewport;
-		step.SetInputTexture(0, level.VTexture, PPFilterMode::Linear);
+		step.SetInputTexture(0, blevel.VTexture, PPFilterMode::Linear);
 		step.SetOutputTexture(next.VTexture);
 		step.SetNoBlend();
 		steps.Push(step);
@@ -191,17 +191,17 @@ void PPBloom::UpdateBlurSteps()
 	// Blur and downscale:
 	for (int i = 0; i < numLevels - 1; i++)
 	{
-		auto &level = levels[i];
+		auto &blevel = levels[i];
 		auto &next = levels[i + 1];
 
-		steps.Push(BlurStep(blurUniforms, level.VTexture, level.HTexture, level.Viewport, false));
-		steps.Push(BlurStep(blurUniforms, level.HTexture, level.VTexture, level.Viewport, true));
+		steps.Push(BlurStep(blurUniforms, blevel.VTexture, blevel.HTexture, blevel.Viewport, false));
+		steps.Push(BlurStep(blurUniforms, blevel.HTexture, blevel.VTexture, blevel.Viewport, true));
 
 		// Linear downscale:
 		step.ShaderName = "BloomCombine";
 		step.Uniforms.Clear();
 		step.Viewport = next.Viewport;
-		step.SetInputTexture(0, level.VTexture, PPFilterMode::Linear);
+		step.SetInputTexture(0, blevel.VTexture, PPFilterMode::Linear);
 		step.SetOutputTexture(next.VTexture);
 		step.SetNoBlend();
 		steps.Push(step);
@@ -210,17 +210,17 @@ void PPBloom::UpdateBlurSteps()
 	// Blur and upscale:
 	for (int i = numLevels - 1; i > 0; i--)
 	{
-		auto &level = levels[i];
+		auto &blevel = levels[i];
 		auto &next = levels[i - 1];
 
-		steps.Push(BlurStep(blurUniforms, level.VTexture, level.HTexture, level.Viewport, false));
-		steps.Push(BlurStep(blurUniforms, level.HTexture, level.VTexture, level.Viewport, true));
+		steps.Push(BlurStep(blurUniforms, blevel.VTexture, blevel.HTexture, blevel.Viewport, false));
+		steps.Push(BlurStep(blurUniforms, blevel.HTexture, blevel.VTexture, blevel.Viewport, true));
 
 		// Linear upscale:
 		step.ShaderName = "BloomCombine";
 		step.Uniforms.Clear();
 		step.Viewport = next.Viewport;
-		step.SetInputTexture(0, level.VTexture, PPFilterMode::Linear);
+		step.SetInputTexture(0, blevel.VTexture, PPFilterMode::Linear);
 		step.SetOutputTexture(next.VTexture);
 		step.SetNoBlend();
 		steps.Push(step);
@@ -440,16 +440,16 @@ void PPCameraExposure::UpdateTextures()
 		width = MAX(width / 2, 1);
 		height = MAX(height / 2, 1);
 
-		PPExposureLevel level;
-		level.Viewport.left = 0;
-		level.Viewport.top = 0;
-		level.Viewport.width = width;
-		level.Viewport.height = height;
-		level.Texture.Format("Exposure.Level.%d", i);
-		ExposureLevels.Push(level);
+		PPExposureLevel blevel;
+		blevel.Viewport.left = 0;
+		blevel.Viewport.top = 0;
+		blevel.Viewport.width = width;
+		blevel.Viewport.height = height;
+		blevel.Texture.Format("Exposure.Level.%d", i);
+		ExposureLevels.Push(blevel);
 
-		PPTextureDesc texture = { level.Viewport.width, level.Viewport.height, PixelFormat::R32f };
-		hw_postprocess.Textures[level.Texture] = texture;
+		PPTextureDesc texture = { blevel.Viewport.width, blevel.Viewport.height, PixelFormat::R32f };
+		hw_postprocess.Textures[blevel.Texture] = texture;
 
 		i++;
 
@@ -483,7 +483,7 @@ void PPCameraExposure::UpdateSteps()
 
 	auto &level0 = ExposureLevels[0];
 
-	// Extract light level from scene texture:
+	// Extract light blevel from scene texture:
 	step.ShaderName = "ExposureExtract";
 	step.Uniforms.Set(extractUniforms);
 	step.Viewport = level0.Viewport;
@@ -495,13 +495,13 @@ void PPCameraExposure::UpdateSteps()
 	// Find the average value:
 	for (unsigned int i = 0; i + 1 < ExposureLevels.Size(); i++)
 	{
-		auto &level = ExposureLevels[i];
+		auto &blevel = ExposureLevels[i];
 		auto &next = ExposureLevels[i + 1];
 
 		step.ShaderName = "ExposureAverage";
 		step.Uniforms.Clear();
 		step.Viewport = next.Viewport;
-		step.SetInputTexture(0, level.Texture, PPFilterMode::Linear);
+		step.SetInputTexture(0, blevel.Texture, PPFilterMode::Linear);
 		step.SetOutputTexture(next.Texture);
 		step.SetNoBlend();
 		steps.Push(step);

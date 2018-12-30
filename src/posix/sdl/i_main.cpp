@@ -52,6 +52,7 @@
 #include "cmdlib.h"
 #include "r_utility.h"
 #include "doomstat.h"
+#include "vm.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -261,16 +262,31 @@ int main (int argc, char **argv)
     catch (std::exception &error)
     {
 		I_ShutdownJoysticks();
-		if (error.what () && strcmp(error.what(), "NoRunExit"))
-			fprintf (stderr, "%s\n", error.what ());
 
+		const char *const message = error.what();
+
+		if (strcmp(message, "NoRunExit"))
+		{
+			if (CVMAbortException::stacktrace.IsNotEmpty())
+			{
+				Printf("%s", CVMAbortException::stacktrace.GetChars());
+			}
+
+			if (batchrun)
+			{
+				Printf("%s\n", message);
+			}
+			else
+			{
 #ifdef __APPLE__
-		Mac_I_FatalError(error.what());
+				Mac_I_FatalError(message);
 #endif // __APPLE__
 
 #ifdef __linux__
-		Linux_I_FatalError(error.what());
+				Linux_I_FatalError(message);
 #endif // __linux__
+			}
+		}
 
 		exit (-1);
     }

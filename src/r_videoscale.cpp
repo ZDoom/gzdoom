@@ -78,7 +78,7 @@ namespace
 }
 
 void R_ShowCurrentScaling();
-CUSTOM_CVAR(Float, vid_scalefactor, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, vid_scalefactor, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	setsizeneeded = true;
 	if (self < 0.05 || self > 2.0)
@@ -191,6 +191,7 @@ CCMD (vid_setscale)
             }
         }
         vid_scalemode = 5;
+	vid_scalefactor = 1.0;
     }
     else
     {

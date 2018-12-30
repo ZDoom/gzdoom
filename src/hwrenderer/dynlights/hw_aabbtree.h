@@ -51,6 +51,8 @@ public:
 	// Shoot a ray from ray_start to ray_end and return the closest hit as a fractional value between 0 and 1. Returns 1 if no line was hit.
 	double RayTest(const DVector3 &ray_start, const DVector3 &ray_end);
 
+	bool Update();
+
 private:
 	// Test if a ray overlaps an AABB node or not
 	bool OverlapRayAABB(const DVector2 &ray_start2d, const DVector2 &ray_end2d, const AABBTreeNode &node);
@@ -60,6 +62,10 @@ private:
 
 	// Generate a tree node and its children recursively
 	int GenerateTreeNode(int *lines, int num_lines, const FVector2 *centroids, int *work_buffer);
+
+	TArray<int> FindNodePath(unsigned int line, unsigned int node);
+
+	TArray<int> polylines;
 };
 
 } // namespace

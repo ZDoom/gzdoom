@@ -50,7 +50,7 @@ public:
 class PolyTriangleThreadData
 {
 public:
-	PolyTriangleThreadData(int32_t core, int32_t num_cores, int32_t numa_node, int32_t num_numa_nodes) : core(core), num_cores(num_cores), numa_node(numa_node), num_numa_nodes(num_numa_nodes) { }
+	PolyTriangleThreadData(int32_t core, int32_t num_cores, int32_t numa_node, int32_t num_numa_nodes, int numa_start_y, int numa_end_y) : core(core), num_cores(num_cores), numa_node(numa_node), num_numa_nodes(num_numa_nodes), numa_start_y(numa_start_y), numa_end_y(numa_end_y) { }
 
 	void ClearStencil(uint8_t value);
 	void SetViewport(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra);
@@ -71,12 +71,23 @@ public:
 	int numa_start_y;
 	int numa_end_y;
 
-	// The number of lines to skip to reach the first line to be rendered by this thread
+	bool line_skipped_by_thread(int line)
+	{
+		return line < numa_start_y || line >= numa_end_y || line % num_cores != core;
+	}
+
 	int skipped_by_thread(int first_line)
 	{
 		int clip_first_line = MAX(first_line, numa_start_y);
 		int core_skip = (num_cores - (clip_first_line - core) % num_cores) % num_cores;
 		return clip_first_line + core_skip - first_line;
+	}
+
+	int count_for_thread(int first_line, int count)
+	{
+		count = MIN(count, numa_end_y - first_line);
+		int c = (count - skipped_by_thread(first_line) + num_cores - 1) / num_cores;
+		return MAX(c, 0);
 	}
 
 	// Varyings
@@ -97,6 +108,8 @@ public:
 	uint8_t *dest = nullptr;
 	bool weaponScene = false;
 
+	int viewport_y = 0;
+
 private:
 	ShadedTriVertex ShadeVertex(const PolyDrawArgs &drawargs, const void *vertices, int index);
 	void DrawShadedTriangle(const ShadedTriVertex *vertices, bool ccw, TriDrawTriangleArgs *args);
@@ -105,7 +118,6 @@ private:
 	static int ClipEdge(const ShadedTriVertex *verts, ShadedTriVertex *clippedvert);
 
 	int viewport_x = 0;
-	int viewport_y = 0;
 	int viewport_width = 0;
 	int viewport_height = 0;
 	bool ccw = true;

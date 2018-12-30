@@ -142,7 +142,7 @@ namespace swrenderer
 		NoLightFade = !!(level.flags3 & LEVEL3_NOLIGHTFADE);
 	}
 
-	fixed_t LightVisibility::LightLevelToShade(int lightlevel, bool foggy)
+	fixed_t LightVisibility::LightLevelToShadeImpl(int lightlevel, bool foggy)
 	{
 		bool nolightfade = !foggy && ((level.flags3 & LEVEL3_NOLIGHTFADE));
 		if (nolightfade)
@@ -160,7 +160,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	void ColormapLight::SetColormap(double visibility, int shade, FDynamicColormap *basecolormap, bool fullbright, bool invertColormap, bool fadeToBlack)
+	void ColormapLight::SetColormap(RenderThread *thread, double z, int lightlevel, bool foggy, FDynamicColormap *basecolormap, bool fullbright, bool invertColormap, bool fadeToBlack, bool psprite, bool particle)
 	{
 		if (fadeToBlack)
 		{
@@ -181,15 +181,15 @@ namespace swrenderer
 		}
 
 		CameraLight *cameraLight = CameraLight::Instance();
-		if (cameraLight->FixedColormap())
-		{
-			BaseColormap = cameraLight->FixedColormap();
-			ColormapNum = 0;
-		}
-		else if (cameraLight->FixedLightLevel() >= 0)
+		if (cameraLight->FixedLightLevel() >= 0)
 		{
 			BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap;
 			ColormapNum = cameraLight->FixedLightLevel() >> COLORMAPSHIFT;
+		}
+		else if (cameraLight->FixedColormap())
+		{
+			BaseColormap = cameraLight->FixedColormap();
+			ColormapNum = 0;
 		}
 		else if (fullbright)
 		{
@@ -198,6 +198,14 @@ namespace swrenderer
 		}
 		else
 		{
+			double visibility = thread->Light->SpriteVis(z, foggy);
+			if (particle)
+				visibility *= 0.5;
+
+			int shade = LightVisibility::LightLevelToShade(lightlevel, foggy, thread->Viewport.get());
+			if (psprite)
+				shade -= 24 * FRACUNIT;
+
 			BaseColormap = basecolormap;
 			ColormapNum = GETPALOOKUP(visibility, shade);
 		}

@@ -429,12 +429,8 @@ void player_t::SetLogNumber (int num)
 	}
 	else
 	{
-		int length=Wads.LumpLength(lumpnum);
-		char *data= new char[length+1];
-		Wads.ReadLump (lumpnum, data);
-		data[length]=0;
-		SetLogText (data);
-		delete[] data;
+		auto lump = Wads.ReadLump(lumpnum);
+		SetLogText (lump.GetString());
 	}
 }
 
@@ -1926,9 +1922,11 @@ void P_UnPredictPlayer ()
 
 		TObjPtr<AActor*> InvSel = act->InvSel;
 		int inventorytics = player->inventorytics;
+		const bool settings_controller = player->settings_controller;
 
 		*player = PredictionPlayerBackup;
 
+		player->settings_controller = settings_controller;
 		// Restore the camera instead of using the backup's copy, because spynext/prev
 		// could cause it to change during prediction.
 		player->camera = savedcamera;

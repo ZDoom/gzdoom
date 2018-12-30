@@ -224,10 +224,9 @@ void FTextureManager::InitAnimated (void)
 						(anim_p[21] << 16) | (anim_p[22] << 24);
 
 			// SMMU-style swirly hack? Don't apply on already-warping texture
-			if (animspeed > 65535 && tex1 != NULL && !tex1->bWarped)
+			if (animspeed > 65535 && tex1 != NULL && !tex1->isWarped())
 			{
-				FTexture *warper = new FWarpTexture (tex1, 2);
-				ReplaceTexture (pic1, warper, false);
+				tex1->bWarped = 2;
 			}
 			// These tests were not really relevant for swirling textures, or even potentially
 			// harmful, so they have been moved to the else block.
@@ -622,15 +621,14 @@ void FTextureManager::ParseWarp(FScanner &sc)
 
 
 		// don't warp a texture more than once
-		if (!warper->bWarped)
+		if (!warper->isWarped())
 		{
-			warper = new FWarpTexture (warper, type2? 2:1);
-			ReplaceTexture (picnum, warper, false);
+			warper->bWarped = type2? 2:1;
 		}
 
 		if (sc.CheckFloat())
 		{
-			static_cast<FWarpTexture*>(warper)->SetSpeed(float(sc.Float));
+			warper->SetSpeed(float(sc.Float));
 		}
 
 		// No decals on warping textures, by default.

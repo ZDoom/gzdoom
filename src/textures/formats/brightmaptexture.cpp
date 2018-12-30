@@ -39,18 +39,17 @@
 #include "r_data/r_translate.h"
 #include "bitmap.h"
 #include "v_video.h"
+#include "image.h"
 
-class FBrightmapTexture : public FWorldTexture
+class FBrightmapTexture : public FImageSource
 {
 public:
-	FBrightmapTexture (FTexture *source);
+	FBrightmapTexture (FImageSource *source);
 
-	uint8_t *MakeTexture(FRenderStyle style) override;
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override;
-	bool UseBasePalette() override { return false; }
+	int CopyPixels(FBitmap *bmp, int conversion) override;
 
 protected:
-	FTexture *SourcePic;
+	FImageSource *SourcePic;
 };
 
 //===========================================================================
@@ -61,33 +60,21 @@ protected:
 //
 //===========================================================================
 
-FBrightmapTexture::FBrightmapTexture (FTexture *source)
+FBrightmapTexture::FBrightmapTexture (FImageSource *source)
 {
-	Name = "";
 	SourcePic = source;
-	CopySize(source);
-	bNoDecals = source->bNoDecals;
-	Rotations = source->Rotations;
-	UseType = source->UseType;
+	Width = source->GetWidth();
+	Height = source->GetHeight();
 	bMasked = false;
-	id.SetInvalid();
-	SourceLump = -1;
 }
 
-uint8_t *FBrightmapTexture::MakeTexture(FRenderStyle style)
+int FBrightmapTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
-	// This function is only necessary to satisfy the parent class's interface.
-	// This will never be called.
-	return nullptr;
-}
-
-int FBrightmapTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
-{
-	SourcePic->CopyTrueColorTranslated(bmp, x, y, rotate, TexMan.GlobalBrightmap.Palette);
+	SourcePic->CopyTranslatedPixels(bmp, TexMan.GlobalBrightmap.Palette);
 	return 0;
 }
 
-FTexture *CreateBrightmapTexture(FTexture *tex)
+FTexture *CreateBrightmapTexture(FImageSource *tex)
 {
-	return new FBrightmapTexture(tex);
+	return new FImageTexture(new FBrightmapTexture(tex));
 }

@@ -333,7 +333,7 @@ class ArtiPoisonBag3 : ArtiPoisonBag
 		Actor mo = Spawn("ThrowingBomb", Owner.Pos + (0,0,35. - Owner.Floorclip + (Owner.player? Owner.player.crouchoffset : 0)), ALLOW_REPLACE);
 		if (mo)
 		{
-			mo.angle = Owner.angle + (((random[PoisonBag]() & 7) - 4) * (360./256.));
+			mo.angle = Owner.angle + (random[PoisonBag](-4, 3) * (360./256.));
 
 			/* Original flight code from Hexen
 			 * mo.momz = 4*F.RACUNIT+((player.lookdir)<<(F.RACBITS-4));
@@ -358,7 +358,7 @@ class ArtiPoisonBag3 : ArtiPoisonBag
 			mo.AddZ(mo.Speed * sin(modpitch));
 
 			mo.target = Owner;
-			mo.tics -= random[PoisonBag]()&3;
+			mo.tics -= random[PoisonBag](0, 3);
 			mo.CheckMissileSpawn(Owner.radius);
 			return true;
 		}
@@ -467,7 +467,7 @@ class PoisonCloud : Actor
 	override void BeginPlay ()
 	{
 		Vel.X = MinVel; // missile objects must move to impact other objects
-		special1 = 24+(random[PoisonCloud]() & 7);
+		special1 = random[PoisonCloud](24, 31);
 		special2 = 0;
 	}
 	
@@ -495,7 +495,7 @@ class PoisonCloud : Actor
 
 			if (dopoison)
 			{
-				damage = 15 + (random[PoisonCloud]() & 15);
+				damage = random[PoisonCloud](15, 30);
 				if (mate)
 				{
 					damage = (int)(damage * level.teamdamage);
@@ -506,7 +506,7 @@ class PoisonCloud : Actor
 				damage = victim.ApplyDamageFactor(damagetype, damage);
 				if (damage > 0)
 				{
-					victim.player.PoisonDamage (self, 15 + (random[PoisonCloud]() & 15), false); // Don't play painsound
+					victim.player.PoisonDamage (self, random[PoisonCloud](15, 30), false); // Don't play painsound
 
 					// If successful, play the poison sound.
 					if (victim.player.PoisonPlayer (self, self.target, 50))

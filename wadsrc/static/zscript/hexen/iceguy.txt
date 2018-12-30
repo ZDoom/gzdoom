@@ -62,7 +62,7 @@ class IceGuy : Actor
 
 		double dist = (random[IceGuyLook]() - 128) * radius / 128.;
 		double an = angle + 90;
-		Actor mo = Spawn(WispTypes[random[IceGuyLook]() & 1], Vec3Angle(dist, an, 60.), ALLOW_REPLACE);
+		Actor mo = Spawn(WispTypes[random[IceGuyLook](0, 1)], Vec3Angle(dist, an, 60.), ALLOW_REPLACE);
 		if (mo)
 		{
 			mo.Vel = Vel;

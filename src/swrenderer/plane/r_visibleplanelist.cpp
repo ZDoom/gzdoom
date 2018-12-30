@@ -99,7 +99,7 @@ namespace swrenderer
 		}
 	}
 
-	VisiblePlane *VisiblePlaneList::FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal, FDynamicColormap *basecolormap, Fake3DOpaque::Type fakeFloorType, fixed_t fakeAlpha)
+	VisiblePlane *VisiblePlaneList::FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, bool foggy, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal, FDynamicColormap *basecolormap, Fake3DOpaque::Type fakeFloorType, fixed_t fakeAlpha)
 	{
 		secplane_t plane;
 		VisiblePlane *check;
@@ -112,6 +112,8 @@ namespace swrenderer
 		FTransform nulltransform;
 
 		RenderPortal *renderportal = Thread->Portal.get();
+
+		lightlevel += LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get());
 
 		if (picnum == skyflatnum)	// killough 10/98
 		{ // most skies map together

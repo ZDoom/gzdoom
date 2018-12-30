@@ -74,7 +74,8 @@ void PolyRenderThread::FlushDrawQueue()
 	}
 }
 
-void PolyRenderThread::PrepareTexture(FTexture *texture, FRenderStyle style)
+static std::mutex loadmutex;
+void PolyRenderThread::PrepareTexture(FSoftwareTexture *texture, FRenderStyle style)
 {
 	if (texture == nullptr)
 		return;
@@ -87,24 +88,25 @@ void PolyRenderThread::PrepareTexture(FTexture *texture, FRenderStyle style)
 	// It is critical that this function is called before any direct
 	// calls to GetPixels for this to work.
 
-	static std::mutex loadmutex;
-
 	std::unique_lock<std::mutex> lock(loadmutex);
 
-	texture->GetPixels(style);
-	const FTexture::Span *spans;
-	texture->GetColumn(style, 0, &spans);
+	const FSoftwareTextureSpan *spans;
 	if (PolyRenderer::Instance()->RenderTarget->IsBgra())
 	{
 		texture->GetPixelsBgra();
 		texture->GetColumnBgra(0, &spans);
 	}
+	else
+	{
+		bool alpha = !!(style.Flags & STYLEF_RedIsAlpha);
+		texture->GetPixels(alpha);
+		texture->GetColumn(alpha, 0, &spans);
+	}
 }
 
+static std::mutex polyobjmutex;
 void PolyRenderThread::PreparePolyObject(subsector_t *sub)
 {
-	static std::mutex polyobjmutex;
-
 	std::unique_lock<std::mutex> lock(polyobjmutex);
 
 	if (sub->BSP == nullptr || sub->BSP->bDirty)

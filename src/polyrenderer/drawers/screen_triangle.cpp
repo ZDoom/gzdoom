@@ -60,73 +60,84 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, PolyTriangleThreadDat
 	ShadedTriVertex *sortedVertices[3];
 	SortVertices(args, sortedVertices);
 
+	int clipleft = 0;
+	int cliptop = MAX(thread->viewport_y, thread->numa_start_y);
 	int clipright = thread->dest_width;
-	int cliptop = thread->numa_start_y;
 	int clipbottom = MIN(thread->dest_height, thread->numa_end_y);
 
 	int topY = (int)(sortedVertices[0]->y + 0.5f);
 	int midY = (int)(sortedVertices[1]->y + 0.5f);
 	int bottomY = (int)(sortedVertices[2]->y + 0.5f);
 
-	topY = MAX(topY, 0);
-	midY = clamp(midY, 0, clipbottom);
+	topY = MAX(topY, cliptop);
+	midY = MIN(midY, clipbottom);
 	bottomY = MIN(bottomY, clipbottom);
 
 	if (topY >= bottomY)
 		return;
 
+	topY += thread->skipped_by_thread(topY);
+	int num_cores = thread->num_cores;
+
 	// Find start/end X positions for each line covered by the triangle:
 
 	int16_t edges[MAXHEIGHT * 2];
 
+	int y = topY;
+
 	float longDX = sortedVertices[2]->x - sortedVertices[0]->x;
 	float longDY = sortedVertices[2]->y - sortedVertices[0]->y;
 	float longStep = longDX / longDY;
-	float longPos = sortedVertices[0]->x + longStep * (topY + 0.5f - sortedVertices[0]->y) + 0.5f;
+	float longPos = sortedVertices[0]->x + longStep * (y + 0.5f - sortedVertices[0]->y) + 0.5f;
+	longStep *= num_cores;
 
-	if (topY < midY)
+	if (y < midY)
 	{
 		float shortDX = sortedVertices[1]->x - sortedVertices[0]->x;
 		float shortDY = sortedVertices[1]->y - sortedVertices[0]->y;
 		float shortStep = shortDX / shortDY;
-		float shortPos = sortedVertices[0]->x + shortStep * (topY + 0.5f - sortedVertices[0]->y) + 0.5f;
+		float shortPos = sortedVertices[0]->x + shortStep * (y + 0.5f - sortedVertices[0]->y) + 0.5f;
+		shortStep *= num_cores;
 
-		for (int y = topY; y < midY; y++)
+		while (y < midY)
 		{
 			int x0 = (int)shortPos;
 			int x1 = (int)longPos;
 			if (x1 < x0) std::swap(x0, x1);
-			x0 = clamp(x0, 0, clipright);
-			x1 = clamp(x1, 0, clipright);
+			x0 = clamp(x0, clipleft, clipright);
+			x1 = clamp(x1, clipleft, clipright);
 
 			edges[y << 1] = x0;
 			edges[(y << 1) + 1] = x1;
 
 			shortPos += shortStep;
 			longPos += longStep;
+			y += num_cores;
 		}
 	}
 
-	if (midY < bottomY)
+	if (y < bottomY)
 	{
 		float shortDX = sortedVertices[2]->x - sortedVertices[1]->x;
 		float shortDY = sortedVertices[2]->y - sortedVertices[1]->y;
 		float shortStep = shortDX / shortDY;
-		float shortPos = sortedVertices[1]->x + shortStep * (midY + 0.5f - sortedVertices[1]->y) + 0.5f;
+		float shortPos = sortedVertices[1]->x + shortStep * (y + 0.5f - sortedVertices[1]->y) + 0.5f;
+		shortStep *= num_cores;
 
-		for (int y = midY; y < bottomY; y++)
+		while (y < bottomY)
 		{
 			int x0 = (int)shortPos;
 			int x1 = (int)longPos;
 			if (x1 < x0) std::swap(x0, x1);
-			x0 = clamp(x0, 0, clipright);
-			x1 = clamp(x1, 0, clipright);
+			x0 = clamp(x0, clipleft, clipright);
+			x1 = clamp(x1, clipleft, clipright);
 
 			edges[y << 1] = x0;
 			edges[(y << 1) + 1] = x1;
 
 			shortPos += shortStep;
 			longPos += longStep;
+			y += num_cores;
 		}
 	}
 
@@ -183,8 +194,14 @@ void DrawTriangle(const TriDrawTriangleArgs *args, PolyTriangleThreadData *threa
 	if (OptT::Flags & SWTRI_WriteStencil)
 		stencilWriteValue = args->uniforms->StencilWriteValue();
 
+	float weaponWOffset;
+	if ((OptT::Flags & SWTRI_DepthTest) || (OptT::Flags & SWTRI_WriteDepth))
+	{
+		weaponWOffset = thread->weaponScene ? 1.0f : 0.0f;
+	}
+
 	int num_cores = thread->num_cores;
-	for (int y = topY + thread->skipped_by_thread(topY); y < bottomY; y += num_cores)
+	for (int y = topY; y < bottomY; y += num_cores)
 	{
 		int x = edges[y << 1];
 		int xend = edges[(y << 1) + 1];
@@ -198,7 +215,7 @@ void DrawTriangle(const TriDrawTriangleArgs *args, PolyTriangleThreadData *threa
 
 			float startX = x + (0.5f - v1X);
 			float startY = y + (0.5f - v1Y);
-			posXW = v1W + stepXW * startX + args->gradientY.W * startY + (thread->weaponScene ? 1.0f : 0.0f);
+			posXW = v1W + stepXW * startX + args->gradientY.W * startY + weaponWOffset;
 		}
 
 #ifndef NO_SSE

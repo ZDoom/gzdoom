@@ -11,6 +11,5 @@ void T_PreprocessScripts();
 void T_LoadScripts(MapData * map);
 void T_AddSpawnedThing(AActor * );
 bool T_RunScript(int snum, AActor * t_trigger);
-void FS_Close();
 
 #endif

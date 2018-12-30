@@ -88,7 +88,7 @@ namespace swrenderer
 		SWPixelFormatDrawers *Drawers(RenderViewport *viewport);
 
 		// Make sure texture can accessed safely
-		void PrepareTexture(FTexture *texture, FRenderStyle style);
+		void PrepareTexture(FSoftwareTexture *texture, FRenderStyle style);
 
 		// Setup poly object in a threadsafe manner
 		void PreparePolyObject(subsector_t *sub);

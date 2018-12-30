@@ -774,8 +774,6 @@ MusInfo *MOD_OpenSong(FileReader &reader)
 	bool is_it = false;
 	bool is_dos = true;
 
-	atterm(dumb_exit);
-
     int size = (int)reader.GetLength();
 	auto fpos = reader.Tell();
 

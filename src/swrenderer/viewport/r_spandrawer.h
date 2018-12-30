@@ -15,11 +15,11 @@ namespace swrenderer
 	public:
 		SpanDrawerArgs();
 
-		void SetStyle(bool masked, bool additive, fixed_t alpha);
+		void SetStyle(bool masked, bool additive, fixed_t alpha, FDynamicColormap *basecolormap);
 		void SetDestY(RenderViewport *viewport, int y) { ds_viewport = viewport; ds_y = y; }
 		void SetDestX1(int x) { ds_x1 = x; }
 		void SetDestX2(int x) { ds_x2 = x; }
-		void SetTexture(RenderThread *thread, FTexture *tex);
+		void SetTexture(RenderThread *thread, FSoftwareTexture *tex);
 		void SetTextureLOD(double lod) { ds_lod = lod; }
 		void SetTextureUPos(double u) { ds_xfrac = (uint32_t)(int64_t)(u * 4294967296.0); }
 		void SetTextureVPos(double v) { ds_yfrac = (uint32_t)(int64_t)(v * 4294967296.0); }
@@ -29,7 +29,7 @@ namespace swrenderer
 
 		void DrawDepthSpan(RenderThread *thread, float idepth1, float idepth2);
 		void DrawSpan(RenderThread *thread);
-		void DrawTiltedSpan(RenderThread *thread, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap);
+		void DrawTiltedSpan(RenderThread *thread, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int lightlevel, bool foggy, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap);
 		void DrawColoredSpan(RenderThread *thread, int y, int x1, int x2);
 		void DrawFogBoundaryLine(RenderThread *thread, int y, int x1, int x2);
 

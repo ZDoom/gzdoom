@@ -32,8 +32,10 @@
  */
 // Workaround for GCC Objective-C++ with C++ exceptions bug.
 
-#include "doomerrors.h"
 #include <stdlib.h>
+
+#include "doomerrors.h"
+#include "vm.h"
 
 // Import some functions from i_main.mm
 void call_terms();
@@ -50,10 +52,21 @@ void OriginalMainExcept(int argc, char** argv)
 	{
 		const char* const message = error.what();
 
-		if (NULL != message)
+		if (strcmp(message, "NoRunExit"))
 		{
-			if (strcmp(message, "NoRunExit")) fprintf(stderr, "%s\n", message);
-			Mac_I_FatalError(message);
+			if (CVMAbortException::stacktrace.IsNotEmpty())
+			{
+				Printf("%s", CVMAbortException::stacktrace.GetChars());
+			}
+
+			if (batchrun)
+			{
+				Printf("%s\n", message);
+			}
+			else
+			{
+				Mac_I_FatalError(message);
+			}
 		}
 
 		exit(-1);

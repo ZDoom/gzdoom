@@ -57,15 +57,15 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void RenderDecal::RenderDecals(RenderThread *thread, side_t *sidedef, DrawSegment *draw_segment, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &wallC, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom, bool drawsegPass)
+	void RenderDecal::RenderDecals(RenderThread *thread, side_t *sidedef, DrawSegment *draw_segment, seg_t *curline, const ProjectedWallLight &light, const short *walltop, const short *wallbottom, bool drawsegPass)
 	{
 		for (DBaseDecal *decal = sidedef->AttachedDecals; decal != NULL; decal = decal->WallNext)
 		{
-			Render(thread, sidedef, decal, draw_segment, wallshade, lightleft, lightstep, curline, wallC, foggy, basecolormap, walltop, wallbottom, drawsegPass);
+			Render(thread, sidedef, decal, draw_segment, curline, light, walltop, wallbottom, drawsegPass);
 		}
 	}
 
-	void RenderDecal::Render(RenderThread *thread, side_t *wall, DBaseDecal *decal, DrawSegment *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &savecoord, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom, bool drawsegPass)
+	void RenderDecal::Render(RenderThread *thread, side_t *wall, DBaseDecal *decal, DrawSegment *clipper, seg_t *curline, const ProjectedWallLight &light, const short *walltop, const short *wallbottom, bool drawsegPass)
 	{
 		DVector2 decal_left, decal_right, decal_pos;
 		int x1, x2;
@@ -74,10 +74,7 @@ namespace swrenderer
 		double zpos;
 		int needrepeat = 0;
 		sector_t *back;
-		bool calclighting;
-		bool rereadcolormap;
 		FDynamicColormap *usecolormap;
-		float light = 0;
 		const short *mfloorclip;
 		const short *mceilingclip;
 
@@ -129,13 +126,14 @@ namespace swrenderer
 			}
 		}
 
-		FTexture *WallSpriteTile = TexMan(decal->PicNum, true);
+		FTexture *tex = TexMan.GetPalettedTexture(decal->PicNum, true);
 		flipx = (uint8_t)(decal->RenderFlags & RF_XFLIP);
 
-		if (WallSpriteTile == NULL || WallSpriteTile->UseType == ETextureType::Null)
+		if (tex == NULL || !tex->isValid())
 		{
 			return;
 		}
+		FSoftwareTexture *WallSpriteTile = tex->GetSoftwareTexture();
 
 		// Determine left and right edges of sprite. Since this sprite is bound
 		// to a wall, we use the wall's angle instead of the decal's. This is
@@ -258,18 +256,15 @@ namespace swrenderer
 		}
 
 		// Prepare lighting
-		calclighting = false;
-		usecolormap = basecolormap;
-		rereadcolormap = true;
+		usecolormap = light.GetBaseColormap();
 
 		// Decals that are added to the scene must fade to black.
 		if (decal->RenderStyle == LegacyRenderStyles[STYLE_Add] && usecolormap->Fade != 0)
 		{
 			usecolormap = GetSpecialLights(usecolormap->Color, 0, usecolormap->Desaturate);
-			rereadcolormap = false;
 		}
 
-		light = lightleft + (x1 - savecoord.sx1) * lightstep;
+		float lightpos = light.GetLightPos(x1);
 
 		cameraLight = CameraLight::Instance();
 
@@ -291,24 +286,12 @@ namespace swrenderer
 		{
 			int x = x1;
 
+			ColormapLight cmlight;
+			cmlight.SetColormap(thread, MINZ, light.GetLightLevel(), light.GetFoggy(), usecolormap, decal->RenderFlags & RF_FULLBRIGHT, false, false, false, false);
+
 			SpriteDrawerArgs drawerargs;
-
-			if (cameraLight->FixedLightLevel() >= 0)
-				drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, cameraLight->FixedLightLevelShade());
-			else if (cameraLight->FixedColormap() != NULL)
-				drawerargs.SetLight(cameraLight->FixedColormap(), 0, 0);
-			else if (!foggy && (decal->RenderFlags & RF_FULLBRIGHT))
-				drawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, 0);
-			else
-				calclighting = true;
-
-			bool visible = drawerargs.SetStyle(thread->Viewport.get(), decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor, basecolormap);
-
-			// R_SetPatchStyle can modify basecolormap.
-			if (rereadcolormap)
-			{
-				usecolormap = basecolormap;
-			}
+			bool visible = drawerargs.SetStyle(thread->Viewport.get(), decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor, cmlight);
+			bool calclighting = cameraLight->FixedLightLevel() < 0 && !cameraLight->FixedColormap();
 
 			if (visible)
 			{
@@ -317,10 +300,10 @@ namespace swrenderer
 				{
 					if (calclighting)
 					{ // calculate lighting
-						drawerargs.SetLight(usecolormap, light, wallshade);
+						drawerargs.SetLight(lightpos, light.GetLightLevel(), light.GetFoggy(), thread->Viewport.get());
 					}
 					DrawColumn(thread, drawerargs, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip, decal->RenderStyle);
-					light += lightstep;
+					lightpos += light.GetLightStep();
 					x++;
 				}
 			}
@@ -333,7 +316,7 @@ namespace swrenderer
 		} while (needrepeat--);
 	}
 
-	void RenderDecal::DrawColumn(RenderThread *thread, SpriteDrawerArgs &drawerargs, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, FRenderStyle style)
+	void RenderDecal::DrawColumn(RenderThread *thread, SpriteDrawerArgs &drawerargs, int x, FSoftwareTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, FRenderStyle style)
 	{
 		auto viewport = thread->Viewport.get();
 		

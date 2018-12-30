@@ -56,6 +56,7 @@ struct RenderJob
 		WallJob,
 		SpriteJob,
 		ParticleJob,
+		PortalJob,
 		TerminateJob	// inserted when all work is done so that the worker can return.
 	};
 	
@@ -177,7 +178,12 @@ void HWDrawInfo::WorkerThread()
 			RenderParticles(job->sub, front);
 			SetupSprite.Unclock();
 			break;
+
+		case RenderJob::PortalJob:
+			AddSubsectorToPortal((FSectorPortalGroup *)job->seg, job->sub);
+			break;
 		}
+
 	}
 }
 
@@ -277,8 +283,8 @@ void HWDrawInfo::AddLine (seg_t *seg, bool portalclip)
 		{
 			if (!seg->linedef->isVisualPortal())
 			{
-				FTexture * tex = TexMan(seg->sidedef->GetTexture(side_t::mid));
-				if (!tex || tex->UseType==ETextureType::Null) 
+				FTexture * tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::mid), true);
+				if (!tex || !tex->isValid()) 
 				{
 					// nothing to do here!
 					seg->linedef->validcount=validcount;
@@ -646,7 +652,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 		sector->validcount = validcount;
 		sector->MoreFlags |= SECMF_DRAWN;
 
-		if (gl_render_things && sector->touching_renderthings)
+		if (gl_render_things && (sector->touching_renderthings || sector->sectorportal_thinglist))
 		{
 			if (multithread)
 			{
@@ -706,16 +712,35 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 				// This is for portal coverage.
 				FSectorPortalGroup *portal;
 
+				// AddSubsectorToPortal cannot be called here when using multithreaded processing,
+				// because the wall processing code in the worker can also modify the portal state.
+				// To avoid costly synchronization for every access to the portal list,
+				// the call to AddSubsectorToPortal will be deferred to the worker.
+				// (GetPortalGruop only accesses static sector data so this check can be done here, restricting the new job to the minimum possible extent.)
 				portal = fakesector->GetPortalGroup(sector_t::ceiling);
 				if (portal != nullptr)
 				{
-					AddSubsectorToPortal(portal, sub);
+					if (multithread)
+					{
+						jobQueue.AddJob(RenderJob::PortalJob, sub, (seg_t *)portal);
+					}
+					else
+					{
+						AddSubsectorToPortal(portal, sub);
+					}
 				}
 
 				portal = fakesector->GetPortalGroup(sector_t::floor);
 				if (portal != nullptr)
 				{
-					AddSubsectorToPortal(portal, sub);
+					if (multithread)
+					{
+						jobQueue.AddJob(RenderJob::PortalJob, sub, (seg_t *)portal);
+					}
+					else
+					{
+						AddSubsectorToPortal(portal, sub);
+					}
 				}
 			}
 		}

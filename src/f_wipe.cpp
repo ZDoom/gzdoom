@@ -41,10 +41,13 @@ public:
 		Height = h;
 	}
 	
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override
+	FBitmap GetBgraBitmap(PalEntry*, int *trans) override
 	{
-		bmp->CopyPixelDataRGB(x, y, (uint8_t*)WorkBuffer.Data(), Width, Height, 4, Width*4, rotate, CF_RGBA, inf);
-		return 0;
+		FBitmap bmp;
+		bmp.Create(Width, Height);
+		bmp.CopyPixelDataRGB(0, 0, (uint8_t*)WorkBuffer.Data(), Width, Height, 4, Width*4, 0, CF_RGBA, nullptr);
+		if (trans) *trans = 0;
+		return bmp;
 	}
 	
 	uint32_t *GetBuffer()
@@ -304,8 +307,8 @@ bool Wiper_Melt::Run(int ticks)
 				// Only draw for the final tick.
 				// No need for optimization. Wipes won't ever be drawn with anything else.
 				
-				int w = startScreen->GetWidth();
-				int h = startScreen->GetHeight();
+				int w = startScreen->GetDisplayWidth();
+				int h = startScreen->GetDisplayHeight();
 				dpt.x = i * w / WIDTH;
 				dpt.y = MAX(0, y[i] * h / HEIGHT);
 				rect.left = dpt.x;
@@ -369,9 +372,8 @@ bool Wiper_Burn::Run(int ticks)
 		Density = wipe_CalcBurn(BurnArray, WIDTH, HEIGHT, Density);
 		done = (Density < 0);
 	}
-	
-	auto mat = FMaterial::ValidateTexture(BurnTexture, false);
-	mat->Clean(true);
+
+	BurnTexture->SystemTextures.Clean(true, true);
 	const uint8_t *src = BurnArray;
 	uint32_t *dest = (uint32_t *)BurnTexture->GetBuffer();
 	for (int y = HEIGHT; y != 0; --y)

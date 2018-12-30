@@ -55,7 +55,7 @@ public:
 
 	// Active range for the numa block the cores are part of
 	int numa_start_y = 0;
-	int numa_end_y = 0;
+	int numa_end_y = MAXHEIGHT;
 
 	// Working buffer used by the tilted (sloped) span drawer
 	const uint8_t *tiltlighting[MAXWIDTH];

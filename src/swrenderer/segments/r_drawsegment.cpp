@@ -107,18 +107,18 @@ namespace swrenderer
 			group.EndIndex = MIN(index + groupSize, SegmentsCount());
 			group.x1 = ds->x1;
 			group.x2 = ds->x2;
-			group.neardepth = MIN(ds->sz1, ds->sz2);
-			group.fardepth = MAX(ds->sz1, ds->sz2);
+			group.neardepth = MIN(ds->WallC.sz1, ds->WallC.sz2);
+			group.fardepth = MAX(ds->WallC.sz1, ds->WallC.sz2);
 
 			for (unsigned int groupIndex = group.BeginIndex + 1; groupIndex < group.EndIndex; groupIndex++)
 			{
 				ds = Segment(groupIndex);
 				group.x1 = MIN(group.x1, ds->x1);
 				group.x2 = MAX(group.x2, ds->x2);
-				group.neardepth = MIN(group.neardepth, ds->sz1);
-				group.neardepth = MIN(group.neardepth, ds->sz2);
-				group.fardepth = MAX(ds->sz1, group.fardepth);
-				group.fardepth = MAX(ds->sz2, group.fardepth);
+				group.neardepth = MIN(group.neardepth, ds->WallC.sz1);
+				group.neardepth = MIN(group.neardepth, ds->WallC.sz2);
+				group.fardepth = MAX(ds->WallC.sz1, group.fardepth);
+				group.fardepth = MAX(ds->WallC.sz2, group.fardepth);
 			}
 
 			for (int x = group.x1; x < group.x2; x++)

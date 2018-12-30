@@ -14,7 +14,7 @@ namespace swrenderer
 	class WallDrawerArgs : public DrawerArgs
 	{
 	public:
-		void SetStyle(bool masked, bool additive, fixed_t alpha);
+		void SetStyle(bool masked, bool additive, fixed_t alpha, FDynamicColormap *basecolormap);
 		void SetDest(RenderViewport *viewport, int x, int y);
 		void SetCount(int count) { dc_count = count; }
 		void SetTexture(const uint8_t *pixels, const uint8_t *pixels2, int height)
@@ -27,8 +27,6 @@ namespace swrenderer
 		void SetTextureUPos(uint32_t pos) { dc_texturefracx = pos; }
 		void SetTextureVPos(fixed_t pos) { dc_texturefrac = pos; }
 		void SetTextureVStep(fixed_t step) { dc_iscale = step; }
-
-		bool IsMaskedDrawer() const;
 
 		void DrawDepthColumn(RenderThread *thread, float idepth);
 		void DrawColumn(RenderThread *thread);

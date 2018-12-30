@@ -37,6 +37,8 @@
 #include "files.h"
 #include "w_wad.h"
 #include "textures/textures.h"
+#include "imagehelpers.h"
+#include "image.h"
 
 //==========================================================================
 //
@@ -44,11 +46,11 @@
 //
 //==========================================================================
 
-class FFlatTexture : public FWorldTexture
+class FFlatTexture : public FImageSource
 {
 public:
 	FFlatTexture (int lumpnum);
-	uint8_t *MakeTexture (FRenderStyle style) override;
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
 };
 
 
@@ -60,7 +62,7 @@ public:
 //
 //==========================================================================
 
-FTexture *FlatTexture_TryCreate(FileReader & file, int lumpnum)
+FImageSource *FlatImage_TryCreate(FileReader & file, int lumpnum)
 {
 	return new FFlatTexture(lumpnum);
 }
@@ -72,7 +74,7 @@ FTexture *FlatTexture_TryCreate(FileReader & file, int lumpnum)
 //==========================================================================
 
 FFlatTexture::FFlatTexture (int lumpnum)
-: FWorldTexture(NULL, lumpnum)
+: FImageSource(lumpnum)
 {
 	int area;
 	int bits;
@@ -90,11 +92,10 @@ FFlatTexture::FFlatTexture (int lumpnum)
 	case 256*256:	bits = 8;	break;
 	}
 
+	bUseGamePalette = true;
 	bMasked = false;
 	bTranslucent = false;
-	WidthBits = HeightBits = bits;
 	Width = Height = 1 << bits;
-	WidthMask = (1 << bits) - 1;
 }
 
 //==========================================================================
@@ -103,16 +104,16 @@ FFlatTexture::FFlatTexture (int lumpnum)
 //
 //==========================================================================
 
-uint8_t *FFlatTexture::MakeTexture (FRenderStyle style)
+TArray<uint8_t> FFlatTexture::CreatePalettedPixels(int conversion)
 {
 	auto lump = Wads.OpenLumpReader (SourceLump);
-	auto Pixels = new uint8_t[Width*Height];
-	auto numread = lump.Read (Pixels, Width*Height);
+	TArray<uint8_t> Pixels(Width*Height, true);
+	auto numread = lump.Read (Pixels.Data(), Width*Height);
 	if (numread < Width*Height)
 	{
-		memset (Pixels + numread, 0xBB, Width*Height - numread);
+		memset (Pixels.Data() + numread, 0xBB, Width*Height - numread);
 	}
-	FTexture::FlipSquareBlockRemap(Pixels, Width, Height, GetRemap(style));
+	ImageHelpers::FlipSquareBlockRemap(Pixels.Data(), Width, ImageHelpers::GetRemap(conversion == luminance));
 	return Pixels;
 }
 

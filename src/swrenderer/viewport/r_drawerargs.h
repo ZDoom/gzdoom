@@ -16,6 +16,7 @@ struct FLightNode;
 
 namespace swrenderer
 {
+	class ColormapLight;
 	class SWPixelFormatDrawers;
 	class DrawerArgs;
 	struct ShadeConstants;
@@ -30,7 +31,9 @@ namespace swrenderer
 	class DrawerArgs
 	{
 	public:
-		void SetLight(FSWColormap *base_colormap, float light, int shade);
+		void SetBaseColormap(FSWColormap *base_colormap);
+		void SetLight(float light, int shade);
+		void SetLight(float light, int lightlevel, bool foggy, RenderViewport *viewport);
 		void SetTranslationMap(lighttable_t *translation);
 
 		uint8_t *Colormap(RenderViewport *viewport) const;
@@ -38,6 +41,9 @@ namespace swrenderer
 
 		ShadeConstants ColormapConstants() const;
 		fixed_t Light() const { return LIGHTSCALE(mLight, mShade); }
+
+	protected:
+		void SetLight(const ColormapLight &light);
 
 	private:
 		FSWColormap *mBaseColormap = nullptr;

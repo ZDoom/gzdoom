@@ -19,31 +19,8 @@ class AActor;
 namespace OpenGLRenderer
 {
 
-
-// For error catching while changing parameters.
-enum EInvalid
-{
-	Invalid = 0
-};
-
 class FHardwareTexture : public IHardwareTexture
 {
-public:
-	enum
-	{
-		MAX_TEXTURES = 16
-	};
-
-private:
-	struct TranslatedTexture
-	{
-		unsigned int glTexID;
-		int translation;
-		bool mipmapped;
-
-		void Delete();
-	};
-
 public:
 
 	static unsigned int lastbound[MAX_TEXTURES];
@@ -60,18 +37,20 @@ private:
 
 	bool forcenocompression;
 
-	TranslatedTexture glDefTex;
-	TArray<TranslatedTexture> glTex_Translated;
-	unsigned int glDepthID;	// only used by camera textures
+	unsigned int glTexID = 0;
+	unsigned int glDepthID = 0;	// only used by camera textures
 	unsigned int glBufferID = 0;
 	int glTextureBytes = 4;
-
-	TranslatedTexture * GetTexID(int translation);
+	bool mipmapped = false;
 
 	int GetDepthBuffer(int w, int h);
 
 public:
-	FHardwareTexture(bool nocompress);
+	FHardwareTexture(bool nocompress)
+	{
+		forcenocompression = nocompress;
+	}
+
 	~FHardwareTexture();
 
 	static void Unbind(int texunit);
@@ -79,18 +58,14 @@ public:
 
 	void BindToFrameBuffer(int w, int h);
 
-	unsigned int Bind(int texunit, int translation, bool needmipmap);
+	unsigned int Bind(int texunit, bool needmipmap);
 	bool BindOrCreate(FTexture *tex, int texunit, int clampmode, int translation, int flags);
 
 	void AllocateBuffer(int w, int h, int texelsize);
 	uint8_t *MapBuffer();
 
-	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const FString &name) = delete;
 	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name);
 	unsigned int GetTextureHandle(int translation);
-
-	void Clean(bool all);
-	void CleanUnused(SpriteHits &usedtranslations);
 };
 
 }

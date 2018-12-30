@@ -90,7 +90,7 @@ struct FDecalLib::FTranslation
 
 	uint32_t StartColor, EndColor;
 	FTranslation *Next;
-	uint16_t Index;
+	uint32_t Index;
 };
 
 struct FDecalAnimator
@@ -1115,7 +1115,7 @@ FDecalLib::FTranslation::FTranslation (uint32_t start, uint32_t end)
 		table[i] = ColorMatcher.Pick (ri >> 24, gi >> 24, bi >> 24);
 	}
 	table[0] = table[1];
-	Index = (uint16_t)TRANSLATION(TRANSLATION_Decals, tablei >> 8);
+	Index = (uint32_t)TRANSLATION(TRANSLATION_Decals, tablei >> 8);
 }
 
 FDecalLib::FTranslation *FDecalLib::FTranslation::LocateTranslation (uint32_t start, uint32_t end)

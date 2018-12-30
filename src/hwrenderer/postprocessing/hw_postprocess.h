@@ -38,12 +38,7 @@ public:
 
 	PPUniforms(const PPUniforms &src)
 	{
-		if (src.Size > 0)
-		{
-			Data = new uint8_t[src.Size];
-			Size = src.Size;
-			memcpy(Data, src.Data, Size);
-		}
+		Data = src.Data;
 	}
 
 	~PPUniforms()
@@ -53,49 +48,26 @@ public:
 
 	PPUniforms &operator=(const PPUniforms &src)
 	{
-		if (this != &src)
-		{
-			if (src.Size > 0)
-			{
-				Data = new uint8_t[src.Size];
-				Size = src.Size;
-				memcpy(Data, src.Data, Size);
-			}
-			else
-			{
-				delete[] Data;
-				Data = nullptr;
-				Size = 0;
-			}
-		}
-
+		Data = src.Data;
 		return *this;
 	}
 
 	void Clear()
 	{
-		delete[] Data;
-		Data = nullptr;
-		Size = 0;
+		Data.Clear();
 	}
 
 	template<typename T>
 	void Set(const T &v)
 	{
-		if (Size != (int)sizeof(T))
+		if (Data.Size() != (int)sizeof(T))
 		{
-			delete[] Data;
-			Data = nullptr;
-			Size = 0;
-
-			Data = new uint8_t[sizeof(T)];
-			Size = sizeof(T);
-			memcpy(Data, &v, Size);
+			Data.Resize(sizeof(T));
+			memcpy(Data.Data(), &v, Data.Size());
 		}
 	}
 
-	uint8_t *Data = nullptr;
-	int Size = 0;
+	TArray<uint8_t> Data;
 };
 
 class PPStep

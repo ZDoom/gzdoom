@@ -53,12 +53,12 @@
 //
 //===========================================================================
 
-FString WeaponSection;
+static FString WeaponSection;
 TArray<FString> KeyConfWeapons;
-FWeaponSlots *PlayingKeyConf;
+static FWeaponSlots *PlayingKeyConf;
 
-TArray<PClassActor *> Weapons_ntoh;
-TMap<PClassActor *, int> Weapons_hton;
+static TArray<PClassActor *> Weapons_ntoh;
+static TMap<PClassActor *, int> Weapons_hton;
 
 static int ntoh_cmp(const void *a, const void *b);
 

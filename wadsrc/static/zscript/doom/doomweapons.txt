@@ -37,7 +37,7 @@ extend class StateProvider
 			State flash = weap.FindState('Flash');
 			if (flash != null)
 			{
-				player.SetSafeFlash(weap, flash, random[FireRail]()&1);
+				player.SetSafeFlash(weap, flash, random[FireRail](0, 1));
 			}
 			
 		}

@@ -47,7 +47,7 @@ public:
 	fixed_t xscale = 0;
 	float yscale = 0.0f;
 
-	FTexture *pic = nullptr;
+	FSoftwareTexture *pic = nullptr;
 
 	fixed_t xiscale = 0;
 	fixed_t startfrac = 0;
@@ -67,7 +67,7 @@ public:
 class PolyHWAccelPlayerSprite
 {
 public:
-	FTexture *pic = nullptr;
+	FSoftwareTexture *pic = nullptr;
 	double texturemid = 0.0;
 	float yscale = 0.0f;
 	fixed_t xscale = 0;

@@ -549,6 +549,7 @@ FString cht_Morph(player_t *player, PClassActor *morphclass, bool quickundo)
 
 void cht_SetInv(player_t *player, const char *string, int amount, bool beyond)
 {
+	if (!player->mo) return;
 	IFVIRTUALPTR(player->mo, APlayerPawn, CheatTakeInv)
 	{
 		FString message = string;
@@ -559,6 +560,7 @@ void cht_SetInv(player_t *player, const char *string, int amount, bool beyond)
 
 void cht_Give (player_t *player, const char *name, int amount)
 {
+	if (!player->mo) return;
 	IFVIRTUALPTR(player->mo, APlayerPawn, CheatGive)
 	{
 		FString namestr = name;
@@ -569,6 +571,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 
 void cht_Take (player_t *player, const char *name, int amount)
 {
+	if (!player->mo) return;
 	IFVIRTUALPTR(player->mo, APlayerPawn, CheatTake)
 	{
 		FString namestr = name;
@@ -579,6 +582,7 @@ void cht_Take (player_t *player, const char *name, int amount)
 
 void cht_Takeweaps(player_t *player)
 {
+	if (!player->mo) return;
 	IFVIRTUALPTR(player->mo, APlayerPawn, CheatTakeWeaps)
 	{
 		VMValue params[3] = { player->mo };

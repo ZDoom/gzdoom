@@ -89,8 +89,8 @@ namespace swrenderer
 			return pal_drawers.get();
 	}
 
-	void RenderThread::PrepareTexture(FTexture *texture, FRenderStyle style)
-	{
+	static std::mutex loadmutex;
+	void RenderThread::PrepareTexture(FSoftwareTexture *texture, FRenderStyle style)	{
 		if (texture == nullptr)
 			return;
 
@@ -102,24 +102,25 @@ namespace swrenderer
 		// It is critical that this function is called before any direct
 		// calls to GetPixels for this to work.
 
-		static std::mutex loadmutex;
-
 		std::unique_lock<std::mutex> lock(loadmutex);
 
-		texture->GetPixels(style);
-		const FTexture::Span *spans;
-		texture->GetColumn(style, 0, &spans);
+		const FSoftwareTextureSpan *spans;
 		if (Viewport->RenderTarget->IsBgra())
 		{
 			texture->GetPixelsBgra();
 			texture->GetColumnBgra(0, &spans);
 		}
+		else
+		{
+			bool alpha = !!(style.Flags & STYLEF_RedIsAlpha);
+			texture->GetPixels(alpha);
+			texture->GetColumn(alpha, 0, &spans);
+	}
 	}
 
+	static std::mutex polyobjmutex;
 	void RenderThread::PreparePolyObject(subsector_t *sub)
 	{
-		static std::mutex polyobjmutex;
-
 		std::unique_lock<std::mutex> lock(polyobjmutex);
 
 		if (sub->BSP == nullptr || sub->BSP->bDirty)

@@ -49,9 +49,11 @@ void RenderPolyDecal::Render(PolyRenderThread *thread, DBaseDecal *decal, const 
 	if (decal->RenderFlags & RF_INVISIBLE || !viewactive || !decal->PicNum.isValid())
 		return;
 
-	FTexture *tex = TexMan(decal->PicNum, true);
-	if (tex == nullptr || tex->UseType == ETextureType::Null)
+	FTexture *ttex = TexMan.GetPalettedTexture(decal->PicNum, true);
+	if (ttex == nullptr || !ttex->isValid())
 		return;
+	
+	FSoftwareTexture *tex = ttex->GetSoftwareTexture();
 
 	sector_t *front, *back;
 	GetDecalSectors(decal, line, &front, &back);
@@ -73,16 +75,16 @@ void RenderPolyDecal::Render(PolyRenderThread *thread, DBaseDecal *decal, const 
 
 	bool flipTextureX = (decal->RenderFlags & RF_XFLIP) == RF_XFLIP;
 	double u_left = flipTextureX ? 1.0 : 0.0;
-	double u_right = flipTextureX ? 1.0 - tex->Scale.X : tex->Scale.X;
+	double u_right = flipTextureX ? 1.0 - tex->GetScale().X : tex->GetScale().X;
 	double u_unit = (u_right - u_left) / (edge_left + edge_right);
 
 	double zpos = GetDecalZ(decal, line, front, back);
-	double spriteHeight = decal->ScaleY / tex->Scale.Y * tex->GetHeight();
+	double spriteHeight = decal->ScaleY / tex->GetScale().Y * tex->GetHeight();
 	double ztop = zpos + spriteHeight - spriteHeight * 0.5;
 	double zbottom = zpos - spriteHeight * 0.5;
 
 	double v_top = 0.0;
-	double v_bottom = tex->Scale.Y;
+	double v_bottom = tex->GetScale().Y;
 	double v_unit = (v_bottom - v_top) / (zbottom - ztop);
 
 	// Clip decal to wall part
@@ -156,25 +158,25 @@ void RenderPolyDecal::Render(PolyRenderThread *thread, DBaseDecal *decal, const 
 	vertices[0].z = (float)ztop;
 	vertices[0].w = 1.0f;
 	vertices[0].u = (float)u_left;
-	vertices[0].v = (float)v_top;
+	vertices[0].v = 1.0f - (float)v_top;
 	vertices[1].x = (float)decal_right.X;
 	vertices[1].y = (float)decal_right.Y;
 	vertices[1].z = (float)ztop;
 	vertices[1].w = 1.0f;
 	vertices[1].u = (float)u_right;
-	vertices[1].v = (float)v_top;
+	vertices[1].v = 1.0f - (float)v_top;
 	vertices[2].x = (float)decal_right.X;
 	vertices[2].y = (float)decal_right.Y;
 	vertices[2].z = (float)zbottom;
 	vertices[2].w = 1.0f;
 	vertices[2].u = (float)u_right;
-	vertices[2].v = (float)v_bottom;
+	vertices[2].v = 1.0f - (float)v_bottom;
 	vertices[3].x = (float)decal_left.X;
 	vertices[3].y = (float)decal_left.Y;
 	vertices[3].z = (float)zbottom;
 	vertices[3].w = 1.0f;
 	vertices[3].u = (float)u_left;
-	vertices[3].v = (float)v_bottom;
+	vertices[3].v = 1.0f - (float)v_bottom;
 
 	// Light calculations
 

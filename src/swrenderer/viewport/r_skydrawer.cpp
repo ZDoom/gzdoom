@@ -40,6 +40,21 @@ namespace swrenderer
 		thread->Drawers(dc_viewport)->DrawDoubleSkyColumn(*this);
 	}
 
+	void SkyDrawerArgs::SetStyle()
+	{
+		CameraLight *cameraLight = CameraLight::Instance();
+		if (cameraLight->FixedColormap())
+		{
+			SetBaseColormap(cameraLight->FixedColormap());
+			SetLight(0, 0);
+		}
+		else
+		{
+			SetBaseColormap(&NormalLight);
+			SetLight(0, 0);
+		}
+	}
+
 	void SkyDrawerArgs::SetDest(RenderViewport *viewport, int x, int y)
 	{
 		dc_dest = viewport->GetDest(x, y);
@@ -47,21 +62,21 @@ namespace swrenderer
 		dc_viewport = viewport;
 	}
 
-	void SkyDrawerArgs::SetFrontTexture(RenderThread *thread, FTexture *texture, uint32_t column)
+	void SkyDrawerArgs::SetFrontTexture(RenderThread *thread, FSoftwareTexture *texture, fixed_t column)
 	{
 		if (thread->Viewport->RenderTarget->IsBgra())
 		{
-			dc_source = (const uint8_t *)texture->GetColumnBgra(column, nullptr);
-			dc_sourceheight = texture->GetHeight();
+			dc_source = (const uint8_t *)texture->GetColumnBgra((column * texture->GetPhysicalScale()) >> FRACBITS, nullptr);
+			dc_sourceheight = texture->GetPhysicalHeight();
 		}
 		else
 		{
-			dc_source = texture->GetColumn(DefaultRenderStyle(), column, nullptr);
-			dc_sourceheight = texture->GetHeight();
+			dc_source = texture->GetColumn(DefaultRenderStyle(), (column * texture->GetPhysicalScale()) >> FRACBITS, nullptr);
+			dc_sourceheight = texture->GetPhysicalHeight();
 		}
 	}
 
-	void SkyDrawerArgs::SetBackTexture(RenderThread *thread, FTexture *texture, uint32_t column)
+	void SkyDrawerArgs::SetBackTexture(RenderThread *thread, FSoftwareTexture *texture, fixed_t column)
 	{
 		if (texture == nullptr)
 		{
@@ -70,13 +85,13 @@ namespace swrenderer
 		}
 		else if (thread->Viewport->RenderTarget->IsBgra())
 		{
-			dc_source2 = (const uint8_t *)texture->GetColumnBgra(column, nullptr);
-			dc_sourceheight2 = texture->GetHeight();
+			dc_source2 = (const uint8_t *)texture->GetColumnBgra((column * texture->GetPhysicalScale()) >> FRACBITS, nullptr);
+			dc_sourceheight2 = texture->GetPhysicalHeight();
 		}
 		else
 		{
-			dc_source2 = texture->GetColumn(DefaultRenderStyle(), column, nullptr);
-			dc_sourceheight2 = texture->GetHeight();
+			dc_source2 = texture->GetColumn(DefaultRenderStyle(), (column * texture->GetPhysicalScale()) >> FRACBITS, nullptr);
+			dc_sourceheight2 = texture->GetPhysicalHeight();
 		}
 	}
 }

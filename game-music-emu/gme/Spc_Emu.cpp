@@ -299,11 +299,6 @@ blargg_err_t Spc_Emu::start_track_( int track )
 	RETURN_ERR( apu.load_spc( file_data, file_size ) );
 	filter.set_gain( (int) (gain() * SPC_Filter::gain_unit) );
 	apu.clear_echo();
-	track_info_t spc_info;
-	RETURN_ERR( track_info_( &spc_info, track ) );
-	// Set a default track length, need a non-zero fadeout
-	if ( spc_info.length > 0 )
-		set_fade ( spc_info.length, 50 );
 	return 0;
 }
 

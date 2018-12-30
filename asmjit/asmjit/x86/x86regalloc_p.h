@@ -327,6 +327,7 @@ public:
   Error emitLoad(VirtReg* vreg, uint32_t id, const char* reason);
   Error emitSave(VirtReg* vreg, uint32_t id, const char* reason);
   Error emitSwapGp(VirtReg* aVReg, VirtReg* bVReg, uint32_t aId, uint32_t bId, const char* reason) noexcept;
+  Error emitSwapVec(VirtReg* aVReg, VirtReg* bVReg, uint32_t aId, uint32_t bId, const char* reason) noexcept;
 
   Error emitImmToReg(uint32_t dstTypeId, uint32_t dstPhysId, const Imm* src) noexcept;
   Error emitImmToStack(uint32_t dstTypeId, const X86Mem* dst, const Imm* src) noexcept;
@@ -513,6 +514,37 @@ public:
     _x86State._modified.xor_(X86Reg::kKindGp, (m << aIndex) | (m << bIndex));
 
     ASMJIT_X86_CHECK_STATE
+  }
+
+  //! Swap two registers
+  //!
+  //! Xor swap on Vec registers.
+  ASMJIT_INLINE void swapVec(VirtReg* aVReg, VirtReg* bVReg) {
+	  ASMJIT_ASSERT(aVReg != bVReg);
+
+	  ASMJIT_ASSERT(aVReg->getKind() == X86Reg::kKindVec);
+	  ASMJIT_ASSERT(aVReg->getState() == VirtReg::kStateReg);
+	  ASMJIT_ASSERT(aVReg->getPhysId() != Globals::kInvalidRegId);
+
+	  ASMJIT_ASSERT(bVReg->getKind() == X86Reg::kKindVec);
+	  ASMJIT_ASSERT(bVReg->getState() == VirtReg::kStateReg);
+	  ASMJIT_ASSERT(bVReg->getPhysId() != Globals::kInvalidRegId);
+
+	  uint32_t aIndex = aVReg->getPhysId();
+	  uint32_t bIndex = bVReg->getPhysId();
+
+	  emitSwapVec(aVReg, bVReg, aIndex, bIndex, "Swap");
+
+	  aVReg->setPhysId(bIndex);
+	  bVReg->setPhysId(aIndex);
+
+	  _x86State.getListByKind(X86Reg::kKindVec)[aIndex] = bVReg;
+	  _x86State.getListByKind(X86Reg::kKindVec)[bIndex] = aVReg;
+
+	  uint32_t m = aVReg->isModified() ^ bVReg->isModified();
+	  _x86State._modified.xor_(X86Reg::kKindVec, (m << aIndex) | (m << bIndex));
+
+	  ASMJIT_X86_CHECK_STATE
   }
 
   // --------------------------------------------------------------------------

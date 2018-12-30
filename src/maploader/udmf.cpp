@@ -49,6 +49,7 @@
 #include "g_levellocals.h"
 #include "info.h"
 #include "vm.h"
+#include "maploader.h"
 
 //===========================================================================
 //
@@ -121,18 +122,7 @@ enum
 	// namespace for each game
 };
 
-void SetTexture (sector_t *sector, int index, int position, const char *name, FMissingTextureTracker &, bool truncate);
-void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmapsidedef_t *msd, int special, int tag, short *alpha, FMissingTextureTracker &);
-void P_AdjustLine (line_t *ld);
-void P_FinishLoadingLineDef(line_t *ld, int alpha);
-void SpawnMapThing(int index, FMapThing *mt, int position);
-extern bool		ForceNodeBuild;
-extern TArray<FMapThing> MapThingsConverted;
-extern TArray<int>		linemap;
-
-
 #define CHECK_N(f) if (!(namespace_bits&(f))) break;
-
 
 //===========================================================================
 //
@@ -426,6 +416,8 @@ class UDMFParser : public UDMFParserBase
 	bool isTranslated;
 	bool isExtended;
 	bool floordrop;
+	MapLoader *loader;
+	FLevelLocals *Level;
 
 	TArray<line_t> ParsedLines;
 	TArray<side_t> ParsedSides;
@@ -438,10 +430,10 @@ class UDMFParser : public UDMFParserBase
 	FMissingTextureTracker &missingTex;
 
 public:
-	UDMFParser(FMissingTextureTracker &missing)
-		: missingTex(missing)
+	UDMFParser(MapLoader *ld, FMissingTextureTracker &missing)
+		: loader(ld), Level(ld->Level), missingTex(missing)
 	{
-		linemap.Clear();
+		loader->linemap.Clear();
 	}
 
   void ReadUserKey(FUDMFKey &ukey) {
@@ -774,7 +766,7 @@ public:
 					FUDMFKey ukey;
 					ukey.Key = key;
 					ReadUserKey(ukey);
-					MapThingsUserData.Push(ukey);
+					loader->MapThingsUserData.Push(ukey);
 				}
 				break;
 			}
@@ -832,9 +824,9 @@ public:
 		ld->portalindex = UINT_MAX;
 		ld->portaltransferred = UINT_MAX;
 		ld->sidedef[0] = ld->sidedef[1] = NULL;
-		if (level.flags2 & LEVEL2_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
-		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
-		if (level.flags2 & LEVEL2_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
+		if (Level->flags2 & LEVEL2_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
+		if (Level->flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
+		if (Level->flags2 & LEVEL2_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
 
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
@@ -1329,7 +1321,7 @@ public:
 				break;
 
 			case NAME_useowncolors_top:
-				Flag(sd->textures[side_t::top].flags, side_t::part::UseOwnColors, key);
+				Flag(sd->textures[side_t::top].flags, side_t::part::UseOwnSpecialColors, key);
 				break;
 
 			case NAME_uppercolor_top:
@@ -1353,7 +1345,7 @@ public:
 				break;
 
 			case NAME_useowncolors_mid:
-				Flag(sd->textures[side_t::mid].flags, side_t::part::UseOwnColors, key);
+				Flag(sd->textures[side_t::mid].flags, side_t::part::UseOwnSpecialColors, key);
 				break;
 
 			case NAME_uppercolor_mid:
@@ -1377,7 +1369,7 @@ public:
 				break;
 
 			case NAME_useowncolors_bottom:
-				Flag(sd->textures[side_t::bottom].flags, side_t::part::UseOwnColors, key);
+				Flag(sd->textures[side_t::bottom].flags, side_t::part::UseOwnSpecialColors, key);
 				break;
 
 			case NAME_uppercolor_bottom:
@@ -1388,6 +1380,26 @@ public:
 				sd->SetSpecialColor(side_t::bottom, 1, CheckInt(key));
 				break;
 
+			case NAME_coloradd_top:
+				sd->SetAdditiveColor(side_t::top, CheckInt(key));
+				break;
+
+			case NAME_coloradd_mid:
+				sd->SetAdditiveColor(side_t::mid, CheckInt(key));
+				break;
+
+			case NAME_coloradd_bottom:
+				sd->SetAdditiveColor(side_t::bottom, CheckInt(key));
+				break;
+
+			case NAME_useowncoloradd_top:
+				sd->textures[side_t::top].flags |= side_t::part::UseOwnAdditiveColor * CheckBool(key);
+
+			case NAME_useowncoloradd_mid:
+				sd->textures[side_t::mid].flags |= side_t::part::UseOwnAdditiveColor * CheckBool(key);
+
+			case NAME_useowncoloradd_bottom:
+				sd->textures[side_t::bottom].flags |= side_t::part::UseOwnAdditiveColor * CheckBool(key);
 
 			default:
 				break;
@@ -1444,7 +1456,7 @@ public:
 		sec->touching_thinglist = nullptr;		// phares 3/14/98
 		sec->sectorportal_thinglist = nullptr;
 		sec->touching_renderthings = nullptr;
-		sec->seqType = (level.flags & LEVEL_SNDSEQTOTALCTRL) ? 0 : -1;
+		sec->seqType = (Level->flags & LEVEL_SNDSEQTOTALCTRL) ? 0 : -1;
 		sec->nextsec = -1;	//jff 2/26/98 add fields to support locking out
 		sec->prevsec = -1;	// stair retriggering until build completes
 		sec->heightsec = NULL;	// sector used to get floor and ceiling height
@@ -1453,6 +1465,7 @@ public:
 		sec->terrainnum[sector_t::ceiling] = sec->terrainnum[sector_t::floor] = -1;
 		sec->ibocount = -1;
 		memset(sec->SpecialColors, -1, sizeof(sec->SpecialColors));
+		memset(sec->AdditiveColors, 0, sizeof(sec->AdditiveColors));
 		if (floordrop) sec->Flags = SECF_FLOORDROP;
 		// killough 3/7/98: end changes
 
@@ -1478,11 +1491,11 @@ public:
 				continue;
 
 			case NAME_Texturefloor:
-				SetTexture(sec, index, sector_t::floor, CheckString(key), missingTex, false);
+				loader->SetTexture(sec, index, sector_t::floor, CheckString(key), missingTex, false);
 				continue;
 
 			case NAME_Textureceiling:
-				SetTexture(sec, index, sector_t::ceiling, CheckString(key), missingTex, false);
+				loader->SetTexture(sec, index, sector_t::ceiling, CheckString(key), missingTex, false);
 				continue;
 
 			case NAME_Lightlevel:
@@ -1623,6 +1636,22 @@ public:
 
 				case NAME_Color_Sprites:
 					sec->SpecialColors[sector_t::sprites] = CheckInt(key) | 0xff000000;
+					break;
+
+				case NAME_ColorAdd_Floor:
+					sec->AdditiveColors[sector_t::floor] = CheckInt(key) | 0xff000000; // Alpha is used to decide whether or not to use the color
+					break;
+
+				case NAME_ColorAdd_Ceiling:
+					sec->AdditiveColors[sector_t::ceiling] = CheckInt(key) | 0xff000000;
+					break;
+
+				case NAME_ColorAdd_Walls:
+					sec->AdditiveColors[sector_t::walltop] = CheckInt(key) | 0xff000000;
+					break;
+
+				case NAME_ColorAdd_Sprites:
+					sec->AdditiveColors[sector_t::sprites] = CheckInt(key) | 0xff000000;
 					break;
 
 				case NAME_Desaturation:
@@ -1930,13 +1959,13 @@ public:
 			// [RH] Sectors default to white light with the default fade.
 			//		If they are outside (have a sky ceiling), they use the outside fog.
 			sec->Colormap.LightColor = PalEntry(255, 255, 255);
-			if (level.outsidefog != 0xff000000 && (sec->GetTexture(sector_t::ceiling) == skyflatnum || (sec->special & 0xff) == Sector_Outside))
+			if (Level->outsidefog != 0xff000000 && (sec->GetTexture(sector_t::ceiling) == skyflatnum || (sec->special & 0xff) == Sector_Outside))
 			{
-				sec->Colormap.FadeColor.SetRGB(level.outsidefog);
+				sec->Colormap.FadeColor.SetRGB(Level->outsidefog);
 			}
 			else
 			{
-				sec->Colormap.FadeColor.SetRGB(level.fadeto);
+				sec->Colormap.FadeColor.SetRGB(Level->fadeto);
 			}
 		}
 		else
@@ -1944,10 +1973,10 @@ public:
 			sec->Colormap.LightColor.SetRGB(lightcolor);
 			if (fadecolor == ~0u)
 			{
-				if (level.outsidefog != 0xff000000 && (sec->GetTexture(sector_t::ceiling) == skyflatnum || (sec->special & 0xff) == Sector_Outside))
-					fadecolor = level.outsidefog;
+				if (Level->outsidefog != 0xff000000 && (sec->GetTexture(sector_t::ceiling) == skyflatnum || (sec->special & 0xff) == Sector_Outside))
+					fadecolor = Level->outsidefog;
 				else
-					fadecolor = level.fadeto;
+					fadecolor = Level->fadeto;
 			}
 			sec->Colormap.FadeColor.SetRGB(fadecolor);
 			sec->Colormap.Desaturation = clamp(desaturation, 0, 255);
@@ -2013,37 +2042,37 @@ public:
 			intptr_t v1i = intptr_t(ParsedLines[i].v1);
 			intptr_t v2i = intptr_t(ParsedLines[i].v2);
 
-			if ((unsigned)v1i >= level.vertexes.Size() || (unsigned)v2i >= level.vertexes.Size())
+			if ((unsigned)v1i >= Level->vertexes.Size() || (unsigned)v2i >= Level->vertexes.Size())
 			{
-				I_Error ("Line %d has invalid vertices: %zd and/or %zd.\nThe map only contains %u vertices.", i+skipped, v1i, v2i, level.vertexes.Size());
+				I_Error ("Line %d has invalid vertices: %zd and/or %zd.\nThe map only contains %u vertices.", i+skipped, v1i, v2i, Level->vertexes.Size());
 			}
 			else if (v1i == v2i ||
-				(level.vertexes[v1i].fX() == level.vertexes[v2i].fX() && level.vertexes[v1i].fY() == level.vertexes[v2i].fY()))
+				(Level->vertexes[v1i].fX() == Level->vertexes[v2i].fX() && Level->vertexes[v1i].fY() == Level->vertexes[v2i].fY()))
 			{
 				Printf ("Removing 0-length line %d\n", i+skipped);
 				ParsedLines.Delete(i);
-				ForceNodeBuild = true;
+				loader->ForceNodeBuild = true;
 				skipped++;
 			}
 			else
 			{
-				ParsedLines[i].v1 = &level.vertexes[v1i];
-				ParsedLines[i].v2 = &level.vertexes[v2i];
+				ParsedLines[i].v1 = &Level->vertexes[v1i];
+				ParsedLines[i].v2 = &Level->vertexes[v2i];
 
 				if (ParsedLines[i].sidedef[0] != NULL)
 					sidecount++;
 				if (ParsedLines[i].sidedef[1] != NULL)
 					sidecount++;
-				linemap.Push(i+skipped);
+				loader->linemap.Push(i+skipped);
 				i++;
 			}
 		}
 		unsigned numlines = ParsedLines.Size();
-		level.sides.Alloc(sidecount);
-		level.lines.Alloc(numlines);
+		Level->sides.Alloc(sidecount);
+		Level->lines.Alloc(numlines);
 		int line, side;
-		auto lines = &level.lines[0];
-		auto sides = &level.sides[0];
+		auto lines = &Level->lines[0];
+		auto sides = &Level->sides[0];
 
 		for(line = 0, side = 0; line < (int)numlines; line++)
 		{
@@ -2060,10 +2089,10 @@ public:
 					{
 						sides[side] = ParsedSides[mapside];
 						sides[side].linedef = &lines[line];
-						sides[side].sector = &level.sectors[intptr_t(sides[side].sector)];
+						sides[side].sector = &Level->sectors[intptr_t(sides[side].sector)];
 						lines[line].sidedef[sd] = &sides[side];
 
-						P_ProcessSideTextures(!isExtended, &sides[side], sides[side].sector, &ParsedSideTextures[mapside],
+						loader->ProcessSideTextures(!isExtended, &sides[side], sides[side].sector, &ParsedSideTextures[mapside],
 							lines[line].special, lines[line].args[0], &tempalpha[sd], missingTex);
 
 						side++;
@@ -2075,11 +2104,11 @@ public:
 				}
 			}
 
-			P_AdjustLine(&lines[line]);
-			P_FinishLoadingLineDef(&lines[line], tempalpha[0]);
+			lines[line].AdjustLine();
+			loader->FinishLoadingLineDef(&lines[line], tempalpha[0]);
 		}
 
-		const int sideDelta = level.sides.Size() - side;
+		const int sideDelta = Level->sides.Size() - side;
 		assert(sideDelta >= 0);
 
 		if (sideDelta < 0)
@@ -2088,7 +2117,7 @@ public:
 		}
 		else if (sideDelta > 0)
 		{
-			level.sides.Resize(side);
+			Level->sides.Resize(side);
 		}
 	}
 
@@ -2118,7 +2147,7 @@ public:
 				isTranslated = false;
 				break;
 			case NAME_ZDoomTranslated:
-				level.flags2 |= LEVEL2_DUMMYSWITCHES;
+				Level->flags2 |= LEVEL2_DUMMYSWITCHES;
 				namespace_bits = Zdt;
 				break;
 			case NAME_Vavoom:
@@ -2132,19 +2161,19 @@ public:
 			case NAME_Doom:
 				namespace_bits = Dm;
 				P_LoadTranslator("xlat/doom_base.txt");
-				level.flags2 |= LEVEL2_DUMMYSWITCHES;
+				Level->flags2 |= LEVEL2_DUMMYSWITCHES;
 				floordrop = true;
 				break;
 			case NAME_Heretic:
 				namespace_bits = Ht;
 				P_LoadTranslator("xlat/heretic_base.txt");
-				level.flags2 |= LEVEL2_DUMMYSWITCHES;
+				Level->flags2 |= LEVEL2_DUMMYSWITCHES;
 				floordrop = true;
 				break;
 			case NAME_Strife:
 				namespace_bits = St;
 				P_LoadTranslator("xlat/strife_base.txt");
-				level.flags2 |= LEVEL2_DUMMYSWITCHES|LEVEL2_RAILINGHACK;
+				Level->flags2 |= LEVEL2_DUMMYSWITCHES|LEVEL2_RAILINGHACK;
 				floordrop = true;
 				break;
 			default:
@@ -2183,17 +2212,17 @@ public:
 			if (sc.Compare("thing"))
 			{
 				FMapThing th;
-				unsigned userdatastart = MapThingsUserData.Size();
+				unsigned userdatastart = loader->MapThingsUserData.Size();
 				ParseThing(&th);
-				MapThingsConverted.Push(th);
-				if (userdatastart < MapThingsUserData.Size())
+				loader->MapThingsConverted.Push(th);
+				if (userdatastart < loader->MapThingsUserData.Size())
 				{ // User data added
-					MapThingsUserDataIndex[MapThingsConverted.Size()-1] = userdatastart;
+					loader->MapThingsUserDataIndex[loader->MapThingsConverted.Size()-1] = userdatastart;
 					// Mark end of the user data for this map thing
 					FUDMFKey ukey;
 					ukey.Key = NAME_None;
 					ukey = 0;
-					MapThingsUserData.Push(ukey);
+					loader->MapThingsUserData.Push(ukey);
 				}
 			}
 			else if (sc.Compare("linedef"))
@@ -2223,7 +2252,7 @@ public:
 				vertexdata_t vd;
 				ParseVertex(&vt, &vd);
 				ParsedVertices.Push(vt);
-				vertexdatas.Push(vd);
+				loader->vertexdatas.Push(vd);
 			}
 			else
 			{
@@ -2239,16 +2268,16 @@ public:
 		if (BadCoordinates)				I_Error("Map has out of range coordinates");
 
 		// Create the real vertices
-		level.vertexes.Alloc(ParsedVertices.Size());
-		memcpy(&level.vertexes[0], &ParsedVertices[0], level.vertexes.Size() * sizeof(vertex_t));
+		Level->vertexes.Alloc(ParsedVertices.Size());
+		memcpy(&Level->vertexes[0], &ParsedVertices[0], Level->vertexes.Size() * sizeof(vertex_t));
 
 		// Create the real sectors
-		level.sectors.Alloc(ParsedSectors.Size());
-		memcpy(&level.sectors[0], &ParsedSectors[0], level.sectors.Size() * sizeof(sector_t));
-		level.sectors[0].e = new extsector_t[level.sectors.Size()];
-		for(unsigned i = 0; i < level.sectors.Size(); i++)
+		Level->sectors.Alloc(ParsedSectors.Size());
+		memcpy(&Level->sectors[0], &ParsedSectors[0], Level->sectors.Size() * sizeof(sector_t));
+		Level->sectors[0].e = new extsector_t[Level->sectors.Size()];
+		for(unsigned i = 0; i < Level->sectors.Size(); i++)
 		{
-			level.sectors[i].e = &level.sectors[0].e[i];
+			Level->sectors[i].e = &Level->sectors[0].e[i];
 		}
 		// Now create the scrollers.
 		for (auto &scroll : UDMFScrollers)
@@ -2270,9 +2299,9 @@ public:
 	}
 };
 
-void P_ParseTextMap(MapData *map, FMissingTextureTracker &missingtex)
+void MapLoader::ParseTextMap(MapData *map, FMissingTextureTracker &missingtex)
 {
-	UDMFParser parse(missingtex);
+	UDMFParser parse(this, missingtex);
 
 	parse.ParseTextMap(map);
 }

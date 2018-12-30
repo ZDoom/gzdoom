@@ -129,26 +129,27 @@ bool FMD3Model::Load(const char * path, int lumpnum, const char * buffer, int le
 {
 	md3_header_t * hdr = (md3_header_t *)buffer;
 
-	numFrames = LittleLong(hdr->Num_Frames);
+	auto numFrames = LittleLong(hdr->Num_Frames);
+	auto numSurfaces = LittleLong(hdr->Num_Surfaces);
+	
 	numTags = LittleLong(hdr->Num_Tags);
-	numSurfaces = LittleLong(hdr->Num_Surfaces);
 
 	md3_frame_t * frm = (md3_frame_t*)(buffer + LittleLong(hdr->Ofs_Frames));
 
-	frames = new MD3Frame[numFrames];
-	for (int i = 0; i < numFrames; i++)
+	Frames.Resize(numFrames);
+	for (unsigned i = 0; i < numFrames; i++)
 	{
-		strncpy(frames[i].Name, frm[i].Name, 16);
-		for (int j = 0; j < 3; j++) frames[i].origin[j] = frm[i].localorigin[j];
+		strncpy(Frames[i].Name, frm[i].Name, 16);
+		for (int j = 0; j < 3; j++) Frames[i].origin[j] = frm[i].localorigin[j];
 	}
 
 	md3_surface_t * surf = (md3_surface_t*)(buffer + LittleLong(hdr->Ofs_Surfaces));
 
-	surfaces = new MD3Surface[numSurfaces];
+	Surfaces.Resize(numSurfaces);
 
-	for (int i = 0; i < numSurfaces; i++)
+	for (unsigned i = 0; i < numSurfaces; i++)
 	{
-		MD3Surface * s = &surfaces[i];
+		MD3Surface * s = &Surfaces[i];
 		md3_surface_t * ss = surf;
 
 		surf = (md3_surface_t *)(((char*)surf) + LittleLong(surf->Ofs_End));
@@ -159,17 +160,17 @@ bool FMD3Model::Load(const char * path, int lumpnum, const char * buffer, int le
 
 		// copy shaders (skins)
 		md3_shader_t * shader = (md3_shader_t*)(((char*)ss) + LittleLong(ss->Ofs_Shaders));
-		s->skins = new FTextureID[s->numSkins];
+		s->Skins.Resize(s->numSkins);
 
-		for (int i = 0; i < s->numSkins; i++)
+		for (unsigned i = 0; i < s->numSkins; i++)
 		{
 			// [BB] According to the MD3 spec, Name is supposed to include the full path.
 			// ... and since some tools seem to output backslashes, these need to be replaced with forward slashes to work.
 			FixPathSeperator(shader[i].Name);
-			s->skins[i] = LoadSkin("", shader[i].Name);
+			s->Skins[i] = LoadSkin("", shader[i].Name);
 			// [BB] Fall back and check if Name is relative.
-			if (!s->skins[i].isValid())
-				s->skins[i] = LoadSkin(path, shader[i].Name);
+			if (!s->Skins[i].isValid())
+				s->Skins[i] = LoadSkin(path, shader[i].Name);
 		}
 	}
 	mLumpNum = lumpnum;
@@ -189,42 +190,42 @@ void FMD3Model::LoadGeometry()
 	md3_header_t * hdr = (md3_header_t *)buffer;
 	md3_surface_t * surf = (md3_surface_t*)(buffer + LittleLong(hdr->Ofs_Surfaces));
 
-	for(int i=0;i<numSurfaces;i++)
+	for (unsigned i = 0; i < Surfaces.Size(); i++)
 	{
-		MD3Surface * s = &surfaces[i];
+		MD3Surface * s = &Surfaces[i];
 		md3_surface_t * ss = surf;
 
 		surf = (md3_surface_t *)(((char*)surf) + LittleLong(surf->Ofs_End));
 
 		// copy triangle indices
-		md3_triangle_t * tris = (md3_triangle_t*)(((char*)ss)+LittleLong(ss->Ofs_Triangles));
-		s->tris = new MD3Triangle[s->numTriangles];
+		md3_triangle_t * tris = (md3_triangle_t*)(((char*)ss) + LittleLong(ss->Ofs_Triangles));
+		s->Tris.Resize(s->numTriangles);
 
-		for(int i=0;i<s->numTriangles;i++) for (int j=0;j<3;j++)
+		for (unsigned i = 0; i < s->numTriangles; i++) for (int j = 0; j < 3; j++)
 		{
-			s->tris[i].VertIndex[j]=LittleLong(tris[i].vt_index[j]);
+			s->Tris[i].VertIndex[j] = LittleLong(tris[i].vt_index[j]);
 		}
 
 		// Load texture coordinates
-		md3_texcoord_t * tc = (md3_texcoord_t*)(((char*)ss)+LittleLong(ss->Ofs_Texcoord));
-		s->texcoords = new MD3TexCoord[s->numVertices];
+		md3_texcoord_t * tc = (md3_texcoord_t*)(((char*)ss) + LittleLong(ss->Ofs_Texcoord));
+		s->Texcoords.Resize(s->numVertices);
 
-		for(int i=0;i<s->numVertices;i++)
+		for (unsigned i = 0; i < s->numVertices; i++)
 		{
-			s->texcoords[i].s = tc[i].s;
-			s->texcoords[i].t = tc[i].t;
+			s->Texcoords[i].s = tc[i].s;
+			s->Texcoords[i].t = tc[i].t;
 		}
 
 		// Load vertices and texture coordinates
-		md3_vertex_t * vt = (md3_vertex_t*)(((char*)ss)+LittleLong(ss->Ofs_XYZNormal));
-		s->vertices = new MD3Vertex[s->numVertices * numFrames];
+		md3_vertex_t * vt = (md3_vertex_t*)(((char*)ss) + LittleLong(ss->Ofs_XYZNormal));
+		s->Vertices.Resize(s->numVertices * Frames.Size());
 
-		for(int i=0;i<s->numVertices * numFrames;i++)
+		for (unsigned i = 0; i < s->numVertices * Frames.Size(); i++)
 		{
-			s->vertices[i].x = LittleShort(vt[i].x)/64.f;
-			s->vertices[i].y = LittleShort(vt[i].y)/64.f;
-			s->vertices[i].z = LittleShort(vt[i].z)/64.f;
-			UnpackVector( LittleShort(vt[i].n), s->vertices[i].nx, s->vertices[i].ny, s->vertices[i].nz);
+			s->Vertices[i].x = LittleShort(vt[i].x) / 64.f;
+			s->Vertices[i].y = LittleShort(vt[i].y) / 64.f;
+			s->Vertices[i].z = LittleShort(vt[i].z) / 64.f;
+			UnpackVector(LittleShort(vt[i].n), s->Vertices[i].nx, s->Vertices[i].ny, s->Vertices[i].nz);
 		}
 	}
 }
@@ -244,14 +245,14 @@ void FMD3Model::BuildVertexBuffer(FModelRenderer *renderer)
 		unsigned int vbufsize = 0;
 		unsigned int ibufsize = 0;
 
-		for (int i = 0; i < numSurfaces; i++)
+		for (unsigned i = 0; i < Surfaces.Size(); i++)
 		{
-			MD3Surface * surf = &surfaces[i];
-			vbufsize += numFrames * surf->numVertices;
+			MD3Surface * surf = &Surfaces[i];
+			vbufsize += Frames.Size() * surf->numVertices;
 			ibufsize += 3 * surf->numTriangles;
 		}
 
-		auto vbuf = renderer->CreateVertexBuffer(true, numFrames == 1);
+		auto vbuf = renderer->CreateVertexBuffer(true, Frames.Size() == 1);
 		SetVertexBuffer(renderer, vbuf);
 
 		FModelVertex *vertptr = vbuf->LockVertexBuffer(vbufsize);
@@ -261,28 +262,28 @@ void FMD3Model::BuildVertexBuffer(FModelRenderer *renderer)
 
 		unsigned int vindex = 0, iindex = 0;
 
-		for (int i = 0; i < numSurfaces; i++)
+		for (unsigned i = 0; i < Surfaces.Size(); i++)
 		{
-			MD3Surface * surf = &surfaces[i];
+			MD3Surface * surf = &Surfaces[i];
 
 			surf->vindex = vindex;
 			surf->iindex = iindex;
-			for (int j = 0; j < numFrames * surf->numVertices; j++)
+			for (unsigned j = 0; j < Frames.Size() * surf->numVertices; j++)
 			{
-				MD3Vertex* vert = surf->vertices + j;
+				MD3Vertex* vert = &surf->Vertices[j];
 
 				FModelVertex *bvert = &vertptr[vindex++];
 
 				int tc = j % surf->numVertices;
-				bvert->Set(vert->x, vert->z, vert->y, surf->texcoords[tc].s, surf->texcoords[tc].t);
+				bvert->Set(vert->x, vert->z, vert->y, surf->Texcoords[tc].s, surf->Texcoords[tc].t);
 				bvert->SetNormal(vert->nx, vert->nz, vert->ny);
 			}
 
-			for (int k = 0; k < surf->numTriangles; k++)
+			for (unsigned k = 0; k < surf->numTriangles; k++)
 			{
 				for (int l = 0; l < 3; l++)
 				{
-					indxptr[iindex++] = surf->tris[k].VertIndex[l];
+					indxptr[iindex++] = surf->Tris[k].VertIndex[l];
 				}
 			}
 			surf->UnloadGeometry();
@@ -301,19 +302,19 @@ void FMD3Model::BuildVertexBuffer(FModelRenderer *renderer)
 
 void FMD3Model::AddSkins(uint8_t *hitlist)
 {
-	for (int i = 0; i < numSurfaces; i++)
+	for (unsigned i = 0; i < Surfaces.Size(); i++)
 	{
 		if (curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].isValid())
 		{
 			hitlist[curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].GetIndex()] |= FTextureManager::HIT_Flat;
 		}
 
-		MD3Surface * surf = &surfaces[i];
-		for (int j = 0; j < surf->numSkins; j++)
+		MD3Surface * surf = &Surfaces[i];
+		for (unsigned j = 0; j < surf->numSkins; j++)
 		{
-			if (surf->skins[j].isValid())
+			if (surf->Skins[j].isValid())
 			{
-				hitlist[surf->skins[j].GetIndex()] |= FTextureManager::HIT_Flat;
+				hitlist[surf->Skins[j].GetIndex()] |= FTextureManager::HIT_Flat;
 			}
 		}
 	}
@@ -327,9 +328,9 @@ void FMD3Model::AddSkins(uint8_t *hitlist)
 
 int FMD3Model::FindFrame(const char * name)
 {
-	for (int i=0;i<numFrames;i++)
+	for (unsigned i = 0; i < Frames.Size(); i++)
 	{
-		if (!stricmp(name, frames[i].Name)) return i;
+		if (!stricmp(name, Frames[i].Name)) return i;
 	}
 	return -1;
 }
@@ -342,12 +343,12 @@ int FMD3Model::FindFrame(const char * name)
 
 void FMD3Model::RenderFrame(FModelRenderer *renderer, FTexture * skin, int frameno, int frameno2, double inter, int translation)
 {
-	if (frameno>=numFrames || frameno2>=numFrames) return;
+	if ((unsigned)frameno >= Frames.Size() || (unsigned)frameno2 >= Frames.Size()) return;
 
 	renderer->SetInterpolation(inter);
-	for(int i=0;i<numSurfaces;i++)
+	for (unsigned i = 0; i < Surfaces.Size(); i++)
 	{
-		MD3Surface * surf = &surfaces[i];
+		MD3Surface * surf = &Surfaces[i];
 
 		// [BB] In case no skin is specified via MODELDEF, check if the MD3 has a skin for the current surface.
 		// Note: Each surface may have a different skin.
@@ -356,11 +357,11 @@ void FMD3Model::RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame
 		{
 			if (curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].isValid())
 			{
-				surfaceSkin = TexMan(curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i]);
+				surfaceSkin = TexMan.GetTexture(curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i], true);
 			}
-			else if(surf->numSkins > 0 && surf->skins[0].isValid())
+			else if (surf->numSkins > 0 && surf->Skins[0].isValid())
 			{
-				surfaceSkin = TexMan(surf->skins[0]);
+				surfaceSkin = TexMan.GetTexture(surf->Skins[0], true);
 			}
 
 			if (!surfaceSkin)
@@ -376,16 +377,3 @@ void FMD3Model::RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame
 	renderer->SetInterpolation(0.f);
 }
 
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-FMD3Model::~FMD3Model()
-{
-	if (frames) delete [] frames;
-	if (surfaces) delete [] surfaces;
-	frames = nullptr;
-	surfaces = nullptr;
-}

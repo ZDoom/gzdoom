@@ -117,7 +117,7 @@ FGLRenderer::~FGLRenderer()
 {
 	FlushModels();
 	AActor::DeleteAllAttachedLights();
-	FMaterial::FlushAll();
+	TexMan.FlushAll();
 	if (mShaderManager != nullptr) delete mShaderManager;
 	if (mSamplerManager != nullptr) delete mSamplerManager;
 	if (mFBID != 0) glDeleteFramebuffers(1, &mFBID);
@@ -254,7 +254,10 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 		bool saved_niv = NoInterpolateView;
 		NoInterpolateView = false;
 		// prepare all camera textures that have been used in the last frame
-		FCanvasTextureInfo::UpdateAll();
+		level.canvasTextureInfo.UpdateAll([&](AActor *camera, FCanvasTexture *camtex, double fov)
+		{
+			RenderTextureView(camtex, camera, fov);
+		});
 		NoInterpolateView = saved_niv;
 
 
@@ -285,7 +288,7 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 
 void FGLRenderer::BindToFrameBuffer(FMaterial *mat)
 {
-	auto BaseLayer = static_cast<FHardwareTexture*>(mat->GetLayer(0));
+	auto BaseLayer = static_cast<FHardwareTexture*>(mat->GetLayer(0, 0));
 
 	if (BaseLayer == nullptr)
 	{
@@ -324,7 +327,8 @@ void FGLRenderer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, doub
 
 	EndOffscreen();
 
-	tex->SetUpdated();
+	tex->SetUpdated(true);
+	static_cast<OpenGLFrameBuffer*>(screen)->camtexcount++;
 }
 
 //===========================================================================

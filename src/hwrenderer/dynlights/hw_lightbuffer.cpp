@@ -64,7 +64,6 @@ FLightBuffer::FLightBuffer()
 	mBuffer->SetData(mByteSize, nullptr, false);
 
 	Clear();
-	mLastMappedIndex = UINT_MAX;
 }
 
 FLightBuffer::~FLightBuffer()
@@ -75,6 +74,7 @@ FLightBuffer::~FLightBuffer()
 void FLightBuffer::Clear()
 {
 	mIndex = 0;
+	mLastMappedIndex = UINT_MAX;
 }
 
 int FLightBuffer::UploadLights(FDynLightData &data)

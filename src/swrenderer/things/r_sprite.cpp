@@ -72,8 +72,9 @@ EXTERN_CVAR(Bool, gl_light_sprites)
 
 namespace swrenderer
 {
-	void RenderSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int spriteshade, bool foggy, FDynamicColormap *basecolormap)
+	void RenderSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FTexture *ttex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int lightlevel, bool foggy, FDynamicColormap *basecolormap)
 	{
+		FSoftwareTexture *tex = ttex->GetSoftwareTexture();
 		// transform the origin point
 		double tr_x = pos.X - thread->Viewport->viewpoint.Pos.X;
 		double tr_y = pos.Y - thread->Viewport->viewpoint.Pos.Y;
@@ -151,7 +152,7 @@ namespace swrenderer
 			renderflags ^= RF_XFLIP;
 
 		// calculate edges of the shape
-		const double thingxscalemul = spriteScale.X / tex->Scale.X;
+		const double thingxscalemul = spriteScale.X / tex->GetScale().X;
 
 		tx -= ((renderflags & RF_XFLIP) ? (tex->GetWidth() - tex->GetLeftOffsetSW() - 1) : tex->GetLeftOffsetSW()) * thingxscalemul;
 		double dtx1 = tx * xscale;
@@ -168,10 +169,10 @@ namespace swrenderer
 		if ((x2 < renderportal->WindowLeft || x2 <= x1))
 			return;
 
-		xscale = spriteScale.X * xscale / tex->Scale.X;
+		xscale = spriteScale.X * xscale / tex->GetScale().X;
 		fixed_t iscale = (fixed_t)(FRACUNIT / xscale); // Round towards zero to avoid wrapping in edge cases
 
-		double yscale = spriteScale.Y / tex->Scale.Y;
+		double yscale = spriteScale.Y / tex->GetScale().Y;
 
 		// store information in a vissprite
 		RenderSprite *vis = thread->FrameMemory->NewObject<RenderSprite>();
@@ -299,7 +300,7 @@ namespace swrenderer
 			vis->dynlightcolor = 0;
 		}
 
-		vis->Light.SetColormap(thread->Light->SpriteGlobVis(foggy) / MAX(tz, MINZ), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
+		vis->Light.SetColormap(thread, tz, lightlevel, foggy, basecolormap, fullbright, invertcolormap, fadeToBlack, false, false);
 
 		thread->SpriteList->Push(vis);
 	}
@@ -309,7 +310,7 @@ namespace swrenderer
 		auto vis = this;
 
 		fixed_t 		frac;
-		FTexture		*tex;
+		FSoftwareTexture		*tex;
 		int				x2;
 		fixed_t			xiscale;
 
@@ -322,12 +323,8 @@ namespace swrenderer
 		}
 
 		SpriteDrawerArgs drawerargs;
-		drawerargs.SetLight(vis->Light.BaseColormap, 0, vis->Light.ColormapNum << FRACBITS);
 		drawerargs.SetDynamicLight(dynlightcolor);
-
-		FDynamicColormap *basecolormap = static_cast<FDynamicColormap*>(vis->Light.BaseColormap);
-
-		bool visible = drawerargs.SetStyle(thread->Viewport.get(), vis->RenderStyle, vis->Alpha, vis->Translation, vis->FillColor, basecolormap, vis->Light.ColormapNum << FRACBITS);
+		bool visible = drawerargs.SetStyle(thread->Viewport.get(), vis->RenderStyle, vis->Alpha, vis->Translation, vis->FillColor, vis->Light);
 
 		if (visible)
 		{

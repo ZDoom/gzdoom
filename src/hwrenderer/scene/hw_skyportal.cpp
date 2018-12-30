@@ -164,10 +164,10 @@ void HWSkyPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 	auto &vp = di->Viewpoint;
 
 	// We have no use for Doom lighting special handling here, so disable it for this function.
-	int oldlightmode = ::level.lightmode;
-	if (::level.lightmode == 8)
+	auto oldlightmode = ::level.lightmode;
+	if (::level.isSoftwareLighting())
 	{
-		::level.lightmode = 2;
+		::level.SetFallbackLightMode();
 		state.SetSoftLightLevel(-1);
 	}
 
@@ -181,7 +181,7 @@ void HWSkyPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 	di->SetupView(state, 0, 0, 0, !!(mState->MirrorFlag & 1), !!(mState->PlaneMirrorFlag & 1));
 
 	state.SetVertexBuffer(vertexBuffer);
-	if (origin->texture[0] && origin->texture[0]->tex->bSkybox)
+	if (origin->texture[0] && origin->texture[0]->tex->isSkybox())
 	{
 		RenderBox(di, state, origin->skytexno1, origin->texture[0], origin->x_offset[0], origin->sky2);
 	}

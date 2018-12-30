@@ -31,15 +31,10 @@ namespace swrenderer
 		float light, lightstep;
 		float iscale, iscalestep;
 		short x1, x2; // Same as sx1 and sx2, but clipped to the drawseg
-		short sx1, sx2; // left, right of parent seg on screen
-		float sz1, sz2; // z for left, right of parent seg on screen
-		float siz1, siz2; // 1/z for left, right of parent seg on screen
-		float cx, cy, cdx, cdy;
+		FWallCoords WallC;
 		float yscale;
 		uint8_t silhouette = 0; // 0=none, 1=bottom, 2=top, 3=both
 		bool bFogBoundary = false;
-		int shade = 0;
-		bool foggy = false;
 
 		// Pointers to lists for sprite clipping, all three adjusted so [x1] is first value.
 		short *sprtopclip = nullptr;

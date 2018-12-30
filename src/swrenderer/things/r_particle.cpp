@@ -69,7 +69,7 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void RenderParticle::Project(RenderThread *thread, particle_t *particle, const sector_t *sector, int shade, WaterFakeSide fakeside, bool foggy)
+	void RenderParticle::Project(RenderThread *thread, particle_t *particle, const sector_t *sector, int lightlevel, WaterFakeSide fakeside, bool foggy)
 	{
 		double 				tr_x, tr_y;
 		double 				tx, ty;
@@ -220,7 +220,7 @@ namespace swrenderer
 		vis->floorclip = 0;
 		vis->foggy = foggy;
 
-		vis->Light.SetColormap(tiz * thread->Light->ParticleGlobVis(foggy), shade, map, particle->bright != 0, false, false);
+		vis->Light.SetColormap(thread, tz, lightlevel, foggy, map, particle->bright != 0, false, false, false, true);
 
 		thread->SpriteList->Push(vis);
 	}
@@ -291,7 +291,9 @@ namespace swrenderer
 			{
 				continue;
 			}
-			if ((ds->siz2 - ds->siz1) * ((x2 + x1) / 2 - ds->sx1) / (ds->sx2 - ds->sx1) + ds->siz1 < idepth)
+			float siz1 = 1 / ds->WallC.sz1;
+			float siz2 = 1 / ds->WallC.sz2;
+			if ((siz2 - siz1) * ((x2 + x1) / 2 - ds->WallC.sx1) / (ds->WallC.sx2 - ds->WallC.sx1) + siz1 < idepth)
 			{
 				// [ZZ] only draw stuff that's inside the same portal as the particle, other portals will care for themselves
 				if (ds->CurrentPortalUniq == CurrentPortalUniq)

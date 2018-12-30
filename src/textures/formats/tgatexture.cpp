@@ -39,6 +39,8 @@
 #include "templates.h"
 #include "bitmap.h"
 #include "v_video.h"
+#include "imagehelpers.h"
+#include "image.h"
 
 
 //==========================================================================
@@ -74,18 +76,16 @@ struct TGAHeader
 //
 //==========================================================================
 
-class FTGATexture : public FWorldTexture
+class FTGATexture : public FImageSource
 {
 public:
 	FTGATexture (int lumpnum, TGAHeader *);
 
-	FTextureFormat GetFormat () override;
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override;
-	bool UseBasePalette() override;
+	int CopyPixels(FBitmap *bmp, int conversion) override;
 
 protected:
 	void ReadCompressed(FileReader &lump, uint8_t * buffer, int bytesperpixel);
-	uint8_t *MakeTexture (FRenderStyle style) override;
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
 };
 
 //==========================================================================
@@ -94,7 +94,7 @@ protected:
 //
 //==========================================================================
 
-FTexture *TGATexture_TryCreate(FileReader & file, int lumpnum)
+FImageSource *TGAImage_TryCreate(FileReader & file, int lumpnum)
 {
 	TGAHeader hdr;
 
@@ -129,25 +129,12 @@ FTexture *TGATexture_TryCreate(FileReader & file, int lumpnum)
 //==========================================================================
 
 FTGATexture::FTGATexture (int lumpnum, TGAHeader * hdr)
-: FWorldTexture(NULL, lumpnum)
+: FImageSource(lumpnum)
 {
-	Wads.GetLumpName (Name, lumpnum);
 	Width = hdr->width;
 	Height = hdr->height;
 	// Alpha channel is used only for 32 bit RGBA and paletted images with RGBA palettes.
 	bMasked = (hdr->img_desc&15)==8 && (hdr->bpp==32 || (hdr->img_type==1 && hdr->cm_size==32));
-	CalcBitSize();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FTextureFormat FTGATexture::GetFormat()
-{
-	return TEX_RGB;
 }
 
 //==========================================================================
@@ -192,17 +179,15 @@ void FTGATexture::ReadCompressed(FileReader &lump, uint8_t * buffer, int bytespe
 //
 //==========================================================================
 
-uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
+TArray<uint8_t> FTGATexture::CreatePalettedPixels(int conversion)
 {
 	uint8_t PaletteMap[256];
 	auto lump = Wads.OpenLumpReader (SourceLump);
 	TGAHeader hdr;
 	uint16_t w;
 	uint8_t r,g,b,a;
-	uint8_t * buffer;
-	bool alphatex = !!(style.Flags & STYLEF_RedIsAlpha);
 
-	auto Pixels = new uint8_t[Width*Height];
+	TArray<uint8_t> Pixels(Width*Height, true);
 	lump.Read(&hdr, sizeof(hdr));
 	lump.Seek(hdr.id_len, FileReader::SeekCur);
 	
@@ -246,23 +231,23 @@ uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
 				r=g=b=a=0;
 				break;
 			}
-			PaletteMap[i] = RGBToPalettePrecise(alphatex, r, g, b, a);
+			PaletteMap[i] = ImageHelpers::RGBToPalettePrecise(conversion == luminance, r, g, b, a);
 		}
     }
     
     int Size = Width * Height * (hdr.bpp>>3);
-   	buffer = new uint8_t[Size];
+	TArray<uint8_t> buffer(Size, true);
    	
     if (hdr.img_type < 4)	// uncompressed
     {
-    	lump.Read(buffer, Size);
+    	lump.Read(buffer.Data(), Size);
     }
     else				// compressed
     {
-    	ReadCompressed(lump, buffer, hdr.bpp>>3);
+    	ReadCompressed(lump, buffer.Data(), hdr.bpp>>3);
     }
     
-	uint8_t * ptr = buffer;
+	uint8_t * ptr = buffer.Data();
 	int step_x = (hdr.bpp>>3);
 	int Pitch = Width * step_x;
 
@@ -305,7 +290,7 @@ uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
 				for(int x=0;x<Width;x++)
 				{
 					int v = LittleShort(*p);
-					Pixels[x*Height + y] = RGBToPalette(alphatex, ((v >> 10) & 0x1f) * 8, ((v >> 5) & 0x1f) * 8, (v & 0x1f) * 8);
+					Pixels[x*Height + y] = ImageHelpers::RGBToPalette(conversion == luminance, ((v >> 10) & 0x1f) * 8, ((v >> 5) & 0x1f) * 8, (v & 0x1f) * 8);
 					p+=step_x;
 				}
 			}
@@ -317,7 +302,7 @@ uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
 				uint8_t * p = ptr + y * Pitch;
 				for(int x=0;x<Width;x++)
 				{
-					Pixels[x*Height + y] = RGBToPalette(alphatex, p[2], p[1], p[0]);
+					Pixels[x*Height + y] = ImageHelpers::RGBToPalette(conversion == luminance, p[2], p[1], p[0]);
 					p+=step_x;
 				}
 			}
@@ -331,7 +316,7 @@ uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
 					uint8_t * p = ptr + y * Pitch;
 					for(int x=0;x<Width;x++)
 					{
-						Pixels[x*Height + y] = RGBToPalette(alphatex, p[2], p[1], p[0]);
+						Pixels[x*Height + y] = ImageHelpers::RGBToPalette(conversion == luminance, p[2], p[1], p[0]);
 						p+=step_x;
 					}
 				}
@@ -343,7 +328,7 @@ uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
 					uint8_t * p = ptr + y * Pitch;
 					for(int x=0;x<Width;x++)
 					{
-						Pixels[x*Height + y] = RGBToPalette(alphatex, p[2], p[1], p[0], p[3]);
+						Pixels[x*Height + y] = ImageHelpers::RGBToPalette(conversion == luminance, p[2], p[1], p[0], p[3]);
 						p+=step_x;
 					}
 				}
@@ -357,7 +342,7 @@ uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
 	
 	case 3:	// Grayscale
 	{
-		auto remap = GetRemap(style, true);
+		auto remap = ImageHelpers::GetRemap(conversion == luminance, true);
 		switch (hdr.bpp)
 		{
 		case 8:
@@ -392,24 +377,22 @@ uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
 	default:
 		break;
     }
-	delete [] buffer;
 	return Pixels;
 }	
 
 //===========================================================================
 //
-// FTGATexture::CopyTrueColorPixels
+// FTGATexture::CopyPixels
 //
 //===========================================================================
 
-int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FTGATexture::CopyPixels(FBitmap *bmp, int conversion)
 {
 	PalEntry pe[256];
 	auto lump = Wads.OpenLumpReader (SourceLump);
 	TGAHeader hdr;
 	uint16_t w;
 	uint8_t r,g,b,a;
-	uint8_t * sbuffer;
 	int transval = 0;
 
 	lump.Read(&hdr, sizeof(hdr));
@@ -461,18 +444,18 @@ int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
     }
     
     int Size = Width * Height * (hdr.bpp>>3);
-   	sbuffer = new uint8_t[Size];
+	TArray<uint8_t> sbuffer(Size);
    	
     if (hdr.img_type < 4)	// uncompressed
     {
-    	lump.Read(sbuffer, Size);
+    	lump.Read(sbuffer.Data(), Size);
     }
     else				// compressed
     {
-    	ReadCompressed(lump, sbuffer, hdr.bpp>>3);
+    	ReadCompressed(lump, sbuffer.Data(), hdr.bpp>>3);
     }
     
-	uint8_t * ptr = sbuffer;
+	uint8_t * ptr = sbuffer.Data();
 	int step_x = (hdr.bpp>>3);
 	int Pitch = Width * step_x;
 
@@ -492,7 +475,7 @@ int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
     switch (hdr.img_type & 7)
     {
 	case 1:	// paletted
-		bmp->CopyPixelData(x, y, ptr, Width, Height, step_x, Pitch, rotate, pe, inf);
+		bmp->CopyPixelData(0, 0, ptr, Width, Height, step_x, Pitch, 0, pe);
 		break;
 
 	case 2:	// RGB
@@ -500,21 +483,21 @@ int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 		{
 		case 15:
 		case 16:
-			bmp->CopyPixelDataRGB(x, y, ptr, Width, Height, step_x, Pitch, rotate, CF_RGB555, inf);
+			bmp->CopyPixelDataRGB(0, 0, ptr, Width, Height, step_x, Pitch, 0, CF_RGB555);
 			break;
 		
 		case 24:
-			bmp->CopyPixelDataRGB(x, y, ptr, Width, Height, step_x, Pitch, rotate, CF_BGR, inf);
+			bmp->CopyPixelDataRGB(0, 0, ptr, Width, Height, step_x, Pitch, 0, CF_BGR);
 			break;
 		
 		case 32:
 			if ((hdr.img_desc&15)!=8)	// 32 bits without a valid alpha channel
 			{
-				bmp->CopyPixelDataRGB(x, y, ptr, Width, Height, step_x, Pitch, rotate, CF_BGR, inf);
+				bmp->CopyPixelDataRGB(0, 0, ptr, Width, Height, step_x, Pitch, 0, CF_BGR);
 			}
 			else
 			{
-				bmp->CopyPixelDataRGB(x, y, ptr, Width, Height, step_x, Pitch, rotate, CF_BGRA, inf);
+				bmp->CopyPixelDataRGB(0, 0, ptr, Width, Height, step_x, Pitch, 9, CF_BGRA);
 				transval = -1;
 			}
 			break;
@@ -529,11 +512,11 @@ int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 		{
 		case 8:
 			for(int i=0;i<256;i++) pe[i]=PalEntry(255,i,i,i);	// gray map
-			bmp->CopyPixelData(x, y, ptr, Width, Height, step_x, Pitch, rotate, pe, inf);
+			bmp->CopyPixelData(0, 0, ptr, Width, Height, step_x, Pitch, 0, pe);
 			break;
 		
 		case 16:
-			bmp->CopyPixelDataRGB(x, y, ptr, Width, Height, step_x, Pitch, rotate, CF_I16, inf);
+			bmp->CopyPixelDataRGB(0, 0, ptr, Width, Height, step_x, Pitch, 0, CF_I16);
 			break;
 		
 		default:
@@ -544,16 +527,5 @@ int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 	default:
 		break;
     }
-	delete [] sbuffer;
 	return transval;
 }	
-
-//===========================================================================
-//
-//
-//===========================================================================
-
-bool FTGATexture::UseBasePalette() 
-{ 
-	return false; 
-}

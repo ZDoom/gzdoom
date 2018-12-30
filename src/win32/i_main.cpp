@@ -71,6 +71,7 @@
 #include "r_utility.h"
 #include "g_levellocals.h"
 #include "s_sound.h"
+#include "vm.h"
 
 #include "stats.h"
 #include "st_start.h"
@@ -1057,6 +1058,11 @@ void DoMain (HINSTANCE hInstance)
 		auto msg = error.what();
 		if (strcmp(msg, "NoRunExit"))
 		{
+			if (CVMAbortException::stacktrace.IsNotEmpty())
+			{
+				Printf("%s", CVMAbortException::stacktrace.GetChars());
+			}
+
 			if (!batchrun)
 			{
 				ShowErrorPane(msg);
@@ -1337,7 +1343,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	_CrtSetDbgFlag (_CrtSetDbgFlag(0) | _CRTDBG_LEAK_CHECK_DF);
 
 	// Use this to break at a specific allocation number.
-	//_crtBreakAlloc = 177312;
+	//_crtBreakAlloc = 227524;
 #endif
 
 	DoMain (hInstance);

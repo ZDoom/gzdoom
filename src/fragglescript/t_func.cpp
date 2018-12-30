@@ -887,7 +887,7 @@ void FParser::SF_Spawn(void)
 		{
 			t_return.value.mobj->Angles.Yaw = angle;
 
-			if (!DFraggleThinker::ActiveThinker->nocheckposition)
+			if (!level.info->fs_nocheckposition)
 			{
 				if (!P_TestMobjLocation(t_return.value.mobj))
 				{
@@ -1892,7 +1892,7 @@ void FParser::SF_FloorTexture(void)
 		if(t_argc > 1)
 		{
 			int i = -1;
-			FTextureID picnum = TexMan.GetTexture(t_argv[1].string, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
+			FTextureID picnum = TexMan.GetTextureID(t_argv[1].string, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
 			
 			// set all sectors with tag
 			FSSectorTagIterator itr(tagnum);
@@ -1903,8 +1903,8 @@ void FParser::SF_FloorTexture(void)
 		}
 		
 		t_return.type = svt_string;
-		FTexture * tex = TexMan[sector->GetTexture(sector_t::floor)];
-		t_return.string = tex? tex->Name : "";
+		FTexture * tex = TexMan.GetTexture(sector->GetTexture(sector_t::floor));
+		t_return.string = tex? tex->GetName() : "";
 	}
 }
 
@@ -1982,7 +1982,7 @@ void FParser::SF_CeilingTexture(void)
 		if(t_argc > 1)
 		{
 			int i = -1;
-			FTextureID picnum = TexMan.GetTexture(t_argv[1].string, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
+			FTextureID picnum = TexMan.GetTextureID(t_argv[1].string, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
 			
 			// set all sectors with tag
 			FSSectorTagIterator itr(tagnum);
@@ -1993,8 +1993,8 @@ void FParser::SF_CeilingTexture(void)
 		}
 		
 		t_return.type = svt_string;
-		FTexture * tex = TexMan[sector->GetTexture(sector_t::ceiling)];
-		t_return.string = tex? tex->Name : "";
+		FTexture * tex = TexMan.GetTexture(sector->GetTexture(sector_t::ceiling));
+		t_return.string = tex? tex->GetName() : "";
 	}
 }
 
@@ -2235,7 +2235,7 @@ void FParser::SF_SetLineTexture(void)
 			position=3-position;
 			
 			texture = stringvalue(t_argv[3]);
-			texturenum = TexMan.GetTexture(texture, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
+			texturenum = TexMan.GetTextureID(texture, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
 			
 			FLineIdIterator itr(tag);
 			while ((i = itr.Next()) >= 0)
@@ -2252,7 +2252,7 @@ void FParser::SF_SetLineTexture(void)
 		}
 		else // and an improved legacy version
 		{ 
-			FTextureID picnum = TexMan.GetTexture(t_argv[1].string, ETextureType::Wall, FTextureManager::TEXMAN_Overridable); 
+			FTextureID picnum = TexMan.GetTextureID(t_argv[1].string, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
 			side = !!intvalue(t_argv[2]); 
 			int sections = intvalue(t_argv[3]); 
 			
@@ -2453,7 +2453,7 @@ void FParser::SF_PlayerKeys(void)
 		else
 		{
 			givetake = intvalue(t_argv[2]);
-			ScriptUtil::Exec(givetake?NAME_GiveInventory : NAME_TakeInventory, players[playernum].mo, keyname.GetIndex(), 1);
+			ScriptUtil::Exec(givetake?NAME_GiveInventory : NAME_TakeInventory, ScriptUtil::Pointer, players[playernum].mo, ScriptUtil::Int, keyname.GetIndex(), ScriptUtil::Int, 1, ScriptUtil::End);
 			t_return.type = svt_int;
 			t_return.value.i = 0;
 		}
@@ -2648,7 +2648,7 @@ void FParser::SF_GiveInventory(void)
 
 		if(t_argc == 2) count=1;
 		else count=intvalue(t_argv[2]);
-		ScriptUtil::Exec(NAME_GiveInventory, ScriptUtil::Pointer, players[playernum].mo, FName(stringvalue(t_argv[1])).GetIndex(), count);
+		ScriptUtil::Exec(NAME_GiveInventory, ScriptUtil::Pointer, players[playernum].mo, ScriptUtil::Int, FName(stringvalue(t_argv[1])).GetIndex(), ScriptUtil::Int, count, ScriptUtil::End);
 		t_return.type = svt_int;
 		t_return.value.i = 0;
 	}
@@ -2671,7 +2671,7 @@ void FParser::SF_TakeInventory(void)
 
 		if(t_argc == 2) count=32767;
 		else count=intvalue(t_argv[2]);
-		ScriptUtil::Exec(NAME_TakeInventory, ScriptUtil::Pointer, players[playernum].mo, FName(stringvalue(t_argv[1])).GetIndex(), count);
+		ScriptUtil::Exec(NAME_TakeInventory, ScriptUtil::Pointer, players[playernum].mo, ScriptUtil::Int, FName(stringvalue(t_argv[1])).GetIndex(), ScriptUtil::Int, count, ScriptUtil::End);
 		t_return.type = svt_int;
 		t_return.value.i = 0;
 	}
@@ -3724,19 +3724,7 @@ void FParser::SF_SetColor(void)
 		FSSectorTagIterator itr(tagnum);
 		while ((i = itr.Next()) >= 0)
 		{
-			if (!DFraggleThinker::ActiveThinker->setcolormaterial)
-			{
-				level.sectors[i].SetColor(color, 0);
-			}
-			else
-			{
-				// little hack for testing the D64 color stuff.
-				for (int j = 0; j < 4; j++) level.sectors[i].SetSpecialColor(j, color);
-				// simulates 'nocoloredspritelighting' settings.
-				int v = (color.r + color.g + color.b) / 3;
-				v = (255 + v + v) / 3;
-				level.sectors[i].SetSpecialColor(sector_t::sprites, v, v, v);
-			}
+			level.sectors[i].SetColor(color, 0);
 		}
 	}
 }
@@ -4058,16 +4046,14 @@ void FParser::SF_ScriptRunning()
 //
 //==========================================================================
 
-static int zoom=1;	// Dummy - no longer needed!
-
-void init_functions(void)
+void DFraggleThinker::InitFunctions()
 {
 	for(unsigned i=0;i<countof(ActorNames_init);i++)
 	{
 		ActorTypes[i]=PClass::FindActor(ActorNames_init[i]);
 	}
 
-	DFsScript * gscr = global_script;
+	DFsScript * gscr = GlobalScript;
 
 	// add all the functions
 	gscr->NewVariable("consoleplayer", svt_pInt)->value.pI = &consoleplayer;

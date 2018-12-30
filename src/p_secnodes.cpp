@@ -444,3 +444,39 @@ void AActor::ClearRenderLineList()
 	P_DelSeclist(touching_lineportallist, &FLinePortal::lineportal_thinglist);
 	touching_lineportallist = nullptr;
 }
+
+//===========================================================================
+//
+// FBlockNode - allows to link actors into multiple blocks in the blockmap
+//
+//===========================================================================
+
+FBlockNode *FBlockNode::FreeBlocks = nullptr;
+
+FBlockNode *FBlockNode::Create(AActor *who, int x, int y, int group)
+{
+	FBlockNode *block;
+
+	if (FreeBlocks != nullptr)
+	{
+		block = FreeBlocks;
+		FreeBlocks = block->NextBlock;
+	}
+	else
+	{
+		block = (FBlockNode *)secnodearena.Alloc(sizeof(FBlockNode));
+	}
+	block->BlockIndex = x + y * level.blockmap.bmapwidth;
+	block->Me = who;
+	block->NextActor = nullptr;
+	block->PrevActor = nullptr;
+	block->PrevBlock = nullptr;
+	block->NextBlock = nullptr;
+	return block;
+}
+
+void FBlockNode::Release()
+{
+	NextBlock = FreeBlocks;
+	FreeBlocks = this;
+}

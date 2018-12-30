@@ -30,28 +30,28 @@ namespace swrenderer
 		spanfunc = &SWPixelFormatDrawers::DrawSpan;
 	}
 
-	void SpanDrawerArgs::SetTexture(RenderThread *thread, FTexture *tex)
+	void SpanDrawerArgs::SetTexture(RenderThread *thread, FSoftwareTexture *tex)
 	{
 		thread->PrepareTexture(tex, DefaultRenderStyle());
 
-		ds_texwidth = tex->GetWidth();
-		ds_texheight = tex->GetHeight();
-		ds_xbits = tex->WidthBits;
-		ds_ybits = tex->HeightBits;
-		if ((1 << ds_xbits) > tex->GetWidth())
+		ds_texwidth = tex->GetPhysicalWidth();
+		ds_texheight = tex->GetPhysicalHeight();
+		ds_xbits = tex->GetWidthBits();
+		ds_ybits = tex->GetHeightBits();
+		if ((1 << ds_xbits) > tex->GetPhysicalWidth())
 		{
 			ds_xbits--;
 		}
-		if ((1 << ds_ybits) > tex->GetHeight())
+		if ((1 << ds_ybits) > tex->GetPhysicalHeight())
 		{
 			ds_ybits--;
 		}
 
 		ds_source = thread->Viewport->RenderTarget->IsBgra() ? (const uint8_t*)tex->GetPixelsBgra() : tex->GetPixels(DefaultRenderStyle()); // Get correct render style? Shaded won't get here.
-		ds_source_mipmapped = tex->Mipmapped() && tex->GetWidth() > 1 && tex->GetHeight() > 1;
+		ds_source_mipmapped = tex->Mipmapped() && tex->GetPhysicalWidth() > 1 && tex->GetPhysicalHeight() > 1;
 	}
 
-	void SpanDrawerArgs::SetStyle(bool masked, bool additive, fixed_t alpha)
+	void SpanDrawerArgs::SetStyle(bool masked, bool additive, fixed_t alpha, FDynamicColormap *basecolormap)
 	{
 		if (masked)
 		{
@@ -105,6 +105,22 @@ namespace swrenderer
 				spanfunc = &SWPixelFormatDrawers::DrawSpan;
 			}
 		}
+
+		CameraLight *cameraLight = CameraLight::Instance();
+		if (cameraLight->FixedLightLevel() >= 0)
+		{
+			SetBaseColormap((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap);
+			SetLight(0, cameraLight->FixedLightLevelShade());
+		}
+		else if (cameraLight->FixedColormap())
+		{
+			SetBaseColormap(cameraLight->FixedColormap());
+			SetLight(0, 0);
+		}
+		else
+		{
+			SetBaseColormap(basecolormap);
+		}
 	}
 
 	void SpanDrawerArgs::DrawDepthSpan(RenderThread *thread, float idepth1, float idepth2)
@@ -117,12 +133,12 @@ namespace swrenderer
 		(thread->Drawers(ds_viewport)->*spanfunc)(*this);
 	}
 
-	void SpanDrawerArgs::DrawTiltedSpan(RenderThread *thread, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap)
+	void SpanDrawerArgs::DrawTiltedSpan(RenderThread *thread, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int lightlevel, bool foggy, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap)
 	{
 		SetDestY(thread->Viewport.get(), y);
 		SetDestX1(x1);
 		SetDestX2(x2);
-		thread->Drawers(ds_viewport)->DrawTiltedSpan(*this, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy, basecolormap);
+		thread->Drawers(ds_viewport)->DrawTiltedSpan(*this, plane_sz, plane_su, plane_sv, plane_shade, LightVisibility::LightLevelToShade(lightlevel, foggy, thread->Viewport.get()), planelightfloat, pviewx, pviewy, basecolormap);
 	}
 
 	void SpanDrawerArgs::DrawFogBoundaryLine(RenderThread *thread, int y, int x1, int x2)

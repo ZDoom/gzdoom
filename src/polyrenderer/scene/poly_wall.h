@@ -48,7 +48,7 @@ public:
 	const line_t *LineSegLine = nullptr;
 	const line_t *Line = nullptr;
 	const side_t *Side = nullptr;
-	FTexture *Texture = nullptr;
+	FSoftwareTexture *Texture = nullptr;
 	side_t::ETexpart Wallpart = side_t::mid;
 	double TopTexZ = 0.0;
 	double BottomTexZ = 0.0;
@@ -72,13 +72,13 @@ private:
 	void SetDynLights(PolyRenderThread *thread, PolyDrawArgs &args);
 
 	static bool IsFogBoundary(sector_t *front, sector_t *back);
-	static FTexture *GetTexture(const line_t *Line, const side_t *Side, side_t::ETexpart texpart);
+	static FSoftwareTexture *GetTexture(const line_t *Line, const side_t *Side, side_t::ETexpart texpart);
 };
 
 class PolyWallTextureCoordsU
 {
 public:
-	PolyWallTextureCoordsU(FTexture *tex, const seg_t *lineseg, const line_t *linesegline, const side_t *side, side_t::ETexpart wallpart);
+	PolyWallTextureCoordsU(FSoftwareTexture *tex, const seg_t *lineseg, const line_t *linesegline, const side_t *side, side_t::ETexpart wallpart);
 
 	double u1, u2;
 };
@@ -86,14 +86,14 @@ public:
 class PolyWallTextureCoordsV
 {
 public:
-	PolyWallTextureCoordsV(FTexture *tex, const line_t *line, const side_t *side, side_t::ETexpart wallpart, double topz, double bottomz, double unpeggedceil, double topTexZ, double bottomTexZ);
+	PolyWallTextureCoordsV(FSoftwareTexture *tex, const line_t *line, const side_t *side, side_t::ETexpart wallpart, double topz, double bottomz, double unpeggedceil, double topTexZ, double bottomTexZ);
 
 	double v1, v2;
 
 private:
-	void CalcVTopPart(FTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double yoffset);
-	void CalcVMidPart(FTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double yoffset);
-	void CalcVBottomPart(FTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double unpeggedceil, double yoffset);
+	void CalcVTopPart(FSoftwareTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double yoffset);
+	void CalcVMidPart(FSoftwareTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double yoffset);
+	void CalcVBottomPart(FSoftwareTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double unpeggedceil, double yoffset);
 };
 
 class PolyTranslucentWall : public PolyTranslucentObject

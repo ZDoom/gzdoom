@@ -27,7 +27,7 @@
 #include "screen_triangle.h"
 
 class PolyRenderThread;
-class FTexture;
+class FSoftwareTexture;
 class Mat4f;
 
 enum class PolyDrawMode
@@ -67,8 +67,8 @@ class PolyDrawArgs
 public:
 	void SetClipPlane(int index, const PolyClipPlane &plane) { mClipPlane[index] = plane; }
 	void SetTexture(const uint8_t *texels, int width, int height);
-	void SetTexture(FTexture *texture, FRenderStyle style);
-	void SetTexture(FTexture *texture, uint32_t translationID, FRenderStyle style);
+	void SetTexture(FSoftwareTexture *texture, FRenderStyle style);
+	void SetTexture(FSoftwareTexture *texture, uint32_t translationID, FRenderStyle style);
 	void SetLight(FSWColormap *basecolormap, uint32_t lightlevel, double globVis, bool fixed);
 	void SetDepthTest(bool enable) { mDepthTest = enable; }
 	void SetStencilTestValue(uint8_t stencilTestValue) { mStencilTestValue = stencilTestValue; }
@@ -76,7 +76,7 @@ public:
 	void SetWriteStencil(bool enable, uint8_t stencilWriteValue = 0) { mWriteStencil = enable; mStencilWriteValue = stencilWriteValue; }
 	void SetWriteDepth(bool enable) { mWriteDepth = enable; }
 	void SetStyle(TriBlendMode blendmode, double alpha = 1.0) { mBlendMode = blendmode; mAlpha = (uint32_t)(alpha * 256.0 + 0.5); }
-	void SetStyle(const FRenderStyle &renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FTexture *texture, bool fullbright);
+	void SetStyle(const FRenderStyle &renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FSoftwareTexture *texture, bool fullbright);
 	void SetColor(uint32_t bgra, uint8_t palindex);
 	void SetLights(PolyLight *lights, int numLights) { mLights = lights; mNumLights = numLights; }
 	void SetDynLightColor(uint32_t color) { mDynLightColor = color; }
@@ -85,7 +85,7 @@ public:
 
 	bool WriteColor() const { return mWriteColor; }
 
-	FTexture *Texture() const { return mTexture; }
+	FSoftwareTexture *Texture() const { return mTexture; }
 	const uint8_t *TexturePixels() const { return mTexturePixels; }
 	int TextureWidth() const { return mTextureWidth; }
 	int TextureHeight() const { return mTextureHeight; }
@@ -131,7 +131,7 @@ private:
 	bool mWriteStencil = true;
 	bool mWriteColor = true;
 	bool mWriteDepth = true;
-	FTexture *mTexture = nullptr;
+	FSoftwareTexture *mTexture = nullptr;
 	const uint8_t *mTexturePixels = nullptr;
 	int mTextureWidth = 0;
 	int mTextureHeight = 0;
@@ -166,15 +166,15 @@ private:
 class RectDrawArgs
 {
 public:
-	void SetTexture(FTexture *texture, FRenderStyle style);
-	void SetTexture(FTexture *texture, uint32_t translationID, FRenderStyle style);
+	void SetTexture(FSoftwareTexture *texture, FRenderStyle style);
+	void SetTexture(FSoftwareTexture *texture, uint32_t translationID, FRenderStyle style);
 	void SetLight(FSWColormap *basecolormap, uint32_t lightlevel);
 	void SetStyle(TriBlendMode blendmode, double alpha = 1.0) { mBlendMode = blendmode; mAlpha = (uint32_t)(alpha * 256.0 + 0.5); }
-	void SetStyle(const FRenderStyle &renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FTexture *texture, bool fullbright);
+	void SetStyle(const FRenderStyle &renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FSoftwareTexture *texture, bool fullbright);
 	void SetColor(uint32_t bgra, uint8_t palindex);
 	void Draw(PolyRenderThread *thread, double x0, double x1, double y0, double y1, double u0, double u1, double v0, double v1);
 
-	FTexture *Texture() const { return mTexture; }
+	FSoftwareTexture *Texture() const { return mTexture; }
 	const uint8_t *TexturePixels() const { return mTexturePixels; }
 	int TextureWidth() const { return mTextureWidth; }
 	int TextureHeight() const { return mTextureHeight; }
@@ -207,7 +207,7 @@ public:
 	float V1() const { return mV1; }
 
 private:
-	FTexture *mTexture = nullptr;
+	FSoftwareTexture *mTexture = nullptr;
 	const uint8_t *mTexturePixels = nullptr;
 	int mTextureWidth = 0;
 	int mTextureHeight = 0;

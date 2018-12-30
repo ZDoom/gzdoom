@@ -160,7 +160,7 @@ public:
 	}
 };
 
-
-void CreateSections(FSectionContainer &container);
+struct FLevelLocals;
+void CreateSections(FLevelLocals *l);
 
 #endif

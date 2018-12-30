@@ -307,11 +307,11 @@ extend class Actor
 		if (flags & SXF_CLEARCALLERSPECIAL)
 		{
 			self.special = 0;
-			mo.args[0] = 0;
-			mo.args[1] = 0;
-			mo.args[2] = 0;
-			mo.args[3] = 0;
-			mo.args[4] = 0;
+			self.args[0] = 0;
+			self.args[1] = 0;
+			self.args[2] = 0;
+			self.args[3] = 0;
+			self.args[4] = 0;
 		}
 		if (flags & SXF_TRANSFERSTENCILCOL)
 		{

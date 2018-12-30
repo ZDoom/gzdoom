@@ -346,16 +346,16 @@ void GLWall::SkyBottom(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,v
 		}
 		zbottom[0]=zbottom[1]=-32768.0f;
 
-		if ((tex && !tex->isValid()) || bs->GetTexture(sector_t::floor)!=skyflatnum)
+		if ((tex && tex->isValid()) || bs->GetTexture(sector_t::floor) != skyflatnum)
 		{
-			ztop[0]=zfloor[0];
-			ztop[1]=zfloor[1];
+			ztop[0] = zfloor[0];
+			ztop[1] = zfloor[1];
 		}
 		else
 		{
 			ztop[0] = bs->floorplane.ZatPoint(v1);
 			ztop[1] = bs->floorplane.ZatPoint(v2);
-			flags|=GLWF_SKYHACK;	// mid textures on such lines need special treatment!
+			flags |= GLWF_SKYHACK;	// mid textures on such lines need special treatment!
 		}
 	}
 	else 

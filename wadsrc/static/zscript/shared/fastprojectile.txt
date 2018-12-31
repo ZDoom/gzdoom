@@ -82,7 +82,13 @@ class FastProjectile : Actor
 		}
 
 		// Handle movement
-		if (Vel != (0, 0, 0) || (pos.Z != floorz))
+		bool ismoved = Vel != (0, 0, 0)
+			// Check Z position set during previous tick.
+			// It should be strictly equal to the argument of SetZ() function.
+			|| (   (pos.Z != floorz           ) /* Did it hit the floor?   */
+				&& (pos.Z != ceilingz - Height) /* Did it hit the ceiling? */ );
+
+		if (ismoved)
 		{
 			// force some lateral movement so that collision detection works as intended.
 			if (bMissile && Vel.X == 0 && Vel.Y == 0 && !IsZeroDamage())

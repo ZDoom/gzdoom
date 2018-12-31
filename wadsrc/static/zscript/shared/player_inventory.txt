@@ -309,7 +309,8 @@ extend class PlayerPawn
 
 				while (player.health < 50)
 				{
-					if (!UseInventory (Items[index]))
+					let item = Items[index];
+					if (item == null || !UseInventory (item))
 						break;
 				}
 				if (player.health >= 50) return;

@@ -1303,6 +1303,11 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 	set( ZDOOM_LIBS ${ZDOOM_LIBS} nsl socket)
 endif()
 
+find_package( Backtrace )
+if(Backtrace_FOUND)
+	set( ZDOOM_LIBS ${ZDOOM_LIBS} ${Backtrace_LIBRARIES} )
+endif()
+
 target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma )
 
 include_directories( .

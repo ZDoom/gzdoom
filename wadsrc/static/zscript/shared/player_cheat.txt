@@ -99,14 +99,14 @@ extend class PlayerPawn
 			// he doesn't have it already, and set each to its maximum.
 			for (i = 0; i < AllActorClasses.Size(); ++i)
 			{
-				type = (class<Inventory>)(AllActorClasses[i]);
+				let ammotype = (class<Ammo>)(AllActorClasses[i]);
 
-				if (type != null && type.GetParentClass() == "Ammo")
+				if (ammotype && GetDefaultByType(ammotype).GetParentAmmo() == ammotype)
 				{
-					let ammoitem = FindInventory(type);
+					let ammoitem = FindInventory(ammotype);
 					if (ammoitem == NULL)
 					{
-						ammoitem = Inventory(Spawn (type));
+						ammoitem = Inventory(Spawn (ammotype));
 						ammoitem.AttachToOwner (self);
 						ammoitem.Amount = ammoitem.MaxAmount;
 					}

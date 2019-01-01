@@ -4842,6 +4842,7 @@ void AActor::OnDestroy ()
 	//      note: if OnDestroy is ever made optional, E_WorldThingDestroyed should still be called for ANY thing.
 	E_WorldThingDestroyed(this);
 
+	DeleteAttachedLights();
 	ClearRenderSectorList();
 	ClearRenderLineList();
 
@@ -5526,27 +5527,26 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 			(mthing->fillcolor & 0xff00) >> 8, (mthing->fillcolor & 0xff)) << 24);
 
 	// allow color strings for lights and reshuffle the args for spot lights
-	if (i->IsDescendantOf(RUNTIME_CLASS(ADynamicLight)))
+	if (i->IsDescendantOf(NAME_DynamicLight))
 	{
-		auto light = static_cast<ADynamicLight*>(mobj);
 		if (mthing->arg0str != NAME_None)
 		{
 			PalEntry color = V_GetColor(nullptr, mthing->arg0str);
-			light->args[0] = color.r;
-			light->args[1] = color.g;
-			light->args[2] = color.b;
+			mobj->args[0] = color.r;
+			mobj->args[1] = color.g;
+			mobj->args[2] = color.b;
 		}
-		else if (light->lightflags & LF_SPOT)
+		else if (mobj->IntVar(NAME_lightflags) & LF_SPOT)
 		{
-			light->args[0] = RPART(mthing->args[0]);
-			light->args[1] = GPART(mthing->args[0]);
-			light->args[2] = BPART(mthing->args[0]);
+			mobj->args[0] = RPART(mthing->args[0]);
+			mobj->args[1] = GPART(mthing->args[0]);
+			mobj->args[2] = BPART(mthing->args[0]);
 		}
 
-		if (light->lightflags & LF_SPOT)
+		if (mobj->IntVar(NAME_lightflags) & LF_SPOT)
 		{
-			light->SpotInnerAngle = double(mthing->args[1]);
-			light->SpotOuterAngle = double(mthing->args[2]);
+			mobj->AngleVar(NAME_SpotInnerAngle) = double(mthing->args[1]);
+			mobj->AngleVar(NAME_SpotOuterAngle) = double(mthing->args[2]);
 		}
 	}
 

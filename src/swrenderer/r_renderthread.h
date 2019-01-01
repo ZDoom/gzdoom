@@ -28,7 +28,7 @@
 class DrawerCommandQueue;
 typedef std::shared_ptr<DrawerCommandQueue> DrawerCommandQueuePtr;
 class RenderMemory;
-class ADynamicLight;
+struct FDynamicLight;
 
 EXTERN_CVAR(Bool, r_models);
 extern bool r_modelscene;
@@ -77,7 +77,7 @@ namespace swrenderer
 		std::unique_ptr<LightVisibility> Light;
 		DrawerCommandQueuePtr DrawQueue;
 
-		TArray<ADynamicLight*> AddedLightsArray;
+		TArray<FDynamicLight*> AddedLightsArray;
 
 		std::thread thread;
 

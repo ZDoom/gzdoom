@@ -1235,7 +1235,7 @@ public:
 	DVector3 Prev;
 	DRotator PrevAngles;
 	int PrevPortalGroup;
-	TArray<TObjPtr<AActor*> > AttachedLights;
+	TArray<FDynamicLight *> AttachedLights;
 
 	// When was this actor spawned?
 	int SpawnTime;
@@ -1489,13 +1489,11 @@ public:
 
 	int ApplyDamageFactor(FName damagetype, int damage) const;
 	int GetModifiedDamage(FName damagetype, int damage, bool passive);
-
+	void DeleteAttachedLights();
 	static void DeleteAllAttachedLights();
 	static void RecreateAllAttachedLights();
 
 	bool				hasmodel;
-
-	size_t PropagateMark();
 };
 
 class FActorIterator

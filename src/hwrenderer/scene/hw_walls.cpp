@@ -359,11 +359,11 @@ void GLWall::SetupLights(HWDrawInfo *di, FDynLightData &lightdata)
 	// Iterate through all dynamic lights which touch this wall and render them
 	while (node)
 	{
-		if (!(node->lightsource->flags2&MF2_DORMANT))
+		if (node->lightsource->IsActive())
 		{
 			iter_dlight++;
 
-			DVector3 posrel = node->lightsource->PosRelative(seg->frontsector);
+			DVector3 posrel = node->lightsource->PosRelative(seg->frontsector->PortalGroup);
 			float x = posrel.X;
 			float y = posrel.Y;
 			float z = posrel.Z;

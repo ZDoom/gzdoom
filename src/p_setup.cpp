@@ -322,14 +322,6 @@ void FLevelLocals::ClearLevelData()
 
 void P_FreeLevelData ()
 {
-	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
-	auto mo = it.Next();
-	while (mo)
-	{
-		auto next = it.Next();
-		mo->Destroy();
-		mo = next;
-	}
 
 	// [ZZ] delete per-map event handlers
 	E_Shutdown(true);

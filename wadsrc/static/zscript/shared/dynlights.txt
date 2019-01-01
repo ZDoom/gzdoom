@@ -1,10 +1,20 @@
-class DynamicLight : Actor native
+class DynamicLight : Actor
 {
-	native double SpotInnerAngle;
-	native double SpotOuterAngle;
+	double SpotInnerAngle;
+	double SpotOuterAngle;
+	private int lighttype;
+	private int lightflags;
 
 	property SpotInnerAngle: SpotInnerAngle;
 	property SpotOuterAngle: SpotOuterAngle;
+	
+	flagdef subtractive: lightflags, 0;
+	flagdef additive: lightflags, 1;
+	flagdef dontlightself: lightflags, 2;
+	flagdef attenuate: lightflags, 3;
+	flagdef noshadowmap: lightflags, 4;
+	flagdef dontlightactors: lightflags, 5;
+	flagdef spot: lightflags, 6;
 
 	enum EArgs
 	{
@@ -30,6 +40,9 @@ class DynamicLight : Actor native
 	};
 
 	native void SetOffset(Vector3 offset);
+	private native void AttachLight();
+	private native void ActivateLight();
+	private native void DeactivateLight();
 
 	Default
 	{
@@ -44,6 +57,46 @@ class DynamicLight : Actor native
 		+FIXMAPTHINGPOS
 		+INVISIBLE
 	}
+	
+	//==========================================================================
+	//
+	//
+	//
+	//==========================================================================
+
+	override void Tick()
+	{
+		// Lights do not call the super method.
+	}
+	
+	override void BeginPlay()
+	{
+		ChangeStatNum(STAT_DLIGHT);
+		AttachLight();
+	}
+
+	override void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+		
+		if (!(SpawnFlags & MTF_DORMANT))
+		{
+			Activate(self);
+		}
+	}
+
+	override void Activate(Actor activator)
+	{
+		bDormant = false;
+		ActivateLight();
+	}
+
+	override void Deactivate(Actor activator)
+	{
+		bDormant = true;
+		DeactivateLight();
+	}
+	
 }
 
 

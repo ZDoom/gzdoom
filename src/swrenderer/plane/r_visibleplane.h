@@ -27,7 +27,7 @@
 #include "r_state.h"
 #include "swrenderer/r_memory.h"
 
-class ADynamicLight;
+struct FDynamicLight;
 struct FLightNode;
 struct FDynamicColormap;
 struct FSectorPortal;
@@ -38,7 +38,7 @@ namespace swrenderer
 
 	struct VisiblePlaneLight
 	{
-		ADynamicLight *lightsource;
+		FDynamicLight *lightsource;
 		VisiblePlaneLight *next;
 	};
 

@@ -38,6 +38,7 @@
 #include <type_traits>
 #include "doomtype.h"
 #include "i_system.h"
+#include "vectors.h"
 
 class PClass;
 class PType;
@@ -238,6 +239,7 @@ public:
 	inline PalEntry &ColorVar(FName field);
 	inline FName &NameVar(FName field);
 	inline double &FloatVar(FName field);
+	inline DAngle &AngleVar(FName field);
 	inline FString &StringVar(FName field);
 	template<class T> T*& PointerVar(FName field);
 
@@ -454,6 +456,11 @@ inline FName &DObject::NameVar(FName field)
 inline double &DObject::FloatVar(FName field)
 {
 	return *(double*)ScriptVar(field, nullptr);
+}
+
+inline DAngle &DObject::AngleVar(FName field)
+{
+	return *(DAngle*)ScriptVar(field, nullptr);
 }
 
 template<class T>

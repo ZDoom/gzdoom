@@ -391,8 +391,8 @@ void RenderPolySprite::SetDynlight(AActor *thing, PolyDrawArgs &args)
 	auto node = thing->section->lighthead;
 	while (node != nullptr)
 	{
-		ADynamicLight *light = node->lightsource;
-		if (light->visibletoplayer && !(light->flags2&MF2_DORMANT) && (!(light->lightflags&LF_DONTLIGHTSELF) || light->target != thing) && !(light->lightflags&LF_DONTLIGHTACTORS))
+		FDynamicLight *light = node->lightsource;
+		if (light->ShouldLightActor(thing))
 		{
 			float lx = (float)(light->X() - thing->X());
 			float ly = (float)(light->Y() - thing->Y());

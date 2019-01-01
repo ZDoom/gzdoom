@@ -117,9 +117,9 @@ int HWDrawInfo::SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &light
 		lightdata.Clear();
 		while (node)
 		{
-			ADynamicLight * light = node->lightsource;
+			FDynamicLight * light = node->lightsource;
 
-			if (light->flags2&MF2_DORMANT)
+			if (!light->IsActive())
 			{
 				node = node->nextLight;
 				continue;

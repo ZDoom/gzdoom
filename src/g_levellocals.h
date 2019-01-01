@@ -198,6 +198,8 @@ struct FLevelLocals : public FLevelData
 	bool		lightadditivesurfaces;
 	bool		notexturefill;
 
+	FDynamicLight *lights;
+
 	bool		IsJumpingAllowed() const;
 	bool		IsCrouchingAllowed() const;
 	bool		IsFreelookAllowed() const;

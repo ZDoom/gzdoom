@@ -40,6 +40,8 @@
 #include "vm.h"
 #include "c_dispatch.h"
 #include "v_text.h"
+#include "g_levellocals.h"
+#include "a_dynlight.h"
 
 
 static int ThinkCount;
@@ -617,6 +619,13 @@ void DThinker::RunThinkers ()
 				count += TickThinkers(&FreshThinkers[i], &Thinkers[i]);
 			}
 		} while (count != 0);
+
+		for (auto light = level.lights; light;)
+		{
+			auto next = light->next;
+			light->Tick();
+			light = next;
+		}
 	}
 	else
 	{
@@ -636,6 +645,19 @@ void DThinker::RunThinkers ()
 				count += ProfileThinkers(&FreshThinkers[i], &Thinkers[i]);
 			}
 		} while (count != 0);
+
+		// Also profile the internal dynamic lights, even though they are not implemented as thinkers.
+		auto &prof = Profiles[NAME_InternalDynamicLight];
+		prof.timer.Clock();
+		for (auto light = level.lights; light;)
+		{
+			prof.numcalls++;
+			auto next = light->next;
+			light->Tick();
+			light = next;
+		}
+		prof.timer.Unclock();
+
 
 		struct SortedProfileInfo
 		{

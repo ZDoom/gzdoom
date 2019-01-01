@@ -168,8 +168,8 @@ namespace swrenderer
 				FLightNode * node = subsector->section->lighthead;
 				while (node) // check all lights touching a subsector
 				{
-					ADynamicLight *light = node->lightsource;
-					if (light->visibletoplayer && !(light->flags2&MF2_DORMANT) && (!(light->lightflags&LF_DONTLIGHTSELF) || light->target != actor) && !(light->lightflags&LF_DONTLIGHTACTORS))
+					FDynamicLight *light = node->lightsource;
+					if (light->ShouldLightActor(actor))
 					{
 						int group = subsector->sector->PortalGroup;
 						DVector3 pos = light->PosRelative(group);
@@ -194,7 +194,7 @@ namespace swrenderer
 			Lights = Thread->FrameMemory->AllocMemory<PolyLight>(NumLights);
 			for (int i = 0; i < NumLights; i++)
 			{
-				ADynamicLight *lightsource = addedLights[i];
+				FDynamicLight *lightsource = addedLights[i];
 
 				bool is_point_light = (lightsource->lightflags & LF_ATTENUATE) != 0;
 

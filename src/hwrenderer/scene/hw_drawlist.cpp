@@ -588,7 +588,7 @@ inline int HWDrawList::CompareSprites(SortNode * a,SortNode * b)
 	int res = s1->depth - s2->depth;
 
 	if (res != 0) return -res;
-	else return (i_compatflags & COMPATF_SPRITESORT)? s1->index-s2->index : s2->index-s1->index;
+	else return (i_compatflags & COMPATF_SPRITESORT)? s2->index-s1->index : s1->index-s2->index;
 }
 
 //==========================================================================

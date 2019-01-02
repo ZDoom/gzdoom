@@ -174,6 +174,7 @@ void GLWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 		PalEntry color2 = side->GetSpecialColor(tierndx, side_t::wallbottom, frontsector);
 		state.SetObjectColor(color1);
 		state.SetObjectColor2(color2);
+		state.SetAddColor(side->GetAdditiveColor(tierndx, frontsector));
 		if (color1 != color2)
 		{
 			// Do gradient setup only if there actually is a gradient.
@@ -238,6 +239,7 @@ void GLWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 	}
 	state.SetObjectColor(0xffffffff);
 	state.SetObjectColor2(0);
+	state.SetAddColor(0);
 	state.SetTextureMode(tmode);
 	state.EnableGlow(false);
 	state.EnableGradient(false);
@@ -357,11 +359,11 @@ void GLWall::SetupLights(HWDrawInfo *di, FDynLightData &lightdata)
 	// Iterate through all dynamic lights which touch this wall and render them
 	while (node)
 	{
-		if (!(node->lightsource->flags2&MF2_DORMANT))
+		if (node->lightsource->IsActive())
 		{
 			iter_dlight++;
 
-			DVector3 posrel = node->lightsource->PosRelative(seg->frontsector);
+			DVector3 posrel = node->lightsource->PosRelative(seg->frontsector->PortalGroup);
 			float x = posrel.X;
 			float y = posrel.Y;
 			float z = posrel.Z;

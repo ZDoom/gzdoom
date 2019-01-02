@@ -98,6 +98,7 @@
 #include "events.h"
 #include "actorinlines.h"
 #include "a_dynlight.h"
+#include "fragglescript/t_fs.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -362,6 +363,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("renderrequired", RenderRequired)
 		A("friendlyseeblocks", friendlyseeblocks)
 		A("spawntime", SpawnTime)
+		A("spawnorder", SpawnOrder)
 		A("friction", Friction);
 }
 
@@ -1864,8 +1866,12 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 	// that large thrusts can't propel an actor through a wall, because wall
 	// running depends on the player's original movement continuing even after
 	// it gets blocked.
-	if ((mo->player != NULL && (i_compatflags & COMPATF_WALLRUN)) || (mo->waterlevel >= 1) ||
-		(mo->player != NULL && mo->player->crouchfactor < 0.75))
+	//
+	// [anon] When friction is turned off, turn off the crouching and water
+	//  speed caps as well, since it is a sort of friction, and the modders
+	//  most likely want to deal with that themselves.
+	if ((mo->player != NULL && (i_compatflags & COMPATF_WALLRUN)) || ((mo->waterlevel >= 1 ||
+		(mo->player != NULL && mo->player->crouchfactor < 0.75)) && !(mo->flags8 & MF8_NOFRICTION)))
 	{
 		// preserve the direction instead of clamping x and y independently.
 		double cx = mo->Vel.X == 0 ? 1. : clamp(mo->Vel.X, -maxmove, maxmove) / mo->Vel.X;
@@ -2254,7 +2260,7 @@ explode:
 		return Oldfloorz;
 	}
 
-	if (mo->flags & (MF_MISSILE | MF_SKULLFLY))
+	if (mo->flags & (MF_MISSILE | MF_SKULLFLY) || mo->flags8 & MF8_NOFRICTION)
 	{ // no friction for missiles
 		return Oldfloorz;
 	}
@@ -2525,9 +2531,13 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 		{
 			mo->AddZ(DAngle(360 / 80.f * level.maptime).Sin() / 8);
 		}
-		mo->Vel.Z *= FRICTION_FLY;
+
+		if (!(mo->flags8 & MF8_NOFRICTION))
+		{
+			mo->Vel.Z *= FRICTION_FLY;
+		}
 	}
-	if (mo->waterlevel && !(mo->flags & MF_NOGRAVITY))
+	if (mo->waterlevel && !(mo->flags & MF_NOGRAVITY) && !(mo->flags8 & MF8_NOFRICTION))
 	{
 		double friction = -1;
 
@@ -4409,6 +4419,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 	
 	actor = static_cast<AActor *>(const_cast<PClassActor *>(type)->CreateNew ());
 	actor->SpawnTime = level.totaltime;
+	actor->SpawnOrder = level.spawnindex++;
 
 	// Set default dialogue
 	actor->ConversationRoot = GetConversation(actor->GetClass()->TypeName);
@@ -4831,6 +4842,7 @@ void AActor::OnDestroy ()
 	//      note: if OnDestroy is ever made optional, E_WorldThingDestroyed should still be called for ANY thing.
 	E_WorldThingDestroyed(this);
 
+	DeleteAttachedLights();
 	ClearRenderSectorList();
 	ClearRenderLineList();
 
@@ -5240,17 +5252,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		case SMT_PolySpawn:
 		case SMT_PolySpawnCrush:
 		case SMT_PolySpawnHurt:
-	{
-		polyspawns_t *polyspawn = new polyspawns_t;
-		polyspawn->next = polyspawns;
-		polyspawn->pos = mthing->pos;
-		polyspawn->angle = mthing->angle;
-		polyspawn->type = mentry->Special;
-		polyspawns = polyspawn;
-			if (mentry->Special != SMT_PolyAnchor)
-			po_NumPolyobjs++;
-		return NULL;
-	}
+			return nullptr;
 
 		case SMT_Player1Start:
 		case SMT_Player2Start:
@@ -5525,27 +5527,26 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 			(mthing->fillcolor & 0xff00) >> 8, (mthing->fillcolor & 0xff)) << 24);
 
 	// allow color strings for lights and reshuffle the args for spot lights
-	if (i->IsDescendantOf(RUNTIME_CLASS(ADynamicLight)))
+	if (i->IsDescendantOf(NAME_DynamicLight))
 	{
-		auto light = static_cast<ADynamicLight*>(mobj);
 		if (mthing->arg0str != NAME_None)
 		{
 			PalEntry color = V_GetColor(nullptr, mthing->arg0str);
-			light->args[0] = color.r;
-			light->args[1] = color.g;
-			light->args[2] = color.b;
+			mobj->args[0] = color.r;
+			mobj->args[1] = color.g;
+			mobj->args[2] = color.b;
 		}
-		else if (light->lightflags & LF_SPOT)
+		else if (mobj->IntVar(NAME_lightflags) & LF_SPOT)
 		{
-			light->args[0] = RPART(mthing->args[0]);
-			light->args[1] = GPART(mthing->args[0]);
-			light->args[2] = BPART(mthing->args[0]);
+			mobj->args[0] = RPART(mthing->args[0]);
+			mobj->args[1] = GPART(mthing->args[0]);
+			mobj->args[2] = BPART(mthing->args[0]);
 		}
 
-		if (light->lightflags & LF_SPOT)
+		if (mobj->IntVar(NAME_lightflags) & LF_SPOT)
 		{
-			light->SpotInnerAngle = double(mthing->args[1]);
-			light->SpotOuterAngle = double(mthing->args[2]);
+			mobj->AngleVar(NAME_SpotInnerAngle) = double(mthing->args[1]);
+			mobj->AngleVar(NAME_SpotOuterAngle) = double(mthing->args[2]);
 		}
 	}
 
@@ -5565,6 +5566,26 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		mobj->StartHealth = mobj->health;
 
 	return mobj;
+}
+
+//===========================================================================
+//
+// SpawnMapThing
+//
+//===========================================================================
+CVAR(Bool, dumpspawnedthings, false, 0)
+
+AActor *SpawnMapThing(int index, FMapThing *mt, int position)
+{
+	AActor *spawned = P_SpawnMapThing(mt, position);
+	if (dumpspawnedthings)
+	{
+		Printf("%5d: (%5f, %5f, %5f), doomednum = %5d, flags = %04x, type = %s\n",
+			index, mt->pos.X, mt->pos.Y, mt->pos.Z, mt->EdNum, mt->flags,
+			spawned ? spawned->GetClass()->TypeName.GetChars() : "(none)");
+	}
+	T_AddSpawnedThing(spawned);
+	return spawned;
 }
 
 

@@ -97,7 +97,10 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 	}
 	*/
 	bool firstCall = glTexID == 0;
-	if (firstCall) glGenTextures(1,&glTexID);
+	if (firstCall)
+	{
+		glGenTextures(1, &glTexID);
+	}
 
 	int textureBinding = UINT_MAX;
 	if (texunit == -1)	glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding);
@@ -211,7 +214,8 @@ uint8_t *FHardwareTexture::MapBuffer()
 //===========================================================================
 FHardwareTexture::~FHardwareTexture() 
 { 
-	glDeleteBuffers(1, &glBufferID);
+	if (glTexID != 0) glDeleteTextures(1, &glTexID);
+	if (glBufferID != 0) glDeleteBuffers(1, &glBufferID);
 }
 
 

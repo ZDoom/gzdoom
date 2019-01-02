@@ -2333,10 +2333,9 @@ void AM_showSS()
 			AM_drawSeg(sub->firstline + i, yellow);
 		}
 
-		for (int i = 0; i <po_NumPolyobjs; i++)
+		for (auto &poly : level.Polyobjects)
 		{
-			FPolyObj *po = &polyobjs[i];
-			FPolyNode *pnode = po->subsectorlinks;
+			FPolyNode *pnode = poly.subsectorlinks;
 
 			while (pnode != NULL)
 			{

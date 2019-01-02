@@ -62,7 +62,6 @@ ClassReg DObject::RegistrationInfo =
 	&DObject::InPlaceConstructor,			// ConstructNative
 	nullptr,
 	sizeof(DObject),						// SizeOf
-	CLASSREG_PClass,						// MetaClassNum
 };
 _DECLARE_TI(DObject)
 

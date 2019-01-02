@@ -192,24 +192,6 @@ size_t PropagateMark()
 
 //==========================================================================
 //
-// PropagateAll
-//
-// Empties the gray list by propagating every single object in it.
-//
-//==========================================================================
-
-static size_t PropagateAll()
-{
-	size_t m = 0;
-	while (Gray != NULL)
-	{
-		m += PropagateMark();
-	}
-	return m;
-}
-
-//==========================================================================
-//
 // SweepList
 //
 // Runs a limited sweep on a list, returning the location where to resume
@@ -668,14 +650,14 @@ size_t DSectorMarker::PropagateMark()
 		moretodo = true;
 	}
 
-	if (!moretodo && polyobjs != NULL)
+	if (!moretodo && level.Polyobjects.Size() > 0)
 	{
-		for (i = 0; i < POLYSTEPSIZE && PolyNum + i < po_NumPolyobjs; ++i)
+		for (i = 0; i < POLYSTEPSIZE && PolyNum + i < (int)level.Polyobjects.Size(); ++i)
 		{
-			GC::Mark(polyobjs[PolyNum + i].interpolation);
+			GC::Mark(level.Polyobjects[PolyNum + i].interpolation);
 		}
 		marked += i * sizeof(FPolyObj);
-		if (PolyNum + i < po_NumPolyobjs)
+		if (PolyNum + i < (int)level.Polyobjects.Size())
 		{
 			PolyNum += i;
 			moretodo = true;
@@ -686,7 +668,7 @@ size_t DSectorMarker::PropagateMark()
 		for (i = 0; i < SIDEDEFSTEPSIZE && SideNum + i < (int)level.sides.Size(); ++i)
 		{
 			side_t *side = &level.sides[SideNum + i];
-			for(int j=0;j<3;j++) GC::Mark(side->textures[j].interpolation);
+			for (int j = 0; j < 3; j++) GC::Mark(side->textures[j].interpolation);
 		}
 		marked += i * sizeof(side_t);
 		if (SideNum + i < (int)level.sides.Size())

@@ -42,6 +42,7 @@
 #include "portal.h"
 #include "p_blockmap.h"
 #include "p_local.h"
+#include "po_man.h"
 #include "p_destructible.h"
 #include "r_data/r_sections.h"
 #include "r_data/r_canvastexture.h"
@@ -52,8 +53,10 @@ struct FLevelData
 	TArray<vertex_t> vertexes;
 	TArray<sector_t> sectors;
 	TArray<line_t*> linebuffer;	// contains the line lists for the sectors.
+	TArray<subsector_t*> subsectorbuffer;	// contains the subsector lists for the sectors.
 	TArray<line_t> lines;
 	TArray<side_t> sides;
+	TArray<seg_t *> segbuffer;	// contains the seg links for the sidedefs.
 	TArray<seg_t> segs;
 	TArray<subsector_t> subsectors;
 	TArray<node_t> nodes;
@@ -62,6 +65,7 @@ struct FLevelData
 	node_t *headgamenode;
 	TArray<uint8_t> rejectmatrix;
 	TArray<zone_t>	Zones;
+	TArray<FPolyObj> Polyobjects;
 
 	TArray<FSectorPortal> sectorPortals;
 	TArray<FLinePortal> linePortals;
@@ -79,6 +83,7 @@ struct FLevelData
 	TMap<int, FHealthGroup> healthGroups;
 
 	FBlockmap blockmap;
+	TArray<polyblock_t *> PolyBlockMap;
 
 	// These are copies of the loaded map data that get used by the savegame code to skip unaltered fields
 	// Without such a mechanism the savegame format would become too slow and large because more than 80-90% are normally still unaltered.
@@ -100,6 +105,8 @@ struct FLevelLocals : public FLevelData
 	void AddScroller(int secnum);
 	void SetInterMusic(const char *nextmap);
 	void SetMusicVolume(float v);
+	void ClearLevelData();
+	void ClearPortals();
 
 	uint8_t		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
 	int			time;			// time in the hub
@@ -108,6 +115,7 @@ struct FLevelLocals : public FLevelData
 	int			starttime;
 	int			partime;
 	int			sucktime;
+	uint32_t	spawnindex;
 
 	level_info_t *info;
 	int			cluster;
@@ -189,6 +197,8 @@ struct FLevelLocals : public FLevelData
 	bool		brightfog;
 	bool		lightadditivesurfaces;
 	bool		notexturefill;
+
+	FDynamicLight *lights;
 
 	bool		IsJumpingAllowed() const;
 	bool		IsCrouchingAllowed() const;

@@ -241,4 +241,43 @@ namespace swrenderer
 			}
 		}
 	}
+
+	/////////////////////////////////////////////////////////////////////////
+
+	void ProjectedWallLight::SetLightLeft(RenderThread *thread, const FWallCoords &wallc)
+	{
+		x1 = wallc.sx1;
+
+		CameraLight *cameraLight = CameraLight::Instance();
+		if (cameraLight->FixedColormap() == nullptr && cameraLight->FixedLightLevel() < 0)
+		{
+			lightleft = float(thread->Light->WallVis(wallc.sz1, foggy));
+			lightstep = float((thread->Light->WallVis(wallc.sz2, foggy) - lightleft) / (wallc.sx2 - wallc.sx1));
+		}
+		else
+		{
+			lightleft = 1;
+			lightstep = 0;
+		}
+	}
+
+	void ProjectedWallLight::SetColormap(const sector_t *frontsector, seg_t *lineseg, lightlist_t *lit)
+	{
+		if (!lit)
+		{
+			basecolormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::walltop]);
+			foggy = level.fadeto || frontsector->Colormap.FadeColor || (level.flags & LEVEL_HASFADETABLE);
+
+			if (!(lineseg->sidedef->Flags & WALLF_POLYOBJ))
+				lightlevel = lineseg->sidedef->GetLightLevel(foggy, frontsector->lightlevel);
+			else
+				lightlevel = frontsector->GetLightLevel();
+		}
+		else
+		{
+			basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
+			foggy = level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE);
+			lightlevel = lineseg->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, lit->lightsource != nullptr);
+		}
+	}
 }

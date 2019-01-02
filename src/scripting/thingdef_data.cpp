@@ -319,6 +319,8 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF8, BLOCKASPLAYER, AActor, flags8),
 	DEFINE_FLAG(MF8, DONTFACETALKER, AActor, flags8),
 	DEFINE_FLAG(MF8, HITOWNER, AActor, flags8),
+	DEFINE_FLAG(MF8, NOFRICTION, AActor, flags8),
+	DEFINE_FLAG(MF8, NOFRICTIONBOUNCE, AActor, flags8),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
@@ -417,25 +419,12 @@ static FFlagDef PlayerPawnFlagDefs[] =
 	DEFINE_FLAG(PPF, CROUCHABLEMORPH, APlayerPawn, PlayerFlags),
 };
 
-static FFlagDef DynLightFlagDefs[] =
-{
-	// PlayerPawn flags
-	DEFINE_FLAG(LF, SUBTRACTIVE, ADynamicLight, lightflags),
-	DEFINE_FLAG(LF, ADDITIVE, ADynamicLight, lightflags),
-	DEFINE_FLAG(LF, DONTLIGHTSELF, ADynamicLight, lightflags),
-	DEFINE_FLAG(LF, ATTENUATE, ADynamicLight, lightflags),
-	DEFINE_FLAG(LF, NOSHADOWMAP, ADynamicLight, lightflags),
-	DEFINE_FLAG(LF, DONTLIGHTACTORS, ADynamicLight, lightflags),
-	DEFINE_FLAG(LF, SPOT, ADynamicLight, lightflags),
-};
-
 static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int NumDefs; int Use; } FlagLists[] =
 {
 	{ &RUNTIME_CLASS_CASTLESS(AActor), 		ActorFlagDefs,		countof(ActorFlagDefs), 3 },	// -1 to account for the terminator
 	{ &RUNTIME_CLASS_CASTLESS(AActor), 		MoreFlagDefs,		countof(MoreFlagDefs), 1 },
 	{ &RUNTIME_CLASS_CASTLESS(AActor), 	InternalActorFlagDefs,	countof(InternalActorFlagDefs), 2 },
 	{ &RUNTIME_CLASS_CASTLESS(APlayerPawn),	PlayerPawnFlagDefs,	countof(PlayerPawnFlagDefs), 3 },
-	{ &RUNTIME_CLASS_CASTLESS(ADynamicLight),DynLightFlagDefs,	countof(DynLightFlagDefs), 3 },
 };
 #define NUM_FLAG_LISTS (countof(FlagLists))
 

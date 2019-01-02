@@ -9,6 +9,7 @@ struct vertex_t;
 struct side_t;
 struct F3DFloor;
 class DBaseDecal;
+struct SpreadInfo;
 
 class DBaseDecal *ShootDecal(const FDecalTemplate *tpl, AActor *basisactor, sector_t *sec, double x, double y, double z, DAngle angle, double tracedist, bool permanent);
 void SprayDecal(AActor *shooter, const char *name,double distance = 172.);
@@ -52,8 +53,8 @@ protected:
 	void CalcFracPos(side_t *wall, double x, double y);
 	void Remove ();
 
-	static void SpreadLeft (double r, vertex_t *v1, side_t *feelwall, F3DFloor *ffloor);
-	static void SpreadRight (double r, side_t *feelwall, double wallsize, F3DFloor *ffloor);
+	static void SpreadLeft (double r, vertex_t *v1, side_t *feelwall, F3DFloor *ffloor, SpreadInfo *spread);
+	static void SpreadRight (double r, side_t *feelwall, double wallsize, F3DFloor *ffloor, SpreadInfo *spread);
 };
 
 class DImpactDecal : public DBaseDecal

@@ -6,7 +6,6 @@ class PClassActor;
 
 int P_CheckKeys (AActor *owner, int keynum, bool remote, bool quiet = false);
 void P_InitKeyMessages ();
-void P_DeinitKeyMessages ();
 int P_GetMapColorForLock (int lock);
 int P_GetMapColorForKey (AActor *key);
 int P_GetKeyTypeCount();

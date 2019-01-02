@@ -2812,6 +2812,7 @@ void FSlide::HitSlideLine(line_t* ld)
 
 	// killough 10/98: only bounce if hit hard (prevents wobbling)
 	icyfloor =
+		!(slidemo->flags8 & MF8_NOFRICTIONBOUNCE) &&
 		tmmove.LengthSquared() > 4*4 &&
 		var_friction &&  // killough 8/28/98: calc friction on demand
 		slidemo->Z() <= slidemo->floorz &&

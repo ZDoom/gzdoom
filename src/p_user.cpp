@@ -1922,9 +1922,11 @@ void P_UnPredictPlayer ()
 
 		TObjPtr<AActor*> InvSel = act->InvSel;
 		int inventorytics = player->inventorytics;
+		const bool settings_controller = player->settings_controller;
 
 		*player = PredictionPlayerBackup;
 
+		player->settings_controller = settings_controller;
 		// Restore the camera instead of using the backup's copy, because spynext/prev
 		// could cause it to change during prediction.
 		player->camera = savedcamera;

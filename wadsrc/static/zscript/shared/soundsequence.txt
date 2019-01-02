@@ -58,7 +58,7 @@
 ** selects which choice it picks.
 */
 
-class AmbientSound : Actor native
+class AmbientSound : Actor
 {
 	default
 	{
@@ -68,6 +68,15 @@ class AmbientSound : Actor native
 	}
 	
 	native void MarkAmbientSounds();
+	override native void Tick();
+	override native void Activate(Actor activator);
+	override native void Deactivate(Actor activator);
+	
+	override void BeginPlay ()
+	{
+		Super.BeginPlay ();
+		Activate (NULL);
+	}
 	
 	override void MarkPrecacheSounds()
 	{

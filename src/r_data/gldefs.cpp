@@ -815,7 +815,7 @@ class GLDefsParser
 					break;
 				case LIGHTTAG_SCALE:
 					floatVal = ParseFloat(sc);
-					defaults->SetArg(LIGHT_SCALE, clamp((int)(floatVal * 255), 1, 1024));
+					defaults->SetArg(LIGHT_INTENSITY, clamp((int)(floatVal * 255), 1, 1024));
 					break;
 				case LIGHTTAG_SUBTRACTIVE:
 					defaults->SetSubtractive(ParseInt(sc) != 0);

@@ -1477,6 +1477,39 @@ CUSTOM_CVAR(Int, r_fakecontrast, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	else if (self > 2) self = 2;
 }
 
+//===========================================================================
+//
+//
+//
+//===========================================================================
+
+void line_t::AdjustLine()
+{
+	setDelta(v2->fX() - v1->fX(), v2->fY() - v1->fY());
+
+	if (v1->fX() < v2->fX())
+	{
+		bbox[BOXLEFT] = v1->fX();
+		bbox[BOXRIGHT] = v2->fX();
+	}
+	else
+	{
+		bbox[BOXLEFT] = v2->fX();
+		bbox[BOXRIGHT] = v1->fX();
+	}
+
+	if (v1->fY() < v2->fY())
+	{
+		bbox[BOXBOTTOM] = v1->fY();
+		bbox[BOXTOP] = v2->fY();
+	}
+	else
+	{
+		bbox[BOXBOTTOM] = v2->fY();
+		bbox[BOXTOP] = v1->fY();
+	}
+}
+
 //==========================================================================
 //
 //

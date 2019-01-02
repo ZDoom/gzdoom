@@ -133,8 +133,6 @@ void IHardwareTexture::Resize(int swidth, int sheight, int width, int height, un
 // Constructor
 //
 //===========================================================================
-TArray<FMaterial *> FMaterial::mMaterials;
-int FMaterial::mMaxBound;
 
 FMaterial::FMaterial(FTexture * tx, bool expanded)
 {
@@ -227,8 +225,6 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	SetSpriteRect();
 
 	mTextureLayers.ShrinkToFit();
-	mMaxBound = -1;
-	mMaterials.Push(this);
 	tx->Material[expanded] = this;
 	if (tx->isHardwareCanvas()) tx->bTranslucent = 0;
 }
@@ -241,15 +237,6 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 
 FMaterial::~FMaterial()
 {
-	for(unsigned i=0;i<mMaterials.Size();i++)
-	{
-		if (mMaterials[i]==this) 
-		{
-			mMaterials.Delete(i);
-			break;
-		}
-	}
-
 }
 
 //===========================================================================

@@ -72,6 +72,14 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 	state.SetRenderStyle(huds->RenderStyle);
 	state.SetTextureMode(huds->RenderStyle);
 	state.SetObjectColor(huds->ObjectColor);
+	if (huds->owner->Sector)
+	{
+		state.SetAddColor(huds->owner->Sector->AdditiveColors[sector_t::sprites] | 0xff000000);
+	}
+	else
+	{
+		state.SetAddColor(0);
+	}
 	state.SetDynLight(huds->dynrgb[0], huds->dynrgb[1], huds->dynrgb[2]);
 	state.EnableBrightmap(!(huds->RenderStyle.Flags & STYLEF_ColorIsFixed));
 
@@ -94,6 +102,7 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 	state.SetTextureMode(TM_NORMAL);
 	state.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
 	state.SetObjectColor(0xffffffff);
+	state.SetAddColor(0);
 	state.SetDynLight(0, 0, 0);
 	state.EnableBrightmap(false);
 }

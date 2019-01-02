@@ -89,7 +89,6 @@
 #include "d_event.h"
 #include "d_netinf.h"
 #include "m_cheat.h"
-#include "compatibility.h"
 #include "m_joy.h"
 #include "po_man.h"
 #include "r_renderer.h"
@@ -750,8 +749,7 @@ void D_Display ()
 		// Check for the presence of dynamic lights at the start of the frame once.
 		if ((gl_lights && vid_rendermode == 4) || (r_dynlights && vid_rendermode != 4))
 		{
-			TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
-			level.HasDynamicLights = !!it.Next();
+			level.HasDynamicLights = !!level.lights;
 		}
 		else level.HasDynamicLights = false;	// lights are off so effectively we have none.
 		
@@ -2432,8 +2430,6 @@ void D_DoomMain (void)
 			StartScreen = new FStartupScreen(0);
 		}
 
-		ParseCompatibility();
-
 		CheckCmdLine();
 
 		// [RH] Load sound environments
@@ -2702,7 +2698,6 @@ void D_DoomMain (void)
 		DThinker::DestroyThinkersInList(STAT_STATIC);
 		E_Shutdown(false);
 		P_FreeLevelData();
-		P_FreeExtraLevelData();
 
 		M_SaveDefaults(NULL);			// save config before the restart
 
@@ -2717,7 +2712,6 @@ void D_DoomMain (void)
 		S_Shutdown();					// free all channels and delete playlist
 		C_ClearAliases();				// CCMDs won't be reinitialized so these need to be deleted here
 		DestroyCVarsFlagged(CVAR_MOD);	// Delete any cvar left by mods
-		FS_Close();						// destroy the global FraggleScript.
 		DeinitMenus();
 		LightDefaults.DeleteAndClear();			// this can leak heap memory if it isn't cleared.
 

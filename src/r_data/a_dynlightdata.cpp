@@ -68,34 +68,35 @@ FLightDefaults::FLightDefaults(FName name, ELightType type)
 	m_type = type;
 }
 
-void FLightDefaults::ApplyProperties(ADynamicLight * light) const
+void FLightDefaults::ApplyProperties(FDynamicLight * light) const
 {
 	auto oldtype = light->lighttype;
 
+	light->m_active = true;
 	light->lighttype = m_type;
 	light->specialf1 = m_Param;
-	light->SetOffset(m_Pos);
-	light->halo = m_halo;
-	for (int a = 0; a < 3; a++) light->args[a] = clamp<int>((int)(m_Args[a]), 0, 255);
-	light->args[LIGHT_INTENSITY] = m_Args[LIGHT_INTENSITY];
-	light->args[LIGHT_SECONDARY_INTENSITY] = m_Args[LIGHT_SECONDARY_INTENSITY];
-	light->lightflags &= ~(LF_ADDITIVE | LF_SUBTRACTIVE | LF_DONTLIGHTSELF);
+	light->pArgs = m_Args;
+	light->lightflags &= ~(LF_ADDITIVE | LF_SUBTRACTIVE | LF_DONTLIGHTSELF | LF_SPOT);
 	if (m_subtractive) light->lightflags |= LF_SUBTRACTIVE;
 	if (m_additive) light->lightflags |= LF_ADDITIVE;
 	if (m_dontlightself) light->lightflags |= LF_DONTLIGHTSELF;
 	if (m_dontlightactors) light->lightflags |= LF_DONTLIGHTACTORS;
 	if (m_spot)
+	{
 		light->lightflags |= LF_SPOT;
-	light->SpotInnerAngle = m_spotInnerAngle;
-	light->SpotOuterAngle = m_spotOuterAngle;
+		light->pSpotInnerAngle = &m_spotInnerAngle;
+		light->pSpotOuterAngle = &m_spotOuterAngle;
+		if (m_explicitPitch) light->pPitch = &m_pitch;
+		else light->pPitch = &light->target->Angles.Pitch;
+	}
 	light->m_tickCount = 0;
 	if (m_type == PulseLight)
 	{
 		float pulseTime = float(m_Param / TICRATE);
 
 		light->m_lastUpdate = level.maptime;
-		if (m_swapped) light->m_cycler.SetParams(float(light->args[LIGHT_SECONDARY_INTENSITY]), float(light->args[LIGHT_INTENSITY]), pulseTime, oldtype == PulseLight);
-		else light->m_cycler.SetParams(float(light->args[LIGHT_INTENSITY]), float(light->args[LIGHT_SECONDARY_INTENSITY]), pulseTime, oldtype == PulseLight);
+		if (m_swapped) light->m_cycler.SetParams(float(m_Args[LIGHT_SECONDARY_INTENSITY]), float(m_Args[LIGHT_INTENSITY]), pulseTime, oldtype == PulseLight);
+		else light->m_cycler.SetParams(float(m_Args[LIGHT_INTENSITY]), float(m_Args[LIGHT_SECONDARY_INTENSITY]), pulseTime, oldtype == PulseLight);
 		light->m_cycler.ShouldCycle(true);
 		light->m_cycler.SetCycleType(CYCLE_Sin);
 		light->m_currentRadius = (float)light->m_cycler.GetVal();
@@ -109,7 +110,8 @@ void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 		case 1: light->lightflags |= LF_ATTENUATE; break;
 		default: if (level.flags3 & LEVEL3_ATTENUATE)  light->lightflags |= LF_ATTENUATE; else light->lightflags &= ~LF_ATTENUATE; break;
 	}
-	}
+	light->SetOffset(m_Pos);	// this must be the last thing to do.
+}
 
 
 //==========================================================================

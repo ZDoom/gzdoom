@@ -85,19 +85,19 @@ CUSTOM_CVAR (Bool, gl_light_shadowmap, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
     if (!self)
     {
-        // Unset any residual shadow map indices in the light actors.
-        TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
-        while (auto light = it.Next())
-        {
+		auto light = level.lights;
+		while (light)
+		{
             light->mShadowmapIndex = 1024;
+			light = light->next;
         }
     }
 }
 
-bool IShadowMap::ShadowTest(ADynamicLight *light, const DVector3 &pos)
+bool IShadowMap::ShadowTest(FDynamicLight *light, const DVector3 &pos)
 {
-	if (light->shadowmapped && light->radius > 0.0 && IsEnabled() && mAABBTree)
-		return mAABBTree->RayTest(light->Pos(), pos) >= 1.0f;
+	if (light->shadowmapped && light->GetRadius() > 0.0 && IsEnabled() && mAABBTree)
+		return mAABBTree->RayTest(light->Pos, pos) >= 1.0f;
 	else
 		return true;
 }
@@ -113,8 +113,7 @@ void IShadowMap::CollectLights()
 	int lightindex = 0;
 
 	// Todo: this should go through the blockmap in a spiral pattern around the player so that closer lights are preferred.
-	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
-	while (auto light = it.Next())
+	for (auto light = level.lights; light; light = light->next)
 	{
 		LightsProcessed++;
 		if (light->shadowmapped && light->IsActive() && lightindex < 1024 * 4)
@@ -156,7 +155,7 @@ bool IShadowMap::ValidateAABBTree()
 	}
 
 	if (mAABBTree)
-		return true;
+		return mAABBTree->Update();
 
 	mAABBTree.reset(new hwrenderer::LevelAABBTree());
 	return false;
@@ -197,10 +196,12 @@ void IShadowMap::UploadAABBTree()
 {
 	if (!ValidateAABBTree())
 	{
-		mNodesBuffer = screen->CreateDataBuffer(2, true);
+		if (!mNodesBuffer)
+			mNodesBuffer = screen->CreateDataBuffer(2, true);
 		mNodesBuffer->SetData(sizeof(hwrenderer::AABBTreeNode) * mAABBTree->nodes.Size(), &mAABBTree->nodes[0]);
 
-		mLinesBuffer = screen->CreateDataBuffer(3, true);
+		if (!mLinesBuffer)
+			mLinesBuffer = screen->CreateDataBuffer(3, true);
 		mLinesBuffer->SetData(sizeof(hwrenderer::AABBTreeLine) * mAABBTree->lines.Size(), &mAABBTree->lines[0]);
 	}
 }

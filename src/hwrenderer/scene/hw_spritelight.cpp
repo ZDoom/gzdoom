@@ -51,7 +51,7 @@ T smoothstep(const T edge0, const T edge1, const T x)
 
 void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FLightNode *node, int portalgroup, float *out)
 {
-	ADynamicLight *light;
+	FDynamicLight *light;
 	float frac, lr, lg, lb;
 	float radius;
 	
@@ -60,7 +60,7 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FLig
 	while (node)
 	{
 		light=node->lightsource;
-		if (light->visibletoplayer && !(light->flags2&MF2_DORMANT) && (!(light->lightflags&LF_DONTLIGHTSELF) || light->target != self || !self) && !(light->lightflags&LF_DONTLIGHTACTORS))
+		if (light->ShouldLightActor(self))
 		{
 			float dist;
 			FVector3 L;
@@ -94,13 +94,14 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FLig
 				if (light->IsSpot())
 				{
 					L *= -1.0f / dist;
-					DAngle negPitch = -light->Angles.Pitch;
+					DAngle negPitch = -*light->pPitch;
+					DAngle Angle = light->target->Angles.Yaw;
 					double xyLen = negPitch.Cos();
-					double spotDirX = -light->Angles.Yaw.Cos() * xyLen;
-					double spotDirY = -light->Angles.Yaw.Sin() * xyLen;
+					double spotDirX = -Angle.Cos() * xyLen;
+					double spotDirY = -Angle.Sin() * xyLen;
 					double spotDirZ = -negPitch.Sin();
 					double cosDir = L.X * spotDirX + L.Y * spotDirY + L.Z * spotDirZ;
-					frac *= (float)smoothstep(light->SpotOuterAngle.Cos(), light->SpotInnerAngle.Cos(), cosDir);
+					frac *= (float)smoothstep(light->pSpotOuterAngle->Cos(), light->pSpotInnerAngle->Cos(), cosDir);
 				}
 
 				if (frac > 0 && (!light->shadowmapped || screen->mShadowMap.ShadowTest(light, { x, y, z })))
@@ -141,7 +142,7 @@ void HWDrawInfo::GetDynSpriteLight(AActor *thing, particle_t *particle, float *o
 
 // static so that we build up a reserve (memory allocations stop)
 // For multithread processing each worker thread needs its own copy, though.
-static thread_local TArray<ADynamicLight*> addedLightsArray; 
+static thread_local TArray<FDynamicLight*> addedLightsArray; 
 
 void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata)
 {
@@ -166,8 +167,8 @@ void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata)
 			FLightNode * node = section->lighthead;
 			while (node) // check all lights touching a subsector
 			{
-				ADynamicLight *light = node->lightsource;
-				if (light->visibletoplayer && !(light->flags2&MF2_DORMANT) && (!(light->lightflags&LF_DONTLIGHTSELF) || light->target != self) && !(light->lightflags&LF_DONTLIGHTACTORS))
+				FDynamicLight *light = node->lightsource;
+				if (light->ShouldLightActor(self))
 				{
 					int group = subsector->sector->PortalGroup;
 					DVector3 pos = light->PosRelative(group);

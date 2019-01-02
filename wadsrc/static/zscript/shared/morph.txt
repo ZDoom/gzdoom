@@ -35,7 +35,7 @@ extend class Actor
 	//
 	//===========================================================================
 
-	bool Morph(Actor activator, class<PlayerPawn> playerclass, class<MorphedMonster> monsterclass, int duration = 0, int style = 0, class<Actor> morphflash = null, class<Actor>unmorphflash = null)
+	virtual bool Morph(Actor activator, class<PlayerPawn> playerclass, class<MorphedMonster> monsterclass, int duration = 0, int style = 0, class<Actor> morphflash = null, class<Actor>unmorphflash = null)
 	{
 		if (player != null && player.mo != null && playerclass != null)
 		{
@@ -73,7 +73,7 @@ extend class Actor
 	//
 	//===========================================================================
 
-	bool UnMorph(Actor activator, int flags, bool force)
+	virtual bool UnMorph(Actor activator, int flags, bool force)
 	{
 		if (player)
 		{

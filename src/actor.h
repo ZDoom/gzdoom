@@ -405,6 +405,8 @@ enum ActorFlag8
 	MF8_BLOCKASPLAYER	= 0x00000004,	// actor is blocked by player-blocking lines even if not a player
 	MF8_DONTFACETALKER	= 0x00000008,	// don't alter the angle to face the player in conversations
 	MF8_HITOWNER		= 0x00000010,	// projectile can hit the actor that fired it
+	MF8_NOFRICTION		= 0x00000020,	// friction doesn't apply to the actor at all
+	MF8_NOFRICTIONBOUNCE	= 0x00000040,	// don't bounce off walls when on icy floors
 };
 
 // --- mobj.renderflags ---
@@ -1233,10 +1235,12 @@ public:
 	DVector3 Prev;
 	DRotator PrevAngles;
 	int PrevPortalGroup;
-	TArray<TObjPtr<AActor*> > AttachedLights;
+	TArray<FDynamicLight *> AttachedLights;
 
 	// When was this actor spawned?
 	int SpawnTime;
+	uint32_t SpawnOrder;
+
 
 	// ThingIDs
 	static void ClearTIDHashes ();
@@ -1485,13 +1489,11 @@ public:
 
 	int ApplyDamageFactor(FName damagetype, int damage) const;
 	int GetModifiedDamage(FName damagetype, int damage, bool passive);
-
+	void DeleteAttachedLights();
 	static void DeleteAllAttachedLights();
 	static void RecreateAllAttachedLights();
 
 	bool				hasmodel;
-
-	size_t PropagateMark();
 };
 
 class FActorIterator

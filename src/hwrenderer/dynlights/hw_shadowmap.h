@@ -5,7 +5,7 @@
 #include "stats.h"
 #include <memory>
 
-class ADynamicLight;
+struct FDynamicLight;
 struct level_info_t;
 class IDataBuffer;
 
@@ -16,7 +16,7 @@ public:
 	virtual ~IShadowMap();
 
 	// Test if a world position is in shadow relative to the specified light and returns false if it is
-	bool ShadowTest(ADynamicLight *light, const DVector3 &pos);
+	bool ShadowTest(FDynamicLight *light, const DVector3 &pos);
 
 	// Returns true if gl_light_shadowmap is enabled and supported by the hardware
 	bool IsEnabled() const;

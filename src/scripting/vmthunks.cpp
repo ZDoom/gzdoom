@@ -542,6 +542,23 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetSpecialColor, SetSpecialColor)
 	return 0;
 }
 
+static void SetAdditiveColor(sector_t *self, int pos, int color)
+{
+	if (pos >= 0 && pos < 5)
+	{
+		self->SetAdditiveColor(pos, color);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetAdditiveColor, SetAdditiveColor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(pos);
+	PARAM_COLOR(color);
+	SetAdditiveColor(self, pos, color);
+	return 0;
+}
+
 static void SetFogDensity(sector_t *self, int dens)
 {
 	self->Colormap.FogDensity = dens;
@@ -1521,6 +1538,57 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 PARAM_INT(position);
 	 PARAM_COLOR(color);
 	 SetSideSpecialColor(self, tier, position, color);
+	 return 0;
+ }
+
+ static int GetSideAdditiveColor(side_t *self, int tier)
+ {
+	 if (tier >= 0 && tier < 3)
+	 {
+		 return self->GetAdditiveColor(tier, self->sector);
+	 }
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, GetAdditiveColor, GetSideAdditiveColor)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(tier);
+	 ACTION_RETURN_INT(GetSideAdditiveColor(self, tier));
+	 return 0;
+ }
+
+ static void SetSideAdditiveColor(side_t *self, int tier, int color)
+ {
+	 if (tier >= 0 && tier < 3)
+	 {
+		 self->SetAdditiveColor(tier, color);
+	 }
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, SetAdditiveColor, SetSideAdditiveColor)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(tier);
+	 PARAM_COLOR(color);
+	 SetSideAdditiveColor(self, tier, color);
+	 return 0;
+ }
+
+ static void EnableSideAdditiveColor(side_t *self, int tier, bool enable)
+ {
+	 if (tier >= 0 && tier < 3)
+	 {
+		 self->EnableAdditiveColor(tier, enable);
+	 }
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, EnableAdditiveColor, EnableSideAdditiveColor)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(tier);
+	 PARAM_BOOL(enable);
+	 EnableSideAdditiveColor(self, tier, enable);
 	 return 0;
  }
 
@@ -2701,6 +2769,7 @@ DEFINE_FIELD_X(Sector, sector_t, floorplane)
 DEFINE_FIELD_X(Sector, sector_t, ceilingplane)
 DEFINE_FIELD_X(Sector, sector_t, Colormap)
 DEFINE_FIELD_X(Sector, sector_t, SpecialColors)
+DEFINE_FIELD_X(Sector, sector_t, AdditiveColors)
 DEFINE_FIELD_X(Sector, sector_t, SoundTarget)
 DEFINE_FIELD_X(Sector, sector_t, special)
 DEFINE_FIELD_X(Sector, sector_t, lightlevel)

@@ -86,6 +86,9 @@ struct Side native play
 	native double GetTextureYScale(int which);
 	native void MultiplyTextureYScale(int which, double delta);
 	native void SetSpecialColor(int tier, int position, Color scolor);
+	native Color GetAdditiveColor(int tier);
+	native void SetAdditiveColor(int tier, Color color);
+	native void EnableAdditiveColor(int tier, bool enable);
 	//native DInterpolation *SetInterpolation(int position);
 	//native void StopInterpolation(int position);
 
@@ -236,6 +239,7 @@ struct Sector native play
 
 	native readonly FColormap 	ColorMap;
 	native readonly Color		SpecialColors[5];
+	native readonly Color		AdditiveColors[5];
 
 	native Actor 		SoundTarget;
 
@@ -409,6 +413,7 @@ struct Sector native play
 	native void SetGlowHeight(int pos, double height);
 	native void SetGlowColor(int pos, color color);
 	native void SetSpecialColor(int pos, color color);
+	native void SetAdditiveColor(int pos, Color color);
 	
 	native TextureID GetTexture(int pos);
 	native void SetTexture(int pos, TextureID tex, bool floorclip = true);

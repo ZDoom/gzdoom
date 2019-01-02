@@ -462,21 +462,8 @@ FSpriteModelFrame * FindModelFrame(const PClass * ti, int sprite, int frame, boo
 bool IsHUDModelForPlayerAvailable(player_t * player);
 void FlushModels();
 
-class DeletingModelArray : public TArray<FModel *>
-{
-public:
 
-	~DeletingModelArray()
-	{
-		for (unsigned i = 0; i<Size(); i++)
-		{
-			delete (*this)[i];
-		}
-
-	}
-};
-
-extern DeletingModelArray Models;
+extern TDeletingArray<FModel*> Models;
 
 // Check if circle potentially intersects with node AABB
 inline bool CheckBBoxCircle(float *bbox, float x, float y, float radiusSquared)

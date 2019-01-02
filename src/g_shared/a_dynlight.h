@@ -2,6 +2,7 @@
 #include "c_cvars.h"
 #include "actor.h"
 #include "cycler.h"
+#include "g_levellocals.h"
 
 EXTERN_CVAR(Bool, r_dynlights)
 EXTERN_CVAR(Bool, gl_lights)
@@ -10,7 +11,6 @@ EXTERN_CVAR(Bool, gl_attachedlights)
 struct side_t;
 struct seg_t;
 
-class ADynamicLight;
 class FSerializer;
 struct FSectionLine;
 
@@ -34,7 +34,6 @@ enum
 	LIGHT_BLUE = 2,
 	LIGHT_INTENSITY = 3,
 	LIGHT_SECONDARY_INTENSITY = 4,
-	LIGHT_SCALE = 3,
 };
 
 enum LightFlag
@@ -58,7 +57,7 @@ class FLightDefaults
 public:
 	FLightDefaults(FName name, ELightType type);
 
-	void ApplyProperties(ADynamicLight * light) const;
+	void ApplyProperties(FDynamicLight * light) const;
 	FName GetName() const { return m_Name; }
 	void SetParameter(double p) { m_Param = p; }
 	void SetArg(int arg, int val) { m_Args[arg] = val; }
@@ -98,8 +97,10 @@ protected:
 	bool m_dontlightactors = false;
 	bool m_swapped = false;
 	bool m_spot = false;
-	double m_spotInnerAngle = 10.0;
-	double m_spotOuterAngle = 25.0;
+	bool m_explicitPitch = false;
+	DAngle m_spotInnerAngle = 10.0;
+	DAngle m_spotOuterAngle = 25.0;
+	DAngle m_pitch = 0.0;
 };
 
 //==========================================================================
@@ -159,7 +160,7 @@ struct FLightNode
 	FLightNode * nextTarget;
 	FLightNode ** prevLight;
 	FLightNode * nextLight;
-	ADynamicLight * lightsource;
+	FDynamicLight * lightsource;
 	union
 	{
 		side_t * targLine;
@@ -168,72 +169,85 @@ struct FLightNode
 	};
 };
 
-
-//
-// Base class
-//
-// [CO] I merged everything together in this one class so that I don't have
-// to create and re-create an excessive amount of objects
-//
-
-class ADynamicLight : public AActor
+struct FDynamicLight
 {
 	friend class FLightDefaults;
-	DECLARE_CLASS(ADynamicLight, AActor)
-public:
-	virtual void Tick();
-	void Serialize(FSerializer &arc);
-	void PostSerialize();
-	uint8_t GetRed() const { return args[LIGHT_RED]; }
-	uint8_t GetGreen() const { return args[LIGHT_GREEN]; }
-	uint8_t GetBlue() const { return args[LIGHT_BLUE]; }
+
+	inline DVector3 PosRelative(int portalgroup) const
+	{
+		return Pos + level.Displacements.getOffset(Sector->PortalGroup, portalgroup);
+	}
+
+	bool ShouldLightActor(AActor *check)
+	{
+		return visibletoplayer && IsActive() && (!(lightflags & LF_DONTLIGHTSELF) || target != check) && !(lightflags&LF_DONTLIGHTACTORS);
+	}
+
+	void SetOffset(const DVector3 &pos)
+	{
+		m_off = pos;
+	}
+
+
+	bool IsActive() const { return m_active; }
 	float GetRadius() const { return (IsActive() ? m_currentRadius * 2.f : 0.f); }
+	int GetRed() const { return pArgs[LIGHT_RED]; }
+	int GetGreen() const { return pArgs[LIGHT_GREEN]; }
+	int GetBlue() const { return pArgs[LIGHT_BLUE]; }
+	int GetIntensity() const { return pArgs[LIGHT_INTENSITY]; }
+	int GetSecondaryIntensity() const { return pArgs[LIGHT_SECONDARY_INTENSITY]; }
+
+	bool IsSubtractive() const { return !!(lightflags & LF_SUBTRACTIVE); }
+	bool IsAdditive() const { return !!(lightflags & LF_ADDITIVE); }
+	bool IsSpot() const { return !!(lightflags & LF_SPOT); }
+	void Deactivate() { m_active = false; }
+	void Activate();
+
+	void SetActor(AActor *ac, bool isowned) { target = ac; owned = isowned; }
+	double X() const { return Pos.X; }
+	double Y() const { return Pos.Y; }
+	double Z() const { return Pos.Z; }
+
+	void Tick();
+	void UpdateLocation();
 	void LinkLight();
 	void UnlinkLight();
-	size_t PointerSubstitution(DObject *old, DObject *notOld);
-
-	void BeginPlay();
-	void SetOrigin(double x, double y, double z, bool moving = false);
-	void PostBeginPlay();
-	void OnDestroy() override;
-	void Activate(AActor *activator);
-	void Deactivate(AActor *activator);
-	void SetOffset(const DVector3 &pos);
-	void UpdateLocation();
-	bool IsOwned() const { return owned; }
-	bool IsActive() const { return !(flags2&MF2_DORMANT); }
-	bool IsSubtractive() { return !!(lightflags & LF_SUBTRACTIVE); }
-	bool IsAdditive() { return !!(lightflags & LF_ADDITIVE); }
-	bool IsSpot() { return !!(lightflags & LF_SPOT); }
-	FState *targetState;
-	FLightNode * touching_sides;
-	FLightNode * touching_sector;
+	void ReleaseLight();
 
 private:
 	double DistToSeg(const DVector3 &pos, vertex_t *start, vertex_t *end);
 	void CollectWithinRadius(const DVector3 &pos, FSection *section, float radius);
 
-protected:
-	DVector3 m_off;
-	float m_currentRadius;
-	unsigned int m_lastUpdate;
-	FCycler m_cycler;
-	subsector_t * subsector;
-
 public:
+	FCycler m_cycler;
+	DVector3 Pos;
+	DVector3 m_off;
+
+	// This date can either come from the owning actor or from a light definition
+	// To avoid having to copy these around every tic, these are pointers to the source data.
+	const DAngle *pSpotInnerAngle;
+	const DAngle *pSpotOuterAngle;
+	const DAngle *pPitch;	// This is to handle pitch overrides through GLDEFS, it can either point to the target's pitch or the light definition.
+	const int *pArgs;
+
+	double specialf1;
+	FDynamicLight *next, *prev;
+	sector_t *Sector;
+	TObjPtr<AActor *> target;
+	FLightNode * touching_sides;
+	FLightNode * touching_sector;
+	LightFlags lightflags;
+	float radius;			// The maximum size the light can be with its current settings.
+	float m_currentRadius;	// The current light size.
 	int m_tickCount;
+	int m_lastUpdate;
+	int mShadowmapIndex;
+	bool m_active;
+	bool visibletoplayer;
+	bool shadowmapped;
 	uint8_t lighttype;
 	bool owned;
-	bool halo;
-	uint8_t color2[3];
-	bool visibletoplayer;
 	bool swapped;
-	bool shadowmapped;
-	int bufferindex;
-	LightFlags lightflags;
-	DAngle SpotInnerAngle;
-	DAngle SpotOuterAngle;
-    
-    int mShadowmapIndex;
+	bool explicitpitch;
 
 };

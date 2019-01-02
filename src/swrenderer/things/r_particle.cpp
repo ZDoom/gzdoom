@@ -291,7 +291,9 @@ namespace swrenderer
 			{
 				continue;
 			}
-			if ((ds->siz2 - ds->siz1) * ((x2 + x1) / 2 - ds->sx1) / (ds->sx2 - ds->sx1) + ds->siz1 < idepth)
+			float siz1 = 1 / ds->WallC.sz1;
+			float siz2 = 1 / ds->WallC.sz2;
+			if ((siz2 - siz1) * ((x2 + x1) / 2 - ds->WallC.sx1) / (ds->WallC.sx2 - ds->WallC.sx1) + siz1 < idepth)
 			{
 				// [ZZ] only draw stuff that's inside the same portal as the particle, other portals will care for themselves
 				if (ds->CurrentPortalUniq == CurrentPortalUniq)

@@ -48,7 +48,6 @@ namespace OpenGLRenderer
 FGLRenderState gl_RenderState;
 
 static VSMatrix identityMatrix(1);
-TArray<VSMatrix> gl_MatrixStack;
 
 static void matrixToGL(const VSMatrix &mat, int loc)
 {
@@ -145,6 +144,7 @@ bool FGLRenderState::ApplyShader()
 	activeShader->muLightIndex.Set(-1);
 	activeShader->muClipSplit.Set(mClipSplit);
 	activeShader->muSpecularMaterial.Set(mGlossiness, mSpecularLevel);
+	activeShader->muAddColor.Set(mAddColor); // Can this be done without a shader?
 
 	if (mGlowEnabled)
 	{

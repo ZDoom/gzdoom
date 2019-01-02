@@ -920,9 +920,10 @@ unsigned FSerializer::GetSize(const char *group)
 {
 	if (isWriting()) return -1;	// we do not know this when writing.
 
-	const rapidjson::Value &val = r->mDoc[group];
-	if (!val.IsArray()) return -1;
-	return val.Size();
+	const rapidjson::Value *val = r->FindKey(group);
+	if (!val) return 0;
+	if (!val->IsArray()) return -1;
+	return val->Size();
 }
 
 //==========================================================================
@@ -1449,12 +1450,12 @@ FSerializer &SerializePointer(FSerializer &arc, const char *key, T *&value, T **
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FPolyObj *&value, FPolyObj **defval)
 {
-	return SerializePointer(arc, key, value, defval, polyobjs);
+	return SerializePointer(arc, key, value, defval, level.Polyobjects.Data());
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, const FPolyObj *&value, const FPolyObj **defval)
 {
-	return SerializePointer<const FPolyObj>(arc, key, value, defval, polyobjs);
+	return SerializePointer<const FPolyObj>(arc, key, value, defval, level.Polyobjects.Data());
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, side_t *&value, side_t **defval)

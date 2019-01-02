@@ -191,6 +191,7 @@ CCMD (vid_setscale)
             }
         }
         vid_scalemode = 5;
+	vid_scalefactor = 1.0;
     }
     else
     {

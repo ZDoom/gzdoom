@@ -100,7 +100,7 @@ struct BuildInfo
 		std::swap(Scale, other.Scale);
 		std::swap(bWorldPanning, other.bWorldPanning);
 		std::swap(DefinitionLump, other.DefinitionLump);
-		std::swap(bComplex, bComplex);
+		std::swap(bComplex, other.bComplex);
 		std::swap(textual, other.textual);
 		std::swap(bNoDecals, other.bNoDecals);
 		std::swap(LeftOffset[0], other.LeftOffset[0]);

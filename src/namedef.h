@@ -1028,6 +1028,11 @@ xx(WeaponFlags)
 xx(DropTime)
 xx(PickupSound)
 
+// PlayerPawn member fields
+xx(ColorRangeStart)
+xx(ColorRangeEnd)
+
+
 xx(BlueCard)
 xx(YellowCard)
 xx(RedCard)

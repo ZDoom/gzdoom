@@ -29,8 +29,6 @@ class PlayerPawn : Actor native
 	native Name 		Portrait;
 	native Name 		Slot[10];
 	native double 		HexenArmor[5];
-	native uint8		ColorRangeStart;	// Skin color range
-	native uint8		ColorRangeEnd;
 
 	// [GRB] Player class properties
 	native double		JumpZ;
@@ -54,6 +52,8 @@ class PlayerPawn : Actor native
 	meta Name HealingRadiusType;
 	meta Name InvulMode;
 	meta int TeleportFreezeTime;
+	meta int ColorRangeStart;	// Skin color range
+	meta int ColorRangeEnd;
 	
 	property prefix: Player;
 	property HealRadiusType: HealingradiusType;

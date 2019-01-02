@@ -1399,8 +1399,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorrange, I_I, PlayerPawn)
 	if (start > end)
 		swapvalues (start, end);
 
-	defaults->ColorRangeStart = start;
-	defaults->ColorRangeEnd = end;
+	defaults->IntVar(NAME_ColorRangeStart) = start;
+	defaults->IntVar(NAME_ColorRangeEnd) = end;
 }
 
 //==========================================================================

@@ -2142,8 +2142,6 @@ DEFINE_FIELD(APlayerPawn, Face)
 DEFINE_FIELD(APlayerPawn, Portrait)
 DEFINE_FIELD(APlayerPawn, Slot)
 DEFINE_FIELD(APlayerPawn, HexenArmor)
-DEFINE_FIELD(APlayerPawn, ColorRangeStart)
-DEFINE_FIELD(APlayerPawn, ColorRangeEnd)
 
 DEFINE_FIELD_X(PlayerInfo, player_t, mo)
 DEFINE_FIELD_X(PlayerInfo, player_t, playerstate)

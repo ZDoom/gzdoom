@@ -2119,11 +2119,12 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 		
 			AActor *item;
 			unsigned int i = 0;
+			auto &InvFirst = statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvFirst);
 			// If the player has no artifacts, don't draw the bar
-			statusBar->CPlayer->mo->InvFirst = statusBar->wrapper->ValidateInvFirst(size);
-			if(statusBar->CPlayer->mo->InvFirst != NULL || alwaysShow)
+			InvFirst = statusBar->wrapper->ValidateInvFirst(size);
+			if (InvFirst != nullptr || alwaysShow)
 			{
-				for(item = statusBar->CPlayer->mo->InvFirst, i = 0; item != NULL && i < size; item = NextInv(item), ++i)
+				for(item = InvFirst, i = 0; item != NULL && i < size; item = NextInv(item), ++i)
 				{
 					SBarInfoCoordinate rx = x + (!vertical ? i*spacing : 0);
 					SBarInfoCoordinate ry = y + (vertical ? i*spacing : 0);
@@ -2157,7 +2158,7 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 					statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgARTIBOX], x + (!vertical ? (i*spacing) : 0), y + (vertical ? (i*spacing) : 0), block->XOffset(), block->YOffset(), bgalpha, block->FullScreenOffsets());
 		
 				// Is there something to the left?
-				if (!noArrows && statusBar->CPlayer->mo->InvFirst && PrevInv(statusBar->CPlayer->mo->InvFirst))
+				if (!noArrows && InvFirst && PrevInv(statusBar->CPlayer->mo->InvFirst))
 				{
 					int offset = (style != STYLE_Strife ? (style != STYLE_HexenStrict ? -12 : -10) : 14);
 					int yOffset = style != STYLE_HexenStrict ? 0 : -1;

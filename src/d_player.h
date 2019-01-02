@@ -118,10 +118,8 @@ public:
 	int			BonusHealth;
 
 	int			MugShotMaxHealth;
-	int			RunHealth;
 	int			PlayerFlags;
 	double		FullHeight;
-	TObjPtr<AActor*> InvFirst;		// first inventory item displayed on inventory bar
 	TObjPtr<AActor*> InvSel;			// selected inventory item
 
 	// [GRB] Player class properties
@@ -129,8 +127,6 @@ public:
 	double		GruntSpeed;
 	double		FallingScreamMinSpeed, FallingScreamMaxSpeed;
 	double		ViewHeight;
-	double		ForwardMove1, ForwardMove2;
-	double		SideMove1, SideMove2;
 	FTextureID	ScoreIcon;
 	int			SpawnMask;
 	FName	MorphWeapon;
@@ -153,6 +149,10 @@ public:
 	double HexenArmor[5];
 
 	// Everything below this point is only used by scripted code.
+	int			RunHealth;
+	TObjPtr<AActor*> InvFirst;		// first inventory item displayed on inventory bar
+	double		ForwardMove1, ForwardMove2;
+	double		SideMove1, SideMove2;
 	PClassActor *FlechetteType;
 
 };

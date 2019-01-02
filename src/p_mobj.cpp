@@ -812,50 +812,6 @@ DEFINE_ACTION_FUNCTION(AActor, CopyFriendliness)
 	self->CopyFriendliness(other, changetarget, resethealth);
 	return 0;
 }
-//============================================================================
-//
-// AActor :: ObtainInventory
-//
-// Removes the items from the other actor and puts them in this actor's
-// inventory. The actor receiving the inventory must not have any items.
-//
-//============================================================================
-
-void AActor::ObtainInventory (AActor *other)
-{
-	assert (Inventory == NULL);
-
-	Inventory = other->Inventory;
-	InventoryID = other->InventoryID;
-	other->Inventory = NULL;
-	other->InventoryID = 0;
-
-	if (other->IsKindOf(RUNTIME_CLASS(APlayerPawn)) && this->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
-	{
-		APlayerPawn *you = static_cast<APlayerPawn *>(other);
-		APlayerPawn *me = static_cast<APlayerPawn *>(this);
-		me->InvFirst = you->InvFirst;
-		me->InvSel = you->InvSel;
-		you->InvFirst = NULL;
-		you->InvSel = NULL;
-	}
-
-	auto item = Inventory;
-	while (item != nullptr)
-	{
-		item->PointerVar<AActor>(NAME_Owner) = this;
-		item = item->Inventory;
-	}
-}
-
-DEFINE_ACTION_FUNCTION(AActor, ObtainInventory)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT(other, AActor);
-	self->ObtainInventory(other);
-	return 0;
-}
-
 //---------------------------------------------------------------------------
 //
 // FUNC P_GetRealMaxHealth
@@ -5039,7 +4995,11 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	else if (oldactor != NULL && oldactor->player == p && !(flags & SPF_TEMPPLAYER))
 	{
 		// Move the voodoo doll's inventory to the new player.
-		mobj->ObtainInventory (oldactor);
+		IFVM(Actor, ObtainInventory)
+		{
+			VMValue params[] = { mobj, oldactor };
+			VMCall(func, params, 2, nullptr, 0);
+		}
 		FBehavior::StaticStopMyScripts (oldactor);	// cancel all ENTER/RESPAWN scripts for the voodoo doll
 	}
 

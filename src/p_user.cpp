@@ -1183,56 +1183,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 }
 
 
-//----------------------------------------------------------------------------
-//
-// PROC A_SkullPop
-//
-//----------------------------------------------------------------------------
-
-DEFINE_ACTION_FUNCTION(AActor, A_SkullPop)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS(spawntype, APlayerPawn);
-
-	APlayerPawn *mo;
-	player_t *player;
-
-	// [GRB] Parameterized version
-	if (spawntype == NULL || !spawntype->IsDescendantOf("PlayerChunk"))
-	{
-		spawntype = PClass::FindActor("BloodySkull");
-		if (spawntype == NULL)
-			return 0;
-	}
-
-	self->flags &= ~MF_SOLID;
-	mo = (APlayerPawn *)Spawn (spawntype, self->PosPlusZ(48.), NO_REPLACE);
-	//mo->target = self;
-	mo->Vel.X = pr_skullpop.Random2() / 128.;
-	mo->Vel.Y = pr_skullpop.Random2() / 128.;
-	mo->Vel.Z = 2. + (pr_skullpop() / 1024.);
-	// Attach player mobj to bloody skull
-	player = self->player;
-	self->player = NULL;
-	mo->ObtainInventory (self);
-	mo->player = player;
-	mo->health = self->health;
-	mo->Angles.Yaw = self->Angles.Yaw;
-	if (player != NULL)
-	{
-		player->mo = mo;
-		player->damagecount = 32;
-	}
-	for (int i = 0; i < MAXPLAYERS; ++i)
-	{
-		if (playeringame[i] && players[i].camera == self)
-		{
-			players[i].camera = mo;
-		}
-	}
-	return 0;
-}
-
 //===========================================================================
 //
 // P_CheckPlayerSprites

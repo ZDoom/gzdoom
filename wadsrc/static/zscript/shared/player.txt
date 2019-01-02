@@ -2173,7 +2173,7 @@ class PlayerPawn : Actor native
 		return p1 * (1. - ticfrac) + p2 * ticfrac;
 	}
 
-	
+		
 	//----------------------------------------------------------------------------
 	//
 	// 
@@ -2189,6 +2189,53 @@ class PlayerPawn : Actor native
 	native void CheckUse();
 	native void CheckWeaponButtons();
 	native void MarkPlayerSounds();
+}
+
+extend class Actor
+{
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_SkullPop
+	// This should really be in PlayerPawn but cannot be.
+	//
+	//----------------------------------------------------------------------------
+
+	void A_SkullPop(class<PlayerChunk> skulltype = "BloodySkull")
+	{
+		// [GRB] Parameterized version
+		if (skulltype == NULL || !(skulltype is "PlayerChunk"))
+		{
+			skulltype = "BloodySkull";
+			if (skulltype == NULL)
+				return;
+		}
+
+		bSolid = false;
+		let mo = PlayerPawn(Spawn (skulltype,  Pos + (0, 0, 48), NO_REPLACE));
+		//mo.target = self;
+		mo.Vel.X = Random2[SkullPop]() / 128.;
+		mo.Vel.Y = Random2[SkullPop]() / 128.;
+		mo.Vel.Z = 2. + (Random[SkullPop]() / 1024.);
+		// Attach player mobj to bloody skull
+		let player = self.player;
+		self.player = NULL;
+		mo.ObtainInventory (self);
+		mo.player = player;
+		mo.health = health;
+		mo.Angle = Angle;
+		if (player != NULL)
+		{
+			player.mo = mo;
+			player.damagecount = 32;
+		}
+		for (int i = 0; i < MAXPLAYERS; ++i)
+		{
+			if (playeringame[i] && players[i].camera == self)
+			{
+				players[i].camera = mo;
+			}
+		}
+	}
 }
 
 class PlayerChunk : PlayerPawn

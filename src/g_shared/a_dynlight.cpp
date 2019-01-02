@@ -227,7 +227,6 @@ void FDynamicLight::ReleaseLight()
 	if (next != nullptr) next->prev = prev;
 	prev = nullptr;
 	FreeList.Push(this);
-	Printf("Releasing %p\n", this);
 }
 
 

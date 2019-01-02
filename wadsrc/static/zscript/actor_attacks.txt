@@ -92,11 +92,10 @@ extend class Actor
 				let puff = LineAttack(pangle, range, slope, damage, 'Hitscan', pufftype, laflags);
 				if (missile != null && pufftype != null)
 				{
-					double x = Spawnofs_xy * cos(pangle);
-					double y = Spawnofs_xy * sin(pangle);
-					
+					double ang = pangle - 90;
+					let ofs = AngleToVector(ang, Spawnofs_xy);
 					let pos = self.pos;
-					SetXYZ(Vec3Offset(x, y, 0.));
+					SetXYZ(Vec3Offset(ofs.x, ofs.y, 0.));
 					let proj = SpawnMissileAngleZSpeed(Pos.Z + GetBobOffset() + Spawnheight, missile, self.Angle, 0, GetDefaultByType(missile).Speed, self, false);
 					SetXYZ(pos);
 					

@@ -797,7 +797,8 @@ static inline bool MustForcePain(AActor *target, AActor *inflictor)
 
 static inline bool isFakePain(AActor *target, AActor *inflictor, int damage)
 {
-	return ((target->flags7 & MF7_ALLOWPAIN && damage > 0) || (inflictor && (inflictor->flags7 & MF7_CAUSEPAIN)));
+	return (((target->flags7 & MF7_ALLOWPAIN || target->flags5 & MF5_NODAMAGE) && damage > 0) || 
+			(inflictor && (inflictor->flags7 & MF7_CAUSEPAIN)));
 }
 
 // [MC] Completely ripped out of DamageMobj to make it less messy.

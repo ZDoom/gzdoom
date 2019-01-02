@@ -320,5 +320,40 @@ extend class PlayerPawn
 		}
 	}
 
+	//============================================================================
+	//
+	// Helper for 'useflechette' CCMD.
+	//
+	//============================================================================
+
+	protected virtual Inventory GetFlechetteItem() 
+	{
+		// Select from one of arti_poisonbag1-3, whichever the player has
+		static const Class<Inventory> bagtypes[] = { 
+			"ArtiPoisonBag3",	// use type 3 first because that's the default when the player has none specified.
+			"ArtiPoisonBag1",
+			"ArtiPoisonBag2"
+		};
+
+		if (FlechetteType != NULL)
+		{
+			let item = FindInventory(FlechetteType);
+			if (item != null)
+			{
+				return item;
+			}
+		}
+
+		// The default flechette could not be found, or the player had no default. Try all 3 types then.
+		for (int j = 0; j < 3; ++j)
+		{
+			let item = FindInventory(bagtypes[j]);
+			if (item != null)
+			{
+				return item;
+			}
+		}
+		return null;
+	}
 	
 }

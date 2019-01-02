@@ -137,8 +137,6 @@ public:
 	double		AttackZOffset;			// attack height, relative to player center
 	double		UseRange;				// [NS] Distance at which player can +use
 	double		AirCapacity;			// Multiplier for air supply underwater.
-	PClassActor *FlechetteType;
-
 
 	// [CW] Fades for when you are being damaged.
 	PalEntry DamageFade;
@@ -155,6 +153,9 @@ public:
 	double HexenArmor[5];
 	uint8_t ColorRangeStart;	// Skin color range
 	uint8_t ColorRangeEnd;
+
+	// Everything below this point is only used by scripted code.
+	PClassActor *FlechetteType;
 
 };
 

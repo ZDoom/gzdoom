@@ -45,7 +45,7 @@ class PlayerPawn : Actor native
 	native double		AttackZOffset;			// attack height, relative to player center
 	native double		UseRange;				// [NS] Distance at which player can +use
 	native double		AirCapacity;			// Multiplier for air supply underwater.
-	native Class<Actor> FlechetteType;
+	native Class<Inventory> FlechetteType;
 	native color 		DamageFade;				// [CW] Fades for when you are being damaged.
 	native double		ViewBob;				// [SP] ViewBob Multiplier
 	native double		FullHeight;

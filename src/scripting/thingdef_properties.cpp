@@ -1541,11 +1541,11 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, spawnclass, L, PlayerPawn)
 DEFINE_CLASS_PROPERTY_PREFIX(player, forwardmove, F_f, PlayerPawn)
 {
 	PROP_DOUBLE_PARM(m, 0);
-	defaults->ForwardMove1 = defaults->ForwardMove2 = m;
+	defaults->FloatVar(NAME_ForwardMove1) = defaults->FloatVar(NAME_ForwardMove2) = m;
 	if (PROP_PARM_COUNT > 1)
 	{
 		PROP_DOUBLE_PARM(m2, 1);
-		defaults->ForwardMove2 = m2;
+		defaults->FloatVar(NAME_ForwardMove2) = m2;
 	}
 }
 
@@ -1555,11 +1555,11 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, forwardmove, F_f, PlayerPawn)
 DEFINE_CLASS_PROPERTY_PREFIX(player, sidemove, F_f, PlayerPawn)
 {
 	PROP_DOUBLE_PARM(m, 0);
-	defaults->SideMove1 = defaults->SideMove2 = m;
+	defaults->FloatVar(NAME_SideMove1) = defaults->FloatVar(NAME_SideMove2) = m;
 	if (PROP_PARM_COUNT > 1)
 	{
 		PROP_DOUBLE_PARM(m2, 1);
-		defaults->SideMove2 = m2;
+		defaults->FloatVar(NAME_SideMove2) = m2;
 	}
 }
 
@@ -1666,7 +1666,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, hexenarmor, FFFFF, PlayerPawn)
 	for (int i = 0; i < 5; i++)
 	{
 		PROP_DOUBLE_PARM(val, i);
-		defaults->HexenArmor[i] = val;
+		auto hexarmor = &defaults->FloatVar(NAME_HexenArmor);
+		hexarmor[i] = val;
 	}
 }
 

@@ -140,7 +140,7 @@ TArray<int> LevelAABBTree::FindNodePath(unsigned int line, unsigned int node)
 		if (path.Size())
 			path.Push(node);
 	}
-	else if (n.line_index == line)
+	else if (n.line_index == (int)line)
 	{
 		path.Push(node);
 	}

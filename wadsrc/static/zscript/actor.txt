@@ -1018,7 +1018,7 @@ class Actor : Thinker native
 	native void A_NoBlocking(bool drop = true);
 	void A_Fall() { A_NoBlocking(); }
 	native void A_Look();
-	native void A_Chase(statelabel melee = null, statelabel missile = null, int flags = 0x40000000);
+	native void A_Chase(statelabel melee = '_a_chase_default', statelabel missile = '_a_chase_default', int flags = 0);
 	native void A_VileChase();
 	native bool A_CheckForResurrection();
 	native void A_BossDeath();

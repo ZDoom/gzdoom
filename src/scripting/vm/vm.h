@@ -513,6 +513,7 @@ bool AssertObject(void * ob);
 #define PARAM_ANGLE_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_FLOAT); DAngle x = param[p].f;
 #define PARAM_STRING_VAL_AT(p,x)	assert((p) < numparam); assert(reginfo[p] == REGT_STRING); FString x = param[p].s();
 #define PARAM_STRING_AT(p,x)		assert((p) < numparam); assert(reginfo[p] == REGT_STRING); const FString &x = param[p].s();
+#define PARAM_STATELABEL_AT(p,x)	assert((p) < numparam); assert(reginfo[p] == REGT_INT); int x = param[p].i;
 #define PARAM_STATE_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_INT); FState *x = (FState *)StateLabels.GetState(param[p].i, self->GetClass());
 #define PARAM_STATE_ACTION_AT(p,x)	assert((p) < numparam); assert(reginfo[p] == REGT_INT); FState *x = (FState *)StateLabels.GetState(param[p].i, stateowner->GetClass());
 #define PARAM_POINTER_AT(p,x,type)	assert((p) < numparam); assert(reginfo[p] == REGT_POINTER); type *x = (type *)param[p].a;
@@ -538,6 +539,7 @@ bool AssertObject(void * ob);
 #define PARAM_ANGLE(x)				++paramnum; PARAM_ANGLE_AT(paramnum,x)
 #define PARAM_STRING(x)				++paramnum; PARAM_STRING_AT(paramnum,x)
 #define PARAM_STRING_VAL(x)				++paramnum; PARAM_STRING_VAL_AT(paramnum,x)
+#define PARAM_STATELABEL(x)				++paramnum; PARAM_STATELABEL_AT(paramnum,x)
 #define PARAM_STATE(x)				++paramnum; PARAM_STATE_AT(paramnum,x)
 #define PARAM_STATE_ACTION(x)		++paramnum; PARAM_STATE_ACTION_AT(paramnum,x)
 #define PARAM_POINTER(x,type)		++paramnum; PARAM_POINTER_AT(paramnum,x,type)

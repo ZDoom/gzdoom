@@ -87,22 +87,6 @@ public:
 	
 	virtual void Serialize(FSerializer &arc);
 
-	virtual void PostBeginPlay() override;
-	virtual void Tick() override;
-	virtual void BeginPlay () override;
-	virtual bool UpdateWaterLevel (bool splash) override;
-
-
-	enum EInvulState
-	{
-		INVUL_Start,
-		INVUL_Active,
-		INVUL_Stop,
-		INVUL_GetAlpha
-	};
-
-
-	int			crouchsprite;
 	int			BonusHealth;
 
 	int			MugShotMaxHealth;
@@ -122,6 +106,7 @@ public:
 	double		UseRange;				// [NS] Distance at which player can +use
 
 	// Everything below this point is only used by scripted code or through the scripted variable interface.
+	int			crouchsprite;
 	int			MaxHealth;
 	int			RunHealth;
 	TObjPtr<AActor*> InvFirst;		// first inventory item displayed on inventory bar
@@ -492,11 +477,6 @@ public:
 		}
 	}
 	
-	bool CanCrouch() const
-	{
-		return morphTics == 0 || mo->PlayerFlags & PPF_CROUCHABLEMORPH;
-	}
-
 	int GetSpawnClass();
 
 	// PSprite layers

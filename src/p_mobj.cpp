@@ -4267,79 +4267,98 @@ bool AActor::UpdateWaterLevel(bool dosplash)
 
 	double fh = -FLT_MAX;
 	bool reset = false;
+	int oldlevel = waterlevel;
 
 	waterlevel = 0;
 
-	if (Sector == NULL)
+	if (Sector != nullptr)
 	{
-		return false;
-	}
-
-	if (Sector->MoreFlags & SECMF_UNDERWATER)	// intentionally not SECMF_UNDERWATERMASK
-	{
-		waterlevel = 3;
-	}
-	else
-	{
-		const sector_t *hsec = Sector->GetHeightSec();
-		if (hsec != NULL)
+		if (Sector->MoreFlags & SECMF_UNDERWATER)	// intentionally not SECMF_UNDERWATERMASK
 		{
-			fh = hsec->floorplane.ZatPoint(this);
-			if (hsec->MoreFlags & SECMF_UNDERWATERMASK)	// also check Boom-style non-swimmable sectors
-			{
-				if (Z() < fh)
-				{
-					waterlevel = 1;
-					if (Center() < fh)
-					{
-						waterlevel = 2;
-						if ((player && Z() + player->viewheight <= fh) ||
-							(Top() <= fh))
-						{
-							waterlevel = 3;
-						}
-					}
-				}
-				else if (!(hsec->MoreFlags & SECMF_FAKEFLOORONLY) && (Top() > hsec->ceilingplane.ZatPoint(this)))
-				{
-					waterlevel = 3;
-				}
-				else
-				{
-					waterlevel = 0;
-				}
-			}
+			waterlevel = 3;
 		}
 		else
 		{
-			// Check 3D floors as well!
-			for (auto rover : Sector->e->XFloor.ffloors)
+			const sector_t *hsec = Sector->GetHeightSec();
+			if (hsec != NULL)
 			{
-				if (!(rover->flags & FF_EXISTS)) continue;
-				if (rover->flags & FF_SOLID) continue;
-				if (!(rover->flags & FF_SWIMMABLE)) continue;
-
-				double ff_bottom = rover->bottom.plane->ZatPoint(this);
-				double ff_top = rover->top.plane->ZatPoint(this);
-
-				if (ff_top <= Z() || ff_bottom > (Center())) continue;
-
-				fh = ff_top;
-				if (Z() < fh)
+				fh = hsec->floorplane.ZatPoint(this);
+				if (hsec->MoreFlags & SECMF_UNDERWATERMASK)	// also check Boom-style non-swimmable sectors
 				{
-					waterlevel = 1;
-					if (Center() < fh)
+					if (Z() < fh)
 					{
-						waterlevel = 2;
-						if ((player && Z() + player->viewheight <= fh) ||
-							(Top() <= fh))
+						waterlevel = 1;
+						if (Center() < fh)
 						{
-							waterlevel = 3;
+							waterlevel = 2;
+							if ((player && Z() + player->viewheight <= fh) ||
+								(Top() <= fh))
+							{
+								waterlevel = 3;
+							}
 						}
 					}
+					else if (!(hsec->MoreFlags & SECMF_FAKEFLOORONLY) && (Top() > hsec->ceilingplane.ZatPoint(this)))
+					{
+						waterlevel = 3;
+					}
+					else
+					{
+						waterlevel = 0;
+					}
 				}
+			}
+			else
+			{
+				// Check 3D floors as well!
+				for (auto rover : Sector->e->XFloor.ffloors)
+				{
+					if (!(rover->flags & FF_EXISTS)) continue;
+					if (rover->flags & FF_SOLID) continue;
+					if (!(rover->flags & FF_SWIMMABLE)) continue;
 
-				break;
+					double ff_bottom = rover->bottom.plane->ZatPoint(this);
+					double ff_top = rover->top.plane->ZatPoint(this);
+
+					if (ff_top <= Z() || ff_bottom > (Center())) continue;
+
+					fh = ff_top;
+					if (Z() < fh)
+					{
+						waterlevel = 1;
+						if (Center() < fh)
+						{
+							waterlevel = 2;
+							if ((player && Z() + player->viewheight <= fh) ||
+								(Top() <= fh))
+							{
+								waterlevel = 3;
+							}
+						}
+					}
+
+					break;
+				}
+			}
+		}
+
+		// Play surfacing and diving sounds, as appropriate.
+		if (player != nullptr)
+		{
+			if (oldlevel < 3 && waterlevel == 3)
+			{ 
+				// Our head just went under.
+				S_Sound(this, CHAN_VOICE, "*dive", 1, ATTN_NORM);
+			}
+			else if (oldlevel == 3 && waterlevel < 3)
+			{ 
+				// Our head just came up.
+				if (player->air_finished > level.time)
+				{ 
+					// We hadn't run out of air yet.
+					S_Sound(this, CHAN_VOICE, "*surface", 1, ATTN_NORM);
+				}
+				// If we were running out of air, then ResetAirSupply() will play *gasp.
 			}
 		}
 	}

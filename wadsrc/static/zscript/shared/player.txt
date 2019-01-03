@@ -116,6 +116,65 @@ class PlayerPawn : Actor native
 		Obituary "$OB_MPDEFAULT";
 	}
 	
+	
+	//===========================================================================
+	//
+	// APlayerPawn :: Tick
+	//
+	//===========================================================================
+
+	override void Tick()
+	{
+		if (player != NULL && player.mo == self && CanCrouch() && player.playerstate != PST_DEAD)
+		{
+			Height = FullHeight * player.crouchfactor;
+		}
+		else
+		{
+			if (health > 0) Height = FullHeight;
+		}
+		Super.Tick();
+	}
+
+	//===========================================================================
+	//
+	// 
+	//
+	//===========================================================================
+
+	override void BeginPlay()
+	{
+		Super.BeginPlay ();
+		ChangeStatNum (STAT_PLAYER);
+		FullHeight = Height;
+		if (!SetupCrouchSprite(crouchsprite)) crouchsprite = 0;
+	}
+	
+	//===========================================================================
+	//
+	// APlayerPawn :: PostBeginPlay
+	//
+	//===========================================================================
+
+	override void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+		WeaponSlots.SetupWeaponSlots(self);
+
+		// Voodoo dolls: restore original floorz/ceilingz logic
+		if (player == NULL || player.mo != self)
+		{
+			FindFloorCeiling(FFCF_ONLYSPAWNPOS|FFCF_NOPORTALS);
+			SetZ(floorz);
+			FindFloorCeiling(FFCF_ONLYSPAWNPOS);
+		}
+		else
+		{
+			player.SendPitchLimits();
+		}
+	}
+
+	
 	//===========================================================================
 	//
 	// APlayerPawn :: MarkPrecacheSounds
@@ -2391,6 +2450,7 @@ class PlayerPawn : Actor native
 	native void CheckUse();
 	native void CheckWeaponButtons();
 	native void MarkPlayerSounds();
+	private native int SetupCrouchSprite(int c);
 	private native clearscope Color GetPainFlashForType(Name type);
 }
 
@@ -2659,6 +2719,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native double GetStillBob() const;
 	native void SetFOV(float fov);
 	native bool GetClassicFlight() const;
+	native void SendPitchLimits();
 	native clearscope bool HasWeaponsInSlot(int slot) const;
 
 	// The actual implementation is on PlayerPawn where it can be overridden. Use that directly in the future.

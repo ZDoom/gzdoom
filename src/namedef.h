@@ -1042,6 +1042,7 @@ xx(SoundClass)
 xx(ViewBob)
 xx(DamageFade)
 xx(MaxHealth)
+xx(crouchsprite)
 
 xx(BlueCard)
 xx(YellowCard)

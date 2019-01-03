@@ -634,6 +634,13 @@ void player_t::SendPitchLimits() const
 	}
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, SendPitchLimits)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	self->SendPitchLimits();
+	return 0;
+}
+
 
 bool player_t::HasWeaponsInSlot(int slot) const
 {
@@ -830,11 +837,8 @@ void APlayerPawn::Serialize(FSerializer &arc)
 //
 //===========================================================================
 
-void APlayerPawn::BeginPlay ()
+static int SetupCrouchSprite(AActor *self, int crouchsprite)
 {
-	Super::BeginPlay ();
-	ChangeStatNum (STAT_PLAYER);
-	FullHeight = Height;
 	// Check whether a PWADs normal sprite is to be combined with the base WADs
 	// crouch sprite. In such a case the sprites normally don't match and it is
 	// best to disable the crouch sprite.
@@ -843,110 +847,44 @@ void APlayerPawn::BeginPlay ()
 		// This assumes that player sprites always exist in rotated form and
 		// that the front view is always a separate sprite. So far this is
 		// true for anything that exists.
-		FString normspritename = sprites[SpawnState->sprite].name;
+		FString normspritename = sprites[self->SpawnState->sprite].name;
 		FString crouchspritename = sprites[crouchsprite].name;
 
 		int spritenorm = Wads.CheckNumForName(normspritename + "A1", ns_sprites);
-		if (spritenorm==-1) 
+		if (spritenorm == -1)
 		{
 			spritenorm = Wads.CheckNumForName(normspritename + "A0", ns_sprites);
 		}
 
 		int spritecrouch = Wads.CheckNumForName(crouchspritename + "A1", ns_sprites);
-		if (spritecrouch==-1) 
+		if (spritecrouch == -1)
 		{
 			spritecrouch = Wads.CheckNumForName(crouchspritename + "A0", ns_sprites);
 		}
-		
-		if (spritenorm==-1 || spritecrouch ==-1) 
+
+		if (spritenorm == -1 || spritecrouch == -1)
 		{
 			// Sprites do not exist so it is best to disable the crouch sprite.
-			crouchsprite = 0;
-			return;
+			return false;
 		}
-	
+
 		int wadnorm = Wads.GetLumpFile(spritenorm);
 		int wadcrouch = Wads.GetLumpFile(spritenorm);
-		
+
 		if (wadnorm > Wads.GetIwadNum() && wadcrouch <= Wads.GetIwadNum())
 		{
 			// Question: Add an option / disable crouching or do what?
-			crouchsprite = 0;
+			return false;
 		}
 	}
+	return true;
 }
 
-//===========================================================================
-//
-// APlayerPawn :: Tick
-//
-//===========================================================================
-
-void APlayerPawn::Tick()
+DEFINE_ACTION_FUNCTION_NATIVE(APlayerPawn, SetupCrouchSprite, SetupCrouchSprite)
 {
-	if (player != NULL && player->mo == this && player->CanCrouch() && player->playerstate != PST_DEAD)
-	{
-		Height = FullHeight * player->crouchfactor;
-	}
-	else
-	{
-		if (health > 0) Height = FullHeight;
-	}
-	Super::Tick();
-}
-
-//===========================================================================
-//
-// APlayerPawn :: PostBeginPlay
-//
-//===========================================================================
-
-void APlayerPawn::PostBeginPlay()
-{
-	Super::PostBeginPlay();
-	FWeaponSlots::SetupWeaponSlots(this);
-
-	// Voodoo dolls: restore original floorz/ceilingz logic
-	if (player == NULL || player->mo != this)
-	{
-		P_FindFloorCeiling(this, FFCF_ONLYSPAWNPOS|FFCF_NOPORTALS);
-		SetZ(floorz);
-		P_FindFloorCeiling(this, FFCF_ONLYSPAWNPOS);
-	}
-	else
-	{
-		player->SendPitchLimits();
-	}
-}
-
-//===========================================================================
-//
-// APlayerPawn :: UpdateWaterLevel
-//
-// Plays surfacing and diving sounds, as appropriate.
-//
-//===========================================================================
-
-bool APlayerPawn::UpdateWaterLevel (bool splash)
-{
-	int oldlevel = waterlevel;
-	bool retval = Super::UpdateWaterLevel (splash);
-	if (player != NULL)
-	{
-		if (oldlevel < 3 && waterlevel == 3)
-		{ // Our head just went under.
-			S_Sound (this, CHAN_VOICE, "*dive", 1, ATTN_NORM);
-		}
-		else if (oldlevel == 3 && waterlevel < 3)
-		{ // Our head just came up.
-			if (player->air_finished > level.time)
-			{ // We hadn't run out of air yet.
-				S_Sound (this, CHAN_VOICE, "*surface", 1, ATTN_NORM);
-			}
-			// If we were running out of air, then ResetAirSupply() will play *gasp.
-		}
-	}
-	return retval;
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(crouchsprite);
+	ACTION_RETURN_INT(SetupCrouchSprite(self, crouchsprite));
 }
 
 //===========================================================================
@@ -1068,9 +1006,10 @@ void P_CheckPlayerSprite(AActor *actor, int &spritenum, DVector2 &scale)
 	// Set the crouch sprite?
 	if (player->crouchfactor < 0.75)
 	{
-		if (spritenum == actor->SpawnState->sprite || spritenum == player->mo->crouchsprite) 
+		int crouchsprite = player->mo->IntVar(NAME_crouchsprite);
+		if (spritenum == actor->SpawnState->sprite || spritenum == crouchsprite) 
 		{
-			crouchspriteno = player->mo->crouchsprite;
+			crouchspriteno = crouchsprite;
 		}
 		else if (!(actor->flags4 & MF4_NOSKIN) &&
 				(spritenum == Skins[player->userinfo.GetSkin()].sprite ||

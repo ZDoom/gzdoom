@@ -1585,11 +1585,11 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, crouchsprite, S, PlayerPawn)
 	PROP_STRING_PARM(z, 0);
 	if (strlen(z) == 4)
 	{
-		defaults->crouchsprite = GetSpriteIndex (z);
+		defaults->IntVar(NAME_crouchsprite) = GetSpriteIndex (z);
 	}
 	else if (*z == 0)
 	{
-		defaults->crouchsprite = 0;
+		defaults->IntVar(NAME_crouchsprite) = 0;
 	}
 	else
 	{

@@ -1019,36 +1019,6 @@ bool APlayerPawn::UpdateWaterLevel (bool splash)
 
 //===========================================================================
 //
-// APlayerPawn :: ResetAirSupply
-//
-// Gives the player a full "tank" of air. If they had previously completely
-// run out of air, also plays the *gasp sound. Returns true if the player
-// was drowning.
-//
-//===========================================================================
-
-bool APlayerPawn::ResetAirSupply (bool playgasp)
-{
-	bool wasdrowning = (player->air_finished < level.time);
-
-	if (playgasp && wasdrowning)
-	{
-		S_Sound (this, CHAN_VOICE, "*gasp", 1, ATTN_NORM);
-	}
-	if (level.airsupply> 0 && player->mo->AirCapacity > 0) player->air_finished = level.time + int(level.airsupply * player->mo->AirCapacity);
-	else player->air_finished = INT_MAX;
-	return wasdrowning;
-}
-
-DEFINE_ACTION_FUNCTION(APlayerPawn, ResetAirSupply)
-{
-	PARAM_SELF_PROLOGUE(APlayerPawn);
-	PARAM_BOOL(playgasp);
-	ACTION_RETURN_BOOL(self->ResetAirSupply(playgasp));
-}
-
-//===========================================================================
-//
 // Animations
 //
 //===========================================================================

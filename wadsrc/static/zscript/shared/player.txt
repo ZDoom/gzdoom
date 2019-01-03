@@ -2317,6 +2317,30 @@ class PlayerPawn : Actor native
 		return painFlash;
 	}
 		
+	//===========================================================================
+	//
+	// APlayerPawn :: ResetAirSupply
+	//
+	// Gives the player a full "tank" of air. If they had previously completely
+	// run out of air, also plays the *gasp sound. Returns true if the player
+	// was drowning.
+	//
+	//===========================================================================
+
+	virtual bool ResetAirSupply (bool playgasp = true)
+	{
+		let player = self.player;
+		bool wasdrowning = (player.air_finished < level.time);
+
+		if (playgasp && wasdrowning)
+		{
+			A_PlaySound("*gasp", CHAN_VOICE);
+		}
+		if (level.airsupply > 0 && AirCapacity > 0) player.air_finished = level.time + int(level.airsupply * AirCapacity);
+		else player.air_finished = int.max;
+		return wasdrowning;
+	}
+
 	//----------------------------------------------------------------------------
 	//
 	// 
@@ -2324,7 +2348,6 @@ class PlayerPawn : Actor native
 	//----------------------------------------------------------------------------
 
 	native clearscope int GetMaxHealth(bool withupgrades = false) const;
-	native bool ResetAirSupply (bool playgasp = true);
 	native clearscope static String GetPrintableDisplayName(Class<Actor> cls);
 	native void CheckMusicChange();
 	native void CheckEnvironment();

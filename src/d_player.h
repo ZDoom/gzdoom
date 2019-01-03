@@ -92,7 +92,6 @@ public:
 	virtual void BeginPlay () override;
 	virtual bool UpdateWaterLevel (bool splash) override;
 
-	bool ResetAirSupply (bool playgasp = true);
 	int GetMaxHealth(bool withupgrades = false) const;
 	void GiveDeathmatchInventory ();
 	
@@ -131,14 +130,17 @@ public:
 	FName	MorphWeapon;
 	double		AttackZOffset;			// attack height, relative to player center
 	double		UseRange;				// [NS] Distance at which player can +use
-	double		AirCapacity;			// Multiplier for air supply underwater.
 
 	// Everything below this point is only used by scripted code or through the scripted variable interface.
 	int			RunHealth;
 	TObjPtr<AActor*> InvFirst;		// first inventory item displayed on inventory bar
+
+	// [GRB] Player class properties
 	double		ForwardMove1, ForwardMove2;
 	double		SideMove1, SideMove2;
+	double		AirCapacity;			// Multiplier for air supply underwater.
 	double HexenArmor[5];
+
 
 	// [CW] Fades for when you are being damaged.
 	PalEntry DamageFade;

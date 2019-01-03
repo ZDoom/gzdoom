@@ -5045,13 +5045,17 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	p->multicount = 0;
 	p->lastkilltime = 0;
 	p->BlendR = p->BlendG = p->BlendB = p->BlendA = 0.f;
-	p->mo->ResetAirSupply(false);
 	p->Uncrouch();
 	p->MinPitch = p->MaxPitch = 0.;	// will be filled in by PostBeginPlay()/netcode
 	p->MUSINFOactor = NULL;
 	p->MUSINFOtics = -1;
-
 	p->Vel.Zero();	// killough 10/98: initialize bobbing to 0.
+
+	IFVIRTUALPTR(p->mo, APlayerPawn, ResetAirSupply)
+	{
+		VMValue params[] = { p->mo, false };
+		VMCall(func, params, 2, nullptr, 0);
+	}
 
 	for (int ii = 0; ii < MAXPLAYERS; ++ii)
 	{

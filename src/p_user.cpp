@@ -456,7 +456,7 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, SetLogText)
 int player_t::GetSpawnClass()
 {
 	const PClass * type = PlayerClasses[CurrentPlayerClass].Type;
-	return static_cast<APlayerPawn*>(GetDefaultByType(type))->SpawnMask;
+	return GetDefaultByType(type)->IntVar(NAME_SpawnMask);
 }
 
 // [Nash] Set FOV
@@ -666,7 +666,7 @@ bool player_t::Resurrect()
 	mo->Revive();
 	playerstate = PST_LIVE;
 	health = mo->health = mo->GetDefault()->health;
-	viewheight = ((APlayerPawn *)mo->GetDefault())->ViewHeight;
+	viewheight = DefaultViewHeight();
 	mo->renderflags &= ~RF_INVISIBLE;
 	mo->Height = mo->GetDefault()->Height;
 	mo->radius = mo->GetDefault()->radius;
@@ -793,43 +793,7 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetStillBob)
 //
 //===========================================================================
 
-IMPLEMENT_CLASS(APlayerPawn, false, true)
-
-IMPLEMENT_POINTERS_START(APlayerPawn)
-	IMPLEMENT_POINTER(InvFirst)
-	IMPLEMENT_POINTER(InvSel)
-IMPLEMENT_POINTERS_END
-
-void APlayerPawn::Serialize(FSerializer &arc)
-{
-	Super::Serialize (arc);
-	auto def = (APlayerPawn*)GetDefault();
-
-	arc("jumpz", JumpZ, def->JumpZ)
-		("maxhealth", MaxHealth, def->MaxHealth)
-		("bonushealth", BonusHealth, def->BonusHealth)
-		("runhealth", RunHealth, def->RunHealth)
-		("spawnmask", SpawnMask, def->SpawnMask)
-		("forwardmove1", ForwardMove1, def->ForwardMove1)
-		("forwardmove2", ForwardMove2, def->ForwardMove2)
-		("sidemove1", SideMove1, def->SideMove1)
-		("sidemove2", SideMove2, def->SideMove2)
-		("scoreicon", ScoreIcon, def->ScoreIcon)
-		("invfirst", InvFirst)
-		("invsel", InvSel)
-		("morphweapon", MorphWeapon, def->MorphWeapon)
-		("damagefade", DamageFade, def->DamageFade)
-		("playerflags", PlayerFlags, def->PlayerFlags)
-		("flechettetype", FlechetteType, def->FlechetteType)
-		("gruntspeed", GruntSpeed, def->GruntSpeed)
-		("fallingscreammin", FallingScreamMinSpeed, def->FallingScreamMinSpeed)
-		("fallingscreammaxn", FallingScreamMaxSpeed, def->FallingScreamMaxSpeed)
-		("userange", UseRange, def->UseRange)
-		("aircapacity", AirCapacity, def->AirCapacity)
-		("viewheight", ViewHeight, def->ViewHeight)
-		("viewbob", ViewBob, def->ViewBob)
-		("fullheight", FullHeight, def->FullHeight);
-}
+IMPLEMENT_CLASS(APlayerPawn, false, false)
 
 //===========================================================================
 //
@@ -1193,8 +1157,8 @@ void P_CheckEnvironment(player_t *player)
 		// Player must be touching the floor
 		P_PlayerOnSpecialFlat(player, P_GetThingFloorType(player->mo));
 	}
-	if (player->mo->Vel.Z <= -player->mo->FallingScreamMinSpeed &&
-		player->mo->Vel.Z >= -player->mo->FallingScreamMaxSpeed && !player->morphTics &&
+	if (player->mo->Vel.Z <= -player->mo->FloatVar(NAME_FallingScreamMinSpeed) &&
+		player->mo->Vel.Z >= -player->mo->FloatVar(NAME_FallingScreamMaxSpeed) && !player->morphTics &&
 		player->mo->waterlevel == 0)
 	{
 		int id = S_FindSkinnedSound(player->mo, "*falling");
@@ -1537,7 +1501,8 @@ void P_UnPredictPlayer ()
 		APlayerPawn *act = player->mo;
 		AActor *savedcamera = player->camera;
 
-		TObjPtr<AActor*> InvSel = act->InvSel;
+		auto &actInvSel = act->PointerVar<AActor*>(NAME_InvSel);
+		auto InvSel = actInvSel;
 		int inventorytics = player->inventorytics;
 		const bool settings_controller = player->settings_controller;
 
@@ -1602,7 +1567,7 @@ void P_UnPredictPlayer ()
 			block = block->NextBlock;
 		}
 
-		act->InvSel = InvSel;
+		actInvSel = InvSel;
 		player->inventorytics = inventorytics;
 	}
 }
@@ -1725,39 +1690,6 @@ bool P_IsPlayerTotallyFrozen(const player_t *player)
 // native members
 //
 //==========================================================================
-
-DEFINE_FIELD(APlayerPawn, crouchsprite)
-DEFINE_FIELD(APlayerPawn, MaxHealth)
-DEFINE_FIELD(APlayerPawn, BonusHealth)
-DEFINE_FIELD(APlayerPawn, MugShotMaxHealth)
-DEFINE_FIELD(APlayerPawn, RunHealth)
-DEFINE_FIELD(APlayerPawn, PlayerFlags)
-DEFINE_FIELD(APlayerPawn, InvFirst)
-DEFINE_FIELD(APlayerPawn, InvSel)
-DEFINE_FIELD(APlayerPawn, JumpZ)
-DEFINE_FIELD(APlayerPawn, GruntSpeed)
-DEFINE_FIELD(APlayerPawn, FallingScreamMinSpeed)
-DEFINE_FIELD(APlayerPawn, FallingScreamMaxSpeed)
-DEFINE_FIELD(APlayerPawn, ViewHeight)
-DEFINE_FIELD(APlayerPawn, ForwardMove1)
-DEFINE_FIELD(APlayerPawn, ForwardMove2)
-DEFINE_FIELD(APlayerPawn, SideMove1)
-DEFINE_FIELD(APlayerPawn, SideMove2)
-DEFINE_FIELD(APlayerPawn, ScoreIcon)
-DEFINE_FIELD(APlayerPawn, SpawnMask)
-DEFINE_FIELD(APlayerPawn, MorphWeapon)
-DEFINE_FIELD(APlayerPawn, AttackZOffset)
-DEFINE_FIELD(APlayerPawn, UseRange)
-DEFINE_FIELD(APlayerPawn, AirCapacity)
-DEFINE_FIELD(APlayerPawn, FlechetteType)
-DEFINE_FIELD(APlayerPawn, DamageFade)
-DEFINE_FIELD(APlayerPawn, ViewBob)
-DEFINE_FIELD(APlayerPawn, curBob)
-DEFINE_FIELD(APlayerPawn, FullHeight)
-DEFINE_FIELD(APlayerPawn, SoundClass)
-DEFINE_FIELD(APlayerPawn, Portrait)
-DEFINE_FIELD(APlayerPawn, Slot)
-DEFINE_FIELD(APlayerPawn, HexenArmor)
 
 DEFINE_FIELD_X(PlayerInfo, player_t, mo)
 DEFINE_FIELD_X(PlayerInfo, player_t, playerstate)

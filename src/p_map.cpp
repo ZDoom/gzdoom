@@ -4264,15 +4264,7 @@ struct aim_t
 DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLineTarget *pLineTarget, DAngle vrange,
 	int flags, AActor *target, AActor *friender)
 {
-	double shootz = t1->Center() - t1->Floorclip;
-	if (t1->player != NULL)
-	{
-		shootz += t1->player->mo->AttackZOffset * t1->player->crouchfactor;
-	}
-	else
-	{
-		shootz += 8;
-	}
+	double shootz = t1->Center() - t1->Floorclip + t1->AttackOffset();
 
 	// can't shoot outside view angles
 	if (vrange == 0)
@@ -4409,21 +4401,13 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	double pc = pitch.Cos();
 
 	direction = { pc * angle.Cos(), pc * angle.Sin(), -pitch.Sin() };
-	shootz = t1->Center() - t1->Floorclip;
+	shootz = t1->Center() - t1->Floorclip + t1->AttackOffset();
 
 	if (t1->player != NULL)
 	{
-		shootz += t1->player->mo->AttackZOffset * t1->player->crouchfactor;
-		if (damageType == NAME_Melee || damageType == NAME_Hitscan)
-		{
-			// this is coming from a weapon attack function which needs to transfer information to the obituary code,
-			// We need to preserve this info from the damage type because the actual damage type can get overridden by the puff
-			pflag = DMG_PLAYERATTACK;
-		}
-	}
-	else
-	{
-		shootz += 8;
+		// this is coming from a weapon attack function which needs to transfer information to the obituary code,
+		// We need to preserve this info from the damage type because the actual damage type can get overridden by the puff
+		pflag = DMG_PLAYERATTACK;
 	}
 
 	// [MC] If overriding, set it to the base of the actor.
@@ -4866,16 +4850,7 @@ AActor *P_LinePickActor(AActor *t1, DAngle angle, double distance, DAngle pitch,
 
 	double pc = pitch.Cos();
 	direction = { pc * angle.Cos(), pc * angle.Sin(), -pitch.Sin() };
-	shootz = t1->Center() - t1->Floorclip;
-
-	if (t1->player != NULL)
-	{
-		shootz += t1->player->mo->AttackZOffset * t1->player->crouchfactor;
-	}
-	else
-	{
-		shootz += 8;
-	}
+	shootz = t1->Center() - t1->Floorclip + t1->AttackOffset();
 
 	FTraceResults trace;
 	Origin TData;
@@ -5165,14 +5140,7 @@ void P_RailAttack(FRailParams *p)
 
 	if (!(p->flags & RAF_CENTERZ))
 	{
-		if (source->player != NULL)
-		{
-			shootz += source->player->mo->AttackZOffset * source->player->crouchfactor;
-		}
-		else
-		{
-			shootz += 8;
-		}
+		shootz += source->AttackOffset();
 	}
 
 	int puffflags = 0;
@@ -5587,7 +5555,7 @@ void P_UseLines(player_t *player)
 	// If the player is transitioning a portal, use the group that is at its vertical center.
 	DVector2 start = player->mo->GetPortalTransition(player->mo->Height / 2);
 	// [NS] Now queries the Player's UseRange.
-	DVector2 end = start + player->mo->Angles.Yaw.ToVector(player->mo->UseRange);
+	DVector2 end = start + player->mo->Angles.Yaw.ToVector(player->mo->FloatVar(NAME_UseRange));
 
 	// old code:
 	// This added test makes the "oof" sound work on 2s lines -- killough:
@@ -5621,7 +5589,7 @@ int P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
 
 	// [NS] If it's a Player, get their UseRange.
 	if (PuzzleItemUser->player)
-		usedist = PuzzleItemUser->player->mo->UseRange;
+		usedist = PuzzleItemUser->player->mo->FloatVar(NAME_UseRange);
 	else
 		usedist = USERANGE;
 

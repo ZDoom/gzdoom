@@ -18,37 +18,37 @@ class PlayerPawn : Actor native
 	// 16 pixels of bob
 	const MAXBOB = 16.;
 	
-	native int			crouchsprite;
-	native int			MaxHealth;
-	native int			BonusHealth;
-	native int			MugShotMaxHealth;
-	native int			RunHealth;
-	native int			PlayerFlags;
-	native clearscope Inventory	InvFirst;		// first inventory item displayed on inventory bar
-	native clearscope Inventory	InvSel;			// selected inventory item
-	native Name 		SoundClass;		// Sound class
-	native Name 		Portrait;
-	native Name 		Slot[10];
-	native double 		HexenArmor[5];
+	int			crouchsprite;
+	int			MaxHealth;
+	int			BonusHealth;
+	int			MugShotMaxHealth;
+	int			RunHealth;
+	private int	PlayerFlags;
+	clearscope Inventory	InvFirst;		// first inventory item displayed on inventory bar
+	clearscope Inventory	InvSel;			// selected inventory item
+	Name 		SoundClass;		// Sound class
+	Name 		Portrait;
+	Name 		Slot[10];
+	double 		HexenArmor[5];
 
 	// [GRB] Player class properties
-	native double		JumpZ;
-	native double		GruntSpeed;
-	native double		FallingScreamMinSpeed, FallingScreamMaxSpeed;
-	native double		ViewHeight;
-	native double		ForwardMove1, ForwardMove2;
-	native double		SideMove1, SideMove2;
-	native TextureID	ScoreIcon;
-	native int			SpawnMask;
-	native Name			MorphWeapon;
-	native double		AttackZOffset;			// attack height, relative to player center
-	native double		UseRange;				// [NS] Distance at which player can +use
-	native double		AirCapacity;			// Multiplier for air supply underwater.
-	native Class<Inventory> FlechetteType;
-	native color 		DamageFade;				// [CW] Fades for when you are being damaged.
-	native double		ViewBob;				// [SP] ViewBob Multiplier
-	native double		FullHeight;
-	native double		curBob;
+	double		JumpZ;
+	double		GruntSpeed;
+	double		FallingScreamMinSpeed, FallingScreamMaxSpeed;
+	double		ViewHeight;
+	double		ForwardMove1, ForwardMove2;
+	double		SideMove1, SideMove2;
+	TextureID	ScoreIcon;
+	int			SpawnMask;
+	Name			MorphWeapon;
+	double		AttackZOffset;			// attack height, relative to player center
+	double		UseRange;				// [NS] Distance at which player can +use
+	double		AirCapacity;			// Multiplier for air supply underwater.
+	Class<Inventory> FlechetteType;
+	color 		DamageFade;				// [CW] Fades for when you are being damaged.
+	double		ViewBob;				// [SP] ViewBob Multiplier
+	double		FullHeight;
+	double		curBob;
 
 	meta Name HealingRadiusType;
 	meta Name InvulMode;
@@ -75,6 +75,10 @@ class PlayerPawn : Actor native
 	property Portrait: Portrait;
 	property TeleportFreezeTime: TeleportFreezeTime;
 	property ViewBob: ViewBob;
+	
+	flagdef NoThrustWhenInvul: PlayerFlags, 0;
+	flagdef CanSuperMorph: PlayerFlags, 1;
+	flagdef CrouchableMorph: PlayerFlags, 2;
 	
 	Default
 	{

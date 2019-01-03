@@ -241,7 +241,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 				applyscale = false;
 			}
 			if(type == PLAYERICON)
-				texture = TexMan.GetTexture(statusBar->CPlayer->mo->ScoreIcon, true);
+				texture = TexMan.ByIndex(statusBar->CPlayer->mo->IntVar(NAME_ScoreIcon), true);
 			else if(type == AMMO1)
 			{
 				auto ammo = statusBar->ammo1;
@@ -293,8 +293,8 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			}
 			else if(type == INVENTORYICON)
 				texture = TexMan.GetTexture(sprite, true);
-			else if(type == SELECTEDINVENTORYICON && statusBar->CPlayer->mo->InvSel != NULL)
-				texture = TexMan.GetTexture(statusBar->CPlayer->mo->InvSel->TextureIDVar(NAME_Icon), true);
+			else if(type == SELECTEDINVENTORYICON && statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel) != NULL)
+				texture = TexMan.GetTexture(statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel)->TextureIDVar(NAME_Icon), true);
 			else if(image >= 0)
 				texture = statusBar->Images[image];
 			
@@ -892,7 +892,7 @@ class CommandDrawString : public SBarInfoCommand
 					SetStringToTag(statusBar->CPlayer->ReadyWeapon);
 					break;
 				case INVENTORYTAG:
-					SetStringToTag(statusBar->CPlayer->mo->InvSel);
+					SetStringToTag(statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel));
 					break;
 				case PLAYERNAME:
 					// Can't think of a good way to detect changes to this, so
@@ -1465,8 +1465,8 @@ class CommandDrawNumber : public CommandDrawString
 					break;
 				}
 				case SELECTEDINVENTORY:
-					if(statusBar->CPlayer->mo->InvSel != NULL)
-						num = statusBar->CPlayer->mo->InvSel->IntVar(NAME_Amount);
+					if(statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel) != NULL)
+						num = statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel)->IntVar(NAME_Amount);
 					break;
 				case ACCURACY:
 					num = statusBar->CPlayer->mo->accuracy;
@@ -1691,7 +1691,7 @@ class CommandDrawSelectedInventory : public CommandDrawImage, private CommandDra
 			if(alternateOnEmpty)
 				SBarInfoCommandFlowControl::Draw(block, statusBar);
 
-			if(statusBar->CPlayer->mo->InvSel != NULL && !(level.flags & LEVEL_NOINVENTORYBAR))
+			if(statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel) != NULL && !(level.flags & LEVEL_NOINVENTORYBAR))
 			{
 				if(artiflash && statusBar->wrapper->artiflashTick)
 				{
@@ -1708,7 +1708,7 @@ class CommandDrawSelectedInventory : public CommandDrawImage, private CommandDra
 					}
 					CommandDrawImage::Draw(block, statusBar);
 				}
-				if(alwaysShowCounter || statusBar->CPlayer->mo->InvSel->IntVar(NAME_Amount) != 1)
+				if(alwaysShowCounter || statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel)->IntVar(NAME_Amount) != 1)
 					CommandDrawNumber::Draw(block, statusBar);
 			}
 		}
@@ -1791,7 +1791,7 @@ class CommandDrawSelectedInventory : public CommandDrawImage, private CommandDra
 		{
 			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
 
-			SetTruth(statusBar->CPlayer->mo->InvSel == NULL || (level.flags & LEVEL_NOINVENTORYBAR), block, statusBar);
+			SetTruth(statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel) == NULL || (level.flags & LEVEL_NOINVENTORYBAR), block, statusBar);
 
 			CommandDrawImage::Tick(block, statusBar, hudChanged);
 			CommandDrawNumber::Tick(block, statusBar, hudChanged);
@@ -2133,7 +2133,7 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 		
 					if(style != STYLE_Strife) //Strife draws the cursor before the icons
 						statusBar->DrawGraphic(TexMan.GetTexture(item->TextureIDVar(NAME_Icon), true), rx - (style == STYLE_HexenStrict ? 2 : 0), ry - (style == STYLE_HexenStrict ? 1 : 0), block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, item->IntVar(NAME_Amount) <= 0);
-					if(item == statusBar->CPlayer->mo->InvSel)
+					if(item == statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel))
 					{
 						if(style == STYLE_Heretic)
 							statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgSELECTBOX], rx, ry+29, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
@@ -2158,7 +2158,7 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 					statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgARTIBOX], x + (!vertical ? (i*spacing) : 0), y + (vertical ? (i*spacing) : 0), block->XOffset(), block->YOffset(), bgalpha, block->FullScreenOffsets());
 		
 				// Is there something to the left?
-				if (!noArrows && InvFirst && PrevInv(statusBar->CPlayer->mo->InvFirst))
+				if (!noArrows && InvFirst && PrevInv(statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvFirst)))
 				{
 					int offset = (style != STYLE_Strife ? (style != STYLE_HexenStrict ? -12 : -10) : 14);
 					int yOffset = style != STYLE_HexenStrict ? 0 : -1;

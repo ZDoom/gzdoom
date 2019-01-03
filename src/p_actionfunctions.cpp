@@ -2218,15 +2218,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckLOF)
 		{ // default to hitscan origin
 
 			// Synced with hitscan: self->Height is strangely NON-conscientious about getting the right actor for player
-			pos.Z += self->Height *0.5;
-			if (self->player != NULL)
-			{
-				pos.Z += self->player->mo->AttackZOffset * self->player->crouchfactor;
-			}
-			else
-			{
-				pos.Z += 8;
-			}
+			pos.Z += self->Height *0.5 + self->AttackOffset();
 		}
 
 		if (target)
@@ -4872,7 +4864,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetSize)
 	}
 	if (self->player && self->player->mo == self)
 	{
-		self->player->mo->FullHeight = newheight;
+		self->player->mo->FloatVar(NAME_FullHeight) = newheight;
 	}
 
 	ACTION_RETURN_BOOL(true);

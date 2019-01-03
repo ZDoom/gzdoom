@@ -82,55 +82,6 @@ FString GetPrintableDisplayName(PClassActor *cls);
 class APlayerPawn : public AActor
 {
 	DECLARE_CLASS(APlayerPawn, AActor)
-	HAS_OBJECT_POINTERS
-public:
-	
-	virtual void Serialize(FSerializer &arc);
-
-	int			BonusHealth;
-
-	int			MugShotMaxHealth;
-	int			PlayerFlags;
-	double		FullHeight;
-	TObjPtr<AActor*> InvSel;			// selected inventory item
-
-	// [GRB] Player class properties
-	double		JumpZ;
-	double		GruntSpeed;
-	double		FallingScreamMinSpeed, FallingScreamMaxSpeed;
-	double		ViewHeight;
-	FTextureID	ScoreIcon;
-	int			SpawnMask;
-	FName	MorphWeapon;
-	double		AttackZOffset;			// attack height, relative to player center
-	double		UseRange;				// [NS] Distance at which player can +use
-
-	// Everything below this point is only used by scripted code or through the scripted variable interface.
-	int			crouchsprite;
-	int			MaxHealth;
-	int			RunHealth;
-	TObjPtr<AActor*> InvFirst;		// first inventory item displayed on inventory bar
-
-	// [GRB] Player class properties
-	double		ForwardMove1, ForwardMove2;
-	double		SideMove1, SideMove2;
-	double		AirCapacity;			// Multiplier for air supply underwater.
-	double HexenArmor[5];
-
-
-	// [CW] Fades for when you are being damaged.
-	PalEntry DamageFade;
-
-	// [SP] ViewBob Multiplier
-	double		ViewBob;
-	double		curBob;
-
-	// Former class properties that were moved into the object to get rid of the meta class.
-	FName SoundClass;		// Sound class
-	FName Portrait;
-	FName Slot[10];
-	PClassActor *FlechetteType;
-
 };
 
 void PlayIdle(AActor *player);
@@ -142,8 +93,6 @@ void PlayIdle(AActor *player);
 enum
 {
 	PPF_NOTHRUSTWHENINVUL = 1,	// Attacks do not thrust the player if they are invulnerable.
-	PPF_CANSUPERMORPH = 2,		// Being remorphed into this class can give you a Tome of Power
-	PPF_CROUCHABLEMORPH = 4,	// This morphed player can crouch
 };
 
 //
@@ -461,8 +410,14 @@ public:
 
 	double GetDeltaViewHeight() const
 	{
-		return (mo->ViewHeight + crouchviewdelta - viewheight) / 8;
+		return (mo->FloatVar(NAME_ViewHeight) + crouchviewdelta - viewheight) / 8;
 	}
+
+	double DefaultViewHeight() const
+	{
+		return mo->FloatVar(NAME_ViewHeight);
+	}
+
 
 	void Uncrouch()
 	{
@@ -473,7 +428,7 @@ public:
 			crouchdir = 0;
 			crouching = 0;
 			crouchviewdelta = 0;
-			viewheight = mo ? mo->ViewHeight : 0;
+			viewheight = mo ? mo->FloatVar(NAME_ViewHeight) : 0;
 		}
 	}
 	

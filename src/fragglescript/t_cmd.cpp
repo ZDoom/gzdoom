@@ -157,7 +157,7 @@ void FS_EmulateCmd(char * string)
 			for(int i=0;i<MAXPLAYERS;i++)
 			{
 				// No, this is not correct. But this is the way Legacy WADs expect it to be handled!
-				if (players[i].mo != NULL) players[i].mo->ViewHeight = playerviewheight;
+				if (players[i].mo != NULL) players[i].mo->FloatVar(NAME_ViewHeight) = playerviewheight;
 				players[i].viewheight = playerviewheight;
 				players[i].Uncrouch();
 			}

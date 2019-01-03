@@ -207,9 +207,10 @@ void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth, int &maxiconheigh
 			{
 				maxnamewidth = width;
 			}
-			if (players[i].mo->ScoreIcon.isValid())
+			auto icon = FSetTextureID(players[i].mo->IntVar(NAME_ScoreIcon));
+			if (icon.isValid())
 			{
-				FTexture *pic = TexMan.GetTexture(players[i].mo->ScoreIcon);
+				FTexture *pic = TexMan.GetTexture(icon);
 				width = pic->GetDisplayWidth() - pic->GetDisplayLeftOffset() + 2;
 				if (width > maxscorewidth)
 				{
@@ -420,9 +421,10 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 	screen->DrawText (SmallFont, color, col2, y + ypadding, player->playerstate == PST_DEAD && !deathmatch ? "DEAD" : str,
 		DTA_CleanNoMove, true, TAG_DONE);
 
-	if (player->mo->ScoreIcon.isValid())
+	auto icon = FSetTextureID(player->mo->IntVar(NAME_ScoreIcon));
+	if (icon.isValid())
 	{
-		FTexture *pic = TexMan.GetTexture(player->mo->ScoreIcon);
+		FTexture *pic = TexMan.GetTexture(icon);
 		screen->DrawTexture (pic, col3, y,
 			DTA_CleanNoMove, true,
 			TAG_DONE);

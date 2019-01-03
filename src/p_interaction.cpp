@@ -1066,7 +1066,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 		else
 		{
 			// Players are optionally excluded from getting thrust by damage.
-			if (static_cast<APlayerPawn *>(target)->PlayerFlags & PPF_NOTHRUSTWHENINVUL)
+			if (target->IntVar(NAME_PlayerFlags) & PPF_NOTHRUSTWHENINVUL)
 			{
 				return 0;
 			}

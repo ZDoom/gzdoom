@@ -1511,10 +1511,11 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, spawnclass, L, PlayerPawn)
 {
 	PROP_INT_PARM(type, 0);
 
+	int &SpawnMask = defaults->IntVar(NAME_SpawnMask);
 	if (type == 0)
 	{
 		PROP_INT_PARM(val, 1);
-		if (val > 0) defaults->SpawnMask |= 1<<(val-1);
+		if (val > 0) SpawnMask |= 1<<(val-1);
 	}
 	else 
 	{
@@ -1523,13 +1524,13 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, spawnclass, L, PlayerPawn)
 			PROP_STRING_PARM(str, i);
 
 			if (!stricmp(str, "Any"))
-				defaults->SpawnMask = 0;
+				SpawnMask = 0;
 			else if (!stricmp(str, "Fighter"))
-				defaults->SpawnMask |= 1;
+				SpawnMask |= 1;
 			else if (!stricmp(str, "Cleric"))
-				defaults->SpawnMask |= 2;
+				SpawnMask |= 2;
 			else if (!stricmp(str, "Mage"))
-				defaults->SpawnMask |= 4;
+				SpawnMask |= 4;
 
 		}
 	}
@@ -1569,8 +1570,9 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, sidemove, F_f, PlayerPawn)
 DEFINE_CLASS_PROPERTY_PREFIX(player, scoreicon, S, PlayerPawn)
 {
 	PROP_STRING_PARM(z, 0);
-	defaults->ScoreIcon = TexMan.CheckForTexture(z, ETextureType::MiscPatch);
-	if (!defaults->ScoreIcon.isValid())
+	auto icon = TexMan.CheckForTexture(z, ETextureType::MiscPatch);
+	defaults->IntVar(NAME_ScoreIcon) = icon.GetIndex();
+	if (!icon.isValid())
 	{
 		bag.ScriptPosition.Message(MSG_WARNING,
 			"Icon '%s' for '%s' not found\n", z, info->TypeName.GetChars ());

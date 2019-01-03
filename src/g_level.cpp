@@ -1393,7 +1393,7 @@ int G_FinishTravel ()
 		pawn->lastenemy = NULL;
 		pawn->player->mo = pawn;
 		pawn->player->camera = pawn;
-		pawn->player->viewheight = pawn->ViewHeight;
+		pawn->player->viewheight = pawn->player->DefaultViewHeight();
 		pawn->flags2 &= ~MF2_BLASTED;
 		if (oldpawn != nullptr)
 		{

@@ -95,5 +95,4 @@ extend class Actor
 		}
 	}
 
-
 }

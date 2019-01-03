@@ -461,7 +461,7 @@ FTexture *FMugShot::GetFace(player_t *player, const char *default_face, int accu
 {
 	int angle = UpdateState(player, stateflags);
 	int level = 0;
-	int max = player->mo->MugShotMaxHealth;
+	int max = player->mo->IntVar(NAME_MugShotMaxHealth);
 	if (max < 0)
 	{
 		max = player->mo->GetMaxHealth();

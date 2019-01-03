@@ -821,6 +821,7 @@ public:
 	void Crash();
 
 	// Return starting health adjusted by skill level
+	double AttackOffset(double offset = 0);
 	int SpawnHealth() const;
 	virtual int GetMaxHealth(bool withupgrades = false) const;
 	int GetGibHealth() const;

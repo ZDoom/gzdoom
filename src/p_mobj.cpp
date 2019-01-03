@@ -836,7 +836,7 @@ int P_GetRealMaxHealth(APlayerPawn *actor, int max)
 			{
 				if (!(player->MorphStyle & MORPH_ADDSTAMINA))
 				{
-					max -= actor->stamina + actor->BonusHealth;
+					max -= actor->stamina + actor->IntVar(NAME_BonusHealth);
 				}
 			}
 			else // old health behaviour
@@ -844,7 +844,7 @@ int P_GetRealMaxHealth(APlayerPawn *actor, int max)
 				max = MAXMORPHHEALTH;
 				if (player->MorphStyle & MORPH_ADDSTAMINA)
 				{
-					max += actor->stamina + actor->BonusHealth;
+					max += actor->stamina + actor->IntVar(NAME_BonusHealth);
 				}
 			}
 		}
@@ -854,7 +854,7 @@ int P_GetRealMaxHealth(APlayerPawn *actor, int max)
 		// Bonus health should be added on top of the item's limit.
 		if (player->morphTics == 0 || (player->MorphStyle & MORPH_ADDSTAMINA))
 		{
-			max += actor->BonusHealth;
+			max += actor->IntVar(NAME_BonusHealth);
 		}
 	}
 	return max;
@@ -1760,9 +1760,9 @@ bool P_SeekerMissile (AActor *actor, double thresh, double turnMax, bool precise
 			double dist = MAX(1., actor->Distance2D(target));
 			// Aim at a player's eyes and at the middle of the actor for everything else.
 			double aimheight = target->Height/2;
-			if (target->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
+			if (target->player)
 			{
-				aimheight = static_cast<APlayerPawn *>(target)->ViewHeight;
+				aimheight = target->player->DefaultViewHeight();
 			}
 			pitch = DVector2(dist, target->Z() + aimheight - actor->Center()).Angle();
 		}
@@ -2781,7 +2781,7 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 	{
 		grunted = false;
 		// Why should this number vary by gravity?
-		if (mo->health > 0 && mo->Vel.Z < -mo->player->mo->GruntSpeed)
+		if (mo->health > 0 && mo->Vel.Z < -mo->player->mo->FloatVar(NAME_GruntSpeed))
 		{
 			S_Sound (mo, CHAN_VOICE, "*grunt", 1, ATTN_NORM);
 			grunted = true;
@@ -5057,7 +5057,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	p->extralight = 0;
 	p->fixedcolormap = NOFIXEDCOLORMAP;
 	p->fixedlightlevel = -1;
-	p->viewheight = mobj->ViewHeight;
+	p->viewheight = p->DefaultViewHeight();
 	p->inconsistant = 0;
 	p->attacker = NULL;
 	p->spreecount = 0;
@@ -6711,15 +6711,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 	if (z != ONFLOORZ && z != ONCEILINGZ)
 	{
 		// Doom spawns missiles 4 units lower than hitscan attacks for players.
-		z += source->Center() - source->Floorclip;
-		if (source->player != NULL)	// Considering this is for player missiles, it better not be NULL.
-		{
-			z += ((source->player->mo->AttackZOffset - 4) * source->player->crouchfactor);
-		}
-		else
-		{
-			z += 4;
-		}
+		z += source->Center() - source->Floorclip + source->AttackOffset(4);
 		// Do not fire beneath the floor.
 		if (z < source->floorz)
 		{

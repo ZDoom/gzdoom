@@ -101,7 +101,6 @@ public:
 	// These are virtual on the script side only.
 	void PlayIdle();
 
-	const char *GetSoundClass () const;
 	int hasBuddha(); // returns 0  for no buddha, 1 for regular buddha and 2 for strong buddha
 
 	enum EInvulState
@@ -141,18 +140,17 @@ public:
 	double		ViewBob;
 	double		curBob;
 
-	// Former class properties that were moved into the object to get rid of the meta class.
-	FName SoundClass;		// Sound class
-	FName Face;			// Doom status bar face (when used)
-	FName Portrait;
-	FName Slot[10];
-
-	// Everything below this point is only used by scripted code.
+	// Everything below this point is only used by scripted code or through the scripted variable interface.
 	int			RunHealth;
 	TObjPtr<AActor*> InvFirst;		// first inventory item displayed on inventory bar
 	double		ForwardMove1, ForwardMove2;
 	double		SideMove1, SideMove2;
 	double HexenArmor[5];
+
+	// Former class properties that were moved into the object to get rid of the meta class.
+	FName SoundClass;		// Sound class
+	FName Portrait;
+	FName Slot[10];
 	PClassActor *FlechetteType;
 
 };

@@ -25,7 +25,6 @@ class PlayerPawn : Actor native
 	native clearscope Inventory	InvFirst;		// first inventory item displayed on inventory bar
 	native clearscope Inventory	InvSel;			// selected inventory item
 	native Name 		SoundClass;		// Sound class
-	native Name 		Face;			// Doom status bar face (when used)
 	native Name 		Portrait;
 	native Name 		Slot[10];
 	native double 		HexenArmor[5];
@@ -51,6 +50,7 @@ class PlayerPawn : Actor native
 
 	meta Name HealingRadiusType;
 	meta Name InvulMode;
+	meta Name Face;
 	meta int TeleportFreezeTime;
 	meta int ColorRangeStart;	// Skin color range
 	meta int ColorRangeEnd;

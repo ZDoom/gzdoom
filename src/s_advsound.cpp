@@ -45,6 +45,7 @@
 #include "serializer.h"
 #include "v_text.h"
 #include "g_levellocals.h"
+#include "r_data/sprites.h"
 #include "vm.h"
 
 // MACROS ------------------------------------------------------------------
@@ -1888,6 +1889,27 @@ bool S_AreSoundsEquivalent (AActor *actor, int id1, int id2)
 	return id1 == id2;
 }
 
+//===========================================================================
+//
+// APlayerPawn :: GetSoundClass
+//
+//===========================================================================
+
+static const char *GetSoundClass(AActor *pp)
+{
+	auto player = pp->player;
+	if (player != nullptr &&
+		(player->mo == nullptr || !(player->mo->flags4 &MF4_NOSKIN)) &&
+		(unsigned int)player->userinfo.GetSkin() >= PlayerClasses.Size() &&
+		(unsigned)player->userinfo.GetSkin() < Skins.Size())
+	{
+		return Skins[player->userinfo.GetSkin()].Name.GetChars();
+	}
+	auto sclass = pp->NameVar(NAME_SoundClass);
+
+	return sclass != NAME_None ? sclass.GetChars() : "player";
+}
+
 //==========================================================================
 //
 // S_FindSkinnedSound
@@ -1900,10 +1922,10 @@ int S_FindSkinnedSound (AActor *actor, FSoundID refid)
 	const char *pclass;
 	int gender = 0;
 
-	if (actor != NULL && actor->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
+	if (actor != nullptr)
 	{
-		pclass = static_cast<APlayerPawn*>(actor)->GetSoundClass ();
-		if (actor->player != NULL) gender = actor->player->userinfo.GetGender();
+		pclass = GetSoundClass (actor);
+		if (actor->player != nullptr) gender = actor->player->userinfo.GetGender();
 	}
 	else
 	{
@@ -2053,8 +2075,9 @@ void sfxinfo_t::MarkUsed()
 //
 //==========================================================================
 
-void S_MarkPlayerSounds (const char *playerclass)
+void S_MarkPlayerSounds (AActor *player)
 {
+	const char *playerclass = GetSoundClass(player);
 	int classidx = S_FindPlayerClass(playerclass);
 	if (classidx < 0)
 	{

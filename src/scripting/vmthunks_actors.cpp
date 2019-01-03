@@ -1649,6 +1649,20 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckFor3DCeilingHit, CheckFor3DCeilingHit
 
 
 
+//===========================================================================
+//
+// APlayerPawn :: MarkPlayerSounds
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_NATIVE(APlayerPawn, MarkPlayerSounds, S_MarkPlayerSounds)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	S_MarkPlayerSounds(self);
+	return 0;
+}
+
+
 DEFINE_FIELD(AActor, snext)
 DEFINE_FIELD(AActor, player)
 DEFINE_FIELD_NAMED(AActor, __Pos, pos)

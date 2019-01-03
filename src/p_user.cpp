@@ -821,18 +821,6 @@ void APlayerPawn::Serialize(FSerializer &arc)
 
 //===========================================================================
 //
-// APlayerPawn :: MarkPlayerSounds
-//
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION(APlayerPawn, MarkPlayerSounds)
-{
-	PARAM_SELF_PROLOGUE(APlayerPawn);
-	S_MarkPlayerSounds(self->GetSoundClass());
-	return 0;
-}
-//===========================================================================
-//
 // APlayerPawn :: BeginPlay
 //
 //===========================================================================
@@ -956,28 +944,8 @@ void APlayerPawn::GiveDeathmatchInventory()
 
 //===========================================================================
 //
-// APlayerPawn :: GetSoundClass
-//
-//===========================================================================
-
-const char *APlayerPawn::GetSoundClass() const
-{
-	if (player != NULL &&
-		(player->mo == NULL || !(player->mo->flags4 &MF4_NOSKIN)) &&
-		(unsigned int)player->userinfo.GetSkin() >= PlayerClasses.Size () &&
-		(unsigned)player->userinfo.GetSkin() < Skins.Size())
-	{
-		return Skins[player->userinfo.GetSkin()].Name.GetChars();
-	}
-
-	return SoundClass != NAME_None? SoundClass.GetChars() : "player";
-}
-
-//===========================================================================
-//
 // APlayerPawn :: hasBuddha
 //
-
 //===========================================================================
 
 int APlayerPawn::hasBuddha()
@@ -2088,7 +2056,6 @@ DEFINE_FIELD(APlayerPawn, ViewBob)
 DEFINE_FIELD(APlayerPawn, curBob)
 DEFINE_FIELD(APlayerPawn, FullHeight)
 DEFINE_FIELD(APlayerPawn, SoundClass)
-DEFINE_FIELD(APlayerPawn, Face)
 DEFINE_FIELD(APlayerPawn, Portrait)
 DEFINE_FIELD(APlayerPawn, Slot)
 DEFINE_FIELD(APlayerPawn, HexenArmor)

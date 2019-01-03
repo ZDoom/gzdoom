@@ -1013,14 +1013,8 @@ void R_InitSprites ()
 		auto basetype = ((APlayerPawn*)GetDefaultByType(PlayerClasses[i].Type));
 
 		Skins[i].Name = "Base";
-		if (basetype->Face == NAME_None)
-		{
-			Skins[i].Face = "STF";
-		}
-		else
-		{
-			Skins[i].Face = basetype->Face;
-		}
+		auto face = basetype->NameVar(NAME_Face);
+		Skins[i].Face = face == NAME_None? FName("STF") : face;
 		Skins[i].range0start = basetype->IntVar(NAME_ColorRangeStart);
 		Skins[i].range0end = basetype->IntVar(NAME_ColorRangeEnd);
 		Skins[i].Scale = basetype->Scale;

@@ -491,7 +491,7 @@ void FWeaponSlots::SendDifferences(int playernum, const FWeaponSlots &other)
 void FWeaponSlots::SetFromPlayer(PClassActor *type)
 {
 	Clear();
-	auto Slot = ((APlayerPawn*)GetDefaultByType(type))->Slot;
+	auto Slot = &GetDefaultByType(type)->NameVar(NAME_Slot);
 	for (int i = 0; i < NUM_WEAPON_SLOTS; ++i)
 	{
 		if (Slot[i] != NAME_None)

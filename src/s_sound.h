@@ -364,7 +364,7 @@ int S_AddSoundLump (const char *logicalname, int lump);	// Add sound by lump ind
 int S_AddPlayerSound (const char *playerclass, const int gender, int refid, const char *lumpname);
 int S_AddPlayerSound (const char *playerclass, const int gender, int refid, int lumpnum, bool fromskin=false);
 int S_AddPlayerSoundExisting (const char *playerclass, const int gender, int refid, int aliasto, bool fromskin=false);
-void S_MarkPlayerSounds (const char *playerclass);
+void S_MarkPlayerSounds (AActor *player);
 void S_ShrinkPlayerSoundLists ();
 void S_UnloadSound (sfxinfo_t *sfx);
 sfxinfo_t *S_LoadSound(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer = nullptr);

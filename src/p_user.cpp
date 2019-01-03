@@ -195,13 +195,6 @@ FString GetPrintableDisplayName(PClassActor *cls)
 	return cls->GetDisplayName();
 }
 
-DEFINE_ACTION_FUNCTION(APlayerPawn, GetPrintableDisplayName)
-{
-	PARAM_PROLOGUE;
-	PARAM_CLASS(type, AActor);
-	ACTION_RETURN_STRING(type->GetDisplayName());
-}
-
 bool ValidatePlayerClass(PClassActor *ti, const char *name)
 {
 	if (ti == NULL)
@@ -296,9 +289,6 @@ CCMD (playerclasses)
 //
 // Movement.
 //
-
-// 16 pixels of bob
-#define MAXBOB			16.
 
 player_t::~player_t()
 {
@@ -774,6 +764,17 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetWBobSpeed)
 	ACTION_RETURN_FLOAT(self->userinfo.GetWBobSpeed());
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetMoveBob)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_FLOAT(self->userinfo.GetMoveBob());
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetStillBob)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_FLOAT(self->userinfo.GetStillBob());
+}
 
 //===========================================================================
 //
@@ -1200,138 +1201,6 @@ void P_CheckPlayerSprite(AActor *actor, int &spritenum, DVector2 &scale)
 			scale.Y *= 0.5;
 		}
 	}
-}
-
-/*
-==================
-=
-= P_CalcHeight
-=
-=
-Calculate the walking / running height adjustment
-=
-==================
-*/
-
-void P_CalcHeight (player_t *player) 
-{
-	DAngle		angle;
-	double	 	bob;
-	bool		still = false;
-
-	// Regular movement bobbing
-	// (needs to be calculated for gun swing even if not on ground)
-
-	// killough 10/98: Make bobbing depend only on player-applied motion.
-	//
-	// Note: don't reduce bobbing here if on ice: if you reduce bobbing here,
-	// it causes bobbing jerkiness when the player moves from ice to non-ice,
-	// and vice-versa.
-
-	if (player->cheats & CF_NOCLIP2)
-	{
-		player->bob = 0;
-	}
-	else if ((player->mo->flags & MF_NOGRAVITY) && !player->onground)
-	{
-		player->bob = 0.5;
-	}
-	else
-	{
-		player->bob = player->Vel.LengthSquared();
-		if (player->bob == 0)
-		{
-			still = true;
-		}
-		else
-		{
-			player->bob *= player->userinfo.GetMoveBob();
-
-			if (player->bob > MAXBOB)
-				player->bob = MAXBOB;
-		}
-	}
-
-	double defaultviewheight = player->mo->ViewHeight + player->crouchviewdelta;
-
-	if (player->cheats & CF_NOVELOCITY)
-	{
-		player->viewz = player->mo->Z() + defaultviewheight;
-
-		if (player->viewz > player->mo->ceilingz-4)
-			player->viewz = player->mo->ceilingz-4;
-
-		return;
-	}
-
-	if (still)
-	{
-		if (player->health > 0)
-		{
-			angle = level.time / (120 * TICRATE / 35.) * 360.;
-			bob = player->userinfo.GetStillBob() * angle.Sin();
-		}
-		else
-		{
-			bob = 0;
-		}
-	}
-	else
-	{
-		angle = level.time / (20 * TICRATE / 35.) * 360.;
-		bob = player->bob * angle.Sin() * (player->mo->waterlevel > 1 ? 0.25f : 0.5f);
-	}
-
-	// move viewheight
-	if (player->playerstate == PST_LIVE)
-	{
-		player->viewheight += player->deltaviewheight;
-
-		if (player->viewheight > defaultviewheight)
-		{
-			player->viewheight = defaultviewheight;
-			player->deltaviewheight = 0;
-		}
-		else if (player->viewheight < (defaultviewheight/2))
-		{
-			player->viewheight = defaultviewheight/2;
-			if (player->deltaviewheight <= 0)
-				player->deltaviewheight = 1 / 65536.;
-		}
-		
-		if (player->deltaviewheight)	
-		{
-			player->deltaviewheight += 0.25;
-			if (!player->deltaviewheight)
-				player->deltaviewheight = 1/65536.;
-		}
-	}
-
-	if (player->morphTics)
-	{
-		bob = 0;
-	}
-	player->viewz = player->mo->Z() + player->viewheight + (bob * player->mo->ViewBob); // [SP] Allow DECORATE changes to view bobbing speed.
-	if (player->mo->Floorclip && player->playerstate != PST_DEAD
-		&& player->mo->Z() <= player->mo->floorz)
-	{
-		player->viewz -= player->mo->Floorclip;
-	}
-	if (player->viewz > player->mo->ceilingz - 4)
-	{
-		player->viewz = player->mo->ceilingz - 4;
-	}
-	if (player->viewz < player->mo->floorz + 4)
-	{
-		player->viewz = player->mo->floorz + 4;
-	}
-}
-
-DEFINE_ACTION_FUNCTION(APlayerPawn, CalcHeight)
-{
-	PARAM_SELF_PROLOGUE(APlayerPawn);
-	P_CalcHeight(self->player);
-	return 0;
 }
 
 CUSTOM_CVAR (Float, sv_aircontrol, 0.00390625f, CVAR_SERVERINFO|CVAR_NOSAVE)

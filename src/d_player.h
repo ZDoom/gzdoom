@@ -136,16 +136,16 @@ public:
 	// [CW] Fades for when you are being damaged.
 	PalEntry DamageFade;
 
-	// [SP] ViewBob Multiplier
-	double		ViewBob;
-	double		curBob;
-
 	// Everything below this point is only used by scripted code or through the scripted variable interface.
 	int			RunHealth;
 	TObjPtr<AActor*> InvFirst;		// first inventory item displayed on inventory bar
 	double		ForwardMove1, ForwardMove2;
 	double		SideMove1, SideMove2;
 	double HexenArmor[5];
+
+	// [SP] ViewBob Multiplier
+	double		ViewBob;
+	double		curBob;
 
 	// Former class properties that were moved into the object to get rid of the meta class.
 	FName SoundClass;		// Sound class

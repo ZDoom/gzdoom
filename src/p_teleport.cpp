@@ -48,8 +48,6 @@
 
 static FRandom pr_teleport ("Teleport");
 
-extern void P_CalcHeight (player_t *player);
-
 CVAR (Bool, telezoom, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
 //==========================================================================
@@ -585,7 +583,11 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 				player->deltaviewheight = 0;
 
 				// Set player's view according to the newly set parameters
-				P_CalcHeight(player);
+				IFVIRTUALPTR(player->mo, APlayerPawn, CalcHeight)
+				{
+					VMValue param = player->mo;
+					VMCall(func, &param, 1, nullptr, 0);
+				}
 
 				// Reset the delta to have the same dynamics as before
 				player->deltaviewheight = deltaviewheight;

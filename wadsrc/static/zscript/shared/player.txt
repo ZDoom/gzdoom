@@ -15,6 +15,8 @@ class PlayerPawn : Actor native
 	const CROUCHSPEED = (1./12);
 	// [RH] # of ticks to complete a turn180
 	const TURN180_TICKS = ((TICRATE / 4) + 1);
+	// 16 pixels of bob
+	const MAXBOB = 16.;
 	
 	native int			crouchsprite;
 	native int			MaxHealth;
@@ -72,6 +74,7 @@ class PlayerPawn : Actor native
 	property FlechetteType: FlechetteType;
 	property Portrait: Portrait;
 	property TeleportFreezeTime: TeleportFreezeTime;
+	property ViewBob: ViewBob;
 	
 	Default
 	{
@@ -451,6 +454,133 @@ class PlayerPawn : Actor native
 			}
 		}
 	}
+	
+	/*
+	==================
+	=
+	= P_CalcHeight
+	=
+	=
+	Calculate the walking / running height adjustment
+	=
+	==================
+	*/
+
+	virtual void CalcHeight()
+	{
+		let player = self.player;
+		double angle;
+		double bob;
+		bool still = false;
+
+		// Regular movement bobbing
+		// (needs to be calculated for gun swing even if not on ground)
+
+		// killough 10/98: Make bobbing depend only on player-applied motion.
+		//
+		// Note: don't reduce bobbing here if on ice: if you reduce bobbing here,
+		// it causes bobbing jerkiness when the player moves from ice to non-ice,
+		// and vice-versa.
+
+		if (player.cheats & CF_NOCLIP2)
+		{
+			player.bob = 0;
+		}
+		else if (bNoGravity && !player.onground)
+		{
+			player.bob = 0.5;
+		}
+		else
+		{
+			player.bob = player.Vel dot player.Vel;
+			if (player.bob == 0)
+			{
+				still = true;
+			}
+			else
+			{
+				player.bob *= player.GetMoveBob();
+
+				if (player.bob > MAXBOB)
+					player.bob = MAXBOB;
+			}
+		}
+
+		double defaultviewheight = ViewHeight + player.crouchviewdelta;
+
+		if (player.cheats & CF_NOVELOCITY)
+		{
+			player.viewz = pos.Z + defaultviewheight;
+
+			if (player.viewz > ceilingz-4)
+				player.viewz = ceilingz-4;
+
+			return;
+		}
+
+		if (still)
+		{
+			if (player.health > 0)
+			{
+				angle = level.time / (120 * TICRATE / 35.) * 360.;
+				bob = player.GetStillBob() * sin(angle);
+			}
+			else
+			{
+				bob = 0;
+			}
+		}
+		else
+		{
+			angle = level.time / (20 * TICRATE / 35.) * 360.;
+			bob = player.bob * sin(angle) * (waterlevel > 1 ? 0.25f : 0.5f);
+		}
+
+		// move viewheight
+		if (player.playerstate == PST_LIVE)
+		{
+			player.viewheight += player.deltaviewheight;
+
+			if (player.viewheight > defaultviewheight)
+			{
+				player.viewheight = defaultviewheight;
+				player.deltaviewheight = 0;
+			}
+			else if (player.viewheight < (defaultviewheight/2))
+			{
+				player.viewheight = defaultviewheight/2;
+				if (player.deltaviewheight <= 0)
+					player.deltaviewheight = 1 / 65536.;
+			}
+			
+			if (player.deltaviewheight)	
+			{
+				player.deltaviewheight += 0.25;
+				if (!player.deltaviewheight)
+					player.deltaviewheight = 1/65536.;
+			}
+		}
+
+		if (player.morphTics)
+		{
+			bob = 0;
+		}
+		player.viewz = pos.Z + player.viewheight + (bob * clamp(ViewBob, 0. , 1.5)); // [SP] Allow DECORATE changes to view bobbing speed.
+		if (Floorclip && player.playerstate != PST_DEAD
+			&& pos.Z <= floorz)
+		{
+			player.viewz -= Floorclip;
+		}
+		if (player.viewz > ceilingz - 4)
+		{
+			player.viewz = ceilingz - 4;
+		}
+		if (player.viewz < floorz + 4)
+		{
+			player.viewz = floorz + 4;
+		}
+	}
+
 
 	//==========================================================================
 	//
@@ -1445,7 +1575,7 @@ class PlayerPawn : Actor native
 			CheckUse();
 			CheckUndoMorph();
 			// Cycle psprites.
-			// Note that after self point the PlayerPawn may have changed due to getting unmorphed so 'self' is no longer safe to use.
+			// Note that after this point the PlayerPawn may have changed due to getting unmorphed so 'self' is no longer safe to use.
 			player.mo.TickPSprites();
 			// Other Counters
 			if (player.damagecount)	player.damagecount--;
@@ -1474,6 +1604,7 @@ class PlayerPawn : Actor native
 
 	void BringUpWeapon ()
 	{
+		let player = self.player;
 		if (player.PendingWeapon == WP_NOCHANGE)
 		{
 			if (player.ReadyWeapon != null)
@@ -2184,7 +2315,6 @@ class PlayerPawn : Actor native
 	native bool ResetAirSupply (bool playgasp = true);
 	native clearscope static String GetPrintableDisplayName(Class<Actor> cls);
 	native void CheckMusicChange();
-	native void CalcHeight ();
 	native void CheckEnvironment();
 	native void CheckUse();
 	native void CheckWeaponButtons();
@@ -2452,6 +2582,8 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native float GetAutoaim() const;
 	native bool GetNoAutostartMap() const;
 	native double GetWBobSpeed() const;
+	native double GetMoveBob() const;
+	native double GetStillBob() const;
 	native void SetFOV(float fov);
 	native bool GetClassicFlight() const;
 	native clearscope bool HasWeaponsInSlot(int slot) const;
@@ -2471,7 +2603,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	{
 		if (player.mo != null)
 		{
-			return player.mo.UndoPlayerMorph(self, unmorphflag, force);
+ 			return player.mo.UndoPlayerMorph(self, unmorphflag, force);
 		}
 		return false;
 	}

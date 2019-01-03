@@ -1651,7 +1651,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckFor3DCeilingHit, CheckFor3DCeilingHit
 
 //===========================================================================
 //
-// APlayerPawn :: MarkPlayerSounds
+// APlayerPawn functions
 //
 //===========================================================================
 
@@ -1661,6 +1661,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(APlayerPawn, MarkPlayerSounds, S_MarkPlayerSounds)
 	S_MarkPlayerSounds(self);
 	return 0;
 }
+
+static void GetPrintableDisplayNameJit(PClassActor *cls, FString *result)
+{
+	*result = cls->GetDisplayName();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(APlayerPawn, GetPrintableDisplayName, GetPrintableDisplayNameJit)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(type, AActor);
+	ACTION_RETURN_STRING(type->GetDisplayName());
+}
+
 
 
 DEFINE_FIELD(AActor, snext)

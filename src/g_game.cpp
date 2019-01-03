@@ -2001,8 +2001,6 @@ CUSTOM_CVAR (Int, autosavecount, 4, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		self = 0;
 }
 
-extern void P_CalcHeight (player_t *);
-
 void G_DoAutoSave ()
 {
 	FString description;

@@ -581,13 +581,16 @@ class Inventory : Actor
 	//
 	//===========================================================================
 
-	bool, Actor CallTryPickup(Actor toucher)
+	bool, Actor CallTryPickup(Actor toucher, bool touched = false)
 	{
 		let saved_toucher = toucher;
 		let Invstack = Inv; // A pointer of the inventories item stack.
 
 		// unmorphed versions of a currently morphed actor cannot pick up anything. 
 		if (bUnmorphed) return false, null;
+
+		if (!touched && toucher != null && !toucher.CanPickupItem(self))
+			return false, null;
 
 		bool res;
 		if (CanPickup(toucher))
@@ -760,8 +763,10 @@ class Inventory : Actor
 
 		bool localview = toucher.CheckLocalView(consoleplayer);
 
+		if (!toucher.CanPickupItem(self, true))	return;
+
 		bool res;
-		[res, toucher] = CallTryPickup(toucher);
+		[res, toucher] = CallTryPickup(toucher, true);
 		if (!res) return;
 
 		// This is the only situation when a pickup flash should ever play.

@@ -358,7 +358,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 	flags &= ~(MF_SHOOTABLE|MF_FLOAT|MF_SKULLFLY);
 	if (!(flags4 & MF4_DONTFALL)) flags&=~MF_NOGRAVITY;
 	flags |= MF_DROPOFF;
-	if ((flags3 & MF3_ISMONSTER) || FindState(NAME_Raise) != NULL || IsKindOf(RUNTIME_CLASS(APlayerPawn)))
+	if ((flags3 & MF3_ISMONSTER) || FindState(NAME_Raise) != NULL || IsKindOf(NAME_PlayerPawn))
 	{	// [RH] Only monsters get to be corpses.
 		// Objects with a raise state should get the flag as well so they can
 		// be revived by an Arch-Vile. Batman Doom needs this.
@@ -986,7 +986,7 @@ DEFINE_ACTION_FUNCTION(AActor, TriggerPainChance)
 
 //===========================================================================
 //
-// APlayerPawn :: hasBuddha
+// 
 //
 //===========================================================================
 

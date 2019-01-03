@@ -1989,7 +1989,7 @@ static int PatchMisc (int dummy)
 		health->IntVar(NAME_Amount) = health->IntVar(NAME_MaxAmount) = deh.MegasphereHealth;
 	}
 
-	APlayerPawn *player = static_cast<APlayerPawn *> (GetDefaultByName ("DoomPlayer"));
+	AActor *player = GetDefaultByName ("DoomPlayer");
 	if (player != NULL)
 	{
 		player->health = deh.StartHealth;

@@ -477,7 +477,7 @@ FTexture *FMugShot::GetFace(player_t *player, const char *default_face, int accu
 	if (CurrentState != NULL)
 	{
 		int skin = player->userinfo.GetSkin();
-		const char *skin_face = (stateflags & FMugShot::CUSTOM) ? nullptr : (player->morphTics ? ((APlayerPawn*)GetDefaultByType(player->MorphedPlayerClass))->NameVar(NAME_Face).GetChars() : Skins[skin].Face.GetChars());
+		const char *skin_face = (stateflags & FMugShot::CUSTOM) ? nullptr : (player->morphTics ? (GetDefaultByType(player->MorphedPlayerClass))->NameVar(NAME_Face).GetChars() : Skins[skin].Face.GetChars());
 		return CurrentState->GetCurrentFrameTexture(default_face, skin_face, level, angle);
 	}
 	return NULL;

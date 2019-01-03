@@ -1010,7 +1010,7 @@ void R_InitSprites ()
 	// [GRB] Each player class has its own base skin
 	for (i = 0; i < PlayerClasses.Size (); i++)
 	{
-		auto basetype = ((APlayerPawn*)GetDefaultByType(PlayerClasses[i].Type));
+		auto basetype = GetDefaultByType(PlayerClasses[i].Type);
 
 		Skins[i].Name = "Base";
 		auto face = basetype->NameVar(NAME_Face);

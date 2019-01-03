@@ -2,7 +2,6 @@
 
 #include "a_pickups.h"
 class PClassActor;
-class APlayerPawn;
 
 class FWeaponSlot
 {
@@ -69,7 +68,7 @@ public:
 	void SendDifferences(int playernum, const FWeaponSlots &other);
 	int RestoreSlots (FConfigFile *config, const char *section);
 	void PrintSettings();
-	static void SetupWeaponSlots(APlayerPawn *pp);
+	static void SetupWeaponSlots(AActor *pp);
 
 	void AddSlot(int slot, PClassActor *type, bool feedback);
 	void AddSlotDefault(int slot, PClassActor *type, bool feedback);

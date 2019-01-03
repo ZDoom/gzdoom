@@ -1040,7 +1040,7 @@ DEFINE_PROPERTY(visibletoplayerclass, Ssssssssssssssssssss, Actor)
 	{
 		PROP_STRING_PARM(n, i);
 		if (*n != 0)
-			info->ActorInfo()->VisibleToPlayerClass.Push(FindClassTentative(n, RUNTIME_CLASS(APlayerPawn)));
+			info->ActorInfo()->VisibleToPlayerClass.Push(FindClassTentative(n, RUNTIME_CLASS(AActor)));
 	}
 }
 
@@ -1076,7 +1076,7 @@ DEFINE_PROPERTY(distancecheck, S, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY(restrictedto, Ssssssssssssssssssss, Inventory)
+DEFINE_CLASS_PROPERTY(restrictedto, Ssssssssssssssssssss, Inventory)
 {
 	auto restrictarray = (TArray<PClassActor*>*)defaults->ScriptVar(NAME_RestrictedToPlayerClass, nullptr);
 
@@ -1085,14 +1085,14 @@ DEFINE_SCRIPTED_PROPERTY(restrictedto, Ssssssssssssssssssss, Inventory)
 	{
 		PROP_STRING_PARM(n, i);
 		if (*n != 0)
-			restrictarray->Push(FindClassTentative(n, RUNTIME_CLASS(APlayerPawn)));
+			restrictarray->Push(FindClassTentative(n, RUNTIME_CLASS(AActor)));
 	}
 }
 
 //==========================================================================
 //
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY(forbiddento, Ssssssssssssssssssss, Inventory)
+DEFINE_CLASS_PROPERTY(forbiddento, Ssssssssssssssssssss, Inventory)
 {
 	auto forbidarray = (TArray<PClassActor*>*)defaults->ScriptVar(NAME_ForbiddenToPlayerClass, nullptr);
 
@@ -1101,7 +1101,7 @@ DEFINE_SCRIPTED_PROPERTY(forbiddento, Ssssssssssssssssssss, Inventory)
 	{
 		PROP_STRING_PARM(n, i);
 		if (*n != 0)
-			forbidarray->Push(FindClassTentative(n, RUNTIME_CLASS(APlayerPawn)));
+			forbidarray->Push(FindClassTentative(n, RUNTIME_CLASS(AActor)));
 	}
 }
 
@@ -1134,7 +1134,7 @@ static void SetIcon(FTextureID &icon, Baggage &bag, const char *i)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY(icon, S, Inventory)
+DEFINE_CLASS_PROPERTY(icon, S, Inventory)
 {
 	PROP_STRING_PARM(i, 0);
 	SetIcon(defaults->TextureIDVar(NAME_Icon), bag, i);
@@ -1143,7 +1143,7 @@ DEFINE_SCRIPTED_PROPERTY(icon, S, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY(althudicon, S, Inventory)
+DEFINE_CLASS_PROPERTY(althudicon, S, Inventory)
 {
 	PROP_STRING_PARM(i, 0);
 	SetIcon(defaults->TextureIDVar(NAME_AltHUDIcon), bag, i);
@@ -1152,7 +1152,7 @@ DEFINE_SCRIPTED_PROPERTY(althudicon, S, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY(defmaxamount, 0, Inventory)
+DEFINE_CLASS_PROPERTY(defmaxamount, 0, Inventory)
 {
 	defaults->IntVar(NAME_MaxAmount) = gameinfo.definventorymaxamount;
 }
@@ -1160,14 +1160,14 @@ DEFINE_SCRIPTED_PROPERTY(defmaxamount, 0, Inventory)
 //==========================================================================
 // Dummy for Skulltag compatibility...
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY(pickupannouncerentry, S, Inventory)
+DEFINE_CLASS_PROPERTY(pickupannouncerentry, S, Inventory)
 {
 }
 
 //==========================================================================
 //
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY(defaultkickback, 0, Weapon)
+DEFINE_CLASS_PROPERTY(defaultkickback, 0, Weapon)
 {
 	defaults->IntVar(NAME_Kickback) = gameinfo.defKickback;
 }
@@ -1175,7 +1175,7 @@ DEFINE_SCRIPTED_PROPERTY(defaultkickback, 0, Weapon)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY(bobstyle, S, Weapon)
+DEFINE_CLASS_PROPERTY(bobstyle, S, Weapon)
 {
 	static const char *names[] = { "Normal", "Inverse", "Alpha", "InverseAlpha", "Smooth", "InverseSmooth", NULL };
 	static const EBobStyle styles[] = { EBobStyle::BobNormal,
@@ -1194,7 +1194,7 @@ DEFINE_SCRIPTED_PROPERTY(bobstyle, S, Weapon)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY(preferredskin, S, Weapon)
+DEFINE_CLASS_PROPERTY(preferredskin, S, Weapon)
 {
 	PROP_STRING_PARM(str, 0);
 	// NoOp - only for Skulltag compatibility
@@ -1203,7 +1203,7 @@ DEFINE_SCRIPTED_PROPERTY(preferredskin, S, Weapon)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
+DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 {
 	static const char *specialcolormapnames[] = {
 		"INVERSEMAP", "GOLDMAP", "REDMAP", "GREENMAP", "BLUEMAP", NULL };
@@ -1258,7 +1258,7 @@ DEFINE_SCRIPTED_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
+DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
 {
 	PalEntry BlendColor;
 
@@ -1295,7 +1295,7 @@ DEFINE_SCRIPTED_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY_PREFIX(powerup, duration, I, Inventory)
+DEFINE_CLASS_PROPERTY_PREFIX(powerup, duration, I, Inventory)
 {
 	if (!info->IsDescendantOf(NAME_Powerup) && !info->IsDescendantOf(NAME_PowerupGiver))
 	{
@@ -1310,7 +1310,7 @@ DEFINE_SCRIPTED_PROPERTY_PREFIX(powerup, duration, I, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
+DEFINE_CLASS_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
 {
 	PROP_STRING_PARM(str, 0);
 
@@ -1701,16 +1701,16 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, weaponslot, ISsssssssssssssssssssssssssssss
 //==========================================================================
 // (non-fatal with non-existent types only in DECORATE)
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY(playerclass, S, MorphProjectile)
+DEFINE_CLASS_PROPERTY(playerclass, S, MorphProjectile)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->PointerVar<PClassActor>(NAME_PlayerClass) = FindClassTentative(str, RUNTIME_CLASS(APlayerPawn), bag.fromDecorate);
+	defaults->PointerVar<PClassActor>(NAME_PlayerClass) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
 }
 
 //==========================================================================
 // (non-fatal with non-existent types only in DECORATE)
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY(monsterclass, S, MorphProjectile)
+DEFINE_CLASS_PROPERTY(monsterclass, S, MorphProjectile)
 {
 	PROP_STRING_PARM(str, 0);
 	defaults->PointerVar<PClassActor>(NAME_MonsterClass) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
@@ -1719,7 +1719,7 @@ DEFINE_SCRIPTED_PROPERTY(monsterclass, S, MorphProjectile)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY(duration, I, MorphProjectile)
+DEFINE_CLASS_PROPERTY(duration, I, MorphProjectile)
 {
 	PROP_INT_PARM(i, 0);
 	defaults->IntVar(NAME_Duration) = i >= 0 ? i : -i*TICRATE;
@@ -1728,7 +1728,7 @@ DEFINE_SCRIPTED_PROPERTY(duration, I, MorphProjectile)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY(morphstyle, M, MorphProjectile)
+DEFINE_CLASS_PROPERTY(morphstyle, M, MorphProjectile)
 {
 	PROP_INT_PARM(i, 0);
 	defaults->IntVar(NAME_MorphStyle) = i;
@@ -1737,7 +1737,7 @@ DEFINE_SCRIPTED_PROPERTY(morphstyle, M, MorphProjectile)
 //==========================================================================
 // (non-fatal with non-existent types only in DECORATE)
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY(morphflash, S, MorphProjectile)
+DEFINE_CLASS_PROPERTY(morphflash, S, MorphProjectile)
 {
 	PROP_STRING_PARM(str, 0);
 	defaults->PointerVar<PClassActor>(NAME_MorphFlash) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
@@ -1746,7 +1746,7 @@ DEFINE_SCRIPTED_PROPERTY(morphflash, S, MorphProjectile)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY(unmorphflash, S, MorphProjectile)
+DEFINE_CLASS_PROPERTY(unmorphflash, S, MorphProjectile)
 {
 	PROP_STRING_PARM(str, 0);
 	defaults->PointerVar<PClassActor>(NAME_UnMorphFlash) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
@@ -1755,16 +1755,16 @@ DEFINE_SCRIPTED_PROPERTY(unmorphflash, S, MorphProjectile)
 //==========================================================================
 // (non-fatal with non-existent types only in DECORATE)
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY(playerclass, S, PowerMorph)
+DEFINE_CLASS_PROPERTY(playerclass, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->PointerVar<PClassActor>(NAME_PlayerClass) = FindClassTentative(str, RUNTIME_CLASS(APlayerPawn), bag.fromDecorate);
+	defaults->PointerVar<PClassActor>(NAME_PlayerClass) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
 }
 
 //==========================================================================
 //
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY(morphstyle, M, PowerMorph)
+DEFINE_CLASS_PROPERTY(morphstyle, M, PowerMorph)
 {
 	PROP_INT_PARM(i, 0);
 	defaults->IntVar(NAME_MorphStyle) = i;
@@ -1773,7 +1773,7 @@ DEFINE_SCRIPTED_PROPERTY(morphstyle, M, PowerMorph)
 //==========================================================================
 // (non-fatal with non-existent types only in DECORATE)
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY(morphflash, S, PowerMorph)
+DEFINE_CLASS_PROPERTY(morphflash, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
 	defaults->PointerVar<PClassActor>(NAME_MorphFlash) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
@@ -1782,7 +1782,7 @@ DEFINE_SCRIPTED_PROPERTY(morphflash, S, PowerMorph)
 //==========================================================================
 // (non-fatal with non-existent types only in DECORATE)
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY(unmorphflash, S, PowerMorph)
+DEFINE_CLASS_PROPERTY(unmorphflash, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
 	defaults->PointerVar<PClassActor>(NAME_UnMorphFlash) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);

@@ -342,7 +342,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 	old = player->mo->Pos();
 }
 
-int P_GetRealMaxHealth(APlayerPawn *actor, int max);
+int P_GetRealMaxHealth(AActor *actor, int max);
 
 //BOT_WhatToGet
 //

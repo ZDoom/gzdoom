@@ -80,7 +80,7 @@ CVAR (Bool, gl_attachedlights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 //==========================================================================
 //
 //==========================================================================
-DEFINE_SCRIPTED_PROPERTY(type, S, DynamicLight)
+DEFINE_CLASS_PROPERTY(type, S, DynamicLight)
 {
 	PROP_STRING_PARM(str, 0);
 	static const char * ltype_names[]={

@@ -341,8 +341,8 @@ void G_NewInit ()
 	int i;
 
 	// Destory all old player refrences that may still exist
-	TThinkerIterator<APlayerPawn> it(STAT_TRAVELLING);
-	APlayerPawn *pawn, *next;
+	TThinkerIterator<AActor> it(NAME_PlayerPawn, STAT_TRAVELLING);
+	AActor *pawn, *next;
 
 	next = it.Next();
 	while ((pawn = next) != NULL)
@@ -1325,15 +1325,15 @@ void G_StartTravel ()
 
 int G_FinishTravel ()
 {
-	TThinkerIterator<APlayerPawn> it (STAT_TRAVELLING);
-	APlayerPawn *pawn, *pawndup, *oldpawn, *next;
+	TThinkerIterator<AActor> it (NAME_PlayerPawn, STAT_TRAVELLING);
+	AActor *pawn, *pawndup, *oldpawn, *next;
 	AActor *inv;
 	FPlayerStart *start;
 	int pnum;
 	int failnum = 0;
 
 	// 
-	APlayerPawn* pawns[MAXPLAYERS];
+	AActor* pawns[MAXPLAYERS];
 	int pawnsnum = 0;
 
 	next = it.Next ();
@@ -1684,8 +1684,8 @@ void G_UnSnapshotLevel (bool hubLoad)
 		G_SerializeLevel (arc, hubLoad);
 		level.FromSnapshot = true;
 
-		TThinkerIterator<APlayerPawn> it;
-		APlayerPawn *pawn, *next;
+		TThinkerIterator<AActor> it(NAME_PlayerPawn);
+		AActor *pawn, *next;
 
 		next = it.Next();
 		while ((pawn = next) != 0)

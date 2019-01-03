@@ -376,7 +376,7 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 		mCastSounds[i].mSound = static_cast<FIntermissionActionCast*>(desc)->mCastSounds[i].mSound;
 	}
 	caststate = mDefaults->SeeState;
-	if (mClass->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)))
+	if (mClass->IsDescendantOf(NAME_PlayerPawn))
 	{
 		advplayerstate = mDefaults->MissileState;
 		casttranslation = TRANSLATION(TRANSLATION_Players, consoleplayer);
@@ -419,7 +419,7 @@ int DIntermissionScreenCast::Responder (event_t *ev)
 		castframes = 0;
 		castattacking = false;
 
-		if (mClass->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)))
+		if (mClass->IsDescendantOf(NAME_PlayerPawn))
 		{
 			int snd = S_FindSkinnedSound(players[consoleplayer].mo, "*death");
 			if (snd != 0) S_Sound (CHAN_VOICE | CHAN_UI, snd, 1, ATTN_NONE);
@@ -479,7 +479,7 @@ int DIntermissionScreenCast::Ticker ()
 	{
 		// go into attack frame
 		castattacking = true;
-		if (!mClass->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)))
+		if (!mClass->IsDescendantOf(NAME_PlayerPawn))
 		{
 			if (castonmelee)
 				basestate = caststate = mDefaults->MeleeState;
@@ -546,7 +546,7 @@ void DIntermissionScreenCast::Drawer ()
 
 		if (!(mDefaults->flags4 & MF4_NOSKIN) &&
 			mDefaults->SpawnState != NULL && caststate->sprite == mDefaults->SpawnState->sprite &&
-			mClass->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)) &&
+			mClass->IsDescendantOf(NAME_PlayerPawn) &&
 			Skins.Size() > 0)
 		{
 			// Only use the skin sprite if this class has not been removed from the

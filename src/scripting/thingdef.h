@@ -308,11 +308,8 @@ int MatchString (const char *in, const char **strings);
 #define DEFINE_PROPERTY(name, paramlist, clas) DEFINE_PROPERTY_BASE(name, paramlist, clas, CAT_PROPERTY)
 #define DEFINE_INFO_PROPERTY(name, paramlist, clas) DEFINE_PROPERTY_BASE(name, paramlist, clas, CAT_INFO)
 
-#define DEFINE_CLASS_PROPERTY(name, paramlist, clas) DEFINE_PREFIXED_PROPERTY_BASE(clas, name, paramlist, clas, CAT_PROPERTY)
-#define DEFINE_CLASS_PROPERTY_PREFIX(prefix, name, paramlist, clas) DEFINE_PREFIXED_PROPERTY_BASE(prefix, name, paramlist, clas, CAT_PROPERTY)
-
-#define DEFINE_SCRIPTED_PROPERTY(name, paramlist, clas) DEFINE_PREFIXED_SCRIPTED_PROPERTY_BASE(clas, name, paramlist, clas, CAT_PROPERTY)
-#define DEFINE_SCRIPTED_PROPERTY_PREFIX(prefix, name, paramlist, clas) DEFINE_PREFIXED_SCRIPTED_PROPERTY_BASE(prefix, name, paramlist, clas, CAT_PROPERTY)
+#define DEFINE_CLASS_PROPERTY(name, paramlist, clas) DEFINE_PREFIXED_SCRIPTED_PROPERTY_BASE(clas, name, paramlist, clas, CAT_PROPERTY)
+#define DEFINE_CLASS_PROPERTY_PREFIX(prefix, name, paramlist, clas) DEFINE_PREFIXED_SCRIPTED_PROPERTY_BASE(prefix, name, paramlist, clas, CAT_PROPERTY)
 
 #define PROP_PARM_COUNT (params[0].i)
 

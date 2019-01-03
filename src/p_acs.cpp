@@ -4230,7 +4230,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_JumpZ:
-		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+		if (actor->IsKindOf(NAME_PlayerPawn))
 			actor->FloatVar(NAME_JumpZ) = ACSToDouble(value);
 		break; 	// [GRB]
 
@@ -4263,7 +4263,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 
 
 	case APROP_SpawnHealth:
-		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+		if (actor->IsKindOf(NAME_PlayerPawn))
 		{
 			actor->IntVar(NAME_MaxHealth) = value;
 		}
@@ -4348,7 +4348,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_ViewHeight:
-		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+		if (actor->IsKindOf(NAME_PlayerPawn))
 		{
 			actor->FloatVar(NAME_ViewHeight) = ACSToDouble(value);
 			if (actor->player != NULL)
@@ -4359,7 +4359,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_AttackZOffset:
-		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+		if (actor->IsKindOf(NAME_PlayerPawn))
 			actor->FloatVar(NAME_AttackZOffset) = ACSToDouble(value);
 		break;
 
@@ -4427,7 +4427,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Dormant:		return !!(actor->flags2 & MF2_DORMANT);
 	case APROP_SpawnHealth: return actor->GetMaxHealth();
 
-	case APROP_JumpZ:		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+	case APROP_JumpZ:		if (actor->IsKindOf(NAME_PlayerPawn))
 							{
 								return DoubleToACS(actor->FloatVar(NAME_JumpZ));
 							}
@@ -4449,7 +4449,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Radius:		return DoubleToACS(actor->radius);
 	case APROP_ReactionTime:return actor->reactiontime;
 	case APROP_MeleeRange:	return DoubleToACS(actor->meleerange);
-	case APROP_ViewHeight:	if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+	case APROP_ViewHeight:	if (actor->IsKindOf(NAME_PlayerPawn))
 							{
 								return DoubleToACS(actor->player->DefaultViewHeight());
 							}
@@ -4459,7 +4459,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 							}
 	case APROP_AttackZOffset:
 							// Note that this is inconsistent with every other place, where the return for monsters is 8, not 0!
-							if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+							if (actor->IsKindOf(NAME_PlayerPawn))
 							{
 								return DoubleToACS(actor->FloatVar(NAME_AttackZOffset));
 							}

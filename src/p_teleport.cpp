@@ -202,7 +202,7 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 	if (thing->player && ((flags & TELF_DESTFOG) || !(flags & TELF_KEEPORIENTATION)) && !(flags & TELF_KEEPVELOCITY))
 	{
 		int time = 18;
-		IFVIRTUALPTR(thing, APlayerPawn, GetTeleportFreezeTime)
+		IFVIRTUALPTRNAME(thing, NAME_PlayerPawn, GetTeleportFreezeTime)
 		{
 			VMValue param = thing;
 			VMReturn ret(&time);
@@ -583,7 +583,7 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 				player->deltaviewheight = 0;
 
 				// Set player's view according to the newly set parameters
-				IFVIRTUALPTR(player->mo, APlayerPawn, CalcHeight)
+				IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, CalcHeight)
 				{
 					VMValue param = player->mo;
 					VMCall(func, &param, 1, nullptr, 0);

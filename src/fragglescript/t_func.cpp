@@ -285,7 +285,7 @@ static int T_GetPlayerNum(const svalue_t &arg)
 	return playernum;
 }
 
-APlayerPawn *T_GetPlayerActor(const svalue_t &arg)
+AActor *T_GetPlayerActor(const svalue_t &arg)
 {
 	int num = T_GetPlayerNum(arg);
 	return num == -1 ? nullptr : players[num].mo;

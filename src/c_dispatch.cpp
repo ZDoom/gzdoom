@@ -1039,12 +1039,12 @@ FConsoleCommand::~FConsoleCommand ()
 	delete[] m_Name;
 }
 
-void FConsoleCommand::Run (FCommandLine &argv, APlayerPawn *who, int key)
+void FConsoleCommand::Run (FCommandLine &argv, AActor *who, int key)
 {
 	m_RunFunc (argv, who, key);
 }
 
-void FUnsafeConsoleCommand::Run (FCommandLine &args, APlayerPawn *instigator, int key)
+void FUnsafeConsoleCommand::Run (FCommandLine &args, AActor *instigator, int key)
 {
 	if (UnsafeExecutionContext)
 	{
@@ -1455,7 +1455,7 @@ bool FConsoleAlias::IsAlias ()
 	return true;
 }
 
-void FConsoleAlias::Run (FCommandLine &args, APlayerPawn *who, int key)
+void FConsoleAlias::Run (FCommandLine &args, AActor *who, int key)
 {
 	if (bRunning)
 	{
@@ -1519,7 +1519,7 @@ void FConsoleAlias::SafeDelete ()
 	}
 }
 
-void FUnsafeConsoleAlias::Run (FCommandLine &args, APlayerPawn *instigator, int key)
+void FUnsafeConsoleAlias::Run (FCommandLine &args, AActor *instigator, int key)
 {
 	UnsafeExecutionScope scope;
 	FConsoleAlias::Run(args, instigator, key);

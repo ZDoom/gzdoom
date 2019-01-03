@@ -10,7 +10,7 @@ struct UserCmd native
 	native int16	upmove;
 }
 
-class PlayerPawn : Actor native
+class PlayerPawn : Actor
 {
 	const CROUCHSPEED = (1./12);
 	// [RH] # of ticks to complete a turn180
@@ -123,7 +123,7 @@ class PlayerPawn : Actor native
 	
 	//===========================================================================
 	//
-	// APlayerPawn :: Tick
+	// PlayerPawn :: Tick
 	//
 	//===========================================================================
 
@@ -156,7 +156,7 @@ class PlayerPawn : Actor native
 	
 	//===========================================================================
 	//
-	// APlayerPawn :: PostBeginPlay
+	// PlayerPawn :: PostBeginPlay
 	//
 	//===========================================================================
 
@@ -181,7 +181,7 @@ class PlayerPawn : Actor native
 	
 	//===========================================================================
 	//
-	// APlayerPawn :: MarkPrecacheSounds
+	// PlayerPawn :: MarkPrecacheSounds
 	//
 	//===========================================================================
 
@@ -303,7 +303,7 @@ class PlayerPawn : Actor native
 
 	//===========================================================================
 	//
-	// APlayerPawn :: CheckWeaponSwitch
+	// PlayerPawn :: CheckWeaponSwitch
 	//
 	// Checks if weapons should be changed after picking up ammo
 	//
@@ -748,7 +748,7 @@ class PlayerPawn : Actor native
 
 	//===========================================================================
 	//
-	// APlayerPawn :: Die
+	// PlayerPawn :: Die
 	//
 	//===========================================================================
 
@@ -827,7 +827,7 @@ class PlayerPawn : Actor native
 	
 	//===========================================================================
 	//
-	// APlayerPawn :: FilterCoopRespawnInventory
+	// PlayerPawn :: FilterCoopRespawnInventory
 	//
 	// When respawning in coop, this function is called to walk through the dead
 	// player's inventory and modify it according to the current game flags so
@@ -1174,7 +1174,7 @@ class PlayerPawn : Actor native
 	
 	//===========================================================================
 	//
-	// APlayerPawn :: TweakSpeeds
+	// PlayerPawn :: TweakSpeeds
 	//
 	//===========================================================================
 
@@ -1709,7 +1709,7 @@ class PlayerPawn : Actor native
 	
 	//===========================================================================
 	//
-	// APlayerPawn :: BestWeapon
+	// PlayerPawn :: BestWeapon
 	//
 	// Returns the best weapon a player has, possibly restricted to a single
 	// type of ammo.
@@ -1793,7 +1793,7 @@ class PlayerPawn : Actor native
 	
 	//===========================================================================
 	//
-	// APlayerPawn :: PickNewWeapon
+	// PlayerPawn :: PickNewWeapon
 	//
 	// Picks a new weapon for this player. Used mostly for running out of ammo,
 	// but it also works when an ACS script explicitly takes the ready weapon
@@ -1822,7 +1822,7 @@ class PlayerPawn : Actor native
 
 	//===========================================================================
 	//
-	// APlayerPawn :: GiveDefaultInventory
+	// PlayerPawn :: GiveDefaultInventory
 	//
 	//===========================================================================
 
@@ -1912,7 +1912,7 @@ class PlayerPawn : Actor native
 
 	//===========================================================================
 	//
-	// APlayerPawn :: GiveDeathmatchInventory
+	// PlayerPawn :: GiveDeathmatchInventory
 	//
 	// Gives players items they should have in addition to their default
 	// inventory when playing deathmatch. (i.e. all keys)
@@ -2420,7 +2420,7 @@ class PlayerPawn : Actor native
 		
 	//===========================================================================
 	//
-	// APlayerPawn :: ResetAirSupply
+	// PlayerPawn :: ResetAirSupply
 	//
 	// Gives the player a full "tank" of air. If they had previously completely
 	// run out of air, also plays the *gasp sound. Returns true if the player

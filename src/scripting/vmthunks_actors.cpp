@@ -1651,13 +1651,13 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckFor3DCeilingHit, CheckFor3DCeilingHit
 
 //===========================================================================
 //
-// APlayerPawn functions
+// PlayerPawn functions
 //
 //===========================================================================
 
 DEFINE_ACTION_FUNCTION_NATIVE(APlayerPawn, MarkPlayerSounds, S_MarkPlayerSounds)
 {
-	PARAM_SELF_PROLOGUE(APlayerPawn);
+	PARAM_SELF_PROLOGUE(AActor);
 	S_MarkPlayerSounds(self);
 	return 0;
 }

@@ -536,7 +536,7 @@ FString cht_Morph(player_t *player, PClassActor *morphclass, bool quickundo)
 {
 	if (player->mo == nullptr)	return "";
 
-	IFVIRTUALPTR(player->mo, APlayerPawn, CheatMorph)
+	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, CheatMorph)
 	{
 		FString message;
 		VMReturn msgret(&message);
@@ -550,7 +550,7 @@ FString cht_Morph(player_t *player, PClassActor *morphclass, bool quickundo)
 void cht_SetInv(player_t *player, const char *string, int amount, bool beyond)
 {
 	if (!player->mo) return;
-	IFVIRTUALPTR(player->mo, APlayerPawn, CheatTakeInv)
+	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, CheatTakeInv)
 	{
 		FString message = string;
 		VMValue params[] = { player->mo, &message, amount, beyond };
@@ -561,7 +561,7 @@ void cht_SetInv(player_t *player, const char *string, int amount, bool beyond)
 void cht_Give (player_t *player, const char *name, int amount)
 {
 	if (!player->mo) return;
-	IFVIRTUALPTR(player->mo, APlayerPawn, CheatGive)
+	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, CheatGive)
 	{
 		FString namestr = name;
 		VMValue params[3] = { player->mo, &namestr, amount };
@@ -572,7 +572,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 void cht_Take (player_t *player, const char *name, int amount)
 {
 	if (!player->mo) return;
-	IFVIRTUALPTR(player->mo, APlayerPawn, CheatTake)
+	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, CheatTake)
 	{
 		FString namestr = name;
 		VMValue params[3] = { player->mo, &namestr, amount };
@@ -583,7 +583,7 @@ void cht_Take (player_t *player, const char *name, int amount)
 void cht_Takeweaps(player_t *player)
 {
 	if (!player->mo) return;
-	IFVIRTUALPTR(player->mo, APlayerPawn, CheatTakeWeaps)
+	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, CheatTakeWeaps)
 	{
 		VMValue params[3] = { player->mo };
 		VMCall(func, params, 1, nullptr, 0);
@@ -595,7 +595,7 @@ class DSuicider : public DThinker
 	DECLARE_CLASS(DSuicider, DThinker)
 	HAS_OBJECT_POINTERS;
 public:
-	TObjPtr<APlayerPawn*> Pawn;
+	TObjPtr<AActor*> Pawn;
 
 	void Tick()
 	{
@@ -644,7 +644,7 @@ void cht_Suicide (player_t *plyr)
 
 DEFINE_ACTION_FUNCTION(APlayerPawn, CheatSuicide)
 {
-	PARAM_SELF_PROLOGUE(APlayerPawn);
+	PARAM_SELF_PROLOGUE(AActor);
 	cht_Suicide(self->player);
 	return 0;
 }

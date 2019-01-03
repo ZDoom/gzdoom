@@ -125,7 +125,7 @@ void V_AddPlayerBlend (player_t *CPlayer, float blend[4], float maxinvalpha, int
 	}
 
 	PalEntry painFlash = 0;
-	IFVIRTUALPTR(CPlayer->mo, APlayerPawn, GetPainFlash)
+	IFVIRTUALPTRNAME(CPlayer->mo, NAME_PlayerPawn, GetPainFlash)
 	{
 		VMValue param = CPlayer->mo;
 		VMReturn ret((int*)&painFlash.d);

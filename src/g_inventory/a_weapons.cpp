@@ -756,7 +756,7 @@ void P_PlaybackKeyConfWeapons(FWeaponSlots *slots)
 
 //===========================================================================
 //
-// APlayerPawn :: SetupWeaponSlots
+// SetupWeaponSlots
 //
 // Sets up the default weapon slots for this player. If this is also the
 // local player, determines local modifications and sends those across the
@@ -764,7 +764,7 @@ void P_PlaybackKeyConfWeapons(FWeaponSlots *slots)
 //
 //===========================================================================
 
-void FWeaponSlots::SetupWeaponSlots(APlayerPawn *pp)
+void FWeaponSlots::SetupWeaponSlots(AActor *pp)
 {
 	auto player = pp->player;
 	if (player != nullptr && player->mo == pp)

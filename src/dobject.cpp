@@ -503,7 +503,7 @@ void DObject::StaticPointerSubstitution (AActor *old, AActor *notOld)
 	{
 		if (playeringame[i])
 		{
-			APlayerPawn *replacement = static_cast<APlayerPawn *>(notOld);
+			AActor *replacement = notOld;
 			auto &p = players[i];
 			
 			if (p.mo == old)					p.mo = replacement, changed++;

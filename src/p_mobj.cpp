@@ -821,7 +821,7 @@ DEFINE_ACTION_FUNCTION(AActor, CopyFriendliness)
 //
 //---------------------------------------------------------------------------
 
-int P_GetRealMaxHealth(APlayerPawn *actor, int max)
+int P_GetRealMaxHealth(AActor *actor, int max)
 {
 	// Max is 0 by default, preserving default behavior for P_GiveBody()
 	// calls while supporting health pickups.
@@ -4462,7 +4462,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 		actor->SetZ(actor->ceilingz - actor->Height);
 	}
 
-	if (SpawningMapThing || !type->IsDescendantOf (RUNTIME_CLASS(APlayerPawn)))
+	if (SpawningMapThing || !type->IsDescendantOf (NAME_PlayerPawn))
 	{
 		// Check if there's something solid to stand on between the current position and the
 		// current sector's floor. For map spawns this must be delayed until after setting the
@@ -4906,10 +4906,10 @@ EXTERN_CVAR(Float, fov)
 
 extern bool demonew;
 
-APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
+AActor *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 {
 	player_t *p;
-	APlayerPawn *mobj, *oldactor;
+	AActor *mobj, *oldactor;
 	uint8_t	  state;
 	DVector3 spawn;
 	DAngle SpawnAngle;
@@ -4990,8 +4990,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 			spawn.Z = ONFLOORZ;
 	}
 
-	mobj = static_cast<APlayerPawn *>
-		(Spawn (p->cls, spawn, NO_REPLACE));
+	mobj = Spawn (p->cls, spawn, NO_REPLACE);
 
 	if (level.flags & LEVEL_USEPLAYERSTARTZ)
 	{
@@ -5070,7 +5069,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	p->MUSINFOtics = -1;
 	p->Vel.Zero();	// killough 10/98: initialize bobbing to 0.
 
-	IFVIRTUALPTR(p->mo, APlayerPawn, ResetAirSupply)
+	IFVIRTUALPTRNAME(p->mo, NAME_PlayerPawn, ResetAirSupply)
 	{
 		VMValue params[] = { p->mo, false };
 		VMCall(func, params, 2, nullptr, 0);
@@ -5096,7 +5095,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 
 	if (deathmatch)
 	{ // Give all cards in death match mode.
-		IFVIRTUALPTR(p->mo, APlayerPawn, GiveDeathmatchInventory)
+		IFVIRTUALPTRNAME(p->mo, NAME_PlayerPawn, GiveDeathmatchInventory)
 		{
 			VMValue params[1] = { p->mo };
 			VMCall(func, params, 1, nullptr, 0);
@@ -5119,7 +5118,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	// [BC] Handle temporary invulnerability when respawned
 	if (state == PST_REBORN || state == PST_ENTER)
 	{
-		IFVIRTUALPTR(p->mo, APlayerPawn, OnRespawn)
+		IFVIRTUALPTRNAME(p->mo, NAME_PlayerPawn, OnRespawn)
 		{
 			VMValue param = p->mo;
 			VMCall(func, &param, 1, nullptr, 0);
@@ -7112,7 +7111,7 @@ FState *AActor::GetRaiseState()
 		return NULL;
 	}
 
-	if (IsKindOf(RUNTIME_CLASS(APlayerPawn)))
+	if (IsKindOf(NAME_PlayerPawn))
 	{
 		return NULL;	// do not resurrect players
 	}

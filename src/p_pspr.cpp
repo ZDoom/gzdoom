@@ -187,7 +187,7 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
 	if (Next && Next->ID == ID && ID != 0)
 		Next->Destroy(); // Replace it.
 
-	if (Caller->IsKindOf(NAME_Weapon) || Caller->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
+	if (Caller->IsKindOf(NAME_Weapon) || Caller->IsKindOf(NAME_PlayerPawn))
 		Flags = (PSPF_ADDWEAPON|PSPF_ADDBOB|PSPF_POWDOUBLE|PSPF_CVARFAST);
 }
 
@@ -577,7 +577,7 @@ void P_BringUpWeapon (player_t *player)
 
 void P_BobWeapon (player_t *player, float *x, float *y, double ticfrac)
 {
-	IFVIRTUALPTR(player->mo, APlayerPawn, BobWeapon)
+	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, BobWeapon)
 	{
 		VMValue param[] = { player->mo, ticfrac };
 		DVector2 result;
@@ -631,7 +631,7 @@ static void P_CheckWeaponButtons (player_t *player)
 
 DEFINE_ACTION_FUNCTION(APlayerPawn, CheckWeaponButtons)
 {
-	PARAM_SELF_PROLOGUE(APlayerPawn);
+	PARAM_SELF_PROLOGUE(AActor);
 	P_CheckWeaponButtons(self->player);
 	return 0;
 }

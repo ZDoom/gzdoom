@@ -129,7 +129,8 @@ struct PredictPos
 static int PredictionLerptics;
 
 static player_t PredictionPlayerBackup;
-static uint8_t PredictionActorBackup[sizeof(APlayerPawn)];
+static AActor *PredictionActor;
+static TArray<uint8_t> PredictionActorBackupArray;
 static TArray<AActor *> PredictionSectorListBackup;
 
 static TArray<sector_t *> PredictionTouchingSectorsBackup;
@@ -202,7 +203,7 @@ bool ValidatePlayerClass(PClassActor *ti, const char *name)
 		Printf("Unknown player class '%s'\n", name);
 		return false;
 	}
-	else if (!ti->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)))
+	else if (!ti->IsDescendantOf(NAME_PlayerPawn))
 	{
 		Printf("Invalid player class '%s'\n", name);
 		return false;
@@ -787,17 +788,10 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetStillBob)
 	ACTION_RETURN_FLOAT(self->userinfo.GetStillBob());
 }
 
-//===========================================================================
-//
-// APlayerPawn
-//
-//===========================================================================
-
-IMPLEMENT_CLASS(APlayerPawn, false, false)
 
 //===========================================================================
 //
-// APlayerPawn :: BeginPlay
+// 
 //
 //===========================================================================
 
@@ -859,7 +853,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(APlayerPawn, SetupCrouchSprite, SetupCrouchSprite)
 
 void PlayIdle (AActor *player)
 {
-	IFVIRTUALPTR(player, APlayerPawn, PlayIdle)
+	IFVIRTUALPTRNAME(player, NAME_PlayerPawn, PlayIdle)
 	{
 		VMValue params[1] = { (DObject*)player };
 		VMCall(func, params, 1, nullptr, 0);
@@ -1135,7 +1129,7 @@ void P_CheckMusicChange(player_t *player)
 
 DEFINE_ACTION_FUNCTION(APlayerPawn, CheckMusicChange)
 {
-	PARAM_SELF_PROLOGUE(APlayerPawn);
+	PARAM_SELF_PROLOGUE(AActor);
 	P_CheckMusicChange(self->player);
 	return 0;
 }
@@ -1171,7 +1165,7 @@ void P_CheckEnvironment(player_t *player)
 
 DEFINE_ACTION_FUNCTION(APlayerPawn, CheckEnvironment)
 {
-	PARAM_SELF_PROLOGUE(APlayerPawn);
+	PARAM_SELF_PROLOGUE(AActor);
 	P_CheckEnvironment(self->player);
 	return 0;
 }
@@ -1205,7 +1199,7 @@ void P_CheckUse(player_t *player)
 
 DEFINE_ACTION_FUNCTION(APlayerPawn, CheckUse)
 {
-	PARAM_SELF_PROLOGUE(APlayerPawn);
+	PARAM_SELF_PROLOGUE(AActor);
 	P_CheckUse(self->player);
 	return 0;
 }
@@ -1240,7 +1234,7 @@ void P_PlayerThink (player_t *player)
 	// Don't interpolate the view for more than one tic
 	player->cheats &= ~CF_INTERPVIEW;
 
-	IFVIRTUALPTR(player->mo, APlayerPawn, PlayerThink)
+	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, PlayerThink)
 	{
 		VMValue param = player->mo;
 		VMCall(func, &param, 1, nullptr, 0);
@@ -1391,8 +1385,10 @@ void P_PredictPlayer (player_t *player)
 	// Save original values for restoration later
 	PredictionPlayerBackup = *player;
 
-	APlayerPawn *act = player->mo;
-	memcpy(PredictionActorBackup, &act->snext, sizeof(APlayerPawn) - ((uint8_t *)&act->snext - (uint8_t *)act));
+	auto act = player->mo;
+	PredictionActor = player->mo;
+	PredictionActorBackupArray.Resize(act->GetClass()->Size);
+	memcpy(PredictionActorBackupArray.Data(), &act->snext, act->GetClass()->Size - ((uint8_t *)&act->snext - (uint8_t *)act));
 
 	act->flags &= ~MF_PICKUP;
 	act->flags2 &= ~MF2_PUSHWALL;
@@ -1498,7 +1494,13 @@ void P_UnPredictPlayer ()
 	if (player->cheats & CF_PREDICTING)
 	{
 		unsigned int i;
-		APlayerPawn *act = player->mo;
+		AActor *act = player->mo;
+
+		if (act != PredictionActor)
+		{
+			// Q: Can this happen? If yes, can we continue?
+		}
+
 		AActor *savedcamera = player->camera;
 
 		auto &actInvSel = act->PointerVar<AActor*>(NAME_InvSel);
@@ -1514,14 +1516,14 @@ void P_UnPredictPlayer ()
 		player->camera = savedcamera;
 
 		FLinkContext ctx;
-		// Unlink from all list, includeing those which are not being handled by UnlinkFromWorld.
+		// Unlink from all list, including those which are not being handled by UnlinkFromWorld.
 		auto sectorportal_list = act->touching_sectorportallist;
 		auto lineportal_list = act->touching_lineportallist;
 		act->touching_sectorportallist = nullptr;
 		act->touching_lineportallist = nullptr;
 
 		act->UnlinkFromWorld(&ctx);
-		memcpy(&act->snext, PredictionActorBackup, sizeof(APlayerPawn) - ((uint8_t *)&act->snext - (uint8_t *)act));
+		memcpy(&act->snext, PredictionActorBackupArray.Data(), PredictionActorBackupArray.Size() - ((uint8_t *)&act->snext - (uint8_t *)act));
 
 		// The blockmap ordering needs to remain unchanged, too.
 		// Restore sector links and refrences.

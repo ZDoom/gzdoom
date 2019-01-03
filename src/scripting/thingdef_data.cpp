@@ -110,8 +110,8 @@ static FFlagDef InternalActorFlagDefs[]=
 
 static FFlagDef ActorFlagDefs[]=
 {
-	DEFINE_FLAG(MF, PICKUP, APlayerPawn, flags),
-	DEFINE_FLAG(MF, SPECIAL, APlayerPawn, flags),
+	DEFINE_FLAG(MF, PICKUP, AActor, flags),
+	DEFINE_FLAG(MF, SPECIAL, AActor, flags),
 	DEFINE_FLAG(MF, SOLID, AActor, flags),
 	DEFINE_FLAG(MF, SHOOTABLE, AActor, flags),
 	DEFINE_PROTECTED_FLAG(MF, NOSECTOR, AActor, flags),

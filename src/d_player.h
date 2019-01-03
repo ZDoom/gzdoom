@@ -79,11 +79,6 @@ extern ColorSetList ColorSets;
 
 FString GetPrintableDisplayName(PClassActor *cls);
 
-class APlayerPawn : public AActor
-{
-	DECLARE_CLASS(APlayerPawn, AActor)
-};
-
 void PlayIdle(AActor *player);
 
 
@@ -296,7 +291,7 @@ public:
 	void SetLogText (const char *text);
 	void SendPitchLimits() const;
 
-	APlayerPawn	*mo = nullptr;
+	AActor *mo = nullptr;
 	uint8_t		playerstate = 0;
 	ticcmd_t	cmd = {};
 	usercmd_t	original_cmd;

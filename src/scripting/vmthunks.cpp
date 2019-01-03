@@ -1945,7 +1945,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FWeaponSlots, SlotSize, SlotSize)
 DEFINE_ACTION_FUNCTION_NATIVE(FWeaponSlots, SetupWeaponSlots, FWeaponSlots::SetupWeaponSlots)
 {
 	PARAM_PROLOGUE;
-	PARAM_OBJECT(pawn, APlayerPawn);
+	PARAM_OBJECT(pawn, AActor);
 	FWeaponSlots::SetupWeaponSlots(pawn);
 	return 0;
 }

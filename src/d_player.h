@@ -133,15 +133,15 @@ public:
 	double		UseRange;				// [NS] Distance at which player can +use
 	double		AirCapacity;			// Multiplier for air supply underwater.
 
-	// [CW] Fades for when you are being damaged.
-	PalEntry DamageFade;
-
 	// Everything below this point is only used by scripted code or through the scripted variable interface.
 	int			RunHealth;
 	TObjPtr<AActor*> InvFirst;		// first inventory item displayed on inventory bar
 	double		ForwardMove1, ForwardMove2;
 	double		SideMove1, SideMove2;
 	double HexenArmor[5];
+
+	// [CW] Fades for when you are being damaged.
+	PalEntry DamageFade;
 
 	// [SP] ViewBob Multiplier
 	double		ViewBob;
@@ -511,8 +511,6 @@ public:
 	// Make sure that a state is properly set after calling this unless
 	// you are 100% sure the context already implies the layer exists.
 	DPSprite *GetPSprite(PSPLayers layer);
-
-	bool GetPainFlash(FName type, PalEntry *color) const;
 
 	// [Nash] set player FOV
 	void SetFOV(float fov);

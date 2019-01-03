@@ -2303,7 +2303,19 @@ class PlayerPawn : Actor native
 		}
 		return p1 * (1. - ticfrac) + p2 * ticfrac;
 	}
+	
+	//----------------------------------------------------------------------------
+	//
+	// 
+	//
+	//----------------------------------------------------------------------------
 
+	virtual clearscope color GetPainFlash() const
+	{
+		Color painFlash = GetPainFlashForType(DamageTypeReceived);
+		if (painFlash == 0) painFlash = DamageFade;
+		return painFlash;
+	}
 		
 	//----------------------------------------------------------------------------
 	//
@@ -2319,6 +2331,7 @@ class PlayerPawn : Actor native
 	native void CheckUse();
 	native void CheckWeaponButtons();
 	native void MarkPlayerSounds();
+	private native clearscope Color GetPainFlashForType(Name type);
 }
 
 extend class Actor

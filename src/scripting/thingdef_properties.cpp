@@ -1609,14 +1609,14 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, damagescreencolor, Cfs, PlayerPawn)
 	if (PROP_PARM_COUNT < 3)		// Because colors count as 2 parms
 	{
 		color.a = 255;
-		defaults->DamageFade = color;
+		defaults->IntVar(NAME_DamageFade) = color;
 	}
 	else if (PROP_PARM_COUNT < 4)
 	{
 		PROP_DOUBLE_PARM(a, 2);
 
 		color.a = uint8_t(255 * clamp<double>(a, 0.f, 1.f));
-		defaults->DamageFade = color;
+		defaults->IntVar(NAME_DamageFade) = color;
 	}
 	else
 	{

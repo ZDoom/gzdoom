@@ -567,24 +567,28 @@ DEFINE_ACTION_FUNCTION(FPlayerClass, GetColorSetName)
 //
 //==========================================================================
 
-bool player_t::GetPainFlash(FName type, PalEntry *color) const
+static int GetPainFlash(AActor *info, int type)
 {
-	PClass *info = mo->GetClass();
-
 	// go backwards through the list and return the first item with a 
 	// matching damage type for an ancestor of our class. 
 	// This will always return the best fit because any parent class
 	// must be processed before its children.
 	for (int i = PainFlashes.Size() - 1; i >= 0; i--)
 	{
-		if (std::get<1>(PainFlashes[i]) == type &&
-			std::get<0>(PainFlashes[i])->IsAncestorOf(info))
+		if (std::get<1>(PainFlashes[i]) == ENamedName(type) &&
+			std::get<0>(PainFlashes[i])->IsAncestorOf(info->GetClass()))
 		{
-			*color = std::get<2>(PainFlashes[i]);
-			return true;
+			return std::get<2>(PainFlashes[i]);
 		}
 	}
-	return false;
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(APlayerPawn, GetPainFlashForType, GetPainFlash)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(type);
+	ACTION_RETURN_INT(GetPainFlash(self, type));
 }
 
 //===========================================================================

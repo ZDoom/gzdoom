@@ -124,8 +124,13 @@ void V_AddPlayerBlend (player_t *CPlayer, float blend[4], float maxinvalpha, int
 					BPART(gameinfo.pickupcolor)/255.f, cnt > 128 ? 0.5f : cnt / 255.f, blend);
 	}
 
-	PalEntry painFlash = CPlayer->mo->DamageFade;
-	CPlayer->GetPainFlash(CPlayer->mo->DamageTypeReceived, &painFlash);
+	PalEntry painFlash = 0;
+	IFVIRTUALPTR(CPlayer->mo, APlayerPawn, GetPainFlash)
+	{
+		VMValue param = CPlayer->mo;
+		VMReturn ret((int*)&painFlash.d);
+		VMCall(func, &param, 1, &ret, 1);
+	}
 
 	if (painFlash.a != 0)
 	{

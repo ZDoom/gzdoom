@@ -2769,12 +2769,16 @@ void A_Chase(AActor *self)
 DEFINE_ACTION_FUNCTION(AActor, A_Chase)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE(melee);
-	PARAM_STATE(missile);
+	PARAM_STATELABEL(meleelabel);
+	PARAM_STATELABEL(missilelabel);
 	PARAM_INT(flags);
 
-	if (melee != nullptr || missile != nullptr || flags != 0x40000000)
+	FName meleename = ENamedName(meleelabel - 0x10000000);
+	FName missilename = ENamedName(missilelabel - 0x10000000);
+	if (meleename != NAME__a_chase_default || missilename != NAME__a_chase_default)
 	{
+		FState *melee = StateLabels.GetState(meleelabel, self->GetClass());
+		FState *missile = StateLabels.GetState(missilelabel, self->GetClass());
 		if ((flags & CHF_RESURRECT) && P_CheckForResurrection(self, false))
 			return 0;
 

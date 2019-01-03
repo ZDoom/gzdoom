@@ -822,6 +822,7 @@ public:
 
 	// Return starting health adjusted by skill level
 	int SpawnHealth() const;
+	virtual int GetMaxHealth(bool withupgrades = false) const;
 	int GetGibHealth() const;
 	double GetCameraHeight() const;
 

@@ -321,10 +321,6 @@ struct VMValue
 	{
 		sp = s;
 	}
-	VMValue(DObject *v)
-	{
-		a = v;
-	}
 	VMValue(void *v)
 	{
 		a = v;

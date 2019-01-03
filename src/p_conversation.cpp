@@ -771,7 +771,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 
 	pc->Vel.Zero();
 	pc->player->Vel.Zero();
-	static_cast<APlayerPawn*>(pc)->PlayIdle ();
+	PlayIdle (pc);
 
 	pc->player->ConversationPC = pc;
 	pc->player->ConversationNPC = npc;

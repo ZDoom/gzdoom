@@ -406,7 +406,7 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 		}
 		if (vx == 0 && vy == 0 && thing->player != NULL && thing->player->mo == thing && !predicting)
 		{
-			thing->player->mo->PlayIdle ();
+			PlayIdle (thing->player->mo);
 		}
 		return true;
 	}

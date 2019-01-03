@@ -984,6 +984,25 @@ DEFINE_ACTION_FUNCTION(AActor, TriggerPainChance)
 ==================
 */
 
+//===========================================================================
+//
+// APlayerPawn :: hasBuddha
+//
+//===========================================================================
+
+static int hasBuddha(player_t *player)
+{
+	if (player->playerstate == PST_DEAD) return 0;
+	if (player->cheats & CF_BUDDHA2) return 2;
+
+	if ((player->cheats & CF_BUDDHA) ||
+		(player->mo->flags7 & MF7_BUDDHA) ||
+		player->mo->FindInventory(PClass::FindActor(NAME_PowerBuddha), true) != nullptr) return 1;
+
+	return 0;
+}
+
+
 
 // Returns the amount of damage actually inflicted upon the target, or -1 if
 // the damage was cancelled.
@@ -1312,7 +1331,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 			// but telefragging should still do enough damage to kill the player)
 			// Ignore players that are already dead.
 			// [MC]Buddha2 absorbs telefrag damage, and anything else thrown their way.
-			int buddha = player->mo->hasBuddha();
+			int buddha = hasBuddha(player);
 			if (flags & DMG_FORCED) buddha = 0;
 			if (telefragDamage && buddha == 1) buddha = 0;
 			if (buddha)
@@ -1759,7 +1778,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPain
 	target->health -= damage;
 	if (target->health <= 0)
 	{ // Death
-		int buddha = player->mo->hasBuddha();
+		int buddha = hasBuddha(player);
 		if (telefragDamage && buddha == 1) buddha = 0;
 		if (buddha)
 		{ // [SP] Save the player... 

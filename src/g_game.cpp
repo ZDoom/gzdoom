@@ -1290,7 +1290,12 @@ void G_PlayerReborn (int player)
 	if (gamestate != GS_TITLELEVEL)
 	{
 		// [GRB] Give inventory specified in DECORATE
-		actor->GiveDefaultInventory ();
+
+		IFVIRTUALPTR(actor, APlayerPawn, GiveDefaultInventory)
+		{
+			VMValue params[1] = { actor };
+			VMCall(func, params, 1, nullptr, 0);
+		}
 		p->ReadyWeapon = p->PendingWeapon;
 	}
 

@@ -92,15 +92,6 @@ public:
 	virtual void BeginPlay () override;
 	virtual bool UpdateWaterLevel (bool splash) override;
 
-	int GetMaxHealth(bool withupgrades = false) const;
-	void GiveDeathmatchInventory ();
-	
-	void GiveDefaultInventory ();
-
-	// These are virtual on the script side only.
-	void PlayIdle();
-
-	int hasBuddha(); // returns 0  for no buddha, 1 for regular buddha and 2 for strong buddha
 
 	enum EInvulState
 	{
@@ -112,7 +103,6 @@ public:
 
 
 	int			crouchsprite;
-	int			MaxHealth;
 	int			BonusHealth;
 
 	int			MugShotMaxHealth;
@@ -132,6 +122,7 @@ public:
 	double		UseRange;				// [NS] Distance at which player can +use
 
 	// Everything below this point is only used by scripted code or through the scripted variable interface.
+	int			MaxHealth;
 	int			RunHealth;
 	TObjPtr<AActor*> InvFirst;		// first inventory item displayed on inventory bar
 
@@ -156,6 +147,9 @@ public:
 	PClassActor *FlechetteType;
 
 };
+
+void PlayIdle(AActor *player);
+
 
 //
 // PlayerPawn flags

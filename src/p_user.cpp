@@ -921,74 +921,6 @@ void APlayerPawn::PostBeginPlay()
 
 //===========================================================================
 //
-// APlayerPawn :: GiveDeathmatchInventory
-//
-// Gives players items they should have in addition to their default
-// inventory when playing deathmatch. (i.e. all keys)
-//
-//===========================================================================
-
-void APlayerPawn::GiveDeathmatchInventory()
-{
-	for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
-	{
-		if (PClassActor::AllActorClasses[i]->IsDescendantOf (PClass::FindActor(NAME_Key)))
-		{
-			auto key = GetDefaultByType (PClassActor::AllActorClasses[i]);
-			if (key->special1 != 0)
-			{
-				key = Spawn(PClassActor::AllActorClasses[i]);
-				if (!CallTryPickup (key, this))
-				{
-					key->Destroy ();
-				}
-			}
-		}
-	}
-}
-
-//===========================================================================
-//
-// APlayerPawn :: hasBuddha
-//
-//===========================================================================
-
-int APlayerPawn::hasBuddha()
-{
-	if (player->playerstate == PST_DEAD) return 0;
-	if (player->cheats & CF_BUDDHA2) return 2;
-	
-	if ((player->cheats & CF_BUDDHA) ||
-		(player->mo->flags7 & MF7_BUDDHA) ||
-		player->mo->FindInventory (PClass::FindActor(NAME_PowerBuddha),true) != nullptr) return 1;
-	
-	return 0;
-}
-
-//===========================================================================
-//
-// APlayerPawn :: GetMaxHealth
-//
-// only needed because Boom screwed up Dehacked.
-//
-//===========================================================================
-
-int APlayerPawn::GetMaxHealth(bool withupgrades) const 
-{ 
-	int ret = MaxHealth > 0? MaxHealth : ((i_compatflags&COMPATF_DEHHEALTH)? 100 : deh.MaxHealth);
-	if (withupgrades) ret += stamina + BonusHealth;
-	return ret;
-}
-
-DEFINE_ACTION_FUNCTION(APlayerPawn, GetMaxHealth)
-{
-	PARAM_SELF_PROLOGUE(APlayerPawn);
-	PARAM_BOOL(withupgrades);
-	ACTION_RETURN_INT(self->GetMaxHealth(withupgrades));
-}
-
-//===========================================================================
-//
 // APlayerPawn :: UpdateWaterLevel
 //
 // Plays surfacing and diving sounds, as appropriate.
@@ -1023,30 +955,15 @@ bool APlayerPawn::UpdateWaterLevel (bool splash)
 //
 //===========================================================================
 
-void APlayerPawn::PlayIdle ()
+void PlayIdle (AActor *player)
 {
-	IFVIRTUAL(APlayerPawn, PlayIdle)
+	IFVIRTUALPTR(player, APlayerPawn, PlayIdle)
 	{
-		VMValue params[1] = { (DObject*)this };
+		VMValue params[1] = { (DObject*)player };
 		VMCall(func, params, 1, nullptr, 0);
 	}
 }
 
-//===========================================================================
-//
-// APlayerPawn :: GiveDefaultInventory
-//
-//===========================================================================
-
-void APlayerPawn::GiveDefaultInventory ()
-{
-	IFVIRTUAL(APlayerPawn, GiveDefaultInventory)
-	{
-		VMValue params[1] = { (DObject*)this };
-		VMCall(func, params, 1, nullptr, 0);
-	}
-}
- 
 //===========================================================================
 //
 // A_PlayerScream

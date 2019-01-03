@@ -1816,10 +1816,7 @@ int CheckInventory (AActor *activator, const char *type, bool max)
 	{
 		if (max)
 		{
-			if (activator->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
-				return static_cast<APlayerPawn *>(activator)->GetMaxHealth();
-			else
-				return activator->SpawnHealth();
+			return activator->GetMaxHealth();
 		}
 		return activator->health;
 	}
@@ -4268,7 +4265,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 	case APROP_SpawnHealth:
 		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
 		{
-			static_cast<APlayerPawn *>(actor)->MaxHealth = value;
+			actor->IntVar(NAME_MaxHealth) = value;
 		}
 		break;
 
@@ -4428,14 +4425,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Notarget:	return !!(actor->flags3 & MF3_NOTARGET);
 	case APROP_Notrigger:	return !!(actor->flags6 & MF6_NOTRIGGER);
 	case APROP_Dormant:		return !!(actor->flags2 & MF2_DORMANT);
-	case APROP_SpawnHealth: if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
-							{
-								return static_cast<APlayerPawn *>(actor)->GetMaxHealth();
-							}
-							else
-							{
-								return actor->SpawnHealth();
-							}
+	case APROP_SpawnHealth: return actor->GetMaxHealth();
 
 	case APROP_JumpZ:		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
 							{

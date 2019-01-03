@@ -1041,6 +1041,7 @@ xx(Slot)
 xx(SoundClass)
 xx(ViewBob)
 xx(DamageFade)
+xx(MaxHealth)
 
 xx(BlueCard)
 xx(YellowCard)

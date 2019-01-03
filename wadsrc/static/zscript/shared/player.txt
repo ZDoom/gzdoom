@@ -1849,6 +1849,44 @@ class PlayerPawn : Actor native
 
 	//===========================================================================
 	//
+	// APlayerPawn :: GiveDeathmatchInventory
+	//
+	// Gives players items they should have in addition to their default
+	// inventory when playing deathmatch. (i.e. all keys)
+	//
+	//===========================================================================
+
+	virtual void GiveDeathmatchInventory()
+	{
+		for ( int i = 0; i < AllActorClasses.Size(); ++i)
+		{
+			let cls = (class<Key>)(AllActorClasses[i]);
+			if (cls)
+			{
+				let keyobj = GetDefaultByType(cls);
+				if (keyobj.special1 != 0)
+				{
+					GiveInventoryType(cls);
+				}
+			}
+		}
+	}
+
+	//===========================================================================
+	//
+	// 
+	//
+	//===========================================================================
+
+	override int GetMaxHealth(bool withupgrades) const
+	{
+		int ret = MaxHealth > 0? MaxHealth : (compat_dehhealth? 100 : deh.MaxHealth);
+		if (withupgrades) ret += stamina + BonusHealth;
+		return ret;
+	}
+	
+	//===========================================================================
+	//
 	// 
 	//
 	//===========================================================================
@@ -2347,7 +2385,6 @@ class PlayerPawn : Actor native
 	//
 	//----------------------------------------------------------------------------
 
-	native clearscope int GetMaxHealth(bool withupgrades = false) const;
 	native clearscope static String GetPrintableDisplayName(Class<Actor> cls);
 	native void CheckMusicChange();
 	native void CheckEnvironment();

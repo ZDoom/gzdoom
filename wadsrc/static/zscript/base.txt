@@ -724,6 +724,7 @@ struct DehInfo native
 	native readonly int NoAutofreeze;
 	native readonly int BFGCells;
 	native readonly int BlueAC;
+	native readonly int MaxHealth;
 }
 
 struct State native

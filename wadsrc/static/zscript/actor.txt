@@ -615,6 +615,10 @@ class Actor : Thinker native
 	native void ExplodeMissile(line lin = null, Actor target = null, bool onsky = false);
 	native void RestoreDamage();
 	native clearscope int SpawnHealth() const;
+	virtual clearscope int GetMaxHealth(bool withupgrades = false) const	// this only exists to make checks for player health easier so they can avoid the type check and just call this method.
+	{
+		return SpawnHealth();
+	}
 	native void SetDamage(int dmg);
 	native clearscope double Distance2D(Actor other) const;
 	native clearscope double Distance3D(Actor other) const;
@@ -1086,7 +1090,6 @@ class Actor : Thinker native
 	native int GetRadiusDamage(Actor thing, int damage, int distance, int fulldmgdistance = 0, bool oldradiusdmg = false);
 	native int RadiusAttack(Actor bombsource, int bombdamage, int bombdistance, Name bombmod = 'none', int flags = RADF_HURTSOURCE, int fulldamagedistance = 0);
 	
-	native void A_Stop();
 	native void A_Respawn(int flags = 1);
 	native void A_RestoreSpecialPosition();
 	native void A_QueueCorpse();
@@ -1097,8 +1100,6 @@ class Actor : Thinker native
 	native void A_SetAngle(double angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetPitch(double pitch, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetRoll(double roll, int flags = 0, int ptr = AAPTR_DEFAULT);
-	native void A_ScaleVelocity(double scale, int ptr = AAPTR_DEFAULT);
-	native void A_ChangeVelocity(double x = 0, double y = 0, double z = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	deprecated("2.3") native void A_SetUserVar(name varname, int value);
 	deprecated("2.3") native void A_SetUserArray(name varname, int index, int value);
 	deprecated("2.3") native void A_SetUserVarFloat(name varname, double value);

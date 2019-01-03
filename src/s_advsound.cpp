@@ -1756,9 +1756,10 @@ static int S_LookupPlayerSound (int classidx, int gender, FSoundID refid)
 	{
 		int g;
 
-		for (g = 0; g < GENDER_MAX && listidx == 0xffff; ++g)
+		for (g = 0; g < GENDER_MAX; ++g)
 		{
 			listidx = PlayerClassLookups[classidx].ListIndex[g];
+			if (listidx != 0xffff) break;
 		}
 		if (g == GENDER_MAX)
 		{ // No sounds defined at all for this class (can this happen?)

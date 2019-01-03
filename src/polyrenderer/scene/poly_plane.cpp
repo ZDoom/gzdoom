@@ -309,7 +309,7 @@ void RenderPolyPlane::SetDynLights(PolyRenderThread *thread, PolyDrawArgs &args,
 	{
 		if (cur_node->lightsource->IsActive())
 		{
-			bool is_point_light = (cur_node->lightsource->lightflags & LF_ATTENUATE) != 0;
+			bool is_point_light = cur_node->lightsource->IsAttenuated();
 
 			// To do: cull lights not touching subsector
 

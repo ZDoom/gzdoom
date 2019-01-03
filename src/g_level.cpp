@@ -78,6 +78,7 @@
 #include "vm.h"
 #include "events.h"
 #include "i_music.h"
+#include "a_dynlight.h"
 
 #include "gi.h"
 
@@ -1532,6 +1533,7 @@ void G_InitLevelLocals ()
 	level.lightadditivesurfaces = info->lightadditivesurfaces < 0 ? gl_lightadditivesurfaces : !!info->lightadditivesurfaces;
 	level.notexturefill = info->notexturefill < 0 ? gl_notexturefill : !!info->notexturefill;
 
+	FLightDefaults::SetAttenuationForLevel();
 }
 
 //==========================================================================

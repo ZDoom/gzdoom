@@ -133,11 +133,11 @@ void AttachLight(AActor *self)
 	light->pSpotInnerAngle = &self->AngleVar(NAME_SpotInnerAngle);
 	light->pSpotOuterAngle = &self->AngleVar(NAME_SpotOuterAngle);
 	light->pPitch = &self->Angles.Pitch;
+	light->pLightFlags = (LightFlags*)&self->IntVar(NAME_lightflags);
 	light->pArgs = self->args;
 	light->specialf1 = DAngle(double(self->SpawnAngle)).Normalized360().Degrees;
 	light->Sector = self->Sector;
 	light->target = self;
-	light->lightflags.FromInt(self->IntVar(NAME_lightflags));
 	light->mShadowmapIndex = 1024;
 	light->m_active = false;
 	light->visibletoplayer = true;
@@ -665,7 +665,7 @@ void FDynamicLight::CollectWithinRadius(const DVector3 &opos, FSection *section,
 			}
 		}
 	}
-	shadowmapped = hitonesidedback && !(lightflags & LF_NOSHADOWMAP);
+	shadowmapped = hitonesidedback && !DontShadowmap();
 }
 
 //==========================================================================
@@ -886,7 +886,7 @@ CCMD(listlights)
 		Printf("%s at (%f, %f, %f), color = 0x%02x%02x%02x, radius = %f %s %s",
 			dl->target->GetClass()->TypeName.GetChars(),
 			dl->X(), dl->Y(), dl->Z(), dl->GetRed(), dl->GetGreen(), dl->GetBlue(), 
-			dl->radius, (dl->lightflags & LF_ATTENUATE)? "attenuated" : "", dl->shadowmapped? "shadowmapped" : "");
+			dl->radius, dl->IsAttenuated()? "attenuated" : "", dl->shadowmapped? "shadowmapped" : "");
 		i++;
 		shadowcount += dl->shadowmapped;
 

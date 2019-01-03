@@ -155,7 +155,7 @@ void PolyModelRenderer::AddLights(AActor *actor)
 		{
 			FDynamicLight *lightsource = addedLights[i];
 
-			bool is_point_light = (lightsource->lightflags & LF_ATTENUATE) != 0;
+			bool is_point_light = lightsource->IsAttenuated();
 
 			uint32_t red = lightsource->GetRed();
 			uint32_t green = lightsource->GetGreen();

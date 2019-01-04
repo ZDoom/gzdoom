@@ -265,7 +265,8 @@ void FDynamicLight::Tick()
 {
 	if (!target)
 	{
-		delete this;
+		// How did we get here? :?
+		ReleaseLight();
 		return;
 	}
 
@@ -273,7 +274,7 @@ void FDynamicLight::Tick()
 	{
 		if (!target->state)
 		{
-			delete this;
+			Deactivate();
 			return;
 		}
 		if (target->flags & MF_UNMORPHED)

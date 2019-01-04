@@ -117,7 +117,7 @@ bool LevelAABBTree::Update()
 			}
 		}
 	}
-	return modified;
+	return !modified;
 }
 
 TArray<int> LevelAABBTree::FindNodePath(unsigned int line, unsigned int node)

@@ -3557,17 +3557,18 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 				type = ztype;
 			}
 
-			FxExpression *val;
 			if (node->InitIsArray)
 			{
-				Error(node, "Compound initializer not implemented yet");
-				val = nullptr;
+				FArgumentList args;
+				ConvertNodeList(args, node->Init);
+				// This has to let the code generator resolve the constants, not the Simplifier, which lacks all the necessary type info.
+				list->Add(new FxLocalArrayDeclaration(ztype, node->Name, args, *ast));
 			}
 			else
 			{
-				val = node->Init ? ConvertNode(node->Init) : nullptr;
+				FxExpression *val = node->Init ? ConvertNode(node->Init) : nullptr;
+				list->Add(new FxLocalVariableDeclaration(type, node->Name, val, 0, *node));	// todo: Handle flags in the grammar.
 			}
-			list->Add(new FxLocalVariableDeclaration(type, node->Name, val, 0, *node));	// todo: Handle flags in the grammar.
 
 			node = static_cast<decltype(node)>(node->SiblingNext);
 		} while (node != loc->Vars);

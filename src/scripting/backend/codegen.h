@@ -301,6 +301,7 @@ enum EFxType
 	EFX_ColorLiteral,
 	EFX_GetDefaultByType,
 	EFX_FontCast,
+	EFX_LocalArrayDeclaration,
 	EFX_COUNT
 };
 
@@ -1806,6 +1807,7 @@ class FxCompoundStatement : public FxSequence
 	friend class FxLocalVariableDeclaration;
 	friend class FxStaticArray;
 	friend class FxMultiAssign;
+	friend class FxLocalArrayDeclaration;
 
 public:
 	FxCompoundStatement(const FScriptPosition &pos) : FxSequence(pos) {}
@@ -2123,6 +2125,7 @@ class FxLocalVariableDeclaration : public FxExpression
 	friend class FxCompoundStatement;
 	friend class FxLocalVariable;
 	friend class FxStaticArrayVariable;
+	friend class FxLocalArrayDeclaration;
 
 	FName Name;
 	FxExpression *Init;
@@ -2179,6 +2182,24 @@ public:
 		delete this;
 		return nullptr;
 	}
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class FxLocalArrayDeclaration : public FxLocalVariableDeclaration
+{
+	PType *ElementType;
+	FArgumentList values;
+
+public:
+
+	FxLocalArrayDeclaration(PType *type, FName name, FArgumentList &args, const FScriptPosition &pos);
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 #endif

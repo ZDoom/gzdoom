@@ -44,9 +44,14 @@ LevelAABBTree::LevelAABBTree()
 	{
 		if (!level.lines[i].backsector)
 		{
+#ifdef USE_POLYOBJ_SHADOWS
 			if (level.lines[i].sidedef[0] && (level.lines[i].sidedef[0]->Flags & WALLF_POLYOBJ))
 				polylines.Push(i);
 			line_elements.Push(i);
+#else
+			if (!level.lines[i].sidedef[0] || !(level.lines[i].sidedef[0]->Flags & WALLF_POLYOBJ))
+				line_elements.Push(i);
+#endif
 		}
 	}
 

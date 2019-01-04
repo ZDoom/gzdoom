@@ -110,14 +110,12 @@ extend class Actor
 
 	virtual void RemoveInventory(Inventory item)
 	{
-		Inventory invp;
-
 		if (item != NULL && item.Owner != NULL)	// can happen if the owner was destroyed by some action from an item's use state.
 		{
 			if (Inv == item) Inv = item.Inv;
 			else
 			{
-				for (invp = Inv; invp != null; invp = invp.Inv)
+				for (Actor invp = self; invp != null; invp = invp.Inv)
 				{
 					if (invp.Inv == item)
 					{

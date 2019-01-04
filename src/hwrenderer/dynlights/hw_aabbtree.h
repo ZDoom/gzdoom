@@ -42,18 +42,26 @@ public:
 	// Constructs a tree for the current level
 	LevelAABBTree();
 
-	// Nodes in the AABB tree. Last node is the root node.
-	TArray<AABBTreeNode> nodes;
-
-	// Line segments for the leaf nodes in the tree.
-	TArray<AABBTreeLine> lines;
-
 	// Shoot a ray from ray_start to ray_end and return the closest hit as a fractional value between 0 and 1. Returns 1 if no line was hit.
 	double RayTest(const DVector3 &ray_start, const DVector3 &ray_end);
 
 	bool Update();
 
+	const void *Nodes() const { return nodes.Data(); }
+	const void *Lines() const { return lines.Data(); }
+	size_t NodesSize() const { return nodes.Size() * sizeof(AABBTreeNode); }
+	size_t LinesSize() const { return lines.Size() * sizeof(AABBTreeLine); }
+
+	const void *DynamicNodes() const { return nodes.Data() + dynamicStartNode; }
+	const void *DynamicLines() const { return lines.Data() + dynamicStartLine; }
+	size_t DynamicNodesSize() const { return (nodes.Size() - dynamicStartNode) * sizeof(AABBTreeNode); }
+	size_t DynamicLinesSize() const { return (lines.Size() - dynamicStartLine) * sizeof(AABBTreeLine); }
+	size_t DynamicNodesOffset() const { return dynamicStartNode * sizeof(AABBTreeNode); }
+	size_t DynamicLinesOffset() const { return dynamicStartLine * sizeof(AABBTreeLine); }
+
 private:
+	bool GenerateTree(const FVector2 *centroids, bool dynamicsubtree);
+
 	// Test if a ray overlaps an AABB node or not
 	bool OverlapRayAABB(const DVector2 &ray_start2d, const DVector2 &ray_end2d, const AABBTreeNode &node);
 
@@ -65,7 +73,16 @@ private:
 
 	TArray<int> FindNodePath(unsigned int line, unsigned int node);
 
-	TArray<int> polylines;
+	// Nodes in the AABB tree. Last node is the root node.
+	TArray<AABBTreeNode> nodes;
+
+	// Line segments for the leaf nodes in the tree.
+	TArray<AABBTreeLine> lines;
+
+	int dynamicStartNode = 0;
+	int dynamicStartLine = 0;
+
+	TArray<int> mapLines;
 };
 
 } // namespace

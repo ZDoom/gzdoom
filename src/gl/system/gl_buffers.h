@@ -22,7 +22,8 @@ protected:
 
 	GLBuffer(int usetype);
 	~GLBuffer();
-	void SetData(size_t size, void *data, bool staticdata) override;
+	void SetData(size_t size, const void *data, bool staticdata) override;
+	void SetSubData(size_t offset, size_t size, const void *data) override;
 	void Map() override;
 	void Unmap() override;
 	void Resize(size_t newsize) override;

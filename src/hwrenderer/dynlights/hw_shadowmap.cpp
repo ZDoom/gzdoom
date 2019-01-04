@@ -155,7 +155,7 @@ bool IShadowMap::ValidateAABBTree()
 	}
 
 	if (mAABBTree)
-		return mAABBTree->Update();
+		return true;
 
 	mAABBTree.reset(new hwrenderer::LevelAABBTree());
 	return false;
@@ -198,11 +198,16 @@ void IShadowMap::UploadAABBTree()
 	{
 		if (!mNodesBuffer)
 			mNodesBuffer = screen->CreateDataBuffer(2, true);
-		mNodesBuffer->SetData(sizeof(hwrenderer::AABBTreeNode) * mAABBTree->nodes.Size(), &mAABBTree->nodes[0]);
+		mNodesBuffer->SetData(mAABBTree->NodesSize(), mAABBTree->Nodes());
 
 		if (!mLinesBuffer)
 			mLinesBuffer = screen->CreateDataBuffer(3, true);
-		mLinesBuffer->SetData(sizeof(hwrenderer::AABBTreeLine) * mAABBTree->lines.Size(), &mAABBTree->lines[0]);
+		mLinesBuffer->SetData(mAABBTree->LinesSize(), mAABBTree->Lines());
+	}
+	else if (mAABBTree->Update())
+	{
+		mNodesBuffer->SetSubData(mAABBTree->DynamicNodesOffset(), mAABBTree->DynamicNodesSize(), mAABBTree->DynamicNodes());
+		mLinesBuffer->SetSubData(mAABBTree->DynamicLinesOffset(), mAABBTree->DynamicLinesSize(), mAABBTree->DynamicLines());
 	}
 }
 

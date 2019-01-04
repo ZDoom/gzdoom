@@ -333,9 +333,9 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, OffsetSectorPlane)
 	PARAM_INT(planeval);
 	PARAM_FLOAT(delta);
 
-	if ((unsigned)sector < self->Level->sectors.Size())
+	if ((unsigned)sector < level.sectors.Size())
 	{
-		sector_t *sec = &self->Level->sectors[sector];
+		sector_t *sec = &level.sectors[sector];
 		secplane_t& plane = sector_t::floor == planeval? sec->floorplane : sec->ceilingplane;
 		plane.ChangeHeight(delta);
 		sec->ChangePlaneTexZ(planeval, delta);
@@ -357,7 +357,7 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, AddSectorTag)
 	PARAM_INT(sector);
 	PARAM_INT(tag);
 
-	if ((unsigned)sector < self->Level->sectors.Size())
+	if ((unsigned)sector < level.sectors.Size())
 	{
 		tagManager.AddSectorTag(sector, tag);
 	}

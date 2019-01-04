@@ -590,7 +590,7 @@ class Inventory : Actor
 		if (bUnmorphed) return false, null;
 
 		if (!touched && toucher != null && !toucher.CanPickupItem(self))
-			return false, null;
+			return false, toucher;
 
 		bool res;
 		if (CanPickup(toucher))

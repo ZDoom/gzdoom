@@ -193,6 +193,8 @@ struct gameinfo_t
 	FName statusscreen_dm;
 	int healthpic;	// These get filled in from ALTHUDCF
 	int berserkpic;
+	double normforwardmove[2];
+	double normsidemove[2];
 
 	const char *GetFinalePage(unsigned int num) const;
 };

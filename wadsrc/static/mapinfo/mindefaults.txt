@@ -35,6 +35,8 @@ gameinfo
 	endoom = "ENDOOM"
 	pickupcolor = "c0 c0 c0"
 	quitmessages = "Do you want to quit?"
+	normforwardmove = 0x19, 0x32
+	normsidemove = 0x18, 0x28
 
 	menufontcolor_title = "purple"
 	menufontcolor_label = "default"

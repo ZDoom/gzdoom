@@ -887,12 +887,12 @@ void FParser::SF_Spawn(void)
 		{
 			t_return.value.mobj->Angles.Yaw = angle;
 
-			if (!level.info->fs_nocheckposition)
+			if (!Level->info->fs_nocheckposition)
 			{
 				if (!P_TestMobjLocation(t_return.value.mobj))
 				{
-					if (t_return.value.mobj->flags&MF_COUNTKILL) level.total_monsters--;
-					if (t_return.value.mobj->flags&MF_COUNTITEM) level.total_items--;
+					if (t_return.value.mobj->flags&MF_COUNTKILL) Level->total_monsters--;
+					if (t_return.value.mobj->flags&MF_COUNTITEM) Level->total_items--;
 					t_return.value.mobj->Destroy();
 					t_return.value.mobj = NULL;
 				}
@@ -1521,7 +1521,7 @@ void FParser::SF_StartSectorSound(void)
 		FSSectorTagIterator itr(tagnum);
 		while ((i = itr.Next()) >= 0)
 		{
-			sector = &level.sectors[i];
+			sector = &Level->sectors[i];
 			S_Sound(sector, CHAN_BODY, T_FindSound(stringvalue(t_argv[1])), 1.0f, ATTN_NORM);
 		}
 	}
@@ -1558,7 +1558,7 @@ void FParser::SF_FloorHeight(void)
 			FSSectorTagIterator itr(tagnum);
 			while ((i = itr.Next()) >= 0)
 			{
-				auto &sec = level.sectors[i];
+				auto &sec = Level->sectors[i];
 				if (sec.floordata) continue;	// don't move floors that are active!
 
 				if (sec.MoveFloor(
@@ -1580,7 +1580,7 @@ void FParser::SF_FloorHeight(void)
 				script_error("sector not found with tagnum %i\n", tagnum); 
 				return;
 			}
-			returnval = level.sectors[secnum].CenterFloor();
+			returnval = Level->sectors[secnum].CenterFloor();
 		}
 		
 		// return floor height
@@ -1613,7 +1613,7 @@ void FParser::SF_MoveFloor(void)
 		FSSectorTagIterator itr(tagnum);
 		while ((secnum = itr.Next()) >= 0)
 		{
-			P_CreateFloor(&level.sectors[secnum], DFloor::floorMoveToValue, NULL, platspeed, destheight, crush, 0, false, false);
+			P_CreateFloor(&Level->sectors[secnum], DFloor::floorMoveToValue, NULL, platspeed, destheight, crush, 0, false, false);
 		}
 	}
 }
@@ -1648,7 +1648,7 @@ void FParser::SF_CeilingHeight(void)
 			FSSectorTagIterator itr(tagnum);
 			while ((i = itr.Next()) >= 0)
 			{
-				auto &sec = level.sectors[i];
+				auto &sec = Level->sectors[i];
 				if (sec.ceilingdata) continue;	// don't move ceilings that are active!
 
 				if (sec.MoveCeiling(
@@ -1670,7 +1670,7 @@ void FParser::SF_CeilingHeight(void)
 				script_error("sector not found with tagnum %i\n", tagnum); 
 				return;
 			}
-			returnval = level.sectors[secnum].CenterCeiling();
+			returnval = Level->sectors[secnum].CenterCeiling();
 		}
 		
 		// return ceiling height
@@ -1705,7 +1705,7 @@ void FParser::SF_MoveCeiling(void)
 		FSSectorTagIterator itr(tagnum);
 		while ((secnum = itr.Next()) >= 0)
 		{
-			P_CreateCeiling(&level.sectors[secnum], DCeiling::ceilMoveToValue, NULL, tagnum, platspeed, platspeed, destheight, crush, silent | 4, 0, DCeiling::ECrushMode::crushDoom);
+			P_CreateCeiling(&Level->sectors[secnum], DCeiling::ceilMoveToValue, NULL, tagnum, platspeed, platspeed, destheight, crush, silent | 4, 0, DCeiling::ECrushMode::crushDoom);
 		}
 	}
 }
@@ -1734,7 +1734,7 @@ void FParser::SF_LightLevel(void)
 			return;
 		}
 		
-		sector = &level.sectors[secnum];
+		sector = &Level->sectors[secnum];
 		
 		if(t_argc > 1)          // > 1: set light level
 		{
@@ -1744,7 +1744,7 @@ void FParser::SF_LightLevel(void)
 			FSSectorTagIterator itr(tagnum);
 			while ((i = itr.Next()) >= 0)
 			{
-				level.sectors[i].SetLightLevel(intvalue(t_argv[1]));
+				Level->sectors[i].SetLightLevel(intvalue(t_argv[1]));
 			}
 		}
 		
@@ -1862,7 +1862,7 @@ void FParser::SF_FadeLight(void)
 		FSectorTagIterator it(sectag);
 		while ((i = it.Next()) >= 0)
 		{
-			if (!level.sectors[i].lightingdata) Create<DLightLevel>(&level.sectors[i],destlevel,speed);
+			if (!Level->sectors[i].lightingdata) Create<DLightLevel>(&Level->sectors[i],destlevel,speed);
 		}
 	}
 }
@@ -1887,7 +1887,7 @@ void FParser::SF_FloorTexture(void)
 		if(secnum < 0)
 		{ script_error("sector not found with tagnum %i\n", tagnum); return;}
 		
-		sector = &level.sectors[secnum];
+		sector = &Level->sectors[secnum];
 		
 		if(t_argc > 1)
 		{
@@ -1898,7 +1898,7 @@ void FParser::SF_FloorTexture(void)
 			FSSectorTagIterator itr(tagnum);
 			while ((i = itr.Next()) >= 0)
 			{
-				level.sectors[i].SetTexture(sector_t::floor, picnum);
+				Level->sectors[i].SetTexture(sector_t::floor, picnum);
 			}
 		}
 		
@@ -1939,7 +1939,7 @@ void FParser::SF_SectorColormap(void)
 	if(secnum < 0)
 	{ script_error("sector not found with tagnum %i\n", tagnum); return;}
 	
-	sector = &level.sectors[secnum];
+	sector = &Level->sectors[secnum];
 
 	if (t_argv[1].type==svt_string)
 	{
@@ -1949,7 +1949,7 @@ void FParser::SF_SectorColormap(void)
 		while ((i = itr.Next()) >= 0)
 		{
 			sectors[i].midmap=cm;
-			sectors[i].heightsec=&level.sectors[i];
+			sectors[i].heightsec=&Level->sectors[i];
 		}
 	}
 	*/	
@@ -1977,7 +1977,7 @@ void FParser::SF_CeilingTexture(void)
 		if(secnum < 0)
 		{ script_error("sector not found with tagnum %i\n", tagnum); return;}
 		
-		sector = &level.sectors[secnum];
+		sector = &Level->sectors[secnum];
 		
 		if(t_argc > 1)
 		{
@@ -1988,7 +1988,7 @@ void FParser::SF_CeilingTexture(void)
 			FSSectorTagIterator itr(tagnum);
 			while ((i = itr.Next()) >= 0)
 			{
-				level.sectors[i].SetTexture(sector_t::ceiling, picnum);
+				Level->sectors[i].SetTexture(sector_t::ceiling, picnum);
 			}
 		}
 		
@@ -2161,7 +2161,7 @@ void FParser::SF_SetLineBlocking(void)
 			int i;
 			while ((i = itr.Next()) >= 0)
 			{
-				level.lines[i].flags = (level.lines[i].flags & ~(ML_BLOCKING | ML_BLOCKEVERYTHING)) | blocking;
+				Level->lines[i].flags = (Level->lines[i].flags & ~(ML_BLOCKING | ML_BLOCKEVERYTHING)) | blocking;
 			}
 		}
 	}
@@ -2184,7 +2184,7 @@ void FParser::SF_SetLineMonsterBlocking(void)
 		int i;
 		while ((i = itr.Next()) >= 0)
 		{
-			level.lines[i].flags = (level.lines[i].flags & ~ML_BLOCKMONSTERS) | blocking;
+			Level->lines[i].flags = (Level->lines[i].flags & ~ML_BLOCKMONSTERS) | blocking;
 		}
 	}
 }
@@ -2241,11 +2241,11 @@ void FParser::SF_SetLineTexture(void)
 			while ((i = itr.Next()) >= 0)
 			{
 				// bad sidedef, Hexen just SEGV'd here!
-				if (level.lines[i].sidedef[side] != NULL)
+				if (Level->lines[i].sidedef[side] != NULL)
 				{
 					if (position >= 0 && position <= 2)
 					{
-						level.lines[i].sidedef[side]->SetTexture(position, texturenum);
+						Level->lines[i].sidedef[side]->SetTexture(position, texturenum);
 					}
 				}
 			}
@@ -2260,7 +2260,7 @@ void FParser::SF_SetLineTexture(void)
 			FLineIdIterator itr(tag);
 			while ((i = itr.Next()) >= 0)
 			{ 
-				side_t *sided = level.lines[i].sidedef[side];
+				side_t *sided = Level->lines[i].sidedef[side];
 				if(sided != NULL)
 				{ 
 					if(sections & 1) sided->SetTexture(side_t::top, picnum);
@@ -3204,13 +3204,13 @@ void FParser::SF_LineFlag()
 	if (CheckArgs(2))
 	{
 		linenum = intvalue(t_argv[0]);
-		if(linenum >= level.lines.Size())
+		if(linenum >= Level->lines.Size())
 		{
 			script_error("LineFlag: Invalid line number.\n");
 			return;
 		}
 		
-		line = &level.lines[linenum];
+		line = &Level->lines[linenum];
 		
 		flagnum = intvalue(t_argv[1]);
 		if(flagnum < 0 || (flagnum > 8 && flagnum!=15))
@@ -3573,7 +3573,7 @@ void FParser::SF_SetCorona(void)
 void FParser::SF_LevelNum()
 {
 	t_return.type = svt_int;
-	t_return.value.f = level.levelnum;
+	t_return.value.f = Level->levelnum;
 }
 
 
@@ -3724,7 +3724,7 @@ void FParser::SF_SetColor(void)
 		FSSectorTagIterator itr(tagnum);
 		while ((i = itr.Next()) >= 0)
 		{
-			level.sectors[i].SetColor(color, 0);
+			Level->sectors[i].SetColor(color, 0);
 		}
 	}
 }
@@ -3821,9 +3821,9 @@ void FParser::SF_SetLineTrigger()
 			mld.special = spec;
 			mld.tag = tag;
 			mld.flags = 0;
-			int f = level.lines[i].flags;
-			P_TranslateLineDef(&level.lines[i], &mld);
-			level.lines[i].flags = (level.lines[i].flags & (ML_MONSTERSCANACTIVATE | ML_REPEAT_SPECIAL | ML_SPAC_MASK | ML_FIRSTSIDEONLY)) |
+			int f = Level->lines[i].flags;
+			P_TranslateLineDef(&Level->lines[i], &mld);
+			Level->lines[i].flags = (Level->lines[i].flags & (ML_MONSTERSCANACTIVATE | ML_REPEAT_SPECIAL | ML_SPAC_MASK | ML_FIRSTSIDEONLY)) |
 				(f & ~(ML_MONSTERSCANACTIVATE | ML_REPEAT_SPECIAL | ML_SPAC_MASK | ML_FIRSTSIDEONLY));
 
 		}

@@ -398,6 +398,7 @@ struct FParser
 	char *Tokens[T_MAXTOKENS];
 	tokentype_t TokenType[T_MAXTOKENS];
 	int NumTokens;
+	FLevelLocals *Level;
 	DFsScript *Script;       // the current script
 	DFsSection *Section;
 	DFsSection *PrevSection;
@@ -408,8 +409,9 @@ struct FParser
 	svalue_t t_return;              // returned value
 	FString t_func;					// name of current function
 
-	FParser(DFsScript *scr)
+	FParser(FLevelLocals *l, DFsScript *scr)
 	{
+		Level = l;
 		LineStart = NULL;
 		Rover = NULL;
 		Tokens[0] = new char[scr->len+32];	// 32 for safety. FS seems to need a few bytes more than the script's actual length.

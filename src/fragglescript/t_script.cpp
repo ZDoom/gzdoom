@@ -219,7 +219,7 @@ void DFsScript::ParseScript(char *position)
 	
 	try
 	{
-		FParser parse(this);
+		FParser parse(&level, this);
 		parse.Run(position, data, data + len);
 	}
 	catch (CFraggleScriptError &err)

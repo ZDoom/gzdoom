@@ -252,44 +252,9 @@ struct FLevelLocals : public FLevelData
 
 extern FLevelLocals level;
 
-inline int vertex_t::Index() const
-{
-	return int(this - &level.vertexes[0]);
-}
-
-inline int side_t::Index() const
-{
-	return int(this - &level.sides[0]);
-}
-
-inline int line_t::Index() const
-{
-	return int(this - &level.lines[0]);
-}
-
-inline int seg_t::Index() const
-{
-	return int(this - &level.segs[0]);
-}
-
-inline int subsector_t::Index() const
-{
-	return int(this - &level.subsectors[0]);
-}
-
-inline int node_t::Index() const
-{
-	return int(this - &level.nodes[0]);
-}
-
 inline FSectorPortal *line_t::GetTransferredPortal()
 {
 	return portaltransferred >= level.sectorPortals.Size() ? (FSectorPortal*)nullptr : &level.sectorPortals[portaltransferred];
-}
-
-inline int sector_t::Index() const 
-{ 
-	return int(this - &level.sectors[0]); 
 }
 
 inline FSectorPortal *sector_t::GetPortal(int plane)

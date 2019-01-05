@@ -148,7 +148,7 @@ struct vertex_t
 		return p;
 	}
 
-	int Index() const;
+	int Index() const { return vertexnum; }
 	void RecalcVertexHeights();
 
 
@@ -776,7 +776,7 @@ public:
 
 	sector_t *NextSpecialSector (int type, sector_t *prev) const;		// [RH]
 	void RemoveForceField();
-	int Index() const;
+	int Index() const { return sectornum; }
 
 	void AdjustFloorClip () const;
 	void SetColor(PalEntry pe, int desat);
@@ -1346,7 +1346,7 @@ struct side_t
 	vertex_t *V1() const;
 	vertex_t *V2() const;
 
-	int Index() const;
+	int Index() const { return sidenum; }
 };
 
 enum AutomapLineStyle : int
@@ -1415,7 +1415,7 @@ struct line_t
 	inline int getPortalAlignment() const;
 	inline bool hitSkyWall(AActor* mo) const;
 
-	int Index() const;
+	int Index() const { return linenum; }
 };
 
 inline vertex_t *side_t::V1() const
@@ -1491,7 +1491,7 @@ struct seg_t
 	float			sidefrac;		// relative position of seg's ending vertex on owning sidedef
 	int				segnum;
 
-	int Index() const;
+	int Index() const { return segnum; }
 };
 
 //extern seg_t *segs;
@@ -1538,7 +1538,7 @@ struct subsector_t
 	char			hacked;			// 1: is part of a render hack
 
 	void BuildPolyBSP();
-	int Index() const;
+	int Index() const { return subsectornum; }
 									// 2: has one-sided walls
 	FPortalCoverage	portalcoverage[2];
 };
@@ -1569,7 +1569,7 @@ struct node_t
 		int		intchildren[2];	// Used by nodebuilder.
 	};
 
-	int Index() const;
+	int Index() const { return nodenum; }
 };
 
 

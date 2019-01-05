@@ -6710,7 +6710,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 	if (z != ONFLOORZ && z != ONCEILINGZ)
 	{
 		// Doom spawns missiles 4 units lower than hitscan attacks for players.
-		z += source->Center() - source->Floorclip + source->AttackOffset(4);
+		z += source->Center() - source->Floorclip + source->AttackOffset(-4);
 		// Do not fire beneath the floor.
 		if (z < source->floorz)
 		{

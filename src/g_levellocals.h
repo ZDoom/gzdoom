@@ -47,6 +47,7 @@
 #include "r_data/r_sections.h"
 #include "r_data/r_canvastexture.h"
 
+class DFraggleThinker;
 
 struct FLevelData
 {
@@ -199,6 +200,9 @@ struct FLevelLocals : public FLevelData
 	bool		notexturefill;
 
 	FDynamicLight *lights;
+
+	// links to global game objects
+	TObjPtr<DFraggleThinker *> FraggleScriptThinker;
 
 	bool		IsJumpingAllowed() const;
 	bool		IsCrouchingAllowed() const;

@@ -486,7 +486,7 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 		}
 	}
 
-	T_PreprocessScripts();        // preprocess FraggleScript scripts
+	T_PreprocessScripts(&level);        // preprocess FraggleScript scripts
 
 	// build subsector connect matrix
 	//	UNUSED P_ConnectSubsectors ();

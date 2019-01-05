@@ -57,6 +57,7 @@
 #include "g_levellocals.h"
 #include "events.h"
 #include "p_destructible.h"
+#include "fragglescript/t_script.h"
 
 //==========================================================================
 //
@@ -974,7 +975,8 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		("level.deathsequence", level.deathsequence)
 		("level.bodyqueslot", level.bodyqueslot)
 		("level.spawnindex", level.spawnindex)
-		.Array("level.bodyque", level.bodyque, level.BODYQUESIZE);
+		.Array("level.bodyque", level.bodyque, level.BODYQUESIZE)
+		("level.fragglethinker", level.FraggleScriptThinker);
 
 	// Hub transitions must keep the current total time
 	if (!hubload)

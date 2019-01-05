@@ -129,7 +129,7 @@ int intvalue(const svalue_t & v);
 fsfix fixedvalue(const svalue_t & v);
 double floatvalue(const svalue_t & v);
 const char *stringvalue(const svalue_t & v);
-AActor *actorvalue(const svalue_t &svalue);
+AActor *actorvalue(FLevelLocals *Level, const svalue_t &svalue);
 
 //==========================================================================
 //
@@ -185,7 +185,7 @@ public:
 	DFsVariable(const char *_name = "");
 
 	void GetValue(svalue_t &result);
-	void SetValue(const svalue_t &newvalue);
+	void SetValue(FLevelLocals *Level, const svalue_t &newvalue);
 	void Serialize(FSerializer &ar);
 };
 
@@ -484,6 +484,15 @@ struct FParser
 	FString GetFormatString(int startarg);
 	bool CheckArgs(int cnt);
 
+	PClassActor * T_GetMobjType(svalue_t arg);
+	int T_GetPlayerNum(const svalue_t &arg);
+	AActor *T_GetPlayerActor(const svalue_t &arg);
+
+	AActor* actorvalue(const svalue_t &svalue)
+	{
+		return ::actorvalue(Level, svalue);
+	}
+
 	void SF_Print();
 	void SF_Rnd();
 	void SF_Continue();
@@ -711,7 +720,7 @@ public:
 #include "t_fs.h"
 
 void script_error(const char *s, ...) GCCPRINTF(1,2);
-void FS_EmulateCmd(char * string);
+void FS_EmulateCmd(FLevelLocals *l, char * string);
 
 #endif
 

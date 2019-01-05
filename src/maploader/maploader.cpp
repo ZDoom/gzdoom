@@ -2919,7 +2919,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	{
 		ForceNodeBuild = true;
 	}
-	T_LoadScripts(map);
+	T_LoadScripts(Level, map);
 
 	if (!map->HasBehavior || map->isText)
 	{

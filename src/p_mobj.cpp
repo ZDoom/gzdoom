@@ -5570,7 +5570,7 @@ AActor *SpawnMapThing(int index, FMapThing *mt, int position)
 			index, mt->pos.X, mt->pos.Y, mt->pos.Z, mt->EdNum, mt->flags,
 			spawned ? spawned->GetClass()->TypeName.GetChars() : "(none)");
 	}
-	T_AddSpawnedThing(spawned);
+	T_AddSpawnedThing(&level, spawned);
 	return spawned;
 }
 

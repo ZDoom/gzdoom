@@ -222,7 +222,7 @@ static PClassActor * ActorTypes[countof(ActorNames_init)];
 // Doom index is only supported for the original things up to MBF
 //
 //==========================================================================
-PClassActor * T_GetMobjType(svalue_t arg)
+PClassActor * FParser::T_GetMobjType(svalue_t arg)
 {
 	PClassActor * pclass=NULL;
 	
@@ -256,7 +256,7 @@ PClassActor * T_GetMobjType(svalue_t arg)
 // Input can be either an actor variable or an index value
 //
 //==========================================================================
-static int T_GetPlayerNum(const svalue_t &arg)
+int FParser::T_GetPlayerNum(const svalue_t &arg)
 {
 	int playernum;
 	if(arg.type == svt_mobj)
@@ -285,7 +285,7 @@ static int T_GetPlayerNum(const svalue_t &arg)
 	return playernum;
 }
 
-AActor *T_GetPlayerActor(const svalue_t &arg)
+AActor *FParser::T_GetPlayerActor(const svalue_t &arg)
 {
 	int num = T_GetPlayerNum(arg);
 	return num == -1 ? nullptr : players[num].mo;
@@ -2080,7 +2080,7 @@ void FParser::SF_CloseDoor(void)
 // run console cmd
 void FParser::SF_RunCommand(void)
 {
-	FS_EmulateCmd(GetFormatString(0).LockBuffer());
+	FS_EmulateCmd(Level, GetFormatString(0).LockBuffer());
 }
 
 //==========================================================================
@@ -3108,7 +3108,7 @@ void FParser::SF_SpawnMissile()
 
 void FParser::SF_MapThingNumExist()
 {
-	auto &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
+	auto &SpawnedThings = Level->FraggleScriptThinker->SpawnedThings;
 
 	int intval;
 
@@ -3137,7 +3137,7 @@ void FParser::SF_MapThingNumExist()
 
 void FParser::SF_MapThings()
 {
-	auto &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
+	auto &SpawnedThings = Level->FraggleScriptThinker->SpawnedThings;
 
 	t_return.type = svt_int;
 	t_return.value.i = SpawnedThings.Size();
@@ -3861,7 +3861,7 @@ void FParser::RunLineSpecial(const FLineSpecial *spec)
 
 DRunningScript *FParser::SaveCurrentScript()
 {
-	DFraggleThinker *th = DFraggleThinker::ActiveThinker;
+	DFraggleThinker *th = Level->FraggleScriptThinker;
 	if (th)
 	{
 		DRunningScript *runscr = Create<DRunningScript>(Script->trigger, Script, Script->MakeIndex(Rover));
@@ -3987,7 +3987,7 @@ void FParser::SF_StartScript()
 		return;
 	}
 
-	DFraggleThinker *th = DFraggleThinker::ActiveThinker;
+	DFraggleThinker *th = Level->FraggleScriptThinker;
 	if (th)
 	{
 
@@ -4023,7 +4023,7 @@ void FParser::SF_ScriptRunning()
 	
 	snum = intvalue(t_argv[0]);  
 	
-	for(current = DFraggleThinker::ActiveThinker->RunningScripts->next; current; current=current->next)
+	for(current = Level->FraggleScriptThinker->RunningScripts->next; current; current=current->next)
 	{
 		if(current->script->scriptnum == snum)
 		{

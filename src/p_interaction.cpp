@@ -352,7 +352,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 	// [JM] Fire KILL type scripts for actor. Not needed for players, since they have the "DEATH" script type.
 	if (!player && !(flags7 & MF7_NOKILLSCRIPTS) && ((flags7 & MF7_USEKILLSCRIPTS) || gameinfo.forcekillscripts))
 	{
-		FBehavior::StaticStartTypedScripts(SCRIPT_Kill, this, true, 0, true);
+		level.Behaviors.StartTypedScripts(SCRIPT_Kill, this, true, 0, true);
 	}
 
 	flags &= ~(MF_SHOOTABLE|MF_FLOAT|MF_SKULLFLY);
@@ -563,7 +563,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 		E_PlayerDied(int(player - players));
 
 		// Death script execution, care of Skull Tag
-		FBehavior::StaticStartTypedScripts (SCRIPT_Death, this, true);
+		level.Behaviors.StartTypedScripts (SCRIPT_Death, this, true);
 
 		// [RH] Force a delay between death and respawn
 		player->respawn_time = level.time + TICRATE;

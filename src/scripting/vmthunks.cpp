@@ -2368,19 +2368,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, SetClipRect, SBar_SetClipRect)
 
 static void GetGlobalACSString(int index, FString *result)
 {
-	*result = FBehavior::StaticLookupString(ACS_GlobalVars[index]);
+	*result = level.Behaviors.LookupString(ACS_GlobalVars[index]);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSString, GetGlobalACSString)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(index);
-	ACTION_RETURN_STRING(FBehavior::StaticLookupString(ACS_GlobalVars[index]));
+	ACTION_RETURN_STRING(level.Behaviors.LookupString(ACS_GlobalVars[index]));
 }
 
 static void GetGlobalACSArrayString(int arrayno, int index, FString *result)
 {
-	*result = FBehavior::StaticLookupString(ACS_GlobalVars[index]);
+	*result = level.Behaviors.LookupString(ACS_GlobalVars[index]);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSArrayString, GetGlobalACSArrayString)
@@ -2388,7 +2388,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSArrayString, GetGlobal
 	PARAM_PROLOGUE;
 	PARAM_INT(arrayno);
 	PARAM_INT(index);
-	ACTION_RETURN_STRING(FBehavior::StaticLookupString(ACS_GlobalArrays[arrayno][index]));
+	ACTION_RETURN_STRING(level.Behaviors.LookupString(ACS_GlobalArrays[arrayno][index]));
 }
 
 static int GetGlobalACSValue(int index)

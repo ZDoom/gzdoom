@@ -992,11 +992,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		G_AirControlChanged();
 	}
 
-
-
-	// fixme: This needs to ensure it reads from the correct place. Should be one once there's enough of this code converted to JSON
-
-	FBehavior::StaticSerializeModuleStates(arc);
+	level.Behaviors.SerializeModuleStates(arc);
 	// The order here is important: First world state, then portal state, then thinkers, and last polyobjects.
 	arc("linedefs", level.lines, level.loadlines);
 	arc("sidedefs", level.sides, level.loadsides);

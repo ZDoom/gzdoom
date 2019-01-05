@@ -344,6 +344,7 @@ enum
 
 enum ACSFormat { ACS_Old, ACS_Enhanced, ACS_LittleEnhanced, ACS_Unknown };
 
+
 class FBehavior
 {
 public:
@@ -381,20 +382,6 @@ public:
 
 	BoundsCheckingArray<int32_t *, NUM_MAPVARS> MapVars;
 
-	static FBehavior *StaticLoadModule (int lumpnum, FileReader *fr = nullptr, int len=0);
-	static void StaticLoadDefaultModules ();
-	static void StaticUnloadModules ();
-	static bool StaticCheckAllGood ();
-	static FBehavior *StaticGetModule (int lib);
-	static void StaticSerializeModuleStates (FSerializer &arc);
-	static void StaticMarkLevelVarStrings();
-	static void StaticLockLevelVarStrings();
-	static void StaticUnlockLevelVarStrings();
-
-	static const ScriptPtr *StaticFindScript (int script, FBehavior *&module);
-	static const char *StaticLookupString (uint32_t index);
-	static void StaticStartTypedScripts (uint16_t type, AActor *activator, bool always, int arg1=0, bool runNow=false);
-	static void StaticStopMyScripts (AActor *actor);
 
 private:
 	struct ArrayInfo;
@@ -421,8 +408,6 @@ private:
 	char ModuleName[9];
 	TArray<int> JumpPoints;
 
-	static TArray<FBehavior *> StaticModules;
-
 	void LoadScriptsDirectory ();
 
 	static int SortScripts (const void *a, const void *b);
@@ -439,6 +424,30 @@ private:
 
 	friend void ArrangeScriptProfiles(TArray<ProfileCollector> &profiles);
 	friend void ArrangeFunctionProfiles(TArray<ProfileCollector> &profiles);
+	friend struct FBehaviorContainer;
 };
+
+struct FBehaviorContainer
+{
+	TArray<FBehavior *> StaticModules;
+
+	FBehavior *LoadModule(int lumpnum, FileReader *fr = nullptr, int len = 0);
+	void LoadDefaultModules();
+	void UnloadModules();
+	bool CheckAllGood();
+	FBehavior *GetModule(int lib);
+	void SerializeModuleStates(FSerializer &arc);
+	void MarkLevelVarStrings();
+	void LockLevelVarStrings();
+	void UnlockLevelVarStrings();
+
+	const ScriptPtr *FindScript(int script, FBehavior *&module);
+	const char *LookupString(uint32_t index);
+	void StartTypedScripts(uint16_t type, AActor *activator, bool always, int arg1 = 0, bool runNow = false);
+	void StopMyScripts(AActor *actor);
+
+};
+
+
 
 #endif //__P_ACS_H__

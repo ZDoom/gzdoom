@@ -5018,7 +5018,7 @@ AActor *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 			VMValue params[] = { mobj, oldactor };
 			VMCall(func, params, 2, nullptr, 0);
 		}
-		FBehavior::StaticStopMyScripts (oldactor);	// cancel all ENTER/RESPAWN scripts for the voodoo doll
+		level.Behaviors.StopMyScripts (oldactor);	// cancel all ENTER/RESPAWN scripts for the voodoo doll
 	}
 
 	// [GRB] Reset skin
@@ -5147,7 +5147,7 @@ AActor *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	{
 		if (state == PST_ENTER || (state == PST_LIVE && !savegamerestore))
 		{
-			FBehavior::StaticStartTypedScripts (SCRIPT_Enter, p->mo, true);
+			level.Behaviors.StartTypedScripts (SCRIPT_Enter, p->mo, true);
 		}
 		else if (state == PST_REBORN)
 		{
@@ -5171,7 +5171,7 @@ AActor *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 			DObject::StaticPointerSubstitution (oldactor, p->mo);
 
 			E_PlayerRespawned(int(p - players));
-			FBehavior::StaticStartTypedScripts (SCRIPT_Respawn, p->mo, true);
+			level.Behaviors.StartTypedScripts (SCRIPT_Respawn, p->mo, true);
 		}
 	}
 	return mobj;

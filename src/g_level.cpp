@@ -641,7 +641,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 
 	// [RH] Give scripts a chance to do something
 	unloading = true;
-	FBehavior::StaticStartTypedScripts (SCRIPT_Unloading, NULL, false, 0, true);
+	level.Behaviors.StartTypedScripts (SCRIPT_Unloading, NULL, false, 0, true);
 	// [ZZ] safe world unload
 	E_WorldUnloaded();
 	// [ZZ] unsafe world unload (changemap != map)
@@ -854,7 +854,7 @@ void G_DoCompleted (void)
 			G_SnapshotLevel ();
 			// Do not free any global strings this level might reference
 			// while it's not loaded.
-			FBehavior::StaticLockLevelVarStrings();
+			level.Behaviors.LockLevelVarStrings();
 		}
 		else
 		{ // Make sure we don't have a snapshot lying around from before.
@@ -1089,7 +1089,7 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 			if (fromSnapshot)
 			{
 				// ENTER scripts are being handled when the player gets spawned, this cannot be changed due to its effect on voodoo dolls.
-				FBehavior::StaticStartTypedScripts(SCRIPT_Return, players[ii].mo, true);
+				level.Behaviors.StartTypedScripts(SCRIPT_Return, players[ii].mo, true);
 			}
 		}
 	}
@@ -1097,7 +1097,7 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 	if (level.FromSnapshot)
 	{
 		// [Nash] run REOPEN scripts upon map re-entry
-		FBehavior::StaticStartTypedScripts(SCRIPT_Reopen, NULL, false);
+		level.Behaviors.StartTypedScripts(SCRIPT_Reopen, NULL, false);
 	}
 
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
@@ -1718,7 +1718,7 @@ void G_UnSnapshotLevel (bool hubLoad)
 	if (hubLoad)
 	{
 		// Unlock ACS global strings that were locked when the snapshot was made.
-		FBehavior::StaticUnlockLevelVarStrings();
+		level.Behaviors.UnlockLevelVarStrings();
 	}
 }
 

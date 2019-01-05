@@ -340,7 +340,7 @@ void P_FreeLevelData ()
 	DThinker::DestroyAllThinkers ();
 	tagManager.Clear();
 
-	FBehavior::StaticUnloadModules ();
+	level.Behaviors.UnloadModules ();
 
 	P_FreeStrifeConversations ();
 	level.ClearLevelData();

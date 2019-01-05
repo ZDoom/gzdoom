@@ -1682,11 +1682,11 @@ void G_DoPlayerPop(int playernum)
 	}
 
 	// [RH] Make the player disappear
-	FBehavior::StaticStopMyScripts(players[playernum].mo);
+	level.Behaviors.StopMyScripts(players[playernum].mo);
 	// [ZZ] fire player disconnect hook
 	E_PlayerDisconnected(playernum);
 	// [RH] Let the scripts know the player left
-	FBehavior::StaticStartTypedScripts(SCRIPT_Disconnect, players[playernum].mo, true, playernum, true);
+	level.Behaviors.StartTypedScripts(SCRIPT_Disconnect, players[playernum].mo, true, playernum, true);
 	if (players[playernum].mo != NULL)
 	{
 		P_DisconnectEffect(players[playernum].mo);

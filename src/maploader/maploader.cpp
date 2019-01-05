@@ -2825,12 +2825,12 @@ void MapLoader::LoadBehavior(MapData * map)
 {
 	if (map->Size(ML_BEHAVIOR) > 0)
 	{
-		FBehavior::StaticLoadModule(-1, &map->Reader(ML_BEHAVIOR), map->Size(ML_BEHAVIOR));
+		Level->Behaviors.LoadModule(-1, &map->Reader(ML_BEHAVIOR), map->Size(ML_BEHAVIOR));
 	}
-	if (!FBehavior::StaticCheckAllGood())
+	if (!Level->Behaviors.CheckAllGood())
 	{
 		Printf("ACS scripts unloaded.\n");
-		FBehavior::StaticUnloadModules();
+		Level->Behaviors.UnloadModules();
 	}
 }
 
@@ -2881,7 +2881,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	ForceNodeBuild = gennodes;
 
 	// [RH] Load in the BEHAVIOR lump
-	FBehavior::StaticUnloadModules();
+	Level->Behaviors.UnloadModules();
 	if (map->HasBehavior)
 	{
 		LoadBehavior(map);
@@ -2941,7 +2941,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 		Level->flags2 |= LEVEL2_DUMMYSWITCHES;
 	}
 
-	FBehavior::StaticLoadDefaultModules();
+	Level->Behaviors.LoadDefaultModules();
 	LoadMapinfoACSLump();
 
 
@@ -3174,7 +3174,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 		node.len = (float)g_sqrt(fdx * fdx + fdy * fdy);
 	}
 
-	InitRenderInfo();				// create hardware independent renderer resources for the level. This must be done BEFORE the PolyObj Spawn!!!	
+	InitRenderInfo();				// create hardware independent renderer resources for the Level-> This must be done BEFORE the PolyObj Spawn!!!	
 	P_ClearDynamic3DFloorData();	// CreateVBO must be run on the plain 3D floor data.
 	screen->mVertexData->CreateVBO();
 

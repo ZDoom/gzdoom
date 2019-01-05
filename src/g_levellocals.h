@@ -43,6 +43,7 @@
 #include "p_blockmap.h"
 #include "p_local.h"
 #include "po_man.h"
+#include "p_acs.h"
 #include "p_destructible.h"
 #include "r_data/r_sections.h"
 #include "r_data/r_canvastexture.h"
@@ -98,6 +99,7 @@ struct FLevelData
 	FPlayerStart		playerstarts[MAXPLAYERS];
 	TArray<FPlayerStart> AllPlayerStarts;
 
+	FBehaviorContainer Behaviors;
 };
 
 struct FLevelLocals : public FLevelData

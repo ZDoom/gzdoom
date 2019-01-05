@@ -1505,7 +1505,7 @@ void P_SpawnSpecials (MapLoader *ml)
 		}
 	}
 	// [RH] Start running any open scripts on this map
-	FBehavior::StaticStartTypedScripts (SCRIPT_Open, NULL, false);
+	level.Behaviors.StartTypedScripts (SCRIPT_Open, NULL, false);
 }
 
 ////////////////////////////////////////////////////////////////////////////

@@ -904,7 +904,7 @@ class CommandDrawString : public SBarInfoCommand
 					if(ACS_GlobalVars[valueArgument] != cache)
 					{
 						cache = ACS_GlobalVars[valueArgument];
-						str = FBehavior::StaticLookupString(ACS_GlobalVars[valueArgument]);
+						str = level.Behaviors.LookupString(ACS_GlobalVars[valueArgument]);
 						RealignString();
 					}
 					break;
@@ -912,7 +912,7 @@ class CommandDrawString : public SBarInfoCommand
 					if(ACS_GlobalArrays[valueArgument][consoleplayer] != cache)
 					{
 						cache = ACS_GlobalArrays[valueArgument][consoleplayer];
-						str = FBehavior::StaticLookupString(ACS_GlobalArrays[valueArgument][consoleplayer]);
+						str = level.Behaviors.LookupString(ACS_GlobalArrays[valueArgument][consoleplayer]);
 						RealignString();
 					}
 					break;

@@ -979,6 +979,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		("level.corpsequeue", level.CorpseQueue)
 		("level.spotstate", level.SpotState)
 		("level.fragglethinker", level.FraggleScriptThinker);
+		("level.acsthinker", level.ACSThinker);
 
 	// Hub transitions must keep the current total time
 	if (!hubload)

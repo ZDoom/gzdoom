@@ -48,6 +48,7 @@
 #include "r_data/r_sections.h"
 #include "r_data/r_canvastexture.h"
 
+class DACSThinker;
 class DFraggleThinker;
 class DSpotState;
 
@@ -207,6 +208,8 @@ struct FLevelLocals : public FLevelData
 	// links to global game objects
 	TArray<TObjPtr<AActor *>> CorpseQueue;
 	TObjPtr<DFraggleThinker *> FraggleScriptThinker = nullptr;
+	TObjPtr<DACSThinker*> ACSThinker = nullptr;
+
 	TObjPtr<DSpotState *> SpotState = nullptr;
 
 	bool		IsJumpingAllowed() const;

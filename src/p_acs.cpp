@@ -782,7 +782,6 @@ public:
 
 	typedef TMap<int, DLevelScript *> ScriptMap;
 	ScriptMap RunningScripts;	// Array of all synchronous scripts
-	static TObjPtr<DACSThinker*> ActiveThinker;
 
 	void DumpScriptStatus();
 	void StopScriptsFor(AActor *actor);
@@ -2066,9 +2065,9 @@ void FBehaviorContainer::MarkLevelVarStrings()
 		StaticModules[modnum]->MarkMapVarStrings();
 	}
 	// Mark running scripts' local variables.
-	if (DACSThinker::ActiveThinker != NULL)
+	if (level.ACSThinker != nullptr)
 	{
-		for (DLevelScript *script = DACSThinker::ActiveThinker->Scripts; script != NULL; script = script->GetNext())
+		for (DLevelScript *script = level.ACSThinker->Scripts; script != NULL; script = script->GetNext())
 		{
 			script->MarkLocalVarStrings();
 		}
@@ -2083,9 +2082,9 @@ void FBehaviorContainer::LockLevelVarStrings()
 		StaticModules[modnum]->LockMapVarStrings();
 	}
 	// Lock running scripts' local variables.
-	if (DACSThinker::ActiveThinker != NULL)
+	if (level.ACSThinker != nullptr)
 	{
-		for (DLevelScript *script = DACSThinker::ActiveThinker->Scripts; script != NULL; script = script->GetNext())
+		for (DLevelScript *script = level.ACSThinker->Scripts; script != NULL; script = script->GetNext())
 		{
 			script->LockLocalVarStrings();
 		}
@@ -3359,7 +3358,7 @@ void FBehavior::StartTypedScripts (uint16_t type, AActor *activator, bool always
 
 void FBehaviorContainer::StopMyScripts (AActor *actor)
 {
-	DACSThinker *controller = DACSThinker::ActiveThinker;
+	DACSThinker *controller = level.ACSThinker;
 
 	if (controller != NULL)
 	{
@@ -3377,28 +3376,17 @@ IMPLEMENT_POINTERS_START(DACSThinker)
 	IMPLEMENT_POINTER(Scripts)
 IMPLEMENT_POINTERS_END
 
-TObjPtr<DACSThinker*> DACSThinker::ActiveThinker;
-
 DACSThinker::DACSThinker ()
 : DThinker(STAT_SCRIPTS)
 {
-	if (ActiveThinker)
-	{
-		I_Error ("Only one ACSThinker is allowed to exist at a time.\nCheck your code.");
-	}
-	else
-	{
-		ActiveThinker = this;
-		Scripts = NULL;
-		LastScript = NULL;
-		RunningScripts.Clear();
-	}
+	Scripts = nullptr;
+	LastScript = nullptr;
+	RunningScripts.Clear();
 }
 
 DACSThinker::~DACSThinker ()
 {
-	Scripts = NULL;
-	ActiveThinker = NULL;
+	Scripts = nullptr;
 }
 
 //==========================================================================
@@ -3563,9 +3551,9 @@ void DLevelScript::Serialize(FSerializer &arc)
 
 DLevelScript::DLevelScript ()
 {
-	next = prev = NULL;
-	if (DACSThinker::ActiveThinker == NULL)
-		Create<DACSThinker>();
+	next = prev = nullptr;
+	if (level.ACSThinker == nullptr)
+		level.ACSThinker =  Create<DACSThinker>();
 	activefont = SmallFont;
 }
 
@@ -3575,7 +3563,7 @@ DLevelScript::~DLevelScript ()
 
 void DLevelScript::Unlink ()
 {
-	DACSThinker *controller = DACSThinker::ActiveThinker;
+	DACSThinker *controller = level.ACSThinker;
 
 	if (controller->LastScript == this)
 	{
@@ -3601,7 +3589,7 @@ void DLevelScript::Unlink ()
 
 void DLevelScript::Link ()
 {
-	DACSThinker *controller = DACSThinker::ActiveThinker;
+	DACSThinker *controller = level.ACSThinker;
 
 	next = controller->Scripts;
 	GC::WriteBarrier(this, next);
@@ -3621,7 +3609,7 @@ void DLevelScript::Link ()
 
 void DLevelScript::PutLast ()
 {
-	DACSThinker *controller = DACSThinker::ActiveThinker;
+	DACSThinker *controller = level.ACSThinker;
 
 	if (controller->LastScript == this)
 		return;
@@ -3643,7 +3631,7 @@ void DLevelScript::PutLast ()
 
 void DLevelScript::PutFirst ()
 {
-	DACSThinker *controller = DACSThinker::ActiveThinker;
+	DACSThinker *controller = level.ACSThinker;
 
 	if (controller->Scripts == this)
 		return;
@@ -6853,7 +6841,7 @@ static bool CharArrayParms(int &capacity, int &offset, int &a, FACSStackMemory& 
 
 int DLevelScript::RunScript ()
 {
-	DACSThinker *controller = DACSThinker::ActiveThinker;
+	DACSThinker *controller = level.ACSThinker;
 	ACSLocalVariables locals(Localvars);
 	ACSLocalArrays noarrays;
 	ACSLocalArrays *localarrays = &noarrays;
@@ -10313,7 +10301,7 @@ scriptwait:
 static DLevelScript *P_GetScriptGoing (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
 	const int *args, int argcount, int flags)
 {
-	DACSThinker *controller = DACSThinker::ActiveThinker;
+	DACSThinker *controller = level.ACSThinker;
 	DLevelScript **running;
 
 	if (controller && !(flags & ACS_ALWAYS) && (running = controller->RunningScripts.CheckKey(num)) != NULL)
@@ -10333,8 +10321,8 @@ DLevelScript::DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr
 	const int *args, int argcount, int flags)
 	: activeBehavior (module)
 {
-	if (DACSThinker::ActiveThinker == NULL)
-		Create<DACSThinker>();
+	if (level.ACSThinker == nullptr)
+		level.ACSThinker = Create<DACSThinker>();
 
 	script = num;
 	assert(code->VarCount >= code->ArgCount);
@@ -10362,7 +10350,7 @@ DLevelScript::DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr
 	// goes by while they're in their default state.
 
 	if (!(flags & ACS_ALWAYS))
-		DACSThinker::ActiveThinker->RunningScripts[num] = this;
+		level.ACSThinker->RunningScripts[num] = this;
 
 	Link();
 
@@ -10376,7 +10364,7 @@ DLevelScript::DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr
 
 static void SetScriptState (int script, DLevelScript::EScriptState state)
 {
-	DACSThinker *controller = DACSThinker::ActiveThinker;
+	DACSThinker *controller = level.ACSThinker;
 	DLevelScript **running;
 
 	if (controller != NULL && (running = controller->RunningScripts.CheckKey(script)) != NULL)
@@ -10545,13 +10533,13 @@ FSerializer &Serialize(FSerializer &arc, const char *key, acsdefered_t &defer, a
 
 CCMD (scriptstat)
 {
-	if (DACSThinker::ActiveThinker == NULL)
+	if (level.ACSThinker == NULL)
 	{
 		Printf ("No scripts are running.\n");
 	}
 	else
 	{
-		DACSThinker::ActiveThinker->DumpScriptStatus ();
+		level.ACSThinker->DumpScriptStatus ();
 	}
 }
 

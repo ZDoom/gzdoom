@@ -1970,6 +1970,7 @@ void FLevelLocals::Mark()
 {
 	GC::Mark(SpotState);
 	GC::Mark(FraggleScriptThinker);
+	GC::Mark(ACSThinker);
 	canvasTextureInfo.Mark();
 	for (auto &c : CorpseQueue)
 	{

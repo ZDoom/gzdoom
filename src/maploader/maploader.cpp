@@ -790,7 +790,7 @@ void MapLoader::LoadSegs (MapData * map)
 
 	for (auto &line : Level->lines)
 	{
-		vertchanged[line.v1->Index()] = vertchanged[line.v2->Index()] = 1;
+		vertchanged[Index(line.v1)] = vertchanged[Index(line.v2)] = 1;
 	}
 
 	try
@@ -878,9 +878,9 @@ void MapLoader::LoadSegs (MapData * map)
 			{
 				throw badseg(3, i, side);
 			}
-			if ((unsigned)(ldef->sidedef[side]->Index()) >= Level->sides.Size())
+			if ((unsigned)(Index(ldef->sidedef[side])) >= Level->sides.Size())
 			{
-				throw badseg(2, i, ldef->sidedef[side]->Index());
+				throw badseg(2, i, Index(ldef->sidedef[side]));
 			}
 			li->sidedef = ldef->sidedef[side];
 			li->frontsector = ldef->sidedef[side]->sector;
@@ -1155,7 +1155,7 @@ void MapLoader::LoadNodes (MapData * map)
 			else if ((unsigned)child >= numnodes)
 			{
 				Printf ("BSP node %d references invalid node %d.\n"
-					"The BSP will be rebuilt.\n", i, ((node_t *)no->children[j])->Index());
+					"The BSP will be rebuilt.\n", i, Index(((node_t *)no->children[j])));
 				ForceNodeBuild = true;
 				Level->nodes.Clear();
 				return;
@@ -1478,7 +1478,7 @@ void MapLoader::SaveLineSpecial (line_t *ld)
 	if (ld->sidedef[0] == nullptr)
 		return;
 
-	uint32_t sidenum = ld->sidedef[0]->Index();
+	uint32_t sidenum = Index(ld->sidedef[0]);
 	// killough 4/4/98: support special sidedef interpretation below
 	// [RH] Save Static_Init only if it's interested in the textures
 	if	(ld->special != Static_Init || ld->args[1] == Init_Color)
@@ -1506,7 +1506,7 @@ void MapLoader::FinishLoadingLineDef(line_t *ld, int alpha)
 	ld->backsector  = ld->sidedef[1] != nullptr ? ld->sidedef[1]->sector : nullptr;
 	double dx = (ld->v2->fX() - ld->v1->fX());
 	double dy = (ld->v2->fY() - ld->v1->fY());
-	int linenum = ld->Index();
+	int linenum = Index(ld);
 
 	if (ld->frontsector == nullptr)
 	{
@@ -1581,7 +1581,7 @@ void MapLoader::FinishLoadingLineDefs ()
 {
 	for (auto &line : Level->lines)
 	{
-		FinishLoadingLineDef(&line, sidetemp[line.sidedef[0]->Index()].a.alpha);
+		FinishLoadingLineDef(&line, sidetemp[Index(line.sidedef[0])].a.alpha);
 	}
 }
 
@@ -1869,7 +1869,7 @@ void MapLoader::LoopSidedefs (bool firstloop)
 		// as their left edge.
 		line_t *line = Level->sides[i].linedef;
 		int lineside = (line->sidedef[0] != &Level->sides[i]);
-		int vert = lineside ? line->v2->Index() : line->v1->Index();
+		int vert = lineside ? Index(line->v2) : Index(line->v1);
 		
 		sidetemp[i].b.lineside = lineside;
 		sidetemp[i].b.next = sidetemp[vert].b.first;
@@ -1893,26 +1893,26 @@ void MapLoader::LoopSidedefs (bool firstloop)
 		// instead of as part of another loop
 		if (line->frontsector == line->backsector)
 		{
-			const side_t* const rightside = line->sidedef[!sidetemp[i].b.lineside];
+			side_t* rightside = line->sidedef[!sidetemp[i].b.lineside];
 
 			if (nullptr == rightside)
 			{
 				// There is no right side!
-				if (firstloop) Printf ("Line %d's right edge is unconnected\n", linemap[line->Index()]);
+				if (firstloop) Printf ("Line %d's right edge is unconnected\n", linemap[Index(line)]);
 				continue;
 			}
 
-			right = rightside->Index();
+			right = Index(rightside);
 		}
 		else
 		{
 			if (sidetemp[i].b.lineside)
 			{
-				right = line->v1->Index();
+				right = Index(line->v1);
 			}
 			else
 			{
-				right = line->v2->Index();
+				right = Index(line->v2);
 			}
 
 			right = sidetemp[right].b.first;
@@ -1920,7 +1920,7 @@ void MapLoader::LoopSidedefs (bool firstloop)
 			if (right == NO_SIDE)
 			{ 
 				// There is no right side!
-				if (firstloop) Printf ("Line %d's right edge is unconnected\n", linemap[line->Index()]);
+				if (firstloop) Printf ("Line %d's right edge is unconnected\n", linemap[Index(line)]);
 				continue;
 			}
 
@@ -2686,7 +2686,7 @@ void MapLoader::GroupLines (bool buildmap)
 	{
 		if (sector->Lines.Count == 0)
 		{
-			Printf ("Sector %i (tag %i) has no lines\n", i, tagManager.GetFirstSectorTag(sector));
+			Printf ("Sector %i (tag %i) has no lines\n", i, tagManager.GetFirstSectorTag(Index(sector)));
 			// 0 the sector's tag so that no specials can use it
 			tagManager.RemoveSectorTags(i);
 		}
@@ -2702,11 +2702,11 @@ void MapLoader::GroupLines (bool buildmap)
 		auto li = &Level->lines[i];
 		if (li->frontsector != nullptr)
 		{
-			li->frontsector->Lines[linesDoneInEachSector[li->frontsector->Index()]++] = li;
+			li->frontsector->Lines[linesDoneInEachSector[Index(li->frontsector)]++] = li;
 		}
 		if (li->backsector != nullptr && li->backsector != li->frontsector)
 		{
-			li->backsector->Lines[linesDoneInEachSector[li->backsector->Index()]++] = li;
+			li->backsector->Lines[linesDoneInEachSector[Index(li->backsector)]++] = li;
 		}
 	}
 	
@@ -2866,6 +2866,40 @@ void MapLoader::GetPolySpots (MapData * map, TArray<FNodeBuilder::FPolyStart> &s
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void MapLoader::CalcIndices()
+{
+	// sectornums were already initialized because some init code needs them.
+	for (unsigned int i = 0; i < Level->vertexes.Size(); ++i)
+	{
+		Level->vertexes[i].vertexnum = i;
+	}
+	for (unsigned int i = 0; i < Level->lines.Size(); ++i)
+	{
+		Level->lines[i].linenum = i;
+	}
+	for (unsigned int i = 0; i < Level->sides.Size(); ++i)
+	{
+		Level->sides[i].sidenum = i;
+	}
+	for (unsigned int i = 0; i < Level->segs.Size(); ++i)
+	{
+		Level->segs[i].segnum = i;
+	}
+	for (unsigned int i = 0; i < Level->subsectors.Size(); ++i)
+	{
+		Level->subsectors[i].subsectornum = i;
+	}
+	for (unsigned int i = 0; i < Level->nodes.Size(); ++i)
+	{
+		Level->nodes[i].nodenum = i;
+	}
+}
 
 //==========================================================================
 //
@@ -3061,6 +3095,13 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	uint64_t startTime = 0, endTime = 0;
 
 	bool BuildGLNodes;
+
+	// The node builder needs these indices.
+	for (unsigned int i = 0; i < Level->sides.Size(); ++i)
+	{
+		Level->sides[i].sidenum = i;
+	}
+
 	if (ForceNodeBuild)
 	{
 		BuildGLNodes = true;
@@ -3126,6 +3167,9 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	SetRenderSector();
 	FixMinisegReferences();
 	FixHoles();
+
+	// Create the item indices, after the last function which may change the data has run.
+	CalcIndices();
 
 	Level->bodyqueslot = 0;
 	// phares 8/10/98: Clear body queue so the corpses from previous games are

@@ -97,6 +97,15 @@ struct vertex_t
 {
 	DVector2 p;
 
+	int vertexnum;
+	angle_t viewangle;	// precalculated angle for clipping
+	int angletime;		// recalculation time for view angle
+	bool dirty;			// something has changed and needs to be recalculated
+	int numheights;
+	int numsectors;
+	sector_t ** sectors;
+	float * heightlist;
+
 	void set(fixed_t x, fixed_t y)
 	{
 		p.X = x / 65536.;
@@ -142,15 +151,6 @@ struct vertex_t
 	int Index() const;
 	void RecalcVertexHeights();
 
-
-	angle_t viewangle;	// precalculated angle for clipping
-	int angletime;		// recalculation time for view angle
-	bool dirty;			// something has changed and needs to be recalculated
-	int numheights;
-	int numsectors;
-	sector_t ** sectors;
-	float * heightlist;
-	int vertexnum;
 
 	vertex_t()
 	{
@@ -1187,6 +1187,7 @@ struct side_t
 	FLightNode * lighthead;		// all dynamic lights that may affect this wall
 	seg_t **segs;	// all segs belonging to this sidedef in ascending order. Used for precise rendering
 	int numsegs;
+	int sidenum;
 
 	int GetLightLevel (bool foggy, int baselight, bool is3dlight=false, int *pfakecontrast_usedbygzdoom=NULL) const;
 
@@ -1387,6 +1388,7 @@ struct line_t
 	AutomapLineStyle automapstyle;
 	int			health;		// [ZZ] for destructible geometry (0 = no special behavior)
 	int			healthgroup; // [ZZ] this is the "destructible object" id
+	int			linenum;
 
 	DVector2 Delta() const
 	{
@@ -1487,6 +1489,7 @@ struct seg_t
 	subsector_t*	Subsector;
 
 	float			sidefrac;		// relative position of seg's ending vertex on owning sidedef
+	int				segnum;
 
 	int Index() const;
 };
@@ -1525,6 +1528,7 @@ struct subsector_t
 	seg_t		*firstline;
 	sector_t	*render_sector;
 	FSection	*section;
+	int			subsectornum;
 	uint32_t	numlines;
 	uint16_t	flags;
 	short		mapsection;
@@ -1558,6 +1562,7 @@ struct node_t
 		fixed_t	nb_bbox[2][4];	// Used by nodebuilder.
 	};
 	float		len;
+	int nodenum;
 	union
 	{
 		void	*children[2];	// If bit 0 is set, it's a subsector.

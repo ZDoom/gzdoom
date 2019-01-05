@@ -1154,9 +1154,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 
  static int SectorIndex(sector_t *self)
  {
-	 unsigned ndx = self->Index();
-	 if (ndx >= level.sectors.Size()) return -1;	// This must not throw because it is the only means to check that the given pointer is valid.
-	 return ndx;
+	 return self->Index();
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, Index, SectorIndex)
@@ -1295,12 +1293,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 
  static int LineIndex(line_t *self)
  {
-	 unsigned ndx = self->Index();
-	 if (ndx >= level.lines.Size())
-	 {
-		 return -1;
-	 }
-	 return ndx;
+	 return self->Index();
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Line, Index, LineIndex)
@@ -1594,12 +1587,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 
  static int SideIndex(side_t *self)
  {
-	 unsigned ndx = self->Index();
-	 if (ndx >= level.sides.Size())
-	 {
-		 return -1;
-	 }
-	 return ndx;
+	 return self->Index();
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Side, Index, SideIndex)
@@ -1616,12 +1604,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 
  static int VertexIndex(vertex_t *self)
  {
-	 unsigned ndx = self->Index();
-	 if (ndx >= level.vertexes.Size())
-	 {
-		 return -1;
-	 }
-	 return ndx;
+	 return self->Index();
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Vertex, Index, VertexIndex)

@@ -594,7 +594,7 @@ void DBaseStatusBar::Tick ()
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{
 		DHUDMessageBase *msg = Messages[i];
-		DHUDMessageBase **prev = &Messages[i];
+		TObjPtr<DHUDMessageBase *>*prev = &Messages[i];
 
 		while (msg)
 		{
@@ -657,7 +657,7 @@ void DBaseStatusBar::CallTick()
 void DBaseStatusBar::AttachMessage (DHUDMessageBase *msg, uint32_t id, int layer)
 {
 	DHUDMessageBase *old = NULL;
-	DHUDMessageBase **prev;
+	TObjPtr<DHUDMessageBase *>*prev;
 
 	old = (id == 0 || id == 0xFFFFFFFF) ? NULL : DetachMessage (id);
 	if (old != NULL)
@@ -698,7 +698,7 @@ DHUDMessageBase *DBaseStatusBar::DetachMessage (DHUDMessageBase *msg)
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{
 		DHUDMessageBase *probe = Messages[i];
-		DHUDMessageBase **prev = &Messages[i];
+		TObjPtr<DHUDMessageBase *>*prev = &Messages[i];
 
 		while (probe && probe != msg)
 		{
@@ -720,7 +720,7 @@ DHUDMessageBase *DBaseStatusBar::DetachMessage (uint32_t id)
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{
 		DHUDMessageBase *probe = Messages[i];
-		DHUDMessageBase **prev = &Messages[i];
+		TObjPtr<DHUDMessageBase *>*prev = &Messages[i];
 
 		while (probe && probe->SBarID != id)
 		{

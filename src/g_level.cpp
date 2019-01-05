@@ -1971,6 +1971,10 @@ void FLevelLocals::Mark()
 	GC::Mark(SpotState);
 	GC::Mark(FraggleScriptThinker);
 	canvasTextureInfo.Mark();
+	for (auto &c : CorpseQueue)
+	{
+		GC::Mark(c);
+	}
 	for (auto &s : sectorPortals)
 	{
 		GC::Mark(s.mSkybox);

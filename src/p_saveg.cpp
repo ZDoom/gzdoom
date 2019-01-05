@@ -976,6 +976,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		("level.bodyqueslot", level.bodyqueslot)
 		("level.spawnindex", level.spawnindex)
 		.Array("level.bodyque", level.bodyque, level.BODYQUESIZE)
+		("level.corpsequeue", level.CorpseQueue)
 		("level.spotstate", level.SpotState)
 		("level.fragglethinker", level.FraggleScriptThinker);
 

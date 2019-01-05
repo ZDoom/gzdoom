@@ -275,6 +275,7 @@ void FLevelLocals::ClearLevelData()
 	ClearPortals();
 
 	SpotState = nullptr;
+	CorpseQueue.Clear();
 	canvasTextureInfo.EmptyList();
 	sections.Clear();
 	segs.Clear();

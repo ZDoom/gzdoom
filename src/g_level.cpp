@@ -89,7 +89,7 @@
 #include "p_maputl.h"
 
 void STAT_StartNewGame(const char *lev);
-void STAT_ChangeLevel(const char *newl);
+void STAT_ChangeLevel(const char *newl, FLevelLocals *Level);
 
 EXTERN_CVAR(Bool, save_formatted)
 EXTERN_CVAR (Float, sv_gravity)
@@ -648,7 +648,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 	E_WorldUnloadedUnsafe();
 	unloading = false;
 
-	STAT_ChangeLevel(nextlevel);
+	STAT_ChangeLevel(nextlevel, &level);
 
 	if (thiscluster && (thiscluster->flags & CLUSTER_HUB))
 	{

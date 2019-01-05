@@ -1,6 +1,9 @@
 class SpotState : Object native
 {
-	native static SpotState GetSpotState(bool create = true);
+	deprecated ("3.8") static SpotState GetSpotState(bool create = true)
+	{
+		return level.GetSpotState(create);
+	}
 	native SpecialSpot GetNextInList(class<Actor> type, int skipcounter);
 	native SpecialSpot GetSpotWithMinMaxDistance(Class<Actor> type, double x, double y, double mindist, double maxdist);
 	native SpecialSpot GetRandomSpot(class<Actor> type, bool onlyonce);
@@ -13,7 +16,7 @@ class SpecialSpot : Actor
 {
 	override void BeginPlay()
 	{
-		let sstate = SpotState.GetSpotState();
+		let sstate = Level.GetSpotState();
 		if (sstate != NULL) sstate.AddSpot(self);
 		Super.BeginPlay();
 	}
@@ -26,7 +29,7 @@ class SpecialSpot : Actor
 
 	override void OnDestroy()
 	{
-		let sstate = SpotState.GetSpotState(false);
+		let sstate = Level.GetSpotState(false);
 		if (sstate != NULL) sstate.RemoveSpot(self);
 		Super.OnDestroy();
 	}
@@ -40,7 +43,7 @@ class SpecialSpot : Actor
 	void A_SpawnSingleItem(class<Actor> cls, int fail_sp = 0, int fail_co = 0, int fail_dm = 0)
 	{
 		Actor spot = NULL;
-		let state = SpotState.GetSpotState();
+		let state = Level.GetSpotState();
 
 		if (state != NULL) spot = state.GetRandomSpot(GetClass(), true);
 		if (spot == NULL) return;

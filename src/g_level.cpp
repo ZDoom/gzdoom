@@ -1968,6 +1968,7 @@ void FLevelLocals::Tick ()
 
 void FLevelLocals::Mark()
 {
+	GC::Mark(SpotState);
 	GC::Mark(FraggleScriptThinker);
 	canvasTextureInfo.Mark();
 	for (auto &s : sectorPortals)

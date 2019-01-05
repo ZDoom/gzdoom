@@ -687,6 +687,7 @@ struct LevelLocals native
 	native bool IsCrouchingAllowed() const;
 	native bool IsFreelookAllowed() const;
 	native void StartIntermission(Name type, int state) const;
+	native SpotState GetSpotState(bool create = true);
 
 	native static clearscope bool IsPointInMap(vector3 p);
 

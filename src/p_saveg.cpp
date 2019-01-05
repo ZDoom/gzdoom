@@ -976,6 +976,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		("level.bodyqueslot", level.bodyqueslot)
 		("level.spawnindex", level.spawnindex)
 		.Array("level.bodyque", level.bodyque, level.BODYQUESIZE)
+		("level.spotstate", level.SpotState)
 		("level.fragglethinker", level.FraggleScriptThinker);
 
 	// Hub transitions must keep the current total time

@@ -69,6 +69,7 @@
 #include "i_time.h"
 #include "scripting/vm/vm.h"
 #include "fragglescript/t_fs.h"
+#include "a_specialspot.h"
 #include "maploader/maploader.h"
 
 void P_ClearUDMFKeys();
@@ -273,6 +274,7 @@ void FLevelLocals::ClearLevelData()
 	}
 	ClearPortals();
 
+	SpotState = nullptr;
 	canvasTextureInfo.EmptyList();
 	sections.Clear();
 	segs.Clear();

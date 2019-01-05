@@ -1957,13 +1957,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(FWeaponSlots, SetupWeaponSlots, FWeaponSlots::Setu
 //=====================================================================================
 
 
-DEFINE_ACTION_FUNCTION_NATIVE(DSpotState, GetSpotState, DSpotState::GetSpotState)
-{
-	PARAM_PROLOGUE;
-	PARAM_BOOL(create);
-	ACTION_RETURN_OBJECT(DSpotState::GetSpotState(create));
-}
-
 static void AddSpot(DSpotState *state, AActor *spot)
 {
 	state->AddSpot(spot);
@@ -2505,6 +2498,20 @@ DEFINE_ACTION_FUNCTION_NATIVE(DHUDFont, Create, CreateHudFont)
 //
 //
 //=====================================================================================
+
+DSpotState *GetSpotState(FLevelLocals *self, int create)
+{
+	if (create && self->SpotState == nullptr) self->SpotState = Create<DSpotState>();
+	GC::WriteBarrier(self->SpotState);
+	return self->SpotState;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetSpotState, GetSpotState)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_INT(create);
+	ACTION_RETURN_POINTER(GetSpotState(self, create));
+}
 
 static void FormatMapName(FLevelLocals *self, int cr, FString *result)
 {

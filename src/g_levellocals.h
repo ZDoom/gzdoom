@@ -48,6 +48,7 @@
 #include "r_data/r_canvastexture.h"
 
 class DFraggleThinker;
+class DSpotState;
 
 struct FLevelData
 {
@@ -202,7 +203,9 @@ struct FLevelLocals : public FLevelData
 	FDynamicLight *lights;
 
 	// links to global game objects
-	TObjPtr<DFraggleThinker *> FraggleScriptThinker;
+	TArray<TObjPtr<AActor *>> CorpseQueue;
+	TObjPtr<DFraggleThinker *> FraggleScriptThinker = nullptr;
+	TObjPtr<DSpotState *> SpotState = nullptr;
 
 	bool		IsJumpingAllowed() const;
 	bool		IsCrouchingAllowed() const;

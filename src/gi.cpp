@@ -71,6 +71,8 @@ DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, defKickback)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, healthpic)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, berserkpic)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, defaultdropstyle)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, normforwardmove)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, normsidemove)
 
 const char *GameNames[17] =
 {

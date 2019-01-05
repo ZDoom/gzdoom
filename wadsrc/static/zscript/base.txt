@@ -374,6 +374,8 @@ struct GameInfoStruct native
 	native int defaultdropstyle;
 	native TextureID healthpic;
 	native TextureID berserkpic;
+	native double normforwardmove[2];
+	native double normsidemove[2];
 }
 
 class Object native

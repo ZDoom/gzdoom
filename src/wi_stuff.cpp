@@ -164,6 +164,7 @@ private:
 	FTexture* 		splat = nullptr;		// splat
 	FTexture		*background = nullptr;
 	wbstartstruct_t *wbs;
+	level_info_t	*exitlevel;
 	
 public:
 
@@ -257,7 +258,8 @@ DEFINE_ACTION_FUNCTION(DInterBackground, Create)
 
 bool DInterBackground::LoadBackground(bool isenterpic)
 {
-	const char *lumpname = NULL;
+	const char *lumpname = nullptr;
+	const char *exitpic = nullptr;
 	char buffer[10];
 	in_anim_t an;
 	lnode_t pt;
@@ -267,14 +269,15 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 	bcnt = 0;
 
 	texture.SetInvalid();
+
+	level_info_t * li = FindLevelInfo(wbs->current);
+	if (li != nullptr) exitpic = li->EnterPic;
+	lumpname = exitpic;
+
 	if (isenterpic)
 	{
 		level_info_t * li = FindLevelInfo(wbs->next);
 		if (li != NULL) lumpname = li->EnterPic;
-	}
-	else
-	{
-		lumpname = level.info->ExitPic;
 	}
 
 	// Try to get a default if nothing specified
@@ -287,10 +290,10 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 		case GAME_Doom:
 			if (!(gameinfo.flags & GI_MAPxx))
 			{
-				const char *level = isenterpic ? wbs->next : wbs->current;
-				if (IsExMy(level))
+				const char *levelname = isenterpic ? wbs->next : wbs->current;
+				if (IsExMy(levelname))
 				{
-					mysnprintf(buffer, countof(buffer), "$IN_EPI%c", level[1]);
+					mysnprintf(buffer, countof(buffer), "$IN_EPI%c", levelname[1]);
 					lumpname = buffer;
 				}
 			}
@@ -298,11 +301,11 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 			{
 				if (isenterpic)
 				{
-					// One special case needs to be handled here!
+					// One special case needs to be handled here:
 					// If going from E1-E3 to E4 the default should be used, not the exit pic.
 
-					// Not if the exit pic is user defined!
-					if (level.info->ExitPic.IsNotEmpty()) return false;
+					// Not if the exit pic is user defined.
+					if (exitpic && exitpic[0]) return false;
 
 					// E1-E3 need special treatment when playing Doom 1.
 					if (!(gameinfo.flags & GI_MAPxx))

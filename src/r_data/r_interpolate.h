@@ -52,7 +52,7 @@ struct FInterpolator
 public:
 	FInterpolator()
 	{
-		Head = NULL;
+		Head = nullptr;
 		didInterp = false;
 		count = 0;
 	}

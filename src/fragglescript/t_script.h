@@ -232,7 +232,7 @@ public:
 
 	DFsSection()
 	{
-		next = NULL;
+		next = nullptr;
 	}
 
 	void Serialize(FSerializer &ar);

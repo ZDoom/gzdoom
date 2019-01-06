@@ -54,15 +54,15 @@ DPillar::DPillar ()
 
 void DPillar::OnDestroy()
 {
-	if (m_Interp_Ceiling != NULL)
+	if (m_Interp_Ceiling != nullptr)
 	{
 		m_Interp_Ceiling->DelRef();
-		m_Interp_Ceiling = NULL;
+		m_Interp_Ceiling = nullptr;
 	}
-	if (m_Interp_Floor != NULL)
+	if (m_Interp_Floor != nullptr)
 	{
 		m_Interp_Floor->DelRef();
-		m_Interp_Floor = NULL;
+		m_Interp_Floor = nullptr;
 	}
 	Super::OnDestroy();
 }

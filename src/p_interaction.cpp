@@ -104,7 +104,7 @@ void P_TouchSpecialThing (AActor *special, AActor *toucher)
 	if (toucher->player != NULL && toucher->player->Bot != NULL && special == toucher->player->Bot->dest)
 	{
 		toucher->player->Bot->prev = toucher->player->Bot->dest;
-		toucher->player->Bot->dest = NULL;
+		toucher->player->Bot->dest = nullptr;
 	}
 	special->CallTouch (toucher);
 }

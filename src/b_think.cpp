@@ -63,7 +63,7 @@ void DBot::Think ()
 	memset (cmd, 0, sizeof(*cmd));
 
 	if (enemy && enemy->health <= 0)
-		enemy = NULL;
+		enemy = nullptr;
 
 	if (player->mo->health > 0) //Still alive
 	{

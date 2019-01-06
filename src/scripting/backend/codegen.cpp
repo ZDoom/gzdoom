@@ -11401,86 +11401,75 @@ ExpEmit FxStaticArray::Emit(VMFunctionBuilder *build)
 	return ExpEmit();
 }
 
-FxLocalArrayDeclaration::FxLocalArrayDeclaration(PType *type, FName name, FArgumentList &args, const FScriptPosition &pos)
-	: FxLocalVariableDeclaration(NewArray(type, args.Size()), name, nullptr, 0, pos)
+FxLocalArrayDeclaration::FxLocalArrayDeclaration(PType *type, FName name, FArgumentList &args, int varflags, const FScriptPosition &pos)
+	: FxLocalVariableDeclaration(type, name, nullptr, varflags, pos)
 {
-	ElementType = type;
 	ExprType = EFX_LocalArrayDeclaration;
 	values = std::move(args);
 }
 
 FxExpression *FxLocalArrayDeclaration::Resolve(FCompileContext &ctx)
 {
-	CHECKRESOLVED();
+	if (isresolved)
+	{
+		return this;
+	}
+
+	FxLocalVariableDeclaration::Resolve(ctx);
+
+	auto stackVar = new FxStackVariable(ValueType, StackOffset, ScriptPosition);
+	auto elementType = (static_cast<PArray *> (ValueType))->ElementType;
+	auto elementCount = (static_cast<PArray *> (ValueType))->ElementCount;
+
+	if (values.Size() > elementCount)
+	{
+		ScriptPosition.Message(MSG_ERROR, "Initializer contains more elements than the array can contain");
+		delete this;
+		return nullptr;
+	}
 
 	for (unsigned int i = 0; i < values.Size(); i++)
 	{
-		auto v = values[i]->Resolve(ctx);
+		if (values[i] == nullptr)
+		{
+			delete this;
+			return nullptr;
+		}
+
+		FxExpression *v = new FxTypeCast(values[i], elementType, false);
+		SAFE_RESOLVE(v, ctx);
 		if (v == nullptr)
 		{
 			delete this;
 			return nullptr;
 		}
+
+		if (!IsDynamicArray())
+		{
+			if (v->IsNativeStruct() && elementType->isRealPointer() && elementType->toPointer()->PointedType == v->ValueType)
+			{
+				// Allow conversion of native structs to pointers of the same type.
+				// For all other types this is not needed. Structs are not assignable and classes can only exist as references.
+				bool writable;
+				v->RequestAddress(ctx, &writable);
+				v->ValueType = elementType;
+			}
+		}
+		else
+		{
+			FArgumentList argsList;
+			argsList.Clear();
+			argsList.Push(v);
+
+			FxExpression *funcCall = new FxMemberFunctionCall(stackVar, NAME_Push, argsList, (const FScriptPosition) v->ScriptPosition);
+			SAFE_RESOLVE(funcCall, ctx);
+
+			v = funcCall;
+		}
+
 		values[i] = v;
 	}
 
-	if (ctx.Block == nullptr)
-	{
-		ScriptPosition.Message(MSG_ERROR, "Variable declaration outside compound statement");
-		delete this;
-		return nullptr;
-	}
-	if (ValueType->RegType == REGT_NIL && ValueType != TypeAuto)
-	{
-		auto sfunc = static_cast<VMScriptFunction *>(ctx.Function->Variants[0].Implementation);
-		StackOffset = sfunc->AllocExtraStack(ValueType);
-
-		if (Init != nullptr)
-		{
-			ScriptPosition.Message(MSG_ERROR, "Cannot initialize non-scalar variable %s here", Name.GetChars());
-			delete this;
-			return nullptr;
-		}
-	}
-	else if (ValueType != TypeAuto)
-	{
-		if (Init) Init = new FxTypeCast(Init, ValueType, false);
-		SAFE_RESOLVE_OPT(Init, ctx);
-	}
-	else
-	{
-		if (Init == nullptr)
-		{
-			ScriptPosition.Message(MSG_ERROR, "Automatic type deduction requires an initializer for variable %s", Name.GetChars());
-			delete this;
-			return nullptr;
-		}
-		SAFE_RESOLVE_OPT(Init, ctx);
-		if (Init->ValueType->RegType == REGT_NIL)
-		{
-			ScriptPosition.Message(MSG_ERROR, "Cannot initialize non-scalar variable %s here", Name.GetChars());
-			delete this;
-			return nullptr;
-		}
-		ValueType = Init->ValueType;
-		// check for undersized ints and floats. These are not allowed as local variables.
-		if (IsInteger() && ValueType->Align < sizeof(int)) ValueType = TypeSInt32;
-		else if (IsFloat() && ValueType->Align < sizeof(double)) ValueType = TypeFloat64;
-	}
-	if (Name != NAME_None)
-	{
-		for (auto l : ctx.Block->LocalVars)
-		{
-			if (l->Name == Name)
-			{
-				ScriptPosition.Message(MSG_ERROR, "Local variable %s already defined", Name.GetChars());
-				l->ScriptPosition.Message(MSG_ERROR, "Original definition is here ");
-				delete this;
-				return nullptr;
-			}
-		}
-	}
-	ctx.Block->LocalVars.Push(this);
 	return this;
 }
 
@@ -11488,10 +11477,18 @@ ExpEmit FxLocalArrayDeclaration::Emit(VMFunctionBuilder *build)
 {
 	assert(!(VarFlags & VARF_Out));	// 'out' variables should never be initialized, they can only exist as function parameters.
 
+	auto elementSizeConst = build->GetConstantInt(static_cast<PArray *>(ValueType)->ElementSize);
 	auto arrOffsetReg = build->Registers[REGT_INT].Get(1);
+	build->Emit(OP_LK, arrOffsetReg, build->GetConstantInt(StackOffset));
+
 	for (auto v : values)
 	{
 		ExpEmit emitval = v->Emit(build);
+
+		if (IsDynamicArray())
+		{
+			continue;
+		}
 
 		int regtype = emitval.RegType;
 		if (regtype < REGT_INT || regtype > REGT_TYPE)
@@ -11512,20 +11509,20 @@ ExpEmit FxLocalArrayDeclaration::Emit(VMFunctionBuilder *build)
 				break;
 
 			case REGT_FLOAT:
-				build->Emit(OP_LKF, regNum, build->GetConstantInt(constval->GetValue().GetInt()));
+				build->Emit(OP_LKF, regNum, build->GetConstantFloat(constval->GetValue().GetFloat()));
 				build->Emit(OP_SDP_R, build->FramePointer.RegNum, regNum, arrOffsetReg);
 				break;
 
 			case REGT_POINTER:
-				build->Emit(OP_LKP, regNum, build->GetConstantInt(constval->GetValue().GetInt()));
+				build->Emit(OP_LKP, regNum, build->GetConstantAddress(constval->GetValue().GetPointer()));
 				build->Emit(OP_SP_R, build->FramePointer.RegNum, regNum, arrOffsetReg);
 				break;
+
 			case REGT_STRING:
-				build->Emit(OP_LKS, regNum, build->GetConstantInt(constval->GetValue().GetInt()));
+				build->Emit(OP_LKS, regNum, build->GetConstantString(constval->GetValue().GetString()));
 				build->Emit(OP_SS_R, build->FramePointer.RegNum, regNum, arrOffsetReg);
 				break;
 			}
-			build->Emit(OP_ADD_RK, arrOffsetReg, arrOffsetReg, build->GetConstantInt(v->ValueType->Size));
 			build->Registers[regtype].Return(regNum, 1);
 			
 			emitval.Free(build);
@@ -11546,13 +11543,15 @@ ExpEmit FxLocalArrayDeclaration::Emit(VMFunctionBuilder *build)
 			case REGT_POINTER:
 				build->Emit(OP_SP_R, build->FramePointer.RegNum, emitval.RegNum, arrOffsetReg);
 				break;
+
 			case REGT_STRING:
 				build->Emit(OP_SS_R, build->FramePointer.RegNum, emitval.RegNum, arrOffsetReg);
 				break;
 			}
-			build->Emit(OP_ADD_RK, arrOffsetReg, arrOffsetReg, build->GetConstantInt(v->ValueType->Size));
 			emitval.Free(build);
 		}
+
+		build->Emit(OP_ADD_RK, arrOffsetReg, arrOffsetReg, elementSizeConst);
 	}
 	build->Registers[REGT_INT].Return(arrOffsetReg, 1);
 

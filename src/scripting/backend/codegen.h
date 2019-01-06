@@ -2197,7 +2197,7 @@ class FxLocalArrayDeclaration : public FxLocalVariableDeclaration
 
 public:
 
-	FxLocalArrayDeclaration(PType *type, FName name, FArgumentList &args, const FScriptPosition &pos);
+	FxLocalArrayDeclaration(PType *type, FName name, FArgumentList &args, int varflags, const FScriptPosition &pos);
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };

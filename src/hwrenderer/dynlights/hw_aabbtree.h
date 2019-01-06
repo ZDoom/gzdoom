@@ -4,6 +4,8 @@
 #include "tarray.h"
 #include "vectors.h"
 
+struct FLevelLocals;
+
 namespace hwrenderer
 {
 
@@ -35,12 +37,12 @@ struct AABBTreeLine
 	float dx, dy;
 };
 
-// Axis aligned bounding box tree used for ray testing lines.
+// Axis aligned bounding box tree used for ray testing treelines.
 class LevelAABBTree
 {
 public:
 	// Constructs a tree for the current level
-	LevelAABBTree();
+	LevelAABBTree(FLevelLocals *lev);
 
 	// Shoot a ray from ray_start to ray_end and return the closest hit as a fractional value between 0 and 1. Returns 1 if no line was hit.
 	double RayTest(const DVector3 &ray_start, const DVector3 &ray_end);
@@ -48,14 +50,14 @@ public:
 	bool Update();
 
 	const void *Nodes() const { return nodes.Data(); }
-	const void *Lines() const { return lines.Data(); }
+	const void *Lines() const { return treelines.Data(); }
 	size_t NodesSize() const { return nodes.Size() * sizeof(AABBTreeNode); }
-	size_t LinesSize() const { return lines.Size() * sizeof(AABBTreeLine); }
+	size_t LinesSize() const { return treelines.Size() * sizeof(AABBTreeLine); }
 
 	const void *DynamicNodes() const { return nodes.Data() + dynamicStartNode; }
-	const void *DynamicLines() const { return lines.Data() + dynamicStartLine; }
+	const void *DynamicLines() const { return treelines.Data() + dynamicStartLine; }
 	size_t DynamicNodesSize() const { return (nodes.Size() - dynamicStartNode) * sizeof(AABBTreeNode); }
-	size_t DynamicLinesSize() const { return (lines.Size() - dynamicStartLine) * sizeof(AABBTreeLine); }
+	size_t DynamicLinesSize() const { return (treelines.Size() - dynamicStartLine) * sizeof(AABBTreeLine); }
 	size_t DynamicNodesOffset() const { return dynamicStartNode * sizeof(AABBTreeNode); }
 	size_t DynamicLinesOffset() const { return dynamicStartLine * sizeof(AABBTreeLine); }
 
@@ -69,7 +71,7 @@ private:
 	double IntersectRayLine(const DVector2 &ray_start, const DVector2 &ray_end, int line_index, const DVector2 &raydelta, double rayd, double raydist2);
 
 	// Generate a tree node and its children recursively
-	int GenerateTreeNode(int *lines, int num_lines, const FVector2 *centroids, int *work_buffer);
+	int GenerateTreeNode(int *treelines, int num_lines, const FVector2 *centroids, int *work_buffer);
 
 	TArray<int> FindNodePath(unsigned int line, unsigned int node);
 
@@ -77,12 +79,13 @@ private:
 	TArray<AABBTreeNode> nodes;
 
 	// Line segments for the leaf nodes in the tree.
-	TArray<AABBTreeLine> lines;
+	TArray<AABBTreeLine> treelines;
 
 	int dynamicStartNode = 0;
 	int dynamicStartLine = 0;
 
 	TArray<int> mapLines;
+	FLevelLocals *Level;
 };
 
 } // namespace

@@ -27,14 +27,15 @@
 namespace hwrenderer
 {
 
-LevelAABBTree::LevelAABBTree()
+LevelAABBTree::LevelAABBTree(FLevelLocals *lev)
 {
+	Level = lev;
 	// Calculate the center of all lines
 	TArray<FVector2> centroids;
-	for (unsigned int i = 0; i < level.lines.Size(); i++)
+	for (unsigned int i = 0; i < Level->lines.Size(); i++)
 	{
-		FVector2 v1 = { (float)level.lines[i].v1->fX(), (float)level.lines[i].v1->fY() };
-		FVector2 v2 = { (float)level.lines[i].v2->fX(), (float)level.lines[i].v2->fY() };
+		FVector2 v1 = { (float)Level->lines[i].v1->fX(), (float)Level->lines[i].v1->fY() };
+		FVector2 v2 = { (float)Level->lines[i].v2->fX(), (float)Level->lines[i].v2->fY() };
 		centroids.Push((v1 + v2) * 0.5f);
 	}
 
@@ -45,7 +46,7 @@ LevelAABBTree::LevelAABBTree()
 	int staticroot = nodes.Size() - 1;
 
 	dynamicStartNode = nodes.Size();
-	dynamicStartLine = lines.Size();
+	dynamicStartLine = treelines.Size();
 
 	// Create the dynamic subtree
 	if (GenerateTree(&centroids[0], true))
@@ -64,11 +65,11 @@ LevelAABBTree::LevelAABBTree()
 	}
 
 	// Add the lines referenced by the leaf nodes
-	lines.Resize(mapLines.Size());
+	treelines.Resize(mapLines.Size());
 	for (unsigned int i = 0; i < mapLines.Size(); i++)
 	{
-		const auto &line = level.lines[mapLines[i]];
-		auto &treeline = lines[i];
+		const auto &line = Level->lines[mapLines[i]];
+		auto &treeline = treelines[i];
 
 		treeline.x = (float)line.v1->fX();
 		treeline.y = (float)line.v1->fY();
@@ -81,11 +82,12 @@ bool LevelAABBTree::GenerateTree(const FVector2 *centroids, bool dynamicsubtree)
 {
 	// Create a list of level lines we want to add:
 	TArray<int> line_elements;
-	for (unsigned int i = 0; i < level.lines.Size(); i++)
+	auto &maplines = Level->lines;
+	for (unsigned int i = 0; i < maplines.Size(); i++)
 	{
-		if (!level.lines[i].backsector)
+		if (!maplines[i].backsector)
 		{
-			bool isPolyLine = level.lines[i].sidedef[0] && (level.lines[i].sidedef[0]->Flags & WALLF_POLYOBJ);
+			bool isPolyLine = maplines[i].sidedef[0] && (maplines[i].sidedef[0]->Flags & WALLF_POLYOBJ);
 			if (isPolyLine && dynamicsubtree)
 			{
 				line_elements.Push(mapLines.Size());
@@ -116,7 +118,7 @@ bool LevelAABBTree::Update()
 	bool modified = false;
 	for (unsigned int i = dynamicStartLine; i < mapLines.Size(); i++)
 	{
-		const auto &line = level.lines[mapLines[i]];
+		const auto &line = Level->lines[mapLines[i]];
 
 		AABBTreeLine treeline;
 		treeline.x = (float)line.v1->fX();
@@ -124,7 +126,7 @@ bool LevelAABBTree::Update()
 		treeline.dx = (float)line.v2->fX() - treeline.x;
 		treeline.dy = (float)line.v2->fY() - treeline.y;
 
-		if (memcmp(&lines[i], &treeline, sizeof(AABBTreeLine)))
+		if (memcmp(&treelines[i], &treeline, sizeof(AABBTreeLine)))
 		{
 			TArray<int> path = FindNodePath(i, nodes.Size() - 1);
 			if (path.Size())
@@ -151,7 +153,7 @@ bool LevelAABBTree::Update()
 					cur.aabb_bottom = MAX(left.aabb_bottom, right.aabb_bottom);
 				}
 
-				lines[i] = treeline;
+				treelines[i] = treeline;
 				modified = true;
 			}
 		}
@@ -163,8 +165,8 @@ TArray<int> LevelAABBTree::FindNodePath(unsigned int line, unsigned int node)
 {
 	const AABBTreeNode &n = nodes[node];
 
-	if (n.aabb_left > lines[line].x || n.aabb_right < lines[line].x ||
-		n.aabb_top > lines[line].y || n.aabb_bottom < lines[line].y)
+	if (n.aabb_left > treelines[line].x || n.aabb_right < treelines[line].x ||
+		n.aabb_top > treelines[line].y || n.aabb_bottom < treelines[line].y)
 	{
 		return {};
 	}
@@ -273,7 +275,7 @@ double LevelAABBTree::IntersectRayLine(const DVector2 &ray_start, const DVector2
 	// This algorithm is homemade - I would not be surprised if there's a much faster method out there.
 
 	const double epsilon = 0.0000001;
-	const AABBTreeLine &line = lines[line_index];
+	const AABBTreeLine &line = treelines[line_index];
 
 	DVector2 raynormal = DVector2(raydelta.Y, -raydelta.X);
 
@@ -303,15 +305,16 @@ int LevelAABBTree::GenerateTreeNode(int *lines, int num_lines, const FVector2 *c
 	// Find bounding box and median of the lines
 	FVector2 median = FVector2(0.0f, 0.0f);
 	FVector2 aabb_min, aabb_max;
-	aabb_min.X = (float)level.lines[mapLines[lines[0]]].v1->fX();
-	aabb_min.Y = (float)level.lines[mapLines[lines[0]]].v1->fY();
+	auto &maplines = Level->lines;
+	aabb_min.X = (float)maplines[mapLines[lines[0]]].v1->fX();
+	aabb_min.Y = (float)maplines[mapLines[lines[0]]].v1->fY();
 	aabb_max = aabb_min;
 	for (int i = 0; i < num_lines; i++)
 	{
-		float x1 = (float)level.lines[mapLines[lines[i]]].v1->fX();
-		float y1 = (float)level.lines[mapLines[lines[i]]].v1->fY();
-		float x2 = (float)level.lines[mapLines[lines[i]]].v2->fX();
-		float y2 = (float)level.lines[mapLines[lines[i]]].v2->fY();
+		float x1 = (float)maplines[mapLines[lines[i]]].v1->fX();
+		float y1 = (float)maplines[mapLines[lines[i]]].v1->fY();
+		float x2 = (float)maplines[mapLines[lines[i]]].v2->fX();
+		float y2 = (float)maplines[mapLines[lines[i]]].v2->fY();
 
 		aabb_min.X = MIN(aabb_min.X, x1);
 		aabb_min.X = MIN(aabb_min.X, x2);

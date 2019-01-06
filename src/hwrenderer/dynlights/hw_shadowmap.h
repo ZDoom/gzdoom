@@ -8,6 +8,7 @@
 struct FDynamicLight;
 struct level_info_t;
 class IDataBuffer;
+struct FLevelLocals;
 
 class IShadowMap
 {
@@ -33,7 +34,7 @@ public:
 
 protected:
 	void CollectLights();
-	bool ValidateAABBTree();
+	bool ValidateAABBTree(FLevelLocals *lev);
 
 	// Upload the AABB-tree to the GPU
 	void UploadAABBTree();

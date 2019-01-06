@@ -141,23 +141,23 @@ void IShadowMap::CollectLights()
 	}
 }
 
-bool IShadowMap::ValidateAABBTree()
+bool IShadowMap::ValidateAABBTree(FLevelLocals *Level)
 {
 	// Just comparing the level info is not enough. If two MAPINFO-less levels get played after each other, 
 	// they can both refer to the same default level info.
-	if (level.info != mLastLevel && (level.nodes.Size() != mLastNumNodes || level.segs.Size() != mLastNumSegs))
+	if (Level->info != mLastLevel && (Level->nodes.Size() != mLastNumNodes || Level->segs.Size() != mLastNumSegs))
 	{
 		mAABBTree.reset();
 
-		mLastLevel = level.info;
-		mLastNumNodes = level.nodes.Size();
-		mLastNumSegs = level.segs.Size();
+		mLastLevel = Level->info;
+		mLastNumNodes = Level->nodes.Size();
+		mLastNumSegs = Level->segs.Size();
 	}
 
 	if (mAABBTree)
 		return true;
 
-	mAABBTree.reset(new hwrenderer::LevelAABBTree());
+	mAABBTree.reset(new hwrenderer::LevelAABBTree(Level));
 	return false;
 }
 
@@ -194,7 +194,7 @@ void IShadowMap::UploadLights()
 
 void IShadowMap::UploadAABBTree()
 {
-	if (!ValidateAABBTree())
+	if (!ValidateAABBTree(&level))
 	{
 		if (!mNodesBuffer)
 			mNodesBuffer = screen->CreateDataBuffer(2, true);

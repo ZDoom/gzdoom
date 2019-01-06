@@ -137,6 +137,7 @@ void P_Ticker (void)
 
 	// [ZZ] call the WorldTick hook
 	E_WorldTick();
+	StatusBar->SetLevel(&level);
 	StatusBar->CallTick ();		// [RH] moved this here
 	level.Tick ();			// [RH] let the level tick
 	DThinker::RunThinkers ();

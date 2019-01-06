@@ -201,21 +201,22 @@ class AltHud ui
 		
 		if (!deathmatch)
 		{
+			let Level = StatusBar.Level;
 			// FIXME: ZDoom doesn't preserve the player's stat counters across hubs so this doesn't
 			// work in cooperative hub games
 			if (hud_showsecrets)
 			{
-				DrawStatLine(x, y, "S:", String.Format("%i/%i ", multiplayer? CPlayer.secretcount : level.found_secrets, level.total_secrets));
+				DrawStatLine(x, y, "S:", String.Format("%i/%i ", multiplayer? CPlayer.secretcount : Level.found_secrets, Level.total_secrets));
 			}
 			
 			if (hud_showitems)
 			{
-				DrawStatLine(x, y, "I:", String.Format("%i/%i ", multiplayer? CPlayer.itemcount : level.found_items, level.total_items));
+				DrawStatLine(x, y, "I:", String.Format("%i/%i ", multiplayer? CPlayer.itemcount : Level.found_items, Level.total_items));
 			}
 			
 			if (hud_showmonsters)
 			{
-				DrawStatLine(x, y, "K:", String.Format("%i/%i ", multiplayer? CPlayer.killcount : level.killed_monsters, level.total_monsters));
+				DrawStatLine(x, y, "K:", String.Format("%i/%i ", multiplayer? CPlayer.killcount : Level.killed_monsters, Level.total_monsters));
 			}
 		}
 	}
@@ -732,6 +733,7 @@ class AltHud ui
 		String coordstr;
 		int h = SmallFont.GetHeight() + 1;
 		let mo = CPlayer.mo;
+		let Level = StatusBar.Level;
 		
 		if (!map_point_coordinates || !automapactive) 
 		{
@@ -746,11 +748,11 @@ class AltHud ui
 		int xpos = hudwidth - SmallFont.StringWidth("X: -00000")-6;
 		int ypos = 18;
 
-		screen.DrawText(SmallFont, hudcolor_titl, hudwidth - 6 - SmallFont.StringWidth(level.MapName), ypos, level.MapName,
+		screen.DrawText(SmallFont, hudcolor_titl, hudwidth - 6 - SmallFont.StringWidth(Level.MapName), ypos, Level.MapName,
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
 
-		screen.DrawText(SmallFont, hudcolor_titl, hudwidth - 6 - SmallFont.StringWidth(level.LevelName), ypos + h, level.LevelName,
+		screen.DrawText(SmallFont, hudcolor_titl, hudwidth - 6 - SmallFont.StringWidth(Level.LevelName), ypos + h, Level.LevelName,
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
 
@@ -785,6 +787,7 @@ class AltHud ui
 
 	bool DrawTime(int y)
 	{
+		let Level = StatusBar.Level;
 		if (hud_showtime > 0 && hud_showtime <= 9)
 		{
 			int timeSeconds;
@@ -793,10 +796,10 @@ class AltHud ui
 			{
 				int timeTicks =
 					hud_showtime < 4
-						? level.maptime
+						? Level.maptime
 						: (hud_showtime < 6
-							? level.time
-							: level.totaltime);
+							? Level.time
+							: Level.totaltime);
 				timeSeconds = Thinker.Tics2Seconds(timeTicks);
 			}
 			else
@@ -815,7 +818,7 @@ class AltHud ui
 
 			if (showMillis)
 			{
-				int millis  = (level.time % Thinker.TICRATE) * (1000 / Thinker.TICRATE);
+				int millis  = (Level.time % Thinker.TICRATE) * (1000 / Thinker.TICRATE);
 				timeString = String.Format("%02i:%02i:%02i.%03i", hours, minutes, seconds, millis);
 			}
 			else if (showSeconds)
@@ -906,7 +909,7 @@ class AltHud ui
 
 	virtual void DrawInGame(PlayerInfo CPlayer)
 	{
-		// No HUD in the title level!
+		// No HUD in the title Level!
 		if (gamestate == GS_TITLELEVEL || !CPlayer) return;
 
 		if (!deathmatch) 
@@ -943,26 +946,27 @@ class AltHud ui
 	{
 		int fonth=SmallFont.GetHeight() + 1;
 		int bottom = hudheight - 1;
+		let Level = StatusBar.Level;
 
 		if (am_showtotaltime)
 		{
-			DrawTimeString(SmallFont, hudcolor_ttim, level.totaltime, hudwidth-2, bottom, 1);
+			DrawTimeString(SmallFont, hudcolor_ttim, Level.totaltime, hudwidth-2, bottom, 1);
 			bottom -= fonth;
 		}
 
 		if (am_showtime)
 		{
-			if (level.clusterflags & level.CLUSTER_HUB)
+			if (Level.clusterflags & Level.CLUSTER_HUB)
 			{
-				DrawTimeString(SmallFont, hudcolor_time, level.time, hudwidth-2, bottom, 1);
+				DrawTimeString(SmallFont, hudcolor_time, Level.time, hudwidth-2, bottom, 1);
 				bottom -= fonth;
 			}
 
-			// Single level time for hubs
-			DrawTimeString(SmallFont, hudcolor_ltim, level.maptime, hudwidth-2, bottom, 1);
+			// Single Level time for hubs
+			DrawTimeString(SmallFont, hudcolor_ltim, Level.maptime, hudwidth-2, bottom, 1);
 		}
 
-		screen.DrawText(SmallFont, 0, 1, hudheight - fonth - 1, level.FormatMapName(hudcolor_titl),
+		screen.DrawText(SmallFont, 0, 1, hudheight - fonth - 1, Level.FormatMapName(hudcolor_titl),
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
 

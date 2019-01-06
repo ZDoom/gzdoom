@@ -2499,7 +2499,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetSpotState, GetSpotState)
 static void FormatMapName(FLevelLocals *self, int cr, FString *result)
 {
 	char mapnamecolor[3] = { '\34', char(cr + 'A'), 0 };
-	ST_FormatMapName(*result, mapnamecolor);
+	self->FormatMapName(*result, mapnamecolor);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, FormatMapName, FormatMapName)

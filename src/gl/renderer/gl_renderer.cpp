@@ -39,6 +39,7 @@
 #include "g_game.h"
 #include "swrenderer/r_swscene.h"
 #include "hwrenderer/utility/hw_clock.h"
+#include "actorinlines.h"
 
 #include "gl_load/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"

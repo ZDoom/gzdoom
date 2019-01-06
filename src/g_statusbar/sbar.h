@@ -433,6 +433,8 @@ public:
 	uint32_t GetTranslation() const;
 	void DrawAltHUD();
 
+	void SetLevel(FLevelLocals *l) { Level = l; }
+
 	void DrawGraphic(FTextureID texture, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY);
 	void DrawString(FFont *font, const FString &cstring, double x, double y, int flags, double Alpha, int translation, int spacing, bool monospaced, int shadowX, int shadowY);
 	void TransformRect(double &x, double &y, double &w, double &h, int flags = 0);
@@ -461,6 +463,9 @@ public:
 
 	AActor *ValidateInvFirst (int numVisible) const;
 	void DrawCrosshair ();
+
+	FLevelLocals *Level;	// the level whose information should be shown. Will be set each frame before drawing.
+	void *level;
 
 	// Sizing info for ths status bar.
 	int ST_X;

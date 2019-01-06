@@ -769,6 +769,7 @@ void D_Display ()
 		//cycle_t stb;
 		//stb.Reset();
 		//stb.Clock();
+		StatusBar->SetLevel(&level);
 		if (hud_althud && viewheight == SCREENHEIGHT && screenblocks > 10)
 		{
 			StatusBar->DrawBottomStuff (HUD_AltHud);

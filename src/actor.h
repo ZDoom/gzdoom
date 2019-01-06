@@ -910,7 +910,7 @@ public:
 		}
 		else
 		{
-			return P_GetOffsetPosition(X(), Y(), dx, dy);
+			return P_GetOffsetPosition(__GetLevel(), X(), Y(), dx, dy);
 		}
 	}
 
@@ -923,7 +923,7 @@ public:
 		}
 		else
 		{
-			DVector2 v = P_GetOffsetPosition(X(), Y(), dx, dy);
+			DVector2 v = P_GetOffsetPosition(__GetLevel(), X(), Y(), dx, dy);
 			return DVector3(v, atz);
 		}
 	}
@@ -936,7 +936,7 @@ public:
 		}
 		else
 		{
-			return P_GetOffsetPosition(X(), Y(), length*angle.Cos(), length*angle.Sin());
+			return P_GetOffsetPosition(__GetLevel(), X(), Y(), length*angle.Cos(), length*angle.Sin());
 		}
 	}
 
@@ -948,7 +948,7 @@ public:
 		}
 		else
 		{
-			DVector2 v = P_GetOffsetPosition(X(), Y(), dx, dy);
+			DVector2 v = P_GetOffsetPosition(__GetLevel(), X(), Y(), dx, dy);
 			return DVector3(v, Z() + dz);
 		}
 	}
@@ -966,7 +966,7 @@ public:
 		}
 		else
 		{
-			DVector2 v = P_GetOffsetPosition(X(), Y(), length*angle.Cos(), length*angle.Sin());
+			DVector2 v = P_GetOffsetPosition(__GetLevel(), X(), Y(), length*angle.Cos(), length*angle.Sin());
 			return DVector3(v, Z() + dz);
 		}
 	}

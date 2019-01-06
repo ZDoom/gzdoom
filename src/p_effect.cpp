@@ -46,6 +46,7 @@
 #include "d_player.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 #include "vm.h"
 
 CVAR (Int, cl_rockettrails, 1, CVAR_ARCHIVE);
@@ -264,7 +265,7 @@ void P_ThinkParticles ()
 		}
 
 		// Handle crossing a line portal
-		DVector2 newxy = P_GetOffsetPosition(particle->Pos.X, particle->Pos.Y, particle->Vel.X, particle->Vel.Y);
+		DVector2 newxy = P_GetOffsetPosition(&level, particle->Pos.X, particle->Pos.Y, particle->Vel.X, particle->Vel.Y);
 		particle->Pos.X = newxy.X;
 		particle->Pos.Y = newxy.Y;
 		particle->Pos.Z += particle->Vel.Z;

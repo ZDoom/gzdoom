@@ -3235,5 +3235,5 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	if (reloop) LoopSidedefs(false);
 	PO_Init();				// Initialize the polyobjs
 	if (!Level->IsReentering())
-		P_FinalizePortals();	// finalize line portals after polyobjects have been initialized. This info is needed for properly flagging them.
+		P_FinalizePortals(Level);	// finalize line portals after polyobjects have been initialized. This info is needed for properly flagging them.
 }

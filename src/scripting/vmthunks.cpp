@@ -2577,7 +2577,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, GetChecksum)
 	ACTION_RETURN_STRING((const char*)md5string);
 }
 
-static void Vec2Offset(double x, double y, double dx, double dy, bool absolute, DVector2 *result)
+static void Vec2Offset(FLevelLocals *self, double x, double y, double dx, double dy, bool absolute, DVector2 *result)
 {
 	if (absolute)
 	{
@@ -2585,24 +2585,24 @@ static void Vec2Offset(double x, double y, double dx, double dy, bool absolute, 
 	}
 	else
 	{
-		*result = P_GetOffsetPosition(x, y, dx, dy);
+		*result = P_GetOffsetPosition(self, x, y, dx, dy);
 	}
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, Vec2Offset, Vec2Offset)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	PARAM_FLOAT(dx);
 	PARAM_FLOAT(dy);
 	PARAM_BOOL(absolute);
 	DVector2 result;
-	Vec2Offset(x, y, dx, dy, absolute, &result);
+	Vec2Offset(self, x, y, dx, dy, absolute, &result);
 	ACTION_RETURN_VEC2(result);
 }
 
-static void Vec2OffsetZ(double x, double y, double dx, double dy, double atz, bool absolute, DVector3 *result)
+static void Vec2OffsetZ(FLevelLocals *Level, double x, double y, double dx, double dy, double atz, bool absolute, DVector3 *result)
 {
 	if (absolute)
 	{
@@ -2610,14 +2610,14 @@ static void Vec2OffsetZ(double x, double y, double dx, double dy, double atz, bo
 	}
 	else
 	{
-		DVector2 v = P_GetOffsetPosition(x, y, dx, dy);
+		DVector2 v = P_GetOffsetPosition(Level, x, y, dx, dy);
 		*result = (DVector3(v, atz));
 	}
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, Vec2OffsetZ, Vec2OffsetZ)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	PARAM_FLOAT(dx);
@@ -2625,11 +2625,11 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, Vec2OffsetZ, Vec2OffsetZ)
 	PARAM_FLOAT(atz);
 	PARAM_BOOL(absolute);
 	DVector3 result;
-	Vec2OffsetZ(x, y, dx, dy, atz, absolute, &result);
+	Vec2OffsetZ(self, x, y, dx, dy, atz, absolute, &result);
 	ACTION_RETURN_VEC3(result);
 }
 
-static void Vec3Offset(double x, double y, double z, double dx, double dy, double dz, bool absolute, DVector3 *result)
+static void Vec3Offset(FLevelLocals *Level, double x, double y, double z, double dx, double dy, double dz, bool absolute, DVector3 *result)
 {
 	if (absolute)
 	{
@@ -2637,14 +2637,14 @@ static void Vec3Offset(double x, double y, double z, double dx, double dy, doubl
 	}
 	else
 	{
-		DVector2 v = P_GetOffsetPosition(x, y, dx, dy);
+		DVector2 v = P_GetOffsetPosition(Level, x, y, dx, dy);
 		*result = (DVector3(v, z + dz));
 	}
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, Vec3Offset, Vec3Offset)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	PARAM_FLOAT(z);
@@ -2653,7 +2653,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, Vec3Offset, Vec3Offset)
 	PARAM_FLOAT(dz);
 	PARAM_BOOL(absolute);
 	DVector3 result;
-	Vec3Offset(x, y, z, dx, dy, dz, absolute, &result);
+	Vec3Offset(self, x, y, z, dx, dy, dz, absolute, &result);
 	ACTION_RETURN_VEC3(result);
 }
 
@@ -2851,6 +2851,7 @@ DEFINE_FIELD(DBaseStatusBar, fullscreenOffsets);
 DEFINE_FIELD(DBaseStatusBar, defaultScale);
 DEFINE_FIELD(DBaseStatusBar, artiflashTick);
 DEFINE_FIELD(DBaseStatusBar, itemflashFade);
+DEFINE_FIELD(DBaseStatusBar, Level);
 
 DEFINE_FIELD(DHUDFont, mFont);
 

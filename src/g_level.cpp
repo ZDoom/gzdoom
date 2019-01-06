@@ -2048,7 +2048,7 @@ void FLevelLocals::SetMusicVolume(float f)
 //==========================================================================
 
 
-int IsPointInMap(double x, double y, double z)
+int IsPointInMap(FLevelLocals *Level, double x, double y, double z)
 {
 	subsector_t *subsector = R_PointInSubsector(FLOAT2FIXED(x), FLOAT2FIXED(y));
 	if (!subsector) return false;
@@ -2076,15 +2076,15 @@ int IsPointInMap(double x, double y, double z)
 
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, IsPointInMap, IsPointInMap)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	PARAM_FLOAT(z);
-	ACTION_RETURN_BOOL(IsPointInMap(x, y, z));
+	ACTION_RETURN_BOOL(IsPointInMap(self, x, y, z));
 }
 
 template <typename T>
-inline T VecDiff(const T& v1, const T& v2)
+inline T VecDiff(FLevelLocals *Level, const T& v1, const T& v2)
 {
 	T result = v2 - v1;
 
@@ -2095,7 +2095,7 @@ inline T VecDiff(const T& v1, const T& v2)
 
 		if (nullptr != sec1 && nullptr != sec2)
 		{
-			result += level.Displacements.getOffset(sec2->PortalGroup, sec1->PortalGroup);
+			result += Level->Displacements.getOffset(sec2->PortalGroup, sec1->PortalGroup);
 		}
 	}
 
@@ -2104,29 +2104,29 @@ inline T VecDiff(const T& v1, const T& v2)
 
 DEFINE_ACTION_FUNCTION(FLevelLocals, Vec2Diff)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_FLOAT(x1);
 	PARAM_FLOAT(y1);
 	PARAM_FLOAT(x2);
 	PARAM_FLOAT(y2);
-	ACTION_RETURN_VEC2(VecDiff(DVector2(x1, y1), DVector2(x2, y2)));
+	ACTION_RETURN_VEC2(VecDiff(self, DVector2(x1, y1), DVector2(x2, y2)));
 }
 
 DEFINE_ACTION_FUNCTION(FLevelLocals, Vec3Diff)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_FLOAT(x1);
 	PARAM_FLOAT(y1);
 	PARAM_FLOAT(z1);
 	PARAM_FLOAT(x2);
 	PARAM_FLOAT(y2);
 	PARAM_FLOAT(z2);
-	ACTION_RETURN_VEC3(VecDiff(DVector3(x1, y1, z1), DVector3(x2, y2, z2)));
+	ACTION_RETURN_VEC3(VecDiff(self, DVector3(x1, y1, z1), DVector3(x2, y2, z2)));
 }
 
 DEFINE_ACTION_FUNCTION(FLevelLocals, SphericalCoords)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_FLOAT(viewpointX);
 	PARAM_FLOAT(viewpointY);
 	PARAM_FLOAT(viewpointZ);
@@ -2139,7 +2139,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, SphericalCoords)
 
 	DVector3 viewpoint(viewpointX, viewpointY, viewpointZ);
 	DVector3 target(targetX, targetY, targetZ);
-	auto vecTo = absolute ? target - viewpoint : VecDiff(viewpoint, target);
+	auto vecTo = absolute ? target - viewpoint : VecDiff(self, viewpoint, target);
 
 	ACTION_RETURN_VEC3(DVector3(
 		deltaangle(vecTo.Angle(), viewYaw).Degrees,

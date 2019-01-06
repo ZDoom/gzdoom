@@ -299,6 +299,7 @@ class BaseStatusBar native ui
 	native Vector2 defaultScale;	// factor for fully scaled fullscreen display.
 	clearscope native int artiflashTick;
 	clearscope native double itemflashFade;
+	clearscope native LevelLocals Level;
 
 	// These are block properties for the drawers. A child class can set them to have a block of items use the same settings.
 	native double Alpha;

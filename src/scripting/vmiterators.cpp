@@ -108,8 +108,8 @@ public:
 		cres.portalflags = 0;
 	}
 
-	DBlockLinesIterator(double x, double y, double z, double height, double radius, sector_t *sec)
-		:FMultiBlockLinesIterator(check, x, y, z, height, radius, sec)
+	DBlockLinesIterator(FLevelLocals *Level, double x, double y, double z, double height, double radius, sector_t *sec)
+		:FMultiBlockLinesIterator(check, Level, x, y, z, height, radius, sec)
 	{
 		cres.line = nullptr;
 		cres.Position.Zero();
@@ -132,21 +132,22 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBlockLinesIterator, Create, CreateBLI)
 	ACTION_RETURN_OBJECT(Create<DBlockLinesIterator>(origin, radius));
 }
 
-static DBlockLinesIterator *CreateBLIFromPos(double x, double y, double z, double h, double radius, sector_t *sec)
+static DBlockLinesIterator *CreateBLIFromPos(FLevelLocals *Level, double x, double y, double z, double h, double radius, sector_t *sec)
 {
-	return Create<DBlockLinesIterator>(x, y, z, h, radius, sec);
+	return Create<DBlockLinesIterator>(Level, x, y, z, h, radius, sec);
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(DBlockLinesIterator, CreateFromPos, CreateBLIFromPos)
+DEFINE_ACTION_FUNCTION_NATIVE(DBlockLinesIterator, CreateFromPosition, CreateBLIFromPos)
 {
 	PARAM_PROLOGUE;
+	PARAM_POINTER(Level, FLevelLocals);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	PARAM_FLOAT(z);
 	PARAM_FLOAT(h);
 	PARAM_FLOAT(radius);
 	PARAM_POINTER(sec, sector_t);
-	ACTION_RETURN_OBJECT(Create<DBlockLinesIterator>(x, y, z, h, radius, sec));
+	ACTION_RETURN_OBJECT(Create<DBlockLinesIterator>(Level, x, y, z, h, radius, sec));
 }
 
 static int BLINext(DBlockLinesIterator *self)
@@ -182,8 +183,8 @@ public:
 		cres.portalflags = 0;
 	}
 
-	DBlockThingsIterator(double checkx, double checky, double checkz, double checkh, double checkradius, bool ignorerestricted, sector_t *newsec)
-		: iterator(check, checkx, checky, checkz, checkh, checkradius, ignorerestricted, newsec)
+	DBlockThingsIterator(FLevelLocals *Level, double checkx, double checky, double checkz, double checkh, double checkradius, bool ignorerestricted, sector_t *newsec)
+		: iterator(check, Level, checkx, checky, checkz, checkh, checkradius, ignorerestricted, newsec)
 	{
 		cres.thing = nullptr;
 		cres.Position.Zero();
@@ -209,21 +210,22 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBlockThingsIterator, Create, CreateBTI)
 	ACTION_RETURN_OBJECT(Create<DBlockThingsIterator>(origin, radius, ignore));
 }
 
-static DBlockThingsIterator *CreateBTIFromPos(double x, double y, double z, double h, double radius, bool ignore)
+static DBlockThingsIterator *CreateBTIFromPos(FLevelLocals *Level, double x, double y, double z, double h, double radius, bool ignore)
 {
-	return Create<DBlockThingsIterator>(x, y, z, h, radius, ignore, nullptr);
+	return Create<DBlockThingsIterator>(Level, x, y, z, h, radius, ignore, nullptr);
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(DBlockThingsIterator, CreateFromPos, CreateBTIFromPos)
+DEFINE_ACTION_FUNCTION_NATIVE(DBlockThingsIterator, CreateFromPosition, CreateBTIFromPos)
 {
 	PARAM_PROLOGUE;
+	PARAM_POINTER(Level, FLevelLocals);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	PARAM_FLOAT(z);
 	PARAM_FLOAT(h);
 	PARAM_FLOAT(radius);
 	PARAM_BOOL(ignore);
-	ACTION_RETURN_OBJECT(Create<DBlockThingsIterator>(x, y, z, h, radius, ignore, nullptr));
+	ACTION_RETURN_OBJECT(Create<DBlockThingsIterator>(Level, x, y, z, h, radius, ignore, nullptr));
 }
 
 static int NextBTI(DBlockThingsIterator *bti)

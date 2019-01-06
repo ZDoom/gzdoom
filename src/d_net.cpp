@@ -64,6 +64,7 @@
 #include "events.h"
 #include "i_time.h"
 #include "vm.h"
+#include "actorinlines.h"
 
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (Int, autosavecount)

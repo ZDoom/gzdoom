@@ -386,30 +386,30 @@ void STAT_StartNewGame(const char *mapname)
 //
 //==========================================================================
 
-static void StoreLevelStats()
+static void StoreLevelStats(FLevelLocals *Level)
 {
 	unsigned int i;
 
 	if (gamestate != GS_LEVEL) return;
 
-	if (!(level.flags2&LEVEL2_NOSTATISTICS))	// don't consider maps that were excluded from statistics
+	if (!(Level->flags2&LEVEL2_NOSTATISTICS))	// don't consider maps that were excluded from statistics
 	{
 		for(i=0;i<LevelData.Size();i++)
 		{
-			if (!LevelData[i].Levelname.CompareNoCase(level.MapName)) break;
+			if (!LevelData[i].Levelname.CompareNoCase(Level->MapName)) break;
 		}
 		if (i==LevelData.Size())
 		{
 			LevelData.Reserve(1);
-			LevelData[i].Levelname = level.MapName;
+			LevelData[i].Levelname = Level->MapName;
 		}
-		LevelData[i].totalkills = level.total_monsters;
-		LevelData[i].killcount = level.killed_monsters;
-		LevelData[i].totalitems = level.total_items;
-		LevelData[i].itemcount = level.found_items;
-		LevelData[i].totalsecrets = level.total_secrets;
-		LevelData[i].secretcount = level.found_secrets;
-		LevelData[i].leveltime = level.maptime;
+		LevelData[i].totalkills = Level->total_monsters;
+		LevelData[i].killcount = Level->killed_monsters;
+		LevelData[i].totalitems = Level->total_items;
+		LevelData[i].itemcount = Level->found_items;
+		LevelData[i].totalsecrets = Level->total_secrets;
+		LevelData[i].secretcount = Level->found_secrets;
+		LevelData[i].leveltime = Level->maptime;
 
 		// Check for living monsters. On some maps it can happen
 		// that the counter misses some. 
@@ -432,12 +432,12 @@ static void StoreLevelStats()
 //
 //==========================================================================
 
-void STAT_ChangeLevel(const char *newl)
+void STAT_ChangeLevel(const char *newl, FLevelLocals *Level)
 {
 	// record the current level's stats.
-	StoreLevelStats();
+	StoreLevelStats(Level);
 
-	level_info_t *thisinfo = level.info;
+	level_info_t *thisinfo = Level->info;
 	level_info_t *nextinfo = NULL;
 	
 	if (strncmp(newl, "enDSeQ", 6))
@@ -481,7 +481,7 @@ void STAT_ChangeLevel(const char *newl)
 			}
 
 			infostring.Format("%4d/%4d, %4d/%4d, %3d/%3d, %2d", statvals[0], statvals[1], statvals[2], statvals[3], statvals[4], statvals[5], validlevels);
-			FSessionStatistics *es = StatisticsEntry(sl, infostring, level.totaltime);
+			FSessionStatistics *es = StatisticsEntry(sl, infostring, Level->totaltime);
 
 			for(unsigned i = 0; i < LevelData.Size(); i++)
 			{
@@ -577,7 +577,7 @@ FString GetStatString()
 
 CCMD(printstats)
 {
-	StoreLevelStats();	// Refresh the current level's results.
+	StoreLevelStats(&level);	// Refresh the current level's results.
 	Printf("%s", GetStatString().GetChars());
 }
 
@@ -590,12 +590,12 @@ CCMD(finishgame)
 		Printf("Cannot use 'finishgame' while not in a game!\n");
 		return;
 	}
-	// This CCMD simulates an end-of-game action and exists to end mods that never exit their last level.
+	// This CCMD simulates an end-of-game action and exists to end mods that never exit their last Level->
 	Net_WriteByte(DEM_FINISHGAME);
 }
 
 ADD_STAT(statistics)
 {
-	StoreLevelStats();	// Refresh the current level's results.
+	StoreLevelStats(&level);	// Refresh the current level's results.
 	return GetStatString();
 }

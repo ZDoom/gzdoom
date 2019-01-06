@@ -273,7 +273,6 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 			fovratio = ratio;
 		}
 
-		UpdateShadowMap();
 		retsec = RenderViewpoint(r_viewpoint, player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
 	}
 	All.Unclock();

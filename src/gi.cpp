@@ -40,8 +40,12 @@
 #include "v_video.h"
 #include "g_level.h"
 #include "vm.h"
+#include "c_cvars.h"
 
 gameinfo_t gameinfo;
+
+EXTERN_CVAR(Float, turbo)
+
 
 DEFINE_GLOBAL(gameinfo)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, backpacktype)
@@ -67,6 +71,8 @@ DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, defKickback)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, healthpic)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, berserkpic)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, defaultdropstyle)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, normforwardmove)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, normsidemove)
 
 const char *GameNames[17] =
 {
@@ -186,6 +192,16 @@ const char* GameInfoBorders[] =
 		gameinfo.key = sc.Float; \
 	}
 
+#define GAMEINFOKEY_TWODOUBLES(key, variable) \
+	else if(nextKey.CompareNoCase(variable) == 0) \
+	{ \
+		sc.MustGetValue(true); \
+		gameinfo.key[0] = sc.Float; \
+		sc.MustGetToken(','); \
+		sc.MustGetValue(true); \
+		gameinfo.key[1] = sc.Float; \
+	}
+
 #define GAMEINFOKEY_COLOR(key, variable) \
 	else if(nextKey.CompareNoCase(variable) == 0) \
 	{ \
@@ -250,7 +266,7 @@ void FMapInfoParser::ParseGameInfo()
 	sc.MustGetToken('{');
 	while(sc.GetToken())
 	{
-		if (sc.TokenType == '}') return;
+		if (sc.TokenType == '}') break;
 
 		sc.TokenMustBe(TK_Identifier);
 		FString nextKey = sc.String;
@@ -337,84 +353,86 @@ void FMapInfoParser::ParseGameInfo()
 		}
 		// Insert valid keys here.
 		GAMEINFOKEY_STRING(mCheatKey, "cheatKey")
-		GAMEINFOKEY_STRING(mEasyKey, "easyKey")
-		GAMEINFOKEY_STRING(TitlePage, "titlePage")
-		GAMEINFOKEY_STRINGARRAY(creditPages, "addcreditPage", 8, false)
-		GAMEINFOKEY_STRINGARRAY(creditPages, "CreditPage", 8, true)
-		GAMEINFOKEY_STRINGARRAY(PlayerClasses, "addplayerclasses", 0, false)
-		GAMEINFOKEY_STRINGARRAY(PlayerClasses, "playerclasses", 0, true)
-		GAMEINFOKEY_MUSIC(titleMusic, titleOrder, "titleMusic")
-		GAMEINFOKEY_FLOAT(titleTime, "titleTime")
-		GAMEINFOKEY_FLOAT(advisoryTime, "advisoryTime")
-		GAMEINFOKEY_FLOAT(pageTime, "pageTime")
-		GAMEINFOKEY_STRING(chatSound, "chatSound")
-		GAMEINFOKEY_MUSIC(finaleMusic, finaleOrder, "finaleMusic")
-		GAMEINFOKEY_STRING(FinaleFlat, "finaleFlat")
-		GAMEINFOKEY_STRINGARRAY(finalePages, "finalePage", 8, true)
-		GAMEINFOKEY_STRINGARRAY(infoPages, "addinfoPage", 8, false)
-		GAMEINFOKEY_STRINGARRAY(infoPages, "infoPage", 8, true)
-		GAMEINFOKEY_STRINGARRAY(PrecachedClasses, "precacheclasses", 0, false)
-		GAMEINFOKEY_STRINGARRAY(PrecachedTextures, "precachetextures", 0, false)
-		GAMEINFOKEY_SOUNDARRAY(PrecachedSounds, "precachesounds", 0, false)
-		GAMEINFOKEY_STRINGARRAY(EventHandlers, "addeventhandlers", 0, false)
-		GAMEINFOKEY_STRINGARRAY(EventHandlers, "eventhandlers", 0, true)
-		GAMEINFOKEY_STRING(PauseSign, "pausesign")
-		GAMEINFOKEY_STRING(quitSound, "quitSound")
-		GAMEINFOKEY_STRING(BorderFlat, "borderFlat")
-		GAMEINFOKEY_DOUBLE(telefogheight, "telefogheight")
-		GAMEINFOKEY_DOUBLE(gibfactor, "gibfactor")
-		GAMEINFOKEY_INT(defKickback, "defKickback")
-		GAMEINFOKEY_STRING(SkyFlatName, "SkyFlatName")
-		GAMEINFOKEY_STRING(translator, "translator")
-		GAMEINFOKEY_COLOR(pickupcolor, "pickupcolor")
-		GAMEINFOKEY_COLOR(defaultbloodcolor, "defaultbloodcolor")
-		GAMEINFOKEY_COLOR(defaultbloodparticlecolor, "defaultbloodparticlecolor")
-		GAMEINFOKEY_STRING(backpacktype, "backpacktype")
-		GAMEINFOKEY_STRING_STAMPED(statusbar, "statusbar", statusbarfile)
-		GAMEINFOKEY_STRING_STAMPED(statusbarclass, "statusbarclass", statusbarclassfile)
-		GAMEINFOKEY_MUSIC(intermissionMusic, intermissionOrder, "intermissionMusic")
-		GAMEINFOKEY_STRING(CursorPic, "CursorPic")
-		GAMEINFOKEY_STRING(MessageBoxClass, "MessageBoxClass")
-		GAMEINFOKEY_BOOL(noloopfinalemusic, "noloopfinalemusic")
-		GAMEINFOKEY_BOOL(drawreadthis, "drawreadthis")
-		GAMEINFOKEY_BOOL(swapmenu, "swapmenu")
-		GAMEINFOKEY_BOOL(dontcrunchcorpses, "dontcrunchcorpses")
-		GAMEINFOKEY_BOOL(correctprintbold, "correctprintbold")
-		GAMEINFOKEY_BOOL(intermissioncounter, "intermissioncounter")
-		GAMEINFOKEY_BOOL(nightmarefast, "nightmarefast")
-		GAMEINFOKEY_COLOR(dimcolor, "dimcolor")
-		GAMEINFOKEY_FLOAT(dimamount, "dimamount")
-		GAMEINFOKEY_FLOAT(bluramount, "bluramount")
-		GAMEINFOKEY_STRING(mSliderColor, "menuslidercolor")
-		GAMEINFOKEY_INT(definventorymaxamount, "definventorymaxamount")
-		GAMEINFOKEY_INT(defaultrespawntime, "defaultrespawntime")
-		GAMEINFOKEY_INT(defaultdropstyle, "defaultdropstyle")
-		GAMEINFOKEY_STRING(Endoom, "endoom")
-		GAMEINFOKEY_STRINGARRAY(quitmessages, "addquitmessages", 0, false)
-		GAMEINFOKEY_STRINGARRAY(quitmessages, "quitmessages", 0, true)
-		GAMEINFOKEY_STRING(mTitleColor, "menufontcolor_title")
-		GAMEINFOKEY_STRING(mFontColor, "menufontcolor_label")
-		GAMEINFOKEY_STRING(mFontColorValue, "menufontcolor_value")
-		GAMEINFOKEY_STRING(mFontColorMore, "menufontcolor_action")
-		GAMEINFOKEY_STRING(mFontColorHeader, "menufontcolor_header")
-		GAMEINFOKEY_STRING(mFontColorHighlight, "menufontcolor_highlight")
-		GAMEINFOKEY_STRING(mFontColorSelection, "menufontcolor_selection")
-		GAMEINFOKEY_STRING(mBackButton, "menubackbutton")
-		GAMEINFOKEY_INT(TextScreenX, "textscreenx")
-		GAMEINFOKEY_INT(TextScreenY, "textscreeny")
-		GAMEINFOKEY_STRING(DefaultEndSequence, "defaultendsequence")
-		GAMEINFOKEY_STRING(DefaultConversationMenuClass, "defaultconversationmenuclass")
-		GAMEINFOKEY_FONT(mStatscreenMapNameFont, "statscreen_mapnamefont")
-		GAMEINFOKEY_FONT(mStatscreenFinishedFont, "statscreen_finishedfont")
-		GAMEINFOKEY_FONT(mStatscreenEnteringFont, "statscreen_enteringfont")
-		GAMEINFOKEY_PATCH(mStatscreenFinishedFont, "statscreen_finishedpatch")
-		GAMEINFOKEY_PATCH(mStatscreenEnteringFont, "statscreen_enteringpatch")
-		GAMEINFOKEY_BOOL(norandomplayerclass, "norandomplayerclass")
-		GAMEINFOKEY_BOOL(forcekillscripts, "forcekillscripts") // [JM] Force kill scripts on thing death. (MF7_NOKILLSCRIPTS overrides.)
-		GAMEINFOKEY_STRING(Dialogue, "dialogue")
-		GAMEINFOKEY_STRING(statusscreen_single, "statscreen_single")
-		GAMEINFOKEY_STRING(statusscreen_coop, "statscreen_coop")
-		GAMEINFOKEY_STRING(statusscreen_dm, "statscreen_dm")
+			GAMEINFOKEY_STRING(mEasyKey, "easyKey")
+			GAMEINFOKEY_STRING(TitlePage, "titlePage")
+			GAMEINFOKEY_STRINGARRAY(creditPages, "addcreditPage", 8, false)
+			GAMEINFOKEY_STRINGARRAY(creditPages, "CreditPage", 8, true)
+			GAMEINFOKEY_STRINGARRAY(PlayerClasses, "addplayerclasses", 0, false)
+			GAMEINFOKEY_STRINGARRAY(PlayerClasses, "playerclasses", 0, true)
+			GAMEINFOKEY_MUSIC(titleMusic, titleOrder, "titleMusic")
+			GAMEINFOKEY_FLOAT(titleTime, "titleTime")
+			GAMEINFOKEY_FLOAT(advisoryTime, "advisoryTime")
+			GAMEINFOKEY_FLOAT(pageTime, "pageTime")
+			GAMEINFOKEY_STRING(chatSound, "chatSound")
+			GAMEINFOKEY_MUSIC(finaleMusic, finaleOrder, "finaleMusic")
+			GAMEINFOKEY_STRING(FinaleFlat, "finaleFlat")
+			GAMEINFOKEY_STRINGARRAY(finalePages, "finalePage", 8, true)
+			GAMEINFOKEY_STRINGARRAY(infoPages, "addinfoPage", 8, false)
+			GAMEINFOKEY_STRINGARRAY(infoPages, "infoPage", 8, true)
+			GAMEINFOKEY_STRINGARRAY(PrecachedClasses, "precacheclasses", 0, false)
+			GAMEINFOKEY_STRINGARRAY(PrecachedTextures, "precachetextures", 0, false)
+			GAMEINFOKEY_SOUNDARRAY(PrecachedSounds, "precachesounds", 0, false)
+			GAMEINFOKEY_STRINGARRAY(EventHandlers, "addeventhandlers", 0, false)
+			GAMEINFOKEY_STRINGARRAY(EventHandlers, "eventhandlers", 0, true)
+			GAMEINFOKEY_STRING(PauseSign, "pausesign")
+			GAMEINFOKEY_STRING(quitSound, "quitSound")
+			GAMEINFOKEY_STRING(BorderFlat, "borderFlat")
+			GAMEINFOKEY_DOUBLE(telefogheight, "telefogheight")
+			GAMEINFOKEY_DOUBLE(gibfactor, "gibfactor")
+			GAMEINFOKEY_INT(defKickback, "defKickback")
+			GAMEINFOKEY_STRING(SkyFlatName, "SkyFlatName")
+			GAMEINFOKEY_STRING(translator, "translator")
+			GAMEINFOKEY_COLOR(pickupcolor, "pickupcolor")
+			GAMEINFOKEY_COLOR(defaultbloodcolor, "defaultbloodcolor")
+			GAMEINFOKEY_COLOR(defaultbloodparticlecolor, "defaultbloodparticlecolor")
+			GAMEINFOKEY_STRING(backpacktype, "backpacktype")
+			GAMEINFOKEY_STRING_STAMPED(statusbar, "statusbar", statusbarfile)
+			GAMEINFOKEY_STRING_STAMPED(statusbarclass, "statusbarclass", statusbarclassfile)
+			GAMEINFOKEY_MUSIC(intermissionMusic, intermissionOrder, "intermissionMusic")
+			GAMEINFOKEY_STRING(CursorPic, "CursorPic")
+			GAMEINFOKEY_STRING(MessageBoxClass, "MessageBoxClass")
+			GAMEINFOKEY_BOOL(noloopfinalemusic, "noloopfinalemusic")
+			GAMEINFOKEY_BOOL(drawreadthis, "drawreadthis")
+			GAMEINFOKEY_BOOL(swapmenu, "swapmenu")
+			GAMEINFOKEY_BOOL(dontcrunchcorpses, "dontcrunchcorpses")
+			GAMEINFOKEY_BOOL(correctprintbold, "correctprintbold")
+			GAMEINFOKEY_BOOL(intermissioncounter, "intermissioncounter")
+			GAMEINFOKEY_BOOL(nightmarefast, "nightmarefast")
+			GAMEINFOKEY_COLOR(dimcolor, "dimcolor")
+			GAMEINFOKEY_FLOAT(dimamount, "dimamount")
+			GAMEINFOKEY_FLOAT(bluramount, "bluramount")
+			GAMEINFOKEY_STRING(mSliderColor, "menuslidercolor")
+			GAMEINFOKEY_INT(definventorymaxamount, "definventorymaxamount")
+			GAMEINFOKEY_INT(defaultrespawntime, "defaultrespawntime")
+			GAMEINFOKEY_INT(defaultdropstyle, "defaultdropstyle")
+			GAMEINFOKEY_STRING(Endoom, "endoom")
+			GAMEINFOKEY_STRINGARRAY(quitmessages, "addquitmessages", 0, false)
+			GAMEINFOKEY_STRINGARRAY(quitmessages, "quitmessages", 0, true)
+			GAMEINFOKEY_STRING(mTitleColor, "menufontcolor_title")
+			GAMEINFOKEY_STRING(mFontColor, "menufontcolor_label")
+			GAMEINFOKEY_STRING(mFontColorValue, "menufontcolor_value")
+			GAMEINFOKEY_STRING(mFontColorMore, "menufontcolor_action")
+			GAMEINFOKEY_STRING(mFontColorHeader, "menufontcolor_header")
+			GAMEINFOKEY_STRING(mFontColorHighlight, "menufontcolor_highlight")
+			GAMEINFOKEY_STRING(mFontColorSelection, "menufontcolor_selection")
+			GAMEINFOKEY_STRING(mBackButton, "menubackbutton")
+			GAMEINFOKEY_INT(TextScreenX, "textscreenx")
+			GAMEINFOKEY_INT(TextScreenY, "textscreeny")
+			GAMEINFOKEY_STRING(DefaultEndSequence, "defaultendsequence")
+			GAMEINFOKEY_STRING(DefaultConversationMenuClass, "defaultconversationmenuclass")
+			GAMEINFOKEY_FONT(mStatscreenMapNameFont, "statscreen_mapnamefont")
+			GAMEINFOKEY_FONT(mStatscreenFinishedFont, "statscreen_finishedfont")
+			GAMEINFOKEY_FONT(mStatscreenEnteringFont, "statscreen_enteringfont")
+			GAMEINFOKEY_PATCH(mStatscreenFinishedFont, "statscreen_finishedpatch")
+			GAMEINFOKEY_PATCH(mStatscreenEnteringFont, "statscreen_enteringpatch")
+			GAMEINFOKEY_BOOL(norandomplayerclass, "norandomplayerclass")
+			GAMEINFOKEY_BOOL(forcekillscripts, "forcekillscripts") // [JM] Force kill scripts on thing death. (MF7_NOKILLSCRIPTS overrides.)
+			GAMEINFOKEY_STRING(Dialogue, "dialogue")
+			GAMEINFOKEY_STRING(statusscreen_single, "statscreen_single")
+			GAMEINFOKEY_STRING(statusscreen_coop, "statscreen_coop")
+			GAMEINFOKEY_STRING(statusscreen_dm, "statscreen_dm")
+			GAMEINFOKEY_TWODOUBLES(normforwardmove, "normforwardmove")
+			GAMEINFOKEY_TWODOUBLES(normsidemove, "normsidemove")
 
 		else
 		{
@@ -425,6 +443,7 @@ void FMapInfoParser::ParseGameInfo()
 			SkipToNext();
 		}
 	}
+	turbo.Callback();
 }
 
 const char *gameinfo_t::GetFinalePage(unsigned int num) const

@@ -196,6 +196,12 @@ int FTagManager::GetFirstSectorTag(const sector_t *sect) const
 	return SectorHasTags(i) ? allTags[startForSector[i]].tag : 0;
 }
 
+int FTagManager::GetFirstSectorTag(int i) const
+{
+	return SectorHasTags(i) ? allTags[startForSector[i]].tag : 0;
+}
+
+
 //-----------------------------------------------------------------------------
 //
 //

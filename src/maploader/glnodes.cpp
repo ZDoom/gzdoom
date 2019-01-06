@@ -126,7 +126,7 @@ int MapLoader::CheckForMissingSegs()
 		{
 			// check all the segs and calculate the length they occupy on their sidedef
 			DVector2 vec1(seg.v2->fX() - seg.v1->fX(), seg.v2->fY() - seg.v1->fY());
-			added_seglen[seg.sidedef->Index()] += vec1.Length();
+			added_seglen[Index(seg.sidedef)] += vec1.Length();
 		}
 	}
 
@@ -1002,11 +1002,11 @@ void MapLoader::CreateCachedNodes(MapData *map)
 	WriteLong(ZNodes, Level->segs.Size());
 	for(auto &seg : Level->segs)
 	{
-		WriteLong(ZNodes, seg.v1->Index());
-		WriteLong(ZNodes, seg.PartnerSeg == nullptr? 0xffffffffu : uint32_t(seg.PartnerSeg->Index()));
+		WriteLong(ZNodes, Index(seg.v1));
+		WriteLong(ZNodes, seg.PartnerSeg == nullptr? 0xffffffffu : uint32_t(Index(seg.PartnerSeg)));
 		if (seg.linedef)
 		{
-			WriteLong(ZNodes, uint32_t(seg.linedef->Index()));
+			WriteLong(ZNodes, uint32_t(Index(seg.linedef)));
 			WriteByte(ZNodes, seg.sidedef == seg.linedef->sidedef[0]? 0:1);
 		}
 		else
@@ -1036,11 +1036,11 @@ void MapLoader::CreateCachedNodes(MapData *map)
 			uint32_t child;
 			if ((size_t)node.children[j] & 1)
 			{
-				child = 0x80000000 | uint32_t(((subsector_t *)((uint8_t *)node.children[j] - 1))->Index());
+				child = 0x80000000 | uint32_t(Index(((subsector_t *)((uint8_t *)node.children[j] - 1))));
 			}
 			else
 			{
-				child = ((node_t *)node.children[j])->Index();
+				child = Index(((node_t *)node.children[j]));
 			}
 			WriteLong(ZNodes, child);
 		}
@@ -1067,7 +1067,7 @@ void MapLoader::CreateCachedNodes(MapData *map)
 	map->GetChecksum(&compressed[8]);
 	for (unsigned i = 0; i < Level->lines.Size(); i++)
 	{
-		uint32_t ndx[2] = { LittleLong(uint32_t(Level->lines[i].v1->Index())), LittleLong(uint32_t(Level->lines[i].v2->Index())) };
+		uint32_t ndx[2] = { LittleLong(uint32_t(Index(Level->lines[i].v1))), LittleLong(uint32_t(Index(Level->lines[i].v2))) };
 		memcpy(&compressed[8 + 16 + 8 * i], ndx, 8);
 	}
 	memcpy(&compressed[offset - 4], "ZGL3", 4);
@@ -1138,7 +1138,7 @@ bool MapLoader::CheckCachedNodes(MapData *map)
 
 	for(auto &line : Level->lines)
 	{
-		int i = line.Index();
+		int i = Index(&line);
 		line.v1 = &Level->vertexes[LittleLong(verts[i*2])];
 		line.v2 = &Level->vertexes[LittleLong(verts[i*2+1])];
 	}
@@ -1253,7 +1253,7 @@ void MapLoader::SetRenderSector()
 		auto p = seg.PartnerSeg;
 		if (p != nullptr)
 		{
-			int partner = p->Index();
+			int partner = Index(p);
 
 			if (partner < 0 || partner >= (int)Level->segs.Size() || &Level->segs[partner] != p)
 			{

@@ -380,10 +380,8 @@ void MapLoader::PrepareTransparentDoors(sector_t * sector)
 //
 //==========================================================================
 
-static void AddToVertex(const sector_t * sec, TArray<int> & list)
+static void AddToVertex(int secno, TArray<int> & list)
 {
-	int secno = sec->Index();
-
 	for(unsigned i=0;i<list.Size();i++)
 	{
 		if (list[i]==secno) return;
@@ -415,8 +413,8 @@ void MapLoader::InitVertexData()
 				{
 					extsector_t::xfloor &x = sec->e->XFloor;
 
-					AddToVertex(sec, vt_sectorlists[v->Index()]);
-					if (sec->heightsec) AddToVertex(sec->heightsec, vt_sectorlists[v->Index()]);
+					AddToVertex(Index(sec), vt_sectorlists[Index(v)]);
+					if (sec->heightsec) AddToVertex(Index(sec->heightsec), vt_sectorlists[Index(v)]);
 				}
 			}
 		}
@@ -492,7 +490,7 @@ void MapLoader::PrepareSegs()
 	for(auto &seg : Level->segs)
 	{
 		if (seg.sidedef == nullptr) continue;	// miniseg
-		int sidenum = seg.sidedef->Index();
+		int sidenum = Index(seg.sidedef);
 
 		realsegs++;
 		segcount[sidenum]++;
@@ -544,7 +542,7 @@ void MapLoader::InitRenderInfo()
 	memset(checkmap.Data(), -1, sizeof(int)*Level->vertexes.Size());
 	for(auto &sec : Level->sectors) 
 	{
-		int i = sec.sectornum;
+		int i = Index(&sec);
 		PrepareTransparentDoors(&sec);
 
 		// This ignores vertices only used for seg splitting because those aren't needed here
@@ -552,8 +550,8 @@ void MapLoader::InitRenderInfo()
 		{
 			if (l->sidedef[0]->Flags & WALLF_POLYOBJ) continue;	// don't bother with polyobjects
 
-			int vtnum1 = l->v1->Index();
-			int vtnum2 = l->v2->Index();
+			int vtnum1 = Index(l->v1);
+			int vtnum2 = Index(l->v2);
 
 			if (checkmap[vtnum1] < i)
 			{
@@ -613,7 +611,7 @@ void MapLoader::FixMinisegReferences()
 		}
 		if (pick)
 		{
-			DPrintf(DMSG_NOTIFY, "Linking miniseg pair from (%2.3f, %2.3f) -> (%2.3f, %2.3f) in sector %d\n", pick->v2->fX(), pick->v2->fY(), pick->v1->fX(), pick->v1->fY(), pick->frontsector->Index());
+			DPrintf(DMSG_NOTIFY, "Linking miniseg pair from (%2.3f, %2.3f) -> (%2.3f, %2.3f) in sector %d\n", pick->v2->fX(), pick->v2->fY(), pick->v1->fX(), pick->v1->fY(), Index(pick->frontsector));
 			pick->PartnerSeg = seg1;
 			seg1->PartnerSeg = pick;
 			assert(seg1->v1 == pick->v2 && pick->v1 == seg1->v2);
@@ -720,7 +718,7 @@ void MapLoader::FixHoles()
 			subsector_t *newssstartptr = &Level->subsectors[0];
 
 			// Now fix all references to these in the level data.
-			// Note that the Index() method does not work here due to the reallocation.
+			// Note that the Index method does not work here due to the reallocation.
 			for (auto &seg : Level->segs)
 			{
 				if (seg.PartnerSeg) seg.PartnerSeg = newsegstartptr + (seg.PartnerSeg - oldsegstartptr);
@@ -758,7 +756,7 @@ void MapLoader::FixHoles()
 			// Add the new data. This doesn't care about convexity. It is never directly used to generate a primitive.
 			for (auto &segloop : segloops)
 			{
-				DPrintf(DMSG_NOTIFY, "Adding dummy subsector for sector %d\n", segloop[0]->Subsector->render_sector->Index());
+				DPrintf(DMSG_NOTIFY, "Adding dummy subsector for sector %d\n", Index(segloop[0]->Subsector->render_sector));
 
 				subsector_t &sub = Level->subsectors[newssstart++];
 				memset(&sub, 0, sizeof(sub));

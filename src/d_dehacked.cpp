@@ -213,6 +213,7 @@ DEFINE_FIELD_X(DehInfo, DehInfo, ExplosionAlpha)
 DEFINE_FIELD_X(DehInfo, DehInfo, NoAutofreeze)
 DEFINE_FIELD_X(DehInfo, DehInfo, BFGCells)
 DEFINE_FIELD_X(DehInfo, DehInfo, BlueAC)
+DEFINE_FIELD_X(DehInfo, DehInfo, MaxHealth)
 
 // Doom identified pickup items by their sprites. ZDoom prefers to use their
 // class type to identify them instead. To support the traditional Doom
@@ -1988,7 +1989,7 @@ static int PatchMisc (int dummy)
 		health->IntVar(NAME_Amount) = health->IntVar(NAME_MaxAmount) = deh.MegasphereHealth;
 	}
 
-	APlayerPawn *player = static_cast<APlayerPawn *> (GetDefaultByName ("DoomPlayer"));
+	AActor *player = GetDefaultByName ("DoomPlayer");
 	if (player != NULL)
 	{
 		player->health = deh.StartHealth;

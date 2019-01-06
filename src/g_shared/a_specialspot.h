@@ -7,10 +7,9 @@
 struct FSpotList;
 
 
-class DSpotState : public DThinker
+class DSpotState : public DObject
 {
-	DECLARE_CLASS(DSpotState, DThinker)
-	static TObjPtr<DSpotState*> SpotState;
+	DECLARE_CLASS(DSpotState, DObject)
 	TArray<FSpotList> SpotLists;
 
 public:

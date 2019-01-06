@@ -43,6 +43,7 @@
 #include "t_script.h"
 #include "w_wad.h"
 #include "serializer.h"
+#include "g_levellocals.h"
 
 
 //==========================================================================
@@ -338,7 +339,7 @@ void DFsScript::DryRunScript()
 	char *rover = data;
 	
 	// allocate space for the tokens
-	FParser parse(this);
+	FParser parse(&level, this);
 	try
 	{
 		while(rover < end && *rover)
@@ -428,7 +429,7 @@ void DFsScript::ParseInclude(char *lumpname)
 	ProcessFindChar(lump, 0);
 	
 	// now parse the lump
-	FParser parse(this);
+	FParser parse(&level, this);
 	parse.Run(lump, lump, lump+lumplen);
 	
 	// free the lump

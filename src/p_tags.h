@@ -54,6 +54,7 @@ public:
 
 	bool SectorHasTags(const sector_t *sector) const;
 	int GetFirstSectorTag(const sector_t *sect) const;
+	int GetFirstSectorTag(int sect) const;
 	bool SectorHasTag(int sector, int tag) const;
 	bool SectorHasTag(const sector_t *sector, int tag) const;
 

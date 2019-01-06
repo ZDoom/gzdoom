@@ -812,50 +812,6 @@ DEFINE_ACTION_FUNCTION(AActor, CopyFriendliness)
 	self->CopyFriendliness(other, changetarget, resethealth);
 	return 0;
 }
-//============================================================================
-//
-// AActor :: ObtainInventory
-//
-// Removes the items from the other actor and puts them in this actor's
-// inventory. The actor receiving the inventory must not have any items.
-//
-//============================================================================
-
-void AActor::ObtainInventory (AActor *other)
-{
-	assert (Inventory == NULL);
-
-	Inventory = other->Inventory;
-	InventoryID = other->InventoryID;
-	other->Inventory = NULL;
-	other->InventoryID = 0;
-
-	if (other->IsKindOf(RUNTIME_CLASS(APlayerPawn)) && this->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
-	{
-		APlayerPawn *you = static_cast<APlayerPawn *>(other);
-		APlayerPawn *me = static_cast<APlayerPawn *>(this);
-		me->InvFirst = you->InvFirst;
-		me->InvSel = you->InvSel;
-		you->InvFirst = NULL;
-		you->InvSel = NULL;
-	}
-
-	auto item = Inventory;
-	while (item != nullptr)
-	{
-		item->PointerVar<AActor>(NAME_Owner) = this;
-		item = item->Inventory;
-	}
-}
-
-DEFINE_ACTION_FUNCTION(AActor, ObtainInventory)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT(other, AActor);
-	self->ObtainInventory(other);
-	return 0;
-}
-
 //---------------------------------------------------------------------------
 //
 // FUNC P_GetRealMaxHealth
@@ -865,7 +821,7 @@ DEFINE_ACTION_FUNCTION(AActor, ObtainInventory)
 //
 //---------------------------------------------------------------------------
 
-int P_GetRealMaxHealth(APlayerPawn *actor, int max)
+int P_GetRealMaxHealth(AActor *actor, int max)
 {
 	// Max is 0 by default, preserving default behavior for P_GiveBody()
 	// calls while supporting health pickups.
@@ -880,7 +836,7 @@ int P_GetRealMaxHealth(APlayerPawn *actor, int max)
 			{
 				if (!(player->MorphStyle & MORPH_ADDSTAMINA))
 				{
-					max -= actor->stamina + actor->BonusHealth;
+					max -= actor->stamina + actor->IntVar(NAME_BonusHealth);
 				}
 			}
 			else // old health behaviour
@@ -888,7 +844,7 @@ int P_GetRealMaxHealth(APlayerPawn *actor, int max)
 				max = MAXMORPHHEALTH;
 				if (player->MorphStyle & MORPH_ADDSTAMINA)
 				{
-					max += actor->stamina + actor->BonusHealth;
+					max += actor->stamina + actor->IntVar(NAME_BonusHealth);
 				}
 			}
 		}
@@ -898,7 +854,7 @@ int P_GetRealMaxHealth(APlayerPawn *actor, int max)
 		// Bonus health should be added on top of the item's limit.
 		if (player->morphTics == 0 || (player->MorphStyle & MORPH_ADDSTAMINA))
 		{
-			max += actor->BonusHealth;
+			max += actor->IntVar(NAME_BonusHealth);
 		}
 	}
 	return max;
@@ -1804,9 +1760,9 @@ bool P_SeekerMissile (AActor *actor, double thresh, double turnMax, bool precise
 			double dist = MAX(1., actor->Distance2D(target));
 			// Aim at a player's eyes and at the middle of the actor for everything else.
 			double aimheight = target->Height/2;
-			if (target->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
+			if (target->player)
 			{
-				aimheight = static_cast<APlayerPawn *>(target)->ViewHeight;
+				aimheight = target->player->DefaultViewHeight();
 			}
 			pitch = DVector2(dist, target->Z() + aimheight - actor->Center()).Angle();
 		}
@@ -2323,7 +2279,7 @@ explode:
 		// Don't affect main player when voodoo dolls stop:
 		if (player && player->mo == mo && !(player->cheats & CF_PREDICTING))
 		{
-			player->mo->PlayIdle ();
+			PlayIdle (player->mo);
 		}
 
 		mo->Vel.X = mo->Vel.Y = 0;
@@ -2825,7 +2781,7 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 	{
 		grunted = false;
 		// Why should this number vary by gravity?
-		if (mo->health > 0 && mo->Vel.Z < -mo->player->mo->GruntSpeed)
+		if (mo->health > 0 && mo->Vel.Z < -mo->player->mo->FloatVar(NAME_GruntSpeed))
 		{
 			S_Sound (mo, CHAN_VOICE, "*grunt", 1, ATTN_NORM);
 			grunted = true;
@@ -4311,79 +4267,98 @@ bool AActor::UpdateWaterLevel(bool dosplash)
 
 	double fh = -FLT_MAX;
 	bool reset = false;
+	int oldlevel = waterlevel;
 
 	waterlevel = 0;
 
-	if (Sector == NULL)
+	if (Sector != nullptr)
 	{
-		return false;
-	}
-
-	if (Sector->MoreFlags & SECMF_UNDERWATER)	// intentionally not SECMF_UNDERWATERMASK
-	{
-		waterlevel = 3;
-	}
-	else
-	{
-		const sector_t *hsec = Sector->GetHeightSec();
-		if (hsec != NULL)
+		if (Sector->MoreFlags & SECMF_UNDERWATER)	// intentionally not SECMF_UNDERWATERMASK
 		{
-			fh = hsec->floorplane.ZatPoint(this);
-			if (hsec->MoreFlags & SECMF_UNDERWATERMASK)	// also check Boom-style non-swimmable sectors
-			{
-				if (Z() < fh)
-				{
-					waterlevel = 1;
-					if (Center() < fh)
-					{
-						waterlevel = 2;
-						if ((player && Z() + player->viewheight <= fh) ||
-							(Top() <= fh))
-						{
-							waterlevel = 3;
-						}
-					}
-				}
-				else if (!(hsec->MoreFlags & SECMF_FAKEFLOORONLY) && (Top() > hsec->ceilingplane.ZatPoint(this)))
-				{
-					waterlevel = 3;
-				}
-				else
-				{
-					waterlevel = 0;
-				}
-			}
+			waterlevel = 3;
 		}
 		else
 		{
-			// Check 3D floors as well!
-			for (auto rover : Sector->e->XFloor.ffloors)
+			const sector_t *hsec = Sector->GetHeightSec();
+			if (hsec != NULL)
 			{
-				if (!(rover->flags & FF_EXISTS)) continue;
-				if (rover->flags & FF_SOLID) continue;
-				if (!(rover->flags & FF_SWIMMABLE)) continue;
-
-				double ff_bottom = rover->bottom.plane->ZatPoint(this);
-				double ff_top = rover->top.plane->ZatPoint(this);
-
-				if (ff_top <= Z() || ff_bottom > (Center())) continue;
-
-				fh = ff_top;
-				if (Z() < fh)
+				fh = hsec->floorplane.ZatPoint(this);
+				if (hsec->MoreFlags & SECMF_UNDERWATERMASK)	// also check Boom-style non-swimmable sectors
 				{
-					waterlevel = 1;
-					if (Center() < fh)
+					if (Z() < fh)
 					{
-						waterlevel = 2;
-						if ((player && Z() + player->viewheight <= fh) ||
-							(Top() <= fh))
+						waterlevel = 1;
+						if (Center() < fh)
 						{
-							waterlevel = 3;
+							waterlevel = 2;
+							if ((player && Z() + player->viewheight <= fh) ||
+								(Top() <= fh))
+							{
+								waterlevel = 3;
+							}
 						}
 					}
+					else if (!(hsec->MoreFlags & SECMF_FAKEFLOORONLY) && (Top() > hsec->ceilingplane.ZatPoint(this)))
+					{
+						waterlevel = 3;
+					}
+					else
+					{
+						waterlevel = 0;
+					}
 				}
+			}
+			else
+			{
+				// Check 3D floors as well!
+				for (auto rover : Sector->e->XFloor.ffloors)
+				{
+					if (!(rover->flags & FF_EXISTS)) continue;
+					if (rover->flags & FF_SOLID) continue;
+					if (!(rover->flags & FF_SWIMMABLE)) continue;
 
-				break;
+					double ff_bottom = rover->bottom.plane->ZatPoint(this);
+					double ff_top = rover->top.plane->ZatPoint(this);
+
+					if (ff_top <= Z() || ff_bottom > (Center())) continue;
+
+					fh = ff_top;
+					if (Z() < fh)
+					{
+						waterlevel = 1;
+						if (Center() < fh)
+						{
+							waterlevel = 2;
+							if ((player && Z() + player->viewheight <= fh) ||
+								(Top() <= fh))
+							{
+								waterlevel = 3;
+							}
+						}
+					}
+
+					break;
+				}
+			}
+		}
+
+		// Play surfacing and diving sounds, as appropriate.
+		if (player != nullptr)
+		{
+			if (oldlevel < 3 && waterlevel == 3)
+			{ 
+				// Our head just went under.
+				S_Sound(this, CHAN_VOICE, "*dive", 1, ATTN_NORM);
+			}
+			else if (oldlevel == 3 && waterlevel < 3)
+			{ 
+				// Our head just came up.
+				if (player->air_finished > level.time)
+				{ 
+					// We hadn't run out of air yet.
+					S_Sound(this, CHAN_VOICE, "*surface", 1, ATTN_NORM);
+				}
+				// If we were running out of air, then ResetAirSupply() will play *gasp.
 			}
 		}
 	}
@@ -4487,7 +4462,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 		actor->SetZ(actor->ceilingz - actor->Height);
 	}
 
-	if (SpawningMapThing || !type->IsDescendantOf (RUNTIME_CLASS(APlayerPawn)))
+	if (SpawningMapThing || !type->IsDescendantOf (NAME_PlayerPawn))
 	{
 		// Check if there's something solid to stand on between the current position and the
 		// current sector's floor. For map spawns this must be delayed until after setting the
@@ -4931,10 +4906,10 @@ EXTERN_CVAR(Float, fov)
 
 extern bool demonew;
 
-APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
+AActor *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 {
 	player_t *p;
-	APlayerPawn *mobj, *oldactor;
+	AActor *mobj, *oldactor;
 	uint8_t	  state;
 	DVector3 spawn;
 	DAngle SpawnAngle;
@@ -5015,8 +4990,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 			spawn.Z = ONFLOORZ;
 	}
 
-	mobj = static_cast<APlayerPawn *>
-		(Spawn (p->cls, spawn, NO_REPLACE));
+	mobj = Spawn (p->cls, spawn, NO_REPLACE);
 
 	if (level.flags & LEVEL_USEPLAYERSTARTZ)
 	{
@@ -5039,8 +5013,12 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	else if (oldactor != NULL && oldactor->player == p && !(flags & SPF_TEMPPLAYER))
 	{
 		// Move the voodoo doll's inventory to the new player.
-		mobj->ObtainInventory (oldactor);
-		FBehavior::StaticStopMyScripts (oldactor);	// cancel all ENTER/RESPAWN scripts for the voodoo doll
+		IFVM(Actor, ObtainInventory)
+		{
+			VMValue params[] = { mobj, oldactor };
+			VMCall(func, params, 2, nullptr, 0);
+		}
+		level.Behaviors.StopMyScripts (oldactor);	// cancel all ENTER/RESPAWN scripts for the voodoo doll
 	}
 
 	// [GRB] Reset skin
@@ -5078,20 +5056,24 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	p->extralight = 0;
 	p->fixedcolormap = NOFIXEDCOLORMAP;
 	p->fixedlightlevel = -1;
-	p->viewheight = mobj->ViewHeight;
+	p->viewheight = p->DefaultViewHeight();
 	p->inconsistant = 0;
 	p->attacker = NULL;
 	p->spreecount = 0;
 	p->multicount = 0;
 	p->lastkilltime = 0;
 	p->BlendR = p->BlendG = p->BlendB = p->BlendA = 0.f;
-	p->mo->ResetAirSupply(false);
 	p->Uncrouch();
 	p->MinPitch = p->MaxPitch = 0.;	// will be filled in by PostBeginPlay()/netcode
 	p->MUSINFOactor = NULL;
 	p->MUSINFOtics = -1;
-
 	p->Vel.Zero();	// killough 10/98: initialize bobbing to 0.
+
+	IFVIRTUALPTRNAME(p->mo, NAME_PlayerPawn, ResetAirSupply)
+	{
+		VMValue params[] = { p->mo, false };
+		VMCall(func, params, 2, nullptr, 0);
+	}
 
 	for (int ii = 0; ii < MAXPLAYERS; ++ii)
 	{
@@ -5113,7 +5095,11 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 
 	if (deathmatch)
 	{ // Give all cards in death match mode.
-		p->mo->GiveDeathmatchInventory ();
+		IFVIRTUALPTRNAME(p->mo, NAME_PlayerPawn, GiveDeathmatchInventory)
+		{
+			VMValue params[1] = { p->mo };
+			VMCall(func, params, 1, nullptr, 0);
+		}
 	}
 	else if ((multiplayer || (level.flags2 & LEVEL2_ALLOWRESPAWN) || sv_singleplayerrespawn ||
 		!!G_SkillProperty(SKILLP_PlayerRespawn)) && state == PST_REBORN && oldactor != NULL)
@@ -5132,7 +5118,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	// [BC] Handle temporary invulnerability when respawned
 	if (state == PST_REBORN || state == PST_ENTER)
 	{
-		IFVIRTUALPTR(p->mo, APlayerPawn, OnRespawn)
+		IFVIRTUALPTRNAME(p->mo, NAME_PlayerPawn, OnRespawn)
 		{
 			VMValue param = p->mo;
 			VMCall(func, &param, 1, nullptr, 0);
@@ -5161,7 +5147,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	{
 		if (state == PST_ENTER || (state == PST_LIVE && !savegamerestore))
 		{
-			FBehavior::StaticStartTypedScripts (SCRIPT_Enter, p->mo, true);
+			level.Behaviors.StartTypedScripts (SCRIPT_Enter, p->mo, true);
 		}
 		else if (state == PST_REBORN)
 		{
@@ -5185,7 +5171,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 			DObject::StaticPointerSubstitution (oldactor, p->mo);
 
 			E_PlayerRespawned(int(p - players));
-			FBehavior::StaticStartTypedScripts (SCRIPT_Respawn, p->mo, true);
+			level.Behaviors.StartTypedScripts (SCRIPT_Respawn, p->mo, true);
 		}
 	}
 	return mobj;
@@ -5584,7 +5570,7 @@ AActor *SpawnMapThing(int index, FMapThing *mt, int position)
 			index, mt->pos.X, mt->pos.Y, mt->pos.Z, mt->EdNum, mt->flags,
 			spawned ? spawned->GetClass()->TypeName.GetChars() : "(none)");
 	}
-	T_AddSpawnedThing(spawned);
+	T_AddSpawnedThing(&level, spawned);
 	return spawned;
 }
 
@@ -6724,15 +6710,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 	if (z != ONFLOORZ && z != ONCEILINGZ)
 	{
 		// Doom spawns missiles 4 units lower than hitscan attacks for players.
-		z += source->Center() - source->Floorclip;
-		if (source->player != NULL)	// Considering this is for player missiles, it better not be NULL.
-		{
-			z += ((source->player->mo->AttackZOffset - 4) * source->player->crouchfactor);
-		}
-		else
-		{
-			z += 4;
-		}
+		z += source->Center() - source->Floorclip + source->AttackOffset(-4);
 		// Do not fire beneath the floor.
 		if (z < source->floorz)
 		{
@@ -7108,6 +7086,18 @@ int AActor::SpawnHealth() const
 	}
 }
 
+int AActor::GetMaxHealth(bool withupgrades) const
+{
+	int ret = 100;
+	IFVIRTUAL(AActor, GetMaxHealth)
+	{
+		VMValue param[] = { const_cast<AActor*>(this), withupgrades };
+		VMReturn r(&ret);
+		VMCall(func, param, 2, &r, 1);
+	}
+	return ret;
+}
+
 FState *AActor::GetRaiseState()
 {
 	if (!(flags & MF_CORPSE))
@@ -7121,7 +7111,7 @@ FState *AActor::GetRaiseState()
 		return NULL;
 	}
 
-	if (IsKindOf(RUNTIME_CLASS(APlayerPawn)))
+	if (IsKindOf(NAME_PlayerPawn))
 	{
 		return NULL;	// do not resurrect players
 	}

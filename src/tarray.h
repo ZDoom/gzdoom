@@ -586,8 +586,7 @@ public:
 };
 
 // This is only used for exposing the sector's Lines array to ZScript.
-// This also must be trivial so that sector_t remains trivial.
-// For other uses TArrayView should be preferred.
+// Unlike TArrayView, its members are public as needed by the map loader.
 
 template <class T>
 class TStaticPointedArray

@@ -374,6 +374,8 @@ struct GameInfoStruct native
 	native int defaultdropstyle;
 	native TextureID healthpic;
 	native TextureID berserkpic;
+	native double normforwardmove[2];
+	native double normsidemove[2];
 }
 
 class Object native
@@ -687,6 +689,7 @@ struct LevelLocals native
 	native bool IsCrouchingAllowed() const;
 	native bool IsFreelookAllowed() const;
 	native void StartIntermission(Name type, int state) const;
+	native SpotState GetSpotState(bool create = true);
 
 	native static clearscope bool IsPointInMap(vector3 p);
 
@@ -724,6 +727,7 @@ struct DehInfo native
 	native readonly int NoAutofreeze;
 	native readonly int BFGCells;
 	native readonly int BlueAC;
+	native readonly int MaxHealth;
 }
 
 struct State native

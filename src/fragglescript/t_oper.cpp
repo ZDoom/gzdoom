@@ -89,7 +89,7 @@ void FParser::OPequals(svalue_t &result, int start, int n, int stop)
 	if(var)
     {
 		EvaluateExpression(result, n+1, stop);
-		var->SetValue (result);
+		var->SetValue(Level, result);
     }
 	else
     {
@@ -490,12 +490,12 @@ void FParser::OPincrement(svalue_t &result, int start, int n, int stop)
 		{
 			result.value.i = intvalue(result) + 1;
 			result.type = svt_int;
-			var->SetValue (result);
+			var->SetValue(Level, result);
 		}
 		else
 		{
 			result.setDouble(floatvalue(result)+1);
-			var->SetValue (result);
+			var->SetValue(Level, result);
 		}
     }
 	else if(stop == n)     // n++
@@ -515,12 +515,12 @@ void FParser::OPincrement(svalue_t &result, int start, int n, int stop)
 		{
 			newvalue.type = svt_int;
 			newvalue.value.i = intvalue(result) + 1;
-			var->SetValue (newvalue);
+			var->SetValue(Level, newvalue);
 		}
 		else
 		{
 			newvalue.setDouble(floatvalue(result)+1);
-			var->SetValue (newvalue);
+			var->SetValue(Level, newvalue);
 		}
     }
 	else
@@ -553,13 +553,13 @@ void FParser::OPdecrement(svalue_t &result, int start, int n, int stop)
 		{
 			result.value.i = intvalue(result) - 1;
 			result.type = svt_int;
-			var->SetValue (result);
+			var->SetValue(Level, result);
 		}
 		else
 		{
 			result.setDouble(floatvalue(result)-1);
 			result.type = svt_fixed;
-			var->SetValue (result);
+			var->SetValue(Level, result);
 		}
     }
 	else if(stop == n)   // n++
@@ -579,12 +579,12 @@ void FParser::OPdecrement(svalue_t &result, int start, int n, int stop)
 		{
 			newvalue.type = svt_int;
 			newvalue.value.i = intvalue(result) - 1;
-			var->SetValue (newvalue);
+			var->SetValue(Level, newvalue);
 		}
 		else
 		{
 			newvalue.setDouble(floatvalue(result)-1);
-			var->SetValue (newvalue);
+			var->SetValue(Level, newvalue);
 		}
     }
 	else

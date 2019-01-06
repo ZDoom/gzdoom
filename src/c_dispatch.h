@@ -37,7 +37,6 @@
 #include "doomtype.h"
 
 class FConfigFile;
-class APlayerPawn;
 
 // Class that can parse command lines
 class FCommandLine
@@ -96,7 +95,8 @@ void C_ClearAliases ();
 // build a single string out of multiple strings
 FString BuildString (int argc, FString *argv);
 
-typedef void (*CCmdRun) (FCommandLine &argv, APlayerPawn *instigator, int key);
+class AActor;
+typedef void (*CCmdRun) (FCommandLine &argv, AActor *instigator, int key);
 
 class FConsoleCommand
 {
@@ -106,7 +106,7 @@ public:
 	virtual bool IsAlias ();
 	void PrintCommand () { Printf ("%s\n", m_Name); }
 
-	virtual void Run (FCommandLine &args, APlayerPawn *instigator, int key);
+	virtual void Run (FCommandLine &args, AActor *instigator, int key);
 	static FConsoleCommand* FindByName (const char* name);
 
 	FConsoleCommand *m_Next, **m_Prev;
@@ -123,9 +123,9 @@ protected:
 };
 
 #define CCMD(n) \
-	void Cmd_##n (FCommandLine &, APlayerPawn *, int key); \
+	void Cmd_##n (FCommandLine &, AActor *, int key); \
 	FConsoleCommand Cmd_##n##_Ref (#n, Cmd_##n); \
-	void Cmd_##n (FCommandLine &argv, APlayerPawn *who, int key)
+	void Cmd_##n (FCommandLine &argv, AActor *who, int key)
 
 class FUnsafeConsoleCommand : public FConsoleCommand
 {
@@ -135,13 +135,13 @@ public:
 	{
 	}
 
-	virtual void Run (FCommandLine &args, APlayerPawn *instigator, int key) override;
+	virtual void Run (FCommandLine &args, AActor *instigator, int key) override;
 };
 
 #define UNSAFE_CCMD(n) \
-	static void Cmd_##n (FCommandLine &, APlayerPawn *, int key); \
+	static void Cmd_##n (FCommandLine &, AActor *, int key); \
 	static FUnsafeConsoleCommand Cmd_##n##_Ref (#n, Cmd_##n); \
-	void Cmd_##n (FCommandLine &argv, APlayerPawn *who, int key)
+	void Cmd_##n (FCommandLine &argv, AActor *who, int key)
 
 const int KEY_DBLCLICKED = 0x8000;
 
@@ -150,7 +150,7 @@ class FConsoleAlias : public FConsoleCommand
 public:
 	FConsoleAlias (const char *name, const char *command, bool noSave);
 	~FConsoleAlias ();
-	void Run (FCommandLine &args, APlayerPawn *Instigator, int key);
+	void Run (FCommandLine &args, AActor *instigator, int key);
 	bool IsAlias ();
 	void PrintAlias ();
 	void Archive (FConfigFile *f);
@@ -171,7 +171,7 @@ public:
 	{
 	}
 
-	virtual void Run (FCommandLine &args, APlayerPawn *instigator, int key) override;
+	virtual void Run (FCommandLine &args, AActor *instigator, int key) override;
 };
 
 // Actions

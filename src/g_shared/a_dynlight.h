@@ -47,6 +47,9 @@ enum LightFlag
 	LF_SPOT = 64
 };
 
+typedef TFlags<LightFlag> LightFlags;
+DEFINE_TFLAGS_OPERATORS(LightFlags)
+
 //==========================================================================
 //
 // Light definitions
@@ -64,15 +67,16 @@ public:
 	int GetArg(int arg) { return m_Args[arg]; }
 	uint8_t GetAttenuate() const { return m_attenuate; }
 	void SetOffset(float* ft) { m_Pos.X = ft[0]; m_Pos.Z = ft[1]; m_Pos.Y = ft[2]; }
-	void SetSubtractive(bool subtract) { m_subtractive = subtract; }
-	void SetAdditive(bool add) { m_additive = add; }
-	void SetDontLightSelf(bool add) { m_dontlightself = add; }
-	void SetAttenuate(bool on) { m_attenuate = on; }
-	void SetHalo(bool halo) { m_halo = halo; }
-	void SetDontLightActors(bool on) { m_dontlightactors = on; }
-	void SetSpot(bool spot) { m_spot = spot; }
+	void SetSubtractive(bool subtract) { if (subtract) m_lightFlags |= LF_SUBTRACTIVE; else m_lightFlags &= ~LF_SUBTRACTIVE; }
+	void SetAdditive(bool add) { if (add) m_lightFlags |= LF_ADDITIVE; else m_lightFlags &= ~LF_ADDITIVE; }
+	void SetDontLightSelf(bool add) { if (add) m_lightFlags |= LF_DONTLIGHTSELF; else m_lightFlags &= ~LF_DONTLIGHTSELF; }
+	void SetAttenuate(bool on) { m_attenuate = on; if (on) m_lightFlags |= LF_ATTENUATE; else m_lightFlags &= ~LF_ATTENUATE; }
+	void SetDontLightActors(bool on) { if (on) m_lightFlags |= LF_DONTLIGHTACTORS; else m_lightFlags &= ~LF_DONTLIGHTACTORS; }
+	void SetNoShadowmap(bool on) { if (on) m_lightFlags |= LF_NOSHADOWMAP; else m_lightFlags &= ~LF_NOSHADOWMAP; }
+	void SetSpot(bool spot) { if (spot) m_lightFlags |= LF_SPOT; else m_lightFlags &= ~LF_SPOT; }
 	void SetSpotInnerAngle(double angle) { m_spotInnerAngle = angle; }
 	void SetSpotOuterAngle(double angle) { m_spotOuterAngle = angle; }
+	static void SetAttenuationForLevel();
 
 	void OrderIntensities()
 	{
@@ -90,11 +94,7 @@ protected:
 	DVector3 m_Pos = { 0,0,0 };
 	ELightType m_type;
 	int8_t m_attenuate = -1;
-	bool m_subtractive = false;
-	bool m_additive = false;
-	bool m_halo = false;
-	bool m_dontlightself = false;
-	bool m_dontlightactors = false;
+	LightFlags m_lightFlags = 0;
 	bool m_swapped = false;
 	bool m_spot = false;
 	bool m_explicitPitch = false;
@@ -149,11 +149,6 @@ protected:
 };
 
 
-
-typedef TFlags<LightFlag> LightFlags;
-DEFINE_TFLAGS_OPERATORS(LightFlags)
-
-
 struct FLightNode
 {
 	FLightNode ** prevTarget;
@@ -180,7 +175,7 @@ struct FDynamicLight
 
 	bool ShouldLightActor(AActor *check)
 	{
-		return visibletoplayer && IsActive() && (!(lightflags & LF_DONTLIGHTSELF) || target != check) && !(lightflags&LF_DONTLIGHTACTORS);
+		return visibletoplayer && IsActive() && (!((*pLightFlags) & LF_DONTLIGHTSELF) || target != check) && !((*pLightFlags) & LF_DONTLIGHTACTORS);
 	}
 
 	void SetOffset(const DVector3 &pos)
@@ -197,9 +192,13 @@ struct FDynamicLight
 	int GetIntensity() const { return pArgs[LIGHT_INTENSITY]; }
 	int GetSecondaryIntensity() const { return pArgs[LIGHT_SECONDARY_INTENSITY]; }
 
-	bool IsSubtractive() const { return !!(lightflags & LF_SUBTRACTIVE); }
-	bool IsAdditive() const { return !!(lightflags & LF_ADDITIVE); }
-	bool IsSpot() const { return !!(lightflags & LF_SPOT); }
+	bool IsSubtractive() const { return !!((*pLightFlags) & LF_SUBTRACTIVE); }
+	bool IsAdditive() const { return !!((*pLightFlags) & LF_ADDITIVE); }
+	bool IsSpot() const { return !!((*pLightFlags) & LF_SPOT); }
+	bool IsAttenuated() const { return !!((*pLightFlags) & LF_ATTENUATE); }
+	bool DontShadowmap() const { return !!((*pLightFlags) & LF_NOSHADOWMAP); }
+	bool DontLightSelf() const { return !!((*pLightFlags) & (LF_DONTLIGHTSELF|LF_DONTLIGHTACTORS)); }	// dontlightactors implies dontlightself.
+	bool DontLightActors() const { return !!((*pLightFlags) & LF_DONTLIGHTACTORS); }
 	void Deactivate() { m_active = false; }
 	void Activate();
 
@@ -229,6 +228,7 @@ public:
 	const DAngle *pSpotOuterAngle;
 	const DAngle *pPitch;	// This is to handle pitch overrides through GLDEFS, it can either point to the target's pitch or the light definition.
 	const int *pArgs;
+	const LightFlags *pLightFlags;
 
 	double specialf1;
 	FDynamicLight *next, *prev;
@@ -236,7 +236,6 @@ public:
 	TObjPtr<AActor *> target;
 	FLightNode * touching_sides;
 	FLightNode * touching_sector;
-	LightFlags lightflags;
 	float radius;			// The maximum size the light can be with its current settings.
 	float m_currentRadius;	// The current light size.
 	int m_tickCount;

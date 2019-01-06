@@ -352,13 +352,13 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 	// [JM] Fire KILL type scripts for actor. Not needed for players, since they have the "DEATH" script type.
 	if (!player && !(flags7 & MF7_NOKILLSCRIPTS) && ((flags7 & MF7_USEKILLSCRIPTS) || gameinfo.forcekillscripts))
 	{
-		FBehavior::StaticStartTypedScripts(SCRIPT_Kill, this, true, 0, true);
+		level.Behaviors.StartTypedScripts(SCRIPT_Kill, this, true, 0, true);
 	}
 
 	flags &= ~(MF_SHOOTABLE|MF_FLOAT|MF_SKULLFLY);
 	if (!(flags4 & MF4_DONTFALL)) flags&=~MF_NOGRAVITY;
 	flags |= MF_DROPOFF;
-	if ((flags3 & MF3_ISMONSTER) || FindState(NAME_Raise) != NULL || IsKindOf(RUNTIME_CLASS(APlayerPawn)))
+	if ((flags3 & MF3_ISMONSTER) || FindState(NAME_Raise) != NULL || IsKindOf(NAME_PlayerPawn))
 	{	// [RH] Only monsters get to be corpses.
 		// Objects with a raise state should get the flag as well so they can
 		// be revived by an Arch-Vile. Batman Doom needs this.
@@ -563,7 +563,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 		E_PlayerDied(int(player - players));
 
 		// Death script execution, care of Skull Tag
-		FBehavior::StaticStartTypedScripts (SCRIPT_Death, this, true);
+		level.Behaviors.StartTypedScripts (SCRIPT_Death, this, true);
 
 		// [RH] Force a delay between death and respawn
 		player->respawn_time = level.time + TICRATE;
@@ -797,7 +797,8 @@ static inline bool MustForcePain(AActor *target, AActor *inflictor)
 
 static inline bool isFakePain(AActor *target, AActor *inflictor, int damage)
 {
-	return ((target->flags7 & MF7_ALLOWPAIN && damage > 0) || (inflictor && (inflictor->flags7 & MF7_CAUSEPAIN)));
+	return (((target->flags7 & MF7_ALLOWPAIN || target->flags5 & MF5_NODAMAGE) && damage > 0) || 
+			(inflictor && (inflictor->flags7 & MF7_CAUSEPAIN)));
 }
 
 // [MC] Completely ripped out of DamageMobj to make it less messy.
@@ -983,6 +984,25 @@ DEFINE_ACTION_FUNCTION(AActor, TriggerPainChance)
 ==================
 */
 
+//===========================================================================
+//
+// 
+//
+//===========================================================================
+
+static int hasBuddha(player_t *player)
+{
+	if (player->playerstate == PST_DEAD) return 0;
+	if (player->cheats & CF_BUDDHA2) return 2;
+
+	if ((player->cheats & CF_BUDDHA) ||
+		(player->mo->flags7 & MF7_BUDDHA) ||
+		player->mo->FindInventory(PClass::FindActor(NAME_PowerBuddha), true) != nullptr) return 1;
+
+	return 0;
+}
+
+
 
 // Returns the amount of damage actually inflicted upon the target, or -1 if
 // the damage was cancelled.
@@ -1046,7 +1066,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 		else
 		{
 			// Players are optionally excluded from getting thrust by damage.
-			if (static_cast<APlayerPawn *>(target)->PlayerFlags & PPF_NOTHRUSTWHENINVUL)
+			if (target->IntVar(NAME_PlayerFlags) & PPF_NOTHRUSTWHENINVUL)
 			{
 				return 0;
 			}
@@ -1311,7 +1331,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 			// but telefragging should still do enough damage to kill the player)
 			// Ignore players that are already dead.
 			// [MC]Buddha2 absorbs telefrag damage, and anything else thrown their way.
-			int buddha = player->mo->hasBuddha();
+			int buddha = hasBuddha(player);
 			if (flags & DMG_FORCED) buddha = 0;
 			if (telefragDamage && buddha == 1) buddha = 0;
 			if (buddha)
@@ -1758,7 +1778,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPain
 	target->health -= damage;
 	if (target->health <= 0)
 	{ // Death
-		int buddha = player->mo->hasBuddha();
+		int buddha = hasBuddha(player);
 		if (telefragDamage && buddha == 1) buddha = 0;
 		if (buddha)
 		{ // [SP] Save the player... 

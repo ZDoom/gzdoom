@@ -1154,9 +1154,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 
  static int SectorIndex(sector_t *self)
  {
-	 unsigned ndx = self->Index();
-	 if (ndx >= level.sectors.Size()) return -1;	// This must not throw because it is the only means to check that the given pointer is valid.
-	 return ndx;
+	 return self->Index();
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, Index, SectorIndex)
@@ -1295,12 +1293,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 
  static int LineIndex(line_t *self)
  {
-	 unsigned ndx = self->Index();
-	 if (ndx >= level.lines.Size())
-	 {
-		 return -1;
-	 }
-	 return ndx;
+	 return self->Index();
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Line, Index, LineIndex)
@@ -1594,12 +1587,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 
  static int SideIndex(side_t *self)
  {
-	 unsigned ndx = self->Index();
-	 if (ndx >= level.sides.Size())
-	 {
-		 return -1;
-	 }
-	 return ndx;
+	 return self->Index();
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Side, Index, SideIndex)
@@ -1616,12 +1604,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 
  static int VertexIndex(vertex_t *self)
  {
-	 unsigned ndx = self->Index();
-	 if (ndx >= level.vertexes.Size())
-	 {
-		 return -1;
-	 }
-	 return ndx;
+	 return self->Index();
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Vertex, Index, VertexIndex)
@@ -1945,7 +1928,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FWeaponSlots, SlotSize, SlotSize)
 DEFINE_ACTION_FUNCTION_NATIVE(FWeaponSlots, SetupWeaponSlots, FWeaponSlots::SetupWeaponSlots)
 {
 	PARAM_PROLOGUE;
-	PARAM_OBJECT(pawn, APlayerPawn);
+	PARAM_OBJECT(pawn, AActor);
 	FWeaponSlots::SetupWeaponSlots(pawn);
 	return 0;
 }
@@ -1956,13 +1939,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(FWeaponSlots, SetupWeaponSlots, FWeaponSlots::Setu
 //
 //=====================================================================================
 
-
-DEFINE_ACTION_FUNCTION_NATIVE(DSpotState, GetSpotState, DSpotState::GetSpotState)
-{
-	PARAM_PROLOGUE;
-	PARAM_BOOL(create);
-	ACTION_RETURN_OBJECT(DSpotState::GetSpotState(create));
-}
 
 static void AddSpot(DSpotState *state, AActor *spot)
 {
@@ -2375,19 +2351,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, SetClipRect, SBar_SetClipRect)
 
 static void GetGlobalACSString(int index, FString *result)
 {
-	*result = FBehavior::StaticLookupString(ACS_GlobalVars[index]);
+	*result = level.Behaviors.LookupString(ACS_GlobalVars[index]);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSString, GetGlobalACSString)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(index);
-	ACTION_RETURN_STRING(FBehavior::StaticLookupString(ACS_GlobalVars[index]));
+	ACTION_RETURN_STRING(level.Behaviors.LookupString(ACS_GlobalVars[index]));
 }
 
 static void GetGlobalACSArrayString(int arrayno, int index, FString *result)
 {
-	*result = FBehavior::StaticLookupString(ACS_GlobalVars[index]);
+	*result = level.Behaviors.LookupString(ACS_GlobalVars[index]);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSArrayString, GetGlobalACSArrayString)
@@ -2395,7 +2371,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSArrayString, GetGlobal
 	PARAM_PROLOGUE;
 	PARAM_INT(arrayno);
 	PARAM_INT(index);
-	ACTION_RETURN_STRING(FBehavior::StaticLookupString(ACS_GlobalArrays[arrayno][index]));
+	ACTION_RETURN_STRING(level.Behaviors.LookupString(ACS_GlobalArrays[arrayno][index]));
 }
 
 static int GetGlobalACSValue(int index)
@@ -2505,6 +2481,20 @@ DEFINE_ACTION_FUNCTION_NATIVE(DHUDFont, Create, CreateHudFont)
 //
 //
 //=====================================================================================
+
+DSpotState *GetSpotState(FLevelLocals *self, int create)
+{
+	if (create && self->SpotState == nullptr) self->SpotState = Create<DSpotState>();
+	GC::WriteBarrier(self->SpotState);
+	return self->SpotState;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetSpotState, GetSpotState)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_INT(create);
+	ACTION_RETURN_POINTER(GetSpotState(self, create));
+}
 
 static void FormatMapName(FLevelLocals *self, int cr, FString *result)
 {

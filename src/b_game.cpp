@@ -92,6 +92,7 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 #include "d_player.h"
 #include "events.h"
 #include "vm.h"
+#include "g_levellocals.h"
 
 static FRandom pr_botspawn ("BotSpawn");
 
@@ -447,7 +448,7 @@ void FCajunMaster::RemoveAllBots (bool fromlist)
 			// [ZZ] run event hook
 			E_PlayerDisconnected(i);
 			//
-			FBehavior::StaticStartTypedScripts (SCRIPT_Disconnect, players[i].mo, true, i, true);
+			level.Behaviors.StartTypedScripts (SCRIPT_Disconnect, players[i].mo, true, i, true);
 			ClearPlayer (i, !fromlist);
 		}
 	}

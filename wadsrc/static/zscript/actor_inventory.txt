@@ -110,14 +110,12 @@ extend class Actor
 
 	virtual void RemoveInventory(Inventory item)
 	{
-		Inventory invp;
-
 		if (item != NULL && item.Owner != NULL)	// can happen if the owner was destroyed by some action from an item's use state.
 		{
 			if (Inv == item) Inv = item.Inv;
 			else
 			{
-				for (invp = Inv; invp != null; invp = invp.Inv)
+				for (Actor invp = self; invp != null; invp = invp.Inv)
 				{
 					if (invp.Inv == item)
 					{
@@ -730,6 +728,44 @@ extend class Actor
 		return false;
 	}
 
+	//============================================================================
+	//
+	// AActor :: ObtainInventory
+	//
+	// Removes the items from the other actor and puts them in this actor's
+	// inventory. The actor receiving the inventory must not have any items.
+	//
+	//============================================================================
+
+	void ObtainInventory (Actor other)
+	{
+		Inv = other.Inv;
+		InventoryID = other.InventoryID;
+		other.Inv = NULL;
+		other.InventoryID = 0;
+
+		let you = PlayerPawn(other);
+		let me = PlayerPawn(self);
+		
+		if (you)
+		{
+			if (me)
+			{
+				me.InvFirst = you.InvFirst;
+				me.InvSel = you.InvSel;
+			}
+			you.InvFirst = NULL;
+			you.InvSel = NULL;
+		}
+
+		
+		for (let item = Inv; item != null; item = item.Inv)
+		{
+			item.Owner = self;
+		}
+	}
+
+	
 	//===========================================================================
 	//
 	// A_SelectWeapon

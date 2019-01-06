@@ -52,8 +52,8 @@ public:
 	typedef T EnumType;
 	typedef TT IntType;
 
-	TFlags(){}
-	TFlags (const Self& other) : Value (other.GetValue()) {}
+	TFlags() = default;
+	TFlags(const Self& other) = default;
 	TFlags (T value) : Value (static_cast<TT> (value)) {}
 
 	// This allows initializing the flagset with 0, as 0 implicitly converts into a null pointer.

@@ -385,7 +385,7 @@ namespace swrenderer
 				float lz = (float)lightZ;
 
 				// Precalculate the constant part of the dot here so the drawer doesn't have to.
-				bool is_point_light = (cur_node->lightsource->lightflags & LF_ATTENUATE) != 0;
+				bool is_point_light = cur_node->lightsource->IsAttenuated();
 				float lconstant = lx * lx + ly * ly;
 				float nlconstant = is_point_light ? lx * drawerargs.dc_normal.X + ly * drawerargs.dc_normal.Y : 0.0f;
 

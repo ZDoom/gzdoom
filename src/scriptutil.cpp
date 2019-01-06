@@ -62,7 +62,7 @@ void ScriptUtil::BuildParameters(va_list ap)
 				break;
 				
 			case ACSClass:
-				parameters.Push(VMValue(PClass::FindActor(FBehavior::StaticLookupString(va_arg(ap, int)))));
+				parameters.Push(VMValue(PClass::FindActor(level.Behaviors.LookupString(va_arg(ap, int)))));
 				break;
 		}
 	}

@@ -2016,7 +2016,7 @@ FUNC(LS_FS_Execute)
 {
 	if (arg1 && ln && backSide) return false;
 	if (arg2!=0 && !P_CheckKeys(it, arg2, !!arg3)) return false;
-	return T_RunScript(arg0,it);
+	return T_RunScript(&level, arg0, it);
 }
 
 

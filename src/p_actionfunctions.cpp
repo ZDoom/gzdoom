@@ -1935,34 +1935,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_Burst)
 	return 0;
 }
 
-//===========================================================================
-//
-// A_Stop
-// resets all velocity of the actor to 0
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_Stop)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	self->Vel.Zero();
-	if (self->player && self->player->mo == self && !(self->player->cheats & CF_PREDICTING))
-	{
-		self->player->mo->PlayIdle();
-		self->player->Vel.Zero();
-	}
-	return 0;
-}
-
-static void CheckStopped(AActor *self)
-{
-	if (self->player != NULL &&
-		self->player->mo == self &&
-		!(self->player->cheats & CF_PREDICTING) && !self->Vel.isZero())
-	{
-		self->player->mo->PlayIdle();
-		self->player->Vel.Zero();
-	}
-}
 
 //===========================================================================
 //
@@ -2246,15 +2218,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckLOF)
 		{ // default to hitscan origin
 
 			// Synced with hitscan: self->Height is strangely NON-conscientious about getting the right actor for player
-			pos.Z += self->Height *0.5;
-			if (self->player != NULL)
-			{
-				pos.Z += self->player->mo->AttackZOffset * self->player->crouchfactor;
-			}
-			else
-			{
-				pos.Z += 8;
-			}
+			pos.Z += self->Height *0.5 + self->AttackOffset();
 		}
 
 		if (target)
@@ -2883,89 +2847,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetRoll)
 
 //===========================================================================
 //
-// A_ScaleVelocity
-//
-// Scale actor's velocity.
-//
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_ScaleVelocity)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(scale);
-	PARAM_INT(ptr);
-
-	AActor *ref = COPY_AAPTR(self, ptr);
-
-	if (ref == NULL)
-	{
-		return 0;
-	}
-
-	bool was_moving = !ref->Vel.isZero();
-
-	ref->Vel *= scale;
-
-	// If the actor was previously moving but now is not, and is a player,
-	// update its player variables. (See A_Stop.)
-	if (was_moving)
-	{
-		CheckStopped(ref);
-	}
-	return 0;
-}
-
-//===========================================================================
-//
-// A_ChangeVelocity
-//
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_ChangeVelocity)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT	(x)		
-	PARAM_FLOAT	(y)		
-	PARAM_FLOAT	(z)		
-	PARAM_INT	(flags)	
-	PARAM_INT	(ptr)	
-
-	AActor *ref = COPY_AAPTR(self, ptr);
-
-	if (ref == NULL)
-	{
-		return 0;
-	}
-
-	INTBOOL was_moving = !ref->Vel.isZero();
-
-	DVector3 vel(x, y, z);
-	double sina = ref->Angles.Yaw.Sin();
-	double cosa = ref->Angles.Yaw.Cos();
-
-	if (flags & 1)	// relative axes - make x, y relative to actor's current angle
-	{
-		vel.X = x*cosa - y*sina;
-		vel.Y = x*sina + y*cosa;
-	}
-	if (flags & 2)	// discard old velocity - replace old velocity with new velocity
-	{
-		ref->Vel = vel;
-	}
-	else	// add new velocity to old velocity
-	{
-		ref->Vel += vel;
-	}
-
-	if (was_moving)
-	{
-		CheckStopped(ref);
-	}
-	return 0;
-}
-
-//===========================================================================
-//
 // A_SetUserVar
 //
 //===========================================================================
@@ -3100,6 +2981,8 @@ enum T_Flags
 	TF_SENSITIVEZ =		0x00000800, // Fail if the actor wouldn't fit in the position (for Z).
 };
 
+DSpotState *GetSpotState(FLevelLocals *self, int create);
+
 DEFINE_ACTION_FUNCTION(AActor, A_Teleport)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
@@ -3156,7 +3039,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Teleport)
 		}
 	}
 
-	DSpotState *state = DSpotState::GetSpotState();
+	DSpotState *state = GetSpotState(&level, false);
 	if (state == NULL)
 	{
 		return numret;
@@ -4983,7 +4866,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetSize)
 	}
 	if (self->player && self->player->mo == self)
 	{
-		self->player->mo->FullHeight = newheight;
+		self->player->mo->FloatVar(NAME_FullHeight) = newheight;
 	}
 
 	ACTION_RETURN_BOOL(true);

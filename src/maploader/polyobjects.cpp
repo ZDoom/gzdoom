@@ -120,7 +120,7 @@ void MapLoader::IterFindPolySides (FPolyObj *po, side_t *side)
 	assert(sidetemp.Size() > 0);
 
 	vnum.Clear();
-	vnum.Push(uint32_t(side->V1()->Index()));
+	vnum.Push(uint32_t(Index(side->V1())));
 	vnumat = 0;
 
 	while (vnum.Size() != vnumat)
@@ -129,7 +129,7 @@ void MapLoader::IterFindPolySides (FPolyObj *po, side_t *side)
 		while (sidenum != NO_SIDE)
 		{
 			po->Sidedefs.Push(&Level->sides[sidenum]);
-			AddPolyVert(vnum, uint32_t(Level->sides[sidenum].V2()->Index()));
+			AddPolyVert(vnum, uint32_t(Index(Level->sides[sidenum].V2())));
 			sidenum = sidetemp[sidenum].b.next;
 		}
 	}
@@ -208,7 +208,7 @@ void MapLoader::SpawnPolyobj (int index, int tag, int type)
 			{
 				if (!Level->sides[i].linedef->args[1])
 				{
-					Printf(TEXTCOLOR_RED "SpawnPolyobj: Explicit line missing order number in poly %d, linedef %d.\n", tag, Level->sides[i].linedef->Index());
+					Printf(TEXTCOLOR_RED "SpawnPolyobj: Explicit line missing order number in poly %d, linedef %d.\n", tag, Index(Level->sides[i].linedef));
 					return;
 				}
 				else

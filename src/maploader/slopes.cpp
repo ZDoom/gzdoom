@@ -312,10 +312,10 @@ void MapLoader::SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt
 			DVector3 vec1, vec2;
 			int vi1, vi2, vi3;
 
-			vi1 = sec.Lines[0]->v1->Index();
-			vi2 = sec.Lines[0]->v2->Index();
+			vi1 = Index(sec.Lines[0]->v1);
+			vi2 = Index(sec.Lines[0]->v2);
 			vi3 = (sec.Lines[1]->v1 == sec.Lines[0]->v1 || sec.Lines[1]->v1 == sec.Lines[0]->v2)?
-				sec.Lines[1]->v2->Index() : sec.Lines[1]->v1->Index();
+				Index(sec.Lines[1]->v2) : Index(sec.Lines[1]->v1);
 
 			vt1 = DVector3(Level->vertexes[vi1].fPos(), 0);
 			vt2 = DVector3(Level->vertexes[vi2].fPos(), 0);

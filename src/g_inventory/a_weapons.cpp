@@ -491,7 +491,7 @@ void FWeaponSlots::SendDifferences(int playernum, const FWeaponSlots &other)
 void FWeaponSlots::SetFromPlayer(PClassActor *type)
 {
 	Clear();
-	auto Slot = ((APlayerPawn*)GetDefaultByType(type))->Slot;
+	auto Slot = &GetDefaultByType(type)->NameVar(NAME_Slot);
 	for (int i = 0; i < NUM_WEAPON_SLOTS; ++i)
 	{
 		if (Slot[i] != NAME_None)
@@ -756,7 +756,7 @@ void P_PlaybackKeyConfWeapons(FWeaponSlots *slots)
 
 //===========================================================================
 //
-// APlayerPawn :: SetupWeaponSlots
+// SetupWeaponSlots
 //
 // Sets up the default weapon slots for this player. If this is also the
 // local player, determines local modifications and sends those across the
@@ -764,7 +764,7 @@ void P_PlaybackKeyConfWeapons(FWeaponSlots *slots)
 //
 //===========================================================================
 
-void FWeaponSlots::SetupWeaponSlots(APlayerPawn *pp)
+void FWeaponSlots::SetupWeaponSlots(AActor *pp)
 {
 	auto player = pp->player;
 	if (player != nullptr && player->mo == pp)

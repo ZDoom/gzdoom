@@ -190,13 +190,6 @@ public:
 		assert(q != NULL);
 		return *q;
 	}
-	T *operator&() throw()
-	{
-		// Does not perform a read barrier. The only real use for this is with
-		// the DECLARE_POINTER macro, where a read barrier would be a very bad
-		// thing.
-		return &pp;
-	}
 	T operator->() throw()
 	{
 		return GC::ReadBarrier(pp);

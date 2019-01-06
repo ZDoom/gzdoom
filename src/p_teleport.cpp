@@ -48,8 +48,6 @@
 
 static FRandom pr_teleport ("Teleport");
 
-extern void P_CalcHeight (player_t *player);
-
 CVAR (Bool, telezoom, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
 //==========================================================================
@@ -204,7 +202,7 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 	if (thing->player && ((flags & TELF_DESTFOG) || !(flags & TELF_KEEPORIENTATION)) && !(flags & TELF_KEEPVELOCITY))
 	{
 		int time = 18;
-		IFVIRTUALPTR(thing, APlayerPawn, GetTeleportFreezeTime)
+		IFVIRTUALPTRNAME(thing, NAME_PlayerPawn, GetTeleportFreezeTime)
 		{
 			VMValue param = thing;
 			VMReturn ret(&time);
@@ -408,7 +406,7 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 		}
 		if (vx == 0 && vy == 0 && thing->player != NULL && thing->player->mo == thing && !predicting)
 		{
-			thing->player->mo->PlayIdle ();
+			PlayIdle (thing->player->mo);
 		}
 		return true;
 	}
@@ -585,7 +583,11 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 				player->deltaviewheight = 0;
 
 				// Set player's view according to the newly set parameters
-				P_CalcHeight(player);
+				IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, CalcHeight)
+				{
+					VMValue param = player->mo;
+					VMCall(func, &param, 1, nullptr, 0);
+				}
 
 				// Reset the delta to have the same dynamics as before
 				player->deltaviewheight = deltaviewheight;

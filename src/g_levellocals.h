@@ -43,10 +43,14 @@
 #include "p_blockmap.h"
 #include "p_local.h"
 #include "po_man.h"
+#include "p_acs.h"
 #include "p_destructible.h"
 #include "r_data/r_sections.h"
 #include "r_data/r_canvastexture.h"
 
+class DACSThinker;
+class DFraggleThinker;
+class DSpotState;
 
 struct FLevelData
 {
@@ -96,6 +100,7 @@ struct FLevelData
 	FPlayerStart		playerstarts[MAXPLAYERS];
 	TArray<FPlayerStart> AllPlayerStarts;
 
+	FBehaviorContainer Behaviors;
 };
 
 struct FLevelLocals : public FLevelData
@@ -200,6 +205,13 @@ struct FLevelLocals : public FLevelData
 
 	FDynamicLight *lights;
 
+	// links to global game objects
+	TArray<TObjPtr<AActor *>> CorpseQueue;
+	TObjPtr<DFraggleThinker *> FraggleScriptThinker = nullptr;
+	TObjPtr<DACSThinker*> ACSThinker = nullptr;
+
+	TObjPtr<DSpotState *> SpotState = nullptr;
+
 	bool		IsJumpingAllowed() const;
 	bool		IsCrouchingAllowed() const;
 	bool		IsFreelookAllowed() const;
@@ -240,44 +252,9 @@ struct FLevelLocals : public FLevelData
 
 extern FLevelLocals level;
 
-inline int vertex_t::Index() const
-{
-	return int(this - &level.vertexes[0]);
-}
-
-inline int side_t::Index() const
-{
-	return int(this - &level.sides[0]);
-}
-
-inline int line_t::Index() const
-{
-	return int(this - &level.lines[0]);
-}
-
-inline int seg_t::Index() const
-{
-	return int(this - &level.segs[0]);
-}
-
-inline int subsector_t::Index() const
-{
-	return int(this - &level.subsectors[0]);
-}
-
-inline int node_t::Index() const
-{
-	return int(this - &level.nodes[0]);
-}
-
 inline FSectorPortal *line_t::GetTransferredPortal()
 {
 	return portaltransferred >= level.sectorPortals.Size() ? (FSectorPortal*)nullptr : &level.sectorPortals[portaltransferred];
-}
-
-inline int sector_t::Index() const 
-{ 
-	return int(this - &level.sectors[0]); 
 }
 
 inline FSectorPortal *sector_t::GetPortal(int plane)

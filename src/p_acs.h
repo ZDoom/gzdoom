@@ -102,12 +102,10 @@ public:
 	int AddString(const char *str);
 	int AddString(FString &str);
 	const char *GetString(int strnum);
-	void LockString(int strnum);
-	void UnlockString(int strnum);
+	void LockString(int levelnum, int strnum);
 	void UnlockAll();
 	void MarkString(int strnum);
-	void LockStringArray(const int *strnum, unsigned int count);
-	void UnlockStringArray(const int *strnum, unsigned int count);
+	void LockStringArray(int levelnum, const int *strnum, unsigned int count);
 	void MarkStringArray(const int *strnum, unsigned int count);
 	void MarkStringMap(const FWorldGlobalArray &array);
 	void PurgeStrings();
@@ -134,8 +132,8 @@ private:
 		bool Mark;
 		TArray<int> Locks;
 
-		void Lock();
-		void Unlock();
+		void Lock(int levelnum);
+		void Unlock(int levelnum);
 	};
 	TArray<PoolEntry> Pool;
 	unsigned int PoolBuckets[NUM_BUCKETS];
@@ -419,8 +417,7 @@ private:
 	void SerializeVarSet (FSerializer &arc, int32_t *vars, int max);
 
 	void MarkMapVarStrings() const;
-	void LockMapVarStrings() const;
-	void UnlockMapVarStrings() const;
+	void LockMapVarStrings(int levelnum) const;
 
 	friend void ArrangeScriptProfiles(TArray<ProfileCollector> &profiles);
 	friend void ArrangeFunctionProfiles(TArray<ProfileCollector> &profiles);
@@ -438,8 +435,8 @@ struct FBehaviorContainer
 	FBehavior *GetModule(int lib);
 	void SerializeModuleStates(FSerializer &arc);
 	void MarkLevelVarStrings();
-	void LockLevelVarStrings();
-	void UnlockLevelVarStrings();
+	void LockLevelVarStrings(int levelnum);
+	void UnlockLevelVarStrings(int levelnum);
 
 	const ScriptPtr *FindScript(int script, FBehavior *&module);
 	const char *LookupString(uint32_t index);
@@ -447,6 +444,7 @@ struct FBehaviorContainer
 	void StopMyScripts(AActor *actor);
 
 };
+
 
 
 

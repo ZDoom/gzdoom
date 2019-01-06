@@ -854,7 +854,7 @@ void G_DoCompleted (void)
 			G_SnapshotLevel ();
 			// Do not free any global strings this level might reference
 			// while it's not loaded.
-			level.Behaviors.LockLevelVarStrings();
+			level.Behaviors.LockLevelVarStrings(level.levelnum);
 		}
 		else
 		{ // Make sure we don't have a snapshot lying around from before.
@@ -1718,7 +1718,7 @@ void G_UnSnapshotLevel (bool hubLoad)
 	if (hubLoad)
 	{
 		// Unlock ACS global strings that were locked when the snapshot was made.
-		level.Behaviors.UnlockLevelVarStrings();
+		level.Behaviors.UnlockLevelVarStrings(level.levelnum);
 	}
 }
 

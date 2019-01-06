@@ -687,13 +687,9 @@ public:
 	{
 		GlobalACSStrings.MarkStringArray(&Localvars[0], Localvars.Size());
 	}
-	void LockLocalVarStrings() const
+	void LockLocalVarStrings(int levelnum) const
 	{
-		GlobalACSStrings.LockStringArray(&Localvars[0], Localvars.Size());
-	}
-	void UnlockLocalVarStrings() const
-	{
-		GlobalACSStrings.UnlockStringArray(&Localvars[0], Localvars.Size());
+		GlobalACSStrings.LockStringArray(levelnum, &Localvars[0], Localvars.Size());
 	}
 
 protected:
@@ -929,17 +925,17 @@ FACSStack::~FACSStack()
 
 ACSStringPool GlobalACSStrings;
 
-void ACSStringPool::PoolEntry::Lock()
+void ACSStringPool::PoolEntry::Lock(int levelnum)
 {
-	if (Locks.Find(level.levelnum) == Locks.Size())
+	if (Locks.Find(levelnum) == Locks.Size())
 	{
-		Locks.Push(level.levelnum);
+		Locks.Push(levelnum);
 	}
 }
 
-void ACSStringPool::PoolEntry::Unlock()
+void ACSStringPool::PoolEntry::Unlock(int levelnum)
 {
-	auto ndx = Locks.Find(level.levelnum);
+	auto ndx = Locks.Find(levelnum);
 	if (ndx < Locks.Size())
 	{
 		Locks.Delete(ndx);
@@ -1028,28 +1024,12 @@ const char *ACSStringPool::GetString(int strnum)
 //
 //============================================================================
 
-void ACSStringPool::LockString(int strnum)
+void ACSStringPool::LockString(int levelnum, int strnum)
 {
 	assert((strnum & LIBRARYID_MASK) == STRPOOL_LIBRARYID_OR);
 	strnum &= ~LIBRARYID_MASK;
 	assert((unsigned)strnum < Pool.Size());
-	Pool[strnum].Lock();
-}
-
-//============================================================================
-//
-// ACSStringPool :: UnlockString
-//
-// When equally mated with LockString, allows this string to be purged.
-//
-//============================================================================
-
-void ACSStringPool::UnlockString(int strnum)
-{
-	assert((strnum & LIBRARYID_MASK) == STRPOOL_LIBRARYID_OR);
-	strnum &= ~LIBRARYID_MASK;
-	assert((unsigned)strnum < Pool.Size());
-	Pool[strnum].Unlock();
+	Pool[strnum].Lock(levelnum);
 }
 
 //============================================================================
@@ -1081,7 +1061,7 @@ void ACSStringPool::MarkString(int strnum)
 //
 //============================================================================
 
-void ACSStringPool::LockStringArray(const int *strnum, unsigned int count)
+void ACSStringPool::LockStringArray(int levelnum, const int *strnum, unsigned int count)
 {
 	for (unsigned int i = 0; i < count; ++i)
 	{
@@ -1091,31 +1071,7 @@ void ACSStringPool::LockStringArray(const int *strnum, unsigned int count)
 			num &= ~LIBRARYID_MASK;
 			if ((unsigned)num < Pool.Size())
 			{
-				Pool[num].Lock();
-			}
-		}
-	}
-}
-
-//============================================================================
-//
-// ACSStringPool :: UnlockStringArray
-//
-// Reverse of LockStringArray.
-//
-//============================================================================
-
-void ACSStringPool::UnlockStringArray(const int *strnum, unsigned int count)
-{
-	for (unsigned int i = 0; i < count; ++i)
-	{
-		int num = strnum[i];
-		if ((num & LIBRARYID_MASK) == STRPOOL_LIBRARYID_OR)
-		{
-			num &= ~LIBRARYID_MASK;
-			if ((unsigned)num < Pool.Size())
-			{
-				Pool[num].Unlock();
+				Pool[num].Lock(levelnum);
 			}
 		}
 	}
@@ -2074,26 +2030,26 @@ void FBehaviorContainer::MarkLevelVarStrings()
 	}
 }
 
-void FBehaviorContainer::LockLevelVarStrings()
+void FBehaviorContainer::LockLevelVarStrings(int levelnum)
 {
 	// Lock map variables.
 	for (uint32_t modnum = 0; modnum < StaticModules.Size(); ++modnum)
 	{
-		StaticModules[modnum]->LockMapVarStrings();
+		StaticModules[modnum]->LockMapVarStrings(levelnum);
 	}
 	// Lock running scripts' local variables.
 	if (level.ACSThinker != nullptr)
 	{
 		for (DLevelScript *script = level.ACSThinker->Scripts; script != NULL; script = script->GetNext())
 		{
-			script->LockLocalVarStrings();
+			script->LockLocalVarStrings(levelnum);
 		}
 	}
 }
 
-void FBehaviorContainer::UnlockLevelVarStrings()
+void FBehaviorContainer::UnlockLevelVarStrings(int levelnum)
 {
-	GlobalACSStrings.UnlockForLevel(level.levelnum);
+	GlobalACSStrings.UnlockForLevel(levelnum);
 }
 
 void FBehavior::MarkMapVarStrings() const
@@ -2105,21 +2061,12 @@ void FBehavior::MarkMapVarStrings() const
 	}
 }
 
-void FBehavior::LockMapVarStrings() const
+void FBehavior::LockMapVarStrings(int levelnum) const
 {
-	GlobalACSStrings.LockStringArray(MapVarStore, NUM_MAPVARS);
+	GlobalACSStrings.LockStringArray(levelnum, MapVarStore, NUM_MAPVARS);
 	for (int i = 0; i < NumArrays; ++i)
 	{
-		GlobalACSStrings.LockStringArray(ArrayStore[i].Elements, ArrayStore[i].ArraySize);
-	}
-}
-
-void FBehavior::UnlockMapVarStrings() const
-{
-	GlobalACSStrings.UnlockStringArray(MapVarStore, NUM_MAPVARS);
-	for (int i = 0; i < NumArrays; ++i)
-	{
-		GlobalACSStrings.UnlockStringArray(ArrayStore[i].Elements, ArrayStore[i].ArraySize);
+		GlobalACSStrings.LockStringArray(levelnum, ArrayStore[i].Elements, ArrayStore[i].ArraySize);
 	}
 }
 

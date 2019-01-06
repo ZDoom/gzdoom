@@ -198,7 +198,7 @@ struct FLevelLocals : public FLevelData
 	float		MusicVolume;
 
 	// Hardware render stuff that can either be set via CVAR or MAPINFO
-	ELightMode	lightmode;
+	ELightMode	lightMode;
 	bool		brightfog;
 	bool		lightadditivesurfaces;
 	bool		notexturefill;
@@ -230,21 +230,6 @@ struct FLevelLocals : public FLevelData
 	{
 		return savegamerestore
 			|| (info != nullptr && info->Snapshot.mBuffer != nullptr && info->isValid());
-	}
-
-	bool isSoftwareLighting() const
-	{
-		return lightmode >= ELightMode::ZDoomSoftware;
-	}
-
-	bool isDarkLightMode() const
-	{
-		return !!((int)lightmode & (int)ELightMode::Doom);
-	}
-
-	void SetFallbackLightMode()
-	{
-		lightmode = ELightMode::Doom;
 	}
 };
 

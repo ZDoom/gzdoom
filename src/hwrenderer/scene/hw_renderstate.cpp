@@ -37,19 +37,21 @@
 // set current light color
 //
 //==========================================================================
-void FRenderState::SetColor(int sectorlightlevel, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon)
+void HWDrawInfo::SetColor(FRenderState &state, int sectorlightlevel, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon)
 {
 	if (fullbright)
 	{
-		SetColorAlpha(0xffffff, alpha, 0);
-		SetSoftLightLevel(255);
+		state.SetColorAlpha(0xffffff, alpha, 0);
+		if (isSoftwareLighting()) state.SetSoftLightLevel(255);
+		else state.SetNoSoftLightLevel();
 	}
 	else
 	{
-		int hwlightlevel = hw_CalcLightLevel(sectorlightlevel, rellight, weapon, cm.BlendFactor);
-		PalEntry pe = hw_CalcLightColor(hwlightlevel, cm.LightColor, cm.BlendFactor);
-		SetColorAlpha(pe, alpha, cm.Desaturation);
-		SetSoftLightLevel(hw_ClampLight(sectorlightlevel + rellight), cm.BlendFactor);
+		int hwlightlevel = CalcLightLevel(sectorlightlevel, rellight, weapon, cm.BlendFactor);
+		PalEntry pe = CalcLightColor(hwlightlevel, cm.LightColor, cm.BlendFactor);
+		state.SetColorAlpha(pe, alpha, cm.Desaturation);
+		if (isSoftwareLighting()) state.SetSoftLightLevel(hw_ClampLight(sectorlightlevel + rellight), cm.BlendFactor);
+		else state.SetNoSoftLightLevel();
 	}
 }
 
@@ -59,7 +61,7 @@ void FRenderState::SetColor(int sectorlightlevel, int rellight, bool fullbright,
 //
 //==========================================================================
 
-void FRenderState::SetShaderLight(float level, float olight)
+void HWDrawInfo::SetShaderLight(FRenderState &state, float level, float olight)
 {
 	const float MAXDIST = 256.f;
 	const float THRESHOLD = 96.f;
@@ -78,11 +80,11 @@ void FRenderState::SetShaderLight(float level, float olight)
 
 		lightfactor = 1.f + ((olight / level) - 1.f) * FACTOR;
 		if (lightfactor == 1.f) lightdist = 0.f;	// save some code in the shader
-		SetLightParms(lightfactor, lightdist);
+		state.SetLightParms(lightfactor, lightdist);
 	}
 	else
 	{
-		SetLightParms(1.f, 0.f);
+		state.SetLightParms(1.f, 0.f);
 	}
 }
 
@@ -93,7 +95,7 @@ void FRenderState::SetShaderLight(float level, float olight)
 //
 //==========================================================================
 
-void FRenderState::SetFog(int lightlevel, int rellight, bool fullbright, const FColormap *cmap, bool isadditive)
+void HWDrawInfo::SetFog(FRenderState &state, int lightlevel, int rellight, bool fullbright, const FColormap *cmap, bool isadditive)
 {
 	PalEntry fogcolor;
 	float fogdensity;
@@ -106,7 +108,7 @@ void FRenderState::SetFog(int lightlevel, int rellight, bool fullbright, const F
 	else if (cmap != NULL && !fullbright)
 	{
 		fogcolor = cmap->FadeColor;
-		fogdensity = hw_GetFogDensity(lightlevel, fogcolor, cmap->FogDensity, cmap->BlendFactor);
+		fogdensity = GetFogDensity(lightlevel, fogcolor, cmap->FogDensity, cmap->BlendFactor);
 		fogcolor.a = 0;
 	}
 	else
@@ -122,19 +124,19 @@ void FRenderState::SetFog(int lightlevel, int rellight, bool fullbright, const F
 	// no fog in enhanced vision modes!
 	if (fogdensity == 0 || gl_fogmode == 0)
 	{
-		EnableFog(false);
-		SetFog(0, 0);
+		state.EnableFog(false);
+		state.SetFog(0, 0);
 	}
 	else
 	{
-		if ((level.lightmode == ELightMode::Doom || (level.isSoftwareLighting() && cmap->BlendFactor > 0)) && fogcolor == 0)
+		if ((lightmode == ELightMode::Doom || (isSoftwareLighting() && cmap->BlendFactor > 0)) && fogcolor == 0)
 		{
-			float light = (float)hw_CalcLightLevel(lightlevel, rellight, false, cmap->BlendFactor);
-			SetShaderLight(light, lightlevel);
+			float light = (float)CalcLightLevel(lightlevel, rellight, false, cmap->BlendFactor);
+			SetShaderLight(state, light, lightlevel);
 		}
 		else
 		{
-			SetLightParms(1.f, 0.f);
+			state.SetLightParms(1.f, 0.f);
 		}
 
 		// For additive rendering using the regular fog color here would mean applying it twice
@@ -144,13 +146,13 @@ void FRenderState::SetFog(int lightlevel, int rellight, bool fullbright, const F
 			fogcolor = 0;
 		}
 
-		EnableFog(true);
-		SetFog(fogcolor, fogdensity);
+		state.EnableFog(true);
+		state.SetFog(fogcolor, fogdensity);
 
 		// Korshun: fullbright fog like in software renderer.
-		if (level.isSoftwareLighting() && cmap->BlendFactor == 0 && level.brightfog && fogdensity != 0 && fogcolor != 0)
+		if (isSoftwareLighting() && cmap->BlendFactor == 0 && level.brightfog && fogdensity != 0 && fogcolor != 0)
 		{
-			SetSoftLightLevel(255);
+			state.SetSoftLightLevel(255);
 		}
 	}
 }

@@ -140,6 +140,7 @@ struct HWDrawInfo
     
 	HWDrawList drawlists[GLDL_TYPES];
 	int vpIndex;
+	ELightMode lightmode;
 
 	HWDrawInfo * outer = nullptr;
 	int FullbrightFlags;
@@ -210,6 +211,14 @@ private:
 	int SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &lightdata, const secplane_t *plane);
 	int CreateOtherPlaneVertices(subsector_t *sub, const secplane_t *plane);
 	void DrawPSprite(HUDSprite *huds, FRenderState &state);
+	void SetColor(FRenderState &state, int sectorlightlevel, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon = false);
+	void SetFog(FRenderState &state, int lightlevel, int rellight, bool fullbright, const FColormap *cmap, bool isadditive);
+	void SetShaderLight(FRenderState &state, float level, float olight);
+	int CalcLightLevel(int lightlevel, int rellight, bool weapon, int blendfactor);
+	PalEntry CalcLightColor(int light, PalEntry pe, int blendfactor);
+	float GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity, int blendfactor);
+	bool CheckFog(sector_t *frontsector, sector_t *backsector);
+	WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &pos, int cm, area_t in_area, const DVector3 &playerpos);
 public:
 
 	void SetCameraPos(const DVector3 &pos)
@@ -307,5 +316,21 @@ public:
 
 
     GLDecal *AddDecal(bool onmirror);
+
+	bool isSoftwareLighting() const
+	{
+		return lightmode >= ELightMode::ZDoomSoftware;
+	}
+
+	bool isDarkLightMode() const
+	{
+		return !!((int)lightmode & (int)ELightMode::Doom);
+	}
+
+	void SetFallbackLightMode()
+	{
+		lightmode = ELightMode::Doom;
+	}
+
 };
 

@@ -75,7 +75,7 @@ void GLDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 	else state.AlphaFunc(Alpha_Greater, 0.f);
 
 
-	state.SetColor(lightlevel, rellight, di->isFullbrightScene(), Colormap, alpha);
+	di->SetColor(state, lightlevel, rellight, di->isFullbrightScene(), Colormap, alpha);
 	// for additively drawn decals we must temporarily set the fog color to black.
 	PalEntry fc = state.GetFogColor();
 	if (decal->RenderStyle.BlendOp == STYLEOP_Add && decal->RenderStyle.DestAlpha == STYLEALPHA_One)
@@ -106,9 +106,9 @@ void GLDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 				FColormap thiscm;
 				thiscm.FadeColor = Colormap.FadeColor;
 				thiscm.CopyFrom3DLight(&lightlist[k]);
-				state.SetColor(thisll, rellight, di->isFullbrightScene(), thiscm, alpha);
+				di->SetColor(state, thisll, rellight, di->isFullbrightScene(), thiscm, alpha);
 				if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) thiscm.Decolorize();
-				state.SetFog(thisll, rellight, di->isFullbrightScene(), &thiscm, false);
+				di->SetFog(state, thisll, rellight, di->isFullbrightScene(), &thiscm, false);
 				state.SetSplitPlanes(lightlist[k].plane, lowplane);
 
 				state.Draw(DT_TriangleFan, vertindex, 4);
@@ -147,7 +147,7 @@ void HWDrawInfo::DrawDecals(FRenderState &state, TArray<GLDecal *> &decals)
 			else
 			{
 				state.EnableSplit(false);
-				state.SetFog(gldecal->lightlevel, gldecal->rellight, isFullbrightScene(), &gldecal->Colormap, false);
+				SetFog(state, gldecal->lightlevel, gldecal->rellight, isFullbrightScene(), &gldecal->Colormap, false);
 			}
 		}
 		gldecal->DrawDecal(this, state);
@@ -169,7 +169,7 @@ void GLWall::DrawDecalsForMirror(HWDrawInfo *di, FRenderState &state, TArray<GLD
 	state.SetDepthMask(false);
 	state.SetDepthBias(-1, -128);
 	state.SetLightIndex(-1);
-	state.SetFog(lightlevel, rellight + getExtraLight(), di->isFullbrightScene(), &Colormap, false);
+	di->SetFog(state, lightlevel, rellight + getExtraLight(), di->isFullbrightScene(), &Colormap, false);
 	for (auto gldecal : decals)
 	{
 		if (gldecal->decal->Side == seg->sidedef)

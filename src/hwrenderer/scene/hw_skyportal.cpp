@@ -164,11 +164,11 @@ void HWSkyPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 	auto &vp = di->Viewpoint;
 
 	// We have no use for Doom lighting special handling here, so disable it for this function.
-	auto oldlightmode = ::level.lightmode;
-	if (::level.isSoftwareLighting())
+	auto oldlightmode = di->lightmode;
+	if (di->isSoftwareLighting())
 	{
-		::level.SetFallbackLightMode();
-		state.SetSoftLightLevel(-1);
+		di->SetFallbackLightMode();
+		state.SetNoSoftLightLevel();
 	}
 
 
@@ -215,7 +215,7 @@ void HWSkyPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 			state.SetObjectColor(0xffffffff);
 		}
 	}
-	::level.lightmode = oldlightmode;
+	di->lightmode = oldlightmode;
 	state.SetDepthClamp(oldClamp);
 }
 

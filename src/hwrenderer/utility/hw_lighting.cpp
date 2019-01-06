@@ -29,6 +29,7 @@
 #include "r_sky.h"
 #include "g_levellocals.h"
 #include "hw_lighting.h"
+#include "hwrenderer/scene/hw_drawinfo.h"
 
 // externally settable lighting properties
 static float distfogtable[2][256];	// light to fog conversion table for black fog
@@ -82,13 +83,13 @@ CUSTOM_CVAR(Int,gl_fogmode,1,CVAR_ARCHIVE|CVAR_NOINITCALL)
 //
 //==========================================================================
 
-int hw_CalcLightLevel(int lightlevel, int rellight, bool weapon, int blendfactor)
+int HWDrawInfo::CalcLightLevel(int lightlevel, int rellight, bool weapon, int blendfactor)
 {
 	int light;
 
 	if (lightlevel == 0) return 0;
 
-	bool darklightmode = (level.isDarkLightMode()) || (level.isSoftwareLighting() && blendfactor > 0);
+	bool darklightmode = (isDarkLightMode()) || (isSoftwareLighting() && blendfactor > 0);
 
 	if (darklightmode && lightlevel < 192 && !weapon) 
 	{
@@ -124,13 +125,13 @@ int hw_CalcLightLevel(int lightlevel, int rellight, bool weapon, int blendfactor
 //
 //==========================================================================
 
-PalEntry hw_CalcLightColor(int light, PalEntry pe, int blendfactor)
+PalEntry HWDrawInfo::CalcLightColor(int light, PalEntry pe, int blendfactor)
 {
 	int r,g,b;
 
 	if (blendfactor == 0)
 	{
-		if (level.isSoftwareLighting())
+		if (isSoftwareLighting())
 		{
 			return pe;
 		}
@@ -170,12 +171,12 @@ PalEntry hw_CalcLightColor(int light, PalEntry pe, int blendfactor)
 //
 //==========================================================================
 
-float hw_GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity, int blendfactor)
+float HWDrawInfo::GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity, int blendfactor)
 {
 	float density;
 
-	auto lightmode = level.lightmode;
-	if (level.isSoftwareLighting() && blendfactor > 0) lightmode = ELightMode::Doom;	// The blendfactor feature does not work with software-style lighting.
+	auto oldlightmode = lightmode;
+	if (isSoftwareLighting() && blendfactor > 0) lightmode = ELightMode::Doom;	// The blendfactor feature does not work with software-style lighting.
 
 	if (lightmode == ELightMode::DoomLegacy)
 	{
@@ -190,9 +191,9 @@ float hw_GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity, 
 	else if ((fogcolor.d & 0xffffff) == 0)
 	{
 		// case 2: black fog
-		if ((!level.isSoftwareLighting() || blendfactor > 0) && !(level.flags3 & LEVEL3_NOLIGHTFADE))
+		if ((!isSoftwareLighting() || blendfactor > 0) && !(level.flags3 & LEVEL3_NOLIGHTFADE))
 		{
-			density = distfogtable[level.lightmode != ELightMode::LinearStandard][hw_ClampLight(lightlevel)];
+			density = distfogtable[lightmode != ELightMode::LinearStandard][hw_ClampLight(lightlevel)];
 		}
 		else
 		{
@@ -232,7 +233,7 @@ float hw_GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity, 
 //
 //==========================================================================
 
-bool hw_CheckFog(sector_t *frontsector, sector_t *backsector)
+bool HWDrawInfo::CheckFog(sector_t *frontsector, sector_t *backsector)
 {
 	if (frontsector == backsector) return false;	// there can't be a boundary if both sides are in the same sector.
 
@@ -250,7 +251,7 @@ bool hw_CheckFog(sector_t *frontsector, sector_t *backsector)
 	else if (level.outsidefogdensity != 0 && APART(level.info->outsidefog) != 0xff && (fogcolor.d & 0xffffff) == (level.info->outsidefog & 0xffffff))
 	{
 	}
-	else  if (level.fogdensity!=0 || level.lightmode == ELightMode::DoomLegacy)
+	else  if (level.fogdensity!=0 || lightmode == ELightMode::DoomLegacy)
 	{
 		// case 3: level has fog density set
 	}
@@ -269,7 +270,7 @@ bool hw_CheckFog(sector_t *frontsector, sector_t *backsector)
 	{
 		return false;
 	}
-	else  if (level.fogdensity!=0 || level.lightmode == ELightMode::DoomLegacy)
+	else  if (level.fogdensity!=0 || lightmode == ELightMode::DoomLegacy)
 	{
 		// case 3: level has fog density set
 		return false;

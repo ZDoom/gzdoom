@@ -964,14 +964,14 @@ void HWHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 	if (gltexture && gltexture->tex->isFullbright())
 	{
 		// glowing textures are always drawn full bright without color
-		state.SetColor(255, 0, false, origin->colormap, 1.f);
-		state.SetFog(255, 0, false, &origin->colormap, false);
+		di->SetColor(state, 255, 0, false, origin->colormap, 1.f);
+		di->SetFog(state, 255, 0, false, &origin->colormap, false);
 	}
 	else
 	{
 		int rel = getExtraLight();
-		state.SetColor(origin->lightlevel, rel, di->isFullbrightScene(), origin->colormap, 1.0f);
-		state.SetFog(origin->lightlevel, rel, di->isFullbrightScene(), &origin->colormap, false);
+		di->SetColor(state, origin->lightlevel, rel, di->isFullbrightScene(), origin->colormap, 1.0f);
+		di->SetFog(state, origin->lightlevel, rel, di->isFullbrightScene(), &origin->colormap, false);
 	}
 
 

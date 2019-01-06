@@ -304,8 +304,8 @@ void GLFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 
 	state.SetNormal(plane.plane.Normal().X, plane.plane.Normal().Z, plane.plane.Normal().Y);
 
-	state.SetColor(lightlevel, rel, di->isFullbrightScene(), Colormap, alpha);
-	state.SetFog(lightlevel, rel, di->isFullbrightScene(), &Colormap, false);
+	di->SetColor(state, lightlevel, rel, di->isFullbrightScene(), Colormap, alpha);
+	di->SetFog(state, lightlevel, rel, di->isFullbrightScene(), &Colormap, false);
 	state.SetObjectColor(FlatColor | 0xff000000);
 	state.SetAddColor(AddColor | 0xff000000);
 

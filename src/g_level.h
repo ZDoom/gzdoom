@@ -296,18 +296,6 @@ struct FExitText
 	}
 };
 
-enum class ELightMode : int8_t
-{
-	NotSet = -1,
-	LinearStandard = 0,
-	DoomBright = 1,
-	Doom = 2,
-	DoomDark = 3,
-	DoomLegacy = 4,
-	ZDoomSoftware = 8,
-	DoomSoftware = 16
-};
-
 
 struct level_info_t
 {

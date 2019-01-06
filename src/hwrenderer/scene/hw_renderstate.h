@@ -163,7 +163,6 @@ protected:
 	int mVertexOffsets[2];	// one per binding point
 	IIndexBuffer *mIndexBuffer;
 
-	void SetShaderLight(float level, float olight);
 
 public:
 	VSMatrix mModelMatrix;
@@ -328,8 +327,13 @@ public:
 
 	void SetSoftLightLevel(int llevel, int blendfactor = 0)
 	{
-		if (level.isSoftwareLighting() && blendfactor == 0) mLightParms[3] = llevel / 255.f;
+		if (blendfactor == 0) mLightParms[3] = llevel / 255.f;
 		else mLightParms[3] = -1.f;
+	}
+
+	void SetNoSoftLightLevel()
+	{
+		 mLightParms[3] = -1.f;
 	}
 
 	void SetGlowPlanes(const secplane_t &top, const secplane_t &bottom)
@@ -497,9 +501,6 @@ public:
 	{
 		return mInterpolationFactor;
 	}
-
-	void SetColor(int sectorlightlevel, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon = false);
-	void SetFog(int lightlevel, int rellight, bool fullbright, const FColormap *cmap, bool isadditive);
 
 	// API-dependent render interface
 

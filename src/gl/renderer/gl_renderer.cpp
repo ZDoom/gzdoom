@@ -361,7 +361,7 @@ void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, i
     FRenderViewpoint savevp;
     sector_t *viewsector = RenderViewpoint(savevp, players[consoleplayer].camera, &bounds, r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
     glDisable(GL_STENCIL_TEST);
-    gl_RenderState.SetSoftLightLevel(-1);
+    gl_RenderState.SetNoSoftLightLevel();
     CopyToBackbuffer(&bounds, false);
     
     // strictly speaking not needed as the glReadPixels should block until the scene is rendered, but this is to safeguard against shitty drivers

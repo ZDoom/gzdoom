@@ -125,6 +125,7 @@ void HWDrawInfo::StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uni
 	mClipper = &staticClipper;
 
 	Viewpoint = parentvp;
+	lightmode = level.lightMode;
 	if (uniforms)
 	{
 		VPUniforms = *uniforms;
@@ -605,7 +606,7 @@ void HWDrawInfo::DrawEndScene2D(sector_t * viewsector, FRenderState &state)
 
 	DrawPlayerSprites(false, state);
 
-	state.SetSoftLightLevel(-1);
+	state.SetNoSoftLightLevel();
 
 	// Restore standard rendering state
 	state.SetRenderStyle(STYLE_Translucent);

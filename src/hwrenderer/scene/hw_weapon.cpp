@@ -66,7 +66,7 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 	}
 	else
 	{
-		state.SetColor(huds->lightlevel, 0, isFullbrightScene(), huds->cm, huds->alpha, true);
+		SetColor(state, huds->lightlevel, 0, isFullbrightScene(), huds->cm, huds->alpha, true);
 	}
 	state.SetLightIndex(-1);
 	state.SetRenderStyle(huds->RenderStyle);
@@ -115,14 +115,14 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 
 void HWDrawInfo::DrawPlayerSprites(bool hudModelStep, FRenderState &state)
 {
-	auto oldlightmode = level.lightmode;
-	if (!hudModelStep && level.isSoftwareLighting()) level.SetFallbackLightMode();	// Software lighting cannot handle 2D content.
+	auto oldlightmode = lightmode;
+	if (!hudModelStep && isSoftwareLighting()) SetFallbackLightMode();	// Software lighting cannot handle 2D content.
 	for (auto &hudsprite : hudsprites)
 	{
 		if ((!!hudsprite.mframe) == hudModelStep)
 			DrawPSprite(&hudsprite, state);
 	}
-	level.lightmode = oldlightmode;
+	lightmode = oldlightmode;
 }
 
 
@@ -219,7 +219,7 @@ static FVector2 BobWeapon(WeaponPosition &weap, DPSprite *psp, double ticFrac)
 //
 //==========================================================================
 
-static WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &pos, int cm, area_t in_area, const DVector3 &playerpos)
+WeaponLighting HWDrawInfo::GetWeaponLighting(sector_t *viewsector, const DVector3 &pos, int cm, area_t in_area, const DVector3 &playerpos)
 {
 	WeaponLighting l;
 
@@ -267,9 +267,9 @@ static WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &po
 			if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) l.cm.ClearColor();
 		}
 
-		l.lightlevel = hw_CalcLightLevel(l.lightlevel, getExtraLight(), true, 0);
+		l.lightlevel = CalcLightLevel(l.lightlevel, getExtraLight(), true, 0);
 
-		if (level.isSoftwareLighting() || l.lightlevel < 92)
+		if (isSoftwareLighting() || l.lightlevel < 92)
 		{
 			// Korshun: the way based on max possible light level for sector like in software renderer.
 			double min_L = 36.0 / 31.0 - ((l.lightlevel / 255.0) * (63.0 / 31.0)); // Lightlevel in range 0-63
@@ -507,8 +507,8 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 
 	// hack alert! Rather than changing everything in the underlying lighting code let's just temporarily change
 	// light mode here to draw the weapon sprite.
-	auto oldlightmode = level.lightmode;
-	if (level.isSoftwareLighting()) level.SetFallbackLightMode();
+	auto oldlightmode = lightmode;
+	if (isSoftwareLighting()) SetFallbackLightMode();
 
 	for (DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
 	{
@@ -555,7 +555,7 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 		}
 		hudsprites.Push(hudsprite);
 	}
-	level.lightmode = oldlightmode;
+	lightmode = oldlightmode;
 	PrepareTargeterSprites();
 }
 

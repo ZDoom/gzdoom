@@ -128,7 +128,7 @@ CUSTOM_CVAR(Int, gl_lightmode, 3, CVAR_ARCHIVE | CVAR_NOINITCALL)
 	else if (newself > 4) newself = 8;
 	else if (newself < 0) newself = 0;
 	if (self != newself) self = newself;
-	else if ((level.info == nullptr || level.info->lightmode == ELightMode::NotSet)) level.lightmode = (ELightMode)*self;
+	else if ((level.info == nullptr || level.info->lightmode == ELightMode::NotSet)) level.lightMode = (ELightMode)*self;
 }
 
 
@@ -1530,7 +1530,7 @@ void G_InitLevelLocals ()
 
 	level.DefaultEnvironment = info->DefaultEnvironment;
 
-	level.lightmode = info->lightmode == ELightMode::NotSet? (ELightMode)*gl_lightmode : info->lightmode;
+	level.lightMode = info->lightmode == ELightMode::NotSet? (ELightMode)*gl_lightmode : info->lightmode;
 	level.brightfog = info->brightfog < 0? gl_brightfog : !!info->brightfog;
 	level.lightadditivesurfaces = info->lightadditivesurfaces < 0 ? gl_lightadditivesurfaces : !!info->lightadditivesurfaces;
 	level.notexturefill = info->notexturefill < 0 ? gl_notexturefill : !!info->notexturefill;

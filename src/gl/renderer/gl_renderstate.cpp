@@ -93,12 +93,6 @@ void FGLRenderState::Reset()
 
 bool FGLRenderState::ApplyShader()
 {
-	static uint64_t firstFrame = 0;
-	// if firstFrame is not yet initialized, initialize it to current time
-	// if we're going to overflow a float (after ~4.6 hours, or 24 bits), re-init to regain precision
-	if ((firstFrame == 0) || (screen->FrameTime - firstFrame >= 1<<24) || level.ShaderStartTime >= firstFrame)
-		firstFrame = screen->FrameTime;
-
 	static const float nulvec[] = { 0.f, 0.f, 0.f, 0.f };
 	if (mSpecialEffect > EFF_NONE)
 	{
@@ -593,6 +587,14 @@ bool FGLRenderState::SetDepthClamp(bool on)
 	else glEnable(GL_DEPTH_CLAMP);
 	mLastDepthClamp = on;
 	return res;
+}
+
+void FGLRenderState::CheckTimer(uint64_t ShaderStartTime)
+{
+	// if firstFrame is not yet initialized, initialize it to current time
+	// if we're going to overflow a float (after ~4.6 hours, or 24 bits), re-init to regain precision
+	if ((firstFrame == 0) || (screen->FrameTime - firstFrame >= 1 << 24) || ShaderStartTime >= firstFrame)
+		firstFrame = screen->FrameTime;
 }
 
 }

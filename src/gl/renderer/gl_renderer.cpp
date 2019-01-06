@@ -254,7 +254,9 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 		bool saved_niv = NoInterpolateView;
 		NoInterpolateView = false;
 		// prepare all camera textures that have been used in the last frame
-		level.canvasTextureInfo.UpdateAll([&](AActor *camera, FCanvasTexture *camtex, double fov)
+		auto Level = player->mo->__GetLevel();
+		gl_RenderState.CheckTimer(Level->ShaderStartTime);
+		Level->canvasTextureInfo.UpdateAll([&](AActor *camera, FCanvasTexture *camtex, double fov)
 		{
 			RenderTextureView(camtex, camera, fov);
 		});

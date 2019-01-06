@@ -129,7 +129,7 @@ static void CreateVerticesForSection(FSection &section, VertexContainer &gen, bo
 
 static void CreateVerticesForSector(sector_t *sec, VertexContainer &gen)
 {
-	auto sections = level.sections.SectionsForSector(sec);
+	auto sections = sec->Level->sections.SectionsForSector(sec);
 	for (auto &section :sections)
 	{
 		CreateVerticesForSection( section, gen, true);
@@ -137,12 +137,12 @@ static void CreateVerticesForSector(sector_t *sec, VertexContainer &gen)
 }
 
 
-TArray<VertexContainer> BuildVertices()
+TArray<VertexContainer> BuildVertices(TArray<sector_t> &sectors)
 {
-	TArray<VertexContainer> verticesPerSector(level.sectors.Size(), true);
-	for (unsigned i=0; i<level.sectors.Size(); i++)
+	TArray<VertexContainer> verticesPerSector(sectors.Size(), true);
+	for (unsigned i=0; i< sectors.Size(); i++)
 	{
-		CreateVerticesForSector(&level.sectors[i], verticesPerSector[i]);
+		CreateVerticesForSector(&sectors[i], verticesPerSector[i]);
 	}
 	return verticesPerSector;
 }

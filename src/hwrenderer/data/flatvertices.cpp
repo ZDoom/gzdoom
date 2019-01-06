@@ -232,9 +232,9 @@ int FFlatVertexBuffer::CreateIndexedVertices(int h, sector_t *sec, const secplan
 //
 //==========================================================================
 
-void FFlatVertexBuffer::CreateIndexedFlatVertices()
+void FFlatVertexBuffer::CreateIndexedFlatVertices(TArray<sector_t> &sectors)
 {
-    auto verts = BuildVertices();
+    auto verts = BuildVertices(sectors);
 
 	int i = 0;
 	/*
@@ -259,7 +259,7 @@ void FFlatVertexBuffer::CreateIndexedFlatVertices()
     
 	for (int h = sector_t::floor; h <= sector_t::ceiling; h++)
 	{
-		for (auto &sec : level.sectors)
+		for (auto &sec : sectors)
 		{
 			CreateIndexedVertices(h, &sec, sec.GetSecPlane(h), h == sector_t::floor, verts);
 		}
@@ -267,7 +267,7 @@ void FFlatVertexBuffer::CreateIndexedFlatVertices()
 
 	// We need to do a final check for Vavoom water and FF_FIX sectors.
 	// No new vertices are needed here. The planes come from the actual sector
-	for (auto &sec : level.sectors)
+	for (auto &sec : sectors)
 	{
 		for (auto ff : sec.e->XFloor.ffloors)
 		{
@@ -310,10 +310,10 @@ void FFlatVertexBuffer::UpdatePlaneVertices(sector_t *sec, int plane)
 //
 //==========================================================================
 
-void FFlatVertexBuffer::CreateVertices()
+void FFlatVertexBuffer::CreateVertices(TArray<sector_t> &sectors)
 {
 	vbo_shadowdata.Resize(NUM_RESERVED);
-	CreateIndexedFlatVertices();
+	CreateIndexedFlatVertices(sectors);
 }
 
 //==========================================================================
@@ -390,10 +390,10 @@ void FFlatVertexBuffer::Copy(int start, int count)
 //
 //==========================================================================
 
-void FFlatVertexBuffer::CreateVBO()
+void FFlatVertexBuffer::CreateVBO(TArray<sector_t> &sectors)
 {
 	vbo_shadowdata.Resize(mNumReserved);
-	FFlatVertexBuffer::CreateVertices();
+	FFlatVertexBuffer::CreateVertices(sectors);
 	mCurIndex = mIndex = vbo_shadowdata.Size();
 	Copy(0, mIndex);
 	mIndexBuffer->SetData(ibo_data.Size() * sizeof(uint32_t), &ibo_data[0]);

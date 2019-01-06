@@ -58,7 +58,7 @@ void HWSkyPortal::RenderDome(HWDrawInfo *di, FRenderState &state, FMaterial * te
 		state.EnableModelMatrix(true);
 		state.EnableTextureMatrix(true);
 
-		vertexBuffer->SetupMatrices(tex, x_offset, y_offset, mirror, mode, state.mModelMatrix, state.mTextureMatrix);
+		vertexBuffer->SetupMatrices(di, tex, x_offset, y_offset, mirror, mode, state.mModelMatrix, state.mTextureMatrix);
 	}
 
 	int rc = vertexBuffer->mRows + 1;
@@ -104,9 +104,9 @@ void HWSkyPortal::RenderBox(HWDrawInfo *di, FRenderState &state, FTextureID texn
 	state.mModelMatrix.loadIdentity();
 
 	if (!sky2)
-        state.mModelMatrix.rotate(-180.0f+x_offset, ::level.info->skyrotatevector.X, ::level.info->skyrotatevector.Z, ::level.info->skyrotatevector.Y);
+        state.mModelMatrix.rotate(-180.0f+x_offset, di->Level->info->skyrotatevector.X, di->Level->info->skyrotatevector.Z, di->Level->info->skyrotatevector.Y);
 	else
-        state.mModelMatrix.rotate(-180.0f+x_offset, ::level.info->skyrotatevector2.X, ::level.info->skyrotatevector2.Z, ::level.info->skyrotatevector2.Y);
+        state.mModelMatrix.rotate(-180.0f+x_offset, di->Level->info->skyrotatevector2.X, di->Level->info->skyrotatevector2.Z, di->Level->info->skyrotatevector2.Y);
 
 	if (sb->faces[5]) 
 	{
@@ -203,10 +203,10 @@ void HWSkyPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 			RenderDome(di, state, origin->texture[1], origin->x_offset[1], origin->y_offset, false, FSkyVertexBuffer::SKYMODE_SECONDLAYER);
 		}
 
-		if (::level.skyfog>0 && !di->isFullbrightScene()  && (origin->fadecolor & 0xffffff) != 0)
+		if (di->Level->skyfog>0 && !di->isFullbrightScene()  && (origin->fadecolor & 0xffffff) != 0)
 		{
 			PalEntry FadeColor = origin->fadecolor;
-			FadeColor.a = clamp<int>(::level.skyfog, 0, 255);
+			FadeColor.a = clamp<int>(di->Level->skyfog, 0, 255);
 
 			state.EnableTexture(false);
 			state.SetObjectColor(FadeColor);

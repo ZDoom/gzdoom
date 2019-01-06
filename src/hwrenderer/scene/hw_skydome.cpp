@@ -66,6 +66,7 @@
 #include "hwrenderer/textures/hw_material.h"
 #include "hw_skydome.h"
 #include "hw_renderstate.h"
+#include "hw_drawinfo.h"
 #include "hwrenderer/data/buffers.h"
 
 //-----------------------------------------------------------------------------
@@ -281,7 +282,7 @@ void FSkyVertexBuffer::CreateDome()
 //
 //-----------------------------------------------------------------------------
 
-void FSkyVertexBuffer::SetupMatrices(FMaterial *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelMatrix, VSMatrix &textureMatrix)
+void FSkyVertexBuffer::SetupMatrices(HWDrawInfo *di, FMaterial *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelMatrix, VSMatrix &textureMatrix)
 {
 	int texw = tex->TextureWidth();
 	int texh = tex->TextureHeight();
@@ -291,7 +292,7 @@ void FSkyVertexBuffer::SetupMatrices(FMaterial *tex, float x_offset, float y_off
 
 	float xscale = texw < 1024.f ? floor(1024.f / float(texw)) : 1.f;
 	float yscale = 1.f;
-	if (texh <= 128 && (level.flags & LEVEL_FORCETILEDSKY))
+	if (texh <= 128 && (di->Level->flags & LEVEL_FORCETILEDSKY))
 	{
 		modelMatrix.translate(0.f, (-40 + tex->tex->GetSkyOffset() + skyoffset)*skyoffsetfactor, 0.f);
 		modelMatrix.scale(1.f, 1.2f * 1.17f, 1.f);

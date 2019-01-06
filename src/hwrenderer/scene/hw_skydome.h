@@ -6,6 +6,8 @@
 class FMaterial;
 class FRenderState;
 class IVertexBuffer;
+struct HWSkyPortal;
+struct HWDrawInfo;
 
 struct FSkyVertex
 {
@@ -34,7 +36,6 @@ struct FSkyVertex
 
 };
 
-struct HWSkyPortal;
 class FSkyVertexBuffer
 {
 	friend struct HWSkyPortal;
@@ -68,7 +69,7 @@ public:
 
 	FSkyVertexBuffer();
 	~FSkyVertexBuffer();
-	void SetupMatrices(FMaterial *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelmatrix, VSMatrix &textureMatrix);
+	void SetupMatrices(HWDrawInfo *di, FMaterial *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelmatrix, VSMatrix &textureMatrix);
 	std::pair<IVertexBuffer *, IIndexBuffer *> GetBufferObjects() const
 	{
 		return std::make_pair(mVertexBuffer, nullptr);

@@ -97,6 +97,11 @@ enum DrawListType
 
 struct HWDrawInfo
 {
+	HWDrawInfo(FLevelLocals *lev)
+	{
+		Level = lev;
+	}
+
 	virtual ~HWDrawInfo() 
 	{
 		ClearBuffers();
@@ -142,6 +147,7 @@ struct HWDrawInfo
 	int vpIndex;
 	ELightMode lightmode;
 
+	FLevelLocals *Level;
 	HWDrawInfo * outer = nullptr;
 	int FullbrightFlags;
 	std::atomic<int> spriteindex;
@@ -243,7 +249,7 @@ public:
 	void RenderBSPNode(void *node);
 	void RenderBSP(void *node);
 
-	static HWDrawInfo *StartDrawInfo(HWDrawInfo *parent, FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
+	static HWDrawInfo *StartDrawInfo(FLevelLocals *lev, HWDrawInfo *parent, FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
 	void StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
 	void ClearBuffers();
 	HWDrawInfo *EndDrawInfo();

@@ -733,7 +733,7 @@ const char *HWSkyboxPortal::GetName() { return "Skybox"; }
 
 static uint8_t SetCoverage(HWDrawInfo *di, void *node)
 {
-	if (level.nodes.Size() == 0)
+	if (di->Level->nodes.Size() == 0)
 	{
 		return 0;
 	}
@@ -759,12 +759,12 @@ void HWSectorStackPortal::SetupCoverage(HWDrawInfo *di)
 		int plane = origin->plane;
 		for (int j = 0; j<sub->portalcoverage[plane].sscount; j++)
 		{
-			subsector_t *dsub = &::level.subsectors[sub->portalcoverage[plane].subsectors[j]];
+			subsector_t *dsub = &di->Level->subsectors[sub->portalcoverage[plane].subsectors[j]];
 			di->CurrentMapSections.Set(dsub->mapsection);
 			di->ss_renderflags[dsub->Index()] |= SSRF_SEEN;
 		}
 	}
-	SetCoverage(di, ::level.HeadNode());
+	SetCoverage(di, di->Level->HeadNode());
 }
 
 //-----------------------------------------------------------------------------
@@ -1020,7 +1020,7 @@ void HWEEHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 		sector->GetTexture(sector_t::ceiling) == skyflatnum)
 	{
 		GLSkyInfo skyinfo;
-		skyinfo.init(sector->sky, 0);
+		skyinfo.init(di, sector->sky, 0);
 		HWSkyPortal sky(screen->mSkyData, mState, &skyinfo, true);
 		sky.DrawContents(di, state);
 	}

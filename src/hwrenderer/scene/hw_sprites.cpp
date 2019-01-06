@@ -127,7 +127,7 @@ void GLSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 			state.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
 			state.SetColor(0.2f, 0.2f, 0.2f, fuzzalpha, Colormap.Desaturation);
 			additivefog = true;
-			lightlist = nullptr;	// the fuzz effect does not use the sector's light level so splitting is not needed.
+			lightlist = nullptr;	// the fuzz effect does not use the sector's light di->Level-> so splitting is not needed.
 		}
 		else if (RenderStyle.BlendOp == STYLEOP_Add && RenderStyle.DestAlpha == STYLEALPHA_One)
 		{
@@ -142,7 +142,7 @@ void GLSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 	}
 	if (RenderStyle.BlendOp != STYLEOP_Shadow)
 	{
-		if (level.HasDynamicLights && !di->isFullbrightScene() && !fullbright)
+		if (di->Level->HasDynamicLights && !di->isFullbrightScene() && !fullbright)
 		{
 			if (dynlightindex == -1)	// only set if we got no light buffer index. This covers all cases where sprite lighting is used.
 			{
@@ -224,7 +224,7 @@ void GLSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 			FColormap thiscm;
 			thiscm.CopyFog(Colormap);
 			thiscm.CopyFrom3DLight(&(*lightlist)[i]);
-			if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
+			if (di->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
 			{
 				thiscm.Decolorize();
 			}
@@ -459,7 +459,7 @@ bool GLSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 inline void GLSprite::PutSprite(HWDrawInfo *di, bool translucent)
 {
 	// That's a lot of checks...
-	if (modelframe && !modelframe->isVoxel && RenderStyle.BlendOp != STYLEOP_Shadow && gl_light_sprites && level.HasDynamicLights && !di->isFullbrightScene() && !fullbright)
+	if (modelframe && !modelframe->isVoxel && RenderStyle.BlendOp != STYLEOP_Shadow && gl_light_sprites && di->Level->HasDynamicLights && !di->isFullbrightScene() && !fullbright)
 	{
 		hw_GetDynModelLight(actor, lightdata);
 		dynlightindex = screen->mLights->UploadLights(lightdata);
@@ -528,7 +528,7 @@ void GLSprite::SplitSprite(HWDrawInfo *di, sector_t * frontsector, bool transluc
 			copySprite.lightlevel = hw_ClampLight(*lightlist[i].p_lightlevel);
 			copySprite.Colormap.CopyLight(lightlist[i].extra_colormap);
 
-			if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
+			if (di->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
 			{
 				copySprite.Colormap.Decolorize();
 			}
@@ -696,13 +696,13 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 	// [RH] Interpolate the sprite's position to make it look smooth
 	DVector3 thingpos = thing->InterpolatedPosition(vp.TicFrac);
-	if (thruportal == 1) thingpos += level.Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
+	if (thruportal == 1) thingpos += di->Level->Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
 
 	// Some added checks if the camera actor is not supposed to be seen. It can happen that some portal setup has this actor in view in which case it may not be skipped here
 	if (thing == camera && !vp.showviewer)
 	{
 		DVector3 thingorigin = thing->Pos();
-		if (thruportal == 1) thingorigin += level.Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
+		if (thruportal == 1) thingorigin += di->Level->Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
 		if (fabs(thingorigin.X - vp.ActorPos.X) < 2 && fabs(thingorigin.Y - vp.ActorPos.Y) < 2) return;
 	}
 	// Thing is invisible if close to the camera.
@@ -773,7 +773,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	x = thingpos.X;
 	z = thingpos.Z;
 	y = thingpos.Y;
-	if (spritetype == RF_FACESPRITE) z -= thing->Floorclip; // wall and flat sprites are to be considered level geometry so this may not apply.
+	if (spritetype == RF_FACESPRITE) z -= thing->Floorclip; // wall and flat sprites are to be considered di->Level-> geometry so this may not apply.
 
 	// [RH] Make floatbobbing a renderer-only effect.
 	if (thing->flags2 & MF2_FLOATBOB)
@@ -946,7 +946,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		Colormap = rendersector->Colormap;
 		if (fullbright)
 		{
-			if (rendersector == &level.sectors[rendersector->sectornum] || in_area != area_below)
+			if (rendersector == &di->Level->sectors[rendersector->sectornum] || in_area != area_below)
 				// under water areas keep their color for fullbright objects
 			{
 				// Only make the light white but keep everything else (fog, desaturation and Boom colormap.)
@@ -960,7 +960,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 				Colormap.LightColor.b = (3 * Colormap.LightColor.b + 0xff) / 4;
 			}
 		}
-		else if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
+		else if (di->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
 		{
 			Colormap.Decolorize();
 		}
@@ -1143,7 +1143,7 @@ void GLSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 				break;
 			}
 		}
-		if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
+		if (di->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
 		{
 			Colormap.Decolorize();	// ZDoom never applies colored light to particles.
 		}
@@ -1198,7 +1198,7 @@ void GLSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 
     const auto &vp = di->Viewpoint;
 	double timefrac = vp.TicFrac;
-	if (paused || bglobal.freeze || (level.flags2 & LEVEL2_FROZEN))
+	if (paused || bglobal.freeze || (di->Level->flags2 & LEVEL2_FROZEN))
 		timefrac = 0.;
 	float xvf = (particle->Vel.X) * timefrac;
 	float yvf = (particle->Vel.Y) * timefrac;

@@ -103,6 +103,7 @@
 static FRandom pr_playerinspecialsector ("PlayerInSpecialSector");
 
 EXTERN_CVAR(Bool, cl_predict_specials)
+EXTERN_CVAR(Bool, forcewater)
 
 
 // killough 3/7/98: Initialize generalized scrolling
@@ -686,34 +687,9 @@ void P_UpdateSpecials (FLevelLocals *Level)
 	}
 }
 
-
-
 //
 // SPECIAL SPAWNING
 //
-
-CUSTOM_CVAR (Bool, forcewater, false, CVAR_ARCHIVE|CVAR_SERVERINFO)
-{
-	if (gamestate == GS_LEVEL)
-	{
-		auto Level = players[consoleplayer].mo->__GetLevel();
-		for (auto &sec : Level->sectors)
-		{
-			sector_t *hsec = sec.GetHeightSec();
-			if (hsec && !(hsec->MoreFlags & SECMF_UNDERWATER))
-			{
-				if (self)
-				{
-					hsec->MoreFlags |= SECMF_FORCEDUNDERWATER;
-				}
-				else
-				{
-					hsec->MoreFlags &= ~SECMF_FORCEDUNDERWATER;
-				}
-			}
-		}
-	}
-}
 
 class DLightTransfer : public DThinker
 {

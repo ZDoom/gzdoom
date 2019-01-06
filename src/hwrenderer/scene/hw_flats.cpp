@@ -141,7 +141,7 @@ void GLFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &light
 	Plane p;
 
 	lightdata.Clear();
-	if (renderstyle == STYLE_Add && !level.lightadditivesurfaces)
+	if (renderstyle == STYLE_Add && !di->Level->lightadditivesurfaces)
 	{
 		dynlightindex = -1;
 		return;	// no lights on additively blended surfaces.
@@ -182,7 +182,7 @@ void GLFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &light
 
 void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 {
-	if (level.HasDynamicLights && screen->BuffersArePersistent() && !di->isFullbrightScene())
+	if (di->Level->HasDynamicLights && screen->BuffersArePersistent() && !di->isFullbrightScene())
 	{
 		SetupLights(di, section->lighthead, lightdata, sector->PortalGroup);
 	}
@@ -377,7 +377,7 @@ inline void GLFlat::PutFlat(HWDrawInfo *di, bool fog)
 	}
 	else if (!screen->BuffersArePersistent())
 	{
-		if (level.HasDynamicLights && gltexture != nullptr && !di->isFullbrightScene() && !(hacktype & (SSRF_PLANEHACK|SSRF_FLOODHACK)) )
+		if (di->Level->HasDynamicLights && gltexture != nullptr && !di->isFullbrightScene() && !(hacktype & (SSRF_PLANEHACK|SSRF_FLOODHACK)) )
 		{
 			SetupLights(di, section->lighthead, lightdata, sector->PortalGroup);
 		}
@@ -484,13 +484,13 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 #endif
 
 	// Get the real sector for this one.
-	sector = &level.sectors[frontsector->sectornum];
+	sector = &di->Level->sectors[frontsector->sectornum];
 	extsector_t::xfloor &x = sector->e->XFloor;
 	dynlightindex = -1;
     hacktype = (which & (SSRF_PLANEHACK|SSRF_FLOODHACK));
 
 	uint8_t sink;
-	uint8_t &srf = hacktype? sink : di->section_renderflags[level.sections.SectionIndex(section)];
+	uint8_t &srf = hacktype? sink : di->section_renderflags[di->Level->sections.SectionIndex(section)];
     const auto &vp = di->Viewpoint;
 
 	//

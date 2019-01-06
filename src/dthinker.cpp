@@ -625,7 +625,7 @@ void DThinker::RunThinkers ()
 			auto next = light->next;
 			light->Tick();
 			light = next;
-		}
+	}
 	}
 	else
 	{

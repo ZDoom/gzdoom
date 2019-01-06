@@ -41,16 +41,16 @@ CVAR(Bool,gl_noskyboxes, false, 0)
 //
 //==========================================================================
 
-void GLSkyInfo::init(int sky1, PalEntry FadeColor)
+void GLSkyInfo::init(HWDrawInfo *di, int sky1, PalEntry FadeColor)
 {
 	memset(this, 0, sizeof(*this));
 	if ((sky1 & PL_SKYFLAT) && (sky1 & (PL_SKYFLAT - 1)))
 	{
-		const line_t *l = &level.lines[(sky1&(PL_SKYFLAT - 1)) - 1];
+		const line_t *l = &di->Level->lines[(sky1&(PL_SKYFLAT - 1)) - 1];
 		const side_t *s = l->sidedef[0];
 		int pos;
 
-		if (level.flags & LEVEL_SWAPSKIES && s->GetTexture(side_t::bottom).isValid())
+		if (di->Level->flags & LEVEL_SWAPSKIES && s->GetTexture(side_t::bottom).isValid())
 		{
 			pos = side_t::bottom;
 		}
@@ -70,14 +70,14 @@ void GLSkyInfo::init(int sky1, PalEntry FadeColor)
 	else
 	{
 	normalsky:
-		if (level.flags&LEVEL_DOUBLESKY)
+		if (di->Level->flags&LEVEL_DOUBLESKY)
 		{
 			texture[1] = FMaterial::ValidateTexture(sky1texture, false, true);
 			x_offset[1] = hw_sky1pos;
 			doublesky = true;
 		}
 
-		if ((level.flags&LEVEL_SWAPSKIES || (sky1 == PL_SKYFLAT) || (level.flags&LEVEL_DOUBLESKY)) &&
+		if ((di->Level->flags&LEVEL_SWAPSKIES || (sky1 == PL_SKYFLAT) || (di->Level->flags&LEVEL_DOUBLESKY)) &&
 			sky2texture != sky1texture)	// If both skies are equal use the scroll offset of the first!
 		{
 			texture[0] = FMaterial::ValidateTexture(sky2texture, false, true);
@@ -92,7 +92,7 @@ void GLSkyInfo::init(int sky1, PalEntry FadeColor)
 			x_offset[0] = hw_sky1pos;
 		}
 	}
-	if (level.skyfog > 0)
+	if (di->Level->skyfog > 0)
 	{
 		fadecolor = FadeColor;
 		fadecolor.a = 0;
@@ -119,7 +119,7 @@ void GLWall::SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowref
 	if ((sportal == nullptr && sector->GetTexture(plane) == skyflatnum) || (gl_noskyboxes && sportal != nullptr && sportal->mType == PORTS_SKYVIEWPOINT))
 	{
 		GLSkyInfo skyinfo;
-		skyinfo.init(sector->sky, Colormap.FadeColor);
+		skyinfo.init(di, sector->sky, Colormap.FadeColor);
 		ptype = PORTALTYPE_SKY;
 		sky = &skyinfo;
 		PutPortal(di, ptype, plane);
@@ -189,7 +189,7 @@ void GLWall::SkyLine(HWDrawInfo *di, sector_t *fs, line_t *line)
 	}
 	else
 	{
-		skyinfo.init(fs->sky, Colormap.FadeColor);
+		skyinfo.init(di, fs->sky, Colormap.FadeColor);
 		ptype = PORTALTYPE_SKY;
 		sky = &skyinfo;
 	}

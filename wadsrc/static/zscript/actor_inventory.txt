@@ -395,13 +395,13 @@ extend class Actor
 	{
 		int paramnum = 0;
 
-		if (!orresult)
-		{
-			receiver = receiver.GetPointer(setreceiver);
-		}
 		if (receiver == NULL)
 		{ // If there's nothing to receive it, it's obviously a fail, right?
 			return false;
+		}
+		if (!orresult)
+		{
+			receiver = receiver.GetPointer(setreceiver);
 		}
 		// Owned inventory items cannot own anything because their Inventory pointer is repurposed for the owner's linked list.
 		if (receiver is 'Inventory' && Inventory(receiver).Owner != null)

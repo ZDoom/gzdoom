@@ -400,7 +400,7 @@ public:
 	// Mark the palette as changed. It will be updated on the next Update().
 	virtual void UpdatePalette() {}
 
-	// Sets the gamma level. Returns false if the hardware does not support
+	// Sets the gamma Level. Returns false if the hardware does not support
 	// gamma changing. (Always true for now, since palettes can always be
 	// gamma adjusted.)
 	virtual void SetGamma() {}

@@ -68,9 +68,10 @@
 #include "types.h"
 #include "i_time.h"
 #include "scripting/vm/vm.h"
-#include "fragglescript/t_fs.h"
 #include "a_specialspot.h"
 #include "maploader/maploader.h"
+#include "p_acs.h"
+#include "fragglescript/t_script.h"
 
 void P_ClearUDMFKeys();
 
@@ -275,6 +276,8 @@ void FLevelLocals::ClearLevelData()
 	ClearPortals();
 
 	SpotState = nullptr;
+	ACSThinker = nullptr;
+	FraggleScriptThinker = nullptr;
 	CorpseQueue.Clear();
 	canvasTextureInfo.EmptyList();
 	sections.Clear();

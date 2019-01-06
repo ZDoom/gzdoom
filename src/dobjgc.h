@@ -180,6 +180,20 @@ public:
 		return *this;
 	}
 
+	T operator=(nullptr_t nul)
+	{
+		o = nullptr;
+		return nullptr;
+	}
+
+	// To allow NULL, too.
+	T operator=(const int val)
+	{
+		assert(val == 0);
+		o = nullptr;
+		return nullptr;
+	}
+
 	operator T() throw()
 	{
 		return GC::ReadBarrier(pp);

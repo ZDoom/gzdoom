@@ -765,33 +765,6 @@ private:
 	friend class DACSThinker;
 };
 
-class DACSThinker : public DThinker
-{
-	DECLARE_CLASS(DACSThinker, DThinker)
-	HAS_OBJECT_POINTERS
-public:
-	DACSThinker();
-	~DACSThinker();
-
-	void Serialize(FSerializer &arc);
-	void Tick();
-
-	typedef TMap<int, DLevelScript *> ScriptMap;
-	ScriptMap RunningScripts;	// Array of all synchronous scripts
-
-	void DumpScriptStatus();
-	void StopScriptsFor(AActor *actor);
-
-private:
-	DLevelScript *LastScript;
-	DLevelScript *Scripts;				// List of all running scripts
-
-	friend class DLevelScript;
-	friend class FBehavior;
-	friend struct FBehaviorContainer;
-};
-
-
 static DLevelScript *P_GetScriptGoing (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
 	const int *args, int argcount, int flags);
 

@@ -389,7 +389,7 @@ extend class Actor
 	//
 	//===========================================================================
 
-	static bool DoGiveInventory(Actor receiver, bool orresult, class<Inventory> mi, int amount, int setreceiver)
+	private bool DoGiveInventory(Actor receiver, bool orresult, class<Inventory> mi, int amount, int setreceiver)
 	{
 		int paramnum = 0;
 

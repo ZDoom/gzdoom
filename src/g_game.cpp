@@ -1493,7 +1493,7 @@ void G_DeathMatchSpawnPlayer (int playernum)
 			}
 		}
 	}
-	AActor *mo = P_SpawnPlayer(spot, playernum);
+	AActor *mo = P_SpawnPlayer(&level, spot, playernum);
 	if (mo != NULL) P_PlayerStartStomp(mo);
 }
 
@@ -1638,13 +1638,13 @@ void G_DoReborn (int playernum, bool freshbot)
 			level.playerstarts[playernum].type != 0 &&
 			G_CheckSpot (playernum, &level.playerstarts[playernum]))
 		{
-			AActor *mo = P_SpawnPlayer(&level.playerstarts[playernum], playernum);
+			AActor *mo = P_SpawnPlayer(&level, &level.playerstarts[playernum], playernum);
 			if (mo != NULL) P_PlayerStartStomp(mo, true);
 		}
 		else
 		{ // try to spawn at any random player's spot
 			FPlayerStart *start = G_PickPlayerStart(playernum, PPS_FORCERANDOM);
-			AActor *mo = P_SpawnPlayer(start, playernum);
+			AActor *mo = P_SpawnPlayer(&level, start, playernum);
 			if (mo != NULL) P_PlayerStartStomp(mo, true);
 		}
 	}

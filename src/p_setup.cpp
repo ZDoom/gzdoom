@@ -75,8 +75,6 @@
 
 void P_ClearUDMFKeys();
 
-extern AActor *SpawnMapThing (int index, FMapThing *mthing, int position);
-
 extern unsigned int R_OldBlend;
 
 static void P_Shutdown ();
@@ -450,7 +448,7 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 			{
 				players[i].mo = nullptr;
 				FPlayerStart *mthing = G_PickPlayerStart(i);
-				P_SpawnPlayer(mthing, i, (level.flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
+				P_SpawnPlayer(&level, mthing, i, (level.flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
 			}
 		}
 	}

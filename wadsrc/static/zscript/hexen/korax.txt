@@ -234,7 +234,7 @@ class Korax : Actor
 		spirit.args[1] = 0; 						// initial look angle
 
 		// Spawn a tail for spirit
-		HolyTail.SpawnSpiritTail (spirit);
+		SpawnSpiritTail (spirit);
 	}
 
 	//============================================================================

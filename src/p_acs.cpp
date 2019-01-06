@@ -3737,7 +3737,7 @@ int DLevelScript::DoSpawn (int type, const DVector3 &pos, int tid, DAngle angle,
 			return 0;
 		}
 
-		actor = Spawn (info, pos, ALLOW_REPLACE);
+		actor = Spawn (&level, info, pos, ALLOW_REPLACE);
 		if (actor != NULL)
 		{
 			ActorFlags2 oldFlags2 = actor->flags2;

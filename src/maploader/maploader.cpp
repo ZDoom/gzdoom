@@ -111,7 +111,7 @@ void BloodCrypt (void *data, int key, int len);
 void P_ClearUDMFKeys();
 void InitRenderInfo();
 
-extern AActor *SpawnMapThing (int index, FMapThing *mthing, int position);
+extern AActor *SpawnMapThing (FLevelLocals *Level, int index, FMapThing *mthing, int position);
 
 EXTERN_CVAR(Bool, am_textured)
 
@@ -1380,7 +1380,7 @@ void MapLoader::SpawnThings (int position)
 
 	for (int i=0; i < numthings; i++)
 	{
-		AActor *actor = SpawnMapThing (i, &MapThingsConverted[i], position);
+		AActor *actor = SpawnMapThing (Level, i, &MapThingsConverted[i], position);
 		unsigned *udi = MapThingsUserDataIndex.CheckKey((unsigned)i);
 		if (udi != nullptr)
 		{

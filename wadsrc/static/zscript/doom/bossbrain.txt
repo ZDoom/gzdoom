@@ -151,9 +151,9 @@ extend class Actor
 		A_PlaySound("brain/pain", CHAN_VOICE, 1, false, ATTN_NONE);
 	}
 
-	private static void BrainishExplosion(vector3 pos)
+	private void BrainishExplosion(vector3 pos)
 	{
-		Actor boom = Actor.Spawn("Rocket", pos, NO_REPLACE);
+		Actor boom = Spawn("Rocket", pos, NO_REPLACE);
 		if (boom)
 		{
 			boom.DeathSound = "misc/brainexplode";

@@ -3285,13 +3285,13 @@ FUNC(LS_GlassBreak)
 				{
 					if (type != nullptr)
 					{
-						glass = Spawn(*type, DVector3(linemid, ONFLOORZ), ALLOW_REPLACE);
+						glass = Spawn(Level, *type, DVector3(linemid, ONFLOORZ), ALLOW_REPLACE);
 						glass->AddZ(24.);
 					}
 				}
 				else
 				{
-					glass = Spawn("GlassJunk", DVector3(linemid, ONFLOORZ), ALLOW_REPLACE);
+					glass = Spawn(Level, "GlassJunk", DVector3(linemid, ONFLOORZ), ALLOW_REPLACE);
 					glass->AddZ(24.);
 					glass->SetState(glass->SpawnState + (pr_glass() % glass->health));
 				}

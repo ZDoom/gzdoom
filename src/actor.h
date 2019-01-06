@@ -651,7 +651,7 @@ public:
 	virtual void PostBeginPlay() override;		// Called immediately before the actor's first tick
 	virtual void Tick() override;
 
-	static AActor *StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t allowreplacement, bool SpawningMapThing = false);
+	static AActor *StaticSpawn (FLevelLocals *Level, PClassActor *type, const DVector3 &pos, replace_t allowreplacement, bool SpawningMapThing = false);
 
 	inline AActor *GetDefault () const
 	{
@@ -1569,34 +1569,34 @@ int P_FindUniqueTID(int start_tid, int limit);
 
 PClassActor *ClassForSpawn(FName classname);
 
-inline AActor *Spawn(PClassActor *type)
+inline AActor *Spawn(FLevelLocals *l, PClassActor *type)
 {
-	return AActor::StaticSpawn(type, DVector3(0, 0, 0), NO_REPLACE);
+	return AActor::StaticSpawn(l, type, DVector3(0, 0, 0), NO_REPLACE);
 }
 
-inline AActor *Spawn(PClassActor *type, const DVector3 &pos, replace_t allowreplacement)
+inline AActor *Spawn(FLevelLocals *l, PClassActor *type, const DVector3 &pos, replace_t allowreplacement)
 {
-	return AActor::StaticSpawn(type, pos, allowreplacement);
+	return AActor::StaticSpawn(l, type, pos, allowreplacement);
 }
 
-inline AActor *Spawn(FName type)
+inline AActor *Spawn(FLevelLocals *l, FName type)
 {
-	return AActor::StaticSpawn(ClassForSpawn(type), DVector3(0, 0, 0), NO_REPLACE);
+	return AActor::StaticSpawn(l, ClassForSpawn(type), DVector3(0, 0, 0), NO_REPLACE);
 }
 
-inline AActor *Spawn(FName type, const DVector3 &pos, replace_t allowreplacement)
+inline AActor *Spawn(FLevelLocals *l, FName type, const DVector3 &pos, replace_t allowreplacement)
 {
-	return AActor::StaticSpawn(ClassForSpawn(type), pos, allowreplacement);
+	return AActor::StaticSpawn(l, ClassForSpawn(type), pos, allowreplacement);
 }
 
-template<class T> inline T *Spawn(const DVector3 &pos, replace_t allowreplacement)
+template<class T> inline T *Spawn(FLevelLocals *l, const DVector3 &pos, replace_t allowreplacement)
 {
-	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_CLASS(T), pos, allowreplacement));
+	return static_cast<T *>(AActor::StaticSpawn(l, RUNTIME_CLASS(T), pos, allowreplacement));
 }
 
-template<class T> inline T *Spawn()	// for inventory items we do not need coordinates and replacement info.
+template<class T> inline T *Spawn(FLevelLocals *l)	// for inventory items we do not need coordinates and replacement info.
 {
-	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_CLASS(T), DVector3(0, 0, 0), NO_REPLACE));
+	return static_cast<T *>(AActor::StaticSpawn(l, RUNTIME_CLASS(T), DVector3(0, 0, 0), NO_REPLACE));
 }
 
 inline PClassActor *PClass::FindActor(FName name)

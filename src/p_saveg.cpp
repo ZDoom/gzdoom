@@ -908,7 +908,7 @@ static void SpawnExtraPlayers(FLevelLocals *Level)
 		if (playeringame[i] && players[i].mo == NULL)
 		{
 			players[i].playerstate = PST_ENTER;
-			P_SpawnPlayer(&Level->playerstarts[i], i, (level.flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
+			P_SpawnPlayer(Level, &Level->playerstarts[i], i, (Level->flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
 		}
 	}
 }

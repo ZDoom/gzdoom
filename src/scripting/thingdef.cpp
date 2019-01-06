@@ -236,7 +236,7 @@ PFunction *CreateAnonymousFunction(PContainerType *containingclass, PType *retur
 //
 //==========================================================================
 
-PFunction *FindClassMemberFunction(PContainerType *selfcls, PContainerType *funccls, FName name, FScriptPosition &sc, bool *error, const VersionInfo &version)
+PFunction *FindClassMemberFunction(PContainerType *selfcls, PContainerType *funccls, FName name, FScriptPosition &sc, bool *error, const VersionInfo &version, bool nodeprecated)
 {
 	// Skip ACS_NamedExecuteWithResult. Anything calling this should use the builtin instead.
 	if (name == NAME_ACS_NamedExecuteWithResult) return nullptr;
@@ -263,7 +263,8 @@ PFunction *FindClassMemberFunction(PContainerType *selfcls, PContainerType *func
 		{
 			sc.Message(MSG_ERROR, "%s is declared protected and not accessible", symbol->SymbolName.GetChars());
 		}
-		else if ((funcsym->Variants[0].Flags & VARF_Deprecated) && funcsym->mVersion <= version)
+		// ZScript will skip this because it prints its own message.
+		else if ((funcsym->Variants[0].Flags & VARF_Deprecated) && funcsym->mVersion <= version && !nodeprecated)
 		{
 			sc.Message(MSG_WARNING, "Call to deprecated function %s", symbol->SymbolName.GetChars());
 		}

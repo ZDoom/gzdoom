@@ -4442,7 +4442,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 
 		AActor *tempuff = NULL;
 		if (pufftype != NULL)
-			tempuff = Spawn(pufftype, t1->Pos(), ALLOW_REPLACE);
+			tempuff = Spawn(t1->__GetLevel(), pufftype, t1->Pos(), ALLOW_REPLACE);
 		if (tempuff != NULL)
 		{
 			TData.PuffSpecies = tempuff->GetSpecies();
@@ -5187,7 +5187,7 @@ void P_RailAttack(FRailParams *p)
 	// used as damage inflictor
 	AActor *thepuff = NULL;
 	
-	if (puffclass != NULL) thepuff = Spawn(puffclass, source->Pos(), ALLOW_REPLACE);
+	if (puffclass != NULL) thepuff = Spawn(source->__GetLevel(), puffclass, source->Pos(), ALLOW_REPLACE);
 		rail_data.PuffSpecies = (thepuff != NULL) ? thepuff->GetSpecies() : NAME_None;
 
 	Trace(start, source->Sector, vec, p->distance, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,	flags, ProcessRailHit, &rail_data);
@@ -6183,7 +6183,7 @@ void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 				{
 					AActor *mo;
 
-					mo = Spawn(bloodcls, thing->PosPlusZ(thing->Height / 2), ALLOW_REPLACE);
+					mo = Spawn(thing->__GetLevel(), bloodcls, thing->PosPlusZ(thing->Height / 2), ALLOW_REPLACE);
 
 					mo->Vel.X = pr_crunch.Random2() / 16.;
 					mo->Vel.Y = pr_crunch.Random2() / 16.;

@@ -81,7 +81,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, i
 	}
 	while (spot != NULL)
 	{
-		mobj = Spawn (kind, spot->Pos(), ALLOW_REPLACE);
+		mobj = Spawn (spot->__GetLevel(), kind, spot->Pos(), ALLOW_REPLACE);
 
 		if (mobj != NULL)
 		{
@@ -302,7 +302,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 				{
 					z -= spot->Floorclip;
 				}
-				mobj = Spawn (kind, spot->PosAtZ(z), ALLOW_REPLACE);
+				mobj = Spawn (spot->__GetLevel(), kind, spot->PosAtZ(z), ALLOW_REPLACE);
 
 				if (mobj)
 				{

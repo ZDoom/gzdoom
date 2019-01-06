@@ -881,7 +881,7 @@ void FParser::SF_Spawn(void)
 		}
 		
 		t_return.type = svt_mobj;
-		t_return.value.mobj = Spawn(pclass, pos, ALLOW_REPLACE);
+		t_return.value.mobj = Spawn(Level, pclass, pos, ALLOW_REPLACE);
 
 		if (t_return.value.mobj)		
 		{
@@ -2930,7 +2930,7 @@ void FParser::SF_SpawnExplosion()
 		else
 			pos.Z = P_PointInSector(pos)->floorplane.ZatPoint(pos);
 		
-		spawn = Spawn (pclass, pos, ALLOW_REPLACE);
+		spawn = Spawn (Level, pclass, pos, ALLOW_REPLACE);
 		t_return.type = svt_int;
 		t_return.value.i=0;
 		if (spawn)
@@ -3761,7 +3761,7 @@ void FParser::SF_SpawnShot2(void)
 
 		t_return.type = svt_mobj;
 
-		AActor *mo = Spawn(pclass, source->PosPlusZ(z), ALLOW_REPLACE);
+		AActor *mo = Spawn(Level, pclass, source->PosPlusZ(z), ALLOW_REPLACE);
 		if (mo)
 		{
 			S_Sound(mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_NORM);

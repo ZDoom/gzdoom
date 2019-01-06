@@ -7600,7 +7600,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 
 	if (ctx.Class != nullptr)
 	{
-		PFunction *afd = FindClassMemberFunction(ctx.Class, ctx.Class, MethodName, ScriptPosition, &error, ctx.Version);
+		PFunction *afd = FindClassMemberFunction(ctx.Class, ctx.Class, MethodName, ScriptPosition, &error, ctx.Version, true);
 
 		if (afd != nullptr)
 		{
@@ -7640,6 +7640,20 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 			{
 				delete this;
 				return nullptr;
+			}
+
+			// Redirect Spawn to another function when called from a non-static method of an actor.
+			// In this special case the missing Level parameter of the static variant can be worked around
+			// and deprecation is not needed. The only problem is that it is impossible to declare
+			// the replacement method in a way that lets it get picked automatically, so it needs to be done here.
+			if (afd->SymbolName == NAME_Spawn)
+			{
+				if ((outerflags & VARF_Method) && ctx.Function->OwningClass->isClass() && 
+					static_cast<PClassType*>(ctx.Function->OwningClass)->Descriptor->IsDescendantOf(RUNTIME_CLASS(AActor)))
+				{
+					PFunction *afd2 = FindClassMemberFunction(ctx.Class, ctx.Class, NAME_Spawn2, ScriptPosition, &error, ctx.Version, true);
+					if (afd2 != nullptr) afd = afd2;
+				}
 			}
 
 			auto self = (afd->Variants[0].Flags & VARF_Method) ? new FxSelf(ScriptPosition) : nullptr;

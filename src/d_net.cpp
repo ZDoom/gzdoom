@@ -2334,7 +2334,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 						const AActor *def = GetDefaultByType (typeinfo);
 						DVector3 spawnpos = source->Vec3Angle(def->radius * 2 + source->radius, source->Angles.Yaw, 8.);
 
-						AActor *spawned = Spawn (typeinfo, spawnpos, ALLOW_REPLACE);
+						AActor *spawned = Spawn (source->__GetLevel(), typeinfo, spawnpos, ALLOW_REPLACE);
 						if (spawned != NULL)
 						{
 							if (type == DEM_SUMMONFRIEND || type == DEM_SUMMONFRIEND2 || type == DEM_SUMMONMBF)

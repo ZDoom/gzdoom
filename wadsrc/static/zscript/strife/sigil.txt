@@ -414,12 +414,16 @@ class Sigil : Weapon
 		{
 			if (playeringame[i] && players[i].mo != null)
 			{
-				GiveSigilPiece (players[i].mo);
+				players[i].mo.GiveSigilPiece ();
 				Destroy ();
 			}
 		}
 		return true;
 	}
+}
+
+extend class Actor
+{
 
 	//============================================================================
 	//
@@ -430,13 +434,13 @@ class Sigil : Weapon
 	//
 	//============================================================================
 
-	static int GiveSigilPiece (Actor receiver)
+	int GiveSigilPiece ()
 	{
-		Sigil sigl = Sigil(receiver.FindInventory("Sigil"));
+		Sigil sigl = Sigil(FindInventory("Sigil"));
 		if (sigl == null)
 		{
 			sigl = Sigil(Spawn("Sigil1"));
-			if (!sigl.CallTryPickup (receiver))
+			if (!sigl.CallTryPickup (self))
 			{
 				sigl.Destroy ();
 			}

@@ -706,6 +706,7 @@ struct LevelLocals native
 	native void StartIntermission(Name type, int state) const;
 	native SpotState GetSpotState(bool create = true);
 	native void ReplaceTextures(String from, String to, int flags);
+	native Actor Spawn(class<Actor> type, vector3 pos = (0,0,0), int replace = NO_REPLACE);
 
 	native clearscope bool IsPointInMap(vector3 p);
 

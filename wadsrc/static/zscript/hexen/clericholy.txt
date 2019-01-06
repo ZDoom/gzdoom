@@ -258,7 +258,7 @@ class HolyMissile : Actor
 				mo.bSkullFly = true;
 				mo.bMissile = false;
 			}
-			HolyTail.SpawnSpiritTail (mo);
+			SpawnSpiritTail (mo);
 		}
 	}
 }
@@ -560,28 +560,6 @@ class HolyTail : Actor
 	
 	//============================================================================
 	//
-	// SpawnSpiritTail
-	//
-	//============================================================================
-
-	static void SpawnSpiritTail (Actor spirit)
-	{
-		Actor tail = Spawn ("HolyTail", spirit.Pos, ALLOW_REPLACE);
-		if (tail != null)
-		{
-			tail.target = spirit; // parent
-			for (int i = 1; i < 3; i++)
-			{
-				Actor next = Spawn ("HolyTailTrail", spirit.Pos, ALLOW_REPLACE);
-				tail.tracer = next;
-				tail = next;
-			}
-			tail.tracer = null; // last tail bit
-		}
-	}
-
-	//============================================================================
-	//
 	// CHolyTailFollow
 	//
 	//============================================================================
@@ -673,4 +651,30 @@ class HolyTailTrail : HolyTail
 	Spawn:
 		Goto TailTrail;
 	}
+}
+
+extend class Actor
+{
+	//============================================================================
+	//
+	// SpawnSpiritTail
+	//
+	//============================================================================
+
+	void SpawnSpiritTail (Actor spirit)
+	{
+		Actor tail = Spawn ("HolyTail", spirit.Pos, ALLOW_REPLACE);
+		if (tail != null)
+		{
+			tail.target = spirit; // parent
+			for (int i = 1; i < 3; i++)
+			{
+				Actor next = Spawn ("HolyTailTrail", spirit.Pos, ALLOW_REPLACE);
+				tail.tracer = next;
+				tail = next;
+			}
+			tail.tracer = null; // last tail bit
+		}
+	}
+
 }

@@ -106,7 +106,7 @@ EXTERN_CVAR(Bool, cl_predict_specials)
 
 
 // killough 3/7/98: Initialize generalized scrolling
-void P_SpawnScrollers();
+void P_SpawnScrollers(FLevelLocals *Level);
 static void P_SpawnFriction ();		// phares 3/16/98
 void P_SpawnPushers ();		// phares 3/20/98
 
@@ -1219,7 +1219,7 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 
 	case dScroll_EastLavaDamage:
 		P_SetupSectorDamage(sector, 5, 16, 256, NAME_Fire, SECF_DMGTERRAINFX);
-		P_CreateScroller(EScroll::sc_floor, -4., 0, -1, sector->Index(), 0);
+		P_CreateScroller(EScroll::sc_floor, -4., 0, sector, 0);
 		keepspecial = true;
 		break;
 
@@ -1258,8 +1258,7 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 		break;
 
 	default:
-		if (sector->special >= Scroll_North_Slow &&
-			sector->special <= Scroll_SouthWest_Fast)
+		if (sector->special >= Scroll_North_Slow && sector->special <= Scroll_SouthWest_Fast)
 		{ // Hexen scroll special
 			static const int8_t hexenScrollies[24][2] =
 			{
@@ -1277,14 +1276,13 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 			int i = sector->special - Scroll_North_Slow;
 			double dx = hexenScrollies[i][0] / 2.;
 			double dy = hexenScrollies[i][1] / 2.;
-			P_CreateScroller(EScroll::sc_floor, dx, dy, -1, sector->Index(), 0);
+			P_CreateScroller(EScroll::sc_floor, dx, dy, sector, 0);
 		}
-		else if (sector->special >= Carry_East5 &&
-					sector->special <= Carry_East35)
-		{ // Heretic scroll special
+		else if (sector->special >= Carry_East5 && sector->special <= Carry_East35)
+		{ 
+			// Heretic scroll special
 			// Only east scrollers also scroll the texture
-			P_CreateScroller(EScroll::sc_floor,
-				-0.5 * (1 << ((sector->special & 0xff) - Carry_East5)),	0, -1, sector->Index(), 0);
+			P_CreateScroller(EScroll::sc_floor,	-0.5 * (1 << ((sector->special & 0xff) - Carry_East5)),	0, sector, 0);
 		}
 		keepspecial = true;
 		break;
@@ -1317,7 +1315,7 @@ void P_SpawnSpecials (MapLoader *ml)
 	
 	// Init other misc stuff
 
-	P_SpawnScrollers(); // killough 3/7/98: Add generalized scrollers
+	P_SpawnScrollers(&level); // killough 3/7/98: Add generalized scrollers
 	P_SpawnFriction();	// phares 3/12/98: New friction model using linedefs
 	P_SpawnPushers();	// phares 3/20/98: New pusher model using linedefs
 

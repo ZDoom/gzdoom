@@ -2285,12 +2285,12 @@ public:
 			const double scrollfactor = 1 / 3.2;	// I hope this is correct, it's just a guess taken from Eternity's code.
 			if (scroll.type == NAME_Both || scroll.type == NAME_Visual)
 			{
-				P_CreateScroller(scroll.ceiling ? EScroll::sc_ceiling : EScroll::sc_floor, scroll.x * scrollfactor, scroll.y * scrollfactor, -1, scroll.index, 0);
+				P_CreateScroller(scroll.ceiling ? EScroll::sc_ceiling : EScroll::sc_floor, scroll.x * scrollfactor, scroll.y * scrollfactor, &Level->sectors[scroll.index], 0);
 			}
 			if (scroll.type == NAME_Both || scroll.type == NAME_Physical)
 			{
 				// sc_carry_ceiling doesn't do anything yet.
-				P_CreateScroller(scroll.ceiling ? EScroll::sc_carry_ceiling : EScroll::sc_carry, scroll.x * scrollfactor, scroll.y * scrollfactor, -1, scroll.index, 0);
+				P_CreateScroller(scroll.ceiling ? EScroll::sc_carry_ceiling : EScroll::sc_carry, scroll.x * scrollfactor, scroll.y * scrollfactor, &Level->sectors[scroll.index], 0);
 			}
 		}
 

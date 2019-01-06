@@ -63,7 +63,7 @@ enum EScrollPos : int
 	scw_all = 7,
 };
 
-void P_CreateScroller(EScroll type, double dx, double dy, int control, int affectee, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
+void P_CreateScroller(EScroll type, double dx, double dy, sector_t *affectee, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
 
 
 //jff 2/23/98 identify the special classes that can share sectors

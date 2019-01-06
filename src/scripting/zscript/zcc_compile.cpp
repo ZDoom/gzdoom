@@ -3559,10 +3559,13 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 
 			if (node->InitIsArray)
 			{
+				if (static_cast<PArray *>(type)->ElementType->isArray ())
+				{
+					Error(node, "Compound initializer not implemented yet for multi-dimensional arrays");
+				}
 				FArgumentList args;
 				ConvertNodeList(args, node->Init);
-				// This has to let the code generator resolve the constants, not the Simplifier, which lacks all the necessary type info.
-				list->Add(new FxLocalArrayDeclaration(ztype, node->Name, args, *ast));
+				list->Add(new FxLocalArrayDeclaration(type, node->Name, args, 0, *node));
 			}
 			else
 			{

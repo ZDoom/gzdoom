@@ -165,14 +165,15 @@ bool P_Thing_Move (int tid, AActor *source, int mapspot, bool fog)
 
 // [MC] Was part of P_Thing_Projectile, now its own function for use in ZScript.
 // Aims mobj at targ based on speed and targ's velocity.
-void VelIntercept(AActor *targ, AActor *mobj, double speed, bool aimpitch = false, bool oldvel = false)
+static void VelIntercept(AActor *targ, AActor *mobj, double speed, bool aimpitch = false, bool oldvel = false, bool leadTarget = true)
 {
 	if (targ == nullptr || mobj == nullptr)	return;
 
-	if (speed > 0 && !targ->Vel.isZero())
+	DVector3 aim = mobj->Vec3To(targ);
+	aim.Z += targ->Height / 2;
+
+	if (leadTarget && speed > 0 && !targ->Vel.isZero())
 	{
-		DVector3 aim = mobj->Vec3To(targ);
-		aim.Z += targ->Height / 2;
 		// Aiming at the target's position some time in the future
 		// is basically just an application of the law of sines:
 		//     a/sin(A) = b/sin(B)
@@ -180,53 +181,46 @@ void VelIntercept(AActor *targ, AActor *mobj, double speed, bool aimpitch = fals
 		// with the math. I don't think I would have thought of using
 		// trig alone had I been left to solve it by myself.
 
-		bool nolead = false;
 		DVector3 tvel = targ->Vel;
 		if (!(targ->flags & MF_NOGRAVITY) && targ->waterlevel < 3)
-		{ // If the target is subject to gravity and not underwater,
-		  // assume that it isn't moving vertically. Thanks to gravity,
-		  // even if we did consider the vertical component of the target's
-		  // velocity, we would still miss more often than not.
+		{
+			// If the target is subject to gravity and not underwater,
+			// assume that it isn't moving vertically. Thanks to gravity,
+			// even if we did consider the vertical component of the target's
+			// velocity, we would still miss more often than not.
 			tvel.Z = 0.0;
-			nolead = !!(targ->Vel.X == 0 && targ->Vel.Y == 0);
-		}
-		if (!nolead)
-		{
-			double dist = aim.Length();
-			double targspeed = tvel.Length();
-			double ydotx = -aim | tvel;
-			double a = g_acos(clamp(ydotx / targspeed / dist, -1.0, 1.0));
-			double multiplier = double(pr_leadtarget.Random2())*0.1 / 255 + 1.1;
-			double sinb = -clamp(targspeed*multiplier * g_sin(a) / speed, -1.0, 1.0);
-			DVector3 prevel = mobj->Vel;
-			// Use the cross product of two of the triangle's sides to get a
-			// rotation vector.
-			DVector3 rv(tvel ^ aim);
-			// The vector must be normalized.
-			rv.MakeUnit();
-			// Now combine the rotation vector with angle b to get a rotation matrix.
-			DMatrix3x3 rm(rv, g_cos(g_asin(sinb)), sinb);
-			// And multiply the original aim vector with the matrix to get a
-			// new aim vector that leads the target.
-			DVector3 aimvec = rm * aim;
-			// And make the projectile follow that vector at the desired speed.
-			mobj->Vel = aimvec * (speed / dist);
-			mobj->AngleFromVel();
-			if (oldvel)
+			if (targ->Vel.X == 0 && targ->Vel.Y == 0)
 			{
-				mobj->Vel = prevel;
-			}
-			if (aimpitch) // [MC] Ripped right out of A_FaceMovementDirection
-			{
-				const DVector2 velocity = mobj->Vel.XY();
-				mobj->Angles.Pitch = -VecToAngle(velocity.Length(), mobj->Vel.Z);
+				goto nolead;
 			}
 		}
-		else
-		{
-			mobj->Angles.Yaw = mobj->AngleTo(targ);
-			mobj->Vel = aim.Resized(speed);
-		}
+
+		double dist = aim.Length();
+		double targspeed = tvel.Length();
+		double ydotx = -aim | tvel;
+		double a = g_acos (clamp (ydotx / targspeed / dist, -1.0, 1.0));
+		double multiplier = double(pr_leadtarget.Random2())*0.1/255+1.1;
+		double sinb = -clamp (targspeed*multiplier * g_sin(a) / speed, -1.0, 1.0);
+
+		// Use the cross product of two of the triangle's sides to get a
+		// rotation vector.
+		DVector3 rv(tvel ^ aim);
+		// The vector must be normalized.
+		rv.MakeUnit();
+		// Now combine the rotation vector with angle b to get a rotation matrix.
+		DMatrix3x3 rm(rv, g_cos(g_asin(sinb)), sinb);
+		// And multiply the original aim vector with the matrix to get a
+		// new aim vector that leads the target.
+		DVector3 aimvec = rm * aim;
+		// And make the projectile follow that vector at the desired speed.
+		mobj->Vel = aimvec * (speed / dist);
+		mobj->AngleFromVel();
+	}
+	else
+	{
+	nolead:
+		mobj->Angles.Yaw = mobj->AngleTo(targ);
+		mobj->Vel = aim.Resized (speed);
 	}
 }
 
@@ -325,10 +319,8 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 
 					if (targ != nullptr)
 					{
-						if (leadTarget)
-						{
-							VelIntercept(targ, mobj, speed);
-						}
+						VelIntercept(targ, mobj, speed, false, false, leadTarget);
+
 						if (mobj->flags2 & MF2_SEEKERMISSILE)
 						{
 							mobj->tracer = targ;

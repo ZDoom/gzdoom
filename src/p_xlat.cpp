@@ -295,7 +295,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineindexforid)
 // given a TID. And since Doom format maps don't have TIDs, we can safely
 // give them TID 1.
 
-void P_TranslateTeleportThings ()
+void FLevelLocals::TranslateTeleportThings ()
 {
 	AActor *dest;
 	TThinkerIterator<AActor> iterator(NAME_TeleportDest);
@@ -313,7 +313,7 @@ void P_TranslateTeleportThings ()
 
 	if (foundSomething)
 	{
-		for (auto &line : level.lines)
+		for (auto &line : lines)
 		{
 			if (line.special == Teleport)
 			{

@@ -113,8 +113,6 @@ void InitRenderInfo();
 
 extern AActor *SpawnMapThing (int index, FMapThing *mthing, int position);
 
-extern void P_TranslateTeleportThings (void);
-
 EXTERN_CVAR(Bool, am_textured)
 
 CVAR (Bool, genblockmap, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
@@ -3196,7 +3194,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 			players[i].health = players[i].mo->health;
 	}
 	if (!map->HasBehavior && !map->isText)
-		P_TranslateTeleportThings();	// [RH] Assign teleport destination TIDs
+		Level->TranslateTeleportThings();	// [RH] Assign teleport destination TIDs
 
 	if (oldvertextable != nullptr)
 	{

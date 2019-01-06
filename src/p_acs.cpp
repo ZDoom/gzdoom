@@ -5652,7 +5652,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 				const char *seqname = level.Behaviors.LookupString(args[1]);
 				if (seqname != NULL)
 				{
-					FPolyObj *poly = PO_GetPolyobj(args[0]);
+					FPolyObj *poly = PO_GetPolyobj(&level, args[0]);
 					if (poly != NULL)
 					{
 						SN_StartSequence(poly, seqname, 0);
@@ -5663,7 +5663,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 
 		case ACSF_GetPolyobjX:
 			{
-				FPolyObj *poly = PO_GetPolyobj(args[0]);
+				FPolyObj *poly = PO_GetPolyobj(&level, args[0]);
 				if (poly != NULL)
 				{
 					return DoubleToACS(poly->StartSpot.pos.X);
@@ -5673,7 +5673,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 
 		case ACSF_GetPolyobjY:
 			{
-				FPolyObj *poly = PO_GetPolyobj(args[0]);
+				FPolyObj *poly = PO_GetPolyobj(&level, args[0]);
 				if (poly != NULL)
 				{
 					return DoubleToACS(poly->StartSpot.pos.Y);
@@ -6810,7 +6810,7 @@ int DLevelScript::RunScript ()
 
 	case SCRIPT_PolyWait:
 		// Wait for polyobj(s) to stop moving, then enter state running
-		if (!PO_Busy (statedata))
+		if (!PO_Busy (&level, statedata))
 		{
 			state = SCRIPT_Running;
 		}

@@ -114,6 +114,8 @@ struct FLevelLocals : public FLevelData
 	void ClearPortals();
 	bool CheckIfExitIsGood(AActor *self, level_info_t *newmap);
 	void FormatMapName(FString &mapname, const char *mapnamecolor);
+	void TranslateTeleportThings(void);
+	void ClearAllSubsectorLinks();
 
 	uint8_t		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
 	int			time;			// time in the hub

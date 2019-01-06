@@ -525,7 +525,7 @@ CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
 	i_compatflags = GetCompatibility(self) | ii_compatflags;
 	if ((old ^ i_compatflags) & COMPATF_POLYOBJ)
 	{
-		FPolyObj::ClearAllSubsectorLinks();
+		level.ClearAllSubsectorLinks();
 	}
 }
 

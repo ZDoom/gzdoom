@@ -799,7 +799,7 @@ class Inventory : Actor
 			{
 				player.itemcount++;
 			}
-			level.found_items++;
+			Level.found_items++;
 		}
 
 		if (bCountSecret)

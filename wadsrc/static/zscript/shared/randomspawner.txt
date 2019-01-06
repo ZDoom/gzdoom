@@ -35,7 +35,7 @@ class RandomSpawner : Actor
 		DropItem di;   // di will be our drop item list iterator
 		DropItem drop; // while drop stays as the reference point.
 		int n = 0;
-		bool nomonsters = sv_nomonsters || level.nomonsters;
+		bool nomonsters = sv_nomonsters || Level.nomonsters;
 
 		drop = di = GetDropItems();
 		if (di != null)

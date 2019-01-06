@@ -68,7 +68,7 @@ class Key : Inventory
 //
 // A MapRevealer reveals the whole map for the player who picks it up.
 // The MapRevealer doesn't actually go in your inventory. Instead, it sets
-// a flag on the level.
+// a flag on the level
 //
 //===========================================================================
 
@@ -76,7 +76,7 @@ class MapRevealer : Inventory
 {
 	override bool TryPickup (in out Actor toucher)
 	{
-		level.allmap = true;
+		Level.allmap = true;
 		GoAwayAndDie ();
 		return true;
 	}

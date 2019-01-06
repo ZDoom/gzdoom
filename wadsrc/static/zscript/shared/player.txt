@@ -585,7 +585,7 @@ class PlayerPawn : Actor
 		{
 			if (player.health > 0)
 			{
-				angle = level.time / (120 * TICRATE / 35.) * 360.;
+				angle = Level.time / (120 * TICRATE / 35.) * 360.;
 				bob = player.GetStillBob() * sin(angle);
 			}
 			else
@@ -595,7 +595,7 @@ class PlayerPawn : Actor
 		}
 		else
 		{
-			angle = level.time / (20 * TICRATE / 35.) * 360.;
+			angle = Level.time / (20 * TICRATE / 35.) * 360.;
 			bob = player.bob * sin(angle) * (waterlevel > 1 ? 0.25f : 0.5f);
 		}
 
@@ -734,10 +734,10 @@ class PlayerPawn : Actor
 		if ((player.cmd.buttons & BT_USE ||
 			((multiplayer || alwaysapplydmflags) && sv_forcerespawn)) && !sv_norespawn)
 		{
-			if (level.time >= player.respawn_time || ((player.cmd.buttons & BT_USE) && player.Bot == NULL))
+			if (Level.time >= player.respawn_time || ((player.cmd.buttons & BT_USE) && player.Bot == NULL))
 			{
 				player.cls = NULL;		// Force a new class if the player is using a random class
-				player.playerstate = (multiplayer || level.AllowRespawn || sv_singleplayerrespawn || G_SkillPropertyInt(SKILLP_PlayerRespawn)) ? PST_REBORN : PST_ENTER;
+				player.playerstate = (multiplayer || Level.AllowRespawn || sv_singleplayerrespawn || G_SkillPropertyInt(SKILLP_PlayerRespawn)) ? PST_REBORN : PST_ENTER;
 				if (special1 > 2)
 				{
 					special1 = 0;
@@ -818,9 +818,9 @@ class PlayerPawn : Actor
 					}
 				}
 			}
-			if (!multiplayer && level.deathsequence != 'None')
+			if (!multiplayer && Level.deathsequence != 'None')
 			{
-				level.StartIntermission(level.deathsequence, FSTATE_EndingGame);
+				Level.StartIntermission(Level.deathsequence, FSTATE_EndingGame);
 			}
 		}
 	}
@@ -1098,7 +1098,7 @@ class PlayerPawn : Actor
 		{
 			cmd.buttons &= ~BT_CROUCH;
 		}
-		if (CanCrouch() && player.health > 0 && level.IsCrouchingAllowed())
+		if (CanCrouch() && player.health > 0 && Level.IsCrouchingAllowed())
 		{
 			if (!totallyfrozen)
 			{
@@ -1262,8 +1262,8 @@ class PlayerPawn : Actor
 			if (!player.onground && !bNoGravity && !waterlevel)
 			{
 				// [RH] allow very limited movement if not on ground.
-				movefactor *= level.aircontrol;
-				bobfactor*= level.aircontrol;
+				movefactor *= Level.aircontrol;
+				bobfactor*= Level.aircontrol;
 			}
 
 			fm = cmd.forwardmove;
@@ -1318,7 +1318,7 @@ class PlayerPawn : Actor
 	{
 		let player = self.player;
 		// [RH] Look up/down stuff
-		if (!level.IsFreelookAllowed())
+		if (!Level.IsFreelookAllowed())
 		{
 			Pitch = 0.;
 		}
@@ -1385,7 +1385,7 @@ class PlayerPawn : Actor
 			{
 				Vel.Z = 3.;
 			}
-			else if (level.IsJumpingAllowed() && player.onground && player.jumpTics == 0)
+			else if (Level.IsJumpingAllowed() && player.onground && player.jumpTics == 0)
 			{
 				double jumpvelz = JumpZ * 35 / TICRATE;
 				double jumpfac = 0;
@@ -1518,7 +1518,7 @@ class PlayerPawn : Actor
 	virtual void CheckPoison()
 	{
 		let player = self.player;
-		if (player.poisoncount && !(level.time & 15))
+		if (player.poisoncount && !(Level.time & 15))
 		{
 			player.poisoncount -= 5;
 			if (player.poisoncount < 0)
@@ -1542,7 +1542,7 @@ class PlayerPawn : Actor
 		{
 			let player = self.player;
 			int maxhealth = GetMaxHealth(true);
-			if ((level.time % TICRATE) == 0 && player.health > maxhealth)
+			if ((Level.time % TICRATE) == 0 && player.health > maxhealth)
 			{
 				if (player.health - 5 < maxhealth)
 					player.health = maxhealth;
@@ -1563,16 +1563,16 @@ class PlayerPawn : Actor
 	virtual void CheckAirSupply()
 	{
 		// Handle air supply
-		//if (level.airsupply > 0)
+		//if (Level.airsupply > 0)
 		{
 			let player = self.player;
 			if (waterlevel < 3 || (bInvulnerable) || (player.cheats & (CF_GODMODE | CF_NOCLIP2)) ||	(player.cheats & CF_GODMODE2))
 			{
 				ResetAirSupply();
 			}
-			else if (player.air_finished <= level.time && !(level.time & 31))
+			else if (player.air_finished <= Level.time && !(Level.time & 31))
 			{
-				DamageMobj(NULL, NULL, 2 + ((level.time - player.air_finished) / TICRATE), 'Drowning');
+				DamageMobj(NULL, NULL, 2 + ((Level.time - player.air_finished) / TICRATE), 'Drowning');
 			}
 		}
 	}
@@ -1647,7 +1647,7 @@ class PlayerPawn : Actor
 			if (player.hazardcount)
 			{
 				player.hazardcount--;
-				if (!(level.time % player.hazardinterval) && player.hazardcount > 16*TICRATE)
+				if (!(Level.time % player.hazardinterval) && player.hazardcount > 16*TICRATE)
 					player.mo.DamageMobj (NULL, NULL, 5, player.hazardtype);
 			}
 			player.mo.CheckPoison();
@@ -1970,7 +1970,7 @@ class PlayerPawn : Actor
 	//===========================================================================
 	//
 	// G_PlayerFinishLevel
-	// Called when a player completes a level.
+	// Called when a player completes a Level.
 	//
 	// flags is checked for RESETINVENTORY and RESETHEALTH only.
 	//
@@ -2033,7 +2033,7 @@ class PlayerPawn : Actor
 			}
 		}
 
-		if (mode == FINISH_NoHub && !level.KEEPFULLINVENTORY)
+		if (mode == FINISH_NoHub && !Level.KEEPFULLINVENTORY)
 		{ // Reduce all owned (visible) inventory to defined maximum interhub amount
 			Array<Inventory> todelete;
 			for (item = me.Inv; item != NULL; item = item.Inv)
@@ -2042,7 +2042,7 @@ class PlayerPawn : Actor
 				if (item.bINVBAR && item.Amount > item.InterHubAmount)
 				{
 					item.Amount = item.InterHubAmount;
-					if (level.REMOVEITEMS && !item.bUNDROPPABLE)
+					if (Level.REMOVEITEMS && !item.bUNDROPPABLE)
 					{
 						todelete.Push(item);
 					}
@@ -2333,7 +2333,7 @@ class PlayerPawn : Actor
 		for (int i = 0; i < 2; i++)
 		{
 			// Bob the weapon based on movement speed. ([SP] And user's bob speed setting)
-			double angle = (BobSpeed * player.GetWBobSpeed() * 35 /	TICRATE*(level.time - 1 + i)) * (360. / 8192.);
+			double angle = (BobSpeed * player.GetWBobSpeed() * 35 /	TICRATE*(Level.time - 1 + i)) * (360. / 8192.);
 
 			// [RH] Smooth transitions between bobbing and not-bobbing frames.
 			// This also fixes the bug where you can "stick" a weapon off-center by
@@ -2431,13 +2431,13 @@ class PlayerPawn : Actor
 	virtual bool ResetAirSupply (bool playgasp = true)
 	{
 		let player = self.player;
-		bool wasdrowning = (player.air_finished < level.time);
+		bool wasdrowning = (player.air_finished < Level.time);
 
 		if (playgasp && wasdrowning)
 		{
 			A_PlaySound("*gasp", CHAN_VOICE);
 		}
-		if (level.airsupply > 0 && AirCapacity > 0) player.air_finished = level.time + int(level.airsupply * AirCapacity);
+		if (Level.airsupply > 0 && AirCapacity > 0) player.air_finished = Level.time + int(Level.airsupply * AirCapacity);
 		else player.air_finished = int.max;
 		return wasdrowning;
 	}

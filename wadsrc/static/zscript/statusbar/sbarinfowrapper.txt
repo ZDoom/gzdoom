@@ -3,10 +3,10 @@ struct SBarInfo native ui
 {
 	native void Destroy();
 	native void AttachToPlayer(PlayerInfo player);
-	native void Draw(int state);
+	native void Draw(int state, LevelLocals l);
 	native void NewGame();
 	native bool MustDrawLog(int state);
-	native void Tick();
+	native void Tick(LevelLocals l);
 	native void ShowPop(int popnum);
 	native int GetProtrusion(double scalefac);
 }
@@ -34,7 +34,7 @@ class SBarInfoWrapper : BaseStatusBar
 	override void Draw(int state, double TicFrac)
 	{
 		Super.Draw(state, TicFrac);
-		core.Draw(state);
+		core.Draw(state, Level);
 	}
 
 	override void NewGame()
@@ -54,7 +54,7 @@ class SBarInfoWrapper : BaseStatusBar
 	override void Tick()
 	{
 		Super.Tick();
-		core.Tick();
+		core.Tick(Level);
 	}
 
 	override void ShowPop(int popnum)

@@ -81,7 +81,7 @@ class CWeapStaff : ClericWeapon
 					if (t.linetarget != null)
 					{
 						angle = t.angleFromSource;
-						if (((t.linetarget.player && (!t.linetarget.IsTeammate(self) || level.teamdamage != 0)) || t.linetarget.bIsMonster)
+						if (((t.linetarget.player && (!t.linetarget.IsTeammate(self) || Level.teamdamage != 0)) || t.linetarget.bIsMonster)
 							&& (!t.linetarget.bDormant && !t.linetarget.bInvulnerable))
 						{
 							int newLife = player.health + (damage >> 3);

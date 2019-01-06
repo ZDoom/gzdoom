@@ -89,7 +89,7 @@ class SummoningDoll : Actor
 			// Careful! The Minotaur might have been replaced 
 			// so only set the time if we got a genuine one.
 			MinotaurFriend m = MinotaurFriend(mo);
-			if (m) m.StartTime = level.maptime;
+			if (m) m.StartTime = Level.maptime;
 			
 			if (tracer.bCorpse)
 			{	// Master dead

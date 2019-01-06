@@ -241,7 +241,7 @@ class ScriptedMarine : Actor
 		{
 			if (CurrentWeapon == WEAPON_SuperShotgun)
 			{ // Play SSG reload sounds
-				int ticks = level.maptime - special1;
+				int ticks = Level.maptime - special1;
 				if (ticks < 47)
 				{
 					switch (ticks)
@@ -264,7 +264,7 @@ class ScriptedMarine : Actor
 			}
 			else
 			{ // Wait for a long refire time
-				if (level.maptime >= special1)
+				if (Level.maptime >= special1)
 				{
 					special1 = 0;
 				}
@@ -438,7 +438,7 @@ class ScriptedMarine : Actor
 		{
 			GunShot2 (false, pitch, "BulletPuff");
 		}
-		special1 = level.maptime + 27;
+		special1 = Level.maptime + 27;
 	}
 
 	//============================================================================
@@ -480,7 +480,7 @@ class ScriptedMarine : Actor
 
 			LineAttack (ang, MISSILERANGE, pitch + Random2[SMarineFireSSG]() * (7.097 / 256), damage, 'Hitscan', "BulletPuff");
 		}
-		special1 = level.maptime;
+		special1 = Level.maptime;
 	}
 
 	//============================================================================
@@ -537,7 +537,7 @@ class ScriptedMarine : Actor
 			return;
 
 		A_MonsterRail();
-		special1 = level.maptime + 50;
+		special1 = Level.maptime + 50;
 	}
 
 	//============================================================================
@@ -553,7 +553,7 @@ class ScriptedMarine : Actor
 
 		A_FaceTarget ();
 		SpawnMissile (target, "PlasmaBall");
-		special1 = level.maptime + 20;
+		special1 = Level.maptime + 20;
 	}
 
 	//============================================================================
@@ -593,7 +593,7 @@ class ScriptedMarine : Actor
 
 		A_FaceTarget ();
 		SpawnMissile (target, "BFGBall");
-		special1 = level.maptime + 30;
+		special1 = Level.maptime + 30;
 		PainChance = MARINE_PAIN_CHANCE;
 	}
 		

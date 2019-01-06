@@ -1,7 +1,7 @@
 
 class LevelCompatibility native play
 {
-	native LevelLocals level;
+	native LevelLocals Level;
 	
 	protected void Apply(Name checksum)
 	{
@@ -114,7 +114,7 @@ class LevelCompatibility native play
 			case 'F0E6F30F57B0425F17E43600AA813E80': // Ultimate Simplicity, map11
 			{
 				// If door (sector #309) is closed it cannot be open again
-				// from one side potentially blocking level progression
+				// from one side potentially blocking Level progression
 				ClearLineSpecial(2445);
 				break;
 			}
@@ -235,7 +235,7 @@ class LevelCompatibility native play
 			
 			case 'B02ACA32AE9630042543037BA630CDE9': // Plutonia Experiment MAP13
 			{
-				// Textures on wrong side at level start.
+				// Textures on wrong side at Level start.
 				SetWallTexture(107, Line.back, Side.top, "A-BROWN1");
 				SetWallTexture(119, Line.back, Side.top, "A-BROWN1");
 				break;
@@ -243,7 +243,7 @@ class LevelCompatibility native play
 			
 			case 'ECA0559E85EFFB6966ECB8DE01E3A35B': // Plutonia Experiment MAP16
 			{
-				// Have it so that the slime pit at the end of the level can
+				// Have it so that the slime pit at the end of the Level can
 				// actually kill the player.
 				SetSectorSpecial(95, 768);
 				SetSectorSpecial(96, 768);
@@ -252,7 +252,7 @@ class LevelCompatibility native play
 			
 			case '9D84B423D8FD28553DDE23B55F97CF4A': // Plutonia Experiment MAP25
 			{
-				// Missing texture at level exit.
+				// Missing texture at Level exit.
 				SetWallTexture(1152, Line.front, Side.top, "A-BROCK2");
 				break;
 			}
@@ -687,14 +687,14 @@ class LevelCompatibility native play
 			
 			case '94893A0DC429A22ADC4B3A73DA537E16': // Doom II MAP25
 			{
-				// Missing texture at bloodfall near level start
+				// Missing texture at bloodfall near Level start
 				SetWallTexture(436, Line.back, Side.top, "STONE6");
 				break;
 			}
 			
 			case '1037366026AAB4B0CF11BAB27DB90E4E': // Doom II MAP26
 			{
-				// Missing texture at level exit
+				// Missing texture at Level exit
 				SetWallTexture(761, Line.back, Side.top, "METAL2");
 				break;
 			}
@@ -749,7 +749,7 @@ class LevelCompatibility native play
 					SetWallTextureID(567+i, Line.front, Side.bottom, ROCK2);
 					SetWallTextureID(567+i, Line.back, Side.top, ROCK2);
 				}
-				// Tags the linedefs on the teleporter at the end of the level so that
+				// Tags the linedefs on the teleporter at the end of the Level so that
 				// it's possible to leave the room near the yellow keycard door.
 				for(int i=0; i<2; i++)
 				{
@@ -1201,42 +1201,42 @@ class LevelCompatibility native play
 
 	protected void SetWallTextureID(int line, int side, int texpart, TextureID texture)
 	{
-		level.Lines[line].sidedef[side].SetTexture(texpart, texture);
+		Level.Lines[line].sidedef[side].SetTexture(texpart, texture);
 	}
 	
 	protected void SetLineFlags(int line, int setflags, int clearflags = 0)
 	{
-		level.Lines[line].flags = (level.Lines[line].flags & ~clearflags) | setflags;
+		Level.Lines[line].flags = (Level.Lines[line].flags & ~clearflags) | setflags;
 	}
 	
 	protected void SetLineActivation(int line, int acttype)
 	{
-		level.Lines[line].activation = acttype;
+		Level.Lines[line].activation = acttype;
 	}
 	
 	protected void ClearLineSpecial(int line)
 	{
-		level.Lines[line].special = 0;
+		Level.Lines[line].special = 0;
 	}
 	
 	protected void SetLineSpecial(int line, int special, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0, int arg5 = 0)
 	{
-		level.Lines[line].special = special;
-		level.Lines[line].args[0] = arg1;
-		level.Lines[line].args[1] = arg2;
-		level.Lines[line].args[2] = arg3;
-		level.Lines[line].args[3] = arg4;
-		level.Lines[line].args[4] = arg5;
+		Level.Lines[line].special = special;
+		Level.Lines[line].args[0] = arg1;
+		Level.Lines[line].args[1] = arg2;
+		Level.Lines[line].args[2] = arg3;
+		Level.Lines[line].args[3] = arg4;
+		Level.Lines[line].args[4] = arg5;
 	}
 	
 	protected void SetSectorSpecial(int sectornum, int special)
 	{
-		level.sectors[sectornum].special = special;
+		Level.sectors[sectornum].special = special;
 	}
 
 	protected void SetSectorTextureID(int sectornum, int plane, TextureID texture)
 	{
-		level.sectors[sectornum].SetTexture(plane, texture);
+		Level.sectors[sectornum].SetTexture(plane, texture);
 	}
 
 	protected void SetSectorTexture(int sectornum, int plane, String texture)
@@ -1246,11 +1246,11 @@ class LevelCompatibility native play
 
 	protected void SetSectorLight(int sectornum, int newval)
 	{
-		level.sectors[sectornum].SetLightLevel(newval);
+		Level.sectors[sectornum].SetLightLevel(newval);
 	}
 
 	protected void SetWallYScale(int line, int side, int texpart, double scale)
 	{
-		level.lines[line].sidedef[side].SetTextureYScale(texpart, scale);
+		Level.lines[line].sidedef[side].SetTextureYScale(texpart, scale);
 	}
 }

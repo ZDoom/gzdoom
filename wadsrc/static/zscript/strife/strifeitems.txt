@@ -527,7 +527,7 @@ class Scanner : PowerupGiver
 	
 	override bool Use (bool pickup)
 	{
-		if (!level.AllMap)
+		if (!Level.AllMap)
 		{
 			if (Owner.CheckLocalView (consoleplayer))
 			{
@@ -808,7 +808,7 @@ class SlideshowStarter : DummyStrifeItem
 	override bool TryPickup (in out Actor toucher)
 	{
 		Level.StartSlideshow();
-		if (level.levelnum == 10)
+		if (Level.levelnum == 10)
 		{
 			toucher.GiveInventoryType ("QuestItem17");
 		}

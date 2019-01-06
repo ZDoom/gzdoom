@@ -396,7 +396,7 @@ class Minotaur : Actor
 		let mf = MinotaurFriend(self);
 		if (mf)
 		{
-			if (mf.StartTime >= 0 && (level.maptime - mf.StartTime) >= MAULATORTICS)
+			if (mf.StartTime >= 0 && (Level.maptime - mf.StartTime) >= MAULATORTICS)
 			{
 				DamageMobj (null, null, TELEFRAG_DAMAGE, 'None');
 				return;
@@ -517,7 +517,7 @@ class Minotaur : Actor
 		// In case pain caused him to skip his fade in.
 		A_SetRenderStyle(1, STYLE_Normal);
 
-		if (mf.StartTime >= 0 && (level.maptime - mf.StartTime) >= MAULATORTICS)
+		if (mf.StartTime >= 0 && (Level.maptime - mf.StartTime) >= MAULATORTICS)
 		{
 			DamageMobj (null, null, TELEFRAG_DAMAGE, 'None');
 			return;
@@ -628,7 +628,7 @@ class MinotaurFriend : Minotaur
 				// [RH] Minotaurs can't be morphed, so this isn't needed
 				//if (!(mo.flags&MF_COUNTKILL)) continue;		// for morphed minotaurs
 				if (mo.bCorpse) continue;
-				if (mo.StartTime >= 0 && (level.maptime - StartTime) >= MAULATORTICS) continue;
+				if (mo.StartTime >= 0 && (Level.maptime - StartTime) >= MAULATORTICS) continue;
 				if (mo.tracer != null && mo.tracer.player == tracer.player) break;
 			}
 

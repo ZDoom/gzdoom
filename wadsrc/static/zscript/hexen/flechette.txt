@@ -490,7 +490,7 @@ class PoisonCloud : Actor
 			}
 			else
 			{
-				dopoison = victim.player.poisoncount < (int)(4. * level.teamdamage);
+				dopoison = victim.player.poisoncount < (int)(4. * Level.teamdamage);
 			}
 
 			if (dopoison)
@@ -498,7 +498,7 @@ class PoisonCloud : Actor
 				damage = random[PoisonCloud](15, 30);
 				if (mate)
 				{
-					damage = (int)(damage * level.teamdamage);
+					damage = (int)(damage * Level.teamdamage);
 				}
 				// Handle passive damage modifiers (e.g. PowerProtection)
 				damage = victim.GetModifiedDamage(damagetype, damage, true);

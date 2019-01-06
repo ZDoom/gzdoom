@@ -186,11 +186,11 @@ extend class Actor
 
 	void A_BrainDie()
 	{
-		// [RH] If noexit, then don't end the level.
+		// [RH] If noexit, then don't end the Level.
 		if ((deathmatch || alwaysapplydmflags) && sv_noexit)
 			return;
 
-		// New dmflag: Kill all boss spawned monsters before ending the level.
+		// New dmflag: Kill all boss spawned monsters before ending the Level.
 		if (sv_killbossmonst)
 		{
 			int count;	// Repeat until we have no more boss-spawned monsters.
@@ -261,7 +261,7 @@ extend class Actor
 					spit.special2 = int((targ.pos.x - pos.x) / spit.Vel.x);
 				}
 				// [GZ] Calculates when the projectile will have reached destination
-				spit.special2 += level.maptime;
+				spit.special2 += Level.maptime;
 				spit.bBossCube = true;
 			}
 
@@ -294,7 +294,7 @@ extend class Actor
 		// [GZ] Should be more viable than a countdown...
 		if (special2 != 0)
 		{
-			if (special2 > level.maptime)
+			if (special2 > Level.maptime)
 				return;		// still flying
 		}
 		else

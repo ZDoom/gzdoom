@@ -139,7 +139,7 @@ class TelOtherFX1 : Actor
 				if (target.bIsMonster && target.special)
 				{
 					target.RemoveFromHash ();
-					Actor caller = level.ActOwnSpecial? target : self.target;
+					Actor caller = Level.ActOwnSpecial? target : self.target;
 					caller.A_CallSpecial(target.special, target.args[0], target.args[1], target.args[2], target.args[3], target.args[4]);
 					target.special = 0;
 				}

@@ -13,7 +13,7 @@ struct WorldEvent native play version("2.4")
 {
     // for loaded/unloaded
     native readonly bool IsSaveGame;
-    // this will be true if we are re-entering the hub level.
+    // this will be true if we are re-entering the hub level
     native readonly bool IsReopen;
     // for thingspawned/thingdied/thingdestroyed
     native readonly Actor Thing;
@@ -44,7 +44,7 @@ struct PlayerEvent native play version("2.4")
     // this is the player number that caused the event.
     // note: you can get player struct from this by using players[e.PlayerNumber]
     native readonly int PlayerNumber;
-    // this will be true if we are re-entering the hub level.
+    // this will be true if we are re-entering the hub level
     native readonly bool IsReturn;
 }
 

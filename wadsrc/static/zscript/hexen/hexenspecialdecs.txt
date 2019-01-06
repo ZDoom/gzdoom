@@ -133,7 +133,7 @@ class Pottery1 : Actor
 		Class<Actor> type = GetSpawnableType(args[0]);
 		if (type != null)
 		{
-			if (!(level.nomonsters || sv_nomonsters) || !(GetDefaultByType (type).bIsMonster))
+			if (!(Level.nomonsters || sv_nomonsters) || !(GetDefaultByType (type).bIsMonster))
 			{ // Only spawn monsters if not -nomonsters
 				Spawn (type, Pos, ALLOW_REPLACE);
 			}
@@ -776,7 +776,7 @@ class ZSuitOfArmor : Actor
 		Class<Actor> type = GetSpawnableType(args[0]);
 		if (type != null)
 		{
-			if (!(level.nomonsters || sv_nomonsters) || !(GetDefaultByType (type).bIsMonster))
+			if (!(Level.nomonsters || sv_nomonsters) || !(GetDefaultByType (type).bIsMonster))
 			{ // Only spawn monsters if not -nomonsters
 				Spawn (type, Pos, ALLOW_REPLACE);
 			}

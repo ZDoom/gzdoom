@@ -229,9 +229,9 @@ extend class Actor
 		// killough 3/6/98: fix revenant internal demo bug by subtracting
 		// levelstarttic from gametic:
 		//
-		// [RH] level.time is always 0-based, so nothing special to do here.
+		// [RH] Level.time is always 0-based, so nothing special to do here.
 
-		if (level.time & 3)	return;
+		if (Level.time & 3)	return;
 	
 		// spawn a puff of smoke behind the rocket
 		SpawnPuff ("BulletPuff", pos, angle, angle, 3);

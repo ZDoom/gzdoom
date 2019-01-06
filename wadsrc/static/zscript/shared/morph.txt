@@ -118,7 +118,7 @@ extend class Actor
 		morphed.RenderStyle = RenderStyle;
 		morphed.Score = Score;
 
-		morphed.UnmorphTime = level.time + ((duration) ? duration : DEFMORPHTICS) + random[morphmonst]();
+		morphed.UnmorphTime = Level.time + ((duration) ? duration : DEFMORPHTICS) + random[morphmonst]();
 		morphed.MorphStyle = style;
 		morphed.MorphExitFlash = (exit_flash) ? exit_flash : (class<Actor>)("TeleportFog");
 		morphed.FlagsSave = bSolid * 2 + bShootable * 4 + bInvisible * 0x40;	// The factors are for savegame compatibility
@@ -656,7 +656,7 @@ class MorphedMonster : Actor
 
 	override void Tick ()
 	{
-		if (UnmorphTime > level.time || !UndoMonsterMorph())
+		if (UnmorphTime > Level.time || !UndoMonsterMorph())
 		{
 			Super.Tick();
 		}
@@ -687,7 +687,7 @@ class MorphedMonster : Actor
 			unmorphed.bSolid = false;
 			bSolid = true;
 			bTouchy = save;
-			UnmorphTime = level.time + 5*TICRATE; // Next try in 5 seconds
+			UnmorphTime = Level.time + 5*TICRATE; // Next try in 5 seconds
 			return false;
 		}
 		unmorphed.Angle = Angle;

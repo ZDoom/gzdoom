@@ -8895,7 +8895,7 @@ scriptwait:
 			const char *fromname = level.Behaviors.LookupString(STACK(3));
 			const char *toname = level.Behaviors.LookupString(STACK(2));
 
-			P_ReplaceTextures(fromname, toname, STACK(1));
+			P_ReplaceTextures(&level, fromname, toname, STACK(1));
 			sp -= 3;
 			break;
 		}

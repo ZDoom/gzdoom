@@ -631,7 +631,7 @@ class Weapon : StateProvider
 
 	override Inventory CreateTossable (int amt)
 	{
-		// Only drop the weapon that is meant to be placed in a level. That is,
+		// Only drop the weapon that is meant to be placed in a Level. That is,
 		// only drop the weapon that normally gives you ammo.
 		if (SisterWeapon != NULL && 
 			Default.AmmoGive1 == 0 && Default.AmmoGive2 == 0 &&

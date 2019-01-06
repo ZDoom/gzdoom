@@ -1406,6 +1406,11 @@ struct line_t
 		alpha = a;
 	}
 
+	FLevelLocals *GetLevel() const
+	{
+		return frontsector->Level;
+	}
+
 	FSectorPortal *GetTransferredPortal();
 	void AdjustLine();
 

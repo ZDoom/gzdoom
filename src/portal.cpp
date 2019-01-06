@@ -210,7 +210,7 @@ static line_t *FindDestination(line_t *src, int tag)
 	if (tag)
 	{
 		int lineno = -1;
-		auto Level = src->frontsector->Level;
+		auto Level = src->GetLevel();
 		FLineIdIterator it(tag);
 
 		while ((lineno = it.Next()) >= 0)
@@ -270,7 +270,7 @@ static void SetRotation(FLinePortal *port)
 
 void P_SpawnLinePortal(line_t* line)
 {
-	auto Level = line->frontsector->Level;
+	auto Level = line->GetLevel();
 
 	// portal destination is special argument #0
 	line_t* dst = nullptr;
@@ -354,7 +354,7 @@ void P_SpawnLinePortal(line_t* line)
 
 void P_UpdatePortal(FLinePortal *port)
 {
-	auto Level = port->mOrigin->frontsector->Level;
+	auto Level = port->mOrigin->GetLevel();
 	if (port->mType != PORTT_VISUAL && port->mOrigin->backsector == nullptr && !(port->mOrigin->sidedef[0]->Flags & WALLF_POLYOBJ))
 	{
 		Printf(TEXTCOLOR_RED "Warning: Traversable portals must have a back-sector and empty space behind them (or be on a polyobject)! Changing line %d to visual-portal!\n", port->mOrigin->Index());
@@ -445,7 +445,7 @@ void P_FinalizePortals(FLevelLocals *Level)
 
 static bool ChangePortalLine(line_t *line, int destid)
 {
-	auto Level = line->frontsector->Level;
+	auto Level = line->GetLevel();
 	if (line->portalindex >= Level->linePortals.Size()) return false;
 	FLinePortal *port = &Level->linePortals[line->portalindex];
 	if (port->mType == PORTT_LINKED) return false;	// linked portals cannot be changed.
@@ -489,7 +489,7 @@ bool P_ChangePortal(line_t *ln, int thisid, int destid)
 {
 	int lineno;
 
-	auto Level = ln->frontsector->Level;
+	auto Level = ln->GetLevel();
 	if (thisid == 0) return ChangePortalLine(ln, destid);
 	FLineIdIterator it(thisid);
 	bool res = false;

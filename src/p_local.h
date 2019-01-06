@@ -457,11 +457,11 @@ enum EDmgFlags
 	DMG_NO_ENHANCE = 4096,
 };
 
-
+struct FLevelLocals;
 //
 // P_SPEC
 //
-bool P_AlignFlat (int linenum, int side, int fc);
+bool P_AlignFlat (FLevelLocals *l, int linenum, int side, int fc);
 
 enum ETexReplaceFlags
 {
@@ -472,7 +472,7 @@ enum ETexReplaceFlags
 	NOT_CEILING			= 16
 };
 
-void P_ReplaceTextures(const char *fromname, const char *toname, int flags);
+void P_ReplaceTextures(FLevelLocals *l, const char *fromname, const char *toname, int flags);
 
 enum ERaise
 {

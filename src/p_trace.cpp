@@ -385,6 +385,7 @@ bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit, bool spec
 	int lineside;
 	sector_t *entersector;
 
+	auto Level = CurSector->Level;
 	double ff, fc, bf = 0, bc = 0;
 
 	if (in->d.line->frontsector->sectornum == CurSector->sectornum)
@@ -452,7 +453,7 @@ bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit, bool spec
 		// hit crossed a water plane
 		if (CheckSectorPlane(hsec, true))
 		{
-			Results->CrossedWater = &level.sectors[CurSector->sectornum];
+			Results->CrossedWater = &Level->sectors[CurSector->sectornum];
 			Results->CrossedWaterPos = Results->HitPos;
 			Results->Distance = 0;
 		}
@@ -583,7 +584,7 @@ cont:
 	if (Results->HitType != TRACE_HitNone)
 	{
 		// We hit something, so figure out where exactly
-		Results->Sector = &level.sectors[CurSector->sectornum];
+		Results->Sector = &Level->sectors[CurSector->sectornum];
 
 		if (Results->HitType != TRACE_HitWall &&
 			!CheckSectorPlane(CurSector, Results->HitType == TRACE_HitFloor))
@@ -667,6 +668,7 @@ cont:
 
 bool FTraceInfo::ThingCheck(intercept_t *in, double dist, DVector3 hit)
 {
+	auto Level = CurSector->Level;
 	if (hit.Z > in->d.thing->Top())
 	{
 		// trace enters above actor
@@ -720,7 +722,7 @@ bool FTraceInfo::ThingCheck(intercept_t *in, double dist, DVector3 hit)
 
 		// the trace hit a 3D floor before the thing.
 		// Calculate an intersection and abort.
-		Results->Sector = &level.sectors[CurSector->sectornum];
+		Results->Sector = &Level->sectors[CurSector->sectornum];
 		if (!CheckSectorPlane(CurSector, Results->HitType == TRACE_HitFloor))
 		{
 			Results->HitType = TRACE_HitNone;
@@ -872,7 +874,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 	}
 
 	// check for intersection with floor/ceiling
-	Results->Sector = &level.sectors[CurSector->sectornum];
+	Results->Sector = &CurSector->Level->sectors[CurSector->sectornum];
 
 	if (Results->CrossedWater == NULL &&
 		CurSector->heightsec != NULL &&
@@ -886,7 +888,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 
 		if (CheckSectorPlane(CurSector->heightsec, true))
 		{
-			Results->CrossedWater = &level.sectors[CurSector->sectornum];
+			Results->CrossedWater = &CurSector->Level->sectors[CurSector->sectornum];
 			Results->CrossedWaterPos = Results->HitPos;
 			Results->Distance = 0;
 		}

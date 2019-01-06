@@ -91,7 +91,10 @@ struct TexMan
 	};
 
 	native static TextureID CheckForTexture(String name, int usetype, int flags = TryAny);
-	native static void ReplaceTextures(String from, String to, int flags);
+	deprecated("3.8") static void ReplaceTextures(String from, String to, int flags)
+	{
+		level.ReplaceTextures(from, to, flags);
+	}
 	native static String GetName(TextureID tex);
 	native static int, int GetSize(TextureID tex);
 	native static Vector2 GetScaledSize(TextureID tex);
@@ -702,6 +705,7 @@ struct LevelLocals native
 	native bool IsFreelookAllowed() const;
 	native void StartIntermission(Name type, int state) const;
 	native SpotState GetSpotState(bool create = true);
+	native void ReplaceTextures(String from, String to, int flags);
 
 	native clearscope bool IsPointInMap(vector3 p);
 

@@ -2598,7 +2598,7 @@ FUNC(LS_Line_AlignCeiling)
 	int line;
 	while ((line = itr.Next()) >= 0)
 	{
-		ret |= P_AlignFlat (line, !!arg1, 1);
+		ret |= P_AlignFlat (Level, line, !!arg1, 1);
 	}
 	return ret;
 }
@@ -2612,7 +2612,7 @@ FUNC(LS_Line_AlignFloor)
 	int line;
 	while ((line = itr.Next()) >= 0)
 	{
-		ret |= P_AlignFlat (line, !!arg1, 0);
+		ret |= P_AlignFlat (Level, line, !!arg1, 0);
 	}
 	return ret;
 }

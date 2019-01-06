@@ -243,32 +243,33 @@ extern FLevelLocals level;
 
 inline FSectorPortal *line_t::GetTransferredPortal()
 {
-	return portaltransferred >= level.sectorPortals.Size() ? (FSectorPortal*)nullptr : &level.sectorPortals[portaltransferred];
+	auto Level = GetLevel();
+	return portaltransferred >= Level->sectorPortals.Size() ? (FSectorPortal*)nullptr : &Level->sectorPortals[portaltransferred];
 }
 
 inline FSectorPortal *sector_t::GetPortal(int plane)
 {
-	return &level.sectorPortals[Portals[plane]];
+	return &Level->sectorPortals[Portals[plane]];
 }
 
 inline double sector_t::GetPortalPlaneZ(int plane)
 {
-	return level.sectorPortals[Portals[plane]].mPlaneZ;
+	return Level->sectorPortals[Portals[plane]].mPlaneZ;
 }
 
 inline DVector2 sector_t::GetPortalDisplacement(int plane)
 {
-	return level.sectorPortals[Portals[plane]].mDisplacement;
+	return Level->sectorPortals[Portals[plane]].mDisplacement;
 }
 
 inline int sector_t::GetPortalType(int plane)
 {
-	return level.sectorPortals[Portals[plane]].mType;
+	return Level->sectorPortals[Portals[plane]].mType;
 }
 
 inline int sector_t::GetOppositePortalGroup(int plane)
 {
-	return level.sectorPortals[Portals[plane]].mDestination->PortalGroup;
+	return Level->sectorPortals[Portals[plane]].mDestination->PortalGroup;
 }
 
 inline bool sector_t::PortalBlocksView(int plane)
@@ -299,29 +300,34 @@ inline bool sector_t::PortalIsLinked(int plane)
 
 inline FLinePortal *line_t::getPortal() const
 {
-	return portalindex >= level.linePortals.Size() ? (FLinePortal*)NULL : &level.linePortals[portalindex];
+	auto Level = GetLevel();
+	return portalindex >= Level->linePortals.Size() ? (FLinePortal*)NULL : &Level->linePortals[portalindex];
 }
 
 // returns true if the portal is crossable by actors
 inline bool line_t::isLinePortal() const
 {
-	return portalindex >= level.linePortals.Size() ? false : !!(level.linePortals[portalindex].mFlags & PORTF_PASSABLE);
+	auto Level = GetLevel();
+	return portalindex >= Level->linePortals.Size() ? false : !!(Level->linePortals[portalindex].mFlags & PORTF_PASSABLE);
 }
 
 // returns true if the portal needs to be handled by the renderer
 inline bool line_t::isVisualPortal() const
 {
-	return portalindex >= level.linePortals.Size() ? false : !!(level.linePortals[portalindex].mFlags & PORTF_VISIBLE);
+	auto Level = GetLevel();
+	return portalindex >= Level->linePortals.Size() ? false : !!(Level->linePortals[portalindex].mFlags & PORTF_VISIBLE);
 }
 
 inline line_t *line_t::getPortalDestination() const
 {
-	return portalindex >= level.linePortals.Size() ? (line_t*)NULL : level.linePortals[portalindex].mDestination;
+	auto Level = GetLevel();
+	return portalindex >= Level->linePortals.Size() ? (line_t*)NULL : Level->linePortals[portalindex].mDestination;
 }
 
 inline int line_t::getPortalAlignment() const
 {
-	return portalindex >= level.linePortals.Size() ? 0 : level.linePortals[portalindex].mAlign;
+	auto Level = GetLevel();
+	return portalindex >= Level->linePortals.Size() ? 0 : Level->linePortals[portalindex].mAlign;
 }
 
 inline bool line_t::hitSkyWall(AActor* mo) const

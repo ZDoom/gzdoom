@@ -652,6 +652,7 @@ struct sector_t
 
 	splane planes[2];
 
+	FLevelLocals * Level;					// To have access to the current level from gepmetry data. The sector can be accessed by all other elements so they won't need this info.
 	extsector_t	*				e;			// This stores data that requires construction/destruction. Such data must not be copied by R_FakeFlat.
 
 	secplane_t	floorplane, ceilingplane;	// [RH] store floor and ceiling planes instead of heights

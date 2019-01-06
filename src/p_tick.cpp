@@ -144,7 +144,7 @@ void P_Ticker (void)
 	//if added by MC: Freeze mode.
 	if (!bglobal.freeze && !(level.flags2 & LEVEL2_FROZEN))
 	{
-		P_UpdateSpecials ();
+		P_UpdateSpecials (&level);
 		P_RunEffects ();	// [RH] Run particle effects
 	}
 

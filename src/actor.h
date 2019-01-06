@@ -54,6 +54,7 @@ struct FPortalGroupArray;
 struct visstyle_t;
 class FLightDefaults;
 struct FSection;
+struct FLevelLocals;
 //
 // NOTES: AActor
 //
@@ -641,6 +642,8 @@ public:
 	AActor (const AActor &other) throw();
 	AActor &operator= (const AActor &other);
 	~AActor ();
+
+	FLevelLocals *__GetLevel();	// With double underscore so that it can be replaced later, once a permanent solution has been implemented.
 
 	virtual void OnDestroy() override;
 	virtual void Serialize(FSerializer &arc) override;

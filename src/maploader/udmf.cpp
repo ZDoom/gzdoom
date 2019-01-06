@@ -2278,6 +2278,7 @@ public:
 		for(unsigned i = 0; i < Level->sectors.Size(); i++)
 		{
 			Level->sectors[i].e = &Level->sectors[0].e[i];
+			Level->sectors[i].Level = Level;
 		}
 		// Now create the scrollers.
 		for (auto &scroll : UDMFScrollers)

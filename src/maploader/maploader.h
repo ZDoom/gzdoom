@@ -96,7 +96,9 @@ class MapLoader
 {
 	friend class UDMFParser;
 	void *level;	// this is to hide the global variable and produce an error for referencing it.
+public:
 	FLevelLocals *Level;
+private:
 
 	int firstglvertex;	// helpers for loading GL nodes from GWA files.
 	bool format5;

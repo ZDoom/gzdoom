@@ -9921,7 +9921,7 @@ scriptwait:
 				int flags = STACK(1);
 				sp -= 5;
 
-				P_SectorDamage(tag, amount, type, protectClass, flags);
+				P_SectorDamage(&level, tag, amount, type, protectClass, flags);
 			}
 			break;
 

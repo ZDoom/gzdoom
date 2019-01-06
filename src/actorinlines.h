@@ -93,3 +93,9 @@ inline double AActor::AttackOffset(double offset)
 	}
 
 }
+
+// Needs something more permanent.
+inline FLevelLocals *AActor::__GetLevel()
+{
+	return &level;
+}

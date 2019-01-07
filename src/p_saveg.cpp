@@ -923,6 +923,8 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 {
 	int i = Level->totaltime;
 
+	arc.SetLevel(&level);
+
 	if (arc.isWriting())
 	{
 		arc.Array("checksum", Level->md5, 16);
@@ -1034,4 +1036,6 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 	}
 	AActor::RecreateAllAttachedLights();
 	InitPortalGroups(Level);
+	arc.SetLevel(nullptr);
+
 }

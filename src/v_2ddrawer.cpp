@@ -418,7 +418,7 @@ void F2DDrawer::AddShape( FTexture *img, DShape2D *shape, DrawParms &parms )
 
 void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
-		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel,
+		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel, ELightMode lightMode,
 		uint32_t *indices, size_t indexcount)
 {
 	// Use an equation similar to player sprites to determine shade
@@ -428,7 +428,7 @@ void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 	// is necessary in order to best reproduce Doom's original lighting.
 	double fadelevel;
 
-	if (vid_rendermode != 4 || level.lightMode == ELightMode::Doom || level.lightMode == ELightMode::ZDoomSoftware || level.lightMode == ELightMode::DoomSoftware)
+	if (vid_rendermode != 4 || lightMode == ELightMode::Doom || lightMode == ELightMode::ZDoomSoftware || lightMode == ELightMode::DoomSoftware)
 	{
 		double map = (NUMCOLORMAPS * 2.) - ((lightlevel + 12) * (NUMCOLORMAPS / 128.));
 		fadelevel = clamp((map - 12) / NUMCOLORMAPS, 0.0, 1.0);

@@ -1450,27 +1450,27 @@ FSerializer &SerializePointer(FSerializer &arc, const char *key, T *&value, T **
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FPolyObj *&value, FPolyObj **defval)
 {
-	return SerializePointer(arc, key, value, defval, level.Polyobjects.Data());
+	return SerializePointer(arc, key, value, defval, arc.Level->Polyobjects.Data());
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, const FPolyObj *&value, const FPolyObj **defval)
 {
-	return SerializePointer<const FPolyObj>(arc, key, value, defval, level.Polyobjects.Data());
+	return SerializePointer<const FPolyObj>(arc, key, value, defval, arc.Level->Polyobjects.Data());
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, side_t *&value, side_t **defval)
 {
-	return SerializePointer(arc, key, value, defval, &level.sides[0]);
+	return SerializePointer(arc, key, value, defval, arc.Level->sides.Data());
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, sector_t *&value, sector_t **defval)
 {
-	return SerializePointer(arc, key, value, defval, &level.sectors[0]);
+	return SerializePointer(arc, key, value, defval, &arc.Level->sectors[0]);
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, const sector_t *&value, const sector_t **defval)
 {
-	return SerializePointer<const sector_t>(arc, key, value, defval, &level.sectors[0]);
+	return SerializePointer<const sector_t>(arc, key, value, defval, &arc.Level->sectors[0]);
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, player_t *&value, player_t **defval)
@@ -1480,12 +1480,12 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, player_t *&
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, line_t *&value, line_t **defval)
 {
-	return SerializePointer(arc, key, value, defval, &level.lines[0]);
+	return SerializePointer(arc, key, value, defval, &arc.Level->lines[0]);
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, vertex_t *&value, vertex_t **defval)
 {
-	return SerializePointer(arc, key, value, defval, &level.vertexes[0]);
+	return SerializePointer(arc, key, value, defval, &arc.Level->vertexes[0]);
 }
 
 //==========================================================================

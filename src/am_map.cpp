@@ -2243,6 +2243,7 @@ void AM_drawSubsectors()
 				colormap,
 				flatcolor,
 				floorlight,
+				level.lightMode,
 				f_y + f_h,
 				indices.data(), indices.size());
 		}

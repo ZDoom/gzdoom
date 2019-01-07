@@ -61,10 +61,10 @@ struct NumericValue
 
 class FSerializer
 {
-
 public:
 	FWriter *w = nullptr;
 	FReader *r = nullptr;
+	FLevelLocals *Level = nullptr;
 
 	unsigned ArraySize();
 	void WriteKey(const char *key);
@@ -77,6 +77,7 @@ public:
 		mErrors = 0;	// The destructor may not throw an exception so silence the error checker.
 		Close();
 	}
+	void SetLevel(FLevelLocals *l) { Level = l; }
 	bool OpenWriter(bool pretty = true);
 	bool OpenReader(const char *buffer, size_t length);
 	bool OpenReader(FCompressedBuffer *input);

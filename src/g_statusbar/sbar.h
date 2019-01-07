@@ -453,6 +453,7 @@ public:
 
 	
 	void RefreshBackground () const;
+	void RefreshViewBorder ();
 
 private:
 	DObject *AltHud = nullptr;

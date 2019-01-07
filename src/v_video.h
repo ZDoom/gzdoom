@@ -538,9 +538,7 @@ public:
 	void DrawChar(FFont *font, int normalcolor, double x, double y, int character, VMVa_List &args);
 
 	void DrawFrame(int left, int top, int width, int height);
-	void DrawBorder(int x1, int y1, int x2, int y2);
-	void DrawViewBorder();
-	void RefreshViewBorder();
+	void DrawBorder(FTextureID, int x1, int y1, int x2, int y2);
 
 	// Calculate gamma table
 	void CalcGamma(float gamma, uint8_t gammalookup[256]);

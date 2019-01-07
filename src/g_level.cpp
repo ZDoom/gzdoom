@@ -1289,7 +1289,7 @@ void G_StartTravel ()
 		{
 			AActor *pawn = players[i].mo;
 			AActor *inv;
-			players[i].camera = NULL;
+			players[i].camera = nullptr;
 
 			// Only living players travel. Dead ones get a new body on the new level.
 			if (players[i].health > 0)
@@ -1391,8 +1391,8 @@ int G_FinishTravel ()
 		{
 			P_FindFloorCeiling(pawn);
 		}
-		pawn->target = NULL;
-		pawn->lastenemy = NULL;
+		pawn->target = nullptr;
+		pawn->lastenemy = nullptr;
 		pawn->player->mo = pawn;
 		pawn->player->camera = pawn;
 		pawn->player->viewheight = pawn->player->DefaultViewHeight();

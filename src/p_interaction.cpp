@@ -580,8 +580,8 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 				if (players[i].Bot != NULL && this == players[i].Bot->enemy)
 				{
 					if (players[i].Bot->dest ==  players[i].Bot->enemy)
-						players[i].Bot->dest = NULL;
-					players[i].Bot->enemy = NULL;
+						players[i].Bot->dest = nullptr;
+					players[i].Bot->enemy = nullptr;
 				}
 			}
 

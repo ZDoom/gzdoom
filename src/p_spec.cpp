@@ -962,7 +962,7 @@ void P_SetupPortals(FLevelLocals *Level)
 		if (s.mType == PORTS_STACKEDSECTORTHING && s.mSkybox)
 		{
 			s.mDisplacement = s.mSkybox->Pos() - s.mSkybox->target->Pos();
-			s.mSkybox = NULL;
+			s.mSkybox = nullptr;
 		}
 	}
 }

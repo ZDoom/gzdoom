@@ -681,7 +681,7 @@ DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, 
 	mIndex = 0;
 	mAdvance = false;
 	mSentAdvance = false;
-	mScreen = NULL;
+	mScreen = nullptr;
 	mFirst = true;
 	mGameState = state;
 }

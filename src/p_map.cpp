@@ -2336,7 +2336,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 				&& bglobal.IsDangerous(tm.sector))
 			{
 				thing->player->Bot->prev = thing->player->Bot->dest;
-				thing->player->Bot->dest = NULL;
+				thing->player->Bot->dest = nullptr;
 				thing->Vel.X = thing->Vel.Y = 0;
 				thing->SetZ(oldz);
 				thing->flags6 &= ~MF6_INTRYMOVE;

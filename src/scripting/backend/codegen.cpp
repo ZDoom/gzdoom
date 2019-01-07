@@ -11406,6 +11406,7 @@ FxLocalArrayDeclaration::FxLocalArrayDeclaration(PType *type, FName name, FArgum
 {
 	ExprType = EFX_LocalArrayDeclaration;
 	values = std::move(args);
+	clearExpr = nullptr;
 }
 
 FxExpression *FxLocalArrayDeclaration::Resolve(FCompileContext &ctx)
@@ -11420,6 +11421,16 @@ FxExpression *FxLocalArrayDeclaration::Resolve(FCompileContext &ctx)
 	auto stackVar = new FxStackVariable(ValueType, StackOffset, ScriptPosition);
 	auto elementType = (static_cast<PArray *> (ValueType))->ElementType;
 	auto elementCount = (static_cast<PArray *> (ValueType))->ElementCount;
+
+	// We HAVE to clear dynamic arrays before initializing them
+	if (IsDynamicArray())
+	{
+		FArgumentList argsList;
+		argsList.Clear();
+
+		clearExpr = new FxMemberFunctionCall(stackVar, "Clear", argsList, (const FScriptPosition) ScriptPosition);
+		SAFE_RESOLVE(clearExpr, ctx);
+	}
 
 	if (values.Size() > elementCount)
 	{
@@ -11476,6 +11487,11 @@ FxExpression *FxLocalArrayDeclaration::Resolve(FCompileContext &ctx)
 ExpEmit FxLocalArrayDeclaration::Emit(VMFunctionBuilder *build)
 {
 	assert(!(VarFlags & VARF_Out));	// 'out' variables should never be initialized, they can only exist as function parameters.
+
+	if (IsDynamicArray() && clearExpr != nullptr)
+	{
+		clearExpr->Emit(build);
+	}
 
 	auto elementSizeConst = build->GetConstantInt(static_cast<PArray *>(ValueType)->ElementSize);
 	auto arrOffsetReg = build->Registers[REGT_INT].Get(1);

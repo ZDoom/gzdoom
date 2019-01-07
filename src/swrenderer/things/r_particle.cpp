@@ -79,7 +79,7 @@ namespace swrenderer
 		sector_t*			heightsec = NULL;
 
 		double timefrac = r_viewpoint.TicFrac;
-		if (paused || bglobal.freeze || (level.flags2 & LEVEL2_FROZEN))
+		if (paused || bglobal.freeze || (sector->Level->flags2 & LEVEL2_FROZEN))
 			timefrac = 0.;
 
 		double ippx = particle->Pos.X + particle->Vel.X * timefrac;

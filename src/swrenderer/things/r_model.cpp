@@ -273,10 +273,11 @@ namespace swrenderer
 	{
 		// Calculate the WorldToView matrix as it would have looked like without yshearing:
 		const auto &Viewpoint = Thread->Viewport->viewpoint;
+		auto Level = Thread->Viewport->Level();
 		const auto &Viewwindow = Thread->Viewport->viewwindow;
 		double radPitch = Viewpoint.Angles.Pitch.Normalized180().Radians();
 		double angx = cos(radPitch);
-		double angy = sin(radPitch) * level.info->pixelstretch;
+		double angy = sin(radPitch) * Level->info->pixelstretch;
 		double alen = sqrt(angx*angx + angy*angy);
 		float adjustedPitch = (float)asin(angy / alen);
 		float adjustedViewAngle = (float)(Viewpoint.Angles.Yaw - 90).Radians();
@@ -286,7 +287,7 @@ namespace swrenderer
 		Mat4f altWorldToView =
 			Mat4f::Rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
 			Mat4f::Rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
-			Mat4f::Scale(1.0f, level.info->pixelstretch, 1.0f) *
+			Mat4f::Scale(1.0f, Level->info->pixelstretch, 1.0f) *
 			Mat4f::SwapYZ() *
 			Mat4f::Translate((float)-Viewpoint.Pos.X, (float)-Viewpoint.Pos.Y, (float)-Viewpoint.Pos.Z);
 

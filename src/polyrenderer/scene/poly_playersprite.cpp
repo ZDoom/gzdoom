@@ -106,7 +106,7 @@ void RenderPolyPlayerSprites::Render(PolyRenderThread *thread)
 	}
 
 	// [RH] set foggy flag
-	bool foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE));
+	bool foggy = (PolyRenderer::Instance()->Level->fadeto || basecolormap->Fade || (PolyRenderer::Instance()->Level->flags & LEVEL_HASFADETABLE));
 
 	// get light level
 	lightnum = ((floorlight + ceilinglight) >> 1) + (foggy ? 0 : viewpoint.extralight << 4);
@@ -458,7 +458,7 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 
 fixed_t RenderPolyPlayerSprites::LightLevelToShade(int lightlevel, bool foggy)
 {
-	bool nolightfade = !foggy && ((level.flags3 & LEVEL3_NOLIGHTFADE));
+	bool nolightfade = !foggy && ((PolyRenderer::Instance()->Level->flags3 & LEVEL3_NOLIGHTFADE));
 	if (nolightfade)
 	{
 		return (MAX(255 - lightlevel, 0) * NUMCOLORMAPS) << (FRACBITS - 8);

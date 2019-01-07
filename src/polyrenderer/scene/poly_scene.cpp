@@ -70,7 +70,7 @@ void RenderPolyScene::Render(PolyPortalViewpoint *viewpoint)
 	const auto &rviewpoint = PolyRenderer::Instance()->Viewpoint;
 	for (uint32_t sectorIndex : Cull.SeenSectors)
 	{
-		sector_t *sector = &level.sectors[sectorIndex];
+		sector_t *sector = &PolyRenderer::Instance()->Level->sectors[sectorIndex];
 		for (AActor *thing = sector->thinglist; thing != nullptr; thing = thing->snext)
 		{
 			if (!RenderPolySprite::IsThingCulled(thing))
@@ -132,7 +132,7 @@ void RenderPolyScene::RenderSectors()
 		int end = thread->End;
 		for (int i = start; i < end; i++)
 		{
-			RenderSubsector(thread, &level.subsectors[subsectors[i]], i);
+			RenderSubsector(thread, &PolyRenderer::Instance()->Level->subsectors[subsectors[i]], i);
 		}
 	}, [&](PolyRenderThread *thread)
 	{
@@ -254,15 +254,15 @@ int RenderPolyScene::PointOnSide(const DVector2 &pos, const node_t *node)
 
 void RenderPolyScene::AddSprite(PolyRenderThread *thread, AActor *thing, double sortDistance, const DVector2 &left, const DVector2 &right)
 {
-	if (level.nodes.Size() == 0)
+	if (PolyRenderer::Instance()->Level->nodes.Size() == 0)
 	{
-		subsector_t *sub = &level.subsectors[0];
+		subsector_t *sub = &PolyRenderer::Instance()->Level->subsectors[0];
 		if (Cull.SubsectorDepths[sub->Index()] != 0xffffffff)
 			thread->TranslucentObjects.push_back(thread->FrameMemory->NewObject<PolyTranslucentThing>(thing, sub, Cull.SubsectorDepths[sub->Index()], sortDistance, 0.0f, 1.0f, CurrentViewpoint->StencilValue));
 	}
 	else
 	{
-		AddSprite(thread, thing, sortDistance, left, right, 0.0, 1.0, level.HeadNode());
+		AddSprite(thread, thing, sortDistance, left, right, 0.0, 1.0, PolyRenderer::Instance()->Level->HeadNode());
 	}
 }
 
@@ -303,15 +303,15 @@ void RenderPolyScene::AddSprite(PolyRenderThread *thread, AActor *thing, double 
 
 void RenderPolyScene::AddModel(PolyRenderThread *thread, AActor *thing, double sortDistance, DVector2 pos)
 {
-	if (level.nodes.Size() == 0)
+	if (PolyRenderer::Instance()->Level->nodes.Size() == 0)
 	{
-		subsector_t *sub = &level.subsectors[0];
+		subsector_t *sub = &PolyRenderer::Instance()->Level->subsectors[0];
 		if (Cull.SubsectorDepths[sub->Index()] != 0xffffffff)
 			thread->TranslucentObjects.push_back(thread->FrameMemory->NewObject<PolyTranslucentThing>(thing, sub, Cull.SubsectorDepths[sub->Index()], sortDistance, 0.0f, 1.0f, CurrentViewpoint->StencilValue));
 	}
 	else
 	{
-		void *node = level.HeadNode();
+		void *node = PolyRenderer::Instance()->Level->HeadNode();
 
 		while (!((size_t)node & 1))  // Keep going until found a subsector
 		{
@@ -444,7 +444,7 @@ PolyTransferHeights::PolyTransferHeights(subsector_t *sub) : Subsector(sub)
 
 	// If player's view height is underneath fake floor, lower the
 	// drawn ceiling to be just under the floor height, and replace
-	// the drawn floor and ceiling textures, and light level, with
+	// the drawn floor and ceiling textures, and light PolyRenderer::Instance()->Level->, with
 	// the control sector's.
 	//
 	// Similar for ceiling, only reflected.

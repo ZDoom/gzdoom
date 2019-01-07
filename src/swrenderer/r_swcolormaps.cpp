@@ -524,7 +524,10 @@ CCMD (testfade)
 		{
 			color = V_GetColorFromString (NULL, argv[1]);
 		}
-		level.fadeto = color;
+		ForAllLevels([&](FLevelLocals *Level)
+		{
+			Level->fadeto = color;
+		});
 		NormalLight.ChangeFade (color);
 	}
 }

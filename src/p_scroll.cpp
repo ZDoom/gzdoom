@@ -581,7 +581,7 @@ void P_SpawnScrollers(FLevelLocals *Level)
 		case Scroll_Texture_Offsets:
 			// killough 3/2/98: scroll according to sidedef offsets
 			side = Level->lines[i].sidedef[0];
-			Create<DScroller> (EScroll::sc_side, -Level->sides[s].GetTextureXOffset(side_t::mid),
+			Create<DScroller> (EScroll::sc_side, -side->GetTextureXOffset(side_t::mid),
 				side->GetTextureYOffset(side_t::mid), nullptr, nullptr, side, accel, SCROLLTYPE(l->args[0]));
 			break;
 

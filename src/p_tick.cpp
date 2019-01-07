@@ -71,36 +71,17 @@ bool P_CheckTickerPaused ()
 //
 // P_Ticker
 //
+// (split up to prepare for running multiple levels.)
+//
 void P_Ticker (void)
 {
 	int i;
 
-	interpolator.UpdateInterpolations ();
-	r_NoInterpolate = true;
-
-	if (!demoplayback)
-	{
-		// This is a separate slot from the wipe in D_Display(), because this
-		// is delayed slightly due to latency. (Even on a singleplayer game!)
-//		GSnd->SetSfxPaused(!!playerswiping, 2);
-	}
-
-	// run the tic
 	if (paused || P_CheckTickerPaused())
 		return;
-
-	DPSprite::NewTick();
-
-	// [RH] Frozen mode is only changed every 4 tics, to make it work with A_Tracer().
-	if ((level.time & 3) == 0)
-	{
-		if (bglobal.changefreeze)
-		{
-			bglobal.freeze ^= 1;
-			bglobal.changefreeze = 0;
-		}
-	}
-
+	
+	level.Tick();
+	
 	// [BC] Do a quick check to see if anyone has the freeze time power. If they do,
 	// then don't resume the sound, since one of the effects of that power is to shut
 	// off the music.
@@ -109,9 +90,32 @@ void P_Ticker (void)
 		if (playeringame[i] && players[i].timefreezer != 0)
 			break;
 	}
-
+	
 	if ( i == MAXPLAYERS )
 		S_ResumeSound (false);
+
+}
+
+void FLevelLocals::Tick()
+{
+	// run the tic
+
+
+	interpolator.UpdateInterpolations ();
+	r_NoInterpolate = true;
+
+	DPSprite::NewTick();
+
+	// [RH] Frozen mode is only changed every 4 tics, to make it work with A_Tracer().
+	if ((maptime & 3) == 0)
+	{
+		if (bglobal.changefreeze)
+		{
+			bglobal.freeze ^= 1;
+			bglobal.changefreeze = 0;
+		}
+	}
+
 
 	P_ResetSightCounters (false);
 	R_ClearInterpolationPath();
@@ -130,27 +134,31 @@ void P_Ticker (void)
 
 	P_ThinkParticles();	// [RH] make the particles think
 
-	for (i = 0; i<MAXPLAYERS; i++)
+	for (int i = 0; i<MAXPLAYERS; i++)
 		if (playeringame[i] &&
 			/*Added by MC: Freeze mode.*/!(bglobal.freeze && players[i].Bot != NULL))
 			P_PlayerThink (&players[i]);
 
 	// [ZZ] call the WorldTick hook
 	E_WorldTick();
-	StatusBar->SetLevel(&level);
+	StatusBar->SetLevel(this);
 	StatusBar->CallTick ();		// [RH] moved this here
-	level.Tick ();			// [RH] let the level tick
+	// Reset carry sectors
+	if (Scrolls.Size() > 0)
+	{
+		memset (&Scrolls[0], 0, sizeof(Scrolls[0])*Scrolls.Size());
+	}
 	DThinker::RunThinkers ();
 
 	//if added by MC: Freeze mode.
-	if (!bglobal.freeze && !(level.flags2 & LEVEL2_FROZEN))
+	if (!bglobal.freeze && !(flags2 & LEVEL2_FROZEN))
 	{
 		P_UpdateSpecials (&level);
 		P_RunEffects ();	// [RH] Run particle effects
 	}
 
 	// for par times
-	level.time++;
-	level.maptime++;
-	level.totaltime++;
+	time++;
+	maptime++;
+	totaltime++;
 }

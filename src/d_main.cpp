@@ -760,16 +760,16 @@ void D_Display ()
 		{
 			AM_Drawer (hud_althud? viewheight : StatusBar->GetTopOfStatusbar());
 		}
-		if (!automapactive || viewactive)
-		{
-			screen->RefreshViewBorder ();
-		}
 		
 		// for timing the statusbar code.
 		//cycle_t stb;
 		//stb.Reset();
 		//stb.Clock();
 		StatusBar->SetLevel(&level);
+		if (!automapactive || viewactive)
+		{
+			StatusBar->RefreshViewBorder ();
+		}
 		if (hud_althud && viewheight == SCREENHEIGHT && screenblocks > 10)
 		{
 			StatusBar->DrawBottomStuff (HUD_AltHud);

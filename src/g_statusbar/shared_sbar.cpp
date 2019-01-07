@@ -436,7 +436,7 @@ void DBaseStatusBar::OnDestroy ()
 			msg->Destroy();
 			msg = next;
 		}
-		Messages[i] = NULL;
+		Messages[i] = nullptr;
 	}
 	if (AltHud) AltHud->Destroy();
 	Super::OnDestroy();
@@ -708,7 +708,7 @@ DHUDMessageBase *DBaseStatusBar::DetachMessage (DHUDMessageBase *msg)
 		if (probe != NULL)
 		{
 			*prev = probe->Next;
-			probe->Next = NULL;
+			probe->Next = nullptr;
 			return probe;
 		}
 	}
@@ -730,7 +730,7 @@ DHUDMessageBase *DBaseStatusBar::DetachMessage (uint32_t id)
 		if (probe != NULL)
 		{
 			*prev = probe->Next;
-			probe->Next = NULL;
+			probe->Next = nullptr;
 			return probe;
 		}
 	}
@@ -749,7 +749,7 @@ void DBaseStatusBar::DetachAllMessages ()
 	{
 		DHUDMessageBase *probe = Messages[i];
 
-		Messages[i] = NULL;
+		Messages[i] = nullptr;
 		while (probe != NULL)
 		{
 			DHUDMessageBase *next = probe->Next;
@@ -776,6 +776,49 @@ void DBaseStatusBar::ShowPlayerName ()
 
 //---------------------------------------------------------------------------
 //
+//
+//
+//---------------------------------------------------------------------------
+
+static FTextureID GetBorderTexture(FLevelLocals *Level)
+{
+	if (Level != nullptr && Level->info != nullptr && Level->info->BorderTexture.Len() != 0)
+	{
+		auto picnum = TexMan.CheckForTexture (Level->info->BorderTexture, ETextureType::Flat);
+		if (picnum.isValid()) return picnum;
+	}
+	return TexMan.CheckForTexture (gameinfo.BorderFlat, ETextureType::Flat);
+}
+
+//==========================================================================
+//
+// R_RefreshViewBorder
+//
+// Draws the border around the player view, if needed.
+//
+//==========================================================================
+
+void DBaseStatusBar::RefreshViewBorder ()
+{
+	if (setblocks < 10)
+	{
+		int Width = screen->GetWidth();
+		if (viewwidth == Width)
+		{
+			return;
+		}
+		auto tex = GetBorderTexture(Level);
+		screen->DrawBorder (tex, 0, 0, Width, viewwindowy);
+		screen->DrawBorder (tex, 0, viewwindowy, viewwindowx, viewheight + viewwindowy);
+		screen->DrawBorder (tex, viewwindowx + viewwidth, viewwindowy, Width, viewheight + viewwindowy);
+		screen->DrawBorder (tex, 0, viewwindowy + viewheight, Width, StatusBar->GetTopOfStatusbar());
+		
+		screen->DrawFrame (viewwindowx, viewwindowy, viewwidth, viewheight);
+	}
+}
+
+//---------------------------------------------------------------------------
+//
 // RefreshBackground
 //
 //---------------------------------------------------------------------------
@@ -787,13 +830,17 @@ void DBaseStatusBar::RefreshBackground () const
 	float ratio = ActiveRatio (SCREENWIDTH, SCREENHEIGHT);
 	x = ST_X;
 	y = SBarTop;
+	
+	if (x == 0 && y == SCREENHEIGHT) return;
+
+	auto tex = GetBorderTexture(Level);
 
 	if(!CompleteBorder)
 	{
 		if(y < SCREENHEIGHT)
 		{
-			screen->DrawBorder (x+1, y, SCREENWIDTH, y+1);
-			screen->DrawBorder (x+1, SCREENHEIGHT-1, SCREENWIDTH, SCREENHEIGHT);
+			screen->DrawBorder (tex, x+1, y, SCREENWIDTH, y+1);
+			screen->DrawBorder (tex, x+1, SCREENHEIGHT-1, SCREENWIDTH, SCREENHEIGHT);
 		}
 	}
 	else
@@ -812,8 +859,8 @@ void DBaseStatusBar::RefreshBackground () const
 			x2 = SCREENWIDTH;
 		}
 
-		screen->DrawBorder (0, y, x+1, SCREENHEIGHT);
-		screen->DrawBorder (x2-1, y, SCREENWIDTH, SCREENHEIGHT);
+		screen->DrawBorder (tex, 0, y, x+1, SCREENHEIGHT);
+		screen->DrawBorder (tex, x2-1, y, SCREENWIDTH, SCREENHEIGHT);
 
 		if (setblocks >= 10)
 		{

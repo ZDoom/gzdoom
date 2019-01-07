@@ -677,6 +677,8 @@ public:
 
 	void Serialize(FSerializer &arc);
 	int RunScript();
+	PClass *GetClassForIndex(int index) const;
+
 
 	inline void SetState(EScriptState newstate) { state = newstate; }
 	inline EScriptState GetState() { return state; }
@@ -6759,6 +6761,11 @@ static bool CharArrayParms(int &capacity, int &offset, int &a, FACSStackMemory& 
 	return true;
 }
 
+PClass *DLevelScript::GetClassForIndex(int index) const
+{
+	return PClass::FindActor(level.Behaviors.LookupString(index));
+}
+
 int DLevelScript::RunScript ()
 {
 	DACSThinker *controller = level.ACSThinker;
@@ -9618,7 +9625,7 @@ scriptwait:
             break;
 
 		case PCD_SETWEAPON:
-			STACK(1) = ScriptUtil::Exec(NAME_SetWeapon, ScriptUtil::Pointer, activator, ScriptUtil::ACSClass, STACK(1), ScriptUtil::End);
+			STACK(1) = ScriptUtil::Exec(NAME_SetWeapon, ScriptUtil::Pointer, activator, ScriptUtil::Class, GetClassForIndex(STACK(1)), ScriptUtil::End);
 			break;
 
 		case PCD_SETMARINEWEAPON:
@@ -9627,7 +9634,7 @@ scriptwait:
 			break;
 
 		case PCD_SETMARINESPRITE:
-			ScriptUtil::Exec(NAME_SetMarineSprite, ScriptUtil::Pointer, activator, ScriptUtil::Int, STACK(2), ScriptUtil::ACSClass, STACK(1), ScriptUtil::End);
+			ScriptUtil::Exec(NAME_SetMarineSprite, ScriptUtil::Pointer, activator, ScriptUtil::Int, STACK(2), ScriptUtil::Class, GetClassForIndex(STACK(1)), ScriptUtil::End);
 			sp -= 2;
 			break;
 

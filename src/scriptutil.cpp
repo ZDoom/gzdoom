@@ -60,10 +60,6 @@ void ScriptUtil::BuildParameters(va_list ap)
 			case Float:
 				parameters.Push(VMValue(va_arg(ap, double)));
 				break;
-				
-			case ACSClass:
-				parameters.Push(VMValue(PClass::FindActor(level.Behaviors.LookupString(va_arg(ap, int)))));
-				break;
 		}
 	}
 }

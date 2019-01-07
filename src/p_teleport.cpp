@@ -236,7 +236,7 @@ DEFINE_ACTION_FUNCTION(AActor, Teleport)
 	ACTION_RETURN_BOOL(P_Teleport(self, DVector3(x, y, z), an, flags));
 }
 
-static AActor *SelectTeleDest (int tid, int tag, bool norandom)
+static AActor *SelectTeleDest (FLevelLocals *Level, int tid, int tag, bool norandom)
 {
 	AActor *searcher;
 
@@ -320,7 +320,7 @@ static AActor *SelectTeleDest (int tid, int tag, bool norandom)
 			TThinkerIterator<AActor> it2(NAME_TeleportDest);
 			while ((searcher = it2.Next()) != NULL)
 			{
-				if (searcher->Sector == &level.sectors[secnum])
+				if (searcher->Sector == &Level->sectors[secnum])
 				{
 					return searcher;
 				}
@@ -331,7 +331,7 @@ static AActor *SelectTeleDest (int tid, int tag, bool norandom)
 	return NULL;
 }
 
-bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int flags)
+bool EV_Teleport (FLevelLocals *Level, int tid, int tag, line_t *line, int side, AActor *thing, int flags)
 {
 	AActor *searcher;
 	double z;
@@ -353,7 +353,7 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 	{ // Don't teleport if hit back of line, so you can get out of teleporter.
 		return 0;
 	}
-	searcher = SelectTeleDest(tid, tag, predicting);
+	searcher = SelectTeleDest(Level, tid, tag, predicting);
 	if (searcher == NULL)
 	{
 		return false;
@@ -427,6 +427,7 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 {
 	int i;
 	line_t *l;
+	auto Level = thing->__GetLevel();
 
 	if (side || thing->flags2 & MF2_NOTELEPORT || !line || line->sidedef[1] == NULL)
 		return false;
@@ -437,7 +438,7 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 		if (line->Index() == i)
 			continue;
 
-		if ((l=&level.lines[i]) != line && l->backsector)
+		if ((l=&Level->lines[i]) != line && l->backsector)
 		{
 			// Get the thing's position along the source linedef
 			double pos;
@@ -601,7 +602,7 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 }
 
 // [RH] Teleport anything matching other_tid to dest_tid
-bool EV_TeleportOther (int other_tid, int dest_tid, bool fog)
+bool EV_TeleportOther (FLevelLocals *Level, int other_tid, int dest_tid, bool fog)
 {
 	bool didSomething = false;
 
@@ -612,7 +613,7 @@ bool EV_TeleportOther (int other_tid, int dest_tid, bool fog)
 
 		while ( (victim = iterator.Next ()) )
 		{
-			didSomething |= EV_Teleport (dest_tid, 0, NULL, 0, victim,
+			didSomething |= EV_Teleport (Level, dest_tid, 0, NULL, 0, victim,
 				fog ? (TELF_DESTFOG | TELF_SOURCEFOG) : TELF_KEEPORIENTATION);
 		}
 	}
@@ -639,7 +640,7 @@ static bool DoGroupForOne (AActor *victim, AActor *source, AActor *dest, bool fl
 
 // [RH] Teleport a group of actors centered around source_tid so
 // that they become centered around dest_tid instead.
-bool EV_TeleportGroup (int group_tid, AActor *victim, int source_tid, int dest_tid, bool moveSource, bool fog)
+bool EV_TeleportGroup (FLevelLocals *Level, int group_tid, AActor *victim, int source_tid, int dest_tid, bool moveSource, bool fog)
 {
 	AActor *sourceOrigin, *destOrigin;
 	{
@@ -648,7 +649,7 @@ bool EV_TeleportGroup (int group_tid, AActor *victim, int source_tid, int dest_t
 	}
 	if (sourceOrigin == NULL)
 	{ // If there is no source origin, behave like TeleportOther
-		return EV_TeleportOther (group_tid, dest_tid, fog);
+		return EV_TeleportOther (Level, group_tid, dest_tid, fog);
 	}
 
 	{
@@ -694,7 +695,7 @@ bool EV_TeleportGroup (int group_tid, AActor *victim, int source_tid, int dest_t
 // [RH] Teleport a group of actors in a sector. Source_tid is used as a
 // reference point so that they end up in the same position relative to
 // dest_tid. Group_tid can be used to not teleport all actors in the sector.
-bool EV_TeleportSector (int tag, int source_tid, int dest_tid, bool fog, int group_tid)
+bool EV_TeleportSector (FLevelLocals *Level, int tag, int source_tid, int dest_tid, bool fog, int group_tid)
 {
 	AActor *sourceOrigin, *destOrigin;
 	{
@@ -723,7 +724,7 @@ bool EV_TeleportSector (int tag, int source_tid, int dest_tid, bool fog, int gro
 	while ((secnum = itr.Next()) >= 0)
 	{
 		msecnode_t *node;
-		const sector_t * const sec = &level.sectors[secnum];
+		const sector_t * const sec = &Level->sectors[secnum];
 
 		for (node = sec->touching_thinglist; node; )
 		{

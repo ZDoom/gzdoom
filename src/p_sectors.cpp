@@ -1530,7 +1530,7 @@ int side_t::GetLightLevel (bool foggy, int baselight, bool is3dlight, int *pfake
 	}
 
 	auto Level = sector->Level;
-	if (!foggy || level.flags3 & LEVEL3_FORCEFAKECONTRAST) // Don't do relative lighting in foggy sectors
+	if (!foggy || Level->flags3 & LEVEL3_FORCEFAKECONTRAST) // Don't do relative lighting in foggy sectors
 	{
 		if (!(Flags & WALLF_NOFAKECONTRAST) && r_fakecontrast != 0)
 		{

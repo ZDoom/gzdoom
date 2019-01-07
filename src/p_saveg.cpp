@@ -331,9 +331,9 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t 
 //
 //==========================================================================
 
-void RecalculateDrawnSubsectors()
+void RecalculateDrawnSubsectors(FLevelLocals *Level)
 {
-	for (auto &sub : level.subsectors)
+	for (auto &sub : Level->subsectors)
 	{
 		for (unsigned int j = 0; j<sub.numlines; j++)
 		{
@@ -352,12 +352,12 @@ void RecalculateDrawnSubsectors()
 //
 //==========================================================================
 
-FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
+FSerializer &SerializeSubsectors(FSerializer &arc, FLevelLocals *Level, const char *key)
 {
 	uint8_t by;
 	const char *str;
 
-	auto numsubsectors = level.subsectors.Size();
+	auto numsubsectors = Level->subsectors.Size();
 	if (arc.isWriting())
 	{
 		TArray<char> encoded(1 + (numsubsectors + 5) / 6);
@@ -367,7 +367,7 @@ FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
 			by = 0;
 			for (unsigned j = 0; j < 6; j++)
 			{
-				if (i + j < numsubsectors && (level.subsectors[i + j].flags & SSECMF_DRAWN))
+				if (i + j < numsubsectors && (Level->subsectors[i + j].flags & SSECMF_DRAWN))
 				{
 					by |= (1 << j);
 				}
@@ -383,7 +383,7 @@ FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
 		str = &encoded[0];
 		if (arc.BeginArray(key))
 		{
-			auto numvertexes = level.vertexes.Size();
+			auto numvertexes = Level->vertexes.Size();
 			arc(nullptr, numvertexes)
 				(nullptr, numsubsectors)
 				.StringPtr(nullptr, str)
@@ -401,7 +401,7 @@ FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
 				.StringPtr(nullptr, str)
 				.EndArray();
 
-			if (num_verts == (int)level.vertexes.Size() && num_subs == (int)numsubsectors)
+			if (num_verts == (int)Level->vertexes.Size() && num_subs == (int)numsubsectors)
 			{
 				success = true;
 				int sub = 0;
@@ -422,7 +422,7 @@ FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
 					{
 						if (sub + s < (int)numsubsectors && (by & (1 << s)))
 						{
-							level.subsectors[sub + s].flags |= SSECMF_DRAWN;
+							Level->subsectors[sub + s].flags |= SSECMF_DRAWN;
 						}
 					}
 					sub += 6;
@@ -430,7 +430,7 @@ FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
 			}
 			if (!success)
 			{
-				RecalculateDrawnSubsectors();
+				RecalculateDrawnSubsectors(Level);
 			}
 		}
 
@@ -1012,7 +1012,7 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 	E_SerializeEvents(arc);
 	DThinker::SerializeThinkers(arc, hubload);
 	arc("polyobjs", Level->Polyobjects);
-	SerializeSubsectors(arc, "subsectors");
+	SerializeSubsectors(arc, Level, "subsectors");
 	StatusBar->SerializeMessages(arc);
 	AM_SerializeMarkers(arc);
 	FRemapTable::StaticSerializeTranslations(arc);

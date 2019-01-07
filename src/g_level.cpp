@@ -1952,20 +1952,6 @@ void P_ReadACSDefereds (FSerializer &arc)
 //
 //==========================================================================
 
-void FLevelLocals::Tick ()
-{
-	// Reset carry sectors
-	if (Scrolls.Size() > 0)
-	{
-		memset (&Scrolls[0], 0, sizeof(Scrolls[0])*Scrolls.Size());
-	}
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
 void FLevelLocals::Mark()
 {
 	GC::Mark(SpotState);

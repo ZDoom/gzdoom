@@ -1103,7 +1103,7 @@ FUNC(LS_Teleport)
 	{
 		flags |= TELF_SOURCEFOG;
 	}
-	return EV_Teleport (arg0, arg1, ln, backSide, it, flags);
+	return EV_Teleport (Level, arg0, arg1, ln, backSide, it, flags);
 }
 
 FUNC( LS_Teleport_NoStop )
@@ -1114,7 +1114,7 @@ FUNC( LS_Teleport_NoStop )
 	{
 		flags |= TELF_SOURCEFOG;
 	}
-	return EV_Teleport( arg0, arg1, ln, backSide, it, flags);
+	return EV_Teleport(Level, arg0, arg1, ln, backSide, it, flags);
 }
 
 FUNC(LS_Teleport_NoFog)
@@ -1144,7 +1144,7 @@ FUNC(LS_Teleport_NoFog)
 	{
 		flags |= TELF_KEEPHEIGHT;
 	}
-	return EV_Teleport (arg0, arg2, ln, backSide, it, flags);
+	return EV_Teleport (Level, arg0, arg2, ln, backSide, it, flags);
 }
 
 FUNC(LS_Teleport_ZombieChanger)
@@ -1153,7 +1153,7 @@ FUNC(LS_Teleport_ZombieChanger)
 	// This is practically useless outside of Strife, but oh well.
 	if (it != NULL)
 	{
-		EV_Teleport (arg0, arg1, ln, backSide, it, 0);
+		EV_Teleport (Level, arg0, arg1, ln, backSide, it, 0);
 		if (it->health >= 0) it->SetState (it->FindState(NAME_Pain));
 		return true;
 	}
@@ -1163,19 +1163,19 @@ FUNC(LS_Teleport_ZombieChanger)
 FUNC(LS_TeleportOther)
 // TeleportOther (other_tid, dest_tid, fog?)
 {
-	return EV_TeleportOther (arg0, arg1, arg2?true:false);
+	return EV_TeleportOther (Level, arg0, arg1, arg2?true:false);
 }
 
 FUNC(LS_TeleportGroup)
 // TeleportGroup (group_tid, source_tid, dest_tid, move_source?, fog?)
 {
-	return EV_TeleportGroup (arg0, it, arg1, arg2, arg3?true:false, arg4?true:false);
+	return EV_TeleportGroup (Level, arg0, it, arg1, arg2, arg3?true:false, arg4?true:false);
 }
 
 FUNC(LS_TeleportInSector)
 // TeleportInSector (tag, source_tid, dest_tid, bFog, group_tid)
 {
-	return EV_TeleportSector (arg0, arg1, arg2, arg3?true:false, arg4);
+	return EV_TeleportSector (Level, arg0, arg1, arg2, arg3?true:false, arg4);
 }
 
 FUNC(LS_Teleport_EndGame)

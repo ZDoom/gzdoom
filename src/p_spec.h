@@ -688,11 +688,11 @@ enum
 void P_SpawnTeleportFog(AActor *mobj, const DVector3 &pos, bool beforeTele = true, bool setTarget = false);
 
 bool P_Teleport(AActor *thing, DVector3 pos, DAngle angle, int flags);
-bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int flags);
+bool EV_Teleport (FLevelLocals *Level, int tid, int tag, line_t *line, int side, AActor *thing, int flags);
 bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBOOL reverse);
-bool EV_TeleportOther (int other_tid, int dest_tid, bool fog);
-bool EV_TeleportGroup (int group_tid, AActor *victim, int source_tid, int dest_tid, bool moveSource, bool fog);
-bool EV_TeleportSector (int tag, int source_tid, int dest_tid, bool fog, int group_tid);
+bool EV_TeleportOther (FLevelLocals *Level, int other_tid, int dest_tid, bool fog);
+bool EV_TeleportGroup (FLevelLocals *Level, int group_tid, AActor *victim, int source_tid, int dest_tid, bool moveSource, bool fog);
+bool EV_TeleportSector (FLevelLocals *Level, int tag, int source_tid, int dest_tid, bool fog, int group_tid);
 
 
 //

@@ -641,7 +641,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 
 	// [RH] Give scripts a chance to do something
 	unloading = true;
-	level.Behaviors.StartTypedScripts (SCRIPT_Unloading, NULL, false, 0, true);
+	level.Behaviors.StartTypedScripts (&level, SCRIPT_Unloading, NULL, false, 0, true);
 	// [ZZ] safe world unload
 	E_WorldUnloaded();
 	// [ZZ] unsafe world unload (changemap != map)
@@ -854,11 +854,17 @@ void G_DoCompleted (void)
 			G_SnapshotLevel ();
 			// Do not free any global strings this level might reference
 			// while it's not loaded.
-			level.Behaviors.LockLevelVarStrings(level.levelnum);
+			ForAllLevels([](FLevelLocals *Level)
+			{
+				Level->Behaviors.LockLevelVarStrings(Level);
+			});
 		}
 		else
 		{ // Make sure we don't have a snapshot lying around from before.
-			level.info->Snapshot.Clean();
+			ForAllLevels([](FLevelLocals *Level)
+			{
+				Level->info->Snapshot.Clean();
+			});
 		}
 	}
 	else
@@ -1089,7 +1095,7 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 			if (fromSnapshot)
 			{
 				// ENTER scripts are being handled when the player gets spawned, this cannot be changed due to its effect on voodoo dolls.
-				level.Behaviors.StartTypedScripts(SCRIPT_Return, players[ii].mo, true);
+				level.Behaviors.StartTypedScripts(&level, SCRIPT_Return, players[ii].mo, true);
 			}
 		}
 	}
@@ -1097,7 +1103,7 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 	if (level.FromSnapshot)
 	{
 		// [Nash] run REOPEN scripts upon map re-entry
-		level.Behaviors.StartTypedScripts(SCRIPT_Reopen, NULL, false);
+		level.Behaviors.StartTypedScripts(&level, SCRIPT_Reopen, NULL, false);
 	}
 
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
@@ -1105,7 +1111,7 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 	E_WorldLoadedUnsafe();
 	//      regular world load (savegames are handled internally)
 	E_WorldLoaded();
-	P_DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
+	P_DoDeferedScripts (&level);	// [RH] Do script actions that were triggered on another map.
 	
 	if (demoplayback || oldgs == GS_STARTUP || oldgs == GS_TITLELEVEL)
 		C_HideConsole ();

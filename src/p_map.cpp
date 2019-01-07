@@ -4272,7 +4272,7 @@ DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLin
 	// can't shoot outside view angles
 	if (vrange == 0)
 	{
-		if (t1->player == NULL || !level.IsFreelookAllowed())
+		if (t1->player == NULL || !Level->IsFreelookAllowed())
 		{
 			vrange = 35.;
 		}
@@ -5628,7 +5628,7 @@ int P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
 				return false;
 			}
 			int args[3] = { in->d.line->args[2], in->d.line->args[3], in->d.line->args[4] };
-			P_StartScript(PuzzleItemUser, in->d.line, in->d.line->args[1], NULL, args, 3, ACS_ALWAYS);
+			P_StartScript(PuzzleItemUser->__GetLevel(), PuzzleItemUser, in->d.line, in->d.line->args[1], NULL, args, 3, ACS_ALWAYS);
 			in->d.line->special = 0;
 			return true;
 		}
@@ -5643,7 +5643,7 @@ int P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
 			continue;
 		}
 		int args[3] = { mobj->args[2], mobj->args[3], mobj->args[4] };
-		P_StartScript(PuzzleItemUser, NULL, mobj->args[1], NULL, args, 3, ACS_ALWAYS);
+		P_StartScript(PuzzleItemUser->__GetLevel(), PuzzleItemUser, NULL, mobj->args[1], NULL, args, 3, ACS_ALWAYS);
 		mobj->special = 0;
 		return true;
 	}

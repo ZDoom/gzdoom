@@ -1686,7 +1686,7 @@ void G_DoPlayerPop(int playernum)
 	// [ZZ] fire player disconnect hook
 	E_PlayerDisconnected(playernum);
 	// [RH] Let the scripts know the player left
-	level.Behaviors.StartTypedScripts(SCRIPT_Disconnect, players[playernum].mo, true, playernum, true);
+	level.Behaviors.StartTypedScripts(&level, SCRIPT_Disconnect, players[playernum].mo, true, playernum, true);
 	if (players[playernum].mo != NULL)
 	{
 		P_DisconnectEffect(players[playernum].mo);

@@ -1081,7 +1081,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 
 	if (isconsole)
 	{
-		I_SetMusicVolume (level.MusicVolume);
+		I_SetMusicVolume (player->mo->__GetLevel()->MusicVolume);
 	}
 }
 

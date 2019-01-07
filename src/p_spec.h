@@ -215,16 +215,16 @@ protected:
 private:
 	DPlat ();
 
-	friend bool	EV_DoPlat (int tag, line_t *line, EPlatType type,
+	friend bool	EV_DoPlat (FLevelLocals *Level, int tag, line_t *line, EPlatType type,
 						   double height, double speed, int delay, int lip, int change);
-	friend void EV_StopPlat (int tag, bool remove);
-	friend void P_ActivateInStasis (int tag);
+	friend void EV_StopPlat (FLevelLocals *Level, int tag, bool remove);
+	friend void P_ActivateInStasis (FLevelLocals *Level, int tag);
 };
 
-bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type,
+bool EV_DoPlat (FLevelLocals *Level, int tag, line_t *line, DPlat::EPlatType type,
 				double height, double speed, int delay, int lip, int change);
-void EV_StopPlat (int tag, bool remove);
-void P_ActivateInStasis (int tag);
+void EV_StopPlat (FLevelLocals *Level, int tag, bool remove);
+void P_ActivateInStasis (FLevelLocals *Level, int tag);
 
 //
 // [RH]
@@ -265,7 +265,7 @@ private:
 	DPillar ();
 };
 
-bool EV_DoPillar (DPillar::EPillar type, line_t *line, int tag,
+bool EV_DoPillar (FLevelLocals *Level, DPillar::EPillar type, line_t *line, int tag,
 				  double speed, double height, double height2, int crush, bool hexencrush);
 
 //
@@ -704,10 +704,10 @@ bool EV_TeleportSector (int tag, int source_tid, int dest_tid, bool fog, int gro
 #define ACS_WANTRESULT		4
 #define ACS_NET				8
 
-int  P_StartScript (AActor *who, line_t *where, int script, const char *map, const int *args, int argcount, int flags);
-void P_SuspendScript (int script, const char *map);
-void P_TerminateScript (int script, const char *map);
-void P_DoDeferedScripts (void);
+int P_StartScript(FLevelLocals *Level, AActor *who, line_t *where, int script, const char *map, const int *args, int argcount, int flags);
+void P_SuspendScript (FLevelLocals *Level, int script, const char *map);
+void P_TerminateScript (FLevelLocals *Level, int script, const char *map);
+void P_DoDeferedScripts (FLevelLocals *Level);
 
 //
 // [RH] p_quake.c

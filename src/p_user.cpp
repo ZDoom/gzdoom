@@ -693,7 +693,8 @@ bool player_t::Resurrect()
 	// fire E_PlayerRespawned and start the ACS SCRIPT_Respawn.
 	E_PlayerRespawned(int(this - players));
 	//
-	level.Behaviors.StartTypedScripts(SCRIPT_Respawn, mo, true);
+	auto Level = mo->__GetLevel();
+	Level->Behaviors.StartTypedScripts(Level, SCRIPT_Respawn, mo, true);
 	return true;
 }
 

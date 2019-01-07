@@ -448,7 +448,7 @@ void FCajunMaster::RemoveAllBots (bool fromlist)
 			// [ZZ] run event hook
 			E_PlayerDisconnected(i);
 			//
-			level.Behaviors.StartTypedScripts (SCRIPT_Disconnect, players[i].mo, true, i, true);
+			level.Behaviors.StartTypedScripts (players[i].mo->__GetLevel(), SCRIPT_Disconnect, players[i].mo, true, i, true);
 			ClearPlayer (i, !fromlist);
 		}
 	}

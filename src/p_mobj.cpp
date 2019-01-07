@@ -5157,7 +5157,7 @@ AActor *P_SpawnPlayer (FLevelLocals *Level, FPlayerStart *mthing, int playernum,
 	{
 		if (state == PST_ENTER || (state == PST_LIVE && !savegamerestore))
 		{
-			Level->Behaviors.StartTypedScripts (SCRIPT_Enter, p->mo, true);
+			Level->Behaviors.StartTypedScripts (Level, SCRIPT_Enter, p->mo, true);
 		}
 		else if (state == PST_REBORN)
 		{
@@ -5181,7 +5181,7 @@ AActor *P_SpawnPlayer (FLevelLocals *Level, FPlayerStart *mthing, int playernum,
 			DObject::StaticPointerSubstitution (oldactor, p->mo);
 
 			E_PlayerRespawned(int(p - players));
-			Level->Behaviors.StartTypedScripts (SCRIPT_Respawn, p->mo, true);
+			Level->Behaviors.StartTypedScripts (Level, SCRIPT_Respawn, p->mo, true);
 		}
 	}
 	return mobj;

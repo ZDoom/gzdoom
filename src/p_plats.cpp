@@ -214,7 +214,7 @@ DPlat::DPlat (sector_t *sector)
 //	[RH] Changed amount to height and added delay,
 //		 lip, change, tag, and speed parameters.
 //
-bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, double height,
+bool EV_DoPlat (FLevelLocals *Level, int tag, line_t *line, DPlat::EPlatType type, double height,
 				double speed, int delay, int lip, int change)
 {
 	DPlat *plat;
@@ -233,7 +233,7 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, double height,
 		case DPlat::platToggle:
 			rtn = true;
 		case DPlat::platPerpetualRaise:
-			P_ActivateInStasis (tag);
+			P_ActivateInStasis (Level, tag);
 			break;
 
 		default:
@@ -247,7 +247,7 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, double height,
 	FSectorTagIterator itr(tag, line);
 	while ((secnum = itr.Next()) >= 0)
 	{
-		sec = &level.sectors[secnum];
+		sec = &Level->sectors[secnum];
 
 		if (sec->PlaneMoving(sector_t::floor))
 		{
@@ -400,7 +400,7 @@ void DPlat::Reactivate ()
 		m_Status = m_OldStatus;
 }
 
-void P_ActivateInStasis (int tag)
+void P_ActivateInStasis (FLevelLocals *Level, int tag)
 {
 	DPlat *scan;
 	TThinkerIterator<DPlat> iterator;
@@ -418,7 +418,7 @@ void DPlat::Stop ()
 	m_Status = in_stasis;
 }
 
-void EV_StopPlat (int tag, bool remove)
+void EV_StopPlat (FLevelLocals *Level, int tag, bool remove)
 {
 	DPlat *scan;
 	TThinkerIterator<DPlat> iterator;

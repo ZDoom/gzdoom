@@ -2194,6 +2194,7 @@ class FxLocalArrayDeclaration : public FxLocalVariableDeclaration
 {
 	PType *ElementType;
 	FArgumentList values;
+	FxExpression *clearExpr;
 
 public:
 

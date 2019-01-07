@@ -1288,7 +1288,13 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 
 		if (field->Type->ArraySize != nullptr)
 		{
-			fieldtype = ResolveArraySize(fieldtype, field->Type->ArraySize, type);
+			bool nosize;
+			fieldtype = ResolveArraySize(fieldtype, field->Type->ArraySize, type, &nosize);
+
+			if (nosize)
+			{
+				Error(field, "Must specify array size");
+			}
 		}
 
 		auto name = field->Names;
@@ -1304,7 +1310,13 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 				auto thisfieldtype = fieldtype;
 				if (name->ArraySize != nullptr)
 				{
-					thisfieldtype = ResolveArraySize(thisfieldtype, name->ArraySize, type);
+					bool nosize;
+					thisfieldtype = ResolveArraySize(thisfieldtype, name->ArraySize, type, &nosize);
+
+					if (nosize)
+					{
+						Error(field, "Must specify array size");
+					}
 				}
 				
 				if (varflags & VARF_Native)
@@ -1805,7 +1817,7 @@ PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt, boo
 //
 //==========================================================================
 
-PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PContainerType *cls)
+PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PContainerType *cls, bool *nosize)
 {
 	TArray<ZCC_Expression *> indices;
 
@@ -1817,6 +1829,11 @@ PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize,
 		node = static_cast<ZCC_Expression*>(node->SiblingNext);
 	} while (node != arraysize);
 
+	if (indices.Size() == 1 && indices [0]->Operation == PEX_Nil)
+	{
+		*nosize = true;
+		return baseType;
+	}
 
 	FCompileContext ctx(OutNamespace, cls, false);
 	for (auto node : indices)
@@ -1839,6 +1856,8 @@ PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize,
 		}
 		baseType = NewArray(baseType, size);
 	}
+
+	*nosize = false;
 	return baseType;
 }
 
@@ -3541,30 +3560,48 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 
 		if (loc->Type->ArraySize != nullptr)
 		{
-			ztype = ResolveArraySize(ztype, loc->Type->ArraySize, ConvertClass);
+			bool nosize;
+			ztype = ResolveArraySize(ztype, loc->Type->ArraySize, ConvertClass, &nosize);
+
+			if (nosize)
+			{
+				Error(node, "Must specify array size");
+			}
 		}
 
 		do
 		{
 			PType *type;
 
+			bool nosize = false;
 			if (node->ArraySize != nullptr)
 			{
-				type = ResolveArraySize(ztype, node->ArraySize, ConvertClass);
+				type = ResolveArraySize(ztype, node->ArraySize, ConvertClass, &nosize);
+
+				if (nosize && !node->InitIsArray)
+				{
+					Error(node, "Must specify array size for non-initialized arrays");
+				}
 			}
 			else
 			{
 				type = ztype;
 			}
 
-			if (node->InitIsArray)
+			if (node->InitIsArray && (type->isArray() || type->isDynArray() || nosize))
 			{
-				if (static_cast<PArray *>(type)->ElementType->isArray ())
+				auto arrtype = static_cast<PArray *>(type);
+				if (!nosize && (arrtype->ElementType->isArray() || arrtype->ElementType->isDynArray()))
 				{
 					Error(node, "Compound initializer not implemented yet for multi-dimensional arrays");
 				}
 				FArgumentList args;
 				ConvertNodeList(args, node->Init);
+
+				if (nosize)
+				{
+					type = NewArray(type, args.Size());
+				}
 				list->Add(new FxLocalArrayDeclaration(type, node->Name, args, 0, *node));
 			}
 			else

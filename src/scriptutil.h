@@ -19,8 +19,6 @@ public:
 		Float,
 		String,
 		Class,
-		ACSString,	// convenience helpers taking an ACS string index instead of a string
-		ACSClass,
 	};
 
 	static int Exec(FName functionname, ...);

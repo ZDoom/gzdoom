@@ -46,6 +46,7 @@
 #include "v_text.h"
 #include "g_levellocals.h"
 #include "r_data/sprites.h"
+#include "actorinlines.h"
 #include "vm.h"
 
 // MACROS ------------------------------------------------------------------
@@ -2255,8 +2256,9 @@ DEFINE_ACTION_FUNCTION(AAmbientSound, Tick)
 	PARAM_SELF_PROLOGUE(AActor);
 
 	self->Tick();
+	auto Level = self->__GetLevel();
 
-	if (!self->special2 || level.maptime < self->special1)
+	if (!self->special2 || Level->maptime < self->special1)
 		return 0;
 
 	FAmbientSound *ambient;
@@ -2351,7 +2353,8 @@ DEFINE_ACTION_FUNCTION(AAmbientSound, Activate)
 			amb->periodmin = ::Scale(S_GetMSLength(sndnum), TICRATE, 1000);
 		}
 
-		self->special1 = level.maptime;
+		auto Level = self->__GetLevel();
+		self->special1 = Level->maptime;
 		if (amb->type & (RANDOM|PERIODIC))
 			self->special1 += GetTicker (amb);
 

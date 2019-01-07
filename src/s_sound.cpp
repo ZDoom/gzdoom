@@ -82,6 +82,7 @@
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "actorinlines.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -140,7 +141,7 @@ static bool		MusicPaused;		// whether music is paused
 MusPlayingInfo mus_playing;	// music currently being played
 static FString	 LastSong;			// last music that was played
 static FPlayList *PlayList;
-static int		RestartEvictionsAt;	// do not restart evicted channels before this level.time
+static int		RestartEvictionsAt;	// do not restart evicted channels before a given delay.
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -389,7 +390,7 @@ void S_Shutdown ()
 // and starts new music.
 //==========================================================================
 
-void S_Start ()
+void S_Start (FLevelLocals *Level)
 {
 	if (GSnd)
 	{
@@ -401,49 +402,48 @@ void S_Start ()
 		FString LocalSndInfo;
 		FString LocalSndSeq;
 		
-		// To be certain better check whether level is valid!
-		if (level.info)
+		// If this is called with a null level (happens only in case of an I_Error) do not reset the last local definition
+		if (Level && Level->info)
 		{
-			LocalSndInfo = level.info->SoundInfo;
-			LocalSndSeq = level.info->SndSeq;
-		}
-
-		bool parse_ss = false;
-
-		// This level uses a different local SNDINFO
-		if (LastLocalSndInfo.CompareNoCase(LocalSndInfo) != 0 || !level.info)
-		{
-			// First delete the old sound list
-			for(unsigned i = 1; i < S_sfx.Size(); i++) 
+			LocalSndInfo = Level->info->SoundInfo;
+			LocalSndSeq = Level->info->SndSeq;
+			bool parse_ss = false;
+			
+			// This level uses a different local SNDINFO
+			if (LastLocalSndInfo.CompareNoCase(LocalSndInfo) != 0)
 			{
-				S_UnloadSound(&S_sfx[i]);
+				// First delete the old sound list
+				for(unsigned i = 1; i < S_sfx.Size(); i++)
+				{
+					S_UnloadSound(&S_sfx[i]);
+				}
+				
+				// Parse the global SNDINFO
+				S_ParseSndInfo(true);
+				
+				if (LocalSndInfo.IsNotEmpty())
+				{
+					// Now parse the local SNDINFO
+					int j = Wads.CheckNumForFullName(LocalSndInfo, true);
+					if (j>=0) S_AddLocalSndInfo(j);
+				}
+				
+				// Also reload the SNDSEQ if the SNDINFO was replaced!
+				parse_ss = true;
+			}
+			else if (LastLocalSndSeq.CompareNoCase(LocalSndSeq) != 0)
+			{
+				parse_ss = true;
 			}
 			
-			// Parse the global SNDINFO
-			S_ParseSndInfo(true);
-		
-			if (LocalSndInfo.IsNotEmpty())
+			if (parse_ss)
 			{
-				// Now parse the local SNDINFO
-				int j = Wads.CheckNumForFullName(LocalSndInfo, true);
-				if (j>=0) S_AddLocalSndInfo(j);
+				S_ParseSndSeq(LocalSndSeq.IsNotEmpty()? Wads.CheckNumForFullName(LocalSndSeq, true) : -1);
 			}
-
-			// Also reload the SNDSEQ if the SNDINFO was replaced!
-			parse_ss = true;
+			
+			LastLocalSndInfo = LocalSndInfo;
+			LastLocalSndSeq = LocalSndSeq;
 		}
-		else if (LastLocalSndSeq.CompareNoCase(LocalSndSeq) != 0)
-		{
-			parse_ss = true;
-		}
-
-		if (parse_ss)
-		{
-			S_ParseSndSeq(LocalSndSeq.IsNotEmpty()? Wads.CheckNumForFullName(LocalSndSeq, true) : -1);
-		}
-		
-		LastLocalSndInfo = LocalSndInfo;
-		LastLocalSndSeq = LocalSndSeq;
 	}
 
 	// stop the old music if it has been paused.
@@ -456,10 +456,14 @@ void S_Start ()
 
 	// Don't start the music if loading a savegame, because the music is stored there.
 	// Don't start the music if revisiting a level in a hub for the same reason.
-	if (!level.IsReentering())
+	if (Level == nullptr)
 	{
-		if (level.cdtrack == 0 || !S_ChangeCDMusic (level.cdtrack, level.cdid))
-			S_ChangeMusic (level.Music, level.musicorder);
+		S_ChangeMusic("", 0);
+	}
+	else if (!Level->IsReentering())
+	{
+		if (Level->cdtrack == 0 || !S_ChangeCDMusic (Level->cdtrack, Level->cdid))
+			S_ChangeMusic (Level->Music, Level->musicorder);
 	}
 }
 
@@ -471,7 +475,7 @@ void S_Start ()
 //
 //==========================================================================
 
-void S_PrecacheLevel ()
+void S_PrecacheLevel (TArray<int> &levelsounds)
 {
 	unsigned int i;
 
@@ -499,7 +503,7 @@ void S_PrecacheLevel ()
 			FSoundID(snd).MarkUsed();
 		}
 		// Precache all extra sounds requested by this map.
-		for (auto snd : level.info->PrecacheSounds)
+		for (auto snd : levelsounds)
 		{
 			FSoundID(snd).MarkUsed();
 		}
@@ -679,7 +683,7 @@ static void CalcPosVel(FSoundChan *chan, FVector3 *pos, FVector3 *vel)
 //
 //=========================================================================
 
-static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
+static void CalcPosVel( int type, const AActor *actor, const sector_t *sector,
 	const FPolyObj *poly, const float pt[3], int channum, int chanflags, FVector3 *pos, FVector3 *vel)
 {
 	if (pos != NULL)
@@ -687,6 +691,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 		DVector3 listenpos;
 		int pgroup;
 		AActor *listener = players[consoleplayer].camera;
+		auto Level = listener->__GetLevel();
 
 		if (listener != NULL)
 		{
@@ -706,7 +711,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 		if(type == SOURCE_Unattached)
 		{		
 			sector_t *sec = P_PointInSector(pt[0], pt[2]);
-			DVector2 disp = level.Displacements.getOffset(pgroup, sec->PortalGroup);
+			DVector2 disp = Level->Displacements.getOffset(pgroup, sec->PortalGroup);
 			pos->X = pt[0] - (float)disp.X;
 			pos->Y = !(chanflags & CHAN_LISTENERZ) ? pt[1] : (float)listenpos.Z;
 			pos->Z = pt[2] - (float)disp.Y;
@@ -723,7 +728,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 				//assert(actor != NULL);
 				if (actor != NULL)
 				{
-					DVector2 disp = level.Displacements.getOffset(pgroup, actor->Sector->PortalGroup);
+					DVector2 disp = Level->Displacements.getOffset(pgroup, actor->Sector->PortalGroup);
 					DVector3 posi = actor->Pos() - disp;
 					*pos = { (float)posi.X, (float)posi.Z, (float)posi.Y };
 				}
@@ -733,7 +738,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 				assert(sector != NULL);
 				if (sector != NULL)
 				{
-					DVector2 disp = level.Displacements.getOffset(pgroup, sector->PortalGroup);
+					DVector2 disp = Level->Displacements.getOffset(pgroup, sector->PortalGroup);
 					if (chanflags & CHAN_AREA)
 					{
 						// listener must be reversely offset to calculate the proper sound origin.
@@ -755,7 +760,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 				assert(poly != NULL);
 				if (poly != NULL)
 				{
-					DVector2 disp = level.Displacements.getOffset(pgroup, poly->CenterSubsector->sector->PortalGroup);
+					DVector2 disp = Level->Displacements.getOffset(pgroup, poly->CenterSubsector->sector->PortalGroup);
 					CalcPolyobjSoundOrg(listenpos + disp, poly, *pos);
 					pos->X -= (float)disp.X;
 					pos->Z -= (float)disp.Y;
@@ -916,7 +921,7 @@ static void CalcPolyobjSoundOrg(const DVector3 &listenpos, const FPolyObj *poly,
 //
 // S_StartSound
 //
-// 0 attenuation means full volume over whole level.
+// 0 attenuation means full volume over whole level,
 // 0 < attenuation means to scale the distance by that amount when
 //		calculating volume.
 //
@@ -2182,7 +2187,7 @@ void S_UpdateSounds (AActor *listenactor)
 	GSnd->UpdateListener(&listener);
 	GSnd->UpdateSounds();
 
-	if (level.time >= RestartEvictionsAt)
+	if (listenactor->__GetLevel()->time >= RestartEvictionsAt)
 	{
 		RestartEvictionsAt = 0;
 		S_RestoreEvictedChannels();
@@ -2199,6 +2204,7 @@ static void S_SetListener(SoundListener &listener, AActor *listenactor)
 {
 	if (listenactor != NULL)
 	{
+		auto Level = listenactor->__GetLevel();
 		listener.angle = (float)listenactor->Angles.Yaw.Radians();
 		/*
 		listener.velocity.X = listenactor->vel.x * (TICRATE/65536.f);
@@ -2208,8 +2214,8 @@ static void S_SetListener(SoundListener &listener, AActor *listenactor)
 		listener.velocity.Zero();
 		listener.position = listenactor->SoundPos();
 		listener.underwater = listenactor->waterlevel == 3;
-		assert(level.Zones.Size() > listenactor->Sector->ZoneNumber);
-		listener.Environment = level.Zones[listenactor->Sector->ZoneNumber].Environment;
+		assert(Level->Zones.Size() > listenactor->Sector->ZoneNumber);
+		listener.Environment = Level->Zones[listenactor->Sector->ZoneNumber].Environment;
 		listener.valid = true;
 	}
 	else
@@ -2427,7 +2433,7 @@ static FSerializer &Serialize(FSerializer &arc, const char *key, FSoundChan &cha
 //
 //==========================================================================
 
-void S_SerializeSounds(FSerializer &arc)
+void S_SerializeSounds(FSerializer &arc, FLevelLocals *Level)
 {
 	FSoundChan *chan;
 
@@ -2487,7 +2493,7 @@ void S_SerializeSounds(FSerializer &arc)
 		// playing before the wipe, and depending on the synchronization
 		// between the main thread and the mixer thread at the time, the
 		// sounds might be heard briefly before pausing for the wipe.
-		RestartEvictionsAt = level.time + 2;
+		RestartEvictionsAt = Level->time + 2;
 	}
 	GSnd->Sync(false);
 	GSnd->UpdateSounds();

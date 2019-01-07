@@ -544,7 +544,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, zone_t &z, zone_t *def
 
 void P_SerializeSounds(FSerializer &arc)
 {
-	S_SerializeSounds(arc);
+	S_SerializeSounds(arc, &level);
 	DSeqNode::SerializeSequences (arc);
 	const char *name = NULL;
 	uint8_t order;

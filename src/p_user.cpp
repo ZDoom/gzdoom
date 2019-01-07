@@ -693,7 +693,7 @@ bool player_t::Resurrect()
 	// fire E_PlayerRespawned and start the ACS SCRIPT_Respawn.
 	E_PlayerRespawned(int(this - players));
 	//
-	level.Behaviors.StartTypedScripts(SCRIPT_Respawn, mo, true);
+	mo->__GetLevel()->Behaviors.StartTypedScripts(SCRIPT_Respawn, mo, true);
 	return true;
 }
 
@@ -1113,7 +1113,7 @@ void P_CheckMusicChange(player_t *player)
 				if (player->MUSINFOactor->args[0] != 0)
 				{
 					auto Level = player->mo->__GetLevel();
-					FName *music = level.info->MusicMap.CheckKey(player->MUSINFOactor->args[0]);
+					FName *music = Level->info->MusicMap.CheckKey(player->MUSINFOactor->args[0]);
 
 					if (music != NULL)
 					{

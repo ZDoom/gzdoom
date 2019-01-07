@@ -395,7 +395,7 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 	players[consoleplayer].viewz = NO_VALUE;
 
 	// Make sure all sounds are stopped before Z_FreeTags.
-	S_Start();
+	S_Start(&level);
 
 	// [RH] clear out the mid-screen message
 	C_MidPrint(nullptr, nullptr);
@@ -504,7 +504,7 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 	if (precache)
 	{
 		PrecacheLevel(&level);
-		S_PrecacheLevel();
+		S_PrecacheLevel(level.info->PrecacheSounds);
 	}
 
 	if (deathmatch)

@@ -34,6 +34,7 @@
 class AActor;
 class FScanner;
 class FSerializer;
+struct FLevelLocals;
 
 //
 // SoundFX struct.
@@ -214,10 +215,10 @@ void S_Shutdown ();
 // Per level startup code.
 // Kills playing sounds at start of level and starts new music.
 //
-void S_Start ();
+void S_Start (FLevelLocals *Level);
 
 // Called after a level is loaded. Ensures that most sounds are loaded.
-void S_PrecacheLevel ();
+void S_PrecacheLevel (TArray<int> &levelsounds);
 
 // Loads a sound, including any random sounds it might reference.
 void S_CacheSound (sfxinfo_t *sfx);
@@ -313,7 +314,7 @@ void S_ChangeSoundVolume(AActor *actor, int channel, double volume);
 void S_RelinkSound (AActor *from, AActor *to);
 
 // Stores/retrieves playing channel information in an archive.
-void S_SerializeSounds(FSerializer &arc);
+void S_SerializeSounds(FSerializer &arc, FLevelLocals *Level);
 
 // Start music using <music_name>
 bool S_StartMusic (const char *music_name);

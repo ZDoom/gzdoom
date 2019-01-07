@@ -49,7 +49,7 @@ protected:
 
 	FSoundID m_CurrentSoundID;
 	int m_StopSound;
-	int m_DelayUntilTic;
+	int m_DelayTics;
 	float m_Volume;
 	float m_Atten;
 	int m_ModeNum;

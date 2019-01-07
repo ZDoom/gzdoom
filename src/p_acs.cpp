@@ -3915,15 +3915,15 @@ int DoSetMaster (AActor *self, AActor *master)
                 self->flags = (self->flags & ~MF_FRIENDLY) | (master->flags & MF_FRIENDLY);
                 level.total_monsters += self->CountsAsKill();
                 // Don't attack your new master
-                if (self->target == self->master) self->target = NULL;
-                if (self->lastenemy == self->master) self->lastenemy = NULL;
-                if (self->LastHeard == self->master) self->LastHeard = NULL;
+                if (self->target == self->master) self->target = nullptr;
+                if (self->lastenemy == self->master) self->lastenemy = nullptr;
+                if (self->LastHeard == self->master) self->LastHeard = nullptr;
                 return 1;
             }
             else if (master->player)
             {
                 // [KS] Be friendly to this player
-                self->master = NULL;
+                self->master = nullptr;
                 level.total_monsters -= self->CountsAsKill();
                 self->flags|=MF_FRIENDLY;
                 self->SetFriendPlayer(master->player);
@@ -3938,15 +3938,15 @@ int DoSetMaster (AActor *self, AActor *master)
                     }
                 }
                 // And stop attacking him if necessary.
-                if (self->target == master) self->target = NULL;
-                if (self->lastenemy == master) self->lastenemy = NULL;
-                if (self->LastHeard == master) self->LastHeard = NULL;
+                if (self->target == master) self->target = nullptr;
+                if (self->lastenemy == master) self->lastenemy = nullptr;
+                if (self->LastHeard == master) self->LastHeard = nullptr;
                 return 1;
             }
         }
         else
         {
-            self->master = NULL;
+            self->master = nullptr;
             self->FriendPlayer = 0;
             // Go back to whatever friendliness we usually have...
             defs = self->GetDefault();
@@ -3954,9 +3954,9 @@ int DoSetMaster (AActor *self, AActor *master)
             self->flags = (self->flags & ~MF_FRIENDLY) | (defs->flags & MF_FRIENDLY);
             level.total_monsters += self->CountsAsKill();
             // ...And re-side with our friends.
-            if (self->target && !self->IsHostile (self->target)) self->target = NULL;
-            if (self->lastenemy && !self->IsHostile (self->lastenemy)) self->lastenemy = NULL;
-            if (self->LastHeard && !self->IsHostile (self->LastHeard)) self->LastHeard = NULL;
+            if (self->target && !self->IsHostile (self->target)) self->target = nullptr;
+            if (self->lastenemy && !self->IsHostile (self->lastenemy)) self->lastenemy = nullptr;
+            if (self->LastHeard && !self->IsHostile (self->LastHeard)) self->LastHeard = nullptr;
             return 1;
         }
     }

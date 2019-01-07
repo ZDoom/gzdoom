@@ -179,9 +179,9 @@ DFsVariable::DFsVariable(const char * _name)
 {
 	Name=_name;
 	type=svt_int;
-	actor = NULL;
+	actor = nullptr;
 	value.i=0;
-	next=NULL;
+	next = nullptr;
 }
 
 //==========================================================================

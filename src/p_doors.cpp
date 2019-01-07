@@ -147,7 +147,7 @@ void DDoor::Tick ()
 			{
 			case doorRaise:
 			case doorClose:
-				m_Sector->ceilingdata = NULL;	//jff 2/22/98
+				m_Sector->ceilingdata = nullptr;	//jff 2/22/98
 				Destroy ();						// unlink and free
 				break;
 				
@@ -198,7 +198,7 @@ void DDoor::Tick ()
 				
 			case doorCloseWaitOpen:
 			case doorOpen:
-				m_Sector->ceilingdata = NULL;	//jff 2/22/98
+				m_Sector->ceilingdata = nullptr;	//jff 2/22/98
 				Destroy ();						// unlink and free
 				break;
 				
@@ -593,7 +593,7 @@ void DAnimatedDoor::Tick ()
 	switch (m_Status)
 	{
 	case Dead:
-		m_Sector->ceilingdata = NULL;
+		m_Sector->ceilingdata = nullptr;
 		Destroy ();
 		break;
 
@@ -608,7 +608,7 @@ void DAnimatedDoor::Tick ()
 
 				if (m_Delay == 0)
 				{
-					m_Sector->ceilingdata = NULL;
+					m_Sector->ceilingdata = nullptr;
 					Destroy ();
 					break;
 				}
@@ -647,7 +647,7 @@ void DAnimatedDoor::Tick ()
 			{
 				// IF DOOR IS DONE CLOSING...
 				m_Sector->MoveCeiling (2048., m_BotDist, -1);
-				m_Sector->ceilingdata = NULL;
+				m_Sector->ceilingdata = nullptr;
 				Destroy ();
 				// Unset blocking flags on lines that didn't start with them. Since the
 				// ceiling is down now, we shouldn't need this flag anymore to keep things

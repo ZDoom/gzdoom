@@ -1074,8 +1074,8 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	{
 		npc->flags5 &= ~MF5_INCONVERSATION;
 		player->ConversationFaceTalker = false;
-		player->ConversationNPC = NULL;
-		player->ConversationPC = NULL;
+		player->ConversationNPC = nullptr;
+		player->ConversationPC = nullptr;
 		player->ConversationNPCAngle = 0.;
 	}
 
@@ -1121,8 +1121,8 @@ void P_ConversationCommand (int netcode, int pnum, uint8_t **stream)
 		if (netcode == DEM_CONVNULL)
 		{
 			player->ConversationFaceTalker = false;
-			player->ConversationNPC = NULL;
-			player->ConversationPC = NULL;
+			player->ConversationNPC = nullptr;
+			player->ConversationPC = nullptr;
 			player->ConversationNPCAngle = 0.;
 		}
 	}

@@ -180,7 +180,7 @@ public:
 		return *this;
 	}
 
-	T operator=(nullptr_t nul)
+	T operator=(std::nullptr_t nul)
 	{
 		o = nullptr;
 		return nullptr;

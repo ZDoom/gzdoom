@@ -174,12 +174,12 @@ void FCajunMaster::Main ()
 void FCajunMaster::Init ()
 {
 	botnum = 0;
-	firstthing = NULL;
+	firstthing = nullptr;
 	spawn_tries = 0;
 	freeze = false;
 	observer = false;
-	body1 = NULL;
-	body2 = NULL;
+	body1 = nullptr;
+	body2 = nullptr;
 
 	if (ctf && teamplay == false)
 		teamplay = true; //Need teamplay for ctf. (which is not done yet)

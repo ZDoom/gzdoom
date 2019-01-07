@@ -222,7 +222,7 @@ void FInterpolator::AddInterpolation(DInterpolation *interp)
 {
 	interp->Next = Head;
 	if (Head != NULL) Head->Prev = interp;
-	interp->Prev = NULL;
+	interp->Prev = nullptr;
 	Head = interp;
 	count++;
 }
@@ -238,15 +238,15 @@ void FInterpolator::RemoveInterpolation(DInterpolation *interp)
 	if (Head == interp)
 	{
 		Head = interp->Next;
-		if (Head != NULL) Head->Prev = NULL;
+		if (Head != nullptr) Head->Prev = nullptr;
 	}
 	else
 	{
 		if (interp->Prev != NULL) interp->Prev->Next = interp->Next;
 		if (interp->Next != NULL) interp->Next->Prev = interp->Prev;
 	}
-		interp->Next = NULL;
-		interp->Prev = NULL;
+		interp->Next = nullptr;
+		interp->Prev = nullptr;
 		count--;
 }
 
@@ -302,11 +302,11 @@ void FInterpolator::RestoreInterpolations()
 void FInterpolator::ClearInterpolations()
 {
 	DInterpolation *probe = Head;
-	Head = NULL;
-	while (probe != NULL)
+	Head = nullptr;
+	while (probe != nullptr)
 	{
 		DInterpolation *next = probe->Next;
-		probe->Next = probe->Prev = NULL;
+		probe->Next = probe->Prev = nullptr;
 		probe->Destroy();
 		probe = next;
 	}
@@ -327,8 +327,8 @@ void FInterpolator::ClearInterpolations()
 
 DInterpolation::DInterpolation()
 {
-	Next = NULL;
-	Prev = NULL;
+	Next = nullptr;
+	Prev = nullptr;
 	refcount = 0;
 }
 

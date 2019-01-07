@@ -1620,7 +1620,7 @@ FUNC(LS_Thing_Hate)
 			if (arg2 != 0)
 			{
 				hater->TIDtoHate = arg1;
-				hater->LastLookActor = NULL;
+				hater->LastLookActor = nullptr;
 
 				// If the TID to hate is 0, then don't forget the target and
 				// lastenemy fields.
@@ -1628,11 +1628,11 @@ FUNC(LS_Thing_Hate)
 				{
 					if (hater->target != NULL && hater->target->tid != arg1)
 					{
-						hater->target = NULL;
+						hater->target = nullptr;
 					}
 					if (hater->lastenemy != NULL && hater->lastenemy->tid != arg1)
 					{
-						hater->lastenemy = NULL;
+						hater->lastenemy = nullptr;
 					}
 				}
 			}
@@ -1826,7 +1826,7 @@ FUNC(LS_Thing_SetGoal)
 			{ // Targeting a goal already? -> don't target it anymore.
 			  // A_Look will set it to the goal, presuming no real targets
 			  // come into view by then.
-				self->target = NULL;
+				self->target = nullptr;
 			}
 			self->goal = goal;
 			if (arg3 == 0)

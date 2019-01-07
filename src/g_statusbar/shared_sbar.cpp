@@ -436,7 +436,7 @@ void DBaseStatusBar::OnDestroy ()
 			msg->Destroy();
 			msg = next;
 		}
-		Messages[i] = NULL;
+		Messages[i] = nullptr;
 	}
 	if (AltHud) AltHud->Destroy();
 	Super::OnDestroy();
@@ -708,7 +708,7 @@ DHUDMessageBase *DBaseStatusBar::DetachMessage (DHUDMessageBase *msg)
 		if (probe != NULL)
 		{
 			*prev = probe->Next;
-			probe->Next = NULL;
+			probe->Next = nullptr;
 			return probe;
 		}
 	}
@@ -730,7 +730,7 @@ DHUDMessageBase *DBaseStatusBar::DetachMessage (uint32_t id)
 		if (probe != NULL)
 		{
 			*prev = probe->Next;
-			probe->Next = NULL;
+			probe->Next = nullptr;
 			return probe;
 		}
 	}
@@ -749,7 +749,7 @@ void DBaseStatusBar::DetachAllMessages ()
 	{
 		DHUDMessageBase *probe = Messages[i];
 
-		Messages[i] = NULL;
+		Messages[i] = nullptr;
 		while (probe != NULL)
 		{
 			DHUDMessageBase *next = probe->Next;

@@ -3184,7 +3184,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	CopySlopes();
 
 	// Spawn 3d floors - must be done before spawning things so it can't be done in P_SpawnSpecials
-	P_Spawn3DFloors();
+	P_Spawn3DFloors(Level);
 
 	SpawnThings(position);
 
@@ -3218,7 +3218,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	}
 
 	InitRenderInfo();				// create hardware independent renderer resources for the Level-> This must be done BEFORE the PolyObj Spawn!!!	
-	P_ClearDynamic3DFloorData();	// CreateVBO must be run on the plain 3D floor data.
+	P_ClearDynamic3DFloorData(Level);	// CreateVBO must be run on the plain 3D floor data.
 	screen->mVertexData->CreateVBO(Level->sectors);
 
 	for (auto &sec : Level->sectors)

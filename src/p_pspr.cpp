@@ -43,6 +43,7 @@
 #include "v_text.h"
 #include "cmdlib.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 #include "vm.h"
 #include "sbar.h"
 
@@ -966,7 +967,7 @@ DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimfla
 		pitch = P_AimLineAttack (mo, an, 16.*64, pLineTarget, 0., aimflags);
 
 		if (mo->player != NULL &&
-			level.IsFreelookAllowed() &&
+			mo->__GetLevel()->IsFreelookAllowed() &&
 			mo->player->userinfo.GetAimDist() <= 0.5)
 		{
 			break;

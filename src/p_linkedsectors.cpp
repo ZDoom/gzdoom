@@ -308,6 +308,7 @@ static void RemoveTaggedSectors(extsector_t::linked::plane &scrollplane, int tag
 bool P_AddSectorLinks(sector_t *control, int tag, INTBOOL ceiling, int movetype)
 {
 	int param = movetype;
+	auto Level = control->Level;
 
 	// can't be done if the control sector is moving.
 	if ((ceiling && control->PlaneMoving(sector_t::ceiling)) || 
@@ -331,12 +332,12 @@ bool P_AddSectorLinks(sector_t *control, int tag, INTBOOL ceiling, int movetype)
 		while ((sec = itr.Next()) >= 0)
 		{
 			// Don't attach to self (but allow attaching to this sector's oposite plane.
-			if (control == &level.sectors[sec])
+			if (control == &Level->sectors[sec])
 			{
 				if (ceiling == sector_t::floor && movetype & LINK_FLOOR) continue;
 				if (ceiling == sector_t::ceiling && movetype & LINK_CEILING) continue;
 			}
-			AddSingleSector(scrollplane, &level.sectors[sec], movetype);
+			AddSingleSector(scrollplane, &Level->sectors[sec], movetype);
 		}
 	}
 	else
@@ -359,12 +360,13 @@ bool P_AddSectorLinks(sector_t *control, int tag, INTBOOL ceiling, int movetype)
 void P_AddSectorLinksByID(sector_t *control, int id, INTBOOL ceiling)
 {
 	extsector_t::linked::plane &scrollplane = ceiling? control->e->Linked.Ceiling : control->e->Linked.Floor;
+	auto Level = control->Level;
 
 	FLineIdIterator itr(id);
 	int line;
 	while ((line = itr.Next()) >= 0)
 	{
-		line_t *ld = &level.lines[line];
+		line_t *ld = &Level->lines[line];
 
 		if (ld->special == Static_Init && ld->args[1] == Init_SectorLink)
 		{

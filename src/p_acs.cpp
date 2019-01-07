@@ -9062,15 +9062,13 @@ scriptwait:
 			break;
 
 		case PCD_SETAIRCONTROL:
-			level.aircontrol = ACSToDouble(STACK(1));
+			level.ChangeAirControl(ACSToDouble(STACK(1)));
 			sp--;
-			G_AirControlChanged ();
 			break;
 
 		case PCD_SETAIRCONTROLDIRECT:
-			level.aircontrol = ACSToDouble(uallong(pc[0]));
+			level.ChangeAirControl(ACSToDouble(uallong(pc[0])));
 			pc++;
-			G_AirControlChanged ();
 			break;
 
 		case PCD_SPAWN:

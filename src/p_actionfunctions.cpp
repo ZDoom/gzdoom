@@ -1956,6 +1956,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Respawn)
 
 	bool oktorespawn = false;
 	DVector3 pos = self->Pos();
+	auto Level = self->__GetLevel();
 
 	self->flags |= MF_SOLID;
 	self->Height = self->GetDefault()->Height;
@@ -2012,7 +2013,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Respawn)
 		}
 		if (self->CountsAsKill())
 		{
-			level.total_monsters++;
+			Level->total_monsters++;
 		}
 	}
 	else
@@ -2610,9 +2611,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeCountFlags)
 	PARAM_INT(item);
 	PARAM_INT(secret);
 
-	if (self->CountsAsKill() && self->health > 0) --level.total_monsters;
-	if (self->flags & MF_COUNTITEM) --level.total_items;
-	if (self->flags5 & MF5_COUNTSECRET) --level.total_secrets;
+	auto Level = self->__GetLevel();
+	if (self->CountsAsKill() && self->health > 0) --Level->total_monsters;
+	if (self->flags & MF_COUNTITEM) --Level->total_items;
+	if (self->flags5 & MF5_COUNTSECRET) --Level->total_secrets;
 
 	if (kill != -1)
 	{
@@ -2631,9 +2633,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeCountFlags)
 		if (secret == 0) self->flags5 &= ~MF5_COUNTSECRET;
 		else self->flags5 |= MF5_COUNTSECRET;
 	}
-	if (self->CountsAsKill() && self->health > 0) ++level.total_monsters;
-	if (self->flags & MF_COUNTITEM) ++level.total_items;
-	if (self->flags5 & MF5_COUNTSECRET) ++level.total_secrets;
+	if (self->CountsAsKill() && self->health > 0) ++Level->total_monsters;
+	if (self->flags & MF_COUNTITEM) ++Level->total_items;
+	if (self->flags5 & MF5_COUNTSECRET) ++Level->total_secrets;
 	return 0;
 }
 

@@ -994,8 +994,10 @@ void P_CheckPlayerSprite(AActor *actor, int &spritenum, DVector2 &scale)
 
 CUSTOM_CVAR (Float, sv_aircontrol, 0.00390625f, CVAR_SERVERINFO|CVAR_NOSAVE)
 {
-	level.aircontrol = self;
-	G_AirControlChanged ();
+	ForAllLevels([&](FLevelLocals *Level)
+	{
+		Level->ChangeAirControl(self);
+	});
 }
 
 //==========================================================================

@@ -147,7 +147,10 @@ FRandom pr_spawnmobj ("SpawnActor");
 
 CUSTOM_CVAR (Float, sv_gravity, 800.f, CVAR_SERVERINFO|CVAR_NOSAVE)
 {
-	level.gravity = self;
+	ForAllLevels([&](FLevelLocals *Level)
+	{
+		Level->gravity = self;
+	});
 }
 
 CVAR (Bool, cl_missiledecals, true, CVAR_ARCHIVE)

@@ -287,7 +287,10 @@ void cht_DoCheat (player_t *player, int cheat)
 
 		if (i == 4)
 		{
-			level.flags2 ^= LEVEL2_ALLMAP;
+			ForAllLevels([](FLevelLocals *Level)
+			{
+				Level->flags2 ^= LEVEL2_ALLMAP;
+			});
 		}
 		else if (player->mo != NULL && player->health >= 0)
 		{

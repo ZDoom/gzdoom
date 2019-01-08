@@ -70,7 +70,7 @@ namespace swrenderer
 	RenderSkyPlane::RenderSkyPlane(RenderThread *thread)
 	{
 		Thread = thread;
-		auto Level = Thread->Viewport->Level();
+		auto Level = Thread->Viewport->GetLevel();
 
 		auto skytex1 = TexMan.GetPalettedTexture(sky1texture, true);
 		auto skytex2 = TexMan.GetPalettedTexture(sky2texture, true);
@@ -119,7 +119,7 @@ namespace swrenderer
 	{
 		FTextureID sky1tex, sky2tex;
 		double frontdpos = 0, backdpos = 0;
-		auto Level = Thread->Viewport->Level();
+		auto Level = Thread->Viewport->GetLevel();
 
 		if ((Level->flags & LEVEL_SWAPSKIES) && !(Level->flags & LEVEL_DOUBLESKY))
 		{
@@ -226,7 +226,7 @@ namespace swrenderer
 	{
 		RenderPortal *renderportal = Thread->Portal.get();
 		auto viewport = Thread->Viewport.get();
-		auto Level = viewport->Level();
+		auto Level = viewport->GetLevel();
 
 		double uv_stepd = skyiscale * yrepeat;
 		double v = (texturemid + uv_stepd * (y1 - viewport->CenterY + 0.5)) / frontskytex->GetHeight();

@@ -1258,7 +1258,7 @@ AActor *LookForTIDInBlock (AActor *lookee, int index, void *extparams)
 	AActor *link;
 	AActor *other;
 	
-	auto Level = lookee->__GetLevel();
+	auto Level = lookee->Level;
 	for (block = Level->blockmap.blocklinks[index]; block != NULL; block = block->NextActor)
 	{
 		link = block->Me;
@@ -1430,7 +1430,7 @@ AActor *LookForEnemiesInBlock (AActor *lookee, int index, void *extparam)
 	AActor *other;
 	FLookExParams *params = (FLookExParams *)extparam;
 	
-	auto Level = lookee->__GetLevel();
+	auto Level = lookee->Level;
 	for (block = Level->blockmap.blocklinks[index]; block != NULL; block = block->NextActor)
 	{
 		link = block->Me;
@@ -1759,7 +1759,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 	if (self->flags5 & MF5_INCONVERSATION)
 		return 0;
 
-	auto Level = self->__GetLevel();
+	auto Level = self->Level;
 
 	// [RH] Set goal now if appropriate
 	if (self->special == Thing_SetGoal && self->args[0] == 0) 
@@ -1890,7 +1890,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
 	if (self->flags5 & MF5_INCONVERSATION)
 		return 0;
 
-	auto Level = self->__GetLevel();
+	auto Level = self->Level;
 
 	// [RH] Set goal now if appropriate
 	if (self->special == Thing_SetGoal && self->args[0] == 0) 
@@ -2153,7 +2153,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look2)
 	{
 		targ = NULL;
 	}
-	auto Level = self->__GetLevel();
+	auto Level = self->Level;
 
 	if (targ && (targ->flags & MF_SHOOTABLE))
 	{
@@ -2378,7 +2378,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 
 		if (result)
 		{
-			auto Level = actor->__GetLevel();
+			auto Level = actor->Level;
 
 			// reached the goal
 			NActorIterator iterator (NAME_PatrolPoint, actor->goal->args[0]);
@@ -2636,7 +2636,7 @@ bool P_CheckForResurrection(AActor *self, bool usevilestates)
 
 		FPortalGroupArray check(FPortalGroupArray::PGA_Full3d);
 
-		FMultiBlockThingsIterator it(check, self->__GetLevel(), viletry.X, viletry.Y, self->Z() - 64, self->Top() + 64, 32., false, NULL);
+		FMultiBlockThingsIterator it(check, self->Level, viletry.X, viletry.Y, self->Z() - 64, self->Top() + 64, 32., false, NULL);
 		FMultiBlockThingsIterator::CheckResult cres;
 		while (it.Next(&cres))
 		{
@@ -3083,7 +3083,7 @@ void A_BossDeath(AActor *self)
 	
 	// Do generic special death actions first
 	bool checked = false;
-	auto Level = self->__GetLevel();
+	auto Level = self->Level;
 	for (unsigned i = 0; i < Level->info->specialactions.Size(); i++)
 	{
 		FSpecialAction *sa = &Level->info->specialactions[i];

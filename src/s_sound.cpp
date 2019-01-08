@@ -691,7 +691,7 @@ static void CalcPosVel( int type, const AActor *actor, const sector_t *sector,
 		DVector3 listenpos;
 		int pgroup;
 		AActor *listener = players[consoleplayer].camera;
-		auto Level = listener->__GetLevel();
+		auto Level = listener->Level;
 
 		if (listener != NULL)
 		{
@@ -2187,7 +2187,7 @@ void S_UpdateSounds (AActor *listenactor)
 	GSnd->UpdateListener(&listener);
 	GSnd->UpdateSounds();
 
-	if (listenactor->__GetLevel()->time >= RestartEvictionsAt)
+	if (listenactor->Level->time >= RestartEvictionsAt)
 	{
 		RestartEvictionsAt = 0;
 		S_RestoreEvictedChannels();
@@ -2204,7 +2204,7 @@ static void S_SetListener(SoundListener &listener, AActor *listenactor)
 {
 	if (listenactor != NULL)
 	{
-		auto Level = listenactor->__GetLevel();
+		auto Level = listenactor->Level;
 		listener.angle = (float)listenactor->Angles.Yaw.Radians();
 		/*
 		listener.velocity.X = listenactor->vel.x * (TICRATE/65536.f);

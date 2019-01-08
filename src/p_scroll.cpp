@@ -255,7 +255,7 @@ void DScroller::Tick ()
 
 		// [RH] Don't actually carry anything here. That happens later.
 		case EScroll::sc_carry:
-			m_Sector->Level->Scrolls[m_Sector->Index()] += { dx, dy };
+			Level->Scrolls[m_Sector->Index()] += { dx, dy };
 			// mark all potentially affected things here so that the very expensive calculation loop in AActor::Tick does not need to run for actors which do not touch a scrolling sector.
 			for (auto n = m_Sector->touching_thinglist; n; n = n->m_snext)
 			{
@@ -310,7 +310,7 @@ DScroller::DScroller (EScroll type, double dx, double dy,  sector_t *ctrl, secto
 	{
 	case EScroll::sc_carry:
 		assert(sec != nullptr);
-		sec->Level->AddScroller (sec->Index());
+		Level->AddScroller (sec->Index());
 		break;
 
 	case EScroll::sc_side:

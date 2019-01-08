@@ -81,9 +81,9 @@ namespace swrenderer
 			return (CenterY - screenY - 0.5) / FocalLengthY * viewZ;
 		}
 
-		FLevelLocals *Level()
+		FLevelLocals *GetLevel()
 		{
-			return viewpoint.camera->__GetLevel();
+			return viewpoint.camera->Level;
 		}
 
 	private:

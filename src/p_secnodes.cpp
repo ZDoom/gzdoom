@@ -383,7 +383,6 @@ portnode_t *P_AddPortalnode(FLinePortal *s, AActor *thing, portnode_t *nextnode)
 void AActor::UpdateRenderSectorList()
 {
 	static const double SPRITE_SPACE = 64.;
-	auto Level = __GetLevel();
 	if (Pos() != OldRenderPos && !(flags & MF_NOSECTOR))
 	{
 		// Only check if the map contains line portals
@@ -468,7 +467,7 @@ FBlockNode *FBlockNode::Create(AActor *who, int x, int y, int group)
 	{
 		block = (FBlockNode *)secnodearena.Alloc(sizeof(FBlockNode));
 	}
-	block->BlockIndex = x + y * who->__GetLevel()->blockmap.bmapwidth;
+	block->BlockIndex = x + y * who->Level->blockmap.bmapwidth;
 	block->Me = who;
 	block->NextActor = nullptr;
 	block->PrevActor = nullptr;

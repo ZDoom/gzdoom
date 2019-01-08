@@ -134,7 +134,7 @@ namespace swrenderer
 		}
 
 		// [RH] set foggy flag
-		auto Level = Thread->Viewport->Level();
+		auto Level = Thread->Viewport->GetLevel();
 		bool foggy = (Level->fadeto || basecolormap->Fade || (Level->flags & LEVEL_HASFADETABLE));
 
 		// get light level

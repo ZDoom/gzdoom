@@ -175,7 +175,7 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 		}
 
 
-		auto di = HWDrawInfo::StartDrawInfo(camera->__GetLevel(), nullptr, mainvp, nullptr);
+		auto di = HWDrawInfo::StartDrawInfo(camera->Level, nullptr, mainvp, nullptr);
 		auto &vp = di->Viewpoint;
 
 		di->Set3DViewport(gl_RenderState);

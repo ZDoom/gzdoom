@@ -1372,7 +1372,7 @@ int G_FinishTravel ()
 
 		// The player being spawned here is a short lived dummy and
 		// must not start any ENTER script or big problems will happen.
-		pawndup = P_SpawnPlayer(pawn->__GetLevel(), start, pnum, SPF_TEMPPLAYER);
+		pawndup = P_SpawnPlayer(pawn->Level, start, pnum, SPF_TEMPPLAYER);
 		if (pawndup != NULL)
 		{
 			if (!(changeflags & CHANGELEVEL_KEEPFACING))
@@ -1457,7 +1457,7 @@ void FLevelLocals::InitLevelLocals ()
 
 	gravity = sv_gravity * 35/TICRATE;
 	aircontrol = sv_aircontrol;
-	teamdamage = teamdamage;
+	teamdamage = ::teamdamage;
 	flags = 0;
 	flags2 = 0;
 	flags3 = 0;

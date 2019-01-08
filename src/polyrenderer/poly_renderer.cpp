@@ -133,7 +133,7 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	
 	DontMapLines = dontmaplines;
 
-	Level = actor->__GetLevel();
+	Level = actor->Level;
 	R_SetupFrame(Viewpoint, Viewwindow, actor);
 	P_FindParticleSubsectors();
 	PO_LinkToSubsectors(&level);

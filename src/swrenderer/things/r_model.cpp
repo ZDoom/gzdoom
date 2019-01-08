@@ -273,7 +273,7 @@ namespace swrenderer
 	{
 		// Calculate the WorldToView matrix as it would have looked like without yshearing:
 		const auto &Viewpoint = Thread->Viewport->viewpoint;
-		auto Level = Thread->Viewport->Level();
+		auto Level = Thread->Viewport->GetLevel();
 		const auto &Viewwindow = Thread->Viewport->viewwindow;
 		double radPitch = Viewpoint.Angles.Pitch.Normalized180().Radians();
 		double angx = cos(radPitch);

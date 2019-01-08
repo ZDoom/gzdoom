@@ -846,9 +846,9 @@ namespace swrenderer
 
 	void RenderOpaquePass::RenderBSPNode(void *node)
 	{
-		if (Thread->Viewport->Level()->nodes.Size() == 0)
+		if (Thread->Viewport->GetLevel()->nodes.Size() == 0)
 		{
-			RenderSubsector(&Thread->Viewport->Level()->subsectors[0]);
+			RenderSubsector(&Thread->Viewport->GetLevel()->subsectors[0]);
 			return;
 		}
 		while (!((size_t)node & 1))  // Keep going until found a subsector

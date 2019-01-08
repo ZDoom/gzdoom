@@ -3295,7 +3295,7 @@ void FBehavior::StartTypedScripts (FLevelLocals *Level, int type, AActor *activa
 
 void FBehaviorContainer::StopMyScripts (AActor *actor)
 {
-	DACSThinker *controller = actor->__GetLevel()->ACSThinker;
+	DACSThinker *controller = actor->Level->ACSThinker;
 
 	if (controller != NULL)
 	{
@@ -6781,7 +6781,7 @@ static bool CharArrayParms(int &capacity, int &offset, int &a, FACSStackMemory& 
 
 PClass *DLevelScript::GetClassForIndex(int index) const
 {
-	return PClass::FindActor(level.Behaviors.LookupString(index));
+	return PClass::FindActor(Level->Behaviors.LookupString(index));
 }
 
 int DLevelScript::RunScript ()

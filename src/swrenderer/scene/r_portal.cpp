@@ -167,7 +167,7 @@ namespace swrenderer
 				continue;
 			}
 
-			auto Level = Thread->Viewport->Level();
+			auto Level = Thread->Viewport->GetLevel();
 
 			SetInSkyBox(port);
 			if (port->mPartner > 0) SetInSkyBox(&Level->sectorPortals[port->mPartner]);
@@ -223,7 +223,7 @@ namespace swrenderer
 			memcpy(draw_segment->sprtopclip, ceilingclip + pl->left, (pl->right - pl->left) * sizeof(short));
 			drawseglist->Push(draw_segment);
 
-			Thread->OpaquePass->RenderScene(Thread->Viewport->Level());
+			Thread->OpaquePass->RenderScene(Thread->Viewport->GetLevel());
 			Thread->Clip3D->ResetClip(); // reset clips (floor/ceiling)
 			planes->Render();
 
@@ -440,7 +440,7 @@ namespace swrenderer
 		memcpy(ceilingclip + pds->x1, &pds->ceilingclip[0], pds->len * sizeof(*ceilingclip));
 		memcpy(floorclip + pds->x1, &pds->floorclip[0], pds->len * sizeof(*floorclip));
 
-		Thread->OpaquePass->RenderScene(Thread->Viewport->Level());
+		Thread->OpaquePass->RenderScene(Thread->Viewport->GetLevel());
 		Thread->Clip3D->ResetClip(); // reset clips (floor/ceiling)
 		if (!savedvisibility && viewpoint.camera) viewpoint.camera->renderflags &= ~RF_INVISIBLE;
 

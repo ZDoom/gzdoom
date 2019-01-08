@@ -643,8 +643,6 @@ public:
 	AActor &operator= (const AActor &other);
 	~AActor ();
 
-	FLevelLocals *__GetLevel() const;	// With double underscore so that it can be replaced later, once a permanent solution has been implemented.
-
 	virtual void OnDestroy() override;
 	virtual void Serialize(FSerializer &arc) override;
 	virtual void PostSerialize() override;
@@ -910,7 +908,7 @@ public:
 		}
 		else
 		{
-			return P_GetOffsetPosition(__GetLevel(), X(), Y(), dx, dy);
+			return P_GetOffsetPosition(Level, X(), Y(), dx, dy);
 		}
 	}
 
@@ -923,7 +921,7 @@ public:
 		}
 		else
 		{
-			DVector2 v = P_GetOffsetPosition(__GetLevel(), X(), Y(), dx, dy);
+			DVector2 v = P_GetOffsetPosition(Level, X(), Y(), dx, dy);
 			return DVector3(v, atz);
 		}
 	}
@@ -936,7 +934,7 @@ public:
 		}
 		else
 		{
-			return P_GetOffsetPosition(__GetLevel(), X(), Y(), length*angle.Cos(), length*angle.Sin());
+			return P_GetOffsetPosition(Level, X(), Y(), length*angle.Cos(), length*angle.Sin());
 		}
 	}
 
@@ -948,7 +946,7 @@ public:
 		}
 		else
 		{
-			DVector2 v = P_GetOffsetPosition(__GetLevel(), X(), Y(), dx, dy);
+			DVector2 v = P_GetOffsetPosition(Level, X(), Y(), dx, dy);
 			return DVector3(v, Z() + dz);
 		}
 	}
@@ -966,7 +964,7 @@ public:
 		}
 		else
 		{
-			DVector2 v = P_GetOffsetPosition(__GetLevel(), X(), Y(), length*angle.Cos(), length*angle.Sin());
+			DVector2 v = P_GetOffsetPosition(Level, X(), Y(), length*angle.Cos(), length*angle.Sin());
 			return DVector3(v, Z() + dz);
 		}
 	}

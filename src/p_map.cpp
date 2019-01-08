@@ -413,7 +413,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 
 	spechit.Clear();	// this is needed so that no more specials get activated after crossing a teleporter.
 
-	bool StompAlwaysFrags = ((thing->flags2 & MF2_TELESTOMP) || (thing->__GetLevel()->flags & LEVEL_MONSTERSTELEFRAG) || telefrag) && !(thing->flags7 & MF7_NOTELESTOMP);
+	bool StompAlwaysFrags = ((thing->flags2 & MF2_TELESTOMP) || (thing->Level->flags & LEVEL_MONSTERSTELEFRAG) || telefrag) && !(thing->flags7 & MF7_NOTELESTOMP);
 
 	// P_LineOpening requires the thing's z to be the destination z in order to work.
 	double savedz = thing->Z();
@@ -421,7 +421,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 	sector_t *sector = P_PointInSector(pos);
 
 	FPortalGroupArray grouplist;
-	FMultiBlockLinesIterator mit(grouplist, thing->__GetLevel(), pos.X, pos.Y, pos.Z, thing->Height, thing->radius, sector);
+	FMultiBlockLinesIterator mit(grouplist, thing->Level, pos.X, pos.Y, pos.Z, thing->Height, thing->radius, sector);
 	FMultiBlockLinesIterator::CheckResult cres;
 
 	while (mit.Next(&cres))
@@ -432,7 +432,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 
 	if (tmf.touchmidtex) tmf.dropoffz = tmf.floorz;
 
-	FMultiBlockThingsIterator mit2(grouplist, thing->__GetLevel(), pos.X, pos.Y, pos.Z, thing->Height, thing->radius, false, sector);
+	FMultiBlockThingsIterator mit2(grouplist, thing->Level, pos.X, pos.Y, pos.Z, thing->Height, thing->radius, false, sector);
 	FMultiBlockThingsIterator::CheckResult cres2;
 
 	while (mit2.Next(&cres2))
@@ -1359,7 +1359,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			P_DamageMobj(thing, NULL, NULL, thing->health, NAME_None, DMG_FORCED);  // kill object
 			return true;
 		}
-		auto Level = thing->__GetLevel();
+		auto Level = thing->Level;
 
 		// Check for MF6_BUMPSPECIAL
 		// By default, only players can activate things by bumping into them
@@ -1751,7 +1751,7 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 	FBoundingBox box(pos.X, pos.Y, thing->radius);
 
 	FPortalGroupArray pcheck;
-	FMultiBlockThingsIterator it2(pcheck, thing->__GetLevel(), pos.X, pos.Y, thing->Z(), thing->Height, thing->radius, false, newsec);
+	FMultiBlockThingsIterator it2(pcheck, thing->Level, pos.X, pos.Y, thing->Z(), thing->Height, thing->radius, false, newsec);
 	FMultiBlockThingsIterator::CheckResult tcres;
 
 	while ((it2.Next(&tcres)))
@@ -1823,7 +1823,7 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 		return (thing->BlockingMobj = thingblocker) == NULL;
 
 
-	FMultiBlockLinesIterator it(pcheck, thing->__GetLevel(), pos.X, pos.Y, thing->Z(), thing->Height, thing->radius, newsec);
+	FMultiBlockLinesIterator it(pcheck, thing->Level, pos.X, pos.Y, thing->Z(), thing->Height, thing->radius, newsec);
 	FMultiBlockLinesIterator::CheckResult lcres;
 
 	double thingdropoffz = tm.floorz;
@@ -2042,7 +2042,7 @@ void P_FakeZMovement(AActor *mo)
 	}
 	if (mo->player && mo->flags&MF_NOGRAVITY && (mo->Z() > mo->floorz) && !mo->IsNoClip2())
 	{
-		mo->AddZ(DAngle(4.5 * mo->__GetLevel()->maptime).Sin());
+		mo->AddZ(DAngle(4.5 * mo->Level->maptime).Sin());
 	}
 
 	//
@@ -2067,7 +2067,7 @@ void P_FakeZMovement(AActor *mo)
 
 static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, DVector2 *posforwindowcheck)
 {
-	auto Level = mobj->__GetLevel();
+	auto Level = mobj->Level;
 	if (line->special && !(mobj->flags6 & MF6_NOTRIGGER))
 	{
 		if (posforwindowcheck && !(i_compatflags2 & COMPATF2_PUSHWINDOW) && line->backsector != NULL)
@@ -4267,7 +4267,7 @@ DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLin
 	int flags, AActor *target, AActor *friender)
 {
 	double shootz = t1->Center() - t1->Floorclip + t1->AttackOffset();
-	auto Level = t1->__GetLevel();
+	auto Level = t1->Level;
 
 	// can't shoot outside view angles
 	if (vrange == 0)
@@ -4378,7 +4378,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	DAngle pitch, int damage, FName damageType, PClassActor *pufftype, int flags, FTranslatedLineTarget*victim, int *actualdamage, 
 	double sz, double offsetforward, double offsetside)
 {
-	auto Level = t1->__GetLevel();
+	auto Level = t1->Level;
 	bool nointeract = !!(flags & LAF_NOINTERACT);
 	DVector3 direction;
 	double shootz;
@@ -4543,7 +4543,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 			// position a bit closer for puffs
 			if (nointeract || trace.HitType != TRACE_HitWall || ((trace.Line->special != Line_Horizon) || spawnSky))
 			{
-				DVector2 pos = P_GetOffsetPosition(t1->__GetLevel(), trace.HitPos.X, trace.HitPos.Y, -trace.HitVector.X * 4, -trace.HitVector.Y * 4);
+				DVector2 pos = P_GetOffsetPosition(t1->Level, trace.HitPos.X, trace.HitPos.Y, -trace.HitVector.X * 4, -trace.HitVector.Y * 4);
 				puff = P_SpawnPuff(t1, pufftype, DVector3(pos, trace.HitPos.Z - trace.HitVector.Z * 4), trace.SrcAngleFromTarget,
 					trace.SrcAngleFromTarget - 90, 0, puffFlags);
 				puff->radius = 1/65536.;
@@ -4594,7 +4594,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 			// position a bit closer for puffs/blood if using compatibility mode.
 			if (i_compatflags & COMPATF_HITSCAN)
 			{
-				DVector2 ofs = P_GetOffsetPosition(t1->__GetLevel(), bleedpos.X, bleedpos.Y, -10 * trace.HitVector.X, -10 * trace.HitVector.Y);
+				DVector2 ofs = P_GetOffsetPosition(t1->Level, bleedpos.X, bleedpos.Y, -10 * trace.HitVector.X, -10 * trace.HitVector.Y);
 				bleedpos.X = ofs.X;
 				bleedpos.Y = ofs.Y;
 				bleedpos.Z -= -10 * trace.HitVector.Z;
@@ -5105,7 +5105,7 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 	newhit.HitAngle = res.SrcAngleFromTarget;
 	if (i_compatflags & COMPATF_HITSCAN)
 	{
-		DVector2 ofs = P_GetOffsetPosition(res.Actor->__GetLevel(), newhit.HitPos.X, newhit.HitPos.Y, -10 * res.HitVector.X, -10 * res.HitVector.Y);
+		DVector2 ofs = P_GetOffsetPosition(res.Actor->Level, newhit.HitPos.X, newhit.HitPos.Y, -10 * res.HitVector.X, -10 * res.HitVector.Y);
 		newhit.HitPos.X = ofs.X;
 		newhit.HitPos.Y = ofs.Y;
 		newhit.HitPos.Z -= -10 * res.HitVector.Z;
@@ -5191,7 +5191,7 @@ void P_RailAttack(FRailParams *p)
 	// used as damage inflictor
 	AActor *thepuff = NULL;
 	
-	if (puffclass != NULL) thepuff = Spawn(source->__GetLevel(), puffclass, source->Pos(), ALLOW_REPLACE);
+	if (puffclass != NULL) thepuff = Spawn(source->Level, puffclass, source->Pos(), ALLOW_REPLACE);
 		rail_data.PuffSpecies = (thepuff != NULL) ? thepuff->GetSpecies() : NAME_None;
 
 	Trace(start, source->Sector, vec, p->distance, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,	flags, ProcessRailHit, &rail_data);
@@ -5628,7 +5628,7 @@ int P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
 				return false;
 			}
 			int args[3] = { in->d.line->args[2], in->d.line->args[3], in->d.line->args[4] };
-			P_StartScript(PuzzleItemUser->__GetLevel(), PuzzleItemUser, in->d.line, in->d.line->args[1], NULL, args, 3, ACS_ALWAYS);
+			P_StartScript(PuzzleItemUser->Level, PuzzleItemUser, in->d.line, in->d.line->args[1], NULL, args, 3, ACS_ALWAYS);
 			in->d.line->special = 0;
 			return true;
 		}
@@ -5643,7 +5643,7 @@ int P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
 			continue;
 		}
 		int args[3] = { mobj->args[2], mobj->args[3], mobj->args[4] };
-		P_StartScript(PuzzleItemUser->__GetLevel(), PuzzleItemUser, NULL, mobj->args[1], NULL, args, 3, ACS_ALWAYS);
+		P_StartScript(PuzzleItemUser->Level, PuzzleItemUser, NULL, mobj->args[1], NULL, args, 3, ACS_ALWAYS);
 		mobj->special = 0;
 		return true;
 	}
@@ -5840,7 +5840,7 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 	fulldamagedistance = clamp<int>(fulldamagedistance, 0, bombdistance - 1);
 
 	FPortalGroupArray grouplist(FPortalGroupArray::PGA_Full3d);
-	FMultiBlockThingsIterator it(grouplist, bombspot->__GetLevel(), bombspot->X(), bombspot->Y(), bombspot->Z() - bombdistance, bombspot->Height + bombdistance*2, bombdistance, false, bombspot->Sector);
+	FMultiBlockThingsIterator it(grouplist, bombspot->Level, bombspot->X(), bombspot->Y(), bombspot->Z() - bombdistance, bombspot->Height + bombdistance*2, bombdistance, false, bombspot->Sector);
 	FMultiBlockThingsIterator::CheckResult cres;
 
 	if (flags & RADF_SOURCEISSPOT)
@@ -6171,7 +6171,7 @@ void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 	if (!(thing && thing->CallGrind(true) && cpos)) return;
 	cpos->nofit = true;
 
-	auto Level = thing->__GetLevel();
+	auto Level = thing->Level;
 	if ((cpos->crushchange > 0) && !(Level->maptime & 3))
 	{
 		int newdam = P_DamageMobj(thing, NULL, NULL, cpos->crushchange, NAME_Crush);
@@ -6188,7 +6188,7 @@ void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 				{
 					AActor *mo;
 
-					mo = Spawn(thing->__GetLevel(), bloodcls, thing->PosPlusZ(thing->Height / 2), ALLOW_REPLACE);
+					mo = Spawn(thing->Level, bloodcls, thing->PosPlusZ(thing->Height / 2), ALLOW_REPLACE);
 
 					mo->Vel.X = pr_crunch.Random2() / 16.;
 					mo->Vel.Y = pr_crunch.Random2() / 16.;
@@ -6794,7 +6794,7 @@ static void SpawnDeepSplash(AActor *t1, const FTraceResults &trace, AActor *puff
 bool P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death)
 {
 	bool res = false;
-	auto Level = thing->__GetLevel();
+	auto Level = thing->Level;
 
 	// Target switching mechanism
 	if (thing->activationtype & THINGSPEC_ThingTargets)		thing->target = trigger;

@@ -71,7 +71,7 @@ void P_SpawnTeleportFog(AActor *mobj, const DVector3 &pos, bool beforeTele, bool
 	else
 	{
 		double fogDelta = mobj->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
-		mo = Spawn(mobj->__GetLevel(), (beforeTele ? mobj->TeleFogSourceType : mobj->TeleFogDestType), DVector3(pos, pos.Z + fogDelta), ALLOW_REPLACE);
+		mo = Spawn(mobj->Level, (beforeTele ? mobj->TeleFogSourceType : mobj->TeleFogDestType), DVector3(pos, pos.Z + fogDelta), ALLOW_REPLACE);
 	}
 
 	if (mo != NULL && setTarget)
@@ -187,7 +187,7 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 		if (!predicting)
 		{
 			DVector2 vector = angle.ToVector(20);
-			DVector2 fogpos = P_GetOffsetPosition(thing->__GetLevel(), pos.X, pos.Y, vector.X, vector.Y);
+			DVector2 fogpos = P_GetOffsetPosition(thing->Level, pos.X, pos.Y, vector.X, vector.Y);
 			P_SpawnTeleportFog(thing, DVector3(fogpos, thing->Z()), false, true);
 
 		}
@@ -427,7 +427,7 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 {
 	int i;
 	line_t *l;
-	auto Level = thing->__GetLevel();
+	auto Level = thing->Level;
 
 	if (side || thing->flags2 & MF2_NOTELEPORT || !line || line->sidedef[1] == NULL)
 		return false;

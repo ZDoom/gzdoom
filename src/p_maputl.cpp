@@ -355,7 +355,6 @@ void AActor::UnlinkFromWorld (FLinkContext *ctx)
 bool AActor::FixMapthingPos()
 {
 	sector_t *secstart = P_PointInSectorBuggy(X(), Y());
-	auto Level = __GetLevel();
 
 	int blockx = Level->blockmap.GetBlockX(X());
 	int blocky = Level->blockmap.GetBlockY(Y());
@@ -440,7 +439,6 @@ bool AActor::FixMapthingPos()
 void AActor::LinkToWorld(FLinkContext *ctx, bool spawningmapthing, sector_t *sector)
 {
 	bool spawning = spawningmapthing;
-	auto Level = __GetLevel();
 
 	if (spawning)
 	{
@@ -506,7 +504,7 @@ void AActor::LinkToWorld(FLinkContext *ctx, bool spawningmapthing, sector_t *sec
 	{
 		FPortalGroupArray check;
 
-		P_CollectConnectedGroups(__GetLevel(), Sector->PortalGroup, Pos(), Top(), radius, check);
+		P_CollectConnectedGroups(Level, Sector->PortalGroup, Pos(), Top(), radius, check);
 
 		BlockNode = NULL;
 		FBlockNode **alink = &this->BlockNode;
@@ -716,7 +714,7 @@ FMultiBlockLinesIterator::FMultiBlockLinesIterator(FPortalGroupArray &check, AAc
 	: checklist(check)
 {
 	checkpoint = origin->Pos();
-	if (!check.inited) P_CollectConnectedGroups(origin->__GetLevel(), origin->Sector->PortalGroup, checkpoint, origin->Top(), checkradius, checklist);
+	if (!check.inited) P_CollectConnectedGroups(origin->Level, origin->Sector->PortalGroup, checkpoint, origin->Top(), checkradius, checklist);
 	checkpoint.Z = checkradius == -1? origin->radius : checkradius;
 	basegroup = origin->Sector->PortalGroup;
 	startsector = origin->Sector;
@@ -1058,7 +1056,7 @@ FMultiBlockThingsIterator::FMultiBlockThingsIterator(FPortalGroupArray &check, A
 	: checklist(check)
 {
 	checkpoint = origin->Pos();
-	if (!check.inited) P_CollectConnectedGroups(origin->__GetLevel(), origin->Sector->PortalGroup, checkpoint, origin->Top(), checkradius, checklist);
+	if (!check.inited) P_CollectConnectedGroups(origin->Level, origin->Sector->PortalGroup, checkpoint, origin->Top(), checkradius, checklist);
 	checkpoint.Z = checkradius == -1? origin->radius : checkradius;
 	basegroup = origin->Sector->PortalGroup;
 	Reset();
@@ -1692,7 +1690,7 @@ AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, in
 	int finalStop;
 	int count;
 	AActor *target;
-	auto Level = mo->__GetLevel();
+	auto Level = mo->Level;
 	int bmapwidth = Level->blockmap.bmapwidth;
 	int bmapheight = Level->blockmap.bmapheight;
 

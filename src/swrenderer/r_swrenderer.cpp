@@ -202,7 +202,7 @@ void FSoftwareRenderer::RenderView(player_t *player, DCanvas *target, void *vide
 		r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
 	}
 
-	player->mo->__GetLevel()->canvasTextureInfo.UpdateAll([&](AActor *camera, FCanvasTexture *camtex, double fov)
+	player->mo->Level->canvasTextureInfo.UpdateAll([&](AActor *camera, FCanvasTexture *camtex, double fov)
 	{
 		RenderTextureView(camtex, camera, fov);
 	});

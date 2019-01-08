@@ -235,7 +235,7 @@ void DBot::Dofire (ticcmd_t *cmd)
 		// prediction aiming
 		Dist = player->mo->Distance2D(enemy);
 		fm = Dist / GetDefaultByType (GetBotInfo(player->ReadyWeapon).projectileType)->Speed;
-		bglobal.SetBodyAt(enemy->__GetLevel(), enemy->Pos() + enemy->Vel.XY() * fm * 2, 1);
+		bglobal.SetBodyAt(Level, enemy->Pos() + enemy->Vel.XY() * fm * 2, 1);
 		Angle = player->mo->AngleTo(bglobal.body1);
 		if (Check_LOS (enemy, SHOOTFOV))
 			no_fire = false;
@@ -517,7 +517,7 @@ void FCajunMaster::SetBodyAt (FLevelLocals *l, const DVector3 &pos, int hostnum)
 //Emulates missile travel. Returns distance travelled.
 double FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 {
-	AActor *th = Spawn (source->__GetLevel(), "CajunTrace", source->PosPlusZ(4*8.), NO_REPLACE);
+	AActor *th = Spawn (source->Level, "CajunTrace", source->PosPlusZ(4*8.), NO_REPLACE);
 	
 	th->target = source;		// where it came from
 
@@ -543,7 +543,7 @@ DAngle DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	AActor *actor;
 	double m;
 
-	bglobal.SetBodyAt(player->mo->__GetLevel(),  player->mo->PosPlusZ(player->mo->Height / 2) + player->mo->Vel.XY() * 5, 2);
+	bglobal.SetBodyAt(Level, player->mo->PosPlusZ(player->mo->Height / 2) + player->mo->Vel.XY() * 5, 2);
 
 	actor = bglobal.body2;
 
@@ -553,7 +553,7 @@ DAngle DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	//Predict.
 	m = ((dist+1) / GetDefaultByName("Rocket")->Speed);
 
-	bglobal.SetBodyAt(player->mo->__GetLevel(), DVector3((enemy->Pos() + enemy->Vel * (m + 2)), ONFLOORZ), 1);
+	bglobal.SetBodyAt(Level, DVector3((enemy->Pos() + enemy->Vel * (m + 2)), ONFLOORZ), 1);
 	
 	//try the predicted location
 	if (P_CheckSight (actor, bglobal.body1, SF_IGNOREVISIBILITY)) //See the predicted location, so give a test missile

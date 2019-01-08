@@ -44,6 +44,7 @@ struct pspdef_s;
 struct FState;
 class DThinker;
 class FSerializer;
+struct FLevelLocals;
 
 class FThinkerIterator;
 
@@ -73,7 +74,9 @@ public:
 	virtual void PostBeginPlay ();	// Called just before the first tick
 	virtual void CallPostBeginPlay(); // different in actor.
 	virtual void PostSerialize();
+	void Serialize(FSerializer &arc);
 	size_t PropagateMark();
+	FLevelLocals *GetLevel() const { return Level; }
 	
 	void ChangeStatNum (int statnum);
 
@@ -94,6 +97,9 @@ public:
 	// only used internally but Create needs access.
 	enum no_link_type { NO_LINK };
 	DThinker(no_link_type) throw();
+	
+	FLevelLocals *Level;
+
 private:
 	static void DestroyThinkersInList (FThinkerList &list);
 	static bool DoDestroyThinkersInList(FThinkerList &list);

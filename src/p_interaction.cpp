@@ -349,8 +349,6 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 	// [ZZ] Fire WorldThingDied script hook.
 	E_WorldThingDied(this, inflictor);
 
-	auto Level = __GetLevel();
-
 	// [JM] Fire KILL type scripts for actor. Not needed for players, since they have the "DEATH" script type.
 	if (!player && !(flags7 & MF7_NOKILLSCRIPTS) && ((flags7 & MF7_USEKILLSCRIPTS) || gameinfo.forcekillscripts))
 	{
@@ -1188,7 +1186,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 	}
 
 
-	auto Level = target->__GetLevel();
+	auto Level = target->Level;
 
 	//[RC] Backported from the Zandronum source.. Mostly.
 	if( target->player  &&
@@ -1683,7 +1681,7 @@ bool P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poi
 	{
 		return false;
 	}
-	auto Level = player->mo->__GetLevel();
+	auto Level = player->mo->Level;
 	if (source != NULL && source->player != player && player->mo->IsTeammate (source))
 	{
 		poison = (int)(poison * Level->teamdamage);
@@ -1807,7 +1805,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPain
 			return;
 		}
 	}
-	auto Level = player->mo->__GetLevel();
+	auto Level = player->mo->Level;
 
 	if (!(Level->time & 63) && playPainSound)
 	{

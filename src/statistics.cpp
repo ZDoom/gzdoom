@@ -568,7 +568,7 @@ FString GetStatString()
 	for(unsigned i = 0; i < LevelData.Size(); i++)
 	{
 		OneLevel *l = &LevelData[i];
-		compose.AppendFormat("Level %s - Kills: %d/%d - Items: %d/%d - Secrets: %d/%d - Time: %d:%02d\n", 
+		compose.AppendFormat("Map %s - Kills: %d/%d - Items: %d/%d - Secrets: %d/%d - Time: %d:%02d\n", 
 			l->Levelname.GetChars(), l->killcount, l->totalkills, l->itemcount, l->totalitems, l->secretcount, l->totalsecrets,
 			l->leveltime/(60*TICRATE), (l->leveltime/TICRATE)%60);
 	}
@@ -590,7 +590,7 @@ CCMD(finishgame)
 		Printf("Cannot use 'finishgame' while not in a game!\n");
 		return;
 	}
-	// This CCMD simulates an end-of-game action and exists to end mods that never exit their last Level->
+	// This CCMD simulates an end-of-game action and exists to end mods that never exit their last map.
 	Net_WriteByte(DEM_FINISHGAME);
 }
 

@@ -83,7 +83,7 @@ static void P_Shutdown ();
 //
 // P_PrecacheLevel
 //
-// Preloads all relevant graphics for the Level->
+// Preloads all relevant graphics for the map.
 //
 //===========================================================================
 void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist);

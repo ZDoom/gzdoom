@@ -171,7 +171,7 @@ void V_AddPlayerBlend (player_t *CPlayer, float blend[4], float maxinvalpha, int
 
 	if (CPlayer->hazardcount)
 	{
-		auto Level = CPlayer->mo->__GetLevel();
+		auto Level = CPlayer->mo->Level;
 		if (paletteflash & PF_HAZARD)
 		{
 			if (CPlayer->hazardcount > 16*TICRATE || (CPlayer->hazardcount & 8))

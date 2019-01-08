@@ -693,7 +693,7 @@ bool player_t::Resurrect()
 	// fire E_PlayerRespawned and start the ACS SCRIPT_Respawn.
 	E_PlayerRespawned(int(this - players));
 	//
-	auto Level = mo->__GetLevel();
+	auto Level = mo->Level;
 	Level->Behaviors.StartTypedScripts(Level, SCRIPT_Respawn, mo, true);
 	return true;
 }
@@ -890,7 +890,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 		return 0;
 	}
 
-	auto Level = self->__GetLevel();
+	auto Level = self->Level;
 	// Handle the different player death screams
 	if ((((Level->flags >> 15) | (dmflags)) &
 		(DF_FORCE_FALLINGZD | DF_FORCE_FALLINGHX)) &&
@@ -1013,7 +1013,7 @@ void P_FallingDamage (AActor *actor)
 	int damage;
 	double vel;
 
-	auto Level = actor->__GetLevel();
+	auto Level = actor->Level;
 	damagestyle = ((Level->flags >> 15) | (dmflags)) &
 		(DF_FORCE_FALLINGZD | DF_FORCE_FALLINGHX);
 
@@ -1115,7 +1115,7 @@ void P_CheckMusicChange(player_t *player)
 			{
 				if (player->MUSINFOactor->args[0] != 0)
 				{
-					auto Level = player->mo->__GetLevel();
+					auto Level = player->mo->Level;
 					FName *music = Level->info->MusicMap.CheckKey(player->MUSINFOactor->args[0]);
 
 					if (music != NULL)
@@ -1689,7 +1689,7 @@ bool P_IsPlayerTotallyFrozen(const player_t *player)
 	return
 		gamestate == GS_TITLELEVEL ||
 		player->cheats & CF_TOTALLYFROZEN ||
-		((player->mo->__GetLevel()->flags2 & LEVEL2_FROZEN) && player->timefreezer == 0);
+		((player->mo->Level->flags2 & LEVEL2_FROZEN) && player->timefreezer == 0);
 }
 
 

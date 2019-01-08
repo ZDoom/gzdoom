@@ -121,7 +121,7 @@ public:
 
 	void init(AActor * t1, AActor * t2, sector_t *startsector, SightTask *task, int flags)
 	{
-		Level = t1->__GetLevel();
+		Level = t1->Level;
 		sightstart = t1->PosRelative(task->portalgroup);
 		sightend = t2->PosRelative(task->portalgroup);
 		sightstart.Z += t1->Height * 0.75;
@@ -848,7 +848,7 @@ int P_CheckSight (AActor *t1, AActor *t2, int flags)
 		return false;
 	}
 
-	auto Level = t1->__GetLevel();
+	auto Level = t1->Level;
 	const sector_t *s1 = t1->Sector;
 	const sector_t *s2 = t2->Sector;
 	int pnum = int(s1->Index()) * Level->sectors.Size() + int(s2->Index());

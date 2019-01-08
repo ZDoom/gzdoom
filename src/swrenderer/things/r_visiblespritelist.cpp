@@ -110,7 +110,7 @@ namespace swrenderer
 
 	uint32_t VisibleSpriteList::FindSubsectorDepth(RenderThread *thread, const DVector2 &worldPos)
 	{
-		auto Level = thread->Viewport->Level();
+		auto Level = thread->Viewport->GetLevel();
 		if (Level->nodes.Size() == 0)
 		{
 			subsector_t *sub = &Level->subsectors[0];

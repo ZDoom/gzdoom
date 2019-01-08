@@ -653,7 +653,7 @@ void P_TranslatePortalZ(line_t* src, double& z)
 unsigned P_GetSkyboxPortal(AActor *actor)
 {
 	if (actor == nullptr) return 1;	// this means a regular sky.
-	auto Level = actor->__GetLevel();
+	auto Level = actor->Level;
 	for (unsigned i = 0;i<Level->sectorPortals.Size();i++)
 	{
 		if (Level->sectorPortals[i].mSkybox == actor) return i;
@@ -705,7 +705,7 @@ unsigned P_GetPortal(int type, int plane, sector_t *from, sector_t *to, const DV
 
 unsigned P_GetStackPortal(AActor *point, int plane)
 {
-	auto Level = point->__GetLevel();
+	auto Level = point->Level;
 	unsigned i = Level->sectorPortals.Reserve(1);
 	memset(&Level->sectorPortals[i], 0, sizeof(Level->sectorPortals[i]));
 	Level->sectorPortals[i].mType = PORTS_STACKEDSECTORTHING;

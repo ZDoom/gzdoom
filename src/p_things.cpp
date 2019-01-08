@@ -55,7 +55,7 @@ static FRandom pr_leadtarget ("LeadTarget");
 bool P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, int newtid)
 {
 	int rtn = 0;
-	auto Level = source->__GetLevel();
+	auto Level = source->Level;
 	PClassActor *kind;
 	AActor *spot, *mobj;
 	FActorIterator iterator (tid);
@@ -82,7 +82,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, i
 	}
 	while (spot != NULL)
 	{
-		mobj = Spawn (spot->__GetLevel(), kind, spot->Pos(), ALLOW_REPLACE);
+		mobj = Spawn (spot->Level, kind, spot->Pos(), ALLOW_REPLACE);
 
 		if (mobj != NULL)
 		{
@@ -262,7 +262,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 	bool leadTarget)
 {
 	int rtn = 0;
-	auto Level = source->__GetLevel();
+	auto Level = source->Level;
 	PClassActor *kind;
 	AActor *spot, *mobj, *targ = forcedest;
 	FActorIterator iterator (tid);
@@ -955,7 +955,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, double xofs, double yofs, do
 				caller->Vel.Zero();
 			}
 			
-			auto &Displacements = caller->__GetLevel()->Displacements;
+			auto &Displacements = caller->Level->Displacements;
 
 			// this is no fun with line portals 
 			if (flags & WARPF_WARPINTERPOLATION)

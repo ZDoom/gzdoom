@@ -634,7 +634,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, GiveSecret)
 
 void P_PlayerOnSpecialFlat (player_t *player, int floorType)
 {
-	auto Level = player->mo->__GetLevel();
+	auto Level = player->mo->Level;
 
 	if (Terrains[floorType].DamageAmount &&
 		!(Level->time & Terrains[floorType].DamageTimeMask))

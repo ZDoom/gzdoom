@@ -1070,7 +1070,7 @@ void FPolyObj::UnLinkPolyobj ()
 
 bool FPolyObj::CheckMobjBlocking (side_t *sd)
 {
-	auto Level = sd->sector->Level;
+	auto Level = GetLevel();
 	static TArray<AActor *> checker;
 	FBlockNode *block;
 	AActor *mobj;

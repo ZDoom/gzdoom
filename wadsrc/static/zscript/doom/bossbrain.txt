@@ -190,7 +190,7 @@ extend class Actor
 		if ((deathmatch || alwaysapplydmflags) && sv_noexit)
 			return;
 
-		// New dmflag: Kill all boss spawned monsters before ending the Level.
+		// New dmflag: Kill all boss spawned monsters before ending the map.
 		if (sv_killbossmonst)
 		{
 			int count;	// Repeat until we have no more boss-spawned monsters.

@@ -868,7 +868,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RadiusDamageSelf)
 		// the player to indicate bad things happened.
 		AActor *flash = NULL;
 		if(flashtype != NULL)
-			flash = Spawn(self->__GetLevel(), flashtype, self->target->PosPlusZ(self->target->Height / 4), ALLOW_REPLACE);
+			flash = Spawn(self->Level, flashtype, self->target->PosPlusZ(self->target->Height / 4), ALLOW_REPLACE);
 
 		int dmgFlags = 0;
 		FName dmgType = NAME_BFGSplash;
@@ -1572,7 +1572,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnDebris)
 		double xo = (pr_spawndebris() - 128) / 16.;
 		double yo = (pr_spawndebris() - 128) / 16.;
 		double zo = pr_spawndebris()*self->Height / 256 + self->GetBobOffset();
-		mo = Spawn(self->__GetLevel(), debris, self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
+		mo = Spawn(self->Level, debris, self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 		if (mo)
 		{
 			if (transfer_translation)
@@ -1908,7 +1908,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Burst)
 		double xo = (pr_burst() - 128) * self->radius / 128;
 		double yo = (pr_burst() - 128) * self->radius / 128;
 		double zo = (pr_burst() * self->Height / 255);
-		mo = Spawn(self->__GetLevel(), chunk, self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
+		mo = Spawn(self->Level, chunk, self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 
 		if (mo)
 		{
@@ -1953,7 +1953,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Respawn)
 
 	bool oktorespawn = false;
 	DVector3 pos = self->Pos();
-	auto Level = self->__GetLevel();
+	auto Level = self->Level;
 
 	self->flags |= MF_SOLID;
 	self->Height = self->GetDefault()->Height;
@@ -2608,7 +2608,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeCountFlags)
 	PARAM_INT(item);
 	PARAM_INT(secret);
 
-	auto Level = self->__GetLevel();
+	auto Level = self->Level;
 	if (self->CountsAsKill() && self->health > 0) --Level->total_monsters;
 	if (self->flags & MF_COUNTITEM) --Level->total_items;
 	if (self->flags5 & MF5_COUNTSECRET) --Level->total_secrets;
@@ -3101,7 +3101,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Teleport)
 					P_SpawnTeleportFog(ref, prev, true, true);
 				else
 				{
-					fog1 = Spawn(self->__GetLevel(), fog_type, prev, ALLOW_REPLACE);
+					fog1 = Spawn(self->Level, fog_type, prev, ALLOW_REPLACE);
 					if (fog1 != NULL)
 						fog1->target = ref;
 				}
@@ -3112,7 +3112,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Teleport)
 					P_SpawnTeleportFog(ref, ref->Pos(), false, true);
 				else
 				{
-					fog2 = Spawn(self->__GetLevel(), fog_type, ref->Pos(), ALLOW_REPLACE);
+					fog2 = Spawn(self->Level, fog_type, ref->Pos(), ALLOW_REPLACE);
 					if (fog2 != NULL)
 						fog2->target = ref;
 				}
@@ -3645,7 +3645,7 @@ static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amo
 
 		if ((flags & RGF_NOSIGHT) || P_CheckSight(thing, self, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
 		{ // OK to give; target is in direct path, or the monster doesn't care about it being in line of sight.
-			auto gift = Spawn(thing->__GetLevel(), item);
+			auto gift = Spawn(thing->Level, item);
 			if (gift->IsKindOf(NAME_Health))
 			{
 				gift->IntVar(NAME_Amount) *= amount;
@@ -3706,7 +3706,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RadiusGive)
 	{
 		FPortalGroupArray check(FPortalGroupArray::PGA_Full3d);
 		double mid = self->Center();
-		FMultiBlockThingsIterator it(check, self->__GetLevel(), self->X(), self->Y(), mid-distance, mid+distance, distance, false, self->Sector);
+		FMultiBlockThingsIterator it(check, self->Level, self->X(), self->Y(), mid-distance, mid+distance, distance, false, self->Sector);
 		FMultiBlockThingsIterator::CheckResult cres;
 
 		while ((it.Next(&cres)) && ((unlimited) || (given < limit)))

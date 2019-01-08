@@ -6,36 +6,30 @@
 #include "d_player.h"
 // These depend on both actor.h and r_defs.h so they cannot be in either file without creating a circular dependency.
 
-// Needs something more permanent.
-inline FLevelLocals *AActor::__GetLevel() const
-{
-	return &level;
-}
-
 inline DVector3 AActor::PosRelative(int portalgroup) const
 {
-	return Pos() + __GetLevel()->Displacements.getOffset(Sector->PortalGroup, portalgroup);
+	return Pos() + Level->Displacements.getOffset(Sector->PortalGroup, portalgroup);
 }
 
 inline DVector3 AActor::PosRelative(const AActor *other) const
 {
-	return Pos() + __GetLevel()->Displacements.getOffset(Sector->PortalGroup, other->Sector->PortalGroup);
+	return Pos() + Level->Displacements.getOffset(Sector->PortalGroup, other->Sector->PortalGroup);
 }
 
 inline DVector3 AActor::PosRelative(sector_t *sec) const
 {
-	return Pos() + __GetLevel()->Displacements.getOffset(Sector->PortalGroup, sec->PortalGroup);
+	return Pos() + Level->Displacements.getOffset(Sector->PortalGroup, sec->PortalGroup);
 }
 
 inline DVector3 AActor::PosRelative(const line_t *line) const
 {
-	return Pos() + __GetLevel()->Displacements.getOffset(Sector->PortalGroup, line->frontsector->PortalGroup);
+	return Pos() + Level->Displacements.getOffset(Sector->PortalGroup, line->frontsector->PortalGroup);
 }
 
 /*
 inline DVector3 PosRelative(const DVector3 &pos, line_t *line, sector_t *refsec = NULL)
 {
-	return pos + __GetLevel()->Displacements.getOffset(refsec->PortalGroup, line->frontsector->PortalGroup);
+	return pos + Level->Displacements.getOffset(refsec->PortalGroup, line->frontsector->PortalGroup);
 }
 */
 
@@ -69,7 +63,7 @@ inline double AActor::GetBobOffset(double ticfrac) const
 	{
 		return 0;
 	}
-	return BobSin(FloatBobPhase + __GetLevel()->maptime + ticfrac) * FloatBobStrength;
+	return BobSin(FloatBobPhase + Level->maptime + ticfrac) * FloatBobStrength;
 }
 
 inline double AActor::GetCameraHeight() const
@@ -86,7 +80,7 @@ inline FDropItem *AActor::GetDropItems() const
 inline double AActor::GetGravity() const
 {
 	if (flags & MF_NOGRAVITY) return 0;
-	return __GetLevel()->gravity * Sector->gravity * Gravity * 0.00125;
+	return Level->gravity * Sector->gravity * Gravity * 0.00125;
 }
 
 inline double AActor::AttackOffset(double offset)

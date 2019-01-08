@@ -163,7 +163,7 @@ PalEntry HWDrawInfo::CalcLightColor(int light, PalEntry pe, int blendfactor)
 //     This is what Legacy's GL render does.
 //	2. black fog means no fog and always uses the distfogtable based on the level's fog density setting
 //	3. If outside fog is defined and the current fog color is the same as the outside fog
-//	   the engine always uses the outside fog density to make the fog uniform across the Level->
+//	   the engine always uses the outside fog density to make the fog uniform across the map.
 //	   If the outside fog's density is undefined it uses the level's fog density and if that is
 //	   not defined it uses a default of 70.
 //	4. If a global fog density is specified it is being used for all fog on the level

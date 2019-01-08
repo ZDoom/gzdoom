@@ -145,7 +145,7 @@ void ModActorFlag(AActor *actor, FFlagDef *fd, bool set)
 bool ModActorFlag(AActor *actor, const FString &flagname, bool set, bool printerror)
 {
 	bool found = false;
-	auto Level = actor->__GetLevel();
+	auto Level = actor->Level;
 
 	if (actor != NULL)
 	{

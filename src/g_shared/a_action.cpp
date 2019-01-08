@@ -92,13 +92,15 @@ CUSTOM_CVAR(Int, sv_corpsequeuesize, 64, CVAR_ARCHIVE|CVAR_SERVERINFO)
 {
 	if (self > 0)
 	{
-		auto &corpsequeue = level.CorpseQueue;
-		while (corpsequeue.Size() > (unsigned)self)
-		{
-			AActor *corpse = corpsequeue[0];
-			if (corpse) corpse->Destroy();
-			corpsequeue.Delete(0);
-		}
+		ForAllLevels([&](FLevelLocals *Level) {
+			auto &corpsequeue = Level->CorpseQueue;
+			while (corpsequeue.Size() > (unsigned)self)
+			{
+				AActor *corpse = corpsequeue[0];
+				if (corpse) corpse->Destroy();
+				corpsequeue.Delete(0);
+			}
+		});
 	}
 }
 
@@ -111,7 +113,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_QueueCorpse)
 
 	if (sv_corpsequeuesize > 0)
 	{
-		auto &corpsequeue = level.CorpseQueue;
+		auto &corpsequeue = self->Level->CorpseQueue;
 		while (corpsequeue.Size() >= (unsigned)sv_corpsequeuesize)
 		{
 			AActor *corpse = corpsequeue[0];
@@ -128,7 +130,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeQueueCorpse)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 
-	auto &corpsequeue = level.CorpseQueue;
+	auto &corpsequeue = self->Level->CorpseQueue;
 	auto index = corpsequeue.FindEx([=](auto &element) { return element == self; });
 	if (index < corpsequeue.Size())
 	{

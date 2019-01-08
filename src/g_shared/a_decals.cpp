@@ -405,6 +405,7 @@ static side_t *NextWall (const side_t *wall)
 void DBaseDecal::SpreadLeft (double r, vertex_t *v1, side_t *feelwall, F3DFloor *ffloor, SpreadInfo *spread)
 {
 	double ldx, ldy;
+	auto Level = feelwall->sector->Level;
 
 	spread->SpreadStack.Push (feelwall);
 
@@ -415,7 +416,7 @@ void DBaseDecal::SpreadLeft (double r, vertex_t *v1, side_t *feelwall, F3DFloor 
 		double x = v1->fX();
 		double y = v1->fY();
 
-		feelwall = &level.sides[feelwall->LeftSide];
+		feelwall = &Level->sides[feelwall->LeftSide];
 		GetWallStuff (feelwall, v1, ldx, ldy);
 		double wallsize = Length (ldx, ldy);
 		r += spread->DecalLeft;
@@ -450,12 +451,13 @@ void DBaseDecal::SpreadRight (double r, side_t *feelwall, double wallsize, F3DFl
 {
 	vertex_t *v1;
 	double x, y, ldx, ldy;
+	auto Level = feelwall->sector->Level;
 
 	spread->SpreadStack.Push (feelwall);
 
 	while (r > wallsize && feelwall->RightSide != NO_SIDE)
 	{
-		feelwall = &level.sides[feelwall->RightSide];
+		feelwall = &Level->sides[feelwall->LeftSide];
 
 		side_t *nextwall = NextWall (feelwall);
 		if (nextwall != NULL && nextwall->LeftSide != NO_SIDE)

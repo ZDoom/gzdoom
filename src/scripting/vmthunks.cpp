@@ -1635,15 +1635,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, ReplaceTextures, ReplaceTextures)
 	return 0;
 }
 
-void SetCameraToTexture(AActor *viewpoint, const FString &texturename, double fov);
+void SetCameraToTexture(FLevelLocals *Level, AActor *viewpoint, const FString &texturename, double fov);
+void SetCameraToTexture_(AActor *viewpoint, const FString &texturename, double fov)
+{
+	SetCameraToTexture(viewpoint->Level, viewpoint, texturename, fov);
+}
 
-DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraToTexture, SetCameraToTexture)
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraToTexture, SetCameraToTexture_)
 {
 	PARAM_PROLOGUE;
 	PARAM_OBJECT(viewpoint, AActor);
 	PARAM_STRING(texturename); // [ZZ] there is no point in having this as FTextureID because it's easier to refer to a cameratexture by name and it isn't executed too often to cache it.
 	PARAM_FLOAT(fov);
-	SetCameraToTexture(viewpoint, texturename, fov);
+	SetCameraToTexture_(viewpoint, texturename, fov);
 	return 0;
 }
 

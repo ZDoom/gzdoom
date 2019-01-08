@@ -188,9 +188,9 @@ void FGLRenderer::EndOffscreen()
 //
 //===========================================================================
 
-void FGLRenderer::UpdateShadowMap()
+void FGLRenderer::UpdateShadowMap(FLevelLocals *Level)
 {
-	if (screen->mShadowMap.PerformUpdate())
+	if (screen->mShadowMap.PerformUpdate(Level))
 	{
 		FGLDebug::PushGroup("ShadowMap");
 

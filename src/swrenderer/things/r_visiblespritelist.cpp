@@ -118,7 +118,7 @@ namespace swrenderer
 		}
 		else
 		{
-			return FindSubsectorDepth(thread, worldPos, level.HeadNode());
+			return FindSubsectorDepth(thread, worldPos, Level->HeadNode());
 		}
 	}
 

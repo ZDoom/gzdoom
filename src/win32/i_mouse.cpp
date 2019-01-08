@@ -781,7 +781,7 @@ ufailit:
 		Device = NULL;
 		return false;
 	}
-	// Set cooperative level.
+	// Set cooperative level
 	hr = Device->SetCooperativeLevel(Window, DISCL_EXCLUSIVE | DISCL_FOREGROUND);
 	if (FAILED(hr))
 	{

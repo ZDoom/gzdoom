@@ -405,7 +405,7 @@ void FParser::spec_script()
 		return;
     }
 	
-	newscript = Create<DFsScript>();
+	newscript = Create<DFsScript>(Level);
 	
 	// add to scripts list of parent
 	Script->children[scriptnum] = newscript;

@@ -76,7 +76,7 @@ public:
 	void SetSpot(bool spot) { if (spot) m_lightFlags |= LF_SPOT; else m_lightFlags &= ~LF_SPOT; }
 	void SetSpotInnerAngle(double angle) { m_spotInnerAngle = angle; }
 	void SetSpotOuterAngle(double angle) { m_spotOuterAngle = angle; }
-	static void SetAttenuationForLevel();
+	static void SetAttenuationForLevel(FLevelLocals *Level);
 
 	void OrderIntensities()
 	{
@@ -170,7 +170,7 @@ struct FDynamicLight
 
 	inline DVector3 PosRelative(int portalgroup) const
 	{
-		return Pos + level.Displacements.getOffset(Sector->PortalGroup, portalgroup);
+		return Pos + Level->Displacements.getOffset(Sector->PortalGroup, portalgroup);
 	}
 
 	bool ShouldLightActor(AActor *check)
@@ -218,6 +218,7 @@ private:
 	void CollectWithinRadius(const DVector3 &pos, FSection *section, float radius);
 
 public:
+	FLevelLocals *Level;
 	FCycler m_cycler;
 	DVector3 Pos;
 	DVector3 m_off;

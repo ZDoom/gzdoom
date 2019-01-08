@@ -108,17 +108,26 @@ void G_VerifySkill();
 
 CUSTOM_CVAR(Bool, gl_brightfog, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
-	if (level.info == nullptr || level.info->brightfog == -1) level.brightfog = self;
+	ForAllLevels([&](FLevelLocals *Level)
+	{
+		if (Level->info == nullptr || Level->info->brightfog == -1) Level->brightfog = self;
+	});
 }
 
 CUSTOM_CVAR(Bool, gl_lightadditivesurfaces, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
-	if (level.info == nullptr || level.info->lightadditivesurfaces == -1) level.lightadditivesurfaces = self;
+	ForAllLevels([&](FLevelLocals *Level)
+	{
+		if (Level->info == nullptr || Level->info->lightadditivesurfaces == -1) Level->lightadditivesurfaces = self;
+	});
 }
 
 CUSTOM_CVAR(Bool, gl_notexturefill, false, CVAR_NOINITCALL)
 {
-	if (level.info == nullptr || level.info->notexturefill == -1) level.notexturefill = self;
+	ForAllLevels([&](FLevelLocals *Level)
+	{
+		if (Level->info == nullptr || Level->info->notexturefill == -1) Level->notexturefill = self;
+	});
 }
 
 CUSTOM_CVAR(Int, gl_lightmode, 3, CVAR_ARCHIVE | CVAR_NOINITCALL)
@@ -127,8 +136,11 @@ CUSTOM_CVAR(Int, gl_lightmode, 3, CVAR_ARCHIVE | CVAR_NOINITCALL)
 	if (newself > 8) newself = 16;	// use 8 and 16 for software lighting to avoid conflicts with the bit mask
 	else if (newself > 4) newself = 8;
 	else if (newself < 0) newself = 0;
-	if (self != newself) self = newself;
-	else if ((level.info == nullptr || level.info->lightmode == ELightMode::NotSet)) level.lightMode = (ELightMode)*self;
+	if (self != newself) self = newself;	// This recursively calls this handler again.
+	else ForAllLevels([&](FLevelLocals *Level)
+	{
+		if ((Level->info == nullptr || Level->info->lightmode == ELightMode::NotSet)) Level->lightMode = (ELightMode)*self;
+	});
 }
 
 
@@ -1027,7 +1039,7 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 	// [RH] Start lightning, if MAPINFO tells us to
 	if (level.flags & LEVEL_STARTLIGHTNING)
 	{
-		P_StartLightning ();
+		P_StartLightning (&level);
 	}
 
 	gameaction = ga_nothing; 
@@ -1534,7 +1546,8 @@ void FLevelLocals::InitLevelLocals ()
 	lightadditivesurfaces = info->lightadditivesurfaces < 0 ? gl_lightadditivesurfaces : !!info->lightadditivesurfaces;
 	notexturefill = info->notexturefill < 0 ? gl_notexturefill : !!info->notexturefill;
 
-	FLightDefaults::SetAttenuationForLevel();
+	// This may only be done for the primary level in a set!
+	FLightDefaults::SetAttenuationForLevel(this);
 }
 
 //==========================================================================

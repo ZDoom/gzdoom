@@ -691,19 +691,21 @@ static void CalcPosVel( int type, const AActor *actor, const sector_t *sector,
 		DVector3 listenpos;
 		int pgroup;
 		AActor *listener = players[consoleplayer].camera;
-		auto Level = listener->Level;
+		FLevelLocals *Level = nullptr;
 
-		if (listener != NULL)
+		if (listener != nullptr)
 		{
 			listenpos = listener->Pos();
 			*pos = listener->SoundPos();
 			pgroup = listener->Sector->PortalGroup;
+			Level = listener->Level;
 		}
 		else
 		{
 			listenpos.Zero();
 			pos->Zero();
 			pgroup = 0;
+			type = SOURCE_None; // No level means that no level sound placement should be performed.
 		}
 
 		// [BL] Moved this case out of the switch statement to make code easier

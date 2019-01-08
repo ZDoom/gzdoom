@@ -94,14 +94,14 @@ public:
 		*r = mSpriteRect;
 	}
 
-	void GetTexCoordInfo(FTexCoordInfo *tci, float x, float y) const
+	void GetTexCoordInfo(FTexCoordInfo *tci, float x, float y, bool fwp) const
 	{
-		tci->GetFromTexture(tex, x, y);
+		tci->GetFromTexture(tex, x, y, fwp);
 	}
 
-	void GetTexCoordInfo(FTexCoordInfo *tci, side_t *side, int texpos) const
+	void GetTexCoordInfo(FTexCoordInfo *tci, side_t *side, int texpos, bool fwp) const
 	{
-		GetTexCoordInfo(tci, (float)side->GetTextureXScale(texpos), (float)side->GetTextureYScale(texpos));
+		GetTexCoordInfo(tci, (float)side->GetTextureXScale(texpos), (float)side->GetTextureYScale(texpos), fwp);
 	}
 
 	// This is scaled size in integer units as needed by walls and flats

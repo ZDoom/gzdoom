@@ -515,8 +515,8 @@ void DObject::StaticPointerSubstitution (AActor *old, AActor *notOld)
 		}
 	}
 
-	// Go through sectors.
-	for (auto &sec : level.sectors)
+	// Go through sectors. We only need to look at the level the 'old' actor was in.
+	for (auto &sec : old->Level->sectors)
 	{
 		if (sec.SoundTarget == old) sec.SoundTarget = notOld;
 	}

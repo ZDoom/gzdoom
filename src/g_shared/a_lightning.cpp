@@ -89,8 +89,8 @@ void DLightningThinker::LightningFlash ()
 		LightningFlashCount--;
 		if (LightningFlashCount)
 		{ // reduce the brightness of the flash
-			tempSec = &level.sectors[0];
-			for (i = level.sectors.Size(), j = 0; i > 0; ++j, --i, ++tempSec)
+			tempSec = &Level->sectors[0];
+			for (i = Level->sectors.Size(), j = 0; i > 0; ++j, --i, ++tempSec)
 			{
 				// [RH] Checking this sector's applicability to lightning now
 				// is not enough to know if we should lower its light level,
@@ -105,24 +105,24 @@ void DLightningThinker::LightningFlash ()
 		}					
 		else
 		{ // remove the alternate lightning flash special
-			tempSec = &level.sectors[0];
-			for (i = level.sectors.Size(), j = 0; i > 0; ++j, --i, ++tempSec)
+			tempSec = &Level->sectors[0];
+			for (i = Level->sectors.Size(), j = 0; i > 0; ++j, --i, ++tempSec)
 			{
 				if (LightningLightLevels[j] != SHRT_MAX)
 				{
 					tempSec->SetLightLevel(LightningLightLevels[j]);
 				}
 			}
-			fillshort(&LightningLightLevels[0], level.sectors.Size(), SHRT_MAX);
-			level.flags &= ~LEVEL_SWAPSKIES;
+			fillshort(&LightningLightLevels[0], Level->sectors.Size(), SHRT_MAX);
+			Level->flags &= ~LEVEL_SWAPSKIES;
 		}
 		return;
 	}
 
 	LightningFlashCount = (pr_lightning()&7)+8;
 	flashLight = 200+(pr_lightning()&31);
-	tempSec = &level.sectors[0];
-	for (i = level.sectors.Size(), j = 0; i > 0; ++j, --i, ++tempSec)
+	tempSec = &Level->sectors[0];
+	for (i = Level->sectors.Size(), j = 0; i > 0; ++j, --i, ++tempSec)
 	{
 		// allow combination of the lightning sector specials with bit masks
 		int special = tempSec->special;
@@ -152,12 +152,12 @@ void DLightningThinker::LightningFlash ()
 		}
 	}
 
-	level.flags |= LEVEL_SWAPSKIES;	// set alternate sky
+	Level->flags |= LEVEL_SWAPSKIES;	// set alternate sky
 	S_Sound (CHAN_AUTO, "world/thunder", 1.0, ATTN_NONE);
 	// [ZZ] just in case
 	E_WorldLightning();
 	// start LIGHTNING scripts
-	level.Behaviors.StartTypedScripts (&level, SCRIPT_Lightning, NULL, false);	// [RH] Run lightning scripts
+	Level->Behaviors.StartTypedScripts (Level, SCRIPT_Lightning, NULL, false);	// [RH] Run lightning scripts
 
 	// Calculate the next lighting flash
 	if (!NextLightningFlash)
@@ -168,7 +168,7 @@ void DLightningThinker::LightningFlash ()
 		}
 		else
 		{
-			if (pr_lightning() < 128 && !(level.time&32))
+			if (pr_lightning() < 128 && !(Level->time&32))
 			{
 				NextLightningFlash = ((pr_lightning()&7)+2)*35;
 			}
@@ -203,16 +203,16 @@ static DLightningThinker *LocateLightning ()
 	return iterator.Next ();
 }
 
-void P_StartLightning ()
+void P_StartLightning (FLevelLocals *Level)
 {
 	const bool isOriginalHexen = (gameinfo.gametype == GAME_Hexen)
-		&& (level.flags2 & LEVEL2_HEXENHACK);
+		&& (Level->flags2 & LEVEL2_HEXENHACK);
 
 	if (isOriginalHexen)
 	{
 		bool hasLightning = false;
 
-		for (const sector_t &sector : level.sectors)
+		for (const sector_t &sector : Level->sectors)
 		{
 			hasLightning = sector.GetTexture(sector_t::ceiling) == skyflatnum
 				|| sector.special == Light_IndoorLightning1
@@ -226,7 +226,7 @@ void P_StartLightning ()
 
 		if (!hasLightning)
 		{
-			level.flags &= ~LEVEL_STARTLIGHTNING;
+			Level->flags &= ~LEVEL_STARTLIGHTNING;
 			return;
 		}
 	}

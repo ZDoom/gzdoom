@@ -110,13 +110,13 @@ bool IShadowMap::IsEnabled() const
 	return gl_light_shadowmap && (screen->hwcaps & RFL_SHADER_STORAGE_BUFFER);
 }
 
-void IShadowMap::CollectLights()
+void IShadowMap::CollectLights(FDynamicLight *head)
 {
 	if (mLights.Size() != 1024 * 4) mLights.Resize(1024 * 4);
 	int lightindex = 0;
 
 	// Todo: this should go through the blockmap in a spiral pattern around the player so that closer lights are preferred.
-	for (auto light = level.lights; light; light = light->next)
+	for (auto light = head; light; light = light->next)
 	{
 		LightsProcessed++;
 		if (light->shadowmapped && light->IsActive() && lightindex < 1024 * 4)
@@ -164,7 +164,7 @@ bool IShadowMap::ValidateAABBTree(FLevelLocals *Level)
 	return false;
 }
 
-bool IShadowMap::PerformUpdate()
+bool IShadowMap::PerformUpdate(FLevelLocals *Level)
 {
 	UpdateCycles.Reset();
 
@@ -174,8 +174,8 @@ bool IShadowMap::PerformUpdate()
 	if (IsEnabled())
 	{
 		UpdateCycles.Clock();
-		UploadAABBTree();
-		UploadLights();
+		UploadAABBTree(Level);
+		UploadLights(Level->lights);
 		mLightList->BindBase();
 		mNodesBuffer->BindBase();
 		mLinesBuffer->BindBase();
@@ -184,9 +184,9 @@ bool IShadowMap::PerformUpdate()
 	return false;
 }
 
-void IShadowMap::UploadLights()
+void IShadowMap::UploadLights(FDynamicLight *head)
 {
-	CollectLights();
+	CollectLights(head);
 
 	if (mLightList == nullptr)
 		mLightList = screen->CreateDataBuffer(4, true);
@@ -195,9 +195,9 @@ void IShadowMap::UploadLights()
 }
 
 
-void IShadowMap::UploadAABBTree()
+void IShadowMap::UploadAABBTree(FLevelLocals *Level)
 {
-	if (!ValidateAABBTree(&level))
+	if (!ValidateAABBTree(Level))
 	{
 		if (!mNodesBuffer)
 			mNodesBuffer = screen->CreateDataBuffer(2, true);

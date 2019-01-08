@@ -236,7 +236,7 @@ bool P_GetMidTexturePosition(const line_t *line, int sideno, double *ptextop, do
 	FTexCoordInfo tci;
 
 	// We only need the vertical positioning info here.
-	tci.GetFromTexture(tex, 1., (float)side->GetTextureYScale(side_t::mid));
+	tci.GetFromTexture(tex, 1., (float)side->GetTextureYScale(side_t::mid), !!(line->GetLevel()->flags3 & LEVEL3_FORCEWORLDPANNING));
 	double y_offset = tci.RowOffset((float)side->GetTextureYOffset(side_t::mid));
 	double textureheight = tci.mRenderHeight;
 

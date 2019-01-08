@@ -1129,7 +1129,7 @@ void GLWall::DoTexture(HWDrawInfo *di, int _type,seg_t * seg, int peg,
 
 	FTexCoordInfo tci;
 
-	gltexture->GetTexCoordInfo(&tci, seg->sidedef, texpos);
+	gltexture->GetTexCoordInfo(&tci, seg->sidedef, texpos, !!(di->Level->flags3 & LEVEL3_FORCEWORLDPANNING));
 
 	type = _type;
 
@@ -1190,7 +1190,7 @@ void GLWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 		// Align the texture to the ORIGINAL sector's height!!
 		// At this point slopes don't matter because they don't affect the texture's z-position
 
-		gltexture->GetTexCoordInfo(&tci, seg->sidedef, side_t::mid);
+		gltexture->GetTexCoordInfo(&tci, seg->sidedef, side_t::mid, !!(di->Level->flags3 & LEVEL3_FORCEWORLDPANNING));
 		if (tci.mRenderHeight < 0)
 		{
 			mirrory = true;
@@ -1526,23 +1526,24 @@ void GLWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover,
 	else
 	{
 
+		auto fwp = !!(di->Level->flags3 & LEVEL3_FORCEWORLDPANNING);
 		if (rover->flags&FF_UPPERTEXTURE)
 		{
 			gltexture = FMaterial::ValidateTexture(seg->sidedef->GetTexture(side_t::top), false, true);
 			if (!gltexture) return;
-			gltexture->GetTexCoordInfo(&tci, seg->sidedef, side_t::top);
+			gltexture->GetTexCoordInfo(&tci, seg->sidedef, side_t::top, fwp);
 		}
 		else if (rover->flags&FF_LOWERTEXTURE)
 		{
 			gltexture = FMaterial::ValidateTexture(seg->sidedef->GetTexture(side_t::bottom), false, true);
 			if (!gltexture) return;
-			gltexture->GetTexCoordInfo(&tci, seg->sidedef, side_t::bottom);
+			gltexture->GetTexCoordInfo(&tci, seg->sidedef, side_t::bottom, fwp);
 		}
 		else
 		{
 			gltexture = FMaterial::ValidateTexture(mastersd->GetTexture(side_t::mid), false, true);
 			if (!gltexture) return;
-			gltexture->GetTexCoordInfo(&tci, mastersd, side_t::mid);
+			gltexture->GetTexCoordInfo(&tci, mastersd, side_t::mid, fwp);
 		}
 
 		to = (rover->flags&(FF_UPPERTEXTURE | FF_LOWERTEXTURE)) ? 0 : tci.TextureOffset(mastersd->GetTextureXOffset(side_t::mid));
@@ -2195,7 +2196,7 @@ void GLWall::ProcessLowerMiniseg(HWDrawInfo *di, seg_t *seg, sector_t * frontsec
 		{
 			FTexCoordInfo tci;
 			type = RENDERWALL_BOTTOM;
-			gltexture->GetTexCoordInfo(&tci, 1.f, 1.f);
+			gltexture->GetTexCoordInfo(&tci, 1.f, 1.f, !!(di->Level->flags3 & LEVEL3_FORCEWORLDPANNING));
 			SetWallCoordinates(seg, &tci, bfh, bfh, bfh, ffh, ffh, 0);
 			PutWall(di, false);
 		}

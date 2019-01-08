@@ -101,7 +101,8 @@ void RenderPolyWallSprite::Render(PolyRenderThread *thread, AActor *thing, subse
 	int lightlevel = fullbrightSprite ? 255 : thing->Sector->lightlevel + actualextralight;
 
 	PolyDrawArgs args;
-	args.SetLight(GetColorTable(sub->sector->Colormap, sub->sector->SpecialColors[sector_t::sprites], true), lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), fullbrightSprite);
+	auto nc = !!(sub->sector->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING);
+	args.SetLight(GetSpriteColorTable(sub->sector->Colormap, sub->sector->SpecialColors[sector_t::sprites], nc), lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), fullbrightSprite);
 	args.SetStencilTestValue(stencilValue);
 	args.SetTexture(tex, thing->RenderStyle);
 	args.SetDepthTest(true);

@@ -160,7 +160,7 @@ void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata)
 		float radiusSquared = (float)(self->renderradius * self->renderradius);
 		dl_validcount++;
 
-		BSPWalkCircle(x, y, radiusSquared, [&](subsector_t *subsector) // Iterate through all subsectors potentially touched by actor
+		BSPWalkCircle(self->Level, x, y, radiusSquared, [&](subsector_t *subsector) // Iterate through all subsectors potentially touched by actor
 		{
 			auto section = subsector->section;
 			if (section->validcount == dl_validcount) return;	// already done from a previous subsector.

@@ -146,8 +146,8 @@ AActor *P_SpawnSubMissile (AActor *source, PClassActor *type, AActor *target);	/
 extern FClassMap SpawnableThings;
 extern FClassMap StrifeTypes;
 
-bool	P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, int newtid);
-bool	P_Thing_Projectile (int tid, AActor *source, int type, const char * type_name, DAngle angle,
+bool	P_Thing_Spawn (FLevelLocals *Level, int tid, AActor *source, int type, DAngle angle, bool fog, int newtid);
+bool	P_Thing_Projectile (FLevelLocals *Level, int tid, AActor *source, int type, const char * type_name, DAngle angle,
 			double speed, double vspeed, int dest, AActor *forcedest, int gravity, int newtid,
 			bool leadTarget);
 

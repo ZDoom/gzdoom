@@ -307,6 +307,7 @@ public:
 
 	// {} sections
 
+	FLevelLocals *Level;
 	TObjPtr<DFsSection*> sections[SECTIONSLOTS];
 
 	// variables:
@@ -332,7 +333,7 @@ public:
 	bool lastiftrue;     // haleyjd: whether last "if" statement was 
 	// true or false
 
-	DFsScript();
+	DFsScript(FLevelLocals *Level);
 	~DFsScript();
 	void OnDestroy() override;
 	void Serialize(FSerializer &ar);
@@ -365,6 +366,9 @@ public:
 	void ParseInclude(char *lumpname);
 	void ParseScript(char *rover = NULL);
 	void ParseData(char *rover, char *data, char *end);
+	
+private:
+	DFsScript() {}
 };
 
 //==========================================================================

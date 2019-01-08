@@ -89,7 +89,7 @@ void FLightDefaults::ApplyProperties(FDynamicLight * light) const
 	{
 		float pulseTime = float(m_Param / TICRATE);
 
-		light->m_lastUpdate = level.maptime;
+		light->m_lastUpdate = light->Level->maptime;
 		if (m_swapped) light->m_cycler.SetParams(float(m_Args[LIGHT_SECONDARY_INTENSITY]), float(m_Args[LIGHT_INTENSITY]), pulseTime, oldtype == PulseLight);
 		else light->m_cycler.SetParams(float(m_Args[LIGHT_INTENSITY]), float(m_Args[LIGHT_SECONDARY_INTENSITY]), pulseTime, oldtype == PulseLight);
 		light->m_cycler.ShouldCycle(true);
@@ -101,13 +101,13 @@ void FLightDefaults::ApplyProperties(FDynamicLight * light) const
 	light->SetOffset(m_Pos);	// this must be the last thing to do.
 }
 
-void FLightDefaults::SetAttenuationForLevel()
+void FLightDefaults::SetAttenuationForLevel(FLevelLocals *Level)
 {
 	for (auto ldef : LightDefaults)
 	{
 		if (ldef->m_attenuate == -1)
 		{
-			if (level.flags3 & LEVEL3_ATTENUATE)  ldef->m_lightFlags |= LF_ATTENUATE; else ldef->m_lightFlags &= ~LF_ATTENUATE;
+			if (Level->flags3 & LEVEL3_ATTENUATE)  ldef->m_lightFlags |= LF_ATTENUATE; else ldef->m_lightFlags &= ~LF_ATTENUATE;
 		}
 	}
 }

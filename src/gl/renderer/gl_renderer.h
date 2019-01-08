@@ -103,7 +103,7 @@ public:
 
 	bool StartOffscreen();
 	void EndOffscreen();
-	void UpdateShadowMap();
+	void UpdateShadowMap(FLevelLocals *Level);
 
 	void BindToFrameBuffer(FMaterial *mat);
 

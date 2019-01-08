@@ -52,10 +52,9 @@ FClassMap SpawnableThings;
 
 static FRandom pr_leadtarget ("LeadTarget");
 
-bool P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, int newtid)
+bool P_Thing_Spawn (FLevelLocals *Level, int tid, AActor *source, int type, DAngle angle, bool fog, int newtid)
 {
 	int rtn = 0;
-	auto Level = source->Level;
 	PClassActor *kind;
 	AActor *spot, *mobj;
 	FActorIterator iterator (tid);
@@ -257,12 +256,11 @@ DEFINE_ACTION_FUNCTION(AActor, VelIntercept)
 	return 0;
 }
 
-bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_name, DAngle angle,
+bool P_Thing_Projectile (FLevelLocals *Level, int tid, AActor *source, int type, const char *type_name, DAngle angle,
 	double speed, double vspeed, int dest, AActor *forcedest, int gravity, int newtid,
 	bool leadTarget)
 {
 	int rtn = 0;
-	auto Level = source->Level;
 	PClassActor *kind;
 	AActor *spot, *mobj, *targ = forcedest;
 	FActorIterator iterator (tid);

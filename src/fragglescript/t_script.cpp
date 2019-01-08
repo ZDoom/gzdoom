@@ -119,14 +119,14 @@ void DFsScript::ClearChildren()
 //
 //==========================================================================
 
-DFsScript::DFsScript()
+DFsScript::DFsScript(FLevelLocals *l)
 {
 	int i;
 	
 	for(i=0; i<SECTIONSLOTS; i++) sections[i] = nullptr;
 	for(i=0; i<VARIABLESLOTS; i++) variables[i] = nullptr;
 	for(i=0; i<MAXSCRIPTS; i++)	children[i] = nullptr;
-
+	Level = l;
 	data = nullptr;
 	scriptnum = -1;
 	len = 0;
@@ -177,7 +177,9 @@ void DFsScript::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
 	// don't save a reference to the global script, which contains unserializable data.
-	if (parent == level.FraggleScriptThinker->GlobalScript) parent = nullptr;
+	if (parent == Level->FraggleScriptThinker->GlobalScript) parent = nullptr;
+	
+	if (arc.isReading()) Level = &level;	// must later be written out.
 
 	arc("data", data)
 		("scriptnum", scriptnum)
@@ -189,7 +191,7 @@ void DFsScript::Serialize(FSerializer &arc)
 		.Array("variables", variables, VARIABLESLOTS)
 		.Array("children", children, MAXSCRIPTS);
 
-	if (parent == nullptr) parent = level.FraggleScriptThinker->GlobalScript;
+	if (parent == nullptr) parent = Level->FraggleScriptThinker->GlobalScript;
 }
 
 //==========================================================================
@@ -215,11 +217,11 @@ void DFsScript::ParseScript(char *position)
 		return;
     }
 	
-	level.FraggleScriptThinker->trigger_obj = trigger;  // set trigger
+	Level->FraggleScriptThinker->trigger_obj = trigger;  // set trigger
 	
 	try
 	{
-		FParser parse(&level, this);
+		FParser parse(Level, this);
 		parse.Run(position, data, data + len);
 	}
 	catch (CFraggleScriptError &err)
@@ -368,14 +370,14 @@ IMPLEMENT_POINTERS_END
 DFraggleThinker::DFraggleThinker() 
 : DThinker(STAT_SCRIPTS)
 {
-	GlobalScript = Create<DFsScript>();
+	GlobalScript = Create<DFsScript>(Level);
 	GC::WriteBarrier(this, GlobalScript);
 	// do not create resources which will be filled in by the serializer if being called from there.
 	if (!bSerialOverride)
 	{
 		RunningScripts = Create<DRunningScript>();
 		GC::WriteBarrier(this, RunningScripts);
-		LevelScript = Create<DFsScript>();
+		LevelScript = Create<DFsScript>(Level);
 		LevelScript->parent = GlobalScript;
 		GC::WriteBarrier(this, LevelScript);
 	}
@@ -459,7 +461,7 @@ bool DFraggleThinker::wait_finished(DRunningScript *script)
 			FSectorTagIterator itr(script->wait_data);
 			while ((secnum = itr.Next()) >= 0)
 			{
-				sector_t *sec = &level.sectors[secnum];
+				sector_t *sec = &Level->sectors[secnum];
 				if(sec->floordata || sec->ceilingdata || sec->lightingdata)
 					return false;        // not finished
 			}

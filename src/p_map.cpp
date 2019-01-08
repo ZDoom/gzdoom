@@ -413,7 +413,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 
 	spechit.Clear();	// this is needed so that no more specials get activated after crossing a teleporter.
 
-	bool StompAlwaysFrags = ((thing->flags2 & MF2_TELESTOMP) || (level.flags & LEVEL_MONSTERSTELEFRAG) || telefrag) && !(thing->flags7 & MF7_NOTELESTOMP);
+	bool StompAlwaysFrags = ((thing->flags2 & MF2_TELESTOMP) || (thing->__GetLevel()->flags & LEVEL_MONSTERSTELEFRAG) || telefrag) && !(thing->flags7 & MF7_NOTELESTOMP);
 
 	// P_LineOpening requires the thing's z to be the destination z in order to work.
 	double savedz = thing->Z();
@@ -975,7 +975,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 		// better than Strife's handling of rails, which lets you jump into rails
 		// from either side. How long until somebody reports this as a bug and I'm
 		// forced to say, "It's not a bug. It's a feature?" Ugh.
-		(!(level.flags2 & LEVEL2_RAILINGHACK) ||
+		(!(ld->GetLevel()->flags2 & LEVEL2_RAILINGHACK) ||
 		open.bottom == tm.thing->Sector->floorplane.ZatPoint(ref)))
 	{
 		open.bottom += 32;
@@ -1359,16 +1359,17 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			P_DamageMobj(thing, NULL, NULL, thing->health, NAME_None, DMG_FORCED);  // kill object
 			return true;
 		}
+		auto Level = thing->__GetLevel();
 
 		// Check for MF6_BUMPSPECIAL
 		// By default, only players can activate things by bumping into them
 		if ((thing->flags6 & MF6_BUMPSPECIAL) && ((tm.thing->player != NULL)
 			|| ((thing->activationtype & THINGSPEC_MonsterTrigger) && (tm.thing->flags3 & MF3_ISMONSTER))
 			|| ((thing->activationtype & THINGSPEC_MissileTrigger) && (tm.thing->flags & MF_MISSILE))
-			) && (level.maptime > thing->lastbump)) // Leave the bumper enough time to go away
+			) && (Level->maptime > thing->lastbump)) // Leave the bumper enough time to go away
 		{
 			if (P_ActivateThingSpecial(thing, tm.thing))
-				thing->lastbump = level.maptime + TICRATE;
+				thing->lastbump = Level->maptime + TICRATE;
 		}
 	}
 
@@ -2041,7 +2042,7 @@ void P_FakeZMovement(AActor *mo)
 	}
 	if (mo->player && mo->flags&MF_NOGRAVITY && (mo->Z() > mo->floorz) && !mo->IsNoClip2())
 	{
-		mo->AddZ(DAngle(4.5 * level.maptime).Sin());
+		mo->AddZ(DAngle(4.5 * mo->__GetLevel()->maptime).Sin());
 	}
 
 	//
@@ -2066,6 +2067,7 @@ void P_FakeZMovement(AActor *mo)
 
 static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, DVector2 *posforwindowcheck)
 {
+	auto Level = mobj->__GetLevel();
 	if (line->special && !(mobj->flags6 & MF6_NOTRIGGER))
 	{
 		if (posforwindowcheck && !(i_compatflags2 & COMPATF2_PUSHWINDOW) && line->backsector != NULL)
@@ -2111,7 +2113,7 @@ static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, DVector2 *
 		}
 		else if (mobj->flags2 & MF2_IMPACT)
 		{
-			if ((level.flags2 & LEVEL2_MISSILESACTIVATEIMPACT) ||
+			if ((Level->flags2 & LEVEL2_MISSILESACTIVATEIMPACT) ||
 				!(mobj->flags & MF_MISSILE) ||
 				(mobj->target == NULL))
 			{
@@ -2336,7 +2338,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 				&& bglobal.IsDangerous(tm.sector))
 			{
 				thing->player->Bot->prev = thing->player->Bot->dest;
-				thing->player->Bot->dest = NULL;
+				thing->player->Bot->dest = nullptr;
 				thing->Vel.X = thing->Vel.Y = 0;
 				thing->SetZ(oldz);
 				thing->flags6 &= ~MF6_INTRYMOVE;
@@ -4265,11 +4267,12 @@ DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLin
 	int flags, AActor *target, AActor *friender)
 {
 	double shootz = t1->Center() - t1->Floorclip + t1->AttackOffset();
+	auto Level = t1->__GetLevel();
 
 	// can't shoot outside view angles
 	if (vrange == 0)
 	{
-		if (t1->player == NULL || !level.IsFreelookAllowed())
+		if (t1->player == NULL || !Level->IsFreelookAllowed())
 		{
 			vrange = 35.;
 		}
@@ -4375,6 +4378,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	DAngle pitch, int damage, FName damageType, PClassActor *pufftype, int flags, FTranslatedLineTarget*victim, int *actualdamage, 
 	double sz, double offsetforward, double offsetside)
 {
+	auto Level = t1->__GetLevel();
 	bool nointeract = !!(flags & LAF_NOINTERACT);
 	DVector3 direction;
 	double shootz;
@@ -4442,7 +4446,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 
 		AActor *tempuff = NULL;
 		if (pufftype != NULL)
-			tempuff = Spawn(t1->__GetLevel(), pufftype, t1->Pos(), ALLOW_REPLACE);
+			tempuff = Spawn(Level, pufftype, t1->Pos(), ALLOW_REPLACE);
 		if (tempuff != NULL)
 		{
 			TData.PuffSpecies = tempuff->GetSpecies();
@@ -5624,7 +5628,7 @@ int P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
 				return false;
 			}
 			int args[3] = { in->d.line->args[2], in->d.line->args[3], in->d.line->args[4] };
-			P_StartScript(PuzzleItemUser, in->d.line, in->d.line->args[1], NULL, args, 3, ACS_ALWAYS);
+			P_StartScript(PuzzleItemUser->__GetLevel(), PuzzleItemUser, in->d.line, in->d.line->args[1], NULL, args, 3, ACS_ALWAYS);
 			in->d.line->special = 0;
 			return true;
 		}
@@ -5639,7 +5643,7 @@ int P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
 			continue;
 		}
 		int args[3] = { mobj->args[2], mobj->args[3], mobj->args[4] };
-		P_StartScript(PuzzleItemUser, NULL, mobj->args[1], NULL, args, 3, ACS_ALWAYS);
+		P_StartScript(PuzzleItemUser->__GetLevel(), PuzzleItemUser, NULL, mobj->args[1], NULL, args, 3, ACS_ALWAYS);
 		mobj->special = 0;
 		return true;
 	}
@@ -6167,7 +6171,8 @@ void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 	if (!(thing && thing->CallGrind(true) && cpos)) return;
 	cpos->nofit = true;
 
-	if ((cpos->crushchange > 0) && !(level.maptime & 3))
+	auto Level = thing->__GetLevel();
+	if ((cpos->crushchange > 0) && !(Level->maptime & 3))
 	{
 		int newdam = P_DamageMobj(thing, NULL, NULL, cpos->crushchange, NAME_Crush);
 
@@ -6789,6 +6794,7 @@ static void SpawnDeepSplash(AActor *t1, const FTraceResults &trace, AActor *puff
 bool P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death)
 {
 	bool res = false;
+	auto Level = thing->__GetLevel();
 
 	// Target switching mechanism
 	if (thing->activationtype & THINGSPEC_ThingTargets)		thing->target = trigger;
@@ -6829,14 +6835,14 @@ bool P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death)
 	{
 		res = !!P_ExecuteSpecial(thing->special, NULL,
 			// TriggerActs overrides the level flag, which only concerns thing activated by death
-			(((death && level.flags & LEVEL_ACTOWNSPECIAL && !(thing->activationtype & THINGSPEC_TriggerActs))
+			(((death && Level->flags & LEVEL_ACTOWNSPECIAL && !(thing->activationtype & THINGSPEC_TriggerActs))
 			|| (thing->activationtype & THINGSPEC_ThingActs)) // Who triggers?
 			? thing : trigger),
 			false, thing->args[0], thing->args[1], thing->args[2], thing->args[3], thing->args[4]);
 
 		// Clears the special if it was run on thing's death or if flag is set.
 		// Note that Hexen originally did not clear the special which some original maps depend on (e.g. the bell in HEXDD.)
-		if ((death && !(level.flags2 & LEVEL2_HEXENHACK)) || (thing->activationtype & THINGSPEC_ClearSpecial && res)) thing->special = 0;
+		if ((death && !(Level->flags2 & LEVEL2_HEXENHACK)) || (thing->activationtype & THINGSPEC_ClearSpecial && res)) thing->special = 0;
 	}
 
 	// Returns the result

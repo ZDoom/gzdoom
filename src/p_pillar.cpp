@@ -210,7 +210,7 @@ DPillar::DPillar (sector_t *sector, EPillar type, double speed,
 	}
 }
 
-bool EV_DoPillar (DPillar::EPillar type, line_t *line, int tag,
+bool EV_DoPillar (FLevelLocals *Level, DPillar::EPillar type, line_t *line, int tag,
 				  double speed, double height, double height2, int crush, bool hexencrush)
 {
 	int secnum;
@@ -221,7 +221,7 @@ bool EV_DoPillar (DPillar::EPillar type, line_t *line, int tag,
 	FSectorTagIterator itr(tag, line);
 	while ((secnum = itr.Next()) >= 0)
 	{
-		sec = &level.sectors[secnum];
+		sec = &Level->sectors[secnum];
 
 		if (sec->PlaneMoving(sector_t::floor) || sec->PlaneMoving(sector_t::ceiling))
 			continue;

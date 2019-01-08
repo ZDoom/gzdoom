@@ -87,7 +87,7 @@ namespace swrenderer
 
 		double SlopePlaneGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0f : TiltVisibility; }
 
-		static fixed_t LightLevelToShade(int lightlevel, bool foggy, RenderViewport *viewport) { return LightLevelToShadeImpl(lightlevel + ActualExtraLight(foggy, viewport), foggy); }
+		static fixed_t LightLevelToShade(int lightlevel, bool foggy, RenderViewport *viewport) { return LightLevelToShadeImpl(viewport, lightlevel + ActualExtraLight(foggy, viewport), foggy); }
 
 		static int ActualExtraLight(bool fog, RenderViewport *viewport) { return fog ? 0 : viewport->viewpoint.extralight << 4; }
 
@@ -96,7 +96,7 @@ namespace swrenderer
 		double SpriteGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0f : WallVisibility; }
 		double FlatPlaneGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0f : FloorVisibility; }
 
-		static fixed_t LightLevelToShadeImpl(int lightlevel, bool foggy);
+		static fixed_t LightLevelToShadeImpl(RenderViewport *viewport, int lightlevel, bool foggy);
 
 		double BaseVisibility = 0.0;
 		double WallVisibility = 0.0;

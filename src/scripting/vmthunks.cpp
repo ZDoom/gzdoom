@@ -1165,7 +1165,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 
  static void SetEnvironmentID(sector_t *self, int envnum)
  {
-	 level.Zones[self->ZoneNumber].Environment = S_FindEnvironment(envnum);
+	 self->Level->Zones[self->ZoneNumber].Environment = S_FindEnvironment(envnum);
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetEnvironmentID, SetEnvironmentID)
@@ -1178,7 +1178,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 
  static void SetEnvironment(sector_t *self, const FString &env)
  {
-	 level.Zones[self->ZoneNumber].Environment = S_FindEnvironment(env);
+	 self->Level->Zones[self->ZoneNumber].Environment = S_FindEnvironment(env);
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetEnvironment, SetEnvironment)
@@ -2349,51 +2349,57 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, SetClipRect, SBar_SetClipRect)
 	return 0;
 }
 
-static void GetGlobalACSString(int index, FString *result)
+static void GetGlobalACSString(DBaseStatusBar *self, int index, FString *result)
 {
-	*result = level.Behaviors.LookupString(ACS_GlobalVars[index]);
+	if (self->Level == nullptr) ThrowAbortException(X_OTHER, "BaseStatusBar.GetGlobalACSString called from outside the status bar code.");
+	*result = self->Level->Behaviors.LookupString(ACS_GlobalVars[index]);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSString, GetGlobalACSString)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
 	PARAM_INT(index);
-	ACTION_RETURN_STRING(level.Behaviors.LookupString(ACS_GlobalVars[index]));
+	FString result;
+	GetGlobalACSString(self, index, &result);
+	ACTION_RETURN_STRING(result);
 }
 
-static void GetGlobalACSArrayString(int arrayno, int index, FString *result)
+static void GetGlobalACSArrayString(DBaseStatusBar *self, int arrayno, int index, FString *result)
 {
-	*result = level.Behaviors.LookupString(ACS_GlobalVars[index]);
+	if (self->Level == nullptr) ThrowAbortException(X_OTHER, "BaseStatusBar.GetGlobalACSArrayString called from outside the status bar code.");
+	*result = self->Level->Behaviors.LookupString(ACS_GlobalVars[index]);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSArrayString, GetGlobalACSArrayString)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
 	PARAM_INT(arrayno);
 	PARAM_INT(index);
-	ACTION_RETURN_STRING(level.Behaviors.LookupString(ACS_GlobalArrays[arrayno][index]));
+	FString result;
+	GetGlobalACSArrayString(self, arrayno, index, &result);
+	ACTION_RETURN_STRING(result);
 }
 
-static int GetGlobalACSValue(int index)
+static int GetGlobalACSValue(DBaseStatusBar *self, int index)
 {
 	return (ACS_GlobalVars[index]);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSValue, GetGlobalACSValue)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
 	PARAM_INT(index);
 	ACTION_RETURN_INT(ACS_GlobalVars[index]);
 }
 
-static int GetGlobalACSArrayValue(int arrayno, int index)
+static int GetGlobalACSArrayValue(DBaseStatusBar *self, int arrayno, int index)
 {
 	return (ACS_GlobalArrays[arrayno][index]);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSArrayValue, GetGlobalACSArrayValue)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
 	PARAM_INT(arrayno);
 	PARAM_INT(index);
 	ACTION_RETURN_INT(ACS_GlobalArrays[arrayno][index]);
@@ -2571,7 +2577,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, GetChecksum)
 
 	for (int j = 0; j < 16; ++j)
 	{
-		sprintf(md5string + j * 2, "%02x", level.md5[j]);
+		sprintf(md5string + j * 2, "%02x", self->md5[j]);
 	}
 
 	ACTION_RETURN_STRING((const char*)md5string);

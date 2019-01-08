@@ -2824,7 +2824,7 @@ void MapLoader::LoadBehavior(MapData * map)
 {
 	if (map->Size(ML_BEHAVIOR) > 0)
 	{
-		Level->Behaviors.LoadModule(-1, &map->Reader(ML_BEHAVIOR), map->Size(ML_BEHAVIOR));
+		Level->Behaviors.LoadModule(Level, -1, &map->Reader(ML_BEHAVIOR), map->Size(ML_BEHAVIOR));
 	}
 	if (!Level->Behaviors.CheckAllGood())
 	{
@@ -2974,7 +2974,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 		Level->flags2 |= LEVEL2_DUMMYSWITCHES;
 	}
 
-	Level->Behaviors.LoadDefaultModules();
+	Level->Behaviors.LoadDefaultModules(Level);
 	LoadMapinfoACSLump();
 
 
@@ -3184,7 +3184,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	CopySlopes();
 
 	// Spawn 3d floors - must be done before spawning things so it can't be done in P_SpawnSpecials
-	P_Spawn3DFloors();
+	P_Spawn3DFloors(Level);
 
 	SpawnThings(position);
 
@@ -3218,7 +3218,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	}
 
 	InitRenderInfo();				// create hardware independent renderer resources for the Level-> This must be done BEFORE the PolyObj Spawn!!!	
-	P_ClearDynamic3DFloorData();	// CreateVBO must be run on the plain 3D floor data.
+	P_ClearDynamic3DFloorData(Level);	// CreateVBO must be run on the plain 3D floor data.
 	screen->mVertexData->CreateVBO(Level->sectors);
 
 	for (auto &sec : Level->sectors)
@@ -3226,7 +3226,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 		P_Recalculate3DFloors(&sec);
 	}
 
-	SWRenderer->SetColormap();	//The SW renderer needs to do some special setup for the level's default colormap.
+	SWRenderer->SetColormap(Level);	//The SW renderer needs to do some special setup for the level's default colormap.
 	InitPortalGroups(Level);
 	P_InitHealthGroups();
 

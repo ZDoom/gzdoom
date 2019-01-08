@@ -693,7 +693,8 @@ bool player_t::Resurrect()
 	// fire E_PlayerRespawned and start the ACS SCRIPT_Respawn.
 	E_PlayerRespawned(int(this - players));
 	//
-	mo->__GetLevel()->Behaviors.StartTypedScripts(SCRIPT_Respawn, mo, true);
+	auto Level = mo->__GetLevel();
+	Level->Behaviors.StartTypedScripts(Level, SCRIPT_Respawn, mo, true);
 	return true;
 }
 
@@ -994,8 +995,10 @@ void P_CheckPlayerSprite(AActor *actor, int &spritenum, DVector2 &scale)
 
 CUSTOM_CVAR (Float, sv_aircontrol, 0.00390625f, CVAR_SERVERINFO|CVAR_NOSAVE)
 {
-	level.aircontrol = self;
-	G_AirControlChanged ();
+	ForAllLevels([&](FLevelLocals *Level)
+	{
+		Level->ChangeAirControl(self);
+	});
 }
 
 //==========================================================================

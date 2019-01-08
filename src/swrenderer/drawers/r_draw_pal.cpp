@@ -69,7 +69,7 @@ EXTERN_CVAR(Int, gl_particles_style)
 	table seemed to be quite ultimate.
 
 	The computation of the RGB for each pixel is accelerated by using two
-	1k tables for each translucency level.
+	1k tables for each translucency level
 	The xth element of one of these tables contains the r, g and b values for
 	the colour x, weighted for the current translucency level (for example,
 	the weighted rgb values for background colour at 75% translucency are 1/4

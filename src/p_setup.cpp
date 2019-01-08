@@ -355,20 +355,20 @@ void P_FreeLevelData ()
 //
 //===========================================================================
 
-void P_SetupLevel(const char *lumpname, int position, bool newGame)
+void P_SetupLevel(FLevelLocals *Level, const char *lumpname, int position, bool newGame)
 {
 	int i;
 
-	level.ShaderStartTime = I_msTimeFS(); // indicate to the shader system that the level just started
+	Level->ShaderStartTime = I_msTimeFS(); // indicate to the shader system that the level just started
 
 	// This is motivated as follows:
 
-	level.maptype = MAPTYPE_UNKNOWN;
+	Level->maptype = MAPTYPE_UNKNOWN;
 	wminfo.partime = 180;
 
 	if (!savegamerestore)
 	{
-		level.SetMusicVolume(level.MusicVolume);
+		Level->SetMusicVolume(Level->MusicVolume);
 		for (i = 0; i < MAXPLAYERS; ++i)
 		{
 			players[i].killcount = players[i].secretcount
@@ -414,16 +414,16 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 	E_InitStaticHandlers(true);
 
 	// generate a checksum for the level, to be included and checked with savegames.
-	map->GetChecksum(level.md5);
+	map->GetChecksum(Level->md5);
 	// find map num
-	level.lumpnum = map->lumpnum;
+	Level->lumpnum = map->lumpnum;
 
 	if (newGame)
 	{
 		E_NewGame(EventHandlerType::PerMap);
 	}
 
-	MapLoader loader(&level);
+	MapLoader loader(Level);
 	loader.LoadLevel(map, lumpname, position);
 	delete map;
 
@@ -440,7 +440,7 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 		}
 	}
 	// the same, but for random single/coop player starts
-	else if (level.flags2 & LEVEL2_RANDOMPLAYERSTARTS)
+	else if (Level->flags2 & LEVEL2_RANDOMPLAYERSTARTS)
 	{
 		for (i = 0; i < MAXPLAYERS; ++i)
 		{
@@ -448,14 +448,14 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 			{
 				players[i].mo = nullptr;
 				FPlayerStart *mthing = G_PickPlayerStart(i);
-				P_SpawnPlayer(&level, mthing, i, (level.flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
+				P_SpawnPlayer(Level, mthing, i, (Level->flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
 			}
 		}
 	}
 
 	// [SP] move unfriendly players around
 	// horribly hacky - yes, this needs rewritten.
-	if (level.deathmatchstarts.Size() > 0)
+	if (Level->deathmatchstarts.Size() > 0)
 	{
 		for (i = 0; i < MAXPLAYERS; ++i)
 		{
@@ -490,7 +490,7 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 		}
 	}
 
-	T_PreprocessScripts(&level);        // preprocess FraggleScript scripts
+	T_PreprocessScripts(Level);        // preprocess FraggleScript scripts
 
 	// build subsector connect matrix
 	//	UNUSED P_ConnectSubsectors ();
@@ -503,8 +503,8 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 	// preload graphics and sounds
 	if (precache)
 	{
-		PrecacheLevel(&level);
-		S_PrecacheLevel(level.info->PrecacheSounds);
+		PrecacheLevel(Level);
+		S_PrecacheLevel(Level->info->PrecacheSounds);
 	}
 
 	if (deathmatch)
@@ -514,7 +514,7 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 
 	// This check was previously done at run time each time the heightsec was checked.
 	// However, since 3D floors are static data, we can easily precalculate this and store it in the sector's flags for quick access.
-	for (auto &s : level.sectors)
+	for (auto &s : Level->sectors)
 	{
 		if (s.heightsec != nullptr)
 		{
@@ -534,12 +534,12 @@ void P_SetupLevel(const char *lumpname, int position, bool newGame)
 	// Create a backup of the map data so the savegame code can toss out all fields that haven't changed in order to reduce processing time and file size.
 	// Note that we want binary identity here, so assignment is not sufficient because it won't initialize any padding bytes.
 	// Note that none of these structures may contain non POD fields anyway.
-	level.loadsectors.Resize(level.sectors.Size());
-	memcpy(&level.loadsectors[0], &level.sectors[0], level.sectors.Size() * sizeof(level.sectors[0]));
-	level.loadlines.Resize(level.lines.Size());
-	memcpy(&level.loadlines[0], &level.lines[0], level.lines.Size() * sizeof(level.lines[0]));
-	level.loadsides.Resize(level.sides.Size());
-	memcpy(&level.loadsides[0], &level.sides[0], level.sides.Size() * sizeof(level.sides[0]));
+	Level->loadsectors.Resize(Level->sectors.Size());
+	memcpy(&Level->loadsectors[0], &Level->sectors[0], Level->sectors.Size() * sizeof(Level->sectors[0]));
+	Level->loadlines.Resize(Level->lines.Size());
+	memcpy(&Level->loadlines[0], &Level->lines[0], Level->lines.Size() * sizeof(Level->lines[0]));
+	Level->loadsides.Resize(Level->sides.Size());
+	memcpy(&Level->loadsides[0], &Level->sides[0], Level->sides.Size() * sizeof(Level->sides[0]));
 }
 
 //
@@ -576,42 +576,46 @@ static void P_Shutdown ()
 
 CCMD(dumpgeometry)
 {
-	for (auto &sector : level.sectors)
+	ForAllLevels([](FLevelLocals *Level)
 	{
-		Printf(PRINT_LOG, "Sector %d\n", sector.sectornum);
-		for (int j = 0; j<sector.subsectorcount; j++)
+		Printf("%s - %s\n", Level->MapName.GetChars(), Level->LevelName.GetChars());
+		for (auto &sector : Level->sectors)
 		{
-			subsector_t * sub = sector.subsectors[j];
-
-			Printf(PRINT_LOG, "    Subsector %d - real sector = %d - %s\n", int(sub->Index()), sub->sector->sectornum, sub->hacked & 1 ? "hacked" : "");
-			for (uint32_t k = 0; k<sub->numlines; k++)
+			Printf(PRINT_LOG, "Sector %d\n", sector.sectornum);
+			for (int j = 0; j < sector.subsectorcount; j++)
 			{
-				seg_t * seg = sub->firstline + k;
-				if (seg->linedef)
-				{
-					Printf(PRINT_LOG, "      (%4.4f, %4.4f), (%4.4f, %4.4f) - seg %d, linedef %d, side %d",
-						seg->v1->fX(), seg->v1->fY(), seg->v2->fX(), seg->v2->fY(),
-						seg->Index(), seg->linedef->Index(), seg->sidedef != seg->linedef->sidedef[0]);
-				}
-				else
-				{
-					Printf(PRINT_LOG, "      (%4.4f, %4.4f), (%4.4f, %4.4f) - seg %d, miniseg",
-						seg->v1->fX(), seg->v1->fY(), seg->v2->fX(), seg->v2->fY(), seg->Index());
-				}
-				if (seg->PartnerSeg)
-				{
-					subsector_t * sub2 = seg->PartnerSeg->Subsector;
-					Printf(PRINT_LOG, ", back sector = %d, real back sector = %d", sub2->render_sector->sectornum, seg->PartnerSeg->frontsector->sectornum);
-				}
-				else if (seg->backsector)
-				{
-					Printf(PRINT_LOG, ", back sector = %d (no partnerseg)", seg->backsector->sectornum);
-				}
+				subsector_t * sub = sector.subsectors[j];
 
-				Printf(PRINT_LOG, "\n");
+				Printf(PRINT_LOG, "    Subsector %d - real sector = %d - %s\n", int(sub->Index()), sub->sector->sectornum, sub->hacked & 1 ? "hacked" : "");
+				for (uint32_t k = 0; k < sub->numlines; k++)
+				{
+					seg_t * seg = sub->firstline + k;
+					if (seg->linedef)
+					{
+						Printf(PRINT_LOG, "      (%4.4f, %4.4f), (%4.4f, %4.4f) - seg %d, linedef %d, side %d",
+							seg->v1->fX(), seg->v1->fY(), seg->v2->fX(), seg->v2->fY(),
+							seg->Index(), seg->linedef->Index(), seg->sidedef != seg->linedef->sidedef[0]);
+					}
+					else
+					{
+						Printf(PRINT_LOG, "      (%4.4f, %4.4f), (%4.4f, %4.4f) - seg %d, miniseg",
+							seg->v1->fX(), seg->v1->fY(), seg->v2->fX(), seg->v2->fY(), seg->Index());
+					}
+					if (seg->PartnerSeg)
+					{
+						subsector_t * sub2 = seg->PartnerSeg->Subsector;
+						Printf(PRINT_LOG, ", back sector = %d, real back sector = %d", sub2->render_sector->sectornum, seg->PartnerSeg->frontsector->sectornum);
+					}
+					else if (seg->backsector)
+					{
+						Printf(PRINT_LOG, ", back sector = %d (no partnerseg)", seg->backsector->sectornum);
+					}
+
+					Printf(PRINT_LOG, "\n");
+				}
 			}
 		}
-	}
+	});
 }
 
 //==========================================================================
@@ -622,17 +626,21 @@ CCMD(dumpgeometry)
 
 CCMD(listmapsections)
 {
-	for (int i = 0; i < 100; i++)
+	ForAllLevels([](FLevelLocals *Level)
 	{
-		for (auto &sub : level.subsectors)
+		Printf("%s - %s\n", Level->MapName.GetChars(), Level->LevelName.GetChars());
+		for (int i = 0; i < 1000; i++)
 		{
-			if (sub.mapsection == i)
+			for (auto &sub : Level->subsectors)
 			{
-				Printf("Mapsection %d, sector %d, line %d\n", i, sub.render_sector->Index(), sub.firstline->linedef->Index());
-				break;
+				if (sub.mapsection == i)
+				{
+					Printf("Mapsection %d, sector %d, line %d\n", i, sub.render_sector->Index(), sub.firstline->linedef->Index());
+					break;
+				}
 			}
 		}
-	}
+	});
 }
 
 //==========================================================================

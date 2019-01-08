@@ -181,7 +181,7 @@ void DFloor::Tick ()
 				}
 			}
 
-			m_Sector->floordata = NULL; //jff 2/22/98
+			m_Sector->floordata = nullptr; //jff 2/22/98
 			StopInterpolation();
 
 			//jff 2/26/98 implement stair retrigger lockout while still building
@@ -561,7 +561,7 @@ bool EV_FloorCrushStop (int tag, line_t *line)
 		{
 			SN_StopSequence (sec, CHAN_FLOOR);
 			sec->floordata->Destroy ();
-			sec->floordata = NULL;
+			sec->floordata = nullptr;
 		}
 	}
 	return true;
@@ -900,12 +900,12 @@ void DElevator::OnDestroy()
 	if (m_Interp_Ceiling != NULL)
 	{
 		m_Interp_Ceiling->DelRef();
-		m_Interp_Ceiling = NULL;
+		m_Interp_Ceiling = nullptr;
 	}
 	if (m_Interp_Floor != NULL)
 	{
 		m_Interp_Floor->DelRef();
-		m_Interp_Floor = NULL;
+		m_Interp_Floor = nullptr;
 	}
 	Super::OnDestroy();
 }
@@ -964,8 +964,8 @@ void DElevator::Tick ()
 		// make floor stop sound
 		SN_StopSequence (m_Sector, CHAN_FLOOR);
 
-		m_Sector->floordata = NULL;		//jff 2/22/98
-		m_Sector->ceilingdata = NULL;	//jff 2/22/98
+		m_Sector->floordata = nullptr;		//jff 2/22/98
+		m_Sector->ceilingdata = nullptr;	//jff 2/22/98
 		Destroy ();		// remove elevator from actives
 	}
 }
@@ -1225,11 +1225,11 @@ void DWaggleBase::DoWaggle (bool ceiling)
 			P_ChangeSector (m_Sector, true, dist, ceiling, false);
 			if (ceiling)
 			{
-				m_Sector->ceilingdata = NULL;
+				m_Sector->ceilingdata = nullptr;
 			}
 			else
 			{
-				m_Sector->floordata = NULL;
+				m_Sector->floordata = nullptr;
 			}
 			Destroy ();
 			return;

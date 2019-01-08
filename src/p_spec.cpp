@@ -109,7 +109,7 @@ EXTERN_CVAR(Bool, forcewater)
 // killough 3/7/98: Initialize generalized scrolling
 void P_SpawnScrollers(FLevelLocals *Level);
 static void P_SpawnFriction (FLevelLocals *l);		// phares 3/16/98
-void P_SpawnPushers ();		// phares 3/20/98
+void P_SpawnPushers (FLevelLocals *Level);		// phares 3/20/98
 
 
 // [RH] Check dmflags for noexit and respond accordingly
@@ -962,7 +962,7 @@ void P_SetupPortals(FLevelLocals *Level)
 		if (s.mType == PORTS_STACKEDSECTORTHING && s.mSkybox)
 		{
 			s.mDisplacement = s.mSkybox->Pos() - s.mSkybox->target->Pos();
-			s.mSkybox = NULL;
+			s.mSkybox = nullptr;
 		}
 	}
 }
@@ -1303,7 +1303,7 @@ void P_SpawnSpecials (MapLoader *ml)
 
 	P_SpawnScrollers(Level); // killough 3/7/98: Add generalized scrollers
 	P_SpawnFriction(Level);	// phares 3/12/98: New friction model using linedefs
-	P_SpawnPushers();	// phares 3/20/98: New pusher model using linedefs
+	P_SpawnPushers(Level);	// phares 3/20/98: New pusher model using linedefs
 
 	TThinkerIterator<AActor> it2("SkyCamCompat");
 	AActor *pt2;
@@ -1489,7 +1489,7 @@ void P_SpawnSpecials (MapLoader *ml)
 		}
 	}
 	// [RH] Start running any open scripts on this map
-	Level->Behaviors.StartTypedScripts (SCRIPT_Open, NULL, false);
+	Level->Behaviors.StartTypedScripts (Level, SCRIPT_Open, NULL, false);
 }
 
 ////////////////////////////////////////////////////////////////////////////

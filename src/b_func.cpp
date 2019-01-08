@@ -351,7 +351,7 @@ AActor *DBot::Choose_Mate ()
 	if (mate)
 	{
 		if (mate->health <= 0)
-			mate = NULL;
+			mate = nullptr;
 		else
 			last_mate = mate;
 	}
@@ -361,7 +361,7 @@ AActor *DBot::Choose_Mate ()
 	//Check old_mates status.
 	if (last_mate)
 		if (last_mate->health <= 0)
-			last_mate = NULL;
+			last_mate = nullptr;
 
 	target = NULL;
 	closest_dist = FLT_MAX;

@@ -641,7 +641,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 
 	// [RH] Give scripts a chance to do something
 	unloading = true;
-	level.Behaviors.StartTypedScripts (SCRIPT_Unloading, NULL, false, 0, true);
+	level.Behaviors.StartTypedScripts (&level, SCRIPT_Unloading, NULL, false, 0, true);
 	// [ZZ] safe world unload
 	E_WorldUnloaded();
 	// [ZZ] unsafe world unload (changemap != map)
@@ -854,11 +854,17 @@ void G_DoCompleted (void)
 			G_SnapshotLevel ();
 			// Do not free any global strings this level might reference
 			// while it's not loaded.
-			level.Behaviors.LockLevelVarStrings(level.levelnum);
+			ForAllLevels([](FLevelLocals *Level)
+			{
+				Level->Behaviors.LockLevelVarStrings(Level);
+			});
 		}
 		else
 		{ // Make sure we don't have a snapshot lying around from before.
-			level.info->Snapshot.Clean();
+			ForAllLevels([](FLevelLocals *Level)
+			{
+				Level->info->Snapshot.Clean();
+			});
 		}
 	}
 	else
@@ -942,7 +948,7 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 	else
 		lastposition = position;
 
-	G_InitLevelLocals ();
+	level.InitLevelLocals ();
 	StatusBar->DetachAllMessages ();
 
 	// Force 'teamplay' to 'true' if need be.
@@ -1014,7 +1020,7 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 		E_NewGame(EventHandlerType::Global);
 	}
 
-	P_SetupLevel (level.MapName, position, newGame);
+	P_SetupLevel (&level, level.MapName, position, newGame);
 
 	AM_LevelInit();
 
@@ -1089,7 +1095,7 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 			if (fromSnapshot)
 			{
 				// ENTER scripts are being handled when the player gets spawned, this cannot be changed due to its effect on voodoo dolls.
-				level.Behaviors.StartTypedScripts(SCRIPT_Return, players[ii].mo, true);
+				level.Behaviors.StartTypedScripts(&level, SCRIPT_Return, players[ii].mo, true);
 			}
 		}
 	}
@@ -1097,7 +1103,7 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 	if (level.FromSnapshot)
 	{
 		// [Nash] run REOPEN scripts upon map re-entry
-		level.Behaviors.StartTypedScripts(SCRIPT_Reopen, NULL, false);
+		level.Behaviors.StartTypedScripts(&level, SCRIPT_Reopen, NULL, false);
 	}
 
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
@@ -1105,7 +1111,7 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 	E_WorldLoadedUnsafe();
 	//      regular world load (savegames are handled internally)
 	E_WorldLoaded();
-	P_DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
+	P_DoDeferedScripts (&level);	// [RH] Do script actions that were triggered on another map.
 	
 	if (demoplayback || oldgs == GS_STARTUP || oldgs == GS_TITLELEVEL)
 		C_HideConsole ();
@@ -1289,7 +1295,7 @@ void G_StartTravel ()
 		{
 			AActor *pawn = players[i].mo;
 			AActor *inv;
-			players[i].camera = NULL;
+			players[i].camera = nullptr;
 
 			// Only living players travel. Dead ones get a new body on the new level.
 			if (players[i].health > 0)
@@ -1391,8 +1397,8 @@ int G_FinishTravel ()
 		{
 			P_FindFloorCeiling(pawn);
 		}
-		pawn->target = NULL;
-		pawn->lastenemy = NULL;
+		pawn->target = nullptr;
+		pawn->lastenemy = nullptr;
 		pawn->player->mo = pawn;
 		pawn->player->camera = pawn;
 		pawn->player->viewheight = pawn->player->DefaultViewHeight();
@@ -1445,95 +1451,88 @@ int G_FinishTravel ()
 //
 //==========================================================================
 
-void G_InitLevelLocals ()
+void FLevelLocals::InitLevelLocals ()
 {
-	level_info_t *info;
-
 	BaseBlendA = 0.0f;		// Remove underwater blend effect, if any
 
-	level.gravity = sv_gravity * 35/TICRATE;
-	level.aircontrol = sv_aircontrol;
-	level.teamdamage = teamdamage;
-	level.flags = 0;
-	level.flags2 = 0;
-	level.flags3 = 0;
+	gravity = sv_gravity * 35/TICRATE;
+	aircontrol = sv_aircontrol;
+	teamdamage = teamdamage;
+	flags = 0;
+	flags2 = 0;
+	flags3 = 0;
 
-	info = FindLevelInfo (level.MapName);
+	info = FindLevelInfo (MapName);
 
-	level.info = info;
-	level.skyspeed1 = info->skyspeed1;
-	level.skyspeed2 = info->skyspeed2;
-	level.skytexture1 = TexMan.GetTextureID(info->SkyPic1, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
-	level.skytexture2 = TexMan.GetTextureID(info->SkyPic2, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
-	level.fadeto = info->fadeto;
-	level.cdtrack = info->cdtrack;
-	level.cdid = info->cdid;
-	level.FromSnapshot = false;
-	if (level.fadeto == 0)
+	skyspeed1 = info->skyspeed1;
+	skyspeed2 = info->skyspeed2;
+	skytexture1 = TexMan.GetTextureID(info->SkyPic1, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
+	skytexture2 = TexMan.GetTextureID(info->SkyPic2, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
+	fadeto = info->fadeto;
+	cdtrack = info->cdtrack;
+	cdid = info->cdid;
+	FromSnapshot = false;
+	if (fadeto == 0)
 	{
 		if (strnicmp (info->FadeTable, "COLORMAP", 8) != 0)
 		{
-			level.flags |= LEVEL_HASFADETABLE;
+			flags |= LEVEL_HASFADETABLE;
 		}
 	}
-	level.airsupply = info->airsupply*TICRATE;
-	level.outsidefog = info->outsidefog;
-	level.WallVertLight = info->WallVertLight*2;
-	level.WallHorizLight = info->WallHorizLight*2;
+	airsupply = info->airsupply*TICRATE;
+	outsidefog = info->outsidefog;
+	WallVertLight = info->WallVertLight*2;
+	WallHorizLight = info->WallHorizLight*2;
 	if (info->gravity != 0.f)
 	{
-		level.gravity = info->gravity * 35/TICRATE;
-	}
-	if (info->aircontrol != 0.f)
-	{
-		level.aircontrol = info->aircontrol;
+		gravity = info->gravity * 35/TICRATE;
 	}
 	if (info->teamdamage != 0.f)
 	{
-		level.teamdamage = info->teamdamage;
+		teamdamage = info->teamdamage;
 	}
 
-	G_AirControlChanged ();
+	ChangeAirControl(info->aircontrol != 0.f? info->aircontrol : *sv_aircontrol);
 
 	cluster_info_t *clus = FindClusterInfo (info->cluster);
 
-	level.partime = info->partime;
-	level.sucktime = info->sucktime;
-	level.cluster = info->cluster;
-	level.clusterflags = clus ? clus->flags : 0;
-	level.flags |= info->flags;
-	level.flags2 |= info->flags2;
-	level.flags3 |= info->flags3;
-	level.levelnum = info->levelnum;
-	level.Music = info->Music;
-	level.musicorder = info->musicorder;
-	level.MusicVolume = 1.f;
-	level.HasHeightSecs = false;
+	partime = info->partime;
+	sucktime = info->sucktime;
+	cluster = info->cluster;
+	clusterflags = clus ? clus->flags : 0;
+	flags |= info->flags;
+	flags2 |= info->flags2;
+	flags3 |= info->flags3;
+	levelnum = info->levelnum;
+	Music = info->Music;
+	musicorder = info->musicorder;
+	MusicVolume = 1.f;
+	HasHeightSecs = false;
 
-	level.LevelName = level.info->LookupLevelName();
-	level.NextMap = info->NextMap;
-	level.NextSecretMap = info->NextSecretMap;
-	level.F1Pic = info->F1Pic;
-	level.hazardcolor = info->hazardcolor;
-	level.hazardflash = info->hazardflash;
+	LevelName = info->LookupLevelName();
+	NextMap = info->NextMap;
+	NextSecretMap = info->NextSecretMap;
+	F1Pic = info->F1Pic;
+	hazardcolor = info->hazardcolor;
+	hazardflash = info->hazardflash;
 	
 	// GL fog stuff modifiable by SetGlobalFogParameter.
-	level.fogdensity = info->fogdensity;
-	level.outsidefogdensity = info->outsidefogdensity;
-	level.skyfog = info->skyfog;
-	level.deathsequence = info->deathsequence;
+	fogdensity = info->fogdensity;
+	outsidefogdensity = info->outsidefogdensity;
+	skyfog = info->skyfog;
+	deathsequence = info->deathsequence;
 
-	level.pixelstretch = info->pixelstretch;
+	pixelstretch = info->pixelstretch;
 
 	compatflags.Callback();
 	compatflags2.Callback();
 
-	level.DefaultEnvironment = info->DefaultEnvironment;
+	DefaultEnvironment = info->DefaultEnvironment;
 
-	level.lightMode = info->lightmode == ELightMode::NotSet? (ELightMode)*gl_lightmode : info->lightmode;
-	level.brightfog = info->brightfog < 0? gl_brightfog : !!info->brightfog;
-	level.lightadditivesurfaces = info->lightadditivesurfaces < 0 ? gl_lightadditivesurfaces : !!info->lightadditivesurfaces;
-	level.notexturefill = info->notexturefill < 0 ? gl_notexturefill : !!info->notexturefill;
+	lightMode = info->lightmode == ELightMode::NotSet? (ELightMode)*gl_lightmode : info->lightmode;
+	brightfog = info->brightfog < 0? gl_brightfog : !!info->brightfog;
+	lightadditivesurfaces = info->lightadditivesurfaces < 0 ? gl_lightadditivesurfaces : !!info->lightadditivesurfaces;
+	notexturefill = info->notexturefill < 0 ? gl_notexturefill : !!info->notexturefill;
 
 	FLightDefaults::SetAttenuationForLevel();
 }
@@ -1626,16 +1625,17 @@ FString CalcMapName (int episode, int level)
 //
 //==========================================================================
 
-void G_AirControlChanged ()
+void FLevelLocals::ChangeAirControl(double newval)
 {
-	if (level.aircontrol <= 1/256.)
+	aircontrol = newval;
+	if (aircontrol <= 1/256.)
 	{
-		level.airfriction = 1.;
+		airfriction = 1.;
 	}
 	else
 	{
 		// Friction is inversely proportional to the amount of control
-		level.airfriction = level.aircontrol * -0.0941 + 1.0004;
+		airfriction = aircontrol * -0.0941 + 1.0004;
 	}
 }
 

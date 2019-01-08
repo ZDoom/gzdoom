@@ -660,6 +660,6 @@ void MapLoader::LoadMapinfoACSLump()
 	if (Level->info->acsName.IsNotEmpty())
 	{
 		int lump = Wads.CheckNumForName(Level->info->acsName);
-		if (lump >= 0) Level->Behaviors.LoadModule(lump);
+		if (lump >= 0) Level->Behaviors.LoadModule(Level, lump);
 	}
 }

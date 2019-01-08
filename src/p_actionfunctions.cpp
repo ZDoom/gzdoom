@@ -70,9 +70,6 @@
 #include "actorinlines.h"
 #include "types.h"
 
-AActor *SingleActorFromTID(int tid, AActor *defactor);
-
-
 static FRandom pr_camissile ("CustomActorfire");
 static FRandom pr_cabullet ("CustomBullet");
 static FRandom pr_cwjump ("CustomWpJump");
@@ -570,7 +567,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RearrangePointers)
 		if (!(PTROP_UNSAFETARGET & flags)) VerifyTargetChain(self);
 		break;
 	case AAPTR_NULL:
-		self->target = NULL;
+		self->target = nullptr;
 		// THIS IS NOT "A_ClearTarget", so no other targeting info is removed
 		break;
 	}
@@ -587,7 +584,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RearrangePointers)
 		if (!(PTROP_UNSAFEMASTER & flags)) VerifyMasterChain(self);
 		break;
 	case AAPTR_NULL:
-		self->master = NULL;
+		self->master = nullptr;
 		break;
 	}
 
@@ -600,7 +597,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RearrangePointers)
 		self->tracer = getmaster;
 		break; // no verification deemed necessary; the engine never follows a tracer chain(?)
 	case AAPTR_NULL:
-		self->tracer = NULL;
+		self->tracer = nullptr;
 		break;
 	}
 	return 0;
@@ -771,7 +768,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SeekerMissile)
 	{
 		if (flags & SMF_LOOK)
 		{ // This monster is no longer seekable, so let us look for another one next time.
-			self->tracer = NULL;
+			self->tracer = nullptr;
 		}
 	}
 	return 0;
@@ -1956,6 +1953,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Respawn)
 
 	bool oktorespawn = false;
 	DVector3 pos = self->Pos();
+	auto Level = self->__GetLevel();
 
 	self->flags |= MF_SOLID;
 	self->Height = self->GetDefault()->Height;
@@ -1981,17 +1979,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_Respawn)
 		//      ...Actually it's better off an option, so you have better control over monster behavior.
 		if (!(flags & RSF_KEEPTARGET))
 		{
-			self->target = NULL;
-			self->LastHeard = NULL;
-			self->lastenemy = NULL;
+			self->target = nullptr;
+			self->LastHeard = nullptr;
+			self->lastenemy = nullptr;
 		}
 		else
 		{
 			// Don't attack yourself (Re: "Marine targets itself after suicide")
 			if (self->target == self)
-				self->target = NULL;
+				self->target = nullptr;
 			if (self->lastenemy == self)
-				self->lastenemy = NULL;
+				self->lastenemy = nullptr;
 		}
 
 		self->flags  = (defs->flags & ~MF_FRIENDLY) | (self->flags & MF_FRIENDLY);
@@ -2012,7 +2010,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Respawn)
 		}
 		if (self->CountsAsKill())
 		{
-			level.total_monsters++;
+			Level->total_monsters++;
 		}
 	}
 	else
@@ -2610,9 +2608,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeCountFlags)
 	PARAM_INT(item);
 	PARAM_INT(secret);
 
-	if (self->CountsAsKill() && self->health > 0) --level.total_monsters;
-	if (self->flags & MF_COUNTITEM) --level.total_items;
-	if (self->flags5 & MF5_COUNTSECRET) --level.total_secrets;
+	auto Level = self->__GetLevel();
+	if (self->CountsAsKill() && self->health > 0) --Level->total_monsters;
+	if (self->flags & MF_COUNTITEM) --Level->total_items;
+	if (self->flags5 & MF5_COUNTSECRET) --Level->total_secrets;
 
 	if (kill != -1)
 	{
@@ -2631,9 +2630,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeCountFlags)
 		if (secret == 0) self->flags5 &= ~MF5_COUNTSECRET;
 		else self->flags5 |= MF5_COUNTSECRET;
 	}
-	if (self->CountsAsKill() && self->health > 0) ++level.total_monsters;
-	if (self->flags & MF_COUNTITEM) ++level.total_items;
-	if (self->flags5 & MF5_COUNTSECRET) ++level.total_secrets;
+	if (self->CountsAsKill() && self->health > 0) ++Level->total_monsters;
+	if (self->flags & MF_COUNTITEM) ++Level->total_items;
+	if (self->flags5 & MF5_COUNTSECRET) ++Level->total_secrets;
 	return 0;
 }
 
@@ -3444,7 +3443,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_Warp)
 
 	if ((flags & WARPF_USETID))
 	{
-		reference = SingleActorFromTID(destination_selector, self);
+		if (destination_selector != 0)
+		{
+			FActorIterator it(destination_selector);
+			reference = it.Next();
+		}
+		else reference = self;
 	}
 	else
 	{

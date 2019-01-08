@@ -38,7 +38,7 @@
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "p_enemy.h"
-#include "g_Level.h"
+#include "g_level.h"
 #include "v_palette.h"
 #include "a_sharedglobal.h"
 #include "a_lightning.h"
@@ -650,19 +650,19 @@ FUNC(LS_Generic_Stairs)
 FUNC(LS_Pillar_Build)
 // Pillar_Build (tag, speed, height)
 {
-	return EV_DoPillar (DPillar::pillarBuild, ln, arg0, SPEED(arg1), arg2, 0, -1, false);
+	return EV_DoPillar (Level, DPillar::pillarBuild, ln, arg0, SPEED(arg1), arg2, 0, -1, false);
 }
 
 FUNC(LS_Pillar_BuildAndCrush)
 // Pillar_BuildAndCrush (tag, speed, height, crush, crushtype)
 {
-	return EV_DoPillar (DPillar::pillarBuild, ln, arg0, SPEED(arg1), arg2, 0, arg3, CRUSHTYPE(arg4));
+	return EV_DoPillar (Level, DPillar::pillarBuild, ln, arg0, SPEED(arg1), arg2, 0, arg3, CRUSHTYPE(arg4));
 }
 
 FUNC(LS_Pillar_Open)
 // Pillar_Open (tag, speed, f_height, c_height)
 {
-	return EV_DoPillar (DPillar::pillarOpen, ln, arg0, SPEED(arg1), arg2, arg3, -1, false);
+	return EV_DoPillar (Level, DPillar::pillarOpen, ln, arg0, SPEED(arg1), arg2, arg3, -1, false);
 }
 
 FUNC(LS_Ceiling_LowerByValue)
@@ -929,13 +929,13 @@ FUNC(LS_Generic_Crusher2)
 FUNC(LS_Plat_PerpetualRaise)
 // Plat_PerpetualRaise (tag, speed, delay)
 {
-	return EV_DoPlat (arg0, ln, DPlat::platPerpetualRaise, 0, SPEED(arg1), TICS(arg2), 8, 0);
+	return EV_DoPlat(Level, arg0, ln, DPlat::platPerpetualRaise, 0, SPEED(arg1), TICS(arg2), 8, 0);
 }
 
 FUNC(LS_Plat_PerpetualRaiseLip)
 // Plat_PerpetualRaiseLip (tag, speed, delay, lip)
 {
-	return EV_DoPlat (arg0, ln, DPlat::platPerpetualRaise, 0, SPEED(arg1), TICS(arg2), arg3, 0);
+	return EV_DoPlat(Level, arg0, ln, DPlat::platPerpetualRaise, 0, SPEED(arg1), TICS(arg2), arg3, 0);
 }
 
 FUNC(LS_Plat_Stop)
@@ -954,20 +954,20 @@ FUNC(LS_Plat_Stop)
 		remove = gameinfo.gametype == GAME_Hexen;
 		break;
 	}
-	EV_StopPlat(arg0, remove);
+	EV_StopPlat(Level, arg0, remove);
 	return true;
 }
 
 FUNC(LS_Plat_DownWaitUpStay)
 // Plat_DownWaitUpStay (tag, speed, delay)
 {
-	return EV_DoPlat (arg0, ln, DPlat::platDownWaitUpStay, 0, SPEED(arg1), TICS(arg2), 8, 0);
+	return EV_DoPlat(Level, arg0, ln, DPlat::platDownWaitUpStay, 0, SPEED(arg1), TICS(arg2), 8, 0);
 }
 
 FUNC(LS_Plat_DownWaitUpStayLip)
 // Plat_DownWaitUpStayLip (tag, speed, delay, lip, floor-sound?)
 {
-	return EV_DoPlat (arg0, ln,
+	return EV_DoPlat(Level, arg0, ln,
 		arg4 ? DPlat::platDownWaitUpStayStone : DPlat::platDownWaitUpStay,
 		0, SPEED(arg1), TICS(arg2), arg3, 0);
 }
@@ -975,25 +975,25 @@ FUNC(LS_Plat_DownWaitUpStayLip)
 FUNC(LS_Plat_DownByValue)
 // Plat_DownByValue (tag, speed, delay, height)
 {
-	return EV_DoPlat (arg0, ln, DPlat::platDownByValue, arg3*8, SPEED(arg1), TICS(arg2), 0, 0);
+	return EV_DoPlat(Level, arg0, ln, DPlat::platDownByValue, arg3*8, SPEED(arg1), TICS(arg2), 0, 0);
 }
 
 FUNC(LS_Plat_UpByValue)
 // Plat_UpByValue (tag, speed, delay, height)
 {
-	return EV_DoPlat (arg0, ln, DPlat::platUpByValue, arg3*8, SPEED(arg1), TICS(arg2), 0, 0);
+	return EV_DoPlat(Level, arg0, ln, DPlat::platUpByValue, arg3*8, SPEED(arg1), TICS(arg2), 0, 0);
 }
 
 FUNC(LS_Plat_UpWaitDownStay)
 // Plat_UpWaitDownStay (tag, speed, delay)
 {
-	return EV_DoPlat (arg0, ln, DPlat::platUpWaitDownStay, 0, SPEED(arg1), TICS(arg2), 0, 0);
+	return EV_DoPlat(Level, arg0, ln, DPlat::platUpWaitDownStay, 0, SPEED(arg1), TICS(arg2), 0, 0);
 }
 
 FUNC(LS_Plat_UpNearestWaitDownStay)
 // Plat_UpNearestWaitDownStay (tag, speed, delay)
 {
-	return EV_DoPlat (arg0, ln, DPlat::platUpNearestWaitDownStay, 0, SPEED(arg1), TICS(arg2), 0, 0);
+	return EV_DoPlat(Level, arg0, ln, DPlat::platUpNearestWaitDownStay, 0, SPEED(arg1), TICS(arg2), 0, 0);
 }
 
 FUNC(LS_Plat_RaiseAndStayTx0)
@@ -1015,19 +1015,19 @@ FUNC(LS_Plat_RaiseAndStayTx0)
 	}
 
 
-	return EV_DoPlat (arg0, ln, type, 0, SPEED(arg1), 0, 0, 1);
+	return EV_DoPlat(Level, arg0, ln, type, 0, SPEED(arg1), 0, 0, 1);
 }
 
 FUNC(LS_Plat_UpByValueStayTx)
 // Plat_UpByValueStayTx (tag, speed, height)
 {
-	return EV_DoPlat (arg0, ln, DPlat::platUpByValueStay, arg2*8, SPEED(arg1), 0, 0, 2);
+	return EV_DoPlat(Level, arg0, ln, DPlat::platUpByValueStay, arg2*8, SPEED(arg1), 0, 0, 2);
 }
 
 FUNC(LS_Plat_ToggleCeiling)
 // Plat_ToggleCeiling (tag)
 {
-	return EV_DoPlat (arg0, ln, DPlat::platToggle, 0, 0, 0, 0, 0);
+	return EV_DoPlat(Level, arg0, ln, DPlat::platToggle, 0, 0, 0, 0, 0);
 }
 
 FUNC(LS_Generic_Lift)
@@ -1054,7 +1054,7 @@ FUNC(LS_Generic_Lift)
 			break;
 	}
 
-	return EV_DoPlat (arg0, ln, type, arg4*8, SPEED(arg1), OCTICS(arg2), 0, 0);
+	return EV_DoPlat(Level, arg0, ln, type, arg4*8, SPEED(arg1), OCTICS(arg2), 0, 0);
 }
 
 FUNC(LS_Exit_Normal)
@@ -1620,7 +1620,7 @@ FUNC(LS_Thing_Hate)
 			if (arg2 != 0)
 			{
 				hater->TIDtoHate = arg1;
-				hater->LastLookActor = NULL;
+				hater->LastLookActor = nullptr;
 
 				// If the TID to hate is 0, then don't forget the target and
 				// lastenemy fields.
@@ -1628,11 +1628,11 @@ FUNC(LS_Thing_Hate)
 				{
 					if (hater->target != NULL && hater->target->tid != arg1)
 					{
-						hater->target = NULL;
+						hater->target = nullptr;
 					}
 					if (hater->lastenemy != NULL && hater->lastenemy->tid != arg1)
 					{
-						hater->lastenemy = NULL;
+						hater->lastenemy = nullptr;
 					}
 				}
 			}
@@ -1826,7 +1826,7 @@ FUNC(LS_Thing_SetGoal)
 			{ // Targeting a goal already? -> don't target it anymore.
 			  // A_Look will set it to the goal, presuming no real targets
 			  // come into view by then.
-				self->target = NULL;
+				self->target = nullptr;
 			}
 			self->goal = goal;
 			if (arg3 == 0)
@@ -1923,7 +1923,7 @@ FUNC(LS_ACS_Execute)
 	{
 		return false;
 	}
-	return P_StartScript(it, ln, arg0, mapname, args, 3, flags);
+	return P_StartScript(Level, it, ln, arg0, mapname, args, 3, flags);
 }
 
 FUNC(LS_ACS_ExecuteAlways)
@@ -1946,7 +1946,7 @@ FUNC(LS_ACS_ExecuteAlways)
 	{
 		return false;
 	}
-	return P_StartScript(it, ln, arg0, mapname, args, 3, flags);
+	return P_StartScript(Level, it, ln, arg0, mapname, args, 3, flags);
 }
 
 FUNC(LS_ACS_LockedExecute)
@@ -1976,7 +1976,7 @@ FUNC(LS_ACS_ExecuteWithResult)
 	int args[4] = { arg1, arg2, arg3, arg4 };
 	int flags = (backSide ? ACS_BACKSIDE : 0) | ACS_ALWAYS | ACS_WANTRESULT;
 
-	return P_StartScript (it, ln, arg0, Level->MapName, args, 4, flags);
+	return P_StartScript (Level, it, ln, arg0, Level->MapName, args, 4, flags);
 }
 
 FUNC(LS_ACS_Suspend)
@@ -1985,9 +1985,9 @@ FUNC(LS_ACS_Suspend)
 	level_info_t *info;
 
 	if (arg1 == 0)
-		P_SuspendScript (arg0, Level->MapName);
+		P_SuspendScript (Level, arg0, Level->MapName);
 	else if ((info = FindLevelByNum (arg1)) )
-		P_SuspendScript (arg0, info->MapName);
+		P_SuspendScript(Level, arg0, info->MapName);
 
 	return true;
 }
@@ -1998,9 +1998,9 @@ FUNC(LS_ACS_Terminate)
 	level_info_t *info;
 
 	if (arg1 == 0)
-		P_TerminateScript (arg0, Level->MapName);
+		P_TerminateScript (Level, arg0, Level->MapName);
 	else if ((info = FindLevelByNum (arg1)) )
-		P_TerminateScript (arg0, info->MapName);
+		P_TerminateScript (Level, arg0, info->MapName);
 
 	return true;
 }
@@ -2016,7 +2016,7 @@ FUNC(LS_FS_Execute)
 {
 	if (arg1 && ln && backSide) return false;
 	if (arg2!=0 && !P_CheckKeys(it, arg2, !!arg3)) return false;
-	return T_RunScript(&level, arg0, it);
+	return T_RunScript(Level, arg0, it);
 }
 
 
@@ -2227,7 +2227,7 @@ FUNC(LS_Sector_ChangeFlags)
 
 
 
-void AdjustPusher(int tag, int magnitude, int angle, bool wind);
+void AdjustPusher(FLevelLocals *l, int tag, int magnitude, int angle, bool wind);
 
 FUNC(LS_Sector_SetWind)
 // Sector_SetWind (tag, amount, angle)
@@ -2235,7 +2235,7 @@ FUNC(LS_Sector_SetWind)
 	if (arg3)
 		return false;
 
-	AdjustPusher (arg0, arg1, arg2, true);
+	AdjustPusher (Level, arg0, arg1, arg2, true);
 	return true;
 }
 
@@ -2245,7 +2245,7 @@ FUNC(LS_Sector_SetCurrent)
 	if (arg3)
 		return false;
 
-	AdjustPusher (arg0, arg1, arg2, false);
+	AdjustPusher (Level, arg0, arg1, arg2, false);
 	return true;
 }
 

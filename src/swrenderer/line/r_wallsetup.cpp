@@ -266,7 +266,7 @@ namespace swrenderer
 		if (!lit)
 		{
 			basecolormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::walltop]);
-			foggy = level.fadeto || frontsector->Colormap.FadeColor || (level.flags & LEVEL_HASFADETABLE);
+			foggy = frontsector->Level->fadeto || frontsector->Colormap.FadeColor || (frontsector->Level->flags & LEVEL_HASFADETABLE);
 
 			if (!(lineseg->sidedef->Flags & WALLF_POLYOBJ))
 				lightlevel = lineseg->sidedef->GetLightLevel(foggy, frontsector->lightlevel);
@@ -276,7 +276,7 @@ namespace swrenderer
 		else
 		{
 			basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
-			foggy = level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE);
+			foggy = frontsector->Level->fadeto || basecolormap->Fade || (frontsector->Level->flags & LEVEL_HASFADETABLE);
 			lightlevel = lineseg->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, lit->lightsource != nullptr);
 		}
 	}

@@ -876,7 +876,11 @@ void CreateSections(FLevelLocals *Level)
 
 CCMD(printsections)
 {
-	PrintSections(level.sections);
+	ForAllLevels([](FLevelLocals *Level)
+	{
+		Printf("%s - %s\n", Level->MapName.GetChars(), Level->LevelName.GetChars());
+		PrintSections(Level->sections);
+	});
 }
 
 

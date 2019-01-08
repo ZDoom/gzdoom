@@ -121,7 +121,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 		(!missile->Vel.X || !missile->Vel.Y || !Check_LOS(missile, SHOOTFOV*3/2)))
 	{
 		sleft = !sleft;
-		missile = NULL; //Probably ended its travel.
+		missile = nullptr; //Probably ended its travel.
 	}
 
 #if 0	// this has always been broken and without any reference it cannot be fixed.
@@ -183,7 +183,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 			}
 		}
 
-		dest = NULL; //To let bot turn right
+		dest = nullptr; //To let bot turn right
 
 		if (GetBotInfo(player->ReadyWeapon).MoveCombatDist == 0)
 			player->mo->flags &= ~MF_DROPOFF; //Don't jump off any ledges when fighting.
@@ -237,7 +237,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 		{
 			if (mate == dest && pr_botmove.Random() < 32)
 			{ // [RH] If the mate is the dest, pick a new dest sometimes
-				dest = NULL;
+				dest = nullptr;
 			}
 			goto roam;
 		}
@@ -264,7 +264,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 
 		if (dest && !(dest->flags&MF_SPECIAL) && dest->health < 0)
 		{ //Roaming after something dead.
-			dest = NULL;
+			dest = nullptr;
 		}
 
 		if (dest == NULL)
@@ -333,7 +333,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 	if (!t_roam && dest)
 	{
 		prev = dest;
-		dest = NULL;
+		dest = nullptr;
 	}
 
 	if (t_fight<(AFTERTICS/2))
@@ -438,5 +438,5 @@ void DBot::Set_enemy ()
 	}
 	//Verify that that enemy is really something alive that bot can kill.
 	if (enemy && ((enemy->health < 0 || !(enemy->flags&MF_SHOOTABLE)) || player->mo->IsFriend(enemy)))
-		enemy = NULL;
+		enemy = nullptr;
 }

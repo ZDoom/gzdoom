@@ -459,7 +459,7 @@ void ZCCCompiler::MessageV(ZCC_TreeNode *node, const char *txtcolor, const char 
 //
 // ZCCCompiler :: Compile
 //
-// Compile everything defined at this level.
+// Compile everything defined at this level
 //
 //==========================================================================
 

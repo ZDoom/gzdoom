@@ -116,6 +116,8 @@ struct FLevelLocals : public FLevelData
 	void FormatMapName(FString &mapname, const char *mapnamecolor);
 	void TranslateTeleportThings(void);
 	void ClearAllSubsectorLinks();
+	void ChangeAirControl(double newval);
+	void InitLevelLocals();
 
 	uint8_t		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
 	int			time;			// time in the hub
@@ -336,4 +338,13 @@ inline bool line_t::hitSkyWall(AActor* mo) const
 		backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
 		mo->Z() >= backsector->ceilingplane.ZatPoint(mo->PosRelative(this));
 }
+
+// For handling CVARs that alter level settings.
+// If we add multi-level handling later they need to be able to adjust and with a function like this the change can be done right now.
+template<class T>
+inline void ForAllLevels(T func)
+{
+	func(&level);
+}
+
 #endif

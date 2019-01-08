@@ -355,18 +355,19 @@ void AActor::UnlinkFromWorld (FLinkContext *ctx)
 bool AActor::FixMapthingPos()
 {
 	sector_t *secstart = P_PointInSectorBuggy(X(), Y());
+	auto Level = __GetLevel();
 
-	int blockx = level.blockmap.GetBlockX(X());
-	int blocky = level.blockmap.GetBlockY(Y());
+	int blockx = Level->blockmap.GetBlockX(X());
+	int blocky = Level->blockmap.GetBlockY(Y());
 	bool success = false;
 
-	if (level.blockmap.isValidBlock(blockx, blocky))
+	if (Level->blockmap.isValidBlock(blockx, blocky))
 	{
 		int *list;
 
-		for (list = level.blockmap.GetLines(blockx, blocky); *list != -1; ++list)
+		for (list = Level->blockmap.GetLines(blockx, blocky); *list != -1; ++list)
 		{
-			line_t *ldef = &level.lines[*list];
+			line_t *ldef = &Level->lines[*list];
 
 			if (ldef->frontsector == ldef->backsector)
 			{ // Skip two-sided lines inside a single sector
@@ -439,6 +440,7 @@ bool AActor::FixMapthingPos()
 void AActor::LinkToWorld(FLinkContext *ctx, bool spawningmapthing, sector_t *sector)
 {
 	bool spawning = spawningmapthing;
+	auto Level = __GetLevel();
 
 	if (spawning)
 	{
@@ -512,25 +514,25 @@ void AActor::LinkToWorld(FLinkContext *ctx, bool spawningmapthing, sector_t *sec
 		{
 			DVector3 pos = i==-1? Pos() : PosRelative(check[i] & ~FPortalGroupArray::FLAT);
 
-			int x1 = level.blockmap.GetBlockX(pos.X - radius);
-			int x2 = level.blockmap.GetBlockX(pos.X + radius);
-			int y1 = level.blockmap.GetBlockY(pos.Y - radius);
-			int y2 = level.blockmap.GetBlockY(pos.Y + radius);
+			int x1 = Level->blockmap.GetBlockX(pos.X - radius);
+			int x2 = Level->blockmap.GetBlockX(pos.X + radius);
+			int y1 = Level->blockmap.GetBlockY(pos.Y - radius);
+			int y2 = Level->blockmap.GetBlockY(pos.Y + radius);
 
-			if (x1 >= level.blockmap.bmapwidth || x2 < 0 || y1 >= level.blockmap.bmapheight || y2 < 0)
+			if (x1 >= Level->blockmap.bmapwidth || x2 < 0 || y1 >= Level->blockmap.bmapheight || y2 < 0)
 			{ // thing is off the map
 			}
 			else
 			{ // [RH] Link into every block this actor touches, not just the center one
 				x1 = MAX(0, x1);
 				y1 = MAX(0, y1);
-				x2 = MIN(level.blockmap.bmapwidth - 1, x2);
-				y2 = MIN(level.blockmap.bmapheight - 1, y2);
+				x2 = MIN(Level->blockmap.bmapwidth - 1, x2);
+				y2 = MIN(Level->blockmap.bmapheight - 1, y2);
 				for (int y = y1; y <= y2; ++y)
 				{
 					for (int x = x1; x <= x2; ++x)
 					{
-						FBlockNode **link = &level.blockmap.blocklinks[y*level.blockmap.bmapwidth + x];
+						FBlockNode **link = &Level->blockmap.blocklinks[y*Level->blockmap.bmapwidth + x];
 						FBlockNode *node = FBlockNode::Create(this, x, y, this->Sector->PortalGroup);
 
 						// Link in to block
@@ -1690,14 +1692,15 @@ AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, in
 	int finalStop;
 	int count;
 	AActor *target;
-	int bmapwidth = level.blockmap.bmapwidth;
-	int bmapheight = level.blockmap.bmapheight;
+	auto Level = mo->__GetLevel();
+	int bmapwidth = Level->blockmap.bmapwidth;
+	int bmapheight = Level->blockmap.bmapheight;
 
-	startX = level.blockmap.GetBlockX(mo->X());
-	startY = level.blockmap.GetBlockY(mo->Y());
+	startX = Level->blockmap.GetBlockX(mo->X());
+	startY = Level->blockmap.GetBlockY(mo->Y());
 	validcount++;
 	
-	if (level.blockmap.isValidBlock(startX, startY))
+	if (Level->blockmap.isValidBlock(startX, startY))
 	{
 		if ( (target = check (mo, startY*bmapwidth+startX, params)) )
 		{ // found a target right away

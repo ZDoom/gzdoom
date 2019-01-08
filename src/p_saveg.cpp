@@ -967,6 +967,7 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 		("total_monsters", Level->total_monsters)
 		("gravity", Level->gravity)
 		("aircontrol", Level->aircontrol)
+		("airfriction", Level->airfriction)
 		("teamdamage", Level->teamdamage)
 		("maptime", Level->maptime)
 		("totaltime", i)
@@ -993,7 +994,6 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 		sky1texture = Level->skytexture1;
 		sky2texture = Level->skytexture2;
 		R_InitSkyMap();
-		G_AirControlChanged();
 	}
 
 	Level->Behaviors.SerializeModuleStates(arc);

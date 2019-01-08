@@ -32,18 +32,18 @@ void PolyCull::CullScene(sector_t *portalSector, line_t *portalLine)
 {
 	for (uint32_t sub : PvsSubsectors)
 		SubsectorDepths[sub] = 0xffffffff;
-	SubsectorDepths.resize(level.subsectors.Size(), 0xffffffff);
+	SubsectorDepths.resize(PolyRenderer::Instance()->Level->subsectors.Size(), 0xffffffff);
 
 	for (uint32_t sector : SeenSectors)
 		SectorSeen[sector] = false;
-	SectorSeen.resize(level.sectors.Size());
+	SectorSeen.resize(PolyRenderer::Instance()->Level->sectors.Size());
 
 	PvsSubsectors.clear();
 	SeenSectors.clear();
 
 	NextPvsLineStart = 0;
 	PvsLineStart.clear();
-	PvsLineVisible.resize(level.segs.Size());
+	PvsLineVisible.resize(PolyRenderer::Instance()->Level->segs.Size());
 
 	PortalSector = portalSector;
 	PortalLine = portalLine;
@@ -78,10 +78,10 @@ void PolyCull::CullScene(sector_t *portalSector, line_t *portalLine)
 	FirstSkyHeight = true;
 	MaxCeilingHeight = 0.0;
 	MinFloorHeight = 0.0;
-	if (level.nodes.Size() == 0)
-		CullSubsector(&level.subsectors[0]);
+	if (PolyRenderer::Instance()->Level->nodes.Size() == 0)
+		CullSubsector(&PolyRenderer::Instance()->Level->subsectors[0]);
 	else
-		CullNode(level.HeadNode());
+		CullNode(PolyRenderer::Instance()->Level->HeadNode());
 }
 
 void PolyCull::CullNode(void *node)

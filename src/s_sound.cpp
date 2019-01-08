@@ -2187,7 +2187,7 @@ void S_UpdateSounds (AActor *listenactor)
 	GSnd->UpdateListener(&listener);
 	GSnd->UpdateSounds();
 
-	if (listenactor->Level->time >= RestartEvictionsAt)
+	if (listenactor && listenactor->Level->time >= RestartEvictionsAt)
 	{
 		RestartEvictionsAt = 0;
 		S_RestoreEvictedChannels();

@@ -828,7 +828,7 @@ static bool Validate(const FVector3 &value, const float limit, const char *const
 static bool ValidatePosVel(const AActor *actor, const FVector3 &pos, const FVector3 &vel)
 {
 	// The actual limit for map coordinates
-	static const float POSITION_LIMIT = 32768.f;
+	static const float POSITION_LIMIT = 1024.f * 1024.f;
 	const bool valid = Validate(pos, POSITION_LIMIT, "position", actor);
 
 	// The maximum velocity is enough to travel through entire map in one tic

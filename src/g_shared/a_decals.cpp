@@ -548,37 +548,39 @@ CUSTOM_CVAR (Int, cl_maxdecals, 1024, CVAR_ARCHIVE)
 	}
 	else
 	{
-		while (ImpactCount > self)
+		ForAllLevels([&](FLevelLocals *Level)
 		{
-			DThinker *thinker = DThinker::FirstThinker (STAT_AUTODECAL);
-			if (thinker != NULL)
+			while (Level->ImpactDecalCount > self)
 			{
-				thinker->Destroy();
+				DThinker *thinker = DThinker::FirstThinker(STAT_AUTODECAL);
+				if (thinker != NULL)
+				{
+					thinker->Destroy();
+				}
 			}
-		}
+		});
 	}
 }
 
 DImpactDecal::DImpactDecal ()
 : DBaseDecal (STAT_AUTODECAL, 0.)
 {
-	ImpactCount++;
 }
 
 DImpactDecal::DImpactDecal (double z)
 : DBaseDecal (STAT_AUTODECAL, z)
 {
-	ImpactCount++;
 }
 
 void DImpactDecal::CheckMax ()
 {
-	if (ImpactCount >= cl_maxdecals)
+	if (++level.ImpactDecalCount >= cl_maxdecals)
 	{
 		DThinker *thinker = DThinker::FirstThinker (STAT_AUTODECAL);
 		if (thinker != NULL)
 		{
 			thinker->Destroy();
+			level.ImpactDecalCount--;
 		}
 	}
 }
@@ -613,7 +615,6 @@ DImpactDecal *DImpactDecal::StaticCreate (const FDecalTemplate *tpl, const DVect
 			else lowercolor = color;
 			StaticCreate (tpl_low, pos, wall, ffloor, lowercolor);
 		}
-		DImpactDecal::CheckMax();
 		decal = Create<DImpactDecal>(pos.Z);
 		if (decal == NULL)
 		{
@@ -624,6 +625,7 @@ DImpactDecal *DImpactDecal::StaticCreate (const FDecalTemplate *tpl, const DVect
 		{
 			return NULL;
 		}
+		decal->CheckMax();
 
 		tpl->ApplyToDecal (decal, wall);
 		if (color != 0)
@@ -649,12 +651,12 @@ DBaseDecal *DImpactDecal::CloneSelf (const FDecalTemplate *tpl, double ix, doubl
 		return NULL;
 	}
 
-	DImpactDecal::CheckMax();
 	DImpactDecal *decal = Create<DImpactDecal>(iz);
 	if (decal != NULL)
 	{
 		if (decal->StickToWall (wall, ix, iy, ffloor).isValid())
 		{
+			decal->CheckMax();
 			tpl->ApplyToDecal (decal, wall);
 			decal->AlphaColor = AlphaColor;
 			decal->RenderFlags = (decal->RenderFlags & RF_DECALMASK) |
@@ -667,12 +669,6 @@ DBaseDecal *DImpactDecal::CloneSelf (const FDecalTemplate *tpl, double ix, doubl
 		}
 	}
 	return decal;
-}
-
-void DImpactDecal::OnDestroy ()
-{
-	ImpactCount--;
-	Super::OnDestroy();
 }
 
 CCMD (countdecals)

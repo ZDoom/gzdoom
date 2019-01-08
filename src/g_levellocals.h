@@ -202,6 +202,7 @@ struct FLevelLocals : public FLevelData
 	bool		brightfog;
 	bool		lightadditivesurfaces;
 	bool		notexturefill;
+	int			ImpactDecalCount;
 
 	FDynamicLight *lights;
 

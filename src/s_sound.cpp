@@ -691,25 +691,28 @@ static void CalcPosVel( int type, const AActor *actor, const sector_t *sector,
 		DVector3 listenpos;
 		int pgroup;
 		AActor *listener = players[consoleplayer].camera;
-		auto Level = listener->Level;
+		FLevelLocals *Level;
 
 		if (listener != NULL)
 		{
 			listenpos = listener->Pos();
 			*pos = listener->SoundPos();
 			pgroup = listener->Sector->PortalGroup;
+			Level = listener->Level;
 		}
 		else
 		{
 			listenpos.Zero();
 			pos->Zero();
 			pgroup = 0;
+			Level = nullptr;
 		}
 
 		// [BL] Moved this case out of the switch statement to make code easier
 		//      on static analysis.
 		if(type == SOURCE_Unattached)
-		{		
+		{
+			assert(Level != nullptr);
 			sector_t *sec = P_PointInSector(pt[0], pt[2]);
 			DVector2 disp = Level->Displacements.getOffset(pgroup, sec->PortalGroup);
 			pos->X = pt[0] - (float)disp.X;
@@ -728,6 +731,7 @@ static void CalcPosVel( int type, const AActor *actor, const sector_t *sector,
 				//assert(actor != NULL);
 				if (actor != NULL)
 				{
+					assert(Level != nullptr);
 					DVector2 disp = Level->Displacements.getOffset(pgroup, actor->Sector->PortalGroup);
 					DVector3 posi = actor->Pos() - disp;
 					*pos = { (float)posi.X, (float)posi.Z, (float)posi.Y };
@@ -738,6 +742,7 @@ static void CalcPosVel( int type, const AActor *actor, const sector_t *sector,
 				assert(sector != NULL);
 				if (sector != NULL)
 				{
+					assert(Level != nullptr);
 					DVector2 disp = Level->Displacements.getOffset(pgroup, sector->PortalGroup);
 					if (chanflags & CHAN_AREA)
 					{
@@ -760,6 +765,7 @@ static void CalcPosVel( int type, const AActor *actor, const sector_t *sector,
 				assert(poly != NULL);
 				if (poly != NULL)
 				{
+					assert(Level != nullptr);
 					DVector2 disp = Level->Displacements.getOffset(pgroup, poly->CenterSubsector->sector->PortalGroup);
 					CalcPolyobjSoundOrg(listenpos + disp, poly, *pos);
 					pos->X -= (float)disp.X;

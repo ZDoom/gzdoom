@@ -43,7 +43,6 @@
 #include "v_text.h"
 #include "cmdlib.h"
 #include "g_levellocals.h"
-#include "actorinlines.h"
 #include "vm.h"
 #include "sbar.h"
 

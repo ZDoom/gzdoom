@@ -30,7 +30,6 @@
 #include "p_effect.h"
 #include "g_level.h"
 #include "g_levellocals.h"
-#include "actorinlines.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "hwrenderer/dynlights/hw_shadowmap.h"
 #include "hwrenderer/scene/hw_drawinfo.h"

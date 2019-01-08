@@ -49,7 +49,6 @@
 #include "p_maputl.h"
 #include "p_spec.h"
 #include "g_levellocals.h"
-#include "actorinlines.h"
 #include "vm.h"
 
 // simulation recurions maximum

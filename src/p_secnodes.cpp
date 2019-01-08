@@ -27,7 +27,6 @@
 #include "g_levellocals.h"
 #include "p_maputl.h"
 #include "actor.h"
-#include "actorinlines.h"
 
 //=============================================================================
 // phares 3/21/98

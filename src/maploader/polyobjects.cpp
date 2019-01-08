@@ -34,7 +34,6 @@
 #include "p_maputl.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
-#include "actorinlines.h"
 #include "v_text.h"
 
 #include "maploader/maploader.h"

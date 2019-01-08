@@ -31,7 +31,6 @@
 #include "polyrenderer/poly_renderthread.h"
 #include "polyrenderer/scene/poly_model.h"
 #include "r_data/r_vanillatrans.h"
-#include "actorinlines.h"
 
 EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, r_drawfuzz)

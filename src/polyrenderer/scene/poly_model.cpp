@@ -30,7 +30,6 @@
 #include "polyrenderer/scene/poly_light.h"
 #include "polyrenderer/poly_renderthread.h"
 #include "r_data/r_vanillatrans.h"
-#include "actorinlines.h"
 #include "i_time.h"
 
 void PolyRenderModel(PolyRenderThread *thread, const Mat4f &worldToClip, uint32_t stencilValue, float x, float y, float z, FSpriteModelFrame *smf, AActor *actor)

@@ -39,7 +39,6 @@
 #include "p_local.h"
 #include "serializer.h"
 #include "g_levellocals.h"
-#include "actorinlines.h"
 #include "r_data/models/models.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "hwrenderer/utility/hw_clock.h"

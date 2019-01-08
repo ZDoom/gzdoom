@@ -27,7 +27,6 @@
 #include "r_data/r_translate.h"
 #include "r_model.h"
 #include "r_data/r_vanillatrans.h"
-#include "actorinlines.h"
 #include "i_time.h"
 #include "swrenderer/r_memory.h"
 #include "swrenderer/r_swcolormaps.h"

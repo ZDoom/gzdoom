@@ -32,7 +32,6 @@
 #include "doomstat.h"
 #include "d_player.h"
 #include "g_levellocals.h"
-#include "actorinlines.h"
 #include "p_lnspec.h"
 #include "r_data/matrix.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"

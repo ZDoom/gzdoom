@@ -691,7 +691,7 @@ static void CalcPosVel( int type, const AActor *actor, const sector_t *sector,
 		DVector3 listenpos;
 		int pgroup;
 		AActor *listener = players[consoleplayer].camera;
-		FLevelLocals *Level = nullptr;
+		FLevelLocals *Level;
 
 		if (listener != nullptr)
 		{
@@ -706,12 +706,14 @@ static void CalcPosVel( int type, const AActor *actor, const sector_t *sector,
 			pos->Zero();
 			pgroup = 0;
 			type = SOURCE_None; // No level means that no level sound placement should be performed.
+			Level = nullptr;
 		}
 
 		// [BL] Moved this case out of the switch statement to make code easier
 		//      on static analysis.
 		if(type == SOURCE_Unattached)
-		{		
+		{
+			assert(Level != nullptr);
 			sector_t *sec = P_PointInSector(pt[0], pt[2]);
 			DVector2 disp = Level->Displacements.getOffset(pgroup, sec->PortalGroup);
 			pos->X = pt[0] - (float)disp.X;
@@ -730,6 +732,7 @@ static void CalcPosVel( int type, const AActor *actor, const sector_t *sector,
 				//assert(actor != NULL);
 				if (actor != NULL)
 				{
+					assert(Level != nullptr);
 					DVector2 disp = Level->Displacements.getOffset(pgroup, actor->Sector->PortalGroup);
 					DVector3 posi = actor->Pos() - disp;
 					*pos = { (float)posi.X, (float)posi.Z, (float)posi.Y };
@@ -740,6 +743,7 @@ static void CalcPosVel( int type, const AActor *actor, const sector_t *sector,
 				assert(sector != NULL);
 				if (sector != NULL)
 				{
+					assert(Level != nullptr);
 					DVector2 disp = Level->Displacements.getOffset(pgroup, sector->PortalGroup);
 					if (chanflags & CHAN_AREA)
 					{
@@ -762,6 +766,7 @@ static void CalcPosVel( int type, const AActor *actor, const sector_t *sector,
 				assert(poly != NULL);
 				if (poly != NULL)
 				{
+					assert(Level != nullptr);
 					DVector2 disp = Level->Displacements.getOffset(pgroup, poly->CenterSubsector->sector->PortalGroup);
 					CalcPolyobjSoundOrg(listenpos + disp, poly, *pos);
 					pos->X -= (float)disp.X;
@@ -831,7 +836,7 @@ static bool Validate(const FVector3 &value, const float limit, const char *const
 static bool ValidatePosVel(const AActor *actor, const FVector3 &pos, const FVector3 &vel)
 {
 	// The actual limit for map coordinates
-	static const float POSITION_LIMIT = 32768.f;
+	static const float POSITION_LIMIT = 1024.f * 1024.f;
 	const bool valid = Validate(pos, POSITION_LIMIT, "position", actor);
 
 	// The maximum velocity is enough to travel through entire map in one tic

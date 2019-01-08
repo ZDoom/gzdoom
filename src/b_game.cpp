@@ -93,6 +93,7 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 #include "events.h"
 #include "vm.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 
 static FRandom pr_botspawn ("BotSpawn");
 

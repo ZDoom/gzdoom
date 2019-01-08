@@ -54,6 +54,7 @@
 #include "a_keys.h"
 #include "g_levellocals.h"
 #include "types.h"
+#include "actorinlines.h"
 
 //==========================================================================
 //

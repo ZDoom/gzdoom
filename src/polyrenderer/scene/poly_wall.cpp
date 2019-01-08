@@ -637,7 +637,7 @@ PolyWallTextureCoordsU::PolyWallTextureCoordsU(FSoftwareTexture *tex, const seg_
 PolyWallTextureCoordsV::PolyWallTextureCoordsV(FSoftwareTexture *tex, const line_t *line, const side_t *side, side_t::ETexpart wallpart, double topz, double bottomz, double unpeggedceil, double topTexZ, double bottomTexZ)
 {
 	double yoffset = side->GetTextureYOffset(wallpart);
-	if (tex->useWorldPanning())
+	if (tex->useWorldPanning(line->GetLevel()))
 		yoffset *= side->GetTextureYScale(wallpart) * tex->GetScale().Y;
 
 	switch (wallpart)

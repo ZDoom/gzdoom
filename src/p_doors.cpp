@@ -136,7 +136,7 @@ void DDoor::Tick ()
 		// killough 10/98: implement gradual lighting effects
 		if (m_LightTag != 0 && m_TopDist != -m_Sector->floorplane.fD())
 		{
-			EV_LightTurnOnPartway (m_LightTag, 
+			EV_LightTurnOnPartway (Level, m_LightTag, 
 				(m_Sector->ceilingplane.fD() + m_Sector->floorplane.fD()) / (m_TopDist + m_Sector->floorplane.fD()));
 		}
 
@@ -182,7 +182,7 @@ void DDoor::Tick ()
 		// killough 10/98: implement gradual lighting effects
 		if (m_LightTag != 0 && m_TopDist != -m_Sector->floorplane.fD())
 		{
-			EV_LightTurnOnPartway (m_LightTag, 
+			EV_LightTurnOnPartway (Level, m_LightTag, 
 				(m_Sector->ceilingplane.fD() + m_Sector->floorplane.fD()) / (m_TopDist + m_Sector->floorplane.fD()));
 		}
 
@@ -417,7 +417,7 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, double speed, int delay, int lightTag
 //
 //============================================================================
 
-bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
+bool EV_DoDoor (FLevelLocals *Level, DDoor::EVlDoor type, line_t *line, AActor *thing,
 				int tag, double speed, int delay, int lock, int lightTag, bool boomgen, int topcountdown)
 {
 	bool		rtn = false;
@@ -493,7 +493,7 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 		FSectorTagIterator it(tag);
 		while ((secnum = it.Next()) >= 0)
 		{
-			sec = &level.sectors[secnum];
+			sec = &Level->sectors[secnum];
 			// if the ceiling is already moving, don't start the door action
 			if (sec->PlaneMoving(sector_t::ceiling))
 				continue;
@@ -748,7 +748,7 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay,
 //
 //============================================================================
 
-bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay, DAnimatedDoor::EADType type)
+bool EV_SlidingDoor (FLevelLocals *Level, line_t *line, AActor *actor, int tag, int speed, int delay, DAnimatedDoor::EADType type)
 {
 	sector_t *sec;
 	int secnum;
@@ -790,7 +790,7 @@ bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay,
 	FSectorTagIterator it(tag);
 	while ((secnum = it.Next()) >= 0)
 	{
-		sec = &level.sectors[secnum];
+		sec = &Level->sectors[secnum];
 		if (sec->ceilingdata != NULL)
 		{
 			continue;

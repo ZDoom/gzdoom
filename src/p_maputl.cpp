@@ -582,7 +582,7 @@ void AActor::SetOrigin(double x, double y, double z, bool moving)
 //
 //===========================================================================
 
-FBlockLinesIterator::FBlockLinesIterator(int _minx, int _miny, int _maxx, int _maxy, bool keepvalidcount)
+FBlockLinesIterator::FBlockLinesIterator(FLevelLocals *l, int _minx, int _miny, int _maxx, int _maxy, bool keepvalidcount) : Level(l)
 {
 	if (!keepvalidcount) validcount++;
 	minx = _minx;
@@ -595,14 +595,14 @@ FBlockLinesIterator::FBlockLinesIterator(int _minx, int _miny, int _maxx, int _m
 void FBlockLinesIterator::init(const FBoundingBox &box)
 {
 	validcount++;
-	maxy = level.blockmap.GetBlockY(box.Top());
-	miny = level.blockmap.GetBlockY(box.Bottom());
-	maxx = level.blockmap.GetBlockX(box.Right());
-	minx = level.blockmap.GetBlockX(box.Left());
+	maxy = Level->blockmap.GetBlockY(box.Top());
+	miny = Level->blockmap.GetBlockY(box.Bottom());
+	maxx = Level->blockmap.GetBlockX(box.Right());
+	minx = Level->blockmap.GetBlockX(box.Left());
 	Reset();
 }
 
-FBlockLinesIterator::FBlockLinesIterator(const FBoundingBox &box)
+FBlockLinesIterator::FBlockLinesIterator(FLevelLocals *l, const FBoundingBox &box) : Level(l)
 {
 	init(box);
 }
@@ -617,13 +617,13 @@ void FBlockLinesIterator::StartBlock(int x, int y)
 { 
 	curx = x; 
 	cury = y; 
-	if (level.blockmap.isValidBlock(x, y))
+	if (Level->blockmap.isValidBlock(x, y))
 	{
-		unsigned offset = y*level.blockmap.bmapwidth + x;
-		polyLink = level.PolyBlockMap.Size() > offset? level.PolyBlockMap[offset] : nullptr;
+		unsigned offset = y*Level->blockmap.bmapwidth + x;
+		polyLink = Level->PolyBlockMap.Size() > offset? Level->PolyBlockMap[offset] : nullptr;
 		polyIndex = 0;
 
-		list = level.blockmap.GetLines(x, y);
+		list = Level->blockmap.GetLines(x, y);
 	}
 	else
 	{
@@ -682,7 +682,7 @@ line_t *FBlockLinesIterator::Next()
 		{
 			while (*list != -1)
 			{
-				line_t *ld = &level.lines[*list];
+				line_t *ld = &Level->lines[*list];
 
 				list++;
 				if (ld->validcount != validcount)
@@ -711,7 +711,7 @@ line_t *FBlockLinesIterator::Next()
 //===========================================================================
 
 FMultiBlockLinesIterator::FMultiBlockLinesIterator(FPortalGroupArray &check, AActor *origin, double checkradius)
-	: checklist(check)
+	: checklist(check), blockIterator(origin->Level)
 {
 	checkpoint = origin->Pos();
 	if (!check.inited) P_CollectConnectedGroups(origin->Level, origin->Sector->PortalGroup, checkpoint, origin->Top(), checkradius, checklist);
@@ -722,7 +722,7 @@ FMultiBlockLinesIterator::FMultiBlockLinesIterator(FPortalGroupArray &check, AAc
 }
 
 FMultiBlockLinesIterator::FMultiBlockLinesIterator(FPortalGroupArray &check, FLevelLocals *Level, double checkx, double checky, double checkz, double checkh, double checkradius, sector_t *newsec)
-	: checklist(check)
+	: checklist(check), blockIterator(Level)
 {
 	checkpoint = { checkx, checky, checkz };
 	if (newsec == NULL)	newsec = P_PointInSector(checkx, checky);
@@ -848,7 +848,7 @@ bool FMultiBlockLinesIterator::Next(FMultiBlockLinesIterator::CheckResult *item)
 
 bool FMultiBlockLinesIterator::startIteratorForGroup(int group)
 {
-	offset = level.Displacements.getOffset(basegroup, group);
+	offset = blockIterator.Level->Displacements.getOffset(basegroup, group);
 	offset.X += checkpoint.X;
 	offset.Y += checkpoint.Y;
 	cursector = group == startsector->PortalGroup ? startsector : P_PointInSector(offset);
@@ -881,8 +881,8 @@ void FMultiBlockLinesIterator::Reset()
 //
 //===========================================================================
 
-FBlockThingsIterator::FBlockThingsIterator()
-: DynHash(0)
+FBlockThingsIterator::FBlockThingsIterator(FLevelLocals *l)
+: Level(l), DynHash(0)
 {
 	minx = maxx = 0;
 	miny = maxy = 0;
@@ -890,8 +890,8 @@ FBlockThingsIterator::FBlockThingsIterator()
 	block = NULL;
 }
 
-FBlockThingsIterator::FBlockThingsIterator(int _minx, int _miny, int _maxx, int _maxy)
-: DynHash(0)
+FBlockThingsIterator::FBlockThingsIterator(FLevelLocals *L, int _minx, int _miny, int _maxx, int _maxy)
+: Level(L), DynHash(0)
 {
 	minx = _minx;
 	maxx = _maxx;
@@ -903,10 +903,10 @@ FBlockThingsIterator::FBlockThingsIterator(int _minx, int _miny, int _maxx, int 
 
 void FBlockThingsIterator::init(const FBoundingBox &box)
 {
-	maxy = level.blockmap.GetBlockY(box.Top());
-	miny = level.blockmap.GetBlockY(box.Bottom());
-	maxx = level.blockmap.GetBlockX(box.Right());
-	minx = level.blockmap.GetBlockX(box.Left());
+	maxy = Level->blockmap.GetBlockY(box.Top());
+	miny = Level->blockmap.GetBlockY(box.Bottom());
+	maxx = Level->blockmap.GetBlockX(box.Right());
+	minx = Level->blockmap.GetBlockX(box.Left());
 	ClearHash();
 	Reset();
 }
@@ -934,9 +934,9 @@ void FBlockThingsIterator::StartBlock(int x, int y)
 {
 	curx = x;
 	cury = y;
-	if (level.blockmap.isValidBlock(x, y))
+	if (Level->blockmap.isValidBlock(x, y))
 	{
-		block = level.blockmap.blocklinks[y*level.blockmap.bmapwidth + x];
+		block = Level->blockmap.blocklinks[y*Level->blockmap.bmapwidth + x];
 	}
 	else
 	{
@@ -984,9 +984,9 @@ AActor *FBlockThingsIterator::Next(bool centeronly)
 			if (centeronly)
 			{
 				// Block boundaries for compatibility mode
-				double blockleft = (curx * FBlockmap::MAPBLOCKUNITS) + level.blockmap.bmaporgx;
+				double blockleft = (curx * FBlockmap::MAPBLOCKUNITS) + Level->blockmap.bmaporgx;
 				double blockright = blockleft + FBlockmap::MAPBLOCKUNITS;
-				double blockbottom = (cury * FBlockmap::MAPBLOCKUNITS) + level.blockmap.bmaporgy;
+				double blockbottom = (cury * FBlockmap::MAPBLOCKUNITS) + Level->blockmap.bmaporgy;
 				double blocktop = blockbottom + FBlockmap::MAPBLOCKUNITS;
 
 				// only return actors with the center in this block
@@ -1053,7 +1053,7 @@ AActor *FBlockThingsIterator::Next(bool centeronly)
 //===========================================================================
 
 FMultiBlockThingsIterator::FMultiBlockThingsIterator(FPortalGroupArray &check, AActor *origin, double checkradius, bool ignorerestricted)
-	: checklist(check)
+	: checklist(check), blockIterator(origin->Level)
 {
 	checkpoint = origin->Pos();
 	if (!check.inited) P_CollectConnectedGroups(origin->Level, origin->Sector->PortalGroup, checkpoint, origin->Top(), checkradius, checklist);
@@ -1063,7 +1063,7 @@ FMultiBlockThingsIterator::FMultiBlockThingsIterator(FPortalGroupArray &check, A
 }
 
 FMultiBlockThingsIterator::FMultiBlockThingsIterator(FPortalGroupArray &check, FLevelLocals *Level, double checkx, double checky, double checkz, double checkh, double checkradius, bool ignorerestricted, sector_t *newsec)
-	: checklist(check)
+	: checklist(check), blockIterator(Level)
 {
 	checkpoint.X = checkx;
 	checkpoint.Y = checky;
@@ -1087,7 +1087,7 @@ bool FMultiBlockThingsIterator::Next(FMultiBlockThingsIterator::CheckResult *ite
 	if (thing != NULL)
 	{
 		item->thing = thing;
-		item->Position = checkpoint + level.Displacements.getOffset(basegroup, thing->Sector->PortalGroup);
+		item->Position = checkpoint + blockIterator.Level->Displacements.getOffset(basegroup, thing->Sector->PortalGroup);
 		item->portalflags = portalflags;
 		return true;
 	}
@@ -1126,7 +1126,7 @@ bool FMultiBlockThingsIterator::Next(FMultiBlockThingsIterator::CheckResult *ite
 
 void FMultiBlockThingsIterator::startIteratorForGroup(int group)
 {
-	DVector2 offset = level.Displacements.getOffset(basegroup, group);
+	DVector2 offset = blockIterator.Level->Displacements.getOffset(basegroup, group);
 	offset.X += checkpoint.X;
 	offset.Y += checkpoint.Y;
 	bbox.setBox(offset.X, offset.Y, checkpoint.Z);
@@ -1169,7 +1169,7 @@ TArray<intercept_t> FPathTraverse::intercepts(128);
 
 void FPathTraverse::AddLineIntercepts(int bx, int by)
 {
-	FBlockLinesIterator it(bx, by, bx, by, true);
+	FBlockLinesIterator it(Level, bx, by, bx, by, true);
 	line_t *ld;
 
 	while ((ld = it.Next()))
@@ -1459,13 +1459,13 @@ void FPathTraverse::init(double x1, double y1, double x2, double y2, int flags, 
 		y2 += y1;
 	}
 
-	x1 -= level.blockmap.bmaporgx;
-	y1 -= level.blockmap.bmaporgy;
+	x1 -= Level->blockmap.bmaporgx;
+	y1 -= Level->blockmap.bmaporgy;
 	xt1 = x1 / FBlockmap::MAPBLOCKUNITS;
 	yt1 = y1 / FBlockmap::MAPBLOCKUNITS;
 
-	x2 -= level.blockmap.bmaporgx;
-	y2 -= level.blockmap.bmaporgy;
+	x2 -= Level->blockmap.bmaporgx;
+	y2 -= Level->blockmap.bmaporgy;
 	xt2 = x2 / FBlockmap::MAPBLOCKUNITS;
 	yt2 = y2 / FBlockmap::MAPBLOCKUNITS;
 
@@ -1543,7 +1543,7 @@ void FPathTraverse::init(double x1, double y1, double x2, double y2, int flags, 
 	bool compatible = (flags & PT_COMPATIBLE) && (i_compatflags & COMPATF_HITSCAN);
 		
 	// we want to use one list of checked actors for the entire operation
-	FBlockThingsIterator btit;
+	FBlockThingsIterator btit(Level);
 	for (count = 0 ; count < 1000 ; count++)
 	{
 		if (flags & PT_ADDLINES)
@@ -1789,7 +1789,7 @@ static AActor *RoughBlockCheck (AActor *mo, int index, void *param)
 
 	FBlockNode *link;
 
-	for (link = level.blockmap.blocklinks[index]; link != NULL; link = link->NextActor)
+	for (link = mo->Level->blockmap.blocklinks[index]; link != NULL; link = link->NextActor)
 	{
 		if (link->Me != mo)
 		{

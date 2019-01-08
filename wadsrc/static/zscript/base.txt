@@ -707,7 +707,8 @@ struct LevelLocals native
 	native SpotState GetSpotState(bool create = true);
 	native void ReplaceTextures(String from, String to, int flags);
 	native Actor Spawn(class<Actor> type, vector3 pos = (0,0,0), int replace = NO_REPLACE);
-
+    clearscope native HealthGroup FindHealthGroup(int id);
+	
 	native clearscope bool IsPointInMap(vector3 p);
 
 	native clearscope vector2 Vec2Diff(vector2 v1, vector2 v2);

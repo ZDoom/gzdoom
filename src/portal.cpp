@@ -744,7 +744,7 @@ DVector2 P_GetOffsetPosition(FLevelLocals *Level, double x, double y, double dx,
 		bool repeat;
 		do
 		{
-			FLinePortalTraverse it;
+			FLinePortalTraverse it(Level);
 			it.init(actx, acty, dx, dy, PT_ADDLINES|PT_DELTA);
 			intercept_t *in;
 
@@ -1261,7 +1261,7 @@ bool P_CollectConnectedGroups(FLevelLocals *Level, int startgroup, const DVector
 			{
 				DVector2 disp = Level->Displacements.getOffset(startgroup, thisgroup & ~FPortalGroupArray::FLAT);
 				FBoundingBox box(position.X + disp.X, position.Y + disp.Y, checkradius);
-				FBlockLinesIterator it(box);
+				FBlockLinesIterator it(Level, box);
 				line_t *ld;
 				while ((ld = it.Next()))
 				{

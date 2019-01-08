@@ -1007,7 +1007,7 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 	if (arc.isReading()) P_FinalizePortals(&level);
 
 	// [ZZ] serialize health groups
-	P_SerializeHealthGroups(arc);
+	P_SerializeHealthGroups(Level, arc);
 	// [ZZ] serialize events
 	E_SerializeEvents(arc);
 	DThinker::SerializeThinkers(arc, hubload);

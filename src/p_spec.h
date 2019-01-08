@@ -133,19 +133,19 @@ protected:
 	DLighting();
 };
 
-void	EV_StartLightFlickering (int tag, int upper, int lower);
-void	EV_StartLightStrobing (int tag, int upper, int lower, int utics, int ltics);
-void	EV_StartLightStrobing (int tag, int utics, int ltics);
-void	EV_TurnTagLightsOff (int tag);
-void	EV_LightTurnOn (int tag, int bright);
-void	EV_LightTurnOnPartway (int tag, double frac);	// killough 10/98
-void	EV_LightChange (int tag, int value);
-void	EV_StopLightEffect (int tag);
+void	EV_StartLightFlickering (FLevelLocals *Level, int tag, int upper, int lower);
+void	EV_StartLightStrobing (FLevelLocals *Level, int tag, int upper, int lower, int utics, int ltics);
+void	EV_StartLightStrobing (FLevelLocals *Level, int tag, int utics, int ltics);
+void	EV_TurnTagLightsOff (FLevelLocals *Level, int tag);
+void	EV_LightTurnOn (FLevelLocals *Level, int tag, int bright);
+void	EV_LightTurnOnPartway (FLevelLocals *Level, int tag, double frac);	// killough 10/98
+void	EV_LightChange (FLevelLocals *Level, int tag, int value);
+void	EV_StopLightEffect (FLevelLocals *Level, int tag);
 
 void	P_SpawnGlowingLight (sector_t *sector);
 
-void	EV_StartLightGlowing (int tag, int upper, int lower, int tics);
-void	EV_StartLightFading (int tag, int value, int tics);
+void	EV_StartLightGlowing (FLevelLocals *Level, int tag, int upper, int lower, int tics);
+void	EV_StartLightFading (FLevelLocals *Level, int tag, int value, int tics);
 
 
 //
@@ -310,7 +310,7 @@ protected:
 
 	void DoorSound (bool raise, class DSeqNode *curseq=NULL) const;
 
-	friend bool	EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
+	friend bool	EV_DoDoor (FLevelLocals *Level, DDoor::EVlDoor type, line_t *line, AActor *thing,
 						   int tag, double speed, int delay, int lock,
 						   int lightTag, bool boomgen, int topcountdown);
 private:
@@ -318,7 +318,7 @@ private:
 
 };
 
-bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
+bool EV_DoDoor (FLevelLocals *Level, DDoor::EVlDoor type, line_t *line, AActor *thing,
 				int tag, double speed, int delay, int lock,
 				int lightTag, bool boomgen = false, int topcountdown = 0);
 
@@ -360,12 +360,12 @@ protected:
 	int m_Delay;
 	bool m_SetBlocking1, m_SetBlocking2;
 
-	friend bool EV_SlidingDoor (line_t *line, AActor *thing, int tag, int speed, int delay, EADType type);
+	friend bool EV_SlidingDoor (FLevelLocals *Level, line_t *line, AActor *thing, int tag, int speed, int delay, EADType type);
 private:
 	DAnimatedDoor ();
 };
 
-bool EV_SlidingDoor (line_t *line, AActor *thing, int tag, int speed, int delay, DAnimatedDoor::EADType type);
+bool EV_SlidingDoor (FLevelLocals *Level, line_t *line, AActor *thing, int tag, int speed, int delay, DAnimatedDoor::EADType type);
 
 //
 // P_CEILNG
@@ -447,16 +447,16 @@ private:
 	DCeiling ();
 
 	friend bool P_CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int tag, double speed, double speed2, double height, int crush, int silent, int change, DCeiling::ECrushMode hexencrush);
-	friend bool EV_CeilingCrushStop (int tag, bool remove);
-	friend void P_ActivateInStasisCeiling (int tag);
+	friend bool EV_CeilingCrushStop (FLevelLocals *Level, int tag, bool remove);
+	friend void P_ActivateInStasisCeiling (FLevelLocals *Level, int tag);
 };
 
 bool P_CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int tag, double speed, double speed2, double height, int crush, int silent, int change, DCeiling::ECrushMode hexencrush);
-bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line, int tag, double speed, double speed2, double height, int crush, int silent, int change, DCeiling::ECrushMode hexencrush = DCeiling::ECrushMode::crushDoom);
+bool EV_DoCeiling (FLevelLocals *Level, DCeiling::ECeiling type, line_t *line, int tag, double speed, double speed2, double height, int crush, int silent, int change, DCeiling::ECrushMode hexencrush = DCeiling::ECrushMode::crushDoom);
 
-bool EV_CeilingCrushStop (int tag, bool remove);
-bool EV_StopCeiling(int tag, line_t *line);
-void P_ActivateInStasisCeiling (int tag);
+bool EV_CeilingCrushStop (FLevelLocals *Level, int tag, bool remove);
+bool EV_StopCeiling(FLevelLocals *Level, int tag, line_t *line);
+void P_ActivateInStasisCeiling (FLevelLocals *Level, int tag);
 
 
 
@@ -548,12 +548,12 @@ public:
 	void StartFloorSound ();
 	void SetFloorChangeType (sector_t *sec, int change);
 
-	friend bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
+	friend bool EV_BuildStairs (FLevelLocals *Level, int tag, DFloor::EStair type, line_t *line,
 		double stairsize, double speed, int delay, int reset, int igntxt,
 		int usespecials);
-	friend bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
+	friend bool EV_DoFloor (FLevelLocals *Level, DFloor::EFloor floortype, line_t *line, int tag,
 		double speed, double height, int crush, int change, bool hexencrush, bool hereticlower);
-	friend bool EV_DoDonut (int tag, line_t *line, double pillarspeed, double slimespeed);
+	friend bool EV_DoDonut (FLevelLocals *Level, int tag, line_t *line, double pillarspeed, double slimespeed);
 private:
 	DFloor ();
 };
@@ -561,15 +561,15 @@ private:
 bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 	double speed, double height, int crush, int change, bool hexencrush, bool hereticlower);
 
-bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
+bool EV_BuildStairs (FLevelLocals *Level, int tag, DFloor::EStair type, line_t *line,
 	double stairsize, double speed, int delay, int reset, int igntxt,
 	int usespecials);
-bool EV_DoFloor(DFloor::EFloor floortype, line_t *line, int tag,
+bool EV_DoFloor(FLevelLocals *Level, DFloor::EFloor floortype, line_t *line, int tag,
 	double speed, double height, int crush, int change, bool hexencrush, bool hereticlower = false);
 
-bool EV_FloorCrushStop (int tag, line_t *line);
-bool EV_StopFloor(int tag, line_t *line);
-bool EV_DoDonut (int tag, line_t *line, double pillarspeed, double slimespeed);
+bool EV_FloorCrushStop (FLevelLocals *Level, int tag, line_t *line);
+bool EV_StopFloor(FLevelLocals *Level, int tag, line_t *line);
+bool EV_DoDonut (FLevelLocals *Level, int tag, line_t *line, double pillarspeed, double slimespeed);
 
 class DElevator : public DMover
 {
@@ -603,12 +603,12 @@ protected:
 
 	void StartFloorSound ();
 
-	friend bool EV_DoElevator (line_t *line, DElevator::EElevator type, double speed, double height, int tag);
+	friend bool EV_DoElevator (FLevelLocals *Level, line_t *line, DElevator::EElevator type, double speed, double height, int tag);
 private:
 	DElevator ();
 };
 
-bool EV_DoElevator (line_t *line, DElevator::EElevator type, double speed, double height, int tag);
+bool EV_DoElevator (FLevelLocals *Level, line_t *line, DElevator::EElevator type, double speed, double height, int tag);
 
 class DWaggleBase : public DMover
 {
@@ -629,15 +629,13 @@ protected:
 	int m_Ticker;
 	int m_State;
 
-	friend bool EV_StartWaggle (int tag, line_t *line, int height, int speed,
-		int offset, int timer, bool ceiling);
+	friend bool EV_StartWaggle (FLevelLocals *Level, int tag, line_t *line, int height, int speed, int offset, int timer, bool ceiling);
 
 	void DoWaggle (bool ceiling);
 	DWaggleBase ();
 };
 
-bool EV_StartWaggle (int tag, line_t *line, int height, int speed,
-	int offset, int timer, bool ceiling);
+bool EV_StartWaggle (FLevelLocals *Level, int tag, line_t *line, int height, int speed, int offset, int timer, bool ceiling);
 
 class DFloorWaggle : public DWaggleBase
 {
@@ -666,7 +664,7 @@ enum EChange
 	numChangeOnly,
 };
 
-bool EV_DoChange (line_t *line, EChange changetype, int tag);
+bool EV_DoChange (FLevelLocals *Level, line_t *line, EChange changetype, int tag);
 
 
 

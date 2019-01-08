@@ -117,7 +117,7 @@ struct FLineOpening
 static const double LINEOPEN_MIN = -FLT_MAX;
 static const double LINEOPEN_MAX = FLT_MAX;
 
-void P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, const DVector2 &xy, const DVector2 *ref = NULL, int flags = 0);
+void P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, const DVector2 &xy, const DVector2 *ref = nullptr, int flags = 0);
 inline void P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, const DVector2 &xy, const DVector3 *ref, int flags = 0)
 {
 	P_LineOpening(open, thing, linedef, xy, reinterpret_cast<const DVector2*>(ref), flags);
@@ -206,6 +206,7 @@ private:
 class FBlockLinesIterator
 {
 	friend class FMultiBlockLinesIterator;
+	FLevelLocals *Level;
 	int minx, maxx;
 	int miny, maxy;
 
@@ -216,11 +217,11 @@ class FBlockLinesIterator
 
 	void StartBlock(int x, int y);
 
-	FBlockLinesIterator() {}
+	FBlockLinesIterator(FLevelLocals *l) { Level = l;  }
 	void init(const FBoundingBox &box);
 public:
-	FBlockLinesIterator(int minx, int miny, int maxx, int maxy, bool keepvalidcount = false);
-	FBlockLinesIterator(const FBoundingBox &box);
+	FBlockLinesIterator(FLevelLocals *Level, int minx, int miny, int maxx, int maxy, bool keepvalidcount = false);
+	FBlockLinesIterator(FLevelLocals *Level, const FBoundingBox &box);
 	line_t *Next();
 	void Reset() { StartBlock(minx, miny); }
 };
@@ -276,6 +277,7 @@ public:
 
 class FBlockThingsIterator
 {
+	FLevelLocals *Level;
 	int minx, maxx;
 	int miny, maxy;
 
@@ -302,14 +304,14 @@ class FBlockThingsIterator
 
 	// The following is only for use in the path traverser 
 	// and therefore declared private.
-	FBlockThingsIterator();
+	FBlockThingsIterator(FLevelLocals *l);
 
 	friend class FPathTraverse;
 	friend class FMultiBlockThingsIterator;
 
 public:
-	FBlockThingsIterator(int minx, int miny, int maxx, int maxy);
-	FBlockThingsIterator(const FBoundingBox &box)
+	FBlockThingsIterator(FLevelLocals *Level, int minx, int miny, int maxx, int maxy);
+	FBlockThingsIterator(FLevelLocals *Level, const FBoundingBox &box)
 	{
 		init(box);
 	}
@@ -331,7 +333,7 @@ class FMultiBlockThingsIterator
 	void startIteratorForGroup(int group);
 
 protected:
-	FMultiBlockThingsIterator(FPortalGroupArray &check) : checklist(check) {}
+	//FMultiBlockThingsIterator(FPortalGroupArray &check) : checklist(check) {}
 public:
 
 	struct CheckResult
@@ -358,6 +360,7 @@ class FPathTraverse
 protected:
 	static TArray<intercept_t> intercepts;
 
+	FLevelLocals *Level;
 	divline_t trace;
 	double Startfrac;
 	unsigned int intercept_index;
@@ -366,17 +369,18 @@ protected:
 
 	virtual void AddLineIntercepts(int bx, int by);
 	virtual void AddThingIntercepts(int bx, int by, FBlockThingsIterator &it, bool compatible);
-	FPathTraverse() {}
+	FPathTraverse(FLevelLocals *l) { Level = l;  }
 public:
 
 	intercept_t *Next();
 
-	FPathTraverse(double x1, double y1, double x2, double y2, int flags, double startfrac = 0)
+	FPathTraverse(FLevelLocals *l, double x1, double y1, double x2, double y2, int flags, double startfrac = 0)
 	{
+		Level = l;
 		init(x1, y1, x2, y2, flags, startfrac);
 	}
 	void init(double x1, double y1, double x2, double y2, int flags, double startfrac = 0);
-	int PortalRelocate(intercept_t *in, int flags, DVector3 *optpos = NULL);
+	int PortalRelocate(intercept_t *in, int flags, DVector3 *optpos = nullptr);
 	void PortalRelocate(const DVector2 &disp, int flags, double hitfrac);
 	virtual ~FPathTraverse();
 	const divline_t &Trace() const { return trace; }
@@ -404,7 +408,7 @@ class FLinePortalTraverse : public FPathTraverse
 	void AddLineIntercepts(int bx, int by);
 
 public:
-	FLinePortalTraverse()
+	FLinePortalTraverse(FLevelLocals *l) : FPathTraverse(l)
 	{
 	}
 };

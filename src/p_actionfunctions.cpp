@@ -4832,7 +4832,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
 		}
 		else if (sec->special == Scroll_StrifeCurrent)
 		{
-			int anglespeed = tagManager.GetFirstSectorTag(sec) - 100;
+			int anglespeed = self->Level->tagManager.GetFirstSectorTag(sec) - 100;
 			double speed = (anglespeed % 10) / 16.;
 			DAngle an = (anglespeed / 10) * (360 / 8.);
 			self->Thrust(an, speed);

@@ -1040,7 +1040,7 @@ void MapLoader::LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 			ss->special = LittleShort(ms->special);
 		else	// [RH] Translate to new sector special
 			ss->special = P_TranslateSectorSpecial (LittleShort(ms->special));
-		tagManager.AddSectorTag(i, LittleShort(ms->tag));
+		Level->tagManager.AddSectorTag(i, LittleShort(ms->tag));
 		ss->thinglist = nullptr;
 		ss->touching_thinglist = nullptr;		// phares 3/14/98
 		ss->sectorportal_thinglist = nullptr;
@@ -1461,7 +1461,7 @@ void MapLoader::SetLineID (int i, line_t *ld)
 		}
 		if (setid != -1)
 		{
-			tagManager.AddLineID(i, setid);
+			Level->tagManager.AddLineID(i, setid);
 		}
 	}
 }
@@ -1555,7 +1555,7 @@ void MapLoader::FinishLoadingLineDef(line_t *ld, int alpha)
 		{
 			for (unsigned j = 0; j < Level->lines.Size(); j++)
 			{
-				if (tagManager.LineHasID(j, ld->args[0]))
+				if (Level->tagManager.LineHasID(j, ld->args[0]))
 				{
 					Level->lines[j].alpha = dalpha;
 					if (additive)
@@ -1685,7 +1685,7 @@ void MapLoader::LoadLineDefs (MapData * map)
 		// do not assign the tag for Extradata lines.
 		if (ld->special != Static_Init || (ld->args[1] != Init_EDLine && ld->args[1] != Init_EDSector))
 		{
-			tagManager.AddLineID(i, mld->tag);
+			Level->tagManager.AddLineID(i, mld->tag);
 		}
 #ifndef NO_EDATA
 		if (ld->special == Static_Init && ld->args[1] == Init_EDLine)
@@ -2059,7 +2059,7 @@ void MapLoader::ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec
 			{
 				for (unsigned s = 0; s < Level->sectors.Size(); s++)
 				{
-					if (tagManager.SectorHasTag(s, tag))
+					if (Level->tagManager.SectorHasTag(s, tag))
 					{
 						if (colorgood)
 						{
@@ -2685,9 +2685,9 @@ void MapLoader::GroupLines (bool buildmap)
 	{
 		if (sector->Lines.Count == 0)
 		{
-			Printf ("Sector %i (tag %i) has no lines\n", i, tagManager.GetFirstSectorTag(Index(sector)));
+			Printf ("Sector %i (tag %i) has no lines\n", i, Level->tagManager.GetFirstSectorTag(Index(sector)));
 			// 0 the sector's tag so that no specials can use it
-			tagManager.RemoveSectorTags(i);
+			Level->tagManager.RemoveSectorTags(i);
 		}
 		else
 		{
@@ -2742,7 +2742,7 @@ void MapLoader::GroupLines (bool buildmap)
 	}
 
 	// killough 1/30/98: Create xref tables for tags
-	tagManager.HashTags();
+	Level->tagManager.HashTags();
 
 	if (!buildmap)
 	{

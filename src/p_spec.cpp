@@ -165,6 +165,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 	INTBOOL repeat;
 	INTBOOL buttonSuccess;
 	uint8_t special;
+	auto Level = line->GetLevel();
 
 	if (!P_TestActivateLine (line, mo, side, activationType, optpos))
 	{
@@ -209,9 +210,9 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 		!repeat &&												// only non-repeatable triggers
 		(special<Generic_Floor || special>Generic_Crusher) &&	// not for Boom's generalized linedefs
 		special &&												// not for lines without a special
-		tagManager.LineHasID(line, line->args[0]) &&							// Safety check: exclude edited UDMF linedefs or ones that don't map the tag to args[0]
+		Level->tagManager.LineHasID(line, line->args[0]) &&							// Safety check: exclude edited UDMF linedefs or ones that don't map the tag to args[0]
 		line->args[0] &&										// only if there's a tag (which is stored in the first arg)
-		P_FindFirstSectorFromTag (line->args[0]) == -1)			// only if no sector is tagged to this linedef
+		Level->tagManager.FindFirstSectorFromTag (line->args[0]) == -1)			// only if no sector is tagged to this linedef
 	{
 		P_ChangeSwitchTexture (line->sidedef[0], repeat, special);
 		line->special = 0;
@@ -523,7 +524,7 @@ static void DoSectorDamage(AActor *actor, sector_t *sec, int amount, FName type,
 
 void P_SectorDamage(FLevelLocals *Level, int tag, int amount, FName type, PClassActor *protectClass, int flags)
 {
-	FSectorTagIterator itr(tag);
+	FSectorTagIterator itr(Level->tagManager, tag);
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
@@ -733,13 +734,13 @@ DLightTransfer::DLightTransfer (sector_t *srcSec, int target, bool copyFloor)
 	auto Level = Source->Level;
 	if (copyFloor)
 	{
-		FSectorTagIterator itr(target);
+		FSectorTagIterator itr(Level->tagManager, target);
 		while ((secnum = itr.Next()) >= 0)
 			Level->sectors[secnum].ChangeFlags(sector_t::floor, 0, PLANEF_ABSLIGHTING);
 	}
 	else
 	{
-		FSectorTagIterator itr(target);
+		FSectorTagIterator itr(Level->tagManager, target);
 		while ((secnum = itr.Next()) >= 0)
 			Level->sectors[secnum].ChangeFlags(sector_t::ceiling, 0, PLANEF_ABSLIGHTING);
 	}
@@ -764,13 +765,13 @@ void DLightTransfer::DoTransfer (int llevel, int target, bool floor)
 	auto Level = Source->Level;
 	if (floor)
 	{
-		FSectorTagIterator itr(target);
+		FSectorTagIterator itr(Level->tagManager, target);
 		while ((secnum = itr.Next()) >= 0)
 			Level->sectors[secnum].SetPlaneLight(sector_t::floor, llevel);
 	}
 	else
 	{
-		FSectorTagIterator itr(target);
+		FSectorTagIterator itr(Level->tagManager, target);
 		while ((secnum = itr.Next()) >= 0)
 			Level->sectors[secnum].SetPlaneLight(sector_t::ceiling, llevel);
 	}
@@ -832,7 +833,7 @@ DWallLightTransfer::DWallLightTransfer (sector_t *srcSec, int target, uint8_t fl
 		wallflags = WALLF_ABSLIGHTING | WALLF_NOFAKECONTRAST;
 	}
 
-	FLineIdIterator itr(target);
+	FLineIdIterator itr(Level->tagManager, target);
 	auto Level = Source->Level;
 	while ((linenum = itr.Next()) >= 0)
 	{
@@ -865,7 +866,7 @@ void DWallLightTransfer::DoTransfer (short lightlevel, int target, uint8_t flags
 	int linenum;
 
 	auto Level = Source->Level;
-	FLineIdIterator itr(target);
+	FLineIdIterator itr(Level->tagManager, target);
 	while ((linenum = itr.Next()) >= 0)
 	{
 		line_t *line = &Level->lines[linenum];
@@ -999,7 +1000,7 @@ static void SetPortal(sector_t *sector, int plane, unsigned pnum, double alpha)
 static void CopyPortal(FLevelLocals *Level, int sectortag, int plane, unsigned pnum, double alpha, bool tolines)
 {
 	int s;
-	FSectorTagIterator itr(sectortag);
+	FSectorTagIterator itr(Level->tagManager, sectortag);
 	while ((s = itr.Next()) >= 0)
 	{
 		SetPortal(&Level->sectors[s], plane, pnum, alpha);
@@ -1020,7 +1021,7 @@ static void CopyPortal(FLevelLocals *Level, int sectortag, int plane, unsigned p
 			}
 			else
 			{
-				FSectorTagIterator itr(line.args[0]);
+				FSectorTagIterator itr(Level->tagManager, line.args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
 					SetPortal(&Level->sectors[s], plane, pnum, alpha);
@@ -1037,7 +1038,7 @@ static void CopyPortal(FLevelLocals *Level, int sectortag, int plane, unsigned p
 			}
 			else
 			{
-				FLineIdIterator itr(line.args[0]);
+				FLineIdIterator itr(Level->tagManager, line.args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
 					Level->lines[s].portaltransferred = pnum;
@@ -1350,7 +1351,7 @@ void P_SpawnSpecials (MapLoader *ml)
 				{
 					sec->MoreFlags |= SECMF_NOFAKELIGHT;
 				}
-				FSectorTagIterator itr(line.args[0]);
+				FSectorTagIterator itr(Level->tagManager, line.args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
 					Level->sectors[s].heightsec = sec;
@@ -1426,7 +1427,7 @@ void P_SpawnSpecials (MapLoader *ml)
 			case Init_Gravity:
 				{
 					double grav = line.Delta().Length() / 100.;
-					FSectorTagIterator itr(line.args[0]);
+					FSectorTagIterator itr(Level->tagManager, line.args[0]);
 					while ((s = itr.Next()) >= 0)
 						Level->sectors[s].gravity = grav;
 				}
@@ -1438,7 +1439,7 @@ void P_SpawnSpecials (MapLoader *ml)
 			case Init_Damage:
 				{
 					int damage = int(line.Delta().Length());
-					FSectorTagIterator itr(line.args[0]);
+					FSectorTagIterator itr(Level->tagManager, line.args[0]);
 					while ((s = itr.Next()) >= 0)
 					{
 						sector_t *sec = &Level->sectors[s];
@@ -1479,7 +1480,7 @@ void P_SpawnSpecials (MapLoader *ml)
 
 			case Init_TransferSky:
 				{
-					FSectorTagIterator itr(line.args[0]);
+					FSectorTagIterator itr(Level->tagManager, line.args[0]);
 					while ((s = itr.Next()) >= 0)
 						Level->sectors[s].sky = (line.Index() + 1) | PL_SKYFLAT;
 					break;
@@ -1587,7 +1588,7 @@ void P_SetSectorFriction (FLevelLocals *Level, int tag, int amount, bool alterFl
 	// higher friction value actually means 'less friction'.
 	movefactor = FrictionToMoveFactor(friction);
 
-	FSectorTagIterator itr(tag);
+	FSectorTagIterator itr(Level->tagManager, tag);
 	while ((s = itr.Next()) >= 0)
 	{
 		// killough 8/28/98:

@@ -255,7 +255,7 @@ static AActor *SelectTeleDest (FLevelLocals *Level, int tid, int tag, bool noran
 		int count = 0;
 		while ( (searcher = iterator.Next ()) )
 		{
-			if (tag == 0 || tagManager.SectorHasTag(searcher->Sector, tag))
+			if (tag == 0 || Level->tagManager.SectorHasTag(searcher->Sector, tag))
 			{
 				count++;
 			}
@@ -294,7 +294,7 @@ static AActor *SelectTeleDest (FLevelLocals *Level, int tid, int tag, bool noran
 			while (count > 0)
 			{
 				searcher = iterator.Next ();
-				if (tag == 0 || tagManager.SectorHasTag(searcher->Sector, tag))
+				if (tag == 0 || Level->tagManager.SectorHasTag(searcher->Sector, tag))
 				{
 					count--;
 				}
@@ -307,7 +307,7 @@ static AActor *SelectTeleDest (FLevelLocals *Level, int tid, int tag, bool noran
 	{
 		int secnum;
 
-		FSectorTagIterator itr(tag);
+		FSectorTagIterator itr(Level->tagManager, tag);
 		while ((secnum = itr.Next()) >= 0)
 		{
 			// Scanning the snext links of things in the sector will not work, because
@@ -432,7 +432,7 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 	if (side || thing->flags2 & MF2_NOTELEPORT || !line || line->sidedef[1] == NULL)
 		return false;
 
-	FLineIdIterator itr(id);
+	FLineIdIterator itr(Level->tagManager, id);
 	while ((i = itr.Next()) >= 0)
 	{
 		if (line->Index() == i)
@@ -720,7 +720,7 @@ bool EV_TeleportSector (FLevelLocals *Level, int tag, int source_tid, int dest_t
 	int secnum;
 
 	secnum = -1;
-	FSectorTagIterator itr(tag);
+	FSectorTagIterator itr(Level->tagManager, tag);
 	while ((secnum = itr.Next()) >= 0)
 	{
 		msecnode_t *node;

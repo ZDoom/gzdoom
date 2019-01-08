@@ -1520,7 +1520,7 @@ FUNC(LS_Thing_Destroy)
 		while (actor)
 		{
 			AActor *temp = iterator.Next ();
-			if (actor->flags & MF_SHOOTABLE && tagManager.SectorHasTag(actor->Sector, arg2))
+			if (actor->flags & MF_SHOOTABLE && Level->tagManager.SectorHasTag(actor->Sector, arg2))
 				P_DamageMobj (actor, NULL, it, arg1 ? TELEFRAG_DAMAGE : actor->health, NAME_None);
 			actor = temp;
 		}
@@ -1533,7 +1533,7 @@ FUNC(LS_Thing_Destroy)
 		while (actor)
 		{
 			AActor *temp = iterator.Next ();
-			if (actor->flags & MF_SHOOTABLE && (arg2 == 0 || tagManager.SectorHasTag(actor->Sector, arg2)))
+			if (actor->flags & MF_SHOOTABLE && (arg2 == 0 || Level->tagManager.SectorHasTag(actor->Sector, arg2)))
 				P_DamageMobj (actor, NULL, it, arg1 ? TELEFRAG_DAMAGE : actor->health, NAME_None);
 			actor = temp;
 		}
@@ -2194,7 +2194,7 @@ FUNC(LS_Sector_ChangeSound)
 		return false;
 
 	rtn = false;
-	FSectorTagIterator itr(arg0);
+	FSectorTagIterator itr(Level->tagManager, arg0);
 	while ((secNum = itr.Next()) >= 0)
 	{
 		Level->sectors[secNum].seqType = arg1;
@@ -2213,7 +2213,7 @@ FUNC(LS_Sector_ChangeFlags)
 		return false;
 
 	rtn = false;
-	FSectorTagIterator itr(arg0);
+	FSectorTagIterator itr(Level->tagManager, arg0);
 	// exclude protected flags
 	arg1 &= ~SECF_NOMODIFY;
 	arg2 &= ~SECF_NOMODIFY;
@@ -2262,7 +2262,7 @@ FUNC(LS_Sector_SetTranslucent)
 	if (arg0 != 0)
 	{
 		int secnum;
-		FSectorTagIterator itr(arg0);
+		FSectorTagIterator itr(Level->tagManager, arg0);
 		while ((secnum = itr.Next()) >= 0)
 		{
 			Level->sectors[secnum].SetAlpha(arg1, clamp(arg2, 0, 255) / 255.);
@@ -2278,7 +2278,7 @@ FUNC(LS_Sector_SetLink)
 {
 	if (arg0 != 0)	// control tag == 0 is for static initialization and must not be handled here
 	{
-		int control = P_FindFirstSectorFromTag(arg0);
+		int control = Level->tagManager.FindFirstSectorFromTag(arg0);
 		if (control >= 0)
 		{
 			return P_AddSectorLinks(&Level->sectors[control], arg1, arg2, arg3);
@@ -2379,7 +2379,7 @@ FUNC(LS_Sector_SetDamage)
 	// problems by adding an unwanted constructor.
 	// Since it doesn't really matter whether the type is translated
 	// here or in P_PlayerInSpecialSector I think it's the best solution.
-	FSectorTagIterator itr(arg0);
+	FSectorTagIterator itr(Level->tagManager, arg0);
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
@@ -2418,7 +2418,7 @@ FUNC(LS_Sector_SetGravity)
 		arg2 = 99;
 	gravity = (double)arg1 + (double)arg2 * 0.01;
 
-	FSectorTagIterator itr(arg0);
+	FSectorTagIterator itr(Level->tagManager, arg0);
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 		Level->sectors[secnum].gravity = gravity;
@@ -2429,7 +2429,7 @@ FUNC(LS_Sector_SetGravity)
 FUNC(LS_Sector_SetColor)
 // Sector_SetColor (tag, r, g, b, desaturate)
 {
-	FSectorTagIterator itr(arg0);
+	FSectorTagIterator itr(Level->tagManager, arg0);
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
@@ -2442,7 +2442,7 @@ FUNC(LS_Sector_SetColor)
 FUNC(LS_Sector_SetFade)
 // Sector_SetFade (tag, r, g, b)
 {
-	FSectorTagIterator itr(arg0);
+	FSectorTagIterator itr(Level->tagManager, arg0);
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
@@ -2457,7 +2457,7 @@ FUNC(LS_Sector_SetCeilingPanning)
 	double xofs = arg1 + arg2 / 100.;
 	double yofs = arg3 + arg4 / 100.;
 
-	FSectorTagIterator itr(arg0);
+	FSectorTagIterator itr(Level->tagManager, arg0);
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
@@ -2473,7 +2473,7 @@ FUNC(LS_Sector_SetFloorPanning)
 	double xofs = arg1 + arg2 / 100.;
 	double yofs = arg3 + arg4 / 100.;
 
-	FSectorTagIterator itr(arg0);
+	FSectorTagIterator itr(Level->tagManager, arg0);
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
@@ -2494,7 +2494,7 @@ FUNC(LS_Sector_SetFloorScale)
 	if (yscale)
 		yscale = 1. / yscale;
 
-	FSectorTagIterator itr(arg0);
+	FSectorTagIterator itr(Level->tagManager, arg0);
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
@@ -2517,7 +2517,7 @@ FUNC(LS_Sector_SetCeilingScale)
 	if (yscale)
 		yscale = 1. / yscale;
 
-	FSectorTagIterator itr(arg0);
+	FSectorTagIterator itr(Level->tagManager, arg0);
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
@@ -2539,7 +2539,7 @@ FUNC(LS_Sector_SetFloorScale2)
 	if (yscale)
 		yscale = 1. / yscale;
 
-	FSectorTagIterator itr(arg0);
+	FSectorTagIterator itr(Level->tagManager, arg0);
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
@@ -2561,7 +2561,7 @@ FUNC(LS_Sector_SetCeilingScale2)
 	if (yscale)
 		yscale = 1. / yscale;
 
-	FSectorTagIterator itr(arg0);
+	FSectorTagIterator itr(Level->tagManager, arg0);
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
@@ -2579,7 +2579,7 @@ FUNC(LS_Sector_SetRotation)
 	DAngle ceiling = (double)arg2;
 	DAngle floor = (double)arg1;
 
-	FSectorTagIterator itr(arg0);
+	FSectorTagIterator itr(Level->tagManager, arg0);
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
@@ -2594,7 +2594,7 @@ FUNC(LS_Line_AlignCeiling)
 {
 	bool ret = 0;
 
-	FLineIdIterator itr(arg0);
+	FLineIdIterator itr(Level->tagManager, arg0);
 	int line;
 	while ((line = itr.Next()) >= 0)
 	{
@@ -2608,7 +2608,7 @@ FUNC(LS_Line_AlignFloor)
 {
 	bool ret = 0;
 
-	FLineIdIterator itr(arg0);
+	FLineIdIterator itr(Level->tagManager, arg0);
 	int line;
 	while ((line = itr.Next()) >= 0)
 	{
@@ -2627,7 +2627,7 @@ FUNC(LS_Line_SetTextureOffset)
 	if (arg0 == 0 || arg3 < 0 || arg3 > 1)
 		return false;
 
-	FLineIdIterator itr(arg0);
+	FLineIdIterator itr(Level->tagManager, arg0);
 	int line;
 	while ((line = itr.Next()) >= 0)
 	{
@@ -2682,7 +2682,7 @@ FUNC(LS_Line_SetTextureScale)
 	if (arg0 == 0 || arg3 < 0 || arg3 > 1)
 		return false;
 
-	FLineIdIterator itr(arg0);
+	FLineIdIterator itr(Level->tagManager, arg0);
 	int line;
 	while ((line = itr.Next()) >= 0)
 	{
@@ -2756,7 +2756,7 @@ FUNC(LS_Line_SetBlocking)
 		if (arg2 & 1) clearflags |= flagtrans[i];
 	}
 
-	FLineIdIterator itr(arg0);
+	FLineIdIterator itr(Level->tagManager, arg0);
 	int line;
 	while ((line = itr.Next()) >= 0)
 	{
@@ -2788,7 +2788,7 @@ FUNC(LS_Line_SetAutomapFlags)
 		if (arg2 & 1) clearflags |= flagtrans[i];
 	}
 
-	FLineIdIterator itr(arg0);
+	FLineIdIterator itr(Level->tagManager, arg0);
 	int line;
 	while ((line = itr.Next()) >= 0)
 	{
@@ -2803,7 +2803,7 @@ FUNC(LS_Line_SetAutomapStyle)
 {
 	if (arg1 < AMLS_COUNT && arg1 >= 0)
 	{
-		FLineIdIterator itr(arg0);
+		FLineIdIterator itr(Level->tagManager, arg0);
 		int line;
 		while ((line = itr.Next()) >= 0)
 		{
@@ -3103,7 +3103,7 @@ FUNC(LS_SetPlayerProperty)
 FUNC(LS_TranslucentLine)
 // TranslucentLine (id, amount, type)
 {
-	FLineIdIterator itr(arg0);
+	FLineIdIterator itr(Level->tagManager, arg0);
 	int linenum;
 	while ((linenum = itr.Next()) >= 0)
 	{
@@ -3233,7 +3233,7 @@ FUNC(LS_ClearForceField)
 {
 	bool rtn = false;
 
-	FSectorTagIterator itr(arg0);
+	FSectorTagIterator itr(Level->tagManager, arg0);
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
@@ -3409,7 +3409,7 @@ FUNC(LS_Sector_SetPlaneReflection)
 // Sector_SetPlaneReflection (tag, floor, ceiling)
 {
 	int secnum;
-	FSectorTagIterator itr(arg0);
+	FSectorTagIterator itr(Level->tagManager, arg0);
 
 	while ((secnum = itr.Next()) >= 0)
 	{
@@ -3450,7 +3450,7 @@ FUNC(LS_Sector_SetFloorGlow)
 	int secnum;
 	PalEntry color(arg2, arg3, arg4);
 	if (arg1 < 0) color = -1;	// negative height invalidates the glow.
-	FSectorTagIterator itr(arg0);
+	FSectorTagIterator itr(Level->tagManager, arg0);
 
 	while ((secnum = itr.Next()) >= 0)
 	{
@@ -3467,7 +3467,7 @@ FUNC(LS_Sector_SetCeilingGlow)
 	int secnum;
 	PalEntry color(arg2, arg3, arg4);
 	if (arg1 < 0) color = -1;	// negative height invalidates the glow.
-	FSectorTagIterator itr(arg0);
+	FSectorTagIterator itr(Level->tagManager, arg0);
 
 	while ((secnum = itr.Next()) >= 0)
 	{
@@ -3481,7 +3481,7 @@ FUNC(LS_Sector_SetCeilingGlow)
 FUNC(LS_Line_SetHealth)
 // Line_SetHealth(id, health)
 {
-	FLineIdIterator itr(arg0);
+	FLineIdIterator itr(Level->tagManager, arg0);
 	int l;
 
 	if (arg1 < 0)
@@ -3500,7 +3500,7 @@ FUNC(LS_Line_SetHealth)
 FUNC(LS_Sector_SetHealth)
 // Sector_SetHealth(id, part, health)
 {
-	FSectorTagIterator itr(arg0);
+	FSectorTagIterator itr(Level->tagManager, arg0);
 	int s;
 
 	if (arg2 < 0)

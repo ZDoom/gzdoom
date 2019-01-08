@@ -432,7 +432,7 @@ void P_SpawnScrollers(FLevelLocals *Level)
 		if (line.special == Sector_CopyScroller)
 		{
 			// don't allow copying the scroller if the sector has the same tag as it would just duplicate it.
-			if (!tagManager.SectorHasTag(line.frontsector, line.args[0]))
+			if (!Level->tagManager.SectorHasTag(line.frontsector, line.args[0]))
 			{
 				copyscrollers.Push(line.Index());
 			}
@@ -510,7 +510,7 @@ void P_SpawnScrollers(FLevelLocals *Level)
 
 		case Scroll_Ceiling:
 		{
-			FSectorTagIterator itr(l->args[0]);
+			FSectorTagIterator itr(Level->tagManager, l->args[0]);
 			while ((s = itr.Next()) >= 0)
 			{
 				Create<DScroller>(EScroll::sc_ceiling, -dx, dy, control, &Level->sectors[s], nullptr, accel);
@@ -530,7 +530,7 @@ void P_SpawnScrollers(FLevelLocals *Level)
 		case Scroll_Floor:
 			if (l->args[2] != 1)
 			{ // scroll the floor texture
-				FSectorTagIterator itr(l->args[0]);
+				FSectorTagIterator itr(Level->tagManager, l->args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
 					Create<DScroller> (EScroll::sc_floor, -dx, dy, control, &Level->sectors[s], nullptr, accel);
@@ -548,7 +548,7 @@ void P_SpawnScrollers(FLevelLocals *Level)
 
 			if (l->args[2] > 0)
 			{ // carry objects on the floor
-				FSectorTagIterator itr(l->args[0]);
+				FSectorTagIterator itr(Level->tagManager, l->args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
 					Create<DScroller> (EScroll::sc_carry, dx, dy, control, &Level->sectors[s], nullptr, accel);
@@ -569,7 +569,7 @@ void P_SpawnScrollers(FLevelLocals *Level)
 		// (same direction and speed as scrolling floors)
 		case Scroll_Texture_Model:
 		{
-			FLineIdIterator itr(l->args[0]);
+			FLineIdIterator itr(Level->tagManager, l->args[0]);
 			while ((s = itr.Next()) >= 0)
 			{
 				if (s != (int)i)
@@ -647,7 +647,7 @@ void SetWallScroller (FLevelLocals *Level, int id, int sidechoice, double dx, do
 		{
 			auto wall = scroller->GetWall ();
 
-			if (wall != nullptr && tagManager.LineHasID(wall->linedef, id) && wall->linedef->sidedef[sidechoice] == wall && Where == scroller->GetScrollParts())
+			if (wall != nullptr && Level->tagManager.LineHasID(wall->linedef, id) && wall->linedef->sidedef[sidechoice] == wall && Where == scroller->GetScrollParts())
 			{
 				scroller->Destroy ();
 			}
@@ -668,7 +668,7 @@ void SetWallScroller (FLevelLocals *Level, int id, int sidechoice, double dx, do
 				if (wall != nullptr)
 				{
 					auto line = wall->linedef;
-					if (tagManager.LineHasID(line, id) && line->sidedef[sidechoice] == wall && Where == scroll->GetScrollParts())
+					if (Level->tagManager.LineHasID(line, id) && line->sidedef[sidechoice] == wall && Where == scroll->GetScrollParts())
 					{
 						scroll->SetRate(dx, dy);
 						Collection.Push(scroll);
@@ -681,7 +681,7 @@ void SetWallScroller (FLevelLocals *Level, int id, int sidechoice, double dx, do
 		int linenum;
 
 		// Now create scrollers for any walls that don't already have them.
-		FLineIdIterator itr(id);
+		FLineIdIterator itr(Level->tagManager, id);
 		while ((linenum = itr.Next()) >= 0)
 		{
 			side_t *side = Level->lines[linenum].sidedef[sidechoice];
@@ -712,7 +712,7 @@ void SetScroller (FLevelLocals *Level, int tag, EScroll type, double dx, double 
 	{
 		if (scroller->IsType (type))
 		{
-			if (tagManager.SectorHasTag(scroller->GetSector(), tag))
+			if (Level->tagManager.SectorHasTag(scroller->GetSector(), tag))
 			{
 				i++;
 				scroller->SetRate (dx, dy);
@@ -726,7 +726,7 @@ void SetScroller (FLevelLocals *Level, int tag, EScroll type, double dx, double 
 	}
 
 	// Need to create scrollers for the sector(s)
-	FSectorTagIterator itr(tag);
+	FSectorTagIterator itr(Level->tagManager, tag);
 	while ((i = itr.Next()) >= 0)
 	{
 		Create<DScroller> (type, dx, dy, nullptr, &Level->sectors[i], nullptr, 0);

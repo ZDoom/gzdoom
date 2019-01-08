@@ -583,7 +583,7 @@ void MapLoader::ProcessEDLinedef(line_t *ld, int recordnum)
 	ld->flags = (ld->flags&~fmask) | eld->flags;
 	ld->setAlpha(eld->alpha);
 	memcpy(ld->args, eld->args, sizeof(ld->args));
-	tagManager.AddLineID(Index(ld), eld->tag);
+	Level->tagManager.AddLineID(Index(ld), eld->tag);
 }
 
 void MapLoader::ProcessEDSector(sector_t *sec, int recordnum)

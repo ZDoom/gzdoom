@@ -306,7 +306,7 @@ class FSSectorTagIterator : public FSectorTagIterator
 {
 public:
 	FSSectorTagIterator(FLevelLocals *Level, int tag)
-		: FSectorTagIterator(tag)
+		: FSectorTagIterator(Level->tagManager, tag)
 	{
 		if (tag < 0)
 		{
@@ -1150,7 +1150,7 @@ void FParser::SF_ObjSector(void)
 	}
 
 	t_return.type = svt_int;
-	t_return.value.i = mo ? tagManager.GetFirstSectorTag(mo->Sector) : 0; // nullptr check
+	t_return.value.i = mo ? Level->tagManager.GetFirstSectorTag(mo->Sector) : 0; // nullptr check
 }
 
 //==========================================================================
@@ -1859,7 +1859,7 @@ void FParser::SF_FadeLight(void)
 		destlevel = intvalue(t_argv[1]);
 		speed = t_argc>2 ? intvalue(t_argv[2]) : 1;
 		
-		FSectorTagIterator it(sectag);
+		FSectorTagIterator it(Level->tagManager, sectag);
 		while ((i = it.Next()) >= 0)
 		{
 			if (!Level->sectors[i].lightingdata) Create<DLightLevel>(&Level->sectors[i],destlevel,speed);
@@ -2157,7 +2157,7 @@ void FParser::SF_SetLineBlocking(void)
 		{
 			blocking=blocks[blocking];
 			int tag=intvalue(t_argv[0]);
-			FLineIdIterator itr(tag);
+			FLineIdIterator itr(Level->tagManager, tag);
 			int i;
 			while ((i = itr.Next()) >= 0)
 			{
@@ -2180,7 +2180,7 @@ void FParser::SF_SetLineMonsterBlocking(void)
 		int blocking = intvalue(t_argv[1]) ? (int)ML_BLOCKMONSTERS : 0;
 		int tag=intvalue(t_argv[0]);
 
-		FLineIdIterator itr(tag);
+		FLineIdIterator itr(Level->tagManager, tag);
 		int i;
 		while ((i = itr.Next()) >= 0)
 		{
@@ -2237,7 +2237,7 @@ void FParser::SF_SetLineTexture(void)
 			texture = stringvalue(t_argv[3]);
 			texturenum = TexMan.GetTextureID(texture, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
 			
-			FLineIdIterator itr(tag);
+			FLineIdIterator itr(Level->tagManager, tag);
 			while ((i = itr.Next()) >= 0)
 			{
 				// bad sidedef, Hexen just SEGV'd here!
@@ -2257,7 +2257,7 @@ void FParser::SF_SetLineTexture(void)
 			int sections = intvalue(t_argv[3]); 
 			
 			// set all sectors with tag 
-			FLineIdIterator itr(tag);
+			FLineIdIterator itr(Level->tagManager, tag);
 			while ((i = itr.Next()) >= 0)
 			{ 
 				side_t *sided = Level->lines[i].sidedef[side];
@@ -3792,7 +3792,7 @@ void  FParser::SF_KillInSector()
 
 		while ((mo=it.Next()))
 		{
-			if (mo->flags3&MF3_ISMONSTER && tagManager.SectorHasTag(mo->Sector, tag)) P_DamageMobj(mo, NULL, NULL, 1000000, NAME_Massacre);
+			if (mo->flags3&MF3_ISMONSTER && Level->tagManager.SectorHasTag(mo->Sector, tag)) P_DamageMobj(mo, NULL, NULL, 1000000, NAME_Massacre);
 		}
 	}
 }
@@ -3814,7 +3814,7 @@ void FParser::SF_SetLineTrigger()
 		id=intvalue(t_argv[0]);
 		spec=intvalue(t_argv[1]);
 		if (t_argc>2) tag=intvalue(t_argv[2]);
-		FLineIdIterator itr(id);
+		FLineIdIterator itr(Level->tagManager, id);
 		while ((i = itr.Next()) >= 0)
 		{
 			maplinedef_t mld;

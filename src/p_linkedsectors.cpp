@@ -284,11 +284,11 @@ static void AddSingleSector(extsector_t::linked::plane &scrollplane, sector_t *s
 //
 //============================================================================
 
-static void RemoveTaggedSectors(extsector_t::linked::plane &scrollplane, int tag)
+static void RemoveTaggedSectors(FLevelLocals *Level, extsector_t::linked::plane &scrollplane, int tag)
 {
 	for(int i = scrollplane.Sectors.Size()-1; i>=0; i--)
 	{
-		if (tagManager.SectorHasTag(scrollplane.Sectors[i].Sector, tag))
+		if (Level->tagManager.SectorHasTag(scrollplane.Sectors[i].Sector, tag))
 		{
 			scrollplane.Sectors.Delete(i);
 		}
@@ -328,7 +328,7 @@ bool P_AddSectorLinks(sector_t *control, int tag, INTBOOL ceiling, int movetype)
 	if (movetype > 0)
 	{
 		int sec;
-		FSectorTagIterator itr(tag);
+		FSectorTagIterator itr(Level->tagManager, tag);
 		while ((sec = itr.Next()) >= 0)
 		{
 			// Don't attach to self (but allow attaching to this sector's oposite plane.
@@ -342,7 +342,7 @@ bool P_AddSectorLinks(sector_t *control, int tag, INTBOOL ceiling, int movetype)
 	}
 	else
 	{
-		RemoveTaggedSectors(scrollplane, tag);
+		RemoveTaggedSectors(Level, scrollplane, tag);
 	}
 	return true;
 }
@@ -362,7 +362,7 @@ void P_AddSectorLinksByID(sector_t *control, int id, INTBOOL ceiling)
 	extsector_t::linked::plane &scrollplane = ceiling? control->e->Linked.Ceiling : control->e->Linked.Floor;
 	auto Level = control->Level;
 
-	FLineIdIterator itr(id);
+	FLineIdIterator itr(Level->tagManager, id);
 	int line;
 	while ((line = itr.Next()) >= 0)
 	{

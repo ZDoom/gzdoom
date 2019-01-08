@@ -1853,7 +1853,7 @@ DPlaneWatcher::DPlaneWatcher (FLevelLocals *Level, AActor *it, line_t *line, int
 	Args[2] = arg2;
 	Args[3] = arg3;
 	Args[4] = arg4;
-	secnum = P_FindFirstSectorFromTag (tag);
+	secnum = Level->tagManager.FindFirstSectorFromTag (tag);
 	if (secnum >= 0)
 	{
 		secplane_t plane;
@@ -3625,7 +3625,7 @@ do_count:
 			if (actor->health > 0 &&
 				(kind == NULL || actor->IsA (kind)))
 			{
-				if (tag == -1 || tagManager.SectorHasTag(actor->Sector, tag))
+				if (tag == -1 || Level->tagManager.SectorHasTag(actor->Sector, tag))
 				{
 					// Don't count items in somebody's inventory
 					if (actor->IsMapActor())
@@ -3644,7 +3644,7 @@ do_count:
 			if (actor->health > 0 &&
 				(kind == NULL || actor->IsA (kind)))
 			{
-				if (tag == -1 || tagManager.SectorHasTag(actor->Sector, tag))
+				if (tag == -1 || Level->tagManager.SectorHasTag(actor->Sector, tag))
 				{
 					// Don't count items in somebody's inventory
 					if (actor->IsMapActor())
@@ -3680,7 +3680,7 @@ void DLevelScript::ChangeFlat (int tag, int name, bool floorOrCeiling)
 
 	flat = TexMan.GetTextureID(flatname, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
 
-	FSectorTagIterator it(tag);
+	FSectorTagIterator it(Level->tagManager, tag);
 	while ((secnum = it.Next()) >= 0)
 	{
 		int pos = floorOrCeiling? sector_t::ceiling : sector_t::floor;
@@ -3712,7 +3712,7 @@ void DLevelScript::SetLineTexture (int lineid, int side, int position, int name)
 
 	texture = TexMan.GetTextureID(texname, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
 
-	FLineIdIterator itr(lineid);
+	FLineIdIterator itr(Level->tagManager, lineid);
 	while ((linenum = itr.Next()) >= 0)
 	{
 		side_t *sidedef;
@@ -4819,7 +4819,7 @@ int DLevelScript::SideFromID(int id, int side)
 	}
 	else
 	{
-		int line = P_FindFirstLineFromID(id);
+		int line = Level->tagManager.FindFirstLineFromID(id);
 		if (line == -1) return -1;
 		if (Level->lines[line].sidedef[side] == NULL) return -1;
 		return Level->lines[line].sidedef[side]->UDMFIndex;
@@ -4835,7 +4835,7 @@ int DLevelScript::LineFromID(int id)
 	}
 	else
 	{
-		return P_FindFirstLineFromID(id);
+		return Level->tagManager.FindFirstLineFromID(id);
 	}
 }
 
@@ -5322,10 +5322,10 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 			return 0;	// Not implemented yet
 
 		case ACSF_GetSectorUDMFInt:
-			return GetUDMFInt(UDMF_Sector, P_FindFirstSectorFromTag(args[0]), Level->Behaviors.LookupString(args[1]));
+			return GetUDMFInt(UDMF_Sector, Level->tagManager.FindFirstSectorFromTag(args[0]), Level->Behaviors.LookupString(args[1]));
 
 		case ACSF_GetSectorUDMFFixed:
-			return DoubleToACS(GetUDMFFloat(UDMF_Sector, P_FindFirstSectorFromTag(args[0]), Level->Behaviors.LookupString(args[1])));
+			return DoubleToACS(GetUDMFFloat(UDMF_Sector, Level->tagManager.FindFirstSectorFromTag(args[0]), Level->Behaviors.LookupString(args[1])));
 
 		case ACSF_GetSideUDMFInt:
 			return GetUDMFInt(UDMF_Side, SideFromID(args[0], args[1]), Level->Behaviors.LookupString(args[2]));
@@ -5657,7 +5657,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 				int space = args[2] < CHAN_FLOOR || args[2] > CHAN_INTERIOR ? CHAN_FULLHEIGHT : args[2];
 				if (seqname != NULL)
 				{
-					FSectorTagIterator it(args[0]);
+					FSectorTagIterator it(Level->tagManager, args[0]);
 					int s;
 					while ((s = it.Next()) >= 0)
 					{
@@ -6205,7 +6205,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			if (argCount >= 2)
 			{
 				int line;
-				FLineIdIterator itr(args[0]);
+				FLineIdIterator itr(Level->tagManager, args[0]);
 				while ((line = itr.Next()) >= 0)
 				{
 					Level->lines[line].activation = args[1];
@@ -6216,7 +6216,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		case ACSF_GetLineActivation:
 			if (argCount > 0)
 			{
-				int line = P_FindFirstLineFromID(args[0]);
+				int line = Level->tagManager.FindFirstLineFromID(args[0]);
 				return line >= 0 ? Level->lines[line].activation : 0;
 			}
 			break;
@@ -6429,7 +6429,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		case ACSF_SetSectorDamage:
 			if (argCount >= 2)
 			{
-				FSectorTagIterator it(args[0]);
+				FSectorTagIterator it(Level->tagManager, args[0]);
 				int s;
 				while ((s = it.Next()) >= 0)
 				{
@@ -6449,7 +6449,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				if (args[1] == sector_t::floor || args[1] == sector_t::ceiling)
 				{
 					int terrain = P_FindTerrain(Level->Behaviors.LookupString(args[2]));
-					FSectorTagIterator it(args[0]);
+					FSectorTagIterator it(Level->tagManager, args[0]);
 					int s;
 					while ((s = it.Next()) >= 0)
 					{
@@ -6590,7 +6590,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			float height = float(args[5]);
 			if (args[2] == -1) color = -1;
 
-			FSectorTagIterator it(args[0]);
+			FSectorTagIterator it(Level->tagManager, args[0]);
 			int s;
 			while ((s = it.Next()) >= 0)
 			{
@@ -6602,7 +6602,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 
 		case ACSF_SetFogDensity:
 		{
-			FSectorTagIterator it(args[0]);
+			FSectorTagIterator it(Level->tagManager, args[0]);
 			int s;
 			int d = clamp(args[1]/2, 0, 255);
 			while ((s = it.Next()) >= 0)
@@ -6662,7 +6662,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		case ACSF_GetSectorHealth:
 		{
 			int part = args[1];
-			FSectorTagIterator it(args[0]);
+			FSectorTagIterator it(Level->tagManager, args[0]);
 			int s = it.Next();
 			if (s < 0)
 				return 0;
@@ -6688,7 +6688,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 
 		case ACSF_GetLineHealth:
 		{
-			FLineIdIterator it(args[0]);
+			FLineIdIterator it(Level->tagManager, args[0]);
 			int l = it.Next();
 			if (l < 0)
 				return 0;
@@ -6705,7 +6705,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		case ACSF_GetLineX:
 		case ACSF_GetLineY:
 		{
-			FLineIdIterator it(args[0]);
+			FLineIdIterator it(Level->tagManager, args[0]);
 			int lineno = it.Next();
 			if (lineno < 0) return 0;
 			DVector2 delta = Level->lines[lineno].Delta();
@@ -6821,7 +6821,7 @@ int DLevelScript::RunScript ()
 		// state running
 	{
 		int secnum;
-		FSectorTagIterator it(statedata);
+		FSectorTagIterator it(Level->tagManager, statedata);
 		while ((secnum = it.Next()) >= 0)
 		{
 			if (Level->sectors[secnum].floordata || Level->sectors[secnum].ceilingdata)
@@ -8930,7 +8930,7 @@ scriptwait:
 			{
 				int lineno;
 
-				FLineIdIterator itr(STACK(2));
+				FLineIdIterator itr(Level->tagManager, STACK(2));
 				while ((lineno = itr.Next()) >= 0)
 				{
 					auto &line = Level->lines[lineno];
@@ -8967,7 +8967,7 @@ scriptwait:
 			{
 				int line;
 
-				FLineIdIterator itr(STACK(2));
+				FLineIdIterator itr(Level->tagManager, STACK(2));
 				while ((line = itr.Next()) >= 0)
 				{
 					if (STACK(1))
@@ -8993,7 +8993,7 @@ scriptwait:
 					arg0 = -FName(Level->Behaviors.LookupString(arg0));
 				}
 
-				FLineIdIterator itr(STACK(7));
+				FLineIdIterator itr(Level->tagManager, STACK(7));
 				while ((linenum = itr.Next()) >= 0)
 				{
 					line_t *line = &Level->lines[linenum];
@@ -9467,7 +9467,7 @@ scriptwait:
 				double z = 0;
 
 				if (tag != 0)
-					secnum = P_FindFirstSectorFromTag (tag);
+					secnum = Level->tagManager.FindFirstSectorFromTag (tag);
 				else
 					secnum = P_PointInSector (x, y)->sectornum;
 
@@ -9489,7 +9489,7 @@ scriptwait:
 
 		case PCD_GETSECTORLIGHTLEVEL:
 			{
-				int secnum = P_FindFirstSectorFromTag (STACK(1));
+				int secnum = Level->tagManager.FindFirstSectorFromTag (STACK(1));
 				int z = -1;
 
 				if (secnum >= 0)

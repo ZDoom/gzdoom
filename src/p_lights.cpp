@@ -326,7 +326,7 @@ DFlicker::DFlicker (sector_t *sector, int upper, int lower)
 void EV_StartLightFlickering (FLevelLocals *Level, int tag, int upper, int lower)
 {
 	int secnum;
-	FSectorTagIterator it(tag);
+	FSectorTagIterator it(Level->tagManager, tag);
 	while ((secnum = it.Next()) >= 0)
 	{
 		Create<DFlicker> (&Level->sectors[secnum], upper, lower);
@@ -503,7 +503,7 @@ DStrobe::DStrobe (sector_t *sector, int utics, int ltics, bool inSync)
 void EV_StartLightStrobing (FLevelLocals *Level, int tag, int upper, int lower, int utics, int ltics)
 {
 	int secnum;
-	FSectorTagIterator it(tag);
+	FSectorTagIterator it(Level->tagManager, tag);
 	while ((secnum = it.Next()) >= 0)
 	{
 		sector_t *sec = &Level->sectors[secnum];
@@ -517,7 +517,7 @@ void EV_StartLightStrobing (FLevelLocals *Level, int tag, int upper, int lower, 
 void EV_StartLightStrobing (FLevelLocals *Level, int tag, int utics, int ltics)
 {
 	int secnum;
-	FSectorTagIterator it(tag);
+	FSectorTagIterator it(Level->tagManager, tag);
 	while ((secnum = it.Next()) >= 0)
 	{
 		sector_t *sec = &Level->sectors[secnum];
@@ -539,7 +539,7 @@ void EV_StartLightStrobing (FLevelLocals *Level, int tag, int utics, int ltics)
 void EV_TurnTagLightsOff (FLevelLocals *Level, int tag)
 {
 	int secnum;
-	FSectorTagIterator it(tag);
+	FSectorTagIterator it(Level->tagManager, tag);
 	while ((secnum = it.Next()) >= 0)
 	{
 		sector_t *sector = &Level->sectors[secnum];
@@ -568,7 +568,7 @@ void EV_TurnTagLightsOff (FLevelLocals *Level, int tag)
 void EV_LightTurnOn (FLevelLocals *Level, int tag, int bright)
 {
 	int secnum;
-	FSectorTagIterator it(tag);
+	FSectorTagIterator it(Level->tagManager, tag);
 	while ((secnum = it.Next()) >= 0)
 	{
 		sector_t *sector = &Level->sectors[secnum];
@@ -621,7 +621,7 @@ void EV_LightTurnOnPartway (FLevelLocals *Level, int tag, double frac)
 
 	// Search all sectors for ones with same tag as activating line
 	int secnum;
-	FSectorTagIterator it(tag);
+	FSectorTagIterator it(Level->tagManager, tag);
 	while ((secnum = it.Next()) >= 0)
 	{
 		sector_t *temp, *sector = &Level->sectors[secnum];
@@ -657,7 +657,7 @@ void EV_LightTurnOnPartway (FLevelLocals *Level, int tag, double frac)
 void EV_LightChange (FLevelLocals *Level, int tag, int value)
 {
 	int secnum;
-	FSectorTagIterator it(tag);
+	FSectorTagIterator it(Level->tagManager, tag);
 	while ((secnum = it.Next()) >= 0)
 	{
 		Level->sectors[secnum].SetLightLevel(Level->sectors[secnum].lightlevel + value);
@@ -823,7 +823,7 @@ void EV_StartLightGlowing (FLevelLocals *Level, int tag, int upper, int lower, i
 		lower = temp;
 	}
 
-	FSectorTagIterator it(tag);
+	FSectorTagIterator it(Level->tagManager, tag);
 	while ((secnum = it.Next()) >= 0)
 	{
 		sector_t *sec = &Level->sectors[secnum];
@@ -843,7 +843,7 @@ void EV_StartLightGlowing (FLevelLocals *Level, int tag, int upper, int lower, i
 void EV_StartLightFading (FLevelLocals *Level, int tag, int value, int tics)
 {
 	int secnum;
-	FSectorTagIterator it(tag);
+	FSectorTagIterator it(Level->tagManager, tag);
 	while ((secnum = it.Next()) >= 0)
 	{
 		sector_t *sec = &Level->sectors[secnum];
@@ -989,7 +989,7 @@ void EV_StopLightEffect (FLevelLocals *Level, int tag)
 
 	while ((effect = iterator.Next()) != NULL)
 	{
-		if (tagManager.SectorHasTag(effect->GetSector(), tag))
+		if (Level->tagManager.SectorHasTag(effect->GetSector(), tag))
 		{
 			effect->Destroy();
 		}

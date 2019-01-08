@@ -44,6 +44,7 @@
 #include "p_local.h"
 #include "po_man.h"
 #include "p_acs.h"
+#include "p_tags.h"
 #include "p_destructible.h"
 #include "r_data/r_sections.h"
 #include "r_data/r_canvastexture.h"
@@ -70,6 +71,7 @@ struct FLevelData
 	TArray<uint8_t> rejectmatrix;
 	TArray<zone_t>	Zones;
 	TArray<FPolyObj> Polyobjects;
+	FTagManager tagManager;
 
 	TArray<FSectorPortal> sectorPortals;
 	TArray<FLinePortal> linePortals;

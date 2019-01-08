@@ -520,7 +520,7 @@ bool EV_DoCeiling (FLevelLocals *Level, DCeiling::ECeiling type, line_t *line,
 	}
 
 	// affects all sectors with the same tag as the linedef
-	FSectorTagIterator it(tag);
+	FSectorTagIterator it(Level->tagManager, tag);
 	while ((secnum = it.Next()) >= 0)
 	{
 		rtn |= P_CreateCeiling(&Level->sectors[secnum], type, line, tag, speed, speed2, height, crush, silent, change, hexencrush);
@@ -592,7 +592,7 @@ bool EV_CeilingCrushStop (FLevelLocals *Level, int tag, bool remove)
 bool EV_StopCeiling(FLevelLocals *Level, int tag, line_t *line)
 {
 	int sec;
-	FSectorTagIterator it(tag, line);
+	FSectorTagIterator it(Level->tagManager, tag, line);
 	while ((sec = it.Next()) >= 0)
 	{
 		if (Level->sectors[sec].ceilingdata)

@@ -62,6 +62,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineindexforid)
 	short tag = mld->tag;
 	uint32_t flags =mld->flags;
 	INTBOOL passthrough = 0;
+	auto Level = ld->GetLevel();
 
 	uint32_t flags1 = flags;
 	uint32_t newflags = 0;
@@ -102,7 +103,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineindexforid)
 		// line also needs to have its ID set to the same as its tag.
 		// An external conversion program would need to do this more
 		// intelligently.
-		tagManager.AddLineID(lineindexforid, tag);
+		Level->tagManager.AddLineID(lineindexforid, tag);
 	}
 
 	// 0 specials are never translated.

@@ -490,7 +490,7 @@ bool EV_DoDoor (FLevelLocals *Level, DDoor::EVlDoor type, line_t *line, AActor *
 	else
 	{	// [RH] Remote door
 
-		FSectorTagIterator it(tag);
+		FSectorTagIterator it(Level->tagManager, tag);
 		while ((secnum = it.Next()) >= 0)
 		{
 			sec = &Level->sectors[secnum];
@@ -787,7 +787,7 @@ bool EV_SlidingDoor (FLevelLocals *Level, line_t *line, AActor *actor, int tag, 
 		return false;
 	}
 
-	FSectorTagIterator it(tag);
+	FSectorTagIterator it(Level->tagManager, tag);
 	while ((secnum = it.Next()) >= 0)
 	{
 		sec = &Level->sectors[secnum];

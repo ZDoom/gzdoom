@@ -245,7 +245,7 @@ class DSectorTagIterator : public DObject, public FSectorTagIterator
 {
 	DECLARE_ABSTRACT_CLASS(DSectorTagIterator, DObject);
 public:
-	DSectorTagIterator(int tag, line_t *line)
+	DSectorTagIterator(FTagManager &tagManager, int tag, line_t *line) : FSectorTagIterator(tagManager)
 	{
 		if (line == nullptr) Init(tag);
 		else Init(tag, line);
@@ -254,17 +254,17 @@ public:
 
 IMPLEMENT_CLASS(DSectorTagIterator, true, false);
 
-static DSectorTagIterator *CreateSTI(int tag, line_t *line)
+static DSectorTagIterator *CreateSTI(FLevelLocals *Level, int tag, line_t *line)
 {
-	return Create<DSectorTagIterator>(tag, line);
+	return Create<DSectorTagIterator>(Level->tagManager, tag, line);
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(DSectorTagIterator, Create, CreateSTI)
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, CreateSectorTagIterator, CreateSTI)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_INT(tag);
 	PARAM_POINTER(line, line_t);
-	ACTION_RETURN_POINTER(Create<DSectorTagIterator>(tag, line));
+	ACTION_RETURN_POINTER(Create<DSectorTagIterator>(self->tagManager, tag, line));
 }
 
 int NextSTI(DSectorTagIterator *self)
@@ -301,8 +301,8 @@ class DLineIdIterator : public DObject, public FLineIdIterator
 {
 	DECLARE_ABSTRACT_CLASS(DLineIdIterator, DObject);
 public:
-	DLineIdIterator(int tag)
-		: FLineIdIterator(tag)
+	DLineIdIterator(FTagManager &tagManager, int tag)
+		: FLineIdIterator(tagManager, tag)
 	{
 	}
 };
@@ -310,16 +310,16 @@ public:
 IMPLEMENT_CLASS(DLineIdIterator, true, false);
 
 
-static DLineIdIterator *CreateLTI(int tag)
+static DLineIdIterator *CreateLTI(FLevelLocals *Level, int tag)
 {
-	return Create<DLineIdIterator>(tag);
+	return Create<DLineIdIterator>(Level->tagManager, tag);
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(DLineIdIterator, Create, CreateLTI)
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, CreateLineIDIterator, CreateLTI)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_INT(tag);
-	ACTION_RETURN_POINTER(Create<DLineIdIterator>(tag));
+	ACTION_RETURN_POINTER(Create<DLineIdIterator>(self->tagManager, tag));
 }
 
 int NextLTI(DLineIdIterator *self)

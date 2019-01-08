@@ -458,7 +458,7 @@ bool DFraggleThinker::wait_finished(DRunningScript *script)
     case wt_tagwait:
 		{
 			int secnum;
-			FSectorTagIterator itr(script->wait_data);
+			FSectorTagIterator itr(Level->tagManager, script->wait_data);
 			while ((secnum = itr.Next()) >= 0)
 			{
 				sector_t *sec = &Level->sectors[secnum];

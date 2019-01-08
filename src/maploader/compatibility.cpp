@@ -394,7 +394,7 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, ClearSectorTags)
 {
 	PARAM_SELF_PROLOGUE(DLevelCompatibility);
 	PARAM_INT(sector);
-	tagManager.RemoveSectorTags(sector);
+	self->Level->tagManager.RemoveSectorTags(sector);
 	return 0;
 }
 
@@ -406,7 +406,7 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, AddSectorTag)
 
 	if ((unsigned)sector < self->Level->sectors.Size())
 	{
-		tagManager.AddSectorTag(sector, tag);
+		self->Level->tagManager.AddSectorTag(sector, tag);
 	}
 	return 0;
 }

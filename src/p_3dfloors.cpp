@@ -213,7 +213,7 @@ static int P_Set3DFloor(line_t * line, int param, int param2, int alpha)
 	sector_t * sec = line->frontsector, *ss;
 	auto Level = sec->Level;
 
-	FSectorTagIterator itr(tag);
+	FSectorTagIterator itr(Level->tagManager, tag);
 	while ((s = itr.Next()) >= 0)
 	{
 		ss = &Level->sectors[s];
@@ -905,7 +905,7 @@ void P_Spawn3DFloors (FLevelLocals *Level)
 			{
 				if (line.args[1]&8)
 				{
-					tagManager.AddLineID(line.Index(), line.args[4]);
+					Level->tagManager.AddLineID(line.Index(), line.args[4]);
 				}
 				else
 				{

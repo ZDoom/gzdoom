@@ -244,7 +244,7 @@ bool EV_DoPlat (FLevelLocals *Level, int tag, line_t *line, DPlat::EPlatType typ
 
 	// [RH] If tag is zero, use the sector on the back side
 	//		of the activating line (if any).
-	FSectorTagIterator itr(tag, line);
+	FSectorTagIterator itr(Level->tagManager, tag, line);
 	while ((secnum = itr.Next()) >= 0)
 	{
 		sec = &Level->sectors[secnum];

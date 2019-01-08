@@ -856,7 +856,7 @@ public:
 
 			case NAME_Id:
 				lineid = CheckInt(key);
-				tagManager.AddLineID(index, lineid);
+				Level->tagManager.AddLineID(index, lineid);
 				continue;
 
 			case NAME_Sidefront:
@@ -1127,7 +1127,7 @@ public:
 			// scan the string as long as valid numbers can be found
 			while (sc.CheckNumber())
 			{
-				if (sc.Number != 0)	tagManager.AddLineID(index, sc.Number);
+				if (sc.Number != 0)	Level->tagManager.AddLineID(index, sc.Number);
 			}
 		}
 
@@ -1513,7 +1513,7 @@ public:
 				continue;
 
 			case NAME_Id:
-				tagManager.AddSectorTag(index, CheckInt(key));
+				Level->tagManager.AddSectorTag(index, CheckInt(key));
 				continue;
 
 			default:
@@ -1908,7 +1908,7 @@ public:
 			// scan the string as long as valid numbers can be found
 			while (sc.CheckNumber())
 			{
-				if (sc.Number != 0)	tagManager.AddSectorTag(index, sc.Number);
+				if (sc.Number != 0)	Level->tagManager.AddSectorTag(index, sc.Number);
 			}
 		}
 

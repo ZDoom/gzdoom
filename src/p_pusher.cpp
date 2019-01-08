@@ -173,7 +173,7 @@ DPusher::DPusher (DPusher::EPusher type, line_t *l, int magnitude, int angle, AA
 
 int DPusher::CheckForSectorMatch (EPusher type, int tag)
 {
-	if (m_Type == type && tagManager.SectorHasTag(m_Affectee, tag))
+	if (m_Type == type && Level->tagManager.SectorHasTag(m_Affectee, tag))
 		return m_Affectee->Index();
 	else
 		return -1;
@@ -368,7 +368,7 @@ void P_SpawnPushers (FLevelLocals *Level)
 		{
 		case Sector_SetWind: // wind
 		{
-			FSectorTagIterator itr(l->args[0]);
+			FSectorTagIterator itr(Level->tagManager, l->args[0]);
 			while ((s = itr.Next()) >= 0)
 				Create<DPusher>(DPusher::p_wind, l->args[3] ? l : nullptr, l->args[1], l->args[2], nullptr, &Level->sectors[s]);
 			l->special = 0;
@@ -377,7 +377,7 @@ void P_SpawnPushers (FLevelLocals *Level)
 
 		case Sector_SetCurrent: // current
 		{
-			FSectorTagIterator itr(l->args[0]);
+			FSectorTagIterator itr(Level->tagManager, l->args[0]);
 			while ((s = itr.Next()) >= 0)
 				Create<DPusher>(DPusher::p_current, l->args[3] ? l : nullptr, l->args[1], l->args[2], nullptr, &Level->sectors[s]);
 			l->special = 0;
@@ -386,7 +386,7 @@ void P_SpawnPushers (FLevelLocals *Level)
 
 		case PointPush_SetForce: // push/pull
 			if (l->args[0]) {	// [RH] Find thing by sector
-				FSectorTagIterator itr(l->args[0]);
+				FSectorTagIterator itr(Level->tagManager, l->args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
 					AActor *thing = P_GetPushThing (&Level->sectors[s]);
@@ -439,7 +439,7 @@ void AdjustPusher (FLevelLocals *Level, int tag, int magnitude, int angle, bool 
 	int secnum;
 
 	// Now create pushers for any sectors that don't already have them.
-	FSectorTagIterator itr(tag);
+	FSectorTagIterator itr(Level->tagManager, tag);
 	while ((secnum = itr.Next()) >= 0)
 	{
 		unsigned int i;

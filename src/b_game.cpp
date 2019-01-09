@@ -130,7 +130,7 @@ FCajunMaster::~FCajunMaster()
 }
 
 //This function is called every tick (from g_game.c).
-void FCajunMaster::Main ()
+void FCajunMaster::Main(FLevelLocals *Level)
 {
 	BotThinkCycles.Reset();
 
@@ -138,7 +138,7 @@ void FCajunMaster::Main ()
 		return;
 
 	//Add new bots?
-	if (wanted_botnum > botnum && !freeze)
+	if (wanted_botnum > botnum && !Level->freeze)
 	{
 		if (t_join == ((wanted_botnum - botnum) * SPAWN_DELAY))
 		{
@@ -177,7 +177,6 @@ void FCajunMaster::Init ()
 	botnum = 0;
 	firstthing = nullptr;
 	spawn_tries = 0;
-	freeze = false;
 	observer = false;
 	body1 = nullptr;
 	body2 = nullptr;

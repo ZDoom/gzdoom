@@ -1477,6 +1477,8 @@ void FLevelLocals::InitLevelLocals ()
 	flags = 0;
 	flags2 = 0;
 	flags3 = 0;
+	freeze = false;
+	changefreeze = false;
 
 	info = FindLevelInfo (MapName);
 

@@ -986,7 +986,7 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 		("acsthinker", Level->ACSThinker)
 		("impactdecalcount", Level->ImpactDecalCount)
 		("freeze", Level->freeze)
-		("changefreeze", Level->changefreeze
+		("changefreeze", Level->changefreeze);
 
 	// Hub transitions must keep the current total time
 	if (!hubload)

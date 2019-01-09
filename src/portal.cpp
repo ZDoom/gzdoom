@@ -485,11 +485,10 @@ static bool ChangePortalLine(line_t *line, int destid)
 //
 //============================================================================
 
-bool P_ChangePortal(line_t *ln, int thisid, int destid)
+bool P_ChangePortal(FLevelLocals *Level, line_t *ln, int thisid, int destid)
 {
 	int lineno;
 
-	auto Level = ln->GetLevel();
 	if (thisid == 0) return ChangePortalLine(ln, destid);
 	FLineIdIterator it(Level->tagManager, thisid);
 	bool res = false;

@@ -6076,7 +6076,7 @@ foundone:
 		}
 		else
 		{
-			S_Sound(pos, CHAN_ITEM, smallsplash ?
+			S_Sound(sec->Level, pos, CHAN_ITEM, smallsplash ?
 				splash->SmallSplashSound : splash->NormalSplashSound,
 				1, ATTN_IDLE);
 		}
@@ -6284,7 +6284,7 @@ void P_PlaySpawnSound(AActor *missile, AActor *spawner)
 			// If there is no spawner use the spawn position.
 			// But not in a silenced sector.
 			if (!(missile->Sector->Flags & SECF_SILENT))
-				S_Sound (missile->Pos(), CHAN_WEAPON, missile->SeeSound, 1, ATTN_NORM);
+				S_Sound (missile->Level, missile->Pos(), CHAN_WEAPON, missile->SeeSound, 1, ATTN_NORM);
 		}
 	}
 }

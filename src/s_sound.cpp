@@ -130,12 +130,13 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector, co
 	const float pt[3], int channel, int chanflags, FVector3 *pos, FVector3 *vel);
 static void CalcSectorSoundOrg(const DVector3 &listenpos, const sector_t *sec, int channum, FVector3 &res);
 static void CalcPolyobjSoundOrg(const DVector3 &listenpos, const FPolyObj *poly, FVector3 &res);
-static FSoundChan *S_StartSound(AActor *mover, const sector_t *sec, const FPolyObj *poly,
+static FSoundChan *S_StartSound(FLevelLocals *Level, AActor *mover, const sector_t *sec, const FPolyObj *poly,
 	const FVector3 *pt, int channel, FSoundID sound_id, float volume, float attenuation, FRolloffInfo *rolloff);
 static void S_SetListener(SoundListener &listener, AActor *listenactor);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static FLevelLocals *SoundMainLevel;		// this is the level for which sound should be played. 
 static bool		SoundPaused;		// whether sound is paused
 static bool		MusicPaused;		// whether music is paused
 MusPlayingInfo mus_playing;	// music currently being played
@@ -394,6 +395,7 @@ void S_Start (FLevelLocals *Level)
 {
 	if (GSnd)
 	{
+		SoundMainLevel = Level;
 		// kill all playing sounds at start of level (trust me - a good idea)
 		S_StopAllChannels();
 
@@ -691,14 +693,13 @@ static void CalcPosVel( int type, const AActor *actor, const sector_t *sector,
 		DVector3 listenpos;
 		int pgroup;
 		AActor *listener = players[consoleplayer].camera;
-		FLevelLocals *Level;
+		FLevelLocals *Level = SoundMainLevel;
 
 		if (listener != nullptr)
 		{
 			listenpos = listener->Pos();
 			*pos = listener->SoundPos();
 			pgroup = listener->Sector->PortalGroup;
-			Level = listener->Level;
 		}
 		else
 		{
@@ -706,14 +707,13 @@ static void CalcPosVel( int type, const AActor *actor, const sector_t *sector,
 			pos->Zero();
 			pgroup = 0;
 			type = SOURCE_None; // No level means that no level sound placement should be performed.
-			Level = nullptr;
 		}
 
 		// [BL] Moved this case out of the switch statement to make code easier
 		//      on static analysis.
 		if(type == SOURCE_Unattached)
 		{
-			assert(Level != nullptr);
+			assert(Level != NULL);
 			sector_t *sec = P_PointInSector(pt[0], pt[2]);
 			DVector2 disp = Level->Displacements.getOffset(pgroup, sec->PortalGroup);
 			pos->X = pt[0] - (float)disp.X;
@@ -766,7 +766,8 @@ static void CalcPosVel( int type, const AActor *actor, const sector_t *sector,
 				assert(poly != NULL);
 				if (poly != NULL)
 				{
-					assert(Level != nullptr);
+					assert(Level != NULL);
+					// Todo: Level offsetting
 					DVector2 disp = Level->Displacements.getOffset(pgroup, poly->CenterSubsector->sector->PortalGroup);
 					CalcPolyobjSoundOrg(listenpos + disp, poly, *pos);
 					pos->X -= (float)disp.X;
@@ -934,7 +935,7 @@ static void CalcPolyobjSoundOrg(const DVector3 &listenpos, const FPolyObj *poly,
 //
 //==========================================================================
 
-static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyObj *poly,
+static FSoundChan *S_StartSound(FLevelLocals *Level, AActor *actor, const sector_t *sec, const FPolyObj *poly,
 	const FVector3 *pt, int channel, FSoundID sound_id, float volume, float attenuation,
 	FRolloffInfo *forcedrolloff=NULL)
 {
@@ -950,6 +951,12 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 
 	if (sound_id <= 0 || volume <= 0 || nosfx || nosound )
 		return NULL;
+
+	// Playing sounds from other than the primary level is a job for later. For now, just do not play them.
+	if (Level && Level != SoundMainLevel)
+	{
+		return nullptr;
+	}
 
 	int type;
 
@@ -1327,7 +1334,7 @@ void S_RestartSound(FSoundChan *chan)
 
 void S_Sound (int channel, FSoundID sound_id, float volume, float attenuation)
 {
-	S_StartSound (NULL, NULL, NULL, NULL, channel, sound_id, volume, attenuation);
+	S_StartSound (NULL, NULL, NULL, NULL, NULL, channel, sound_id, volume, attenuation);
 }
 
 DEFINE_ACTION_FUNCTION(DObject, S_Sound)
@@ -1351,7 +1358,7 @@ void S_Sound (AActor *ent, int channel, FSoundID sound_id, float volume, float a
 {
 	if (ent == NULL || ent->Sector->Flags & SECF_SILENT)
 		return;
-	S_StartSound (ent, NULL, NULL, NULL, channel, sound_id, volume, attenuation);
+	S_StartSound (ent->Level, ent, NULL, NULL, NULL, channel, sound_id, volume, attenuation);
 }
 
 //==========================================================================
@@ -1372,7 +1379,7 @@ void S_SoundMinMaxDist(AActor *ent, int channel, FSoundID sound_id, float volume
 	rolloff.RolloffType = ROLLOFF_Linear;
 	rolloff.MinDistance = mindist;
 	rolloff.MaxDistance = maxdist;
-	S_StartSound(ent, NULL, NULL, NULL, channel, sound_id, volume, 1, &rolloff);
+	S_StartSound(ent->Level, ent, NULL, NULL, NULL, channel, sound_id, volume, 1, &rolloff);
 }
 
 //==========================================================================
@@ -1383,7 +1390,7 @@ void S_SoundMinMaxDist(AActor *ent, int channel, FSoundID sound_id, float volume
 
 void S_Sound (const FPolyObj *poly, int channel, FSoundID sound_id, float volume, float attenuation)
 {
-	S_StartSound (NULL, NULL, poly, NULL, channel, sound_id, volume, attenuation);
+	S_StartSound (poly->GetLevel(), NULL, NULL, poly, NULL, channel, sound_id, volume, attenuation);
 }
 
 //==========================================================================
@@ -1392,11 +1399,11 @@ void S_Sound (const FPolyObj *poly, int channel, FSoundID sound_id, float volume
 //
 //==========================================================================
 
-void S_Sound(const DVector3 &pos, int channel, FSoundID sound_id, float volume, float attenuation)
+void S_Sound(FLevelLocals *Level, const DVector3 &pos, int channel, FSoundID sound_id, float volume, float attenuation)
 {
 	// The sound system switches Y and Z around.
 	FVector3 p((float)pos.X, (float)pos.Z, (float)pos.Y);
-	S_StartSound (NULL, NULL, NULL, &p, channel, sound_id, volume, attenuation);
+	S_StartSound (Level, NULL, NULL, NULL, &p, channel, sound_id, volume, attenuation);
 }
 
 //==========================================================================
@@ -1407,7 +1414,7 @@ void S_Sound(const DVector3 &pos, int channel, FSoundID sound_id, float volume, 
 
 void S_Sound (const sector_t *sec, int channel, FSoundID sfxid, float volume, float attenuation)
 {
-	S_StartSound (NULL, sec, NULL, NULL, channel, sfxid, volume, attenuation);
+	S_StartSound (sec->Level, NULL, sec, NULL, NULL, channel, sfxid, volume, attenuation);
 }
 
 //==========================================================================

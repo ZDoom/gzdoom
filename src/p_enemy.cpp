@@ -161,12 +161,12 @@ static void P_RecursiveSound(sector_t *sec, AActor *soundtarget, bool splash, AA
 		// I wish there was a better method to do this than randomly looking through the portal at a few places...
 		if (checkabove)
 		{
-			sector_t *upper = P_PointInSector(check->v1->fPos() + check->Delta() / 2 + sec->GetPortalDisplacement(sector_t::ceiling));
+			sector_t *upper = P_PointInSector(sec->Level, check->v1->fPos() + check->Delta() / 2 + sec->GetPortalDisplacement(sector_t::ceiling));
 			NoiseMarkSector(upper, soundtarget, splash, emitter, soundblocks, maxdist);
 		}
 		if (checkbelow)
 		{
-			sector_t *lower = P_PointInSector(check->v1->fPos() + check->Delta() / 2 + sec->GetPortalDisplacement(sector_t::floor));
+			sector_t *lower = P_PointInSector(sec->Level, check->v1->fPos() + check->Delta() / 2 + sec->GetPortalDisplacement(sector_t::floor));
 			NoiseMarkSector(lower, soundtarget, splash, emitter, soundblocks, maxdist);
 		}
 

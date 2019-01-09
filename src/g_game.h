@@ -34,11 +34,12 @@ struct event_t;
 
 
 class AActor;
+struct FLevelLocals;
 
 //
 // GAME
 //
-void G_DeathMatchSpawnPlayer (int playernum);
+void G_DeathMatchSpawnPlayer (FLevelLocals *Level, int playernum);
 
 struct FPlayerStart *G_PickPlayerStart (int playernum, int flags = 0);
 enum

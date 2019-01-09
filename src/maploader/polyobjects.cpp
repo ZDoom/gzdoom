@@ -315,7 +315,7 @@ void MapLoader::TranslateToStartSpot (int tag, const DVector2 &origin)
 	}
 	po->CalcCenter();
 	// For compatibility purposes
-	po->CenterSubsector = R_PointInSubsector(po->CenterSpot.pos);
+	po->CenterSubsector = R_PointInSubsector(po->GetLevel(), po->CenterSpot.pos);
 }
 
 //==========================================================================

@@ -2062,7 +2062,7 @@ void FLevelLocals::SetMusicVolume(float f)
 
 int IsPointInMap(FLevelLocals *Level, double x, double y, double z)
 {
-	subsector_t *subsector = R_PointInSubsector(FLOAT2FIXED(x), FLOAT2FIXED(y));
+	subsector_t *subsector = R_PointInSubsector(Level, FLOAT2FIXED(x), FLOAT2FIXED(y));
 	if (!subsector) return false;
 
 	for (uint32_t i = 0; i < subsector->numlines; i++)
@@ -2102,8 +2102,8 @@ inline T VecDiff(FLevelLocals *Level, const T& v1, const T& v2)
 
 	if (level.subsectors.Size() > 0)
 	{
-		const sector_t *const sec1 = P_PointInSector(v1);
-		const sector_t *const sec2 = P_PointInSector(v2);
+		const sector_t *const sec1 = P_PointInSector(Level, v1);
+		const sector_t *const sec2 = P_PointInSector(Level, v2);
 
 		if (nullptr != sec1 && nullptr != sec2)
 		{

@@ -295,7 +295,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetZAt)
 				double c = angle.Cos();
 				pos = mobj->Vec2Offset(pos.X * c + pos.Y * s, pos.X * s - pos.Y * c);
 			}
-			sector_t *sec = P_PointInSector(pos);
+			sector_t *sec = P_PointInSector(mobj->Level, pos);
 
 			if (sec)
 			{
@@ -2290,7 +2290,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckLOF)
 		range
 	*/
 
-	sector_t *sec = P_PointInSector(pos);
+	sector_t *sec = P_PointInSector(self->Level, pos);
 
 	if (range == 0)
 	{

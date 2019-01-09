@@ -1315,7 +1315,7 @@ void G_PlayerReborn (int player)
 // because something is occupying it 
 //
 
-bool G_CheckSpot (int playernum, FPlayerStart *mthing)
+bool G_CheckSpot (FLevelLocals *Level, int playernum, FPlayerStart *mthing)
 {
 	DVector3 spot;
 	double oldz;
@@ -1329,7 +1329,7 @@ bool G_CheckSpot (int playernum, FPlayerStart *mthing)
 	{
 		spot.Z = 0;
 	}
-	spot.Z += P_PointInSector (spot)->floorplane.ZatPoint (spot);
+	spot.Z += P_PointInSector (Level, spot)->floorplane.ZatPoint (spot);
 
 	if (!players[playernum].mo)
 	{ // first spawn of level, before corpses
@@ -1409,27 +1409,28 @@ static FPlayerStart *SelectFarthestDeathmatchSpot (size_t selections)
 }
 
 // [RH] Select a deathmatch spawn spot at random (original mechanism)
-static FPlayerStart *SelectRandomDeathmatchSpot (int playernum, unsigned int selections)
+static FPlayerStart *SelectRandomDeathmatchSpot (FLevelLocals *Level, int playernum, unsigned int selections)
 {
 	unsigned int i, j;
 
 	for (j = 0; j < 20; j++)
 	{
 		i = pr_dmspawn() % selections;
-		if (G_CheckSpot (playernum, &level.deathmatchstarts[i]) )
+		if (G_CheckSpot (Level, playernum, &level.deathmatchstarts[i]) )
 		{
-			return &level.deathmatchstarts[i];
+			return &Level->deathmatchstarts[i];
 		}
 	}
 
 	// [RH] return a spot anyway, since we allow telefragging when a player spawns
-	return &level.deathmatchstarts[i];
+	return &Level->deathmatchstarts[i];
 }
 
 DEFINE_ACTION_FUNCTION(DObject, G_PickDeathmatchStart)
 {
 	PARAM_PROLOGUE;
-	unsigned int selections = level.deathmatchstarts.Size();
+	auto Level = &level;
+	unsigned int selections = Level->deathmatchstarts.Size();
 	DVector3 pos;
 	int angle;
 	if (selections == 0)
@@ -1440,8 +1441,8 @@ DEFINE_ACTION_FUNCTION(DObject, G_PickDeathmatchStart)
 	else
 	{
 		unsigned int i = pr_dmspawn() % selections;
-		angle = level.deathmatchstarts[i].angle;
-		pos = level.deathmatchstarts[i].pos;
+		angle = Level->deathmatchstarts[i].angle;
+		pos = Level->deathmatchstarts[i].pos;
 	}
 
 	if (numret > 1)
@@ -1456,12 +1457,12 @@ DEFINE_ACTION_FUNCTION(DObject, G_PickDeathmatchStart)
 	return numret;
 }
 
-void G_DeathMatchSpawnPlayer (int playernum)
+void G_DeathMatchSpawnPlayer (FLevelLocals *Level, int playernum)
 {
 	unsigned int selections;
 	FPlayerStart *spot;
 
-	selections = level.deathmatchstarts.Size ();
+	selections = Level->deathmatchstarts.Size ();
 	// [RH] We can get by with just 1 deathmatch start
 	if (selections < 1)
 		I_Error ("No deathmatch starts");
@@ -1472,28 +1473,28 @@ void G_DeathMatchSpawnPlayer (int playernum)
 	if ((dmflags & DF_SPAWN_FARTHEST) && players[playernum].mo)
 		spot = SelectFarthestDeathmatchSpot (selections);
 	else
-		spot = SelectRandomDeathmatchSpot (playernum, selections);
+		spot = SelectRandomDeathmatchSpot (Level, playernum, selections);
 
 	if (spot == NULL)
 	{ // No good spot, so the player will probably get stuck.
 	  // We were probably using select farthest above, and all
 	  // the spots were taken.
 		spot = G_PickPlayerStart(playernum, PPS_FORCERANDOM);
-		if (!G_CheckSpot(playernum, spot))
+		if (!G_CheckSpot(&level, playernum, spot))
 		{ // This map doesn't have enough coop spots for this player
 		  // to use one.
-			spot = SelectRandomDeathmatchSpot(playernum, selections);
+			spot = SelectRandomDeathmatchSpot(Level, playernum, selections);
 			if (spot == NULL)
 			{ // We have a player 1 start, right?
 				spot = &level.playerstarts[0];
 				if (spot->type == 0)
 				{ // Fine, whatever.
-					spot = &level.deathmatchstarts[0];
+					spot = &Level->deathmatchstarts[0];
 				}
 			}
 		}
 	}
-	AActor *mo = P_SpawnPlayer(&level, spot, playernum);
+	AActor *mo = P_SpawnPlayer(Level, spot, playernum);
 	if (mo != NULL) P_PlayerStartStomp(mo);
 }
 
@@ -1519,7 +1520,7 @@ FPlayerStart *G_PickPlayerStart(int playernum, int flags)
 			// Find all unblocked player starts.
 			for (i = 0; i < level.AllPlayerStarts.Size(); ++i)
 			{
-				if (G_CheckSpot(playernum, &level.AllPlayerStarts[i]))
+				if (G_CheckSpot(&level, playernum, &level.AllPlayerStarts[i]))
 				{
 					good_starts.Push(&level.AllPlayerStarts[i]);
 				}
@@ -1630,13 +1631,13 @@ void G_DoReborn (int playernum, bool freshbot)
 		// spawn at random spot if in deathmatch
 		if ((deathmatch || isUnfriendly) && (level.deathmatchstarts.Size () > 0))
 		{
-			G_DeathMatchSpawnPlayer (playernum);
+			G_DeathMatchSpawnPlayer (&level, playernum);
 			return;
 		}
 
 		if (!(level.flags2 & LEVEL2_RANDOMPLAYERSTARTS) &&
 			level.playerstarts[playernum].type != 0 &&
-			G_CheckSpot (playernum, &level.playerstarts[playernum]))
+			G_CheckSpot (&level, playernum, &level.playerstarts[playernum]))
 		{
 			AActor *mo = P_SpawnPlayer(&level, &level.playerstarts[playernum], playernum);
 			if (mo != NULL) P_PlayerStartStomp(mo, true);

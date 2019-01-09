@@ -941,7 +941,7 @@ double HighestCeilingAt(sector_t *check, double x, double y, sector_t **resultse
 	{
 		pos += check->GetPortalDisplacement(sector_t::ceiling);
 		planeheight = check->GetPortalPlaneZ(sector_t::ceiling);
-		check = P_PointInSector(pos);
+		check = P_PointInSector(check->Level, pos);
 	}
 	if (resultsec) *resultsec = check;
 	return check->ceilingplane.ZatPoint(pos);
@@ -963,7 +963,7 @@ double LowestFloorAt(sector_t *check, double x, double y, sector_t **resultsec)
 	{
 		pos += check->GetPortalDisplacement(sector_t::floor);
 		planeheight = check->GetPortalPlaneZ(sector_t::ceiling);
-		check = P_PointInSector(pos);
+		check = P_PointInSector(check->Level, pos);
 	}
 	if (resultsec) *resultsec = check;
 	return check->floorplane.ZatPoint(pos);
@@ -1012,7 +1012,7 @@ double NextHighestCeilingAt(sector_t *sec, double x, double y, double bottomz, d
 			x += pos.X;
 			y += pos.Y;
 			planeheight = sec->GetPortalPlaneZ(sector_t::ceiling);
-			sec = P_PointInSector(x, y);
+			sec = P_PointInSector(sec->Level, x, y);
 		}
 	}
 }
@@ -1061,7 +1061,7 @@ double NextLowestFloorAt(sector_t *sec, double x, double y, double z, int flags,
 			x += pos.X;
 			y += pos.Y;
 			planeheight = sec->GetPortalPlaneZ(sector_t::floor);
-			sec = P_PointInSector(x, y);
+			sec = P_PointInSector(sec->Level, x, y);
 		}
 	}
 }

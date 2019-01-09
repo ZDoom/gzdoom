@@ -866,7 +866,7 @@ void FParser::SF_Spawn(void)
 			// [Graf Zahl] added option of spawning with a relative z coordinate
 			if(t_argc > 5)
 			{
-				if (intvalue(t_argv[5])) pos.Z += P_PointInSector(pos)->floorplane.ZatPoint(pos);
+				if (intvalue(t_argv[5])) pos.Z += P_PointInSector(Level, pos)->floorplane.ZatPoint(pos);
 			}
 		}
 		else
@@ -2928,7 +2928,7 @@ void FParser::SF_SpawnExplosion()
 		if(t_argc > 3)
 			pos.Z = floatvalue(t_argv[3]);
 		else
-			pos.Z = P_PointInSector(pos)->floorplane.ZatPoint(pos);
+			pos.Z = P_PointInSector(Level, pos)->floorplane.ZatPoint(pos);
 		
 		spawn = Spawn (Level, pclass, pos, ALLOW_REPLACE);
 		t_return.type = svt_int;

@@ -187,7 +187,7 @@ void P_FindParticleSubsectors ()
 	for (uint16_t i = ActiveParticles; i != NO_PARTICLE; i = Particles[i].tnext)
 	{
 		 // Try to reuse the subsector from the last portal check, if still valid.
-		if (Particles[i].subsector == NULL) Particles[i].subsector = R_PointInSubsector(Particles[i].Pos);
+		if (Particles[i].subsector == NULL) Particles[i].subsector = R_PointInSubsector(&level, Particles[i].Pos);
 		int ssnum = Particles[i].subsector->Index();
 		Particles[i].snext = ParticlesInSubsec[ssnum];
 		ParticlesInSubsec[ssnum] = i;
@@ -270,8 +270,8 @@ void P_ThinkParticles ()
 		particle->Pos.Y = newxy.Y;
 		particle->Pos.Z += particle->Vel.Z;
 		particle->Vel += particle->Acc;
-		particle->subsector = R_PointInSubsector(particle->Pos);
 		sector_t *s = particle->subsector->sector;
+		particle->subsector = R_PointInSubsector(s->Level, particle->Pos);
 		// Handle crossing a sector portal.
 		if (!s->PortalBlocksMovement(sector_t::ceiling))
 		{

@@ -143,7 +143,7 @@ void MapLoader::CopyPlane (int tag, sector_t *dest, bool copyCeil)
 
 void MapLoader::CopyPlane (int tag, const DVector2 &pos, bool copyCeil)
 {
-	sector_t *dest = P_PointInSector (pos);
+	sector_t *dest = P_PointInSector (Level, pos);
 	CopyPlane(tag, dest, copyCeil);
 }
 
@@ -389,7 +389,7 @@ void MapLoader::SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const i
 			sector_t *sec;
 			bool ceiling;
 
-			sec = P_PointInSector (mt->pos);
+			sec = P_PointInSector (Level, mt->pos);
 			if (mt->info->Special == SMT_SlopeCeilingPointLine || mt->info->Special == SMT_VavoomCeiling || mt->info->Special == SMT_SetCeilingSlope)
 			{
 				refplane = &sec->ceilingplane;

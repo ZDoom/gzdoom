@@ -629,7 +629,7 @@ bool SightCheck::P_SightPathTraverse ()
 	y1 = sightstart.Y + Startfrac * Trace.dy;
 	x2 = sightend.X;
 	y2 = sightend.Y;
-	if (lastsector == NULL) lastsector = P_PointInSector(x1, y1);
+	if (lastsector == NULL) lastsector = P_PointInSector(seeingthing->Level, x1, y1);
 
 	// for FF_SEETHROUGH the following rule applies:
 	// If the viewer is in an area without FF_SEETHROUGH he can only see into areas without this flag

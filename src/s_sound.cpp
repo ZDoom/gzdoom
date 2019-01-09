@@ -714,7 +714,7 @@ static void CalcPosVel( int type, const AActor *actor, const sector_t *sector,
 		if(type == SOURCE_Unattached)
 		{
 			assert(Level != NULL);
-			sector_t *sec = P_PointInSector(pt[0], pt[2]);
+			sector_t *sec = P_PointInSector(SoundMainLevel, pt[0], pt[2]);
 			DVector2 disp = Level->Displacements.getOffset(pgroup, sec->PortalGroup);
 			pos->X = pt[0] - (float)disp.X;
 			pos->Y = !(chanflags & CHAN_LISTENERZ) ? pt[1] : (float)listenpos.Z;
@@ -865,7 +865,7 @@ static void CalcSectorSoundOrg(const DVector3 &listenpos, const sector_t *sec, i
 	if (!(i_compatflags & COMPATF_SECTORSOUNDS))
 	{
 		// Are we inside the sector? If yes, the closest point is the one we're on.
-		if (P_PointInSector(listenpos.X, listenpos.Y) == sec)
+		if (P_PointInSector(sec->Level, listenpos.X, listenpos.Y) == sec)
 		{
 			pos.X = (float)listenpos.X;
 			pos.Z = (float)listenpos.Y;

@@ -154,7 +154,7 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, const DVector3 *
 		// if the polyobject lies directly on a sector boundary
 		check.X = dll.x + dll.dx * (inter + 0.01);
 		check.Y = dll.y + dll.dy * (inter + 0.01);
-		front = P_PointInSector(check);
+		front = P_PointInSector(front->Level, check);
 	}
 	else
 	{

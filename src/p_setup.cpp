@@ -445,7 +445,7 @@ void P_SetupLevel(FLevelLocals *Level, const char *lumpname, int position, bool 
 			if (playeringame[i])
 			{
 				players[i].mo = nullptr;
-				G_DeathMatchSpawnPlayer(i);
+				G_DeathMatchSpawnPlayer(Level, i);
 			}
 		}
 	}
@@ -474,7 +474,7 @@ void P_SetupLevel(FLevelLocals *Level, const char *lumpname, int position, bool 
 				if (!(players[i].mo->flags & MF_FRIENDLY))
 				{
 					AActor * oldSpawn = players[i].mo;
-					G_DeathMatchSpawnPlayer(i);
+					G_DeathMatchSpawnPlayer(Level, i);
 					oldSpawn->Destroy();
 				}
 			}

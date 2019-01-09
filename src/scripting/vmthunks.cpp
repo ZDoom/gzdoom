@@ -656,12 +656,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
-  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, PointInSector, P_PointInSectorXY)
+  DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, PointInSector, P_PointInSectorXY)
  {
-	 PARAM_PROLOGUE;
+	 PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	 PARAM_FLOAT(x);
 	 PARAM_FLOAT(y);
-	 ACTION_RETURN_POINTER(P_PointInSector(x, y));
+	 ACTION_RETURN_POINTER(P_PointInSector(self, x, y));
  }
 
   static void SetXOffset(sector_t *self, int pos, double o)

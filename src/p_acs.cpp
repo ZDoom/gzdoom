@@ -9470,7 +9470,7 @@ scriptwait:
 				if (tag != 0)
 					secnum = Level->tagManager.FindFirstSectorFromTag (tag);
 				else
-					secnum = P_PointInSector (x, y)->sectornum;
+					secnum = P_PointInSector (Level, x, y)->sectornum;
 
 				if (secnum >= 0)
 				{

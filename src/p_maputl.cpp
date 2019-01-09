@@ -80,7 +80,7 @@
 #include "po_man.h"
 #include "vm.h"
 
-sector_t *P_PointInSectorBuggy(double x, double y);
+sector_t *P_PointInSectorBuggy(FLevelLocals *Level, double x, double y);
 int P_VanillaPointOnDivlineSide(double x, double y, const divline_t* line);
 
 
@@ -354,7 +354,7 @@ void AActor::UnlinkFromWorld (FLinkContext *ctx)
 
 bool AActor::FixMapthingPos()
 {
-	sector_t *secstart = P_PointInSectorBuggy(X(), Y());
+	sector_t *secstart = P_PointInSectorBuggy(Level, X(), Y());
 
 	int blockx = Level->blockmap.GetBlockX(X());
 	int blocky = Level->blockmap.GetBlockY(Y());
@@ -452,16 +452,16 @@ void AActor::LinkToWorld(FLinkContext *ctx, bool spawningmapthing, sector_t *sec
 	{
 		if (!spawning)
 		{
-			sector = P_PointInSector(Pos());
+			sector = P_PointInSector(Level, Pos());
 		}
 		else
 		{
-			sector = P_PointInSectorBuggy(X(), Y());
+			sector = P_PointInSectorBuggy(Level, X(), Y());
 		}
 	}
 
 	Sector = sector;
-	subsector = R_PointInSubsector(Pos());	// this is from the rendering nodes, not the gameplay nodes!
+	subsector = R_PointInSubsector(Level, Pos());	// this is from the rendering nodes, not the gameplay nodes!
 	section = subsector->section;
 
 	if (!(flags & MF_NOSECTOR))
@@ -725,7 +725,7 @@ FMultiBlockLinesIterator::FMultiBlockLinesIterator(FPortalGroupArray &check, FLe
 	: checklist(check), blockIterator(Level)
 {
 	checkpoint = { checkx, checky, checkz };
-	if (newsec == NULL)	newsec = P_PointInSector(checkx, checky);
+	if (newsec == NULL)	newsec = P_PointInSector(Level, checkx, checky);
 	startsector = newsec;
 	basegroup = newsec->PortalGroup;
 	if (!check.inited) P_CollectConnectedGroups(Level, basegroup, checkpoint, checkz + checkh, checkradius, checklist);
@@ -851,7 +851,7 @@ bool FMultiBlockLinesIterator::startIteratorForGroup(int group)
 	offset = blockIterator.Level->Displacements.getOffset(basegroup, group);
 	offset.X += checkpoint.X;
 	offset.Y += checkpoint.Y;
-	cursector = group == startsector->PortalGroup ? startsector : P_PointInSector(offset);
+	cursector = group == startsector->PortalGroup ? startsector : P_PointInSector(blockIterator.Level, offset);
 	// If we ended up in a different group, 
 	// presumably because the spot to be checked is too far outside the actual portal group,
 	// the search needs to abort.
@@ -1068,7 +1068,7 @@ FMultiBlockThingsIterator::FMultiBlockThingsIterator(FPortalGroupArray &check, F
 	checkpoint.X = checkx;
 	checkpoint.Y = checky;
 	checkpoint.Z = checkz;
-	if (newsec == NULL) newsec = P_PointInSector(checkx, checky);
+	if (newsec == NULL) newsec = P_PointInSector(Level, checkx, checky);
 	basegroup = newsec->PortalGroup;
 	if (!check.inited) P_CollectConnectedGroups(Level, basegroup, checkpoint, checkz + checkh, checkradius, checklist);
 	checkpoint.Z = checkradius;
@@ -1934,12 +1934,12 @@ int P_VanillaPointOnLineSide(double x, double y, const line_t* line)
 //
 //==========================================================================
 
-subsector_t *P_PointInSubsector(double x, double y)
+subsector_t *P_PointInSubsector(FLevelLocals *Level, double x, double y)
 {
 	int side;
 
-	auto node = level.HeadGamenode();
-	if (node == nullptr) return &level.subsectors[0];
+	auto node = Level->HeadGamenode();
+	if (node == nullptr) return &Level->subsectors[0];
 
 	fixed_t xx = FLOAT2FIXED(x);
 	fixed_t yy = FLOAT2FIXED(y);
@@ -1959,7 +1959,7 @@ subsector_t *P_PointInSubsector(double x, double y)
 //
 //==========================================================================
 
-sector_t *P_PointInSectorBuggy(double x, double y)
+sector_t *P_PointInSectorBuggy(FLevelLocals *Level, double x, double y)
 {
 	// single subsector is a special case
 	auto node = level.HeadGamenode();

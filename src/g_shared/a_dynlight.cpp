@@ -591,7 +591,7 @@ void FDynamicLight::CollectWithinRadius(const DVector3 &opos, FSection *section,
 					line_t *other = port->mDestination;
 					if (other->validcount != ::validcount)
 					{
-						subsector_t *othersub = R_PointInSubsector(other->v1->fPos() + other->Delta() / 2);
+						subsector_t *othersub = R_PointInSubsector(Level, other->v1->fPos() + other->Delta() / 2);
 						FSection *othersect = othersub->section;
 						if (othersect->validcount != ::validcount)
 						{
@@ -642,7 +642,7 @@ void FDynamicLight::CollectWithinRadius(const DVector3 &opos, FSection *section,
 			if (sec->GetPortalPlaneZ(sector_t::ceiling) < Z() + radius)
 			{
 				DVector2 refpos = other->v1->fPos() + other->Delta() / 2 + sec->GetPortalDisplacement(sector_t::ceiling);
-				subsector_t *othersub = R_PointInSubsector(refpos);
+				subsector_t *othersub = R_PointInSubsector(Level, refpos);
 				FSection *othersect = othersub->section;
 				if (othersect->validcount != dl_validcount)
 				{
@@ -657,7 +657,7 @@ void FDynamicLight::CollectWithinRadius(const DVector3 &opos, FSection *section,
 			if (sec->GetPortalPlaneZ(sector_t::floor) > Z() - radius)
 			{
 				DVector2 refpos = other->v1->fPos() + other->Delta() / 2 + sec->GetPortalDisplacement(sector_t::floor);
-				subsector_t *othersub = R_PointInSubsector(refpos);
+				subsector_t *othersub = R_PointInSubsector(Level, refpos);
 				FSection *othersect = othersub->section;
 				if (othersect->validcount != dl_validcount)
 				{
@@ -697,7 +697,7 @@ void FDynamicLight::LinkLight()
 	if (radius>0)
 	{
 		// passing in radius*radius allows us to do a distance check without any calls to sqrt
-		FSection *sect = R_PointInSubsector(Pos)->section;
+		FSection *sect = R_PointInSubsector(Level, Pos)->section;
 
 		dl_validcount++;
 		::validcount++;

@@ -712,6 +712,7 @@ struct LevelLocals native
 	native Actor Spawn(class<Actor> type, vector3 pos = (0,0,0), int replace = NO_REPLACE);
 	clearscope native HealthGroup FindHealthGroup(int id);
 	native int FindUniqueTid(int start = 0, int limit = 0);
+	native Sector PointInSector(Vector2 v);
 
 	native clearscope bool IsPointInMap(vector3 p);
 

@@ -116,7 +116,7 @@ static void GetPortalTransition(DVector3 &pos, sector_t *&sec)
 		if (pos.Z > sec->GetPortalPlaneZ(sector_t::ceiling))
 		{
 			pos += sec->GetPortalDisplacement(sector_t::ceiling);
-			sec = P_PointInSector(pos);
+			sec = P_PointInSector(sec->Level, pos);
 			moved = true;
 		}
 		else break;
@@ -128,7 +128,7 @@ static void GetPortalTransition(DVector3 &pos, sector_t *&sec)
 			if (pos.Z <= sec->GetPortalPlaneZ(sector_t::floor))
 			{
 				pos += sec->GetPortalDisplacement(sector_t::floor);
-				sec = P_PointInSector(pos);
+				sec = P_PointInSector(sec->Level, pos);
 			}
 			else break;
 		}
@@ -220,7 +220,7 @@ void FTraceInfo::EnterSectorPortal(FPathTraverse &pt, int position, double frac,
 	DVector3 enter = exit + displacement;
 
 	Start += displacement;
-	CurSector = P_PointInSector(enter);
+	CurSector = P_PointInSector(entersec->Level, enter);
 	inshootthrough = true;
 	startfrac = frac;
 	EnterDist = enterdist;
@@ -259,7 +259,7 @@ void FTraceInfo::EnterLinePortal(FPathTraverse &pt, intercept_t *in)
 	P_TranslatePortalVXVY(li, Vec.X, Vec.Y);
 	P_TranslatePortalZ(li, limitz);
 
-	CurSector = P_PointInSector(Start + enterdist * Vec);
+	CurSector = P_PointInSector(li->GetLevel(), Start + enterdist * Vec);
 	EnterDist = enterdist;
 	inshootthrough = true;
 	startfrac = frac;

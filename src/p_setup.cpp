@@ -261,6 +261,16 @@ void FLevelLocals::ClearLevelData()
 	total_monsters = total_items = total_secrets =
 		killed_monsters = found_items = found_secrets =
 		wminfo.maxfrags = 0;
+	
+	FStrifeDialogueNode *node;
+	
+	while (StrifeDialogues.Pop (node))
+	{
+		delete node;
+	}
+	
+	DialogueRoots.Clear();
+	ClassRoots.Clear();
 
 	// delete allocated data in the level arrays.
 	if (sectors.Size() > 0)
@@ -344,7 +354,6 @@ void P_FreeLevelData ()
 	SN_StopAllSequences ();
 	DThinker::DestroyAllThinkers ();
 
-	P_FreeStrifeConversations ();
 	level.ClearLevelData();
 }
 

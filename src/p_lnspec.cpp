@@ -3378,9 +3378,9 @@ FUNC(LS_Thing_SetConversation)
 
 	if (arg1 != 0)
 	{
-		dlg_index = GetConversation(arg1);	
+		dlg_index = Level->GetConversation(arg1);
 		if (dlg_index == -1) return false;
-		node = StrifeDialogues[dlg_index];
+		node = Level->StrifeDialogues[dlg_index];
 	}
 
 	if (arg0 != 0)

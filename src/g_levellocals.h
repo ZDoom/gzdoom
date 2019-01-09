@@ -52,6 +52,10 @@
 class DACSThinker;
 class DFraggleThinker;
 class DSpotState;
+struct FStrifeDialogueNode;
+
+typedef TMap<int, int> FDialogueIDMap;				// maps dialogue IDs to dialogue array index (for ACS)
+typedef TMap<FName, int> FDialogueMap;				// maps actor class names to dialogue array index
 
 struct FLevelData
 {
@@ -105,8 +109,14 @@ struct FLevelData
 
 	FTagManager tagManager;
 	AActor *TIDHash[128];
+	
+	TArray<FStrifeDialogueNode *> StrifeDialogues;
+	FDialogueIDMap DialogueRoots;
+	FDialogueMap ClassRoots;
+
 
 };
+
 
 struct FLevelLocals : public FLevelData
 {
@@ -125,7 +135,10 @@ struct FLevelLocals : public FLevelData
 	void InitLevelLocals();
 	bool IsTIDUsed(int tid);
 	int FindUniqueTID(int start_tid, int limit);
-
+	int GetConversation(int conv_id);
+	int GetConversation(FName classname);
+	void SetConversation(int convid, PClassActor *Class, int dlgindex);
+	int FindNode (const FStrifeDialogueNode *node);
 
 	//
 	// P_ClearTidHashes

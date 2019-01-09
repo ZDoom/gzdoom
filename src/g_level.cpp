@@ -1675,8 +1675,10 @@ void G_SnapshotLevel ()
 		if (arc.OpenWriter(save_formatted))
 		{
 			SaveVersion = SAVEVER;
+			arc.SetLevel(&level);
 			G_SerializeLevel(arc, &level, false);
 			level.info->Snapshot = arc.GetCompressedOutput();
+			arc.SetLevel(nullptr);
 		}
 	}
 }
@@ -1702,7 +1704,9 @@ void G_UnSnapshotLevel (bool hubLoad)
 			return;
 		}
 
+		arc.SetLevel(&level);
 		G_SerializeLevel (arc, &level, hubLoad);
+		arc.SetLevel(nullptr);
 		level.FromSnapshot = true;
 
 		TThinkerIterator<AActor> it(NAME_PlayerPawn);

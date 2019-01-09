@@ -298,7 +298,7 @@ CCMD(dumptags)
 	{
 		Printf("%s - %s\n", Level->MapName.GetChars(), Level->LevelName.GetChars());
 		Level->tagManager.DumpTags();
-	}
+	});
 }
 
 //-----------------------------------------------------------------------------

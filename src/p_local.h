@@ -152,8 +152,8 @@ bool	P_Thing_Projectile (FLevelLocals *Level, int tid, AActor *source, int type,
 			bool leadTarget);
 
 bool	P_MoveThing(AActor *source, const DVector3 &pos, bool fog);
-bool	P_Thing_Move (int tid, AActor *source, int mapspot, bool fog);
-int		P_Thing_Damage (int tid, AActor *whofor0, int amount, FName type);
+bool	P_Thing_Move (FLevelLocals *Level, int tid, AActor *source, int mapspot, bool fog);
+int		P_Thing_Damage (FLevelLocals *Level, int tid, AActor *whofor0, int amount, FName type);
 void	P_Thing_SetVelocity(AActor *actor, const DVector3 &vec, bool add, bool setbob);
 void P_RemoveThing(AActor * actor);
 bool P_Thing_Raise(AActor *thing, AActor *raiser, int flags = 0);

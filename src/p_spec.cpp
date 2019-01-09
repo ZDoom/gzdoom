@@ -894,7 +894,7 @@ void DWallLightTransfer::DoTransfer (short lightlevel, int target, uint8_t flags
 
 static void SetupFloorPortal (AActor *point)
 {
-	NActorIterator it (NAME_LowerStackLookOnly, point->tid);
+	NActorIterator it (point->Level, NAME_LowerStackLookOnly, point->tid);
 	sector_t *Sector = point->Sector;
 	auto skyv = it.Next();
 	if (skyv != nullptr)
@@ -909,7 +909,7 @@ static void SetupFloorPortal (AActor *point)
 
 static void SetupCeilingPortal (AActor *point)
 {
-	NActorIterator it (NAME_UpperStackLookOnly, point->tid);
+	NActorIterator it (point->Level, NAME_UpperStackLookOnly, point->tid);
 	sector_t *Sector = point->Sector;
 	auto skyv = it.Next();
 	if (skyv != nullptr)

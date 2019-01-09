@@ -251,7 +251,7 @@ static AActor *SelectTeleDest (FLevelLocals *Level, int tid, int tag, bool noran
 
 	if (tid != 0)
 	{
-		NActorIterator iterator (NAME_TeleportDest, tid);
+		NActorIterator iterator (Level, NAME_TeleportDest, tid);
 		int count = 0;
 		while ( (searcher = iterator.Next ()) )
 		{
@@ -269,12 +269,12 @@ static AActor *SelectTeleDest (FLevelLocals *Level, int tid, int tag, bool noran
 			if (tag == 0)
 			{
 				// Try to find a matching map spot (fixes Hexen MAP10)
-				NActorIterator it2 (NAME_MapSpot, tid);
+				NActorIterator it2 (Level, NAME_MapSpot, tid);
 				searcher = it2.Next ();
 				if (searcher == NULL)
 				{
 					// Try to find a matching non-blocking spot of any type (fixes Caldera MAP13)
-					FActorIterator it3 (tid);
+					FActorIterator it3 (Level, tid);
 					searcher = it3.Next ();
 					while (searcher != NULL && (searcher->flags & MF_SOLID))
 					{
@@ -609,7 +609,7 @@ bool EV_TeleportOther (FLevelLocals *Level, int other_tid, int dest_tid, bool fo
 	if (other_tid != 0 && dest_tid != 0)
 	{
 		AActor *victim;
-		FActorIterator iterator (other_tid);
+		FActorIterator iterator (Level, other_tid);
 
 		while ( (victim = iterator.Next ()) )
 		{
@@ -644,7 +644,7 @@ bool EV_TeleportGroup (FLevelLocals *Level, int group_tid, AActor *victim, int s
 {
 	AActor *sourceOrigin, *destOrigin;
 	{
-		FActorIterator iterator (source_tid);
+		FActorIterator iterator (Level, source_tid);
 		sourceOrigin = iterator.Next ();
 	}
 	if (sourceOrigin == NULL)
@@ -653,7 +653,7 @@ bool EV_TeleportGroup (FLevelLocals *Level, int group_tid, AActor *victim, int s
 	}
 
 	{
-		NActorIterator iterator (NAME_TeleportDest, dest_tid);
+		NActorIterator iterator (Level, NAME_TeleportDest, dest_tid);
 		destOrigin = iterator.Next ();
 	}
 	if (destOrigin == NULL)
@@ -671,7 +671,7 @@ bool EV_TeleportGroup (FLevelLocals *Level, int group_tid, AActor *victim, int s
 	}
 	else
 	{
-		FActorIterator iterator (group_tid);
+		FActorIterator iterator (Level, group_tid);
 
 		// For each actor with tid matching arg0, move it to the same
 		// position relative to destOrigin as it is relative to sourceOrigin
@@ -699,7 +699,7 @@ bool EV_TeleportSector (FLevelLocals *Level, int tag, int source_tid, int dest_t
 {
 	AActor *sourceOrigin, *destOrigin;
 	{
-		FActorIterator iterator (source_tid);
+		FActorIterator iterator (Level, source_tid);
 		sourceOrigin = iterator.Next ();
 	}
 	if (sourceOrigin == NULL)
@@ -707,7 +707,7 @@ bool EV_TeleportSector (FLevelLocals *Level, int tag, int source_tid, int dest_t
 		return false;
 	}
 	{
-		NActorIterator iterator (NAME_TeleportDest, dest_tid);
+		NActorIterator iterator (Level, NAME_TeleportDest, dest_tid);
 		destOrigin = iterator.Next ();
 	}
 	if (destOrigin == NULL)

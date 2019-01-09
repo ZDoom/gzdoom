@@ -3207,7 +3207,7 @@ void AM_drawAuthorMarkers ()
 				tex = TexMan.GetTexture(picnum);
 			}
 		}
-		FActorIterator it (mark->args[0]);
+		FActorIterator it (&level, mark->args[0]);
 		AActor *marked = mark->args[0] == 0 ? mark : it.Next();
 
 		while (marked != NULL)

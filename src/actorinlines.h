@@ -96,3 +96,71 @@ inline double AActor::AttackOffset(double offset)
 
 }
 
+class FActorIterator
+{
+public:
+	FActorIterator (FLevelLocals *l, int i) : Level(l), base (nullptr), id (i)
+	{
+	}
+	FActorIterator (int i, AActor *start) : Level(start->Level), base (start), id (i)
+	{
+	}
+	AActor *Next ()
+	{
+		if (id == 0)
+			return nullptr;
+		if (!base)
+			base = Level->TIDHash[id & 127];
+		else
+			base = base->inext;
+
+		while (base && base->tid != id)
+			base = base->inext;
+
+		return base;
+	}
+	void Reinit()
+	{
+		base = nullptr;
+	}
+
+private:
+	FLevelLocals *Level;
+	AActor *base;
+	int id;
+};
+
+template<class T>
+class TActorIterator : public FActorIterator
+{
+public:
+	TActorIterator (FLevelLocals *Level, int id) : FActorIterator (Level, id) {}
+	T *Next ()
+	{
+		AActor *actor;
+		do
+		{
+			actor = FActorIterator::Next ();
+		} while (actor && !actor->IsKindOf (RUNTIME_CLASS(T)));
+		return static_cast<T *>(actor);
+	}
+};
+
+class NActorIterator : public FActorIterator
+{
+	const PClass *type;
+public:
+	NActorIterator (FLevelLocals *Level, const PClass *cls, int id) : FActorIterator (Level, id) { type = cls; }
+	NActorIterator (FLevelLocals *Level, FName cls, int id) : FActorIterator (Level, id) { type = PClass::FindClass(cls); }
+	NActorIterator (FLevelLocals *Level, const char *cls, int id) : FActorIterator (Level, id) { type = PClass::FindClass(cls); }
+	AActor *Next ()
+	{
+		AActor *actor;
+		if (type == NULL) return NULL;
+		do
+		{
+			actor = FActorIterator::Next ();
+		} while (actor && !actor->IsKindOf (type));
+		return actor;
+	}
+};

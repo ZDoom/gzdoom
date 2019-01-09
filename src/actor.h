@@ -104,7 +104,7 @@ struct FLevelLocals;
 // things, but nothing can run into a missile).
 // Each block in the grid is 128*128 units, and knows about
 // every line_t that it contains a piece of, and every
-// interactable actor that has its origin contained.  
+// interactable actor that has its origin contained.
 //
 // A valid actor is an actor that has the proper subsector_t
 // filled in for its xy coordinates and is linked into the
@@ -152,7 +152,7 @@ enum ActorFlag
 	MF_CORPSE			= 0x00100000,	// don't stop moving halfway off a step
 	MF_INFLOAT			= 0x00200000,	// floating to a height for a move, don't
 										// auto float to target's height
-	MF_INBOUNCE			= 0x00200000,	// used by Heretic bouncing missiles 
+	MF_INBOUNCE			= 0x00200000,	// used by Heretic bouncing missiles
 
 	MF_COUNTKILL		= 0x00400000,	// count towards intermission kill total
 	MF_COUNTITEM		= 0x00800000,	// count towards intermission item total
@@ -203,11 +203,11 @@ enum ActorFlag2
 	MF2_MCROSS			= 0x00800000,	// can activate monster cross lines
 	MF2_PCROSS			= 0x01000000,	// can activate projectile cross lines
 	MF2_CANTLEAVEFLOORPIC=0x02000000,	// stay within a certain floor type
-	MF2_NONSHOOTABLE	= 0x04000000,	// mobj is totally non-shootable, 
+	MF2_NONSHOOTABLE	= 0x04000000,	// mobj is totally non-shootable,
 										// but still considered solid
 	MF2_INVULNERABLE	= 0x08000000,	// mobj is invulnerable
 	MF2_DORMANT			= 0x10000000,	// thing is dormant
-	MF2_ARGSDEFINED		= 0x20000000,	// Internal flag used by DECORATE to signal that the 
+	MF2_ARGSDEFINED		= 0x20000000,	// Internal flag used by DECORATE to signal that the
 										// args should not be taken from the mapthing definition
 	MF2_SEEKERMISSILE	= 0x40000000,	// is a seeker (for reflection)
 	MF2_REFLECTIVE		= 0x80000000,	// reflects missiles
@@ -312,7 +312,7 @@ enum ActorFlag5
 	MF5_ALWAYSRESPAWN	= 0x00020000,	// always respawns, regardless of skill setting
 	MF5_NEVERRESPAWN	= 0x00040000,	// never respawns, regardless of skill setting
 	MF5_DONTRIP			= 0x00080000,	// Ripping projectiles explode when hitting this actor
-	MF5_NOINFIGHTING	= 0x00100000,	// This actor doesn't switch target when it's hurt 
+	MF5_NOINFIGHTING	= 0x00100000,	// This actor doesn't switch target when it's hurt
 	MF5_NOINTERACTION	= 0x00200000,	// Thing is completely excluded from any gameplay related checks
 	MF5_NOTIMEFREEZE	= 0x00400000,	// Actor is not affected by time freezer
 	MF5_PUFFGETSOWNER	= 0x00800000,	// [BB] Sets the owner of the puff to the player who fired it
@@ -373,7 +373,7 @@ enum ActorFlag7
 	MF7_HANDLENODELAY	= 0x00000008,	// respect NoDelay state flag
 	MF7_WEAPONSPAWN		= 0x00000010,	// subject to DF_NO_COOP_WEAPON_SPAWN dmflag
 	MF7_HARMFRIENDS		= 0x00000020,	// is allowed to harm friendly monsters.
-	MF7_BUDDHA			= 0x00000040,	// Behaves just like the buddha cheat. 
+	MF7_BUDDHA			= 0x00000040,	// Behaves just like the buddha cheat.
 	MF7_FOILBUDDHA		= 0x00000080,	// Similar to FOILINVUL, foils buddha mode.
 	MF7_DONTTHRUST		= 0x00000100,	// Thrusting functions do not take, and do not give thrust (damage) to actors with this flag.
 	MF7_ALLOWPAIN		= 0x00000200,	// Invulnerable or immune (via damagefactors) actors can still react to taking damage even if they don't.
@@ -506,7 +506,7 @@ enum ActorBounceFlag
 	BOUNCE_Doom = BOUNCE_Walls | BOUNCE_Floors | BOUNCE_Ceilings | BOUNCE_Actors | BOUNCE_AutoOff,
 	BOUNCE_Hexen = BOUNCE_Walls | BOUNCE_Floors | BOUNCE_Ceilings | BOUNCE_Actors,
 	BOUNCE_Grenade = BOUNCE_MBF | BOUNCE_Doom,		// Bounces on walls and flats like ZDoom bounce.
-	BOUNCE_Classic = BOUNCE_MBF | BOUNCE_Floors | BOUNCE_Ceilings,	// Bounces on flats only, but 
+	BOUNCE_Classic = BOUNCE_MBF | BOUNCE_Floors | BOUNCE_Ceilings,	// Bounces on flats only, but
 																	// does not die when bouncing.
 
 	// combined types
@@ -1222,7 +1222,7 @@ public:
 	FState *MeleeState;
 	FState *MissileState;
 
-	
+
 	int ConversationRoot;				// THe root of the current dialogue
 	FStrifeDialogueNode *Conversation;	// [RH] The dialogue to show when this actor is "used."
 
@@ -1241,19 +1241,16 @@ public:
 
 
 	// ThingIDs
-	static void ClearTIDHashes ();
 	void AddToHash ();
 	void RemoveFromHash ();
 
 
 private:
-	static AActor *TIDHash[128];
 	static inline int TIDHASH (int key) { return key & 127; }
 public:
 	static FSharedStringArena mStringPropertyData;
 private:
 	friend class FActorIterator;
-	friend bool P_IsTIDUsed(int tid);
 
 	bool FixMapthingPos();
 
@@ -1493,77 +1490,6 @@ public:
 
 	bool				hasmodel;
 };
-
-class FActorIterator
-{
-public:
-	FActorIterator (int i) : base (NULL), id (i)
-	{
-	}
-	FActorIterator (int i, AActor *start) : base (start), id (i)
-	{
-	}
-	AActor *Next ()
-	{
-		if (id == 0)
-			return NULL;
-		if (!base)
-			base = AActor::TIDHash[id & 127];
-		else
-			base = base->inext;
-
-		while (base && base->tid != id)
-			base = base->inext;
-
-		return base;
-	}
-	void Reinit()
-	{
-		base = nullptr;
-	}
-
-private:
-	AActor *base;
-	int id;
-};
-
-template<class T>
-class TActorIterator : public FActorIterator
-{
-public:
-	TActorIterator (int id) : FActorIterator (id) {}
-	T *Next ()
-	{
-		AActor *actor;
-		do
-		{
-			actor = FActorIterator::Next ();
-		} while (actor && !actor->IsKindOf (RUNTIME_CLASS(T)));
-		return static_cast<T *>(actor);
-	}
-};
-
-class NActorIterator : public FActorIterator
-{
-	const PClass *type;
-public:
-	NActorIterator (const PClass *cls, int id) : FActorIterator (id) { type = cls; }
-	NActorIterator (FName cls, int id) : FActorIterator (id) { type = PClass::FindClass(cls); }
-	NActorIterator (const char *cls, int id) : FActorIterator (id) { type = PClass::FindClass(cls); }
-	AActor *Next ()
-	{
-		AActor *actor;
-		if (type == NULL) return NULL;
-		do
-		{
-			actor = FActorIterator::Next ();
-		} while (actor && !actor->IsKindOf (type));
-		return actor;
-	}
-};
-
-bool P_IsTIDUsed(int tid);
-int P_FindUniqueTID(int start_tid, int limit);
 
 PClassActor *ClassForSpawn(FName classname);
 

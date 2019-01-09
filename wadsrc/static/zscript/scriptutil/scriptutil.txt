@@ -151,11 +151,11 @@ class ScriptUtil play
 	//
 	//==========================================================================
 
-	static void SetMarineWeapon(Actor activator, int tid, int marineweapontype)
+	static void SetMarineWeapon(LevelLocals Level, Actor activator, int tid, int marineweapontype)
 	{
 		if (tid != 0)
 		{
-			let it = ActorIterator.Create(tid, 'ScriptedMarine');
+			let it = Level.CreateActorIterator(tid, 'ScriptedMarine');
 			ScriptedMarine marine;
 
 			while ((marine = ScriptedMarine(it.Next())) != NULL)
@@ -179,13 +179,13 @@ class ScriptUtil play
 	//
 	//==========================================================================
 
-	static void SetMarineSprite(Actor activator, int tid, class<Actor> type)
+	static void SetMarineSprite(LevelLocals Level, Actor activator, int tid, class<Actor> type)
 	{
 		if (type != NULL)
 		{
 			if (tid != 0)
 			{
-				let it = ActorIterator.Create(tid, 'ScriptedMarine');
+				let it = Level.CreateActorIterator(tid, 'ScriptedMarine');
 				ScriptedMarine marine;
 
 				while ((marine = ScriptedMarine(it.Next())) != NULL)

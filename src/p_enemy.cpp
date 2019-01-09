@@ -1764,7 +1764,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 	// [RH] Set goal now if appropriate
 	if (self->special == Thing_SetGoal && self->args[0] == 0) 
 	{
-		NActorIterator iterator (NAME_PatrolPoint, self->args[1]);
+		NActorIterator iterator (Level, NAME_PatrolPoint, self->args[1]);
 		self->special = 0;
 		self->goal = iterator.Next ();
 		self->reactiontime = self->args[2] * TICRATE + Level->maptime;
@@ -1895,7 +1895,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
 	// [RH] Set goal now if appropriate
 	if (self->special == Thing_SetGoal && self->args[0] == 0) 
 	{
-		NActorIterator iterator(NAME_PatrolPoint, self->args[1]);
+		NActorIterator iterator(Level, NAME_PatrolPoint, self->args[1]);
 		self->special = 0;
 		self->goal = iterator.Next ();
 		self->reactiontime = self->args[2] * TICRATE + Level->maptime;
@@ -2381,8 +2381,8 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			auto Level = actor->Level;
 
 			// reached the goal
-			NActorIterator iterator (NAME_PatrolPoint, actor->goal->args[0]);
-			NActorIterator specit (NAME_PatrolSpecial, actor->goal->tid);
+			NActorIterator iterator (Level, NAME_PatrolPoint, actor->goal->args[0]);
+			NActorIterator specit (Level, NAME_PatrolSpecial, actor->goal->tid);
 			AActor *spec;
 
 			// Execute the specials of any PatrolSpecials with the same TID

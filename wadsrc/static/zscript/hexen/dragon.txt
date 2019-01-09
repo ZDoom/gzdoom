@@ -135,7 +135,7 @@ class Dragon : Actor
 					{
 						continue;
 					}
-					ActorIterator iter = ActorIterator.Create(targ.args[i]);
+					ActorIterator iter = Level.CreateActorIterator(targ.args[i]);
 					mo = iter.Next ();
 					if (mo == null)
 					{
@@ -171,7 +171,7 @@ class Dragon : Actor
 					{
 						i = (random[DragonSeek]() >> 2) % 5;
 					} while(!targ.args[i]);
-					ActorIterator iter = ActorIterator.Create(targ.args[i]);
+					ActorIterator iter = Level.CreateActorIterator(targ.args[i]);
 					tracer = iter.Next ();
 				}
 			}
@@ -186,7 +186,7 @@ class Dragon : Actor
 
 	void A_DragonInitFlight()
 	{
-		ActorIterator iter = ActorIterator.Create(tid);
+		ActorIterator iter = Level.CreateActorIterator(tid);
 
 		do
 		{ // find the first tid identical to the dragon's tid

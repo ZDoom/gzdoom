@@ -398,7 +398,7 @@ void P_SpawnPushers (FLevelLocals *Level)
 				}
 			} else {	// [RH] Find thing by tid
 				AActor *thing;
-				FActorIterator iterator (l->args[1]);
+				FActorIterator iterator (Level, l->args[1]);
 
 				while ( (thing = iterator.Next ()) )
 				{

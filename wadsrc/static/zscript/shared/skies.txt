@@ -109,7 +109,7 @@ class SkyPicker : Actor
 		}
 		else
 		{
-			let it = ActorIterator.Create(args[0], "SkyViewpoint");
+			let it = Level.CreateActorIterator(args[0], "SkyViewpoint");
 			box = it.Next ();
 		}
 

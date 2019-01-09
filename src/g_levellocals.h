@@ -71,7 +71,6 @@ struct FLevelData
 	TArray<uint8_t> rejectmatrix;
 	TArray<zone_t>	Zones;
 	TArray<FPolyObj> Polyobjects;
-	FTagManager tagManager;
 
 	TArray<FSectorPortal> sectorPortals;
 	TArray<FLinePortal> linePortals;
@@ -103,6 +102,10 @@ struct FLevelData
 	TArray<FPlayerStart> AllPlayerStarts;
 
 	FBehaviorContainer Behaviors;
+
+	FTagManager tagManager;
+	AActor *TIDHash[128];
+
 };
 
 struct FLevelLocals : public FLevelData
@@ -120,6 +123,21 @@ struct FLevelLocals : public FLevelData
 	void ClearAllSubsectorLinks();
 	void ChangeAirControl(double newval);
 	void InitLevelLocals();
+	bool IsTIDUsed(int tid);
+	int FindUniqueTID(int start_tid, int limit);
+
+
+	//
+	// P_ClearTidHashes
+	//
+	// Clears the tid hashtable.
+	//
+
+	void ClearTIDHashes ()
+	{
+		memset(TIDHash, 0, sizeof(TIDHash));
+	}
+
 
 	uint8_t		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
 	int			time;			// time in the hub
@@ -141,6 +159,8 @@ struct FLevelLocals : public FLevelData
 	FString		NextSecretMap;		// map to go to when used secret exit
 	FString		F1Pic;
 	EMapType	maptype;
+
+
 
 	uint64_t	ShaderStartTime = 0;	// tell the shader system when we started the level (forces a timer restart)
 

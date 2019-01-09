@@ -45,7 +45,7 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native ui BaseStatusBar StatusBar;
 	native readonly Weapon WP_NOCHANGE;
 	native int LocalViewPitch;
-	
+
 }
 
 struct TexMan
@@ -78,7 +78,7 @@ struct TexMan
 		ShortNameOnly = 16,
 		DontCreate = 32
 	};
-	
+
 	enum ETexReplaceFlags
 	{
 		NOT_BOTTOM			= 1,
@@ -207,8 +207,8 @@ struct Screen native
 	native static void ClearClipRect();
 	native static int, int, int, int GetClipRect();
 	native static int, int, int, int GetViewWindow();
-	
-	
+
+
 	// This is a leftover of the abandoned Inventory.DrawPowerup method.
 	deprecated("2.5") static ui void DrawHUDTexture(TextureID tex, double x, double y)
 	{
@@ -250,7 +250,7 @@ struct Font native
 		CR_TEAL,
 		NUM_TEXT_COLORS
 	};
-	
+
 	const TEXTCOLOR_BRICK			= "\034A";
 	const TEXTCOLOR_TAN				= "\034B";
 	const TEXTCOLOR_GRAY			= "\034C";
@@ -284,7 +284,7 @@ struct Font native
 
 	const TEXTCOLOR_CHAT			= "\034*";
 	const TEXTCOLOR_TEAMCHAT		= "\034!";
-	
+
 
 	native int GetCharWidth(int code);
 	native int StringWidth(String code);
@@ -301,7 +301,7 @@ struct Font native
 struct Translation version("2.4")
 {
 	Color colors[256];
-	
+
 	native int AddTranslation();
 	native static bool SetPlayerTranslation(int group, int num, int plrnum, PlayerClass pclass);
 	native static int GetID(Name transname);
@@ -393,7 +393,7 @@ class Object native
 	private native static int BuiltinCallLineSpecial(int special, Actor activator, int arg1, int arg2, int arg3, int arg4, int arg5);
 	private native static Class<Object> BuiltinNameToClass(Name nm, Class<Object> filter);
 	private native static Object BuiltinClassCast(Object inptr, Class<Object> test);
-	
+
 	// These really should be global functions...
 	native static String G_SkillName();
 	native static int G_SkillPropertyInt(int p);
@@ -462,11 +462,11 @@ class Thinker : Object native play
 	}
 
 	const TICRATE = 35;
-	
+
 	virtual native void Tick();
 	virtual native void PostBeginPlay();
 	native void ChangeStatNum(int stat);
-	
+
 	static clearscope int Tics2Seconds(int tics)
 	{
 		return int(tics / TICRATE);
@@ -482,8 +482,11 @@ class ThinkerIterator : Object native
 }
 
 class ActorIterator : Object native
-{	
-	native static ActorIterator Create(int tid, class<Actor> type = "Actor");
+{
+	deprecated("3.8") static ActorIterator Create(int tid, class<Actor> type = "Actor")
+	{
+		return level.CreateActorIterator(tid, type);
+	}
 	native Actor Next();
 	native void Reinit();
 }
@@ -493,7 +496,7 @@ class BlockThingsIterator : Object native
 	native Actor thing;
 	native Vector3 position;
 	native int portalflags;
-	
+
 	native static BlockThingsIterator Create(Actor origin, double checkradius = -1, bool ignorerestricted = false);
 	native static BlockThingsIterator CreateFromPosition(LevelLocals Level, double checkx, double checky, double checkz, double checkh, double checkradius, bool ignorerestricted);
 
@@ -510,7 +513,7 @@ class BlockLinesIterator : Object native
 	native Line CurLine;
 	native Vector3 position;
 	native int portalflags;
-	
+
 	native static BlockLinesIterator Create(Actor origin, double checkradius = -1);
 	native static BlockLinesIterator CreateFromPosition(LevelLocals Level, Vector3 pos, double checkh, double checkradius, Sector sec = null);
 
@@ -624,7 +627,7 @@ struct LevelLocals native
 		UDMF_Sector,
 		//UDMF_Thing // not implemented
 	};
-	
+
 	const CLUSTER_HUB = 0x00000001;	// Cluster uses hub behavior
 
 
@@ -633,7 +636,7 @@ struct LevelLocals native
 	native Array<@Side> Sides;
 	native readonly Array<@Vertex> Vertexes;
 	native internal Array<@SectorPortal> SectorPortals;
-	
+
 	native readonly int time;
 	native readonly int maptime;
 	native readonly int totaltime;
@@ -707,14 +710,15 @@ struct LevelLocals native
 	native SpotState GetSpotState(bool create = true);
 	native void ReplaceTextures(String from, String to, int flags);
 	native Actor Spawn(class<Actor> type, vector3 pos = (0,0,0), int replace = NO_REPLACE);
-    clearscope native HealthGroup FindHealthGroup(int id);
-	
+	clearscope native HealthGroup FindHealthGroup(int id);
+	native int FindUniqueTid(int start = 0, int limit = 0);
+
 	native clearscope bool IsPointInMap(vector3 p);
 
 	native clearscope vector2 Vec2Diff(vector2 v1, vector2 v2);
 	native clearscope vector3 Vec3Diff(vector3 v1, vector3 v2);
-	native clearscope vector3 SphericalCoords(vector3 viewpoint, vector3 targetPos, vector2 viewAngles = (0, 0), bool absolute = false);	
-	
+	native clearscope vector3 SphericalCoords(vector3 viewpoint, vector3 targetPos, vector2 viewAngles = (0, 0), bool absolute = false);
+
 	native clearscope vector2 Vec2Offset(vector2 pos, vector2 dir, bool absolute = false);
 	native clearscope vector3 Vec2OffsetZ(vector2 pos, vector2 dir, double atz, bool absolute = false);
 	native clearscope vector3 Vec3Offset(vector3 pos, vector3 dir, bool absolute = false);
@@ -725,10 +729,12 @@ struct LevelLocals native
 
 	native SectorTagIterator CreateSectorTagIterator(int tag, line defline = null);
 	native LineIdIterator CreateLineIdIterator(int tag);
-	
+	native ActorIterator CreateActorIterator(int tid, class<Actor> type = "Actor");
+
+
 	String TimeFormatted(bool totals = false)
 	{
-		int sec = Thinker.Tics2Seconds(totals? totaltime : time); 
+		int sec = Thinker.Tics2Seconds(totals? totaltime : time);
 		return String.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
 	}
 }
@@ -757,8 +763,8 @@ struct State native
 	native readonly int sprite;
 	native readonly int16 Tics;
 	native readonly uint16 TicRange;
-	native readonly uint8 Frame;		
-	native readonly uint8 UseFlags;	
+	native readonly uint8 Frame;
+	native readonly uint8 UseFlags;
 	native readonly int Misc1;
 	native readonly int Misc2;
 	native readonly uint16 bSlow;
@@ -768,7 +774,7 @@ struct State native
 	native readonly bool bSameFrame;
 	native readonly bool bCanRaise;
 	native readonly bool bDehacked;
-	
+
 	native int DistanceTo(state other);
 	native bool ValidateSpriteFrame();
 	native TextureID, bool, Vector2 GetSpriteTexture(int rotation, int skin = 0, Vector2 scale = (0,0));
@@ -974,9 +980,9 @@ class Ceiling : MovingCeiling native
 		crushHexen = 1,
 		crushSlowdown = 2
 	}
-	
+
 	native static bool CreateCeiling(sector sec, int type, line ln, double speed, double speed2, double height = 0, int crush = -1, int silent = 0, int change = 0, int crushmode = crushDoom);
-	
+
 }
 
 struct LookExParams
@@ -1021,4 +1027,3 @@ struct FRailParams
 	native int SpiralOffset;
 	native int limit;
 };	// [RH] Shoot a railgun
-

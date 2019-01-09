@@ -57,7 +57,7 @@ bool P_Thing_Spawn (FLevelLocals *Level, int tid, AActor *source, int type, DAng
 	int rtn = 0;
 	PClassActor *kind;
 	AActor *spot, *mobj;
-	FActorIterator iterator (tid);
+	FActorIterator iterator (Level, tid);
 
 	kind = P_GetSpawnableType(type);
 
@@ -144,16 +144,16 @@ bool P_MoveThing(AActor *source, const DVector3 &pos, bool fog)
 	}
 }
 
-bool P_Thing_Move (int tid, AActor *source, int mapspot, bool fog)
+bool P_Thing_Move (FLevelLocals *Level, int tid, AActor *source, int mapspot, bool fog)
 {
 	AActor *target;
 
 	if (tid != 0)
 	{
-		FActorIterator iterator1(tid);
+		FActorIterator iterator1(Level, tid);
 		source = iterator1.Next();
 	}
-	FActorIterator iterator2 (mapspot);
+	FActorIterator iterator2 (Level, mapspot);
 	target = iterator2.Next ();
 
 	if (source != NULL && target != NULL)
@@ -263,7 +263,7 @@ bool P_Thing_Projectile (FLevelLocals *Level, int tid, AActor *source, int type,
 	int rtn = 0;
 	PClassActor *kind;
 	AActor *spot, *mobj, *targ = forcedest;
-	FActorIterator iterator (tid);
+	FActorIterator iterator (Level, tid);
 	int defflags3;
 
 	if (type_name == NULL)
@@ -297,7 +297,7 @@ bool P_Thing_Projectile (FLevelLocals *Level, int tid, AActor *source, int type,
 	}
 	while (spot != NULL)
 	{
-		FActorIterator tit (dest);
+		FActorIterator tit (Level, dest);
 
 		if (dest == 0 || (targ = tit.Next()))
 		{
@@ -394,9 +394,9 @@ bool P_Thing_Projectile (FLevelLocals *Level, int tid, AActor *source, int type,
 	return rtn != 0;
 }
 
-int P_Thing_Damage (int tid, AActor *whofor0, int amount, FName type)
+int P_Thing_Damage (FLevelLocals *Level,int tid, AActor *whofor0, int amount, FName type)
 {
-	FActorIterator iterator (tid);
+	FActorIterator iterator (Level, tid);
 	int count = 0;
 	AActor *actor;
 

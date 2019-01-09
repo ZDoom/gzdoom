@@ -68,6 +68,7 @@
 #include "r_utility.h"
 #include "c_functions.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 
 extern FILE *Logfile;
 extern bool insave;
@@ -1153,9 +1154,9 @@ CCMD(currentpos)
 //
 //-----------------------------------------------------------------------------
 
-static void PrintSecretString(const char *string, bool thislevel)
+static void PrintSecretString(const char *string, FLevelLocals *Level)
 {
-	const char *colstr = thislevel? TEXTCOLOR_YELLOW : TEXTCOLOR_CYAN;
+	const char *colstr = Level? TEXTCOLOR_YELLOW : TEXTCOLOR_CYAN;
 	if (string != NULL)
 	{
 		if (*string == '$')
@@ -1164,10 +1165,10 @@ static void PrintSecretString(const char *string, bool thislevel)
 			{
 				auto secnum = (unsigned)strtoull(string+2, (char**)&string, 10);
 				if (*string == ';') string++;
-				if (thislevel && secnum < level.sectors.Size())
+				if (Level && secnum < level.sectors.Size())
 				{
-					if (level.sectors[secnum].isSecret()) colstr = TEXTCOLOR_RED;
-					else if (level.sectors[secnum].wasSecret()) colstr = TEXTCOLOR_GREEN;
+					if (Level->sectors[secnum].isSecret()) colstr = TEXTCOLOR_RED;
+					else if (Level->sectors[secnum].wasSecret()) colstr = TEXTCOLOR_GREEN;
 					else colstr = TEXTCOLOR_ORANGE;
 				}
 			}
@@ -1175,11 +1176,11 @@ static void PrintSecretString(const char *string, bool thislevel)
 			{
 				long tid = (long)strtoll(string+2, (char**)&string, 10);
 				if (*string == ';') string++;
-				FActorIterator it(tid);
-				AActor *actor;
 				bool foundone = false;
-				if (thislevel)
+				if (Level)
 				{
+					FActorIterator it(Level, tid);
+					AActor *actor;
 					while ((actor = it.Next()))
 					{
 						if (!actor->IsKindOf("SecretTrigger")) continue;
@@ -1200,29 +1201,21 @@ static void PrintSecretString(const char *string, bool thislevel)
 	}
 }
 
-//============================================================================
-//
-// Print secret hints
-//
-//============================================================================
-
-CCMD(secret)
+static void PrintSecretsForLevel(const FString &mapname, FLevelLocals *Level)
 {
-	const char *mapname = argv.argc() < 2? level.MapName.GetChars() : argv[1];
-	bool thislevel = !stricmp(mapname, level.MapName);
 	bool foundsome = false;
-
+	
 	int lumpno=Wads.CheckNumForName("SECRETS");
 	if (lumpno < 0) return;
-
+	
 	auto lump = Wads.OpenLumpReader(lumpno);
 	FString maphdr;
-	maphdr.Format("[%s]", mapname);
-
+	maphdr.Format("[%s]", mapname.GetChars());
+	
 	FString linebuild;
 	char readbuffer[1024];
 	bool inlevel = false;
-
+	
 	while (lump.Gets(readbuffer, 1024))
 	{
 		if (!inlevel)
@@ -1235,7 +1228,7 @@ CCMD(secret)
 					FString levelname;
 					level_info_t *info = FindLevelInfo(mapname);
 					const char *ln = !(info->flags & LEVEL_LOOKUPLEVELNAME)? info->LevelName.GetChars() : GStrings[info->LevelName.GetChars()];
-					levelname.Format("%s - %s\n", mapname, ln);
+					levelname.Format("%s - %s\n", mapname.GetChars(), ln);
 					size_t llen = levelname.Len() - 1;
 					for(size_t ii=0; ii<llen; ii++) levelname += '-';
 					Printf(TEXTCOLOR_YELLOW"%s\n", levelname.GetChars());
@@ -1254,7 +1247,7 @@ CCMD(secret)
 					// line complete so print it.
 					linebuild.Substitute("\r", "");
 					linebuild.StripRight(" \t\n");
-					PrintSecretString(linebuild, thislevel);
+					PrintSecretString(linebuild, Level);
 					linebuild = "";
 				}
 			}
@@ -1262,6 +1255,45 @@ CCMD(secret)
 		}
 	}
 }
+
+//============================================================================
+//
+// Print secret hints
+//
+//============================================================================
+
+CCMD(secret)
+{
+	TArray<std::pair<FString, FLevelLocals *>> levelList;	TMap<FString, FLevelLocals *> levelMap;
+	
+	ForAllLevels([&](FLevelLocals *Level) {
+		if (argv.argc() < 2 || Level->MapName.CompareNoCase(argv[1]) == 0)
+		{
+			levelList.Push(std::make_pair(Level->MapName, Level));
+		}
+	});
+	
+	if (levelMap.CountUsed() == 0)
+	{
+		if (argv.argc() < 2)
+		{
+			return;
+		}
+		level_info_t *info = FindLevelInfo(argv[1]);
+		if (info == nullptr)
+		{
+			Printf("%s: Map does not exist", argv[1]);
+			return;
+		}
+		levelList.Push(std::make_pair(argv[1], nullptr));
+	}
+	
+	for (auto &entry : levelList)
+	{
+		PrintSecretsForLevel(entry.first, entry.second);
+	}
+}
+	
 
 CCMD(angleconvtest)
 {

@@ -57,6 +57,7 @@
 #include "g_levellocals.h"
 #include "vm.h"
 #include "p_destructible.h"
+#include "actorinlines.h"
 
 // Remaps EE sector change types to Generic_Floor values. According to the Eternity Wiki:
 /*
@@ -171,7 +172,7 @@ FUNC(LS_Polyobj_MoveTo)
 FUNC(LS_Polyobj_MoveToSpot)
 // Polyobj_MoveToSpot (po, speed, tid)
 {
-	FActorIterator iterator (arg2);
+	FActorIterator iterator (Level, arg2);
 	AActor *spot = iterator.Next();
 	if (spot == NULL) return false;
 	return EV_MovePolyTo (Level, ln, arg0, SPEED(arg1), spot->Pos(), false);
@@ -222,7 +223,7 @@ FUNC(LS_Polyobj_OR_MoveTo)
 FUNC(LS_Polyobj_OR_MoveToSpot)
 // Polyobj_OR_MoveToSpot (po, speed, tid)
 {
-	FActorIterator iterator (arg2);
+	FActorIterator iterator (Level, arg2);
 	AActor *spot = iterator.Next();
 	if (spot == NULL) return false;
 	return EV_MovePolyTo (Level, ln, arg0, SPEED(arg1), spot->Pos(), true);
@@ -1210,7 +1211,7 @@ FUNC(LS_ThrustThing)
 {
 	if (arg3 != 0)
 	{
-		FActorIterator iterator (arg3);
+		FActorIterator iterator (Level, arg3);
 		while ((it = iterator.Next()) != NULL)
 		{
 			ThrustThingHelper (it, BYTEANGLE(arg0), arg1, arg2);
@@ -1241,7 +1242,7 @@ FUNC(LS_ThrustThingZ)	// [BC]
 
 	if (arg0 != 0)
 	{
-		FActorIterator iterator (arg0);
+		FActorIterator iterator (Level, arg0);
 
 		while ( (victim = iterator.Next ()) )
 		{
@@ -1281,7 +1282,7 @@ FUNC(LS_Thing_SetSpecial)	// [BC]
 	else
 	{
 		AActor *actor;
-		FActorIterator iterator (arg0);
+		FActorIterator iterator (Level, arg0);
 
 		while ( (actor = iterator.Next ()) )
 		{
@@ -1308,7 +1309,7 @@ FUNC(LS_Thing_ChangeTID)
 	}
 	else
 	{
-		FActorIterator iterator (arg0);
+		FActorIterator iterator (Level, arg0);
 		AActor *actor, *next;
 
 		next = iterator.Next ();
@@ -1424,7 +1425,7 @@ FUNC(LS_Thing_Activate)
 	if (arg0 != 0)
 	{
 		AActor *actor;
-		FActorIterator iterator (arg0);
+		FActorIterator iterator (Level,arg0);
 		int count = 0;
 
 		actor = iterator.Next ();
@@ -1454,7 +1455,7 @@ FUNC(LS_Thing_Deactivate)
 	if (arg0 != 0)
 	{
 		AActor *actor;
-		FActorIterator iterator (arg0);
+		FActorIterator iterator (Level, arg0);
 		int count = 0;
 	
 		actor = iterator.Next ();
@@ -1483,7 +1484,7 @@ FUNC(LS_Thing_Remove)
 {
 	if (arg0 != 0)
 	{
-		FActorIterator iterator (arg0);
+		FActorIterator iterator (Level, arg0);
 		AActor *actor;
 
 		actor = iterator.Next ();
@@ -1527,7 +1528,7 @@ FUNC(LS_Thing_Destroy)
 	}
 	else
 	{
-		FActorIterator iterator (arg0);
+		FActorIterator iterator (Level, arg0);
 
 		actor = iterator.Next ();
 		while (actor)
@@ -1544,7 +1545,7 @@ FUNC(LS_Thing_Destroy)
 FUNC(LS_Thing_Damage)
 // Thing_Damage (tid, amount, MOD)
 {
-	P_Thing_Damage (arg0, it, arg1, MODtoDamageType (arg2));
+	P_Thing_Damage (Level, arg0, it, arg1, MODtoDamageType (arg2));
 	return true;
 }
 
@@ -1565,9 +1566,9 @@ FUNC(LS_Thing_ProjectileGravity)
 FUNC(LS_Thing_Hate)
 // Thing_Hate (hater, hatee, group/"xray"?)
 {
-	FActorIterator haterIt (arg0);
+	FActorIterator haterIt (Level, arg0);
 	AActor *hater, *hatee = NULL;
-	FActorIterator hateeIt (arg1);
+	FActorIterator hateeIt (Level, arg1);
 	bool nothingToHate = false;
 
 	if (arg1 != 0)
@@ -1768,7 +1769,7 @@ FUNC(LS_Thing_Raise)
 	}
 	else
 	{
-		TActorIterator<AActor> iterator (arg0);
+		TActorIterator<AActor> iterator (Level, arg0);
 
 		while ( (target = iterator.Next ()) )
 		{
@@ -1795,7 +1796,7 @@ FUNC(LS_Thing_Stop)
 	}
 	else
 	{
-		TActorIterator<AActor> iterator (arg0);
+		TActorIterator<AActor> iterator (Level, arg0);
 
 		while ( (target = iterator.Next ()) )
 		{
@@ -1811,8 +1812,8 @@ FUNC(LS_Thing_Stop)
 FUNC(LS_Thing_SetGoal)
 // Thing_SetGoal (tid, goal, delay, chasegoal)
 {
-	TActorIterator<AActor> selfiterator (arg0);
-	NActorIterator goaliterator (NAME_PatrolPoint, arg1);
+	TActorIterator<AActor> selfiterator (Level, arg0);
+	NActorIterator goaliterator (Level, NAME_PatrolPoint, arg1);
 	AActor *self;
 	AActor *goal = goaliterator.Next ();
 	bool ok = false;
@@ -1850,7 +1851,7 @@ FUNC(LS_Thing_SetGoal)
 FUNC(LS_Thing_Move)		// [BC]
 // Thing_Move (tid, mapspot, nofog)
 {
-	return P_Thing_Move (arg0, it, arg1, arg2 ? false : true);
+	return P_Thing_Move (Level, arg0, it, arg1, arg2 ? false : true);
 }
 
 enum
@@ -1861,7 +1862,7 @@ enum
 FUNC(LS_Thing_SetTranslation)
 // Thing_SetTranslation (tid, range)
 {
-	TActorIterator<AActor> iterator (arg0);
+	TActorIterator<AActor> iterator (Level, arg0);
 	int range;
 	AActor *target;
 	bool ok = false;
@@ -2153,7 +2154,7 @@ FUNC(LS_Light_Stop)
 FUNC(LS_Radius_Quake)
 // Radius_Quake (intensity, duration, damrad, tremrad, tid)
 {
-	return P_StartQuake (it, arg4, arg0, arg1, arg2*64, arg3*64, "world/quake");
+	return P_StartQuake (Level, it, arg4, arg0, arg1, arg2*64, arg3*64, "world/quake");
 }
 
 FUNC(LS_UsePuzzleItem)
@@ -2822,7 +2823,7 @@ FUNC(LS_ChangeCamera)
 	AActor *camera;
 	if (arg0 != 0)
 	{
-		FActorIterator iterator (arg0);
+		FActorIterator iterator (Level, arg0);
 		camera = iterator.Next ();
 	}
 	else
@@ -3159,7 +3160,7 @@ FUNC(LS_NoiseAlert)
 	}
 	else
 	{
-		FActorIterator iter (arg0);
+		FActorIterator iter (Level, arg0);
 		target = iter.Next();
 	}
 
@@ -3173,7 +3174,7 @@ FUNC(LS_NoiseAlert)
 	}
 	else
 	{
-		FActorIterator iter (arg1);
+		FActorIterator iter (Level, arg1);
 		emitter = iter.Next();
 	}
 
@@ -3333,7 +3334,7 @@ FUNC(LS_GlassBreak)
 FUNC(LS_StartConversation)
 // StartConversation (tid, facetalker)
 {
-	FActorIterator iterator (arg0);
+	FActorIterator iterator (Level, arg0);
 
 	AActor *target = iterator.Next();
 
@@ -3384,7 +3385,7 @@ FUNC(LS_Thing_SetConversation)
 
 	if (arg0 != 0)
 	{
-		FActorIterator iterator (arg0);
+		FActorIterator iterator (Level, arg0);
 		while ((it = iterator.Next()) != NULL)
 		{
 			it->ConversationRoot = dlg_index;

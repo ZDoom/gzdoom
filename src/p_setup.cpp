@@ -274,6 +274,8 @@ void FLevelLocals::ClearLevelData()
 	ClearPortals();
 
 	tagManager.Clear();
+	// [RH] Clear all ThingID hash chains.
+	ClearTIDHashes();
 
 	Behaviors.UnloadModules();
 
@@ -336,8 +338,6 @@ void P_FreeLevelData ()
 	R_FreePastViewers();
 	P_ClearUDMFKeys();
 
-	// [RH] Clear all ThingID hash chains.
-	AActor::ClearTIDHashes();
 
 	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
 	level.ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
@@ -557,8 +557,8 @@ void P_Init ()
 }
 
 static void P_Shutdown ()
-{	
-	DThinker::DestroyThinkersInList(STAT_STATIC);	
+{
+	DThinker::DestroyThinkersInList(STAT_STATIC);
 	P_FreeLevelData ();
 	// [ZZ] delete global event handlers
 	E_Shutdown(false);
@@ -672,4 +672,3 @@ CUSTOM_CVAR(Bool, forcewater, false, CVAR_ARCHIVE | CVAR_SERVERINFO)
 		}
 	}
 }
-

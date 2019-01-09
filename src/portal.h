@@ -265,7 +265,7 @@ struct FSectorPortalGroup
 
 void P_SpawnLinePortal(line_t* line);
 void P_FinalizePortals(FLevelLocals *Level);
-bool P_ChangePortal(line_t *ln, int thisid, int destid);
+bool P_ChangePortal(FLevelLocals *Level, line_t *ln, int thisid, int destid);
 void P_CreateLinkedPortals(FLevelLocals *Level);
 bool P_CollectConnectedGroups(FLevelLocals *Level, int startgroup, const DVector3 &position, double upperz, double checkradius, FPortalGroupArray &out);
 void P_CollectLinkedPortals(FLevelLocals *Level);

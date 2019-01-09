@@ -71,94 +71,93 @@ bool P_CheckTickerPaused ()
 //
 // P_Ticker
 //
-// (split up to prepare for running multiple levels.)
-//
 void P_Ticker (void)
 {
 	int i;
 
+	// This must be done before the pause check
+	ForAllLevels([](FLevelLocals *Level)
+	{
+		Level->interpolator.UpdateInterpolations();
+	});
+
+	r_NoInterpolate = true;
+
+	// run the tic
 	if (paused || P_CheckTickerPaused())
 		return;
-	
-	level.Tick();
-	
+
+	DPSprite::NewTick();
+
 	// [BC] Do a quick check to see if anyone has the freeze time power. If they do,
 	// then don't resume the sound, since one of the effects of that power is to shut
 	// off the music.
-	for (i = 0; i < MAXPLAYERS; i++ )
+	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		if (playeringame[i] && players[i].timefreezer != 0)
 			break;
 	}
-	
-	if ( i == MAXPLAYERS )
-		S_ResumeSound (false);
 
-}
+	if (i == MAXPLAYERS)
+		S_ResumeSound(false);
 
-void FLevelLocals::Tick()
-{
-	// run the tic
-
-
-	interpolator.UpdateInterpolations ();
-	r_NoInterpolate = true;
-
-	DPSprite::NewTick();
-
-	// [RH] Frozen mode is only changed every 4 tics, to make it work with A_Tracer().
-	if ((maptime & 3) == 0)
-	{
-		if (changefreeze)
-		{
-			freeze ^= 1;
-			changefreeze = 0;
-		}
-	}
-
-
-	P_ResetSightCounters (false);
+	P_ResetSightCounters(false);
 	R_ClearInterpolationPath();
 
-	// Reset all actor interpolations for all actors before the current thinking turn so that indirect actor movement gets properly interpolated.
-	TThinkerIterator<AActor> it;
-	AActor *ac;
-
-	while ((ac = it.Next()))
+	ForAllLevels([](FLevelLocals *Level)
 	{
-		ac->ClearInterpolation();
+		// [RH] Frozen mode is only changed every 4 tics, to make it work with A_Tracer().
+		if ((Level->time & 3) == 0)
+		{
+			if (Level->changefreeze)
+			{
+				Level->freeze ^= 1;
+				Level->changefreeze = 0;
+			}
+		}
+
+		// Reset all actor interpolations for all actors before the current thinking turn so that indirect actor movement gets properly interpolated.
+		TThinkerIterator<AActor> it;
+		AActor *ac;
+
+		while ((ac = it.Next()))
+		{
+			ac->ClearInterpolation();
+		}
+
+		P_ThinkParticles();	// [RH] make the particles think
+	});
+
+	for (int i = 0; i < MAXPLAYERS; i++)
+	{
+		if (playeringame[i]) P_PlayerThink(&players[i]);
 	}
-
-	// Since things will be moving, it's okay to interpolate them in the renderer.
-	r_NoInterpolate = false;
-
-	P_ThinkParticles();	// [RH] make the particles think
-
-	for (int i = 0; i<MAXPLAYERS; i++)
-		if (playeringame[i] &&
-			/*Added by MC: Freeze mode.*/!(freeze && players[i].Bot != NULL))
-			P_PlayerThink (&players[i]);
 
 	// [ZZ] call the WorldTick hook
 	E_WorldTick();
-	StatusBar->SetLevel(this);
+	StatusBar->SetLevel(players[consoleplayer].mo->Level);
 	StatusBar->CallTick ();		// [RH] moved this here
-	// Reset carry sectors
-	if (Scrolls.Size() > 0)
-	{
-		memset (&Scrolls[0], 0, sizeof(Scrolls[0])*Scrolls.Size());
-	}
-	DThinker::RunThinkers ();
 
-	//if added by MC: Freeze mode.
-	if (!freeze && !(flags2 & LEVEL2_FROZEN))
+	ForAllLevels([](FLevelLocals *Level)
 	{
-		P_UpdateSpecials (&level);
-		P_RunEffects ();	// [RH] Run particle effects
-	}
+		// Reset carry sectors
+		if (Level->Scrolls.Size() > 0)
+		{
+			memset(&Level->Scrolls[0], 0, sizeof(Level->Scrolls[0]) * Level->Scrolls.Size());
+		}
 
-	// for par times
-	time++;
-	maptime++;
-	totaltime++;
+		DThinker::RunThinkers();
+
+		//if added by MC: Freeze mode.
+		if (!Level->freeze && !(Level->flags2 & LEVEL2_FROZEN))
+		{
+			P_UpdateSpecials(Level);
+			P_RunEffects();	// [RH] Run particle effects
+		}
+
+		// for par times
+		Level->time++;
+		Level->maptime++;
+		Level->totaltime++;
+	});
 }

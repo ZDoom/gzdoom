@@ -854,7 +854,10 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 
 	viewpoint.SetViewAngle (viewwindow);
 
-	interpolator.DoInterpolations (viewpoint.TicFrac);
+	ForAllLevels([&](FLevelLocals *Level)
+	{
+		Level->interpolator.DoInterpolations(viewpoint.TicFrac);
+	});
 
 	// Keep the view within the sector's floor and ceiling
 	if (viewpoint.sector->PortalBlocksMovement(sector_t::ceiling))

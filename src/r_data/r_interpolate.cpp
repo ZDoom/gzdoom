@@ -39,6 +39,8 @@
 #include "p_local.h"
 #include "po_man.h"
 #include "serializer.h"
+#include "r_defs.h"
+#include "g_levellocals.h"
 
 //==========================================================================
 //
@@ -56,6 +58,7 @@ class DSectorPlaneInterpolation : public DInterpolation
 	bool ceiling;
 	TArray<DInterpolation *> attached;
 
+	FLevelLocals *GetLevel() override { return sector->Level; }
 
 public:
 
@@ -85,6 +88,8 @@ class DSectorScrollInterpolation : public DInterpolation
 	double bakx, baky;
 	bool ceiling;
 
+	FLevelLocals *GetLevel() override { return sector->Level; }
+
 public:
 
 	DSectorScrollInterpolation() {}
@@ -113,6 +118,8 @@ class DWallScrollInterpolation : public DInterpolation
 	double oldx, oldy;
 	double bakx, baky;
 
+	FLevelLocals *GetLevel() override { return side->sector->Level; }
+
 public:
 
 	DWallScrollInterpolation() {}
@@ -139,6 +146,8 @@ class DPolyobjInterpolation : public DInterpolation
 	TArray<double> oldverts, bakverts;
 	double oldcx, oldcy;
 	double bakcx, bakcy;
+
+	FLevelLocals *GetLevel() override { return poly->GetLevel(); }
 
 public:
 
@@ -184,8 +193,6 @@ IMPLEMENT_CLASS(DPolyobjInterpolation, false, false)
 // will automatically be unlinked from the list.
 //
 //==========================================================================
-
-FInterpolator interpolator;
 
 //==========================================================================
 //
@@ -364,7 +371,7 @@ int DInterpolation::DelRef(bool force)
 
 void DInterpolation::OnDestroy()
 {
-	interpolator.RemoveInterpolation(this);
+	GetLevel()->interpolator.RemoveInterpolation(this);
 	refcount = 0;
 	Super::OnDestroy();
 }
@@ -379,10 +386,6 @@ void DInterpolation::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
 	arc("refcount", refcount);
-	if (arc.isReading())
-	{
-		interpolator.AddInterpolation(this);
-	}
 }
 
 //==========================================================================
@@ -408,7 +411,7 @@ DSectorPlaneInterpolation::DSectorPlaneInterpolation(sector_t *_sector, bool _pl
 		P_Start3dMidtexInterpolations(attached, sector, ceiling);
 		P_StartLinkedSectorInterpolations(attached, sector, ceiling);
 	}
-	interpolator.AddInterpolation(this);
+	sector->Level->interpolator.AddInterpolation(this);
 }
 
 //==========================================================================
@@ -532,6 +535,8 @@ void DSectorPlaneInterpolation::Serialize(FSerializer &arc)
 		("oldheight", oldheight)
 		("oldtexz", oldtexz)
 		("attached", attached);
+
+	sector->Level->interpolator.AddInterpolation(this);
 }
 
 
@@ -567,7 +572,7 @@ DSectorScrollInterpolation::DSectorScrollInterpolation(sector_t *_sector, bool _
 	sector = _sector;
 	ceiling = _plane;
 	UpdateInterpolation ();
-	interpolator.AddInterpolation(this);
+	sector->Level->interpolator.AddInterpolation(this);
 }
 
 //==========================================================================
@@ -652,6 +657,8 @@ void DSectorScrollInterpolation::Serialize(FSerializer &arc)
 		("ceiling", ceiling)
 		("oldx", oldx)
 		("oldy", oldy);
+
+	sector->Level->interpolator.AddInterpolation(this);
 }
 
 
@@ -672,7 +679,7 @@ DWallScrollInterpolation::DWallScrollInterpolation(side_t *_side, int _part)
 	side = _side;
 	part = _part;
 	UpdateInterpolation ();
-	interpolator.AddInterpolation(this);
+	side->sector->Level->interpolator.AddInterpolation(this);
 }
 
 //==========================================================================
@@ -750,6 +757,9 @@ void DWallScrollInterpolation::Serialize(FSerializer &arc)
 		("part", part)
 		("oldx", oldx)
 		("oldy", oldy);
+
+	side->sector->Level->interpolator.AddInterpolation(this);
+
 }
 
 //==========================================================================
@@ -770,7 +780,7 @@ DPolyobjInterpolation::DPolyobjInterpolation(FPolyObj *po)
 	oldverts.Resize(po->Vertices.Size() << 1);
 	bakverts.Resize(po->Vertices.Size() << 1);
 	UpdateInterpolation ();
-	interpolator.AddInterpolation(this);
+	poly->GetLevel()->interpolator.AddInterpolation(this);
 }
 
 //==========================================================================
@@ -873,6 +883,9 @@ void DPolyobjInterpolation::Serialize(FSerializer &arc)
 		("oldcx", oldcx)
 		("oldcy", oldcy);
 	if (arc.isReading()) bakverts.Resize(oldverts.Size());
+
+	poly->GetLevel()->interpolator.AddInterpolation(this);
+
 }
 
 
@@ -980,13 +993,4 @@ void FPolyObj::StopInterpolation()
 		interpolation->DelRef();
 	}
 }
-
-
-ADD_STAT (interpolations)
-{
-	FString out;
-	out.Format ("%d interpolations", interpolator.CountInterpolations ());
-	return out;
-}
-
 

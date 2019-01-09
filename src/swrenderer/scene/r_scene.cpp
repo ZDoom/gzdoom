@@ -189,7 +189,11 @@ namespace swrenderer
 		RenderPSprites();
 
 		MainThread()->Viewport->viewpoint.camera->renderflags = savedflags;
-		interpolator.RestoreInterpolations();
+		// Restore interpolations for all levels.
+		ForAllLevels([](FLevelLocals *Level)
+		{
+			Level->interpolator.RestoreInterpolations();
+		});
 	}
 
 	void RenderScene::RenderPSprites()

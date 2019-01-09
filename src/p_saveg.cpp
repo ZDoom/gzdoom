@@ -950,7 +950,7 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 	if (arc.isReading())
 	{
 		DThinker::DestroyAllThinkers();
-		interpolator.ClearInterpolations();
+		Level->interpolator.ClearInterpolations();
 		arc.ReadObjects(hubload);
 	}
 

@@ -217,7 +217,11 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 			mBuffers->BlitToEyeTexture(eye_ix);
 	}
 
-	interpolator.RestoreInterpolations ();
+	// Restore interpolations for all levels.
+	ForAllLevels([](FLevelLocals *Level)
+	{
+		Level->interpolator.RestoreInterpolations();
+	});
 	return mainvp.sector;
 }
 

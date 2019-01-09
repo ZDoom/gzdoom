@@ -272,6 +272,10 @@ void FLevelLocals::ClearLevelData()
 	DialogueRoots.Clear();
 	ClassRoots.Clear();
 
+	level.interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
+	level.ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
+	DThinker::DestroyAllThinkers();
+
 	// delete allocated data in the level arrays.
 	if (sectors.Size() > 0)
 	{
@@ -348,11 +352,7 @@ void P_FreeLevelData ()
 	R_FreePastViewers();
 	P_ClearUDMFKeys();
 
-
-	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
-	level.ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
 	SN_StopAllSequences ();
-	DThinker::DestroyAllThinkers ();
 
 	level.ClearLevelData();
 }

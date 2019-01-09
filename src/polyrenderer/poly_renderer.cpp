@@ -188,7 +188,10 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 
 	if (Viewpoint.camera)
 		Viewpoint.camera->renderflags = savedflags;
-	interpolator.RestoreInterpolations ();
+	ForAllLevels([](FLevelLocals *Level)
+	{
+		Level->interpolator.RestoreInterpolations();
+	});
 	
 	NetUpdate();
 }

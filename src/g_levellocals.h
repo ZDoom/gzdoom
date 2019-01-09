@@ -46,6 +46,7 @@
 #include "p_acs.h"
 #include "p_tags.h"
 #include "p_destructible.h"
+#include "r_data/r_interpolate.h"
 #include "r_data/r_sections.h"
 #include "r_data/r_canvastexture.h"
 
@@ -221,6 +222,7 @@ struct FLevelLocals : public FLevelData
 	uint8_t freeze;						//Game in freeze mode.
 	uint8_t changefreeze;				//Game wants to change freeze mode.
 
+	FInterpolator interpolator;
 
 	TArray<DVector2>	Scrolls;		// NULL if no DScrollers in this level
 

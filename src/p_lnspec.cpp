@@ -3960,8 +3960,6 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, ExecuteSpecial)
 	PARAM_INT(arg4);
 	PARAM_INT(arg5);
 
-	bool res = !!P_ExecuteSpecial(special, linedef, activator, lineside, arg1, arg2, arg3, arg4, arg5);
-
-	ACTION_RETURN_BOOL(res);
+	ACTION_RETURN_INT(P_ExecuteSpecial(special, linedef, activator, lineside, arg1, arg2, arg3, arg4, arg5));
 }
 

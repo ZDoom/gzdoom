@@ -218,6 +218,10 @@ struct FLevelLocals : public FLevelData
 	int			airsupply;
 	int			DefaultEnvironment;		// Default sound environment.
 
+	uint8_t freeze;						//Game in freeze mode.
+	uint8_t changefreeze;				//Game wants to change freeze mode.
+
+
 	TArray<DVector2>	Scrolls;		// NULL if no DScrollers in this level
 
 	int8_t		WallVertLight;			// Light diffs for vert/horiz walls

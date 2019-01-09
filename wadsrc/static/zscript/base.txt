@@ -20,7 +20,6 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native play uint gameaction;
 	native readonly int gamestate;
 	native readonly TextureID skyflatnum;
-	native readonly uint8 globalfreeze;
 	native readonly int consoleplayer;
 	native readonly Font smallfont;
 	native readonly Font smallfont2;
@@ -690,6 +689,7 @@ struct LevelLocals native
 	native readonly int skyfog;
 	native readonly float pixelstretch;
 	native name deathsequence;
+	native readonly uint8 globalfreeze;
 // level_info_t *info cannot be done yet.
 
 	native String GetUDMFString(int type, int index, Name key);

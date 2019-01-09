@@ -109,10 +109,10 @@ void FLevelLocals::Tick()
 	// [RH] Frozen mode is only changed every 4 tics, to make it work with A_Tracer().
 	if ((maptime & 3) == 0)
 	{
-		if (bglobal.changefreeze)
+		if (changefreeze)
 		{
-			bglobal.freeze ^= 1;
-			bglobal.changefreeze = 0;
+			freeze ^= 1;
+			changefreeze = 0;
 		}
 	}
 
@@ -136,7 +136,7 @@ void FLevelLocals::Tick()
 
 	for (int i = 0; i<MAXPLAYERS; i++)
 		if (playeringame[i] &&
-			/*Added by MC: Freeze mode.*/!(bglobal.freeze && players[i].Bot != NULL))
+			/*Added by MC: Freeze mode.*/!(freeze && players[i].Bot != NULL))
 			P_PlayerThink (&players[i]);
 
 	// [ZZ] call the WorldTick hook
@@ -151,7 +151,7 @@ void FLevelLocals::Tick()
 	DThinker::RunThinkers ();
 
 	//if added by MC: Freeze mode.
-	if (!bglobal.freeze && !(flags2 & LEVEL2_FROZEN))
+	if (!freeze && !(flags2 & LEVEL2_FROZEN))
 	{
 		P_UpdateSpecials (&level);
 		P_RunEffects ();	// [RH] Run particle effects

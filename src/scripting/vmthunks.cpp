@@ -2748,6 +2748,8 @@ DEFINE_FIELD(FLevelLocals, outsidefogdensity)
 DEFINE_FIELD(FLevelLocals, skyfog)
 DEFINE_FIELD(FLevelLocals, pixelstretch)
 DEFINE_FIELD(FLevelLocals, deathsequence)
+DEFINE_FIELD(FLevelLocals, freeze)
+
 DEFINE_FIELD_BIT(FLevelLocals, flags, noinventorybar, LEVEL_NOINVENTORYBAR)
 DEFINE_FIELD_BIT(FLevelLocals, flags, monsterstelefrag, LEVEL_MONSTERSTELEFRAG)
 DEFINE_FIELD_BIT(FLevelLocals, flags, actownspecial, LEVEL_ACTOWNSPECIAL)

@@ -116,7 +116,7 @@ public:
 	void ClearPlayer (int playernum, bool keepTeam);
 
 	//(b_game.cpp)
-	void Main ();
+	void Main (FLevelLocals *Level);
 	void Init ();
 	void End();
 	bool SpawnBot (const char *name, int color = NOCOLOR);
@@ -139,8 +139,6 @@ public:
 	bool IsDangerous (sector_t *sec);
 
 	TArray<FString> getspawned; //Array of bots (their names) which should be spawned when starting a game.
-	uint8_t freeze;			//Game in freeze mode.
-	uint8_t changefreeze;	//Game wants to change freeze mode.
 	int botnum;
 	botinfo_t *botinfo;
 	int spawn_tries;

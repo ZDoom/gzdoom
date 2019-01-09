@@ -3522,7 +3522,7 @@ void AActor::Tick ()
 		if (!(flags5 & MF5_NOTIMEFREEZE))
 		{
 			//Added by MC: Freeze mode.
-			if (bglobal.freeze || Level->flags2 & LEVEL2_FROZEN)
+			if (Level->freeze || Level->flags2 & LEVEL2_FROZEN)
 			{
 				// Boss cubes shouldn't be accelerated by timefreeze
 				if (flags6 & MF6_BOSSCUBE)
@@ -3577,7 +3577,7 @@ void AActor::Tick ()
 				special2++;
 			}
 			//Added by MC: Freeze mode.
-			if (bglobal.freeze && !(player && player->Bot == NULL))
+			if (Level->freeze && !(player && player->Bot == NULL))
 			{
 				return;
 			}

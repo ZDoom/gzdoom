@@ -2873,7 +2873,6 @@ DEFINE_GLOBAL(multiplayer)
 DEFINE_GLOBAL(gameaction)
 DEFINE_GLOBAL(gamestate)
 DEFINE_GLOBAL(skyflatnum)
-DEFINE_GLOBAL_NAMED(bglobal.freeze, globalfreeze)
 DEFINE_GLOBAL(gametic)
 DEFINE_GLOBAL(demoplayback)
 DEFINE_GLOBAL(automapactive);

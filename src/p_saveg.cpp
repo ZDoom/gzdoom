@@ -984,7 +984,9 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 		("spotstate", Level->SpotState)
 		("fragglethinker", Level->FraggleScriptThinker)
 		("acsthinker", Level->ACSThinker)
-		("impactdecalcount", Level->ImpactDecalCount);
+		("impactdecalcount", Level->ImpactDecalCount)
+		("freeze", Level->freeze)
+		("changefreeze", Level->changefreeze
 
 	// Hub transitions must keep the current total time
 	if (!hubload)

@@ -39,8 +39,6 @@
 #include "g_levellocals.h"
 #include "vm.h"
 
-FTagManager tagManager;
-
 //-----------------------------------------------------------------------------
 //
 //
@@ -296,7 +294,11 @@ void FTagManager::DumpTags()
 
 CCMD(dumptags)
 {
-	tagManager.DumpTags();
+	ForAllLevels([](FLevelLocals *Level)
+	{
+		Printf("%s - %s\n", Level->MapName.GetChars(), Level->LevelName.GetChars());
+		Level->tagManager.DumpTags();
+	}
 }
 
 //-----------------------------------------------------------------------------

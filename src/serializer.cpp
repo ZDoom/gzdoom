@@ -60,7 +60,6 @@
 #include "cmdlib.h"
 #include "g_levellocals.h"
 
-char nulspace[1024 * 1024 * 4];
 bool save_full = false;	// for testing. Should be removed afterward.
 
 int utf8_encode(int32_t codepoint, char *buffer, int *size)

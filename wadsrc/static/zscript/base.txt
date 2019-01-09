@@ -689,7 +689,7 @@ struct LevelLocals native
 	native readonly int skyfog;
 	native readonly float pixelstretch;
 	native name deathsequence;
-	native readonly uint8 globalfreeze;
+	native readonly uint8 freeze;
 // level_info_t *info cannot be done yet.
 
 	native String GetUDMFString(int type, int index, Name key);

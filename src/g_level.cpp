@@ -79,6 +79,7 @@
 #include "events.h"
 #include "i_music.h"
 #include "a_dynlight.h"
+#include "p_conversation.h"
 
 #include "gi.h"
 
@@ -759,6 +760,9 @@ void G_DoCompleted (void)
 
 	if (automapactive)
 		AM_Stop ();
+	
+	// Close the conversation menu if open.
+	P_FreeStrifeConversations ();
 
 	wminfo.finished_ep = level.cluster - 1;
 	wminfo.LName0 = TexMan.CheckForTexture(level.info->PName, ETextureType::MiscPatch);

@@ -4374,10 +4374,10 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 	actor->SpawnOrder = level.spawnindex++;
 
 	// Set default dialogue
-	actor->ConversationRoot = GetConversation(actor->GetClass()->TypeName);
+	actor->ConversationRoot = level.GetConversation(actor->GetClass()->TypeName);
 	if (actor->ConversationRoot != -1)
 	{
-		actor->Conversation = StrifeDialogues[actor->ConversationRoot];
+		actor->Conversation = level.StrifeDialogues[actor->ConversationRoot];
 	}
 	else
 	{
@@ -5462,11 +5462,11 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	if (mthing->Conversation > 0)
 	{
 		// Make sure that this does not partially overwrite the default dialogue settings.
-		int root = GetConversation(mthing->Conversation);
+		int root = level.GetConversation(mthing->Conversation);
 		if (root != -1)
 		{
 			mobj->ConversationRoot = root;
-			mobj->Conversation = StrifeDialogues[mobj->ConversationRoot];
+			mobj->Conversation = level.StrifeDialogues[mobj->ConversationRoot];
 		}
 	}
 

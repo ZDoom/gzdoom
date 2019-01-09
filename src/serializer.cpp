@@ -1968,13 +1968,13 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FStrifeDial
 			}
 			else if (val->IsUint())
 			{
-				if (val->GetUint() >= StrifeDialogues.Size())
+				if (val->GetUint() >= level.StrifeDialogues.Size())
 				{
 					node = nullptr;
 				}
 				else
 				{
-					node = StrifeDialogues[val->GetUint()];
+					node = level.StrifeDialogues[val->GetUint()];
 				}
 			}
 			else

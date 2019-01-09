@@ -432,7 +432,6 @@ void DSectorPlaneInterpolation::OnDestroy()
 		{
 			sector->interpolations[sector_t::FloorMove] = nullptr;
 		}
-		sector = nullptr;
 	}
 	for(unsigned i=0; i<attached.Size(); i++)
 	{
@@ -593,7 +592,6 @@ void DSectorScrollInterpolation::OnDestroy()
 		{
 			sector->interpolations[sector_t::FloorScroll] = nullptr;
 		}
-		sector = nullptr;
 	}
 	Super::OnDestroy();
 }
@@ -693,7 +691,6 @@ void DWallScrollInterpolation::OnDestroy()
 	if (side != nullptr)
 	{
 		side->textures[part].interpolation = nullptr;
-		side = nullptr;
 	}
 	Super::OnDestroy();
 }

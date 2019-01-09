@@ -107,7 +107,7 @@ void P_Ticker (void)
 	ForAllLevels([](FLevelLocals *Level)
 	{
 		// [RH] Frozen mode is only changed every 4 tics, to make it work with A_Tracer().
-		if ((Level->time & 3) == 0)
+		if ((Level->maptime & 3) == 0)
 		{
 			if (Level->changefreeze)
 			{

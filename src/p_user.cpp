@@ -1226,7 +1226,7 @@ void P_PlayerThink (player_t *player)
 	}
 
 	// Bots do not think in freeze mode.
-	if (!(player->mo->Level->freeze && player->Bot != nullptr))
+	if (player->mo->Level->freeze && player->Bot != nullptr)
 	{
 		return;
 	}

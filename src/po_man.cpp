@@ -900,13 +900,13 @@ void FPolyObj::CalcCenter()
 //
 //==========================================================================
 
-bool FPolyObj::MovePolyobj (const DVector2 &pos, bool force)
+bool FPolyObj::MovePolyobj (const DVector2 &pos, bool fromsave)
 {
 	FBoundingBox oldbounds = Bounds;
 	UnLinkPolyobj ();
 	DoMovePolyobj (pos);
 
-	if (!force)
+	if (!fromsave)
 	{
 		bool blocked = false;
 
@@ -928,7 +928,7 @@ bool FPolyObj::MovePolyobj (const DVector2 &pos, bool force)
 	CenterSpot.pos += pos;
 	LinkPolyobj ();
 	ClearSubsectorLinks();
-	RecalcActorFloorCeil(Bounds | oldbounds);
+	if (!fromsave) RecalcActorFloorCeil(Bounds | oldbounds);
 	return true;
 }
 
@@ -1022,7 +1022,7 @@ bool FPolyObj::RotatePolyobj (DAngle angle, bool fromsave)
 	Angle += angle;
 	LinkPolyobj();
 	ClearSubsectorLinks();
-	RecalcActorFloorCeil(Bounds | oldbounds);
+	if (!fromsave) RecalcActorFloorCeil(Bounds | oldbounds);
 	return true;
 }
 

@@ -545,7 +545,6 @@ FSerializer &Serialize(FSerializer &arc, const char *key, zone_t &z, zone_t *def
 void P_SerializeSounds(FSerializer &arc)
 {
 	S_SerializeSounds(arc, &level);
-	DSeqNode::SerializeSequences (arc);
 	const char *name = NULL;
 	uint8_t order;
 	float musvol = level.MusicVolume;
@@ -984,7 +983,9 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 		("acsthinker", Level->ACSThinker)
 		("impactdecalcount", Level->ImpactDecalCount)
 		("freeze", Level->freeze)
-		("changefreeze", Level->changefreeze);
+		("changefreeze", Level->changefreeze)
+		("sndseqlisthead", Level->SequenceListHead);
+
 
 	// Hub transitions must keep the current total time
 	if (!hubload)

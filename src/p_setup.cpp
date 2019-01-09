@@ -262,6 +262,8 @@ void FLevelLocals::ClearLevelData()
 		killed_monsters = found_items = found_secrets =
 		wminfo.maxfrags = 0;
 	
+	SN_StopAllSequences(this);
+
 	FStrifeDialogueNode *node;
 	
 	while (StrifeDialogues.Pop (node))
@@ -351,8 +353,6 @@ void P_FreeLevelData ()
 	E_Shutdown(true);
 	R_FreePastViewers();
 	P_ClearUDMFKeys();
-
-	SN_StopAllSequences ();
 
 	level.ClearLevelData();
 }

@@ -314,8 +314,6 @@ static void MarkRoot()
 		if (playeringame[i])
 			players[i].PropagateMark();
 	}
-	// Mark sound sequences.
-	DSeqNode::StaticMarkHead();
 	// Mark sectors.
 	if (SectorMarker == nullptr && level.sectors.Size() > 0)
 	{

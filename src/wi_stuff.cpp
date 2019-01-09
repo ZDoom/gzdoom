@@ -769,7 +769,7 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
 	else wbstartstruct->nextname = info->LookupLevelName();
 	V_SetBlend(0, 0, 0, 0);
 	S_StopAllChannels();
-	SN_StopAllSequences();
+	ForAllLevels(SN_StopAllSequences);
 	WI_Screen = cls->CreateNew();
 	IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Start)
 	{

@@ -53,6 +53,7 @@
 class DACSThinker;
 class DFraggleThinker;
 class DSpotState;
+class DSeqNode;
 struct FStrifeDialogueNode;
 
 typedef TMap<int, int> FDialogueIDMap;				// maps dialogue IDs to dialogue array index (for ACS)
@@ -223,6 +224,9 @@ struct FLevelLocals : public FLevelData
 	uint8_t changefreeze;				//Game wants to change freeze mode.
 
 	FInterpolator interpolator;
+
+	int ActiveSequences;
+	DSeqNode *SequenceListHead;
 
 	TArray<DVector2>	Scrolls;		// NULL if no DScrollers in this level
 

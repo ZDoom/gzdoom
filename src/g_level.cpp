@@ -1976,6 +1976,104 @@ void P_ReadACSDefereds (FSerializer &arc)
 
 //==========================================================================
 //
+// This object is responsible for marking sectors during the propagate
+// stage. In case there are many, many sectors, it lets us break them
+// up instead of marking them all at once.
+//
+//==========================================================================
+
+class DSectorMarker : public DObject
+{
+	enum
+	{
+		SECTORSTEPSIZE = 32,
+		POLYSTEPSIZE = 120,
+		SIDEDEFSTEPSIZE = 240
+	};
+	DECLARE_CLASS(DSectorMarker, DObject)
+public:
+	DSectorMarker(FLevelLocals *l) : Level(l), SecNum(0),PolyNum(0),SideNum(0) {}
+	size_t PropagateMark();
+	FLevelLocals *Level;
+	int SecNum;
+	int PolyNum;
+	int SideNum;
+};
+
+IMPLEMENT_CLASS(DSectorMarker, true, false)
+
+//==========================================================================
+//
+// DSectorMarker :: PropagateMark
+//
+// Propagates marks across a few sectors and reinserts itself into the
+// gray list if it didn't do them all.
+//
+//==========================================================================
+
+size_t DSectorMarker::PropagateMark()
+{
+	int i;
+	int marked = 0;
+	bool moretodo = false;
+	int numsectors = Level->sectors.Size();
+	
+	for (i = 0; i < SECTORSTEPSIZE && SecNum + i < numsectors; ++i)
+	{
+		sector_t *sec = &Level->sectors[SecNum + i];
+		GC::Mark(sec->SoundTarget);
+		GC::Mark(sec->SecActTarget);
+		GC::Mark(sec->floordata);
+		GC::Mark(sec->ceilingdata);
+		GC::Mark(sec->lightingdata);
+		for(int j = 0; j < 4; j++) GC::Mark(sec->interpolations[j]);
+	}
+	marked += i * sizeof(sector_t);
+	if (SecNum + i < numsectors)
+	{
+		SecNum += i;
+		moretodo = true;
+	}
+	
+	if (!moretodo && Level->Polyobjects.Size() > 0)
+	{
+		for (i = 0; i < POLYSTEPSIZE && PolyNum + i < (int)Level->Polyobjects.Size(); ++i)
+		{
+			GC::Mark(Level->Polyobjects[PolyNum + i].interpolation);
+		}
+		marked += i * sizeof(FPolyObj);
+		if (PolyNum + i < (int)Level->Polyobjects.Size())
+		{
+			PolyNum += i;
+			moretodo = true;
+		}
+	}
+	if (!moretodo && Level->sides.Size() > 0)
+	{
+		for (i = 0; i < SIDEDEFSTEPSIZE && SideNum + i < (int)Level->sides.Size(); ++i)
+		{
+			side_t *side = &Level->sides[SideNum + i];
+			for (int j = 0; j < 3; j++) GC::Mark(side->textures[j].interpolation);
+		}
+		marked += i * sizeof(side_t);
+		if (SideNum + i < (int)Level->sides.Size())
+		{
+			SideNum += i;
+			moretodo = true;
+		}
+	}
+	// If there are more items to mark, put ourself back into the gray list.
+	if (moretodo)
+	{
+		Black2Gray();
+		GCNext = GC::Gray;
+		GC::Gray = this;
+	}
+	return marked;
+}
+
+//==========================================================================
+//
 //
 //==========================================================================
 
@@ -1995,6 +2093,20 @@ void FLevelLocals::Tick ()
 
 void FLevelLocals::Mark()
 {
+	if (SectorMarker == nullptr && (sectors.Size() > 0 || Polyobjects.Size() > 0 || sides.Size() > 0))
+	{
+		SectorMarker = Create<DSectorMarker>(this);
+	}
+	else if (sectors.Size() == 0 && Polyobjects.Size() == 0 && sides.Size() == 0)
+	{
+		SectorMarker = nullptr;
+	}
+	else
+	{
+		SectorMarker->SecNum = 0;
+	}
+
+	GC::Mark(SectorMarker);
 	GC::Mark(SpotState);
 	GC::Mark(FraggleScriptThinker);
 	GC::Mark(ACSThinker);

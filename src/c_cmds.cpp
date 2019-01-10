@@ -1046,24 +1046,25 @@ CCMD(countitemsnum) // [SP] # of counted items
 //-----------------------------------------------------------------------------
 CCMD(changesky)
 {
-	const char *sky1name;
-
 	if (netgame || argv.argc()<2) return;
 
-	sky1name = argv[1];
-	if (sky1name[0] != 0)
+	const char *sky1name = argv[1];
+	ForAllLevels([=](FLevelLocals *Level)
 	{
-		FTextureID newsky = TexMan.GetTextureID(sky1name, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
-		if (newsky.Exists())
+		if (sky1name[0] != 0)
 		{
-			sky1texture = level.skytexture1 = newsky;
+			FTextureID newsky = TexMan.GetTextureID(sky1name, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
+			if (newsky.Exists())
+			{
+				Level->skytexture1 = newsky;
+			}
+			else
+			{
+				Printf("changesky: Texture '%s' not found\n", sky1name);
+			}
 		}
-		else
-		{
-			Printf("changesky: Texture '%s' not found\n", sky1name);
-		}
-	}
-	R_InitSkyMap ();
+		InitSkyMap(Level);
+	});
 }
 
 //-----------------------------------------------------------------------------

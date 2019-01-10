@@ -9794,13 +9794,13 @@ scriptwait:
 				sky2name = Level->Behaviors.LookupString (STACK(1));
 				if (sky1name[0] != 0)
 				{
-					sky1texture = Level->skytexture1 = TexMan.GetTextureID(sky1name, ETextureType::Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
+					Level->skytexture1 = TexMan.GetTextureID(sky1name, ETextureType::Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
 				}
 				if (sky2name[0] != 0)
 				{
-					sky2texture = Level->skytexture2 = TexMan.GetTextureID(sky2name, ETextureType::Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
+					Level->skytexture2 = TexMan.GetTextureID(sky2name, ETextureType::Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
 				}
-				R_InitSkyMap ();
+				InitSkyMap (Level);
 				sp -= 2;
 			}
 			break;

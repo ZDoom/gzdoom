@@ -361,8 +361,7 @@ CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO)
 {
 	// In case DF_NO_FREELOOK was changed, reinitialize the sky
 	// map. (If no freelook, then no need to stretch the sky.)
-	if (sky1texture.isValid())
-		R_InitSkyMap ();
+	R_InitSkyMap ();
 
 	if (self & DF_NO_FREELOOK)
 	{

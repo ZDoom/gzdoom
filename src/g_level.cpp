@@ -1032,12 +1032,6 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 	//	setting one.
 	skyflatnum = TexMan.GetTextureID (gameinfo.SkyFlatName, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
 
-	// DOOM determines the sky texture to be used
-	// depending on the current episode and the game version.
-	// [RH] Fetch sky parameters from FLevelLocals.
-	sky1texture = level.skytexture1;
-	sky2texture = level.skytexture2;
-
 	// [RH] Set up details about sky rendering
 	R_InitSkyMap ();
 
@@ -1294,10 +1288,10 @@ void G_WorldDone (FLevelLocals *Level)
 	}
 } 
  
-DEFINE_ACTION_FUNCTION(FLevelLocals, WorldDone)
+DEFINE_ACTION_FUNCTION(FGameSession, WorldDone)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
-	G_WorldDone(self);
+	PARAM_SELF_STRUCT_PROLOGUE(FGameSession);
+	G_WorldDone(self->Levelinfo[0]);
 	return 0;
 }
 
@@ -2365,9 +2359,9 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, ChangeSky)
 	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_INT(sky1);
 	PARAM_INT(sky2);
-	sky1texture = self->skytexture1 = FSetTextureID(sky1);
-	sky2texture = self->skytexture2 = FSetTextureID(sky2);
-	R_InitSkyMap();
+	self->skytexture1 = FSetTextureID(sky1);
+	self->skytexture2 = FSetTextureID(sky2);
+	InitSkyMap(self);
 	return 0;
 }
 

@@ -30,16 +30,15 @@
 
 #include "textures/textures.h"
 
+struct FLevelLocals;
+
 extern FTextureID	skyflatnum;
-extern FTextureID	sky1texture,	sky2texture;
-extern double		sky1pos,		sky2pos;
-extern float		hw_sky1pos, hw_sky2pos;
-extern bool		skystretch;
 extern int		freelookviewheight;
 
 #define SKYSTRETCH_HEIGHT 228
 
 // Called whenever the sky changes.
+void InitSkyMap(FLevelLocals *Level);
 void R_InitSkyMap		();
 void R_UpdateSky (uint64_t mstime);
 

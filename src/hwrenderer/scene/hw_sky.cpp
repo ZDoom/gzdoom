@@ -72,24 +72,24 @@ void GLSkyInfo::init(HWDrawInfo *di, int sky1, PalEntry FadeColor)
 	normalsky:
 		if (di->Level->flags&LEVEL_DOUBLESKY)
 		{
-			texture[1] = FMaterial::ValidateTexture(sky1texture, false, true);
-			x_offset[1] = hw_sky1pos;
+			texture[1] = FMaterial::ValidateTexture(di->Level->skytexture1, false, true);
+			x_offset[1] = di->Level->hw_sky1pos;
 			doublesky = true;
 		}
 
 		if ((di->Level->flags&LEVEL_SWAPSKIES || (sky1 == PL_SKYFLAT) || (di->Level->flags&LEVEL_DOUBLESKY)) &&
-			sky2texture != sky1texture)	// If both skies are equal use the scroll offset of the first!
+			di->Level->skytexture2 != di->Level->skytexture1)	// If both skies are equal use the scroll offset of the first!
 		{
-			texture[0] = FMaterial::ValidateTexture(sky2texture, false, true);
-			skytexno1 = sky2texture;
+			texture[0] = FMaterial::ValidateTexture(di->Level->skytexture2, false, true);
+			skytexno1 = di->Level->skytexture2;
 			sky2 = true;
-			x_offset[0] = hw_sky2pos;
+			x_offset[0] = di->Level->hw_sky2pos;
 		}
 		else if (!doublesky)
 		{
-			texture[0] = FMaterial::ValidateTexture(sky1texture, false, true);
-			skytexno1 = sky1texture;
-			x_offset[0] = hw_sky1pos;
+			texture[0] = FMaterial::ValidateTexture(di->Level->skytexture1, false, true);
+			skytexno1 = di->Level->skytexture1;
+			x_offset[0] = di->Level->hw_sky1pos;
 		}
 	}
 	if (di->Level->skyfog > 0)

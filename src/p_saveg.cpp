@@ -956,9 +956,7 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 
 	if (arc.isReading())
 	{
-		sky1texture = Level->skytexture1;
-		sky2texture = Level->skytexture2;
-		R_InitSkyMap();
+		InitSkyMap(Level);
 	}
 
 	Level->Behaviors.SerializeModuleStates(arc);

@@ -5138,9 +5138,54 @@ FxExpression *FxNew::Resolve(FCompileContext &ctx)
 
 //==========================================================================
 //
-//
+// The CVAR is for finding places where thinkers are created.
+// Those will require code changes in ZScript 4.0.
 //
 //==========================================================================
+CVAR(Bool, vm_warnthinkercreation, false, 0)
+
+static DObject *BuiltinNew(PClass *cls, int outerside, int backwardscompatible)
+{
+	if (cls->ConstructNative == nullptr)
+	{
+		ThrowAbortException(X_OTHER, "Class %s requires native construction", cls->TypeName.GetChars());
+		return nullptr;
+	}
+	if (cls->bAbstract)
+	{
+		ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
+		return nullptr;
+	}
+	// Creating actors here must be outright prohibited,
+	if (cls->IsDescendantOf(NAME_Actor))
+	{
+		ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
+		return nullptr;
+	}
+	if (vm_warnthinkercreation && cls->IsDescendantOf(NAME_Thinker))
+	{
+		// This must output a diagnostic warning
+		//ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
+		//return nullptr;
+	}
+	// [ZZ] validate readonly and between scope construction
+	if (outerside) FScopeBarrier::ValidateNew(cls, outerside - 1);
+	auto object = cls->CreateNew();
+	if (backwardscompatible && object->IsKindOf(NAME_Thinker))
+	{
+		// Todo: Link thinker to current primary level.
+	}
+	return object;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, BuiltinNew, BuiltinNew)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(cls, DObject);
+	PARAM_INT(outerside);
+	PARAM_INT(compatible);
+	ACTION_RETURN_OBJECT(BuiltinNew(cls, outerside, compatible));
+}
 
 ExpEmit FxNew::Emit(VMFunctionBuilder *build)
 {
@@ -5148,18 +5193,27 @@ ExpEmit FxNew::Emit(VMFunctionBuilder *build)
 	from.Free(build);
 	ExpEmit to(build, REGT_POINTER);
 
+	// Call DecoRandom to generate a random number.
+	VMFunction *callfunc;
+	auto sym = FindBuiltinFunction(NAME_BuiltinNew);
+	
+	assert(sym);
+	callfunc = sym->Variants[0].Implementation;
+	
+	FunctionCallEmitter emitters(callfunc);
+
+	int outerside = -1;
 	if (!from.Konst)
 	{
 		int outerside = FScopeBarrier::SideFromFlags(CallingFunction->Variants[0].Flags);
 		if (outerside == FScopeBarrier::Side_Virtual)
 			outerside = FScopeBarrier::SideFromObjectFlags(CallingFunction->OwningClass->ScopeFlags);
-		build->Emit(OP_NEW, to.RegNum, from.RegNum, outerside+1);	// +1 to ensure it's not 0
 	}
-	else
-	{
-		build->Emit(OP_NEW_K, to.RegNum, from.RegNum);
-	}
-	return to;
+	emitters.AddParameter(from, false);
+	emitters.AddParameterIntConst(outerside);
+	emitters.AddParameterIntConst(1);	// Todo: 1 only if version < 4.0.0
+	emitters.AddReturn(REGT_POINTER);
+	return emitters.EmitCall(build);
 }
 
 //==========================================================================

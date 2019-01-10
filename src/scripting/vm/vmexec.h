@@ -757,34 +757,6 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		assert(0);
 		NEXTOP;
 
-	OP(NEW_K):
-	OP(NEW):
-	{
-		b = B;
-		PClass *cls = (PClass*)(pc->op == OP_NEW ? reg.a[b] : konsta[b].v);
-		if (cls->ConstructNative == nullptr)
-		{
-			ThrowAbortException(X_OTHER, "Class %s requires native construction", cls->TypeName.GetChars());
-			return 0;
-		}
-		if (cls->bAbstract)
-		{
-			ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
-			return 0;
-		}
-		// Creating actors here must be outright prohibited,
-		if (cls->IsDescendantOf(NAME_Actor))
-		{
-			ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
-			return 0;
-		}
-		// [ZZ] validate readonly and between scope construction
-		c = C;
-		if (c) FScopeBarrier::ValidateNew(cls, c - 1);
-		reg.a[a] = cls->CreateNew();
-		NEXTOP;
-	}
-
 #if 0
 	OP(TRY):
 		assert(try_depth < MAX_TRY_DEPTH);

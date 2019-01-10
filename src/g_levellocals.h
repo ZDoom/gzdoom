@@ -56,6 +56,7 @@ class DFraggleThinker;
 class DSpotState;
 class DSeqNode;
 struct FStrifeDialogueNode;
+class DSectorMarker;
 
 typedef TMap<int, int> FDialogueIDMap;				// maps dialogue IDs to dialogue array index (for ACS)
 typedef TMap<FName, int> FDialogueMap;				// maps actor class names to dialogue array index
@@ -154,6 +155,7 @@ struct FLevelLocals : public FLevelData
 		memset(TIDHash, 0, sizeof(TIDHash));
 	}
 
+	DSectorMarker *SectorMarker;
 
 	uint8_t		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
 	int			time;			// time in the hub

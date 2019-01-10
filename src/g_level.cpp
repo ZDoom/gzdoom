@@ -168,6 +168,21 @@ void *statcopy;					// for statistics driver
 
 FLevelLocals level;			// info about current level
 
+FGameSession *currentSession;
+
+// Temporary placeholder to initialize the data until it can be done properly.
+class HackyInitializer
+{
+	FGameSession session;
+
+public:
+	HackyInitializer()
+	{
+		session.Levelinfo.Push(&level);
+		currentSession = &session;
+	}
+};
+HackyInitializer hackyinit;
 
 //==========================================================================
 //
@@ -1486,6 +1501,11 @@ int G_FinishTravel ()
 
 void FLevelLocals::InitLevelLocals ()
 {
+	info = FindLevelInfo(MapName);
+
+	// Session data should be moved out of here later!
+	currentSession->F1Pic = info->F1Pic;
+
 	P_InitParticles(this);
 	P_ClearParticles(this);
 	BaseBlendA = 0.0f;		// Remove underwater blend effect, if any
@@ -1499,7 +1519,6 @@ void FLevelLocals::InitLevelLocals ()
 	freeze = false;
 	changefreeze = false;
 
-	info = FindLevelInfo (MapName);
 
 	skyspeed1 = info->skyspeed1;
 	skyspeed2 = info->skyspeed2;
@@ -1549,7 +1568,6 @@ void FLevelLocals::InitLevelLocals ()
 	LevelName = info->LookupLevelName();
 	NextMap = info->NextMap;
 	NextSecretMap = info->NextSecretMap;
-	F1Pic = info->F1Pic;
 	hazardcolor = info->hazardcolor;
 	hazardflash = info->hazardflash;
 	

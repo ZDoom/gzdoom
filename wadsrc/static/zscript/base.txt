@@ -44,6 +44,7 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native ui BaseStatusBar StatusBar;
 	native readonly Weapon WP_NOCHANGE;
 	native int LocalViewPitch;
+	native GameSession currentSession;
 
 }
 
@@ -92,7 +93,7 @@ struct TexMan
 	native static TextureID CheckForTexture(String name, int usetype, int flags = TryAny);
 	deprecated("3.8") static void ReplaceTextures(String from, String to, int flags)
 	{
-		level.ReplaceTextures(from, to, flags);
+		currentSession.LevelInfo[0].ReplaceTextures(from, to, flags);
 	}
 	native static String GetName(TextureID tex);
 	native static int, int GetSize(TextureID tex);
@@ -463,6 +464,8 @@ class Thinker : Object native play
 
 	const TICRATE = 35;
 
+	native readonly LevelLocals Level;
+
 	virtual native void Tick();
 	virtual native void PostBeginPlay();
 	native void ChangeStatNum(int stat);
@@ -485,7 +488,7 @@ class ActorIterator : Object native
 {
 	deprecated("3.8") static ActorIterator Create(int tid, class<Actor> type = "Actor")
 	{
-		return level.CreateActorIterator(tid, type);
+		return currentSession.LevelInfo[0].CreateActorIterator(tid, type);
 	}
 	native Actor Next();
 	native void Reinit();
@@ -618,6 +621,13 @@ struct DropItem native
 	native readonly int Amount;
 }
 
+struct GameSession native
+{
+	// all open levels. The first entry in this list is the primary one where gameplay takes place.
+	native Array<LevelLocals> LevelInfo;
+	native readonly String F1Pic;
+}
+
 struct LevelLocals native
 {
 	enum EUDMF
@@ -629,6 +639,13 @@ struct LevelLocals native
 	};
 
 	const CLUSTER_HUB = 0x00000001;	// Cluster uses hub behavior
+
+	// Do not even THINK about using these functions directly, or else... >)
+	deprecated("3.8") static String __getter__F1Pic__()
+	{
+		return currentSession? currentSession.F1Pic : "";
+	}
+
 
 
 	native Array<@Sector> Sectors;
@@ -650,7 +667,6 @@ struct LevelLocals native
 	native readonly String MapName;
 	native String NextMap;
 	native String NextSecretMap;
-	deprecated("3.8") native readonly String F1Pic;
 	native readonly int maptype;
 	deprecated("3.8") native readonly String Music;
 	deprecated("3.8") native readonly int musicorder;

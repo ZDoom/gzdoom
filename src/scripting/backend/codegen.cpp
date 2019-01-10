@@ -6275,6 +6275,23 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PContainerType *
 	}
 	else
 	{
+		if (objtype != nullptr)
+		{
+			// Try to remap deprecated fields to getter functions.
+			FStringf getter("__getter__%s__", Identifier.GetChars());
+			FName gettername(getter, true);
+			if (gettername != NAME_None)
+			{
+				if ((sym = objtype->Symbols.FindSymbolInTable(gettername, symtbl)) != nullptr)
+				{
+					FxExpression *x = new FxMemberFunctionCall(object, gettername, FArgumentList(), ScriptPosition);
+					x = x->Resolve(ctx);
+					delete this;
+					return x;
+				}
+			}
+		}
+
 		ScriptPosition.Message(MSG_ERROR, "Unknown identifier '%s'", Identifier.GetChars());
 		delete object;
 		object = nullptr;

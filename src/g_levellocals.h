@@ -178,7 +178,6 @@ struct FLevelLocals : public FLevelData
 	FString		MapName;			// the lump name (E1M1, MAP01, etc)
 	FString		NextMap;			// go here when using the regular exit
 	FString		NextSecretMap;		// map to go to when used secret exit
-	FString		F1Pic;
 	EMapType	maptype;
 
 
@@ -296,6 +295,16 @@ struct FLevelLocals : public FLevelData
 			|| (info != nullptr && info->Snapshot.mBuffer != nullptr && info->isValid());
 	}
 };
+
+
+class FGameSession
+{
+public:
+	TArray<FLevelLocals *> Levelinfo;
+	FString F1Pic;
+};
+
+extern FGameSession *currentSession;
 
 #ifndef NO_DEFINE_LEVEL
 

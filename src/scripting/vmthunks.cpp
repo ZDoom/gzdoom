@@ -2724,7 +2724,6 @@ DEFINE_FIELD(FLevelLocals, LevelName)
 DEFINE_FIELD(FLevelLocals, MapName)
 DEFINE_FIELD(FLevelLocals, NextMap)
 DEFINE_FIELD(FLevelLocals, NextSecretMap)
-DEFINE_FIELD(FLevelLocals, F1Pic)
 DEFINE_FIELD(FLevelLocals, maptype)
 DEFINE_FIELD(FLevelLocals, Music)
 DEFINE_FIELD(FLevelLocals, musicorder)
@@ -2766,6 +2765,10 @@ DEFINE_FIELD_BIT(FLevelLocals, flags2, infinite_flight, LEVEL2_INFINITE_FLIGHT)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, no_dlg_freeze, LEVEL2_CONV_SINGLE_UNFREEZE)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, keepfullinventory, LEVEL2_KEEPFULLINVENTORY)
 DEFINE_FIELD_BIT(FLevelLocals, flags3, removeitems, LEVEL3_REMOVEITEMS)
+
+DEFINE_FIELD(FGameSession, Levelinfo)
+DEFINE_FIELD(FGameSession, F1Pic)
+DEFINE_GLOBAL(currentSession)
 
 DEFINE_FIELD_X(Sector, sector_t, floorplane)
 DEFINE_FIELD_X(Sector, sector_t, ceilingplane)
@@ -2868,3 +2871,5 @@ DEFINE_FIELD(DBaseStatusBar, Level);
 DEFINE_FIELD(DHUDFont, mFont);
 
 DEFINE_GLOBAL(StatusBar);
+
+DEFINE_FIELD(DThinker, Level);

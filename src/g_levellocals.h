@@ -110,9 +110,6 @@ struct FLevelData
 	TArray<FPlayerStart> AllPlayerStarts;
 
 	FBehaviorContainer Behaviors;
-
-	FTagManager tagManager;
-	AActor *TIDHash[128];
 	
 	TArray<FStrifeDialogueNode *> StrifeDialogues;
 	FDialogueIDMap DialogueRoots;
@@ -124,6 +121,8 @@ struct FLevelData
 
 struct FLevelLocals : public FLevelData
 {
+	FLevelLocals() : tagManager(this) {}
+
 	void Tick();
 	void Mark();
 	void AddScroller(int secnum);
@@ -154,6 +153,9 @@ struct FLevelLocals : public FLevelData
 	{
 		memset(TIDHash, 0, sizeof(TIDHash));
 	}
+
+	FTagManager tagManager;
+	AActor *TIDHash[128];
 
 	DSectorMarker *SectorMarker;
 

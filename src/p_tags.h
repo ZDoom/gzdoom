@@ -24,6 +24,7 @@ class FTagManager
 	friend class FSectorTagIterator;
 	friend class FLineIdIterator;
 
+	FLevelLocals *Level;
 	TArray<FTagItem> allTags;
 	TArray<FTagItem> allIDs;
 	TArray<int> startForSector;
@@ -42,6 +43,7 @@ class FTagManager
 	}
 
 public:
+	FTagManager(FLevelLocals *l) : Level(l) {}
 	void Clear()
 	{
 		allTags.Clear();

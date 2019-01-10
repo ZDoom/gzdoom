@@ -1991,7 +1991,7 @@ class DSectorMarker : public DObject
 	};
 	DECLARE_CLASS(DSectorMarker, DObject)
 public:
-	DSectorMarker(FLevelLocals *l) : SecNum(0),PolyNum(0),SideNum(0) {}
+	DSectorMarker(FLevelLocals *l) : Level(l), SecNum(0),PolyNum(0),SideNum(0) {}
 	size_t PropagateMark();
 	FLevelLocals *Level;
 	int SecNum;

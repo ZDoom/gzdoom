@@ -508,7 +508,7 @@ void P_SetupLevel(FLevelLocals *Level, const char *lumpname, int position, bool 
 	R_OldBlend = 0xffffffff;
 
 	// [RH] Remove all particles
-	P_ClearParticles();
+	P_ClearParticles(Level);
 
 	// preload graphics and sounds
 	if (precache)

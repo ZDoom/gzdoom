@@ -160,10 +160,10 @@ namespace swrenderer
 		this->dontmaplines = dontmaplines;
 
 		// [RH] Setup particles for this frame
-		P_FindParticleSubsectors();
+		ForAllLevels(P_FindParticleSubsectors);
 
 		// Link the polyobjects right before drawing the scene to reduce the amounts of calls to this function
-		PO_LinkToSubsectors(&level);
+		ForAllLevels(PO_LinkToSubsectors);
 
 		R_UpdateFuzzPosFrameStart();
 

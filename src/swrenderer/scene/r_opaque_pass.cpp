@@ -616,9 +616,9 @@ namespace swrenderer
 		if ((unsigned int)(sub->Index()) < Level->subsectors.Size())
 		{ // Only do it for the main BSP.
 			int lightlevel = (floorlightlevel + ceilinglightlevel) / 2;
-			for (int i = ParticlesInSubsec[sub->Index()]; i != NO_PARTICLE; i = Particles[i].snext)
+			for (int i = frontsector->Level->ParticlesInSubsec[sub->Index()]; i != NO_PARTICLE; i = frontsector->Level->Particles[i].snext)
 			{
-				RenderParticle::Project(Thread, &Particles[i], sub->sector, lightlevel, FakeSide, foggy);
+				RenderParticle::Project(Thread, &frontsector->Level->Particles[i], sub->sector, lightlevel, FakeSide, foggy);
 			}
 		}
 

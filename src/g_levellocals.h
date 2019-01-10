@@ -45,6 +45,7 @@
 #include "po_man.h"
 #include "p_acs.h"
 #include "p_tags.h"
+#include "p_effect.h"
 #include "p_destructible.h"
 #include "r_data/r_interpolate.h"
 #include "r_data/r_sections.h"
@@ -227,6 +228,12 @@ struct FLevelLocals : public FLevelData
 
 	int ActiveSequences;
 	DSeqNode *SequenceListHead;
+
+	// [RH] particle globals
+	uint32_t			ActiveParticles;
+	uint32_t			InactiveParticles;
+	TArray<particle_t>	Particles;
+	TArray<uint16_t>	ParticlesInSubsec;
 
 	TArray<DVector2>	Scrolls;		// NULL if no DScrollers in this level
 

@@ -246,7 +246,8 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 		if (cl_capfps || r_NoInterpolate) r_viewpoint.TicFrac = 1.;
 		else r_viewpoint.TicFrac = I_GetTimeFrac();
 
-		P_FindParticleSubsectors();
+		auto Level = player->camera->Level;
+		ForAllLevels(P_FindParticleSubsectors);
 
 		screen->mLights->Clear();
 		screen->mViewpoints->Clear();
@@ -255,7 +256,6 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 		bool saved_niv = NoInterpolateView;
 		NoInterpolateView = false;
 		// prepare all camera textures that have been used in the last frame
-		auto Level = player->camera->Level;
 		gl_RenderState.CheckTimer(Level->ShaderStartTime);
 		Level->canvasTextureInfo.UpdateAll([&](AActor *camera, FCanvasTexture *camtex, double fov)
 		{
@@ -354,7 +354,7 @@ void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, i
     mBuffers = mSaveBuffers;
     
 	hw_ClearFakeFlat();
-	P_FindParticleSubsectors();    // make sure that all recently spawned particles have a valid subsector.
+	ForAllLevels(P_FindParticleSubsectors);
 	gl_RenderState.SetVertexBuffer(screen->mVertexData);
 	screen->mVertexData->Reset();
     screen->mLights->Clear();

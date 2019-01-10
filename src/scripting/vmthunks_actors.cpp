@@ -1256,7 +1256,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetReplacee, ZS_GetReplacee)
 
 static void DrawSplash(AActor *self, int count, double angle, int kind)
 {
-	P_DrawSplash(count, self->Pos(), angle, kind);
+	P_DrawSplash(self->Level, count, self->Pos(), angle, kind);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, DrawSplash, DrawSplash)
@@ -1265,7 +1265,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, DrawSplash, DrawSplash)
 	PARAM_INT(count);
 	PARAM_FLOAT(angle);
 	PARAM_INT(kind);
-	P_DrawSplash(count, self->Pos(), angle, kind);
+	P_DrawSplash(self->Level, count, self->Pos(), angle, kind);
 	return 0;
 }
 

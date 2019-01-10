@@ -535,7 +535,10 @@ void DSectorPlaneInterpolation::Serialize(FSerializer &arc)
 		("oldtexz", oldtexz)
 		("attached", attached);
 
-	sector->Level->interpolator.AddInterpolation(this);
+	if (arc.isReading())
+	{
+		sector->Level->interpolator.AddInterpolation(this);
+	}
 }
 
 
@@ -656,7 +659,10 @@ void DSectorScrollInterpolation::Serialize(FSerializer &arc)
 		("oldx", oldx)
 		("oldy", oldy);
 
-	sector->Level->interpolator.AddInterpolation(this);
+	if (arc.isReading())
+	{
+		sector->Level->interpolator.AddInterpolation(this);
+	}
 }
 
 
@@ -755,8 +761,10 @@ void DWallScrollInterpolation::Serialize(FSerializer &arc)
 		("oldx", oldx)
 		("oldy", oldy);
 
-	side->sector->Level->interpolator.AddInterpolation(this);
-
+	if (arc.isReading())
+	{
+		side->sector->Level->interpolator.AddInterpolation(this);
+	}
 }
 
 //==========================================================================
@@ -879,10 +887,11 @@ void DPolyobjInterpolation::Serialize(FSerializer &arc)
 		("oldverts", oldverts)
 		("oldcx", oldcx)
 		("oldcy", oldcy);
-	if (arc.isReading()) bakverts.Resize(oldverts.Size());
-
-	poly->GetLevel()->interpolator.AddInterpolation(this);
-
+	if (arc.isReading())
+	{
+		bakverts.Resize(oldverts.Size());
+		poly->GetLevel()->interpolator.AddInterpolation(this);
+	}
 }
 
 

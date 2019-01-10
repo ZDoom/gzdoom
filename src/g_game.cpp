@@ -759,7 +759,7 @@ void G_AddViewPitch (int look, bool mouse)
 		return;
 	}
 	look = LookAdjust(look);
-	if (!players[consoleplayer].mo->Level->IsFreelookAllowed())
+	if (currentSession && !currentSession->Levelinfo[0]->IsFreelookAllowed())
 	{
 		LocalViewPitch = 0;
 	}
@@ -1504,7 +1504,7 @@ void G_DeathMatchSpawnPlayer (FLevelLocals *Level, int playernum)
 //
 FPlayerStart *G_PickPlayerStart(FLevelLocals *Level, int playernum, int flags)
 {
-	if (level.AllPlayerStarts.Size() == 0) // No starts to pick
+	if (Level->AllPlayerStarts.Size() == 0) // No starts to pick
 	{
 		return NULL;
 	}
@@ -1522,7 +1522,7 @@ FPlayerStart *G_PickPlayerStart(FLevelLocals *Level, int playernum, int flags)
 			{
 				if (G_CheckSpot(Level, playernum, &Level->AllPlayerStarts[i]))
 				{
-					good_starts.Push(&level.AllPlayerStarts[i]);
+					good_starts.Push(&Level->AllPlayerStarts[i]);
 				}
 			}
 			if (good_starts.Size() > 0)
@@ -1533,7 +1533,7 @@ FPlayerStart *G_PickPlayerStart(FLevelLocals *Level, int playernum, int flags)
 		// Pick a spot at random, whether it's open or not.
 		return &Level->AllPlayerStarts[pr_pspawn(Level->AllPlayerStarts.Size())];
 	}
-	return &level.playerstarts[playernum];
+	return &Level->playerstarts[playernum];
 }
 
 DEFINE_ACTION_FUNCTION(DObject, G_PickPlayerStart)
@@ -1541,7 +1541,7 @@ DEFINE_ACTION_FUNCTION(DObject, G_PickPlayerStart)
 	PARAM_PROLOGUE;
 	PARAM_INT(playernum);
 	PARAM_INT(flags);
-	auto ps = G_PickPlayerStart(&level, playernum, flags);
+	auto ps = currentSession ? G_PickPlayerStart(currentSession->Levelinfo[0], playernum, flags) : nullptr;
 	if (numret > 1)
 	{
 		ret[1].SetInt(ps? ps->angle : 0);
@@ -1561,7 +1561,7 @@ static void G_QueueBody (AActor *body)
 {
 	auto Level = body->Level;
 	// flush an old corpse if needed
-	int modslot = level.bodyqueslot % FLevelLocals::BODYQUESIZE;
+	int modslot = Level->bodyqueslot % FLevelLocals::BODYQUESIZE;
 	Level->bodyqueslot = modslot + 1;
 
 	if (Level->bodyqueslot >= FLevelLocals::BODYQUESIZE && Level->bodyque[modslot] != NULL)

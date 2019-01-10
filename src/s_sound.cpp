@@ -464,8 +464,7 @@ void S_Start (FLevelLocals *Level)
 	}
 	else if (!Level->IsReentering())
 	{
-		if (Level->cdtrack == 0 || !S_ChangeCDMusic (Level->cdtrack, Level->cdid))
-			S_ChangeMusic (Level->Music, Level->musicorder);
+		Level->SetMusic();
 	}
 }
 
@@ -2592,13 +2591,14 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		return false;
 	}
 
-	// allow specifying "*" as a placeholder to play the level's default music.
+	// allow specifying "*" as a placeholder to play the current primary level's default music.
 	if (musicname != NULL && !strcmp(musicname, "*"))
 	{
-		if (gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL)
+		if ((gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL) && currentSession)
 		{
-			musicname = level.Music;
-			order = level.musicorder;
+			auto Level = currentSession->Levelinfo[0];
+			musicname = Level->Music;
+			order = Level->musicorder;
 		}
 		else
 		{
@@ -2876,9 +2876,9 @@ CCMD (loopsound)
 		{
 			Printf("'%s' is not a sound\n", argv[1]);
 		}
-		else
+		else if (currentSession)
 		{
-			AActor *icon = Spawn(&level, "SpeakerIcon", players[consoleplayer].mo->PosPlusZ(32.), ALLOW_REPLACE);
+			AActor *icon = Spawn(currentSession->Levelinfo[0], "SpeakerIcon", players[consoleplayer].mo->PosPlusZ(32.), ALLOW_REPLACE);
 			if (icon != NULL)
 			{
 				S_Sound(icon, CHAN_BODY | CHAN_LOOP, id, 1.f, ATTN_IDLE);
@@ -2954,7 +2954,7 @@ CCMD (changemus)
 				delete PlayList;
 				PlayList = NULL;
 			}
-		S_ChangeMusic (argv[1], argv.argc() > 2 ? atoi (argv[2]) : 0);
+			S_ChangeMusic (argv[1], argv.argc() > 2 ? atoi (argv[2]) : 0);
 		}
 		else
 		{

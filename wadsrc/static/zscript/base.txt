@@ -668,8 +668,8 @@ struct LevelLocals native
 	native String NextMap;
 	native String NextSecretMap;
 	native readonly int maptype;
-	deprecated("3.8") native readonly String Music;
-	deprecated("3.8") native readonly int musicorder;
+	native readonly String Music;
+	native readonly int musicorder;
 	native readonly TextureID skytexture1;
 	native readonly TextureID skytexture2;
 	native float skyspeed1;

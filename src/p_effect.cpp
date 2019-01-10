@@ -181,7 +181,7 @@ void P_FindParticleSubsectors (FLevelLocals *Level)
 	for (uint16_t i = Level->ActiveParticles; i != NO_PARTICLE; i = Level->Particles[i].tnext)
 	{
 		 // Try to reuse the subsector from the last portal check, if still valid.
-		if (Level->Particles[i].subsector == NULL) Level->Particles[i].subsector = R_PointInSubsector(&level, Level->Particles[i].Pos);
+		if (Level->Particles[i].subsector == NULL) Level->Particles[i].subsector = R_PointInSubsector(Level, Level->Particles[i].Pos);
 		int ssnum = Level->Particles[i].subsector->Index();
 		Level->Particles[i].snext = Level->ParticlesInSubsec[ssnum];
 		Level->ParticlesInSubsec[ssnum] = i;
@@ -258,7 +258,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 		}
 
 		// Handle crossing a line portal
-		DVector2 newxy = P_GetOffsetPosition(&level, particle->Pos.X, particle->Pos.Y, particle->Vel.X, particle->Vel.Y);
+		DVector2 newxy = P_GetOffsetPosition(Level, particle->Pos.X, particle->Pos.Y, particle->Vel.X, particle->Vel.Y);
 		particle->Pos.X = newxy.X;
 		particle->Pos.Y = newxy.Y;
 		particle->Pos.Z += particle->Vel.Z;

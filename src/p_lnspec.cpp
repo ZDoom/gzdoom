@@ -2253,7 +2253,7 @@ FUNC(LS_Sector_SetCurrent)
 FUNC(LS_Sector_SetFriction)
 // Sector_SetFriction (tag, amount)
 {
-	P_SetSectorFriction (&level, arg0, arg1, true);
+	P_SetSectorFriction (Level, arg0, arg1, true);
 	return true;
 }
 
@@ -2312,7 +2312,7 @@ FUNC(LS_Scroll_Texture_Both)
 		sidechoice = 0;
 	}
 
-	SetWallScroller (&level, arg0, sidechoice, dx, dy, scw_all);
+	SetWallScroller (Level, arg0, sidechoice, dx, dy, scw_all);
 
 	return true;
 }
@@ -2323,7 +2323,7 @@ FUNC(LS_Scroll_Wall)
 	if (arg0 == 0)
 		return false;
 
-	SetWallScroller (&level, arg0, !!arg3, arg1 / 65536., arg2 / 65536., EScrollPos(arg4));
+	SetWallScroller (Level, arg0, !!arg3, arg1 / 65536., arg2 / 65536., EScrollPos(arg4));
 	return true;
 }
 
@@ -2339,19 +2339,19 @@ FUNC(LS_Scroll_Floor)
 
 	if (arg3 == 0 || arg3 == 2)
 	{
-		SetScroller (&level, arg0, EScroll::sc_floor, -dx, dy);
+		SetScroller (Level, arg0, EScroll::sc_floor, -dx, dy);
 	}
 	else
 	{
-		SetScroller (&level, arg0, EScroll::sc_floor, 0, 0);
+		SetScroller (Level, arg0, EScroll::sc_floor, 0, 0);
 	}
 	if (arg3 > 0)
 	{
-		SetScroller (&level, arg0, EScroll::sc_carry, dx, dy);
+		SetScroller (Level, arg0, EScroll::sc_carry, dx, dy);
 	}
 	else
 	{
-		SetScroller (&level, arg0, EScroll::sc_carry, 0, 0);
+		SetScroller (Level, arg0, EScroll::sc_carry, 0, 0);
 	}
 	return true;
 }
@@ -2362,7 +2362,7 @@ FUNC(LS_Scroll_Ceiling)
 	double dx = arg1 / 32.;
 	double dy = arg2 / 32.;
 
-	SetScroller (&level, arg0, EScroll::sc_ceiling, -dx, dy);
+	SetScroller (Level, arg0, EScroll::sc_ceiling, -dx, dy);
 	return true;
 }
 

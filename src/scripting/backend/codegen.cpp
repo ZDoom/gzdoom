@@ -5195,8 +5195,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(DObject, BuiltinNew, BuiltinNew)
 
 ExpEmit FxNew::Emit(VMFunctionBuilder *build)
 {
-	ExpEmit from = val->Emit(build);
-	from.Free(build);
 	ExpEmit to(build, REGT_POINTER);
 
 	// Call DecoRandom to generate a random number.
@@ -5209,14 +5207,14 @@ ExpEmit FxNew::Emit(VMFunctionBuilder *build)
 	FunctionCallEmitter emitters(callfunc);
 
 	int outerside = -1;
-	if (!from.Konst)
+	if (!val->isConstant())
 	{
 		int outerside = FScopeBarrier::SideFromFlags(CallingFunction->Variants[0].Flags);
 		if (outerside == FScopeBarrier::Side_Virtual)
 			outerside = FScopeBarrier::SideFromObjectFlags(CallingFunction->OwningClass->ScopeFlags);
 	}
-	emitters.AddParameter(from, false);
-	emitters.AddParameterIntConst(outerside);
+	emitters.AddParameter(build, val);
+	emitters.AddParameterIntConst(outerside + 1);
 	emitters.AddParameterIntConst(1);	// Todo: 1 only if version < 4.0.0
 	emitters.AddReturn(REGT_POINTER);
 	return emitters.EmitCall(build);

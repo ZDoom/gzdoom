@@ -758,16 +758,16 @@ void D_Display ()
 		viewsec = screen->RenderView(&players[consoleplayer]);
 		screen->Begin2D();
 		screen->DrawBlend(viewsec);
-		if (automapactive)
+		if (automapactive && currentSession)
 		{
-			AM_Drawer (&level, hud_althud? viewheight : StatusBar->GetTopOfStatusbar());
+			AM_Drawer (currentSession->Levelinfo[0], hud_althud? viewheight : StatusBar->GetTopOfStatusbar());
 		}
 		
 		// for timing the statusbar code.
 		//cycle_t stb;
 		//stb.Reset();
 		//stb.Clock();
-		StatusBar->SetLevel(&level);
+		StatusBar->SetLevel(currentSession->Levelinfo[0]);
 		if (!automapactive || viewactive)
 		{
 			StatusBar->RefreshViewBorder ();

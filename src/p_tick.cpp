@@ -62,7 +62,7 @@ bool P_CheckTickerPaused ()
 		 && players[consoleplayer].viewz != NO_VALUE
 		 && wipegamestate == gamestate)
 	{
-		S_PauseSound (!(level.flags2 & LEVEL2_PAUSE_MUSIC_IN_MENUS), false);
+		S_PauseSound (!currentSession || !(currentSession->Levelinfo[0]->flags2 & LEVEL2_PAUSE_MUSIC_IN_MENUS), false);
 		return true;
 	}
 	return false;
@@ -138,7 +138,7 @@ void P_Ticker (void)
 
 	// [ZZ] call the WorldTick hook
 	E_WorldTick();
-	StatusBar->SetLevel(players[consoleplayer].mo->Level);
+	StatusBar->SetLevel(currentSession->Levelinfo[0]);
 	StatusBar->CallTick ();		// [RH] moved this here
 
 	ForAllLevels([](FLevelLocals *Level)

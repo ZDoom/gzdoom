@@ -127,6 +127,7 @@ struct FLevelLocals : public FLevelData
 	void Mark();
 	void AddScroller(int secnum);
 	void SetInterMusic(const char *nextmap);
+	void SetMusic();
 	void SetMusicVolume(float v);
 	void ClearLevelData();
 	void ClearPortals();
@@ -202,8 +203,7 @@ struct FLevelLocals : public FLevelData
 
 	FString		Music;
 	int			musicorder;
-	int			cdtrack;
-	unsigned int cdid;
+
 	FTextureID	skytexture1;
 	FTextureID	skytexture2;
 
@@ -411,7 +411,10 @@ inline bool line_t::hitSkyWall(AActor* mo) const
 template<class T>
 inline void ForAllLevels(T func)
 {
-	func(&level);
+	if (currentSession)
+	{
+		for (auto Level : currentSession->Levelinfo) func(Level);
+	}
 }
 
 #endif

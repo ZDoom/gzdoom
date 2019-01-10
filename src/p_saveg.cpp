@@ -538,36 +538,6 @@ FSerializer &Serialize(FSerializer &arc, const char *key, zone_t &z, zone_t *def
 
 //==========================================================================
 //
-// ArchiveSounds
-//
-//==========================================================================
-
-void P_SerializeSounds(FSerializer &arc)
-{
-	S_SerializeSounds(arc, &level);
-	const char *name = NULL;
-	uint8_t order;
-	float musvol = level.MusicVolume;
-
-	if (arc.isWriting())
-	{
-		order = S_GetMusic(&name);
-	}
-	arc.StringPtr("musicname", name)
-		("musicorder", order)
-		("musicvolume", musvol);
-
-	if (arc.isReading())
-	{
-		if (!S_ChangeMusic(name, order))
-			if (level.cdtrack == 0 || !S_ChangeCDMusic(level.cdtrack, level.cdid))
-				S_ChangeMusic(level.Music, level.musicorder);
-		level.SetMusicVolume(musvol);
-	}
-}
-
-//==========================================================================
-//
 //
 //
 //==========================================================================
@@ -1020,7 +990,25 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 	FRemapTable::StaticSerializeTranslations(arc);
 	Level->canvasTextureInfo.Serialize(arc);
 	P_SerializePlayers(Level, arc, hubload);
-	P_SerializeSounds(arc);
+	S_SerializeSounds(arc, Level);
+
+	// this must be part of the session, not the level!
+	const char *name = NULL;
+	uint8_t order;
+
+	if (arc.isWriting())
+	{
+		order = S_GetMusic(&name);
+	}
+	arc.StringPtr("musicname", name)
+		("musicorder", order);
+
+	if (arc.isReading())
+	{
+		if (!S_ChangeMusic(name, order)) Level->SetMusic();
+		level.SetMusicVolume(Level->MusicVolume);
+	}
+
 
 	if (arc.isReading())
 	{

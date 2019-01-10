@@ -3166,7 +3166,7 @@ void AM_drawMarks ()
 //
 //=============================================================================
 
-void AM_drawAuthorMarkers ()
+void AM_drawAuthorMarkers (FLevelLocals *Level)
 {
 	// [RH] Draw any actors derived from AMapMarker on the automap.
 	// If args[0] is 0, then the actor's sprite is drawn at its own location.
@@ -3211,7 +3211,7 @@ void AM_drawAuthorMarkers ()
 				tex = TexMan.GetTexture(picnum);
 			}
 		}
-		FActorIterator it (&level, mark->args[0]);
+		FActorIterator it (Level, mark->args[0]);
 		AActor *marked = mark->args[0] == 0 ? mark : it.Next();
 
 		while (marked != NULL)
@@ -3293,7 +3293,7 @@ void AM_Drawer (FLevelLocals *Level, int bottom)
 	if ((am_cheat >= 2 && am_cheat != 4) || allthings)
 		AM_drawThings(Level);
 
-	AM_drawAuthorMarkers();
+	AM_drawAuthorMarkers(Level);
 
 	if (!viewactive)
 		AM_drawCrosshair(AMColors[AMColors.XHairColor]);

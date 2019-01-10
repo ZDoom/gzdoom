@@ -361,7 +361,7 @@ CCMD (changemap)
 	if (argv.argc() > 1)
 	{
 		const char *mapname = argv[1];
-		if (!strcmp(mapname, "*")) mapname = level.MapName.GetChars();
+		if (!strcmp(mapname, "*") && currentSession) mapname = currentSession->Levelinfo[0]->MapName.GetChars();
 
 		try
 		{

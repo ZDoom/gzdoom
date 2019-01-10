@@ -887,7 +887,7 @@ void G_DoCompleted ()
 	}
 
 	// Intermission stats for entire hubs
-	G_LeavingHub(mode, thiscluster, &wminfo);
+	G_LeavingHub(mode, thiscluster, &wminfo, &level);
 
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
@@ -1525,8 +1525,6 @@ void FLevelLocals::InitLevelLocals ()
 	skytexture1 = TexMan.GetTextureID(info->SkyPic1, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
 	skytexture2 = TexMan.GetTextureID(info->SkyPic2, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
 	fadeto = info->fadeto;
-	cdtrack = info->cdtrack;
-	cdid = info->cdid;
 	FromSnapshot = false;
 	if (fadeto == 0)
 	{
@@ -2190,6 +2188,11 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, SetInterMusic)
 	return 0;
 }
 
+void FLevelLocals::SetMusic()
+{
+	if (info->cdtrack == 0 || !S_ChangeCDMusic(info->cdtrack, info->cdid))
+		S_ChangeMusic(Music, musicorder);
+}
 //==========================================================================
 //
 //

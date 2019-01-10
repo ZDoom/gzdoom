@@ -3756,7 +3756,7 @@ int DLevelScript::DoSpawn (int type, const DVector3 &pos, int tid, DAngle angle,
 			return 0;
 		}
 
-		actor = Spawn (&level, info, pos, ALLOW_REPLACE);
+		actor = Spawn (Level, info, pos, ALLOW_REPLACE);
 		if (actor != NULL)
 		{
 			ActorFlags2 oldFlags2 = actor->flags2;
@@ -4101,7 +4101,6 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 	{
 		return;
 	}
-	auto Level = &level;
 	switch (property)
 	{
 	case APROP_Health:
@@ -5309,7 +5308,6 @@ int DLevelScript::ScriptCall(AActor *activator, unsigned argc, int32_t *args)
 int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 {
 	AActor *actor;
-	auto Level = &level;
 	switch(funcIndex)
 	{
 		case ACSF_GetLineUDMFInt:
@@ -5673,7 +5671,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 				const char *seqname = Level->Behaviors.LookupString(args[1]);
 				if (seqname != NULL)
 				{
-					FPolyObj *poly = PO_GetPolyobj(&level, args[0]);
+					FPolyObj *poly = PO_GetPolyobj(Level, args[0]);
 					if (poly != NULL)
 					{
 						SN_StartSequence(poly, seqname, 0);
@@ -5684,7 +5682,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 
 		case ACSF_GetPolyobjX:
 			{
-				FPolyObj *poly = PO_GetPolyobj(&level, args[0]);
+				FPolyObj *poly = PO_GetPolyobj(Level, args[0]);
 				if (poly != NULL)
 				{
 					return DoubleToACS(poly->StartSpot.pos.X);
@@ -5694,7 +5692,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 
 		case ACSF_GetPolyobjY:
 			{
-				FPolyObj *poly = PO_GetPolyobj(&level, args[0]);
+				FPolyObj *poly = PO_GetPolyobj(Level, args[0]);
 				if (poly != NULL)
 				{
 					return DoubleToACS(poly->StartSpot.pos.Y);
@@ -6836,7 +6834,7 @@ int DLevelScript::RunScript ()
 
 	case SCRIPT_PolyWait:
 		// Wait for polyobj(s) to stop moving, then enter state running
-		if (!PO_Busy (&level, statedata))
+		if (!PO_Busy (Level, statedata))
 		{
 			state = SCRIPT_Running;
 		}
@@ -6874,7 +6872,6 @@ int DLevelScript::RunScript ()
 	const char *lookup;
 	int optstart = -1;
 	int temp;
-	auto Level = &level;
 
 	while (state == SCRIPT_Running)
 	{

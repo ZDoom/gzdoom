@@ -1039,7 +1039,7 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 
 	P_SetupLevel (&level, level.MapName, position, newGame);
 
-	AM_LevelInit();
+	AM_LevelInit(&level);
 
 	// [RH] Start lightning, if MAPINFO tells us to
 	if (level.flags & LEVEL_STARTLIGHTNING)
@@ -1370,7 +1370,7 @@ int G_FinishTravel ()
 		pawndup = pawn->player->mo;
 		assert (pawn != pawndup);
 
-		start = G_PickPlayerStart(pnum, 0);
+		start = G_PickPlayerStart(&level, pnum, 0);
 		if (start == NULL)
 		{
 			if (pawndup != nullptr)

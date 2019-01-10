@@ -50,7 +50,9 @@ CVAR (Bool, alwaysapplydmflags, false, CVAR_SERVERINFO);
 
 CUSTOM_CVAR (Float, teamdamage, 0.f, CVAR_SERVERINFO)
 {
-	level.teamdamage = self;
+	ForAllLevels([&](FLevelLocals *Level) {
+		Level->teamdamage = self;
+	});
 }
 
 CUSTOM_CVAR (String, language, "auto", CVAR_ARCHIVE)

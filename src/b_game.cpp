@@ -207,7 +207,7 @@ void FCajunMaster::End ()
 {
 	int i;
 
-	//Arrange wanted botnum and their names, so they can be spawned next level.
+	//Arrange wanted botnum and their names, so they can be spawned next map.
 	getspawned.Clear();
 	if (deathmatch)
 	{

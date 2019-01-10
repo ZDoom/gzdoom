@@ -149,7 +149,7 @@ void P_Ticker (void)
 			memset(&Level->Scrolls[0], 0, sizeof(Level->Scrolls[0]) * Level->Scrolls.Size());
 		}
 
-		DThinker::RunThinkers();
+		DThinker::RunThinkers(Level);
 
 		//if added by MC: Freeze mode.
 		if (!Level->freeze && !(Level->flags2 & LEVEL2_FROZEN))

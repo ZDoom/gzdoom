@@ -2341,7 +2341,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 							{
 								if (spawned->CountsAsKill()) 
 								{
-									level.total_monsters--;
+									source->Level->total_monsters--;
 								}
 								spawned->FriendPlayer = player + 1;
 								spawned->flags |= MF_FRIENDLY;
@@ -2702,7 +2702,7 @@ static void RunScript(uint8_t **stream, AActor *pawn, int snum, int argn, int al
 			arg[i] = argval;
 		}
 	}
-	P_StartScript(&level, pawn, NULL, snum, level.MapName, arg, MIN<int>(countof(arg), argn), ACS_NET | always);
+	P_StartScript(pawn->Level, pawn, NULL, snum, pawn->Level->MapName, arg, MIN<int>(countof(arg), argn), ACS_NET | always);
 }
 
 void Net_SkipCommand (int type, uint8_t **stream)

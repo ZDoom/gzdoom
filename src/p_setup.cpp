@@ -274,8 +274,8 @@ void FLevelLocals::ClearLevelData()
 	DialogueRoots.Clear();
 	ClassRoots.Clear();
 
-	level.interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
-	level.ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
+	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh map.
+	ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
 	DThinker::DestroyAllThinkers();
 
 	// delete allocated data in the level arrays.
@@ -457,7 +457,7 @@ void P_SetupLevel(FLevelLocals *Level, const char *lumpname, int position, bool 
 			if (playeringame[i])
 			{
 				players[i].mo = nullptr;
-				FPlayerStart *mthing = G_PickPlayerStart(i);
+				FPlayerStart *mthing = G_PickPlayerStart(Level, i);
 				P_SpawnPlayer(Level, mthing, i, (Level->flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
 			}
 		}

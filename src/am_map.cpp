@@ -644,22 +644,26 @@ CUSTOM_CVAR (Int, am_showalllines, -1, 0)	// This is a cheat so don't save it.
 {
 	int flagged = 0;
 	int total = 0;
-	if (self > 0 && level.lines.Size() > 0)
-	{
-		for(auto &line : level.lines)
+	
+	ForAllLevels([&](FLevelLocals *Level) {
+		for(auto &line : Level->lines)
 		{
 			// disregard intra-sector lines
-			if (line.frontsector == line.backsector) continue;	
-
+			if (line.frontsector == line.backsector) continue;
+			
 			// disregard control sectors for deep water
-			if (line.frontsector->e->FakeFloor.Sectors.Size() > 0) continue;	
-
+			if (line.frontsector->e->FakeFloor.Sectors.Size() > 0) continue;
+			
 			// disregard control sectors for 3D-floors
-			if (line.frontsector->e->XFloor.attached.Size() > 0) continue;	
-
+			if (line.frontsector->e->XFloor.attached.Size() > 0) continue;
+			
 			total++;
 			if (line.flags & ML_DONTDRAW) flagged++;
 		}
+	});
+
+	if (self > 0 && total > 0)
+	{
 		am_showallenabled =  (flagged * 100 / total >= self);
 	}
 	else if (self == 0)
@@ -1065,12 +1069,12 @@ bool AM_addMark ()
 //
 //=============================================================================
 
-static void AM_findMinMaxBoundaries ()
+static void AM_findMinMaxBoundaries (FLevelLocals *Level)
 {
 	min_x = min_y = FLT_MAX;
 	max_x = max_y = FIXED_MIN;
   
-	for (auto &vert : level.vertexes)
+	for (auto &vert : Level->vertexes)
 	{
 		if (vert.fX() < min_x)
 			min_x = vert.fX();
@@ -1363,20 +1367,20 @@ bool AM_clearMarks ()
 //
 //=============================================================================
 
-void AM_LevelInit ()
+void AM_LevelInit (FLevelLocals *Level)
 {
-	if (level.info->MapBackground.Len() == 0)
+	if (Level->info->MapBackground.Len() == 0)
 	{
 		mapback = TexMan.CheckForTexture("AUTOPAGE", ETextureType::MiscPatch);
 	}
 	else
 	{
-		mapback = TexMan.CheckForTexture(level.info->MapBackground, ETextureType::MiscPatch);
+		mapback = TexMan.CheckForTexture(Level->info->MapBackground, ETextureType::MiscPatch);
 	}
 
 	AM_clearMarks();
 
-	AM_findMinMaxBoundaries();
+	AM_findMinMaxBoundaries(Level);
 	scale_mtof = min_scale_mtof / 0.7;
 	if (scale_mtof > max_scale_mtof)
 		scale_mtof = min_scale_mtof;
@@ -1867,15 +1871,15 @@ inline void AM_drawMline (mline_t *ml, int colorindex)
 //
 //=============================================================================
 
-void AM_drawGrid (int color)
+void AM_drawGrid (FLevelLocals *Level, int color)
 {
 	double x, y;
 	double start, end;
 	mline_t ml;
 	double minlen, extx, exty;
 	double minx, miny;
-	auto bmaporgx = level.blockmap.bmaporgx;
-	auto bmaporgy = level.blockmap.bmaporgy;
+	auto bmaporgx = Level->blockmap.bmaporgx;
+	auto bmaporgy = Level->blockmap.bmaporgy;
 
 	// [RH] Calculate a minimum for how long the grid lines should be so that
 	// they cover the screen at any rotation.
@@ -2052,7 +2056,7 @@ sector_t * AM_FakeFlat(AActor *viewer, sector_t * sec, sector_t * dest)
 //
 //=============================================================================
 
-void AM_drawSubsectors()
+void AM_drawSubsectors(FLevelLocals *Level)
 {
 	static TArray<FVector2> points;
 	std::vector<uint32_t> indices;
@@ -2066,7 +2070,7 @@ void AM_drawSubsectors()
 	PalEntry flatcolor;
 	mpoint_t originpt;
 
-	auto &subsectors = level.subsectors;
+	auto &subsectors = Level->subsectors;
 	for (unsigned i = 0; i < subsectors.Size(); ++i)
 	{
 		auto sub = &subsectors[i];
@@ -2206,7 +2210,7 @@ void AM_drawSubsectors()
 			colormap.Desaturation = 255 - (255 - colormap.Desaturation) / 4;
 		}
 		// make table based fog visible on the automap as well.
-		if (level.flags & LEVEL_HASFADETABLE)
+		if (Level->flags & LEVEL_HASFADETABLE)
 		{
 			colormap.FadeColor = PalEntry(0, 128, 128, 128);
 		}
@@ -2243,7 +2247,7 @@ void AM_drawSubsectors()
 				colormap,
 				flatcolor,
 				floorlight,
-				level.lightMode,
+				Level->lightMode,
 				f_y + f_h,
 				indices.data(), indices.size());
 		}
@@ -2303,7 +2307,7 @@ void AM_drawSeg(seg_t *seg, const AMColor &color)
 	AM_drawMline(&l, color);
 }
 
-void AM_drawPolySeg(FPolySeg *seg, const AMColor &color)
+void AM_drawPolySeg(FLevelLocals *Level, FPolySeg *seg, const AMColor &color)
 {
 	mline_t l;
 	l.a.x = seg->v1.pos.X;
@@ -2319,22 +2323,22 @@ void AM_drawPolySeg(FPolySeg *seg, const AMColor &color)
 	AM_drawMline(&l, color);
 }
 
-void AM_showSS()
+void AM_showSS(FLevelLocals *Level)
 {
-	if (am_showsubsector >= 0 && (unsigned)am_showsubsector < level.subsectors.Size())
+	if (am_showsubsector >= 0 && (unsigned)am_showsubsector < Level->subsectors.Size())
 	{
 		AMColor yellow;
 		yellow.FromRGB(255,255,0);
 		AMColor red;
 		red.FromRGB(255,0,0);
 
-		subsector_t *sub = &level.subsectors[am_showsubsector];
+		subsector_t *sub = &Level->subsectors[am_showsubsector];
 		for (unsigned int i = 0; i < sub->numlines; i++)
 		{
 			AM_drawSeg(sub->firstline + i, yellow);
 		}
 
-		for (auto &poly : level.Polyobjects)
+		for (auto &poly : Level->Polyobjects)
 		{
 			FPolyNode *pnode = poly.subsectorlinks;
 
@@ -2344,7 +2348,7 @@ void AM_showSS()
 				{
 					for (unsigned j = 0; j < pnode->segs.Size(); j++)
 					{
-						AM_drawPolySeg(&pnode->segs[j], red);
+						AM_drawPolySeg(Level, &pnode->segs[j], red);
 					}
 				}
 				pnode = pnode->snext;
@@ -2572,19 +2576,19 @@ bool AM_isLockBoundary (line_t &line, int *lockptr = NULL)
 //
 //=============================================================================
 
-void AM_drawWalls (bool allmap)
+void AM_drawWalls (FLevelLocals *Level, bool allmap)
 {
 	static mline_t l;
 	int lock, color;
 
-	int numportalgroups = am_portaloverlay ? level.Displacements.size : 0;
+	int numportalgroups = am_portaloverlay ? Level->Displacements.size : 0;
 
 	for (int p = numportalgroups - 1; p >= -1; p--)
 	{
 		if (p == MapPortalGroup) continue;
 
 
-		for (auto &line : level.lines)
+		for (auto &line : Level->lines)
 		{
 			int pg;
 			
@@ -2601,7 +2605,7 @@ void AM_drawWalls (bool allmap)
 			bool portalmode = numportalgroups > 0 &&  pg != MapPortalGroup;
 			if (pg == p)
 			{
-				offset = level.Displacements.getOffset(pg, MapPortalGroup);
+				offset = Level->Displacements.getOffset(pg, MapPortalGroup);
 			}
 			else if (p == -1 && (pg == MapPortalGroup || !am_portaloverlay))
 			{
@@ -2979,14 +2983,14 @@ void AM_drawKeys ()
 //
 //
 //=============================================================================
-void AM_drawThings ()
+void AM_drawThings (FLevelLocals *Level)
 {
 	AMColor color;
 	AActor*	 t;
 	mpoint_t p;
 	DAngle	 angle;
 
-	for (auto &sec : level.sectors)
+	for (auto &sec : Level->sectors)
 	{
 		t = sec.thinglist;
 		while (t)
@@ -3239,12 +3243,12 @@ void AM_drawCrosshair (const AMColor &color)
 //
 //=============================================================================
 
-void AM_Drawer (int bottom)
+void AM_Drawer (FLevelLocals *Level, int bottom)
 {
 	if (!automapactive)
 		return;
 
-	bool allmap = (level.flags2 & LEVEL2_ALLMAP) != 0;
+	bool allmap = (Level->flags2 & LEVEL2_ALLMAP) != 0;
 	bool allthings = allmap && players[consoleplayer].mo->FindInventory(NAME_PowerScanner, true) != nullptr;
 
 	if (am_portaloverlay)
@@ -3277,17 +3281,17 @@ void AM_Drawer (int bottom)
 	AM_activateNewScale();
 
 	if (am_textured && textured && !viewactive)
-		AM_drawSubsectors();
+		AM_drawSubsectors(Level);
 
 	if (grid)	
-		AM_drawGrid(AMColors.GridColor);
+		AM_drawGrid(Level, AMColors.GridColor);
 
-	AM_drawWalls(allmap);
+	AM_drawWalls(Level, allmap);
 	AM_drawPlayers();
 	if (G_SkillProperty(SKILLP_EasyKey))
 		AM_drawKeys();
 	if ((am_cheat >= 2 && am_cheat != 4) || allthings)
-		AM_drawThings();
+		AM_drawThings(Level);
 
 	AM_drawAuthorMarkers();
 
@@ -3296,7 +3300,7 @@ void AM_Drawer (int bottom)
 
 	AM_drawMarks();
 
-	AM_showSS();
+	AM_showSS(Level);
 }
 
 //=============================================================================

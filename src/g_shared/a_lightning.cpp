@@ -48,7 +48,7 @@ DLightningThinker::DLightningThinker ()
 	LightningFlashCount = 0;
 	NextLightningFlash = ((pr_lightning()&15)+5)*35; // don't flash at level start
 
-	LightningLightLevels.Resize(level.sectors.Size());
+	LightningLightLevels.Resize(Level->sectors.Size());
 	fillshort(&LightningLightLevels[0], LightningLightLevels.Size(), SHRT_MAX);
 }
 

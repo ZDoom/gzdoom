@@ -1962,8 +1962,8 @@ subsector_t *P_PointInSubsector(FLevelLocals *Level, double x, double y)
 sector_t *P_PointInSectorBuggy(FLevelLocals *Level, double x, double y)
 {
 	// single subsector is a special case
-	auto node = level.HeadGamenode();
-	if (node == nullptr) return level.subsectors[0].sector;
+	auto node = Level->HeadGamenode();
+	if (node == nullptr) return Level->subsectors[0].sector;
 	do
 	{
 		// Use original buggy point-on-side test when spawning

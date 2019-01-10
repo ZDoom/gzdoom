@@ -167,12 +167,12 @@ void P_ClearParticles (FLevelLocals *Level)
 
 void P_FindParticleSubsectors (FLevelLocals *Level)
 {
-	if (Level->ParticlesInSubsec.Size() < level.subsectors.Size())
+	if (Level->ParticlesInSubsec.Size() < Level->subsectors.Size())
 	{
-		Level->ParticlesInSubsec.Reserve (level.subsectors.Size() - Level->ParticlesInSubsec.Size());
+		Level->ParticlesInSubsec.Reserve (Level->subsectors.Size() - Level->ParticlesInSubsec.Size());
 	}
 
-	fillshort (&Level->ParticlesInSubsec[0], level.subsectors.Size(), NO_PARTICLE);
+	fillshort (&Level->ParticlesInSubsec[0], Level->subsectors.Size(), NO_PARTICLE);
 
 	if (!r_particles)
 	{
@@ -236,7 +236,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 	{
 		particle = &Level->Particles[i];
 		i = particle->tnext;
-		if (!particle->notimefreeze && ((level.freeze) || (level.flags2 & LEVEL2_FROZEN)))
+		if (!particle->notimefreeze && ((Level->freeze) || (Level->flags2 & LEVEL2_FROZEN)))
 		{
 			prev = particle;
 			continue;
@@ -323,7 +323,7 @@ void P_RunEffects (FLevelLocals *Level)
 {
 	if (players[consoleplayer].camera == NULL) return;
 
-	int	pnum = players[consoleplayer].camera->Sector->Index() * level.sectors.Size();
+	int	pnum = players[consoleplayer].camera->Sector->Index() * Level->sectors.Size();
 
 	AActor *actor;
 	TThinkerIterator<AActor> iterator;
@@ -372,7 +372,7 @@ static void MakeFountain (AActor *actor, int color1, int color2)
 {
 	particle_t *particle;
 
-	if (!(level.time & 1))
+	if (!(actor->Level->maptime & 1))
 		return;
 
 	particle = JitterParticle (actor->Level, 51);

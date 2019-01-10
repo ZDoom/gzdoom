@@ -79,6 +79,7 @@ class FSectorTagIterator
 protected:
 	int searchtag;
 	int start;
+	FLevelLocals *Level;
 	FTagManager &tagManager;
 
 	FSectorTagIterator(FTagManager &manager) : tagManager(manager)

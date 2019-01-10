@@ -597,7 +597,7 @@ struct ProfileInfo
 TMap<FName, ProfileInfo> Profiles;
 
 
-void DThinker::RunThinkers ()
+void DThinker::RunThinkers (FLevelLocals *Level)
 {
 	int i, count;
 
@@ -627,7 +627,7 @@ void DThinker::RunThinkers ()
 			}
 		} while (count != 0);
 
-		for (auto light = level.lights; light;)
+		for (auto light = Level->lights; light;)
 		{
 			auto next = light->next;
 			light->Tick();
@@ -656,7 +656,7 @@ void DThinker::RunThinkers ()
 		// Also profile the internal dynamic lights, even though they are not implemented as thinkers.
 		auto &prof = Profiles[NAME_InternalDynamicLight];
 		prof.timer.Clock();
-		for (auto light = level.lights; light;)
+		for (auto light = Level->lights; light;)
 		{
 			prof.numcalls++;
 			auto next = light->next;

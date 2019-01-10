@@ -80,7 +80,7 @@ public:
 	
 	void ChangeStatNum (int statnum);
 
-	static void RunThinkers ();
+	static void RunThinkers (FLevelLocals *Level);
 	static void RunThinkers (int statnum);
 	static void DestroyAllThinkers ();
 	static void DestroyThinkersInList(int statnum)

@@ -6657,7 +6657,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			return ScriptCall(activator, argCount, args);
 
 		case ACSF_StartSlideshow:
-			G_StartSlideshow(FName(Level->Behaviors.LookupString(args[0])));
+			G_StartSlideshow(Level, FName(Level->Behaviors.LookupString(args[0])).GetIndex());
 			break;
 
 		case ACSF_GetSectorHealth:

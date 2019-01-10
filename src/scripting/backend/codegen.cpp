@@ -1881,6 +1881,12 @@ FxExpression *FxMinusSign::Resolve(FCompileContext& ctx)
 			delete this;
 			return e;
 		}
+		else if (Operand->ValueType == TypeBool)
+		{
+			Operand = new FxIntCast(Operand, true);
+			Operand = Operand->Resolve(ctx);
+			assert(Operand != nullptr);
+		}
 		ValueType = Operand->ValueType;
 		return this;
 	}

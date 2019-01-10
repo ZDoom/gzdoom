@@ -160,9 +160,9 @@ void P_LoadTranslator(const char *lumpname);
 void P_TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineindexforid = -1);
 int P_TranslateSectorSpecial (int);
 
-int GetUDMFInt(int type, int index, FName key);
-double GetUDMFFloat(int type, int index, FName key);
-FString GetUDMFString(int type, int index, FName key);
+int GetUDMFInt(FLevelLocals *Level, int type, int index, FName key);
+double GetUDMFFloat(FLevelLocals *Level, int type, int index, FName key);
+FString GetUDMFString(FLevelLocals *Level, int type, int index, FName key);
 
 void FixMinisegReferences();
 void FixHoles();

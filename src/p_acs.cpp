@@ -5311,26 +5311,26 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 	switch(funcIndex)
 	{
 		case ACSF_GetLineUDMFInt:
-			return GetUDMFInt(UDMF_Line, LineFromID(args[0]), Level->Behaviors.LookupString(args[1]));
+			return GetUDMFInt(Level, UDMF_Line, LineFromID(args[0]), Level->Behaviors.LookupString(args[1]));
 
 		case ACSF_GetLineUDMFFixed:
-			return DoubleToACS(GetUDMFFloat(UDMF_Line, LineFromID(args[0]), Level->Behaviors.LookupString(args[1])));
+			return DoubleToACS(GetUDMFFloat(Level, UDMF_Line, LineFromID(args[0]), Level->Behaviors.LookupString(args[1])));
 
 		case ACSF_GetThingUDMFInt:
 		case ACSF_GetThingUDMFFixed:
 			return 0;	// Not implemented yet
 
 		case ACSF_GetSectorUDMFInt:
-			return GetUDMFInt(UDMF_Sector, Level->tagManager.FindFirstSectorFromTag(args[0]), Level->Behaviors.LookupString(args[1]));
+			return GetUDMFInt(Level, UDMF_Sector, Level->tagManager.FindFirstSectorFromTag(args[0]), Level->Behaviors.LookupString(args[1]));
 
 		case ACSF_GetSectorUDMFFixed:
-			return DoubleToACS(GetUDMFFloat(UDMF_Sector, Level->tagManager.FindFirstSectorFromTag(args[0]), Level->Behaviors.LookupString(args[1])));
+			return DoubleToACS(GetUDMFFloat(Level, UDMF_Sector, Level->tagManager.FindFirstSectorFromTag(args[0]), Level->Behaviors.LookupString(args[1])));
 
 		case ACSF_GetSideUDMFInt:
-			return GetUDMFInt(UDMF_Side, SideFromID(args[0], args[1]), Level->Behaviors.LookupString(args[2]));
+			return GetUDMFInt(Level, UDMF_Side, SideFromID(args[0], args[1]), Level->Behaviors.LookupString(args[2]));
 
 		case ACSF_GetSideUDMFFixed:
-			return DoubleToACS(GetUDMFFloat(UDMF_Side, SideFromID(args[0], args[1]), Level->Behaviors.LookupString(args[2])));
+			return DoubleToACS(GetUDMFFloat(Level, UDMF_Side, SideFromID(args[0], args[1]), Level->Behaviors.LookupString(args[2])));
 
 		case ACSF_GetActorVelX:
 			actor = SingleActorFromTID(args[0], activator);

@@ -60,6 +60,7 @@ class DSectorMarker;
 
 typedef TMap<int, int> FDialogueIDMap;				// maps dialogue IDs to dialogue array index (for ACS)
 typedef TMap<FName, int> FDialogueMap;				// maps actor class names to dialogue array index
+typedef TMap<int, FUDMFKeys> FUDMFKeyMap;
 
 struct FLevelData
 {
@@ -120,6 +121,8 @@ struct FLevelData
 	int ib_compatflags = 0;
 	int i_compatflags = 0;
 	int i_compatflags2 = 0;
+
+	FUDMFKeyMap UDMFKeys[4];
 
 };
 

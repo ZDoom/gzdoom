@@ -285,20 +285,6 @@ const char *UDMFParserBase::CheckString(const char *key)
 //
 //===========================================================================
 
-typedef TMap<int, FUDMFKeys> FUDMFKeyMap;
-
-
-static FUDMFKeyMap UDMFKeys[4];
-// Things must be handled differently
-
-void P_ClearUDMFKeys()
-{
-	for(int i=0;i<4;i++)
-	{
-		UDMFKeys[i].Clear();
-	}
-}
-
 static int udmfcmp(const void *a, const void *b)
 {
 	FUDMFKey *A = (FUDMFKey*)a;
@@ -346,11 +332,11 @@ FUDMFKey *FUDMFKeys::Find(FName key)
 //
 //===========================================================================
 
-int GetUDMFInt(int type, int index, FName key)
+int GetUDMFInt(FLevelLocals *Level, int type, int index, FName key)
 {
 	assert(type >=0 && type <=3);
 
-	FUDMFKeys *pKeys = UDMFKeys[type].CheckKey(index);
+	FUDMFKeys *pKeys = Level->UDMFKeys[type].CheckKey(index);
 
 	if (pKeys != NULL)
 	{
@@ -363,11 +349,11 @@ int GetUDMFInt(int type, int index, FName key)
 	return 0;
 }
 
-double GetUDMFFloat(int type, int index, FName key)
+double GetUDMFFloat(FLevelLocals *Level, int type, int index, FName key)
 {
 	assert(type >=0 && type <=3);
 
-	FUDMFKeys *pKeys = UDMFKeys[type].CheckKey(index);
+	FUDMFKeys *pKeys = Level->UDMFKeys[type].CheckKey(index);
 
 	if (pKeys != NULL)
 	{
@@ -380,11 +366,11 @@ double GetUDMFFloat(int type, int index, FName key)
 	return 0;
 }
 
-FString GetUDMFString(int type, int index, FName key)
+FString GetUDMFString(FLevelLocals *Level, int type, int index, FName key)
 {
 	assert(type >= 0 && type <= 3);
 
-	FUDMFKeys *pKeys = UDMFKeys[type].CheckKey(index);
+	FUDMFKeys *pKeys = Level->UDMFKeys[type].CheckKey(index);
 
 	if (pKeys != NULL)
 	{
@@ -459,7 +445,7 @@ public:
   }
 	void AddUserKey(FName key, int kind, int index)
 	{
-		FUDMFKeys &keyarray = UDMFKeys[kind][index];
+		FUDMFKeys &keyarray = Level->UDMFKeys[kind][index];
 
 		for(unsigned i=0; i < keyarray.Size(); i++)
 		{

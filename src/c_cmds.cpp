@@ -1093,10 +1093,11 @@ CCMD(nextmap)
 				TEXTCOLOR_NORMAL " is for single-player only.\n");
 		return;
 	}
+	auto Level = who->Level;
 	
-	if (level.NextMap.Len() > 0 && level.NextMap.Compare("enDSeQ", 6))
+	if (Level->NextMap.Len() > 0 && Level->NextMap.Compare("enDSeQ", 6))
 	{
-		G_DeferedInitNew(level.NextMap);
+		G_DeferedInitNew(Level->NextMap);
 	}
 	else
 	{
@@ -1117,10 +1118,11 @@ CCMD(nextsecret)
 				TEXTCOLOR_NORMAL " is for single-player only.\n");
 		return;
 	}
+	auto Level = who->Level;
 
-	if (level.NextSecretMap.Len() > 0 && level.NextSecretMap.Compare("enDSeQ", 6))
+	if (Level->NextSecretMap.Len() > 0 && Level->NextSecretMap.Compare("enDSeQ", 6))
 	{
-		G_DeferedInitNew(level.NextSecretMap);
+		G_DeferedInitNew(Level->NextSecretMap);
 	}
 	else
 	{
@@ -1165,7 +1167,7 @@ static void PrintSecretString(const char *string, FLevelLocals *Level)
 			{
 				auto secnum = (unsigned)strtoull(string+2, (char**)&string, 10);
 				if (*string == ';') string++;
-				if (Level && secnum < level.sectors.Size())
+				if (Level && secnum < Level->sectors.Size())
 				{
 					if (Level->sectors[secnum].isSecret()) colstr = TEXTCOLOR_RED;
 					else if (Level->sectors[secnum].wasSecret()) colstr = TEXTCOLOR_GREEN;

@@ -1100,11 +1100,11 @@ void DoomSpecificInfo (char *buffer, size_t bufflen)
 
 	if (gamestate != GS_LEVEL && gamestate != GS_TITLELEVEL)
 	{
-		buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nNot in a level.");
+		buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nNot in a map.");
 	}
 	else
 	{
-		buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nCurrent map: %s", level.MapName.GetChars());
+		buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nCurrent map: %s", vp.camera->Level->MapName.GetChars());
 
 		if (!viewactive)
 		{

@@ -214,7 +214,15 @@ CCMD (map)
 	if (argv.argc() > 1)
 	{
 		const char *mapname = argv[1];
-		if (!strcmp(mapname, "*")) mapname = level.MapName.GetChars();
+		if (!strcmp(mapname, "*"))
+		{
+			if (who == nullptr)
+			{
+				Printf("Player is not in a level that can be restarted.\n");
+				return;
+			}
+			mapname = who->Level->MapName.GetChars();
+		}
 
 		try
 		{
@@ -264,7 +272,16 @@ UNSAFE_CCMD(recordmap)
 	if (argv.argc() > 2)
 	{
 		const char *mapname = argv[2];
-		if (!strcmp(mapname, "*")) mapname = level.MapName.GetChars();
+		
+		if (!strcmp(mapname, "*"))
+		{
+			if (who == nullptr)
+			{
+				Printf("Player is not in a level that can be restarted.\n");
+				return;
+			}
+			mapname = who->Level->MapName.GetChars();
+		}
 
 		try
 		{
@@ -745,9 +762,10 @@ void G_SecretExitLevel (int position)
 //
 //==========================================================================
 
-void G_DoCompleted (void)
+void G_DoCompleted ()
 {
-	int i; 
+	int i;
+	auto Level = &level;
 
 	gameaction = ga_nothing;
 
@@ -768,8 +786,8 @@ void G_DoCompleted (void)
 	}
 
 	// [RH] Mark this level as having been visited
-	if (!(level.flags & LEVEL_CHANGEMAPCHEAT))
-		FindLevelInfo (level.MapName)->flags |= LEVEL_VISITED;
+	if (!(Level->flags & LEVEL_CHANGEMAPCHEAT))
+		Level->info->flags |= LEVEL_VISITED;
 
 	if (automapactive)
 		AM_Stop ();
@@ -777,15 +795,15 @@ void G_DoCompleted (void)
 	// Close the conversation menu if open.
 	P_FreeStrifeConversations ();
 
-	wminfo.finished_ep = level.cluster - 1;
+	wminfo.finished_ep = Level->cluster - 1;
 	wminfo.LName0 = TexMan.CheckForTexture(level.info->PName, ETextureType::MiscPatch);
-	wminfo.current = level.MapName;
+	wminfo.current = Level->MapName;
 
 	if (deathmatch &&
 		(dmflags & DF_SAME_LEVEL) &&
-		!(level.flags & LEVEL_CHANGEMAPCHEAT))
+		!(Level->flags & LEVEL_CHANGEMAPCHEAT))
 	{
-		wminfo.next = level.MapName;
+		wminfo.next = Level->MapName;
 		wminfo.LName1 = wminfo.LName0;
 	}
 	else
@@ -807,14 +825,14 @@ void G_DoCompleted (void)
 	nextlevel = wminfo.next;
 
 	wminfo.next_ep = FindLevelInfo (wminfo.next)->cluster - 1;
-	wminfo.maxkills = level.total_monsters;
-	wminfo.maxitems = level.total_items;
-	wminfo.maxsecret = level.total_secrets;
+	wminfo.maxkills = Level->total_monsters;
+	wminfo.maxitems = Level->total_items;
+	wminfo.maxsecret = Level->total_secrets;
 	wminfo.maxfrags = 0;
-	wminfo.partime = TICRATE * level.partime;
-	wminfo.sucktime = level.sucktime;
+	wminfo.partime = TICRATE * Level->partime;
+	wminfo.sucktime = Level->sucktime;
 	wminfo.pnum = consoleplayer;
-	wminfo.totaltime = level.totaltime;
+	wminfo.totaltime = Level->totaltime;
 
 	for (i=0 ; i<MAXPLAYERS ; i++)
 	{
@@ -832,7 +850,7 @@ void G_DoCompleted (void)
 	//		the player and clear the world vars. If this is just an
 	//		ordinary cluster (not a hub), take stuff from the player, but
 	//		leave the world vars alone.
-	cluster_info_t *thiscluster = FindClusterInfo (level.cluster);
+	cluster_info_t *thiscluster = FindClusterInfo (Level->cluster);
 	cluster_info_t *nextcluster = FindClusterInfo (wminfo.next_ep+1);	// next_ep is cluster-1
 	EFinishLevelType mode;
 
@@ -866,10 +884,10 @@ void G_DoCompleted (void)
 
 	if (mode == FINISH_SameHub)
 	{ // Remember the level's state for re-entry.
-		if (!(level.flags2 & LEVEL2_FORGETSTATE))
+		if (!(Level->flags2 & LEVEL2_FORGETSTATE))
 		{
 			G_SnapshotLevel ();
-			// Do not free any global strings this level might reference
+			// Do not free any global strings this level (or any sublevel) might reference
 			// while it's not loaded.
 			ForAllLevels([](FLevelLocals *Level)
 			{
@@ -877,11 +895,8 @@ void G_DoCompleted (void)
 			});
 		}
 		else
-		{ // Make sure we don't have a snapshot lying around from before.
-			ForAllLevels([](FLevelLocals *Level)
-			{
-				Level->info->Snapshot.Clean();
-			});
+		{ // Make sure we don't have a snapshot lying around from before. (Snapshots are only attached to the primary level!)
+			Level->info->Snapshot.Clean();
 		}
 	}
 	else
@@ -900,10 +915,10 @@ void G_DoCompleted (void)
 	finishstate = mode;
 
 	if (!deathmatch &&
-		((level.flags & LEVEL_NOINTERMISSION) ||
+		((Level->flags & LEVEL_NOINTERMISSION) ||
 		((nextcluster == thiscluster) && (thiscluster->flags & CLUSTER_HUB) && !(thiscluster->flags & CLUSTER_ALLOWINTERMISSION))))
 	{
-		G_WorldDone ();
+		G_WorldDone (Level);
 		return;
 	}
 
@@ -1153,17 +1168,17 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 //
 //==========================================================================
 
-void G_WorldDone (void) 
+void G_WorldDone (FLevelLocals *Level)
 { 
 	cluster_info_t *nextcluster;
 	cluster_info_t *thiscluster;
 
 	gameaction = ga_worlddone; 
 
-	if (level.flags & LEVEL_CHANGEMAPCHEAT)
+	if (Level->flags & LEVEL_CHANGEMAPCHEAT)
 		return;
 
-	thiscluster = FindClusterInfo (level.cluster);
+	thiscluster = FindClusterInfo (Level->cluster);
 
 	if (strncmp (nextlevel, "enDSeQ", 6) == 0)
 	{
@@ -1182,7 +1197,7 @@ void G_WorldDone (void)
 			}
 		}
 
-		auto ext = level.info->ExitMapTexts.CheckKey(level.flags3 & LEVEL3_EXITSECRETUSED ? NAME_Secret : NAME_Normal);
+		auto ext = Level->info->ExitMapTexts.CheckKey(Level->flags3 & LEVEL3_EXITSECRETUSED ? NAME_Secret : NAME_Normal);
 		if (ext != nullptr && (ext->mDefined & FExitText::DEF_TEXT))
 		{
 			F_StartFinale(ext->mDefined & FExitText::DEF_MUSIC ? ext->mMusic : gameinfo.finaleMusic,
@@ -1210,9 +1225,9 @@ void G_WorldDone (void)
 	{
 		FExitText *ext = nullptr;
 		
-		if (level.flags3 & LEVEL3_EXITSECRETUSED) ext = level.info->ExitMapTexts.CheckKey(NAME_Secret);
-		else if (level.flags3 & LEVEL3_EXITNORMALUSED) ext = level.info->ExitMapTexts.CheckKey(NAME_Normal);
-		if (ext == nullptr) ext = level.info->ExitMapTexts.CheckKey(nextlevel);
+		if (Level->flags3 & LEVEL3_EXITSECRETUSED) ext = Level->info->ExitMapTexts.CheckKey(NAME_Secret);
+		else if (Level->flags3 & LEVEL3_EXITNORMALUSED) ext = Level->info->ExitMapTexts.CheckKey(NAME_Normal);
+		if (ext == nullptr) ext = Level->info->ExitMapTexts.CheckKey(nextlevel);
 
 		if (ext != nullptr)
 		{
@@ -1233,7 +1248,7 @@ void G_WorldDone (void)
 
 		nextcluster = FindClusterInfo (FindLevelInfo (nextlevel)->cluster);
 
-		if (nextcluster->cluster != level.cluster && !deathmatch)
+		if (nextcluster->cluster != Level->cluster && !deathmatch)
 		{
 			// Only start the finale if the next level's cluster is different
 			// than the current one and we're not in deathmatch.
@@ -1263,7 +1278,8 @@ void G_WorldDone (void)
  
 DEFINE_ACTION_FUNCTION(FLevelLocals, WorldDone)
 {
-	G_WorldDone();
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	G_WorldDone(self);
 	return 0;
 }
 
@@ -1314,7 +1330,7 @@ void G_StartTravel ()
 			AActor *inv;
 			players[i].camera = nullptr;
 
-			// Only living players travel. Dead ones get a new body on the new level.
+			// Only living players travel. Dead ones get a new body on the new map.
 			if (players[i].health > 0)
 			{
 				pawn->UnlinkFromWorld (nullptr);
@@ -1376,7 +1392,7 @@ int G_FinishTravel ()
 			if (pawndup != nullptr)
 			{
 				Printf(TEXTCOLOR_RED "No player %d start to travel to!\n", pnum + 1);
-				// Move to the coordinates this player had when they left the level.
+				// Move to the coordinates this player had when they left the map.
 				pawn->SetXYZ(pawndup->Pos());
 			}
 			else
@@ -2139,11 +2155,11 @@ void FLevelLocals::AddScroller (int secnum)
 
 void FLevelLocals::SetInterMusic(const char *nextmap)
 {
-	auto mus = level.info->MapInterMusic.CheckKey(nextmap);
+	auto mus = info->MapInterMusic.CheckKey(nextmap);
 	if (mus != nullptr)
 		S_ChangeMusic(mus->first, mus->second);
-	else if (level.info->InterMusic.IsNotEmpty())
-		S_ChangeMusic(level.info->InterMusic, level.info->intermusicorder);
+	else if (info->InterMusic.IsNotEmpty())
+		S_ChangeMusic(info->InterMusic, info->intermusicorder);
 	else
 		S_ChangeMusic(gameinfo.intermissionMusic.GetChars(), gameinfo.intermissionOrder);
 }
@@ -2215,7 +2231,7 @@ inline T VecDiff(FLevelLocals *Level, const T& v1, const T& v2)
 {
 	T result = v2 - v1;
 
-	if (level.subsectors.Size() > 0)
+	if (Level->subsectors.Size() > 0)
 	{
 		const sector_t *const sec1 = P_PointInSector(Level, v1);
 		const sector_t *const sec2 = P_PointInSector(Level, v2);
@@ -2307,7 +2323,9 @@ CCMD(skyfog)
 {
 	if (argv.argc()>1)
 	{
-		level.skyfog = MAX(0, (int)strtoull(argv[1], NULL, 0));
+		ForAllLevels([&](FLevelLocals *Level) {
+			Level->skyfog = MAX(0, (int)strtoull(argv[1], NULL, 0));
+		});
 	}
 }
 

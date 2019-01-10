@@ -586,6 +586,19 @@ int FLevelLocals::FindNode (const FStrifeDialogueNode *node)
 
 //============================================================================
 //
+//
+//
+//============================================================================
+
+int FLevelLocals::GetInfighting()
+{
+	if (flags2 & LEVEL2_TOTALINFIGHTING) return 1;
+	if (flags2 & LEVEL2_NOINFIGHTING) return -1;
+	return G_SkillProperty(SKILLP_Infight);
+}
+
+//============================================================================
+//
 // CheckStrifeItem
 //
 // Checks if you have an item. A NULL itemtype is always considered to be

@@ -52,11 +52,11 @@
 #undef DD
 #endif
 
-void FNodeBuilder::Extract (FLevelLocals &level)
+void FNodeBuilder::Extract (FLevelLocals &destination)
 {
 	int i;
 
-	auto &outVerts = level.vertexes; 
+	auto &outVerts = destination.vertexes;
 	int vertCount = Vertices.Size ();
 	outVerts.Alloc(vertCount);
 
@@ -65,12 +65,12 @@ void FNodeBuilder::Extract (FLevelLocals &level)
 		outVerts[i].set(Vertices[i].x, Vertices[i].y);
 	}
 
-	auto &outSubs = level.subsectors;
+	auto &outSubs = destination.subsectors;
 	auto subCount = Subsectors.Size();
 	outSubs.Alloc(subCount);
 	memset(&outSubs[0], 0, subCount * sizeof(subsector_t));
 
-	auto &outNodes = level.nodes;
+	auto &outNodes = destination.nodes;
 	auto nodeCount = Nodes.Size ();
 	outNodes.Alloc(nodeCount);
 
@@ -103,7 +103,7 @@ void FNodeBuilder::Extract (FLevelLocals &level)
 		}
 	}
 
-	auto &outSegs = level.segs;
+	auto &outSegs = destination.segs;
 	if (GLNodes)
 	{
 		TArray<glseg_t> segs (Segs.Size()*5/4);

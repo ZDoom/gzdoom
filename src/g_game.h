@@ -68,7 +68,7 @@ void G_PlayDemo (char* name);
 void G_TimeDemo (const char* name);
 bool G_CheckDemoStatus (void);
 
-void G_WorldDone (void);
+void G_WorldDone (FLevelLocals *);
 
 void G_Ticker (void);
 bool G_Responder (event_t*	ev);

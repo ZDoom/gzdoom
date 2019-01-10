@@ -1722,7 +1722,7 @@ void FPolyObj::CreateSubsectorLinks()
 		seg->v2 = side->V2();
 		seg->wall = side;
 	}
-	if (!(i_compatflags & COMPATF_POLYOBJ))
+	if (!(Level->i_compatflags & COMPATF_POLYOBJ))
 	{
 		SplitPoly(node, Level->HeadNode(), dummybbox);
 	}

@@ -2226,8 +2226,11 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		s = ReadString (stream);
 		// Using LEVEL_NOINTERMISSION tends to throw the game out of sync.
 		// That was a long time ago. Maybe it works now?
-		level.flags |= LEVEL_CHANGEMAPCHEAT;
-		G_ChangeLevel(s, pos, 0);
+		if (currentSession)
+		{
+			currentSession->Levelinfo[0]->flags |= LEVEL_CHANGEMAPCHEAT;
+			G_ChangeLevel(s, pos, 0);
+		}
 		break;
 
 	case DEM_SUICIDE:

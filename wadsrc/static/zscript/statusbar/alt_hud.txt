@@ -798,8 +798,8 @@ class AltHud ui
 					hud_showtime < 4
 						? Level.maptime
 						: (hud_showtime < 6
-							? Level.time
-							: Level.totaltime);
+							? currentSession.time
+							: currentSession.totaltime);
 				timeSeconds = Thinker.Tics2Seconds(timeTicks);
 			}
 			else
@@ -818,7 +818,7 @@ class AltHud ui
 
 			if (showMillis)
 			{
-				int millis  = (Level.time % Thinker.TICRATE) * (1000 / Thinker.TICRATE);
+				int millis  = (currentSession.time % Thinker.TICRATE) * (1000 / Thinker.TICRATE);
 				timeString = String.Format("%02i:%02i:%02i.%03i", hours, minutes, seconds, millis);
 			}
 			else if (showSeconds)
@@ -950,7 +950,7 @@ class AltHud ui
 
 		if (am_showtotaltime)
 		{
-			DrawTimeString(SmallFont, hudcolor_ttim, Level.totaltime, hudwidth-2, bottom, 1);
+			DrawTimeString(SmallFont, hudcolor_ttim, currentSession.totaltime, hudwidth-2, bottom, 1);
 			bottom -= fonth;
 		}
 
@@ -958,7 +958,7 @@ class AltHud ui
 		{
 			if (Level.clusterflags & Level.CLUSTER_HUB)
 			{
-				DrawTimeString(SmallFont, hudcolor_time, Level.time, hudwidth-2, bottom, 1);
+				DrawTimeString(SmallFont, hudcolor_time, currentSession.time, hudwidth-2, bottom, 1);
 				bottom -= fonth;
 			}
 

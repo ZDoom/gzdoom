@@ -481,7 +481,7 @@ void STAT_ChangeLevel(const char *newl, FLevelLocals *Level)
 			}
 
 			infostring.Format("%4d/%4d, %4d/%4d, %3d/%3d, %2d", statvals[0], statvals[1], statvals[2], statvals[3], statvals[4], statvals[5], validlevels);
-			FSessionStatistics *es = StatisticsEntry(sl, infostring, Level->totaltime);
+			FSessionStatistics *es = StatisticsEntry(sl, infostring, currentSession->totaltime);
 
 			for(unsigned i = 0; i < LevelData.Size(); i++)
 			{

@@ -540,9 +540,10 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		}
 		FRandom::StaticClearRandom ();
 		P_ClearACSVars(true);
-		level.time = 0;
+		currentSession->time = 0;
+		currentSession->totaltime = 0;
+
 		level.maptime = 0;
-		level.totaltime = 0;
 		level.spawnindex = 0;
 
 		if (!multiplayer || !deathmatch)
@@ -610,7 +611,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 		Printf (TEXTCOLOR_RED "Unloading scripts cannot exit the level again.\n");
 		return;
 	}
-	if (gameaction == ga_completed && !(i_compatflags2 & COMPATF2_MULTIEXIT))	// do not exit multiple times.
+	if (gameaction == ga_completed && !(currentSession->Levelinfo[0]->i_compatflags2 & COMPATF2_MULTIEXIT))	// do not exit multiple times.
 	{
 		return;
 	}
@@ -665,7 +666,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 
 	startpos = position;
 	gameaction = ga_completed;
-	level.SetMusicVolume(1.0);
+	currentSession->SetMusicVolume(1.0);
 		
 	if (nextinfo != NULL) 
 	{
@@ -738,18 +739,19 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 
 const char *G_GetExitMap()
 {
-	return level.NextMap;
+	return currentSession->Levelinfo[0]->NextMap;
 }
 
 const char *G_GetSecretExitMap()
 {
-	const char *nextmap = level.NextMap;
+	auto Level = currentSession->Levelinfo[0];
+	const char *nextmap = Level->NextMap;
 
-	if (level.NextSecretMap.Len() > 0)
+	if (Level->NextSecretMap.Len() > 0)
 	{
-		if (P_CheckMapData(level.NextSecretMap))
+		if (P_CheckMapData(Level->NextSecretMap))
 		{
-			nextmap = level.NextSecretMap;
+			nextmap = Level->NextSecretMap;
 		}
 	}
 	return nextmap;
@@ -757,18 +759,19 @@ const char *G_GetSecretExitMap()
 
 //==========================================================================
 //
+// The flags here must always be on the primary level.
 //
 //==========================================================================
 
 void G_ExitLevel (int position, bool keepFacing)
 {
-	level.flags3 |= LEVEL3_EXITNORMALUSED;
+	currentSession->Levelinfo[0]->flags3 |= LEVEL3_EXITNORMALUSED;
 	G_ChangeLevel(G_GetExitMap(), position, keepFacing ? CHANGELEVEL_KEEPFACING : 0);
 }
 
 void G_SecretExitLevel (int position) 
 {
-	level.flags3 |= LEVEL3_EXITSECRETUSED;
+	currentSession->Levelinfo[0]->flags3 |= LEVEL3_EXITSECRETUSED;
 	G_ChangeLevel(G_GetSecretExitMap(), position, 0);
 }
 
@@ -847,14 +850,14 @@ void G_DoCompleted ()
 	wminfo.partime = TICRATE * Level->partime;
 	wminfo.sucktime = Level->sucktime;
 	wminfo.pnum = consoleplayer;
-	wminfo.totaltime = Level->totaltime;
+	wminfo.totaltime = currentSession->totaltime;
 
 	for (i=0 ; i<MAXPLAYERS ; i++)
 	{
 		wminfo.plyr[i].skills = players[i].killcount;
 		wminfo.plyr[i].sitems = players[i].itemcount;
 		wminfo.plyr[i].ssecret = players[i].secretcount;
-		wminfo.plyr[i].stime = level.time;
+		wminfo.plyr[i].stime = currentSession->time;
 		memcpy (wminfo.plyr[i].frags, players[i].frags
 				, sizeof(wminfo.plyr[i].frags));
 		wminfo.plyr[i].fragcount = players[i].fragcount;
@@ -922,7 +925,7 @@ void G_DoCompleted ()
 		{ // Reset world variables for the new hub.
 			P_ClearACSVars(false);
 		}
-		level.time = 0;
+		currentSession->time = 0;
 		level.maptime = 0;
 		level.spawnindex = 0;
 	}
@@ -1477,7 +1480,7 @@ int G_FinishTravel ()
 				VMCall(func, params, 1, nullptr, 0);
 			}
 		}
-		if (ib_compatflags & BCOMPATF_RESETPLAYERSPEED)
+		if (pawn->Level->ib_compatflags & BCOMPATF_RESETPLAYERSPEED)
 		{
 			pawn->Speed = pawn->GetDefault()->Speed;
 		}
@@ -1505,6 +1508,8 @@ void FLevelLocals::InitLevelLocals ()
 
 	// Session data should be moved out of here later!
 	currentSession->F1Pic = info->F1Pic;
+	currentSession->MusicVolume = 1.f;
+
 
 	P_InitParticles(this);
 	P_ClearParticles(this);
@@ -1560,7 +1565,6 @@ void FLevelLocals::InitLevelLocals ()
 	levelnum = info->levelnum;
 	Music = info->Music;
 	musicorder = info->musicorder;
-	MusicVolume = 1.f;
 	HasHeightSecs = false;
 
 	LevelName = info->LookupLevelName();
@@ -2198,9 +2202,9 @@ void FLevelLocals::SetMusic()
 //
 //==========================================================================
 
-void FLevelLocals::SetMusicVolume(float f)
+void FGameSession::SetMusicVolume(float f)
 {
-	MusicVolume = f;
+	if (currentSession) currentSession->MusicVolume = f;
 	I_SetMusicVolume(f);
 }
 

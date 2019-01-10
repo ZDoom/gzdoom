@@ -918,7 +918,7 @@ class CommandDrawString : public SBarInfoCommand
 					break;
 				case TIME:
 				{
-					int sec = Tics2Seconds(statusBar->Level->time); 
+					int sec = Tics2Seconds(currentSession->time); 
 					str.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
 					break;
 				}
@@ -1461,7 +1461,7 @@ class CommandDrawNumber : public CommandDrawString
 					if(statusBar->CPlayer->mo->waterlevel < 3)
 						num = statusBar->Level->airsupply/TICRATE;
 					else
-						num = clamp<int>((statusBar->CPlayer->air_finished - statusBar->Level->time + (TICRATE-1))/TICRATE, 0, INT_MAX);
+						num = clamp<int>((statusBar->CPlayer->air_finished - currentSession->time + (TICRATE-1))/TICRATE, 0, INT_MAX);
 					break;
 				}
 				case SELECTEDINVENTORY:
@@ -1502,7 +1502,7 @@ class CommandDrawNumber : public CommandDrawString
 				}
 				default: break;
 			}
-			if(interpolationSpeed != 0 && (!hudChanged || statusBar->Level->time == 1))
+			if(interpolationSpeed != 0 && (!hudChanged || currentSession->time == 1))
 			{
 				if(num < drawValue)
 					drawValue -= clamp<int>((drawValue - num) >> 2, 1, interpolationSpeed);
@@ -2751,7 +2751,7 @@ class CommandDrawBar : public SBarInfoCommand
 					break;
 				}
 				case AIRTIME:
-					value = clamp<int>(statusBar->CPlayer->air_finished - statusBar->Level->time, 0, INT_MAX);
+					value = clamp<int>(statusBar->CPlayer->air_finished - currentSession->time, 0, INT_MAX);
 					max = statusBar->Level->airsupply;
 					break;
 				case POWERUPTIME:
@@ -2798,7 +2798,7 @@ class CommandDrawBar : public SBarInfoCommand
 			}
 			else
 				value = 0;
-			if(interpolationSpeed != 0 && (!hudChanged || statusBar->Level->time == 1))
+			if(interpolationSpeed != 0 && (!hudChanged || currentSession->time == 1))
 			{
 				// [BL] Since we used a percentage (in order to get the most fluid animation)
 				//      we need to establish a cut off point so the last pixel won't hang as the animation slows
@@ -3192,7 +3192,7 @@ class CommandDrawGem : public SBarInfoCommand
 		
 			goalValue = reverse ? 100 - goalValue : goalValue;
 		
-			if(interpolationSpeed != 0 && (!hudChanged || statusBar->Level->time == 1)) // At the start force an animation
+			if(interpolationSpeed != 0 && (!hudChanged || currentSession->time == 1)) // At the start force an animation
 			{
 				if(goalValue < drawValue)
 					drawValue -= clamp<int>((drawValue - goalValue) >> 2, 1, interpolationSpeed);
@@ -3202,7 +3202,7 @@ class CommandDrawGem : public SBarInfoCommand
 			else
 				drawValue = goalValue;
 		
-			if(wiggle && statusBar->Level->time & 1)
+			if(wiggle && currentSession->time & 1)
 				chainWiggle = pr_chainwiggle() & 1;
 		}
 	protected:

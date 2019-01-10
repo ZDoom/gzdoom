@@ -890,8 +890,6 @@ static void SpawnExtraPlayers(FLevelLocals *Level)
 
 void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 {
-	int i = Level->totaltime;
-
 	if (arc.isWriting())
 	{
 		arc.Array("checksum", Level->md5, 16);
@@ -937,7 +935,6 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 		("airfriction", Level->airfriction)
 		("teamdamage", Level->teamdamage)
 		("maptime", Level->maptime)
-		("totaltime", i)
 		("skytexture1", Level->skytexture1)
 		("skytexture2", Level->skytexture2)
 		("fogdensity", Level->fogdensity)
@@ -956,10 +953,6 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 		("changefreeze", Level->changefreeze)
 		("sndseqlisthead", Level->SequenceListHead);
 
-
-	// Hub transitions must keep the current total time
-	if (!hubload)
-		Level->totaltime = i;
 
 	if (arc.isReading())
 	{
@@ -1000,13 +993,16 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 	{
 		order = S_GetMusic(&name);
 	}
+	
 	arc.StringPtr("musicname", name)
-		("musicorder", order);
+		("musicorder", order)
+		("musicvolume", currentSession->MusicVolume);
+	if (!hubload) arc ("totaltime", currentSession->totaltime);	// this must be skipped for hub transitions.
 
 	if (arc.isReading())
 	{
 		if (!S_ChangeMusic(name, order)) Level->SetMusic();
-		level.SetMusicVolume(Level->MusicVolume);
+		currentSession->SetMusicVolume(currentSession->MusicVolume);
 	}
 
 

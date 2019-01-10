@@ -861,7 +861,7 @@ static bool ValidatePosVel(const FSoundChan *const chan, const FVector3 &pos, co
 
 static void CalcSectorSoundOrg(const DVector3 &listenpos, const sector_t *sec, int channum, FVector3 &pos)
 {
-	if (!(i_compatflags & COMPATF_SECTORSOUNDS))
+	if (!(sec->Level->i_compatflags & COMPATF_SECTORSOUNDS))
 	{
 		// Are we inside the sector? If yes, the closest point is the one we're on.
 		if (P_PointInSector(sec->Level, listenpos.X, listenpos.Y) == sec)
@@ -991,11 +991,11 @@ static FSoundChan *S_StartSound(FLevelLocals *Level, AActor *actor, const sector
 		return nullptr;
 	}
 
-	if (i_compatflags & COMPATF_MAGICSILENCE)
+	if (Level->i_compatflags & COMPATF_MAGICSILENCE)
 	{ // For people who just can't play without a silent BFG.
 		channel = CHAN_WEAPON;
 	}
-	else if ((chanflags & CHAN_MAYBE_LOCAL) && (i_compatflags & COMPATF_SILENTPICKUP))
+	else if ((chanflags & CHAN_MAYBE_LOCAL) && (Level->i_compatflags & COMPATF_SILENTPICKUP))
 	{
 		if (actor != NULL && actor != players[consoleplayer].camera)
 		{
@@ -1679,7 +1679,7 @@ void S_StopSound (int channel)
 	{
 		FSoundChan *next = chan->NextChan;
 		if (chan->SourceType == SOURCE_None &&
-			(chan->EntChannel == channel || (i_compatflags & COMPATF_MAGICSILENCE)))
+			(chan->EntChannel == channel || (compatflags & COMPATF_MAGICSILENCE)))
 		{
 			S_StopChannel(chan);
 		}
@@ -1703,7 +1703,7 @@ void S_StopSound (AActor *actor, int channel)
 		FSoundChan *next = chan->NextChan;
 		if (chan->SourceType == SOURCE_Actor &&
 			chan->Actor == actor &&
-			(chan->EntChannel == channel || (i_compatflags & COMPATF_MAGICSILENCE)))
+			(chan->EntChannel == channel || (compatflags & COMPATF_MAGICSILENCE)))
 		{
 			S_StopChannel(chan);
 		}
@@ -1727,7 +1727,7 @@ void S_StopSound (const sector_t *sec, int channel)
 		FSoundChan *next = chan->NextChan;
 		if (chan->SourceType == SOURCE_Sector &&
 			chan->Sector == sec &&
-			(chan->EntChannel == channel || (i_compatflags & COMPATF_MAGICSILENCE)))
+			(chan->EntChannel == channel || (compatflags & COMPATF_MAGICSILENCE)))
 		{
 			S_StopChannel(chan);
 		}
@@ -1751,7 +1751,7 @@ void S_StopSound (const FPolyObj *poly, int channel)
 		FSoundChan *next = chan->NextChan;
 		if (chan->SourceType == SOURCE_Polyobj &&
 			chan->Poly == poly &&
-			(chan->EntChannel == channel || (i_compatflags & COMPATF_MAGICSILENCE)))
+			(chan->EntChannel == channel || (compatflags & COMPATF_MAGICSILENCE)))
 		{
 			S_StopChannel(chan);
 		}
@@ -1840,7 +1840,7 @@ void S_ChangeSoundVolume(AActor *actor, int channel, double dvolume)
 	{
 		if (chan->SourceType == SOURCE_Actor &&
 			chan->Actor == actor &&
-			(chan->EntChannel == channel || (i_compatflags & COMPATF_MAGICSILENCE)))
+			(chan->EntChannel == channel || (compatflags & COMPATF_MAGICSILENCE)))
 		{
 			GSnd->ChannelVolume(chan, volume);
 			chan->Volume = volume;
@@ -1946,7 +1946,7 @@ static bool S_IsChannelUsed(AActor *actor, int channel, int *seen)
 
 bool S_IsActorPlayingSomething (AActor *actor, int channel, int sound_id)
 {
-	if (i_compatflags & COMPATF_MAGICSILENCE)
+	if (compatflags & COMPATF_MAGICSILENCE)
 	{
 		channel = 0;
 	}
@@ -2200,7 +2200,7 @@ void S_UpdateSounds (AActor *listenactor)
 	GSnd->UpdateListener(&listener);
 	GSnd->UpdateSounds();
 
-	if (listenactor && listenactor->Level->time >= RestartEvictionsAt)
+	if (currentSession && currentSession->time >= RestartEvictionsAt)
 	{
 		RestartEvictionsAt = 0;
 		S_RestoreEvictedChannels();
@@ -2506,7 +2506,7 @@ void S_SerializeSounds(FSerializer &arc, FLevelLocals *Level)
 		// playing before the wipe, and depending on the synchronization
 		// between the main thread and the mixer thread at the time, the
 		// sounds might be heard briefly before pausing for the wipe.
-		RestartEvictionsAt = Level->time + 2;
+		RestartEvictionsAt = currentSession->time + 2;
 	}
 	GSnd->Sync(false);
 	GSnd->UpdateSounds();

@@ -218,7 +218,7 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 //
 
 	// ignore self referencing sectors if COMPAT_TRACE is on
-	if ((i_compatflags & COMPATF_TRACE) && li->frontsector == li->backsector)
+	if ((Level->i_compatflags & COMPATF_TRACE) && li->frontsector == li->backsector)
 		return true;
 
 	double trX = Trace.x + Trace.dx * in->frac;

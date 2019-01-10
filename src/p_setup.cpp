@@ -378,7 +378,7 @@ void P_SetupLevel(FLevelLocals *Level, const char *lumpname, int position, bool 
 
 	if (!savegamerestore)
 	{
-		Level->SetMusicVolume(Level->MusicVolume);
+		currentSession->SetMusicVolume(currentSession->MusicVolume);
 		for (i = 0; i < MAXPLAYERS; ++i)
 		{
 			players[i].killcount = players[i].secretcount

@@ -769,7 +769,7 @@ class Actor : Thinker native
 	//==========================================================================
 	clearscope int GetLevelSpawnTime() const
 	{
-		return SpawnTime - Level.totaltime + Level.time;
+		return SpawnTime - currentSession.totaltime + currentSession.time;
 	}
 
 	//==========================================================================
@@ -782,7 +782,7 @@ class Actor : Thinker native
 
 	clearscope int GetAge() const
 	{
-		return Level.totaltime - SpawnTime;
+		return currentSession.totaltime - SpawnTime;
 	}
 
 	double AccuracyFactor()

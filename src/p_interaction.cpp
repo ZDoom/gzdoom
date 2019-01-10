@@ -492,7 +492,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 				source->player->multicount++;
 				if (source->player->lastkilltime > 0)
 				{
-					if (source->player->lastkilltime < Level->time - 3*TICRATE)
+					if (source->player->lastkilltime < currentSession->time - 3*TICRATE)
 					{
 						source->player->multicount = 1;
 					}
@@ -535,7 +535,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 						}
 					}
 				}
-				source->player->lastkilltime = Level->time;
+				source->player->lastkilltime = currentSession->time;
 			}
 
 			// [RH] Implement fraglimit
@@ -566,7 +566,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 		Level->Behaviors.StartTypedScripts (Level, SCRIPT_Death, this, true);
 
 		// [RH] Force a delay between death and respawn
-		player->respawn_time = Level->time + TICRATE;
+		player->respawn_time = currentSession->time + TICRATE;
 
 		//Added by MC: Respawn bots
 		if (bglobal.botnum && !demoplayback)
@@ -1807,7 +1807,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPain
 	}
 	auto Level = player->mo->Level;
 
-	if (!(Level->time & 63) && playPainSound)
+	if (!(Level->maptime & 63) && playPainSound)
 	{
 		FState *painstate = target->FindState(NAME_Pain, player->poisonpaintype);
 		if (painstate != NULL)

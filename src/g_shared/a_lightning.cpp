@@ -168,7 +168,7 @@ void DLightningThinker::LightningFlash ()
 		}
 		else
 		{
-			if (pr_lightning() < 128 && !(Level->time&32))
+			if (pr_lightning() < 128 && !(currentSession->time&32))
 			{
 				NextLightningFlash = ((pr_lightning()&7)+2)*35;
 			}

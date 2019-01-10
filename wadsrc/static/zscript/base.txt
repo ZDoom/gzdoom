@@ -626,6 +626,8 @@ struct GameSession native
 	// all open levels. The first entry in this list is the primary one where gameplay takes place.
 	native Array<LevelLocals> LevelInfo;
 	native readonly String F1Pic;
+	native readonly int time;
+	native readonly int totaltime;
 }
 
 struct LevelLocals native
@@ -645,6 +647,14 @@ struct LevelLocals native
 	{
 		return currentSession? currentSession.F1Pic : "";
 	}
+	deprecated("3.8") static int __getter__time__()
+	{
+		return currentSession? currentSession.time : 0;
+	}
+	deprecated("3.8") static int __getter__totaltime__()
+	{
+		return currentSession? currentSession.totaltime : 0;
+	}
 
 
 
@@ -654,9 +664,7 @@ struct LevelLocals native
 	native readonly Array<@Vertex> Vertexes;
 	native internal Array<@SectorPortal> SectorPortals;
 
-	deprecated("3.8") native readonly int time;
 	native readonly int maptime;
-	deprecated("3.8") native readonly int totaltime;
 	native readonly int starttime;
 	native readonly int partime;
 	native readonly int sucktime;
@@ -752,7 +760,7 @@ struct LevelLocals native
 
 	String TimeFormatted(bool totals = false)
 	{
-		int sec = Thinker.Tics2Seconds(totals? totaltime : time);
+		int sec = Thinker.Tics2Seconds(totals? currentSession.totaltime : currentSession.time);
 		return String.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
 	}
 }

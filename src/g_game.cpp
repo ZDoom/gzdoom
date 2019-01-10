@@ -1685,11 +1685,11 @@ void G_DoPlayerPop(int playernum)
 	}
 
 	// [RH] Make the player disappear
-	level.Behaviors.StopMyScripts(players[playernum].mo);
+	players[playernum].mo->Level->Behaviors.StopMyScripts(players[playernum].mo);
 	// [ZZ] fire player disconnect hook
 	E_PlayerDisconnected(playernum);
 	// [RH] Let the scripts know the player left
-	level.Behaviors.StartTypedScripts(&level, SCRIPT_Disconnect, players[playernum].mo, true, playernum, true);
+	players[playernum].mo->Level->Behaviors.StartTypedScripts(&level, SCRIPT_Disconnect, players[playernum].mo, true, playernum, true);
 	if (players[playernum].mo != NULL)
 	{
 		P_DisconnectEffect(players[playernum].mo);
@@ -1902,7 +1902,7 @@ void G_DoLoadGame ()
 	arc("ticrate", time[0])
 		("leveltime", time[1]);
 	// dearchive all the modifications
-	level.time = Scale(time[1], TICRATE, time[0]);
+	currentSession->time = Scale(time[1], TICRATE, time[0]);
 
 	G_ReadSnapshots(resfile.get());
 	resfile.reset(nullptr);	// we no longer need the resource file below this point
@@ -2081,9 +2081,8 @@ static void PutSaveComment (FSerializer &arc)
 	});
 
 	// Append elapsed time
-	levelTime = level.time / TICRATE;
-	comment.AppendFormat("time: %02d:%02d:%02d",
-		levelTime/3600, (levelTime%3600)/60, levelTime%60);
+	levelTime = currentSession->time / TICRATE;
+	comment.AppendFormat("time: %02d:%02d:%02d", levelTime/3600, (levelTime%3600)/60, levelTime%60);
 
 	// Write out the comment
 	arc.AddString("Comment", comment);
@@ -2196,11 +2195,11 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 		savegameglobals.AddString("importantcvars", vars.GetChars());
 	}
 
-	if (level.time != 0 || level.maptime != 0)
+	if (currentSession->time != 0)
 	{
 		int tic = TICRATE;
 		savegameglobals("ticrate", tic);
-		savegameglobals("leveltime", level.time);
+		savegameglobals("leveltime", currentSession->time);
 	}
 
 	STAT_Serialize(savegameglobals);

@@ -159,8 +159,8 @@ void P_Ticker (void)
 		}
 
 		// for par times
-		Level->time++;
 		Level->maptime++;
-		Level->totaltime++;
 	});
+	currentSession->time++;
+	currentSession->totaltime++;
 }

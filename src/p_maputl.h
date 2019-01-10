@@ -5,6 +5,7 @@
 #include "r_defs.h"
 #include "doomstat.h"
 #include "m_bbox.h"
+#include "g_levellocals.h"
 
 extern int validcount;
 struct FBlockNode;
@@ -50,7 +51,7 @@ inline int P_PointOnLineSidePrecise(const DVector2 &pt, const line_t *line)
 inline int P_PointOnLineSide (double x, double y, const line_t *line)
 {
 	extern int P_VanillaPointOnLineSide(double x, double y, const line_t* line);
-	return i_compatflags2 & COMPATF2_POINTONLINE
+	return line->GetLevel()->i_compatflags2 & COMPATF2_POINTONLINE
 		? P_VanillaPointOnLineSide(x, y, line) : P_PointOnLineSidePrecise(x, y, line);
 }
 

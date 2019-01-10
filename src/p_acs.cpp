@@ -5428,7 +5428,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 			}
 			else
 			{
-				return players[args[0]].air_finished - Level->time;
+				return players[args[0]].air_finished - currentSession->time;
 			}
 		}
 
@@ -5440,7 +5440,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 			}
 			else
 			{
-				players[args[0]].air_finished = args[1] + Level->time;
+				players[args[0]].air_finished = args[1] + currentSession->time;
 				return 1;
 			}
 		}
@@ -6491,7 +6491,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		break;
 
 		case ACSF_SetMusicVolume:
-			Level->SetMusicVolume(ACSToFloat(args[0]));
+			currentSession->SetMusicVolume(ACSToFloat(args[0]));
 			break;
 
 		case ACSF_CheckProximity:
@@ -8827,7 +8827,7 @@ scriptwait:
 // [BC] End ST PCD's
 
 		case PCD_TIMER:
-			PushToStack (Level->time);
+			PushToStack (currentSession->time);
 			break;
 
 		case PCD_SECTORSOUND:

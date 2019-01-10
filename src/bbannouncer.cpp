@@ -182,9 +182,9 @@ static FRandom pr_bbannounce ("BBAnnounce");
 void DoVoiceAnnounce (const char *sound)
 {
 	// Don't play announcements too close together
-	if (LastAnnounceTime == 0 || LastAnnounceTime <= level.time-5)
+	if (LastAnnounceTime == 0 || LastAnnounceTime <= currentSession->time-5)
 	{
-		LastAnnounceTime = level.time;
+		LastAnnounceTime = currentSession->time;
 		S_Sound (CHAN_VOICE, sound, 1, ATTN_NONE);
 	}
 }

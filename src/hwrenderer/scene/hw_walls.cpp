@@ -2063,7 +2063,7 @@ void GLWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 		FTexture *tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::mid), true);
 		if (tex != NULL)
 		{
-			if (i_compatflags & COMPATF_MASKEDMIDTEX)
+			if (di->Level->i_compatflags & COMPATF_MASKEDMIDTEX)
 			{
 				tex = tex->GetRawTexture();
 			}

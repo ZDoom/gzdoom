@@ -115,6 +115,11 @@ struct FLevelData
 	FDialogueIDMap DialogueRoots;
 	FDialogueMap ClassRoots;
 
+	int ii_compatflags = 0;
+	int ii_compatflags2 = 0;
+	int ib_compatflags = 0;
+	int i_compatflags = 0;
+	int i_compatflags2 = 0;
 
 };
 
@@ -128,7 +133,6 @@ struct FLevelLocals : public FLevelData
 	void AddScroller(int secnum);
 	void SetInterMusic(const char *nextmap);
 	void SetMusic();
-	void SetMusicVolume(float v);
 	void ClearLevelData();
 	void ClearPortals();
 	bool CheckIfExitIsGood(AActor *self, level_info_t *newmap);
@@ -162,9 +166,7 @@ struct FLevelLocals : public FLevelData
 	DSectorMarker *SectorMarker;
 
 	uint8_t		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
-	int			time;			// time in the hub
-	int			maptime;		// time in the map
-	int			totaltime;		// time in the game
+	int			maptime;			// time in the map
 	int			starttime;
 	int			partime;
 	int			sucktime;
@@ -257,7 +259,6 @@ struct FLevelLocals : public FLevelData
 
 	FName		deathsequence;
 	float		pixelstretch;
-	float		MusicVolume;
 
 	// Hardware render stuff that can either be set via CVAR or MAPINFO
 	ELightMode	lightMode;
@@ -302,6 +303,12 @@ class FGameSession
 public:
 	TArray<FLevelLocals *> Levelinfo;
 	FString F1Pic;
+	float		MusicVolume;
+	int			time;			// time in the hub
+	int			totaltime;		// time in the game
+
+
+	void SetMusicVolume(float vol);
 };
 
 extern FGameSession *currentSession;

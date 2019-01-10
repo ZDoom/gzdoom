@@ -1173,7 +1173,7 @@ bool AActor::Grind(bool items)
 		// see rh_log entry for February 21, 1999. Don't know if it is still relevant.
 		if (state == NULL 									// Only use the default crushed state if:
 			&& !(flags & MF_NOBLOOD)						// 1. the monster bleeeds,
-			&& (i_compatflags & COMPATF_CORPSEGIBS)			// 2. the compat setting is on,
+			&& (Level->i_compatflags & COMPATF_CORPSEGIBS)			// 2. the compat setting is on,
 			&& player == NULL)								// 3. and the thing isn't a player.
 		{
 			isgeneric = true;
@@ -1829,7 +1829,7 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 	// [anon] When friction is turned off, turn off the crouching and water
 	//  speed caps as well, since it is a sort of friction, and the modders
 	//  most likely want to deal with that themselves.
-	if ((mo->player != NULL && (i_compatflags & COMPATF_WALLRUN)) || ((mo->waterlevel >= 1 ||
+	if ((mo->player != NULL && (Level->i_compatflags & COMPATF_WALLRUN)) || ((mo->waterlevel >= 1 ||
 		(mo->player != NULL && mo->player->crouchfactor < 0.75)) && !(mo->flags8 & MF8_NOFRICTION)))
 	{
 		// preserve the direction instead of clamping x and y independently.
@@ -1951,7 +1951,7 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 	DAngle oldangle = mo->Angles.Yaw;
 	do
 	{
-		if (i_compatflags & COMPATF_WALLRUN) pushtime++;
+		if (Level->i_compatflags & COMPATF_WALLRUN) pushtime++;
 		tm.PushTime = pushtime;
 
 		ptry = start + move * step / steps;
@@ -2002,7 +2002,7 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 					// actor's velocity, do not attempt to slide.
 					if (mo->Vel.XY() == startvel)
 					{
-						if (player && (i_compatflags & COMPATF_WALLRUN))
+						if (player && (Level->i_compatflags & COMPATF_WALLRUN))
 						{
 						// [RH] Here is the key to wall running: The move is clipped using its full speed.
 						// If the move is done a second time (because it was too fast for one move), it
@@ -2020,7 +2020,7 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 						}
 						else
 						{
-							if (!player || !(i_compatflags & COMPATF_WALLRUN))
+							if (!player || !(Level->i_compatflags & COMPATF_WALLRUN))
 							{
 								move = mo->Vel;
 								onestep = move / steps;
@@ -2464,7 +2464,7 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 	// Hexen yanked all items to the floor, except those being spawned at map start in the air.
 	// Those were kept at their original height.
 	// Do this only if the item was actually spawned by the map above ground to avoid problems.
-	if (mo->specialf1 > 0 && (mo->flags2 & MF2_FLOATBOB) && (ib_compatflags & BCOMPATF_FLOATBOB))
+	if (mo->specialf1 > 0 && (mo->flags2 & MF2_FLOATBOB) && (mo->Level->ib_compatflags & BCOMPATF_FLOATBOB))
 	{
 		mo->SetZ(mo->floorz + mo->specialf1);
 	}
@@ -3741,7 +3741,7 @@ void AActor::Tick ()
 						scrolltype <= Scroll_SouthWest_Fast)
 					{ // Hexen scroll special
 						scrolltype -= Scroll_North_Slow;
-						if (i_compatflags&COMPATF_RAVENSCROLL)
+						if (Level->i_compatflags&COMPATF_RAVENSCROLL)
 						{
 							scrollv.X -= HexenCompatSpeeds[HexenScrollies[scrolltype][0]+4] * (1. / (32 * CARRYFACTOR));
 							scrollv.Y += HexenCompatSpeeds[HexenScrollies[scrolltype][1]+4] * (1. / (32 * CARRYFACTOR));
@@ -3760,7 +3760,7 @@ void AActor::Tick ()
 						scrolltype -= Carry_East5;
 						uint8_t dir = HereticScrollDirs[scrolltype / 5];
 						double carryspeed = HereticSpeedMuls[scrolltype % 5] * (1. / (32 * CARRYFACTOR));
-						if (scrolltype < 5 && !(i_compatflags&COMPATF_RAVENSCROLL))
+						if (scrolltype < 5 && !(Level->i_compatflags&COMPATF_RAVENSCROLL))
 						{
 							// Use speeds that actually match the scrolling textures!
 							carryspeed = (1 << ((scrolltype % 5) + 15)) / 65536.;
@@ -3770,7 +3770,7 @@ void AActor::Tick ()
 					}
 					else if (scrolltype == dScroll_EastLavaDamage)
 					{ // Special Heretic scroll special
-						if (i_compatflags&COMPATF_RAVENSCROLL)
+						if (Level->i_compatflags&COMPATF_RAVENSCROLL)
 						{
 							scrollv.X += 28. / (32*CARRYFACTOR);
 						}
@@ -3823,7 +3823,7 @@ void AActor::Tick ()
 			// Some levels designed with Boom in mind actually want things to accelerate
 			// at neighboring scrolling sector boundaries. But it is only important for
 			// non-player objects.
-			if (player != NULL || !(i_compatflags & COMPATF_BOOMSCROLL))
+			if (player != NULL || !(Level->i_compatflags & COMPATF_BOOMSCROLL))
 			{
 				if (countx > 1)
 				{
@@ -3916,7 +3916,7 @@ void AActor::Tick ()
 		}
 		if (Vel.Z != 0 || BlockingMobj || Z() != floorz)
 		{	// Handle Z velocity and gravity
-			if (((flags2 & MF2_PASSMOBJ) || (flags & MF_SPECIAL)) && !(i_compatflags & COMPATF_NO_PASSMOBJ))
+			if (((flags2 & MF2_PASSMOBJ) || (flags & MF_SPECIAL)) && !(Level->i_compatflags & COMPATF_NO_PASSMOBJ))
 			{
 				if (!(onmo = P_CheckOnmobj (this)))
 				{
@@ -4001,7 +4001,7 @@ void AActor::Tick ()
 		}
 
 		// Check for poison damage, but only once per PoisonPeriod tics (or once per second if none).
-		if (PoisonDurationReceived && (Level->time % (PoisonPeriodReceived ? PoisonPeriodReceived : TICRATE) == 0))
+		if (PoisonDurationReceived && (Level->maptime % (PoisonPeriodReceived ? PoisonPeriodReceived : TICRATE) == 0))
 		{
 			P_DamageMobj(this, NULL, Poisoner, PoisonDamageReceived, PoisonDamageTypeReceived ? PoisonDamageTypeReceived : (FName)NAME_Poison, 0);
 
@@ -4055,7 +4055,7 @@ void AActor::Tick ()
 		if (movecount < respawn_monsters)
 			return;
 
-		if (Level->time & 31)
+		if (Level->maptime & 31)
 			return;
 
 		if (pr_nightmarerespawn() > 4)
@@ -4348,7 +4348,7 @@ bool AActor::UpdateWaterLevel(bool dosplash)
 			else if (oldlevel == 3 && waterlevel < 3)
 			{
 				// Our head just came up.
-				if (player->air_finished > Level->time)
+				if (player->air_finished > currentSession->time)
 				{
 					// We hadn't run out of air yet.
 					S_Sound(this, CHAN_VOICE, "*surface", 1, ATTN_NORM);
@@ -4388,7 +4388,7 @@ AActor *AActor::StaticSpawn (FLevelLocals *Level, PClassActor *type, const DVect
 	AActor *actor;
 
 	actor = static_cast<AActor *>(const_cast<PClassActor *>(type)->CreateNew ());
-	actor->SpawnTime = Level->totaltime;
+	actor->SpawnTime = currentSession->totaltime;
 	actor->SpawnOrder = Level->spawnindex++;
 
 	// Set default dialogue
@@ -4972,7 +4972,7 @@ AActor *P_SpawnPlayer (FLevelLocals *Level, FPlayerStart *mthing, int playernum,
 
 		// Allow full angular precision
 		SpawnAngle = (double)mthing->angle;
-		if (i_compatflags2 & COMPATF2_BADANGLES)
+		if (Level->i_compatflags2 & COMPATF2_BADANGLES)
 		{
 			SpawnAngle += 0.01;
 		}
@@ -5434,7 +5434,7 @@ AActor *P_SpawnMapThing (FLevelLocals *Level, FMapThing *mthing, int position)
 	if (sz == ONFLOORZ)
 	{
 		mobj->AddZ(mthing->pos.Z);
-		if ((mobj->flags2 & MF2_FLOATBOB) && (ib_compatflags & BCOMPATF_FLOATBOB))
+		if ((mobj->flags2 & MF2_FLOATBOB) && (mobj->Level->ib_compatflags & BCOMPATF_FLOATBOB))
 		{
 			mobj->specialf1 = mthing->pos.Z;
 		}
@@ -5457,7 +5457,7 @@ AActor *P_SpawnMapThing (FLevelLocals *Level, FMapThing *mthing, int position)
 	}
 
 	// For Hexen floatbob 'compatibility' we do not really want to alter the floorz.
-	if (mobj->specialf1 == 0 || !(mobj->flags2 & MF2_FLOATBOB) || !(ib_compatflags & BCOMPATF_FLOATBOB))
+	if (mobj->specialf1 == 0 || !(mobj->flags2 & MF2_FLOATBOB) || !(mobj->Level->ib_compatflags & BCOMPATF_FLOATBOB))
 	{
 		P_FindFloorCeiling(mobj, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
 	}

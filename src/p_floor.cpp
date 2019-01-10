@@ -465,7 +465,7 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 		// [Graf Zahl]
 		// Don't make sounds for instant movement hacks but make an exception for
 		// switches that activate their own back side. 
-		if (!(i_compatflags & COMPATF_SILENT_INSTANT_FLOORS))
+		if (!(sec->Level->i_compatflags & COMPATF_SILENT_INSTANT_FLOORS))
 		{
 			if (!line || !(line->activation & (SPAC_Use | SPAC_Push)) || line->backsector != sec)
 				silent = true;
@@ -622,7 +622,7 @@ bool EV_BuildStairs (FLevelLocals *Level, int tag, DFloor::EStair type, line_t *
 	FSectorTagIterator itr(Level->tagManager, tag, line);
 	// The compatibility mode doesn't work with a hashing algorithm.
 	// It needs the original linear search method. This was broken in Boom.
-	bool compatible = tag != 0 && (i_compatflags & COMPATF_STAIRINDEX);
+	bool compatible = tag != 0 && (Level->i_compatflags & COMPATF_STAIRINDEX);
 	while ((secnum = itr.NextCompat(compatible, secnum)) >= 0)
 	{
 		sec = &Level->sectors[secnum];
@@ -711,14 +711,14 @@ bool EV_BuildStairs (FLevelLocals *Level, int tag, DFloor::EStair type, line_t *
 
 					// Doom bug: Height was changed before discarding the sector as part of the stairs.
 					// Needs to be compatibility optioned because some maps (Eternall MAP25) depend on it.
-					if (i_compatflags & COMPATF_STAIRINDEX) height += stairstep;
+					if (Level->i_compatflags & COMPATF_STAIRINDEX) height += stairstep;
 
 					// if sector's floor already moving, look for another
 					//jff 2/26/98 special lockout condition for retriggering
 					if (tsec->PlaneMoving(sector_t::floor) || tsec->stairlock)
 						continue;
 
-					if (!(i_compatflags & COMPATF_STAIRINDEX)) height += stairstep;
+					if (!(Level->i_compatflags & COMPATF_STAIRINDEX)) height += stairstep;
 
 					ok = true;
 					break;

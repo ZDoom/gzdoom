@@ -1815,10 +1815,11 @@ void G_DoLoadGame ()
 	// Check whether this savegame actually has been created by a compatible engine.
 	// Since there are ZDoom derivates using the exact same savegame format but
 	// with mutual incompatibilities this check simplifies things significantly.
-	FString savever, engine, map;
+	FString savever, engine;
 	arc("Save Version", SaveVersion);
 	arc("Engine", engine);
-	arc("Current Map", map);
+	TArray<FString> maps;
+	arc("Current Maps", maps);
 
 	if (engine.CompareNoCase(GAMESIG) != 0)
 	{
@@ -1855,7 +1856,7 @@ void G_DoLoadGame ()
 		return;
 	}
 
-	if (map.IsEmpty())
+	if (maps.Size() == 0)
 	{
 		Printf("Savegame is missing the current map\n");
 		return;
@@ -1912,7 +1913,7 @@ void G_DoLoadGame ()
 	// load a base level
 	savegamerestore = true;		// Use the player actors in the savegame
 	bool demoplaybacksave = demoplayback;
-	G_InitNew(map, false);
+	G_InitNew(maps[0], false);
 	demoplayback = demoplaybacksave;
 	savegamerestore = false;
 
@@ -2181,6 +2182,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 		ForAllLevels([&](FLevelLocals *Level) {
 			savegameinfo.AddString(nullptr, Level->MapName);
 		});
+		savegameinfo.EndArray();
 	}
 
 

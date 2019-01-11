@@ -93,7 +93,7 @@ std2:
 		("#region"|"#endregion") (any\"\n")* "\n"
 									{ goto newline; }	/* Region blocks [mxd] */
 
-		(["](([\\]["])|[^"])*["])	{ RET(TK_StringConst); }
+		(["](([\\]["])|[^"])*["])	{ goto string_const; }
 		'stop'						{ RET(TK_Stop); }
 		'wait'						{ RET(TK_Wait); }
 		'fail'						{ RET(TK_Fail); }
@@ -234,7 +234,7 @@ std2:
 									{ RET(TK_FloatConst); }
 
 		(["](([\\]["])|[^"])*["])
-									{ RET(TK_StringConst); }
+									{ goto string_const; }
 
 		(['] (any\[\n'])* ['])
 									{ RET(TK_NameConst); }
@@ -464,6 +464,13 @@ normal_token:
 	}
 	return_val = true;
 	goto end;
+
+string_const:
+	for (const char *c = tok; c < YYCURSOR; ++c)
+	{
+		if (*c == '\n') ++Line;
+	}
+	RET(TK_StringConst);
 
 string:
 	if (YYLIMIT != ScriptEndPtr)

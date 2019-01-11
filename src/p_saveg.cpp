@@ -952,7 +952,13 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 		("impactdecalcount", Level->ImpactDecalCount)
 		("freeze", Level->freeze)
 		("changefreeze", Level->changefreeze)
-		("sndseqlisthead", Level->SequenceListHead);
+		("sndseqlisthead", Level->SequenceListHead)
+		("am_markpointnum", Level->am_markpointnum)
+		.Array("am_markpoints", &Level->am_markpoints[0].x, Level->AM_NUMMARKPOINTS * 2)	// write as a double array.
+		("am_scale_mtof", Level->am_scale_mtof)
+		("am_scale_ftom", Level->am_scale_ftom)
+		.EndObject();
+
 
 
 	if (arc.isReading())
@@ -978,7 +984,6 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 	arc("polyobjs", Level->Polyobjects);
 	SerializeSubsectors(arc, Level, "subsectors");
 	StatusBar->SerializeMessages(arc);
-	AM_SerializeMarkers(arc);
 	FRemapTable::StaticSerializeTranslations(arc);
 	Level->canvasTextureInfo.Serialize(arc);
 	P_SerializePlayers(Level, arc, hubload);

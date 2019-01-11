@@ -292,6 +292,33 @@ struct FLevelLocals : public FLevelData
 
 	TObjPtr<DSpotState *> SpotState = nullptr;
 
+	// scale on entry
+	static const int AM_NUMMARKPOINTS = 10;
+
+	struct mpoint_t
+	{
+		double x, y;
+	};
+
+	// used by MTOF to scale from map-to-frame-buffer coords
+	double am_scale_mtof = 0.2;
+	// used by FTOM to scale from frame-buffer-to-map coords (=1/scale_mtof)
+	double am_scale_ftom = 1 / 0.2;
+	mpoint_t am_markpoints[AM_NUMMARKPOINTS]; // where the points are
+	int am_markpointnum = 0; // next point to be assigned
+
+// translates between frame-buffer and map distances
+	inline double FTOM(double x)
+	{
+		return x * am_scale_ftom;
+	}
+
+	inline double MTOF(double x)
+	{
+		return x * am_scale_mtof;
+	}
+
+
 	bool		IsJumpingAllowed() const;
 	bool		IsCrouchingAllowed() const;
 	bool		IsFreelookAllowed() const;
@@ -330,7 +357,6 @@ public:
 	
 	FString	nextlevel;		// Level to go to on exit
 	int		nextstartpos;	// [RH] Support for multiple starts per level
-
 
 
 	void SetMusicVolume(float vol);

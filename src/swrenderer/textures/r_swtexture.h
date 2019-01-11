@@ -191,8 +191,8 @@ public:
 	virtual void Unload() override;
 	void UpdatePixels(bool truecolor);
 
-	DCanvas *GetCanvas() { return Canvas; }
-	DCanvas *GetCanvasBgra() { return CanvasBgra; }
+	DCanvas *GetCanvas() { GetPixels(0); return Canvas; }
+	DCanvas *GetCanvasBgra() { GetPixelsBgra(); return CanvasBgra; }
 	bool Mipmapped() override { return false; }
 
 };

@@ -200,7 +200,7 @@ float HWDrawInfo::GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfog
 			density = 0;
 		}
 	}
-	else if (Level->outsidefogdensity != 0 && APART(Level->info->outsidefog) != 0xff && (fogcolor.d & 0xffffff) == (Level->info->outsidefog & 0xffffff))
+	else if (Level->outsidefogdensity != 0 && APART(Level->outsidefog) != 0xff && (fogcolor.d & 0xffffff) == (Level->outsidefog & 0xffffff))
 	{
 		// case 3. outsidefogdensity has already been set as needed
 		density = (float)Level->outsidefogdensity;
@@ -248,7 +248,7 @@ bool HWDrawInfo::CheckFog(sector_t *frontsector, sector_t *backsector)
 	else if (fogcolor.a != 0)
 	{
 	}
-	else if (Level->outsidefogdensity != 0 && APART(Level->info->outsidefog) != 0xff && (fogcolor.d & 0xffffff) == (Level->info->outsidefog & 0xffffff))
+	else if (Level->outsidefogdensity != 0 && APART(Level->outsidefog) != 0xff && (fogcolor.d & 0xffffff) == (Level->outsidefog & 0xffffff))
 	{
 	}
 	else  if (Level->fogdensity!=0 || lightmode == ELightMode::DoomLegacy)
@@ -266,7 +266,7 @@ bool HWDrawInfo::CheckFog(sector_t *frontsector, sector_t *backsector)
 	if ((fogcolor.d & 0xffffff) == 0)
 	{
 	}
-	else if (Level->outsidefogdensity != 0 && APART(Level->info->outsidefog) != 0xff && (fogcolor.d & 0xffffff) == (Level->info->outsidefog & 0xffffff))
+	else if (Level->outsidefogdensity != 0 && APART(Level->outsidefog) != 0xff && (fogcolor.d & 0xffffff) == (Level->outsidefog & 0xffffff))
 	{
 		return false;
 	}

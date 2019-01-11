@@ -149,7 +149,6 @@ CUSTOM_CVAR(Int, gl_lightmode, 3, CVAR_ARCHIVE | CVAR_NOINITCALL)
 
 static FRandom pr_classchoice ("RandomPlayerClassChoice");
 
-extern level_info_t TheDefaultLevelInfo;
 extern bool timingdemo;
 
 // Start time for timing demos
@@ -166,23 +165,8 @@ extern bool sendpause, sendsave, sendturn180, SendLand;
 
 void *statcopy;					// for statistics driver
 
-FLevelLocals level;			// info about current level
-
-FGameSession *currentSession;
-
-// Temporary placeholder to initialize the data until it can be done properly.
-class HackyInitializer
-{
-	FGameSession session;
-
-public:
-	HackyInitializer()
-	{
-		session.Levelinfo.Push(&level);
-		currentSession = &session;
-	}
-};
-HackyInitializer hackyinit;
+static FGameSession session; // do not use directly. The pointer is more future proof.
+FGameSession *currentSession = &session;
 
 //==========================================================================
 //
@@ -386,17 +370,20 @@ void G_NewInit ()
 {
 	int i;
 
-	// Destory all old player refrences that may still exist
-	TThinkerIterator<AActor> it(currentSession->Levelinfo[0], NAME_PlayerPawn, STAT_TRAVELLING);
-	AActor *pawn, *next;
-
-	next = it.Next();
-	while ((pawn = next) != NULL)
+	ForAllLevels([](FLevelLocals *Level)
 	{
+		// Destory all old player refrences that may still exist
+		TThinkerIterator<AActor> it(Level, NAME_PlayerPawn, STAT_TRAVELLING);
+		AActor *pawn, *next;
+		
 		next = it.Next();
-		pawn->flags |= MF_NOSECTOR | MF_NOBLOCKMAP;
-		pawn->Destroy();
-	}
+		while ((pawn = next) != NULL)
+		{
+			next = it.Next();
+			pawn->flags |= MF_NOSECTOR | MF_NOBLOCKMAP;
+			pawn->Destroy();
+		}
+	});
 
 	G_ClearSnapshots ();
 	netgame = false;
@@ -483,7 +470,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	int i;
 
 	// did we have any level before?
-	if (currentSession->Levelinfo[0]->info)
+	if (currentSession->Levelinfo.Size())
 		E_WorldUnloadedUnsafe();
 
 	if (!savegamerestore)
@@ -493,8 +480,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		P_RemoveDefereds ();
 
 		// [RH] Mark all levels as not visited
-		for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
-			wadlevelinfos[i].flags = wadlevelinfos[i].flags & ~LEVEL_VISITED;
+		currentSession->Visited.Clear();
 	}
 
 	UnlatchCVars ();
@@ -543,9 +529,6 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		currentSession->time = 0;
 		currentSession->totaltime = 0;
 
-		level.maptime = 0;
-		level.spawnindex = 0;
-
 		if (!multiplayer || !deathmatch)
 		{
 			InitPlayerClasses ();
@@ -570,7 +553,6 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		bglobal.Init ();
 	}
 
-	level.MapName = mapname;
 	if (bTitleLevel)
 	{
 		gamestate = GS_TITLELEVEL;
@@ -580,14 +562,12 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		gamestate = GS_LEVEL;
 	}
 	
-	G_DoLoadLevel (0, false, !savegamerestore);
+	G_DoLoadLevel (mapname, 0, false, !savegamerestore);
 }
 
 //
 // G_DoCompleted
 //
-static FString	nextlevel;
-static int		startpos;	// [RH] Support for multiple starts per level
 extern int		NoWipe;		// [RH] Don't wipe when travelling in hubs
 static int		changeflags;
 static bool		unloading;
@@ -602,10 +582,15 @@ static bool		unloading;
 
 EXTERN_CVAR(Bool, sv_singleplayerrespawn)
 
-void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill)
+void G_ChangeLevel(FLevelLocals *OldLevel, const char *levelname, int position, int flags, int nextSkill)
 {
 	level_info_t *nextinfo = NULL;
 
+	if (OldLevel != currentSession->Levelinfo[0])
+	{
+		// Level exit must be initiated from the primary level.
+		return;
+	}
 	if (unloading)
 	{
 		Printf (TEXTCOLOR_RED "Unloading scripts cannot exit the level again.\n");
@@ -616,11 +601,11 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 		return;
 	}
 
-	auto OldLevel = currentSession->Levelinfo[0];	// Only the primary level is relevant here.
-	if (levelname == NULL || *levelname == 0)
+	FString nextlevel;
+	if (levelname == nullptr || *levelname == 0)
 	{
 		// end the game
-		levelname = NULL;
+		levelname = nullptr;
 		if (!OldLevel->NextMap.Compare("enDSeQ",6))
 		{
 			nextlevel = OldLevel->NextMap;	// If there is already an end sequence please leave it alone!
@@ -665,7 +650,8 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 	cluster_info_t *thiscluster = FindClusterInfo (OldLevel->cluster);
 	cluster_info_t *nextcluster = nextinfo? FindClusterInfo (nextinfo->cluster) : NULL;
 
-	startpos = position;
+	currentSession->nextlevel = nextlevel;
+	currentSession->nextstartpos = position;
 	gameaction = ga_completed;
 	currentSession->SetMusicVolume(1.0);
 		
@@ -738,14 +724,13 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 //
 //==========================================================================
 
-const char *G_GetExitMap()
+const char *G_GetExitMap(FLevelLocals *Level)
 {
-	return currentSession->Levelinfo[0]->NextMap;
+	return Level->NextMap;
 }
 
-const char *G_GetSecretExitMap()
+const char *G_GetSecretExitMap(FLevelLocals *Level)
 {
-	auto Level = currentSession->Levelinfo[0];
 	const char *nextmap = Level->NextMap;
 
 	if (Level->NextSecretMap.Len() > 0)
@@ -764,16 +749,16 @@ const char *G_GetSecretExitMap()
 //
 //==========================================================================
 
-void G_ExitLevel (int position, bool keepFacing)
+void G_ExitLevel (FLevelLocals *Level, int position, bool keepFacing)
 {
-	currentSession->Levelinfo[0]->flags3 |= LEVEL3_EXITNORMALUSED;
-	G_ChangeLevel(G_GetExitMap(), position, keepFacing ? CHANGELEVEL_KEEPFACING : 0);
+	Level->flags3 |= LEVEL3_EXITNORMALUSED;
+	G_ChangeLevel(Level, G_GetExitMap(Level), position, keepFacing ? CHANGELEVEL_KEEPFACING : 0, -1);
 }
 
-void G_SecretExitLevel (int position) 
+void G_SecretExitLevel (FLevelLocals *Level, int position)
 {
-	currentSession->Levelinfo[0]->flags3 |= LEVEL3_EXITSECRETUSED;
-	G_ChangeLevel(G_GetSecretExitMap(), position, 0);
+	Level->flags3 |= LEVEL3_EXITSECRETUSED;
+	G_ChangeLevel(Level, G_GetSecretExitMap(Level), position, 0, -1);
 }
 
 //==========================================================================
@@ -784,7 +769,7 @@ void G_SecretExitLevel (int position)
 void G_DoCompleted ()
 {
 	int i;
-	auto Level = &level;
+	auto Level = currentSession->Levelinfo[0];
 
 	gameaction = ga_nothing;
 
@@ -797,16 +782,18 @@ void G_DoCompleted ()
 
 	if (gamestate == GS_TITLELEVEL)
 	{
-		level.MapName = nextlevel;
-		G_DoLoadLevel (startpos, false, false);
-		startpos = 0;
+		G_DoLoadLevel (currentSession->nextlevel, currentSession->nextstartpos, false, false);
+		currentSession->nextlevel = "";
+		currentSession->nextstartpos = 0;
 		viewactive = true;
 		return;
 	}
 
 	// [RH] Mark this level as having been visited
 	if (!(Level->flags & LEVEL_CHANGEMAPCHEAT))
-		Level->info->flags |= LEVEL_VISITED;
+	{
+		currentSession->Visited.Insert(Level->MapName, true);
+	}
 
 	if (automapactive)
 		AM_Stop ();
@@ -827,10 +814,10 @@ void G_DoCompleted ()
 	}
 	else
 	{
-		level_info_t *nextinfo = FindLevelInfo (nextlevel, false);
-		if (nextinfo == NULL || strncmp (nextlevel, "enDSeQ", 6) == 0)
+		level_info_t *nextinfo = FindLevelInfo (currentSession->nextlevel, false);
+		if (nextinfo == NULL || strncmp (currentSession->nextlevel, "enDSeQ", 6) == 0)
 		{
-			wminfo.next = nextlevel;
+			wminfo.next = currentSession->nextlevel;
 			wminfo.LName1.SetInvalid();
 		}
 		else
@@ -841,7 +828,7 @@ void G_DoCompleted ()
 	}
 
 	CheckWarpTransMap (wminfo.next, true);
-	nextlevel = wminfo.next;
+	currentSession->nextlevel = wminfo.next;
 
 	wminfo.next_ep = FindLevelInfo (wminfo.next)->cluster - 1;
 	wminfo.maxkills = Level->total_monsters;
@@ -891,7 +878,7 @@ void G_DoCompleted ()
 	}
 
 	// Intermission stats for entire hubs
-	G_LeavingHub(mode, thiscluster, &wminfo, &level);
+	G_LeavingHub(mode, thiscluster, &wminfo, Level);
 
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
@@ -914,8 +901,8 @@ void G_DoCompleted ()
 			});
 		}
 		else
-		{ // Make sure we don't have a snapshot lying around from before. (Snapshots are only attached to the primary level!)
-			Level->info->Snapshot.Clean();
+		{ // Make sure we don't have a snapshot lying around from before.
+			currentSession->Snapshots.Remove(Level->MapName);
 		}
 	}
 	else
@@ -927,8 +914,6 @@ void G_DoCompleted ()
 			P_ClearACSVars(false);
 		}
 		currentSession->time = 0;
-		level.maptime = 0;
-		level.spawnindex = 0;
 	}
 
 	finishstate = mode;
@@ -972,6 +957,46 @@ void DAutosaver::Tick ()
 	Destroy ();
 }
 
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void InitGlobalState()
+{
+	gameaction = ga_nothing;
+	
+	// clear cmd building stuff
+	ResetButtonStates ();
+	
+	SendItemUse = NULL;
+	SendItemDrop = NULL;
+	mousex = mousey = 0;
+	sendpause = sendsave = sendturn180 = SendLand = false;
+	LocalViewAngle = 0;
+	LocalViewPitch = 0;
+	paused = 0;
+	
+	//Added by MC: Initialize bots.
+	if (deathmatch)
+	{
+		bglobal.Init ();
+	}
+	
+	if (timingdemo)
+	{
+		static bool firstTime = true;
+		
+		if (firstTime)
+		{
+			starttime = I_GetTime ();
+			firstTime = false;
+		}
+	}
+}
+
 //==========================================================================
 //
 // G_DoLoadLevel 
@@ -980,10 +1005,15 @@ void DAutosaver::Tick ()
 
 extern gamestate_t 	wipegamestate; 
  
-void G_DoLoadLevel (int position, bool autosave, bool newGame)
-{ 
+void G_DoLoadLevel (const FString &nextlevel, int position, bool autosave, bool newGame)
+{
+	auto levelinfo = FindLevelInfo(nextlevel);
+	TArray<level_info_t *> MapSet;
+	
+	MapSet.Push(levelinfo);
+	//MapSet.Append(levelinfo->SubLevels);
+	
 	static int lastposition = 0;
-	auto &level = *currentSession->Levelinfo[0];
 	gamestate_t oldgs = gamestate;
 	int i;
 
@@ -1000,24 +1030,26 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 	else
 		lastposition = position;
 
-	level.InitLevelLocals ();
 	StatusBar->DetachAllMessages ();
-
+	currentSession->Levelinfo.Clear();	// Delete all old levels.
+	
 	// Force 'teamplay' to 'true' if need be.
-	if (level.flags2 & LEVEL2_FORCETEAMPLAYON)
+	if (levelinfo->flags2 & LEVEL2_FORCETEAMPLAYON)
 		teamplay = true;
 
 	// Force 'teamplay' to 'false' if need be.
-	if (level.flags2 & LEVEL2_FORCETEAMPLAYOFF)
+	if (levelinfo->flags2 & LEVEL2_FORCETEAMPLAYOFF)
 		teamplay = false;
 
-	FString mapname = level.MapName;
+	FString levelname = levelinfo->LookupLevelName();
+	FString mapname = levelinfo->MapName;
 	mapname.ToLower();
+	
 	Printf (
 			"\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
 			"\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n"
 			TEXTCOLOR_BOLD "%s - %s\n\n",
-			mapname.GetChars(), level.LevelName.GetChars());
+			mapname.GetChars(), levelname.GetChars());
 
 	if (wipegamestate == GS_LEVEL)
 		wipegamestate = GS_FORCEWIPE;
@@ -1034,100 +1066,78 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 	//	setting one.
 	skyflatnum = TexMan.GetTextureID (gameinfo.SkyFlatName, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
 
-	// [RH] Set up details about sky rendering
-	R_InitSkyMap ();
-
 	for (i = 0; i < MAXPLAYERS; i++)
-	{ 
+	{
 		if (playeringame[i] && (deathmatch || players[i].playerstate == PST_DEAD))
 			players[i].playerstate = PST_ENTER;	// [BC]
-		memset (players[i].frags,0,sizeof(players[i].frags));
+		memset (players[i].frags, 0, sizeof(players[i].frags));
 		if (!(dmflags2 & DF2_YES_KEEPFRAGS) && (alwaysapplydmflags || deathmatch))
 			players[i].fragcount = 0;
 	}
 
-	if (changeflags & CHANGELEVEL_NOMONSTERS)
+	// Set up all needed levels.
+	for(auto &linfo : MapSet)
 	{
-		level.flags2 |= LEVEL2_NOMONSTERS;
+		FLevelLocals *Level = new FLevelLocals;
+		auto pos = currentSession->Levelinfo.Push(Level);
+		Level->InitLevelLocals (linfo, pos == 0);
+	
+		if (changeflags & CHANGELEVEL_NOMONSTERS)
+		{
+			Level->flags2 |= LEVEL2_NOMONSTERS;
+		}
+		else
+		{
+			Level->flags2 &= ~LEVEL2_NOMONSTERS;
+		}
+		if (changeflags & CHANGELEVEL_PRERAISEWEAPON)
+		{
+			Level->flags2 |= LEVEL2_PRERAISEWEAPON;
+		}
 	}
-	else
-	{
-		level.flags2 &= ~LEVEL2_NOMONSTERS;
-	}
-	if (changeflags & CHANGELEVEL_PRERAISEWEAPON)
-	{
-		level.flags2 |= LEVEL2_PRERAISEWEAPON;
-	}
-
-	level.maptime = 0;
-
+	
 	if (newGame)
 	{
 		E_NewGame(EventHandlerType::Global);
 	}
 
-	P_SetupLevel (&level, level.MapName, position, newGame);
-
-	AM_LevelInit(&level);
-
-	// [RH] Start lightning, if MAPINFO tells us to
-	if (level.flags & LEVEL_STARTLIGHTNING)
+	// Load all levels.
+	ForAllLevels([&](FLevelLocals *Level)
 	{
-		P_StartLightning (&level);
-	}
+		P_SetupLevel (Level, Level->MapName, position, newGame);
+		AM_LevelInit(Level);
 
-	gameaction = ga_nothing; 
-
-	// clear cmd building stuff
-	ResetButtonStates ();
-
-	SendItemUse = NULL;
-	SendItemDrop = NULL;
-	mousex = mousey = 0; 
-	sendpause = sendsave = sendturn180 = SendLand = false;
-	LocalViewAngle = 0;
-	LocalViewPitch = 0;
-	paused = 0;
-
-	//Added by MC: Initialize bots.
-	if (deathmatch)
-	{
-		bglobal.Init ();
-	}
-
-	if (timingdemo)
-	{
-		static bool firstTime = true;
-
-		if (firstTime)
+		// [RH] Start lightning, if MAPINFO tells us to
+		if (Level->flags & LEVEL_STARTLIGHTNING)
 		{
-			starttime = I_GetTime ();
-			firstTime = false;
+			P_StartLightning (Level);
 		}
-	}
+	});
 
-	level.starttime = gametic;
+	// Init global state after all levels have been loaded.
+	InitGlobalState();
 
-	G_UnSnapshotLevel (!savegamerestore);	// [RH] Restore the state of the level.
-	int pnumerr = G_FinishTravel ();
+	// Restore the state of the levels
+	G_UnSnapshotLevel (currentSession->Levelinfo, !savegamerestore);
+	
+	int pnumerr = G_FinishTravel (currentSession->Levelinfo[0]);
 
-	if (!level.FromSnapshot)
+	for (int i = 0; i<MAXPLAYERS; i++)
 	{
-		for (int i = 0; i<MAXPLAYERS; i++)
-		{
-			if (playeringame[i] && players[i].mo != NULL)
-				P_PlayerStartStomp(players[i].mo);
-		}
+		// Be prepared for players being on different levels by checking each one's level separately.
+		// (This is very unlikely to ever become an issue, though.)
+		if (playeringame[i] && players[i].mo != nullptr && !players[i].mo->Level->FromSnapshot)
+			P_PlayerStartStomp(players[i].mo);
 	}
-
+	
 	// For each player, if they are viewing through a player, make sure it is themselves.
-	for (int ii = 0; ii < MAXPLAYERS; ++ii)
+	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
-		if (playeringame[ii])
+		if (playeringame[i])
 		{
-			if (players[ii].camera == NULL || players[ii].camera->player != NULL)
+			if (players[i].camera == nullptr || players[i].camera->player != nullptr)
 			{
-				players[ii].camera = players[ii].mo;
+				players[i].camera = players[i].mo;
 			}
 
 			if (savegamerestore)
@@ -1135,29 +1145,37 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 				continue;
 			}
 
-			const bool fromSnapshot = level.FromSnapshot;
-			E_PlayerEntered(ii, fromSnapshot && finishstate == FINISH_SameHub);
+			auto Level = players[i].mo->Level;
+			const bool fromSnapshot = Level->FromSnapshot;
+			E_PlayerEntered(i, fromSnapshot && finishstate == FINISH_SameHub);
 
 			if (fromSnapshot)
 			{
 				// ENTER scripts are being handled when the player gets spawned, this cannot be changed due to its effect on voodoo dolls.
-				level.Behaviors.StartTypedScripts(&level, SCRIPT_Return, players[ii].mo, true);
+				Level->Behaviors.StartTypedScripts(Level, SCRIPT_Return, players[i].mo, true);
 			}
 		}
 	}
 
-	if (level.FromSnapshot)
+	ForAllLevels([&](FLevelLocals *Level)
 	{
-		// [Nash] run REOPEN scripts upon map re-entry
-		level.Behaviors.StartTypedScripts(&level, SCRIPT_Reopen, NULL, false);
-	}
+		if (Level->FromSnapshot)
+		{
+			// [Nash] run REOPEN scripts upon map re-entry
+			Level->Behaviors.StartTypedScripts(Level, SCRIPT_Reopen, NULL, false);
+		}
+	});
 
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
 	//      unsafe world load
 	E_WorldLoadedUnsafe();
 	//      regular world load (savegames are handled internally)
 	E_WorldLoaded();
-	P_DoDeferedScripts (&level);	// [RH] Do script actions that were triggered on another map.
+	
+	ForAllLevels([&](FLevelLocals *Level)
+	{
+		P_DoDeferedScripts (Level);	// [RH] Do script actions that were triggered on another map.
+	});
 	
 	if (demoplayback || oldgs == GS_STARTUP || oldgs == GS_TITLELEVEL)
 		C_HideConsole ();
@@ -1194,6 +1212,8 @@ void G_WorldDone (FLevelLocals *Level)
 
 	thiscluster = FindClusterInfo (Level->cluster);
 
+	auto nextlevel = Level->NextMap;
+	
 	if (strncmp (nextlevel, "enDSeQ", 6) == 0)
 	{
 		FName endsequence = ENamedName(strtoll(nextlevel.GetChars()+6, NULL, 16));
@@ -1237,7 +1257,7 @@ void G_WorldDone (FLevelLocals *Level)
 	}
 	else
 	{
-		FExitText *ext = nullptr;
+		const FExitText *ext = nullptr;
 		
 		if (Level->flags3 & LEVEL3_EXITSECRETUSED) ext = Level->info->ExitMapTexts.CheckKey(NAME_Secret);
 		else if (Level->flags3 & LEVEL3_EXITNORMALUSED) ext = Level->info->ExitMapTexts.CheckKey(NAME_Normal);
@@ -1305,18 +1325,16 @@ DEFINE_ACTION_FUNCTION(FGameSession, WorldDone)
 void G_DoWorldDone (void) 
 {		 
 	gamestate = GS_LEVEL;
-	if (wminfo.next[0] == 0)
+	if (currentSession->nextlevel.IsEmpty())
 	{
-		// Don't crash if no next map is given. Just repeat the current one.
-		Printf ("No next map specified.\n");
-	}
-	else
-	{
-		level.MapName = nextlevel;
+		// Don't crash if no next map is given.
+		I_Error ("No next map specified.\n");
 	}
 	G_StartTravel ();
-	G_DoLoadLevel (startpos, true, false);
-	startpos = 0;
+	G_DoLoadLevel (currentSession->nextlevel, currentSession->nextstartpos, true, false);
+	currentSession->nextlevel = "";
+	currentSession->nextstartpos = 0;
+
 	gameaction = ga_nothing;
 	viewactive = true; 
 }
@@ -1378,9 +1396,9 @@ void G_StartTravel ()
 //
 //==========================================================================
 
-int G_FinishTravel ()
+int G_FinishTravel (FLevelLocals *Level)
 {
-	TThinkerIterator<AActor> it (currentSession->Levelinfo[0], NAME_PlayerPawn, STAT_TRAVELLING);
+	TThinkerIterator<AActor> it (Level, NAME_PlayerPawn, STAT_TRAVELLING);
 	AActor *pawn, *pawndup, *oldpawn, *next;
 	AActor *inv;
 	FPlayerStart *start;
@@ -1400,7 +1418,7 @@ int G_FinishTravel ()
 		pawndup = pawn->player->mo;
 		assert (pawn != pawndup);
 
-		start = G_PickPlayerStart(&level, pnum, 0);
+		start = G_PickPlayerStart(Level, pnum, 0);
 		if (start == NULL)
 		{
 			if (pawndup != nullptr)
@@ -1419,7 +1437,7 @@ int G_FinishTravel ()
 
 		// The player being spawned here is a short lived dummy and
 		// must not start any ENTER script or big problems will happen.
-		pawndup = P_SpawnPlayer(pawn->Level, start, pnum, SPF_TEMPPLAYER);
+		pawndup = P_SpawnPlayer(Level, start, pnum, SPF_TEMPPLAYER);
 		if (pawndup != NULL)
 		{
 			if (!(changeflags & CHANGELEVEL_KEEPFACING))
@@ -1496,11 +1514,72 @@ int G_FinishTravel ()
 //==========================================================================
 //
 //
+//
 //==========================================================================
 
-void FLevelLocals::InitLevelLocals ()
+FLevelLocals::~FLevelLocals()
 {
-	info = FindLevelInfo(MapName);
+	SN_StopAllSequences(this);
+	ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
+	DThinker::DestroyAllThinkers();
+
+	// delete allocated data in the level arrays.
+	if (sectors.Size() > 0)
+	{
+		delete[] sectors[0].e;
+	}
+	for (auto &sub : subsectors)
+	{
+		if (sub.BSP != nullptr) delete sub.BSP;
+	}
+
+	// also clear the render data
+	for (auto &sub : subsectors)
+	{
+		for (int j = 0; j < 2; j++)
+		{
+			if (sub.portalcoverage[j].subsectors != nullptr)
+			{
+				delete[] sub.portalcoverage[j].subsectors;
+				sub.portalcoverage[j].subsectors = nullptr;
+			}
+		}
+	}
+
+	for (auto &pb : PolyBlockMap)
+	{
+		polyblock_t *link = pb;
+		while (link != nullptr)
+		{
+			polyblock_t *next = link->next;
+			delete link;
+			link = next;
+		}
+	}
+}
+
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void FLevelLocals::InitLevelLocals (const level_info_t *info, bool isprimary)
+{
+	this->info = info;
+	MapName = info->MapName;
+
+	// Set up the two default portals.
+	sectorPortals.Resize(2);
+	// The first entry must always be the default skybox. This is what every sector gets by default.
+	memset(&sectorPortals[0], 0, sizeof(sectorPortals[0]));
+	sectorPortals[0].mType = PORTS_SKYVIEWPOINT;
+	sectorPortals[0].mFlags = PORTSF_SKYFLATONLY;
+	// The second entry will be the default sky. This is for forcing a regular sky through the skybox picker
+	memset(&sectorPortals[1], 0, sizeof(sectorPortals[0]));
+	sectorPortals[1].mType = PORTS_SKYVIEWPOINT;
+	sectorPortals[1].mFlags = PORTSF_SKYFLATONLY;
+
 
 	// Session data should be moved out of here later!
 	currentSession->F1Pic = info->F1Pic;
@@ -1514,17 +1593,21 @@ void FLevelLocals::InitLevelLocals ()
 	gravity = sv_gravity * 35/TICRATE;
 	aircontrol = sv_aircontrol;
 	teamdamage = ::teamdamage;
-	flags = 0;
-	flags2 = 0;
-	flags3 = 0;
+	flags = info->flags;
+	flags2 = info->flags2;
+	flags3 = info->flags3;
 	freeze = false;
 	changefreeze = false;
+	maptime = 0;
+	spawnindex = 0;
+	starttime = gametic;
 
 
 	skyspeed1 = info->skyspeed1;
 	skyspeed2 = info->skyspeed2;
 	skytexture1 = TexMan.GetTextureID(info->SkyPic1, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
 	skytexture2 = TexMan.GetTextureID(info->SkyPic2, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
+	InitSkyMap(this);
 	fadeto = info->fadeto;
 	FromSnapshot = false;
 	if (fadeto == 0)
@@ -1555,9 +1638,6 @@ void FLevelLocals::InitLevelLocals ()
 	sucktime = info->sucktime;
 	cluster = info->cluster;
 	clusterflags = clus ? clus->flags : 0;
-	flags |= info->flags;
-	flags2 |= info->flags2;
-	flags3 |= info->flags3;
 	levelnum = info->levelnum;
 	Music = info->Music;
 	musicorder = info->musicorder;
@@ -1577,6 +1657,7 @@ void FLevelLocals::InitLevelLocals ()
 
 	pixelstretch = info->pixelstretch;
 
+	// Fixme: This should not process all other levels again.
 	compatflags.Callback();
 	compatflags2.Callback();
 
@@ -1588,7 +1669,7 @@ void FLevelLocals::InitLevelLocals ()
 	notexturefill = info->notexturefill < 0 ? gl_notexturefill : !!info->notexturefill;
 
 	// This may only be done for the primary level in a set!
-	FLightDefaults::SetAttenuationForLevel(this);
+	if (isprimary) FLightDefaults::SetAttenuationForLevel(this);
 }
 
 //==========================================================================
@@ -1695,27 +1776,52 @@ void FLevelLocals::ChangeAirControl(double newval)
 
 //==========================================================================
 //
+//
+//==========================================================================
+
+void G_ClearSnapshots (void)
+{
+	currentSession->ClearSnapshots();
+	// Since strings are only locked when snapshotting a level, unlock them
+	// all now, since we got rid of all the snapshots that cared about them.
+	GlobalACSStrings.UnlockAll();
+}
+
+//==========================================================================
+//
+// Remove any existing defereds
+//
+//==========================================================================
+
+void P_RemoveDefereds (void)
+{
+	currentSession->ClearDefered();
+}
+
+//==========================================================================
+//
 // Archives the current level
 //
 //==========================================================================
 
 void G_SnapshotLevel ()
 {
-	level.info->Snapshot.Clean();
-
-	if (level.info->isValid())
+	// Create snapshots of all active levels.
+	ForAllLevels([](FLevelLocals *Level)
 	{
+		// first remove the old snapshot, if it exists.
+		currentSession->Snapshots.Remove(Level->MapName);
+		
 		FSerializer arc;
-
 		if (arc.OpenWriter(save_formatted))
 		{
 			SaveVersion = SAVEVER;
-			arc.SetLevel(&level);
-			G_SerializeLevel(arc, &level, false);
-			level.info->Snapshot = arc.GetCompressedOutput();
+			arc.SetLevel(Level);
+			G_SerializeLevel(arc, Level, false);
+			currentSession->Snapshots.Insert(Level->MapName, arc.GetCompressedOutput());
 			arc.SetLevel(nullptr);
 		}
-	}
+	});
 }
 
 //==========================================================================
@@ -1725,58 +1831,61 @@ void G_SnapshotLevel ()
 //
 //==========================================================================
 
-void G_UnSnapshotLevel (bool hubLoad)
+void G_UnSnapshotLevel (const TArray<FLevelLocals *> &levels, bool hubLoad)
 {
-	if (level.info->Snapshot.mBuffer == nullptr)
-		return;
-
-	if (level.info->isValid())
+	for (auto &Level : levels)
 	{
-		FSerializer arc;
-		if (!arc.OpenReader(&level.info->Snapshot))
+		auto snapshot = currentSession->Snapshots.CheckKey(Level->MapName);
+		if (snapshot == nullptr)
 		{
-			I_Error("Failed to load savegame");
+			// should be handled by the caller when reading in the savegame.
+			I_Error("Bad list of levels passed to G_UnSnapshotLevel");
 			return;
 		}
 
-		arc.SetLevel(&level);
-		G_SerializeLevel (arc, &level, hubLoad);
-		arc.SetLevel(nullptr);
-		level.FromSnapshot = true;
-
-		TThinkerIterator<AActor> it(currentSession->Levelinfo[0], NAME_PlayerPawn);
-		AActor *pawn, *next;
-
-		next = it.Next();
-		while ((pawn = next) != 0)
+		if (Level->info->isValid())
 		{
-			next = it.Next();
-			if (pawn->player == NULL || pawn->player->mo == NULL || !playeringame[pawn->player - players])
+			FSerializer arc;
+			if (!arc.OpenReader(snapshot))
 			{
-				int i;
+				I_Error("Failed to load savegame");
+				return;
+			}
+			
+			arc.SetLevel(Level);
+			G_SerializeLevel (arc, Level, hubLoad);
+			arc.SetLevel(nullptr);
+			Level->FromSnapshot = true;
 
-				// If this isn't the unmorphed original copy of a player, destroy it, because it's extra.
-				for (i = 0; i < MAXPLAYERS; ++i)
+			TThinkerIterator<AActor> it(Level, NAME_PlayerPawn);
+			AActor *pawn;
+			
+			while ((pawn = it.Next()) != 0)
+			{
+				if (pawn->player == NULL || pawn->player->mo == NULL || !playeringame[pawn->player - players])
 				{
-					if (playeringame[i] && players[i].morphTics && players[i].mo->alternative == pawn)
+					int i;
+					
+					// If this isn't the unmorphed original copy of a player, destroy it, because it's extra.
+					for (i = 0; i < MAXPLAYERS; ++i)
 					{
-						break;
+						if (playeringame[i] && players[i].morphTics && players[i].mo->alternative == pawn)
+						{
+							break;
+						}
+					}
+					if (i == MAXPLAYERS)
+					{
+						pawn->Destroy ();
 					}
 				}
-				if (i == MAXPLAYERS)
-				{
-					pawn->Destroy ();
-				}
 			}
+			arc.Close();
 		}
-		arc.Close();
-	}
-	// No reason to keep the snapshot around once the level's been entered.
-	level.info->Snapshot.Clean();
-	if (hubLoad)
-	{
+		// No reason to keep the snapshot around once the level's been entered.
+		currentSession->Snapshots.Remove(Level->MapName);
 		// Unlock ACS global strings that were locked when the snapshot was made.
-		level.Behaviors.UnlockLevelVarStrings(level.levelnum);
+		Level->Behaviors.UnlockLevelVarStrings(Level->levelnum);
 	}
 }
 
@@ -1787,25 +1896,18 @@ void G_UnSnapshotLevel (bool hubLoad)
 
 void G_WriteSnapshots(TArray<FString> &filenames, TArray<FCompressedBuffer> &buffers)
 {
-	unsigned int i;
-	FString filename;
-
-	for (i = 0; i < wadlevelinfos.Size(); i++)
+	decltype(currentSession->Snapshots)::Iterator it(currentSession->Snapshots);
+	decltype(currentSession->Snapshots)::Pair *pair;
+	
+	while (it.NextPair(pair))
 	{
-		if (wadlevelinfos[i].Snapshot.mCompressedSize > 0)
+		if (pair->Value.mCompressedSize > 0)
 		{
-			filename.Format("%s.map.json", wadlevelinfos[i].MapName.GetChars());
+			FStringf filename("%s.map.json", pair->Key.GetChars());
 			filename.ToLower();
 			filenames.Push(filename);
-			buffers.Push(wadlevelinfos[i].Snapshot);
+			buffers.Push(pair->Value);
 		}
-	}
-	if (TheDefaultLevelInfo.Snapshot.mCompressedSize > 0)
-	{
-		filename.Format("%s.mapd.json", TheDefaultLevelInfo.MapName.GetChars());
-		filename.ToLower();
-		filenames.Push(filename);
-		buffers.Push(TheDefaultLevelInfo.Snapshot);
 	}
 }
 
@@ -1816,15 +1918,15 @@ void G_WriteSnapshots(TArray<FString> &filenames, TArray<FCompressedBuffer> &buf
 
 void G_WriteVisited(FSerializer &arc)
 {
+	decltype(currentSession->Visited)::Iterator it(currentSession->Visited);
+	decltype(currentSession->Visited)::Pair *pair;
+
 	if (arc.BeginArray("visited"))
 	{
-		// Write out which levels have been visited
-		for (auto & wi : wadlevelinfos)
+		while (it.NextPair(pair))
 		{
-			if (wi.flags & LEVEL_VISITED)
-			{
-				arc.AddString(nullptr, wi.MapName);
-			}
+			// Write out which levels have been visited
+			arc.AddString(nullptr, pair->Key);
 		}
 		arc.EndArray();
 	}
@@ -1857,9 +1959,6 @@ void G_WriteVisited(FSerializer &arc)
 
 void G_ReadSnapshots(FResourceFile *resf)
 {
-	FString MapName;
-	level_info_t *i;
-
 	G_ClearSnapshots();
 
 	for (unsigned j = 0; j < resf->LumpCount(); j++)
@@ -1871,22 +1970,8 @@ void G_ReadSnapshots(FResourceFile *resf)
 			if (ptr != nullptr)
 			{
 				ptrdiff_t maplen = ptr - resl->FullName.GetChars();
-				FString mapname(resl->FullName.GetChars(), (size_t)maplen);
-				i = FindLevelInfo(mapname);
-				if (i != nullptr)
-				{
-					i->Snapshot = resl->GetRawData();
-				}
-			}
-			else
-			{
-				auto ptr = strstr(resl->FullName, ".mapd.json");
-				if (ptr != nullptr)
-				{
-					ptrdiff_t maplen = ptr - resl->FullName.GetChars();
-					FString mapname(resl->FullName.GetChars(), (size_t)maplen);
-					TheDefaultLevelInfo.Snapshot = resl->GetRawData();
-				}
+				FName mapname(resl->FullName.GetChars(), (size_t)maplen);
+				currentSession->Snapshots.Insert(mapname, resl->GetRawData());
 			}
 		}
 	}
@@ -1905,8 +1990,7 @@ void G_ReadVisited(FSerializer &arc)
 		{
 			FString str;
 			arc(nullptr, str);
-			auto i = FindLevelInfo(str);
-			if (i != nullptr) i->flags |= LEVEL_VISITED;
+			currentSession->Visited.Insert(str, true);
 		}
 		arc.EndArray();
 	}
@@ -1932,12 +2016,15 @@ void G_ReadVisited(FSerializer &arc)
 
 CCMD(listsnapshots)
 {
-	for (unsigned i = 0; i < wadlevelinfos.Size(); ++i)
+	decltype(currentSession->Snapshots)::Iterator it(currentSession->Snapshots);
+	decltype(currentSession->Snapshots)::Pair *pair;
+	
+	while (it.NextPair(pair))
 	{
-		FCompressedBuffer *snapshot = &wadlevelinfos[i].Snapshot;
+		FCompressedBuffer *snapshot = &pair->Value;
 		if (snapshot->mBuffer != nullptr)
 		{
-			Printf("%s (%u -> %u bytes)\n", wadlevelinfos[i].MapName.GetChars(), snapshot->mCompressedSize, snapshot->mSize);
+			Printf("%s (%u -> %u bytes)\n", pair->Key.GetChars(), snapshot->mCompressedSize, snapshot->mSize);
 		}
 	}
 }
@@ -1949,31 +2036,18 @@ CCMD(listsnapshots)
 
 void P_WriteACSDefereds (FSerializer &arc)
 {
-	bool found = false;
+	if (currentSession->DeferredScripts.CountUsed() == 0) return;
+	decltype(currentSession->DeferredScripts)::Iterator it(currentSession->DeferredScripts);
+	decltype(currentSession->DeferredScripts)::Pair *pair;
 
-	// only write this stuff if needed
-	for (auto &wi : wadlevelinfos)
+	if (arc.BeginObject("deferred"))
 	{
-		if (wi.deferred.Size() > 0)
+		while (it.NextPair(pair))
 		{
-			found = true;
-			break;
+			arc(pair->Key, pair->Value);
 		}
 	}
-	if (found && arc.BeginObject("deferred"))
-	{
-		for (auto &wi : wadlevelinfos)
-		{
-			if (wi.deferred.Size() > 0)
-			{
-				if (wi.deferred.Size() > 0)
-				{
-					arc(wi.MapName, wi.deferred);
-				}
-			}
-		}
-		arc.EndObject();
-	}
+	arc.EndObject();
 }
 
 //==========================================================================
@@ -1993,17 +2067,13 @@ void P_ReadACSDefereds (FSerializer &arc)
 
 		while ((key = arc.GetKey()))
 		{
-			level_info_t *i = FindLevelInfo(key);
-			if (i == NULL)
-			{
-				I_Error("Unknown map '%s' in savegame", key);
-			}
-			arc(nullptr, i->deferred);
+			TArray<acsdefered_t> deferred;
+			arc(nullptr, deferred);
+			currentSession->DeferredScripts.Insert(key, std::move(deferred));
 		}
 		arc.EndObject();
 	}
 }
-
 
 //==========================================================================
 //

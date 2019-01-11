@@ -42,6 +42,7 @@
 struct level_info_t;
 struct cluster_info_t;
 class FSerializer;
+struct FLevelLocals;
 
 #if defined(_MSC_VER)
 #pragma section(".yreg$u",read)
@@ -191,7 +192,7 @@ enum ELevelFlags : unsigned int
 	LEVEL_SWAPSKIES				= 0x10000000,	// Used by lightning
 	LEVEL_NOALLIES				= 0x20000000,	// i.e. Inside Strife's front base
 	LEVEL_CHANGEMAPCHEAT		= 0x40000000,	// Don't display cluster messages
-	LEVEL_VISITED				= 0x80000000,	// Used for intermission map
+	//LEVEL_VISITED				= 0x80000000,	// Used for intermission map
 
 	// The flags uint64_t is now split into 2 DWORDs 
 	LEVEL2_RANDOMPLAYERSTARTS	= 0x00000001,	// Select single player starts randomnly (no voodoo dolls)
@@ -325,8 +326,6 @@ struct level_info_t
 	FString		LevelName;
 	int8_t		WallVertLight, WallHorizLight;
 	int			musicorder;
-	FCompressedBuffer	Snapshot;
-	TArray<acsdefered_t> deferred;
 	float		skyspeed1;
 	float		skyspeed2;
 	uint32_t	fadeto;
@@ -393,19 +392,10 @@ struct level_info_t
 	{ 
 		Reset(); 
 	}
-	~level_info_t()
-	{
-		Snapshot.Clean();
-		ClearDefered();
-	}
 	void Reset();
-	bool isValid();
-	FString LookupLevelName ();
-	void ClearDefered()
-	{
-		deferred.Clear();
-	}
-	level_info_t *CheckLevelRedirect ();
+	bool isValid() const;
+	FString LookupLevelName () const;
+	level_info_t *CheckLevelRedirect () const;
 };
 
 
@@ -454,10 +444,10 @@ void G_DeferedInitNew (const char *mapname, int skill = -1);
 struct FGameStartup;
 void G_DeferedInitNew (FGameStartup *gs);
 
-void G_ExitLevel (int position, bool keepFacing);
-void G_SecretExitLevel (int position);
-const char *G_GetExitMap();
-const char *G_GetSecretExitMap();
+void G_ExitLevel (FLevelLocals *Level, int position, bool keepFacing);
+void G_SecretExitLevel (FLevelLocals *Level, int position);
+const char *G_GetExitMap(FLevelLocals *Level);
+const char *G_GetSecretExitMap(FLevelLocals *Level);
 
 enum 
 {
@@ -470,12 +460,12 @@ enum
 	CHANGELEVEL_PRERAISEWEAPON = 64,
 };
 
-void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill=-1);
+void G_ChangeLevel(FLevelLocals *Level, const char *levelname, int position, int flags, int nextSkill=-1);
 
 void G_StartTravel ();
-int G_FinishTravel ();
+int G_FinishTravel (FLevelLocals *);
 
-void G_DoLoadLevel (int position, bool autosave, bool newGame);
+void G_DoLoadLevel (const FString &mapname, int position, bool autosave, bool newGame);
 
 void G_InitLevelLocals (void);
 
@@ -493,7 +483,7 @@ void G_ParseMapInfo (FString basemapinfo);
 void G_ClearSnapshots (void);
 void P_RemoveDefereds ();
 void G_SnapshotLevel (void);
-void G_UnSnapshotLevel (bool keepPlayers);
+void G_UnSnapshotLevel(const TArray<FLevelLocals *> &levels, bool hubLoad);
 void G_ReadSnapshots (FResourceFile *);
 void G_WriteSnapshots (TArray<FString> &, TArray<FCompressedBuffer> &);
 void G_WriteVisited(FSerializer &arc);

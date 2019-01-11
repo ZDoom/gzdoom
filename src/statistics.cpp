@@ -437,7 +437,7 @@ void STAT_ChangeLevel(const char *newl, FLevelLocals *Level)
 	// record the current level's stats.
 	StoreLevelStats(Level);
 
-	level_info_t *thisinfo = Level->info;
+	const level_info_t *thisinfo = Level->info;
 	level_info_t *nextinfo = NULL;
 	
 	if (strncmp(newl, "enDSeQ", 6))

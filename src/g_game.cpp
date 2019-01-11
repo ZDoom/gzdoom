@@ -1028,7 +1028,7 @@ void G_Ticker ()
 		switch (gameaction)
 		{
 		case ga_loadlevel:
-			G_DoLoadLevel (-1, false, false);
+			G_DoLoadLevel (currentSession->nextlevel, -1, false, false);
 			break;
 		case ga_recordgame:
 			G_CheckDemoStatus();
@@ -1103,7 +1103,8 @@ void G_Ticker ()
 	uint32_t rngsum = FRandom::StaticSumSeeds ();
 
 	//Added by MC: For some of that bot stuff. The main bot function.
-	bglobal.Main (currentSession->Levelinfo[0]);
+	if (currentSession->Levelinfo.Size() > 0)
+		bglobal.Main (currentSession->Levelinfo[0]);
 
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
@@ -1925,8 +1926,7 @@ void G_DoLoadGame ()
 	NextSkill = -1;
 	arc("nextskill", NextSkill);
 
-	if (level.info != nullptr)
-		level.info->Snapshot.Clean();
+	//currentSession->Snapshots.Remove(MapName); fixme
 
 	BackupSaveName = savename;
 
@@ -2137,7 +2137,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	{
 		// delete the snapshot. Since the save failed it is broken.
 		insave = false;
-		level.info->Snapshot.Clean();
+		//level.info->Snapshot.Clean();
 		Printf(PRINT_HIGH, "Save failed\n");
 		Printf(PRINT_HIGH, "%s\n", err.GetMessage());
 		// The time freeze must be reset if the save fails.
@@ -2236,8 +2236,8 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 
 	// delete the JSON buffers we created just above. Everything else will
 	// either still be needed or taken care of automatically.
-	savegame_content[1].Clean();
-	savegame_content[2].Clean();
+	//savegame_content[1].Clean();
+	//savegame_content[2].Clean();
 
 	// Check whether the file is ok by trying to open it.
 	FResourceFile *test = FResourceFile::OpenResourceFile(filename, true);
@@ -2253,7 +2253,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	BackupSaveName = filename;
 
 	// We don't need the snapshot any longer.
-	level.info->Snapshot.Clean();
+	//currentSession->Snapshots.Remove(???);
 		
 	insave = false;
 

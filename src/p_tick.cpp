@@ -62,7 +62,8 @@ bool P_CheckTickerPaused ()
 		 && players[consoleplayer].viewz != NO_VALUE
 		 && wipegamestate == gamestate)
 	{
-		S_PauseSound (!currentSession || !(currentSession->Levelinfo[0]->flags2 & LEVEL2_PAUSE_MUSIC_IN_MENUS), false);
+		auto nopause = gamestate != GS_LEVEL || !(currentSession->Levelinfo[0]->flags2 & LEVEL2_PAUSE_MUSIC_IN_MENUS);
+		S_PauseSound (nopause, false);
 		return true;
 	}
 	return false;

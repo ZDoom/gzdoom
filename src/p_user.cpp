@@ -1116,7 +1116,7 @@ void P_CheckMusicChange(player_t *player)
 				if (player->MUSINFOactor->args[0] != 0)
 				{
 					auto Level = player->mo->Level;
-					FName *music = Level->info->MusicMap.CheckKey(player->MUSINFOactor->args[0]);
+					const FName *music = Level->info->MusicMap.CheckKey(player->MUSINFOactor->args[0]);
 
 					if (music != NULL)
 					{

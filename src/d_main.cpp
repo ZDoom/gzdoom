@@ -170,7 +170,7 @@ CUSTOM_CVAR (Int, fraglimit, 0, CVAR_SERVERINFO)
 			if (playeringame[i] && self <= D_GetFragCount(&players[i]))
 			{
 				Printf ("%s\n", GStrings("TXT_FRAGLIMIT"));
-				G_ExitLevel (0, false);
+				G_ExitLevel (currentSession->Levelinfo[0],  0, false);
 				break;
 			}
 		}

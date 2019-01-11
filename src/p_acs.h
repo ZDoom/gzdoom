@@ -428,7 +428,7 @@ private:
 
 struct FBehaviorContainer
 {
-	TArray<FBehavior *> StaticModules;
+	TDeletingArray<FBehavior *> StaticModules;
 	
 	FBehavior *LoadModule(FLevelLocals *Level, int lumpnum, FileReader *fr = nullptr, int len = 0);
 	void LoadDefaultModules(FLevelLocals *Level);

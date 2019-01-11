@@ -2705,7 +2705,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(_AltHUD, GetLatency, Net_GetLatency)
 //
 //
 //==========================================================================
-DEFINE_GLOBAL(level);
 DEFINE_FIELD(FLevelLocals, sectors)
 DEFINE_FIELD(FLevelLocals, lines)
 DEFINE_FIELD(FLevelLocals, sides)
@@ -2770,6 +2769,7 @@ DEFINE_FIELD(FGameSession, time)
 DEFINE_FIELD(FGameSession, totaltime)
 DEFINE_GLOBAL(currentSession)
 
+DEFINE_FIELD_X(Sector, sector_t, Level)
 DEFINE_FIELD_X(Sector, sector_t, floorplane)
 DEFINE_FIELD_X(Sector, sector_t, ceilingplane)
 DEFINE_FIELD_X(Sector, sector_t, Colormap)

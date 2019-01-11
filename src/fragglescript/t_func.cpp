@@ -635,7 +635,7 @@ void FParser::SF_Clock(void)
 
 void FParser::SF_ExitLevel(void)
 {
-	G_ExitLevel(0, false);
+	G_ExitLevel(Level, 0, false);
 }
 
 //==========================================================================
@@ -2853,7 +2853,7 @@ void FParser::SF_AmbientSound(void)
 
 void FParser::SF_ExitSecret(void)
 {
-	G_SecretExitLevel(0);
+	G_SecretExitLevel(Level, 0);
 }
 
 

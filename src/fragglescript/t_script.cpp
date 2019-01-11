@@ -179,7 +179,7 @@ void DFsScript::Serialize(FSerializer &arc)
 	// don't save a reference to the global script, which contains unserializable data.
 	if (parent == Level->FraggleScriptThinker->GlobalScript) parent = nullptr;
 	
-	if (arc.isReading()) Level = &level;	// must later be written out.
+	if (arc.isReading()) Level = arc.Level;
 
 	arc("data", data)
 		("scriptnum", scriptnum)

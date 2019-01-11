@@ -100,7 +100,7 @@ struct FPortalBlock
 struct FPortalBlockmap
 {
 	TArray<FPortalBlock> data;
-	int dx, dy;
+	int dx = 0, dy = 0;
 	bool containsLines;
 	bool hasLinkedSectorPortals;	// global flag to shortcut portal checks if the map has none.
 	bool hasLinkedPolyPortals;	// this means that any early-outs in P_CheckSight need to be disabled if a block contains polyobjects.

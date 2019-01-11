@@ -476,7 +476,7 @@ void S_Start (FLevelLocals *Level)
 //
 //==========================================================================
 
-void S_PrecacheLevel (TArray<int> &levelsounds)
+void S_PrecacheLevel (const TArray<int> &levelsounds)
 {
 	unsigned int i;
 

@@ -1988,11 +1988,7 @@ bool FBehaviorContainer::CheckAllGood ()
 
 void FBehaviorContainer::UnloadModules ()
 {
-	for (unsigned int i = StaticModules.Size(); i-- > 0; )
-	{
-		delete StaticModules[i];
-	}
-	StaticModules.Clear ();
+	StaticModules.DeleteAndClear ();
 }
 
 FBehavior *FBehaviorContainer::GetModule (int lib)
@@ -3447,8 +3443,7 @@ void DLevelScript::Serialize(FSerializer &arc)
 	uint32_t pcofs;
 	uint16_t lib;
 
-	// This cannot be serialized yet.
-	if(arc.isReading()) Level = &level;
+	if(arc.isReading()) Level = arc.Level;
 
 	if (arc.isWriting())
 	{
@@ -9928,7 +9923,7 @@ scriptwait:
 
 		case PCD_CHANGELEVEL:
 			{
-				G_ChangeLevel(Level->Behaviors.LookupString(STACK(4)), STACK(3), STACK(2), STACK(1));
+				G_ChangeLevel(Level, Level->Behaviors.LookupString(STACK(4)), STACK(3), STACK(2), STACK(1));
 				sp -= 4;
 			}
 			break;
@@ -10321,70 +10316,73 @@ void P_DoDeferedScripts (FLevelLocals *Level)
 	FBehavior *module;
 
 	// Handle defered scripts in this step, too
-	for(int i = Level->info->deferred.Size()-1; i>=0; i--)
+	auto deferred = currentSession->DeferredScripts.CheckKey(Level->MapName);
+	if (deferred)
 	{
-		acsdefered_t *def = &Level->info->deferred[i];
-		switch (def->type)
+		for(int i = deferred->Size()-1; i>=0; i--)
 		{
-		case acsdefered_t::defexecute:
-		case acsdefered_t::defexealways:
-			scriptdata = Level->Behaviors.FindScript (def->script, module);
-			if (scriptdata)
+			acsdefered_t *def = &(*deferred)[i];
+			switch (def->type)
 			{
-				P_GetScriptGoing (Level, (unsigned)def->playernum < MAXPLAYERS &&
-					playeringame[def->playernum] ? players[def->playernum].mo : NULL,
-					NULL, def->script,
-					scriptdata, module,
-					def->args, 3,
-					def->type == acsdefered_t::defexealways ? ACS_ALWAYS : 0);
+				case acsdefered_t::defexecute:
+				case acsdefered_t::defexealways:
+					scriptdata = Level->Behaviors.FindScript (def->script, module);
+					if (scriptdata)
+					{
+						P_GetScriptGoing (Level, (unsigned)def->playernum < MAXPLAYERS &&
+										  playeringame[def->playernum] ? players[def->playernum].mo : NULL,
+										  NULL, def->script,
+										  scriptdata, module,
+										  def->args, 3,
+										  def->type == acsdefered_t::defexealways ? ACS_ALWAYS : 0);
+					}
+					else
+					{
+						Printf ("P_DoDeferredScripts: Unknown %s\n", ScriptPresentation(def->script).GetChars());
+					}
+					break;
+					
+				case acsdefered_t::defsuspend:
+					SetScriptState (Level->ACSThinker, def->script, DLevelScript::SCRIPT_Suspended);
+					DPrintf (DMSG_SPAMMY, "Deferred suspend of %s\n", ScriptPresentation(def->script).GetChars());
+					break;
+					
+				case acsdefered_t::defterminate:
+					SetScriptState (Level->ACSThinker, def->script, DLevelScript::SCRIPT_PleaseRemove);
+					DPrintf (DMSG_SPAMMY, "Deferred terminate of %s\n", ScriptPresentation(def->script).GetChars());
+					break;
 			}
-			else
-			{
-				Printf ("P_DoDeferredScripts: Unknown %s\n", ScriptPresentation(def->script).GetChars());
-			}
-			break;
-
-		case acsdefered_t::defsuspend:
-			SetScriptState (Level->ACSThinker, def->script, DLevelScript::SCRIPT_Suspended);
-			DPrintf (DMSG_SPAMMY, "Deferred suspend of %s\n", ScriptPresentation(def->script).GetChars());
-			break;
-
-		case acsdefered_t::defterminate:
-			SetScriptState (Level->ACSThinker, def->script, DLevelScript::SCRIPT_PleaseRemove);
-			DPrintf (DMSG_SPAMMY, "Deferred terminate of %s\n", ScriptPresentation(def->script).GetChars());
-			break;
 		}
 	}
-	Level->info->deferred.Clear();
+	currentSession->DeferredScripts.Remove(Level->MapName);
 }
 
-static void addDefered (level_info_t *i, acsdefered_t::EType type, int script, const int *args, int argcount, AActor *who)
+static void addDefered (FLevelLocals *Level, acsdefered_t::EType type, int script, const int *args, int argcount, AActor *who)
 {
-	if (i)
+	auto &deferred = currentSession->DeferredScripts[Level->MapName];
+	
+	acsdefered_t &def = deferred[deferred.Reserve(1)];
+	int j;
+	
+	def.type = type;
+	def.script = script;
+	for (j = 0; (size_t)j < countof(def.args) && j < argcount; ++j)
 	{
-		acsdefered_t &def = i->deferred[i->deferred.Reserve(1)];
-		int j;
-
-		def.type = type;
-		def.script = script;
-		for (j = 0; (size_t)j < countof(def.args) && j < argcount; ++j)
-		{
-			def.args[j] = args[j];
-		}
-		while ((size_t)j < countof(def.args))
-		{
-			def.args[j++] = 0;
-		}
-		if (who != NULL && who->player != NULL)
-		{
-			def.playernum = int(who->player - players);
-		}
-		else
-		{
-			def.playernum = -1;
-		}
-		DPrintf (DMSG_SPAMMY, "%s on map %s deferred\n", ScriptPresentation(script).GetChars(), i->MapName.GetChars());
+		def.args[j] = args[j];
 	}
+	while ((size_t)j < countof(def.args))
+	{
+		def.args[j++] = 0;
+	}
+	if (who != NULL && who->player != NULL)
+	{
+		def.playernum = int(who->player - players);
+	}
+	else
+	{
+		def.playernum = -1;
+	}
+	DPrintf (DMSG_SPAMMY, "%s on map %s deferred\n", ScriptPresentation(script).GetChars(), Level->MapName.GetChars());
 }
 
 EXTERN_CVAR (Bool, sv_cheats)
@@ -10436,9 +10434,7 @@ int P_StartScript (FLevelLocals *Level, AActor *who, line_t *where, int script, 
 	}
 	else
 	{
-		addDefered (FindLevelInfo (map),
-					(flags & ACS_ALWAYS) ? acsdefered_t::defexealways : acsdefered_t::defexecute,
-					script, args, argcount, who);
+		addDefered (Level, (flags & ACS_ALWAYS) ? acsdefered_t::defexealways : acsdefered_t::defexecute, script, args, argcount, who);
 		return true;
 	}
 	return false;
@@ -10447,7 +10443,7 @@ int P_StartScript (FLevelLocals *Level, AActor *who, line_t *where, int script, 
 void P_SuspendScript (FLevelLocals *Level, int script, const char *map)
 {
 	if (strnicmp (Level->MapName, map, 8))
-		addDefered (FindLevelInfo (map), acsdefered_t::defsuspend, script, NULL, 0, NULL);
+		addDefered (Level, acsdefered_t::defsuspend, script, NULL, 0, NULL);
 	else
 		SetScriptState (Level->ACSThinker, script, DLevelScript::SCRIPT_Suspended);
 }
@@ -10455,7 +10451,7 @@ void P_SuspendScript (FLevelLocals *Level, int script, const char *map)
 void P_TerminateScript (FLevelLocals *Level, int script, const char *map)
 {
 	if (strnicmp (Level->MapName, map, 8))
-		addDefered (FindLevelInfo (map), acsdefered_t::defterminate, script, NULL, 0, NULL);
+		addDefered (Level, acsdefered_t::defterminate, script, NULL, 0, NULL);
 	else
 		SetScriptState (Level->ACSThinker, script, DLevelScript::SCRIPT_PleaseRemove);
 }

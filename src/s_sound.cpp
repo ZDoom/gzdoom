@@ -991,15 +991,18 @@ static FSoundChan *S_StartSound(FLevelLocals *Level, AActor *actor, const sector
 		return nullptr;
 	}
 
-	if (Level->i_compatflags & COMPATF_MAGICSILENCE)
-	{ // For people who just can't play without a silent BFG.
-		channel = CHAN_WEAPON;
-	}
-	else if ((chanflags & CHAN_MAYBE_LOCAL) && (Level->i_compatflags & COMPATF_SILENTPICKUP))
+	if (Level != nullptr)
 	{
-		if (actor != NULL && actor != players[consoleplayer].camera)
+		if (Level->i_compatflags & COMPATF_MAGICSILENCE)
+		{ // For people who just can't play without a silent BFG.
+			channel = CHAN_WEAPON;
+		}
+		else if ((chanflags & CHAN_MAYBE_LOCAL) && (Level->i_compatflags & COMPATF_SILENTPICKUP))
 		{
-			return NULL;
+			if (actor != nullptr && actor != players[consoleplayer].camera)
+			{
+				return nullptr;
+			}
 		}
 	}
 

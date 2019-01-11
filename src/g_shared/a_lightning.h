@@ -28,6 +28,6 @@ protected:
 };
 
 void P_StartLightning (FLevelLocals *Level);
-void P_ForceLightning (int mode);
+void P_ForceLightning (FLevelLocals *Level, int mode);
 
 #endif //__A_LIGHTNING_H__

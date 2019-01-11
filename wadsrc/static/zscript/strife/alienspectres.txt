@@ -116,7 +116,7 @@ class AlienSpectre1 : SpectralMonster
 		{
 			Console.MidPrint("SmallFont", "$TXT_KILLED_ORACLE");
 			// If there are any Oracles still alive, kill them.
-			ThinkerIterator it = ThinkerIterator.Create("Oracle");
+			ThinkerIterator it = Level.CreateThinkerIterator("Oracle");
 			Actor oracle;
 
 			while ( (oracle = Actor(it.Next())) != null)

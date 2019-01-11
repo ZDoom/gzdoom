@@ -878,7 +878,7 @@ size_t DThinker::PropagateMark()
 //
 //==========================================================================
 
-FThinkerIterator::FThinkerIterator (const PClass *type, int statnum)
+FThinkerIterator::FThinkerIterator (FLevelLocals *Level, const PClass *type, int statnum)
 {
 	if ((unsigned)statnum > MAX_STATNUM)
 	{
@@ -901,7 +901,7 @@ FThinkerIterator::FThinkerIterator (const PClass *type, int statnum)
 //
 //==========================================================================
 
-FThinkerIterator::FThinkerIterator (const PClass *type, int statnum, DThinker *prev)
+FThinkerIterator::FThinkerIterator (FLevelLocals *Level, const PClass *type, int statnum, DThinker *prev)
 {
 	if ((unsigned)statnum > MAX_STATNUM)
 	{

@@ -117,7 +117,7 @@ void P_Ticker (void)
 		}
 
 		// Reset all actor interpolations for all actors before the current thinking turn so that indirect actor movement gets properly interpolated.
-		TThinkerIterator<AActor> it;
+		TThinkerIterator<AActor> it(Level);
 		AActor *ac;
 
 		while ((ac = it.Next()))

@@ -160,7 +160,7 @@ class SVEOreSpawner : Actor
 		}
 		if(!inrange) return;
 
-		let it = ThinkerIterator.Create("DegninOre");
+		let it = Level.CreateThinkerIterator("DegninOre");
 		Thinker ac;
 		
 		int numores = 0;

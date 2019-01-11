@@ -1515,7 +1515,7 @@ FUNC(LS_Thing_Destroy)
 	}
 	else if (arg0 == 0)
 	{
-		TThinkerIterator<AActor> iterator;
+		TThinkerIterator<AActor> iterator(Level);
 		
 		actor = iterator.Next ();
 		while (actor)
@@ -2070,7 +2070,7 @@ FUNC(LS_Elevator_LowerToNearest)
 FUNC(LS_Light_ForceLightning)
 // Light_ForceLightning (mode)
 {
-	P_ForceLightning (arg0);
+	P_ForceLightning (Level, arg0);
 	return true;
 }
 

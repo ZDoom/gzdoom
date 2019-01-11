@@ -299,7 +299,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineindexforid)
 void FLevelLocals::TranslateTeleportThings ()
 {
 	AActor *dest;
-	TThinkerIterator<AActor> iterator(NAME_TeleportDest);
+	TThinkerIterator<AActor> iterator(this, NAME_TeleportDest);
 	bool foundSomething = false;
 
 	while ( (dest = iterator.Next()) )

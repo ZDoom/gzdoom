@@ -640,7 +640,7 @@ void SetWallScroller (FLevelLocals *Level, int id, int sidechoice, double dx, do
 	if (dx == 0 && dy == 0)
 	{
 		// Special case: Remove the scroller, because the deltas are both 0.
-		TThinkerIterator<DScroller> iterator (STAT_SCROLLER);
+		TThinkerIterator<DScroller> iterator (Level, STAT_SCROLLER);
 		DScroller *scroller;
 
 		while ( (scroller = iterator.Next ()) )
@@ -659,7 +659,7 @@ void SetWallScroller (FLevelLocals *Level, int id, int sidechoice, double dx, do
 		// their rates.
 		TArray<DScroller *> Collection;
 		{
-			TThinkerIterator<DScroller> iterator (STAT_SCROLLER);
+			TThinkerIterator<DScroller> iterator (Level, STAT_SCROLLER);
 			DScroller *scroll;
 
 			while ( (scroll = iterator.Next ()) )
@@ -698,7 +698,7 @@ void SetWallScroller (FLevelLocals *Level, int id, int sidechoice, double dx, do
 
 void SetScroller (FLevelLocals *Level, int tag, EScroll type, double dx, double dy)
 {
-	TThinkerIterator<DScroller> iterator (STAT_SCROLLER);
+	TThinkerIterator<DScroller> iterator (Level, STAT_SCROLLER);
 	DScroller *scroller;
 	int i;
 

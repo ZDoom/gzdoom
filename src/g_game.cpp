@@ -1103,7 +1103,7 @@ void G_Ticker ()
 	uint32_t rngsum = FRandom::StaticSumSeeds ();
 
 	//Added by MC: For some of that bot stuff. The main bot function.
-	bglobal.Main (&level);
+	bglobal.Main (currentSession->Levelinfo[0]);
 
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
@@ -1429,7 +1429,7 @@ static FPlayerStart *SelectRandomDeathmatchSpot (FLevelLocals *Level, int player
 DEFINE_ACTION_FUNCTION(DObject, G_PickDeathmatchStart)
 {
 	PARAM_PROLOGUE;
-	auto Level = &level;
+	auto Level = currentSession->Levelinfo[0];
 	unsigned int selections = Level->deathmatchstarts.Size();
 	DVector3 pos;
 	int angle;
@@ -1600,7 +1600,7 @@ static void G_QueueBody (AActor *body)
 EXTERN_CVAR(Bool, sv_singleplayerrespawn)
 void G_DoReborn (int playernum, bool freshbot)
 {
-	auto Level = &level;
+	auto Level = currentSession->Levelinfo[0];
 	if (!multiplayer && !(Level->flags2 & LEVEL2_ALLOWRESPAWN) && !sv_singleplayerrespawn &&
 		!G_SkillProperty(SKILLP_PlayerRespawn))
 	{
@@ -2718,10 +2718,12 @@ void G_DoPlayDemo (void)
 		{
 			G_InitNew (mapname, false);
 		}
-		else if (level.sectors.Size() == 0)
+		/*
+		else if (!currentSession || currenlevel.sectors.Size() == 0)
 		{
 			I_Error("Cannot play demo without its savegame\n");
 		}
+		*/
 		C_HideConsole ();
 		demonew = false;
 		precache = true;

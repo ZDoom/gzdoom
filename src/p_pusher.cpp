@@ -422,7 +422,7 @@ void AdjustPusher (FLevelLocals *Level, int tag, int magnitude, int angle, bool 
 	// Find pushers already attached to the sector, and change their parameters.
 	TArray<FThinkerCollection> Collection;
 	{
-		TThinkerIterator<DPusher> iterator;
+		TThinkerIterator<DPusher> iterator(Level);
 		FThinkerCollection collect;
 
 		while ( (collect.Obj = iterator.Next ()) )

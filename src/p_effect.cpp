@@ -326,7 +326,7 @@ void P_RunEffects (FLevelLocals *Level)
 	int	pnum = players[consoleplayer].camera->Sector->Index() * Level->sectors.Size();
 
 	AActor *actor;
-	TThinkerIterator<AActor> iterator;
+	TThinkerIterator<AActor> iterator(Level);
 
 	while ( (actor = iterator.Next ()) )
 	{

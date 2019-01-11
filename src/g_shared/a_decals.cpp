@@ -54,8 +54,6 @@ struct SpreadInfo
 	TArray<side_t *> SpreadStack;
 };
 
-static int ImpactCount;
-
 CVAR (Bool, cl_spreaddecals, true, CVAR_ARCHIVE)
 
 IMPLEMENT_CLASS(DBaseDecal, false, true)
@@ -675,18 +673,24 @@ DBaseDecal *DImpactDecal::CloneSelf (const FDecalTemplate *tpl, double ix, doubl
 
 CCMD (countdecals)
 {
-	Printf ("%d impact decals\n", ImpactCount);
+	ForAllLevels([](FLevelLocals *Level)
+	{
+		Printf("%d impact decals\n", Level->ImpactDecalCount);
+	});
 }
 
-CCMD (countdecalsreal)
+CCMD(countdecalsreal)
 {
-	TThinkerIterator<DImpactDecal> iterator (STAT_AUTODECAL);
-	int count = 0;
+	ForAllLevels([](FLevelLocals *Level)
+	{
+		TThinkerIterator<DImpactDecal> iterator(Level, STAT_AUTODECAL);
+		int count = 0;
 
-	while (iterator.Next())
-		count++;
+		while (iterator.Next())
+			count++;
 
-	Printf ("Counted %d impact decals\n", count);
+		Printf("Counted %d impact decals\n", count);
+	});
 }
 
 CCMD (spray)

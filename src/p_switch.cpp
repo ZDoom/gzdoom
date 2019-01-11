@@ -86,7 +86,7 @@ protected:
 static bool P_StartButton (side_t *side, int Where, FSwitchDef *Switch, const DVector2 &pos, bool useagain)
 {
 	DActiveButton *button;
-	TThinkerIterator<DActiveButton> iterator;
+	TThinkerIterator<DActiveButton> iterator(side->sector->Level);
 	
 	// See if button is already pressed
 	while ( (button = iterator.Next ()) )

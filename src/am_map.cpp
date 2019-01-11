@@ -2941,13 +2941,13 @@ void AM_drawPlayers ()
 //
 //=============================================================================
 
-void AM_drawKeys ()
+void AM_drawKeys (FLevelLocals *Level)
 {
 	AMColor color;
 	mpoint_t p;
 	DAngle	 angle;
 
-	TThinkerIterator<AActor> it(NAME_Key);
+	TThinkerIterator<AActor> it(Level, NAME_Key);
 	AActor *key;
 
 	while ((key = it.Next()) != NULL)
@@ -3171,7 +3171,7 @@ void AM_drawAuthorMarkers (FLevelLocals *Level)
 	// [RH] Draw any actors derived from AMapMarker on the automap.
 	// If args[0] is 0, then the actor's sprite is drawn at its own location.
 	// Otherwise, its sprite is drawn at the location of any actors whose TIDs match args[0].
-	TThinkerIterator<AActor> it ("MapMarker", STAT_MAPMARKER);
+	TThinkerIterator<AActor> it (Level, "MapMarker", STAT_MAPMARKER);
 	AActor *mark;
 
 	while ((mark = it.Next()) != NULL)
@@ -3289,7 +3289,7 @@ void AM_Drawer (FLevelLocals *Level, int bottom)
 	AM_drawWalls(Level, allmap);
 	AM_drawPlayers();
 	if (G_SkillProperty(SKILLP_EasyKey))
-		AM_drawKeys();
+		AM_drawKeys(Level);
 	if ((am_cheat >= 2 && am_cheat != 4) || allthings)
 		AM_drawThings(Level);
 

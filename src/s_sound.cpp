@@ -488,7 +488,7 @@ void S_PrecacheLevel (TArray<int> &levelsounds)
 		}
 
 		AActor *actor;
-		TThinkerIterator<AActor> iterator;
+		TThinkerIterator<AActor> iterator(SoundMainLevel);
 
 		// Precache all sounds known to be used by the currently spawned actors.
 		while ( (actor = iterator.Next()) != NULL )

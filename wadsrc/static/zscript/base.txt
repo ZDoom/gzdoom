@@ -479,7 +479,10 @@ class Thinker : Object native play
 
 class ThinkerIterator : Object native
 {
-	native static ThinkerIterator Create(class<Object> type = "Actor", int statnum=Thinker.MAX_STATNUM+1);
+	deprecated("3.8") static ThinkerIterator Create(class<Object> type = "Actor", int statnum=Thinker.MAX_STATNUM+1)
+	{
+		return currentSession.LevelInfo[0].CreateThinkerIterator(type, statnum);
+	}
 	native Thinker Next(bool exact = false);
 	native void Reinit();
 }
@@ -758,6 +761,7 @@ struct LevelLocals native
 	native SectorTagIterator CreateSectorTagIterator(int tag, line defline = null);
 	native LineIdIterator CreateLineIdIterator(int tag);
 	native ActorIterator CreateActorIterator(int tid, class<Actor> type = "Actor");
+	native  ThinkerIterator CreateThinkerIterator(class<Object> type = "Actor", int statnum=Thinker.MAX_STATNUM+1);
 
 
 	String TimeFormatted(bool totals = false)

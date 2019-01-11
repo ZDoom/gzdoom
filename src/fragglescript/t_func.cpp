@@ -2098,7 +2098,7 @@ void FParser::SF_LineTrigger()
 		mld.special=intvalue(t_argv[0]);
 		mld.tag=t_argc > 1 ? intvalue(t_argv[1]) : 0;
 		P_TranslateLineDef(&line, &mld);
-		P_ExecuteSpecial(line.special, NULL, Script->trigger, false, 
+		P_ExecuteSpecial(Level, line.special, NULL, Script->trigger, false, 
 			line.args[0],line.args[1],line.args[2],line.args[3],line.args[4]); 
 	}
 }
@@ -3645,7 +3645,7 @@ void FParser::SF_ThingCount(void)
 		pClass = pClass->GetReplacement();
 		
 again:
-		TThinkerIterator<AActor> it;
+		TThinkerIterator<AActor> it(Level);
 
 		if (t_argc<2 || intvalue(t_argv[1])==0 || pClass->IsDescendantOf(NAME_Inventory))
 		{
@@ -3786,7 +3786,7 @@ void  FParser::SF_KillInSector()
 {
 	if (CheckArgs(1))
 	{
-		TThinkerIterator<AActor> it;
+		TThinkerIterator<AActor> it(Level);
 		AActor * mo;
 		int tag=intvalue(t_argv[0]);
 
@@ -3848,7 +3848,7 @@ void FParser::RunLineSpecial(const FLineSpecial *spec)
 			if (t_argc>i) args[i]=intvalue(t_argv[i]);
 			else args[i] = 0;
 		}
-		t_return.value.i = P_ExecuteSpecial(spec->number, NULL,Script->trigger,false, args[0],args[1],args[2],args[3],args[4]);
+		t_return.value.i = P_ExecuteSpecial(Level, spec->number, NULL,Script->trigger,false, args[0],args[1],args[2],args[3],args[4]);
 	}
 }
 

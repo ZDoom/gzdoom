@@ -2085,12 +2085,12 @@ static int KillAll(PClassActor *cls)
 	return P_Massacre(false, cls);
 }
 
-static int RemoveClass(const PClass *cls)
+static int RemoveClass(FLevelLocals *Level, const PClass *cls)
 {
 	AActor *actor;
 	int removecount = 0;
 	bool player = false;
-	TThinkerIterator<AActor> iterator(cls);
+	TThinkerIterator<AActor> iterator(Level, cls);
 	while ((actor = iterator.Next()))
 	{
 		if (actor->IsA(cls))
@@ -2589,11 +2589,11 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		PClassActor *cls = PClass::FindActor(s);
 		if (cls != NULL && cls->IsDescendantOf(RUNTIME_CLASS(AActor)))
 		{
-			removecount = RemoveClass(cls);
+			removecount = RemoveClass(players[player].mo->Level, cls);
 			const PClass *cls_rep = cls->GetReplacement();
 			if (cls != cls_rep)
 			{
-				removecount += RemoveClass(cls_rep);
+				removecount += RemoveClass(players[player].mo->Level, cls_rep);
 			}
 			Printf("Removed %d actors of type %s.\n", removecount, s);
 		}

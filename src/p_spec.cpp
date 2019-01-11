@@ -924,7 +924,7 @@ static void SetupCeilingPortal (AActor *point)
 
 void P_SetupPortals(FLevelLocals *Level)
 {
-	TThinkerIterator<AActor> it("StackPoint");
+	TThinkerIterator<AActor> it(Level, "StackPoint");
 	AActor *pt;
 	TArray<AActor *> points;
 
@@ -1306,7 +1306,7 @@ void P_SpawnSpecials (MapLoader *ml)
 	P_SpawnFriction(Level);	// phares 3/12/98: New friction model using linedefs
 	P_SpawnPushers(Level);	// phares 3/20/98: New pusher model using linedefs
 
-	TThinkerIterator<AActor> it2("SkyCamCompat");
+	TThinkerIterator<AActor> it2(Level, "SkyCamCompat");
 	AActor *pt2;
 	while ((pt2 = it2.Next()))
 	{

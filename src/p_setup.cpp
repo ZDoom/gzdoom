@@ -138,7 +138,7 @@ static void PrecacheLevel(FLevelLocals *Level)
 	memset(hitlist.Data(), 0, cnt);
 
 	AActor *actor;
-	TThinkerIterator<AActor> iterator;
+	TThinkerIterator<AActor> iterator(Level);
 
 	while ((actor = iterator.Next()))
 	{
@@ -480,7 +480,7 @@ void P_SetupLevel(FLevelLocals *Level, const char *lumpname, int position, bool 
 	// Don't count monsters in end-of-level sectors if option is on
 	if (dmflags2 & DF2_NOCOUNTENDMONST)
 	{
-		TThinkerIterator<AActor> it;
+		TThinkerIterator<AActor> it(Level);
 		AActor * mo;
 
 		while ((mo = it.Next()))

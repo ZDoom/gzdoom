@@ -96,7 +96,7 @@ extend class Actor
 			// count total number of skulls currently on the level
 			// if there are already 21 skulls on the level, don't spit another one
 			int count = limit;
-			ThinkerIterator it = ThinkerIterator.Create(spawntype);
+			ThinkerIterator it = Level.CreateThinkerIterator(spawntype);
 			Thinker othink;
 
 			while ( (othink = it.Next ()) )

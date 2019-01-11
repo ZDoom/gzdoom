@@ -457,7 +457,7 @@ extend class Actor
 
 	int A_GiveToChildren(class<Inventory> itemtype, int amount = 0)
 	{
-		let it = ThinkerIterator.Create('Actor');
+		let it = Level.CreateThinkerIterator('Actor');
 		Actor mo;
 		int count = 0;
 
@@ -473,7 +473,7 @@ extend class Actor
 
 	int A_GiveToSiblings(class<Inventory> itemtype, int amount = 0)
 	{
-		let it = ThinkerIterator.Create('Actor');
+		let it = Level.CreateThinkerIterator('Actor');
 		Actor mo;
 		int count = 0;
 
@@ -528,7 +528,7 @@ extend class Actor
 
 	int A_TakeFromChildren(class<Inventory> itemtype, int amount = 0)
 	{
-		let it = ThinkerIterator.Create('Actor');
+		let it = Level.CreateThinkerIterator('Actor');
 		Actor mo;
 		int count = 0;
 
@@ -544,7 +544,7 @@ extend class Actor
 
 	int A_TakeFromSiblings(class<Inventory> itemtype, int amount = 0)
 	{
-		let it = ThinkerIterator.Create('Actor');
+		let it = Level.CreateThinkerIterator('Actor');
 		Actor mo;
 		int count = 0;
 

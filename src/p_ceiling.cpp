@@ -539,7 +539,7 @@ bool EV_DoCeiling (FLevelLocals *Level, DCeiling::ECeiling type, line_t *line,
 void P_ActivateInStasisCeiling (FLevelLocals *Level, int tag)
 {
 	DCeiling *scan;
-	TThinkerIterator<DCeiling> iterator;
+	TThinkerIterator<DCeiling> iterator(Level);
 
 	while ( (scan = iterator.Next ()) )
 	{
@@ -563,7 +563,7 @@ bool EV_CeilingCrushStop (FLevelLocals *Level, int tag, bool remove)
 {
 	bool rtn = false;
 	DCeiling *scan;
-	TThinkerIterator<DCeiling> iterator;
+	TThinkerIterator<DCeiling> iterator(Level);
 
 	scan = iterator.Next();
 	while (scan != nullptr)

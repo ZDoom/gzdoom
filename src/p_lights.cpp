@@ -984,7 +984,7 @@ DPhased::DPhased (sector_t *sector, int baselevel, int phase)
 
 void EV_StopLightEffect (FLevelLocals *Level, int tag)
 {
-	TThinkerIterator<DLighting> iterator;
+	TThinkerIterator<DLighting> iterator(Level);
 	DLighting *effect;
 
 	while ((effect = iterator.Next()) != NULL)

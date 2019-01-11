@@ -472,7 +472,7 @@ class Minotaur : Actor
 
 		if (!target)				// Normal monster search
 		{
-			ThinkerIterator it = ThinkerIterator.Create("Actor");
+			ThinkerIterator it = Level.CreateThinkerIterator("Actor");
 
 			while ((mo = Actor(it.Next())) != null)
 			{
@@ -619,7 +619,7 @@ class MinotaurFriend : Minotaur
 		if (tracer && tracer.health > 0 && tracer.player)
 		{
 			// Search thinker list for minotaur
-			ThinkerIterator it = ThinkerIterator.Create("MinotaurFriend");
+			ThinkerIterator it = Level.CreateThinkerIterator("MinotaurFriend");
 			MinotaurFriend mo;
 
 			while ((mo = MinotaurFriend(it.Next())) != null)

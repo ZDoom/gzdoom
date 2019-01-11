@@ -64,7 +64,7 @@ extend class Actor
 		A_NoBlocking(false);
 
 		// scan the remaining thinkers to see if all Keens are dead
-		ThinkerIterator it = ThinkerIterator.Create(GetClass());
+		ThinkerIterator it = Level.CreateThinkerIterator(GetClass());
 		Actor mo;
 		while (mo = Actor(it.Next(true)))
 		{

@@ -339,7 +339,7 @@ void DFsScript::DryRunScript()
 	char *rover = data;
 	
 	// allocate space for the tokens
-	FParser parse(&level, this);
+	FParser parse(Level, this);
 	try
 	{
 		while(rover < end && *rover)
@@ -429,7 +429,7 @@ void DFsScript::ParseInclude(char *lumpname)
 	ProcessFindChar(lump, 0);
 	
 	// now parse the lump
-	FParser parse(&level, this);
+	FParser parse(Level, this);
 	parse.Run(lump, lump, lump+lumplen);
 	
 	// free the lump

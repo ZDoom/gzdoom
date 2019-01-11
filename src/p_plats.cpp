@@ -403,7 +403,7 @@ void DPlat::Reactivate ()
 void P_ActivateInStasis (FLevelLocals *Level, int tag)
 {
 	DPlat *scan;
-	TThinkerIterator<DPlat> iterator;
+	TThinkerIterator<DPlat> iterator(Level);
 
 	while ( (scan = iterator.Next ()) )
 	{
@@ -421,7 +421,7 @@ void DPlat::Stop ()
 void EV_StopPlat (FLevelLocals *Level, int tag, bool remove)
 {
 	DPlat *scan;
-	TThinkerIterator<DPlat> iterator;
+	TThinkerIterator<DPlat> iterator(Level);
 
 	scan = iterator.Next();
 	while (scan != nullptr)

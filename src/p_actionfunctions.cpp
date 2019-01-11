@@ -2663,7 +2663,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseChildren)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(flags);
 
-	TThinkerIterator<AActor> it;
+	TThinkerIterator<AActor> it(self->Level);
 	AActor *mo;
 
 	while ((mo = it.Next()) != NULL)
@@ -2686,7 +2686,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseSiblings)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(flags);
 
-	TThinkerIterator<AActor> it;
+	TThinkerIterator<AActor> it(self->Level);
 	AActor *mo;
 
 	if (self->master != NULL)
@@ -3288,7 +3288,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LineEffect)
 		{
 			oldjunk.tag = tag;								// Sector tag for linedef
 			P_TranslateLineDef(&junk, &oldjunk);			// Turn into native type
-			res = !!P_ExecuteSpecial(junk.special, NULL, self, false, junk.args[0], 
+			res = !!P_ExecuteSpecial(self->Level, junk.special, NULL, self, false, junk.args[0], 
 				junk.args[1], junk.args[2], junk.args[3], junk.args[4]); 
 			if (res && !(junk.flags & ML_REPEAT_SPECIAL))	// If only once,
 				self->flags6 |= MF6_LINEDONE;				// no more for this thing
@@ -3696,7 +3696,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RadiusGive)
 	int given = 0;
 	if (flags & RGF_MISSILES)
 	{
-		TThinkerIterator<AActor> it;
+		TThinkerIterator<AActor> it(self->Level);
 		while ((thing = it.Next()) && ((unlimited) || (given < limit)))
 		{
 			given += DoRadiusGive(self, thing, item, amount, distance, flags, filter, species, mindist);
@@ -3925,7 +3925,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DamageChildren)
 	AActor *source = COPY_AAPTR(self, src);
 	AActor *inflictor = COPY_AAPTR(self, inflict);
 
-	TThinkerIterator<AActor> it;
+	TThinkerIterator<AActor> it(self->Level);
 	AActor *mo;
 
 	while ( (mo = it.Next()) )
@@ -3955,7 +3955,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DamageSiblings)
 	AActor *source = COPY_AAPTR(self, src);
 	AActor *inflictor = COPY_AAPTR(self, inflict);
 
-	TThinkerIterator<AActor> it;
+	TThinkerIterator<AActor> it(self->Level);
 	AActor *mo;
 
 	if (self->master != NULL)
@@ -4106,7 +4106,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KillChildren)
 	AActor *source = COPY_AAPTR(self, src);
 	AActor *inflictor = COPY_AAPTR(self, inflict);
 
-	TThinkerIterator<AActor> it;
+	TThinkerIterator<AActor> it(self->Level);
 	AActor *mo;
 
 	while ( (mo = it.Next()) )
@@ -4137,7 +4137,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KillSiblings)
 	AActor *source = COPY_AAPTR(self, src);
 	AActor *inflictor = COPY_AAPTR(self, inflict);
 
-	TThinkerIterator<AActor> it;
+	TThinkerIterator<AActor> it(self->Level);
 	AActor *mo;
 
 	if (self->master != NULL)
@@ -4265,7 +4265,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RemoveChildren)
 	PARAM_CLASS(filter, AActor);
 	PARAM_NAME(species);
 
-	TThinkerIterator<AActor> it;
+	TThinkerIterator<AActor> it(self->Level);
 	AActor *mo;
 
 	while ((mo = it.Next()) != NULL)
@@ -4291,7 +4291,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RemoveSiblings)
 	PARAM_CLASS(filter, AActor);
 	PARAM_NAME(species);
 
-	TThinkerIterator<AActor> it;
+	TThinkerIterator<AActor> it(self->Level);
 	AActor *mo;
 
 	if (self->master != NULL)

@@ -139,7 +139,7 @@ class SoundSequence : Actor
 		if (slot != 'none')
 		{ // This is a slotted sound, so add it to the master for that slot
 			SoundSequenceSlot master;
-			let locator = ThinkerIterator.Create("SoundSequenceSlot");
+			let locator = Level.CreateThinkerIterator("SoundSequenceSlot");
 
 			while ((master = SoundSequenceSlot(locator.Next ())))
 			{

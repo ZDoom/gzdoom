@@ -42,25 +42,25 @@ class DThinkerIterator : public DObject, public FThinkerIterator
 	DECLARE_ABSTRACT_CLASS(DThinkerIterator, DObject)
 
 public:
-	DThinkerIterator(PClass *cls, int statnum = MAX_STATNUM + 1)
-		: FThinkerIterator(cls, statnum)
+	DThinkerIterator(FLevelLocals *Level, PClass *cls, int statnum = MAX_STATNUM + 1)
+		: FThinkerIterator(Level, cls, statnum)
 	{
 	}
 };
 
 IMPLEMENT_CLASS(DThinkerIterator, true, false);
 
-static DThinkerIterator *CreateThinkerIterator(PClass *type, int statnum)
+static DThinkerIterator *CreateThinkerIterator(FLevelLocals *Level, PClass *type, int statnum)
 {
-	return Create<DThinkerIterator>(type, statnum);
+	return Create<DThinkerIterator>(Level, type, statnum);
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(DThinkerIterator, Create, CreateThinkerIterator)
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, CreateThinkerIterator, CreateThinkerIterator)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_CLASS(type, DThinker);
 	PARAM_INT(statnum);
-	ACTION_RETURN_OBJECT(Create<DThinkerIterator>(type, statnum));
+	ACTION_RETURN_OBJECT(CreateThinkerIterator(self, type, statnum));
 }
 
 static DThinker *NextThinker(DThinkerIterator *self, bool exact)

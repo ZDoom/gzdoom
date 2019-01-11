@@ -119,7 +119,7 @@ extend class Actor
 		{
 			SoundAlert (self);
 		}
-		ThinkerIterator it = ThinkerIterator.Create("Actor");
+		ThinkerIterator it = Level.CreateThinkerIterator("Actor");
 		Actor mo;
 		while ( (mo = Actor(it.Next ())) )
 		{

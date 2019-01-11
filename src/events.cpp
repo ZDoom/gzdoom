@@ -712,7 +712,7 @@ static FWorldEvent E_SetupWorldEvent()
 {
 	FWorldEvent e;
 	e.IsSaveGame = savegamerestore;
-	e.IsReopen = currentSession->Levelinfo[0]->FromSnapshot && !savegamerestore; // each one by itself isnt helpful, but with hub load we have savegamerestore==0 and level.FromSnapshot==1.
+	e.IsReopen = currentSession->Levelinfo[0]->FromSnapshot && !savegamerestore; // each one by itself isnt helpful, but with hub load we have savegamerestore==0 and FromSnapshot==1.
 	e.DamageAngle = 0.0;
 	return e;
 }

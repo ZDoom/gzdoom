@@ -1201,7 +1201,7 @@ int P_LookForMonsters (AActor *actor)
 {
 	int count;
 	AActor *mo;
-	TThinkerIterator<AActor> iterator;
+	TThinkerIterator<AActor> iterator(actor->Level);
 
 	if (!P_CheckSight (players[0].mo, actor, SF_SEEPASTBLOCKEVERYTHING))
 	{ // Player can't see monster
@@ -2389,7 +2389,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			// as the goal.
 			while ( (spec = specit.Next()) )
 			{
-				P_ExecuteSpecial(spec->special, NULL, actor, false, spec->args[0],
+				P_ExecuteSpecial(actor->Level, spec->special, NULL, actor, false, spec->args[0],
 					spec->args[1], spec->args[2], spec->args[3], spec->args[4]);
 			}
 
@@ -3053,7 +3053,7 @@ int CheckBossDeath (AActor *actor)
 		return false; // no one left alive, so do not end game
 	
 	// Make sure all bosses are dead
-	TThinkerIterator<AActor> iterator;
+	TThinkerIterator<AActor> iterator(actor->Level);
 	AActor *other;
 
 	while ( (other = iterator.Next ()) )
@@ -3096,7 +3096,7 @@ void A_BossDeath(AActor *self)
 			}
 			checked = true;
 
-			P_ExecuteSpecial(sa->Action, NULL, self, false, 
+			P_ExecuteSpecial(self->Level, sa->Action, NULL, self, false, 
 				sa->Args[0], sa->Args[1], sa->Args[2], sa->Args[3], sa->Args[4]);
 		}
 	}
@@ -3192,16 +3192,19 @@ int P_Massacre (bool baddies, PClassActor *cls)
 	// fixed lost soul bug (LSs left behind when PEs are killed)
 
 	int killcount = 0;
-	AActor *actor;
-	TThinkerIterator<AActor> iterator(cls? cls : RUNTIME_CLASS(AActor));
-
-	while ( (actor = iterator.Next ()) )
+	ForAllLevels([&](FLevelLocals *Level)
 	{
-		if (!(actor->flags2 & MF2_DORMANT) && (actor->flags3 & MF3_ISMONSTER) && (!baddies || !(actor->flags & MF_FRIENDLY)))
+		AActor *actor;
+		TThinkerIterator<AActor> iterator(Level, cls ? cls : RUNTIME_CLASS(AActor));
+
+		while ((actor = iterator.Next()))
 		{
-			killcount += actor->Massacre();
+			if (!(actor->flags2 & MF2_DORMANT) && (actor->flags3 & MF3_ISMONSTER) && (!baddies || !(actor->flags & MF_FRIENDLY)))
+			{
+				killcount += actor->Massacre();
+			}
 		}
-	}
+	});
 	return killcount;
 }
 

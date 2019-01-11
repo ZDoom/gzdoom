@@ -387,7 +387,7 @@ void G_NewInit ()
 	int i;
 
 	// Destory all old player refrences that may still exist
-	TThinkerIterator<AActor> it(NAME_PlayerPawn, STAT_TRAVELLING);
+	TThinkerIterator<AActor> it(currentSession->Levelinfo[0], NAME_PlayerPawn, STAT_TRAVELLING);
 	AActor *pawn, *next;
 
 	next = it.Next();
@@ -1380,7 +1380,7 @@ void G_StartTravel ()
 
 int G_FinishTravel ()
 {
-	TThinkerIterator<AActor> it (NAME_PlayerPawn, STAT_TRAVELLING);
+	TThinkerIterator<AActor> it (currentSession->Levelinfo[0], NAME_PlayerPawn, STAT_TRAVELLING);
 	AActor *pawn, *pawndup, *oldpawn, *next;
 	AActor *inv;
 	FPlayerStart *start;
@@ -1744,7 +1744,7 @@ void G_UnSnapshotLevel (bool hubLoad)
 		arc.SetLevel(nullptr);
 		level.FromSnapshot = true;
 
-		TThinkerIterator<AActor> it(NAME_PlayerPawn);
+		TThinkerIterator<AActor> it(currentSession->Levelinfo[0], NAME_PlayerPawn);
 		AActor *pawn, *next;
 
 		next = it.Next();

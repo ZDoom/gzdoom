@@ -5153,7 +5153,7 @@ AActor *P_SpawnPlayer (FLevelLocals *Level, FPlayerStart *mthing, int playernum,
 			// monsters who last targeted this player will wake up immediately
 			// after the player has respawned.
 			AActor *th;
-			TThinkerIterator<AActor> it;
+			TThinkerIterator<AActor> it(Level);
 			while ((th = it.Next()))
 			{
 				if (th->LastHeard == oldactor) th->LastHeard = nullptr;

@@ -835,13 +835,16 @@ void AActor::DeleteAttachedLights()
 
 void AActor::DeleteAllAttachedLights()
 {
-	TThinkerIterator<AActor> it;
-	AActor * a;
-
-	while ((a=it.Next())) 
+	ForAllLevels([](FLevelLocals *Level)
 	{
-		a->DeleteAttachedLights();
-	}
+		TThinkerIterator<AActor> it(Level);
+		AActor * a;
+
+		while ((a = it.Next()))
+		{
+			a->DeleteAttachedLights();
+		}
+	});
 }
 
 //==========================================================================
@@ -852,20 +855,23 @@ void AActor::DeleteAllAttachedLights()
 
 void AActor::RecreateAllAttachedLights()
 {
-	TThinkerIterator<AActor> it;
-	AActor * a;
-
-	while ((a=it.Next())) 
+	ForAllLevels([](FLevelLocals *Level)
 	{
-		if (a->IsKindOf(NAME_DynamicLight))
+		TThinkerIterator<AActor> it(Level);
+		AActor * a;
+
+		while ((a = it.Next()))
 		{
-			::AttachLight(a);
+			if (a->IsKindOf(NAME_DynamicLight))
+			{
+				::AttachLight(a);
+			}
+			else
+			{
+				a->SetDynamicLights();
+			}
 		}
-		else
-		{
-			a->SetDynamicLights();
-		}
-	}
+	});
 }
 
 //==========================================================================

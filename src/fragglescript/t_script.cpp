@@ -664,6 +664,6 @@ CCMD(fpuke)
 	}
 	else
 	{
-		T_RunScript(&level, atoi(argv[1]), players[consoleplayer].mo);
+		T_RunScript(currentSession->Levelinfo[0] , atoi(argv[1]), players[consoleplayer].mo);
 	}
 }

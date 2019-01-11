@@ -47,6 +47,7 @@
 #include "v_text.h"
 #include "w_wad.h"
 #include "doomstat.h"
+#include "g_levellocals.h"
 
 extern FRandom pr_exrandom;
 FMemArena FxAlloc(65536);
@@ -7783,6 +7784,10 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 			return nullptr;
 		}
 		FxExpression *self = (ctx.Function && (ctx.Function->Variants[0].Flags & VARF_Method) && isActor(ctx.Class)) ? new FxSelf(ScriptPosition) : (FxExpression*)new FxConstant(ScriptPosition);
+		if (self->isConstant() && ctx.Version >= MakeVersion(3, 8, 0))
+		{
+			ScriptPosition.Message(MSG_WARNING, "Deprecated use of %s. Action specials should only be used from actor methods", MethodName.GetChars());
+		}
 		FxExpression *x = new FxActionSpecialCall(self, special, ArgList, ScriptPosition);
 		delete this;
 		return x->Resolve(ctx);
@@ -8619,7 +8624,7 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 
 int BuiltinCallLineSpecial(int special, AActor *activator, int arg1, int arg2, int arg3, int arg4, int arg5)
 {
-	return P_ExecuteSpecial(special, nullptr, activator, 0, arg1, arg2, arg3, arg4, arg5);
+	return P_ExecuteSpecial(activator ? activator->Level : currentSession->LevelInfo[0], special, nullptr, activator, 0, arg1, arg2, arg3, arg4, arg5);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DObject, BuiltinCallLineSpecial, BuiltinCallLineSpecial)
@@ -8633,7 +8638,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DObject, BuiltinCallLineSpecial, BuiltinCallLineSp
 	PARAM_INT(arg4);
 	PARAM_INT(arg5);
 
-	ACTION_RETURN_INT(P_ExecuteSpecial(special, nullptr, activator, 0, arg1, arg2, arg3, arg4, arg5));
+	ACTION_RETURN_INT(BuiltinCallLineSpecial(special, activator, arg1, arg2, arg3, arg4, arg5));
 }
 
 ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)

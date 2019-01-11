@@ -3038,7 +3038,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Teleport)
 		}
 	}
 
-	DSpotState *state = GetSpotState(&level, false);
+	DSpotState *state = GetSpotState(self->Level, false);
 	if (state == NULL)
 	{
 		return numret;

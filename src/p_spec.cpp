@@ -183,7 +183,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 	lineActivation = line->activation;
 	repeat = line->flags & ML_REPEAT_SPECIAL;
 	buttonSuccess = false;
-	buttonSuccess = P_ExecuteSpecial(line->special,
+	buttonSuccess = P_ExecuteSpecial(Level, line->special,
 					line, mo, side == 1, line->args[0],
 					line->args[1], line->args[2],
 					line->args[3], line->args[4]);
@@ -404,7 +404,7 @@ bool P_PredictLine(line_t *line, AActor *mo, int side, int activationType)
 	if (line->locknumber > 0) return false;
 	lineActivation = line->activation;
 	buttonSuccess = false;
-	buttonSuccess = P_ExecuteSpecial(line->special,
+	buttonSuccess = P_ExecuteSpecial(line->GetLevel(), line->special,
 		line, mo, side == 1, line->args[0],
 		line->args[1], line->args[2],
 		line->args[3], line->args[4]);

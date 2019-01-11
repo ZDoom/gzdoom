@@ -1683,13 +1683,14 @@ void G_DoPlayerPop(int playernum)
 			}
 		}
 	}
+	auto Level = players[playernum].mo->Level;
 
 	// [RH] Make the player disappear
-	players[playernum].mo->Level->Behaviors.StopMyScripts(players[playernum].mo);
+	Level->Behaviors.StopMyScripts(players[playernum].mo);
 	// [ZZ] fire player disconnect hook
 	E_PlayerDisconnected(playernum);
 	// [RH] Let the scripts know the player left
-	players[playernum].mo->Level->Behaviors.StartTypedScripts(&level, SCRIPT_Disconnect, players[playernum].mo, true, playernum, true);
+	Level->Behaviors.StartTypedScripts(Level, SCRIPT_Disconnect, players[playernum].mo, true, playernum, true);
 	if (players[playernum].mo != NULL)
 	{
 		P_DisconnectEffect(players[playernum].mo);
@@ -2027,14 +2028,14 @@ void G_DoAutoSave ()
 
 	file = G_BuildSaveName ("auto", nextautosave);
 
-	if (!(level.flags2 & LEVEL2_NOAUTOSAVEHINT))
+	if (!(currentSession->Levelinfo[0]->flags2 & LEVEL2_NOAUTOSAVEHINT))
 	{
 		nextautosave = (nextautosave + 1) % count;
 	}
 	else
 	{
 		// This flag can only be used once per level
-		level.flags2 &= ~LEVEL2_NOAUTOSAVEHINT;
+		currentSession->Levelinfo[0]->flags2 &= ~LEVEL2_NOAUTOSAVEHINT;
 	}
 
 	readableTime = myasctime ();
@@ -2112,7 +2113,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	ForAllLevels([&](FLevelLocals *Level) {
 		
 		// Do not even try, if we're not in a map. (Can happen after a demo finishes playback.)
-		if (Level->lines.Size() == 0 || level.sectors.Size() == 0)
+		if (Level->lines.Size() == 0 || Level->sectors.Size() == 0)
 		{
 			checkok = false;
 		}
@@ -2391,7 +2392,8 @@ void G_BeginRecording (const char *startmap)
 
 	if (startmap == NULL)
 	{
-		startmap = level.MapName;
+		if (!currentSession) return;
+		startmap = currentSession->Levelinfo[0]->MapName;
 	}
 	demo_p = demobuffer;
 

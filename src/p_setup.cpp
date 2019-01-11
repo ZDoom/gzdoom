@@ -400,7 +400,7 @@ void P_SetupLevel(FLevelLocals *Level, const char *lumpname, int position, bool 
 	players[consoleplayer].viewz = NO_VALUE;
 
 	// Make sure all sounds are stopped before Z_FreeTags.
-	S_Start(&level);
+	S_Start(currentSession->Levelinfo[0]);
 
 	// [RH] clear out the mid-screen message
 	C_MidPrint(nullptr, nullptr);
@@ -658,21 +658,23 @@ CUSTOM_CVAR(Bool, forcewater, false, CVAR_ARCHIVE | CVAR_SERVERINFO)
 {
 	if (gamestate == GS_LEVEL)
 	{
-		auto Level = &level;
-		for (auto &sec : Level->sectors)
+		ForAllLevels([&](FLevelLocals *Level)
 		{
-			sector_t *hsec = sec.GetHeightSec();
-			if (hsec && !(hsec->MoreFlags & SECMF_UNDERWATER))
+			for (auto &sec : Level->sectors)
 			{
-				if (self)
+				sector_t *hsec = sec.GetHeightSec();
+				if (hsec && !(hsec->MoreFlags & SECMF_UNDERWATER))
 				{
-					hsec->MoreFlags |= SECMF_FORCEDUNDERWATER;
-				}
-				else
-				{
-					hsec->MoreFlags &= ~SECMF_FORCEDUNDERWATER;
+					if (self)
+					{
+						hsec->MoreFlags |= SECMF_FORCEDUNDERWATER;
+					}
+					else
+					{
+						hsec->MoreFlags &= ~SECMF_FORCEDUNDERWATER;
+					}
 				}
 			}
-		}
+		});
 	}
 }

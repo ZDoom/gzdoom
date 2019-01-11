@@ -483,7 +483,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	int i;
 
 	// did we have any level before?
-	if (level.info != nullptr)
+	if (currentSession->Levelinfo[0]->info)
 		E_WorldUnloadedUnsafe();
 
 	if (!savegamerestore)
@@ -616,13 +616,14 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 		return;
 	}
 
+	auto OldLevel = currentSession->Levelinfo[0];	// Only the primary level is relevant here.
 	if (levelname == NULL || *levelname == 0)
 	{
 		// end the game
 		levelname = NULL;
-		if (!level.NextMap.Compare("enDSeQ",6))
+		if (!OldLevel->NextMap.Compare("enDSeQ",6))
 		{
-			nextlevel = level.NextMap;	// If there is already an end sequence please leave it alone!
+			nextlevel = OldLevel->NextMap;	// If there is already an end sequence please leave it alone!
 		}
 		else 
 		{
@@ -658,10 +659,10 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 
 	if (flags & CHANGELEVEL_NOINTERMISSION)
 	{
-		level.flags |= LEVEL_NOINTERMISSION;
+		OldLevel->flags |= LEVEL_NOINTERMISSION;
 	}
 
-	cluster_info_t *thiscluster = FindClusterInfo (level.cluster);
+	cluster_info_t *thiscluster = FindClusterInfo (OldLevel->cluster);
 	cluster_info_t *nextcluster = nextinfo? FindClusterInfo (nextinfo->cluster) : NULL;
 
 	startpos = position;
@@ -688,18 +689,18 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 
 	// [RH] Give scripts a chance to do something
 	unloading = true;
-	level.Behaviors.StartTypedScripts (&level, SCRIPT_Unloading, NULL, false, 0, true);
+	OldLevel->Behaviors.StartTypedScripts (OldLevel, SCRIPT_Unloading, NULL, false, 0, true);
 	// [ZZ] safe world unload
 	E_WorldUnloaded();
 	// [ZZ] unsafe world unload (changemap != map)
 	E_WorldUnloadedUnsafe();
 	unloading = false;
 
-	STAT_ChangeLevel(nextlevel, &level);
+	STAT_ChangeLevel(nextlevel, OldLevel);
 
 	if (thiscluster && (thiscluster->flags & CLUSTER_HUB))
 	{
-		if ((level.flags & LEVEL_NOINTERMISSION) || ((nextcluster == thiscluster) && !(thiscluster->flags & CLUSTER_ALLOWINTERMISSION)))
+		if ((OldLevel->flags & LEVEL_NOINTERMISSION) || ((nextcluster == thiscluster) && !(thiscluster->flags & CLUSTER_ALLOWINTERMISSION)))
 			NoWipe = 35;
 		D_DrawIcon = "TELEICON";
 	}
@@ -715,7 +716,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 
 			// If this is co-op, respawn any dead players now so they can
 			// keep their inventory on the next map.
-			if ((multiplayer || level.flags2 & LEVEL2_ALLOWRESPAWN || sv_singleplayerrespawn || !!G_SkillProperty(SKILLP_PlayerRespawn))
+			if ((multiplayer || OldLevel->flags2 & LEVEL2_ALLOWRESPAWN || sv_singleplayerrespawn || !!G_SkillProperty(SKILLP_PlayerRespawn))
 				&& !deathmatch && player->playerstate == PST_DEAD)
 			{
 				// Copied from the end of P_DeathThink [[
@@ -759,7 +760,7 @@ const char *G_GetSecretExitMap()
 
 //==========================================================================
 //
-// The flags here must always be on the primary level.
+// The flags here must always be on the primary map.
 //
 //==========================================================================
 
@@ -814,7 +815,7 @@ void G_DoCompleted ()
 	P_FreeStrifeConversations ();
 
 	wminfo.finished_ep = Level->cluster - 1;
-	wminfo.LName0 = TexMan.CheckForTexture(level.info->PName, ETextureType::MiscPatch);
+	wminfo.LName0 = TexMan.CheckForTexture(Level->info->PName, ETextureType::MiscPatch);
 	wminfo.current = Level->MapName;
 
 	if (deathmatch &&
@@ -864,7 +865,7 @@ void G_DoCompleted ()
 	}
 
 	// [RH] If we're in a hub and staying within that hub, take a snapshot
-	//		of the level. If we're traveling to a new hub, take stuff from
+	//		of the map. If we're traveling to a new hub, take stuff from
 	//		the player and clear the world vars. If this is just an
 	//		ordinary cluster (not a hub), take stuff from the player, but
 	//		leave the world vars alone.
@@ -982,6 +983,7 @@ extern gamestate_t 	wipegamestate;
 void G_DoLoadLevel (int position, bool autosave, bool newGame)
 { 
 	static int lastposition = 0;
+	auto &level = *currentSession->Levelinfo[0];
 	gamestate_t oldgs = gamestate;
 	int i;
 

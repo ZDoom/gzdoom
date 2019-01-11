@@ -212,7 +212,7 @@ FLineSpecial *P_GetLineSpecialInfo(int num);
 int P_GetMaxLineSpecial();
 int P_FindLineSpecial (const char *string, int *min_args=NULL, int *max_args=NULL);
 bool P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death=false);
-int P_ExecuteSpecial(int			num,
+int P_ExecuteSpecial(FLevelLocals *Level, int num,
 					 //FLevelLocals	*lev, must be added later.
 					 struct line_t	*line,
 					 class AActor	*activator,

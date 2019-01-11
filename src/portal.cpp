@@ -159,7 +159,6 @@ static void BuildBlockmap(FLevelLocals *Level)
 
 void FLinePortalTraverse::AddLineIntercepts(int bx, int by)
 {
-	auto Level = &level;
 	if (by < 0 || by >= Level->PortalBlockmap.dy || bx < 0 || bx >= Level->PortalBlockmap.dx) return;
 
 	FPortalBlock &block = Level->PortalBlockmap(bx, by);

@@ -2514,7 +2514,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 			}
 			if (!CheckCheatmode(player == consoleplayer))
 			{
-				P_ExecuteSpecial(snum, NULL, players[player].mo, false, arg[0], arg[1], arg[2], arg[3], arg[4]);
+				P_ExecuteSpecial(players[player].mo->Level, snum, NULL, players[player].mo, false, arg[0], arg[1], arg[2], arg[3], arg[4]);
 			}
 		}
 		break;

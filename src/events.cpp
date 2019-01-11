@@ -290,7 +290,7 @@ void E_InitStaticHandlers(bool map)
 		return;
 
 	// initialize event handlers from mapinfo
-	for (const FString& typeName : level.info->EventHandlers)
+	for (const FString& typeName : currentSession->Levelinfo[0]->info->EventHandlers)
 	{
 		PClass* type = E_GetHandlerClass(typeName);
 		if (E_IsStaticType(type))
@@ -712,7 +712,7 @@ static FWorldEvent E_SetupWorldEvent()
 {
 	FWorldEvent e;
 	e.IsSaveGame = savegamerestore;
-	e.IsReopen = level.FromSnapshot && !savegamerestore; // each one by itself isnt helpful, but with hub load we have savegamerestore==0 and level.FromSnapshot==1.
+	e.IsReopen = currentSession->Levelinfo[0]->FromSnapshot && !savegamerestore; // each one by itself isnt helpful, but with hub load we have savegamerestore==0 and level.FromSnapshot==1.
 	e.DamageAngle = 0.0;
 	return e;
 }

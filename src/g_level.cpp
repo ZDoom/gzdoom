@@ -901,7 +901,7 @@ void G_DoCompleted ()
 		}
 		else
 		{ // Make sure we don't have a snapshot lying around from before.
-			currentSession->Snapshots.Remove(Level->MapName);
+			currentSession->RemoveSnapshot(Level->MapName);
 		}
 	}
 	else
@@ -928,10 +928,6 @@ void G_DoCompleted ()
 	gamestate = GS_INTERMISSION;
 	viewactive = false;
 	automapactive = false;
-
-// [RH] If you ever get a statistics driver operational, adapt this.
-//	if (statcopy)
-//		memcpy (statcopy, &wminfo, sizeof(wminfo));
 
 	WI_Start (&wminfo);
 }
@@ -1810,7 +1806,7 @@ void G_SnapshotLevel ()
 	ForAllLevels([](FLevelLocals *Level)
 	{
 		// first remove the old snapshot, if it exists.
-		currentSession->Snapshots.Remove(Level->MapName);
+		currentSession->RemoveSnapshot(Level->MapName);
 		
 		FSerializer arc;
 		if (arc.OpenWriter(save_formatted))
@@ -1881,7 +1877,7 @@ void G_UnSnapshotLevel (const TArray<FLevelLocals *> &levels, bool hubLoad)
 			arc.Close();
 		}
 		// No reason to keep the snapshot around once the level's been entered.
-		currentSession->Snapshots.Remove(Level->MapName);
+		currentSession->RemoveSnapshot(Level->MapName);
 		// Unlock ACS global strings that were locked when the snapshot was made.
 		Level->Behaviors.UnlockLevelVarStrings(Level->levelnum);
 	}

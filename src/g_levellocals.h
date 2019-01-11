@@ -344,7 +344,23 @@ public:
 	}
 	void ClearSnapshots()
 	{
+		decltype(Snapshots)::Iterator it(Snapshots);
+		decltype(Snapshots)::Pair *pair;
+		while (it.NextPair(pair))
+		{
+			pair->Value.Clean();
+		}
+
 		Snapshots.Clear();
+	}
+	void RemoveSnapshot(FName mapname)
+	{
+		auto snapshot = Snapshots.CheckKey(mapname);
+		if (snapshot)
+		{
+			snapshot->Clean();
+		}
+		Snapshots.Remove(mapname);
 	}
 
 };

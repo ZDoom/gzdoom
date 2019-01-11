@@ -1926,7 +1926,11 @@ void G_DoLoadGame ()
 	NextSkill = -1;
 	arc("nextskill", NextSkill);
 
-	//currentSession->Snapshots.Remove(MapName); fixme
+	// Delete all snapshots that were created for the currently active levels.
+	ForAllLevels([](FLevelLocals *Level)
+	{
+		currentSession->RemoveSnapshot(Level->MapName);
+	});
 
 	BackupSaveName = savename;
 
@@ -2234,11 +2238,6 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 
 	savegameManager.NotifyNewSave (filename, description, okForQuicksave);
 
-	// delete the JSON buffers we created just above. Everything else will
-	// either still be needed or taken care of automatically.
-	//savegame_content[1].Clean();
-	//savegame_content[2].Clean();
-
 	// Check whether the file is ok by trying to open it.
 	FResourceFile *test = FResourceFile::OpenResourceFile(filename, true);
 	if (test != nullptr)
@@ -2252,9 +2251,6 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 
 	BackupSaveName = filename;
 
-	// We don't need the snapshot any longer.
-	//currentSession->Snapshots.Remove(???);
-		
 	insave = false;
 
 	if (cl_waitforsave)

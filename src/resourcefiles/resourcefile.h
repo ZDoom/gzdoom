@@ -19,7 +19,8 @@ struct FCompressedBuffer
 	char *mBuffer;
 
 	bool Decompress(char *destbuffer);
-	~FCompressedBuffer()
+
+	void Clean()
 	{
 		mSize = mCompressedSize = 0;
 		if (mBuffer != nullptr)

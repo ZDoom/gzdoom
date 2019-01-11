@@ -139,6 +139,8 @@ static int DoomSpecificInfo (char *buffer, char *end)
 	int size = end-buffer-2;
 	int i, p;
 
+	auto &vp = r_viewpoint;
+
 	p = 0;
 	p += snprintf (buffer+p, size-p, GAMENAME" version %s (%s)\n", GetVersionString(), GetGitHash());
 #ifdef __VERSION__
@@ -170,7 +172,6 @@ static int DoomSpecificInfo (char *buffer, char *end)
 		}
 		else
 		{
-            auto &vp = r_viewpoint;
 			p += snprintf (buffer+p, size-p, "\n\nviewx = %f", vp.Pos.X);
 			p += snprintf (buffer+p, size-p, "\nviewy = %f", vp.Pos.Y);
 			p += snprintf (buffer+p, size-p, "\nviewz = %f", vp.Pos.Z);

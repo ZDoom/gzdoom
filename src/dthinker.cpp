@@ -382,6 +382,8 @@ void DThinker::ChangeStatNum (int statnum)
 {
 	FThinkerList *list;
 
+	Level = currentSession->Levelinfo[0];	// fixme later.
+
 	// This thinker should already be in a list; verify that.
 	assert(NextThinker != NULL && PrevThinker != NULL);
 

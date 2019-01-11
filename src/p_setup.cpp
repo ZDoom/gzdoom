@@ -415,6 +415,7 @@ void P_Init ()
 {
 	atterm (P_Shutdown);
 
+	currentSession = new FGameSession;
 	P_InitEffects ();		// [RH]
 	P_InitTerrainTypes ();
 	P_InitKeyMessages ();
@@ -423,6 +424,8 @@ void P_Init ()
 
 static void P_Shutdown ()
 {
+	delete currentSession;
+	currentSession = nullptr;
 	DThinker::DestroyThinkersInList(STAT_STATIC);
 	P_FreeLevelData ();
 	// [ZZ] delete global event handlers

@@ -317,7 +317,7 @@ struct FLevelLocals : public FLevelData
 class FGameSession
 {
 public:
-	TArray<FLevelLocals *> Levelinfo;
+	TDeletingArray<FLevelLocals *> Levelinfo;
 	
 	TMap<FName, FCompressedBuffer> Snapshots;
 	TMap<FName, TArray<acsdefered_t>> DeferredScripts;

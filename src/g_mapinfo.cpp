@@ -2251,7 +2251,6 @@ static void ClearMapinfo()
 	AllSkills.Clear();
 	DefaultSkill = -1;
 	DeinitIntermissions();
-	currentSession->F1Pic = "";
 }
 
 //==========================================================================

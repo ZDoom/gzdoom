@@ -1767,7 +1767,8 @@ void S_StopSound (const FPolyObj *poly, int channel)
 
 void S_StopAllChannels ()
 {
-	ForAllLevels(SN_StopAllSequences);
+	if (currentSession)
+		ForAllLevels(SN_StopAllSequences);
 
 	FSoundChan *chan = Channels;
 	while (chan != NULL)

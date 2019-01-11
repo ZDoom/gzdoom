@@ -165,8 +165,7 @@ extern bool sendpause, sendsave, sendturn180, SendLand;
 
 void *statcopy;					// for statistics driver
 
-static FGameSession session; // do not use directly. The pointer is more future proof.
-FGameSession *currentSession = &session;
+FGameSession *currentSession = nullptr;
 
 //==========================================================================
 //
@@ -1009,7 +1008,7 @@ void G_DoLoadLevel (const FString &nextlevel, int position, bool autosave, bool 
 {
 	auto levelinfo = FindLevelInfo(nextlevel);
 	TArray<level_info_t *> MapSet;
-	
+
 	MapSet.Push(levelinfo);
 	//MapSet.Append(levelinfo->SubLevels);
 	
@@ -1031,7 +1030,8 @@ void G_DoLoadLevel (const FString &nextlevel, int position, bool autosave, bool 
 		lastposition = position;
 
 	StatusBar->DetachAllMessages ();
-	currentSession->Levelinfo.Clear();	// Delete all old levels.
+	currentSession->Levelinfo.DeleteAndClear();
+	GC::FullGC();	// really get rid of all the data we just deleted.
 	
 	// Force 'teamplay' to 'true' if need be.
 	if (levelinfo->flags2 & LEVEL2_FORCETEAMPLAYON)
@@ -1838,9 +1838,7 @@ void G_UnSnapshotLevel (const TArray<FLevelLocals *> &levels, bool hubLoad)
 		auto snapshot = currentSession->Snapshots.CheckKey(Level->MapName);
 		if (snapshot == nullptr)
 		{
-			// should be handled by the caller when reading in the savegame.
-			I_Error("Bad list of levels passed to G_UnSnapshotLevel");
-			return;
+			continue;
 		}
 
 		if (Level->info->isValid())

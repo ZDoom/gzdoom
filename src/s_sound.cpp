@@ -990,22 +990,19 @@ static FSoundChan *S_StartSound(FLevelLocals *Level, AActor *actor, const sector
 	{
 		return nullptr;
 	}
-
-	if (Level != nullptr)
+	
+	if (compatflags & COMPATF_MAGICSILENCE)
+	{ // For people who just can't play without a silent BFG.
+		channel = CHAN_WEAPON;
+	}
+	else if ((chanflags & CHAN_MAYBE_LOCAL) && (compatflags & COMPATF_SILENTPICKUP))
 	{
-		if (Level->i_compatflags & COMPATF_MAGICSILENCE)
-		{ // For people who just can't play without a silent BFG.
-			channel = CHAN_WEAPON;
-		}
-		else if ((chanflags & CHAN_MAYBE_LOCAL) && (Level->i_compatflags & COMPATF_SILENTPICKUP))
+		if (actor != nullptr && actor != players[consoleplayer].camera)
 		{
-			if (actor != nullptr && actor != players[consoleplayer].camera)
-			{
-				return nullptr;
-			}
+			return nullptr;
 		}
 	}
-
+	
 	sfx = &S_sfx[sound_id];
 
 	// Scale volume according to SNDINFO data.

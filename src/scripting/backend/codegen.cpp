@@ -6283,7 +6283,8 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PContainerType *
 			{
 				if ((sym = objtype->Symbols.FindSymbolInTable(gettername, symtbl)) != nullptr)
 				{
-					FxExpression *x = new FxMemberFunctionCall(object, gettername, FArgumentList(), ScriptPosition);
+					FArgumentList argsList;
+					FxExpression *x = new FxMemberFunctionCall(object, gettername, argsList, ScriptPosition);
 					x = x->Resolve(ctx);
 					delete this;
 					return x;

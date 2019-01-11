@@ -162,6 +162,7 @@ static int DoomSpecificInfo (char *buffer, char *end)
 	}
 	else
 	{
+		auto &vp = r_viewpoint;
 		p += snprintf (buffer+p, size-p, "\n\nCurrent map: %s", vp.camera->Level->MapName.GetChars());
 
 		if (!viewactive)

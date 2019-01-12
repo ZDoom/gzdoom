@@ -46,7 +46,9 @@
 #include "p_acs.h"
 #include "p_tags.h"
 #include "p_effect.h"
+#include "wi_stuff.h"
 #include "p_destructible.h"
+#include "p_conversation.h"
 #include "r_data/r_interpolate.h"
 #include "r_data/r_sections.h"
 #include "r_data/r_canvastexture.h"
@@ -88,7 +90,7 @@ struct FLevelData
 	FDisplacementTable Displacements;
 	FPortalBlockmap PortalBlockmap;
 	TArray<FLinePortal*> linkedPortals;	// only the linked portals, this is used to speed up looking for them in P_CollectConnectedGroups.
-	TArray<FSectorPortalGroup *> portalGroups;
+	TDeletingArray<FSectorPortalGroup *> portalGroups;
 	TArray<FLinePortalSpan> linePortalSpans;
 	FSectionContainer sections;
 	FCanvasTextureInfo canvasTextureInfo;
@@ -112,7 +114,7 @@ struct FLevelData
 
 	FBehaviorContainer Behaviors;
 	
-	TArray<FStrifeDialogueNode *> StrifeDialogues;
+	TDeletingArray<FStrifeDialogueNode *> StrifeDialogues;
 	FDialogueIDMap DialogueRoots;
 	FDialogueMap ClassRoots;
 
@@ -129,7 +131,16 @@ struct FLevelData
 
 struct FLevelLocals : public FLevelData
 {
+	void *operator new(size_t blocksize)
+	{
+		// Null the allocated memory before running the constructor.
+		// This was previously static memory that relied on being nulled to avoid uninitialized parts.
+		auto block = ::operator new(blocksize);
+		memset(block, 0, blocksize);
+		return block;
+	}
 	FLevelLocals() : tagManager(this) {}
+	~FLevelLocals();
 
 	void Tick();
 	void Mark();
@@ -137,13 +148,12 @@ struct FLevelLocals : public FLevelData
 	void SetInterMusic(const char *nextmap);
 	void SetMusic();
 	void ClearLevelData();
-	void ClearPortals();
 	bool CheckIfExitIsGood(AActor *self, level_info_t *newmap);
 	void FormatMapName(FString &mapname, const char *mapnamecolor);
 	void TranslateTeleportThings(void);
 	void ClearAllSubsectorLinks();
 	void ChangeAirControl(double newval);
-	void InitLevelLocals();
+	void InitLevelLocals(const level_info_t *info, bool isprimary);
 	bool IsTIDUsed(int tid);
 	int FindUniqueTID(int start_tid, int limit);
 	int GetConversation(int conv_id);
@@ -175,7 +185,7 @@ struct FLevelLocals : public FLevelData
 	int			sucktime;
 	uint32_t	spawnindex;
 
-	level_info_t *info;
+	const level_info_t * info;		// The info is supposed to be immutable.
 	int			cluster;
 	int			clusterflags;
 	int			levelnum;
@@ -283,6 +293,33 @@ struct FLevelLocals : public FLevelData
 
 	TObjPtr<DSpotState *> SpotState = nullptr;
 
+	// scale on entry
+	static const int AM_NUMMARKPOINTS = 10;
+
+	struct mpoint_t
+	{
+		double x, y;
+	};
+
+	// used by MTOF to scale from map-to-frame-buffer coords
+	double am_scale_mtof = 0.2;
+	// used by FTOM to scale from frame-buffer-to-map coords (=1/scale_mtof)
+	double am_scale_ftom = 1 / 0.2;
+	mpoint_t am_markpoints[AM_NUMMARKPOINTS]; // where the points are
+	int am_markpointnum = 0; // next point to be assigned
+
+// translates between frame-buffer and map distances
+	inline double FTOM(double x)
+	{
+		return x * am_scale_ftom;
+	}
+
+	inline double MTOF(double x)
+	{
+		return x * am_scale_mtof;
+	}
+
+
 	bool		IsJumpingAllowed() const;
 	bool		IsCrouchingAllowed() const;
 	bool		IsFreelookAllowed() const;
@@ -299,30 +336,131 @@ struct FLevelLocals : public FLevelData
 	// Returns true if level is loaded from saved game or is being revisited as a part of a hub
 	bool		IsReentering() const
 	{
-		return savegamerestore
-			|| (info != nullptr && info->Snapshot.mBuffer != nullptr && info->isValid());
+		// This is actually very simple: A reentered map never has a map time of 0 when it starts. If the map time is 0 it must be a freshly loaded instance.
+		return maptime > 0;
 	}
+};
+
+//==========================================================================
+//
+// Player is leaving the current level
+//
+//==========================================================================
+
+struct FHubInfo
+{
+	int			levelnum;
+
+	int			maxkills;
+	int			maxitems;
+	int			maxsecret;
+	int			maxfrags;
+
+	wbplayerstruct_t	plyr[MAXPLAYERS];
+
+	FHubInfo &operator=(const wbstartstruct_t &wbs)
+	{
+		levelnum = wbs.finished_ep;
+		maxkills = wbs.maxkills;
+		maxsecret = wbs.maxsecret;
+		maxitems = wbs.maxitems;
+		maxfrags = wbs.maxfrags;
+		memcpy(plyr, wbs.plyr, sizeof(plyr));
+		return *this;
+	}
+};
+
+
+// This struct is used to track statistics data in game
+struct OneLevel
+{
+	int totalkills, killcount;
+	int totalitems, itemcount;
+	int totalsecrets, secretcount;
+	int leveltime;
+	FString Levelname;
 };
 
 
 class FGameSession
 {
 public:
-	TArray<FLevelLocals *> Levelinfo;
+	TDeletingArray<FLevelLocals *> Levelinfo;
+	
+	TMap<FName, FCompressedBuffer> Snapshots;
+	TMap<FName, TArray<acsdefered_t>> DeferredScripts;
+	TMap<FName, bool> Visited;
+	TArray<FHubInfo> hubdata;
+	TArray<OneLevel> Statistics;// Current game's statistics
+	int SinglePlayerClass[MAXPLAYERS];
+
 	FString F1Pic;
-	float		MusicVolume;
-	int			time;			// time in the hub
-	int			totaltime;		// time in the game
+	float		MusicVolume = 1.0f;
+	int			time = 0;			// time in the hub
+	int			totaltime = 0;		// time in the game
+	int			frozenstate = 0;
+	int			changefreeze = 0;
+	int			NextSkill = -1;
+
+	FString	nextlevel;		// Level to go to on exit
+	int		nextstartpos = 0;	// [RH] Support for multiple starts per level
 
 
 	void SetMusicVolume(float vol);
+	void LeavingHub(int mode, cluster_info_t * cluster, wbstartstruct_t * wbs, FLevelLocals *Level);
+	void InitPlayerClasses();
+
+	void Reset()
+	{
+		Levelinfo.DeleteAndClear();
+		ClearSnapshots();
+		DeferredScripts.Clear();
+		Visited.Clear();
+		hubdata.Clear();
+		Statistics.Clear();
+
+		MusicVolume = 1.0f;
+		time = 0;
+		totaltime = 0;
+		frozenstate = 0;
+		changefreeze = 0;
+
+		nextlevel = "";
+		nextstartpos = 0;
+	}
+	int isFrozen() const
+	{
+		return frozenstate;
+	}
+	bool isValid();
+	FString LookupLevelName ();
+	void ClearSnapshots()
+	{
+		decltype(Snapshots)::Iterator it(Snapshots);
+		decltype(Snapshots)::Pair *pair;
+		while (it.NextPair(pair))
+		{
+			pair->Value.Clean();
+		}
+
+		Snapshots.Clear();
+	}
+	void RemoveSnapshot(FName mapname)
+	{
+		auto snapshot = Snapshots.CheckKey(mapname);
+		if (snapshot)
+		{
+			snapshot->Clean();
+		}
+		Snapshots.Remove(mapname);
+	}
+	void SerializeSession(FSerializer &arc);
+	void SerializeACSDefereds(FSerializer &arc);
+	void SerializeVisited(FSerializer &arc);
+
 };
 
 extern FGameSession *currentSession;
-
-#ifndef NO_DEFINE_LEVEL
-
-extern FLevelLocals level;
 
 inline FSectorPortal *line_t::GetTransferredPortal()
 {
@@ -431,4 +569,5 @@ inline void ForAllLevels(T func)
 	}
 }
 
-#endif
+FSerializer &Serialize(FSerializer &arc, const char *key, wbplayerstruct_t &h, wbplayerstruct_t *def);
+FSerializer &Serialize(FSerializer &arc, const char *key, FHubInfo &h, FHubInfo *def);

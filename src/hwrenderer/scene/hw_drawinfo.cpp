@@ -61,7 +61,7 @@ class FDrawInfoList
 public:
 	TDeletingArray<HWDrawInfo *> mList;
 
-	HWDrawInfo * GetNew(FLevelLocals *);
+	HWDrawInfo * GetNew();
 	void Release(HWDrawInfo *);
 };
 
@@ -77,7 +77,7 @@ FDrawInfoList di_list;
 //
 //==========================================================================
 
-HWDrawInfo *FDrawInfoList::GetNew(FLevelLocals *lev)
+HWDrawInfo *FDrawInfoList::GetNew()
 {
 	if (mList.Size() > 0)
 	{
@@ -85,13 +85,14 @@ HWDrawInfo *FDrawInfoList::GetNew(FLevelLocals *lev)
 		mList.Pop(di);
 		return di;
 	}
-	return new HWDrawInfo(lev);
+	return new HWDrawInfo();
 }
 
 void FDrawInfoList::Release(HWDrawInfo * di)
 {
 	di->DrawScene = nullptr;
 	di->ClearBuffers();
+	di->Level = nullptr;
 	mList.Push(di);
 }
 
@@ -103,8 +104,9 @@ void FDrawInfoList::Release(HWDrawInfo * di)
 
 HWDrawInfo *HWDrawInfo::StartDrawInfo(FLevelLocals *lev, HWDrawInfo *parent, FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms)
 {
-	HWDrawInfo *di = di_list.GetNew(lev);
+	HWDrawInfo *di = di_list.GetNew();
 	if (parent) di->DrawScene = parent->DrawScene;
+	di->Level = lev;
 	di->StartScene(parentvp, uniforms);
 	return di;
 }
@@ -193,16 +195,19 @@ void HWDrawInfo::ClearBuffers()
 	HandledSubsectors.Clear();
 	spriteindex = 0;
 
-	CurrentMapSections.Resize(Level->NumMapSections);
-	CurrentMapSections.Zero();
+	if (Level)
+	{
+		CurrentMapSections.Resize(Level->NumMapSections);
+		CurrentMapSections.Zero();
 
-	section_renderflags.Resize(Level->sections.allSections.Size());
-	ss_renderflags.Resize(Level->subsectors.Size());
-	no_renderflags.Resize(Level->subsectors.Size());
+		section_renderflags.Resize(Level->sections.allSections.Size());
+		ss_renderflags.Resize(Level->subsectors.Size());
+		no_renderflags.Resize(Level->subsectors.Size());
 
-	memset(&section_renderflags[0], 0, Level->sections.allSections.Size() * sizeof(section_renderflags[0]));
-	memset(&ss_renderflags[0], 0, Level->subsectors.Size() * sizeof(ss_renderflags[0]));
-	memset(&no_renderflags[0], 0, Level->nodes.Size() * sizeof(no_renderflags[0]));
+		memset(&section_renderflags[0], 0, Level->sections.allSections.Size() * sizeof(section_renderflags[0]));
+		memset(&ss_renderflags[0], 0, Level->subsectors.Size() * sizeof(ss_renderflags[0]));
+		memset(&no_renderflags[0], 0, Level->nodes.Size() * sizeof(no_renderflags[0]));
+	}
 
 	Decals[0].Clear();
 	Decals[1].Clear();

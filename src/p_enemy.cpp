@@ -3168,11 +3168,11 @@ void A_BossDeath(AActor *self)
 		}
 	}
 
-	// [RH] If noexit, then don't end the Level->
+	// [RH] If noexit, then don't end the map.
 	if ((deathmatch || alwaysapplydmflags) && (dmflags & DF_NO_EXIT))
 		return;
 
-	G_ExitLevel (0, false);
+	G_ExitLevel (Level, 0, false);
 }
 
 //----------------------------------------------------------------------------

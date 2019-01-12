@@ -73,7 +73,6 @@
 #include "dobjgc.h"
 #include "gi.h"
 
-#include "g_hub.h"
 #include "g_levellocals.h"
 #include "events.h"
 
@@ -95,7 +94,6 @@ void	G_DoWorldDone (void);
 void	G_DoSaveGame (bool okForQuicksave, FString filename, const char *description);
 void	G_DoAutoSave ();
 
-void STAT_Serialize(FSerializer &file);
 bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompressedBuffer> &content);
 
 FIntCVar gameskill ("skill", 2, CVAR_SERVERINFO|CVAR_LATCH);
@@ -1028,7 +1026,7 @@ void G_Ticker ()
 		switch (gameaction)
 		{
 		case ga_loadlevel:
-			G_DoLoadLevel (-1, false, false);
+			G_DoLoadLevel (currentSession->nextlevel, -1, false, false);
 			break;
 		case ga_recordgame:
 			G_CheckDemoStatus();
@@ -1078,7 +1076,7 @@ void G_Ticker ()
 			gameaction = ga_nothing;
 			break;
 		case ga_togglemap:
-			AM_ToggleMap ();
+			AM_ToggleMap (players[consoleplayer].camera->Level);
 			gameaction = ga_nothing;
 			break;
 		case ga_nothing:
@@ -1103,7 +1101,8 @@ void G_Ticker ()
 	uint32_t rngsum = FRandom::StaticSumSeeds ();
 
 	//Added by MC: For some of that bot stuff. The main bot function.
-	bglobal.Main (currentSession->Levelinfo[0]);
+	if (currentSession->Levelinfo.Size() > 0)
+		bglobal.Main (currentSession->Levelinfo[0]);
 
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
@@ -1169,7 +1168,7 @@ void G_Ticker ()
 	{
 	case GS_LEVEL:
 		P_Ticker ();
-		AM_Ticker ();
+		AM_Ticker (players[consoleplayer].camera->Level);
 		break;
 
 	case GS_TITLELEVEL:
@@ -1885,12 +1884,9 @@ void G_DoLoadGame ()
 		return;
 	}
 
-
-	// Read intermission data for hubs
-	G_SerializeHub(arc);
-
 	bglobal.RemoveAllBots(true);
 
+	// read the global state
 	FString cvar;
 	arc("importantcvars", cvar);
 	if (!cvar.IsEmpty())
@@ -1898,17 +1894,13 @@ void G_DoLoadGame ()
 		uint8_t *vars_p = (uint8_t *)cvar.GetChars();
 		C_ReadCVars(&vars_p);
 	}
+	FRandom::StaticReadRNGState(arc);
 
-	uint32_t time[2] = { 1,0 };
-
-	arc("ticrate", time[0])
-		("leveltime", time[1]);
-	// dearchive all the modifications
-	currentSession->time = Scale(time[1], TICRATE, time[0]);
+	// Read the session data
+	currentSession->SerializeSession(arc);
 
 	G_ReadSnapshots(resfile.get());
 	resfile.reset(nullptr);	// we no longer need the resource file below this point
-	G_ReadVisited(arc);
 
 	// load a base level
 	savegamerestore = true;		// Use the player actors in the savegame
@@ -1917,16 +1909,12 @@ void G_DoLoadGame ()
 	demoplayback = demoplaybacksave;
 	savegamerestore = false;
 
-	STAT_Serialize(arc);
-	FRandom::StaticReadRNGState(arc);
-	P_ReadACSDefereds(arc);
-	P_ReadACSVars(arc);
 
-	NextSkill = -1;
-	arc("nextskill", NextSkill);
-
-	if (level.info != nullptr)
-		level.info->Snapshot.Clean();
+	// Delete all snapshots that were created for the currently active levels.
+	ForAllLevels([](FLevelLocals *Level)
+	{
+		currentSession->RemoveSnapshot(Level->MapName);
+	});
 
 	BackupSaveName = savename;
 
@@ -2109,7 +2097,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 
 	char buf[100];
 	
-	bool checkok = gamestate != GS_LEVEL;
+	bool checkok = gamestate == GS_LEVEL;
 	
 	ForAllLevels([&](FLevelLocals *Level) {
 		
@@ -2119,6 +2107,12 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 			checkok = false;
 		}
 	});
+
+	if (!checkok)
+	{
+		Printf("Cannot save outside a level\n");
+		return;
+	}
 
 	if (demoplayback)
 	{
@@ -2137,7 +2131,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	{
 		// delete the snapshot. Since the save failed it is broken.
 		insave = false;
-		level.info->Snapshot.Clean();
+		//level.info->Snapshot.Clean();
 		Printf(PRINT_HIGH, "Save failed\n");
 		Printf(PRINT_HIGH, "%s\n", err.GetMessage());
 		// The time freeze must be reset if the save fails.
@@ -2190,32 +2184,14 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	PutSaveWads (savegameinfo);
 	PutSaveComment (savegameinfo);
 
-	// Intermission stats for hubs
-	G_SerializeHub(savegameglobals);
-
 	{
 		FString vars = C_GetMassCVarString(CVAR_SERVERINFO);
 		savegameglobals.AddString("importantcvars", vars.GetChars());
 	}
 
-	if (currentSession->time != 0)
-	{
-		int tic = TICRATE;
-		savegameglobals("ticrate", tic);
-		savegameglobals("leveltime", currentSession->time);
-	}
-
-	STAT_Serialize(savegameglobals);
 	FRandom::StaticWriteRNGState(savegameglobals);
-	P_WriteACSDefereds(savegameglobals);
-	P_WriteACSVars(savegameglobals);
-	G_WriteVisited(savegameglobals);
+	currentSession->SerializeSession(savegameglobals);
 
-
-	if (NextSkill != -1)
-	{
-		savegameglobals("nextskill", NextSkill);
-	}
 
 	auto picdata = savepic.GetBuffer();
 	FCompressedBuffer bufpng = { picdata->Size(), picdata->Size(), METHOD_STORED, 0, static_cast<unsigned int>(crc32(0, &(*picdata)[0], picdata->Size())), (char*)&(*picdata)[0] };
@@ -2234,10 +2210,12 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 
 	savegameManager.NotifyNewSave (filename, description, okForQuicksave);
 
+
 	// delete the JSON buffers we created just above. Everything else will
 	// either still be needed or taken care of automatically.
 	savegame_content[1].Clean();
 	savegame_content[2].Clean();
+
 
 	// Check whether the file is ok by trying to open it.
 	FResourceFile *test = FResourceFile::OpenResourceFile(filename, true);
@@ -2252,9 +2230,6 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 
 	BackupSaveName = filename;
 
-	// We don't need the snapshot any longer.
-	level.info->Snapshot.Clean();
-		
 	insave = false;
 
 	if (cl_waitforsave)

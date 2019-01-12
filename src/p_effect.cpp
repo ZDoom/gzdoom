@@ -236,7 +236,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 	{
 		particle = &Level->Particles[i];
 		i = particle->tnext;
-		if (!particle->notimefreeze && ((Level->freeze) || (Level->flags2 & LEVEL2_FROZEN)))
+		if (!particle->notimefreeze && currentSession->isFrozen())
 		{
 			prev = particle;
 			continue;

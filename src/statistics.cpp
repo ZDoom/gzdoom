@@ -68,18 +68,6 @@ CVAR(String, statfile, "zdoomstat.txt", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-// This struct is used to track statistics data in game
-struct OneLevel
-{
-	int totalkills, killcount;
-	int totalitems, itemcount;
-	int totalsecrets, secretcount;
-	int leveltime;
-	FString Levelname;
-};
-
-// Current game's statistics
-static TArray<OneLevel> LevelData;
 static FEpisode *StartEpisode;
 
 // The statistics for one level
@@ -363,7 +351,7 @@ static void LevelStatEntry(FSessionStatistics *es, const char *level, const char
 //
 //==========================================================================
 
-void STAT_StartNewGame(const char *mapname)
+void STAT_StartNewGame(TArray<OneLevel> &LevelData, const char *mapname)
 {
 	LevelData.Clear();
 	if (!deathmatch && !multiplayer)
@@ -386,7 +374,7 @@ void STAT_StartNewGame(const char *mapname)
 //
 //==========================================================================
 
-static void StoreLevelStats(FLevelLocals *Level)
+static void StoreLevelStats(TArray<OneLevel> &LevelData, FLevelLocals *Level)
 {
 	unsigned int i;
 
@@ -432,12 +420,12 @@ static void StoreLevelStats(FLevelLocals *Level)
 //
 //==========================================================================
 
-void STAT_ChangeLevel(const char *newl, FLevelLocals *Level)
+void STAT_ChangeLevel(TArray<OneLevel> &LevelData, const char *newl, FLevelLocals *Level)
 {
 	// record the current level's stats.
-	StoreLevelStats(Level);
+	StoreLevelStats(LevelData, Level);
 
-	level_info_t *thisinfo = Level->info;
+	const level_info_t *thisinfo = Level->info;
 	level_info_t *nextinfo = NULL;
 	
 	if (strncmp(newl, "enDSeQ", 6))
@@ -524,7 +512,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, OneLevel &l, OneLevel 
 	return arc;
 }
 
-void STAT_Serialize(FSerializer &arc)
+void STAT_Serialize(TArray<OneLevel> &LevelData, FSerializer &arc)
 {
 	FString startlevel;
 	int i = LevelData.Size();
@@ -564,6 +552,7 @@ void STAT_Serialize(FSerializer &arc)
 
 FString GetStatString()
 {
+	auto &LevelData = currentSession->Statistics;
 	FString compose;
 	for(unsigned i = 0; i < LevelData.Size(); i++)
 	{
@@ -577,7 +566,7 @@ FString GetStatString()
 
 CCMD(printstats)
 {
-	if (currentSession) StoreLevelStats(currentSession->Levelinfo[0]);	// Refresh the current level's results.
+	if (currentSession) StoreLevelStats(currentSession->Statistics, currentSession->Levelinfo[0]);	// Refresh the current level's results.
 	Printf("%s", GetStatString().GetChars());
 }
 
@@ -596,6 +585,6 @@ CCMD(finishgame)
 
 ADD_STAT(statistics)
 {
-	if (currentSession) StoreLevelStats(currentSession->Levelinfo[0]);	// Refresh the current level's results.
+	if (currentSession) StoreLevelStats(currentSession->Statistics, currentSession->Levelinfo[0]);	// Refresh the current level's results.
 	return GetStatString();
 }

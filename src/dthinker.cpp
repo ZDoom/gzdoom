@@ -229,7 +229,7 @@ void DThinker::SerializeThinkers(FSerializer &arc, bool hubLoad)
 void DThinker::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
-	Level = &level;		// Must be written out once a real object.
+	Level = arc.Level;
 }
 
 //==========================================================================
@@ -242,7 +242,7 @@ DThinker::DThinker (int statnum) throw()
 {
 	NextThinker = NULL;
 	PrevThinker = NULL;
-	Level = &level;	// do this properly later.
+	Level = bSerialOverride? nullptr : currentSession->Levelinfo[0];	// do this properly later.
 	if (bSerialOverride)
 	{ // The serializer will insert us into the right list
 		return;
@@ -381,6 +381,8 @@ DThinker *DThinker::FirstThinker (int statnum)
 void DThinker::ChangeStatNum (int statnum)
 {
 	FThinkerList *list;
+
+	Level = currentSession->Levelinfo[0];	// fixme later.
 
 	// This thinker should already be in a list; verify that.
 	assert(NextThinker != NULL && PrevThinker != NULL);

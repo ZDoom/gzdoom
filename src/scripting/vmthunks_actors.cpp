@@ -1680,6 +1680,18 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, compat_mushroom, compat_mushroom_)
 	ACTION_RETURN_INT(compat_mushroom_(self));
 }
 
+static int isFrozen(AActor *self)
+{
+	return self->isFrozen();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, isFrozen, isFrozen)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(AActor);
+	return isFrozen(self);
+}
+
+
 //===========================================================================
 //
 // PlayerPawn functions

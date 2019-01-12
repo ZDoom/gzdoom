@@ -46,7 +46,7 @@ protected:
 	TArray<float> mLights;
 
 	// Used to detect when a level change requires the AABB tree to be regenerated
-	level_info_t *mLastLevel = nullptr;
+	const level_info_t *mLastLevel = nullptr;
 	unsigned mLastNumNodes = 0;
 	unsigned mLastNumSegs = 0;
 

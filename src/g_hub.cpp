@@ -34,7 +34,6 @@
 */
 
 #include "doomstat.h"
-#include "g_hub.h"
 #include "g_level.h"
 #include "g_game.h"
 #include "m_png.h"
@@ -44,39 +43,7 @@
 #include "g_levellocals.h"
 
 
-//==========================================================================
-//
-// Player is leaving the current level
-//
-//==========================================================================
-
-struct FHubInfo
-{
-	int			levelnum;
-	
-	int			maxkills;
-	int			maxitems;
-	int			maxsecret;
-	int			maxfrags;
-
-	wbplayerstruct_t	plyr[MAXPLAYERS];
-
-	FHubInfo &operator=(const wbstartstruct_t &wbs)
-	{
-		levelnum = wbs.finished_ep;
-		maxkills = wbs.maxkills;
-		maxsecret= wbs.maxsecret;
-		maxitems = wbs.maxitems;
-		maxfrags = wbs.maxfrags;
-		memcpy(plyr, wbs.plyr, sizeof(plyr));
-		return *this;
-	}
-};
-
-
-static TArray<FHubInfo> hubdata;
-
-void G_LeavingHub(int mode, cluster_info_t * cluster, wbstartstruct_t * wbs, FLevelLocals *Level)
+void FGameSession::LeavingHub(int mode, cluster_info_t * cluster, wbstartstruct_t * wbs, FLevelLocals *Level)
 {
 	unsigned int i, j;
 
@@ -175,14 +142,4 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FHubInfo &h, FHubInfo 
 			.EndObject();
 	}
 	return arc;
-}
-
-void G_SerializeHub(FSerializer &arc)
-{
-	arc("hubinfo", hubdata);
-}
-
-void G_ClearHubInfo()
-{
-	hubdata.Clear();
 }

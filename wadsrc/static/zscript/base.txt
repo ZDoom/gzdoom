@@ -7,7 +7,6 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native readonly Array<@Team> Teams;
 	native int validcount;
 	native readonly bool multiplayer;
-	native play @LevelLocals level;
 	native @KeyBindings Bindings;
 	native @KeyBindings AutomapBindings;
 	native play @DehInfo deh;
@@ -46,6 +45,9 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native int LocalViewPitch;
 	native GameSession currentSession;
 
+	//native play @LevelLocals level;
+	deprecated("3.8") native readonly bool globalfreeze;
+	
 }
 
 struct TexMan
@@ -506,10 +508,10 @@ class BlockThingsIterator : Object native
 	native static BlockThingsIterator Create(Actor origin, double checkradius = -1, bool ignorerestricted = false);
 	native static BlockThingsIterator CreateFromPosition(LevelLocals Level, double checkx, double checky, double checkz, double checkh, double checkradius, bool ignorerestricted);
 
-	// Since this depends on the global level variable it should not be used any longer because this may block compatibility with future features.
+	// Since this has no good means to deduce the level from its parameters it should not be used any longer because this may block compatibility with future features.
 	deprecated("3.8") static BlockThingsIterator CreateFromPos(double checkx, double checky, double checkz, double checkh, double checkradius, bool ignorerestricted)
 	{
-		return CreateFromPosition(level, checkx, checky, checkz, checkh, checkradius, ignorerestricted);
+		return CreateFromPosition(currentSession.LevelInfo[0], checkx, checky, checkz, checkh, checkradius, ignorerestricted);
 	}
 	native bool Next();
 }
@@ -523,10 +525,10 @@ class BlockLinesIterator : Object native
 	native static BlockLinesIterator Create(Actor origin, double checkradius = -1);
 	native static BlockLinesIterator CreateFromPosition(LevelLocals Level, Vector3 pos, double checkh, double checkradius, Sector sec = null);
 
-	// Since this depends on the global level variable it should not be used any longer because this may block compatibility with future features.
+	// Since this has no good means to deduce the level from its parameters it should not be used any longer because this may block compatibility with future features.
 	deprecated("3.8") static BlockLinesIterator CreateFromPos(Vector3 pos, double checkh, double checkradius, Sector sec = null)
 	{
-		return CreateFromPosition(level, pos, checkh, checkradius, sec);
+		return CreateFromPosition(currentSession.LevelInfo[0], pos, checkh, checkradius, sec);
 	}
 	native bool Next();
 }
@@ -633,6 +635,10 @@ struct GameSession native
 	native readonly String F1Pic;
 	native readonly int time;
 	native readonly int totaltime;
+
+	native bool isFrozen();
+	native void setFrozen(bool on);
+	
 }
 
 struct LevelLocals native
@@ -709,7 +715,7 @@ struct LevelLocals native
 	native readonly bool polygrind;
 	native readonly bool nomonsters;
 	native readonly bool allowrespawn;
-	native bool frozen;
+	deprecated("3.8") native bool frozen;
 	native readonly bool infinite_flight;
 	native readonly bool no_dlg_freeze;
 	native readonly bool keepfullinventory;
@@ -719,7 +725,6 @@ struct LevelLocals native
 	native readonly int skyfog;
 	native readonly float pixelstretch;
 	native name deathsequence;
-	native readonly uint8 freeze;
 // level_info_t *info cannot be done yet.
 
 	native String GetUDMFString(int type, int index, Name key);
@@ -769,6 +774,7 @@ struct LevelLocals native
 		int sec = Thinker.Tics2Seconds(totals? currentSession.totaltime : currentSession.time);
 		return String.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
 	}
+	
 }
 
 struct StringTable native

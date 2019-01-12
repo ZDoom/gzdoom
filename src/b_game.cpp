@@ -138,7 +138,7 @@ void FCajunMaster::Main(FLevelLocals *Level)
 		return;
 
 	//Add new bots?
-	if (wanted_botnum > botnum && !Level->freeze)
+	if (wanted_botnum > botnum && !currentSession->isFrozen())
 	{
 		if (t_join == ((wanted_botnum - botnum) * SPAWN_DELAY))
 		{

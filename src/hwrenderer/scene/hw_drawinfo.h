@@ -97,16 +97,6 @@ enum DrawListType
 
 struct HWDrawInfo
 {
-	HWDrawInfo(FLevelLocals *lev)
-	{
-		Level = lev;
-	}
-
-	virtual ~HWDrawInfo() 
-	{
-		ClearBuffers();
-	}
-
 	struct wallseg
 	{
 		float x1, y1, z1, x2, y2, z2;

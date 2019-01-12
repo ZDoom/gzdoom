@@ -515,9 +515,8 @@ void cht_DoCheat (player_t *player, int cheat)
 
 	case CHT_FREEZE:
 	{
-		auto Level = player->mo->Level;
-		Level->changefreeze ^= 1;
-		if (Level->freeze ^ Level->changefreeze)
+		currentSession->changefreeze ^= 2;
+		if (currentSession->isFrozen() ^ currentSession->changefreeze)
 		{
 			msg = GStrings("TXT_FREEZEON");
 		}

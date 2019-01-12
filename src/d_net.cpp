@@ -2228,8 +2228,9 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		// That was a long time ago. Maybe it works now?
 		if (currentSession)
 		{
-			currentSession->Levelinfo[0]->flags |= LEVEL_CHANGEMAPCHEAT;
-			G_ChangeLevel(s, pos, 0);
+			auto Level = currentSession->Levelinfo[0];
+			Level->flags |= LEVEL_CHANGEMAPCHEAT;
+			G_ChangeLevel(Level, s, pos, 0);
 		}
 		break;
 
@@ -2667,7 +2668,11 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 
 	case DEM_FINISHGAME:
 		// Simulate an end-of-game action
-		G_ChangeLevel(NULL, 0, 0);
+		if (currentSession)
+		{
+			auto Level = currentSession->Levelinfo[0];
+			G_ChangeLevel(Level, nullptr, 0, 0);
+		}
 		break;
 
 	case DEM_NETEVENT:

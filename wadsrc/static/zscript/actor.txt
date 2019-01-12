@@ -448,6 +448,7 @@ class Actor : Thinker native
 		return sin(fb * (180./32)) * 8;
 	}
 
+	native bool isFrozen();
 	virtual native void BeginPlay();
 	virtual native void Activate(Actor activator);
 	virtual native void Deactivate(Actor activator);

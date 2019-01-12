@@ -590,7 +590,6 @@ void V_OutputResized (int width, int height)
 	C_NewModeAdjust();
 	// Reload crosshair if transitioned to a different size
 	ST_LoadCrosshair(true);
-	AM_NewResolution();
 }
 
 void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int realheight, int *cleanx, int *cleany, int *_cx1, int *_cx2)

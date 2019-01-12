@@ -199,144 +199,6 @@ static void PrecacheLevel(FLevelLocals *Level)
 
 }
 
-//============================================================================
-//
-// clears all portal data for a new level start
-//
-//============================================================================
-
-void FLevelLocals::ClearPortals()
-{
-	Displacements.Create(1);
-	linePortals.Clear();
-	linkedPortals.Clear();
-	sectorPortals.Resize(2);
-	PortalBlockmap.Clear();
-
-	// The first entry must always be the default skybox. This is what every sector gets by default.
-	memset(&sectorPortals[0], 0, sizeof(sectorPortals[0]));
-	sectorPortals[0].mType = PORTS_SKYVIEWPOINT;
-	sectorPortals[0].mFlags = PORTSF_SKYFLATONLY;
-	// The second entry will be the default sky. This is for forcing a regular sky through the skybox picker
-	memset(&sectorPortals[1], 0, sizeof(sectorPortals[0]));
-	sectorPortals[1].mType = PORTS_SKYVIEWPOINT;
-	sectorPortals[1].mFlags = PORTSF_SKYFLATONLY;
-
-	// also clear the render data
-	for (auto &sub : subsectors)
-	{
-		for (int j = 0; j < 2; j++)
-		{
-			if (sub.portalcoverage[j].subsectors != nullptr)
-			{
-				delete[] sub.portalcoverage[j].subsectors;
-				sub.portalcoverage[j].subsectors = nullptr;
-			}
-		}
-	}
-	for (unsigned i = 0; i < portalGroups.Size(); i++)
-	{
-		delete portalGroups[i];
-	}
-	portalGroups.Clear();
-	linePortalSpans.Clear();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FLevelLocals::ClearLevelData()
-{
-	total_monsters = total_items = total_secrets =
-		killed_monsters = found_items = found_secrets =
-		wminfo.maxfrags = 0;
-
-	for (int i = 0; i < 4; i++)
-	{
-		UDMFKeys[i].Clear();
-	}
-	
-	SN_StopAllSequences(this);
-
-	FStrifeDialogueNode *node;
-	
-	while (StrifeDialogues.Pop (node))
-	{
-		delete node;
-	}
-	
-	DialogueRoots.Clear();
-	ClassRoots.Clear();
-
-	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh map.
-	ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
-	DThinker::DestroyAllThinkers();
-
-	// delete allocated data in the level arrays.
-	if (sectors.Size() > 0)
-	{
-		delete[] sectors[0].e;
-	}
-	for (auto &sub : subsectors)
-	{
-		if (sub.BSP != nullptr) delete sub.BSP;
-	}
-	ClearPortals();
-
-	tagManager.Clear();
-	// [RH] Clear all ThingID hash chains.
-	ClearTIDHashes();
-
-	Behaviors.UnloadModules();
-
-	SpotState = nullptr;
-	ACSThinker = nullptr;
-	FraggleScriptThinker = nullptr;
-	CorpseQueue.Clear();
-	canvasTextureInfo.EmptyList();
-	sections.Clear();
-	segs.Clear();
-	sectors.Clear();
-	linebuffer.Clear();
-	subsectorbuffer.Clear();
-	lines.Clear();
-	sides.Clear();
-	segbuffer.Clear();
-	loadsectors.Clear();
-	loadlines.Clear();
-	loadsides.Clear();
-	vertexes.Clear();
-	nodes.Clear();
-	gamenodes.Reset();
-	subsectors.Clear();
-	gamesubsectors.Reset();
-	rejectmatrix.Clear();
-	Zones.Clear();
-	blockmap.Clear();
-	Polyobjects.Clear();
-
-	for (auto &pb : PolyBlockMap)
-	{
-		polyblock_t *link = pb;
-		while (link != nullptr)
-		{
-			polyblock_t *next = link->next;
-			delete link;
-			link = next;
-		}
-	}
-	PolyBlockMap.Reset();
-
-	deathmatchstarts.Clear();
-	AllPlayerStarts.Clear();
-	memset(playerstarts, 0, sizeof(playerstarts));
-	Scrolls.Clear();
-
-}
-
 //==========================================================================
 //
 //
@@ -349,7 +211,6 @@ void P_FreeLevelData ()
 	// [ZZ] delete per-map event handlers
 	E_Shutdown(true);
 	R_FreePastViewers();
-	level.ClearLevelData();
 }
 
 //===========================================================================
@@ -554,6 +415,7 @@ void P_Init ()
 {
 	atterm (P_Shutdown);
 
+	currentSession = new FGameSession;
 	P_InitEffects ();		// [RH]
 	P_InitTerrainTypes ();
 	P_InitKeyMessages ();
@@ -562,6 +424,8 @@ void P_Init ()
 
 static void P_Shutdown ()
 {
+	delete currentSession;
+	currentSession = nullptr;
 	DThinker::DestroyThinkersInList(STAT_STATIC);
 	P_FreeLevelData ();
 	// [ZZ] delete global event handlers

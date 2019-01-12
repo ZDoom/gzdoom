@@ -620,13 +620,11 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 		switch (a->type & ANIM_CONDITION)
 		{
 		case ANIM_IFVISITED:
-			li = FindLevelInfo(a->LevelName);
-			if (li == NULL || !(li->flags & LEVEL_VISITED)) continue;
+			if (!currentSession->Visited.CheckKey(a->LevelName)) continue;
 			break;
 
 		case ANIM_IFNOTVISITED:
-			li = FindLevelInfo(a->LevelName);
-			if (li == NULL || (li->flags & LEVEL_VISITED)) continue;
+			if (currentSession->Visited.CheckKey(a->LevelName)) continue;
 			break;
 
 			// StatCount means 'leaving' - everything else means 'entering'!
@@ -663,8 +661,7 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 	{
 		for (i = 0; i<lnodes.Size(); i++)
 		{
-			level_info_t * li = FindLevelInfo(lnodes[i].Level);
-			if (li && li->flags & LEVEL_VISITED) drawOnLnode(i, &splat, 1);  // draw a splat on taken cities.
+			if (currentSession->Visited.CheckKey(lnodes[i].Level)) drawOnLnode(i, &splat, 1);  // draw a splat on taken cities.
 		}
 	}
 

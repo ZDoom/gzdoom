@@ -354,7 +354,7 @@ void DSeqNode::Serialize(FSerializer &arc)
 	}
 	else
 	{
-		Level = &level;	// temporary solution
+		Level = arc.Level;
 		seqnum = FindSequence (seqName);
 		if (seqnum >= 0)
 		{

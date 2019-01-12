@@ -139,7 +139,7 @@ void DBot::Tick ()
 {
 	Super::Tick ();
 
-	if (player->mo == nullptr || Level->freeze)
+	if (player->mo == nullptr || currentSession->isFrozen())
 	{
 		return;
 	}

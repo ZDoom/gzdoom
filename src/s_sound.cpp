@@ -476,7 +476,7 @@ void S_Start (FLevelLocals *Level)
 //
 //==========================================================================
 
-void S_PrecacheLevel (TArray<int> &levelsounds)
+void S_PrecacheLevel (const TArray<int> &levelsounds)
 {
 	unsigned int i;
 
@@ -1767,7 +1767,8 @@ void S_StopSound (const FPolyObj *poly, int channel)
 
 void S_StopAllChannels ()
 {
-	ForAllLevels(SN_StopAllSequences);
+	if (currentSession)
+		ForAllLevels(SN_StopAllSequences);
 
 	FSoundChan *chan = Channels;
 	while (chan != NULL)

@@ -939,6 +939,7 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 		("skytexture2", Level->skytexture2)
 		("fogdensity", Level->fogdensity)
 		("outsidefogdensity", Level->outsidefogdensity)
+		("outsidefog", Level->outsidefog)
 		("skyfog", Level->skyfog)
 		("deathsequence", Level->deathsequence)
 		("bodyqueslot", Level->bodyqueslot)
@@ -949,9 +950,12 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 		("fragglethinker", Level->FraggleScriptThinker)
 		("acsthinker", Level->ACSThinker)
 		("impactdecalcount", Level->ImpactDecalCount)
-		("freeze", Level->freeze)
-		("changefreeze", Level->changefreeze)
-		("sndseqlisthead", Level->SequenceListHead);
+		("sndseqlisthead", Level->SequenceListHead)
+		("am_markpointnum", Level->am_markpointnum)
+		.Array("am_markpoints", &Level->am_markpoints[0].x, Level->AM_NUMMARKPOINTS * 2)	// write as a double array.
+		("am_scale_mtof", Level->am_scale_mtof)
+		("am_scale_ftom", Level->am_scale_ftom);
+
 
 
 	if (arc.isReading())
@@ -977,7 +981,6 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 	arc("polyobjs", Level->Polyobjects);
 	SerializeSubsectors(arc, Level, "subsectors");
 	StatusBar->SerializeMessages(arc);
-	AM_SerializeMarkers(arc);
 	FRemapTable::StaticSerializeTranslations(arc);
 	Level->canvasTextureInfo.Serialize(arc);
 	P_SerializePlayers(Level, arc, hubload);
@@ -1020,5 +1023,4 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 	}
 	AActor::RecreateAllAttachedLights();
 	InitPortalGroups(Level);
-
 }

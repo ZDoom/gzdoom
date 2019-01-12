@@ -59,6 +59,10 @@ public:
 		didInterp = false;
 		count = 0;
 	}
+	~FInterpolator()
+	{
+		ClearInterpolations();
+	}
 	void UpdateInterpolations();
 	void AddInterpolation(DInterpolation *);
 	void RemoveInterpolation(DInterpolation *);

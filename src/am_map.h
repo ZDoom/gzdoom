@@ -34,7 +34,7 @@ void AM_ClearColorsets();	// reset data for a restart.
 bool AM_Responder (event_t* ev, bool last);
 
 // Called by main loop.
-void AM_Ticker (void);
+void AM_Ticker (FLevelLocals *Level);
 
 // Called by main loop,
 // called instead of view drawer if automap active.
@@ -44,10 +44,9 @@ void AM_Drawer (FLevelLocals *Level, int bottom);
 // if the level is completed while it is up.
 void AM_Stop (void);
 
-void AM_NewResolution ();
-void AM_ToggleMap ();
+void AM_NewResolution (FLevelLocals *Level);
+void AM_ToggleMap (FLevelLocals *Level);
 void AM_LevelInit (FLevelLocals *Level);
-void AM_SerializeMarkers(FSerializer &arc);
 
 
 #endif

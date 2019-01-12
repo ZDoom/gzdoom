@@ -1116,7 +1116,7 @@ void P_CheckMusicChange(player_t *player)
 				if (player->MUSINFOactor->args[0] != 0)
 				{
 					auto Level = player->mo->Level;
-					FName *music = Level->info->MusicMap.CheckKey(player->MUSINFOactor->args[0]);
+					const FName *music = Level->info->MusicMap.CheckKey(player->MUSINFOactor->args[0]);
 
 					if (music != NULL)
 					{
@@ -1226,7 +1226,7 @@ void P_PlayerThink (player_t *player)
 	}
 
 	// Bots do not think in freeze mode.
-	if (player->mo->Level->freeze && player->Bot != nullptr)
+	if (currentSession->isFrozen() && player->Bot != nullptr)
 	{
 		return;
 	}
@@ -1695,7 +1695,7 @@ bool P_IsPlayerTotallyFrozen(const player_t *player)
 	return
 		gamestate == GS_TITLELEVEL ||
 		player->cheats & CF_TOTALLYFROZEN ||
-		((player->mo->Level->flags2 & LEVEL2_FROZEN) && player->timefreezer == 0);
+		player->mo->isFrozen();
 }
 
 

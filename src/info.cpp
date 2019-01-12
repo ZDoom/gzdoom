@@ -135,7 +135,7 @@ void FState::CheckCallerType(AActor *self, AActor *stateowner)
 		{
 			ThrowAbortException(X_OTHER, "%s called without valid caller. %s expected", ActionFunc->PrintableName.GetChars(), cls->TypeName.GetChars());
 		}
-		if (!check->IsKindOf(cls))
+		if (!(StateFlags & STF_DEHACKED) && !check->IsKindOf(cls))
 		{
 			ThrowAbortException(X_OTHER, "Invalid class %s in function call to %s. %s expected", check->GetClass()->TypeName.GetChars(), ActionFunc->PrintableName.GetChars(), cls->TypeName.GetChars());
 		}

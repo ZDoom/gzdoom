@@ -153,7 +153,7 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 	R_SetupFrame (mainvp, r_viewwindow, camera);
 
 	if (mainview && toscreen)
-		UpdateShadowMap(camera->Level);
+		UpdateShadowMap();
 
     // Render (potentially) multiple views for stereo 3d
 	// Fixme. The view offsetting should be done with a static table and not require setup of the entire render state for the mode.

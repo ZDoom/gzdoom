@@ -1356,7 +1356,7 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 							{
 								f->mVersion = field->Version;
 							}
-							if (name->Name == Name_globalfreeze)	// Give the parser a kick in the butt for not parsing the declaration properly. I have no idea why it doesn't work.
+							if (name->Name == NAME_globalfreeze)	// Give the parser a kick in the butt for not parsing the declaration properly. I have no idea why it doesn't work.
 							{
 								f->mVersion = MakeVersion(3, 8, 0);
 								f->Flags |= VARF_Deprecated;

@@ -77,7 +77,7 @@ PClassActor *DecoDerivedClass(const FScriptPosition &sc, PClassActor *parent, FN
 	if (type == nullptr)
 	{
 		FString newname = typeName.GetChars();
-		FString sourcefile = sc.FileName;
+		FString sourcefile = sc.FileName.GetChars();
 
 		sourcefile.Substitute(":", "@");
 		newname << '@' << sourcefile;

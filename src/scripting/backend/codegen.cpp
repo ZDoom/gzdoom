@@ -6120,6 +6120,10 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 				{
 					ScriptPosition.Message(MSG_WARNING, "Accessing deprecated global variable %s - deprecated since %d.%d.%d", sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision);
 				}
+				else if (sym->mVersion >= MakeVersion(3, 8, 0))
+				{
+					ScriptPosition.Message(MSG_WARNING, TEXTCOLOR_BLUE "Accessing deprecated global variable %s - deprecated since %d.%d.%d", sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision);
+				}
 			}
 
 			newex = new FxGlobalVariable(static_cast<PField *>(sym), ScriptPosition);
@@ -6214,6 +6218,10 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PContainerType *
 				if (sym->mVersion <= ctx.Version)
 				{
 					ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s - deprecated since %d.%d.%d", sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision);
+				}
+				else if (sym->mVersion >= MakeVersion(3, 8, 0))
+				{
+					ScriptPosition.Message(MSG_WARNING, TEXTCOLOR_BLUE "Accessing deprecated member variable %s - deprecated since %d.%d.%d", sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision);
 				}
 			}
 
@@ -7801,6 +7809,8 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		{
 			if (ctx.Version >= MakeVersion(3, 8, 0))
 				ScriptPosition.Message(MSG_WARNING, "Deprecated use of %s. Action specials should only be used from actor methods", MethodName.GetChars());
+			else 
+				ScriptPosition.Message(MSG_WARNING,TEXTCOLOR_BLUE "Deprecated use of %s. Action specials should only be used from actor methods", MethodName.GetChars());
 		}
 		FxExpression *x = new FxActionSpecialCall(self, special, ArgList, ScriptPosition);
 		delete this;
@@ -8763,6 +8773,10 @@ bool FxVMFunctionCall::CheckAccessibility(const VersionInfo &ver)
 		if (Function->mVersion <= ver)
 		{
 			ScriptPosition.Message(MSG_WARNING, "Accessing deprecated function %s - deprecated since %d.%d.%d", Function->SymbolName.GetChars(), Function->mVersion.major, Function->mVersion.minor, Function->mVersion.revision);
+		}
+		else if (Function->mVersion >= MakeVersion(3, 8, 0))
+		{
+			ScriptPosition.Message(MSG_WARNING, TEXTCOLOR_BLUE "Accessing deprecated function %s - deprecated since %d.%d.%d", Function->SymbolName.GetChars(), Function->mVersion.major, Function->mVersion.minor, Function->mVersion.revision);
 		}
 	}
 	return true;

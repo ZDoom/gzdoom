@@ -644,6 +644,13 @@ void ZCCCompiler::CreateClassTypes()
 						{
 							c->cls->Type = NewClassType(newclass);
 							DPrintf(DMSG_SPAMMY, "Created class %s with parent %s\n", c->Type()->TypeName.GetChars(), c->ClassType()->ParentClass->TypeName.GetChars());
+							if (c->ClassType()->IsDescendantOf(NAME_Thinker) && !c->ClassType()->IsDescendantOf(NAME_Actor))
+							{
+								if (Wads.GetLumpFile(Lump) != 0)
+								{
+									Printf(TEXTCOLOR_BLUE "Created thinker class %s\n", c->Type()->TypeName.GetChars());
+								}
+							}
 						}
 					}
 					catch (CRecoverableError &err)

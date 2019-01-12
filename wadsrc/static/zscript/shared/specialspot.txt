@@ -2,7 +2,7 @@ class SpotState : Object native
 {
 	deprecated ("3.8") static SpotState GetSpotState(bool create = true)
 	{
-		return currentSession.LevelInfo[0].GetSpotState(create);
+		return currentSession.__GetCompatibilityLevel().GetSpotState(create);
 	}
 	native SpecialSpot GetNextInList(class<Actor> type, int skipcounter);
 	native SpecialSpot GetSpotWithMinMaxDistance(Class<Actor> type, double x, double y, double mindist, double maxdist);

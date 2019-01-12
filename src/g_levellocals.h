@@ -382,6 +382,9 @@ struct OneLevel
 };
 
 
+extern FLevelLocals emptyLevelPlaceholderForZScript;
+extern FLevelLocals *levelForZScript;
+
 class FGameSession
 {
 public:
@@ -412,6 +415,7 @@ public:
 
 	void Reset()
 	{
+		levelForZScript = &emptyLevelPlaceholderForZScript;
 		Levelinfo.DeleteAndClear();
 		ClearSnapshots();
 		DeferredScripts.Clear();

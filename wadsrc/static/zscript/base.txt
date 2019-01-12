@@ -45,7 +45,8 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native int LocalViewPitch;
 	native GameSession currentSession;
 
-	//native play @LevelLocals level;
+	// These are deprecated because they can no longer reference valid state in all situations.
+	deprecated("3.8") native play LevelLocals level;
 	deprecated("3.8") native readonly bool globalfreeze;
 	
 }
@@ -95,7 +96,7 @@ struct TexMan
 	native static TextureID CheckForTexture(String name, int usetype, int flags = TryAny);
 	deprecated("3.8") static void ReplaceTextures(String from, String to, int flags)
 	{
-		currentSession.LevelInfo[0].ReplaceTextures(from, to, flags);
+		currentSession.__GetCompatibilityLevel().ReplaceTextures(from, to, flags);
 	}
 	native static String GetName(TextureID tex);
 	native static int, int GetSize(TextureID tex);
@@ -483,7 +484,7 @@ class ThinkerIterator : Object native
 {
 	deprecated("3.8") static ThinkerIterator Create(class<Object> type = "Actor", int statnum=Thinker.MAX_STATNUM+1)
 	{
-		return currentSession.LevelInfo[0].CreateThinkerIterator(type, statnum);
+		return currentSession.__GetCompatibilityLevel().CreateThinkerIterator(type, statnum);
 	}
 	native Thinker Next(bool exact = false);
 	native void Reinit();
@@ -493,7 +494,7 @@ class ActorIterator : Object native
 {
 	deprecated("3.8") static ActorIterator Create(int tid, class<Actor> type = "Actor")
 	{
-		return currentSession.LevelInfo[0].CreateActorIterator(tid, type);
+		return currentSession.__GetCompatibilityLevel().CreateActorIterator(tid, type);
 	}
 	native Actor Next();
 	native void Reinit();
@@ -511,7 +512,7 @@ class BlockThingsIterator : Object native
 	// Since this has no good means to deduce the level from its parameters it should not be used any longer because this may block compatibility with future features.
 	deprecated("3.8") static BlockThingsIterator CreateFromPos(double checkx, double checky, double checkz, double checkh, double checkradius, bool ignorerestricted)
 	{
-		return CreateFromPosition(currentSession.LevelInfo[0], checkx, checky, checkz, checkh, checkradius, ignorerestricted);
+		return CreateFromPosition(currentSession.__GetCompatibilityLevel(), checkx, checky, checkz, checkh, checkradius, ignorerestricted);
 	}
 	native bool Next();
 }
@@ -528,7 +529,7 @@ class BlockLinesIterator : Object native
 	// Since this has no good means to deduce the level from its parameters it should not be used any longer because this may block compatibility with future features.
 	deprecated("3.8") static BlockLinesIterator CreateFromPos(Vector3 pos, double checkh, double checkradius, Sector sec = null)
 	{
-		return CreateFromPosition(currentSession.LevelInfo[0], pos, checkh, checkradius, sec);
+		return CreateFromPosition(currentSession.__GetCompatibilityLevel(), pos, checkh, checkradius, sec);
 	}
 	native bool Next();
 }
@@ -638,6 +639,8 @@ struct GameSession native
 
 	native bool isFrozen();
 	native void setFrozen(bool on);
+	//IMPORTANT: This function MUST NOT(!!!) be used by user code. It cannot be deprecated because internal code needs it to implement deprecated fallbacks.
+	native LevelLocals __GetCompatibilityLevel();	
 	
 }
 
@@ -656,15 +659,15 @@ struct LevelLocals native
 	// Do not even THINK about using these functions directly, or else... >)
 	deprecated("3.8") static String __getter__F1Pic__()
 	{
-		return currentSession? currentSession.F1Pic : "";
+		return currentSession.F1Pic;
 	}
 	deprecated("3.8") static int __getter__time__()
 	{
-		return currentSession? currentSession.time : 0;
+		return currentSession.time;
 	}
 	deprecated("3.8") static int __getter__totaltime__()
 	{
-		return currentSession? currentSession.totaltime : 0;
+		return currentSession.totaltime;
 	}
 
 

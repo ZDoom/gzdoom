@@ -89,8 +89,18 @@
 #include "i_time.h"
 #include "p_maputl.h"
 
+// Compatibility glue to emulate removed features.
+FLevelLocals emptyLevelPlaceholderForZScript;
+FLevelLocals *levelForZScript = &emptyLevelPlaceholderForZScript;
 bool globalfreeze;
 DEFINE_GLOBAL(globalfreeze);
+DEFINE_GLOBAL_NAMED(levelForZScript, level);
+
+DEFINE_ACTION_FUNCTION(FGameSession, __GetCompatibilityLevel)
+{
+	ACTION_RETURN_POINTER(levelForZScript);
+}
+
 
 void STAT_StartNewGame(TArray<OneLevel> &LevelData, const char *lev);
 void STAT_ChangeLevel(TArray<OneLevel> &LevelData, const char *newl, FLevelLocals *Level);
@@ -1021,6 +1031,7 @@ void G_DoLoadLevel (const FString &nextlevel, int position, bool autosave, bool 
 
 	StatusBar->DetachAllMessages ();
 	currentSession->Levelinfo.DeleteAndClear();
+	levelForZScript = &emptyLevelPlaceholderForZScript;
 	GC::FullGC();	// really get rid of all the data we just deleted.
 	
 	// Force 'teamplay' to 'true' if need be.
@@ -1072,6 +1083,8 @@ void G_DoLoadLevel (const FString &nextlevel, int position, bool autosave, bool 
 	{
 		FLevelLocals *Level = new FLevelLocals;
 		auto pos = currentSession->Levelinfo.Push(Level);
+		if (pos == 0) levelForZScript = currentSession->Levelinfo[0];
+
 		Level->InitLevelLocals (linfo, pos == 0);
 	
 		if (changeflags & CHANGELEVEL_NOMONSTERS)

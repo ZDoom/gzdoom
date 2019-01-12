@@ -373,7 +373,7 @@ struct Sector native play
 	native void RemoveForceField();
 	deprecated("3.8") static clearscope Sector PointInSector(Vector2 pt)
 	{
-		return currentSession.LevelInfo[0].PointInSector(pt);
+		return currentSession.__GetCompatibilityLevel().PointInSector(pt);
 	}
 
 	native bool PlaneMoving(int pos);
@@ -537,7 +537,7 @@ class SectorTagIterator : Object native
 {
 	deprecated("3.8") static SectorTagIterator Create(int tag, line defline = null)
 	{
-		return currentSession.LevelInfo[0].CreateSectorTagIterator(tag, defline);
+		return currentSession.__GetCompatibilityLevel().CreateSectorTagIterator(tag, defline);
 	}
 	native int Next();
 	native int NextCompat(bool compat, int secnum);
@@ -547,7 +547,7 @@ class LineIdIterator : Object native
 {
 	deprecated("3.8") static LineIdIterator Create(int tag)
 	{
-		return currentSession.LevelInfo[0].CreateLineIdIterator(tag);
+		return currentSession.__GetCompatibilityLevel().CreateLineIdIterator(tag);
 	}
 	native int Next();
 }

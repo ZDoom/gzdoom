@@ -84,14 +84,17 @@
 
 #include "gi.h"
 
-#include "g_hub.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "i_time.h"
 #include "p_maputl.h"
 
-void STAT_StartNewGame(const char *lev);
-void STAT_ChangeLevel(const char *newl, FLevelLocals *Level);
+bool globalfreeze;
+DEFINE_GLOBAL(globalfreeze);
+
+void STAT_StartNewGame(TArray<OneLevel> &LevelData, const char *lev);
+void STAT_ChangeLevel(TArray<OneLevel> &LevelData, const char *newl, FLevelLocals *Level);
+void STAT_Serialize(TArray<OneLevel> &LevelData, FSerializer &file);
 
 EXTERN_CVAR(Bool, save_formatted)
 EXTERN_CVAR (Float, sv_gravity)
@@ -411,7 +414,7 @@ void G_NewInit ()
 	}
 	BackupSaveName = "";
 	consoleplayer = 0;
-	NextSkill = -1;
+	currentSession->NextSkill = -1;
 }
 
 //==========================================================================
@@ -440,21 +443,17 @@ void G_DoNewGame (void)
 //
 //==========================================================================
 
-
-static void InitPlayerClasses ()
+void FGameSession::InitPlayerClasses ()
 {
-	if (!savegamerestore)
+	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
-		for (int i = 0; i < MAXPLAYERS; ++i)
+		SinglePlayerClass[i] = players[i].userinfo.GetPlayerClassNum();
+		if (SinglePlayerClass[i] < 0 || !playeringame[i])
 		{
-			SinglePlayerClass[i] = players[i].userinfo.GetPlayerClassNum();
-			if (SinglePlayerClass[i] < 0 || !playeringame[i])
-			{
-				SinglePlayerClass[i] = (pr_classchoice()) % PlayerClasses.Size ();
-			}
-			players[i].cls = NULL;
-			players[i].CurrentPlayerClass = SinglePlayerClass[i];
+			SinglePlayerClass[i] = (pr_classchoice()) % PlayerClasses.Size ();
 		}
+		players[i].cls = nullptr;
+		players[i].CurrentPlayerClass = SinglePlayerClass[i];
 	}
 }
 
@@ -474,12 +473,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 
 	if (!savegamerestore)
 	{
-		G_ClearHubInfo();
-		G_ClearSnapshots ();
-		P_RemoveDefereds ();
-
-		// [RH] Mark all levels as not visited
-		currentSession->Visited.Clear();
+		currentSession->Reset();
 	}
 
 	UnlatchCVars ();
@@ -530,14 +524,14 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 
 		if (!multiplayer || !deathmatch)
 		{
-			InitPlayerClasses ();
+			currentSession->InitPlayerClasses ();
 		}
 
 		// force players to be initialized upon first level load
 		for (i = 0; i < MAXPLAYERS; i++)
 			players[i].playerstate = PST_ENTER;	// [BC]
 
-		STAT_StartNewGame(mapname);
+		STAT_StartNewGame(currentSession->Statistics, mapname);
 	}
 
 	usergame = !bTitleLevel;		// will be set false if a demo
@@ -639,7 +633,7 @@ void G_ChangeLevel(FLevelLocals *OldLevel, const char *levelname, int position, 
 	}
 
 	if (nextSkill != -1)
-		NextSkill = nextSkill;
+		currentSession->NextSkill = nextSkill;
 
 	if (flags & CHANGELEVEL_NOINTERMISSION)
 	{
@@ -681,7 +675,7 @@ void G_ChangeLevel(FLevelLocals *OldLevel, const char *levelname, int position, 
 	E_WorldUnloadedUnsafe();
 	unloading = false;
 
-	STAT_ChangeLevel(nextlevel, OldLevel);
+	STAT_ChangeLevel(currentSession->Statistics, nextlevel, OldLevel);
 
 	if (thiscluster && (thiscluster->flags & CLUSTER_HUB))
 	{
@@ -877,7 +871,7 @@ void G_DoCompleted ()
 	}
 
 	// Intermission stats for entire hubs
-	G_LeavingHub(mode, thiscluster, &wminfo, Level);
+	currentSession->LeavingHub(mode, thiscluster, &wminfo, Level);
 
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
@@ -1012,12 +1006,12 @@ void G_DoLoadLevel (const FString &nextlevel, int position, bool autosave, bool 
 	gamestate_t oldgs = gamestate;
 	int i;
 
-	if (NextSkill >= 0)
+	if (currentSession->NextSkill >= 0)
 	{
 		UCVarValue val;
-		val.Int = NextSkill;
+		val.Int = currentSession->NextSkill;
 		gameskill.ForceSet (val, CVAR_Int);
-		NextSkill = -1;
+		currentSession->NextSkill = -1;
 	}
 
 	if (position == -1)
@@ -1071,6 +1065,8 @@ void G_DoLoadLevel (const FString &nextlevel, int position, bool autosave, bool 
 			players[i].fragcount = 0;
 	}
 
+	globalfreeze = false;
+
 	// Set up all needed levels.
 	for(auto &linfo : MapSet)
 	{
@@ -1115,6 +1111,8 @@ void G_DoLoadLevel (const FString &nextlevel, int position, bool autosave, bool 
 
 	// Restore the state of the levels
 	G_UnSnapshotLevel (currentSession->Levelinfo, !savegamerestore);
+
+	globalfreeze = !!(currentSession->isFrozen() & 2);
 	
 	int pnumerr = G_FinishTravel (currentSession->Levelinfo[0]);
 
@@ -1785,14 +1783,145 @@ void G_ClearSnapshots (void)
 
 //==========================================================================
 //
-// Remove any existing defereds
 //
 //==========================================================================
 
-void P_RemoveDefereds (void)
+void FGameSession::SerializeACSDefereds(FSerializer &arc)
 {
-	currentSession->ClearDefered();
+	if (arc.isWriting())
+	{
+		if (DeferredScripts.CountUsed() == 0) return;
+		decltype(DeferredScripts)::Iterator it(DeferredScripts);
+		decltype(DeferredScripts)::Pair *pair;
+
+		if (arc.BeginObject("deferred"))
+		{
+			while (it.NextPair(pair))
+			{
+				arc(pair->Key, pair->Value);
+			}
+		}
+		arc.EndObject();
+	}
+	else
+	{
+		FString MapName;
+
+		DeferredScripts.Clear();
+
+		if (arc.BeginObject("deferred"))
+		{
+			const char *key;
+
+			while ((key = arc.GetKey()))
+			{
+				TArray<acsdefered_t> deferred;
+				arc(nullptr, deferred);
+				DeferredScripts.Insert(key, std::move(deferred));
+			}
+			arc.EndObject();
+		}
+	}
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void FGameSession::SerializeVisited(FSerializer &arc)
+{
+	if (arc.isWriting())
+	{
+		decltype(Visited)::Iterator it(Visited);
+		decltype(Visited)::Pair *pair;
+
+		if (arc.BeginArray("visited"))
+		{
+			while (it.NextPair(pair))
+			{
+				// Write out which levels have been visited
+				arc.AddString(nullptr, pair->Key);
+			}
+			arc.EndArray();
+		}
+
+		// Store player classes to be used when spawning a random class
+		if (multiplayer)
+		{
+			arc.Array("randomclasses", SinglePlayerClass, MAXPLAYERS);
+		}
+
+		if (arc.BeginObject("playerclasses"))
+		{
+			for (int i = 0; i < MAXPLAYERS; ++i)
+			{
+				if (playeringame[i])
+				{
+					FString key;
+					key.Format("%d", i);
+					arc(key, players[i].cls);
+				}
+			}
+			arc.EndObject();
+		}
+	}
+	else
+	{
+		if (arc.BeginArray("visited"))
+		{
+			for (int s = arc.ArraySize(); s > 0; s--)
+			{
+				FString str;
+				arc(nullptr, str);
+				Visited.Insert(str, true);
+			}
+			arc.EndArray();
+		}
+
+		arc.Array("randomclasses", SinglePlayerClass, MAXPLAYERS);
+
+		if (arc.BeginObject("playerclasses"))
+		{
+			for (int i = 0; i < MAXPLAYERS; ++i)
+			{
+				FString key;
+				key.Format("%d", i);
+				arc(key, players[i].cls);
+			}
+			arc.EndObject();
+		}
+	}
+}
+
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void FGameSession::SerializeSession(FSerializer &arc)
+{
+	if (arc.BeginObject("session"))
+	{
+		arc("f1pic", F1Pic)
+			("musicvolume", MusicVolume)
+			("totaltime", totaltime)
+			("time", time)
+			("frozenstate", frozenstate)
+			("hubinfo", hubdata)
+			("nextskill", NextSkill);
+
+		SerializeACSDefereds(arc);
+		SerializeVisited(arc);
+		STAT_Serialize(Statistics, arc);
+		if (arc.isReading()) P_ReadACSVars(arc);
+		else P_WriteACSVars(arc);
+		arc.EndObject();
+	}
+}
+
 
 //==========================================================================
 //
@@ -1910,47 +2039,6 @@ void G_WriteSnapshots(TArray<FString> &filenames, TArray<FCompressedBuffer> &buf
 //
 //==========================================================================
 
-void G_WriteVisited(FSerializer &arc)
-{
-	decltype(currentSession->Visited)::Iterator it(currentSession->Visited);
-	decltype(currentSession->Visited)::Pair *pair;
-
-	if (arc.BeginArray("visited"))
-	{
-		while (it.NextPair(pair))
-		{
-			// Write out which levels have been visited
-			arc.AddString(nullptr, pair->Key);
-		}
-		arc.EndArray();
-	}
-
-	// Store player classes to be used when spawning a random class
-	if (multiplayer)
-	{
-		arc.Array("randomclasses", SinglePlayerClass, MAXPLAYERS);
-	}
-
-	if (arc.BeginObject("playerclasses"))
-	{
-		for (int i = 0; i < MAXPLAYERS; ++i)
-		{
-			if (playeringame[i])
-			{
-				FString key;
-				key.Format("%d", i);
-				arc(key, players[i].cls);
-			}
-		}
-		arc.EndObject();
-	}
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
 void G_ReadSnapshots(FResourceFile *resf)
 {
 	G_ClearSnapshots();
@@ -1976,38 +2064,6 @@ void G_ReadSnapshots(FResourceFile *resf)
 //
 //==========================================================================
 
-void G_ReadVisited(FSerializer &arc)
-{
-	if (arc.BeginArray("visited"))
-	{
-		for (int s = arc.ArraySize(); s > 0; s--)
-		{
-			FString str;
-			arc(nullptr, str);
-			currentSession->Visited.Insert(str, true);
-		}
-		arc.EndArray();
-	}
-
-	arc.Array("randomclasses", SinglePlayerClass, MAXPLAYERS);
-
-	if (arc.BeginObject("playerclasses"))
-	{
-		for (int i = 0; i < MAXPLAYERS; ++i)
-		{
-			FString key;
-			key.Format("%d", i);
-			arc(key, players[i].cls);
-		}
-		arc.EndObject();
-	}
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
 CCMD(listsnapshots)
 {
 	decltype(currentSession->Snapshots)::Iterator it(currentSession->Snapshots);
@@ -2020,52 +2076,6 @@ CCMD(listsnapshots)
 		{
 			Printf("%s (%u -> %u bytes)\n", pair->Key.GetChars(), snapshot->mCompressedSize, snapshot->mSize);
 		}
-	}
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-void P_WriteACSDefereds (FSerializer &arc)
-{
-	if (currentSession->DeferredScripts.CountUsed() == 0) return;
-	decltype(currentSession->DeferredScripts)::Iterator it(currentSession->DeferredScripts);
-	decltype(currentSession->DeferredScripts)::Pair *pair;
-
-	if (arc.BeginObject("deferred"))
-	{
-		while (it.NextPair(pair))
-		{
-			arc(pair->Key, pair->Value);
-		}
-	}
-	arc.EndObject();
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-void P_ReadACSDefereds (FSerializer &arc)
-{
-	FString MapName;
-	
-	P_RemoveDefereds ();
-
-	if (arc.BeginObject("deferred"))
-	{
-		const char *key;
-
-		while ((key = arc.GetKey()))
-		{
-			TArray<acsdefered_t> deferred;
-			arc(nullptr, deferred);
-			currentSession->DeferredScripts.Insert(key, std::move(deferred));
-		}
-		arc.EndObject();
 	}
 }
 

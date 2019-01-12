@@ -67,10 +67,6 @@ CUSTOM_CVAR (String, language, "auto", CVAR_ARCHIVE)
 // [RH] Network arbitrator
 int Net_Arbitrator = 0;
 
-int NextSkill = -1;
-
-int SinglePlayerClass[MAXPLAYERS];
-
 bool ToggleFullscreen;
 
 FString LumpFilterIWAD;

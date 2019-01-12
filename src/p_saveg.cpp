@@ -950,14 +950,11 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 		("fragglethinker", Level->FraggleScriptThinker)
 		("acsthinker", Level->ACSThinker)
 		("impactdecalcount", Level->ImpactDecalCount)
-		("freeze", Level->freeze)
-		("changefreeze", Level->changefreeze)
 		("sndseqlisthead", Level->SequenceListHead)
 		("am_markpointnum", Level->am_markpointnum)
 		.Array("am_markpoints", &Level->am_markpoints[0].x, Level->AM_NUMMARKPOINTS * 2)	// write as a double array.
 		("am_scale_mtof", Level->am_scale_mtof)
-		("am_scale_ftom", Level->am_scale_ftom)
-		.EndObject();
+		("am_scale_ftom", Level->am_scale_ftom);
 
 
 
@@ -1026,5 +1023,4 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 	}
 	AActor::RecreateAllAttachedLights();
 	InitPortalGroups(Level);
-
 }

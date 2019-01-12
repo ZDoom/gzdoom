@@ -46,6 +46,7 @@
 #include "p_acs.h"
 #include "p_tags.h"
 #include "p_effect.h"
+#include "wi_stuff.h"
 #include "p_destructible.h"
 #include "p_conversation.h"
 #include "r_data/r_interpolate.h"
@@ -340,6 +341,46 @@ struct FLevelLocals : public FLevelData
 	}
 };
 
+//==========================================================================
+//
+// Player is leaving the current level
+//
+//==========================================================================
+
+struct FHubInfo
+{
+	int			levelnum;
+
+	int			maxkills;
+	int			maxitems;
+	int			maxsecret;
+	int			maxfrags;
+
+	wbplayerstruct_t	plyr[MAXPLAYERS];
+
+	FHubInfo &operator=(const wbstartstruct_t &wbs)
+	{
+		levelnum = wbs.finished_ep;
+		maxkills = wbs.maxkills;
+		maxsecret = wbs.maxsecret;
+		maxitems = wbs.maxitems;
+		maxfrags = wbs.maxfrags;
+		memcpy(plyr, wbs.plyr, sizeof(plyr));
+		return *this;
+	}
+};
+
+
+// This struct is used to track statistics data in game
+struct OneLevel
+{
+	int totalkills, killcount;
+	int totalitems, itemcount;
+	int totalsecrets, secretcount;
+	int leveltime;
+	FString Levelname;
+};
+
 
 class FGameSession
 {
@@ -349,25 +390,50 @@ public:
 	TMap<FName, FCompressedBuffer> Snapshots;
 	TMap<FName, TArray<acsdefered_t>> DeferredScripts;
 	TMap<FName, bool> Visited;
-	
+	TArray<FHubInfo> hubdata;
+	TArray<OneLevel> Statistics;// Current game's statistics
+	int SinglePlayerClass[MAXPLAYERS];
+
 	FString F1Pic;
-	float		MusicVolume;
-	int			time;			// time in the hub
-	int			totaltime;		// time in the game
-	
+	float		MusicVolume = 1.0f;
+	int			time = 0;			// time in the hub
+	int			totaltime = 0;		// time in the game
+	int			frozenstate = 0;
+	int			changefreeze = 0;
+	int			NextSkill = -1;
+
 	FString	nextlevel;		// Level to go to on exit
-	int		nextstartpos;	// [RH] Support for multiple starts per level
+	int		nextstartpos = 0;	// [RH] Support for multiple starts per level
 
 
 	void SetMusicVolume(float vol);
-	
-	void Reset();
+	void LeavingHub(int mode, cluster_info_t * cluster, wbstartstruct_t * wbs, FLevelLocals *Level);
+	void InitPlayerClasses();
+
+	void Reset()
+	{
+		Levelinfo.DeleteAndClear();
+		ClearSnapshots();
+		DeferredScripts.Clear();
+		Visited.Clear();
+		hubdata.Clear();
+		Statistics.Clear();
+
+		MusicVolume = 1.0f;
+		time = 0;
+		totaltime = 0;
+		frozenstate = 0;
+		changefreeze = 0;
+
+		nextlevel = "";
+		nextstartpos = 0;
+	}
+	int isFrozen() const
+	{
+		return frozenstate;
+	}
 	bool isValid();
 	FString LookupLevelName ();
-	void ClearDefered()
-	{
-		DeferredScripts.Clear();
-	}
 	void ClearSnapshots()
 	{
 		decltype(Snapshots)::Iterator it(Snapshots);
@@ -388,6 +454,9 @@ public:
 		}
 		Snapshots.Remove(mapname);
 	}
+	void SerializeSession(FSerializer &arc);
+	void SerializeACSDefereds(FSerializer &arc);
+	void SerializeVisited(FSerializer &arc);
 
 };
 
@@ -499,3 +568,6 @@ inline void ForAllLevels(T func)
 		for (auto Level : currentSession->Levelinfo) func(Level);
 	}
 }
+
+FSerializer &Serialize(FSerializer &arc, const char *key, wbplayerstruct_t &h, wbplayerstruct_t *def);
+FSerializer &Serialize(FSerializer &arc, const char *key, FHubInfo &h, FHubInfo *def);

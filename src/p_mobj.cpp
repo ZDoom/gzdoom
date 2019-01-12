@@ -3522,7 +3522,7 @@ void AActor::Tick ()
 		if (!(flags5 & MF5_NOTIMEFREEZE))
 		{
 			//Added by MC: Freeze mode.
-			if (Level->freeze || Level->flags2 & LEVEL2_FROZEN)
+			if (isFrozen())
 			{
 				// Boss cubes shouldn't be accelerated by timefreeze
 				if (flags6 & MF6_BOSSCUBE)
@@ -3569,26 +3569,15 @@ void AActor::Tick ()
 			return;
 		}
 
-		if (!(flags5 & MF5_NOTIMEFREEZE))
+		if (isFrozen())
 		{
 			// Boss cubes shouldn't be accelerated by timefreeze
 			if (flags6 & MF6_BOSSCUBE)
 			{
 				special2++;
 			}
-			//Added by MC: Freeze mode.
-			if (Level->freeze && !(player && player->Bot == NULL))
-			{
-				return;
-			}
-
-			// Apply freeze mode.
-			if ((Level->flags2 & LEVEL2_FROZEN) && (player == NULL || player->timefreezer == 0))
-			{
-				return;
-			}
+			return;
 		}
-
 
 		if (effects & FX_ROCKET)
 		{
@@ -4934,7 +4923,7 @@ AActor *P_SpawnPlayer (FLevelLocals *Level, FPlayerStart *mthing, int playernum,
 
 			if (!deathmatch || !multiplayer)
 			{
-				type = SinglePlayerClass[playernum];
+				type = currentSession->SinglePlayerClass[playernum];
 			}
 			else
 			{

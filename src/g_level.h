@@ -481,14 +481,12 @@ FString CalcMapName (int episode, int level);
 void G_ParseMapInfo (FString basemapinfo);
 
 void G_ClearSnapshots (void);
-void P_RemoveDefereds ();
 void G_SnapshotLevel (void);
 void G_UnSnapshotLevel(const TArray<FLevelLocals *> &levels, bool hubLoad);
 void G_ReadSnapshots (FResourceFile *);
 void G_WriteSnapshots (TArray<FString> &, TArray<FCompressedBuffer> &);
 void G_WriteVisited(FSerializer &arc);
 void G_ReadVisited(FSerializer &arc);
-void G_ClearHubInfo();
 
 enum ESkillProperty
 {

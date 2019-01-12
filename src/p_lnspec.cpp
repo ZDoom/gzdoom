@@ -3140,11 +3140,11 @@ FUNC(LS_ChangeSkill)
 {
 	if ((unsigned)arg0 >= AllSkills.Size())
 	{
-		NextSkill = -1;
+		currentSession->NextSkill = -1;
 	}
 	else
 	{
-		NextSkill = arg0;
+		currentSession->NextSkill = arg0;
 	}
 	return true;
 }

@@ -39,6 +39,7 @@
 #include "actorinlines.h"
 
 extern gamestate_t wipegamestate;
+extern bool globalfreeze;
 
 //==========================================================================
 //
@@ -110,10 +111,11 @@ void P_Ticker (void)
 		// [RH] Frozen mode is only changed every 4 tics, to make it work with A_Tracer().
 		if ((Level->maptime & 3) == 0)
 		{
-			if (Level->changefreeze)
+			if (currentSession->changefreeze)
 			{
-				Level->freeze ^= 1;
-				Level->changefreeze = 0;
+				currentSession->frozenstate ^= currentSession->changefreeze;
+				currentSession->changefreeze = 0;
+				globalfreeze = !!(currentSession->isFrozen() & 2);	// for ZScript backwards compatibiity.
 			}
 		}
 
@@ -153,7 +155,7 @@ void P_Ticker (void)
 		DThinker::RunThinkers(Level);
 
 		//if added by MC: Freeze mode.
-		if (!Level->freeze && !(Level->flags2 & LEVEL2_FROZEN))
+		if (!currentSession->isFrozen())
 		{
 			P_UpdateSpecials(Level);
 			P_RunEffects(Level);	// [RH] Run particle effects

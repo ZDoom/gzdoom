@@ -68,7 +68,6 @@ extern	FString			StoredWarp;			// [RH] +warp at the command line
 
 // Selected by user. 
 EXTERN_CVAR (Int, gameskill);
-extern	int				NextSkill;			// [RH] Skill to use at next level load
 
 // Netgame? Only true if >1 player.
 extern	bool			netgame;
@@ -90,10 +89,6 @@ EXTERN_CVAR (Bool, teamplay)
 
 // [RH] Friendly fire amount
 EXTERN_CVAR (Float, teamdamage)
-
-// [RH] The class the player will spawn as in single player,
-// in case using a random class with Hexen.
-extern int SinglePlayerClass[/*MAXPLAYERS*/];
 
 // -------------------------
 // Internal parameters for sound rendering.

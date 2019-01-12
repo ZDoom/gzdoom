@@ -46,8 +46,8 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native GameSession currentSession;
 
 	// These are deprecated because they can no longer reference valid state in all situations.
-	deprecated("3.8") native play LevelLocals level;
 	deprecated("3.8") native readonly bool globalfreeze;
+	deprecated("3.8") native play LevelLocals level;
 	
 }
 

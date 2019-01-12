@@ -1348,13 +1348,23 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 						}
 						else
 						{
+
 							// This is a global variable.
 							if (fd->BitValue != 0) thisfieldtype = fd->FieldSize == 1 ? TypeUInt8 : fd->FieldSize == 2 ? TypeUInt16 : TypeUInt32;
-							PField *field = Create<PField>(name->Name, thisfieldtype, varflags | VARF_Native | VARF_Static, fd->FieldOffset, fd->BitValue);
+							PField *f = Create<PField>(name->Name, thisfieldtype, varflags | VARF_Native | VARF_Static, fd->FieldOffset, fd->BitValue);
+							if (f->Flags & (ZCC_Version | ZCC_Deprecated))
+							{
+								f->mVersion = field->Version;
+							}
+							if (name->Name == Name_globalfreeze)	// Give the parser a kick in the butt for not parsing the declaration properly. I have no idea why it doesn't work.
+							{
+								f->mVersion = MakeVersion(3, 8, 0);
+								f->Flags |= VARF_Deprecated;
+							}
 
-							if (OutNamespace->Symbols.AddSymbol(field) == nullptr)
+							if (OutNamespace->Symbols.AddSymbol(f) == nullptr)
 							{ // name is already in use
-								field->Destroy();
+								f->Destroy();
 								return false;
 							}
 						}

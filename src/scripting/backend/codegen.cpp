@@ -6114,6 +6114,15 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 
 			// internally defined global variable
 			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as global variable\n", Identifier.GetChars());
+
+			if ((vsym->Flags & VARF_Deprecated))
+			{
+				if (sym->mVersion <= ctx.Version)
+				{
+					ScriptPosition.Message(MSG_WARNING, "Accessing deprecated global variable %s - deprecated since %d.%d.%d", sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision);
+				}
+			}
+
 			newex = new FxGlobalVariable(static_cast<PField *>(sym), ScriptPosition);
 			goto foundit;
 		}
@@ -6201,9 +6210,12 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PContainerType *
 				object = nullptr;
 				return nullptr;
 			}
-			if ((vsym->Flags & VARF_Deprecated) && sym->mVersion <= ctx.Version)
+			if ((vsym->Flags & VARF_Deprecated))
 			{
-				ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s - deprecated since %d.%d.%d", sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision);
+				if (sym->mVersion <= ctx.Version)
+				{
+					ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s - deprecated since %d.%d.%d", sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision);
+				}
 			}
 
 			// We have 4 cases to consider here:
@@ -8625,6 +8637,7 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 	emitters.AddParameterIntConst(abs(Special));			// pass special number
 	emitters.AddParameter(build, Self);
 
+
 	for (; i < ArgList.Size(); ++i)
 	{
 		FxExpression *argex = ArgList[i];
@@ -8711,9 +8724,12 @@ bool FxVMFunctionCall::CheckAccessibility(const VersionInfo &ver)
 		ScriptPosition.Message(MSG_ERROR, "%s not accessible to %s", Function->SymbolName.GetChars(), VersionString.GetChars());
 		return false;
 	}
-	if ((Function->Variants[0].Flags & VARF_Deprecated) && Function->mVersion <= ver)
+	if ((Function->Variants[0].Flags & VARF_Deprecated))
 	{
-		ScriptPosition.Message(MSG_WARNING, "Accessing deprecated function %s - deprecated since %d.%d.%d", Function->SymbolName.GetChars(), Function->mVersion.major, Function->mVersion.minor, Function->mVersion.revision);
+		if (Function->mVersion <= ver)
+		{
+			ScriptPosition.Message(MSG_WARNING, "Accessing deprecated function %s - deprecated since %d.%d.%d", Function->SymbolName.GetChars(), Function->mVersion.major, Function->mVersion.minor, Function->mVersion.revision);
+		}
 	}
 	return true;
 }

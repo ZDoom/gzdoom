@@ -82,7 +82,7 @@ void DFlashFader::Tick ()
 		Destroy ();
 		return;
 	}
-	SetBlend ((float)RemainingTics / (float)TotalTics);
+	SetBlend (1.f - (float)RemainingTics / (float)TotalTics);
 }
 
 void DFlashFader::SetBlend (float time)

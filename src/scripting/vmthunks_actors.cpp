@@ -1687,7 +1687,7 @@ static int isFrozen(AActor *self)
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, isFrozen, isFrozen)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(AActor);
+	PARAM_SELF_PROLOGUE(AActor);
 	return isFrozen(self);
 }
 

@@ -86,7 +86,7 @@ void FSoftwareRenderer::PreparePrecache(FTexture *ttex, int cache)
 {
 	bool isbgra = V_IsTrueColor();
 
-	if (ttex != NULL && ttex->isValid())
+	if (ttex != nullptr && ttex->isValid() && !ttex->isCanvas())
 	{
 		FSoftwareTexture *tex = ttex->GetSoftwareTexture();
 
@@ -105,7 +105,7 @@ void FSoftwareRenderer::PrecacheTexture(FTexture *ttex, int cache)
 {
 	bool isbgra = V_IsTrueColor();
 
-	if (ttex != NULL && ttex->isValid())
+	if (ttex != nullptr && ttex->isValid() && !ttex->isCanvas())
 	{
 		FSoftwareTexture *tex = ttex->GetSoftwareTexture();
 		if (cache & FTextureManager::HIT_Columnmode)

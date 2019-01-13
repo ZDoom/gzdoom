@@ -986,7 +986,6 @@ void FSerializer::ReadObjects(bool hubtravel)
 		// Do not link any thinker that's being created here. This will be done by deserializing the thinker list later.
 		try
 		{
-			DThinker::bSerialOverride = true;
 			r->mDObjects.Resize(ArraySize());
 			for (auto &p : r->mDObjects)
 			{
@@ -1051,7 +1050,6 @@ void FSerializer::ReadObjects(bool hubtravel)
 			}
 			EndArray();
 
-			DThinker::bSerialOverride = false;
 			assert(!founderrors);
 			if (founderrors)
 			{
@@ -1069,7 +1067,6 @@ void FSerializer::ReadObjects(bool hubtravel)
 			r->mDObjects.Clear();
 
 			// make sure this flag gets unset, even if something in here throws an error.
-			DThinker::bSerialOverride = false;
 			throw;
 		}
 	}

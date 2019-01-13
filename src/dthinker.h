@@ -101,7 +101,6 @@ public:
 	static void MarkRoots();
 
 	static DThinker *FirstThinker (int statnum);
-	static bool bSerialOverride;
 
 	FLevelLocals *Level;
 

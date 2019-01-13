@@ -56,7 +56,6 @@ DThinker *NextToThink;
 
 FThinkerList DThinker::Thinkers[MAX_STATNUM+2];
 FThinkerList DThinker::FreshThinkers[MAX_STATNUM+1];
-bool DThinker::bSerialOverride = false;
 
 //==========================================================================
 //

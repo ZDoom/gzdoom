@@ -2066,7 +2066,7 @@ void G_ReadSnapshots(FResourceFile *resf)
 			if (ptr != nullptr)
 			{
 				ptrdiff_t maplen = ptr - resl->FullName.GetChars();
-				FName mapname(resl->FullName.GetChars(), (size_t)maplen);
+				FName mapname(resl->FullName.GetChars(), (size_t)maplen, false);
 				currentSession->Snapshots.Insert(mapname, resl->GetRawData());
 			}
 		}

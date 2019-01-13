@@ -242,7 +242,11 @@ DThinker::DThinker (int statnum) throw()
 {
 	NextThinker = NULL;
 	PrevThinker = NULL;
-	Level = bSerialOverride? nullptr : currentSession->Levelinfo[0];	// do this properly later.
+	Level = bSerialOverride
+		? nullptr
+		: currentSession == nullptr
+			? nullptr
+			: currentSession->Levelinfo[0];	// do this properly later.
 	if (bSerialOverride)
 	{ // The serializer will insert us into the right list
 		return;

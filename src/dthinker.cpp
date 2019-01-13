@@ -367,8 +367,6 @@ void DThinker::ChangeStatNum (int statnum)
 {
 	FThinkerList *list;
 
-	Level = currentSession == nullptr ? nullptr : currentSession->Levelinfo[0];	// fixme later.
-
 	if ((unsigned)statnum > MAX_STATNUM)
 	{
 		statnum = MAX_STATNUM;

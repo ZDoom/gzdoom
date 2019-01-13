@@ -64,8 +64,8 @@ IMPLEMENT_POINTERS_END
 
 DEFINE_FIELD(DBot, dest)
 
-DBot::DBot ()
-: DThinker(STAT_BOT)
+DBot::DBot (FLevelLocals *Level)
+	:DThinker(Level)
 {
 	Clear ();
 }

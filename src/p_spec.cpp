@@ -696,8 +696,10 @@ class DLightTransfer : public DThinker
 {
 	DECLARE_CLASS (DLightTransfer, DThinker)
 
-	DLightTransfer() {}
+	DLightTransfer() = default;
 public:
+	static const int DEFAULT_STAT = STAT_LIGHTTRANSFER;
+
 	DLightTransfer (sector_t *srcSec, int target, bool copyFloor);
 	void Serialize(FSerializer &arc);
 	void Tick ();
@@ -723,6 +725,7 @@ void DLightTransfer::Serialize(FSerializer &arc)
 }
 
 DLightTransfer::DLightTransfer (sector_t *srcSec, int target, bool copyFloor)
+	: DThinker(srcSec->Level)
 {
 	int secnum;
 
@@ -744,7 +747,6 @@ DLightTransfer::DLightTransfer (sector_t *srcSec, int target, bool copyFloor)
 		while ((secnum = itr.Next()) >= 0)
 			Level->sectors[secnum].ChangeFlags(sector_t::ceiling, 0, PLANEF_ABSLIGHTING);
 	}
-	ChangeStatNum (STAT_LIGHTTRANSFER);
 }
 
 void DLightTransfer::Tick ()
@@ -788,8 +790,9 @@ class DWallLightTransfer : public DThinker
 	};
 
 	DECLARE_CLASS (DWallLightTransfer, DThinker)
-	DWallLightTransfer() {}
+	DWallLightTransfer() = default;
 public:
+	static const int DEFAULT_STAT = STAT_LIGHTTRANSFER;
 	DWallLightTransfer (sector_t *srcSec, int target, uint8_t flags);
 	void Serialize(FSerializer &arc);
 	void Tick ();
@@ -815,6 +818,7 @@ void DWallLightTransfer::Serialize(FSerializer &arc)
 }
 
 DWallLightTransfer::DWallLightTransfer (sector_t *srcSec, int target, uint8_t flags)
+	: DThinker(srcSec->Level)
 {
 	int linenum;
 	int wallflags;
@@ -847,7 +851,6 @@ DWallLightTransfer::DWallLightTransfer (sector_t *srcSec, int target, uint8_t fl
 			Level->lines[linenum].sidedef[1]->Flags |= wallflags;
 		}
 	}
-	ChangeStatNum(STAT_LIGHTTRANSFER);
 }
 
 void DWallLightTransfer::Tick ()
@@ -1174,7 +1177,7 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 		break;
 
 	case dSector_DoorCloseIn30:
-		Create<DDoor>(sector, DDoor::doorWaitClose, 2, 0, 0, 30 * TICRATE);
+		CreateThinker<DDoor>(sector, DDoor::doorWaitClose, 2, 0, 0, 30 * TICRATE);
 		break;
 			
 	case dDamage_End:
@@ -1182,7 +1185,7 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 		break;
 
 	case dSector_DoorRaiseIn5Mins:
-		Create<DDoor> (sector, DDoor::doorWaitRaise, 2, TICRATE*30/7, 0, 5*60*TICRATE);
+		CreateThinker<DDoor> (sector, DDoor::doorWaitRaise, 2, TICRATE*30/7, 0, 5*60*TICRATE);
 		break;
 
 	case dFriction_Low:
@@ -1365,19 +1368,19 @@ void P_SpawnSpecials (MapLoader *ml)
 		// killough 3/16/98: Add support for setting
 		// floor lighting independently (e.g. lava)
 		case Transfer_FloorLight:
-			Create<DLightTransfer> (line.frontsector, line.args[0], true);
+			CreateThinker<DLightTransfer> (line.frontsector, line.args[0], true);
 			break;
 
 		// killough 4/11/98: Add support for setting
 		// ceiling lighting independently
 		case Transfer_CeilingLight:
-			Create<DLightTransfer> (line.frontsector, line.args[0], false);
+			CreateThinker<DLightTransfer>(line.frontsector, line.args[0], false);
 			break;
 
 		// [Graf Zahl] Add support for setting lighting
 		// per wall independently
 		case Transfer_WallLight:
-			Create<DWallLightTransfer> (line.frontsector, line.args[0], line.args[1]);
+			CreateThinker<DWallLightTransfer>(line.frontsector, line.args[0], line.args[1]);
 			break;
 
 		case Sector_Attach3dMidtex:

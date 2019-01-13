@@ -43,17 +43,6 @@ IMPLEMENT_POINTERS_END
 
 //==========================================================================
 //
-// DEarthquake :: DEarthquake private constructor
-//
-//==========================================================================
-
-DEarthquake::DEarthquake()
-: DThinker(STAT_EARTHQUAKE)
-{
-}
-
-//==========================================================================
-//
 // DEarthquake :: DEarthquake public constructor
 //
 //==========================================================================
@@ -62,7 +51,7 @@ DEarthquake::DEarthquake(AActor *center, int intensityX, int intensityY, int int
 	int damrad, int tremrad, FSoundID quakesound, int flags,
 	double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, 
 	double rollIntensity, double rollWave)
-	: DThinker(STAT_EARTHQUAKE)
+	: DThinker(center->Level)
 {
 	m_QuakeSFX = quakesound;
 	m_Spot = center;
@@ -395,7 +384,7 @@ bool P_StartQuakeXYZ(FLevelLocals *Level, AActor *activator, int tid, int intens
 	{
 		if (activator != NULL)
 		{
-			Create<DEarthquake>(activator, intensityX, intensityY, intensityZ, duration, damrad, tremrad,
+			CreateThinker<DEarthquake>(activator, intensityX, intensityY, intensityZ, duration, damrad, tremrad,
 				quakesfx, flags, waveSpeedX, waveSpeedY, waveSpeedZ, falloff, highpoint, rollIntensity, rollWave);
 			return true;
 		}
@@ -406,7 +395,7 @@ bool P_StartQuakeXYZ(FLevelLocals *Level, AActor *activator, int tid, int intens
 		while ( (center = iterator.Next ()) )
 		{
 			res = true;
-			Create<DEarthquake>(center, intensityX, intensityY, intensityZ, duration, damrad, tremrad,
+			CreateThinker<DEarthquake>(center, intensityX, intensityY, intensityZ, duration, damrad, tremrad,
 				quakesfx, flags, waveSpeedX, waveSpeedY, waveSpeedZ, falloff, highpoint, rollIntensity, rollWave);
 		}
 	}

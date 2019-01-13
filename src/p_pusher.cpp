@@ -54,7 +54,6 @@ public:
 		p_current
 	};
 
-	DPusher ();
 	DPusher (EPusher type, line_t *l, int magnitude, int angle, AActor *source, sector_t *affectee);
 	void Serialize(FSerializer &arc);
 	int CheckForSectorMatch (EPusher type, int tag);
@@ -76,6 +75,10 @@ protected:
 	sector_t *m_Affectee;			// Number of affected sector
 
 	friend bool PIT_PushThing (AActor *thing);
+
+private:
+	DPusher() = default;
+
 };
 
 IMPLEMENT_CLASS(DPusher, false, true)
@@ -83,10 +86,6 @@ IMPLEMENT_CLASS(DPusher, false, true)
 IMPLEMENT_POINTERS_START(DPusher)
 	IMPLEMENT_POINTER(m_Source)
 IMPLEMENT_POINTERS_END
-
-DPusher::DPusher ()
-{
-}
 
 void DPusher::Serialize(FSerializer &arc)
 {
@@ -152,6 +151,7 @@ void DPusher::Serialize(FSerializer &arc)
 // Add a push thinker to the thinker list
 
 DPusher::DPusher (DPusher::EPusher type, line_t *l, int magnitude, int angle, AActor *source, sector_t *affectee)
+	: DThinker(affectee->Level)
 {
 	m_Source = source;
 	m_Type = type;
@@ -370,7 +370,7 @@ void P_SpawnPushers (FLevelLocals *Level)
 		{
 			FSectorTagIterator itr(Level->tagManager, l->args[0]);
 			while ((s = itr.Next()) >= 0)
-				Create<DPusher>(DPusher::p_wind, l->args[3] ? l : nullptr, l->args[1], l->args[2], nullptr, &Level->sectors[s]);
+				CreateThinker<DPusher>(DPusher::p_wind, l->args[3] ? l : nullptr, l->args[1], l->args[2], nullptr, &Level->sectors[s]);
 			l->special = 0;
 			break;
 		}
@@ -379,7 +379,7 @@ void P_SpawnPushers (FLevelLocals *Level)
 		{
 			FSectorTagIterator itr(Level->tagManager, l->args[0]);
 			while ((s = itr.Next()) >= 0)
-				Create<DPusher>(DPusher::p_current, l->args[3] ? l : nullptr, l->args[1], l->args[2], nullptr, &Level->sectors[s]);
+				CreateThinker<DPusher>(DPusher::p_current, l->args[3] ? l : nullptr, l->args[1], l->args[2], nullptr, &Level->sectors[s]);
 			l->special = 0;
 			break;
 		}
@@ -393,7 +393,7 @@ void P_SpawnPushers (FLevelLocals *Level)
 					if (thing) {	// No MT_P* means no effect
 						// [RH] Allow narrowing it down by tid
 						if (!l->args[1] || l->args[1] == thing->tid)
-							Create<DPusher> (DPusher::p_push, l->args[3] ? l : NULL, l->args[2], 0, thing, &Level->sectors[s]);
+							CreateThinker<DPusher>(DPusher::p_push, l->args[3] ? l : NULL, l->args[2], 0, thing, &Level->sectors[s]);
 					}
 				}
 			} else {	// [RH] Find thing by tid
@@ -405,7 +405,7 @@ void P_SpawnPushers (FLevelLocals *Level)
 					if (thing->GetClass()->TypeName == NAME_PointPusher ||
 						thing->GetClass()->TypeName == NAME_PointPuller)
 					{
-						Create<DPusher> (DPusher::p_push, l->args[3] ? l : NULL, l->args[2], 0, thing, thing->Sector);
+						CreateThinker<DPusher>(DPusher::p_push, l->args[3] ? l : NULL, l->args[2], 0, thing, thing->Sector);
 					}
 				}
 			}
@@ -450,7 +450,7 @@ void AdjustPusher (FLevelLocals *Level, int tag, int magnitude, int angle, bool 
 		}
 		if (i == numcollected)
 		{
-			Create<DPusher> (type, nullptr, magnitude, angle, nullptr, &Level->sectors[secnum]);
+			CreateThinker<DPusher>(type, nullptr, magnitude, angle, nullptr, &Level->sectors[secnum]);
 		}
 	}
 }

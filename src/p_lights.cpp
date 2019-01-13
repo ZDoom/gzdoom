@@ -60,7 +60,7 @@ protected:
 	int 		m_MaxLight;
 	int 		m_MinLight;
 private:
-	DFireFlicker();
+	DFireFlicker() = default;
 };
 
 class DFlicker : public DLighting
@@ -75,7 +75,7 @@ protected:
 	int 		m_MaxLight;
 	int 		m_MinLight;
 private:
-	DFlicker();
+	DFlicker() = default;
 };
 
 class DLightFlash : public DLighting
@@ -93,7 +93,7 @@ protected:
 	int 		m_MaxTime;
 	int 		m_MinTime;
 private:
-	DLightFlash();
+	DLightFlash() = default;
 };
 
 class DStrobe : public DLighting
@@ -111,7 +111,7 @@ protected:
 	int 		m_DarkTime;
 	int 		m_BrightTime;
 private:
-	DStrobe();
+	DStrobe() = default;
 };
 
 class DGlow : public DLighting
@@ -126,7 +126,7 @@ protected:
 	int 		m_MaxLight;
 	int 		m_Direction;
 private:
-	DGlow();
+	DGlow() = default;
 };
 
 // [RH] Glow from Light_Glow and Light_Fade specials
@@ -144,7 +144,7 @@ protected:
 	int			m_Tics;
 	bool		m_OneShot;
 private:
-	DGlow2();
+	DGlow2() = default;
 };
 
 // [RH] Phased light thinker
@@ -155,7 +155,6 @@ public:
 	DPhased(sector_t *sector);
 	DPhased(sector_t *sector, int baselevel, int phase);
 	// These are for internal use only but the Create template needs access to them.
-	DPhased();
 	DPhased(sector_t *sector, int baselevel);
 
 	void		Serialize(FSerializer &arc);
@@ -164,6 +163,7 @@ protected:
 	uint8_t		m_BaseLevel;
 	uint8_t		m_Phase;
 private:
+	DPhased() = default;
 	int PhaseHelper(sector_t *sector, int index, int light, sector_t *prev);
 };
 
@@ -181,14 +181,9 @@ private:
 
 IMPLEMENT_CLASS(DLighting, false, false)
 
-DLighting::DLighting ()
-{
-}
-
 DLighting::DLighting (sector_t *sector)
 	: DSectorEffect (sector)
 {
-	ChangeStatNum (STAT_LIGHT);
 }
 
 //-----------------------------------------------------------------------------
@@ -198,10 +193,6 @@ DLighting::DLighting (sector_t *sector)
 //-----------------------------------------------------------------------------
 
 IMPLEMENT_CLASS(DFireFlicker, false, false)
-
-DFireFlicker::DFireFlicker ()
-{
-}
 
 void DFireFlicker::Serialize(FSerializer &arc)
 {
@@ -266,10 +257,6 @@ DFireFlicker::DFireFlicker (sector_t *sector, int upper, int lower)
 
 IMPLEMENT_CLASS(DFlicker, false, false)
 
-DFlicker::DFlicker ()
-{
-}
-
 void DFlicker::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
@@ -329,7 +316,7 @@ void EV_StartLightFlickering (FLevelLocals *Level, int tag, int upper, int lower
 	FSectorTagIterator it(Level->tagManager, tag);
 	while ((secnum = it.Next()) >= 0)
 	{
-		Create<DFlicker> (&Level->sectors[secnum], upper, lower);
+		CreateThinker<DFlicker>(&Level->sectors[secnum], upper, lower);
 	}
 }
 
@@ -341,10 +328,6 @@ void EV_StartLightFlickering (FLevelLocals *Level, int tag, int upper, int lower
 //-----------------------------------------------------------------------------
 
 IMPLEMENT_CLASS(DLightFlash, false, false)
-
-DLightFlash::DLightFlash ()
-{
-}
 
 void DLightFlash::Serialize(FSerializer &arc)
 {
@@ -416,10 +399,6 @@ DLightFlash::DLightFlash (sector_t *sector, int min, int max)
 //-----------------------------------------------------------------------------
 
 IMPLEMENT_CLASS(DStrobe, false, false)
-
-DStrobe::DStrobe ()
-{
-}
 
 void DStrobe::Serialize(FSerializer &arc)
 {
@@ -510,7 +489,7 @@ void EV_StartLightStrobing (FLevelLocals *Level, int tag, int upper, int lower, 
 		if (sec->lightingdata)
 			continue;
 		
-		Create<DStrobe> (sec, upper, lower, utics, ltics);
+		CreateThinker<DStrobe>(sec, upper, lower, utics, ltics);
 	}
 }
 
@@ -524,7 +503,7 @@ void EV_StartLightStrobing (FLevelLocals *Level, int tag, int utics, int ltics)
 		if (sec->lightingdata)
 			continue;
 		
-		Create<DStrobe> (sec, utics, ltics, false);
+		CreateThinker<DStrobe>(sec, utics, ltics, false);
 	}
 }
 
@@ -673,10 +652,6 @@ void EV_LightChange (FLevelLocals *Level, int tag, int value)
 
 IMPLEMENT_CLASS(DGlow, false, false)
 
-DGlow::DGlow ()
-{
-}
-
 void DGlow::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
@@ -741,10 +716,6 @@ DGlow::DGlow (sector_t *sector)
 //-----------------------------------------------------------------------------
 
 IMPLEMENT_CLASS(DGlow2, false, false)
-
-DGlow2::DGlow2 ()
-{
-}
 
 void DGlow2::Serialize(FSerializer &arc)
 {
@@ -830,7 +801,7 @@ void EV_StartLightGlowing (FLevelLocals *Level, int tag, int upper, int lower, i
 		if (sec->lightingdata)
 			continue;
 		
-		Create<DGlow2> (sec, upper, lower, tics, false);
+		CreateThinker<DGlow2>(sec, upper, lower, tics, false);
 	}
 }
 
@@ -860,7 +831,7 @@ void EV_StartLightFading (FLevelLocals *Level, int tag, int value, int tics)
 			if (sec->lightlevel == value)
 				continue;
 
-			Create<DGlow2> (sec, sec->lightlevel, value, tics, true);
+			CreateThinker<DGlow2>(sec, sec->lightlevel, value, tics, true);
 		}
 	}
 }
@@ -874,10 +845,6 @@ void EV_StartLightFading (FLevelLocals *Level, int tag, int value, int tics)
 //-----------------------------------------------------------------------------
 
 IMPLEMENT_CLASS(DPhased, false, false)
-
-DPhased::DPhased ()
-{
-}
 
 void DPhased::Serialize(FSerializer &arc)
 {
@@ -934,7 +901,7 @@ int DPhased::PhaseHelper (sector_t *sector, int index, int light, sector_t *prev
 			m_BaseLevel = baselevel;
 		}
 		else
-			l = Create<DPhased> (sector, baselevel);
+			l = CreateThinker<DPhased>(sector, baselevel);
 
 		int numsteps = PhaseHelper (sector->NextSpecialSector (
 				sector->special == LightSequenceSpecial1 ?
@@ -999,55 +966,56 @@ void EV_StopLightEffect (FLevelLocals *Level, int tag)
 
 void P_SpawnLights(sector_t *sector)
 {
+	auto Level = sector->Level;
 	switch (sector->special)
 	{
 	case Light_Phased:
-		Create<DPhased>(sector, 48, 63 - (sector->lightlevel & 63));
+		CreateThinker<DPhased>(sector, 48, 63 - (sector->lightlevel & 63));
 		break;
 
 		// [RH] Hexen-like phased lighting
 	case LightSequenceStart:
-		Create<DPhased>(sector);
+		CreateThinker<DPhased>(sector);
 		break;
 
 	case dLight_Flicker:
-		Create<DLightFlash>(sector);
+		CreateThinker<DLightFlash>(sector);
 		break;
 
 	case dLight_StrobeFast:
-		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
+		CreateThinker<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
 		break;
 
 	case dLight_StrobeSlow:
-		Create<DStrobe>(sector, STROBEBRIGHT, SLOWDARK, false);
+		CreateThinker<DStrobe>(sector, STROBEBRIGHT, SLOWDARK, false);
 		break;
 
 	case dLight_Strobe_Hurt:
-		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
+		CreateThinker<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
 		break;
 
 	case dLight_Glow:
-		Create<DGlow>(sector);
+		CreateThinker<DGlow>(sector);
 		break;
 
 	case dLight_StrobeSlowSync:
-		Create<DStrobe>(sector, STROBEBRIGHT, SLOWDARK, true);
+		CreateThinker<DStrobe>(sector, STROBEBRIGHT, SLOWDARK, true);
 		break;
 
 	case dLight_StrobeFastSync:
-		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, true);
+		CreateThinker<DStrobe>(sector, STROBEBRIGHT, FASTDARK, true);
 		break;
 
 	case dLight_FireFlicker:
-		Create<DFireFlicker>(sector);
+		CreateThinker<DFireFlicker>(sector);
 		break;
 
 	case dScroll_EastLavaDamage:
-		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
+		CreateThinker<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
 		break;
 
 	case sLight_Strobe_Hurt:
-		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
+		CreateThinker<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
 		break;
 
 	default:

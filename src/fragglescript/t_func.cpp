@@ -1768,7 +1768,7 @@ class DLightLevel : public DLighting
 	unsigned char destlevel;
 	unsigned char speed;
 
-	DLightLevel() {}
+	DLightLevel() = default;
 
 public:
 
@@ -1862,7 +1862,7 @@ void FParser::SF_FadeLight(void)
 		FSectorTagIterator it(Level->tagManager, sectag);
 		while ((i = it.Next()) >= 0)
 		{
-			if (!Level->sectors[i].lightingdata) Create<DLightLevel>(&Level->sectors[i],destlevel,speed);
+			if (!Level->sectors[i].lightingdata) CreateThinker<DLightLevel>(&Level->sectors[i],destlevel,speed);
 		}
 	}
 }

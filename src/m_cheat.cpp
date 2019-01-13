@@ -602,6 +602,7 @@ class DSuicider : public DThinker
 public:
 	TObjPtr<AActor*> Pawn;
 
+	DSuicider(AActor *pawn) : DThinker(pawn->Level), Pawn(pawn) {}
 	void Tick()
 	{
 		Pawn->flags |= MF_SHOOTABLE;
@@ -624,6 +625,8 @@ public:
 		Super::Serialize(arc);
 		arc("pawn", Pawn);
 	}
+private:
+	DSuicider() = default;
 };
 
 IMPLEMENT_CLASS(DSuicider, false, true)
@@ -641,7 +644,7 @@ void cht_Suicide (player_t *plyr)
 	// the initial tick.
 	if (plyr->mo != NULL)
 	{
-		DSuicider *suicide = Create<DSuicider>();
+		DSuicider *suicide = CreateThinker<DSuicider>(plyr->mo);
 		suicide->Pawn = plyr->mo;
 		GC::WriteBarrier(suicide, suicide->Pawn);
 	}

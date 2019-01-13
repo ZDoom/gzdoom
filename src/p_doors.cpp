@@ -47,10 +47,6 @@
 
 IMPLEMENT_CLASS(DDoor, false, false)
 
-DDoor::DDoor ()
-{
-}
-
 void DDoor::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
@@ -484,7 +480,7 @@ bool EV_DoDoor (FLevelLocals *Level, DDoor::EVlDoor type, line_t *line, AActor *
 			}
 			return false;
 		}
-		if (Create<DDoor> (sec, type, speed, delay, lightTag, topcountdown))
+		if (CreateThinker<DDoor> (sec, type, speed, delay, lightTag, topcountdown))
 			rtn = true;
 	}
 	else
@@ -498,7 +494,7 @@ bool EV_DoDoor (FLevelLocals *Level, DDoor::EVlDoor type, line_t *line, AActor *
 			if (sec->PlaneMoving(sector_t::ceiling))
 				continue;
 
-			if (Create<DDoor>(sec, type, speed, delay, lightTag, topcountdown))
+			if (CreateThinker<DDoor>(sec, type, speed, delay, lightTag, topcountdown))
 				rtn = true;
 		}
 				
@@ -513,10 +509,6 @@ bool EV_DoDoor (FLevelLocals *Level, DDoor::EVlDoor type, line_t *line, AActor *
 //============================================================================
 
 IMPLEMENT_CLASS(DAnimatedDoor, false, false)
-
-DAnimatedDoor::DAnimatedDoor ()
-{
-}
 
 DAnimatedDoor::DAnimatedDoor (sector_t *sec)
 	: DMovingCeiling (sec, false)
@@ -781,7 +773,7 @@ bool EV_SlidingDoor (FLevelLocals *Level, line_t *line, AActor *actor, int tag, 
 		FDoorAnimation *anim = TexMan.FindAnimatedDoor (line->sidedef[0]->GetTexture(side_t::top));
 		if (anim != NULL)
 		{
-			Create<DAnimatedDoor>(sec, line, speed, delay, anim, type);
+			CreateThinker<DAnimatedDoor>(sec, line, speed, delay, anim, type);
 			return true;
 		}
 		return false;
@@ -806,7 +798,7 @@ bool EV_SlidingDoor (FLevelLocals *Level, line_t *line, AActor *actor, int tag, 
 			if (anim != NULL)
 			{
 				rtn = true;
-				Create<DAnimatedDoor>(sec, line, speed, delay, anim, type);
+				CreateThinker<DAnimatedDoor>(sec, line, speed, delay, anim, type);
 				break;
 			}
 		}

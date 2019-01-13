@@ -403,17 +403,7 @@ void AActor::PostSerialize()
 }
 
 
-
-AActor::AActor () throw()
-{
-}
-
-AActor::AActor (const AActor &other) throw()
-	: DThinker()
-{
-	memcpy (&snext, &other.snext, (uint8_t *)&this[1] - (uint8_t *)&snext);
-}
-
+// This needs to go away.
 AActor &AActor::operator= (const AActor &other)
 {
 	memcpy (&snext, &other.snext, (uint8_t *)&this[1] - (uint8_t *)&snext);
@@ -4377,6 +4367,9 @@ AActor *AActor::StaticSpawn (FLevelLocals *Level, PClassActor *type, const DVect
 	AActor *actor;
 
 	actor = static_cast<AActor *>(const_cast<PClassActor *>(type)->CreateNew ());
+	// Note that this actor does not have the thinker initialized yet. It neither has a level attached nor is it linked into the thinker list.
+	actor->Level = Level;
+	actor->ChangeStatNum(STAT_DEFAULT);
 	actor->SpawnTime = currentSession->totaltime;
 	actor->SpawnOrder = Level->spawnindex++;
 

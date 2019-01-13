@@ -2239,7 +2239,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		break;
 
 	case DEM_ADDBOT:
-		bglobal.TryAddBot (stream, player);
+		bglobal.TryAddBot (currentSession->Levelinfo[0], stream, player);
 		break;
 
 	case DEM_KILLBOTS:

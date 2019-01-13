@@ -367,20 +367,24 @@ IMPLEMENT_POINTERS_END
 //
 //==========================================================================
 
-DFraggleThinker::DFraggleThinker() 
-: DThinker(STAT_SCRIPTS)
+DFraggleThinker::DFraggleThinker(FLevelLocals * l) 
+	: DThinker(l)
 {
 	GlobalScript = Create<DFsScript>(Level);
 	GC::WriteBarrier(this, GlobalScript);
-	// do not create resources which will be filled in by the serializer if being called from there.
-	if (!bSerialOverride)
-	{
-		RunningScripts = Create<DRunningScript>();
-		GC::WriteBarrier(this, RunningScripts);
-		LevelScript = Create<DFsScript>(Level);
-		LevelScript->parent = GlobalScript;
-		GC::WriteBarrier(this, LevelScript);
-	}
+	RunningScripts = Create<DRunningScript>();
+	GC::WriteBarrier(this, RunningScripts);
+	LevelScript = Create<DFsScript>(Level);
+	LevelScript->parent = GlobalScript;
+	GC::WriteBarrier(this, LevelScript);
+	InitFunctions();
+}
+
+DFraggleThinker::DFraggleThinker()
+{
+	// The global script is not serializable and must be constructed even here in the deserializing constructor.
+	GlobalScript = Create<DFsScript>(Level);
+	GC::WriteBarrier(this, GlobalScript);
 	InitFunctions();
 }
 

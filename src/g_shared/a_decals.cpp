@@ -65,35 +65,16 @@ IMPLEMENT_POINTERS_END
 
 IMPLEMENT_CLASS(DImpactDecal, false, false)
 
-DBaseDecal::DBaseDecal ()
-: DThinker(STAT_DECAL),
-  WallNext(0), WallPrev(0), LeftDistance(0), Z(0), ScaleX(1.), ScaleY(1.), Alpha(1.),
-  AlphaColor(0), Translation(0), RenderFlags(0)
-{
-	RenderStyle = STYLE_None;
-	PicNum.SetInvalid();
-}
-
-DBaseDecal::DBaseDecal (double z)
-: DThinker(STAT_DECAL),
-  WallNext(0), WallPrev(0), LeftDistance(0), Z(z), ScaleX(1.), ScaleY(1.), Alpha(1.),
+DBaseDecal::DBaseDecal (FLevelLocals *l, double z)
+: DThinker(l), WallNext(0), WallPrev(0), LeftDistance(0), Z(z), ScaleX(1.), ScaleY(1.), Alpha(1.),
   AlphaColor(0), Translation(0), RenderFlags(0), Side(nullptr), Sector(nullptr)
 {
 	RenderStyle = STYLE_None;
 	PicNum.SetInvalid();
 }
 
-DBaseDecal::DBaseDecal (int statnum, double z)
-: DThinker(statnum),
-	WallNext(nullptr), WallPrev(nullptr), LeftDistance(0), Z(z), ScaleX(1.), ScaleY(1.), Alpha(1.),
-	AlphaColor(0), Translation(0), RenderFlags(0), Side(nullptr), Sector(nullptr)
-{
-	RenderStyle = STYLE_None;
-	PicNum.SetInvalid();
-}
-
 DBaseDecal::DBaseDecal (const AActor *basis)
-: DThinker(STAT_DECAL),
+:   DThinker(basis->Level),
 	WallNext(nullptr), WallPrev(nullptr), LeftDistance(0), Z(basis->Z()), ScaleX(basis->Scale.X), ScaleY(basis->Scale.Y),
 	Alpha(basis->Alpha), AlphaColor(basis->fillcolor), Translation(basis->Translation), PicNum(basis->picnum),
 	RenderFlags(basis->renderflags), RenderStyle(basis->RenderStyle), Side(nullptr), Sector(nullptr)
@@ -101,7 +82,7 @@ DBaseDecal::DBaseDecal (const AActor *basis)
 }
 
 DBaseDecal::DBaseDecal (const DBaseDecal *basis)
-: DThinker(STAT_DECAL),
+:   DThinker(basis->Level),
 	WallNext(nullptr), WallPrev(nullptr), LeftDistance(basis->LeftDistance), Z(basis->Z), ScaleX(basis->ScaleX),
 	ScaleY(basis->ScaleY), Alpha(basis->Alpha), AlphaColor(basis->AlphaColor), Translation(basis->Translation),
 	PicNum(basis->PicNum), RenderFlags(basis->RenderFlags), RenderStyle(basis->RenderStyle), Side(nullptr), Sector(nullptr)
@@ -521,7 +502,7 @@ void DBaseDecal::Spread (const FDecalTemplate *tpl, side_t *wall, double x, doub
 
 DBaseDecal *DBaseDecal::CloneSelf (const FDecalTemplate *tpl, double ix, double iy, double iz, side_t *wall, F3DFloor * ffloor) const
 {
-	DBaseDecal *decal = Create<DBaseDecal>(iz);
+	DBaseDecal *decal = CreateThinker<DBaseDecal>(wall->sector->Level, iz);
 	if (decal != NULL)
 	{
 		if (decal->StickToWall (wall, ix, iy, ffloor).isValid())
@@ -562,13 +543,8 @@ CUSTOM_CVAR (Int, cl_maxdecals, 1024, CVAR_ARCHIVE)
 	}
 }
 
-DImpactDecal::DImpactDecal ()
-: DBaseDecal (STAT_AUTODECAL, 0.)
-{
-}
-
-DImpactDecal::DImpactDecal (double z)
-: DBaseDecal (STAT_AUTODECAL, z)
+DImpactDecal::DImpactDecal (FLevelLocals *l, double z)
+: DBaseDecal (l, z)
 {
 }
 
@@ -615,7 +591,7 @@ DImpactDecal *DImpactDecal::StaticCreate (const FDecalTemplate *tpl, const DVect
 			else lowercolor = color;
 			StaticCreate (tpl_low, pos, wall, ffloor, lowercolor);
 		}
-		decal = Create<DImpactDecal>(pos.Z);
+		decal = CreateThinker<DImpactDecal>(wall->sector->Level, pos.Z);
 		if (decal == NULL)
 		{
 			return NULL;
@@ -651,7 +627,7 @@ DBaseDecal *DImpactDecal::CloneSelf (const FDecalTemplate *tpl, double ix, doubl
 		return NULL;
 	}
 
-	DImpactDecal *decal = Create<DImpactDecal>(iz);
+	DImpactDecal *decal = CreateThinker<DImpactDecal>(Level, iz);
 	if (decal != NULL)
 	{
 		if (decal->StickToWall (wall, ix, iy, ffloor).isValid())
@@ -740,7 +716,7 @@ DBaseDecal *ShootDecal(const FDecalTemplate *tpl, AActor *basisactor, sector_t *
 	{
 		if (permanent)
 		{
-			decal = Create<DBaseDecal>(trace.HitPos.Z);
+			decal = CreateThinker<DBaseDecal>(trace.Line->GetLevel(), trace.HitPos.Z);
 			wall = trace.Line->sidedef[trace.Side];
 			decal->StickToWall(wall, trace.HitPos.X, trace.HitPos.Y, trace.ffloor);
 			tpl->ApplyToDecal(decal, wall);

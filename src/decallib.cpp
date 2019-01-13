@@ -109,11 +109,12 @@ struct DDecalThinker : public DThinker
 	DECLARE_CLASS (DDecalThinker, DThinker)
 	HAS_OBJECT_POINTERS
 public:
-	DDecalThinker (DBaseDecal *decal) : DThinker (STAT_DECALTHINKER), TheDecal (decal) {}
+	static const int DEFAULT_STAT = STAT_DECALTHINKER;
+	DDecalThinker (DBaseDecal *decal) : DThinker(decal->Level), TheDecal (decal) {}
 	void Serialize(FSerializer &arc);
 	TObjPtr<DBaseDecal*> TheDecal;
 protected:
-	DDecalThinker () : DThinker (STAT_DECALTHINKER) {}
+	DDecalThinker() = default;
 };
 
 IMPLEMENT_CLASS(DDecalThinker, false, true)
@@ -1202,7 +1203,7 @@ void DDecalFader::Tick ()
 DThinker *FDecalFaderAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
 {
 	auto Level = wall->sector->Level;
-	DDecalFader *fader = Create<DDecalFader> (actor);
+	DDecalFader *fader = ::CreateThinker<DDecalFader>(actor);
 
 	fader->TimeToStartDecay = Level->maptime + DecayStart;
 	fader->TimeToEndDecay = fader->TimeToStartDecay + DecayTime;
@@ -1229,7 +1230,7 @@ void DDecalStretcher::Serialize(FSerializer &arc)
 DThinker *FDecalStretcherAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
 {
 	auto Level = wall->sector->Level;
-	DDecalStretcher *thinker = Create<DDecalStretcher> (actor);
+	DDecalStretcher *thinker = ::CreateThinker<DDecalStretcher> (actor);
 
 	thinker->TimeToStart = Level->maptime + StretchStart;
 	thinker->TimeToStop = thinker->TimeToStart + StretchTime;
@@ -1316,7 +1317,7 @@ void DDecalSlider::Serialize(FSerializer &arc)
 DThinker *FDecalSliderAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
 {
 	auto Level = wall->sector->Level;
-	DDecalSlider *thinker = Create<DDecalSlider> (actor);
+	DDecalSlider *thinker = ::CreateThinker<DDecalSlider> (actor);
 
 	thinker->TimeToStart = Level->maptime + SlideStart;
 	thinker->TimeToStop = thinker->TimeToStart + SlideTime;
@@ -1436,7 +1437,7 @@ void DDecalColorer::Tick ()
 DThinker *FDecalColorerAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
 {
 	auto Level = wall->sector->Level;
-	DDecalColorer *Colorer = Create<DDecalColorer>(actor);
+	DDecalColorer *Colorer = ::CreateThinker<DDecalColorer>(actor);
 
 	Colorer->TimeToStartDecay = Level->maptime + DecayStart;
 	Colorer->TimeToEndDecay = Colorer->TimeToStartDecay + DecayTime;

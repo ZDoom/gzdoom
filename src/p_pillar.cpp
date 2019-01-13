@@ -48,10 +48,6 @@ IMPLEMENT_POINTERS_START(DPillar)
 	IMPLEMENT_POINTER(m_Interp_Ceiling)
 IMPLEMENT_POINTERS_END
 
-DPillar::DPillar ()
-{
-}
-
 void DPillar::OnDestroy()
 {
 	if (m_Interp_Ceiling != nullptr)
@@ -238,7 +234,7 @@ bool EV_DoPillar (FLevelLocals *Level, DPillar::EPillar type, line_t *line, int 
 			continue;
 
 		rtn = true;
-		Create<DPillar> (sec, type, speed, height, height2, crush, hexencrush);
+		CreateThinker<DPillar>(sec, type, speed, height, height2, crush, hexencrush);
 	}
 	return rtn;
 }

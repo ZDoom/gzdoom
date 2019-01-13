@@ -11,7 +11,8 @@ class DLightningThinker : public DThinker
 {
 	DECLARE_CLASS (DLightningThinker, DThinker);
 public:
-	DLightningThinker ();
+	static const int DEFAULT_STAT = STAT_LIGHTNING;
+	DLightningThinker (FLevelLocals *l);
 	~DLightningThinker ();
 	void Serialize(FSerializer &arc);
 	void Tick ();
@@ -25,6 +26,8 @@ protected:
 	int LightningFlashCount;
 	bool Stopped;
 	TArray<short> LightningLightLevels;
+private:
+	DLightningThinker() = default;
 };
 
 void P_StartLightning (FLevelLocals *Level);

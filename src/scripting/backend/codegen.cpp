@@ -5181,6 +5181,12 @@ static DObject *BuiltinNew(PClass *cls, int outerside, int backwardscompatible)
 	if (backwardscompatible && object->IsKindOf(NAME_Thinker))
 	{
 		// Todo: Link thinker to current primary level.
+		static_cast<DThinker*>(object)->Level = currentSession->Levelinfo.Size() ? currentSession->Levelinfo[0] : nullptr;
+		static_cast<DThinker*>(object)->ChangeStatNum(STAT_DEFAULT);
+		if (!backwardscompatible)
+		{
+			Printf(TEXTCOLOR_ORANGE "Created a thinker of type %s without level reference.\n", object->GetClass()->TypeName.GetChars());
+		}
 	}
 	return object;
 }

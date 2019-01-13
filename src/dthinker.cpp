@@ -70,7 +70,8 @@ void FThinkerList::AddTail(DThinker *thinker)
 	assert(!(thinker->ObjectFlags & OF_EuthanizeMe));
 	if (Sentinel == NULL)
 	{
-		Sentinel = Create<DThinker>(DThinker::NO_LINK);
+		// This cannot use CreateThinker because it must not be added to the list automatically.
+		Sentinel = (DThinker*)RUNTIME_CLASS(DThinker)->CreateNew();
 		Sentinel->ObjectFlags |= OF_Sentinel;
 		Sentinel->NextThinker = Sentinel;
 		Sentinel->PrevThinker = Sentinel;
@@ -238,27 +239,12 @@ void DThinker::Serialize(FSerializer &arc)
 //
 //==========================================================================
 
-DThinker::DThinker (int statnum) throw()
+DThinker::DThinker(FLevelLocals *l) throw()
 {
 	NextThinker = NULL;
 	PrevThinker = NULL;
-	Level = bSerialOverride? nullptr : currentSession->Levelinfo[0];	// do this properly later.
-	if (bSerialOverride)
-	{ // The serializer will insert us into the right list
-		return;
-	}
-
+	Level = l;
 	ObjectFlags |= OF_JustSpawned;
-	if ((unsigned)statnum > MAX_STATNUM)
-	{
-		statnum = MAX_STATNUM;
-	}
-	FreshThinkers[statnum].AddTail (this);
-}
-
-DThinker::DThinker(no_link_type foo) throw()
-{
-	foo;	// Avoid unused argument warnings.
 }
 
 DThinker::~DThinker ()
@@ -383,9 +369,6 @@ void DThinker::ChangeStatNum (int statnum)
 	FThinkerList *list;
 
 	Level = currentSession->Levelinfo[0];	// fixme later.
-
-	// This thinker should already be in a list; verify that.
-	assert(NextThinker != NULL && PrevThinker != NULL);
 
 	if ((unsigned)statnum > MAX_STATNUM)
 	{

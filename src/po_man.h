@@ -13,6 +13,7 @@ class DPolyAction : public DThinker
 	DECLARE_CLASS(DPolyAction, DThinker)
 	HAS_OBJECT_POINTERS
 public:
+	static const int DEFAULT_STAT = STAT_SECTOREFFECT;
 	DPolyAction(FPolyObj *polyNum);
 	void Serialize(FSerializer &arc);
 	void OnDestroy() override;
@@ -21,7 +22,7 @@ public:
 
 	void StopInterpolation();
 protected:
-	DPolyAction();
+	DPolyAction() = default;
 	FPolyObj *m_PolyObj;
 	double m_Speed;
 	double m_Dist;

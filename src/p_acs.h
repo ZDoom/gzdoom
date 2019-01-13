@@ -454,7 +454,8 @@ class DACSThinker : public DThinker
 	DECLARE_CLASS(DACSThinker, DThinker)
 	HAS_OBJECT_POINTERS
 public:
-	DACSThinker();
+	static const int DEFAULT_STAT = STAT_SCRIPTS;
+	DACSThinker(FLevelLocals *Level);
 	~DACSThinker();
 
 	void Serialize(FSerializer &arc);
@@ -467,6 +468,7 @@ public:
 	void StopScriptsFor(AActor *actor);
 
 private:
+	DACSThinker() = default;
 	DLevelScript *LastScript;
 	DLevelScript *Scripts;				// List of all running scripts
 

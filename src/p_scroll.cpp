@@ -74,7 +74,8 @@ class DScroller : public DThinker
 	DECLARE_CLASS (DScroller, DThinker)
 	HAS_OBJECT_POINTERS
 public:
-	
+	static const int DEFAULT_STAT = STAT_SCROLLER;
+
 	DScroller(EScroll type, double dx, double dy, sector_t *control, sector_t *sec, side_t *side, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
 	DScroller (double dx, double dy, const line_t *l, sector_t *control, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
 	void OnDestroy() override;
@@ -102,9 +103,7 @@ protected:
 	TObjPtr<DInterpolation*> m_Interpolations[3];
 
 private:
-	DScroller ()
-	{
-	}
+	DScroller() = default;
 };
 
 IMPLEMENT_CLASS(DScroller, false, true)
@@ -289,7 +288,7 @@ void DScroller::Tick ()
 //-----------------------------------------------------------------------------
 
 DScroller::DScroller (EScroll type, double dx, double dy,  sector_t *ctrl, sector_t *sec, side_t *side, int accel, EScrollPos scrollpos)
-	: DThinker (STAT_SCROLLER)
+	: DThinker(type == EScroll::sc_side? side->sector->Level : sec->Level)
 {
 	m_Type = type;
 	m_dx = dx;
@@ -371,7 +370,7 @@ void DScroller::OnDestroy ()
 //-----------------------------------------------------------------------------
 
 DScroller::DScroller (double dx, double dy, const line_t *l, sector_t * control, int accel, EScrollPos scrollpos)
-	: DThinker (STAT_SCROLLER)
+	: DThinker(l->GetLevel())
 {
 	double x = fabs(l->Delta().X), y = fabs(l->Delta().Y), d;
 	if (y > x) d = x, x = y, y = d;
@@ -513,7 +512,7 @@ void P_SpawnScrollers(FLevelLocals *Level)
 			FSectorTagIterator itr(Level->tagManager, l->args[0]);
 			while ((s = itr.Next()) >= 0)
 			{
-				Create<DScroller>(EScroll::sc_ceiling, -dx, dy, control, &Level->sectors[s], nullptr, accel);
+				CreateThinker<DScroller>(EScroll::sc_ceiling, -dx, dy, control, &Level->sectors[s], nullptr, accel);
 			}
 			for (unsigned j = 0; j < copyscrollers.Size(); j++)
 			{
@@ -521,7 +520,7 @@ void P_SpawnScrollers(FLevelLocals *Level)
 
 				if (line->args[0] == l->args[0] && (line->args[1] & 1))
 				{
-					Create<DScroller>(EScroll::sc_ceiling, -dx, dy, control, line->frontsector, nullptr, accel);
+					CreateThinker<DScroller>(EScroll::sc_ceiling, -dx, dy, control, line->frontsector, nullptr, accel);
 				}
 			}
 			break;
@@ -533,7 +532,7 @@ void P_SpawnScrollers(FLevelLocals *Level)
 				FSectorTagIterator itr(Level->tagManager, l->args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
-					Create<DScroller> (EScroll::sc_floor, -dx, dy, control, &Level->sectors[s], nullptr, accel);
+					CreateThinker<DScroller>(EScroll::sc_floor, -dx, dy, control, &Level->sectors[s], nullptr, accel);
 				}
 				for(unsigned j = 0;j < copyscrollers.Size(); j++)
 				{
@@ -541,7 +540,7 @@ void P_SpawnScrollers(FLevelLocals *Level)
 
 					if (line->args[0] == l->args[0] && (line->args[1] & 2))
 					{
-						Create<DScroller>(EScroll::sc_floor, -dx, dy, control, line->frontsector, nullptr, accel);
+						CreateThinker<DScroller>(EScroll::sc_floor, -dx, dy, control, line->frontsector, nullptr, accel);
 					}
 				}
 			}
@@ -551,7 +550,7 @@ void P_SpawnScrollers(FLevelLocals *Level)
 				FSectorTagIterator itr(Level->tagManager, l->args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
-					Create<DScroller> (EScroll::sc_carry, dx, dy, control, &Level->sectors[s], nullptr, accel);
+					CreateThinker<DScroller>(EScroll::sc_carry, dx, dy, control, &Level->sectors[s], nullptr, accel);
 				}
 				for(unsigned j = 0;j < copyscrollers.Size(); j++)
 				{
@@ -559,7 +558,7 @@ void P_SpawnScrollers(FLevelLocals *Level)
 
 					if (line->args[0] == l->args[0] && (line->args[1] & 4))
 					{
-						Create<DScroller> (EScroll::sc_carry, dx, dy, control, line->frontsector, nullptr, accel);
+						CreateThinker<DScroller>(EScroll::sc_carry, dx, dy, control, line->frontsector, nullptr, accel);
 					}
 				}
 			}
@@ -573,7 +572,7 @@ void P_SpawnScrollers(FLevelLocals *Level)
 			while ((s = itr.Next()) >= 0)
 			{
 				if (s != (int)i)
-					Create<DScroller>(dx, dy, &Level->lines[s], control, accel);
+					CreateThinker<DScroller>(dx, dy, &Level->lines[s], control, accel);
 			}
 			break;
 		}
@@ -581,32 +580,32 @@ void P_SpawnScrollers(FLevelLocals *Level)
 		case Scroll_Texture_Offsets:
 			// killough 3/2/98: scroll according to sidedef offsets
 			side = Level->lines[i].sidedef[0];
-			Create<DScroller> (EScroll::sc_side, -side->GetTextureXOffset(side_t::mid),
+			CreateThinker<DScroller>(EScroll::sc_side, -side->GetTextureXOffset(side_t::mid),
 				side->GetTextureYOffset(side_t::mid), nullptr, nullptr, side, accel, SCROLLTYPE(l->args[0]));
 			break;
 
 		case Scroll_Texture_Left:
 			l->special = special;	// Restore the special, for compat_useblocking's benefit.
 			side = Level->lines[i].sidedef[0];
-			Create<DScroller> (EScroll::sc_side, l->args[0] / 64., 0, nullptr, nullptr, side, accel, SCROLLTYPE(l->args[1]));
+			CreateThinker<DScroller>(EScroll::sc_side, l->args[0] / 64., 0, nullptr, nullptr, side, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Right:
 			l->special = special;
 			side = Level->lines[i].sidedef[0];
-			Create<DScroller> (EScroll::sc_side, -l->args[0] / 64., 0, nullptr, nullptr, side, accel, SCROLLTYPE(l->args[1]));
+			CreateThinker<DScroller>(EScroll::sc_side, -l->args[0] / 64., 0, nullptr, nullptr, side, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Up:
 			l->special = special;
 			side = Level->lines[i].sidedef[0];
-			Create<DScroller> (EScroll::sc_side, 0, l->args[0] / 64., nullptr, nullptr, side, accel, SCROLLTYPE(l->args[1]));
+			CreateThinker<DScroller>(EScroll::sc_side, 0, l->args[0] / 64., nullptr, nullptr, side, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Down:
 			l->special = special;
 			side = Level->lines[i].sidedef[0];
-			Create<DScroller> (EScroll::sc_side, 0, -l->args[0] / 64., nullptr, nullptr, side, accel, SCROLLTYPE(l->args[1]));
+			CreateThinker<DScroller>(EScroll::sc_side, 0, -l->args[0] / 64., nullptr, nullptr, side, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Both:
@@ -614,7 +613,7 @@ void P_SpawnScrollers(FLevelLocals *Level)
 			if (l->args[0] == 0) {
 				dx = (l->args[1] - l->args[2]) / 64.;
 				dy = (l->args[4] - l->args[3]) / 64.;
-				Create<DScroller> (EScroll::sc_side, dx, dy, nullptr, nullptr, side, accel);
+				CreateThinker<DScroller>(EScroll::sc_side, dx, dy, nullptr, nullptr, side, accel);
 			}
 			break;
 
@@ -689,7 +688,7 @@ void SetWallScroller (FLevelLocals *Level, int id, int sidechoice, double dx, do
 			{
 				if (Collection.FindEx([=](const DScroller *element) { return element->GetWall() == side; }) == Collection.Size())
 				{
-					Create<DScroller> (EScroll::sc_side, dx, dy, nullptr, nullptr, side, 0, Where);
+					CreateThinker<DScroller>(EScroll::sc_side, dx, dy, nullptr, nullptr, side, 0, Where);
 				}
 			}
 		}
@@ -729,11 +728,11 @@ void SetScroller (FLevelLocals *Level, int tag, EScroll type, double dx, double 
 	FSectorTagIterator itr(Level->tagManager, tag);
 	while ((i = itr.Next()) >= 0)
 	{
-		Create<DScroller> (type, dx, dy, nullptr, &Level->sectors[i], nullptr, 0);
+		CreateThinker<DScroller>(type, dx, dy, nullptr, &Level->sectors[i], nullptr, 0);
 	}
 }
 
 void P_CreateScroller(EScroll type, double dx, double dy, sector_t *affectee, int accel, EScrollPos scrollpos)
 {
-	Create<DScroller>(type, dx, dy, nullptr, affectee, nullptr, accel, scrollpos);
+	CreateThinker<DScroller>(type, dx, dy, nullptr, affectee, nullptr, accel, scrollpos);
 }

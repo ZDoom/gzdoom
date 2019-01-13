@@ -177,6 +177,7 @@ public: \
 #include "dobjgc.h"
 
 class AActor;
+struct FLevelLocals;
 
 class DObject
 {
@@ -279,6 +280,11 @@ public:
 		M_Free(mem);
 	}
 
+	constexpr static bool isThinker()
+	{
+		return false;
+	}
+
 	// GC fiddling
 
 	// An object is white if either white bit is set.
@@ -349,6 +355,9 @@ protected:
 	template<typename T, typename... Args>
 		friend T* Create(Args&&... args);
 
+	template<typename T, typename... Args>
+		friend T* CreateThinker(Args&&... args);
+
 	friend class JitCompiler;
 };
 
@@ -357,6 +366,7 @@ protected:
 template<typename T, typename... Args>
 T* Create(Args&&... args)
 {
+	static_assert(!T::isThinker(), "Trying to create Thinker with Create<>");
 	DObject::nonew nono;
 	T *object = new(nono) T(std::forward<Args>(args)...);
 	if (object != nullptr)
@@ -366,7 +376,6 @@ T* Create(Args&&... args)
 	}
 	return object;
 }
-
 
 // When you write to a pointer to an Object, you must call this for
 // proper bookkeeping in case the Object holding this pointer has

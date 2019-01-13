@@ -692,6 +692,7 @@ class DFraggleThinker : public DThinker
 	DECLARE_CLASS(DFraggleThinker, DThinker)
 	HAS_OBJECT_POINTERS
 public:
+	static const int DEFAULT_STAT = STAT_SCRIPTS;
 
 	int zoom = 1;
 	AActor *trigger_obj;	// this is a transient pointer not being subjected to GC.
@@ -700,7 +701,7 @@ public:
 	TObjPtr<DRunningScript*> RunningScripts;
 	TArray<TObjPtr<AActor*> > SpawnedThings;
 
-	DFraggleThinker();
+	DFraggleThinker(FLevelLocals *Level);
 	void OnDestroy() override;
 
 
@@ -713,6 +714,8 @@ public:
 	void AddRunningScript(DRunningScript *runscr);
 
 	static TObjPtr<DFraggleThinker*> ActiveThinker;
+private:
+	DFraggleThinker();
 };
 
 //-----------------------------------------------------------------------------

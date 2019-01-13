@@ -946,6 +946,7 @@ class DAutosaver : public DThinker
 	DECLARE_CLASS (DAutosaver, DThinker)
 public:
 	void Tick ();
+	DAutosaver() : DThinker(nullptr) {}
 };
 
 IMPLEMENT_CLASS(DAutosaver, false, false)
@@ -1192,7 +1193,7 @@ void G_DoLoadLevel (const FString &nextlevel, int position, bool autosave, bool 
 	// [RH] Always save the game when entering a new level.
 	if (autosave && !savegamerestore && disableautosave < 1)
 	{
-		DAutosaver GCCNOWARN *dummy = Create<DAutosaver>();
+		DAutosaver GCCNOWARN *dummy = CreateThinker<DAutosaver>();
 	}
 	if (pnumerr > 0)
 	{

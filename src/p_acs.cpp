@@ -1832,7 +1832,7 @@ private:
 	bool LineSide;
 	bool bCeiling;
 
-	DPlaneWatcher() {}
+	DPlaneWatcher() = default;
 };
 
 IMPLEMENT_CLASS(DPlaneWatcher, false, true)
@@ -1842,9 +1842,8 @@ IMPLEMENT_POINTERS_START(DPlaneWatcher)
 IMPLEMENT_POINTERS_END
 
 DPlaneWatcher::DPlaneWatcher (FLevelLocals *Level, AActor *it, line_t *line, int lineSide, bool ceiling,
-	int tag, int height, int special,
-	int arg0, int arg1, int arg2, int arg3, int arg4)
-	: Special (special),
+	int tag, int height, int special, int arg0, int arg1, int arg2, int arg3, int arg4)
+	: DThinker(Level), Special (special),
 	  Activator (it), Line (line), LineSide (!!lineSide), bCeiling (ceiling)
 {
 	int secnum;
@@ -3310,8 +3309,8 @@ IMPLEMENT_POINTERS_START(DACSThinker)
 	IMPLEMENT_POINTER(Scripts)
 IMPLEMENT_POINTERS_END
 
-DACSThinker::DACSThinker ()
-: DThinker(STAT_SCRIPTS)
+DACSThinker::DACSThinker (FLevelLocals *Level)
+	: DThinker(Level)
 {
 	Scripts = nullptr;
 	LastScript = nullptr;
@@ -3897,7 +3896,10 @@ showme:
 							fa1 = viewer->BlendA;
 						}
 					}
-					Create<DFlashFader> (fr1, fg1, fb1, fa1, fr2, fg2, fb2, fa2, ftime, viewer->mo);
+					if (viewer->mo)
+					{
+						CreateThinker<DFlashFader>(fr1, fg1, fb1, fa1, fr2, fg2, fb2, fa2, ftime, viewer->mo);
+					}
 				}
 			}
 		}
@@ -9494,13 +9496,13 @@ scriptwait:
 			break;
 
 		case PCD_SETFLOORTRIGGER:
-			Create<DPlaneWatcher> (Level, activator, activationline, backSide, false, STACK(8),
+			CreateThinker<DPlaneWatcher> (Level, activator, activationline, backSide, false, STACK(8),
 				STACK(7), STACK(6), STACK(5), STACK(4), STACK(3), STACK(2), STACK(1));
 			sp -= 8;
 			break;
 
 		case PCD_SETCEILINGTRIGGER:
-			Create<DPlaneWatcher> (Level, activator, activationline, backSide, true, STACK(8),
+			CreateThinker<DPlaneWatcher> (Level, activator, activationline, backSide, true, STACK(8),
 				STACK(7), STACK(6), STACK(5), STACK(4), STACK(3), STACK(2), STACK(1));
 			sp -= 8;
 			break;
@@ -10260,7 +10262,7 @@ DLevelScript::DLevelScript (FLevelLocals *l, AActor *who, line_t *where, int num
 {
 	Level = l;
 	if (Level->ACSThinker == nullptr)
-		Level->ACSThinker = Create<DACSThinker>();
+		Level->ACSThinker = CreateThinker<DACSThinker>(Level);
 
 	script = num;
 	assert(code->VarCount >= code->ArgCount);

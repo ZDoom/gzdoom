@@ -65,8 +65,12 @@ struct FThinkerList
 class DThinker : public DObject
 {
 	DECLARE_CLASS (DThinker, DObject)
+
+	void LinkThinker(int statnum);
+
 public:
-	DThinker (int statnum = STAT_DEFAULT) throw();
+	static const int DEFAULT_STAT = STAT_DEFAULT;
+	DThinker (FLevelLocals *l) throw();
 	void OnDestroy () override;
 	virtual ~DThinker ();
 	virtual void Tick ();
@@ -77,6 +81,11 @@ public:
 	void Serialize(FSerializer &arc);
 	size_t PropagateMark();
 	FLevelLocals *GetLevel() const { return Level; }
+
+	constexpr static bool isThinker()
+	{
+		return true;
+	}
 	
 	void ChangeStatNum (int statnum);
 
@@ -94,12 +103,10 @@ public:
 	static DThinker *FirstThinker (int statnum);
 	static bool bSerialOverride;
 
-	// only used internally but Create needs access.
-	enum no_link_type { NO_LINK };
-	DThinker(no_link_type) throw();
-	
 	FLevelLocals *Level;
 
+protected:
+	DThinker() = default;
 private:
 	static void DestroyThinkersInList (FThinkerList &list);
 	static bool DoDestroyThinkersInList(FThinkerList &list);
@@ -172,5 +179,20 @@ public:
 		return static_cast<T *>(FThinkerIterator::Next (exact));
 	}
 };
+
+
+template<typename T, typename... Args>
+T* CreateThinker(Args&&... args)
+{
+	DObject::nonew nono;
+	T *object = new(nono) T(std::forward<Args>(args)...);
+	if (object != nullptr)
+	{
+		object->SetClass(RUNTIME_CLASS(T));
+		object->ChangeStatNum(T::DEFAULT_STAT);
+		assert(object->GetClass() != nullptr);	// beware of objects that get created before the type system is up.
+	}
+	return object;
+}
 
 #endif //__DTHINKER_H__

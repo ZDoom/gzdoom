@@ -41,8 +41,8 @@ static FRandom pr_lightning ("Lightning");
 
 IMPLEMENT_CLASS(DLightningThinker, false, false)
 
-DLightningThinker::DLightningThinker ()
-	: DThinker (STAT_LIGHTNING)
+DLightningThinker::DLightningThinker (FLevelLocals *l)
+	: DThinker(l)
 {
 	Stopped = false;
 	LightningFlashCount = 0;
@@ -234,7 +234,7 @@ void P_StartLightning (FLevelLocals *Level)
 	DLightningThinker *lightning = LocateLightning (Level);
 	if (lightning == NULL)
 	{
-		Create<DLightningThinker>();
+		CreateThinker<DLightningThinker>(Level);
 	}
 }
 
@@ -243,7 +243,7 @@ void P_ForceLightning (FLevelLocals *Level, int mode)
 	DLightningThinker *lightning = LocateLightning (Level);
 	if (lightning == NULL)
 	{
-		lightning = Create<DLightningThinker>();
+		lightning = CreateThinker<DLightningThinker>(Level);
 	}
 	if (lightning != NULL)
 	{

@@ -128,9 +128,11 @@ class DLighting : public DSectorEffect
 {
 	DECLARE_CLASS(DLighting, DSectorEffect)
 public:
+	static const int DEFAULT_STAT = STAT_LIGHT;
+
 	DLighting(sector_t *sector);
 protected:
-	DLighting();
+	DLighting() = default;
 };
 
 void	EV_StartLightFlickering (FLevelLocals *Level, int tag, int upper, int lower);
@@ -213,7 +215,7 @@ protected:
 	void Stop ();
 
 private:
-	DPlat ();
+	DPlat() = default;
 
 	friend bool	EV_DoPlat (FLevelLocals *Level, int tag, line_t *line, EPlatType type,
 						   double height, double speed, int delay, int lip, int change);
@@ -262,7 +264,7 @@ protected:
 	TObjPtr<DInterpolation*> m_Interp_Floor;
 
 private:
-	DPillar ();
+	DPillar() = default;
 };
 
 bool EV_DoPillar (FLevelLocals *Level, DPillar::EPillar type, line_t *line, int tag,
@@ -314,7 +316,7 @@ protected:
 						   int tag, double speed, int delay, int lock,
 						   int lightTag, bool boomgen, int topcountdown);
 private:
-	DDoor ();
+	DDoor() = default;
 
 };
 
@@ -362,7 +364,7 @@ protected:
 
 	friend bool EV_SlidingDoor (FLevelLocals *Level, line_t *line, AActor *thing, int tag, int speed, int delay, EADType type);
 private:
-	DAnimatedDoor ();
+	DAnimatedDoor() = default;
 };
 
 bool EV_SlidingDoor (FLevelLocals *Level, line_t *line, AActor *thing, int tag, int speed, int delay, DAnimatedDoor::EADType type);
@@ -444,7 +446,7 @@ protected:
 	void PlayCeilingSound ();
 
 private:
-	DCeiling ();
+	DCeiling() = default;
 
 	friend bool P_CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int tag, double speed, double speed2, double height, int crush, int silent, int change, DCeiling::ECrushMode hexencrush);
 	friend bool EV_CeilingCrushStop (FLevelLocals *Level, int tag, bool remove);
@@ -555,7 +557,7 @@ public:
 		double speed, double height, int crush, int change, bool hexencrush, bool hereticlower);
 	friend bool EV_DoDonut (FLevelLocals *Level, int tag, line_t *line, double pillarspeed, double slimespeed);
 private:
-	DFloor ();
+	DFloor() = default;
 };
 
 bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
@@ -605,7 +607,7 @@ protected:
 
 	friend bool EV_DoElevator (FLevelLocals *Level, line_t *line, DElevator::EElevator type, double speed, double height, int tag);
 private:
-	DElevator ();
+	DElevator() = default;
 };
 
 bool EV_DoElevator (FLevelLocals *Level, line_t *line, DElevator::EElevator type, double speed, double height, int tag);
@@ -632,7 +634,7 @@ protected:
 	friend bool EV_StartWaggle (FLevelLocals *Level, int tag, line_t *line, int height, int speed, int offset, int timer, bool ceiling);
 
 	void DoWaggle (bool ceiling);
-	DWaggleBase ();
+	DWaggleBase() = default;
 };
 
 bool EV_StartWaggle (FLevelLocals *Level, int tag, line_t *line, int height, int speed, int offset, int timer, bool ceiling);
@@ -644,7 +646,7 @@ public:
 	DFloorWaggle (sector_t *sec);
 	void Tick ();
 private:
-	DFloorWaggle ();
+	DFloorWaggle() = default;
 };
 
 class DCeilingWaggle : public DWaggleBase
@@ -654,7 +656,7 @@ public:
 	DCeilingWaggle (sector_t *sec);
 	void Tick ();
 private:
-	DCeilingWaggle ();
+	DCeilingWaggle() = default;
 };
 
 //jff 3/15/98 pure texture/type change for better generalized support

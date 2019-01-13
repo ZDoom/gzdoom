@@ -41,10 +41,6 @@ static FRandom pr_doplat ("DoPlat");
 
 IMPLEMENT_CLASS(DPlat, false, false)
 
-DPlat::DPlat ()
-{
-}
-
 void DPlat::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
@@ -256,7 +252,7 @@ bool EV_DoPlat (FLevelLocals *Level, int tag, line_t *line, DPlat::EPlatType typ
 
 		// Find lowest & highest floors around sector
 		rtn = true;
-		plat = Create<DPlat> (sec);
+		plat = CreateThinker<DPlat>(sec);
 
 		plat->m_Type = type;
 		plat->m_Crush = -1;

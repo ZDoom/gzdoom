@@ -489,7 +489,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	UnlatchCVars ();
 	G_VerifySkill();
 	UnlatchCVars ();
-	DThinker::DestroyThinkersInList(STAT_STATIC);
+	Thinkers.DestroyThinkersInList(STAT_STATIC);
 
 	if (paused)
 	{
@@ -1515,7 +1515,7 @@ int G_FinishTravel (FLevelLocals *Level)
 	// make sure that, after travelling has completed, no travelling thinkers are left.
 	// Since this list is excluded from regular thinker cleaning, anything that may survive through here
 	// will endlessly multiply and severely break the following savegames or just simply crash on broken pointers.
-	DThinker::DestroyThinkersInList(STAT_TRAVELLING);
+	Thinkers.DestroyThinkersInList(STAT_TRAVELLING);
 	return failnum;
 }
  
@@ -1529,7 +1529,7 @@ FLevelLocals::~FLevelLocals()
 {
 	SN_StopAllSequences(this);
 	ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
-	DThinker::DestroyAllThinkers();
+	Thinkers.DestroyAllThinkers();
 
 	// delete allocated data in the level arrays.
 	if (sectors.Size() > 0)
@@ -2217,6 +2217,7 @@ void FLevelLocals::Mark()
 	GC::Mark(ACSThinker);
 	GC::Mark(interpolator.Head);
 	GC::Mark(SequenceListHead);
+	Thinkers.MarkRoots();
 
 	canvasTextureInfo.Mark();
 	for (auto &c : CorpseQueue)

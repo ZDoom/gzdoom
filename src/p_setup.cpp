@@ -426,7 +426,7 @@ static void P_Shutdown ()
 {
 	delete currentSession;
 	currentSession = nullptr;
-	DThinker::DestroyThinkersInList(STAT_STATIC);
+	Thinkers.DestroyThinkersInList(STAT_STATIC);
 	P_FreeLevelData ();
 	// [ZZ] delete global event handlers
 	E_Shutdown(false);

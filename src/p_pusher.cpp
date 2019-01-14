@@ -415,8 +415,15 @@ void P_SpawnPushers (FLevelLocals *Level)
 	}
 }
 
+
 void AdjustPusher (FLevelLocals *Level, int tag, int magnitude, int angle, bool wind)
 {
+	struct FThinkerCollection
+	{
+		int RefNum;
+		DThinker *Obj;
+	};
+
 	DPusher::EPusher type = wind? DPusher::p_wind : DPusher::p_current;
 	
 	// Find pushers already attached to the sector, and change their parameters.

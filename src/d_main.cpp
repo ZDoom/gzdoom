@@ -2585,7 +2585,7 @@ void D_DoomMain (void)
 		gamestate = GS_FULLCONSOLE;
 		Net_NewMakeTic ();
 		ForAllLevels([](FLevelLocals *Level) {
-			DThinker::RunThinkers (Level);
+			Thinkers.RunThinkers (Level);
 		});
 		gamestate = GS_STARTUP;
 
@@ -2702,7 +2702,7 @@ void D_DoomMain (void)
 		// clean up game state
 		ST_Clear();
 		D_ErrorCleanup ();
-		DThinker::DestroyThinkersInList(STAT_STATIC);
+		Thinkers.DestroyThinkersInList(STAT_STATIC);
 		E_Shutdown(false);
 		P_FreeLevelData();
 

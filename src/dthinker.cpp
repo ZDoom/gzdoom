@@ -745,8 +745,6 @@ void DThinker::PostSerialize()
 
 void DThinker::ChangeStatNum (int statnum)
 {
-	FThinkerList *list;
-
 	FThinkerCollection *collection = &Thinkers;	//Todo: get from level
 
 	if ((unsigned)statnum > MAX_STATNUM)

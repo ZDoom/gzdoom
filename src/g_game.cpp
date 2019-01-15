@@ -1076,7 +1076,8 @@ void G_Ticker ()
 			gameaction = ga_nothing;
 			break;
 		case ga_togglemap:
-			AM_ToggleMap (players[consoleplayer].camera->Level);
+			// show thew
+			AM_ToggleMap(currentSession->Levelinfo[0]);
 			gameaction = ga_nothing;
 			break;
 		case ga_nothing:
@@ -1168,7 +1169,7 @@ void G_Ticker ()
 	{
 	case GS_LEVEL:
 		P_Ticker ();
-		AM_Ticker (players[consoleplayer].camera->Level);
+		AM_Ticker (currentSession->Levelinfo[0]);
 		break;
 
 	case GS_TITLELEVEL:

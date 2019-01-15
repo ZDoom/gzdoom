@@ -75,6 +75,11 @@ bool E_RegisterHandler(DStaticEventHandler* handler)
 	{
 		// if before is not null, link it before the existing handler.
 		// note that before can be first handler, check for this.
+		if (before->prev != nullptr)
+		{
+			before->prev->next = handler;
+			GC::WriteBarrier(before->prev, handler);
+		}
 		handler->next = before;
 		GC::WriteBarrier(handler, before);
 		handler->prev = before->prev;

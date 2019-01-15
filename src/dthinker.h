@@ -122,7 +122,10 @@ public:
 	FLevelLocals *Level;
 
 protected:
-	DThinker() = default;
+	DThinker()
+	{
+		ObjectFlags |= OF_JustSpawned;
+	}
 private:
 	void Remove();
 

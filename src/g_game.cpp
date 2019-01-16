@@ -757,7 +757,7 @@ void G_AddViewPitch (int look, bool mouse)
 		return;
 	}
 	look = LookAdjust(look);
-	if (currentSession && !currentSession->Levelinfo[0]->IsFreelookAllowed())
+	if (currentSession && currentSession->Levelinfo.Size() > 0 && !currentSession->Levelinfo[0]->IsFreelookAllowed())
 	{
 		LocalViewPitch = 0;
 	}

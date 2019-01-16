@@ -2371,84 +2371,7 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 
 	mo->AddZ(mo->Vel.Z);
 
-//
-// apply gravity
-//
-	if (mo->Z() > mo->floorz && !(mo->flags & MF_NOGRAVITY))
-	{
-		double startvelz = mo->Vel.Z;
-
-		if (mo->waterlevel == 0 || (mo->player &&
-			!(mo->player->cmd.ucmd.forwardmove | mo->player->cmd.ucmd.sidemove)))
-		{
-			// [RH] Double gravity only if running off a ledge. Coming down from
-			// an upward thrust (e.g. a jump) should not double it.
-			if (mo->Vel.Z == 0 && oldfloorz > mo->floorz && mo->Z() == oldfloorz)
-			{
-				mo->Vel.Z -= grav + grav;
-			}
-			else
-			{
-				mo->Vel.Z -= grav;
-			}
-		}
-		if (mo->player == NULL)
-		{
-			if (mo->waterlevel >= 1)
-			{
-				double sinkspeed;
-
-				if ((mo->flags & MF_SPECIAL) && !(mo->flags3 & MF3_ISMONSTER))
-				{ // Pickup items don't sink if placed and drop slowly if dropped
-					sinkspeed = (mo->flags & MF_DROPPED) ? -WATER_SINK_SPEED / 8 : 0;
-				}
-				else
-				{
-					sinkspeed = -WATER_SINK_SPEED;
-
-					// If it's not a player, scale sinkspeed by its mass, with
-					// 100 being equivalent to a player.
-					if (mo->player == NULL)
-					{
-						sinkspeed = sinkspeed * clamp(mo->Mass, 1, 4000) / 100;
-					}
-				}
-				if (mo->Vel.Z < sinkspeed)
-				{ // Dropping too fast, so slow down toward sinkspeed.
-					mo->Vel.Z -= MAX(sinkspeed*2, -8.);
-					if (mo->Vel.Z > sinkspeed)
-					{
-						mo->Vel.Z = sinkspeed;
-					}
-				}
-				else if (mo->Vel.Z > sinkspeed)
-				{ // Dropping too slow/going up, so trend toward sinkspeed.
-					mo->Vel.Z = startvelz + MAX(sinkspeed/3, -8.);
-					if (mo->Vel.Z < sinkspeed)
-					{
-						mo->Vel.Z = sinkspeed;
-					}
-				}
-			}
-		}
-		else
-		{
-			if (mo->waterlevel > 1)
-			{
-				double sinkspeed = -WATER_SINK_SPEED;
-
-				if (mo->Vel.Z < sinkspeed)
-				{
-					mo->Vel.Z = (startvelz < sinkspeed) ? startvelz : sinkspeed;
-				}
-				else
-				{
-					mo->Vel.Z = startvelz + ((mo->Vel.Z - startvelz) *
-						(mo->waterlevel == 1 ? WATER_SINK_SMALL_FACTOR : WATER_SINK_FACTOR));
-				}
-			}
-		}
-	}
+	mo->CallFallAndSink(grav, oldfloorz);
 
 	// Hexen compatibility handling for floatbobbing. Ugh...
 	// Hexen yanked all items to the floor, except those being spawned at map start in the air.
@@ -2790,6 +2713,115 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 		}
 	}
 //	mo->player->centering = true;
+}
+
+
+//==========================================================================
+//
+// AActor :: FallAndSink
+//
+//==========================================================================
+
+void AActor::FallAndSink(double grav, double oldfloorz)
+{
+	if (Z() > floorz && !(flags & MF_NOGRAVITY))
+	{
+		double startvelz = Vel.Z;
+
+		if (waterlevel == 0 || (player &&
+			!(player->cmd.ucmd.forwardmove | player->cmd.ucmd.sidemove)))
+		{
+			// [RH] Double gravity only if running off a ledge. Coming down from
+			// an upward thrust (e.g. a jump) should not double it.
+			if (Vel.Z == 0 && oldfloorz > floorz && Z() == oldfloorz)
+			{
+				Vel.Z -= grav + grav;
+			}
+			else
+			{
+				Vel.Z -= grav;
+			}
+		}
+		if (player == NULL)
+		{
+			if (waterlevel >= 1)
+			{
+				double sinkspeed;
+
+				if ((flags & MF_SPECIAL) && !(flags3 & MF3_ISMONSTER))
+				{ // Pickup items don't sink if placed and drop slowly if dropped
+					sinkspeed = (flags & MF_DROPPED) ? -WATER_SINK_SPEED / 8 : 0;
+				}
+				else
+				{
+					sinkspeed = -WATER_SINK_SPEED;
+
+					// If it's not a player, scale sinkspeed by its mass, with
+					// 100 being equivalent to a player.
+					if (player == NULL)
+					{
+						sinkspeed = sinkspeed * clamp(Mass, 1, 4000) / 100;
+					}
+				}
+				if (Vel.Z < sinkspeed)
+				{ // Dropping too fast, so slow down toward sinkspeed.
+					Vel.Z -= MAX(sinkspeed*2, -8.);
+					if (Vel.Z > sinkspeed)
+					{
+						Vel.Z = sinkspeed;
+					}
+				}
+				else if (Vel.Z > sinkspeed)
+				{ // Dropping too slow/going up, so trend toward sinkspeed.
+					Vel.Z = startvelz + MAX(sinkspeed/3, -8.);
+					if (Vel.Z < sinkspeed)
+					{
+						Vel.Z = sinkspeed;
+					}
+				}
+			}
+		}
+		else
+		{
+			if (waterlevel > 1)
+			{
+				double sinkspeed = -WATER_SINK_SPEED;
+
+				if (Vel.Z < sinkspeed)
+				{
+					Vel.Z = (startvelz < sinkspeed) ? startvelz : sinkspeed;
+				}
+				else
+				{
+					Vel.Z = startvelz + ((Vel.Z - startvelz) *
+						(waterlevel == 1 ? WATER_SINK_SMALL_FACTOR : WATER_SINK_FACTOR));
+				}
+			}
+		}
+	}
+}
+
+
+DEFINE_ACTION_FUNCTION(AActor, FallAndSink)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(grav);
+	PARAM_FLOAT(oldfloorz);
+	self->FallAndSink(grav, oldfloorz);
+    return 0;
+}
+
+void AActor::CallFallAndSink(double grav, double oldfloorz)
+{
+	IFVIRTUAL(AActor, FallAndSink)
+	{
+		VMValue params[3] = { (DObject*)this, grav, oldfloorz };
+		VMCall(func, params, 3, nullptr, 0);
+	}
+	else
+	{
+		FallAndSink(grav, oldfloorz);
+	}
 }
 
 

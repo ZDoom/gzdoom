@@ -234,10 +234,10 @@ public:
 
 	void FloodZones();
 	void LoadVertexes(MapData * map);
-	void LoadExtendedNodes(FileReader &dalump, uint32_t id);
-	template<class segtype> void LoadSegs(MapData * map);
-	template<class subsectortype, class segtype> void LoadSubsectors(MapData * map);
-	template<class nodetype, class subsectortype> void LoadNodes(MapData * map);
+	bool LoadExtendedNodes(FileReader &dalump, uint32_t id);
+	template<class segtype> bool LoadSegs(MapData * map);
+	template<class subsectortype, class segtype> bool LoadSubsectors(MapData * map);
+	template<class nodetype, class subsectortype> bool LoadNodes(MapData * map);
 	bool LoadGLNodes(MapData * map);
 	bool CheckCachedNodes(MapData *map);
 	bool CheckNodes(MapData * map, bool rebuilt, int buildtime);

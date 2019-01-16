@@ -650,7 +650,7 @@ void MapLoader::LoadZNodes(FileReader &data, int glnodes)
 //
 //===========================================================================
 
-void MapLoader::LoadExtendedNodes (FileReader &dalump, uint32_t id)
+bool MapLoader::LoadExtendedNodes (FileReader &dalump, uint32_t id)
 {
 	int type;
 	bool compressed;
@@ -698,21 +698,40 @@ void MapLoader::LoadExtendedNodes (FileReader &dalump, uint32_t id)
 		break;
 
 	default:
-		return;
+		return false;
 	}
 	
-	if (compressed)
+	try
 	{
-		FileReader zip;
-		if (zip.OpenDecompressor(dalump, -1, METHOD_ZLIB, false))
+		if (compressed)
 		{
-			LoadZNodes(zip, type);
+			FileReader zip;
+			if (zip.OpenDecompressor(dalump, -1, METHOD_ZLIB, false))
+			{
+				LoadZNodes(zip, type);
+			}
+			else
+			{
+				Printf("Error loading nodes: Corrupt data.\n");
+				return false;
+			}
 		}
+		else
+		{
+			LoadZNodes(dalump, type);
+		}
+		return true;
 	}
-	else
+	catch (CRecoverableError &error)
 	{
-		LoadZNodes(dalump, type);
+		Printf("Error loading nodes: %s\n", error.GetMessage());
+		
+		Level->subsectors.Clear();
+		Level->segs.Clear();
+		Level->nodes.Clear();
+		return false;
 	}
+
 }
 
 
@@ -750,7 +769,7 @@ struct badseg
 };
 
 template<class segtype>
-void MapLoader::LoadSegs (MapData * map)
+bool MapLoader::LoadSegs (MapData * map)
 {
 	uint32_t numvertexes = Level->vertexes.Size();
 	TArray<uint8_t> vertchanged(numvertexes, true);
@@ -769,8 +788,7 @@ void MapLoader::LoadSegs (MapData * map)
 		Printf ("This map has no segs.\n");
 		Level->subsectors.Clear();
 		Level->nodes.Clear();
-		ForceNodeBuild = true;
-		return;
+		return false;
 	}
 
 	Level->segs.Alloc(numsegs);
@@ -921,8 +939,9 @@ void MapLoader::LoadSegs (MapData * map)
 		Level->segs.Clear();
 		Level->subsectors.Clear();
 		Level->nodes.Clear();
-		ForceNodeBuild = true;
+		return false;
 	}
+	return true;
 }
 
 
@@ -933,7 +952,7 @@ void MapLoader::LoadSegs (MapData * map)
 //===========================================================================
 
 template<class subsectortype, class segtype>
-void MapLoader::LoadSubsectors (MapData * map)
+bool MapLoader::LoadSubsectors (MapData * map)
 {
 	uint32_t maxseg = map->Size(ML_SEGS) / sizeof(segtype);
 
@@ -943,8 +962,7 @@ void MapLoader::LoadSubsectors (MapData * map)
 	{
 		Printf ("This map has an incomplete BSP tree.\n");
 		Level->nodes.Clear();
-		ForceNodeBuild = true;
-		return;
+		return false;
 	}
 
 	auto &subsectors = Level->subsectors;
@@ -965,8 +983,7 @@ void MapLoader::LoadSubsectors (MapData * map)
 			Printf ("Subsector %i is empty.\n", i);
 			Level->subsectors.Clear();
 			Level->nodes.Clear();
-			ForceNodeBuild = true;
-			return;
+			return false;
 		}
 
 		subsectors[i].numlines = subd.numsegs;
@@ -977,22 +994,22 @@ void MapLoader::LoadSubsectors (MapData * map)
 			Printf ("Subsector %d contains invalid segs %u-%u\n"
 				"The BSP will be rebuilt.\n", i, (unsigned)((size_t)subsectors[i].firstline),
 				(unsigned)((size_t)subsectors[i].firstline) + subsectors[i].numlines - 1);
-			ForceNodeBuild = true;
 			Level->nodes.Clear();
 			Level->subsectors.Clear();
-			break;
+			return false;
 		}
 		else if ((size_t)subsectors[i].firstline + subsectors[i].numlines > maxseg)
 		{
 			Printf ("Subsector %d contains invalid segs %u-%u\n"
 				"The BSP will be rebuilt.\n", i, maxseg,
 				(unsigned)((size_t)subsectors[i].firstline) + subsectors[i].numlines - 1);
-			ForceNodeBuild = true;
+
 			Level->nodes.Clear();
 			Level->subsectors.Clear();
-			break;
+			return false;
 		}
 	}
+	return true;
 }
 
 
@@ -1102,7 +1119,7 @@ void MapLoader::LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 //===========================================================================
 
 template<class nodetype, class subsectortype>
-void MapLoader::LoadNodes (MapData * map)
+bool MapLoader::LoadNodes (MapData * map)
 {
 	FMemLump	data;
 	int 		j;
@@ -1117,8 +1134,7 @@ void MapLoader::LoadNodes (MapData * map)
 
 	if ((numnodes == 0 && maxss != 1) || maxss == 0)
 	{
-		ForceNodeBuild = true;
-		return;
+		return false;
 	}
 	
 	auto &nodes = Level->nodes;
@@ -1146,9 +1162,8 @@ void MapLoader::LoadNodes (MapData * map)
 				{
 					Printf ("BSP node %d references invalid subsector %d.\n"
 						"The BSP will be rebuilt.\n", i, child);
-					ForceNodeBuild = true;
 					Level->nodes.Clear();
-					return;
+					return false;
 				}
 				no->children[j] = (uint8_t *)&Level->subsectors[child] + 1;
 			}
@@ -1156,18 +1171,16 @@ void MapLoader::LoadNodes (MapData * map)
 			{
 				Printf ("BSP node %d references invalid node %d.\n"
 					"The BSP will be rebuilt.\n", i, Index(((node_t *)no->children[j])));
-				ForceNodeBuild = true;
 				Level->nodes.Clear();
-				return;
+				return false;
 			}
 			else if (used[child])
 			{
 				Printf ("BSP node %d references node %d,\n"
 					"which is already used by node %d.\n"
 					"The BSP will be rebuilt.\n", i, child, used[child]-1);
-				ForceNodeBuild = true;
 				Level->nodes.Clear();
-				return;
+				return false;
 			}
 			else
 			{
@@ -1180,6 +1193,7 @@ void MapLoader::LoadNodes (MapData * map)
 			}
 		}
 	}
+	return true;
 }
 
 //===========================================================================
@@ -3040,22 +3054,11 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 			idcheck6 = MAKE_ID('X', 'G', 'L', '3');
 		}
 
+		bool NodesLoaded = false;
 		if (fr != nullptr && fr->isOpen()) fr->Read(&id, 4);
 		if (id != 0 && (id == idcheck || id == idcheck2 || id == idcheck3 || id == idcheck4 || id == idcheck5 || id == idcheck6))
 		{
-			try
-			{
-				LoadExtendedNodes(*fr, id);
-			}
-			catch (CRecoverableError &error)
-			{
-				Printf("Error loading nodes: %s\n", error.GetMessage());
-
-				ForceNodeBuild = true;
-				Level->subsectors.Clear();
-				Level->segs.Clear();
-				Level->nodes.Clear();
-			}
+			NodesLoaded = LoadExtendedNodes(*fr, id);
 		}
 		else if (!map->isText)	// regular nodes are not supported for text maps
 		{
@@ -3065,29 +3068,26 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 			{
 				if (!P_CheckV4Nodes(map))
 				{
-					LoadSubsectors<mapsubsector_t, mapseg_t>(map);
-					if (!ForceNodeBuild) LoadNodes<mapnode_t, mapsubsector_t>(map);
-					if (!ForceNodeBuild) LoadSegs<mapseg_t>(map);
+					NodesLoaded = LoadSubsectors<mapsubsector_t, mapseg_t>(map) &&
+						LoadNodes<mapnode_t, mapsubsector_t>(map) &&
+					 	LoadSegs<mapseg_t>(map);
 				}
 				else
 				{
-					LoadSubsectors<mapsubsector4_t, mapseg4_t>(map);
-					if (!ForceNodeBuild) LoadNodes<mapnode4_t, mapsubsector4_t>(map);
-					if (!ForceNodeBuild) LoadSegs<mapseg4_t>(map);
+					NodesLoaded = LoadSubsectors<mapsubsector4_t, mapseg4_t>(map) &&
+						LoadNodes<mapnode4_t, mapsubsector4_t>(map) &&
+						LoadSegs<mapseg4_t>(map);
 				}
 			}
-			else ForceNodeBuild = true;
 		}
-		else ForceNodeBuild = true;
 
 		// If loading the regular nodes failed try GL nodes before considering a rebuild
-		if (ForceNodeBuild)
+		if (!NodesLoaded)
 		{
 			if (LoadGLNodes(map))
-			{
-				ForceNodeBuild = false;
 				reloop = true;
-			}
+			else
+				ForceNodeBuild = true;
 		}
 	}
 	else reloop = true;
@@ -3117,9 +3117,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 			0, 0, 0, 0
 		};
 		leveldata.FindMapBounds();
-		// We need GL nodes if am_textured is on.
-		// In case a sync critical game mode is started, also build GL nodes to avoid problems
-		// if the different machines' am_textured setting differs.
+
 		FNodeBuilder builder(leveldata, polyspots, anchors, BuildGLNodes);
 		builder.Extract(*Level);
 		endTime = I_msTime();
@@ -3218,7 +3216,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 		node.len = (float)g_sqrt(fdx * fdx + fdy * fdy);
 	}
 
-	InitRenderInfo();				// create hardware independent renderer resources for the Level-> This must be done BEFORE the PolyObj Spawn!!!	
+	InitRenderInfo();				// create hardware independent renderer resources for the level. This must be done BEFORE the PolyObj Spawn!!!
 	P_ClearDynamic3DFloorData();	// CreateVBO must be run on the plain 3D floor data.
 	screen->mVertexData->CreateVBO();
 

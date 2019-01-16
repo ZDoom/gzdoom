@@ -1077,7 +1077,8 @@ void G_Ticker ()
 			break;
 		case ga_togglemap:
 			// show thew
-			AM_ToggleMap(currentSession->Levelinfo[0]);
+			if (currentSession->Levelinfo.Size() > 0)
+				AM_ToggleMap(currentSession->Levelinfo[0]);
 			gameaction = ga_nothing;
 			break;
 		case ga_nothing:

@@ -1465,6 +1465,7 @@ int G_FinishTravel (FLevelLocals *Level)
 			pawn->ceilingpic = pawndup->ceilingpic;
 			pawn->Floorclip = pawndup->Floorclip;
 			pawn->waterlevel = pawndup->waterlevel;
+			pawn->waterdepth = pawndup->waterdepth;
 		}
 		else if (failnum == 0)	// In the failure case this may run into some undefined data.
 		{

@@ -267,6 +267,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("stamina", stamina)
 		("goal", goal)
 		A("waterlevel", waterlevel)
+		A("waterdepth", waterdepth)
 		A("boomwaterlevel", boomwaterlevel)
 		A("minmissilechance", MinMissileChance)
 		A("spawnflags", SpawnFlags)
@@ -2808,7 +2809,7 @@ DEFINE_ACTION_FUNCTION(AActor, FallAndSink)
 	PARAM_FLOAT(grav);
 	PARAM_FLOAT(oldfloorz);
 	self->FallAndSink(grav, oldfloorz);
-    return 0;
+	return 0;
 }
 
 void AActor::CallFallAndSink(double grav, double oldfloorz)
@@ -4159,29 +4160,35 @@ void AActor::CheckSectorTransition(sector_t *oldsec)
 	}
 }
 
+
 //==========================================================================
 //
-// AActor::SplashCheck
+// AActor::UpdateWaterDepth
 //
-// Returns true if actor should splash
+// Updates the actor's current waterlevel and waterdepth.
+// Consolidates common code in UpdateWaterLevel and SplashCheck.
+//
+// Returns the floor height used for the depth check, or -FLT_MAX
+// if the actor wasn't in a sector.
 //
 //==========================================================================
 
-void AActor::SplashCheck()
+int AActor::UpdateWaterDepth(bool splash)
 {
 	double fh = -FLT_MAX;
 	bool reset = false;
 
 	waterlevel = 0;
+	waterdepth = 0;
 
 	if (Sector == NULL)
 	{
-		return;
+		return fh;
 	}
 
 	if (Sector->MoreFlags & SECMF_UNDERWATER)	// intentionally not SECMF_UNDERWATERMASK
 	{
-		waterlevel = 3;
+		waterdepth = Height;
 	}
 	else
 	{
@@ -4189,28 +4196,16 @@ void AActor::SplashCheck()
 		if (hsec != NULL)
 		{
 			fh = hsec->floorplane.ZatPoint(this);
-			//if (hsec->MoreFlags & SECMF_UNDERWATERMASK)	// also check Boom-style non-swimmable sectors
+
+			// splash checks also check Boom-style non-swimmable sectors
+			//  as well as non-solid, visible 3D floors (below)
+			if (splash || hsec->MoreFlags & SECMF_UNDERWATERMASK)
 			{
-				if (Z() < fh)
+				waterdepth = fh - Z();
+
+				if (waterdepth <= 0 && !(hsec->MoreFlags & SECMF_FAKEFLOORONLY) && (Top() > hsec->ceilingplane.ZatPoint(this)))
 				{
-					waterlevel = 1;
-					if (Center() < fh)
-					{
-						waterlevel = 2;
-						if ((player && Z() + player->viewheight <= fh) ||
-							(Top() <= fh))
-						{
-							waterlevel = 3;
-						}
-					}
-				}
-				else if (!(hsec->MoreFlags & SECMF_FAKEFLOORONLY) && (Top() > hsec->ceilingplane.ZatPoint(this)))
-				{
-					waterlevel = 3;
-				}
-				else
-				{
-					waterlevel = 0;
+					waterdepth = Height;
 				}
 			}
 		}
@@ -4223,31 +4218,57 @@ void AActor::SplashCheck()
 				if (rover->flags & FF_SOLID) continue;
 
 				bool reset = !(rover->flags & FF_SWIMMABLE);
-				if (reset && rover->alpha == 0) continue;
+				if (splash) { reset &= rover->alpha == 0; }
+				if (reset) continue;
+
 				double ff_bottom = rover->bottom.plane->ZatPoint(this);
 				double ff_top = rover->top.plane->ZatPoint(this);
 
-				if (ff_top <= Z() || ff_bottom > (Center())) continue;
+				if (ff_top <= Z() || ff_bottom > Center()) continue;
 
 				fh = ff_top;
-				if (Z() < fh)
-				{
-					waterlevel = 1;
-					if (Center() < fh)
-					{
-						waterlevel = 2;
-						if ((player && Z() + player->viewheight <= fh) ||
-							(Top() <= fh))
-						{
-							waterlevel = 3;
-						}
-					}
-				}
-
+				waterdepth = ff_top - Z();
 				break;
 			}
 		}
 	}
+
+	if (waterdepth < 0) { waterdepth = 0; }
+
+	if (waterdepth > (Height/2))
+	{
+		// When noclipping around and going from low to high sector, your view height
+		//  can go negative, which is why this is nested inside here
+		if ((player && (waterdepth >= player->viewheight)) || (waterdepth >= Height))
+		{
+			waterlevel = 3;
+		}
+		else
+		{
+			waterlevel = 2;
+		}
+	}
+	else if (waterdepth > 0)
+	{
+		waterlevel = 1;
+	}
+
+	return fh;
+}
+
+
+
+//==========================================================================
+//
+// AActor::SplashCheck
+//
+// Returns true if actor should splash
+//
+//==========================================================================
+
+void AActor::SplashCheck()
+{
+	double fh = UpdateWaterDepth(true);
 
 	// some additional checks to make deep sectors like Boom's splash without setting
 	// the water flags.
@@ -4255,9 +4276,12 @@ void AActor::SplashCheck()
 	{
 		P_HitWater(this, Sector, PosAtZ(fh), true);
 	}
+
 	boomwaterlevel = waterlevel;
 	return;
 }
+
+
 
 //==========================================================================
 //
@@ -4271,103 +4295,34 @@ bool AActor::UpdateWaterLevel(bool dosplash)
 {
 	if (dosplash) SplashCheck();
 
-	double fh = -FLT_MAX;
-	bool reset = false;
 	int oldlevel = waterlevel;
+	UpdateWaterDepth(false);
 
-	waterlevel = 0;
+	// Play surfacing and diving sounds, as appropriate.
+	//
+	// (used to be that this code was wrapped around a "Sector != nullptr" check,
+	//  but actors should always be within a sector, and besides, this is just
+	//  sound stuff)
 
-	if (Sector != nullptr)
+	if (player != nullptr)
 	{
-		if (Sector->MoreFlags & SECMF_UNDERWATER)	// intentionally not SECMF_UNDERWATERMASK
+		if (oldlevel < 3 && waterlevel == 3)
 		{
-			waterlevel = 3;
+			// Our head just went under.
+			S_Sound(this, CHAN_VOICE, "*dive", 1, ATTN_NORM);
 		}
-		else
+		else if (oldlevel == 3 && waterlevel < 3)
 		{
-			const sector_t *hsec = Sector->GetHeightSec();
-			if (hsec != NULL)
+			// Our head just came up.
+			if (player->air_finished > currentSession->time)
 			{
-				fh = hsec->floorplane.ZatPoint(this);
-				if (hsec->MoreFlags & SECMF_UNDERWATERMASK)	// also check Boom-style non-swimmable sectors
-				{
-					if (Z() < fh)
-					{
-						waterlevel = 1;
-						if (Center() < fh)
-						{
-							waterlevel = 2;
-							if ((player && Z() + player->viewheight <= fh) ||
-								(Top() <= fh))
-							{
-								waterlevel = 3;
-							}
-						}
-					}
-					else if (!(hsec->MoreFlags & SECMF_FAKEFLOORONLY) && (Top() > hsec->ceilingplane.ZatPoint(this)))
-					{
-						waterlevel = 3;
-					}
-					else
-					{
-						waterlevel = 0;
-					}
-				}
+				// We hadn't run out of air yet.
+				S_Sound(this, CHAN_VOICE, "*surface", 1, ATTN_NORM);
 			}
-			else
-			{
-				// Check 3D floors as well!
-				for (auto rover : Sector->e->XFloor.ffloors)
-				{
-					if (!(rover->flags & FF_EXISTS)) continue;
-					if (rover->flags & FF_SOLID) continue;
-					if (!(rover->flags & FF_SWIMMABLE)) continue;
-
-					double ff_bottom = rover->bottom.plane->ZatPoint(this);
-					double ff_top = rover->top.plane->ZatPoint(this);
-
-					if (ff_top <= Z() || ff_bottom > (Center())) continue;
-
-					fh = ff_top;
-					if (Z() < fh)
-					{
-						waterlevel = 1;
-						if (Center() < fh)
-						{
-							waterlevel = 2;
-							if ((player && Z() + player->viewheight <= fh) ||
-								(Top() <= fh))
-							{
-								waterlevel = 3;
-							}
-						}
-					}
-
-					break;
-				}
-			}
-		}
-
-		// Play surfacing and diving sounds, as appropriate.
-		if (player != nullptr)
-		{
-			if (oldlevel < 3 && waterlevel == 3)
-			{
-				// Our head just went under.
-				S_Sound(this, CHAN_VOICE, "*dive", 1, ATTN_NORM);
-			}
-			else if (oldlevel == 3 && waterlevel < 3)
-			{
-				// Our head just came up.
-				if (player->air_finished > currentSession->time)
-				{
-					// We hadn't run out of air yet.
-					S_Sound(this, CHAN_VOICE, "*surface", 1, ATTN_NORM);
-				}
-				// If we were running out of air, then ResetAirSupply() will play *gasp.
-			}
+			// If we were running out of air, then ResetAirSupply() will play *gasp.
 		}
 	}
+
 	return false;	// we did the splash ourselves
 }
 

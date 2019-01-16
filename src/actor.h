@@ -1266,6 +1266,7 @@ public:
 	bool IsMapActor();
 	int GetTics(FState * newstate);
 	bool SetState (FState *newstate, bool nofunction=false);
+	int UpdateWaterDepth(bool splash);
 	virtual void SplashCheck();
 	virtual bool UpdateWaterLevel (bool splash=true);
 	bool isFast();

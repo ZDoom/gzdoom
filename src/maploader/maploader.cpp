@@ -3105,6 +3105,11 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	if (ForceNodeBuild)
 	{
 		BuildGLNodes = true;
+		// In case the compatibility handler made changes to the map's layout
+		for(auto &line : Level->lines)
+		{
+			line.AdjustLine();
+		}
 
 		startTime = I_msTime();
 		TArray<FNodeBuilder::FPolyStart> polyspots, anchors;
@@ -3153,7 +3158,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	// use in P_PointInSubsector to avoid problems with maps that depend on the specific
 	// nodes they were built with (P:AR E1M3 is a good example for a map where this is the case.)
 	reloop |= CheckNodes(map, BuildGLNodes, (uint32_t)(endTime - startTime));
-
+	
 	// set the head node for gameplay purposes. If the separate gamenodes array is not empty, use that, otherwise use the render nodes.
 	Level->headgamenode = Level->gamenodes.Size() > 0 ? &Level->gamenodes[Level->gamenodes.Size() - 1] : Level->nodes.Size() ? &Level->nodes[Level->nodes.Size() - 1] : nullptr;
 

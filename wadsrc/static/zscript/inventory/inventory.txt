@@ -509,6 +509,13 @@ class Inventory : Actor
 			// The item is placed in the inventory just long enough to be used.
 			toucher.AddInventory(self);
 			bool usegood = Use(true);
+
+			// Handle potential change of toucher/owner because of morph
+			if (usegood && self.owner)
+			{
+				toucher = self.owner;
+			}
+
 			toucher.RemoveInventory(self);
 
 			if (usegood)

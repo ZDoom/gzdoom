@@ -1185,6 +1185,8 @@ class LevelCompatibility native play
 
 	protected native void ClearSectorTags(int sector);
 	protected native void AddSectorTag(int sector, int tag);
+	protected native void ClearLineIDs(int line);
+	protected native void AddLineID(int line, int tag);
 	protected native void OffsetSectorPlane(int sector, int plane, double offset);
 	protected native void SetThingSkills(int thing, int skills);
 	protected native void SetThingXY(int thing, double x, double y);

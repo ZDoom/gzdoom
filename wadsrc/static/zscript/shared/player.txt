@@ -1943,7 +1943,8 @@ class PlayerPawn : Actor native
 				// look for its non-powered up version.
 				if (ReadyWeapon.bPOWERED_UP && ReadyWeapon.SisterWeaponType != null)
 				{
-					return player.weapons.LocateWeapon(ReadyWeapon.SisterWeaponType);
+					[found, slot, index] = player.weapons.LocateWeapon(ReadyWeapon.SisterWeaponType);
+					return found, slot, index;
 				}
 				return false, 0, 0;
 			}

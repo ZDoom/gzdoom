@@ -124,7 +124,7 @@ public:
 	FActorIterator (FLevelLocals *l, int i) : Level(l), base (nullptr), id (i)
 	{
 	}
-	FActorIterator (int i, AActor *start) : Level(start->Level), base (start), id (i)
+	FActorIterator (FLevelLocals *l, int i, AActor *start) : Level(l), base (start), id (i)
 	{
 	}
 	AActor *Next ()

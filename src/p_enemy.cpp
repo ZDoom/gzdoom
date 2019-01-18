@@ -1340,7 +1340,7 @@ int P_LookForTID (AActor *actor, INTBOOL allaround, FLookExParams *params)
 		actor->LastLookActor = nullptr;
 	}
 
-	FActorIterator iterator (actor->TIDtoHate, actor->LastLookActor);
+	FActorIterator iterator (actor->Level, actor->TIDtoHate, actor->LastLookActor);
 	int c = (pr_look3() & 31) + 7;	// Look for between 7 and 38 hatees at a time
 	while ((other = iterator.Next()) != actor->LastLookActor)
 	{

@@ -5076,7 +5076,7 @@ void DLevelScript::SetActorAngle(AActor *activator, int tid, int angle, bool int
 
 void DLevelScript::SetActorPitch(AActor *activator, int tid, int angle, bool interpolate)
 {
-	DAngle an = ACSToAngle(angle);
+	DAngle an = ACSToAngle(angle).Normalized180();
 	if (tid == 0)
 	{
 		if (activator != NULL)

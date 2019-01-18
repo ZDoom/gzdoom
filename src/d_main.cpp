@@ -2584,9 +2584,7 @@ void D_DoomMain (void)
 		// [RH] Run any saved commands from the command line or autoexec.cfg now.
 		gamestate = GS_FULLCONSOLE;
 		Net_NewMakeTic ();
-		ForAllLevels([](FLevelLocals *Level) {
-			Thinkers.RunThinkers (Level);
-		});
+		Thinkers.RunThinkers (nullptr);
 		gamestate = GS_STARTUP;
 
 		if (!restart)

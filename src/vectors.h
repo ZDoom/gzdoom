@@ -1417,7 +1417,7 @@ TAngle<T> TVector3<T>::Angle() const
 template<class T>
 TAngle<T> TVector3<T>::Pitch() const
 {
-	return VecToAngle(TVector2<T>(X, Y).Length(), Z);
+	return -VecToAngle(TVector2<T>(X, Y).Length(), Z);
 }
 
 // Much of this is copied from TVector3. Is all that functionality really appropriate?

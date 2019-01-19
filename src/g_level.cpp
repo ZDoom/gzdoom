@@ -2132,7 +2132,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, SphericalCoords)
 
 	ACTION_RETURN_VEC3(DVector3(
 		deltaangle(vecTo.Angle(), viewYaw).Degrees,
-		deltaangle(-vecTo.Pitch(), viewPitch).Degrees,
+		deltaangle(vecTo.Pitch(), viewPitch).Degrees,
 		vecTo.Length()
 	));
 }

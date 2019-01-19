@@ -263,8 +263,8 @@ void P_ThinkParticles (FLevelLocals *Level)
 		particle->Pos.Y = newxy.Y;
 		particle->Pos.Z += particle->Vel.Z;
 		particle->Vel += particle->Acc;
+		particle->subsector = R_PointInSubsector(Level, particle->Pos);
 		sector_t *s = particle->subsector->sector;
-		particle->subsector = R_PointInSubsector(s->Level, particle->Pos);
 		// Handle crossing a sector portal.
 		if (!s->PortalBlocksMovement(sector_t::ceiling))
 		{

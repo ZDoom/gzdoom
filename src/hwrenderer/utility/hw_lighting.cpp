@@ -86,7 +86,7 @@ int hw_CalcLightLevel(int lightlevel, int rellight, bool weapon, int blendfactor
 {
 	int light;
 
-	if (lightlevel == 0) return 0;
+	if (lightlevel <= 0) return 0;
 
 	bool darklightmode = (level.isDarkLightMode()) || (level.isSoftwareLighting() && blendfactor > 0);
 
@@ -115,7 +115,8 @@ int hw_CalcLightLevel(int lightlevel, int rellight, bool weapon, int blendfactor
 		light=lightlevel+rellight;
 	}
 
-	return clamp(light, 0, 255);
+	// Fake contrast should never turn a positive value into 0.
+	return clamp(light, 1, 255);
 }
 
 //==========================================================================

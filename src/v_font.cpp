@@ -381,11 +381,14 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 
 		if (charLumps[i] != nullptr)
 		{
+			charLumps[i]->SetUseType(ETextureType::FontChar);
+
 			if (!noTranslate)
 			{
 				Chars[i].OriginalPic = charLumps[i];
 				Chars[i].TranslatedPic = new FImageTexture(new FFontChar1 (charLumps[i]->GetImage()), "");
 				Chars[i].TranslatedPic->Scale = charLumps[i]->Scale;
+				Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
 				TexMan.AddTexture(Chars[i].TranslatedPic);
 			}
 			else Chars[i].TranslatedPic = charLumps[i];
@@ -768,10 +771,14 @@ FTexture *FFont::GetChar (int code, int translation, int *const width, bool *red
 	{
 		bool redirect = Chars[code].OriginalPic && Chars[code].OriginalPic != Chars[code].TranslatedPic;
 		if (redirected) *redirected = redirect;
-		if (redirect) 
+		if (redirect)
+		{
+			assert(Chars[code].OriginalPic->UseType == ETextureType::FontChar);
 			return Chars[code].OriginalPic;
+		}
 	}
 	if (redirected) *redirected = false;
+	assert(Chars[code].TranslatedPic->UseType == ETextureType::FontChar);
 	return Chars[code].TranslatedPic;
 }
 
@@ -1130,6 +1137,7 @@ void FSingleLumpFont::LoadFON2 (int lump, const uint8_t *data)
 		else
 		{
 			Chars[i].TranslatedPic = new FImageTexture(new FFontChar2 (lump, int(data_p - data), widths2[i], FontHeight));
+			Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
 			TexMan.AddTexture(Chars[i].TranslatedPic);
 			do
 			{
@@ -1264,6 +1272,7 @@ void FSingleLumpFont::LoadBMF(int lump, const uint8_t *data)
 			-(int8_t)chardata[chari+3],	// x offset
 			-(int8_t)chardata[chari+4]	// y offset
 		));
+		tex->SetUseType(ETextureType::FontChar);
 		Chars[chardata[chari] - FirstChar].TranslatedPic = tex;
 		TexMan.AddTexture(tex);
 	}
@@ -1331,6 +1340,7 @@ void FSingleLumpFont::CheckFON1Chars (double *luminosity)
 		if(!Chars[i].TranslatedPic)
 		{
 			Chars[i].TranslatedPic = new FImageTexture(new FFontChar2 (Lump, int(data_p - data), SpaceWidth, FontHeight));
+			Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
 			Chars[i].XMove = SpaceWidth;
 			TexMan.AddTexture(Chars[i].TranslatedPic);
 		}
@@ -1543,11 +1553,14 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 
 		if (charlumps[i] != nullptr)
 		{
+			charlumps[i]->SetUseType(ETextureType::FontChar);
+
 			Chars[i].OriginalPic = charlumps[i];
 			if (!noTranslate)
 			{
 				Chars[i].TranslatedPic = new FImageTexture(new FFontChar1 (charlumps[i]->GetImage()), "");
 				Chars[i].TranslatedPic->Scale = charlumps[i]->Scale;
+				Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
 				TexMan.AddTexture(Chars[i].TranslatedPic);
 			}
 			else Chars[i].TranslatedPic = charlumps[i];

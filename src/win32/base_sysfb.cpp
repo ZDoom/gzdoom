@@ -65,6 +65,10 @@ extern "C" {
 EXTERN_CVAR(Int, vid_defwidth)
 EXTERN_CVAR(Int, vid_defheight)
 
+namespace {
+	bool vid_usedsysgamma = false;
+}
+
 //==========================================================================
 //
 // Windows framebuffer
@@ -390,6 +394,11 @@ SystemBaseFrameBuffer::~SystemBaseFrameBuffer()
 
 void SystemBaseFrameBuffer::ResetGammaTable()
 {
+	if (vid_usedsysgamma == false)
+		return;
+
+	vid_usedsysgamma = false;
+
 	if (m_supportsGamma)
 	{
 		HDC hDC = GetDC(Window);
@@ -400,6 +409,8 @@ void SystemBaseFrameBuffer::ResetGammaTable()
 
 void SystemBaseFrameBuffer::SetGammaTable(uint16_t *tbl)
 {
+	vid_usedsysgamma = true;
+
 	if (m_supportsGamma)
 	{
 		HDC hDC = GetDC(Window);

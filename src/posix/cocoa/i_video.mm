@@ -94,7 +94,6 @@ CUSTOM_CVAR(Bool, vid_autoswitch, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_
 	Printf("You must restart " GAMENAME " to apply graphics switching mode\n");
 }
 
-
 // ---------------------------------------------------------------------------
 
 
@@ -105,6 +104,8 @@ namespace
 
 	const NSUInteger STYLE_MASK_FULLSCREEN = NSBorderlessWindowMask;
 	const NSUInteger STYLE_MASK_WINDOWED   = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask;
+
+	bool vid_usedsysgamma = false;
 }
 
 
@@ -433,6 +434,8 @@ void SystemGLFrameBuffer::SwapBuffers()
 
 void SystemGLFrameBuffer::SetGammaTable(uint16_t* table)
 {
+	vid_usedsysgamma = true;
+
 	if (m_supportsGamma)
 	{
 		CGGammaValue gammaTable[GAMMA_TABLE_SIZE];
@@ -449,6 +452,11 @@ void SystemGLFrameBuffer::SetGammaTable(uint16_t* table)
 
 void SystemGLFrameBuffer::ResetGammaTable()
 {
+	if (vid_usedsysgamma == false)
+		return;
+
+	vid_usedsysgamma = false;
+
 	if (m_supportsGamma)
 	{
 		SetGammaTable(m_originalGamma);

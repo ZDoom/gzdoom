@@ -101,6 +101,10 @@ public:
 	void SetupPixelFormat(bool allowsoftware, int multisample, const int *glver);
 };
 
+namespace {
+	bool vid_usedsysgamma = false;
+}
+
 // CODE --------------------------------------------------------------------
 
 SDLGLVideo::SDLGLVideo (int parm)
@@ -282,6 +286,8 @@ SystemGLFrameBuffer::~SystemGLFrameBuffer ()
 
 void SystemGLFrameBuffer::SetGammaTable(uint16_t *tbl)
 {
+	vid_usedsysgamma = true;
+
 	if (m_supportsGamma)
 	{
 		SDL_SetWindowGammaRamp(Screen, &tbl[0], &tbl[256], &tbl[512]);
@@ -290,6 +296,11 @@ void SystemGLFrameBuffer::SetGammaTable(uint16_t *tbl)
 
 void SystemGLFrameBuffer::ResetGammaTable()
 {
+	if (vid_usedsysgamma == false)
+		return;
+
+	vid_usedsysgamma = false;
+
 	if (m_supportsGamma)
 	{
 		SDL_SetWindowGammaRamp(Screen, m_origGamma[0], m_origGamma[1], m_origGamma[2]);

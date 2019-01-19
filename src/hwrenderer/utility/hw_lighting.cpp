@@ -87,7 +87,7 @@ int HWDrawInfo::CalcLightLevel(int lightlevel, int rellight, bool weapon, int bl
 {
 	int light;
 
-	if (lightlevel == 0) return 0;
+	if (lightlevel <= 0) return 0;
 
 	bool darklightmode = (isDarkLightMode()) || (isSoftwareLighting() && blendfactor > 0);
 
@@ -116,7 +116,8 @@ int HWDrawInfo::CalcLightLevel(int lightlevel, int rellight, bool weapon, int bl
 		light=lightlevel+rellight;
 	}
 
-	return clamp(light, 0, 255);
+	// Fake contrast should never turn a positive value into 0.
+	return clamp(light, 1, 255);
 }
 
 //==========================================================================

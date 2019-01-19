@@ -5262,8 +5262,8 @@ void P_RailAttack(FRailParams *p)
 			if (puff && (trace.Line != NULL) && (trace.Line->special == Line_Horizon) && !(puff->flags3 & MF3_SKYEXPLODE))
 				puff->Destroy();
 		}
-		if (puff != NULL && puffDefaults->flags7 & MF7_FORCEDECAL && puff->DecalGenerator)
-			SpawnShootDecal(puff, trace);
+		if (puffDefaults != nullptr && puffDefaults->flags7 & MF7_FORCEDECAL && puffDefaults->DecalGenerator)
+			SpawnShootDecal(puffDefaults, trace);
 		else
 			SpawnShootDecal(source, trace);
 

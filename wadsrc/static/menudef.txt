@@ -1968,6 +1968,7 @@ OptionMenu CustomResolutionMenu protected
 	Command "1366x768", "menu_resolution_set_custom 1366 768"
 	Command "(1080p HD) 1920x1080", "menu_resolution_set_custom 1920 1080"
 	Command "(1440p HD) 2560x1440", "menu_resolution_set_custom 2560 1440"
+	Command "(4K UHD) 3840x2160", "menu_resolution_set_custom 3840 2160"
 	StaticText ""
 	StaticText "$VIDMNU_ASPECT1610"
 	Command "960x600", "menu_resolution_set_custom 960 600"

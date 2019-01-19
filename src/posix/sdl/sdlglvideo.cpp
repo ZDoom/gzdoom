@@ -71,6 +71,7 @@ EXTERN_CVAR (Int, vid_displaybits)
 EXTERN_CVAR (Int, vid_maxfps)
 EXTERN_CVAR (Int, vid_defwidth)
 EXTERN_CVAR (Int, vid_defheight)
+EXTERN_CVAR (Int, vid_hwgamma)
 EXTERN_CVAR (Bool, cl_capfps)
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -268,7 +269,8 @@ SystemGLFrameBuffer::~SystemGLFrameBuffer ()
 {
 	if (Screen)
 	{
-		ResetGammaTable();
+		if (m_supportsGamma && ((vid_hwgamma == 0) || (vid_hwgamma == 2 && IsFullscreen())))
+			ResetGammaTable();
 
 		if (GLContext)
 		{

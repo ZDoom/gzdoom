@@ -64,6 +64,7 @@ extern "C" {
 
 EXTERN_CVAR(Int, vid_defwidth)
 EXTERN_CVAR(Int, vid_defheight)
+EXTERN_CVAR(Int, vid_hwgamma)
 
 //==========================================================================
 //
@@ -369,7 +370,8 @@ SystemBaseFrameBuffer::SystemBaseFrameBuffer(void *hMonitor, bool fullscreen) : 
 
 SystemBaseFrameBuffer::~SystemBaseFrameBuffer()
 {
-	ResetGammaTable();
+	if (m_supportsGamma && ((vid_hwgamma == 0) || (vid_hwgamma == 2 && IsFullscreen())))
+		ResetGammaTable();
 	if (!m_Fullscreen) SaveWindowedPos();
 
 	ShowWindow (Window, SW_SHOW);

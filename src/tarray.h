@@ -369,7 +369,7 @@ public:
 			}
 		}
 	}
-
+	
 	// Inserts an item into the array, shifting elements as needed
 	void Insert (unsigned int index, const T &item)
 	{

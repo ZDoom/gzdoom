@@ -293,7 +293,7 @@ static void MarkRoot()
 	}
 	// Mark sectors.
 	
-	Thinkers.MarkRoots();
+	StaticThinkers.MarkRoots();
 	ForAllLevels([](FLevelLocals *Level)
 	{
 		Level->Mark();

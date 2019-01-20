@@ -2584,9 +2584,7 @@ void D_DoomMain (void)
 		// [RH] Run any saved commands from the command line or autoexec.cfg now.
 		gamestate = GS_FULLCONSOLE;
 		Net_NewMakeTic ();
-		ForAllLevels([](FLevelLocals *Level) {
-			Thinkers.RunThinkers (Level);
-		});
+		StaticThinkers.RunThinkers(nullptr);
 		gamestate = GS_STARTUP;
 
 		if (!restart)
@@ -2702,7 +2700,7 @@ void D_DoomMain (void)
 		// clean up game state
 		ST_Clear();
 		D_ErrorCleanup ();
-		Thinkers.DestroyThinkersInList(STAT_STATIC);
+		StaticThinkers.DestroyAllThinkers();
 		E_Shutdown(false);
 		P_FreeLevelData();
 

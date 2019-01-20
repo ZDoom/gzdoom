@@ -914,7 +914,7 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 
 	if (arc.isReading())
 	{
-		Thinkers.DestroyAllThinkers();
+		Level->Thinkers.DestroyAllThinkers();
 		Level->interpolator.ClearInterpolations();
 		arc.ReadObjects(hubload);
 	}
@@ -977,7 +977,7 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 	P_SerializeHealthGroups(Level, arc);
 	// [ZZ] serialize events
 	E_SerializeEvents(arc);
-	Thinkers.SerializeThinkers(arc, hubload);
+	Level->Thinkers.SerializeThinkers(arc, hubload);
 	arc("polyobjs", Level->Polyobjects);
 	SerializeSubsectors(arc, Level, "subsectors");
 	StatusBar->SerializeMessages(arc);

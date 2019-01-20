@@ -490,7 +490,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	UnlatchCVars ();
 	G_VerifySkill();
 	UnlatchCVars ();
-	Thinkers.DestroyThinkersInList(STAT_STATIC);
+	StaticThinkers.DestroyThinkersInList(STAT_STATIC);
 
 	if (paused)
 	{
@@ -1370,6 +1370,8 @@ void G_StartTravel ()
 	if (deathmatch)
 		return;
 
+	currentSession->TravellingThinkers.Clear();
+
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (playeringame[i])
@@ -1385,14 +1387,14 @@ void G_StartTravel ()
 				int tid = pawn->tid;	// Save TID
 				pawn->RemoveFromHash ();
 				pawn->tid = tid;		// Restore TID (but no longer linked into the hash chain)
-				pawn->ChangeStatNum (STAT_TRAVELLING);
 				pawn->DeleteAttachedLights();
+				pawn->BeginTravel();
 
 				for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
 				{
-					inv->ChangeStatNum (STAT_TRAVELLING);
 					inv->UnlinkFromWorld (nullptr);
 					inv->DeleteAttachedLights();
+					inv->BeginTravel();
 				}
 			}
 		}
@@ -1414,7 +1416,6 @@ void G_StartTravel ()
 
 int G_FinishTravel (FLevelLocals *Level)
 {
-	TThinkerIterator<AActor> it (Level, NAME_PlayerPawn, STAT_TRAVELLING);
 	AActor *pawn, *pawndup, *oldpawn, *next;
 	AActor *inv;
 	FPlayerStart *start;
@@ -1425,107 +1426,111 @@ int G_FinishTravel (FLevelLocals *Level)
 	AActor* pawns[MAXPLAYERS];
 	int pawnsnum = 0;
 
-	next = it.Next ();
-	while ( (pawn = next) != NULL)
+	for (auto thinker : currentSession->TravellingThinkers)
 	{
-		next = it.Next ();
-		pnum = int(pawn->player - players);
-		pawn->ChangeStatNum (STAT_PLAYER);
-		pawndup = pawn->player->mo;
-		assert (pawn != pawndup);
-
-		start = G_PickPlayerStart(Level, pnum, 0);
-		if (start == NULL)
+		if (thinker->IsKindOf(NAME_PlayerPawn))
 		{
-			if (pawndup != nullptr)
+			auto pawn = static_cast<AActor *>(thinker);
+			pnum = int(pawn->player - players);
+			pawn->EndTravel(Level, STAT_PLAYER);
+			pawndup = pawn->player->mo;
+			assert (pawn != pawndup);
+			
+			start = G_PickPlayerStart(Level, pnum, 0);
+			if (start == NULL)
 			{
-				Printf(TEXTCOLOR_RED "No player %d start to travel to!\n", pnum + 1);
-				// Move to the coordinates this player had when they left the map.
+				if (pawndup != nullptr)
+				{
+					Printf(TEXTCOLOR_RED "No player %d start to travel to!\n", pnum + 1);
+					// Move to the coordinates this player had when they left the map.
+					pawn->SetXYZ(pawndup->Pos());
+				}
+				else
+				{
+					// Could not find a start for this player at all. This really should never happen but if it does, let's better abort.
+					if (failnum == 0) failnum = pnum + 1;
+				}
+			}
+			oldpawn = pawndup;
+
+			// The player being spawned here is a short lived dummy and
+			// must not start any ENTER script or big problems will happen.
+			pawndup = P_SpawnPlayer(Level, start, pnum, SPF_TEMPPLAYER);
+			if (pawndup != NULL)
+			{
+				if (!(changeflags & CHANGELEVEL_KEEPFACING))
+				{
+					pawn->Angles = pawndup->Angles;
+				}
 				pawn->SetXYZ(pawndup->Pos());
+				pawn->Vel = pawndup->Vel;
+				pawn->Sector = pawndup->Sector;
+				pawn->floorz = pawndup->floorz;
+				pawn->ceilingz = pawndup->ceilingz;
+				pawn->dropoffz = pawndup->dropoffz;
+				pawn->floorsector = pawndup->floorsector;
+				pawn->floorpic = pawndup->floorpic;
+				pawn->floorterrain = pawndup->floorterrain;
+				pawn->ceilingsector = pawndup->ceilingsector;
+				pawn->ceilingpic = pawndup->ceilingpic;
+				pawn->Floorclip = pawndup->Floorclip;
+				pawn->waterlevel = pawndup->waterlevel;
 			}
-			else
+			else if (failnum == 0)	// In the failure case this may run into some undefined data.
 			{
-				// Could not find a start for this player at all. This really should never happen but if it does, let's better abort.
-				if (failnum == 0) failnum = pnum + 1;
+				P_FindFloorCeiling(pawn);
 			}
-		}
-		oldpawn = pawndup;
-
-		// The player being spawned here is a short lived dummy and
-		// must not start any ENTER script or big problems will happen.
-		pawndup = P_SpawnPlayer(Level, start, pnum, SPF_TEMPPLAYER);
-		if (pawndup != NULL)
-		{
-			if (!(changeflags & CHANGELEVEL_KEEPFACING))
+			pawn->Level = Level;
+			pawn->target = nullptr;
+			pawn->lastenemy = nullptr;
+			pawn->player->mo = pawn;
+			pawn->player->camera = pawn;
+			pawn->player->viewheight = pawn->player->DefaultViewHeight();
+			pawn->flags2 &= ~MF2_BLASTED;
+			if (oldpawn != nullptr)
 			{
-				pawn->Angles = pawndup->Angles;
+				DObject::StaticPointerSubstitution (oldpawn, pawn);
+				oldpawn->Destroy();
 			}
-			pawn->SetXYZ(pawndup->Pos());
-			pawn->Vel = pawndup->Vel;
-			pawn->Sector = pawndup->Sector;
-			pawn->floorz = pawndup->floorz;
-			pawn->ceilingz = pawndup->ceilingz;
-			pawn->dropoffz = pawndup->dropoffz;
-			pawn->floorsector = pawndup->floorsector;
-			pawn->floorpic = pawndup->floorpic;
-			pawn->floorterrain = pawndup->floorterrain;
-			pawn->ceilingsector = pawndup->ceilingsector;
-			pawn->ceilingpic = pawndup->ceilingpic;
-			pawn->Floorclip = pawndup->Floorclip;
-			pawn->waterlevel = pawndup->waterlevel;
-		}
-		else if (failnum == 0)	// In the failure case this may run into some undefined data.
-		{
-			P_FindFloorCeiling(pawn);
-		}
-		pawn->Level = Level;
-		pawn->target = nullptr;
-		pawn->lastenemy = nullptr;
-		pawn->player->mo = pawn;
-		pawn->player->camera = pawn;
-		pawn->player->viewheight = pawn->player->DefaultViewHeight();
-		pawn->flags2 &= ~MF2_BLASTED;
-		if (oldpawn != nullptr)
-		{
-			DObject::StaticPointerSubstitution (oldpawn, pawn);
-			oldpawn->Destroy();
-		}
-		if (pawndup != NULL)
-		{
-			pawndup->Destroy();
-		}
-		pawn->LinkToWorld (nullptr);
-		pawn->ClearInterpolation();
-		pawn->AddToHash ();
-		pawn->SetState(pawn->SpawnState);
-		pawn->player->SendPitchLimits();
-
-		for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
-		{
-			inv->Level = Level;
-			inv->ChangeStatNum (STAT_INVENTORY);
-			inv->LinkToWorld (nullptr);
-
-			IFVIRTUALPTRNAME(inv, NAME_Inventory, Travelled)
+			if (pawndup != NULL)
 			{
-				VMValue params[1] = { inv };
-				VMCall(func, params, 1, nullptr, 0);
+				pawndup->Destroy();
 			}
+			pawn->LinkToWorld (nullptr);
+			pawn->ClearInterpolation();
+			pawn->AddToHash ();
+			pawn->SetState(pawn->SpawnState);
+			pawn->player->SendPitchLimits();
+
+			for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
+			{
+				inv->EndTravel(Level, STAT_INVENTORY);
+				inv->LinkToWorld (nullptr);
+				
+				IFVIRTUALPTRNAME(inv, NAME_Inventory, Travelled)
+				{
+					VMValue params[1] = { inv };
+					VMCall(func, params, 1, nullptr, 0);
+				}
+			}
+			if (pawn->Level->ib_compatflags & BCOMPATF_RESETPLAYERSPEED)
+			{
+				pawn->Speed = pawn->GetDefault()->Speed;
+			}
+			// [ZZ] we probably don't want to fire any scripts before all players are in, especially with runNow = true.
+			pawns[pawnsnum++] = pawn;
+
 		}
-		if (pawn->Level->ib_compatflags & BCOMPATF_RESETPLAYERSPEED)
-		{
-			pawn->Speed = pawn->GetDefault()->Speed;
-		}
-		// [ZZ] we probably don't want to fire any scripts before all players are in, especially with runNow = true.
-		pawns[pawnsnum++] = pawn;
 	}
 
-	bglobal.FinishTravel ();
-
+	bglobal.FinishTravel (Level);
+	
 	// make sure that, after travelling has completed, no travelling thinkers are left.
-	// Since this list is excluded from regular thinker cleaning, anything that may survive through here
-	// will endlessly multiply and severely break the following savegames or just simply crash on broken pointers.
-	Thinkers.DestroyThinkersInList(STAT_TRAVELLING);
+	for (auto thinker : currentSession->TravellingThinkers)
+	{
+		if (thinker->Level == nullptr) thinker->Destroy();
+	}
+	currentSession->TravellingThinkers.Clear();
 	return failnum;
 }
  

@@ -65,8 +65,13 @@ struct ProfileInfo
 
 static TMap<FName, ProfileInfo> Profiles;
 static unsigned int profilethinkers, profilelimit;
-FThinkerCollection Thinkers;
 DThinker *NextToThink;
+
+// Only two lists in here will be used: STAT_STATIC and STAT_DEFAULT.
+// STAT_STATIC is for non-ticking user thinkers, meant to be used as variable holders. All STAT_STATIC content will be implicitly remapped to this list.
+// STAT_DEFAULT only gets used by global console thinkers that need to work independently of a map. This feature is not accessible to modding.
+FThinkerCollection StaticThinkers;
+
 
 //==========================================================================
 //
@@ -94,7 +99,7 @@ void FThinkerCollection::Link(DThinker *thinker, int statnum)
 //
 //==========================================================================
 
-void FThinkerCollection::RunThinkers(FLevelLocals *Level)
+void FThinkerCollection::RunThinkers(FDynamicLight *lights)
 {
 	int i, count;
 
@@ -124,7 +129,7 @@ void FThinkerCollection::RunThinkers(FLevelLocals *Level)
 			}
 		} while (count != 0);
 
-		for (auto light = Level->lights; light;)
+		for (auto light = lights; light;)
 		{
 			auto next = light->next;
 			light->Tick();
@@ -153,7 +158,7 @@ void FThinkerCollection::RunThinkers(FLevelLocals *Level)
 		// Also profile the internal dynamic lights, even though they are not implemented as thinkers.
 		auto &prof = Profiles[NAME_InternalDynamicLight];
 		prof.timer.Clock();
-		for (auto light = Level->lights; light;)
+		for (auto light = lights; light;)
 		{
 			prof.numcalls++;
 			auto next = light->next;
@@ -237,11 +242,8 @@ void FThinkerCollection::DestroyAllThinkers()
 
 	for (i = 0; i <= MAX_STATNUM; i++)
 	{
-		if (i != STAT_TRAVELLING && i != STAT_STATIC)
-		{
-			error |= Thinkers[i].DoDestroyThinkers();
-			error |= FreshThinkers[i].DoDestroyThinkers();
-		}
+		error |= Thinkers[i].DoDestroyThinkers();
+		error |= FreshThinkers[i].DoDestroyThinkers();
 	}
 	error |= Thinkers[MAX_STATNUM + 1].DoDestroyThinkers();
 	GC::FullGC();
@@ -745,18 +747,33 @@ void DThinker::PostSerialize()
 
 void DThinker::ChangeStatNum (int statnum)
 {
-	FThinkerCollection *collection = &Thinkers;	//Todo: get from level
-
-	if ((unsigned)statnum > MAX_STATNUM)
+	FThinkerCollection *collection = nullptr;
+	if (statnum == STAT_STATIC || Level == nullptr)
 	{
-		statnum = MAX_STATNUM;
+		if (statnum < STAT_FIRST_THINKING) statnum = STAT_STATIC;
+		else statnum = STAT_DEFAULT;
+		collection = &StaticThinkers;
+		Level = nullptr;
 	}
+	else
+	{
+		collection = &Level->Thinkers;
+		if ((unsigned)statnum > MAX_STATNUM)
+		{
+			statnum = MAX_STATNUM;
+		}
+	}
+
 	Remove();
-	Thinkers.Link(this, statnum);
+	collection->Link(this, statnum);
 }
 
 static void ChangeStatNum(DThinker *thinker, int statnum)
 {
+	if (thinker->Level == nullptr && statnum != STAT_STATIC)
+	{
+		ThrowAbortException(X_OTHER, "Attempt to change statnum of non-static thinker without a level being attached.");
+	}
 	thinker->ChangeStatNum(statnum);
 }
 
@@ -764,8 +781,44 @@ DEFINE_ACTION_FUNCTION_NATIVE(DThinker, ChangeStatNum, ChangeStatNum)
 {
 	PARAM_SELF_PROLOGUE(DThinker);
 	PARAM_INT(stat);
-	self->ChangeStatNum(stat);
+	ChangeStatNum(self, stat);
 	return 0;
+}
+
+static void AddThinker(FLevelLocals *self, DThinker *thinker, int statnum)
+{
+	// This may only be called for a user-defined thinker allocated through 'new'.
+	// Once a thinker belongs to a level it cannot be transferred to another one by user code.
+	PARAM_NULLCHECK(thinker, thinker);
+	if (thinker->Level)
+	{
+		ThrowAbortException(X_OTHER, "Thinker already attached to a level.");
+	}
+	if (statnum != STAT_STATIC) thinker->Level = self;
+	thinker->ChangeStatNum(statnum);
+	
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, AddThinker, AddThinker)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_POINTER(thinker, DThinker);
+	PARAM_INT(stat);
+	AddThinker(self, thinker, stat);
+	return 0;
+}
+
+void DThinker::BeginTravel()
+{
+	Remove();
+	Level = nullptr;
+	currentSession->TravellingThinkers.Push(this);
+}
+
+void DThinker::EndTravel(FLevelLocals *newLevel, int statnum)
+{
+	Level = newLevel;
+	Level->Thinkers.Link(this, statnum);
 }
 
 //==========================================================================
@@ -890,8 +943,7 @@ FThinkerIterator::FThinkerIterator (FLevelLocals *Level, const PClass *type, int
 		m_SearchStats = false;
 	}
 	m_ParentType = type;
-	m_CurrThinker = Thinkers.Thinkers[m_Stat].GetHead();
-	m_SearchingFresh = false;
+	Reinit();
 }
 
 //==========================================================================
@@ -932,7 +984,7 @@ FThinkerIterator::FThinkerIterator (FLevelLocals *Level, const PClass *type, int
 
 void FThinkerIterator::Reinit ()
 {
-	m_CurrThinker = Thinkers.Thinkers[m_Stat].GetHead();
+	m_CurrThinker = m_Stat == STAT_STATIC? StaticThinkers.Thinkers[STAT_STATIC].GetHead() : Level->Thinkers.Thinkers[m_Stat].GetHead();
 	m_SearchingFresh = false;
 }
 
@@ -973,7 +1025,7 @@ DThinker *FThinkerIterator::Next (bool exact)
 			}
 			if ((m_SearchingFresh = !m_SearchingFresh))
 			{
-				m_CurrThinker = Thinkers.FreshThinkers[m_Stat].GetHead();
+				m_CurrThinker = Level->Thinkers.FreshThinkers[m_Stat].GetHead();
 			}
 		} while (m_SearchingFresh);
 		if (m_SearchStats)
@@ -984,7 +1036,7 @@ DThinker *FThinkerIterator::Next (bool exact)
 				m_Stat = STAT_FIRST_THINKING;
 			}
 		}
-		m_CurrThinker = Thinkers.Thinkers[m_Stat].GetHead();
+		m_CurrThinker = Level->Thinkers.Thinkers[m_Stat].GetHead();
 		m_SearchingFresh = false;
 	} while (m_SearchStats && m_Stat != STAT_FIRST_THINKING);
 	return nullptr;

@@ -596,18 +596,18 @@ void FCajunMaster::StartTravel ()
 	{
 		if (players[i].Bot != NULL)
 		{
-			players[i].Bot->ChangeStatNum (STAT_TRAVELLING);
+			players[i].Bot->BeginTravel();
 		}
 	}
 }
 
-void FCajunMaster::FinishTravel ()
+void FCajunMaster::FinishTravel (FLevelLocals *Level)
 {
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (players[i].Bot != NULL)
 		{
-			players[i].Bot->ChangeStatNum (STAT_BOT);
+			players[i].Bot->EndTravel(Level, STAT_BOT);
 		}
 	}
 }

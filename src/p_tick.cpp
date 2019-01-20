@@ -143,6 +143,7 @@ void P_Ticker (void)
 	E_WorldTick();
 	StatusBar->SetLevel(currentSession->Levelinfo[0]);
 	StatusBar->CallTick ();		// [RH] moved this here
+	StaticThinkers.RunThinkers(nullptr);
 
 	ForAllLevels([](FLevelLocals *Level)
 	{
@@ -152,7 +153,7 @@ void P_Ticker (void)
 			memset(&Level->Scrolls[0], 0, sizeof(Level->Scrolls[0]) * Level->Scrolls.Size());
 		}
 
-		Thinkers.RunThinkers(Level);
+		Level->Thinkers.RunThinkers(Level->lights);
 
 		//if added by MC: Freeze mode.
 		if (!currentSession->isFrozen())

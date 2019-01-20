@@ -258,6 +258,7 @@ struct FLevelLocals : public FLevelData
 	uint32_t			InactiveParticles;
 	TArray<particle_t>	Particles;
 	TArray<uint16_t>	ParticlesInSubsec;
+	FThinkerCollection Thinkers;
 
 	TArray<DVector2>	Scrolls;		// NULL if no DScrollers in this level
 
@@ -399,6 +400,7 @@ public:
 	TArray<FHubInfo> hubdata;
 	TArray<OneLevel> Statistics;// Current game's statistics
 	int SinglePlayerClass[MAXPLAYERS];
+	TArray<DThinker*> TravellingThinkers;	// This was taken out of the thinker collection for easier handling.
 
 	FString F1Pic;
 	float		MusicVolume = 1.0f;
@@ -425,6 +427,7 @@ public:
 		Visited.Clear();
 		hubdata.Clear();
 		Statistics.Clear();
+		TravellingThinkers.Clear();
 
 		MusicVolume = 1.0f;
 		time = 0;

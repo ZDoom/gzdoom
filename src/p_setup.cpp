@@ -428,7 +428,7 @@ static void P_Shutdown ()
 {
 	delete currentSession;
 	currentSession = nullptr;
-	Thinkers.DestroyThinkersInList(STAT_STATIC);
+	StaticThinkers.DestroyAllThinkers();
 	P_FreeLevelData ();
 	// [ZZ] delete global event handlers
 	E_Shutdown(false);

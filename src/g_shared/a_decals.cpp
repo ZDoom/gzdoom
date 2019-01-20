@@ -533,7 +533,7 @@ CUSTOM_CVAR (Int, cl_maxdecals, 1024, CVAR_ARCHIVE)
 		{
 			while (Level->ImpactDecalCount > self)
 			{
-				DThinker *thinker = Thinkers.FirstThinker(STAT_AUTODECAL);
+				DThinker *thinker = Level->Thinkers.FirstThinker(STAT_AUTODECAL);
 				if (thinker != NULL)
 				{
 					thinker->Destroy();
@@ -552,8 +552,8 @@ void DImpactDecal::CheckMax ()
 {
 	if (++Level->ImpactDecalCount >= cl_maxdecals)
 	{
-		DThinker *thinker = Thinkers.FirstThinker (STAT_AUTODECAL);
-		if (thinker != NULL)
+		DThinker *thinker = Level->Thinkers.FirstThinker (STAT_AUTODECAL);
+		if (thinker != nullptr)
 		{
 			thinker->Destroy();
 			Level->ImpactDecalCount--;

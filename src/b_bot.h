@@ -127,7 +127,7 @@ public:
 
 	//(b_func.cpp)
 	void StartTravel ();
-	void FinishTravel ();
+	void FinishTravel (FLevelLocals *Level);
 	bool IsLeader (player_t *player);
 	void SetBodyAt (FLevelLocals *l, const DVector3 &pos, int hostnum);
 	double FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd);

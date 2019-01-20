@@ -1220,7 +1220,7 @@ void G_WorldDone (FLevelLocals *Level)
 
 	thiscluster = FindClusterInfo (Level->cluster);
 
-	auto nextlevel = Level->NextMap;
+	auto nextlevel = currentSession->nextlevel;
 	
 	if (strncmp (nextlevel, "enDSeQ", 6) == 0)
 	{

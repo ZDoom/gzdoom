@@ -68,6 +68,8 @@
 #include "version.h"
 
 EXTERN_CVAR(Bool, cl_capfps)
+EXTERN_CVAR(Int, menu_resolution_custom_width)
+EXTERN_CVAR(Int, menu_resolution_custom_height)
 
 CVAR(Int, win_x, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, win_y, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -739,6 +741,10 @@ void V_Init2()
 
 	Video->SetResolution();	// this only fails via exceptions.
 	Printf ("Resolution: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);
+
+	// init these for the scaling menu
+	menu_resolution_custom_width = SCREENWIDTH;
+	menu_resolution_custom_height = SCREENHEIGHT;
 
 	screen->SetGamma ();
 	FBaseCVar::ResetColors ();

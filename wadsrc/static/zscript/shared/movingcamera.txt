@@ -194,7 +194,7 @@ class PathFollower : Actor
 
 		if (node == null)
 		{
-			A_Log ("PathFollower " .. tid .. ": Can't find interpolation pt " .. args[0] + 256 * args[1] .. "%d\n");
+			A_Log ("PathFollower " .. tid .. ": Can't find interpolation point " .. args[0] + 256 * args[1] .. "\n");
 			return;
 		}
 

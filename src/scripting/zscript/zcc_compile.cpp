@@ -3291,12 +3291,10 @@ static FxExpression *ModifyAssign(FxBinary *operation, FxExpression *left)
 //
 //==========================================================================
 
-FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
+FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast, bool substitute)
 {
 	if (ast == nullptr) return nullptr;
 
-	// Note: Do not call 'Simplify' here because that function tends to destroy identifiers due to lack of context in which to resolve them.
-	// The Fx nodes created here will be better suited for that.
 	switch (ast->NodeType)
 	{
 	case AST_ExprFuncCall:
@@ -3318,7 +3316,7 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		case AST_ExprMemberAccess:
 		{
 			auto ema = static_cast<ZCC_ExprMemberAccess *>(fcall->Function);
-			return new FxMemberFunctionCall(ConvertNode(ema->Left), ema->Right, ConvertNodeList(args, fcall->Parameters), *ast);
+			return new FxMemberFunctionCall(ConvertNode(ema->Left, true), ema->Right, ConvertNodeList(args, fcall->Parameters), *ast);
 		}
 
 		case AST_ExprBinary:
@@ -3383,8 +3381,9 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 
 	case AST_ExprID:
 	{
-		auto id = static_cast<ZCC_ExprID *>(ast);
-		return new FxIdentifier(id->Identifier, *ast);
+		auto id = static_cast<ZCC_ExprID *>(ast)->Identifier;
+		if (id == NAME_LevelLocals && substitute) id = NAME_Level;	// All static methods of FLevelLocals are now non-static so remap the name right here before passing it to the backend.
+		return new FxIdentifier(id, *ast);
 	}
 
 	case AST_ExprConstant:

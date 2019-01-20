@@ -1216,6 +1216,13 @@ void G_WorldDone (FLevelLocals *Level)
 
 	gameaction = ga_worlddone; 
 
+
+	//Added by mc
+	if (deathmatch)
+	{
+		bglobal.RemoveAllBots(consoleplayer != Net_Arbitrator);
+	}
+
 	if (Level->flags & LEVEL_CHANGEMAPCHEAT)
 		return;
 

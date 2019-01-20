@@ -259,7 +259,7 @@ class ScriptUtil play
 	//
 	//==========================================================================
 
-	int PlayerAmmo(Actor activator, class<Inventory> type, int newamount = int.min)
+	static int PlayerAmmo(Actor activator, class<Inventory> type, int newamount = int.min)
 	{
 		if (activator == null) return 0;
 		let ammotype = (class<Ammo>)(type);

@@ -1470,6 +1470,7 @@ int G_FinishTravel (FLevelLocals *Level)
 		{
 			P_FindFloorCeiling(pawn);
 		}
+		pawn->Level = Level;
 		pawn->target = nullptr;
 		pawn->lastenemy = nullptr;
 		pawn->player->mo = pawn;
@@ -1493,6 +1494,7 @@ int G_FinishTravel (FLevelLocals *Level)
 
 		for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
 		{
+			inv->Level = Level;
 			inv->ChangeStatNum (STAT_INVENTORY);
 			inv->LinkToWorld (nullptr);
 

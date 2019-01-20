@@ -88,6 +88,7 @@
 #include "actorinlines.h"
 #include "i_time.h"
 #include "p_maputl.h"
+#include "hwrenderer/dynlights/hw_shadowmap.h"
 
 // Compatibility glue to emulate removed features.
 FLevelLocals emptyLevelPlaceholderForZScript;
@@ -1542,6 +1543,7 @@ FLevelLocals::~FLevelLocals()
 	{
 		if (sub.BSP != nullptr) delete sub.BSP;
 	}
+	if (shadowMap) delete shadowMap;
 
 	// also clear the render data
 	for (auto &sub : subsectors)

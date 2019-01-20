@@ -13,7 +13,7 @@ struct FLevelLocals;
 class IShadowMap
 {
 public:
-	IShadowMap() { }
+	IShadowMap(FLevelLocals *level);
 	virtual ~IShadowMap();
 
 	// Test if a world position is in shadow relative to the specified light and returns false if it is
@@ -22,11 +22,11 @@ public:
 	// Returns true if gl_light_shadowmap is enabled and supported by the hardware
 	bool IsEnabled() const;
 
-	static cycle_t UpdateCycles;
-	static int LightsProcessed;
-	static int LightsShadowmapped;
+	cycle_t UpdateCycles;
+	int LightsProcessed;
+	int LightsShadowmapped;
 
-	bool PerformUpdate(FLevelLocals *level);
+	bool PerformUpdate();
 	void FinishUpdate()
 	{
 		UpdateCycles.Clock();
@@ -34,21 +34,16 @@ public:
 
 protected:
 	void CollectLights(FDynamicLight *head);
-	bool ValidateAABBTree(FLevelLocals *lev);
 
 	// Upload the AABB-tree to the GPU
-	void UploadAABBTree(FLevelLocals *Level);
+	void UploadAABBTree();
+	void ValidateBuffers();
 
 	// Upload light list to the GPU
 	void UploadLights(FDynamicLight *head);
 
 	// Working buffer for creating the list of lights. Stored here to avoid allocating memory each frame
 	TArray<float> mLights;
-
-	// Used to detect when a level change requires the AABB tree to be regenerated
-	const level_info_t *mLastLevel = nullptr;
-	unsigned mLastNumNodes = 0;
-	unsigned mLastNumSegs = 0;
 
 	// AABB-tree of the level, used for ray tests
 	std::unique_ptr<hwrenderer::LevelAABBTree> mAABBTree;
@@ -62,5 +57,6 @@ protected:
 	// OpenGL storage buffers for the AABB tree
 	IDataBuffer *mNodesBuffer = nullptr;
 	IDataBuffer *mLinesBuffer = nullptr;
+	FLevelLocals *const Level = nullptr;
 
 };

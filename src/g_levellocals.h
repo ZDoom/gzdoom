@@ -59,6 +59,7 @@ class DSpotState;
 class DSeqNode;
 struct FStrifeDialogueNode;
 class DSectorMarker;
+class IShadowMap;
 
 typedef TMap<int, int> FDialogueIDMap;				// maps dialogue IDs to dialogue array index (for ACS)
 typedef TMap<FName, int> FDialogueMap;				// maps actor class names to dialogue array index
@@ -292,6 +293,8 @@ struct FLevelLocals : public FLevelData
 	TObjPtr<DACSThinker*> ACSThinker = nullptr;
 
 	TObjPtr<DSpotState *> SpotState = nullptr;
+
+	IShadowMap *shadowMap;
 
 	// scale on entry
 	static const int AM_NUMMARKPOINTS = 10;

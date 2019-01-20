@@ -356,7 +356,6 @@ public:
 	FFlatVertexBuffer *mVertexData = nullptr;	// Global vertex data
 	GLViewpointBuffer *mViewpoints = nullptr;	// Viewpoint render data.
 	FLightBuffer *mLights = nullptr;			// Dynamic lights
-	IShadowMap mShadowMap;
 
 	IntRect mScreenViewport;
 	IntRect mSceneViewport;

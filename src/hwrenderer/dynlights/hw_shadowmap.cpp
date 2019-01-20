@@ -55,14 +55,17 @@
 	as on the CPU, except everything uses indexes as pointers are not allowed in GLSL.
 */
 
-cycle_t IShadowMap::UpdateCycles;
-int IShadowMap::LightsProcessed;
-int IShadowMap::LightsShadowmapped;
-
 ADD_STAT(shadowmap)
 {
 	FString out;
-	out.Format("upload=%04.2f ms  lights=%d  shadowmapped=%d", IShadowMap::UpdateCycles.TimeMS(), IShadowMap::LightsProcessed, IShadowMap::LightsShadowmapped);
+	ForAllLevels([&](FLevelLocals *Level)
+	{
+		if (Level->shadowMap)
+		{
+			auto sm = Level->shadowMap;
+			out.AppendFormat("%s: upload=%04.2f ms  lights=%d  shadowmapped=%d", Level->MapName.GetChars(), sm->UpdateCycles.TimeMS(), sm->LightsProcessed, sm->LightsShadowmapped);
+		}
+	});
 	return out;
 }
 
@@ -144,27 +147,26 @@ void IShadowMap::CollectLights(FDynamicLight *head)
 	}
 }
 
-bool IShadowMap::ValidateAABBTree(FLevelLocals *Level)
+IShadowMap::IShadowMap(FLevelLocals *l) : mAABBTree(new hwrenderer::LevelAABBTree(l)), Level(l)
 {
-	// Just comparing the level info is not enough. If two MAPINFO-less levels get played after each other, 
-	// they can both refer to the same default level info.
-	if (Level->info != mLastLevel && (Level->nodes.Size() != mLastNumNodes || Level->segs.Size() != mLastNumSegs))
-	{
-		mAABBTree.reset();
-
-		mLastLevel = Level->info;
-		mLastNumNodes = Level->nodes.Size();
-		mLastNumSegs = Level->segs.Size();
-	}
-
-	if (mAABBTree)
-		return true;
-
-	mAABBTree.reset(new hwrenderer::LevelAABBTree(Level));
-	return false;
 }
 
-bool IShadowMap::PerformUpdate(FLevelLocals *Level)
+void IShadowMap::ValidateBuffers()
+{
+	if (!mNodesBuffer)
+	{
+		mNodesBuffer = screen->CreateDataBuffer(2, true);
+		mNodesBuffer->SetData(mAABBTree->NodesSize(), mAABBTree->Nodes());
+	}
+
+	if (!mLinesBuffer)
+	{
+		mLinesBuffer = screen->CreateDataBuffer(3, true);
+		mLinesBuffer->SetData(mAABBTree->LinesSize(), mAABBTree->Lines());
+	}
+}
+
+bool IShadowMap::PerformUpdate()
 {
 	UpdateCycles.Reset();
 
@@ -174,7 +176,8 @@ bool IShadowMap::PerformUpdate(FLevelLocals *Level)
 	if (IsEnabled())
 	{
 		UpdateCycles.Clock();
-		UploadAABBTree(Level);
+		ValidateBuffers();
+		UploadAABBTree();
 		UploadLights(Level->lights);
 		mLightList->BindBase();
 		mNodesBuffer->BindBase();
@@ -195,19 +198,9 @@ void IShadowMap::UploadLights(FDynamicLight *head)
 }
 
 
-void IShadowMap::UploadAABBTree(FLevelLocals *Level)
+void IShadowMap::UploadAABBTree()
 {
-	if (!ValidateAABBTree(Level))
-	{
-		if (!mNodesBuffer)
-			mNodesBuffer = screen->CreateDataBuffer(2, true);
-		mNodesBuffer->SetData(mAABBTree->NodesSize(), mAABBTree->Nodes());
-
-		if (!mLinesBuffer)
-			mLinesBuffer = screen->CreateDataBuffer(3, true);
-		mLinesBuffer->SetData(mAABBTree->LinesSize(), mAABBTree->Lines());
-	}
-	else if (mAABBTree->Update())
+	if (mAABBTree->Update())
 	{
 		mNodesBuffer->SetSubData(mAABBTree->DynamicNodesOffset(), mAABBTree->DynamicNodesSize(), mAABBTree->DynamicNodes());
 		mLinesBuffer->SetSubData(mAABBTree->DynamicLinesOffset(), mAABBTree->DynamicLinesSize(), mAABBTree->DynamicLines());

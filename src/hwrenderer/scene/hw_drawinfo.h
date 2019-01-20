@@ -25,7 +25,6 @@ class GLWall;
 class GLFlat;
 class GLSprite;
 struct GLDecal;
-class IShadowMap;
 struct particle_t;
 struct FDynLightData;
 struct HUDSprite;

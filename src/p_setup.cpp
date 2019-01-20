@@ -397,6 +397,8 @@ void P_SetupLevel(FLevelLocals *Level, const char *lumpname, int position, bool 
 
 	P_ResetSightCounters(true);
 
+	Level->shadowMap = new IShadowMap(Level);
+
 	// Create a backup of the map data so the savegame code can toss out all fields that haven't changed in order to reduce processing time and file size.
 	// Note that we want binary identity here, so assignment is not sufficient because it won't initialize any padding bytes.
 	// Note that none of these structures may contain non POD fields anyway.

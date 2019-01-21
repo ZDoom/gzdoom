@@ -234,7 +234,7 @@ void Mark(DObject **obj)
 {
 	DObject *lobj = *obj;
 
-	assert(lobj == nullptr || !(lobj->ObjectFlags & OF_Released));
+	//assert(lobj == nullptr || !(lobj->ObjectFlags & OF_Released));
 	if (lobj != nullptr && !(lobj->ObjectFlags & OF_Released))
 	{
 		if (lobj->ObjectFlags & OF_EuthanizeMe)

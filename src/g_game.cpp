@@ -2058,12 +2058,12 @@ static void PutSaveWads (FSerializer &arc)
 	name = Wads.GetWadName (Wads.GetIwadNum());
 	arc.AddString("Game WAD", name);
 
-	// Name of wad the map resides in
+		// Name of wad the map resides in
 	if (Wads.GetLumpFile (level.lumpnum) > Wads.GetIwadNum())
-	{
+		{
 		name = Wads.GetWadName (Wads.GetLumpFile (level.lumpnum));
 		arc.AddString("Map WAD", name);
-	}
+		}
 }
 
 static void PutSaveComment (FSerializer &arc)
@@ -2079,14 +2079,14 @@ static void PutSaveComment (FSerializer &arc)
 
 	arc.AddString("Creation Time", comment);
 
-	// Get level name
+		// Get level name
 	//strcpy (comment, level.level_name);
 	comment.Format("%s - %s\n", level.MapName.GetChars(), level.LevelName.GetChars());
 
 	// Append elapsed time
+	const char *const time = GStrings("SAVECOMMENT_TIME");
 	levelTime = level.time / TICRATE;
-	comment.AppendFormat("time: %02d:%02d:%02d",
-		levelTime/3600, (levelTime%3600)/60, levelTime%60);
+	comment.AppendFormat("%s: %02d:%02d:%02d", time, levelTime/3600, (levelTime%3600)/60, levelTime%60);
 
 	// Write out the comment
 	arc.AddString("Comment", comment);

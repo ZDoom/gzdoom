@@ -297,15 +297,18 @@ class StateProvider : Inventory
 					}
 					if (armorbonustype != NULL)
 					{
-						let armorbonus = ArmorBonus(Spawn(armorbonustype));
-						armorbonus.SaveAmount *= int(actualdamage * lifesteal);
-						if (lifestealmax > 0) armorbonus.MaxSaveAmount = lifestealmax;
-						armorbonus.bDropped = true;
-						armorbonus.ClearCounters();
-
-						if (!armorbonus.CallTryPickup(self))
+						let armorbonus = BasicArmorBonus(Spawn(armorbonustype));
+						if (armorbonus)
 						{
-							armorbonus.Destroy ();
+							armorbonus.SaveAmount *= int(actualdamage * lifesteal);
+							if (lifestealmax > 0) armorbonus.MaxSaveAmount = lifestealmax;
+							armorbonus.bDropped = true;
+							armorbonus.ClearCounters();
+
+							if (!armorbonus.CallTryPickup(self))
+							{
+								armorbonus.Destroy ();
+							}
 						}
 					}
 				}

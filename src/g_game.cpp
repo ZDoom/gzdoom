@@ -2083,8 +2083,9 @@ static void PutSaveComment (FSerializer &arc)
 	});
 
 	// Append elapsed time
+	FString time = GStrings("SAVECOMMENT_TIME");
 	levelTime = currentSession->time / TICRATE;
-	comment.AppendFormat("time: %02d:%02d:%02d", levelTime/3600, (levelTime%3600)/60, levelTime%60);
+	comment.AppendFormat("%s: %02d:%02d:%02d", time, levelTime/3600, (levelTime%3600)/60, levelTime%60);
 
 	// Write out the comment
 	arc.AddString("Comment", comment);

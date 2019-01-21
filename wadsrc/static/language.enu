@@ -856,6 +856,9 @@ STARTUP3 = "";
 STARTUP4 = "";
 STARTUP5 = "";
 
+// Save file comment
+SAVECOMMENT_TIME = "time";
+
 // Scoreboard text
 SCORE_ITEMS = "ITEMS";
 SCORE_BONUS = "BONUS";

@@ -95,6 +95,7 @@ level_info_t *FindLevelInfo (const char *mapname, bool allowdefault)
 			TheDefaultLevelInfo.SkyPic2 = TheDefaultLevelInfo.SkyPic1 = "SKY1";
 			TheDefaultLevelInfo.LevelName = "Unnamed";
 		}
+		TheDefaultLevelInfo.MapName = mapname;
 		return &TheDefaultLevelInfo;
 	}
 	return NULL;

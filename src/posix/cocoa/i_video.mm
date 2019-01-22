@@ -219,31 +219,6 @@ public:
 
 EXTERN_CVAR(Float, Gamma)
 
-CUSTOM_CVAR(Float, rgamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (NULL != screen)
-	{
-		screen->SetGamma();
-	}
-}
-
-CUSTOM_CVAR(Float, ggamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (NULL != screen)
-	{
-		screen->SetGamma();
-	}
-}
-
-CUSTOM_CVAR(Float, bgamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (NULL != screen)
-	{
-		screen->SetGamma();
-	}
-}
-
-
 // ---------------------------------------------------------------------------
 
 
@@ -335,23 +310,6 @@ SystemGLFrameBuffer::SystemGLFrameBuffer(void*, const bool fullscreen)
 
 	[m_window setContentView:glView];
 
-	// Create table for system-wide gamma correction
-
-	CGGammaValue gammaTable[GAMMA_TABLE_SIZE];
-	uint32_t actualChannelSize;
-
-	const CGError result = CGGetDisplayTransferByTable(kCGDirectMainDisplay, GAMMA_CHANNEL_SIZE,
-		gammaTable, &gammaTable[GAMMA_CHANNEL_SIZE], &gammaTable[GAMMA_CHANNEL_SIZE * 2], &actualChannelSize);
-	m_supportsGamma = kCGErrorSuccess == result && GAMMA_CHANNEL_SIZE == actualChannelSize;
-
-	if (m_supportsGamma)
-	{
-		for (uint32_t i = 0; i < GAMMA_TABLE_SIZE; ++i)
-		{
-			m_originalGamma[i] = static_cast<uint16_t>(gammaTable[i] * 65535.0f);
-		}
-	}
-
 	assert(frameBuffer == nullptr);
 	frameBuffer = this;
 
@@ -430,31 +388,6 @@ void SystemGLFrameBuffer::SwapBuffers()
 {
 	[[NSOpenGLContext currentContext] flushBuffer];
 }
-
-void SystemGLFrameBuffer::SetGammaTable(uint16_t* table)
-{
-	if (m_supportsGamma)
-	{
-		CGGammaValue gammaTable[GAMMA_TABLE_SIZE];
-
-		for (uint32_t i = 0; i < GAMMA_TABLE_SIZE; ++i)
-		{
-			gammaTable[i] = static_cast<CGGammaValue>(table[i] / 65535.0f);
-		}
-
-		CGSetDisplayTransferByTable(kCGDirectMainDisplay, GAMMA_CHANNEL_SIZE,
-			gammaTable, &gammaTable[GAMMA_CHANNEL_SIZE], &gammaTable[GAMMA_CHANNEL_SIZE * 2]);
-	}
-}
-
-void SystemGLFrameBuffer::ResetGammaTable()
-{
-	if (m_supportsGamma)
-	{
-		SetGammaTable(m_originalGamma);
-	}
-}
-
 
 int SystemGLFrameBuffer::GetClientWidth()
 {

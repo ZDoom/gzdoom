@@ -743,7 +743,6 @@ OptionMenu "VideoOptions" protected
 	Slider "$DSPLYMNU_BRIGHTNESS",				"vid_brightness",				-0.8,0.8, 0.05,2
 	Slider "$DSPLYMNU_CONTRAST",				"vid_contrast",	   				0.1, 3.0, 0.1
 	Slider "$DSPLYMNU_SATURATION",				"vid_saturation",  				-3.0, 3.0, 0.25, 2
-	Option "$DSPLYMNU_HWGAMMA",					"vid_hwgamma", "HWGammaModes"
 	StaticText " "
 	Option "$DSPLYMNU_VSYNC",					"vid_vsync", "OnOff"
 	Option "$DSPLYMNU_CAPFPS",					"cl_capfps", "OffOn"
@@ -2037,13 +2036,6 @@ OptionValue "FilterModes"
 	2, "$OPTVAL_LINEAR"
 	3, "$OPTVAL_BILINEAR"
 	4, "$OPTVAL_TRILINEAR"
-}
-
-OptionValue "HWGammaModes"
-{
-	0, "$OPTVAL_ON"
-	1, "$OPTVAL_OFF"
-	2, "$OPTVAL_FULLSCREENONLY"
 }
 
 OptionValue "TonemapModes"

@@ -74,8 +74,6 @@ protected:
 	void SetGammaTable(uint16_t* table);
 	void ResetGammaTable();
 
-	bool m_supportsGamma;
-
 private:
 	void SetFullscreenMode();
 	void SetWindowedMode();

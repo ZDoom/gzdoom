@@ -168,12 +168,12 @@ find_package( ZLIB )
  # if the asmjit author uses our changes then we'll update this.
 
 # GME
-find_path( GME_INCLUDE_DIR gme/gme.h )
-find_library( GME_LIBRARIES gme )
-mark_as_advanced( GME_INCLUDE_DIR GME_LIBRARIES )
-FIND_PACKAGE_HANDLE_STANDARD_ARGS( GME
-	REQUIRED_VARS GME_LIBRARIES GME_INCLUDE_DIR
-)
+#find_path( GME_INCLUDE_DIR gme/gme.h )
+#find_library( GME_LIBRARIES gme )
+#mark_as_advanced( GME_INCLUDE_DIR GME_LIBRARIES )
+#FIND_PACKAGE_HANDLE_STANDARD_ARGS( GME
+#	REQUIRED_VARS GME_LIBRARIES GME_INCLUDE_DIR
+#)
 
 if( MSVC )
 	# Eliminate unreferenced functions and data
@@ -274,7 +274,8 @@ set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${DEB_C_FLAGS} -D_DEBUG" )
 option(FORCE_INTERNAL_ZLIB "Use internal zlib")
 option(FORCE_INTERNAL_JPEG "Use internal jpeg")
 option(FORCE_INTERNAL_BZIP2 "Use internal bzip2")
-option(FORCE_INTERNAL_GME "Use internal gme")
+option(FORCE_INTERNAL_GME "Use internal gme" ON)
+mark_as_advanced( FORCE_INTERNAL_GME )
 option(FORCE_INTERNAL_ASMJIT "Use internal asmjit" ON)
 mark_as_advanced( FORCE_INTERNAL_ASMJIT )
 

@@ -6036,11 +6036,10 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 		{
 			if (ctx.Function == nullptr)
 			{
-				ScriptPosition.Message(MSG_ERROR, "Unable to access class member %s from constant declaration", sym->SymbolName.GetChars());
+				ScriptPosition.Message(MSG_ERROR, "Unable to access class member %s from constant declaration", Identifier.GetChars());
 				delete this;
 				return nullptr;
 			}
-
 			FxExpression *self = new FxSelf(ScriptPosition);
 			self = self->Resolve(ctx);
 			newex = ResolveMember(ctx, ctx.Function->Variants[0].SelfClass, self, ctx.Function->Variants[0].SelfClass);
@@ -6064,29 +6063,36 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			delete this;
 			return nullptr;
 		}
-		// Do this check for ZScript as well, so that a clearer error message can be printed. MSG_OPTERROR will default to MSG_ERROR there.
-		else if (ctx.Function->Variants[0].SelfClass != ctx.Class && sym->IsKindOf(RUNTIME_CLASS(PField)))
+		// The following only applies to non-static content.
+		// Static functions have no access to non-static parts of a class and should be able to see global identifiers of the same name.
+		else if (ctx.Function->Variants[0].SelfClass != nullptr)
 		{
-			FxExpression *self = new FxSelf(ScriptPosition, true);
-			self = self->Resolve(ctx);
-			newex = ResolveMember(ctx, ctx.Class, self, ctx.Class);
-			ABORT(newex);
-			ScriptPosition.Message(MSG_OPTERROR, "Self pointer used in ambiguous context; VM execution may abort!");
-			ctx.Unsafe = true;
-			goto foundit;
-		}
-		else
-		{
-			if (sym->IsKindOf(RUNTIME_CLASS(PFunction)))
+			// Do this check for ZScript as well, so that a clearer error message can be printed. MSG_OPTERROR will default to MSG_ERROR there.
+			if (ctx.Function->Variants[0].SelfClass != ctx.Class && sym->IsKindOf(RUNTIME_CLASS(PField)))
 			{
-				ScriptPosition.Message(MSG_ERROR, "Function '%s' used without ().\n", Identifier.GetChars());
+				FxExpression *self = new FxSelf(ScriptPosition, true);
+				self = self->Resolve(ctx);
+				newex = ResolveMember(ctx, ctx.Class, self, ctx.Class);
+				ABORT(newex);
+				ScriptPosition.Message(MSG_OPTERROR, "Self pointer used in ambiguous context; VM execution may abort!");
+				ctx.Unsafe = true;
+				goto foundit;
 			}
 			else
 			{
-				ScriptPosition.Message(MSG_ERROR, "Invalid member identifier '%s'.\n", Identifier.GetChars());
+				if (sym->IsKindOf(RUNTIME_CLASS(PFunction)))
+				{
+					ScriptPosition.Message(MSG_ERROR, "Function '%s' used without ().\n", Identifier.GetChars());
+					delete this;
+					return nullptr;
+				}
+				else
+				{
+					ScriptPosition.Message(MSG_ERROR, "Invalid member identifier '%s'.\n", Identifier.GetChars());
+					delete this;
+					return nullptr;
+				}
 			}
-			delete this;
-			return nullptr;
 		}
 	}
 

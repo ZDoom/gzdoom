@@ -2323,7 +2323,7 @@ OptionMenu "OpenGLOptions" protected
 	Option "Prevent Colormap Greying",		gl_paltonemap_colormap_nogrey,	"OnOff"
 }
 
-OptionValue "ColormapTypes" protected
+OptionValue "ColormapTypes"
 {
 	0, "Neutral"
 	1, "Doom"

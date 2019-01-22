@@ -68,10 +68,10 @@ layout(binding=1) uniform sampler2D PaletteLUT;
 
 vec3 Tonemap(vec3 color)
 {
-	ivec3 c = ivec3(clamp(color.rgb, vec3(0.0), vec3(1.0)) * 63.0 + 0.5);
-	int index = (c.r * 64 + c.g) * 64 + c.b;
-	int tx = index % 512;
-	int ty = index / 512;
+	ivec3 c = ivec3(clamp(color.rgb, vec3(0.0), vec3(1.0)) * 63.5 );
+	int index = (( c.r << 6 ) + c.g << 6 ) + c.b ;
+	int tx = index & 511 ;
+	int ty = index >> 9 ;
 	return texelFetch(PaletteLUT, ivec2(tx, ty), 0).rgb;
 }
 

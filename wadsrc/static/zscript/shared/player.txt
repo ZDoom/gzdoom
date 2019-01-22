@@ -1887,16 +1887,16 @@ class PlayerPawn : Actor
 						bool res;
 						Actor check;
 						[res, check] = item.CallTryPickup(self);
-						if (check != self)
+						if (!res)
+						{
+							item.Destroy();
+							item = NULL;
+						}
+						else if (check != self)
 						{
 							// Player was morphed. This is illegal at game start.
 							// This problem is only detectable when it's too late to do something about it...
 							ThrowAbortException("Cannot give morph item '%s' when starting a game!", di.Name);
-						}
-						else if (!res)
-						{
-							item.Destroy();
-							item = NULL;
 						}
 					}
 					let weap = Weapon(item);

@@ -24,9 +24,6 @@ public:
 	void InitializeState() override;
 	void Update() override;
 
-	// Color correction
-	void SetGamma();
-
 	void CleanForRestart() override;
 	void UpdatePalette() override;
 	uint32_t GetCaps() override;

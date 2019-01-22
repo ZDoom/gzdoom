@@ -65,7 +65,6 @@
 
 extern IVideo *Video;
 
-EXTERN_CVAR (Float, Gamma)
 EXTERN_CVAR (Int, vid_adapter)
 EXTERN_CVAR (Int, vid_displaybits)
 EXTERN_CVAR (Int, vid_maxfps)
@@ -250,13 +249,7 @@ SystemGLFrameBuffer::SystemGLFrameBuffer (void *, bool fullscreen)
 
 			GLContext = SDL_GL_CreateContext(Screen);
 			if (GLContext != NULL)
-			{
-				m_supportsGamma = -1 != SDL_GetWindowGammaRamp(Screen,
-					 m_origGamma[0], m_origGamma[1], m_origGamma[2]
-				);
-
 				return;
-			}
 
 			SDL_DestroyWindow(Screen);
 			Screen = NULL;
@@ -268,8 +261,6 @@ SystemGLFrameBuffer::~SystemGLFrameBuffer ()
 {
 	if (Screen)
 	{
-		ResetGammaTable();
-
 		if (GLContext)
 		{
 			SDL_GL_DeleteContext(GLContext);
@@ -279,22 +270,6 @@ SystemGLFrameBuffer::~SystemGLFrameBuffer ()
 	}
 }
 
-
-void SystemGLFrameBuffer::SetGammaTable(uint16_t *tbl)
-{
-	if (m_supportsGamma)
-	{
-		SDL_SetWindowGammaRamp(Screen, &tbl[0], &tbl[256], &tbl[512]);
-	}
-}
-
-void SystemGLFrameBuffer::ResetGammaTable()
-{
-	if (m_supportsGamma)
-	{
-		SDL_SetWindowGammaRamp(Screen, m_origGamma[0], m_origGamma[1], m_origGamma[2]);
-	}
-}
 
 bool SystemGLFrameBuffer::IsFullscreen ()
 {

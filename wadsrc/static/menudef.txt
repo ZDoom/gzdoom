@@ -2319,6 +2319,14 @@ OptionMenu "OpenGLOptions" protected
 	StaticText " "
 	Slider "$GLPREFMNU_PALTONEMAPPOWER",		gl_paltonemap_powtable,			0.2, 3.0, 0.1, 1
 	Option "$GLPREFMNU_PALTONEMAPORDER",		gl_paltonemap_reverselookup,	"LookupOrder"
+	Option "Tonemap Palette Colormap",		gl_paltonemap_colormap,		"ColormapTypes"
+	Option "Prevent Colormap Greying",		gl_paltonemap_colormap_nogrey,	"OnOff"
+}
+
+OptionValue "ColormapTypes" protected
+{
+	0, "Neutral"
+	1, "Doom"
 }
 
 OptionMenu "ReverbEdit" protected

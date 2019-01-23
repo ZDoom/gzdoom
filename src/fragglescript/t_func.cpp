@@ -1768,7 +1768,7 @@ class DLightLevel : public DLighting
 	unsigned char destlevel;
 	unsigned char speed;
 
-	DLightLevel() {}
+	DLightLevel() = default;
 
 public:
 

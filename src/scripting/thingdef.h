@@ -204,7 +204,7 @@ class FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestr
 FName CheckCastKludges(FName in);
 void SetImplicitArgs(TArray<PType *> *args, TArray<uint32_t> *argflags, TArray<FName> *argnames, PContainerType *cls, uint32_t funcflags, int useflags);
 PFunction *CreateAnonymousFunction(PContainerType *containingclass, PType *returntype, int flags);
-PFunction *FindClassMemberFunction(PContainerType *cls, PContainerType *funccls, FName name, FScriptPosition &sc, bool *error, const VersionInfo &version);
+PFunction *FindClassMemberFunction(PContainerType *cls, PContainerType *funccls, FName name, FScriptPosition &sc, bool *error, const VersionInfo &version, bool nodeprecated = false);
 void CreateDamageFunction(PNamespace *ns, const VersionInfo &ver, PClassActor *info, AActor *defaults, FxExpression *id, bool fromDecorate, int lumpnum);
 
 //==========================================================================

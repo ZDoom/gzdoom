@@ -974,7 +974,7 @@ void FunctionCallEmitter::AddParameter(ExpEmit &emit, bool reference)
 	}
 	emitters.push_back([=](VMFunctionBuilder *build) ->int
 	{
-		build->Emit(OP_PARAM, emit.RegType + (reference * REGT_ADDROF), emit.RegNum);
+		build->Emit(OP_PARAM, emit.RegType + (reference * REGT_ADDROF) + (emit.Konst * REGT_KONST), emit.RegNum);
 		auto op = emit;
 		op.Free(build);
 		return emit.RegCount;

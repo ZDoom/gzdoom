@@ -329,7 +329,6 @@ protected:
 	template<class T>
 	bool ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext) const;
 	void DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms);
-	void BuildGammaTable(uint16_t *gt);
 
 	F2DDrawer m2DDrawer;
 private:

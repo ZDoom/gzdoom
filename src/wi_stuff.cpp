@@ -615,6 +615,7 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 	for (i = 0; i<anims.Size(); i++)
 	{
 		in_anim_t * a = &anims[i];
+		level_info_t *li;
 
 		switch (a->type & ANIM_CONDITION)
 		{

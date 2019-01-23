@@ -548,17 +548,14 @@ CUSTOM_CVAR (Int, cl_maxdecals, 1024, CVAR_ARCHIVE)
 	}
 	else
 	{
-		ForAllLevels([&](FLevelLocals *Level)
+		while (level.ImpactDecalCount > self)
 		{
-			while (Level->ImpactDecalCount > self)
+			DThinker *thinker = DThinker::FirstThinker(STAT_AUTODECAL);
+			if (thinker != NULL)
 			{
-				DThinker *thinker = DThinker::FirstThinker(STAT_AUTODECAL);
-				if (thinker != NULL)
-				{
-					thinker->Destroy();
-				}
+				thinker->Destroy();
 			}
-		});
+		}
 	}
 }
 

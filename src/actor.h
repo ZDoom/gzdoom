@@ -1527,22 +1527,6 @@ private:
 	int id;
 };
 
-template<class T>
-class TActorIterator : public FActorIterator
-{
-public:
-	TActorIterator (int id) : FActorIterator (id) {}
-	T *Next ()
-	{
-		AActor *actor;
-		do
-		{
-			actor = FActorIterator::Next ();
-		} while (actor && !actor->IsKindOf (RUNTIME_CLASS(T)));
-		return static_cast<T *>(actor);
-	}
-};
-
 class NActorIterator : public FActorIterator
 {
 	const PClass *type;

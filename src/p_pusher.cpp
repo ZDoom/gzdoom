@@ -372,7 +372,7 @@ void MapLoader::SpawnPushers ()
 		{
 		case Sector_SetWind: // wind
 		{
-			FSectorTagIterator itr(l->args[0]);
+			auto itr = Level->GetSectorTagIterator(l->args[0]);
 			while ((s = itr.Next()) >= 0)
 				Create<DPusher>(DPusher::p_wind, l->args[3] ? l : nullptr, l->args[1], l->args[2], nullptr, s);
 			l->special = 0;
@@ -381,7 +381,7 @@ void MapLoader::SpawnPushers ()
 
 		case Sector_SetCurrent: // current
 		{
-			FSectorTagIterator itr(l->args[0]);
+			auto itr = Level->GetSectorTagIterator(l->args[0]);
 			while ((s = itr.Next()) >= 0)
 				Create<DPusher>(DPusher::p_current, l->args[3] ? l : nullptr, l->args[1], l->args[2], nullptr, s);
 			l->special = 0;
@@ -390,7 +390,7 @@ void MapLoader::SpawnPushers ()
 
 		case PointPush_SetForce: // push/pull
 			if (l->args[0]) {	// [RH] Find thing by sector
-				FSectorTagIterator itr(l->args[0]);
+				auto itr = Level->GetSectorTagIterator(l->args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
 					AActor *thing = GetPushThing (s);
@@ -403,7 +403,7 @@ void MapLoader::SpawnPushers ()
 				}
 			} else {	// [RH] Find thing by tid
 				AActor *thing;
-				FActorIterator iterator (l->args[1]);
+				auto iterator = Level->GetActorIterator(l->args[1]);
 
 				while ( (thing = iterator.Next ()) )
 				{

@@ -188,7 +188,8 @@ private:
 	void SpawnSkybox(AActor *origin);
 	void SetupFloorPortal (AActor *point);
 	void SetupCeilingPortal (AActor *point);
-	
+	void TranslateTeleportThings();
+
 	void SetTexture(side_t *side, int position, const char *name, FMissingTextureTracker &track);
 	void SetTexture(sector_t *sector, int index, int position, const char *name, FMissingTextureTracker &track, bool truncate);
 	void SetTexture(side_t *side, int position, uint32_t *blend, const char *name);

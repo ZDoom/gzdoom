@@ -5503,7 +5503,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 			}
 			else
 			{
-				TActorIterator<AActor> iterator(args[0]);
+				FActorIterator iterator(args[0]);
 
 				while ((actor = iterator.Next()))
 				{
@@ -5529,7 +5529,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 				}
 				else
 				{
-					TActorIterator<AActor> iterator(args[0]);
+					FActorIterator iterator(args[0]);
 	                
 					while ( (actor = iterator.Next()) )
 					{
@@ -5568,7 +5568,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 				}
 				else
 				{
-					TActorIterator<AActor> iterator(args[0]);
+					FActorIterator iterator(args[0]);
 	                
 					while ( (actor = iterator.Next()) )
 					{
@@ -5699,7 +5699,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 
 				if (args[1] == 0) return 1; // [KS] I'm sure the activator can see itself.
 
-				TActorIterator<AActor> dstiter (args[1]);
+				FActorIterator dstiter (args[1]);
 
 				while ( (dest = dstiter.Next ()) )
 				{
@@ -5708,13 +5708,13 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 			}
 			else
 			{
-				TActorIterator<AActor> srciter (args[0]);
+				FActorIterator srciter (args[0]);
 
 				while ( (source = srciter.Next ()) )
 				{
 					if (args[1] != 0)
 					{
-						TActorIterator<AActor> dstiter (args[1]);
+						FActorIterator dstiter (args[1]);
 						while ( (dest = dstiter.Next ()) )
 						{
 							if (P_CheckSight(source, dest, flags)) return 1;

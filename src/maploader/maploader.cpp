@@ -113,8 +113,6 @@ void InitRenderInfo();
 
 extern AActor *SpawnMapThing (int index, FMapThing *mthing, int position);
 
-extern void P_TranslateTeleportThings (void);
-
 EXTERN_CVAR(Bool, am_textured)
 
 CVAR (Bool, genblockmap, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
@@ -124,6 +122,61 @@ inline bool P_LoadBuildMap(uint8_t *mapdata, size_t len, FMapThing **things, int
 {
 	return false;
 }
+
+//===========================================================================
+//
+// Now that ZDoom again gives the option of using Doom's original teleport
+// behavior, only teleport dests in a sector with a 0 tag need to be
+// given a TID. And since Doom format maps don't have TIDs, we can safely
+// give them TID 1.
+//
+//===========================================================================
+
+void MapLoader::TranslateTeleportThings ()
+{
+	AActor *dest;
+	auto iterator = Level->GetThinkerIterator<AActor>(NAME_TeleportDest);
+	bool foundSomething = false;
+	
+	while ( (dest = iterator.Next()) )
+	{
+		if (!Level->SectorHasTags(dest->Sector))
+		{
+			dest->tid = 1;
+			dest->AddToHash ();
+			foundSomething = true;
+		}
+	}
+	
+	if (foundSomething)
+	{
+		for (auto &line : Level->lines)
+		{
+			if (line.special == Teleport)
+			{
+				if (line.args[1] == 0)
+				{
+					line.args[0] = 1;
+				}
+			}
+			else if (line.special == Teleport_NoFog)
+			{
+				if (line.args[2] == 0)
+				{
+					line.args[0] = 1;
+				}
+			}
+			else if (line.special == Teleport_ZombieChanger)
+			{
+				if (line.args[1] == 0)
+				{
+					line.args[0] = 1;
+				}
+			}
+		}
+	}
+}
+
 
 //===========================================================================
 //
@@ -1570,7 +1623,7 @@ void MapLoader::FinishLoadingLineDef(line_t *ld, int alpha)
 		{
 			for (unsigned j = 0; j < Level->lines.Size(); j++)
 			{
-				if (tagManager.LineHasID(j, ld->args[0]))
+				if (Level->LineHasId(j, ld->args[0]))
 				{
 					Level->lines[j].alpha = dalpha;
 					if (additive)
@@ -2074,7 +2127,7 @@ void MapLoader::ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec
 			{
 				for (unsigned s = 0; s < Level->sectors.Size(); s++)
 				{
-					if (tagManager.SectorHasTag(s, tag))
+					if (Level->SectorHasTag(s, tag))
 					{
 						if (colorgood)
 						{
@@ -3198,7 +3251,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 			players[i].health = players[i].mo->health;
 	}
 	if (!map->HasBehavior && !map->isText)
-		P_TranslateTeleportThings();	// [RH] Assign teleport destination TIDs
+		TranslateTeleportThings();	// [RH] Assign teleport destination TIDs
 
 	if (oldvertextable != nullptr)
 	{

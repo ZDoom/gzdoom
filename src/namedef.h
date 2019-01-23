@@ -86,6 +86,8 @@ xx(PointPuller)
 
 xx(UpperStackLookOnly)
 xx(LowerStackLookOnly)
+xx(StackPoint)
+xx(SkyCamCompat)
 
 xx(BasicArmorBonus)
 xx(BasicArmorPickup)

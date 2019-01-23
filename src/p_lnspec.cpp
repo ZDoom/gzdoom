@@ -1768,7 +1768,7 @@ FUNC(LS_Thing_Raise)
 	}
 	else
 	{
-		TActorIterator<AActor> iterator (arg0);
+		FActorIterator iterator (arg0);
 
 		while ( (target = iterator.Next ()) )
 		{
@@ -1795,7 +1795,7 @@ FUNC(LS_Thing_Stop)
 	}
 	else
 	{
-		TActorIterator<AActor> iterator (arg0);
+		FActorIterator iterator (arg0);
 
 		while ( (target = iterator.Next ()) )
 		{
@@ -1811,7 +1811,7 @@ FUNC(LS_Thing_Stop)
 FUNC(LS_Thing_SetGoal)
 // Thing_SetGoal (tid, goal, delay, chasegoal)
 {
-	TActorIterator<AActor> selfiterator (arg0);
+	FActorIterator selfiterator (arg0);
 	NActorIterator goaliterator (NAME_PatrolPoint, arg1);
 	AActor *self;
 	AActor *goal = goaliterator.Next ();
@@ -1861,7 +1861,7 @@ enum
 FUNC(LS_Thing_SetTranslation)
 // Thing_SetTranslation (tid, range)
 {
-	TActorIterator<AActor> iterator (arg0);
+	FActorIterator iterator (arg0);
 	int range;
 	AActor *target;
 	bool ok = false;

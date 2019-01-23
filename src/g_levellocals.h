@@ -44,6 +44,8 @@
 #include "p_local.h"
 #include "po_man.h"
 #include "p_acs.h"
+#include "p_tags.h"
+#include "actor.h"
 #include "p_destructible.h"
 #include "r_data/r_sections.h"
 #include "r_data/r_canvastexture.h"
@@ -113,6 +115,51 @@ struct FLevelLocals : public FLevelData
 	void ClearLevelData();
 	void ClearPortals();
 	bool CheckIfExitIsGood(AActor *self, level_info_t *newmap);
+	FSectorTagIterator GetSectorTagIterator(int tag)
+	{
+		return FSectorTagIterator(tag);
+	}
+	FSectorTagIterator GetSectorTagIterator(int tag, line_t *line)
+	{
+		return FSectorTagIterator(tag, line);
+	}
+	FLineIdIterator GetLineIdIterator(int tag)
+	{
+		return FLineIdIterator(tag);
+	}
+	template<class T> TThinkerIterator<T> GetThinkerIterator(FName subtype = NAME_None)
+	{
+		if (subtype == NAME_None) return TThinkerIterator<T>();
+		else return TThinkerIterator<T>(subtype);
+	}
+	FActorIterator GetActorIterator(int tid)
+	{
+		return FActorIterator(tid);
+	}
+	NActorIterator GetActorIterator(FName type, int tid)
+	{
+		return NActorIterator(type, tid);
+	}
+	bool SectorHasTags(sector_t *sector)
+	{
+		return tagManager.SectorHasTags(sector);
+	}
+	bool SectorHasTag(sector_t *sector, int tag)
+	{
+		return tagManager.SectorHasTag(sector, tag);
+	}
+	bool SectorHasTag(int sector, int tag)
+	{
+		return tagManager.SectorHasTag(sector, tag);
+	}
+	bool LineHasId(int line, int tag)
+	{
+		return tagManager.LineHasID(line, tag);
+	}
+	sector_t *PointInSector(const DVector2 &pos)
+	{
+		return P_PointInSector(pos);
+	}
 
 	uint8_t		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
 	int			time;			// time in the hub

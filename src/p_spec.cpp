@@ -911,7 +911,7 @@ void DWallLightTransfer::DoTransfer (short lightlevel, int target, uint8_t flags
 
 void MapLoader::SetupFloorPortal (AActor *point)
 {
-	NActorIterator it (NAME_LowerStackLookOnly, point->tid);
+	auto it = Level->GetActorIterator(NAME_LowerStackLookOnly, point->tid);
 	sector_t *Sector = point->Sector;
 	auto skyv = it.Next();
 	if (skyv != nullptr)
@@ -926,7 +926,7 @@ void MapLoader::SetupFloorPortal (AActor *point)
 
 void MapLoader::SetupCeilingPortal (AActor *point)
 {
-	NActorIterator it (NAME_UpperStackLookOnly, point->tid);
+	auto it = Level->GetActorIterator(NAME_UpperStackLookOnly, point->tid);
 	sector_t *Sector = point->Sector;
 	auto skyv = it.Next();
 	if (skyv != nullptr)
@@ -941,7 +941,7 @@ void MapLoader::SetupCeilingPortal (AActor *point)
 
 void MapLoader::SetupPortals()
 {
-	TThinkerIterator<AActor> it("StackPoint");
+	auto it = Level->GetThinkerIterator<AActor>(NAME_StackPoint);
 	AActor *pt;
 	TArray<AActor *> points;
 
@@ -1017,7 +1017,7 @@ void MapLoader::SetPortal(sector_t *sector, int plane, unsigned pnum, double alp
 void MapLoader::CopyPortal(int sectortag, int plane, unsigned pnum, double alpha, bool tolines)
 {
 	int s;
-	FSectorTagIterator itr(sectortag);
+	auto itr = Level->GetSectorTagIterator(sectortag);
 	while ((s = itr.Next()) >= 0)
 	{
 		SetPortal(&Level->sectors[s], plane, pnum, alpha);
@@ -1038,7 +1038,7 @@ void MapLoader::CopyPortal(int sectortag, int plane, unsigned pnum, double alpha
 			}
 			else
 			{
-				FSectorTagIterator itr(line.args[0]);
+				auto itr = Level->GetSectorTagIterator(line.args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
 					SetPortal(&Level->sectors[s], plane, pnum, alpha);
@@ -1055,7 +1055,7 @@ void MapLoader::CopyPortal(int sectortag, int plane, unsigned pnum, double alpha
 			}
 			else
 			{
-				FLineIdIterator itr(line.args[0]);
+				auto itr = Level->GetLineIdIterator(line.args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
 					Level->lines[s].portaltransferred = pnum;
@@ -1318,7 +1318,7 @@ void MapLoader::SpawnSpecials ()
 	SpawnFriction();	// phares 3/12/98: New friction model using linedefs
 	SpawnPushers();	// phares 3/20/98: New pusher model using linedefs
 
-	TThinkerIterator<AActor> it2("SkyCamCompat");
+	auto it2 = Level->GetThinkerIterator<AActor>(NAME_SkyCamCompat);
 	AActor *pt2;
 	while ((pt2 = it2.Next()))
 	{
@@ -1363,7 +1363,7 @@ void MapLoader::SpawnSpecials ()
 				{
 					sec->MoreFlags |= SECMF_NOFAKELIGHT;
 				}
-				FSectorTagIterator itr(line.args[0]);
+				auto itr = Level->GetSectorTagIterator(line.args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
 					Level->sectors[s].heightsec = sec;
@@ -1439,7 +1439,7 @@ void MapLoader::SpawnSpecials ()
 			case Init_Gravity:
 				{
 					double grav = line.Delta().Length() / 100.;
-					FSectorTagIterator itr(line.args[0]);
+					auto itr = Level->GetSectorTagIterator(line.args[0]);
 					while ((s = itr.Next()) >= 0)
 						Level->sectors[s].gravity = grav;
 				}
@@ -1451,7 +1451,7 @@ void MapLoader::SpawnSpecials ()
 			case Init_Damage:
 				{
 					int damage = int(line.Delta().Length());
-					FSectorTagIterator itr(line.args[0]);
+					auto itr = Level->GetSectorTagIterator(line.args[0]);
 					while ((s = itr.Next()) >= 0)
 					{
 						sector_t *sec = &Level->sectors[s];
@@ -1492,7 +1492,7 @@ void MapLoader::SpawnSpecials ()
 
 			case Init_TransferSky:
 				{
-					FSectorTagIterator itr(line.args[0]);
+					auto itr = Level->GetSectorTagIterator(line.args[0]);
 					while ((s = itr.Next()) >= 0)
 						Level->sectors[s].sky = (line.Index() + 1) | PL_SKYFLAT;
 					break;
@@ -1600,7 +1600,7 @@ void P_SetSectorFriction (FLevelLocals *Level, int tag, int amount, bool alterFl
 	// higher friction value actually means 'less friction'.
 	movefactor = FrictionToMoveFactor(friction);
 
-	FSectorTagIterator itr(tag);
+	auto itr = Level->GetSectorTagIterator(tag);
 	while ((s = itr.Next()) >= 0)
 	{
 		// killough 8/28/98:

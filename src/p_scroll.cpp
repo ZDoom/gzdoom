@@ -433,7 +433,7 @@ void MapLoader::SpawnScrollers()
 		if (line.special == Sector_CopyScroller)
 		{
 			// don't allow copying the scroller if the sector has the same tag as it would just duplicate it.
-			if (!tagManager.SectorHasTag(line.frontsector, line.args[0]))
+			if (!Level->SectorHasTag(line.frontsector, line.args[0]))
 			{
 				copyscrollers.Push(line.Index());
 			}
@@ -511,7 +511,7 @@ void MapLoader::SpawnScrollers()
 
 		case Scroll_Ceiling:
 		{
-			FSectorTagIterator itr(l->args[0]);
+			auto itr = Level->GetSectorTagIterator(l->args[0]);
 			while ((s = itr.Next()) >= 0)
 			{
 				Create<DScroller>(EScroll::sc_ceiling, -dx, dy, control, &Level->sectors[s], nullptr, accel);
@@ -531,7 +531,7 @@ void MapLoader::SpawnScrollers()
 		case Scroll_Floor:
 			if (l->args[2] != 1)
 			{ // scroll the floor texture
-				FSectorTagIterator itr(l->args[0]);
+				auto itr = Level->GetSectorTagIterator(l->args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
 					Create<DScroller> (EScroll::sc_floor, -dx, dy, control, &Level->sectors[s], nullptr, accel);
@@ -549,7 +549,7 @@ void MapLoader::SpawnScrollers()
 
 			if (l->args[2] > 0)
 			{ // carry objects on the floor
-				FSectorTagIterator itr(l->args[0]);
+				auto itr = Level->GetSectorTagIterator(l->args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
 					Create<DScroller> (EScroll::sc_carry, dx, dy, control, &Level->sectors[s], nullptr, accel);
@@ -570,7 +570,7 @@ void MapLoader::SpawnScrollers()
 		// (same direction and speed as scrolling floors)
 		case Scroll_Texture_Model:
 		{
-			FLineIdIterator itr(l->args[0]);
+			auto itr = Level->GetLineIdIterator(l->args[0]);
 			while ((s = itr.Next()) >= 0)
 			{
 				if (s != (int)i)
@@ -713,7 +713,7 @@ void SetScroller (FLevelLocals *Level, int tag, EScroll type, double dx, double 
 	{
 		if (scroller->IsType (type))
 		{
-			if (tagManager.SectorHasTag(scroller->GetSector(), tag))
+			if (Level->SectorHasTag(scroller->GetSector(), tag))
 			{
 				i++;
 				scroller->SetRate (dx, dy);
@@ -727,7 +727,7 @@ void SetScroller (FLevelLocals *Level, int tag, EScroll type, double dx, double 
 	}
 
 	// Need to create scrollers for the sector(s)
-	FSectorTagIterator itr(tag);
+	auto itr = Level->GetSectorTagIterator(tag);
 	while ((i = itr.Next()) >= 0)
 	{
 		Create<DScroller> (type, dx, dy, nullptr, &Level->sectors[i], nullptr, 0);

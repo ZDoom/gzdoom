@@ -225,7 +225,7 @@ void FDynamicLight::ReleaseLight()
 	if (prev != nullptr) prev->next = next;
 	else level.lights = next;
 	if (next != nullptr) next->prev = prev;
-	prev = nullptr;
+	next = prev = nullptr;
 	FreeList.Push(this);
 }
 
@@ -305,7 +305,7 @@ void FDynamicLight::Tick()
 	case FlickerLight:
 	{
 		int rnd = randLight(360);
-		m_currentRadius = float((rnd >= int(specialf1))? GetIntensity() : GetSecondaryIntensity());
+		m_currentRadius = float((rnd < int(specialf1))? GetIntensity() : GetSecondaryIntensity());
 		break;
 	}
 

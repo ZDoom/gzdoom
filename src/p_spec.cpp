@@ -104,13 +104,6 @@ static FRandom pr_playerinspecialsector ("PlayerInSpecialSector");
 
 EXTERN_CVAR(Bool, cl_predict_specials)
 
-
-// killough 3/7/98: Initialize generalized scrolling
-void P_SpawnScrollers(FLevelLocals *Level);
-static void P_SpawnFriction (FLevelLocals *l);		// phares 3/16/98
-void P_SpawnPushers ();		// phares 3/20/98
-
-
 // [RH] Check dmflags for noexit and respond accordingly
 bool FLevelLocals::CheckIfExitIsGood (AActor *self, level_info_t *info)
 {
@@ -916,7 +909,7 @@ void DWallLightTransfer::DoTransfer (short lightlevel, int target, uint8_t flags
 //---------------------------------------------------------------------------
 // Upper stacks go in the top sector. Lower stacks go in the bottom sector.
 
-static void SetupFloorPortal (AActor *point)
+void MapLoader::SetupFloorPortal (AActor *point)
 {
 	NActorIterator it (NAME_LowerStackLookOnly, point->tid);
 	sector_t *Sector = point->Sector;
@@ -931,7 +924,7 @@ static void SetupFloorPortal (AActor *point)
 	}
 }
 
-static void SetupCeilingPortal (AActor *point)
+void MapLoader::SetupCeilingPortal (AActor *point)
 {
 	NActorIterator it (NAME_UpperStackLookOnly, point->tid);
 	sector_t *Sector = point->Sector;
@@ -946,7 +939,7 @@ static void SetupCeilingPortal (AActor *point)
 	}
 }
 
-void P_SetupPortals(FLevelLocals *Level)
+void MapLoader::SetupPortals()
 {
 	TThinkerIterator<AActor> it("StackPoint");
 	AActor *pt;
@@ -992,7 +985,7 @@ void P_SetupPortals(FLevelLocals *Level)
 	}
 }
 
-static void SetPortal(FLevelLocals *Level, sector_t *sector, int plane, unsigned pnum, double alpha)
+void MapLoader::SetPortal(sector_t *sector, int plane, unsigned pnum, double alpha)
 {
 	// plane: 0=floor, 1=ceiling, 2=both
 	if (plane > 0)
@@ -1021,13 +1014,13 @@ static void SetPortal(FLevelLocals *Level, sector_t *sector, int plane, unsigned
 	}
 }
 
-static void CopyPortal(FLevelLocals *Level, int sectortag, int plane, unsigned pnum, double alpha, bool tolines)
+void MapLoader::CopyPortal(int sectortag, int plane, unsigned pnum, double alpha, bool tolines)
 {
 	int s;
 	FSectorTagIterator itr(sectortag);
 	while ((s = itr.Next()) >= 0)
 	{
-		SetPortal(Level, &Level->sectors[s], plane, pnum, alpha);
+		SetPortal(&Level->sectors[s], plane, pnum, alpha);
 	}
 
 	for (auto &line : Level->lines)
@@ -1041,14 +1034,14 @@ static void CopyPortal(FLevelLocals *Level, int sectortag, int plane, unsigned p
 		{
 			if (line.args[0] == 0)
 			{
-				SetPortal(Level, line.frontsector, plane, pnum, alpha);
+				SetPortal(line.frontsector, plane, pnum, alpha);
 			}
 			else
 			{
 				FSectorTagIterator itr(line.args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
-					SetPortal(Level, &Level->sectors[s], plane, pnum, alpha);
+					SetPortal(&Level->sectors[s], plane, pnum, alpha);
 				}
 			}
 		}
@@ -1073,7 +1066,7 @@ static void CopyPortal(FLevelLocals *Level, int sectortag, int plane, unsigned p
 }
 
 
-void P_SpawnPortal(FLevelLocals *Level, line_t *line, int sectortag, int plane, int bytealpha, int linked)
+void MapLoader::SpawnPortal(line_t *line, int sectortag, int plane, int bytealpha, int linked)
 {
 	if (plane < 0 || plane > 2 || (linked && plane == 2)) return;
 	for (auto &oline : Level->lines)
@@ -1090,7 +1083,7 @@ void P_SpawnPortal(FLevelLocals *Level, line_t *line, int sectortag, int plane, 
 			DVector2 pos1 = line->v1->fPos() + line->Delta() / 2;
 			DVector2 pos2 = oline.v1->fPos() + oline.Delta() / 2;
 			unsigned pnum = P_GetPortal(linked ? PORTS_LINKEDPORTAL : PORTS_PORTAL, plane, line->frontsector, oline.frontsector, pos2 - pos1);
-			CopyPortal(Level, sectortag, plane, pnum, bytealpha / 255., false);
+			CopyPortal(sectortag, plane, pnum, bytealpha / 255., false);
 			return;
 		}
 	}
@@ -1098,7 +1091,7 @@ void P_SpawnPortal(FLevelLocals *Level, line_t *line, int sectortag, int plane, 
 
 // This searches the viewpoint's sector
 // for a skybox line special, gets its tag and transfers the skybox to all tagged sectors.
-void P_SpawnSkybox(FLevelLocals *Level, AActor *origin)
+void MapLoader::SpawnSkybox(AActor *origin)
 {
 	sector_t *Sector = origin->Sector;
 	if (Sector == NULL)
@@ -1114,7 +1107,7 @@ void P_SpawnSkybox(FLevelLocals *Level, AActor *origin)
 			{
 				// We found the setup linedef for this skybox, so let's use it for our init.
 				unsigned pnum = P_GetSkyboxPortal(origin);
-				CopyPortal(Level, refline->args[0], refline->args[2], pnum, 0, true);
+				CopyPortal(refline->args[0], refline->args[2], pnum, 0, true);
 				return;
 			}
 		}
@@ -1129,7 +1122,7 @@ void P_SpawnSkybox(FLevelLocals *Level, AActor *origin)
 // Sets damage properties for one sector. Allows combination of original specials with explicit use of the damage properties
 //
 
-static void P_SetupSectorDamage(sector_t *sector, int damage, int interval, int leakchance, FName type, int flags)
+static void SetupSectorDamage(sector_t *sector, int damage, int interval, int leakchance, FName type, int flags)
 {
 	// Only set if damage is not yet initialized. This ensures that UDMF takes precedence over sector specials.
 	if (sector->damageamount == 0)
@@ -1148,9 +1141,8 @@ static void P_SetupSectorDamage(sector_t *sector, int damage, int interval, int 
 // Sets up everything derived from 'sector->special' for one sector
 // ('fromload' is necessary to allow conversion upon savegame load.)
 //
-void P_SpawnLights(sector_t *sector);
 
-void P_InitSectorSpecial(FLevelLocals *Level, sector_t *sector, int special)
+void MapLoader::InitSectorSpecial(sector_t *sector, int special)
 {
 	// [RH] All secret sectors are marked with a BOOM-ish bitfield
 	if (sector->special & SECRET_MASK)
@@ -1168,33 +1160,33 @@ void P_InitSectorSpecial(FLevelLocals *Level, sector_t *sector, int special)
 	}
 	if ((sector->special & DAMAGE_MASK) == 0x100)
 	{
-		P_SetupSectorDamage(sector, 5, 32, 0, NAME_Fire, 0);
+		SetupSectorDamage(sector, 5, 32, 0, NAME_Fire, 0);
 	}
 	else if ((sector->special & DAMAGE_MASK) == 0x200)
 	{
-		P_SetupSectorDamage(sector, 10, 32, 0, NAME_Slime, 0);
+		SetupSectorDamage(sector, 10, 32, 0, NAME_Slime, 0);
 	}
 	else if ((sector->special & DAMAGE_MASK) == 0x300)
 	{
-		P_SetupSectorDamage(sector, 20, 32, 5, NAME_Slime, 0);
+		SetupSectorDamage(sector, 20, 32, 5, NAME_Slime, 0);
 	}
 	sector->special &= 0xff;
 
 	// [RH] Normal DOOM special or BOOM specialized?
 	bool keepspecial = false;
-	P_SpawnLights(sector);
+	SpawnLights(sector);
 	switch (sector->special)
 	{
 	case dLight_Strobe_Hurt:
-		P_SetupSectorDamage(sector, 20, 32, 5, NAME_Slime, 0);
+		SetupSectorDamage(sector, 20, 32, 5, NAME_Slime, 0);
 		break;
 
 	case dDamage_Hellslime:
-		P_SetupSectorDamage(sector, 10, 32, 0, NAME_Slime, 0);
+		SetupSectorDamage(sector, 10, 32, 0, NAME_Slime, 0);
 		break;
 
 	case dDamage_Nukage:
-		P_SetupSectorDamage(sector, 5, 32, 0, NAME_Slime, 0);
+		SetupSectorDamage(sector, 5, 32, 0, NAME_Slime, 0);
 		break;
 
 	case dSector_DoorCloseIn30:
@@ -1202,7 +1194,7 @@ void P_InitSectorSpecial(FLevelLocals *Level, sector_t *sector, int special)
 		break;
 			
 	case dDamage_End:
-		P_SetupSectorDamage(sector, 20, 32, 256, NAME_None, SECF_ENDGODMODE|SECF_ENDLEVEL);
+		SetupSectorDamage(sector, 20, 32, 256, NAME_None, SECF_ENDGODMODE|SECF_ENDLEVEL);
 		break;
 
 	case dSector_DoorRaiseIn5Mins:
@@ -1216,42 +1208,42 @@ void P_InitSectorSpecial(FLevelLocals *Level, sector_t *sector, int special)
 		break;
 
 	case dDamage_SuperHellslime:
-		P_SetupSectorDamage(sector, 20, 32, 5, NAME_Slime, 0);
+		SetupSectorDamage(sector, 20, 32, 5, NAME_Slime, 0);
 		break;
 
 	case dDamage_LavaWimpy:
-		P_SetupSectorDamage(sector, 5, 16, 256, NAME_Fire, SECF_DMGTERRAINFX);
+		SetupSectorDamage(sector, 5, 16, 256, NAME_Fire, SECF_DMGTERRAINFX);
 		break;
 
 	case dDamage_LavaHefty:
-		P_SetupSectorDamage(sector, 8, 16, 256, NAME_Fire, SECF_DMGTERRAINFX);
+		SetupSectorDamage(sector, 8, 16, 256, NAME_Fire, SECF_DMGTERRAINFX);
 		break;
 
 	case dScroll_EastLavaDamage:
-		P_SetupSectorDamage(sector, 5, 16, 256, NAME_Fire, SECF_DMGTERRAINFX);
-		P_CreateScroller(EScroll::sc_floor, -4., 0, sector, 0);
+		SetupSectorDamage(sector, 5, 16, 256, NAME_Fire, SECF_DMGTERRAINFX);
+		CreateScroller(EScroll::sc_floor, -4., 0, sector, 0);
 		keepspecial = true;
 		break;
 
 	case hDamage_Sludge:
-		P_SetupSectorDamage(sector, 4, 32, 0, NAME_Slime, 0);
+		SetupSectorDamage(sector, 4, 32, 0, NAME_Slime, 0);
 		break;
 
 	case sLight_Strobe_Hurt:
-		P_SetupSectorDamage(sector, 5, 32, 0, NAME_Slime, 0);
+		SetupSectorDamage(sector, 5, 32, 0, NAME_Slime, 0);
 		break;
 
 	case sDamage_Hellslime:
-		P_SetupSectorDamage(sector, 2, 32, 0, NAME_Slime, SECF_HAZARD);
+		SetupSectorDamage(sector, 2, 32, 0, NAME_Slime, SECF_HAZARD);
 		break;
 
 	case Damage_InstantDeath:
 		// Strife's instant death sector
-		P_SetupSectorDamage(sector, TELEFRAG_DAMAGE, 1, 256, NAME_InstantDeath, 0);
+		SetupSectorDamage(sector, TELEFRAG_DAMAGE, 1, 256, NAME_InstantDeath, 0);
 		break;
 
 	case sDamage_SuperHellslime:
-		P_SetupSectorDamage(sector, 4, 32, 0, NAME_Slime, SECF_HAZARD);
+		SetupSectorDamage(sector, 4, 32, 0, NAME_Slime, SECF_HAZARD);
 		break;
 
 	case Sector_Hidden:
@@ -1260,7 +1252,7 @@ void P_InitSectorSpecial(FLevelLocals *Level, sector_t *sector, int special)
 
 	case Sector_Heal:
 		// CoD's healing sector
-		P_SetupSectorDamage(sector, -1, 32, 0, NAME_None, 0);
+		SetupSectorDamage(sector, -1, 32, 0, NAME_None, 0);
 		break;
 
 	case Sky2:
@@ -1286,13 +1278,13 @@ void P_InitSectorSpecial(FLevelLocals *Level, sector_t *sector, int special)
 			int i = sector->special - Scroll_North_Slow;
 			double dx = hexenScrollies[i][0] / 2.;
 			double dy = hexenScrollies[i][1] / 2.;
-			P_CreateScroller(EScroll::sc_floor, dx, dy, sector, 0);
+			CreateScroller(EScroll::sc_floor, dx, dy, sector, 0);
 		}
 		else if (sector->special >= Carry_East5 && sector->special <= Carry_East35)
 		{ 
 			// Heretic scroll special
 			// Only east scrollers also scroll the texture
-			P_CreateScroller(EScroll::sc_floor,	-0.5 * (1 << ((sector->special & 0xff) - Carry_East5)),	0, sector, 0);
+			CreateScroller(EScroll::sc_floor,	-0.5 * (1 << ((sector->special & 0xff) - Carry_East5)),	0, sector, 0);
 		}
 		keepspecial = true;
 		break;
@@ -1306,35 +1298,31 @@ void P_InitSectorSpecial(FLevelLocals *Level, sector_t *sector, int special)
 // After the map has been loaded, scan for specials that spawn thinkers
 //
 
-void P_SpawnSpecials (MapLoader *ml)
+void MapLoader::SpawnSpecials ()
 {
-	auto Level = ml->Level;
-	P_SetupPortals(Level);
+	SetupPortals();
 
 	for (auto &sec : Level->sectors)
 	{
 		if (sec.special == 0)
 			continue;
 
-		P_InitSectorSpecial(Level, &sec, sec.special);
+		InitSectorSpecial(&sec, sec.special);
 	}
 
-#ifndef NO_EDATA
-	ml->ProcessEDSectors();
-#endif
-
+	ProcessEDSectors();
 	
 	// Init other misc stuff
 
-	P_SpawnScrollers(Level); // killough 3/7/98: Add generalized scrollers
-	P_SpawnFriction(Level);	// phares 3/12/98: New friction model using linedefs
-	P_SpawnPushers();	// phares 3/20/98: New pusher model using linedefs
+	SpawnScrollers(); // killough 3/7/98: Add generalized scrollers
+	SpawnFriction();	// phares 3/12/98: New friction model using linedefs
+	SpawnPushers();	// phares 3/20/98: New pusher model using linedefs
 
 	TThinkerIterator<AActor> it2("SkyCamCompat");
 	AActor *pt2;
 	while ((pt2 = it2.Next()))
 	{
-		P_SpawnSkybox(Level, pt2);
+		SpawnSkybox(pt2);
 	}
 
 	for (auto &line : Level->lines)
@@ -1431,12 +1419,12 @@ void P_SpawnSpecials (MapLoader *ml)
 			// arg 4 = for the anchor only: alpha
 			if ((line.args[1] == 0 || line.args[1] == 6) && line.args[3] == 0)
 			{
-				P_SpawnPortal(Level, &line, line.args[0], line.args[2], line.args[4], line.args[1]);
+				SpawnPortal(&line, line.args[0], line.args[2], line.args[4], line.args[1]);
 			}
 			else if (line.args[1] == 3 || line.args[1] == 4)
 			{
 				unsigned pnum = P_GetPortal(line.args[1] == 3 ? PORTS_PLANE : PORTS_HORIZON, line.args[2], line.frontsector, NULL, { 0,0 });
-				CopyPortal(Level, line.args[0], line.args[2], pnum, 0, true);
+				CopyPortal(line.args[0], line.args[2], pnum, 0, true);
 			}
 			break;
 
@@ -1514,7 +1502,7 @@ void P_SpawnSpecials (MapLoader *ml)
 		}
 	}
 	// [RH] Start running any open scripts on this map
-	level.Behaviors.StartTypedScripts (SCRIPT_Open, NULL, false);
+	Level->Behaviors.StartTypedScripts (SCRIPT_Open, NULL, false);
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -1570,7 +1558,7 @@ void P_SpawnSpecials (MapLoader *ml)
 //
 // Initialize the sectors where friction is increased or decreased
 
-static void P_SpawnFriction(FLevelLocals *Level)
+void MapLoader::SpawnFriction()
 {
 	line_t *l = &Level->lines[0];
 

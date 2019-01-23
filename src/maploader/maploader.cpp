@@ -3206,7 +3206,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	}
 
 	// set up world state
-	P_SpawnSpecials(this);
+	SpawnSpecials();
 
 	// disable reflective planes on sloped sectors.
 	for (auto &sec : Level->sectors)

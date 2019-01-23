@@ -36,6 +36,7 @@
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
+#include "maploader/maploader.h"
 
 CVAR(Bool, var_pushers, true, CVAR_SERVERINFO);
 
@@ -338,12 +339,12 @@ void DPusher::Tick ()
 // P_GetPushThing() returns a pointer to an MT_PUSH or MT_PULL thing,
 // NULL otherwise.
 
-AActor *P_GetPushThing (int s)
+AActor *MapLoader::GetPushThing (int s)
 {
 	AActor* thing;
 	sector_t* sec;
 
-	sec = &level.sectors[s];
+	sec = &Level->sectors[s];
 	thing = sec->thinglist;
 
 	while (thing &&
@@ -360,12 +361,12 @@ AActor *P_GetPushThing (int s)
 // Initialize the sectors where pushers are present
 //
 
-void P_SpawnPushers ()
+void MapLoader::SpawnPushers ()
 {
-	line_t *l = &level.lines[0];
+	line_t *l = &Level->lines[0];
 	int s;
 
-	for (unsigned i = 0; i < level.lines.Size(); i++, l++)
+	for (unsigned i = 0; i < Level->lines.Size(); i++, l++)
 	{
 		switch (l->special)
 		{
@@ -392,7 +393,7 @@ void P_SpawnPushers ()
 				FSectorTagIterator itr(l->args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
-					AActor *thing = P_GetPushThing (s);
+					AActor *thing = GetPushThing (s);
 					if (thing) {	// No MT_P* means no effect
 						// [RH] Allow narrowing it down by tid
 						if (!l->args[1] || l->args[1] == thing->tid)

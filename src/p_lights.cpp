@@ -37,6 +37,7 @@
 #include "doomstat.h"
 #include "p_maputl.h"
 #include "g_levellocals.h"
+#include "maploader/maploader.h"
 
 // State.
 #include "serializer.h"
@@ -997,7 +998,7 @@ void EV_StopLightEffect (int tag)
 }
 
 
-void P_SpawnLights(sector_t *sector)
+void MapLoader::SpawnLights(sector_t *sector)
 {
 	switch (sector->special)
 	{

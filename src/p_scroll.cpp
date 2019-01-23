@@ -62,6 +62,7 @@
 #include "p_lnspec.h"
 #include "r_data/r_interpolate.h"
 #include "g_levellocals.h"
+#include "maploader/maploader.h"
 
 //-----------------------------------------------------------------------------
 //
@@ -421,7 +422,7 @@ DScroller::DScroller (double dx, double dy, const line_t *l, sector_t * control,
 //
 //-----------------------------------------------------------------------------
 
-void P_SpawnScrollers(FLevelLocals *Level)
+void MapLoader::SpawnScrollers()
 {
 	line_t *l = &Level->lines[0];
 	side_t *side;
@@ -733,7 +734,7 @@ void SetScroller (FLevelLocals *Level, int tag, EScroll type, double dx, double 
 	}
 }
 
-void P_CreateScroller(EScroll type, double dx, double dy, sector_t *affectee, int accel, EScrollPos scrollpos)
+void MapLoader::CreateScroller(EScroll type, double dx, double dy, sector_t *affectee, int accel, EScrollPos scrollpos)
 {
 	Create<DScroller>(type, dx, dy, nullptr, affectee, nullptr, accel, scrollpos);
 }

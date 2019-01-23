@@ -63,7 +63,6 @@ enum EScrollPos : int
 	scw_all = 7,
 };
 
-void P_CreateScroller(EScroll type, double dx, double dy, sector_t *affectee, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
 
 
 //jff 2/23/98 identify the special classes that can share sectors
@@ -88,8 +87,6 @@ const double CARRYFACTOR = 3 / 32.;
 
 
 class MapLoader;
-// at map load
-void	P_SpawnSpecials (MapLoader *ml);
 
 // every tic
 void	P_UpdateSpecials (FLevelLocals *);

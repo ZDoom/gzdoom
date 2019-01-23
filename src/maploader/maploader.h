@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nodebuild.h"
+#include "p_spec.h"
 
 struct EDMapthing
 {
@@ -170,7 +171,24 @@ private:
 	void FixHoles();
 	void ReportUnpairedMinisegs();
 	void CalcIndices();
-
+	
+	// Specials
+	void SpawnSpecials();
+	void InitSectorSpecial(sector_t *sector, int special);
+	void SpawnLights(sector_t *sector);
+	void CreateScroller(EScroll type, double dx, double dy, sector_t *affectee, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
+	void SpawnScrollers();
+	void SpawnFriction();
+	void SpawnPushers();
+	AActor *GetPushThing (int s);
+	void SpawnPortal(line_t *line, int sectortag, int plane, int bytealpha, int linked);
+	void CopyPortal(int sectortag, int plane, unsigned pnum, double alpha, bool tolines);
+	void SetPortal(sector_t *sector, int plane, unsigned pnum, double alpha);
+	void SetupPortals();
+	void SpawnSkybox(AActor *origin);
+	void SetupFloorPortal (AActor *point);
+	void SetupCeilingPortal (AActor *point);
+	
 	void SetTexture(side_t *side, int position, const char *name, FMissingTextureTracker &track);
 	void SetTexture(sector_t *sector, int index, int position, const char *name, FMissingTextureTracker &track, bool truncate);
 	void SetTexture(side_t *side, int position, uint32_t *blend, const char *name);

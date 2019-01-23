@@ -95,11 +95,11 @@ public:
 protected:
 	float Blends[2][4];
 	int TotalTics;
-	int StartTic;
+	int RemainingTics;
 	TObjPtr<AActor*> ForWho;
 	bool Terminate;
 	void SetBlend (float time);
-	DFlashFader ();
+	DFlashFader() = default;
 };
 
 enum

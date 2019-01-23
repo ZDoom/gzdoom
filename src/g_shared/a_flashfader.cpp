@@ -43,14 +43,10 @@ IMPLEMENT_POINTERS_START(DFlashFader)
 	IMPLEMENT_POINTER(ForWho)
 IMPLEMENT_POINTERS_END
 
-DFlashFader::DFlashFader ()
-{
-}
-
 DFlashFader::DFlashFader (float r1, float g1, float b1, float a1,
 						  float r2, float g2, float b2, float a2,
 						  float time, AActor *who, bool terminate)
-	: TotalTics ((int)(time*TICRATE)), StartTic (level.time), ForWho (who)
+	: TotalTics ((int)(time*TICRATE)), RemainingTics(TotalTics), ForWho (who)
 {
 	Blends[0][0]=r1; Blends[0][1]=g1; Blends[0][2]=b1; Blends[0][3]=a1;
 	Blends[1][0]=r2; Blends[1][1]=g2; Blends[1][2]=b2; Blends[1][3]=a2;
@@ -68,7 +64,7 @@ void DFlashFader::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
 	arc("totaltics", TotalTics)
-		("starttic", StartTic)
+		("remainingtics", RemainingTics)
 		("forwho", ForWho)
 		.Array("blends", Blends[0], 8);
 }
@@ -80,13 +76,13 @@ void DFlashFader::Tick ()
 		Destroy ();
 		return;
 	}
-	if (level.time >= StartTic+TotalTics)
+	if (--RemainingTics <= 0)
 	{
 		SetBlend (1.f);
 		Destroy ();
 		return;
 	}
-	SetBlend ((float)(level.time - StartTic) / (float)TotalTics);
+	SetBlend (1.f - (float)RemainingTics / (float)TotalTics);
 }
 
 void DFlashFader::SetBlend (float time)
@@ -105,6 +101,6 @@ void DFlashFader::SetBlend (float time)
 
 void DFlashFader::Cancel ()
 {
-	TotalTics = level.time - StartTic;
+	RemainingTics = 0;
 	Blends[1][3] = 0.f;
 }

@@ -1325,7 +1325,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckSight, P_CheckSight)
 
 static void GiveSecret(AActor *self, bool printmessage, bool playsound)
 {
-	P_GiveSecret(self, printmessage, playsound, -1);
+	P_GiveSecret(&level, self, printmessage, playsound, -1);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, GiveSecret, GiveSecret)
@@ -1333,7 +1333,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GiveSecret, GiveSecret)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_BOOL(printmessage);
 	PARAM_BOOL(playsound);
-	P_GiveSecret(self, printmessage, playsound, -1);
+	GiveSecret(self, printmessage, playsound);
 	return 0;
 }
 

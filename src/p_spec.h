@@ -87,17 +87,12 @@ const double CARRYFACTOR = 3 / 32.;
 #define DAMAGE_NO_ARMOR				16
 
 
-// [RH] If a deathmatch game, checks to see if noexit is enabled.
-//		If so, it kills the player and returns false. Otherwise,
-//		it returns true, and the player is allowed to live.
-bool	CheckIfExitIsGood (AActor *self, level_info_t *info);
-
 class MapLoader;
 // at map load
 void	P_SpawnSpecials (MapLoader *ml);
 
 // every tic
-void	P_UpdateSpecials (void);
+void	P_UpdateSpecials (FLevelLocals *);
 
 // when needed
 bool	P_ActivateLine (line_t *ld, AActor *mo, int side, int activationType, DVector3 *optpos = NULL);
@@ -106,10 +101,10 @@ bool	P_PredictLine (line_t *ld, AActor *mo, int side, int activationType);
 
 void 	P_PlayerInSpecialSector (player_t *player, sector_t * sector=NULL);
 void	P_PlayerOnSpecialFlat (player_t *player, int floorType);
-void	P_SectorDamage(int tag, int amount, FName type, PClassActor *protectClass, int flags);
-void	P_SetSectorFriction (int tag, int amount, bool alterFlag);
+void	P_SectorDamage(FLevelLocals *Level, int tag, int amount, FName type, PClassActor *protectClass, int flags);
+void	P_SetSectorFriction (FLevelLocals *level, int tag, int amount, bool alterFlag);
 double FrictionToMoveFactor(double friction);
-void P_GiveSecret(AActor *actor, bool printmessage, bool playsound, int sectornum);
+void P_GiveSecret(FLevelLocals *Level, AActor *actor, bool printmessage, bool playsound, int sectornum);
 
 //
 // getNextSector()

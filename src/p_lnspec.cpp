@@ -1060,7 +1060,7 @@ FUNC(LS_Generic_Lift)
 FUNC(LS_Exit_Normal)
 // Exit_Normal (position)
 {
-	if (CheckIfExitIsGood (it, FindLevelInfo(G_GetExitMap())))
+	if (level.CheckIfExitIsGood (it, FindLevelInfo(G_GetExitMap())))
 	{
 		G_ExitLevel (arg0, false);
 		return true;
@@ -1071,7 +1071,7 @@ FUNC(LS_Exit_Normal)
 FUNC(LS_Exit_Secret)
 // Exit_Secret (position)
 {
-	if (CheckIfExitIsGood (it, FindLevelInfo(G_GetSecretExitMap())))
+	if (level.CheckIfExitIsGood (it, FindLevelInfo(G_GetSecretExitMap())))
 	{
 		G_SecretExitLevel (arg0);
 		return true;
@@ -1086,7 +1086,7 @@ FUNC(LS_Teleport_NewMap)
 	{
 		level_info_t *info = FindLevelByNum (arg0);
 
-		if (info && CheckIfExitIsGood (it, info))
+		if (info && level.CheckIfExitIsGood (it, info))
 		{
 			G_ChangeLevel(info->MapName, arg1, arg2 ? CHANGELEVEL_KEEPFACING : 0);
 			return true;
@@ -1181,7 +1181,7 @@ FUNC(LS_TeleportInSector)
 FUNC(LS_Teleport_EndGame)
 // Teleport_EndGame ()
 {
-	if (!backSide && CheckIfExitIsGood (it, NULL))
+	if (!backSide && level.CheckIfExitIsGood (it, NULL))
 	{
 		G_ChangeLevel(NULL, 0, 0);
 		return true;
@@ -2252,7 +2252,7 @@ FUNC(LS_Sector_SetCurrent)
 FUNC(LS_Sector_SetFriction)
 // Sector_SetFriction (tag, amount)
 {
-	P_SetSectorFriction (arg0, arg1, true);
+	P_SetSectorFriction (&level, arg0, arg1, true);
 	return true;
 }
 

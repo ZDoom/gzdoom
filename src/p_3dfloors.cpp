@@ -332,8 +332,7 @@ void P_PlayerOnSpecial3DFloor(player_t* player)
 		P_PlayerInSpecialSector(player, rover->model);
 
 		// Apply flat specials (using the ceiling!)
-		P_PlayerOnSpecialFlat(
-			player, rover->model->GetTerrain(rover->top.isceiling));
+		P_PlayerOnSpecialFlat(player, rover->model->GetTerrain(rover->top.isceiling));
 
 		break;
 	}

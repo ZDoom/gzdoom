@@ -93,3 +93,4 @@ inline double AActor::AttackOffset(double offset)
 	}
 
 }
+

@@ -54,6 +54,7 @@ struct FPortalGroupArray;
 struct visstyle_t;
 class FLightDefaults;
 struct FSection;
+struct FLevelLocals;
 //
 // NOTES: AActor
 //
@@ -637,8 +638,8 @@ class AActor : public DThinker
 	DECLARE_CLASS_WITH_META (AActor, DThinker, PClassActor)
 	HAS_OBJECT_POINTERS
 public:
-	AActor () throw();
-	AActor (const AActor &other) throw();
+	AActor() = default;
+	AActor(const AActor &other) = delete;	// Calling this would be disastrous.
 	AActor &operator= (const AActor &other);
 	~AActor ();
 

@@ -401,16 +401,6 @@ void AActor::PostSerialize()
 
 
 
-AActor::AActor () throw()
-{
-}
-
-AActor::AActor (const AActor &other) throw()
-	: DThinker()
-{
-	memcpy (&snext, &other.snext, (uint8_t *)&this[1] - (uint8_t *)&snext);
-}
-
 AActor &AActor::operator= (const AActor &other)
 {
 	memcpy (&snext, &other.snext, (uint8_t *)&this[1] - (uint8_t *)&snext);

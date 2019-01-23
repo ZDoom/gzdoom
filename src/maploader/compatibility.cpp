@@ -415,7 +415,7 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, ClearLineIDs)
 {
 	PARAM_SELF_PROLOGUE(DLevelCompatibility);
 	PARAM_INT(line);
-	self->Level->tagManager.RemoveLineIDs(line);
+	tagManager.RemoveLineIDs(line);
 	return 0;
 }
 
@@ -427,7 +427,7 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, AddLineID)
 	
 	if ((unsigned)line < self->Level->lines.Size())
 	{
-		self->Level->tagManager.AddLineID(line, tag);
+		tagManager.AddLineID(line, tag);
 	}
 	return 0;
 }

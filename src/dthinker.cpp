@@ -99,7 +99,7 @@ void FThinkerCollection::Link(DThinker *thinker, int statnum)
 //
 //==========================================================================
 
-void FThinkerCollection::RunThinkers(FDynamicLight *lights)
+void FThinkerCollection::RunThinkers(FDynamicLight **lights) 
 {
 	int i, count;
 
@@ -129,11 +129,14 @@ void FThinkerCollection::RunThinkers(FDynamicLight *lights)
 			}
 		} while (count != 0);
 
-		for (auto light = lights; light;)
+		if (lights)
 		{
-			auto next = light->next;
-			light->Tick();
-			light = next;
+			for (auto light = *lights; light;)
+			{
+				auto next = light->next;
+				light->Tick();
+				light = next;
+			}
 		}
 	}
 	else
@@ -158,12 +161,15 @@ void FThinkerCollection::RunThinkers(FDynamicLight *lights)
 		// Also profile the internal dynamic lights, even though they are not implemented as thinkers.
 		auto &prof = Profiles[NAME_InternalDynamicLight];
 		prof.timer.Clock();
-		for (auto light = lights; light;)
+		if (lights)
 		{
-			prof.numcalls++;
-			auto next = light->next;
-			light->Tick();
-			light = next;
+			for (auto light = *lights; light;)
+			{
+				prof.numcalls++;
+				auto next = light->next;
+				light->Tick();
+				light = next;
+			}
 		}
 		prof.timer.Unclock();
 
@@ -931,6 +937,7 @@ size_t DThinker::PropagateMark()
 //==========================================================================
 
 FThinkerIterator::FThinkerIterator (FLevelLocals *Level, const PClass *type, int statnum)
+	: Level(Level)
 {
 	if ((unsigned)statnum > MAX_STATNUM)
 	{
@@ -953,6 +960,7 @@ FThinkerIterator::FThinkerIterator (FLevelLocals *Level, const PClass *type, int
 //==========================================================================
 
 FThinkerIterator::FThinkerIterator (FLevelLocals *Level, const PClass *type, int statnum, DThinker *prev)
+	: Level(Level)
 {
 	if ((unsigned)statnum > MAX_STATNUM)
 	{

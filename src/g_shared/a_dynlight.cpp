@@ -226,7 +226,7 @@ void FDynamicLight::ReleaseLight()
 	if (prev != nullptr) prev->next = next;
 	else Level->lights = next;
 	if (next != nullptr) next->prev = prev;
-	prev = nullptr;
+	next = prev = nullptr;
 	FreeList.Push(this);
 }
 

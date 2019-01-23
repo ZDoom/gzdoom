@@ -45,7 +45,7 @@ struct FState;
 class DThinker;
 class FSerializer;
 struct FLevelLocals;
-class FDynamicLight;
+struct FDynamicLight;
 
 class FThinkerIterator;
 
@@ -79,7 +79,7 @@ struct FThinkerCollection
 		FreshThinkers[statnum].DestroyThinkers();
 	}
 
-	void RunThinkers(FDynamicLight *lights);
+	void RunThinkers(FDynamicLight **lights);
 	void DestroyAllThinkers();
 	void SerializeThinkers(FSerializer &arc, bool keepPlayers);
 	void MarkRoots();

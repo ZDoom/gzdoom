@@ -6,12 +6,14 @@
 #include "m_bbox.h"
 #include "dthinker.h"
 
+struct FPolyObj;
+
 class DPolyAction : public DThinker
 {
 	DECLARE_CLASS(DPolyAction, DThinker)
 	HAS_OBJECT_POINTERS
 public:
-	DPolyAction(int polyNum);
+	DPolyAction(FPolyObj *polyNum);
 	void Serialize(FSerializer &arc);
 	void OnDestroy() override;
 	void Stop();
@@ -20,7 +22,7 @@ public:
 	void StopInterpolation();
 protected:
 	DPolyAction();
-	int m_PolyObj;
+	FPolyObj *m_PolyObj;
 	double m_Speed;
 	double m_Dist;
 	TObjPtr<DInterpolation*> m_Interpolation;
@@ -107,6 +109,9 @@ struct FPolyObj
 	void UpdateLinks();
 	static void ClearAllSubsectorLinks();
 
+	FLevelLocals *GetLevel() const;
+
+
 private:
 
 	void ThrustMobj (AActor *actor, side_t *side);
@@ -125,7 +130,7 @@ struct polyblock_t
 };
 
 
-void PO_LinkToSubsectors();
+void PO_LinkToSubsectors(FLevelLocals *Level);
 
 
 // ===== PO_MAN =====
@@ -137,14 +142,13 @@ typedef enum
 	PODOOR_SWING,
 } podoortype_t;
 
-bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, bool overRide);
-bool EV_MovePoly (line_t *line, int polyNum, double speed, DAngle angle, double dist, bool overRide);
-bool EV_MovePolyTo (line_t *line, int polyNum, double speed, const DVector2 &pos, bool overRide);
-bool EV_OpenPolyDoor (line_t *line, int polyNum, double speed, DAngle angle, int delay, double distance, podoortype_t type);
-bool EV_StopPoly (int polyNum);
+bool EV_RotatePoly (FLevelLocals *Level, line_t *line, int polyNum, int speed, int byteAngle, int direction, bool overRide);
+bool EV_MovePoly (FLevelLocals *Level, line_t *line, int polyNum, double speed, DAngle angle, double dist, bool overRide);
+bool EV_MovePolyTo (FLevelLocals *Level, line_t *line, int polyNum, double speed, const DVector2 &pos, bool overRide);
+bool EV_OpenPolyDoor (FLevelLocals *Level, line_t *line, int polyNum, double speed, DAngle angle, int delay, double distance, podoortype_t type);
+bool EV_StopPoly (FLevelLocals *Level, int polyNum);
 
-bool PO_Busy (int polyobj);
-FPolyObj *PO_GetPolyobj(int polyNum);
+bool PO_Busy (FLevelLocals *Level, int polyobj);
 
 
 #endif

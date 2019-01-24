@@ -44,6 +44,6 @@ void P_DestroyThinkers(bool hubLoad);
 void P_ReadACSDefereds (FSerializer &);
 void P_WriteACSDefereds (FSerializer &);
 
-void G_SerializeLevel(FSerializer &arc, bool hubLoad);
+void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubLoad);
 
 #endif // __P_SAVEG_H__

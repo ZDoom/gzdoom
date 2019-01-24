@@ -115,6 +115,8 @@ struct FLevelLocals : public FLevelData
 	void ClearLevelData();
 	void ClearPortals();
 	bool CheckIfExitIsGood(AActor *self, level_info_t *newmap);
+	void FormatMapName(FString &mapname, const char *mapnamecolor);
+	void ClearAllSubsectorLinks();
 	FSectorTagIterator GetSectorTagIterator(int tag)
 	{
 		return FSectorTagIterator(tag);
@@ -160,6 +162,13 @@ struct FLevelLocals : public FLevelData
 	{
 		return P_PointInSector(pos);
 	}
+	
+	FPolyObj *GetPolyobj (int polyNum)
+	{
+		auto index = Polyobjects.FindEx([=](const auto &poly) { return poly.tag == polyNum; });
+		return index == Polyobjects.Size()? nullptr : &Polyobjects[index];
+	}
+
 
 	uint8_t		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
 	int			time;			// time in the hub

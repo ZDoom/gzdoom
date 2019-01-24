@@ -3776,7 +3776,7 @@ void AActor::Tick ()
 					}
 					else if (scrolltype == Scroll_StrifeCurrent)
 					{ // Strife scroll special
-						int anglespeed = tagManager.GetFirstSectorTag(sec) - 100;
+						int anglespeed = level.GetFirstSectorTag(sec) - 100;
 						double carryspeed = (anglespeed % 10) / (16 * CARRYFACTOR);
 						DAngle angle = ((anglespeed / 10) * 45.);
 						scrollv += angle.ToVector(carryspeed);

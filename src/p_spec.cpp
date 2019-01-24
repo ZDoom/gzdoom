@@ -201,9 +201,9 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 		!repeat &&												// only non-repeatable triggers
 		(special<Generic_Floor || special>Generic_Crusher) &&	// not for Boom's generalized linedefs
 		special &&												// not for lines without a special
-		tagManager.LineHasID(line, line->args[0]) &&							// Safety check: exclude edited UDMF linedefs or ones that don't map the tag to args[0]
+		level.LineHasId(line, line->args[0]) &&							// Safety check: exclude edited UDMF linedefs or ones that don't map the tag to args[0]
 		line->args[0] &&										// only if there's a tag (which is stored in the first arg)
-		P_FindFirstSectorFromTag (line->args[0]) == -1)			// only if no sector is tagged to this linedef
+		level.FindFirstSectorFromTag (line->args[0]) == -1)			// only if no sector is tagged to this linedef
 	{
 		P_ChangeSwitchTexture (line->sidedef[0], repeat, special);
 		line->special = 0;
@@ -516,7 +516,7 @@ static void DoSectorDamage(AActor *actor, sector_t *sec, int amount, FName type,
 
 void P_SectorDamage(FLevelLocals *Level, int tag, int amount, FName type, PClassActor *protectClass, int flags)
 {
-	FSectorTagIterator itr(tag);
+	auto itr = Level->GetSectorTagIterator(tag);
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
@@ -751,13 +751,13 @@ DLightTransfer::DLightTransfer (sector_t *srcSec, int target, bool copyFloor)
 	auto Level = &level;
 	if (copyFloor)
 	{
-		FSectorTagIterator itr(target);
+		auto itr = Level->GetSectorTagIterator(target);
 		while ((secnum = itr.Next()) >= 0)
 			Level->sectors[secnum].ChangeFlags(sector_t::floor, 0, PLANEF_ABSLIGHTING);
 	}
 	else
 	{
-		FSectorTagIterator itr(target);
+		auto itr = Level->GetSectorTagIterator(target);
 		while ((secnum = itr.Next()) >= 0)
 			Level->sectors[secnum].ChangeFlags(sector_t::ceiling, 0, PLANEF_ABSLIGHTING);
 	}
@@ -782,13 +782,13 @@ void DLightTransfer::DoTransfer (int llevel, int target, bool floor)
 	auto Level = &level;
 	if (floor)
 	{
-		FSectorTagIterator itr(target);
+		auto itr = Level->GetSectorTagIterator(target);
 		while ((secnum = itr.Next()) >= 0)
 			Level->sectors[secnum].SetPlaneLight(sector_t::floor, llevel);
 	}
 	else
 	{
-		FSectorTagIterator itr(target);
+		auto itr = Level->GetSectorTagIterator(target);
 		while ((secnum = itr.Next()) >= 0)
 			Level->sectors[secnum].SetPlaneLight(sector_t::ceiling, llevel);
 	}
@@ -850,8 +850,8 @@ DWallLightTransfer::DWallLightTransfer (sector_t *srcSec, int target, uint8_t fl
 		wallflags = WALLF_ABSLIGHTING | WALLF_NOFAKECONTRAST;
 	}
 
-	FLineIdIterator itr(target);
 	auto Level = &level;
+	auto itr = Level->GetLineIdIterator(target);
 	while ((linenum = itr.Next()) >= 0)
 	{
 		if (flags & WLF_SIDE1 && Level->lines[linenum].sidedef[0] != NULL)
@@ -883,7 +883,7 @@ void DWallLightTransfer::DoTransfer (short lightlevel, int target, uint8_t flags
 	int linenum;
 
 	auto Level = &level;
-	FLineIdIterator itr(target);
+	auto itr = Level->GetLineIdIterator(target);
 	while ((linenum = itr.Next()) >= 0)
 	{
 		line_t *line = &Level->lines[linenum];

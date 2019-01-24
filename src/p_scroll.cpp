@@ -648,7 +648,7 @@ void SetWallScroller (FLevelLocals *Level, int id, int sidechoice, double dx, do
 		{
 			auto wall = scroller->GetWall ();
 
-			if (wall != nullptr && tagManager.LineHasID(wall->linedef, id) && wall->linedef->sidedef[sidechoice] == wall && Where == scroller->GetScrollParts())
+			if (wall != nullptr && Level->LineHasId(wall->linedef, id) && wall->linedef->sidedef[sidechoice] == wall && Where == scroller->GetScrollParts())
 			{
 				scroller->Destroy ();
 			}
@@ -669,7 +669,7 @@ void SetWallScroller (FLevelLocals *Level, int id, int sidechoice, double dx, do
 				if (wall != nullptr)
 				{
 					auto line = wall->linedef;
-					if (tagManager.LineHasID(line, id) && line->sidedef[sidechoice] == wall && Where == scroll->GetScrollParts())
+					if (Level->LineHasId(line, id) && line->sidedef[sidechoice] == wall && Where == scroll->GetScrollParts())
 					{
 						scroll->SetRate(dx, dy);
 						Collection.Push(scroll);
@@ -682,7 +682,7 @@ void SetWallScroller (FLevelLocals *Level, int id, int sidechoice, double dx, do
 		int linenum;
 
 		// Now create scrollers for any walls that don't already have them.
-		FLineIdIterator itr(id);
+		auto itr = Level->GetLineIdIterator(id);
 		while ((linenum = itr.Next()) >= 0)
 		{
 			side_t *side = Level->lines[linenum].sidedef[sidechoice];

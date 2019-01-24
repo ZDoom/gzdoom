@@ -141,6 +141,7 @@ private:
 	void ProcessEDMapthing(FMapThing *mt, int recordnum);
 	void ProcessEDLinedef(line_t *line, int recordnum);
 	void ProcessEDSector(sector_t *sec, int recordnum);
+	void parseEDLinedef(FScanner &sc, TMap<int, EDLinedef> &EDLines);
 
 	// Polyobjects
 	void InitSideLists();
@@ -189,6 +190,8 @@ private:
 	void SetupFloorPortal (AActor *point);
 	void SetupCeilingPortal (AActor *point);
 	void TranslateTeleportThings();
+	int Set3DFloor(line_t * line, int param, int param2, int alpha);
+	void Spawn3DFloors ();
 
 	void SetTexture(side_t *side, int position, const char *name, FMissingTextureTracker &track);
 	void SetTexture(sector_t *sector, int index, int position, const char *name, FMissingTextureTracker &track, bool truncate);

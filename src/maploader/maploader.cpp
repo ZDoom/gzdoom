@@ -1749,7 +1749,7 @@ void MapLoader::LoadLineDefs (MapData * map)
 		mld->special = LittleShort(mld->special);
 		mld->tag = LittleShort(mld->tag);
 		mld->flags = LittleShort(mld->flags);
-		P_TranslateLineDef (ld, mld, -1);
+		Level->TranslateLineDef (ld, mld, -1);
 		// do not assign the tag for Extradata lines.
 		if (ld->special != Static_Init || (ld->args[1] != Init_EDLine && ld->args[1] != Init_EDSector))
 		{
@@ -2753,7 +2753,7 @@ void MapLoader::GroupLines (bool buildmap)
 	{
 		if (sector->Lines.Count == 0)
 		{
-			Printf ("Sector %i (tag %i) has no lines\n", i, tagManager.GetFirstSectorTag(Index(sector)));
+			Printf ("Sector %i (tag %i) has no lines\n", i, Level->GetFirstSectorTag(Index(sector)));
 			// 0 the sector's tag so that no specials can use it
 			tagManager.RemoveSectorTags(i);
 		}
@@ -3241,7 +3241,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	CopySlopes();
 
 	// Spawn 3d floors - must be done before spawning things so it can't be done in P_SpawnSpecials
-	P_Spawn3DFloors();
+	Spawn3DFloors();
 
 	SpawnThings(position);
 

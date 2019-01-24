@@ -117,6 +117,8 @@ struct FLevelLocals : public FLevelData
 	bool CheckIfExitIsGood(AActor *self, level_info_t *newmap);
 	void FormatMapName(FString &mapname, const char *mapnamecolor);
 	void ClearAllSubsectorLinks();
+	void TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineindexforid = -1);
+
 	FSectorTagIterator GetSectorTagIterator(int tag)
 	{
 		return FSectorTagIterator(tag);
@@ -154,10 +156,40 @@ struct FLevelLocals : public FLevelData
 	{
 		return tagManager.SectorHasTag(sector, tag);
 	}
+	int GetFirstSectorTag(const sector_t *sect) const
+	{
+		return tagManager.GetFirstSectorTag(sect);
+	}
+	int GetFirstSectorTag(int i) const
+	{
+		return tagManager.GetFirstSectorTag(i);
+	}
+	int GetFirstLineId(const line_t *sect) const
+	{
+		return tagManager.GetFirstLineID(sect);
+	}
+
 	bool LineHasId(int line, int tag)
 	{
 		return tagManager.LineHasID(line, tag);
 	}
+	bool LineHasId(line_t *line, int tag)
+	{
+		return tagManager.LineHasID(line, tag);
+	}
+
+	int FindFirstSectorFromTag(int tag)
+	{
+		auto it = GetSectorTagIterator(tag);
+		return it.Next();
+	}
+	
+	int FindFirstLineFromID(int tag)
+	{
+		auto it = GetLineIdIterator(tag);
+		return it.Next();
+	}
+
 	sector_t *PointInSector(const DVector2 &pos)
 	{
 		return P_PointInSector(pos);

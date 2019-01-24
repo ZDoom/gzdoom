@@ -218,7 +218,7 @@ bool EV_DoPillar (DPillar::EPillar type, line_t *line, int tag,
 	bool rtn = false;
 
 	// check if a manual trigger; if so do just the sector on the backside
-	FSectorTagIterator itr(tag, line);
+	auto itr = level.GetSectorTagIterator(tag, line);
 	while ((secnum = itr.Next()) >= 0)
 	{
 		sec = &level.sectors[secnum];

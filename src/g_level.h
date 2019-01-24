@@ -254,7 +254,7 @@ enum ELevelFlags : unsigned int
 struct FSpecialAction
 {
 	FName Type;					// this is initialized before the actors...
-	uint8_t Action;
+	int Action;
 	int Args[5];
 };
 

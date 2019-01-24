@@ -532,7 +532,7 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 	bool 		rtn = false;
 
 	// check if a manual trigger; if so do just the sector on the backside
-	FSectorTagIterator it(tag, line);
+	auto it = level.GetSectorTagIterator(tag, line);
 	while ((secnum = it.Next()) >= 0)
 	{
 		rtn |= P_CreateFloor(&level.sectors[secnum], floortype, line, speed, height, crush, change, hexencrush, hereticlower);
@@ -551,7 +551,7 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 bool EV_FloorCrushStop (int tag, line_t *line)
 {
 	int secnum;
-	FSectorTagIterator it(tag, line);
+	auto it = level.GetSectorTagIterator(tag, line);
 	while ((secnum = it.Next()) >= 0)
 	{
 		sector_t *sec = &level.sectors[secnum];
@@ -571,7 +571,7 @@ bool EV_FloorCrushStop (int tag, line_t *line)
 bool EV_StopFloor(int tag, line_t *line)
 {
 	int sec;
-	FSectorTagIterator it(tag, line);
+	auto it = level.GetSectorTagIterator(tag, line);
 	while ((sec = it.Next()) >= 0)
 	{
 		if (level.sectors[sec].floordata)
@@ -619,7 +619,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 	persteptime = int(stairsize / speed);
 
 	// check if a manual trigger, if so do just the sector on the backside
-	FSectorTagIterator itr(tag, line);
+	auto itr = level.GetSectorTagIterator(tag, line);
 	// The compatibility mode doesn't work with a hashing algorithm.
 	// It needs the original linear search method. This was broken in Boom.
 	bool compatible = tag != 0 && (i_compatflags & COMPATF_STAIRINDEX);
@@ -794,7 +794,7 @@ bool EV_DoDonut (int tag, line_t *line, double pillarspeed, double slimespeed)
 		
 	rtn = false;
 
-	FSectorTagIterator itr(tag, line);
+	auto itr = level.GetSectorTagIterator(tag, line);
 	while ((secnum = itr.Next()) >= 0)
 	{
 		s1 = &level.sectors[secnum];					// s1 is pillar's sector
@@ -1011,7 +1011,7 @@ bool EV_DoElevator (line_t *line, DElevator::EElevator elevtype,
 	secnum = -1;
 	rtn = false;
 
-	FSectorTagIterator itr(tag, line);
+	auto itr = level.GetSectorTagIterator(tag, line);
 
 	// act on all sectors with the same tag as the triggering linedef
 	while ((secnum = itr.Next()) >= 0)
@@ -1106,7 +1106,7 @@ bool EV_DoChange (line_t *line, EChange changetype, int tag)
 
 	rtn = false;
 	// change all sectors with the same tag as the linedef
-	FSectorTagIterator it(tag);
+	auto it = level.GetSectorTagIterator(tag);
 	while ((secnum = it.Next()) >= 0)
 	{
 		sec = &level.sectors[secnum];
@@ -1320,7 +1320,7 @@ bool EV_StartWaggle (int tag, line_t *line, int height, int speed, int offset,
 
 	retCode = false;
 
-	FSectorTagIterator itr(tag, line);
+	auto itr = level.GetSectorTagIterator(tag, line);
 
 	while ((sectorIndex = itr.Next()) >= 0)
 	{

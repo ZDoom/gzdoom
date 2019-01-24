@@ -208,7 +208,7 @@ static line_t *FindDestination(line_t *src, int tag)
 	if (tag)
 	{
 		int lineno = -1;
-		FLineIdIterator it(tag);
+		auto it = level.GetLineIdIterator(tag);
 
 		while ((lineno = it.Next()) >= 0)
 		{
@@ -305,11 +305,11 @@ void P_SpawnLinePortal(line_t* line)
 	{
 		// EE-style portals require that the first line ID is identical and the first arg of the two linked linedefs are 0 and 1 respectively.
 
-		int mytag = tagManager.GetFirstLineID(line);
+		int mytag = level.GetFirstLineId(line);
 
 		for (auto &ln : level.lines)
 		{
-			if (tagManager.GetFirstLineID(&ln) == mytag && ln.args[0] == 1 && ln.special == Line_SetPortal)
+			if (level.GetFirstLineId(&ln) == mytag && ln.args[0] == 1 && ln.special == Line_SetPortal)
 			{
 				line->portalindex = level.linePortals.Reserve(1);
 				FLinePortal *port = &level.linePortals.Last();
@@ -483,7 +483,7 @@ bool P_ChangePortal(line_t *ln, int thisid, int destid)
 	int lineno;
 
 	if (thisid == 0) return ChangePortalLine(ln, destid);
-	FLineIdIterator it(thisid);
+	auto it = level.GetLineIdIterator(thisid);
 	bool res = false;
 	while ((lineno = it.Next()) >= 0)
 	{

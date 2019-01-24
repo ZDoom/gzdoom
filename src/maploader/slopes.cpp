@@ -53,7 +53,7 @@ void MapLoader::SlopeLineToPoint (int lineid, const DVector3 &pos, bool slopeCei
 {
 	int linenum;
 
-	FLineIdIterator itr(lineid);
+	auto itr = Level->GetLineIdIterator(lineid);
 	while ((linenum = itr.Next()) >= 0)
 	{
 		const line_t *line = &Level->lines[linenum];
@@ -123,7 +123,7 @@ void MapLoader::CopyPlane (int tag, sector_t *dest, bool copyCeil)
 	sector_t *source;
 	int secnum;
 
-	secnum = P_FindFirstSectorFromTag (tag);
+	secnum = Level->FindFirstSectorFromTag (tag);
 	if (secnum == -1)
 	{
 		return;

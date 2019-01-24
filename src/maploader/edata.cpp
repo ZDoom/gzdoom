@@ -50,7 +50,7 @@
 #include "maploader.h"
 
 
-static void parseLinedef(FScanner &sc, TMap<int, EDLinedef> &EDLines)
+void MapLoader::parseEDLinedef(FScanner &sc, TMap<int, EDLinedef> &EDLines)
 {
 	EDLinedef ld;
 	bool argsset = false;
@@ -159,7 +159,7 @@ static void parseLinedef(FScanner &sc, TMap<int, EDLinedef> &EDLines)
 		maplinedef_t mld;
 		mld.special = -ld.special;
 		mld.tag = ld.tag;
-		P_TranslateLineDef(&line, &mld);
+		Level->TranslateLineDef(&line, &mld);
 		ld.special = line.special;
 		ld.activation = line.activation;
 		ld.flags = (ld.flags & ~(ML_REPEAT_SPECIAL | ML_FIRSTSIDEONLY)) | (line.flags & (ML_REPEAT_SPECIAL | ML_FIRSTSIDEONLY));
@@ -529,7 +529,7 @@ void MapLoader::InitED()
 	{
 		if (sc.Compare("linedef"))
 		{
-			parseLinedef(sc, EDLines);
+			parseEDLinedef(sc, EDLines);
 		}
 		else if (sc.Compare("mapthing"))
 		{

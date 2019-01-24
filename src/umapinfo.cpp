@@ -271,6 +271,7 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 			scanner.MustGetValue(false);
 			int tag = scanner.Number;
 			// allow no 0-tag specials here, unless a level exit.
+#pragma message("Fixme: This needs to be evaluated at run time")
 			if (tag != 0 || special == 11 || special == 51 || special == 52 || special == 124)
 			{
 				FSpecialAction & bossact = mape->BossActions[mape->BossActions.Reserve(1)];
@@ -278,7 +279,7 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 				maplinedef_t mld;
 				mld.special = special;
 				mld.tag = tag;
-				P_TranslateLineDef(&line, &mld);
+				//level.TranslateLineDef(&line, &mld);
 				bossact = { type, (uint8_t)line.special, {line.args[0], line.args[1],line.args[2],line.args[3],line.args[4]} };
 			}
 		}

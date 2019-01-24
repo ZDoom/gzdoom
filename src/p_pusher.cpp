@@ -175,7 +175,7 @@ DPusher::DPusher (DPusher::EPusher type, line_t *l, int magnitude, int angle,
 
 int DPusher::CheckForSectorMatch (EPusher type, int tag)
 {
-	if (m_Type == type && tagManager.SectorHasTag(m_Affectee, tag))
+	if (m_Type == type && level.SectorHasTag(m_Affectee, tag))
 		return m_Affectee;
 	else
 		return -1;
@@ -444,7 +444,7 @@ void AdjustPusher (int tag, int magnitude, int angle, bool wind)
 	int secnum;
 
 	// Now create pushers for any sectors that don't already have them.
-	FSectorTagIterator itr(tag);
+	auto itr = level.GetSectorTagIterator(tag);
 	while ((secnum = itr.Next()) >= 0)
 	{
 		unsigned int i;

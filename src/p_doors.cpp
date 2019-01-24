@@ -490,7 +490,7 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 	else
 	{	// [RH] Remote door
 
-		FSectorTagIterator it(tag);
+		auto it = level.GetSectorTagIterator(tag);
 		while ((secnum = it.Next()) >= 0)
 		{
 			sec = &level.sectors[secnum];
@@ -787,7 +787,7 @@ bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay,
 		return false;
 	}
 
-	FSectorTagIterator it(tag);
+	auto it = level.GetSectorTagIterator(tag);
 	while ((secnum = it.Next()) >= 0)
 	{
 		sec = &level.sectors[secnum];

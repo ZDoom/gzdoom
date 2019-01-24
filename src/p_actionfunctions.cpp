@@ -3288,7 +3288,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LineEffect)
 		if ((oldjunk.special = special))					// Linedef type
 		{
 			oldjunk.tag = tag;								// Sector tag for linedef
-			P_TranslateLineDef(&junk, &oldjunk);			// Turn into native type
+			level.TranslateLineDef(&junk, &oldjunk);			// Turn into native type
 			res = !!P_ExecuteSpecial(junk.special, NULL, self, false, junk.args[0], 
 				junk.args[1], junk.args[2], junk.args[3], junk.args[4]); 
 			if (res && !(junk.flags & ML_REPEAT_SPECIAL))	// If only once,
@@ -4828,7 +4828,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
 		}
 		else if (sec->special == Scroll_StrifeCurrent)
 		{
-			int anglespeed = tagManager.GetFirstSectorTag(sec) - 100;
+			int anglespeed = level.GetFirstSectorTag(sec) - 100;
 			double speed = (anglespeed % 10) / 16.;
 			DAngle an = (anglespeed / 10) * (360 / 8.);
 			self->Thrust(an, speed);

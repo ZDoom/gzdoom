@@ -1111,7 +1111,7 @@ void MapLoader::LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 			ss->special = LittleShort(ms->special);
 		else	// [RH] Translate to new sector special
 			ss->special = P_TranslateSectorSpecial (LittleShort(ms->special));
-		tagManager.AddSectorTag(i, LittleShort(ms->tag));
+		Level->tagManager.AddSectorTag(i, LittleShort(ms->tag));
 		ss->thinglist = nullptr;
 		ss->touching_thinglist = nullptr;		// phares 3/14/98
 		ss->sectorportal_thinglist = nullptr;
@@ -1529,7 +1529,7 @@ void MapLoader::SetLineID (int i, line_t *ld)
 		}
 		if (setid != -1)
 		{
-			tagManager.AddLineID(i, setid);
+			Level->tagManager.AddLineID(i, setid);
 		}
 	}
 }
@@ -1753,7 +1753,7 @@ void MapLoader::LoadLineDefs (MapData * map)
 		// do not assign the tag for Extradata lines.
 		if (ld->special != Static_Init || (ld->args[1] != Init_EDLine && ld->args[1] != Init_EDSector))
 		{
-			tagManager.AddLineID(i, mld->tag);
+			Level->tagManager.AddLineID(i, mld->tag);
 		}
 #ifndef NO_EDATA
 		if (ld->special == Static_Init && ld->args[1] == Init_EDLine)
@@ -2755,7 +2755,7 @@ void MapLoader::GroupLines (bool buildmap)
 		{
 			Printf ("Sector %i (tag %i) has no lines\n", i, Level->GetFirstSectorTag(Index(sector)));
 			// 0 the sector's tag so that no specials can use it
-			tagManager.RemoveSectorTags(i);
+			Level->tagManager.RemoveSectorTags(i);
 		}
 		else
 		{
@@ -2810,7 +2810,7 @@ void MapLoader::GroupLines (bool buildmap)
 	}
 
 	// killough 1/30/98: Create xref tables for tags
-	tagManager.HashTags();
+	Level->tagManager.HashTags();
 
 	if (!buildmap)
 	{

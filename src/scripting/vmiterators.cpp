@@ -243,7 +243,7 @@ class DSectorTagIterator : public DObject, public FSectorTagIterator
 {
 	DECLARE_ABSTRACT_CLASS(DSectorTagIterator, DObject);
 public:
-	DSectorTagIterator(int tag, line_t *line)
+	DSectorTagIterator(FTagManager &tm, int tag, line_t *line) : FSectorTagIterator(tm)
 	{
 		if (line == nullptr) Init(tag);
 		else Init(tag, line);
@@ -254,7 +254,7 @@ IMPLEMENT_CLASS(DSectorTagIterator, true, false);
 
 static DSectorTagIterator *CreateSTI(int tag, line_t *line)
 {
-	return Create<DSectorTagIterator>(tag, line);
+	return Create<DSectorTagIterator>(level.tagManager, tag, line);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DSectorTagIterator, Create, CreateSTI)
@@ -262,7 +262,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DSectorTagIterator, Create, CreateSTI)
 	PARAM_PROLOGUE;
 	PARAM_INT(tag);
 	PARAM_POINTER(line, line_t);
-	ACTION_RETURN_POINTER(Create<DSectorTagIterator>(tag, line));
+	ACTION_RETURN_POINTER(CreateSTI(tag, line));
 }
 
 int NextSTI(DSectorTagIterator *self)
@@ -299,8 +299,8 @@ class DLineIdIterator : public DObject, public FLineIdIterator
 {
 	DECLARE_ABSTRACT_CLASS(DLineIdIterator, DObject);
 public:
-	DLineIdIterator(int tag)
-		: FLineIdIterator(tag)
+	DLineIdIterator(FTagManager &tm, int tag)
+		: FLineIdIterator(tm, tag)
 	{
 	}
 };
@@ -310,14 +310,14 @@ IMPLEMENT_CLASS(DLineIdIterator, true, false);
 
 static DLineIdIterator *CreateLTI(int tag)
 {
-	return Create<DLineIdIterator>(tag);
+	return Create<DLineIdIterator>(level.tagManager, tag);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DLineIdIterator, Create, CreateLTI)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(tag);
-	ACTION_RETURN_POINTER(Create<DLineIdIterator>(tag));
+	ACTION_RETURN_POINTER(CreateLTI(tag));
 }
 
 int NextLTI(DLineIdIterator *self)

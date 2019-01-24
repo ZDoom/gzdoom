@@ -904,7 +904,7 @@ void MapLoader::Spawn3DFloors ()
 			{
 				if (line.args[1]&8)
 				{
-					tagManager.AddLineID(line.Index(), line.args[4]);
+					Level->tagManager.AddLineID(line.Index(), line.args[4]);
 				}
 				else
 				{

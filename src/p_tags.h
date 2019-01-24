@@ -76,16 +76,15 @@ public:	// The ones below are called by functions that cannot be declared as fri
 	void DumpTags();
 };
 
-extern FTagManager tagManager;
-
 class FSectorTagIterator
 {
 	friend struct FLevelLocals;
 protected:
 	int searchtag;
 	int start;
+	FTagManager &tagManager;
 
-	FSectorTagIterator()
+	FSectorTagIterator(FTagManager &tm) : tagManager(tm)
 	{
 		// For DSectorTagIterator
 	}
@@ -110,13 +109,13 @@ protected:
 		}
 	}
 
-	FSectorTagIterator(int tag)
+	FSectorTagIterator(FTagManager &tm, int tag) : tagManager(tm)
 	{
 		Init(tag);
 	}
 
 	// Special constructor for actions that treat tag 0 as  'back of activation line'
-	FSectorTagIterator(int tag, line_t *line)
+	FSectorTagIterator(FTagManager &tm, int tag, line_t *line) : tagManager(tm)
 	{
 		Init(tag, line);
 	}
@@ -131,8 +130,9 @@ class FLineIdIterator
 protected:
 	int searchtag;
 	int start;
+	FTagManager &tagManager;
 
-	FLineIdIterator(int id)
+	FLineIdIterator(FTagManager &tm, int id) : tagManager(tm)
 	{
 		searchtag = id;
 		start = tagManager.IDHashFirst[((unsigned int)id) % FTagManager::TAG_HASH_SIZE];

@@ -394,7 +394,7 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, ClearSectorTags)
 {
 	PARAM_SELF_PROLOGUE(DLevelCompatibility);
 	PARAM_INT(sector);
-	tagManager.RemoveSectorTags(sector);
+	self->Level->tagManager.RemoveSectorTags(sector);
 	return 0;
 }
 
@@ -406,7 +406,7 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, AddSectorTag)
 
 	if ((unsigned)sector < self->Level->sectors.Size())
 	{
-		tagManager.AddSectorTag(sector, tag);
+		self->Level->tagManager.AddSectorTag(sector, tag);
 	}
 	return 0;
 }
@@ -415,7 +415,7 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, ClearLineIDs)
 {
 	PARAM_SELF_PROLOGUE(DLevelCompatibility);
 	PARAM_INT(line);
-	tagManager.RemoveLineIDs(line);
+	self->Level->tagManager.RemoveLineIDs(line);
 	return 0;
 }
 
@@ -427,7 +427,7 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, AddLineID)
 	
 	if ((unsigned)line < self->Level->lines.Size())
 	{
-		tagManager.AddLineID(line, tag);
+		self->Level->tagManager.AddLineID(line, tag);
 	}
 	return 0;
 }

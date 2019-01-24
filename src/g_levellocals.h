@@ -103,6 +103,8 @@ struct FLevelData
 	TArray<FPlayerStart> AllPlayerStarts;
 
 	FBehaviorContainer Behaviors;
+	FTagManager tagManager;
+
 };
 
 struct FLevelLocals : public FLevelData
@@ -121,15 +123,15 @@ struct FLevelLocals : public FLevelData
 
 	FSectorTagIterator GetSectorTagIterator(int tag)
 	{
-		return FSectorTagIterator(tag);
+		return FSectorTagIterator(tagManager, tag);
 	}
 	FSectorTagIterator GetSectorTagIterator(int tag, line_t *line)
 	{
-		return FSectorTagIterator(tag, line);
+		return FSectorTagIterator(tagManager, tag, line);
 	}
 	FLineIdIterator GetLineIdIterator(int tag)
 	{
-		return FLineIdIterator(tag);
+		return FLineIdIterator(tagManager, tag);
 	}
 	template<class T> TThinkerIterator<T> GetThinkerIterator(FName subtype = NAME_None)
 	{

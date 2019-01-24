@@ -3,10 +3,13 @@ class LevelCompatibility native play
 {
 	native LevelLocals level;
 	
-	protected void Apply(Name checksum)
+	protected void Apply(Name checksum, String mapname)
 	{
 		switch (checksum)
 		{			
+			case 'none':
+				return;
+				
 			case '9BC9E12781903D7C2D5697A5E0AEFD6F': // HACX.WAD map05 from 21.10.2010
 			case '9527DD0809FDA39CCFC316A21D135783': // HACX.WAD map05 from 20.10.2010
 			{

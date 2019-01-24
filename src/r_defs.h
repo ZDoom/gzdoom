@@ -1408,6 +1408,7 @@ struct line_t
 	FSectorPortal *GetTransferredPortal();
 	void AdjustLine();
 
+	inline FLevelLocals *GetLevel() const;
 	inline FLinePortal *getPortal() const;
 	inline bool isLinePortal() const;
 	inline bool isVisualPortal() const;

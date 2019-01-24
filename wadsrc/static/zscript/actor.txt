@@ -584,7 +584,10 @@ class Actor : Thinker native
 	native static int ApplyDamageFactors(class<Inventory> itemcls, Name damagetype, int damage, int defdamage);
 	native void RemoveFromHash();
 	native void ChangeTid(int newtid);
-	native static int FindUniqueTid(int start = 0, int limit = 0);
+	deprecated("3.8") static int FindUniqueTid(int start = 0, int limit = 0)
+	{
+		return level.FindUniqueTid(start, limit);
+	}
 	native void SetShade(color col);
 	native clearscope int GetRenderStyle() const;
 	native clearscope bool CheckKeys(int locknum, bool remote, bool quiet = false);

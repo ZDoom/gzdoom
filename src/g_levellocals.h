@@ -104,6 +104,7 @@ struct FLevelData
 
 	FBehaviorContainer Behaviors;
 	FTagManager tagManager;
+	AActor *TIDHash[128];
 
 };
 
@@ -120,6 +121,8 @@ struct FLevelLocals : public FLevelData
 	void FormatMapName(FString &mapname, const char *mapnamecolor);
 	void ClearAllSubsectorLinks();
 	void TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineindexforid = -1);
+	bool IsTIDUsed(int tid);
+	int FindUniqueTID(int start_tid, int limit);
 
 	FSectorTagIterator GetSectorTagIterator(int tag)
 	{
@@ -140,15 +143,15 @@ struct FLevelLocals : public FLevelData
 	}
 	FActorIterator GetActorIterator(int tid)
 	{
-		return FActorIterator(tid);
+		return FActorIterator(TIDHash, tid);
 	}
 	FActorIterator GetActorIterator(int tid, AActor *start)
 	{
-		return FActorIterator(tid, start);
+		return FActorIterator(TIDHash, tid, start);
 	}
 	NActorIterator GetActorIterator(FName type, int tid)
 	{
-		return NActorIterator(type, tid);
+		return NActorIterator(TIDHash, type, tid);
 	}
 	bool SectorHasTags(sector_t *sector)
 	{
@@ -205,6 +208,12 @@ struct FLevelLocals : public FLevelData
 	{
 		auto index = Polyobjects.FindEx([=](const auto &poly) { return poly.tag == polyNum; });
 		return index == Polyobjects.Size()? nullptr : &Polyobjects[index];
+	}
+
+
+	void ClearTIDHashes ()
+	{
+		memset(TIDHash, 0, sizeof(TIDHash));
 	}
 
 

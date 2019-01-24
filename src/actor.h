@@ -1241,19 +1241,16 @@ public:
 
 
 	// ThingIDs
-	static void ClearTIDHashes ();
 	void AddToHash ();
 	void RemoveFromHash ();
 
 
 private:
-	static AActor *TIDHash[128];
 	static inline int TIDHASH (int key) { return key & 127; }
 public:
 	static FSharedStringArena mStringPropertyData;
 private:
 	friend class FActorIterator;
-	friend bool P_IsTIDUsed(int tid);
 
 	bool FixMapthingPos();
 
@@ -1496,19 +1493,21 @@ public:
 
 class FActorIterator
 {
+	friend struct FLevelLocals;
+protected:
+	FActorIterator (AActor **hash, int i) : TIDHash(hash), base (nullptr), id (i)
+	{
+	}
+	FActorIterator (AActor **hash, int i, AActor *start) : TIDHash(hash), base (start), id (i)
+	{
+	}
 public:
-	FActorIterator (int i) : base (NULL), id (i)
-	{
-	}
-	FActorIterator (int i, AActor *start) : base (start), id (i)
-	{
-	}
 	AActor *Next ()
 	{
 		if (id == 0)
-			return NULL;
+			return nullptr;
 		if (!base)
-			base = AActor::TIDHash[id & 127];
+			base = TIDHash[id & 127];
 		else
 			base = base->inext;
 
@@ -1523,21 +1522,23 @@ public:
 	}
 
 private:
+	AActor **TIDHash;
 	AActor *base;
 	int id;
 };
 
 class NActorIterator : public FActorIterator
 {
+	friend struct FLevelLocals;
 	const PClass *type;
+protected:
+	NActorIterator (AActor **hash, const PClass *cls, int id) : FActorIterator (hash, id) { type = cls; }
+	NActorIterator (AActor **hash, FName cls, int id) : FActorIterator (hash, id) { type = PClass::FindClass(cls); }
 public:
-	NActorIterator (const PClass *cls, int id) : FActorIterator (id) { type = cls; }
-	NActorIterator (FName cls, int id) : FActorIterator (id) { type = PClass::FindClass(cls); }
-	NActorIterator (const char *cls, int id) : FActorIterator (id) { type = PClass::FindClass(cls); }
 	AActor *Next ()
 	{
 		AActor *actor;
-		if (type == NULL) return NULL;
+		if (type == nullptr) return nullptr;
 		do
 		{
 			actor = FActorIterator::Next ();
@@ -1545,9 +1546,6 @@ public:
 		return actor;
 	}
 };
-
-bool P_IsTIDUsed(int tid);
-int P_FindUniqueTID(int start_tid, int limit);
 
 PClassActor *ClassForSpawn(FName classname);
 

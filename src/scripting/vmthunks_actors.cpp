@@ -893,12 +893,17 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetFloorTerrain, GetFloorTerrain)
 	ACTION_RETURN_POINTER(GetFloorTerrain(self));
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, FindUniqueTid, P_FindUniqueTID)
+static int P_FindUniqueTID(FLevelLocals *Level, int start, int limit)
 {
-	PARAM_PROLOGUE;
+	return Level->FindUniqueTID(start, limit);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, FindUniqueTid, P_FindUniqueTID)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_INT(start);
 	PARAM_INT(limit);
-	ACTION_RETURN_INT(P_FindUniqueTID(start, limit));
+	ACTION_RETURN_INT(P_FindUniqueTID(self, start, limit));
 }
 
 static void RemoveFromHash(AActor *self)

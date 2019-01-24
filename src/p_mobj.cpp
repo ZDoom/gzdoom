@@ -2886,19 +2886,6 @@ void P_NightmareRespawn (AActor *mobj)
 }
 
 
-AActor *AActor::TIDHash[128];
-
-//
-// P_ClearTidHashes
-//
-// Clears the tid hashtable.
-//
-
-void AActor::ClearTIDHashes ()
-{
-	memset(TIDHash, 0, sizeof(TIDHash));
-}
-
 //
 // P_AddMobjToHash
 //
@@ -2916,10 +2903,11 @@ void AActor::AddToHash ()
 	else
 	{
 		int hash = TIDHASH (tid);
+		auto &slot = level.TIDHash[hash];
 
-		inext = TIDHash[hash];
-		iprev = &TIDHash[hash];
-		TIDHash[hash] = this;
+		inext = slot;
+		iprev = &slot;
+		slot = this;
 		if (inext)
 		{
 			inext->iprev = &inext;
@@ -2956,9 +2944,9 @@ void AActor::RemoveFromHash ()
 //
 //==========================================================================
 
-bool P_IsTIDUsed(int tid)
+bool FLevelLocals::IsTIDUsed(int tid)
 {
-	AActor *probe = AActor::TIDHash[tid & 127];
+	AActor *probe = TIDHash[tid & 127];
 	while (probe != NULL)
 	{
 		if (probe->tid == tid)
@@ -2981,7 +2969,7 @@ bool P_IsTIDUsed(int tid)
 //
 //==========================================================================
 
-int P_FindUniqueTID(int start_tid, int limit)
+int FLevelLocals::FindUniqueTID(int start_tid, int limit)
 {
 	int tid;
 
@@ -2997,7 +2985,7 @@ int P_FindUniqueTID(int start_tid, int limit)
 		}
 		for (tid = start_tid; tid <= limit; ++tid)
 		{
-			if (tid != 0 && !P_IsTIDUsed(tid))
+			if (tid != 0 && !IsTIDUsed(tid))
 			{
 				return tid;
 			}
@@ -3019,7 +3007,7 @@ int P_FindUniqueTID(int start_tid, int limit)
 	{
 		// Use a positive starting TID.
 		tid = pr_uniquetid.GenRand32() & INT_MAX;
-		tid = P_FindUniqueTID(tid == 0 ? 1 : tid, 5);
+		tid = FindUniqueTID(tid == 0 ? 1 : tid, 5);
 		if (tid != 0)
 		{
 			return tid;
@@ -3033,7 +3021,7 @@ int P_FindUniqueTID(int start_tid, int limit)
 CCMD(utid)
 {
 	Printf("%d\n",
-		P_FindUniqueTID(argv.argc() > 1 ? atoi(argv[1]) : 0,
+		level.FindUniqueTID(argv.argc() > 1 ? atoi(argv[1]) : 0,
 		(argv.argc() > 2 && atoi(argv[2]) >= 0) ? atoi(argv[2]) : 0));
 }
 

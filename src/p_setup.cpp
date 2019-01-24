@@ -276,6 +276,7 @@ void FLevelLocals::ClearLevelData()
 	ClearPortals();
 
 	tagManager.Clear();
+	ClearTIDHashes();
 	Behaviors.UnloadModules();
 	SpotState = nullptr;
 	ACSThinker = nullptr;
@@ -335,9 +336,6 @@ void P_FreeLevelData ()
 	E_Shutdown(true);
 	R_FreePastViewers();
 	P_ClearUDMFKeys();
-
-	// [RH] Clear all ThingID hash chains.
-	AActor::ClearTIDHashes();
 
 	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
 	level.ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.

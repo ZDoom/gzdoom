@@ -480,8 +480,11 @@ class ThinkerIterator : Object native
 }
 
 class ActorIterator : Object native
-{	
-	native static ActorIterator Create(int tid, class<Actor> type = "Actor");
+{
+	deprecated("3.8") static ActorIterator Create(int tid, class<Actor> type = "Actor")
+	{
+		return level.CreateActorIterator(tid, type);
+	}
 	native Actor Next();
 	native void Reinit();
 }
@@ -691,6 +694,7 @@ struct LevelLocals native
 	native bool IsFreelookAllowed() const;
 	native void StartIntermission(Name type, int state) const;
 	native SpotState GetSpotState(bool create = true);
+	native int FindUniqueTid(int start = 0, int limit = 0);
 
 	native static clearscope bool IsPointInMap(vector3 p);
 
@@ -708,7 +712,8 @@ struct LevelLocals native
 
 	native SectorTagIterator CreateSectorTagIterator(int tag, line defline = null);
 	native LineIdIterator CreateLineIdIterator(int tag);
-	
+	native ActorIterator CreateActorIterator(int tid, class<Actor> type = "Actor");
+
 	String TimeFormatted(bool totals = false)
 	{
 		int sec = Thinker.Tics2Seconds(totals? totaltime : time); 

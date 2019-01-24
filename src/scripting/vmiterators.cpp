@@ -342,25 +342,25 @@ class DActorIterator : public DObject, public NActorIterator
 	DECLARE_ABSTRACT_CLASS(DActorIterator, DObject)
 
 public:
-	DActorIterator(PClassActor *cls = nullptr, int tid = 0)
-		: NActorIterator(cls, tid)
+	DActorIterator(AActor **hash, PClassActor *cls = nullptr, int tid = 0)
+		: NActorIterator(hash, cls, tid)
 	{
 	}
 };
 
 IMPLEMENT_CLASS(DActorIterator, true, false);
 
-static DActorIterator *CreateActI(int tid, PClassActor *type)
+static DActorIterator *CreateActI(FLevelLocals *Level, int tid, PClassActor *type)
 {
-	return Create<DActorIterator>(type, tid);
+	return Create<DActorIterator>(Level->TIDHash, type, tid);
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(DActorIterator, Create, CreateActI)
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, CreateActorIterator, CreateActI)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_INT(tid);
 	PARAM_CLASS(type, AActor);
-	ACTION_RETURN_OBJECT(Create<DActorIterator>(type, tid));
+	ACTION_RETURN_OBJECT(CreateActI(self, tid, type));
 }
 
 static AActor *NextActI(DActorIterator *self)

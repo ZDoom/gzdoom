@@ -129,7 +129,7 @@ class Korax : Actor
 	{
 		if ((!special2) && (health <= (SpawnHealth()/2)))
 		{
-			ActorIterator it = ActorIterator.Create(KORAX_FIRST_TELEPORT_TID);
+			ActorIterator it = Level.CreateActorIterator(KORAX_FIRST_TELEPORT_TID);
 			Actor spot = it.Next ();
 			if (spot != null)
 			{
@@ -158,7 +158,7 @@ class Korax : Actor
 		{
 			if (random[KoraxChase]() < 10)
 			{
-				ActorIterator it = ActorIterator.Create(KORAX_TELEPORT_TID);
+				ActorIterator it = Level.CreateActorIterator(KORAX_TELEPORT_TID);
 				Actor spot;
 
 				if (tracer != null)

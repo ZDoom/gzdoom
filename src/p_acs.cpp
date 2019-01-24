@@ -5751,10 +5751,10 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 			break;
 
 		case ACSF_UniqueTID:
-			return P_FindUniqueTID(argCount > 0 ? args[0] : 0, (argCount > 1 && args[1] >= 0) ? args[1] : 0);
+			return level.FindUniqueTID(argCount > 0 ? args[0] : 0, (argCount > 1 && args[1] >= 0) ? args[1] : 0);
 
 		case ACSF_IsTIDUsed:
-			return P_IsTIDUsed(args[0]);
+			return level.IsTIDUsed(args[0]);
 
 		case ACSF_Sqrt:
 			return xs_FloorToInt(g_sqrt(double(args[0])));

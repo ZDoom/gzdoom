@@ -1074,6 +1074,7 @@ set (PCH_SOURCES
 	hwrenderer/utility/hw_shaderpatcher.cpp
 	hwrenderer/utility/hw_vrmodes.cpp
 	maploader/edata.cpp
+	maploader/specials.cpp
 	maploader/maploader.cpp
 	maploader/slopes.cpp
 	maploader/glnodes.cpp

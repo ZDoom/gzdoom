@@ -38,6 +38,7 @@
 #include "p_maputl.h"
 #include "g_levellocals.h"
 #include "maploader/maploader.h"
+#include "p_spec_thinkers.h"
 
 // State.
 #include "serializer.h"
@@ -46,132 +47,6 @@ static FRandom pr_flicker ("Flicker");
 static FRandom pr_lightflash ("LightFlash");
 static FRandom pr_strobeflash ("StrobeFlash");
 static FRandom pr_fireflicker ("FireFlicker");
-
-
-class DFireFlicker : public DLighting
-{
-	DECLARE_CLASS(DFireFlicker, DLighting)
-public:
-	DFireFlicker(sector_t *sector);
-	DFireFlicker(sector_t *sector, int upper, int lower);
-	void		Serialize(FSerializer &arc);
-	void		Tick();
-protected:
-	int 		m_Count;
-	int 		m_MaxLight;
-	int 		m_MinLight;
-private:
-	DFireFlicker();
-};
-
-class DFlicker : public DLighting
-{
-	DECLARE_CLASS(DFlicker, DLighting)
-public:
-	DFlicker(sector_t *sector, int upper, int lower);
-	void		Serialize(FSerializer &arc);
-	void		Tick();
-protected:
-	int 		m_Count;
-	int 		m_MaxLight;
-	int 		m_MinLight;
-private:
-	DFlicker();
-};
-
-class DLightFlash : public DLighting
-{
-	DECLARE_CLASS(DLightFlash, DLighting)
-public:
-	DLightFlash(sector_t *sector);
-	DLightFlash(sector_t *sector, int min, int max);
-	void		Serialize(FSerializer &arc);
-	void		Tick();
-protected:
-	int 		m_Count;
-	int 		m_MaxLight;
-	int 		m_MinLight;
-	int 		m_MaxTime;
-	int 		m_MinTime;
-private:
-	DLightFlash();
-};
-
-class DStrobe : public DLighting
-{
-	DECLARE_CLASS(DStrobe, DLighting)
-public:
-	DStrobe(sector_t *sector, int utics, int ltics, bool inSync);
-	DStrobe(sector_t *sector, int upper, int lower, int utics, int ltics);
-	void		Serialize(FSerializer &arc);
-	void		Tick();
-protected:
-	int 		m_Count;
-	int 		m_MinLight;
-	int 		m_MaxLight;
-	int 		m_DarkTime;
-	int 		m_BrightTime;
-private:
-	DStrobe();
-};
-
-class DGlow : public DLighting
-{
-	DECLARE_CLASS(DGlow, DLighting)
-public:
-	DGlow(sector_t *sector);
-	void		Serialize(FSerializer &arc);
-	void		Tick();
-protected:
-	int 		m_MinLight;
-	int 		m_MaxLight;
-	int 		m_Direction;
-private:
-	DGlow();
-};
-
-// [RH] Glow from Light_Glow and Light_Fade specials
-class DGlow2 : public DLighting
-{
-	DECLARE_CLASS(DGlow2, DLighting)
-public:
-	DGlow2(sector_t *sector, int start, int end, int tics, bool oneshot);
-	void		Serialize(FSerializer &arc);
-	void		Tick();
-protected:
-	int			m_Start;
-	int			m_End;
-	int			m_MaxTics;
-	int			m_Tics;
-	bool		m_OneShot;
-private:
-	DGlow2();
-};
-
-// [RH] Phased light thinker
-class DPhased : public DLighting
-{
-	DECLARE_CLASS(DPhased, DLighting)
-public:
-	DPhased(sector_t *sector);
-	DPhased(sector_t *sector, int baselevel, int phase);
-	// These are for internal use only but the Create template needs access to them.
-	DPhased();
-	DPhased(sector_t *sector, int baselevel);
-
-	void		Serialize(FSerializer &arc);
-	void		Tick();
-protected:
-	uint8_t		m_BaseLevel;
-	uint8_t		m_Phase;
-private:
-	int PhaseHelper(sector_t *sector, int index, int light, sector_t *prev);
-};
-
-#define GLOWSPEED				8
-#define STROBEBRIGHT			5
-#define FASTDARK				15
-#define SLOWDARK				TICRATE
 
 
 //-----------------------------------------------------------------------------
@@ -694,6 +569,7 @@ void DGlow::Serialize(FSerializer &arc)
 
 void DGlow::Tick ()
 {
+	const int GLOWSPEED = 8;
 	int newlight = m_Sector->lightlevel;
 
 	switch (m_Direction)
@@ -997,62 +873,4 @@ void EV_StopLightEffect (int tag)
 	}
 }
 
-
-void MapLoader::SpawnLights(sector_t *sector)
-{
-	switch (sector->special)
-	{
-	case Light_Phased:
-		Create<DPhased>(sector, 48, 63 - (sector->lightlevel & 63));
-		break;
-
-		// [RH] Hexen-like phased lighting
-	case LightSequenceStart:
-		Create<DPhased>(sector);
-		break;
-
-	case dLight_Flicker:
-		Create<DLightFlash>(sector);
-		break;
-
-	case dLight_StrobeFast:
-		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
-		break;
-
-	case dLight_StrobeSlow:
-		Create<DStrobe>(sector, STROBEBRIGHT, SLOWDARK, false);
-		break;
-
-	case dLight_Strobe_Hurt:
-		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
-		break;
-
-	case dLight_Glow:
-		Create<DGlow>(sector);
-		break;
-
-	case dLight_StrobeSlowSync:
-		Create<DStrobe>(sector, STROBEBRIGHT, SLOWDARK, true);
-		break;
-
-	case dLight_StrobeFastSync:
-		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, true);
-		break;
-
-	case dLight_FireFlicker:
-		Create<DFireFlicker>(sector);
-		break;
-
-	case dScroll_EastLavaDamage:
-		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
-		break;
-
-	case sLight_Strobe_Hurt:
-		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
-		break;
-
-	default:
-		break;
-	}
-}
 

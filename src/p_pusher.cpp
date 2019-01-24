@@ -36,48 +36,10 @@
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
+#include "p_spec_thinkers.h"
 #include "maploader/maploader.h"
 
 CVAR(Bool, var_pushers, true, CVAR_SERVERINFO);
-
-// phares 3/20/98: added new model of Pushers for push/pull effects
-
-class DPusher : public DThinker
-{
-	DECLARE_CLASS (DPusher, DThinker)
-	HAS_OBJECT_POINTERS
-public:
-	enum EPusher
-	{
-		p_push,
-		p_pull,
-		p_wind,
-		p_current
-	};
-
-	DPusher ();
-	DPusher (EPusher type, line_t *l, int magnitude, int angle, AActor *source, int affectee);
-	void Serialize(FSerializer &arc);
-	int CheckForSectorMatch (EPusher type, int tag);
-	void ChangeValues (int magnitude, int angle)
-	{
-		DAngle ang = angle * (360. / 256.);
-		m_PushVec = ang.ToVector(magnitude);
-		m_Magnitude = magnitude;
-	}
-
-	void Tick ();
-
-protected:
-	EPusher m_Type;
-	TObjPtr<AActor*> m_Source;// Point source if point pusher
-	DVector2 m_PushVec;
-	double m_Magnitude;		// Vector strength for point pusher
-	double m_Radius;		// Effective radius for point pusher
-	int m_Affectee;			// Number of affected sector
-
-	friend bool PIT_PushThing (AActor *thing);
-};
 
 IMPLEMENT_CLASS(DPusher, false, true)
 
@@ -334,113 +296,28 @@ void DPusher::Tick ()
 	}
 }
 
-/////////////////////////////
-//
-// P_GetPushThing() returns a pointer to an MT_PUSH or MT_PULL thing,
-// NULL otherwise.
 
-AActor *MapLoader::GetPushThing (int s)
+void AdjustPusher(int tag, int magnitude, int angle, bool wind)
 {
-	AActor* thing;
-	sector_t* sec;
+	DPusher::EPusher type = wind ? DPusher::p_wind : DPusher::p_current;
 
-	sec = &Level->sectors[s];
-	thing = sec->thinglist;
-
-	while (thing &&
-		thing->GetClass()->TypeName != NAME_PointPusher &&
-		thing->GetClass()->TypeName != NAME_PointPuller)
-	{
-		thing = thing->snext;
-	}
-	return thing;
-}
-
-/////////////////////////////
-//
-// Initialize the sectors where pushers are present
-//
-
-void MapLoader::SpawnPushers ()
-{
-	line_t *l = &Level->lines[0];
-	int s;
-
-	for (unsigned i = 0; i < Level->lines.Size(); i++, l++)
-	{
-		switch (l->special)
-		{
-		case Sector_SetWind: // wind
-		{
-			auto itr = Level->GetSectorTagIterator(l->args[0]);
-			while ((s = itr.Next()) >= 0)
-				Create<DPusher>(DPusher::p_wind, l->args[3] ? l : nullptr, l->args[1], l->args[2], nullptr, s);
-			l->special = 0;
-			break;
-		}
-
-		case Sector_SetCurrent: // current
-		{
-			auto itr = Level->GetSectorTagIterator(l->args[0]);
-			while ((s = itr.Next()) >= 0)
-				Create<DPusher>(DPusher::p_current, l->args[3] ? l : nullptr, l->args[1], l->args[2], nullptr, s);
-			l->special = 0;
-			break;
-		}
-
-		case PointPush_SetForce: // push/pull
-			if (l->args[0]) {	// [RH] Find thing by sector
-				auto itr = Level->GetSectorTagIterator(l->args[0]);
-				while ((s = itr.Next()) >= 0)
-				{
-					AActor *thing = GetPushThing (s);
-					if (thing) {	// No MT_P* means no effect
-						// [RH] Allow narrowing it down by tid
-						if (!l->args[1] || l->args[1] == thing->tid)
-							Create<DPusher> (DPusher::p_push, l->args[3] ? l : NULL, l->args[2],
-										 0, thing, s);
-					}
-				}
-			} else {	// [RH] Find thing by tid
-				AActor *thing;
-				auto iterator = Level->GetActorIterator(l->args[1]);
-
-				while ( (thing = iterator.Next ()) )
-				{
-					if (thing->GetClass()->TypeName == NAME_PointPusher ||
-						thing->GetClass()->TypeName == NAME_PointPuller)
-					{
-						Create<DPusher> (DPusher::p_push, l->args[3] ? l : NULL, l->args[2], 0, thing, thing->Sector->Index());
-					}
-				}
-			}
-			l->special = 0;
-			break;
-		}
-	}
-}
-
-void AdjustPusher (int tag, int magnitude, int angle, bool wind)
-{
-	DPusher::EPusher type = wind? DPusher::p_wind : DPusher::p_current;
-	
 	// Find pushers already attached to the sector, and change their parameters.
 	TArray<FThinkerCollection> Collection;
 	{
 		TThinkerIterator<DPusher> iterator;
 		FThinkerCollection collect;
 
-		while ( (collect.Obj = iterator.Next ()) )
+		while ((collect.Obj = iterator.Next()))
 		{
-			if ((collect.RefNum = ((DPusher *)collect.Obj)->CheckForSectorMatch (type, tag)) >= 0)
+			if ((collect.RefNum = ((DPusher *)collect.Obj)->CheckForSectorMatch(type, tag)) >= 0)
 			{
-				((DPusher *)collect.Obj)->ChangeValues (magnitude, angle);
-				Collection.Push (collect);
+				((DPusher *)collect.Obj)->ChangeValues(magnitude, angle);
+				Collection.Push(collect);
 			}
 		}
 	}
 
-	size_t numcollected = Collection.Size ();
+	size_t numcollected = Collection.Size();
 	int secnum;
 
 	// Now create pushers for any sectors that don't already have them.
@@ -455,7 +332,7 @@ void AdjustPusher (int tag, int magnitude, int angle, bool wind)
 		}
 		if (i == numcollected)
 		{
-			Create<DPusher> (type, nullptr, magnitude, angle, nullptr, secnum);
+			Create<DPusher>(type, nullptr, magnitude, angle, nullptr, secnum);
 		}
 	}
 }

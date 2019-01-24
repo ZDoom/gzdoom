@@ -171,7 +171,7 @@ FUNC(LS_Polyobj_MoveTo)
 FUNC(LS_Polyobj_MoveToSpot)
 // Polyobj_MoveToSpot (po, speed, tid)
 {
-	FActorIterator iterator (arg2);
+	auto iterator = Level->GetActorIterator(arg2);
 	AActor *spot = iterator.Next();
 	if (spot == NULL) return false;
 	return EV_MovePolyTo (Level, ln, arg0, SPEED(arg1), spot->Pos(), false);
@@ -222,7 +222,7 @@ FUNC(LS_Polyobj_OR_MoveTo)
 FUNC(LS_Polyobj_OR_MoveToSpot)
 // Polyobj_OR_MoveToSpot (po, speed, tid)
 {
-	FActorIterator iterator (arg2);
+	auto iterator = Level->GetActorIterator(arg2);
 	AActor *spot = iterator.Next();
 	if (spot == NULL) return false;
 	return EV_MovePolyTo (Level, ln, arg0, SPEED(arg1), spot->Pos(), true);
@@ -1210,7 +1210,7 @@ FUNC(LS_ThrustThing)
 {
 	if (arg3 != 0)
 	{
-		FActorIterator iterator (arg3);
+		auto iterator = Level->GetActorIterator(arg3);
 		while ((it = iterator.Next()) != NULL)
 		{
 			ThrustThingHelper (it, BYTEANGLE(arg0), arg1, arg2);
@@ -1241,7 +1241,7 @@ FUNC(LS_ThrustThingZ)	// [BC]
 
 	if (arg0 != 0)
 	{
-		FActorIterator iterator (arg0);
+		auto iterator = Level->GetActorIterator(arg0);
 
 		while ( (victim = iterator.Next ()) )
 		{
@@ -1281,7 +1281,7 @@ FUNC(LS_Thing_SetSpecial)	// [BC]
 	else
 	{
 		AActor *actor;
-		FActorIterator iterator (arg0);
+		auto iterator = Level->GetActorIterator(arg0);
 
 		while ( (actor = iterator.Next ()) )
 		{
@@ -1308,7 +1308,7 @@ FUNC(LS_Thing_ChangeTID)
 	}
 	else
 	{
-		FActorIterator iterator (arg0);
+		auto iterator = Level->GetActorIterator(arg0);
 		AActor *actor, *next;
 
 		next = iterator.Next ();
@@ -1424,7 +1424,7 @@ FUNC(LS_Thing_Activate)
 	if (arg0 != 0)
 	{
 		AActor *actor;
-		FActorIterator iterator (arg0);
+		auto iterator = Level->GetActorIterator(arg0);
 		int count = 0;
 
 		actor = iterator.Next ();
@@ -1454,7 +1454,7 @@ FUNC(LS_Thing_Deactivate)
 	if (arg0 != 0)
 	{
 		AActor *actor;
-		FActorIterator iterator (arg0);
+		auto iterator = Level->GetActorIterator(arg0);
 		int count = 0;
 	
 		actor = iterator.Next ();
@@ -1483,7 +1483,7 @@ FUNC(LS_Thing_Remove)
 {
 	if (arg0 != 0)
 	{
-		FActorIterator iterator (arg0);
+		auto iterator = Level->GetActorIterator(arg0);
 		AActor *actor;
 
 		actor = iterator.Next ();
@@ -1527,7 +1527,7 @@ FUNC(LS_Thing_Destroy)
 	}
 	else
 	{
-		FActorIterator iterator (arg0);
+		auto iterator = Level->GetActorIterator(arg0);
 
 		actor = iterator.Next ();
 		while (actor)
@@ -1565,9 +1565,9 @@ FUNC(LS_Thing_ProjectileGravity)
 FUNC(LS_Thing_Hate)
 // Thing_Hate (hater, hatee, group/"xray"?)
 {
-	FActorIterator haterIt (arg0);
-	AActor *hater, *hatee = NULL;
-	FActorIterator hateeIt (arg1);
+	AActor *hater, *hatee = nullptr;
+	auto haterIt = Level->GetActorIterator(arg0);
+	auto hateeIt = Level->GetActorIterator(arg1);
 	bool nothingToHate = false;
 
 	if (arg1 != 0)
@@ -1768,7 +1768,7 @@ FUNC(LS_Thing_Raise)
 	}
 	else
 	{
-		FActorIterator iterator (arg0);
+		auto iterator = Level->GetActorIterator(arg0);
 
 		while ( (target = iterator.Next ()) )
 		{
@@ -1795,7 +1795,7 @@ FUNC(LS_Thing_Stop)
 	}
 	else
 	{
-		FActorIterator iterator (arg0);
+		auto iterator = Level->GetActorIterator(arg0);
 
 		while ( (target = iterator.Next ()) )
 		{
@@ -1811,8 +1811,8 @@ FUNC(LS_Thing_Stop)
 FUNC(LS_Thing_SetGoal)
 // Thing_SetGoal (tid, goal, delay, chasegoal)
 {
-	FActorIterator selfiterator (arg0);
-	NActorIterator goaliterator (NAME_PatrolPoint, arg1);
+	auto selfiterator = Level->GetActorIterator(arg0);
+	auto goaliterator = Level->GetActorIterator(NAME_PatrolPoint, arg1);
 	AActor *self;
 	AActor *goal = goaliterator.Next ();
 	bool ok = false;
@@ -1861,7 +1861,7 @@ enum
 FUNC(LS_Thing_SetTranslation)
 // Thing_SetTranslation (tid, range)
 {
-	FActorIterator iterator (arg0);
+	auto iterator = Level->GetActorIterator(arg0);
 	int range;
 	AActor *target;
 	bool ok = false;
@@ -2278,7 +2278,7 @@ FUNC(LS_Sector_SetLink)
 {
 	if (arg0 != 0)	// control tag == 0 is for static initialization and must not be handled here
 	{
-		int control = level.FindFirstSectorFromTag(arg0);
+		int control = Level->FindFirstSectorFromTag(arg0);
 		if (control >= 0)
 		{
 			return P_AddSectorLinks(&Level->sectors[control], arg1, arg2, arg3);
@@ -2822,7 +2822,7 @@ FUNC(LS_ChangeCamera)
 	AActor *camera;
 	if (arg0 != 0)
 	{
-		FActorIterator iterator (arg0);
+		auto iterator = Level->GetActorIterator(arg0);
 		camera = iterator.Next ();
 	}
 	else
@@ -3159,7 +3159,7 @@ FUNC(LS_NoiseAlert)
 	}
 	else
 	{
-		FActorIterator iter (arg0);
+		auto iter = Level->GetActorIterator(arg0);
 		target = iter.Next();
 	}
 
@@ -3173,7 +3173,7 @@ FUNC(LS_NoiseAlert)
 	}
 	else
 	{
-		FActorIterator iter (arg1);
+		auto iter = Level->GetActorIterator(arg1);
 		emitter = iter.Next();
 	}
 
@@ -3333,7 +3333,7 @@ FUNC(LS_GlassBreak)
 FUNC(LS_StartConversation)
 // StartConversation (tid, facetalker)
 {
-	FActorIterator iterator (arg0);
+	auto iterator = Level->GetActorIterator(arg0);
 
 	AActor *target = iterator.Next();
 
@@ -3384,7 +3384,7 @@ FUNC(LS_Thing_SetConversation)
 
 	if (arg0 != 0)
 	{
-		FActorIterator iterator (arg0);
+		auto iterator = Level->GetActorIterator(arg0);
 		while ((it = iterator.Next()) != NULL)
 		{
 			it->ConversationRoot = dlg_index;

@@ -31,6 +31,7 @@
 #include "serializer.h"
 #include "d_player.h"
 #include "r_utility.h"
+#include "g_levellocals.h"
 
 static FRandom pr_quake ("Quake");
 
@@ -401,7 +402,7 @@ bool P_StartQuakeXYZ(AActor *activator, int tid, int intensityX, int intensityY,
 	}
 	else
 	{
-		FActorIterator iterator (tid);
+		auto iterator = level.GetActorIterator(tid);
 		while ( (center = iterator.Next ()) )
 		{
 			res = true;

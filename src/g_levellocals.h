@@ -142,6 +142,10 @@ struct FLevelLocals : public FLevelData
 	{
 		return FActorIterator(tid);
 	}
+	FActorIterator GetActorIterator(int tid, AActor *start)
+	{
+		return FActorIterator(tid, start);
+	}
 	NActorIterator GetActorIterator(FName type, int tid)
 	{
 		return NActorIterator(type, tid);

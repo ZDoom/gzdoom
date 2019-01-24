@@ -1339,7 +1339,7 @@ int P_LookForTID (AActor *actor, INTBOOL allaround, FLookExParams *params)
 		actor->LastLookActor = nullptr;
 	}
 
-	FActorIterator iterator (actor->TIDtoHate, actor->LastLookActor);
+	auto iterator = level.GetActorIterator(actor->TIDtoHate, actor->LastLookActor);
 	int c = (pr_look3() & 31) + 7;	// Look for between 7 and 38 hatees at a time
 	while ((other = iterator.Next()) != actor->LastLookActor)
 	{
@@ -1760,7 +1760,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 	// [RH] Set goal now if appropriate
 	if (self->special == Thing_SetGoal && self->args[0] == 0) 
 	{
-		NActorIterator iterator (NAME_PatrolPoint, self->args[1]);
+		auto iterator = level.GetActorIterator(NAME_PatrolPoint, self->args[1]);
 		self->special = 0;
 		self->goal = iterator.Next ();
 		self->reactiontime = self->args[2] * TICRATE + level.maptime;
@@ -1889,7 +1889,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
 	// [RH] Set goal now if appropriate
 	if (self->special == Thing_SetGoal && self->args[0] == 0) 
 	{
-		NActorIterator iterator(NAME_PatrolPoint, self->args[1]);
+		auto iterator = level.GetActorIterator(NAME_PatrolPoint, self->args[1]);
 		self->special = 0;
 		self->goal = iterator.Next ();
 		self->reactiontime = self->args[2] * TICRATE + level.maptime;
@@ -2372,8 +2372,8 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		if (result)
 		{
 			// reached the goal
-			NActorIterator iterator (NAME_PatrolPoint, actor->goal->args[0]);
-			NActorIterator specit (NAME_PatrolSpecial, actor->goal->tid);
+			auto iterator = level.GetActorIterator(NAME_PatrolPoint, actor->goal->args[0]);
+			auto specit = level.GetActorIterator(NAME_PatrolSpecial, actor->goal->tid);
 			AActor *spec;
 
 			// Execute the specials of any PatrolSpecials with the same TID

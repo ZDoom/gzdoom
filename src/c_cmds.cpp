@@ -1175,7 +1175,7 @@ static void PrintSecretString(const char *string, bool thislevel)
 			{
 				long tid = (long)strtoll(string+2, (char**)&string, 10);
 				if (*string == ';') string++;
-				FActorIterator it(tid);
+				auto it = level.GetActorIterator(tid);
 				AActor *actor;
 				bool foundone = false;
 				if (thislevel)

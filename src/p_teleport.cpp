@@ -250,7 +250,7 @@ static AActor *SelectTeleDest (int tid, int tag, bool norandom)
 
 	if (tid != 0)
 	{
-		NActorIterator iterator (NAME_TeleportDest, tid);
+		auto iterator = level.GetActorIterator(NAME_TeleportDest, tid);
 		int count = 0;
 		while ( (searcher = iterator.Next ()) )
 		{
@@ -268,12 +268,12 @@ static AActor *SelectTeleDest (int tid, int tag, bool norandom)
 			if (tag == 0)
 			{
 				// Try to find a matching map spot (fixes Hexen MAP10)
-				NActorIterator it2 (NAME_MapSpot, tid);
+				auto it2 = level.GetActorIterator(NAME_MapSpot, tid);
 				searcher = it2.Next ();
-				if (searcher == NULL)
+				if (searcher == nullptr)
 				{
 					// Try to find a matching non-blocking spot of any type (fixes Caldera MAP13)
-					FActorIterator it3 (tid);
+					auto it3 = level.GetActorIterator(tid);
 					searcher = it3.Next ();
 					while (searcher != NULL && (searcher->flags & MF_SOLID))
 					{
@@ -607,7 +607,7 @@ bool EV_TeleportOther (int other_tid, int dest_tid, bool fog)
 	if (other_tid != 0 && dest_tid != 0)
 	{
 		AActor *victim;
-		FActorIterator iterator (other_tid);
+		auto iterator = level.GetActorIterator(other_tid);
 
 		while ( (victim = iterator.Next ()) )
 		{
@@ -642,7 +642,7 @@ bool EV_TeleportGroup (int group_tid, AActor *victim, int source_tid, int dest_t
 {
 	AActor *sourceOrigin, *destOrigin;
 	{
-		FActorIterator iterator (source_tid);
+		auto iterator = level.GetActorIterator(source_tid);
 		sourceOrigin = iterator.Next ();
 	}
 	if (sourceOrigin == NULL)
@@ -651,7 +651,7 @@ bool EV_TeleportGroup (int group_tid, AActor *victim, int source_tid, int dest_t
 	}
 
 	{
-		NActorIterator iterator (NAME_TeleportDest, dest_tid);
+		auto iterator = level.GetActorIterator(NAME_TeleportDest, dest_tid);
 		destOrigin = iterator.Next ();
 	}
 	if (destOrigin == NULL)
@@ -669,7 +669,7 @@ bool EV_TeleportGroup (int group_tid, AActor *victim, int source_tid, int dest_t
 	}
 	else
 	{
-		FActorIterator iterator (group_tid);
+		auto iterator = level.GetActorIterator(group_tid);
 
 		// For each actor with tid matching arg0, move it to the same
 		// position relative to destOrigin as it is relative to sourceOrigin
@@ -697,7 +697,7 @@ bool EV_TeleportSector (int tag, int source_tid, int dest_tid, bool fog, int gro
 {
 	AActor *sourceOrigin, *destOrigin;
 	{
-		FActorIterator iterator (source_tid);
+		auto iterator = level.GetActorIterator(source_tid);
 		sourceOrigin = iterator.Next ();
 	}
 	if (sourceOrigin == NULL)
@@ -705,7 +705,7 @@ bool EV_TeleportSector (int tag, int source_tid, int dest_tid, bool fog, int gro
 		return false;
 	}
 	{
-		NActorIterator iterator (NAME_TeleportDest, dest_tid);
+		auto iterator = level.GetActorIterator(NAME_TeleportDest, dest_tid);
 		destOrigin = iterator.Next ();
 	}
 	if (destOrigin == NULL)

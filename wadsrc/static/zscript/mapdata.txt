@@ -531,13 +531,19 @@ struct Sector native play
 
 class SectorTagIterator : Object native
 {
-	native static SectorTagIterator Create(int tag, line defline = null);
+	deprecated("3.8") static SectorTagIterator Create(int tag, line defline = null)
+	{
+		return level.CreateSectorTagIterator(tag, defline);
+	}
 	native int Next();
 	native int NextCompat(bool compat, int secnum);
 }
 
 class LineIdIterator : Object native
 {
-	native static LineIdIterator Create(int tag);
+	deprecated("3.8") static LineIdIterator Create(int tag)
+	{
+		return level.CreateLineIdIterator(tag);
+	}
 	native int Next();
 }

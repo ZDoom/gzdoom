@@ -252,17 +252,17 @@ public:
 
 IMPLEMENT_CLASS(DSectorTagIterator, true, false);
 
-static DSectorTagIterator *CreateSTI(int tag, line_t *line)
+static DSectorTagIterator *CreateSTI(FLevelLocals *Level, int tag, line_t *line)
 {
-	return Create<DSectorTagIterator>(level.tagManager, tag, line);
+	return Create<DSectorTagIterator>(Level->tagManager, tag, line);
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(DSectorTagIterator, Create, CreateSTI)
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, CreateSectorTagIterator, CreateSTI)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_INT(tag);
 	PARAM_POINTER(line, line_t);
-	ACTION_RETURN_POINTER(CreateSTI(tag, line));
+	ACTION_RETURN_POINTER(CreateSTI(self, tag, line));
 }
 
 int NextSTI(DSectorTagIterator *self)
@@ -308,16 +308,16 @@ public:
 IMPLEMENT_CLASS(DLineIdIterator, true, false);
 
 
-static DLineIdIterator *CreateLTI(int tag)
+static DLineIdIterator *CreateLTI(FLevelLocals *Level, int tag)
 {
-	return Create<DLineIdIterator>(level.tagManager, tag);
+	return Create<DLineIdIterator>(Level->tagManager, tag);
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(DLineIdIterator, Create, CreateLTI)
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, CreateLineIDIterator, CreateLTI)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_INT(tag);
-	ACTION_RETURN_POINTER(CreateLTI(tag));
+	ACTION_RETURN_POINTER(CreateLTI(self, tag));
 }
 
 int NextLTI(DLineIdIterator *self)

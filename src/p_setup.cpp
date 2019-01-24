@@ -276,6 +276,7 @@ void FLevelLocals::ClearLevelData()
 	ClearPortals();
 
 	tagManager.Clear();
+	Behaviors.UnloadModules();
 	SpotState = nullptr;
 	ACSThinker = nullptr;
 	FraggleScriptThinker = nullptr;
@@ -342,8 +343,6 @@ void P_FreeLevelData ()
 	level.ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
 	SN_StopAllSequences ();
 	DThinker::DestroyAllThinkers ();
-
-	level.Behaviors.UnloadModules ();
 
 	P_FreeStrifeConversations ();
 	level.ClearLevelData();

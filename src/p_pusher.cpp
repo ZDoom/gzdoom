@@ -47,10 +47,6 @@ IMPLEMENT_POINTERS_START(DPusher)
 	IMPLEMENT_POINTER(m_Source)
 IMPLEMENT_POINTERS_END
 
-DPusher::DPusher ()
-{
-}
-
 void DPusher::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);

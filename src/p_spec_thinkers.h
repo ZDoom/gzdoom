@@ -7,7 +7,7 @@ class DLightTransfer : public DThinker
 {
 	DECLARE_CLASS (DLightTransfer, DThinker)
 
-	DLightTransfer() {}
+	DLightTransfer() = default;
 public:
 	DLightTransfer (sector_t *srcSec, int target, bool copyFloor);
 	void Serialize(FSerializer &arc);
@@ -32,7 +32,7 @@ class DWallLightTransfer : public DThinker
 	};
 
 	DECLARE_CLASS (DWallLightTransfer, DThinker)
-	DWallLightTransfer() {}
+	DWallLightTransfer() = default;
 public:
 	DWallLightTransfer (sector_t *srcSec, int target, uint8_t flags);
 	void Serialize(FSerializer &arc);
@@ -61,7 +61,7 @@ protected:
 	int 		m_MaxLight;
 	int 		m_MinLight;
 private:
-	DFireFlicker();
+	DFireFlicker() = default;
 };
 
 class DFlicker : public DLighting
@@ -76,7 +76,7 @@ protected:
 	int 		m_MaxLight;
 	int 		m_MinLight;
 private:
-	DFlicker();
+	DFlicker() = default;
 };
 
 class DLightFlash : public DLighting
@@ -94,7 +94,7 @@ protected:
 	int 		m_MaxTime;
 	int 		m_MinTime;
 private:
-	DLightFlash();
+	DLightFlash() = default;
 };
 
 class DStrobe : public DLighting
@@ -112,7 +112,7 @@ protected:
 	int 		m_DarkTime;
 	int 		m_BrightTime;
 private:
-	DStrobe();
+	DStrobe() = default;
 };
 
 class DGlow : public DLighting
@@ -127,7 +127,7 @@ protected:
 	int 		m_MaxLight;
 	int 		m_Direction;
 private:
-	DGlow();
+	DGlow() = default;
 };
 
 // [RH] Glow from Light_Glow and Light_Fade specials
@@ -145,7 +145,7 @@ protected:
 	int			m_Tics;
 	bool		m_OneShot;
 private:
-	DGlow2();
+	DGlow2() = default;
 };
 
 // [RH] Phased light thinker
@@ -156,7 +156,7 @@ public:
 	DPhased(sector_t *sector);
 	DPhased(sector_t *sector, int baselevel, int phase);
 	// These are for internal use only but the Create template needs access to them.
-	DPhased();
+	DPhased() = default;
 	DPhased(sector_t *sector, int baselevel);
 
 	void		Serialize(FSerializer &arc);
@@ -183,7 +183,7 @@ public:
 		p_current
 	};
 
-	DPusher ();
+	DPusher () = default;
 	DPusher (EPusher type, line_t *l, int magnitude, int angle, AActor *source, int affectee);
 	void Serialize(FSerializer &arc);
 	int CheckForSectorMatch (EPusher type, int tag);
@@ -246,8 +246,6 @@ protected:
 	TObjPtr<DInterpolation*> m_Interpolations[3];
 
 private:
-	DScroller ()
-	{
-	}
+	DScroller () = default;
 };
 

@@ -57,10 +57,6 @@ static FRandom pr_fireflicker ("FireFlicker");
 
 IMPLEMENT_CLASS(DLighting, false, false)
 
-DLighting::DLighting ()
-{
-}
-
 DLighting::DLighting (sector_t *sector)
 	: DSectorEffect (sector)
 {
@@ -74,10 +70,6 @@ DLighting::DLighting (sector_t *sector)
 //-----------------------------------------------------------------------------
 
 IMPLEMENT_CLASS(DFireFlicker, false, false)
-
-DFireFlicker::DFireFlicker ()
-{
-}
 
 void DFireFlicker::Serialize(FSerializer &arc)
 {
@@ -141,10 +133,6 @@ DFireFlicker::DFireFlicker (sector_t *sector, int upper, int lower)
 //-----------------------------------------------------------------------------
 
 IMPLEMENT_CLASS(DFlicker, false, false)
-
-DFlicker::DFlicker ()
-{
-}
 
 void DFlicker::Serialize(FSerializer &arc)
 {
@@ -218,10 +206,6 @@ void EV_StartLightFlickering (int tag, int upper, int lower)
 
 IMPLEMENT_CLASS(DLightFlash, false, false)
 
-DLightFlash::DLightFlash ()
-{
-}
-
 void DLightFlash::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
@@ -292,10 +276,6 @@ DLightFlash::DLightFlash (sector_t *sector, int min, int max)
 //-----------------------------------------------------------------------------
 
 IMPLEMENT_CLASS(DStrobe, false, false)
-
-DStrobe::DStrobe ()
-{
-}
 
 void DStrobe::Serialize(FSerializer &arc)
 {
@@ -549,10 +529,6 @@ void EV_LightChange (int tag, int value)
 
 IMPLEMENT_CLASS(DGlow, false, false)
 
-DGlow::DGlow ()
-{
-}
-
 void DGlow::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
@@ -618,10 +594,6 @@ DGlow::DGlow (sector_t *sector)
 //-----------------------------------------------------------------------------
 
 IMPLEMENT_CLASS(DGlow2, false, false)
-
-DGlow2::DGlow2 ()
-{
-}
 
 void DGlow2::Serialize(FSerializer &arc)
 {
@@ -751,10 +723,6 @@ void EV_StartLightFading (int tag, int value, int tics)
 //-----------------------------------------------------------------------------
 
 IMPLEMENT_CLASS(DPhased, false, false)
-
-DPhased::DPhased ()
-{
-}
 
 void DPhased::Serialize(FSerializer &arc)
 {

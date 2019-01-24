@@ -127,7 +127,7 @@ class DLighting : public DSectorEffect
 public:
 	DLighting(sector_t *sector);
 protected:
-	DLighting();
+	DLighting() = default;
 };
 
 void	EV_StartLightFlickering (int tag, int upper, int lower);

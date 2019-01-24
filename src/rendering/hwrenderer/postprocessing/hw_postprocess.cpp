@@ -544,20 +544,64 @@ void PPTonemap::UpdateTextures()
 	{
 		std::shared_ptr<void> data(new uint32_t[512 * 512], [](void *p) { delete[](uint32_t*)p; });
 
+		PalEntry color;
 		uint8_t *lut = (uint8_t *)data.get();
-		for (int r = 0; r < 64; r++)
+
+		if (gl_paltonemap_colormap == 0)
 		{
-			for (int g = 0; g < 64; g++)
+			double norm = 1;
+			for (int r = 0; r < 64; r++)
 			{
-				for (int b = 0; b < 64; b++)
+				int red = (r << 2) | (r >> 4);
+				int redindex = r << 6;
+				for (int g = 0; g < 64; g++)
 				{
-					PalEntry color = GPalette.BaseColors[(uint8_t)PTM_BestColor((uint32_t *)GPalette.BaseColors, (r << 2) | (r >> 4), (g << 2) | (g >> 4), (b << 2) | (b >> 4),
-						gl_paltonemap_reverselookup, gl_paltonemap_powtable, 0, 256)];
-					int index = ((r * 64 + g) * 64 + b) * 4;
-					lut[index] = color.r;
-					lut[index + 1] = color.g;
-					lut[index + 2] = color.b;
-					lut[index + 3] = 255;
+					int grn = (g << 2) | (g >> 4);
+					int grnindex = redindex + g << 6;
+					int val = fmax(red, grn);
+					for (int b = 0; b < 64; b++)
+					{
+						int blu = (b << 2) | (b >> 4);
+						val = fmax(val, blu);
+						if (val > 0) norm = 255. / val;
+						color = GPalette.BaseColors[(uint8_t)PTM_BestColorNorm((uint32_t *)GPalette.BaseColors, red * norm, grn * norm, blu * norm,
+										gl_paltonemap_reverselookup, gl_paltonemap_powtable, 0, 256, gl_paltonemap_colormap_nogrey)];
+						double palval = fmax(fmax(color.r, color.g), color.b); // can this be returned from BestColorNorm instead?
+						if (palval > 0) palval = 1.0 / palval * val;
+						color.r *= palval;
+						color.g *= palval;
+						color.b *= palval;
+
+						int index = grnindex + b << 2;
+						lut[index] = color.r;
+						lut[index + 1] = color.g;
+						lut[index + 2] = color.b;
+						lut[index + 3] = 255;
+					}
+				}
+			}
+		}
+		else
+		{
+			for (int r = 0; r < 64; r++)
+			{
+				int red = (r << 2) | (r >> 4);
+				int redindex = r << 6;
+				for (int g = 0; g < 64; g++)
+				{
+					int grn = (g << 2) | (g >> 4);
+					int grnindex = redindex + g << 6;
+					for (int b = 0; b < 64; b++)
+					{
+						int blu = (b << 2) | (b >> 4);
+						color = GPalette.BaseColors[(uint8_t)PTM_BestColor((uint32_t *)GPalette.BaseColors, red, grn, blu,
+											gl_paltonemap_reverselookup, gl_paltonemap_powtable, 0, 256, gl_paltonemap_colormap_nogrey)];
+						int index = grnindex + b << 2;
+						lut[index] = color.r;
+						lut[index + 1] = color.g;
+						lut[index + 2] = color.b;
+						lut[index + 3] = 255;
+					}
 				}
 			}
 		}

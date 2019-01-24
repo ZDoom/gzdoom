@@ -2617,6 +2617,14 @@ OptionMenu "PostProcessMenu" protected
 	StaticText " "
 	Slider "$GLPREFMNU_PALTONEMAPPOWER",		gl_paltonemap_powtable,			0.2, 3.0, 0.1, 1
 	Option "$GLPREFMNU_PALTONEMAPORDER",		gl_paltonemap_reverselookup,	"LookupOrder"
+	Option "$GLPREFMNU_PALTONECMAP",		gl_paltonemap_colormap,		"ColormapTypes"
+	Option "$GLPREFMNU_PALTONENOGREY",		gl_paltonemap_colormap_nogrey,	"YesNo"
+}
+
+OptionValue "ColormapTypes"
+{
+	0, "Neutral"
+	1, "Doom"
 }
 
 OptionMenu "ReverbEdit" protected

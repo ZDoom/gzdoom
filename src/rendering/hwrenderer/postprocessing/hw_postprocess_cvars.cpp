@@ -92,12 +92,26 @@ CUSTOM_CVAR(Float, gl_ssao_exponent, 1.8f, 0)
 
 CUSTOM_CVAR(Float, gl_paltonemap_powtable, 2.0f, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
-	screen->UpdatePalette();
+	if (screen != nullptr)
+		screen->UpdatePalette();
 }
 
 CUSTOM_CVAR(Bool, gl_paltonemap_reverselookup, true, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
-	screen->UpdatePalette();
+	if (screen != nullptr)
+		screen->UpdatePalette();
+}
+
+CUSTOM_CVAR(Int, gl_paltonemap_colormap, 1, CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	if (screen != nullptr)
+		screen->UpdatePalette();
+}
+
+CUSTOM_CVAR(Bool, gl_paltonemap_colormap_nogrey, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	if (screen != nullptr)
+		screen->UpdatePalette();
 }
 
 CVAR(Float, gl_menu_blur, -1.0f, CVAR_ARCHIVE)

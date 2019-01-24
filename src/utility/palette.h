@@ -12,7 +12,8 @@ struct PalEntry;
 #define BPART(c)			((c)&0xff)
 
 int BestColor(const uint32_t* pal, int r, int g, int b, int first = 1, int num = 255);
-int PTM_BestColor(const uint32_t* pal_in, int r, int g, int b, bool reverselookup, float powtable, int first = 1, int num = 255);
+int PTM_BestColor(const uint32_t* pal_in, int r, int g, int b, bool reverselookup, float powtable, int first = 1, int num = 255, bool nogrey = false);
+int PTM_BestColorNorm(const uint32_t* pal_in, double r, double g, double b, bool reverselookup, float powtable, int first = 1, int num = 255, bool nogrey = false);
 void DoBlending(const PalEntry* from, PalEntry* to, int count, int r, int g, int b, int a);
 // Colorspace conversion RGB <-> HSV
 void RGBtoHSV (float r, float g, float b, float *h, float *s, float *v);

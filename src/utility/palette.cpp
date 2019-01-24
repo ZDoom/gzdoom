@@ -66,7 +66,7 @@ int BestColor (const uint32_t *pal_in, int r, int g, int b, int first, int num)
 
 // [SP] Re-implemented BestColor for more precision rather than speed. This function is only ever called once until the game palette is changed.
 
-int PTM_BestColor (const uint32_t *pal_in, int r, int g, int b, bool reverselookup, float powtable_val, int first, int num)
+int PTM_BestColor (const uint32_t *pal_in, int r, int g, int b, bool reverselookup, float powtable_val, int first, int num, bool nogrey)
 {
 	const PalEntry *pal = (const PalEntry *)pal_in;
 	static double powtable[256];
@@ -84,13 +84,77 @@ int PTM_BestColor (const uint32_t *pal_in, int r, int g, int b, bool reverselook
 		for (int x = 0; x < 256; x++) powtable[x] = pow((double)x/255, (double)pt);
 	}
 
+	bool preventgrey = (nogrey && !(r == g && b == r));
+
 	for (int color = first; color < num; color++)
 	{
-		double x = powtable[abs(r-pal[color].r)];
-		double y = powtable[abs(g-pal[color].g)];
-		double z = powtable[abs(b-pal[color].b)];
+		int palred = pal[color].r;
+		int palgrn = pal[color].g;
+		int palblu = pal[color].b;
+
+		if (preventgrey && (palred == palgrn && palblu == palred))
+			continue;
+
+		double x = powtable[abs(r - palred)];
+		double y = powtable[abs(g - palgrn)];
+		double z = powtable[abs(b - palblu)];
+
 		fdist = x + y + z;
 		if (color == first || (reverselookup?(fdist <= fbestdist):(fdist < fbestdist)))
+		{
+			if (fdist == 0 && !reverselookup)
+				return color;
+
+			fbestdist = fdist;
+			bestcolor = color;
+		}
+	}
+	return bestcolor;
+}
+
+int PTM_BestColorNorm (const uint32_t *pal_in, double r, double g, double b, bool reverselookup, float powtable_val, int first, int num, bool nogrey)
+{
+	const PalEntry *pal = (const PalEntry *)pal_in;
+	static double powtable[256];
+	static bool firstTime = true;
+	static float trackpowtable = 0.;
+
+	double fbestdist = DBL_MAX, fdist;
+	int bestcolor = 0;
+
+	if (firstTime || trackpowtable != powtable_val)
+	{
+		auto pt = powtable_val;
+		trackpowtable = pt;
+		firstTime = false;
+		for (int x = 0; x < 256; x++) powtable[x] = pow((double)x/255, (double)pt);
+	}
+
+	bool preventgrey = (nogrey && !(r == g && b == r));
+
+	for (int color = first; color < num; color++)
+	{
+		double palred = pal[color].r;
+		double palgrn = pal[color].g;
+		double palblu = pal[color].b;
+
+		if (preventgrey && (palred == palgrn && palblu == palred))
+			continue;
+
+		int palval = fmax(fmax(palred, palgrn), palblu);
+		if (palval > 0)
+		{
+			double norm = 255. / palval;
+			palred *= norm;
+			palgrn *= norm;
+			palblu *= norm;
+		}
+
+		double x = powtable[static_cast<int>(abs(r - palred))];
+		double y = powtable[static_cast<int>(abs(g - palgrn))];
+		double z = powtable[static_cast<int>(abs(b - palblu))];
+		fdist = x + y + z;
+		if ((reverselookup?(fdist <= fbestdist):(fdist < fbestdist)))
 		{
 			if (fdist == 0 && !reverselookup)
 				return color;

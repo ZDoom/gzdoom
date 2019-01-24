@@ -695,6 +695,7 @@ struct LevelLocals native
 	native void StartIntermission(Name type, int state) const;
 	native SpotState GetSpotState(bool create = true);
 	native int FindUniqueTid(int start = 0, int limit = 0);
+	native uint GetSkyboxPortal(Actor actor);
 
 	native static clearscope bool IsPointInMap(vector3 p);
 

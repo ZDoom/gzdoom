@@ -900,74 +900,12 @@ public:
 		return other->PosRelative(this) - Pos();
 	}
 
-	DVector2 Vec2Offset(double dx, double dy, bool absolute = false)
-	{
-		if (absolute)
-		{
-			return { X() + dx, Y() + dy };
-		}
-		else
-		{
-			return P_GetOffsetPosition(X(), Y(), dx, dy);
-		}
-	}
-
-
-	DVector3 Vec2OffsetZ(double dx, double dy, double atz, bool absolute = false)
-	{
-		if (absolute)
-		{
-			return{ X() + dx, Y() + dy, atz };
-		}
-		else
-		{
-			DVector2 v = P_GetOffsetPosition(X(), Y(), dx, dy);
-			return DVector3(v, atz);
-		}
-	}
-
-	DVector2 Vec2Angle(double length, DAngle angle, bool absolute = false)
-	{
-		if (absolute)
-		{
-			return{ X() + length * angle.Cos(), Y() + length * angle.Sin() };
-		}
-		else
-		{
-			return P_GetOffsetPosition(X(), Y(), length*angle.Cos(), length*angle.Sin());
-		}
-	}
-
-	DVector3 Vec3Offset(double dx, double dy, double dz, bool absolute = false)
-	{
-		if (absolute)
-		{
-			return { X() + dx, Y() + dy, Z() + dz };
-		}
-		else
-		{
-			DVector2 v = P_GetOffsetPosition(X(), Y(), dx, dy);
-			return DVector3(v, Z() + dz);
-		}
-	}
-
-	DVector3 Vec3Offset(const DVector3 &ofs, bool absolute = false)
-	{
-		return Vec3Offset(ofs.X, ofs.Y, ofs.Z, absolute);
-	}
-
-	DVector3 Vec3Angle(double length, DAngle angle, double dz, bool absolute = false)
-	{
-		if (absolute)
-		{
-			return{ X() + length * angle.Cos(), Y() + length * angle.Sin(), Z() + dz };
-		}
-		else
-		{
-			DVector2 v = P_GetOffsetPosition(X(), Y(), length*angle.Cos(), length*angle.Sin());
-			return DVector3(v, Z() + dz);
-		}
-	}
+	DVector2 Vec2Offset(double dx, double dy, bool absolute = false);
+	DVector3 Vec2OffsetZ(double dx, double dy, double atz, bool absolute = false);
+	DVector2 AActor::Vec2Angle(double length, DAngle angle, bool absolute = false);
+	DVector3 Vec3Offset(double dx, double dy, double dz, bool absolute = false);
+	DVector3 Vec3Offset(const DVector3 &ofs, bool absolute = false);
+	DVector3 Vec3Angle(double length, DAngle angle, double dz, bool absolute = false);
 
 	void ClearInterpolation();
 

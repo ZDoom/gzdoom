@@ -109,7 +109,87 @@ EXTERN_CVAR(Bool, forcewater)
 //
 //-----------------------------------------------------------------------------
 
-//---------------------------------------------------------------------------
+//============================================================================
+//
+// Spawns a single line portal
+//
+//============================================================================
+
+void MapLoader::SpawnLinePortal(line_t* line)
+{
+	// portal destination is special argument #0
+	line_t* dst = nullptr;
+
+	if (line->args[2] >= PORTT_VISUAL && line->args[2] <= PORTT_LINKED)
+	{
+		dst = Level->FindPortalDestination(line, line->args[0]);
+
+		line->portalindex = Level->linePortals.Reserve(1);
+		FLinePortal *port = &Level->linePortals.Last();
+
+		memset(port, 0, sizeof(FLinePortal));
+		port->mOrigin = line;
+		port->mDestination = dst;
+		port->mType = uint8_t(line->args[2]);	// range check is done above.
+
+		if (port->mType == PORTT_LINKED)
+		{
+			// Linked portals have no z-offset ever.
+			port->mAlign = PORG_ABSOLUTE;
+		}
+		else
+		{
+			port->mAlign = uint8_t(line->args[3] >= PORG_ABSOLUTE && line->args[3] <= PORG_CEILING ? line->args[3] : PORG_ABSOLUTE);
+			if (port->mType == PORTT_INTERACTIVE && port->mAlign != PORG_ABSOLUTE)
+			{
+				// Due to the way z is often handled, these pose a major issue for parts of the code that needs to transparently handle interactive portals.
+				Printf(TEXTCOLOR_RED "Warning: z-offsetting not allowed for interactive portals. Changing line %d to teleport-portal!\n", line->Index());
+				port->mType = PORTT_TELEPORT;
+			}
+		}
+		port->mDefFlags = port->mType == PORTT_VISUAL ? PORTF_VISIBLE :
+			port->mType == PORTT_TELEPORT ? PORTF_TYPETELEPORT :
+			PORTF_TYPEINTERACTIVE;
+	}
+	else if (line->args[2] == PORTT_LINKEDEE && line->args[0] == 0)
+	{
+		// EE-style portals require that the first line ID is identical and the first arg of the two linked linedefs are 0 and 1 respectively.
+
+		int mytag = Level->GetFirstLineId(line);
+
+		for (auto &ln : Level->lines)
+		{
+			if (Level->GetFirstLineId(&ln) == mytag && ln.args[0] == 1 && ln.special == Line_SetPortal)
+			{
+				line->portalindex = Level->linePortals.Reserve(1);
+				FLinePortal *port = &Level->linePortals.Last();
+
+				memset(port, 0, sizeof(FLinePortal));
+				port->mOrigin = line;
+				port->mDestination = &ln;
+				port->mType = PORTT_LINKED;
+				port->mAlign = PORG_ABSOLUTE;
+				port->mDefFlags = PORTF_TYPEINTERACTIVE;
+
+				// we need to create the backlink here, too.
+				ln.portalindex = Level->linePortals.Reserve(1);
+				port = &Level->linePortals.Last();
+
+				memset(port, 0, sizeof(FLinePortal));
+				port->mOrigin = &ln;
+				port->mDestination = line;
+				port->mType = PORTT_LINKED;
+				port->mAlign = PORG_ABSOLUTE;
+				port->mDefFlags = PORTF_TYPEINTERACTIVE;
+			}
+		}
+	}
+	else
+	{
+		// undefined type
+		return;
+	}
+}
 
 //-----------------------------------------------------------------------------
 //
@@ -128,7 +208,7 @@ void MapLoader::SetupFloorPortal (AActor *point)
 		if (Sector->GetAlpha(sector_t::floor) == 1.)
 			Sector->SetAlpha(sector_t::floor, clamp(point->args[0], 0, 255) / 255.);
 
-		Sector->Portals[sector_t::floor] = P_GetStackPortal(skyv, sector_t::floor);
+		Sector->Portals[sector_t::floor] = Level->GetStackPortal(skyv, sector_t::floor);
 	}
 }
 
@@ -149,7 +229,7 @@ void MapLoader::SetupCeilingPortal (AActor *point)
 		if (Sector->GetAlpha(sector_t::ceiling) == 1.)
 			Sector->SetAlpha(sector_t::ceiling, clamp(point->args[0], 0, 255) / 255.);
 
-		Sector->Portals[sector_t::ceiling] = P_GetStackPortal(skyv, sector_t::ceiling);
+		Sector->Portals[sector_t::ceiling] = Level->GetStackPortal(skyv, sector_t::ceiling);
 	}
 }
 
@@ -319,7 +399,7 @@ void MapLoader::SpawnPortal(line_t *line, int sectortag, int plane, int bytealph
 			// beware of overflows.
 			DVector2 pos1 = line->v1->fPos() + line->Delta() / 2;
 			DVector2 pos2 = oline.v1->fPos() + oline.Delta() / 2;
-			unsigned pnum = P_GetPortal(linked ? PORTS_LINKEDPORTAL : PORTS_PORTAL, plane, line->frontsector, oline.frontsector, pos2 - pos1);
+			unsigned pnum = Level->GetPortal(linked ? PORTS_LINKEDPORTAL : PORTS_PORTAL, plane, line->frontsector, oline.frontsector, pos2 - pos1);
 			CopyPortal(sectortag, plane, pnum, bytealpha / 255., false);
 			return;
 		}
@@ -348,7 +428,7 @@ void MapLoader::SpawnSkybox(AActor *origin)
 			if (refline->special == Sector_SetPortal && refline->args[1] == 2)
 			{
 				// We found the setup linedef for this skybox, so let's use it for our init.
-				unsigned pnum = P_GetSkyboxPortal(origin);
+				unsigned pnum = Level->GetSkyboxPortal(origin);
 				CopyPortal(refline->args[0], refline->args[2], pnum, 0, true);
 				return;
 			}
@@ -669,13 +749,13 @@ void MapLoader::SpawnSpecials ()
 			}
 			else if (line.args[1] == 3 || line.args[1] == 4)
 			{
-				unsigned pnum = P_GetPortal(line.args[1] == 3 ? PORTS_PLANE : PORTS_HORIZON, line.args[2], line.frontsector, NULL, { 0,0 });
+				unsigned pnum = Level->GetPortal(line.args[1] == 3 ? PORTS_PLANE : PORTS_HORIZON, line.args[2], line.frontsector, NULL, { 0,0 });
 				CopyPortal(line.args[0], line.args[2], pnum, 0, true);
 			}
 			break;
 
 		case Line_SetPortal:
-			P_SpawnLinePortal(&line);
+			SpawnLinePortal(&line);
 			break;
 
 		// [RH] ZDoom Static_Init settings

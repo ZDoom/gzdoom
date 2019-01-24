@@ -988,7 +988,7 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 	arc("zones", Level->Zones);
 	arc("lineportals", Level->linePortals);
 	arc("sectorportals", Level->sectorPortals);
-	if (arc.isReading()) P_FinalizePortals();
+	if (arc.isReading()) Level->FinalizePortals();
 
 	// [ZZ] serialize health groups
 	P_SerializeHealthGroups(arc);

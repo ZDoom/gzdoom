@@ -185,6 +185,7 @@ private:
 	void SpawnPortal(line_t *line, int sectortag, int plane, int bytealpha, int linked);
 	void CopyPortal(int sectortag, int plane, unsigned pnum, double alpha, bool tolines);
 	void SetPortal(sector_t *sector, int plane, unsigned pnum, double alpha);
+	void SpawnLinePortal(line_t* line);
 	void SetupPortals();
 	void SpawnSkybox(AActor *origin);
 	void SetupFloorPortal (AActor *point);

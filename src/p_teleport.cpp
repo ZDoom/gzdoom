@@ -186,7 +186,7 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 		if (!predicting)
 		{
 			DVector2 vector = angle.ToVector(20);
-			DVector2 fogpos = P_GetOffsetPosition(pos.X, pos.Y, vector.X, vector.Y);
+			DVector2 fogpos = level.GetPortalOffsetPosition(pos.X, pos.Y, vector.X, vector.Y);
 			P_SpawnTeleportFog(thing, DVector3(fogpos, thing->Z()), false, true);
 
 		}

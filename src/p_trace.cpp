@@ -777,7 +777,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 	// Do a 3D floor check in the starting sector
 	Setup3DFloors();
 
-	FPathTraverse it(Start.X, Start.Y, Vec.X * MaxDist, Vec.Y * MaxDist, ptflags | PT_DELTA, startfrac);
+	FPathTraverse it(&level, Start.X, Start.Y, Vec.X * MaxDist, Vec.Y * MaxDist, ptflags | PT_DELTA, startfrac);
 	intercept_t *in;
 	int lastsplashsector = -1;
 

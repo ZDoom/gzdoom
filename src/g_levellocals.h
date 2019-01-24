@@ -50,6 +50,38 @@
 #include "r_data/r_sections.h"
 #include "r_data/r_canvastexture.h"
 
+//============================================================================
+//
+// This is used to mark processed portals for some collection functions.
+//
+//============================================================================
+
+struct FPortalBits
+{
+	TArray<uint32_t> data;
+
+	void setSize(int num)
+	{
+		data.Resize((num + 31) / 32);
+		clear();
+	}
+
+	void clear()
+	{
+		memset(&data[0], 0, data.Size() * sizeof(uint32_t));
+	}
+
+	void setBit(int group)
+	{
+		data[group >> 5] |= (1 << (group & 31));
+	}
+
+	int getBit(int group)
+	{
+		return data[group >> 5] & (1 << (group & 31));
+	}
+};
+
 class DACSThinker;
 class DFraggleThinker;
 class DSpotState;
@@ -120,6 +152,8 @@ struct FLevelData
 
 struct FLevelLocals : public FLevelData
 {
+	friend class MapLoader;
+
 	void Tick();
 	void Mark();
 	void AddScroller(int secnum);
@@ -137,6 +171,33 @@ struct FLevelLocals : public FLevelData
 	int GetConversation(FName classname);
 	void SetConversation(int convid, PClassActor *Class, int dlgindex);
 	int FindNode (const FStrifeDialogueNode *node);
+
+private:
+	line_t *FindPortalDestination(line_t *src, int tag);
+	void BuildPortalBlockmap();
+	void UpdatePortal(FLinePortal *port);
+	void CollectLinkedPortals();
+	void CreateLinkedPortals();
+	bool ChangePortalLine(line_t *line, int destid);
+	void AddDisplacementForPortal(FSectorPortal *portal);
+	void AddDisplacementForPortal(FLinePortal *portal);
+	bool ConnectPortalGroups();
+public:
+	void FinalizePortals();
+	bool ChangePortal(line_t *ln, int thisid, int destid);
+	unsigned GetSkyboxPortal(AActor *actor);
+	unsigned GetPortal(int type, int plane, sector_t *orgsec, sector_t *destsec, const DVector2 &displacement);
+	unsigned GetStackPortal(AActor *point, int plane);
+	DVector2 GetPortalOffsetPosition(double x, double y, double dx, double dy);
+	bool CollectConnectedGroups(int startgroup, const DVector3 &position, double upperz, double checkradius, FPortalGroupArray &out);
+
+private:
+	// Work data for CollectConnectedGroups.
+	FPortalBits processMask;
+	TArray<FLinePortal*> foundPortals;
+	TArray<int> groupsToCheck;
+
+public:
 
 	FSectorTagIterator GetSectorTagIterator(int tag)
 	{

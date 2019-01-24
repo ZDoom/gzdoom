@@ -25,9 +25,7 @@ struct SectorPortal native play
 	native Sector mDestination;
 	native Vector2 mDisplacement;
 	native double mPlaneZ;
-	native Actor mSkybox;
-	
-	native static uint GetSkyboxPortal(Actor actor);
+	native Actor mSkybox;	
 };
 
 

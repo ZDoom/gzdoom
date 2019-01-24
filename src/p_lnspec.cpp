@@ -3402,7 +3402,7 @@ FUNC(LS_Thing_SetConversation)
 FUNC(LS_Line_SetPortalTarget)
 // Line_SetPortalTarget(thisid, destid)
 {
-	return P_ChangePortal(ln, arg0, arg1);
+	return Level->ChangePortal(ln, arg0, arg1);
 }
 
 FUNC(LS_Sector_SetPlaneReflection)

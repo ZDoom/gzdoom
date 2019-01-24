@@ -2585,7 +2585,7 @@ static void Vec2Offset(double x, double y, double dx, double dy, bool absolute, 
 	}
 	else
 	{
-		*result = P_GetOffsetPosition(x, y, dx, dy);
+		*result = level.GetPortalOffsetPosition(x, y, dx, dy);
 	}
 }
 
@@ -2610,7 +2610,7 @@ static void Vec2OffsetZ(double x, double y, double dx, double dy, double atz, bo
 	}
 	else
 	{
-		DVector2 v = P_GetOffsetPosition(x, y, dx, dy);
+		DVector2 v = level.GetPortalOffsetPosition(x, y, dx, dy);
 		*result = (DVector3(v, atz));
 	}
 }
@@ -2637,7 +2637,7 @@ static void Vec3Offset(double x, double y, double z, double dx, double dy, doubl
 	}
 	else
 	{
-		DVector2 v = P_GetOffsetPosition(x, y, dx, dy);
+		DVector2 v = level.GetPortalOffsetPosition(x, y, dx, dy);
 		*result = (DVector3(v, z + dz));
 	}
 }

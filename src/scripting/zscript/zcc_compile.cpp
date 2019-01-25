@@ -1369,10 +1369,14 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 				{
 					Error(field, "Cannot add field %s to %s. %s has native children which means it size may not change", FName(name->Name).GetChars(), type->TypeName.GetChars(), type->TypeName.GetChars());
 				}
-				else
+				else if (type != nullptr)
 				{
 					auto f = type->AddField(name->Name, thisfieldtype, varflags);
 					if (field->Flags & (ZCC_Version | ZCC_Deprecated)) f->mVersion = field->Version;
+				}
+				else
+				{
+					Error(field, "Cannot declare non-native global variables. Tried to declare %s", FName(name->Name).GetChars());
 				}
 			}
 			name = static_cast<ZCC_VarName*>(name->SiblingNext);

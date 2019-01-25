@@ -2496,10 +2496,28 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetSpotState, GetSpotState)
 	ACTION_RETURN_POINTER(GetSpotState(self, create));
 }
 
+
+//---------------------------------------------------------------------------
+//
+// Format the map name, include the map label if wanted
+//
+//---------------------------------------------------------------------------
+
+EXTERN_CVAR(Int, am_showmaplabel)
+
 static void FormatMapName(FLevelLocals *self, int cr, FString *result)
 {
 	char mapnamecolor[3] = { '\34', char(cr + 'A'), 0 };
-	ST_FormatMapName(*result, mapnamecolor);
+
+	cluster_info_t *cluster = FindClusterInfo(self->cluster);
+	bool ishub = (cluster != nullptr && (cluster->flags & CLUSTER_HUB));
+
+	*result = "";
+	if (am_showmaplabel == 1 || (am_showmaplabel == 2 && !ishub))
+	{
+		*result << self->MapName << ": ";
+	}
+	*result << mapnamecolor << self->LevelName;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, FormatMapName, FormatMapName)
@@ -2696,6 +2714,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_AltHUD, GetLatency, Net_GetLatency)
 //
 //==========================================================================
 DEFINE_GLOBAL(level);
+DEFINE_GLOBAL(currentUILevel);
 DEFINE_FIELD(FLevelLocals, sectors)
 DEFINE_FIELD(FLevelLocals, lines)
 DEFINE_FIELD(FLevelLocals, sides)

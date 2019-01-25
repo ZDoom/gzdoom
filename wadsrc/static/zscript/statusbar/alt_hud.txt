@@ -205,17 +205,17 @@ class AltHud ui
 			// work in cooperative hub games
 			if (hud_showsecrets)
 			{
-				DrawStatLine(x, y, "S:", String.Format("%i/%i ", multiplayer? CPlayer.secretcount : level.found_secrets, level.total_secrets));
+				DrawStatLine(x, y, "S:", String.Format("%i/%i ", multiplayer? CPlayer.secretcount : currentUILevel.found_secrets, currentUILevel.total_secrets));
 			}
 			
 			if (hud_showitems)
 			{
-				DrawStatLine(x, y, "I:", String.Format("%i/%i ", multiplayer? CPlayer.itemcount : level.found_items, level.total_items));
+				DrawStatLine(x, y, "I:", String.Format("%i/%i ", multiplayer? CPlayer.itemcount : currentUILevel.found_items, currentUILevel.total_items));
 			}
 			
 			if (hud_showmonsters)
 			{
-				DrawStatLine(x, y, "K:", String.Format("%i/%i ", multiplayer? CPlayer.killcount : level.killed_monsters, level.total_monsters));
+				DrawStatLine(x, y, "K:", String.Format("%i/%i ", multiplayer? CPlayer.killcount : currentUILevel.killed_monsters, currentUILevel.total_monsters));
 			}
 		}
 	}
@@ -739,18 +739,18 @@ class AltHud ui
 		}
 		else 
 		{
-			pos.xy = Level.GetAutomapPosition();
+			pos.xy = currentUILevel.GetAutomapPosition();
 			pos.z = Sector.PointInSector(pos.xy).floorplane.ZatPoint(pos.xy);
 		}
 
 		int xpos = hudwidth - SmallFont.StringWidth("X: -00000")-6;
 		int ypos = 18;
 
-		screen.DrawText(SmallFont, hudcolor_titl, hudwidth - 6 - SmallFont.StringWidth(level.MapName), ypos, level.MapName,
+		screen.DrawText(SmallFont, hudcolor_titl, hudwidth - 6 - SmallFont.StringWidth(currentUILevel.MapName), ypos, currentUILevel.MapName,
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
 
-		screen.DrawText(SmallFont, hudcolor_titl, hudwidth - 6 - SmallFont.StringWidth(level.LevelName), ypos + h, level.LevelName,
+		screen.DrawText(SmallFont, hudcolor_titl, hudwidth - 6 - SmallFont.StringWidth(currentUILevel.LevelName), ypos + h, currentUILevel.LevelName,
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
 
@@ -793,10 +793,10 @@ class AltHud ui
 			{
 				int timeTicks =
 					hud_showtime < 4
-						? level.maptime
+						? currentUILevel.maptime
 						: (hud_showtime < 6
-							? level.time
-							: level.totaltime);
+							? currentUILevel.time
+							: currentUILevel.totaltime);
 				timeSeconds = Thinker.Tics2Seconds(timeTicks);
 			}
 			else
@@ -815,7 +815,7 @@ class AltHud ui
 
 			if (showMillis)
 			{
-				int millis  = (level.time % Thinker.TICRATE) * (1000 / Thinker.TICRATE);
+				int millis  = (currentUILevel.time % Thinker.TICRATE) * (1000 / Thinker.TICRATE);
 				timeString = String.Format("%02i:%02i:%02i.%03i", hours, minutes, seconds, millis);
 			}
 			else if (showSeconds)
@@ -946,23 +946,23 @@ class AltHud ui
 
 		if (am_showtotaltime)
 		{
-			DrawTimeString(SmallFont, hudcolor_ttim, level.totaltime, hudwidth-2, bottom, 1);
+			DrawTimeString(SmallFont, hudcolor_ttim, currentUILevel.totaltime, hudwidth-2, bottom, 1);
 			bottom -= fonth;
 		}
 
 		if (am_showtime)
 		{
-			if (level.clusterflags & level.CLUSTER_HUB)
+			if (currentUILevel.clusterflags & currentUILevel.CLUSTER_HUB)
 			{
-				DrawTimeString(SmallFont, hudcolor_time, level.time, hudwidth-2, bottom, 1);
+				DrawTimeString(SmallFont, hudcolor_time, currentUILevel.time, hudwidth-2, bottom, 1);
 				bottom -= fonth;
 			}
 
 			// Single level time for hubs
-			DrawTimeString(SmallFont, hudcolor_ltim, level.maptime, hudwidth-2, bottom, 1);
+			DrawTimeString(SmallFont, hudcolor_ltim, currentUILevel.maptime, hudwidth-2, bottom, 1);
 		}
 
-		screen.DrawText(SmallFont, 0, 1, hudheight - fonth - 1, level.FormatMapName(hudcolor_titl),
+		screen.DrawText(SmallFont, 0, 1, hudheight - fonth - 1, currentUILevel.FormatMapName(hudcolor_titl),
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
 

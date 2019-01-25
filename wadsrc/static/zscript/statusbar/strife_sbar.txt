@@ -427,7 +427,7 @@ class StrifeStatusBar : BaseStatusBar
 		case POP_Log:
 		{
 			// Draw the latest log message.
-			screen.DrawText(SmallFont2, Font.CR_UNTRANSLATED, left + 210 * xscale, top + 8 * yscale, Level.TimeFormatted(),
+			screen.DrawText(SmallFont2, Font.CR_UNTRANSLATED, left + 210 * xscale, top + 8 * yscale, currentUILevel.TimeFormatted(),
 				DTA_CleanNoMove, true);
 
 			if (CPlayer.LogText.Length() > 0)

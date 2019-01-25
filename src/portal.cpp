@@ -612,7 +612,7 @@ unsigned FLevelLocals::GetStackPortal(AActor *point, int plane)
 
 //============================================================================
 //
-// level.GetPortalOffsetPosition
+// GetPortalOffsetPosition
 //
 // Offsets a given coordinate if the trace from the origin crosses an 
 // interactive line-to-line portal.

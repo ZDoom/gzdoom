@@ -135,25 +135,6 @@ CVAR (Bool, idmypos, false, 0);
 
 //---------------------------------------------------------------------------
 //
-// Format the map name, include the map label if wanted
-//
-//---------------------------------------------------------------------------
-
-void ST_FormatMapName(FString &mapname, const char *mapnamecolor)
-{
-	cluster_info_t *cluster = FindClusterInfo (level.cluster);
-	bool ishub = (cluster != NULL && (cluster->flags & CLUSTER_HUB));
-
-	mapname = "";
-	if (am_showmaplabel == 1 || (am_showmaplabel == 2 && !ishub))
-	{
-		mapname << level.MapName << ": ";
-	}
-	mapname << mapnamecolor << level.LevelName;
-}
-
-//---------------------------------------------------------------------------
-//
 // Load crosshair definitions
 //
 //---------------------------------------------------------------------------

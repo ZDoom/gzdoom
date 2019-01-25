@@ -413,9 +413,9 @@ public:
 	}
 };
 
-#ifndef NO_DEFINE_LEVEL
 
 extern FLevelLocals level;
+extern FLevelLocals *currentUILevel;	// level for which to display the user interface. This will always be the one the current consoleplayer is in.
 
 inline FSectorPortal *line_t::GetTransferredPortal()
 {
@@ -510,4 +510,3 @@ inline bool line_t::hitSkyWall(AActor* mo) const
 		backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
 		mo->Z() >= backsector->ceilingplane.ZatPoint(mo->PosRelative(this));
 }
-#endif

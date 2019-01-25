@@ -47,6 +47,7 @@
 #include "r_utility.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "actorinlines.h"
 
 CVAR (Int, cl_rockettrails, 1, CVAR_ARCHIVE);
 CVAR (Bool, r_rail_smartspiral, 0, CVAR_ARCHIVE);

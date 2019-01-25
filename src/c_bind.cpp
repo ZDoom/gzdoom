@@ -70,7 +70,7 @@ const char *KeyNames[NUM_KEYS] =
 	NULL,		NULL,		NULL,		NULL,		"F13",		"F14",		"F15",		"F16",		//60
 	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		//68
 	"Kana",		NULL,		NULL,		"Abnt_C1",	NULL,		NULL,		NULL,		NULL,		//70
-	NULL,		"Convert",	NULL,		"NoConvert",NULL,		"Yen",		"abnt_c2",	NULL,		//78
+	NULL,		"Convert",	NULL,		"NoConvert",NULL,		"Yen",		"Abnt_C2",	NULL,		//78
 	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		//80
 	NULL,		NULL,		NULL,		NULL,		NULL,		"KP=",		NULL,		NULL,		//88
 	"Circumflex","@",		":",		"_",		"Kanji",	"Stop",		"Ax",		"Unlabeled",//90
@@ -148,7 +148,7 @@ const char *KeyNames[NUM_KEYS] =
 	"DPadUp","DPadDown","DPadLeft","DPadRight",	// Gamepad buttons
 	"Pad_Start","Pad_Back","LThumb","RThumb",
 	"LShoulder","RShoulder","LTrigger","RTrigger",
-	"Pad_A", "Pad_B", "Pad_X", "Pad_Y" 
+	"Pad_A", "Pad_B", "Pad_X", "Pad_Y"
 };
 
 FKeyBindings Bindings;

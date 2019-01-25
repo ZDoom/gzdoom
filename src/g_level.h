@@ -477,8 +477,6 @@ int G_FinishTravel ();
 
 void G_DoLoadLevel (int position, bool autosave, bool newGame);
 
-void G_InitLevelLocals (void);
-
 void G_AirControlChanged ();
 
 cluster_info_t *FindClusterInfo (int cluster);

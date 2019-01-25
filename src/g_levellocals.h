@@ -171,6 +171,7 @@ struct FLevelLocals : public FLevelData
 	int GetConversation(FName classname);
 	void SetConversation(int convid, PClassActor *Class, int dlgindex);
 	int FindNode (const FStrifeDialogueNode *node);
+	void Init();
 
 private:
 	line_t *FindPortalDestination(line_t *src, int tag);

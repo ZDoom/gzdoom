@@ -196,8 +196,9 @@ static sector_t *allocateSector(sector_t *sec)
 {
 	if (fakesectorbuffer == nullptr)
 	{
-		fakesectorbuffer = (sector_t**)FakeSectorAllocator.Alloc(level.sectors.Size() * sizeof(sector_t*));
-		memset(fakesectorbuffer, 0, level.sectors.Size() * sizeof(sector_t*));
+		unsigned numsectors = level.sectors.Size();
+		fakesectorbuffer = (sector_t**)FakeSectorAllocator.Alloc(numsectors * sizeof(sector_t*));
+		memset(fakesectorbuffer, 0, numsectors * sizeof(sector_t*));
 	}
 	auto sectornum = sec->sectornum;
 	fakesectorbuffer[sectornum] = (sector_t*)FakeSectorAllocator.Alloc(sizeof(sector_t));

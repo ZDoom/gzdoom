@@ -67,13 +67,13 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FLig
 
 			// This is a performance critical section of code where we cannot afford to let the compiler decide whether to inline the function or not.
 			// This will do the calculations explicitly rather than calling one of AActor's utility functions.
-			if (level.Displacements.size > 0)
+			if (Level->Displacements.size > 0)
 			{
 				int fromgroup = light->Sector->PortalGroup;
 				int togroup = portalgroup;
 				if (fromgroup == togroup || fromgroup == 0 || togroup == 0) goto direct;
 
-				DVector2 offset = level.Displacements.getOffset(fromgroup, togroup);
+				DVector2 offset = Level->Displacements.getOffset(fromgroup, togroup);
 				L = FVector3(x - (float)(light->X() + offset.X), y - (float)(light->Y() + offset.Y), z - (float)light->Z());
 			}
 			else

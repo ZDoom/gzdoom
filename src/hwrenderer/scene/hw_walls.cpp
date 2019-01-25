@@ -281,7 +281,7 @@ void GLWall::DrawWall(HWDrawInfo *di, FRenderState &state, bool translucent)
 {
 	if (screen->BuffersArePersistent())
 	{
-		if (level.HasDynamicLights && !di->isFullbrightScene() && gltexture != nullptr)
+		if (di->Level->HasDynamicLights && !di->isFullbrightScene() && gltexture != nullptr)
 		{
 			SetupLights(di, lightdata);
 		}
@@ -322,7 +322,7 @@ void GLWall::SetupLights(HWDrawInfo *di, FDynLightData &lightdata)
 {
 	lightdata.Clear();
 
-	if (RenderStyle == STYLE_Add && !level.lightadditivesurfaces) return;	// no lights on additively blended surfaces.
+	if (RenderStyle == STYLE_Add && !di->Level->lightadditivesurfaces) return;	// no lights on additively blended surfaces.
 
 	// check for wall types which cannot have dynamic lights on them (portal types never get here so they don't need to be checked.)
 	switch (type)
@@ -456,7 +456,7 @@ void GLWall::PutWall(HWDrawInfo *di, bool translucent)
     
 	if (!screen->BuffersArePersistent())
 	{
-		if (level.HasDynamicLights && !di->isFullbrightScene() && gltexture != nullptr)
+		if (di->Level->HasDynamicLights && !di->isFullbrightScene() && gltexture != nullptr)
 		{
 			SetupLights(di, lightdata);
 		}
@@ -567,7 +567,7 @@ void GLWall::PutPortal(HWDrawInfo *di, int ptype, int plane)
 		if (!portal)
 		{
 			line_t *otherside = lineportal->lines[0]->mDestination;
-			if (otherside != nullptr && otherside->portalindex < level.linePortals.Size())
+			if (otherside != nullptr && otherside->portalindex < di->Level->linePortals.Size())
 			{
 				di->ProcessActorsInPortal(otherside->getPortal()->mGroup, di->in_area);
 			}
@@ -604,7 +604,7 @@ void GLWall::PutPortal(HWDrawInfo *di, int ptype, int plane)
 
 void GLWall::Put3DWall(HWDrawInfo *di, lightlist_t * lightlist, bool translucent)
 {
-	// only modify the light level if it doesn't originate from the seg's frontsector. This is to account for light transferring effects
+	// only modify the light di->Level-> if it doesn't originate from the seg's frontsector. This is to account for light transferring effects
 	if (lightlist->p_lightlevel != &seg->sidedef->sector->lightlevel)
 	{
 		lightlevel = hw_ClampLight(*lightlist->p_lightlevel);
@@ -1516,7 +1516,7 @@ void GLWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover,
 			light = P_GetPlaneLight(rover->target, rover->top.plane, true);
 			Colormap.Clear();
 			Colormap.LightColor = light->extra_colormap.FadeColor;
-			// the fog plane defines the light level, not the front sector
+			// the fog plane defines the light di->Level->, not the front sector
 			lightlevel = hw_ClampLight(*light->p_lightlevel);
 			gltexture = NULL;
 			type = RENDERWALL_FFBLOCK;
@@ -1867,8 +1867,8 @@ void GLWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 	else
 	{
 		// Need these for aligning the textures
-		realfront = &level.sectors[frontsector->sectornum];
-		realback = backsector ? &level.sectors[backsector->sectornum] : NULL;
+		realfront = &di->Level->sectors[frontsector->sectornum];
+		realback = backsector ? &di->Level->sectors[backsector->sectornum] : NULL;
 		segfront = frontsector;
 		segback = backsector;
 	}
@@ -1928,7 +1928,7 @@ void GLWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 
 	int rel = 0;
 	int orglightlevel = hw_ClampLight(frontsector->lightlevel);
-	bool foggy = (!Colormap.FadeColor.isBlack() || level.flags&LEVEL_HASFADETABLE);	// fog disables fake contrast
+	bool foggy = (!Colormap.FadeColor.isBlack() || di->Level->flags&LEVEL_HASFADETABLE);	// fog disables fake contrast
 	lightlevel = hw_ClampLight(seg->sidedef->GetLightLevel(foggy, orglightlevel, false, &rel));
 	if (orglightlevel >= 253)			// with the software renderer fake contrast won't be visible above this.
 	{

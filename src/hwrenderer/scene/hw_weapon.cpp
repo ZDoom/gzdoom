@@ -237,7 +237,7 @@ WeaponLighting HWDrawInfo::GetWeaponLighting(sector_t *viewsector, const DVector
 		l.lightlevel = hw_ClampLight(fakesec->lightlevel);
 
 		// calculate colormap for weapon sprites
-		if (viewsector->e->XFloor.ffloors.Size() && !(level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING))
+		if (viewsector->e->XFloor.ffloors.Size() && !(Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING))
 		{
 			TArray<lightlist_t> & lightlist = viewsector->e->XFloor.lightlist;
 			for (unsigned i = 0; i<lightlist.Size(); i++)
@@ -264,7 +264,7 @@ WeaponLighting HWDrawInfo::GetWeaponLighting(sector_t *viewsector, const DVector
 		else
 		{
 			l.cm = fakesec->Colormap;
-			if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) l.cm.ClearColor();
+			if (Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) l.cm.ClearColor();
 		}
 
 		l.lightlevel = CalcLightLevel(l.lightlevel, getExtraLight(), true, 0);
@@ -289,7 +289,7 @@ WeaponLighting HWDrawInfo::GetWeaponLighting(sector_t *viewsector, const DVector
 	}
 
 	// Korshun: fullbright fog in opengl, render weapon sprites fullbright (but don't cancel out the light color!)
-	if (level.brightfog && ((level.flags&LEVEL_HASFADETABLE) || l.cm.FadeColor != 0))
+	if (Level->brightfog && ((Level->flags&LEVEL_HASFADETABLE) || l.cm.FadeColor != 0))
 	{
 		l.lightlevel = 255;
 	}
@@ -530,7 +530,7 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 		hudsprite.dynrgb[0] = hudsprite.dynrgb[1] = hudsprite.dynrgb[2] = 0;
 		hudsprite.lightindex = -1;
 		// set the lighting parameters
-		if (hudsprite.RenderStyle.BlendOp != STYLEOP_Shadow && level.HasDynamicLights && !isFullbrightScene() && gl_light_sprites)
+		if (hudsprite.RenderStyle.BlendOp != STYLEOP_Shadow && Level->HasDynamicLights && !isFullbrightScene() && gl_light_sprites)
 		{
 			if (!hudModelStep)
 			{

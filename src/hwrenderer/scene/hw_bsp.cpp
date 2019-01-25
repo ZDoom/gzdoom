@@ -686,7 +686,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 					fakesector = hw_FakeFlat(sector, in_area, false);
 				}
 
-				uint8_t &srf = section_renderflags[level.sections.SectionIndex(sub->section)];
+				uint8_t &srf = section_renderflags[Level->sections.SectionIndex(sub->section)];
 				if (!(srf & SSRF_PROCESSED))
 				{
 					srf |= SSRF_PROCESSED;
@@ -761,9 +761,9 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 
 void HWDrawInfo::RenderBSPNode (void *node)
 {
-	if (level.nodes.Size() == 0)
+	if (Level->nodes.Size() == 0)
 	{
-		DoSubsector (&level.subsectors[0]);
+		DoSubsector (&Level->subsectors[0]);
 		return;
 	}
 	while (!((size_t)node & 1))  // Keep going until found a subsector

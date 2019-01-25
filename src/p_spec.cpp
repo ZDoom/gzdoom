@@ -103,6 +103,7 @@
 static FRandom pr_playerinspecialsector ("PlayerInSpecialSector");
 
 EXTERN_CVAR(Bool, cl_predict_specials)
+EXTERN_CVAR(Bool, forcewater)
 
 // [RH] Check dmflags for noexit and respond accordingly
 bool FLevelLocals::CheckIfExitIsGood (AActor *self, level_info_t *info)
@@ -680,34 +681,9 @@ void P_UpdateSpecials (FLevelLocals *Level)
 	}
 }
 
-
-
 //
 // SPECIAL SPAWNING
 //
-
-CUSTOM_CVAR (Bool, forcewater, false, CVAR_ARCHIVE|CVAR_SERVERINFO)
-{
-	if (gamestate == GS_LEVEL)
-	{
-		auto Level = &level;
-		for (auto &sec : Level->sectors)
-		{
-			sector_t *hsec = sec.GetHeightSec();
-			if (hsec && !(hsec->MoreFlags & SECMF_UNDERWATER))
-			{
-				if (self)
-				{
-					hsec->MoreFlags |= SECMF_FORCEDUNDERWATER;
-				}
-				else
-				{
-					hsec->MoreFlags &= ~SECMF_FORCEDUNDERWATER;
-				}
-			}
-		}
-	}
-}
 
 IMPLEMENT_CLASS(DLightTransfer, false, false)
 

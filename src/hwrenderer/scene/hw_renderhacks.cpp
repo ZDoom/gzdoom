@@ -55,28 +55,28 @@ void HWDrawInfo::DispatchRenderHacks()
 	glflat.section = nullptr;
 	while (ofi.NextPair(pair))
 	{
-		auto sec = hw_FakeFlat(&level.sectors[pair->Key], in_area, false);
+		auto sec = hw_FakeFlat(&Level->sectors[pair->Key], in_area, false);
 		glflat.ProcessSector(this, sec, SSRF_RENDERFLOOR | SSRF_PLANEHACK);
 	}
 
 	TMap<int, gl_subsectorrendernode*>::Iterator oci(otherCeilingPlanes);
 	while (oci.NextPair(pair))
 	{
-		auto sec = hw_FakeFlat(&level.sectors[pair->Key], in_area, false);
+		auto sec = hw_FakeFlat(&Level->sectors[pair->Key], in_area, false);
 		glflat.ProcessSector(this, sec, SSRF_RENDERCEILING | SSRF_PLANEHACK);
 	}
 
 	TMap<int, gl_floodrendernode*>::Iterator ffi(floodFloorSegs);
 	while (ffi.NextPair(fpair))
 	{
-		auto sec = hw_FakeFlat(&level.sectors[fpair->Key], in_area, false);
+		auto sec = hw_FakeFlat(&Level->sectors[fpair->Key], in_area, false);
 		glflat.ProcessSector(this, sec, SSRF_RENDERFLOOR | SSRF_FLOODHACK);
 	}
 
 	TMap<int, gl_floodrendernode*>::Iterator fci(floodCeilingSegs);
 	while (fci.NextPair(fpair))
 	{
-		auto sec = hw_FakeFlat(&level.sectors[fpair->Key], in_area, false);
+		auto sec = hw_FakeFlat(&Level->sectors[fpair->Key], in_area, false);
 		glflat.ProcessSector(this, sec, SSRF_RENDERCEILING | SSRF_FLOODHACK);
 	}
 }
@@ -108,7 +108,7 @@ static gl_floodrendernode *NewFloodRenderNode()
 
 int HWDrawInfo::SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &lightdata, const secplane_t *plane)
 {
-	if (level.HasDynamicLights && !isFullbrightScene())
+	if (Level->HasDynamicLights && !isFullbrightScene())
 	{
 		Plane p;
 
@@ -170,8 +170,8 @@ void HWDrawInfo::AddOtherFloorPlane(int sector, gl_subsectorrendernode * node)
     auto pNode = otherFloorPlanes.CheckKey(sector);
     
 	node->next = pNode? *pNode : nullptr;
-	node->lightindex = SetupLightsForOtherPlane(node->sub, lightdata, &level.sectors[sector].floorplane);
-	node->vertexindex = CreateOtherPlaneVertices(node->sub, &level.sectors[sector].floorplane);
+	node->lightindex = SetupLightsForOtherPlane(node->sub, lightdata, &Level->sectors[sector].floorplane);
+	node->vertexindex = CreateOtherPlaneVertices(node->sub, &Level->sectors[sector].floorplane);
 	otherFloorPlanes[sector] = node;
 }
 
@@ -180,8 +180,8 @@ void HWDrawInfo::AddOtherCeilingPlane(int sector, gl_subsectorrendernode * node)
     auto pNode = otherCeilingPlanes.CheckKey(sector);
     
     node->next = pNode? *pNode : nullptr;
-	node->lightindex = SetupLightsForOtherPlane(node->sub, lightdata, &level.sectors[sector].ceilingplane);
-	node->vertexindex = CreateOtherPlaneVertices(node->sub, &level.sectors[sector].ceilingplane);
+	node->lightindex = SetupLightsForOtherPlane(node->sub, lightdata, &Level->sectors[sector].ceilingplane);
+	node->vertexindex = CreateOtherPlaneVertices(node->sub, &Level->sectors[sector].ceilingplane);
 	otherCeilingPlanes[sector] = node;
 }
 
@@ -837,7 +837,7 @@ void HWDrawInfo::PrepareLowerGap(seg_t * seg)
 
 void HWDrawInfo::PrepareUnhandledMissingTextures()
 {
-	if (!level.notexturefill)
+	if (!Level->notexturefill)
 	{
 		validcount++;
 		for (int i = MissingUpperSegs.Size() - 1; i >= 0; i--)
@@ -894,7 +894,7 @@ void HWDrawInfo::PrepareUnhandledMissingTextures()
 
 void HWDrawInfo::AddHackedSubsector(subsector_t * sub)
 {
-	if (!(level.maptype == MAPTYPE_HEXEN))
+	if (!(Level->maptype == MAPTYPE_HEXEN))
 	{
 		SubsectorHackInfo sh={sub, 0};
 		SubsectorHacks.Push (sh);

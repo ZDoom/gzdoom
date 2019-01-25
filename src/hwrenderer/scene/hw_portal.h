@@ -28,7 +28,7 @@ struct GLSkyInfo
 	{
 		return !!memcmp(this, &inf, sizeof(*this));
 	}
-	void init(int sky1, PalEntry fadecolor);
+	void init(HWDrawInfo *di, int sky1, PalEntry fadecolor);
 };
 
 struct GLHorizonInfo

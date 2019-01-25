@@ -902,7 +902,7 @@ public:
 
 	DVector2 Vec2Offset(double dx, double dy, bool absolute = false);
 	DVector3 Vec2OffsetZ(double dx, double dy, double atz, bool absolute = false);
-	DVector2 AActor::Vec2Angle(double length, DAngle angle, bool absolute = false);
+	DVector2 Vec2Angle(double length, DAngle angle, bool absolute = false);
 	DVector3 Vec3Offset(double dx, double dy, double dz, bool absolute = false);
 	DVector3 Vec3Offset(const DVector3 &ofs, bool absolute = false);
 	DVector3 Vec3Angle(double length, DAngle angle, double dz, bool absolute = false);

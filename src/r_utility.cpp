@@ -1034,6 +1034,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	viewpoint.HWAngles.Pitch = RAD2DEG((float)asin(angy / alen));
 	
 	viewpoint.HWAngles.Roll.Degrees = (float)viewpoint.Angles.Roll.Degrees;    // copied for convenience.
+	viewpoint.ViewLevel = &level;
 	
 	// ViewActor only gets set, if the camera actor should not be rendered
 	if (actor->player && actor->player - players == consoleplayer &&

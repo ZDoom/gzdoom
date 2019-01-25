@@ -84,7 +84,7 @@ public:
 		return std::make_pair(mVertexBuffer, mIndexBuffer);
 	}
 
-	void CreateVBO();
+	void CreateVBO(TArray<sector_t> &sectors);
 	void Copy(int start, int count);
 
 	FFlatVertex *GetBuffer(int index) const
@@ -119,11 +119,11 @@ private:
 	int CreateIndexedSectionVertices(subsector_t *sub, const secplane_t &plane, int floor, VertexContainer &cont);
 	int CreateIndexedSectorVertices(sector_t *sec, const secplane_t &plane, int floor, VertexContainer &cont);
 	int CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, VertexContainers &cont);
-	void CreateIndexedFlatVertices();
+	void CreateIndexedFlatVertices(TArray<sector_t> &sectors);
 
 	void UpdatePlaneVertices(sector_t *sec, int plane);
 protected:
-	void CreateVertices();
+	void CreateVertices(TArray<sector_t> &sectors);
 	void CheckPlanes(sector_t *sector);
 public:
 	void CheckUpdate(sector_t *sector);

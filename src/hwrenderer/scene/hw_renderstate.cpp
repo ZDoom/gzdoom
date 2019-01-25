@@ -100,7 +100,7 @@ void HWDrawInfo::SetFog(FRenderState &state, int lightlevel, int rellight, bool 
 	PalEntry fogcolor;
 	float fogdensity;
 
-	if (level.flags&LEVEL_HASFADETABLE)
+	if (Level->flags&LEVEL_HASFADETABLE)
 	{
 		fogdensity = 70;
 		fogcolor = 0x808080;
@@ -150,7 +150,7 @@ void HWDrawInfo::SetFog(FRenderState &state, int lightlevel, int rellight, bool 
 		state.SetFog(fogcolor, fogdensity);
 
 		// Korshun: fullbright fog like in software renderer.
-		if (isSoftwareLighting() && cmap->BlendFactor == 0 && level.brightfog && fogdensity != 0 && fogcolor != 0)
+		if (isSoftwareLighting() && cmap->BlendFactor == 0 && Level->brightfog && fogdensity != 0 && fogcolor != 0)
 		{
 			state.SetSoftLightLevel(255);
 		}

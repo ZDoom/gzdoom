@@ -49,7 +49,7 @@ void GLDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 	auto tex = gltexture;
 
 	// calculate dynamic light effect.
-	if (level.HasDynamicLights && !di->isFullbrightScene() && gl_light_sprites)
+	if (di->Level->HasDynamicLights && !di->isFullbrightScene() && gl_light_sprites)
 	{
 		// Note: This should be replaced with proper shader based lighting.
 		double x, y;
@@ -107,7 +107,7 @@ void GLDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 				thiscm.FadeColor = Colormap.FadeColor;
 				thiscm.CopyFrom3DLight(&lightlist[k]);
 				di->SetColor(state, thisll, rellight, di->isFullbrightScene(), thiscm, alpha);
-				if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) thiscm.Decolorize();
+				if (di->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) thiscm.Decolorize();
 				di->SetFog(state, thisll, rellight, di->isFullbrightScene(), &thiscm, false);
 				state.SetSplitPlanes(lightlist[k].plane, lowplane);
 
@@ -397,7 +397,7 @@ void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 
 	gldecal->Colormap = Colormap;
 
-	if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
+	if (di->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
 	{
 		gldecal->Colormap.Decolorize();
 	}

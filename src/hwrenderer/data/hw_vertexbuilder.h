@@ -64,6 +64,6 @@ struct VertexContainer
 
 using VertexContainers = TArray<VertexContainer>;
 
-VertexContainers BuildVertices();
+VertexContainers BuildVertices(TArray<sector_t> &sectors);
 
 

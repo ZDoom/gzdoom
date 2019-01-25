@@ -167,8 +167,9 @@ void CheckBench()
 		FString compose;
 
         auto &vp = r_viewpoint;
+		auto Level = vp.ViewLevel;
 		compose.Format("Map %s: \"%s\",\nx = %1.4f, y = %1.4f, z = %1.4f, angle = %1.4f, pitch = %1.4f\n",
-			level.MapName.GetChars(), level.LevelName.GetChars(), vp.Pos.X, vp.Pos.Y, vp.Pos.Z, vp.Angles.Yaw.Degrees, vp.Angles.Pitch.Degrees);
+			Level->MapName.GetChars(), Level->LevelName.GetChars(), vp.Pos.X, vp.Pos.Y, vp.Pos.Z, vp.Angles.Yaw.Degrees, vp.Angles.Pitch.Degrees);
 		
 		AppendRenderStats(compose);
 		AppendRenderTimes(compose);

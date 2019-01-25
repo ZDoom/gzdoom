@@ -137,12 +137,12 @@ static void CreateVerticesForSector(sector_t *sec, VertexContainer &gen)
 }
 
 
-TArray<VertexContainer> BuildVertices()
+TArray<VertexContainer> BuildVertices(TArray<sector_t> &sectors)
 {
-	TArray<VertexContainer> verticesPerSector(level.sectors.Size(), true);
-	for (unsigned i=0; i<level.sectors.Size(); i++)
+	TArray<VertexContainer> verticesPerSector(sectors.Size(), true);
+	for (unsigned i=0; i< sectors.Size(); i++)
 	{
-		CreateVerticesForSector(&level.sectors[i], verticesPerSector[i]);
+		CreateVerticesForSector(&sectors[i], verticesPerSector[i]);
 	}
 	return verticesPerSector;
 }

@@ -39,6 +39,7 @@
 #include "p_local.h"
 #include "serializer.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 #include "r_data/models/models.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "hwrenderer/utility/hw_clock.h"
@@ -175,7 +176,7 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 		}
 
 
-		auto di = HWDrawInfo::StartDrawInfo(nullptr, mainvp, nullptr);
+		auto di = HWDrawInfo::StartDrawInfo(mainvp.ViewLevel, nullptr, mainvp, nullptr);
 		auto &vp = di->Viewpoint;
 
 		di->Set3DViewport(gl_RenderState);

@@ -70,9 +70,6 @@
 #include "actorinlines.h"
 #include "types.h"
 
-AActor *SingleActorFromTID(int tid, AActor *defactor);
-
-
 static FRandom pr_camissile ("CustomActorfire");
 static FRandom pr_cabullet ("CustomBullet");
 static FRandom pr_cwjump ("CustomWpJump");
@@ -3444,7 +3441,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Warp)
 
 	if ((flags & WARPF_USETID))
 	{
-		reference = SingleActorFromTID(destination_selector, self);
+		reference = level.SingleActorFromTID(destination_selector, self);
 	}
 	else
 	{

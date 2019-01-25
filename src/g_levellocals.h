@@ -228,6 +228,11 @@ public:
 	{
 		return NActorIterator(TIDHash, type, tid);
 	}
+	AActor *SingleActorFromTID(int tid, AActor *defactor)
+	{
+		return tid == 0 ? defactor : GetActorIterator(tid).Next();
+	}
+
 	bool SectorHasTags(sector_t *sector)
 	{
 		return tagManager.SectorHasTags(sector);

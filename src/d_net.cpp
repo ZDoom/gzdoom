@@ -61,6 +61,7 @@
 #include "a_keys.h"
 #include "intermission/intermission.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 #include "events.h"
 #include "i_time.h"
 #include "vm.h"

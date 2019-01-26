@@ -31,11 +31,6 @@
 **
 */
 
-/*
-
-DVector2 AM_GetPosition();
-*/
-
 class AltHud ui
 {
 	TextureID tnt1a0;

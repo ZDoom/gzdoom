@@ -46,6 +46,7 @@
 #include "d_player.h"
 #include "p_setup.h"
 #include "i_music.h"
+#include "am_map.h"
 
 DVector2 AM_GetPosition();
 int Net_GetLatency(int *ld, int *ad);
@@ -2529,15 +2530,17 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, FormatMapName, FormatMapName)
 	ACTION_RETURN_STRING(rets);
 }
 
-static void GetAutomapPosition(DVector2 *pos)
+static void GetAutomapPosition(FLevelLocals *self, DVector2 *pos)
 {
-	*pos = AM_GetPosition();
+ 	*pos = self->automap->GetPosition();
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetAutomapPosition, GetAutomapPosition)
 {
-	PARAM_PROLOGUE;
-	ACTION_RETURN_VEC2(AM_GetPosition());
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	DVector2 result;
+	GetAutomapPosition(self, &result);
+	ACTION_RETURN_VEC2(result);
 }
 
 static int ZGetUDMFInt(FLevelLocals *self, int type, int index, int key)

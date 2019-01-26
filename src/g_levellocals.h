@@ -87,6 +87,7 @@ class DACSThinker;
 class DFraggleThinker;
 class DSpotState;
 struct FStrifeDialogueNode;
+class DAutomapBase;
 
 typedef TMap<int, int> FDialogueIDMap;				// maps dialogue IDs to dialogue array index (for ACS)
 typedef TMap<FName, int> FDialogueMap;				// maps actor class names to dialogue array index
@@ -235,10 +236,10 @@ public:
 	{
 		return FLineIdIterator(tagManager, tag);
 	}
-	template<class T> TThinkerIterator<T> GetThinkerIterator(FName subtype = NAME_None)
+	template<class T> TThinkerIterator<T> GetThinkerIterator(FName subtype = NAME_None, int statnum = MAX_STATNUM+1)
 	{
-		if (subtype == NAME_None) return TThinkerIterator<T>();
-		else return TThinkerIterator<T>(subtype);
+		if (subtype == NAME_None) return TThinkerIterator<T>(statnum);
+		else return TThinkerIterator<T>(subtype, statnum);
 	}
 	FActorIterator GetActorIterator(int tid)
 	{
@@ -357,6 +358,7 @@ public:
 
 	static const int BODYQUESIZE = 32;
 	TObjPtr<AActor*> bodyque[BODYQUESIZE];
+	TObjPtr<DAutomapBase*> automap;
 	int bodyqueslot;
 
 	int NumMapSections;

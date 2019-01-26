@@ -66,6 +66,8 @@
 #include "r_videoscale.h"
 #include "i_time.h"
 #include "version.h"
+#include "g_levellocals.h"
+#include "am_map.h"
 
 EXTERN_CVAR(Bool, cl_capfps)
 EXTERN_CVAR(Int, menu_resolution_custom_width)
@@ -592,7 +594,8 @@ void V_OutputResized (int width, int height)
 	C_NewModeAdjust();
 	// Reload crosshair if transitioned to a different size
 	ST_LoadCrosshair(true);
-	AM_NewResolution();
+	if (currentUILevel && currentUILevel->automap)
+		currentUILevel->automap->NewResolution();
 }
 
 void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int realheight, int *cleanx, int *cleany, int *_cx1, int *_cx2)

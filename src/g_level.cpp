@@ -1019,9 +1019,8 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 		E_NewGame(EventHandlerType::Global);
 	}
 
-	P_SetupLevel (level.MapName, position, newGame);
+	P_SetupLevel (&level, position, newGame);
 
-	AM_LevelInit();
 
 	// [RH] Start lightning, if MAPINFO tells us to
 	if (level.flags & LEVEL_STARTLIGHTNING)
@@ -1126,6 +1125,7 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 	{
 		I_Error("no start for player %d found.", pnumerr);
 	}
+	P_ResetSightCounters(true);
 }
 
 
@@ -1452,8 +1452,6 @@ int G_FinishTravel ()
 
 void FLevelLocals::Init()
 {
-	level_info_t *info;
-
 	BaseBlendA = 0.0f;		// Remove underwater blend effect, if any
 
 	gravity = sv_gravity * 35/TICRATE;
@@ -1465,7 +1463,6 @@ void FLevelLocals::Init()
 
 	info = FindLevelInfo (MapName);
 
-	info = info;
 	skyspeed1 = info->skyspeed1;
 	skyspeed2 = info->skyspeed2;
 	skytexture1 = TexMan.GetTextureID(info->SkyPic1, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
@@ -1976,6 +1973,7 @@ void FLevelLocals::Mark()
 	GC::Mark(SpotState);
 	GC::Mark(FraggleScriptThinker);
 	GC::Mark(ACSThinker);
+	GC::Mark(automap);
 	canvasTextureInfo.Mark();
 	for (auto &c : CorpseQueue)
 	{

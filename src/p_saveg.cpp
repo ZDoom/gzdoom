@@ -965,7 +965,8 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 		("fragglethinker", Level->FraggleScriptThinker)
 		("acsthinker", Level->ACSThinker)
         ("impactdecalcount", Level->ImpactDecalCount)
-		("scrolls", Level->Scrolls);
+		("scrolls", Level->Scrolls)
+		("automap", Level->automap);
 
 
 	// Hub transitions must keep the current total time
@@ -988,7 +989,10 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 	arc("zones", Level->Zones);
 	arc("lineportals", Level->linePortals);
 	arc("sectorportals", Level->sectorPortals);
-	if (arc.isReading()) Level->FinalizePortals();
+	if (arc.isReading())
+	{
+		Level->FinalizePortals();
+	}
 
 	// [ZZ] serialize health groups
 	P_SerializeHealthGroups(arc);
@@ -998,12 +1002,12 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 	arc("polyobjs", Level->Polyobjects);
 	SerializeSubsectors(arc, "subsectors");
 	StatusBar->SerializeMessages(arc);
-	AM_SerializeMarkers(arc);
 	FRemapTable::StaticSerializeTranslations(arc);
 	Level->canvasTextureInfo.Serialize(arc);
 	P_SerializePlayers(Level, arc, hubload);
 	P_SerializeSounds(arc);
 
+	// Regenerate some data that wasn't saved
 	if (arc.isReading())
 	{
 		for (auto &sec : Level->sectors)
@@ -1012,12 +1016,17 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 		}
 		for (int i = 0; i < MAXPLAYERS; ++i)
 		{
-			if (playeringame[i] && players[i].mo != NULL)
+			if (playeringame[i] && players[i].mo != nullptr)
 			{
 				FWeaponSlots::SetupWeaponSlots(players[i].mo);
 			}
 		}
+		AActor::RecreateAllAttachedLights();
+		InitPortalGroups(Level);
+
+		Level->automap->Level = Level;	// Temporary workaround. At the moment this cannot be deserialized yet.
+		Level->automap->UpdateShowAllLines();
+
 	}
-	AActor::RecreateAllAttachedLights();
-	InitPortalGroups(Level);
+
 }

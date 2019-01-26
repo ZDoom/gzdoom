@@ -3187,6 +3187,7 @@ void DAutomap::Drawer (int bottom)
 
 void DAutomap::Serialize(FSerializer &arc)
 {
+	Super::Serialize(arc);
 	// This only stores those variables which do not get set each time the automap is either activated or drawn.
 	// Especially the screen coordinates can not be brought over because the display settings may have changed.
 	arc("markpointnum", markpointnum)

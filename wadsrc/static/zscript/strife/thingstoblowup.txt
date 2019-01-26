@@ -213,7 +213,7 @@ class PowerCrystal : Actor
 		sec.Flags |= Sector.SECF_SILENTMOVE;
 		sec.lightlevel = 0;
 		// Do this right with proper checks instead of just hacking the floor height.
-		Floor.CreateFloor(sec, Floor.floorLowerToLowest, null, 65536.);
+		level.CreateFloor(sec, Floor.floorLowerToLowest, null, 65536.);
 		
 
 		for (int i = 0; i < 8; ++i)

@@ -45,6 +45,7 @@
 #include "po_man.h"
 #include "p_acs.h"
 #include "p_tags.h"
+#include "p_spec.h"
 #include "actor.h"
 #include "p_destructible.h"
 #include "r_data/r_sections.h"
@@ -191,6 +192,28 @@ public:
 	unsigned GetStackPortal(AActor *point, int plane);
 	DVector2 GetPortalOffsetPosition(double x, double y, double dx, double dy);
 	bool CollectConnectedGroups(int startgroup, const DVector3 &position, double upperz, double checkradius, FPortalGroupArray &out);
+
+	void ActivateInStasisPlat(int tag);
+	bool CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int tag, double speed, double speed2, double height, int crush, int silent, int change, DCeiling::ECrushMode hexencrush);
+	void ActivateInStasisCeiling(int tag);
+	bool CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line, double speed, double height, int crush, int change, bool hexencrush, bool hereticlower);
+
+	bool EV_DoPlat(int tag, line_t *line, DPlat::EPlatType type, double height, double speed, int delay, int lip, int change);
+	void EV_StopPlat(int tag, bool remove);
+	bool EV_DoPillar(DPillar::EPillar type, line_t *line, int tag, double speed, double height, double height2, int crush, bool hexencrush);
+	bool EV_DoDoor(DDoor::EVlDoor type, line_t *line, AActor *thing, int tag, double speed, int delay, int lock, int lightTag, bool boomgen = false, int topcountdown = 0);
+	bool EV_SlidingDoor(line_t *line, AActor *thing, int tag, int speed, int delay, DAnimatedDoor::EADType type);
+	bool EV_DoCeiling(DCeiling::ECeiling type, line_t *line, int tag, double speed, double speed2, double height, int crush, int silent, int change, DCeiling::ECrushMode hexencrush = DCeiling::ECrushMode::crushDoom);
+	bool EV_CeilingCrushStop(int tag, bool remove);
+	bool EV_StopCeiling(int tag, line_t *line);
+	bool EV_BuildStairs(int tag, DFloor::EStair type, line_t *line, double stairsize, double speed, int delay, int reset, int igntxt, int usespecials);
+	bool EV_DoFloor(DFloor::EFloor floortype, line_t *line, int tag, double speed, double height, int crush, int change, bool hexencrush, bool hereticlower = false);
+	bool EV_FloorCrushStop(int tag, line_t *line);
+	bool EV_StopFloor(int tag, line_t *line);
+	bool EV_DoDonut(int tag, line_t *line, double pillarspeed, double slimespeed);
+	bool EV_DoElevator(line_t *line, DElevator::EElevator type, double speed, double height, int tag);
+	bool EV_StartWaggle(int tag, line_t *line, int height, int speed, int offset, int timer, bool ceiling);
+	bool EV_DoChange(line_t *line, EChange changetype, int tag);
 
 private:
 	// Work data for CollectConnectedGroups.

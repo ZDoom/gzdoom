@@ -3626,7 +3626,7 @@ do_count:
 	}
 	else
 	{
-		TThinkerIterator<AActor> iterator;
+		auto iterator = Level->GetThinkerIterator<AActor>();
 		while ( (actor = iterator.Next ()) )
 		{
 			if (actor->health > 0 &&
@@ -9340,7 +9340,7 @@ scriptwait:
 
 		case PCD_CANCELFADE:
 			{
-				TThinkerIterator<DFlashFader> iterator;
+				auto iterator = Level->GetThinkerIterator<DFlashFader>();
 				DFlashFader *fader;
 
 				while ( (fader = iterator.Next()) )

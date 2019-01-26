@@ -41,10 +41,6 @@ static FRandom pr_doplat ("DoPlat");
 
 IMPLEMENT_CLASS(DPlat, false, false)
 
-DPlat::DPlat ()
-{
-}
-
 void DPlat::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
@@ -204,6 +200,21 @@ void DPlat::Tick ()
 	}
 }
 
+void DPlat::Reactivate()
+{
+	if (m_Type == platToggle)	//jff 3/14/98 reactivate toggle type
+		m_Status = m_OldStatus == up ? down : up;
+	else
+		m_Status = m_OldStatus;
+}
+
+
+void DPlat::Stop()
+{
+	m_OldStatus = m_Status;
+	m_Status = in_stasis;
+}
+
 DPlat::DPlat (sector_t *sector)
 	: DMovingFloor (sector)
 {
@@ -214,8 +225,7 @@ DPlat::DPlat (sector_t *sector)
 //	[RH] Changed amount to height and added delay,
 //		 lip, change, tag, and speed parameters.
 //
-bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, double height,
-				double speed, int delay, int lip, int change)
+bool FLevelLocals::EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, double height, double speed, int delay, int lip, int change)
 {
 	DPlat *plat;
 	int secnum;
@@ -233,7 +243,7 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, double height,
 		case DPlat::platToggle:
 			rtn = true;
 		case DPlat::platPerpetualRaise:
-			P_ActivateInStasis (tag);
+			ActivateInStasisPlat (tag);
 			break;
 
 		default:
@@ -244,10 +254,10 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, double height,
 
 	// [RH] If tag is zero, use the sector on the back side
 	//		of the activating line (if any).
-	auto itr = level.GetSectorTagIterator(tag, line);
+	auto itr = GetSectorTagIterator(tag, line);
 	while ((secnum = itr.Next()) >= 0)
 	{
-		sec = &level.sectors[secnum];
+		sec = &sectors[secnum];
 
 		if (sec->PlaneMoving(sector_t::floor))
 		{
@@ -392,18 +402,10 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, double height,
 	return rtn;
 }
 
-void DPlat::Reactivate ()
-{
-	if (m_Type == platToggle)	//jff 3/14/98 reactivate toggle type
-		m_Status = m_OldStatus == up ? down : up;
-	else
-		m_Status = m_OldStatus;
-}
-
-void P_ActivateInStasis (int tag)
+void FLevelLocals::ActivateInStasisPlat (int tag)
 {
 	DPlat *scan;
-	TThinkerIterator<DPlat> iterator;
+	auto iterator = GetThinkerIterator<DPlat>();
 
 	while ( (scan = iterator.Next ()) )
 	{
@@ -412,16 +414,10 @@ void P_ActivateInStasis (int tag)
 	}
 }
 
-void DPlat::Stop ()
-{
-	m_OldStatus = m_Status;
-	m_Status = in_stasis;
-}
-
-void EV_StopPlat (int tag, bool remove)
+void FLevelLocals::EV_StopPlat (int tag, bool remove)
 {
 	DPlat *scan;
-	TThinkerIterator<DPlat> iterator;
+	auto iterator = GetThinkerIterator<DPlat>();
 
 	scan = iterator.Next();
 	while (scan != nullptr)

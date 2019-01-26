@@ -47,10 +47,6 @@
 
 IMPLEMENT_CLASS(DCeiling, false, false)
 
-DCeiling::DCeiling ()
-{
-}
-
 //============================================================================
 //
 // 
@@ -235,7 +231,7 @@ DCeiling::DCeiling (sector_t *sec, double speed1, double speed2, int silent)
 //
 //============================================================================
 
-bool P_CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int tag, 
+bool FLevelLocals::CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int tag, 
 				   double speed, double speed2, double height,
 				   int crush, int silent, int change, DCeiling::ECrushMode hexencrush)
 {
@@ -465,9 +461,9 @@ bool P_CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int t
 	return ceiling != NULL;
 }
 
-DEFINE_ACTION_FUNCTION(DCeiling, CreateCeiling)
+DEFINE_ACTION_FUNCTION(FLevelLocals, CreateCeiling)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_POINTER_NOT_NULL(sec, sector_t);
 	PARAM_INT(type);
 	PARAM_POINTER(ln, line_t);
@@ -478,7 +474,7 @@ DEFINE_ACTION_FUNCTION(DCeiling, CreateCeiling)
 	PARAM_INT(silent);
 	PARAM_INT(change);
 	PARAM_INT(crushmode);
-	ACTION_RETURN_BOOL(P_CreateCeiling(sec, (DCeiling::ECeiling)type, ln, 0, speed, speed2, height, crush, silent, change, (DCeiling::ECrushMode)crushmode));
+	ACTION_RETURN_BOOL(self->CreateCeiling(sec, (DCeiling::ECeiling)type, ln, 0, speed, speed2, height, crush, silent, change, (DCeiling::ECrushMode)crushmode));
 }
 
 //============================================================================
@@ -490,7 +486,7 @@ DEFINE_ACTION_FUNCTION(DCeiling, CreateCeiling)
 //
 //============================================================================
 
-bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line,
+bool FLevelLocals::EV_DoCeiling (DCeiling::ECeiling type, line_t *line,
 				   int tag, double speed, double speed2, double height,
 				   int crush, int silent, int change, DCeiling::ECrushMode hexencrush)
 {
@@ -508,22 +504,22 @@ bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line,
 		secnum = sec->sectornum;
 		// [RH] Hack to let manual crushers be retriggerable, too
 		tag ^= secnum | 0x1000000;
-		P_ActivateInStasisCeiling (tag);
-		return P_CreateCeiling(sec, type, line, tag, speed, speed2, height, crush, silent, change, hexencrush);
+		ActivateInStasisCeiling (tag);
+		return CreateCeiling(sec, type, line, tag, speed, speed2, height, crush, silent, change, hexencrush);
 	}
 	
 	//	Reactivate in-stasis ceilings...for certain types.
 	// This restarts a crusher after it has been stopped
 	if (type == DCeiling::ceilCrushAndRaise)
 	{
-		P_ActivateInStasisCeiling (tag);
+		ActivateInStasisCeiling (tag);
 	}
 
 	// affects all sectors with the same tag as the linedef
-	auto it = level.GetSectorTagIterator(tag);
+	auto it = GetSectorTagIterator(tag);
 	while ((secnum = it.Next()) >= 0)
 	{
-		rtn |= P_CreateCeiling(&level.sectors[secnum], type, line, tag, speed, speed2, height, crush, silent, change, hexencrush);
+		rtn |= CreateCeiling(&sectors[secnum], type, line, tag, speed, speed2, height, crush, silent, change, hexencrush);
 	}
 	return rtn;
 }
@@ -536,10 +532,10 @@ bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line,
 //
 //============================================================================
 
-void P_ActivateInStasisCeiling (int tag)
+void FLevelLocals::ActivateInStasisCeiling (int tag)
 {
 	DCeiling *scan;
-	TThinkerIterator<DCeiling> iterator;
+	auto iterator = GetThinkerIterator<DCeiling>();
 
 	while ( (scan = iterator.Next ()) )
 	{
@@ -559,13 +555,12 @@ void P_ActivateInStasisCeiling (int tag)
 //
 //============================================================================
 
-bool EV_CeilingCrushStop (int tag, bool remove)
+bool FLevelLocals::EV_CeilingCrushStop (int tag, bool remove)
 {
 	bool rtn = false;
-	DCeiling *scan;
-	TThinkerIterator<DCeiling> iterator;
+	auto iterator = GetThinkerIterator<DCeiling>();
 
-	scan = iterator.Next();
+	auto scan = iterator.Next();
 	while (scan != nullptr)
 	{
 		DCeiling *next = iterator.Next();
@@ -589,17 +584,17 @@ bool EV_CeilingCrushStop (int tag, bool remove)
 	return rtn;
 }
 
-bool EV_StopCeiling(int tag, line_t *line)
+bool FLevelLocals::EV_StopCeiling(int tag, line_t *line)
 {
 	int sec;
-	auto it = level.GetSectorTagIterator(tag, line);
+	auto it = GetSectorTagIterator(tag, line);
 	while ((sec = it.Next()) >= 0)
 	{
-		if (level.sectors[sec].ceilingdata)
+		if (sectors[sec].ceilingdata)
 		{
-			SN_StopSequence(&level.sectors[sec], CHAN_CEILING);
-			level.sectors[sec].ceilingdata->Destroy();
-			level.sectors[sec].ceilingdata = nullptr;
+			SN_StopSequence(&sectors[sec], CHAN_CEILING);
+			sectors[sec].ceilingdata->Destroy();
+			sectors[sec].ceilingdata = nullptr;
 		}
 	}
 	return true;

@@ -47,10 +47,6 @@
 
 IMPLEMENT_CLASS(DDoor, false, false)
 
-DDoor::DDoor ()
-{
-}
-
 void DDoor::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
@@ -417,7 +413,7 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, double speed, int delay, int lightTag
 //
 //============================================================================
 
-bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
+bool FLevelLocals::EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 				int tag, double speed, int delay, int lock, int lightTag, bool boomgen, int topcountdown)
 {
 	bool		rtn = false;
@@ -490,10 +486,10 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 	else
 	{	// [RH] Remote door
 
-		auto it = level.GetSectorTagIterator(tag);
+		auto it = GetSectorTagIterator(tag);
 		while ((secnum = it.Next()) >= 0)
 		{
-			sec = &level.sectors[secnum];
+			sec = &sectors[secnum];
 			// if the ceiling is already moving, don't start the door action
 			if (sec->PlaneMoving(sector_t::ceiling))
 				continue;
@@ -513,10 +509,6 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 //============================================================================
 
 IMPLEMENT_CLASS(DAnimatedDoor, false, false)
-
-DAnimatedDoor::DAnimatedDoor ()
-{
-}
 
 DAnimatedDoor::DAnimatedDoor (sector_t *sec)
 	: DMovingCeiling (sec, false)
@@ -748,7 +740,7 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay,
 //
 //============================================================================
 
-bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay, DAnimatedDoor::EADType type)
+bool FLevelLocals::EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay, DAnimatedDoor::EADType type)
 {
 	sector_t *sec;
 	int secnum;
@@ -787,10 +779,10 @@ bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay,
 		return false;
 	}
 
-	auto it = level.GetSectorTagIterator(tag);
+	auto it = GetSectorTagIterator(tag);
 	while ((secnum = it.Next()) >= 0)
 	{
-		sec = &level.sectors[secnum];
+		sec = &sectors[secnum];
 		if (sec->ceilingdata != NULL)
 		{
 			continue;

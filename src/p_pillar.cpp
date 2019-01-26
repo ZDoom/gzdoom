@@ -48,10 +48,6 @@ IMPLEMENT_POINTERS_START(DPillar)
 	IMPLEMENT_POINTER(m_Interp_Ceiling)
 IMPLEMENT_POINTERS_END
 
-DPillar::DPillar ()
-{
-}
-
 void DPillar::OnDestroy()
 {
 	if (m_Interp_Ceiling != nullptr)
@@ -210,7 +206,7 @@ DPillar::DPillar (sector_t *sector, EPillar type, double speed,
 	}
 }
 
-bool EV_DoPillar (DPillar::EPillar type, line_t *line, int tag,
+bool FLevelLocals::EV_DoPillar (DPillar::EPillar type, line_t *line, int tag,
 				  double speed, double height, double height2, int crush, bool hexencrush)
 {
 	int secnum;
@@ -218,10 +214,10 @@ bool EV_DoPillar (DPillar::EPillar type, line_t *line, int tag,
 	bool rtn = false;
 
 	// check if a manual trigger; if so do just the sector on the backside
-	auto itr = level.GetSectorTagIterator(tag, line);
+	auto itr = GetSectorTagIterator(tag, line);
 	while ((secnum = itr.Next()) >= 0)
 	{
-		sec = &level.sectors[secnum];
+		sec = &sectors[secnum];
 
 		if (sec->PlaneMoving(sector_t::floor) || sec->PlaneMoving(sector_t::ceiling))
 			continue;

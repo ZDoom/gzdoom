@@ -721,6 +721,10 @@ struct LevelLocals native
 		int sec = Thinker.Tics2Seconds(totals? totaltime : time); 
 		return String.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
 	}
+
+	native bool CreateCeiling(sector sec, int type, line ln, double speed, double speed2, double height = 0, int crush = -1, int silent = 0, int change = 0, int crushmode = crushDoom);
+	native bool CreateFloor(sector sec, EFloor floortype, line ln, double speed, double height = 0, int crush = -1, int change = 0, bool crushmode = false, bool hereticlower = false);
+
 }
 
 struct StringTable native
@@ -922,7 +926,10 @@ class Floor : MovingFloor native
 		genFloorChg
 	};
 
-	native static bool CreateFloor(sector sec, EFloor floortype, line ln, double speed, double height = 0, int crush = -1, int change = 0, bool crushmode = false, bool hereticlower = false);
+	deprecated("3.8") static bool CreateFloor(sector sec, EFloor floortype, line ln, double speed, double height = 0, int crush = -1, int change = 0, bool crushmode = false, bool hereticlower = false)
+	{
+		return level.CreateFloor(sec, floortype, ln, speed, height, crush, change, crushmode, hereticlower);
+	}
 }
 
 class Ceiling : MovingCeiling native
@@ -965,7 +972,10 @@ class Ceiling : MovingCeiling native
 		crushSlowdown = 2
 	}
 	
-	native static bool CreateCeiling(sector sec, int type, line ln, double speed, double speed2, double height = 0, int crush = -1, int silent = 0, int change = 0, int crushmode = crushDoom);
+	deprecated("3.8") static bool CreateCeiling(sector sec, int type, line ln, double speed, double speed2, double height = 0, int crush = -1, int silent = 0, int change = 0, int crushmode = crushDoom)
+	{
+		return level.CreateCeiling(sec, type, ln, speed, speed2, height, crush, silent, change, crushmode);
+	}
 	
 }
 

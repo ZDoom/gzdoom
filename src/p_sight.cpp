@@ -92,6 +92,7 @@ static TArray<SightTask> portals(32);
 
 class SightCheck
 {
+	FLevelLocals *Level;
 	DVector3 sightstart;
 	DVector2 sightend;
 	double Startfrac;
@@ -116,6 +117,11 @@ class SightCheck
 	bool LineBlocksSight(line_t *ld);
 
 public:
+	SightCheck(FLevelLocals *l)
+	{
+		Level = l;
+	}
+
 	bool P_SightPathTraverse ();
 
 	void init(AActor * t1, AActor * t2, sector_t *startsector, SightTask *task, int flags)
@@ -407,7 +413,7 @@ bool SightCheck::LineBlocksSight(line_t *ld)
 			{
 				return true;
 			}
-			if (ld->args[1] != 0 && ld->args[1] != level.levelnum)
+			if (ld->args[1] != 0 && ld->args[1] != Level->levelnum)
 			{
 				return true;
 			}
@@ -477,14 +483,14 @@ int SightCheck::P_SightBlockLinesIterator (int x, int y)
 	polyblock_t *polyLink;
 	unsigned int i;
 
-	offset = y*level.blockmap.bmapwidth+x;
+	offset = y* Level->blockmap.bmapwidth+x;
 
 	// if any of the previous blocks may contain a portal we may abort the collection of lines here, but we may not abort the sight check.
 	// (We still try to delay activating this for as long as possible.)
-	portalfound = portalfound || level.PortalBlockmap(x, y).containsLinkedPortals;
+	portalfound = portalfound || Level->PortalBlockmap(x, y).containsLinkedPortals;
 
-	polyLink = level.PolyBlockMap[offset];
-	portalfound |= (polyLink && level.PortalBlockmap.hasLinkedPolyPortals);
+	polyLink = Level->PolyBlockMap[offset];
+	portalfound |= (polyLink && Level->PortalBlockmap.hasLinkedPolyPortals);
 	while (polyLink)
 	{
 		if (polyLink->polyobj)
@@ -505,9 +511,9 @@ int SightCheck::P_SightBlockLinesIterator (int x, int y)
 		polyLink = polyLink->next;
 	}
 
-	for (list = level.blockmap.GetLines(x, y); *list != -1; list++)
+	for (list = Level->blockmap.GetLines(x, y); *list != -1; list++)
 	{
-		if (!P_SightCheckLine (&level.lines[*list]))
+		if (!P_SightCheckLine (&Level->lines[*list]))
 		{
 			if (!portalfound) return 0;
 			else res = -1;
@@ -661,13 +667,13 @@ bool SightCheck::P_SightPathTraverse ()
 		portals.Push({ 0, topslope, bottomslope, sector_t::floor, lastsector->GetOppositePortalGroup(sector_t::floor) });
 	}
 
-	x1 -= level.blockmap.bmaporgx;
-	y1 -= level.blockmap.bmaporgy;
+	x1 -= Level->blockmap.bmaporgx;
+	y1 -= Level->blockmap.bmaporgy;
 	xt1 = x1 / FBlockmap::MAPBLOCKUNITS;
 	yt1 = y1 / FBlockmap::MAPBLOCKUNITS;
 
-	x2 -= level.blockmap.bmaporgx;
-	y2 -= level.blockmap.bmaporgy;
+	x2 -= Level->blockmap.bmaporgx;
+	y2 -= Level->blockmap.bmaporgy;
 	xt2 = x2 / FBlockmap::MAPBLOCKUNITS;
 	yt2 = y2 / FBlockmap::MAPBLOCKUNITS;
 
@@ -747,7 +753,7 @@ bool SightCheck::P_SightPathTraverse ()
 	{
 		// end traversing when reaching the end of the blockmap
 		// an early out is not possible because with portals a trace can easily land outside the map's bounds.
-		if (!level.blockmap.isValidBlock(mapx, mapy))
+		if (!Level->blockmap.isValidBlock(mapx, mapy))
 		{
 			break;
 		}
@@ -839,22 +845,17 @@ int P_CheckSight (AActor *t1, AActor *t2, int flags)
 
 	bool res;
 
-	assert (t1 != NULL);
-	assert (t2 != NULL);
-	if (t1 == NULL || t2 == NULL)
+	assert (t1 != nullptr);
+	assert (t2 != nullptr);
+	if (t1 == nullptr || t2 == nullptr)
 	{
 		return false;
 	}
 
-	const sector_t *s1 = t1->Sector;
-	const sector_t *s2 = t2->Sector;
-	int pnum = int(s1->Index()) * level.sectors.Size() + int(s2->Index());
-
-//
-// check for trivial rejection
-//
-	if (level.rejectmatrix.Size() > 0 &&
-		(level.rejectmatrix[pnum>>3] & (1 << (pnum & 7))))
+	//
+	// check for trivial rejection
+	//
+	if (!level.CheckReject(t1->Sector, t2->Sector))
 	{
 sightcounts[0]++;
 		res = false;			// can't possibly be connected
@@ -911,7 +912,7 @@ sightcounts[0]++;
 		SightTask task = { 0, topslope, bottomslope, -1, sec->PortalGroup };
 
 
-		SightCheck s;
+		SightCheck s(&level);
 		s.init(t1, t2, sec, &task, flags);
 		res = s.P_SightPathTraverse ();
 		if (!res)

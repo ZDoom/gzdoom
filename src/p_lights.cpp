@@ -183,23 +183,6 @@ DFlicker::DFlicker (sector_t *sector, int upper, int lower)
 
 //-----------------------------------------------------------------------------
 //
-//
-//
-//-----------------------------------------------------------------------------
-
-void EV_StartLightFlickering (int tag, int upper, int lower)
-{
-	int secnum;
-	auto it = level.GetSectorTagIterator(tag);
-	while ((secnum = it.Next()) >= 0)
-	{
-		Create<DFlicker> (&level.sectors[secnum], upper, lower);
-	}
-}
-
-
-//-----------------------------------------------------------------------------
-//
 // BROKEN LIGHT FLASHING
 //
 //-----------------------------------------------------------------------------
@@ -349,178 +332,7 @@ DStrobe::DStrobe (sector_t *sector, int utics, int ltics, bool inSync)
 
 
 
-//-----------------------------------------------------------------------------
-//
-// Start strobing lights (usually from a trigger)
-// [RH] Made it more configurable.
-//
-//-----------------------------------------------------------------------------
 
-void EV_StartLightStrobing (int tag, int upper, int lower, int utics, int ltics)
-{
-	int secnum;
-	auto it = level.GetSectorTagIterator(tag);
-	while ((secnum = it.Next()) >= 0)
-	{
-		sector_t *sec = &level.sectors[secnum];
-		if (sec->lightingdata)
-			continue;
-		
-		Create<DStrobe> (sec, upper, lower, utics, ltics);
-	}
-}
-
-void EV_StartLightStrobing (int tag, int utics, int ltics)
-{
-	int secnum;
-	auto it = level.GetSectorTagIterator(tag);
-	while ((secnum = it.Next()) >= 0)
-	{
-		sector_t *sec = &level.sectors[secnum];
-		if (sec->lightingdata)
-			continue;
-		
-		Create<DStrobe> (sec, utics, ltics, false);
-	}
-}
-
-
-//-----------------------------------------------------------------------------
-//
-// TURN LINE'S TAG LIGHTS OFF
-// [RH] Takes a tag instead of a line
-//
-//-----------------------------------------------------------------------------
-
-void EV_TurnTagLightsOff (int tag)
-{
-	int secnum;
-	auto it = level.GetSectorTagIterator(tag);
-	while ((secnum = it.Next()) >= 0)
-	{
-		sector_t *sector = &level.sectors[secnum];
-		int min = sector->lightlevel;
-
-		for (auto ln : sector->Lines)
-		{
-			sector_t *tsec = getNextSector (ln, sector);
-			if (!tsec)
-				continue;
-			if (tsec->lightlevel < min)
-				min = tsec->lightlevel;
-		}
-		sector->SetLightLevel(min);
-	}
-}
-
-
-//-----------------------------------------------------------------------------
-//
-// TURN LINE'S TAG LIGHTS ON
-// [RH] Takes a tag instead of a line
-//
-//-----------------------------------------------------------------------------
-
-void EV_LightTurnOn (int tag, int bright)
-{
-	int secnum;
-	auto it = level.GetSectorTagIterator(tag);
-	while ((secnum = it.Next()) >= 0)
-	{
-		sector_t *sector = &level.sectors[secnum];
-		int tbright = bright; //jff 5/17/98 search for maximum PER sector
-
-		// bright = -1 means to search ([RH] Not 0)
-		// for highest light level
-		// surrounding sector
-		if (bright < 0)
-		{
-			for (auto ln : sector->Lines)
-			{
-				sector_t *temp = getNextSector(ln, sector);
-
-				if (!temp)
-					continue;
-
-				if (temp->lightlevel > tbright)
-					tbright = temp->lightlevel;
-			}
-		}
-		sector->SetLightLevel(tbright);
-
-		//jff 5/17/98 unless compatibility optioned
-		//then maximum near ANY tagged sector
-		if (i_compatflags & COMPATF_LIGHT)
-		{
-			bright = tbright;
-		}
-	}
-}
-
-//-----------------------------------------------------------------------------
-//
-// killough 10/98
-//
-// EV_LightTurnOnPartway
-//
-// Turn sectors tagged to line lights on to specified or max neighbor level
-//
-// Passed the tag of sector(s) to light and a light level fraction between 0 and 1.
-// Sets the light to min on 0, max on 1, and interpolates in-between.
-// Used for doors with gradual lighting effects.
-//
-//-----------------------------------------------------------------------------
-
-void EV_LightTurnOnPartway (int tag, double frac)
-{
-	frac = clamp(frac, 0., 1.);
-
-	// Search all sectors for ones with same tag as activating line
-	int secnum;
-	auto it = level.GetSectorTagIterator(tag);
-	while ((secnum = it.Next()) >= 0)
-	{
-		sector_t *temp, *sector = &level.sectors[secnum];
-		int bright = 0, min = sector->lightlevel;
-
-		for (auto ln : sector->Lines)
-		{
-			if ((temp = getNextSector (ln, sector)) != nullptr)
-			{
-				if (temp->lightlevel > bright)
-				{
-					bright = temp->lightlevel;
-				}
-				if (temp->lightlevel < min)
-				{
-					min = temp->lightlevel;
-				}
-			}
-		}
-		sector->SetLightLevel(int(frac * bright + (1 - frac) * min));
-	}
-}
-
-
-//-----------------------------------------------------------------------------
-//
-// [RH] New function to adjust tagged sectors' light levels
-//		by a relative amount. Light levels are clipped to
-//		be within range for sector_t::lightlevel.
-//
-//-----------------------------------------------------------------------------
-
-void EV_LightChange (int tag, int value)
-{
-	int secnum;
-	auto it = level.GetSectorTagIterator(tag);
-	while ((secnum = it.Next()) >= 0)
-	{
-		level.sectors[secnum].SetLightLevel(level.sectors[secnum].lightlevel + value);
-	}
-}
-
-	
 //-----------------------------------------------------------------------------
 //
 // Spawn glowing light
@@ -651,72 +463,6 @@ DGlow2::DGlow2 (sector_t *sector, int start, int end, int tics, bool oneshot)
 
 //-----------------------------------------------------------------------------
 //
-//
-//
-//-----------------------------------------------------------------------------
-
-void EV_StartLightGlowing (int tag, int upper, int lower, int tics)
-{
-	int secnum;
-
-	// If tics is non-positive, then we can't really do anything.
-	if (tics <= 0)
-	{
-		return;
-	}
-
-	if (upper < lower)
-	{
-		int temp = upper;
-		upper = lower;
-		lower = temp;
-	}
-
-	auto it = level.GetSectorTagIterator(tag);
-	while ((secnum = it.Next()) >= 0)
-	{
-		sector_t *sec = &level.sectors[secnum];
-		if (sec->lightingdata)
-			continue;
-		
-		Create<DGlow2> (sec, upper, lower, tics, false);
-	}
-}
-
-//-----------------------------------------------------------------------------
-//
-//
-//
-//-----------------------------------------------------------------------------
-
-void EV_StartLightFading (int tag, int value, int tics)
-{
-	int secnum;
-	auto it = level.GetSectorTagIterator(tag);
-	while ((secnum = it.Next()) >= 0)
-	{
-		sector_t *sec = &level.sectors[secnum];
-		if (sec->lightingdata)
-			continue;
-
-		if (tics <= 0)
-		{
-			sec->SetLightLevel(value);
-		}
-		else
-		{
-			// No need to fade if lightlevel is already at desired value.
-			if (sec->lightlevel == value)
-				continue;
-
-			Create<DGlow2> (sec, sec->lightlevel, value, tics, true);
-		}
-	}
-}
-
-
-//-----------------------------------------------------------------------------
-//
 // [RH] Phased lighting ala Hexen, but implemented without the help of the Hexen source
 // The effect is a little different, but close enough, I feel.
 //
@@ -819,6 +565,260 @@ DPhased::DPhased (sector_t *sector, int baselevel, int phase)
 	m_Phase = phase;
 }
 
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+void FLevelLocals::EV_StartLightFlickering(int tag, int upper, int lower)
+{
+	int secnum;
+	auto it = GetSectorTagIterator(tag);
+	while ((secnum = it.Next()) >= 0)
+	{
+		Create<DFlicker>(&sectors[secnum], upper, lower);
+	}
+}
+
+
+//-----------------------------------------------------------------------------
+//
+// Start strobing lights (usually from a trigger)
+// [RH] Made it more configurable.
+//
+//-----------------------------------------------------------------------------
+
+void FLevelLocals::EV_StartLightStrobing(int tag, int upper, int lower, int utics, int ltics)
+{
+	int secnum;
+	auto it = GetSectorTagIterator(tag);
+	while ((secnum = it.Next()) >= 0)
+	{
+		sector_t *sec = &sectors[secnum];
+		if (sec->lightingdata)
+			continue;
+
+		Create<DStrobe>(sec, upper, lower, utics, ltics);
+	}
+}
+
+void FLevelLocals::EV_StartLightStrobing(int tag, int utics, int ltics)
+{
+	int secnum;
+	auto it = GetSectorTagIterator(tag);
+	while ((secnum = it.Next()) >= 0)
+	{
+		sector_t *sec = &sectors[secnum];
+		if (sec->lightingdata)
+			continue;
+
+		Create<DStrobe>(sec, utics, ltics, false);
+	}
+}
+
+
+//-----------------------------------------------------------------------------
+//
+// TURN LINE'S TAG LIGHTS OFF
+// [RH] Takes a tag instead of a line
+//
+//-----------------------------------------------------------------------------
+
+void FLevelLocals::EV_TurnTagLightsOff(int tag)
+{
+	int secnum;
+	auto it = GetSectorTagIterator(tag);
+	while ((secnum = it.Next()) >= 0)
+	{
+		sector_t *sector = &sectors[secnum];
+		int min = sector->lightlevel;
+
+		for (auto ln : sector->Lines)
+		{
+			sector_t *tsec = getNextSector(ln, sector);
+			if (!tsec)
+				continue;
+			if (tsec->lightlevel < min)
+				min = tsec->lightlevel;
+		}
+		sector->SetLightLevel(min);
+	}
+}
+
+
+//-----------------------------------------------------------------------------
+//
+// TURN LINE'S TAG LIGHTS ON
+// [RH] Takes a tag instead of a line
+//
+//-----------------------------------------------------------------------------
+
+void FLevelLocals::EV_LightTurnOn(int tag, int bright)
+{
+	int secnum;
+	auto it = GetSectorTagIterator(tag);
+	while ((secnum = it.Next()) >= 0)
+	{
+		sector_t *sector = &sectors[secnum];
+		int tbright = bright; //jff 5/17/98 search for maximum PER sector
+
+		// bright = -1 means to search ([RH] Not 0)
+		// for highest light level
+		// surrounding sector
+		if (bright < 0)
+		{
+			for (auto ln : sector->Lines)
+			{
+				sector_t *temp = getNextSector(ln, sector);
+
+				if (!temp)
+					continue;
+
+				if (temp->lightlevel > tbright)
+					tbright = temp->lightlevel;
+			}
+		}
+		sector->SetLightLevel(tbright);
+
+		//jff 5/17/98 unless compatibility optioned
+		//then maximum near ANY tagged sector
+		if (i_compatflags & COMPATF_LIGHT)
+		{
+			bright = tbright;
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+//
+// killough 10/98
+//
+// EV_LightTurnOnPartway
+//
+// Turn sectors tagged to line lights on to specified or max neighbor level
+//
+// Passed the tag of sector(s) to light and a light level fraction between 0 and 1.
+// Sets the light to min on 0, max on 1, and interpolates in-between.
+// Used for doors with gradual lighting effects.
+//
+//-----------------------------------------------------------------------------
+
+void FLevelLocals::EV_LightTurnOnPartway(int tag, double frac)
+{
+	frac = clamp(frac, 0., 1.);
+
+	// Search all sectors for ones with same tag as activating line
+	int secnum;
+	auto it = GetSectorTagIterator(tag);
+	while ((secnum = it.Next()) >= 0)
+	{
+		sector_t *temp, *sector = &sectors[secnum];
+		int bright = 0, min = sector->lightlevel;
+
+		for (auto ln : sector->Lines)
+		{
+			if ((temp = getNextSector(ln, sector)) != nullptr)
+			{
+				if (temp->lightlevel > bright)
+				{
+					bright = temp->lightlevel;
+				}
+				if (temp->lightlevel < min)
+				{
+					min = temp->lightlevel;
+				}
+			}
+		}
+		sector->SetLightLevel(int(frac * bright + (1 - frac) * min));
+	}
+}
+
+
+//-----------------------------------------------------------------------------
+//
+// [RH] New function to adjust tagged sectors' light levels
+//		by a relative amount. Light levels are clipped to
+//		be within range for sector_t::light
+//
+//-----------------------------------------------------------------------------
+
+void FLevelLocals::EV_LightChange(int tag, int value)
+{
+	int secnum;
+	auto it = GetSectorTagIterator(tag);
+	while ((secnum = it.Next()) >= 0)
+	{
+		sectors[secnum].SetLightLevel(sectors[secnum].lightlevel + value);
+	}
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+void FLevelLocals::EV_StartLightGlowing(int tag, int upper, int lower, int tics)
+{
+	int secnum;
+
+	// If tics is non-positive, then we can't really do anything.
+	if (tics <= 0)
+	{
+		return;
+	}
+
+	if (upper < lower)
+	{
+		int temp = upper;
+		upper = lower;
+		lower = temp;
+	}
+
+	auto it = GetSectorTagIterator(tag);
+	while ((secnum = it.Next()) >= 0)
+	{
+		sector_t *sec = &sectors[secnum];
+		if (sec->lightingdata)
+			continue;
+
+		Create<DGlow2>(sec, upper, lower, tics, false);
+	}
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+void FLevelLocals::EV_StartLightFading(int tag, int value, int tics)
+{
+	int secnum;
+	auto it = GetSectorTagIterator(tag);
+	while ((secnum = it.Next()) >= 0)
+	{
+		sector_t *sec = &sectors[secnum];
+		if (sec->lightingdata)
+			continue;
+
+		if (tics <= 0)
+		{
+			sec->SetLightLevel(value);
+		}
+		else
+		{
+			// No need to fade if lightlevel is already at desired value.
+			if (sec->lightlevel == value)
+				continue;
+
+			Create<DGlow2>(sec, sec->lightlevel, value, tics, true);
+		}
+	}
+}
+
+
 //============================================================================
 //
 // EV_StopLightEffect
@@ -827,14 +827,14 @@ DPhased::DPhased (sector_t *sector, int baselevel, int phase)
 //
 //============================================================================
 
-void EV_StopLightEffect (int tag)
+void FLevelLocals::EV_StopLightEffect (int tag)
 {
 	TThinkerIterator<DLighting> iterator;
 	DLighting *effect;
 
 	while ((effect = iterator.Next()) != NULL)
 	{
-		if (level.SectorHasTag(effect->GetSector(), tag))
+		if (SectorHasTag(effect->GetSector(), tag))
 		{
 			effect->Destroy();
 		}

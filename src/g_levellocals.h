@@ -216,6 +216,22 @@ public:
 	bool EV_StartWaggle(int tag, line_t *line, int height, int speed, int offset, int timer, bool ceiling);
 	bool EV_DoChange(line_t *line, EChange changetype, int tag);
 
+	void EV_StartLightFlickering(int tag, int upper, int lower);
+	void EV_StartLightStrobing(int tag, int upper, int lower, int utics, int ltics);
+	void EV_StartLightStrobing(int tag, int utics, int ltics);
+	void EV_TurnTagLightsOff(int tag);
+	void EV_LightTurnOn(int tag, int bright);
+	void EV_LightTurnOnPartway(int tag, double frac);
+	void EV_LightChange(int tag, int value);
+	void EV_StartLightGlowing(int tag, int upper, int lower, int tics);
+	void EV_StartLightFading(int tag, int value, int tics);
+	void EV_StopLightEffect(int tag);
+
+	void RecalculateDrawnSubsectors();
+	FSerializer &SerializeSubsectors(FSerializer &arc, const char *key);
+	void SpawnExtraPlayers();
+	void Serialize(FSerializer &arc, bool hubload);
+
 private:
 	// Work data for CollectConnectedGroups.
 	FPortalBits processMask;

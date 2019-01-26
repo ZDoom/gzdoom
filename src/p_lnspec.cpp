@@ -2076,77 +2076,77 @@ FUNC(LS_Light_ForceLightning)
 FUNC(LS_Light_RaiseByValue)
 // Light_RaiseByValue (tag, value)
 {
-	EV_LightChange (arg0, arg1);
+	Level->EV_LightChange (arg0, arg1);
 	return true;
 }
 
 FUNC(LS_Light_LowerByValue)
 // Light_LowerByValue (tag, value)
 {
-	EV_LightChange (arg0, -arg1);
+	Level->EV_LightChange (arg0, -arg1);
 	return true;
 }
 
 FUNC(LS_Light_ChangeToValue)
 // Light_ChangeToValue (tag, value)
 {
-	EV_LightTurnOn (arg0, arg1);
+	Level->EV_LightTurnOn (arg0, arg1);
 	return true;
 }
 
 FUNC(LS_Light_Fade)
 // Light_Fade (tag, value, tics);
 {
-	EV_StartLightFading (arg0, arg1, TICS(arg2));
+	Level->EV_StartLightFading (arg0, arg1, TICS(arg2));
 	return true;
 }
 
 FUNC(LS_Light_Glow)
 // Light_Glow (tag, upper, lower, tics)
 {
-	EV_StartLightGlowing (arg0, arg1, arg2, TICS(arg3));
+	Level->EV_StartLightGlowing (arg0, arg1, arg2, TICS(arg3));
 	return true;
 }
 
 FUNC(LS_Light_Flicker)
 // Light_Flicker (tag, upper, lower)
 {
-	EV_StartLightFlickering (arg0, arg1, arg2);
+	Level->EV_StartLightFlickering (arg0, arg1, arg2);
 	return true;
 }
 
 FUNC(LS_Light_Strobe)
 // Light_Strobe (tag, upper, lower, u-tics, l-tics)
 {
-	EV_StartLightStrobing (arg0, arg1, arg2, TICS(arg3), TICS(arg4));
+	Level->EV_StartLightStrobing (arg0, arg1, arg2, TICS(arg3), TICS(arg4));
 	return true;
 }
 
 FUNC(LS_Light_StrobeDoom)
 // Light_StrobeDoom (tag, u-tics, l-tics)
 {
-	EV_StartLightStrobing (arg0, TICS(arg1), TICS(arg2));
+	Level->EV_StartLightStrobing (arg0, TICS(arg1), TICS(arg2));
 	return true;
 }
 
 FUNC(LS_Light_MinNeighbor)
 // Light_MinNeighbor (tag)
 {
-	EV_TurnTagLightsOff (arg0);
+	Level->EV_TurnTagLightsOff (arg0);
 	return true;
 }
 
 FUNC(LS_Light_MaxNeighbor)
 // Light_MaxNeighbor (tag)
 {
-	EV_LightTurnOn (arg0, -1);
+	Level->EV_LightTurnOn (arg0, -1);
 	return true;
 }
 
 FUNC(LS_Light_Stop)
 // Light_Stop (tag)
 {
-	EV_StopLightEffect (arg0);
+	Level->EV_StopLightEffect (arg0);
 	return true;
 }
 

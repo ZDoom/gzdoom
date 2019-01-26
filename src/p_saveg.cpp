@@ -314,9 +314,9 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t 
 //
 //==========================================================================
 
-void RecalculateDrawnSubsectors()
+void FLevelLocals::RecalculateDrawnSubsectors()
 {
-	for (auto &sub : level.subsectors)
+	for (auto &sub : subsectors)
 	{
 		for (unsigned int j = 0; j<sub.numlines; j++)
 		{
@@ -335,12 +335,12 @@ void RecalculateDrawnSubsectors()
 //
 //==========================================================================
 
-FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
+FSerializer &FLevelLocals::SerializeSubsectors(FSerializer &arc, const char *key)
 {
 	uint8_t by;
 	const char *str;
 
-	auto numsubsectors = level.subsectors.Size();
+	auto numsubsectors = subsectors.Size();
 	if (arc.isWriting())
 	{
 		TArray<char> encoded(1 + (numsubsectors + 5) / 6);
@@ -350,7 +350,7 @@ FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
 			by = 0;
 			for (unsigned j = 0; j < 6; j++)
 			{
-				if (i + j < numsubsectors && (level.subsectors[i + j].flags & SSECMF_DRAWN))
+				if (i + j < numsubsectors && (subsectors[i + j].flags & SSECMF_DRAWN))
 				{
 					by |= (1 << j);
 				}
@@ -366,7 +366,7 @@ FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
 		str = &encoded[0];
 		if (arc.BeginArray(key))
 		{
-			auto numvertexes = level.vertexes.Size();
+			auto numvertexes = vertexes.Size();
 			arc(nullptr, numvertexes)
 				(nullptr, numsubsectors)
 				.StringPtr(nullptr, str)
@@ -384,7 +384,7 @@ FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
 				.StringPtr(nullptr, str)
 				.EndArray();
 
-			if (num_verts == (int)level.vertexes.Size() && num_subs == (int)numsubsectors)
+			if (num_verts == (int)vertexes.Size() && num_subs == (int)numsubsectors)
 			{
 				success = true;
 				int sub = 0;
@@ -405,7 +405,7 @@ FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
 					{
 						if (sub + s < (int)numsubsectors && (by & (1 << s)))
 						{
-							level.subsectors[sub + s].flags |= SSECMF_DRAWN;
+							subsectors[sub + s].flags |= SSECMF_DRAWN;
 						}
 					}
 					sub += 6;
@@ -559,7 +559,6 @@ void P_SerializeSounds(FSerializer &arc)
 void CopyPlayer(player_t *dst, player_t *src, const char *name);
 static void ReadOnePlayer(FSerializer &arc, bool skipload);
 static void ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayersNow, bool skipload);
-static void SpawnExtraPlayers(FLevelLocals *Level);
 
 //==========================================================================
 //
@@ -624,7 +623,7 @@ void P_SerializePlayers(FLevelLocals *Level, FSerializer &arc, bool skipload)
 		}
 		if (!skipload && numPlayersNow > numPlayers)
 		{
-			SpawnExtraPlayers(Level);
+			Level->SpawnExtraPlayers();
 		}
 		// Redo pitch limits, since the spawned player has them at 0.
 		players[consoleplayer].SendPitchLimits();
@@ -875,7 +874,7 @@ void CopyPlayer(player_t *dst, player_t *src, const char *name)
 //
 //==========================================================================
 
-static void SpawnExtraPlayers(FLevelLocals *Level)
+void FLevelLocals::SpawnExtraPlayers()
 {
 	// If there are more players now than there were in the savegame,
 	// be sure to spawn the extra players.
@@ -891,7 +890,7 @@ static void SpawnExtraPlayers(FLevelLocals *Level)
 		if (playeringame[i] && players[i].mo == NULL)
 		{
 			players[i].playerstate = PST_ENTER;
-			P_SpawnPlayer(&Level->playerstarts[i], i, (level.flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
+			P_SpawnPlayer(&playerstarts[i], i, (flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
 		}
 	}
 }
@@ -902,13 +901,13 @@ static void SpawnExtraPlayers(FLevelLocals *Level)
 //
 //============================================================================
 
-void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
+void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 {
-	int i = Level->totaltime;
+	int i = totaltime;
 
 	if (arc.isWriting())
 	{
-		arc.Array("checksum", Level->md5, 16);
+		arc.Array("checksum", md5, 16);
 	}
 	else
 	{
@@ -917,11 +916,11 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 		// deep down in the deserializer or just a crash if the few insufficient safeguards were not triggered.
 		uint8_t chk[16] = { 0 };
 		arc.Array("checksum", chk, 16);
-		if (arc.GetSize("linedefs") != Level->lines.Size() ||
-			arc.GetSize("sidedefs") != Level->sides.Size() ||
-			arc.GetSize("sectors") != Level->sectors.Size() ||
-			arc.GetSize("polyobjs") != Level->Polyobjects.Size() ||
-			memcmp(chk, Level->md5, 16))
+		if (arc.GetSize("linedefs") != lines.Size() ||
+			arc.GetSize("sidedefs") != sides.Size() ||
+			arc.GetSize("sectors") != sectors.Size() ||
+			arc.GetSize("polyobjs") != Polyobjects.Size() ||
+			memcmp(chk, md5, 16))
 		{
 			I_Error("Savegame is from a different level");
 		}
@@ -937,61 +936,61 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 
 	arc("multiplayer", multiplayer);
 
-	arc("flags", Level->flags)
-		("flags2", Level->flags2)
-		("fadeto", Level->fadeto)
-		("found_secrets", Level->found_secrets)
-		("found_items", Level->found_items)
-		("killed_monsters", Level->killed_monsters)
-		("total_secrets", Level->total_secrets)
-		("total_items", Level->total_items)
-		("total_monsters", Level->total_monsters)
-		("gravity", Level->gravity)
-		("aircontrol", Level->aircontrol)
-		("teamdamage", Level->teamdamage)
-		("maptime", Level->maptime)
+	arc("flags", flags)
+		("flags2", flags2)
+		("fadeto", fadeto)
+		("found_secrets", found_secrets)
+		("found_items", found_items)
+		("killed_monsters", killed_monsters)
+		("total_secrets", total_secrets)
+		("total_items", total_items)
+		("total_monsters", total_monsters)
+		("gravity", gravity)
+		("aircontrol", aircontrol)
+		("teamdamage", teamdamage)
+		("maptime", maptime)
 		("totaltime", i)
-		("skytexture1", Level->skytexture1)
-		("skytexture2", Level->skytexture2)
-		("fogdensity", Level->fogdensity)
-		("outsidefogdensity", Level->outsidefogdensity)
-		("skyfog", Level->skyfog)
-		("deathsequence", Level->deathsequence)
-		("bodyqueslot", Level->bodyqueslot)
-		("spawnindex", Level->spawnindex)
-		.Array("bodyque", Level->bodyque, Level->BODYQUESIZE)
-		("corpsequeue", Level->CorpseQueue)
-		("spotstate", Level->SpotState)
-		("fragglethinker", Level->FraggleScriptThinker)
-		("acsthinker", Level->ACSThinker)
-        ("impactdecalcount", Level->ImpactDecalCount)
-		("scrolls", Level->Scrolls)
-		("automap", Level->automap);
+		("skytexture1", skytexture1)
+		("skytexture2", skytexture2)
+		("fogdensity", fogdensity)
+		("outsidefogdensity", outsidefogdensity)
+		("skyfog", skyfog)
+		("deathsequence", deathsequence)
+		("bodyqueslot", bodyqueslot)
+		("spawnindex", spawnindex)
+		.Array("bodyque", bodyque, BODYQUESIZE)
+		("corpsequeue", CorpseQueue)
+		("spotstate", SpotState)
+		("fragglethinker", FraggleScriptThinker)
+		("acsthinker", ACSThinker)
+        ("impactdecalcount", ImpactDecalCount)
+		("scrolls", Scrolls)
+		("automap", automap);
 
 
 	// Hub transitions must keep the current total time
 	if (!hubload)
-		Level->totaltime = i;
+		totaltime = i;
 
 	if (arc.isReading())
 	{
-		sky1texture = Level->skytexture1;
-		sky2texture = Level->skytexture2;
+		sky1texture = skytexture1;
+		sky2texture = skytexture2;
 		R_InitSkyMap();
 		G_AirControlChanged();
 	}
 
-	Level->Behaviors.SerializeModuleStates(arc);
+	Behaviors.SerializeModuleStates(arc);
 	// The order here is important: First world state, then portal state, then thinkers, and last polyobjects.
-	arc("linedefs", Level->lines, Level->loadlines);
-	arc("sidedefs", Level->sides, Level->loadsides);
-	arc("sectors", Level->sectors, Level->loadsectors);
-	arc("zones", Level->Zones);
-	arc("lineportals", Level->linePortals);
-	arc("sectorportals", Level->sectorPortals);
+	arc("linedefs", lines, loadlines);
+	arc("sidedefs", sides, loadsides);
+	arc("sectors", sectors, loadsectors);
+	arc("zones", Zones);
+	arc("lineportals", linePortals);
+	arc("sectorportals", sectorPortals);
 	if (arc.isReading())
 	{
-		Level->FinalizePortals();
+		FinalizePortals();
 	}
 
 	// [ZZ] serialize health groups
@@ -999,18 +998,18 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 	// [ZZ] serialize events
 	E_SerializeEvents(arc);
 	DThinker::SerializeThinkers(arc, hubload);
-	arc("polyobjs", Level->Polyobjects);
+	arc("polyobjs", Polyobjects);
 	SerializeSubsectors(arc, "subsectors");
 	StatusBar->SerializeMessages(arc);
 	FRemapTable::StaticSerializeTranslations(arc);
-	Level->canvasTextureInfo.Serialize(arc);
-	P_SerializePlayers(Level, arc, hubload);
+	canvasTextureInfo.Serialize(arc);
+	P_SerializePlayers(this, arc, hubload);
 	P_SerializeSounds(arc);
 
 	// Regenerate some data that wasn't saved
 	if (arc.isReading())
 	{
-		for (auto &sec : Level->sectors)
+		for (auto &sec : sectors)
 		{
 			P_Recalculate3DFloors(&sec);
 		}
@@ -1022,10 +1021,10 @@ void G_SerializeLevel(FSerializer &arc, FLevelLocals *Level, bool hubload)
 			}
 		}
 		AActor::RecreateAllAttachedLights();
-		InitPortalGroups(Level);
+		InitPortalGroups(this);
 
-		Level->automap->Level = Level;	// Temporary workaround. At the moment this cannot be deserialized yet.
-		Level->automap->UpdateShowAllLines();
+		automap->Level = this;	// Temporary workaround. At the moment this cannot be deserialized yet.
+		automap->UpdateShowAllLines();
 
 	}
 

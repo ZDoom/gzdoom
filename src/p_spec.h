@@ -130,21 +130,6 @@ protected:
 	DLighting() = default;
 };
 
-void	EV_StartLightFlickering (int tag, int upper, int lower);
-void	EV_StartLightStrobing (int tag, int upper, int lower, int utics, int ltics);
-void	EV_StartLightStrobing (int tag, int utics, int ltics);
-void	EV_TurnTagLightsOff (int tag);
-void	EV_LightTurnOn (int tag, int bright);
-void	EV_LightTurnOnPartway (int tag, double frac);	// killough 10/98
-void	EV_LightChange (int tag, int value);
-void	EV_StopLightEffect (int tag);
-
-void	P_SpawnGlowingLight (sector_t *sector);
-
-void	EV_StartLightGlowing (int tag, int upper, int lower, int tics);
-void	EV_StartLightFading (int tag, int value, int tics);
-
-
 //
 // P_SWITCH
 //

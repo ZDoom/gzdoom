@@ -1460,6 +1460,7 @@ void FLevelLocals::Init()
 	flags = 0;
 	flags2 = 0;
 	flags3 = 0;
+	ImpactDecalCount = 0;
 
 	info = FindLevelInfo (MapName);
 

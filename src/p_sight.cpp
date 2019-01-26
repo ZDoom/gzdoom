@@ -852,10 +852,12 @@ int P_CheckSight (AActor *t1, AActor *t2, int flags)
 		return false;
 	}
 
+	auto s1 = t1->Sector;
+	auto s2 = t2->Sector;
 	//
 	// check for trivial rejection
 	//
-	if (!level.CheckReject(t1->Sector, t2->Sector))
+	if (!level.CheckReject(s1, s2))
 	{
 sightcounts[0]++;
 		res = false;			// can't possibly be connected

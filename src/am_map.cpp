@@ -3205,7 +3205,8 @@ void DAutomap::Serialize(FSerializer &arc)
 		("max_h", max_h)
 		("min_scale_mtof", min_scale_mtof)
 		("max_scale_mtof", max_scale_mtof)
-		("mapback", mapback);
+		("mapback", mapback)
+		("level", Level);
 
 }
 

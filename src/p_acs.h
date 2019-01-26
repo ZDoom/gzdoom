@@ -420,8 +420,6 @@ private:
 	void MarkMapVarStrings() const;
 	void LockMapVarStrings(int levelnum) const;
 
-	friend void ArrangeScriptProfiles(TArray<ProfileCollector> &profiles);
-	friend void ArrangeFunctionProfiles(TArray<ProfileCollector> &profiles);
 	friend struct FBehaviorContainer;
 };
 
@@ -443,6 +441,8 @@ struct FBehaviorContainer
 	const char *LookupString(uint32_t index);
 	void StartTypedScripts(uint16_t type, AActor *activator, bool always, int arg1 = 0, bool runNow = false);
 	void StopMyScripts(AActor *actor);
+	void ArrangeScriptProfiles(TArray<ProfileCollector> &profiles);
+	void ArrangeFunctionProfiles(TArray<ProfileCollector> &profiles);
 
 };
 

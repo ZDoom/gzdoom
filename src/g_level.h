@@ -490,8 +490,6 @@ void G_ParseMapInfo (FString basemapinfo);
 
 void G_ClearSnapshots (void);
 void P_RemoveDefereds ();
-void G_SnapshotLevel (void);
-void G_UnSnapshotLevel (bool keepPlayers);
 void G_ReadSnapshots (FResourceFile *);
 void G_WriteSnapshots (TArray<FString> &, TArray<FCompressedBuffer> &);
 void G_WriteVisited(FSerializer &arc);

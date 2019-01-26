@@ -1023,7 +1023,6 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 		AActor::RecreateAllAttachedLights();
 		InitPortalGroups(this);
 
-		automap->Level = this;	// Temporary workaround. At the moment this cannot be deserialized yet.
 		automap->UpdateShowAllLines();
 
 	}

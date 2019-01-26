@@ -65,12 +65,16 @@ class FSerializer
 public:
 	FWriter *w = nullptr;
 	FReader *r = nullptr;
+	FLevelLocals *Level;
 
 	unsigned ArraySize();
 	void WriteKey(const char *key);
 	void WriteObjects();
 
 public:
+
+	FSerializer(FLevelLocals *l) : Level(l)
+	{}
 
 	~FSerializer()
 	{
@@ -262,6 +266,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FString *&p
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDoorAnimation *&pstr, FDoorAnimation **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, char *&pstr, char **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&font, FFont **def);
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, FLevelLocals *&font, FLevelLocals **def);
 
 FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def, bool *retcode);
 template<> inline FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def)

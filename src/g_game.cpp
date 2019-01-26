@@ -1811,7 +1811,7 @@ void G_DoLoadGame ()
 	SaveVersion = 0;
 
 	void *data = info->CacheLump();
-	FSerializer arc;
+	FSerializer arc(nullptr);
 	if (!arc.OpenReader((const char *)data, info->LumpSize))
 	{
 		Printf("Failed to access savegame info\n");
@@ -2129,7 +2129,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	insave = true;
 	try
 	{
-		G_SnapshotLevel();
+		level.SnapshotLevel();
 	}
 	catch(CRecoverableError &err)
 	{
@@ -2152,8 +2152,8 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	}
 
 	BufferWriter savepic;
-	FSerializer savegameinfo;		// this is for displayable info about the savegame
-	FSerializer savegameglobals;	// and this for non-level related info that must be saved.
+	FSerializer savegameinfo(nullptr);		// this is for displayable info about the savegame
+	FSerializer savegameglobals(nullptr);	// and this for non-level related info that must be saved.
 
 	savegameinfo.OpenWriter(true);
 	savegameglobals.OpenWriter(save_formatted);

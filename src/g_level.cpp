@@ -856,7 +856,7 @@ void G_DoCompleted (void)
 	{ // Remember the level's state for re-entry.
 		if (!(level.flags2 & LEVEL2_FORGETSTATE))
 		{
-			G_SnapshotLevel ();
+			level.SnapshotLevel ();
 			// Do not free any global strings this level might reference
 			// while it's not loaded.
 			level.Behaviors.LockLevelVarStrings(level.levelnum);
@@ -1060,7 +1060,7 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 
 	level.starttime = gametic;
 
-	G_UnSnapshotLevel (!savegamerestore);	// [RH] Restore the state of the level.
+	level.UnSnapshotLevel (!savegamerestore);	// [RH] Restore the state of the level.
 	int pnumerr = G_FinishTravel ();
 
 	if (!level.FromSnapshot)
@@ -1109,7 +1109,7 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 	E_WorldLoadedUnsafe();
 	//      regular world load (savegames are handled internally)
 	E_WorldLoaded();
-	P_DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
+	level.DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
 	
 	if (demoplayback || oldgs == GS_STARTUP || oldgs == GS_TITLELEVEL)
 		C_HideConsole ();
@@ -1647,19 +1647,19 @@ void G_AirControlChanged ()
 //
 //==========================================================================
 
-void G_SnapshotLevel ()
+void FLevelLocals::SnapshotLevel ()
 {
-	level.info->Snapshot.Clean();
+	info->Snapshot.Clean();
 
-	if (level.info->isValid())
+	if (info->isValid())
 	{
-		FSerializer arc;
+		FSerializer arc(this);
 
 		if (arc.OpenWriter(save_formatted))
 		{
 			SaveVersion = SAVEVER;
-			level.Serialize(arc, false);
-			level.info->Snapshot = arc.GetCompressedOutput();
+			Serialize(arc, false);
+			info->Snapshot = arc.GetCompressedOutput();
 		}
 	}
 }
@@ -1671,24 +1671,24 @@ void G_SnapshotLevel ()
 //
 //==========================================================================
 
-void G_UnSnapshotLevel (bool hubLoad)
+void FLevelLocals::UnSnapshotLevel (bool hubLoad)
 {
-	if (level.info->Snapshot.mBuffer == nullptr)
+	if (info->Snapshot.mBuffer == nullptr)
 		return;
 
-	if (level.info->isValid())
+	if (info->isValid())
 	{
-		FSerializer arc;
-		if (!arc.OpenReader(&level.info->Snapshot))
+		FSerializer arc(this);
+		if (!arc.OpenReader(&info->Snapshot))
 		{
 			I_Error("Failed to load savegame");
 			return;
 		}
 
-		level.Serialize (arc, hubLoad);
-		level.FromSnapshot = true;
+		Serialize (arc, hubLoad);
+		FromSnapshot = true;
 
-		TThinkerIterator<AActor> it(NAME_PlayerPawn);
+		auto it = GetThinkerIterator<AActor>(NAME_PlayerPawn);
 		AActor *pawn, *next;
 
 		next = it.Next();
@@ -1716,11 +1716,11 @@ void G_UnSnapshotLevel (bool hubLoad)
 		arc.Close();
 	}
 	// No reason to keep the snapshot around once the level's been entered.
-	level.info->Snapshot.Clean();
+	info->Snapshot.Clean();
 	if (hubLoad)
 	{
 		// Unlock ACS global strings that were locked when the snapshot was made.
-		level.Behaviors.UnlockLevelVarStrings(level.levelnum);
+		Behaviors.UnlockLevelVarStrings(level.levelnum);
 	}
 }
 

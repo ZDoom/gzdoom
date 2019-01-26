@@ -186,6 +186,9 @@ private:
 	void AddDisplacementForPortal(FLinePortal *portal);
 	bool ConnectPortalGroups();
 public:
+	void SnapshotLevel();
+	void UnSnapshotLevel(bool hubLoad);
+
 	void FinalizePortals();
 	bool ChangePortal(line_t *ln, int thisid, int destid);
 	unsigned GetSkyboxPortal(AActor *actor);
@@ -198,6 +201,7 @@ public:
 	bool CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int tag, double speed, double speed2, double height, int crush, int silent, int change, DCeiling::ECrushMode hexencrush);
 	void ActivateInStasisCeiling(int tag);
 	bool CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line, double speed, double height, int crush, int change, bool hexencrush, bool hereticlower);
+	void DoDeferedScripts();
 
 	bool EV_DoPlat(int tag, line_t *line, DPlat::EPlatType type, double height, double speed, int delay, int lip, int change);
 	void EV_StopPlat(int tag, bool remove);

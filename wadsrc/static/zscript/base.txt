@@ -7,7 +7,7 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native readonly Array<@Team> Teams;
 	native int validcount;
 	native readonly bool multiplayer;
-	native play @LevelLocals level;
+	deprecated("3.8") native play @LevelLocals level;
 	native @KeyBindings Bindings;
 	native @KeyBindings AutomapBindings;
 	native play @DehInfo deh;
@@ -461,6 +461,8 @@ class Thinker : Object native play
 	}
 
 	const TICRATE = 35;
+
+	native LevelLocals Level;
 	
 	virtual native void Tick();
 	virtual native void PostBeginPlay();

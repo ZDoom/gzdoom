@@ -969,13 +969,26 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnProjectile)
 
 				if ( (CMF_ABSOLUTEPITCH|CMF_OFFSETPITCH) & flags)
 				{
-					if (CMF_OFFSETPITCH & flags)
+					if (!(flags & CMF_BADPITCH))
 					{
-						Pitch += missile->Vel.Pitch();
+						if (CMF_OFFSETPITCH & flags)
+						{
+							Pitch += missile->Vel.Pitch();
+						}
+						missilespeed = fabs(Pitch.Cos() * missile->Speed);
+						missile->Vel.Z = -Pitch.Sin() * missile->Speed;
 					}
-					missilespeed = fabs(Pitch.Cos() * missile->Speed);
-					missile->Vel.Z = Pitch.Sin() * missile->Speed;
-					if (!(flags & CMF_BADPITCH)) missile->Vel.Z *= -1;
+					else
+					{
+						// Replicate the bogus calculation from A_CustomMissile in its entirety.
+						// This tried to do the right thing but in the process effectively inverted the base pitch.
+						if (CMF_OFFSETPITCH & flags)
+						{
+							Pitch -= missile->Vel.Pitch();
+						}
+						missilespeed = fabs(Pitch.Cos() * missile->Speed);
+						missile->Vel.Z = Pitch.Sin() * missile->Speed;
+					}
 				}
 				else
 				{

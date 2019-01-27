@@ -229,7 +229,7 @@ Mat4f PolySkyDome::GLSkyMath()
 
 		float xscale = texw < 1024.f ? floor(1024.f / float(texw)) : 1.f;
 		float yscale = 1.f;
-		if (texh <= 128 && (level.flags & LEVEL_FORCETILEDSKY))
+		if (texh <= 128 && (PolyRenderer::Instance()->Level->flags & LEVEL_FORCETILEDSKY))
 		{
 			modelMatrix = modelMatrix * Mat4f::Translate(0.f, 0.f, (-40 + tex->GetSkyOffset() + skyoffset)*skyoffsetfactor);
 			modelMatrix = modelMatrix * Mat4f::Scale(1.f, 1.f, 1.2f * 1.17f);
@@ -307,7 +307,7 @@ void PolySkySetup::Update()
 		}
 		else if (skyheight > 200)
 		{
-			skytexturemid = (200 - skyheight) * sskytex1->GetScale().Y + ((r_skymode == 2 && !(level.flags & LEVEL_FORCETILEDSKY)) ? skytex1->GetSkyOffset() : 0);
+			skytexturemid = (200 - skyheight) * sskytex1->GetScale().Y + ((r_skymode == 2 && !(PolyRenderer::Instance()->Level->flags & LEVEL_FORCETILEDSKY)) ? skytex1->GetSkyOffset() : 0);
 		}
 
 		if (viewwidth != 0 && viewheight != 0)
@@ -337,7 +337,7 @@ void PolySkySetup::Update()
 	FTextureID sky1tex, sky2tex;
 	double frontdpos = 0, backdpos = 0;
 
-	if ((level.flags & LEVEL_SWAPSKIES) && !(level.flags & LEVEL_DOUBLESKY))
+	if ((PolyRenderer::Instance()->Level->flags & LEVEL_SWAPSKIES) && !(PolyRenderer::Instance()->Level->flags & LEVEL_DOUBLESKY))
 	{
 		sky1tex = sky2texture;
 	}
@@ -355,7 +355,7 @@ void PolySkySetup::Update()
 	{	// use sky1
 	sky1:
 		frontskytex = GetSWTex(sky1tex);
-		if (level.flags & LEVEL_DOUBLESKY)
+		if (PolyRenderer::Instance()->Level->flags & LEVEL_DOUBLESKY)
 			backskytex = GetSWTex(sky2tex);
 		else
 			backskytex = nullptr;
@@ -376,7 +376,7 @@ void PolySkySetup::Update()
 	else
 	{	// MBF's linedef-controlled skies
 		// Sky Linedef
-		const line_t *l = &level.lines[(sectorSky & ~PL_SKYFLAT) - 1];
+		const line_t *l = &PolyRenderer::Instance()->Level->lines[(sectorSky & ~PL_SKYFLAT) - 1];
 
 		// Sky transferred from first sidedef
 		const side_t *s = l->sidedef[0];
@@ -384,7 +384,7 @@ void PolySkySetup::Update()
 
 		// Texture comes from upper texture of reference sidedef
 		// [RH] If swapping skies, then use the lower sidedef
-		if (level.flags & LEVEL_SWAPSKIES && s->GetTexture(side_t::bottom).isValid())
+		if (PolyRenderer::Instance()->Level->flags & LEVEL_SWAPSKIES && s->GetTexture(side_t::bottom).isValid())
 		{
 			pos = side_t::bottom;
 		}

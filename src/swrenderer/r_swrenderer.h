@@ -23,7 +23,7 @@ struct FSoftwareRenderer : public FRenderer
 	void SetClearColor(int color) override;
 	void RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, double fov);
 
-	void SetColormap() override;
+	void SetColormap(FLevelLocals *Level) override;
 	void Init() override;
 
 private:

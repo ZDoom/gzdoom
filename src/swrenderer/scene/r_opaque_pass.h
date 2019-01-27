@@ -64,7 +64,7 @@ namespace swrenderer
 		RenderOpaquePass(RenderThread *thread);
 
 		void ClearClip();
-		void RenderScene();
+		void RenderScene(FLevelLocals *Level);
 
 		void ResetFakingUnderwater() { r_fakingunderwater = false; }
 		sector_t *FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel, seg_t *backline, int backx1, int backx2, double frontcz1, double frontcz2);

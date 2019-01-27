@@ -34,7 +34,7 @@ void PolyLightVisibility::SetVisibility(FViewWindow &viewwindow, float vis)
 
 fixed_t PolyLightVisibility::LightLevelToShade(int lightlevel, bool foggy)
 {
-	bool nolightfade = !foggy && ((level.flags3 & LEVEL3_NOLIGHTFADE));
+	bool nolightfade = !foggy && ((PolyRenderer::Instance()->Level->flags3 & LEVEL3_NOLIGHTFADE));
 	if (nolightfade)
 	{
 		return (MAX(255 - lightlevel, 0) * NUMCOLORMAPS) << (FRACBITS - 8);

@@ -292,7 +292,7 @@ namespace swrenderer
 		if (thread->X2 < viewwidth)
 			thread->ClipSegments->Clip(thread->X2, viewwidth, true, &visitor);
 
-		thread->OpaquePass->RenderScene();
+		thread->OpaquePass->RenderScene(thread->Viewport->Level());
 		thread->Clip3D->ResetClip(); // reset clips (floor/ceiling)
 
 		if (thread->MainThread)

@@ -246,7 +246,7 @@ void RenderPolyPlane::RenderSkyWalls(PolyRenderThread *thread, PolyDrawArgs &arg
 
 void RenderPolyPlane::SetLightLevel(PolyRenderThread *thread, PolyDrawArgs &args, const PolyTransferHeights &fakeflat, bool ceiling)
 {
-	bool foggy = level.fadeto || fakeflat.FrontSector->Colormap.FadeColor || (level.flags & LEVEL_HASFADETABLE);
+	bool foggy = PolyRenderer::Instance()->Level->fadeto || fakeflat.FrontSector->Colormap.FadeColor || (PolyRenderer::Instance()->Level->flags & LEVEL_HASFADETABLE);
 
 	int lightlevel = ceiling ? fakeflat.CeilingLightLevel : fakeflat.FloorLightLevel;
 	int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Viewpoint.extralight << 4;

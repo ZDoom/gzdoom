@@ -492,9 +492,10 @@ namespace swrenderer
 			PvsSubsectors.push_back(sub->Index());
 		}
 
+		auto Level = sub->sector->Level;
 #ifdef RANGECHECK
-		if (outersubsector && (unsigned)sub->Index() >= level.subsectors.Size())
-			I_Error("RenderSubsector: ss %i with numss = %u", sub->Index(), level.subsectors.Size());
+		if (outersubsector && (unsigned)sub->Index() >= Level->subsectors.Size())
+			I_Error("RenderSubsector: ss %i with numss = %u", sub->Index(), Level->subsectors.Size());
 #endif
 
 		if (sub->polys)
@@ -515,7 +516,7 @@ namespace swrenderer
 		sector_t *frontsector = FakeFlat(sub->sector, &tempsec, &floorlightlevel, &ceilinglightlevel, nullptr, 0, 0, 0, 0);
 
 		// [RH] set foggy flag
-		bool foggy = level.fadeto || frontsector->Colormap.FadeColor || (level.flags & LEVEL_HASFADETABLE);
+		bool foggy = Level->fadeto || frontsector->Colormap.FadeColor || (Level->flags & LEVEL_HASFADETABLE);
 
 		// kg3D - fake lights
 		CameraLight *cameraLight = CameraLight::Instance();
@@ -611,7 +612,7 @@ namespace swrenderer
 		AddSprites(sub->sector, frontsector->GetTexture(sector_t::ceiling) == skyflatnum ? ceilinglightlevel : floorlightlevel, FakeSide, foggy, GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::sprites], true));
 
 		// [RH] Add particles
-		if ((unsigned int)(sub->Index()) < level.subsectors.Size())
+		if ((unsigned int)(sub->Index()) < Level->subsectors.Size())
 		{ // Only do it for the main BSP.
 			int lightlevel = (floorlightlevel + ceilinglightlevel) / 2;
 			for (int i = ParticlesInSubsec[sub->Index()]; i != NO_PARTICLE; i = Particles[i].snext)
@@ -817,21 +818,21 @@ namespace swrenderer
 		}
 	}
 
-	void RenderOpaquePass::RenderScene()
+	void RenderOpaquePass::RenderScene(FLevelLocals *Level)
 	{
 		if (Thread->MainThread)
 			WallCycles.Clock();
 
 		for (uint32_t sub : PvsSubsectors)
 			SubsectorDepths[sub] = 0xffffffff;
-		SubsectorDepths.resize(level.subsectors.Size(), 0xffffffff);
+		SubsectorDepths.resize(Level->subsectors.Size(), 0xffffffff);
 
 		PvsSubsectors.clear();
 		SeenSpriteSectors.clear();
 		SeenActors.clear();
 
 		InSubsector = nullptr;
-		RenderBSPNode(level.HeadNode());	// The head node is the last node output.
+		RenderBSPNode(Level->HeadNode());	// The head node is the last node output.
 
 		if (Thread->MainThread)
 			WallCycles.Unclock();
@@ -845,9 +846,9 @@ namespace swrenderer
 
 	void RenderOpaquePass::RenderBSPNode(void *node)
 	{
-		if (level.nodes.Size() == 0)
+		if (Thread->Viewport->Level()->nodes.Size() == 0)
 		{
-			RenderSubsector(&level.subsectors[0]);
+			RenderSubsector(&Thread->Viewport->Level()->subsectors[0]);
 			return;
 		}
 		while (!((size_t)node & 1))  // Keep going until found a subsector

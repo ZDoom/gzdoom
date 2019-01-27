@@ -135,7 +135,7 @@ namespace swrenderer
 			virtwidth = virtwidth * AspectMultiplier(viewwindow.WidescreenRatio) / 48;
 		}
 
-		double ypixelstretch = (level.info) ? level.info->pixelstretch : 1.2;
+		double ypixelstretch = (Level()->info) ? Level()->info->pixelstretch : 1.2;
 
 		BaseYaspectMul = 320.0 * virtheight2 / (r_Yaspect * virtwidth2);
 		YaspectMul = 320.0 * virtheight / (r_Yaspect * virtwidth) * ypixelstretch / 1.2;

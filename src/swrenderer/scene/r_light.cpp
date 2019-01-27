@@ -39,6 +39,7 @@
 #include "g_level.h"
 #include "r_utility.h"
 #include "d_player.h"
+#include "g_levellocals.h"
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/viewport/r_viewport.h"
 
@@ -139,12 +140,12 @@ namespace swrenderer
 
 		TiltVisibility = float(vis * viewport->viewwindow.FocalTangent * (16.f * 320.f) / viewwidth);
 
-		NoLightFade = !!(level.flags3 & LEVEL3_NOLIGHTFADE);
+		NoLightFade = !!(viewport->Level()->flags3 & LEVEL3_NOLIGHTFADE);
 	}
 
-	fixed_t LightVisibility::LightLevelToShadeImpl(int lightlevel, bool foggy)
+	fixed_t LightVisibility::LightLevelToShadeImpl(RenderViewport *viewport, int lightlevel, bool foggy)
 	{
-		bool nolightfade = !foggy && ((level.flags3 & LEVEL3_NOLIGHTFADE));
+		bool nolightfade = !foggy && ((viewport->Level()->flags3 & LEVEL3_NOLIGHTFADE));
 		if (nolightfade)
 		{
 			return (MAX(255 - lightlevel, 0) * NUMCOLORMAPS) << (FRACBITS - 8);

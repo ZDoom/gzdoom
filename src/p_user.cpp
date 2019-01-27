@@ -693,7 +693,7 @@ bool player_t::Resurrect()
 	// fire E_PlayerRespawned and start the ACS SCRIPT_Respawn.
 	E_PlayerRespawned(int(this - players));
 	//
-	level.Behaviors.StartTypedScripts(SCRIPT_Respawn, mo, true);
+	mo->Level->Behaviors.StartTypedScripts(SCRIPT_Respawn, mo, true);
 	return true;
 }
 
@@ -890,7 +890,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 	}
 
 	// Handle the different player death screams
-	if ((((level.flags >> 15) | (dmflags)) &
+	if ((((self->Level->flags >> 15) | (dmflags)) &
 		(DF_FORCE_FALLINGZD | DF_FORCE_FALLINGHX)) &&
 		self->Vel.Z <= -39)
 	{
@@ -1009,7 +1009,7 @@ void P_FallingDamage (AActor *actor)
 	int damage;
 	double vel;
 
-	damagestyle = ((level.flags >> 15) | (dmflags)) &
+	damagestyle = ((actor->Level->flags >> 15) | (dmflags)) &
 		(DF_FORCE_FALLINGZD | DF_FORCE_FALLINGHX);
 
 	if (damagestyle == 0)
@@ -1110,7 +1110,7 @@ void P_CheckMusicChange(player_t *player)
 			{
 				if (player->MUSINFOactor->args[0] != 0)
 				{
-					FName *music = level.info->MusicMap.CheckKey(player->MUSINFOactor->args[0]);
+					FName *music = player->MUSINFOactor->Level->info->MusicMap.CheckKey(player->MUSINFOactor->args[0]);
 
 					if (music != NULL)
 					{
@@ -1248,7 +1248,6 @@ void P_PredictionLerpReset()
 
 bool P_LerpCalculate(AActor *pmo, PredictPos from, PredictPos to, PredictPos &result, float scale)
 {
-	//DVector2 pfrom = level.Displacements.getOffset(from.portalgroup, to.portalgroup);
 	DVector3 vecFrom = from.pos;
 	DVector3 vecTo = to.pos;
 	DVector3 vecResult;
@@ -1683,7 +1682,7 @@ bool P_IsPlayerTotallyFrozen(const player_t *player)
 	return
 		gamestate == GS_TITLELEVEL ||
 		player->cheats & CF_TOTALLYFROZEN ||
-		((level.flags2 & LEVEL2_FROZEN) && player->timefreezer == 0);
+		((player->mo->Level->flags2 & LEVEL2_FROZEN) && player->timefreezer == 0);
 }
 
 

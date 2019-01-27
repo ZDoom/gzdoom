@@ -2136,11 +2136,11 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, char *&pstr
 //
 // This is a bit of a cheat because it never actually writes out the pointer.
 // The rules for levels are that they must be self-contained.
-// No level and no pbject that is part of a level may reference a different level.
+// No level and no pbject that is part of a level may reference a different one.
 //
 // When writing, this merely checks if the rules are obeyed and if not errors out.
 // When reading, it assumes that the object was properly written and restores
-// the reference from the owning level.
+// the reference from the owning level
 //
 // The only exception are null pointers which are allowed
 //
@@ -2159,7 +2159,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FLevelLocal
 			}
 			else
 			{
-				// This MUST be the currently serialized level. Anything else will error out here as a sanity check.
+				// This MUST be the currently serialized level, anything else will error out here as a sanity check.
 				if (arc.Level == nullptr || lev != arc.Level)
 				{
 					I_Error("Attempt to serialize invalid level reference");

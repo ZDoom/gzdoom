@@ -271,7 +271,6 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 			scanner.MustGetValue(false);
 			int tag = scanner.Number;
 			// allow no 0-tag specials here, unless a level exit.
-#pragma message("Fixme: This needs to be evaluated at run time")
 			if (tag != 0 || special == 11 || special == 51 || special == 52 || special == 124)
 			{
 				// This cannot be evaluated here because this needs to be done in the context of the level being used.

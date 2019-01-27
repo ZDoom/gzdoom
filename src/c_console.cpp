@@ -629,7 +629,7 @@ void C_DeinitConsole ()
 	while (cmd != NULL)
 	{
 		GameAtExit *next = cmd->Next;
-		AddCommandString (cmd->Command.LockBuffer());
+		AddCommandString (cmd->Command);
 		delete cmd;
 		cmd = next;
 	}
@@ -1559,17 +1559,9 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			{
 				// Work with a copy of command to avoid side effects caused by
 				// exception raised during execution, like with 'error' CCMD.
-				// It's problematic to maintain FString's lock symmetry.
-				static TArray<char> command;
-				const size_t length = buffer.Text.Len();
-
-				command.Resize(unsigned(length + 1));
-				memcpy(&command[0], buffer.Text.GetChars(), length);
-				command[length] = '\0';
-
+				FString copy = buffer.Text;
 				buffer.SetString("");
-
-				AddCommandString(&command[0]);
+				AddCommandString(copy);
 			}
 			TabbedLast = false;
 			TabbedList = false;

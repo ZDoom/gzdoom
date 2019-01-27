@@ -2579,7 +2579,7 @@ void D_DoomMain (void)
 		// [RH] Run any saved commands from the command line or autoexec.cfg now.
 		gamestate = GS_FULLCONSOLE;
 		Net_NewMakeTic ();
-		DThinker::RunThinkers ();
+		C_RunDelayedCommands();
 		gamestate = GS_STARTUP;
 
 		if (!restart)
@@ -2646,7 +2646,7 @@ void D_DoomMain (void)
 							G_InitNew(startmap, false);
 							if (StoredWarp.IsNotEmpty())
 							{
-								AddCommandString(StoredWarp.LockBuffer());
+								AddCommandString(StoredWarp);
 								StoredWarp = NULL;
 							}
 						}

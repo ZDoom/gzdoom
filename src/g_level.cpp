@@ -885,7 +885,7 @@ void G_DoCompleted (void)
 		((level.flags & LEVEL_NOINTERMISSION) ||
 		((nextcluster == thiscluster) && (thiscluster->flags & CLUSTER_HUB) && !(thiscluster->flags & CLUSTER_ALLOWINTERMISSION))))
 	{
-		G_WorldDone ();
+		level.WorldDone ();
 		return;
 	}
 
@@ -1131,17 +1131,17 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 //
 //==========================================================================
 
-void G_WorldDone (void) 
+void FLevelLocals::WorldDone (void) 
 { 
 	cluster_info_t *nextcluster;
 	cluster_info_t *thiscluster;
 
 	gameaction = ga_worlddone; 
 
-	if (level.flags & LEVEL_CHANGEMAPCHEAT)
+	if (flags & LEVEL_CHANGEMAPCHEAT)
 		return;
 
-	thiscluster = FindClusterInfo (level.cluster);
+	thiscluster = FindClusterInfo (cluster);
 
 	if (strncmp (nextlevel, "enDSeQ", 6) == 0)
 	{
@@ -1160,7 +1160,7 @@ void G_WorldDone (void)
 			}
 		}
 
-		auto ext = level.info->ExitMapTexts.CheckKey(level.flags3 & LEVEL3_EXITSECRETUSED ? NAME_Secret : NAME_Normal);
+		auto ext = info->ExitMapTexts.CheckKey(flags3 & LEVEL3_EXITSECRETUSED ? NAME_Secret : NAME_Normal);
 		if (ext != nullptr && (ext->mDefined & FExitText::DEF_TEXT))
 		{
 			F_StartFinale(ext->mDefined & FExitText::DEF_MUSIC ? ext->mMusic : gameinfo.finaleMusic,
@@ -1188,9 +1188,9 @@ void G_WorldDone (void)
 	{
 		FExitText *ext = nullptr;
 		
-		if (level.flags3 & LEVEL3_EXITSECRETUSED) ext = level.info->ExitMapTexts.CheckKey(NAME_Secret);
-		else if (level.flags3 & LEVEL3_EXITNORMALUSED) ext = level.info->ExitMapTexts.CheckKey(NAME_Normal);
-		if (ext == nullptr) ext = level.info->ExitMapTexts.CheckKey(nextlevel);
+		if (flags3 & LEVEL3_EXITSECRETUSED) ext = info->ExitMapTexts.CheckKey(NAME_Secret);
+		else if (flags3 & LEVEL3_EXITNORMALUSED) ext = info->ExitMapTexts.CheckKey(NAME_Normal);
+		if (ext == nullptr) ext = info->ExitMapTexts.CheckKey(nextlevel);
 
 		if (ext != nullptr)
 		{
@@ -1211,7 +1211,7 @@ void G_WorldDone (void)
 
 		nextcluster = FindClusterInfo (FindLevelInfo (nextlevel)->cluster);
 
-		if (nextcluster->cluster != level.cluster && !deathmatch)
+		if (nextcluster->cluster != cluster && !deathmatch)
 		{
 			// Only start the finale if the next level's cluster is different
 			// than the current one and we're not in deathmatch.
@@ -1241,7 +1241,7 @@ void G_WorldDone (void)
  
 DEFINE_ACTION_FUNCTION(FLevelLocals, WorldDone)
 {
-	G_WorldDone();
+	currentUILevel->WorldDone();
 	return 0;
 }
 
@@ -1492,7 +1492,7 @@ void FLevelLocals::Init()
 		teamdamage = info->teamdamage;
 	}
 
-	G_AirControlChanged ();
+	AirControlChanged ();
 
 	cluster_info_t *clus = FindClusterInfo (info->cluster);
 
@@ -1625,16 +1625,16 @@ FString CalcMapName (int episode, int level)
 //
 //==========================================================================
 
-void G_AirControlChanged ()
+void FLevelLocals::AirControlChanged ()
 {
-	if (level.aircontrol <= 1/256.)
+	if (aircontrol <= 1/256.)
 	{
-		level.airfriction = 1.;
+		airfriction = 1.;
 	}
 	else
 	{
 		// Friction is inversely proportional to the amount of control
-		level.airfriction = level.aircontrol * -0.0941 + 1.0004;
+		airfriction = aircontrol * -0.0941 + 1.0004;
 	}
 }
 

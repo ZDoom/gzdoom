@@ -92,7 +92,10 @@ struct TexMan
 	};
 
 	native static TextureID CheckForTexture(String name, int usetype, int flags = TryAny);
-	native static void ReplaceTextures(String from, String to, int flags);
+	deprecated("3.8") static void ReplaceTextures(String from, String to, int flags)
+	{
+		level.ReplaceTextures(from, to, flags);
+	}
 	native static String GetName(TextureID tex);
 	native static int, int GetSize(TextureID tex);
 	native static Vector2 GetScaledSize(TextureID tex);
@@ -699,6 +702,7 @@ struct LevelLocals native
 	native SpotState GetSpotState(bool create = true);
 	native int FindUniqueTid(int start = 0, int limit = 0);
 	native uint GetSkyboxPortal(Actor actor);
+	native void ReplaceTextures(String from, String to, int flags);
 
 	native static clearscope bool IsPointInMap(vector3 p);
 

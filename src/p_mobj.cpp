@@ -4331,7 +4331,7 @@ bool AActor::UpdateWaterLevel(bool dosplash)
 			else if (oldlevel == 3 && waterlevel < 3)
 			{ 
 				// Our head just came up.
-				if (player->air_finished > level.time)
+				if (player->air_finished > Level->time)
 				{ 
 					// We hadn't run out of air yet.
 					S_Sound(this, CHAN_VOICE, "*surface", 1, ATTN_NORM);
@@ -4356,29 +4356,17 @@ DEFINE_ACTION_FUNCTION(AActor, UpdateWaterLevel)
 //
 //==========================================================================
 
-AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t allowreplacement, bool SpawningMapThing)
+void ConstructActor(AActor *actor, const DVector3 &pos, bool SpawningMapThing)
 {
-	if (type == NULL)
-	{
-		I_Error ("Tried to spawn a class-less actor\n");
-	}
-
-	if (allowreplacement)
-	{
-		type = type->GetReplacement();
-	}
-
-	AActor *actor;
-	
-	actor = static_cast<AActor *>(level.CreateThinker(type));
-	actor->SpawnTime = level.totaltime;
-	actor->SpawnOrder = level.spawnindex++;
+	auto Level = actor->Level;
+	actor->SpawnTime = Level->totaltime;
+	actor->SpawnOrder = Level->spawnindex++;
 
 	// Set default dialogue
-	actor->ConversationRoot = level.GetConversation(actor->GetClass()->TypeName);
+	actor->ConversationRoot = Level->GetConversation(actor->GetClass()->TypeName);
 	if (actor->ConversationRoot != -1)
 	{
-		actor->Conversation = level.StrifeDialogues[actor->ConversationRoot];
+		actor->Conversation = Level->StrifeDialogues[actor->ConversationRoot];
 	}
 	else
 	{
@@ -4440,7 +4428,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 		actor->SetZ(actor->ceilingz - actor->Height);
 	}
 
-	if (SpawningMapThing || !type->IsDescendantOf (NAME_PlayerPawn))
+	if (SpawningMapThing || !actor->IsKindOf (NAME_PlayerPawn))
 	{
 		// Check if there's something solid to stand on between the current position and the
 		// current sector's floor. For map spawns this must be delayed until after setting the
@@ -4516,30 +4504,50 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 		actor->CallBeginPlay ();
 		if (actor->ObjectFlags & OF_EuthanizeMe)
 		{
-			return NULL;
+			return;
 		}
 	}
-	if (level.flags & LEVEL_NOALLIES && !actor->player)
+	if (Level->flags & LEVEL_NOALLIES && !actor->player)
 	{
 		actor->flags &= ~MF_FRIENDLY;
 	}
 	// [RH] Count monsters whenever they are spawned.
 	if (actor->CountsAsKill())
 	{
-		level.total_monsters++;
+		Level->total_monsters++;
 	}
 	// [RH] Same, for items
 	if (actor->flags & MF_COUNTITEM)
 	{
-		level.total_items++;
+		Level->total_items++;
 	}
 	// And for secrets
 	if (actor->flags5 & MF5_COUNTSECRET)
 	{
-		level.total_secrets++;
+		Level->total_secrets++;
 	}
 	// force scroller check in the first tic.
 	actor->flags8 |= MF8_INSCROLLSEC;
+}
+
+
+AActor *AActor::StaticSpawn(PClassActor *type, const DVector3 &pos, replace_t allowreplacement, bool SpawningMapThing)
+{
+	if (type == NULL)
+	{
+		I_Error("Tried to spawn a class-less actor\n");
+	}
+
+	if (allowreplacement)
+	{
+		type = type->GetReplacement();
+	}
+
+	AActor *actor;
+
+	actor = static_cast<AActor *>(level.CreateThinker(type));
+
+	ConstructActor(actor, pos, SpawningMapThing);
 	return actor;
 }
 
@@ -4604,7 +4612,7 @@ void AActor::HandleSpawnFlags ()
 		if (flags & MF_COUNTKILL)
 		{
 			flags &= ~MF_COUNTKILL;
-			level.total_monsters--;
+			Level->total_monsters--;
 		}
 	}
 	if (SpawnFlags & MTF_SHADOW)
@@ -4623,7 +4631,7 @@ void AActor::HandleSpawnFlags ()
 		{
 			//Printf("Secret %s in sector %i!\n", GetTag(), Sector->sectornum);
 			flags5 |= MF5_COUNTSECRET;
-			level.total_secrets++;
+			Level->total_secrets++;
 		}
 	}
 }
@@ -7122,7 +7130,7 @@ void AActor::Revive()
 	// [RH] If it's a monster, it gets to count as another kill
 	if (CountsAsKill())
 	{
-		level.total_monsters++;
+		Level->total_monsters++;
 	}
 
 	// [ZZ] resurrect hook

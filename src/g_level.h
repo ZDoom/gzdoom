@@ -477,8 +477,6 @@ int G_FinishTravel ();
 
 void G_DoLoadLevel (int position, bool autosave, bool newGame);
 
-void G_AirControlChanged ();
-
 cluster_info_t *FindClusterInfo (int cluster);
 level_info_t *FindLevelInfo (const char *mapname, bool allowdefault=true);
 level_info_t *FindLevelByNum (int num);

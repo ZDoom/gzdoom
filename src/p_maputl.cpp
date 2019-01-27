@@ -356,17 +356,17 @@ bool AActor::FixMapthingPos()
 {
 	sector_t *secstart = P_PointInSectorBuggy(X(), Y());
 
-	int blockx = level.blockmap.GetBlockX(X());
-	int blocky = level.blockmap.GetBlockY(Y());
+	int blockx = Level->blockmap.GetBlockX(X());
+	int blocky = Level->blockmap.GetBlockY(Y());
 	bool success = false;
 
-	if (level.blockmap.isValidBlock(blockx, blocky))
+	if (Level->blockmap.isValidBlock(blockx, blocky))
 	{
 		int *list;
 
-		for (list = level.blockmap.GetLines(blockx, blocky); *list != -1; ++list)
+		for (list = Level->blockmap.GetLines(blockx, blocky); *list != -1; ++list)
 		{
-			line_t *ldef = &level.lines[*list];
+			line_t *ldef = &Level->lines[*list];
 
 			if (ldef->frontsector == ldef->backsector)
 			{ // Skip two-sided lines inside a single sector
@@ -504,7 +504,7 @@ void AActor::LinkToWorld(FLinkContext *ctx, bool spawningmapthing, sector_t *sec
 	{
 		FPortalGroupArray check;
 
-		level.CollectConnectedGroups(Sector->PortalGroup, Pos(), Top(), radius, check);
+		Level->CollectConnectedGroups(Sector->PortalGroup, Pos(), Top(), radius, check);
 
 		BlockNode = NULL;
 		FBlockNode **alink = &this->BlockNode;
@@ -512,25 +512,25 @@ void AActor::LinkToWorld(FLinkContext *ctx, bool spawningmapthing, sector_t *sec
 		{
 			DVector3 pos = i==-1? Pos() : PosRelative(check[i] & ~FPortalGroupArray::FLAT);
 
-			int x1 = level.blockmap.GetBlockX(pos.X - radius);
-			int x2 = level.blockmap.GetBlockX(pos.X + radius);
-			int y1 = level.blockmap.GetBlockY(pos.Y - radius);
-			int y2 = level.blockmap.GetBlockY(pos.Y + radius);
+			int x1 = Level->blockmap.GetBlockX(pos.X - radius);
+			int x2 = Level->blockmap.GetBlockX(pos.X + radius);
+			int y1 = Level->blockmap.GetBlockY(pos.Y - radius);
+			int y2 = Level->blockmap.GetBlockY(pos.Y + radius);
 
-			if (x1 >= level.blockmap.bmapwidth || x2 < 0 || y1 >= level.blockmap.bmapheight || y2 < 0)
+			if (x1 >= Level->blockmap.bmapwidth || x2 < 0 || y1 >= Level->blockmap.bmapheight || y2 < 0)
 			{ // thing is off the map
 			}
 			else
 			{ // [RH] Link into every block this actor touches, not just the center one
 				x1 = MAX(0, x1);
 				y1 = MAX(0, y1);
-				x2 = MIN(level.blockmap.bmapwidth - 1, x2);
-				y2 = MIN(level.blockmap.bmapheight - 1, y2);
+				x2 = MIN(Level->blockmap.bmapwidth - 1, x2);
+				y2 = MIN(Level->blockmap.bmapheight - 1, y2);
 				for (int y = y1; y <= y2; ++y)
 				{
 					for (int x = x1; x <= x2; ++x)
 					{
-						FBlockNode **link = &level.blockmap.blocklinks[y*level.blockmap.bmapwidth + x];
+						FBlockNode **link = &Level->blockmap.blocklinks[y*Level->blockmap.bmapwidth + x];
 						FBlockNode *node = FBlockNode::Create(this, x, y, this->Sector->PortalGroup);
 
 						// Link in to block
@@ -1459,13 +1459,13 @@ void FPathTraverse::init(double x1, double y1, double x2, double y2, int flags, 
 		y2 += y1;
 	}
 
-	x1 -= level.blockmap.bmaporgx;
-	y1 -= level.blockmap.bmaporgy;
+	x1 -= Level->blockmap.bmaporgx;
+	y1 -= Level->blockmap.bmaporgy;
 	xt1 = x1 / FBlockmap::MAPBLOCKUNITS;
 	yt1 = y1 / FBlockmap::MAPBLOCKUNITS;
 
-	x2 -= level.blockmap.bmaporgx;
-	y2 -= level.blockmap.bmaporgy;
+	x2 -= Level->blockmap.bmaporgx;
+	y2 -= Level->blockmap.bmaporgy;
 	xt2 = x2 / FBlockmap::MAPBLOCKUNITS;
 	yt2 = y2 / FBlockmap::MAPBLOCKUNITS;
 

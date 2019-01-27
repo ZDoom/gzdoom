@@ -209,6 +209,18 @@ public:
 	AActor *SpawnPlayer(FPlayerStart *mthing, int playernum, int flags);
 	void StartLightning();
 	void ForceLightning(int mode);
+	void ClearDynamic3DFloorData();
+	void WorldDone(void);
+	void AirControlChanged();
+	AActor *SelectTeleDest(int tid, int tag, bool norandom);
+	bool AlignFlat(int linenum, int side, int fc);
+	void ReplaceTextures(const char *fromname, const char *toname, int flags);
+
+	bool EV_Thing_Spawn(int tid, AActor *source, int type, DAngle angle, bool fog, int newtid);
+	bool EV_Thing_Move(int tid, AActor *source, int mapspot, bool fog);
+	bool EV_Thing_Projectile(int tid, AActor *source, int type, const char *type_name, DAngle angle,
+		double speed, double vspeed, int dest, AActor *forcedest, int gravity, int newtid, bool leadTarget);
+	int EV_Thing_Damage(int tid, AActor *whofor0, int amount, FName type);
 
 	bool EV_DoPlat(int tag, line_t *line, DPlat::EPlatType type, double height, double speed, int delay, int lip, int change);
 	void EV_StopPlat(int tag, bool remove);
@@ -237,6 +249,12 @@ public:
 	void EV_StartLightGlowing(int tag, int upper, int lower, int tics);
 	void EV_StartLightFading(int tag, int value, int tics);
 	void EV_StopLightEffect(int tag);
+
+	bool EV_Teleport(int tid, int tag, line_t *line, int side, AActor *thing, int flags);
+	bool EV_SilentLineTeleport(line_t *line, int side, AActor *thing, int id, INTBOOL reverse);
+	bool EV_TeleportOther(int other_tid, int dest_tid, bool fog);
+	bool EV_TeleportGroup(int group_tid, AActor *victim, int source_tid, int dest_tid, bool moveSource, bool fog);
+	bool EV_TeleportSector(int tag, int source_tid, int dest_tid, bool fog, int group_tid);
 
 	void RecalculateDrawnSubsectors();
 	FSerializer &SerializeSubsectors(FSerializer &arc, const char *key);

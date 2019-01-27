@@ -525,13 +525,13 @@ FSerializer &Serialize(FSerializer &arc, const char *key, zone_t &z, zone_t *def
 //
 //==========================================================================
 
-void P_SerializeSounds(FSerializer &arc)
+void P_SerializeSounds(FLevelLocals *Level, FSerializer &arc)
 {
 	S_SerializeSounds(arc);
 	DSeqNode::SerializeSequences (arc);
 	const char *name = NULL;
 	uint8_t order;
-	float musvol = level.MusicVolume;
+	float musvol = Level->MusicVolume;
 
 	if (arc.isWriting())
 	{
@@ -544,9 +544,9 @@ void P_SerializeSounds(FSerializer &arc)
 	if (arc.isReading())
 	{
 		if (!S_ChangeMusic(name, order))
-			if (level.cdtrack == 0 || !S_ChangeCDMusic(level.cdtrack, level.cdid))
-				S_ChangeMusic(level.Music, level.musicorder);
-		level.SetMusicVolume(musvol);
+			if (Level->cdtrack == 0 || !S_ChangeCDMusic(Level->cdtrack, Level->cdid))
+				S_ChangeMusic(Level->Music, Level->musicorder);
+		Level->SetMusicVolume(musvol);
 	}
 }
 
@@ -977,7 +977,7 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 		sky1texture = skytexture1;
 		sky2texture = skytexture2;
 		R_InitSkyMap();
-		G_AirControlChanged();
+		AirControlChanged();
 	}
 
 	Behaviors.SerializeModuleStates(arc);
@@ -1004,7 +1004,7 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 	FRemapTable::StaticSerializeTranslations(arc);
 	canvasTextureInfo.Serialize(arc);
 	P_SerializePlayers(this, arc, hubload);
-	P_SerializeSounds(arc);
+	P_SerializeSounds(this, arc);
 
 	// Regenerate some data that wasn't saved
 	if (arc.isReading())

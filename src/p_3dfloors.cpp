@@ -558,9 +558,9 @@ void P_Recalculate3DFloors(sector_t * sector)
 //
 //==========================================================================
 
-void P_ClearDynamic3DFloorData()
+void FLevelLocals::ClearDynamic3DFloorData()
 {
-	for (auto &sec : level.sectors)
+	for (auto &sec : sectors)
 	{
 		TArray<F3DFloor*> & ffloors = sec.e->XFloor.ffloors;
 

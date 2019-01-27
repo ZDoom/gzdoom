@@ -52,12 +52,12 @@ FClassMap SpawnableThings;
 
 static FRandom pr_leadtarget ("LeadTarget");
 
-bool P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, int newtid)
+bool FLevelLocals::EV_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, int newtid)
 {
 	int rtn = 0;
 	PClassActor *kind;
 	AActor *spot, *mobj;
-	auto iterator = level.GetActorIterator(tid);
+	auto iterator = GetActorIterator(tid);
 
 	kind = P_GetSpawnableType(type);
 
@@ -68,7 +68,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, i
 	kind = kind->GetReplacement();
 
 	if ((GetDefaultByType(kind)->flags3 & MF3_ISMONSTER) && 
-		((dmflags & DF_NO_MONSTERS) || (level.flags2 & LEVEL2_NOMONSTERS)))
+		((dmflags & DF_NO_MONSTERS) || (flags2 & LEVEL2_NOMONSTERS)))
 		return false;
 
 	if (tid == 0)
@@ -144,16 +144,16 @@ bool P_MoveThing(AActor *source, const DVector3 &pos, bool fog)
 	}
 }
 
-bool P_Thing_Move (int tid, AActor *source, int mapspot, bool fog)
+bool FLevelLocals::EV_Thing_Move (int tid, AActor *source, int mapspot, bool fog)
 {
 	AActor *target;
 
 	if (tid != 0)
 	{
-		auto iterator1 = level.GetActorIterator(tid);
+		auto iterator1 = GetActorIterator(tid);
 		source = iterator1.Next();
 	}
-	auto iterator2 = level.GetActorIterator(mapspot);
+	auto iterator2 = GetActorIterator(mapspot);
 	target = iterator2.Next ();
 
 	if (source != NULL && target != NULL)
@@ -256,14 +256,14 @@ DEFINE_ACTION_FUNCTION(AActor, VelIntercept)
 	return 0;
 }
 
-bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_name, DAngle angle,
+bool FLevelLocals::EV_Thing_Projectile (int tid, AActor *source, int type, const char *type_name, DAngle angle,
 	double speed, double vspeed, int dest, AActor *forcedest, int gravity, int newtid,
 	bool leadTarget)
 {
 	int rtn = 0;
 	PClassActor *kind;
 	AActor *spot, *mobj, *targ = forcedest;
-	auto iterator = level.GetActorIterator(tid);
+	auto iterator = GetActorIterator(tid);
 	int defflags3;
 
 	if (type_name == NULL)
@@ -284,7 +284,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 
 	defflags3 = GetDefaultByType(kind)->flags3;
 	if ((defflags3 & MF3_ISMONSTER) && 
-		((dmflags & DF_NO_MONSTERS) || (level.flags2 & LEVEL2_NOMONSTERS)))
+		((dmflags & DF_NO_MONSTERS) || (flags2 & LEVEL2_NOMONSTERS)))
 		return false;
 
 	if (tid == 0)
@@ -297,7 +297,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 	}
 	while (spot != NULL)
 	{
-		auto tit = level.GetActorIterator(dest);
+		auto tit = GetActorIterator(dest);
 
 		if (dest == 0 || (targ = tit.Next()))
 		{
@@ -394,9 +394,9 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 	return rtn != 0;
 }
 
-int P_Thing_Damage (int tid, AActor *whofor0, int amount, FName type)
+int FLevelLocals::EV_Thing_Damage (int tid, AActor *whofor0, int amount, FName type)
 {
-	auto iterator = level.GetActorIterator(tid);
+	auto iterator = GetActorIterator(tid);
 	int count = 0;
 	AActor *actor;
 
@@ -876,6 +876,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, double xofs, double yofs, do
 	}
 
 	DVector3 old = caller->Pos();
+	auto Level = caller->Level;
 	int oldpgroup = caller->Sector->PortalGroup;
 
 	zofs += reference->Height * heightoffset;
@@ -957,15 +958,15 @@ int P_Thing_Warp(AActor *caller, AActor *reference, double xofs, double yofs, do
 			if (flags & WARPF_WARPINTERPOLATION)
 			{
 				// This just translates the movement but doesn't change the vector
-				DVector3 displacedold  = old + level.Displacements.getOffset(oldpgroup, caller->Sector->PortalGroup);
+				DVector3 displacedold  = old + Level->Displacements.getOffset(oldpgroup, caller->Sector->PortalGroup);
 				caller->Prev += caller->Pos() - displacedold;
 				caller->PrevPortalGroup = caller->Sector->PortalGroup;
 			}
 			else if (flags & WARPF_COPYINTERPOLATION)
 			{
 				// Map both positions of the reference actor to the current portal group
-				DVector3 displacedold = old + level.Displacements.getOffset(reference->PrevPortalGroup, caller->Sector->PortalGroup);
-				DVector3 displacedref = old + level.Displacements.getOffset(reference->Sector->PortalGroup, caller->Sector->PortalGroup);
+				DVector3 displacedold = old + Level->Displacements.getOffset(reference->PrevPortalGroup, caller->Sector->PortalGroup);
+				DVector3 displacedref = old + Level->Displacements.getOffset(reference->Sector->PortalGroup, caller->Sector->PortalGroup);
 				caller->Prev = caller->Pos() + displacedold - displacedref;
 				caller->PrevPortalGroup = caller->Sector->PortalGroup;
 			}

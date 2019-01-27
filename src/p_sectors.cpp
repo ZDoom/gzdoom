@@ -623,7 +623,7 @@ double FindHighestFloorPoint (const sector_t *sector, vertex_t **v)
 	{
 		if (v != NULL)
 		{
-			if (sector->Lines.Size() == 0) *v = &level.vertexes[0];
+			if (sector->Lines.Size() == 0) *v = &sector->Level->vertexes[0];
 			else *v = sector->Lines[0]->v1;
 		}
 		return -sector->floorplane.fD();
@@ -663,7 +663,7 @@ double FindLowestCeilingPoint (const sector_t *sector, vertex_t **v)
 	{
 		if (v != nullptr)
 		{
-			if (sector->Lines.Size() == 0) *v = &level.vertexes[0];
+			if (sector->Lines.Size() == 0) *v = &sector->Level->vertexes[0];
 			else *v = sector->Lines[0]->v1;
 		}
 		return sector->ceilingplane.fD();
@@ -1358,9 +1358,9 @@ bool secplane_t::CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) cons
 //
 //==========================================================================
 
-bool P_AlignFlat (int linenum, int side, int fc)
+bool FLevelLocals::AlignFlat (int linenum, int side, int fc)
 {
-	line_t *line = &level.lines[linenum];
+	line_t *line = &lines[linenum];
 	sector_t *sec = side ? line->backsector : line->frontsector;
 
 	if (!sec)
@@ -1388,7 +1388,7 @@ bool P_AlignFlat (int linenum, int side, int fc)
 //
 //==========================================================================
 
-void P_ReplaceTextures(const char *fromname, const char *toname, int flags)
+void FLevelLocals::ReplaceTextures(const char *fromname, const char *toname, int flags)
 {
 	FTextureID picnum1, picnum2;
 
@@ -1400,7 +1400,7 @@ void P_ReplaceTextures(const char *fromname, const char *toname, int flags)
 		picnum1 = TexMan.GetTextureID(fromname, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
 		picnum2 = TexMan.GetTextureID(toname, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
 
-		for (auto &side : level.sides)
+		for (auto &side : sides)
 		{
 			for (int j = 0; j<3; j++)
 			{
@@ -1417,7 +1417,7 @@ void P_ReplaceTextures(const char *fromname, const char *toname, int flags)
 		picnum1 = TexMan.GetTextureID(fromname, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
 		picnum2 = TexMan.GetTextureID(toname, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
 
-		for (auto &sec : level.sectors)
+		for (auto &sec : sectors)
 		{
 			if (!(flags & NOT_FLOOR) && sec.GetTexture(sector_t::floor) == picnum1)
 				sec.SetTexture(sector_t::floor, picnum2);
@@ -1440,9 +1440,9 @@ void subsector_t::BuildPolyBSP()
 	assert((BSP == NULL || BSP->bDirty) && "BSP computed more than once");
 
 	// Set up level information for the node builder.
-	PolyNodeLevel.Sides = &level.sides[0];
-	PolyNodeLevel.NumSides = level.sides.Size();
-	PolyNodeLevel.Lines = &level.lines[0];
+	PolyNodeLevel.Sides = &sector->Level->sides[0];
+	PolyNodeLevel.NumSides = sector->Level->sides.Size();
+	PolyNodeLevel.Lines = &sector->Level->lines[0];
 	PolyNodeLevel.NumLines = numlines; // is this correct???
 
 	// Feed segs to the nodebuilder and build the nodes.
@@ -1528,26 +1528,26 @@ int side_t::GetLightLevel (bool foggy, int baselight, bool is3dlight, int *pfake
 		*pfakecontrast = 0;
 	}
 
-	if (!foggy || level.flags3 & LEVEL3_FORCEFAKECONTRAST) // Don't do relative lighting in foggy sectors
+	if (!foggy || sector->Level->flags3 & LEVEL3_FORCEFAKECONTRAST) // Don't do relative lighting in foggy sectors
 	{
 		if (!(Flags & WALLF_NOFAKECONTRAST) && r_fakecontrast != 0)
 		{
 			DVector2 delta = linedef->Delta();
 			int rel;
-			if (((level.flags2 & LEVEL2_SMOOTHLIGHTING) || (Flags & WALLF_SMOOTHLIGHTING) || r_fakecontrast == 2) &&
+			if (((sector->Level->flags2 & LEVEL2_SMOOTHLIGHTING) || (Flags & WALLF_SMOOTHLIGHTING) || r_fakecontrast == 2) &&
 				delta.X != 0)
 			{
 				rel = xs_RoundToInt // OMG LEE KILLOUGH LIVES! :/
 					(
-						level.WallHorizLight
+						sector->Level->WallHorizLight
 						+ fabs(atan(delta.Y / delta.X) / 1.57079)
-						* (level.WallVertLight - level.WallHorizLight)
+						* (sector->Level->WallVertLight - sector->Level->WallHorizLight)
 					);
 			}
 			else
 			{
-				rel = delta.X == 0 ? level.WallVertLight : 
-					  delta.Y == 0 ? level.WallHorizLight : 0;
+				rel = delta.X == 0 ? sector->Level->WallVertLight : 
+					  delta.Y == 0 ? sector->Level->WallHorizLight : 0;
 			}
 			if (pfakecontrast != NULL)
 			{

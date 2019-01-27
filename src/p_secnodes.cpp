@@ -386,16 +386,16 @@ void AActor::UpdateRenderSectorList()
 	{
 		// Only check if the map contains line portals
 		ClearRenderLineList();
-		if (level.PortalBlockmap.containsLines && Pos().XY() != OldRenderPos.XY())
+		if (Level->PortalBlockmap.containsLines && Pos().XY() != OldRenderPos.XY())
 		{
-			int bx = level.blockmap.GetBlockX(X());
-			int by = level.blockmap.GetBlockY(Y());
+			int bx = Level->blockmap.GetBlockX(X());
+			int by = Level->blockmap.GetBlockY(Y());
 			FBoundingBox bb(X(), Y(), MIN(radius*1.5, 128.));	// Don't go further than 128 map units, even for large actors
 			// Are there any portals near the actor's position?
-			if (level.blockmap.isValidBlock(bx, by) && level.PortalBlockmap(bx, by).neighborContainsLines)
+			if (Level->blockmap.isValidBlock(bx, by) && Level->PortalBlockmap(bx, by).neighborContainsLines)
 			{
 				// Go through the entire list. In most cases this is faster than setting up a blockmap iterator
-				for (auto &p : level.linePortals)
+				for (auto &p : Level->linePortals)
 				{
 					if (p.mType == PORTT_VISUAL) continue;
 					if (bb.inRange(p.mOrigin) && bb.BoxOnLineSide(p.mOrigin))

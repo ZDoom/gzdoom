@@ -3178,7 +3178,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Quake)
 	PARAM_INT		(tremrad);
 	PARAM_SOUND	(sound);
 
-	P_StartQuake(self, 0, intensity, duration, damrad, tremrad, sound);
+	P_StartQuake(self->Level, self, 0, intensity, duration, damrad, tremrad, sound);
 	return 0;
 }
 
@@ -3208,7 +3208,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_QuakeEx)
 	PARAM_INT(highpoint);
 	PARAM_FLOAT(rollIntensity);
 	PARAM_FLOAT(rollWave);
-	P_StartQuakeXYZ(self, 0, intensityX, intensityY, intensityZ, duration, damrad, tremrad, sound, flags, mulWaveX, mulWaveY, mulWaveZ, falloff, highpoint, 
+	P_StartQuakeXYZ(self->Level, self, 0, intensityX, intensityY, intensityZ, duration, damrad, tremrad, sound, flags, mulWaveX, mulWaveY, mulWaveZ, falloff, highpoint, 
 		rollIntensity, rollWave);
 	return 0;
 }

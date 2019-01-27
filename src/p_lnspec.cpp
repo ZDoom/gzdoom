@@ -1103,7 +1103,7 @@ FUNC(LS_Teleport)
 	{
 		flags |= TELF_SOURCEFOG;
 	}
-	return EV_Teleport (arg0, arg1, ln, backSide, it, flags);
+	return Level->EV_Teleport (arg0, arg1, ln, backSide, it, flags);
 }
 
 FUNC( LS_Teleport_NoStop )
@@ -1114,7 +1114,7 @@ FUNC( LS_Teleport_NoStop )
 	{
 		flags |= TELF_SOURCEFOG;
 	}
-	return EV_Teleport( arg0, arg1, ln, backSide, it, flags);
+	return Level->EV_Teleport( arg0, arg1, ln, backSide, it, flags);
 }
 
 FUNC(LS_Teleport_NoFog)
@@ -1144,7 +1144,7 @@ FUNC(LS_Teleport_NoFog)
 	{
 		flags |= TELF_KEEPHEIGHT;
 	}
-	return EV_Teleport (arg0, arg2, ln, backSide, it, flags);
+	return Level->EV_Teleport (arg0, arg2, ln, backSide, it, flags);
 }
 
 FUNC(LS_Teleport_ZombieChanger)
@@ -1153,7 +1153,7 @@ FUNC(LS_Teleport_ZombieChanger)
 	// This is practically useless outside of Strife, but oh well.
 	if (it != NULL)
 	{
-		EV_Teleport (arg0, arg1, ln, backSide, it, 0);
+		Level->EV_Teleport (arg0, arg1, ln, backSide, it, 0);
 		if (it->health >= 0) it->SetState (it->FindState(NAME_Pain));
 		return true;
 	}
@@ -1163,19 +1163,19 @@ FUNC(LS_Teleport_ZombieChanger)
 FUNC(LS_TeleportOther)
 // TeleportOther (other_tid, dest_tid, fog?)
 {
-	return EV_TeleportOther (arg0, arg1, arg2?true:false);
+	return Level->EV_TeleportOther (arg0, arg1, arg2?true:false);
 }
 
 FUNC(LS_TeleportGroup)
 // TeleportGroup (group_tid, source_tid, dest_tid, move_source?, fog?)
 {
-	return EV_TeleportGroup (arg0, it, arg1, arg2, arg3?true:false, arg4?true:false);
+	return Level->EV_TeleportGroup (arg0, it, arg1, arg2, arg3?true:false, arg4?true:false);
 }
 
 FUNC(LS_TeleportInSector)
 // TeleportInSector (tag, source_tid, dest_tid, bFog, group_tid)
 {
-	return EV_TeleportSector (arg0, arg1, arg2, arg3?true:false, arg4);
+	return Level->EV_TeleportSector (arg0, arg1, arg2, arg3?true:false, arg4);
 }
 
 FUNC(LS_Teleport_EndGame)
@@ -1192,7 +1192,7 @@ FUNC(LS_Teleport_EndGame)
 FUNC(LS_Teleport_Line)
 // Teleport_Line (thisid, destid, reversed)
 {
-	return EV_SilentLineTeleport (ln, backSide, it, arg1, arg2);
+	return Level->EV_SilentLineTeleport (ln, backSide, it, arg1, arg2);
 }
 
 static void ThrustThingHelper(AActor *it, DAngle angle, double force, INTBOOL nolimit)
@@ -1544,21 +1544,21 @@ FUNC(LS_Thing_Destroy)
 FUNC(LS_Thing_Damage)
 // Thing_Damage (tid, amount, MOD)
 {
-	P_Thing_Damage (arg0, it, arg1, MODtoDamageType (arg2));
+	Level->EV_Thing_Damage (arg0, it, arg1, MODtoDamageType (arg2));
 	return true;
 }
 
 FUNC(LS_Thing_Projectile)
 // Thing_Projectile (tid, type, angle, speed, vspeed)
 {
-	return P_Thing_Projectile (arg0, it, arg1, NULL, BYTEANGLE(arg2), SPEED(arg3),
+	return Level->EV_Thing_Projectile (arg0, it, arg1, NULL, BYTEANGLE(arg2), SPEED(arg3),
 		SPEED(arg4), 0, NULL, 0, 0, false);
 }
 
 FUNC(LS_Thing_ProjectileGravity)
 // Thing_ProjectileGravity (tid, type, angle, speed, vspeed)
 {
-	return P_Thing_Projectile (arg0, it, arg1, NULL, BYTEANGLE(arg2), SPEED(arg3),
+	return Level->EV_Thing_Projectile (arg0, it, arg1, NULL, BYTEANGLE(arg2), SPEED(arg3),
 		SPEED(arg4), 0, NULL, 1, 0, false);
 }
 
@@ -1728,32 +1728,32 @@ FUNC(LS_Thing_Hate)
 FUNC(LS_Thing_ProjectileAimed)
 // Thing_ProjectileAimed (tid, type, speed, target, newtid)
 {
-	return P_Thing_Projectile (arg0, it, arg1, NULL, 0., SPEED(arg2), 0, arg3, it, 0, arg4, false);
+	return Level->EV_Thing_Projectile (arg0, it, arg1, NULL, 0., SPEED(arg2), 0, arg3, it, 0, arg4, false);
 }
 
 FUNC(LS_Thing_ProjectileIntercept)
 // Thing_ProjectileIntercept (tid, type, speed, target, newtid)
 {
-	return P_Thing_Projectile (arg0, it, arg1, NULL, 0., SPEED(arg2), 0, arg3, it, 0, arg4, true);
+	return Level->EV_Thing_Projectile (arg0, it, arg1, NULL, 0., SPEED(arg2), 0, arg3, it, 0, arg4, true);
 }
 
 // [BC] added newtid for next two
 FUNC(LS_Thing_Spawn)
 // Thing_Spawn (tid, type, angle, newtid)
 {
-	return P_Thing_Spawn (arg0, it, arg1, BYTEANGLE(arg2), true, arg3);
+	return Level->EV_Thing_Spawn (arg0, it, arg1, BYTEANGLE(arg2), true, arg3);
 }
 
 FUNC(LS_Thing_SpawnNoFog)
 // Thing_SpawnNoFog (tid, type, angle, newtid)
 {
-	return P_Thing_Spawn (arg0, it, arg1, BYTEANGLE(arg2), false, arg3);
+	return Level->EV_Thing_Spawn (arg0, it, arg1, BYTEANGLE(arg2), false, arg3);
 }
 
 FUNC(LS_Thing_SpawnFacing)
 // Thing_SpawnFacing (tid, type, nofog, newtid)
 {
-	return P_Thing_Spawn (arg0, it, arg1, 1000000., arg2 ? false : true, arg3);
+	return Level->EV_Thing_Spawn (arg0, it, arg1, 1000000., arg2 ? false : true, arg3);
 }
 
 FUNC(LS_Thing_Raise)
@@ -1850,7 +1850,7 @@ FUNC(LS_Thing_SetGoal)
 FUNC(LS_Thing_Move)		// [BC]
 // Thing_Move (tid, mapspot, nofog)
 {
-	return P_Thing_Move (arg0, it, arg1, arg2 ? false : true);
+	return Level->EV_Thing_Move (arg0, it, arg1, arg2 ? false : true);
 }
 
 enum
@@ -2153,7 +2153,7 @@ FUNC(LS_Light_Stop)
 FUNC(LS_Radius_Quake)
 // Radius_Quake (intensity, duration, damrad, tremrad, tid)
 {
-	return P_StartQuake (it, arg4, arg0, arg1, arg2*64, arg3*64, "world/quake");
+	return P_StartQuake (Level, it, arg4, arg0, arg1, arg2*64, arg3*64, "world/quake");
 }
 
 FUNC(LS_UsePuzzleItem)
@@ -2597,7 +2597,7 @@ FUNC(LS_Line_AlignCeiling)
 	int line;
 	while ((line = itr.Next()) >= 0)
 	{
-		ret |= P_AlignFlat (line, !!arg1, 1);
+		ret |= Level->AlignFlat (line, !!arg1, 1);
 	}
 	return ret;
 }
@@ -2611,7 +2611,7 @@ FUNC(LS_Line_AlignFloor)
 	int line;
 	while ((line = itr.Next()) >= 0)
 	{
-		ret |= P_AlignFlat (line, !!arg1, 0);
+		ret |= Level->AlignFlat (line, !!arg1, 0);
 	}
 	return ret;
 }

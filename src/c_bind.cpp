@@ -753,7 +753,6 @@ bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds)
 	dclickmask = 1 << (ev->data1 & 7);
 	dclick = false;
 
-	// This used level.time which didn't work outside a level.
 	nowtime = (unsigned)I_msTime();
 	if (doublebinds != NULL && int(DClickTime[ev->data1] - nowtime) > 0 && ev->type == EV_KeyDown)
 	{

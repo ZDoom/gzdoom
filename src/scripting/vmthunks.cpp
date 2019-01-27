@@ -1621,18 +1621,18 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 //=====================================================================================
 
  // This is needed to convert the strings to char pointers.
- static void ReplaceTextures(const FString &from, const FString &to, int flags)
+ static void ReplaceTextures(FLevelLocals *self, const FString &from, const FString &to, int flags)
  {
-	 P_ReplaceTextures(from, to, flags);
+	 self->ReplaceTextures(from, to, flags);
  }
 
-DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, ReplaceTextures, ReplaceTextures)
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, ReplaceTextures, ReplaceTextures)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_STRING(from);
 	PARAM_STRING(to);
 	PARAM_INT(flags);
-	P_ReplaceTextures(from, to, flags);
+	self->ReplaceTextures(from, to, flags);
 	return 0;
 }
 

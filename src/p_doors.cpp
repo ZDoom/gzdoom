@@ -132,7 +132,7 @@ void DDoor::Tick ()
 		// killough 10/98: implement gradual lighting effects
 		if (m_LightTag != 0 && m_TopDist != -m_Sector->floorplane.fD())
 		{
-			level.EV_LightTurnOnPartway (m_LightTag, 
+			Level->EV_LightTurnOnPartway (m_LightTag, 
 				(m_Sector->ceilingplane.fD() + m_Sector->floorplane.fD()) / (m_TopDist + m_Sector->floorplane.fD()));
 		}
 
@@ -178,7 +178,7 @@ void DDoor::Tick ()
 		// killough 10/98: implement gradual lighting effects
 		if (m_LightTag != 0 && m_TopDist != -m_Sector->floorplane.fD())
 		{
-			level.EV_LightTurnOnPartway (m_LightTag,
+			Level->EV_LightTurnOnPartway (m_LightTag,
 				(m_Sector->ceilingplane.fD() + m_Sector->floorplane.fD()) / (m_TopDist + m_Sector->floorplane.fD()));
 		}
 

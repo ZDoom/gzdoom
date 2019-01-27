@@ -97,7 +97,7 @@ static bool P_StartButton (side_t *side, int Where, FSwitchDef *Switch, const DV
 		}
 	}
 
-	level.CreateThinker<DActiveButton> (side, Where, Switch, pos, useagain);
+	side->sector->Level->CreateThinker<DActiveButton> (side, Where, Switch, pos, useagain);
 	return true;
 }
 

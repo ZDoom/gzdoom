@@ -509,27 +509,27 @@ inline FSectorPortal *line_t::GetTransferredPortal()
 
 inline FSectorPortal *sector_t::GetPortal(int plane)
 {
-	return &level.sectorPortals[Portals[plane]];
+	return &Level->sectorPortals[Portals[plane]];
 }
 
 inline double sector_t::GetPortalPlaneZ(int plane)
 {
-	return level.sectorPortals[Portals[plane]].mPlaneZ;
+	return Level->sectorPortals[Portals[plane]].mPlaneZ;
 }
 
 inline DVector2 sector_t::GetPortalDisplacement(int plane)
 {
-	return level.sectorPortals[Portals[plane]].mDisplacement;
+	return Level->sectorPortals[Portals[plane]].mDisplacement;
 }
 
 inline int sector_t::GetPortalType(int plane)
 {
-	return level.sectorPortals[Portals[plane]].mType;
+	return Level->sectorPortals[Portals[plane]].mType;
 }
 
 inline int sector_t::GetOppositePortalGroup(int plane)
 {
-	return level.sectorPortals[Portals[plane]].mDestination->PortalGroup;
+	return Level->sectorPortals[Portals[plane]].mDestination->PortalGroup;
 }
 
 inline bool sector_t::PortalBlocksView(int plane)

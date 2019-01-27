@@ -164,6 +164,8 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 		return false;
 	}
 
+	auto Level = line->GetLevel();
+
 	// [MK] Use WorldLinePreActivated to decide if activation should continue
 	bool shouldactivate = true;
 	E_WorldLinePreActivated(line, mo, activationType, &shouldactivate);
@@ -198,13 +200,13 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 	}
 	// some old WADs use this method to create walls that change the texture when shot.
 	else if (activationType == SPAC_Impact &&					// only for shootable triggers
-		(level.flags2 & LEVEL2_DUMMYSWITCHES) &&				// this is only a compatibility setting for an old hack!
+		(Level->flags2 & LEVEL2_DUMMYSWITCHES) &&				// this is only a compatibility setting for an old hack!
 		!repeat &&												// only non-repeatable triggers
 		(special<Generic_Floor || special>Generic_Crusher) &&	// not for Boom's generalized linedefs
 		special &&												// not for lines without a special
-		level.LineHasId(line, line->args[0]) &&							// Safety check: exclude edited UDMF linedefs or ones that don't map the tag to args[0]
+		Level->LineHasId(line, line->args[0]) &&							// Safety check: exclude edited UDMF linedefs or ones that don't map the tag to args[0]
 		line->args[0] &&										// only if there's a tag (which is stored in the first arg)
-		level.FindFirstSectorFromTag (line->args[0]) == -1)			// only if no sector is tagged to this linedef
+		Level->FindFirstSectorFromTag (line->args[0]) == -1)			// only if no sector is tagged to this linedef
 	{
 		P_ChangeSwitchTexture (line->sidedef[0], repeat, special);
 		line->special = 0;

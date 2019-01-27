@@ -288,7 +288,8 @@ static void RemoveTaggedSectors(extsector_t::linked::plane &scrollplane, int tag
 {
 	for(int i = scrollplane.Sectors.Size()-1; i>=0; i--)
 	{
-		if (level.SectorHasTag(scrollplane.Sectors[i].Sector, tag))
+		auto sec = scrollplane.Sectors[i].Sector;
+		if (sec->Level->SectorHasTag(sec, tag))
 		{
 			scrollplane.Sectors.Delete(i);
 		}
@@ -313,6 +314,7 @@ bool P_AddSectorLinks(sector_t *control, int tag, INTBOOL ceiling, int movetype)
 	if ((ceiling && control->PlaneMoving(sector_t::ceiling)) || 
 		(!ceiling && control->PlaneMoving(sector_t::floor))) return false;
 
+	auto Level = control->Level;
 	// Make sure we have only valid combinations
 	movetype &= LINK_FLAGMASK;
 	if ((movetype & LINK_FLOORMIRROR) == LINK_FLOORMIRRORFLAG) movetype &= ~LINK_FLOORMIRRORFLAG;
@@ -327,16 +329,16 @@ bool P_AddSectorLinks(sector_t *control, int tag, INTBOOL ceiling, int movetype)
 	if (movetype > 0)
 	{
 		int sec;
-		auto itr = level.GetSectorTagIterator(tag);
+		auto itr = Level->GetSectorTagIterator(tag);
 		while ((sec = itr.Next()) >= 0)
 		{
 			// Don't attach to self (but allow attaching to this sector's oposite plane.
-			if (control == &level.sectors[sec])
+			if (control == &Level->sectors[sec])
 			{
 				if (ceiling == sector_t::floor && movetype & LINK_FLOOR) continue;
 				if (ceiling == sector_t::ceiling && movetype & LINK_CEILING) continue;
 			}
-			AddSingleSector(scrollplane, &level.sectors[sec], movetype);
+			AddSingleSector(scrollplane, &Level->sectors[sec], movetype);
 		}
 	}
 	else
@@ -360,11 +362,11 @@ void P_AddSectorLinksByID(sector_t *control, int id, INTBOOL ceiling)
 {
 	extsector_t::linked::plane &scrollplane = ceiling? control->e->Linked.Ceiling : control->e->Linked.Floor;
 
-	auto itr = level.GetLineIdIterator(id);
+	auto itr = control->Level->GetLineIdIterator(id);
 	int line;
 	while ((line = itr.Next()) >= 0)
 	{
-		line_t *ld = &level.lines[line];
+		line_t *ld = &control->Level->lines[line];
 
 		if (ld->special == Static_Init && ld->args[1] == Init_SectorLink)
 		{

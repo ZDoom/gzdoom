@@ -133,7 +133,7 @@ void DPusher::Construct (DPusher::EPusher type, line_t *l, int magnitude, int an
 
 int DPusher::CheckForSectorMatch (EPusher type, int tag)
 {
-	if (m_Type == type && level.SectorHasTag(m_Affectee, tag))
+	if (m_Type == type && Level->SectorHasTag(m_Affectee, tag))
 		return m_Affectee;
 	else
 		return -1;
@@ -155,7 +155,7 @@ void DPusher::Tick ()
 	if (!var_pushers)
 		return;
 
-	sec = &level.sectors[m_Affectee];
+	sec = &Level->sectors[m_Affectee];
 
 	// Be sure the special sector type is still turned on. If so, proceed.
 	// Else, bail out; the sector type has been changed on us.
@@ -317,7 +317,7 @@ void FLevelLocals::AdjustPusher(int tag, int magnitude, int angle, bool wind)
 	int secnum;
 
 	// Now create pushers for any sectors that don't already have them.
-	auto itr = level.GetSectorTagIterator(tag);
+	auto itr = GetSectorTagIterator(tag);
 	while ((secnum = itr.Next()) >= 0)
 	{
 		unsigned int i;

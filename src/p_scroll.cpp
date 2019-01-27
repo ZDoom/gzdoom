@@ -213,7 +213,7 @@ void DScroller::Tick ()
 
 		// [RH] Don't actually carry anything here. That happens later.
 		case EScroll::sc_carry:
-			level.Scrolls[m_Sector->Index()] += { dx, dy };
+			Level->Scrolls[m_Sector->Index()] += { dx, dy };
 			// mark all potentially affected things here so that the very expensive calculation loop in AActor::Tick does not need to run for actors which do not touch a scrolling sector.
 			for (auto n = m_Sector->touching_thinglist; n; n = n->m_snext)
 			{
@@ -267,7 +267,7 @@ void DScroller::Construct (EScroll type, double dx, double dy,  sector_t *ctrl, 
 	{
 	case EScroll::sc_carry:
 		assert(sec != nullptr);
-		level.AddScroller (sec->Index());
+		Level->AddScroller (sec->Index());
 		break;
 
 	case EScroll::sc_side:
@@ -381,7 +381,7 @@ void SetWallScroller (FLevelLocals *Level, int id, int sidechoice, double dx, do
 	if (dx == 0 && dy == 0)
 	{
 		// Special case: Remove the scroller, because the deltas are both 0.
-		TThinkerIterator<DScroller> iterator (STAT_SCROLLER);
+		auto iterator = Level->GetThinkerIterator<DScroller>(NAME_None, STAT_SCROLLER);
 		DScroller *scroller;
 
 		while ( (scroller = iterator.Next ()) )
@@ -400,7 +400,7 @@ void SetWallScroller (FLevelLocals *Level, int id, int sidechoice, double dx, do
 		// their rates.
 		TArray<DScroller *> Collection;
 		{
-			TThinkerIterator<DScroller> iterator (STAT_SCROLLER);
+			auto iterator = Level->GetThinkerIterator<DScroller>(NAME_None, STAT_SCROLLER);
 			DScroller *scroll;
 
 			while ( (scroll = iterator.Next ()) )
@@ -439,7 +439,7 @@ void SetWallScroller (FLevelLocals *Level, int id, int sidechoice, double dx, do
 
 void SetScroller (FLevelLocals *Level, int tag, EScroll type, double dx, double dy)
 {
-	TThinkerIterator<DScroller> iterator (STAT_SCROLLER);
+	auto iterator = Level->GetThinkerIterator<DScroller>(NAME_None, STAT_SCROLLER);
 	DScroller *scroller;
 	int i;
 

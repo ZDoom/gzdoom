@@ -188,19 +188,19 @@ void DFloor::Tick ()
 				sector_t *sec = m_Sector;
 				sec->stairlock = -1;				// thinker done, promote lock to -1
 
-				while (sec->prevsec != -1 && level.sectors[sec->prevsec].stairlock != -2)
-					sec = &level.sectors[sec->prevsec];	// search for a non-done thinker
+				while (sec->prevsec != -1 && Level->sectors[sec->prevsec].stairlock != -2)
+					sec = &Level->sectors[sec->prevsec];	// search for a non-done thinker
 				if (sec->prevsec == -1)				// if all thinkers previous are done
 				{
 					sec = m_Sector;			// search forward
-					while (sec->nextsec != -1 && level.sectors[sec->nextsec].stairlock != -2)
-						sec = &level.sectors[sec->nextsec];
+					while (sec->nextsec != -1 && Level->sectors[sec->nextsec].stairlock != -2)
+						sec = &Level->sectors[sec->nextsec];
 					if (sec->nextsec == -1)			// if all thinkers ahead are done too
 					{
 						while (sec->prevsec != -1)	// clear all locks
 						{
 							sec->stairlock = 0;
-							sec = &level.sectors[sec->prevsec];
+							sec = &Level->sectors[sec->prevsec];
 						}
 						sec->stairlock = 0;
 					}

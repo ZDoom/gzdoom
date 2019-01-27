@@ -816,10 +816,10 @@ void FLevelLocals::EV_StartLightFading(int tag, int value, int tics)
 
 void FLevelLocals::EV_StopLightEffect (int tag)
 {
-	TThinkerIterator<DLighting> iterator;
+	auto iterator = GetThinkerIterator<DLighting>(NAME_None, STAT_LIGHTNING);
 	DLighting *effect;
 
-	while ((effect = iterator.Next()) != NULL)
+	while ((effect = iterator.Next()) != nullptr)
 	{
 		if (SectorHasTag(effect->GetSector(), tag))
 		{

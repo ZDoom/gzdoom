@@ -453,6 +453,7 @@ class DACSThinker : public DThinker
 	DECLARE_CLASS(DACSThinker, DThinker)
 	HAS_OBJECT_POINTERS
 public:
+	static const int DEFAULT_STAT = STAT_SCRIPTS;
 	DACSThinker();
 	~DACSThinker();
 

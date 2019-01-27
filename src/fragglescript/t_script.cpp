@@ -366,7 +366,6 @@ IMPLEMENT_POINTERS_END
 //==========================================================================
 
 DFraggleThinker::DFraggleThinker() 
-: DThinker(STAT_SCRIPTS)
 {
 	GlobalScript = Create<DFsScript>();
 	GC::WriteBarrier(this, GlobalScript);

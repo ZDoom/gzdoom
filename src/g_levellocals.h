@@ -202,6 +202,7 @@ public:
 	void ActivateInStasisCeiling(int tag);
 	bool CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line, double speed, double height, int crush, int change, bool hexencrush, bool hereticlower);
 	void DoDeferedScripts();
+	void AdjustPusher(int tag, int magnitude, int angle, bool wind);
 
 	bool EV_DoPlat(int tag, line_t *line, DPlat::EPlatType type, double height, double speed, int delay, int lip, int change);
 	void EV_StopPlat(int tag, bool remove);
@@ -352,6 +353,27 @@ public:
 		return true;
 	}
 
+	template<typename T, typename... Args>
+	T* CreateThinker(Args&&... args)
+	{
+		auto thinker = Create<T>(std::forward<Args>(args)...);
+		auto statnum = T::DEFAULT_STAT;
+		thinker->ObjectFlags |= OF_JustSpawned;
+		DThinker::FreshThinkers[statnum].AddTail(thinker);
+		thinker->Level = this;
+		return thinker;
+	}
+
+	DThinker *CreateThinker(PClass *cls, int statnum = STAT_DEFAULT)
+	{
+		DThinker *thinker = static_cast<DThinker*>(cls->CreateNew());
+		assert(thinker->IsKindOf(RUNTIME_CLASS(DThinker)));
+		thinker->ObjectFlags |= OF_JustSpawned;
+		DThinker::FreshThinkers[statnum].AddTail(thinker);
+		thinker->Level = this;
+		return thinker;
+	}
+
 
 	uint8_t		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
 	int			time;			// time in the hub
@@ -378,7 +400,7 @@ public:
 
 	static const int BODYQUESIZE = 32;
 	TObjPtr<AActor*> bodyque[BODYQUESIZE];
-	TObjPtr<DAutomapBase*> automap;
+	TObjPtr<DAutomapBase*> automap = nullptr;
 	int bodyqueslot;
 
 	int NumMapSections;

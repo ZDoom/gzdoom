@@ -405,7 +405,7 @@ bool FCajunMaster::DoAddBot (uint8_t *info, botskill_t skill)
 	D_ReadUserInfoStrings (bnum, &info, false);
 
 	multiplayer = true; //Prevents cheating and so on; emulates real netgame (almost).
-	players[bnum].Bot = Create<DBot>();
+	players[bnum].Bot = level.CreateThinker<DBot>();
 	players[bnum].Bot->player = &players[bnum];
 	players[bnum].Bot->skill = skill;
 	playeringame[bnum] = true;

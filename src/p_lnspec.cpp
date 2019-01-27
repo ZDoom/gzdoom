@@ -2227,7 +2227,6 @@ FUNC(LS_Sector_ChangeFlags)
 
 
 
-void AdjustPusher(int tag, int magnitude, int angle, bool wind);
 
 FUNC(LS_Sector_SetWind)
 // Sector_SetWind (tag, amount, angle)
@@ -2235,7 +2234,7 @@ FUNC(LS_Sector_SetWind)
 	if (arg3)
 		return false;
 
-	AdjustPusher (arg0, arg1, arg2, true);
+	Level->AdjustPusher (arg0, arg1, arg2, true);
 	return true;
 }
 
@@ -2245,7 +2244,7 @@ FUNC(LS_Sector_SetCurrent)
 	if (arg3)
 		return false;
 
-	AdjustPusher (arg0, arg1, arg2, false);
+	Level->AdjustPusher (arg0, arg1, arg2, false);
 	return true;
 }
 

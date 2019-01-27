@@ -166,6 +166,7 @@ class DBot : public DThinker
 	DECLARE_CLASS(DBot,DThinker)
 	HAS_OBJECT_POINTERS
 public:
+	static const int DEFAULT_STAT = STAT_BOT;
 	DBot ();
 
 	void Clear ();

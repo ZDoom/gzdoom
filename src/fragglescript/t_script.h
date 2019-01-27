@@ -688,7 +688,7 @@ class DFraggleThinker : public DThinker
 	DECLARE_CLASS(DFraggleThinker, DThinker)
 	HAS_OBJECT_POINTERS
 public:
-
+	static const int DEFAULT_STAT = STAT_SCRIPTS;
 	int zoom = 1;
 	AActor *trigger_obj;	// this is a transient pointer not being subjected to GC.
 	TObjPtr<DFsScript*> GlobalScript;

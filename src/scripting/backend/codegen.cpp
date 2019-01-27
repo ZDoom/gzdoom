@@ -47,6 +47,7 @@
 #include "v_text.h"
 #include "w_wad.h"
 #include "doomstat.h"
+#include "g_levellocals.h"
 
 extern FRandom pr_exrandom;
 FMemArena FxAlloc(65536);
@@ -5173,18 +5174,21 @@ static DObject *BuiltinNew(PClass *cls, int outerside, int backwardscompatible)
 		ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
 		return nullptr;
 	}
-	if (vm_warnthinkercreation && cls->IsDescendantOf(NAME_Thinker))
+	if ((vm_warnthinkercreation || !backwardscompatible) && cls->IsDescendantOf(NAME_Thinker))
 	{
 		// This must output a diagnostic warning
-		//ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
-		//return nullptr;
+		Printf("Using 'new' to create thinkers is deprecated.");
 	}
 	// [ZZ] validate readonly and between scope construction
 	if (outerside) FScopeBarrier::ValidateNew(cls, outerside - 1);
-	auto object = cls->CreateNew();
-	if (backwardscompatible && object->IsKindOf(NAME_Thinker))
+	DObject *object;
+	if (!cls->IsDescendantOf(NAME_Thinker))
 	{
-		// Todo: Link thinker to current primary level.
+		object = cls->CreateNew();
+	}
+	else
+	{
+		object = level.CreateThinker(cls);
 	}
 	return object;
 }

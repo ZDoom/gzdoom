@@ -9,6 +9,7 @@ class DLightTransfer : public DThinker
 
 	DLightTransfer() = default;
 public:
+	static const int DEFAULT_STAT = STAT_LIGHTTRANSFER;
 	DLightTransfer (sector_t *srcSec, int target, bool copyFloor);
 	void Serialize(FSerializer &arc);
 	void Tick ();
@@ -34,6 +35,7 @@ class DWallLightTransfer : public DThinker
 	DECLARE_CLASS (DWallLightTransfer, DThinker)
 	DWallLightTransfer() = default;
 public:
+	static const int DEFAULT_STAT = STAT_LIGHTTRANSFER;
 	DWallLightTransfer (sector_t *srcSec, int target, uint8_t flags);
 	void Serialize(FSerializer &arc);
 	void Tick ();
@@ -153,11 +155,10 @@ class DPhased : public DLighting
 {
 	DECLARE_CLASS(DPhased, DLighting)
 public:
-	DPhased(sector_t *sector);
-	DPhased(sector_t *sector, int baselevel, int phase);
+	DPhased(sector_t *sector, int baselevel = 0, int phase = 0);
 	// These are for internal use only but the Create template needs access to them.
 	DPhased() = default;
-	DPhased(sector_t *sector, int baselevel);
+	void Propagate();
 
 	void		Serialize(FSerializer &arc);
 	void		Tick();
@@ -218,7 +219,8 @@ class DScroller : public DThinker
 	DECLARE_CLASS (DScroller, DThinker)
 	HAS_OBJECT_POINTERS
 public:
-	
+	static const int DEFAULT_STAT = STAT_SCROLLER;
+
 	DScroller(EScroll type, double dx, double dy, sector_t *control, sector_t *sec, side_t *side, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
 	DScroller (double dx, double dy, const line_t *l, sector_t *control, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
 	void OnDestroy() override;

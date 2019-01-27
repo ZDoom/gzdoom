@@ -11,7 +11,7 @@ struct F3DFloor;
 class DBaseDecal;
 struct SpreadInfo;
 
-class DBaseDecal *ShootDecal(const FDecalTemplate *tpl, AActor *basisactor, sector_t *sec, double x, double y, double z, DAngle angle, double tracedist, bool permanent);
+DBaseDecal *ShootDecal(FLevelLocals *Level, const FDecalTemplate *tpl, sector_t *sec, double x, double y, double z, DAngle angle, double tracedist, bool permanent);
 void SprayDecal(AActor *shooter, const char *name,double distance = 172.);
 
 class DBaseDecal : public DThinker
@@ -19,9 +19,8 @@ class DBaseDecal : public DThinker
 	DECLARE_CLASS (DBaseDecal, DThinker)
 	HAS_OBJECT_POINTERS
 public:
-	DBaseDecal ();
-	DBaseDecal(double z);
-	DBaseDecal(int statnum, double z);
+	static const int DEFAULT_STAT = STAT_DECAL;
+	DBaseDecal(double z = 0);
 	DBaseDecal (const AActor *actor);
 	DBaseDecal (const DBaseDecal *basis);
 
@@ -61,20 +60,18 @@ class DImpactDecal : public DBaseDecal
 {
 	DECLARE_CLASS (DImpactDecal, DBaseDecal)
 public:
-	DImpactDecal(double z);
+	static const int DEFAULT_STAT = STAT_AUTODECAL;
+	DImpactDecal(double z = 0) : DBaseDecal(z) {}
 	DImpactDecal (side_t *wall, const FDecalTemplate *templ);
 
-	static DImpactDecal *StaticCreate(const char *name, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color = 0);
-	static DImpactDecal *StaticCreate(const FDecalTemplate *tpl, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color = 0);
+	static DImpactDecal *StaticCreate(FLevelLocals *Level, const char *name, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color = 0);
+	static DImpactDecal *StaticCreate(FLevelLocals *Level, const FDecalTemplate *tpl, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color = 0);
 
 	void BeginPlay ();
 
 protected:
 	DBaseDecal *CloneSelf(const FDecalTemplate *tpl, double x, double y, double z, side_t *wall, F3DFloor * ffloor) const;
 	void CheckMax ();
-
-private:
-	DImpactDecal();
 };
 
 class DFlashFader : public DThinker
@@ -126,6 +123,7 @@ class DEarthquake : public DThinker
 	DECLARE_CLASS (DEarthquake, DThinker)
 	HAS_OBJECT_POINTERS
 public:
+	static const int DEFAULT_STAT = STAT_EARTHQUAKE;
 	DEarthquake(AActor *center, int intensityX, int intensityY, int intensityZ, int duration,
 		int damrad, int tremrad, FSoundID quakesfx, int flags, 
 		double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, double rollIntensity, double rollWave);
@@ -151,7 +149,7 @@ public:
 	static int StaticGetQuakeIntensities(double ticFrac, AActor *viewer, FQuakeJiggers &jiggers);
 
 private:
-	DEarthquake ();
+	DEarthquake() = default;
 };
 
 #endif //__A_SHAREDGLOBAL_H__

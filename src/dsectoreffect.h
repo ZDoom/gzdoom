@@ -8,6 +8,7 @@ class DSectorEffect : public DThinker
 {
 	DECLARE_CLASS (DSectorEffect, DThinker)
 public:
+	static const int DEFAULT_STAT = STAT_SECTOREFFECT;
 	DSectorEffect (sector_t *sector);
 
 	
@@ -19,7 +20,7 @@ public:
 	sector_t *m_Sector;
 
 protected:
-	DSectorEffect();
+	DSectorEffect() = default;
 
 };
 

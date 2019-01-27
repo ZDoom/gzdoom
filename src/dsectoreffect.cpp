@@ -36,12 +36,6 @@
 
 IMPLEMENT_CLASS(DSectorEffect, false, false)
 
-DSectorEffect::DSectorEffect ()
-: DThinker(STAT_SECTOREFFECT)
-{
-	m_Sector = nullptr;
-}
-
 void DSectorEffect::OnDestroy()
 {
 	if (m_Sector)
@@ -63,7 +57,6 @@ void DSectorEffect::OnDestroy()
 }
 
 DSectorEffect::DSectorEffect (sector_t *sector)
-	: DThinker(STAT_SECTOREFFECT)
 {
 	m_Sector = sector;
 }

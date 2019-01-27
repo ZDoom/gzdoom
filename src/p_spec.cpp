@@ -718,7 +718,6 @@ DLightTransfer::DLightTransfer (sector_t *srcSec, int target, bool copyFloor)
 		while ((secnum = itr.Next()) >= 0)
 			Level->sectors[secnum].ChangeFlags(sector_t::ceiling, 0, PLANEF_ABSLIGHTING);
 	}
-	ChangeStatNum (STAT_LIGHTTRANSFER);
 }
 
 void DLightTransfer::Tick ()
@@ -796,7 +795,6 @@ DWallLightTransfer::DWallLightTransfer (sector_t *srcSec, int target, uint8_t fl
 			Level->lines[linenum].sidedef[1]->Flags |= wallflags;
 		}
 	}
-	ChangeStatNum(STAT_LIGHTTRANSFER);
 }
 
 void DWallLightTransfer::Tick ()

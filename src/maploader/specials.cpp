@@ -514,7 +514,7 @@ void MapLoader::InitSectorSpecial(sector_t *sector, int special)
 		break;
 
 	case dSector_DoorCloseIn30:
-		Create<DDoor>(sector, DDoor::doorWaitClose, 2, 0, 0, 30 * TICRATE);
+		Level->CreateThinker<DDoor>(sector, DDoor::doorWaitClose, 2, 0, 0, 30 * TICRATE);
 		break;
 			
 	case dDamage_End:
@@ -522,7 +522,7 @@ void MapLoader::InitSectorSpecial(sector_t *sector, int special)
 		break;
 
 	case dSector_DoorRaiseIn5Mins:
-		Create<DDoor> (sector, DDoor::doorWaitRaise, 2, TICRATE*30/7, 0, 5*60*TICRATE);
+		Level->CreateThinker<DDoor> (sector, DDoor::doorWaitRaise, 2, TICRATE*30/7, 0, 5*60*TICRATE);
 		break;
 
 	case dFriction_Low:
@@ -703,19 +703,19 @@ void MapLoader::SpawnSpecials ()
 		// killough 3/16/98: Add support for setting
 		// floor lighting independently (e.g. lava)
 		case Transfer_FloorLight:
-			Create<DLightTransfer> (line.frontsector, line.args[0], true);
+			Level->CreateThinker<DLightTransfer> (line.frontsector, line.args[0], true);
 			break;
 
 		// killough 4/11/98: Add support for setting
 		// ceiling lighting independently
 		case Transfer_CeilingLight:
-			Create<DLightTransfer> (line.frontsector, line.args[0], false);
+			Level->CreateThinker<DLightTransfer> (line.frontsector, line.args[0], false);
 			break;
 
 		// [Graf Zahl] Add support for setting lighting
 		// per wall independently
 		case Transfer_WallLight:
-			Create<DWallLightTransfer> (line.frontsector, line.args[0], line.args[1]);
+			Level->CreateThinker<DWallLightTransfer> (line.frontsector, line.args[0], line.args[1]);
 			break;
 
 		case Sector_Attach3dMidtex:
@@ -1029,52 +1029,52 @@ void MapLoader::SpawnLights(sector_t *sector)
 	switch (sector->special)
 	{
 	case Light_Phased:
-		Create<DPhased>(sector, 48, 63 - (sector->lightlevel & 63));
+		Level->CreateThinker<DPhased>(sector, 48, 63 - (sector->lightlevel & 63));
 		break;
 
 		// [RH] Hexen-like phased lighting
 	case LightSequenceStart:
-		Create<DPhased>(sector);
+		Level->CreateThinker<DPhased>(sector);
 		break;
 
 	case dLight_Flicker:
-		Create<DLightFlash>(sector);
+		Level->CreateThinker<DLightFlash>(sector);
 		break;
 
 	case dLight_StrobeFast:
-		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
+		Level->CreateThinker<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
 		break;
 
 	case dLight_StrobeSlow:
-		Create<DStrobe>(sector, STROBEBRIGHT, SLOWDARK, false);
+		Level->CreateThinker<DStrobe>(sector, STROBEBRIGHT, SLOWDARK, false);
 		break;
 
 	case dLight_Strobe_Hurt:
-		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
+		Level->CreateThinker<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
 		break;
 
 	case dLight_Glow:
-		Create<DGlow>(sector);
+		Level->CreateThinker<DGlow>(sector);
 		break;
 
 	case dLight_StrobeSlowSync:
-		Create<DStrobe>(sector, STROBEBRIGHT, SLOWDARK, true);
+		Level->CreateThinker<DStrobe>(sector, STROBEBRIGHT, SLOWDARK, true);
 		break;
 
 	case dLight_StrobeFastSync:
-		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, true);
+		Level->CreateThinker<DStrobe>(sector, STROBEBRIGHT, FASTDARK, true);
 		break;
 
 	case dLight_FireFlicker:
-		Create<DFireFlicker>(sector);
+		Level->CreateThinker<DFireFlicker>(sector);
 		break;
 
 	case dScroll_EastLavaDamage:
-		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
+		Level->CreateThinker<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
 		break;
 
 	case sLight_Strobe_Hurt:
-		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
+		Level->CreateThinker<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
 		break;
 
 	default:
@@ -1122,7 +1122,7 @@ void MapLoader::SpawnPushers()
 		{
 			auto itr = Level->GetSectorTagIterator(l->args[0]);
 			while ((s = itr.Next()) >= 0)
-				Create<DPusher>(DPusher::p_wind, l->args[3] ? l : nullptr, l->args[1], l->args[2], nullptr, s);
+				Level->CreateThinker<DPusher>(DPusher::p_wind, l->args[3] ? l : nullptr, l->args[1], l->args[2], nullptr, s);
 			l->special = 0;
 			break;
 		}
@@ -1131,7 +1131,7 @@ void MapLoader::SpawnPushers()
 		{
 			auto itr = Level->GetSectorTagIterator(l->args[0]);
 			while ((s = itr.Next()) >= 0)
-				Create<DPusher>(DPusher::p_current, l->args[3] ? l : nullptr, l->args[1], l->args[2], nullptr, s);
+				Level->CreateThinker<DPusher>(DPusher::p_current, l->args[3] ? l : nullptr, l->args[1], l->args[2], nullptr, s);
 			l->special = 0;
 			break;
 		}
@@ -1145,7 +1145,7 @@ void MapLoader::SpawnPushers()
 					if (thing) {	// No MT_P* means no effect
 						// [RH] Allow narrowing it down by tid
 						if (!l->args[1] || l->args[1] == thing->tid)
-							Create<DPusher>(DPusher::p_push, l->args[3] ? l : NULL, l->args[2],
+							Level->CreateThinker<DPusher>(DPusher::p_push, l->args[3] ? l : NULL, l->args[2],
 								0, thing, s);
 					}
 				}
@@ -1159,7 +1159,7 @@ void MapLoader::SpawnPushers()
 					if (thing->GetClass()->TypeName == NAME_PointPusher ||
 						thing->GetClass()->TypeName == NAME_PointPuller)
 					{
-						Create<DPusher>(DPusher::p_push, l->args[3] ? l : NULL, l->args[2], 0, thing, thing->Sector->Index());
+						Level->CreateThinker<DPusher>(DPusher::p_push, l->args[3] ? l : NULL, l->args[2], 0, thing, thing->Sector->Index());
 					}
 				}
 			}
@@ -1269,7 +1269,7 @@ void MapLoader::SpawnScrollers()
 			auto itr = Level->GetSectorTagIterator(l->args[0]);
 			while ((s = itr.Next()) >= 0)
 			{
-				Create<DScroller>(EScroll::sc_ceiling, -dx, dy, control, &Level->sectors[s], nullptr, accel);
+				Level->CreateThinker<DScroller>(EScroll::sc_ceiling, -dx, dy, control, &Level->sectors[s], nullptr, accel);
 			}
 			for (unsigned j = 0; j < copyscrollers.Size(); j++)
 			{
@@ -1277,7 +1277,7 @@ void MapLoader::SpawnScrollers()
 
 				if (line->args[0] == l->args[0] && (line->args[1] & 1))
 				{
-					Create<DScroller>(EScroll::sc_ceiling, -dx, dy, control, line->frontsector, nullptr, accel);
+					Level->CreateThinker<DScroller>(EScroll::sc_ceiling, -dx, dy, control, line->frontsector, nullptr, accel);
 				}
 			}
 			break;
@@ -1289,7 +1289,7 @@ void MapLoader::SpawnScrollers()
 				auto itr = Level->GetSectorTagIterator(l->args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
-					Create<DScroller>(EScroll::sc_floor, -dx, dy, control, &Level->sectors[s], nullptr, accel);
+					Level->CreateThinker<DScroller>(EScroll::sc_floor, -dx, dy, control, &Level->sectors[s], nullptr, accel);
 				}
 				for (unsigned j = 0; j < copyscrollers.Size(); j++)
 				{
@@ -1297,7 +1297,7 @@ void MapLoader::SpawnScrollers()
 
 					if (line->args[0] == l->args[0] && (line->args[1] & 2))
 					{
-						Create<DScroller>(EScroll::sc_floor, -dx, dy, control, line->frontsector, nullptr, accel);
+						Level->CreateThinker<DScroller>(EScroll::sc_floor, -dx, dy, control, line->frontsector, nullptr, accel);
 					}
 				}
 			}
@@ -1307,7 +1307,7 @@ void MapLoader::SpawnScrollers()
 				auto itr = Level->GetSectorTagIterator(l->args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
-					Create<DScroller>(EScroll::sc_carry, dx, dy, control, &Level->sectors[s], nullptr, accel);
+					Level->CreateThinker<DScroller>(EScroll::sc_carry, dx, dy, control, &Level->sectors[s], nullptr, accel);
 				}
 				for (unsigned j = 0; j < copyscrollers.Size(); j++)
 				{
@@ -1315,7 +1315,7 @@ void MapLoader::SpawnScrollers()
 
 					if (line->args[0] == l->args[0] && (line->args[1] & 4))
 					{
-						Create<DScroller>(EScroll::sc_carry, dx, dy, control, line->frontsector, nullptr, accel);
+						Level->CreateThinker<DScroller>(EScroll::sc_carry, dx, dy, control, line->frontsector, nullptr, accel);
 					}
 				}
 			}
@@ -1329,7 +1329,7 @@ void MapLoader::SpawnScrollers()
 			while ((s = itr.Next()) >= 0)
 			{
 				if (s != (int)i)
-					Create<DScroller>(dx, dy, &Level->lines[s], control, accel);
+					Level->CreateThinker<DScroller>(dx, dy, &Level->lines[s], control, accel);
 			}
 			break;
 		}
@@ -1337,32 +1337,32 @@ void MapLoader::SpawnScrollers()
 		case Scroll_Texture_Offsets:
 			// killough 3/2/98: scroll according to sidedef offsets
 			side = Level->lines[i].sidedef[0];
-			Create<DScroller>(EScroll::sc_side, -side->GetTextureXOffset(side_t::mid),
+			Level->CreateThinker<DScroller>(EScroll::sc_side, -side->GetTextureXOffset(side_t::mid),
 				side->GetTextureYOffset(side_t::mid), nullptr, nullptr, side, accel, SCROLLTYPE(l->args[0]));
 			break;
 
 		case Scroll_Texture_Left:
 			l->special = special;	// Restore the special, for compat_useblocking's benefit.
 			side = Level->lines[i].sidedef[0];
-			Create<DScroller>(EScroll::sc_side, l->args[0] / 64., 0, nullptr, nullptr, side, accel, SCROLLTYPE(l->args[1]));
+			Level->CreateThinker<DScroller>(EScroll::sc_side, l->args[0] / 64., 0, nullptr, nullptr, side, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Right:
 			l->special = special;
 			side = Level->lines[i].sidedef[0];
-			Create<DScroller>(EScroll::sc_side, -l->args[0] / 64., 0, nullptr, nullptr, side, accel, SCROLLTYPE(l->args[1]));
+			Level->CreateThinker<DScroller>(EScroll::sc_side, -l->args[0] / 64., 0, nullptr, nullptr, side, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Up:
 			l->special = special;
 			side = Level->lines[i].sidedef[0];
-			Create<DScroller>(EScroll::sc_side, 0, l->args[0] / 64., nullptr, nullptr, side, accel, SCROLLTYPE(l->args[1]));
+			Level->CreateThinker<DScroller>(EScroll::sc_side, 0, l->args[0] / 64., nullptr, nullptr, side, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Down:
 			l->special = special;
 			side = Level->lines[i].sidedef[0];
-			Create<DScroller>(EScroll::sc_side, 0, -l->args[0] / 64., nullptr, nullptr, side, accel, SCROLLTYPE(l->args[1]));
+			Level->CreateThinker<DScroller>(EScroll::sc_side, 0, -l->args[0] / 64., nullptr, nullptr, side, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Both:
@@ -1370,7 +1370,7 @@ void MapLoader::SpawnScrollers()
 			if (l->args[0] == 0) {
 				dx = (l->args[1] - l->args[2]) / 64.;
 				dy = (l->args[4] - l->args[3]) / 64.;
-				Create<DScroller>(EScroll::sc_side, dx, dy, nullptr, nullptr, side, accel);
+				Level->CreateThinker<DScroller>(EScroll::sc_side, dx, dy, nullptr, nullptr, side, accel);
 			}
 			break;
 
@@ -1385,5 +1385,5 @@ void MapLoader::SpawnScrollers()
 
 void MapLoader::CreateScroller(EScroll type, double dx, double dy, sector_t *affectee, int accel, EScrollPos scrollpos)
 {
-	Create<DScroller>(type, dx, dy, nullptr, affectee, nullptr, accel, scrollpos);
+	Level->CreateThinker<DScroller>(type, dx, dy, nullptr, affectee, nullptr, accel, scrollpos);
 }

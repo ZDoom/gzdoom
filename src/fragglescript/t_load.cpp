@@ -262,7 +262,7 @@ bool FScriptLoader::ParseInfo(MapData * map)
 			I_Error("Only one FraggleThinker is allowed to exist at a time.\nCheck your code.");
 		}
 
-		auto th = Create<DFraggleThinker>();
+		auto th = Level->CreateThinker<DFraggleThinker>();
 		th->LevelScript->data = copystring(scriptsrc.GetChars());
 		Level->FraggleScriptThinker = th;
 

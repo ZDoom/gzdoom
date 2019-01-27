@@ -247,7 +247,6 @@ void DScroller::Tick ()
 //-----------------------------------------------------------------------------
 
 DScroller::DScroller (EScroll type, double dx, double dy,  sector_t *ctrl, sector_t *sec, side_t *side, int accel, EScrollPos scrollpos)
-	: DThinker (STAT_SCROLLER)
 {
 	m_Type = type;
 	m_dx = dx;
@@ -329,7 +328,6 @@ void DScroller::OnDestroy ()
 //-----------------------------------------------------------------------------
 
 DScroller::DScroller (double dx, double dy, const line_t *l, sector_t * control, int accel, EScrollPos scrollpos)
-	: DThinker (STAT_SCROLLER)
 {
 	double x = fabs(l->Delta().X), y = fabs(l->Delta().Y), d;
 	if (y > x) d = x, x = y, y = d;
@@ -432,7 +430,7 @@ void SetWallScroller (FLevelLocals *Level, int id, int sidechoice, double dx, do
 			{
 				if (Collection.FindEx([=](const DScroller *element) { return element->GetWall() == side; }) == Collection.Size())
 				{
-					Create<DScroller> (EScroll::sc_side, dx, dy, nullptr, nullptr, side, 0, Where);
+					Level->CreateThinker<DScroller> (EScroll::sc_side, dx, dy, nullptr, nullptr, side, 0, Where);
 				}
 			}
 		}
@@ -472,6 +470,6 @@ void SetScroller (FLevelLocals *Level, int tag, EScroll type, double dx, double 
 	auto itr = Level->GetSectorTagIterator(tag);
 	while ((i = itr.Next()) >= 0)
 	{
-		Create<DScroller> (type, dx, dy, nullptr, &Level->sectors[i], nullptr, 0);
+		Level->CreateThinker<DScroller> (type, dx, dy, nullptr, &Level->sectors[i], nullptr, 0);
 	}
 }

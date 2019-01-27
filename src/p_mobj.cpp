@@ -1415,7 +1415,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target, bool onsky)
 						}
 					}
 
-					DImpactDecal::StaticCreate(base->GetDecal(), linepos, line->sidedef[side], ffloor);
+					DImpactDecal::StaticCreate(mo->Level, base->GetDecal(), linepos, line->sidedef[side], ffloor);
 				}
 			}
 		}
@@ -4369,7 +4369,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 
 	AActor *actor;
 	
-	actor = static_cast<AActor *>(const_cast<PClassActor *>(type)->CreateNew ());
+	actor = static_cast<AActor *>(level.CreateThinker(type));
 	actor->SpawnTime = level.totaltime;
 	actor->SpawnOrder = level.spawnindex++;
 

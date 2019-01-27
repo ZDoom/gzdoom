@@ -293,14 +293,14 @@ void DPusher::Tick ()
 }
 
 
-void AdjustPusher(int tag, int magnitude, int angle, bool wind)
+void FLevelLocals::AdjustPusher(int tag, int magnitude, int angle, bool wind)
 {
 	DPusher::EPusher type = wind ? DPusher::p_wind : DPusher::p_current;
 
 	// Find pushers already attached to the sector, and change their parameters.
 	TArray<FThinkerCollection> Collection;
 	{
-		TThinkerIterator<DPusher> iterator;
+		auto iterator = GetThinkerIterator<DPusher>();
 		FThinkerCollection collect;
 
 		while ((collect.Obj = iterator.Next()))
@@ -328,7 +328,7 @@ void AdjustPusher(int tag, int magnitude, int angle, bool wind)
 		}
 		if (i == numcollected)
 		{
-			Create<DPusher>(type, nullptr, magnitude, angle, nullptr, secnum);
+			CreateThinker<DPusher>(type, nullptr, magnitude, angle, nullptr, secnum);
 		}
 	}
 }

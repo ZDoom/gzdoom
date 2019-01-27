@@ -3300,7 +3300,6 @@ IMPLEMENT_POINTERS_START(DACSThinker)
 IMPLEMENT_POINTERS_END
 
 DACSThinker::DACSThinker ()
-: DThinker(STAT_SCRIPTS)
 {
 	Scripts = nullptr;
 	LastScript = nullptr;
@@ -3880,7 +3879,7 @@ showme:
 							fa1 = viewer->BlendA;
 						}
 					}
-					Create<DFlashFader> (fr1, fg1, fb1, fa1, fr2, fg2, fb2, fa2, ftime, viewer->mo);
+					Level->CreateThinker<DFlashFader> (fr1, fg1, fb1, fa1, fr2, fg2, fb2, fa2, ftime, viewer->mo);
 				}
 			}
 		}
@@ -5016,7 +5015,7 @@ static bool DoSpawnDecal(AActor *actor, const FDecalTemplate *tpl, int flags, DA
 	{
 		angle += actor->Angles.Yaw;
 	}
-	return NULL != ShootDecal(tpl, actor, actor->Sector, actor->X(), actor->Y(),
+	return nullptr != ShootDecal(actor->Level, tpl, actor->Sector, actor->X(), actor->Y(),
 		actor->Center() - actor->Floorclip + actor->GetBobOffset() + zofs,
 		angle, distance, !!(flags & SDF_PERMANENT));
 }
@@ -9471,7 +9470,7 @@ scriptwait:
 			int secnum = Level->FindFirstSectorFromTag(STACK(8));
 			if (secnum >= 0)
 			{
-				Create<DPlaneWatcher>(activator, activationline, backSide, pcd == PCD_SETCEILINGTRIGGER, &Level->sectors[secnum],
+				Level->CreateThinker<DPlaneWatcher>(activator, activationline, backSide, pcd == PCD_SETCEILINGTRIGGER, &Level->sectors[secnum],
 					STACK(7), STACK(6), STACK(5), STACK(4), STACK(3), STACK(2), STACK(1));
 			}
 
@@ -10234,7 +10233,7 @@ DLevelScript::DLevelScript (FLevelLocals *l, AActor *who, line_t *where, int num
 {
 	Level = l;
 	if (Level->ACSThinker == nullptr)
-		Level->ACSThinker = Create<DACSThinker>();
+		Level->ACSThinker = Level->CreateThinker<DACSThinker>();
 
 	script = num;
 	assert(code->VarCount >= code->ArgCount);

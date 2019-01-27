@@ -283,7 +283,7 @@ bool FLevelLocals::CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *
 
 	// new floor thinker
 	rtn = true;
-	floor = Create<DFloor>(sec);
+	floor = CreateThinker<DFloor>(sec);
 	floor->m_Type = floortype;
 	floor->m_Crush = crush;
 	floor->m_Hexencrush = hexencrush;
@@ -631,7 +631,7 @@ bool FLevelLocals::EV_BuildStairs (int tag, DFloor::EStair type, line_t *line, d
 		
 		// new floor thinker
 		rtn = true;
-		floor = Create<DFloor> (sec);
+		floor = CreateThinker<DFloor> (sec);
 		floor->m_Direction = (type == DFloor::buildUp) ? 1 : -1;
 		stairstep = stairsize * floor->m_Direction;
 		floor->m_Type = DFloor::buildStair;	//jff 3/31/98 do not leave uninited
@@ -734,7 +734,7 @@ bool FLevelLocals::EV_BuildStairs (int tag, DFloor::EStair type, line_t *line, d
 				secnum = newsecnum;
 
 				// create and initialize a thinker for the next step
-				floor = Create<DFloor> (sec);
+				floor = CreateThinker<DFloor> (sec);
 				floor->StartFloorSound ();
 				floor->m_Direction = (type == DFloor::buildUp) ? 1 : -1;
 				floor->m_FloorDestDist = sec->floorplane.PointToDist (DVector2(0, 0), height);
@@ -813,7 +813,7 @@ bool FLevelLocals::EV_DoDonut (int tag, line_t *line, double pillarspeed, double
 			s3 = ln->backsector;
 			
 			//	Spawn rising slime
-			floor = Create<DFloor> (s2);
+			floor = CreateThinker<DFloor> (s2);
 			floor->m_Type = DFloor::donutRaise;
 			floor->m_Crush = -1;
 			floor->m_Hexencrush = false;
@@ -828,7 +828,7 @@ bool FLevelLocals::EV_DoDonut (int tag, line_t *line, double pillarspeed, double
 			floor->StartFloorSound ();
 			
 			//	Spawn lowering donut-hole
-			floor = Create<DFloor> (s1);
+			floor = CreateThinker<DFloor> (s1);
 			floor->m_Type = DFloor::floorLowerToNearest;
 			floor->m_Crush = -1;
 			floor->m_Hexencrush = false;
@@ -1013,7 +1013,7 @@ bool FLevelLocals::EV_DoElevator (line_t *line, DElevator::EElevator elevtype,
 
 		// create and initialize new elevator thinker
 		rtn = true;
-		elevator = Create<DElevator> (sec);
+		elevator = CreateThinker<DElevator> (sec);
 		elevator->m_Type = elevtype;
 		elevator->m_Speed = speed;
 		elevator->StartFloorSound ();
@@ -1310,12 +1310,12 @@ bool FLevelLocals::EV_StartWaggle (int tag, line_t *line, int height, int speed,
 		retCode = true;
 		if (ceiling)
 		{
-			waggle = Create<DCeilingWaggle> (sector);
+			waggle = CreateThinker<DCeilingWaggle> (sector);
 			waggle->m_OriginalDist = sector->ceilingplane.fD();
 		}
 		else
 		{
-			waggle = Create<DFloorWaggle> (sector);
+			waggle = CreateThinker<DFloorWaggle> (sector);
 			waggle->m_OriginalDist = sector->floorplane.fD();
 		}
 		waggle->m_Accumulator = offset;

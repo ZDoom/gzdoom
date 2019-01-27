@@ -109,11 +109,12 @@ struct DDecalThinker : public DThinker
 	DECLARE_CLASS (DDecalThinker, DThinker)
 	HAS_OBJECT_POINTERS
 public:
-	DDecalThinker (DBaseDecal *decal) : DThinker (STAT_DECALTHINKER), TheDecal (decal) {}
+	static const int DEFAULT_STAT = STAT_DECALTHINKER;
+	DDecalThinker (DBaseDecal *decal) : TheDecal (decal) {}
 	void Serialize(FSerializer &arc);
 	TObjPtr<DBaseDecal*> TheDecal;
 protected:
-	DDecalThinker () : DThinker (STAT_DECALTHINKER) {}
+	DDecalThinker() = default;
 };
 
 IMPLEMENT_CLASS(DDecalThinker, false, true)
@@ -1201,9 +1202,10 @@ void DDecalFader::Tick ()
 
 DThinker *FDecalFaderAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
 {
-	DDecalFader *fader = Create<DDecalFader> (actor);
+	auto Level = actor->Level;
+	DDecalFader *fader = Level->CreateThinker<DDecalFader> (actor);
 
-	fader->TimeToStartDecay = level.maptime + DecayStart;
+	fader->TimeToStartDecay = Level->maptime + DecayStart;
 	fader->TimeToEndDecay = fader->TimeToStartDecay + DecayTime;
 	fader->StartTrans = -1;
 	return fader;
@@ -1227,9 +1229,10 @@ void DDecalStretcher::Serialize(FSerializer &arc)
 
 DThinker *FDecalStretcherAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
 {
-	DDecalStretcher *thinker = Create<DDecalStretcher> (actor);
+	auto Level = actor->Level;
+	DDecalStretcher *thinker = Level->CreateThinker<DDecalStretcher> (actor);
 
-	thinker->TimeToStart = level.maptime + StretchStart;
+	thinker->TimeToStart = Level->maptime + StretchStart;
 	thinker->TimeToStop = thinker->TimeToStart + StretchTime;
 
 	if (GoalX >= 0)
@@ -1313,9 +1316,10 @@ void DDecalSlider::Serialize(FSerializer &arc)
 
 DThinker *FDecalSliderAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
 {
-	DDecalSlider *thinker = Create<DDecalSlider> (actor);
+	auto Level = actor->Level;
+	DDecalSlider *thinker = Level->CreateThinker<DDecalSlider> (actor);
 
-	thinker->TimeToStart = level.maptime + SlideStart;
+	thinker->TimeToStart = Level->maptime + SlideStart;
 	thinker->TimeToStop = thinker->TimeToStart + SlideTime;
 	/*thinker->DistX = DistX;*/
 	thinker->DistY = DistY;
@@ -1432,9 +1436,10 @@ void DDecalColorer::Tick ()
 
 DThinker *FDecalColorerAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
 {
-	DDecalColorer *Colorer = Create<DDecalColorer>(actor);
+	auto Level = actor->Level;
+	DDecalColorer *Colorer = Level->CreateThinker<DDecalColorer>(actor);
 
-	Colorer->TimeToStartDecay = level.maptime + DecayStart;
+	Colorer->TimeToStartDecay = Level->maptime + DecayStart;
 	Colorer->TimeToEndDecay = Colorer->TimeToStartDecay + DecayTime;
 	Colorer->StartColor = 0xff000000;
 	Colorer->GoalColor = GoalColor;

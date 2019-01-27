@@ -60,7 +60,6 @@ IMPLEMENT_CLASS(DLighting, false, false)
 DLighting::DLighting (sector_t *sector)
 	: DSectorEffect (sector)
 {
-	ChangeStatNum (STAT_LIGHT);
 }
 
 //-----------------------------------------------------------------------------
@@ -525,7 +524,7 @@ int DPhased::PhaseHelper (sector_t *sector, int index, int light, sector_t *prev
 			m_BaseLevel = baselevel;
 		}
 		else
-			l = Create<DPhased> (sector, baselevel);
+			l = Level->CreateThinker<DPhased> (sector, baselevel);
 
 		int numsteps = PhaseHelper (sector->NextSpecialSector (
 				sector->special == LightSequenceSpecial1 ?
@@ -545,17 +544,10 @@ int DPhased::PhaseHelper (sector_t *sector, int index, int light, sector_t *prev
 //
 //-----------------------------------------------------------------------------
 
-DPhased::DPhased (sector_t *sector, int baselevel)
-	: DLighting (sector)
-{
-	m_BaseLevel = baselevel;
-}
-
-DPhased::DPhased (sector_t *sector)
-	: DLighting (sector)
+void DPhased::Propagate()
 {
 	validcount++;
-	PhaseHelper (sector, 0, 0, NULL);
+	PhaseHelper (m_Sector, 0, 0, nullptr);
 }
 
 DPhased::DPhased (sector_t *sector, int baselevel, int phase)
@@ -577,7 +569,7 @@ void FLevelLocals::EV_StartLightFlickering(int tag, int upper, int lower)
 	auto it = GetSectorTagIterator(tag);
 	while ((secnum = it.Next()) >= 0)
 	{
-		Create<DFlicker>(&sectors[secnum], upper, lower);
+		CreateThinker<DFlicker>(&sectors[secnum], upper, lower);
 	}
 }
 
@@ -599,7 +591,7 @@ void FLevelLocals::EV_StartLightStrobing(int tag, int upper, int lower, int utic
 		if (sec->lightingdata)
 			continue;
 
-		Create<DStrobe>(sec, upper, lower, utics, ltics);
+		CreateThinker<DStrobe>(sec, upper, lower, utics, ltics);
 	}
 }
 
@@ -613,7 +605,7 @@ void FLevelLocals::EV_StartLightStrobing(int tag, int utics, int ltics)
 		if (sec->lightingdata)
 			continue;
 
-		Create<DStrobe>(sec, utics, ltics, false);
+		CreateThinker<DStrobe>(sec, utics, ltics, false);
 	}
 }
 
@@ -783,7 +775,7 @@ void FLevelLocals::EV_StartLightGlowing(int tag, int upper, int lower, int tics)
 		if (sec->lightingdata)
 			continue;
 
-		Create<DGlow2>(sec, upper, lower, tics, false);
+		CreateThinker<DGlow2>(sec, upper, lower, tics, false);
 	}
 }
 
@@ -813,7 +805,7 @@ void FLevelLocals::EV_StartLightFading(int tag, int value, int tics)
 			if (sec->lightlevel == value)
 				continue;
 
-			Create<DGlow2>(sec, sec->lightlevel, value, tics, true);
+			CreateThinker<DGlow2>(sec, sec->lightlevel, value, tics, true);
 		}
 	}
 }

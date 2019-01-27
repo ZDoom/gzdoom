@@ -1835,7 +1835,7 @@ void FParser::SF_FadeLight(void)
 		auto it = Level->GetSectorTagIterator(sectag);
 		while ((i = it.Next()) >= 0)
 		{
-			if (!Level->sectors[i].lightingdata) Create<DLightLevel>(&Level->sectors[i],destlevel,speed);
+			if (!Level->sectors[i].lightingdata) Level->CreateThinker<DLightLevel>(&Level->sectors[i],destlevel,speed);
 		}
 	}
 }

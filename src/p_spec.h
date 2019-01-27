@@ -125,6 +125,7 @@ class DLighting : public DSectorEffect
 {
 	DECLARE_CLASS(DLighting, DSectorEffect)
 public:
+	static const int DEFAULT_STAT = STAT_LIGHT;
 	DLighting(sector_t *sector);
 protected:
 	DLighting() = default;

@@ -244,7 +244,7 @@ bool FLevelLocals::CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t 
 	}
 	
 	// new door thinker
-	DCeiling *ceiling = Create<DCeiling> (sec, speed, speed2, silent & ~4);
+	DCeiling *ceiling = CreateThinker<DCeiling> (sec, speed, speed2, silent & ~4);
 	vertex_t *spot = sec->Lines[0]->v1;
 
 	switch (type)

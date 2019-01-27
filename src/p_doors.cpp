@@ -480,7 +480,7 @@ bool FLevelLocals::EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 			}
 			return false;
 		}
-		if (Create<DDoor> (sec, type, speed, delay, lightTag, topcountdown))
+		if (CreateThinker<DDoor> (sec, type, speed, delay, lightTag, topcountdown))
 			rtn = true;
 	}
 	else
@@ -494,7 +494,7 @@ bool FLevelLocals::EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 			if (sec->PlaneMoving(sector_t::ceiling))
 				continue;
 
-			if (Create<DDoor>(sec, type, speed, delay, lightTag, topcountdown))
+			if (CreateThinker<DDoor>(sec, type, speed, delay, lightTag, topcountdown))
 				rtn = true;
 		}
 				
@@ -773,7 +773,7 @@ bool FLevelLocals::EV_SlidingDoor (line_t *line, AActor *actor, int tag, int spe
 		FDoorAnimation *anim = TexMan.FindAnimatedDoor (line->sidedef[0]->GetTexture(side_t::top));
 		if (anim != NULL)
 		{
-			Create<DAnimatedDoor>(sec, line, speed, delay, anim, type);
+			CreateThinker<DAnimatedDoor>(sec, line, speed, delay, anim, type);
 			return true;
 		}
 		return false;
@@ -798,7 +798,7 @@ bool FLevelLocals::EV_SlidingDoor (line_t *line, AActor *actor, int tag, int spe
 			if (anim != NULL)
 			{
 				rtn = true;
-				Create<DAnimatedDoor>(sec, line, speed, delay, anim, type);
+				CreateThinker<DAnimatedDoor>(sec, line, speed, delay, anim, type);
 				break;
 			}
 		}

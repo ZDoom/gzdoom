@@ -234,7 +234,7 @@ bool FLevelLocals::EV_DoPillar (DPillar::EPillar type, line_t *line, int tag,
 			continue;
 
 		rtn = true;
-		Create<DPillar> (sec, type, speed, height, height2, crush, hexencrush);
+		CreateThinker<DPillar> (sec, type, speed, height, height2, crush, hexencrush);
 	}
 	return rtn;
 }

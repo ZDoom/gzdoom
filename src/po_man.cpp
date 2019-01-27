@@ -369,7 +369,7 @@ bool EV_RotatePoly (FLevelLocals *Level, line_t *line, int polyNum, int speed, i
 			// cannot do rotations on linked polyportals.
 			break;
 		}
-		pe = Create<DRotatePoly>(poly);
+		pe = Level->CreateThinker<DRotatePoly>(poly);
 		poly->specialdata = pe;
 		poly->bBlocked = false;
 		if (byteAngle != 0)
@@ -448,7 +448,7 @@ bool EV_MovePoly (FLevelLocals *Level, line_t *line, int polyNum, double speed, 
 		{ // poly is already in motion
 			break;
 		}
-		pe = Create<DMovePoly>(poly);
+		pe = Level->CreateThinker<DMovePoly>(poly);
 		poly->specialdata = pe;
 		poly->bBlocked = false;
 		pe->m_Dist = dist; // Distance
@@ -528,7 +528,7 @@ bool EV_MovePolyTo(FLevelLocals *Level, line_t *line, int polyNum, double speed,
 		{ // poly is already in motion
 			break;
 		}
-		pe = Create<DMovePolyTo>(poly);
+		pe = Level->CreateThinker<DMovePolyTo>(poly);
 		poly->specialdata = pe;
 		poly->bBlocked = false;
 		pe->m_Dist = distlen;
@@ -681,7 +681,7 @@ bool EV_OpenPolyDoor(FLevelLocals *Level, line_t *line, int polyNum, double spee
 			break;
 		}
 
-		pd = Create<DPolyDoor>(poly, type);
+		pd = Level->CreateThinker<DPolyDoor>(poly, type);
 		poly->specialdata = pd;
 		if (type == PODOOR_SLIDE)
 		{
@@ -1223,7 +1223,7 @@ void FPolyObj::LinkPolyobj ()
 			{
 				link = &Level->PolyBlockMap[j+i];
 				if(!(*link))
-				{ // Create a new link at the current block cell
+				{ // CreateThinker a new link at the current block cell
 					*link = new polyblock_t;
 					(*link)->next = nullptr;
 					(*link)->prev = nullptr;

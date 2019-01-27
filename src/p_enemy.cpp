@@ -3087,8 +3087,20 @@ void A_BossDeath(AActor *self)
 			}
 			checked = true;
 
-			P_ExecuteSpecial(sa->Action, NULL, self, false, 
-				sa->Args[0], sa->Args[1], sa->Args[2], sa->Args[3], sa->Args[4]);
+			if (sa->Action & 0x40000000)
+			{
+				// This is a Doom format special from UMAPINFO. It must be translated here, because at parsing time there is not sufficient context to do it.
+				maplinedef_t ml;
+				ml.special = sa->Action & 0x3fffffff;
+				ml.tag = sa->Args[0];
+				line_t line;
+				self->Level->TranslateLineDef(&line, &ml);
+				P_ExecuteSpecial(line.special, NULL, self, false, line.args[0], line.args[1], line.args[2], line.args[3], line.args[4]);
+			}
+			else
+			{
+				P_ExecuteSpecial(sa->Action, NULL, self, false, sa->Args[0], sa->Args[1], sa->Args[2], sa->Args[3], sa->Args[4]);
+			}
 		}
 	}
 

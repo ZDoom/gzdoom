@@ -1035,7 +1035,7 @@ void FLevelLocals::CreateLinkedPortals()
 	if (linkedPortals.Size() > 0)
 	{
 		// We need to relink all actors that may touch a linked line portal
-		TThinkerIterator<AActor> it;
+		auto it = Level->GetThinkerIterator<AActor>();
 		AActor *actor;
 		while ((actor = it.Next()))
 		{

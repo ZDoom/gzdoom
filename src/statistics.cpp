@@ -413,7 +413,7 @@ static void StoreLevelStats(FLevelLocals *Level)
 
 		// Check for living monsters. On some maps it can happen
 		// that the counter misses some. 
-		TThinkerIterator<AActor> it;
+		auto it = Level->GetThinkerIterator<AActor>();
 		AActor *ac;
 		int mc = 0;
 

@@ -364,7 +364,7 @@ DFsVariable *DFsScript::VariableForName(const char *name)
 //
 //==========================================================================
 
-DFsVariable *DFsScript::FindVariable(const char *name)
+DFsVariable *DFsScript::FindVariable(const char *name, DFsScript *GlobalScript)
 {
 	DFsVariable *var;
 	DFsScript *current = this;
@@ -374,7 +374,13 @@ DFsVariable *DFsScript::FindVariable(const char *name)
 		// check this script
 		if ((var = current->VariableForName(name)))
 			return var;
-		current = current->parent;    // try the parent of this one
+
+		// Since the global script cannot be serialized, we cannot store a pointer to it, because this cannot be safely restored during deserialization.
+		// To compensate we need to check the relationship explicitly here.
+		if (current->parent == nullptr && current != GlobalScript)
+			current = GlobalScript;
+		else
+			current = current->parent;    // try the parent of this one
     }
 	
 	return NULL;    // no variable

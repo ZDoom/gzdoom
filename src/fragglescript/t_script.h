@@ -341,7 +341,7 @@ public:
 	void NewFunction(const char *name, void (FParser::*handler)());
 
 	DFsVariable *VariableForName(const char *name);
-	DFsVariable *FindVariable(const char *name);
+	DFsVariable *FindVariable(const char *name, DFsScript *global);
 	void ClearVariables(bool complete= false);
 	DFsVariable *NewLabel(char *labelptr);
 	char *LabelValue(const svalue_t &v);
@@ -363,7 +363,7 @@ public:
 	void DryRunScript();
 	void Preprocess();
 	void ParseInclude(char *lumpname);
-	void ParseScript(char *rover = NULL);
+	void ParseScript(char *rover, AActor **pTrigger);
 	void ParseData(char *rover, char *data, char *end);
 };
 

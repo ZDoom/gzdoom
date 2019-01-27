@@ -176,8 +176,6 @@ void DFsScript::OnDestroy()
 void DFsScript::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
-	// don't save a reference to the global script, which contains unserializable data.
-	if (parent == level.FraggleScriptThinker->GlobalScript) parent = nullptr;
 
 	arc("data", data)
 		("scriptnum", scriptnum)
@@ -188,8 +186,6 @@ void DFsScript::Serialize(FSerializer &arc)
 		.Array("sections", sections, SECTIONSLOTS)
 		.Array("variables", variables, VARIABLESLOTS)
 		.Array("children", children, MAXSCRIPTS);
-
-	if (parent == nullptr) parent = level.FraggleScriptThinker->GlobalScript;
 }
 
 //==========================================================================
@@ -200,7 +196,7 @@ void DFsScript::Serialize(FSerializer &arc)
 //
 //==========================================================================
 
-void DFsScript::ParseScript(char *position)
+void DFsScript::ParseScript(char *position, AActor **pTrigger)
 {
 	if (position == nullptr) 
 	{
@@ -215,7 +211,7 @@ void DFsScript::ParseScript(char *position)
 		return;
     }
 	
-	level.FraggleScriptThinker->trigger_obj = trigger;  // set trigger
+	*pTrigger = trigger;  // set trigger variable. 
 	
 	try
 	{
@@ -387,7 +383,7 @@ void DFraggleThinker::Construct()
 	RunningScripts = Create<DRunningScript>();
 	GC::WriteBarrier(this, RunningScripts);
 	LevelScript = Create<DFsScript>();
-	LevelScript->parent = GlobalScript;
+	LevelScript->parent = nullptr;
 	GC::WriteBarrier(this, LevelScript);
 }
 
@@ -465,10 +461,10 @@ bool DFraggleThinker::wait_finished(DRunningScript *script)
     case wt_tagwait:
 		{
 			int secnum;
-			auto itr = level.GetSectorTagIterator(script->wait_data);
+			auto itr = Level->GetSectorTagIterator(script->wait_data);
 			while ((secnum = itr.Next()) >= 0)
 			{
-				sector_t *sec = &level.sectors[secnum];
+				sector_t *sec = &Level->sectors[secnum];
 				if(sec->floordata || sec->ceilingdata || sec->lightingdata)
 					return false;        // not finished
 			}
@@ -532,7 +528,7 @@ void DFraggleThinker::Tick()
 			next = current->next;   // save before freeing
 			
 			// continue the script
-			current->script->ParseScript (current->script->data + current->save_point);
+			current->script->ParseScript (current->script->data + current->save_point, &trigger_obj);
 
 			// free
 			current->Destroy();
@@ -623,7 +619,7 @@ void T_PreprocessScripts(FLevelLocals *Level)
 		th->LevelScript->trigger = players[0].mo;
 		
 		th->LevelScript->Preprocess();
-		th->LevelScript->ParseScript();
+		th->LevelScript->ParseScript(nullptr, &th->trigger_obj);
 	}
 }
 

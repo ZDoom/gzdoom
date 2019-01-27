@@ -1510,11 +1510,11 @@ FUNC(LS_Thing_Destroy)
 
 	if (arg0 == 0 && arg2 == 0)
 	{
-		P_Massacre ();
+		Level->Massacre ();
 	}
 	else if (arg0 == 0)
 	{
-		TThinkerIterator<AActor> iterator;
+		auto iterator = Level->GetThinkerIterator<AActor>();
 		
 		actor = iterator.Next ();
 		while (actor)

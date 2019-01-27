@@ -2080,11 +2080,6 @@ uint8_t *FDynamicBuffer::GetData (int *len)
 }
 
 
-static int KillAll(PClassActor *cls)
-{
-	return P_Massacre(false, cls);
-}
-
 static int RemoveClass(const PClass *cls)
 {
 	AActor *actor;
@@ -2564,11 +2559,11 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 
 			if (cls != NULL)
 			{
-				killcount = KillAll(cls);
+				killcount = currentUILevel->Massacre(false, cls->TypeName);
 				PClassActor *cls_rep = cls->GetReplacement();
 				if (cls != cls_rep)
 				{
-					killcount += KillAll(cls_rep);
+					killcount += currentUILevel->Massacre(false, cls_rep->TypeName);
 				}
 				Printf ("Killed %d monsters of type %s.\n",killcount, s);
 			}

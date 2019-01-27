@@ -203,6 +203,7 @@ public:
 	bool CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line, double speed, double height, int crush, int change, bool hexencrush, bool hereticlower);
 	void DoDeferedScripts();
 	void AdjustPusher(int tag, int magnitude, int angle, bool wind);
+	int Massacre(bool baddies = false, FName cls = NAME_None);
 
 	bool EV_DoPlat(int tag, line_t *line, DPlat::EPlatType type, double height, double speed, int delay, int lip, int change);
 	void EV_StopPlat(int tag, bool remove);

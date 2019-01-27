@@ -20,9 +20,9 @@ class DBaseDecal : public DThinker
 	HAS_OBJECT_POINTERS
 public:
 	static const int DEFAULT_STAT = STAT_DECAL;
-	DBaseDecal(double z = 0);
-	DBaseDecal (const AActor *actor);
-	DBaseDecal (const DBaseDecal *basis);
+	void Construct(double z = 0);
+	void Construct(const AActor *actor);
+	void Construct(const DBaseDecal *basis);
 
 	void Serialize(FSerializer &arc);
 	void OnDestroy() override;
@@ -33,19 +33,19 @@ public:
 	void Spread (const FDecalTemplate *tpl, side_t *wall, double x, double y, double z, F3DFloor * ffloor);
 	void GetXY (side_t *side, double &x, double &y) const;
 
-	DBaseDecal *WallNext, *WallPrev;
+	DBaseDecal *WallNext = nullptr, *WallPrev = nullptr;
 
-	double LeftDistance;
+	double LeftDistance = 0;
 	double Z;
-	double ScaleX, ScaleY;
-	double Alpha;
-	uint32_t AlphaColor;
-	int Translation;
+	double ScaleX = 1, ScaleY = 1;
+	double Alpha = 1;
+	uint32_t AlphaColor = 0;
+	int Translation = 0;
 	FTextureID PicNum;
-	uint32_t RenderFlags;
+	uint32_t RenderFlags = 0;
 	FRenderStyle RenderStyle;
-	side_t *Side;
-	sector_t *Sector;
+	side_t *Side = nullptr;
+	sector_t *Sector = nullptr;
 
 protected:
 	virtual DBaseDecal *CloneSelf(const FDecalTemplate *tpl, double x, double y, double z, side_t *wall, F3DFloor * ffloor) const;
@@ -61,8 +61,11 @@ class DImpactDecal : public DBaseDecal
 	DECLARE_CLASS (DImpactDecal, DBaseDecal)
 public:
 	static const int DEFAULT_STAT = STAT_AUTODECAL;
-	DImpactDecal(double z = 0) : DBaseDecal(z) {}
-	DImpactDecal (side_t *wall, const FDecalTemplate *templ);
+	void Construct(double z = 0)
+	{
+		Super::Construct(z);
+	}
+	void Construct(side_t *wall, const FDecalTemplate *templ);
 
 	static DImpactDecal *StaticCreate(FLevelLocals *Level, const char *name, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color = 0);
 	static DImpactDecal *StaticCreate(FLevelLocals *Level, const FDecalTemplate *tpl, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color = 0);
@@ -79,7 +82,7 @@ class DFlashFader : public DThinker
 	DECLARE_CLASS (DFlashFader, DThinker)
 	HAS_OBJECT_POINTERS
 public:
-	DFlashFader (float r1, float g1, float b1, float a1,
+	void Construct(float r1, float g1, float b1, float a1,
 				 float r2, float g2, float b2, float a2,
 				 float time, AActor *who, bool terminate = false);
 	void OnDestroy() override;
@@ -96,7 +99,6 @@ protected:
 	TObjPtr<AActor*> ForWho;
 	bool Terminate;
 	void SetBlend (float time);
-	DFlashFader() = default;
 };
 
 enum
@@ -124,7 +126,7 @@ class DEarthquake : public DThinker
 	HAS_OBJECT_POINTERS
 public:
 	static const int DEFAULT_STAT = STAT_EARTHQUAKE;
-	DEarthquake(AActor *center, int intensityX, int intensityY, int intensityZ, int duration,
+	void Construct(AActor *center, int intensityX, int intensityY, int intensityZ, int duration,
 		int damrad, int tremrad, FSoundID quakesfx, int flags, 
 		double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, double rollIntensity, double rollWave);
 
@@ -147,9 +149,6 @@ public:
 	double GetFalloff(double dist) const;
 
 	static int StaticGetQuakeIntensities(double ticFrac, AActor *viewer, FQuakeJiggers &jiggers);
-
-private:
-	DEarthquake() = default;
 };
 
 #endif //__A_SHAREDGLOBAL_H__

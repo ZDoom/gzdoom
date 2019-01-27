@@ -696,7 +696,7 @@ void DLightTransfer::Serialize(FSerializer &arc)
 		("copyfloor", CopyFloor);
 }
 
-DLightTransfer::DLightTransfer (sector_t *srcSec, int target, bool copyFloor)
+void DLightTransfer::Construct(sector_t *srcSec, int target, bool copyFloor)
 {
 	int secnum;
 
@@ -762,7 +762,7 @@ void DWallLightTransfer::Serialize(FSerializer &arc)
 		("flags", Flags);
 }
 
-DWallLightTransfer::DWallLightTransfer (sector_t *srcSec, int target, uint8_t flags)
+void DWallLightTransfer::Construct(sector_t *srcSec, int target, uint8_t flags)
 {
 	int linenum;
 	int wallflags;

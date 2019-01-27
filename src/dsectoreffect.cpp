@@ -56,7 +56,7 @@ void DSectorEffect::OnDestroy()
 	Super::OnDestroy();
 }
 
-DSectorEffect::DSectorEffect (sector_t *sector)
+void DSectorEffect::Construct(sector_t *sector)
 {
 	m_Sector = sector;
 }
@@ -81,9 +81,9 @@ IMPLEMENT_POINTERS_START(DMover)
 	IMPLEMENT_POINTER(interpolation)
 IMPLEMENT_POINTERS_END
 
-DMover::DMover (sector_t *sector)
-	: DSectorEffect (sector)
+void DMover::Construct (sector_t *sector)
 {
+	Super::Construct(sector);
 	interpolation = nullptr;
 }
 
@@ -111,9 +111,9 @@ void DMover::StopInterpolation(bool force)
 IMPLEMENT_CLASS(DMovingFloor, true, false)
 
 
-DMovingFloor::DMovingFloor (sector_t *sector)
-	: DMover (sector)
+void DMovingFloor::Construct(sector_t *sector)
 {
+	Super::Construct(sector);
 	sector->floordata = this;
 	interpolation = sector->SetInterpolation(sector_t::FloorMove, true);
 }
@@ -121,9 +121,9 @@ DMovingFloor::DMovingFloor (sector_t *sector)
 IMPLEMENT_CLASS(DMovingCeiling, true, false)
 
 
-DMovingCeiling::DMovingCeiling (sector_t *sector, bool interpolate)
-	: DMover (sector)
+void DMovingCeiling::Construct(sector_t *sector, bool interpolate)
 {
+	Super::Construct(sector);
 	sector->ceilingdata = this;
 	if (interpolate) interpolation = sector->SetInterpolation(sector_t::CeilingMove, true);
 }

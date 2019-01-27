@@ -7,10 +7,9 @@ class DLightTransfer : public DThinker
 {
 	DECLARE_CLASS (DLightTransfer, DThinker)
 
-	DLightTransfer() = default;
 public:
 	static const int DEFAULT_STAT = STAT_LIGHTTRANSFER;
-	DLightTransfer (sector_t *srcSec, int target, bool copyFloor);
+	void Construct(sector_t *srcSec, int target, bool copyFloor);
 	void Serialize(FSerializer &arc);
 	void Tick ();
 
@@ -33,10 +32,9 @@ class DWallLightTransfer : public DThinker
 	};
 
 	DECLARE_CLASS (DWallLightTransfer, DThinker)
-	DWallLightTransfer() = default;
 public:
 	static const int DEFAULT_STAT = STAT_LIGHTTRANSFER;
-	DWallLightTransfer (sector_t *srcSec, int target, uint8_t flags);
+	void Construct(sector_t *srcSec, int target, uint8_t flags);
 	void Serialize(FSerializer &arc);
 	void Tick ();
 
@@ -54,39 +52,35 @@ class DFireFlicker : public DLighting
 {
 	DECLARE_CLASS(DFireFlicker, DLighting)
 public:
-	DFireFlicker(sector_t *sector);
-	DFireFlicker(sector_t *sector, int upper, int lower);
+	void Construct(sector_t *sector);
+	void Construct(sector_t *sector, int upper, int lower);
 	void		Serialize(FSerializer &arc);
 	void		Tick();
 protected:
 	int 		m_Count;
 	int 		m_MaxLight;
 	int 		m_MinLight;
-private:
-	DFireFlicker() = default;
 };
 
 class DFlicker : public DLighting
 {
 	DECLARE_CLASS(DFlicker, DLighting)
 public:
-	DFlicker(sector_t *sector, int upper, int lower);
+	void Construct(sector_t *sector, int upper, int lower);
 	void		Serialize(FSerializer &arc);
 	void		Tick();
 protected:
 	int 		m_Count;
 	int 		m_MaxLight;
 	int 		m_MinLight;
-private:
-	DFlicker() = default;
 };
 
 class DLightFlash : public DLighting
 {
 	DECLARE_CLASS(DLightFlash, DLighting)
 public:
-	DLightFlash(sector_t *sector);
-	DLightFlash(sector_t *sector, int min, int max);
+	void Construct(sector_t *sector);
+	void Construct(sector_t *sector, int min, int max);
 	void		Serialize(FSerializer &arc);
 	void		Tick();
 protected:
@@ -95,16 +89,14 @@ protected:
 	int 		m_MinLight;
 	int 		m_MaxTime;
 	int 		m_MinTime;
-private:
-	DLightFlash() = default;
 };
 
 class DStrobe : public DLighting
 {
 	DECLARE_CLASS(DStrobe, DLighting)
 public:
-	DStrobe(sector_t *sector, int utics, int ltics, bool inSync);
-	DStrobe(sector_t *sector, int upper, int lower, int utics, int ltics);
+	void Construct(sector_t *sector, int utics, int ltics, bool inSync);
+	void Construct(sector_t *sector, int upper, int lower, int utics, int ltics);
 	void		Serialize(FSerializer &arc);
 	void		Tick();
 protected:
@@ -113,23 +105,19 @@ protected:
 	int 		m_MaxLight;
 	int 		m_DarkTime;
 	int 		m_BrightTime;
-private:
-	DStrobe() = default;
 };
 
 class DGlow : public DLighting
 {
 	DECLARE_CLASS(DGlow, DLighting)
 public:
-	DGlow(sector_t *sector);
+	void Construct(sector_t *sector);
 	void		Serialize(FSerializer &arc);
 	void		Tick();
 protected:
 	int 		m_MinLight;
 	int 		m_MaxLight;
 	int 		m_Direction;
-private:
-	DGlow() = default;
 };
 
 // [RH] Glow from Light_Glow and Light_Fade specials
@@ -137,7 +125,7 @@ class DGlow2 : public DLighting
 {
 	DECLARE_CLASS(DGlow2, DLighting)
 public:
-	DGlow2(sector_t *sector, int start, int end, int tics, bool oneshot);
+	void Construct(sector_t *sector, int start, int end, int tics, bool oneshot);
 	void		Serialize(FSerializer &arc);
 	void		Tick();
 protected:
@@ -146,8 +134,6 @@ protected:
 	int			m_MaxTics;
 	int			m_Tics;
 	bool		m_OneShot;
-private:
-	DGlow2() = default;
 };
 
 // [RH] Phased light thinker
@@ -155,9 +141,9 @@ class DPhased : public DLighting
 {
 	DECLARE_CLASS(DPhased, DLighting)
 public:
-	DPhased(sector_t *sector, int baselevel = 0, int phase = 0);
+	void Construct(sector_t *sector, int baselevel = 0, int phase = 0);
 	// These are for internal use only but the Create template needs access to them.
-	DPhased() = default;
+	void Construct();
 	void Propagate();
 
 	void		Serialize(FSerializer &arc);
@@ -184,8 +170,7 @@ public:
 		p_current
 	};
 
-	DPusher () = default;
-	DPusher (EPusher type, line_t *l, int magnitude, int angle, AActor *source, int affectee);
+	void Construct(EPusher type, line_t *l, int magnitude, int angle, AActor *source, int affectee);
 	void Serialize(FSerializer &arc);
 	int CheckForSectorMatch (EPusher type, int tag);
 	void ChangeValues (int magnitude, int angle)
@@ -221,8 +206,8 @@ class DScroller : public DThinker
 public:
 	static const int DEFAULT_STAT = STAT_SCROLLER;
 
-	DScroller(EScroll type, double dx, double dy, sector_t *control, sector_t *sec, side_t *side, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
-	DScroller (double dx, double dy, const line_t *l, sector_t *control, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
+	void Construct(EScroll type, double dx, double dy, sector_t *control, sector_t *sec, side_t *side, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
+	void Construct(double dx, double dy, const line_t *l, sector_t *control, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
 	void OnDestroy() override;
 
 	void Serialize(FSerializer &arc);
@@ -246,8 +231,5 @@ protected:
 	int m_Accel;			// Whether it's accelerative
 	EScrollPos m_Parts;			// Which parts of a sidedef are being scrolled?
 	TObjPtr<DInterpolation*> m_Interpolations[3];
-
-private:
-	DScroller () = default;
 };
 

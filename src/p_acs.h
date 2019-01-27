@@ -454,7 +454,7 @@ class DACSThinker : public DThinker
 	HAS_OBJECT_POINTERS
 public:
 	static const int DEFAULT_STAT = STAT_SCRIPTS;
-	DACSThinker();
+	void Construct() {}
 	~DACSThinker();
 
 	void Serialize(FSerializer &arc);
@@ -467,8 +467,8 @@ public:
 	void StopScriptsFor(AActor *actor);
 
 private:
-	DLevelScript *LastScript;
-	DLevelScript *Scripts;				// List of all running scripts
+	DLevelScript *LastScript = nullptr;
+	DLevelScript *Scripts = nullptr;				// List of all running scripts
 
 	friend class DLevelScript;
 	friend class FBehavior;

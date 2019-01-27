@@ -12,7 +12,7 @@ class DLightningThinker : public DThinker
 	DECLARE_CLASS (DLightningThinker, DThinker);
 public:
 	static const int DEFAULT_STAT = STAT_LIGHTNING;
-	DLightningThinker ();
+	void Construct();
 	~DLightningThinker ();
 	void Serialize(FSerializer &arc);
 	void Tick ();

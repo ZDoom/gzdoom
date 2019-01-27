@@ -126,9 +126,6 @@ class DLighting : public DSectorEffect
 	DECLARE_CLASS(DLighting, DSectorEffect)
 public:
 	static const int DEFAULT_STAT = STAT_LIGHT;
-	DLighting(sector_t *sector);
-protected:
-	DLighting() = default;
 };
 
 //
@@ -176,7 +173,7 @@ public:
 	void Tick ();
 
 	bool IsLift() const { return m_Type == platDownWaitUpStay || m_Type == platDownWaitUpStayStone; }
-	DPlat(sector_t *sector);
+	void Construct(sector_t *sector);
 
 protected:
 
@@ -194,9 +191,6 @@ protected:
 	void PlayPlatSound (const char *sound);
 	void Reactivate ();
 	void Stop ();
-
-private:
-	DPlat() = default;
 
 	friend struct FLevelLocals;
 };
@@ -218,8 +212,7 @@ public:
 
 	};
 
-	DPillar (sector_t *sector, EPillar type, double speed, double height,
-			 double height2, int crush, bool hexencrush);
+	void Construct (sector_t *sector, EPillar type, double speed, double height, double height2, int crush, bool hexencrush);
 
 	void Serialize(FSerializer &arc);
 	void Tick ();
@@ -235,9 +228,6 @@ protected:
 	bool		m_Hexencrush;
 	TObjPtr<DInterpolation*> m_Interp_Ceiling;
 	TObjPtr<DInterpolation*> m_Interp_Floor;
-
-private:
-	DPillar() = default;
 };
 
 
@@ -258,8 +248,8 @@ public:
 		doorWaitClose,
 	};
 
-	DDoor (sector_t *sector);
-	DDoor (sector_t *sec, EVlDoor type, double speed, int delay, int lightTag, int topcountdown);
+	void Construct(sector_t *sector);
+	void Construct(sector_t *sec, EVlDoor type, double speed, int delay, int lightTag, int topcountdown);
 
 	void Serialize(FSerializer &arc);
 	void Tick ();
@@ -285,8 +275,6 @@ protected:
 
 private:
 	friend struct FLevelLocals;
-	DDoor() = default;
-
 };
 
 class DAnimatedDoor : public DMovingCeiling
@@ -300,8 +288,8 @@ public:
 		adClose
 	};
 
-	DAnimatedDoor (sector_t *sector);
-	DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay, FDoorAnimation *anim, EADType type);
+	void Construct(sector_t *sector);
+	void Construct(sector_t *sec, line_t *line, int speed, int delay, FDoorAnimation *anim, EADType type);
 
 	void Serialize(FSerializer &arc);
 	void Tick ();
@@ -327,8 +315,6 @@ protected:
 	bool m_SetBlocking1, m_SetBlocking2;
 
 	friend struct FLevelLocals;
-private:
-	DAnimatedDoor() = default;
 };
 
 //
@@ -379,8 +365,8 @@ public:
 	};
 
 
-	DCeiling (sector_t *sec);
-	DCeiling (sector_t *sec, double speed1, double speed2, int silent);
+	void Construct(sector_t *sec);
+	void Construct(sector_t *sec, double speed1, double speed2, int silent);
 
 	void Serialize(FSerializer &arc);
 	void Tick ();
@@ -407,10 +393,7 @@ protected:
 
 	void PlayCeilingSound ();
 
-private:
-	DCeiling() = default;
 	friend struct FLevelLocals;
-
 };
 
 //
@@ -474,7 +457,7 @@ public:
 		stairCrush = 4,
 	};
 
-	DFloor (sector_t *sec);
+	void Construct(sector_t *sec);
 
 	void Serialize(FSerializer &arc);
 	void Tick ();
@@ -501,9 +484,6 @@ public:
 	void StartFloorSound ();
 	void SetFloorChangeType (sector_t *sec, int change);
 	friend struct FLevelLocals;
-
-private:
-	DFloor() = default;
 };
 
 class DElevator : public DMover
@@ -521,7 +501,7 @@ public:
 		elevateLower
 	};
 
-	DElevator (sector_t *sec);
+	void Construct(sector_t *sec);
 
 	void OnDestroy() override;
 	void Serialize(FSerializer &arc);
@@ -538,8 +518,6 @@ protected:
 
 	void StartFloorSound ();
 	friend struct FLevelLocals;
-private:
-	DElevator() = default;
 };
 
 
@@ -548,7 +526,7 @@ class DWaggleBase : public DMover
 	DECLARE_CLASS (DWaggleBase, DMover)
 	HAS_OBJECT_POINTERS
 public:
-	DWaggleBase (sector_t *sec);
+	void Construct(sector_t *sec);
 
 	void Serialize(FSerializer &arc);
 
@@ -564,27 +542,22 @@ protected:
 
 	friend struct FLevelLocals;
 	void DoWaggle (bool ceiling);
-	DWaggleBase() = default;
 };
 
 class DFloorWaggle : public DWaggleBase
 {
 	DECLARE_CLASS (DFloorWaggle, DWaggleBase)
 public:
-	DFloorWaggle (sector_t *sec);
+	void Construct(sector_t *sec);
 	void Tick ();
-private:
-	DFloorWaggle() = default;
 };
 
 class DCeilingWaggle : public DWaggleBase
 {
 	DECLARE_CLASS (DCeilingWaggle, DWaggleBase)
 public:
-	DCeilingWaggle (sector_t *sec);
+	void Construct(sector_t *sec);
 	void Tick ();
-private:
-	DCeilingWaggle() = default;
 };
 
 //jff 3/15/98 pure texture/type change for better generalized support

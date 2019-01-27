@@ -215,9 +215,9 @@ void DPlat::Stop()
 	m_Status = in_stasis;
 }
 
-DPlat::DPlat (sector_t *sector)
-	: DMovingFloor (sector)
+void DPlat::Construct (sector_t *sector)
 {
+	Super::Construct(sector);
 }
 
 //

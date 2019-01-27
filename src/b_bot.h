@@ -167,7 +167,7 @@ class DBot : public DThinker
 	HAS_OBJECT_POINTERS
 public:
 	static const int DEFAULT_STAT = STAT_BOT;
-	DBot ();
+	void Construct ();
 
 	void Clear ();
 	void Serialize(FSerializer &arc);

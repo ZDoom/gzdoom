@@ -56,8 +56,7 @@ class DActiveButton : public DThinker
 {
 	DECLARE_CLASS (DActiveButton, DThinker)
 public:
-	DActiveButton ();
-	DActiveButton (side_t *, int, FSwitchDef *, const DVector2 &pos, bool flippable);
+	void Construct(side_t *, int, FSwitchDef *, const DVector2 &pos, bool flippable);
 
 	void Serialize(FSerializer &arc);
 	void Tick ();
@@ -320,20 +319,7 @@ bool P_ChangeSwitchTexture (side_t *side, int useAgain, uint8_t special, bool *q
 
 IMPLEMENT_CLASS(DActiveButton, false, false)
 
-DActiveButton::DActiveButton ()
-{
-	m_Side = NULL;
-	m_Part = -1;
-	m_SwitchDef = 0;
-	m_Timer = 0;
-	m_Pos = { 0,0 };
-	bFlippable = false;
-	bReturning = false;
-	m_Frame = 0;
-}
-
-DActiveButton::DActiveButton (side_t *side, int Where, FSwitchDef *Switch,
-							  const DVector2 &pos, bool useagain)
+void DActiveButton::Construct (side_t *side, int Where, FSwitchDef *Switch, const DVector2 &pos, bool useagain)
 {
 	m_Side = side;
 	m_Part = int8_t(Where);

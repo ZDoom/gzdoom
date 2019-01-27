@@ -67,7 +67,6 @@ class DThinker : public DObject
 	DECLARE_CLASS (DThinker, DObject)
 public:
 	static const int DEFAULT_STAT = STAT_DEFAULT;
-	DThinker () throw();
 	void OnDestroy () override;
 	virtual ~DThinker ();
 	virtual void Tick ();
@@ -92,11 +91,6 @@ public:
 	static void MarkRoots();
 
 	static DThinker *FirstThinker (int statnum);
-	static bool bSerialOverride;
-
-	// only used internally but Create needs access.
-	enum no_link_type { NO_LINK };
-	DThinker(no_link_type) throw();
 private:
 	static void DestroyThinkersInList (FThinkerList &list);
 	static bool DoDestroyThinkersInList(FThinkerList &list);
@@ -113,7 +107,7 @@ private:
 	friend class DObject;
 	friend class FSerializer;
 
-	DThinker *NextThinker, *PrevThinker;
+	DThinker *NextThinker = nullptr, *PrevThinker = nullptr;
 
 public:
 	FLevelLocals *Level;

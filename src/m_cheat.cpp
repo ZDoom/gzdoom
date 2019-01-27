@@ -597,6 +597,7 @@ class DSuicider : public DThinker
 public:
 	TObjPtr<AActor*> Pawn;
 
+	void Construct() {}
 	void Tick()
 	{
 		Pawn->flags |= MF_SHOOTABLE;

@@ -41,7 +41,7 @@ static FRandom pr_lightning ("Lightning");
 
 IMPLEMENT_CLASS(DLightningThinker, false, false)
 
-DLightningThinker::DLightningThinker ()
+void DLightningThinker::Construct()
 {
 	Stopped = false;
 	LightningFlashCount = 0;

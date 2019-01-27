@@ -57,11 +57,6 @@ static FRandom pr_fireflicker ("FireFlicker");
 
 IMPLEMENT_CLASS(DLighting, false, false)
 
-DLighting::DLighting (sector_t *sector)
-	: DSectorEffect (sector)
-{
-}
-
 //-----------------------------------------------------------------------------
 //
 // FIRELIGHT FLICKER
@@ -109,17 +104,17 @@ void DFireFlicker::Tick ()
 //
 //-----------------------------------------------------------------------------
 
-DFireFlicker::DFireFlicker (sector_t *sector)
-	: DLighting (sector)
+void DFireFlicker::Construct(sector_t *sector)
 {
+	Super::Construct(sector);
 	m_MaxLight = sector->lightlevel;
 	m_MinLight = sector_t::ClampLight(FindMinSurroundingLight(sector, sector->lightlevel) + 16);
 	m_Count = 4;
 }
 
-DFireFlicker::DFireFlicker (sector_t *sector, int upper, int lower)
-	: DLighting (sector)
+void DFireFlicker::Construct(sector_t *sector, int upper, int lower)
 {
+	Super::Construct(sector);
 	m_MaxLight = sector_t::ClampLight(upper);
 	m_MinLight = sector_t::ClampLight(lower);
 	m_Count = 4;
@@ -171,9 +166,9 @@ void DFlicker::Tick ()
 //
 //-----------------------------------------------------------------------------
 
-DFlicker::DFlicker (sector_t *sector, int upper, int lower)
-	: DLighting (sector)
+void DFlicker::Construct(sector_t *sector, int upper, int lower)
 {
+	Super::Construct(sector);
 	m_MaxLight = sector_t::ClampLight(upper);
 	m_MinLight = sector_t::ClampLight(lower);
 	sector->lightlevel = m_MaxLight;
@@ -228,9 +223,9 @@ void DLightFlash::Tick ()
 //
 //-----------------------------------------------------------------------------
 
-DLightFlash::DLightFlash (sector_t *sector)
-	: DLighting (sector)
+void DLightFlash::Construct(sector_t *sector)
 {
+	Super::Construct(sector);
 	// Find light levels like Doom.
 	m_MaxLight = sector->lightlevel;
 	m_MinLight = FindMinSurroundingLight (sector, sector->lightlevel);
@@ -239,9 +234,9 @@ DLightFlash::DLightFlash (sector_t *sector)
 	m_Count = (pr_lightflash() & m_MaxTime) + 1;
 }
 	
-DLightFlash::DLightFlash (sector_t *sector, int min, int max)
-	: DLighting (sector)
+void DLightFlash::Construct (sector_t *sector, int min, int max)
 {
+	Super::Construct(sector);
 	// Use specified light levels.
 	m_MaxLight = sector_t::ClampLight(max);
 	m_MinLight = sector_t::ClampLight(min);
@@ -298,9 +293,9 @@ void DStrobe::Tick ()
 //
 //-----------------------------------------------------------------------------
 
-DStrobe::DStrobe (sector_t *sector, int upper, int lower, int utics, int ltics)
-	: DLighting (sector)
+void DStrobe::Construct(sector_t *sector, int upper, int lower, int utics, int ltics)
 {
+	Super::Construct(sector);
 	m_DarkTime = ltics;
 	m_BrightTime = utics;
 	m_MaxLight = sector_t::ClampLight(upper);
@@ -314,9 +309,9 @@ DStrobe::DStrobe (sector_t *sector, int upper, int lower, int utics, int ltics)
 //
 //-----------------------------------------------------------------------------
 
-DStrobe::DStrobe (sector_t *sector, int utics, int ltics, bool inSync)
-	: DLighting (sector)
+void DStrobe::Construct(sector_t *sector, int utics, int ltics, bool inSync)
 {
+	Super::Construct(sector);
 	m_DarkTime = ltics;
 	m_BrightTime = utics;
 
@@ -390,9 +385,9 @@ void DGlow::Tick ()
 //
 //-----------------------------------------------------------------------------
 
-DGlow::DGlow (sector_t *sector)
-	: DLighting (sector)
+void DGlow::Construct(sector_t *sector)
 {
+	Super::Construct(sector);
 	m_MinLight = FindMinSurroundingLight (sector, sector->lightlevel);
 	m_MaxLight = sector->lightlevel;
 	m_Direction = -1;
@@ -450,9 +445,9 @@ void DGlow2::Tick ()
 //
 //-----------------------------------------------------------------------------
 
-DGlow2::DGlow2 (sector_t *sector, int start, int end, int tics, bool oneshot)
-	: DLighting (sector)
+void DGlow2::Construct(sector_t *sector, int start, int end, int tics, bool oneshot)
 {
+	Super::Construct(sector);
 	m_Start = sector_t::ClampLight(start);
 	m_End = sector_t::ClampLight(end);
 	m_MaxTics = tics;
@@ -550,9 +545,9 @@ void DPhased::Propagate()
 	PhaseHelper (m_Sector, 0, 0, nullptr);
 }
 
-DPhased::DPhased (sector_t *sector, int baselevel, int phase)
-	: DLighting (sector)
+void DPhased::Construct (sector_t *sector, int baselevel, int phase)
 {
+	Super::Construct(sector);
 	m_BaseLevel = baselevel;
 	m_Phase = phase;
 }

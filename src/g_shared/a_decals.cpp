@@ -67,26 +67,39 @@ IMPLEMENT_POINTERS_END
 
 IMPLEMENT_CLASS(DImpactDecal, false, false)
 
-DBaseDecal::DBaseDecal (double z)
-: WallNext(0), WallPrev(0), LeftDistance(0), Z(z), ScaleX(1.), ScaleY(1.), Alpha(1.),
-  AlphaColor(0), Translation(0), RenderFlags(0), Side(nullptr), Sector(nullptr)
+void DBaseDecal::Construct(double z)
 {
+	Z = z;
 	RenderStyle = STYLE_None;
 	PicNum.SetInvalid();
 }
 
-DBaseDecal::DBaseDecal (const AActor *basis)
-: WallNext(nullptr), WallPrev(nullptr), LeftDistance(0), Z(basis->Z()), ScaleX(basis->Scale.X), ScaleY(basis->Scale.Y),
-	Alpha(basis->Alpha), AlphaColor(basis->fillcolor), Translation(basis->Translation), PicNum(basis->picnum),
-	RenderFlags(basis->renderflags), RenderStyle(basis->RenderStyle), Side(nullptr), Sector(nullptr)
+void DBaseDecal::Construct(const AActor *basis)
 {
+	Z = basis->Z();
+	ScaleX = basis->Scale.X;
+	ScaleY = basis->Scale.Y;
+	Alpha = basis->Alpha;
+	AlphaColor = basis->fillcolor;
+	Translation = basis->Translation;
+	PicNum = basis->picnum;
+	RenderFlags = basis->renderflags;
+	RenderStyle = basis->RenderStyle;
 }
 
-DBaseDecal::DBaseDecal (const DBaseDecal *basis)
-: WallNext(nullptr), WallPrev(nullptr), LeftDistance(basis->LeftDistance), Z(basis->Z), ScaleX(basis->ScaleX),
-	ScaleY(basis->ScaleY), Alpha(basis->Alpha), AlphaColor(basis->AlphaColor), Translation(basis->Translation),
-	PicNum(basis->PicNum), RenderFlags(basis->RenderFlags), RenderStyle(basis->RenderStyle), Side(nullptr), Sector(nullptr)
+void DBaseDecal::Construct(const DBaseDecal *basis)
 {
+	LeftDistance = basis->LeftDistance;
+	Z = basis->Z;
+	ScaleX = basis->ScaleX;
+	ScaleY = basis->ScaleY;
+	Alpha = basis->Alpha;
+	AlphaColor = basis->AlphaColor;
+	Translation = basis->Translation;
+	PicNum = basis->PicNum;
+	RenderFlags = basis->RenderFlags;
+	RenderStyle = basis->RenderStyle;
+
 }
 
 void DBaseDecal::OnDestroy ()

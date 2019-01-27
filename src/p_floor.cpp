@@ -255,9 +255,9 @@ void DFloor::StartFloorSound ()
 //
 //==========================================================================
 
-DFloor::DFloor (sector_t *sec)
-	: DMovingFloor (sec)
+void DFloor::Construct(sector_t *sec)
 {
+	Super::Construct(sec);
 }
 
 //==========================================================================
@@ -858,9 +858,9 @@ IMPLEMENT_POINTERS_START(DElevator)
 	IMPLEMENT_POINTER(m_Interp_Ceiling)
 IMPLEMENT_POINTERS_END
 
-DElevator::DElevator (sector_t *sec)
-	: Super (sec)
+void DElevator::Construct(sector_t *sec)
 {
+	Super::Construct(sec);
 	sec->floordata = this;
 	sec->ceilingdata = this;
 	m_Interp_Floor = sec->SetInterpolation(sector_t::FloorMove, true);
@@ -1164,9 +1164,9 @@ void DWaggleBase::Serialize(FSerializer &arc)
 #define WGLSTATE_STABLE 2
 #define WGLSTATE_REDUCE 3
 
-DWaggleBase::DWaggleBase (sector_t *sec)
-	: Super (sec)
+void DWaggleBase::Construct(sector_t *sec)
 {
+	Super::Construct(sec);
 }
 
 //==========================================================================
@@ -1252,9 +1252,9 @@ void DWaggleBase::DoWaggle (bool ceiling)
 //
 //==========================================================================
 
-DFloorWaggle::DFloorWaggle (sector_t *sec)
-	: Super (sec)
+void DFloorWaggle::Construct(sector_t *sec)
 {
+	Super::Construct(sec);
 	sec->floordata = this;
 	interpolation = sec->SetInterpolation(sector_t::FloorMove, true);
 }
@@ -1270,9 +1270,9 @@ void DFloorWaggle::Tick ()
 //
 //==========================================================================
 
-DCeilingWaggle::DCeilingWaggle (sector_t *sec)
-	: Super (sec)
+void DCeilingWaggle::Construct(sector_t *sec)
 {
+	Super::Construct(sec);
 	sec->ceilingdata = this;
 	interpolation = sec->SetInterpolation(sector_t::CeilingMove, true);
 }

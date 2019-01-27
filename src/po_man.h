@@ -13,7 +13,7 @@ class DPolyAction : public DThinker
 	DECLARE_CLASS(DPolyAction, DThinker)
 	HAS_OBJECT_POINTERS
 public:
-	DPolyAction(FPolyObj *polyNum);
+	void Construct(FPolyObj *polyNum);
 	void Serialize(FSerializer &arc);
 	void OnDestroy() override;
 	void Stop();
@@ -21,7 +21,6 @@ public:
 
 	void StopInterpolation();
 protected:
-	DPolyAction();
 	FPolyObj *m_PolyObj;
 	double m_Speed;
 	double m_Dist;

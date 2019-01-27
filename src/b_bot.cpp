@@ -63,7 +63,7 @@ IMPLEMENT_POINTERS_END
 
 DEFINE_FIELD(DBot, dest)
 
-DBot::DBot ()
+void DBot::Construct()
 {
 	Clear ();
 }

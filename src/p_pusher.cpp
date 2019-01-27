@@ -110,7 +110,7 @@ void DPusher::Serialize(FSerializer &arc)
 //
 // Add a push thinker to the thinker list
 
-DPusher::DPusher (DPusher::EPusher type, line_t *l, int magnitude, int angle,
+void DPusher::Construct (DPusher::EPusher type, line_t *l, int magnitude, int angle,
 				  AActor *source, int affectee)
 {
 	m_Source = source;

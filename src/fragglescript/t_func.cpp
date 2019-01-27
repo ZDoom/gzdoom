@@ -1741,11 +1741,9 @@ class DLightLevel : public DLighting
 	unsigned char destlevel;
 	unsigned char speed;
 
-	DLightLevel() = default;
-
 public:
 
-	DLightLevel(sector_t * s,int destlevel,int speed);
+	void Construct(sector_t * s,int destlevel,int speed);
 	void	Serialize(FSerializer &arc);
 	void		Tick ();
 	void		OnDestroy() { Super::OnDestroy(); m_Sector->lightingdata = nullptr; }
@@ -1806,8 +1804,9 @@ void DLightLevel::Tick()
 //==========================================================================
 //
 //==========================================================================
-DLightLevel::DLightLevel(sector_t * s,int _destlevel,int _speed) : DLighting(s)
+void DLightLevel::Construct(sector_t * s,int _destlevel,int _speed)
 {
+	Super::Construct(s);
 	destlevel=_destlevel;
 	speed=_speed;
 	s->lightingdata=this;

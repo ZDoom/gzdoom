@@ -46,10 +46,8 @@ class DRotatePoly : public DPolyAction
 {
 	DECLARE_CLASS (DRotatePoly, DPolyAction)
 public:
-	DRotatePoly (FPolyObj *polyNum);
+	void Construct(FPolyObj *polyNum);
 	void Tick ();
-private:
-	DRotatePoly ();
 
 	friend bool EV_RotatePoly (FLevelLocals *Level, line_t *line, int polyNum, int speed, int byteAngle, int direction, bool overRide);
 };
@@ -59,11 +57,10 @@ class DMovePoly : public DPolyAction
 {
 	DECLARE_CLASS (DMovePoly, DPolyAction)
 public:
-	DMovePoly (FPolyObj *polyNum);
+	void Construct(FPolyObj *polyNum);
 	void Serialize(FSerializer &arc);
 	void Tick ();
 protected:
-	DMovePoly ();
 	DAngle m_Angle;
 	DVector2 m_Speedv;
 
@@ -74,11 +71,10 @@ class DMovePolyTo : public DPolyAction
 {
 	DECLARE_CLASS(DMovePolyTo, DPolyAction)
 public:
-	DMovePolyTo(FPolyObj *polyNum);
+	void Construct(FPolyObj *polyNum);
 	void Serialize(FSerializer &arc);
 	void Tick();
 protected:
-	DMovePolyTo();
 	DVector2 m_Speedv;
 	DVector2 m_Target;
 
@@ -90,7 +86,7 @@ class DPolyDoor : public DMovePoly
 {
 	DECLARE_CLASS (DPolyDoor, DMovePoly)
 public:
-	DPolyDoor (FPolyObj *polyNum, podoortype_t type);
+	void Construct(FPolyObj *polyNum, podoortype_t type);
 	void Serialize(FSerializer &arc);
 	void Tick ();
 protected:
@@ -102,8 +98,6 @@ protected:
 	bool m_Close;
 
 	friend bool EV_OpenPolyDoor(FLevelLocals *Level, line_t *line, int polyNum, double speed, DAngle angle, int delay, double distance, podoortype_t type);
-private:
-	DPolyDoor ();
 };
 
 class FPolyMirrorIterator
@@ -152,10 +146,6 @@ IMPLEMENT_POINTERS_START(DPolyAction)
 	IMPLEMENT_POINTER(m_Interpolation)
 IMPLEMENT_POINTERS_END
 
-DPolyAction::DPolyAction ()
-{
-}
-
 void DPolyAction::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
@@ -165,7 +155,7 @@ void DPolyAction::Serialize(FSerializer &arc)
 		("interpolation", m_Interpolation);
 }
 
-DPolyAction::DPolyAction (FPolyObj *polyNum)
+void DPolyAction::Construct(FPolyObj *polyNum)
 {
 	m_PolyObj = polyNum;
 	m_Speed = 0;
@@ -212,13 +202,9 @@ void DPolyAction::StopInterpolation ()
 
 IMPLEMENT_CLASS(DRotatePoly, false, false)
 
-DRotatePoly::DRotatePoly ()
+void DRotatePoly::Construct(FPolyObj *polyNum)
 {
-}
-
-DRotatePoly::DRotatePoly (FPolyObj *polyNum)
-	: Super (polyNum)
-{
+	Super::Construct(polyNum);
 }
 
 //==========================================================================
@@ -229,10 +215,6 @@ DRotatePoly::DRotatePoly (FPolyObj *polyNum)
 
 IMPLEMENT_CLASS(DMovePoly, false, false)
 
-DMovePoly::DMovePoly ()
-{
-}
-
 void DMovePoly::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
@@ -240,9 +222,9 @@ void DMovePoly::Serialize(FSerializer &arc)
 		("speedv", m_Speedv);
 }
 
-DMovePoly::DMovePoly (FPolyObj *polyNum)
-	: Super (polyNum)
+void DMovePoly::Construct(FPolyObj *polyNum)
 {
+	Super::Construct(polyNum);
 	m_Angle = 0.;
 	m_Speedv = { 0,0 };
 }
@@ -256,10 +238,6 @@ DMovePoly::DMovePoly (FPolyObj *polyNum)
 
 IMPLEMENT_CLASS(DMovePolyTo, false, false)
 
-DMovePolyTo::DMovePolyTo()
-{
-}
-
 void DMovePolyTo::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
@@ -267,9 +245,9 @@ void DMovePolyTo::Serialize(FSerializer &arc)
 		("target", m_Target);
 }
 
-DMovePolyTo::DMovePolyTo(FPolyObj *polyNum)
-	: Super(polyNum)
+void DMovePolyTo::Construct(FPolyObj *polyNum)
 {
+	Super::Construct(polyNum);
 	m_Speedv = m_Target = { 0,0 };
 }
 
@@ -280,10 +258,6 @@ DMovePolyTo::DMovePolyTo(FPolyObj *polyNum)
 //==========================================================================
 
 IMPLEMENT_CLASS(DPolyDoor, false, false)
-
-DPolyDoor::DPolyDoor ()
-{
-}
 
 void DPolyDoor::Serialize(FSerializer &arc)
 {
@@ -296,9 +270,10 @@ void DPolyDoor::Serialize(FSerializer &arc)
 		("close", m_Close);
 }
 
-DPolyDoor::DPolyDoor (FPolyObj * polyNum, podoortype_t type)
-	: Super (polyNum), m_Type (type)
+void DPolyDoor::Construct (FPolyObj * polyNum, podoortype_t type)
 {
+	Super::Construct(polyNum);
+	m_Type = type;
 	m_Direction = 0.;
 	m_TotalDist = 0;
 	m_Tics = 0;

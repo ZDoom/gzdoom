@@ -1813,7 +1813,7 @@ class DPlaneWatcher : public DThinker
 	DECLARE_CLASS (DPlaneWatcher, DThinker)
 	HAS_OBJECT_POINTERS
 public:
-	DPlaneWatcher (AActor *it, line_t *line, int lineSide, bool ceiling,
+	void Construct(AActor *it, line_t *line, int lineSide, bool ceiling,
 		sector_t *sec, int height, int special,
 		int arg0, int arg1, int arg2, int arg3, int arg4);
 	void Tick ();
@@ -1837,12 +1837,16 @@ IMPLEMENT_POINTERS_START(DPlaneWatcher)
 	IMPLEMENT_POINTER(Activator)
 IMPLEMENT_POINTERS_END
 
-DPlaneWatcher::DPlaneWatcher (AActor *it, line_t *line, int lineSide, bool ceiling,
+void DPlaneWatcher::Construct(AActor *it, line_t *line, int lineSide, bool ceiling,
 	sector_t *sec, int height, int special, int arg0, int arg1, int arg2, int arg3, int arg4)
-	: Special (special),
-	  Activator (it), Line (line), LineSide (!!lineSide), bCeiling (ceiling)
 {
 	secplane_t plane;
+
+	Special = special;
+	Activator = it;
+	Line = line;
+	LineSide = !!lineSide;
+	bCeiling = ceiling;
 
 	Args[0] = arg0;
 	Args[1] = arg1;
@@ -3298,13 +3302,6 @@ IMPLEMENT_POINTERS_START(DACSThinker)
 	IMPLEMENT_POINTER(LastScript)
 	IMPLEMENT_POINTER(Scripts)
 IMPLEMENT_POINTERS_END
-
-DACSThinker::DACSThinker ()
-{
-	Scripts = nullptr;
-	LastScript = nullptr;
-	RunningScripts.Clear();
-}
 
 DACSThinker::~DACSThinker ()
 {

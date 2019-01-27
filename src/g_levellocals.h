@@ -353,17 +353,6 @@ public:
 		return true;
 	}
 
-	template<typename T, typename... Args>
-	T* CreateThinker(Args&&... args)
-	{
-		auto thinker = Create<T>(std::forward<Args>(args)...);
-		auto statnum = T::DEFAULT_STAT;
-		thinker->ObjectFlags |= OF_JustSpawned;
-		DThinker::FreshThinkers[statnum].AddTail(thinker);
-		thinker->Level = this;
-		return thinker;
-	}
-
 	DThinker *CreateThinker(PClass *cls, int statnum = STAT_DEFAULT)
 	{
 		DThinker *thinker = static_cast<DThinker*>(cls->CreateNew());
@@ -371,6 +360,14 @@ public:
 		thinker->ObjectFlags |= OF_JustSpawned;
 		DThinker::FreshThinkers[statnum].AddTail(thinker);
 		thinker->Level = this;
+		return thinker;
+	}
+
+	template<typename T, typename... Args>
+	T* CreateThinker(Args&&... args)
+	{
+		auto thinker = static_cast<T*>(CreateThinker(RUNTIME_CLASS(T), T::DEFAULT_STAT));
+		thinker->Construct(std::forward<Args>(args)...);
 		return thinker;
 	}
 

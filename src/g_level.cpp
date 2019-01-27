@@ -909,6 +909,7 @@ class DAutosaver : public DThinker
 {
 	DECLARE_CLASS (DAutosaver, DThinker)
 public:
+	void Construct() {}
 	void Tick ();
 };
 

@@ -696,7 +696,8 @@ public:
 	TObjPtr<DRunningScript*> RunningScripts;
 	TArray<TObjPtr<AActor*> > SpawnedThings;
 
-	DFraggleThinker();
+	DFraggleThinker();	// This class needs a real constructor because it has non-serializable content.
+	void Construct();
 	void OnDestroy() override;
 
 

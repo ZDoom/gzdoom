@@ -246,7 +246,7 @@ void DScroller::Tick ()
 //
 //-----------------------------------------------------------------------------
 
-DScroller::DScroller (EScroll type, double dx, double dy,  sector_t *ctrl, sector_t *sec, side_t *side, int accel, EScrollPos scrollpos)
+void DScroller::Construct (EScroll type, double dx, double dy,  sector_t *ctrl, sector_t *sec, side_t *side, int accel, EScrollPos scrollpos)
 {
 	m_Type = type;
 	m_dx = dx;
@@ -327,7 +327,7 @@ void DScroller::OnDestroy ()
 //
 //-----------------------------------------------------------------------------
 
-DScroller::DScroller (double dx, double dy, const line_t *l, sector_t * control, int accel, EScrollPos scrollpos)
+void DScroller::Construct(double dx, double dy, const line_t *l, sector_t * control, int accel, EScrollPos scrollpos)
 {
 	double x = fabs(l->Delta().X), y = fabs(l->Delta().Y), d;
 	if (y > x) d = x, x = y, y = d;

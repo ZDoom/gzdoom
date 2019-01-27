@@ -361,7 +361,11 @@ IMPLEMENT_POINTERS_END
 
 //==========================================================================
 //
+// This thinker is a little unusual from all the rest, because it
+// needs to construct some non-serializable data.
 //
+// This cannot be done in Construct, but requires an actual constructor,
+// so that even a deserialized ionstance is fully set up.
 //
 //==========================================================================
 
@@ -369,16 +373,22 @@ DFraggleThinker::DFraggleThinker()
 {
 	GlobalScript = Create<DFsScript>();
 	GC::WriteBarrier(this, GlobalScript);
-	// do not create resources which will be filled in by the serializer if being called from there.
-	if (!bSerialOverride)
-	{
-		RunningScripts = Create<DRunningScript>();
-		GC::WriteBarrier(this, RunningScripts);
-		LevelScript = Create<DFsScript>();
-		LevelScript->parent = GlobalScript;
-		GC::WriteBarrier(this, LevelScript);
-	}
 	InitFunctions();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DFraggleThinker::Construct()
+{
+	RunningScripts = Create<DRunningScript>();
+	GC::WriteBarrier(this, RunningScripts);
+	LevelScript = Create<DFsScript>();
+	LevelScript->parent = GlobalScript;
+	GC::WriteBarrier(this, LevelScript);
 }
 
 //==========================================================================

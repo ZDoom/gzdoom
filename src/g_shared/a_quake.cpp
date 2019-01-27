@@ -47,7 +47,7 @@ IMPLEMENT_POINTERS_END
 //
 //==========================================================================
 
-DEarthquake::DEarthquake(AActor *center, int intensityX, int intensityY, int intensityZ, int duration,
+void DEarthquake::Construct(AActor *center, int intensityX, int intensityY, int intensityZ, int duration,
 	int damrad, int tremrad, FSoundID quakesound, int flags,
 	double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, 
 	double rollIntensity, double rollWave)

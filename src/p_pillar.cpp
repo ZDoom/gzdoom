@@ -114,10 +114,9 @@ void DPillar::Tick ()
 	}
 }
 
-DPillar::DPillar (sector_t *sector, EPillar type, double speed,
-				  double floordist, double ceilingdist, int crush, bool hexencrush)
-	: DMover (sector)
+void DPillar::Construct(sector_t *sector, EPillar type, double speed, double floordist, double ceilingdist, int crush, bool hexencrush)
 {
+	Super::Construct(sector);
 	double newheight;
 	vertex_t *spot;
 

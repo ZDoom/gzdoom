@@ -110,11 +110,12 @@ struct DDecalThinker : public DThinker
 	HAS_OBJECT_POINTERS
 public:
 	static const int DEFAULT_STAT = STAT_DECALTHINKER;
-	DDecalThinker (DBaseDecal *decal) : TheDecal (decal) {}
+	void Construct(DBaseDecal *decal)
+	{
+		TheDecal = decal;
+	}
 	void Serialize(FSerializer &arc);
 	TObjPtr<DBaseDecal*> TheDecal;
-protected:
-	DDecalThinker() = default;
 };
 
 IMPLEMENT_CLASS(DDecalThinker, false, true)
@@ -142,15 +143,16 @@ class DDecalFader : public DDecalThinker
 {
 	DECLARE_CLASS (DDecalFader, DDecalThinker)
 public:
-	DDecalFader (DBaseDecal *decal) : DDecalThinker (decal) {}
+	void Construct(DBaseDecal *decal)
+	{
+		Super::Construct(decal);
+	}
 	void Serialize(FSerializer &arc);
 	void Tick ();
 
 	int TimeToStartDecay;
 	int TimeToEndDecay;
 	double StartTrans;
-private:
-	DDecalFader () {}
 };
 
 struct FDecalColorerAnim : public FDecalAnimator
@@ -167,7 +169,10 @@ class DDecalColorer : public DDecalThinker
 {
 	DECLARE_CLASS (DDecalColorer, DDecalThinker)
 public:
-	DDecalColorer (DBaseDecal *decal) : DDecalThinker (decal) {}
+	void Construct(DBaseDecal *decal)
+	{
+		Super::Construct(decal);
+	}
 	void Serialize(FSerializer &arc);
 	void Tick ();
 
@@ -175,8 +180,6 @@ public:
 	int TimeToEndDecay;
 	PalEntry StartColor;
 	PalEntry GoalColor;
-private:
-	DDecalColorer () {}
 };
 
 struct FDecalStretcherAnim : public FDecalAnimator
@@ -193,7 +196,10 @@ class DDecalStretcher : public DDecalThinker
 {
 	DECLARE_CLASS (DDecalStretcher, DDecalThinker)
 public:
-	DDecalStretcher (DBaseDecal *decal) : DDecalThinker (decal) {}
+	void Construct(DBaseDecal *decal)
+	{
+		Super::Construct(decal);
+	}
 	void Serialize(FSerializer &arc);
 	void Tick ();
 
@@ -206,8 +212,6 @@ public:
 	bool bStretchX;
 	bool bStretchY;
 	bool bStarted;
-private:
-	DDecalStretcher () {}
 };
 
 struct FDecalSliderAnim : public FDecalAnimator
@@ -224,7 +228,10 @@ class DDecalSlider : public DDecalThinker
 {
 	DECLARE_CLASS (DDecalSlider, DDecalThinker)
 public:
-	DDecalSlider (DBaseDecal *decal) : DDecalThinker (decal) {}
+	void Construct(DBaseDecal *decal)
+	{
+		Super::Construct(decal);
+	}
 	void Serialize(FSerializer &arc);
 	void Tick ();
 
@@ -235,8 +242,6 @@ public:
 	double StartX;
 	double StartY;
 	bool bStarted;
-private:
-	DDecalSlider () {}
 };
 
 struct FDecalCombinerAnim : public FDecalAnimator

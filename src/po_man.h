@@ -67,6 +67,7 @@ struct FPolyNode
 // ===== Polyobj data =====
 struct FPolyObj
 {
+	FLevelLocals			*Level;
 	TArray<side_t *>		Sidedefs;
 	TArray<line_t *>		Linedefs;
 	TArray<vertex_t *>		Vertices;
@@ -107,9 +108,6 @@ struct FPolyObj
 	void CalcCenter();
 	void UpdateLinks();
 	static void ClearAllSubsectorLinks();
-
-	FLevelLocals *GetLevel() const;
-
 
 private:
 

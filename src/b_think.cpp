@@ -289,7 +289,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 				r = pr_botmove();
 				if (r < 128)
 				{
-					TThinkerIterator<AActor> it (NAME_Inventory, MAX_STATNUM+1, bglobal.firstthing);
+					auto it = player->mo->Level->GetThinkerIterator<AActor>(NAME_Inventory, MAX_STATNUM+1, bglobal.firstthing);
 					auto item = it.Next();
 
 					if (item != NULL || (item = it.Next()) != NULL)

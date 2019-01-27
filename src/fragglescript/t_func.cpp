@@ -560,7 +560,7 @@ void FParser::SF_Include(void)
 		else
 			mysnprintf(tempstr, countof(tempstr), "%i", (int)t_argv[0].value.i);
 		
-		Script->ParseInclude(tempstr);
+		Script->ParseInclude(Level, tempstr);
 	}
 }
 

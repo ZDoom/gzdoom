@@ -595,9 +595,9 @@ bool P_Teleport(AActor *thing, DVector3 pos, DAngle angle, int flags);
 #define ACS_WANTRESULT		4
 #define ACS_NET				8
 
-int  P_StartScript (AActor *who, line_t *where, int script, const char *map, const int *args, int argcount, int flags);
-void P_SuspendScript (int script, const char *map);
-void P_TerminateScript (int script, const char *map);
+int  P_StartScript (FLevelLocals *Level, AActor *who, line_t *where, int script, const char *map, const int *args, int argcount, int flags);
+void P_SuspendScript (FLevelLocals *Level, int script, const char *map);
+void P_TerminateScript (FLevelLocals *Level, int script, const char *map);
 
 //
 // [RH] p_quake.c

@@ -754,7 +754,7 @@ int P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, int
 	const bool ptrWillChange = !!(flags & (CPXF_SETTARGET | CPXF_SETMASTER | CPXF_SETTRACER));
 	const bool ptrDistPref = !!(flags & (CPXF_CLOSEST | CPXF_FARTHEST));
 
-	TThinkerIterator<AActor> it;
+	auto it = self->Level->GetThinkerIterator<AActor>();
 	AActor *mo, *dist = nullptr;
 
 	// [MC] Process of elimination, I think, will get through this as quickly and 

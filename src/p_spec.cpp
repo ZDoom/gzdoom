@@ -435,7 +435,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	// Has hit ground.
 	AActor *ironfeet;
 
-	auto Level = &level;
+	auto Level = sector->Level;
 
 	// [RH] Apply any customizable damage
 	if (sector->damageamount > 0)
@@ -630,7 +630,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, GiveSecret)
 
 void P_PlayerOnSpecialFlat (player_t *player, int floorType)
 {
-	auto Level = &level;
+	auto Level = player->mo->Level;
 
 	if (Terrains[floorType].DamageAmount &&
 		!(Level->time & Terrains[floorType].DamageTimeMask))
@@ -707,7 +707,6 @@ void DLightTransfer::Construct(sector_t *srcSec, int target, bool copyFloor)
 	CopyFloor = copyFloor;
 	DoTransfer (LastLight = srcSec->lightlevel, target, copyFloor);
 
-	auto Level = &level;
 	if (copyFloor)
 	{
 		auto itr = Level->GetSectorTagIterator(target);
@@ -737,7 +736,6 @@ void DLightTransfer::DoTransfer (int llevel, int target, bool floor)
 {
 	int secnum;
 
-	auto Level = &level;
 	if (floor)
 	{
 		auto itr = Level->GetSectorTagIterator(target);
@@ -783,7 +781,6 @@ void DWallLightTransfer::Construct(sector_t *srcSec, int target, uint8_t flags)
 		wallflags = WALLF_ABSLIGHTING | WALLF_NOFAKECONTRAST;
 	}
 
-	auto Level = &level;
 	auto itr = Level->GetLineIdIterator(target);
 	while ((linenum = itr.Next()) >= 0)
 	{
@@ -814,7 +811,6 @@ void DWallLightTransfer::DoTransfer (short lightlevel, int target, uint8_t flags
 {
 	int linenum;
 
-	auto Level = &level;
 	auto itr = Level->GetLineIdIterator(target);
 	while ((linenum = itr.Next()) >= 0)
 	{

@@ -1923,7 +1923,7 @@ FUNC(LS_ACS_Execute)
 	{
 		return false;
 	}
-	return P_StartScript(it, ln, arg0, mapname, args, 3, flags);
+	return P_StartScript(Level, it, ln, arg0, mapname, args, 3, flags);
 }
 
 FUNC(LS_ACS_ExecuteAlways)
@@ -1946,7 +1946,7 @@ FUNC(LS_ACS_ExecuteAlways)
 	{
 		return false;
 	}
-	return P_StartScript(it, ln, arg0, mapname, args, 3, flags);
+	return P_StartScript(Level, it, ln, arg0, mapname, args, 3, flags);
 }
 
 FUNC(LS_ACS_LockedExecute)
@@ -1976,7 +1976,7 @@ FUNC(LS_ACS_ExecuteWithResult)
 	int args[4] = { arg1, arg2, arg3, arg4 };
 	int flags = (backSide ? ACS_BACKSIDE : 0) | ACS_ALWAYS | ACS_WANTRESULT;
 
-	return P_StartScript (it, ln, arg0, Level->MapName, args, 4, flags);
+	return P_StartScript (Level, it, ln, arg0, Level->MapName, args, 4, flags);
 }
 
 FUNC(LS_ACS_Suspend)
@@ -1985,9 +1985,9 @@ FUNC(LS_ACS_Suspend)
 	level_info_t *info;
 
 	if (arg1 == 0)
-		P_SuspendScript (arg0, Level->MapName);
+		P_SuspendScript (Level, arg0, Level->MapName);
 	else if ((info = FindLevelByNum (arg1)) )
-		P_SuspendScript (arg0, info->MapName);
+		P_SuspendScript (Level, arg0, info->MapName);
 
 	return true;
 }
@@ -1998,9 +1998,9 @@ FUNC(LS_ACS_Terminate)
 	level_info_t *info;
 
 	if (arg1 == 0)
-		P_TerminateScript (arg0, Level->MapName);
+		P_TerminateScript (Level, arg0, Level->MapName);
 	else if ((info = FindLevelByNum (arg1)) )
-		P_TerminateScript (arg0, info->MapName);
+		P_TerminateScript (Level, arg0, info->MapName);
 
 	return true;
 }
@@ -2016,7 +2016,7 @@ FUNC(LS_FS_Execute)
 {
 	if (arg1 && ln && backSide) return false;
 	if (arg2!=0 && !P_CheckKeys(it, arg2, !!arg3)) return false;
-	return T_RunScript(&level, arg0, it);
+	return T_RunScript(Level, arg0, it);
 }
 
 
@@ -2251,7 +2251,7 @@ FUNC(LS_Sector_SetCurrent)
 FUNC(LS_Sector_SetFriction)
 // Sector_SetFriction (tag, amount)
 {
-	P_SetSectorFriction (&level, arg0, arg1, true);
+	P_SetSectorFriction (Level, arg0, arg1, true);
 	return true;
 }
 
@@ -2310,7 +2310,7 @@ FUNC(LS_Scroll_Texture_Both)
 		sidechoice = 0;
 	}
 
-	SetWallScroller (&level, arg0, sidechoice, dx, dy, scw_all);
+	SetWallScroller (Level, arg0, sidechoice, dx, dy, scw_all);
 
 	return true;
 }
@@ -2321,7 +2321,7 @@ FUNC(LS_Scroll_Wall)
 	if (arg0 == 0)
 		return false;
 
-	SetWallScroller (&level, arg0, !!arg3, arg1 / 65536., arg2 / 65536., EScrollPos(arg4));
+	SetWallScroller (Level, arg0, !!arg3, arg1 / 65536., arg2 / 65536., EScrollPos(arg4));
 	return true;
 }
 
@@ -2337,19 +2337,19 @@ FUNC(LS_Scroll_Floor)
 
 	if (arg3 == 0 || arg3 == 2)
 	{
-		SetScroller (&level, arg0, EScroll::sc_floor, -dx, dy);
+		SetScroller (Level, arg0, EScroll::sc_floor, -dx, dy);
 	}
 	else
 	{
-		SetScroller (&level, arg0, EScroll::sc_floor, 0, 0);
+		SetScroller (Level, arg0, EScroll::sc_floor, 0, 0);
 	}
 	if (arg3 > 0)
 	{
-		SetScroller (&level, arg0, EScroll::sc_carry, dx, dy);
+		SetScroller (Level, arg0, EScroll::sc_carry, dx, dy);
 	}
 	else
 	{
-		SetScroller (&level, arg0, EScroll::sc_carry, 0, 0);
+		SetScroller (Level, arg0, EScroll::sc_carry, 0, 0);
 	}
 	return true;
 }
@@ -2360,7 +2360,7 @@ FUNC(LS_Scroll_Ceiling)
 	double dx = arg1 / 32.;
 	double dy = arg2 / 32.;
 
-	SetScroller (&level, arg0, EScroll::sc_ceiling, -dx, dy);
+	SetScroller (Level, arg0, EScroll::sc_ceiling, -dx, dy);
 	return true;
 }
 

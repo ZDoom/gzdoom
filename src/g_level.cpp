@@ -2012,11 +2012,11 @@ void FLevelLocals::AddScroller (int secnum)
 
 void FLevelLocals::SetInterMusic(const char *nextmap)
 {
-	auto mus = level.info->MapInterMusic.CheckKey(nextmap);
+	auto mus = info->MapInterMusic.CheckKey(nextmap);
 	if (mus != nullptr)
 		S_ChangeMusic(mus->first, mus->second);
-	else if (level.info->InterMusic.IsNotEmpty())
-		S_ChangeMusic(level.info->InterMusic, level.info->intermusicorder);
+	else if (info->InterMusic.IsNotEmpty())
+		S_ChangeMusic(info->InterMusic, info->intermusicorder);
 	else
 		S_ChangeMusic(gameinfo.intermissionMusic.GetChars(), gameinfo.intermissionOrder);
 }

@@ -228,13 +228,13 @@ public:
 		fixed_t x, y;
 	};
 
-	FNodeBuilder (FLevel &level);
-	FNodeBuilder (FLevel &level,
+	FNodeBuilder (FLevel &lev);
+	FNodeBuilder (FLevel &lev,
 		TArray<FPolyStart> &polyspots, TArray<FPolyStart> &anchors,
 		bool makeGLNodes);
 	~FNodeBuilder ();
 
-	void Extract(FLevelLocals &level);
+	void Extract(FLevelLocals &lev);
 	const int *GetOldVertexTable();
 
 	// These are used for building sub-BSP trees for polyobjects.

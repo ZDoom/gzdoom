@@ -286,6 +286,10 @@ public:
 		if (subtype == NAME_None) return TThinkerIterator<T>(statnum);
 		else return TThinkerIterator<T>(subtype, statnum);
 	}
+	template<class T> TThinkerIterator<T> GetThinkerIterator(FName subtype, int statnum, AActor *prev)
+	{
+		return TThinkerIterator<T>(subtype, statnum, prev);
+	}
 	FActorIterator GetActorIterator(int tid)
 	{
 		return FActorIterator(TIDHash, tid);
@@ -524,7 +528,8 @@ extern FLevelLocals *currentUILevel;	// level for which to display the user inte
 
 inline FSectorPortal *line_t::GetTransferredPortal()
 {
-	return portaltransferred >= level.sectorPortals.Size() ? (FSectorPortal*)nullptr : &level.sectorPortals[portaltransferred];
+	auto Level = GetLevel();
+	return portaltransferred >= Level->sectorPortals.Size() ? (FSectorPortal*)nullptr : &Level->sectorPortals[portaltransferred];
 }
 
 inline FSectorPortal *sector_t::GetPortal(int plane)
@@ -580,7 +585,7 @@ inline bool sector_t::PortalIsLinked(int plane)
 
 inline FLevelLocals *line_t::GetLevel() const
 {
-	return &level;
+	return frontsector->Level;
 }
 inline FLinePortal *line_t::getPortal() const
 {

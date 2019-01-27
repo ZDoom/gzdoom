@@ -316,7 +316,7 @@ AActor *FLevelLocals::SelectTeleDest (int tid, int tag, bool norandom)
 			// teleport destination. This means if 50 sectors have a matching tag and
 			// only the last one has a destination, *every* actor is scanned at least 49
 			// times. Yuck.
-			TThinkerIterator<AActor> it2(NAME_TeleportDest);
+			auto it2 = GetThinkerIterator<AActor>(NAME_TeleportDest);
 			while ((searcher = it2.Next()) != NULL)
 			{
 				if (searcher->Sector == &sectors[secnum])

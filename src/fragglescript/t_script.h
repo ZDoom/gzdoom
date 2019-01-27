@@ -35,6 +35,8 @@
 #pragma pointers_to_members( full_generality, single_inheritance )
 #endif
 
+class DFraggleThinker;
+
 
 class CFraggleScriptError : public CDoomError
 {
@@ -360,10 +362,10 @@ public:
 	DFsSection *FindSectionStart(const char *brace);
 	DFsSection *FindSectionEnd(const char *brace);
 	char *ProcessFindChar(char *data, char find);
-	void DryRunScript();
-	void Preprocess();
-	void ParseInclude(char *lumpname);
-	void ParseScript(char *rover, AActor **pTrigger);
+	void DryRunScript(FLevelLocals *Level);
+	void Preprocess(FLevelLocals *Level);
+	void ParseInclude(FLevelLocals *Level, char *lumpname);
+	void ParseScript(char *rover, DFraggleThinker *th);
 	void ParseData(char *rover, char *data, char *end);
 };
 

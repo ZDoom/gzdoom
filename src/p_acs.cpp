@@ -6795,7 +6795,7 @@ int DLevelScript::RunScript()
 
 	case SCRIPT_PolyWait:
 		// Wait for polyobj(s) to stop moving, then enter state running
-		if (!PO_Busy (&level, statedata))
+		if (!PO_Busy (Level, statedata))
 		{
 			state = SCRIPT_Running;
 		}
@@ -9908,7 +9908,7 @@ scriptwait:
 				int flags = STACK(1);
 				sp -= 5;
 
-				P_SectorDamage(&level, tag, amount, type, protectClass, flags);
+				P_SectorDamage(Level, tag, amount, type, protectClass, flags);
 			}
 			break;
 
@@ -10354,14 +10354,14 @@ static void addDefered (level_info_t *i, acsdefered_t::EType type, int script, c
 
 EXTERN_CVAR (Bool, sv_cheats)
 
-int P_StartScript (AActor *who, line_t *where, int script, const char *map, const int *args, int argcount, int flags)
+int P_StartScript (FLevelLocals *Level, AActor *who, line_t *where, int script, const char *map, const int *args, int argcount, int flags)
 {
-	if (map == NULL || 0 == strnicmp (level.MapName, map, 8))
+	if (map == NULL || 0 == strnicmp (Level->MapName, map, 8))
 	{
 		FBehavior *module = NULL;
 		const ScriptPtr *scriptdata;
 
-		if ((scriptdata = level.Behaviors.FindScript (script, module)) != NULL)
+		if ((scriptdata = Level->Behaviors.FindScript (script, module)) != NULL)
 		{
 			if ((flags & ACS_NET) && netgame && !sv_cheats)
 			{
@@ -10379,7 +10379,7 @@ int P_StartScript (AActor *who, line_t *where, int script, const char *map, cons
 					return false;
 				}
 			}
-			DLevelScript *runningScript = P_GetScriptGoing (&level, who, where, script,
+			DLevelScript *runningScript = P_GetScriptGoing (Level, who, where, script,
 				scriptdata, module, args, argcount, flags);
 			if (runningScript != NULL)
 			{
@@ -10409,20 +10409,20 @@ int P_StartScript (AActor *who, line_t *where, int script, const char *map, cons
 	return false;
 }
 
-void P_SuspendScript (int script, const char *map)
+void P_SuspendScript (FLevelLocals *Level, int script, const char *map)
 {
-	if (strnicmp (level.MapName, map, 8))
+	if (strnicmp (Level->MapName, map, 8))
 		addDefered (FindLevelInfo (map), acsdefered_t::defsuspend, script, NULL, 0, NULL);
 	else
-		SetScriptState (level.ACSThinker, script, DLevelScript::SCRIPT_Suspended);
+		SetScriptState (Level->ACSThinker, script, DLevelScript::SCRIPT_Suspended);
 }
 
-void P_TerminateScript (int script, const char *map)
+void P_TerminateScript (FLevelLocals *Level, int script, const char *map)
 {
-	if (strnicmp (level.MapName, map, 8))
+	if (strnicmp (Level->MapName, map, 8))
 		addDefered (FindLevelInfo (map), acsdefered_t::defterminate, script, NULL, 0, NULL);
 	else
-		SetScriptState (level.ACSThinker, script, DLevelScript::SCRIPT_PleaseRemove);
+		SetScriptState (Level->ACSThinker, script, DLevelScript::SCRIPT_PleaseRemove);
 }
 
 FSerializer &Serialize(FSerializer &arc, const char *key, acsdefered_t &defer, acsdefered_t *def)

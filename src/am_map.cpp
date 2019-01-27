@@ -2824,7 +2824,7 @@ void DAutomap::drawKeys ()
 	mpoint_t p;
 	DAngle	 angle;
 
-	TThinkerIterator<AActor> it(NAME_Key);
+	auto it = Level->GetThinkerIterator<AActor>(NAME_Key);
 	AActor *key;
 
 	while ((key = it.Next()) != nullptr)

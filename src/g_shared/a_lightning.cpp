@@ -196,9 +196,9 @@ void DLightningThinker::ForceLightning (int mode)
 	}
 }
 
-static DLightningThinker *LocateLightning ()
+static DLightningThinker *LocateLightning (FLevelLocals *Level)
 {
-	TThinkerIterator<DLightningThinker> iterator (STAT_LIGHTNING);
+	auto iterator = Level->GetThinkerIterator<DLightningThinker>(NAME_None, STAT_LIGHTNING);
 	return iterator.Next ();
 }
 
@@ -230,7 +230,7 @@ void FLevelLocals::StartLightning ()
 		}
 	}
 
-	DLightningThinker *lightning = LocateLightning ();
+	DLightningThinker *lightning = LocateLightning (this);
 	if (lightning == nullptr)
 	{
 		CreateThinker<DLightningThinker>();
@@ -239,7 +239,7 @@ void FLevelLocals::StartLightning ()
 
 void FLevelLocals::ForceLightning (int mode)
 {
-	DLightningThinker *lightning = LocateLightning ();
+	DLightningThinker *lightning = LocateLightning (this);
 	if (lightning == nullptr)
 	{
 		lightning = CreateThinker<DLightningThinker>();

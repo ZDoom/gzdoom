@@ -471,11 +471,11 @@ void S_Start ()
 //
 //==========================================================================
 
-void S_PrecacheLevel ()
+void S_PrecacheLevel (FLevelLocals *Level)
 {
 	unsigned int i;
 
-	if (GSnd)
+	if (GSnd && Level == currentUILevel)
 	{
 		for (i = 0; i < S_sfx.Size(); ++i)
 		{
@@ -483,7 +483,7 @@ void S_PrecacheLevel ()
 		}
 
 		AActor *actor;
-		TThinkerIterator<AActor> iterator;
+		auto iterator = Level->GetThinkerIterator<AActor>();
 
 		// Precache all sounds known to be used by the currently spawned actors.
 		while ( (actor = iterator.Next()) != NULL )
@@ -1371,7 +1371,7 @@ void S_SoundMinMaxDist(AActor *ent, int channel, FSoundID sound_id, float volume
 
 void S_Sound (const FPolyObj *poly, int channel, FSoundID sound_id, float volume, float attenuation)
 {
-	if (poly->GetLevel() != currentUILevel) return;
+	if (poly->Level != currentUILevel) return;
 	S_StartSound (nullptr, nullptr, poly, nullptr, channel, sound_id, volume, attenuation);
 }
 

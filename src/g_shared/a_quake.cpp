@@ -288,7 +288,7 @@ int DEarthquake::StaticGetQuakeIntensities(double ticFrac, AActor *victim, FQuak
 		return 0;
 	}
 
-	TThinkerIterator<DEarthquake> iterator(STAT_EARTHQUAKE);
+	auto iterator = victim->Level->GetThinkerIterator<DEarthquake>(NAME_None, STAT_EARTHQUAKE);
 	DEarthquake *quake;
 	int count = 0;
 

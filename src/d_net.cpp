@@ -2697,7 +2697,7 @@ static void RunScript(uint8_t **stream, AActor *pawn, int snum, int argn, int al
 			arg[i] = argval;
 		}
 	}
-	P_StartScript(pawn, NULL, snum, level.MapName, arg, MIN<int>(countof(arg), argn), ACS_NET | always);
+	P_StartScript(pawn->Level, pawn, NULL, snum, level.MapName, arg, MIN<int>(countof(arg), argn), ACS_NET | always);
 }
 
 void Net_SkipCommand (int type, uint8_t **stream)

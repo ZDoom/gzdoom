@@ -196,7 +196,7 @@ void DFsScript::Serialize(FSerializer &arc)
 //
 //==========================================================================
 
-void DFsScript::ParseScript(char *position, AActor **pTrigger)
+void DFsScript::ParseScript(char *position, DFraggleThinker *th)
 {
 	if (position == nullptr) 
 	{
@@ -211,11 +211,11 @@ void DFsScript::ParseScript(char *position, AActor **pTrigger)
 		return;
     }
 	
-	*pTrigger = trigger;  // set trigger variable. 
+	th->trigger_obj = trigger;  // set trigger variable. 
 	
 	try
 	{
-		FParser parse(&level, this);
+		FParser parse(th->Level, this);
 		parse.Run(position, data, data + len);
 	}
 	catch (CFraggleScriptError &err)
@@ -528,7 +528,7 @@ void DFraggleThinker::Tick()
 			next = current->next;   // save before freeing
 			
 			// continue the script
-			current->script->ParseScript (current->script->data + current->save_point, &trigger_obj);
+			current->script->ParseScript (current->script->data + current->save_point, this);
 
 			// free
 			current->Destroy();
@@ -618,8 +618,8 @@ void T_PreprocessScripts(FLevelLocals *Level)
 		// levelscript started by player 0 'superplayer'
 		th->LevelScript->trigger = players[0].mo;
 		
-		th->LevelScript->Preprocess();
-		th->LevelScript->ParseScript(nullptr, &th->trigger_obj);
+		th->LevelScript->Preprocess(Level);
+		th->LevelScript->ParseScript(nullptr, th);
 	}
 }
 
@@ -667,6 +667,6 @@ CCMD(fpuke)
 	}
 	else
 	{
-		T_RunScript(&level, atoi(argv[1]), players[consoleplayer].mo);
+		T_RunScript(currentUILevel, atoi(argv[1]), players[consoleplayer].mo);
 	}
 }

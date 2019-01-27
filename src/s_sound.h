@@ -218,7 +218,7 @@ void S_Shutdown ();
 void S_Start ();
 
 // Called after a level is loaded. Ensures that most sounds are loaded.
-void S_PrecacheLevel ();
+void S_PrecacheLevel (FLevelLocals *l);
 
 // Loads a sound, including any random sounds it might reference.
 void S_CacheSound (sfxinfo_t *sfx);

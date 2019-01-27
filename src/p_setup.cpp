@@ -143,7 +143,7 @@ static void PrecacheLevel(FLevelLocals *Level)
 	memset(hitlist.Data(), 0, cnt);
 
 	AActor *actor;
-	TThinkerIterator<AActor> iterator;
+	auto iterator = Level->GetThinkerIterator<AActor>();
 
 	while ((actor = iterator.Next()))
 	{
@@ -485,7 +485,7 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 	// Don't count monsters in end-of-level sectors if option is on
 	if (dmflags2 & DF2_NOCOUNTENDMONST)
 	{
-		TThinkerIterator<AActor> it;
+		auto it = Level->GetThinkerIterator<AActor>();
 		AActor * mo;
 
 		while ((mo = it.Next()))
@@ -500,7 +500,7 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 		}
 	}
 
-	T_PreprocessScripts(&level);        // preprocess FraggleScript scripts
+	T_PreprocessScripts(Level);        // preprocess FraggleScript scripts
 
 	// build subsector connect matrix
 	//	UNUSED P_ConnectSubsectors ();
@@ -513,8 +513,8 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 	// preload graphics and sounds
 	if (precache)
 	{
-		PrecacheLevel(&level);
-		S_PrecacheLevel();
+		PrecacheLevel(Level);
+		S_PrecacheLevel(Level);
 	}
 
 	if (deathmatch)
@@ -663,7 +663,7 @@ CUSTOM_CVAR(Bool, forcewater, false, CVAR_ARCHIVE | CVAR_SERVERINFO)
 {
 	if (gamestate == GS_LEVEL)
 	{
-		auto Level = &level;
+		auto Level = currentUILevel;
 		for (auto &sec : Level->sectors)
 		{
 			sector_t *hsec = sec.GetHeightSec();

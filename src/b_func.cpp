@@ -73,7 +73,7 @@ bool DBot::Reachable (AActor *rtarget)
 	double estimated_dist = player->mo->Distance2D(rtarget);
 	bool reachable = true;
 
-	FPathTraverse it(&level, player->mo->X()+player->mo->Vel.X, player->mo->Y()+player->mo->Vel.Y, rtarget->X(), rtarget->Y(), PT_ADDLINES|PT_ADDTHINGS);
+	FPathTraverse it(Level, player->mo->X()+player->mo->Vel.X, player->mo->Y()+player->mo->Vel.Y, rtarget->X(), rtarget->Y(), PT_ADDLINES|PT_ADDTHINGS);
 	intercept_t *in;
 	while ((in = it.Next()))
 	{

@@ -748,8 +748,7 @@ void P_PlaybackKeyConfWeapons(FWeaponSlots *slots)
 	PlayingKeyConf = slots;
 	for (unsigned int i = 0; i < KeyConfWeapons.Size(); ++i)
 	{
-		FString cmd(KeyConfWeapons[i]);
-		AddCommandString(cmd.LockBuffer());
+		AddCommandString(KeyConfWeapons[i]);
 	}
 	PlayingKeyConf = nullptr;
 }

@@ -77,7 +77,10 @@ FExecList *C_ParseCmdLineParams(FExecList *exec);
 // and semicolon-separated commands. This function may modify the source
 // string, but the string will be restored to its original state before
 // returning. Therefore, commands passed must not be in read-only memory.
-void AddCommandString (char *text, int keynum=0);
+void AddCommandString (const char *text, int keynum=0);
+
+void C_RunDelayedCommands();
+void C_ClearDelayedCommands();
 
 // Process a single console command. Does not handle wait.
 void C_DoCommand (const char *cmd, int keynum=0);

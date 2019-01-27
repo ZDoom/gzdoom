@@ -2202,8 +2202,7 @@ void OpenALSoundRenderer::UpdateSounds()
 		if(connected == ALC_FALSE)
 		{
 			Printf("Sound device disconnected; restarting...\n");
-			static char snd_reset[] = "snd_reset";
-			AddCommandString(snd_reset);
+			AddCommandString("snd_reset");
 			return;
 		}
 	}

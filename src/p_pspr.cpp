@@ -965,8 +965,8 @@ DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimfla
 		an = mo->Angles.Yaw + angdiff[i];
 		pitch = P_AimLineAttack (mo, an, 16.*64, pLineTarget, 0., aimflags);
 
-		if (mo->player != NULL &&
-			level.IsFreelookAllowed() &&
+		if (mo->player != nullptr &&
+			mo->Level->IsFreelookAllowed() &&
 			mo->player->userinfo.GetAimDist() <= 0.5)
 		{
 			break;

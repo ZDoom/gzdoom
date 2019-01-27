@@ -97,8 +97,6 @@ void	P_PredictionLerpReset();
 #define SPF_TEMPPLAYER		1	// spawning a short-lived dummy player
 #define SPF_WEAPONFULLYUP	2	// spawn with weapon already raised
 
-AActor *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags=0);
-
 int P_FaceMobj (AActor *source, AActor *target, DAngle *delta);
 bool P_SeekerMissile (AActor *actor, double thresh, double turnMax, bool precise = false, bool usecurspeed=false);
 

@@ -204,6 +204,9 @@ public:
 	void DoDeferedScripts();
 	void AdjustPusher(int tag, int magnitude, int angle, bool wind);
 	int Massacre(bool baddies = false, FName cls = NAME_None);
+	AActor *SpawnMapThing(FMapThing *mthing, int position);
+	AActor *SpawnMapThing(int index, FMapThing *mt, int position);
+	AActor *SpawnPlayer(FPlayerStart *mthing, int playernum, int flags);
 
 	bool EV_DoPlat(int tag, line_t *line, DPlat::EPlatType type, double height, double speed, int delay, int lip, int change);
 	void EV_StopPlat(int tag, bool remove);
@@ -591,4 +594,10 @@ inline bool line_t::hitSkyWall(AActor* mo) const
 	return backsector &&
 		backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
 		mo->Z() >= backsector->ceilingplane.ZatPoint(mo->PosRelative(this));
+}
+
+// Work for later.
+inline AActor *P_SpawnPlayer(FPlayerStart *mthing, int playernum, int flags = 0)
+{
+	return level.SpawnPlayer(mthing, playernum, flags);
 }

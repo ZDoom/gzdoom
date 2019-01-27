@@ -1023,11 +1023,6 @@ void G_DoLoadLevel (int position, bool autosave, bool newGame)
 	P_SetupLevel (&level, position, newGame);
 
 
-	// [RH] Start lightning, if MAPINFO tells us to
-	if (level.flags & LEVEL_STARTLIGHTNING)
-	{
-		P_StartLightning ();
-	}
 
 	gameaction = ga_nothing; 
 

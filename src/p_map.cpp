@@ -413,7 +413,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 
 	spechit.Clear();	// this is needed so that no more specials get activated after crossing a teleporter.
 
-	bool StompAlwaysFrags = ((thing->flags2 & MF2_TELESTOMP) || (level.flags & LEVEL_MONSTERSTELEFRAG) || telefrag) && !(thing->flags7 & MF7_NOTELESTOMP);
+	bool StompAlwaysFrags = ((thing->flags2 & MF2_TELESTOMP) || (thing->Level->flags & LEVEL_MONSTERSTELEFRAG) || telefrag) && !(thing->flags7 & MF7_NOTELESTOMP);
 
 	// P_LineOpening requires the thing's z to be the destination z in order to work.
 	double savedz = thing->Z();
@@ -975,7 +975,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 		// better than Strife's handling of rails, which lets you jump into rails
 		// from either side. How long until somebody reports this as a bug and I'm
 		// forced to say, "It's not a bug. It's a feature?" Ugh.
-		(!(level.flags2 & LEVEL2_RAILINGHACK) ||
+		(!(tm.thing->Level->flags2 & LEVEL2_RAILINGHACK) ||
 		open.bottom == tm.thing->Sector->floorplane.ZatPoint(ref)))
 	{
 		open.bottom += 32;
@@ -1365,10 +1365,10 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		if ((thing->flags6 & MF6_BUMPSPECIAL) && ((tm.thing->player != NULL)
 			|| ((thing->activationtype & THINGSPEC_MonsterTrigger) && (tm.thing->flags3 & MF3_ISMONSTER))
 			|| ((thing->activationtype & THINGSPEC_MissileTrigger) && (tm.thing->flags & MF_MISSILE))
-			) && (level.maptime > thing->lastbump)) // Leave the bumper enough time to go away
+			) && (thing->Level->maptime > thing->lastbump)) // Leave the bumper enough time to go away
 		{
 			if (P_ActivateThingSpecial(thing, tm.thing))
-				thing->lastbump = level.maptime + TICRATE;
+				thing->lastbump = thing->Level->maptime + TICRATE;
 		}
 	}
 
@@ -2041,7 +2041,7 @@ void P_FakeZMovement(AActor *mo)
 	}
 	if (mo->player && mo->flags&MF_NOGRAVITY && (mo->Z() > mo->floorz) && !mo->IsNoClip2())
 	{
-		mo->AddZ(DAngle(4.5 * level.maptime).Sin());
+		mo->AddZ(DAngle(4.5 * mo->Level->maptime).Sin());
 	}
 
 	//
@@ -2111,7 +2111,7 @@ static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, DVector2 *
 		}
 		else if (mobj->flags2 & MF2_IMPACT)
 		{
-			if ((level.flags2 & LEVEL2_MISSILESACTIVATEIMPACT) ||
+			if ((mobj->Level->flags2 & LEVEL2_MISSILESACTIVATEIMPACT) ||
 				!(mobj->flags & MF_MISSILE) ||
 				(mobj->target == NULL))
 			{
@@ -4269,7 +4269,7 @@ DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLin
 	// can't shoot outside view angles
 	if (vrange == 0)
 	{
-		if (t1->player == NULL || !level.IsFreelookAllowed())
+		if (t1->player == NULL || !t1->Level->IsFreelookAllowed())
 		{
 			vrange = 35.;
 		}
@@ -4539,7 +4539,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 			// position a bit closer for puffs
 			if (nointeract || trace.HitType != TRACE_HitWall || ((trace.Line->special != Line_Horizon) || spawnSky))
 			{
-				DVector2 pos = level.GetPortalOffsetPosition(trace.HitPos.X, trace.HitPos.Y, -trace.HitVector.X * 4, -trace.HitVector.Y * 4);
+				DVector2 pos = t1->Level->GetPortalOffsetPosition(trace.HitPos.X, trace.HitPos.Y, -trace.HitVector.X * 4, -trace.HitVector.Y * 4);
 				puff = P_SpawnPuff(t1, pufftype, DVector3(pos, trace.HitPos.Z - trace.HitVector.Z * 4), trace.SrcAngleFromTarget,
 					trace.SrcAngleFromTarget - 90, 0, puffFlags);
 				puff->radius = 1/65536.;
@@ -4590,7 +4590,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 			// position a bit closer for puffs/blood if using compatibility mode.
 			if (i_compatflags & COMPATF_HITSCAN)
 			{
-				DVector2 ofs = level.GetPortalOffsetPosition(bleedpos.X, bleedpos.Y, -10 * trace.HitVector.X, -10 * trace.HitVector.Y);
+				DVector2 ofs = t1->Level->GetPortalOffsetPosition(bleedpos.X, bleedpos.Y, -10 * trace.HitVector.X, -10 * trace.HitVector.Y);
 				bleedpos.X = ofs.X;
 				bleedpos.Y = ofs.Y;
 				bleedpos.Z -= -10 * trace.HitVector.Z;
@@ -5101,7 +5101,7 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 	newhit.HitAngle = res.SrcAngleFromTarget;
 	if (i_compatflags & COMPATF_HITSCAN)
 	{
-		DVector2 ofs = level.GetPortalOffsetPosition(newhit.HitPos.X, newhit.HitPos.Y, -10 * res.HitVector.X, -10 * res.HitVector.Y);
+		DVector2 ofs = res.Actor->Level->GetPortalOffsetPosition(newhit.HitPos.X, newhit.HitPos.Y, -10 * res.HitVector.X, -10 * res.HitVector.Y);
 		newhit.HitPos.X = ofs.X;
 		newhit.HitPos.Y = ofs.Y;
 		newhit.HitPos.Z -= -10 * res.HitVector.Z;
@@ -6167,7 +6167,7 @@ void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 	if (!(thing && thing->CallGrind(true) && cpos)) return;
 	cpos->nofit = true;
 
-	if ((cpos->crushchange > 0) && !(level.maptime & 3))
+	if ((cpos->crushchange > 0) && !(thing->Level->maptime & 3))
 	{
 		int newdam = P_DamageMobj(thing, NULL, NULL, cpos->crushchange, NAME_Crush);
 
@@ -6829,14 +6829,14 @@ bool P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death)
 	{
 		res = !!P_ExecuteSpecial(thing->special, NULL,
 			// TriggerActs overrides the level flag, which only concerns thing activated by death
-			(((death && level.flags & LEVEL_ACTOWNSPECIAL && !(thing->activationtype & THINGSPEC_TriggerActs))
+			(((death && thing->Level->flags & LEVEL_ACTOWNSPECIAL && !(thing->activationtype & THINGSPEC_TriggerActs))
 			|| (thing->activationtype & THINGSPEC_ThingActs)) // Who triggers?
 			? thing : trigger),
 			false, thing->args[0], thing->args[1], thing->args[2], thing->args[3], thing->args[4]);
 
 		// Clears the special if it was run on thing's death or if flag is set.
 		// Note that Hexen originally did not clear the special which some original maps depend on (e.g. the bell in HEXDD.)
-		if ((death && !(level.flags2 & LEVEL2_HEXENHACK)) || (thing->activationtype & THINGSPEC_ClearSpecial && res)) thing->special = 0;
+		if ((death && !(thing->Level->flags2 & LEVEL2_HEXENHACK)) || (thing->activationtype & THINGSPEC_ClearSpecial && res)) thing->special = 0;
 	}
 
 	// Returns the result

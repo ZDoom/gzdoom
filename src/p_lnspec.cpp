@@ -2069,7 +2069,7 @@ FUNC(LS_Elevator_LowerToNearest)
 FUNC(LS_Light_ForceLightning)
 // Light_ForceLightning (mode)
 {
-	P_ForceLightning (arg0);
+	Level->ForceLightning (arg0);
 	return true;
 }
 

@@ -207,6 +207,8 @@ public:
 	AActor *SpawnMapThing(FMapThing *mthing, int position);
 	AActor *SpawnMapThing(int index, FMapThing *mt, int position);
 	AActor *SpawnPlayer(FPlayerStart *mthing, int playernum, int flags);
+	void StartLightning();
+	void ForceLightning(int mode);
 
 	bool EV_DoPlat(int tag, line_t *line, DPlat::EPlatType type, double height, double speed, int delay, int lip, int change);
 	void EV_StopPlat(int tag, bool remove);

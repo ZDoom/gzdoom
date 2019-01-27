@@ -233,6 +233,7 @@ public:
 	double specialf1;
 	FDynamicLight *next, *prev;
 	sector_t *Sector;
+	FLevelLocals *Level;
 	TObjPtr<AActor *> target;
 	FLightNode * touching_sides;
 	FLightNode * touching_sector;

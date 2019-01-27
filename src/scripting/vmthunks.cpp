@@ -1166,7 +1166,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 
  static void SetEnvironmentID(sector_t *self, int envnum)
  {
-	 level.Zones[self->ZoneNumber].Environment = S_FindEnvironment(envnum);
+	 self->Level->Zones[self->ZoneNumber].Environment = S_FindEnvironment(envnum);
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetEnvironmentID, SetEnvironmentID)
@@ -1179,7 +1179,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 
  static void SetEnvironment(sector_t *self, const FString &env)
  {
-	 level.Zones[self->ZoneNumber].Environment = S_FindEnvironment(env);
+	 self->Level->Zones[self->ZoneNumber].Environment = S_FindEnvironment(env);
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetEnvironment, SetEnvironment)
@@ -2352,19 +2352,21 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, SetClipRect, SBar_SetClipRect)
 
 static void GetGlobalACSString(int index, FString *result)
 {
-	*result = level.Behaviors.LookupString(ACS_GlobalVars[index]);
+	*result = currentUILevel->Behaviors.LookupString(ACS_GlobalVars[index]);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSString, GetGlobalACSString)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(index);
-	ACTION_RETURN_STRING(level.Behaviors.LookupString(ACS_GlobalVars[index]));
+	FString res;
+	GetGlobalACSString(index, &res);
+	ACTION_RETURN_STRING(res);
 }
 
 static void GetGlobalACSArrayString(int arrayno, int index, FString *result)
 {
-	*result = level.Behaviors.LookupString(ACS_GlobalVars[index]);
+	*result = currentUILevel->Behaviors.LookupString(ACS_GlobalVars[index]);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSArrayString, GetGlobalACSArrayString)
@@ -2372,7 +2374,9 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSArrayString, GetGlobal
 	PARAM_PROLOGUE;
 	PARAM_INT(arrayno);
 	PARAM_INT(index);
-	ACTION_RETURN_STRING(level.Behaviors.LookupString(ACS_GlobalArrays[arrayno][index]));
+	FString res;
+	GetGlobalACSArrayString(arrayno, index, &res);
+	ACTION_RETURN_STRING(res);
 }
 
 static int GetGlobalACSValue(int index)
@@ -2592,7 +2596,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, GetChecksum)
 
 	for (int j = 0; j < 16; ++j)
 	{
-		sprintf(md5string + j * 2, "%02x", level.md5[j]);
+		sprintf(md5string + j * 2, "%02x", self->md5[j]);
 	}
 
 	ACTION_RETURN_STRING((const char*)md5string);

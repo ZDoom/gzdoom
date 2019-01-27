@@ -28,7 +28,5 @@ protected:
 	TArray<short> LightningLightLevels;
 };
 
-void P_StartLightning ();
-void P_ForceLightning (int mode);
 
 #endif //__A_LIGHTNING_H__

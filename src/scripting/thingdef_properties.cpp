@@ -148,6 +148,7 @@ bool ModActorFlag(AActor *actor, const FString &flagname, bool set, bool printer
 
 	if (actor != NULL)
 	{
+		auto Level = actor->Level;
 		const char *dot = strchr(flagname, '.');
 		FFlagDef *fd;
 		PClassActor *cls = actor->GetClass();
@@ -166,9 +167,9 @@ bool ModActorFlag(AActor *actor, const FString &flagname, bool set, bool printer
 		{
 			found = true;
 
-			if (actor->CountsAsKill() && actor->health > 0) --level.total_monsters;
-			if (actor->flags & MF_COUNTITEM) --level.total_items;
-			if (actor->flags5 & MF5_COUNTSECRET) --level.total_secrets;
+			if (actor->CountsAsKill() && actor->health > 0) --Level->total_monsters;
+			if (actor->flags & MF_COUNTITEM) --Level->total_items;
+			if (actor->flags5 & MF5_COUNTSECRET) --Level->total_secrets;
 
 			if (fd->structoffset == -1)
 			{
@@ -187,9 +188,9 @@ bool ModActorFlag(AActor *actor, const FString &flagname, bool set, bool printer
 				if (linkchange) actor->LinkToWorld(&ctx);
 			}
 
-			if (actor->CountsAsKill() && actor->health > 0) ++level.total_monsters;
-			if (actor->flags & MF_COUNTITEM) ++level.total_items;
-			if (actor->flags5 & MF5_COUNTSECRET) ++level.total_secrets;
+			if (actor->CountsAsKill() && actor->health > 0) ++Level->total_monsters;
+			if (actor->flags & MF_COUNTITEM) ++Level->total_items;
+			if (actor->flags5 & MF5_COUNTSECRET) ++Level->total_secrets;
 		}
 		else if (printerror)
 		{

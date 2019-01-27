@@ -1445,6 +1445,7 @@ public:
 		FName scroll_floor_type = NAME_None;
 
 		memset(sec, 0, sizeof(*sec));
+		sec->Level = Level;
 		sec->lightlevel = 160;
 		sec->SetXScale(sector_t::floor, 1.);	// [RH] floor and ceiling scaling
 		sec->SetYScale(sector_t::floor, 1.);

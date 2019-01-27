@@ -1098,6 +1098,7 @@ void MapLoader::LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 	for (unsigned i = 0; i < numsectors; i++, ss++, ms++)
 	{
 		ss->e = &sectors[0].e[i];
+		ss->Level = Level;
 		if (!map->HasBehavior) ss->Flags |= SECF_FLOORDROP;
 		ss->SetPlaneTexZ(sector_t::floor, (double)LittleShort(ms->floorheight));
 		ss->floorplane.set(0, 0, 1., -ss->GetPlaneTexZ(sector_t::floor));

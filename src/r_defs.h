@@ -264,7 +264,6 @@ public:
 // Stores things/mobjs.
 //
 class DSectorEffect;
-struct sector_t;
 struct FRemapTable;
 
 enum
@@ -453,7 +452,6 @@ public:
 
 #include "p_3dfloors.h"
 struct subsector_t;
-struct sector_t;
 struct side_t;
 extern bool gl_plane_reflection_i;
 
@@ -652,6 +650,7 @@ struct sector_t
 
 	splane planes[2];
 
+	FLevelLocals *Level;
 	extsector_t	*				e;			// This stores data that requires construction/destruction. Such data must not be copied by R_FakeFlat.
 
 	secplane_t	floorplane, ceilingplane;	// [RH] store floor and ceiling planes instead of heights

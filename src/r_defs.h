@@ -1195,6 +1195,11 @@ struct side_t
 		Light = l;
 	}
 
+	FLevelLocals *GetLevel()
+	{
+		return sector->Level;
+	}
+
 	FTextureID GetTexture(int which) const
 	{
 		return textures[which].texture;

@@ -43,19 +43,13 @@ public:
 
 struct FInterpolator
 {
-	TObjPtr<DInterpolation*> Head;
-	bool didInterp;
-	int count;
+	TObjPtr<DInterpolation*> Head = nullptr;
+	bool didInterp = false;
+	int count = 0;
 
 	int CountInterpolations ();
 
 public:
-	FInterpolator()
-	{
-		Head = nullptr;
-		didInterp = false;
-		count = 0;
-	}
 	void UpdateInterpolations();
 	void AddInterpolation(DInterpolation *);
 	void RemoveInterpolation(DInterpolation *);
@@ -63,9 +57,6 @@ public:
 	void RestoreInterpolations();
 	void ClearInterpolations();
 };
-
-extern FInterpolator interpolator;
-
 
 
 #endif

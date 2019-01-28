@@ -1983,6 +1983,7 @@ void FLevelLocals::Mark()
 	GC::Mark(FraggleScriptThinker);
 	GC::Mark(ACSThinker);
 	GC::Mark(automap);
+	GC::Mark(interpolator.Head);
 	canvasTextureInfo.Mark();
 	for (auto &c : CorpseQueue)
 	{

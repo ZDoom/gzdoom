@@ -39,6 +39,7 @@
 #include "p_local.h"
 #include "po_man.h"
 #include "serializer.h"
+#include "g_levellocals.h"
 
 //==========================================================================
 //
@@ -312,6 +313,16 @@ void FInterpolator::ClearInterpolations()
 	}
 }
 
+FSerializer &Serialize(FSerializer &arc, const char *key, FInterpolator &rs, FInterpolator *def)
+{
+	if (arc.BeginObject(key))
+	{
+		arc("head", rs.Head)
+			("count", rs.count)
+			.EndObject();
+	}
+	return arc;
+}
 
 //==========================================================================
 //
@@ -379,10 +390,6 @@ void DInterpolation::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
 	arc("refcount", refcount);
-	if (arc.isReading())
-	{
-		interpolator.AddInterpolation(this);
-	}
 }
 
 //==========================================================================
@@ -408,7 +415,7 @@ DSectorPlaneInterpolation::DSectorPlaneInterpolation(sector_t *_sector, bool _pl
 		P_Start3dMidtexInterpolations(attached, sector, ceiling);
 		P_StartLinkedSectorInterpolations(attached, sector, ceiling);
 	}
-	interpolator.AddInterpolation(this);
+	sector->Level->interpolator.AddInterpolation(this);
 }
 
 //==========================================================================
@@ -567,7 +574,7 @@ DSectorScrollInterpolation::DSectorScrollInterpolation(sector_t *_sector, bool _
 	sector = _sector;
 	ceiling = _plane;
 	UpdateInterpolation ();
-	interpolator.AddInterpolation(this);
+	sector->Level->interpolator.AddInterpolation(this);
 }
 
 //==========================================================================
@@ -672,7 +679,7 @@ DWallScrollInterpolation::DWallScrollInterpolation(side_t *_side, int _part)
 	side = _side;
 	part = _part;
 	UpdateInterpolation ();
-	interpolator.AddInterpolation(this);
+	side->GetLevel()->interpolator.AddInterpolation(this);
 }
 
 //==========================================================================
@@ -770,7 +777,7 @@ DPolyobjInterpolation::DPolyobjInterpolation(FPolyObj *po)
 	oldverts.Resize(po->Vertices.Size() << 1);
 	bakverts.Resize(po->Vertices.Size() << 1);
 	UpdateInterpolation ();
-	interpolator.AddInterpolation(this);
+	po->Level->interpolator.AddInterpolation(this);
 }
 
 //==========================================================================

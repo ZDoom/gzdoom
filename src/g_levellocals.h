@@ -50,6 +50,7 @@
 #include "p_destructible.h"
 #include "r_data/r_sections.h"
 #include "r_data/r_canvastexture.h"
+#include "r_data/r_interpolate.h"
 
 //============================================================================
 //
@@ -442,6 +443,7 @@ public:
 	FString		F1Pic;
 	EMapType	maptype;
 	FTagManager tagManager;
+	FInterpolator interpolator;
 
 	uint64_t	ShaderStartTime = 0;	// tell the shader system when we started the level (forces a timer restart)
 

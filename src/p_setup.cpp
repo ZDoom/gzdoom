@@ -288,6 +288,7 @@ void FLevelLocals::ClearLevelData()
 	}
 	ClearPortals();
 
+	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
 	tagManager.Clear();
 	ClearTIDHashes();
 	Behaviors.UnloadModules();
@@ -350,7 +351,6 @@ void P_FreeLevelData ()
 	R_FreePastViewers();
 	P_ClearUDMFKeys();
 
-	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
 	SN_StopAllSequences ();
 	DThinker::DestroyAllThinkers ();
 

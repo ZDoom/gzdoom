@@ -754,9 +754,15 @@ void D_Display ()
 				Level->HasDynamicLights = !!level.lights;
 			}
 			else Level->HasDynamicLights = false;	// lights are off so effectively we have none.
+			Level->interpolator.DoInterpolations(I_GetTimeFrac());
 		}
-		
 		viewsec = screen->RenderView(&players[consoleplayer]);
+
+		for (auto Level : AllLevels())
+		{
+			Level->interpolator.RestoreInterpolations();
+		}
+
 		screen->Begin2D();
 		screen->DrawBlend(viewsec);
 		if (automapactive)

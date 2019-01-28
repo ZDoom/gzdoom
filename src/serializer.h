@@ -24,6 +24,7 @@ struct FDoorAnimation;
 class FSoundID;
 struct FPolyObj;
 union FRenderStyle;
+struct FInterpolator;
 
 inline bool nullcmp(const void *buffer, size_t length)
 {
@@ -202,6 +203,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FString &sid, FString 
 FSerializer &Serialize(FSerializer &arc, const char *key, NumericValue &sid, NumericValue *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, ticcmd_t &sid, ticcmd_t *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, usercmd_t &cmd, usercmd_t *def);
+FSerializer &Serialize(FSerializer &arc, const char *key, FInterpolator &rs, FInterpolator *def);
 
 template<class T>
 FSerializer &Serialize(FSerializer &arc, const char *key, T *&value, T **)

@@ -189,7 +189,6 @@ namespace swrenderer
 		RenderPSprites();
 
 		MainThread()->Viewport->viewpoint.camera->renderflags = savedflags;
-		interpolator.RestoreInterpolations();
 	}
 
 	void RenderScene::RenderPSprites()

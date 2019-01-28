@@ -218,7 +218,6 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 			mBuffers->BlitToEyeTexture(eye_ix);
 	}
 
-	interpolator.RestoreInterpolations ();
 	return mainvp.sector;
 }
 

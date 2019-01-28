@@ -962,9 +962,10 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 		("spotstate", SpotState)
 		("fragglethinker", FraggleScriptThinker)
 		("acsthinker", ACSThinker)
-        ("impactdecalcount", ImpactDecalCount)
+		("impactdecalcount", ImpactDecalCount)
 		("scrolls", Scrolls)
-		("automap", automap);
+		("automap", automap)
+		("interpolator", interpolator);
 
 
 	// Hub transitions must keep the current total time

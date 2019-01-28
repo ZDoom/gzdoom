@@ -75,7 +75,10 @@ void P_Ticker (void)
 {
 	int i;
 
-	interpolator.UpdateInterpolations ();
+	for (auto Level : AllLevels())
+	{
+		Level->interpolator.UpdateInterpolations();
+	}
 	r_NoInterpolate = true;
 
 	if (!demoplayback)

@@ -1464,7 +1464,7 @@ void FLevelLocals::Init()
 
 	gravity = sv_gravity * 35/TICRATE;
 	aircontrol = sv_aircontrol;
-	teamdamage = teamdamage;
+	teamdamage = ::teamdamage;
 	flags = 0;
 	flags2 = 0;
 	flags3 = 0;

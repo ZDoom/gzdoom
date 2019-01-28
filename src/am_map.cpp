@@ -2671,14 +2671,15 @@ void DAutomap::rotatePoint (double *x, double *y)
 
 void DAutomap::drawLineCharacter(const mline_t *lineguy, size_t lineguylines, double scale, DAngle angle, const AMColor &color, double x, double y)
 {
-	int		i;
 	mline_t	l;
 
-	for (i=0;i<lineguylines;i++) {
+	for (size_t i=0;i<lineguylines;i++)
+	{
 		l.a.x = lineguy[i].a.x;
 		l.a.y = lineguy[i].a.y;
 
-		if (scale) {
+		if (scale)
+		{
 			l.a.x *= scale;
 			l.a.y *= scale;
 		}
@@ -2692,7 +2693,8 @@ void DAutomap::drawLineCharacter(const mline_t *lineguy, size_t lineguylines, do
 		l.b.x = lineguy[i].b.x;
 		l.b.y = lineguy[i].b.y;
 
-		if (scale) {
+		if (scale)
+		{
 			l.b.x *= scale;
 			l.b.y *= scale;
 		}

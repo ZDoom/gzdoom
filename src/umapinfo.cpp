@@ -275,7 +275,7 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 			{
 				// This cannot be evaluated here because this needs to be done in the context of the level being used.
 				FSpecialAction & bossact = mape->BossActions[mape->BossActions.Reserve(1)];
-				bossact = { type, special | 0x40000000, tag };
+				bossact = { type, special | 0x40000000, {tag} };
 			};
 		}
 	}

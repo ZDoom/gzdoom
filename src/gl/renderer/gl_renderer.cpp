@@ -253,13 +253,18 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 		// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
 		bool saved_niv = NoInterpolateView;
 		NoInterpolateView = false;
-		// prepare all camera textures that have been used in the last frame
-		auto Level = r_viewpoint.ViewLevel;
-		gl_RenderState.CheckTimer(Level->ShaderStartTime);
-		Level->canvasTextureInfo.UpdateAll([&](AActor *camera, FCanvasTexture *camtex, double fov)
+
+		// Shader start time does not need to be handled per level. Just use the one from the camera to render from.
+		gl_RenderState.CheckTimer(player->camera->Level->ShaderStartTime);
+		// prepare all camera textures that have been used in the last frame.
+		// This must be done for all levels, not just the primary one!
+		for (auto Level : AllLevels())
 		{
-			RenderTextureView(camtex, camera, fov);
-		});
+			Level->canvasTextureInfo.UpdateAll([&](AActor *camera, FCanvasTexture *camtex, double fov)
+			{
+				RenderTextureView(camtex, camera, fov);
+			});
+		}
 		NoInterpolateView = saved_niv;
 
 

@@ -50,6 +50,7 @@
 
 struct FTraceInfo
 {
+	FLevelLocals *Level;
 	DVector3 Start;
 	DVector3 Vec;
 	ActorFlags ActorMask;
@@ -158,6 +159,7 @@ bool Trace(const DVector3 &start, sector_t *sector, const DVector3 &direction, d
 	memset(&tempResult, 0, sizeof(tempResult));
 	tempResult.Fraction = tempResult.Distance = NO_VALUE;
 
+	inf.Level = sector->Level;
 	inf.Start = start;
 	GetPortalTransition(inf.Start, sector);
 	inf.ptflags = actorMask ? PT_ADDLINES|PT_ADDTHINGS|PT_COMPATIBLE : PT_ADDLINES;
@@ -452,7 +454,7 @@ bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit, bool spec
 		// hit crossed a water plane
 		if (CheckSectorPlane(hsec, true))
 		{
-			Results->CrossedWater = &level.sectors[CurSector->sectornum];
+			Results->CrossedWater = &Level->sectors[CurSector->sectornum];
 			Results->CrossedWaterPos = Results->HitPos;
 			Results->Distance = 0;
 		}
@@ -583,7 +585,7 @@ cont:
 	if (Results->HitType != TRACE_HitNone)
 	{
 		// We hit something, so figure out where exactly
-		Results->Sector = &level.sectors[CurSector->sectornum];
+		Results->Sector = &Level->sectors[CurSector->sectornum];
 
 		if (Results->HitType != TRACE_HitWall &&
 			!CheckSectorPlane(CurSector, Results->HitType == TRACE_HitFloor))
@@ -720,7 +722,7 @@ bool FTraceInfo::ThingCheck(intercept_t *in, double dist, DVector3 hit)
 
 		// the trace hit a 3D floor before the thing.
 		// Calculate an intersection and abort.
-		Results->Sector = &level.sectors[CurSector->sectornum];
+		Results->Sector = &Level->sectors[CurSector->sectornum];
 		if (!CheckSectorPlane(CurSector, Results->HitType == TRACE_HitFloor))
 		{
 			Results->HitType = TRACE_HitNone;
@@ -872,7 +874,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 	}
 
 	// check for intersection with floor/ceiling
-	Results->Sector = &level.sectors[CurSector->sectornum];
+	Results->Sector = &Level->sectors[CurSector->sectornum];
 
 	if (Results->CrossedWater == NULL &&
 		CurSector->heightsec != NULL &&
@@ -886,7 +888,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 
 		if (CheckSectorPlane(CurSector->heightsec, true))
 		{
-			Results->CrossedWater = &level.sectors[CurSector->sectornum];
+			Results->CrossedWater = &Level->sectors[CurSector->sectornum];
 			Results->CrossedWaterPos = Results->HitPos;
 			Results->Distance = 0;
 		}
@@ -1020,7 +1022,7 @@ DEFINE_ACTION_FUNCTION(DLineTracer, Trace)
 	PARAM_FLOAT(start_x);
 	PARAM_FLOAT(start_y);
 	PARAM_FLOAT(start_z);
-	PARAM_POINTER(sector, sector_t);
+	PARAM_POINTER_NOT_NULL(sector, sector_t);
 	PARAM_FLOAT(direction_x);
 	PARAM_FLOAT(direction_y);
 	PARAM_FLOAT(direction_z);

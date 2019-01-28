@@ -93,68 +93,9 @@ class DAutomapBase;
 typedef TMap<int, int> FDialogueIDMap;				// maps dialogue IDs to dialogue array index (for ACS)
 typedef TMap<FName, int> FDialogueMap;				// maps actor class names to dialogue array index
 
-struct FLevelData
+struct FLevelLocals
 {
-	TArray<vertex_t> vertexes;
-	TArray<sector_t> sectors;
-	TArray<line_t*> linebuffer;	// contains the line lists for the sectors.
-	TArray<subsector_t*> subsectorbuffer;	// contains the subsector lists for the sectors.
-	TArray<line_t> lines;
-	TArray<side_t> sides;
-	TArray<seg_t *> segbuffer;	// contains the seg links for the sidedefs.
-	TArray<seg_t> segs;
-	TArray<subsector_t> subsectors;
-	TArray<node_t> nodes;
-	TArray<subsector_t> gamesubsectors;
-	TArray<node_t> gamenodes;
-	node_t *headgamenode;
-	TArray<uint8_t> rejectmatrix;
-	TArray<zone_t>	Zones;
-	TArray<FPolyObj> Polyobjects;
-
-	TArray<FSectorPortal> sectorPortals;
-	TArray<FLinePortal> linePortals;
-
-	// Portal information.
-	FDisplacementTable Displacements;
-	FPortalBlockmap PortalBlockmap;
-	TArray<FLinePortal*> linkedPortals;	// only the linked portals, this is used to speed up looking for them in P_CollectConnectedGroups.
-	TArray<FSectorPortalGroup *> portalGroups;
-	TArray<FLinePortalSpan> linePortalSpans;
-	FSectionContainer sections;
-	FCanvasTextureInfo canvasTextureInfo;
-
-	// [ZZ] Destructible geometry information
-	TMap<int, FHealthGroup> healthGroups;
-
-	FBlockmap blockmap;
-	TArray<polyblock_t *> PolyBlockMap;
-
-	// These are copies of the loaded map data that get used by the savegame code to skip unaltered fields
-	// Without such a mechanism the savegame format would become too slow and large because more than 80-90% are normally still unaltered.
-	TArray<sector_t>	loadsectors;
-	TArray<line_t>	loadlines;
-	TArray<side_t>	loadsides;
-
-	// Maintain single and multi player starting spots.
-	TArray<FPlayerStart> deathmatchstarts;
-	FPlayerStart		playerstarts[MAXPLAYERS];
-	TArray<FPlayerStart> AllPlayerStarts;
-
-	FBehaviorContainer Behaviors;
-	AActor *TIDHash[128];
-	
-	TArray<FStrifeDialogueNode *> StrifeDialogues;
-	FDialogueIDMap DialogueRoots;
-	FDialogueMap ClassRoots;
-
-
-};
-
-
-struct FLevelLocals : public FLevelData
-{
-	FLevelLocals() : tagManager(this) {}
+	FLevelLocals() : tagManager(this), Behaviors(this) {}
 
 	friend class MapLoader;
 
@@ -426,6 +367,58 @@ public:
 			S_ChangeMusic(Music, musicorder);
 	}
 
+	TArray<vertex_t> vertexes;
+	TArray<sector_t> sectors;
+	TArray<line_t*> linebuffer;	// contains the line lists for the sectors.
+	TArray<subsector_t*> subsectorbuffer;	// contains the subsector lists for the sectors.
+	TArray<line_t> lines;
+	TArray<side_t> sides;
+	TArray<seg_t *> segbuffer;	// contains the seg links for the sidedefs.
+	TArray<seg_t> segs;
+	TArray<subsector_t> subsectors;
+	TArray<node_t> nodes;
+	TArray<subsector_t> gamesubsectors;
+	TArray<node_t> gamenodes;
+	node_t *headgamenode;
+	TArray<uint8_t> rejectmatrix;
+	TArray<zone_t>	Zones;
+	TArray<FPolyObj> Polyobjects;
+
+	TArray<FSectorPortal> sectorPortals;
+	TArray<FLinePortal> linePortals;
+
+	// Portal information.
+	FDisplacementTable Displacements;
+	FPortalBlockmap PortalBlockmap;
+	TArray<FLinePortal*> linkedPortals;	// only the linked portals, this is used to speed up looking for them in P_CollectConnectedGroups.
+	TArray<FSectorPortalGroup *> portalGroups;
+	TArray<FLinePortalSpan> linePortalSpans;
+	FSectionContainer sections;
+	FCanvasTextureInfo canvasTextureInfo;
+
+	// [ZZ] Destructible geometry information
+	TMap<int, FHealthGroup> healthGroups;
+
+	FBlockmap blockmap;
+	TArray<polyblock_t *> PolyBlockMap;
+
+	// These are copies of the loaded map data that get used by the savegame code to skip unaltered fields
+	// Without such a mechanism the savegame format would become too slow and large because more than 80-90% are normally still unaltered.
+	TArray<sector_t>	loadsectors;
+	TArray<line_t>	loadlines;
+	TArray<side_t>	loadsides;
+
+	// Maintain single and multi player starting spots.
+	TArray<FPlayerStart> deathmatchstarts;
+	FPlayerStart		playerstarts[MAXPLAYERS];
+	TArray<FPlayerStart> AllPlayerStarts;
+
+	FBehaviorContainer Behaviors;
+	AActor *TIDHash[128];
+
+	TArray<FStrifeDialogueNode *> StrifeDialogues;
+	FDialogueIDMap DialogueRoots;
+	FDialogueMap ClassRoots;
 
 	uint8_t		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
 	int			time;			// time in the hub

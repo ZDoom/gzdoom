@@ -1447,7 +1447,10 @@ void P_CollectACSGlobalStrings()
 			GlobalACSStrings.MarkStringArray(&stack->buffer[0], sp);
 		}
 	}
-	level.Behaviors.MarkLevelVarStrings();
+	for(auto Level : AllLevels())
+	{ 
+		Level->Behaviors.MarkLevelVarStrings();
+	}
 	P_MarkWorldVarStrings();
 	P_MarkGlobalVarStrings();
 	GlobalACSStrings.PurgeStrings();
@@ -1951,7 +1954,7 @@ FBehavior *FBehaviorContainer::LoadModule (int lumpnum, FileReader *fr, int len)
 	}
 
 	FBehavior * behavior = new FBehavior ();
-	if (behavior->Init(lumpnum, fr, len))
+	if (behavior->Init(Level, lumpnum, fr, len))
 	{
 		return behavior;
 	}
@@ -2001,9 +2004,9 @@ void FBehaviorContainer::MarkLevelVarStrings()
 		StaticModules[modnum]->MarkMapVarStrings();
 	}
 	// Mark running scripts' local variables.
-	if (level.ACSThinker != nullptr)
+	if (Level->ACSThinker != nullptr)
 	{
-		for (DLevelScript *script = level.ACSThinker->Scripts; script != NULL; script = script->GetNext())
+		for (DLevelScript *script = Level->ACSThinker->Scripts; script != NULL; script = script->GetNext())
 		{
 			script->MarkLocalVarStrings();
 		}
@@ -2018,9 +2021,9 @@ void FBehaviorContainer::LockLevelVarStrings(int levelnum)
 		StaticModules[modnum]->LockMapVarStrings(levelnum);
 	}
 	// Lock running scripts' local variables.
-	if (level.ACSThinker != nullptr)
+	if (Level->ACSThinker != nullptr)
 	{
-		for (DLevelScript *script = level.ACSThinker->Scripts; script != NULL; script = script->GetNext())
+		for (DLevelScript *script = Level->ACSThinker->Scripts; script != NULL; script = script->GetNext())
 		{
 			script->LockLocalVarStrings(levelnum);
 		}
@@ -2205,7 +2208,7 @@ FBehavior::FBehavior()
 }
 	
 	
-bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
+bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len)
 {
 	uint8_t *object;
 	int i;
@@ -2267,7 +2270,7 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 		delete[] object;
 		return false;
 	}
-    LibraryID = level.Behaviors.StaticModules.Push (this) << LIBRARYID_SHIFT;
+    LibraryID = Level->Behaviors.StaticModules.Push (this) << LIBRARYID_SHIFT;
 
 	if (fr == NULL)
 	{
@@ -2556,7 +2559,7 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 					}
 					else
 					{
-						module = level.Behaviors.LoadModule (lump);
+						module = Level->Behaviors.LoadModule (lump);
 					}
 					if (module != NULL) Imports.Push (module);
 					do {;} while (parse[++i]);
@@ -3285,7 +3288,7 @@ void FBehavior::StartTypedScripts (uint16_t type, AActor *activator, bool always
 
 void FBehaviorContainer::StopMyScripts (AActor *actor)
 {
-	DACSThinker *controller = level.ACSThinker;
+	DACSThinker *controller = actor->Level->ACSThinker;
 
 	if (controller != NULL)
 	{
@@ -10440,13 +10443,17 @@ FSerializer &Serialize(FSerializer &arc, const char *key, acsdefered_t &defer, a
 
 CCMD (scriptstat)
 {
-	if (level.ACSThinker == NULL)
+	for (auto Level : AllLevels())
 	{
-		Printf ("No scripts are running.\n");
-	}
-	else
-	{
-		level.ACSThinker->DumpScriptStatus ();
+		Printf("Script status for %s", Level->MapName.GetChars());
+		if (Level->ACSThinker == nullptr)
+		{
+			Printf("No scripts are running.\n");
+		}
+		else
+		{
+			Level->ACSThinker->DumpScriptStatus();
+		}
 	}
 }
 
@@ -10659,7 +10666,7 @@ static void ShowProfileData(TArray<ProfileCollector> &profiles, long ilimit,
 	}
 }
 
-CCMD(acsprofile)
+void ACSProfile(FLevelLocals *Level, FCommandLine &argv)
 {
 	static int (*sort_funcs[])(const void*, const void *) =
 	{
@@ -10678,8 +10685,9 @@ CCMD(acsprofile)
 
 	assert(countof(sort_names) == countof(sort_match_len));
 
-	level.Behaviors.ArrangeScriptProfiles(ScriptProfiles);
-	level.Behaviors.ArrangeFunctionProfiles(FuncProfiles);
+	Printf("ACS profile for %s\n", Level->MapName.GetChars());
+	Level->Behaviors.ArrangeScriptProfiles(ScriptProfiles);
+	Level->Behaviors.ArrangeFunctionProfiles(FuncProfiles);
 
 	if (argv.argc() > 1)
 	{
@@ -10728,6 +10736,14 @@ CCMD(acsprofile)
 
 	ShowProfileData(ScriptProfiles, limit, sorter, false);
 	ShowProfileData(FuncProfiles, limit, sorter, true);
+}
+
+CCMD(acsprofile)
+{
+	for (auto Level : AllLevels())
+	{
+		ACSProfile(Level, argv);
+	}
 }
 
 ADD_STAT(ACS)

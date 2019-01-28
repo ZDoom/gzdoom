@@ -62,7 +62,8 @@ bool P_CheckTickerPaused ()
 		 && players[consoleplayer].viewz != NO_VALUE
 		 && wipegamestate == gamestate)
 	{
-		S_PauseSound (!(level.flags2 & LEVEL2_PAUSE_MUSIC_IN_MENUS), false);
+		// Only the current UI level's settings are relevant for sound.
+		S_PauseSound (!(currentUILevel->flags2 & LEVEL2_PAUSE_MUSIC_IN_MENUS), false);
 		return true;
 	}
 	return false;
@@ -95,11 +96,15 @@ void P_Ticker (void)
 	DPSprite::NewTick();
 
 	// [RH] Frozen mode is only changed every 4 tics, to make it work with A_Tracer().
-	if ((level.maptime & 3) == 0)
+	// This may not be perfect but it is not really relevant for sublevels that tracer homing behavior is preserved.
+	if ((currentUILevel->maptime & 3) == 0)
 	{
 		if (bglobal.changefreeze)
 		{
-			level.frozenstate ^= 2;
+			for (auto Level : AllLevels())
+			{
+				Level->frozenstate ^= 2;
+			}
 			bglobal.freeze ^= 1;
 			bglobal.changefreeze = 0;
 		}
@@ -120,13 +125,16 @@ void P_Ticker (void)
 	P_ResetSightCounters (false);
 	R_ClearInterpolationPath();
 
-	// Reset all actor interpolations for all actors before the current thinking turn so that indirect actor movement gets properly interpolated.
-	TThinkerIterator<AActor> it;
-	AActor *ac;
-
-	while ((ac = it.Next()))
+	// Reset all actor interpolations on all levels before the current thinking turn so that indirect actor movement gets properly interpolated.
+	for (auto Level : AllLevels())
 	{
-		ac->ClearInterpolation();
+		auto it = Level->GetThinkerIterator<AActor>();
+		AActor *ac;
+
+		while ((ac = it.Next()))
+		{
+			ac->ClearInterpolation();
+		}
 	}
 
 	// Since things will be moving, it's okay to interpolate them in the renderer.

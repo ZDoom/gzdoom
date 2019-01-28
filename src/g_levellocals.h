@@ -154,6 +154,8 @@ struct FLevelData
 
 struct FLevelLocals : public FLevelData
 {
+	FLevelLocals() : tagManager(this) {}
+
 	friend class MapLoader;
 
 	void Tick();

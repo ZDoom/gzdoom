@@ -29,6 +29,7 @@ class FTagManager
 	friend struct FLevelLocals;
 	friend class UDMFParser;
 
+	FLevelLocals *Level;
 	TArray<FTagItem> allTags;
 	TArray<FTagItem> allIDs;
 	TArray<int> startForSector;
@@ -46,6 +47,8 @@ class FTagManager
 		return sect >= 0 && sect < (int)startForLine.Size() && startForLine[sect] >= 0;
 	}
 
+
+    FTagManager(FLevelLocals *l) : Level(l) {}
 	void Clear()
 	{
 		allTags.Clear();

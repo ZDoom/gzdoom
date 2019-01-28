@@ -328,7 +328,7 @@ void DThinker::PostSerialize()
 //
 //==========================================================================
 
-DThinker *DThinker::FirstThinker (int statnum)
+DThinker *FLevelLocals::FirstThinker (int statnum)
 {
 	DThinker *node;
 
@@ -336,10 +336,10 @@ DThinker *DThinker::FirstThinker (int statnum)
 	{
 		statnum = MAX_STATNUM;
 	}
-	node = Thinkers[statnum].GetHead();
+	node = DThinker::Thinkers[statnum].GetHead();
 	if (node == NULL)
 	{
-		node = FreshThinkers[statnum].GetHead();
+		node = DThinker::FreshThinkers[statnum].GetHead();
 		if (node == NULL)
 		{
 			return NULL;

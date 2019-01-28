@@ -261,6 +261,7 @@ public:
 	FSerializer &SerializeSubsectors(FSerializer &arc, const char *key);
 	void SpawnExtraPlayers();
 	void Serialize(FSerializer &arc, bool hubload);
+	DThinker *FirstThinker (int statnum);
 
 	// g_Game
 	void PlayerReborn (int player);

@@ -90,7 +90,6 @@ public:
 	static void SerializeThinkers(FSerializer &arc, bool keepPlayers);
 	static void MarkRoots();
 
-	static DThinker *FirstThinker (int statnum);
 private:
 	static void DestroyThinkersInList (FThinkerList &list);
 	static bool DoDestroyThinkersInList(FThinkerList &list);

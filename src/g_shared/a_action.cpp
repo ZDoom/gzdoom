@@ -92,12 +92,15 @@ CUSTOM_CVAR(Int, sv_corpsequeuesize, 64, CVAR_ARCHIVE|CVAR_SERVERINFO)
 {
 	if (self > 0)
 	{
-		auto &corpsequeue = level.CorpseQueue;
-		while (corpsequeue.Size() > (unsigned)self)
+		for (auto Level : AllLevels())
 		{
-			AActor *corpse = corpsequeue[0];
-			if (corpse) corpse->Destroy();
-			corpsequeue.Delete(0);
+			auto &corpsequeue = Level->CorpseQueue;
+			while (corpsequeue.Size() > (unsigned)self)
+			{
+				AActor *corpse = corpsequeue[0];
+				if (corpse) corpse->Destroy();
+				corpsequeue.Delete(0);
+			}
 		}
 	}
 }

@@ -147,7 +147,10 @@ FRandom pr_spawnmobj ("SpawnActor");
 
 CUSTOM_CVAR (Float, sv_gravity, 800.f, CVAR_SERVERINFO|CVAR_NOSAVE)
 {
-	level.gravity = self;
+	for (auto Level : AllLevels())
+	{
+		Level->gravity = self;
+	}
 }
 
 CVAR (Bool, cl_missiledecals, true, CVAR_ARCHIVE)
@@ -3021,9 +3024,11 @@ int FLevelLocals::FindUniqueTID(int start_tid, int limit)
 
 CCMD(utid)
 {
-	Printf("%d\n",
-		level.FindUniqueTID(argv.argc() > 1 ? atoi(argv[1]) : 0,
-		(argv.argc() > 2 && atoi(argv[2]) >= 0) ? atoi(argv[2]) : 0));
+	for (auto Level : AllLevels())
+	{
+		Printf("%s, %d\n", Level->MapName.GetChars(), Level->FindUniqueTID(argv.argc() > 1 ? atoi(argv[1]) : 0,
+			(argv.argc() > 2 && atoi(argv[2]) >= 0) ? atoi(argv[2]) : 0));
+	}
 }
 
 //==========================================================================

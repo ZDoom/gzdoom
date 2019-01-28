@@ -109,17 +109,26 @@ void G_VerifySkill();
 
 CUSTOM_CVAR(Bool, gl_brightfog, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
-	if (level.info == nullptr || level.info->brightfog == -1) level.brightfog = self;
+	for (auto Level : AllLevels())
+	{
+		if (Level->info == nullptr || Level->info->brightfog == -1) Level->brightfog = self;
+	}
 }
 
 CUSTOM_CVAR(Bool, gl_lightadditivesurfaces, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
-	if (level.info == nullptr || level.info->lightadditivesurfaces == -1) level.lightadditivesurfaces = self;
+	for (auto Level : AllLevels())
+	{
+		if (Level->info == nullptr || Level->info->lightadditivesurfaces == -1) Level->lightadditivesurfaces = self;
+	}
 }
 
 CUSTOM_CVAR(Bool, gl_notexturefill, false, CVAR_NOINITCALL)
 {
-	if (level.info == nullptr || level.info->notexturefill == -1) level.notexturefill = self;
+	for (auto Level : AllLevels())
+	{
+		if (Level->info == nullptr || Level->info->notexturefill == -1) Level->notexturefill = self;
+	}
 }
 
 CUSTOM_CVAR(Int, gl_lightmode, 3, CVAR_ARCHIVE | CVAR_NOINITCALL)
@@ -129,7 +138,10 @@ CUSTOM_CVAR(Int, gl_lightmode, 3, CVAR_ARCHIVE | CVAR_NOINITCALL)
 	else if (newself > 4) newself = 8;
 	else if (newself < 0) newself = 0;
 	if (self != newself) self = newself;
-	else if ((level.info == nullptr || level.info->lightmode == ELightMode::NotSet)) level.lightMode = (ELightMode)*self;
+	else for (auto Level : AllLevels())
+	{
+		if ((level.info == nullptr || level.info->lightmode == ELightMode::NotSet)) level.lightMode = (ELightMode)*self;
+	}
 }
 
 
@@ -202,7 +214,7 @@ CCMD (map)
 	if (argv.argc() > 1)
 	{
 		const char *mapname = argv[1];
-		if (!strcmp(mapname, "*")) mapname = level.MapName.GetChars();
+		if (!strcmp(mapname, "*")) mapname = currentUILevel->MapName.GetChars();
 
 		try
 		{
@@ -252,7 +264,7 @@ UNSAFE_CCMD(recordmap)
 	if (argv.argc() > 2)
 	{
 		const char *mapname = argv[2];
-		if (!strcmp(mapname, "*")) mapname = level.MapName.GetChars();
+		if (!strcmp(mapname, "*")) mapname = currentUILevel->MapName.GetChars();
 
 		try
 		{
@@ -2180,7 +2192,8 @@ CCMD(skyfog)
 {
 	if (argv.argc()>1)
 	{
-		level.skyfog = MAX(0, (int)strtoull(argv[1], NULL, 0));
+		// Do this only on the primary level.
+		currentUILevel->skyfog = MAX(0, (int)strtoull(argv[1], NULL, 0));
 	}
 }
 

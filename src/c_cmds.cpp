@@ -1061,7 +1061,8 @@ CCMD(changesky)
 		FTextureID newsky = TexMan.GetTextureID(sky1name, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
 		if (newsky.Exists())
 		{
-			sky1texture = level.skytexture1 = newsky;
+			// This only alters the primary level's sky setting.
+			sky1texture = currentUILevel->skytexture1 = newsky;
 		}
 		else
 		{

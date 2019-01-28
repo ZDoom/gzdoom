@@ -316,7 +316,10 @@ void FTagManager::DumpTags()
 
 CCMD(dumptags)
 {
-	level.tagManager.DumpTags();
+	for (auto Level : AllLevels())
+	{
+		Level->tagManager.DumpTags();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -369,7 +372,7 @@ int FSectorTagIterator::NextCompat(bool compat, int start)
 
 	for (unsigned i = start + 1; i < tagManager.Level->sectors.Size(); i++)
 	{
-		if (level.SectorHasTag(i, searchtag)) return i;
+		if (tagManager.Level->SectorHasTag(i, searchtag)) return i;
 	}
 	return -1;
 }

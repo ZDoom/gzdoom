@@ -306,7 +306,8 @@ static void MarkRoot()
 	DThinker::MarkRoots();
 	Mark(E_FirstEventHandler);
 	Mark(E_LastEventHandler);
-	level.Mark();
+	for (auto Level : AllLevels())
+		Level->Mark();
 
 	// Mark players.
 	for (i = 0; i < MAXPLAYERS; i++)

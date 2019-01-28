@@ -83,9 +83,9 @@ CUSTOM_CVAR(Int, gl_shadowmap_quality, 512, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR (Bool, gl_light_shadowmap, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-    if (!self)
+	if (!self) for (auto Level : AllLevels())
     {
-		auto light = level.lights;
+		auto light = Level->lights;
 		while (light)
 		{
             light->mShadowmapIndex = 1024;

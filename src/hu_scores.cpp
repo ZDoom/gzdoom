@@ -368,7 +368,7 @@ static void HU_DrawTimeRemaining (int y)
 	if (deathmatch && timelimit && gamestate == GS_LEVEL)
 	{
 		char str[80];
-		int timeleft = (int)(timelimit * TICRATE * 60) - level.maptime;
+		int timeleft = (int)(timelimit * TICRATE * 60) - currentUILevel->maptime;
 		int hours, minutes, seconds;
 
 		if (timeleft < 0)

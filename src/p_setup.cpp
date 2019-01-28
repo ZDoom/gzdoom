@@ -594,39 +594,43 @@ static void P_Shutdown ()
 
 CCMD(dumpgeometry)
 {
-	for (auto &sector : level.sectors)
+	for (auto Level : AllLevels())
 	{
-		Printf(PRINT_LOG, "Sector %d\n", sector.sectornum);
-		for (int j = 0; j<sector.subsectorcount; j++)
+		Printf("Geometry for %s\n", Level->MapName.GetChars());
+		for (auto &sector : Level->sectors)
 		{
-			subsector_t * sub = sector.subsectors[j];
-
-			Printf(PRINT_LOG, "    Subsector %d - real sector = %d - %s\n", int(sub->Index()), sub->sector->sectornum, sub->hacked & 1 ? "hacked" : "");
-			for (uint32_t k = 0; k<sub->numlines; k++)
+			Printf(PRINT_LOG, "Sector %d\n", sector.sectornum);
+			for (int j = 0; j<sector.subsectorcount; j++)
 			{
-				seg_t * seg = sub->firstline + k;
-				if (seg->linedef)
+				subsector_t * sub = sector.subsectors[j];
+				
+				Printf(PRINT_LOG, "    Subsector %d - real sector = %d - %s\n", int(sub->Index()), sub->sector->sectornum, sub->hacked & 1 ? "hacked" : "");
+				for (uint32_t k = 0; k<sub->numlines; k++)
 				{
-					Printf(PRINT_LOG, "      (%4.4f, %4.4f), (%4.4f, %4.4f) - seg %d, linedef %d, side %d",
-						seg->v1->fX(), seg->v1->fY(), seg->v2->fX(), seg->v2->fY(),
-						seg->Index(), seg->linedef->Index(), seg->sidedef != seg->linedef->sidedef[0]);
+					seg_t * seg = sub->firstline + k;
+					if (seg->linedef)
+					{
+						Printf(PRINT_LOG, "      (%4.4f, %4.4f), (%4.4f, %4.4f) - seg %d, linedef %d, side %d",
+							   seg->v1->fX(), seg->v1->fY(), seg->v2->fX(), seg->v2->fY(),
+							   seg->Index(), seg->linedef->Index(), seg->sidedef != seg->linedef->sidedef[0]);
+					}
+					else
+					{
+						Printf(PRINT_LOG, "      (%4.4f, %4.4f), (%4.4f, %4.4f) - seg %d, miniseg",
+							   seg->v1->fX(), seg->v1->fY(), seg->v2->fX(), seg->v2->fY(), seg->Index());
+					}
+					if (seg->PartnerSeg)
+					{
+						subsector_t * sub2 = seg->PartnerSeg->Subsector;
+						Printf(PRINT_LOG, ", back sector = %d, real back sector = %d", sub2->render_sector->sectornum, seg->PartnerSeg->frontsector->sectornum);
+					}
+					else if (seg->backsector)
+					{
+						Printf(PRINT_LOG, ", back sector = %d (no partnerseg)", seg->backsector->sectornum);
+					}
+					
+					Printf(PRINT_LOG, "\n");
 				}
-				else
-				{
-					Printf(PRINT_LOG, "      (%4.4f, %4.4f), (%4.4f, %4.4f) - seg %d, miniseg",
-						seg->v1->fX(), seg->v1->fY(), seg->v2->fX(), seg->v2->fY(), seg->Index());
-				}
-				if (seg->PartnerSeg)
-				{
-					subsector_t * sub2 = seg->PartnerSeg->Subsector;
-					Printf(PRINT_LOG, ", back sector = %d, real back sector = %d", sub2->render_sector->sectornum, seg->PartnerSeg->frontsector->sectornum);
-				}
-				else if (seg->backsector)
-				{
-					Printf(PRINT_LOG, ", back sector = %d (no partnerseg)", seg->backsector->sectornum);
-				}
-
-				Printf(PRINT_LOG, "\n");
 			}
 		}
 	}
@@ -640,14 +644,18 @@ CCMD(dumpgeometry)
 
 CCMD(listmapsections)
 {
-	for (int i = 0; i < 100; i++)
+	for (auto Level : AllLevels())
 	{
-		for (auto &sub : level.subsectors)
+		Printf("Map sections for %s:\n", Level->MapName.GetChars());
+		for (int i = 0; i < 100; i++)
 		{
-			if (sub.mapsection == i)
+			for (auto &sub : Level->subsectors)
 			{
-				Printf("Mapsection %d, sector %d, line %d\n", i, sub.render_sector->Index(), sub.firstline->linedef->Index());
-				break;
+				if (sub.mapsection == i)
+				{
+					Printf("Mapsection %d, sector %d, line %d\n", i, sub.render_sector->Index(), sub.firstline->linedef->Index());
+					break;
+				}
 			}
 		}
 	}
@@ -661,9 +669,8 @@ CCMD(listmapsections)
 
 CUSTOM_CVAR(Bool, forcewater, false, CVAR_ARCHIVE | CVAR_SERVERINFO)
 {
-	if (gamestate == GS_LEVEL)
+	if (gamestate == GS_LEVEL) for (auto Level : AllLevels())
 	{
-		auto Level = currentUILevel;
 		for (auto &sec : Level->sectors)
 		{
 			sector_t *hsec = sec.GetHeightSec();

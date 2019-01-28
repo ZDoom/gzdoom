@@ -635,3 +635,10 @@ inline AActor *P_SpawnPlayer(FPlayerStart *mthing, int playernum, int flags = 0)
 {
 	return level.SpawnPlayer(mthing, playernum, flags);
 }
+
+// This must later be extended to return an array with all levels.
+// It is meant for code that needs to iterate over all levels to make some global changes, e.g. configuation CCMDs.
+inline TArrayView<FLevelLocals *> AllLevels()
+{
+	return TArrayView<FLevelLocals *>(&currentUILevel, 1);
+}

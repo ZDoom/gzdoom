@@ -466,7 +466,7 @@ FBlockNode *FBlockNode::Create(AActor *who, int x, int y, int group)
 	{
 		block = (FBlockNode *)secnodearena.Alloc(sizeof(FBlockNode));
 	}
-	block->BlockIndex = x + y * level.blockmap.bmapwidth;
+	block->BlockIndex = x + y * who->Level->blockmap.bmapwidth;
 	block->Me = who;
 	block->NextActor = nullptr;
 	block->PrevActor = nullptr;

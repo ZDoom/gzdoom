@@ -769,7 +769,7 @@ void G_AddViewPitch (int look, bool mouse)
 		return;
 	}
 	look = LookAdjust(look);
-	if (!level.IsFreelookAllowed())
+	if (!currentUILevel->IsFreelookAllowed())
 	{
 		LocalViewPitch = 0;
 	}

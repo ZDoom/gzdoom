@@ -880,48 +880,52 @@ CCMD(listlights)
 	int allwalls=0, allsectors=0, allsubsecs = 0;
 	int i=0, shadowcount = 0;
 	FDynamicLight * dl;
-
-	for (dl = level.lights; dl; dl = dl->next)
+	
+	for (auto Level : AllLevels())
 	{
-		walls=0;
-		sectors=0;
-		Printf("%s at (%f, %f, %f), color = 0x%02x%02x%02x, radius = %f %s %s",
-			dl->target->GetClass()->TypeName.GetChars(),
-			dl->X(), dl->Y(), dl->Z(), dl->GetRed(), dl->GetGreen(), dl->GetBlue(), 
-			dl->radius, dl->IsAttenuated()? "attenuated" : "", dl->shadowmapped? "shadowmapped" : "");
-		i++;
-		shadowcount += dl->shadowmapped;
-
-		if (dl->target)
+		Printf("Lights for %s\n", Level->MapName.GetChars());
+		for (dl = Level->lights; dl; dl = dl->next)
 		{
-			FTextureID spr = sprites[dl->target->sprite].GetSpriteFrame(dl->target->frame, 0, 0., nullptr);
-			Printf(", frame = %s ", TexMan.GetTexture(spr)->GetName().GetChars());
+			walls=0;
+			sectors=0;
+			Printf("%s at (%f, %f, %f), color = 0x%02x%02x%02x, radius = %f %s %s",
+				   dl->target->GetClass()->TypeName.GetChars(),
+				   dl->X(), dl->Y(), dl->Z(), dl->GetRed(), dl->GetGreen(), dl->GetBlue(),
+				   dl->radius, dl->IsAttenuated()? "attenuated" : "", dl->shadowmapped? "shadowmapped" : "");
+			i++;
+			shadowcount += dl->shadowmapped;
+			
+			if (dl->target)
+			{
+				FTextureID spr = sprites[dl->target->sprite].GetSpriteFrame(dl->target->frame, 0, 0., nullptr);
+				Printf(", frame = %s ", TexMan.GetTexture(spr)->GetName().GetChars());
+			}
+			
+			
+			FLightNode * node;
+			
+			node=dl->touching_sides;
+			
+			while (node)
+			{
+				walls++;
+				allwalls++;
+				node = node->nextTarget;
+			}
+			
+			
+			node = dl->touching_sector;
+			
+			while (node)
+			{
+				allsectors++;
+				sectors++;
+				node = node->nextTarget;
+			}
+			Printf("- %d walls, %d sectors\n", walls, sectors);
+			
 		}
-
-
-		FLightNode * node;
-
-		node=dl->touching_sides;
-
-		while (node)
-		{
-			walls++;
-			allwalls++;
-			node = node->nextTarget;
-		}
-
-
-		node = dl->touching_sector;
-
-		while (node)
-		{
-			allsectors++;
-			sectors++;
-			node = node->nextTarget;
-		}
-		Printf("- %d walls, %d sectors\n", walls, sectors);
-
+		Printf("%i dynamic lights, %d shadowmapped, %d walls, %d sectors\n\n\n", i, shadowcount, allwalls, allsectors);
 	}
-	Printf("%i dynamic lights, %d shadowmapped, %d walls, %d sectors\n\n\n", i, shadowcount, allwalls, allsectors);
 }
 

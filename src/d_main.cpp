@@ -746,12 +746,15 @@ void D_Display ()
 		//E_RenderFrame();
 		//
 		
-		// Check for the presence of dynamic lights at the start of the frame once.
-		if ((gl_lights && vid_rendermode == 4) || (r_dynlights && vid_rendermode != 4))
+		for (auto Level : AllLevels())
 		{
-			level.HasDynamicLights = !!level.lights;
+			// Check for the presence of dynamic lights at the start of the frame once.
+			if ((gl_lights && vid_rendermode == 4) || (r_dynlights && vid_rendermode != 4))
+			{
+				Level->HasDynamicLights = !!level.lights;
+			}
+			else Level->HasDynamicLights = false;	// lights are off so effectively we have none.
 		}
-		else level.HasDynamicLights = false;	// lights are off so effectively we have none.
 		
 		viewsec = screen->RenderView(&players[consoleplayer]);
 		screen->Begin2D();

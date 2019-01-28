@@ -593,6 +593,16 @@ PClassActor *PClassActor::GetReplacee(bool lookskill)
 		}
 	}
 	PClassActor *savedrep = ActorInfo()->Replacee;
+	// [MC] Same code as CheckReplacement but turned around so modders can indicate
+	// what monsters spawn from which entity. I.e. instead of a randomspawner
+	// showing up, one can assign an Arachnotron as the one being replaced
+	// so functions like CheckReplacee and A_BossDeath can actually work, given
+	// modders set it up that way.
+	if (E_CheckReplacee(&savedrep, this))
+	{
+		// [MK] the replacement is final, so don't continue with the chain
+		return savedrep ? savedrep : this;
+	}
 	if (savedrep == nullptr && (!lookskill || skillrepname == NAME_None))
 	{
 		return this;

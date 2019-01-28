@@ -400,8 +400,14 @@ class Object native
 	native static String G_SkillName();
 	native static int G_SkillPropertyInt(int p);
 	native static double G_SkillPropertyFloat(int p);
-	native static vector3, int G_PickDeathmatchStart();
-	native static vector3, int G_PickPlayerStart(int pnum, int flags = 0);
+	deprecated("3.8") static vector3, int G_PickDeathmatchStart()
+	{
+		return level.PickDeathmatchStart();
+	}
+	deprecated("3.8") static vector3, int G_PickPlayerStart(int pnum, int flags = 0)
+	{
+		return level.PickPlayerStart(pnum, flags);
+	}
 	native static void S_Sound (Sound sound_id, int channel, float volume = 1, float attenuation = ATTN_NORM);
 	native static void S_PauseSound (bool notmusic, bool notsfx);
 	native static void S_ResumeSound (bool notsfx);
@@ -703,6 +709,8 @@ struct LevelLocals native
 	native int FindUniqueTid(int start = 0, int limit = 0);
 	native uint GetSkyboxPortal(Actor actor);
 	native void ReplaceTextures(String from, String to, int flags);
+	native vector3, int PickDeathmatchStart();
+	native vector3, int PickPlayerStart(int pnum, int flags = 0);
 
 	native static clearscope bool IsPointInMap(vector3 p);
 

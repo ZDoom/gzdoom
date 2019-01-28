@@ -693,7 +693,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 					player->mo->special1 = 0;
 				}
 				// ]]
-				G_DoReborn(i, false);
+				level.DoReborn(i, false);
 			}
 		}
 	}
@@ -1360,7 +1360,7 @@ int G_FinishTravel ()
 		pawndup = pawn->player->mo;
 		assert (pawn != pawndup);
 
-		start = G_PickPlayerStart(pnum, 0);
+		start = level.PickPlayerStart(pnum, 0);
 		if (start == NULL)
 		{
 			if (pawndup != nullptr)

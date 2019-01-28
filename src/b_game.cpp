@@ -417,7 +417,7 @@ bool FCajunMaster::DoAddBot (uint8_t *info, botskill_t skill)
 	else
 		Printf ("%s joined the game\n", players[bnum].userinfo.GetName());
 
-	G_DoReborn (bnum, true);
+	level.DoReborn (bnum, true);
 	return true;
 }
 

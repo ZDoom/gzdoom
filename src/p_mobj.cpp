@@ -109,8 +109,6 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void G_PlayerReborn (int player);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void PlayerLandedOnThing (AActor *mo, AActor *onmobj);
@@ -4999,7 +4997,7 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 	state = p->playerstate;
 	if (state == PST_REBORN || state == PST_ENTER)
 	{
-		G_PlayerReborn (playernum);
+		PlayerReborn (playernum);
 	}
 	else if (oldactor != NULL && oldactor->player == p && !(flags & SPF_TEMPPLAYER))
 	{

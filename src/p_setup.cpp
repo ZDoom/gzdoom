@@ -445,7 +445,7 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 			if (playeringame[i])
 			{
 				players[i].mo = nullptr;
-				G_DeathMatchSpawnPlayer(i);
+				Level->DeathMatchSpawnPlayer(i);
 			}
 		}
 	}
@@ -457,7 +457,7 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 			if (playeringame[i])
 			{
 				players[i].mo = nullptr;
-				FPlayerStart *mthing = G_PickPlayerStart(i);
+				FPlayerStart *mthing = Level->PickPlayerStart(i);
 				P_SpawnPlayer(mthing, i, (Level->flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
 			}
 		}
@@ -474,7 +474,7 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 				if (!(players[i].mo->flags & MF_FRIENDLY))
 				{
 					AActor * oldSpawn = players[i].mo;
-					G_DeathMatchSpawnPlayer(i);
+					Level->DeathMatchSpawnPlayer(i);
 					oldSpawn->Destroy();
 				}
 			}

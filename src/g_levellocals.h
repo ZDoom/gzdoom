@@ -262,6 +262,17 @@ public:
 	void SpawnExtraPlayers();
 	void Serialize(FSerializer &arc, bool hubload);
 
+	// g_Game
+	void PlayerReborn (int player);
+	bool CheckSpot (int playernum, FPlayerStart *mthing);
+	void DoReborn (int playernum, bool freshbot);
+	void QueueBody (AActor *body);
+	double PlayersRangeFromSpot (FPlayerStart *spot);
+	FPlayerStart *SelectFarthestDeathmatchSpot (size_t selections);
+	FPlayerStart *SelectRandomDeathmatchSpot (int playernum, unsigned int selections);
+	void DeathMatchSpawnPlayer (int playernum);
+	FPlayerStart *PickPlayerStart(int playernum, int flags = 0);
+
 
 private:
 	// Work data for CollectConnectedGroups.

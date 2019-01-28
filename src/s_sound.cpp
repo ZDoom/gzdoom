@@ -458,8 +458,7 @@ void S_Start ()
 	// Don't start the music if revisiting a level in a hub for the same reason.
 	if (!currentUILevel->IsReentering())
 	{
-		if (currentUILevel->cdtrack == 0 || !S_ChangeCDMusic (currentUILevel->cdtrack, currentUILevel->cdid))
-			S_ChangeMusic (currentUILevel->Music, currentUILevel->musicorder);
+		currentUILevel->SetMusic();
 	}
 }
 

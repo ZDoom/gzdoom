@@ -162,7 +162,7 @@ static int DoomSpecificInfo (char *buffer, char *end)
 	}
 	else
 	{
-		p += snprintf (buffer+p, size-p, "\n\nCurrent map: %s", level.MapName.GetChars());
+		p += snprintf (buffer+p, size-p, "\n\nCurrent map: %s", currentUILevel->MapName.GetChars());
 
 		if (!viewactive)
 		{

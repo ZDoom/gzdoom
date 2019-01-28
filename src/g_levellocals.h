@@ -261,6 +261,7 @@ public:
 	void SpawnExtraPlayers();
 	void Serialize(FSerializer &arc, bool hubload);
 
+
 private:
 	// Work data for CollectConnectedGroups.
 	FPortalBits processMask;
@@ -397,6 +398,12 @@ public:
 		auto thinker = static_cast<T*>(CreateThinker(RUNTIME_CLASS(T), T::DEFAULT_STAT));
 		thinker->Construct(std::forward<Args>(args)...);
 		return thinker;
+	}
+	
+	void SetMusic()
+	{
+		if (cdtrack == 0 || !S_ChangeCDMusic(cdtrack, cdid))
+			S_ChangeMusic(Music, musicorder);
 	}
 
 

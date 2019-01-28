@@ -129,7 +129,7 @@ static void CreateVerticesForSection(FSection &section, VertexContainer &gen, bo
 
 static void CreateVerticesForSector(sector_t *sec, VertexContainer &gen)
 {
-	auto sections = level.sections.SectionsForSector(sec);
+	auto sections = sec->Level->sections.SectionsForSector(sec);
 	for (auto &section :sections)
 	{
 		CreateVerticesForSection( section, gen, true);

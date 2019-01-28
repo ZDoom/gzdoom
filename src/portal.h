@@ -22,7 +22,7 @@ struct subsector_t;
 //   have to be traversed to connect the two
 //
 // - any sector not connected to any portal is assigned to group 0
-//   Group 0 has no displacement to any other group in the level.
+//   Group 0 has no displacement to any other group in the level
 //
 //============================================================================
 

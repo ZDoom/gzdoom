@@ -544,8 +544,7 @@ void P_SerializeSounds(FLevelLocals *Level, FSerializer &arc)
 	if (arc.isReading())
 	{
 		if (!S_ChangeMusic(name, order))
-			if (Level->cdtrack == 0 || !S_ChangeCDMusic(Level->cdtrack, Level->cdid))
-				S_ChangeMusic(Level->Music, Level->musicorder);
+			Level->SetMusic();
 		Level->SetMusicVolume(musvol);
 	}
 }

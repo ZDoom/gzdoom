@@ -26,12 +26,6 @@ inline DVector3 AActor::PosRelative(const line_t *line) const
 	return Pos() + Level->Displacements.getOffset(Sector->PortalGroup, line->frontsector->PortalGroup);
 }
 
-inline DVector3 PosRelative(const DVector3 &pos, line_t *line, sector_t *refsec = NULL)
-{
-	return pos + level.Displacements.getOffset(refsec->PortalGroup, line->frontsector->PortalGroup);
-}
-
-
 inline void AActor::ClearInterpolation()
 {
 	Prev = Pos();

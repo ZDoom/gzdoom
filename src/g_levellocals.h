@@ -207,7 +207,7 @@ public:
 	int Massacre(bool baddies = false, FName cls = NAME_None);
 	AActor *SpawnMapThing(FMapThing *mthing, int position);
 	AActor *SpawnMapThing(int index, FMapThing *mt, int position);
-	AActor *SpawnPlayer(FPlayerStart *mthing, int playernum, int flags);
+	AActor *SpawnPlayer(FPlayerStart *mthing, int playernum, int flags = 0);
 	void StartLightning();
 	void ForceLightning(int mode);
 	void ClearDynamic3DFloorData();
@@ -639,12 +639,6 @@ inline bool line_t::hitSkyWall(AActor* mo) const
 	return backsector &&
 		backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
 		mo->Z() >= backsector->ceilingplane.ZatPoint(mo->PosRelative(this));
-}
-
-// Work for later.
-inline AActor *P_SpawnPlayer(FPlayerStart *mthing, int playernum, int flags = 0)
-{
-	return level.SpawnPlayer(mthing, playernum, flags);
 }
 
 // This must later be extended to return an array with all levels.

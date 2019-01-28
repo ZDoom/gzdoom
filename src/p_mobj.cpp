@@ -5338,7 +5338,7 @@ AActor *FLevelLocals::SpawnMapThing (FMapThing *mthing, int position)
 		}
 		if (!deathmatch && !(flags2 & LEVEL2_RANDOMPLAYERSTARTS))
 		{
-			return P_SpawnPlayer(&start, pnum, (flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
+			return SpawnPlayer(&start, pnum, (flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
 		}
 		return NULL;
 	}

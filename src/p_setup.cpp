@@ -458,7 +458,7 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 			{
 				players[i].mo = nullptr;
 				FPlayerStart *mthing = Level->PickPlayerStart(i);
-				P_SpawnPlayer(mthing, i, (Level->flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
+				Level->SpawnPlayer(mthing, i, (Level->flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
 			}
 		}
 	}

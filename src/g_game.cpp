@@ -1503,7 +1503,7 @@ void FLevelLocals::DeathMatchSpawnPlayer (int playernum)
 			}
 		}
 	}
-	AActor *mo = P_SpawnPlayer(spot, playernum);
+	AActor *mo = SpawnPlayer(spot, playernum);
 	if (mo != NULL) P_PlayerStartStomp(mo);
 }
 
@@ -1649,13 +1649,13 @@ void FLevelLocals::DoReborn (int playernum, bool freshbot)
 			playerstarts[playernum].type != 0 &&
 			CheckSpot (playernum, &playerstarts[playernum]))
 		{
-			AActor *mo = P_SpawnPlayer(&playerstarts[playernum], playernum);
+			AActor *mo = SpawnPlayer(&playerstarts[playernum], playernum);
 			if (mo != NULL) P_PlayerStartStomp(mo, true);
 		}
 		else
 		{ // try to spawn at any random player's spot
 			FPlayerStart *start = PickPlayerStart(playernum, PPS_FORCERANDOM);
-			AActor *mo = P_SpawnPlayer(start, playernum);
+			AActor *mo = SpawnPlayer(start, playernum);
 			if (mo != NULL) P_PlayerStartStomp(mo, true);
 		}
 	}

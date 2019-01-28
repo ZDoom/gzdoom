@@ -81,6 +81,8 @@ void E_Console(int player, FString name, int arg1, int arg2, int arg3, bool manu
 
 // called when looking up the replacement for an actor class
 bool E_CheckReplacement(PClassActor* replacee, PClassActor** replacement);
+// called when looking up the replaced for an actor class
+bool E_CheckReplacee(PClassActor** replacee, PClassActor* replacement);
 
 // called on new game
 void E_NewGame(EventHandlerType handlerType);
@@ -187,6 +189,7 @@ public:
 
 	//
 	void CheckReplacement(PClassActor* replacee, PClassActor** replacement, bool* final);
+	void CheckReplacee(PClassActor** replacee, PClassActor* replacement, bool* final);
 
 	//
 	void NewGame();
@@ -295,6 +298,13 @@ struct FConsoleEvent
 };
 
 struct FReplaceEvent
+{
+	PClassActor* Replacee;
+	PClassActor* Replacement;
+	bool IsFinal;
+};
+
+struct FReplacedEvent
 {
 	PClassActor* Replacee;
 	PClassActor* Replacement;

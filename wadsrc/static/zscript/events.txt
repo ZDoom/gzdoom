@@ -300,6 +300,13 @@ struct ReplaceEvent native version("2.4")
 	native bool IsFinal;
 }
 
+struct ReplacedEvent native version("3.7")
+{
+	native Class<Actor> Replacee;
+	native readonly Class<Actor> Replacement;
+	native bool IsFinal;
+}
+
 class StaticEventHandler : Object native play version("2.4")
 {
     // static event handlers CAN register other static event handlers.
@@ -312,7 +319,7 @@ class StaticEventHandler : Object native play version("2.4")
     virtual void OnUnregister() {}
 
     // actual handlers are here
-virtual void WorldLoaded(WorldEvent e) {}
+	virtual void WorldLoaded(WorldEvent e) {}
     virtual void WorldUnloaded(WorldEvent e) {}
     virtual void WorldThingSpawned(WorldEvent e) {}
     virtual void WorldThingDied(WorldEvent e) {}
@@ -348,6 +355,7 @@ virtual void WorldLoaded(WorldEvent e) {}
     
     //
     virtual void CheckReplacement(ReplaceEvent e) {}
+	virtual void CheckReplacee(ReplacedEvent e) {}
 
     //
     virtual  void NewGame() {}

@@ -225,13 +225,8 @@ extend class Actor
 		// killough 1/18/98: this is why some missiles do not have smoke
 		// and some do. Also, internal demos start at random gametics, thus
 		// the bug in which revenants cause internal demos to go out of sync.
-		//
-		// killough 3/6/98: fix revenant internal demo bug by subtracting
-		// levelstarttic from gametic:
-		//
-		// [RH] level.time is always 0-based, so nothing special to do here.
 
-		if (level.time & 3)	return;
+		if (level.maptime & 3)	return;
 	
 		// spawn a puff of smoke behind the rocket
 		SpawnPuff ("BulletPuff", pos, angle, angle, 3);

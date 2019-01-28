@@ -393,9 +393,6 @@ int G_SkillProperty(ESkillProperty prop)
 			return AllSkills[gameskill].NoPain;	
 
 		case SKILLP_Infight:
-			// This property also needs to consider the level flags for the same info.
-			if (level.flags2 & LEVEL2_TOTALINFIGHTING) return 1;
-			if (level.flags2 & LEVEL2_NOINFIGHTING) return -1;	
 			if (AllSkills[gameskill].Infighting == LEVEL2_TOTALINFIGHTING) return 1;
 			if (AllSkills[gameskill].Infighting == LEVEL2_NOINFIGHTING) return -1;
 			return infighting;

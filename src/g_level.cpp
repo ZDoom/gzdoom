@@ -2052,6 +2052,19 @@ void FLevelLocals::SetMusicVolume(float f)
 	I_SetMusicVolume(f);
 }
 
+//============================================================================
+//
+//
+//
+//============================================================================
+
+int FLevelLocals::GetInfighting()
+{
+	if (flags2 & LEVEL2_TOTALINFIGHTING) return 1;
+	if (flags2 & LEVEL2_NOINFIGHTING) return -1;
+	return G_SkillProperty(SKILLP_Infight);
+}
+
 //==========================================================================
 // IsPointInMap
 //

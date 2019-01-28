@@ -141,7 +141,6 @@ struct FLevelData
 	TArray<FPlayerStart> AllPlayerStarts;
 
 	FBehaviorContainer Behaviors;
-	FTagManager tagManager;
 	AActor *TIDHash[128];
 	
 	TArray<FStrifeDialogueNode *> StrifeDialogues;
@@ -429,6 +428,7 @@ public:
 	FString		NextSecretMap;		// map to go to when used secret exit
 	FString		F1Pic;
 	EMapType	maptype;
+	FTagManager tagManager;
 
 	uint64_t	ShaderStartTime = 0;	// tell the shader system when we started the level (forces a timer restart)
 

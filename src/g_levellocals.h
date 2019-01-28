@@ -87,6 +87,7 @@ struct FPortalBits
 class DACSThinker;
 class DFraggleThinker;
 class DSpotState;
+class DSeqNode;
 struct FStrifeDialogueNode;
 class DAutomapBase;
 
@@ -486,6 +487,9 @@ public:
 	double		airfriction;
 	int			airsupply;
 	int			DefaultEnvironment;		// Default sound environment.
+
+	int ActiveSequences;
+	DSeqNode *SequenceListHead;
 
 	TArray<DVector2>	Scrolls;		// NULL if no DScrollers in this level
 

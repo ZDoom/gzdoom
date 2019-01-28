@@ -267,6 +267,8 @@ void FLevelLocals::ClearLevelData()
 		killed_monsters = found_items = found_secrets =
 		wminfo.maxfrags = 0;
 	
+	SN_StopAllSequences(this);
+
 	FStrifeDialogueNode *node;
 	
 	while (StrifeDialogues.Pop (node))
@@ -351,7 +353,6 @@ void P_FreeLevelData ()
 	R_FreePastViewers();
 	P_ClearUDMFKeys();
 
-	SN_StopAllSequences ();
 	DThinker::DestroyAllThinkers ();
 
 	level.ClearLevelData();
@@ -611,13 +612,13 @@ CCMD(dumpgeometry)
 					if (seg->linedef)
 					{
 						Printf(PRINT_LOG, "      (%4.4f, %4.4f), (%4.4f, %4.4f) - seg %d, linedef %d, side %d",
-							   seg->v1->fX(), seg->v1->fY(), seg->v2->fX(), seg->v2->fY(),
-							   seg->Index(), seg->linedef->Index(), seg->sidedef != seg->linedef->sidedef[0]);
+							seg->v1->fX(), seg->v1->fY(), seg->v2->fX(), seg->v2->fY(),
+							seg->Index(), seg->linedef->Index(), seg->sidedef != seg->linedef->sidedef[0]);
 					}
 					else
 					{
 						Printf(PRINT_LOG, "      (%4.4f, %4.4f), (%4.4f, %4.4f) - seg %d, miniseg",
-							   seg->v1->fX(), seg->v1->fY(), seg->v2->fX(), seg->v2->fY(), seg->Index());
+							seg->v1->fX(), seg->v1->fY(), seg->v2->fX(), seg->v2->fY(), seg->Index());
 					}
 					if (seg->PartnerSeg)
 					{

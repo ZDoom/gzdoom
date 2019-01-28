@@ -528,7 +528,6 @@ FSerializer &Serialize(FSerializer &arc, const char *key, zone_t &z, zone_t *def
 void P_SerializeSounds(FLevelLocals *Level, FSerializer &arc)
 {
 	S_SerializeSounds(arc);
-	DSeqNode::SerializeSequences (arc);
 	const char *name = NULL;
 	uint8_t order;
 	float musvol = Level->MusicVolume;
@@ -931,6 +930,7 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 		DThinker::DestroyAllThinkers();
 		interpolator.ClearInterpolations();
 		arc.ReadObjects(hubload);
+		ActiveSequences = 0;
 	}
 
 	arc("multiplayer", multiplayer);
@@ -966,7 +966,8 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 		("scrolls", Scrolls)
 		("automap", automap)
 		("interpolator", interpolator)
-		("frozenstate", frozenstate);
+		("frozenstate", frozenstate)
+		("sndseqlisthead", SequenceListHead);
 
 
 	// Hub transitions must keep the current total time
@@ -1022,7 +1023,7 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 				FWeaponSlots::SetupWeaponSlots(players[i].mo);
 			}
 		}
-		AActor::RecreateAllAttachedLights();
+	AActor::RecreateAllAttachedLights();
 		InitPortalGroups(this);
 
 		automap->UpdateShowAllLines();

@@ -1751,7 +1751,10 @@ void S_StopSound (const FPolyObj *poly, int channel)
 
 void S_StopAllChannels ()
 {
-	SN_StopAllSequences();
+	for (auto Level : AllLevels())
+	{
+		SN_StopAllSequences(Level);
+	}
 
 	FSoundChan *chan = Channels;
 	while (chan != NULL)
@@ -2178,8 +2181,10 @@ void S_UpdateSounds (AActor *listenactor)
 		chan->ChanFlags &= ~CHAN_JUSTSTARTED;
 	}
 
-	SN_UpdateActiveSequences();
-
+	for (auto Level : AllLevels())
+	{
+		SN_UpdateActiveSequences(Level);
+	}
 
 	GSnd->UpdateListener(&listener);
 	GSnd->UpdateSounds();

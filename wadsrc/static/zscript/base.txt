@@ -635,9 +635,9 @@ struct LevelLocals native
 	native readonly Array<@Vertex> Vertexes;
 	native internal Array<@SectorPortal> SectorPortals;
 	
-	native readonly int time;
+	deprecated("3.8") native readonly int time;
 	native readonly int maptime;
-	native readonly int totaltime;
+	deprecated("3.8") native readonly int totaltime;
 	native readonly int starttime;
 	native readonly int partime;
 	native readonly int sucktime;
@@ -648,10 +648,10 @@ struct LevelLocals native
 	native readonly String MapName;
 	native String NextMap;
 	native String NextSecretMap;
-	native String F1Pic;
+	deprecated("3.8") native readonly String F1Pic;
 	native readonly int maptype;
-	native readonly String Music;
-	native readonly int musicorder;
+	deprecated("3.8") native readonly String Music;
+	deprecated("3.8") native readonly int musicorder;
 	native readonly TextureID skytexture1;
 	native readonly TextureID skytexture2;
 	native float skyspeed1;
@@ -696,7 +696,7 @@ struct LevelLocals native
 	native int ExecuteSpecial(int special, Actor activator, line linedef, bool lineside, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0, int arg5 = 0);
 	native static void GiveSecret(Actor activator, bool printmsg = true, bool playsound = true);
 	native static void StartSlideshow(Name whichone = 'none');
-	native static void WorldDone();
+	native void WorldDone();
 	native static void RemoveAllBots(bool fromlist);
 	native ui Vector2 GetAutomapPosition();
 	native void SetInterMusic(String nextmap);

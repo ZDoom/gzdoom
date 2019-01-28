@@ -430,7 +430,7 @@ class KoraxSpirit : Actor
 		}
 		VelFromAngle();
 
-		if (!(level.time&15) 
+		if (!(Level.maptime&15) 
 			|| pos.z > target.pos.z + target.Default.Height
 			|| pos.z + height < target.pos.z)
 		{

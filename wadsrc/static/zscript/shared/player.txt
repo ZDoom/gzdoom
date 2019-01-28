@@ -585,7 +585,7 @@ class PlayerPawn : Actor
 		{
 			if (player.health > 0)
 			{
-				angle = level.time / (120 * TICRATE / 35.) * 360.;
+				angle = Level.maptime / (120 * TICRATE / 35.) * 360.;
 				bob = player.GetStillBob() * sin(angle);
 			}
 			else
@@ -595,7 +595,7 @@ class PlayerPawn : Actor
 		}
 		else
 		{
-			angle = level.time / (20 * TICRATE / 35.) * 360.;
+			angle = Level.maptime / (20 * TICRATE / 35.) * 360.;
 			bob = player.bob * sin(angle) * (waterlevel > 1 ? 0.25f : 0.5f);
 		}
 
@@ -734,7 +734,7 @@ class PlayerPawn : Actor
 		if ((player.cmd.buttons & BT_USE ||
 			((multiplayer || alwaysapplydmflags) && sv_forcerespawn)) && !sv_norespawn)
 		{
-			if (level.time >= player.respawn_time || ((player.cmd.buttons & BT_USE) && player.Bot == NULL))
+			if (Level.maptime >= player.respawn_time || ((player.cmd.buttons & BT_USE) && player.Bot == NULL))
 			{
 				player.cls = NULL;		// Force a new class if the player is using a random class
 				player.playerstate = (multiplayer || level.AllowRespawn || sv_singleplayerrespawn || G_SkillPropertyInt(SKILLP_PlayerRespawn)) ? PST_REBORN : PST_ENTER;
@@ -1518,7 +1518,7 @@ class PlayerPawn : Actor
 	virtual void CheckPoison()
 	{
 		let player = self.player;
-		if (player.poisoncount && !(level.time & 15))
+		if (player.poisoncount && !(Level.maptime & 15))
 		{
 			player.poisoncount -= 5;
 			if (player.poisoncount < 0)
@@ -1542,7 +1542,7 @@ class PlayerPawn : Actor
 		{
 			let player = self.player;
 			int maxhealth = GetMaxHealth(true);
-			if ((level.time % TICRATE) == 0 && player.health > maxhealth)
+			if ((Level.maptime % TICRATE) == 0 && player.health > maxhealth)
 			{
 				if (player.health - 5 < maxhealth)
 					player.health = maxhealth;
@@ -1570,9 +1570,9 @@ class PlayerPawn : Actor
 			{
 				ResetAirSupply();
 			}
-			else if (player.air_finished <= level.time && !(level.time & 31))
+			else if (player.air_finished <= Level.maptime && !(Level.maptime & 31))
 			{
-				DamageMobj(NULL, NULL, 2 + ((level.time - player.air_finished) / TICRATE), 'Drowning');
+				DamageMobj(NULL, NULL, 2 + ((Level.maptime - player.air_finished) / TICRATE), 'Drowning');
 			}
 		}
 	}
@@ -1647,7 +1647,7 @@ class PlayerPawn : Actor
 			if (player.hazardcount)
 			{
 				player.hazardcount--;
-				if (!(level.time % player.hazardinterval) && player.hazardcount > 16*TICRATE)
+				if (!(Level.maptime % player.hazardinterval) && player.hazardcount > 16*TICRATE)
 					player.mo.DamageMobj (NULL, NULL, 5, player.hazardtype);
 			}
 			player.mo.CheckPoison();
@@ -1898,7 +1898,7 @@ class PlayerPawn : Actor
 							// This problem is only detectable when it's too late to do something about it...
 							ThrowAbortException("Cannot give morph item '%s' when starting a game!", di.Name);
 						}
-					}
+						}
 					let weap = Weapon(item);
 					if (weap != NULL && weap.CheckAmmo(Weapon.EitherFire, false))
 					{
@@ -2334,7 +2334,7 @@ class PlayerPawn : Actor
 		for (int i = 0; i < 2; i++)
 		{
 			// Bob the weapon based on movement speed. ([SP] And user's bob speed setting)
-			double angle = (BobSpeed * player.GetWBobSpeed() * 35 /	TICRATE*(level.time - 1 + i)) * (360. / 8192.);
+			double angle = (BobSpeed * player.GetWBobSpeed() * 35 /	TICRATE*(Level.maptime - 1 + i)) * (360. / 8192.);
 
 			// [RH] Smooth transitions between bobbing and not-bobbing frames.
 			// This also fixes the bug where you can "stick" a weapon off-center by
@@ -2432,13 +2432,13 @@ class PlayerPawn : Actor
 	virtual bool ResetAirSupply (bool playgasp = true)
 	{
 		let player = self.player;
-		bool wasdrowning = (player.air_finished < level.time);
+		bool wasdrowning = (player.air_finished < Level.maptime);
 
 		if (playgasp && wasdrowning)
 		{
 			A_PlaySound("*gasp", CHAN_VOICE);
 		}
-		if (level.airsupply > 0 && AirCapacity > 0) player.air_finished = level.time + int(level.airsupply * AirCapacity);
+		if (Level.airsupply > 0 && AirCapacity > 0) player.air_finished = Level.maptime + int(Level.airsupply * AirCapacity);
 		else player.air_finished = int.max;
 		return wasdrowning;
 	}

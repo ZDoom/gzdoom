@@ -267,12 +267,12 @@ class PathFollower : Actor
 			bJustStepped = false;
 			if (CurrNode.args[2])
 			{
-				HoldTime = level.time + CurrNode.args[2] * TICRATE / 8;
+				HoldTime = Level.maptime + CurrNode.args[2] * TICRATE / 8;
 				SetXYZ(CurrNode.Pos);
 			}
 		}
 
-		if (HoldTime > level.time)
+		if (HoldTime > Level.maptime)
 			return;
 
 		// Splines must have a previous node.

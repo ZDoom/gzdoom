@@ -20,7 +20,6 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native play uint gameaction;
 	native readonly int gamestate;
 	native readonly TextureID skyflatnum;
-	native readonly uint8 globalfreeze;
 	native readonly int consoleplayer;
 	native readonly Font smallfont;
 	native readonly Font smallfont2;
@@ -46,6 +45,7 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native readonly Weapon WP_NOCHANGE;
 	native int LocalViewPitch;
 	native ui readonly LevelLocals currentUILevel;
+	deprecated("3.8") native readonly bool globalfreeze;
 	
 }
 
@@ -635,9 +635,9 @@ struct LevelLocals native
 	native readonly Array<@Vertex> Vertexes;
 	native internal Array<@SectorPortal> SectorPortals;
 	
-	deprecated("3.8") native readonly int time;
+	native readonly int time;
 	native readonly int maptime;
-	deprecated("3.8") native readonly int totaltime;
+	native readonly int totaltime;
 	native readonly int starttime;
 	native readonly int partime;
 	native readonly int sucktime;
@@ -648,10 +648,10 @@ struct LevelLocals native
 	native readonly String MapName;
 	native String NextMap;
 	native String NextSecretMap;
-	deprecated("3.8") native readonly String F1Pic;
+	native readonly String F1Pic;
 	native readonly int maptype;
-	deprecated("3.8") native readonly String Music;
-	deprecated("3.8") native readonly int musicorder;
+	native readonly String Music;
+	native readonly int musicorder;
 	native readonly TextureID skytexture1;
 	native readonly TextureID skytexture2;
 	native float skyspeed1;
@@ -678,7 +678,7 @@ struct LevelLocals native
 	native readonly bool polygrind;
 	native readonly bool nomonsters;
 	native readonly bool allowrespawn;
-	native bool frozen;
+	deprecated("3.8") native bool frozen;
 	native readonly bool infinite_flight;
 	native readonly bool no_dlg_freeze;
 	native readonly bool keepfullinventory;
@@ -711,6 +711,8 @@ struct LevelLocals native
 	native void ReplaceTextures(String from, String to, int flags);
 	native vector3, int PickDeathmatchStart();
 	native vector3, int PickPlayerStart(int pnum, int flags = 0);
+	native int isFrozen();
+	native void setFrozen(bool on);
 
 	native static clearscope bool IsPointInMap(vector3 p);
 

@@ -210,7 +210,7 @@ extend class PlayerPawn
 		{ // You can't use items if you're totally frozen
 			return false;
 		}
-		if ((level.FROZEN) && (player == NULL || player.timefreezer == 0))
+		if (isFrozen())
 		{
 			// Time frozen
 			return false;

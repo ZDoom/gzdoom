@@ -965,7 +965,8 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 		("impactdecalcount", ImpactDecalCount)
 		("scrolls", Scrolls)
 		("automap", automap)
-		("interpolator", interpolator);
+		("interpolator", interpolator)
+		("frozenstate", frozenstate);
 
 
 	// Hub transitions must keep the current total time
@@ -978,6 +979,7 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 		sky2texture = skytexture2;
 		R_InitSkyMap();
 		AirControlChanged();
+		bglobal.freeze = !!(frozenstate & 2);
 	}
 
 	Behaviors.SerializeModuleStates(arc);

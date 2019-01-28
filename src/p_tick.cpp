@@ -99,6 +99,7 @@ void P_Ticker (void)
 	{
 		if (bglobal.changefreeze)
 		{
+			level.frozenstate ^= 2;
 			bglobal.freeze ^= 1;
 			bglobal.changefreeze = 0;
 		}
@@ -134,8 +135,7 @@ void P_Ticker (void)
 	P_ThinkParticles();	// [RH] make the particles think
 
 	for (i = 0; i<MAXPLAYERS; i++)
-		if (playeringame[i] &&
-			/*Added by MC: Freeze mode.*/!(bglobal.freeze && players[i].Bot != NULL))
+		if (playeringame[i])
 			P_PlayerThink (&players[i]);
 
 	// [ZZ] call the WorldTick hook
@@ -145,13 +145,13 @@ void P_Ticker (void)
 	DThinker::RunThinkers ();
 
 	//if added by MC: Freeze mode.
-	if (!bglobal.freeze && !(level.flags2 & LEVEL2_FROZEN))
+	if (!level.isFrozen())
 	{
 		P_UpdateSpecials (&level);
 		P_RunEffects ();	// [RH] Run particle effects
 	}
 
-	// for par times
+		// for par times
 	level.time++;
 	level.maptime++;
 	level.totaltime++;

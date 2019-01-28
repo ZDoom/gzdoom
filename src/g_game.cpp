@@ -1112,7 +1112,7 @@ void G_Ticker ()
 	uint32_t rngsum = FRandom::StaticSumSeeds ();
 
 	//Added by MC: For some of that bot stuff. The main bot function.
-	bglobal.Main ();
+	bglobal.Main (&level);
 
 	for (i = 0; i < MAXPLAYERS; i++)
 	{

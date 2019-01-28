@@ -229,7 +229,7 @@ void FModelRenderer::RenderFrameModels(const FSpriteModelFrame *smf, const FStat
 			// [BB] To interpolate at more than 35 fps we take tic fractions into account.
 			float ticFraction = 0.;
 			// [BB] In case the tic counter is frozen we have to leave ticFraction at zero.
-			if (ConsoleState == c_up && menuactive != MENU_On && !(level.flags2 & LEVEL2_FROZEN))
+			if (ConsoleState == c_up && menuactive != MENU_On && !level.isFrozen())
 			{
 				ticFraction = I_GetTimeFrac();
 			}

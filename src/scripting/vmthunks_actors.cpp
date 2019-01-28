@@ -1654,6 +1654,18 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckFor3DCeilingHit, CheckFor3DCeilingHit
 
 
 
+static int isFrozen(AActor *self)
+{
+	return self->isFrozen();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, isFrozen, isFrozen)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(isFrozen(self));
+}
+
+
 //===========================================================================
 //
 // PlayerPawn functions

@@ -3505,18 +3505,15 @@ void AActor::Tick ()
 		// apply velocity
 		// ensure that the actor is not linked into the blockmap
 
-		if (!(flags5 & MF5_NOTIMEFREEZE))
+		//Added by MC: Freeze mode.
+		if (isFrozen())
 		{
-			//Added by MC: Freeze mode.
-			if (bglobal.freeze || Level->flags2 & LEVEL2_FROZEN)
+			// Boss cubes shouldn't be accelerated by timefreeze
+			if (flags6 & MF6_BOSSCUBE)
 			{
-				// Boss cubes shouldn't be accelerated by timefreeze
-				if (flags6 & MF6_BOSSCUBE)
-				{
-					special2++;
-				}
-				return;
+				special2++;
 			}
+			return;
 		}
 
 		if (!Vel.isZero() || !(flags & MF_NOBLOCKMAP))
@@ -3555,26 +3552,15 @@ void AActor::Tick ()
 			return;
 		}
 
-		if (!(flags5 & MF5_NOTIMEFREEZE))
+		if (isFrozen())
 		{
 			// Boss cubes shouldn't be accelerated by timefreeze
 			if (flags6 & MF6_BOSSCUBE)
 			{
 				special2++;
 			}
-			//Added by MC: Freeze mode.
-			if (bglobal.freeze && !(player && player->Bot == NULL))
-			{
-				return;
-			}
-
-			// Apply freeze mode.
-			if ((Level->flags2 & LEVEL2_FROZEN) && (player == NULL || player->timefreezer == 0))
-			{
-				return;
-			}
+			return;
 		}
-
 
 		if (effects & FX_ROCKET) 
 		{

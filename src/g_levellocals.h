@@ -369,6 +369,11 @@ public:
 		return it.Next();
 	}
 
+	int isFrozen()
+	{
+		return frozenstate;
+	}
+
 	sector_t *PointInSector(const DVector2 &pos)
 	{
 		return P_PointInSector(pos);
@@ -497,6 +502,7 @@ public:
 	bool		FromSnapshot;			// The current map was restored from a snapshot
 	bool		HasHeightSecs;			// true if some Transfer_Heights effects are present in the map. If this is false, some checks in the renderer can be shortcut.
 	bool		HasDynamicLights;		// Another render optimization for maps with no lights at all.
+	uint8_t		frozenstate;
 
 	double		teamdamage;
 

@@ -1425,6 +1425,7 @@ public:
 	void DeleteAttachedLights();
 	static void DeleteAllAttachedLights();
 	static void RecreateAllAttachedLights();
+	bool isFrozen();
 
 	bool				hasmodel;
 };

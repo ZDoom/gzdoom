@@ -1531,7 +1531,7 @@ class PowerTimeFreezer : Powerup
 		// Make sure the effect starts and ends on an even tic.
 		if ((Level.maptime & 1) == 0)
 		{
-			level.frozen = true;;
+			Level.SetFrozen(true);
 		}
 		else
 		{
@@ -1560,7 +1560,7 @@ class PowerTimeFreezer : Powerup
 		// [RH] The "blinking" can't check against EffectTics exactly or it will
 		// never happen, because InitEffect ensures that EffectTics will always
 		// be odd when Level.maptime is even.
-		Level.frozen = ( EffectTics > 4*32 
+		Level.SetFrozen ( EffectTics > 4*32 
 			|| (( EffectTics > 3*32 && EffectTics <= 4*32 ) && ((EffectTics + 1) & 15) != 0 )
 			|| (( EffectTics > 2*32 && EffectTics <= 3*32 ) && ((EffectTics + 1) & 7) != 0 )
 			|| (( EffectTics >   32 && EffectTics <= 2*32 ) && ((EffectTics + 1) & 3) != 0 )
@@ -1598,7 +1598,7 @@ class PowerTimeFreezer : Powerup
 		}
 
 		// No, so allow other actors to move about freely once again.
-		level.frozen = false;
+		Level.SetFrozen(false);
 
 		// Also, turn the music back on.
 		S_ResumeSound(false);

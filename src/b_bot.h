@@ -116,7 +116,7 @@ public:
 	void ClearPlayer (int playernum, bool keepTeam);
 
 	//(b_game.cpp)
-	void Main ();
+	void Main (FLevelLocals *Level);
 	void Init ();
 	void End();
 	bool SpawnBot (const char *name, int color = NOCOLOR);

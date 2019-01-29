@@ -91,6 +91,7 @@ class DSpotState;
 class DSeqNode;
 struct FStrifeDialogueNode;
 class DAutomapBase;
+struct wbstartstruct_t;
 
 typedef TMap<int, int> FDialogueIDMap;				// maps dialogue IDs to dialogue array index (for ACS)
 typedef TMap<FName, int> FDialogueMap;				// maps actor class names to dialogue array index
@@ -218,6 +219,7 @@ public:
 	FPlayerStart *SelectRandomDeathmatchSpot (int playernum, unsigned int selections);
 	void DeathMatchSpawnPlayer (int playernum);
 	FPlayerStart *PickPlayerStart(int playernum, int flags = 0);
+	bool DoCompleted(FString nextlevel, wbstartstruct_t &wminfo);
 
 
 private:

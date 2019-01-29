@@ -475,7 +475,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 void G_StartTravel ();
 int G_FinishTravel ();
 
-void G_DoLoadLevel (int position, bool autosave, bool newGame);
+void G_DoLoadLevel (const FString &MapName, int position, bool autosave, bool newGame);
 
 cluster_info_t *FindClusterInfo (int cluster);
 level_info_t *FindLevelInfo (const char *mapname, bool allowdefault=true);

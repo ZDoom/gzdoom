@@ -1037,9 +1037,6 @@ void G_Ticker ()
 		}
 		switch (gameaction)
 		{
-		case ga_loadlevel:
-			G_DoLoadLevel (-1, false, false);
-			break;
 		case ga_recordgame:
 			G_CheckDemoStatus();
 			G_RecordDemo(newdemoname);
@@ -1624,7 +1621,6 @@ void FLevelLocals::DoReborn (int playernum, bool freshbot)
 			BackupSaveName = "";
 			G_InitNew (level.MapName, false);
 			demoplayback = indemo;
-//			gameaction = ga_loadlevel;
 		}
 	}
 	else

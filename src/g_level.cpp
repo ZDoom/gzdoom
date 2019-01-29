@@ -538,7 +538,6 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		bglobal.Init ();
 	}
 
-	level.MapName = mapname;
 	if (bTitleLevel)
 	{
 		gamestate = GS_TITLELEVEL;
@@ -548,7 +547,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		gamestate = GS_LEVEL;
 	}
 	
-	G_DoLoadLevel (0, false, !savegamerestore);
+	G_DoLoadLevel (mapname, 0, false, !savegamerestore);
 }
 
 //
@@ -746,47 +745,63 @@ void G_SecretExitLevel (int position)
 //
 //==========================================================================
 
-void G_DoCompleted (void)
+void	G_DoCompleted (void)
 {
-	int i; 
-
 	gameaction = ga_nothing;
-
+	
 	if (   gamestate == GS_DEMOSCREEN
 		|| gamestate == GS_FULLCONSOLE
 		|| gamestate == GS_STARTUP)
 	{
 		return;
 	}
-
+	
 	if (gamestate == GS_TITLELEVEL)
 	{
-		level.MapName = nextlevel;
-		G_DoLoadLevel (startpos, false, false);
+		G_DoLoadLevel (nextlevel, startpos, false, false);
 		startpos = 0;
 		viewactive = true;
 		return;
 	}
-
-	// [RH] Mark this level as having been visited
-	if (!(level.flags & LEVEL_CHANGEMAPCHEAT))
-		FindLevelInfo (level.MapName)->flags |= LEVEL_VISITED;
-
+	
 	if (automapactive)
 		AM_Stop ();
-	
+
 	// Close the conversation menu if open.
 	P_FreeStrifeConversations ();
 
-	wminfo.finished_ep = level.cluster - 1;
-	wminfo.LName0 = TexMan.CheckForTexture(level.info->PName, ETextureType::MiscPatch);
-	wminfo.current = level.MapName;
+	if (level.DoCompleted(nextlevel, wminfo))
+	{
+		gamestate = GS_INTERMISSION;
+		viewactive = false;
+		automapactive = false;
+		
+		// [RH] If you ever get a statistics driver operational, adapt this.
+		//	if (statcopy)
+		//		memcpy (statcopy, &wminfo, sizeof(wminfo));
+		
+		WI_Start (&wminfo);
+	}
+}
+
+
+bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
+{
+	int i;
+
+	// [RH] Mark this level as having been visited
+	if (!(flags & LEVEL_CHANGEMAPCHEAT))
+		FindLevelInfo (MapName)->flags |= LEVEL_VISITED;
+	
+	wminfo.finished_ep = cluster - 1;
+	wminfo.LName0 = TexMan.CheckForTexture(info->PName, ETextureType::MiscPatch);
+	wminfo.current = MapName;
 
 	if (deathmatch &&
 		(dmflags & DF_SAME_LEVEL) &&
-		!(level.flags & LEVEL_CHANGEMAPCHEAT))
+		!(flags & LEVEL_CHANGEMAPCHEAT))
 	{
-		wminfo.next = level.MapName;
+		wminfo.next = MapName;
 		wminfo.LName1 = wminfo.LName0;
 	}
 	else
@@ -808,32 +823,31 @@ void G_DoCompleted (void)
 	nextlevel = wminfo.next;
 
 	wminfo.next_ep = FindLevelInfo (wminfo.next)->cluster - 1;
-	wminfo.maxkills = level.total_monsters;
-	wminfo.maxitems = level.total_items;
-	wminfo.maxsecret = level.total_secrets;
+	wminfo.maxkills = total_monsters;
+	wminfo.maxitems = total_items;
+	wminfo.maxsecret = total_secrets;
 	wminfo.maxfrags = 0;
-	wminfo.partime = TICRATE * level.partime;
-	wminfo.sucktime = level.sucktime;
+	wminfo.partime = TICRATE * partime;
+	wminfo.sucktime = sucktime;
 	wminfo.pnum = consoleplayer;
-	wminfo.totaltime = level.totaltime;
+	wminfo.totaltime = totaltime;
 
 	for (i=0 ; i<MAXPLAYERS ; i++)
 	{
 		wminfo.plyr[i].skills = players[i].killcount;
 		wminfo.plyr[i].sitems = players[i].itemcount;
 		wminfo.plyr[i].ssecret = players[i].secretcount;
-		wminfo.plyr[i].stime = level.time;
-		memcpy (wminfo.plyr[i].frags, players[i].frags
-				, sizeof(wminfo.plyr[i].frags));
+		wminfo.plyr[i].stime = time;
+		memcpy (wminfo.plyr[i].frags, players[i].frags, sizeof(wminfo.plyr[i].frags));
 		wminfo.plyr[i].fragcount = players[i].fragcount;
 	}
 
-	// [RH] If we're in a hub and staying within that hub, take a snapshot
-	//		of the level. If we're traveling to a new hub, take stuff from
+	// [RH] If we're in a hub and staying within that hub, take a snapshot.
+	//		If we're traveling to a new hub, take stuff from
 	//		the player and clear the world vars. If this is just an
 	//		ordinary cluster (not a hub), take stuff from the player, but
 	//		leave the world vars alone.
-	cluster_info_t *thiscluster = FindClusterInfo (level.cluster);
+	cluster_info_t *thiscluster = FindClusterInfo (cluster);
 	cluster_info_t *nextcluster = FindClusterInfo (wminfo.next_ep+1);	// next_ep is cluster-1
 	EFinishLevelType mode;
 
@@ -855,7 +869,7 @@ void G_DoCompleted (void)
 	}
 
 	// Intermission stats for entire hubs
-	G_LeavingHub(&level, mode, thiscluster, &wminfo);
+	G_LeavingHub(this, mode, thiscluster, &wminfo);
 
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
@@ -867,16 +881,16 @@ void G_DoCompleted (void)
 
 	if (mode == FINISH_SameHub)
 	{ // Remember the level's state for re-entry.
-		if (!(level.flags2 & LEVEL2_FORGETSTATE))
+		if (!(flags2 & LEVEL2_FORGETSTATE))
 		{
-			level.SnapshotLevel ();
+			SnapshotLevel ();
 			// Do not free any global strings this level might reference
 			// while it's not loaded.
-			level.Behaviors.LockLevelVarStrings(level.levelnum);
+			Behaviors.LockLevelVarStrings(levelnum);
 		}
 		else
 		{ // Make sure we don't have a snapshot lying around from before.
-			level.info->Snapshot.Clean();
+			info->Snapshot.Clean();
 		}
 	}
 	else
@@ -887,30 +901,21 @@ void G_DoCompleted (void)
 		{ // Reset world variables for the new hub.
 			P_ClearACSVars(false);
 		}
-		level.time = 0;
-		level.maptime = 0;
-		level.spawnindex = 0;
+		time = 0;
+		maptime = 0;
+		spawnindex = 0;
 	}
 
 	finishstate = mode;
 
 	if (!deathmatch &&
-		((level.flags & LEVEL_NOINTERMISSION) ||
+		((flags & LEVEL_NOINTERMISSION) ||
 		((nextcluster == thiscluster) && (thiscluster->flags & CLUSTER_HUB) && !(thiscluster->flags & CLUSTER_ALLOWINTERMISSION))))
 	{
-		level.WorldDone ();
-		return;
+		WorldDone ();
+		return false;
 	}
-
-	gamestate = GS_INTERMISSION;
-	viewactive = false;
-	automapactive = false;
-
-// [RH] If you ever get a statistics driver operational, adapt this.
-//	if (statcopy)
-//		memcpy (statcopy, &wminfo, sizeof(wminfo));
-
-	WI_Start (&wminfo);
+	return true;
 }
 
 //==========================================================================
@@ -942,8 +947,9 @@ void DAutosaver::Tick ()
 
 extern gamestate_t 	wipegamestate; 
  
-void G_DoLoadLevel (int position, bool autosave, bool newGame)
-{ 
+void G_DoLoadLevel (const FString &nextmapname, int position, bool autosave, bool newGame)
+{
+	level.MapName = nextmapname;
 	static int lastposition = 0;
 	gamestate_t oldgs = gamestate;
 	int i;
@@ -1277,13 +1283,10 @@ void G_DoWorldDone (void)
 	{
 		// Don't crash if no next map is given. Just repeat the current one.
 		Printf ("No next map specified.\n");
-	}
-	else
-	{
-		level.MapName = nextlevel;
+		nextlevel = level.MapName;
 	}
 	G_StartTravel ();
-	G_DoLoadLevel (startpos, true, false);
+	G_DoLoadLevel (nextlevel, startpos, true, false);
 	startpos = 0;
 	gameaction = ga_nothing;
 	viewactive = true; 

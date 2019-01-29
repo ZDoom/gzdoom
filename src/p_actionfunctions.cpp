@@ -3712,7 +3712,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RadiusGive)
 	{
 		FPortalGroupArray check(FPortalGroupArray::PGA_Full3d);
 		double mid = self->Center();
-		FMultiBlockThingsIterator it(check, self->X(), self->Y(), mid-distance, mid+distance, distance, false, self->Sector);
+		FMultiBlockThingsIterator it(check, self->Level, self->X(), self->Y(), mid-distance, mid+distance, distance, false, self->Sector);
 		FMultiBlockThingsIterator::CheckResult cres;
 
 		while ((it.Next(&cres)) && ((unlimited) || (given < limit)))

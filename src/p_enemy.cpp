@@ -867,7 +867,7 @@ void P_NewChaseDir(AActor * actor)
 		!(actor->flags & MF_FLOAT) && !(i_compatflags & COMPATF_DROPOFF))
 	{
 		FBoundingBox box(actor->X(), actor->Y(), actor->radius);
-		FBlockLinesIterator it(box);
+		FBlockLinesIterator it(actor->Level, box);
 		line_t *line;
 
 		double deltax = 0;
@@ -2627,7 +2627,7 @@ bool P_CheckForResurrection(AActor *self, bool usevilestates)
 
 		FPortalGroupArray check(FPortalGroupArray::PGA_Full3d);
 
-		FMultiBlockThingsIterator it(check, viletry.X, viletry.Y, self->Z() - 64, self->Top() + 64, 32., false, NULL);
+		FMultiBlockThingsIterator it(check, self->Level, viletry.X, viletry.Y, self->Z() - 64, self->Top() + 64, 32., false, NULL);
 		FMultiBlockThingsIterator::CheckResult cres;
 		while (it.Next(&cres))
 		{

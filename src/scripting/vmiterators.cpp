@@ -109,7 +109,7 @@ public:
 	}
 
 	DBlockLinesIterator(double x, double y, double z, double height, double radius, sector_t *sec)
-		:FMultiBlockLinesIterator(check, x, y, z, height, radius, sec)
+		:FMultiBlockLinesIterator(check, &level, x, y, z, height, radius, sec)
 	{
 		cres.line = nullptr;
 		cres.Position.Zero();
@@ -183,7 +183,7 @@ public:
 	}
 
 	DBlockThingsIterator(double checkx, double checky, double checkz, double checkh, double checkradius, bool ignorerestricted, sector_t *newsec)
-		: iterator(check, checkx, checky, checkz, checkh, checkradius, ignorerestricted, newsec)
+		: iterator(check, &level, checkx, checky, checkz, checkh, checkradius, ignorerestricted, newsec)
 	{
 		cres.thing = nullptr;
 		cres.Position.Zero();

@@ -421,7 +421,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 	sector_t *sector = thing->Level->PointInSector(pos);
 
 	FPortalGroupArray grouplist;
-	FMultiBlockLinesIterator mit(grouplist, pos.X, pos.Y, pos.Z, thing->Height, thing->radius, sector);
+	FMultiBlockLinesIterator mit(grouplist, thing->Level, pos.X, pos.Y, pos.Z, thing->Height, thing->radius, sector);
 	FMultiBlockLinesIterator::CheckResult cres;
 
 	while (mit.Next(&cres))
@@ -432,7 +432,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 
 	if (tmf.touchmidtex) tmf.dropoffz = tmf.floorz;
 
-	FMultiBlockThingsIterator mit2(grouplist, pos.X, pos.Y, pos.Z, thing->Height, thing->radius, false, sector);
+	FMultiBlockThingsIterator mit2(grouplist, thing->Level, pos.X, pos.Y, pos.Z, thing->Height, thing->radius, false, sector);
 	FMultiBlockThingsIterator::CheckResult cres2;
 
 	while (mit2.Next(&cres2))
@@ -1082,7 +1082,7 @@ static bool PIT_CheckPortal(FMultiBlockLinesIterator &mit, FMultiBlockLinesItera
 	tm.thing->AddZ(zofs);
 
 	FBoundingBox pbox(cres.Position.X, cres.Position.Y, tm.thing->radius);
-	FBlockLinesIterator it(pbox);
+	FBlockLinesIterator it(tm.thing->Level, pbox);
 	bool ret = false;
 	line_t *ld;
 
@@ -1750,7 +1750,7 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 	FBoundingBox box(pos.X, pos.Y, thing->radius);
 
 	FPortalGroupArray pcheck;
-	FMultiBlockThingsIterator it2(pcheck, pos.X, pos.Y, thing->Z(), thing->Height, thing->radius, false, newsec);
+	FMultiBlockThingsIterator it2(pcheck, thing->Level, pos.X, pos.Y, thing->Z(), thing->Height, thing->radius, false, newsec);
 	FMultiBlockThingsIterator::CheckResult tcres;
 
 	while ((it2.Next(&tcres)))
@@ -1822,7 +1822,7 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 		return (thing->BlockingMobj = thingblocker) == NULL;
 
 
-	FMultiBlockLinesIterator it(pcheck, pos.X, pos.Y, thing->Z(), thing->Height, thing->radius, newsec);
+	FMultiBlockLinesIterator it(pcheck, thing->Level, pos.X, pos.Y, thing->Z(), thing->Height, thing->radius, newsec);
 	FMultiBlockLinesIterator::CheckResult lcres;
 
 	double thingdropoffz = tm.floorz;
@@ -5836,7 +5836,7 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 	fulldamagedistance = clamp<int>(fulldamagedistance, 0, bombdistance - 1);
 
 	FPortalGroupArray grouplist(FPortalGroupArray::PGA_Full3d);
-	FMultiBlockThingsIterator it(grouplist, bombspot->X(), bombspot->Y(), bombspot->Z() - bombdistance, bombspot->Height + bombdistance*2, bombdistance, false, bombspot->Sector);
+	FMultiBlockThingsIterator it(grouplist, bombspot->Level, bombspot->X(), bombspot->Y(), bombspot->Z() - bombdistance, bombspot->Height + bombdistance*2, bombdistance, false, bombspot->Sector);
 	FMultiBlockThingsIterator::CheckResult cres;
 
 	if (flags & RADF_SOURCEISSPOT)

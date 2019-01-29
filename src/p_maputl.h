@@ -206,6 +206,7 @@ private:
 class FBlockLinesIterator
 {
 	friend class FMultiBlockLinesIterator;
+	FLevelLocals *Level;
 	int minx, maxx;
 	int miny, maxy;
 
@@ -216,11 +217,11 @@ class FBlockLinesIterator
 
 	void StartBlock(int x, int y);
 
-	FBlockLinesIterator() {}
+	FBlockLinesIterator(FLevelLocals *l)  { Level = l; }
 	void init(const FBoundingBox &box);
 public:
-	FBlockLinesIterator(int minx, int miny, int maxx, int maxy, bool keepvalidcount = false);
-	FBlockLinesIterator(const FBoundingBox &box);
+	FBlockLinesIterator(FLevelLocals *Level, int minx, int miny, int maxx, int maxy, bool keepvalidcount = false);
+	FBlockLinesIterator(FLevelLocals *Level, const FBoundingBox &box);
 	line_t *Next();
 	void Reset() { StartBlock(minx, miny); }
 };
@@ -254,7 +255,7 @@ public:
 	};
 
 	FMultiBlockLinesIterator(FPortalGroupArray &check, AActor *origin, double checkradius = -1);
-	FMultiBlockLinesIterator(FPortalGroupArray &check, double checkx, double checky, double checkz, double checkh, double checkradius, sector_t *newsec);
+	FMultiBlockLinesIterator(FPortalGroupArray &check, FLevelLocals *Level, double checkx, double checky, double checkz, double checkh, double checkradius, sector_t *newsec);
 
 	bool Next(CheckResult *item);
 	void Reset();
@@ -276,6 +277,7 @@ public:
 
 class FBlockThingsIterator
 {
+	FLevelLocals *Level;
 	int minx, maxx;
 	int miny, maxy;
 
@@ -302,14 +304,14 @@ class FBlockThingsIterator
 
 	// The following is only for use in the path traverser 
 	// and therefore declared private.
-	FBlockThingsIterator();
+	FBlockThingsIterator(FLevelLocals *);
 
 	friend class FPathTraverse;
 	friend class FMultiBlockThingsIterator;
 
 public:
-	FBlockThingsIterator(int minx, int miny, int maxx, int maxy);
-	FBlockThingsIterator(const FBoundingBox &box)
+	FBlockThingsIterator(FLevelLocals *Level, int minx, int miny, int maxx, int maxy);
+	FBlockThingsIterator(FLevelLocals *Level, const FBoundingBox &box)
 	{
 		init(box);
 	}
@@ -331,7 +333,7 @@ class FMultiBlockThingsIterator
 	void startIteratorForGroup(int group);
 
 protected:
-	FMultiBlockThingsIterator(FPortalGroupArray &check) : checklist(check) {}
+	FMultiBlockThingsIterator(FPortalGroupArray &check, FLevelLocals *Level) : checklist(check), blockIterator(Level) {}
 public:
 
 	struct CheckResult
@@ -342,7 +344,7 @@ public:
 	};
 
 	FMultiBlockThingsIterator(FPortalGroupArray &check, AActor *origin, double checkradius = -1, bool ignorerestricted = false);
-	FMultiBlockThingsIterator(FPortalGroupArray &check, double checkx, double checky, double checkz, double checkh, double checkradius, bool ignorerestricted, sector_t *newsec);
+	FMultiBlockThingsIterator(FPortalGroupArray &check, FLevelLocals *Level, double checkx, double checky, double checkz, double checkh, double checkradius, bool ignorerestricted, sector_t *newsec);
 	bool Next(CheckResult *item);
 	void Reset();
 	const FBoundingBox &Box() const

@@ -914,7 +914,7 @@ sightcounts[0]++;
 		SightTask task = { 0, topslope, bottomslope, -1, sec->PortalGroup };
 
 
-		SightCheck s(&level);
+		SightCheck s(t1->Level);
 		s.init(t1, t2, sec, &task, flags);
 		res = s.P_SightPathTraverse ();
 		if (!res)

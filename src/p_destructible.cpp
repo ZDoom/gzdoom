@@ -520,7 +520,7 @@ void P_GeometryRadiusAttack(AActor* bombspot, AActor* bombsource, int bombdamage
 
 	// enumerate all lines around
 	FBoundingBox bombbox(bombspot->X(), bombspot->Y(), bombdistance);
-	FBlockLinesIterator it(bombbox);
+	FBlockLinesIterator it(bombspot->Level, bombbox);
 	line_t* ln;
 	int vc = validcount;
 	TArray<line_t*> lines;

@@ -1147,7 +1147,7 @@ bool FLevelLocals::CollectConnectedGroups(int startgroup, const DVector3 &positi
 			{
 				DVector2 disp = Displacements.getOffset(startgroup, thisgroup & ~FPortalGroupArray::FLAT);
 				FBoundingBox box(position.X + disp.X, position.Y + disp.Y, checkradius);
-				FBlockLinesIterator it(box);
+				FBlockLinesIterator it(this, box);
 				line_t *ld;
 				while ((ld = it.Next()))
 				{

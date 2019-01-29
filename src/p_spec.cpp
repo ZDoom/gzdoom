@@ -249,7 +249,7 @@ DEFINE_ACTION_FUNCTION(_Line, RemoteActivate)
 
 bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType, DVector3 *optpos)
 {
-	auto Level = &level;
+	auto Level = line->GetLevel();
  	int lineActivation = line->activation;
 
 	if (line->flags & ML_FIRSTSIDEONLY && side == 1)

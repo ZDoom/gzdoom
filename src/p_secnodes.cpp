@@ -237,7 +237,7 @@ msecnode_t *P_CreateSecNodeList(AActor *thing, double radius, msecnode_t *sector
 	}
 
 	FBoundingBox box(thing->X(), thing->Y(), radius);
-	FBlockLinesIterator it(box);
+	FBlockLinesIterator it(thing->Level, box);
 	line_t *ld;
 
 	while ((ld = it.Next()))

@@ -1232,7 +1232,7 @@ void FPolyObj::LinkPolyobj ()
 
 void FPolyObj::RecalcActorFloorCeil(FBoundingBox bounds) const
 {
-	FBlockThingsIterator it(bounds);
+	FBlockThingsIterator it(Level, bounds);
 	AActor *actor;
 
 	while ((actor = it.Next()) != nullptr)

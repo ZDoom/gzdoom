@@ -256,8 +256,8 @@ void PolyModelRenderer::SetTransform()
 void PolyModelRenderer::DrawArrays(int start, int count)
 {
 	PolyDrawArgs args;
-	args.SetLight(GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true), lightlevel, visibility, fullbrightSprite);
-	args.SetLights(Lights, NumLights);
+	auto nc = !!(sector->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING);
+	args.SetLight(GetSpriteColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], nc), lightlevel, visibility, fullbrightSprite);	args.SetLights(Lights, NumLights);
 	args.SetStencilTestValue(StencilValue);
 	args.SetClipPlane(0, PolyClipPlane());
 	args.SetStyle(RenderStyle, RenderAlpha, fillcolor, Translation, SkinTexture, fullbrightSprite);
@@ -270,8 +270,8 @@ void PolyModelRenderer::DrawArrays(int start, int count)
 void PolyModelRenderer::DrawElements(int numIndices, size_t offset)
 {
 	PolyDrawArgs args;
-	args.SetLight(GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true), lightlevel, visibility, fullbrightSprite);
-	args.SetLights(Lights, NumLights);
+	auto nc = !!(sector->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING);
+	args.SetLight(GetSpriteColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], nc), lightlevel, visibility, fullbrightSprite);	args.SetLights(Lights, NumLights);
 	args.SetStencilTestValue(StencilValue);
 	args.SetClipPlane(0, PolyClipPlane());
 	args.SetStyle(RenderStyle, RenderAlpha, fillcolor, Translation, SkinTexture, fullbrightSprite);

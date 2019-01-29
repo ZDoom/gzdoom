@@ -352,8 +352,8 @@ namespace swrenderer
 	void SWModelRenderer::DrawArrays(int start, int count)
 	{
 		PolyDrawArgs args;
-		args.SetLight(GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true), lightlevel, visibility, fullbrightSprite);
-		args.SetLights(Lights, NumLights);
+		auto nc = !!(sector->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING);
+		args.SetLight(GetSpriteColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], nc), lightlevel, visibility, fullbrightSprite);		args.SetLights(Lights, NumLights);
 		args.SetNormal(FVector3(0.0f, 0.0f, 0.0f));
 		args.SetStyle(RenderStyle, RenderAlpha, fillcolor, Translation, SkinTexture->GetSoftwareTexture(), fullbrightSprite);
 		args.SetDepthTest(true);
@@ -369,8 +369,8 @@ namespace swrenderer
 	void SWModelRenderer::DrawElements(int numIndices, size_t offset)
 	{
 		PolyDrawArgs args;
-		args.SetLight(GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true), lightlevel, visibility, fullbrightSprite);
-		args.SetLights(Lights, NumLights);
+		auto nc = !!(sector->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING);
+		args.SetLight(GetSpriteColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], nc), lightlevel, visibility, fullbrightSprite);		args.SetLights(Lights, NumLights);
 		args.SetNormal(FVector3(0.0f, 0.0f, 0.0f));
 		args.SetStyle(RenderStyle, RenderAlpha, fillcolor, Translation, SkinTexture->GetSoftwareTexture(), fullbrightSprite);
 		args.SetDepthTest(true);

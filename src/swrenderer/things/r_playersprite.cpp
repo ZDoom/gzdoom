@@ -97,6 +97,8 @@ namespace swrenderer
 
 		FDynamicColormap *basecolormap;
 		CameraLight *cameraLight = CameraLight::Instance();
+		auto nc = !!(Thread->Viewport->Level()->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING);
+
 		if (cameraLight->FixedLightLevel() < 0 && Thread->Viewport->viewpoint.sector->e && Thread->Viewport->viewpoint.sector->e->XFloor.lightlist.Size())
 		{
 			for (i = Thread->Viewport->viewpoint.sector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
@@ -110,9 +112,9 @@ namespace swrenderer
 							break;
 						sec = rover->model;
 						if (rover->flags & FF_FADEWALLS)
-							basecolormap = GetColorTable(sec->Colormap, sec->SpecialColors[sector_t::sprites], true);
+							basecolormap = GetSpriteColorTable(sec->Colormap, sec->SpecialColors[sector_t::sprites], nc);
 						else
-							basecolormap = GetColorTable(Thread->Viewport->viewpoint.sector->e->XFloor.lightlist[i].extra_colormap, sec->SpecialColors[sector_t::sprites], true);
+							basecolormap = GetSpriteColorTable(Thread->Viewport->viewpoint.sector->e->XFloor.lightlist[i].extra_colormap, sec->SpecialColors[sector_t::sprites], nc);
 					}
 					break;
 				}
@@ -120,7 +122,7 @@ namespace swrenderer
 			if (!sec)
 			{
 				sec = Thread->Viewport->viewpoint.sector;
-				basecolormap = GetColorTable(sec->Colormap, sec->SpecialColors[sector_t::sprites], true);
+				basecolormap = GetSpriteColorTable(sec->Colormap, sec->SpecialColors[sector_t::sprites], nc);
 			}
 			floorlight = ceilinglight = sec->lightlevel;
 		}
@@ -130,7 +132,7 @@ namespace swrenderer
 			sec = Thread->OpaquePass->FakeFlat(Thread->Viewport->viewpoint.sector, &tempsec, &floorlight, &ceilinglight, nullptr, 0, 0, 0, 0);
 
 			// [RH] set basecolormap
-			basecolormap = GetColorTable(sec->Colormap, sec->SpecialColors[sector_t::sprites], true);
+			basecolormap = GetSpriteColorTable(sec->Colormap, sec->SpecialColors[sector_t::sprites], nc);
 		}
 
 		// [RH] set foggy flag

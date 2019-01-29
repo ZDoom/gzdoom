@@ -66,6 +66,8 @@ void RenderPolyPlayerSprites::Render(PolyRenderThread *thread)
 
 	FDynamicColormap *basecolormap;
 	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
+	bool nc = !!(viewpoint.camera->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING);
+
 	if (cameraLight->FixedLightLevel() < 0 && viewpoint.sector->e && viewpoint.sector->e->XFloor.lightlist.Size())
 	{
 		for (i = viewpoint.sector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
@@ -79,9 +81,9 @@ void RenderPolyPlayerSprites::Render(PolyRenderThread *thread)
 						break;
 					sec = rover->model;
 					if (rover->flags & FF_FADEWALLS)
-						basecolormap = GetColorTable(sec->Colormap, sec->SpecialColors[sector_t::sprites], true);
+						basecolormap = GetSpriteColorTable(sec->Colormap, sec->SpecialColors[sector_t::sprites], nc);
 					else
-						basecolormap = GetColorTable(viewpoint.sector->e->XFloor.lightlist[i].extra_colormap, sec->SpecialColors[sector_t::sprites], true);
+						basecolormap = GetSpriteColorTable(viewpoint.sector->e->XFloor.lightlist[i].extra_colormap, sec->SpecialColors[sector_t::sprites], nc);
 				}
 				break;
 			}
@@ -89,7 +91,7 @@ void RenderPolyPlayerSprites::Render(PolyRenderThread *thread)
 		if (!sec)
 		{
 			sec = viewpoint.sector;
-			basecolormap = GetColorTable(sec->Colormap, sec->SpecialColors[sector_t::sprites], true);
+			basecolormap = GetSpriteColorTable(sec->Colormap, sec->SpecialColors[sector_t::sprites], nc);
 		}
 		floorlight = ceilinglight = sec->lightlevel;
 	}
@@ -102,7 +104,7 @@ void RenderPolyPlayerSprites::Render(PolyRenderThread *thread)
 		ceilinglight = fakeflat.CeilingLightLevel;
 
 		// [RH] set basecolormap
-		basecolormap = GetColorTable(sec->Colormap, sec->SpecialColors[sector_t::sprites], true);
+		basecolormap = GetSpriteColorTable(sec->Colormap, sec->SpecialColors[sector_t::sprites], nc);
 	}
 
 	// [RH] set foggy flag

@@ -136,13 +136,15 @@ namespace swrenderer
 							break;
 						}
 						sec = rover->model;
+						auto nc = !!(sec->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING);
+
 						if (rover->flags & FF_FADEWALLS)
 						{
-							mybasecolormap = GetColorTable(sec->Colormap, spr->sector->SpecialColors[sector_t::sprites], true);
+							mybasecolormap = GetSpriteColorTable(sec->Colormap, spr->sector->SpecialColors[sector_t::sprites], nc);
 						}
 						else
 						{
-							mybasecolormap = GetColorTable(spr->sector->e->XFloor.lightlist[i].extra_colormap, spr->sector->SpecialColors[sector_t::sprites], true);
+							mybasecolormap = GetSpriteColorTable(spr->sector->e->XFloor.lightlist[i].extra_colormap, spr->sector->SpecialColors[sector_t::sprites], nc);
 						}
 					}
 					break;

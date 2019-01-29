@@ -47,21 +47,33 @@ void SetDefaultColormap (const char *name);
 #endif
 
 // MSVC needs the forceinline here.
-FORCEINLINE FDynamicColormap *GetColorTable(const FColormap &cm, PalEntry SpecialColor = 0xffffff, bool forsprites = false)
+FORCEINLINE FDynamicColormap *GetColorTable(const FColormap &cm, PalEntry SpecialColor = 0xffffff)
 {
-	PalEntry c;
-	if (!forsprites || !(level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)) c =  SpecialColor.Modulate(cm.LightColor);
-	else
-	{
-		c = cm.LightColor;
-		c.Decolorize();
-		c = SpecialColor.Modulate(c);
-	}
+	PalEntry c =  SpecialColor.Modulate(cm.LightColor);
 
 	// First colormap is the default Doom colormap.
 	// testcolor and testfade CCMDs modifies the first colormap, so we have to do the check without looking at the actual values stored in NormalLight.
 	if (c == PalEntry(255, 255, 255) && cm.FadeColor == 0 && cm.Desaturation == 0)
 		return &NormalLight;
 
+	return GetSpecialLights(c, cm.FadeColor, cm.Desaturation);
+}
+
+FORCEINLINE FDynamicColormap *GetSpriteColorTable(const FColormap &cm, PalEntry SpecialColor, bool nocoloredspritelighting)
+{
+	PalEntry c;
+	if (!nocoloredspritelighting) c =  SpecialColor.Modulate(cm.LightColor);
+	else
+	{
+		c = cm.LightColor;
+		c.Decolorize();
+		c = SpecialColor.Modulate(c);
+	}
+	
+	// First colormap is the default Doom colormap.
+	// testcolor and testfade CCMDs modifies the first colormap, so we have to do the check without looking at the actual values stored in NormalLight.
+	if (c == PalEntry(255, 255, 255) && cm.FadeColor == 0 && cm.Desaturation == 0)
+		return &NormalLight;
+	
 	return GetSpecialLights(c, cm.FadeColor, cm.Desaturation);
 }

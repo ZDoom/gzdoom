@@ -158,8 +158,8 @@ void RenderPolySprite::Render(PolyRenderThread *thread, AActor *thing, subsector
 
 	PolyDrawArgs args;
 	SetDynlight(thing, args);
-	args.SetLight(GetColorTable(sub->sector->Colormap, sub->sector->SpecialColors[sector_t::sprites], true), lightlevel, PolyRenderer::Instance()->Light.SpriteGlobVis(foggy), fullbrightSprite);
-	args.SetStencilTestValue(stencilValue);
+	auto nc = !!(thing->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING);
+	args.SetLight(GetSpriteColorTable(sub->sector->Colormap, sub->sector->SpecialColors[sector_t::sprites], nc), lightlevel, PolyRenderer::Instance()->Light.SpriteGlobVis(foggy), fullbrightSprite);	args.SetStencilTestValue(stencilValue);
 	if ((thing->renderflags & RF_ZDOOMTRANS) && r_UseVanillaTransparency)
 		args.SetStyle(LegacyRenderStyles[STYLE_Normal], 1.0f, thing->fillcolor, thing->Translation, tex, fullbrightSprite);
 	else

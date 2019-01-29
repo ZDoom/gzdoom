@@ -199,7 +199,7 @@ void DPusher::Tick ()
 			bool pusharound = ((thing->flags2 & MF2_WINDTHRUST) && !(thing->flags & MF_NOCLIP));
 					
 			// MBF allows any sentient or shootable thing to be affected, but players with a fly cheat aren't.
-			if (compatflags & COMPATF_MBFMONSTERMOVE)
+			if (Level->i_compatflags & COMPATF_MBFMONSTERMOVE)
 			{
 				pusharound = ((pusharound || (thing->IsSentient()) || (thing->flags & MF_SHOOTABLE)) // Add categories here
 					&& (!(thing->player && (thing->flags & (MF_NOGRAVITY))))); // Exclude flying players here

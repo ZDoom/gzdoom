@@ -3065,7 +3065,7 @@ FUNC(LS_SetPlayerProperty)
 	{
 		int i;
 
-		if ((ib_compatflags & BCOMPATF_LINKFROZENPROPS) && (mask & (CF_FROZEN | CF_TOTALLYFROZEN)))
+		if ((Level->ib_compatflags & BCOMPATF_LINKFROZENPROPS) && (mask & (CF_FROZEN | CF_TOTALLYFROZEN)))
 		{ // Clearing one of these properties clears both of them (if the compat flag is set.)
 			mask = CF_FROZEN | CF_TOTALLYFROZEN;
 		}

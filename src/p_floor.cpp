@@ -461,7 +461,7 @@ bool FLevelLocals::CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *
 		// [Graf Zahl]
 		// Don't make sounds for instant movement hacks but make an exception for
 		// switches that activate their own back side. 
-		if (!(i_compatflags & COMPATF_SILENT_INSTANT_FLOORS))
+		if (!(sec->Level->i_compatflags & COMPATF_SILENT_INSTANT_FLOORS))
 		{
 			if (!line || !(line->activation & (SPAC_Use | SPAC_Push)) || line->backsector != sec)
 				silent = true;

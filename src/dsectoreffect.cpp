@@ -214,7 +214,7 @@ EMoveResult sector_t::MoveFloor(double speed, double dest, int crush, int direct
 		//destheight = (dest < ceilingheight) ? dest : ceilingheight;
 		if (!ceilingplane.isSlope() && !floorplane.isSlope() &&
 			!PortalIsLinked(sector_t::ceiling) &&
-			(!(i_compatflags2 & COMPATF2_FLOORMOVE) && -dest > ceilingplane.fD()))
+			(!(Level->i_compatflags2 & COMPATF2_FLOORMOVE) && -dest > ceilingplane.fD()))
 		{
 			dest = -ceilingplane.fD();
 		}
@@ -304,7 +304,7 @@ EMoveResult sector_t::MoveCeiling(double speed, double dest, int crush, int dire
 		//destheight = (dest > floorheight) ? dest : floorheight;
 		if (!ceilingplane.isSlope() && !floorplane.isSlope() &&
 			!PortalIsLinked(sector_t::floor) &&
-			(!(i_compatflags2 & COMPATF2_FLOORMOVE) && dest < -floorplane.fD()))
+			(!(Level->i_compatflags2 & COMPATF2_FLOORMOVE) && dest < -floorplane.fD()))
 		{
 			dest = -floorplane.fD();
 		}

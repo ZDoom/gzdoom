@@ -464,7 +464,7 @@ int P_Move (AActor *actor)
 
 	// [RH] I'm not so sure this is such a good idea
 	// [GZ] That's why it's compat-optioned.
-	if (compatflags & COMPATF_MBFMONSTERMOVE && !(actor->flags8 & MF8_NOFRICTION))
+	if (actor->Level->i_compatflags & COMPATF_MBFMONSTERMOVE && !(actor->flags8 & MF8_NOFRICTION))
 	{
 		// killough 10/98: make monsters get affected by ice and sludge too:
 		movefactor = P_GetMoveFactor (actor, &friction);
@@ -864,7 +864,7 @@ void P_NewChaseDir(AActor * actor)
 	if (actor->floorz - actor->dropoffz > actor->MaxDropOffHeight && 
 		actor->Z() <= actor->floorz && !(actor->flags & MF_DROPOFF) && 
 		!(actor->flags2 & MF2_ONMOBJ) &&
-		!(actor->flags & MF_FLOAT) && !(i_compatflags & COMPATF_DROPOFF))
+		!(actor->flags & MF_FLOAT) && !(actor->Level->i_compatflags & COMPATF_DROPOFF))
 	{
 		FBoundingBox box(actor->X(), actor->Y(), actor->radius);
 		FBlockLinesIterator it(actor->Level, box);
@@ -1715,7 +1715,7 @@ int P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 		// the player then, eh?
 		if(!(actor->flags6 & MF6_SEEINVISIBLE)) 
 		{
-			if ((player->mo->flags & MF_SHADOW && !(i_compatflags & COMPATF_INVISIBILITY)) ||
+			if ((player->mo->flags & MF_SHADOW && !(actor->Level->i_compatflags & COMPATF_INVISIBILITY)) ||
 				player->mo->flags3 & MF3_GHOST)
 			{
 				if (player->mo->Distance2D (actor) > 128 && player->mo->Vel.XY().LengthSquared() < 5*5)
@@ -1776,7 +1776,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 	}
 	else
 	{
-		targ = (i_compatflags & COMPATF_SOUNDTARGET || self->flags & MF_NOSECTOR)? 
+		targ = (self->Level->i_compatflags & COMPATF_SOUNDTARGET || self->flags & MF_NOSECTOR)? 
 			self->Sector->SoundTarget : self->LastHeard;
 
 		// [RH] If the soundtarget is dead, don't chase it
@@ -1909,7 +1909,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
 	{
 		if (!(flags & LOF_NOSOUNDCHECK))
 		{
-			targ = (i_compatflags & COMPATF_SOUNDTARGET || self->flags & MF_NOSECTOR)?
+			targ = (self->Level->i_compatflags & COMPATF_SOUNDTARGET || self->flags & MF_NOSECTOR)?
 				self->Sector->SoundTarget : self->LastHeard;
 			if (targ != NULL)
 			{
@@ -2721,7 +2721,7 @@ bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				{
 					corpsehit->Translation = info->Translation; // Clean up bloodcolor translation from crushed corpses
 				}
-				if (ib_compatflags & BCOMPATF_VILEGHOSTS)
+				if (self->Level->ib_compatflags & BCOMPATF_VILEGHOSTS)
 				{
 					corpsehit->Height *= 4;
 					// [GZ] This was a commented-out feature, so let's make use of it,
@@ -3116,7 +3116,7 @@ void A_BossDeath(AActor *self)
 						LEVEL_SORCERER2SPECIAL)) == 0)
 		return;
 
-	if ((i_compatflags & COMPATF_ANYBOSSDEATH) || ( // [GZ] Added for UAC_DEAD
+	if ((Level->i_compatflags & COMPATF_ANYBOSSDEATH) || ( // [GZ] Added for UAC_DEAD
 		((Level->flags & LEVEL_MAP07SPECIAL) && (type == NAME_Fatso || type == NAME_Arachnotron)) ||
 		((Level->flags & LEVEL_BRUISERSPECIAL) && (type == NAME_BaronOfHell)) ||
 		((Level->flags & LEVEL_CYBORGSPECIAL) && (type == NAME_Cyberdemon)) ||

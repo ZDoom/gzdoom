@@ -459,7 +459,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 		// [RH] Z-Check
 		// But not if not MF2_PASSMOBJ or MF3_DONTOVERLAP are set!
 		// Otherwise those things would get stuck inside each other.
-		if ((thing->flags2 & MF2_PASSMOBJ || th->flags4 & MF4_ACTLIKEBRIDGE) && !(i_compatflags & COMPATF_NO_PASSMOBJ))
+		if ((thing->flags2 & MF2_PASSMOBJ || th->flags4 & MF4_ACTLIKEBRIDGE) && !(thing->Level->i_compatflags & COMPATF_NO_PASSMOBJ))
 		{
 			if (!(th->flags3 & thing->flags3 & MF3_DONTOVERLAP))
 			{
@@ -516,7 +516,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 		// If this teleport was caused by a move, P_TryMove() will handle the
 		// sector transition messages better than we can here.
 		// This needs to be compatibility optioned because some older maps exploited this missing feature.
-		if (!(thing->flags6 & MF6_INTRYMOVE) && !(i_compatflags2 & COMPATF2_TELEPORT))
+		if (!(thing->flags6 & MF6_INTRYMOVE) && !(thing->Level->i_compatflags2 & COMPATF2_TELEPORT))
 		{
 			thing->CheckSectorTransition(oldsec);
 		}
@@ -850,7 +850,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 	// into being friendly with the MBF flag automatically gain MF3_NOBLOCKMONST, so this
 	// just optionally generalizes the behavior to other friendly monsters.
 	bool NotBlocked = ((tm.thing->flags3 & MF3_NOBLOCKMONST)
-		|| ((i_compatflags & COMPATF_NOBLOCKFRIENDS) && (tm.thing->flags & MF_FRIENDLY)));
+		|| ((tm.thing->Level->i_compatflags & COMPATF_NOBLOCKFRIENDS) && (tm.thing->flags & MF_FRIENDLY)));
 
 	uint32_t ProjectileBlocking = ML_BLOCKEVERYTHING | ML_BLOCKPROJECTILE;
 	if ( tm.thing->flags8 & MF8_BLOCKASPLAYER ) ProjectileBlocking |= ML_BLOCK_PLAYERS | ML_BLOCKING;
@@ -1263,7 +1263,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	// walking on other actors and unblocking is too messy through restricted portal types so disable it.
 	if (!(cres.portalflags & FFCF_RESTRICTEDPORTAL))
 	{
-		if (!(i_compatflags & COMPATF_NO_PASSMOBJ) && !(tm.thing->flags & (MF_FLOAT | MF_MISSILE | MF_SKULLFLY | MF_NOGRAVITY)) &&
+		if (!(thing->Level->i_compatflags & COMPATF_NO_PASSMOBJ) && !(tm.thing->flags & (MF_FLOAT | MF_MISSILE | MF_SKULLFLY | MF_NOGRAVITY)) &&
 			(thing->flags & MF_SOLID) && (thing->flags4 & MF4_ACTLIKEBRIDGE))
 		{
 			// [RH] Let monsters walk on actors as well as floors
@@ -1311,7 +1311,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 
 	// [RH] If the other thing is a bridge, then treat the moving thing as if it had MF2_PASSMOBJ, so
 	// you can use a scrolling floor to move scenery items underneath a bridge.
-	if ((tm.thing->flags2 & MF2_PASSMOBJ || thing->flags4 & MF4_ACTLIKEBRIDGE) && !(i_compatflags & COMPATF_NO_PASSMOBJ))
+	if ((tm.thing->flags2 & MF2_PASSMOBJ || thing->flags4 & MF4_ACTLIKEBRIDGE) && !(tm.thing->Level->i_compatflags & COMPATF_NO_PASSMOBJ))
 	{ // check if a mobj passed over/under another object
 		if (!(tm.thing->flags & MF_MISSILE) ||
 			!(tm.thing->flags2 & MF2_RIP) ||
@@ -1441,7 +1441,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		{
 			clipheight = thing->projectilepassheight;
 		}
-		else if (thing->projectilepassheight < 0 && (i_compatflags & COMPATF_MISSILECLIP))
+		else if (thing->projectilepassheight < 0 && (thing->Level->i_compatflags & COMPATF_MISSILECLIP))
 		{
 			clipheight = -thing->projectilepassheight;
 		}
@@ -1763,7 +1763,7 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 			AActor *BlockingMobj = thing->BlockingMobj;
 
 			// If this blocks through a restricted line portal, it will always completely block.
-			if (BlockingMobj == NULL || (i_compatflags & COMPATF_NO_PASSMOBJ) || (tcres.portalflags & FFCF_RESTRICTEDPORTAL))
+			if (BlockingMobj == NULL || (thing->Level->i_compatflags & COMPATF_NO_PASSMOBJ) || (tcres.portalflags & FFCF_RESTRICTEDPORTAL))
 			{ // Thing slammed into something; don't let it move now.
 				thing->Height = realHeight;
 				return false;
@@ -2068,7 +2068,7 @@ static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, DVector2 *
 {
 	if (line->special && !(mobj->flags6 & MF6_NOTRIGGER))
 	{
-		if (posforwindowcheck && !(i_compatflags2 & COMPATF2_PUSHWINDOW) && line->backsector != NULL)
+		if (posforwindowcheck && !(mobj->Level->i_compatflags2 & COMPATF2_PUSHWINDOW) && line->backsector != NULL)
 		{ // Make sure this line actually blocks us and is not a window
 			// or similar construct we are standing inside of.
 			DVector3 pos = mobj->PosRelative(line);
@@ -2175,7 +2175,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 				goto pushline;
 			}
 		}
-		if (!(tm.thing->flags2 & MF2_PASSMOBJ) || (i_compatflags & COMPATF_NO_PASSMOBJ))
+		if (!(tm.thing->flags2 & MF2_PASSMOBJ) || (tm.thing->Level->i_compatflags & COMPATF_NO_PASSMOBJ))
 		{
 			thing->SetZ(oldz);
 			thing->flags6 &= ~MF6_INTRYMOVE;
@@ -2274,7 +2274,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 
 		// compatibility check: Doom originally did not allow monsters to cross dropoffs at all.
 		// If the compatibility flag is on, only allow this when the velocity comes from a scroller
-		if ((i_compatflags & COMPATF_CROSSDROPOFF) && !(thing->flags4 & MF4_SCROLLMOVE))
+		if ((thing->Level->i_compatflags & COMPATF_CROSSDROPOFF) && !(thing->flags4 & MF4_SCROLLMOVE))
 		{
 			dropoff = false;
 		}
@@ -2963,7 +2963,7 @@ void FSlide::SlideTraverse(const DVector2 &start, const DVector2 &end)
 			goto isblocking;
 		}
 		if (li->flags & ML_BLOCKMONSTERS && !((slidemo->flags3 & MF3_NOBLOCKMONST)
-			|| ((i_compatflags & COMPATF_NOBLOCKFRIENDS) && (slidemo->flags & MF_FRIENDLY))))
+			|| ((slidemo->Level->i_compatflags & COMPATF_NOBLOCKFRIENDS) && (slidemo->flags & MF_FRIENDLY))))
 		{
 			goto isblocking;
 		}
@@ -4588,7 +4588,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 			// Hit a thing, so it could be either a puff or blood
 			DVector3 bleedpos = trace.HitPos;
 			// position a bit closer for puffs/blood if using compatibility mode.
-			if (i_compatflags & COMPATF_HITSCAN)
+			if (trace.Actor->Level->i_compatflags & COMPATF_HITSCAN)
 			{
 				DVector2 ofs = t1->Level->GetPortalOffsetPosition(bleedpos.X, bleedpos.Y, -10 * trace.HitVector.X, -10 * trace.HitVector.Y);
 				bleedpos.X = ofs.X;
@@ -4781,7 +4781,7 @@ int P_LineTrace(AActor *t1, DAngle angle, double distance,
 	if ( flags & TRF_BLOCKSELF )
 	{
 		bool Projectile = ( (t1->flags&MF_MISSILE) || (t1->BounceFlags&BOUNCE_MBF) );
-		bool NotBlocked = ( (t1->flags3&MF3_NOBLOCKMONST) || ( (i_compatflags&COMPATF_NOBLOCKFRIENDS) && (t1->flags&MF_FRIENDLY) ) );
+		bool NotBlocked = ( (t1->flags3&MF3_NOBLOCKMONST) || ( (t1->Level->i_compatflags&COMPATF_NOBLOCKFRIENDS) && (t1->flags&MF_FRIENDLY) ) );
 		if ( Projectile ) lflags |= ML_BLOCKPROJECTILE;
 		if ( !Projectile || (t1->flags8&MF8_BLOCKASPLAYER) ) lflags |= ML_BLOCKING;
 		if ( !NotBlocked ) lflags |= ML_BLOCKMONSTERS;
@@ -5099,7 +5099,7 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 	newhit.HitActor = res.Actor;
 	newhit.HitPos = res.HitPos;
 	newhit.HitAngle = res.SrcAngleFromTarget;
-	if (i_compatflags & COMPATF_HITSCAN)
+	if (res.Actor->Level->i_compatflags & COMPATF_HITSCAN)
 	{
 		DVector2 ofs = res.Actor->Level->GetPortalOffsetPosition(newhit.HitPos.X, newhit.HitPos.Y, -10 * res.HitVector.X, -10 * res.HitVector.Y);
 		newhit.HitPos.X = ofs.X;
@@ -5427,7 +5427,7 @@ bool P_UseTraverse(AActor *usething, const DVector2 &start, const DVector2 &end,
 				P_LineOpening(open, NULL, in->d.line, it.InterceptPoint(in));
 			}
 			if (open.range <= 0 ||
-				(in->d.line->special != 0 && (i_compatflags & COMPATF_USEBLOCKING)))
+				(in->d.line->special != 0 && (usething->Level->i_compatflags & COMPATF_USEBLOCKING)))
 			{
 				// [RH] Give sector a chance to intercept the use
 
@@ -5487,7 +5487,7 @@ bool P_UseTraverse(AActor *usething, const DVector2 &start, const DVector2 &end,
 			//[RH] And now I've changed it again. If the line is of type
 			//	   SPAC_USE, then it eats the use. Everything else passes
 			//	   it through, including SPAC_USETHROUGH.
-			if (i_compatflags & COMPATF_USEBLOCKING)
+			if (usething->Level->i_compatflags & COMPATF_USEBLOCKING)
 			{
 				if (in->d.line->activation & SPAC_UseThrough) continue;
 				else return true;

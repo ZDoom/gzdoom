@@ -67,6 +67,7 @@ struct HWDrawList
 	int SortNodeStart;
     float SortZ;
 	SortNode * sorted;
+	bool reverseSort;
 	
 public:
 	HWDrawList()

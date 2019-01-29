@@ -179,7 +179,7 @@ void MapLoader::SetSlope (secplane_t *plane, bool setCeil, int xyangi, int zangi
 
 	DVector3 norm;
 
-	if (ib_compatflags & BCOMPATF_SETSLOPEOVERFLOW)
+	if (Level->ib_compatflags & BCOMPATF_SETSLOPEOVERFLOW)
 	{
 		// We have to consider an integer multiplication overflow here.
 		norm[0] = FixedToFloat(FloatToFixed(zang.Cos()) * FloatToFixed(xyang.Cos())) / 65536.;

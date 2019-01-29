@@ -1543,7 +1543,7 @@ void FPathTraverse::init(double x1, double y1, double x2, double y2, int flags, 
 	// Count is present to prevent a round off error
 	// from skipping the break statement.
 
-	bool compatible = (flags & PT_COMPATIBLE) && (i_compatflags & COMPATF_HITSCAN);
+	bool compatible = (flags & PT_COMPATIBLE) && (Level->i_compatflags & COMPATF_HITSCAN);
 		
 	// we want to use one list of checked actors for the entire operation
 	FBlockThingsIterator btit(Level);

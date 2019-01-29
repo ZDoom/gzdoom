@@ -120,6 +120,7 @@ struct FLevelLocals
 	void SetConversation(int convid, PClassActor *Class, int dlgindex);
 	int FindNode (const FStrifeDialogueNode *node);
     int GetInfighting();
+	void SetCompatLineOnSide(bool state);
 	void Init();
 
 private:
@@ -441,6 +442,12 @@ public:
 	TArray<FStrifeDialogueNode *> StrifeDialogues;
 	FDialogueIDMap DialogueRoots;
 	FDialogueMap ClassRoots;
+
+	int ii_compatflags = 0;
+	int ii_compatflags2 = 0;
+	int ib_compatflags = 0;
+	int i_compatflags = 0;
+	int i_compatflags2 = 0;
 
 	uint8_t		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
 	int			time;			// time in the hub

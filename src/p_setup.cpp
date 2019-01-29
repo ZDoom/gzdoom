@@ -546,6 +546,7 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 
 	Level->automap = AM_Create(Level);
 	Level->automap->LevelInit();
+	Level->SetCompatLineOnSide(true);
 
 	// [RH] Start lightning, if MAPINFO tells us to
 	if (Level->flags & LEVEL_STARTLIGHTNING)

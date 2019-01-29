@@ -530,9 +530,6 @@ CVAR (Flag, sv_respawnsuper,		dmflags2, DF2_RESPAWN_SUPER);
 //
 //==========================================================================
 
-int i_compatflags, i_compatflags2;	// internal compatflags composed from the compatflags CVAR and MAPINFO settings
-int ii_compatflags, ii_compatflags2, ib_compatflags;
-
 EXTERN_CVAR(Int, compatmode)
 
 static int GetCompatibility(FLevelLocals *Level, int mask)
@@ -549,17 +546,24 @@ static int GetCompatibility2(FLevelLocals *Level, int mask)
 
 CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
 {
-	int old = i_compatflags;
-	i_compatflags = GetCompatibility(&level, self) | ii_compatflags;
-	if ((old ^ i_compatflags) & COMPATF_POLYOBJ)
+	for (auto Level : AllLevels())
 	{
-		level.ClearAllSubsectorLinks();
+		int old = Level->i_compatflags;
+		Level->i_compatflags = GetCompatibility(Level, self) | Level->ii_compatflags;
+		if ((old ^ Level->i_compatflags) & COMPATF_POLYOBJ)
+		{
+			Level->ClearAllSubsectorLinks();
+		}
 	}
 }
 
 CUSTOM_CVAR (Int, compatflags2, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
 {
-	i_compatflags2 = GetCompatibility2(&level, self) | ii_compatflags2;
+	for (auto Level : AllLevels())
+	{
+		Level->i_compatflags2 = GetCompatibility2(Level, self) | Level->ii_compatflags2;
+		Level->SetCompatLineOnSide(true);
+	}
 }
 
 CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)

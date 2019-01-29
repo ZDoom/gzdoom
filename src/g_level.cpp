@@ -578,7 +578,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 		Printf (TEXTCOLOR_RED "Unloading scripts cannot exit the level again.\n");
 		return;
 	}
-	if (gameaction == ga_completed && !(i_compatflags2 & COMPATF2_MULTIEXIT))	// do not exit multiple times.
+	if (gameaction == ga_completed && !(level.i_compatflags2 & COMPATF2_MULTIEXIT))	// do not exit multiple times.
 	{
 		return;
 	}
@@ -1070,7 +1070,7 @@ void G_DoLoadLevel (const FString &nextmapname, int position, bool autosave, boo
 	level.starttime = gametic;
 
 	level.UnSnapshotLevel (!savegamerestore);	// [RH] Restore the state of the level.
-	int pnumerr = G_FinishTravel ();
+	int pnumerr = level.FinishTravel ();
 
 	if (!level.FromSnapshot)
 	{
@@ -2073,6 +2073,21 @@ int FLevelLocals::GetInfighting()
 	if (flags2 & LEVEL2_TOTALINFIGHTING) return 1;
 	if (flags2 & LEVEL2_NOINFIGHTING) return -1;
 	return G_SkillProperty(SKILLP_Infight);
+}
+
+//============================================================================
+//
+// transfers the compatiblity flag for old PointOnLineSide to each line.
+// This gets checked in a frequently called worker function and the closer
+// this info is to the data this function works on, the better.
+//
+//============================================================================
+
+void FLevelLocals::SetCompatLineOnSide(bool state)
+{
+	int on = (state && (i_compatflags2 & COMPATF2_POINTONLINE));
+	if (on) for (auto l : lines) l.flags |= ML_COMPATSIDE;
+	else for (auto l : lines) l.flags &= ML_COMPATSIDE;
 }
 
 //==========================================================================

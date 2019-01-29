@@ -69,7 +69,7 @@ namespace swrenderer
 		if (count == 0)
 			return;
 
-		if (!(i_compatflags & COMPATF_SPRITESORT))
+		if (!(thread->Viewport->Level()->i_compatflags & COMPATF_SPRITESORT))
 		{
 			for (unsigned int i = 0; i < count; i++)
 				SortedSprites[i] = Sprites[first + i];

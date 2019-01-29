@@ -1516,7 +1516,7 @@ void MapLoader::SetLineID (int i, line_t *ld)
 			break;
 			
 		case Plane_Align:
-			if (!(ib_compatflags & BCOMPATF_NOSLOPEID)) setid = ld->args[2];
+			if (!(Level->ib_compatflags & BCOMPATF_NOSLOPEID)) setid = ld->args[2];
 			break;
 			
 		case Static_Init:
@@ -3016,7 +3016,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 		Level->maptype = MAPTYPE_UDMF;
 	}
 	FName checksum = CheckCompatibility(map);
-	if (ib_compatflags & BCOMPATF_REBUILDNODES)
+	if (Level->ib_compatflags & BCOMPATF_REBUILDNODES)
 	{
 		ForceNodeBuild = true;
 	}

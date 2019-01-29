@@ -421,7 +421,7 @@ bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit, bool spec
 
 		// For backwards compatibility: Ignore lines with the same sector on both sides.
 		// This is the way Doom.exe did it and some WADs (e.g. Alien Vendetta MAP15) need it.
-		if (i_compatflags & COMPATF_TRACE && in->d.line->backsector == in->d.line->frontsector && !special3dpass)
+		if (Level->i_compatflags & COMPATF_TRACE && in->d.line->backsector == in->d.line->frontsector && !special3dpass)
 		{
 			// We must check special activation here because the code below is never reached.
 			if (TraceFlags & TRACE_PCross)

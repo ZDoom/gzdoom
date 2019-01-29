@@ -473,9 +473,9 @@ double FindHighestCeilingSurrounding (const sector_t *sector, vertex_t **v)
 // jff 02/03/98 Add routine to find shortest lower texture
 //
 
-static inline void CheckShortestTex (FTextureID texnum, double &minsize)
+static inline void CheckShortestTex (FLevelLocals *Level, FTextureID texnum, double &minsize)
 {
-	if (texnum.isValid() || (texnum.isNull() && (i_compatflags & COMPATF_SHORTTEX)))
+	if (texnum.isValid() || (texnum.isNull() && (Level->i_compatflags & COMPATF_SHORTTEX)))
 	{
 		FTexture *tex = TexMan.GetTexture(texnum);
 		if (tex != NULL)
@@ -497,8 +497,8 @@ double FindShortestTextureAround (sector_t *sec)
 	{
 		if (check->flags & ML_TWOSIDED)
 		{
-			CheckShortestTex (check->sidedef[0]->GetTexture(side_t::bottom), minsize);
-			CheckShortestTex (check->sidedef[1]->GetTexture(side_t::bottom), minsize);
+			CheckShortestTex (sec->Level, check->sidedef[0]->GetTexture(side_t::bottom), minsize);
+			CheckShortestTex (sec->Level, check->sidedef[1]->GetTexture(side_t::bottom), minsize);
 		}
 	}
 	return minsize < FLT_MAX ? minsize : TexMan.ByIndex(0)->GetDisplayHeight();
@@ -522,8 +522,8 @@ double FindShortestUpperAround (sector_t *sec)
 	{
 		if (check->flags & ML_TWOSIDED)
 		{
-			CheckShortestTex (check->sidedef[0]->GetTexture(side_t::top), minsize);
-			CheckShortestTex (check->sidedef[1]->GetTexture(side_t::top), minsize);
+			CheckShortestTex (sec->Level, check->sidedef[0]->GetTexture(side_t::top), minsize);
+			CheckShortestTex (sec->Level, check->sidedef[1]->GetTexture(side_t::top), minsize);
 		}
 	}
 	return minsize < FLT_MAX ? minsize : TexMan.ByIndex(0)->GetDisplayHeight();

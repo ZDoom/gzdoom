@@ -153,9 +153,9 @@ struct maplinedef_t;
 void P_LoadTranslator(const char *lumpname);
 int P_TranslateSectorSpecial (int);
 
-int GetUDMFInt(int type, int index, FName key);
-double GetUDMFFloat(int type, int index, FName key);
-FString GetUDMFString(int type, int index, FName key);
+int GetUDMFInt(FLevelLocals *Level, int type, int index, FName key);
+double GetUDMFFloat(FLevelLocals *Level, int type, int index, FName key);
+FString GetUDMFString(FLevelLocals *Level, int type, int index, FName key);
 
 void FixMinisegReferences();
 void FixHoles();

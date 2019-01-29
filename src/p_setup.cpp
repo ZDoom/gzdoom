@@ -74,8 +74,6 @@
 #include "am_map.h"
 #include "fragglescript/t_script.h"
 
-void P_ClearUDMFKeys();
-
 extern AActor *SpawnMapThing (int index, FMapThing *mthing, int position);
 
 extern unsigned int R_OldBlend;
@@ -260,6 +258,11 @@ void FLevelLocals::ClearLevelData()
 	total_monsters = total_items = total_secrets =
 		killed_monsters = found_items = found_secrets =
 		wminfo.maxfrags = 0;
+
+	for (int i = 0; i < 4; i++)
+	{
+		UDMFKeys[i].Clear();
+	}
 	
 	SN_StopAllSequences(this);
 
@@ -345,7 +348,6 @@ void P_FreeLevelData ()
 	// [ZZ] delete per-map event handlers
 	E_Shutdown(true);
 	R_FreePastViewers();
-	P_ClearUDMFKeys();
 
 	DThinker::DestroyAllThinkers ();
 

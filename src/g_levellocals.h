@@ -96,6 +96,7 @@ class DSectorMarker;
 
 typedef TMap<int, int> FDialogueIDMap;				// maps dialogue IDs to dialogue array index (for ACS)
 typedef TMap<FName, int> FDialogueMap;				// maps actor class names to dialogue array index
+typedef TMap<int, FUDMFKeys> FUDMFKeyMap;
 
 struct FLevelLocals
 {
@@ -435,6 +436,7 @@ public:
 
 	FBlockmap blockmap;
 	TArray<polyblock_t *> PolyBlockMap;
+	FUDMFKeyMap UDMFKeys[4];
 
 	// These are copies of the loaded map data that get used by the savegame code to skip unaltered fields
 	// Without such a mechanism the savegame format would become too slow and large because more than 80-90% are normally still unaltered.
@@ -464,7 +466,7 @@ public:
 
 	uint8_t		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
 	int			time;			// time in the hub
-	int			maptime;		// time in the map
+	int			maptime;			// time in the map
 	int			totaltime;		// time in the game
 	int			starttime;
 	int			partime;

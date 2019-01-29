@@ -5277,26 +5277,26 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 	switch(funcIndex)
 	{
 		case ACSF_GetLineUDMFInt:
-			return GetUDMFInt(UDMF_Line, LineFromID(args[0]), Level->Behaviors.LookupString(args[1]));
+			return GetUDMFInt(Level, UDMF_Line, LineFromID(args[0]), Level->Behaviors.LookupString(args[1]));
 
 		case ACSF_GetLineUDMFFixed:
-			return DoubleToACS(GetUDMFFloat(UDMF_Line, LineFromID(args[0]), Level->Behaviors.LookupString(args[1])));
+			return DoubleToACS(GetUDMFFloat(Level, UDMF_Line, LineFromID(args[0]), Level->Behaviors.LookupString(args[1])));
 
 		case ACSF_GetThingUDMFInt:
 		case ACSF_GetThingUDMFFixed:
 			return 0;	// Not implemented yet
 
 		case ACSF_GetSectorUDMFInt:
-			return GetUDMFInt(UDMF_Sector, Level->FindFirstSectorFromTag(args[0]), Level->Behaviors.LookupString(args[1]));
+			return GetUDMFInt(Level, UDMF_Sector, Level->FindFirstSectorFromTag(args[0]), Level->Behaviors.LookupString(args[1]));
 
 		case ACSF_GetSectorUDMFFixed:
-			return DoubleToACS(GetUDMFFloat(UDMF_Sector, Level->FindFirstSectorFromTag(args[0]), Level->Behaviors.LookupString(args[1])));
+			return DoubleToACS(GetUDMFFloat(Level, UDMF_Sector, Level->FindFirstSectorFromTag(args[0]), Level->Behaviors.LookupString(args[1])));
 
 		case ACSF_GetSideUDMFInt:
-			return GetUDMFInt(UDMF_Side, SideFromID(args[0], args[1]), Level->Behaviors.LookupString(args[2]));
+			return GetUDMFInt(Level, UDMF_Side, SideFromID(args[0], args[1]), Level->Behaviors.LookupString(args[2]));
 
 		case ACSF_GetSideUDMFFixed:
-			return DoubleToACS(GetUDMFFloat(UDMF_Side, SideFromID(args[0], args[1]), Level->Behaviors.LookupString(args[2])));
+			return DoubleToACS(GetUDMFFloat(Level, UDMF_Side, SideFromID(args[0], args[1]), Level->Behaviors.LookupString(args[2])));
 
 		case ACSF_GetActorVelX:
 			actor = Level->SingleActorFromTID(args[0], activator);
@@ -10680,8 +10680,8 @@ void ACSProfile(FLevelLocals *Level, FCommandLine &argv)
 	static const char *sort_names[] = { "total", "min", "max", "avg", "runs" };
 	static const uint8_t sort_match_len[] = {   1,     2,     2,     1,      1 };
 
-	TArray<ProfileCollector> ScriptProfiles, FuncProfiles;
-	long limit = 10;
+		TArray<ProfileCollector> ScriptProfiles, FuncProfiles;
+		long limit = 10;
 	int (*sorter)(const void *, const void *) = sort_by_total_instr;
 
 	assert(countof(sort_names) == countof(sort_match_len));

@@ -2554,7 +2554,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetAutomapPosition, GetAutomapPositi
 
 static int ZGetUDMFInt(FLevelLocals *self, int type, int index, int key)
 {
-	return GetUDMFInt(type, index, ENamedName(key));
+	return GetUDMFInt(self,type, index, ENamedName(key));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetUDMFInt, ZGetUDMFInt)
@@ -2563,12 +2563,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetUDMFInt, ZGetUDMFInt)
 	PARAM_INT(type);
 	PARAM_INT(index);
 	PARAM_NAME(key);
-	ACTION_RETURN_INT(GetUDMFInt(type, index, key));
+	ACTION_RETURN_INT(GetUDMFInt(self, type, index, key));
 }
 
 static double ZGetUDMFFloat(FLevelLocals *self, int type, int index, int key)
 {
-	return GetUDMFFloat(type, index, ENamedName(key));
+	return GetUDMFFloat(self, type, index, ENamedName(key));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetUDMFFloat, ZGetUDMFFloat)
@@ -2577,12 +2577,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetUDMFFloat, ZGetUDMFFloat)
 	PARAM_INT(type);
 	PARAM_INT(index);
 	PARAM_NAME(key);
-	ACTION_RETURN_FLOAT(GetUDMFFloat(type, index, key));
+	ACTION_RETURN_FLOAT(GetUDMFFloat(self, type, index, key));
 }
 
 static void ZGetUDMFString(FLevelLocals *self, int type, int index, int key, FString *result)
 {
-	*result = GetUDMFString(type, index, ENamedName(key));
+	*result = GetUDMFString(self, type, index, ENamedName(key));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetUDMFString, ZGetUDMFString)
@@ -2591,7 +2591,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetUDMFString, ZGetUDMFString)
 	PARAM_INT(type);
 	PARAM_INT(index);
 	PARAM_NAME(key);
-	ACTION_RETURN_STRING(GetUDMFString(type, index, key));
+	ACTION_RETURN_STRING(GetUDMFString(self, type, index, key));
 }
 
 DEFINE_ACTION_FUNCTION(FLevelLocals, GetChecksum)

@@ -71,8 +71,11 @@ static FRandom randLight;
 
 CUSTOM_CVAR (Bool, gl_lights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	if (self) AActor::RecreateAllAttachedLights();
-	else AActor::DeleteAllAttachedLights();
+	for (auto Level : AllLevels())
+	{
+		if (self) Level->RecreateAllAttachedLights();
+		else Level->DeleteAllAttachedLights();
+	}
 }
 
 CVAR (Bool, gl_attachedlights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
@@ -833,9 +836,9 @@ void AActor::DeleteAttachedLights()
 //
 //==========================================================================
 
-void AActor::DeleteAllAttachedLights()
+void FLevelLocals::DeleteAllAttachedLights()
 {
-	TThinkerIterator<AActor> it;
+	auto it = GetThinkerIterator<AActor>();
 	AActor * a;
 
 	while ((a=it.Next())) 
@@ -850,9 +853,9 @@ void AActor::DeleteAllAttachedLights()
 //
 //==========================================================================
 
-void AActor::RecreateAllAttachedLights()
+void FLevelLocals::RecreateAllAttachedLights()
 {
-	TThinkerIterator<AActor> it;
+	auto it = GetThinkerIterator<AActor>();
 	AActor * a;
 
 	while ((a=it.Next())) 

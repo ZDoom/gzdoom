@@ -232,6 +232,9 @@ public:
 	void SecretExitLevel(int position);
 	void DoLoadLevel(const FString &nextmapname, int position, bool autosave, bool newGame);
 
+	void DeleteAllAttachedLights();
+	void RecreateAllAttachedLights();
+
 
 private:
 	// Work data for CollectConnectedGroups.

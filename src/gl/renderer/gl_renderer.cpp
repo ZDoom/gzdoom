@@ -116,7 +116,6 @@ void FGLRenderer::Initialize(int width, int height)
 FGLRenderer::~FGLRenderer() 
 {
 	FlushModels();
-	AActor::DeleteAllAttachedLights();
 	TexMan.FlushAll();
 	if (mShaderManager != nullptr) delete mShaderManager;
 	if (mSamplerManager != nullptr) delete mSamplerManager;

@@ -2080,12 +2080,12 @@ uint8_t *FDynamicBuffer::GetData (int *len)
 }
 
 
-static int RemoveClass(const PClass *cls)
+static int RemoveClass(FLevelLocals *Level, const PClass *cls)
 {
 	AActor *actor;
 	int removecount = 0;
 	bool player = false;
-	TThinkerIterator<AActor> iterator(cls);
+	auto iterator = Level->GetThinkerIterator<AActor>(cls->TypeName);
 	while ((actor = iterator.Next()))
 	{
 		if (actor->IsA(cls))
@@ -2581,11 +2581,11 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		PClassActor *cls = PClass::FindActor(s);
 		if (cls != NULL && cls->IsDescendantOf(RUNTIME_CLASS(AActor)))
 		{
-			removecount = RemoveClass(cls);
+			removecount = RemoveClass(&level, cls);
 			const PClass *cls_rep = cls->GetReplacement();
 			if (cls != cls_rep)
 			{
-				removecount += RemoveClass(cls_rep);
+				removecount += RemoveClass(&leve, cls_rep);
 			}
 			Printf("Removed %d actors of type %s.\n", removecount, s);
 		}

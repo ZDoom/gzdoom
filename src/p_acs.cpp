@@ -2213,6 +2213,7 @@ bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len)
 	uint8_t *object;
 	int i;
 
+	this->Level = Level;
 	LumpNum = lumpnum;
 
 	// Now that everything is set up, record this module as being among the loaded modules.
@@ -3270,7 +3271,7 @@ void FBehavior::StartTypedScripts (uint16_t type, AActor *activator, bool always
 		ptr = &Scripts[i];
 		if (ptr->Type == type)
 		{
-			DLevelScript *runningScript = P_GetScriptGoing (&level, activator, NULL, ptr->Number,
+			DLevelScript *runningScript = P_GetScriptGoing (Level, activator, NULL, ptr->Number,
 				ptr, this, &arg1, 1, always ? ACS_ALWAYS : 0);
 			if (nullptr != runningScript && runNow)
 			{

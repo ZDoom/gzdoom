@@ -387,6 +387,7 @@ private:
 
 	ACSFormat Format;
 
+	FLevelLocals *Level;
 	int LumpNum;
 	uint8_t *Data;
 	int DataSize;

@@ -945,7 +945,8 @@ static void PrintFilteredActorList(const ActorTypeChecker IsActorType, const cha
 			}
 		}
 	}
-	TThinkerIterator<AActor> it;
+	// This only works on the primary level.
+	auto it = currentUILevel->GetThinkerIterator<AActor>();
 
 	while ( (mo = it.Next()) )
 	{

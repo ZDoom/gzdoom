@@ -98,7 +98,7 @@ typedef TMap<FName, int> FDialogueMap;				// maps actor class names to dialogue 
 
 struct FLevelLocals
 {
-	FLevelLocals() : tagManager(this), Behaviors(this) {}
+	FLevelLocals() : Behaviors(this), tagManager(this) {}
 
 	friend class MapLoader;
 

@@ -34,7 +34,7 @@
 #include <stdarg.h>
 #include "t_script.h"
 #include "v_text.h"
-#include "g_levellocals.h"""
+#include "g_levellocals.h"
 
 CVAR(Bool, script_debug, false, 0)
 

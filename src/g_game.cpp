@@ -1088,6 +1088,7 @@ void G_Ticker ()
 			AM_ToggleMap ();
 			gameaction = ga_nothing;
 			break;
+		default:
 		case ga_nothing:
 			break;
 		}

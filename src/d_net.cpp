@@ -2222,7 +2222,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		// Using LEVEL_NOINTERMISSION tends to throw the game out of sync.
 		// That was a long time ago. Maybe it works now?
 		level.flags |= LEVEL_CHANGEMAPCHEAT;
-		G_ChangeLevel(s, pos, 0);
+		level.ChangeLevel(s, pos, 0);
 		break;
 
 	case DEM_SUICIDE:
@@ -2659,7 +2659,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 
 	case DEM_FINISHGAME:
 		// Simulate an end-of-game action
-		G_ChangeLevel(NULL, 0, 0);
+		level.ChangeLevel(NULL, 0, 0);
 		break;
 
 	case DEM_NETEVENT:

@@ -296,7 +296,7 @@ static void MarkRoot()
 	}
 	// Mark sectors.
 	
-	for auto Level : AllLevels())
+	for (auto Level : AllLevels())
 	{
 		Level->Mark();
 	}

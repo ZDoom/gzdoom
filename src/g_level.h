@@ -454,11 +454,6 @@ void G_DeferedInitNew (const char *mapname, int skill = -1);
 struct FGameStartup;
 void G_DeferedInitNew (FGameStartup *gs);
 
-void G_ExitLevel (int position, bool keepFacing);
-void G_SecretExitLevel (int position);
-const char *G_GetExitMap();
-const char *G_GetSecretExitMap();
-
 enum 
 {
 	CHANGELEVEL_KEEPFACING = 1,
@@ -469,8 +464,6 @@ enum
 	CHANGELEVEL_RESETHEALTH = 32,
 	CHANGELEVEL_PRERAISEWEAPON = 64,
 };
-
-void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill=-1);
 
 void G_DoLoadLevel (const FString &MapName, int position, bool autosave, bool newGame);
 

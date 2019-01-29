@@ -569,16 +569,19 @@ static bool		unloading;
 
 EXTERN_CVAR(Bool, sv_singleplayerrespawn)
 
-void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill)
+void FLevelLocals::ChangeLevel(const char *levelname, int position, int flags, int nextSkill)
 {
-	level_info_t *nextinfo = NULL;
+	if (this != currentUILevel) return;	// only the primary level may exit.
+
+	FString nextlevel;
+	level_info_t *nextinfo = nullptr;
 
 	if (unloading)
 	{
 		Printf (TEXTCOLOR_RED "Unloading scripts cannot exit the level again.\n");
 		return;
 	}
-	if (gameaction == ga_completed && !(level.i_compatflags2 & COMPATF2_MULTIEXIT))	// do not exit multiple times.
+	if (gameaction == ga_completed && !(i_compatflags2 & COMPATF2_MULTIEXIT))	// do not exit multiple times.
 	{
 		return;
 	}
@@ -587,9 +590,9 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 	{
 		// end the game
 		levelname = NULL;
-		if (!level.NextMap.Compare("enDSeQ",6))
+		if (!NextMap.Compare("enDSeQ",6))
 		{
-			nextlevel = level.NextMap;	// If there is already an end sequence please leave it alone!
+			nextlevel = NextMap;	// If there is already an end sequence please leave it alone!
 		}
 		else 
 		{
@@ -625,15 +628,14 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 
 	if (flags & CHANGELEVEL_NOINTERMISSION)
 	{
-		level.flags |= LEVEL_NOINTERMISSION;
+		flags |= LEVEL_NOINTERMISSION;
 	}
 
-	cluster_info_t *thiscluster = FindClusterInfo (level.cluster);
+	cluster_info_t *thiscluster = FindClusterInfo (cluster);
 	cluster_info_t *nextcluster = nextinfo? FindClusterInfo (nextinfo->cluster) : NULL;
 
 	startpos = position;
-	gameaction = ga_completed;
-	level.SetMusicVolume(1.0);
+	SetMusicVolume(1.0);
 		
 	if (nextinfo != NULL) 
 	{
@@ -655,18 +657,18 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 
 	// [RH] Give scripts a chance to do something
 	unloading = true;
-	level.Behaviors.StartTypedScripts (SCRIPT_Unloading, NULL, false, 0, true);
+	Behaviors.StartTypedScripts (SCRIPT_Unloading, NULL, false, 0, true);
 	// [ZZ] safe world unload
 	E_WorldUnloaded();
 	// [ZZ] unsafe world unload (changemap != map)
 	E_WorldUnloadedUnsafe();
 	unloading = false;
 
-	STAT_ChangeLevel(nextlevel, &level);
+	STAT_ChangeLevel(nextlevel, this);
 
 	if (thiscluster && (thiscluster->flags & CLUSTER_HUB))
 	{
-		if ((level.flags & LEVEL_NOINTERMISSION) || ((nextcluster == thiscluster) && !(thiscluster->flags & CLUSTER_ALLOWINTERMISSION)))
+		if ((flags & LEVEL_NOINTERMISSION) || ((nextcluster == thiscluster) && !(thiscluster->flags & CLUSTER_ALLOWINTERMISSION)))
 			NoWipe = 35;
 		D_DrawIcon = "TELEICON";
 	}
@@ -682,7 +684,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 
 			// If this is co-op, respawn any dead players now so they can
 			// keep their inventory on the next map.
-			if ((multiplayer || level.flags2 & LEVEL2_ALLOWRESPAWN || sv_singleplayerrespawn || !!G_SkillProperty(SKILLP_PlayerRespawn))
+			if ((multiplayer || flags2 & LEVEL2_ALLOWRESPAWN || sv_singleplayerrespawn || !!G_SkillProperty(SKILLP_PlayerRespawn))
 				&& !deathmatch && player->playerstate == PST_DEAD)
 			{
 				// Copied from the end of P_DeathThink [[
@@ -693,10 +695,13 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 					player->mo->special1 = 0;
 				}
 				// ]]
-				level.DoReborn(i, false);
+				DoReborn(i, false);
 			}
 		}
 	}
+	// Set global transition state.
+	gameaction = ga_completed;
+	::nextlevel = nextlevel;
 }
 
 //==========================================================================
@@ -704,20 +709,15 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 //
 //==========================================================================
 
-const char *G_GetExitMap()
+const char *FLevelLocals::GetSecretExitMap()
 {
-	return level.NextMap;
-}
+	const char *nextmap = NextMap;
 
-const char *G_GetSecretExitMap()
-{
-	const char *nextmap = level.NextMap;
-
-	if (level.NextSecretMap.Len() > 0)
+	if (NextSecretMap.Len() > 0)
 	{
-		if (P_CheckMapData(level.NextSecretMap))
+		if (P_CheckMapData(NextSecretMap))
 		{
-			nextmap = level.NextSecretMap;
+			nextmap = NextSecretMap;
 		}
 	}
 	return nextmap;
@@ -728,16 +728,17 @@ const char *G_GetSecretExitMap()
 //
 //==========================================================================
 
-void G_ExitLevel (int position, bool keepFacing)
+
+void FLevelLocals::ExitLevel (int position, bool keepFacing)
 {
-	level.flags3 |= LEVEL3_EXITNORMALUSED;
-	G_ChangeLevel(G_GetExitMap(), position, keepFacing ? CHANGELEVEL_KEEPFACING : 0);
+	flags3 |= LEVEL3_EXITNORMALUSED;
+	ChangeLevel(NextMap, position, keepFacing ? CHANGELEVEL_KEEPFACING : 0);
 }
 
-void G_SecretExitLevel (int position) 
+void FLevelLocals::SecretExitLevel (int position)
 {
-	level.flags3 |= LEVEL3_EXITSECRETUSED;
-	G_ChangeLevel(G_GetSecretExitMap(), position, 0);
+	flags3 |= LEVEL3_EXITSECRETUSED;
+	ChangeLevel(GetSecretExitMap(), position, 0);
 }
 
 //==========================================================================

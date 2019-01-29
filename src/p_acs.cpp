@@ -9896,7 +9896,7 @@ scriptwait:
 
 		case PCD_CHANGELEVEL:
 			{
-				G_ChangeLevel(Level->Behaviors.LookupString(STACK(4)), STACK(3), STACK(2), STACK(1));
+				Level->ChangeLevel(Level->Behaviors.LookupString(STACK(4)), STACK(3), STACK(2), STACK(1));
 				sp -= 4;
 			}
 			break;

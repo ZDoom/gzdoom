@@ -92,6 +92,7 @@ class DSeqNode;
 struct FStrifeDialogueNode;
 class DAutomapBase;
 struct wbstartstruct_t;
+class DSectorMarker;
 
 typedef TMap<int, int> FDialogueIDMap;				// maps dialogue IDs to dialogue array index (for ACS)
 typedef TMap<FName, int> FDialogueMap;				// maps actor class names to dialogue array index
@@ -225,6 +226,10 @@ public:
 	bool DoCompleted(FString nextlevel, wbstartstruct_t &wminfo);
 	void StartTravel();
 	int FinishTravel();
+	void ChangeLevel(const char *levelname, int position, int flags, int nextSkill = -1);
+	const char *GetSecretExitMap();
+	void ExitLevel(int position, bool keepFacing);
+	void SecretExitLevel(int position);
 	void DoLoadLevel(const FString &nextmapname, int position, bool autosave, bool newGame);
 
 

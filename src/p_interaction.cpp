@@ -543,7 +543,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 				fraglimit <= D_GetFragCount (source->player))
 			{
 				Printf ("%s\n", GStrings("TXT_FRAGLIMIT"));
-				G_ExitLevel (0, false);
+				Level->ExitLevel (0, false);
 			}
 		}
 	}

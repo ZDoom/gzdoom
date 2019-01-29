@@ -3175,7 +3175,7 @@ void A_BossDeath(AActor *self)
 	if ((deathmatch || alwaysapplydmflags) && (dmflags & DF_NO_EXIT))
 		return;
 
-	G_ExitLevel (0, false);
+	Level->ExitLevel (0, false);
 }
 
 //----------------------------------------------------------------------------

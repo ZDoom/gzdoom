@@ -1060,9 +1060,9 @@ FUNC(LS_Generic_Lift)
 FUNC(LS_Exit_Normal)
 // Exit_Normal (position)
 {
-	if (Level->CheckIfExitIsGood (it, FindLevelInfo(G_GetExitMap())))
+	if (Level->CheckIfExitIsGood (it, FindLevelInfo(Level->NextMap)))
 	{
-		G_ExitLevel (arg0, false);
+		Level->ExitLevel (arg0, false);
 		return true;
 	}
 	return false;
@@ -1071,9 +1071,9 @@ FUNC(LS_Exit_Normal)
 FUNC(LS_Exit_Secret)
 // Exit_Secret (position)
 {
-	if (Level->CheckIfExitIsGood (it, FindLevelInfo(G_GetSecretExitMap())))
+	if (Level->CheckIfExitIsGood (it, FindLevelInfo(Level->GetSecretExitMap())))
 	{
-		G_SecretExitLevel (arg0);
+		Level->SecretExitLevel (arg0);
 		return true;
 	}
 	return false;
@@ -1088,7 +1088,7 @@ FUNC(LS_Teleport_NewMap)
 
 		if (info && Level->CheckIfExitIsGood (it, info))
 		{
-			G_ChangeLevel(info->MapName, arg1, arg2 ? CHANGELEVEL_KEEPFACING : 0);
+			Level->ChangeLevel(info->MapName, arg1, arg2 ? CHANGELEVEL_KEEPFACING : 0);
 			return true;
 		}
 	}
@@ -1183,7 +1183,7 @@ FUNC(LS_Teleport_EndGame)
 {
 	if (!backSide && Level->CheckIfExitIsGood (it, NULL))
 	{
-		G_ChangeLevel(NULL, 0, 0);
+		Level->ChangeLevel(NULL, 0, 0);
 		return true;
 	}
 	return false;

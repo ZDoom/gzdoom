@@ -463,7 +463,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 				if (!(player->cheats & (CF_GODMODE|CF_GODMODE2))) P_DamageMobj(player->mo, NULL, NULL, sector->damageamount, sector->damagetype);
 				if ((sector->Flags & SECF_ENDLEVEL) && player->health <= 10 && (!deathmatch || !(dmflags & DF_NO_EXIT)))
 				{
-					G_ExitLevel(0, false);
+					Level->ExitLevel(0, false);
 				}
 				if (sector->Flags & SECF_DMGTERRAINFX)
 				{
@@ -678,7 +678,7 @@ void P_UpdateSpecials (FLevelLocals *Level)
 		if (Level->maptime >= (int)(timelimit * TICRATE * 60))
 		{
 			Printf ("%s\n", GStrings("TXT_TIMELIMIT"));
-			G_ExitLevel(0, false);
+			Level->ExitLevel(0, false);
 		}
 	}
 }

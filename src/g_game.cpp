@@ -1691,22 +1691,23 @@ void G_DoPlayerPop(int playernum)
 	}
 
 	// [RH] Make the player disappear
-	level.Behaviors.StopMyScripts(players[playernum].mo);
+	auto mo = players[playernum].mo;
+	mo->Level->Behaviors.StopMyScripts(mo);
 	// [ZZ] fire player disconnect hook
 	E_PlayerDisconnected(playernum);
 	// [RH] Let the scripts know the player left
-	level.Behaviors.StartTypedScripts(SCRIPT_Disconnect, players[playernum].mo, true, playernum, true);
-	if (players[playernum].mo != NULL)
+	mo->Level->Behaviors.StartTypedScripts(SCRIPT_Disconnect, mo, true, playernum, true);
+	if (mo != NULL)
 	{
-		P_DisconnectEffect(players[playernum].mo);
-		players[playernum].mo->player = NULL;
-		players[playernum].mo->Destroy();
+		P_DisconnectEffect(mo);
+		mo->player = NULL;
+		mo->Destroy();
 		if (!(players[playernum].mo->ObjectFlags & OF_EuthanizeMe))
 		{ // We just destroyed a morphed player, so now the original player
 			// has taken their place. Destroy that one too.
 			players[playernum].mo->Destroy();
 		}
-		players[playernum].mo = NULL;
+		players[playernum].mo = nullptr;
 		players[playernum].camera = nullptr;
 	}
 
@@ -2033,14 +2034,15 @@ void G_DoAutoSave ()
 
 	file = G_BuildSaveName ("auto", nextautosave);
 
-	if (!(level.flags2 & LEVEL2_NOAUTOSAVEHINT))
+	// The hint flag is only relevant on the primary level.
+	if (!(currentUILevel->flags2 & LEVEL2_NOAUTOSAVEHINT))
 	{
 		nextautosave = (nextautosave + 1) % count;
 	}
 	else
 	{
 		// This flag can only be used once per level
-		level.flags2 &= ~LEVEL2_NOAUTOSAVEHINT;
+		currentUILevel->flags2 &= ~LEVEL2_NOAUTOSAVEHINT;
 	}
 
 	readableTime = myasctime ();

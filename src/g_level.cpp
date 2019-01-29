@@ -141,7 +141,7 @@ CUSTOM_CVAR(Int, gl_lightmode, 3, CVAR_ARCHIVE | CVAR_NOINITCALL)
 	if (self != newself) self = newself;
 	else for (auto Level : AllLevels())
 	{
-		if ((level.info == nullptr || level.info->lightmode == ELightMode::NotSet)) level.lightMode = (ELightMode)*self;
+		if ((Level->info == nullptr || Level->info->lightmode == ELightMode::NotSet)) Level->lightMode = (ELightMode)*self;
 	}
 }
 

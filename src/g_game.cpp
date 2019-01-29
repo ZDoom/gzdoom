@@ -1410,7 +1410,7 @@ FPlayerStart *FLevelLocals::SelectFarthestDeathmatchSpot (size_t selections)
 		if (distance > bestdistance)
 		{
 			bestdistance = distance;
-			bestspot = &level.deathmatchstarts[i];
+			bestspot = &deathmatchstarts[i];
 		}
 	}
 
@@ -1425,7 +1425,7 @@ FPlayerStart *FLevelLocals::SelectRandomDeathmatchSpot (int playernum, unsigned 
 	for (j = 0; j < 20; j++)
 	{
 		i = pr_dmspawn() % selections;
-		if (CheckSpot (playernum, &level.deathmatchstarts[i]) )
+		if (CheckSpot (playernum, &deathmatchstarts[i]) )
 		{
 			return &deathmatchstarts[i];
 		}
@@ -1526,7 +1526,7 @@ FPlayerStart *FLevelLocals::PickPlayerStart(int playernum, int flags)
 			unsigned int i;
 
 			// Find all unblocked player starts.
-			for (i = 0; i < level.AllPlayerStarts.Size(); ++i)
+			for (i = 0; i < AllPlayerStarts.Size(); ++i)
 			{
 				if (CheckSpot(playernum, &AllPlayerStarts[i]))
 				{
@@ -1539,7 +1539,7 @@ FPlayerStart *FLevelLocals::PickPlayerStart(int playernum, int flags)
 			}
 		}
 		// Pick a spot at random, whether it's open or not.
-		return &level.AllPlayerStarts[pr_pspawn(AllPlayerStarts.Size())];
+		return &AllPlayerStarts[pr_pspawn(AllPlayerStarts.Size())];
 	}
 	return &playerstarts[playernum];
 }
@@ -1568,7 +1568,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, PickPlayerStart)
 void FLevelLocals::QueueBody (AActor *body)
 {
 	// flush an old corpse if needed
-	int modslot = bodyqueslot%level.BODYQUESIZE;
+	int modslot = bodyqueslot % BODYQUESIZE;
 	bodyqueslot = modslot + 1;
 
 	if (bodyqueslot >= BODYQUESIZE && bodyque[modslot] != NULL)
@@ -1620,7 +1620,7 @@ void FLevelLocals::DoReborn (int playernum, bool freshbot)
 		{ // Reload the level from scratch
 			bool indemo = demoplayback;
 			BackupSaveName = "";
-			G_InitNew (level.MapName, false);
+			G_InitNew (MapName, false);
 			demoplayback = indemo;
 		}
 	}

@@ -3285,7 +3285,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 
 	SWRenderer->SetColormap(Level);	//The SW renderer needs to do some special setup for the level's default colormap.
 	InitPortalGroups(Level);
-	P_InitHealthGroups();
+	P_InitHealthGroups(Level);
 
 	if (reloop) LoopSidedefs(false);
 	PO_Init();				// Initialize the polyobjs

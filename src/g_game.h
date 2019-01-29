@@ -34,6 +34,7 @@ struct event_t;
 
 
 class AActor;
+struct FLevelLocals;
 
 //
 // GAME

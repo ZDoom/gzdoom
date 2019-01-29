@@ -3491,7 +3491,7 @@ FUNC(LS_Line_SetHealth)
 		line_t* line = &Level->lines[l];
 		line->health = arg1;
 		if (line->healthgroup)
-			P_SetHealthGroupHealth(line->healthgroup, arg1);
+			P_SetHealthGroupHealth(Level, line->healthgroup, arg1);
 	}
 	return true;
 }
@@ -3512,19 +3512,19 @@ FUNC(LS_Sector_SetHealth)
 		{
 			sector->healthceiling = arg2;
 			if (sector->healthceilinggroup)
-				P_SetHealthGroupHealth(sector->healthceilinggroup, arg2);
+				P_SetHealthGroupHealth(Level, sector->healthceilinggroup, arg2);
 		}
 		else if (arg1 == SECPART_Floor)
 		{
 			sector->healthfloor = arg2;
 			if (sector->healthfloorgroup)
-				P_SetHealthGroupHealth(sector->healthfloorgroup, arg2);
+				P_SetHealthGroupHealth(Level, sector->healthfloorgroup, arg2);
 		}
 		else if (arg1 == SECPART_3D)
 		{
 			sector->health3d = arg2;
 			if (sector->health3dgroup)
-				P_SetHealthGroupHealth(sector->health3dgroup, arg2);
+				P_SetHealthGroupHealth(Level, sector->health3dgroup, arg2);
 		}
 	}
 	return true;

@@ -197,7 +197,7 @@ namespace swrenderer
 				MaskedScaleY = -MaskedScaleY;
 				sprflipvert = true;
 			}
-			if (tex->useWorldPanning())
+			if (tex->useWorldPanning(curline->GetLevel()))
 			{
 				// rowoffset is added before the multiply so that the masked texture will
 				// still be positioned in world units rather than texels.
@@ -332,7 +332,7 @@ namespace swrenderer
 		}
 		else
 		{ // Texture does wrap vertically.
-			if (tex->useWorldPanning())
+			if (tex->useWorldPanning(curline->GetLevel()))
 			{
 				// rowoffset is added before the multiply so that the masked texture will
 				// still be positioned in world units rather than texels.
@@ -447,7 +447,7 @@ namespace swrenderer
 			rowoffset += rw_pic->GetHeight();
 		}
 		double texturemid = (planez - Thread->Viewport->viewpoint.Pos.Z) * yscale;
-		if (rw_pic->useWorldPanning())
+		if (rw_pic->useWorldPanning(curline->GetLevel()))
 		{
 			// rowoffset is added before the multiply so that the masked texture will
 			// still be positioned in world units rather than texels.

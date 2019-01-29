@@ -697,7 +697,7 @@ struct LevelLocals native
 	native void GiveSecret(Actor activator, bool printmsg = true, bool playsound = true);
 	native void StartSlideshow(Name whichone = 'none');
 	native void WorldDone();
-    deprecated("3.8") native static void RemoveAllBots(bool fromlist) { /* intentionally left as no-op. */ }
+    deprecated("3.8") static void RemoveAllBots(bool fromlist) { /* intentionally left as no-op. */ }
 	native ui Vector2 GetAutomapPosition();
 	native void SetInterMusic(String nextmap);
 	native String FormatMapName(int mapnamecolor);
@@ -709,6 +709,7 @@ struct LevelLocals native
 	native int FindUniqueTid(int start = 0, int limit = 0);
 	native uint GetSkyboxPortal(Actor actor);
 	native void ReplaceTextures(String from, String to, int flags);
+    clearscope native HealthGroup FindHealthGroup(int id);
 	native vector3, int PickDeathmatchStart();
 	native vector3, int PickPlayerStart(int pnum, int flags = 0);
 	native int isFrozen();

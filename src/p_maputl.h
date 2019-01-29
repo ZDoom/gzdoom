@@ -117,7 +117,7 @@ struct FLineOpening
 static const double LINEOPEN_MIN = -FLT_MAX;
 static const double LINEOPEN_MAX = FLT_MAX;
 
-void P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, const DVector2 &xy, const DVector2 *ref = NULL, int flags = 0);
+void P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, const DVector2 &xy, const DVector2 *ref = nullptr, int flags = 0);
 inline void P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, const DVector2 &xy, const DVector3 *ref, int flags = 0)
 {
 	P_LineOpening(open, thing, linedef, xy, reinterpret_cast<const DVector2*>(ref), flags);
@@ -383,7 +383,7 @@ public:
 		init(x1, y1, x2, y2, flags, startfrac);
 	}
 	void init(double x1, double y1, double x2, double y2, int flags, double startfrac = 0);
-	int PortalRelocate(intercept_t *in, int flags, DVector3 *optpos = NULL);
+	int PortalRelocate(intercept_t *in, int flags, DVector3 *optpos = nullptr);
 	void PortalRelocate(const DVector2 &disp, int flags, double hitfrac);
 	virtual ~FPathTraverse();
 	const divline_t &Trace() const { return trace; }

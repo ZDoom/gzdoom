@@ -1497,6 +1497,11 @@ struct seg_t
 	int				segnum;
 
 	int Index() const { return segnum; }
+	
+	FLevelLocals *GetLevel() const
+	{
+		return frontsector->Level;
+	}
 };
 
 //extern seg_t *segs;

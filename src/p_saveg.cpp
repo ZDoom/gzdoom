@@ -996,7 +996,7 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 	}
 
 	// [ZZ] serialize health groups
-	P_SerializeHealthGroups(arc);
+	P_SerializeHealthGroups(this, arc);
 	// [ZZ] serialize events
 	E_SerializeEvents(arc);
 	DThinker::SerializeThinkers(arc, hubload);

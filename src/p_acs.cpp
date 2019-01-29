@@ -6633,17 +6633,17 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			FHealthGroup* grp;
 			if (part == SECPART_Ceiling)
 			{
-				return (ss->healthceilinggroup && (grp = P_GetHealthGroup(ss->healthceilinggroup)))
+				return (ss->healthceilinggroup && (grp = P_GetHealthGroup(Level, ss->healthceilinggroup)))
 					? grp->health : ss->healthceiling;
 			}
 			else if (part == SECPART_Floor)
 			{
-				return (ss->healthfloorgroup && (grp = P_GetHealthGroup(ss->healthfloorgroup)))
+				return (ss->healthfloorgroup && (grp = P_GetHealthGroup(Level, ss->healthfloorgroup)))
 					? grp->health : ss->healthfloor;
 			}
 			else if (part == SECPART_3D)
 			{
-				return (ss->health3dgroup && (grp = P_GetHealthGroup(ss->health3dgroup)))
+				return (ss->health3dgroup && (grp = P_GetHealthGroup(Level, ss->health3dgroup)))
 					? grp->health : ss->health3d;
 			}
 			return 0;
@@ -6658,7 +6658,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			line_t* ll = &Level->lines[l];
 			if (ll->healthgroup > 0)
 			{
-				FHealthGroup* grp = P_GetHealthGroup(ll->healthgroup);
+				FHealthGroup* grp = P_GetHealthGroup(Level, ll->healthgroup);
 				if (grp) return grp->health;
 			}
 

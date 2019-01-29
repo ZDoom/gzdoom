@@ -694,10 +694,10 @@ struct LevelLocals native
 	native int GetUDMFInt(int type, int index, Name key);
 	native double GetUDMFFloat(int type, int index, Name key);
 	native int ExecuteSpecial(int special, Actor activator, line linedef, bool lineside, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0, int arg5 = 0);
-	native static void GiveSecret(Actor activator, bool printmsg = true, bool playsound = true);
-	native static void StartSlideshow(Name whichone = 'none');
+	native void GiveSecret(Actor activator, bool printmsg = true, bool playsound = true);
+	native void StartSlideshow(Name whichone = 'none');
 	native void WorldDone();
-	native static void RemoveAllBots(bool fromlist);
+    deprecated("3.8") native static void RemoveAllBots(bool fromlist) { /* intentionally left as no-op. */ }
 	native ui Vector2 GetAutomapPosition();
 	native void SetInterMusic(String nextmap);
 	native String FormatMapName(int mapnamecolor);
@@ -722,13 +722,13 @@ struct LevelLocals native
 		return level.IsPointInLevel(p);
 	}
 
-	native static clearscope vector2 Vec2Diff(vector2 v1, vector2 v2);
-	native static clearscope vector3 Vec3Diff(vector3 v1, vector3 v2);
-	native static clearscope vector3 SphericalCoords(vector3 viewpoint, vector3 targetPos, vector2 viewAngles = (0, 0), bool absolute = false);	
+	native clearscope vector2 Vec2Diff(vector2 v1, vector2 v2);
+	native clearscope vector3 Vec3Diff(vector3 v1, vector3 v2);
+	native clearscope vector3 SphericalCoords(vector3 viewpoint, vector3 targetPos, vector2 viewAngles = (0, 0), bool absolute = false);
 	
-	native static clearscope vector2 Vec2Offset(vector2 pos, vector2 dir, bool absolute = false);
-	native static clearscope vector3 Vec2OffsetZ(vector2 pos, vector2 dir, double atz, bool absolute = false);
-	native static clearscope vector3 Vec3Offset(vector3 pos, vector3 dir, bool absolute = false);
+	native clearscope vector2 Vec2Offset(vector2 pos, vector2 dir, bool absolute = false);
+	native clearscope vector3 Vec2OffsetZ(vector2 pos, vector2 dir, double atz, bool absolute = false);
+	native clearscope vector3 Vec3Offset(vector3 pos, vector3 dir, bool absolute = false);
 
 	native String GetChecksum() const;
 

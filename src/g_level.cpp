@@ -1151,6 +1151,13 @@ void FLevelLocals::WorldDone (void)
 
 	gameaction = ga_worlddone; 
 
+
+	//Added by mc
+	if (deathmatch)
+	{
+		bglobal.RemoveAllBots(consoleplayer != Net_Arbitrator);
+	}
+
 	if (flags & LEVEL_CHANGEMAPCHEAT)
 		return;
 
@@ -2104,81 +2111,6 @@ int IsPointInMap(FLevelLocals *Level, double x, double y, double z)
 
 	return true;
 }
-
-DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, IsPointInLevel, IsPointInMap)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-	PARAM_FLOAT(z);
-	ACTION_RETURN_BOOL(IsPointInMap(self, x, y, z));
-}
-
-template <typename T>
-inline T VecDiff(const T& v1, const T& v2)
-{
-	T result = v2 - v1;
-
-	if (level.subsectors.Size() > 0)
-	{
-		const sector_t *const sec1 = level.PointInSector(v1);
-		const sector_t *const sec2 = level.PointInSector(v2);
-
-		if (nullptr != sec1 && nullptr != sec2)
-		{
-			result += level.Displacements.getOffset(sec2->PortalGroup, sec1->PortalGroup);
-		}
-	}
-
-	return result;
-}
-
-DEFINE_ACTION_FUNCTION(FLevelLocals, Vec2Diff)
-{
-	PARAM_PROLOGUE;
-	PARAM_FLOAT(x1);
-	PARAM_FLOAT(y1);
-	PARAM_FLOAT(x2);
-	PARAM_FLOAT(y2);
-	ACTION_RETURN_VEC2(VecDiff(DVector2(x1, y1), DVector2(x2, y2)));
-}
-
-DEFINE_ACTION_FUNCTION(FLevelLocals, Vec3Diff)
-{
-	PARAM_PROLOGUE;
-	PARAM_FLOAT(x1);
-	PARAM_FLOAT(y1);
-	PARAM_FLOAT(z1);
-	PARAM_FLOAT(x2);
-	PARAM_FLOAT(y2);
-	PARAM_FLOAT(z2);
-	ACTION_RETURN_VEC3(VecDiff(DVector3(x1, y1, z1), DVector3(x2, y2, z2)));
-}
-
-DEFINE_ACTION_FUNCTION(FLevelLocals, SphericalCoords)
-{
-	PARAM_PROLOGUE;
-	PARAM_FLOAT(viewpointX);
-	PARAM_FLOAT(viewpointY);
-	PARAM_FLOAT(viewpointZ);
-	PARAM_FLOAT(targetX);
-	PARAM_FLOAT(targetY);
-	PARAM_FLOAT(targetZ);
-	PARAM_ANGLE(viewYaw);
-	PARAM_ANGLE(viewPitch);
-	PARAM_BOOL(absolute);
-
-	DVector3 viewpoint(viewpointX, viewpointY, viewpointZ);
-	DVector3 target(targetX, targetY, targetZ);
-	auto vecTo = absolute ? target - viewpoint : VecDiff(viewpoint, target);
-
-	ACTION_RETURN_VEC3(DVector3(
-		deltaangle(vecTo.Angle(), viewYaw).Degrees,
-		deltaangle(vecTo.Pitch(), viewPitch).Degrees,
-		vecTo.Length()
-	));
-}
-
 
 //==========================================================================
 //

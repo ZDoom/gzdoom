@@ -403,12 +403,6 @@ class StatusScreen abstract play version("2.5")
 	virtual void End ()
 	{
 		CurState = LeavingIntermission;
-
-		//Added by mc
-		if (deathmatch)
-		{
-			currentUILevel.RemoveAllBots (consoleplayer != Net_Arbitrator);
-		}
 	}
 
 	//====================================================================

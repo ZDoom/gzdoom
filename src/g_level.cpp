@@ -855,7 +855,7 @@ void G_DoCompleted (void)
 	}
 
 	// Intermission stats for entire hubs
-	G_LeavingHub(mode, thiscluster, &wminfo);
+	G_LeavingHub(&level, mode, thiscluster, &wminfo);
 
 	for (i = 0; i < MAXPLAYERS; i++)
 	{

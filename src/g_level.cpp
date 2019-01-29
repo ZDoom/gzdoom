@@ -947,11 +947,47 @@ void DAutosaver::Tick ()
 
 extern gamestate_t 	wipegamestate; 
  
-void G_DoLoadLevel (const FString &nextmapname, int position, bool autosave, bool newGame)
+void G_DoLoadLevel(const FString &nextmapname, int position, bool autosave, bool newGame)
 {
-	level.MapName = nextmapname;
-	static int lastposition = 0;
 	gamestate_t oldgs = gamestate;
+
+	// Here the new level needs to be allocated.
+	level.DoLoadLevel(nextmapname, position, autosave, newGame);
+
+	// Reset the global state for the new level.
+	if (wipegamestate == GS_LEVEL)
+		wipegamestate = GS_FORCEWIPE;
+
+	if (gamestate != GS_TITLELEVEL)
+	{
+		gamestate = GS_LEVEL;
+	}
+
+	gameaction = ga_nothing;
+
+	// clear cmd building stuff
+	ResetButtonStates();
+
+	SendItemUse = nullptr;
+	SendItemDrop = nullptr;
+	mousex = mousey = 0;
+	sendpause = sendsave = sendturn180 = SendLand = false;
+	LocalViewAngle = 0;
+	LocalViewPitch = 0;
+	paused = 0;
+
+	if (demoplayback || oldgs == GS_STARTUP || oldgs == GS_TITLELEVEL)
+		C_HideConsole();
+
+	C_FlushDisplay();
+	P_ResetSightCounters(true);
+
+}
+
+void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool autosave, bool newGame)
+{
+	MapName = nextmapname;
+	static int lastposition = 0;
 	int i;
 
 	if (NextSkill >= 0)
@@ -967,32 +1003,24 @@ void G_DoLoadLevel (const FString &nextmapname, int position, bool autosave, boo
 	else
 		lastposition = position;
 
-	level.Init();
+	Init();
 	StatusBar->DetachAllMessages ();
 
 	// Force 'teamplay' to 'true' if need be.
-	if (level.flags2 & LEVEL2_FORCETEAMPLAYON)
+	if (flags2 & LEVEL2_FORCETEAMPLAYON)
 		teamplay = true;
 
 	// Force 'teamplay' to 'false' if need be.
-	if (level.flags2 & LEVEL2_FORCETEAMPLAYOFF)
+	if (flags2 & LEVEL2_FORCETEAMPLAYOFF)
 		teamplay = false;
 
-	FString mapname = level.MapName;
+	FString mapname = nextmapname;
 	mapname.ToLower();
 	Printf (
 			"\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
 			"\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n"
 			TEXTCOLOR_BOLD "%s - %s\n\n",
-			mapname.GetChars(), level.LevelName.GetChars());
-
-	if (wipegamestate == GS_LEVEL)
-		wipegamestate = GS_FORCEWIPE;
-
-	if (gamestate != GS_TITLELEVEL)
-	{
-		gamestate = GS_LEVEL; 
-	}
+			mapname.GetChars(), LevelName.GetChars());
 
 	// Set the sky map.
 	// First thing, we have a dummy sky texture name,
@@ -1002,7 +1030,7 @@ void G_DoLoadLevel (const FString &nextmapname, int position, bool autosave, boo
 	skyflatnum = TexMan.GetTextureID (gameinfo.SkyFlatName, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
 
 	// [RH] Set up details about sky rendering
-	InitSkyMap (&level);
+	InitSkyMap (this);
 
 	for (i = 0; i < MAXPLAYERS; i++)
 	{ 
@@ -1015,40 +1043,28 @@ void G_DoLoadLevel (const FString &nextmapname, int position, bool autosave, boo
 
 	if (changeflags & CHANGELEVEL_NOMONSTERS)
 	{
-		level.flags2 |= LEVEL2_NOMONSTERS;
+		flags2 |= LEVEL2_NOMONSTERS;
 	}
 	else
 	{
-		level.flags2 &= ~LEVEL2_NOMONSTERS;
+		flags2 &= ~LEVEL2_NOMONSTERS;
 	}
 	if (changeflags & CHANGELEVEL_PRERAISEWEAPON)
 	{
-		level.flags2 |= LEVEL2_PRERAISEWEAPON;
+		flags2 |= LEVEL2_PRERAISEWEAPON;
 	}
 
-	level.maptime = 0;
+	maptime = 0;
 
 	if (newGame)
 	{
 		E_NewGame(EventHandlerType::Global);
 	}
 
-	P_SetupLevel (&level, position, newGame);
+	P_SetupLevel (this, position, newGame);
 
 
 
-	gameaction = ga_nothing; 
-
-	// clear cmd building stuff
-	ResetButtonStates ();
-
-	SendItemUse = NULL;
-	SendItemDrop = NULL;
-	mousex = mousey = 0; 
-	sendpause = sendsave = sendturn180 = SendLand = false;
-	LocalViewAngle = 0;
-	LocalViewPitch = 0;
-	paused = 0;
 
 	//Added by MC: Initialize bots.
 	if (deathmatch)
@@ -1067,12 +1083,12 @@ void G_DoLoadLevel (const FString &nextmapname, int position, bool autosave, boo
 		}
 	}
 
-	level.starttime = gametic;
+	starttime = gametic;
 
-	level.UnSnapshotLevel (!savegamerestore);	// [RH] Restore the state of the level.
-	int pnumerr = level.FinishTravel ();
+	UnSnapshotLevel (!savegamerestore);	// [RH] Restore the state of the 
+	int pnumerr = FinishTravel ();
 
-	if (!level.FromSnapshot)
+	if (!FromSnapshot)
 	{
 		for (int i = 0; i<MAXPLAYERS; i++)
 		{
@@ -1096,21 +1112,21 @@ void G_DoLoadLevel (const FString &nextmapname, int position, bool autosave, boo
 				continue;
 			}
 
-			const bool fromSnapshot = level.FromSnapshot;
+			const bool fromSnapshot = FromSnapshot;
 			E_PlayerEntered(ii, fromSnapshot && finishstate == FINISH_SameHub);
 
 			if (fromSnapshot)
 			{
 				// ENTER scripts are being handled when the player gets spawned, this cannot be changed due to its effect on voodoo dolls.
-				level.Behaviors.StartTypedScripts(SCRIPT_Return, players[ii].mo, true);
+				Behaviors.StartTypedScripts(SCRIPT_Return, players[ii].mo, true);
 			}
 		}
 	}
 
-	if (level.FromSnapshot)
+	if (FromSnapshot)
 	{
 		// [Nash] run REOPEN scripts upon map re-entry
-		level.Behaviors.StartTypedScripts(SCRIPT_Reopen, NULL, false);
+		Behaviors.StartTypedScripts(SCRIPT_Reopen, NULL, false);
 	}
 
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
@@ -1118,23 +1134,18 @@ void G_DoLoadLevel (const FString &nextmapname, int position, bool autosave, boo
 	E_WorldLoadedUnsafe();
 	//      regular world load (savegames are handled internally)
 	E_WorldLoaded();
-	level.DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
+	DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
 	
-	if (demoplayback || oldgs == GS_STARTUP || oldgs == GS_TITLELEVEL)
-		C_HideConsole ();
 
-	C_FlushDisplay ();
-
-	// [RH] Always save the game when entering a new level.
+	// [RH] Always save the game when entering a new 
 	if (autosave && !savegamerestore && disableautosave < 1)
 	{
-		level.CreateThinker<DAutosaver>();
+		CreateThinker<DAutosaver>();
 	}
 	if (pnumerr > 0)
 	{
 		I_Error("no start for player %d found.", pnumerr);
 	}
-	P_ResetSightCounters(true);
 }
 
 

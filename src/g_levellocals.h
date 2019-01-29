@@ -225,6 +225,7 @@ public:
 	bool DoCompleted(FString nextlevel, wbstartstruct_t &wminfo);
 	void StartTravel();
 	int FinishTravel();
+	void DoLoadLevel(const FString &nextmapname, int position, bool autosave, bool newGame);
 
 
 private:

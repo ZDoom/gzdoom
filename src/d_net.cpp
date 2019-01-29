@@ -2230,11 +2230,11 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		break;
 
 	case DEM_ADDBOT:
-		bglobal.TryAddBot (stream, player);
+		bglobal.TryAddBot (&level, stream, player);
 		break;
 
 	case DEM_KILLBOTS:
-		bglobal.RemoveAllBots (true);
+		bglobal.RemoveAllBots (&level, true);
 		Printf ("Removed all bots\n");
 		break;
 

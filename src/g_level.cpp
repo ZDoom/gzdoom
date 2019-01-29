@@ -1161,7 +1161,7 @@ void FLevelLocals::WorldDone (void)
 	//Added by mc
 	if (deathmatch)
 	{
-		bglobal.RemoveAllBots(consoleplayer != Net_Arbitrator);
+		bglobal.RemoveAllBots(this, consoleplayer != Net_Arbitrator);
 	}
 
 	if (flags & LEVEL_CHANGEMAPCHEAT)

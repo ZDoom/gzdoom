@@ -954,7 +954,7 @@ void D_Display ()
 void D_ErrorCleanup ()
 {
 	savegamerestore = false;
-	bglobal.RemoveAllBots (true);
+	bglobal.RemoveAllBots (&level, true);
 	D_QuitNetGame ();
 	if (demorecording || demoplayback)
 		G_CheckDemoStatus ();

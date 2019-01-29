@@ -1893,7 +1893,7 @@ void G_DoLoadGame ()
 	// Read intermission data for hubs
 	G_SerializeHub(arc);
 
-	bglobal.RemoveAllBots(true);
+	bglobal.RemoveAllBots(&level, true);
 
 	FString cvar;
 	arc("importantcvars", cvar);

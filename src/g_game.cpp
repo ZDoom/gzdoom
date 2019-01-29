@@ -1340,7 +1340,7 @@ bool FLevelLocals::CheckSpot (int playernum, FPlayerStart *mthing)
 	{
 		spot.Z = 0;
 	}
-	spot.Z += P_PointInSector (spot)->floorplane.ZatPoint (spot);
+	spot.Z += PointInSector (spot)->floorplane.ZatPoint (spot);
 
 	if (!players[playernum].mo)
 	{ // first spawn of level, before corpses

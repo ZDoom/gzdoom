@@ -814,9 +814,8 @@ secplane_t P_FindFloorPlane(sector_t * sector, const DVector3 &pos)
 
 int	P_Find3DFloor(sector_t * sec, const DVector3 &pos, bool above, bool floor, double &cmpz)
 {
-	// If no sector given, find the one appropriate
-	if (sec == NULL)
-		sec = P_PointInSector(pos);
+	// sector must be given
+	if (sec == nullptr) return -1;
 
 	// Above normal ceiling
 	cmpz = sec->ceilingplane.ZatPoint(pos);

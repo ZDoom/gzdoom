@@ -296,7 +296,7 @@ class PhosphorousFire : Actor
 
 			Vector2 newpos = Vec2Offset(xofs, yofs);
 			
-			Sector sec = Sector.PointInSector(newpos);
+			Sector sec = Level.PointInSector(newpos);
 			// Consider portals and 3D floors instead of just using the current sector's z.
 			double floorh = sec.NextLowestFloorAt(newpos.x, newpos.y, pos.z+4, 0, MaxStepHeight);
 

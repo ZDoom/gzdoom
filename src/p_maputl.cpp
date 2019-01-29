@@ -80,7 +80,6 @@
 #include "po_man.h"
 #include "vm.h"
 
-sector_t *P_PointInSectorBuggy(double x, double y);
 int P_VanillaPointOnDivlineSide(double x, double y, const divline_t* line);
 
 
@@ -354,7 +353,7 @@ void AActor::UnlinkFromWorld (FLinkContext *ctx)
 
 bool AActor::FixMapthingPos()
 {
-	sector_t *secstart = P_PointInSectorBuggy(X(), Y());
+	sector_t *secstart = Level->PointInSectorBuggy(X(), Y());
 
 	int blockx = Level->blockmap.GetBlockX(X());
 	int blocky = Level->blockmap.GetBlockY(Y());
@@ -452,16 +451,16 @@ void AActor::LinkToWorld(FLinkContext *ctx, bool spawningmapthing, sector_t *sec
 	{
 		if (!spawning)
 		{
-			sector = P_PointInSector(Pos());
+			sector = Level->PointInSector(Pos());
 		}
 		else
 		{
-			sector = P_PointInSectorBuggy(X(), Y());
+			sector = Level->PointInSectorBuggy(X(), Y());
 		}
 	}
 
 	Sector = sector;
-	subsector = R_PointInSubsector(Pos());	// this is from the rendering nodes, not the gameplay nodes!
+	subsector = Level->PointInRenderSubsector(Pos());	// this is from the rendering nodes, not the gameplay nodes!
 	section = subsector->section;
 
 	if (!(flags & MF_NOSECTOR))
@@ -725,7 +724,7 @@ FMultiBlockLinesIterator::FMultiBlockLinesIterator(FPortalGroupArray &check, dou
 	: checklist(check)
 {
 	checkpoint = { checkx, checky, checkz };
-	if (newsec == NULL)	newsec = P_PointInSector(checkx, checky);
+	if (newsec == NULL)	newsec = level.PointInSector(checkx, checky);
 	startsector = newsec;
 	basegroup = newsec->PortalGroup;
 	if (!check.inited) level.CollectConnectedGroups(basegroup, checkpoint, checkz + checkh, checkradius, checklist);
@@ -851,7 +850,7 @@ bool FMultiBlockLinesIterator::startIteratorForGroup(int group)
 	offset = level.Displacements.getOffset(basegroup, group);
 	offset.X += checkpoint.X;
 	offset.Y += checkpoint.Y;
-	cursector = group == startsector->PortalGroup ? startsector : P_PointInSector(offset);
+	cursector = group == startsector->PortalGroup ? startsector : level.PointInSector(offset);
 	// If we ended up in a different group, 
 	// presumably because the spot to be checked is too far outside the actual portal group,
 	// the search needs to abort.
@@ -1068,7 +1067,7 @@ FMultiBlockThingsIterator::FMultiBlockThingsIterator(FPortalGroupArray &check, d
 	checkpoint.X = checkx;
 	checkpoint.Y = checky;
 	checkpoint.Z = checkz;
-	if (newsec == NULL) newsec = P_PointInSector(checkx, checky);
+	if (newsec == NULL) newsec = level.PointInSector(checkx, checky);
 	basegroup = newsec->PortalGroup;
 	if (!check.inited) level.CollectConnectedGroups(basegroup, checkpoint, checkz + checkh, checkradius, checklist);
 	checkpoint.Z = checkradius;
@@ -1933,15 +1932,15 @@ int P_VanillaPointOnLineSide(double x, double y, const line_t* line)
 //
 //==========================================================================
 
-subsector_t *P_PointInSubsector(double x, double y)
+subsector_t *FLevelLocals::PointInSubsector(double x, double y)
 {
 	int side;
 
 	auto node = level.HeadGamenode();
 	if (node == nullptr) return &level.subsectors[0];
 
-	fixed_t xx = FLOAT2FIXED(x);
-	fixed_t yy = FLOAT2FIXED(y);
+	fixed_t xx = FloatToFixed(x);
+	fixed_t yy = FloatToFixed(y);
 	do
 	{
 		side = R_PointOnSide(xx, yy, node);
@@ -1958,7 +1957,7 @@ subsector_t *P_PointInSubsector(double x, double y)
 //
 //==========================================================================
 
-sector_t *P_PointInSectorBuggy(double x, double y)
+sector_t *FLevelLocals::PointInSectorBuggy(double x, double y)
 {
 	// single subsector is a special case
 	auto node = level.HeadGamenode();
@@ -1979,3 +1978,31 @@ sector_t *P_PointInSectorBuggy(double x, double y)
 	subsector_t *ssec = (subsector_t *)((uint8_t *)node - 1);
 	return ssec->sector;
 }
+
+//==========================================================================
+//
+// RPointInRenderSubsector
+//
+//==========================================================================
+
+subsector_t *FLevelLocals::PointInRenderSubsector (fixed_t x, fixed_t y)
+{
+	node_t *node;
+	int side;
+	
+	// single subsector is a special case
+	if (level.nodes.Size() == 0)
+		return &level.subsectors[0];
+	
+	node = level.HeadNode();
+	
+	do
+	{
+		side = R_PointOnSide (x, y, node);
+		node = (node_t *)node->children[side];
+	}
+	while (!((size_t)node & 1));
+	
+	return (subsector_t *)((uint8_t *)node - 1);
+}
+

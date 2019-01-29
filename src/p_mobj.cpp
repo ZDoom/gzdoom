@@ -3395,7 +3395,7 @@ DVector3 AActor::GetPortalTransition(double byoffset, sector_t **pSec)
 		if (testz >= sec->GetPortalPlaneZ(sector_t::ceiling))
 		{
 			pos = PosRelative(sec->GetOppositePortalGroup(sector_t::ceiling));
-			sec = P_PointInSector(pos);
+			sec = Level->PointInSector(pos);
 			moved = true;
 		}
 		else break;
@@ -3407,7 +3407,7 @@ DVector3 AActor::GetPortalTransition(double byoffset, sector_t **pSec)
 			if (testz < sec->GetPortalPlaneZ(sector_t::floor))
 			{
 				pos = PosRelative(sec->GetOppositePortalGroup(sector_t::floor));
-				sec = P_PointInSector(pos);
+				sec = Level->PointInSector(pos);
 			}
 			else break;
 		}
@@ -3430,7 +3430,7 @@ void AActor::CheckPortalTransition(bool islinked)
 			if (islinked && !moved) UnlinkFromWorld(&ctx);
 			SetXYZ(PosRelative(Sector->GetOppositePortalGroup(sector_t::ceiling)));
 			Prev += Pos() - oldpos;
-			Sector = P_PointInSector(Pos());
+			Sector = Level->PointInSector(Pos());
 			PrevPortalGroup = Sector->PortalGroup;
 			moved = true;
 		}
@@ -3447,7 +3447,7 @@ void AActor::CheckPortalTransition(bool islinked)
 				if (islinked && !moved) UnlinkFromWorld(&ctx);
 				SetXYZ(PosRelative(Sector->GetOppositePortalGroup(sector_t::floor)));
 				Prev += Pos() - oldpos;
-				Sector = P_PointInSector(Pos());
+				Sector = Level->PointInSector(Pos());
 				PrevPortalGroup = Sector->PortalGroup;
 				moved = true;
 			}
@@ -5340,7 +5340,7 @@ AActor *FLevelLocals::SpawnMapThing (FMapThing *mthing, int position)
 		}
 		else
 		{
-			P_PointInSector (mthing->pos)->seqType = type;
+			PointInSector (mthing->pos)->seqType = type;
 		}
 		return NULL;
 	}
@@ -6176,7 +6176,7 @@ bool P_CheckMissileSpawn (AActor* th, double maxdist)
 
 	newpos = th->Vec3Offset(newpos);
 	th->SetXYZ(newpos);
-	th->Sector = P_PointInSector(th->Pos());
+	th->Sector = th->Level->PointInSector(th->Pos());
 
 	FCheckPosition tm(!!(th->flags2 & MF2_RIP));
 

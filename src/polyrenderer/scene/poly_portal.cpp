@@ -234,7 +234,7 @@ void PolyDrawLinePortal::SaveGlobals()
 	}
 
 	viewpoint.camera = nullptr;
-	viewpoint.sector = R_PointInSubsector(viewpoint.Pos)->sector;
+	viewpoint.sector = viewpoint.ViewLevel->PointInRenderSubsector(viewpoint.Pos)->sector;
 
 	viewpoint.SetViewAngle(viewwindow);
 }

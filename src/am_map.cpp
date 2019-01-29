@@ -2480,7 +2480,7 @@ void DAutomap::drawWalls (bool allmap)
 			if (line.sidedef[0]->Flags & WALLF_POLYOBJ)
 			{
 				// For polyobjects we must test the surrounding sector to get the proper group.
-				pg = P_PointInSector(line.v1->fX() + line.Delta().X / 2, line.v1->fY() + line.Delta().Y / 2)->PortalGroup;
+				pg = Level->PointInSector(line.v1->fX() + line.Delta().X / 2, line.v1->fY() + line.Delta().Y / 2)->PortalGroup;
 			}
 			else
 			{

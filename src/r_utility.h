@@ -111,12 +111,6 @@ struct DVector3a
 	DAngle angle;
 };
 
-
-subsector_t *R_PointInSubsector (fixed_t x, fixed_t y);
-inline subsector_t *R_PointInSubsector(const DVector2 &pos)
-{
-	return R_PointInSubsector(FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y));
-}
 void R_ResetViewInterpolation ();
 void R_RebuildViewInterpolation(player_t *player);
 bool R_GetViewInterpolationStatus();

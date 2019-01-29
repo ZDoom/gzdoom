@@ -107,7 +107,7 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 
 	old = thing->Pos();
 	aboveFloor = thing->Z() - thing->floorz;
-	destsect = P_PointInSector (pos);
+	destsect = thing->Level->PointInSector (pos);
 	// killough 5/12/98: exclude voodoo dolls:
 	player = thing->player;
 	if (player && player->mo != thing)

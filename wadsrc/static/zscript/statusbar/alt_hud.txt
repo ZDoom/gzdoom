@@ -735,7 +735,7 @@ class AltHud ui
 		else 
 		{
 			pos.xy = currentUILevel.GetAutomapPosition();
-			pos.z = Sector.PointInSector(pos.xy).floorplane.ZatPoint(pos.xy);
+			pos.z = currentUILevel.PointInSector(pos.xy).floorplane.ZatPoint(pos.xy);
 		}
 
 		int xpos = hudwidth - SmallFont.StringWidth("X: -00000")-6;

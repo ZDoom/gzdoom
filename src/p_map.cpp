@@ -275,7 +275,7 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator &mit, FMultiBlockLines
 
 void P_GetFloorCeilingZ(FCheckPosition &tmf, int flags)
 {
-	sector_t *sec = (!(flags & FFCF_SAMESECTOR) || tmf.thing->Sector == NULL)? P_PointInSector(tmf.pos) : tmf.sector;
+	sector_t *sec = (!(flags & FFCF_SAMESECTOR) || tmf.thing->Sector == NULL)? tmf.thing->Level->PointInSector(tmf.pos) : tmf.sector;
 	F3DFloor *ffc, *fff;
 
 	tmf.ceilingz = NextHighestCeilingAt(sec, tmf.pos.X, tmf.pos.Y, tmf.pos.Z, tmf.pos.Z + tmf.thing->Height, flags, &tmf.ceilingsector, &ffc);
@@ -418,7 +418,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 	// P_LineOpening requires the thing's z to be the destination z in order to work.
 	double savedz = thing->Z();
 	thing->SetZ(pos.Z);
-	sector_t *sector = P_PointInSector(pos);
+	sector_t *sector = thing->Level->PointInSector(pos);
 
 	FPortalGroupArray grouplist;
 	FMultiBlockLinesIterator mit(grouplist, pos.X, pos.Y, pos.Z, thing->Height, thing->radius, sector);
@@ -1668,7 +1668,7 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 	tm.pos.Y = pos.Y;
 	tm.pos.Z = thing->Z();
 
-	newsec = tm.sector = P_PointInSector(pos);
+	newsec = tm.sector = thing->Level->PointInSector(pos);
 	tm.ceilingline = thing->BlockingLine = NULL;
 
 	// Retrieve the base floor / ceiling from the target location.
@@ -2596,7 +2596,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 		thing->UnlinkFromWorld(&ctx);
 		thing->SetXYZ(thing->PosRelative(tm.portalgroup));
 		thing->Prev += thing->Pos() - oldpos;
-		thing->Sector = P_PointInSector(thing->Pos());
+		thing->Sector = thing->Level->PointInSector(thing->Pos());
 		thing->PrevPortalGroup = thing->Sector->PortalGroup;
 		thing->LinkToWorld(&ctx);
 
@@ -3819,7 +3819,7 @@ struct aim_t
 		newtrace.aimdir = position == sector_t::ceiling? aim_t::aim_up : aim_t::aim_down;
 		newtrace.startpos = startpos + entersec->GetPortalDisplacement(position);
 		newtrace.startfrac = frac + 1. / attackrange;	// this is to skip the transition line to the portal which would produce a bogus opening
-		newtrace.lastsector = P_PointInSector(newtrace.startpos + aimtrace * newtrace.startfrac);
+		newtrace.lastsector = entersec->Level->PointInSector(newtrace.startpos + aimtrace * newtrace.startfrac);
 		newtrace.limitz = portalz;
 		if (aimdebug)
 			Printf("-----Entering %s portal from sector %d to sector %d\n", position ? "ceiling" : "floor", lastsector->sectornum, newtrace.lastsector->sectornum);
@@ -3858,7 +3858,7 @@ struct aim_t
 
 		DVector2 pos = newtrace.startpos + newtrace.aimtrace * newtrace.startfrac;
 
-		newtrace.lastsector = P_PointInSector(pos);
+		newtrace.lastsector = li->GetLevel()->PointInSector(pos);
 		P_TranslatePortalZ(li, limitz);
 		if (aimdebug)
 			Printf("-----Entering line portal from sector %d to sector %d\n", lastsector->sectornum, newtrace.lastsector->sectornum);
@@ -6775,7 +6775,7 @@ static void SpawnDeepSplash(AActor *t1, const FTraceResults &trace, AActor *puff
 	}
 	else return;
 
-	P_HitWater(puff != NULL ? puff : t1, P_PointInSector(*hitpos), *hitpos);
+	P_HitWater(puff != NULL ? puff : t1, t1->Level->PointInSector(*hitpos), *hitpos);
 }
 
 //=============================================================================

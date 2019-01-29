@@ -224,7 +224,7 @@ void HWDrawInfo::ClearBuffers()
 
 void HWDrawInfo::UpdateCurrentMapSection()
 {
-	const int mapsection = R_PointInSubsector(Viewpoint.Pos)->mapsection;
+	const int mapsection = Level->PointInRenderSubsector(Viewpoint.Pos)->mapsection;
 	CurrentMapSections.Set(mapsection);
 }
 
@@ -239,7 +239,7 @@ void HWDrawInfo::SetViewArea()
 {
     auto &vp = Viewpoint;
 	// The render_sector is better suited to represent the current position in GL
-	vp.sector = R_PointInSubsector(vp.Pos)->render_sector;
+	vp.sector = Level->PointInRenderSubsector(vp.Pos)->render_sector;
 
 	// Get the heightsec state from the render sector, not the current one!
 	if (vp.sector->GetHeightSec())
@@ -652,7 +652,7 @@ void HWDrawInfo::ProcessScene(bool toscreen, const std::function<void(HWDrawInfo
 {
 	screen->mPortalState->BeginScene();
 
-	int mapsection = R_PointInSubsector(Viewpoint.Pos)->mapsection;
+	int mapsection = Level->PointInRenderSubsector(Viewpoint.Pos)->mapsection;
 	CurrentMapSections.Set(mapsection);
 	DrawScene = drawScene;
 	DrawScene(this, toscreen ? DM_MAINVIEW : DM_OFFSCREEN);

@@ -714,7 +714,13 @@ struct LevelLocals native
 	native int isFrozen();
 	native void setFrozen(bool on);
 
-	native static clearscope bool IsPointInMap(vector3 p);
+	native clearscope Sector PointInSector(Vector2 pt);
+
+	native clearscope bool IsPointInLevel(vector3 p);
+	deprecated("3.8") clearscope static bool IsPointInMap(vector3 p)
+	{
+		return level.IsPointInLevel(p);
+	}
 
 	native static clearscope vector2 Vec2Diff(vector2 v1, vector2 v2);
 	native static clearscope vector3 Vec3Diff(vector3 v1, vector3 v2);

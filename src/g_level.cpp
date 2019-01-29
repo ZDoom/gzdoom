@@ -2078,10 +2078,10 @@ int FLevelLocals::GetInfighting()
 // Made by dpJudas, modified and implemented by Major Cooke
 //==========================================================================
 
-
-int IsPointInMap(double x, double y, double z)
+int IsPointInMap(FLevelLocals *Level, double x, double y, double z)
 {
-	subsector_t *subsector = R_PointInSubsector(FLOAT2FIXED(x), FLOAT2FIXED(y));
+	// This uses the render nodes because those are guaranteed to be GL nodes, meaning all subsectors are closed.
+	subsector_t *subsector = Level->PointInRenderSubsector(FLOAT2FIXED(x), FLOAT2FIXED(y));
 	if (!subsector) return false;
 
 	for (uint32_t i = 0; i < subsector->numlines; i++)
@@ -2105,13 +2105,13 @@ int IsPointInMap(double x, double y, double z)
 	return true;
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, IsPointInMap, IsPointInMap)
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, IsPointInLevel, IsPointInMap)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	PARAM_FLOAT(z);
-	ACTION_RETURN_BOOL(IsPointInMap(x, y, z));
+	ACTION_RETURN_BOOL(IsPointInMap(self, x, y, z));
 }
 
 template <typename T>
@@ -2121,8 +2121,8 @@ inline T VecDiff(const T& v1, const T& v2)
 
 	if (level.subsectors.Size() > 0)
 	{
-		const sector_t *const sec1 = P_PointInSector(v1);
-		const sector_t *const sec2 = P_PointInSector(v2);
+		const sector_t *const sec1 = level.PointInSector(v1);
+		const sector_t *const sec2 = level.PointInSector(v2);
 
 		if (nullptr != sec1 && nullptr != sec2)
 		{

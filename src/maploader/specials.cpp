@@ -419,7 +419,7 @@ void MapLoader::SpawnSkybox(AActor *origin)
 	if (Sector == NULL)
 	{
 		Printf("Sector not initialized for SkyCamCompat\n");
-		origin->Sector = Sector = P_PointInSector(origin->Pos());
+		origin->Sector = Sector = Level->PointInSector(origin->Pos());
 	}
 	if (Sector)
 	{

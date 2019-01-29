@@ -625,7 +625,7 @@ bool HWLineToLinePortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *cl
 		line_t *line = lines[i].seg->linedef->getPortalDestination();
 		subsector_t *sub;
 		if (line->sidedef[0]->Flags & WALLF_POLYOBJ)
-			sub = R_PointInSubsector(line->v1->fixX(), line->v1->fixY());
+			sub = di->Level->PointInRenderSubsector(line->v1->fixX(), line->v1->fixY());
 		else sub = line->frontsector->subsectors[0];
 		di->CurrentMapSections.Set(sub->mapsection);
 	}
@@ -791,7 +791,7 @@ bool HWSectorStackPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *c
 
 	// If the viewpoint is not within the portal, we need to invalidate the entire clip area.
 	// The portal will re-validate the necessary parts when its subsectors get traversed.
-	subsector_t *sub = R_PointInSubsector(vp.Pos);
+	subsector_t *sub = di->Level->PointInRenderSubsector(vp.Pos);
 	if (!(di->ss_renderflags[sub->Index()] & SSRF_SEEN))
 	{
 		clipper->SafeAddClipRange(0, ANGLE_MAX);

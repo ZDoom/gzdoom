@@ -317,11 +317,27 @@ public:
 		return frozenstate;
 	}
 
+private:	// The engine should never ever access subsectors of the game nodes. This is only needed for actually implementing PointInSector.
+	subsector_t *PointInSubsector(double x, double y);
+public:
+	sector_t *PointInSectorBuggy(double x, double y);
+	subsector_t *PointInRenderSubsector (fixed_t x, fixed_t y);
+
 	sector_t *PointInSector(const DVector2 &pos)
 	{
-		return P_PointInSector(pos);
+		return PointInSubsector(pos.X, pos.Y)->sector;
 	}
-	
+
+	sector_t *PointInSector(double x, double y)
+	{
+		return PointInSubsector(x, y)->sector;
+	}
+
+	subsector_t *PointInRenderSubsector (const DVector2 &pos)
+	{
+		return PointInRenderSubsector(FloatToFixed(pos.X), FloatToFixed(pos.Y));
+	}
+
 	FPolyObj *GetPolyobj (int polyNum)
 	{
 		auto index = Polyobjects.FindEx([=](const auto &poly) { return poly.tag == polyNum; });

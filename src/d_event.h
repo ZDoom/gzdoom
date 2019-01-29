@@ -25,6 +25,7 @@
 
 
 #include "basictypes.h"
+#include <functional>
 
 
 //
@@ -119,6 +120,7 @@ typedef enum
 // Called by IO functions when input is detected.
 void D_PostEvent (const event_t* ev);
 void D_RemoveNextCharEvent();
+void D_Render(std::function<void()> action, bool interpolate);
 
 
 //

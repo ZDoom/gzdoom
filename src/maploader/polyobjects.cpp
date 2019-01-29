@@ -152,6 +152,7 @@ void MapLoader::SpawnPolyobj (int index, int tag, int type)
 	unsigned int ii;
 	int i;
 	FPolyObj *po = &Level->Polyobjects[index];
+	po->Level = Level;
 
 	for (ii = 0; ii < KnownPolySides.Size(); ++ii)
 	{
@@ -351,10 +352,6 @@ void MapLoader::PO_Init (void)
 	InitSideLists ();
 
 	Level->Polyobjects.Resize(NumPolyobjs);
-	for (auto p : Level->Polyobjects)
-	{
-		p.Level = Level;
-	}
 
 	polyIndex = 0; // index polyobj number
 	// Find the startSpot points, and spawn each polyobj

@@ -135,12 +135,12 @@ void P_Ticker (void)
 		{
 			ac->ClearInterpolation();
 		}
+		P_ThinkParticles(Level);	// [RH] make the particles think
 	}
 
 	// Since things will be moving, it's okay to interpolate them in the renderer.
 	r_NoInterpolate = false;
 
-	P_ThinkParticles();	// [RH] make the particles think
 
 	for (i = 0; i<MAXPLAYERS; i++)
 		if (playeringame[i])
@@ -156,7 +156,7 @@ void P_Ticker (void)
 	if (!level.isFrozen())
 	{
 		P_UpdateSpecials (&level);
-		P_RunEffects ();	// [RH] Run particle effects
+		P_RunEffects(&level);	// [RH] Run particle effects
 	}
 
 		// for par times

@@ -1669,7 +1669,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnParticle)
 			acc.X = accelx * c + accely * s;
 			acc.Y = accelx * s - accely * c;
 		}
-		P_SpawnParticle(self->Vec3Offset(pos), vel, acc, color, startalpha, lifetime, size, fadestep, sizestep, flags);
+		P_SpawnParticle(self->Level, self->Vec3Offset(pos), vel, acc, color, startalpha, lifetime, size, fadestep, sizestep, flags);
 	}
 	return 0;
 }

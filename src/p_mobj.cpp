@@ -5619,7 +5619,7 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, const DVector3 &pos1
 	{
 		if (cl_pufftype && updown != 3 && (puff->flags4 & MF4_ALLOWPARTICLES))
 		{
-			P_DrawSplash2 (32, pos, particledir, updown, 1);
+			P_DrawSplash2 (source->Level, 32, pos, particledir, updown, 1);
 			if (cl_pufftype == 1) puff->renderflags |= RF_INVISIBLE;
 		}
 
@@ -5743,7 +5743,7 @@ void P_SpawnBlood (const DVector3 &pos1, DAngle dir, int damage, AActor *origina
 	}
 
 	if (bloodtype >= 1)
-		P_DrawSplash2 (40, pos, dir, 2, originator->BloodColor);
+		P_DrawSplash2 (originator->Level, 40, pos, dir, 2, originator->BloodColor);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, SpawnBlood)
@@ -5794,7 +5794,7 @@ void P_BloodSplatter (const DVector3 &pos, AActor *originator, DAngle hitangle)
 	}
 	if (bloodtype >= 1)
 	{
-		P_DrawSplash2 (40, pos, hitangle-180., 2, originator->BloodColor);
+		P_DrawSplash2 (originator->Level, 40, pos, hitangle-180., 2, originator->BloodColor);
 	}
 }
 
@@ -5835,7 +5835,7 @@ void P_BloodSplatter2 (const DVector3 &pos, AActor *originator, DAngle hitangle)
 	}
 	if (bloodtype >= 1)
 	{
-		P_DrawSplash2(40, pos + add, hitangle - 180., 2, originator->BloodColor);
+		P_DrawSplash2(originator->Level, 40, pos + add, hitangle - 180., 2, originator->BloodColor);
 	}
 }
 
@@ -5895,7 +5895,7 @@ void P_RipperBlood (AActor *mo, AActor *bleeder)
 	}
 	if (bloodtype >= 1)
 	{
-		P_DrawSplash2(28, pos, bleeder->AngleTo(mo) + 180., 0, bleeder->BloodColor);
+		P_DrawSplash2(bleeder->Level, 28, pos, bleeder->AngleTo(mo) + 180., 0, bleeder->BloodColor);
 	}
 }
 

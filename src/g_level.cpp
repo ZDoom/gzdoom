@@ -80,6 +80,7 @@
 #include "i_music.h"
 #include "a_dynlight.h"
 #include "p_conversation.h"
+#include "p_effect.h"
 
 #include "gi.h"
 
@@ -1460,6 +1461,8 @@ int G_FinishTravel ()
 
 void FLevelLocals::Init()
 {
+	P_InitParticles(this);
+	P_ClearParticles(this);
 	BaseBlendA = 0.0f;		// Remove underwater blend effect, if any
 
 	gravity = sv_gravity * 35/TICRATE;

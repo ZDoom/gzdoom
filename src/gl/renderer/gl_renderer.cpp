@@ -245,8 +245,6 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 		if (cl_capfps || r_NoInterpolate) r_viewpoint.TicFrac = 1.;
 		else r_viewpoint.TicFrac = I_GetTimeFrac();
 
-		P_FindParticleSubsectors();
-
 		screen->mLights->Clear();
 		screen->mViewpoints->Clear();
 
@@ -358,7 +356,6 @@ void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, i
     mBuffers = mSaveBuffers;
     
 	hw_ClearFakeFlat();
-	P_FindParticleSubsectors();    // make sure that all recently spawned particles have a valid subsector.
 	gl_RenderState.SetVertexBuffer(screen->mVertexData);
 	screen->mVertexData->Reset();
     screen->mLights->Clear();

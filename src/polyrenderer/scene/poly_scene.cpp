@@ -146,6 +146,7 @@ void RenderPolyScene::RenderSectors()
 void RenderPolyScene::RenderSubsector(PolyRenderThread *thread, subsector_t *sub, uint32_t subsectorDepth)
 {
 	sector_t *frontsector = sub->sector;
+	auto Level = frontsector->Level;
 	frontsector->MoreFlags |= SECMF_DRAWN;
 
 	if (sub->polys)
@@ -187,9 +188,9 @@ void RenderPolyScene::RenderSubsector(PolyRenderThread *thread, subsector_t *sub
 	}
 
 	int subsectorIndex = sub->Index();
-	for (int i = ParticlesInSubsec[subsectorIndex]; i != NO_PARTICLE; i = Particles[i].snext)
+	for (int i = Level->ParticlesInSubsec[subsectorIndex]; i != NO_PARTICLE; i = Level->Particles[i].snext)
 	{
-		particle_t *particle = &Particles[i];
+		particle_t *particle = &Level->Particles[i];
 		thread->TranslucentObjects.push_back(thread->FrameMemory->NewObject<PolyTranslucentParticle>(particle, sub, subsectorDepth, CurrentViewpoint->StencilValue));
 	}
 }

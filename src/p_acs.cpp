@@ -6447,7 +6447,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			size = fabs(size);
 
 			if (lifetime != 0)
-				P_SpawnParticle(DVector3(ACSToDouble(x), ACSToDouble(y), ACSToDouble(z)), 
+				P_SpawnParticle(Level, DVector3(ACSToDouble(x), ACSToDouble(y), ACSToDouble(z)),
 								DVector3(ACSToDouble(xvel), ACSToDouble(yvel), ACSToDouble(zvel)),
 								DVector3(ACSToDouble(accelx), ACSToDouble(accely), ACSToDouble(accelz)),
 								color, startalpha/255., lifetime, size, endsize, fadestep/255., fullbright);

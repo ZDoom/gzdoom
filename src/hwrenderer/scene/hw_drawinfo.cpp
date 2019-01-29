@@ -429,7 +429,6 @@ void HWDrawInfo::CreateScene()
 
 	// reset the portal manager
 	screen->mPortalState->StartFrame();
-	PO_LinkToSubsectors(Level);
 
 	ProcessAll.Clock();
 

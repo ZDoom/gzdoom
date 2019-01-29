@@ -47,6 +47,7 @@
 #include "p_tags.h"
 #include "p_spec.h"
 #include "actor.h"
+#include "p_effect.h"
 #include "p_destructible.h"
 #include "r_data/r_sections.h"
 #include "r_data/r_canvastexture.h"
@@ -490,6 +491,12 @@ public:
 
 	int ActiveSequences;
 	DSeqNode *SequenceListHead;
+
+	// [RH] particle globals
+	uint32_t			ActiveParticles;
+	uint32_t			InactiveParticles;
+	TArray<particle_t>	Particles;
+	TArray<uint16_t>	ParticlesInSubsec;
 
 	TArray<DVector2>	Scrolls;		// NULL if no DScrollers in this level
 

@@ -353,6 +353,35 @@ void D_RemoveNextCharEvent()
 
 //==========================================================================
 //
+// Render wrapper.
+// This function contains all the needed setup and cleanup for starting a render job.
+//
+//==========================================================================
+
+void D_Render(std::function<void()> action, bool interpolate)
+{
+	for (auto Level : AllLevels())
+	{
+		// Check for the presence of dynamic lights at the start of the frame once.
+		if ((gl_lights && vid_rendermode == 4) || (r_dynlights && vid_rendermode != 4))
+		{
+			Level->HasDynamicLights = !!level.lights;
+		}
+		else Level->HasDynamicLights = false;	// lights are off so effectively we have none.
+		if (interpolate) Level->interpolator.DoInterpolations(I_GetTimeFrac());
+		P_FindParticleSubsectors(Level);
+		PO_LinkToSubsectors(Level);
+	}
+	action();
+
+	if (interpolate) for (auto Level : AllLevels())
+	{
+		Level->interpolator.RestoreInterpolations();
+	}
+}
+
+//==========================================================================
+//
 // CVAR dmflags
 //
 //==========================================================================
@@ -746,22 +775,10 @@ void D_Display ()
 		//E_RenderFrame();
 		//
 		
-		for (auto Level : AllLevels())
+		D_Render([&]()
 		{
-			// Check for the presence of dynamic lights at the start of the frame once.
-			if ((gl_lights && vid_rendermode == 4) || (r_dynlights && vid_rendermode != 4))
-			{
-				Level->HasDynamicLights = !!level.lights;
-			}
-			else Level->HasDynamicLights = false;	// lights are off so effectively we have none.
-			Level->interpolator.DoInterpolations(I_GetTimeFrac());
-		}
-		viewsec = screen->RenderView(&players[consoleplayer]);
-
-		for (auto Level : AllLevels())
-		{
-			Level->interpolator.RestoreInterpolations();
-		}
+			viewsec = screen->RenderView(&players[consoleplayer]);
+		}, true);
 
 		screen->Begin2D();
 		screen->DrawBlend(viewsec);

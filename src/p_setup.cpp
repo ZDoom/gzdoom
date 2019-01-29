@@ -509,7 +509,7 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 	R_OldBlend = 0xffffffff;
 
 	// [RH] Remove all particles
-	P_ClearParticles();
+	P_ClearParticles(Level);
 
 	// preload graphics and sounds
 	if (precache)

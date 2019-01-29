@@ -72,6 +72,7 @@
 #include "vm.h"
 #include "dobjgc.h"
 #include "gi.h"
+#include "a_dynlight.h"
 
 #include "g_hub.h"
 #include "g_levellocals.h"
@@ -2101,7 +2102,10 @@ static void PutSavePic (FileWriter *file, int width, int height)
 	}
 	else
 	{
-		screen->WriteSavePic(&players[consoleplayer], file, width, height);
+		D_Render([&]()
+			{
+				screen->WriteSavePic(&players[consoleplayer], file, width, height);
+			}, false);
 	}
 }
 

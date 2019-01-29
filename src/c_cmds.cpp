@@ -1055,21 +1055,21 @@ CCMD(changesky)
 
 	if (netgame || argv.argc()<2) return;
 
+	// This only alters the primary level's sky setting. For testing out a sky that is sufficient.
 	sky1name = argv[1];
 	if (sky1name[0] != 0)
 	{
 		FTextureID newsky = TexMan.GetTextureID(sky1name, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
 		if (newsky.Exists())
 		{
-			// This only alters the primary level's sky setting.
-			sky1texture = currentUILevel->skytexture1 = newsky;
+			currentUILevel->skytexture1 = newsky;
 		}
 		else
 		{
 			Printf("changesky: Texture '%s' not found\n", sky1name);
 		}
 	}
-	R_InitSkyMap ();
+	InitSkyMap (currentUILevel);
 }
 
 //-----------------------------------------------------------------------------

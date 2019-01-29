@@ -72,8 +72,8 @@ namespace swrenderer
 		Thread = thread;
 		auto Level = Thread->Viewport->Level();
 
-		auto skytex1 = TexMan.GetPalettedTexture(sky1texture, true);
-		auto skytex2 = TexMan.GetPalettedTexture(sky2texture, true);
+		auto skytex1 = TexMan.GetPalettedTexture(Level->skytexture1, true);
+		auto skytex2 = TexMan.GetPalettedTexture(Level->skytexture2, true);
 
 		if (skytex1 == nullptr)
 			return;
@@ -100,7 +100,7 @@ namespace swrenderer
 			skyscale *= float(90. / r_viewpoint.FieldOfView.Degrees);
 		}
 
-		if (skystretch)
+		if (Level->skystretch)
 		{
 			skyscale *= (double)SKYSTRETCH_HEIGHT / skyheight;
 			skyiscale *= skyheight / (float)SKYSTRETCH_HEIGHT;
@@ -123,13 +123,13 @@ namespace swrenderer
 
 		if ((Level->flags & LEVEL_SWAPSKIES) && !(Level->flags & LEVEL_DOUBLESKY))
 		{
-			sky1tex = sky2texture;
+			sky1tex = Level->skytexture2;
 		}
 		else
 		{
-			sky1tex = sky1texture;
+			sky1tex = Level->skytexture1;
 		}
-		sky2tex = sky2texture;
+		sky2tex = Level->skytexture2;
 		skymid = skytexturemid;
 		skyangle = Thread->Viewport->viewpoint.Angles.Yaw.BAMs();
 
@@ -144,8 +144,8 @@ namespace swrenderer
 				else
 					backskytex = NULL;
 				skyflip = 0;
-				frontdpos = sky1pos;
-				backdpos = sky2pos;
+				frontdpos = Level->sky1pos;
+				backdpos = Level->sky2pos;
 				frontcyl = sky1cyl;
 				backcyl = sky2cyl;
 			}
@@ -155,7 +155,7 @@ namespace swrenderer
 				backskytex = NULL;
 				frontcyl = sky2cyl;
 				skyflip = 0;
-				frontdpos = sky2pos;
+				frontdpos = Level->sky2pos;
 			}
 			else
 			{	// MBF's linedef-controlled skies
@@ -202,7 +202,7 @@ namespace swrenderer
 
 				int frontxscale = int(frontskytex->GetScale().X * 1024);
 				frontcyl = MAX(frontskytex->GetWidth(), frontxscale);
-				if (skystretch)
+				if (Level->skystretch)
 				{
 					skymid = skymid * frontskytex->GetScaledHeightDouble() / SKYSTRETCH_HEIGHT;
 				}

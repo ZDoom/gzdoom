@@ -291,9 +291,10 @@ void PolySkySetup::Update()
 	double skyscale = 0.0;
 	float skyiscale = 0.0f;
 	fixed_t sky1cyl = 0, sky2cyl = 0;
+	auto Level = PolyRenderer::Instance()->Level;
 
-	auto skytex1 = TexMan.GetPalettedTexture(sky1texture, true);
-	auto skytex2 = TexMan.GetPalettedTexture(sky2texture, true);
+	auto skytex1 = TexMan.GetPalettedTexture(Level->skytexture1, true);
+	auto skytex2 = TexMan.GetPalettedTexture(Level->skytexture2, true);
 
 	if (skytex1)
 	{
@@ -307,7 +308,7 @@ void PolySkySetup::Update()
 		}
 		else if (skyheight > 200)
 		{
-			skytexturemid = (200 - skyheight) * sskytex1->GetScale().Y + ((r_skymode == 2 && !(PolyRenderer::Instance()->Level->flags & LEVEL_FORCETILEDSKY)) ? skytex1->GetSkyOffset() : 0);
+			skytexturemid = (200 - skyheight) * sskytex1->GetScale().Y + ((r_skymode == 2 && !(Level->flags & LEVEL_FORCETILEDSKY)) ? skytex1->GetSkyOffset() : 0);
 		}
 
 		if (viewwidth != 0 && viewheight != 0)
@@ -319,7 +320,7 @@ void PolySkySetup::Update()
 			skyscale *= float(90. / r_viewpoint.FieldOfView.Degrees);
 		}
 
-		if (skystretch)
+		if (Level->skystretch)
 		{
 			skyscale *= (double)SKYSTRETCH_HEIGHT / skyheight;
 			skyiscale *= skyheight / (float)SKYSTRETCH_HEIGHT;
@@ -339,13 +340,13 @@ void PolySkySetup::Update()
 
 	if ((PolyRenderer::Instance()->Level->flags & LEVEL_SWAPSKIES) && !(PolyRenderer::Instance()->Level->flags & LEVEL_DOUBLESKY))
 	{
-		sky1tex = sky2texture;
+		sky1tex = Level->skytexture2;
 	}
 	else
 	{
-		sky1tex = sky1texture;
+		sky1tex = Level->skytexture1;
 	}
-	sky2tex = sky2texture;
+	sky2tex = Level->skytexture2;
 	skymid = skytexturemid;
 	skyangle = 0;
 
@@ -360,8 +361,8 @@ void PolySkySetup::Update()
 		else
 			backskytex = nullptr;
 		skyflip = false;
-		frontdpos = sky1pos;
-		backdpos = sky2pos;
+		frontdpos = Level->sky1pos;
+		backdpos = Level->sky2pos;
 		frontcyl = sky1cyl;
 		backcyl = sky2cyl;
 	}
@@ -371,7 +372,7 @@ void PolySkySetup::Update()
 		backskytex = nullptr;
 		frontcyl = sky2cyl;
 		skyflip = false;
-		frontdpos = sky2pos;
+		frontdpos = Level->sky2pos;
 	}
 	else
 	{	// MBF's linedef-controlled skies

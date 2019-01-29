@@ -57,6 +57,7 @@
 #include "g_levellocals.h"
 #include "events.h"
 #include "p_destructible.h"
+#include "r_sky.h"
 #include "fragglescript/t_script.h"
 
 //==========================================================================
@@ -976,9 +977,7 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 
 	if (arc.isReading())
 	{
-		sky1texture = skytexture1;
-		sky2texture = skytexture2;
-		R_InitSkyMap();
+		InitSkyMap(this);
 		AirControlChanged();
 		bglobal.freeze = !!(frozenstate & 2);
 	}

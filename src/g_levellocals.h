@@ -492,6 +492,10 @@ public:
 	float		skyspeed1;				// Scrolling speed of sky textures, in pixels per ms
 	float		skyspeed2;
 
+	double		sky1pos, sky2pos;
+	float		hw_sky1pos, hw_sky2pos;
+	bool		skystretch;
+
 	int			total_secrets;
 	int			found_secrets;
 

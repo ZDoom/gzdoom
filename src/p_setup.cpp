@@ -175,20 +175,14 @@ static void PrecacheLevel(FLevelLocals *Level)
 		AddToList(hitlist.Data(), Level->sides[i].GetTexture(side_t::bottom), FTextureManager::HIT_Wall);
 	}
 
-	// Sky texture is always present.
-	// Note that F_SKY1 is the name used to
-	//	indicate a sky floor/ceiling as a flat,
-	//	while the sky texture is stored like
-	//	a wall texture, with an episode dependant
-	//	name.
 
-	if (sky1texture.isValid())
+	if (Level->skytexture1.isValid())
 	{
-		AddToList(hitlist.Data(), sky1texture, FTextureManager::HIT_Sky);
+		AddToList(hitlist.Data(), Level->skytexture1, FTextureManager::HIT_Sky);
 	}
-	if (sky2texture.isValid())
+	if (Level->skytexture2.isValid())
 	{
-		AddToList(hitlist.Data(), sky2texture, FTextureManager::HIT_Sky);
+		AddToList(hitlist.Data(), Level->skytexture2, FTextureManager::HIT_Sky);
 	}
 
 	for (auto n : gameinfo.PrecachedTextures)

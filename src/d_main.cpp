@@ -535,22 +535,22 @@ int ii_compatflags, ii_compatflags2, ib_compatflags;
 
 EXTERN_CVAR(Int, compatmode)
 
-static int GetCompatibility(int mask)
+static int GetCompatibility(FLevelLocals *Level, int mask)
 {
-	if (level.info == NULL) return mask;
-	else return (mask & ~level.info->compatmask) | (level.info->compatflags & level.info->compatmask);
+	if (Level->info == nullptr) return mask;
+	else return (mask & ~Level->info->compatmask) | (Level->info->compatflags & Level->info->compatmask);
 }
 
-static int GetCompatibility2(int mask)
+static int GetCompatibility2(FLevelLocals *Level, int mask)
 {
-	return (level.info == NULL) ? mask
-		: (mask & ~level.info->compatmask2) | (level.info->compatflags2 & level.info->compatmask2);
+	return (Level->info == nullptr) ? mask
+		: (mask & ~Level->info->compatmask2) | (Level->info->compatflags2 & Level->info->compatmask2);
 }
 
 CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
 {
 	int old = i_compatflags;
-	i_compatflags = GetCompatibility(self) | ii_compatflags;
+	i_compatflags = GetCompatibility(&level, self) | ii_compatflags;
 	if ((old ^ i_compatflags) & COMPATF_POLYOBJ)
 	{
 		level.ClearAllSubsectorLinks();
@@ -559,7 +559,7 @@ CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
 
 CUSTOM_CVAR (Int, compatflags2, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
 {
-	i_compatflags2 = GetCompatibility2(self) | ii_compatflags2;
+	i_compatflags2 = GetCompatibility2(&level, self) | ii_compatflags2;
 }
 
 CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)

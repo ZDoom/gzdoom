@@ -2640,7 +2640,7 @@ static void Vec2OffsetZ(FLevelLocals *Level, double x, double y, double dx, doub
 	}
 	else
 	{
-		DVector2 v = level.GetPortalOffsetPosition(x, y, dx, dy);
+		DVector2 v = Level->GetPortalOffsetPosition(x, y, dx, dy);
 		*result = (DVector3(v, atz));
 	}
 }

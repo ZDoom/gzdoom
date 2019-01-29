@@ -755,7 +755,7 @@ struct FTexCoordInfo
 	float RowOffset(float ofs) const;
 	float TextureOffset(float ofs) const;
 	float TextureAdjustWidth() const;
-	void GetFromTexture(FTexture *tex, float x, float y);
+	void GetFromTexture(FTexture *tex, float x, float y, bool forceworldpanning);
 };
 
 

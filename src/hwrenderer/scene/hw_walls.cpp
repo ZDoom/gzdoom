@@ -1095,6 +1095,12 @@ void GLWall::CheckTexturePosition(FTexCoordInfo *tci)
 	}
 }
 
+
+static void GetTexCoordInfo(FMaterial *tex, FTexCoordInfo *tci, side_t *side, int texpos)
+{
+	tci->GetFromTexture(tex->tex, (float)side->GetTextureXScale(texpos), (float)side->GetTextureYScale(texpos), !!(side->GetLevel()->flags3 & LEVEL3_FORCEWORLDPANNING));
+}
+
 //==========================================================================
 //
 //  Handle one sided walls, upper and lower texture
@@ -1129,7 +1135,7 @@ void GLWall::DoTexture(HWDrawInfo *di, int _type,seg_t * seg, int peg,
 
 	FTexCoordInfo tci;
 
-	gltexture->GetTexCoordInfo(&tci, seg->sidedef, texpos);
+	GetTexCoordInfo(gltexture, &tci, seg->sidedef, texpos);
 
 	type = _type;
 
@@ -1190,7 +1196,7 @@ void GLWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 		// Align the texture to the ORIGINAL sector's height!!
 		// At this point slopes don't matter because they don't affect the texture's z-position
 
-		gltexture->GetTexCoordInfo(&tci, seg->sidedef, side_t::mid);
+		GetTexCoordInfo(gltexture, &tci, seg->sidedef, side_t::mid);
 		if (tci.mRenderHeight < 0)
 		{
 			mirrory = true;
@@ -1530,19 +1536,19 @@ void GLWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover,
 		{
 			gltexture = FMaterial::ValidateTexture(seg->sidedef->GetTexture(side_t::top), false, true);
 			if (!gltexture) return;
-			gltexture->GetTexCoordInfo(&tci, seg->sidedef, side_t::top);
+			GetTexCoordInfo(gltexture, &tci, seg->sidedef, side_t::top);
 		}
 		else if (rover->flags&FF_LOWERTEXTURE)
 		{
 			gltexture = FMaterial::ValidateTexture(seg->sidedef->GetTexture(side_t::bottom), false, true);
 			if (!gltexture) return;
-			gltexture->GetTexCoordInfo(&tci, seg->sidedef, side_t::bottom);
+			GetTexCoordInfo(gltexture, &tci, seg->sidedef, side_t::bottom);
 		}
 		else
 		{
 			gltexture = FMaterial::ValidateTexture(mastersd->GetTexture(side_t::mid), false, true);
 			if (!gltexture) return;
-			gltexture->GetTexCoordInfo(&tci, mastersd, side_t::mid);
+			GetTexCoordInfo(gltexture, &tci, mastersd, side_t::mid);
 		}
 
 		to = (rover->flags&(FF_UPPERTEXTURE | FF_LOWERTEXTURE)) ? 0 : tci.TextureOffset(mastersd->GetTextureXOffset(side_t::mid));
@@ -2195,7 +2201,7 @@ void GLWall::ProcessLowerMiniseg(HWDrawInfo *di, seg_t *seg, sector_t * frontsec
 		{
 			FTexCoordInfo tci;
 			type = RENDERWALL_BOTTOM;
-			gltexture->GetTexCoordInfo(&tci, 1.f, 1.f);
+			tci.GetFromTexture(gltexture->tex, 1, 1, false);
 			SetWallCoordinates(seg, &tci, bfh, bfh, bfh, ffh, ffh, 0);
 			PutWall(di, false);
 		}

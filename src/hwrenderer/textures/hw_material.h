@@ -94,16 +94,6 @@ public:
 		*r = mSpriteRect;
 	}
 
-	void GetTexCoordInfo(FTexCoordInfo *tci, float x, float y) const
-	{
-		tci->GetFromTexture(tex, x, y);
-	}
-
-	void GetTexCoordInfo(FTexCoordInfo *tci, side_t *side, int texpos) const
-	{
-		GetTexCoordInfo(tci, (float)side->GetTextureXScale(texpos), (float)side->GetTextureYScale(texpos));
-	}
-
 	// This is scaled size in integer units as needed by walls and flats
 	int TextureHeight() const { return mRenderHeight; }
 	int TextureWidth() const { return mRenderWidth; }

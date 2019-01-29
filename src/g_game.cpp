@@ -2859,17 +2859,17 @@ bool G_CheckDemoStatus (void)
 	return false; 
 }
 
-void G_StartSlideshow(FName whichone)
+void G_StartSlideshow(FLevelLocals *Level, FName whichone)
 {
 	gameaction = ga_slideshow;
-	SelectedSlideshow = whichone == NAME_None ? level.info->slideshow : whichone;
+	SelectedSlideshow = whichone == NAME_None ? Level->info->slideshow : whichone;
 }
 
 DEFINE_ACTION_FUNCTION(FLevelLocals, StartSlideshow)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_NAME(whichone);
-	G_StartSlideshow(whichone);
+	G_StartSlideshow(self, whichone);
 	return 0;
 }
 

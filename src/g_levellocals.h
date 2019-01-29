@@ -220,6 +220,8 @@ public:
 	void DeathMatchSpawnPlayer (int playernum);
 	FPlayerStart *PickPlayerStart(int playernum, int flags = 0);
 	bool DoCompleted(FString nextlevel, wbstartstruct_t &wminfo);
+	void StartTravel();
+	int FinishTravel();
 
 
 private:

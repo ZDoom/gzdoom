@@ -1279,7 +1279,7 @@ void G_DoWorldDone (void)
 		Printf ("No next map specified.\n");
 		nextlevel = level.MapName;
 	}
-	G_StartTravel ();
+	level.StartTravel ();
 	G_DoLoadLevel (nextlevel, startpos, true, false);
 	startpos = 0;
 	gameaction = ga_nothing;
@@ -1296,7 +1296,7 @@ void G_DoWorldDone (void)
 //
 //==========================================================================
 
-void G_StartTravel ()
+void FLevelLocals::StartTravel ()
 {
 	if (deathmatch)
 		return;
@@ -1343,9 +1343,9 @@ void G_StartTravel ()
 //
 //==========================================================================
 
-int G_FinishTravel ()
+int FLevelLocals::FinishTravel ()
 {
-	TThinkerIterator<AActor> it (NAME_PlayerPawn, STAT_TRAVELLING);
+	auto it = GetThinkerIterator<AActor>(NAME_PlayerPawn, STAT_TRAVELLING);
 	AActor *pawn, *pawndup, *oldpawn, *next;
 	AActor *inv;
 	FPlayerStart *start;
@@ -1365,7 +1365,7 @@ int G_FinishTravel ()
 		pawndup = pawn->player->mo;
 		assert (pawn != pawndup);
 
-		start = level.PickPlayerStart(pnum, 0);
+		start = PickPlayerStart(pnum, 0);
 		if (start == NULL)
 		{
 			if (pawndup != nullptr)
@@ -1384,7 +1384,7 @@ int G_FinishTravel ()
 
 		// The player being spawned here is a short lived dummy and
 		// must not start any ENTER script or big problems will happen.
-		pawndup = level.SpawnPlayer(start, pnum, SPF_TEMPPLAYER);
+		pawndup = SpawnPlayer(start, pnum, SPF_TEMPPLAYER);
 		if (pawndup != NULL)
 		{
 			if (!(changeflags & CHANGELEVEL_KEEPFACING))
@@ -1736,7 +1736,7 @@ void FLevelLocals::UnSnapshotLevel (bool hubLoad)
 	if (hubLoad)
 	{
 		// Unlock ACS global strings that were locked when the snapshot was made.
-		Behaviors.UnlockLevelVarStrings(level.levelnum);
+		Behaviors.UnlockLevelVarStrings(levelnum);
 	}
 }
 

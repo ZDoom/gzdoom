@@ -2585,7 +2585,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 			const PClass *cls_rep = cls->GetReplacement();
 			if (cls != cls_rep)
 			{
-				removecount += RemoveClass(&leve, cls_rep);
+				removecount += RemoveClass(&level, cls_rep);
 			}
 			Printf("Removed %d actors of type %s.\n", removecount, s);
 		}

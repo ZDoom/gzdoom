@@ -1024,7 +1024,7 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 				FWeaponSlots::SetupWeaponSlots(players[i].mo);
 			}
 		}
-	AActor::RecreateAllAttachedLights();
+		RecreateAllAttachedLights();
 		InitPortalGroups(this);
 
 		automap->UpdateShowAllLines();

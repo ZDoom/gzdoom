@@ -46,6 +46,7 @@ FTextureID LoadSkin(const char * path, const char * fn);
 
 struct FSpriteModelFrame;
 class IModelVertexBuffer;
+struct FLevelLocals;
 
 enum ModelRendererType
 {
@@ -81,7 +82,7 @@ public:
 	virtual void DrawElements(int numIndices, size_t offset) = 0;
 
 private:
-	void RenderFrameModels(const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, int translation);
+	void RenderFrameModels(FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, int translation);
 };
 
 struct FModelVertex
@@ -138,7 +139,7 @@ public:
 	virtual void RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame, int frame2, double inter, int translation=0) = 0;
 	virtual void BuildVertexBuffer(FModelRenderer *renderer) = 0;
 	virtual void AddSkins(uint8_t *hitlist) = 0;
-	virtual float getAspectFactor() { return 1.f; }
+	virtual float getAspectFactor(FLevelLocals *) { return 1.f; }
 
 	void SetVertexBuffer(FModelRenderer *renderer, IModelVertexBuffer *buffer) { mVBuf[renderer->GetType()] = buffer; }
 	IModelVertexBuffer *GetVertexBuffer(FModelRenderer *renderer) const { return mVBuf[renderer->GetType()]; }
@@ -407,7 +408,7 @@ public:
 	virtual void AddSkins(uint8_t *hitlist);
 	FTextureID GetPaletteTexture() const { return mPalette; }
 	void BuildVertexBuffer(FModelRenderer *renderer);
-	float getAspectFactor();
+	float getAspectFactor(FLevelLocals *) override;
 };
 
 
@@ -502,12 +503,12 @@ void BSPNodeWalkCircle(void *node, float x, float y, float radiusSquared, const 
 
 // Search BSP for subsectors within the given radius and call callback(subsector) for each found
 template<typename Callback>
-void BSPWalkCircle(float x, float y, float radiusSquared, const Callback &callback)
+void BSPWalkCircle(FLevelLocals *Level, float x, float y, float radiusSquared, const Callback &callback)
 {
-	if (level.nodes.Size() == 0)
-		callback(&level.subsectors[0]);
+	if (Level->nodes.Size() == 0)
+		callback(&Level->subsectors[0]);
 	else
-		BSPNodeWalkCircle(level.HeadNode(), x, y, radiusSquared, callback);
+		BSPNodeWalkCircle(Level->HeadNode(), x, y, radiusSquared, callback);
 }
 
 #endif

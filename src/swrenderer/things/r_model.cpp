@@ -163,7 +163,7 @@ namespace swrenderer
 			float z = (float)actor->Center();
 			float radiusSquared = (float)(actor->renderradius * actor->renderradius);
 
-			BSPWalkCircle(x, y, radiusSquared, [&](subsector_t *subsector) // Iterate through all subsectors potentially touched by actor
+			BSPWalkCircle(actor->Level, x, y, radiusSquared, [&](subsector_t *subsector) // Iterate through all subsectors potentially touched by actor
 			{
 				FLightNode * node = subsector->section->lighthead;
 				while (node) // check all lights touching a subsector

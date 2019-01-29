@@ -55,6 +55,7 @@ inline PClassActor * GetRealType(PClassActor * ti)
 }
 
 TDeletingArray<FLightDefaults *> LightDefaults;
+int AttenuationIsSet = -1;
 
 //-----------------------------------------------------------------------------
 //
@@ -101,14 +102,18 @@ void FLightDefaults::ApplyProperties(FDynamicLight * light) const
 	light->SetOffset(m_Pos);	// this must be the last thing to do.
 }
 
-void FLightDefaults::SetAttenuationForLevel()
+void FLightDefaults::SetAttenuationForLevel(bool yes)
 {
-	for (auto ldef : LightDefaults)
+	if (AttenuationIsSet != int(yes))
 	{
-		if (ldef->m_attenuate == -1)
+		for (auto ldef : LightDefaults)
 		{
-			if (level.flags3 & LEVEL3_ATTENUATE)  ldef->m_lightFlags |= LF_ATTENUATE; else ldef->m_lightFlags &= ~LF_ATTENUATE;
+			if (ldef->m_attenuate == -1)
+			{
+				if (yes)  ldef->m_lightFlags |= LF_ATTENUATE; else ldef->m_lightFlags &= ~LF_ATTENUATE;
+			}
 		}
+		AttenuationIsSet = yes;
 	}
 }
 

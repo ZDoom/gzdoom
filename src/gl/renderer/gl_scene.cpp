@@ -156,6 +156,10 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 	if (mainview && toscreen)
 		UpdateShadowMap();
 
+	// Update the attenuation flag of all light defaults for each viewpoint.
+	// This function will only do something if the setting differs.
+	FLightDefaults::SetAttenuationForLevel(!!(camera->Level->flags3 & LEVEL3_ATTENUATE));
+
     // Render (potentially) multiple views for stereo 3d
 	// Fixme. The view offsetting should be done with a static table and not require setup of the entire render state for the mode.
 	auto vrmode = VRMode::GetVRMode(mainview && toscreen);

@@ -346,7 +346,7 @@ bool MapLoader::LoadGLSegs(FileReader &lump)
 			segs[i].v2 = &Level->vertexes[checkGLVertex3(LittleLong(ml->v2))];
 
 			const uint32_t partner = LittleLong(ml->partner);
-			segs[i].PartnerSeg = DWORD_MAX == partner ? nullptr : &segs[partner];
+			segs[i].PartnerSeg = UINT_MAX == partner ? nullptr : &segs[partner];
 	
 			if(ml->linedef != 0xffff) // skip minisegs 
 			{

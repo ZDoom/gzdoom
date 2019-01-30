@@ -152,13 +152,13 @@ int FNodeBuilder::CreateSeg (int linenum, int sidenum)
 	FPrivSeg seg;
 	int segnum;
 
-	seg.next = DWORD_MAX;
+	seg.next = UINT_MAX;
 	seg.loopnum = 0;
-	seg.partner = DWORD_MAX;
+	seg.partner = UINT_MAX;
 	seg.hashnext = NULL;
 	seg.planefront = false;
-	seg.planenum = DWORD_MAX;
-	seg.storedseg = DWORD_MAX;
+	seg.planenum = UINT_MAX;
+	seg.storedseg = UINT_MAX;
 
 	if (sidenum == 0)
 	{ // front
@@ -202,13 +202,13 @@ void FNodeBuilder::AddSegs(seg_t *segs, int numsegs)
 		FPrivVert vert;
 		int segnum;
 
-		seg.next = DWORD_MAX;
+		seg.next = UINT_MAX;
 		seg.loopnum = 0;
-		seg.partner = DWORD_MAX;
+		seg.partner = UINT_MAX;
 		seg.hashnext = NULL;
 		seg.planefront = false;
-		seg.planenum = DWORD_MAX;
-		seg.storedseg = DWORD_MAX;
+		seg.planenum = UINT_MAX;
+		seg.storedseg = UINT_MAX;
 
 		seg.frontsector = segs[i].frontsector;
 		seg.backsector = segs[i].backsector;
@@ -239,13 +239,13 @@ void FNodeBuilder::AddPolySegs(FPolySeg *segs, int numsegs)
 		FPrivVert vert;
 		int segnum;
 
-		seg.next = DWORD_MAX;
+		seg.next = UINT_MAX;
 		seg.loopnum = 0;
-		seg.partner = DWORD_MAX;
+		seg.partner = UINT_MAX;
 		seg.hashnext = NULL;
 		seg.planefront = false;
-		seg.planenum = DWORD_MAX;
-		seg.storedseg = DWORD_MAX;
+		seg.planenum = UINT_MAX;
+		seg.storedseg = UINT_MAX;
 
 		side_t *side = segs[i].wall;
 		assert(side != NULL);
@@ -286,7 +286,7 @@ void FNodeBuilder::GroupSegPlanes ()
 		seg->hashnext = NULL;
 	}
 
-	Segs[Segs.Size()-1].next = DWORD_MAX;
+	Segs[Segs.Size()-1].next = UINT_MAX;
 
 	for (i = planenum = 0; i < (int)Segs.Size(); ++i)
 	{
@@ -379,7 +379,7 @@ void FNodeBuilder::GroupSegPlanesSimple()
 		pline->dx = Vertices[seg->v2].x - Vertices[seg->v1].x;
 		pline->dy = Vertices[seg->v2].y - Vertices[seg->v1].y;
 	}
-	Segs.Last().next = DWORD_MAX;
+	Segs.Last().next = UINT_MAX;
 	PlaneChecked.Reserve((Segs.Size() + 7) / 8);
 }
 
@@ -497,13 +497,13 @@ int FNodeBuilder::MarkLoop (uint32_t firstseg, int loopnum)
 				Vertices[s1->v1].x>>16, Vertices[s1->v1].y>>16,
 				Vertices[s1->v2].x>>16, Vertices[s1->v2].y>>16));
 
-		uint32_t bestseg = DWORD_MAX;
+		uint32_t bestseg = UINT_MAX;
 		uint32_t tryseg = Vertices[s1->v2].segs;
 		angle_t bestang = ANGLE_MAX;
 		angle_t ang1 = PointToAngle (Vertices[s1->v2].x - Vertices[s1->v1].x,
 			Vertices[s1->v2].y - Vertices[s1->v1].y);
 
-		while (tryseg != DWORD_MAX)
+		while (tryseg != UINT_MAX)
 		{
 			FPrivSeg *s2 = &Segs[tryseg];
 
@@ -523,7 +523,7 @@ int FNodeBuilder::MarkLoop (uint32_t firstseg, int loopnum)
 		}
 
 		seg = bestseg;
-	} while (seg != DWORD_MAX && Segs[seg].loopnum == 0);
+	} while (seg != UINT_MAX && Segs[seg].loopnum == 0);
 
 	return loopnum + 1;
 }
@@ -563,7 +563,7 @@ bool FNodeBuilder::GetPolyExtents (int polynum, fixed_t bbox[4])
 			vert = Segs[i].v2;
 			i = Vertices[vert].segs;
 			count++;	// to prevent endless loops. Stop when this reaches the number of segs.
-		} while (i != DWORD_MAX && (Vertices[vert].x != start.fixX() || Vertices[vert].y != start.fixY()) && count < Segs.Size());
+		} while (i != UINT_MAX && (Vertices[vert].x != start.fixX() || Vertices[vert].y != start.fixY()) && count < Segs.Size());
 
 		return true;
 	}
@@ -691,8 +691,8 @@ int FNodeBuilder::FVertexMap::InsertVertex (FNodeBuilder::FPrivVert &vert)
 {
 	int vertnum;
 
-	vert.segs = DWORD_MAX;
-	vert.segs2 = DWORD_MAX;
+	vert.segs = UINT_MAX;
+	vert.segs2 = UINT_MAX;
 	vertnum = (int)MyBuilder.Vertices.Push (vert);
 
 	// If a vertex is near a block boundary, then it will be inserted on
@@ -772,7 +772,7 @@ int FNodeBuilder::FVertexMapSimple::SelectVertexClose(FNodeBuilder::FPrivVert &v
 
 int FNodeBuilder::FVertexMapSimple::InsertVertex (FNodeBuilder::FPrivVert &vert)
 {
-	vert.segs = DWORD_MAX;
-	vert.segs2 = DWORD_MAX;
+	vert.segs = UINT_MAX;
+	vert.segs2 = UINT_MAX;
 	return (int)MyBuilder.Vertices.Push (vert);
 }

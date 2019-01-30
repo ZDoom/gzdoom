@@ -117,8 +117,8 @@ void FNodeBuilder::BuildTree ()
 {
 	fixed_t bbox[4];
 
-	HackSeg = DWORD_MAX;
-	HackMate = DWORD_MAX;
+	HackSeg = UINT_MAX;
+	HackMate = UINT_MAX;
 	CreateNode (0, Segs.Size(), bbox);
 	CreateSubsectorsForReal ();
 }
@@ -171,7 +171,7 @@ int FNodeBuilder::CreateSubsector (uint32_t set, fixed_t bbox[4])
 
 	D(Printf (PRINT_LOG, "Subsector from set %d\n", set));
 
-	assert (set != DWORD_MAX);
+	assert (set != UINT_MAX);
 
 	// We cannot actually create the subsector now because the node building
 	// process might split a seg in this subsector (because all partner segs
@@ -181,7 +181,7 @@ int FNodeBuilder::CreateSubsector (uint32_t set, fixed_t bbox[4])
 	ssnum = (int)SubsectorSets.Push (set);
 
 	count = 0;
-	while (set != DWORD_MAX)
+	while (set != UINT_MAX)
 	{
 		AddSegToBBox (bbox, &Segs[set]);
 		set = Segs[set].next;
@@ -211,7 +211,7 @@ void FNodeBuilder::CreateSubsectorsForReal ()
 		uint32_t set = SubsectorSets[i];
 		uint32_t firstline = (uint32_t)SegList.Size();
 
-		while (set != DWORD_MAX)
+		while (set != UINT_MAX)
 		{
 			USegPtr ptr;
 
@@ -349,9 +349,9 @@ bool FNodeBuilder::CheckSubsector (uint32_t set, node_t &node, uint32_t &splitse
 			}
 		}
 		seg = Segs[seg].next;
-	} while (seg != DWORD_MAX);
+	} while (seg != UINT_MAX);
 
-	if (seg == DWORD_MAX)
+	if (seg == UINT_MAX)
 	{ // It's a valid non-GL subsector, and probably a valid GL subsector too.
 		if (GLNodes)
 		{
@@ -361,13 +361,13 @@ bool FNodeBuilder::CheckSubsector (uint32_t set, node_t &node, uint32_t &splitse
 	}
 
 	D(Printf(PRINT_LOG, "Need to synthesize a splitter for set %d on seg %d\n", set, seg));
-	splitseg = DWORD_MAX;
+	splitseg = UINT_MAX;
 
 	// This is a very simple and cheap "fix" for subsectors with segs
 	// from multiple sectors, and it seems ZenNode does something
 	// similar. It is the only technique I could find that makes the
 	// "transparent water" in nb_bmtrk.wad work properly.
-	return ShoveSegBehind (set, node, seg, DWORD_MAX);
+	return ShoveSegBehind (set, node, seg, UINT_MAX);
 }
 
 // When creating GL nodes, we need to check for segs with the same start and
@@ -378,7 +378,7 @@ bool FNodeBuilder::CheckSubsectorOverlappingSegs (uint32_t set, node_t &node, ui
 	int v1, v2;
 	uint32_t seg1, seg2;
 
-	for (seg1 = set; seg1 != DWORD_MAX; seg1 = Segs[seg1].next)
+	for (seg1 = set; seg1 != UINT_MAX; seg1 = Segs[seg1].next)
 	{
 		if (Segs[seg1].linedef == -1)
 		{ // Do not check minisegs.
@@ -386,7 +386,7 @@ bool FNodeBuilder::CheckSubsectorOverlappingSegs (uint32_t set, node_t &node, ui
 		}
 		v1 = Segs[seg1].v1;
 		v2 = Segs[seg1].v2;
-		for (seg2 = Segs[seg1].next; seg2 != DWORD_MAX; seg2 = Segs[seg2].next)
+		for (seg2 = Segs[seg1].next; seg2 != UINT_MAX; seg2 = Segs[seg2].next)
 		{
 			if (Segs[seg2].v1 == v1 && Segs[seg2].v2 == v2)
 			{
@@ -395,7 +395,7 @@ bool FNodeBuilder::CheckSubsectorOverlappingSegs (uint32_t set, node_t &node, ui
 					swapvalues (seg1, seg2);
 				}
 				D(Printf(PRINT_LOG, "Need to synthesize a splitter for set %d on seg %d (ov)\n", set, seg2));
-				splitseg = DWORD_MAX;
+				splitseg = UINT_MAX;
 
 				return ShoveSegBehind (set, node, seg2, seg1);
 			}
@@ -410,7 +410,7 @@ bool FNodeBuilder::CheckSubsectorOverlappingSegs (uint32_t set, node_t &node, ui
 // set, all the other segs will be in front of the splitter. Since
 // the splitter is formed from this seg, the back of the splitter
 // will have a one-dimensional subsector. SplitSegs() will add one
-// or two new minisegs to close it: If mate is DWORD_MAX, then a
+// or two new minisegs to close it: If mate is UINT_MAX, then a
 // new seg is created to replace this one on the front of the
 // splitter. Otherwise, mate takes its place. In either case, the
 // seg in front of the splitter is partnered with a new miniseg on
@@ -447,7 +447,7 @@ int FNodeBuilder::SelectSplitter (uint32_t set, node_t &node, uint32_t &splitseg
 	bool nosplitters = false;
 
 	bestvalue = 0;
-	bestseg = DWORD_MAX;
+	bestseg = UINT_MAX;
 
 	seg = set;
 	stepleft = 0;
@@ -456,7 +456,7 @@ int FNodeBuilder::SelectSplitter (uint32_t set, node_t &node, uint32_t &splitseg
 
 	D(Printf (PRINT_LOG, "Processing set %d\n", set));
 
-	while (seg != DWORD_MAX)
+	while (seg != UINT_MAX)
 	{
 		FPrivSeg *pseg = &Segs[seg];
 
@@ -495,7 +495,7 @@ int FNodeBuilder::SelectSplitter (uint32_t set, node_t &node, uint32_t &splitseg
 		seg = pseg->next;
 	}
 
-	if (bestseg == DWORD_MAX)
+	if (bestseg == UINT_MAX)
 	{ // No lines split any others into two sets, so this is a convex region.
 	D(Printf (PRINT_LOG, "set %d, step %d, nosplit %d has no good splitter (%d)\n", set, step, nosplit, nosplitters));
 		return nosplitters ? -1 : 0;
@@ -532,7 +532,7 @@ int FNodeBuilder::Heuristic (node_t &node, uint32_t set, bool honorNoSplit)
 	Touched.Clear ();
 	Colinear.Clear ();
 
-	while (i != DWORD_MAX)
+	while (i != UINT_MAX)
 	{
 		const FPrivSeg *test = &Segs[i];
 
@@ -756,13 +756,13 @@ void FNodeBuilder::SplitSegs (uint32_t set, node_t &node, uint32_t splitseg, uin
 {
 	unsigned int _count0 = 0;
 	unsigned int _count1 = 0;
-	outset0 = DWORD_MAX;
-	outset1 = DWORD_MAX;
+	outset0 = UINT_MAX;
+	outset1 = UINT_MAX;
 
 	Events.DeleteAll ();
 	SplitSharers.Clear ();
 
-	while (set != DWORD_MAX)
+	while (set != UINT_MAX)
 	{
 		bool hack;
 		FPrivSeg *seg = &Segs[set];
@@ -772,7 +772,7 @@ void FNodeBuilder::SplitSegs (uint32_t set, node_t &node, uint32_t splitseg, uin
 
 		if (HackSeg == set)
 		{
-			HackSeg = DWORD_MAX;
+			HackSeg = UINT_MAX;
 			side = 1;
 			sidev[0] = sidev[1] = 0;
 			hack = true;
@@ -822,7 +822,7 @@ void FNodeBuilder::SplitSegs (uint32_t set, node_t &node, uint32_t splitseg, uin
 				_count1++;
 
 				// Also split the seg on the back side
-				if (Segs[set].partner != DWORD_MAX)
+				if (Segs[set].partner != UINT_MAX)
 				{
 					int partner1 = Segs[set].partner;
 					int partner2 = SplitSeg(partner1, vertnum, sidev[1]);
@@ -884,8 +884,8 @@ void FNodeBuilder::SplitSegs (uint32_t set, node_t &node, uint32_t splitseg, uin
 		{
 			uint32_t newback, newfront;
 
-			newback = AddMiniseg (seg->v2, seg->v1, DWORD_MAX, set, splitseg);
-			if (HackMate == DWORD_MAX)
+			newback = AddMiniseg (seg->v2, seg->v1, UINT_MAX, set, splitseg);
+			if (HackMate == UINT_MAX)
 			{
 				newfront = AddMiniseg (Segs[set].v1, Segs[set].v2, newback, set, splitseg);
 				Segs[newfront].next = outset0;
@@ -996,7 +996,7 @@ void FNodeBuilder::RemoveSegFromVert1 (uint32_t segnum, int vertnum)
 		uint32_t prev, curr;
 		prev = 0;
 		curr = v->segs;
-		while (curr != DWORD_MAX && curr != segnum)
+		while (curr != UINT_MAX && curr != segnum)
 		{
 			prev = curr;
 			curr = Segs[curr].nextforvert;
@@ -1021,7 +1021,7 @@ void FNodeBuilder::RemoveSegFromVert2 (uint32_t segnum, int vertnum)
 		uint32_t prev, curr;
 		prev = 0;
 		curr = v->segs2;
-		while (curr != DWORD_MAX && curr != segnum)
+		while (curr != UINT_MAX && curr != segnum)
 		{
 			prev = curr;
 			curr = Segs[curr].nextforvert2;
@@ -1059,7 +1059,7 @@ double FNodeBuilder::InterceptVector (const node_t &splitter, const FPrivSeg &se
 void FNodeBuilder::PrintSet (int l, uint32_t set)
 {
 	Printf (PRINT_LOG, "set %d:\n", l);
-	for (; set != DWORD_MAX; set = Segs[set].next)
+	for (; set != UINT_MAX; set = Segs[set].next)
 	{
 		Printf (PRINT_LOG, "\t%u(%d)%c%d(%d,%d)-%d(%d,%d)\n", set, Segs[set].frontsector->sectornum,
 			Segs[set].linedef == -1 ? '+' : ':',

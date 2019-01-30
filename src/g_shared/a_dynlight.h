@@ -6,7 +6,6 @@
 
 EXTERN_CVAR(Bool, r_dynlights)
 EXTERN_CVAR(Bool, gl_lights)
-EXTERN_CVAR(Bool, gl_attachedlights)
 
 struct side_t;
 struct seg_t;

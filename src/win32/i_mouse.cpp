@@ -42,7 +42,7 @@
 #include "i_input.h"
 #include "d_event.h"
 #include "d_gui.h"
-#include "doomstat.h"
+#include "g_game.h"
 #include "hardware.h"
 #include "rawinput.h"
 #include "menu/menu.h"

@@ -49,6 +49,7 @@
 #include "d_net.h"
 #include "c_dispatch.h"
 #include "g_levellocals.h"
+#include "g_game.h"
 #include "sbar.h"
 
 // MACROS ------------------------------------------------------------------

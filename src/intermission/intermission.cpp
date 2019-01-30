@@ -33,7 +33,7 @@
 */
 
 #include "doomtype.h"
-#include "doomstat.h"
+#include "g_game.h"
 #include "d_event.h"
 #include "w_wad.h"
 #include "gi.h"

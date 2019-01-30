@@ -37,6 +37,7 @@
 #include "g_levellocals.h"
 #include "events.h"
 #include "actorinlines.h"
+#include "g_game.h"
 
 extern gamestate_t wipegamestate;
 extern uint8_t globalfreeze, globalchangefreeze;

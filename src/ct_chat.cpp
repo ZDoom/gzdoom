@@ -27,7 +27,7 @@
 #include "m_swap.h"
 #include "hu_stuff.h"
 #include "s_sound.h"
-#include "doomstat.h"
+#include "g_game.h"
 #include "st_stuff.h"
 #include "c_console.h"
 #include "c_dispatch.h"

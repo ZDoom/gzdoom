@@ -39,6 +39,7 @@
 #include "actor.h"
 #include "c_dispatch.h"
 #include "d_net.h"
+#include "g_game.h"
 #include "info.h"
 
 DStaticEventHandler* E_FirstEventHandler = nullptr;

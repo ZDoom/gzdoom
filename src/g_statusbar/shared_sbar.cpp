@@ -56,6 +56,7 @@
 #include "p_acs.h"
 #include "sbarinfo.h"
 #include "events.h"
+#include "g_game.h"
 
 #include "../version.h"
 

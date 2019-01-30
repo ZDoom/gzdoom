@@ -40,7 +40,7 @@
 #include "c_console.h"
 #include "c_dispatch.h"
 
-#include "doomstat.h"
+#include "g_game.h"
 #include "d_player.h"
 
 #include "d_netinf.h"

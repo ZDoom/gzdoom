@@ -46,6 +46,7 @@
 #include "sbar.h"
 #include "d_player.h"
 #include "p_blockmap.h"
+#include "g_game.h"
 
 #include "m_cheat.h"
 #include "c_dispatch.h"

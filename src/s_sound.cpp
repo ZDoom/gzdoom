@@ -82,6 +82,7 @@
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "g_game.h"
 
 // MACROS ------------------------------------------------------------------
 

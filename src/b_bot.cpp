@@ -40,7 +40,7 @@
 #include "c_cvars.h"
 #include "c_dispatch.h"
 #include "b_bot.h"
-#include "doomstat.h"
+#include "g_game.h"
 #include "p_local.h"
 #include "cmdlib.h"
 #include "teaminfo.h"

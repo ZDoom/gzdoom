@@ -89,6 +89,7 @@
 #include "actorinlines.h"
 #include "p_acs.h"
 #include "events.h"
+#include "g_game.h"
 
 static FRandom pr_skullpop ("SkullPop");
 

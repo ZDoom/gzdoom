@@ -67,7 +67,7 @@
 #include "i_input.h"
 #include "w_wad.h"
 #include "cmdlib.h"
-#include "doomstat.h"
+#include "g_game.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
 #include "s_sound.h"

@@ -112,6 +112,8 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+extern DThinker *NextToThink;
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 namespace GC
@@ -280,6 +282,7 @@ static void MarkRoot()
 	Mark(StatusBar);
 	M_MarkMenus();
 	Mark(DIntermissionController::CurrentIntermission);
+	Thinkers.MarkRoots();
 	Mark(E_FirstEventHandler);
 	Mark(E_LastEventHandler);
 	for (auto Level : AllLevels())
@@ -297,6 +300,8 @@ static void MarkRoot()
 	{
 		Level->Mark();
 	}
+	// NextToThink must not be freed while thinkers are ticking.
+	Mark(NextToThink);
 	// Mark soft roots.
 	if (SoftRoots != NULL)
 	{

@@ -948,7 +948,6 @@ void HWHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 	Clocker c(PortalAll);
 
 	FMaterial * gltexture;
-	player_t * player = &players[consoleplayer];
 	GLSectorPlane * sp = &origin->plane;
 	auto &vp = di->Viewpoint;
 

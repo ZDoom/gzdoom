@@ -615,8 +615,6 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 	stack = false;
 	if ((which & SSRF_RENDER3DPLANES) && x.ffloors.Size())
 	{
-		player_t * player = players[consoleplayer].camera->player;
-
 		renderflags = SSRF_RENDER3DPLANES;
 		srf |= SSRF_RENDER3DPLANES;
 		// 3d-floors must not overlap!

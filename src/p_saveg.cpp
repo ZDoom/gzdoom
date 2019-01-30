@@ -1013,7 +1013,7 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 	if (arc.isReading())
 	{
 		for (auto &sec : sectors)
-		{
+	{
 			P_Recalculate3DFloors(&sec);
 		}
 		for (int i = 0; i < MAXPLAYERS; ++i)

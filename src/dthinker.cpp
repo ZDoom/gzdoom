@@ -65,7 +65,6 @@ struct ProfileInfo
 
 static TMap<FName, ProfileInfo> Profiles;
 static unsigned int profilethinkers, profilelimit;
-FThinkerCollection Thinkers;
 DThinker *NextToThink;
 
 //==========================================================================
@@ -750,16 +749,12 @@ DThinker *FLevelLocals::FirstThinker (int statnum)
 
 void DThinker::ChangeStatNum (int statnum)
 {
-	FThinkerList *list;
-
-	FThinkerCollection *collection = &Thinkers;	//Todo: get from level
-
 	if ((unsigned)statnum > MAX_STATNUM)
 	{
 		statnum = MAX_STATNUM;
 	}
 	Remove();
-	Thinkers.Link(this, statnum);
+	Level->Thinkers.Link(this, statnum);
 }
 
 static void ChangeStatNum(DThinker *thinker, int statnum)
@@ -771,7 +766,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DThinker, ChangeStatNum, ChangeStatNum)
 {
 	PARAM_SELF_PROLOGUE(DThinker);
 	PARAM_INT(stat);
-	self->ChangeStatNum(stat);
+	ChangeStatNum(self, stat);
 	return 0;
 }
 
@@ -884,7 +879,7 @@ size_t DThinker::PropagateMark()
 //
 //==========================================================================
 
-FThinkerIterator::FThinkerIterator (const PClass *type, int statnum)
+FThinkerIterator::FThinkerIterator (FLevelLocals *l, const PClass *type, int statnum) : Level(l)
 {
 	if ((unsigned)statnum > MAX_STATNUM)
 	{
@@ -897,8 +892,7 @@ FThinkerIterator::FThinkerIterator (const PClass *type, int statnum)
 		m_SearchStats = false;
 	}
 	m_ParentType = type;
-	m_CurrThinker = Thinkers.Thinkers[m_Stat].GetHead();
-	m_SearchingFresh = false;
+	Reinit();
 }
 
 //==========================================================================
@@ -907,7 +901,7 @@ FThinkerIterator::FThinkerIterator (const PClass *type, int statnum)
 //
 //==========================================================================
 
-FThinkerIterator::FThinkerIterator (const PClass *type, int statnum, DThinker *prev)
+FThinkerIterator::FThinkerIterator (FLevelLocals *l, const PClass *type, int statnum, DThinker *prev) : Level(l)
 {
 	if ((unsigned)statnum > MAX_STATNUM)
 	{
@@ -939,7 +933,7 @@ FThinkerIterator::FThinkerIterator (const PClass *type, int statnum, DThinker *p
 
 void FThinkerIterator::Reinit ()
 {
-	m_CurrThinker = Thinkers.Thinkers[m_Stat].GetHead();
+	m_CurrThinker = Level->Thinkers.Thinkers[m_Stat].GetHead();
 	m_SearchingFresh = false;
 }
 
@@ -980,7 +974,7 @@ DThinker *FThinkerIterator::Next (bool exact)
 			}
 			if ((m_SearchingFresh = !m_SearchingFresh))
 			{
-				m_CurrThinker = Thinkers.FreshThinkers[m_Stat].GetHead();
+				m_CurrThinker = Level->Thinkers.FreshThinkers[m_Stat].GetHead();
 			}
 		} while (m_SearchingFresh);
 		if (m_SearchStats)
@@ -991,7 +985,7 @@ DThinker *FThinkerIterator::Next (bool exact)
 				m_Stat = STAT_FIRST_THINKING;
 			}
 		}
-		m_CurrThinker = Thinkers.Thinkers[m_Stat].GetHead();
+		m_CurrThinker = Level->Thinkers.Thinkers[m_Stat].GetHead();
 		m_SearchingFresh = false;
 	} while (m_SearchStats && m_Stat != STAT_FIRST_THINKING);
 	return nullptr;

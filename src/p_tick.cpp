@@ -151,7 +151,7 @@ void P_Ticker (void)
 	E_WorldTick();
 	StatusBar->CallTick ();		// [RH] moved this here
 	level.Tick ();			// [RH] let the level tick
-	Thinkers.RunThinkers(&level);
+	level.Thinkers.RunThinkers(&level);
 
 	//if added by MC: Freeze mode.
 	if (!level.isFrozen())

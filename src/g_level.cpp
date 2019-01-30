@@ -356,7 +356,7 @@ void G_NewInit ()
 	int i;
 
 	// Destory all old player refrences that may still exist
-	TThinkerIterator<AActor> it(NAME_PlayerPawn, STAT_TRAVELLING);
+	TThinkerIterator<AActor> it(&level, NAME_PlayerPawn, STAT_TRAVELLING);
 	AActor *pawn, *next;
 
 	next = it.Next();
@@ -469,7 +469,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	UnlatchCVars ();
 	G_VerifySkill();
 	UnlatchCVars ();
-	Thinkers.DestroyThinkersInList(STAT_STATIC);
+	level.Thinkers.DestroyThinkersInList(STAT_STATIC);
 
 	if (paused)
 	{
@@ -2117,7 +2117,7 @@ void FLevelLocals::Mark()
 	GC::Mark(BotInfo.firstthing);
 	GC::Mark(BotInfo.body1);
 	GC::Mark(BotInfo.body2);
-
+	Thinkers.MarkRoots();
 	canvasTextureInfo.Mark();
 	for (auto &c : CorpseQueue)
 	{

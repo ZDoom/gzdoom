@@ -253,6 +253,7 @@ void FLevelLocals::ClearPortals()
 
 void FLevelLocals::ClearLevelData()
 {
+	Thinkers.DestroyAllThinkers();
 	ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
 
 	total_monsters = total_items = total_secrets =
@@ -348,8 +349,6 @@ void P_FreeLevelData ()
 	// [ZZ] delete per-map event handlers
 	E_Shutdown(true);
 	R_FreePastViewers();
-
-	Thinkers.DestroyAllThinkers ();
 
 	level.ClearLevelData();
 }
@@ -574,7 +573,7 @@ void P_Init ()
 
 static void P_Shutdown ()
 {
-	Thinkers.DestroyThinkersInList(STAT_STATIC);
+	level.Thinkers.DestroyThinkersInList(STAT_STATIC);
 	P_FreeLevelData ();
 	// [ZZ] delete global event handlers
 	E_Shutdown(false);

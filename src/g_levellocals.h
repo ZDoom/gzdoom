@@ -269,12 +269,12 @@ public:
 	}
 	template<class T> TThinkerIterator<T> GetThinkerIterator(FName subtype = NAME_None, int statnum = MAX_STATNUM+1)
 	{
-		if (subtype == NAME_None) return TThinkerIterator<T>(statnum);
-		else return TThinkerIterator<T>(subtype, statnum);
+		if (subtype == NAME_None) return TThinkerIterator<T>(this, statnum);
+		else return TThinkerIterator<T>(this, subtype, statnum);
 	}
 	template<class T> TThinkerIterator<T> GetThinkerIterator(FName subtype, int statnum, AActor *prev)
 	{
-		return TThinkerIterator<T>(subtype, statnum, prev);
+		return TThinkerIterator<T>(this, subtype, statnum, prev);
 	}
 	FActorIterator GetActorIterator(int tid)
 	{
@@ -590,6 +590,7 @@ public:
 	uint32_t			InactiveParticles;
 	TArray<particle_t>	Particles;
 	TArray<uint16_t>	ParticlesInSubsec;
+	FThinkerCollection Thinkers;
 
 	TArray<DVector2>	Scrolls;		// NULL if no DScrollers in this level
 

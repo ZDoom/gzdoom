@@ -131,14 +131,15 @@ class FThinkerIterator
 protected:
 	const PClass *m_ParentType;
 private:
+	FLevelLocals *Level;
 	DThinker *m_CurrThinker;
 	uint8_t m_Stat;
 	bool m_SearchStats;
 	bool m_SearchingFresh;
 
 public:
-	FThinkerIterator (const PClass *type, int statnum=MAX_STATNUM+1);
-	FThinkerIterator (const PClass *type, int statnum, DThinker *prev);
+	FThinkerIterator (FLevelLocals *Level, const PClass *type, int statnum=MAX_STATNUM+1);
+	FThinkerIterator (FLevelLocals *Level, const PClass *type, int statnum, DThinker *prev);
 	DThinker *Next (bool exact = false);
 	void Reinit ();
 
@@ -149,28 +150,19 @@ protected:
 template <class T> class TThinkerIterator : public FThinkerIterator
 {
 public:
-	TThinkerIterator (int statnum=MAX_STATNUM+1) : FThinkerIterator (RUNTIME_CLASS(T), statnum)
+	TThinkerIterator (FLevelLocals *Level, int statnum=MAX_STATNUM+1) : FThinkerIterator (Level, RUNTIME_CLASS(T), statnum)
 	{
 	}
-	TThinkerIterator (int statnum, DThinker *prev) : FThinkerIterator (RUNTIME_CLASS(T), statnum, prev)
+	TThinkerIterator (FLevelLocals *Level, int statnum, DThinker *prev) : FThinkerIterator (Level, RUNTIME_CLASS(T), statnum, prev)
 	{
 	}
-	TThinkerIterator (const PClass *subclass, int statnum=MAX_STATNUM+1) : FThinkerIterator(subclass, statnum)
+	TThinkerIterator (FLevelLocals *Level, const PClass *subclass, int statnum=MAX_STATNUM+1) : FThinkerIterator(Level, subclass, statnum)
 	{
 	}
-	TThinkerIterator (FName subclass, int statnum=MAX_STATNUM+1) : FThinkerIterator(PClass::FindClass(subclass), statnum)
+	TThinkerIterator (FLevelLocals *Level, FName subclass, int statnum=MAX_STATNUM+1) : FThinkerIterator(Level, PClass::FindClass(subclass), statnum)
 	{
 	}
-	TThinkerIterator (ENamedName subclass, int statnum=MAX_STATNUM+1) : FThinkerIterator(PClass::FindClass(subclass), statnum)
-	{
-	}
-	TThinkerIterator (FName subclass, int statnum, DThinker *prev) : FThinkerIterator(PClass::FindClass(subclass), statnum, prev)
-	{
-	}
-	TThinkerIterator (ENamedName subclass, int statnum, DThinker *prev) : FThinkerIterator(PClass::FindClass(subclass), statnum, prev)
-	{
-	}
-	TThinkerIterator (const char *subclass, int statnum=MAX_STATNUM+1) : FThinkerIterator(PClass::FindClass(subclass), statnum)
+	TThinkerIterator (FLevelLocals *Level, FName subclass, int statnum, DThinker *prev) : FThinkerIterator(Level, PClass::FindClass(subclass), statnum, prev)
 	{
 	}
 	T *Next (bool exact = false)
@@ -179,5 +171,5 @@ public:
 	}
 };
 
-extern FThinkerCollection Thinkers;
+
 #endif //__DTHINKER_H__

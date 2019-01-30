@@ -39,6 +39,7 @@
 #include "actorinlines.h"
 
 extern gamestate_t wipegamestate;
+extern uint8_t globalfreeze, globalchangefreeze;
 
 //==========================================================================
 //
@@ -99,14 +100,14 @@ void P_Ticker (void)
 	// This may not be perfect but it is not really relevant for sublevels that tracer homing behavior is preserved.
 	if ((currentUILevel->maptime & 3) == 0)
 	{
-		if (bglobal.changefreeze)
+		if (globalchangefreeze)
 		{
+			globalfreeze ^= 1;
+			globalchangefreeze = 0;
 			for (auto Level : AllLevels())
 			{
-				Level->frozenstate ^= 2;
+				Level->frozenstate = (Level->frozenstate & ~2) | (2 * globalfreeze);
 			}
-			bglobal.freeze ^= 1;
-			bglobal.changefreeze = 0;
 		}
 	}
 

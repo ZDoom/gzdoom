@@ -105,7 +105,7 @@ bool DBot::Reachable (AActor *rtarget)
 				double ceilingheight = s->ceilingplane.ZatPoint (hitx, hity);
 				double floorheight = s->floorplane.ZatPoint (hitx, hity);
 
-				if (!bglobal.IsDangerous (s) &&		//Any nukage/lava?
+				if (!Level->BotInfo.IsDangerous (s) &&		//Any nukage/lava?
 					(floorheight <= (last_z+MAXMOVEHEIGHT)
 					&& ((ceilingheight == floorheight && line->special)
 						|| (ceilingheight - floorheight) >= player->mo->Height))) //Does it fit?
@@ -235,8 +235,8 @@ void DBot::Dofire (ticcmd_t *cmd)
 		// prediction aiming
 		Dist = player->mo->Distance2D(enemy);
 		fm = Dist / GetDefaultByType (GetBotInfo(player->ReadyWeapon).projectileType)->Speed;
-		bglobal.SetBodyAt(enemy->Pos() + enemy->Vel.XY() * fm * 2, 1);
-		Angle = player->mo->AngleTo(bglobal.body1);
+		Level->BotInfo.SetBodyAt(enemy->Pos() + enemy->Vel.XY() * fm * 2, 1);
+		Angle = player->mo->AngleTo(Level->BotInfo.body1);
 		if (Check_LOS (enemy, SHOOTFOV))
 			no_fire = false;
 	}
@@ -300,7 +300,7 @@ extern int BotWTG;
 void FCajunMaster::BotTick(AActor *mo)
 {
 	BotSupportCycles.Clock();
-	bglobal.m_Thinking = true;
+	m_Thinking = true;
 	for (int i = 0; i < MAXPLAYERS; i++)
 	{
 		if (!playeringame[i] || players[i].Bot == NULL)
@@ -333,7 +333,7 @@ void FCajunMaster::BotTick(AActor *mo)
 			}
 		}
 	}
-	bglobal.m_Thinking = false;
+	m_Thinking = false;
 	BotSupportCycles.Unclock();
 }
 
@@ -382,7 +382,7 @@ AActor *DBot::Choose_Mate ()
 			&& client->mo->health > 0
 			&& client->mo != observer
 			&& ((player->mo->health/2) <= client->mo->health || !deathmatch)
-			&& !bglobal.IsLeader(client)) //taken?
+			&& !Level->BotInfo.IsLeader(client)) //taken?
 		{
 			if (P_CheckSight (player->mo, client->mo, SF_IGNOREVISIBILITY))
 			{
@@ -401,7 +401,7 @@ AActor *DBot::Choose_Mate ()
 	//Make a introducing to mate.
 	if(target && target!=last_mate)
 	{
-		if((P_Random()%(200*bglobal.botnum))<3)
+		if((P_Random()%(200*Level->BotInfo.botnum))<3)
 		{
 			chat = c_teamup;
 			if(target->bot)
@@ -543,9 +543,9 @@ DAngle DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	AActor *actor;
 	double m;
 
-	bglobal.SetBodyAt(player->mo->PosPlusZ(player->mo->Height / 2) + player->mo->Vel.XY() * 5, 2);
+	Level->BotInfo.SetBodyAt(player->mo->PosPlusZ(player->mo->Height / 2) + player->mo->Vel.XY() * 5, 2);
 
-	actor = bglobal.body2;
+	actor = Level->BotInfo.body2;
 
 	dist = actor->Distance2D (enemy);
 	if (dist < SAFE_SELF_MISDIST)
@@ -553,24 +553,24 @@ DAngle DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	//Predict.
 	m = ((dist+1) / GetDefaultByName("Rocket")->Speed);
 
-	bglobal.SetBodyAt(DVector3((enemy->Pos() + enemy->Vel * (m + 2)), ONFLOORZ), 1);
+	Level->BotInfo.SetBodyAt(DVector3((enemy->Pos() + enemy->Vel * (m + 2)), ONFLOORZ), 1);
 	
 	//try the predicted location
-	if (P_CheckSight (actor, bglobal.body1, SF_IGNOREVISIBILITY)) //See the predicted location, so give a test missile
+	if (P_CheckSight (actor, Level->BotInfo.body1, SF_IGNOREVISIBILITY)) //See the predicted location, so give a test missile
 	{
 		FCheckPosition tm;
-		if (bglobal.SafeCheckPosition (player->mo, actor->X(), actor->Y(), tm))
+		if (Level->BotInfo.SafeCheckPosition (player->mo, actor->X(), actor->Y(), tm))
 		{
-			if (bglobal.FakeFire (actor, bglobal.body1, cmd) >= SAFE_SELF_MISDIST)
+			if (Level->BotInfo.FakeFire (actor, Level->BotInfo.body1, cmd) >= SAFE_SELF_MISDIST)
 			{
-				return actor->AngleTo(bglobal.body1);
+				return actor->AngleTo(Level->BotInfo.body1);
 			}
 		}
 	}
 	//Try fire straight.
 	if (P_CheckSight (actor, enemy, 0))
 	{
-		if (bglobal.FakeFire (player->mo, enemy, cmd) >= SAFE_SELF_MISDIST)
+		if (Level->BotInfo.FakeFire (player->mo, enemy, cmd) >= SAFE_SELF_MISDIST)
 		{
 			return player->mo->AngleTo(enemy);
 		}

@@ -96,9 +96,6 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 
 static FRandom pr_botspawn ("BotSpawn");
 
-//Externs
-FCajunMaster bglobal;
-
 cycle_t BotThinkCycles, BotSupportCycles;
 int BotWTG;
 
@@ -176,7 +173,6 @@ void FCajunMaster::Init ()
 	botnum = 0;
 	firstthing = nullptr;
 	spawn_tries = 0;
-	freeze = false;
 	observer = false;
 	body1 = nullptr;
 	body2 = nullptr;
@@ -520,7 +516,7 @@ bool FCajunMaster::LoadBots ()
 	bool gotteam = false;
 	int loaded_bots = 0;
 
-	bglobal.ForgetBots ();
+	ForgetBots ();
 	tmp = M_GetCajunPath(BOTFILENAME);
 	if (tmp.IsEmpty())
 	{
@@ -636,9 +632,9 @@ bool FCajunMaster::LoadBots ()
 			appendinfo (newinfo->info, "team");
 			appendinfo (newinfo->info, "255");
 		}
-		newinfo->next = bglobal.botinfo;
+		newinfo->next = botinfo;
 		newinfo->lastteam = TEAM_NONE;
-		bglobal.botinfo = newinfo;
+		botinfo = newinfo;
 		loaded_bots++;
 	}
 	Printf ("%d bots read from %s\n", loaded_bots, BOTFILENAME);

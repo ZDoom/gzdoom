@@ -2333,7 +2333,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 		if (thing->player && thing->player->Bot != NULL && thing->flags & MF_SHOOTABLE)
 		{
 			if (tm.sector != thing->Sector
-				&& bglobal.IsDangerous(tm.sector))
+				&& thing->Level->BotInfo.IsDangerous(tm.sector))
 			{
 				thing->player->Bot->prev = thing->player->Bot->dest;
 				thing->player->Bot->dest = nullptr;

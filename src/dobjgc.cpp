@@ -300,10 +300,6 @@ static void MarkRoot()
 	{
 		Level->Mark();
 	}
-	// Mark bot stuff.
-	Mark(bglobal.firstthing);
-	Mark(bglobal.body1);
-	Mark(bglobal.body2);
 	// NextToThink must not be freed while thinkers are ticking.
 	Mark(NextToThink);
 	// Mark soft roots.

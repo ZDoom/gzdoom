@@ -54,6 +54,8 @@
 #include "g_levellocals.h"
 #include "vm.h"
 
+uint8_t globalfreeze, globalchangefreeze;	// user's freeze state.
+
 // [RH] Actually handle the cheat. The cheat code in st_stuff.c now just
 // writes some bytes to the network data stream, and the network code
 // later calls us.
@@ -514,8 +516,8 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_FREEZE:
-		bglobal.changefreeze ^= 1;
-		if (bglobal.freeze ^ bglobal.changefreeze)
+		globalchangefreeze ^= 1;
+		if (globalfreeze ^ globalchangefreeze)
 		{
 			msg = GStrings("TXT_FREEZEON");
 		}

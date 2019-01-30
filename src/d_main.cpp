@@ -957,7 +957,7 @@ void D_Display ()
 void D_ErrorCleanup ()
 {
 	savegamerestore = false;
-	bglobal.RemoveAllBots (&level, true);
+	level.BotInfo.RemoveAllBots (&level, true);
 	D_QuitNetGame ();
 	if (demorecording || demoplayback)
 		G_CheckDemoStatus ();
@@ -2553,14 +2553,14 @@ void D_DoomMain (void)
 		PClassActor::StaticSetActorNums();
 
 		//Added by MC:
-		bglobal.getspawned.Clear();
+		level.BotInfo.getspawned.Clear();
 		argcount = Args->CheckParmList("-bots", &args);
 		for (p = 0; p < argcount; ++p)
 		{
-			bglobal.getspawned.Push(args[p]);
+			level.BotInfo.getspawned.Push(args[p]);
 		}
-		bglobal.spawn_tries = 0;
-		bglobal.wanted_botnum = bglobal.getspawned.Size();
+		level.BotInfo.spawn_tries = 0;
+		level.BotInfo.wanted_botnum = level.BotInfo.getspawned.Size();
 
 		if (!batchrun) Printf ("P_Init: Init Playloop state.\n");
 		StartScreen->LoadingStatus ("Init game engine", 0x3f);

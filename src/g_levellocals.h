@@ -47,6 +47,7 @@
 #include "p_tags.h"
 #include "p_spec.h"
 #include "actor.h"
+#include "b_bot.h"
 #include "p_effect.h"
 #include "d_player.h"
 #include "p_destructible.h"
@@ -464,6 +465,7 @@ public:
 	TArray<FStrifeDialogueNode *> StrifeDialogues;
 	FDialogueIDMap DialogueRoots;
 	FDialogueMap ClassRoots;
+	FCajunMaster BotInfo;
 
 	int ii_compatflags = 0;
 	int ii_compatflags2 = 0;

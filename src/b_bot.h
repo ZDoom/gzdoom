@@ -139,8 +139,9 @@ public:
 	bool IsDangerous (sector_t *sec);
 
 	TArray<FString> getspawned; //Array of bots (their names) which should be spawned when starting a game.
-	uint8_t freeze;			//Game in freeze mode.
-	uint8_t changefreeze;	//Game wants to change freeze mode.
+	
+	//uint8_t freeze;			//Game in freeze mode.
+	//uint8_t changefreeze;	//Game wants to change freeze mode.
 	int botnum;
 	botinfo_t *botinfo;
 	int spawn_tries;
@@ -237,7 +238,6 @@ private:
 
 
 //Externs
-extern FCajunMaster bglobal;
 extern cycle_t BotThinkCycles, BotSupportCycles;
 
 EXTERN_CVAR (Float, bot_flag_return_time)

@@ -822,7 +822,7 @@ void CopyPlayer(player_t *dst, player_t *src, const char *name)
 
 	if (dst->Bot != nullptr)
 	{
-		botinfo_t *thebot = bglobal.botinfo;
+		botinfo_t *thebot = level.BotInfo.botinfo;
 		while (thebot && stricmp(name, thebot->name))
 		{
 			thebot = thebot->next;
@@ -831,7 +831,7 @@ void CopyPlayer(player_t *dst, player_t *src, const char *name)
 		{
 			thebot->inuse = BOTINUSE_Yes;
 		}
-		bglobal.botnum++;
+		level.BotInfo.botnum++;
 		dst->userinfo.TransferFrom(uibackup2);
 	}
 	else
@@ -979,7 +979,6 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 	{
 		InitSkyMap(this);
 		AirControlChanged();
-		bglobal.freeze = !!(frozenstate & 2);
 	}
 
 	Behaviors.SerializeModuleStates(arc);

@@ -535,7 +535,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	//Added by MC: Initialize bots.
 	if (!deathmatch)
 	{
-		bglobal.Init ();
+		level.BotInfo.Init ();
 	}
 
 	if (bTitleLevel)
@@ -653,7 +653,7 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int flags, i
 	}
 	changeflags = flags;
 
-	bglobal.End();	//Added by MC:
+	BotInfo.End();	//Added by MC:
 
 	// [RH] Give scripts a chance to do something
 	unloading = true;
@@ -1070,7 +1070,7 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 	//Added by MC: Initialize bots.
 	if (deathmatch)
 	{
-		bglobal.Init ();
+		BotInfo.Init ();
 	}
 
 	if (timingdemo)
@@ -1167,7 +1167,7 @@ void FLevelLocals::WorldDone (void)
 	//Added by mc
 	if (deathmatch)
 	{
-		bglobal.RemoveAllBots(this, consoleplayer != Net_Arbitrator);
+		BotInfo.RemoveAllBots(this, consoleplayer != Net_Arbitrator);
 	}
 
 	if (flags & LEVEL_CHANGEMAPCHEAT)
@@ -1341,7 +1341,7 @@ void FLevelLocals::StartTravel ()
 		}
 	}
 
-	bglobal.StartTravel ();
+	BotInfo.StartTravel ();
 }
 
 //==========================================================================
@@ -1461,7 +1461,7 @@ int FLevelLocals::FinishTravel ()
 		pawns[pawnsnum++] = pawn;
 	}
 
-	bglobal.FinishTravel ();
+	BotInfo.FinishTravel ();
 
 	// make sure that, after travelling has completed, no travelling thinkers are left.
 	// Since this list is excluded from regular thinker cleaning, anything that may survive through here
@@ -2114,6 +2114,9 @@ void FLevelLocals::Mark()
 	GC::Mark(automap);
 	GC::Mark(interpolator.Head);
 	GC::Mark(SequenceListHead);
+	GC::Mark(BotInfo.firstthing);
+	GC::Mark(BotInfo.body1);
+	GC::Mark(BotInfo.body2);
 
 	canvasTextureInfo.Mark();
 	for (auto &c : CorpseQueue)

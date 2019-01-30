@@ -3668,10 +3668,10 @@ void AActor::Tick ()
 			}
 		}
 
-		if (bglobal.botnum && !demoplayback &&
+		if (Level->BotInfo.botnum && !demoplayback &&
 			((flags & (MF_SPECIAL|MF_MISSILE)) || (flags3 & MF3_ISMONSTER)))
 		{
-			bglobal.BotTick(this);
+			Level->BotInfo.BotTick(this);
 		}
 
 		// [RH] Consider carrying sectors here
@@ -4375,7 +4375,7 @@ void ConstructActor(AActor *actor, const DVector3 &pos, bool SpawningMapThing)
 	// Actors with zero gravity need the NOGRAVITY flag set.
 	if (actor->Gravity == 0) actor->flags |= MF_NOGRAVITY;
 
-	FRandom &rng = bglobal.m_Thinking ? pr_botspawnmobj : pr_spawnmobj;
+	FRandom &rng = Level->BotInfo.m_Thinking ? pr_botspawnmobj : pr_spawnmobj;
 
 	if (actor->isFast() && actor->flags3 & MF3_ISMONSTER)
 		actor->reactiontime = 0;

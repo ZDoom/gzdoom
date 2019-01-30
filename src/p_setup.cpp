@@ -349,7 +349,7 @@ void P_FreeLevelData ()
 	E_Shutdown(true);
 	R_FreePastViewers();
 
-	DThinker::DestroyAllThinkers ();
+	Thinkers.DestroyAllThinkers ();
 
 	level.ClearLevelData();
 }
@@ -573,8 +573,8 @@ void P_Init ()
 }
 
 static void P_Shutdown ()
-{	
-	DThinker::DestroyThinkersInList(STAT_STATIC);	
+{
+	Thinkers.DestroyThinkersInList(STAT_STATIC);
 	P_FreeLevelData ();
 	// [ZZ] delete global event handlers
 	E_Shutdown(false);

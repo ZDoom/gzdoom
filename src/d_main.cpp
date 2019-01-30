@@ -2724,7 +2724,7 @@ void D_DoomMain (void)
 		// clean up game state
 		ST_Clear();
 		D_ErrorCleanup ();
-		DThinker::DestroyThinkersInList(STAT_STATIC);
+		Thinkers.DestroyThinkersInList(STAT_STATIC);
 		E_Shutdown(false);
 		P_FreeLevelData();
 

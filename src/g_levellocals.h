@@ -393,7 +393,7 @@ public:
 		DThinker *thinker = static_cast<DThinker*>(cls->CreateNew());
 		assert(thinker->IsKindOf(RUNTIME_CLASS(DThinker)));
 		thinker->ObjectFlags |= OF_JustSpawned;
-		DThinker::FreshThinkers[statnum].AddTail(thinker);
+		Thinkers.Link(thinker, statnum);
 		thinker->Level = this;
 		return thinker;
 	}

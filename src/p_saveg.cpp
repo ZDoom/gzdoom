@@ -928,7 +928,7 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 
 	if (arc.isReading())
 	{
-		DThinker::DestroyAllThinkers();
+		Thinkers.DestroyAllThinkers();
 		interpolator.ClearInterpolations();
 		arc.ReadObjects(hubload);
 		ActiveSequences = 0;
@@ -1000,7 +1000,7 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 	P_SerializeHealthGroups(this, arc);
 	// [ZZ] serialize events
 	E_SerializeEvents(arc);
-	DThinker::SerializeThinkers(arc, hubload);
+	Thinkers.SerializeThinkers(arc, hubload);
 	arc("polyobjs", Polyobjects);
 	SerializeSubsectors(arc, "subsectors");
 	StatusBar->SerializeMessages(arc);

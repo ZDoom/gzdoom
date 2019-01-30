@@ -53,13 +53,43 @@ enum { MAX_STATNUM = 127 };
 // Doubly linked ring list of thinkers
 struct FThinkerList
 {
-	FThinkerList() : Sentinel(0) {}
+	// No destructor. If this list goes away it's the GC's task to clean the orphaned thinkers. Otherwise this may clash with engine shutdown.
 	void AddTail(DThinker *thinker);
 	DThinker *GetHead() const;
 	DThinker *GetTail() const;
 	bool IsEmpty() const;
+	void DestroyThinkers();
+	bool DoDestroyThinkers();
+	int TickThinkers(FThinkerList *dest);	// Returns: # of thinkers ticked
+	int ProfileThinkers(FThinkerList *dest);
+	void SaveList(FSerializer &arc);
 
-	DThinker *Sentinel;
+private:
+	DThinker *Sentinel = nullptr;
+
+	friend struct FThinkerCollection;
+};
+
+struct FThinkerCollection
+{
+	void DestroyThinkersInList(int statnum)
+	{
+		Thinkers[statnum].DestroyThinkers();
+		FreshThinkers[statnum].DestroyThinkers();
+	}
+
+	void RunThinkers(FLevelLocals *Level);	// The level is needed to tick the lights
+	void DestroyAllThinkers();
+	void SerializeThinkers(FSerializer &arc, bool keepPlayers);
+	void MarkRoots();
+	DThinker *FirstThinker(int statnum);
+	void Link(DThinker *thinker, int statnum);
+
+private:
+	FThinkerList Thinkers[MAX_STATNUM + 2];
+	FThinkerList FreshThinkers[MAX_STATNUM + 1];
+
+	friend class FThinkerIterator;
 };
 
 class DThinker : public DObject
@@ -79,29 +109,11 @@ public:
 	
 	void ChangeStatNum (int statnum);
 
-	static void RunThinkers ();
-	static void RunThinkers (int statnum);
-	static void DestroyAllThinkers ();
-	static void DestroyThinkersInList(int statnum)
-	{
-		DestroyThinkersInList(Thinkers[statnum]);
-		DestroyThinkersInList(FreshThinkers[statnum]);
-	}
-	static void SerializeThinkers(FSerializer &arc, bool keepPlayers);
-	static void MarkRoots();
-
 private:
-	static void DestroyThinkersInList (FThinkerList &list);
-	static bool DoDestroyThinkersInList(FThinkerList &list);
-	static int TickThinkers (FThinkerList *list, FThinkerList *dest);	// Returns: # of thinkers ticked
-	static int ProfileThinkers(FThinkerList *list, FThinkerList *dest);
-	static void SaveList(FSerializer &arc, DThinker *node);
 	void Remove();
 
-	static FThinkerList Thinkers[MAX_STATNUM+2];		// Current thinkers
-	static FThinkerList FreshThinkers[MAX_STATNUM+1];	// Newly created thinkers
-
 	friend struct FThinkerList;
+	friend struct FThinkerCollection;
 	friend class FThinkerIterator;
 	friend class DObject;
 	friend class FSerializer;
@@ -167,4 +179,5 @@ public:
 	}
 };
 
+extern FThinkerCollection Thinkers;
 #endif //__DTHINKER_H__

@@ -40,12 +40,6 @@ class FScanner;
 struct level_info_t;
 struct FDoorAnimation;
 
-struct FThinkerCollection
-{
-	int RefNum;
-	DThinker *Obj;
-};
-
 enum class EScroll : int
 {
 		sc_side,

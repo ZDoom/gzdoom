@@ -295,8 +295,14 @@ void DPusher::Tick ()
 
 void FLevelLocals::AdjustPusher(int tag, int magnitude, int angle, bool wind)
 {
-	DPusher::EPusher type = wind ? DPusher::p_wind : DPusher::p_current;
+	struct FThinkerCollection
+	{
+		int RefNum;
+		DThinker *Obj;
+	};
 
+	DPusher::EPusher type = wind? DPusher::p_wind : DPusher::p_current;
+	
 	// Find pushers already attached to the sector, and change their parameters.
 	TArray<FThinkerCollection> Collection;
 	{

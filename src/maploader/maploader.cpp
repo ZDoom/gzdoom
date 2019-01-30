@@ -3247,8 +3247,8 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
-		if (playeringame[i] && players[i].mo != nullptr)
-			players[i].health = players[i].mo->health;
+		if (Level->PlayerInGame(i) && Level->Players[i]->mo != nullptr)
+			Level->Players[i]->health = Level->Players[i]->mo->health;
 	}
 	if (!map->HasBehavior && !map->isText)
 		TranslateTeleportThings();	// [RH] Assign teleport destination TIDs

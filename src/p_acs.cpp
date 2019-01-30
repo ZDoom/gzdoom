@@ -1725,7 +1725,7 @@ static bool DoUseInv (AActor *actor, PClassActor *info)
 //
 //============================================================================
 
-static int UseInventory (AActor *activator, const char *type)
+static int UseInventory (FLevelLocals *Level, AActor *activator, const char *type)
 {
 	PClassActor *info;
 	int ret = 0;
@@ -1743,8 +1743,8 @@ static int UseInventory (AActor *activator, const char *type)
 	{
 		for (int i = 0; i < MAXPLAYERS; ++i)
 		{
-			if (playeringame[i])
-				ret += DoUseInv (players[i].mo, info);
+			if (Level->PlayerInGame(i))
+				ret += DoUseInv (Level->Players[i]->mo, info);
 		}
 	}
 	else
@@ -1759,6 +1759,7 @@ static int UseInventory (AActor *activator, const char *type)
 // CheckInventory
 //
 // Returns how much of a particular item an actor has.
+// This also gets called from FraggleScript.
 //
 //============================================================================
 
@@ -3672,7 +3673,7 @@ int DLevelScript::CountPlayers ()
 	int count = 0, i;
 
 	for (i = 0; i < MAXPLAYERS; i++)
-		if (playeringame[i])
+		if (Level->PlayerInGame(i))
 			count++;
 
 	return count;
@@ -3850,9 +3851,9 @@ void DLevelScript::DoFadeRange (int r1, int g1, int b1, int a1,
 	{
 		for (i = 0; i < MAXPLAYERS; ++i)
 		{
-			if (playeringame[i])
+			if (Level->PlayerInGame(i))
 			{
-				viewer = &players[i];
+				viewer = Level->Players[i];
 showme:
 				if (ftime <= 0.f)
 				{
@@ -3965,7 +3966,7 @@ int DoGetMasterTID (AActor *self)
 	if (self->master) return self->master->tid;
 	else if (self->FriendPlayer)
 	{
-		player_t *player = &players[(self->FriendPlayer)-1];
+		player_t *player = self->Level->Players[(self->FriendPlayer)-1];
 		return player->mo->tid;
 	}
 	else return 0;
@@ -4504,13 +4505,13 @@ int DLevelScript::GetPlayerInput(int playernum, int inputnum)
 		}
 		p = activator->player;
 	}
-	else if (playernum >= MAXPLAYERS || !playeringame[playernum])
+	else if (playernum >= MAXPLAYERS || !Level->PlayerInGame(playernum))
 	{
 		return 0;
 	}
 	else
 	{
-		p = &players[playernum];
+		p = Level->Players[playernum];
 	}
 	if (p == NULL)
 	{
@@ -4961,11 +4962,11 @@ static int DoGetCVar(FBaseCVar *cvar, bool is_string)
 
 int DLevelScript::SetUserCVar(int playernum, const char *cvarname, int value, bool is_string)
 {
-	if ((unsigned)playernum >= MAXPLAYERS || !playeringame[playernum])
+	if ((unsigned)playernum >= MAXPLAYERS || !Level->PlayerInGame(playernum))
 	{
 		return 0;
 	}
-	FBaseCVar **cvar_p = players[playernum].userinfo.CheckKey(FName(cvarname, true));
+	FBaseCVar **cvar_p = Level->Players[playernum]->userinfo.CheckKey(FName(cvarname, true));
 	FBaseCVar *cvar;
 	// Only mod-created cvars may be set.
 	if (cvar_p == NULL || (cvar = *cvar_p) == NULL || (cvar->GetFlags() & CVAR_IGNORE) || !(cvar->GetFlags() & CVAR_MOD))
@@ -4975,7 +4976,7 @@ int DLevelScript::SetUserCVar(int playernum, const char *cvarname, int value, bo
 	DoSetCVar(cvar, value, is_string);
 
 	// If we are this player, then also reflect this change in the local version of this cvar.
-	if (playernum == consoleplayer)
+	if (playernum == consoleplayer && Level->isPrimaryLevel())
 	{
 		FBaseCVar *cvar = FindCVar(cvarname, NULL);
 		// If we can find it in the userinfo, then we should also be able to find it in the normal cvar list,
@@ -5004,7 +5005,9 @@ int DLevelScript::SetCVar(AActor *activator, const char *cvarname, int value, bo
 		{
 			return 0;
 		}
-		return SetUserCVar(int(activator->player - players), cvarname, value, is_string);
+		auto pnum = Level->PlayerNum(activator->player);
+		if (pnum < 0) return 0;
+		return SetUserCVar(pnum, cvarname, value, is_string);
 	}
 	DoSetCVar(cvar, value, is_string);
 	return 1;
@@ -5388,25 +5391,25 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 
 		case ACSF_GetAirSupply:
 		{
-			if (args[0] < 0 || args[0] >= MAXPLAYERS || !playeringame[args[0]])
+			if (args[0] < 0 || args[0] >= MAXPLAYERS || !Level->PlayerInGame(args[0]))
 			{
 				return 0;
 			}
 			else
 			{
-				return players[args[0]].air_finished - Level->time;
+				return Level->Players[args[0]]->air_finished - Level->time;
 			}
 		}
 
 		case ACSF_SetAirSupply:
 		{
-			if (args[0] < 0 || args[0] >= MAXPLAYERS || !playeringame[args[0]])
+			if (args[0] < 0 || args[0] >= MAXPLAYERS || !Level->PlayerInGame(args[0]))
 			{
 				return 0;
 			}
 			else
 			{
-				players[args[0]].air_finished = args[1] + Level->time;
+				Level->Players[args[0]]->air_finished = args[1] + Level->time;
 				return 1;
 			}
 		}
@@ -5420,14 +5423,14 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 
 		case ACSF_GetArmorType:
 		{
-			if (args[1] < 0 || args[1] >= MAXPLAYERS || !playeringame[args[1]])
+			if (args[1] < 0 || args[1] >= MAXPLAYERS || !Level->PlayerInGame(args[1]))
 			{
 				return 0;
 			}
 			else
 			{
 				FName p(Level->Behaviors.LookupString(args[0]));
-				auto armor = players[args[1]].mo->FindInventory(NAME_BasicArmor);
+				auto armor = Level->Players[args[1]]->mo->FindInventory(NAME_BasicArmor);
 				if (armor && armor->NameVar(NAME_ArmorType) == p) return armor->IntVar(NAME_Amount);
 			}
 			return 0;
@@ -8454,9 +8457,9 @@ scriptwait:
 						player = activator->player;
 					}
 				}
-				else if (playeringame[STACK(1)-1])
+				else if (Level->PlayerInGame(STACK(1)-1))
 				{
-					player = &players[STACK(1)-1];
+					player = Level->Players[STACK(1)-1];
 				}
 				else
 				{
@@ -8610,6 +8613,7 @@ scriptwait:
 			{
 				optstart = sp;
 			}
+			if (Level->isPrimaryLevel())
 			{
 				AActor *screen = activator;
 				if (screen != NULL &&
@@ -9198,7 +9202,7 @@ scriptwait:
 			break;
 
 		case PCD_USEINVENTORY:
-			STACK(1) = UseInventory (activator, Level->Behaviors.LookupString (STACK(1)));
+			STACK(1) = UseInventory (Level, activator, Level->Behaviors.LookupString (STACK(1)));
 			break;
 
 		case PCD_USEACTORINVENTORY:
@@ -9207,7 +9211,7 @@ scriptwait:
 				const char *type = Level->Behaviors.LookupString(STACK(1));
 				if (STACK(2) == 0)
 				{
-					ret = UseInventory(NULL, type);
+					ret = UseInventory(Level, NULL, type);
 				}
 				else
 				{
@@ -9215,7 +9219,7 @@ scriptwait:
 					AActor *actor;
 					for (actor = it.Next(); actor != NULL; actor = it.Next())
 					{
-						ret += UseInventory(actor, type);
+						ret += UseInventory(Level, actor, type);
 					}
 				}
 				STACK(2) = ret;
@@ -9655,18 +9659,18 @@ scriptwait:
 			}
 			else
 			{
-				STACK(1) = playeringame[STACK(1)];
+				STACK(1) = Level->PlayerInGame(STACK(1));
 			}
 			break;
 
 		case PCD_PLAYERISBOT:
-			if (STACK(1) < 0 || STACK(1) >= MAXPLAYERS || !playeringame[STACK(1)])
+			if (STACK(1) < 0 || STACK(1) >= MAXPLAYERS || !Level->PlayerInGame(STACK(1)))
 			{
 				STACK(1) = false;
 			}
 			else
 			{
-				STACK(1) = (players[STACK(1)].Bot != NULL);
+				STACK(1) = (Level->Players[STACK(1)]->Bot != nullptr);
 			}
 			break;
 
@@ -9858,24 +9862,24 @@ scriptwait:
 			break;
 
 		case PCD_PLAYERCLASS:		// [GRB]
-			if (STACK(1) < 0 || STACK(1) >= MAXPLAYERS || !playeringame[STACK(1)])
+			if (STACK(1) < 0 || STACK(1) >= MAXPLAYERS || !Level->PlayerInGame(STACK(1)))
 			{
 				STACK(1) = -1;
 			}
 			else
 			{
-				STACK(1) = players[STACK(1)].CurrentPlayerClass;
+				STACK(1) = Level->Players[STACK(1)]->CurrentPlayerClass;
 			}
 			break;
 
 		case PCD_GETPLAYERINFO:		// [GRB]
-			if (STACK(2) < 0 || STACK(2) >= MAXPLAYERS || !playeringame[STACK(2)])
+			if (STACK(2) < 0 || STACK(2) >= MAXPLAYERS || !Level->PlayerInGame(STACK(2)))
 			{
 				STACK(2) = -1;
 			}
 			else
 			{
-				player_t *pl = &players[STACK(2)];
+				player_t *pl = Level->Players[STACK(2)];
 				userinfo_t *userinfo = &pl->userinfo;
 				switch (STACK(1))
 				{
@@ -9973,13 +9977,14 @@ scriptwait:
 			{
 				int playernum = STACK(1);
 
-				if (playernum < 0 || playernum >= MAXPLAYERS || !playeringame[playernum] || players[playernum].camera == NULL || players[playernum].camera->player != NULL)
+				if (playernum < 0 || playernum >= MAXPLAYERS || !Level->PlayerInGame(playernum) ||
+					Level->Players[playernum]->camera == nullptr || Level->Players[playernum]->camera->player != nullptr)
 				{
 					STACK(1) = -1;
 				}
 				else
 				{
-					STACK(1) = players[playernum].camera->tid;
+					STACK(1) = Level->Players[playernum]->camera->tid;
 				}
 			}
 			break;
@@ -10301,8 +10306,8 @@ void FLevelLocals::DoDeferedScripts ()
 			if (scriptdata)
 			{
 				P_GetScriptGoing (this, (unsigned)def->playernum < MAXPLAYERS &&
-					playeringame[def->playernum] ? players[def->playernum].mo : NULL,
-					NULL, def->script,
+					PlayerInGame(def->playernum) ? Players[def->playernum]->mo : nullptr,
+					nullptr, def->script,
 					scriptdata, module,
 					def->args, 3,
 					def->type == acsdefered_t::defexealways ? ACS_ALWAYS : 0);

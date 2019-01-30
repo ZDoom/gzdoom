@@ -48,6 +48,7 @@
 #include "p_spec.h"
 #include "actor.h"
 #include "p_effect.h"
+#include "d_player.h"
 #include "p_destructible.h"
 #include "r_data/r_sections.h"
 #include "r_data/r_canvastexture.h"
@@ -102,7 +103,15 @@ struct FLevelLocals
 {
 	void *level;
 	void *Level;	// bug catchers.
-	FLevelLocals() : Behaviors(this), tagManager(this) {}
+	FLevelLocals() : Behaviors(this), tagManager(this)
+	{
+		// Make sure that these point to the right data all the time.
+		// This will be needed for as long as it takes to completely separate global UI state from per-level play state.
+		for (int i = 0; i < MAXPLAYERS; i++)
+		{
+			Players[i] = &players[i];
+		}
+	}
 
 	friend class MapLoader;
 
@@ -493,6 +502,42 @@ public:
 	TObjPtr<AActor*> bodyque[BODYQUESIZE];
 	TObjPtr<DAutomapBase*> automap = nullptr;
 	int bodyqueslot;
+	
+	// For now this merely points to the global player array, but with this in place, access to this array can be moved over to the level.
+	// As things progress each level needs to be able to point to different players,
+	// but even then the level will not own the player - the player merely links to the level.
+	// This should also be made a real object eventually.
+	player_t *Players[MAXPLAYERS];
+	
+	// This is to allow refactoring without refactoring the data right away.
+	bool PlayerInGame(int pnum)
+	{
+		return playeringame[pnum];
+	}
+	
+	// This needs to be done better, but for now it should be good enough.
+	bool PlayerInGame(player_t *player)
+	{
+		for (int i = 0; i < MAXPLAYERS; i++)
+		{
+			if (player == Players[i]) return PlayerInGame(i);
+		}
+		return false;
+	}
+
+	int PlayerNum(player_t *player)
+	{
+		for (int i = 0; i < MAXPLAYERS; i++)
+		{
+			if (player == Players[i]) return i;
+		}
+		return -1;
+	}
+	
+	bool isPrimaryLevel() const
+	{
+		return true;
+	}
 
 	int NumMapSections;
 

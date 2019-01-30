@@ -547,11 +547,11 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 			}
 		}
 	}
-	else if (!multiplayer && CountsAsKill())
+	else if (!multiplayer && CountsAsKill() && Level->isPrimaryLevel())
 	{
 		// count all monster deaths,
 		// even those caused by other monsters
-		players[0].killcount++;
+		Level->Players[0]->killcount++;
 	}
 
 	if (player)
@@ -577,11 +577,12 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 			//Added by MC: Discard enemies.
 			for (int i = 0; i < MAXPLAYERS; i++)
 			{
-				if (players[i].Bot != NULL && this == players[i].Bot->enemy)
+				DBot *Bot = Level->Players[i]->Bot;
+				if (Bot != nullptr && this == Bot->enemy)
 				{
-					if (players[i].Bot->dest ==  players[i].Bot->enemy)
-						players[i].Bot->dest = nullptr;
-					players[i].Bot->enemy = nullptr;
+					if (Bot->dest == Bot->enemy)
+						Bot->dest = nullptr;
+					Bot->enemy = nullptr;
 				}
 			}
 

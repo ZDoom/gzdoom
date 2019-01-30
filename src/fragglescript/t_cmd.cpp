@@ -154,12 +154,12 @@ void FS_EmulateCmd(FLevelLocals *Level, char * string)
 		{
 			sc.MustGetFloat();
 			double playerviewheight = sc.Float;
-			for(int i=0;i<MAXPLAYERS;i++)
+			for (auto p : Level->Players)
 			{
 				// No, this is not correct. But this is the way Legacy WADs expect it to be handled!
-				if (players[i].mo != NULL) players[i].mo->FloatVar(NAME_ViewHeight) = playerviewheight;
-				players[i].viewheight = playerviewheight;
-				players[i].Uncrouch();
+				if (p->mo != nullptr) p->mo->FloatVar(NAME_ViewHeight) = playerviewheight;
+				p->viewheight = playerviewheight;
+				p->Uncrouch();
 			}
 			while (sc.GetString())
 			{

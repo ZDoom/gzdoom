@@ -378,13 +378,13 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 		Level->SetMusicVolume(Level->MusicVolume);
 		for (i = 0; i < MAXPLAYERS; ++i)
 		{
-			players[i].killcount = players[i].secretcount
-				= players[i].itemcount = 0;
+			Level->Players[i]->killcount = Level->Players[i]->secretcount
+				= Level->Players[i]->itemcount = 0;
 		}
 	}
 	for (i = 0; i < MAXPLAYERS; ++i)
 	{
-		players[i].mo = nullptr;
+		Level->Players[i]->mo = nullptr;
 	}
 	// [RH] Clear any scripted translation colors the previous level may have set.
 	for (i = 0; i < int(translationtables[TRANSLATION_LevelScripted].Size()); ++i)
@@ -439,9 +439,9 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 	{
 		for (i = 0; i < MAXPLAYERS; i++)
 		{
-			if (playeringame[i])
+			if (Level->PlayerInGame(i))
 			{
-				players[i].mo = nullptr;
+				Level->Players[i]->mo = nullptr;
 				Level->DeathMatchSpawnPlayer(i);
 			}
 		}
@@ -451,9 +451,9 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 	{
 		for (i = 0; i < MAXPLAYERS; ++i)
 		{
-			if (playeringame[i])
+			if (Level->PlayerInGame(i))
 			{
-				players[i].mo = nullptr;
+				Level->Players[i]->mo = nullptr;
 				FPlayerStart *mthing = Level->PickPlayerStart(i);
 				Level->SpawnPlayer(mthing, i, (Level->flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
 			}
@@ -466,11 +466,12 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 	{
 		for (i = 0; i < MAXPLAYERS; ++i)
 		{
-			if (playeringame[i] && players[i].mo != nullptr)
+			auto p = Level->Players[i];
+			if (Level->PlayerInGame(i) && p->mo != nullptr)
 			{
-				if (!(players[i].mo->flags & MF_FRIENDLY))
+				if (!(p->mo->flags & MF_FRIENDLY))
 				{
-					AActor * oldSpawn = players[i].mo;
+					AActor * oldSpawn = p->mo;
 					Level->DeathMatchSpawnPlayer(i);
 					oldSpawn->Destroy();
 				}

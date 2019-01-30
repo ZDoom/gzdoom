@@ -945,16 +945,17 @@ DEFINE_ACTION_FUNCTION(AActor, GiveBody)
 
 bool AActor::CheckLocalView (int playernum) const
 {
-	if (players[playernum].camera == this)
+	auto p = &players[playernum];
+	if (p->camera == this)
 	{
 		return true;
 	}
-	if (players[playernum].mo != this || players[playernum].camera == NULL)
+	if (p->mo != this || p->camera == nullptr)
 	{
 		return false;
 	}
-	if (players[playernum].camera->player == NULL &&
-		!(players[playernum].camera->flags3 & MF3_ISMONSTER))
+	if (p->camera->player == NULL &&
+		!(p->camera->flags3 & MF3_ISMONSTER))
 	{
 		return true;
 	}
@@ -983,6 +984,10 @@ bool AActor::IsInsideVisibleAngles() const
 		return true;
 
 	if (players[consoleplayer].camera == nullptr)
+		return true;
+	
+	// Not detectable.
+	if (!Level->isPrimaryLevel())
 		return true;
 	
 	DAngle anglestart = VisibleStartAngle;
@@ -3264,7 +3269,7 @@ bool AActor::IsOkayToAttack (AActor *link)
 	AActor * Friend;
 	if (flags5 & MF5_SUMMONEDMONSTER)					Friend = tracer;
 	else if (flags2 & MF2_SEEKERMISSILE)				Friend = target;
-	else if ((flags & MF_FRIENDLY) && FriendPlayer)		Friend = players[FriendPlayer-1].mo;
+	else if ((flags & MF_FRIENDLY) && FriendPlayer)		Friend = Level->Players[FriendPlayer-1]->mo;
 	else												Friend = this;
 
 	// Friend checks
@@ -5052,9 +5057,9 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 
 	for (int ii = 0; ii < MAXPLAYERS; ++ii)
 	{
-		if (playeringame[ii] && players[ii].camera == oldactor)
+		if (PlayerInGame(ii) && Players[ii]->camera == oldactor)
 		{
-			players[ii].camera = mobj;
+			Players[ii]->camera = mobj;
 		}
 	}
 
@@ -6825,13 +6830,13 @@ bool AActor::IsFriend (AActor *other)
 		if (deathmatch && teamplay)
 			return IsTeammate(other) ||
 				(FriendPlayer != 0 && other->FriendPlayer != 0 &&
-					players[FriendPlayer-1].mo->IsTeammate(players[other->FriendPlayer-1].mo));
+					Level->Players[FriendPlayer-1]->mo->IsTeammate(Level->Players[other->FriendPlayer-1]->mo));
 
 		return !deathmatch ||
 			FriendPlayer == other->FriendPlayer ||
 			FriendPlayer == 0 ||
 			other->FriendPlayer == 0 ||
-			players[FriendPlayer-1].mo->IsTeammate(players[other->FriendPlayer-1].mo);
+			Level->Players[FriendPlayer-1]->mo->IsTeammate(Level->Players[other->FriendPlayer-1]->mo);
 	}
 	// [SP] If friendly flags match, then they are on the same team.
 	/*if (!((flags ^ other->flags) & MF_FRIENDLY))
@@ -6858,13 +6863,13 @@ bool AActor::IsHostile (AActor *other)
 		if (deathmatch && teamplay)
 			return !IsTeammate(other) &&
 				!(FriendPlayer != 0 && other->FriendPlayer != 0 &&
-					players[FriendPlayer-1].mo->IsTeammate(players[other->FriendPlayer-1].mo));
+					Level->Players[FriendPlayer-1]->mo->IsTeammate(Level->Players[other->FriendPlayer-1]->mo));
 
 		return deathmatch &&
 			FriendPlayer != other->FriendPlayer &&
 			FriendPlayer !=0 &&
 			other->FriendPlayer != 0 &&
-			!players[FriendPlayer-1].mo->IsTeammate(players[other->FriendPlayer-1].mo);
+			!Level->Players[FriendPlayer-1]->mo->IsTeammate(Level->Players[other->FriendPlayer-1]->mo);
 	}
 	return true;
 }

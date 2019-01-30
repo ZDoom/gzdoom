@@ -573,7 +573,7 @@ void P_SerializePlayers(FLevelLocals *Level, FSerializer &arc, bool skipload)
 	// Count the number of players present right now.
 	for (numPlayersNow = 0, i = 0; i < MAXPLAYERS; ++i)
 	{
-		if (playeringame[i])
+		if (Level->PlayerInGame(i))
 		{
 			++numPlayersNow;
 		}
@@ -879,16 +879,16 @@ void FLevelLocals::SpawnExtraPlayers()
 	// be sure to spawn the extra players.
 	int i;
 
-	if (deathmatch)
+	if (deathmatch || !isPrimaryLevel())
 	{
 		return;
 	}
 
 	for (i = 0; i < MAXPLAYERS; ++i)
 	{
-		if (playeringame[i] && players[i].mo == NULL)
+		if (PlayerInGame(i) && Players[i]->mo == NULL)
 		{
-			players[i].playerstate = PST_ENTER;
+			Players[i]->playerstate = PST_ENTER;
 			SpawnPlayer(&playerstarts[i], i, (flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
 		}
 	}
@@ -1019,9 +1019,9 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 		}
 		for (int i = 0; i < MAXPLAYERS; ++i)
 		{
-			if (playeringame[i] && players[i].mo != nullptr)
+			if (PlayerInGame(i) && Players[i]->mo != nullptr)
 			{
-				FWeaponSlots::SetupWeaponSlots(players[i].mo);
+				FWeaponSlots::SetupWeaponSlots(Players[i]->mo);
 			}
 		}
 		RecreateAllAttachedLights();

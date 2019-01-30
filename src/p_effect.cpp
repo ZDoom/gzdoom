@@ -324,10 +324,6 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 //
 void P_RunEffects (FLevelLocals *Level)
 {
-	if (players[consoleplayer].camera == NULL) return;
-
-	int	pnum = players[consoleplayer].camera->Sector->Index() * Level->sectors.Size();
-
 	AActor *actor;
 	auto iterator = Level->GetThinkerIterator<AActor>();
 

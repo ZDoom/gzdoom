@@ -616,7 +616,7 @@ void T_PreprocessScripts(FLevelLocals *Level)
 		// get the other scripts
 		
 		// levelscript started by player 0 'superplayer'
-		th->LevelScript->trigger = players[0].mo;
+		th->LevelScript->trigger = Level->Players[0]->mo;
 		
 		th->LevelScript->Preprocess(Level);
 		th->LevelScript->ParseScript(nullptr, th);

@@ -1684,18 +1684,20 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfSeen)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 
+	auto Level = self->Level;
 	for (int i = 0; i < MAXPLAYERS; i++) 
 	{
-		if (playeringame[i])
+		if (Level->PlayerInGame(i))
 		{
+			auto p = Level->Players[i];
 			// Always check sight from each player.
-			if (P_CheckSight(players[i].mo, self, SF_IGNOREVISIBILITY))
+			if (P_CheckSight(p->mo, self, SF_IGNOREVISIBILITY))
 			{
 				ACTION_RETURN_BOOL(false);
 			}
 			// If a player is viewing from a non-player, then check that too.
-			if (players[i].camera != NULL && players[i].camera->player == NULL &&
-				P_CheckSight(players[i].camera, self, SF_IGNOREVISIBILITY))
+			if (p->camera != nullptr && p->camera->player == NULL &&
+				P_CheckSight(p->camera, self, SF_IGNOREVISIBILITY))
 			{
 				ACTION_RETURN_BOOL(false);
 			}
@@ -1755,18 +1757,20 @@ DEFINE_ACTION_FUNCTION(AActor, CheckSightOrRange)
 	PARAM_BOOL(twodi);
 
 	range *= range;
-	for (int i = 0; i < MAXPLAYERS; ++i)
+	auto Level = self->Level;
+	for (int i = 0; i < MAXPLAYERS; i++)
 	{
-		if (playeringame[i])
+		if (Level->PlayerInGame(i))
 		{
+			auto p = Level->Players[i];
 			// Always check from each player.
-			if (DoCheckSightOrRange(self, players[i].mo, range, twodi, true))
+			if (DoCheckSightOrRange(self, p->mo, range, twodi, true))
 			{
 				ACTION_RETURN_BOOL(false);
 			}
 			// If a player is viewing from a non-player, check that too.
-			if (players[i].camera != NULL && players[i].camera->player == NULL &&
-				DoCheckSightOrRange(self, players[i].camera, range, twodi, true))
+			if (p->camera != nullptr && p->camera->player == nullptr &&
+				DoCheckSightOrRange(self, p->camera, range, twodi, true))
 			{
 				ACTION_RETURN_BOOL(false);
 			}
@@ -1783,18 +1787,20 @@ DEFINE_ACTION_FUNCTION(AActor, CheckRange)
 	PARAM_BOOL(twodi);
 
 	range *= range;
-	for (int i = 0; i < MAXPLAYERS; ++i)
+	auto Level = self->Level;
+	for (int i = 0; i < MAXPLAYERS; i++)
 	{
-		if (playeringame[i])
+		if (Level->PlayerInGame(i))
 		{
+			auto p = Level->Players[i];
 			// Always check from each player.
-			if (DoCheckSightOrRange(self, players[i].mo, range, twodi, false))
+			if (DoCheckSightOrRange(self, p->mo, range, twodi, false))
 			{
 				ACTION_RETURN_BOOL(false);
 			}
 			// If a player is viewing from a non-player, check that too.
-			if (players[i].camera != NULL && players[i].camera->player == NULL &&
-				DoCheckSightOrRange(self, players[i].camera, range, twodi, false))
+			if (p->camera != nullptr && p->camera->player == nullptr &&
+				DoCheckSightOrRange(self, p->camera, range, twodi, false))
 			{
 				ACTION_RETURN_BOOL(false);
 			}

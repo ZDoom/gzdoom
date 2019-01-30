@@ -35,6 +35,7 @@
 #include "actor.h"
 #include "d_player.h"
 #include "p_local.h"
+#include "g_levellocals.h"
 
 //==========================================================================
 //
@@ -61,13 +62,17 @@
 	Only one selector of each type can be used.
 */
 
-#define AAPTR_RESOLVE_PLAYERNUM(playernum) (playeringame[playernum] ? players[playernum].mo : NULL)
-
 AActor *COPY_AAPTR(AActor *origin, int selector)
 {
 	if (selector == AAPTR_DEFAULT) return origin;
 
 	FTranslatedLineTarget t;
+
+	auto Level = origin->Level;
+	auto AAPTR_RESOLVE_PLAYERNUM = [=](int playernum) -> AActor*
+	{
+		return (Level->PlayerInGame(playernum) ? Level->Players[playernum]->mo : nullptr);
+	};
 
 	if (origin)
 	{
@@ -97,7 +102,7 @@ AActor *COPY_AAPTR(AActor *origin, int selector)
 			return t.linetarget;
 		}
 	}
-
+	
 	switch (selector & AAPTR_STATIC_SELECTORS)
 	{
 		case AAPTR_PLAYER1: return AAPTR_RESOLVE_PLAYERNUM(0);

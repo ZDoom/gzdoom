@@ -2835,24 +2835,25 @@ FUNC(LS_ChangeCamera)
 
 		for (i = 0; i < MAXPLAYERS; i++)
 		{
-			if (!playeringame[i])
+			if (!Level->PlayerInGame(i))
 				continue;
 
-			AActor *oldcamera = players[i].camera;
+			auto p = Level->Players[i];
+			AActor *oldcamera = p->camera;
 			if (camera)
 			{
-				players[i].camera = camera;
+				p->camera = camera;
 				if (arg2)
-					players[i].cheats |= CF_REVERTPLEASE;
+					p->cheats |= CF_REVERTPLEASE;
 			}
 			else
 			{
-				players[i].camera = players[i].mo;
-				players[i].cheats &= ~CF_REVERTPLEASE;
+				p->camera = p->mo;
+				p->cheats &= ~CF_REVERTPLEASE;
 			}
-			if (oldcamera != players[i].camera)
+			if (oldcamera != p->camera)
 			{
-				R_ClearPastViewer (players[i].camera);
+				R_ClearPastViewer (p->camera);
 			}
 		}
 	}
@@ -2977,14 +2978,15 @@ FUNC(LS_SetPlayerProperty)
 
 			for (i = 0; i < MAXPLAYERS; i++)
 			{
-				if (!playeringame[i] || players[i].mo == NULL)
+				auto p = Level->Players[i];
+				if (!Level->PlayerInGame(i) || p->mo == nullptr)
 					continue;
 
 				if (arg1)
 				{ // Give power
 					if (power != 4)
 					{
-						auto item = players[i].mo->GiveInventoryType ((PClass::FindActor(powers[power])));
+						auto item = p->mo->GiveInventoryType ((PClass::FindActor(powers[power])));
 						if (item != NULL && power == 0 && arg1 == 1) 
 						{
 							item->ColorVar(NAME_BlendColor) = MakeSpecialColormap(INVERSECOLORMAP);
@@ -2999,7 +3001,7 @@ FUNC(LS_SetPlayerProperty)
 				{ // Take power
 					if (power != 4)
 					{
-						auto item = players[i].mo->FindInventory (PClass::FindActor(powers[power]));
+						auto item = p->mo->FindInventory (PClass::FindActor(powers[power]));
 						if (item != NULL)
 						{
 							item->Destroy ();
@@ -3072,25 +3074,26 @@ FUNC(LS_SetPlayerProperty)
 
 		for (i = 0; i < MAXPLAYERS; i++)
 		{
-			if (!playeringame[i])
+			if (!Level->PlayerInGame(i))
 				continue;
 
+			auto p = Level->Players[i];
 			if (arg1)
 			{
-				players[i].cheats |= mask;
+				p->cheats |= mask;
 				if (arg2 == PROP_FLY)
 				{
-					players[i].mo->flags2 |= MF2_FLY;
-					players[i].mo->flags |= MF_NOGRAVITY;
+					p->mo->flags2 |= MF2_FLY;
+					p->mo->flags |= MF_NOGRAVITY;
 				}
 			}
 			else
 			{
-				players[i].cheats &= ~mask;
+				p->cheats &= ~mask;
 				if (arg2 == PROP_FLY)
 				{
-					players[i].mo->flags2 &= ~MF2_FLY;
-					players[i].mo->flags &= ~MF_NOGRAVITY;
+					p->mo->flags2 &= ~MF2_FLY;
+					p->mo->flags &= ~MF_NOGRAVITY;
 				}
 			}
 		}
@@ -3310,9 +3313,9 @@ FUNC(LS_GlassBreak)
 			{
 				for (int i = 0; i < MAXPLAYERS; ++i)
 				{
-					if (playeringame[i])
+					if (Level->PlayerInGame(i))
 					{
-						it = players[i].mo;
+						it = Level->Players[i]->mo;
 						break;
 					}
 				}

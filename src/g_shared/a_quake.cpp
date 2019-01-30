@@ -122,9 +122,9 @@ void DEarthquake::Tick ()
 	{
 		for (i = 0; i < MAXPLAYERS; i++)
 		{
-			if (playeringame[i] && !(players[i].cheats & CF_NOCLIP))
+			if (Level->PlayerInGame(i) && !(Level->Players[i]->cheats & CF_NOCLIP))
 			{
-				AActor *victim = players[i].mo;
+				AActor *victim = Level->Players[i]->mo;
 				double dist;
 
 				dist = m_Spot->Distance2D(victim, true);

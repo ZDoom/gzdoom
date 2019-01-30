@@ -1005,12 +1005,12 @@ void P_RandomChaseDir (AActor *actor)
 			{
 				i = 0;
 			}
-			else for (i = pr_newchasedir() & (MAXPLAYERS-1); !playeringame[i]; i = (i+1) & (MAXPLAYERS-1))
+			else for (i = pr_newchasedir() & (MAXPLAYERS-1); !actor->Level->PlayerInGame(i); i = (i+1) & (MAXPLAYERS-1))
 			{
 			}
-			player = players[i].mo;
+			player = actor->Level->Players[i]->mo;
 		}
-		if (player != NULL && playeringame[i])
+		if (player != NULL && actor->Level->PlayerInGame(i))
 		{
 			if (pr_newchasedir() & 1 || !P_CheckSight (actor, player))
 			{
@@ -1203,7 +1203,7 @@ int P_LookForMonsters (AActor *actor)
 	AActor *mo;
 	auto iterator = actor->Level->GetThinkerIterator<AActor>();
 
-	if (!P_CheckSight (players[0].mo, actor, SF_SEEPASTBLOCKEVERYTHING))
+	if (!P_CheckSight (actor->Level->Players[0]->mo, actor, SF_SEEPASTBLOCKEVERYTHING))
 	{ // Player can't see monster
 		return false;
 	}
@@ -1592,11 +1592,13 @@ int P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 			// Go back to a player, no matter whether it's visible or not
 			for (int anyone=0; anyone<=1; anyone++)
 			{
+				auto Level = actor->Level;
 				for (int c=0; c<MAXPLAYERS; c++)
 				{
-					if (playeringame[c] && players[c].playerstate==PST_LIVE &&
-						actor->IsFriend(players[c].mo) &&
-						(anyone || P_IsVisible(actor, players[c].mo, allaround)))
+					auto p = Level->Players[i];
+					if (Level->PlayerInGame(c) && p->playerstate==PST_LIVE &&
+						actor->IsFriend(p->mo) &&
+						(anyone || P_IsVisible(actor, p->mo, allaround)))
 					{
 						actor->target = players[c].mo;
 
@@ -1623,8 +1625,9 @@ int P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 	}	// [SP] if false, and in deathmatch, intentional fall-through
 
 	if (!(gameinfo.gametype & (GAME_DoomStrifeChex)) &&
+		actor->Level->isPrimaryLevel() &&
 		!multiplayer &&
-		players[0].health <= 0 && 
+		actor->Level->Players[0]->health <= 0 &&
 		actor->goal == NULL &&
 		gamestate != GS_TITLELEVEL
 		)
@@ -1648,7 +1651,7 @@ int P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 		if (c++ < MAXPLAYERS)
 		{
 			pnum = (pnum + 1) & (MAXPLAYERS - 1);
-			if (!playeringame[pnum])
+			if (!actor->Level->PlayerInGame(pnum))
 				continue;
 
 			if (actor->TIDtoHate == 0)
@@ -1686,12 +1689,12 @@ int P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 			return actor->target == actor->goal && actor->goal != NULL;
 		}
 
-		player = &players[pnum];
+		player = actor->Level->Players[pnum];
 
 		if (!(player->mo->flags & MF_SHOOTABLE))
 			continue;			// not shootable (observer or dead)
 
-		if (!((actor->flags ^ player->mo->flags) & MF_FRIENDLY))
+		if (actor->IsFriend(player->mo))
 			continue;			// same +MF_FRIENDLY, ignore
 
 		if (player->cheats & CF_NOTARGET)
@@ -2284,7 +2287,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 
 		if (actor->FriendPlayer != 0)
 		{
-			player = &players[actor->FriendPlayer - 1];
+			player = actor->Level->Players[actor->FriendPlayer - 1];
 		}
 		else
 		{
@@ -2293,10 +2296,10 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			{
 				i = 0;
 			}
-			else for (i = pr_newchasedir() & (MAXPLAYERS-1); !playeringame[i]; i = (i+1) & (MAXPLAYERS-1))
+			else for (i = pr_newchasedir() & (MAXPLAYERS-1); !actor->Level->PlayerInGame(i); i = (i+1) & (MAXPLAYERS-1))
 			{
 			}
-			player = &players[i];
+			player = actor->Level->Players[i];
 		}
 		if (player->attacker && player->attacker->health > 0 && player->attacker->flags & MF_SHOOTABLE && pr_newchasedir() < 80)
 		{
@@ -3037,7 +3040,7 @@ int CheckBossDeath (AActor *actor)
 
 	// make sure there is a player alive for victory
 	for (i = 0; i < MAXPLAYERS; i++)
-		if (playeringame[i] && players[i].health > 0)
+		if (actor->Level->PlayerInGame(i) && actor->Level->Players[i]->health > 0)
 			break;
 	
 	if (i == MAXPLAYERS)

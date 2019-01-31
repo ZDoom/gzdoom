@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "timidity.h"
-#include "i_system.h"
+#include "doomerrors.h"
 
 namespace Timidity
 {

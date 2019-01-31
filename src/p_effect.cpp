@@ -36,7 +36,7 @@
 
 #include "doomtype.h"
 #include "doomstat.h"
-#include "i_system.h"
+
 #include "actor.h"
 #include "m_argv.h"
 #include "p_effect.h"

@@ -53,6 +53,7 @@
 
 #include "i_video.h"
 #include "v_video.h"
+#include "i_system.h"
 
 // Data.
 #include "m_misc.h"

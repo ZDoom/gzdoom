@@ -34,7 +34,7 @@
 
 #include "templates.h"
 #include "p_setup.h"
-
+#include "i_system.h"
 #include "version.h"
 #include "g_game.h"
 #include "c_bind.h"

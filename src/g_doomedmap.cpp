@@ -38,6 +38,7 @@
 #include "p_lnspec.h"
 #include "c_dispatch.h"
 #include "v_text.h"
+#include "doomerrors.h"
 
 
 const char *SpecialMapthingNames[] = {

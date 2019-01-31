@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <float.h>
 #include "templates.h"
-#include "i_system.h"
+
 #include "w_wad.h"
 #include "doomdef.h"
 #include "doomstat.h"

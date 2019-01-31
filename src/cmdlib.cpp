@@ -35,7 +35,7 @@
 #endif
 #include "doomtype.h"
 #include "cmdlib.h"
-#include "i_system.h"
+#include "doomerrors.h"
 #include "v_text.h"
 #include "sc_man.h"
 

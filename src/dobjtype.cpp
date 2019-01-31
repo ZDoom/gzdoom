@@ -49,6 +49,7 @@
 #include "vm.h"
 #include "types.h"
 #include "scriptutil.h"
+#include "i_system.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -35,7 +35,7 @@
 
 #include "doomtype.h"
 #include "w_wad.h"
-#include "i_system.h"
+
 #include "r_data/r_translate.h"
 #include "bitmap.h"
 #include "v_video.h"

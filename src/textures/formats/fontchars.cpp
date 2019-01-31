@@ -42,6 +42,7 @@
 #include "image.h"
 #include "imagehelpers.h"
 #include "fontchars.h"
+#include "doomerrors.h"
 
 //==========================================================================
 //

@@ -37,7 +37,7 @@
 #include "doomtype.h"
 #include "files.h"
 #include "w_wad.h"
-#include "i_system.h"
+
 #include "gi.h"
 #include "st_start.h"
 #include "sc_man.h"

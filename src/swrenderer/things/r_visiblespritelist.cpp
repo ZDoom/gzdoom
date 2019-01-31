@@ -26,7 +26,7 @@
 #include "templates.h"
 #include "doomdef.h"
 #include "m_swap.h"
-#include "i_system.h"
+
 #include "w_wad.h"
 #include "g_levellocals.h"
 #include "p_maputl.h"

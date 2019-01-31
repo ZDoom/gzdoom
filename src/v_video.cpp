@@ -36,6 +36,7 @@
 #include <stdio.h>
 
 #include "i_system.h"
+#include "c_cvars.h"
 #include "x86.h"
 #include "i_video.h"
 #include "r_state.h"

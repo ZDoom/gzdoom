@@ -38,7 +38,7 @@
 #include "doomstat.h"
 #include "w_wad.h"
 #include "templates.h"
-#include "i_system.h"
+
 #include "r_data/r_translate.h"
 #include "r_data/sprites.h"
 #include "c_dispatch.h"

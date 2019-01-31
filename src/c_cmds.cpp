@@ -47,7 +47,6 @@
 #include "c_dispatch.h"
 
 #include "i_system.h"
-
 #include "doomerrors.h"
 #include "doomstat.h"
 #include "gstrings.h"

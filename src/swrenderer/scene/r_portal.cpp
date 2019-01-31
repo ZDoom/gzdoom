@@ -38,7 +38,7 @@
 #include "v_video.h"
 #include "stats.h"
 #include "i_video.h"
-#include "i_system.h"
+
 #include "a_sharedglobal.h"
 #include "r_data/r_translate.h"
 #include "p_3dmidtex.h"

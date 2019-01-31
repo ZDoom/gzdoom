@@ -37,7 +37,7 @@
 #include "v_text.h"
 #include "w_wad.h"
 #include "gi.h"
-#include "i_system.h"
+#include "doomerrors.h"
 
 //==========================================================================
 //

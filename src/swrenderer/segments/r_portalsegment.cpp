@@ -23,7 +23,7 @@
 #include "templates.h"
 #include "doomdef.h"
 #include "m_bbox.h"
-#include "i_system.h"
+
 #include "p_lnspec.h"
 #include "p_setup.h"
 #include "swrenderer/drawers/r_draw.h"

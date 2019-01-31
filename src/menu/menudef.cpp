@@ -45,7 +45,7 @@
 #include "gameconfigfile.h"
 #include "m_argv.h"
 #include "i_soundfont.h"
-
+#include "i_system.h"
 
 
 void ClearSaveGames();

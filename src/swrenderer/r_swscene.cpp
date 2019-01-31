@@ -34,6 +34,7 @@
 #include "textures/bitmap.h"
 #include "swrenderer/scene/r_light.h"
 #include "image.h"
+#include "doomerrors.h"
 
 // [RH] Base blending values (for e.g. underwater)
 int BaseBlendR, BaseBlendG, BaseBlendB;

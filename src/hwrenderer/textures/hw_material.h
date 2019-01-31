@@ -4,7 +4,7 @@
 
 #include "m_fixed.h"
 #include "textures/textures.h"
-#include "i_system.h"
+
 #include "r_defs.h"
 
 EXTERN_CVAR(Bool, gl_precache)

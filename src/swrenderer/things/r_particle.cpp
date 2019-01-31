@@ -26,7 +26,7 @@
 #include "templates.h"
 #include "doomdef.h"
 #include "m_swap.h"
-#include "i_system.h"
+
 #include "w_wad.h"
 #include "c_console.h"
 #include "c_cvars.h"

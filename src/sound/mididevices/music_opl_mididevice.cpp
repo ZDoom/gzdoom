@@ -38,7 +38,7 @@
 #include "i_musicinterns.h"
 #include "w_wad.h"
 #include "v_text.h"
-#include "i_system.h"
+#include "doomerrors.h"
 #include "opl.h"
 
 // MACROS ------------------------------------------------------------------

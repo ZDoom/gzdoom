@@ -40,7 +40,7 @@
 #include "v_text.h"
 #include "w_wad.h"
 #include "w_zip.h"
-#include "i_system.h"
+
 #include "ancientzip.h"
 
 #define BUFREADCOMMENT (0x400)

@@ -64,7 +64,7 @@
 #include "actor.h"
 #include "g_levellocals.h"
 #include "p_lnspec.h"
-#include "i_system.h"
+
 #include "v_text.h"
 #include "p_setup.h"
 #include "gi.h"

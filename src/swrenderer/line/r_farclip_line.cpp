@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include "templates.h"
-#include "i_system.h"
+
 #include "doomdef.h"
 #include "doomstat.h"
 #include "doomdata.h"

@@ -28,6 +28,7 @@
 //
 //-----------------------------------------------------------------------------
 
+#include <time.h>
 #include "vm.h"
 #include "r_defs.h"
 #include "g_levellocals.h"

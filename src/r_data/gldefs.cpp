@@ -33,7 +33,7 @@
 **
 */
 #include <ctype.h>
-#include "i_system.h"
+
 #include "sc_man.h"
 #include "templates.h"
 #include "w_wad.h"

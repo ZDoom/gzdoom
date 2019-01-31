@@ -23,7 +23,7 @@
 #include <stddef.h>
 #include "templates.h"
 #include "doomdef.h"
-#include "i_system.h"
+
 #include "w_wad.h"
 #include "v_video.h"
 #include "doomstat.h"

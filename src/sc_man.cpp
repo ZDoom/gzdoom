@@ -61,7 +61,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "doomtype.h"
-#include "i_system.h"
+#include "doomerrors.h"
 #include "sc_man.h"
 #include "w_wad.h"
 #include "cmdlib.h"

@@ -36,7 +36,7 @@
 
 #include "c_dispatch.h"
 #include "gi.h"
-#include "i_system.h"
+
 #include "teaminfo.h"
 #include "v_font.h"
 #include "v_video.h"

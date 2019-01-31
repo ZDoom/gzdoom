@@ -36,7 +36,7 @@
 #include "doomstat.h"
 #include "p_setup.h"
 #include "p_lnspec.h"
-#include "i_system.h"
+
 #include "gi.h"
 #include "r_sky.h"
 #include "g_level.h"

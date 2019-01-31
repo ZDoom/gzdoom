@@ -49,6 +49,7 @@
 #include "autosegs.h"
 #include "g_levellocals.h"
 #include "events.h"
+#include "i_system.h"
 
 TArray<cluster_info_t> wadclusterinfos;
 TArray<level_info_t> wadlevelinfos;

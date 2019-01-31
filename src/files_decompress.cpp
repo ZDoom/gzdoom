@@ -39,7 +39,7 @@
 #include <bzlib.h>
 
 #include "files.h"
-#include "i_system.h"
+#include "doomerrors.h"
 #include "templates.h"
 #include "m_misc.h"
 

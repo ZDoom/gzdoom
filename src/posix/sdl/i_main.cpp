@@ -53,6 +53,7 @@
 #include "r_utility.h"
 #include "doomstat.h"
 #include "vm.h"
+#include "doomerrors.h"
 
 // MACROS ------------------------------------------------------------------
 

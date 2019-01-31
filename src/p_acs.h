@@ -37,6 +37,7 @@
 
 #include "doomtype.h"
 #include "dthinker.h"
+#include "doomerrors.h"
 
 #define LOCAL_SIZE				20
 #define NUM_MAPVARS				128

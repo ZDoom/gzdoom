@@ -47,6 +47,7 @@
 #include "g_levellocals.h"
 #include "r_data/sprites.h"
 #include "vm.h"
+#include "i_system.h"
 
 // MACROS ------------------------------------------------------------------
 

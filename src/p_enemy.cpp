@@ -33,7 +33,7 @@
 
 #include "templates.h"
 #include "m_random.h"
-#include "i_system.h"
+
 #include "doomdef.h"
 #include "p_local.h"
 #include "p_maputl.h"

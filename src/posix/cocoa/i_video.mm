@@ -46,6 +46,7 @@
 #include "st_console.h"
 #include "v_text.h"
 #include "version.h"
+#include "doomerrors.h"
 
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"

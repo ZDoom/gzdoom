@@ -89,6 +89,8 @@
 #include "v_text.h"
 #include "version.h"
 #include "events.h"
+#include "doomerrors.h"
+#include "i_system.h"
 
 // Prototypes and declarations.
 #include "rawinput.h"

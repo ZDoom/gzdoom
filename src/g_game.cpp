@@ -73,6 +73,7 @@
 #include "dobjgc.h"
 #include "gi.h"
 #include "a_dynlight.h"
+#include "i_system.h"
 
 #include "g_hub.h"
 #include "g_levellocals.h"

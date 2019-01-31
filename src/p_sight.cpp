@@ -23,7 +23,7 @@
 #include <assert.h>
 
 #include "doomdef.h"
-#include "i_system.h"
+
 #include "p_local.h"
 #include "p_maputl.h"
 #include "p_blockmap.h"

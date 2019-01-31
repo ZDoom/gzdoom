@@ -44,7 +44,7 @@
 #include <string.h>
 
 #include "nodebuild.h"
-#include "i_system.h"
+
 #include "po_man.h"
 #include "g_levellocals.h"
 

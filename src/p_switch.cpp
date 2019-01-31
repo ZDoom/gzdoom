@@ -33,7 +33,7 @@
 */
 
 #include "templates.h"
-#include "i_system.h"
+
 #include "doomdef.h"
 #include "p_local.h"
 #include "p_lnspec.h"

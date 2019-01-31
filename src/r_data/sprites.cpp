@@ -23,7 +23,7 @@
 
 #include "doomtype.h"
 #include "w_wad.h"
-#include "i_system.h"
+
 #include "s_sound.h"
 #include "d_player.h"
 #include "d_netinf.h"

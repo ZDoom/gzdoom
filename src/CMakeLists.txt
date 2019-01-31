@@ -911,7 +911,9 @@ set (PCH_SOURCES
 	f_wipe.cpp
 	files.cpp
 	files_decompress.cpp
+	g_cvars.cpp
 	g_doomedmap.cpp
+	g_dumpinfo.cpp
 	g_game.cpp
 	g_hub.cpp
 	g_level.cpp

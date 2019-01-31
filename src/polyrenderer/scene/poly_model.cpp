@@ -128,7 +128,7 @@ void PolyModelRenderer::AddLights(AActor *actor)
 			while (node) // check all lights touching a subsector
 			{
 				FDynamicLight *light = node->lightsource;
-			if (light->ShouldLightActor(actor))
+				if (light->ShouldLightActor(actor))
 				{
 					int group = subsector->sector->PortalGroup;
 					DVector3 pos = light->PosRelative(group);

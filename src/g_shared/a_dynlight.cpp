@@ -69,31 +69,8 @@ static FMemArena DynLightArena(sizeof(FDynamicLight) * 200);
 static TArray<FDynamicLight*> FreeList;
 static FRandom randLight;
 
-CUSTOM_CVAR (Bool, gl_lights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	for (auto Level : AllLevels())
-	{
-		if (self) Level->RecreateAllAttachedLights();
-		else Level->DeleteAllAttachedLights();
-	}
-}
+extern TArray<FLightDefaults *> StateLights;
 
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(type, S, DynamicLight)
-{
-	PROP_STRING_PARM(str, 0);
-	static const char * ltype_names[]={
-		"Point","Pulse","Flicker","Sector","RandomFlicker", "ColorPulse", "ColorFlicker", "RandomColorFlicker", nullptr};
-
-	static const int ltype_values[]={
-		PointLight, PulseLight, FlickerLight, SectorLight, RandomFlickerLight, ColorPulseLight, ColorFlickerLight, RandomColorFlickerLight };
-
-	int style = MatchString(str, ltype_names);
-	if (style < 0) I_Error("Unknown light type '%s'", str);
-	defaults->IntVar(NAME_lighttype) = ltype_values[style];
-}
 
 //==========================================================================
 //
@@ -505,9 +482,9 @@ static FLightNode * DeleteLightNode(FLightNode * node)
 		tn=node->nextTarget;
 		delete node;
 		return(tn);
-    }
+	}
 	return(nullptr);
-}                             // phares 3/13/98
+}
 
 
 
@@ -774,7 +751,6 @@ void AActor::AttachLight(unsigned int count, const FLightDefaults *lightdef)
 // per-state light adjustment
 //
 //==========================================================================
-extern TArray<FLightDefaults *> StateLights;
 
 void AActor::SetDynamicLights()
 {
@@ -867,67 +843,6 @@ void FLevelLocals::RecreateAllAttachedLights()
 		{
 			a->SetDynamicLights();
 		}
-	}
-}
-
-//==========================================================================
-//
-// CCMDs
-//
-//==========================================================================
-
-CCMD(listlights)
-{
-	int walls, sectors;
-	int allwalls=0, allsectors=0, allsubsecs = 0;
-	int i=0, shadowcount = 0;
-	FDynamicLight * dl;
-	
-	for (auto Level : AllLevels())
-	{
-		Printf("Lights for %s\n", Level->MapName.GetChars());
-		for (dl = Level->lights; dl; dl = dl->next)
-		{
-			walls=0;
-			sectors=0;
-			Printf("%s at (%f, %f, %f), color = 0x%02x%02x%02x, radius = %f %s %s",
-				   dl->target->GetClass()->TypeName.GetChars(),
-				   dl->X(), dl->Y(), dl->Z(), dl->GetRed(), dl->GetGreen(), dl->GetBlue(),
-				   dl->radius, dl->IsAttenuated()? "attenuated" : "", dl->shadowmapped? "shadowmapped" : "");
-			i++;
-			shadowcount += dl->shadowmapped;
-			
-			if (dl->target)
-			{
-				FTextureID spr = sprites[dl->target->sprite].GetSpriteFrame(dl->target->frame, 0, 0., nullptr);
-				Printf(", frame = %s ", TexMan.GetTexture(spr)->GetName().GetChars());
-			}
-			
-			
-			FLightNode * node;
-			
-			node=dl->touching_sides;
-			
-			while (node)
-			{
-				walls++;
-				allwalls++;
-				node = node->nextTarget;
-			}
-			
-			
-			node = dl->touching_sector;
-			
-			while (node)
-			{
-				allsectors++;
-				sectors++;
-				node = node->nextTarget;
-			}
-			Printf("- %d walls, %d sectors\n", walls, sectors);
-			
-		}
-		Printf("%i dynamic lights, %d shadowmapped, %d walls, %d sectors\n\n\n", i, shadowcount, allwalls, allsectors);
 	}
 }
 

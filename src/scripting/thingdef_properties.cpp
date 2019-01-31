@@ -54,6 +54,7 @@
 #include "a_keys.h"
 #include "g_levellocals.h"
 #include "types.h"
+#include "a_dynlight.h"
 
 //==========================================================================
 //
@@ -1788,4 +1789,22 @@ DEFINE_CLASS_PROPERTY(unmorphflash, S, PowerMorph)
 	PROP_STRING_PARM(str, 0);
 	defaults->PointerVar<PClassActor>(NAME_UnMorphFlash) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
 }
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY(type, S, DynamicLight)
+{
+	PROP_STRING_PARM(str, 0);
+	static const char * ltype_names[]={
+		"Point","Pulse","Flicker","Sector","RandomFlicker", "ColorPulse", "ColorFlicker", "RandomColorFlicker", nullptr};
+	
+	static const int ltype_values[]={
+		PointLight, PulseLight, FlickerLight, SectorLight, RandomFlickerLight, ColorPulseLight, ColorFlickerLight, RandomColorFlickerLight };
+	
+	int style = MatchString(str, ltype_names);
+	if (style < 0) I_Error("Unknown light type '%s'", str);
+	defaults->IntVar(NAME_lighttype) = ltype_values[style];
+}
+
 

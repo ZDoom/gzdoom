@@ -99,6 +99,7 @@
 #include "events.h"
 #include "vm.h"
 #include "types.h"
+#include "g_cvars.h"
 #include "r_data/r_vanillatrans.h"
 
 EXTERN_CVAR(Bool, hud_althud)

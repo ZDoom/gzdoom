@@ -41,6 +41,12 @@ static FRandom pr_lightning ("Lightning");
 
 IMPLEMENT_CLASS(DLightningThinker, false, false)
 
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
 void DLightningThinker::Construct()
 {
 	Stopped = false;
@@ -55,6 +61,12 @@ DLightningThinker::~DLightningThinker ()
 {
 }
 
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
 void DLightningThinker::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
@@ -63,6 +75,12 @@ void DLightningThinker::Serialize(FSerializer &arc)
 		("count", LightningFlashCount)
 		("levels", LightningLightLevels);
 }
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
 
 void DLightningThinker::Tick ()
 {
@@ -76,6 +94,12 @@ void DLightningThinker::Tick ()
 		if (Stopped) Destroy();
 	}
 }
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
 
 void DLightningThinker::LightningFlash ()
 {
@@ -179,6 +203,12 @@ void DLightningThinker::LightningFlash ()
 	}
 }
 
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
 void DLightningThinker::ForceLightning (int mode)
 {
 	switch (mode)
@@ -196,11 +226,23 @@ void DLightningThinker::ForceLightning (int mode)
 	}
 }
 
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
 static DLightningThinker *LocateLightning (FLevelLocals *Level)
 {
 	auto iterator = Level->GetThinkerIterator<DLightningThinker>(NAME_None, STAT_LIGHTNING);
 	return iterator.Next ();
 }
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
 
 void FLevelLocals::StartLightning ()
 {
@@ -236,6 +278,12 @@ void FLevelLocals::StartLightning ()
 		CreateThinker<DLightningThinker>();
 	}
 }
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
 
 void FLevelLocals::ForceLightning (int mode)
 {

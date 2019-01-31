@@ -32,6 +32,8 @@
 #include "vm.h"
 #include "actorinlines.h"
 
+EXTERN_CVAR(Int, sv_corpsequeuesize)
+
 //----------------------------------------------------------------------------
 //
 // PROC A_NoBlocking
@@ -87,25 +89,6 @@ void A_Unblock(AActor *self, bool drop)
 // CorpseQueue Routines (used by Hexen)
 //
 //----------------------------------------------------------------------------
-
-CUSTOM_CVAR(Int, sv_corpsequeuesize, 64, CVAR_ARCHIVE|CVAR_SERVERINFO)
-{
-	if (self > 0)
-	{
-		for (auto Level : AllLevels())
-		{
-			auto &corpsequeue = Level->CorpseQueue;
-			while (corpsequeue.Size() > (unsigned)self)
-			{
-				AActor *corpse = corpsequeue[0];
-				if (corpse) corpse->Destroy();
-				corpsequeue.Delete(0);
-			}
-		}
-	}
-}
-
-
 
 // throw another corpse on the queue
 DEFINE_ACTION_FUNCTION(AActor, A_QueueCorpse)

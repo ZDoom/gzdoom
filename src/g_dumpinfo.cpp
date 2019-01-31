@@ -98,3 +98,30 @@ CCMD(listlights)
 	}
 }
 
+CCMD (countdecals)
+{
+	for (auto Level : AllLevels())
+	{
+		auto iterator = Level->GetThinkerIterator<DImpactDecal>(NAME_None, STAT_AUTODECAL);
+		int count = 0;
+		
+		while (iterator.Next())
+			count++;
+		
+		Printf("%s: Counted %d impact decals\n", Level->MapName.GetChars(), count);
+	}
+}
+
+CCMD (spray)
+{
+	if (who == NULL || argv.argc() < 2)
+	{
+		Printf ("Usage: spray <decal>\n");
+		return;
+	}
+	
+	Net_WriteByte (DEM_SPRAY);
+	Net_WriteString (argv[1]);
+}
+
+

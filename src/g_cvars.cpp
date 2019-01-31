@@ -36,6 +36,9 @@
 #include "c_cvars.h"
 #include "g_levellocals.h"
 
+CVAR (Bool, cl_spreaddecals, true, CVAR_ARCHIVE)
+
+
 CUSTOM_CVAR (Bool, gl_lights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	for (auto Level : AllLevels())
@@ -44,5 +47,44 @@ CUSTOM_CVAR (Bool, gl_lights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 		else Level->DeleteAllAttachedLights();
 	}
 }
+
+CUSTOM_CVAR(Int, sv_corpsequeuesize, 64, CVAR_ARCHIVE|CVAR_SERVERINFO)
+{
+	if (self > 0)
+	{
+		for (auto Level : AllLevels())
+		{
+			auto &corpsequeue = Level->CorpseQueue;
+			while (corpsequeue.Size() > (unsigned)self)
+			{
+				AActor *corpse = corpsequeue[0];
+				if (corpse) corpse->Destroy();
+				corpsequeue.Delete(0);
+			}
+		}
+	}
+}
+
+CUSTOM_CVAR (Int, cl_maxdecals, 1024, CVAR_ARCHIVE)
+{
+	if (self < 0)
+	{
+		self = 0;
+	}
+	else for (auto Level : AllLevels())
+	{
+		while (Level->ImpactDecalCount > self)
+		{
+			DThinker *thinker = Level->FirstThinker(STAT_AUTODECAL);
+			if (thinker != NULL)
+			{
+				thinker->Destroy();
+			}
+		}
+	}
+}
+
+
+
 
 

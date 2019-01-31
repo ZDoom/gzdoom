@@ -37,7 +37,6 @@
 #include "actor.h"
 #include "p_trace.h"
 #include "p_lnspec.h"
-#include "r_sky.h"
 #include "p_local.h"
 #include "p_maputl.h"
 #include "c_cvars.h"

@@ -55,6 +55,7 @@ CVAR (Bool, r_rail_smartspiral, 0, CVAR_ARCHIVE);
 CVAR (Int, r_rail_spiralsparsity, 1, CVAR_ARCHIVE);
 CVAR (Int, r_rail_trailsparsity, 1, CVAR_ARCHIVE);
 CVAR (Bool, r_particles, true, 0);
+EXTERN_CVAR(Int, r_maxparticles);
 
 FRandom pr_railtrail("RailTrail");
 
@@ -115,26 +116,6 @@ inline particle_t *NewParticle (FLevelLocals *Level)
 // [RH] Particle functions
 //
 void P_InitParticles (FLevelLocals *);
-
-// [BC] Allow the maximum number of particles to be specified by a cvar (so people
-// with lots of nice hardware can have lots of particles!).
-CUSTOM_CVAR( Int, r_maxparticles, 4000, CVAR_ARCHIVE )
-{
-	if ( self == 0 )
-		self = 4000;
-	else if (self > 65535)
-		self = 65535;
-	else if (self < 100)
-		self = 100;
-
-	if ( gamestate != GS_STARTUP )
-	{
-		for (auto Level : AllLevels())
-		{
-			P_InitParticles(Level);
-		}
-	}
-}
 
 void P_InitParticles (FLevelLocals *Level)
 {

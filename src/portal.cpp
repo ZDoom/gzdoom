@@ -1198,31 +1198,3 @@ bool FLevelLocals::CollectConnectedGroups(int startgroup, const DVector3 &positi
 	}
 	return retval;
 }
-
-
-//============================================================================
-//
-// print the group link table to the console
-//
-//============================================================================
-
-CCMD(dumplinktable)
-{
-	for (auto Level : AllLevels())
-	{
-		Printf("Portal displacements for %s:\n", Level->MapName.GetChars());
-		for (int x = 1; x < Level->Displacements.size; x++)
-		{
-			for (int y = 1; y < Level->Displacements.size; y++)
-			{
-				FDisplacement &disp = Level->Displacements(x, y);
-				Printf("%c%c(%6d, %6d)", TEXTCOLOR_ESCAPE, 'C' + disp.indirect, int(disp.pos.X), int(disp.pos.Y));
-			}
-			Printf("\n");
-		}
-	}
-}
-
-
-
-

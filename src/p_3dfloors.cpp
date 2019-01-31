@@ -46,7 +46,6 @@
 #include "p_spec.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
-#include "maploader/maploader.h"
 
 //==========================================================================
 //
@@ -859,35 +858,3 @@ int	P_Find3DFloor(sector_t * sec, const DVector3 &pos, bool above, bool floor, d
 	return -1;
 }
 
-#include "c_dispatch.h"
-
-
-CCMD (dump3df)
-{
-	if (argv.argc() > 1) 
-	{
-		// Print 3D floor info for a single sector.
-		// This only checks the primary level.
-		int sec = (int)strtoll(argv[1], NULL, 10);
-		if ((unsigned)sec >= currentUILevel->sectors.Size())
-		{
-			Printf("Sector %d does not exist.\n", sec);
-			return;
-		}
-		sector_t *sector = &currentUILevel->sectors[sec];
-		TArray<F3DFloor*> & ffloors=sector->e->XFloor.ffloors;
-
-		for (unsigned int i = 0; i < ffloors.Size(); i++)
-		{
-			double height=ffloors[i]->top.plane->ZatPoint(sector->centerspot);
-			double bheight=ffloors[i]->bottom.plane->ZatPoint(sector->centerspot);
-
-			IGNORE_FORMAT_PRE
-			Printf("FFloor %d @ top = %f (model = %d), bottom = %f (model = %d), flags = %B, alpha = %d %s %s\n", 
-				i, height, ffloors[i]->top.model->sectornum, 
-				bheight, ffloors[i]->bottom.model->sectornum,
-				ffloors[i]->flags, ffloors[i]->alpha, (ffloors[i]->flags&FF_EXISTS)? "Exists":"", (ffloors[i]->flags&FF_DYNAMIC)? "Dynamic":"");
-			IGNORE_FORMAT_POST
-		}
-	}
-}

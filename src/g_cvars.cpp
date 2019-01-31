@@ -35,6 +35,7 @@
 
 #include "c_cvars.h"
 #include "g_levellocals.h"
+#include "g_game.h"
 
 CVAR (Bool, cl_spreaddecals, true, CVAR_ARCHIVE)
 CVAR(Bool, var_pushers, true, CVAR_SERVERINFO);
@@ -88,6 +89,23 @@ CUSTOM_CVAR (Int, cl_maxdecals, 1024, CVAR_ARCHIVE)
 }
 
 
+// [BC] Allow the maximum number of particles to be specified by a cvar (so people
+// with lots of nice hardware can have lots of particles!).
+CUSTOM_CVAR(Int, r_maxparticles, 4000, CVAR_ARCHIVE)
+{
+	if (self == 0)
+		self = 4000;
+	else if (self > 65535)
+		self = 65535;
+	else if (self < 100)
+		self = 100;
 
-
+	if (gamestate != GS_STARTUP)
+	{
+		for (auto Level : AllLevels())
+		{
+			P_InitParticles(Level);
+		}
+	}
+}
 

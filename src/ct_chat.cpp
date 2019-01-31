@@ -38,6 +38,7 @@
 #include "d_net.h"
 #include "d_event.h"
 #include "sbar.h"
+#include "v_video.h"
 
 #define QUEUESIZE		128
 #define MESSAGESIZE		128

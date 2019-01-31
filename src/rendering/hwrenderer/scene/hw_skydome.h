@@ -2,6 +2,7 @@
 
 #include "v_palette.h"
 #include "r_data/matrix.h"
+#include "hwrenderer/data/buffers.h"
 
 class FMaterial;
 class FRenderState;

@@ -55,6 +55,7 @@
 #include "menu/menu.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "v_video.h"
 #include "actorinlines.h"
 
 // The conversations as they exist inside a SCRIPTxx lump.

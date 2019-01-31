@@ -2,7 +2,6 @@
 #define _PORTALS_H_
 
 #include "basictypes.h"
-#include "v_video.h"
 #include "m_bbox.h"
 
 struct FPortalGroupArray;

@@ -26,6 +26,7 @@
 #include "hwrenderer/data/buffers.h"
 #include "stats.h"
 #include "g_levellocals.h"
+#include "v_video.h"
 
 /*
 	The 1D shadow maps are stored in a 1024x1024 texture as float depth values (R32F).

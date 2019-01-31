@@ -90,6 +90,7 @@
 #include "p_acs.h"
 #include "events.h"
 #include "g_game.h"
+#include "v_video.h"
 
 static FRandom pr_skullpop ("SkullPop");
 

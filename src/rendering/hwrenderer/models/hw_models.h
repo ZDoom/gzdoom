@@ -26,6 +26,7 @@
 #include "p_pspr.h"
 #include "r_data/voxels.h"
 #include "r_data/models/models.h"
+#include "hwrenderer/data/buffers.h"
 
 class GLSprite;
 struct HWDrawInfo;

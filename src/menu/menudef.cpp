@@ -46,6 +46,7 @@
 #include "m_argv.h"
 #include "i_soundfont.h"
 #include "i_system.h"
+#include "v_video.h"
 
 
 void ClearSaveGames();

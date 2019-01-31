@@ -67,6 +67,7 @@
 #include "r_utility.h"
 #include "c_functions.h"
 #include "g_levellocals.h"
+#include "v_video.h"
 
 extern FILE *Logfile;
 extern bool insave;

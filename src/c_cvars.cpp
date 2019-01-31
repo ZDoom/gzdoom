@@ -42,7 +42,7 @@
 
 #include "g_game.h"
 #include "d_player.h"
-
+#include "v_video.h"
 #include "d_netinf.h"
 
 #include "menu/menu.h"

@@ -41,6 +41,7 @@
 #include "zcc_compile.h"
 #include "v_text.h"
 #include "p_lnspec.h"
+#include "v_video.h"
 
 FSharedStringArena VMStringConstants;
 bool isActor(PContainerType *type);

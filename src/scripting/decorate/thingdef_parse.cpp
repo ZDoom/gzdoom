@@ -47,6 +47,7 @@
 #include "w_wad.h"
 #include "v_text.h"
 #include "m_argv.h"
+#include "v_video.h"
 
 void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns);
 EXTERN_CVAR(Bool, strictdecorate);

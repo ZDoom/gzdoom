@@ -31,6 +31,7 @@
 #include "c_cvars.h"
 #include "g_levellocals.h"
 #include "flatvertices.h"
+#include "v_video.h"
 #include "cmdlib.h"
 #include "hwrenderer/data/buffers.h"
 #include "hwrenderer/scene/hw_renderstate.h"

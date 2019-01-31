@@ -51,6 +51,7 @@
 #include "menu/menu.h"
 #include "vm.h"
 #include "events.h"
+#include "v_video.h"
 #include "scripting/types.h"
 
 int DMenu::InMenu;

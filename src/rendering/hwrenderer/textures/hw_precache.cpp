@@ -34,6 +34,7 @@
 #include "textures/skyboxtexture.h"
 #include "hwrenderer/textures/hw_material.h"
 #include "image.h"
+#include "v_video.h"
 
 
 //==========================================================================

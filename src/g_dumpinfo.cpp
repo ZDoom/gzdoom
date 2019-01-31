@@ -38,6 +38,8 @@
 #include "a_dynlight.h"
 #include "a_sharedglobal.h"
 #include "d_net.h"
+#include "p_setup.h"
+#include "w_wad.h"
 
 //==========================================================================
 //

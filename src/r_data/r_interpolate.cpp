@@ -186,8 +186,6 @@ IMPLEMENT_CLASS(DPolyobjInterpolation, false, false)
 //
 //==========================================================================
 
-FInterpolator interpolator;
-
 //==========================================================================
 //
 //
@@ -986,14 +984,6 @@ void FPolyObj::StopInterpolation()
 	{
 		interpolation->DelRef();
 	}
-}
-
-
-ADD_STAT (interpolations)
-{
-	FString out;
-	out.Format ("%d interpolations", interpolator.CountInterpolations ());
-	return out;
 }
 
 

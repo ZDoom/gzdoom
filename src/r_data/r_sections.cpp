@@ -875,12 +875,3 @@ void CreateSections(FLevelLocals *Level)
 	creat.FixMissingReferences();
 }
 
-CCMD(printsections)
-{
-	for (auto Level : AllLevels())
-	{
-		PrintSections(Level);
-	}
-}
-
-

@@ -126,4 +126,117 @@ CCMD (spray)
 	Net_WriteString (argv[1]);
 }
 
+//==========================================================================
+//
+// CCMD mapchecksum
+//
+//==========================================================================
+
+CCMD (mapchecksum)
+{
+	MapData *map;
+	uint8_t cksum[16];
+	
+	if (argv.argc() < 2)
+	{
+		Printf("Usage: mapchecksum <map> ...\n");
+	}
+	for (int i = 1; i < argv.argc(); ++i)
+	{
+		map = P_OpenMapData(argv[i], true);
+		if (map == NULL)
+		{
+			Printf("Cannot load %s as a map\n", argv[i]);
+		}
+		else
+		{
+			map->GetChecksum(cksum);
+			const char *wadname = Wads.GetWadName(Wads.GetLumpFile(map->lumpnum));
+			delete map;
+			for (size_t j = 0; j < sizeof(cksum); ++j)
+			{
+				Printf("%02X", cksum[j]);
+			}
+			Printf(" // %s %s\n", wadname, argv[i]);
+		}
+	}
+}
+
+//==========================================================================
+//
+// CCMD hiddencompatflags
+//
+//==========================================================================
+
+CCMD (hiddencompatflags)
+{
+	for(auto Level : AllLevels())
+	{
+		Printf("%s: %08x %08x %08x\n", Level->MapName.GetChars(), Level->ii_compatflags, Level->ii_compatflags2, Level->ib_compatflags);
+	}
+}
+
+CCMD(dumpportals)
+{
+	for (auto Level : AllLevels())
+	{
+		Printf("Portal groups for %s\n", Level->MapName.GetChars());
+		for (unsigned i = 0; i < Level->portalGroups.Size(); i++)
+		{
+			auto p = Level->portalGroups[i];
+			double xdisp = p->mDisplacement.X;
+			double ydisp = p->mDisplacement.Y;
+			Printf(PRINT_LOG, "Portal #%d, %s, displacement = (%f,%f)\n", i, p->plane == 0 ? "floor" : "ceiling",
+				   xdisp, ydisp);
+			Printf(PRINT_LOG, "Coverage:\n");
+			for (auto &sub : Level->subsectors)
+			{
+				auto port = sub.render_sector->GetPortalGroup(p->plane);
+				if (port == p)
+				{
+					Printf(PRINT_LOG, "\tSubsector %d (%d):\n\t\t", sub.Index(), sub.render_sector->sectornum);
+					for (unsigned k = 0; k < sub.numlines; k++)
+					{
+						Printf(PRINT_LOG, "(%.3f,%.3f), ", sub.firstline[k].v1->fX() + xdisp, sub.firstline[k].v1->fY() + ydisp);
+					}
+					Printf(PRINT_LOG, "\n\t\tCovered by subsectors:\n");
+					FPortalCoverage *cov = &sub.portalcoverage[p->plane];
+					for (int l = 0; l < cov->sscount; l++)
+					{
+						subsector_t *csub = &Level->subsectors[cov->subsectors[l]];
+						Printf(PRINT_LOG, "\t\t\t%5d (%4d): ", cov->subsectors[l], csub->render_sector->sectornum);
+						for (unsigned m = 0; m < csub->numlines; m++)
+						{
+							Printf(PRINT_LOG, "(%.3f,%.3f), ", csub->firstline[m].v1->fX(), csub->firstline[m].v1->fY());
+						}
+						Printf(PRINT_LOG, "\n");
+					}
+				}
+			}
+		}
+	}
+}
+
+ADD_STAT (interpolations)
+{
+	FString out;
+	for (auto Level : AllLevels())
+	{
+		if (out.Len() > 0) out << '\n';
+		out.AppendFormat("%s: %d interpolations", Level->MapName.GetChars(), Level->interpolator.CountInterpolations ());
+		
+	}
+	return out;
+}
+
+CCMD(printsections)
+{
+	void PrintSections(FLevelLocals *Level);
+	for (auto Level : AllLevels())
+	{
+		PrintSections(Level);
+	}
+}
+
+
 

@@ -605,8 +605,8 @@ add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/zcc-parse.c ${CMAKE_CURRE
 	DEPENDS lemon ${CMAKE_CURRENT_SOURCE_DIR}/scripting/zscript/zcc-parse.lemon )
 
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h
-	COMMAND re2c --no-generation-date -s -o ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re
-	DEPENDS re2c ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re )
+	COMMAND re2c --no-generation-date -s -o ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h ${CMAKE_CURRENT_SOURCE_DIR}/utility/sc_man_scanner.re
+	DEPENDS re2c ${CMAKE_CURRENT_SOURCE_DIR}/utility/sc_man_scanner.re )
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
@@ -661,9 +661,11 @@ file( GLOB HEADER_FILES
 	win32/*.h
 	r_data/*.h
 	r_data/models/*.h
-	rapidjson/*.h
+	utility/rapidjson/*.h
 	resourcefiles/*.h
-	sfmt/*.h
+	utility/sfmt/*.h
+	utility/math./*h
+	utility/*.h
 	sound/*.h
 	textures/*.h
 	textures/hires/hqnx/*.h
@@ -790,7 +792,7 @@ set( NOT_COMPILED_SOURCE_FILES
 	${SWRENDER_SOURCES}
 	${POLYRENDER_SOURCES}
 	sc_man_scanner.h
-	sc_man_scanner.re
+	utility/sc_man_scanner.re
 	g_statusbar/sbarinfo_commands.cpp
 	xlat/xlat_parser.y
 	xlat_parser.c
@@ -909,8 +911,6 @@ set (PCH_SOURCES
 	dsectoreffect.cpp
 	dthinker.cpp
 	f_wipe.cpp
-	files.cpp
-	files_decompress.cpp
 	g_cvars.cpp
 	g_doomedmap.cpp
 	g_dumpinfo.cpp
@@ -934,17 +934,7 @@ set (PCH_SOURCES
 	m_cheat.cpp
 	m_joy.cpp
 	m_misc.cpp
-	m_png.cpp
-	m_random.cpp
-	memarena.cpp
-	md5.cpp
 	name.cpp
-	nodebuild.cpp
-	nodebuild_classify_nosse2.cpp
-	nodebuild_events.cpp
-	nodebuild_extract.cpp
-	nodebuild_gl.cpp
-	nodebuild_utility.cpp
 	p_3dfloors.cpp
 	p_3dmidtex.cpp
 	p_acs.cpp
@@ -990,7 +980,6 @@ set (PCH_SOURCES
 	s_sndseq.cpp
 	s_sound.cpp
 	serializer.cpp
-	sc_man.cpp
 	scriptutil.cpp
 	st_stuff.cpp
 	statistics.cpp
@@ -1191,7 +1180,7 @@ set (PCH_SOURCES
 	scripting/zscript/ast.cpp
 	scripting/zscript/zcc_compile.cpp
 	scripting/zscript/zcc_parser.cpp
-	sfmt/SFMT.cpp
+	utility/sfmt/SFMT.cpp
 	sound/i_music.cpp
 	sound/i_sound.cpp
 	sound/i_soundfont.cpp
@@ -1260,6 +1249,19 @@ set (PCH_SOURCES
 	rendering/swrenderer/textures/warptexture.cpp
 	rendering/swrenderer/textures/swcanvastexture.cpp
 	events.cpp
+	utility/files.cpp
+	utility/files_decompress.cpp
+	utility/m_png.cpp
+	utility/m_random.cpp
+	utility/memarena.cpp
+	utility/md5.cpp
+	utility/nodebuilder/nodebuild.cpp
+	utility/nodebuilder/nodebuild_classify_nosse2.cpp
+	utility/nodebuilder/nodebuild_events.cpp
+	utility/nodebuilder/nodebuild_extract.cpp
+	utility/nodebuilder/nodebuild_gl.cpp
+	utility/nodebuilder/nodebuild_utility.cpp
+	utility/sc_man.cpp
 )
 
 enable_precompiled_headers( g_pch.h PCH_SOURCES )
@@ -1273,32 +1275,32 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	${FASTMATH_SOURCES}
 	${PCH_SOURCES}
 	x86.cpp
-	strnatcmp.c
+	utility/strnatcmp.c
 	zstring.cpp
-	math/asin.c
-	math/atan.c
-	math/const.c
-	math/cosh.c
-	math/exp.c
-	math/isnan.c
-	math/log.c
-	math/log10.c
-	math/mtherr.c
-	math/polevl.c
-	math/pow.c
-	math/powi.c
-	math/sin.c
-	math/sinh.c
-	math/sqrt.c
-	math/tan.c
-	math/tanh.c
-	math/fastsin.cpp
+	utility/math/asin.c
+	utility/math/atan.c
+	utility/math/const.c
+	utility/math/cosh.c
+	utility/math/exp.c
+	utility/math/isnan.c
+	utility/math/log.c
+	utility/math/log10.c
+	utility/math/mtherr.c
+	utility/math/polevl.c
+	utility/math/pow.c
+	utility/math/powi.c
+	utility/math/sin.c
+	utility/math/sinh.c
+	utility/math/sqrt.c
+	utility/math/tan.c
+	utility/math/tanh.c
+	utility/math/fastsin.cpp
 	zzautozend.cpp
 )
 
 set_source_files_properties( ${FASTMATH_SOURCES} PROPERTIES COMPILE_FLAGS ${ZD_FASTMATH_FLAG} )
 set_source_files_properties( xlat/parse_xlat.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c" )
-set_source_files_properties( sc_man.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h" )
+set_source_files_properties( utility/sc_man.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h" )
 set_source_files_properties( ${NOT_COMPILED_SOURCE_FILES} PROPERTIES HEADER_FILE_ONLY TRUE )
 
 
@@ -1327,6 +1329,8 @@ include_directories( .
 	sound/timidity
 	sound/wildmidi
 	xlat
+	utility
+	utility/nodebuilder
 	scripting
 	scripting/vm
 	../gdtoa
@@ -1493,8 +1497,10 @@ source_group("Scripting\\ZScript frontend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_
 source_group("Scripting\\Compiler backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/backend/.+")
 source_group("Scripting\\VM" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/vm/.+")
 source_group("Scripting" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/.+")
+source_group("Utility" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/.+")
+source_group("Utility\\Node Builder" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/nodebuilder/.+")
 source_group("Shared Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_shared/.+")
 source_group("Statusbar" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_statusbar/.+")
 source_group("Versioning" FILES version.h win32/zdoom.rc)
 source_group("Xlat" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/xlat/.+" FILES ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h)
-source_group("Source Files" FILES ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h sc_man_scanner.re)
+source_group("Source Files" FILES ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h utility/sc_man_scanner.re)

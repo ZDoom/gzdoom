@@ -875,7 +875,6 @@ set( FASTMATH_SOURCES
 )
 
 set (PCH_SOURCES
-	actorptrselect.cpp
 	am_map.cpp
 	b_bot.cpp
 	b_func.cpp
@@ -908,7 +907,6 @@ set (PCH_SOURCES
 	dobjgc.cpp
 	dobjtype.cpp
 	doomstat.cpp
-	dthinker.cpp
 	f_wipe.cpp
 	g_cvars.cpp
 	g_doomedmap.cpp
@@ -934,8 +932,6 @@ set (PCH_SOURCES
 	m_joy.cpp
 	m_misc.cpp
 	name.cpp
-	p_3dfloors.cpp
-	p_3dmidtex.cpp
 	p_acs.cpp
 	p_actionfunctions.cpp
 	p_conversation.cpp
@@ -943,7 +939,6 @@ set (PCH_SOURCES
 	p_effect.cpp
 	p_enemy.cpp
 	p_interaction.cpp
-	p_linkedsectors.cpp
 	p_lnspec.cpp
 	p_map.cpp
 	p_maputl.cpp
@@ -957,13 +952,10 @@ set (PCH_SOURCES
 	p_terrain.cpp
 	p_things.cpp
 	p_tick.cpp
-	p_trace.cpp
 	p_usdf.cpp
 	p_user.cpp
 	p_xlat.cpp
 	parsecontext.cpp
-	po_man.cpp
-	portal.cpp
 	r_utility.cpp
 	r_sky.cpp
 	r_videoscale.cpp
@@ -1020,6 +1012,14 @@ set (PCH_SOURCES
 	g_shared/p_switch.cpp
 	g_shared/p_tags.cpp
 	g_shared/p_teleport.cpp
+	g_shared/actorptrselect.cpp
+	g_shared/dthinker.cpp
+	g_shared/p_3dfloors.cpp
+	g_shared/p_3dmidtex.cpp
+	g_shared/p_linkedsectors.cpp
+	g_shared/p_trace.cpp
+	g_shared/po_man.cpp
+	g_shared/portal.cpp
 	g_statusbar/hudmessages.cpp
 	g_statusbar/shared_hud.cpp
 	g_statusbar/sbarinfo.cpp

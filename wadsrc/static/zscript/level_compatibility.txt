@@ -358,6 +358,10 @@ class LevelCompatibility native play
 				SetWallTexture(865, Line.back, Side.bottom, "STEP5");
 				SetWallTexture(1062, Line.front, Side.top, "GSTVINE1");
 				SetWallTexture(1071, Line.front, Side.top, "MARBLE1");
+				// Door requiring yellow keycard can only be opened once,
+				// change other side to one-shot Door_Open
+				SetLineSpecial(165, Door_Open, 0, 16);
+				SetLineFlags(165, 0, Line.ML_REPEAT_SPECIAL);
 				break;
 			}
 			
@@ -367,6 +371,11 @@ class LevelCompatibility native play
 				SetWallTexture(590, Line.back, Side.top, "GRAYBIG");
 				SetWallTexture(590, Line.front, Side.bottom, "BROWN1");
 				SetWallTexture(1027, Line.back, Side.top, "SP_HOT1");
+				// Replace tag for eastern secret at level start to not
+				// cause any action to the two-Baron trap
+				AddSectorTag(127, 100);
+				SetLineSpecial(382, Door_Open, 100, 16);
+				SetLineSpecial(388, Door_Open, 100, 16);
 				break;
 			}
 			
@@ -390,6 +399,13 @@ class LevelCompatibility native play
 				SetWallTexture(121, Line.back, Side.top, "SW1LION");
 				SetWallTexture(123, Line.back, Side.top, "GSTONE1");
 				SetWallTexture(140, Line.back, Side.top, "GSTONE1");
+				break;
+			}
+			
+			case 'BBDC4253AE277DA5FCE2F19561627496': // Doom E3M2
+			{
+				// Switch at index finger repeatable in case of being stuck
+				SetLineFlags(368, Line.ML_REPEAT_SPECIAL);
 				break;
 			}
 			
@@ -428,14 +444,29 @@ class LevelCompatibility native play
 			
 			case 'FE97DCB9E6235FB3C52AE7C143160D73': // Doom E3M9
 			{
-				// Missing texture
+				// Missing textures
 				SetWallTexture(102, Line.back, Side.bottom, "STONE3");
+				SetWallTexture(445, Line.back, Side.bottom, "GRAY4");
+				// First door cannot be opened from inside and can stop you
+				// from finishing the level if somehow locked in.
+				SetLineSpecial(24, Door_Open, 0, 16);
+				SetLineActivation(24, SPAC_Use);
+				SetLineFlags(24, Line.ML_REPEAT_SPECIAL);
+				// Door that requires blue skull can only be opened once,
+				// make it repeatable in case of being locked
+				SetLineFlags(194, Line.ML_REPEAT_SPECIAL);
 				break;
 			}
 			
 			case 'DA0C8281AC70EEC31127C228BCD7FE2C': // doom.wad e4m1
 			{
-				// missing texture
+				// missing textures
+				TextureID support3 = TexMan.CheckForTexture("SUPPORT3", TexMan.Type_Wall);
+				for(int i=0; i<4; i++)
+				{
+					SetWallTextureID(252+i, Line.back, Side.top, SUPPORT3);
+				}
+				SetWallTexture(322, Line.back, Side.bottom, "GSTONE1");
 				SetWallTexture(470, Line.front, Side.top, "GSTONE1");
 				break;
 			}
@@ -471,6 +502,13 @@ class LevelCompatibility native play
 				SetSectorSpecial(151, 0);
 				SetSectorSpecial(152, 0);
 				SetSectorSpecial(155, 0);
+				// Stuck Imp
+				SetThingXY(69, -656, -1696);
+				// One line special at the northern lifts is incorrect, change
+				// to a repeatable line you can walk over to lower lift
+				SetLineSpecial(46, Plat_DownWaitUpStayLip, 1, 32, 105, 0);
+				SetLineActivation(46, SPAC_AnyCross);
+				SetLineFlags(46, Line.ML_REPEAT_SPECIAL);
 				break;
 			}
 			

@@ -834,14 +834,17 @@ void FLevelLocals::RecreateAllAttachedLights()
 
 	while ((a=it.Next())) 
 	{
-		if (a->IsKindOf(NAME_DynamicLight))
-		{
-			::AttachLight(a);
-			::ActivateLight(a);
-		}
-		else
+		if (!a->IsKindOf(NAME_DynamicLight))
 		{
 			a->SetDynamicLights();
+		}
+		else if (a->AttachedLights.Size() == 0)
+		{
+			::AttachLight(a);
+			if (!(a->flags2 & MF2_DORMANT))
+			{
+				::ActivateLight(a);
+			}
 		}
 	}
 }

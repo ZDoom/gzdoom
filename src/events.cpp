@@ -536,6 +536,14 @@ bool E_CheckReplacement( PClassActor *replacee, PClassActor **replacement )
 	return final;
 }
 
+bool E_CheckReplacee(PClassActor **replacee, PClassActor *replacement)
+{
+	bool final = false;
+	for (DStaticEventHandler *handler = E_FirstEventHandler; handler; handler = handler->next)
+		handler->CheckReplacee(replacee, replacement, &final);
+	return final;
+}
+
 void E_NewGame(EventHandlerType handlerType)
 {
 	bool isStatic = handlerType == EventHandlerType::Global;
@@ -626,6 +634,10 @@ DEFINE_FIELD_X(ConsoleEvent, FConsoleEvent, IsManual)
 DEFINE_FIELD_X(ReplaceEvent, FReplaceEvent, Replacee)
 DEFINE_FIELD_X(ReplaceEvent, FReplaceEvent, Replacement)
 DEFINE_FIELD_X(ReplaceEvent, FReplaceEvent, IsFinal)
+
+DEFINE_FIELD_X(ReplacedEvent, FReplacedEvent, Replacee)
+DEFINE_FIELD_X(ReplacedEvent, FReplacedEvent, Replacement)
+DEFINE_FIELD_X(ReplacedEvent, FReplacedEvent, IsFinal)
 
 DEFINE_ACTION_FUNCTION(DStaticEventHandler, SetOrder)
 {
@@ -1189,6 +1201,21 @@ void DStaticEventHandler::CheckReplacement( PClassActor *replacee, PClassActor *
 		VMCall(func, params, 2, nullptr, 0);
 		if ( e.Replacement != replacee ) // prevent infinite recursion
 			*replacement = e.Replacement;
+		*final = e.IsFinal;
+	}
+}
+
+void DStaticEventHandler::CheckReplacee(PClassActor **replacee, PClassActor *replacement, bool *final)
+{
+	IFVIRTUAL(DStaticEventHandler, CheckReplacee)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (isEmpty(func)) return;
+		FReplacedEvent e = { *replacee, replacement, *final };
+		VMValue params[2] = { (DStaticEventHandler*)this, &e };
+		VMCall(func, params, 2, nullptr, 0);
+		if (e.Replacee != replacement) // prevent infinite recursion
+			*replacee = e.Replacee;
 		*final = e.IsFinal;
 	}
 }

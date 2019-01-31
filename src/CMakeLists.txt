@@ -952,7 +952,6 @@ set (PCH_SOURCES
 	p_ceiling.cpp
 	p_conversation.cpp
 	p_destructible.cpp
-	p_doors.cpp
 	p_effect.cpp
 	p_enemy.cpp
 	p_floor.cpp
@@ -1024,6 +1023,7 @@ set (PCH_SOURCES
 	g_inventory/a_weapons.cpp
 	g_shared/a_action.cpp
 	g_shared/a_decals.cpp
+	g_shared/a_doors.cpp
 	g_shared/a_dynlight.cpp
 	g_shared/a_flashfader.cpp
 	g_shared/a_lightning.cpp

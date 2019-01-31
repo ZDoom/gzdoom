@@ -36,6 +36,8 @@
 #include "c_dispatch.h"
 #include "g_levellocals.h"
 #include "a_dynlight.h"
+#include "a_sharedglobal.h"
+#include "d_net.h"
 
 //==========================================================================
 //

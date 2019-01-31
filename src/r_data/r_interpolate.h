@@ -19,9 +19,10 @@ class DInterpolation : public DObject
 	TObjPtr<DInterpolation*> Prev;
 
 protected:
+	FLevelLocals *Level;
 	int refcount;
 
-	DInterpolation();
+	DInterpolation(FLevelLocals *l) : Level(l) {}
 
 public:
 	int AddRef();

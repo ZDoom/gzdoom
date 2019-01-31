@@ -908,7 +908,6 @@ set (PCH_SOURCES
 	dobjgc.cpp
 	dobjtype.cpp
 	doomstat.cpp
-	dsectoreffect.cpp
 	dthinker.cpp
 	f_wipe.cpp
 	g_cvars.cpp
@@ -952,15 +951,9 @@ set (PCH_SOURCES
 	p_openmap.cpp
 	p_pspr.cpp
 	p_saveg.cpp
-	p_secnodes.cpp
-	p_sectors.cpp
 	p_setup.cpp
-	p_sight.cpp
 	p_spec.cpp
 	p_states.cpp
-	p_switch.cpp
-	p_tags.cpp
-	p_teleport.cpp
 	p_terrain.cpp
 	p_things.cpp
 	p_tick.cpp
@@ -1020,6 +1013,13 @@ set (PCH_SOURCES
 	g_shared/a_plats.cpp
 	g_shared/a_pusher.cpp
 	g_shared/a_scroll.cpp
+	g_shared/dsectoreffect.cpp
+	g_shared/p_secnodes.cpp
+	g_shared/p_sectors.cpp
+	g_shared/p_sight.cpp
+	g_shared/p_switch.cpp
+	g_shared/p_tags.cpp
+	g_shared/p_teleport.cpp
 	g_statusbar/hudmessages.cpp
 	g_statusbar/shared_hud.cpp
 	g_statusbar/sbarinfo.cpp

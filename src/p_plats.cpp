@@ -41,6 +41,12 @@ static FRandom pr_doplat ("DoPlat");
 
 IMPLEMENT_CLASS(DPlat, false, false)
 
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
 void DPlat::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
@@ -55,6 +61,12 @@ void DPlat::Serialize(FSerializer &arc)
 		("crush", m_Crush)
 		("tag", m_Tag);
 }
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
 
 void DPlat::PlayPlatSound (const char *sound)
 {
@@ -74,9 +86,12 @@ void DPlat::PlayPlatSound (const char *sound)
 	}
 }
 
+//-----------------------------------------------------------------------------
 //
 // Move a plat up and down
 //
+//-----------------------------------------------------------------------------
+
 void DPlat::Tick ()
 {
 	EMoveResult res;
@@ -200,6 +215,12 @@ void DPlat::Tick ()
 	}
 }
 
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
 void DPlat::Reactivate()
 {
 	if (m_Type == platToggle)	//jff 3/14/98 reactivate toggle type
@@ -208,6 +229,11 @@ void DPlat::Reactivate()
 		m_Status = m_OldStatus;
 }
 
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
 
 void DPlat::Stop()
 {
@@ -215,16 +241,25 @@ void DPlat::Stop()
 	m_Status = in_stasis;
 }
 
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
 void DPlat::Construct (sector_t *sector)
 {
 	Super::Construct(sector);
 }
 
+//-----------------------------------------------------------------------------
 //
 // Do Platforms
 //	[RH] Changed amount to height and added delay,
 //		 lip, change, tag, and speed parameters.
 //
+//-----------------------------------------------------------------------------
+
 bool FLevelLocals::EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, double height, double speed, int delay, int lip, int change)
 {
 	DPlat *plat;
@@ -402,6 +437,12 @@ bool FLevelLocals::EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, doub
 	return rtn;
 }
 
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
 void FLevelLocals::ActivateInStasisPlat (int tag)
 {
 	DPlat *scan;
@@ -413,6 +454,12 @@ void FLevelLocals::ActivateInStasisPlat (int tag)
 			scan->Reactivate ();
 	}
 }
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
 
 void FLevelLocals::EV_StopPlat (int tag, bool remove)
 {

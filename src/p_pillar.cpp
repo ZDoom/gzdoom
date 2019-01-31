@@ -48,6 +48,12 @@ IMPLEMENT_POINTERS_START(DPillar)
 	IMPLEMENT_POINTER(m_Interp_Ceiling)
 IMPLEMENT_POINTERS_END
 
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
 void DPillar::OnDestroy()
 {
 	if (m_Interp_Ceiling != nullptr)
@@ -63,6 +69,12 @@ void DPillar::OnDestroy()
 	Super::OnDestroy();
 }
 
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
 void DPillar::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
@@ -76,6 +88,12 @@ void DPillar::Serialize(FSerializer &arc)
 		("interp_floor", m_Interp_Floor)
 		("interp_ceiling", m_Interp_Ceiling);
 }
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
 
 void DPillar::Tick ()
 {
@@ -113,6 +131,12 @@ void DPillar::Tick ()
 		}
 	}
 }
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
 
 void DPillar::Construct(sector_t *sector, EPillar type, double speed, double floordist, double ceilingdist, int crush, bool hexencrush)
 {
@@ -204,6 +228,12 @@ void DPillar::Construct(sector_t *sector, EPillar type, double speed, double flo
 		}
 	}
 }
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
 
 bool FLevelLocals::EV_DoPillar (DPillar::EPillar type, line_t *line, int tag,
 				  double speed, double height, double height2, int crush, bool hexencrush)

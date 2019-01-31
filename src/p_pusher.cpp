@@ -39,13 +39,19 @@
 #include "p_spec_thinkers.h"
 #include "maploader/maploader.h"
 
-CVAR(Bool, var_pushers, true, CVAR_SERVERINFO);
+EXTERN_CVAR(Bool, var_pushers);
 
 IMPLEMENT_CLASS(DPusher, false, true)
 
 IMPLEMENT_POINTERS_START(DPusher)
 	IMPLEMENT_POINTER(m_Source)
 IMPLEMENT_POINTERS_END
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
 
 void DPusher::Serialize(FSerializer &arc)
 {
@@ -59,7 +65,7 @@ void DPusher::Serialize(FSerializer &arc)
 }
 
 
-////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
 //
 // PUSH/PULL EFFECT
 //
@@ -102,13 +108,14 @@ void DPusher::Serialize(FSerializer &arc)
 // to have the PUSH_MASK bit set. If this bit is turned off by a switch
 // at run-time, the effect will not occur. The controlling sector for
 // types 1 & 2 is the sector containing the MT_PUSH/MT_PULL Thing.
+//
+//-----------------------------------------------------------------------------
 
-
-#define PUSH_FACTOR 128
-
-/////////////////////////////
+//-----------------------------------------------------------------------------
 //
 // Add a push thinker to the thinker list
+//
+//-----------------------------------------------------------------------------
 
 void DPusher::Construct (DPusher::EPusher type, line_t *l, int magnitude, int angle,
 				  AActor *source, int affectee)
@@ -140,11 +147,13 @@ int DPusher::CheckForSectorMatch (EPusher type, int tag)
 }
 
 
-/////////////////////////////
+//-----------------------------------------------------------------------------
 //
 // T_Pusher looks for all objects that are inside the radius of
 // the effect.
 //
+//-----------------------------------------------------------------------------
+
 void DPusher::Tick ()
 {
 	sector_t *sec;
@@ -292,6 +301,11 @@ void DPusher::Tick ()
 	}
 }
 
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
 
 void FLevelLocals::AdjustPusher(int tag, int magnitude, int angle, bool wind)
 {

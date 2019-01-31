@@ -161,6 +161,12 @@ class DPusher : public DThinker
 {
 	DECLARE_CLASS (DPusher, DThinker)
 	HAS_OBJECT_POINTERS
+	
+	enum
+	{
+		PUSH_FACTOR = 128
+	};
+
 public:
 	enum EPusher
 	{

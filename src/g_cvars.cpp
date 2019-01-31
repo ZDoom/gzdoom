@@ -37,6 +37,7 @@
 #include "g_levellocals.h"
 
 CVAR (Bool, cl_spreaddecals, true, CVAR_ARCHIVE)
+CVAR(Bool, var_pushers, true, CVAR_SERVERINFO);
 
 
 CUSTOM_CVAR (Bool, gl_lights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)

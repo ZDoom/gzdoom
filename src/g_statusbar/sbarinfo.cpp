@@ -47,7 +47,7 @@
 #include "gstrings.h"
 #include "g_levellocals.h"
 #include "vm.h"
-#include "i_system.h"""
+#include "i_system.h"
 
 #define ARTIFLASH_OFFSET (statusBar->invBarOffset+6)
 enum

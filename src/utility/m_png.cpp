@@ -44,7 +44,6 @@
 #include "m_swap.h"
 #include "c_cvars.h"
 #include "r_defs.h"
-#include "v_video.h"
 #include "m_png.h"
 
 // MACROS ------------------------------------------------------------------

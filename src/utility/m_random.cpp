@@ -62,7 +62,6 @@
 #include "doomstat.h"
 #include "m_random.h"
 #include "serializer.h"
-#include "b_bot.h"
 #include "m_crc32.h"
 #include "c_dispatch.h"
 

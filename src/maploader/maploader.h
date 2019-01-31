@@ -1,7 +1,9 @@
 #pragma once
 
 #include "nodebuild.h"
-#include "p_spec.h"
+#include "g_levellocals.h"
+
+class FileReader;
 
 struct EDMapthing
 {

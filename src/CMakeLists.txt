@@ -1030,8 +1030,8 @@ set (PCH_SOURCES
 	g_shared/a_morph.cpp
 	g_shared/a_quake.cpp
 	g_shared/a_specialspot.cpp
-	g_shared/hudmessages.cpp
-	g_shared/shared_hud.cpp
+	g_statusbar/hudmessages.cpp
+	g_statusbar/shared_hud.cpp
 	g_statusbar/sbarinfo.cpp
 	g_statusbar/sbar_mugshot.cpp
 	g_statusbar/shared_sbar.cpp

@@ -50,6 +50,7 @@
 #include "actorinlines.h"
 #include "scriptutil.h"
 #include "vm.h"
+#include "a_lights.h"
 
 static FRandom pr_script("FScript");
 

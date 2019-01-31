@@ -949,26 +949,19 @@ set (PCH_SOURCES
 	p_3dmidtex.cpp
 	p_acs.cpp
 	p_actionfunctions.cpp
-	p_ceiling.cpp
 	p_conversation.cpp
 	p_destructible.cpp
 	p_effect.cpp
 	p_enemy.cpp
-	p_floor.cpp
 	p_interaction.cpp
-	p_lights.cpp
 	p_linkedsectors.cpp
 	p_lnspec.cpp
 	p_map.cpp
 	p_maputl.cpp
 	p_mobj.cpp
 	p_openmap.cpp
-	p_pillar.cpp
-	p_plats.cpp
 	p_pspr.cpp
-	p_pusher.cpp
 	p_saveg.cpp
-	p_scroll.cpp
 	p_secnodes.cpp
 	p_sectors.cpp
 	p_setup.cpp
@@ -1030,6 +1023,14 @@ set (PCH_SOURCES
 	g_shared/a_morph.cpp
 	g_shared/a_quake.cpp
 	g_shared/a_specialspot.cpp
+	g_shared/a_ceiling.cpp
+	g_shared/a_floor.cpp
+	g_shared/a_lights.cpp
+	g_shared/a_lighttransfer.cpp
+	g_shared/a_pillar.cpp
+	g_shared/a_plats.cpp
+	g_shared/a_pusher.cpp
+	g_shared/a_scroll.cpp
 	g_statusbar/hudmessages.cpp
 	g_statusbar/shared_hud.cpp
 	g_statusbar/sbarinfo.cpp

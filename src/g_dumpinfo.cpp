@@ -240,5 +240,13 @@ CCMD(printsections)
 	}
 }
 
+CCMD(dumptags)
+{
+	for (auto Level : AllLevels())
+	{
+		Level->tagManager.DumpTags();
+	}
+}
+
 
 

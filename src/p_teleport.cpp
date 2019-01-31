@@ -26,23 +26,13 @@
 //
 //-----------------------------------------------------------------------------
 
-
-#include "templates.h"
-#include "doomtype.h"
-#include "doomdef.h"
-#include "s_sound.h"
-#include "p_local.h"
-#include "p_terrain.h"
-#include "r_state.h"
-#include "gi.h"
-#include "a_sharedglobal.h"
-#include "doomstat.h"
 #include "d_player.h"
-#include "p_maputl.h"
-#include "r_utility.h"
-#include "p_spec.h"
-#include "g_levellocals.h"
+#include "doomdef.h"
 #include "vm.h"
+#include "g_levellocals.h"
+#include "p_maputl.h"
+#include "gi.h"
+#include "r_utility.h"
 
 #define FUDGEFACTOR		10
 
@@ -89,9 +79,11 @@ DEFINE_ACTION_FUNCTION(AActor, SpawnTeleportFog)
 	return 0;
 }
 
+//-----------------------------------------------------------------------------
 //
 // TELEPORTATION
 //
+//-----------------------------------------------------------------------------
 
 bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 {
@@ -235,6 +227,12 @@ DEFINE_ACTION_FUNCTION(AActor, Teleport)
 	ACTION_RETURN_BOOL(P_Teleport(self, DVector3(x, y, z), an, flags));
 }
 
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
 AActor *FLevelLocals::SelectTeleDest (int tid, int tag, bool norandom)
 {
 	AActor *searcher;
@@ -330,6 +328,12 @@ AActor *FLevelLocals::SelectTeleDest (int tid, int tag, bool norandom)
 	return NULL;
 }
 
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
 bool FLevelLocals::EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int flags)
 {
 	AActor *searcher;
@@ -377,7 +381,7 @@ bool FLevelLocals::EV_Teleport (int tid, int tag, line_t *line, int side, AActor
 
 		z = searcher->Z();
 	}
-	else if (searcher->IsKindOf (PClass::FindClass(NAME_TeleportDest2)))
+	else if (searcher->IsKindOf (NAME_TeleportDest2))
 	{
 		z = searcher->Z();
 	}
@@ -413,15 +417,18 @@ bool FLevelLocals::EV_Teleport (int tid, int tag, line_t *line, int side, AActor
 	return false;
 }
 
+//-----------------------------------------------------------------------------
 //
 // Silent linedef-based TELEPORTATION, by Lee Killough
 // Primarily for rooms-over-rooms etc.
 // This is the complete player-preserving kind of teleporter.
 // It has advantages over the teleporter with thing exits.
 //
-
 // [RH] Modified to support different source and destination ids.
 // [RH] Modified some more to be accurate.
+//
+//-----------------------------------------------------------------------------
+
 bool FLevelLocals::EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBOOL reverse)
 {
 	int i;
@@ -599,7 +606,12 @@ bool FLevelLocals::EV_SilentLineTeleport (line_t *line, int side, AActor *thing,
 	return false;
 }
 
+//-----------------------------------------------------------------------------
+//
 // [RH] Teleport anything matching other_tid to dest_tid
+//
+//-----------------------------------------------------------------------------
+
 bool FLevelLocals::EV_TeleportOther (int other_tid, int dest_tid, bool fog)
 {
 	bool didSomething = false;
@@ -619,6 +631,12 @@ bool FLevelLocals::EV_TeleportOther (int other_tid, int dest_tid, bool fog)
 	return didSomething;
 }
 
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
 bool DoGroupForOne (AActor *victim, AActor *source, AActor *dest, bool floorz, bool fog)
 {
 	DAngle an = dest->Angles.Yaw - source->Angles.Yaw;
@@ -636,8 +654,13 @@ bool DoGroupForOne (AActor *victim, AActor *source, AActor *dest, bool floorz, b
 	return res;
 }
 
+//-----------------------------------------------------------------------------
+//
 // [RH] Teleport a group of actors centered around source_tid so
 // that they become centered around dest_tid instead.
+//
+//-----------------------------------------------------------------------------
+
 bool FLevelLocals::EV_TeleportGroup (int group_tid, AActor *victim, int source_tid, int dest_tid, bool moveSource, bool fog)
 {
 	AActor *sourceOrigin, *destOrigin;
@@ -690,9 +713,14 @@ bool FLevelLocals::EV_TeleportGroup (int group_tid, AActor *victim, int source_t
 	return didSomething;
 }
 
+//-----------------------------------------------------------------------------
+//
 // [RH] Teleport a group of actors in a sector. Source_tid is used as a
 // reference point so that they end up in the same position relative to
 // dest_tid. Group_tid can be used to not teleport all actors in the sector.
+//
+//-----------------------------------------------------------------------------
+
 bool FLevelLocals::EV_TeleportSector (int tag, int source_tid, int dest_tid, bool fog, int group_tid)
 {
 	AActor *sourceOrigin, *destOrigin;
@@ -714,7 +742,7 @@ bool FLevelLocals::EV_TeleportSector (int tag, int source_tid, int dest_tid, boo
 	}
 
 	bool didSomething = false;
-	bool floorz = !destOrigin->IsKindOf (PClass::FindClass("TeleportDest2"));
+	bool floorz = !destOrigin->IsKindOf(NAME_TeleportDest2);
 	int secnum;
 
 	secnum = -1;

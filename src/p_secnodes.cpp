@@ -346,7 +346,7 @@ portnode_t *P_AddPortalnode(FLinePortal *s, AActor *thing, portnode_t *nextnode)
 {
 	portnode_t *node;
 
-	if (s == 0)
+	if (s == nullptr)
 	{
 		I_FatalError("AddSecnode of 0 for %s\n", thing->GetClass()->TypeName.GetChars());
 	}

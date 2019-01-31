@@ -71,6 +71,17 @@
 #include "g_levellocals.h"
 #include "vm.h"
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+CUSTOM_CVAR(Int, r_fakecontrast, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0) self = 1;
+	else if (self > 2) self = 2;
+}
 
 // [RH]
 // P_NextSpecialSector()
@@ -1463,18 +1474,6 @@ void subsector_t::BuildPolyBSP()
 		BSP->Subsectors[i].sector = sector;
 		BSP->Subsectors[i].section = section;
 	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-CUSTOM_CVAR(Int, r_fakecontrast, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (self < 0) self = 1;
-	else if (self > 2) self = 2;
 }
 
 //===========================================================================

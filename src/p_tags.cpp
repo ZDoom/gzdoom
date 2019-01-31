@@ -314,14 +314,6 @@ void FTagManager::DumpTags()
 	}
 }
 
-CCMD(dumptags)
-{
-	for (auto Level : AllLevels())
-	{
-		Level->tagManager.DumpTags();
-	}
-}
-
 //-----------------------------------------------------------------------------
 //
 // RETURN NEXT SECTOR # THAT LINE TAG REFERS TO

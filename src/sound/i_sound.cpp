@@ -46,6 +46,8 @@
 #include "i_music.h"
 #include "m_argv.h"
 #include "v_text.h"
+#include "c_cvars.h"
+#include "stats.h"
 
 EXTERN_CVAR (Float, snd_sfxvolume)
 CVAR (Int, snd_samplerate, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)

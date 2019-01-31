@@ -2952,7 +2952,6 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	ForceNodeBuild = gennodes;
 
 	// [RH] Load in the BEHAVIOR lump
-	Level->Behaviors.UnloadModules();
 	if (map->HasBehavior)
 	{
 		LoadBehavior(map);

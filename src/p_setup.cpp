@@ -335,6 +335,7 @@ void FLevelLocals::ClearLevelData()
 	memset(playerstarts, 0, sizeof(playerstarts));
 	Scrolls.Clear();
 	if (automap) automap->Destroy();
+	Behaviors.UnloadModules();
 }
 
 //==========================================================================

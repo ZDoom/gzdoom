@@ -1420,7 +1420,7 @@ void S_PlaySound(AActor *a, int chan, FSoundID sid, float vol, float atten, bool
 	}
 	else
 	{
-		if (a->CheckLocalView(consoleplayer))
+		if (a->CheckLocalView())
 		{
 			S_Sound(chan, sid, vol, ATTN_NONE);
 		}

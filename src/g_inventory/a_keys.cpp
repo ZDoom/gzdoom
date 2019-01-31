@@ -494,7 +494,7 @@ int P_CheckKeys (AActor *owner, int keynum, bool remote, bool quiet)
 
 	// If we get here, that means the actor isn't holding an appropriate key.
 
-	if (owner->CheckLocalView(consoleplayer))
+	if (owner->CheckLocalView())
 	{
 		PrintMessage(failtext);
 

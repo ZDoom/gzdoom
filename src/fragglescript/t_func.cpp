@@ -621,7 +621,7 @@ void FParser::SF_ExitLevel(void)
 void FParser::SF_Tip(void)
 {
 	if (t_argc>0 && Script->trigger &&
-		Script->trigger->CheckLocalView(consoleplayer)) 
+		Script->trigger->CheckLocalView()) 
 	{
 		C_MidPrint(SmallFont, GetFormatString(0).GetChars());
 	}
@@ -660,7 +660,7 @@ void FParser::SF_PlayerTip(void)
 	if (CheckArgs(1))
 	{
 		int plnum = T_GetPlayerNum(t_argv[0]);
-		if (plnum!=-1 && Level->Players[plnum]->mo->CheckLocalView(consoleplayer))
+		if (plnum!=-1 && Level->Players[plnum]->mo->CheckLocalView())
 		{
 			C_MidPrint(SmallFont, GetFormatString(1).GetChars());
 		}
@@ -676,7 +676,7 @@ void FParser::SF_PlayerTip(void)
 void FParser::SF_Message(void)
 {
 	if (t_argc>0 && Script->trigger &&
-		Script->trigger->CheckLocalView(consoleplayer))
+		Script->trigger->CheckLocalView())
 	{
 		Printf(PRINT_HIGH, "%s\n", GetFormatString(0).GetChars());
 	}
@@ -693,7 +693,7 @@ void FParser::SF_PlayerMsg(void)
 	if (CheckArgs(1))
 	{
 		int plnum = T_GetPlayerNum(t_argv[0]);
-		if (plnum!=-1 && Level->Players[plnum]->mo->CheckLocalView(consoleplayer))
+		if (plnum!=-1 && Level->Players[plnum]->mo->CheckLocalView())
 		{
 			Printf(PRINT_HIGH, "%s\n", GetFormatString(1).GetChars());
 		}

@@ -752,7 +752,7 @@ public:
 	void ClearInventory();
 
 	// Returns true if this view is considered "local" for the player.
-	bool CheckLocalView (int playernum) const;
+	bool CheckLocalView() const;
 
 	// Finds the first item of a particular type.
 	AActor *FindInventory (PClassActor *type, bool subclass=false);

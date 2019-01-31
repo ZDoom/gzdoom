@@ -529,7 +529,7 @@ class Scanner : PowerupGiver
 	{
 		if (!level.AllMap)
 		{
-			if (Owner.CheckLocalView (consoleplayer))
+			if (Owner.CheckLocalView())
 			{
 				Console.MidPrint("SmallFont", "$TXT_NEEDMAP");
 			}
@@ -630,7 +630,7 @@ class RaiseAlarm : DummyStrifeItem
 		if (dropper.target != null)
 		{
 			dropper.target.SoundAlert(dropper.target);
-			if (dropper.target.CheckLocalView(consoleplayer))
+			if (dropper.target.CheckLocalView())
 			{
 				Console.MidPrint(SmallFont, "$TXT_YOUFOOL");
 			}
@@ -670,7 +670,7 @@ class CloseDoor222 : DummyStrifeItem
 		Door_Close(222, 16);
 		if (dropper.target != null)
 		{
-			if (dropper.target.CheckLocalView(consoleplayer))
+			if (dropper.target.CheckLocalView())
 			{
 				Console.MidPrint(SmallFont, "$TXT_YOUREDEAD");
 			}

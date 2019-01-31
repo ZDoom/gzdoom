@@ -1294,8 +1294,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_Print)
 	PARAM_NAME	(fontname);
 
 	if (text[0] == '$') text = GStrings(&text[1]);
-	if (self->CheckLocalView (consoleplayer) ||
-		(self->target != NULL && self->target->CheckLocalView (consoleplayer)))
+	if (self->CheckLocalView() ||
+		(self->target != NULL && self->target->CheckLocalView()))
 	{
 		float saved = con_midtime;
 		FFont *font = NULL;
@@ -1358,7 +1358,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Log)
 	PARAM_STRING_VAL(text);
 	PARAM_BOOL(local);
 
-	if (local && !self->CheckLocalView(consoleplayer)) return 0;
+	if (local && !self->CheckLocalView()) return 0;
 
 	if (text[0] == '$') text = GStrings(&text[1]);
 	FString formatted = strbin1(text);
@@ -1378,7 +1378,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LogInt)
 	PARAM_INT(num);
 	PARAM_BOOL(local);
 
-	if (local && !self->CheckLocalView(consoleplayer)) return 0;
+	if (local && !self->CheckLocalView()) return 0;
 	Printf("%d\n", num);
 	return 0;
 }
@@ -1395,7 +1395,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LogFloat)
 	PARAM_FLOAT(num);
 	PARAM_BOOL(local);
 
-	if (local && !self->CheckLocalView(consoleplayer)) return 0;
+	if (local && !self->CheckLocalView()) return 0;
 	IGNORE_FORMAT_PRE
 	Printf("%H\n", num);
 	IGNORE_FORMAT_POST
@@ -4925,7 +4925,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetMugshotState)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_STRING(name);
-	if (self->CheckLocalView(consoleplayer))
+	if (self->CheckLocalView())
 		StatusBar->SetMugShotState(name);
 	return 0;
 }

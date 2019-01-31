@@ -594,7 +594,7 @@ void P_GiveSecret(FLevelLocals *Level, AActor *actor, bool printmessage, bool pl
 			ret.IntAt(&retval);
 			VMCall(func, params, countof(params), &ret, 1);
 		}
-		if (retval && cl_showsecretmessage && actor->CheckLocalView(consoleplayer))
+		if (retval && cl_showsecretmessage && actor->CheckLocalView())
 		{
 			if (printmessage)
 			{

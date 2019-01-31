@@ -8588,7 +8588,7 @@ scriptwait:
 					screen = screen->target;
 				}
 				if (pcd == PCD_ENDPRINTBOLD || screen == NULL ||
-					screen->CheckLocalView (consoleplayer))
+					screen->CheckLocalView())
 				{
 					if (pcd == PCD_ENDPRINTBOLD && (gameinfo.correctprintbold || (Level->flags2 & LEVEL2_HEXENHACK)))
 						C_MidPrintBold(activefont, work);
@@ -8837,7 +8837,7 @@ scriptwait:
 
 		case PCD_LOCALAMBIENTSOUND:
 			lookup = Level->Behaviors.LookupString (STACK(2));
-			if (lookup != NULL && activator->CheckLocalView (consoleplayer))
+			if (lookup != NULL && activator->CheckLocalView())
 			{
 				S_Sound (CHAN_AUTO,
 						 lookup,
@@ -9966,7 +9966,7 @@ scriptwait:
 		}
 
 		case PCD_SETMUGSHOTSTATE:
-			if (!multiplayer || (activator != nullptr && activator->CheckLocalView(consoleplayer)))
+			if (!multiplayer || (activator != nullptr && activator->CheckLocalView()))
 			{
 				StatusBar->SetMugShotState(Level->Behaviors.LookupString(STACK(1)));
 			}

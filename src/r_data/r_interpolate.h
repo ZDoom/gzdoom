@@ -2,6 +2,8 @@
 #define R_INTERPOLATE_H
 
 #include "dobject.h"
+
+struct FLevelLocals;
 //==========================================================================
 //
 //
@@ -15,14 +17,14 @@ class DInterpolation : public DObject
 	DECLARE_ABSTRACT_CLASS(DInterpolation, DObject)
 	HAS_OBJECT_POINTERS
 
-	TObjPtr<DInterpolation*> Next;
-	TObjPtr<DInterpolation*> Prev;
+	TObjPtr<DInterpolation*> Next = nullptr;
+	TObjPtr<DInterpolation*> Prev = nullptr;
 
 protected:
 	FLevelLocals *Level;
-	int refcount;
+	int refcount = 0;
 
-	DInterpolation(FLevelLocals *l) : Level(l) {}
+	DInterpolation(FLevelLocals *l = nullptr) : Level(l) {}
 
 public:
 	int AddRef();

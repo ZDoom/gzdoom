@@ -498,7 +498,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 					}
 
 					if (deathmatch &&
-						source->CheckLocalView (consoleplayer) &&
+						source->CheckLocalView() &&
 						cl_showmultikills)
 					{
 						const char *multimsg;

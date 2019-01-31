@@ -334,19 +334,6 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FInterpolator &rs, FIn
 //
 //==========================================================================
 
-DInterpolation::DInterpolation()
-{
-	Next = nullptr;
-	Prev = nullptr;
-	refcount = 0;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 int DInterpolation::AddRef()
 {
 	return ++refcount;
@@ -404,7 +391,7 @@ void DInterpolation::Serialize(FSerializer &arc)
 //==========================================================================
 
 DSectorPlaneInterpolation::DSectorPlaneInterpolation(sector_t *_sector, bool _plane, bool attach)
-: DInterpolation(sector->Level)
+: DInterpolation(_sector->Level)
 {
 	sector = _sector;
 	ceiling = _plane;
@@ -570,7 +557,7 @@ size_t DSectorPlaneInterpolation::PropagateMark()
 //==========================================================================
 
 DSectorScrollInterpolation::DSectorScrollInterpolation(sector_t *_sector, bool _plane)
-: DInterpolation(sector->Level)
+: DInterpolation(_sector->Level)
 {
 	sector = _sector;
 	ceiling = _plane;
@@ -676,7 +663,7 @@ void DSectorScrollInterpolation::Serialize(FSerializer &arc)
 //==========================================================================
 
 DWallScrollInterpolation::DWallScrollInterpolation(side_t *_side, int _part)
-: DInterpolation(side->GetLevel())
+: DInterpolation(_side->GetLevel())
 {
 	side = _side;
 	part = _part;

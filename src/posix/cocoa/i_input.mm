@@ -45,6 +45,7 @@
 #include "doomstat.h"
 #include "v_video.h"
 #include "events.h"
+#include "g_game.h"
 
 
 EXTERN_CVAR(Int, m_use_mouse)

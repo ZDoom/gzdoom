@@ -60,7 +60,7 @@ void P_SpawnTeleportFog(AActor *mobj, const DVector3 &pos, bool beforeTele, bool
 	else
 	{
 		double fogDelta = mobj->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
-		mo = Spawn((beforeTele ? mobj->TeleFogSourceType : mobj->TeleFogDestType), DVector3(pos, pos.Z + fogDelta), ALLOW_REPLACE);
+		mo = Spawn(mobj->Level, (beforeTele ? mobj->TeleFogSourceType : mobj->TeleFogDestType), DVector3(pos, pos.Z + fogDelta), ALLOW_REPLACE);
 	}
 
 	if (mo != NULL && setTarget)

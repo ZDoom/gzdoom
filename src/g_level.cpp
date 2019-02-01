@@ -168,6 +168,7 @@ void *statcopy;					// for statistics driver
 
 FLevelLocals level;				// info about current level
 FLevelLocals *currentUILevel = &level;	// level for which to display the user interface.
+FLevelLocals *currentVMLevel = &level;	// level which currently ticks. Used as global input to the VM and some functions called by it.
 
 
 //==========================================================================

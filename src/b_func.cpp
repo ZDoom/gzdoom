@@ -235,7 +235,7 @@ void DBot::Dofire (ticcmd_t *cmd)
 		// prediction aiming
 		Dist = player->mo->Distance2D(enemy);
 		fm = Dist / GetDefaultByType (GetBotInfo(player->ReadyWeapon).projectileType)->Speed;
-		Level->BotInfo.SetBodyAt(enemy->Pos() + enemy->Vel.XY() * fm * 2, 1);
+		Level->BotInfo.SetBodyAt(Level, enemy->Pos() + enemy->Vel.XY() * fm * 2, 1);
 		Angle = player->mo->AngleTo(Level->BotInfo.body1);
 		if (Check_LOS (enemy, SHOOTFOV))
 			no_fire = false;
@@ -467,7 +467,7 @@ AActor *DBot::Find_enemy ()
 
 
 //Creates a temporary mobj (invisible) at the given location.
-void FCajunMaster::SetBodyAt (const DVector3 &pos, int hostnum)
+void FCajunMaster::SetBodyAt (FLevelLocals *Level, const DVector3 &pos, int hostnum)
 {
 	if (hostnum == 1)
 	{
@@ -477,7 +477,7 @@ void FCajunMaster::SetBodyAt (const DVector3 &pos, int hostnum)
 		}
 		else
 		{
-			body1 = Spawn ("CajunBodyNode", pos, NO_REPLACE);
+			body1 = Spawn (Level, "CajunBodyNode", pos, NO_REPLACE);
 		}
 	}
 	else if (hostnum == 2)
@@ -488,7 +488,7 @@ void FCajunMaster::SetBodyAt (const DVector3 &pos, int hostnum)
 		}
 		else
 		{
-			body2 = Spawn ("CajunBodyNode", pos, NO_REPLACE);
+			body2 = Spawn (Level, "CajunBodyNode", pos, NO_REPLACE);
 		}
 	}
 }
@@ -505,7 +505,7 @@ void FCajunMaster::SetBodyAt (const DVector3 &pos, int hostnum)
 //Emulates missile travel. Returns distance travelled.
 double FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 {
-	AActor *th = Spawn ("CajunTrace", source->PosPlusZ(4*8.), NO_REPLACE);
+	AActor *th = Spawn (source->Level, "CajunTrace", source->PosPlusZ(4*8.), NO_REPLACE);
 	
 	th->target = source;		// where it came from
 
@@ -531,7 +531,7 @@ DAngle DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	AActor *actor;
 	double m;
 
-	Level->BotInfo.SetBodyAt(player->mo->PosPlusZ(player->mo->Height / 2) + player->mo->Vel.XY() * 5, 2);
+	Level->BotInfo.SetBodyAt(Level, player->mo->PosPlusZ(player->mo->Height / 2) + player->mo->Vel.XY() * 5, 2);
 
 	actor = Level->BotInfo.body2;
 
@@ -541,7 +541,7 @@ DAngle DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	//Predict.
 	m = ((dist+1) / GetDefaultByName("Rocket")->Speed);
 
-	Level->BotInfo.SetBodyAt(DVector3((enemy->Pos() + enemy->Vel * (m + 2)), ONFLOORZ), 1);
+	Level->BotInfo.SetBodyAt(Level, DVector3((enemy->Pos() + enemy->Vel * (m + 2)), ONFLOORZ), 1);
 	
 	//try the predicted location
 	if (P_CheckSight (actor, Level->BotInfo.body1, SF_IGNOREVISIBILITY)) //See the predicted location, so give a test missile

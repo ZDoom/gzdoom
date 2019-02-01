@@ -367,7 +367,7 @@ void D_Render(std::function<void()> action, bool interpolate)
 		// Check for the presence of dynamic lights at the start of the frame once.
 		if ((gl_lights && vid_rendermode == 4) || (r_dynlights && vid_rendermode != 4))
 		{
-			Level->HasDynamicLights = !!level.lights;
+			Level->HasDynamicLights = !!Level->lights;
 		}
 		else Level->HasDynamicLights = false;	// lights are off so effectively we have none.
 		if (interpolate) Level->interpolator.DoInterpolations(I_GetTimeFrac());
@@ -2726,7 +2726,10 @@ void D_DoomMain (void)
 		// clean up game state
 		ST_Clear();
 		D_ErrorCleanup ();
-		level.Thinkers.DestroyThinkersInList(STAT_STATIC);
+		for (auto Level : AllLevels())
+		{
+			Level->Thinkers.DestroyThinkersInList(STAT_STATIC);
+		}
 		E_Shutdown(false);
 		P_FreeLevelData();
 

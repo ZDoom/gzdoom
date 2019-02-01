@@ -868,7 +868,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RadiusDamageSelf)
 		// the player to indicate bad things happened.
 		AActor *flash = NULL;
 		if(flashtype != NULL)
-			flash = Spawn(flashtype, self->target->PosPlusZ(self->target->Height / 4), ALLOW_REPLACE);
+			flash = Spawn(self->Level, flashtype, self->target->PosPlusZ(self->target->Height / 4), ALLOW_REPLACE);
 
 		int dmgFlags = 0;
 		FName dmgType = NAME_BFGSplash;
@@ -1585,7 +1585,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnDebris)
 		double xo = (pr_spawndebris() - 128) / 16.;
 		double yo = (pr_spawndebris() - 128) / 16.;
 		double zo = pr_spawndebris()*self->Height / 256 + self->GetBobOffset();
-		mo = Spawn(debris, self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
+		mo = Spawn(self->Level, debris, self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 		if (mo)
 		{
 			if (transfer_translation)
@@ -1927,7 +1927,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Burst)
 		double xo = (pr_burst() - 128) * self->radius / 128;
 		double yo = (pr_burst() - 128) * self->radius / 128;
 		double zo = (pr_burst() * self->Height / 255);
-		mo = Spawn(chunk, self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
+		mo = Spawn(self->Level, chunk, self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 
 		if (mo)
 		{
@@ -3118,7 +3118,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Teleport)
 					P_SpawnTeleportFog(ref, prev, true, true);
 				else
 				{
-					fog1 = Spawn(fog_type, prev, ALLOW_REPLACE);
+					fog1 = Spawn(self->Level, fog_type, prev, ALLOW_REPLACE);
 					if (fog1 != NULL)
 						fog1->target = ref;
 				}
@@ -3129,7 +3129,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Teleport)
 					P_SpawnTeleportFog(ref, ref->Pos(), false, true);
 				else
 				{
-					fog2 = Spawn(fog_type, ref->Pos(), ALLOW_REPLACE);
+					fog2 = Spawn(self->Level, fog_type, ref->Pos(), ALLOW_REPLACE);
 					if (fog2 != NULL)
 						fog2->target = ref;
 				}
@@ -3305,7 +3305,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LineEffect)
 		{
 			oldjunk.tag = tag;								// Sector tag for linedef
 			self->Level->TranslateLineDef(&junk, &oldjunk);			// Turn into native type
-			res = !!P_ExecuteSpecial(junk.special, NULL, self, false, junk.args[0], 
+			res = !!P_ExecuteSpecial(self->Level, junk.special, NULL, self, false, junk.args[0], 
 				junk.args[1], junk.args[2], junk.args[3], junk.args[4]); 
 			if (res && !(junk.flags & ML_REPEAT_SPECIAL))	// If only once,
 				self->flags6 |= MF6_LINEDONE;				// no more for this thing
@@ -3657,7 +3657,7 @@ static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amo
 
 		if ((flags & RGF_NOSIGHT) || P_CheckSight(thing, self, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
 		{ // OK to give; target is in direct path, or the monster doesn't care about it being in line of sight.
-			auto gift = Spawn(item);
+			auto gift = Spawn(self->Level, item);
 			if (gift->IsKindOf(NAME_Health))
 			{
 				gift->IntVar(NAME_Amount) *= amount;

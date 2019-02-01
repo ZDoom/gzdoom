@@ -673,6 +673,7 @@ public:
 
 extern FLevelLocals level;
 extern FLevelLocals *currentUILevel;	// level for which to display the user interface. This will always be the one the current consoleplayer is in.
+extern FLevelLocals *currentVMLevel;
 
 inline FSectorPortal *line_t::GetTransferredPortal()
 {

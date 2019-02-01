@@ -129,7 +129,7 @@ public:
 	void StartTravel ();
 	void FinishTravel ();
 	bool IsLeader (player_t *player);
-	void SetBodyAt (const DVector3 &pos, int hostnum);
+	void SetBodyAt (FLevelLocals *Level, const DVector3 &pos, int hostnum);
 	double FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd);
 	bool SafeCheckPosition (AActor *actor, double x, double y, FCheckPosition &tm);
 	void BotTick(AActor *mo);

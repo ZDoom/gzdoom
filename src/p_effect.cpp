@@ -863,7 +863,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 				if (rnd & 4)
 					diff.Z = clamp<double>(diff.Z + ((rnd & 32) ? 1 : -1), -maxdiff, maxdiff);
 			}			
-			AActor *thing = Spawn (spawnclass, pos + diff, ALLOW_REPLACE);
+			AActor *thing = Spawn (source->Level, spawnclass, pos + diff, ALLOW_REPLACE);
 			if (thing)
 			{
 				if (source)	thing->target = source;

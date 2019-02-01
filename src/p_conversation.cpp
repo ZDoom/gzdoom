@@ -934,7 +934,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	
 			if (takestuff)
 			{
-				auto item = Spawn(reply->GiveType);
+				auto item = Spawn(player->mo->Level, reply->GiveType);
 				// Items given here should not count as items!
 				item->ClearCounters();
 				if (item->GetClass()->TypeName == NAME_FlameThrower)
@@ -966,7 +966,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 
 	if (reply->ActionSpecial != 0)
 	{
-		takestuff |= !!P_ExecuteSpecial(reply->ActionSpecial, NULL, player->mo, false,
+		takestuff |= !!P_ExecuteSpecial(player->mo->Level, reply->ActionSpecial, NULL, player->mo, false,
 			reply->Args[0], reply->Args[1], reply->Args[2], reply->Args[3], reply->Args[4]);
 	}
 

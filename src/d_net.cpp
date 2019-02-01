@@ -2330,7 +2330,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 						const AActor *def = GetDefaultByType (typeinfo);
 						DVector3 spawnpos = source->Vec3Angle(def->radius * 2 + source->radius, source->Angles.Yaw, 8.);
 
-						AActor *spawned = Spawn (typeinfo, spawnpos, ALLOW_REPLACE);
+						AActor *spawned = Spawn (&level, typeinfo, spawnpos, ALLOW_REPLACE);
 						if (spawned != NULL)
 						{
 							if (type == DEM_SUMMONFRIEND || type == DEM_SUMMONFRIEND2 || type == DEM_SUMMONMBF)
@@ -2507,7 +2507,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 			}
 			if (!CheckCheatmode(player == consoleplayer))
 			{
-				P_ExecuteSpecial(snum, NULL, players[player].mo, false, arg[0], arg[1], arg[2], arg[3], arg[4]);
+				P_ExecuteSpecial(&level, snum, NULL, players[player].mo, false, arg[0], arg[1], arg[2], arg[3], arg[4]);
 			}
 		}
 		break;

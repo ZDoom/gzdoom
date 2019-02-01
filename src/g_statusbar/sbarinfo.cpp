@@ -1076,7 +1076,7 @@ public:
 			lastHud = hud;
 
 			// Handle inventory bar drawing
-			if(CPlayer->inventorytics > 0 && !(currentUILevel->flags & LEVEL_NOINVENTORYBAR) && (state == HUD_StatusBar || state == HUD_Fullscreen))
+			if(CPlayer->inventorytics > 0 && !(primaryLevel->flags & LEVEL_NOINVENTORYBAR) && (state == HUD_StatusBar || state == HUD_Fullscreen))
 			{
 				SBarInfoMainBlock *inventoryBar = state == HUD_StatusBar ? script->huds[STBAR_INVENTORY] : script->huds[STBAR_INVENTORYFULLSCREEN];
 				if(inventoryBar != lastInventoryBar)

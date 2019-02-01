@@ -823,7 +823,7 @@ void CopyPlayer(player_t *dst, player_t *src, const char *name)
 
 	if (dst->Bot != nullptr)
 	{
-		botinfo_t *thebot = level.BotInfo.botinfo;
+		botinfo_t *thebot = src->mo->Level->BotInfo.botinfo;
 		while (thebot && stricmp(name, thebot->name))
 		{
 			thebot = thebot->next;
@@ -832,7 +832,7 @@ void CopyPlayer(player_t *dst, player_t *src, const char *name)
 		{
 			thebot->inuse = BOTINUSE_Yes;
 		}
-		level.BotInfo.botnum++;
+		src->mo->Level->BotInfo.botnum++;
 		dst->userinfo.TransferFrom(uibackup2);
 	}
 	else

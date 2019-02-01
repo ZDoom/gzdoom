@@ -43,7 +43,7 @@ class HereticStatusBar : BaseStatusBar
 		mHealthInterpolator.Update(CPlayer.health);
 
 		// wiggle the chain if it moves
-		if (currentUILevel.time & 1)
+		if (Level.time & 1)
 		{
 			wiggle = (mHealthInterpolator.GetValue() != CPlayer.health) && Random[ChainWiggle](0, 1);
 		}
@@ -200,7 +200,7 @@ class HereticStatusBar : BaseStatusBar
 			y -= 40;
 		}
 
-		if (!isInventoryBarVisible() && !currentUILevel.NoInventoryBar && CPlayer.mo.InvSel != null)
+		if (!isInventoryBarVisible() && !Level.NoInventoryBar && CPlayer.mo.InvSel != null)
 		{
 			// This code was changed to always fit the item into the box, regardless of alignment or sprite size.
 			// Heretic's ARTIBOX is 30x30 pixels. 

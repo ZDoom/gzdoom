@@ -173,9 +173,9 @@ CCMD (addbot)
 	}
 
 	if (argv.argc() > 1)
-		currentUILevel->BotInfo.SpawnBot (argv[1]);
+		primaryLevel->BotInfo.SpawnBot (argv[1]);
 	else
-		currentUILevel->BotInfo.SpawnBot (nullptr);
+		primaryLevel->BotInfo.SpawnBot (nullptr);
 }
 
 void FCajunMaster::ClearPlayer (int i, bool keepTeam)
@@ -232,7 +232,7 @@ CCMD (freeze)
 
 CCMD (listbots)
 {
-	botinfo_t *thebot = currentUILevel->BotInfo.botinfo;
+	botinfo_t *thebot = primaryLevel->BotInfo.botinfo;
 	int count = 0;
 
 	while (thebot)

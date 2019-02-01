@@ -97,15 +97,15 @@ struct Side native play
 	
 	int GetUDMFInt(Name nm)
 	{
-		return sector.Level.GetUDMFInt(LevelLocals.UDMF_Side, Index(), nm);
+		return Level.GetUDMFInt(LevelLocals.UDMF_Side, Index(), nm);
 	}
 	double GetUDMFFloat(Name nm)
 	{
-		return sector.Level.GetUDMFFloat(LevelLocals.UDMF_Side, Index(), nm);
+		return Level.GetUDMFFloat(LevelLocals.UDMF_Side, Index(), nm);
 	}
 	String GetUDMFString(Name nm)
 	{
-		return sector.Level.GetUDMFString(LevelLocals.UDMF_Side, Index(), nm);
+		return Level.GetUDMFString(LevelLocals.UDMF_Side, Index(), nm);
 	}
 	
 };
@@ -180,15 +180,15 @@ struct Line native play
 	
 	int GetUDMFInt(Name nm)
 	{
-		return frontsector.Level.GetUDMFInt(LevelLocals.UDMF_Line, Index(), nm);
+		return Level.GetUDMFInt(LevelLocals.UDMF_Line, Index(), nm);
 	}
 	double GetUDMFFloat(Name nm)
 	{
-		return frontsector.Level.GetUDMFFloat(LevelLocals.UDMF_Line, Index(), nm);
+		return Level.GetUDMFFloat(LevelLocals.UDMF_Line, Index(), nm);
 	}
 	String GetUDMFString(Name nm)
 	{
-		return frontsector.Level.GetUDMFString(LevelLocals.UDMF_Line, Index(), nm);
+		return Level.GetUDMFString(LevelLocals.UDMF_Line, Index(), nm);
 	}
 
     native clearscope int GetHealth();
@@ -259,7 +259,6 @@ struct Sector native play
 	native SectorEffect floordata;
 	native SectorEffect ceilingdata;
 	native SectorEffect lightingdata;
-	native readonly LevelLocals Level;
 
 	enum EPlane
 	{

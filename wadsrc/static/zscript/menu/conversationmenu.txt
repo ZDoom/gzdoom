@@ -509,7 +509,7 @@ class ConversationMenu : Menu
 	override void Ticker()
 	{
 		// [CW] Freeze the game depending on MAPINFO options.
-		if (ConversationPauseTic < gametic && !multiplayer && !currentUILevel.no_dlg_freeze)
+		if (ConversationPauseTic < gametic && !multiplayer && !Level.no_dlg_freeze)
 		{
 			menuactive = Menu.On;
 		}

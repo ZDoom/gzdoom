@@ -597,9 +597,9 @@ class BaseStatusBar native ui
 	int GetAirTime()
 	{
 		if(CPlayer.mo.waterlevel < 3)
-			return currentUILevel.airsupply;
+			return Level.airsupply;
 		else
-			return max(CPlayer.air_finished - currentUILevel.time, 0);
+			return max(CPlayer.air_finished - Level.time, 0);
 	}
 	
 	int GetSelectedInventoryAmount()
@@ -654,7 +654,7 @@ class BaseStatusBar native ui
 	bool isInventoryBarVisible()
 	{
 		if (CPlayer == null) return false;
-		return (CPlayer.inventorytics > 0 && !currentUILevel.NoInventoryBar);
+		return (CPlayer.inventorytics > 0 && !Level.NoInventoryBar);
 	}
 	
 	//============================================================================
@@ -850,13 +850,13 @@ class BaseStatusBar native ui
 		let width = SmallFont.StringWidth("00:00:00");
 		if (am_showtime)
 		{
-			printtext = currentUILevel.TimeFormatted();
-			DrawString(mSmallFont, currentUILevel.TimeFormatted(), (-textdist-width, y), 0, crdefault);
+			printtext = Level.TimeFormatted();
+			DrawString(mSmallFont, Level.TimeFormatted(), (-textdist-width, y), 0, crdefault);
 			y += height;
 		}
 		if (am_showtotaltime)
 		{
-			DrawString(mSmallFont, currentUILevel.TimeFormatted(true), (-textdist-width, y), 0, crdefault);
+			DrawString(mSmallFont, Level.TimeFormatted(true), (-textdist-width, y), 0, crdefault);
 		}
 
 		if (!deathmatch)
@@ -866,25 +866,25 @@ class BaseStatusBar native ui
 			// Draw monster count
 			if (am_showmonsters)
 			{
-				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_MONSTERS"), crdefault+65, currentUILevel.killed_monsters, currentUILevel.total_monsters), (textdist, y), 0, highlight);
+				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_MONSTERS"), crdefault+65, Level.killed_monsters, Level.total_monsters), (textdist, y), 0, highlight);
 				y += height;
 			}
 
 			// Draw secret count
 			if (am_showsecrets)
 			{
-				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_SECRETS"), crdefault+65, currentUILevel.found_secrets, currentUILevel.total_secrets), (textdist, y), 0, highlight);
+				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_SECRETS"), crdefault+65, Level.found_secrets, Level.total_secrets), (textdist, y), 0, highlight);
 				y += height;
 			}
 
 			// Draw item count
 			if (am_showitems)
 			{
-				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_ITEMS"), crdefault+65, currentUILevel.found_items, currentUILevel.total_items), (textdist, y), 0, highlight);
+				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_ITEMS"), crdefault+65, Level.found_items, Level.total_items), (textdist, y), 0, highlight);
 			}
 		}
 
-		String mapname = currentUILevel.FormatMapName(crdefault);
+		String mapname = Level.FormatMapName(crdefault);
 		BrokenLines lines = SmallFont.BreakLines(mapname, int(SCREENWIDTH / scale.X));
 		int numlines = lines.Count();
 		int finalwidth = int(SmallFont.StringWidth(lines.StringAt(numlines-1)) * scale.X);

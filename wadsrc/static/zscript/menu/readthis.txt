@@ -57,9 +57,9 @@ class ReadThisMenu : GenericMenu
 		TextureID tex, prevpic;
 		
 		// Did the mapper choose a custom help page via MAPINFO?
-		if (currentUILevel.F1Pic.Length() != 0)
+		if (Level.F1Pic.Length() != 0)
 		{
-			tex = TexMan.CheckForTexture(currentUILevel.F1Pic, TexMan.Type_MiscPatch);
+			tex = TexMan.CheckForTexture(Level.F1Pic, TexMan.Type_MiscPatch);
 			mScreen = 1;
 		}
 		
@@ -98,7 +98,7 @@ class ReadThisMenu : GenericMenu
 			MenuSound("menu/choose");
 			mScreen++;
 			mInfoTic = gametic;
-			if (currentUILevel.F1Pic.Length() != 0 || mScreen > gameinfo.infoPages.Size())
+			if (Level.F1Pic.Length() != 0 || mScreen > gameinfo.infoPages.Size())
 			{
 				Close();
 			}

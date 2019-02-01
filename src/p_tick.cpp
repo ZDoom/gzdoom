@@ -65,7 +65,7 @@ bool P_CheckTickerPaused ()
 		 && wipegamestate == gamestate)
 	{
 		// Only the current UI level's settings are relevant for sound.
-		S_PauseSound (!(currentUILevel->flags2 & LEVEL2_PAUSE_MUSIC_IN_MENUS), false);
+		S_PauseSound (!(primaryLevel->flags2 & LEVEL2_PAUSE_MUSIC_IN_MENUS), false);
 		return true;
 	}
 	return false;
@@ -99,7 +99,7 @@ void P_Ticker (void)
 
 	// [RH] Frozen mode is only changed every 4 tics, to make it work with A_Tracer().
 	// This may not be perfect but it is not really relevant for sublevels that tracer homing behavior is preserved.
-	if ((currentUILevel->maptime & 3) == 0)
+	if ((primaryLevel->maptime & 3) == 0)
 	{
 		if (globalchangefreeze)
 		{
@@ -151,18 +151,22 @@ void P_Ticker (void)
 	// [ZZ] call the WorldTick hook
 	E_WorldTick();
 	StatusBar->CallTick ();		// [RH] moved this here
-	level.Tick ();			// [RH] let the level tick
-	level.Thinkers.RunThinkers(&level);
-
-	//if added by MC: Freeze mode.
-	if (!level.isFrozen())
+	for (auto Level : AllLevels())
 	{
-		P_UpdateSpecials (&level);
-		P_RunEffects(&level);	// [RH] Run particle effects
-	}
+		// todo: set up a sandbox for secondary levels here.
+		Level->Tick();			// [RH] let the level tick
+		Level->Thinkers.RunThinkers(Level);
+
+		//if added by MC: Freeze mode.
+		if (!Level->isFrozen())
+		{
+			P_UpdateSpecials(Level);
+			P_RunEffects(Level);	// [RH] Run particle effects
+		}
 
 		// for par times
-	level.time++;
-	level.maptime++;
-	level.totaltime++;
+		Level->time++;
+		Level->maptime++;
+		Level->totaltime++;
+	}
 }

@@ -2359,7 +2359,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, SetClipRect, SBar_SetClipRect)
 
 static void GetGlobalACSString(int index, FString *result)
 {
-	*result = currentUILevel->Behaviors.LookupString(ACS_GlobalVars[index]);
+	*result = primaryLevel->Behaviors.LookupString(ACS_GlobalVars[index]);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSString, GetGlobalACSString)
@@ -2373,7 +2373,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSString, GetGlobalACSSt
 
 static void GetGlobalACSArrayString(int arrayno, int index, FString *result)
 {
-	*result = currentUILevel->Behaviors.LookupString(ACS_GlobalVars[index]);
+	*result = primaryLevel->Behaviors.LookupString(ACS_GlobalVars[index]);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSArrayString, GetGlobalACSArrayString)
@@ -2846,8 +2846,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_AltHUD, GetLatency, Net_GetLatency)
 //
 //
 //==========================================================================
-DEFINE_GLOBAL(level);
-DEFINE_GLOBAL(currentUILevel);
+DEFINE_GLOBAL(currentVMLevel, level);
 DEFINE_FIELD(FLevelLocals, sectors)
 DEFINE_FIELD(FLevelLocals, lines)
 DEFINE_FIELD(FLevelLocals, sides)

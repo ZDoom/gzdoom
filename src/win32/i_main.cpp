@@ -1105,7 +1105,7 @@ void DoomSpecificInfo (char *buffer, size_t bufflen)
 	}
 	else
 	{
-		buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nCurrent map: %s", currentUILevel->MapName.GetChars());
+		buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nCurrent map: %s", primaryLevel->MapName.GetChars());
 
 		if (!viewactive)
 		{

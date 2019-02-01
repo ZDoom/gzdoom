@@ -672,7 +672,7 @@ public:
 
 
 extern FLevelLocals level;
-extern FLevelLocals *currentUILevel;	// level for which to display the user interface. This will always be the one the current consoleplayer is in.
+extern FLevelLocals *primaryLevel;	// level for which to display the user interface. This will always be the one the current consoleplayer is in.
 extern FLevelLocals *currentVMLevel;
 
 inline FSectorPortal *line_t::GetTransferredPortal()
@@ -774,5 +774,5 @@ inline bool line_t::hitSkyWall(AActor* mo) const
 // It is meant for code that needs to iterate over all levels to make some global changes, e.g. configuation CCMDs.
 inline TArrayView<FLevelLocals *> AllLevels()
 {
-	return TArrayView<FLevelLocals *>(&currentUILevel, 1);
+	return TArrayView<FLevelLocals *>(&primaryLevel, 1);
 }

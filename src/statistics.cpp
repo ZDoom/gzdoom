@@ -577,7 +577,7 @@ FString GetStatString()
 
 CCMD(printstats)
 {
-	StoreLevelStats(currentUILevel);	// Refresh the current level's results.
+	StoreLevelStats(primaryLevel);	// Refresh the current level's results.
 	Printf("%s", GetStatString().GetChars());
 }
 
@@ -596,6 +596,6 @@ CCMD(finishgame)
 
 ADD_STAT(statistics)
 {
-	StoreLevelStats(currentUILevel);	// Refresh the current level's results.
+	StoreLevelStats(primaryLevel);	// Refresh the current level's results.
 	return GetStatString();
 }

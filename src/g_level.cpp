@@ -167,7 +167,7 @@ extern bool sendpause, sendsave, sendturn180, SendLand;
 void *statcopy;					// for statistics driver
 
 FLevelLocals level;				// info about current level
-FLevelLocals *currentUILevel = &level;	// level for which to display the user interface.
+FLevelLocals *primaryLevel = &level;	// level for which to display the user interface.
 FLevelLocals *currentVMLevel = &level;	// level which currently ticks. Used as global input to the VM and some functions called by it.
 
 
@@ -216,7 +216,7 @@ CCMD (map)
 	if (argv.argc() > 1)
 	{
 		const char *mapname = argv[1];
-		if (!strcmp(mapname, "*")) mapname = currentUILevel->MapName.GetChars();
+		if (!strcmp(mapname, "*")) mapname = primaryLevel->MapName.GetChars();
 
 		try
 		{
@@ -266,7 +266,7 @@ UNSAFE_CCMD(recordmap)
 	if (argv.argc() > 2)
 	{
 		const char *mapname = argv[2];
-		if (!strcmp(mapname, "*")) mapname = currentUILevel->MapName.GetChars();
+		if (!strcmp(mapname, "*")) mapname = primaryLevel->MapName.GetChars();
 
 		try
 		{
@@ -357,7 +357,7 @@ void G_NewInit ()
 	int i;
 
 	// Destory all old player refrences that may still exist
-	TThinkerIterator<AActor> it(&level, NAME_PlayerPawn, STAT_TRAVELLING);
+	TThinkerIterator<AActor> it(primaryLevel, NAME_PlayerPawn, STAT_TRAVELLING);
 	AActor *pawn, *next;
 
 	next = it.Next();
@@ -453,7 +453,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	int i;
 
 	// did we have any level before?
-	if (level.info != nullptr)
+	if (primaryLevel->info != nullptr)
 		E_WorldUnloadedUnsafe();
 
 	if (!savegamerestore)
@@ -470,7 +470,10 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	UnlatchCVars ();
 	G_VerifySkill();
 	UnlatchCVars ();
-	level.Thinkers.DestroyThinkersInList(STAT_STATIC);
+	for (auto Level : AllLevels())
+	{
+		Level->Thinkers.DestroyThinkersInList(STAT_STATIC);
+	}
 
 	if (paused)
 	{
@@ -510,10 +513,10 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		}
 		FRandom::StaticClearRandom ();
 		P_ClearACSVars(true);
-		level.time = 0;
-		level.maptime = 0;
-		level.totaltime = 0;
-		level.spawnindex = 0;
+		primaryLevel->time = 0;
+		primaryLevel->maptime = 0;
+		primaryLevel->totaltime = 0;
+		primaryLevel->spawnindex = 0;
 
 		if (!multiplayer || !deathmatch)
 		{
@@ -536,7 +539,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	//Added by MC: Initialize bots.
 	if (!deathmatch)
 	{
-		level.BotInfo.Init ();
+		primaryLevel->BotInfo.Init ();
 	}
 
 	if (bTitleLevel)
@@ -772,7 +775,7 @@ void	G_DoCompleted (void)
 	// Close the conversation menu if open.
 	P_FreeStrifeConversations ();
 
-	if (level.DoCompleted(nextlevel, wminfo))
+	if (primaryLevel->DoCompleted(nextlevel, wminfo))
 	{
 		gamestate = GS_INTERMISSION;
 		viewactive = false;
@@ -954,7 +957,7 @@ void G_DoLoadLevel(const FString &nextmapname, int position, bool autosave, bool
 	gamestate_t oldgs = gamestate;
 
 	// Here the new level needs to be allocated.
-	level.DoLoadLevel(nextmapname, position, autosave, newGame);
+	primaryLevel->DoLoadLevel(nextmapname, position, autosave, newGame);
 
 	// Reset the global state for the new level.
 	if (wipegamestate == GS_LEVEL)
@@ -1274,7 +1277,7 @@ void FLevelLocals::WorldDone (void)
  
 DEFINE_ACTION_FUNCTION(FLevelLocals, WorldDone)
 {
-	currentUILevel->WorldDone();
+	primaryLevel->WorldDone();
 	return 0;
 }
 
@@ -1290,9 +1293,9 @@ void G_DoWorldDone (void)
 	{
 		// Don't crash if no next map is given. Just repeat the current one.
 		Printf ("No next map specified.\n");
-		nextlevel = level.MapName;
+		nextlevel = primaryLevel->MapName;
 	}
-	level.StartTravel ();
+	primaryLevel->StartTravel ();
 	G_DoLoadLevel (nextlevel, startpos, true, false);
 	startpos = 0;
 	gameaction = ga_nothing;
@@ -2282,7 +2285,7 @@ CCMD(skyfog)
 	if (argv.argc()>1)
 	{
 		// Do this only on the primary level.
-		currentUILevel->skyfog = MAX(0, (int)strtoull(argv[1], NULL, 0));
+		primaryLevel->skyfog = MAX(0, (int)strtoull(argv[1], NULL, 0));
 	}
 }
 

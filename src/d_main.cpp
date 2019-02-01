@@ -172,7 +172,7 @@ CUSTOM_CVAR (Int, fraglimit, 0, CVAR_SERVERINFO)
 			if (playeringame[i] && self <= D_GetFragCount(&players[i]))
 			{
 				Printf ("%s\n", GStrings("TXT_FRAGLIMIT"));
-				level.ExitLevel (0, false);
+				primaryLevel->ExitLevel (0, false);
 				break;
 			}
 		}
@@ -789,7 +789,7 @@ void D_Display ()
 		screen->DrawBlend(viewsec);
 		if (automapactive)
 		{
-			currentUILevel->automap->Drawer (hud_althud? viewheight : StatusBar->GetTopOfStatusbar());
+			primaryLevel->automap->Drawer (hud_althud? viewheight : StatusBar->GetTopOfStatusbar());
 		}
 		
 		// for timing the statusbar code.
@@ -959,7 +959,7 @@ void D_Display ()
 void D_ErrorCleanup ()
 {
 	savegamerestore = false;
-	level.BotInfo.RemoveAllBots (&level, true);
+	primaryLevel->BotInfo.RemoveAllBots (primaryLevel, true);
 	D_QuitNetGame ();
 	if (demorecording || demoplayback)
 		G_CheckDemoStatus ();
@@ -2555,14 +2555,14 @@ void D_DoomMain (void)
 		PClassActor::StaticSetActorNums();
 
 		//Added by MC:
-		level.BotInfo.getspawned.Clear();
+		primaryLevel->BotInfo.getspawned.Clear();
 		argcount = Args->CheckParmList("-bots", &args);
 		for (p = 0; p < argcount; ++p)
 		{
-			level.BotInfo.getspawned.Push(args[p]);
+			primaryLevel->BotInfo.getspawned.Push(args[p]);
 		}
-		level.BotInfo.spawn_tries = 0;
-		level.BotInfo.wanted_botnum = level.BotInfo.getspawned.Size();
+		primaryLevel->BotInfo.spawn_tries = 0;
+		primaryLevel->BotInfo.wanted_botnum = primaryLevel->BotInfo.getspawned.Size();
 
 		if (!batchrun) Printf ("P_Init: Init Playloop state.\n");
 		StartScreen->LoadingStatus ("Init game engine", 0x3f);

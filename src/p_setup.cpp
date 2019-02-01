@@ -353,7 +353,11 @@ void P_FreeLevelData ()
 	E_Shutdown(true);
 	R_FreePastViewers();
 
-	level.ClearLevelData();
+	for (auto Level : AllLevels())
+	{
+		Level->ClearLevelData();
+	}
+	// primaryLevel->FreeSecondaryLevels();
 }
 
 //===========================================================================
@@ -577,7 +581,10 @@ void P_Init ()
 
 static void P_Shutdown ()
 {
-	level.Thinkers.DestroyThinkersInList(STAT_STATIC);
+	for (auto Level : AllLevels())
+	{
+		Level->Thinkers.DestroyThinkersInList(STAT_STATIC);
+	}
 	P_FreeLevelData ();
 	// [ZZ] delete global event handlers
 	E_Shutdown(false);

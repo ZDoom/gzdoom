@@ -259,12 +259,12 @@ CCMD(dump3df)
 		// Print 3D floor info for a single sector.
 		// This only checks the primary level.
 		int sec = (int)strtoll(argv[1], NULL, 10);
-		if ((unsigned)sec >= currentUILevel->sectors.Size())
+		if ((unsigned)sec >= primaryLevel->sectors.Size())
 		{
 			Printf("Sector %d does not exist.\n", sec);
 			return;
 		}
-		sector_t *sector = &currentUILevel->sectors[sec];
+		sector_t *sector = &primaryLevel->sectors[sec];
 		TArray<F3DFloor*> & ffloors = sector->e->XFloor.ffloors;
 
 		for (unsigned int i = 0; i < ffloors.Size(); i++)

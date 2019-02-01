@@ -2222,8 +2222,8 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		s = ReadString (stream);
 		// Using LEVEL_NOINTERMISSION tends to throw the game out of sync.
 		// That was a long time ago. Maybe it works now?
-		level.flags |= LEVEL_CHANGEMAPCHEAT;
-		level.ChangeLevel(s, pos, 0);
+		primaryLevel->flags |= LEVEL_CHANGEMAPCHEAT;
+		primaryLevel->ChangeLevel(s, pos, 0);
 		break;
 
 	case DEM_SUICIDE:
@@ -2231,11 +2231,11 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		break;
 
 	case DEM_ADDBOT:
-		level.BotInfo.TryAddBot (&level, stream, player);
+		primaryLevel->BotInfo.TryAddBot (primaryLevel, stream, player);
 		break;
 
 	case DEM_KILLBOTS:
-		level.BotInfo.RemoveAllBots (&level, true);
+		primaryLevel->BotInfo.RemoveAllBots (primaryLevel, true);
 		Printf ("Removed all bots\n");
 		break;
 
@@ -2330,14 +2330,14 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 						const AActor *def = GetDefaultByType (typeinfo);
 						DVector3 spawnpos = source->Vec3Angle(def->radius * 2 + source->radius, source->Angles.Yaw, 8.);
 
-						AActor *spawned = Spawn (&level, typeinfo, spawnpos, ALLOW_REPLACE);
+						AActor *spawned = Spawn (primaryLevel, typeinfo, spawnpos, ALLOW_REPLACE);
 						if (spawned != NULL)
 						{
 							if (type == DEM_SUMMONFRIEND || type == DEM_SUMMONFRIEND2 || type == DEM_SUMMONMBF)
 							{
 								if (spawned->CountsAsKill()) 
 								{
-									level.total_monsters--;
+									primaryLevel->total_monsters--;
 								}
 								spawned->FriendPlayer = player + 1;
 								spawned->flags |= MF_FRIENDLY;
@@ -2507,7 +2507,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 			}
 			if (!CheckCheatmode(player == consoleplayer))
 			{
-				P_ExecuteSpecial(&level, snum, NULL, players[player].mo, false, arg[0], arg[1], arg[2], arg[3], arg[4]);
+				P_ExecuteSpecial(primaryLevel, snum, NULL, players[player].mo, false, arg[0], arg[1], arg[2], arg[3], arg[4]);
 			}
 		}
 		break;
@@ -2560,11 +2560,11 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 
 			if (cls != NULL)
 			{
-				killcount = currentUILevel->Massacre(false, cls->TypeName);
+				killcount = primaryLevel->Massacre(false, cls->TypeName);
 				PClassActor *cls_rep = cls->GetReplacement();
 				if (cls != cls_rep)
 				{
-					killcount += currentUILevel->Massacre(false, cls_rep->TypeName);
+					killcount += primaryLevel->Massacre(false, cls_rep->TypeName);
 				}
 				Printf ("Killed %d monsters of type %s.\n",killcount, s);
 			}
@@ -2582,11 +2582,11 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		PClassActor *cls = PClass::FindActor(s);
 		if (cls != NULL && cls->IsDescendantOf(RUNTIME_CLASS(AActor)))
 		{
-			removecount = RemoveClass(&level, cls);
+			removecount = RemoveClass(primaryLevel, cls);
 			const PClass *cls_rep = cls->GetReplacement();
 			if (cls != cls_rep)
 			{
-				removecount += RemoveClass(&level, cls_rep);
+				removecount += RemoveClass(primaryLevel, cls_rep);
 			}
 			Printf("Removed %d actors of type %s.\n", removecount, s);
 		}
@@ -2660,7 +2660,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 
 	case DEM_FINISHGAME:
 		// Simulate an end-of-game action
-		level.ChangeLevel(NULL, 0, 0);
+		primaryLevel->ChangeLevel(NULL, 0, 0);
 		break;
 
 	case DEM_NETEVENT:
@@ -2698,7 +2698,7 @@ static void RunScript(uint8_t **stream, AActor *pawn, int snum, int argn, int al
 			arg[i] = argval;
 		}
 	}
-	P_StartScript(pawn->Level, pawn, NULL, snum, level.MapName, arg, MIN<int>(countof(arg), argn), ACS_NET | always);
+	P_StartScript(pawn->Level, pawn, NULL, snum, primaryLevel->MapName, arg, MIN<int>(countof(arg), argn), ACS_NET | always);
 }
 
 void Net_SkipCommand (int type, uint8_t **stream)

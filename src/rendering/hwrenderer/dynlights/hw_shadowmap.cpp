@@ -112,9 +112,10 @@ void IShadowMap::CollectLights()
 {
 	if (mLights.Size() != 1024 * 4) mLights.Resize(1024 * 4);
 	int lightindex = 0;
+	auto Level = &level;
 
 	// Todo: this should go through the blockmap in a spiral pattern around the player so that closer lights are preferred.
-	for (auto light = level.lights; light; light = light->next)
+	for (auto light = Level->lights; light; light = light->next)
 	{
 		LightsProcessed++;
 		if (light->shadowmapped && light->IsActive() && lightindex < 1024 * 4)

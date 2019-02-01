@@ -647,7 +647,7 @@ file( GLOB HEADER_FILES
 	fragglescript/*.h
 	g_shared/*.h
 	g_statusbar/*.h
-	g_inventory/*.h
+	gamedata/*.h
 	intermission/*.h
 	maploader/*.h
 	menu/*.h
@@ -973,9 +973,9 @@ set (PCH_SOURCES
 	v_video.cpp
 	w_wad.cpp
 	wi_stuff.cpp
-	g_inventory/a_keys.cpp
-	g_inventory/a_pickups.cpp
-	g_inventory/a_weapons.cpp
+	gamedata/a_keys.cpp
+	gamedata/a_weapons.cpp
+	g_shared/a_pickups.cpp
 	g_shared/a_action.cpp
 	g_shared/a_decals.cpp
 	g_shared/a_doors.cpp
@@ -1321,7 +1321,7 @@ target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma )
 include_directories( .
 	g_statusbar
 	g_shared
-	g_inventory
+	gamedata
 	rendering
 	sound
 	textures
@@ -1439,6 +1439,7 @@ source_group("External\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/m
 source_group("External\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rapidjson/.+")
 source_group("External\\SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sfmt/.+")
 source_group("FraggleScript" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/fragglescript/.+")
+source_group("Game Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/.+")
 source_group("Intermission" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/intermission/.+")
 source_group("Map Loader" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/maploader/.+")
 source_group("Menu" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/menu/.+")

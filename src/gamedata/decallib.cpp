@@ -46,6 +46,7 @@
 #include "b_bot.h"
 #include "serializer.h"
 #include "g_levellocals.h"
+#include "a_decalfx.h"
 
 FDecalLib DecalLibrary;
 
@@ -102,34 +103,6 @@ struct FDecalAnimator
 	FName Name;
 };
 
-TDeletingArray<FDecalAnimator *> Animators;
-
-struct DDecalThinker : public DThinker
-{
-	DECLARE_CLASS (DDecalThinker, DThinker)
-	HAS_OBJECT_POINTERS
-public:
-	static const int DEFAULT_STAT = STAT_DECALTHINKER;
-	void Construct(DBaseDecal *decal)
-	{
-		TheDecal = decal;
-	}
-	void Serialize(FSerializer &arc);
-	TObjPtr<DBaseDecal*> TheDecal;
-};
-
-IMPLEMENT_CLASS(DDecalThinker, false, true)
-
-IMPLEMENT_POINTERS_START(DDecalThinker)
-	IMPLEMENT_POINTER(TheDecal)
-IMPLEMENT_POINTERS_END
-
-void DDecalThinker::Serialize(FSerializer &arc)
-{
-	Super::Serialize (arc);
-	arc("thedecal", TheDecal);
-}
-
 struct FDecalFaderAnim : public FDecalAnimator
 {
 	FDecalFaderAnim (const char *name) : FDecalAnimator (name) {}
@@ -139,22 +112,6 @@ struct FDecalFaderAnim : public FDecalAnimator
 	int DecayTime;
 };
 
-class DDecalFader : public DDecalThinker
-{
-	DECLARE_CLASS (DDecalFader, DDecalThinker)
-public:
-	void Construct(DBaseDecal *decal)
-	{
-		Super::Construct(decal);
-	}
-	void Serialize(FSerializer &arc);
-	void Tick ();
-
-	int TimeToStartDecay;
-	int TimeToEndDecay;
-	double StartTrans;
-};
-
 struct FDecalColorerAnim : public FDecalAnimator
 {
 	FDecalColorerAnim (const char *name) : FDecalAnimator (name) {}
@@ -162,23 +119,6 @@ struct FDecalColorerAnim : public FDecalAnimator
 
 	int DecayStart;
 	int DecayTime;
-	PalEntry GoalColor;
-};
-
-class DDecalColorer : public DDecalThinker
-{
-	DECLARE_CLASS (DDecalColorer, DDecalThinker)
-public:
-	void Construct(DBaseDecal *decal)
-	{
-		Super::Construct(decal);
-	}
-	void Serialize(FSerializer &arc);
-	void Tick ();
-
-	int TimeToStartDecay;
-	int TimeToEndDecay;
-	PalEntry StartColor;
 	PalEntry GoalColor;
 };
 
@@ -192,28 +132,6 @@ struct FDecalStretcherAnim : public FDecalAnimator
 	double GoalX, GoalY;
 };
 
-class DDecalStretcher : public DDecalThinker
-{
-	DECLARE_CLASS (DDecalStretcher, DDecalThinker)
-public:
-	void Construct(DBaseDecal *decal)
-	{
-		Super::Construct(decal);
-	}
-	void Serialize(FSerializer &arc);
-	void Tick ();
-
-	int TimeToStart;
-	int TimeToStop;
-	double GoalX;
-	double StartX;
-	double GoalY;
-	double StartY;
-	bool bStretchX;
-	bool bStretchY;
-	bool bStarted;
-};
-
 struct FDecalSliderAnim : public FDecalAnimator
 {
 	FDecalSliderAnim (const char *name) : FDecalAnimator (name) {}
@@ -222,26 +140,6 @@ struct FDecalSliderAnim : public FDecalAnimator
 	int SlideStart;
 	int SlideTime;
 	double /*DistX,*/ DistY;
-};
-
-class DDecalSlider : public DDecalThinker
-{
-	DECLARE_CLASS (DDecalSlider, DDecalThinker)
-public:
-	void Construct(DBaseDecal *decal)
-	{
-		Super::Construct(decal);
-	}
-	void Serialize(FSerializer &arc);
-	void Tick ();
-
-	int TimeToStart;
-	int TimeToStop;
-/*	double DistX; */
-	double DistY;
-	double StartX;
-	double StartY;
-	bool bStarted;
 };
 
 struct FDecalCombinerAnim : public FDecalAnimator
@@ -255,6 +153,7 @@ struct FDecalCombinerAnim : public FDecalAnimator
 	static TArray<FDecalAnimator *> AnimatorList;
 };
 
+TDeletingArray<FDecalAnimator *> Animators;
 TArray<FDecalAnimator *> FDecalCombinerAnim::AnimatorList;
 
 static const char *DecalKeywords[] =
@@ -1166,45 +1065,6 @@ FDecalAnimator::~FDecalAnimator ()
 {
 }
 
-IMPLEMENT_CLASS(DDecalFader, false, false)
-
-void DDecalFader::Serialize(FSerializer &arc)
-{
-	Super::Serialize (arc);
-	arc("starttime", TimeToStartDecay)
-		("endtime", TimeToEndDecay)
-		("starttrans", StartTrans);
-}
-
-void DDecalFader::Tick ()
-{
-	if (TheDecal == NULL)
-	{
-		Destroy ();
-	}
-	else
-	{
-		if (Level->maptime < TimeToStartDecay || Level->isFrozen())
-		{
-			return;
-		}
-		else if (Level->maptime >= TimeToEndDecay)
-		{
-			TheDecal->Destroy ();		// remove the decal
-			Destroy ();					// remove myself
-			return;
-		}
-		if (StartTrans == -1)
-		{
-			StartTrans = TheDecal->Alpha;
-		}
-
-		int distanceToEnd = TimeToEndDecay - Level->maptime;
-		int fadeDistance = TimeToEndDecay - TimeToStartDecay;
-		TheDecal->Alpha = StartTrans * distanceToEnd / fadeDistance;
-	}
-}
-
 DThinker *FDecalFaderAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
 {
 	auto Level = actor->Level;
@@ -1214,22 +1074,6 @@ DThinker *FDecalFaderAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
 	fader->TimeToEndDecay = fader->TimeToStartDecay + DecayTime;
 	fader->StartTrans = -1;
 	return fader;
-}
-
-IMPLEMENT_CLASS(DDecalStretcher, false, false)
-
-void DDecalStretcher::Serialize(FSerializer &arc)
-{
-	Super::Serialize (arc);
-	arc("starttime", TimeToStart)
-		("endtime", TimeToStop)
-		("goalx", GoalX)
-		("startx", StartX)
-		("stretchx", bStretchX)
-		("goaly", GoalY)
-		("starty", StartY)
-		("stretchy", bStretchY)
-		("started", bStarted);
 }
 
 DThinker *FDecalStretcherAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
@@ -1264,61 +1108,6 @@ DThinker *FDecalStretcherAnim::CreateThinker (DBaseDecal *actor, side_t *wall) c
 	return thinker;
 }
 
-void DDecalStretcher::Tick ()
-{
-	if (TheDecal == NULL)
-	{
-		Destroy ();
-		return;
-	}
-	if (Level->maptime < TimeToStart || Level->isFrozen())
-	{
-		return;
-	}
-	if (Level->maptime >= TimeToStop)
-	{
-		if (bStretchX)
-		{
-			TheDecal->ScaleX = GoalX;
-		}
-		if (bStretchY)
-		{
-			TheDecal->ScaleY = GoalY;
-		}
-		Destroy ();
-		return;
-	}
-	if (!bStarted)
-	{
-		bStarted = true;
-		StartX = TheDecal->ScaleX;
-		StartY = TheDecal->ScaleY;
-	}
-
-	int distance = Level->maptime - TimeToStart;
-	int maxDistance = TimeToStop - TimeToStart;
-	if (bStretchX)
-	{
-		TheDecal->ScaleX = StartX + (GoalX - StartX) * distance / maxDistance;
-	}
-	if (bStretchY)
-	{
-		TheDecal->ScaleY = StartY + (GoalY - StartY) * distance / maxDistance;
-	}
-}
-
-IMPLEMENT_CLASS(DDecalSlider, false, false)
-
-void DDecalSlider::Serialize(FSerializer &arc)
-{
-	Super::Serialize (arc);
-	arc("starttime", TimeToStart)
-		("endtime", TimeToStop)
-		("disty", DistY)
-		("starty", StartY)
-		("started", bStarted);
-}
-
 DThinker *FDecalSliderAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
 {
 	auto Level = actor->Level;
@@ -1330,37 +1119,6 @@ DThinker *FDecalSliderAnim::CreateThinker (DBaseDecal *actor, side_t *wall) cons
 	thinker->DistY = DistY;
 	thinker->bStarted = false;
 	return thinker;
-}
-
-void DDecalSlider::Tick ()
-{
-	if (TheDecal == NULL)
-	{
-		Destroy ();
-		return;
-	}
-	if (Level->maptime < TimeToStart || Level->isFrozen())
-	{
-		return;
-	}
-	if (!bStarted)
-	{
-		bStarted = true;
-		/*StartX = TheDecal->LeftDistance;*/
-		StartY = TheDecal->Z;
-	}
-	if (Level->maptime >= TimeToStop)
-	{
-		/*TheDecal->LeftDistance = StartX + DistX;*/
-		TheDecal->Z = StartY + DistY;
-		Destroy ();
-		return;
-	}
-
-	int distance = Level->maptime - TimeToStart;
-	int maxDistance = TimeToStop - TimeToStart;
-	/*TheDecal->LeftDistance = StartX + DistX * distance / maxDistance);*/
-	TheDecal->Z = StartY + DistY * distance / maxDistance;
 }
 
 DThinker *FDecalCombinerAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
@@ -1386,57 +1144,6 @@ FDecalAnimator *FDecalLib::FindAnimator (const char *name)
 		}
 	}
 	return NULL;
-}
-
-IMPLEMENT_CLASS(DDecalColorer, false, false)
-
-void DDecalColorer::Serialize(FSerializer &arc)
-{
-	Super::Serialize (arc);
-	arc("starttime", TimeToStartDecay)
-		("endtime", TimeToEndDecay)
-		("startcolor", StartColor)
-		("goalcolor", GoalColor);
-}
-
-void DDecalColorer::Tick ()
-{
-	if (TheDecal == NULL || !(TheDecal->RenderStyle.Flags & STYLEF_ColorIsFixed))
-	{
-		Destroy ();
-	}
-	else
-	{
-		if (Level->maptime < TimeToStartDecay || Level->isFrozen())
-		{
-			return;
-		}
-		else if (Level->maptime >= TimeToEndDecay)
-		{
-			TheDecal->SetShade (GoalColor);
-			Destroy ();					// remove myself
-		}
-		if (StartColor.a == 255)
-		{
-			StartColor = TheDecal->AlphaColor & 0xffffff;
-			if (StartColor == GoalColor)
-			{
-				Destroy ();
-				return;
-			}
-		}
-		if (Level->maptime & 0)
-		{ // Changing the shade can be expensive, so don't do it too often.
-			return;
-		}
-
-		int distance = Level->maptime - TimeToStartDecay;
-		int maxDistance = TimeToEndDecay - TimeToStartDecay;
-		int r = StartColor.r + Scale (GoalColor.r - StartColor.r, distance, maxDistance);
-		int g = StartColor.g + Scale (GoalColor.g - StartColor.g, distance, maxDistance);
-		int b = StartColor.b + Scale (GoalColor.b - StartColor.b, distance, maxDistance);
-		TheDecal->SetShade (r, g, b);
-	}
 }
 
 DThinker *FDecalColorerAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const

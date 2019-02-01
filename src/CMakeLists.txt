@@ -899,7 +899,6 @@ set (PCH_SOURCES
 	d_net.cpp
 	d_netinfo.cpp
 	d_protocol.cpp
-	decallib.cpp
 	dobject.cpp
 	dobjgc.cpp
 	dobjtype.cpp
@@ -911,10 +910,7 @@ set (PCH_SOURCES
 	g_game.cpp
 	g_hub.cpp
 	g_level.cpp
-	g_mapinfo.cpp
-	g_skill.cpp
 	gameconfigfile.cpp
-	gi.cpp
 	gitinfo.cpp
 	hu_scores.cpp
 	i_net.cpp
@@ -959,9 +955,7 @@ set (PCH_SOURCES
 	st_stuff.cpp
 	statistics.cpp
 	stats.cpp
-	stringtable.cpp
 	teaminfo.cpp
-	umapinfo.cpp
 	v_2ddrawer.cpp
 	v_blend.cpp
 	v_draw.cpp
@@ -971,13 +965,20 @@ set (PCH_SOURCES
 	v_pfx.cpp
 	v_text.cpp
 	v_video.cpp
-	w_wad.cpp
 	wi_stuff.cpp
 	gamedata/a_keys.cpp
 	gamedata/a_weapons.cpp
+	gamedata/decallib.cpp
+	gamedata/g_mapinfo.cpp
+	gamedata/g_skill.cpp
+	gamedata/gi.cpp
+	gamedata/stringtable.cpp
+	gamedata/umapinfo.cpp
+	gamedata/w_wad.cpp
 	g_shared/a_pickups.cpp
 	g_shared/a_action.cpp
 	g_shared/a_decals.cpp
+	g_shared/a_decalfx.cpp
 	g_shared/a_doors.cpp
 	g_shared/a_dynlight.cpp
 	g_shared/a_flashfader.cpp

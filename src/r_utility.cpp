@@ -815,8 +815,9 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		player = viewpoint.camera->player;
 	}
 
-	if (iview->otic == -1 || r_NoInterpolate)
+	if (iview->otic == -1 || r_NoInterpolate || (viewpoint.camera->renderflags & RF_NOINTERPOLATEVIEW))
 	{
+		viewpoint.camera->renderflags &= ~RF_NOINTERPOLATEVIEW;
 		R_ResetViewInterpolation ();
 		iview->otic = nowtic;
 	}

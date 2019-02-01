@@ -131,10 +131,7 @@ bool P_MoveThing(AActor *source, const DVector3 &pos, bool fog)
 			P_SpawnTeleportFog(source, old, true, true);
 		}
 		source->ClearInterpolation();
-		if (source == players[consoleplayer].camera)
-		{
-			R_ResetViewInterpolation();
-		}
+		source->renderflags |= RF_NOINTERPOLATEVIEW;
 		return true;
 	}
 	else

@@ -1423,7 +1423,7 @@ void FParser::SF_SetCamera(void)
 		if (t_argc < 4) newcamera->Angles.Pitch = 0.;
 		else newcamera->Angles.Pitch = clamp(floatvalue(t_argv[3]), -50., 50.) * (20. / 32.);
 		player->camera=newcamera;
-		R_ResetViewInterpolation();
+		newcamera->renderflags |= RF_NOINTERPOLATEVIEW;
 	}
 }
 

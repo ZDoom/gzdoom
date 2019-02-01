@@ -562,10 +562,7 @@ bool FLevelLocals::EV_SilentLineTeleport (line_t *line, int side, AActor *thing,
 				return false;
 			}
 
-			if (thing == players[consoleplayer].camera)
-			{
-				R_ResetViewInterpolation ();
-			}
+			thing->renderflags |= RF_NOINTERPOLATEVIEW;
 
 			// Rotate thing's orientation according to difference in linedef angles
 			thing->Angles.Yaw += angle;

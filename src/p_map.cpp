@@ -508,10 +508,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 			thing->AdjustFloorClip();
 		}
 
-		if (thing == players[consoleplayer].camera)
-		{
-			R_ResetViewInterpolation();
-		}
+		thing->renderflags |= RF_NOINTERPOLATEVIEW;
 
 		// If this teleport was caused by a move, P_TryMove() will handle the
 		// sector transition messages better than we can here.
@@ -6274,7 +6271,7 @@ int P_PushUp(AActor *thing, FChangePosition *cpos)
 		if (cpos->instant)
 		{
 			intersect->Prev.Z += intersect->Z() - oldz;
-			if (intersect->CheckLocalView()) R_ResetViewInterpolation();
+			intersect->renderflags |= RF_NOINTERPOLATEVIEW;
 		}
 
 		intersect->UpdateRenderSectorList();
@@ -6371,7 +6368,7 @@ void PIT_FloorDrop(AActor *thing, FChangePosition *cpos)
 			if (cpos->instant)
 			{
 				thing->Prev.Z += thing->floorz - oldz;
-				if (thing->CheckLocalView()) R_ResetViewInterpolation();
+				thing->renderflags |= RF_NOINTERPOLATEVIEW;
 			}
 			thing->SetZ(thing->floorz);
 			P_CheckFakeFloorTriggers(thing, oldz);
@@ -6385,7 +6382,7 @@ void PIT_FloorDrop(AActor *thing, FChangePosition *cpos)
 			if (cpos->instant)
 			{
 				thing->Prev.Z += -oldfloorz + thing->floorz;
-				if (thing->CheckLocalView()) R_ResetViewInterpolation();
+				thing->renderflags |= RF_NOINTERPOLATEVIEW;
 			}
 			thing->AddZ(-oldfloorz + thing->floorz);
 			P_CheckFakeFloorTriggers(thing, oldz);
@@ -6425,7 +6422,7 @@ void PIT_FloorRaise(AActor *thing, FChangePosition *cpos)
 		if (cpos->instant)
 		{
 			thing->Prev.Z += thing->floorz - thing->Z();
-			if (thing->CheckLocalView()) R_ResetViewInterpolation();
+			thing->renderflags |= RF_NOINTERPOLATEVIEW;
 		}
 
 		thing->SetZ(thing->floorz);
@@ -6439,7 +6436,7 @@ void PIT_FloorRaise(AActor *thing, FChangePosition *cpos)
 			if (cpos->instant)
 			{
 				thing->Prev.Z += -oldfloorz + thing->floorz;
-				if (thing->CheckLocalView()) R_ResetViewInterpolation();
+				thing->renderflags |= RF_NOINTERPOLATEVIEW;
 			}
 		}
 		else return;

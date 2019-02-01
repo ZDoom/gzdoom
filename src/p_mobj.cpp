@@ -1040,22 +1040,25 @@ bool AActor::IsInsideVisibleAngles() const
 //
 // Returns true if this actor should be seen by the console player.
 //
+// Not that even for secondary maps this must check the real player!
+//
 //============================================================================
 
 bool AActor::IsVisibleToPlayer() const
 {
+	auto &p = players[consoleplayer];
 	// [BB] Safety check. This should never be NULL. Nevertheless, we return true to leave the default ZDoom behavior unaltered.
-	if ( players[consoleplayer].camera == NULL )
+	if ( p.camera == nullptr )
 		return true;
  
 	if (VisibleToTeam != 0 && teamplay &&
-		(signed)(VisibleToTeam-1) != players[consoleplayer].userinfo.GetTeam() )
+		(signed)(VisibleToTeam-1) != p.userinfo.GetTeam() )
 		return false;
 
 	auto &vis = GetInfo()->VisibleToPlayerClass;
 	if (vis.Size() == 0) return true;	// early out for the most common case.
 
-	const player_t* pPlayer = players[consoleplayer].camera->player;
+	const player_t* pPlayer = p.camera->player;
 
 	if (pPlayer)
 	{

@@ -739,7 +739,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 	int i;
 
 	// Make sure this is actually a player.
-	if (pc == nullptr || pc->player == nullptr || npc == nullptr || pc->Level != currentUILevel) return;
+	if (pc == nullptr || pc->player == nullptr || npc == nullptr || !pc->Level->isPrimaryLevel()) return;
 	auto Level = pc->Level;
 
 	// [CW] If an NPC is talking to a PC already, then don't let

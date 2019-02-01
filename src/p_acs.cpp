@@ -8623,8 +8623,8 @@ scriptwait:
 				{
 					screen = screen->target;
 				}
-				if (pcd == PCD_ENDHUDMESSAGEBOLD || screen == NULL ||
-					players[consoleplayer].mo == screen)
+				if (Level->isPrimaryLevel() && (pcd == PCD_ENDHUDMESSAGEBOLD || screen == NULL ||
+					players[consoleplayer].mo == screen))
 				{
 					int type = Stack[optstart-6];
 					int id = Stack[optstart-5];

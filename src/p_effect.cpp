@@ -631,14 +631,23 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 		seg.extend = (tempvec - (seg.dir | tempvec) * seg.dir) * 3;
 		length += seg.length;
 
-		// Only consider sound in 2D (for now, anyway)
-		// [BB] You have to divide by lengthsquared here, not multiply with it.
-		AActor *mo = players[consoleplayer].camera;
-
-		double r = ((seg.start.Y - mo->Y()) * (-seg.dir.Y) - (seg.start.X - mo->X()) * (seg.dir.X)) / (seg.length * seg.length);
-		r = clamp<double>(r, 0., 1.);
-		seg.soundpos = seg.start + r * seg.dir;
-		seg.sounddist = (seg.soundpos - mo->Pos()).LengthSquared();
+		if (source->Level->isPrimaryLevel())
+		{
+			// Only consider sound in 2D (for now, anyway)
+			// [BB] You have to divide by lengthsquared here, not multiply with it.
+			AActor *mo = players[consoleplayer].camera;
+			
+			double r = ((seg.start.Y - mo->Y()) * (-seg.dir.Y) - (seg.start.X - mo->X()) * (seg.dir.X)) / (seg.length * seg.length);
+			r = clamp<double>(r, 0., 1.);
+			seg.soundpos = seg.start + r * seg.dir;
+			seg.sounddist = (seg.soundpos - mo->Pos()).LengthSquared();
+		}
+		else
+		{
+			// Set to invalid for secondary levels.
+			seg.soundpos = {0,0};
+			seg.sounddist = -1;
+		}
 		trail.Push(seg);
 	}
 
@@ -647,7 +656,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 
 	if (steps)
 	{
-		if (!(flags & RAF_SILENT))
+		if (!(flags & RAF_SILENT) && source->Level->isPrimaryLevel())
 		{
 			FSoundID sound;
 			

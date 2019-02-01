@@ -997,7 +997,7 @@ void P_RandomChaseDir (AActor *actor)
 
 		if (actor->FriendPlayer != 0)
 		{
-			player = players[i = actor->FriendPlayer - 1].mo;
+			player = actor->Level->Players[i = actor->FriendPlayer - 1]->mo;
 		}
 		else
 		{
@@ -1600,7 +1600,7 @@ int P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 						actor->IsFriend(p->mo) &&
 						(anyone || P_IsVisible(actor, p->mo, allaround)))
 					{
-						actor->target = players[c].mo;
+						actor->target = Level->Players[c]->mo;
 
 						// killough 12/98:
 						// get out of refiring loop, to avoid hitting player accidentally

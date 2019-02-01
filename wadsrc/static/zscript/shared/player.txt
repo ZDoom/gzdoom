@@ -2042,7 +2042,7 @@ class PlayerPawn : Actor
 				if (item.bINVBAR && item.Amount > item.InterHubAmount)
 				{
 					item.Amount = item.InterHubAmount;
-					if (level.REMOVEITEMS && !item.bUNDROPPABLE)
+					if (level.REMOVEITEMS && !item.bUNDROPPABLE && !item.bUNCLEARABLE)
 					{
 						todelete.Push(item);
 					}

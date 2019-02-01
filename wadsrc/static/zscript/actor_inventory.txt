@@ -336,7 +336,7 @@ extend class Actor
 		while (last.inv != NULL)
 		{
 			let inv = last.inv;
-			if (!inv.bUndroppable)
+			if (!inv.bUndroppable && !inv.bUnclearable)
 			{
 				inv.DepleteOrDestroy();
 				if (!inv.bDestroyed) last = inv;	// was only depleted so advance the pointer manually.

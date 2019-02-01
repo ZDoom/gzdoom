@@ -55,11 +55,6 @@ struct FLinePortal;
 
 #define STEEPSLOPE		(46342/65536.)	// [RH] Minimum floorplane.c value for walking
 
-// Inspired by Maes
-extern int bmapnegx;
-extern int bmapnegy;
-
-//#define GRAVITY 		FRACUNIT
 #define MAXMOVE 		(30.)
 
 #define TALKRANGE		(128.)

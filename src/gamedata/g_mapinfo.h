@@ -438,7 +438,6 @@ struct cluster_info_t
 #define CLUSTER_ALLOWINTERMISSION 0x00000100  // Allow intermissions between levels in a hub.
 
 extern TArray<level_info_t> wadlevelinfos;
-extern TArray<cluster_info_t> wadclusterinfos;
 
 // mapname will be changed if it is a valid warptrans
 bool CheckWarpTransMap (FString &mapname, bool substitute);

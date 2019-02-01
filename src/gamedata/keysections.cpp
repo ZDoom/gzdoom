@@ -223,3 +223,45 @@ void D_LoadWadSettings ()
 	ParsingKeyConf = false;
 }
 
+CCMD(clearplayerclasses)
+{
+	if (ParsingKeyConf)
+	{
+		PlayerClasses.Clear();
+	}
+}
+
+bool ValidatePlayerClass(PClassActor *ti, const char *name);
+
+CCMD(addplayerclass)
+{
+	if (ParsingKeyConf && argv.argc() > 1)
+	{
+		PClassActor *ti = PClass::FindActor(argv[1]);
+
+		if (ValidatePlayerClass(ti, argv[1]))
+		{
+			FPlayerClass newclass;
+
+			newclass.Type = ti;
+			newclass.Flags = 0;
+
+			int arg = 2;
+			while (arg < argv.argc())
+			{
+				if (!stricmp(argv[arg], "nomenu"))
+				{
+					newclass.Flags |= PCF_NOMENU;
+				}
+				else
+				{
+					Printf("Unknown flag '%s' for player class '%s'\n", argv[arg], argv[1]);
+				}
+
+				arg++;
+			}
+			PlayerClasses.Push(newclass);
+		}
+	}
+}
+

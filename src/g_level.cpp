@@ -571,7 +571,7 @@ EXTERN_CVAR(Bool, sv_singleplayerrespawn)
 
 void FLevelLocals::ChangeLevel(const char *levelname, int position, int flags, int nextSkill)
 {
-	if (this != currentUILevel) return;	// only the primary level may exit.
+	if (!isPrimaryLevel()) return;	// only the primary level may exit.
 
 	FString nextlevel;
 	level_info_t *nextinfo = nullptr;

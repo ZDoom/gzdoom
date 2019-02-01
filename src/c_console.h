@@ -51,7 +51,6 @@ constate_e;
 extern int PrintColors[PRINTLEVELS + 2];
 
 extern constate_e ConsoleState;
-extern int ConBottom;
 
 // Initialize the console
 void C_InitConsole (int width, int height, bool ingame);

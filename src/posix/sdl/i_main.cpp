@@ -54,6 +54,8 @@
 #include "doomstat.h"
 #include "vm.h"
 #include "doomerrors.h"
+#include "i_system.h"
+#include "g_game.h"
 
 // MACROS ------------------------------------------------------------------
 

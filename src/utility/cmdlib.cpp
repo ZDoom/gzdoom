@@ -26,6 +26,7 @@
 #include <direct.h>
 #include <io.h>
 #else
+#include <dirent.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <pwd.h>

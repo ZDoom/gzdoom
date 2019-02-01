@@ -44,6 +44,7 @@
 #include "c_dispatch.h"
 #include "dikeys.h"
 #include "events.h"
+#include "g_game.h"
 
 static void I_CheckGUICapture ();
 static void I_CheckNativeMouse ();

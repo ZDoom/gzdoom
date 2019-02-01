@@ -39,6 +39,7 @@
 #include "c_dispatch.h"
 #include "doomstat.h"
 #include "hardware.h"
+#include "i_system.h"
 #include "m_argv.h"
 #include "m_png.h"
 #include "r_renderer.h"

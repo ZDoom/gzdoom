@@ -270,7 +270,7 @@ int FParser::T_GetPlayerNum(const svalue_t &arg)
 			//script_error("mobj not a player!\n");
 			return -1;
 		}
-		playernum = int(arg.value.mobj->player - players);
+		playernum = Level->PlayerNum(arg.value.mobj->player);
 	}
 	else
 		playernum = intvalue(arg);
@@ -734,7 +734,7 @@ void FParser::SF_PlayerName(void)
 	{
 		player_t *pl=NULL;
 		if (Script->trigger) pl = Script->trigger->player;
-		if(pl) plnum = int(pl - players);
+		if(pl) plnum = Level->PlayerNum(pl);
 		else plnum=-1;
 	}
 	else
@@ -765,7 +765,7 @@ void FParser::SF_PlayerObj(void)
 	{
 		player_t *pl=NULL;
 		if (Script->trigger) pl = Script->trigger->player;
-		if(pl) plnum = int(pl - players);
+		if(pl) plnum = Level->PlayerNum(pl);
 		else plnum=-1;
 	}
 	else
@@ -805,7 +805,7 @@ void FParser::SF_Player(void)
 	
 	if(mo && mo->player) // haleyjd: added mo->player
 	{
-		t_return.value.i = (int)(mo->player - players);
+		t_return.value.i = Level->PlayerNum(mo->player);
 	}
 	else
 	{

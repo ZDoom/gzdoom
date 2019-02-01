@@ -746,10 +746,10 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 	// anyone else talk to the NPC.
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
-		if (!playeringame[i] || pc->player == &players[i])
+		if (!Level->PlayerInGame(i) || pc->player == Level->Players[i])
 			continue;
 
-		if (npc == players[i].ConversationNPC)
+		if (npc == Level->Players[i]->ConversationNPC)
 			return;
 	}
 

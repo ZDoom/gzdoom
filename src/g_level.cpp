@@ -675,9 +675,9 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int flags, i
 
 	for(int i = 0; i < MAXPLAYERS; i++)
 	{
-		if (playeringame[i])
+		if (PlayerInGame(i))
 		{
-			player_t *player = &players[i];
+			player_t *player = Players[i];
 
 			// Un-crouch all players here.
 			player->Uncrouch();

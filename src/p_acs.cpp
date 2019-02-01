@@ -9648,7 +9648,7 @@ scriptwait:
 			}
 			else
 			{
-				PushToStack (int(activator->player - players));
+				PushToStack (Level->PlayerNum(activator->player));
 			}
 			break;
 
@@ -10351,7 +10351,7 @@ static void addDefered (level_info_t *i, acsdefered_t::EType type, int script, c
 		}
 		if (who != NULL && who->player != NULL)
 		{
-			def.playernum = int(who->player - players);
+			def.playernum = who->Level->PlayerNum(who->player);
 		}
 		else
 		{

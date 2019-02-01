@@ -401,7 +401,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 		// fair to count them toward a player's score.
 		if (player && Level->maptime)
 		{
-			source->player->frags[player - players]++;
+			source->player->frags[Level->PlayerNum(player)]++;
 			if (player == source->player)	// [RH] Cumulative frag count
 			{
 				char buff[256];
@@ -560,7 +560,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 		ClientObituary (this, inflictor, source, dmgflags, MeansOfDeath);
 
 		// [ZZ] fire player death hook
-		E_PlayerDied(int(player - players));
+		E_PlayerDied(Level->PlayerNum(player));
 
 		// Death script execution, care of Skull Tag
 		Level->Behaviors.StartTypedScripts (SCRIPT_Death, this, true);
@@ -593,7 +593,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 		// count environment kills against you
 		if (!source)
 		{
-			player->frags[player - players]++;
+			player->frags[Level->PlayerNum(player)]++;
 			player->fragcount--;	// [RH] Cumulative frag count
 		}
 						

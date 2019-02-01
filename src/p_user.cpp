@@ -676,9 +676,10 @@ bool player_t::Resurrect()
 	mo->special1 = 0;	// required for the Hexen fighter's fist attack. 
 								// This gets set by AActor::Die as flag for the wimpy death and must be reset here.
 	mo->SetState(mo->SpawnState);
+	int pnum = mo->Level->PlayerNum(this);
 	if (!(mo->flags2 & MF2_DONTTRANSLATE))
 	{
-		mo->Translation = TRANSLATION(TRANSLATION_Players, uint8_t(this - players));
+		mo->Translation = TRANSLATION(TRANSLATION_Players, uint8_t(pnum));
 	}
 	if (ReadyWeapon != nullptr)
 	{
@@ -693,7 +694,7 @@ bool player_t::Resurrect()
 
 	// player is now alive.
 	// fire E_PlayerRespawned and start the ACS SCRIPT_Respawn.
-	E_PlayerRespawned(int(this - players));
+	E_PlayerRespawned(pnum);
 	//
 	mo->Level->Behaviors.StartTypedScripts(SCRIPT_Respawn, mo, true);
 	return true;
@@ -1124,7 +1125,7 @@ void P_CheckMusicChange(player_t *player)
 					S_ChangeMusic("*");
 				}
 			}
-			DPrintf(DMSG_NOTIFY, "MUSINFO change for player %d to %d\n", (int)(player - players), player->MUSINFOactor->args[0]);
+			DPrintf(DMSG_NOTIFY, "MUSINFO change for player %d to %d\n", (int)player->mo->Level->PlayerNum(player), player->MUSINFOactor->args[0]);
 		}
 	}
 }

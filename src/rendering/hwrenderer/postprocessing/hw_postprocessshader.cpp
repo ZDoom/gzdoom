@@ -23,6 +23,7 @@
 #include "vm.h"
 #include "d_player.h"
 #include "hw_postprocessshader.h"
+#include "g_levellocals.h"
 
 TArray<PostProcessShader> PostProcessShaders;
 
@@ -32,7 +33,7 @@ static bool IsConsolePlayer(player_t *player)
 	AActor *activator = player ? player->mo : nullptr;
 	if (activator == nullptr || activator->player == nullptr)
 		return false;
-	return int(activator->player - players) == consoleplayer;
+	return activator->player == activator->Level->GetConsolePlayer();
 }
 
 static void ShaderSetEnabled(player_t *player, const FString &shaderName, bool value)

@@ -384,7 +384,7 @@ void AActor::PostSerialize()
 	AddToHash();
 	if (player)
 	{
-		if (playeringame[player - players] &&
+		if (Level->PlayerInGame(player) &&
 			player->cls != NULL &&
 			!(flags4 & MF4_NOSKIN) &&
 			state->sprite == GetDefaultByType(player->cls)->SpawnState->sprite)
@@ -489,7 +489,7 @@ int AActor::GetTics(FState * newstate)
 bool AActor::SetState (FState *newstate, bool nofunction)
 {
 	if (debugfile && player && (player->cheats & CF_PREDICTING))
-		fprintf (debugfile, "for pl %td: SetState while predicting!\n", player-players);
+		fprintf (debugfile, "for pl %d: SetState while predicting!\n", Level->PlayerNum(player));
 	do
 	{
 		if (newstate == NULL)
@@ -5155,7 +5155,7 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 
 			DObject::StaticPointerSubstitution (oldactor, p->mo);
 
-			E_PlayerRespawned(int(p - players));
+			E_PlayerRespawned(PlayerNum(p));
 			Behaviors.StartTypedScripts (SCRIPT_Respawn, p->mo, true);
 		}
 	}
@@ -6765,7 +6765,7 @@ int AActor::GetTeam()
 	// Check for monsters that belong to a player on the team but aren't part of the team themselves.
 	if (myTeam == TEAM_NONE && FriendPlayer != 0)
 	{
-		myTeam = players[FriendPlayer - 1].userinfo.GetTeam();
+		myTeam = Level->Players[FriendPlayer - 1]->userinfo.GetTeam();
 	}
 	return myTeam;
 

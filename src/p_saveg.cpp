@@ -588,13 +588,13 @@ void P_SerializePlayers(FLevelLocals *Level, FSerializer &arc, bool skipload)
 			// Record each player's name, followed by their data.
 			for (i = 0; i < MAXPLAYERS; ++i)
 			{
-				if (playeringame[i])
+				if (Level->PlayerInGame(i))
 				{
 					if (arc.BeginObject(nullptr))
 					{
-						const char *n = players[i].userinfo.GetName();
+						const char *n = Level->Players[i]->userinfo.GetName();
 						arc.StringPtr("playername", n);
-						players[i].Serialize(arc);
+						Level->Players[i]->Serialize(arc);
 						arc.EndObject();
 					}
 				}

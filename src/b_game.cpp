@@ -148,24 +148,6 @@ void FCajunMaster::Main(FLevelLocals *Level)
 
 	//Check if player should go observer. Or un observe
 	FLinkContext ctx;
-	if (bot_observer && !observer && !netgame)
-	{
-		Printf ("%s is now observer\n", players[consoleplayer].userinfo.GetName());
-		observer = true;
-		players[consoleplayer].mo->UnlinkFromWorld (&ctx);
-		players[consoleplayer].mo->flags = MF_DROPOFF|MF_NOBLOCKMAP|MF_NOCLIP|MF_NOTDMATCH|MF_NOGRAVITY|MF_FRIENDLY;
-		players[consoleplayer].mo->flags2 |= MF2_FLY;
-		players[consoleplayer].mo->LinkToWorld (&ctx);
-	}
-	else if (!bot_observer && observer && !netgame) //Go back
-	{
-		Printf ("%s returned to the fray\n", players[consoleplayer].userinfo.GetName());
-		observer = false;
-		players[consoleplayer].mo->UnlinkFromWorld (&ctx);
-		players[consoleplayer].mo->flags = MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH|MF_FRIENDLY;
-		players[consoleplayer].mo->flags2 &= ~MF2_FLY;
-		players[consoleplayer].mo->LinkToWorld (&ctx);
-	}
 }
 
 void FCajunMaster::Init ()
@@ -173,7 +155,6 @@ void FCajunMaster::Init ()
 	botnum = 0;
 	firstthing = nullptr;
 	spawn_tries = 0;
-	observer = false;
 	body1 = nullptr;
 	body2 = nullptr;
 

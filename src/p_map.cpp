@@ -2448,7 +2448,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 			}
 			// if this is the current camera we need to store the point where the portal was crossed and the exit
 			// so that the renderer can properly calculate an interpolated position along the movement path.
-			if (thing == players[consoleplayer].camera)
+			if (thing->Level->isCamera(thing))
 			{
 				divline_t dl1 = { besthit.Oldrefpos.X,besthit.Oldrefpos.Y, besthit.Refpos.X - besthit.Oldrefpos.X, besthit.Refpos.Y - besthit.Oldrefpos.Y };
 				DVector3a hit = { {dl1.x + dl1.dx * bestfrac, dl1.y + dl1.dy * bestfrac, 0.},0. };
@@ -2463,7 +2463,8 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 				{
 					P_TranslatePortalXY(ld, hit.pos.X, hit.pos.Y);
 					P_TranslatePortalZ(ld, hit.pos.Z);
-					players[consoleplayer].viewz += hit.pos.Z;	// needs to be done here because otherwise the renderer will not catch the change.
+					auto p = thing->Level->GetConsolePlayer();
+					if (p) p->viewz += hit.pos.Z;	// needs to be done here because otherwise the renderer will not catch the change.
 					P_TranslatePortalAngle(ld, hit.angle);
 				}
 				R_AddInterpolationPoint(hit);

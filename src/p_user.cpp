@@ -617,7 +617,7 @@ static int GetSoftPitch(bool down)
 
 void player_t::SendPitchLimits() const
 {
-	if (this - players == consoleplayer)
+	if (this == mo->Level->GetConsolePlayer())
 	{
 		int uppitch, downpitch;
 
@@ -1108,7 +1108,7 @@ void P_CheckMusicChange(player_t *player)
 	{
 		if (--player->MUSINFOtics < 0)
 		{
-			if (player - players == consoleplayer)
+			if (player == player->mo->Level->GetConsolePlayer())
 			{
 				if (player->MUSINFOactor->args[0] != 0)
 				{
@@ -1372,7 +1372,7 @@ void P_PredictPlayer (player_t *player)
 		singletics ||
 		demoplayback ||
 		player->mo == NULL ||
-		player != &players[consoleplayer] ||
+		player != player->mo->Level->GetConsolePlayer() ||
 		player->playerstate != PST_LIVE ||
 		!netgame ||
 		/*player->morphTics ||*/

@@ -945,7 +945,11 @@ DEFINE_ACTION_FUNCTION(AActor, GiveBody)
 
 bool AActor::CheckLocalView() const
 {
-	auto p = &players[consoleplayer];
+	auto p = Level->GetConsolePlayer();
+	if (p == nullptr)
+	{
+		return false;
+	}
 	if (p->camera == this)
 	{
 		return true;
@@ -982,12 +986,10 @@ bool AActor::IsInsideVisibleAngles() const
 	// Don't bother masking if not wanted.
 	if (!(renderflags & RF_MASKROTATION))
 		return true;
-
-	if (players[consoleplayer].camera == nullptr)
-		return true;
 	
-	// Not detectable.
-	if (!Level->isPrimaryLevel())
+	auto p = Level->GetConsolePlayer();
+
+	if (p == nullptr || p->camera == nullptr)
 		return true;
 	
 	DAngle anglestart = VisibleStartAngle;
@@ -1010,7 +1012,7 @@ bool AActor::IsInsideVisibleAngles() const
 	}
 	
 
-	AActor *mo = players[consoleplayer].camera;
+	AActor *mo = p->camera;
 
 	if (mo != nullptr)
 	{
@@ -1046,19 +1048,19 @@ bool AActor::IsInsideVisibleAngles() const
 
 bool AActor::IsVisibleToPlayer() const
 {
-	auto &p = players[consoleplayer];
+	auto p = Level->GetConsolePlayer();
 	// [BB] Safety check. This should never be NULL. Nevertheless, we return true to leave the default ZDoom behavior unaltered.
-	if ( p.camera == nullptr )
+	if (p == nullptr || p->camera == nullptr )
 		return true;
  
 	if (VisibleToTeam != 0 && teamplay &&
-		(signed)(VisibleToTeam-1) != p.userinfo.GetTeam() )
+		(signed)(VisibleToTeam-1) != p->userinfo.GetTeam() )
 		return false;
 
 	auto &vis = GetInfo()->VisibleToPlayerClass;
 	if (vis.Size() == 0) return true;	// early out for the most common case.
 
-	const player_t* pPlayer = p.camera->player;
+	const player_t* pPlayer = p->camera->player;
 
 	if (pPlayer)
 	{
@@ -4902,7 +4904,7 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 		return NULL;
 	}
 	// not playing?
-	if ((unsigned)playernum >= (unsigned)MAXPLAYERS || !playeringame[playernum])
+	if ((unsigned)playernum >= (unsigned)MAXPLAYERS || !PlayerInGame(playernum) )
 		return NULL;
 
 	// Old lerp data needs to go
@@ -4911,7 +4913,7 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 		P_PredictionLerpReset();
 	}
 
-	p = &players[playernum];
+	p = Players[playernum];
 
 	if (p->cls == NULL)
 	{
@@ -5271,10 +5273,14 @@ AActor *FLevelLocals::SpawnMapThing (FMapThing *mthing, int position)
 		// this is enabled for all games.
 		if (!multiplayer)
 		{ // Single player
-			int spawnmask = players[consoleplayer].GetSpawnClass();
-			if (spawnmask != 0 && (mthing->ClassFilter & spawnmask) == 0)
-			{ // Not for current class
-				return NULL;
+			auto p = GetConsolePlayer();
+			if (p)
+			{
+				int spawnmask = p->GetSpawnClass();
+				if (spawnmask != 0 && (mthing->ClassFilter & spawnmask) == 0)
+				{ // Not for current class
+					return nullptr;
+				}
 			}
 		}
 		else if (!deathmatch)
@@ -5282,9 +5288,9 @@ AActor *FLevelLocals::SpawnMapThing (FMapThing *mthing, int position)
 			mask = 0;
 			for (int i = 0; i < MAXPLAYERS; i++)
 			{
-				if (playeringame[i])
+				if (PlayerInGame(i))
 				{
-					int spawnmask = players[i].GetSpawnClass();
+					int spawnmask = Players[i]->GetSpawnClass();
 					if (spawnmask != 0)
 						mask |= spawnmask;
 					else 

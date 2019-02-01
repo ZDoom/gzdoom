@@ -631,12 +631,12 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 		seg.extend = (tempvec - (seg.dir | tempvec) * seg.dir) * 3;
 		length += seg.length;
 
-		if (source->Level->isPrimaryLevel())
+		auto player = source->Level->GetConsolePlayer();
+		if (player)
 		{
 			// Only consider sound in 2D (for now, anyway)
 			// [BB] You have to divide by lengthsquared here, not multiply with it.
-			AActor *mo = players[consoleplayer].camera;
-			
+			AActor *mo = player->camera;
 			double r = ((seg.start.Y - mo->Y()) * (-seg.dir.Y) - (seg.start.X - mo->X()) * (seg.dir.X)) / (seg.length * seg.length);
 			r = clamp<double>(r, 0., 1.);
 			seg.soundpos = seg.start + r * seg.dir;
@@ -656,32 +656,36 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 
 	if (steps)
 	{
-		if (!(flags & RAF_SILENT) && source->Level->isPrimaryLevel())
+		if (!(flags & RAF_SILENT))
 		{
-			FSoundID sound;
-			
-			// Allow other sounds than 'weapons/railgf'!
-			if (!source->player) sound = source->AttackSound;
-			else if (source->player->ReadyWeapon) sound = source->player->ReadyWeapon->AttackSound;
-			else sound = 0;
-			if (!sound) sound = "weapons/railgf";
-
-			// The railgun's sound is special. It gets played from the
-			// point on the slug's trail that is closest to the hearing player.
-			AActor *mo = players[consoleplayer].camera;
-
-			if (fabs(mo->X() - trail[0].start.X) < 20 && fabs(mo->Y() - trail[0].start.Y) < 20)
-			{ // This player (probably) fired the railgun
-				S_Sound (mo, CHAN_WEAPON, sound, 1, ATTN_NORM);
-			}
-			else
+			auto player = source->Level->GetConsolePlayer();
+			if (player)
 			{
-				TrailSegment *shortest = NULL;
-				for (auto &seg : trail)
-				{
-					if (shortest == NULL || shortest->sounddist > seg.sounddist) shortest = &seg;
+				FSoundID sound;
+				
+				// Allow other sounds than 'weapons/railgf'!
+				if (!source->player) sound = source->AttackSound;
+				else if (source->player->ReadyWeapon) sound = source->player->ReadyWeapon->AttackSound;
+				else sound = 0;
+				if (!sound) sound = "weapons/railgf";
+				
+				// The railgun's sound is special. It gets played from the
+				// point on the slug's trail that is closest to the hearing player.
+				AActor *mo = player->camera;
+				
+				if (fabs(mo->X() - trail[0].start.X) < 20 && fabs(mo->Y() - trail[0].start.Y) < 20)
+				{ // This player (probably) fired the railgun
+					S_Sound (mo, CHAN_WEAPON, sound, 1, ATTN_NORM);
 				}
-				S_Sound (source->Level, DVector3(shortest->soundpos, r_viewpoint.Pos.Z), CHAN_WEAPON, sound, 1, ATTN_NORM);
+				else
+				{
+					TrailSegment *shortest = NULL;
+					for (auto &seg : trail)
+					{
+						if (shortest == NULL || shortest->sounddist > seg.sounddist) shortest = &seg;
+					}
+					S_Sound (source->Level, DVector3(shortest->soundpos, r_viewpoint.Pos.Z), CHAN_WEAPON, sound, 1, ATTN_NORM);
+				}
 			}
 		}
 	}

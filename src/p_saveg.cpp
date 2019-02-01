@@ -625,7 +625,8 @@ void P_SerializePlayers(FLevelLocals *Level, FSerializer &arc, bool skipload)
 			Level->SpawnExtraPlayers();
 		}
 		// Redo pitch limits, since the spawned player has them at 0.
-		players[consoleplayer].SendPitchLimits();
+		auto p = Level->GetConsolePlayer();
+		if (p) p->SendPitchLimits();
 	}
 }
 

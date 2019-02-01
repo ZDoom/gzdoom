@@ -151,7 +151,6 @@ void DBot::Tick ()
 }
 
 CVAR (Int, bot_next_color, 11, 0)
-CVAR (Bool, bot_observer, false, 0)
 
 CCMD (addbot)
 {

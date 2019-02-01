@@ -345,7 +345,6 @@ AActor *DBot::Choose_Mate ()
 	int count;
 	double closest_dist, test;
 	AActor *target;
-	AActor *observer;
 
 	//is mate alive?
 	if (mate)
@@ -365,10 +364,6 @@ AActor *DBot::Choose_Mate ()
 
 	target = NULL;
 	closest_dist = FLT_MAX;
-	if (bot_observer)
-		observer = players[consoleplayer].mo;
-	else
-		observer = NULL;
 
 	//Check for player friends
 	for (count = 0; count < MAXPLAYERS; count++)
@@ -380,7 +375,6 @@ AActor *DBot::Choose_Mate ()
 			&& player->mo != client->mo
 			&& (player->mo->IsTeammate (client->mo) || !deathmatch)
 			&& client->mo->health > 0
-			&& client->mo != observer
 			&& ((player->mo->health/2) <= client->mo->health || !deathmatch)
 			&& !Level->BotInfo.IsLeader(client)) //taken?
 		{
@@ -423,7 +417,6 @@ AActor *DBot::Find_enemy ()
 	double closest_dist, temp; //To target.
 	AActor *target;
 	DAngle vangle;
-	AActor *observer;
 
 	if (!deathmatch)
 	{ // [RH] Take advantage of the Heretic/Hexen code to be a little smarter
@@ -439,17 +432,12 @@ AActor *DBot::Find_enemy ()
 
 	target = NULL;
 	closest_dist = FLT_MAX;
-	if (bot_observer)
-		observer = players[consoleplayer].mo;
-	else
-		observer = NULL;
 
 	for (count = 0; count < MAXPLAYERS; count++)
 	{
 		player_t *client = &players[count];
 		if (playeringame[count]
 			&& !player->mo->IsTeammate (client->mo)
-			&& client->mo != observer
 			&& client->mo->health > 0
 			&& player->mo != client->mo)
 		{

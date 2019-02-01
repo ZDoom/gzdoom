@@ -159,7 +159,6 @@ private:
 protected:
 	bool	 ctf;
 	int		 t_join;
-	bool	 observer; //Consoleplayer is observer.
 };
 
 class DBot : public DThinker
@@ -242,10 +241,5 @@ extern cycle_t BotThinkCycles, BotSupportCycles;
 
 EXTERN_CVAR (Float, bot_flag_return_time)
 EXTERN_CVAR (Int, bot_next_color)
-EXTERN_CVAR (Bool, bot_allow_duds)
-EXTERN_CVAR (Int, bot_maxcorpses)
-EXTERN_CVAR (Bool, bot_observer)
-EXTERN_CVAR (Bool, bot_watersplash)
-EXTERN_CVAR (Bool, bot_chat)
 
 #endif	// __B_BOT_H__

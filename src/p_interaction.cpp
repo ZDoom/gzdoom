@@ -606,7 +606,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 			VMCall(func, &param, 1, nullptr, 0);
 		}
 
-		if (this == players[consoleplayer].camera && automapactive)
+		if (Level->isCamera(this) && automapactive)
 		{
 			// don't die in auto map, switch view prior to dying
 			AM_Stop ();
@@ -1352,7 +1352,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 			player->damagecount = 100;	// teleport stomp does 10k points...
 		}
 		temp = damage < 100 ? damage : 100;
-		if (player == &players[consoleplayer])
+		if (player == target->Level->GetConsolePlayer() )
 		{
 			I_Tactile (40,10,40+temp*2);
 		}

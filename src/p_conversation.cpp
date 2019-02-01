@@ -763,7 +763,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 
 	FStrifeDialogueNode *CurNode = npc->Conversation;
 
-	if (pc->player == &players[consoleplayer])
+	if (pc->player == Level->GetConsolePlayer())
 	{
 		S_Sound (CHAN_VOICE | CHAN_UI, gameinfo.chatSound, 1, ATTN_NONE);
 	}
@@ -811,7 +811,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 	}
 
 	// The rest is only done when the conversation is actually displayed.
-	if (pc->player == &players[consoleplayer])
+	if (pc->player == Level->GetConsolePlayer())
 	{
 		if (CurNode->SpeakerVoice != 0)
 		{

@@ -506,8 +506,8 @@ public:
 	int bodyqueslot;
 	
 	// For now this merely points to the global player array, but with this in place, access to this array can be moved over to the level.
-	// As things progress each level needs to be able to point to different players,
-	// but even then the level will not own the player - the player merely links to the level.
+	// As things progress each level needs to be able to point to different players, even if they are just null if the second level is merely a skybox or camera target.
+	// But even if it got a real player, the level will not own it - the player merely links to the level.
 	// This should also be made a real object eventually.
 	player_t *Players[MAXPLAYERS];
 	
@@ -539,6 +539,26 @@ public:
 	bool isPrimaryLevel() const
 	{
 		return true;
+	}
+	
+	// Gets the console player without having the calling code be aware of the level's state.
+	player_t *GetConsolePlayer() const
+	{
+		return isPrimaryLevel()? Players[consoleplayer] : nullptr;
+	}
+	
+	bool isConsolePlayer(AActor *mo) const
+	{
+		auto p = GetConsolePlayer();
+		if (!p) return false;
+		return p->mo == mo;
+	}
+
+	bool isCamera(AActor *mo) const
+	{
+		auto p = GetConsolePlayer();
+		if (!p) return false;
+		return p->camera == mo;
 	}
 
 	int NumMapSections;

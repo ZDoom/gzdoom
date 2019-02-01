@@ -97,7 +97,6 @@ struct TeaserSpeech
 
 static FRandom pr_randomspeech("RandomSpeech");
 
-FClassMap StrifeTypes;
 static int ConversationMenuY;
 
 // These two should be moved to player_t...
@@ -120,16 +119,6 @@ static void TerminalResponse (const char *str);
 // Given an item type number, returns the corresponding PClass.
 //
 //============================================================================
-
-void SetStrifeType(int convid, PClassActor *Class)
-{
-	StrifeTypes[convid] = Class;
-}
-
-void ClearStrifeTypes()
-{
-	StrifeTypes.Clear();
-}
 
 void FLevelLocals::SetConversation(int convid, PClassActor *Class, int dlgindex)
 {

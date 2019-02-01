@@ -892,7 +892,6 @@ set (PCH_SOURCES
 	c_functions.cpp
 	ct_chat.cpp
 	cycler.cpp
-	d_dehacked.cpp
 	d_iwad.cpp
 	d_main.cpp
 	d_anonstats.cpp
@@ -905,7 +904,6 @@ set (PCH_SOURCES
 	doomstat.cpp
 	f_wipe.cpp
 	g_cvars.cpp
-	g_doomedmap.cpp
 	g_dumpinfo.cpp
 	g_game.cpp
 	g_hub.cpp
@@ -914,8 +912,6 @@ set (PCH_SOURCES
 	gitinfo.cpp
 	hu_scores.cpp
 	i_net.cpp
-	info.cpp
-	keysections.cpp
 	m_cheat.cpp
 	m_joy.cpp
 	m_misc.cpp
@@ -936,7 +932,6 @@ set (PCH_SOURCES
 	p_setup.cpp
 	p_spec.cpp
 	p_states.cpp
-	p_terrain.cpp
 	p_things.cpp
 	p_tick.cpp
 	p_usdf.cpp
@@ -955,7 +950,6 @@ set (PCH_SOURCES
 	st_stuff.cpp
 	statistics.cpp
 	stats.cpp
-	teaminfo.cpp
 	v_2ddrawer.cpp
 	v_blend.cpp
 	v_draw.cpp
@@ -975,6 +969,12 @@ set (PCH_SOURCES
 	gamedata/stringtable.cpp
 	gamedata/umapinfo.cpp
 	gamedata/w_wad.cpp
+	gamedata/d_dehacked.cpp
+	gamedata/g_doomedmap.cpp
+	gamedata/info.cpp
+	gamedata/keysections.cpp
+	gamedata/p_terrain.cpp
+	gamedata/teaminfo.cpp
 	g_shared/a_pickups.cpp
 	g_shared/a_action.cpp
 	g_shared/a_decals.cpp

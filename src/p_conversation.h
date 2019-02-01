@@ -59,7 +59,6 @@ struct FStrifeDialogueReply
 
 struct MapData;
 
-void SetStrifeType(int convid, PClassActor *Class);
 PClassActor *GetStrifeType (int typenum);
 
 bool LoadScriptFile (FLevelLocals *Level, const char *name, bool include, int type = 0);

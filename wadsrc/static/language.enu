@@ -2550,8 +2550,8 @@ NOTSET				= "Not set";
 SAFEMESSAGE			= "Do you really want to do this?";
 MNU_COLORPICKER		= "SELECT COLOR";
 
-WI_FINISHED			= "finished";
-WI_ENTERING			= "Now entering:";
+FINISHED			= "finished";
+ENTERING			= "Now entering:";
 
 AM_MONSTERS			= "Monsters:";
 AM_SECRETS			= "Secrets:";

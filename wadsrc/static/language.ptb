@@ -1584,8 +1584,8 @@ $ifgame(heretic) SWSTRING = "SOMENTE DISPONIVEL NA VERSAO REGISTRADA";
 
 MNU_EPISODE			= "Selecione um episodio";
 
-WI_FINISHED			= "finalizado";
-WI_ENTERING			= "Entrando:";
+FINISHED			= "finalizado";
+ENTERING			= "Entrando:";
 
 // Bloodbath announcer (não traduzido ainda)
 

@@ -2511,8 +2511,8 @@ SAFEMESSAGE			= "Voulez-vous vraiment faire ça?";
 MNU_COLORPICKER		= "CHOISIR COULEUR";
 
 
-WI_FINISHED			= "terminé";
-WI_ENTERING			= "Entrant:";
+FINISHED			= "terminé";
+ENTERING			= "Entrant:";
 
 AM_MONSTERS			= "Monstres:";
 AM_ITEMS			= "Objets:";

@@ -890,9 +890,6 @@ set (PCH_SOURCES
 	c_dispatch.cpp
 	c_expr.cpp
 	c_functions.cpp
-	cmdlib.cpp
-	colormatcher.cpp
-	configfile.cpp
 	ct_chat.cpp
 	cycler.cpp
 	d_dehacked.cpp
@@ -920,18 +917,12 @@ set (PCH_SOURCES
 	gi.cpp
 	gitinfo.cpp
 	hu_scores.cpp
-	i_module.cpp
 	i_net.cpp
-	i_time.cpp
 	info.cpp
 	keysections.cpp
-	m_alloc.cpp
-	m_argv.cpp
-	m_bbox.cpp
 	m_cheat.cpp
 	m_joy.cpp
 	m_misc.cpp
-	name.cpp
 	p_acs.cpp
 	p_actionfunctions.cpp
 	p_conversation.cpp
@@ -961,7 +952,6 @@ set (PCH_SOURCES
 	r_videoscale.cpp
 	s_advsound.cpp
 	s_environment.cpp
-	s_playlist.cpp
 	s_sndseq.cpp
 	s_sound.cpp
 	serializer.cpp
@@ -974,7 +964,6 @@ set (PCH_SOURCES
 	umapinfo.cpp
 	v_2ddrawer.cpp
 	v_blend.cpp
-	v_collection.cpp
 	v_draw.cpp
 	v_font.cpp
 	v_framebuffer.cpp
@@ -984,7 +973,6 @@ set (PCH_SOURCES
 	v_video.cpp
 	w_wad.cpp
 	wi_stuff.cpp
-	zstrformat.cpp
 	g_inventory/a_keys.cpp
 	g_inventory/a_pickups.cpp
 	g_inventory/a_weapons.cpp
@@ -1262,6 +1250,18 @@ set (PCH_SOURCES
 	utility/nodebuilder/nodebuild_gl.cpp
 	utility/nodebuilder/nodebuild_utility.cpp
 	utility/sc_man.cpp
+	utility/cmdlib.cpp
+	utility/colormatcher.cpp
+	utility/configfile.cpp
+	utility/i_module.cpp
+	utility/i_time.cpp
+	utility/m_alloc.cpp
+	utility/m_argv.cpp
+	utility/m_bbox.cpp
+	utility/name.cpp
+	utility/s_playlist.cpp
+	utility/v_collection.cpp
+	utility/zstrformat.cpp
 )
 
 enable_precompiled_headers( g_pch.h PCH_SOURCES )
@@ -1274,9 +1274,9 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	${X86_SOURCES}
 	${FASTMATH_SOURCES}
 	${PCH_SOURCES}
-	x86.cpp
+	utility/x86.cpp
 	utility/strnatcmp.c
-	zstring.cpp
+	utility/zstring.cpp
 	utility/math/asin.c
 	utility/math/atan.c
 	utility/math/const.c

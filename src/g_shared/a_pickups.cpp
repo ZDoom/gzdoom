@@ -35,21 +35,11 @@
 
 #include <assert.h>
 
-#include "info.h"
-#include "p_local.h"
-#include "p_lnspec.h"
-#include "sbar.h"
-#include "statnums.h"
-#include "c_dispatch.h"
 #include "gstrings.h"
-#include "a_morph.h"
-#include "a_specialspot.h"
-#include "g_game.h"
+#include "sbar.h"
 #include "doomstat.h"
 #include "d_player.h"
-#include "serializer.h"
 #include "vm.h"
-#include "c_functions.h"
 #include "g_levellocals.h"
 
 EXTERN_CVAR(Bool, sv_unlimited_pickup)
@@ -113,48 +103,5 @@ bool CallTryPickup(AActor *item, AActor *toucher, AActor **toucher_return)
 	VMCall(func, params, 2, ret, 2);
 	if (toucher_return) *toucher_return = tret;
 	return !!res;
-}
-
-//===========================================================================
-//
-// CCMD printinv
-//
-// Prints the console player's current inventory.
-//
-//===========================================================================
-
-CCMD (printinv)
-{
-	int pnum = consoleplayer;
-
-#ifdef _DEBUG
-	// Only allow peeking on other players' inventory in debug builds.
-	if (argv.argc() > 1)
-	{
-		pnum = atoi (argv[1]);
-		if (pnum < 0 || pnum >= MAXPLAYERS)
-		{
-			return;
-		}
-	}
-#endif
-	C_PrintInv(players[pnum].mo);
-}
-
-CCMD (targetinv)
-{
-	FTranslatedLineTarget t;
-
-	if (CheckCheatmode () || players[consoleplayer].mo == NULL)
-		return;
-
-	C_AimLine(&t, true);
-
-	if (t.linetarget)
-	{
-		C_PrintInv(t.linetarget);
-	}
-	else Printf("No target found. Targetinv cannot find actors that have "
-				"the NOBLOCKMAP flag or have height/radius of 0.\n");
 }
 

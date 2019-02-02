@@ -471,7 +471,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		for (i = 0; i < MAXPLAYERS; ++i)
 		{
 			if (playeringame[i])
-				players[i].SetLogText ("Find help");
+				players[i].SetLogText ("$TXT_FINDHELP");
 		}
 	}
 

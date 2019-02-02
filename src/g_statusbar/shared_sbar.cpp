@@ -55,6 +55,7 @@
 #include "vm.h"
 #include "p_acs.h"
 #include "sbarinfo.h"
+#include "gstrings.h"
 #include "events.h"
 #include "g_game.h"
 
@@ -1046,7 +1047,7 @@ void DBaseStatusBar::DrawLog ()
 		hudheight = SCREENHEIGHT / scale;
 
 		int linelen = hudwidth<640? Scale(hudwidth,9,10)-40 : 560;
-		auto lines = V_BreakLines (SmallFont, linelen, CPlayer->LogText);
+		auto lines = V_BreakLines (SmallFont, linelen, GStrings(CPlayer->LogText));
 		int height = 20;
 
 		for (unsigned i = 0; i < lines.Size(); i++) height += SmallFont->GetHeight () + 1;

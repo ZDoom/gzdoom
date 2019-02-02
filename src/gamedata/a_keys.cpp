@@ -555,7 +555,7 @@ int P_GetMapColorForKey (AActor * key)
 			foundlock = pair->Key;
 		}
 	}
-	return 0;
+	return rgb;
 }
 
 

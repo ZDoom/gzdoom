@@ -923,7 +923,7 @@ class CommandDrawString : public SBarInfoCommand
 					break;
 				}
 				case LOGTEXT:
-					str = statusBar->CPlayer->LogText;
+					str = GStrings(statusBar->CPlayer->LogText);
 					break;
 				default:
 					break;

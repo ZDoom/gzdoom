@@ -284,7 +284,7 @@ static bool CaptureMode_InGame()
 //
 //==========================================================================
 
-void I_CheckNativeMouse(bool preferNative)
+void I_CheckNativeMouse(bool preferNative, bool eventhandlerresult)
 {
 	bool windowed = (screen == NULL) || !screen->IsFullscreen();
 	bool want_native;
@@ -311,7 +311,7 @@ void I_CheckNativeMouse(bool preferNative)
 		}
 	}
 
-	if (!want_native && eventManager.CheckRequireMouse())
+	if (!want_native && eventhandlerresult)
 		want_native = true;
 
 	//Printf ("%d %d %d\n", wantNative, preferNative, NativeMouse);

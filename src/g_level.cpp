@@ -1486,12 +1486,32 @@ int FLevelLocals::FinishTravel ()
 //
 //==========================================================================
 
+FLevelLocals::FLevelLocals() : Behaviors(this), tagManager(this)
+{
+	// Make sure that these point to the right data all the time.
+	// This will be needed for as long as it takes to completely separate global UI state from per-level play state.
+	for (int i = 0; i < MAXPLAYERS; i++)
+	{
+		Players[i] = &players[i];
+	}
+	localEventManager = new EventManager;
+}
+
+FLevelLocals::~FLevelLocals()
+{
+	if (localEventManager) delete localEventManager;
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
 void FLevelLocals::Init()
 {
 	P_InitParticles(this);
 	P_ClearParticles(this);
 	BaseBlendA = 0.0f;		// Remove underwater blend effect, if any
-	localEventManager = new EventManager;
 
 	gravity = sv_gravity * 35/TICRATE;
 	aircontrol = sv_aircontrol;
@@ -2129,8 +2149,11 @@ void FLevelLocals::Mark()
 	GC::Mark(BotInfo.firstthing);
 	GC::Mark(BotInfo.body1);
 	GC::Mark(BotInfo.body2);
-	GC::Mark(localEventManager->FirstEventHandler);
-	GC::Mark(localEventManager->LastEventHandler);
+	if (localEventManager)
+	{
+		GC::Mark(localEventManager->FirstEventHandler);
+		GC::Mark(localEventManager->LastEventHandler);
+	}
 	Thinkers.MarkRoots();
 	canvasTextureInfo.Mark();
 	for (auto &c : CorpseQueue)

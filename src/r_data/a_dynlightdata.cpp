@@ -46,7 +46,7 @@
 
 inline PClassActor * GetRealType(PClassActor * ti)
 {
-	PClassActor *rep = ti->GetReplacement(false);
+	PClassActor *rep = ti->GetReplacement(nullptr, false);
 	if (rep != ti && rep != NULL && rep->IsDescendantOf(NAME_DehackedPickup))
 	{
 		return rep;

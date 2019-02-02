@@ -536,9 +536,11 @@ PClassActor *PClassActor::GetReplacement(FLevelLocals *Level, bool lookskill)
 			lookskill = false; skillrepname = NAME_None;
 		}
 	}
-	// [MK] ZScript replacement through Event Handlers, has priority over others
+	// [MK] ZScript replacement through Event Handlers, has priority over others.
 	PClassActor *Replacement = ActorInfo()->Replacement;
-	if (Level->localEventManager->CheckReplacement(this,&Replacement) )
+	// Level can be null when initializing dynamic lights.
+	// Since they only want to check for DehackedPickups this code should be skipped for them.
+	if (Level && Level->localEventManager->CheckReplacement(this,&Replacement) )
 	{
 		// [MK] the replacement is final, so don't continue with the chain
 		return Replacement ? Replacement : this;
@@ -561,7 +563,7 @@ PClassActor *PClassActor::GetReplacement(FLevelLocals *Level, bool lookskill)
 	}
 	// Now handle DECORATE replacement chain
 	// Skill replacements are not recursive, contrarily to DECORATE replacements
-	rep = rep->GetReplacement(false);
+	rep = rep->GetReplacement(Level, false);
 	// Reset the temporarily NULLed field
 	ActorInfo()->Replacement = oldrep;
 	return rep;
@@ -615,7 +617,7 @@ PClassActor *PClassActor::GetReplacee(FLevelLocals *Level, bool lookskill)
 	{
 		rep = PClass::FindActor(skillrepname);
 	}
-	rep = rep->GetReplacee(false);
+	rep = rep->GetReplacee(Level, false);
 	ActorInfo()->Replacee = savedrep;
 	return rep;
 }

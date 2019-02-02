@@ -106,15 +106,8 @@ struct FLevelLocals
 {
 	void *level;
 	void *Level;	// bug catchers.
-	FLevelLocals() : Behaviors(this), tagManager(this)
-	{
-		// Make sure that these point to the right data all the time.
-		// This will be needed for as long as it takes to completely separate global UI state from per-level play state.
-		for (int i = 0; i < MAXPLAYERS; i++)
-		{
-			Players[i] = &players[i];
-		}
-	}
+	FLevelLocals();
+	~FLevelLocals();
 
 	friend class MapLoader;
 

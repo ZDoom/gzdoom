@@ -338,8 +338,7 @@ void FLevelLocals::ClearLevelData()
 	Scrolls.Clear();
 	if (automap) automap->Destroy();
 	Behaviors.UnloadModules();
-	delete localEventManager;
-	localEventManager = nullptr;
+	localEventManager->Shutdown();
 }
 
 //==========================================================================

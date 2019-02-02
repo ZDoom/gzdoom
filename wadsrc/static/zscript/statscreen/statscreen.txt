@@ -224,7 +224,7 @@ class StatusScreen abstract play version("2.5")
 		if (y < (NG_STATSY - finished.mFont.GetHeight()*3/4) * CleanYfac)
 		{
 			// don't draw 'finished' if the level name is too tall
-			y = DrawPatchText(y, finished, "$FINISHED");
+			y = DrawPatchText(y, finished, "$WI_FINISHED");
 		}
 		return y;
 	}
@@ -243,7 +243,7 @@ class StatusScreen abstract play version("2.5")
 	{
 		int y = TITLEY * CleanYfac;
 
-		y = DrawPatchText(y, entering, "$ENTERING");
+		y = DrawPatchText(y, entering, "$WI_ENTERING");
 		y += entering.mFont.GetHeight() * CleanYfac / 4;
 		DrawName(y, wbs.LName1, lnametexts[1]);
 	}

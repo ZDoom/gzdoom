@@ -1464,6 +1464,8 @@ TXT_DOES_NOT_WORK = "That doesn't seem to work";
 
 // Strife Quest messages
 
+TXT_FINDHELP = "FIND HELP";
+
 TXT_QUEST_14 = "You've Blown Up the Crystal";
 TXT_QUEST_16 = "You've Blown Up the Gates";
 TXT_QUEST_27 = "You've Blown Up the Computer";

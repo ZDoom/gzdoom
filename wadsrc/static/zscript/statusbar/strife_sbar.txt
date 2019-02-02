@@ -432,7 +432,8 @@ class StrifeStatusBar : BaseStatusBar
 
 			if (CPlayer.LogText.Length() > 0)
 			{
-				BrokenLines lines = SmallFont2.BreakLines(CPlayer.LogText, 272);
+				let text = Stringtable.Localize(CPlayer.LogText);
+				BrokenLines lines = SmallFont2.BreakLines(text, 272);
 				for (i = 0; i < lines.Count(); ++i)
 				{
 					screen.DrawText(SmallFont2, Font.CR_UNTRANSLATED, left + 24 * xscale, top + (18 + i * 12)*yscale,

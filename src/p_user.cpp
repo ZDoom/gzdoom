@@ -89,6 +89,7 @@
 #include "actorinlines.h"
 #include "p_acs.h"
 #include "events.h"
+#include "gstrings.h"
 
 static FRandom pr_skullpop ("SkullPop");
 
@@ -441,7 +442,7 @@ void player_t::SetLogText (const char *text)
 	{
 		// Print log text to console
 		AddToConsole(-1, TEXTCOLOR_GOLD);
-		AddToConsole(-1, LogText);
+		AddToConsole(-1, GStrings(LogText));
 		AddToConsole(-1, "\n");
 	}
 }

@@ -1000,7 +1000,7 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 	// [ZZ] serialize health groups
 	P_SerializeHealthGroups(this, arc);
 	// [ZZ] serialize events
-	E_SerializeEvents(arc);
+	eventManager.SerializeEvents(arc);
 	Thinkers.SerializeThinkers(arc, hubload);
 	arc("polyobjs", Polyobjects);
 	SerializeSubsectors(arc, "subsectors");

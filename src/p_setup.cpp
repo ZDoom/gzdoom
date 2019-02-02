@@ -350,7 +350,7 @@ void P_FreeLevelData ()
 {
 
 	// [ZZ] delete per-map event handlers
-	E_Shutdown(true);
+	eventManager.Shutdown(true);
 	R_FreePastViewers();
 
 	for (auto Level : AllLevels())
@@ -425,7 +425,7 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 
 	// [ZZ] init per-map static handlers. we need to call this before everything is set up because otherwise scripts don't receive PlayerEntered event
 	//      (which happens at god-knows-what stage in this function, but definitely not the last part, because otherwise it'd work to put E_InitStaticHandlers before the player spawning)
-	E_InitStaticHandlers(true);
+	eventManager.InitStaticHandlers(true);
 
 	// generate a checksum for the level, to be included and checked with savegames.
 	map->GetChecksum(Level->md5);
@@ -434,7 +434,7 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 
 	if (newGame)
 	{
-		E_NewGame(EventHandlerType::PerMap);
+		eventManager.NewGame(EventHandlerType::PerMap);
 	}
 
 	MapLoader loader(Level);
@@ -587,7 +587,7 @@ static void P_Shutdown ()
 	}
 	P_FreeLevelData ();
 	// [ZZ] delete global event handlers
-	E_Shutdown(false);
+	eventManager.Shutdown(false);
 	ST_Clear();
 	for (auto &p : players)
 	{

@@ -311,7 +311,7 @@ void I_CheckNativeMouse(bool preferNative)
 		}
 	}
 
-	if (!want_native && E_CheckRequireMouse())
+	if (!want_native && eventManager.CheckRequireMouse())
 		want_native = true;
 
 	//Printf ("%d %d %d\n", wantNative, preferNative, NativeMouse);

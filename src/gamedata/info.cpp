@@ -395,7 +395,7 @@ void PClassActor::StaticInit()
 	InitBotStuff();
 
 	// reinit GLOBAL static stuff from gameinfo, once classes are loaded.
-	E_InitStaticHandlers(false);
+	eventManager.InitStaticHandlers(false);
 }
 
 //==========================================================================
@@ -538,7 +538,7 @@ PClassActor *PClassActor::GetReplacement(bool lookskill)
 	}
 	// [MK] ZScript replacement through Event Handlers, has priority over others
 	PClassActor *Replacement = ActorInfo()->Replacement;
-	if ( E_CheckReplacement(this,&Replacement) )
+	if (eventManager.CheckReplacement(this,&Replacement) )
 	{
 		// [MK] the replacement is final, so don't continue with the chain
 		return Replacement ? Replacement : this;
@@ -598,7 +598,7 @@ PClassActor *PClassActor::GetReplacee(bool lookskill)
 	// showing up, one can assign an Arachnotron as the one being replaced
 	// so functions like CheckReplacee and A_BossDeath can actually work, given
 	// modders set it up that way.
-	if (E_CheckReplacee(&savedrep, this))
+	if (eventManager.CheckReplacee(&savedrep, this))
 	{
 		// [MK] the replacement is final, so don't continue with the chain
 		return savedrep ? savedrep : this;

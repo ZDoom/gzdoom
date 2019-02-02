@@ -4682,7 +4682,7 @@ void AActor::PostBeginPlay ()
 void AActor::CallPostBeginPlay()
 {
 	Super::CallPostBeginPlay();
-	E_WorldThingSpawned(this);
+	eventManager.WorldThingSpawned(this);
 }
 
 bool AActor::isFast()
@@ -4800,7 +4800,7 @@ void AActor::OnDestroy ()
 	//      note that this differs from ThingSpawned in that you can actually override OnDestroy to avoid calling the hook.
 	//      but you can't really do that without utterly breaking the game, so it's ok.
 	//      note: if OnDestroy is ever made optional, E_WorldThingDestroyed should still be called for ANY thing.
-	E_WorldThingDestroyed(this);
+	eventManager.WorldThingDestroyed(this);
 
 	DeleteAttachedLights();
 	ClearRenderSectorList();
@@ -5155,7 +5155,7 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 
 			DObject::StaticPointerSubstitution (oldactor, p->mo);
 
-			E_PlayerRespawned(PlayerNum(p));
+			eventManager.PlayerRespawned(PlayerNum(p));
 			Behaviors.StartTypedScripts (SCRIPT_Respawn, p->mo, true);
 		}
 	}
@@ -7137,7 +7137,7 @@ void AActor::Revive()
 	}
 
 	// [ZZ] resurrect hook
-	E_WorldThingRevived(this);
+	eventManager.WorldThingRevived(this);
 }
 
 int AActor::GetGibHealth() const

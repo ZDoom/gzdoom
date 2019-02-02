@@ -1147,7 +1147,7 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 		DrawMessages (HUDMSGLayer_OverMap, (state == HUD_StatusBar) ? GetTopOfStatusbar() : SCREENHEIGHT);
 	}
 	DrawMessages (HUDMSGLayer_OverHUD, (state == HUD_StatusBar) ? GetTopOfStatusbar() : SCREENHEIGHT);
-	E_RenderOverlay(state);
+	eventManager.RenderOverlay(state);
 
 	DrawConsistancy ();
 	DrawWaiting ();

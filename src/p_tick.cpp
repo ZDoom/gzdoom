@@ -149,7 +149,7 @@ void P_Ticker (void)
 			P_PlayerThink (&players[i]);
 
 	// [ZZ] call the WorldTick hook
-	E_WorldTick();
+	eventManager.WorldTick();
 	StatusBar->CallTick ();		// [RH] moved this here
 	for (auto Level : AllLevels())
 	{

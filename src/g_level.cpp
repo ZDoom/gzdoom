@@ -454,7 +454,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 
 	// did we have any level before?
 	if (primaryLevel->info != nullptr)
-		E_WorldUnloadedUnsafe();
+		eventManager.WorldUnloadedUnsafe();
 
 	if (!savegamerestore)
 	{
@@ -663,9 +663,9 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int flags, i
 	unloading = true;
 	Behaviors.StartTypedScripts (SCRIPT_Unloading, NULL, false, 0, true);
 	// [ZZ] safe world unload
-	E_WorldUnloaded();
+	eventManager.WorldUnloaded();
 	// [ZZ] unsafe world unload (changemap != map)
-	E_WorldUnloadedUnsafe();
+	eventManager.WorldUnloadedUnsafe();
 	unloading = false;
 
 	STAT_ChangeLevel(nextlevel, this);
@@ -1063,7 +1063,7 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 
 	if (newGame)
 	{
-		E_NewGame(EventHandlerType::Global);
+		eventManager.NewGame(EventHandlerType::Global);
 	}
 
 	P_SetupLevel (this, position, newGame);
@@ -1118,7 +1118,7 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 			}
 
 			const bool fromSnapshot = FromSnapshot;
-			E_PlayerEntered(ii, fromSnapshot && finishstate == FINISH_SameHub);
+			eventManager.PlayerEntered(ii, fromSnapshot && finishstate == FINISH_SameHub);
 
 			if (fromSnapshot)
 			{
@@ -1136,9 +1136,9 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
 	//      unsafe world load
-	E_WorldLoadedUnsafe();
+	eventManager.WorldLoadedUnsafe();
 	//      regular world load (savegames are handled internally)
-	E_WorldLoaded();
+	eventManager.WorldLoaded();
 	DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
 	
 

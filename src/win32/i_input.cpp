@@ -174,7 +174,7 @@ static void I_CheckGUICapture ()
 	}
 
 	// [ZZ] check active event handlers that want the UI processing
-	if (!wantCapt && E_CheckUiProcessors())
+	if (!wantCapt && eventManager.CheckUiProcessors())
 		wantCapt = true;
 
 	if (wantCapt != GUICapture)

@@ -282,8 +282,8 @@ static void MarkRoot()
 	Mark(StatusBar);
 	M_MarkMenus();
 	Mark(DIntermissionController::CurrentIntermission);
-	Mark(E_FirstEventHandler);
-	Mark(E_LastEventHandler);
+	Mark(eventManager.FirstEventHandler);
+	Mark(eventManager.LastEventHandler);
 	for (auto Level : AllLevels())
 		Level->Mark();
 

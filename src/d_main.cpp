@@ -273,7 +273,7 @@ void D_ProcessEvents (void)
 		if (M_Responder (ev))
 			continue;				// menu ate the event
 		// check events
-		if (ev->type != EV_Mouse && E_Responder(ev)) // [ZZ] ZScript ate the event // update 07.03.17: mouse events are handled directly
+		if (ev->type != EV_Mouse && eventManager.Responder(ev)) // [ZZ] ZScript ate the event // update 07.03.17: mouse events are handled directly
 			continue;
 		G_Responder (ev);
 	}
@@ -295,7 +295,7 @@ void D_PostEvent (const event_t *ev)
 		return;
 	}
 	events[eventhead] = *ev;
-	if (ev->type == EV_Mouse && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling && !E_Responder(ev) && !paused)
+	if (ev->type == EV_Mouse && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling && !eventManager.Responder(ev) && !paused)
 	{
 		if (Button_Mlook.bDown || freelook)
 		{
@@ -2730,7 +2730,7 @@ void D_DoomMain (void)
 		{
 			Level->Thinkers.DestroyThinkersInList(STAT_STATIC);
 		}
-		E_Shutdown(false);
+		eventManager.Shutdown(false);
 		P_FreeLevelData();
 
 		M_SaveDefaults(NULL);			// save config before the restart

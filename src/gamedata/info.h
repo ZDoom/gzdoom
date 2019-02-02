@@ -350,8 +350,8 @@ public:
 		return i != nullptr && state >= i->OwnedStates && state < i->OwnedStates + i->NumOwnedStates;
 	}
 
-	PClassActor *GetReplacement(bool lookskill=true);
-	PClassActor *GetReplacee(bool lookskill=true);
+	PClassActor *GetReplacement(FLevelLocals *Level, bool lookskill=true);
+	PClassActor *GetReplacee(FLevelLocals *Level, bool lookskill=true);
 
 	// For those times when being able to scan every kind of actor is convenient
 	static TArray<PClassActor *> AllActorClasses;

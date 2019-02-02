@@ -1232,26 +1232,26 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetSpriteIndex, ZS_GetSpriteIndex)
 
 static PClassActor *ZS_GetReplacement(PClassActor *c)
 {
-	return c->GetReplacement();
+	return c->GetReplacement(currentVMLevel);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetReplacement, ZS_GetReplacement)
 {
 	PARAM_PROLOGUE;
 	PARAM_POINTER(c, PClassActor);
-	ACTION_RETURN_POINTER(c->GetReplacement());
+	ACTION_RETURN_POINTER(ZS_GetReplacement(c));
 }
 
 static PClassActor *ZS_GetReplacee(PClassActor *c)
 {
-	return c->GetReplacee();
+	return c->GetReplacee(currentVMLevel);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetReplacee, ZS_GetReplacee)
 {
 	PARAM_PROLOGUE;
 	PARAM_POINTER(c, PClassActor);
-	ACTION_RETURN_POINTER(c->GetReplacee());
+	ACTION_RETURN_POINTER(ZS_GetReplacee(c));
 }
 
 static void DrawSplash(AActor *self, int count, double angle, int kind)

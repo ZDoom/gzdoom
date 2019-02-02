@@ -1,5 +1,4 @@
-#ifndef EVENTS_H
-#define EVENTS_H
+#pragma once 
 
 #include "dobject.h"
 #include "serializer.h"
@@ -8,6 +7,7 @@
 #include "sbar.h"
 
 class DStaticEventHandler;
+struct EventManager;
 
 enum class EventHandlerType
 {
@@ -34,6 +34,7 @@ public:
 		IsUiProcessor = false;
 	}
 
+	EventManager *owner;
 	DStaticEventHandler* prev;
 	DStaticEventHandler* next;
 	virtual bool IsStatic() { return true; }
@@ -58,6 +59,8 @@ public:
 		}
 		*/
 
+		arc("next", next);
+		arc("prev", prev);
 		arc("Order", Order);
 		arc("IsUiProcessor", IsUiProcessor);
 		arc("RequireMouse", RequireMouse);
@@ -228,8 +231,14 @@ struct FReplacedEvent
 
 struct EventManager
 {
+	FLevelLocals *Level = nullptr;
 	DStaticEventHandler* FirstEventHandler = nullptr;
 	DStaticEventHandler* LastEventHandler = nullptr;
+
+	EventManager() = default;
+	EventManager(FLevelLocals *l) { Level = l; }
+	~EventManager() { Shutdown(); }
+	bool ShouldCallStatic(bool forplay);
 
 	// register
 	bool RegisterHandler(DStaticEventHandler* handler);
@@ -242,16 +251,12 @@ struct EventManager
 	// init static handlers
 	void InitStaticHandlers(bool map);
 	// shutdown handlers
-	void Shutdown(bool map);
+	void Shutdown();
 
 	// called right after the map has loaded (approximately same time as OPEN ACS scripts)
 	void WorldLoaded();
 	// called when the map is about to unload (approximately same time as UNLOADING ACS scripts)
 	void WorldUnloaded();
-	// called right after the map has loaded (every time, UNSAFE VERSION)
-	void WorldLoadedUnsafe();
-	// called right before the map is unloaded (every time, UNSAFE VERSION)
-	void WorldUnloadedUnsafe();
 	// called around PostBeginPlay of each actor.
 	void WorldThingSpawned(AActor* actor);
 	// called after AActor::Die of each actor.
@@ -301,7 +306,7 @@ struct EventManager
 	bool CheckReplacee(PClassActor** replacee, PClassActor* replacement);
 
 	// called on new game
-	void NewGame(EventHandlerType handlerType);
+	void NewGame();
 
 	// send networked event. unified function.
 	bool SendNetworkEvent(FString name, int arg1, int arg2, int arg3, bool manual);
@@ -311,15 +316,19 @@ struct EventManager
 	// check if we need native mouse due to UiProcessors
 	bool CheckRequireMouse();
 
-	// serialization stuff
-	void SerializeEvents(FSerializer& arc);
-
 	void InitHandler(PClass* type);
 	FWorldEvent SetupWorldEvent();
 	FRenderEvent SetupRenderEvent();
 
+	void SetOwnerForHandlers()
+	{
+		for (DStaticEventHandler* existinghandler = FirstEventHandler; existinghandler; existinghandler = existinghandler->next)
+		{
+			existinghandler->owner = this;
+		}
+	}
+
 };
 
 extern EventManager eventManager;
-
-#endif
+extern EventManager staticEventManager;

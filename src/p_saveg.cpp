@@ -1000,7 +1000,8 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 	// [ZZ] serialize health groups
 	P_SerializeHealthGroups(this, arc);
 	// [ZZ] serialize events
-	eventManager.SerializeEvents(arc);
+	arc("firstevent", localEventManager->FirstEventHandler)
+		("lastevent", localEventManager->LastEventHandler);
 	Thinkers.SerializeThinkers(arc, hubload);
 	arc("polyobjs", Polyobjects);
 	SerializeSubsectors(arc, "subsectors");
@@ -1024,6 +1025,7 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 				FWeaponSlots::SetupWeaponSlots(Players[i]->mo);
 			}
 		}
+		localEventManager->SetOwnerForHandlers();	// This cannot be automated.
 		RecreateAllAttachedLights();
 		InitPortalGroups(this);
 

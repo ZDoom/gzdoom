@@ -96,6 +96,7 @@ class DAutomapBase;
 struct wbstartstruct_t;
 class DSectorMarker;
 struct FTranslator;
+struct EventManager;
 
 typedef TMap<int, int> FDialogueIDMap;				// maps dialogue IDs to dialogue array index (for ACS)
 typedef TMap<FName, int> FDialogueMap;				// maps actor class names to dialogue array index
@@ -442,6 +443,7 @@ public:
 	TArray<FLinePortalSpan> linePortalSpans;
 	FSectionContainer sections;
 	FCanvasTextureInfo canvasTextureInfo;
+	EventManager *localEventManager = nullptr;
 
 	// [ZZ] Destructible geometry information
 	TMap<int, FHealthGroup> healthGroups;

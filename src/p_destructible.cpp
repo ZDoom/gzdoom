@@ -124,7 +124,7 @@ void P_DamageLinedef(line_t* line, AActor* source, int damage, FName damagetype,
 
 	if (dogroups)
 	{
-		damage = eventManager.WorldLineDamaged(line, source, damage, damagetype, side, position, isradius);
+		damage = line->GetLevel()->localEventManager->WorldLineDamaged(line, source, damage, damagetype, side, position, isradius);
 		if (damage < 0) damage = 0;
 	}
 
@@ -160,7 +160,7 @@ void P_DamageSector(sector_t* sector, AActor* source, int damage, FName damagety
 
 	if (dogroups)
 	{
-		damage = eventManager.WorldSectorDamaged(sector, source, damage, damagetype, part, position, isradius);
+		damage = sector->Level->localEventManager->WorldSectorDamaged(sector, source, damage, damagetype, part, position, isradius);
 		if (damage < 0) damage = 0;
 	}
 

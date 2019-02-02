@@ -1208,7 +1208,7 @@ bool AActor::Grind(bool items)
 
 			if (i != NULL)
 			{
-				i = i->GetReplacement();
+				i = i->GetReplacement(Level);
 
 				const AActor *defaults = GetDefaultByType (i);
 				if (defaults->SpawnState == NULL ||
@@ -4539,7 +4539,7 @@ AActor *AActor::StaticSpawn(FLevelLocals *Level, PClassActor *type, const DVecto
 
 	if (allowreplacement)
 	{
-		type = type->GetReplacement();
+		type = type->GetReplacement(Level);
 	}
 
 	AActor *actor;
@@ -4682,7 +4682,7 @@ void AActor::PostBeginPlay ()
 void AActor::CallPostBeginPlay()
 {
 	Super::CallPostBeginPlay();
-	eventManager.WorldThingSpawned(this);
+	Level->localEventManager->WorldThingSpawned(this);
 }
 
 bool AActor::isFast()
@@ -4800,7 +4800,7 @@ void AActor::OnDestroy ()
 	//      note that this differs from ThingSpawned in that you can actually override OnDestroy to avoid calling the hook.
 	//      but you can't really do that without utterly breaking the game, so it's ok.
 	//      note: if OnDestroy is ever made optional, E_WorldThingDestroyed should still be called for ANY thing.
-	eventManager.WorldThingDestroyed(this);
+	Level->localEventManager->WorldThingDestroyed(this);
 
 	DeleteAttachedLights();
 	ClearRenderSectorList();
@@ -5155,7 +5155,7 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 
 			DObject::StaticPointerSubstitution (oldactor, p->mo);
 
-			eventManager.PlayerRespawned(PlayerNum(p));
+			localEventManager->PlayerRespawned(PlayerNum(p));
 			Behaviors.StartTypedScripts (SCRIPT_Respawn, p->mo, true);
 		}
 	}
@@ -5363,7 +5363,7 @@ AActor *FLevelLocals::SpawnMapThing (FMapThing *mthing, int position)
 	//		it to the unknown thing.
 		// Handle decorate replacements explicitly here
 		// to check for missing frames in the replacement object.
-	i = mentry->Type->GetReplacement();
+	i = mentry->Type->GetReplacement(this);
 
 		const AActor *defaults = GetDefaultByType (i);
 		if (defaults->SpawnState == NULL ||
@@ -7137,7 +7137,7 @@ void AActor::Revive()
 	}
 
 	// [ZZ] resurrect hook
-	eventManager.WorldThingRevived(this);
+	Level->localEventManager->WorldThingRevived(this);
 }
 
 int AActor::GetGibHealth() const

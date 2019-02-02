@@ -3073,7 +3073,7 @@ void A_BossDeath(AActor *self)
 	FName mytype = self->GetClass()->TypeName;
 
 	// Ugh...
-	FName type = self->GetClass()->GetReplacee()->TypeName;
+	FName type = self->GetClass()->GetReplacee(self->Level)->TypeName;
 	
 	// Do generic special death actions first
 	bool checked = false;

@@ -404,27 +404,27 @@ void FCajunMaster::RemoveAllBots (FLevelLocals *Level, bool fromlist)
 
 	for (i = 0; i < MAXPLAYERS; ++i)
 	{
-		if (players[i].Bot != NULL)
+		if (Level->Players[i]->Bot != nullptr)
 		{
 			// If a player is looking through this bot's eyes, make him
 			// look through his own eyes instead.
 			for (j = 0; j < MAXPLAYERS; ++j)
 			{
-				if (i != j && playeringame[j] && players[j].Bot == NULL)
+				if (i != j && Level->PlayerInGame(j) && Level->Players[j]->Bot == nullptr)
 				{
-					if (players[j].camera == players[i].mo)
+					if (Level->Players[j]->camera == Level->Players[i]->mo)
 					{
-						players[j].camera = players[j].mo;
-						if (j == consoleplayer)
+						Level->Players[j]->camera = Level->Players[j]->mo;
+						if (Level->isConsolePlayer(Level->Players[j]->mo))
 						{
-							StatusBar->AttachToPlayer (players + j);
+							StatusBar->AttachToPlayer (Level->Players[j]);
 						}
 					}
 				}
 			}
 			// [ZZ] run event hook
-			eventManager.PlayerDisconnected(i);
-			Level->Behaviors.StartTypedScripts (SCRIPT_Disconnect, players[i].mo, true, i, true);
+			Level->localEventManager->PlayerDisconnected(i);
+			Level->Behaviors.StartTypedScripts (SCRIPT_Disconnect, Level->Players[i]->mo, true, i, true);
 			ClearPlayer (i, !fromlist);
 		}
 	}

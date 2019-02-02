@@ -4415,7 +4415,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	shootz += sz;
 
 	// We need to check the defaults of the replacement here
-	AActor *puffDefaults = GetDefaultByType(pufftype->GetReplacement());
+	AActor *puffDefaults = GetDefaultByType(pufftype->GetReplacement(t1->Level));
 	
 	TData.hitGhosts = (t1->player != NULL &&
 		t1->player->ReadyWeapon != NULL &&
@@ -5161,7 +5161,7 @@ void P_RailAttack(FRailParams *p)
 	int flags;
 
 	assert(puffclass != NULL);		// Because we set it to a default above
-	AActor *puffDefaults = GetDefaultByType(puffclass->GetReplacement()); //Contains all the flags such as FOILINVUL, etc.
+	AActor *puffDefaults = GetDefaultByType(puffclass->GetReplacement(source->Level)); //Contains all the flags such as FOILINVUL, etc.
 
 	// disabled because not complete yet.
 	flags = (puffDefaults->flags6 & MF6_NOTRIGGER) ? TRACE_ReportPortals : TRACE_PCross | TRACE_Impact | TRACE_ReportPortals;

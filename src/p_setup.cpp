@@ -338,6 +338,8 @@ void FLevelLocals::ClearLevelData()
 	Scrolls.Clear();
 	if (automap) automap->Destroy();
 	Behaviors.UnloadModules();
+	delete localEventManager;
+	localEventManager = nullptr;
 }
 
 //==========================================================================
@@ -348,9 +350,6 @@ void FLevelLocals::ClearLevelData()
 
 void P_FreeLevelData ()
 {
-
-	// [ZZ] delete per-map event handlers
-	eventManager.Shutdown(true);
 	R_FreePastViewers();
 
 	for (auto Level : AllLevels())
@@ -425,7 +424,7 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 
 	// [ZZ] init per-map static handlers. we need to call this before everything is set up because otherwise scripts don't receive PlayerEntered event
 	//      (which happens at god-knows-what stage in this function, but definitely not the last part, because otherwise it'd work to put E_InitStaticHandlers before the player spawning)
-	eventManager.InitStaticHandlers(true);
+	Level->localEventManager->InitStaticHandlers(true);
 
 	// generate a checksum for the level, to be included and checked with savegames.
 	map->GetChecksum(Level->md5);
@@ -434,7 +433,7 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 
 	if (newGame)
 	{
-		eventManager.NewGame(EventHandlerType::PerMap);
+		Level->localEventManager->NewGame();
 	}
 
 	MapLoader loader(Level);
@@ -587,7 +586,7 @@ static void P_Shutdown ()
 	}
 	P_FreeLevelData ();
 	// [ZZ] delete global event handlers
-	eventManager.Shutdown(false);
+	staticEventManager.Shutdown();	// clear out the handlers before starting the engine shutdown
 	ST_Clear();
 	for (auto &p : players)
 	{

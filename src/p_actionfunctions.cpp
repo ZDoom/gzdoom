@@ -3393,7 +3393,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WolfAttack)
 			|| (self->target->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)));
 		if (flags & WAF_USEPUFF && pufftype)
 		{
-			AActor *dpuff = GetDefaultByType(pufftype->GetReplacement());
+			AActor *dpuff = GetDefaultByType(pufftype->GetReplacement(self->Level));
 			mod = dpuff->DamageType;
 
 			if (dpuff->flags2 & MF2_THRUGHOST && self->target->flags3 & MF3_GHOST)

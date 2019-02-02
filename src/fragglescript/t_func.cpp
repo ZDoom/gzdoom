@@ -3615,7 +3615,7 @@ void FParser::SF_ThingCount(void)
 		pClass=T_GetMobjType(t_argv[0]);
 		if (!pClass) return;
 		// If we want to count map items we must consider actor replacement
-		pClass = pClass->GetReplacement();
+		pClass = pClass->GetReplacement(Level);
 		
 	again:
 		auto it = Level->GetThinkerIterator<AActor>();
@@ -3644,7 +3644,7 @@ void FParser::SF_ThingCount(void)
 		{
 			// Again, with decorate replacements
 			replacemented = true;
-			PClassActor *newkind = pClass->GetReplacement();
+			PClassActor *newkind = pClass->GetReplacement(Level);
 			if (newkind != pClass)
 			{
 				pClass = newkind;

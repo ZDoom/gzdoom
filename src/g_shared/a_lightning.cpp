@@ -178,7 +178,7 @@ void DLightningThinker::LightningFlash ()
 	Level->flags |= LEVEL_SWAPSKIES;	// set alternate sky
 	S_Sound (CHAN_AUTO, "world/thunder", 1.0, ATTN_NONE);
 	// [ZZ] just in case
-	eventManager.WorldLightning();
+	Level->localEventManager->WorldLightning();
 	// start LIGHTNING scripts
 	Level->Behaviors.StartTypedScripts (SCRIPT_Lightning, NULL, false);	// [RH] Run lightning scripts
 

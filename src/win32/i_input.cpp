@@ -91,6 +91,7 @@
 #include "events.h"
 #include "doomerrors.h"
 #include "i_system.h"
+#include "g_levellocals.h"
 
 // Prototypes and declarations.
 #include "rawinput.h"
@@ -177,7 +178,7 @@ static void I_CheckGUICapture ()
 	}
 
 	// [ZZ] check active event handlers that want the UI processing
-	if (!wantCapt && eventManager.CheckUiProcessors())
+	if (!wantCapt && primaryLevel->localEventManager->CheckUiProcessors())
 		wantCapt = true;
 
 	if (wantCapt != GUICapture)
@@ -781,7 +782,7 @@ void I_StartTic ()
 	BlockMouseMove--;
 	ResetButtonTriggers ();
 	I_CheckGUICapture ();
-	EventHandlerResultForNativeMouse = eventManager.CheckRequireMouse();
+	EventHandlerResultForNativeMouse = primaryLevel->localEventManager->CheckRequireMouse();
 	I_CheckNativeMouse (false, EventHandlerResultForNativeMouse);
 	I_GetEvent ();
 }

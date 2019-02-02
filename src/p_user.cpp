@@ -654,8 +654,7 @@ bool player_t::Resurrect()
 
 	// player is now alive.
 	// fire E_PlayerRespawned and start the ACS SCRIPT_Respawn.
-	eventManager.PlayerRespawned(pnum);
-	//
+	mo->Level->localEventManager->PlayerRespawned(pnum);
 	mo->Level->Behaviors.StartTypedScripts(SCRIPT_Respawn, mo, true);
 	return true;
 }

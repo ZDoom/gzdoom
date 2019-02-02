@@ -1173,7 +1173,7 @@ void G_Ticker ()
 	}
 
 	// [ZZ] also tick the UI part of the events
-	eventManager.UiTick();
+	primaryLevel->localEventManager->UiTick();
 	C_RunDelayedCommands();
 
 	// do main actions
@@ -1213,7 +1213,7 @@ void G_Ticker ()
 	}
 
 	// [MK] Additional ticker for UI events right after all others
-	eventManager.PostUiTick();
+	primaryLevel->localEventManager->PostUiTick();
 }
 
 
@@ -1697,7 +1697,7 @@ void G_DoPlayerPop(int playernum)
 	auto mo = players[playernum].mo;
 	mo->Level->Behaviors.StopMyScripts(mo);
 	// [ZZ] fire player disconnect hook
-	eventManager.PlayerDisconnected(playernum);
+	mo->Level->localEventManager->PlayerDisconnected(playernum);
 	// [RH] Let the scripts know the player left
 	mo->Level->Behaviors.StartTypedScripts(SCRIPT_Disconnect, mo, true, playernum, true);
 	if (mo != NULL)

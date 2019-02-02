@@ -2561,7 +2561,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 			if (cls != NULL)
 			{
 				killcount = primaryLevel->Massacre(false, cls->TypeName);
-				PClassActor *cls_rep = cls->GetReplacement();
+				PClassActor *cls_rep = cls->GetReplacement(primaryLevel);
 				if (cls != cls_rep)
 				{
 					killcount += primaryLevel->Massacre(false, cls_rep->TypeName);
@@ -2583,7 +2583,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		if (cls != NULL && cls->IsDescendantOf(RUNTIME_CLASS(AActor)))
 		{
 			removecount = RemoveClass(primaryLevel, cls);
-			const PClass *cls_rep = cls->GetReplacement();
+			const PClass *cls_rep = cls->GetReplacement(primaryLevel);
 			if (cls != cls_rep)
 			{
 				removecount += RemoveClass(primaryLevel, cls_rep);
@@ -2671,7 +2671,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 			for (int i = 0; i < 3; i++)
 				arg[i] = ReadLong(stream);
 			bool manual = !!ReadByte(stream);
-			eventManager.Console(player, s, arg[0], arg[1], arg[2], manual);
+			primaryLevel->localEventManager->Console(player, s, arg[0], arg[1], arg[2], manual);
 		}
 		break;
 

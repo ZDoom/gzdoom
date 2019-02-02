@@ -454,7 +454,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 
 	// did we have any level before?
 	if (primaryLevel->info != nullptr)
-		eventManager.WorldUnloadedUnsafe();
+		staticEventManager.WorldUnloaded();
 
 	if (!savegamerestore)
 	{
@@ -663,9 +663,13 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int flags, i
 	unloading = true;
 	Behaviors.StartTypedScripts (SCRIPT_Unloading, NULL, false, 0, true);
 	// [ZZ] safe world unload
-	eventManager.WorldUnloaded();
+	for (auto Level : AllLevels())
+	{
+		// Todo: This must be exolicitly sandboxed!
+		Level->localEventManager->WorldUnloaded();
+	}
 	// [ZZ] unsafe world unload (changemap != map)
-	eventManager.WorldUnloadedUnsafe();
+	staticEventManager.WorldUnloaded();
 	unloading = false;
 
 	STAT_ChangeLevel(nextlevel, this);
@@ -1019,13 +1023,16 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 	if (flags2 & LEVEL2_FORCETEAMPLAYOFF)
 		teamplay = false;
 
-	FString mapname = nextmapname;
-	mapname.ToLower();
-	Printf (
+	if (isPrimaryLevel())
+	{
+		FString mapname = nextmapname;
+		mapname.ToLower();
+		Printf(
 			"\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
 			"\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n"
 			TEXTCOLOR_BOLD "%s - %s\n\n",
 			mapname.GetChars(), LevelName.GetChars());
+	}
 
 	// Set the sky map.
 	// First thing, we have a dummy sky texture name,
@@ -1063,7 +1070,7 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 
 	if (newGame)
 	{
-		eventManager.NewGame(EventHandlerType::Global);
+		staticEventManager.NewGame();
 	}
 
 	P_SetupLevel (this, position, newGame);
@@ -1118,7 +1125,7 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 			}
 
 			const bool fromSnapshot = FromSnapshot;
-			eventManager.PlayerEntered(ii, fromSnapshot && finishstate == FINISH_SameHub);
+			localEventManager->PlayerEntered(ii, fromSnapshot && finishstate == FINISH_SameHub);
 
 			if (fromSnapshot)
 			{
@@ -1136,9 +1143,9 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
 	//      unsafe world load
-	eventManager.WorldLoadedUnsafe();
+	staticEventManager.WorldLoaded();
 	//      regular world load (savegames are handled internally)
-	eventManager.WorldLoaded();
+	localEventManager->WorldLoaded();
 	DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
 	
 
@@ -1484,6 +1491,7 @@ void FLevelLocals::Init()
 	P_InitParticles(this);
 	P_ClearParticles(this);
 	BaseBlendA = 0.0f;		// Remove underwater blend effect, if any
+	localEventManager = new EventManager;
 
 	gravity = sv_gravity * 35/TICRATE;
 	aircontrol = sv_aircontrol;
@@ -2121,6 +2129,8 @@ void FLevelLocals::Mark()
 	GC::Mark(BotInfo.firstthing);
 	GC::Mark(BotInfo.body1);
 	GC::Mark(BotInfo.body2);
+	GC::Mark(localEventManager->FirstEventHandler);
+	GC::Mark(localEventManager->LastEventHandler);
 	Thinkers.MarkRoots();
 	canvasTextureInfo.Mark();
 	for (auto &c : CorpseQueue)

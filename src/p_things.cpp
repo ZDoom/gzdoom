@@ -62,7 +62,7 @@ bool FLevelLocals::EV_Thing_Spawn (int tid, AActor *source, int type, DAngle ang
 		return false;
 
 	// Handle decorate replacements.
-	kind = kind->GetReplacement();
+	kind = kind->GetReplacement(this);
 
 	if ((GetDefaultByType(kind)->flags3 & MF3_ISMONSTER) && 
 		((dmflags & DF_NO_MONSTERS) || (flags2 & LEVEL2_NOMONSTERS)))
@@ -274,7 +274,7 @@ bool FLevelLocals::EV_Thing_Projectile (int tid, AActor *source, int type, const
 	}
 
 	// Handle decorate replacements.
-	kind = kind->GetReplacement();
+	kind = kind->GetReplacement(this);
 
 	defflags3 = GetDefaultByType(kind)->flags3;
 	if ((defflags3 & MF3_ISMONSTER) && 

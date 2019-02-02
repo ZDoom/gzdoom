@@ -127,9 +127,14 @@ void P_Ticker (void)
 	P_ResetSightCounters (false);
 	R_ClearInterpolationPath();
 
+	// Since things will be moving, it's okay to interpolate them in the renderer.
+	r_NoInterpolate = false;
+
 	// Reset all actor interpolations on all levels before the current thinking turn so that indirect actor movement gets properly interpolated.
 	for (auto Level : AllLevels())
 	{
+		// todo: set up a sandbox for secondary levels here.
+
 		auto it = Level->GetThinkerIterator<AActor>();
 		AActor *ac;
 
@@ -138,22 +143,13 @@ void P_Ticker (void)
 			ac->ClearInterpolation();
 		}
 		P_ThinkParticles(Level);	// [RH] make the particles think
-	}
 
-	// Since things will be moving, it's okay to interpolate them in the renderer.
-	r_NoInterpolate = false;
+		for (i = 0; i < MAXPLAYERS; i++)
+			if (Level->PlayerInGame(i))
+				P_PlayerThink(Level->Players[i]);
 
-
-	for (i = 0; i<MAXPLAYERS; i++)
-		if (playeringame[i])
-			P_PlayerThink (&players[i]);
-
-	// [ZZ] call the WorldTick hook
-	eventManager.WorldTick();
-	StatusBar->CallTick ();		// [RH] moved this here
-	for (auto Level : AllLevels())
-	{
-		// todo: set up a sandbox for secondary levels here.
+		// [ZZ] call the WorldTick hook
+		Level->localEventManager->WorldTick();
 		Level->Tick();			// [RH] let the level tick
 		Level->Thinkers.RunThinkers(Level);
 
@@ -169,4 +165,5 @@ void P_Ticker (void)
 		Level->maptime++;
 		Level->totaltime++;
 	}
+	StatusBar->CallTick();		// Status bar should tick AFTER the thinkers to properly reflect the level's state at this time.
 }

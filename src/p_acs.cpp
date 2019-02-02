@@ -3639,7 +3639,7 @@ do_count:
 	{
 		// Again, with decorate replacements
 		replacemented = true;
-		PClassActor *newkind = kind->GetReplacement();
+		PClassActor *newkind = kind->GetReplacement(Level);
 		if (newkind != kind)
 		{
 			kind = newkind;
@@ -3727,7 +3727,7 @@ int DLevelScript::DoSpawn (int type, const DVector3 &pos, int tid, DAngle angle,
 
 	if (info != NULL)
 	{
-		info = info->GetReplacement ();
+		info = info->GetReplacement (Level);
 
 		if ((GetDefaultByType (info)->flags3 & MF3_ISMONSTER) &&
 			((dmflags & DF_NO_MONSTERS) || (Level->flags2 & LEVEL2_NOMONSTERS)))

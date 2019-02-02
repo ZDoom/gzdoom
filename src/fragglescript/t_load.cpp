@@ -294,9 +294,9 @@ void T_LoadScripts(FLevelLocals *Level, MapData *map)
 	// the default translator is being used.
 	// Custom translators will not be patched.
 	if ((gameinfo.gametype == GAME_Doom || gameinfo.gametype == GAME_Heretic) && Level->info->Translator.IsEmpty() &&
-		Level->maptype == MAPTYPE_DOOM && SimpleLineTranslations.Size() > 272 && SimpleLineTranslations[272 - 2*HasScripts].special == FS_Execute)
+		Level->maptype == MAPTYPE_DOOM && Level->Translator->SimpleLineTranslations.Size() > 272 && Level->Translator->SimpleLineTranslations[272 - 2*HasScripts].special == FS_Execute)
 	{
-		std::swap(SimpleLineTranslations[270], SimpleLineTranslations[272]);
+		std::swap(Level->Translator->SimpleLineTranslations[270], Level->Translator->SimpleLineTranslations[272]);
 	}
 }
 

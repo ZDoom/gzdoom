@@ -56,8 +56,11 @@ typedef enum
 	PushMany,
 } triggertype_e;
 
+
 void FLevelLocals::TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineindexforid)
 {
+	auto translator = Translator;
+
 	uint32_t special = mld->special;
 	short tag = mld->tag;
 	uint32_t flags =mld->flags;
@@ -68,16 +71,16 @@ void FLevelLocals::TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineinde
 
 	for(int i=0;i<16;i++)
 	{
-		if ((flags & (1<<i)) && LineFlagTranslations[i].ismask)
+		if ((flags & (1<<i)) && translator->LineFlagTranslations[i].ismask)
 		{
-			flags1 &= LineFlagTranslations[i].newvalue;
+			flags1 &= translator->LineFlagTranslations[i].newvalue;
 		}
 	}
 	for(int i=0;i<16;i++)
 	{
-		if ((flags1 & (1<<i)) && !LineFlagTranslations[i].ismask)
+		if ((flags1 & (1<<i)) && !translator->LineFlagTranslations[i].ismask)
 		{
-			switch (LineFlagTranslations[i].newvalue)
+			switch (translator->LineFlagTranslations[i].newvalue)
 			{
 			case -1:
 				passthrough = true;
@@ -89,7 +92,7 @@ void FLevelLocals::TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineinde
 				ld->alpha = 0.25;
 				break;
 			default:
-				newflags |= LineFlagTranslations[i].newvalue;
+				newflags |= translator->LineFlagTranslations[i].newvalue;
 				break;
 			}
 		}
@@ -116,7 +119,7 @@ void FLevelLocals::TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineinde
 	}
 
 	FLineTrans *linetrans = NULL;
-	if (special < SimpleLineTranslations.Size()) linetrans = &SimpleLineTranslations[special];
+	if (special < translator->SimpleLineTranslations.Size()) linetrans = &translator->SimpleLineTranslations[special];
 	if (linetrans != NULL && linetrans->special != 0)
 	{
 		ld->special = linetrans->special;
@@ -157,7 +160,7 @@ void FLevelLocals::TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineinde
 				break;
 			case ARGOP_Expr:
 				{
-					int *xnode = &XlatExpressions[arg];
+					int *xnode = &translator->XlatExpressions[arg];
 					state.bIsConstant = true;
 					XlatExprEval[*xnode](&ld->args[t], xnode, &state);
 				}
@@ -176,9 +179,9 @@ void FLevelLocals::TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineinde
 		return;
 	}
 
-	for(int i=0;i<NumBoomish;i++)
+	for(int i=0;i< translator->NumBoomish;i++)
 	{
-		FBoomTranslator *b = &Boomish[i];
+		FBoomTranslator *b = &translator->Boomish[i];
 
 		if (special >= b->FirstLinetype && special <= b->LastLinetype)
 		{
@@ -290,32 +293,33 @@ void FLevelLocals::TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineinde
 	memset (ld->args, 0, sizeof(ld->args));
 }
 
-int P_TranslateSectorSpecial (int special)
+int FLevelLocals::TranslateSectorSpecial (int special)
 {
 	int mask = 0;
+	auto translator = Translator;
 
-	for(int i = SectorMasks.Size()-1; i>=0; i--)
+	for(int i = translator->SectorMasks.Size()-1; i>=0; i--)
 	{
-		int newmask = special & SectorMasks[i].mask;
+		int newmask = special & translator->SectorMasks[i].mask;
 		if (newmask)
 		{
 			special &= ~newmask;
-			if (SectorMasks[i].op == 1)
-				newmask <<= SectorMasks[i].shift;
-			else if (SectorMasks[i].op == -1)
-				newmask >>= SectorMasks[i].shift;
-			else if (SectorMasks[i].op == 0 && SectorMasks[i].shift == 1)
+			if (translator->SectorMasks[i].op == 1)
+				newmask <<= translator->SectorMasks[i].shift;
+			else if (translator->SectorMasks[i].op == -1)
+				newmask >>= translator->SectorMasks[i].shift;
+			else if (translator->SectorMasks[i].op == 0 && translator->SectorMasks[i].shift == 1)
 				newmask = 0;
 			mask |= newmask;
 		}
 	}
 	
-	if ((unsigned)special < SectorTranslations.Size())
+	if ((unsigned)special < translator->SectorTranslations.Size())
 	{
-		if (!SectorTranslations[special].bitmask_allowed && mask)
+		if (!translator->SectorTranslations[special].bitmask_allowed && mask)
 			special = 0;
 		else
-			special = SectorTranslations[special].newtype;
+			special = translator->SectorTranslations[special].newtype;
 	}
 	return special | mask;
 }

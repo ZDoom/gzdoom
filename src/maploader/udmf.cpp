@@ -49,6 +49,7 @@
 #include "g_levellocals.h"
 #include "info.h"
 #include "vm.h"
+#include "xlat/xlat.h"
 #include "maploader.h"
 
 //===========================================================================
@@ -1491,7 +1492,7 @@ public:
 
 			case NAME_Special:
 				sec->special = (short)CheckInt(key);
-				if (isTranslated) sec->special = P_TranslateSectorSpecial(sec->special);
+				if (isTranslated) sec->special = Level->TranslateSectorSpecial(sec->special);
 				else if (namespc == NAME_Hexen)
 				{
 					if (sec->special < 0 || sec->special > 140 || !HexenSectorSpecialOk[sec->special])
@@ -2147,19 +2148,19 @@ public:
 				break;
 			case NAME_Doom:
 				namespace_bits = Dm;
-				P_LoadTranslator("xlat/doom_base.txt");
+				Level->Translator = P_LoadTranslator("xlat/doom_base.txt");
 				Level->flags2 |= LEVEL2_DUMMYSWITCHES;
 				floordrop = true;
 				break;
 			case NAME_Heretic:
 				namespace_bits = Ht;
-				P_LoadTranslator("xlat/heretic_base.txt");
+				Level->Translator = P_LoadTranslator("xlat/heretic_base.txt");
 				Level->flags2 |= LEVEL2_DUMMYSWITCHES;
 				floordrop = true;
 				break;
 			case NAME_Strife:
 				namespace_bits = St;
-				P_LoadTranslator("xlat/strife_base.txt");
+				Level->Translator = P_LoadTranslator("xlat/strife_base.txt");
 				Level->flags2 |= LEVEL2_DUMMYSWITCHES|LEVEL2_RAILINGHACK;
 				floordrop = true;
 				break;
@@ -2171,15 +2172,15 @@ public:
 				case GAME_Doom:
 				case GAME_Chex:
 					namespace_bits = Dm;
-					P_LoadTranslator("xlat/doom_base.txt");
+					Level->Translator = P_LoadTranslator("xlat/doom_base.txt");
 					break;
 				case GAME_Heretic:
 					namespace_bits = Ht;
-					P_LoadTranslator("xlat/heretic_base.txt");
+					Level->Translator = P_LoadTranslator("xlat/heretic_base.txt");
 					break;
 				case GAME_Strife:
 					namespace_bits = St;
-					P_LoadTranslator("xlat/strife_base.txt");
+					Level->Translator = P_LoadTranslator("xlat/strife_base.txt");
 					break;
 				case GAME_Hexen:
 					namespace_bits = Hx;

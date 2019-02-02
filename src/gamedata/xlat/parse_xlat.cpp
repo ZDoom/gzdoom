@@ -51,14 +51,7 @@ enum
 DEFINE_TOKEN_TRANS(XLAT_)
 
 
-static FString LastTranslator;
-TAutoGrowArray<FLineTrans> SimpleLineTranslations;
-TArray<int> XlatExpressions;
-FBoomTranslator Boomish[MAX_BOOMISH];
-int NumBoomish;
-TAutoGrowArray<FSectorTrans> SectorTranslations;
-TArray<FSectorMask> SectorMasks;
-FLineFlagTrans LineFlagTranslations[16];
+TMap<FName, FTranslator > translators;
 
 
 struct SpecialArgs
@@ -102,9 +95,10 @@ struct ParseBoomArg
 
 struct XlatParseContext : public FParseContext
 {
-	XlatParseContext(void *parser, ParseFunc parse, int *tt)
+	XlatParseContext(void *parser, ParseFunc parse, int *tt, FTranslator *trans)
 		: FParseContext(parser, parse, tt)
 	{
+		Translator = trans;
 		DefiningLineType = -1;
 	}
 
@@ -152,6 +146,7 @@ struct XlatParseContext : public FParseContext
 	}
 
 	int DefiningLineType;
+	FTranslator *Translator;
 };
 
 #include "xlat_parser.c"
@@ -163,36 +158,23 @@ struct XlatParseContext : public FParseContext
 //
 //==========================================================================
 
-void P_ClearTranslator()
+FTranslator *P_LoadTranslator(const char *lumpname)
 {
-	SimpleLineTranslations.Clear();
-	XlatExpressions.Clear();
-	NumBoomish = 0;
-	SectorTranslations.Clear();
-	SectorMasks.Clear();
-	memset(LineFlagTranslations, 0, sizeof(LineFlagTranslations));
-	LastTranslator = "";
-}
-
-void P_LoadTranslator(const char *lumpname)
-{
-	// Only read the lump if it differs from the previous one.
-	if (LastTranslator.CompareNoCase(lumpname))
+	FName fname = lumpname;
+	auto translator = &translators[fname];
+	if (!translator->loaded)
 	{
-		// Clear the old data before parsing the lump.
-		P_ClearTranslator();
-
 		void *pParser = XlatParseAlloc(malloc);
 
-		XlatParseContext context(pParser, XlatParse, TokenTrans);
-
+		XlatParseContext context(pParser, XlatParse, TokenTrans, translator);
 		context.ParseLump(lumpname);
 		FParseToken tok;
 		tok.val=0;
 		XlatParse(pParser, 0, tok, &context);
 		XlatParseFree(pParser, free);
-		LastTranslator = lumpname;
+		translator->loaded = true;
 	}
+	return translator;
 }
 
 

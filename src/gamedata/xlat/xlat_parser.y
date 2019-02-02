@@ -130,7 +130,7 @@ linetype_exp(Z) ::= expr(A).
 
 linetype_declaration ::= linetype_exp(linetype) EQUALS expr(flags) COMMA expr(special) LPAREN special_args(arg) RPAREN.
 {
-	SimpleLineTranslations.SetVal(linetype, 
+	static_cast<XlatParseContext *>(context)->Translator->SimpleLineTranslations.SetVal(linetype, 
 		FLineTrans(special&0xffff, flags+arg.addflags, arg.args[0], arg.args[1], arg.args[2], arg.args[3], arg.args[4]));
 	static_cast<XlatParseContext *>(context)->DefiningLineType = -1;
 }
@@ -142,17 +142,17 @@ linetype_declaration ::= linetype_exp EQUALS expr COMMA SYM(S) LPAREN special_ar
 }
 
 %type exp_with_tag {int}
-exp_with_tag(A) ::= NUM(B).		{ XlatExpressions.Push(B.val); A = XlatExpressions.Push(XEXP_Const); }
-exp_with_tag(A) ::= TAG.									{ A = XlatExpressions.Push(XEXP_Tag); }
-exp_with_tag(A) ::= exp_with_tag PLUS exp_with_tag.			{ A = XlatExpressions.Push(XEXP_Add); }
-exp_with_tag(A) ::= exp_with_tag MINUS exp_with_tag.		{ A = XlatExpressions.Push(XEXP_Sub); }
-exp_with_tag(A) ::= exp_with_tag MULTIPLY exp_with_tag.		{ A = XlatExpressions.Push(XEXP_Mul); }
-exp_with_tag(A) ::= exp_with_tag DIVIDE exp_with_tag.		{ A = XlatExpressions.Push(XEXP_Div); }
-exp_with_tag(A) ::= exp_with_tag MODULUS exp_with_tag.		{ A = XlatExpressions.Push(XEXP_Mod); }
-exp_with_tag(A) ::= exp_with_tag OR exp_with_tag.			{ A = XlatExpressions.Push(XEXP_Or);  }
-exp_with_tag(A) ::= exp_with_tag AND exp_with_tag.			{ A = XlatExpressions.Push(XEXP_And); }
-exp_with_tag(A) ::= exp_with_tag XOR exp_with_tag.			{ A = XlatExpressions.Push(XEXP_Xor); }
-exp_with_tag(A) ::= MINUS exp_with_tag. [NEG]				{ A = XlatExpressions.Push(XEXP_Neg); }
+exp_with_tag(A) ::= NUM(B).		{ static_cast<XlatParseContext *>(context)->Translator->XlatExpressions.Push(B.val); A = static_cast<XlatParseContext *>(context)->Translator->XlatExpressions.Push(XEXP_Const); }
+exp_with_tag(A) ::= TAG.									{ A = static_cast<XlatParseContext *>(context)->Translator->XlatExpressions.Push(XEXP_Tag); }
+exp_with_tag(A) ::= exp_with_tag PLUS exp_with_tag.			{ A = static_cast<XlatParseContext *>(context)->Translator->XlatExpressions.Push(XEXP_Add); }
+exp_with_tag(A) ::= exp_with_tag MINUS exp_with_tag.		{ A = static_cast<XlatParseContext *>(context)->Translator->XlatExpressions.Push(XEXP_Sub); }
+exp_with_tag(A) ::= exp_with_tag MULTIPLY exp_with_tag.		{ A = static_cast<XlatParseContext *>(context)->Translator->XlatExpressions.Push(XEXP_Mul); }
+exp_with_tag(A) ::= exp_with_tag DIVIDE exp_with_tag.		{ A = static_cast<XlatParseContext *>(context)->Translator->XlatExpressions.Push(XEXP_Div); }
+exp_with_tag(A) ::= exp_with_tag MODULUS exp_with_tag.		{ A = static_cast<XlatParseContext *>(context)->Translator->XlatExpressions.Push(XEXP_Mod); }
+exp_with_tag(A) ::= exp_with_tag OR exp_with_tag.			{ A = static_cast<XlatParseContext *>(context)->Translator->XlatExpressions.Push(XEXP_Or);  }
+exp_with_tag(A) ::= exp_with_tag AND exp_with_tag.			{ A = static_cast<XlatParseContext *>(context)->Translator->XlatExpressions.Push(XEXP_And); }
+exp_with_tag(A) ::= exp_with_tag XOR exp_with_tag.			{ A = static_cast<XlatParseContext *>(context)->Translator->XlatExpressions.Push(XEXP_Xor); }
+exp_with_tag(A) ::= MINUS exp_with_tag. [NEG]				{ A = static_cast<XlatParseContext *>(context)->Translator->XlatExpressions.Push(XEXP_Neg); }
 exp_with_tag(A) ::= LPAREN exp_with_tag(B) RPAREN.			{ A = B; }
 
 
@@ -160,11 +160,11 @@ exp_with_tag(A) ::= LPAREN exp_with_tag(B) RPAREN.			{ A = B; }
 
 special_arg(Z) ::= exp_with_tag(A).
 {
-	if (XlatExpressions[A] == XEXP_Tag)
+	if (static_cast<XlatParseContext *>(context)->Translator->XlatExpressions[A] == XEXP_Tag)
 	{ // Store tags directly
 		Z.arg = 0;
 		Z.argop = ARGOP_Tag;
-		XlatExpressions.Delete(A);
+		static_cast<XlatParseContext *>(context)->Translator->XlatExpressions.Delete(A);
 	}
 	else
 	{ // Try and evaluate it. If it's a constant, store it and erase the
@@ -178,15 +178,15 @@ special_arg(Z) ::= exp_with_tag(A).
 		state.linetype = static_cast<XlatParseContext *>(context)->DefiningLineType;
 		state.tag = 0;
 		state.bIsConstant = true;
-		xnode = &XlatExpressions[A];
+		xnode = &static_cast<XlatParseContext *>(context)->Translator->XlatExpressions[A];
 		endpt = XlatExprEval[*xnode](&val, xnode, &state);
 		if (state.bIsConstant)
 		{
 			Z.arg = val;
 			Z.argop = ARGOP_Const;
 			endpt++;
-			assert(endpt >= &XlatExpressions[0]);
-			XlatExpressions.Resize((unsigned)(endpt - &XlatExpressions[0]));
+			assert(endpt >= &static_cast<XlatParseContext *>(context)->Translator->XlatExpressions[0]);
+			static_cast<XlatParseContext *>(context)->Translator->XlatExpressions.Resize((unsigned)(endpt - &static_cast<XlatParseContext *>(context)->Translator->XlatExpressions[0]));
 		}
 		else
 		{
@@ -257,7 +257,7 @@ boom_declaration ::= LBRACKET expr(special) RBRACKET LPAREN expr(firsttype) COMM
 	int i;
 	MoreLines *probe;
 
-	if (NumBoomish == MAX_BOOMISH)
+	if (static_cast<XlatParseContext *>(context)->Translator->NumBoomish == MAX_BOOMISH)
 	{
 		MoreLines *probe = stores;
 
@@ -271,18 +271,18 @@ boom_declaration ::= LBRACKET expr(special) RBRACKET LPAREN expr(firsttype) COMM
 	}
 	else
 	{
-		Boomish[NumBoomish].FirstLinetype = firsttype;
-		Boomish[NumBoomish].LastLinetype = lasttype;
-		Boomish[NumBoomish].NewSpecial = special;
+		static_cast<XlatParseContext *>(context)->Translator->Boomish[static_cast<XlatParseContext *>(context)->Translator->NumBoomish].FirstLinetype = firsttype;
+		static_cast<XlatParseContext *>(context)->Translator->Boomish[static_cast<XlatParseContext *>(context)->Translator->NumBoomish].LastLinetype = lasttype;
+		static_cast<XlatParseContext *>(context)->Translator->Boomish[static_cast<XlatParseContext *>(context)->Translator->NumBoomish].NewSpecial = special;
 		
 		for (i = 0, probe = stores; probe != NULL; i++)
 		{
 			MoreLines *next = probe->next;
-			Boomish[NumBoomish].Args.Push(probe->arg);
+			static_cast<XlatParseContext *>(context)->Translator->Boomish[static_cast<XlatParseContext *>(context)->Translator->NumBoomish].Args.Push(probe->arg);
 			delete probe;
 			probe = next;
 		}
-		NumBoomish++;
+		static_cast<XlatParseContext *>(context)->Translator->NumBoomish++;
 	}
 }
 
@@ -379,7 +379,7 @@ maxlinespecial_def ::= MAXLINESPECIAL EQUALS expr(mx) SEMICOLON.
 {
 	// Just kill all specials higher than the max.
 	// If the translator wants to redefine some later, just let it.
-	SimpleLineTranslations.Resize(mx+1);
+	static_cast<XlatParseContext *>(context)->Translator->SimpleLineTranslations.Resize(mx+1);
 }
 
 //==========================================================================
@@ -393,7 +393,7 @@ maxlinespecial_def ::= MAXLINESPECIAL EQUALS expr(mx) SEMICOLON.
 sector_declaration ::= SECTOR expr(from) EQUALS expr(to) SEMICOLON.
 {
 	FSectorTrans tr(to, true);
-	SectorTranslations.SetVal(from, tr);
+	static_cast<XlatParseContext *>(context)->Translator->SectorTranslations.SetVal(from, tr);
 }
 
 sector_declaration ::= SECTOR expr EQUALS SYM(sy) SEMICOLON.
@@ -404,25 +404,25 @@ sector_declaration ::= SECTOR expr EQUALS SYM(sy) SEMICOLON.
 sector_declaration ::= SECTOR expr(from) EQUALS expr(to) NOBITMASK SEMICOLON.
 {
 	FSectorTrans tr(to, false);
-	SectorTranslations.SetVal(from, tr);
+	static_cast<XlatParseContext *>(context)->Translator->SectorTranslations.SetVal(from, tr);
 }
 
 sector_bitmask ::= SECTOR BITMASK expr(mask) sector_op(op) expr(shift) SEMICOLON.
 {
 	FSectorMask sm = { mask, op, shift};
-	SectorMasks.Push(sm);
+	static_cast<XlatParseContext *>(context)->Translator->SectorMasks.Push(sm);
 }
 
 sector_bitmask ::= SECTOR BITMASK expr(mask) SEMICOLON.
 {
 	FSectorMask sm = { mask, 0, 0};
-	SectorMasks.Push(sm);
+	static_cast<XlatParseContext *>(context)->Translator->SectorMasks.Push(sm);
 }
 
 sector_bitmask ::= SECTOR BITMASK expr(mask) CLEAR SEMICOLON.
 {
 	FSectorMask sm = { mask, 0, 1};
-	SectorMasks.Push(sm);
+	static_cast<XlatParseContext *>(context)->Translator->SectorMasks.Push(sm);
 }
 
 sector_op(A) ::= LSHASSIGN.		{ A = 1; }
@@ -434,8 +434,8 @@ lineflag_declaration ::= LINEFLAG expr(from) EQUALS expr(to) SEMICOLON.
 {
 	if (from >= 0 && from < 16)
 	{
-		LineFlagTranslations[from].newvalue = to;
-		LineFlagTranslations[from].ismask = false;
+		static_cast<XlatParseContext *>(context)->Translator->LineFlagTranslations[from].newvalue = to;
+		static_cast<XlatParseContext *>(context)->Translator->LineFlagTranslations[from].ismask = false;
 	}
 }
 
@@ -443,7 +443,7 @@ lineflag_declaration ::= LINEFLAG expr(from) AND expr(mask) SEMICOLON.
 {
 	if (from >= 0 && from < 16)
 	{
-		LineFlagTranslations[from].newvalue = mask;
-		LineFlagTranslations[from].ismask = true;
+		static_cast<XlatParseContext *>(context)->Translator->LineFlagTranslations[from].newvalue = mask;
+		static_cast<XlatParseContext *>(context)->Translator->LineFlagTranslations[from].ismask = true;
 	}
 }

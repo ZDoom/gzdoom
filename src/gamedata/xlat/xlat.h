@@ -37,6 +37,10 @@ enum
 	XEXP_COUNT
 };
 
+struct FXlatExprState;
+
+extern const int* (*XlatExprEval[XEXP_COUNT])(int *dest, const int *xnode, FXlatExprState *state);
+
 struct FLineTrans
 {
 	int special;
@@ -76,9 +80,9 @@ struct FBoomArg
 
 struct FBoomTranslator
 {
-	uint16_t FirstLinetype;
-	uint16_t LastLinetype;
-	uint8_t NewSpecial;
+	uint16_t FirstLinetype = 0;
+	uint16_t LastLinetype = 0;
+	uint8_t NewSpecial = 0;
 	TArray<FBoomArg> Args;
 } ;
 
@@ -115,13 +119,18 @@ struct FXlatExprState
 };
 
 
-extern TAutoGrowArray<FLineTrans> SimpleLineTranslations;
-extern TArray<int> XlatExpressions;
-extern FBoomTranslator Boomish[MAX_BOOMISH];
-extern int NumBoomish;
-extern TAutoGrowArray<FSectorTrans> SectorTranslations;
-extern TArray<FSectorMask> SectorMasks;
-extern FLineFlagTrans LineFlagTranslations[16];
-extern const int* (*XlatExprEval[XEXP_COUNT])(int *dest, const int *xnode, FXlatExprState *state);
+struct FTranslator
+{
+	bool loaded = false;
+	TAutoGrowArray<FLineTrans> SimpleLineTranslations;
+	TArray<int> XlatExpressions;
+	FBoomTranslator Boomish[MAX_BOOMISH];
+	int NumBoomish = 0;
+	TAutoGrowArray<FSectorTrans> SectorTranslations;
+	TArray<FSectorMask> SectorMasks;
+	FLineFlagTrans LineFlagTranslations[16] = {};
+};
+
+FTranslator *P_LoadTranslator(const char *lumpname);
 
 #endif

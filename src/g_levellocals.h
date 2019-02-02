@@ -95,6 +95,7 @@ struct FStrifeDialogueNode;
 class DAutomapBase;
 struct wbstartstruct_t;
 class DSectorMarker;
+struct FTranslator;
 
 typedef TMap<int, int> FDialogueIDMap;				// maps dialogue IDs to dialogue array index (for ACS)
 typedef TMap<FName, int> FDialogueMap;				// maps actor class names to dialogue array index
@@ -127,6 +128,7 @@ struct FLevelLocals
 	void FormatMapName(FString &mapname, const char *mapnamecolor);
 	void ClearAllSubsectorLinks();
 	void TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineindexforid = -1);
+	int TranslateSectorSpecial(int special);
 	bool IsTIDUsed(int tid);
 	int FindUniqueTID(int start_tid, int limit);
 	int GetConversation(int conv_id);
@@ -494,6 +496,7 @@ public:
 	FString		NextMap;			// go here when using the regular exit
 	FString		NextSecretMap;		// map to go to when used secret exit
 	FString		F1Pic;
+	FTranslator *Translator;
 	EMapType	maptype;
 	FTagManager tagManager;
 	FInterpolator interpolator;

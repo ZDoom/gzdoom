@@ -150,9 +150,6 @@ void P_Init (void);
 struct line_t;
 struct maplinedef_t;
 
-void P_LoadTranslator(const char *lumpname);
-int P_TranslateSectorSpecial (int);
-
 int GetUDMFInt(FLevelLocals *Level, int type, int index, FName key);
 double GetUDMFFloat(FLevelLocals *Level, int type, int index, FName key);
 FString GetUDMFString(FLevelLocals *Level, int type, int index, FName key);

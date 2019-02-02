@@ -597,8 +597,8 @@ else()
 endif()
 
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h
-	COMMAND lemon -C${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y
-	DEPENDS lemon ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y )
+	COMMAND lemon -C${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/gamedata/xlat/xlat_parser.y
+	DEPENDS lemon ${CMAKE_CURRENT_SOURCE_DIR}/gamedata/xlat/xlat_parser.y )
 
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/zcc-parse.c ${CMAKE_CURRENT_BINARY_DIR}/zcc-parse.h
 	COMMAND lemon -C${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/scripting/zscript/zcc-parse.lemon
@@ -653,6 +653,7 @@ file( GLOB HEADER_FILES
 	gamedata/textures/hires/hqnx/*.h
 	gamedata/textures/hires/hqnx_asm/*.h
 	gamedata/textures/hires/xbr/*.h
+	gamedata/xlat/*.h
 	intermission/*.h
 	maploader/*.h
 	menu/*.h
@@ -683,7 +684,6 @@ file( GLOB HEADER_FILES
 	sound/timidity/*.h
 	sound/timiditypp/*.h
 	sound/wildmidi/*.h
-	xlat/*.h
 	rendering/swrenderer/*.h
 	rendering/swrenderer/textures/*.h
 	rendering/swrenderer/drawers/*.h
@@ -794,7 +794,7 @@ set( NOT_COMPILED_SOURCE_FILES
 	sc_man_scanner.h
 	utility/sc_man_scanner.re
 	g_statusbar/sbarinfo_commands.cpp
-	xlat/xlat_parser.y
+	gamedata/xlat/xlat_parser.y
 	xlat_parser.c
 	xlat_parser.h
 	scripting/zscript/zcc-parse.lemon
@@ -936,8 +936,6 @@ set (PCH_SOURCES
 	p_tick.cpp
 	p_usdf.cpp
 	p_user.cpp
-	p_xlat.cpp
-	parsecontext.cpp
 	r_utility.cpp
 	r_sky.cpp
 	r_videoscale.cpp
@@ -1110,7 +1108,9 @@ set (PCH_SOURCES
 	gamedata/textures/formats/tgatexture.cpp
 	gamedata/textures/hires/hqresize.cpp
 	gamedata/textures/hires/hirestex.cpp
-	xlat/parse_xlat.cpp
+	gamedata/p_xlat.cpp
+	gamedata/xlat/parse_xlat.cpp
+	gamedata/xlat/parsecontext.cpp
 	fragglescript/t_func.cpp
 	fragglescript/t_load.cpp
 	fragglescript/t_oper.cpp

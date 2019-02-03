@@ -180,7 +180,7 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 void FModelRenderer::RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
 {
 	AActor * playermo = players[consoleplayer].camera;
-	FSpriteModelFrame *smf = FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetState()->sprite, psp->GetState()->GetFrame(), false);
+	FSpriteModelFrame *smf = FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetSprite(), psp->GetFrame(), false);
 
 	// [BB] No model found for this sprite, so we can't render anything.
 	if (smf == nullptr)
@@ -922,11 +922,10 @@ bool IsHUDModelForPlayerAvailable (player_t * player)
 
 	DPSprite *psp = player->FindPSprite(PSP_WEAPON);
 
-	if (psp == nullptr || psp->GetState() == nullptr)
+	if (psp == nullptr)
 		return false;
 
-	FState* state = psp->GetState();
-	FSpriteModelFrame *smf = FindModelFrame(player->ReadyWeapon->GetClass(), state->sprite, state->GetFrame(), false);
+	FSpriteModelFrame *smf = FindModelFrame(player->ReadyWeapon->GetClass(), psp->GetSprite(), psp->GetFrame(), false);
 	return ( smf != nullptr );
 }
 

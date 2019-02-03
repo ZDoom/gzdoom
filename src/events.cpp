@@ -259,7 +259,7 @@ void EventManager::Shutdown()
 	}
 }
 
-#define DEFINE_EVENT_LOOPER(name, play) void EventManager::##name() \
+#define DEFINE_EVENT_LOOPER(name, play) void EventManager::name() \
 { \
 	if (ShouldCallStatic(play)) staticEventManager.name(); \
 	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next) \

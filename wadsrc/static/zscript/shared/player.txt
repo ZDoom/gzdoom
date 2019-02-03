@@ -1635,10 +1635,11 @@ class PlayerPawn : Actor
 		if (!(player.cheats & CF_PREDICTING))
 		{
 			CheckEnvironment();
-			CheckUse();
-			CheckUndoMorph();
+			// Note that after this point the PlayerPawn may have changed due to getting unmorphed or getting its skull popped so 'self' is no longer safe to use.
+			// This also must not read mo into a local variable because several functions in this block can change the attached PlayerPawn.
+			player.mo.CheckUse();
+			player.mo.CheckUndoMorph();
 			// Cycle psprites.
-			// Note that after this point the PlayerPawn may have changed due to getting unmorphed so 'self' is no longer safe to use.
 			player.mo.TickPSprites();
 			// Other Counters
 			if (player.damagecount)	player.damagecount--;

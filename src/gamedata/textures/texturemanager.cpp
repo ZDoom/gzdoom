@@ -1051,13 +1051,14 @@ void FTextureManager::Init()
 
 	// The Hexen scripts use BLANK as a blank texture, even though it's really not.
 	// I guess the Doom renderer must have clipped away the line at the bottom of
-	// the texture so it wasn't visible. I'll just map it to 0, so it really is blank.
+	// the texture so it wasn't visible. Change its use type to a blank null texture to really make it blank.
 	if (gameinfo.gametype == GAME_Hexen)
 	{
 		FTextureID tex = CheckForTexture ("BLANK", ETextureType::Wall, false);
 		if (tex.Exists())
 		{
-			SetTranslation (tex, 0);
+			auto texture = GetTexture(tex, false);
+			texture->UseType = ETextureType::Null;
 		}
 	}
 

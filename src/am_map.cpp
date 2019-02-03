@@ -159,6 +159,7 @@ CVAR(Int, am_drawmapback, 1, CVAR_ARCHIVE);
 CVAR(Bool, am_showkeys, true, CVAR_ARCHIVE);
 CVAR(Int, am_showtriggerlines, 0, CVAR_ARCHIVE);
 CVAR(Int, am_showthingsprites, 0, CVAR_ARCHIVE);
+CVAR (Bool, am_showkeys_always, false, CVAR_ARCHIVE);
 
 CUSTOM_CVAR(Int, am_emptyspacemargin, 0, CVAR_ARCHIVE)
 {
@@ -2942,7 +2943,7 @@ void DAutomap::drawThings ()
 						// That is the case for all default keys, however.
 						if (t->IsKindOf(NAME_Key))
 						{
-							if (G_SkillProperty(SKILLP_EasyKey))
+							if (G_SkillProperty(SKILLP_EasyKey) || am_showkeys_always)
 							{
 								// Already drawn by AM_drawKeys(), so don't draw again
 								color.Index = -1;
@@ -3169,7 +3170,7 @@ void DAutomap::Drawer (int bottom)
 
 	drawWalls(allmap);
 	drawPlayers();
-	if (G_SkillProperty(SKILLP_EasyKey))
+	if (G_SkillProperty(SKILLP_EasyKey) || am_showkeys_always)
 		drawKeys();
 	if ((am_cheat >= 2 && am_cheat != 4) || allthings)
 		drawThings();

@@ -718,6 +718,7 @@ public:
 			dest.subsectors.Set(&output.allSubsectors[numsubsectors], group.subsectors.Size());
 			dest.vertexindex = -1;
 			dest.vertexcount = 0;
+			dest.flags = 0;
 			dest.bounds.setEmpty();
 			numsegments += group.segments.Size();
 

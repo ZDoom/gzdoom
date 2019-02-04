@@ -163,6 +163,7 @@ private:
 	void InitVertexData();
 	void GetSideVertices(int sdnum, DVector2 *v1, DVector2 *v2);
 	void PrepareSegs();
+	void FloodSectorStacks();
 	void InitRenderInfo();
 	void FixMinisegReferences();
 	void FixHoles();

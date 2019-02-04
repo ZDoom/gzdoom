@@ -67,7 +67,6 @@ void GLBuffer::Bind()
 
 void GLBuffer::SetData(size_t size, const void *data, bool staticdata)
 {
-	assert(nomap);	// once it's mappable, it cannot be recreated anymore.
 	Bind();
 	if (data != nullptr)
 	{

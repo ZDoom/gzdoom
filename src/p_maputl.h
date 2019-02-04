@@ -312,8 +312,9 @@ class FBlockThingsIterator
 
 public:
 	FBlockThingsIterator(FLevelLocals *Level, int minx, int miny, int maxx, int maxy);
-	FBlockThingsIterator(FLevelLocals *Level, const FBoundingBox &box)
+	FBlockThingsIterator(FLevelLocals *l, const FBoundingBox &box)
 	{
+		Level = l;
 		init(box);
 	}
 	void init(const FBoundingBox &box);

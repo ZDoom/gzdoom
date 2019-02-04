@@ -1663,6 +1663,8 @@ TXT_RANDOMGOODBYE_3 = "A plus tard!";
 TXT_HAVEENOUGH		= "Vous avez l'air d'en avoir assez!";
 TXT_GOAWAY			= "Allez-vous en!";
 
+TXT_PERSON			= "Personne";
+
 TXT_COMM0			= "Message reçu.";
 TXT_COMM1			= "Message reçu de BlackBird";
 

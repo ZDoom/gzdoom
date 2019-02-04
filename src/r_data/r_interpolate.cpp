@@ -429,6 +429,7 @@ void DSectorPlaneInterpolation::OnDestroy()
 	{
 		attached[i]->DelRef();
 	}
+	attached.Reset();
 	Super::OnDestroy();
 }
 

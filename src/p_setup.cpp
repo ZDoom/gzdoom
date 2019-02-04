@@ -255,6 +255,7 @@ void FLevelLocals::ClearPortals()
 
 void FLevelLocals::ClearLevelData()
 {
+	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
 	Thinkers.DestroyAllThinkers();
 	ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
 
@@ -290,10 +291,9 @@ void FLevelLocals::ClearLevelData()
 	}
 	ClearPortals();
 
-	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
 	tagManager.Clear();
 	ClearTIDHashes();
-	Behaviors.UnloadModules();
+	if (SpotState) SpotState->Destroy();
 	SpotState = nullptr;
 	ACSThinker = nullptr;
 	FraggleScriptThinker = nullptr;

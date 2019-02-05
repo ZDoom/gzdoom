@@ -350,7 +350,7 @@ class FBehavior
 public:
 	FBehavior ();
 	~FBehavior ();
-	bool Init(FLevelLocals *l, int lumpnum, FileReader * fr = NULL, int len = 0);
+	bool Init(FLevelLocals *l, int lumpnum, FileReader * fr = NULL, int len = 0, int reallumpnum = -1);
 
 	bool IsGood ();
 	uint8_t *FindChunk (uint32_t id) const;
@@ -378,7 +378,7 @@ public:
 	const char *GetModuleName() const { return ModuleName; }
 	ACSProfileInfo *GetFunctionProfileData(int index) { return index >= 0 && index < NumFunctions ? &FunctionProfileData[index] : NULL; }
 	ACSProfileInfo *GetFunctionProfileData(ScriptFunction *func) { return GetFunctionProfileData((int)(func - (ScriptFunction *)Functions)); }
-	const char *LookupString (uint32_t index) const;
+	const char *LookupString (uint32_t index, bool forprint = false) const;
 
 	BoundsCheckingArray<int32_t *, NUM_MAPVARS> MapVars;
 
@@ -386,26 +386,28 @@ public:
 private:
 	struct ArrayInfo;
 
-	ACSFormat Format;
-
 	FLevelLocals *Level;
-	int LumpNum;
 	uint8_t *Data;
-	int DataSize;
 	uint8_t *Chunks;
 	ScriptPtr *Scripts;
-	int NumScripts;
 	ScriptFunction *Functions;
 	ACSProfileInfo *FunctionProfileData;
-	int NumFunctions;
 	ArrayInfo *ArrayStore;
-	int NumArrays;
 	ArrayInfo **Arrays;
+
+	ACSFormat Format;
+	int LumpNum;
+	int DataSize;
+	int NumScripts;
+	int NumFunctions;
+	int NumArrays;
 	int NumTotalArrays;
 	uint32_t StringTable;
+	uint32_t LibraryID;
+	bool ShouldLocalize;
+
 	int32_t MapVarStore[NUM_MAPVARS];
 	TArray<FBehavior *> Imports;
-	uint32_t LibraryID;
 	char ModuleName[9];
 	TArray<int> JumpPoints;
 
@@ -432,7 +434,7 @@ struct FBehaviorContainer
 
 	FBehaviorContainer(FLevelLocals *l) : Level(l) {}
 
-	FBehavior *LoadModule(int lumpnum, FileReader *fr = nullptr, int len = 0);
+	FBehavior *LoadModule(int lumpnum, FileReader *fr = nullptr, int len = 0, int reallumpnum = -1);
 	void LoadDefaultModules();
 	void UnloadModules();
 	bool CheckAllGood();
@@ -443,7 +445,7 @@ struct FBehaviorContainer
 	void UnlockLevelVarStrings(int levelnum);
 
 	const ScriptPtr *FindScript(int script, FBehavior *&module);
-	const char *LookupString(uint32_t index);
+	const char *LookupString(uint32_t index, bool forprint = false);
 	void StartTypedScripts(uint16_t type, AActor *activator, bool always, int arg1 = 0, bool runNow = false);
 	void StopMyScripts(AActor *actor);
 	void ArrangeScriptProfiles(TArray<ProfileCollector> &profiles);

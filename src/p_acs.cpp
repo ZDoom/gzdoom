@@ -1942,7 +1942,7 @@ void FBehaviorContainer::LoadDefaultModules ()
 	}
 }
 
-FBehavior *FBehaviorContainer::LoadModule (int lumpnum, FileReader *fr, int len)
+FBehavior *FBehaviorContainer::LoadModule (int lumpnum, FileReader *fr, int len, int reallumpnum)
 {
 	if (lumpnum == -1 && fr == NULL) return NULL;
 
@@ -1955,7 +1955,7 @@ FBehavior *FBehaviorContainer::LoadModule (int lumpnum, FileReader *fr, int len)
 	}
 
 	FBehavior * behavior = new FBehavior ();
-	if (behavior->Init(Level, lumpnum, fr, len))
+	if (behavior->Init(Level, lumpnum, fr, len, reallumpnum))
 	{
 		return behavior;
 	}
@@ -2209,7 +2209,7 @@ FBehavior::FBehavior()
 }
 	
 	
-bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len)
+bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len, int reallumpnum)
 {
 	uint8_t *object;
 	int i;
@@ -2303,6 +2303,8 @@ bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len)
 			// Forget about the compatibility cruft at the end of the lump
 			DataSize = LittleLong(((uint32_t *)object)[1]) - 8;
 		}
+
+		ShouldLocalize = false;
 	}
 	else
 	{
@@ -2316,6 +2318,17 @@ bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len)
 		StringTable = LittleLong(((uint32_t *)Data)[1]);
 		StringTable += LittleLong(((uint32_t *)(Data + StringTable))[0]) * 12 + 4;
 		UnescapeStringTable(Data + StringTable, Data, false);
+		// If this is an original Hexen BEHAVIOR, set up some localization info for it. Original Hexen BEHAVIORs are always in the old format.
+		if ((Level->flags2 & LEVEL2_HEXENHACK) && gameinfo.gametype == GAME_Hexen && lumpnum == -1 && reallumpnum > 0)
+		{
+			int fileno = Wads.GetLumpFile(reallumpnum);
+			const char * filename = Wads.GetWadName(fileno);
+			if (!stricmp(filename, "HEXEN.WAD") || !stricmp(filename, "HEXDD.WAD"))
+			{
+				ShouldLocalize = true;
+			}
+		}
+
 	}
 	else
 	{
@@ -3193,7 +3206,7 @@ uint8_t *FBehavior::NextChunk (uint8_t *chunk) const
 	return NULL;
 }
 
-const char *FBehaviorContainer::LookupString (uint32_t index)
+const char *FBehaviorContainer::LookupString (uint32_t index, bool forprint)
 {
 	uint32_t lib = index >> LIBRARYID_SHIFT;
 
@@ -3205,10 +3218,10 @@ const char *FBehaviorContainer::LookupString (uint32_t index)
 	{
 		return NULL;
 	}
-	return StaticModules[lib]->LookupString (index & 0xffff);
+	return StaticModules[lib]->LookupString (index & 0xffff, forprint);
 }
 
-const char *FBehavior::LookupString (uint32_t index) const
+const char *FBehavior::LookupString (uint32_t index, bool forprint) const
 {
 	if (StringTable == 0)
 	{
@@ -3220,7 +3233,26 @@ const char *FBehavior::LookupString (uint32_t index) const
 
 		if (index >= list[0])
 			return NULL;	// Out of range for this list;
-		return (const char *)(Data + list[1+index]);
+
+		const char *s = (const char *)(Data + list[1 + index]);
+		// Allow translations for Hexen's original strings.
+		// This synthesizes a string label and looks it up.
+		// It will only do this for original Hexen maps and PCD_PRINTSTRING operations.
+		// For localizing user content better solutions exist so this hack won't be available as an editing feature.
+		if (ShouldLocalize && forprint)
+		{
+			FString token = s;
+			token.ToUpper();
+			token.ReplaceChars(".,-+!?", ' ');
+			token.Substitute(" ", "");
+			token.Truncate(5);
+
+			FStringf label("TXT_ACS_%s_%d_%.5s", Level->MapName.GetChars(), index, token);
+			auto p = GStrings[label];
+			if (p) return p;
+		}
+
+		return s;
 	}
 	else
 	{
@@ -8362,7 +8394,7 @@ scriptwait:
 
 		case PCD_PRINTSTRING:
 		case PCD_PRINTLOCALIZED:
-			lookup = Level->Behaviors.LookupString (STACK(1));
+			lookup = Level->Behaviors.LookupString (STACK(1), true);
 			if (pcd == PCD_PRINTLOCALIZED)
 			{
 				lookup = GStrings(lookup);

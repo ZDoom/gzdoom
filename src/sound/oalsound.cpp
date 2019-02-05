@@ -824,12 +824,12 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 
 	// Speed of sound is in units per second. Presuming we want to simulate a
 	// typical speed of sound of 343.3 meters per second, multiply it by the
-	// units per meter scale (32?), and set the meters per unit to the scale's
+	// units per meter scale (1), and set the meters per unit to the scale's
 	// reciprocal. It's important to set these correctly for both doppler
 	// effects and reverb.
-	alSpeedOfSound(343.3f * 32.0f);
+	alSpeedOfSound(343.3f);
 	if(ALC.EXT_EFX)
-		alListenerf(AL_METERS_PER_UNIT, 1.0f/32.0f);
+		alListenerf(AL_METERS_PER_UNIT, 1.0f);
 
 	alDistanceModel(AL_INVERSE_DISTANCE);
 	if(AL.EXT_source_distance_model)

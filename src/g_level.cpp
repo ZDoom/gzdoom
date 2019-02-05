@@ -465,7 +465,10 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	ST_CreateStatusBar(bTitleLevel);
 	setsizeneeded = true;
 
-	if (gameinfo.gametype == GAME_Strife || (SBarInfoScript[SCRIPT_CUSTOM] != NULL && SBarInfoScript[SCRIPT_CUSTOM]->GetGameType() == GAME_Strife))
+	const bool setlogtext = !savegamerestore && (gameinfo.gametype == GAME_Strife 
+		|| (SBarInfoScript[SCRIPT_CUSTOM] != nullptr && SBarInfoScript[SCRIPT_CUSTOM]->GetGameType() == GAME_Strife));
+
+	if (setlogtext)
 	{
 		// Set the initial quest log text for Strife.
 		for (i = 0; i < MAXPLAYERS; ++i)

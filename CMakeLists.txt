@@ -163,9 +163,21 @@ option( NO_OPENAL "Disable OpenAL sound support" OFF )
 find_package( BZip2 )
 find_package( JPEG )
 find_package( ZLIB )
-# find_package( asmjit )
- # no, we're not using external asmjit for now, we made too many modifications to our's.
- # if the asmjit author uses our changes then we'll update this.
+
+include( TargetArch )
+
+target_architecture(ZDOOM_TARGET_ARCH)
+
+if( ${ZDOOM_TARGET_ARCH} MATCHES "x86_64" )
+	set( HAVE_VM_JIT ON )
+endif()
+
+# no, we're not using external asmjit for now, we made too many modifications to our's.
+# if the asmjit author uses our changes then we'll update this.
+
+#if( ${HAVE_VM_JIT} )
+#	find_package( asmjit )
+#endif()
 
 # GME
 #find_path( GME_INCLUDE_DIR gme/gme.h )
@@ -299,15 +311,17 @@ else()
 	set( ZLIB_LIBRARY z )
 endif()
 
-if( ASMJIT_FOUND AND NOT FORCE_INTERNAL_ASMJIT )
-	message( STATUS "Using system asmjit, includes found at ${ASMJIT_INCLUDE_DIR}" )
-else()
-	message( STATUS "Using internal asmjit" )
-	set( SKIP_INSTALL_ALL TRUE ) # Avoid installing asmjit alongside zdoom
-	add_subdirectory( asmjit )
-	set( ASMJIT_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/asmjit )
-	set( ASMJIT_LIBRARIES asmjit )
-	set( ASMJIT_LIBRARY asmjit )
+if( ${HAVE_VM_JIT} )
+	if( ASMJIT_FOUND AND NOT FORCE_INTERNAL_ASMJIT )
+		message( STATUS "Using system asmjit, includes found at ${ASMJIT_INCLUDE_DIR}" )
+	else()
+		message( STATUS "Using internal asmjit" )
+		set( SKIP_INSTALL_ALL TRUE ) # Avoid installing asmjit alongside zdoom
+		add_subdirectory( asmjit )
+		set( ASMJIT_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/asmjit )
+		set( ASMJIT_LIBRARIES asmjit )
+		set( ASMJIT_LIBRARY asmjit )
+	endif()
 endif()
 
 if( JPEG_FOUND AND NOT FORCE_INTERNAL_JPEG )

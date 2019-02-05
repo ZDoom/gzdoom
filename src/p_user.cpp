@@ -442,7 +442,7 @@ void player_t::SetLogText (const char *text)
 	{
 		// Print log text to console
 		AddToConsole(-1, TEXTCOLOR_GOLD);
-		AddToConsole(-1, GStrings(LogText));
+		AddToConsole(-1, GStrings(text[0] == '$' ? text + 1 : text));
 		AddToConsole(-1, "\n");
 	}
 }

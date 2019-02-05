@@ -30,7 +30,7 @@ public:
 	int AddRef();
 	int DelRef(bool force = false);
 
-	void OnDestroy() override;
+	virtual void UnlinkFromMap();
 	virtual void UpdateInterpolation() = 0;
 	virtual void Restore() = 0;
 	virtual void Interpolate(double smoothratio) = 0;

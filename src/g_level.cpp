@@ -166,7 +166,7 @@ extern bool sendpause, sendsave, sendturn180, SendLand;
 
 void *statcopy;					// for statistics driver
 
-FLevelLocals level;				// info about current level
+FLevelLocals level;			// info about current level
 FLevelLocals *primaryLevel = &level;	// level for which to display the user interface.
 FLevelLocals *currentVMLevel = &level;	// level which currently ticks. Used as global input to the VM and some functions called by it.
 
@@ -543,7 +543,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	
 	G_DoLoadLevel (mapname, 0, false, !savegamerestore);
 
-	if (gameinfo.gametype == GAME_Strife || (SBarInfoScript[SCRIPT_CUSTOM] != nullptr && SBarInfoScript[SCRIPT_CUSTOM]->GetGameType() == GAME_Strife))
+	if (!savegamerestore && (gameinfo.gametype == GAME_Strife || (SBarInfoScript[SCRIPT_CUSTOM] != nullptr && SBarInfoScript[SCRIPT_CUSTOM]->GetGameType() == GAME_Strife)))
 	{
 		// Set the initial quest log text for Strife.
 		for (i = 0; i < MAXPLAYERS; ++i)
@@ -754,7 +754,7 @@ void FLevelLocals::SecretExitLevel (int position)
 //
 //==========================================================================
 
-void	G_DoCompleted (void)
+void G_DoCompleted (void)
 {
 	gameaction = ga_nothing;
 	
@@ -1026,7 +1026,7 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 	if (isPrimaryLevel())
 	{
 		FString mapname = nextmapname;
-		mapname.ToLower();
+	mapname.ToLower();
 		Printf(
 			"\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
 			"\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n"

@@ -40,7 +40,10 @@
 #include "hwrenderer/scene/hw_portal.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/data/flatvertices.h"
+
+#ifdef ARCH_IA32
 #include <immintrin.h>
+#endif // ARCH_IA32
 
 CVAR(Bool, gl_multithread, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
@@ -106,6 +109,7 @@ void HWDrawInfo::WorkerThread()
 		auto job = jobQueue.GetJob();
 		if (job == nullptr)
 		{
+#ifdef ARCH_IA32
 			// The queue is empty. But yielding would be too costly here and possibly cause further delays down the line if the thread is halted.
 			// So instead add a few pause instructions and retry immediately.
 			_mm_pause();
@@ -118,6 +122,7 @@ void HWDrawInfo::WorkerThread()
 			_mm_pause();
 			_mm_pause();
 			_mm_pause();
+#endif // ARCH_IA32
 		}
 		// Note that the main thread MUST have prepared the fake sectors that get used below!
 		// This worker thread cannot prepare them itself without costly synchronization.

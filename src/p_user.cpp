@@ -404,7 +404,7 @@ void player_t::SetLogText (const char *text)
 	{
 		// Print log text to console
 		AddToConsole(-1, TEXTCOLOR_GOLD);
-		AddToConsole(-1, LogText[0] == '$'? GStrings(LogText.GetChars()+1) : LogText.GetChars() );
+		AddToConsole(-1, LogText[0] == '$'? GStrings(text+1) : text );
 		AddToConsole(-1, "\n");
 	}
 }

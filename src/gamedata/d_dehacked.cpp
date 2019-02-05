@@ -808,6 +808,7 @@ void SetDehParams(FState *state, int codepointer)
 			}
 			fclose(dump);
 		}
+#ifdef HAVE_VM_JIT
 		if (Args->CheckParm("-dumpjit"))
 		{
 			FILE *dump = fopen("dumpjit.txt", "a");
@@ -817,6 +818,7 @@ void SetDehParams(FState *state, int codepointer)
 			}
 			fclose(dump);
 		}
+#endif // HAVE_VM_JIT
 	}
 }
 

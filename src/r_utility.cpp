@@ -883,29 +883,41 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		if (DEarthquake::StaticGetQuakeIntensities(viewpoint.TicFrac, viewpoint.camera, jiggers) > 0)
 		{
 			double quakefactor = r_quakeintensity;
-			DAngle an;
-
+			DVector3 pos; pos.Zero();
 			if (jiggers.RollIntensity != 0 || jiggers.RollWave != 0)
 			{
 				viewpoint.Angles.Roll += QuakePower(quakefactor, jiggers.RollIntensity, jiggers.RollWave);
 			}
 			if (jiggers.RelIntensity.X != 0 || jiggers.RelOffset.X != 0)
 			{
-				an = viewpoint.camera->Angles.Yaw;
-				double power = QuakePower(quakefactor, jiggers.RelIntensity.X, jiggers.RelOffset.X);
-				viewpoint.Pos += an.ToVector(power);
+				pos.X += QuakePower(quakefactor, jiggers.RelIntensity.X, jiggers.RelOffset.X);
 			}
 			if (jiggers.RelIntensity.Y != 0 || jiggers.RelOffset.Y != 0)
 			{
-				an = viewpoint.camera->Angles.Yaw + 90;
-				double power = QuakePower(quakefactor, jiggers.RelIntensity.Y, jiggers.RelOffset.Y);
-				viewpoint.Pos += an.ToVector(power);
+				pos.Y += QuakePower(quakefactor, jiggers.RelIntensity.Y, jiggers.RelOffset.Y);
 			}
-			// FIXME: Relative Z is not relative
 			if (jiggers.RelIntensity.Z != 0 || jiggers.RelOffset.Z != 0)
 			{
-				viewpoint.Pos.Z += QuakePower(quakefactor, jiggers.RelIntensity.Z, jiggers.RelOffset.Z);
+				pos.Z += QuakePower(quakefactor, jiggers.RelIntensity.Z, jiggers.RelOffset.Z);
 			}
+			// [MC] Tremendous thanks to Marisa Kirisame for helping me with this.
+			// Use a rotation matrix to make the view relative.
+			if (!pos.isZero())
+			{
+				DAngle yaw = viewpoint.camera->Angles.Yaw;
+				DAngle pitch = viewpoint.camera->Angles.Pitch;
+				DAngle roll = viewpoint.camera->Angles.Roll;
+				DVector3 relx, rely, relz;
+				DMatrix3x3 rot =
+					DMatrix3x3(DVector3(0., 0., 1.), yaw.Cos(), yaw.Sin()) *
+					DMatrix3x3(DVector3(0., 1., 0.), pitch.Cos(), pitch.Sin()) *
+					DMatrix3x3(DVector3(1., 0., 0.), roll.Cos(), roll.Sin());
+				relx = DVector3(1., 0., 0.)*rot;
+				rely = DVector3(0., 1., 0.)*rot;
+				relz = DVector3(0., 0., 1.)*rot;
+				viewpoint.Pos += relx * pos.X + rely * pos.Y + relz * pos.Z;
+			}
+
 			if (jiggers.Intensity.X != 0 || jiggers.Offset.X != 0)
 			{
 				viewpoint.Pos.X += QuakePower(quakefactor, jiggers.Intensity.X, jiggers.Offset.X);

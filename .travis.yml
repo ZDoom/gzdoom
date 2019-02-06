@@ -133,7 +133,7 @@ script:
       -DPK3_QUIET_ZIPDIR=YES     \
       ..
   - if [[ $TRAVIS_OS_NAME == 'windows' ]]; then cmake --build . -- -m; fi
-  - if [[ $TRAVIS_OS_NAME != 'windows' ]]; then cmake --build . -- -j2; fi
+  - if [[ $TRAVIS_OS_NAME != 'windows' ]]; then cmake --build . -- -j2 -k; fi
 
 notifications:
   email: false

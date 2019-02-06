@@ -217,7 +217,7 @@ void EventManager::InitHandler(PClass* type)
 	RegisterHandler(handler);
 }
 
-void EventManager::InitStaticHandlers(bool map)
+void EventManager::InitStaticHandlers(FLevelLocals *l, bool map)
 {
 	// don't initialize map handlers if restoring from savegame.
 	if (savegamerestore)
@@ -225,6 +225,7 @@ void EventManager::InitStaticHandlers(bool map)
 
 	// just make sure
 	Shutdown();
+	Level = l;
 
 	// initialize event handlers from gameinfo
 	for (const FString& typeName : gameinfo.EventHandlers)
@@ -241,7 +242,7 @@ void EventManager::InitStaticHandlers(bool map)
 		return;
 
 	// initialize event handlers from mapinfo
-	for (const FString& typeName : level.info->EventHandlers)
+	for (const FString& typeName : Level->info->EventHandlers)
 	{
 		PClass* type = GetHandlerClass(typeName);
 		if (IsStaticType(type))

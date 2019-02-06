@@ -395,7 +395,7 @@ void PClassActor::StaticInit()
 	InitBotStuff();
 
 	// reinit GLOBAL static stuff from gameinfo, once classes are loaded.
-	staticEventManager.InitStaticHandlers(false);
+	staticEventManager.InitStaticHandlers(primaryLevel, false);
 }
 
 //==========================================================================

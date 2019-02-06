@@ -249,7 +249,7 @@ struct EventManager
 	// check type
 	bool IsStaticType(PClass* type);
 	// init static handlers
-	void InitStaticHandlers(bool map);
+	void InitStaticHandlers(FLevelLocals *l, bool map);
 	// shutdown handlers
 	void Shutdown();
 

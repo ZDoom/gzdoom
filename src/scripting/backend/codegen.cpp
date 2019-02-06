@@ -9671,6 +9671,10 @@ FxExpression *FxSequence::Resolve(FCompileContext &ctx)
 		{
 			fail = true;
 		}
+		else if (Expressions[i]->ExprType == EFX_Nop)
+		{
+			continue;
+		}
 		else if (Expressions[i]->ValueType == TypeError)
 		{
 			ScriptPosition.Message(MSG_ERROR, "Invalid statement");

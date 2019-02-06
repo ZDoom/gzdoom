@@ -1,6 +1,6 @@
 /* U.S. English. (Sorry, it's not English English.) */
 
-[enu default]
+[en default]
 
 SECRETMESSAGE = "A secret is revealed!";
 

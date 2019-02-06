@@ -44,34 +44,41 @@
 
 
 #include <stdlib.h>
+#include "doomdef.h"
 #include "doomtype.h"
+
+// This public interface is for Dehacked
+class StringMap : public TMap<FName, FString>
+{
+public:
+	const char *MatchString(const char *string) const;
+};
+
 
 class FStringTable
 {
 public:
-	struct StringEntry;
+	using LangMap = TMap<uint32_t, StringMap>;
 
-	FStringTable ();
-	~FStringTable ();
-
-	void LoadStrings (bool enuOnly);
+	void LoadStrings ();
+	void UpdateLanguage();
+	StringMap GetDefaultStrings() { return allStrings[MAKE_ID('*', '*', 0, 0)]; }	// Dehacked needs these for comparison
+	void SetDehackedStrings(StringMap && map)
+	{
+		allStrings.Insert(MAKE_ID('*', '*', '*', 0), map);
+		UpdateLanguage();
+	}
 
 	const char *operator() (const char *name) const;	// Never returns NULL
 	const char *operator[] (const char *name) const;	// Can return NULL
 
-	const char *MatchString (const char *string) const;
-	void SetString (const char *name, const char *newString);
-
 private:
-	enum { HASH_SIZE = 128 };
 
-	StringEntry *Buckets[HASH_SIZE];
+	LangMap allStrings;
+	TArray<StringMap*> currentLanguageSet;
 
-	void FreeData ();
-	void FreeNonDehackedStrings ();
-	void LoadLanguage (int lumpnum, uint32_t code, bool exactMatch, int passnum);
+	void LoadLanguage (int lumpnum);
 	static size_t ProcessEscapes (char *str);
-	void FindString (const char *stringName, StringEntry **&pentry, StringEntry *&entry);
 };
 
 #endif //__STRINGTABLE_H__

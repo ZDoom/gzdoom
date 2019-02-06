@@ -289,7 +289,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 				r = pr_botmove();
 				if (r < 128)
 				{
-					TThinkerIterator<AActor> it (NAME_Inventory, MAX_STATNUM+1, bglobal.firstthing);
+					auto it = player->mo->Level->GetThinkerIterator<AActor>(NAME_Inventory, MAX_STATNUM+1, Level->BotInfo.firstthing);
 					auto item = it.Next();
 
 					if (item != NULL || (item = it.Next()) != NULL)
@@ -304,7 +304,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 						{
 							item = it.Next();
 						}
-						bglobal.firstthing = item;
+						Level->BotInfo.firstthing = item;
 						dest = item;
 					}
 				}
@@ -356,9 +356,6 @@ void DBot::WhatToGet (AActor *item)
 	}
 	int weapgiveammo = (alwaysapplydmflags || deathmatch) && !(dmflags & DF_WEAPONS_STAY);
 
-	//if(pos && !bglobal.thingvis[pos->id][item->id]) continue;
-//	if (item->IsKindOf (RUNTIME_CLASS(AArtifact)))
-//		return;	// don't know how to use artifacts
 	if (item->IsKindOf(NAME_Weapon))
 	{
 		// FIXME

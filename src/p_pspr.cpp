@@ -600,10 +600,6 @@ void P_BobWeapon (player_t *player, float *x, float *y, double ticfrac)
 
 static void P_CheckWeaponButtons (player_t *player)
 {
-	if (player->Bot == nullptr && bot_observer)
-	{
-		return;
-	}
 	auto weapon = player->ReadyWeapon;
 	if (weapon == nullptr)
 	{
@@ -965,8 +961,8 @@ DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimfla
 		an = mo->Angles.Yaw + angdiff[i];
 		pitch = P_AimLineAttack (mo, an, 16.*64, pLineTarget, 0., aimflags);
 
-		if (mo->player != NULL &&
-			level.IsFreelookAllowed() &&
+		if (mo->player != nullptr &&
+			mo->Level->IsFreelookAllowed() &&
 			mo->player->userinfo.GetAimDist() <= 0.5)
 		{
 			break;

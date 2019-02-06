@@ -44,6 +44,9 @@
 #include "c_dispatch.h"
 #include "dikeys.h"
 #include "events.h"
+#include "g_game.h"
+#include "g_levellocals.h"
+
 
 static void I_CheckGUICapture ();
 static void I_CheckNativeMouse ();
@@ -179,7 +182,7 @@ static void I_CheckGUICapture ()
 	}
 
 	// [ZZ] check active event handlers that want the UI processing
-	if (!wantCapt && E_CheckUiProcessors())
+	if (!wantCapt && primaryLevel->localEventManager->CheckUiProcessors())
 		wantCapt = true;
 
 	if (wantCapt != GUICapture)

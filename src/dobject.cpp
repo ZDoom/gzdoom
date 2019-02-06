@@ -488,6 +488,8 @@ void DObject::StaticPointerSubstitution (AActor *old, AActor *notOld)
 	DObject *probe;
 	size_t changed = 0;
 	int i;
+	
+	if (old == nullptr) return;
 
 	// Go through all objects.
 	i = 0;DObject *last=0;
@@ -515,8 +517,8 @@ void DObject::StaticPointerSubstitution (AActor *old, AActor *notOld)
 		}
 	}
 
-	// Go through sectors.
-	for (auto &sec : level.sectors)
+	// Go through sectors. Only the level this actor belongs to is relevant.
+	for (auto &sec : old->Level->sectors)
 	{
 		if (sec.SoundTarget == old) sec.SoundTarget = notOld;
 	}

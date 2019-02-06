@@ -39,7 +39,7 @@
 
 #include "v_text.h"
 
-#include "i_system.h"
+
 #include "v_video.h"
 #include "w_wad.h"
 

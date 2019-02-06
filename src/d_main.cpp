@@ -99,6 +99,8 @@
 #include "events.h"
 #include "vm.h"
 #include "types.h"
+#include "i_system.h"
+#include "g_cvars.h"
 #include "r_data/r_vanillatrans.h"
 
 EXTERN_CVAR(Bool, hud_althud)
@@ -170,7 +172,7 @@ CUSTOM_CVAR (Int, fraglimit, 0, CVAR_SERVERINFO)
 			if (playeringame[i] && self <= D_GetFragCount(&players[i]))
 			{
 				Printf ("%s\n", GStrings("TXT_FRAGLIMIT"));
-				G_ExitLevel (0, false);
+				primaryLevel->ExitLevel (0, false);
 				break;
 			}
 		}
@@ -271,7 +273,7 @@ void D_ProcessEvents (void)
 		if (M_Responder (ev))
 			continue;				// menu ate the event
 		// check events
-		if (ev->type != EV_Mouse && E_Responder(ev)) // [ZZ] ZScript ate the event // update 07.03.17: mouse events are handled directly
+		if (ev->type != EV_Mouse && primaryLevel->localEventManager->Responder(ev)) // [ZZ] ZScript ate the event // update 07.03.17: mouse events are handled directly
 			continue;
 		G_Responder (ev);
 	}
@@ -293,7 +295,7 @@ void D_PostEvent (const event_t *ev)
 		return;
 	}
 	events[eventhead] = *ev;
-	if (ev->type == EV_Mouse && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling && !E_Responder(ev) && !paused)
+	if (ev->type == EV_Mouse && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling && !primaryLevel->localEventManager->Responder(ev) && !paused)
 	{
 		if (Button_Mlook.bDown || freelook)
 		{
@@ -353,6 +355,35 @@ void D_RemoveNextCharEvent()
 
 //==========================================================================
 //
+// Render wrapper.
+// This function contains all the needed setup and cleanup for starting a render job.
+//
+//==========================================================================
+
+void D_Render(std::function<void()> action, bool interpolate)
+{
+	for (auto Level : AllLevels())
+	{
+		// Check for the presence of dynamic lights at the start of the frame once.
+		if ((gl_lights && vid_rendermode == 4) || (r_dynlights && vid_rendermode != 4))
+		{
+			Level->HasDynamicLights = !!Level->lights;
+		}
+		else Level->HasDynamicLights = false;	// lights are off so effectively we have none.
+		if (interpolate) Level->interpolator.DoInterpolations(I_GetTimeFrac());
+		P_FindParticleSubsectors(Level);
+		PO_LinkToSubsectors(Level);
+	}
+	action();
+
+	if (interpolate) for (auto Level : AllLevels())
+	{
+		Level->interpolator.RestoreInterpolations();
+	}
+}
+
+//==========================================================================
+//
 // CVAR dmflags
 //
 //==========================================================================
@@ -361,8 +392,7 @@ CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO)
 {
 	// In case DF_NO_FREELOOK was changed, reinitialize the sky
 	// map. (If no freelook, then no need to stretch the sky.)
-	if (sky1texture.isValid())
-		R_InitSkyMap ();
+	R_InitSkyMap ();
 
 	if (self & DF_NO_FREELOOK)
 	{
@@ -502,36 +532,40 @@ CVAR (Flag, sv_respawnsuper,		dmflags2, DF2_RESPAWN_SUPER);
 //
 //==========================================================================
 
-int i_compatflags, i_compatflags2;	// internal compatflags composed from the compatflags CVAR and MAPINFO settings
-int ii_compatflags, ii_compatflags2, ib_compatflags;
-
 EXTERN_CVAR(Int, compatmode)
 
-static int GetCompatibility(int mask)
+static int GetCompatibility(FLevelLocals *Level, int mask)
 {
-	if (level.info == NULL) return mask;
-	else return (mask & ~level.info->compatmask) | (level.info->compatflags & level.info->compatmask);
+	if (Level->info == nullptr) return mask;
+	else return (mask & ~Level->info->compatmask) | (Level->info->compatflags & Level->info->compatmask);
 }
 
-static int GetCompatibility2(int mask)
+static int GetCompatibility2(FLevelLocals *Level, int mask)
 {
-	return (level.info == NULL) ? mask
-		: (mask & ~level.info->compatmask2) | (level.info->compatflags2 & level.info->compatmask2);
+	return (Level->info == nullptr) ? mask
+		: (mask & ~Level->info->compatmask2) | (Level->info->compatflags2 & Level->info->compatmask2);
 }
 
 CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
 {
-	int old = i_compatflags;
-	i_compatflags = GetCompatibility(self) | ii_compatflags;
-	if ((old ^ i_compatflags) & COMPATF_POLYOBJ)
+	for (auto Level : AllLevels())
 	{
-		FPolyObj::ClearAllSubsectorLinks();
+		int old = Level->i_compatflags;
+		Level->i_compatflags = GetCompatibility(Level, self) | Level->ii_compatflags;
+		if ((old ^ Level->i_compatflags) & COMPATF_POLYOBJ)
+		{
+			Level->ClearAllSubsectorLinks();
+		}
 	}
 }
 
 CUSTOM_CVAR (Int, compatflags2, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
 {
-	i_compatflags2 = GetCompatibility2(self) | ii_compatflags2;
+	for (auto Level : AllLevels())
+	{
+		Level->i_compatflags2 = GetCompatibility2(Level, self) | Level->ii_compatflags2;
+		Level->SetCompatLineOnSide(true);
+	}
 }
 
 CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
@@ -746,19 +780,16 @@ void D_Display ()
 		//E_RenderFrame();
 		//
 		
-		// Check for the presence of dynamic lights at the start of the frame once.
-		if ((gl_lights && vid_rendermode == 4) || (r_dynlights && vid_rendermode != 4))
+		D_Render([&]()
 		{
-			level.HasDynamicLights = !!level.lights;
-		}
-		else level.HasDynamicLights = false;	// lights are off so effectively we have none.
-		
-		viewsec = screen->RenderView(&players[consoleplayer]);
+			viewsec = screen->RenderView(&players[consoleplayer]);
+		}, true);
+
 		screen->Begin2D();
 		screen->DrawBlend(viewsec);
 		if (automapactive)
 		{
-			AM_Drawer (hud_althud? viewheight : StatusBar->GetTopOfStatusbar());
+			primaryLevel->automap->Drawer (hud_althud? viewheight : StatusBar->GetTopOfStatusbar());
 		}
 		
 		// for timing the statusbar code.
@@ -928,7 +959,7 @@ void D_Display ()
 void D_ErrorCleanup ()
 {
 	savegamerestore = false;
-	bglobal.RemoveAllBots (true);
+	primaryLevel->BotInfo.RemoveAllBots (primaryLevel, true);
 	D_QuitNetGame ();
 	if (demorecording || demoplayback)
 		G_CheckDemoStatus ();
@@ -2524,14 +2555,14 @@ void D_DoomMain (void)
 		PClassActor::StaticSetActorNums();
 
 		//Added by MC:
-		bglobal.getspawned.Clear();
+		primaryLevel->BotInfo.getspawned.Clear();
 		argcount = Args->CheckParmList("-bots", &args);
 		for (p = 0; p < argcount; ++p)
 		{
-			bglobal.getspawned.Push(args[p]);
+			primaryLevel->BotInfo.getspawned.Push(args[p]);
 		}
-		bglobal.spawn_tries = 0;
-		bglobal.wanted_botnum = bglobal.getspawned.Size();
+		primaryLevel->BotInfo.spawn_tries = 0;
+		primaryLevel->BotInfo.wanted_botnum = primaryLevel->BotInfo.getspawned.Size();
 
 		if (!batchrun) Printf ("P_Init: Init Playloop state.\n");
 		StartScreen->LoadingStatus ("Init game engine", 0x3f);
@@ -2695,8 +2726,11 @@ void D_DoomMain (void)
 		// clean up game state
 		ST_Clear();
 		D_ErrorCleanup ();
-		DThinker::DestroyThinkersInList(STAT_STATIC);
-		E_Shutdown(false);
+		for (auto Level : AllLevels())
+		{
+			Level->Thinkers.DestroyThinkersInList(STAT_STATIC);
+		}
+		staticEventManager.Shutdown();
 		P_FreeLevelData();
 
 		M_SaveDefaults(NULL);			// save config before the restart

@@ -34,7 +34,7 @@
 
 #include <stdio.h>
 
-#include "i_system.h"
+
 #include "x86.h"
 #include "actor.h"
 

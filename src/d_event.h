@@ -25,6 +25,7 @@
 
 
 #include "basictypes.h"
+#include <functional>
 
 
 //
@@ -58,7 +59,7 @@ struct event_t
 enum gameaction_t : int
 {
 	ga_nothing,
-	ga_loadlevel,
+	ga_loadlevel, // not used.
 	ga_newgame,
 	ga_newgame2,
 	ga_recordgame,
@@ -119,6 +120,7 @@ typedef enum
 // Called by IO functions when input is detected.
 void D_PostEvent (const event_t* ev);
 void D_RemoveNextCharEvent();
+void D_Render(std::function<void()> action, bool interpolate);
 
 
 //
@@ -127,8 +129,6 @@ void D_RemoveNextCharEvent();
 #define MAXEVENTS		128
 
 extern	event_t 		events[MAXEVENTS];
-extern	int 			eventhead;
-extern	int 			eventtail;
 
 extern	gameaction_t	gameaction;
 

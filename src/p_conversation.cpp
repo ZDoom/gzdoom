@@ -55,6 +55,7 @@
 #include "menu/menu.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "v_video.h"
 #include "actorinlines.h"
 
 // The conversations as they exist inside a SCRIPTxx lump.
@@ -96,28 +97,20 @@ struct TeaserSpeech
 
 static FRandom pr_randomspeech("RandomSpeech");
 
-TArray<FStrifeDialogueNode *> StrifeDialogues;
-
-typedef TMap<int, int> FDialogueIDMap;				// maps dialogue IDs to dialogue array index (for ACS)
-typedef TMap<FName, int> FDialogueMap;				// maps actor class names to dialogue array index
-
-FClassMap StrifeTypes;
-static FDialogueIDMap DialogueRoots;
-static FDialogueMap ClassRoots;
 static int ConversationMenuY;
 
-static int ConversationPauseTic;
+// These two should be moved to player_t...
+static FStrifeDialogueNode *PrevNode;
 static int StaticLastReply;
 
-static bool LoadScriptFile(int lumpnum, FileReader &lump, int numnodes, bool include, int type);
-static FStrifeDialogueNode *ReadRetailNode (FileReader &lump, uint32_t &prevSpeakerType);
-static FStrifeDialogueNode *ReadTeaserNode (FileReader &lump, uint32_t &prevSpeakerType);
-static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses);
+static bool LoadScriptFile(FLevelLocals *Level, const char *name, int lumpnum, FileReader &lump, int numnodes, bool include, int type);
+static FStrifeDialogueNode *ReadRetailNode (FLevelLocals *Level, const char *name, FileReader &lump, uint32_t &prevSpeakerType);
+static FStrifeDialogueNode *ReadTeaserNode (FLevelLocals *Level, const char *name, FileReader &lump, uint32_t &prevSpeakerType);
+static void ParseReplies (const char *name, int pos, FStrifeDialogueReply **replyptr, Response *responses);
 static bool DrawConversationMenu ();
 static void PickConversationReply (int replyindex);
 static void TerminalResponse (const char *str);
 
-static FStrifeDialogueNode *PrevNode;
 
 //============================================================================
 //
@@ -127,17 +120,7 @@ static FStrifeDialogueNode *PrevNode;
 //
 //============================================================================
 
-void SetStrifeType(int convid, PClassActor *Class)
-{
-	StrifeTypes[convid] = Class;
-}
-
-void ClearStrifeTypes()
-{
-	StrifeTypes.Clear();
-}
-
-void SetConversation(int convid, PClassActor *Class, int dlgindex)
+void FLevelLocals::SetConversation(int convid, PClassActor *Class, int dlgindex)
 {
 	if (convid != -1)
 	{
@@ -156,14 +139,14 @@ PClassActor *GetStrifeType (int typenum)
 	else return *ptype;
 }
 
-int GetConversation(int conv_id)
+int FLevelLocals::GetConversation(int conv_id)
 {
 	int *pindex = DialogueRoots.CheckKey(conv_id);
 	if (pindex == NULL) return -1;
 	else return *pindex;
 }
 
-int GetConversation(FName classname)
+int FLevelLocals::GetConversation(FName classname)
 {
 	int *pindex = ClassRoots.CheckKey(classname);
 	if (pindex == NULL) return -1;
@@ -178,12 +161,11 @@ int GetConversation(FName classname)
 //
 //============================================================================
 
-void P_LoadStrifeConversations (MapData *map, const char *mapname)
+void P_LoadStrifeConversations (FLevelLocals *Level, MapData *map, const char *mapname)
 {
-	P_FreeStrifeConversations ();
 	if (map->Size(ML_CONVERSATION) > 0)
 	{
-		LoadScriptFile (map->lumpnum, map->Reader(ML_CONVERSATION), map->Size(ML_CONVERSATION), false, 0);
+		LoadScriptFile (Level, nullptr, map->lumpnum, map->Reader(ML_CONVERSATION), map->Size(ML_CONVERSATION), false, 0);
 	}
 	else
 	{
@@ -192,8 +174,8 @@ void P_LoadStrifeConversations (MapData *map, const char *mapname)
 			char scriptname_b[9] = { 'S','C','R','I','P','T',mapname[3],mapname[4],0 };
 			char scriptname_t[9] = { 'D','I','A','L','O','G',mapname[3],mapname[4],0 };
 
-			if (   LoadScriptFile(scriptname_t, false, 2)
-				|| LoadScriptFile(scriptname_b, false, 1))
+			if (   LoadScriptFile(Level, scriptname_t, false, 2)
+				|| LoadScriptFile(Level, scriptname_b, false, 1))
 			{
 				return;
 			}
@@ -201,13 +183,13 @@ void P_LoadStrifeConversations (MapData *map, const char *mapname)
 
 		if (gameinfo.Dialogue.IsNotEmpty())
 		{
-			if (LoadScriptFile(gameinfo.Dialogue, false, 0))
+			if (LoadScriptFile(Level, gameinfo.Dialogue, false, 0))
 			{
 				return;
 			}
 		}
 
-		LoadScriptFile("SCRIPT00", false, 1);
+		LoadScriptFile(Level, "SCRIPT00", false, 1);
 	}
 }
 
@@ -219,7 +201,7 @@ void P_LoadStrifeConversations (MapData *map, const char *mapname)
 //
 //============================================================================
 
-bool LoadScriptFile (const char *name, bool include, int type)
+bool LoadScriptFile (FLevelLocals *Level, const char *name, bool include, int type)
 {
 	int lumpnum = Wads.CheckNumForName (name);
 	const bool found = lumpnum >= 0
@@ -236,11 +218,16 @@ bool LoadScriptFile (const char *name, bool include, int type)
 	}
 	FileReader lump = Wads.ReopenLumpReader (lumpnum);
 
-	bool res = LoadScriptFile(lumpnum, lump, Wads.LumpLength(lumpnum), include, type);
+	auto fn = Wads.GetLumpFile(lumpnum);
+	auto wadname = Wads.GetWadName(fn);
+	if (stricmp(wadname, "STRIFE0.WAD") && stricmp(wadname, "STRIFE1.WAD") && stricmp(wadname, "SVE.WAD")) name = nullptr;	// Only localize IWAD content.
+	if (name && !stricmp(name, "SCRIPT00")) name = nullptr;	// This only contains random string references which already use the string table.
+
+	bool res = LoadScriptFile(Level, name, lumpnum, lump, Wads.LumpLength(lumpnum), include, type);
 	return res;
 }
 
-static bool LoadScriptFile(int lumpnum, FileReader &lump, int numnodes, bool include, int type)
+static bool LoadScriptFile(FLevelLocals *Level, const char *name, int lumpnum, FileReader &lump, int numnodes, bool include, int type)
 {
 	int i;
 	uint32_t prevSpeakerType;
@@ -261,13 +248,13 @@ static bool LoadScriptFile(int lumpnum, FileReader &lump, int numnodes, bool inc
 
 	if (!isbinary)
 	{
-		P_ParseUSDF(lumpnum, lump, numnodes);
+		P_ParseUSDF(Level, lumpnum, lump, numnodes);
 	}
 	else 
 	{
 		if (!include)
 		{
-			LoadScriptFile("SCRIPT00", true, 1);
+			LoadScriptFile(Level, "SCRIPT00", true, 1);
 		}
 		if (!(gameinfo.flags & GI_SHAREWARE))
 		{
@@ -297,13 +284,13 @@ static bool LoadScriptFile(int lumpnum, FileReader &lump, int numnodes, bool inc
 		{
 			if (!(gameinfo.flags & GI_SHAREWARE))
 			{
-				node = ReadRetailNode (lump, prevSpeakerType);
+				node = ReadRetailNode (Level, name, lump, prevSpeakerType);
 			}
 			else
 			{
-				node = ReadTeaserNode (lump, prevSpeakerType);
+				node = ReadTeaserNode (Level, name, lump, prevSpeakerType);
 			}
-			node->ThisNodeNum = StrifeDialogues.Push(node);
+			node->ThisNodeNum = Level->StrifeDialogues.Push(node);
 		}
 	}
 	return true;
@@ -317,7 +304,17 @@ static bool LoadScriptFile(int lumpnum, FileReader &lump, int numnodes, bool inc
 //
 //============================================================================
 
-static FStrifeDialogueNode *ReadRetailNode (FileReader &lump, uint32_t &prevSpeakerType)
+static FString TokenFromString(const char *speech)
+{
+	FString token = speech;
+	token.ToUpper();
+	token.ReplaceChars(".,-+!?'", ' ');
+	token.Substitute(" ", "");
+	token.Truncate(5);
+	return token;
+}
+
+static FStrifeDialogueNode *ReadRetailNode (FLevelLocals *Level, const char *name, FileReader &lump, uint32_t &prevSpeakerType)
 {
 	FStrifeDialogueNode *node;
 	Speech speech;
@@ -327,6 +324,7 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader &lump, uint32_t &prevSpea
 
 	node = new FStrifeDialogueNode;
 
+	auto pos = lump.Tell();
 	lump.Read (&speech, sizeof(speech));
 
 	// Byte swap all the ints in the original data
@@ -343,14 +341,23 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader &lump, uint32_t &prevSpea
 	{
 		if (type != NULL)
 		{
-			ClassRoots[type->TypeName] = StrifeDialogues.Size();
+			Level->ClassRoots[type->TypeName] = Level->StrifeDialogues.Size();
 		}
-		DialogueRoots[speech.SpeakerType] = StrifeDialogues.Size();
+		Level->DialogueRoots[speech.SpeakerType] = Level->StrifeDialogues.Size();
 		prevSpeakerType = speech.SpeakerType;
 	}
 
 	// Convert the rest of the data to our own internal format.
-	node->Dialogue = speech.Dialogue;
+
+	if (name)
+	{
+		FStringf label("$TXT_DLG_%s_d%d_%s", name, int(pos), TokenFromString(speech.Dialogue));
+		node->Dialogue = label;
+	}
+	else
+	{
+		node->Dialogue = speech.Dialogue;
+	}
 
 	// The speaker's portrait, if any.
 	speech.Dialogue[0] = 0; 	//speech.Backdrop[8] = 0;
@@ -380,7 +387,7 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader &lump, uint32_t &prevSpea
 	node->ItemCheckNode = speech.Link;
 	node->Children = NULL;
 
-	ParseReplies (&node->Children, &speech.Responses[0]);
+	ParseReplies (name, int(pos), &node->Children, &speech.Responses[0]);
 
 	return node;
 }
@@ -393,7 +400,7 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader &lump, uint32_t &prevSpea
 //
 //============================================================================
 
-static FStrifeDialogueNode *ReadTeaserNode (FileReader &lump, uint32_t &prevSpeakerType)
+static FStrifeDialogueNode *ReadTeaserNode (FLevelLocals *Level, const char *name, FileReader &lump, uint32_t &prevSpeakerType)
 {
 	FStrifeDialogueNode *node;
 	TeaserSpeech speech;
@@ -403,6 +410,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader &lump, uint32_t &prevSpea
 
 	node = new FStrifeDialogueNode;
 
+	auto pos = lump.Tell() * 1516 / 1488;
 	lump.Read (&speech, sizeof(speech));
 
 	// Byte swap all the ints in the original data
@@ -418,14 +426,22 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader &lump, uint32_t &prevSpea
 	{
 		if (type != NULL)
 		{
-			ClassRoots[type->TypeName] = StrifeDialogues.Size();
+			Level->ClassRoots[type->TypeName] = Level->StrifeDialogues.Size();
 		}
-		DialogueRoots[speech.SpeakerType] = StrifeDialogues.Size();
+		Level->DialogueRoots[speech.SpeakerType] = Level->StrifeDialogues.Size();
 		prevSpeakerType = speech.SpeakerType;
 	}
 
 	// Convert the rest of the data to our own internal format.
-	node->Dialogue = speech.Dialogue;
+	if (name)
+	{
+		FStringf label("$TXT_DLG_%s_d%d_%s", name, pos, TokenFromString(speech.Dialogue));
+		node->Dialogue = label;
+	}
+	else
+	{
+		node->Dialogue = speech.Dialogue;
+	}
 
 	// The Teaser version doesn't have portraits.
 	node->Backdrop = "";
@@ -458,7 +474,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader &lump, uint32_t &prevSpea
 	node->ItemCheckNode = 0;
 	node->Children = NULL;
 
-	ParseReplies (&node->Children, &speech.Responses[0]);
+	ParseReplies (name, int(pos), &node->Children, &speech.Responses[0]);
 
 	return node;
 }
@@ -473,7 +489,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader &lump, uint32_t &prevSpea
 //
 //============================================================================
 
-static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
+static void ParseReplies (const char *name, int pos, FStrifeDialogueReply **replyptr, Response *responses)
 {
 	FStrifeDialogueReply *reply;
 	int j, k;
@@ -527,24 +543,52 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 		reply->ItemCheckRequire.Clear();
 		reply->ItemCheckExclude.Clear();
 
+		if (name)
+		{
+			FStringf label("$TXT_RPLY%d_%s_d%d_%s", j, name, pos, TokenFromString(rsp->Reply));
+			reply->Reply = label;
+		}
+		else
+		{
+			reply->Reply = rsp->Reply;
+		}
+
+
 		// If the first item check has a positive amount required, then
 		// add that to the reply string. Otherwise, use the reply as-is.
-		reply->Reply = rsp->Reply;
 		reply->NeedsGold = (rsp->Count[0] > 0);
 
 		// QuickYes messages are shown when you meet the item checks.
 		// QuickNo messages are shown when you don't.
-		if (rsp->Yes[0] == '_' && rsp->Yes[1] == 0)
+		// Note that empty nodes contain a '_' in retail Strife, a '.' in the teasers and an empty string in SVE.
+		if (((rsp->Yes[0] == '_' || rsp->Yes[0] == '.') && rsp->Yes[1] == 0) || rsp->Yes[0] == 0)
 		{
 			reply->QuickYes = "";
 		}
 		else
 		{
-			reply->QuickYes = rsp->Yes;
+			if (name)
+			{
+				FStringf label("$TXT_RYES%d_%s_d%d_%s", j, name, pos, TokenFromString(rsp->Yes));
+				reply->QuickYes = label;
+			}
+			else
+			{
+				reply->QuickYes = rsp->Yes;
+			}
 		}
 		if (reply->ItemCheck[0].Item != 0)
 		{
-			reply->QuickNo = rsp->No;
+			if (name && strncmp(rsp->No, "NO. ", 4))	// All 'no' nodes starting with 'NO.' won't ever be shown and they all contain broken text.
+			{
+				FStringf label("$TXT_RNO%d_%s_d%d_%s", j, name, pos, TokenFromString(rsp->No));
+				reply->QuickNo = label;
+			}
+			else
+			{
+				reply->QuickNo = rsp->No;
+			}
+
 		}
 		else
 		{
@@ -581,7 +625,7 @@ FStrifeDialogueNode::~FStrifeDialogueNode ()
 //
 //============================================================================
 
-static int FindNode (const FStrifeDialogueNode *node)
+int FLevelLocals::FindNode (const FStrifeDialogueNode *node)
 {
 	int rootnode = 0;
 
@@ -725,16 +769,6 @@ DEFINE_ACTION_FUNCTION(DConversationMenu, SendConversationReply)
 
 void P_FreeStrifeConversations ()
 {
-	FStrifeDialogueNode *node;
-
-	while (StrifeDialogues.Pop (node))
-	{
-		delete node;
-	}
-
-	DialogueRoots.Clear();
-	ClassRoots.Clear();
-
 	PrevNode = NULL;
 	if (CurrentMenu != NULL && CurrentMenu->IsKindOf("ConversationMenu"))
 	{
@@ -756,16 +790,17 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 	int i;
 
 	// Make sure this is actually a player.
-	if (pc->player == NULL) return;
+	if (pc == nullptr || pc->player == nullptr || npc == nullptr || !pc->Level->isPrimaryLevel()) return;
+	auto Level = pc->Level;
 
 	// [CW] If an NPC is talking to a PC already, then don't let
 	// anyone else talk to the NPC.
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
-		if (!playeringame[i] || pc->player == &players[i])
+		if (!Level->PlayerInGame(i) || pc->player == Level->Players[i])
 			continue;
 
-		if (npc == players[i].ConversationNPC)
+		if (npc == Level->Players[i]->ConversationNPC)
 			return;
 	}
 
@@ -779,7 +814,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 
 	FStrifeDialogueNode *CurNode = npc->Conversation;
 
-	if (pc->player == &players[consoleplayer])
+	if (pc->player == Level->GetConsolePlayer())
 	{
 		S_Sound (CHAN_VOICE | CHAN_UI, gameinfo.chatSound, 1, ATTN_NONE);
 	}
@@ -818,7 +853,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 		if (jump && CurNode->ItemCheckNode > 0)
 		{
 			int root = pc->player->ConversationNPC->ConversationRoot;
-			CurNode = StrifeDialogues[root + CurNode->ItemCheckNode - 1];
+			CurNode = Level->StrifeDialogues[root + CurNode->ItemCheckNode - 1];
 		}
 		else
 		{
@@ -827,7 +862,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 	}
 
 	// The rest is only done when the conversation is actually displayed.
-	if (pc->player == &players[consoleplayer])
+	if (pc->player == Level->GetConsolePlayer())
 	{
 		if (CurNode->SpeakerVoice != 0)
 		{
@@ -904,14 +939,14 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	AActor *npc;
 	bool takestuff;
 	int i;
-
-	if (player->ConversationNPC == NULL || (unsigned)nodenum >= StrifeDialogues.Size())
+	auto Level = player->mo->Level;
+	if (player->ConversationNPC == nullptr || (unsigned)nodenum >= Level->StrifeDialogues.Size())
 	{
 		return;
 	}
 
 	// Find the reply.
-	node = StrifeDialogues[nodenum];
+	node = Level->StrifeDialogues[nodenum];
 	for (i = 0, reply = node->Children; reply != NULL && i != replynum; ++i, reply = reply->Next)
 	{ }
 	npc = player->ConversationNPC;
@@ -961,7 +996,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	
 			if (takestuff)
 			{
-				auto item = Spawn(reply->GiveType);
+				auto item = Spawn(player->mo->Level, reply->GiveType);
 				// Items given here should not count as items!
 				item->ClearCounters();
 				if (item->GetClass()->TypeName == NAME_FlameThrower)
@@ -993,7 +1028,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 
 	if (reply->ActionSpecial != 0)
 	{
-		takestuff |= !!P_ExecuteSpecial(reply->ActionSpecial, NULL, player->mo, false,
+		takestuff |= !!P_ExecuteSpecial(player->mo->Level, reply->ActionSpecial, NULL, player->mo, false,
 			reply->Args[0], reply->Args[1], reply->Args[2], reply->Args[3], reply->Args[4]);
 	}
 
@@ -1041,9 +1076,9 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 		const bool isNegative = reply->NextNode < 0;
 		const unsigned next = (unsigned)(rootnode + (isNegative ? -1 : 1) * reply->NextNode - 1);
 
-		if (next < StrifeDialogues.Size())
+		if (next < Level->StrifeDialogues.Size())
 		{
-			npc->Conversation = StrifeDialogues[next];
+			npc->Conversation = Level->StrifeDialogues[next];
 
 			if (isNegative)
 			{
@@ -1081,7 +1116,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 
 	if (isconsole)
 	{
-		I_SetMusicVolume (level.MusicVolume);
+		I_SetMusicVolume (player->mo->Level->MusicVolume);
 	}
 }
 

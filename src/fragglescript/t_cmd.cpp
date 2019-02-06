@@ -77,7 +77,7 @@ static void FS_Gimme(const char * what)
 //
 //==========================================================================
 
-void FS_MapCmd(FScanner &sc)
+void FS_MapCmd(FLevelLocals *Level, FScanner &sc)
 {
 	char nextmap[9];
 	int NextSkill = -1;
@@ -108,7 +108,7 @@ void FS_MapCmd(FScanner &sc)
 			flags &= ~(CHANGELEVEL_RESETINVENTORY|CHANGELEVEL_RESETHEALTH);
 		}
 	}
-	G_ChangeLevel(nextmap, 0, flags, NextSkill);
+	Level->ChangeLevel(nextmap, 0, flags, NextSkill);
 }
 
 //==========================================================================
@@ -154,12 +154,12 @@ void FS_EmulateCmd(FLevelLocals *Level, char * string)
 		{
 			sc.MustGetFloat();
 			double playerviewheight = sc.Float;
-			for(int i=0;i<MAXPLAYERS;i++)
+			for (auto p : Level->Players)
 			{
 				// No, this is not correct. But this is the way Legacy WADs expect it to be handled!
-				if (players[i].mo != NULL) players[i].mo->FloatVar(NAME_ViewHeight) = playerviewheight;
-				players[i].viewheight = playerviewheight;
-				players[i].Uncrouch();
+				if (p->mo != nullptr) p->mo->FloatVar(NAME_ViewHeight) = playerviewheight;
+				p->viewheight = playerviewheight;
+				p->Uncrouch();
 			}
 			while (sc.GetString())
 			{
@@ -168,7 +168,7 @@ void FS_EmulateCmd(FLevelLocals *Level, char * string)
 		}
 		else if (sc.Compare("map"))
 		{
-			FS_MapCmd(sc);
+			FS_MapCmd(Level, sc);
 		}
 		else if (sc.Compare("gr_fogdensity"))
 		{

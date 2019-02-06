@@ -89,6 +89,8 @@
 #include "actorinlines.h"
 #include "p_acs.h"
 #include "events.h"
+#include "g_game.h"
+#include "v_video.h"
 #include "gstrings.h"
 
 static FRandom pr_skullpop ("SkullPop");
@@ -234,46 +236,6 @@ void SetupPlayerClasses ()
 				newclass.Flags |= PCF_NOMENU;
 			}
 			PlayerClasses.Push(newclass);
-		}
-	}
-}
-
-CCMD (clearplayerclasses)
-{
-	if (ParsingKeyConf)
-	{
-		PlayerClasses.Clear ();
-	}
-}
-
-CCMD (addplayerclass)
-{
-	if (ParsingKeyConf && argv.argc () > 1)
-	{
-		PClassActor *ti = PClass::FindActor(argv[1]);
-
-		if (ValidatePlayerClass(ti, argv[1]))
-		{
-			FPlayerClass newclass;
-
-			newclass.Type = ti;
-			newclass.Flags = 0;
-
-			int arg = 2;
-			while (arg < argv.argc())
-			{
-				if (!stricmp (argv[arg], "nomenu"))
-				{
-					newclass.Flags |= PCF_NOMENU;
-				}
-				else
-				{
-					Printf ("Unknown flag '%s' for player class '%s'\n", argv[arg], argv[1]);
-				}
-
-				arg++;
-			}
-			PlayerClasses.Push (newclass);
 		}
 	}
 }
@@ -438,11 +400,11 @@ void player_t::SetLogText (const char *text)
 {
 	LogText = text;
 
-	if (mo->CheckLocalView(consoleplayer))
+	if (mo && mo->CheckLocalView())
 	{
 		// Print log text to console
 		AddToConsole(-1, TEXTCOLOR_GOLD);
-		AddToConsole(-1, GStrings(text[0] == '$' ? text + 1 : text));
+		AddToConsole(-1, LogText[0] == '$'? GStrings(text+1) : text );
 		AddToConsole(-1, "\n");
 	}
 }
@@ -675,9 +637,10 @@ bool player_t::Resurrect()
 	mo->special1 = 0;	// required for the Hexen fighter's fist attack. 
 								// This gets set by AActor::Die as flag for the wimpy death and must be reset here.
 	mo->SetState(mo->SpawnState);
+	int pnum = mo->Level->PlayerNum(this);
 	if (!(mo->flags2 & MF2_DONTTRANSLATE))
 	{
-		mo->Translation = TRANSLATION(TRANSLATION_Players, uint8_t(this - players));
+		mo->Translation = TRANSLATION(TRANSLATION_Players, uint8_t(pnum));
 	}
 	if (ReadyWeapon != nullptr)
 	{
@@ -692,9 +655,8 @@ bool player_t::Resurrect()
 
 	// player is now alive.
 	// fire E_PlayerRespawned and start the ACS SCRIPT_Respawn.
-	E_PlayerRespawned(int(this - players));
-	//
-	level.Behaviors.StartTypedScripts(SCRIPT_Respawn, mo, true);
+	mo->Level->localEventManager->PlayerRespawned(pnum);
+	mo->Level->Behaviors.StartTypedScripts(SCRIPT_Respawn, mo, true);
 	return true;
 }
 
@@ -891,7 +853,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 	}
 
 	// Handle the different player death screams
-	if ((((level.flags >> 15) | (dmflags)) &
+	if ((((self->Level->flags >> 15) | (dmflags)) &
 		(DF_FORCE_FALLINGZD | DF_FORCE_FALLINGHX)) &&
 		self->Vel.Z <= -39)
 	{
@@ -994,8 +956,8 @@ void P_CheckPlayerSprite(AActor *actor, int &spritenum, DVector2 &scale)
 
 CUSTOM_CVAR (Float, sv_aircontrol, 0.00390625f, CVAR_SERVERINFO|CVAR_NOSAVE)
 {
-	level.aircontrol = self;
-	G_AirControlChanged ();
+	primaryLevel->aircontrol = self;
+	primaryLevel->AirControlChanged ();
 }
 
 //==========================================================================
@@ -1010,7 +972,7 @@ void P_FallingDamage (AActor *actor)
 	int damage;
 	double vel;
 
-	damagestyle = ((level.flags >> 15) | (dmflags)) &
+	damagestyle = ((actor->Level->flags >> 15) | (dmflags)) &
 		(DF_FORCE_FALLINGZD | DF_FORCE_FALLINGHX);
 
 	if (damagestyle == 0)
@@ -1107,11 +1069,11 @@ void P_CheckMusicChange(player_t *player)
 	{
 		if (--player->MUSINFOtics < 0)
 		{
-			if (player - players == consoleplayer)
+			if (player == player->mo->Level->GetConsolePlayer())
 			{
 				if (player->MUSINFOactor->args[0] != 0)
 				{
-					FName *music = level.info->MusicMap.CheckKey(player->MUSINFOactor->args[0]);
+					FName *music = player->MUSINFOactor->Level->info->MusicMap.CheckKey(player->MUSINFOactor->args[0]);
 
 					if (music != NULL)
 					{
@@ -1123,7 +1085,7 @@ void P_CheckMusicChange(player_t *player)
 					S_ChangeMusic("*");
 				}
 			}
-			DPrintf(DMSG_NOTIFY, "MUSINFO change for player %d to %d\n", (int)(player - players), player->MUSINFOactor->args[0]);
+			DPrintf(DMSG_NOTIFY, "MUSINFO change for player %d to %d\n", (int)player->mo->Level->PlayerNum(player), player->MUSINFOactor->args[0]);
 		}
 	}
 }
@@ -1220,6 +1182,12 @@ void P_PlayerThink (player_t *player)
 		I_Error ("No player %td start\n", player - players + 1);
 	}
 
+	// Bots do not think in freeze mode.
+	if (player->mo->Level->isFrozen() && player->Bot != nullptr)
+	{
+		return;
+	}
+
 	if (debugfile && !(player->cheats & CF_PREDICTING))
 	{
 		fprintf (debugfile, "tic %d for pl %d: (%f, %f, %f, %f) b:%02x p:%d y:%d f:%d s:%d u:%d\n",
@@ -1249,7 +1217,6 @@ void P_PredictionLerpReset()
 
 bool P_LerpCalculate(AActor *pmo, PredictPos from, PredictPos to, PredictPos &result, float scale)
 {
-	//DVector2 pfrom = level.Displacements.getOffset(from.portalgroup, to.portalgroup);
 	DVector3 vecFrom = from.pos;
 	DVector3 vecTo = to.pos;
 	DVector3 vecResult;
@@ -1259,7 +1226,6 @@ bool P_LerpCalculate(AActor *pmo, PredictPos from, PredictPos to, PredictPos &re
 	DVector3 delta = vecResult - vecTo;
 
 	result.pos = pmo->Vec3Offset(vecResult - to.pos);
-	//result.portalgroup = P_PointInSector(result.pos.x, result.pos.y)->PortalGroup;
 
 	// As a fail safe, assume extrapolation is the threshold.
 	return (delta.LengthSquared() > cl_predict_lerpthreshold && scale <= 1.00f);
@@ -1367,7 +1333,7 @@ void P_PredictPlayer (player_t *player)
 		singletics ||
 		demoplayback ||
 		player->mo == NULL ||
-		player != &players[consoleplayer] ||
+		player != player->mo->Level->GetConsolePlayer() ||
 		player->playerstate != PST_LIVE ||
 		!netgame ||
 		/*player->morphTics ||*/
@@ -1684,7 +1650,7 @@ bool P_IsPlayerTotallyFrozen(const player_t *player)
 	return
 		gamestate == GS_TITLELEVEL ||
 		player->cheats & CF_TOTALLYFROZEN ||
-		((level.flags2 & LEVEL2_FROZEN) && player->timefreezer == 0);
+		player->mo->isFrozen();
 }
 
 

@@ -43,10 +43,6 @@
 // sky mapping
 //
 FTextureID	skyflatnum;
-FTextureID	sky1texture,	sky2texture;
-double		sky1pos,		sky2pos;
-float		hw_sky1pos, hw_sky2pos;
-bool		skystretch;
 
 // [RH] Stretch sky texture if not taller than 128 pixels?
 // Also now controls capped skies. 0 = normal, 1 = stretched, 2 = capped
@@ -65,31 +61,32 @@ CVAR(Float, skyoffset, 0, 0)	// for testing
 //
 //==========================================================================
 
-void R_InitSkyMap()
+void InitSkyMap(FLevelLocals *Level)
 {
 	int skyheight;
 	FTexture *skytex1, *skytex2;
 
 	// Do not allow the null texture which has no bitmap and will crash.
-	if (sky1texture.isNull())
+	if (Level->skytexture1.isNull())
 	{
-		sky1texture = TexMan.CheckForTexture("-noflat-", ETextureType::Any);
+		Level->skytexture1 = TexMan.CheckForTexture("-noflat-", ETextureType::Any);
 	}
-	if (sky2texture.isNull())
+	if (Level->skytexture2.isNull())
 	{
-		sky2texture = TexMan.CheckForTexture("-noflat-", ETextureType::Any);
+		Level->skytexture2 = TexMan.CheckForTexture("-noflat-", ETextureType::Any);
 	}
 
-	skytex1 = TexMan.GetTexture(sky1texture, false);
-	skytex2 = TexMan.GetTexture(sky2texture, false);
+	skytex1 = TexMan.GetTexture(Level->skytexture1, false);
+	skytex2 = TexMan.GetTexture(Level->skytexture2, false);
 
 	if (skytex1 == nullptr)
 		return;
 
-	if ((level.flags & LEVEL_DOUBLESKY) && skytex1->GetDisplayHeight() != skytex2->GetDisplayHeight())
+	if ((Level->flags & LEVEL_DOUBLESKY) && skytex1->GetDisplayHeight() != skytex2->GetDisplayHeight())
 	{
 		Printf(TEXTCOLOR_BOLD "Both sky textures must be the same height." TEXTCOLOR_NORMAL "\n");
-		sky2texture = sky1texture;
+		Level->flags &= ~LEVEL_DOUBLESKY;
+		Level->skytexture1 = Level->skytexture2;
 	}
 
 	// There are various combinations for sky rendering depending on how tall the sky is:
@@ -109,13 +106,22 @@ void R_InitSkyMap()
 
 	if (skyheight >= 128 && skyheight < 200)
 	{
-		skystretch = (r_skymode == 1
+		Level->skystretch = (r_skymode == 1
 			&& skyheight >= 128
-			&& level.IsFreelookAllowed()
-			&& !(level.flags & LEVEL_FORCETILEDSKY)) ? 1 : 0;
+			&& Level->IsFreelookAllowed()
+			&& !(Level->flags & LEVEL_FORCETILEDSKY)) ? 1 : 0;
 	}
-	else skystretch = false;
+	else Level->skystretch = false;
 }
+
+void R_InitSkyMap()
+{
+	for(auto Level : AllLevels())
+	{
+		InitSkyMap(Level);
+	}
+}
+
 
 //==========================================================================
 //
@@ -127,14 +133,16 @@ void R_InitSkyMap()
 
 void R_UpdateSky (uint64_t mstime)
 {
-	// Scroll the sky
 	double ms = (double)mstime * FRACUNIT;
-	sky1pos = ms * level.skyspeed1;
-	sky2pos = ms * level.skyspeed2;
+	for(auto Level : AllLevels())
+	{
+		// Scroll the sky
+		Level->sky1pos = ms * Level->skyspeed1;
+		Level->sky2pos = ms * Level->skyspeed2;
 
-	// The hardware renderer uses a different value range and clamps it to a single rotation
-	hw_sky1pos = (float)(fmod((double(mstime) * level.skyspeed1), 1024.) * (90. / 256.));
-	hw_sky2pos = (float)(fmod((double(mstime) * level.skyspeed2), 1024.) * (90. / 256.));
-
+		// The hardware renderer uses a different value range and clamps it to a single rotation
+		Level->hw_sky1pos = (float)(fmod((double(mstime) * Level->skyspeed1), 1024.) * (90. / 256.));
+		Level->hw_sky2pos = (float)(fmod((double(mstime) * Level->skyspeed2), 1024.) * (90. / 256.));
+	}
 }
 

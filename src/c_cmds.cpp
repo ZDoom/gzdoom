@@ -47,7 +47,6 @@
 #include "c_dispatch.h"
 
 #include "i_system.h"
-
 #include "doomerrors.h"
 #include "doomstat.h"
 #include "gstrings.h"
@@ -68,6 +67,7 @@
 #include "r_utility.h"
 #include "c_functions.h"
 #include "g_levellocals.h"
+#include "v_video.h"
 
 extern FILE *Logfile;
 extern bool insave;
@@ -366,7 +366,7 @@ CCMD (changemap)
 	if (argv.argc() > 1)
 	{
 		const char *mapname = argv[1];
-		if (!strcmp(mapname, "*")) mapname = level.MapName.GetChars();
+		if (!strcmp(mapname, "*")) mapname = primaryLevel->MapName.GetChars();
 
 		try
 		{
@@ -945,7 +945,8 @@ static void PrintFilteredActorList(const ActorTypeChecker IsActorType, const cha
 			}
 		}
 	}
-	TThinkerIterator<AActor> it;
+	// This only works on the primary level.
+	auto it = primaryLevel->GetThinkerIterator<AActor>();
 
 	while ( (mo = it.Next()) )
 	{
@@ -1055,20 +1056,21 @@ CCMD(changesky)
 
 	if (netgame || argv.argc()<2) return;
 
+	// This only alters the primary level's sky setting. For testing out a sky that is sufficient.
 	sky1name = argv[1];
 	if (sky1name[0] != 0)
 	{
 		FTextureID newsky = TexMan.GetTextureID(sky1name, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
 		if (newsky.Exists())
 		{
-			sky1texture = level.skytexture1 = newsky;
+			primaryLevel->skytexture1 = newsky;
 		}
 		else
 		{
 			Printf("changesky: Texture '%s' not found\n", sky1name);
 		}
 	}
-	R_InitSkyMap ();
+	InitSkyMap (primaryLevel);
 }
 
 //-----------------------------------------------------------------------------
@@ -1099,9 +1101,9 @@ CCMD(nextmap)
 		return;
 	}
 	
-	if (level.NextMap.Len() > 0 && level.NextMap.Compare("enDSeQ", 6))
+	if (primaryLevel->NextMap.Len() > 0 && primaryLevel->NextMap.Compare("enDSeQ", 6))
 	{
-		G_DeferedInitNew(level.NextMap);
+		G_DeferedInitNew(primaryLevel->NextMap);
 	}
 	else
 	{
@@ -1123,9 +1125,9 @@ CCMD(nextsecret)
 		return;
 	}
 
-	if (level.NextSecretMap.Len() > 0 && level.NextSecretMap.Compare("enDSeQ", 6))
+	if (primaryLevel->NextSecretMap.Len() > 0 && primaryLevel->NextSecretMap.Compare("enDSeQ", 6))
 	{
-		G_DeferedInitNew(level.NextSecretMap);
+		G_DeferedInitNew(primaryLevel->NextSecretMap);
 	}
 	else
 	{
@@ -1170,10 +1172,10 @@ static void PrintSecretString(const char *string, bool thislevel)
 			{
 				auto secnum = (unsigned)strtoull(string+2, (char**)&string, 10);
 				if (*string == ';') string++;
-				if (thislevel && secnum < level.sectors.Size())
+				if (thislevel && secnum < primaryLevel->sectors.Size())
 				{
-					if (level.sectors[secnum].isSecret()) colstr = TEXTCOLOR_RED;
-					else if (level.sectors[secnum].wasSecret()) colstr = TEXTCOLOR_GREEN;
+					if (primaryLevel->sectors[secnum].isSecret()) colstr = TEXTCOLOR_RED;
+					else if (primaryLevel->sectors[secnum].wasSecret()) colstr = TEXTCOLOR_GREEN;
 					else colstr = TEXTCOLOR_ORANGE;
 				}
 			}
@@ -1181,7 +1183,7 @@ static void PrintSecretString(const char *string, bool thislevel)
 			{
 				long tid = (long)strtoll(string+2, (char**)&string, 10);
 				if (*string == ';') string++;
-				FActorIterator it(tid);
+				auto it = primaryLevel->GetActorIterator(tid);
 				AActor *actor;
 				bool foundone = false;
 				if (thislevel)
@@ -1214,8 +1216,8 @@ static void PrintSecretString(const char *string, bool thislevel)
 
 CCMD(secret)
 {
-	const char *mapname = argv.argc() < 2? level.MapName.GetChars() : argv[1];
-	bool thislevel = !stricmp(mapname, level.MapName);
+	const char *mapname = argv.argc() < 2? primaryLevel->MapName.GetChars() : argv[1];
+	bool thislevel = !stricmp(mapname, primaryLevel->MapName);
 	bool foundsome = false;
 
 	int lumpno=Wads.CheckNumForName("SECRETS");

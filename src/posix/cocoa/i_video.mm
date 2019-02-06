@@ -39,6 +39,7 @@
 #include "c_dispatch.h"
 #include "doomstat.h"
 #include "hardware.h"
+#include "i_system.h"
 #include "m_argv.h"
 #include "m_png.h"
 #include "r_renderer.h"
@@ -46,6 +47,7 @@
 #include "st_console.h"
 #include "v_text.h"
 #include "version.h"
+#include "doomerrors.h"
 
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"

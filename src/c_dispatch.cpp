@@ -45,7 +45,7 @@
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "m_argv.h"
-#include "doomstat.h"
+#include "g_game.h"
 #include "d_player.h"
 #include "configfile.h"
 #include "v_text.h"
@@ -54,6 +54,7 @@
 #include "serializer.h"
 #include "menu/menu.h"
 #include "vm.h"
+#include "g_levellocals.h"
 
 // MACROS ------------------------------------------------------------------
 

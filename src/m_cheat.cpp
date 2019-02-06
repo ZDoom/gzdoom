@@ -54,6 +54,8 @@
 #include "g_levellocals.h"
 #include "vm.h"
 
+uint8_t globalfreeze, globalchangefreeze;	// user's freeze state.
+
 // [RH] Actually handle the cheat. The cheat code in st_stuff.c now just
 // writes some bytes to the network data stream, and the network code
 // later calls us.
@@ -287,7 +289,10 @@ void cht_DoCheat (player_t *player, int cheat)
 
 		if (i == 4)
 		{
-			level.flags2 ^= LEVEL2_ALLMAP;
+			for (auto Level : AllLevels())
+			{
+				Level->flags2 ^= LEVEL2_ALLMAP;
+			}
 		}
 		else if (player->mo != NULL && player->health >= 0)
 		{
@@ -319,7 +324,7 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_MASSACRE:
 	case CHT_MASSACRE2:
 		{
-			int killcount = P_Massacre (cheat == CHT_MASSACRE2);
+			int killcount = primaryLevel->Massacre (cheat == CHT_MASSACRE2);
 			// killough 3/22/98: make more intelligent about plural
 			// Ty 03/27/98 - string(s) *not* externalized
 			mysnprintf (msgbuild, countof(msgbuild), "%d %s%s Killed", killcount,
@@ -511,8 +516,8 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_FREEZE:
-		bglobal.changefreeze ^= 1;
-		if (bglobal.freeze ^ bglobal.changefreeze)
+		globalchangefreeze ^= 1;
+		if (globalfreeze ^ globalchangefreeze)
 		{
 			msg = GStrings("TXT_FREEZEON");
 		}
@@ -597,6 +602,7 @@ class DSuicider : public DThinker
 public:
 	TObjPtr<AActor*> Pawn;
 
+	void Construct() {}
 	void Tick()
 	{
 		Pawn->flags |= MF_SHOOTABLE;
@@ -636,7 +642,7 @@ void cht_Suicide (player_t *plyr)
 	// the initial tick.
 	if (plyr->mo != NULL)
 	{
-		DSuicider *suicide = Create<DSuicider>();
+		DSuicider *suicide = plyr->mo->Level->CreateThinker<DSuicider>();
 		suicide->Pawn = plyr->mo;
 		GC::WriteBarrier(suicide, suicide->Pawn);
 	}

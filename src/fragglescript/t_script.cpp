@@ -176,8 +176,6 @@ void DFsScript::OnDestroy()
 void DFsScript::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
-	// don't save a reference to the global script, which contains unserializable data.
-	if (parent == level.FraggleScriptThinker->GlobalScript) parent = nullptr;
 
 	arc("data", data)
 		("scriptnum", scriptnum)
@@ -188,8 +186,6 @@ void DFsScript::Serialize(FSerializer &arc)
 		.Array("sections", sections, SECTIONSLOTS)
 		.Array("variables", variables, VARIABLESLOTS)
 		.Array("children", children, MAXSCRIPTS);
-
-	if (parent == nullptr) parent = level.FraggleScriptThinker->GlobalScript;
 }
 
 //==========================================================================
@@ -200,7 +196,7 @@ void DFsScript::Serialize(FSerializer &arc)
 //
 //==========================================================================
 
-void DFsScript::ParseScript(char *position)
+void DFsScript::ParseScript(char *position, DFraggleThinker *th)
 {
 	if (position == nullptr) 
 	{
@@ -215,11 +211,11 @@ void DFsScript::ParseScript(char *position)
 		return;
     }
 	
-	level.FraggleScriptThinker->trigger_obj = trigger;  // set trigger
+	th->trigger_obj = trigger;  // set trigger variable. 
 	
 	try
 	{
-		FParser parse(&level, this);
+		FParser parse(th->Level, this);
 		parse.Run(position, data, data + len);
 	}
 	catch (CFraggleScriptError &err)
@@ -361,25 +357,34 @@ IMPLEMENT_POINTERS_END
 
 //==========================================================================
 //
+// This thinker is a little unusual from all the rest, because it
+// needs to construct some non-serializable data.
 //
+// This cannot be done in Construct, but requires an actual constructor,
+// so that even a deserialized ionstance is fully set up.
 //
 //==========================================================================
 
 DFraggleThinker::DFraggleThinker() 
-: DThinker(STAT_SCRIPTS)
 {
 	GlobalScript = Create<DFsScript>();
 	GC::WriteBarrier(this, GlobalScript);
-	// do not create resources which will be filled in by the serializer if being called from there.
-	if (!bSerialOverride)
-	{
-		RunningScripts = Create<DRunningScript>();
-		GC::WriteBarrier(this, RunningScripts);
-		LevelScript = Create<DFsScript>();
-		LevelScript->parent = GlobalScript;
-		GC::WriteBarrier(this, LevelScript);
-	}
 	InitFunctions();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DFraggleThinker::Construct()
+{
+	RunningScripts = Create<DRunningScript>();
+	GC::WriteBarrier(this, RunningScripts);
+	LevelScript = Create<DFsScript>();
+	LevelScript->parent = nullptr;
+	GC::WriteBarrier(this, LevelScript);
 }
 
 //==========================================================================
@@ -456,10 +461,10 @@ bool DFraggleThinker::wait_finished(DRunningScript *script)
     case wt_tagwait:
 		{
 			int secnum;
-			FSectorTagIterator itr(script->wait_data);
+			auto itr = Level->GetSectorTagIterator(script->wait_data);
 			while ((secnum = itr.Next()) >= 0)
 			{
-				sector_t *sec = &level.sectors[secnum];
+				sector_t *sec = &Level->sectors[secnum];
 				if(sec->floordata || sec->ceilingdata || sec->lightingdata)
 					return false;        // not finished
 			}
@@ -523,7 +528,7 @@ void DFraggleThinker::Tick()
 			next = current->next;   // save before freeing
 			
 			// continue the script
-			current->script->ParseScript (current->script->data + current->save_point);
+			current->script->ParseScript (current->script->data + current->save_point, this);
 
 			// free
 			current->Destroy();
@@ -611,10 +616,10 @@ void T_PreprocessScripts(FLevelLocals *Level)
 		// get the other scripts
 		
 		// levelscript started by player 0 'superplayer'
-		th->LevelScript->trigger = players[0].mo;
+		th->LevelScript->trigger = Level->Players[0]->mo;
 		
-		th->LevelScript->Preprocess();
-		th->LevelScript->ParseScript();
+		th->LevelScript->Preprocess(Level);
+		th->LevelScript->ParseScript(nullptr, th);
 	}
 }
 
@@ -662,6 +667,6 @@ CCMD(fpuke)
 	}
 	else
 	{
-		T_RunScript(&level, atoi(argv[1]), players[consoleplayer].mo);
+		T_RunScript(players[consoleplayer].mo->Level, atoi(argv[1]), players[consoleplayer].mo);
 	}
 }

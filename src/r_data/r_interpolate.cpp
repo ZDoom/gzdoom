@@ -39,6 +39,7 @@
 #include "p_local.h"
 #include "po_man.h"
 #include "serializer.h"
+#include "g_levellocals.h"
 
 //==========================================================================
 //
@@ -61,7 +62,7 @@ public:
 
 	DSectorPlaneInterpolation() {}
 	DSectorPlaneInterpolation(sector_t *sector, bool plane, bool attach);
-	void OnDestroy() override;
+	void UnlinkFromMap() override;
 	void UpdateInterpolation();
 	void Restore();
 	void Interpolate(double smoothratio);
@@ -89,7 +90,7 @@ public:
 
 	DSectorScrollInterpolation() {}
 	DSectorScrollInterpolation(sector_t *sector, bool plane);
-	void OnDestroy() override;
+	void UnlinkFromMap() override;
 	void UpdateInterpolation();
 	void Restore();
 	void Interpolate(double smoothratio);
@@ -117,7 +118,7 @@ public:
 
 	DWallScrollInterpolation() {}
 	DWallScrollInterpolation(side_t *side, int part);
-	void OnDestroy() override;
+	void UnlinkFromMap() override;
 	void UpdateInterpolation();
 	void Restore();
 	void Interpolate(double smoothratio);
@@ -144,7 +145,7 @@ public:
 
 	DPolyobjInterpolation() {}
 	DPolyobjInterpolation(FPolyObj *poly);
-	void OnDestroy() override;
+	void UnlinkFromMap() override;
 	void UpdateInterpolation();
 	void Restore();
 	void Interpolate(double smoothratio);
@@ -170,22 +171,6 @@ IMPLEMENT_CLASS(DSectorPlaneInterpolation, false, false)
 IMPLEMENT_CLASS(DSectorScrollInterpolation, false, false)
 IMPLEMENT_CLASS(DWallScrollInterpolation, false, false)
 IMPLEMENT_CLASS(DPolyobjInterpolation, false, false)
-
-//==========================================================================
-//
-// Important note:
-// The linked list of interpolations and the pointers in the interpolated
-// objects are not processed by the garbage collector. This is intentional!
-//
-// If an interpolation is no longer owned by any thinker it should
-// be destroyed even if the interpolator still has a link to it.
-//
-// When such an interpolation is destroyed by the garbage collector it
-// will automatically be unlinked from the list.
-//
-//==========================================================================
-
-FInterpolator interpolator;
 
 //==========================================================================
 //
@@ -303,34 +288,33 @@ void FInterpolator::ClearInterpolations()
 {
 	DInterpolation *probe = Head;
 	Head = nullptr;
+
 	while (probe != nullptr)
 	{
 		DInterpolation *next = probe->Next;
 		probe->Next = probe->Prev = nullptr;
+		probe->UnlinkFromMap();
 		probe->Destroy();
 		probe = next;
 	}
 }
 
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-DInterpolation::DInterpolation()
+FSerializer &Serialize(FSerializer &arc, const char *key, FInterpolator &rs, FInterpolator *def)
 {
-	Next = nullptr;
-	Prev = nullptr;
-	refcount = 0;
+	if (arc.BeginObject(key))
+	{
+		arc("head", rs.Head)
+			("count", rs.count)
+			.EndObject();
+	}
+	return arc;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 //==========================================================================
 //
@@ -352,7 +336,11 @@ int DInterpolation::AddRef()
 int DInterpolation::DelRef(bool force)
 {
 	if (refcount > 0) --refcount;
-	if (force && refcount == 0) Destroy();
+	if (force && refcount == 0)
+	{
+		UnlinkFromMap();
+		Destroy();
+	}
 	return refcount;
 }
 
@@ -362,11 +350,10 @@ int DInterpolation::DelRef(bool force)
 //
 //==========================================================================
 
-void DInterpolation::OnDestroy()
+void DInterpolation::UnlinkFromMap()
 {
-	interpolator.RemoveInterpolation(this);
+	Level->interpolator.RemoveInterpolation(this);
 	refcount = 0;
-	Super::OnDestroy();
 }
 
 //==========================================================================
@@ -379,10 +366,7 @@ void DInterpolation::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
 	arc("refcount", refcount);
-	if (arc.isReading())
-	{
-		interpolator.AddInterpolation(this);
-	}
+	arc("level", Level);
 }
 
 //==========================================================================
@@ -398,6 +382,7 @@ void DInterpolation::Serialize(FSerializer &arc)
 //==========================================================================
 
 DSectorPlaneInterpolation::DSectorPlaneInterpolation(sector_t *_sector, bool _plane, bool attach)
+: DInterpolation(_sector->Level)
 {
 	sector = _sector;
 	ceiling = _plane;
@@ -408,7 +393,7 @@ DSectorPlaneInterpolation::DSectorPlaneInterpolation(sector_t *_sector, bool _pl
 		P_Start3dMidtexInterpolations(attached, sector, ceiling);
 		P_StartLinkedSectorInterpolations(attached, sector, ceiling);
 	}
-	interpolator.AddInterpolation(this);
+	sector->Level->interpolator.AddInterpolation(this);
 }
 
 //==========================================================================
@@ -417,7 +402,7 @@ DSectorPlaneInterpolation::DSectorPlaneInterpolation(sector_t *_sector, bool _pl
 //
 //==========================================================================
 
-void DSectorPlaneInterpolation::OnDestroy()
+void DSectorPlaneInterpolation::UnlinkFromMap()
 {
 	if (sector != nullptr)
 	{
@@ -431,11 +416,11 @@ void DSectorPlaneInterpolation::OnDestroy()
 		}
 		sector = nullptr;
 	}
-	for(unsigned i=0; i<attached.Size(); i++)
+	for (unsigned i = 0; i < attached.Size(); i++)
 	{
 		attached[i]->DelRef();
 	}
-	Super::OnDestroy();
+	attached.Reset();
 }
 
 //==========================================================================
@@ -513,7 +498,7 @@ void DSectorPlaneInterpolation::Interpolate(double smoothratio)
 	{
 		pplane->setD(oldheight + (bakheight - oldheight) * smoothratio);
 		sector->SetPlaneTexZ(pos, oldtexz + (baktexz - oldtexz) * smoothratio, true);
-	P_RecalculateAttached3DFloors(sector);
+		P_RecalculateAttached3DFloors(sector);
 		sector->CheckPortalPlane(pos);
 	}
 }
@@ -563,11 +548,12 @@ size_t DSectorPlaneInterpolation::PropagateMark()
 //==========================================================================
 
 DSectorScrollInterpolation::DSectorScrollInterpolation(sector_t *_sector, bool _plane)
+: DInterpolation(_sector->Level)
 {
 	sector = _sector;
 	ceiling = _plane;
 	UpdateInterpolation ();
-	interpolator.AddInterpolation(this);
+	sector->Level->interpolator.AddInterpolation(this);
 }
 
 //==========================================================================
@@ -576,7 +562,7 @@ DSectorScrollInterpolation::DSectorScrollInterpolation(sector_t *_sector, bool _
 //
 //==========================================================================
 
-void DSectorScrollInterpolation::OnDestroy()
+void DSectorScrollInterpolation::UnlinkFromMap()
 {
 	if (sector != nullptr)
 	{
@@ -590,7 +576,6 @@ void DSectorScrollInterpolation::OnDestroy()
 		}
 		sector = nullptr;
 	}
-	Super::OnDestroy();
 }
 
 //==========================================================================
@@ -630,6 +615,7 @@ void DSectorScrollInterpolation::Interpolate(double smoothratio)
 
 	if (refcount == 0 && oldx == bakx && oldy == baky)
 	{
+		UnlinkFromMap();
 		Destroy();
 	}
 	else
@@ -668,11 +654,12 @@ void DSectorScrollInterpolation::Serialize(FSerializer &arc)
 //==========================================================================
 
 DWallScrollInterpolation::DWallScrollInterpolation(side_t *_side, int _part)
+: DInterpolation(_side->GetLevel())
 {
 	side = _side;
 	part = _part;
 	UpdateInterpolation ();
-	interpolator.AddInterpolation(this);
+	side->GetLevel()->interpolator.AddInterpolation(this);
 }
 
 //==========================================================================
@@ -681,14 +668,13 @@ DWallScrollInterpolation::DWallScrollInterpolation(side_t *_side, int _part)
 //
 //==========================================================================
 
-void DWallScrollInterpolation::OnDestroy()
+void DWallScrollInterpolation::UnlinkFromMap()
 {
 	if (side != nullptr)
 	{
 		side->textures[part].interpolation = nullptr;
 		side = nullptr;
 	}
-	Super::OnDestroy();
 }
 
 //==========================================================================
@@ -728,6 +714,7 @@ void DWallScrollInterpolation::Interpolate(double smoothratio)
 
 	if (refcount == 0 && oldx == bakx && oldy == baky)
 	{
+		UnlinkFromMap();
 		Destroy();
 	}
 	else
@@ -765,12 +752,13 @@ void DWallScrollInterpolation::Serialize(FSerializer &arc)
 //==========================================================================
 
 DPolyobjInterpolation::DPolyobjInterpolation(FPolyObj *po)
+: DInterpolation(po->Level)
 {
 	poly = po;
 	oldverts.Resize(po->Vertices.Size() << 1);
 	bakverts.Resize(po->Vertices.Size() << 1);
 	UpdateInterpolation ();
-	interpolator.AddInterpolation(this);
+	po->Level->interpolator.AddInterpolation(this);
 }
 
 //==========================================================================
@@ -779,13 +767,12 @@ DPolyobjInterpolation::DPolyobjInterpolation(FPolyObj *po)
 //
 //==========================================================================
 
-void DPolyobjInterpolation::OnDestroy()
+void DPolyobjInterpolation::UnlinkFromMap()
 {
 	if (poly != nullptr)
 	{
 		poly->interpolation = nullptr;
 	}
-	Super::OnDestroy();
 }
 
 //==========================================================================
@@ -846,6 +833,7 @@ void DPolyobjInterpolation::Interpolate(double smoothratio)
 	}
 	if (refcount == 0 && !changed)
 	{
+		UnlinkFromMap();
 		Destroy();
 	}
 	else
@@ -979,14 +967,6 @@ void FPolyObj::StopInterpolation()
 	{
 		interpolation->DelRef();
 	}
-}
-
-
-ADD_STAT (interpolations)
-{
-	FString out;
-	out.Format ("%d interpolations", interpolator.CountInterpolations ());
-	return out;
 }
 
 

@@ -55,11 +55,6 @@ struct FLinePortal;
 
 #define STEEPSLOPE		(46342/65536.)	// [RH] Minimum floorplane.c value for walking
 
-// Inspired by Maes
-extern int bmapnegx;
-extern int bmapnegy;
-
-//#define GRAVITY 		FRACUNIT
 #define MAXMOVE 		(30.)
 
 #define TALKRANGE		(128.)
@@ -96,8 +91,6 @@ void	P_PredictionLerpReset();
 
 #define SPF_TEMPPLAYER		1	// spawning a short-lived dummy player
 #define SPF_WEAPONFULLYUP	2	// spawn with weapon already raised
-
-AActor *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags=0);
 
 int P_FaceMobj (AActor *source, AActor *target, DAngle *delta);
 bool P_SeekerMissile (AActor *actor, double thresh, double turnMax, bool precise = false, bool usecurspeed=false);
@@ -145,14 +138,7 @@ AActor *P_SpawnSubMissile (AActor *source, PClassActor *type, AActor *target);	/
 extern FClassMap SpawnableThings;
 extern FClassMap StrifeTypes;
 
-bool	P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, int newtid);
-bool	P_Thing_Projectile (int tid, AActor *source, int type, const char * type_name, DAngle angle,
-			double speed, double vspeed, int dest, AActor *forcedest, int gravity, int newtid,
-			bool leadTarget);
-
 bool	P_MoveThing(AActor *source, const DVector3 &pos, bool fog);
-bool	P_Thing_Move (int tid, AActor *source, int mapspot, bool fog);
-int		P_Thing_Damage (int tid, AActor *whofor0, int amount, FName type);
 void	P_Thing_SetVelocity(AActor *actor, const DVector3 &vec, bool add, bool setbob);
 void P_RemoveThing(AActor * actor);
 bool P_Thing_Raise(AActor *thing, AActor *raiser, int flags = 0);

@@ -36,7 +36,7 @@
 #include "doomstat.h"
 #include "p_setup.h"
 #include "p_lnspec.h"
-#include "i_system.h"
+
 #include "gi.h"
 #include "r_sky.h"
 #include "g_level.h"
@@ -49,6 +49,7 @@
 #include "g_levellocals.h"
 #include "info.h"
 #include "vm.h"
+#include "xlat/xlat.h"
 #include "maploader.h"
 
 //===========================================================================
@@ -285,20 +286,6 @@ const char *UDMFParserBase::CheckString(const char *key)
 //
 //===========================================================================
 
-typedef TMap<int, FUDMFKeys> FUDMFKeyMap;
-
-
-static FUDMFKeyMap UDMFKeys[4];
-// Things must be handled differently
-
-void P_ClearUDMFKeys()
-{
-	for(int i=0;i<4;i++)
-	{
-		UDMFKeys[i].Clear();
-	}
-}
-
 static int udmfcmp(const void *a, const void *b)
 {
 	FUDMFKey *A = (FUDMFKey*)a;
@@ -346,11 +333,11 @@ FUDMFKey *FUDMFKeys::Find(FName key)
 //
 //===========================================================================
 
-int GetUDMFInt(int type, int index, FName key)
+int GetUDMFInt(FLevelLocals *Level, int type, int index, FName key)
 {
 	assert(type >=0 && type <=3);
 
-	FUDMFKeys *pKeys = UDMFKeys[type].CheckKey(index);
+	FUDMFKeys *pKeys = Level->UDMFKeys[type].CheckKey(index);
 
 	if (pKeys != NULL)
 	{
@@ -363,11 +350,11 @@ int GetUDMFInt(int type, int index, FName key)
 	return 0;
 }
 
-double GetUDMFFloat(int type, int index, FName key)
+double GetUDMFFloat(FLevelLocals *Level, int type, int index, FName key)
 {
 	assert(type >=0 && type <=3);
 
-	FUDMFKeys *pKeys = UDMFKeys[type].CheckKey(index);
+	FUDMFKeys *pKeys = Level->UDMFKeys[type].CheckKey(index);
 
 	if (pKeys != NULL)
 	{
@@ -380,11 +367,11 @@ double GetUDMFFloat(int type, int index, FName key)
 	return 0;
 }
 
-FString GetUDMFString(int type, int index, FName key)
+FString GetUDMFString(FLevelLocals *Level, int type, int index, FName key)
 {
 	assert(type >= 0 && type <= 3);
 
-	FUDMFKeys *pKeys = UDMFKeys[type].CheckKey(index);
+	FUDMFKeys *pKeys = Level->UDMFKeys[type].CheckKey(index);
 
 	if (pKeys != NULL)
 	{
@@ -459,7 +446,7 @@ public:
   }
 	void AddUserKey(FName key, int kind, int index)
 	{
-		FUDMFKeys &keyarray = UDMFKeys[kind][index];
+		FUDMFKeys &keyarray = Level->UDMFKeys[kind][index];
 
 		for(unsigned i=0; i < keyarray.Size(); i++)
 		{
@@ -792,7 +779,7 @@ public:
 				mld.flags = 0;
 				mld.special = th->special;
 				mld.tag = th->args[0];
-				P_TranslateLineDef(&ld, &mld);
+				Level->TranslateLineDef(&ld, &mld);
 				th->special = ld.special;
 				memcpy(th->args, ld.args, sizeof (ld.args));
 			}
@@ -856,7 +843,7 @@ public:
 
 			case NAME_Id:
 				lineid = CheckInt(key);
-				tagManager.AddLineID(index, lineid);
+				Level->tagManager.AddLineID(index, lineid);
 				continue;
 
 			case NAME_Sidefront:
@@ -1127,7 +1114,7 @@ public:
 			// scan the string as long as valid numbers can be found
 			while (sc.CheckNumber())
 			{
-				if (sc.Number != 0)	tagManager.AddLineID(index, sc.Number);
+				if (sc.Number != 0)	Level->tagManager.AddLineID(index, sc.Number);
 			}
 		}
 
@@ -1139,7 +1126,7 @@ public:
 			memset(&mld, 0, sizeof(mld));
 			mld.special = ld->special;
 			mld.tag = ld->args[0];
-			P_TranslateLineDef(ld, &mld);
+			Level->TranslateLineDef(ld, &mld);
 			ld->flags = saved | (ld->flags&(ML_MONSTERSCANACTIVATE|ML_REPEAT_SPECIAL|ML_FIRSTSIDEONLY));
 		}
 		if (passuse && (ld->activation & SPAC_Use)) 
@@ -1445,6 +1432,7 @@ public:
 		FName scroll_floor_type = NAME_None;
 
 		memset(sec, 0, sizeof(*sec));
+		sec->Level = Level;
 		sec->lightlevel = 160;
 		sec->SetXScale(sector_t::floor, 1.);	// [RH] floor and ceiling scaling
 		sec->SetYScale(sector_t::floor, 1.);
@@ -1504,7 +1492,7 @@ public:
 
 			case NAME_Special:
 				sec->special = (short)CheckInt(key);
-				if (isTranslated) sec->special = P_TranslateSectorSpecial(sec->special);
+				if (isTranslated) sec->special = Level->TranslateSectorSpecial(sec->special);
 				else if (namespc == NAME_Hexen)
 				{
 					if (sec->special < 0 || sec->special > 140 || !HexenSectorSpecialOk[sec->special])
@@ -1513,7 +1501,7 @@ public:
 				continue;
 
 			case NAME_Id:
-				tagManager.AddSectorTag(index, CheckInt(key));
+				Level->tagManager.AddSectorTag(index, CheckInt(key));
 				continue;
 
 			default:
@@ -1908,7 +1896,7 @@ public:
 			// scan the string as long as valid numbers can be found
 			while (sc.CheckNumber())
 			{
-				if (sc.Number != 0)	tagManager.AddSectorTag(index, sc.Number);
+				if (sc.Number != 0)	Level->tagManager.AddSectorTag(index, sc.Number);
 			}
 		}
 
@@ -2160,19 +2148,19 @@ public:
 				break;
 			case NAME_Doom:
 				namespace_bits = Dm;
-				P_LoadTranslator("xlat/doom_base.txt");
+				Level->Translator = P_LoadTranslator("xlat/doom_base.txt");
 				Level->flags2 |= LEVEL2_DUMMYSWITCHES;
 				floordrop = true;
 				break;
 			case NAME_Heretic:
 				namespace_bits = Ht;
-				P_LoadTranslator("xlat/heretic_base.txt");
+				Level->Translator = P_LoadTranslator("xlat/heretic_base.txt");
 				Level->flags2 |= LEVEL2_DUMMYSWITCHES;
 				floordrop = true;
 				break;
 			case NAME_Strife:
 				namespace_bits = St;
-				P_LoadTranslator("xlat/strife_base.txt");
+				Level->Translator = P_LoadTranslator("xlat/strife_base.txt");
 				Level->flags2 |= LEVEL2_DUMMYSWITCHES|LEVEL2_RAILINGHACK;
 				floordrop = true;
 				break;
@@ -2184,15 +2172,15 @@ public:
 				case GAME_Doom:
 				case GAME_Chex:
 					namespace_bits = Dm;
-					P_LoadTranslator("xlat/doom_base.txt");
+					Level->Translator = P_LoadTranslator("xlat/doom_base.txt");
 					break;
 				case GAME_Heretic:
 					namespace_bits = Ht;
-					P_LoadTranslator("xlat/heretic_base.txt");
+					Level->Translator = P_LoadTranslator("xlat/heretic_base.txt");
 					break;
 				case GAME_Strife:
 					namespace_bits = St;
-					P_LoadTranslator("xlat/strife_base.txt");
+					Level->Translator = P_LoadTranslator("xlat/strife_base.txt");
 					break;
 				case GAME_Hexen:
 					namespace_bits = Hx;
@@ -2285,12 +2273,12 @@ public:
 			const double scrollfactor = 1 / 3.2;	// I hope this is correct, it's just a guess taken from Eternity's code.
 			if (scroll.type == NAME_Both || scroll.type == NAME_Visual)
 			{
-				P_CreateScroller(scroll.ceiling ? EScroll::sc_ceiling : EScroll::sc_floor, scroll.x * scrollfactor, scroll.y * scrollfactor, &Level->sectors[scroll.index], 0);
+				loader->CreateScroller(scroll.ceiling ? EScroll::sc_ceiling : EScroll::sc_floor, scroll.x * scrollfactor, scroll.y * scrollfactor, &Level->sectors[scroll.index], 0);
 			}
 			if (scroll.type == NAME_Both || scroll.type == NAME_Physical)
 			{
 				// sc_carry_ceiling doesn't do anything yet.
-				P_CreateScroller(scroll.ceiling ? EScroll::sc_carry_ceiling : EScroll::sc_carry, scroll.x * scrollfactor, scroll.y * scrollfactor, &Level->sectors[scroll.index], 0);
+				loader->CreateScroller(scroll.ceiling ? EScroll::sc_carry_ceiling : EScroll::sc_carry, scroll.x * scrollfactor, scroll.y * scrollfactor, &Level->sectors[scroll.index], 0);
 			}
 		}
 

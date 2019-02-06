@@ -62,7 +62,8 @@
 #include "vm.h"
 #include "i_time.h"
 #include "actorinlines.h"
-
+#include "g_game.h"
+#include "i_system.h"
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -363,33 +364,6 @@ CUSTOM_CVAR (Int, screenblocks, 10, CVAR_ARCHIVE)
 
 //==========================================================================
 //
-// R_PointInSubsector
-//
-//==========================================================================
-
-subsector_t *R_PointInSubsector (fixed_t x, fixed_t y)
-{
-	node_t *node;
-	int side;
-
-	// single subsector is a special case
-	if (level.nodes.Size() == 0)
-		return &level.subsectors[0];
-				
-	node = level.HeadNode();
-
-	do
-	{
-		side = R_PointOnSide (x, y, node);
-		node = (node_t *)node->children[side];
-	}
-	while (!((size_t)node & 1));
-		
-	return (subsector_t *)((uint8_t *)node - 1);
-}
-
-//==========================================================================
-//
 //
 //
 //==========================================================================
@@ -450,8 +424,9 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 		NoInterpolateView = false;
 		iview->Old = iview->New;
 	}
-	int oldgroup = R_PointInSubsector(iview->Old.Pos)->sector->PortalGroup;
-	int newgroup = R_PointInSubsector(iview->New.Pos)->sector->PortalGroup;
+	auto Level = viewpoint.ViewLevel;
+	int oldgroup = Level->PointInRenderSubsector(iview->Old.Pos)->sector->PortalGroup;
+	int newgroup = Level->PointInRenderSubsector(iview->New.Pos)->sector->PortalGroup;
 
 	DAngle oviewangle = iview->Old.Angles.Yaw;
 	DAngle nviewangle = iview->New.Angles.Yaw;
@@ -518,7 +493,7 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 		}
 		else
 		{
-			DVector2 disp = level.Displacements.getOffset(oldgroup, newgroup);
+			DVector2 disp = viewpoint.ViewLevel->Displacements.getOffset(oldgroup, newgroup);
 			viewpoint.Pos = iview->Old.Pos + (iview->New.Pos - iview->Old.Pos - disp) * Frac;
 			viewpoint.Path[0] = viewpoint.Path[1] = iview->New.Pos;
 		}
@@ -556,7 +531,7 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 	}
 	
 	// Due to interpolation this is not necessarily the same as the sector the camera is in.
-	viewpoint.sector = R_PointInSubsector(viewpoint.Pos)->sector;
+	viewpoint.sector = Level->PointInRenderSubsector(viewpoint.Pos)->sector;
 	bool moved = false;
 	while (!viewpoint.sector->PortalBlocksMovement(sector_t::ceiling))
 	{
@@ -564,7 +539,7 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 		{
 			viewpoint.Pos += viewpoint.sector->GetPortalDisplacement(sector_t::ceiling);
 			viewpoint.ActorPos += viewpoint.sector->GetPortalDisplacement(sector_t::ceiling);
-			viewpoint.sector = R_PointInSubsector(viewpoint.Pos)->sector;
+			viewpoint.sector = Level->PointInRenderSubsector(viewpoint.Pos)->sector;
 			moved = true;
 		}
 		else break;
@@ -577,7 +552,7 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 			{
 				viewpoint.Pos += viewpoint.sector->GetPortalDisplacement(sector_t::floor);
 				viewpoint.ActorPos += viewpoint.sector->GetPortalDisplacement(sector_t::floor);
-				viewpoint.sector = R_PointInSubsector(viewpoint.Pos)->sector;
+				viewpoint.sector = Level->PointInRenderSubsector(viewpoint.Pos)->sector;
 				moved = true;
 			}
 			else break;
@@ -771,6 +746,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	{
 		I_Error ("Tried to render from a NULL actor.");
 	}
+	viewpoint.ViewLevel = actor->Level;
 
 	player_t *player = actor->player;
 	unsigned int newblend;
@@ -807,7 +783,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	if (player != NULL && gamestate != GS_TITLELEVEL &&
 		((player->cheats & CF_CHASECAM) || (r_deathcamera && viewpoint.camera->health <= 0)))
 	{
-		sector_t *oldsector = R_PointInSubsector(iview->Old.Pos)->sector;
+		sector_t *oldsector = viewpoint.ViewLevel->PointInRenderSubsector(iview->Old.Pos)->sector;
 		// [RH] Use chasecam view
 		DVector3 campos;
 		DAngle camangle;
@@ -839,8 +815,9 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		player = viewpoint.camera->player;
 	}
 
-	if (iview->otic == -1 || r_NoInterpolate)
+	if (iview->otic == -1 || r_NoInterpolate || (viewpoint.camera->renderflags & RF_NOINTERPOLATEVIEW))
 	{
+		viewpoint.camera->renderflags &= ~RF_NOINTERPOLATEVIEW;
 		R_ResetViewInterpolation ();
 		iview->otic = nowtic;
 	}
@@ -853,8 +830,6 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	R_InterpolateView (viewpoint, player, viewpoint.TicFrac, iview);
 
 	viewpoint.SetViewAngle (viewwindow);
-
-	interpolator.DoInterpolations (viewpoint.TicFrac);
 
 	// Keep the view within the sector's floor and ceiling
 	if (viewpoint.sector->PortalBlocksMovement(sector_t::ceiling))
@@ -1029,7 +1004,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	// However, to set up a projection matrix this needs to be adjusted.
 	double radPitch = viewpoint.Angles.Pitch.Normalized180().Radians();
 	double angx = cos(radPitch);
-	double angy = sin(radPitch) * level.info->pixelstretch;
+	double angy = sin(radPitch) * actor->Level->info->pixelstretch;
 	double alen = sqrt(angx*angx + angy*angy);
 	viewpoint.HWAngles.Pitch = RAD2DEG((float)asin(angy / alen));
 	

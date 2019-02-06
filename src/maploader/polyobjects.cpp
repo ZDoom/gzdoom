@@ -152,6 +152,7 @@ void MapLoader::SpawnPolyobj (int index, int tag, int type)
 	unsigned int ii;
 	int i;
 	FPolyObj *po = &Level->Polyobjects[index];
+	po->Level = Level;
 
 	for (ii = 0; ii < KnownPolySides.Size(); ++ii)
 	{
@@ -282,7 +283,7 @@ void MapLoader::TranslateToStartSpot (int tag, const DVector2 &origin)
 	FPolyObj *po;
 	DVector2 delta;
 
-	po = PO_GetPolyobj(tag);
+	po = Level->GetPolyobj(tag);
 	if (po == nullptr)
 	{ // didn't match the tag with a polyobj tag
 		Printf(TEXTCOLOR_RED "TranslateToStartSpot: Unable to match polyobj tag: %d\n", tag);
@@ -315,7 +316,7 @@ void MapLoader::TranslateToStartSpot (int tag, const DVector2 &origin)
 	}
 	po->CalcCenter();
 	// For compatibility purposes
-	po->CenterSubsector = R_PointInSubsector(po->CenterSpot.pos);
+	po->CenterSubsector = Level->PointInRenderSubsector(po->CenterSpot.pos);
 }
 
 //==========================================================================
@@ -351,6 +352,7 @@ void MapLoader::PO_Init (void)
 	InitSideLists ();
 
 	Level->Polyobjects.Resize(NumPolyobjs);
+	for (auto &po : Level->Polyobjects) po.Level = Level;	// must be done before the init loop below.
 
 	polyIndex = 0; // index polyobj number
 	// Find the startSpot points, and spawn each polyobj

@@ -33,7 +33,7 @@
 */
 
 #include "doomtype.h"
-#include "doomstat.h"
+#include "g_game.h"
 #include "d_event.h"
 #include "w_wad.h"
 #include "gi.h"
@@ -787,8 +787,7 @@ void DIntermissionController::Ticker ()
 			switch (mGameState)
 			{
 			case FSTATE_InLevel:
-				if (level.cdtrack == 0 || !S_ChangeCDMusic (level.cdtrack, level.cdid))
-					S_ChangeMusic (level.Music, level.musicorder);
+				primaryLevel->SetMusic();
 				gamestate = GS_LEVEL;
 				wipegamestate = GS_LEVEL;
 				P_ResumeConversation ();

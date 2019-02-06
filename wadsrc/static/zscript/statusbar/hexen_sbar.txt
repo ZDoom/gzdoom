@@ -74,7 +74,7 @@ class HexenStatusBar : BaseStatusBar
 			DrawString(mHUDFont, FormatNumber(CPlayer.FragCount, 3), (70, -16));
 		}
 		
-		if (!isInventoryBarVisible() && !level.NoInventoryBar && CPlayer.mo.InvSel != null)
+		if (!isInventoryBarVisible() && !Level.NoInventoryBar && CPlayer.mo.InvSel != null)
 		{
 			// This code was changed to always fit the item into the box, regardless of alignment or sprite size.
 			// Heretic's ARTIBOX is 30x30 pixels. 

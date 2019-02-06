@@ -34,7 +34,7 @@
 
 #include "templates.h"
 #include "p_setup.h"
-
+#include "i_system.h"
 #include "version.h"
 #include "g_game.h"
 #include "c_bind.h"
@@ -1243,7 +1243,7 @@ void C_FullConsole ()
 	if (gamestate != GS_STARTUP)
 	{
 		gamestate = GS_FULLCONSOLE;
-		level.Music = "";
+		primaryLevel->Music = "";
 		S_Start ();
 		P_FreeLevelData ();
 		V_SetBlend (0,0,0,0);

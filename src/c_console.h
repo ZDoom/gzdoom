@@ -51,7 +51,6 @@ constate_e;
 extern int PrintColors[PRINTLEVELS + 2];
 
 extern constate_e ConsoleState;
-extern int ConBottom;
 
 // Initialize the console
 void C_InitConsole (int width, int height, bool ingame);
@@ -65,6 +64,7 @@ void C_Ticker (void);
 
 void AddToConsole (int printlevel, const char *string);
 int PrintString (int printlevel, const char *string);
+int PrintStringHigh (const char *string);
 int VPrintf (int printlevel, const char *format, va_list parms) GCCFORMAT(2);
 
 void C_DrawConsole ();

@@ -310,7 +310,7 @@ class Whirlwind : Actor
 			target.Vel.Y += Random2[WhirlwindDamage]() / 64.;
 		}
 
-		if ((level.time & 16) && !target.bBoss && !target.bDontThrust)
+		if ((Level.maptime & 16) && !target.bBoss && !target.bDontThrust)
 		{
 			randVal = min(160, random[WhirlwindSeek]());
 			target.Vel.Z += randVal / 32.;
@@ -319,7 +319,7 @@ class Whirlwind : Actor
 				target.Vel.Z = 12;
 			}
 		}
-		if (!(level.time & 7))
+		if (!(Level.maptime & 7))
 		{
 			target.DamageMobj (null, target, 3, 'Melee');
 		}

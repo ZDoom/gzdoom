@@ -57,6 +57,7 @@
 #include "sbarinfo.h"
 #include "gstrings.h"
 #include "events.h"
+#include "g_game.h"
 
 #include "../version.h"
 
@@ -133,25 +134,6 @@ CUSTOM_CVAR(Int, am_showmaplabel, 2, CVAR_ARCHIVE)
 }
 
 CVAR (Bool, idmypos, false, 0);
-
-//---------------------------------------------------------------------------
-//
-// Format the map name, include the map label if wanted
-//
-//---------------------------------------------------------------------------
-
-void ST_FormatMapName(FString &mapname, const char *mapnamecolor)
-{
-	cluster_info_t *cluster = FindClusterInfo (level.cluster);
-	bool ishub = (cluster != NULL && (cluster->flags & CLUSTER_HUB));
-
-	mapname = "";
-	if (am_showmaplabel == 1 || (am_showmaplabel == 2 && !ishub))
-	{
-		mapname << level.MapName << ": ";
-	}
-	mapname << mapnamecolor << level.LevelName;
-}
 
 //---------------------------------------------------------------------------
 //
@@ -808,7 +790,7 @@ void DBaseStatusBar::RefreshViewBorder ()
 		{
 			return;
 		}
-		auto tex = GetBorderTexture(&level);
+		auto tex = GetBorderTexture(primaryLevel);
 		screen->DrawBorder (tex, 0, 0, Width, viewwindowy);
 		screen->DrawBorder (tex, 0, viewwindowy, viewwindowx, viewheight + viewwindowy);
 		screen->DrawBorder (tex, viewwindowx + viewwidth, viewwindowy, Width, viewheight + viewwindowy);
@@ -834,7 +816,7 @@ void DBaseStatusBar::RefreshBackground () const
 	
 	if (x == 0 && y == SCREENHEIGHT) return;
 
-	auto tex = GetBorderTexture(&level);
+	auto tex = GetBorderTexture(primaryLevel);
 
 	if(!CompleteBorder)
 	{
@@ -1166,7 +1148,7 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 		DrawMessages (HUDMSGLayer_OverMap, (state == HUD_StatusBar) ? GetTopOfStatusbar() : SCREENHEIGHT);
 	}
 	DrawMessages (HUDMSGLayer_OverHUD, (state == HUD_StatusBar) ? GetTopOfStatusbar() : SCREENHEIGHT);
-	E_RenderOverlay(state);
+	primaryLevel->localEventManager->RenderOverlay(state);
 
 	DrawConsistancy ();
 	DrawWaiting ();

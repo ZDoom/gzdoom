@@ -566,7 +566,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, RestoreDamage, RestoreDamage)
 
 static int PlayerNumber(AActor *self)
 {
-	return self->player ? int(self->player - players) : 0;
+	return self->player ? self->Level->PlayerNum(self->player) : 0;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, PlayerNumber, PlayerNumber)
@@ -893,12 +893,17 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetFloorTerrain, GetFloorTerrain)
 	ACTION_RETURN_POINTER(GetFloorTerrain(self));
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, FindUniqueTid, P_FindUniqueTID)
+static int P_FindUniqueTID(FLevelLocals *Level, int start, int limit)
 {
-	PARAM_PROLOGUE;
+	return Level->FindUniqueTID(start, limit);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, FindUniqueTid, P_FindUniqueTID)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_INT(start);
 	PARAM_INT(limit);
-	ACTION_RETURN_INT(P_FindUniqueTID(start, limit));
+	ACTION_RETURN_INT(P_FindUniqueTID(self, start, limit));
 }
 
 static void RemoveFromHash(AActor *self)
@@ -1227,31 +1232,31 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetSpriteIndex, ZS_GetSpriteIndex)
 
 static PClassActor *ZS_GetReplacement(PClassActor *c)
 {
-	return c->GetReplacement();
+	return c->GetReplacement(currentVMLevel);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetReplacement, ZS_GetReplacement)
 {
 	PARAM_PROLOGUE;
 	PARAM_POINTER(c, PClassActor);
-	ACTION_RETURN_POINTER(c->GetReplacement());
+	ACTION_RETURN_POINTER(ZS_GetReplacement(c));
 }
 
 static PClassActor *ZS_GetReplacee(PClassActor *c)
 {
-	return c->GetReplacee();
+	return c->GetReplacee(currentVMLevel);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetReplacee, ZS_GetReplacee)
 {
 	PARAM_PROLOGUE;
 	PARAM_POINTER(c, PClassActor);
-	ACTION_RETURN_POINTER(c->GetReplacee());
+	ACTION_RETURN_POINTER(ZS_GetReplacee(c));
 }
 
 static void DrawSplash(AActor *self, int count, double angle, int kind)
 {
-	P_DrawSplash(count, self->Pos(), angle, kind);
+	P_DrawSplash(self->Level, count, self->Pos(), angle, kind);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, DrawSplash, DrawSplash)
@@ -1260,7 +1265,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, DrawSplash, DrawSplash)
 	PARAM_INT(count);
 	PARAM_FLOAT(angle);
 	PARAM_INT(kind);
-	P_DrawSplash(count, self->Pos(), angle, kind);
+	P_DrawSplash(self->Level, count, self->Pos(), angle, kind);
 	return 0;
 }
 
@@ -1325,7 +1330,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckSight, P_CheckSight)
 
 static void GiveSecret(AActor *self, bool printmessage, bool playsound)
 {
-	P_GiveSecret(self, printmessage, playsound, -1);
+	P_GiveSecret(self->Level, self, printmessage, playsound, -1);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, GiveSecret, GiveSecret)
@@ -1333,7 +1338,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GiveSecret, GiveSecret)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_BOOL(printmessage);
 	PARAM_BOOL(playsound);
-	P_GiveSecret(self, printmessage, playsound, -1);
+	GiveSecret(self, printmessage, playsound);
 	return 0;
 }
 
@@ -1649,6 +1654,46 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckFor3DCeilingHit, CheckFor3DCeilingHit
 
 
 
+static int isFrozen(AActor *self)
+{
+	return self->isFrozen();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, isFrozen, isFrozen)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(isFrozen(self));
+}
+
+
+//=====================================================================================
+//
+// compat flags. These two are the only ones that get checked in script code
+// so anything more complex isn't really needed.
+//
+//=====================================================================================
+static int compat_limitpain_(AActor *self)
+{
+	return self->Level->i_compatflags & COMPATF_LIMITPAIN;
+}
+
+static int compat_mushroom_(AActor *self)
+{
+	return self->Level->i_compatflags & COMPATF_MUSHROOM;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, compat_limitpain, compat_limitpain_)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_INT(compat_limitpain_(self));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, compat_mushroom, compat_mushroom_)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_INT(compat_mushroom_(self));
+}
+
 //===========================================================================
 //
 // PlayerPawn functions
@@ -1676,6 +1721,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(APlayerPawn, GetPrintableDisplayName, GetPrintable
 
 
 
+DEFINE_FIELD(DThinker, Level)
 DEFINE_FIELD(AActor, snext)
 DEFINE_FIELD(AActor, player)
 DEFINE_FIELD_NAMED(AActor, __Pos, pos)

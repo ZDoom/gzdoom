@@ -23,7 +23,7 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "i_system.h"
+
 #include "tarray.h"
 #include "dobject.h"
 #include "vm.h"

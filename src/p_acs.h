@@ -37,6 +37,7 @@
 
 #include "doomtype.h"
 #include "dthinker.h"
+#include "doomerrors.h"
 
 #define LOCAL_SIZE				20
 #define NUM_MAPVARS				128
@@ -349,7 +350,7 @@ class FBehavior
 public:
 	FBehavior ();
 	~FBehavior ();
-	bool Init(int lumpnum, FileReader * fr = NULL, int len = 0);
+	bool Init(FLevelLocals *l, int lumpnum, FileReader * fr = NULL, int len = 0, int reallumpnum = -1);
 
 	bool IsGood ();
 	uint8_t *FindChunk (uint32_t id) const;
@@ -377,7 +378,7 @@ public:
 	const char *GetModuleName() const { return ModuleName; }
 	ACSProfileInfo *GetFunctionProfileData(int index) { return index >= 0 && index < NumFunctions ? &FunctionProfileData[index] : NULL; }
 	ACSProfileInfo *GetFunctionProfileData(ScriptFunction *func) { return GetFunctionProfileData((int)(func - (ScriptFunction *)Functions)); }
-	const char *LookupString (uint32_t index) const;
+	const char *LookupString (uint32_t index, bool forprint = false) const;
 
 	BoundsCheckingArray<int32_t *, NUM_MAPVARS> MapVars;
 
@@ -385,25 +386,28 @@ public:
 private:
 	struct ArrayInfo;
 
-	ACSFormat Format;
-
-	int LumpNum;
+	FLevelLocals *Level;
 	uint8_t *Data;
-	int DataSize;
 	uint8_t *Chunks;
 	ScriptPtr *Scripts;
-	int NumScripts;
 	ScriptFunction *Functions;
 	ACSProfileInfo *FunctionProfileData;
-	int NumFunctions;
 	ArrayInfo *ArrayStore;
-	int NumArrays;
 	ArrayInfo **Arrays;
+
+	ACSFormat Format;
+	int LumpNum;
+	int DataSize;
+	int NumScripts;
+	int NumFunctions;
+	int NumArrays;
 	int NumTotalArrays;
 	uint32_t StringTable;
+	uint32_t LibraryID;
+	bool ShouldLocalize;
+
 	int32_t MapVarStore[NUM_MAPVARS];
 	TArray<FBehavior *> Imports;
-	uint32_t LibraryID;
 	char ModuleName[9];
 	TArray<int> JumpPoints;
 
@@ -420,16 +424,17 @@ private:
 	void MarkMapVarStrings() const;
 	void LockMapVarStrings(int levelnum) const;
 
-	friend void ArrangeScriptProfiles(TArray<ProfileCollector> &profiles);
-	friend void ArrangeFunctionProfiles(TArray<ProfileCollector> &profiles);
 	friend struct FBehaviorContainer;
 };
 
 struct FBehaviorContainer
 {
+	FLevelLocals *Level;
 	TArray<FBehavior *> StaticModules;
 
-	FBehavior *LoadModule(int lumpnum, FileReader *fr = nullptr, int len = 0);
+	FBehaviorContainer(FLevelLocals *l) : Level(l) {}
+
+	FBehavior *LoadModule(int lumpnum, FileReader *fr = nullptr, int len = 0, int reallumpnum = -1);
 	void LoadDefaultModules();
 	void UnloadModules();
 	bool CheckAllGood();
@@ -440,9 +445,11 @@ struct FBehaviorContainer
 	void UnlockLevelVarStrings(int levelnum);
 
 	const ScriptPtr *FindScript(int script, FBehavior *&module);
-	const char *LookupString(uint32_t index);
+	const char *LookupString(uint32_t index, bool forprint = false);
 	void StartTypedScripts(uint16_t type, AActor *activator, bool always, int arg1 = 0, bool runNow = false);
 	void StopMyScripts(AActor *actor);
+	void ArrangeScriptProfiles(TArray<ProfileCollector> &profiles);
+	void ArrangeFunctionProfiles(TArray<ProfileCollector> &profiles);
 
 };
 
@@ -453,7 +460,8 @@ class DACSThinker : public DThinker
 	DECLARE_CLASS(DACSThinker, DThinker)
 	HAS_OBJECT_POINTERS
 public:
-	DACSThinker();
+	static const int DEFAULT_STAT = STAT_SCRIPTS;
+	void Construct() {}
 	~DACSThinker();
 
 	void Serialize(FSerializer &arc);
@@ -466,8 +474,8 @@ public:
 	void StopScriptsFor(AActor *actor);
 
 private:
-	DLevelScript *LastScript;
-	DLevelScript *Scripts;				// List of all running scripts
+	DLevelScript *LastScript = nullptr;
+	DLevelScript *Scripts = nullptr;				// List of all running scripts
 
 	friend class DLevelScript;
 	friend class FBehavior;

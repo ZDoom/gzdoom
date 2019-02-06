@@ -9,6 +9,7 @@
 #include <cxxabi.h>
 #include <cstring>
 #include <cstdlib>
+#include <memory>
 #endif
 
 struct JitFuncInfo

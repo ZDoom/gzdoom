@@ -61,8 +61,8 @@
 #include "i_time.h"
 #include "maploader.h"
 
-CVAR(Bool, gl_cachenodes, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR(Float, gl_cachetime, 0.6f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+EXTERN_CVAR(Bool, gl_cachenodes)
+EXTERN_CVAR(Float, gl_cachetime)
 
 // fixed 32 bit gl_vert format v2.0+ (glBsp 1.91)
 struct mapglvertex_t
@@ -346,7 +346,7 @@ bool MapLoader::LoadGLSegs(FileReader &lump)
 			segs[i].v2 = &Level->vertexes[checkGLVertex3(LittleLong(ml->v2))];
 
 			const uint32_t partner = LittleLong(ml->partner);
-			segs[i].PartnerSeg = DWORD_MAX == partner ? nullptr : &segs[partner];
+			segs[i].PartnerSeg = UINT_MAX == partner ? nullptr : &segs[partner];
 	
 			if(ml->linedef != 0xffff) // skip minisegs 
 			{

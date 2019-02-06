@@ -40,7 +40,7 @@
 #include "c_cvars.h"
 #include "c_dispatch.h"
 #include "b_bot.h"
-#include "doomstat.h"
+#include "g_game.h"
 #include "p_local.h"
 #include "cmdlib.h"
 #include "teaminfo.h"
@@ -49,6 +49,7 @@
 #include "d_player.h"
 #include "w_wad.h"
 #include "vm.h"
+#include "g_levellocals.h"
 
 IMPLEMENT_CLASS(DBot, false, true)
 
@@ -63,8 +64,7 @@ IMPLEMENT_POINTERS_END
 
 DEFINE_FIELD(DBot, dest)
 
-DBot::DBot ()
-: DThinker(STAT_BOT)
+void DBot::Construct()
 {
 	Clear ();
 }
@@ -138,20 +138,19 @@ void DBot::Tick ()
 {
 	Super::Tick ();
 
-	if (player->mo == nullptr || bglobal.freeze)
+	if (player->mo == nullptr || Level->isFrozen())
 	{
 		return;
 	}
 
 	BotThinkCycles.Clock();
-	bglobal.m_Thinking = true;
+	Level->BotInfo.m_Thinking = true;
 	Think ();
-	bglobal.m_Thinking = false;
+	Level->BotInfo.m_Thinking = false;
 	BotThinkCycles.Unclock();
 }
 
 CVAR (Int, bot_next_color, 11, 0)
-CVAR (Bool, bot_observer, false, 0)
 
 CCMD (addbot)
 {
@@ -174,9 +173,9 @@ CCMD (addbot)
 	}
 
 	if (argv.argc() > 1)
-		bglobal.SpawnBot (argv[1]);
+		primaryLevel->BotInfo.SpawnBot (argv[1]);
 	else
-		bglobal.SpawnBot (nullptr);
+		primaryLevel->BotInfo.SpawnBot (nullptr);
 }
 
 void FCajunMaster::ClearPlayer (int i, bool keepTeam)
@@ -233,7 +232,7 @@ CCMD (freeze)
 
 CCMD (listbots)
 {
-	botinfo_t *thebot = bglobal.botinfo;
+	botinfo_t *thebot = primaryLevel->BotInfo.botinfo;
 	int count = 0;
 
 	while (thebot)

@@ -413,7 +413,7 @@ static void StoreLevelStats(FLevelLocals *Level)
 
 		// Check for living monsters. On some maps it can happen
 		// that the counter misses some. 
-		TThinkerIterator<AActor> it;
+		auto it = Level->GetThinkerIterator<AActor>();
 		AActor *ac;
 		int mc = 0;
 
@@ -577,7 +577,7 @@ FString GetStatString()
 
 CCMD(printstats)
 {
-	StoreLevelStats(&level);	// Refresh the current level's results.
+	StoreLevelStats(primaryLevel);	// Refresh the current level's results.
 	Printf("%s", GetStatString().GetChars());
 }
 
@@ -596,6 +596,6 @@ CCMD(finishgame)
 
 ADD_STAT(statistics)
 {
-	StoreLevelStats(&level);	// Refresh the current level's results.
+	StoreLevelStats(primaryLevel);	// Refresh the current level's results.
 	return GetStatString();
 }

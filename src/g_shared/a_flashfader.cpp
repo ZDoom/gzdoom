@@ -43,15 +43,29 @@ IMPLEMENT_POINTERS_START(DFlashFader)
 	IMPLEMENT_POINTER(ForWho)
 IMPLEMENT_POINTERS_END
 
-DFlashFader::DFlashFader (float r1, float g1, float b1, float a1,
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
+void DFlashFader::Construct (float r1, float g1, float b1, float a1,
 						  float r2, float g2, float b2, float a2,
 						  float time, AActor *who, bool terminate)
-	: TotalTics ((int)(time*TICRATE)), RemainingTics(TotalTics), ForWho (who)
 {
+	TotalTics = (int)(time*TICRATE);
+	RemainingTics = TotalTics;
+	ForWho = who;
 	Blends[0][0]=r1; Blends[0][1]=g1; Blends[0][2]=b1; Blends[0][3]=a1;
 	Blends[1][0]=r2; Blends[1][1]=g2; Blends[1][2]=b2; Blends[1][3]=a2;
 	Terminate = terminate;
 }
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
 
 void DFlashFader::OnDestroy ()
 {
@@ -59,6 +73,12 @@ void DFlashFader::OnDestroy ()
 	SetBlend (1.f);
 	Super::OnDestroy();
 }
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
 
 void DFlashFader::Serialize(FSerializer &arc)
 {
@@ -68,6 +88,12 @@ void DFlashFader::Serialize(FSerializer &arc)
 		("forwho", ForWho)
 		.Array("blends", Blends[0], 8);
 }
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
 
 void DFlashFader::Tick ()
 {
@@ -85,6 +111,12 @@ void DFlashFader::Tick ()
 	SetBlend (1.f - (float)RemainingTics / (float)TotalTics);
 }
 
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
 void DFlashFader::SetBlend (float time)
 {
 	if (ForWho == NULL || ForWho->player == NULL)
@@ -98,6 +130,12 @@ void DFlashFader::SetBlend (float time)
 	player->BlendB = Blends[0][2]*iT + Blends[1][2]*time;
 	player->BlendA = Blends[0][3]*iT + Blends[1][3]*time;
 }
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
 
 void DFlashFader::Cancel ()
 {

@@ -429,7 +429,7 @@ void FParser::spec_script()
 	newscript->parent = Script; // remember parent
 	
 	// preprocess the newscript now
-	newscript->Preprocess();
+	newscript->Preprocess(Level);
     
 	// we dont want to run the newscript, only add it
 	// jump past the newscript in parsing

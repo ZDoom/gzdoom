@@ -37,7 +37,7 @@
 
 #include "m_random.h"
 #include "m_swap.h"
-#include "i_system.h"
+
 #include "w_wad.h"
 #include "g_level.h"
 #include "s_sound.h"
@@ -769,7 +769,10 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
 	else wbstartstruct->nextname = info->LookupLevelName();
 	V_SetBlend(0, 0, 0, 0);
 	S_StopAllChannels();
-	SN_StopAllSequences();
+	for (auto Level : AllLevels())
+	{
+		SN_StopAllSequences(Level);
+	}
 	WI_Screen = cls->CreateNew();
 	IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Start)
 	{

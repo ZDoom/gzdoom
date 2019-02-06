@@ -146,7 +146,7 @@ private:
 	void MessageV(ZCC_TreeNode *node, const char *txtcolor, const char *msg, va_list argptr);
 
 	FxExpression *ConvertAST(PContainerType *cclass, ZCC_TreeNode *ast);
-	FxExpression *ConvertNode(ZCC_TreeNode *node);
+	FxExpression *ConvertNode(ZCC_TreeNode *node, bool substitute= false);
 	FxExpression *ConvertImplicitScopeNode(ZCC_TreeNode *node, ZCC_Statement *nested);
 	FArgumentList &ConvertNodeList(FArgumentList &, ZCC_TreeNode *head);
 

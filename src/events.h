@@ -1,5 +1,4 @@
-#ifndef EVENTS_H
-#define EVENTS_H
+#pragma once 
 
 #include "dobject.h"
 #include "serializer.h"
@@ -8,95 +7,13 @@
 #include "sbar.h"
 
 class DStaticEventHandler;
+struct EventManager;
 
 enum class EventHandlerType
 {
 	Global,
 	PerMap
 };
-
-// register
-bool E_RegisterHandler(DStaticEventHandler* handler);
-// unregister
-bool E_UnregisterHandler(DStaticEventHandler* handler);
-// find
-bool E_CheckHandler(DStaticEventHandler* handler);
-// check type
-bool E_IsStaticType(PClass* type);
-// init static handlers
-void E_InitStaticHandlers(bool map);
-// shutdown handlers
-void E_Shutdown(bool map);
-
-// called right after the map has loaded (approximately same time as OPEN ACS scripts)
-void E_WorldLoaded();
-// called when the map is about to unload (approximately same time as UNLOADING ACS scripts)
-void E_WorldUnloaded();
-// called right after the map has loaded (every time, UNSAFE VERSION)
-void E_WorldLoadedUnsafe();
-// called right before the map is unloaded (every time, UNSAFE VERSION)
-void E_WorldUnloadedUnsafe();
-// called around PostBeginPlay of each actor.
-void E_WorldThingSpawned(AActor* actor);
-// called after AActor::Die of each actor.
-void E_WorldThingDied(AActor* actor, AActor* inflictor);
-// called after AActor::Revive.
-void E_WorldThingRevived(AActor* actor);
-// called before P_DamageMobj and before AActor::DamageMobj virtuals.
-void E_WorldThingDamaged(AActor* actor, AActor* inflictor, AActor* source, int damage, FName mod, int flags, DAngle angle);
-// called before AActor::Destroy of each actor.
-void E_WorldThingDestroyed(AActor* actor);
-// called in P_ActivateLine before executing special, set shouldactivate to false to prevent activation.
-void E_WorldLinePreActivated(line_t* line, AActor* actor, int activationType, bool* shouldactivate);
-// called in P_ActivateLine after successful special execution.
-void E_WorldLineActivated(line_t* line, AActor* actor, int activationType);
-// called in P_DamageSector and P_DamageLinedef before receiving damage to the sector. returns actual damage
-int E_WorldSectorDamaged(sector_t* sector, AActor* source, int damage, FName damagetype, int part, DVector3 position, bool isradius);
-// called in P_DamageLinedef before receiving damage to the linedef. returns actual damage
-int E_WorldLineDamaged(line_t* line, AActor* source, int damage, FName damagetype, int side, DVector3 position, bool isradius);
-// same as ACS SCRIPT_Lightning
-void E_WorldLightning();
-// this executes on every tick, before everything, only when in valid level and not paused
-void E_WorldTick();
-// this executes on every tick on UI side, always
-void E_UiTick();
-// this executes on every tick on UI side, always AND immediately after everything else
-void E_PostUiTick();
-// called on each render frame once.
-void E_RenderFrame();
-// called after everything's been rendered, but before console/menus
-void E_RenderOverlay(EHudState state);
-// this executes when a player enters the level (once). PlayerEnter+inhub = RETURN
-void E_PlayerEntered(int num, bool fromhub);
-// this executes when a player respawns. includes resurrect cheat.
-void E_PlayerRespawned(int num);
-// this executes when a player dies (partially duplicating worldthingdied, but whatever)
-void E_PlayerDied(int num);
-// this executes when a player leaves the game
-void E_PlayerDisconnected(int num);
-// this executes on events.
-bool E_Responder(const event_t* ev); // splits events into InputProcess and UiProcess
-// this executes on console/net events.
-void E_Console(int player, FString name, int arg1, int arg2, int arg3, bool manual);
-
-// called when looking up the replacement for an actor class
-bool E_CheckReplacement(PClassActor* replacee, PClassActor** replacement);
-// called when looking up the replaced for an actor class
-bool E_CheckReplacee(PClassActor** replacee, PClassActor* replacement);
-
-// called on new game
-void E_NewGame(EventHandlerType handlerType);
-
-// send networked event. unified function.
-bool E_SendNetworkEvent(FString name, int arg1, int arg2, int arg3, bool manual);
-
-// check if there is anything that should receive GUI events
-bool E_CheckUiProcessors();
-// check if we need native mouse due to UiProcessors
-bool E_CheckRequireMouse();
-
-// serialization stuff
-void E_SerializeEvents(FSerializer& arc);
 
 // ==============================================
 //
@@ -117,6 +34,7 @@ public:
 		IsUiProcessor = false;
 	}
 
+	EventManager *owner;
 	DStaticEventHandler* prev;
 	DStaticEventHandler* next;
 	virtual bool IsStatic() { return true; }
@@ -141,6 +59,8 @@ public:
 		}
 		*/
 
+		arc("next", next);
+		arc("prev", prev);
 		arc("Order", Order);
 		arc("IsUiProcessor", IsUiProcessor);
 		arc("RequireMouse", RequireMouse);
@@ -200,8 +120,6 @@ class DEventHandler : public DStaticEventHandler
 public:
 	bool IsStatic() override { return false; }
 };
-extern DStaticEventHandler* E_FirstEventHandler;
-extern DStaticEventHandler* E_LastEventHandler;
 
 struct FRenderEvent
 {
@@ -311,4 +229,106 @@ struct FReplacedEvent
 	bool IsFinal;
 };
 
-#endif
+struct EventManager
+{
+	FLevelLocals *Level = nullptr;
+	DStaticEventHandler* FirstEventHandler = nullptr;
+	DStaticEventHandler* LastEventHandler = nullptr;
+
+	EventManager() = default;
+	EventManager(FLevelLocals *l) { Level = l; }
+	~EventManager() { Shutdown(); }
+	bool ShouldCallStatic(bool forplay);
+
+	// register
+	bool RegisterHandler(DStaticEventHandler* handler);
+	// unregister
+	bool UnregisterHandler(DStaticEventHandler* handler);
+	// find
+	bool CheckHandler(DStaticEventHandler* handler);
+	// check type
+	bool IsStaticType(PClass* type);
+	// init static handlers
+	void InitStaticHandlers(bool map);
+	// shutdown handlers
+	void Shutdown();
+
+	// called right after the map has loaded (approximately same time as OPEN ACS scripts)
+	void WorldLoaded();
+	// called when the map is about to unload (approximately same time as UNLOADING ACS scripts)
+	void WorldUnloaded();
+	// called around PostBeginPlay of each actor.
+	void WorldThingSpawned(AActor* actor);
+	// called after AActor::Die of each actor.
+	void WorldThingDied(AActor* actor, AActor* inflictor);
+	// called after AActor::Revive.
+	void WorldThingRevived(AActor* actor);
+	// called before P_DamageMobj and before AActor::DamageMobj virtuals.
+	void WorldThingDamaged(AActor* actor, AActor* inflictor, AActor* source, int damage, FName mod, int flags, DAngle angle);
+	// called before AActor::Destroy of each actor.
+	void WorldThingDestroyed(AActor* actor);
+	// called in P_ActivateLine before executing special, set shouldactivate to false to prevent activation.
+	void WorldLinePreActivated(line_t* line, AActor* actor, int activationType, bool* shouldactivate);
+	// called in P_ActivateLine after successful special execution.
+	void WorldLineActivated(line_t* line, AActor* actor, int activationType);
+	// called in P_DamageSector and P_DamageLinedef before receiving damage to the sector. returns actual damage
+	int WorldSectorDamaged(sector_t* sector, AActor* source, int damage, FName damagetype, int part, DVector3 position, bool isradius);
+	// called in P_DamageLinedef before receiving damage to the linedef. returns actual damage
+	int WorldLineDamaged(line_t* line, AActor* source, int damage, FName damagetype, int side, DVector3 position, bool isradius);
+	// same as ACS SCRIPT_Lightning
+	void WorldLightning();
+	// this executes on every tick, before everything, only when in valid level and not paused
+	void WorldTick();
+	// this executes on every tick on UI side, always
+	void UiTick();
+	// this executes on every tick on UI side, always AND immediately after everything else
+	void PostUiTick();
+	// called on each render frame once.
+	void RenderFrame();
+	// called after everything's been rendered, but before console/menus
+	void RenderOverlay(EHudState state);
+	// this executes when a player enters the level (once). PlayerEnter+inhub = RETURN
+	void PlayerEntered(int num, bool fromhub);
+	// this executes when a player respawns. includes resurrect cheat.
+	void PlayerRespawned(int num);
+	// this executes when a player dies (partially duplicating worldthingdied, but whatever)
+	void PlayerDied(int num);
+	// this executes when a player leaves the game
+	void PlayerDisconnected(int num);
+	// this executes on events.
+	bool Responder(const event_t* ev); // splits events into InputProcess and UiProcess
+	// this executes on console/net events.
+	void Console(int player, FString name, int arg1, int arg2, int arg3, bool manual);
+
+	// called when looking up the replacement for an actor class
+	bool CheckReplacement(PClassActor* replacee, PClassActor** replacement);
+	// called when looking up the replaced for an actor class
+	bool CheckReplacee(PClassActor** replacee, PClassActor* replacement);
+
+	// called on new game
+	void NewGame();
+
+	// send networked event. unified function.
+	bool SendNetworkEvent(FString name, int arg1, int arg2, int arg3, bool manual);
+
+	// check if there is anything that should receive GUI events
+	bool CheckUiProcessors();
+	// check if we need native mouse due to UiProcessors
+	bool CheckRequireMouse();
+
+	void InitHandler(PClass* type);
+	FWorldEvent SetupWorldEvent();
+	FRenderEvent SetupRenderEvent();
+
+	void SetOwnerForHandlers()
+	{
+		for (DStaticEventHandler* existinghandler = FirstEventHandler; existinghandler; existinghandler = existinghandler->next)
+		{
+			existinghandler->owner = this;
+		}
+	}
+
+};
+
+extern EventManager eventManager;
+extern EventManager staticEventManager;

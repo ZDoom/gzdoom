@@ -279,17 +279,17 @@ FName MapLoader::CheckCompatibility(MapData *map)
 
 	if (BCompatMap.CountUsed() == 0) ParseCompatibility();
 
-	ii_compatflags = 0;
-	ii_compatflags2 = 0;
-	ib_compatflags = 0;
+	Level->ii_compatflags = 0;
+	Level->ii_compatflags2 = 0;
+	Level->ib_compatflags = 0;
 
 	// When playing Doom IWAD levels force COMPAT_SHORTTEX and COMPATF_LIGHT.
 	// I'm not sure if the IWAD maps actually need COMPATF_LIGHT but it certainly does not hurt.
 	// TNT's MAP31 also needs COMPATF_STAIRINDEX but that only gets activated for TNT.WAD.
 	if (Wads.GetLumpFile(map->lumpnum) == Wads.GetIwadNum() && (gameinfo.flags & GI_COMPATSHORTTEX) && Level->maptype == MAPTYPE_DOOM)
 	{
-		ii_compatflags = COMPATF_SHORTTEX|COMPATF_LIGHT;
-		if (gameinfo.flags & GI_COMPATSTAIRS) ii_compatflags |= COMPATF_STAIRINDEX;
+		Level->ii_compatflags = COMPATF_SHORTTEX|COMPATF_LIGHT;
+		if (gameinfo.flags & GI_COMPATSTAIRS) Level->ii_compatflags |= COMPATF_STAIRINDEX;
 	}
 
 	map->GetChecksum(md5.Bytes);
@@ -319,9 +319,9 @@ FName MapLoader::CheckCompatibility(MapData *map)
 
 	if (flags != NULL)
 	{
-		ii_compatflags |= flags->CompatFlags[SLOT_COMPAT];
-		ii_compatflags2 |= flags->CompatFlags[SLOT_COMPAT2];
-		ib_compatflags |= flags->CompatFlags[SLOT_BCOMPAT];
+		Level->ii_compatflags |= flags->CompatFlags[SLOT_COMPAT];
+		Level->ii_compatflags2 |= flags->CompatFlags[SLOT_COMPAT2];
+		Level->ib_compatflags |= flags->CompatFlags[SLOT_BCOMPAT];
 	}
 
 	// Reset i_compatflags
@@ -330,7 +330,7 @@ FName MapLoader::CheckCompatibility(MapData *map)
 	// Set floatbob compatibility for all maps with an original Hexen MAPINFO.
 	if (Level->flags2 & LEVEL2_HEXENHACK)
 	{
-		ib_compatflags |= BCOMPATF_FLOATBOB;
+		Level->ib_compatflags |= BCOMPATF_FLOATBOB;
 	}
 	return FName(hash, true);	// if this returns NAME_None it means there is no scripted compatibility handler.
 }
@@ -391,7 +391,7 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, ClearSectorTags)
 {
 	PARAM_SELF_PROLOGUE(DLevelCompatibility);
 	PARAM_INT(sector);
-	tagManager.RemoveSectorTags(sector);
+	self->Level->tagManager.RemoveSectorTags(sector);
 	return 0;
 }
 
@@ -403,7 +403,7 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, AddSectorTag)
 
 	if ((unsigned)sector < self->Level->sectors.Size())
 	{
-		tagManager.AddSectorTag(sector, tag);
+		self->Level->tagManager.AddSectorTag(sector, tag);
 	}
 	return 0;
 }
@@ -412,7 +412,7 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, ClearLineIDs)
 {
 	PARAM_SELF_PROLOGUE(DLevelCompatibility);
 	PARAM_INT(line);
-	tagManager.RemoveLineIDs(line);
+	self->Level->tagManager.RemoveLineIDs(line);
 	return 0;
 }
 
@@ -424,7 +424,7 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, AddLineID)
 	
 	if ((unsigned)line < self->Level->lines.Size())
 	{
-		tagManager.AddLineID(line, tag);
+		self->Level->tagManager.AddLineID(line, tag);
 	}
 	return 0;
 }
@@ -529,51 +529,4 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, GetDefaultActor)
 
 
 DEFINE_FIELD(DLevelCompatibility, Level);
-
-//==========================================================================
-//
-// CCMD mapchecksum
-//
-//==========================================================================
-
-CCMD (mapchecksum)
-{
-	MapData *map;
-	uint8_t cksum[16];
-
-	if (argv.argc() < 2)
-	{
-		Printf("Usage: mapchecksum <map> ...\n");
-	}
-	for (int i = 1; i < argv.argc(); ++i)
-	{
-		map = P_OpenMapData(argv[i], true);
-		if (map == NULL)
-		{
-			Printf("Cannot load %s as a map\n", argv[i]);
-		}
-		else
-		{
-			map->GetChecksum(cksum);
-			const char *wadname = Wads.GetWadName(Wads.GetLumpFile(map->lumpnum));
-			delete map;
-			for (size_t j = 0; j < sizeof(cksum); ++j)
-			{
-				Printf("%02X", cksum[j]);
-			}
-			Printf(" // %s %s\n", wadname, argv[i]);
-		}
-	}
-}
-
-//==========================================================================
-//
-// CCMD hiddencompatflags
-//
-//==========================================================================
-
-CCMD (hiddencompatflags)
-{
-	Printf("%08x %08x %08x\n", ii_compatflags, ii_compatflags2, ib_compatflags);
-}
 

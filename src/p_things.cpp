@@ -47,17 +47,14 @@
 #include "actorinlines.h"
 #include "vm.h"
 
-// Set of spawnable things for the Thing_Spawn and Thing_Projectile specials.
-FClassMap SpawnableThings;
-
 static FRandom pr_leadtarget ("LeadTarget");
 
-bool P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, int newtid)
+bool FLevelLocals::EV_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, int newtid)
 {
 	int rtn = 0;
 	PClassActor *kind;
 	AActor *spot, *mobj;
-	FActorIterator iterator (tid);
+	auto iterator = GetActorIterator(tid);
 
 	kind = P_GetSpawnableType(type);
 
@@ -65,10 +62,10 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, i
 		return false;
 
 	// Handle decorate replacements.
-	kind = kind->GetReplacement();
+	kind = kind->GetReplacement(this);
 
 	if ((GetDefaultByType(kind)->flags3 & MF3_ISMONSTER) && 
-		((dmflags & DF_NO_MONSTERS) || (level.flags2 & LEVEL2_NOMONSTERS)))
+		((dmflags & DF_NO_MONSTERS) || (flags2 & LEVEL2_NOMONSTERS)))
 		return false;
 
 	if (tid == 0)
@@ -81,7 +78,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, i
 	}
 	while (spot != NULL)
 	{
-		mobj = Spawn (kind, spot->Pos(), ALLOW_REPLACE);
+		mobj = Spawn (spot->Level, kind, spot->Pos(), ALLOW_REPLACE);
 
 		if (mobj != NULL)
 		{
@@ -131,10 +128,7 @@ bool P_MoveThing(AActor *source, const DVector3 &pos, bool fog)
 			P_SpawnTeleportFog(source, old, true, true);
 		}
 		source->ClearInterpolation();
-		if (source == players[consoleplayer].camera)
-		{
-			R_ResetViewInterpolation();
-		}
+		source->renderflags |= RF_NOINTERPOLATEVIEW;
 		return true;
 	}
 	else
@@ -144,16 +138,16 @@ bool P_MoveThing(AActor *source, const DVector3 &pos, bool fog)
 	}
 }
 
-bool P_Thing_Move (int tid, AActor *source, int mapspot, bool fog)
+bool FLevelLocals::EV_Thing_Move (int tid, AActor *source, int mapspot, bool fog)
 {
 	AActor *target;
 
 	if (tid != 0)
 	{
-		FActorIterator iterator1(tid);
+		auto iterator1 = GetActorIterator(tid);
 		source = iterator1.Next();
 	}
-	FActorIterator iterator2 (mapspot);
+	auto iterator2 = GetActorIterator(mapspot);
 	target = iterator2.Next ();
 
 	if (source != NULL && target != NULL)
@@ -256,14 +250,14 @@ DEFINE_ACTION_FUNCTION(AActor, VelIntercept)
 	return 0;
 }
 
-bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_name, DAngle angle,
+bool FLevelLocals::EV_Thing_Projectile (int tid, AActor *source, int type, const char *type_name, DAngle angle,
 	double speed, double vspeed, int dest, AActor *forcedest, int gravity, int newtid,
 	bool leadTarget)
 {
 	int rtn = 0;
 	PClassActor *kind;
 	AActor *spot, *mobj, *targ = forcedest;
-	FActorIterator iterator (tid);
+	auto iterator = GetActorIterator(tid);
 	int defflags3;
 
 	if (type_name == NULL)
@@ -280,11 +274,11 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 	}
 
 	// Handle decorate replacements.
-	kind = kind->GetReplacement();
+	kind = kind->GetReplacement(this);
 
 	defflags3 = GetDefaultByType(kind)->flags3;
 	if ((defflags3 & MF3_ISMONSTER) && 
-		((dmflags & DF_NO_MONSTERS) || (level.flags2 & LEVEL2_NOMONSTERS)))
+		((dmflags & DF_NO_MONSTERS) || (flags2 & LEVEL2_NOMONSTERS)))
 		return false;
 
 	if (tid == 0)
@@ -297,7 +291,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 	}
 	while (spot != NULL)
 	{
-		FActorIterator tit (dest);
+		auto tit = GetActorIterator(dest);
 
 		if (dest == 0 || (targ = tit.Next()))
 		{
@@ -316,7 +310,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 				{
 					z -= spot->Floorclip;
 				}
-				mobj = Spawn (kind, spot->PosAtZ(z), ALLOW_REPLACE);
+				mobj = Spawn (spot->Level, kind, spot->PosAtZ(z), ALLOW_REPLACE);
 
 				if (mobj)
 				{
@@ -394,9 +388,9 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 	return rtn != 0;
 }
 
-int P_Thing_Damage (int tid, AActor *whofor0, int amount, FName type)
+int FLevelLocals::EV_Thing_Damage (int tid, AActor *whofor0, int amount, FName type)
 {
-	FActorIterator iterator (tid);
+	auto iterator = GetActorIterator(tid);
 	int count = 0;
 	AActor *actor;
 
@@ -543,173 +537,6 @@ void P_Thing_SetVelocity(AActor *actor, const DVector3 &vec, bool add, bool setb
 	}
 }
 
-PClassActor *P_GetSpawnableType(int spawnnum)
-{
-	if (spawnnum < 0)
-	{ // A named arg from a UDMF map
-		FName spawnname = FName(ENamedName(-spawnnum));
-		if (spawnname.IsValidName())
-		{
-			return PClass::FindActor(spawnname);
-		}
-	}
-	else
-	{ // A numbered arg from a Hexen or UDMF map
-		PClassActor **type = SpawnableThings.CheckKey(spawnnum);
-		if (type != NULL)
-		{
-			return *type;
-		}
-	}
-	return NULL;
-}
-
-struct MapinfoSpawnItem
-{
-	FName classname;	// DECORATE is read after MAPINFO so we do not have the actual classes available here yet.
-	// These are for error reporting. We must store the file information because it's no longer available when these items get resolved.
-	FString filename;
-	int linenum;
-};
-
-typedef TMap<int, MapinfoSpawnItem> SpawnMap;
-static SpawnMap SpawnablesFromMapinfo;
-static SpawnMap ConversationIDsFromMapinfo;
-
-static int SpawnableSort(const void *a, const void *b)
-{
-	return (*((FClassMap::Pair **)a))->Key - (*((FClassMap::Pair **)b))->Key;
-}
-
-static void DumpClassMap(FClassMap &themap)
-{
-	FClassMap::Iterator it(themap);
-	FClassMap::Pair *pair;
-	TArray<FClassMap::Pair*> allpairs(themap.CountUsed(), true);
-	int i = 0;
-
-	// Sort into numerical order, since their arrangement in the map can
-	// be in an unspecified order.
-	while (it.NextPair(pair))
-	{
-		allpairs[i++] = pair;
-	}
-	qsort(allpairs.Data(), i, sizeof(allpairs[0]), SpawnableSort);
-	for (int j = 0; j < i; ++j)
-	{
-		pair = allpairs[j];
-		Printf ("%d %s\n", pair->Key, pair->Value->TypeName.GetChars());
-	}
-}
-
-CCMD(dumpspawnables)
-{
-	DumpClassMap(SpawnableThings);
-}
-
-CCMD (dumpconversationids)
-{
-	DumpClassMap(StrifeTypes);
-}
-
-
-static void ParseSpawnMap(FScanner &sc, SpawnMap & themap, const char *descript)
-{
-	TMap<int, bool> defined;
-	int error = 0;
-
-	MapinfoSpawnItem editem;
-
-	editem.filename = sc.ScriptName;
-
-	while (true)
-	{
-		if (sc.CheckString("}")) return;
-		else if (sc.CheckNumber())
-		{
-			int ednum = sc.Number;
-			sc.MustGetStringName("=");
-			sc.MustGetString();
-
-			bool *def = defined.CheckKey(ednum);
-			if (def != NULL)
-			{
-				sc.ScriptMessage("%s %d defined more than once", descript, ednum);
-				error++;
-			}
-			else if (ednum < 0)
-			{
-				sc.ScriptMessage("%s must be positive, got %d", descript, ednum);
-				error++;
-			}
-			defined[ednum] = true;
-			editem.classname = sc.String;
-			editem.linenum = sc.Line;
-
-			themap.Insert(ednum, editem);
-		}
-		else
-		{
-			sc.ScriptError("Number expected");
-		}
-	}
-	if (error > 0)
-	{
-		sc.ScriptError("%d errors encountered in %s definition", error, descript);
-	}
-}
-
-void FMapInfoParser::ParseSpawnNums()
-{
-	ParseOpenBrace();
-	ParseSpawnMap(sc, SpawnablesFromMapinfo, "Spawn number");
-}
-
-void FMapInfoParser::ParseConversationIDs()
-{
-	ParseOpenBrace();
-	ParseSpawnMap(sc, ConversationIDsFromMapinfo, "Conversation ID");
-}
-
-
-void InitClassMap(FClassMap &themap, SpawnMap &thedata)
-{
-	themap.Clear();
-	SpawnMap::Iterator it(thedata);
-	SpawnMap::Pair *pair;
-	int error = 0;
-
-	while (it.NextPair(pair))
-	{
-		PClassActor *cls = NULL;
-		if (pair->Value.classname != NAME_None)
-		{
-			cls = PClass::FindActor(pair->Value.classname);
-			if (cls == NULL)
-			{
-				Printf(TEXTCOLOR_RED "Script error, \"%s\" line %d:\nUnknown actor class %s\n",
-					pair->Value.filename.GetChars(), pair->Value.linenum, pair->Value.classname.GetChars());
-				error++;
-			}
-			themap.Insert(pair->Key, cls);
-		}
-		else
-		{
-			themap.Remove(pair->Key);
-		}
-	}
-	if (error > 0)
-	{
-		I_Error("%d unknown actor classes found", error);
-	}
-	thedata.Clear();	// we do not need this any longer
-}
-
-void InitSpawnablesFromMapinfo()
-{
-	InitClassMap(SpawnableThings, SpawnablesFromMapinfo);
-	InitClassMap(StrifeTypes, ConversationIDsFromMapinfo);
-}
 int P_Thing_CheckInputNum(player_t *p, int inputnum)
 {
 	int renum = 0;
@@ -754,7 +581,7 @@ int P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, int
 	const bool ptrWillChange = !!(flags & (CPXF_SETTARGET | CPXF_SETMASTER | CPXF_SETTRACER));
 	const bool ptrDistPref = !!(flags & (CPXF_CLOSEST | CPXF_FARTHEST));
 
-	TThinkerIterator<AActor> it;
+	auto it = self->Level->GetThinkerIterator<AActor>();
 	AActor *mo, *dist = nullptr;
 
 	// [MC] Process of elimination, I think, will get through this as quickly and 
@@ -876,6 +703,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, double xofs, double yofs, do
 	}
 
 	DVector3 old = caller->Pos();
+	auto Level = caller->Level;
 	int oldpgroup = caller->Sector->PortalGroup;
 
 	zofs += reference->Height * heightoffset;
@@ -957,15 +785,15 @@ int P_Thing_Warp(AActor *caller, AActor *reference, double xofs, double yofs, do
 			if (flags & WARPF_WARPINTERPOLATION)
 			{
 				// This just translates the movement but doesn't change the vector
-				DVector3 displacedold  = old + level.Displacements.getOffset(oldpgroup, caller->Sector->PortalGroup);
+				DVector3 displacedold  = old + Level->Displacements.getOffset(oldpgroup, caller->Sector->PortalGroup);
 				caller->Prev += caller->Pos() - displacedold;
 				caller->PrevPortalGroup = caller->Sector->PortalGroup;
 			}
 			else if (flags & WARPF_COPYINTERPOLATION)
 			{
 				// Map both positions of the reference actor to the current portal group
-				DVector3 displacedold = old + level.Displacements.getOffset(reference->PrevPortalGroup, caller->Sector->PortalGroup);
-				DVector3 displacedref = old + level.Displacements.getOffset(reference->Sector->PortalGroup, caller->Sector->PortalGroup);
+				DVector3 displacedold = old + Level->Displacements.getOffset(reference->PrevPortalGroup, caller->Sector->PortalGroup);
+				DVector3 displacedref = old + Level->Displacements.getOffset(reference->Sector->PortalGroup, caller->Sector->PortalGroup);
 				caller->Prev = caller->Pos() + displacedold - displacedref;
 				caller->PrevPortalGroup = caller->Sector->PortalGroup;
 			}

@@ -129,7 +129,7 @@ public:
 extern FJoystickCollection *JoyDevices[NUM_JOYDEVICES];
 
 void I_StartupMouse();
-void I_CheckNativeMouse(bool prefer_native);
+void I_CheckNativeMouse(bool prefer_native, bool eh);
 void I_StartupKeyboard();
 void I_StartupXInput();
 void I_StartupDirectInputJoystick();

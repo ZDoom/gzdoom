@@ -35,6 +35,8 @@
 #pragma pointers_to_members( full_generality, single_inheritance )
 #endif
 
+class DFraggleThinker;
+
 
 class CFraggleScriptError : public CDoomError
 {
@@ -341,7 +343,7 @@ public:
 	void NewFunction(const char *name, void (FParser::*handler)());
 
 	DFsVariable *VariableForName(const char *name);
-	DFsVariable *FindVariable(const char *name);
+	DFsVariable *FindVariable(const char *name, DFsScript *global);
 	void ClearVariables(bool complete= false);
 	DFsVariable *NewLabel(char *labelptr);
 	char *LabelValue(const svalue_t &v);
@@ -360,10 +362,10 @@ public:
 	DFsSection *FindSectionStart(const char *brace);
 	DFsSection *FindSectionEnd(const char *brace);
 	char *ProcessFindChar(char *data, char find);
-	void DryRunScript();
-	void Preprocess();
-	void ParseInclude(char *lumpname);
-	void ParseScript(char *rover = NULL);
+	void DryRunScript(FLevelLocals *Level);
+	void Preprocess(FLevelLocals *Level);
+	void ParseInclude(FLevelLocals *Level, char *lumpname);
+	void ParseScript(char *rover, DFraggleThinker *th);
 	void ParseData(char *rover, char *data, char *end);
 };
 
@@ -688,7 +690,7 @@ class DFraggleThinker : public DThinker
 	DECLARE_CLASS(DFraggleThinker, DThinker)
 	HAS_OBJECT_POINTERS
 public:
-
+	static const int DEFAULT_STAT = STAT_SCRIPTS;
 	int zoom = 1;
 	AActor *trigger_obj;	// this is a transient pointer not being subjected to GC.
 	TObjPtr<DFsScript*> GlobalScript;
@@ -696,7 +698,8 @@ public:
 	TObjPtr<DRunningScript*> RunningScripts;
 	TArray<TObjPtr<AActor*> > SpawnedThings;
 
-	DFraggleThinker();
+	DFraggleThinker();	// This class needs a real constructor because it has non-serializable content.
+	void Construct();
 	void OnDestroy() override;
 
 

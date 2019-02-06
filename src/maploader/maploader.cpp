@@ -59,63 +59,31 @@
 
 
 #include <math.h>
-
-#include "templates.h"
-#include "d_player.h"
-#include "m_argv.h"
-#include "g_game.h"
-#include "w_wad.h"
-#include "p_local.h"
-#include "p_effect.h"
-#include "p_terrain.h"
-#include "nodebuild.h"
-#include "p_lnspec.h"
-#include "c_console.h"
-#include "p_acs.h"
-#include "announcer.h"
-#include "wi_stuff.h"
-#include "doomerrors.h"
-#include "gi.h"
-#include "p_conversation.h"
-#include "a_keys.h"
-#include "s_sndseq.h"
-#include "sbar.h"
-#include "p_setup.h"
-#include "r_data/r_interpolate.h"
-#include "r_sky.h"
-#include "cmdlib.h"
-#include "md5.h"
-#include "po_man.h"
-#include "r_renderer.h"
-#include "p_blockmap.h"
-#include "r_utility.h"
-#include "p_spec.h"
-#include "g_levellocals.h"
-#include "c_dispatch.h"
-#include "a_dynlight.h"
-#include "events.h"
-#include "p_destructible.h"
-#include "types.h"
-#include "i_time.h"
-#include "scripting/vm/vm.h"
-#include "hwrenderer/data/flatvertices.h"
-#include "fragglescript/t_fs.h"
 #include "maploader.h"
+#include "c_cvars.h"
+#include "actor.h"
+#include "g_levellocals.h"
+#include "p_lnspec.h"
 
+#include "v_text.h"
+#include "p_setup.h"
+#include "gi.h"
+#include "doomerrors.h"
+#include "types.h"
+#include "w_wad.h"
+#include "p_conversation.h"
+#include "v_video.h"
+#include "i_time.h"
+#include "m_argv.h"
+#include "fragglescript/t_fs.h"
+#include "swrenderer/r_swrenderer.h"
+#include "hwrenderer/data/flatvertices.h"
+#include "xlat/xlat.h"
 
-void PO_Init();
-
-#define MISSING_TEXTURE_WARN_LIMIT		20
-
-void BloodCrypt (void *data, int key, int len);
-void P_ClearUDMFKeys();
-void InitRenderInfo();
-
-extern AActor *SpawnMapThing (int index, FMapThing *mthing, int position);
-
-extern void P_TranslateTeleportThings (void);
-
-EXTERN_CVAR(Bool, am_textured)
+enum
+{
+	MISSING_TEXTURE_WARN_LIMIT = 20
+};
 
 CVAR (Bool, genblockmap, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
 CVAR (Bool, gennodes, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
@@ -124,6 +92,61 @@ inline bool P_LoadBuildMap(uint8_t *mapdata, size_t len, FMapThing **things, int
 {
 	return false;
 }
+
+//===========================================================================
+//
+// Now that ZDoom again gives the option of using Doom's original teleport
+// behavior, only teleport dests in a sector with a 0 tag need to be
+// given a TID. And since Doom format maps don't have TIDs, we can safely
+// give them TID 1.
+//
+//===========================================================================
+
+void MapLoader::TranslateTeleportThings ()
+{
+	AActor *dest;
+	auto iterator = Level->GetThinkerIterator<AActor>(NAME_TeleportDest);
+	bool foundSomething = false;
+	
+	while ( (dest = iterator.Next()) )
+	{
+		if (!Level->SectorHasTags(dest->Sector))
+		{
+			dest->tid = 1;
+			dest->AddToHash ();
+			foundSomething = true;
+		}
+	}
+	
+	if (foundSomething)
+	{
+		for (auto &line : Level->lines)
+		{
+			if (line.special == Teleport)
+			{
+				if (line.args[1] == 0)
+				{
+					line.args[0] = 1;
+				}
+			}
+			else if (line.special == Teleport_NoFog)
+			{
+				if (line.args[2] == 0)
+				{
+					line.args[0] = 1;
+				}
+			}
+			else if (line.special == Teleport_ZombieChanger)
+			{
+				if (line.args[1] == 0)
+				{
+					line.args[0] = 1;
+				}
+			}
+		}
+	}
+}
+
 
 //===========================================================================
 //
@@ -151,7 +174,7 @@ void MapLoader::SetTexture (side_t *side, int position, const char *name, FMissi
 				{
 					if (Level->lines[i].sidedef[j] == side)
 					{
-						Printf(TEXTCOLOR_RED"Unknown %s texture '"
+						Printf(TEXTCOLOR_RED "Unknown %s texture '"
 							TEXTCOLOR_ORANGE "%s" TEXTCOLOR_RED
 							"' on %s side of linedef %d\n",
 							positionnames[position], name, sidenames[j], i);
@@ -1046,6 +1069,7 @@ void MapLoader::LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 	for (unsigned i = 0; i < numsectors; i++, ss++, ms++)
 	{
 		ss->e = &sectors[0].e[i];
+		ss->Level = Level;
 		if (!map->HasBehavior) ss->Flags |= SECF_FLOORDROP;
 		ss->SetPlaneTexZ(sector_t::floor, (double)LittleShort(ms->floorheight));
 		ss->floorplane.set(0, 0, 1., -ss->GetPlaneTexZ(sector_t::floor));
@@ -1057,8 +1081,8 @@ void MapLoader::LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 		if (map->HasBehavior)
 			ss->special = LittleShort(ms->special);
 		else	// [RH] Translate to new sector special
-			ss->special = P_TranslateSectorSpecial (LittleShort(ms->special));
-		tagManager.AddSectorTag(i, LittleShort(ms->tag));
+			ss->special = Level->TranslateSectorSpecial (LittleShort(ms->special));
+		Level->tagManager.AddSectorTag(i, LittleShort(ms->tag));
 		ss->thinglist = nullptr;
 		ss->touching_thinglist = nullptr;		// phares 3/14/98
 		ss->sectorportal_thinglist = nullptr;
@@ -1395,7 +1419,7 @@ void MapLoader::SpawnThings (int position)
 
 	for (int i=0; i < numthings; i++)
 	{
-		AActor *actor = SpawnMapThing (i, &MapThingsConverted[i], position);
+		AActor *actor = Level->SpawnMapThing (i, &MapThingsConverted[i], position);
 		unsigned *udi = MapThingsUserDataIndex.CheckKey((unsigned)i);
 		if (udi != nullptr)
 		{
@@ -1463,7 +1487,7 @@ void MapLoader::SetLineID (int i, line_t *ld)
 			break;
 			
 		case Plane_Align:
-			if (!(ib_compatflags & BCOMPATF_NOSLOPEID)) setid = ld->args[2];
+			if (!(Level->ib_compatflags & BCOMPATF_NOSLOPEID)) setid = ld->args[2];
 			break;
 			
 		case Static_Init:
@@ -1476,7 +1500,7 @@ void MapLoader::SetLineID (int i, line_t *ld)
 		}
 		if (setid != -1)
 		{
-			tagManager.AddLineID(i, setid);
+			Level->tagManager.AddLineID(i, setid);
 		}
 	}
 }
@@ -1570,7 +1594,7 @@ void MapLoader::FinishLoadingLineDef(line_t *ld, int alpha)
 		{
 			for (unsigned j = 0; j < Level->lines.Size(); j++)
 			{
-				if (tagManager.LineHasID(j, ld->args[0]))
+				if (Level->LineHasId(j, ld->args[0]))
 				{
 					Level->lines[j].alpha = dalpha;
 					if (additive)
@@ -1696,11 +1720,11 @@ void MapLoader::LoadLineDefs (MapData * map)
 		mld->special = LittleShort(mld->special);
 		mld->tag = LittleShort(mld->tag);
 		mld->flags = LittleShort(mld->flags);
-		P_TranslateLineDef (ld, mld, -1);
+		Level->TranslateLineDef (ld, mld, -1);
 		// do not assign the tag for Extradata lines.
 		if (ld->special != Static_Init || (ld->args[1] != Init_EDLine && ld->args[1] != Init_EDSector))
 		{
-			tagManager.AddLineID(i, mld->tag);
+			Level->tagManager.AddLineID(i, mld->tag);
 		}
 #ifndef NO_EDATA
 		if (ld->special == Static_Init && ld->args[1] == Init_EDLine)
@@ -2074,7 +2098,7 @@ void MapLoader::ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec
 			{
 				for (unsigned s = 0; s < Level->sectors.Size(); s++)
 				{
-					if (tagManager.SectorHasTag(s, tag))
+					if (Level->SectorHasTag(s, tag))
 					{
 						if (colorgood)
 						{
@@ -2700,9 +2724,9 @@ void MapLoader::GroupLines (bool buildmap)
 	{
 		if (sector->Lines.Count == 0)
 		{
-			Printf ("Sector %i (tag %i) has no lines\n", i, tagManager.GetFirstSectorTag(Index(sector)));
+			Printf ("Sector %i (tag %i) has no lines\n", i, Level->GetFirstSectorTag(Index(sector)));
 			// 0 the sector's tag so that no specials can use it
-			tagManager.RemoveSectorTags(i);
+			Level->tagManager.RemoveSectorTags(i);
 		}
 		else
 		{
@@ -2757,7 +2781,7 @@ void MapLoader::GroupLines (bool buildmap)
 	}
 
 	// killough 1/30/98: Create xref tables for tags
-	tagManager.HashTags();
+	Level->tagManager.HashTags();
 
 	if (!buildmap)
 	{
@@ -2839,7 +2863,7 @@ void MapLoader::LoadBehavior(MapData * map)
 {
 	if (map->Size(ML_BEHAVIOR) > 0)
 	{
-		Level->Behaviors.LoadModule(-1, &map->Reader(ML_BEHAVIOR), map->Size(ML_BEHAVIOR));
+		Level->Behaviors.LoadModule(-1, &map->Reader(ML_BEHAVIOR), map->Size(ML_BEHAVIOR), map->lumpnum);
 	}
 	if (!Level->Behaviors.CheckAllGood())
 	{
@@ -2929,7 +2953,6 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	ForceNodeBuild = gennodes;
 
 	// [RH] Load in the BEHAVIOR lump
-	Level->Behaviors.UnloadModules();
 	if (map->HasBehavior)
 	{
 		LoadBehavior(map);
@@ -2955,7 +2978,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 				translator = gameinfo.translator.GetChars();
 			}
 		}
-		P_LoadTranslator(translator);
+		Level->Translator = P_LoadTranslator(translator);
 		Level->maptype = MAPTYPE_DOOM;
 	}
 	if (map->isText)
@@ -2963,7 +2986,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 		Level->maptype = MAPTYPE_UDMF;
 	}
 	FName checksum = CheckCompatibility(map);
-	if (ib_compatflags & BCOMPATF_REBUILDNODES)
+	if (Level->ib_compatflags & BCOMPATF_REBUILDNODES)
 	{
 		ForceNodeBuild = true;
 	}
@@ -2993,7 +3016,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	LoadMapinfoACSLump();
 
 
-	P_LoadStrifeConversations(map, lumpname);
+	P_LoadStrifeConversations(Level, map, lumpname);
 
 	FMissingTextureTracker missingtex;
 
@@ -3188,17 +3211,17 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	CopySlopes();
 
 	// Spawn 3d floors - must be done before spawning things so it can't be done in P_SpawnSpecials
-	P_Spawn3DFloors();
+	Spawn3DFloors();
 
 	SpawnThings(position);
 
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
-		if (playeringame[i] && players[i].mo != nullptr)
-			players[i].health = players[i].mo->health;
+		if (Level->PlayerInGame(i) && Level->Players[i]->mo != nullptr)
+			Level->Players[i]->health = Level->Players[i]->mo->health;
 	}
 	if (!map->HasBehavior && !map->isText)
-		P_TranslateTeleportThings();	// [RH] Assign teleport destination TIDs
+		TranslateTeleportThings();	// [RH] Assign teleport destination TIDs
 
 	if (oldvertextable != nullptr)
 	{
@@ -3206,7 +3229,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	}
 
 	// set up world state
-	P_SpawnSpecials(this);
+	SpawnSpecials();
 
 	// disable reflective planes on sloped sectors.
 	for (auto &sec : Level->sectors)
@@ -3222,20 +3245,20 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	}
 
 	InitRenderInfo();				// create hardware independent renderer resources for the level. This must be done BEFORE the PolyObj Spawn!!!
-	P_ClearDynamic3DFloorData();	// CreateVBO must be run on the plain 3D floor data.
-	screen->mVertexData->CreateVBO();
+	Level->ClearDynamic3DFloorData();	// CreateVBO must be run on the plain 3D floor data.
+	screen->mVertexData->CreateVBO(Level->sectors);
 
 	for (auto &sec : Level->sectors)
 	{
 		P_Recalculate3DFloors(&sec);
 	}
 
-	SWRenderer->SetColormap();	//The SW renderer needs to do some special setup for the level's default colormap.
+	SWRenderer->SetColormap(Level);	//The SW renderer needs to do some special setup for the level's default colormap.
 	InitPortalGroups(Level);
-	P_InitHealthGroups();
+	P_InitHealthGroups(Level);
 
 	if (reloop) LoopSidedefs(false);
 	PO_Init();				// Initialize the polyobjs
 	if (!Level->IsReentering())
-		P_FinalizePortals();	// finalize line portals after polyobjects have been initialized. This info is needed for properly flagging them.
+		Level->FinalizePortals();	// finalize line portals after polyobjects have been initialized. This info is needed for properly flagging them.
 }

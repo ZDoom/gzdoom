@@ -140,13 +140,7 @@ public:
 MapData * P_OpenMapData(const char * mapname, bool justcheck);
 bool P_CheckMapData(const char * mapname);
 
-
-// NOT called by W_Ticker. Fixme. [RH] Is that bad?
-//
-// [RH] The only parameter used is mapname, so I removed playermask and skill.
-//		On September 1, 1998, I added the position to indicate which set
-//		of single-player start spots should be spawned in the level.
-void P_SetupLevel (const char *mapname, int position, bool newGame);
+void P_SetupLevel (FLevelLocals *Level, int position, bool newGame);
 
 void P_FreeLevelData();
 
@@ -156,13 +150,9 @@ void P_Init (void);
 struct line_t;
 struct maplinedef_t;
 
-void P_LoadTranslator(const char *lumpname);
-void P_TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineindexforid = -1);
-int P_TranslateSectorSpecial (int);
-
-int GetUDMFInt(int type, int index, FName key);
-double GetUDMFFloat(int type, int index, FName key);
-FString GetUDMFString(int type, int index, FName key);
+int GetUDMFInt(FLevelLocals *Level, int type, int index, FName key);
+double GetUDMFFloat(FLevelLocals *Level, int type, int index, FName key);
+FString GetUDMFString(FLevelLocals *Level, int type, int index, FName key);
 
 void FixMinisegReferences();
 void FixHoles();

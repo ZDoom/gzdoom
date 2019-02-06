@@ -4,9 +4,6 @@
 #include "cycler.h"
 #include "g_levellocals.h"
 
-EXTERN_CVAR(Bool, r_dynlights)
-EXTERN_CVAR(Bool, gl_lights)
-
 struct side_t;
 struct seg_t;
 
@@ -75,7 +72,7 @@ public:
 	void SetSpot(bool spot) { if (spot) m_lightFlags |= LF_SPOT; else m_lightFlags &= ~LF_SPOT; }
 	void SetSpotInnerAngle(double angle) { m_spotInnerAngle = angle; }
 	void SetSpotOuterAngle(double angle) { m_spotOuterAngle = angle; }
-	static void SetAttenuationForLevel();
+	static void SetAttenuationForLevel(bool);
 
 	void OrderIntensities()
 	{
@@ -169,7 +166,7 @@ struct FDynamicLight
 
 	inline DVector3 PosRelative(int portalgroup) const
 	{
-		return Pos + level.Displacements.getOffset(Sector->PortalGroup, portalgroup);
+		return Pos + Level->Displacements.getOffset(Sector->PortalGroup, portalgroup);
 	}
 
 	bool ShouldLightActor(AActor *check)
@@ -232,6 +229,7 @@ public:
 	double specialf1;
 	FDynamicLight *next, *prev;
 	sector_t *Sector;
+	FLevelLocals *Level;
 	TObjPtr<AActor *> target;
 	FLightNode * touching_sides;
 	FLightNode * touching_sector;

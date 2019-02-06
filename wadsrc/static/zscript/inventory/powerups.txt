@@ -364,7 +364,7 @@ class PowerInvulnerable : Powerup
 				// Don't mess with the translucency settings if an
 				// invisibility powerup is active.
 				let alpha = Owner.Alpha;
-				if (!(level.time & 7) && alpha > 0 && alpha < 1)
+				if (!(Level.maptime & 7) && alpha > 0 && alpha < 1)
 				{
 					if (alpha == HX_SHADOW)
 					{
@@ -376,7 +376,7 @@ class PowerInvulnerable : Powerup
 						Owner.bNonShootable = true;
 					}
 				}
-				if (!(level.time & 31))
+				if (!(Level.maptime & 31))
 				{
 					if (alpha == 0)
 					{
@@ -806,7 +806,7 @@ class PowerMask : PowerIronFeet
 	override void DoEffect ()
 	{
 		Super.DoEffect ();
-		if (!(level.time & 0x3f))
+		if (!(Level.maptime & 0x3f))
 		{
 			Owner.A_PlaySound ("misc/mask", CHAN_AUTO);
 		}
@@ -894,7 +894,7 @@ class PowerTorch : PowerLightAmp
 		{
 			Powerup.DoEffect ();
 
-			if (!(level.time & 16) && Owner.player != NULL)
+			if (!(Level.maptime & 16) && Owner.player != NULL)
 			{
 				if (NewTorch != 0)
 				{
@@ -1014,7 +1014,7 @@ class PowerFlight : Powerup
 		}
 
 		TextureID picnum = TexMan.CheckForTexture ("SPFLY0", TexMan.Type_MiscPatch);
-		int frame = (level.time/3) & 15;
+		int frame = (Level.maptime/3) & 15;
 
 		if (!picnum.isValid())
 		{
@@ -1191,7 +1191,7 @@ class PowerSpeed : Powerup
 		if (NoTrail)
 			return;
 
-		if (level.time & 1)
+		if (Level.maptime & 1)
 			return;
 
 		// Check if another speed item is present to avoid multiple drawing of the speed trail.
@@ -1529,9 +1529,9 @@ class PowerTimeFreezer : Powerup
 			EffectTics++;
 		}
 		// Make sure the effect starts and ends on an even tic.
-		if ((level.time & 1) == 0)
+		if ((Level.maptime & 1) == 0)
 		{
-			level.frozen = true;;
+			Level.SetFrozen(true);
 		}
 		else
 		{
@@ -1553,14 +1553,14 @@ class PowerTimeFreezer : Powerup
 		// [RH] Do not change LEVEL_FROZEN on odd tics, or the Revenant's tracer
 		// will get thrown off.
 		// [ED850] Don't change it if the player is predicted either.
-		if (level.time & 1 || (Owner != null && Owner.player != null && Owner.player.cheats & CF_PREDICTING))
+		if (Level.maptime & 1 || (Owner != null && Owner.player != null && Owner.player.cheats & CF_PREDICTING))
 		{
 			return;
 		}
 		// [RH] The "blinking" can't check against EffectTics exactly or it will
 		// never happen, because InitEffect ensures that EffectTics will always
-		// be odd when level.time is even.
-		level.frozen = ( EffectTics > 4*32 
+		// be odd when Level.maptime is even.
+		Level.SetFrozen ( EffectTics > 4*32 
 			|| (( EffectTics > 3*32 && EffectTics <= 4*32 ) && ((EffectTics + 1) & 15) != 0 )
 			|| (( EffectTics > 2*32 && EffectTics <= 3*32 ) && ((EffectTics + 1) & 7) != 0 )
 			|| (( EffectTics >   32 && EffectTics <= 2*32 ) && ((EffectTics + 1) & 3) != 0 )
@@ -1598,7 +1598,7 @@ class PowerTimeFreezer : Powerup
 		}
 
 		// No, so allow other actors to move about freely once again.
-		level.frozen = false;
+		Level.SetFrozen(false);
 
 		// Also, turn the music back on.
 		S_ResumeSound(false);
@@ -1791,7 +1791,7 @@ class PowerRegeneration : Powerup
 	override void DoEffect()
 	{
 		Super.DoEffect();
-		if (Owner != null && Owner.health > 0 && (level.time & 31) == 0)
+		if (Owner != null && Owner.health > 0 && (Level.maptime & 31) == 0)
 		{
 			if (Owner.GiveBody(int(Strength)))
 			{

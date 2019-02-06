@@ -7,7 +7,7 @@ extend class Actor
 
 	void A_FLoopActiveSound()
 	{
-		if (ActiveSound != 0 && !(level.time & 7))
+		if (ActiveSound != 0 && !(Level.maptime & 7))
 		{
 			A_PlaySound (ActiveSound, CHAN_VOICE);
 		}

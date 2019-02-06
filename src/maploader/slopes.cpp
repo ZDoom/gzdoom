@@ -53,7 +53,7 @@ void MapLoader::SlopeLineToPoint (int lineid, const DVector3 &pos, bool slopeCei
 {
 	int linenum;
 
-	FLineIdIterator itr(lineid);
+	auto itr = Level->GetLineIdIterator(lineid);
 	while ((linenum = itr.Next()) >= 0)
 	{
 		const line_t *line = &Level->lines[linenum];
@@ -123,7 +123,7 @@ void MapLoader::CopyPlane (int tag, sector_t *dest, bool copyCeil)
 	sector_t *source;
 	int secnum;
 
-	secnum = P_FindFirstSectorFromTag (tag);
+	secnum = Level->FindFirstSectorFromTag (tag);
 	if (secnum == -1)
 	{
 		return;
@@ -143,7 +143,7 @@ void MapLoader::CopyPlane (int tag, sector_t *dest, bool copyCeil)
 
 void MapLoader::CopyPlane (int tag, const DVector2 &pos, bool copyCeil)
 {
-	sector_t *dest = P_PointInSector (pos);
+	sector_t *dest = Level->PointInSector (pos);
 	CopyPlane(tag, dest, copyCeil);
 }
 
@@ -179,7 +179,7 @@ void MapLoader::SetSlope (secplane_t *plane, bool setCeil, int xyangi, int zangi
 
 	DVector3 norm;
 
-	if (ib_compatflags & BCOMPATF_SETSLOPEOVERFLOW)
+	if (Level->ib_compatflags & BCOMPATF_SETSLOPEOVERFLOW)
 	{
 		// We have to consider an integer multiplication overflow here.
 		norm[0] = FixedToFloat(FloatToFixed(zang.Cos()) * FloatToFixed(xyang.Cos())) / 65536.;
@@ -389,7 +389,7 @@ void MapLoader::SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const i
 			sector_t *sec;
 			bool ceiling;
 
-			sec = P_PointInSector (mt->pos);
+			sec = Level->PointInSector (mt->pos);
 			if (mt->info->Special == SMT_SlopeCeilingPointLine || mt->info->Special == SMT_VavoomCeiling || mt->info->Special == SMT_SetCeilingSlope)
 			{
 				refplane = &sec->ceilingplane;

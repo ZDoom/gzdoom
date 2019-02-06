@@ -50,6 +50,7 @@
 #include "s_sound.h"
 #include "m_argv.h"
 #include "d_main.h"
+#include "doomerrors.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -1,4 +1,4 @@
-class SpotState : Object native
+class SpotState : Object native play
 {
 	deprecated ("3.8") static SpotState GetSpotState(bool create = true)
 	{

@@ -9,7 +9,6 @@
 
 #include "i_sound.h"
 #include "s_sound.h"
-#include "menu/menu.h"
 
 #ifndef NO_OPENAL
 

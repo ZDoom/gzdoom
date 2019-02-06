@@ -54,6 +54,8 @@
 #include "a_keys.h"
 #include "g_levellocals.h"
 #include "types.h"
+#include "a_dynlight.h"
+#include "v_video.h"
 
 //==========================================================================
 //
@@ -148,6 +150,7 @@ bool ModActorFlag(AActor *actor, const FString &flagname, bool set, bool printer
 
 	if (actor != NULL)
 	{
+		auto Level = actor->Level;
 		const char *dot = strchr(flagname, '.');
 		FFlagDef *fd;
 		PClassActor *cls = actor->GetClass();
@@ -166,9 +169,9 @@ bool ModActorFlag(AActor *actor, const FString &flagname, bool set, bool printer
 		{
 			found = true;
 
-			if (actor->CountsAsKill() && actor->health > 0) --level.total_monsters;
-			if (actor->flags & MF_COUNTITEM) --level.total_items;
-			if (actor->flags5 & MF5_COUNTSECRET) --level.total_secrets;
+			if (actor->CountsAsKill() && actor->health > 0) --Level->total_monsters;
+			if (actor->flags & MF_COUNTITEM) --Level->total_items;
+			if (actor->flags5 & MF5_COUNTSECRET) --Level->total_secrets;
 
 			if (fd->structoffset == -1)
 			{
@@ -187,9 +190,9 @@ bool ModActorFlag(AActor *actor, const FString &flagname, bool set, bool printer
 				if (linkchange) actor->LinkToWorld(&ctx);
 			}
 
-			if (actor->CountsAsKill() && actor->health > 0) ++level.total_monsters;
-			if (actor->flags & MF_COUNTITEM) ++level.total_items;
-			if (actor->flags5 & MF5_COUNTSECRET) ++level.total_secrets;
+			if (actor->CountsAsKill() && actor->health > 0) ++Level->total_monsters;
+			if (actor->flags & MF_COUNTITEM) ++Level->total_items;
+			if (actor->flags5 & MF5_COUNTSECRET) ++Level->total_secrets;
 		}
 		else if (printerror)
 		{
@@ -1787,4 +1790,22 @@ DEFINE_CLASS_PROPERTY(unmorphflash, S, PowerMorph)
 	PROP_STRING_PARM(str, 0);
 	defaults->PointerVar<PClassActor>(NAME_UnMorphFlash) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
 }
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY(type, S, DynamicLight)
+{
+	PROP_STRING_PARM(str, 0);
+	static const char * ltype_names[]={
+		"Point","Pulse","Flicker","Sector","RandomFlicker", "ColorPulse", "ColorFlicker", "RandomColorFlicker", nullptr};
+	
+	static const int ltype_values[]={
+		PointLight, PulseLight, FlickerLight, SectorLight, RandomFlickerLight, ColorPulseLight, ColorFlickerLight, RandomColorFlickerLight };
+	
+	int style = MatchString(str, ltype_names);
+	if (style < 0) I_Error("Unknown light type '%s'", str);
+	defaults->IntVar(NAME_lighttype) = ltype_values[style];
+}
+
 

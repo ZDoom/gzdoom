@@ -1,3 +1,4 @@
+
 struct _ native	// These are the global variables, the struct is only here to avoid extending the parser for this.
 {
 	native readonly Array<class> AllClasses;
@@ -7,21 +8,16 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native readonly Array<@Team> Teams;
 	native int validcount;
 	native readonly bool multiplayer;
-	native play @LevelLocals level;
 	native @KeyBindings Bindings;
 	native @KeyBindings AutomapBindings;
 	native play @DehInfo deh;
 	native readonly @GameInfoStruct gameinfo;
-	native play @PlayerInfo players[MAXPLAYERS];
-	native readonly bool playeringame[MAXPLAYERS];
 	native readonly ui bool netgame;
 
 	native readonly bool automapactive;
 	native play uint gameaction;
 	native readonly int gamestate;
 	native readonly TextureID skyflatnum;
-	native readonly uint8 globalfreeze;
-	native readonly int consoleplayer;
 	native readonly Font smallfont;
 	native readonly Font smallfont2;
 	native readonly Font bigfont;
@@ -44,8 +40,16 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native readonly int Net_Arbitrator;
 	native ui BaseStatusBar StatusBar;
 	native readonly Weapon WP_NOCHANGE;
+	deprecated("3.8") native readonly bool globalfreeze;
 	native int LocalViewPitch;
-	
+
+// sandbox state in multi-level setups:
+
+	native play @PlayerInfo players[MAXPLAYERS];
+	native readonly bool playeringame[MAXPLAYERS];
+	native readonly int consoleplayer;
+	native play LevelLocals Level;
+
 }
 
 struct TexMan
@@ -91,7 +95,10 @@ struct TexMan
 	};
 
 	native static TextureID CheckForTexture(String name, int usetype, int flags = TryAny);
-	native static void ReplaceTextures(String from, String to, int flags);
+	deprecated("3.8") static void ReplaceTextures(String from, String to, int flags)
+	{
+		level.ReplaceTextures(from, to, flags);
+	}
 	native static String GetName(TextureID tex);
 	native static int, int GetSize(TextureID tex);
 	native static Vector2 GetScaledSize(TextureID tex);
@@ -396,8 +403,14 @@ class Object native
 	native static String G_SkillName();
 	native static int G_SkillPropertyInt(int p);
 	native static double G_SkillPropertyFloat(int p);
-	native static vector3, int G_PickDeathmatchStart();
-	native static vector3, int G_PickPlayerStart(int pnum, int flags = 0);
+	deprecated("3.8") static vector3, int G_PickDeathmatchStart()
+	{
+		return level.PickDeathmatchStart();
+	}
+	deprecated("3.8") static vector3, int G_PickPlayerStart(int pnum, int flags = 0)
+	{
+		return level.PickPlayerStart(pnum, flags);
+	}
 	native static void S_Sound (Sound sound_id, int channel, float volume = 1, float attenuation = ATTN_NORM);
 	native static void S_PauseSound (bool notmusic, bool notsfx);
 	native static void S_ResumeSound (bool notsfx);
@@ -460,6 +473,8 @@ class Thinker : Object native play
 	}
 
 	const TICRATE = 35;
+
+	native LevelLocals Level;
 	
 	virtual native void Tick();
 	virtual native void PostBeginPlay();
@@ -480,8 +495,11 @@ class ThinkerIterator : Object native
 }
 
 class ActorIterator : Object native
-{	
-	native static ActorIterator Create(int tid, class<Actor> type = "Actor");
+{
+	deprecated("3.8") static ActorIterator Create(int tid, class<Actor> type = "Actor")
+	{
+		return level.CreateActorIterator(tid, type);
+	}
 	native Actor Next();
 	native void Reinit();
 }
@@ -633,7 +651,7 @@ struct LevelLocals native
 	native readonly String MapName;
 	native String NextMap;
 	native String NextSecretMap;
-	native String F1Pic;
+	native readonly String F1Pic;
 	native readonly int maptype;
 	native readonly String Music;
 	native readonly int musicorder;
@@ -663,7 +681,7 @@ struct LevelLocals native
 	native readonly bool polygrind;
 	native readonly bool nomonsters;
 	native readonly bool allowrespawn;
-	native bool frozen;
+	deprecated("3.8") native bool frozen;
 	native readonly bool infinite_flight;
 	native readonly bool no_dlg_freeze;
 	native readonly bool keepfullinventory;
@@ -678,39 +696,61 @@ struct LevelLocals native
 	native String GetUDMFString(int type, int index, Name key);
 	native int GetUDMFInt(int type, int index, Name key);
 	native double GetUDMFFloat(int type, int index, Name key);
-	native int ExecuteSpecial(int special, Actor activator, line linedef, bool lineside, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0, int arg5 = 0);
-	native static void GiveSecret(Actor activator, bool printmsg = true, bool playsound = true);
-	native static void StartSlideshow(Name whichone = 'none');
-	native static void WorldDone();
-	native static void RemoveAllBots(bool fromlist);
-	native static Vector2 GetAutomapPosition();
+	native play int ExecuteSpecial(int special, Actor activator, line linedef, bool lineside, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0, int arg5 = 0);
+	native void GiveSecret(Actor activator, bool printmsg = true, bool playsound = true);
+	native void StartSlideshow(Name whichone = 'none');
+	native void WorldDone();
+    deprecated("3.8") static void RemoveAllBots(bool fromlist) { /* intentionally left as no-op. */ }
+	native ui Vector2 GetAutomapPosition();
 	native void SetInterMusic(String nextmap);
 	native String FormatMapName(int mapnamecolor);
 	native bool IsJumpingAllowed() const;
 	native bool IsCrouchingAllowed() const;
 	native bool IsFreelookAllowed() const;
 	native void StartIntermission(Name type, int state) const;
-	native SpotState GetSpotState(bool create = true);
+	native play SpotState GetSpotState(bool create = true);
+	native int FindUniqueTid(int start = 0, int limit = 0);
+	native uint GetSkyboxPortal(Actor actor);
+	native void ReplaceTextures(String from, String to, int flags);
+    clearscope native HealthGroup FindHealthGroup(int id);
+	native vector3, int PickDeathmatchStart();
+	native vector3, int PickPlayerStart(int pnum, int flags = 0);
+	native int isFrozen() const;
+	native void setFrozen(bool on);
 
-	native static clearscope bool IsPointInMap(vector3 p);
+	native clearscope Sector PointInSector(Vector2 pt) const;
 
-	native static clearscope vector2 Vec2Diff(vector2 v1, vector2 v2);
-	native static clearscope vector3 Vec3Diff(vector3 v1, vector3 v2);
-	native static clearscope vector3 SphericalCoords(vector3 viewpoint, vector3 targetPos, vector2 viewAngles = (0, 0), bool absolute = false);	
+	native clearscope bool IsPointInLevel(vector3 p) const;
+	deprecated("3.8") clearscope static bool IsPointInMap(vector3 p)
+	{
+		return level.IsPointInLevel(p);
+	}
+
+	native clearscope vector2 Vec2Diff(vector2 v1, vector2 v2) const;
+	native clearscope vector3 Vec3Diff(vector3 v1, vector3 v2) const;
+	native clearscope vector3 SphericalCoords(vector3 viewpoint, vector3 targetPos, vector2 viewAngles = (0, 0), bool absolute = false) const;
 	
-	native static clearscope vector2 Vec2Offset(vector2 pos, vector2 dir, bool absolute = false);
-	native static clearscope vector3 Vec2OffsetZ(vector2 pos, vector2 dir, double atz, bool absolute = false);
-	native static clearscope vector3 Vec3Offset(vector3 pos, vector3 dir, bool absolute = false);
+	native clearscope vector2 Vec2Offset(vector2 pos, vector2 dir, bool absolute = false) const;
+	native clearscope vector3 Vec2OffsetZ(vector2 pos, vector2 dir, double atz, bool absolute = false) const;
+	native clearscope vector3 Vec3Offset(vector3 pos, vector3 dir, bool absolute = false) const;
 
 	native String GetChecksum() const;
 
-	native void ChangeSky( TextureID sky1, TextureID sky2 );
+	native void ChangeSky(TextureID sky1, TextureID sky2 );
+
+	native SectorTagIterator CreateSectorTagIterator(int tag, line defline = null);
+	native LineIdIterator CreateLineIdIterator(int tag);
+	native ActorIterator CreateActorIterator(int tid, class<Actor> type = "Actor");
 
 	String TimeFormatted(bool totals = false)
 	{
 		int sec = Thinker.Tics2Seconds(totals? totaltime : time); 
 		return String.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
 	}
+
+	native play bool CreateCeiling(sector sec, int type, line ln, double speed, double speed2, double height = 0, int crush = -1, int silent = 0, int change = 0, int crushmode = 0 /*Floor.crushDoom*/);
+	native play bool CreateFloor(sector sec, int floortype, line ln, double speed, double height = 0, int crush = -1, int change = 0, bool crushmode = false, bool hereticlower = false);
+
 }
 
 struct StringTable native
@@ -912,7 +952,10 @@ class Floor : MovingFloor native
 		genFloorChg
 	};
 
-	native static bool CreateFloor(sector sec, EFloor floortype, line ln, double speed, double height = 0, int crush = -1, int change = 0, bool crushmode = false, bool hereticlower = false);
+	deprecated("3.8") static bool CreateFloor(sector sec, int floortype, line ln, double speed, double height = 0, int crush = -1, int change = 0, bool crushmode = false, bool hereticlower = false)
+	{
+		return level.CreateFloor(sec, floortype, ln, speed, height, crush, change, crushmode, hereticlower);
+	}
 }
 
 class Ceiling : MovingCeiling native
@@ -955,7 +998,10 @@ class Ceiling : MovingCeiling native
 		crushSlowdown = 2
 	}
 	
-	native static bool CreateCeiling(sector sec, int type, line ln, double speed, double speed2, double height = 0, int crush = -1, int silent = 0, int change = 0, int crushmode = crushDoom);
+	deprecated("3.8") static bool CreateCeiling(sector sec, int type, line ln, double speed, double speed2, double height = 0, int crush = -1, int silent = 0, int change = 0, int crushmode = crushDoom)
+	{
+		return level.CreateCeiling(sec, type, ln, speed, speed2, height, crush, silent, change, crushmode);
+	}
 	
 }
 

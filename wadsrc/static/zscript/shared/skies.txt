@@ -109,7 +109,7 @@ class SkyPicker : Actor
 		}
 		else
 		{
-			let it = ActorIterator.Create(args[0], "SkyViewpoint");
+			let it = Level.CreateActorIterator(args[0], "SkyViewpoint");
 			box = it.Next ();
 		}
 
@@ -119,7 +119,7 @@ class SkyPicker : Actor
 		}
 		else
 		{
-			int boxindex = SectorPortal.GetSkyboxPortal(box);
+			int boxindex = level.GetSkyboxPortal(box);
 			// Do not override special portal types, only regular skies.
 			if (0 == (args[1] & 2))
 			{

@@ -41,6 +41,7 @@
 #include "zcc_compile.h"
 #include "v_text.h"
 #include "p_lnspec.h"
+#include "v_video.h"
 
 FSharedStringArena VMStringConstants;
 bool isActor(PContainerType *type);
@@ -1369,10 +1370,14 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 				{
 					Error(field, "Cannot add field %s to %s. %s has native children which means it size may not change", FName(name->Name).GetChars(), type->TypeName.GetChars(), type->TypeName.GetChars());
 				}
-				else
+				else if (type != nullptr)
 				{
 					auto f = type->AddField(name->Name, thisfieldtype, varflags);
 					if (field->Flags & (ZCC_Version | ZCC_Deprecated)) f->mVersion = field->Version;
+				}
+				else
+				{
+					Error(field, "Cannot declare non-native global variables. Tried to declare %s", FName(name->Name).GetChars());
 				}
 			}
 			name = static_cast<ZCC_VarName*>(name->SiblingNext);
@@ -3298,12 +3303,10 @@ static FxExpression *ModifyAssign(FxBinary *operation, FxExpression *left)
 //
 //==========================================================================
 
-FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
+FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast, bool substitute)
 {
 	if (ast == nullptr) return nullptr;
 
-	// Note: Do not call 'Simplify' here because that function tends to destroy identifiers due to lack of context in which to resolve them.
-	// The Fx nodes created here will be better suited for that.
 	switch (ast->NodeType)
 	{
 	case AST_ExprFuncCall:
@@ -3325,7 +3328,7 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		case AST_ExprMemberAccess:
 		{
 			auto ema = static_cast<ZCC_ExprMemberAccess *>(fcall->Function);
-			return new FxMemberFunctionCall(ConvertNode(ema->Left), ema->Right, ConvertNodeList(args, fcall->Parameters), *ast);
+			return new FxMemberFunctionCall(ConvertNode(ema->Left, true), ema->Right, ConvertNodeList(args, fcall->Parameters), *ast);
 		}
 
 		case AST_ExprBinary:
@@ -3390,8 +3393,9 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 
 	case AST_ExprID:
 	{
-		auto id = static_cast<ZCC_ExprID *>(ast);
-		return new FxIdentifier(id->Identifier, *ast);
+		auto id = static_cast<ZCC_ExprID *>(ast)->Identifier;
+		if (id == NAME_LevelLocals && substitute) id = NAME_Level;	// All static methods of FLevelLocals are now non-static so remap the name right here before passing it to the backend.
+		return new FxIdentifier(id, *ast);
 	}
 
 	case AST_ExprConstant:

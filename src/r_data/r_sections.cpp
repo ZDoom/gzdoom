@@ -23,7 +23,7 @@
 
 
 #include <future>
-#include "i_system.h"
+
 #include "p_local.h"
 #include "c_dispatch.h"
 #include "r_defs.h"
@@ -814,9 +814,10 @@ public:
 //
 //=============================================================================
 
-void PrintSections(FSectionContainer &container)
+void PrintSections(FLevelLocals *Level)
 {
-	auto Level = &level;
+	FSectionContainer &container = Level->sections;
+	Printf("Sections for %s\n", Level->MapName.GetChars());
 	for (unsigned i = 0; i < container.allSections.Size(); i++)
 	{
 		auto &section = container.allSections[i];
@@ -853,7 +854,7 @@ void PrintSections(FSectionContainer &container)
 			}
 		}
 	}
-	Printf(PRINT_LOG, "%d sectors, %d subsectors, %d sections\n", Level->sectors.Size(), Level->subsectors.Size(), container.allSections.Size());
+	Printf(PRINT_LOG, "%d sectors, %d subsectors, %d sections\n\n", Level->sectors.Size(), Level->subsectors.Size(), container.allSections.Size());
 }
 
 
@@ -874,10 +875,4 @@ void CreateSections(FLevelLocals *Level)
 	creat.ConstructOutput(Level->sections);
 	creat.FixMissingReferences();
 }
-
-CCMD(printsections)
-{
-	PrintSections(level.sections);
-}
-
 

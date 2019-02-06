@@ -399,9 +399,6 @@ public:
 	// Mark the palette as changed. It will be updated on the next Update().
 	virtual void UpdatePalette() {}
 
-	// Sets the gamma level. Returns false if the hardware does not support
-	// gamma changing. (Always true for now, since palettes can always be
-	// gamma adjusted.)
 	virtual void SetGamma() {}
 
 	// Sets a color flash. RGB is the color, and amount is 0-256, with 256

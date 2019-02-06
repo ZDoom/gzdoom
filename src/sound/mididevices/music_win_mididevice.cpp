@@ -42,7 +42,7 @@
 #include "templates.h"
 #include "doomdef.h"
 #include "m_swap.h"
-#include "i_system.h"
+#include "doomerrors.h"
 
 #ifndef __GNUC__
 #include <mmdeviceapi.h>

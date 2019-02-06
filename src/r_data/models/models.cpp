@@ -167,13 +167,13 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 	objectToWorldMatrix.rotate(-smf->rolloffset, 1, 0, 0);
 
 	// consider the pixel stretching. For non-voxels this must be factored out here
-	float stretch = (smf->modelIDs[0] != -1 ? Models[smf->modelIDs[0]]->getAspectFactor() : 1.f) / level.info->pixelstretch;
+	float stretch = (smf->modelIDs[0] != -1 ? Models[smf->modelIDs[0]]->getAspectFactor(actor->Level) : 1.f) / actor->Level->info->pixelstretch;
 	objectToWorldMatrix.scale(1, stretch, 1);
 
 	float orientation = scaleFactorX * scaleFactorY * scaleFactorZ;
 
 	BeginDrawModel(actor, smf, objectToWorldMatrix, orientation < 0);
-	RenderFrameModels(smf, actor->state, actor->tics, actor->GetClass(), translation);
+	RenderFrameModels(actor->Level, smf, actor->state, actor->tics, actor->GetClass(), translation);
 	EndDrawModel(actor, smf);
 }
 
@@ -211,11 +211,11 @@ void FModelRenderer::RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
 	float orientation = smf->xscale * smf->yscale * smf->zscale;
 
 	BeginDrawHUDModel(playermo, objectToWorldMatrix, orientation < 0);
-	RenderFrameModels(smf, psp->GetState(), psp->GetTics(), playermo->player->ReadyWeapon->GetClass(), 0);
+	RenderFrameModels(playermo->Level, smf, psp->GetState(), psp->GetTics(), playermo->player->ReadyWeapon->GetClass(), 0);
 	EndDrawHUDModel(playermo);
 }
 
-void FModelRenderer::RenderFrameModels(const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, int translation)
+void FModelRenderer::RenderFrameModels(FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, int translation)
 {
 	// [BB] Frame interpolation: Find the FSpriteModelFrame smfNext which follows after smf in the animation
 	// and the scalar value inter ( element of [0,1) ), both necessary to determine the interpolated frame.
@@ -229,7 +229,7 @@ void FModelRenderer::RenderFrameModels(const FSpriteModelFrame *smf, const FStat
 			// [BB] To interpolate at more than 35 fps we take tic fractions into account.
 			float ticFraction = 0.;
 			// [BB] In case the tic counter is frozen we have to leave ticFraction at zero.
-			if (ConsoleState == c_up && menuactive != MENU_On && !(level.flags2 & LEVEL2_FROZEN))
+			if (ConsoleState == c_up && menuactive != MENU_On && !Level->isFrozen())
 			{
 				ticFraction = I_GetTimeFrac();
 			}

@@ -35,7 +35,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "i_musicinterns.h"
-#include "i_system.h"
+#include "doomerrors.h"
 
 // MACROS ------------------------------------------------------------------
 

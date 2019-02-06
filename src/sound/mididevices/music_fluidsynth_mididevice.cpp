@@ -39,6 +39,7 @@
 #include "v_text.h"
 #include "cmdlib.h"
 #include "i_soundfont.h"
+#include "doomerrors.h"
 
 // MACROS ------------------------------------------------------------------
 

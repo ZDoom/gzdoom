@@ -50,14 +50,8 @@ class FastProjectile : Actor
 		ClearInterpolation();
 		double oldz = pos.Z;
 
-		if (!bNoTimeFreeze)
-		{
-			//Added by MC: Freeze mode.
-			if (globalfreeze || level.Frozen)
-			{
-				return;
-			}
-		}
+		if (isFrozen())
+			return;
 
 		// [RH] Ripping is a little different than it was in Hexen
 		FCheckPosition tm;

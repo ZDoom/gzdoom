@@ -31,6 +31,7 @@
 
 /* includes ************************/
 #include "t_script.h"
+#include "g_levellocals.h"
 
 
 #define evaluate_leftnright(a, b, c) {\
@@ -84,7 +85,7 @@ void FParser::OPequals(svalue_t &result, int start, int n, int stop)
 {
 	DFsVariable *var;
 	
-	var = Script->FindVariable(Tokens[start]);
+	var = Script->FindVariable(Tokens[start], Level->FraggleScriptThinker->GlobalScript);
 	
 	if(var)
     {
@@ -478,7 +479,7 @@ void FParser::OPincrement(svalue_t &result, int start, int n, int stop)
     {
 		DFsVariable *var;
 		
-		var = Script->FindVariable(Tokens[stop]);
+		var = Script->FindVariable(Tokens[stop], Level->FraggleScriptThinker->GlobalScript);
 		if(!var)
 		{
 			script_error("unknown variable '%s'\n", Tokens[stop]);
@@ -503,7 +504,7 @@ void FParser::OPincrement(svalue_t &result, int start, int n, int stop)
 		svalue_t newvalue;
 		DFsVariable *var;
 		
-		var = Script->FindVariable(Tokens[start]);
+		var = Script->FindVariable(Tokens[start], Level->FraggleScriptThinker->GlobalScript);
 		if(!var)
 		{
 			script_error("unknown variable '%s'\n", Tokens[start]);
@@ -541,7 +542,7 @@ void FParser::OPdecrement(svalue_t &result, int start, int n, int stop)
     {
 		DFsVariable *var;
 		
-		var = Script->FindVariable(Tokens[stop]);
+		var = Script->FindVariable(Tokens[stop], Level->FraggleScriptThinker->GlobalScript);
 		if(!var)
 		{
 			script_error("unknown variable '%s'\n", Tokens[stop]);
@@ -567,7 +568,7 @@ void FParser::OPdecrement(svalue_t &result, int start, int n, int stop)
 		svalue_t newvalue;
 		DFsVariable *var;
 		
-		var = Script->FindVariable(Tokens[start]);
+		var = Script->FindVariable(Tokens[start], Level->FraggleScriptThinker->GlobalScript);
 		if(!var)
 		{
 			script_error("unknown variable '%s'\n", Tokens[start]);

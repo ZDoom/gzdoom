@@ -47,6 +47,8 @@
 #include "v_text.h"
 #include "w_wad.h"
 #include "doomstat.h"
+#include "g_levellocals.h"
+#include "v_video.h"
 
 extern FRandom pr_exrandom;
 FMemArena FxAlloc(65536);
@@ -5173,18 +5175,21 @@ static DObject *BuiltinNew(PClass *cls, int outerside, int backwardscompatible)
 		ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
 		return nullptr;
 	}
-	if (vm_warnthinkercreation && cls->IsDescendantOf(NAME_Thinker))
+	if ((vm_warnthinkercreation || !backwardscompatible) && cls->IsDescendantOf(NAME_Thinker))
 	{
 		// This must output a diagnostic warning
-		//ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
-		//return nullptr;
+		Printf("Using 'new' to create thinkers is deprecated.");
 	}
 	// [ZZ] validate readonly and between scope construction
 	if (outerside) FScopeBarrier::ValidateNew(cls, outerside - 1);
-	auto object = cls->CreateNew();
-	if (backwardscompatible && object->IsKindOf(NAME_Thinker))
+	DObject *object;
+	if (!cls->IsDescendantOf(NAME_Thinker))
 	{
-		// Todo: Link thinker to current primary level.
+		object = cls->CreateNew();
+	}
+	else
+	{
+		object = currentVMLevel->CreateThinker(cls);
 	}
 	return object;
 }
@@ -6128,9 +6133,21 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			{
 				if (sym->mVersion <= ctx.Version)
 				{
-					ScriptPosition.Message(MSG_WARNING, "Accessing deprecated global variable %s - deprecated since %d.%d.%d", sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision);
+					if (!(ctx.Function->Variants[0].Flags & VARF_Deprecated) && Wads.GetLumpFile(ctx.Lump) == 0)
+					{
+						ScriptPosition.Message(MSG_WARNING, "Accessing deprecated global variable %s - deprecated since %d.%d.%d", sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision);
+					}
+					else
+					{
+						// Allow use of deprecated symbols in deprecated functions of the internal code. This is meant to allow deprecated code to remain as it was, 
+						// even if it depends on some deprecated symbol. 
+						// The main motivation here is to keep the deprecated static functions accessing the global level variable as they were.
+						// Print these only if debug output is active and at the highest verbosity level.
+						ScriptPosition.Message(MSG_DEBUGMSG, TEXTCOLOR_BLUE "Accessing deprecated global variable %s - deprecated since %d.%d.%d", sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision);
+					}
 				}
 			}
+			
 
 			newex = new FxGlobalVariable(static_cast<PField *>(sym), ScriptPosition);
 			goto foundit;
@@ -6842,9 +6859,7 @@ ExpEmit FxCVar::Emit(VMFunctionBuilder *build)
 		int *pVal;
 		auto cv = static_cast<FFlagCVar *>(CVar);
 		auto vcv = &cv->ValueVar;
-		if (vcv == &compatflags) pVal = &i_compatflags;
-		else if (vcv == &compatflags2) pVal = &i_compatflags2;
-		else pVal = &vcv->Value;
+		pVal = &vcv->Value;
 		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(pVal));
 		build->Emit(OP_LW, dest.RegNum, addr.RegNum, nul);
 		build->Emit(OP_SRL_RI, dest.RegNum, dest.RegNum, cv->BitNum);
@@ -8613,7 +8628,7 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 
 int BuiltinCallLineSpecial(int special, AActor *activator, int arg1, int arg2, int arg3, int arg4, int arg5)
 {
-	return P_ExecuteSpecial(special, nullptr, activator, 0, arg1, arg2, arg3, arg4, arg5);
+	return P_ExecuteSpecial(currentVMLevel , special, nullptr, activator, 0, arg1, arg2, arg3, arg4, arg5);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DObject, BuiltinCallLineSpecial, BuiltinCallLineSpecial)
@@ -8627,7 +8642,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DObject, BuiltinCallLineSpecial, BuiltinCallLineSp
 	PARAM_INT(arg4);
 	PARAM_INT(arg5);
 
-	ACTION_RETURN_INT(P_ExecuteSpecial(special, nullptr, activator, 0, arg1, arg2, arg3, arg4, arg5));
+	ACTION_RETURN_INT(P_ExecuteSpecial(currentVMLevel, special, nullptr, activator, 0, arg1, arg2, arg3, arg4, arg5));
 }
 
 ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)

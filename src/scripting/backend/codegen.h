@@ -2106,7 +2106,7 @@ public:
 		: FxExpression(EFX_Nop, p)
 	{
 		isresolved = true;
-		ValueType = TypeError;
+		ValueType = TypeVoid;
 	}
 	ExpEmit Emit(VMFunctionBuilder *build)
 	{

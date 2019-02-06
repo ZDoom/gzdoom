@@ -34,7 +34,7 @@ struct BoundingRect
 	void setEmpty()
 	{
 		left = top = FLT_MAX;
-		bottom = right = FLT_MIN;
+		bottom = right = -FLT_MAX;
 	}
 
 	bool contains(const BoundingRect & other) const

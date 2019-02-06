@@ -271,7 +271,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 	texture.SetInvalid();
 
 	level_info_t * li = FindLevelInfo(wbs->current);
-	if (li != nullptr) exitpic = li->EnterPic;
+	if (li != nullptr) exitpic = li->ExitPic;
 	lumpname = exitpic;
 
 	if (isenterpic)

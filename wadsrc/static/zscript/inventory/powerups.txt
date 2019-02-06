@@ -1655,7 +1655,7 @@ class PowerDamage : Powerup
 	//
 	//===========================================================================
 
-	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive)
+	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor, Actor source, int flags)
 	{
 		if (!passive && damage > 0)
 		{
@@ -1749,7 +1749,7 @@ class PowerProtection : Powerup
 	//
 	//===========================================================================
 
-	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive)
+	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor, Actor source, int flags)
 	{
 		if (passive && damage > 0)
 		{

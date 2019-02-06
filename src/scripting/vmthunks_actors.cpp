@@ -799,9 +799,9 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, ClearCounters, ClearCounters)
 	return 0;
 }
 
-static int GetModifiedDamage(AActor *self, int type, int damage, bool passive)
+static int GetModifiedDamage(AActor *self, int type, int damage, bool passive, AActor *inflictor, AActor *source, int flags)
 {
-	return self->GetModifiedDamage(ENamedName(type), damage, passive);
+	return self->GetModifiedDamage(ENamedName(type), damage, passive, inflictor, source, flags);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetModifiedDamage, GetModifiedDamage)
@@ -810,7 +810,10 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetModifiedDamage, GetModifiedDamage)
 	PARAM_NAME(type);
 	PARAM_INT(damage);
 	PARAM_BOOL(passive);
-	ACTION_RETURN_INT(self->GetModifiedDamage(type, damage, passive));
+	PARAM_OBJECT(inflictor, AActor);
+	PARAM_OBJECT(source, AActor);
+	PARAM_INT(flags);
+	ACTION_RETURN_INT(self->GetModifiedDamage(type, damage, passive, inflictor, source, flags));
 }
 
 static int ApplyDamageFactor(AActor *self, int type, int damage)

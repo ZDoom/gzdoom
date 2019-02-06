@@ -3247,7 +3247,7 @@ const char *FBehavior::LookupString (uint32_t index, bool forprint) const
 			token.Substitute(" ", "");
 			token.Truncate(5);
 
-			FStringf label("TXT_ACS_%s_%d_%.5s", Level->MapName.GetChars(), index, token);
+			FStringf label("TXT_ACS_%s_%d_%.5s", Level->MapName.GetChars(), index, token.GetChars());
 			auto p = GStrings[label];
 			if (p) return p;
 		}

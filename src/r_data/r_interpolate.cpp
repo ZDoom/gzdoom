@@ -174,20 +174,6 @@ IMPLEMENT_CLASS(DPolyobjInterpolation, false, false)
 
 //==========================================================================
 //
-// Important note:
-// The linked list of interpolations and the pointers in the interpolated
-// objects are not processed by the garbage collector. This is intentional!
-//
-// If an interpolation is no longer owned by any thinker it should
-// be destroyed even if the interpolator still has a link to it.
-//
-// When such an interpolation is destroyed by the garbage collector it
-// will automatically be unlinked from the list.
-//
-//==========================================================================
-
-//==========================================================================
-//
 //
 //
 //==========================================================================

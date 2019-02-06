@@ -1002,7 +1002,7 @@ class Inventory : Actor
 	//
 	//===========================================================================
 
-	virtual void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive) {}
+	virtual void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor = null, Actor source = null, int flags = 0) {}
 	
 
 	virtual bool Use (bool pickup) { return false; }

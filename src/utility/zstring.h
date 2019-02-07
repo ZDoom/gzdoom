@@ -299,8 +299,8 @@ public:
 
 	bool IsInt () const;
 	bool IsFloat () const;
-	long ToLong (int base=0) const;
-	unsigned long ToULong (int base=0) const;
+	int64_t ToLong (int base=0) const;
+	uint64_t ToULong (int base=0) const;
 	double ToDouble () const;
 
 	size_t Len() const { return Data()->Len; }

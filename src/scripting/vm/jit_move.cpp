@@ -44,7 +44,7 @@ static void CastF2S(FString *a, double b) { a->Format("%.5f", b); }
 static void CastV22S(FString *a, double b, double b1) { a->Format("(%.5f, %.5f)", b, b1); }
 static void CastV32S(FString *a, double b, double b1, double b2) { a->Format("(%.5f, %.5f, %.5f)", b, b1, b2); }
 static void CastP2S(FString *a, void *b) { if (b == nullptr) *a = "null"; else a->Format("%p", b); }
-static int CastS2I(FString *b) { return (VM_SWORD)b->ToLong(); }
+static int CastS2I(FString *b) { return (int)b->ToLong(); }
 static double CastS2F(FString *b) { return b->ToDouble(); }
 static int CastS2N(FString *b) { return b->Len() == 0 ? FName(NAME_None) : FName(*b); }
 static void CastN2S(FString *a, int b) { FName name = FName(ENamedName(b)); *a = name.IsValidName() ? name.GetChars() : ""; }

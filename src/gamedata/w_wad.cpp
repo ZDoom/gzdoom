@@ -1262,6 +1262,43 @@ FResourceLump *FWadCollection::GetLumpRecord(int lump) const
 
 //==========================================================================
 //
+// GetLumpsInFolder
+// 
+// Gets all lumps within a single folder in the hierarchy.
+//
+//==========================================================================
+
+static int folderentrycmp(const void *a, const void *b)
+{
+	auto A = (FolderEntry*)a;
+	auto B = (FolderEntry*)b;
+	return strcmp(A->name, B->name);
+}
+
+unsigned FWadCollection::GetLumpsInFolder(const char *inpath, TArray<FolderEntry> &result) const
+{
+	FString path = inpath;
+	FixPathSeperator(path);
+	path.ToLower();
+	if (path[path.Len() - 1] != '/') path += '/';
+	result.Clear();
+	for (unsigned i = 0; i < LumpInfo.Size(); i++)
+	{
+		if (LumpInfo[i].lump->FullName.IndexOf(path) == 0)
+		{
+			// Only if it hasn't been replaced.
+			if (Wads.CheckNumForFullName(LumpInfo[i].lump->FullName) == i)
+			{
+				result.Push({ LumpInfo[i].lump->FullName.GetChars(), i });
+			}
+		}
+	}
+	qsort(result.Data(), result.Size(), sizeof(FolderEntry), folderentrycmp);
+	return result.Size();
+}
+
+//==========================================================================
+//
 // W_ReadLump
 //
 // Loads the lump into the given buffer, which must be >= W_LumpLength().

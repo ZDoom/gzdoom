@@ -1130,14 +1130,14 @@ digits		= [0-9];
 	return yych == '\0';
 }
 
-long FString::ToLong (int base) const
+int64_t FString::ToLong (int base) const
 {
-	return (long)strtoll (Chars, NULL, base);
+	return strtoll (Chars, NULL, base);
 }
 
-unsigned long FString::ToULong (int base) const
+uint64_t FString::ToULong (int base) const
 {
-	return (unsigned long)strtoull (Chars, NULL, base);
+	return strtoull (Chars, NULL, base);
 }
 
 double FString::ToDouble () const

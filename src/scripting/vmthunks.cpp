@@ -257,7 +257,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToInt, StringToInt)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
 	PARAM_INT(base);
-	ACTION_RETURN_INT(self->ToLong(base));
+	ACTION_RETURN_INT((int)self->ToLong(base));
 }
 
 static double StringToDbl(FString *self)

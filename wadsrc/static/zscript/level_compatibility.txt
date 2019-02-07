@@ -373,6 +373,7 @@ class LevelCompatibility native play
 				SetWallTexture(1027, Line.back, Side.top, "SP_HOT1");
 				// Replace tag for eastern secret at level start to not
 				// cause any action to the two-Baron trap
+				ClearSectorTags(127);
 				AddSectorTag(127, 100);
 				SetLineSpecial(382, Door_Open, 100, 16);
 				SetLineSpecial(388, Door_Open, 100, 16);
@@ -997,7 +998,7 @@ class LevelCompatibility native play
 				SetLineSectorRef(328, Line.front, 74);
 				SetLineSectorRef(329, Line.front, 74);
 				AddSectorTag(74, 4);
-				SetLineSpecial(357, Transfer_Heights, 6);
+				SetLineSpecial(357, Transfer_Heights, 4, 6);
 				break;
 			}
 			
@@ -1220,6 +1221,15 @@ class LevelCompatibility native play
 				// Fix the soulsphere in a secret area (sector 324)
 				// so that it doesn't end up in an unreachable position.
 				SetThingXY(516, -934, 48);
+				break;
+			}
+			
+			case '11EA5B8357DEB70A8F00900117831191': // kdizd_12.pk3 z1m3
+			{
+				// Fix incorrectly tagged underwater sector which causes render glitches.
+				ClearSectorTags(7857);
+				AddSectorTag(7857, 82);
+				break;
 			}
 		}
 	}

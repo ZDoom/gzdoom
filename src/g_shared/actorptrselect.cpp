@@ -62,13 +62,12 @@
 	Only one selector of each type can be used.
 */
 
-AActor *COPY_AAPTR(AActor *origin, int selector)
+AActor *COPY_AAPTREX(FLevelLocals *Level, AActor *origin, int selector)
 {
 	if (selector == AAPTR_DEFAULT) return origin;
 
 	FTranslatedLineTarget t;
 
-	auto Level = origin->Level;
 	auto AAPTR_RESOLVE_PLAYERNUM = [=](int playernum) -> AActor*
 	{
 		return (Level->PlayerInGame(playernum) ? Level->Players[playernum]->mo : nullptr);
@@ -119,6 +118,11 @@ AActor *COPY_AAPTR(AActor *origin, int selector)
 	return origin;
 }
 
+AActor *COPY_AAPTR(AActor *origin, int selector)
+{
+	if (origin == nullptr) return nullptr;
+	return COPY_AAPTREX(origin->Level, origin, selector);
+}
 
 // [FDARI] Exported logic for guarding against loops in Target (for missiles) and Master (for all) chains.
 // It is called from multiple locations.

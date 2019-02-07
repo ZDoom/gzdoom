@@ -5352,7 +5352,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 				AActor *ptr = Level->SingleActorFromTID(args[1], activator);
 				if (argCount > 2)
 				{
-					ptr = COPY_AAPTR(ptr, args[2]);
+					ptr = COPY_AAPTREX(Level, ptr, args[2]);
 				}
 				if (ptr == activator) ptr = NULL;
 				ASSIGN_AAPTR(activator, args[0], ptr, (argCount > 3) ? args[3] : 0);
@@ -6326,7 +6326,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				actor = Level->SingleActorFromTID(tid1, activator);
 				AActor * actor2 = tid2 == tid1 ? actor : Level->SingleActorFromTID(tid2, activator);
 
-				return COPY_AAPTR(actor, args[0]) == COPY_AAPTR(actor2, args[1]);
+				return COPY_AAPTREX(Level, actor, args[0]) == COPY_AAPTREX(Level, actor2, args[1]);
 			}
 			break;
 
@@ -6504,7 +6504,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			int count = argCount >= 4 ? args[3] : 1;
 			int flags = argCount >= 5 ? args[4] : 0;
 			int ptr = argCount >= 6 ? args[5] : AAPTR_DEFAULT;
-			return P_Thing_CheckProximity(actor, classname, distance, count, flags, ptr);
+			return P_Thing_CheckProximity(Level, actor, classname, distance, count, flags, ptr);
 		}
 
 		case ACSF_CheckActorState:
@@ -6528,8 +6528,8 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		case ACSF_DamageActor: // [arookas] wrapper around P_DamageMobj
 		{
 			// (target, ptr_select1, inflictor, ptr_select2, amount, damagetype)
-			AActor* target = COPY_AAPTR(Level->SingleActorFromTID(args[0], activator), args[1]);
-			AActor* inflictor = COPY_AAPTR(Level->SingleActorFromTID(args[2], activator), args[3]);
+			AActor* target = COPY_AAPTREX(Level, Level->SingleActorFromTID(args[0], activator), args[1]);
+			AActor* inflictor = COPY_AAPTREX(Level, Level->SingleActorFromTID(args[2], activator), args[3]);
 			FName damagetype(Level->Behaviors.LookupString(args[5]));
 			return P_DamageMobj(target, inflictor, inflictor, args[4], damagetype);
 		}

@@ -76,6 +76,7 @@ void DDecalFader::Tick ()
 		}
 		else if (Level->maptime >= TimeToEndDecay)
 		{
+			TheDecal->Expired();		// for impact decal bookkeeping.
 			TheDecal->Destroy ();		// remove the decal
 			Destroy ();					// remove myself
 			return;

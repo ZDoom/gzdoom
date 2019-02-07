@@ -26,6 +26,7 @@ public:
 
 	void Serialize(FSerializer &arc);
 	void OnDestroy() override;
+	virtual void Expired() {}	// For thinkers that can remove their decal. For impact decal bookkeeping.
 	FTextureID StickToWall(side_t *wall, double x, double y, F3DFloor * ffloor);
 	double GetRealZ (const side_t *wall) const;
 	void SetShade (uint32_t rgb);
@@ -71,6 +72,7 @@ public:
 	static DImpactDecal *StaticCreate(FLevelLocals *Level, const FDecalTemplate *tpl, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color = 0);
 
 	void BeginPlay ();
+	void Expired() override;
 
 protected:
 	DBaseDecal *CloneSelf(const FDecalTemplate *tpl, double x, double y, double z, side_t *wall, F3DFloor * ffloor) const;

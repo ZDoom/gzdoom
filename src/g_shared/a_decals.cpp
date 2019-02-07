@@ -666,6 +666,8 @@ DBaseDecal *DBaseDecal::CloneSelf (const FDecalTemplate *tpl, double ix, double 
 
 void DImpactDecal::CheckMax ()
 {
+	static int SpawnCounter;
+
 	if (++Level->ImpactDecalCount >= cl_maxdecals)
 	{
 		DThinker *thinker = Level->FirstThinker (STAT_AUTODECAL);
@@ -675,6 +677,17 @@ void DImpactDecal::CheckMax ()
 			Level->ImpactDecalCount--;
 		}
 	}
+}
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
+void DImpactDecal::Expired()
+{
+	Level->ImpactDecalCount--;
 }
 
 //----------------------------------------------------------------------------

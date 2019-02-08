@@ -95,7 +95,7 @@ namespace swrenderer
 	/////////////////////////////////////////////////////////////////////////
 
 	// Changes how rapidly things get dark with distance
-	void LightVisibility::SetVisibility(RenderViewport *viewport, double vis)
+	void LightVisibility::SetVisibility(RenderViewport *viewport, double vis, bool nolightfade)
 	{
 		vis = R_ClampVisibility(vis);
 
@@ -140,7 +140,7 @@ namespace swrenderer
 
 		TiltVisibility = float(vis * viewport->viewwindow.FocalTangent * (16.f * 320.f) / viewwidth);
 
-		NoLightFade = !!(viewport->Level()->flags3 & LEVEL3_NOLIGHTFADE);
+		NoLightFade = nolightfade;
 	}
 
 	fixed_t LightVisibility::LightLevelToShadeImpl(RenderViewport *viewport, int lightlevel, bool foggy)

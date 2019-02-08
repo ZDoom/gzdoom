@@ -95,7 +95,7 @@ namespace swrenderer
 		return Mat4f::Frustum(-width, width, -height + offset, height + offset, near, far, Handedness::Right, ClipZRange::NegativePositiveW);
 	}
 
-	void RenderViewport::SetViewport(RenderThread *thread, int fullWidth, int fullHeight, float trueratio)
+	void RenderViewport::SetViewport(FLevelLocals *Level, RenderThread *thread, int fullWidth, int fullHeight, float trueratio)
 	{
 		int virtheight, virtwidth, virtwidth2, virtheight2;
 
@@ -135,7 +135,7 @@ namespace swrenderer
 			virtwidth = virtwidth * AspectMultiplier(viewwindow.WidescreenRatio) / 48;
 		}
 
-		double ypixelstretch = (Level()->info) ? Level()->info->pixelstretch : 1.2;
+		double ypixelstretch = (Level->info) ? Level->info->pixelstretch : 1.2;
 
 		BaseYaspectMul = 320.0 * virtheight2 / (r_Yaspect * virtwidth2);
 		YaspectMul = 320.0 * virtheight / (r_Yaspect * virtwidth) * ypixelstretch / 1.2;
@@ -150,7 +150,7 @@ namespace swrenderer
 		InitTextureMapping();
 
 		// Reset r_*Visibility vars
-		thread->Light->SetVisibility(this, r_visibility);
+		thread->Light->SetVisibility(this, r_visibility, !!(Level->flags3 & LEVEL3_NOLIGHTFADE));
 
 		SetupBuffer();
 	}

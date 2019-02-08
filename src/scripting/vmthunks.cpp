@@ -2797,9 +2797,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, isFrozen, isFrozen)
 void setFrozen(FLevelLocals *self, int on)
 {
 	self->frozenstate = (self->frozenstate & ~1) | !!on;
-	// For compatibility. The engine itself never checks this.
-	if (on) self->flags2 |= LEVEL2_FROZEN;
-	else  self->flags2 &= ~LEVEL2_FROZEN;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, setFrozen, setFrozen)
@@ -2889,6 +2886,7 @@ DEFINE_FIELD(FLevelLocals, outsidefogdensity)
 DEFINE_FIELD(FLevelLocals, skyfog)
 DEFINE_FIELD(FLevelLocals, pixelstretch)
 DEFINE_FIELD(FLevelLocals, deathsequence)
+DEFINE_FIELD_BIT(FLevelLocals, frozenstate, frozen, 1)	// still needed for backwards compatibility.
 
 DEFINE_FIELD_BIT(FLevelLocals, flags, noinventorybar, LEVEL_NOINVENTORYBAR)
 DEFINE_FIELD_BIT(FLevelLocals, flags, monsterstelefrag, LEVEL_MONSTERSTELEFRAG)
@@ -2901,7 +2899,6 @@ DEFINE_FIELD_BIT(FLevelLocals, flags2, checkswitchrange, LEVEL2_CHECKSWITCHRANGE
 DEFINE_FIELD_BIT(FLevelLocals, flags2, polygrind, LEVEL2_POLYGRIND)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, allowrespawn, LEVEL2_ALLOWRESPAWN)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, nomonsters, LEVEL2_NOMONSTERS)
-DEFINE_FIELD_BIT(FLevelLocals, flags2, frozen, LEVEL2_FROZEN)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, infinite_flight, LEVEL2_INFINITE_FLIGHT)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, no_dlg_freeze, LEVEL2_CONV_SINGLE_UNFREEZE)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, keepfullinventory, LEVEL2_KEEPFULLINVENTORY)

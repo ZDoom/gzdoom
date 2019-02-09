@@ -217,7 +217,7 @@ class StateProvider : Inventory
 			// Temporarily adjusts the pitch
 			double saved_player_pitch = self.Pitch;
 			self.Pitch += pitch;
-			let misl = SpawnPlayerMissile (missiletype, shootangle, ofs.X, ofs.Y, spawnheight, t, NULL, false, (flags & FPF_NOAUTOAIM) != 0);
+			let misl = SpawnPlayerMissile (missiletype, shootangle, ofs.X, ofs.Y, spawnheight, t, false, (flags & FPF_NOAUTOAIM) != 0);
 			self.Pitch = saved_player_pitch;
 
 			// automatic handling of seeker missiles

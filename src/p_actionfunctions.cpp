@@ -485,7 +485,7 @@ DEFINE_ACTION_FUNCTION(AActor, CountProximity)
 		}
 		else
 		{
-			ret->SetInt(P_Thing_CheckProximity(self, classname, distance, 0, flags, ptr, true));
+			ret->SetInt(P_Thing_CheckProximity(self->Level, self, classname, distance, 0, flags, ptr, true));
 		}
 		return 1;
 	}
@@ -4520,7 +4520,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckProximity)
 	PARAM_INT(flags);
 	PARAM_INT(ptr);
 
-	ACTION_RETURN_BOOL(!!P_Thing_CheckProximity(self, classname, distance, count, flags, ptr));
+	ACTION_RETURN_BOOL(!!P_Thing_CheckProximity(self->Level, self, classname, distance, count, flags, ptr));
 }
 
 /*===========================================================================

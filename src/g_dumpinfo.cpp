@@ -114,7 +114,7 @@ CCMD (countdecals)
 		while (iterator.Next())
 			count++;
 		
-		Printf("%s: Counted %d impact decals\n", Level->MapName.GetChars(), count);
+		Printf("%s: Counted %d impact decals, level counter is at %d\n", Level->MapName.GetChars(), count, Level->ImpactDecalCount);
 	}
 }
 

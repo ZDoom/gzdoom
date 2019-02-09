@@ -111,6 +111,7 @@ struct FLineOpening
 	int				floorterrain;
 	bool			touchmidtex;
 	bool			abovemidtex;
+	uint8_t			lowfloorthroughportal;
 	F3DFloor		*topffloor;
 	F3DFloor		*bottomffloor;
 };

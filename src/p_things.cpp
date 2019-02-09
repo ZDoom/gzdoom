@@ -567,9 +567,9 @@ int P_Thing_CheckInputNum(player_t *p, int inputnum)
 	}
 	return renum;
 }
-int P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, int count, int flags, int ptr, bool counting)
+int P_Thing_CheckProximity(FLevelLocals *Level, AActor *self, PClass *classname, double distance, int count, int flags, int ptr, bool counting)
 {
-	AActor *ref = COPY_AAPTR(self, ptr);
+	AActor *ref = COPY_AAPTREX(Level, self, ptr);
 
 	// We need these to check out.
 	if (!ref || !classname || distance <= 0)

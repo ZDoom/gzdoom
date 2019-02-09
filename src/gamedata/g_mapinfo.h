@@ -201,7 +201,7 @@ enum ELevelFlags : unsigned int
 	LEVEL2_LAXACTIVATIONMAPINFO	= 0x00000008,	// LEVEL_LAXMONSTERACTIVATION is not a default.
 
 	LEVEL2_MISSILESACTIVATEIMPACT=0x00000010,	// Missiles are the activators of SPAC_IMPACT events, not their shooters
-	LEVEL2_FROZEN				= 0x00000020,	// Game is frozen by a TimeFreezer
+	//							= 0x00000020,	// unused
 
 	LEVEL2_KEEPFULLINVENTORY	= 0x00000040,	// doesn't reduce the amount of inventory items to 1
 

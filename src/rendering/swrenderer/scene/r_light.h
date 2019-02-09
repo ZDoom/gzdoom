@@ -77,7 +77,7 @@ namespace swrenderer
 	class LightVisibility
 	{
 	public:
-		void SetVisibility(RenderViewport *viewport, double visibility);
+		void SetVisibility(RenderViewport *viewport, double visibility, bool nolightfade);
 		double GetVisibility() const { return CurrentVisibility; }
 
 		// The vis value to pass into the GETPALOOKUP or LIGHTSCALE macros

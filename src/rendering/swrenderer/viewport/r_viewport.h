@@ -20,7 +20,7 @@ namespace swrenderer
 		RenderViewport();
 		~RenderViewport();
 		
-		void SetViewport(RenderThread *thread, int width, int height, float trueratio);
+		void SetViewport(FLevelLocals *Level, RenderThread *thread, int width, int height, float trueratio);
 		void SetupFreelook();
 		
 		void SetupPolyViewport(RenderThread *thread);

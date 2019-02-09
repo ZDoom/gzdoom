@@ -1150,13 +1150,13 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 				// Handle active damage modifiers (e.g. PowerDamage)
 				if (damage > 0 && !(flags & DMG_NO_ENHANCE))
 				{
-					damage = source->GetModifiedDamage(mod, damage, false);
+					damage = source->GetModifiedDamage(mod, damage, false, inflictor, source, flags);
 				}
 			}
 			// Handle passive damage modifiers (e.g. PowerProtection), provided they are not afflicted with protection penetrating powers.
 			if (damage > 0 && !(flags & DMG_NO_PROTECT))
 			{
-				damage = target->GetModifiedDamage(mod, damage, true);
+				damage = target->GetModifiedDamage(mod, damage, true, inflictor, source, flags);
 			}
 			if (damage > 0 && !(flags & DMG_NO_FACTOR))
 			{
@@ -1747,7 +1747,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPain
 	// Take half damage in trainer mode
 	damage = int(damage * G_SkillProperty(SKILLP_DamageFactor) * sv_damagefactorplayer);
 	// Handle passive damage modifiers (e.g. PowerProtection)
-	damage = target->GetModifiedDamage(player->poisontype, damage, true);
+	damage = target->GetModifiedDamage(player->poisontype, damage, true, nullptr, source);
 	// Modify with damage factors
 	damage = target->ApplyDamageFactor(player->poisontype, damage);
 

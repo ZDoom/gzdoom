@@ -651,7 +651,7 @@ class Actor : Thinker native
 	native void SpawnTeleportFog(Vector3 pos, bool beforeTele, bool setTarget);
 	native Actor RoughMonsterSearch(int distance, bool onlyseekable = false, bool frontonly = false);
 	native int ApplyDamageFactor(Name damagetype, int damage);
-	native int GetModifiedDamage(Name damagetype, int damage, bool passive);
+	native int GetModifiedDamage(Name damagetype, int damage, bool passive, Actor inflictor = null, Actor source = null, int flags = 0);
 	native bool CheckBossDeath();
 
 	void A_Light(int extralight) { if (player) player.extralight = clamp(extralight, -20, 20); }

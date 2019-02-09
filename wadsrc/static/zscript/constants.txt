@@ -1295,3 +1295,47 @@ enum EChangeLevelFlags
 	CHANGELEVEL_PRERAISEWEAPON = 64,
 };
 
+// [RH] Compatibility flags.
+enum ECompatFlags
+{
+	COMPATF_SHORTTEX		= 1 << 0,	// Use Doom's shortest texture around behavior?
+	COMPATF_STAIRINDEX		= 1 << 1,	// Don't fix loop index for stair building?
+	COMPATF_LIMITPAIN		= 1 << 2,	// Pain elemental is limited to 20 lost souls?
+	COMPATF_SILENTPICKUP	= 1 << 3,	// Pickups are only heard locally?
+	COMPATF_NO_PASSMOBJ		= 1 << 4,	// Pretend every actor is infinitely tall?
+	COMPATF_MAGICSILENCE	= 1 << 5,	// Limit actors to one sound at a time?
+	COMPATF_WALLRUN			= 1 << 6,	// Enable buggier wall clipping so players can wallrun?
+	COMPATF_NOTOSSDROPS		= 1 << 7,	// Spawn dropped items directly on the floor?
+	COMPATF_USEBLOCKING		= 1 << 8,	// Any special line can block a use line
+	COMPATF_NODOORLIGHT		= 1 << 9,	// Don't do the BOOM local door light effect
+	COMPATF_RAVENSCROLL		= 1 << 10,	// Raven's scrollers use their original carrying speed
+	COMPATF_SOUNDTARGET		= 1 << 11,	// Use sector based sound target code.
+	COMPATF_DEHHEALTH		= 1 << 12,	// Limit deh.MaxHealth to the health bonus (as in Doom2.exe)
+	COMPATF_TRACE			= 1 << 13,	// Trace ignores lines with the same sector on both sides
+	COMPATF_DROPOFF			= 1 << 14,	// Monsters cannot move when hanging over a dropoff
+	COMPATF_BOOMSCROLL		= 1 << 15,	// Scrolling sectors are additive like in Boom
+	COMPATF_INVISIBILITY	= 1 << 16,	// Monsters can see semi-invisible players
+	COMPATF_SILENT_INSTANT_FLOORS = 1<<17,	// Instantly moving floors are not silent
+	COMPATF_SECTORSOUNDS	= 1 << 18,	// Sector sounds use original method for sound origin.
+	COMPATF_MISSILECLIP		= 1 << 19,	// Use original Doom heights for clipping against projectiles
+	COMPATF_CROSSDROPOFF	= 1 << 20,	// monsters can't be pushed over dropoffs
+	COMPATF_ANYBOSSDEATH	= 1 << 21,	// [GZ] Any monster which calls BOSSDEATH counts for level specials
+	COMPATF_MINOTAUR		= 1 << 22,	// Minotaur's floor flame is exploded immediately when feet are clipped
+	COMPATF_MUSHROOM		= 1 << 23,	// Force original velocity calculations for A_Mushroom in Dehacked mods.
+	COMPATF_MBFMONSTERMOVE	= 1 << 24,	// Monsters are affected by friction and pushers/pullers.
+	COMPATF_CORPSEGIBS		= 1 << 25,	// Crushed monsters are turned into gibs, rather than replaced by gibs.
+	COMPATF_NOBLOCKFRIENDS	= 1 << 26,	// Friendly monsters aren't blocked by monster-blocking lines.
+	COMPATF_SPRITESORT		= 1 << 27,	// Invert sprite sorting order for sprites of equal distance
+	COMPATF_HITSCAN			= 1 << 28,	// Hitscans use original blockmap anf hit check code.
+	COMPATF_LIGHT			= 1 << 29,	// Find neighboring light level like Doom
+	COMPATF_POLYOBJ			= 1 << 30,	// Draw polyobjects the old fashioned way
+	COMPATF_MASKEDMIDTEX	= 1 << 31,	// Ignore compositing when drawing masked midtextures
+
+	COMPATF2_BADANGLES		= 1 << 0,	// It is impossible to face directly NSEW.
+	COMPATF2_FLOORMOVE		= 1 << 1,	// Use the same floor motion behavior as Doom.
+	COMPATF2_SOUNDCUTOFF	= 1 << 2,	// Cut off sounds when an actor vanishes instead of making it owner-less
+	COMPATF2_POINTONLINE	= 1 << 3,	// Use original but buggy P_PointOnLineSide() and P_PointOnDivlineSideCompat()
+	COMPATF2_MULTIEXIT		= 1 << 4,	// Level exit can be triggered multiple times (required by Daedalus's travel tubes, thanks to a faulty script)
+	COMPATF2_TELEPORT		= 1 << 5,	// Don't let indirect teleports trigger sector actions
+	COMPATF2_PUSHWINDOW		= 1 << 6,	// Disable the window check in CheckForPushSpecial()
+};

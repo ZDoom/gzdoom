@@ -62,8 +62,6 @@ class PainElemental : Actor
 
 extend class Actor
 {
-	private native bool compat_limitpain();
-
 	//
 	// A_PainShootSkull
 	// Spawn a lost soul and launch it at the target
@@ -88,7 +86,7 @@ extend class Actor
 		}
 
 		// [RH] make this optional
-		if (limit < 0 && compat_limitpain())
+		if (limit < 0 && (Level.compatflags & COMPATF_LIMITPAIN))
 			limit = 21;
 
 		if (limit > 0)

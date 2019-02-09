@@ -4977,7 +4977,7 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 
 	mobj = Spawn (this, p->cls, spawn, NO_REPLACE);
 
-	if (flags & LEVEL_USEPLAYERSTARTZ)
+	if (this->flags & LEVEL_USEPLAYERSTARTZ)
 	{
 		if (spawn.Z == ONFLOORZ)
 			mobj->AddZ(mthing->pos.Z);
@@ -7217,15 +7217,15 @@ void AActor::ClearCounters()
 	}
 }
 
-int AActor::GetModifiedDamage(FName damagetype, int damage, bool passive)
+int AActor::GetModifiedDamage(FName damagetype, int damage, bool passive, AActor *inflictor, AActor *source, int flags)
 {
 	auto inv = Inventory;
 	while (inv != nullptr)
 	{
 		IFVIRTUALPTRNAME(inv, NAME_Inventory, ModifyDamage)
 		{
-			VMValue params[5] = { (DObject*)inv, damage, int(damagetype), &damage, passive };
-			VMCall(func, params, 5, nullptr, 0);
+			VMValue params[8] = { (DObject*)inv, damage, int(damagetype), &damage, passive, inflictor, source, flags };
+			VMCall(func, params, 8, nullptr, 0);
 		}
 		inv = inv->Inventory;
 	}

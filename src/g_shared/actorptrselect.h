@@ -64,8 +64,9 @@ enum AAPTR
 	Only one selector of each type can be used.
 */
 
+struct FLevelLocals;
 AActor *COPY_AAPTR(AActor *origin, int selector);
-
+AActor *COPY_AAPTREX(FLevelLocals *Level, AActor *origin, int selector);
 enum PTROP
 {
 	PTROP_UNSAFETARGET = 1,

@@ -102,7 +102,7 @@ namespace swrenderer
 		int height = SCREENHEIGHT;
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
-		viewport->SetViewport(MainThread(), width, height, trueratio);
+		viewport->SetViewport(player->camera->Level, MainThread(), width, height, trueratio);
 
 		r_modelscene = r_models && Models.Size() > 0;
 		if (r_modelscene)
@@ -379,7 +379,7 @@ namespace swrenderer
 		viewwindowx = x;
 		viewwindowy = y;
 		viewactive = true;
-		viewport->SetViewport(MainThread(), width, height, MainThread()->Viewport->viewwindow.WidescreenRatio);
+		viewport->SetViewport(actor->Level, MainThread(), width, height, MainThread()->Viewport->viewwindow.WidescreenRatio);
 		if (r_modelscene)
 			PolyTriangleDrawer::ResizeBuffers(viewport->RenderTarget);
 

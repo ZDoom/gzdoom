@@ -692,6 +692,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 			double    lowestfloor[2] = {
 				linedef->frontsector->floorplane.ZatPoint(x, y), 
 				linedef->backsector->floorplane.ZatPoint(x, y) };
+			bool lowestfloorset[2] = { false, false };
 			FTextureID highestfloorpic;
 			int highestfloorterrain = -1;
 			FTextureID lowestceilingpic;
@@ -741,7 +742,11 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 							highestfloorplanes[j] = rover->top.plane;
 						}
 					}
-					if(ff_top > lowestfloor[j] && ff_top <= thing->Z() + thing->MaxStepHeight) lowestfloor[j] = ff_top;
+					if (ff_top > lowestfloor[j] && ff_top <= thing->Z() + thing->MaxStepHeight)
+					{
+						lowestfloor[j] = ff_top;
+						lowestfloorset[j] = true;
+					}
 				}
 			}
 			
@@ -771,8 +776,14 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 				open.topsec = lowestceilingsec;
 				open.topffloor = lowestceilingffloor;
 			}
-			
-			open.lowfloor = MIN(lowestfloor[0], lowestfloor[1]);
+
+			// Don't overwrite still valid info from portals here.
+			if ((open.lowfloorthroughportal & 1) && lowestfloorset[0]) open.lowfloorthroughportal &= ~1;
+			if ((open.lowfloorthroughportal & 2) && lowestfloorset[1]) open.lowfloorthroughportal &= ~2;
+
+			double low1 = (open.lowfloorthroughportal & 1) ? open.lowfloor : lowestfloor[0];
+			double low2 = (open.lowfloorthroughportal & 2) ? open.lowfloor : lowestfloor[1];
+			open.lowfloor = MIN(low1, low2);
 		}
     }
 }

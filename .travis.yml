@@ -108,11 +108,11 @@ matrix:
 
     - os: windows
       env:
-        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -A Win32"
+        - CMAKE_OPTIONS="-A Win32"
 
     - os: windows
       env:
-        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -A x64"
+        - CMAKE_OPTIONS="-A x64"
 
 before_install:
   - if [ -n "$GCC_VERSION" ]; then export CC="gcc-${GCC_VERSION}" CXX="g++-${GCC_VERSION}"; fi
@@ -132,8 +132,8 @@ script:
       -DFORCE_INTERNAL_GME=YES   \
       -DPK3_QUIET_ZIPDIR=YES     \
       ..
-  - if [[ $TRAVIS_OS_NAME == 'windows' ]]; then cmake --build . -- -m; fi
-  - if [[ $TRAVIS_OS_NAME != 'windows' ]]; then cmake --build . -- -j2 -k; fi
+  - if [[ $TRAVIS_OS_NAME == 'windows' ]]; then cmake --build . --config Release -- -maxcpucount -verbosity:minimal; fi
+  - if [[ $TRAVIS_OS_NAME != 'windows' ]]; then cmake --build . -- --jobs=2 --keep-going; fi
 
 notifications:
   email: false

@@ -33,7 +33,7 @@ build_script:
   - md build
   - cd build
   - cmake -G "%GENERATOR%" -T "%TOOLSET%" -DPK3_QUIET_ZIPDIR=YES ..
-  - cmake --build . --config "%CONFIGURATION%" -- /verbosity:minimal
+  - cmake --build . --config "%CONFIGURATION%" -- -maxcpucount -verbosity:minimal
 
 after_build:
   - set OUTPUT_DIR=%APPVEYOR_BUILD_FOLDER%\build\%CONFIGURATION%\

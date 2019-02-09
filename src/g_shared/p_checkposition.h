@@ -36,6 +36,7 @@ struct FCheckPosition
 	TMap<AActor*, bool> LastRipped;
 	bool			DoRipping;
 	bool			portalstep;
+	bool			dropoffisportal;
 	int				portalgroup;
 
 	int				PushTime;

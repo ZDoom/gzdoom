@@ -280,6 +280,7 @@ void P_GetFloorCeilingZ(FCheckPosition &tmf, int flags)
 
 	tmf.ceilingz = NextHighestCeilingAt(sec, tmf.pos.X, tmf.pos.Y, tmf.pos.Z, tmf.pos.Z + tmf.thing->Height, flags, &tmf.ceilingsector, &ffc);
 	tmf.floorz = tmf.dropoffz = NextLowestFloorAt(sec, tmf.pos.X, tmf.pos.Y, tmf.pos.Z, flags, tmf.thing->MaxStepHeight, &tmf.floorsector, &fff);
+	tmf.dropoffisportal = tmf.floorsector != sec;
 
 	if (fff)
 	{
@@ -1018,7 +1019,12 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 
 			if (open.lowfloor < tm.dropoffz)
 			{
-				tm.dropoffz = open.lowfloor;
+				// Do not alter the dropoff if the previous portal layer got it solely from its own data.
+				if (!(cres.portalflags & FFCF_NOCEILING) || tm.dropoffisportal)
+				{
+					tm.dropoffz = open.lowfloor;
+					tm.dropoffisportal = open.lowfloorthroughportal;
+				}
 			}
 		}
 	}
@@ -1680,6 +1686,7 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 		else
 		{
 			tm.floorz = tm.dropoffz = newsec->floorplane.ZatPoint(pos);
+			tm.dropoffisportal = false;
 			tm.floorpic = newsec->GetTexture(sector_t::floor);
 			tm.ceilingz = newsec->ceilingplane.ZatPoint(pos);
 			tm.ceilingpic = newsec->GetTexture(sector_t::ceiling);
@@ -1704,6 +1711,7 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 			if (ff_top > tm.floorz && fabs(delta1) < fabs(delta2))
 			{
 				tm.floorz = tm.dropoffz = ff_top;
+				tm.dropoffisportal = false;
 				tm.floorpic = *rover->top.texture;
 				tm.floorterrain = rover->model->GetTerrain(rover->top.isceiling);
 			}

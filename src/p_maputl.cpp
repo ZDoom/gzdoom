@@ -177,12 +177,17 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef, co
 
 		bool usefront;
 
+		// Store portal state to avoid registering false dropoffs.
+		open.lowfloorthroughportal = 0;
+		if (ff == LINEOPEN_MIN) open.lowfloorthroughportal |= 1;
+		if (bf == LINEOPEN_MIN) open.lowfloorthroughportal |= 2;
+
 		// [RH] fudge a bit for actors that are moving across lines
 		// bordering a slope/non-slope that meet on the floor. Note
 		// that imprecisions in the plane equation mean there is a
 		// good chance that even if a slope and non-slope look like
 		// they line up, they won't be perfectly aligned.
-		if (ff == -FLT_MIN || bf == -FLT_MIN || ref == NULL || fabs (ff-bf) > 1./256)
+		if (ff == LINEOPEN_MIN || bf == LINEOPEN_MIN || ref == NULL || fabs (ff-bf) > 1./256)
 		{
 			usefront = (ff > bf);
 		}
@@ -196,6 +201,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef, co
 				usefront = !P_PointOnLineSide (*ref, linedef);
 		}
 
+		open.lowfloorthroughportal = false;
 		if (usefront)
 		{
 			open.bottom = ff;

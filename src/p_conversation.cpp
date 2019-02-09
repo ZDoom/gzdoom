@@ -370,7 +370,17 @@ static FStrifeDialogueNode *ReadRetailNode (FLevelLocals *Level, const char *nam
 
 	// The speaker's name, if any.
 	speech.Sound[0] = 0; 		//speech.Name[16] = 0;
-	node->SpeakerName = speech.Name;
+	if (name && speech.Name[0])
+	{
+		FString label = speech.Name;
+		label.ReplaceChars(' ', '_');
+		label.ReplaceChars('\'', '_');
+		node->SpeakerName.Format("$TXT_SPEAKER_%s", label.GetChars());
+	}
+	else
+	{
+		node->SpeakerName = speech.Name;
+	}
 
 	// The item the speaker should drop when killed.
 	node->DropType = GetStrifeType(speech.DropType);
@@ -459,7 +469,17 @@ static FStrifeDialogueNode *ReadTeaserNode (FLevelLocals *Level, const char *nam
 
 	// The speaker's name, if any.
 	speech.Dialogue[0] = 0; 	//speech.Name[16] = 0;
-	node->SpeakerName = speech.Name;
+	if (name && speech.Name[0])
+	{
+		FString label = speech.Name;
+		label.ReplaceChars(' ', '_');
+		label.ReplaceChars('\'', '_');
+		node->SpeakerName.Format("$TXT_SPEAKER_%s", label.GetChars());
+	}
+	else
+	{
+		node->SpeakerName = speech.Name;
+	}
 
 	// The item the speaker should drop when killed.
 	node->DropType = GetStrifeType (speech.DropType);

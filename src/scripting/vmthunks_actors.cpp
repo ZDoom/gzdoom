@@ -1669,34 +1669,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, isFrozen, isFrozen)
 }
 
 
-//=====================================================================================
-//
-// compat flags. These two are the only ones that get checked in script code
-// so anything more complex isn't really needed.
-//
-//=====================================================================================
-static int compat_limitpain_(AActor *self)
-{
-	return self->Level->i_compatflags & COMPATF_LIMITPAIN;
-}
-
-static int compat_mushroom_(AActor *self)
-{
-	return self->Level->i_compatflags & COMPATF_MUSHROOM;
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, compat_limitpain, compat_limitpain_)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_INT(compat_limitpain_(self));
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, compat_mushroom, compat_mushroom_)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_INT(compat_mushroom_(self));
-}
-
 //===========================================================================
 //
 // PlayerPawn functions

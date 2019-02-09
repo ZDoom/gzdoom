@@ -258,6 +258,7 @@ void EventManager::Shutdown()
 	{
 		handler->Destroy();
 	}
+	FirstEventHandler = LastEventHandler = nullptr;
 }
 
 #define DEFINE_EVENT_LOOPER(name, play) void EventManager::name() \

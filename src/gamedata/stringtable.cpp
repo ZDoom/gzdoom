@@ -124,7 +124,14 @@ void FStringTable::LoadLanguage (int lumpnum)
 				sc.MustGetStringName("ifgame");
 				sc.MustGetStringName("(");
 				sc.MustGetString();
-				skip |= !sc.Compare(GameTypeName());
+				if (sc.Compare("strifeteaser"))
+				{
+					skip |= (gameinfo.gametype != GAME_Strife) || !(gameinfo.flags & GI_SHAREWARE);
+				}
+				else
+				{
+					skip |= !sc.Compare(GameTypeName());
+				}
 				sc.MustGetStringName(")");
 				sc.MustGetString();
 
@@ -141,10 +148,13 @@ void FStringTable::LoadLanguage (int lumpnum)
 				strText += sc.String;
 				sc.MustGetString ();
 			}
-			// Insert the string into all relevant tables.
-			for (auto map : activeMaps)
+			if (!skip)
 			{
-				allStrings[map].Insert(strName, strText);
+				// Insert the string into all relevant tables.
+				for (auto map : activeMaps)
+				{
+					allStrings[map].Insert(strName, strText);
+				}
 			}
 		}
 	}

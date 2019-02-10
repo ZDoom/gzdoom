@@ -600,7 +600,6 @@ public:
 	int			airsupply;
 	int			DefaultEnvironment;		// Default sound environment.
 
-	int ActiveSequences;
 	DSeqNode *SequenceListHead;
 
 	// [RH] particle globals

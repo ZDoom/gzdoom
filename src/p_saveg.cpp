@@ -932,7 +932,6 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 		Thinkers.DestroyAllThinkers();
 		interpolator.ClearInterpolations();
 		arc.ReadObjects(hubload);
-		ActiveSequences = 0;
 	}
 
 	arc("multiplayer", multiplayer);

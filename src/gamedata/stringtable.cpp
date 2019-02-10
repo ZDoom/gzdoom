@@ -208,6 +208,32 @@ size_t FStringTable::ProcessEscapes (char *iptr)
 	return optr - sptr;
 }
 
+bool FStringTable::exists(const char *name)
+{
+	// Checks if the given key exists in any one of the default string tables that are valid for all languages.
+	// To replace IWAD content this condition must be true.
+	if (name == nullptr || *name == 0)
+	{
+		return false;
+	}
+	FName nm(name, true);
+	if (nm != NAME_None)
+	{
+		uint32_t defaultStrings[] = { MAKE_ID('*', '*', '*', 0), MAKE_ID('*', 0, 0, 0), MAKE_ID('*', '*', 0, 0) };
+
+		for (auto mapid : defaultStrings)
+		{
+			auto map = allStrings.CheckKey(mapid);
+			if (map)
+			{
+				auto item = map->CheckKey(nm);
+				if (item) return true;
+			}
+		}
+	}
+	return false;
+}
+
 // Finds a string by name and returns its value
 const char *FStringTable::operator[] (const char *name) const
 {

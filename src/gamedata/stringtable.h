@@ -71,6 +71,7 @@ public:
 
 	const char *operator() (const char *name) const;	// Never returns NULL
 	const char *operator[] (const char *name) const;	// Can return NULL
+	bool exists(const char *name);
 
 private:
 

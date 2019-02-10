@@ -352,7 +352,7 @@ static FStrifeDialogueNode *ReadRetailNode (FLevelLocals *Level, const char *nam
 	if (name)
 	{
 		FStringf label("$TXT_DLG_%s_d%d_%s", name, int(pos), TokenFromString(speech.Dialogue).GetChars());
-		node->Dialogue = label;
+		node->Dialogue = GStrings.exists(label)? label : FString(speech.Dialogue);
 	}
 	else
 	{
@@ -376,6 +376,8 @@ static FStrifeDialogueNode *ReadRetailNode (FLevelLocals *Level, const char *nam
 		label.ReplaceChars(' ', '_');
 		label.ReplaceChars('\'', '_');
 		node->SpeakerName.Format("$TXT_SPEAKER_%s", label.GetChars());
+		if (!GStrings.exists(node->SpeakerName)) node->SpeakerName = speech.Name;
+
 	}
 	else
 	{
@@ -446,7 +448,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FLevelLocals *Level, const char *nam
 	if (name)
 	{
 		FStringf label("$TXT_DLG_%s_d%d_%s", name, pos, TokenFromString(speech.Dialogue).GetChars());
-		node->Dialogue = label;
+		node->Dialogue = GStrings.exists(label)? label : FString(speech.Dialogue);
 	}
 	else
 	{
@@ -475,6 +477,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FLevelLocals *Level, const char *nam
 		label.ReplaceChars(' ', '_');
 		label.ReplaceChars('\'', '_');
 		node->SpeakerName.Format("$TXT_SPEAKER_%s", label.GetChars());
+		if (!GStrings.exists(node->SpeakerName)) node->SpeakerName = speech.Name;
 	}
 	else
 	{
@@ -566,6 +569,8 @@ static void ParseReplies (const char *name, int pos, FStrifeDialogueReply **repl
 		if (name)
 		{
 			FStringf label("$TXT_RPLY%d_%s_d%d_%s", j, name, pos, TokenFromString(rsp->Reply).GetChars());
+			reply->Reply = GStrings.exists(label)? label : FString(rsp->Reply);
+
 			reply->Reply = label;
 		}
 		else
@@ -590,7 +595,7 @@ static void ParseReplies (const char *name, int pos, FStrifeDialogueReply **repl
 			if (name)
 			{
 				FStringf label("$TXT_RYES%d_%s_d%d_%s", j, name, pos, TokenFromString(rsp->Yes).GetChars());
-				reply->QuickYes = label;
+				reply->QuickYes = GStrings.exists(label)? label : FString(rsp->Yes);
 			}
 			else
 			{
@@ -600,7 +605,7 @@ static void ParseReplies (const char *name, int pos, FStrifeDialogueReply **repl
 		if (reply->ItemCheck[0].Item != 0)
 		{
 			FStringf label("$TXT_RNO%d_%s_d%d_%s", j, name, pos, TokenFromString(rsp->No).GetChars());
-			reply->QuickNo = label;
+			reply->QuickNo = GStrings.exists(label)? label : FString(rsp->No);
 		}
 		else
 		{

@@ -2983,3 +2983,9 @@ TXT_STRIFE_MAP36 = "AREA 36: Castle Clash";
 TXT_STRIFE_MAP37 = "AREA 37: Killing Grounds";
 TXT_STRIFE_MAP38 = "AREA 38: Ordered Chaos";
 TXT_STRIFE_EPI = "Quest for the Sigil";
+
+TXT_NEED_CHALICE = "You need the chalice!";
+TXT_NEED_OPASS = "You need the Oracle Pass!";
+TXT_FREED_PRISONERS = "You've freed the prisoners!";
+TXT_DESTROYED_CONVERTER = "You've destroyed the Converter!";
+TXT_COMPLETED_TRAINING = "Congratulations! You have completed the training area";

@@ -599,16 +599,8 @@ static void ParseReplies (const char *name, int pos, FStrifeDialogueReply **repl
 		}
 		if (reply->ItemCheck[0].Item != 0)
 		{
-			if (name && strncmp(rsp->No, "NO. ", 4))	// All 'no' nodes starting with 'NO.' won't ever be shown and they all contain broken text.
-			{
-				FStringf label("$TXT_RNO%d_%s_d%d_%s", j, name, pos, TokenFromString(rsp->No).GetChars());
-				reply->QuickNo = label;
-			}
-			else
-			{
-				reply->QuickNo = rsp->No;
-			}
-
+			FStringf label("$TXT_RNO%d_%s_d%d_%s", j, name, pos, TokenFromString(rsp->No).GetChars());
+			reply->QuickNo = label;
 		}
 		else
 		{

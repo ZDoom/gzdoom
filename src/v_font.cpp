@@ -955,7 +955,7 @@ static int stripaccent(int code)
 	return code;
 }
 
-FFont *V_GetFont(const char *name)
+FFont *V_GetFont(const char *name, const char *fontlumpname)
 {
 	FFont *font = FFont::FindFont (name);
 	if (font == nullptr)
@@ -967,14 +967,14 @@ FFont *V_GetFont(const char *name)
 		FStringf path("fonts/%s/", name);
 		
 		// Use a folder-based font only if it comes from a later file than the single lump version.
-		if (Wads.GetLumpsInFolder(path, folderdata))
+		if (Wads.GetLumpsInFolder(path, folderdata, true))
 		{
 			// This assumes that any custom font comes in one piece and not distributed across multiple resource files.
 			folderfile = Wads.GetLumpFile(folderdata[0].lumpnum);
 		}
 
 
-		lump = Wads.CheckNumForFullName(name, true);
+		lump = Wads.CheckNumForFullName(fontlumpname? fontlumpname : name, true);
 		
 		if (lump != -1 && Wads.GetLumpFile(lump) >= folderfile)
 		{
@@ -1003,7 +1003,7 @@ FFont *V_GetFont(const char *name)
 			return new FFont(name, nullptr, path, HU_FONTSTART, HU_FONTSIZE, 1, -1);
 		}
 	}
-	return nullptr;
+	return font;
 }
 
 //==========================================================================
@@ -1073,7 +1073,9 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 	{
 		TArray<FolderEntry> folderdata;
 		FStringf path("fonts/%s/", filetemplate);
-		if (Wads.GetLumpsInFolder(path, folderdata))
+		// If a name template is given, collect data from all resource files.
+		// For anything else, each folder is being treated as an atomic, self-contained unit and mixing from different glyph sets is blocked.
+		if (Wads.GetLumpsInFolder(path, folderdata, nametemplate == nullptr))
 		{
 			// all valid lumps must be named with a hex number that represents its Unicode character index.
 			for (auto &entry : folderdata)
@@ -2962,20 +2964,14 @@ void V_InitFonts()
 	V_InitCustomFonts ();
 
 	// load the heads-up font
-	if (!(SmallFont = V_GetFont("SmallFont")))
+	if (!(SmallFont = V_GetFont("SmallFont", "SMALLFNT")))
 	{
-		int i;
-
-		if ((i = Wads.CheckNumForName("SMALLFNT")) >= 0)
-		{
-			SmallFont = new FSingleLumpFont("SmallFont", i);
-		}
-		else if (Wads.CheckNumForName ("FONTA_S") >= 0)
+		if (Wads.CheckNumForName ("FONTA_S") >= 0)
 		{
 			SmallFont = new FFont ("SmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
 			SmallFont->SetCursor('[');
 		}
-		else
+		else if (Wads.CheckNumForName ("STCFN033", ns_graphics) >= 0)
 		{
 			SmallFont = new FFont ("SmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
 		}
@@ -2986,33 +2982,17 @@ void V_InitFonts()
 		{
 			SmallFont2 = new FFont ("SmallFont2", "STBFN%.3d", "defsmallfont2", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
 		}
-		else
-		{
-			SmallFont2 = SmallFont;
-		}
 	}
 	if (!(BigFont = V_GetFont("BigFont")))
 	{
-		const char *bigfontname = (gameinfo.gametype & GAME_DoomChex)? "DBIGFONT" : (gameinfo.gametype == GAME_Strife)? "SBIGFONT" : "HBIGFONT";
-		try
+		if (gameinfo.gametype & GAME_Raven)
 		{
-			BigFont = new FSingleLumpFont ("BigFont", Wads.CheckNumForName(bigfontname));
-		}
-		catch (CRecoverableError &err)
-		{
-			BigFont = new FFont ("BigFont", (gameinfo.gametype & GAME_Raven)? "FONTB%02u" : nullptr, "defbigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
+			BigFont = new FFont ("BigFont", "FONTB%02u", "defbigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
 		}
 	}
-	if (!(ConFont = V_GetFont("ConsoleFont")))
+	if (!(ConFont = V_GetFont("ConsoleFont", "CONFONT")))
 	{
-		try
-		{
-			ConFont = new FSingleLumpFont ("ConsoleFont", Wads.GetNumForName ("CONFONT"));
-		}
-		catch (CRecoverableError &err)
-		{
-			ConFont = new FFont ("ConsoleFont", nullptr, "defbigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
-		}
+		ConFont = SmallFont;
 	}
 	if (!(IntermissionFont = FFont::FindFont("IntermissionFont")))
 	{
@@ -3025,6 +3005,25 @@ void V_InitFonts()
 			IntermissionFont = BigFont;
 		}
 	}
+	// This can only happen if gzdoom.pk3 is corrupted. ConFont should always be present.
+	if (ConFont == nullptr)
+	{
+		I_FatalError("Console font not found.");
+	}
+	// SmallFont and SmallFont2 have no default provided by the engine. BigFont only has in non-Raven games.
+	if (SmallFont == nullptr)
+	{
+		SmallFont = ConFont;
+	}
+	if (SmallFont2 == nullptr)
+	{
+		SmallFont2 = SmallFont;
+	}
+	if (BigFont == nullptr)
+	{
+		BigFont = SmallFont;
+	}
+	
 }
 
 void V_ClearFonts()

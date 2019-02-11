@@ -759,6 +759,7 @@ void FWadCollection::RenameSprites ()
 {
 	bool renameAll;
 	bool MNTRZfound = false;
+	const char *altbigfont = gameinfo.gametype == GAME_Strife? "SBIGFONT" : (gameinfo.gametype & GAME_Raven)? "HBIGFONT" : "DBIGFONT";
 
 	static const uint32_t HereticRenames[] =
 	{ MAKE_ID('H','E','A','D'), MAKE_ID('L','I','C','H'),		// Ironlich
@@ -888,6 +889,11 @@ void FWadCollection::RenameSprites ()
 					LumpInfo[i].lump->dwName = MAKE_ID('B', 'L', 'U', 'D');
 				}
 			}
+		}
+		else if (LumpInfo[i].lump->Namespace == ns_global)
+		{
+			// Rename the game specific big font lumps so that the font manager does not have to do problematic special checks for them.
+			if (!strcmp(LumpInfo[i].lump->Name, altbigfont)) strcpy(LumpInfo[i].lump->Name, "BIGFONT");
 		}
 	}
 }
@@ -1265,6 +1271,8 @@ FResourceLump *FWadCollection::GetLumpRecord(int lump) const
 // GetLumpsInFolder
 // 
 // Gets all lumps within a single folder in the hierarchy.
+// If 'atomic' is set, it treats folders as atomic, i.e. only the
+// content of the last found resource file having the given folder name gets used.
 //
 //==========================================================================
 
@@ -1275,7 +1283,7 @@ static int folderentrycmp(const void *a, const void *b)
 	return strcmp(A->name, B->name);
 }
 
-unsigned FWadCollection::GetLumpsInFolder(const char *inpath, TArray<FolderEntry> &result) const
+unsigned FWadCollection::GetLumpsInFolder(const char *inpath, TArray<FolderEntry> &result, bool atomic) const
 {
 	FString path = inpath;
 	FixPathSeperator(path);
@@ -1287,13 +1295,31 @@ unsigned FWadCollection::GetLumpsInFolder(const char *inpath, TArray<FolderEntry
 		if (LumpInfo[i].lump->FullName.IndexOf(path) == 0)
 		{
 			// Only if it hasn't been replaced.
-			if (Wads.CheckNumForFullName(LumpInfo[i].lump->FullName) == i)
+			if ((unsigned)Wads.CheckNumForFullName(LumpInfo[i].lump->FullName) == i)
 			{
 				result.Push({ LumpInfo[i].lump->FullName.GetChars(), i });
 			}
 		}
 	}
-	qsort(result.Data(), result.Size(), sizeof(FolderEntry), folderentrycmp);
+	if (result.Size())
+	{
+		int maxfile = -1;
+		if (atomic)
+		{
+			// Find the highest resource file having content in the given folder.
+			for (auto & entry : result)
+			{
+				int thisfile = Wads.GetLumpFile(entry.lumpnum);
+				if (thisfile > maxfile) maxfile = thisfile;
+			}
+			// Delete everything from older files.
+			for (int i = result.Size() - 1; i >= 0; i--)
+			{
+				if ((int)result[i].lumpnum != maxfile) result.Delete(i);
+			}
+		}
+		qsort(result.Data(), result.Size(), sizeof(FolderEntry), folderentrycmp);
+	}
 	return result.Size();
 }
 

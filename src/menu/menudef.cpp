@@ -404,7 +404,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 						}
 						else if (args[i] == TypeFont)
 						{
-							auto f = FFont::FindFont(sc.String);
+							auto f = V_GetFont(sc.String);
 							if (f == nullptr)
 							{
 								sc.ScriptError("Unknown font %s", sc.String);

@@ -1,7 +1,255 @@
-[enu default]
+[en default]
 
 // Strings from Hexen's IWAD scripts. Technically they are not needed here for English, they are mainly meant to be documentation for translating.
+ 
+TXT_HEXEN_MAP01 = "WINNOWING HALL";
+TXT_HEXEN_MAP02 = "SEVEN PORTALS";
+TXT_HEXEN_MAP03 = "GUARDIAN OF ICE";
+TXT_HEXEN_MAP04 = "GUARDIAN OF FIRE";
+TXT_HEXEN_MAP05 = "GUARDIAN OF STEEL";
+TXT_HEXEN_MAP06 = "BRIGHT CRUCIBLE";
+TXT_HEXEN_MAP13 =  "SHADOW WOOD";
+TXT_HEXEN_MAP08 = "DARKMERE";
+TXT_HEXEN_MAP09 = "CAVES OF CIRCE";
+TXT_HEXEN_MAP10 = "WASTELANDS";
+TXT_HEXEN_MAP11 = "SACRED GROVE";
+TXT_HEXEN_MAP12 =  "HYPOSTYLE";
+TXT_HEXEN_MAP27 = "HERESIARCH'S SEMINARY";
+TXT_HEXEN_MAP28 = "DRAGON CHAPEL";
+TXT_HEXEN_MAP30 = "GRIFFIN CHAPEL";
+TXT_HEXEN_MAP31 = "DEATHWIND CHAPEL";
+TXT_HEXEN_MAP32 = "ORCHARD OF LAMENTATIONS";
+TXT_HEXEN_MAP33 = "SILENT REFECTORY";
+TXT_HEXEN_MAP34 = "WOLF CHAPEL";
+TXT_HEXEN_MAP21 = "FORSAKEN OUTPOST";
+TXT_HEXEN_MAP22 = "CASTLE OF GRIEF";
+TXT_HEXEN_MAP23 = "GIBBET";
+TXT_HEXEN_MAP24 = "EFFLUVIUM";
+TXT_HEXEN_MAP25 = "DUNGEONS";
+TXT_HEXEN_MAP26 = "DESOLATE GARDEN";
+TXT_HEXEN_MAP35 = "NECROPOLIS";
+TXT_HEXEN_MAP36 = "ZEDEK'S TOMB";
+TXT_HEXEN_MAP37 = "MENELKIR'S TOMB";
+TXT_HEXEN_MAP38 = "TRADUCTUS' TOMB";
+TXT_HEXEN_MAP39 = "VIVARIUM";
+TXT_HEXEN_MAP40 = "DARK CRUCIBLE";
+ 
+TXT_HEXEN_CLUS1MSG = "having passed the seven portals\n"
+ "which sealed this realm, a vast\n"
+ "domain of harsh wilderness stretches\n"
+ "before you. fire, ice and steel have\n"
+ "tested you, but greater challenges\n"
+ "remain ahead. the dense tangle of\n"
+ "forest surely hides hostile eyes,\n"
+ "but what lies beyond will be worse.\n"
+ "\n"
+ "barren desert, dank swamps and\n"
+ "musty caverns bar your way, but you\n"
+ "cannot let anything keep you from\n"
+ "your fate, even if you might come\n"
+ "to wish that it would.\n"
+ "\n"
+ "and beyond, flickering in the\n"
+ "distance, the ever-shifting walls\n"
+ "of the hypostyle seem to mock\n"
+ "your every effort.";
 
+TXT_HEXEN_CLUS2MSG = "your mind still reeling from your\n"
+ "encounters within the hypostyle, you\n"
+ "stagger toward what you hope is\n"
+ "a way out. things seem to move faster\n"
+ "and faster, your vision blurs and\n"
+ "begins to fade...\n"
+ "as the world collapses around you,\n"
+ "the brightness of a teleportal\n"
+ "engulfs you. a flash of light, and then\n"
+ "you climb wearily to your feet.\n"
+ "\n"
+ "you stand atop a high tower, and\n"
+ "from below come the screams of the\n"
+ "damned. you step forward, and\n"
+ "instantly the sound of demonic\n"
+ "chanting chills your blood.\n"
+ "by all the gods of death! what place\n"
+ "have you come to? by all the gods of\n"
+ "pain, how will you ever find your\n"
+ "way out?";
+
+TXT_HEXEN_CLUS3MSG = "the mightiest weapons and artifacts\n"
+ "of the ancients barely sufficed to\n"
+ "defeat the heresiarch and his\n"
+ "minions, but now their foul remains\n"
+ "lie strewn at your feet. gathering\n"
+ "the last of your strength, you\n"
+ "prepare to enter the portal which\n"
+ "leads from the heresiarch's inner\n"
+ "sanctum.\n"
+ "\n"
+ "above you, the ramparts of an\n"
+ "immense castle loom. silent towers\n"
+ "and bare walls surround a single\n"
+ "spire of black stone, which squats\n"
+ "in the center of the castle like a\n"
+ "brooding giant. fire and shadow\n"
+ "twist behind gaping windows, dozens\n"
+ "of baleful eyes glaring down upon\n"
+ "you.\n"
+ "somewhere within, your enemies are\n"
+ "waiting...";
+
+TXT_HEXEN_CLUS4MSG = "\"... and he shall journey into the\n"
+ "realms of the dead, and contest with\n"
+ "the forces therein, unto the very\n"
+ "gates of despair. but whether he\n"
+ "shall return again to the world of\n"
+ "light, no man knows.\"\n"
+ "\n"
+ "\n"
+ "\n"
+ "\n"
+ "\n"
+ "damn.";
+ 
+TXT_HEXEN_WIN1MSG = "with a scream of agony you are\n"
+ "wrenched from this world into\n"
+ "another, every part of your body\n"
+ "wreathed in mystic fire.  when your\n"
+ "vision clears, you find yourself\n"
+ "standing in a great hall, filled\n"
+ "with ghostly echoes and menacing\n"
+ "shadows.  in the distance you can\n"
+ "see a raised dais, and upon it the\n"
+ "only source of light in this world.";
+
+TXT_HEXEN_WIN2MSG = " this can only be the chaos sphere,\n"
+ "the source of korax's power.  with\n"
+ "this, you can create worlds...  or\n"
+ "destroy them.  by rights of battle\n"
+ "and conquest it is yours, and with\n"
+ "trembling hands you reach to grasp\n"
+ "it.  perhaps, now, a new player will\n"
+ "join the cosmic game of power.  like\n"
+ "the pawn who is promoted to queen,\n"
+ "suddenly the very reaches of the\n"
+ "board seem to be within your grasp.";
+
+TXT_HEXEN_WIN3MSG = "\n"
+ "but there are other players mightier\n"
+ "than you, and who can know their\n"
+ "next moves?";
+
+TXT_HEXDD_MAP41 = "RUINED VILLAGE";
+TXT_HEXDD_MAP42 = "BLIGHT";
+TXT_HEXDD_MAP43 = "SUMP";
+TXT_HEXDD_MAP44 = "CATACOMB";
+TXT_HEXDD_MAP45 = "BADLANDS";
+TXT_HEXDD_MAP46 = "BRACKENWOOD";
+TXT_HEXDD_MAP47 = "PYRE";
+TXT_HEXDD_MAP48 = "CONSTABLE'S GATE";
+TXT_HEXDD_MAP49 = "TREASURY";
+TXT_HEXDD_MAP50 = "MARKET PLACE";
+TXT_HEXDD_MAP51 = "LOCUS REQUIESCAT";
+TXT_HEXDD_MAP52 = "ORDEAL";
+TXT_HEXDD_MAP53 = "ARMORY";
+TXT_HEXDD_MAP54 = "NAVE";
+TXT_HEXDD_MAP55 = "CHANTRY";
+TXT_HEXDD_MAP56 = "ABATTOIR";
+TXT_HEXDD_MAP57 = "DARK WATCH";
+TXT_HEXDD_MAP58 = "CLOACA";
+TXT_HEXDD_MAP59 = "ICE HOLD";
+TXT_HEXDD_MAP60 = "DARK CITADEL";
+TXT_HEXDD_MAP33 = "TRANSIT";
+TXT_HEXDD_MAP34 = "OVER N UNDER";
+TXT_HEXDD_MAP35 = "DEATHFOG";
+TXT_HEXDD_MAP36 = "CASTLE OF PAIN";
+TXT_HEXDD_MAP37 = "SEWER PIT";
+TXT_HEXDD_MAP38 = "THE ROSE";
+
+TXT_HEXDD_CLUS1MSG = "wiping a trembling hand across your\n"
+ "bleeding face, you try to clear\n"
+ "your mind for what lies ahead...\n"
+ "\n"
+ "...and forget what lies behind.\n"
+ "\n"
+ "in the distance, the stark ramparts\n"
+ "of a great castle complex seem to\n"
+ "rend the sky above, and the stench\n"
+ "of decay wafts from the violated\n"
+ "graves of uncounted dead.\n"
+ "\n"
+ "carefully counting what little\n"
+ "remains of your artifacts, you try\n"
+ "to reassure yourself that it will\n"
+ "be enough. after all, it has to be\n"
+ "enough, doesn't it?\n"
+ "\n"
+ "\n"
+ "doesn't it?";
+ 
+ 
+ //
+TXT_HEXDD_CLUS2MSG = "surely the souls of the damned inhabit\n"
+ "this world, for nothing fair or good\n"
+ "could survive here for long.\n"
+ "\n"
+ "but what has passed before can only\n"
+ "be a pale shadow of what bars your\n"
+ "passage now: the dark citadel itself.\n"
+ "\n"
+ "the grim bulk of the cathedral blocks\n"
+ "all but fragmentary glimpses of the\n"
+ "citadel proper, but what can be seen\n"
+ "speaks in sibilant whispers of cold,\n"
+ "lingering death...\n"
+ "\n"
+ "\n"
+ "\n"
+ "\n"
+ "\n"
+ "...for the fortunate.";
+
+ //
+TXT_HEXDD_WIN1MSG = "once again you find yourself in the\n"
+ "great hall of the chaos sphere, as\n"
+ "if no time had passed from when\n"
+ "last you moved among these shadows.\n"
+ "\n"
+ "but something is eerily different,\n"
+ "a silence where once had been soft\n"
+ "whispers, a sense of being watched\n"
+ "by hidden eyes...\n"
+ "\n"
+ "...eyes which shield a malefic\n"
+ "intent.";
+
+ //
+ 
+TXT_HEXDD_WIN2MSG = "once before you grasped the chaos\n"
+ "sphere, held it within trembling\n"
+ "hands. now your hands tremble with\n"
+ "something more than avarice, and\n"
+ "dread meshes with the hunger for\n"
+ "power.\n"
+ "\n"
+ "if even the power of the sphere is\n"
+ "not enough to protect you from the\n"
+ "forces of darkness, perhaps it is\n"
+ "better left untouched, its promise\n"
+ "left unkept.\n"
+ "\n"
+ "\n"
+ "\n"
+ "but then, you never were one to\n"
+ "back down from a challenge...";
+ 
+//
+ 
+TXT_HEXDD_WIN3MSG =  "\n"
+ "...and other players await.\n"
+ "\n"
+ "";
+
+ 
 TXT_ACS_map01_5_THEDO = "The door is locked";
 TXT_ACS_map02_9_GREET = "Greetings, mortal";
 TXT_ACS_map02_11_AREYO = "Are you ready to die?";
@@ -68,7 +316,7 @@ TXT_ACS_map44_11_TWOTH = "Two thirds of the puzzle is solved";
 TXT_ACS_map45_1_YOUHE = "You hear a platform moving in the distance";
 TXT_ACS_map46_0_ITISD = "It is done...";
 TXT_ACS_map46_1_YOUHA = "You have not completed the puzzle";
-TXT_ACS_map46_2_I'MWA = "I'm warning you...";
+TXT_ACS_map46_2_IMWAR = "I'm warning you...";
 TXT_ACS_map46_3_STUBB = "Stubborn, aren't you?";
 TXT_ACS_map46_4_ANDST = "And stupid, too";
 TXT_ACS_map46_8_ONEFO = "One fourth of this puzzle is complete";
@@ -88,12 +336,12 @@ TXT_ACS_map51_14_DOYOU = "Do you feel lucky?";
 TXT_ACS_map51_15_YOUGU = "You guessed wrong!";
 TXT_ACS_map51_16_GOODG = "Good guess";
 TXT_ACS_map51_17_CANYO = "Can you do all the scripting for my level?";
-TXT_ACS_map51_18_DON'T = "Don't touch my gloppy";
+TXT_ACS_map51_18_DONTT = "Don't touch my gloppy";
 TXT_ACS_map51_19_VORPA = "Vorpal ?!?!?!";
 TXT_ACS_map51_20_GIMME = "Gimme some sugar, baby";
 TXT_ACS_map51_21_DUHUH = "Duh-uhhh...";
 TXT_ACS_map51_22_FILMI = "Film in an hour?";
-TXT_ACS_map51_23_IDON' = "I don't even get my own tombstone - cf";
+TXT_ACS_map51_23_IDONT = "I don't even get my own tombstone - cf";
 TXT_ACS_map51_24_LETNO = "Let no blood be spilt";
 TXT_ACS_map51_25_LETNO = "Let no hand be raised in anger";
 TXT_ACS_map52_9_WHODA = "Who dares disturb our slumber?";

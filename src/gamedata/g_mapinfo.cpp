@@ -827,6 +827,28 @@ void FMapInfoParser::ParseCluster()
 			break;
 		}
 	}
+	// Remap Hexen's CLUS?MSG lumps to the string table, if applicable. The code here only checks what can actually be in an IWAD.
+	if (clusterinfo->flags & CLUSTER_EXITTEXTINLUMP)
+	{
+		int lump = Wads.CheckNumForFullName(clusterinfo->ExitText, false);
+		if (lump > 0)
+		{
+			// Check if this comes from either Hexen.wad or Hexdd.wad and if so, map to the string table.
+			int fileno = Wads.GetLumpFile(lump);
+			auto fn = Wads.GetWadName(fileno);
+			if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
+			{
+				FStringf key("TXT_%.5s_%s", fn, sc.String);
+				if (GStrings.exists(key))
+				{
+					clusterinfo->ExitText = key;
+					clusterinfo->flags &= ~CLUSTER_EXITTEXTINLUMP;
+					clusterinfo->flags |= CLUSTER_LOOKUPEXITTEXT;
+				}
+			}
+		}
+
+	}
 	CheckEndOfFile("cluster");
 }
 
@@ -1900,8 +1922,25 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 		{
 			sc.MustGetString ();
 			levelinfo->flags |= LEVEL_LOOKUPLEVELNAME;
+			levelinfo->LevelName = sc.String;
 		}
-		levelinfo->LevelName = sc.String;
+		else if (HexenHack)
+		{
+			levelinfo->LevelName = sc.String;
+
+			// Try to localize Hexen's map names.
+			int fileno = Wads.GetLumpFile(sc.LumpNum);
+			auto fn = Wads.GetWadName(fileno);
+			if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
+			{
+				FStringf key("TXT_%.5s_%s", fn, levelinfo->MapName.GetChars());
+				if (GStrings.exists(key))
+				{
+					levelinfo->flags |= LEVEL_LOOKUPLEVELNAME;
+					levelinfo->LevelName = key;
+				}
+			}
+		}
 	}
 
 	// Set up levelnum now so that you can use Teleport_NewMap specials

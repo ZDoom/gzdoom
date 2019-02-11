@@ -961,10 +961,22 @@ FFont *V_GetFont(const char *name)
 	if (font == nullptr)
 	{
 		int lump = -1;
+		int folderfile = -1;
+		
+		TArray<FolderEntry> folderdata;
+		FStringf path("fonts/%s/", name);
+		
+		// Use a folder-based font only if it comes from a later file than the single lump version.
+		if (Wads.GetLumpsInFolder(path, folderdata))
+		{
+			// This assumes that any custom font comes in one piece and not distributed across multiple resource files.
+			folderfile = Wads.GetLumpFile(folderdata[0].lumpnum);
+		}
+
 
 		lump = Wads.CheckNumForFullName(name, true);
 		
-		if (lump != -1)
+		if (lump != -1 && Wads.GetLumpFile(lump) >= folderfile)
 		{
 			uint32_t head;
 			{
@@ -974,19 +986,24 @@ FFont *V_GetFont(const char *name)
 			if ((head & MAKE_ID(255,255,255,0)) == MAKE_ID('F','O','N',0) ||
 				head == MAKE_ID(0xE1,0xE6,0xD5,0x1A))
 			{
-				font = new FSingleLumpFont (name, lump);
+				return new FSingleLumpFont (name, lump);
 			}
 		}
-		if (font == nullptr)
+		FTextureID picnum = TexMan.CheckForTexture (name, ETextureType::Any);
+		if (picnum.isValid())
 		{
-			FTextureID picnum = TexMan.CheckForTexture (name, ETextureType::Any);
-			if (picnum.isValid())
+			FTexture *tex = TexMan.GetTexture(picnum);
+			if (tex && tex->GetSourceLump() >= folderfile)
 			{
-				font = new FSinglePicFont (name);
+				return new FSinglePicFont (name);
 			}
+		}
+		if (folderdata.Size() > 0)
+		{
+			return new FFont(name, nullptr, path, HU_FONTSTART, HU_FONTSIZE, 1, -1);
 		}
 	}
-	return font;
+	return nullptr;
 }
 
 //==========================================================================
@@ -1023,30 +1040,33 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 	TMap<int, FTexture*> charMap;
 	int minchar = INT_MAX;
 	int maxchar = INT_MIN;
-	for (i = 0; i < lcount; i++)
+	if (nametemplate != nullptr)
 	{
-		int position = '!' + i;
-		mysnprintf(buffer, countof(buffer), nametemplate, i + start);
-
-		lump = TexMan.CheckForTexture(buffer, ETextureType::MiscPatch);
-		if (doomtemplate && lump.isValid() && i + start == 121)
-		{ // HACKHACK: Don't load STCFN121 in doom(2), because
-		  // it's not really a lower-case 'y' but a '|'.
-		  // Because a lot of wads with their own font seem to foolishly
-		  // copy STCFN121 and make it a '|' themselves, wads must
-		  // provide STCFN120 (x) and STCFN122 (z) for STCFN121 to load as a 'y'.
-			if (!TexMan.CheckForTexture("STCFN120", ETextureType::MiscPatch).isValid() ||
-				!TexMan.CheckForTexture("STCFN122", ETextureType::MiscPatch).isValid())
-			{
-				// insert the incorrectly named '|' graphic in its correct position.
-				position = 124;
-			}
-		}
-		if (lump.isValid())
+		for (i = 0; i < lcount; i++)
 		{
-			if (position < minchar) minchar = position;
-			if (position > maxchar) maxchar = position;
-			charMap.Insert(position, TexMan.GetTexture(lump));
+			int position = '!' + i;
+			mysnprintf(buffer, countof(buffer), nametemplate, i + start);
+			
+			lump = TexMan.CheckForTexture(buffer, ETextureType::MiscPatch);
+			if (doomtemplate && lump.isValid() && i + start == 121)
+			{ // HACKHACK: Don't load STCFN121 in doom(2), because
+				// it's not really a lower-case 'y' but a '|'.
+				// Because a lot of wads with their own font seem to foolishly
+				// copy STCFN121 and make it a '|' themselves, wads must
+				// provide STCFN120 (x) and STCFN122 (z) for STCFN121 to load as a 'y'.
+				if (!TexMan.CheckForTexture("STCFN120", ETextureType::MiscPatch).isValid() ||
+					!TexMan.CheckForTexture("STCFN122", ETextureType::MiscPatch).isValid())
+				{
+					// insert the incorrectly named '|' graphic in its correct position.
+					position = 124;
+				}
+			}
+			if (lump.isValid())
+			{
+				if (position < minchar) minchar = position;
+				if (position > maxchar) maxchar = position;
+				charMap.Insert(position, TexMan.GetTexture(lump));
+			}
 		}
 	}
 	if (filetemplate != nullptr)
@@ -1061,7 +1081,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 				char *endp;
 				auto base = ExtractFileBase(entry.name);
 				auto position = strtoll(base.GetChars(), &endp, 16);
-				if ((*endp == 0 || *endp == '.' && position >= '!' && position < 0xffff))
+				if ((*endp == 0 || (*endp == '.' && position >= '!' && position < 0xffff)))
 				{
 					auto lump = TexMan.CheckForTexture(entry.name, ETextureType::MiscPatch);
 					if (lump.isValid())
@@ -1658,7 +1678,7 @@ FSingleLumpFont::FSingleLumpFont (const char *name, int lump) : FFont(lump)
 	else if (data[0] != 'F' || data[1] != 'O' || data[2] != 'N' ||
 		(data[3] != '1' && data[3] != '2'))
 	{
-		I_FatalError ("%s is not a recognizable font", name);
+		I_Error ("%s is not a recognizable font", name);
 	}
 	else
 	{
@@ -2942,7 +2962,7 @@ void V_InitFonts()
 	V_InitCustomFonts ();
 
 	// load the heads-up font
-	if (!(SmallFont = FFont::FindFont("SmallFont")))
+	if (!(SmallFont = V_GetFont("SmallFont")))
 	{
 		int i;
 
@@ -2960,7 +2980,7 @@ void V_InitFonts()
 			SmallFont = new FFont ("SmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
 		}
 	}
-	if (!(SmallFont2 = FFont::FindFont("SmallFont2")))	// Only used by Strife
+	if (!(SmallFont2 = V_GetFont("SmallFont2")))	// Only used by Strife
 	{
 		if (Wads.CheckNumForName ("STBFN033", ns_graphics) >= 0)
 		{
@@ -2971,37 +2991,28 @@ void V_InitFonts()
 			SmallFont2 = SmallFont;
 		}
 	}
-	if (!(BigFont = FFont::FindFont("BigFont")))
+	if (!(BigFont = V_GetFont("BigFont")))
 	{
-		int lump = Wads.CheckNumForName("BIGFONT");
-		if (lump >= 0)
+		const char *bigfontname = (gameinfo.gametype & GAME_DoomChex)? "DBIGFONT" : (gameinfo.gametype == GAME_Strife)? "SBIGFONT" : "HBIGFONT";
+		try
 		{
-			BigFont = new FSingleLumpFont("BigFont", lump);
+			BigFont = new FSingleLumpFont ("BigFont", Wads.CheckNumForName(bigfontname));
 		}
-		else if (gameinfo.gametype & GAME_DoomChex)
+		catch (CRecoverableError &err)
 		{
-			BigFont = new FSingleLumpFont ("BigFont", Wads.GetNumForName ("DBIGFONT"));
-		}
-		else if (gameinfo.gametype == GAME_Strife)
-		{
-			BigFont = new FSingleLumpFont ("BigFont", Wads.GetNumForName ("SBIGFONT"));
-		}
-		else
-		{
-			lump = Wads.CheckNumForName("HBIGFONT");
-			if (lump >= 0)
-			{
-				BigFont = new FSingleLumpFont("BigFont", lump);
-			}
-			else
-			{
-				BigFont = new FFont ("BigFont", "FONTB%02u", "defbigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
-			}
+			BigFont = new FFont ("BigFont", (gameinfo.gametype & GAME_Raven)? "FONTB%02u" : nullptr, "defbigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
 		}
 	}
-	if (!(ConFont = FFont::FindFont("ConsoleFont")))
+	if (!(ConFont = V_GetFont("ConsoleFont")))
 	{
-		ConFont = new FSingleLumpFont ("ConsoleFont", Wads.GetNumForName ("CONFONT"));
+		try
+		{
+			ConFont = new FSingleLumpFont ("ConsoleFont", Wads.GetNumForName ("CONFONT"));
+		}
+		catch (CRecoverableError &err)
+		{
+			ConFont = new FFont ("ConsoleFont", nullptr, "defbigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
+		}
 	}
 	if (!(IntermissionFont = FFont::FindFont("IntermissionFont")))
 	{

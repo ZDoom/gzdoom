@@ -600,7 +600,7 @@ CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
 
 	case 4: // Old ZDoom compat mode
 		v = COMPATF_SOUNDTARGET | COMPATF_LIGHT;
-		w = COMPATF2_MULTIEXIT | COMPATF2_TELEPORT | COMPATF2_PUSHWINDOW;
+		w = COMPATF2_MULTIEXIT | COMPATF2_TELEPORT | COMPATF2_PUSHWINDOW | COMPATF2_CHECKSWITCHRANGE;
 		break;
 
 	case 5: // MBF compat mode
@@ -658,6 +658,7 @@ CVAR (Flag, compat_pointonline,			compatflags2, COMPATF2_POINTONLINE);
 CVAR (Flag, compat_multiexit,			compatflags2, COMPATF2_MULTIEXIT);
 CVAR (Flag, compat_teleport,			compatflags2, COMPATF2_TELEPORT);
 CVAR (Flag, compat_pushwindow,			compatflags2, COMPATF2_PUSHWINDOW);
+CVAR (Flag, compat_checkswitchrange,	compatflags2, COMPATF2_CHECKSWITCHRANGE);
 
 CVAR(Bool, vid_activeinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 

@@ -1143,7 +1143,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 				// Handle active damage modifiers (e.g. PowerDamage)
 				if (damage > 0 && !(flags & DMG_NO_ENHANCE))
 				{
-					damage = source->GetModifiedDamage(mod, damage, false, inflictor, source, flags);
+					damage = source->GetModifiedDamage(mod, damage, false, inflictor, target, flags);
 				}
 			}
 			// Handle passive damage modifiers (e.g. PowerProtection), provided they are not afflicted with protection penetrating powers.

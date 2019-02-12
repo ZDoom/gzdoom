@@ -1925,20 +1925,23 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 			levelinfo->flags |= LEVEL_LOOKUPLEVELNAME;
 			levelinfo->LevelName = sc.String;
 		}
-		else if (HexenHack)
+		else
 		{
 			levelinfo->LevelName = sc.String;
 
-			// Try to localize Hexen's map names.
-			int fileno = Wads.GetLumpFile(sc.LumpNum);
-			auto fn = Wads.GetWadName(fileno);
-			if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
+			if (HexenHack)
 			{
-				FStringf key("TXT_%.5s_%s", fn, levelinfo->MapName.GetChars());
-				if (GStrings.exists(key))
+				// Try to localize Hexen's map names.
+				int fileno = Wads.GetLumpFile(sc.LumpNum);
+				auto fn = Wads.GetWadName(fileno);
+				if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
 				{
-					levelinfo->flags |= LEVEL_LOOKUPLEVELNAME;
-					levelinfo->LevelName = key;
+					FStringf key("TXT_%.5s_%s", fn, levelinfo->MapName.GetChars());
+					if (GStrings.exists(key))
+					{
+						levelinfo->flags |= LEVEL_LOOKUPLEVELNAME;
+						levelinfo->LevelName = key;
+					}
 				}
 			}
 		}

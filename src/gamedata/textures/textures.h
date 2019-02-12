@@ -482,6 +482,10 @@ protected:
 	}
 
 	void SetScaledSize(int fitwidth, int fitheight);
+	void SetScale(const DVector2 &scale)
+	{
+		Scale = scale;
+	}
 
 protected:
 	uint16_t Width, Height;

@@ -1315,7 +1315,7 @@ unsigned FWadCollection::GetLumpsInFolder(const char *inpath, TArray<FolderEntry
 			// Delete everything from older files.
 			for (int i = result.Size() - 1; i >= 0; i--)
 			{
-				if ((int)result[i].lumpnum != maxfile) result.Delete(i);
+				if (Wads.GetLumpFile(result[i].lumpnum) != maxfile) result.Delete(i);
 			}
 		}
 		qsort(result.Data(), result.Size(), sizeof(FolderEntry), folderentrycmp);

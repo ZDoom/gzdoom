@@ -189,6 +189,9 @@ CVAR(Bool, am_portaloverlay, true, CVAR_ARCHIVE)
 CVAR(Bool, am_showgrid, false, CVAR_ARCHIVE)
 CVAR(Float, am_zoomdir, 0, CVAR_ARCHIVE)
 
+CVAR(Int, am_markfont, 0, CVAR_ARCHIVE)
+CVAR(Int, am_markcolor, CR_GREY, CVAR_ARCHIVE)
+
 CCMD(am_togglefollow)
 {
 	am_followplayer = !am_followplayer;
@@ -1128,7 +1131,9 @@ void DAutomap::restoreScaleAndLoc ()
 
 int DAutomap::addMark ()
 {
-	if (marknums[0].isValid())
+	// Add a mark when default font is selected and its textures (AMMNUM?)
+	// are loaded. Mark is always added when custom font is selected
+	if (am_markfont != 0 || marknums[0].isValid())
 	{
 		auto m = markpointnum;
 		markpoints[markpointnum].x = m_x + m_w/2;
@@ -3036,8 +3041,19 @@ void DAutomap::drawMarks ()
 	{
 		if (markpoints[i].x != -1)
 		{
-			DrawMarker (TexMan.GetTexture(marknums[i], true), markpoints[i].x, markpoints[i].y, -3, 0,
-				1, 1, 0, 1, 0, LegacyRenderStyles[STYLE_Normal]);
+			if (am_markfont == 0)
+			{
+				DrawMarker(TexMan.GetTexture(marknums[i], true), markpoints[i].x, markpoints[i].y, -3, 0,
+					1, 1, 0, 1, 0, LegacyRenderStyles[STYLE_Normal]);
+			}
+			else
+			{
+				char numstr[10];
+				mysnprintf(numstr, countof(numstr), "%d", i);
+
+				screen->DrawText(am_markfont == 1 ? SmallFont : BigFont, am_markcolor, 
+					CXMTOF(markpoints[i].x), CYMTOF(markpoints[i].y), numstr, TAG_DONE);
+			}
 		}
 	}
 }

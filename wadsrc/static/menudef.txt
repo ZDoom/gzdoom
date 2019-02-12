@@ -1077,6 +1077,13 @@ OptionValue MapTriggers
 	2, "$OPTVAL_ON"
 }
 
+OptionValue MapMarkFont
+{
+	0, "$OPTVAL_DEFAULT"
+	1, "$OPTVAL_SMALL"
+	2, "$OPTVAL_LARGE"
+}
+
 OptionMenu AutomapOptions protected
 {
 	Title "$AUTOMAPMNU_TITLE"
@@ -1103,6 +1110,9 @@ OptionMenu AutomapOptions protected
 	Option "$AUTOMAPMNU_SHOWKEYS",				"am_showkeys", "OnOff"
 	Option "$AUTOMAPMNU_SHOWTRIGGERLINES",		"am_showtriggerlines", "MapTriggers"
 	Option "$AUTOMAPMNU_SHOWTHINGSPRITES",		"am_showthingsprites", "STSTypes"
+	StaticText " "
+	Option "$AUTOMAPMNU_MARKFONT",				"am_markfont", "MapMarkFont"
+	Option "$AUTOMAPMNU_MARKCOLOR",				"am_markcolor", "TextColors", "am_markfont"
 }
 
 //-------------------------------------------------------------------------------------------

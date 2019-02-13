@@ -189,6 +189,10 @@ CVAR(Bool, am_portaloverlay, true, CVAR_ARCHIVE)
 CVAR(Bool, am_showgrid, false, CVAR_ARCHIVE)
 CVAR(Float, am_zoomdir, 0, CVAR_ARCHIVE)
 
+static const char *const DEFAULT_FONT_NAME = "AMMNUMx";
+CVAR(String, am_markfont, DEFAULT_FONT_NAME, CVAR_ARCHIVE)
+CVAR(Int, am_markcolor, CR_GREY, CVAR_ARCHIVE)
+
 CCMD(am_togglefollow)
 {
 	am_followplayer = !am_followplayer;
@@ -1128,7 +1132,9 @@ void DAutomap::restoreScaleAndLoc ()
 
 int DAutomap::addMark ()
 {
-	if (marknums[0].isValid())
+	// Add a mark when default font is selected and its textures (AMMNUM?)
+	// are loaded. Mark is always added when custom font is selected
+	if (stricmp(*am_markfont, DEFAULT_FONT_NAME) != 0 || marknums[0].isValid())
 	{
 		auto m = markpointnum;
 		markpoints[markpointnum].x = m_x + m_w/2;
@@ -3032,12 +3038,29 @@ void DAutomap::DrawMarker (FTexture *tex, double x, double y, int yadjust,
 
 void DAutomap::drawMarks ()
 {
+	FFont* font;
+	bool fontloaded = false;
+
 	for (int i = 0; i < AM_NUMMARKPOINTS; i++)
 	{
 		if (markpoints[i].x != -1)
 		{
-			DrawMarker (TexMan.GetTexture(marknums[i], true), markpoints[i].x, markpoints[i].y, -3, 0,
-				1, 1, 0, 1, 0, LegacyRenderStyles[STYLE_Normal]);
+			if (!fontloaded)
+			{
+				font = stricmp(*am_markfont, DEFAULT_FONT_NAME) == 0 ? nullptr : V_GetFont(am_markfont);
+				fontloaded = true;
+			}
+
+			if (font == nullptr)
+			{
+				DrawMarker(TexMan.GetTexture(marknums[i], true), markpoints[i].x, markpoints[i].y, -3, 0,
+					1, 1, 0, 1, 0, LegacyRenderStyles[STYLE_Normal]);
+			}
+			else
+			{
+				char numstr[2] = { char('0' + i), 0 };
+				screen->DrawText(font, am_markcolor, CXMTOF(markpoints[i].x), CYMTOF(markpoints[i].y), numstr, TAG_DONE);
+			}
 		}
 	}
 }

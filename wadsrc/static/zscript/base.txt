@@ -15,7 +15,7 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native readonly ui bool netgame;
 
 	native readonly bool automapactive;
-	native play uint gameaction;
+	native readonly uint gameaction;
 	native readonly int gamestate;
 	native readonly TextureID skyflatnum;
 	native readonly Font smallfont;

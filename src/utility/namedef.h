@@ -565,6 +565,7 @@ xx(Monsterpush)
 xx(ZDoom)
 xx(ZDoomTranslated)
 xx(Vavoom)
+xx(GZDoom)
 
 xx(Xpanningfloor)
 xx(Ypanningfloor)
@@ -742,6 +743,7 @@ xx(Require)
 xx(Exclude)
 xx(Userstring)
 xx(Sky)
+xx(Pagename)
 
 // Special menus
 xx(Mainmenu)

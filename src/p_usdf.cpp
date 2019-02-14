@@ -44,6 +44,7 @@
 
 #define Zd 1
 #define St 2
+#define Gz 4
 
 class USDFParser : public UDMFParserBase
 {
@@ -62,7 +63,7 @@ class USDFParser : public UDMFParserBase
 		{
 			type = GetStrifeType(CheckInt(key));
 		}
-		else if (namespace_bits == Zd)
+		else if (namespace_bits & ( Zd | Gz ))
 		{
 			PClassActor *cls = PClass::FindActor(CheckString(key));
 			if (cls == nullptr)
@@ -188,7 +189,10 @@ class USDFParser : public UDMFParserBase
 					break;
 
 				case NAME_Nextpage:
-					reply->NextNode = CheckInt(key);
+					if (namespace_bits != Gz || sc.TokenType == TK_IntConst)
+						reply->NextNode = CheckInt(key);
+					else
+						reply->NextNodeName = CheckString(key);
 					break;
 
 				case NAME_Closedialog:
@@ -202,7 +206,7 @@ class USDFParser : public UDMFParserBase
 					break;
 
 				case NAME_SpecialName:
-					if (namespace_bits == Zd)
+					if (namespace_bits & ( Zd | Gz ))
 						reply->ActionSpecial = P_FindLineSpecial(CheckString(key));
 					break;
 
@@ -225,7 +229,7 @@ class USDFParser : public UDMFParserBase
 				case NAME_Require:
 				case NAME_Exclude:
 					// Require and Exclude are exclusive to namespace ZDoom. [FishyClockwork]
-					if (key == NAME_Cost || namespace_bits == Zd)
+					if (key == NAME_Cost || (namespace_bits & ( Zd | Gz )))
 					{
 						ParseCostRequireExclude(reply, key);
 						break;
@@ -256,7 +260,15 @@ class USDFParser : public UDMFParserBase
 			reply->QuickNo = "";
 		}
 		reply->LogString = LogString;
-		if(!closeDialog) reply->NextNode *= -1;
+		if (reply->NextNode < 0) // compatibility: handle negative numbers
+		{
+			reply->CloseDialog = !closeDialog;
+			reply->NextNode *= -1;
+		}
+		else
+		{
+			reply->CloseDialog = closeDialog;
+		}
 		return true;
 	}
 
@@ -318,6 +330,13 @@ class USDFParser : public UDMFParserBase
 			{
 				switch(key)
 				{
+				case NAME_Pagename:
+					if (namespace_bits != Gz)
+						sc.ScriptMessage("'PageName' keyword only supported in the GZDoom namespace!");
+					else
+						node->ThisNodeName = CheckString(key);
+					break;
+
 				case NAME_Name:
 					SpeakerName = CheckString(key);
 					break;
@@ -327,7 +346,7 @@ class USDFParser : public UDMFParserBase
 					break;
 
 				case NAME_Userstring:
-					if (namespace_bits == Zd)
+					if (namespace_bits & ( Zd | Gz ))
 					{
 						node->UserData = CheckString(key);
 					}
@@ -341,7 +360,7 @@ class USDFParser : public UDMFParserBase
 							FString soundname = "svox/";
 							soundname += name;
 							node->SpeakerVoice = FSoundID(S_FindSound(soundname));
-							if (node->SpeakerVoice == 0 && namespace_bits == Zd)
+							if (node->SpeakerVoice == 0 && (namespace_bits & ( Zd | Gz )))
 							{
 								node->SpeakerVoice = FSoundID(S_FindSound(name));
 							}
@@ -358,12 +377,15 @@ class USDFParser : public UDMFParserBase
 					break;
 
 				case NAME_Link:
-					node->ItemCheckNode = CheckInt(key);
+					if (namespace_bits != Gz || sc.TokenType == TK_IntConst)
+						node->ItemCheckNode = CheckInt(key);
+					else
+						node->ItemCheckNodeName = CheckString(key);
 					break;
 
 				case NAME_Goodbye:
 					// Custom goodbyes are exclusive to namespace ZDoom. [FishyClockwork]
-					if (namespace_bits == Zd)
+					if (namespace_bits & ( Zd | Gz ))
 					{
 						Goodbye = CheckString(key);
 					}
@@ -425,14 +447,14 @@ class USDFParser : public UDMFParserBase
 					break;
 
 				case NAME_Id:
-					if (namespace_bits == Zd)
+					if (namespace_bits & ( Zd | Gz ))
 					{
 						dlgid = CheckInt(key);
 					}
 					break;
 
 				case NAME_Class:
-					if (namespace_bits == Zd)
+					if (namespace_bits & ( Zd | Gz ))
 					{
 						clsid = CheckString(key);
 					}
@@ -487,6 +509,9 @@ public:
 			namespc = sc.String;
 			switch(namespc)
 			{
+			case NAME_GZDoom:
+				namespace_bits = Gz;
+				break;
 			case NAME_ZDoom:
 				namespace_bits = Zd;
 				break;
@@ -501,7 +526,7 @@ public:
 		}
 		else
 		{
-			sc.ScriptMessage("Map does not define a namespace.\n");
+			sc.ScriptMessage("Dialog script does not define a namespace.\n");
 			return false;
 		}
 
@@ -523,6 +548,58 @@ public:
 			{
 				Skip();
 			}
+		}
+
+		if (namespace_bits == Gz) // string page name linker
+		{
+			int numnodes = Level->StrifeDialogues.Size();
+			int usedstrings = false;
+
+			TMap<FString, int> nameToIndex;
+			for (int i = 0; i < numnodes; i++)
+			{
+				FString key = Level->StrifeDialogues[i]->ThisNodeName;
+				if (key.IsNotEmpty())
+				{
+					key.ToLower();
+					if (nameToIndex.CheckKey(key))
+						Printf("Warning! Duplicate page name '%s'!\n", Level->StrifeDialogues[i]->ThisNodeName.GetChars());
+					else
+						nameToIndex[key] = i;
+					usedstrings = true;
+				}
+			}
+			if (usedstrings)
+			{
+				for (int i = 0; i < numnodes; i++)
+				{
+					FString itemLinkKey = Level->StrifeDialogues[i]->ItemCheckNodeName;
+					if (itemLinkKey.IsNotEmpty())
+					{
+						itemLinkKey.ToLower();
+						if (nameToIndex.CheckKey(itemLinkKey))
+							Level->StrifeDialogues[i]->ItemCheckNode = nameToIndex[itemLinkKey] + 1;
+						else
+							Printf("Warning! Reference to non-existent item-linked dialogue page name '%s' in page %i!\n", Level->StrifeDialogues[i]->ItemCheckNodeName.GetChars(), i);
+					}
+
+					FStrifeDialogueReply *NodeCheck = Level->StrifeDialogues[i]->Children;
+					while (NodeCheck)
+					{
+						if (NodeCheck->NextNodeName.IsNotEmpty())
+						{
+							FString key = NodeCheck->NextNodeName;
+							key.ToLower();
+							if (nameToIndex.CheckKey(key))
+								NodeCheck->NextNode = nameToIndex[key] + 1;
+							else
+								Printf("Warning! Reference to non-existent reply-linked dialogue page name '%s' in page %i!\n", NodeCheck->NextNodeName.GetChars(), i);
+						}
+						NodeCheck = NodeCheck->Next;
+					}
+				}
+			}
+
 		}
 		return true;
 	}

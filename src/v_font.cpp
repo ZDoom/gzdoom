@@ -387,7 +387,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 			{
 				Chars[i].OriginalPic = charLumps[i];
 				Chars[i].TranslatedPic = new FImageTexture(new FFontChar1 (charLumps[i]->GetImage()), "");
-				Chars[i].TranslatedPic->Scale = charLumps[i]->Scale;
+				Chars[i].TranslatedPic->CopySize(charLumps[i]);
 				Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
 				TexMan.AddTexture(Chars[i].TranslatedPic);
 			}
@@ -1559,7 +1559,7 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 			if (!noTranslate)
 			{
 				Chars[i].TranslatedPic = new FImageTexture(new FFontChar1 (charlumps[i]->GetImage()), "");
-				Chars[i].TranslatedPic->Scale = charlumps[i]->Scale;
+				Chars[i].TranslatedPic->CopySize(charlumps[i]);
 				Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
 				TexMan.AddTexture(Chars[i].TranslatedPic);
 			}

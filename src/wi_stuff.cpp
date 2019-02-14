@@ -760,13 +760,7 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
 			I_FatalError("Cannot create status screen");
 		}
 	}
-	// Set up some global stuff that is always needed.
-	auto info = FindLevelInfo(wbstartstruct->next, false);
-	if (info == nullptr)
-	{
-		wbstartstruct->next = "";
-	}
-	else wbstartstruct->nextname = info->LookupLevelName();
+	
 	V_SetBlend(0, 0, 0, 0);
 	S_StopAllChannels();
 	for (auto Level : AllLevels())
@@ -863,6 +857,7 @@ DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, next_ep);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, current);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, next);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, nextname);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, thisname);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, LName0);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, LName1);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, maxkills);

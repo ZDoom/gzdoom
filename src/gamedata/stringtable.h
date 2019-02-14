@@ -58,25 +58,36 @@ public:
 class FStringTable
 {
 public:
+	enum : uint32_t
+	{
+		default_table = MAKE_ID('*', '*', 0, 0),
+		global_table = MAKE_ID('*', 0, 0, 0),
+		dehacked_table = MAKE_ID('*', '*', '*', 0)
+	};
+
 	using LangMap = TMap<uint32_t, StringMap>;
 
 	void LoadStrings ();
 	void UpdateLanguage();
-	StringMap GetDefaultStrings() { return allStrings[MAKE_ID('*', '*', 0, 0)]; }	// Dehacked needs these for comparison
+	StringMap GetDefaultStrings() { return allStrings[default_table]; }	// Dehacked needs these for comparison
 	void SetDehackedStrings(StringMap && map)
 	{
-		allStrings.Insert(MAKE_ID('*', '*', '*', 0), map);
+		allStrings.Insert(dehacked_table, map);
 		UpdateLanguage();
 	}
-
+	
+	const char *GetString(const char *name, uint32_t *langtable) const;
 	const char *operator() (const char *name) const;	// Never returns NULL
-	const char *operator[] (const char *name) const;	// Can return NULL
+	const char *operator[] (const char *name) const
+	{
+		return GetString(name, nullptr);
+	}
 	bool exists(const char *name);
 
 private:
 
 	LangMap allStrings;
-	TArray<StringMap*> currentLanguageSet;
+	TArray<std::pair<uint32_t, StringMap*>> currentLanguageSet;
 
 	void LoadLanguage (int lumpnum);
 	static size_t ProcessEscapes (char *str);

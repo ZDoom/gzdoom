@@ -485,7 +485,7 @@ void FString::DeleteLastCharacter()
 {
 	if (Len() == 0) return;
 	auto pos = Len() - 1;
-	while (pos > 0 && Chars[pos] >= 0x80 && Chars[pos] < 0xc0) pos--;
+	while (pos > 0 && uint8_t(Chars[pos]) >= 0x80 && uint8_t(Chars[pos]) < 0xc0) pos--;
 	if (pos <= 0)
 	{
 		Data()->Release();

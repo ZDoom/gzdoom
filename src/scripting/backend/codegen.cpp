@@ -322,7 +322,7 @@ static FxExpression *StringConstToChar(FxExpression *basex)
 	int chr = str.GetNextCharacter(position);
 
 	// Only succeed if the full string is consumed, i.e. it contains only one code point.
-	if (position == str.Len())
+	if (position == (int)str.Len())
 	{
 		return new FxConstant(chr, basex->ScriptPosition);
 	}

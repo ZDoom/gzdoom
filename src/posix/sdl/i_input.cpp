@@ -471,11 +471,18 @@ void MessagePump (const SDL_Event &sev)
 	case SDL_TEXTINPUT:
 		if (GUICapture)
 		{
-			event.type = EV_GUI_Event;
-			event.subtype = EV_GUI_Char;
-			event.data1 = sev.text.text[0];
-			event.data2 = !!(SDL_GetModState() & KMOD_ALT);
-			D_PostEvent (&event);
+			int utf8_decode(const char *src, int *size);
+			int size;
+			
+			int unichar = utf8_decode(sev.text.text, &size);
+			if (size != 4)
+			{
+				event.type = EV_GUI_Event;
+				event.subtype = EV_GUI_Char;
+				event.data1 = (int16_t)unichar;
+				event.data2 = !!(SDL_GetModState() & KMOD_ALT);
+				D_PostEvent (&event);
+			}
 		}
 		break;
 

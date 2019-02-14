@@ -2990,3 +2990,5 @@ TXT_NEED_OPASS = "You need the Oracle Pass!";
 TXT_FREED_PRISONERS = "You've freed the prisoners!";
 TXT_DESTROYED_CONVERTER = "You've destroyed the Converter!";
 TXT_COMPLETED_TRAINING = "Congratulations! You have completed the training area";
+
+TXT_QUITENDOOM = "Press any key or click anywhere in the window to quit.";

@@ -55,6 +55,8 @@ int ListGetInt(VMVa_List &tags);
 // This can handle both ISO 8859-1 and UTF-8, as well as mixed strings
 // between both encodings, which may happen if inconsistent encoding is 
 // used between different files in a mod.
+// The long term goal should be to convert all text to UTF-8 on loading and
+// make this require pure UTF-8 input.
 //
 //==========================================================================
 
@@ -66,6 +68,45 @@ int GetCharFromString(const uint8_t *&string)
 
 	if (z < 192)
 	{
+		// Handle Windows 1252 characters
+		if (z >= 128 && z < 160)
+		{
+			static const uint16_t map0x80_0x9f[] = {
+				0x20AC,
+				0x81  ,
+				0x201A,
+				0x0192,
+				0x201E,
+				0x2026,
+				0x2020,
+				0x2021,
+				0x02C6,
+				0x2030,
+				0x0160,
+				0x2039,
+				0x0152,
+				0x8d  ,
+				0x017D,
+				0x8f  ,
+				0x90  ,
+				0x2018,
+				0x2019,
+				0x201C,
+				0x201D,
+				0x2022,
+				0x2013,
+				0x2014,
+				0x02DC,
+				0x2122,
+				0x0161,
+				0x203A,
+				0x0153,
+				0x9d  ,
+				0x017E,
+				0x0178,
+			};
+			return map0x80_0x9f[z - 128];
+		}
 		return z;
 	}
 	else if (z <= 223)

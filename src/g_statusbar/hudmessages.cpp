@@ -771,7 +771,8 @@ bool DHUDMessageTypeOnFadeOut::Tick ()
 				if (State == 3 && --step >= 0)
 				{
 					linedrawcount++;
-					if (text[linevis++] == TEXTCOLOR_ESCAPE)
+					
+					if (text.GetNextCharacter(linevis) == TEXTCOLOR_ESCAPE)
 					{
 						if (text[linevis] == '[')
 						{ // named color

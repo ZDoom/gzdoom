@@ -41,7 +41,7 @@
 #endif
 
 #ifndef _WIN32
-#define LoadLibrary(x) dlopen((x), RTLD_LAZY)
+#define LoadLibraryA(x) dlopen((x), RTLD_LAZY)
 #define GetProcAddress(a,b) dlsym((a),(b))
 #define FreeLibrary(x) dlclose((x))
 using HMODULE = void*;
@@ -83,14 +83,14 @@ void FModule::Unload()
 bool FModule::Open(const char* lib)
 {
 #ifdef _WIN32
-	if((handle = GetModuleHandle(lib)) != nullptr)
+	if((handle = GetModuleHandleA(lib)) != nullptr)
 		return true;
 #else
 	// Loading an empty string in Linux doesn't do what we expect it to.
 	if(*lib == '\0')
 		return false;
 #endif
-	handle = LoadLibrary(lib);
+	handle = LoadLibraryA(lib);
 	return handle != nullptr;
 }
 

@@ -490,7 +490,7 @@ void FResourceFile::JunkLeftoverFilters(void *lumps, size_t lumpsize, uint32_t m
 		for (void *p = (uint8_t *)lumps + start * lumpsize; p < stop; p = (uint8_t *)p + lumpsize)
 		{
 			FResourceLump *lump = (FResourceLump *)p;
-			lump->FullName = 0;
+			lump->FullName = "";
 			lump->Name[0] = '\0';
 			lump->Namespace = ns_hidden;
 		}
@@ -720,7 +720,7 @@ bool FMemoryFile::Open(bool quiet)
     Lumps[0].LumpSize = (int)Reader.GetLength();
     Lumps[0].Namespace = ns_global;
     Lumps[0].Flags = 0;
-    Lumps[0].FullName = nullptr;
+    Lumps[0].FullName = "";
     NumLumps = 1;
     return true;
 }

@@ -397,7 +397,7 @@ DWORD *GetTopOfStack (void *top)
 static HANDLE WriteMyMiniDump (void)
 {
 	MINIDUMP_EXCEPTION_INFORMATION exceptor = { DbgThreadID, &CrashPointers, FALSE };
-	char dbghelpPath[MAX_PATH+12], *bs;
+	WCHAR dbghelpPath[MAX_PATH+12], *bs;
 	WRITEDUMP pMiniDumpWriteDump;
 	HANDLE file;
 	BOOL good = FALSE;
@@ -405,17 +405,17 @@ static HANDLE WriteMyMiniDump (void)
 
 	// Make sure dbghelp.dll and MiniDumpWriteDump are available
 	// Try loading from the application directory first, then from the search path.
-	GetModuleFileName (NULL, dbghelpPath, MAX_PATH);
+	GetModuleFileNameW (NULL, dbghelpPath, MAX_PATH);
 	dbghelpPath[MAX_PATH] = 0;
-	bs = strrchr (dbghelpPath, '\\');
+	bs = wcsrchr (dbghelpPath, '\\');
 	if (bs != NULL)
 	{
-		strcpy (bs + 1, "dbghelp.dll");
-		dbghelp = LoadLibrary (dbghelpPath);
+		wcscpy (bs + 1, L"dbghelp.dll");
+		dbghelp = LoadLibraryW (dbghelpPath);
 	}
 	if (dbghelp == NULL)
 	{
-		dbghelp = LoadLibrary ("dbghelp.dll");
+		dbghelp = LoadLibraryA ("dbghelp.dll");
 		if (dbghelp == NULL)
 		{
 			NeedDbgHelp = true;
@@ -852,7 +852,7 @@ HANDLE WriteTextReport ()
 
 static void AddToolHelp (HANDLE file)
 {
-	HMODULE kernel = GetModuleHandle ("kernel32.dll");
+	HMODULE kernel = GetModuleHandleA ("kernel32.dll");
 	if (kernel == NULL)
 		return;
 
@@ -1251,7 +1251,7 @@ static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack, DWORD 
 
 	Writef (file, "\r\nCall trace:\r\n  rip=%p  <- Here it dies.\r\n", CrashAddress);
 
-	kernel = GetModuleHandle("kernel32.dll");
+	kernel = GetModuleHandleA("kernel32.dll");
 	if (kernel == NULL || NULL == (RtlLookupFunctionEntry =
 		(RTLLOOKUPFUNCTIONENTRY)GetProcAddress(kernel, "RtlLookupFunctionEntry")))
 	{
@@ -1391,18 +1391,18 @@ static void DumpBytes (HANDLE file, uint8_t *address)
 
 static HANDLE CreateTempFile ()
 {
-	char temppath[MAX_PATH-13];
-	char tempname[MAX_PATH];
-	if (!GetTempPath (sizeof(temppath), temppath))
+	WCHAR temppath[MAX_PATH-13];
+	WCHAR tempname[MAX_PATH];
+	if (!GetTempPathW (countof(temppath), temppath))
 	{
 		temppath[0] = '.';
 		temppath[1] = '\0';
 	}
-	if (!GetTempFileName (temppath, "zdo", 0, tempname))
+	if (!GetTempFileNameW (temppath, L"zdo", 0, tempname))
 	{
 		return INVALID_HANDLE_VALUE;
 	}
-	return CreateFile (tempname, GENERIC_WRITE|GENERIC_READ, 0, NULL, CREATE_ALWAYS,
+	return CreateFileW (tempname, GENERIC_WRITE|GENERIC_READ, 0, NULL, CREATE_ALWAYS,
 		FILE_ATTRIBUTE_TEMPORARY|FILE_FLAG_DELETE_ON_CLOSE|FILE_FLAG_SEQUENTIAL_SCAN,
 		NULL);
 }
@@ -1939,7 +1939,7 @@ static INT_PTR CALLBACK OverviewDlgProc (HWND hDlg, UINT message, WPARAM wParam,
 		{
 			if (link->msg == WM_LBUTTONDOWN)
 			{
-				ShellExecute (NULL, "open", BUGS_FORUM_URL, NULL, NULL, 0);
+				ShellExecuteA (NULL, "open", BUGS_FORUM_URL, NULL, NULL, 0);
 				SetWindowLongPtr (hDlg, DWLP_MSGRESULT, 1);
 				return TRUE;
 			}
@@ -1965,8 +1965,8 @@ static INT_PTR CALLBACK OverviewDlgProc (HWND hDlg, UINT message, WPARAM wParam,
 
 static INT_PTR CALLBACK CrashDlgProc (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	static CHAR overview[] = "Overview";
-	static CHAR details[] = "Details";
+	static WCHAR overview[] = L"Overview";
+	static WCHAR details[] = L"Details";
 	HWND edit;
 	TCITEM tcitem;
 	RECT tabrect, tcrect;
@@ -1987,14 +1987,14 @@ static INT_PTR CALLBACK CrashDlgProc (HWND hDlg, UINT message, WPARAM wParam, LP
 		// dialog template, and the resultant window is stored as the lParam for
 		// the corresponding tab.
 		tcitem.pszText = overview;
-		tcitem.lParam = (LPARAM)CreateDialogParam (g_hInst, MAKEINTRESOURCE(IDD_CRASHOVERVIEW), hDlg, OverviewDlgProc, (LPARAM)edit);
+		tcitem.lParam = (LPARAM)CreateDialogParamW (g_hInst, MAKEINTRESOURCE(IDD_CRASHOVERVIEW), hDlg, OverviewDlgProc, (LPARAM)edit);
 		TabCtrl_InsertItem (edit, 0, &tcitem);
 		TabCtrl_GetItemRect (edit, 0, &tabrect);
 		SetWindowPos ((HWND)tcitem.lParam, HWND_TOP, tcrect.left + 3, tcrect.top + tabrect.bottom + 3,
 			tcrect.right - tcrect.left - 8, tcrect.bottom - tcrect.top - tabrect.bottom - 8, 0);
 
 		tcitem.pszText = details;
-		tcitem.lParam = (LPARAM)CreateDialogParam (g_hInst, MAKEINTRESOURCE(IDD_CRASHDETAILS), hDlg, DetailsDlgProc, (LPARAM)edit);
+		tcitem.lParam = (LPARAM)CreateDialogParamW (g_hInst, MAKEINTRESOURCE(IDD_CRASHDETAILS), hDlg, DetailsDlgProc, (LPARAM)edit);
 		TabCtrl_InsertItem (edit, 1, &tcitem);
 		SetWindowPos ((HWND)tcitem.lParam, HWND_TOP, tcrect.left + 3, tcrect.top + tabrect.bottom + 3,
 			tcrect.right - tcrect.left - 8, tcrect.bottom - tcrect.top - tabrect.bottom - 8, 0);
@@ -2083,7 +2083,7 @@ static INT_PTR CALLBACK DetailsDlgProc (HWND hDlg, UINT message, WPARAM wParam, 
 			SendMessage (ctrl, LB_RESETCONTENT, 0, 0);
 			for (i = 0; i < NumFiles; ++i)
 			{
-				SendMessage (ctrl, LB_ADDSTRING, 0, (LPARAM)TarFiles[i].Filename);
+				SendMessageA (ctrl, LB_ADDSTRING, 0, (LPARAM)TarFiles[i].Filename);
 			}
 			if (j == LB_ERR || j >= i) j = 0;
 			SendMessage (ctrl, LB_SETCURSEL, j, 0);
@@ -2258,7 +2258,7 @@ static void SetEditControl (HWND edit, HWND sizedisplay, int filenum)
 	{
 		mysnprintf (sizebuf, countof(sizebuf), "(%lu KB)", size/1024);
 	}
-	SetWindowText (sizedisplay, sizebuf);
+	SetWindowTextA (sizedisplay, sizebuf);
 
 	SetWindowLongPtr (edit, GWLP_USERDATA, filenum);
 
@@ -3243,21 +3243,21 @@ static void SaveReport (HANDLE file)
 		sizeof(ofn)
 #endif
 		, };
-	char filename[256];
+	WCHAR filename[256];
 
-	ofn.lpstrFilter = "Zip file (*.zip)\0*.zip\0";
-	strcpy (filename, "CrashReport.zip");
+	ofn.lpstrFilter = L"Zip file (*.zip)\0*.zip\0";
+	wcscpy (filename, L"CrashReport.zip");
 	ofn.lpstrFile = filename;
-	ofn.nMaxFile = sizeof(filename);
+	ofn.nMaxFile = countof(filename);
 
-	while (GetSaveFileName (&ofn))
+	while (GetSaveFileNameW (&ofn))
 	{
-		HANDLE ofile = CreateFile (ofn.lpstrFile, GENERIC_WRITE, 0, NULL,
+		HANDLE ofile = CreateFileW (ofn.lpstrFile, GENERIC_WRITE, 0, NULL,
 			CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL|FILE_FLAG_SEQUENTIAL_SCAN,
 			NULL);
 		if (ofile == INVALID_HANDLE_VALUE)
 		{
-			if (MessageBox (NULL, "Could not open the crash report file",
+			if (MessageBoxA (NULL, "Could not open the crash report file",
 				"Save As failed", MB_RETRYCANCEL) == IDRETRY)
 			{
 				continue;
@@ -3306,7 +3306,7 @@ void DisplayCrashLog ()
 			"detailed information about the crash.\n"
 			"\nThis is all that is available:\n\nCode=XXXXXXXX\nAddr=XXXXXXXX";
 		mysnprintf (ohPoo + countof(ohPoo) - 23, 23, "%08lX\nAddr=%p", CrashCode, CrashAddress);
-		MessageBox (NULL, ohPoo, GAMENAME" Very Fatal Error", MB_OK|MB_ICONSTOP);
+		MessageBoxA (NULL, ohPoo, GAMENAME" Very Fatal Error", MB_OK|MB_ICONSTOP);
 		if (WinHlp32 != NULL)
 		{
 			FreeLibrary (WinHlp32);
@@ -3314,7 +3314,7 @@ void DisplayCrashLog ()
 	}
 	else
 	{
-		HMODULE uxtheme = LoadLibrary ("uxtheme.dll");
+		HMODULE uxtheme = LoadLibraryA ("uxtheme.dll");
 		if (uxtheme != NULL)
 		{
 			pEnableThemeDialogTexture = (HRESULT (__stdcall *)(HWND,DWORD))GetProcAddress (uxtheme, "EnableThemeDialogTexture");

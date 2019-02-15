@@ -57,6 +57,9 @@
 #define IGNORE_FORMAT_POST
 #endif
 
+#ifdef _WIN32
+std::wstring WideString(const char *);
+#endif
 
 struct FStringData
 {
@@ -128,6 +131,12 @@ public:
 	FString (const char *copyStr);
 	FString (const char *copyStr, size_t copyLen);
 	FString (char oneChar);
+	// This is intentionally #ifdef'd. The only code which needs this is parts of the Windows backend that receive Unicode text from the system.
+#ifdef _WIN32
+	explicit FString(const wchar_t *copyStr);
+	FString &operator = (const wchar_t *copyStr);
+	std::wstring WideString() const { return ::WideString(Chars); }
+#endif
 
 	// Concatenation constructors
 	FString (const FString &head, const FString &tail);

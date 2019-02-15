@@ -1169,8 +1169,8 @@ class PlayerPawn : Actor
 		// Strife's player can't run when its health is below 10
 		if (health <= RunHealth)
 		{
-			forward = clamp(forward, -gameinfo.normforwardmove[0], gameinfo.normforwardmove[0]);
-			side = clamp(side, -gameinfo.normsidemove[0], gameinfo.normsidemove[0]);
+			forward = clamp(forward, -gameinfo.normforwardmove[0]*256, gameinfo.normforwardmove[0]*256);
+			side = clamp(side, -gameinfo.normsidemove[0]*256, gameinfo.normsidemove[0]*256);
 		}
 
 		// [GRB]

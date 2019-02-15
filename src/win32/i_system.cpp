@@ -285,10 +285,10 @@ static void SubsetLanguageIDs(LCID id, LCTYPE type, int idx)
 	LCID langid;
 	char *idp;
 
-	if (!GetLocaleInfo(id, type, buf, 8))
+	if (!GetLocaleInfoA(id, type, buf, 8))
 		return;
 	langid = MAKELCID(strtoul(buf, NULL, 16), SORT_DEFAULT);
-	if (!GetLocaleInfo(langid, LOCALE_SABBREVLANGNAME, buf, 8))
+	if (!GetLocaleInfoA(langid, LOCALE_SABBREVLANGNAME, buf, 8))
 		return;
 	idp = (char *)(&LanguageIDs[idx]);
 	memset (idp, 0, 4);
@@ -444,7 +444,7 @@ void I_FatalError(const char *error, ...)
 		va_start(argptr, error);
 		myvsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
 		va_end(argptr);
-		OutputDebugString(errortext);
+		OutputDebugStringA(errortext);
 
 		// Record error to log (if logging)
 		if (Logfile)
@@ -480,7 +480,7 @@ void I_Error(const char *error, ...)
 	va_start(argptr, error);
 	myvsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
 	va_end(argptr);
-	OutputDebugString(errortext);
+	OutputDebugStringA(errortext);
 
 	throw CRecoverableError(errortext);
 }
@@ -768,7 +768,7 @@ static void SetQueryIWad(HWND dialog)
 
 	if (!query && queryiwad)
 	{
-		MessageBox(dialog,
+		MessageBoxA(dialog,
 			"You have chosen not to show this dialog box in the future.\n"
 			"If you wish to see it again, hold down SHIFT while starting " GAMENAME ".",
 			"Don't ask me this again",
@@ -796,12 +796,14 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 	case WM_INITDIALOG:
 		// Add our program name to the window title
 		{
-			TCHAR label[256];
+			WCHAR label[256];
 			FString newlabel;
 
-			GetWindowText(hDlg, label, countof(label));
-			newlabel.Format(GAMESIG " %s: %s", GetVersionString(), label);
-			SetWindowText(hDlg, newlabel.GetChars());
+			GetWindowTextW(hDlg, label, countof(label));
+			FString alabel(label);
+			newlabel.Format(GAMESIG " %s: %s", GetVersionString(), alabel.GetChars());
+			auto wlabel = newlabel.WideString();
+			SetWindowTextW(hDlg, wlabel.c_str());
 		}
 
 		// [SP] Upstreamed from Zandronum
@@ -818,20 +820,20 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 
 		// Set up our version string.
 		sprintf(szString, "Version %s.", GetVersionString());
-		SetDlgItemText (hDlg, IDC_WELCOME_VERSION, szString);
+		SetDlgItemTextA (hDlg, IDC_WELCOME_VERSION, szString);
 
 		// Populate the list with all the IWADs found
 		ctrl = GetDlgItem(hDlg, IDC_IWADLIST);
 		for (i = 0; i < NumWads; i++)
 		{
-			FString work;
 			const char *filepart = strrchr(WadList[i].Path, '/');
 			if (filepart == NULL)
 				filepart = WadList[i].Path;
 			else
 				filepart++;
-			work.Format("%s (%s)", WadList[i].Name.GetChars(), filepart);
-			SendMessage(ctrl, LB_ADDSTRING, 0, (LPARAM)work.GetChars());
+			FStringf work("%s (%s)", WadList[i].Name.GetChars(), filepart);
+			std::wstring wide = work.WideString();
+			SendMessage(ctrl, LB_ADDSTRING, 0, (LPARAM)wide.c_str());
 			SendMessage(ctrl, LB_SETITEMDATA, i, (LPARAM)i);
 		}
 		SendMessage(ctrl, LB_SETCURSEL, DefaultWad, 0);
@@ -1177,7 +1179,7 @@ bool I_WriteIniFailed()
 	);
 	errortext.Format ("The config file %s could not be written:\n%s", GameConfig->GetPathName(), lpMsgBuf);
 	LocalFree (lpMsgBuf);
-	return MessageBox(Window, errortext.GetChars(), GAMENAME " configuration not saved", MB_ICONEXCLAMATION | MB_RETRYCANCEL) == IDRETRY;
+	return MessageBoxA(Window, errortext.GetChars(), GAMENAME " configuration not saved", MB_ICONEXCLAMATION | MB_RETRYCANCEL) == IDRETRY;
 }
 
 //==========================================================================
@@ -1188,9 +1190,13 @@ bool I_WriteIniFailed()
 //
 //==========================================================================
 
+
 void *I_FindFirst(const char *filespec, findstate_t *fileinfo)
 {
-	return FindFirstFileA(filespec, (LPWIN32_FIND_DATAA)fileinfo);
+	static_assert(sizeof(WIN32_FIND_DATAW) == sizeof(fileinfo->FindData), "Findata size mismatch");
+	auto widespec = WideString(filespec);
+	fileinfo->UTF8Name = "";
+	return FindFirstFileW(widespec.c_str(), (LPWIN32_FIND_DATAW)&fileinfo->FindData);
 }
 
 //==========================================================================
@@ -1203,7 +1209,8 @@ void *I_FindFirst(const char *filespec, findstate_t *fileinfo)
 
 int I_FindNext(void *handle, findstate_t *fileinfo)
 {
-	return !FindNextFileA((HANDLE)handle, (LPWIN32_FIND_DATAA)fileinfo);
+	fileinfo->UTF8Name = "";
+	return !FindNextFileW((HANDLE)handle, (LPWIN32_FIND_DATAW)&fileinfo->FindData);
 }
 
 //==========================================================================
@@ -1221,32 +1228,43 @@ int I_FindClose(void *handle)
 
 //==========================================================================
 //
+// I_FindName
+//
+// Returns the name for an entry
+//
+//==========================================================================
+
+const char *I_FindName(findstate_t *fileinfo)
+{
+	if (fileinfo->UTF8Name.IsEmpty()) fileinfo->UTF8Name = fileinfo->FindData.Name;
+	return fileinfo->UTF8Name.GetChars();
+}
+
+//==========================================================================
+//
 // QueryPathKey
 //
 // Returns the value of a registry key into the output variable value.
 //
 //==========================================================================
 
-static bool QueryPathKey(HKEY key, const char *keypath, const char *valname, FString &value)
+static bool QueryPathKey(HKEY key, const wchar_t *keypath, const wchar_t *valname, FString &value)
 {
 	HKEY pathkey;
 	DWORD pathtype;
 	DWORD pathlen;
 	LONG res;
 
+	value = "";
 	if(ERROR_SUCCESS == RegOpenKeyEx(key, keypath, 0, KEY_QUERY_VALUE, &pathkey))
 	{
 		if (ERROR_SUCCESS == RegQueryValueEx(pathkey, valname, 0, &pathtype, NULL, &pathlen) &&
 			pathtype == REG_SZ && pathlen != 0)
 		{
 			// Don't include terminating null in count
-			char *chars = value.LockNewBuffer(pathlen - 1);
-			res = RegQueryValueEx(pathkey, valname, 0, NULL, (LPBYTE)chars, &pathlen);
-			value.UnlockBuffer();
-			if (res != ERROR_SUCCESS)
-			{
-				value = "";
-			}
+			TArray<wchar_t> chars(pathlen + 1, true);
+			res = RegQueryValueEx(pathkey, valname, 0, NULL, (LPBYTE)chars.Data(), &pathlen);
+			if (res == ERROR_SUCCESS) value = FString(chars.Data());
 		}
 		RegCloseKey(pathkey);
 	}
@@ -1268,35 +1286,35 @@ TArray<FString> I_GetGogPaths()
 {
 	TArray<FString> result;
 	FString path;
-	FString gamepath;
+	std::wstring gamepath;
 
 #ifdef _WIN64
-	FString gogregistrypath = "Software\\Wow6432Node\\GOG.com\\Games";
+	std::wstring gogregistrypath = L"Software\\Wow6432Node\\GOG.com\\Games";
 #else
 	// If a 32-bit ZDoom runs on a 64-bit Windows, this will be transparently and
 	// automatically redirected to the Wow6432Node address instead, so this address
 	// should be safe to use in all cases.
-	FString gogregistrypath = "Software\\GOG.com\\Games";
+	std::wstring gogregistrypath = "Software\\GOG.com\\Games";
 #endif
 
 	// Look for Ultimate Doom
-	gamepath = gogregistrypath + "\\1435827232";
-	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.GetChars(), "Path", path))
+	gamepath = gogregistrypath + L"\\1435827232";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.c_str(), L"Path", path))
 	{
 		result.Push(path);	// directly in install folder
 	}
 
 	// Look for Doom II
-	gamepath = gogregistrypath + "\\1435848814";
-	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.GetChars(), "Path", path))
+	gamepath = gogregistrypath + L"\\1435848814";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.c_str(), L"Path", path))
 	{
 		result.Push(path + "/doom2");	// in a subdirectory
 		// If direct support for the Master Levels is ever added, they are in path + /master/wads
 	}
 
 	// Look for Final Doom
-	gamepath = gogregistrypath + "\\1435848742";
-	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.GetChars(), "Path", path))
+	gamepath = gogregistrypath + L"\\1435848742";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.c_str(), L"Path", path))
 	{
 		// in subdirectories
 		result.Push(path + "/TNT");
@@ -1304,15 +1322,15 @@ TArray<FString> I_GetGogPaths()
 	}
 
 	// Look for Doom 3: BFG Edition
-	gamepath = gogregistrypath + "\\1135892318";
-	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.GetChars(), "Path", path))
+	gamepath = gogregistrypath + L"\\1135892318";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.c_str(), L"Path", path))
 	{
 		result.Push(path + "/base/wads");	// in a subdirectory
 	}
 
 	// Look for Strife: Veteran Edition
-	gamepath = gogregistrypath + "\\1432899949";
-	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.GetChars(), "Path", path))
+	gamepath = gogregistrypath + L"\\1432899949";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.c_str(), L"Path", path))
 	{
 		result.Push(path);	// directly in install folder
 	}
@@ -1346,9 +1364,9 @@ TArray<FString> I_GetSteamPath()
 
 	FString path;
 
-	if (!QueryPathKey(HKEY_CURRENT_USER, "Software\\Valve\\Steam", "SteamPath", path))
+	if (!QueryPathKey(HKEY_CURRENT_USER, L"Software\\Valve\\Steam", L"SteamPath", path))
 	{
-		if (!QueryPathKey(HKEY_LOCAL_MACHINE, "Software\\Valve\\Steam", "InstallPath", path))
+		if (!QueryPathKey(HKEY_LOCAL_MACHINE, L"Software\\Valve\\Steam", L"InstallPath", path))
 			return result;
 	}
 	path += "/SteamApps/common/";
@@ -1375,7 +1393,7 @@ unsigned int I_MakeRNGSeed()
 
 	// If RtlGenRandom is available, use that to avoid increasing the
 	// working set by pulling in all of the crytographic API.
-	HMODULE advapi = GetModuleHandle("advapi32.dll");
+	HMODULE advapi = GetModuleHandleA("advapi32.dll");
 	if (advapi != NULL)
 	{
 		BOOLEAN (APIENTRY *RtlGenRandom)(void *, ULONG) =
@@ -1414,28 +1432,21 @@ unsigned int I_MakeRNGSeed()
 //
 //==========================================================================
 
-FString I_GetLongPathName(FString shortpath)
+FString I_GetLongPathName(const FString &shortpath)
 {
-	using OptWin32::GetLongPathNameA;
-
-	// Doesn't exist on NT4
-	if (!GetLongPathNameA)
-		return shortpath;
-
-	DWORD buffsize = GetLongPathNameA(shortpath.GetChars(), NULL, 0);
+	std::wstring wshortpath = shortpath.WideString();
+	DWORD buffsize = GetLongPathNameW(wshortpath.c_str(), nullptr, 0);
 	if (buffsize == 0)
 	{ // nothing to change (it doesn't exist, maybe?)
 		return shortpath;
 	}
-	TCHAR *buff = new TCHAR[buffsize];
-	DWORD buffsize2 = GetLongPathNameA(shortpath.GetChars(), buff, buffsize);
+	TArray<WCHAR> buff(buffsize, true);
+	DWORD buffsize2 = GetLongPathNameW(wshortpath.c_str(), buff.Data(), buffsize);
 	if (buffsize2 >= buffsize)
 	{ // Failure! Just return the short path
-		delete[] buff;
 		return shortpath;
 	}
-	FString longpath(buff, buffsize2);
-	delete[] buff;
+	FString longpath(buff.Data());
 	return longpath;
 }
 

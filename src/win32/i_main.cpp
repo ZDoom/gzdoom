@@ -73,6 +73,7 @@
 #include "s_sound.h"
 #include "vm.h"
 #include "i_system.h"
+#include "gstrings.h"
 
 #include "stats.h"
 #include "st_start.h"
@@ -143,10 +144,7 @@ FModule User32Module{"User32"};
 namespace OptWin32 {
 #define DYN_WIN32_SYM(x) decltype(x) x{#x}
 
-DYN_WIN32_SYM(SHGetFolderPathA);
 DYN_WIN32_SYM(SHGetKnownFolderPath);
-DYN_WIN32_SYM(GetLongPathNameA);
-DYN_WIN32_SYM(GetMonitorInfoA);
 
 #undef DYN_WIN32_SYM
 } // namespace OptWin32
@@ -422,7 +420,6 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	HBRUSH hbr;
 	HGDIOBJ oldfont;
 	RECT rect;
-	int titlelen;
 	SIZE size;
 	LOGFONT lf;
 	TEXTMETRIC tm;
@@ -440,7 +437,7 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		lf.lfCharSet = ANSI_CHARSET;
 		lf.lfWeight = FW_BOLD;
 		lf.lfPitchAndFamily = VARIABLE_PITCH | FF_ROMAN;
-		strcpy (lf.lfFaceName, "Trebuchet MS");
+		wcscpy (lf.lfFaceName, L"Trebuchet MS");
 		GameTitleFont = CreateFontIndirect (&lf);
 
 		oldfont = SelectObject (hdc, GetStockObject (DEFAULT_GUI_FONT));
@@ -459,7 +456,7 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		SelectObject (hdc, oldfont);
 
 		// Create log read-only edit control
-		view = CreateWindowEx (WS_EX_NOPARENTNOTIFY, "RichEdit20W", NULL,
+		view = CreateWindowExW (WS_EX_NOPARENTNOTIFY, L"RichEdit20W", nullptr,
 			WS_CHILD | WS_VISIBLE | WS_VSCROLL |
 			ES_LEFT | ES_MULTILINE | WS_CLIPSIBLINGS,
 			0, 0, 0, 0,
@@ -489,8 +486,8 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		ConWindow = view;
 		ReleaseDC (hWnd, hdc);
 
-		view = CreateWindowEx (WS_EX_NOPARENTNOTIFY, "STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW, 0, 0, 0, 0, hWnd, NULL, inst, NULL);
-		if (view == NULL)
+		view = CreateWindowExW (WS_EX_NOPARENTNOTIFY, L"STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW, 0, 0, 0, 0, hWnd, nullptr, inst, nullptr);
+		if (view == nullptr)
 		{
 			return -1;
 		}
@@ -526,14 +523,14 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			// Calculate width of the title string.
 			SetTextAlign (drawitem->hDC, TA_TOP);
 			oldfont = SelectObject (drawitem->hDC, GameTitleFont != NULL ? GameTitleFont : (HFONT)GetStockObject (DEFAULT_GUI_FONT));
-			titlelen = (int)DoomStartupInfo.Name.Len();
-			GetTextExtentPoint32 (drawitem->hDC, DoomStartupInfo.Name, titlelen, &size);
+			auto widename = DoomStartupInfo.Name.WideString();
+			GetTextExtentPoint32W (drawitem->hDC, widename.c_str(), (int)widename.length(), &size);
 
 			// Draw the title.
 			c = (const PalEntry *)&DoomStartupInfo.FgColor;
 			SetTextColor (drawitem->hDC, RGB(c->r,c->g,c->b));
 			SetBkMode (drawitem->hDC, TRANSPARENT);
-			TextOut (drawitem->hDC, rect.left + (rect.right - rect.left - size.cx) / 2, 2, DoomStartupInfo.Name, titlelen);
+			TextOutW (drawitem->hDC, rect.left + (rect.right - rect.left - size.cx) / 2, 2, widename.c_str(), (int)widename.length());
 			SelectObject (drawitem->hDC, oldfont);
 			return TRUE;
 		}
@@ -555,12 +552,12 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				// where the command prompt would have been in DOS.
 				if (GameTitleWindow == NULL)
 				{
-					static const char QuitText[] = "Press any key or click anywhere in the window to quit.";
+					auto quitmsg = WideString(GStrings("TXT_QUITENDOOM"));
 
 					SetTextColor (drawitem->hDC, RGB(240,240,240));
 					SetBkMode (drawitem->hDC, TRANSPARENT);
 					oldfont = SelectObject (drawitem->hDC, (HFONT)GetStockObject (DEFAULT_GUI_FONT));
-					TextOut (drawitem->hDC, 3, drawitem->rcItem.bottom - DefaultGUIFontHeight - 3, QuitText, countof(QuitText)-1);
+					TextOutW (drawitem->hDC, 3, drawitem->rcItem.bottom - DefaultGUIFontHeight - 3, quitmsg.c_str(), (int)quitmsg.length());
 					SelectObject (drawitem->hDC, oldfont);
 				}
 				return TRUE;
@@ -714,12 +711,13 @@ void RestoreConView()
 
 void ShowErrorPane(const char *text)
 {
-	if (Window == NULL || ConWindow == NULL)
+	auto widetext = WideString(text);
+	if (Window == nullptr || ConWindow == nullptr)
 	{
 		if (text != NULL)
 		{
-			MessageBox (Window, text,
-				GAMESIG " Fatal Error", MB_OK|MB_ICONSTOP|MB_TASKMODAL);
+			MessageBoxW (Window, widetext.c_str(),
+				WGAMENAME " Fatal Error", MB_OK|MB_ICONSTOP|MB_TASKMODAL);
 		}
 		return;
 	}
@@ -730,10 +728,10 @@ void ShowErrorPane(const char *text)
 	}
 	if (text != NULL)
 	{
-		char caption[100];
-		mysnprintf(caption, countof(caption), "Fatal Error - " GAMESIG " %s " X64 " (%s)", GetVersionString(), GetGitTime());
-		SetWindowText (Window, caption);
-		ErrorIcon = CreateWindowEx (WS_EX_NOPARENTNOTIFY, "STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW, 0, 0, 0, 0, Window, NULL, g_hInst, NULL);
+		FStringf caption("Fatal Error - " GAMENAME " %s " X64 " (%s)", GetVersionString(), GetGitTime());
+		auto wcaption = caption.WideString();
+		SetWindowTextW (Window, wcaption.c_str());
+		ErrorIcon = CreateWindowExW (WS_EX_NOPARENTNOTIFY, L"STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW, 0, 0, 0, 0, Window, NULL, g_hInst, NULL);
 		if (ErrorIcon != NULL)
 		{
 			SetWindowLong (ErrorIcon, GWL_ID, IDC_ICONPIC);
@@ -768,21 +766,21 @@ void ShowErrorPane(const char *text)
 		paraformat.dwMask = PFM_STARTINDENT | PFM_OFFSETINDENT | PFM_RIGHTINDENT;
 		paraformat.dxStartIndent = paraformat.dxOffset = paraformat.dxRightIndent = 120;
 		SendMessage (ConWindow, EM_SETPARAFORMAT, 0, (LPARAM)&paraformat);
-		SendMessage (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)"\n");
+		SendMessageW (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)"\n");
 
 		// Find out where the error lines start for the error icon display control.
 		SendMessage (ConWindow, EM_EXGETSEL, 0, (LPARAM)&end);
 		ErrorIconChar = end.cpMax;
 
 		// Now start adding the actual error message.
-		SendMessage (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)"Execution could not continue.\n\n");
+		SendMessageW (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)L"Execution could not continue.\n\n");
 
 		// Restore old charformat but with light yellow text.
 		oldformat.crTextColor = RGB(255,255,170);
 		SendMessage (ConWindow, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&oldformat);
 
 		// Add the error text.
-		SendMessage (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)text);
+		SendMessageW (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)widetext.c_str());
 
 		// Make sure the error text is not scrolled below the window.
 		SendMessage (ConWindow, EM_LINESCROLL, 0, SendMessage (ConWindow, EM_GETLINECOUNT, 0, 0));
@@ -798,8 +796,7 @@ void ShowErrorPane(const char *text)
 	{
 		if (bRet == -1)
 		{
-			MessageBox (Window, text,
-				GAMESIG " Fatal Error", MB_OK|MB_ICONSTOP|MB_TASKMODAL);
+			MessageBoxW (Window, widetext.c_str(), WGAMENAME " Fatal Error", MB_OK|MB_ICONSTOP|MB_TASKMODAL);
 			return;
 		}
 		else if (!IsDialogMessage (ErrorPane, &msg))
@@ -847,7 +844,7 @@ void DoMain (HINSTANCE hInstance)
 		// Under XP, get our session ID so we can know when the user changes/locks sessions.
 		// Since we need to remain binary compatible with older versions of Windows, we
 		// need to extract the ProcessIdToSessionId function from kernel32.dll manually.
-		HMODULE kernel = GetModuleHandle ("kernel32.dll");
+		HMODULE kernel = GetModuleHandleA ("kernel32.dll");
 
 		if (Args->CheckParm("-stdout"))
 		{
@@ -917,23 +914,19 @@ void DoMain (HINSTANCE hInstance)
 		atterm (I_Quit);
 
 		// Figure out what directory the program resides in.
-		char progbuff[1024];
-		if (GetModuleFileName(nullptr, progbuff, sizeof progbuff) == 0)
+		WCHAR progbuff[1024];
+		if (GetModuleFileNameW(nullptr, progbuff, sizeof progbuff) == 0)
 		{
 			I_FatalError("Could not determine program location.");
 		}
 		progbuff[1023] = '\0';
-
-		char *program = progbuff;
-		progdir = program;
-		program = progdir.LockBuffer();
-		if (char *lastsep = strrchr(program, '\\'))
+		if (auto lastsep = wcsrchr(progbuff, '\\'))
 		{
 			lastsep[1] = '\0';
 		}
-		FixPathSeperator(program);
-		progdir.Truncate((long)strlen(program));
-		progdir.UnlockBuffer();
+
+		progdir = progbuff;
+		FixPathSeperator(progdir);
 
 		HDC screenDC = GetDC(0);
 		int dpi = GetDeviceCaps(screenDC, LOGPIXELSX);
@@ -971,12 +964,12 @@ void DoMain (HINSTANCE hInstance)
 			I_FatalError ("Could not register window class");
 		
 		/* create window */
-		char caption[100];
-		mysnprintf(caption, countof(caption), "" GAMESIG " %s " X64 " (%s)", GetVersionString(), GetGitTime());
+		FStringf caption("" GAMESIG " %s " X64 " (%s)", GetVersionString(), GetGitTime());
+		std::wstring wcaption = caption.WideString();
 		Window = CreateWindowEx(
 				WS_EX_APPWINDOW,
 				(LPCTSTR)WinClassName,
-				(LPCTSTR)caption,
+				wcaption.c_str(),
 				WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN,
 				x, y, width, height,
 				(HWND)   NULL,
@@ -1273,7 +1266,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	InitCommonControls ();			// Load some needed controls and be pretty under XP
 
 	// We need to load riched20.dll so that we can create the control.
-	if (NULL == LoadLibrary ("riched20.dll"))
+	if (NULL == LoadLibraryA ("riched20.dll"))
 	{
 		// This should only happen on basic Windows 95 installations, but since we
 		// don't support Windows 95, we have no obligation to provide assistance in
@@ -1357,12 +1350,15 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 // each platform has its own specific version of this function.
 void I_SetWindowTitle(const char* caption)
 {
-	if (caption)
-		SetWindowText(Window, (LPCTSTR)caption);
+	std::wstring widecaption;
+	if (!caption)
+	{
+		FStringf default_caption("" GAMENAME " %s " X64 " (%s)", GetVersionString(), GetGitTime());
+		widecaption = default_caption.WideString();
+	}
 	else
 	{
-		char default_caption[100];
-		mysnprintf(default_caption, countof(default_caption), "" GAMESIG " %s " X64 " (%s)", GetVersionString(), GetGitTime());
-		SetWindowText(Window, default_caption);
+		widecaption = WideString(caption);
 	}
+	SetWindowText(Window, widecaption.c_str());
 }

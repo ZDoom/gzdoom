@@ -1264,6 +1264,7 @@ FString::FString(const wchar_t *copyStr)
 		int size_needed = WideCharToMultiByte(CP_UTF8, 0, copyStr, (int)len, nullptr, 0, nullptr, nullptr);
 		AllocBuffer(size_needed);
 		WideCharToMultiByte(CP_UTF8, 0, copyStr, (int)len, Chars, size_needed, nullptr, nullptr);
+		Chars[size_needed] = 0;
 	}
 }
 
@@ -1280,6 +1281,7 @@ FString &FString::operator=(const wchar_t *copyStr)
 		int size_needed = WideCharToMultiByte(CP_UTF8, 0, copyStr, (int)len, nullptr, 0, nullptr, nullptr);
 		ReallocBuffer(size_needed);
 		WideCharToMultiByte(CP_UTF8, 0, copyStr, (int)len, Chars, size_needed, nullptr, nullptr);
+		Chars[size_needed] = 0;
 	}
 	return *this;
 }

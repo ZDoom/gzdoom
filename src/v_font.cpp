@@ -2494,9 +2494,9 @@ void FFont::FixXMoves()
 			if (myislower(i + FirstChar))
 			{
 				int upper = upperforlower[FirstChar + i];
-				if (upper >= 0)
+				if (upper >= FirstChar && upper <= LastChar )
 				{
-					Chars[i].XMove = Chars[upper].XMove;
+					Chars[i].XMove = Chars[upper - FirstChar].XMove;
 					continue;
 				}
 			}

@@ -798,35 +798,68 @@ void FNotifyBuffer::AddString(int printlevel, FString source)
 	TopGoal = 0;
 }
 
-void AddToConsole (int printlevel, const char *text)
+/* Adds a string to the console and also to the notify buffer */
+int utf8_encode(int32_t codepoint, char *buffer, int *size);
+static TArray<char> UTF8String;
+
+const char *MakeUTF8(const char *outline, int *numchars = nullptr)
 {
-	conbuffer->AddText(printlevel, text, Logfile);
+	UTF8String.Clear();
+	const uint8_t *in = (const uint8_t*)outline;
+
+	if (numchars) *numchars = 0;
+	while (int chr = GetCharFromString(in))
+	{
+		int size = 0;
+		char encode[4];
+		if (!utf8_encode(chr, encode, &size))
+		{
+			for (int i = 0; i < size; i++)
+			{
+				UTF8String.Push(encode[i]);
+			}
+		}
+		if (numchars) *numchars++;
+	}
+	UTF8String.Push(0);
+	return UTF8String.Data();
 }
 
-/* Adds a string to the console and also to the notify buffer */
+void AddToConsole (int printlevel, const char *text)
+{
+	conbuffer->AddText(printlevel, MakeUTF8(text), Logfile);
+}
+
 int PrintString (int printlevel, const char *outline)
 {
 	if (printlevel < msglevel || *outline == '\0')
 	{
 		return 0;
 	}
-
-	if (printlevel != PRINT_LOG)
+	if (printlevel != PRINT_LOG || Logfile != nullptr)
 	{
-		I_PrintStr (outline);
+		// Convert everything coming through here to UTF-8 so that all console text is in a consistent format
+		int count;
+		outline = MakeUTF8(outline, &count);
 
-		AddToConsole (printlevel, outline);
-		if (vidactive && screen && SmallFont)
+		if (printlevel != PRINT_LOG)
 		{
-			NotifyStrings.AddString(printlevel, outline);
+			I_PrintStr(UTF8String.Data());
+
+			conbuffer->AddText(printlevel, outline, Logfile);
+			if (vidactive && screen && SmallFont)
+			{
+				NotifyStrings.AddString(printlevel, outline);
+			}
 		}
+		else if (Logfile != nullptr)
+		{
+			fputs(outline, Logfile);
+			fflush(Logfile);
+		}
+		return count;
 	}
-	else if (Logfile != NULL)
-	{
-		fputs (outline, Logfile);
-		fflush (Logfile);
-	}
-	return (int)strlen (outline);
+	return 0;	// Don't waste time on calculating this if nothing at all was printed...
 }
 
 extern bool gameisdead;

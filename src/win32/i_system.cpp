@@ -69,6 +69,7 @@
 #include "resource.h"
 #include "x86.h"
 #include "stats.h"
+#include "v_text.h"
 
 #include "d_main.h"
 #include "d_net.h"
@@ -480,77 +481,13 @@ void I_Error(const char *error, ...)
 	va_start(argptr, error);
 	myvsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
 	va_end(argptr);
-	OutputDebugStringA(errortext);
+	if (IsDebuggerPresent())
+	{
+		auto wstr = WideString(errortext);
+		OutputDebugStringW(wstr.c_str());
+	}
 
 	throw CRecoverableError(errortext);
-}
-
-//==========================================================================
-//
-// ToEditControl
-//
-// Converts string to Unicode and inserts it into the control.
-//
-//==========================================================================
-
-void ToEditControl(HWND edit, const char *buf, wchar_t *wbuf, int bpos)
-{
-	// Let's just do this ourself. It's not hard, and we can compensate for
-	// special console characters at the same time.
-#if 0
-	MultiByteToWideChar(1252 /* Western */, 0, buf, bpos, wbuf, countof(wbuf));
-	wbuf[bpos] = 0;
-#else
-	static wchar_t notlatin1[32] =		// code points 0x80-0x9F
-	{
-		0x20AC,		// Euro sign
-		0x0081,		// Undefined
-		0x201A,		// Single low-9 quotation mark
-		0x0192,		// Latin small letter f with hook
-		0x201E,		// Double low-9 quotation mark
-		0x2026,		// Horizontal ellipsis
-		0x2020,		// Dagger
-		0x2021,		// Double dagger
-		0x02C6,		// Modifier letter circumflex accent
-		0x2030,		// Per mille sign
-		0x0160,		// Latin capital letter S with caron
-		0x2039,		// Single left-pointing angle quotation mark
-		0x0152,		// Latin capital ligature OE
-		0x008D,		// Undefined
-		0x017D,		// Latin capital letter Z with caron
-		0x008F,		// Undefined
-		0x0090,		// Undefined
-		0x2018,		// Left single quotation mark
-		0x2019,		// Right single quotation mark
-		0x201C,		// Left double quotation mark
-		0x201D,		// Right double quotation mark
-		0x2022,		// Bullet
-		0x2013,		// En dash
-		0x2014,		// Em dash
-		0x02DC,		// Small tilde
-		0x2122,		// Trade mark sign
-		0x0161,		// Latin small letter s with caron
-		0x203A,		// Single right-pointing angle quotation mark
-		0x0153,		// Latin small ligature oe
-		0x009D,		// Undefined
-		0x017E,		// Latin small letter z with caron
-		0x0178		// Latin capital letter Y with diaeresis
-	};
-	for (int i = 0; i <= bpos; ++i)
-	{
-		wchar_t code = (uint8_t)buf[i];
-		if (code >= 0x1D && code <= 0x1F)
-		{ // The bar characters, most commonly used to indicate map changes
-			code = 0x2550;	// Box Drawings Double Horizontal
-		}
-		else if (code >= 0x80 && code <= 0x9F)
-		{
-			code = notlatin1[code - 0x80];
-		}
-		wbuf[i] = code;
-	}
-#endif
-	SendMessageW(edit, EM_REPLACESEL, FALSE, (LPARAM)wbuf); 
 }
 
 //==========================================================================
@@ -562,13 +499,12 @@ void ToEditControl(HWND edit, const char *buf, wchar_t *wbuf, int bpos)
 //
 //==========================================================================
 
-static void DoPrintStr(const char *cp, HWND edit, HANDLE StdOut)
+static void DoPrintStr(const char *cpt, HWND edit, HANDLE StdOut)
 {
-	if (edit == NULL && StdOut == NULL)
+	if (edit == nullptr && StdOut == nullptr && !con_debugoutput)
 		return;
 
-	char buf[256];
-	wchar_t wbuf[countof(buf)];
+	wchar_t wbuf[256];
 	int bpos = 0;
 	CHARRANGE selection;
 	CHARRANGE endselection;
@@ -590,32 +526,53 @@ static void DoPrintStr(const char *cp, HWND edit, HANDLE StdOut)
 		lines_before = (LONG)SendMessage(edit, EM_GETLINECOUNT, 0, 0);
 	}
 
-	while (*cp != 0)
+	const uint8_t *cptr = (const uint8_t*)cpt;
+
+	auto outputIt = [&]()
 	{
-		// 28 is the escape code for a color change.
-		if ((*cp == 28 && bpos != 0) || bpos == 255)
+		wbuf[bpos] = 0;
+		if (edit != nullptr)
 		{
-			buf[bpos] = 0;
-			if (edit != NULL)
-			{
-				ToEditControl(edit, buf, wbuf, bpos);
-			}
-			if (StdOut != NULL)
-			{
-				DWORD bytes_written;
-				WriteFile(StdOut, buf, bpos, &bytes_written, NULL);
-			}
-			bpos = 0;
+			SendMessageW(edit, EM_REPLACESEL, FALSE, (LPARAM)wbuf);
 		}
-		if (*cp != 28)
+		if (con_debugoutput)
 		{
-			buf[bpos++] = *cp++;
+			OutputDebugStringW(wbuf);
+		}
+		if (StdOut != nullptr)
+		{
+			// Convert back to UTF-8.
+			DWORD bytes_written;
+			if (!FancyStdOut)
+			{
+				FString conout(wbuf);
+				WriteFile(StdOut, conout.GetChars(), (DWORD)conout.Len(), &bytes_written, NULL);
+			}
+			else
+			{
+				WriteConsoleW(StdOut, wbuf, bpos, &bytes_written, nullptr);
+			}
+		}
+		bpos = 0;
+	};
+
+	while (int chr = GetCharFromString(cptr))
+	{
+		if ((chr == TEXTCOLOR_ESCAPE && bpos != 0) || bpos == 255)
+		{
+			outputIt();
+		}
+		if (chr != TEXTCOLOR_ESCAPE)
+		{
+			if (chr >= 0x1D && chr <= 0x1F)
+			{ // The bar characters, most commonly used to indicate map changes
+				chr = 0x2550;	// Box Drawings Double Horizontal
+			}
+			wbuf[bpos++] = chr;
 		}
 		else
 		{
-			const uint8_t *color_id = (const uint8_t *)cp + 1;
-			EColorRange range = V_ParseFontColor(color_id, CR_UNTRANSLATED, CR_YELLOW);
-			cp = (const char *)color_id;
+			EColorRange range = V_ParseFontColor(cptr, CR_UNTRANSLATED, CR_YELLOW);
 
 			if (range != CR_UNDEFINED)
 			{
@@ -662,16 +619,7 @@ static void DoPrintStr(const char *cp, HWND edit, HANDLE StdOut)
 	}
 	if (bpos != 0)
 	{
-		buf[bpos] = 0;
-		if (edit != NULL)
-		{
-			ToEditControl(edit, buf, wbuf, bpos);
-		}
-		if (StdOut != NULL)
-		{
-			DWORD bytes_written;
-			WriteFile(StdOut, buf, bpos, &bytes_written, NULL);
-		}
+		outputIt();
 	}
 
 	if (edit != NULL)
@@ -702,35 +650,12 @@ static TArray<FString> bufferedConsoleStuff;
 
 void I_DebugPrint(const char *cp)
 {
-	OutputDebugStringA(cp);
+	auto wstr = WideString(cp);
+	OutputDebugStringW(wstr.c_str());
 }
 
 void I_PrintStr(const char *cp)
 {
-	if (con_debugoutput)
-	{
-		// Strip out any color escape sequences before writing to debug output
-		TArray<char> copy(strlen(cp) + 1, true);
-		const char * srcp = cp;
-		char * dstp = copy.Data();
-
-		while (*srcp != 0)
-		{
-			if (*srcp!=0x1c && *srcp!=0x1d && *srcp!=0x1e && *srcp!=0x1f)
-			{
-				*dstp++=*srcp++;
-			}
-			else
-			{
-				if (srcp[1]!=0) srcp+=2;
-				else break;
-			}
-		}
-		*dstp=0;
-
-		OutputDebugStringA(copy.Data());
-	}
-
 	if (ConWindowHidden)
 	{
 		bufferedConsoleStuff.Push(cp);
@@ -1461,10 +1386,10 @@ FString I_GetLongPathName(const FString &shortpath)
 //
 //==========================================================================
 
-int _stat64i32(const char *path, struct _stat64i32 *buffer)
+int _wstat64i32(const wchar_t *path, struct _stat64i32 *buffer)
 {
 	WIN32_FILE_ATTRIBUTE_DATA data;
-	if(!GetFileAttributesEx(path, GetFileExInfoStandard, &data))
+	if(!GetFileAttributesExW(path, GetFileExInfoStandard, &data))
 		return -1;
 
 	buffer->st_ino = 0;

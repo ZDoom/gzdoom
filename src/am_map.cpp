@@ -3059,7 +3059,15 @@ void DAutomap::drawMarks ()
 			else
 			{
 				char numstr[2] = { char('0' + i), 0 };
-				screen->DrawText(font, am_markcolor, CXMTOF(markpoints[i].x), CYMTOF(markpoints[i].y), numstr, TAG_DONE);
+				double x = markpoints[i].x;
+				double y = markpoints[i].y;
+
+				if (am_rotate == 1 || (am_rotate == 2 && viewactive))
+				{
+					rotatePoint (&x, &y);
+				}
+
+				screen->DrawText(font, am_markcolor, CXMTOF(x), CYMTOF(y), numstr, TAG_DONE);
 			}
 		}
 	}

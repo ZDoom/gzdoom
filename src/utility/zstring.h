@@ -304,6 +304,8 @@ public:
 	double ToDouble () const;
 
 	size_t Len() const { return Data()->Len; }
+	size_t CharacterCount() const;
+	int GetNextCharacter(int &position) const;
 	bool IsEmpty() const { return Len() == 0; }
 	bool IsNotEmpty() const { return Len() != 0; }
 

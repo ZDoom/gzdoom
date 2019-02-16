@@ -1219,7 +1219,7 @@ TArray<FString> I_GetGogPaths()
 	// If a 32-bit ZDoom runs on a 64-bit Windows, this will be transparently and
 	// automatically redirected to the Wow6432Node address instead, so this address
 	// should be safe to use in all cases.
-	std::wstring gogregistrypath = "Software\\GOG.com\\Games";
+	std::wstring gogregistrypath = L"Software\\GOG.com\\Games";
 #endif
 
 	// Look for Ultimate Doom

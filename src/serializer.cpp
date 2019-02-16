@@ -59,114 +59,31 @@
 #include "v_text.h"
 #include "cmdlib.h"
 #include "g_levellocals.h"
+#include "utf8.h"
 
 char nulspace[1024 * 1024 * 4];
 bool save_full = false;	// for testing. Should be removed afterward.
 
-int utf8_encode(int32_t codepoint, char *buffer, int *size)
-{
-	if (codepoint < 0)
-		return -1;
-	else if (codepoint < 0x80)
-	{
-		buffer[0] = (char)codepoint;
-		*size = 1;
-	}
-	else if (codepoint < 0x800)
-	{
-		buffer[0] = 0xC0 + ((codepoint & 0x7C0) >> 6);
-		buffer[1] = 0x80 + ((codepoint & 0x03F));
-		*size = 2;
-	}
-	else if (codepoint < 0x10000)
-	{
-		buffer[0] = 0xE0 + ((codepoint & 0xF000) >> 12);
-		buffer[1] = 0x80 + ((codepoint & 0x0FC0) >> 6);
-		buffer[2] = 0x80 + ((codepoint & 0x003F));
-		*size = 3;
-	}
-	else if (codepoint <= 0x10FFFF)
-	{
-		buffer[0] = 0xF0 + ((codepoint & 0x1C0000) >> 18);
-		buffer[1] = 0x80 + ((codepoint & 0x03F000) >> 12);
-		buffer[2] = 0x80 + ((codepoint & 0x000FC0) >> 6);
-		buffer[3] = 0x80 + ((codepoint & 0x00003F));
-		*size = 4;
-	}
-	else
-		return -1;
-
-	return 0;
-}
-
-int utf8_decode(const char *src, int *size) 
-{
-	int c = src[0] & 255;
-	int r;
-
-	*size = 1;
-	if ((c & 0x80) == 0)
-	{
-		return c;
-	}
-
-	int c1 = src[1] & 255;
-
-	if ((c & 0xE0) == 0xC0) 
-	{
-		r = ((c & 0x1F) << 6) | c1;
-		if (r >= 128) 
-		{
-			*size = 2;
-			return r;
-		}
-		return -1;
-	}
-
-	int c2 = src[2] & 255;
-
-	if ((c & 0xF0) == 0xE0) 
-	{
-		r = ((c & 0x0F) << 12) | (c1 << 6) | c2;
-		if (r >= 2048 && (r < 55296 || r > 57343)) 
-		{
-			*size = 3;
-			return r;
-		}
-		return -1;
-	}
-	
-	int c3 = src[3] & 255;
-
-	if ((c & 0xF8) == 0xF0) 
-	{
-		r = ((c & 0x07) << 18) | (c1 << 12) | (c2 << 6) | c3;
-		if (r >= 65536 && r <= 1114111) 
-		{
-			*size = 4;
-			return r;
-		}
-	}
-	return -1;
-}
+//==========================================================================
+//
+// This will double-encode already existing UTF-8 content.
+// The reason for this behavior is to preserve any original data coming through here, no matter what it is.
+// If these are script-based strings, exact preservation in the serializer is very important.
+//
+//==========================================================================
 
 static TArray<char> out;
 static const char *StringToUnicode(const char *cc, int size = -1)
 {
 	int ch;
-	const char *c = cc;
+	const uint8_t *c = (const uint8_t*)cc;
 	int count = 0;
 	int count1 = 0;
 	out.Clear();
 	while ((ch = (*c++) & 255))
 	{
 		count1++;
-		if (ch >= 128)
-		{
-			if (ch < 0x800) count += 2;
-			else count += 3;
-			// The source cannot contain 4-byte chars.
-		}
+		if (ch >= 128) count += 2;
 		else count++;
 		if (count1 == size && size > 0) break;
 	}
@@ -174,11 +91,11 @@ static const char *StringToUnicode(const char *cc, int size = -1)
 	// we need to convert
 	out.Resize(count + 1);
 	out.Last() = 0;
-	c = cc;
+	c = (const uint8_t*)cc;
 	int i = 0;
-	while ((ch = (*c++) & 255))
+	while ((ch = (*c++)))
 	{
-		utf8_encode(ch, &out[i], &count1);
+		utf8_encode(ch, (uint8_t*)&out[i], &count1);
 		i += count1;
 	}
 	return &out[0];
@@ -191,8 +108,8 @@ static const char *UnicodeToString(const char *cc)
 	while (*cc != 0)
 	{
 		int size;
-		int c = utf8_decode(cc, &size);
-		if (c < 0 || c > 255) c = '?';
+		int c = utf8_decode((const uint8_t*)cc, &size);
+		if (c < 0 || c > 255) c = '?';	// This should never happen because all content was encoded with StringToUnicode which only produces code points 0-255.
 		out[ndx++] = c;
 		cc += size;
 	}

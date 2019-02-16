@@ -49,10 +49,10 @@
 #include "doomstat.h"
 #include "g_levellocals.h"
 #include "v_video.h"
+#include "utf8.h"
 
 extern FRandom pr_exrandom;
 FMemArena FxAlloc(65536);
-int utf8_decode(const char *src, int *size);
 
 struct FLOP
 {
@@ -318,19 +318,13 @@ static FxExpression *StringConstToChar(FxExpression *basex)
 	// This serves as workaround for not being able to use single quoted literals because those are taken for names.
 	ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
 	FString str = constval.GetString();
-	if (str.Len() == 1)
+	int position = 0;
+	int chr = str.GetNextCharacter(position);
+
+	// Only succeed if the full string is consumed, i.e. it contains only one code point.
+	if (position == str.Len())
 	{
-		return new FxConstant(str[0], basex->ScriptPosition);
-	}
-	else if (str.Len() > 1)
-	{
-		// If the string is UTF-8, allow a single character UTF-8 sequence.
-		int size;
-		int c = utf8_decode(str.GetChars(), &size);
-		if (c >= 0 && size_t(size) == str.Len())
-		{
-			return new FxConstant(c, basex->ScriptPosition);
-		}
+		return new FxConstant(chr, basex->ScriptPosition);
 	}
 	return nullptr;
 }

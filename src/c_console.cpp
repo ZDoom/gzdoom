@@ -61,6 +61,7 @@
 #include "c_consolebuffer.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "utf8.h"
 
 
 #include "gi.h"
@@ -167,23 +168,35 @@ struct History
 
 struct FCommandBuffer
 {
+private:
 	FString Text;	// The actual command line text
-	unsigned CursorPos;
-	unsigned StartPos;	// First character to display
+	unsigned CursorPos = 0;
+	unsigned StartPos = 0;	// First character to display
+	unsigned CursorPosChars = 0;
+	unsigned StartPosChars = 0;
 
 	FString YankBuffer;	// Deleted text buffer
-	bool AppendToYankBuffer;	// Append consecutive deletes to buffer
 
-	FCommandBuffer()
-	{
-		CursorPos = StartPos = 0;
-	}
+public:
+	bool AppendToYankBuffer = false;	// Append consecutive deletes to buffer
+
+	FCommandBuffer() = default;
 
 	FCommandBuffer(const FCommandBuffer &o)
 	{
 		Text = o.Text;
 		CursorPos = o.CursorPos;
 		StartPos = o.StartPos;
+	}
+
+	FString GetText() const
+	{
+		return Text;
+	}
+
+	size_t TextLength() const
+	{
+		return Text.Len();
 	}
 
 	void Draw(int x, int y, int scale, bool cursor)
@@ -197,7 +210,7 @@ struct FCommandBuffer
 			if (cursor)
 			{
 				screen->DrawChar(ConFont, CR_YELLOW,
-					x + ConFont->GetCharWidth(0x1c) + (CursorPos - StartPos) * ConFont->GetCharWidth(0xb),
+					x + ConFont->GetCharWidth(0x1c) + (CursorPosChars - StartPosChars) * ConFont->GetCharWidth(0xb),
 					y, '\xb', TAG_DONE);
 			}
 		}
@@ -217,7 +230,7 @@ struct FCommandBuffer
 			if (cursor)
 			{
 				screen->DrawChar(ConFont, CR_YELLOW,
-					x + ConFont->GetCharWidth(0x1c) + (CursorPos - StartPos) * ConFont->GetCharWidth(0xb),
+					x + ConFont->GetCharWidth(0x1c) + (CursorPosChars - StartPosChars) * ConFont->GetCharWidth(0xb),
 					y, '\xb',
 					DTA_VirtualWidth, screen->GetWidth() / scale,
 					DTA_VirtualHeight, screen->GetHeight() / scale,
@@ -226,108 +239,127 @@ struct FCommandBuffer
 		}
 	}
 
+	unsigned BytesForChars(unsigned chars)
+	{
+		unsigned bytes = 0;
+		while (chars > 0)
+		{ 
+			if ((Text[bytes++] & 0xc0) != 0x80) chars--;
+		}
+		return bytes;
+	}
+
 	void MakeStartPosGood()
 	{
-		int n = StartPos;
+		int n = StartPosChars;
 		unsigned cols = ConCols / active_con_scale();
 
-		if (StartPos >= Text.Len())
+		if (StartPosChars >= Text.CharacterCount())
 		{ // Start of visible line is beyond end of line
-			n = CursorPos - cols + 2;
+			n = CursorPosChars - cols + 2;
 		}
-		if ((CursorPos - StartPos) >= cols - 2)
+		if ((CursorPosChars - StartPosChars) >= cols - 2)
 		{ // The cursor is beyond the visible part of the line
-			n = CursorPos - cols + 2;
+			n = CursorPosChars - cols + 2;
 		}
-		if (StartPos > CursorPos)
+		if (StartPosChars > CursorPosChars)
 		{ // The cursor is in front of the visible part of the line
-			n = CursorPos;
+			n = CursorPosChars;
 		}
-		StartPos = MAX(0, n);
-	}
-
-	unsigned WordBoundaryRight()
-	{
-		unsigned index = CursorPos;
-		while (index < Text.Len() && Text[index] == ' ') {
-			index++;
-		}
-		while (index < Text.Len() && Text[index] != ' ') {
-			index++;
-		}
-		return index;
-	}
-
-	unsigned WordBoundaryLeft()
-	{
-		int index = CursorPos - 1;
-		while (index > -1 && Text[index] == ' ') {
-			index--;
-		}
-		while (index > -1 && Text[index] != ' ') {
-			index--;
-		}
-		return (unsigned)index + 1;
+		StartPosChars = MAX(0, n);
+		StartPos = BytesForChars(StartPosChars);
 	}
 
 	void CursorStart()
 	{
 		CursorPos = 0;
 		StartPos = 0;
+		CursorPosChars = 0;
+		StartPosChars = 0;
 	}
 
 	void CursorEnd()
 	{
 		CursorPos = (unsigned)Text.Len();
-		StartPos = 0;
+		CursorPosChars = (unsigned)Text.CharacterCount();
+		StartPosChars = 0;
 		MakeStartPosGood();
 	}
 
+private:
+	void MoveCursorLeft()
+	{
+		CursorPosChars--;
+		do CursorPos--;
+		while ((Text[CursorPos] & 0xc0) == 0x80);	// Step back to the last non-continuation byte.
+	}
+
+	void MoveCursorRight()
+	{
+		CursorPosChars++;
+		do CursorPos++;
+		while ((Text[CursorPos] & 0xc0) == 0x80);	// Step back to the last non-continuation byte.
+	}
+
+public:
 	void CursorLeft()
 	{
-		if (CursorPos > 0)
+		if (CursorPosChars > 0)
 		{
-			CursorPos--;
+			MoveCursorLeft();
 			MakeStartPosGood();
 		}
 	}
 
 	void CursorRight()
 	{
-		if (CursorPos < Text.Len())
+		if (CursorPosChars < Text.CharacterCount())
 		{
-			CursorPos++;
+			MoveCursorRight();
 			MakeStartPosGood();
 		}
 	}
 
 	void CursorWordLeft()
 	{
-		CursorPos = WordBoundaryLeft();
-		MakeStartPosGood();
+		if (CursorPosChars > 0)
+		{
+			do MoveCursorLeft();
+			while (CursorPosChars > 0 && Text[CursorPos - 1] != ' ');
+			MakeStartPosGood();
+		}
 	}
 
 	void CursorWordRight()
 	{
-		CursorPos = WordBoundaryRight();
-		MakeStartPosGood();
+		if (CursorPosChars < Text.CharacterCount())
+		{
+			do MoveCursorRight();
+			while (CursorPosChars < Text.CharacterCount() && Text[CursorPos] != ' ');
+			MakeStartPosGood();
+		}
 	}
 
 	void DeleteLeft()
 	{
 		if (CursorPos > 0)
 		{
-			Text.Remove(CursorPos - 1, 1);
-			CursorPos--;
+			auto now = CursorPos;
+			MoveCursorLeft();
+			Text.Remove(CursorPos, now - CursorPos);
 			MakeStartPosGood();
 		}
 	}
 
 	void DeleteRight()
 	{
-		if (CursorPos < Text.Len())
+		if (CursorPosChars < Text.CharacterCount())
 		{
-			Text.Remove(CursorPos, 1);
+			auto now = CursorPos;
+			MoveCursorRight();
+			Text.Remove(now, CursorPos - now);
+			CursorPos = now;
+			CursorPosChars--;
 			MakeStartPosGood();
 		}
 	}
@@ -336,14 +368,16 @@ struct FCommandBuffer
 	{
 		if (CursorPos > 0)
 		{
-			unsigned index = WordBoundaryLeft();
+			auto now = CursorPos;
+
+			CursorWordLeft();
+
 			if (AppendToYankBuffer) {
-				YankBuffer = FString(&Text[index], CursorPos - index) + YankBuffer;
+				YankBuffer = FString(&Text[CursorPos], now - CursorPos) + YankBuffer;
 			} else {
-				YankBuffer = FString(&Text[index], CursorPos - index);
+				YankBuffer = FString(&Text[CursorPos], now - CursorPos);
 			}
-			Text.Remove(index, CursorPos - index);
-			CursorPos = index;
+			Text.Remove(CursorPos, now - CursorPos);
 			MakeStartPosGood();
 		}
 	}
@@ -378,18 +412,23 @@ struct FCommandBuffer
 
 	void AddChar(int character)
 	{
-		///FIXME: Not Unicode-aware
-		if (CursorPos == Text.Len())
+		uint8_t encoded[5];
+		int size;
+		if (utf8_encode(character, encoded, &size) == 0)
 		{
-			Text += char(character);
+			encoded[size] = 0;
+			if (Text.IsEmpty())
+			{
+				Text = (char*)encoded;
+			}
+			else
+			{
+				Text.Insert(CursorPos, (char*)encoded);
+			}
+			CursorPos += size;
+			CursorPosChars++;
+			MakeStartPosGood();
 		}
-		else
-		{
-			char foo = char(character);
-			Text.Insert(CursorPos, &foo, 1);
-		}
-		CursorPos++;
-		MakeStartPosGood();
 	}
 
 	void AddString(FString clip)
@@ -401,6 +440,7 @@ struct FCommandBuffer
 			if (brk >= 0)
 			{
 				clip.Truncate(brk);
+				clip = MakeUTF8(clip.GetChars());	// Make sure that we actually have UTF-8 text.
 			}
 			if (Text.IsEmpty())
 			{
@@ -411,15 +451,21 @@ struct FCommandBuffer
 				Text.Insert(CursorPos, clip);
 			}
 			CursorPos += (unsigned)clip.Len();
+			CursorPosChars += (unsigned)clip.CharacterCount();
 			MakeStartPosGood();
 		}
 	}
 
-	void SetString(FString str)
+	void SetString(const FString &str)
 	{
-		Text = str;
-		CursorPos = (unsigned)Text.Len();
+		Text = MakeUTF8(str);
+		CursorEnd();
 		MakeStartPosGood();
+	}
+
+	void AddYankBuffer()
+	{
+		AddString(YankBuffer);
 	}
 };
 static FCommandBuffer CmdLine;
@@ -798,33 +844,6 @@ void FNotifyBuffer::AddString(int printlevel, FString source)
 	TopGoal = 0;
 }
 
-/* Adds a string to the console and also to the notify buffer */
-int utf8_encode(int32_t codepoint, char *buffer, int *size);
-static TArray<char> UTF8String;
-
-const char *MakeUTF8(const char *outline, int *numchars = nullptr)
-{
-	UTF8String.Clear();
-	const uint8_t *in = (const uint8_t*)outline;
-
-	if (numchars) *numchars = 0;
-	while (int chr = GetCharFromString(in))
-	{
-		int size = 0;
-		char encode[4];
-		if (!utf8_encode(chr, encode, &size))
-		{
-			for (int i = 0; i < size; i++)
-			{
-				UTF8String.Push(encode[i]);
-			}
-		}
-		if (numchars) *numchars++;
-	}
-	UTF8String.Push(0);
-	return UTF8String.Data();
-}
-
 void AddToConsole (int printlevel, const char *text)
 {
 	conbuffer->AddText(printlevel, MakeUTF8(text), Logfile);
@@ -844,7 +863,7 @@ int PrintString (int printlevel, const char *outline)
 
 		if (printlevel != PRINT_LOG)
 		{
-			I_PrintStr(UTF8String.Data());
+			I_PrintStr(outline);
 
 			conbuffer->AddText(printlevel, outline, Logfile);
 			if (vidactive && screen && SmallFont)
@@ -1242,10 +1261,7 @@ void C_DrawConsole ()
 		{
 			if (gamestate != GS_STARTUP)
 			{
-				// Make a copy of the command line, in case an input event is handled
-				// while we draw the console and it changes.
-				FCommandBuffer command(CmdLine);
-				command.Draw(left, bottomline, textScale, cursoron);
+				CmdLine.Draw(left, bottomline, textScale, cursoron);
 			}
 			if (RowAdjust && ConBottom >= ConFont->GetHeight()*7/2)
 			{
@@ -1527,7 +1543,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			break;
 
 		case 'D':
-			if (ev->data3 & GKM_CTRL && buffer.Text.Len() == 0)
+			if (ev->data3 & GKM_CTRL && buffer.TextLength() == 0)
 			{ // Control-D pressed on an empty line
 				if (strlen(con_ctrl_d) == 0)
 				{
@@ -1542,16 +1558,18 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			// Intentional fall-through for command(s) added with Ctrl-D
 
 		case '\r':
+		{
 			// Execute command line (ENTER)
+			FString bufferText = buffer.GetText();
 
-			buffer.Text.StripLeftRight();
-			Printf(127, TEXTCOLOR_WHITE "]%s\n", buffer.Text.GetChars());
+			bufferText.StripLeftRight();
+			Printf(127, TEXTCOLOR_WHITE "]%s\n", bufferText.GetChars());
 
-			if (buffer.Text.Len() == 0)
+			if (bufferText.Len() == 0)
 			{
-				 // Command line is empty, so do nothing to the history
+				// Command line is empty, so do nothing to the history
 			}
-			else if (HistHead && HistHead->String.CompareNoCase(buffer.Text) == 0)
+			else if (HistHead && HistHead->String.CompareNoCase(bufferText) == 0)
 			{
 				// Command line was the same as the previous one,
 				// so leave the history list alone
@@ -1563,7 +1581,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 				// so add it to the history list.
 
 				History *temp = new History;
-				temp->String = buffer.Text;
+				temp->String = bufferText;
 				temp->Older = HistHead;
 				if (HistHead)
 				{
@@ -1589,16 +1607,12 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 				}
 			}
 			HistPos = NULL;
-			{
-				// Work with a copy of command to avoid side effects caused by
-				// exception raised during execution, like with 'error' CCMD.
-				FString copy = buffer.Text;
-				buffer.SetString("");
-				AddCommandString(copy);
-			}
+			buffer.SetString("");
+			AddCommandString(bufferText);
 			TabbedLast = false;
 			TabbedList = false;
 			break;
+		}
 		
 		case '`':
 			// Check to see if we have ` bound to the console before accepting
@@ -1639,9 +1653,9 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			{
 				if (data1 == 'C')
 				{ // copy to clipboard
-					if (buffer.Text.IsNotEmpty())
+					if (buffer.TextLength() > 0)
 					{
-						I_PutInClipboard(buffer.Text);
+						I_PutInClipboard(buffer.GetText());
 					}
 				}
 				else
@@ -1696,7 +1710,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 		case 'Y':
 			if (ev->data3 & GKM_CTRL)
 			{
-				buffer.AddString(buffer.YankBuffer);
+				buffer.AddYankBuffer();
 				TabbedLast = false;
 				TabbedList = false;
 				HistPos = NULL;
@@ -1939,25 +1953,27 @@ static void C_TabComplete (bool goForward)
 	unsigned i;
 	int diffpoint;
 
+	auto CmdLineText = CmdLine.GetText();
 	if (!TabbedLast)
 	{
 		bool cancomplete;
 
+
 		// Skip any spaces at beginning of command line
-		for (i = 0; i < CmdLine.Text.Len(); ++i)
+		for (i = 0; i < CmdLineText.Len(); ++i)
 		{
-			if (CmdLine.Text[i] != ' ')
+			if (CmdLineText[i] != ' ')
 				break;
 		}
-		if (i == CmdLine.Text.Len())
+		if (i == CmdLineText.Len())
 		{ // Line was nothing but spaces
 			return;
 		}
 		TabStart = i;
 
-		TabSize = (int)CmdLine.Text.Len() - TabStart;
+		TabSize = (int)CmdLineText.Len() - TabStart;
 
-		if (!FindTabCommand(&CmdLine.Text[TabStart], &TabPos, TabSize))
+		if (!FindTabCommand(&CmdLineText[TabStart], &TabPos, TabSize))
 			return;		// No initial matches
 
 		// Show a list of possible completions, if more than one.
@@ -1980,7 +1996,7 @@ static void C_TabComplete (bool goForward)
 		{ // Find the last matching tab, then go one past it.
 			while (++TabPos < (int)TabCommands.Size())
 			{
-				if (FindDiffPoint(TabCommands[TabPos].TabName, &CmdLine.Text[TabStart]) < TabSize)
+				if (FindDiffPoint(TabCommands[TabPos].TabName, &CmdLineText[TabStart]) < TabSize)
 				{
 					break;
 				}
@@ -1997,25 +2013,25 @@ static void C_TabComplete (bool goForward)
 		(!goForward && --TabPos < 0))
 	{
 		TabbedLast = false;
-		CmdLine.Text.Truncate(TabSize);
+		CmdLineText.Truncate(TabSize);
 	}
 	else
 	{
-		diffpoint = FindDiffPoint(TabCommands[TabPos].TabName, &CmdLine.Text[TabStart]);
+		diffpoint = FindDiffPoint(TabCommands[TabPos].TabName, &CmdLineText[TabStart]);
 
 		if (diffpoint < TabSize)
 		{
 			// No more matches
 			TabbedLast = false;
-			CmdLine.Text.Truncate(TabSize - TabStart);
+			CmdLineText.Truncate(TabSize - TabStart);
 		}
 		else
 		{
-			CmdLine.Text.Truncate(TabStart);
-			CmdLine.Text << TabCommands[TabPos].TabName << ' ';
+			CmdLineText.Truncate(TabStart);
+			CmdLineText << TabCommands[TabPos].TabName << ' ';
 		}
 	}
-	CmdLine.CursorPos = (unsigned)CmdLine.Text.Len();
+	CmdLine.SetString(CmdLineText);
 	CmdLine.MakeStartPosGood();
 }
 
@@ -2028,9 +2044,10 @@ static bool C_TabCompleteList ()
 	nummatches = 0;
 	maxwidth = 0;
 
+	auto CmdLineText = CmdLine.GetText();
 	for (i = TabPos; i < (int)TabCommands.Size(); ++i)
 	{
-		if (FindDiffPoint (TabCommands[i].TabName, &CmdLine.Text[TabStart]) < TabSize)
+		if (FindDiffPoint (TabCommands[i].TabName, &CmdLineText[TabStart]) < TabSize)
 		{
 			break;
 		}
@@ -2055,7 +2072,7 @@ static bool C_TabCompleteList ()
 	{
 		size_t x = 0;
 		maxwidth += 3;
-		Printf (TEXTCOLOR_BLUE "Completions for %s:\n", CmdLine.Text.GetChars());
+		Printf (TEXTCOLOR_BLUE "Completions for %s:\n", CmdLineText.GetChars());
 		for (i = TabPos; nummatches > 0; ++i, --nummatches)
 		{
 			// [Dusk] Print console commands blue, CVars green, aliases red.
@@ -2087,9 +2104,9 @@ static bool C_TabCompleteList ()
 		if (TabSize != commonsize)
 		{
 			TabSize = commonsize;
-			CmdLine.Text.Truncate(TabStart);
-			CmdLine.Text.AppendCStrPart(TabCommands[TabPos].TabName.GetChars(), commonsize);
-			CmdLine.CursorPos = (unsigned)CmdLine.Text.Len();
+			CmdLineText.Truncate(TabStart);
+			CmdLineText.AppendCStrPart(TabCommands[TabPos].TabName.GetChars(), commonsize);
+			CmdLine.SetString(CmdLineText);
 		}
 		return false;
 	}

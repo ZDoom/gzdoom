@@ -270,8 +270,7 @@ void FConsoleBuffer::FormatText(FFont *formatfont, int displaywidth)
 	unsigned brokensize = m_BrokenConsoleText.Size();
 	if (brokensize == mConsoleText.Size())
 	{
-		// The last line got text appended. We have to wait until here to format it because
-		// it is possible that during display new text will be added from the NetUpdate calls in the software version of DrawTextureV.
+		// The last line got text appended. 
 		if (mLastLineNeedsUpdate)
 		{
 			brokensize--;

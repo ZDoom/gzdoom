@@ -91,6 +91,7 @@ The FON2 header is followed by variable length data:
 #include "v_text.h"
 #include "vm.h"
 #include "image.h"
+#include "utf8.h"
 #include "textures/formats/fontchars.h"
 
 // MACROS ------------------------------------------------------------------
@@ -1844,7 +1845,10 @@ void FSingleLumpFont::LoadFON1 (int lump, const uint8_t *data)
 {
 	int w, h;
 
-	Chars.Resize(256);
+	// The default console font is for Windows-1252 and fills the 0x80-0x9f range with valid glyphs.
+	// Since now all internal text is processed as Unicode, these have to be remapped to their proper places.
+	// The highest valid character in this range is 0x2122, so we need 0x2123 entries in our character table.
+	Chars.Resize(0x2123);
 
 	w = data[4] + data[5]*256;
 	h = data[6] + data[7]*256;
@@ -1853,10 +1857,20 @@ void FSingleLumpFont::LoadFON1 (int lump, const uint8_t *data)
 	FontHeight = h;
 	SpaceWidth = w;
 	FirstChar = 0;
-	LastChar = 255;
+	LastChar = 255;	// This is to allow LoadTranslations to function. The way this is all set up really needs to be changed.
 	GlobalKerning = 0;
 	translateUntranslated = true;
 	LoadTranslations();
+	LastChar = 0x2122;
+
+	// Move the Windows-1252 characters to their proper place.
+	for (int i = 0x80; i < 0xa0; i++)
+	{
+		if (win1252map[i-0x80] != i && Chars[i].TranslatedPic != nullptr && Chars[win1252map[i - 0x80]].TranslatedPic == nullptr)
+		{ 
+			std::swap(Chars[i], Chars[win1252map[i - 0x80]]);
+		}
+	}
 }
 
 //==========================================================================

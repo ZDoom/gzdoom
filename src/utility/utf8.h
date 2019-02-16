@@ -1,0 +1,8 @@
+#pragma once
+
+int utf8_encode(int32_t codepoint, uint8_t *buffer, int *size);
+int utf8_decode(const uint8_t *src, int *size);
+int GetCharFromString(const uint8_t *&string);
+const char *MakeUTF8(const char *outline, int *numchars = nullptr);	// returns a pointer to a static buffer, assuming that its caller will immediately process the result. 
+
+extern uint16_t win1252map[];

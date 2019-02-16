@@ -425,81 +425,192 @@ ListMenu "PlayerMenu"
 OptionMenu "CustomizeControls" protected
 {
 	Title "$CNTRLMNU_TITLE"
+
+	StaticText ""
+	Submenu    "$CNTRLMNU_ACTION"      , "ActionControlsMenu"
+
+	StaticText ""
+	Submenu    "$CNTRLMNU_CHAT"        , "ChatControlsMenu"
+
+	StaticText ""
+	Submenu    "$CNTRLMNU_WEAPONS"     , "WeaponsControlMenu"
+
+	StaticText ""
+	Submenu    "$CNTRLMNU_INVENTORY"   , "InventoryControlsMenu"
+
+	StaticText ""
+	Submenu    "$CNTRLMNU_OTHER"       , "OtherControlsMenu"
+
+	StaticText ""
+	Submenu    "$CNTRLMNU_POPUPS"      , "StrifeControlsMenu"
+
+	StaticText ""
+	Submenu    "$MAPCNTRLMNU_CONTROLS" , "MapControlsMenu"
+}
+
+OptionMenu "ActionControlsMenu" protected
+{
+	Title "$CNTRLMNU_ACTION_TITLE"
 	ScrollTop 2
-	StaticTextSwitchable 	"$CNTRLMNU_SWITCHTEXT1", "$CNTRLMNU_SWITCHTEXT2", "ControlMessage"
-	StaticText 	""
-	StaticText 	"$CNTRLMNU_CONTROLS", 1
-	Control 	"$CNTRLMNU_ATTACK",					"+attack"
-	Control 	"$CNTRLMNU_ALTATTACK",				"+altattack"
-	Control 	"$CNTRLMNU_RELOAD",					"+reload"
-	Control 	"$CNTRLMNU_ZOOM",					"+zoom"
-	Control		"$CNTRLMNU_USER1",					"+user1"
-	Control		"$CNTRLMNU_USER2",					"+user2"
-	Control		"$CNTRLMNU_USER3",					"+user3"
-	Control		"$CNTRLMNU_USER4",					"+user4"
-	Control 	"$CNTRLMNU_USE",					"+use"
-	Control 	"$CNTRLMNU_FORWARD",				"+forward"
-	Control 	"$CNTRLMNU_BACK",					"+back"
-	Control 	"$CNTRLMNU_MOVELEFT",				"+moveleft"
-	Control 	"$CNTRLMNU_MOVERIGHT",				"+moveright"
-	Control 	"$CNTRLMNU_TURNLEFT",				"+left"
-	Control 	"$CNTRLMNU_TURNRIGHT",				"+right"
-	Control		"$CNTRLMNU_TURN180",				"turn180"
-	Control 	"$CNTRLMNU_JUMP",					"+jump"
-	Control 	"$CNTRLMNU_CROUCH",					"+crouch"
-	Control 	"$CNTRLMNU_TOGGLECROUCH",			"crouch"
-	Control 	"$CNTRLMNU_MOVEUP",					"+moveup"
-	Control 	"$CNTRLMNU_MOVEDOWN",				"+movedown"
-	Control 	"$CNTRLMNU_LAND",					"land"
-	Control 	"$CNTRLMNU_MOUSELOOK",				"+mlook"
-	Control 	"$CNTRLMNU_KEYBOARDLOOK",			"+klook"
-	Control 	"$CNTRLMNU_LOOKUP",					"+lookup"
-	Control 	"$CNTRLMNU_LOOKDOWN",				"+lookdown"
-	Control 	"$CNTRLMNU_CENTERVIEW",				"centerview"
-	Control 	"$CNTRLMNU_RUN",					"+speed"
-	Control 	"$CNTRLMNU_TOGGLERUN",				"toggle cl_run"
-	Control 	"$CNTRLMNU_STRAFE",					"+strafe"
-	Control 	"$CNTRLMNU_SCOREBOARD",				"+showscores"
-	Control 	"$CNTRLMNU_TOGGLESCOREBOARD",		"togglescoreboard"
-	StaticText 	""
-	StaticText 	"$CNTRLMNU_CHAT", 1
-	Control 	"$CNTRLMNU_SAY",					"messagemode"
-	Control 	"$CNTRLMNU_TEAMSAY",				"messagemode2"
-	StaticText 	""
-	StaticText 	"$CNTRLMNU_WEAPONS", 1
-	Control 	"$CNTRLMNU_NEXTWEAPON",				"weapnext"
-	Control 	"$CNTRLMNU_PREVIOUSWEAPON",			"weapprev"
-	Control		"$CNTRLMNU_SLOT1",					"slot 1"
-	Control		"$CNTRLMNU_SLOT2",					"slot 2"
-	Control		"$CNTRLMNU_SLOT3",					"slot 3"
-	Control		"$CNTRLMNU_SLOT4",					"slot 4"
-	Control		"$CNTRLMNU_SLOT5",					"slot 5"
-	Control		"$CNTRLMNU_SLOT6",					"slot 6"
-	Control		"$CNTRLMNU_SLOT7",					"slot 7"
-	Control		"$CNTRLMNU_SLOT8",					"slot 8"
-	Control		"$CNTRLMNU_SLOT9",					"slot 9"
-	Control		"$CNTRLMNU_SLOT0",					"slot 0"
-	StaticText 	""
-	StaticText 	"$CNTRLMNU_INVENTORY", 1
-	Control 	"$CNTRLMNU_USEITEM",				"invuse"
-	Control 	"$CNTRLMNU_USEALLITEMS",			"invuseall"
-	Control 	"$CNTRLMNU_NEXTITEM",				"invnext"
-	Control 	"$CNTRLMNU_PREVIOUSITEM",			"invprev"
-	Control 	"$CNTRLMNU_DROPITEM",				"invdrop"
-	Control		"$CNTRLMNU_QUERYITEM",				"invquery"
-	Control 	"$CNTRLMNU_DROPWEAPON",				"weapdrop"
-	StaticText 	""
-	StaticText 	"$CNTRLMNU_OTHER", 1
-	Control 	"$CNTRLMNU_AUTOMAP",				"togglemap"
-	Control 	"$CNTRLMNU_CHASECAM",				"chase"
-	Control 	"$CNTRLMNU_COOPSPY",				"spynext"
-	Control 	"$CNTRLMNU_SCREENSHOT",				"screenshot"
-	Control  	"$CNTRLMNU_CONSOLE",				"toggleconsole"
-	StaticText 	""
-	StaticText 	"$CNTRLMNU_POPUPS", 1
-	Control 	"$CNTRLMNU_MISSION",				"showpop 1"
-	Control 	"$CNTRLMNU_KEYS",					"showpop 2"
-	Control 	"$CNTRLMNU_STATS",					"showpop 3"
+	StaticTextSwitchable "$CNTRLMNU_SWITCHTEXT1", "$CNTRLMNU_SWITCHTEXT2", "ControlMessage"
+
+	StaticText ""
+	Control    "$CNTRLMNU_ATTACK"           , "+attack"
+	Control    "$CNTRLMNU_ALTATTACK"        , "+altattack"
+	Control    "$CNTRLMNU_RELOAD"           , "+reload"
+	Control    "$CNTRLMNU_ZOOM"             , "+zoom"
+
+	StaticText ""
+	Control    "$CNTRLMNU_USE"              , "+use"
+
+	StaticText ""
+	Control    "$CNTRLMNU_FORWARD"          , "+forward"
+	Control    "$CNTRLMNU_BACK"             , "+back"
+	Control    "$CNTRLMNU_MOVELEFT"         , "+moveleft"
+	Control    "$CNTRLMNU_MOVERIGHT"        , "+moveright"
+
+	StaticText ""
+	Control    "$CNTRLMNU_TURNLEFT"         , "+left"
+	Control    "$CNTRLMNU_TURNRIGHT"        , "+right"
+	Control    "$CNTRLMNU_TURN180"          , "turn180"
+
+	StaticText ""
+	Control    "$CNTRLMNU_JUMP"             , "+jump"
+	Control    "$CNTRLMNU_CROUCH"           , "+crouch"
+	Control    "$CNTRLMNU_TOGGLECROUCH"     , "crouch"
+
+	StaticText ""
+	Control    "$CNTRLMNU_MOVEUP"           , "+moveup"
+	Control    "$CNTRLMNU_MOVEDOWN"         , "+movedown"
+	Control    "$CNTRLMNU_LAND"             , "land"
+
+	StaticText ""
+	Control    "$CNTRLMNU_MOUSELOOK"        , "+mlook"
+	Control    "$CNTRLMNU_KEYBOARDLOOK"     , "+klook"
+	Control    "$CNTRLMNU_LOOKUP"           , "+lookup"
+	Control    "$CNTRLMNU_LOOKDOWN"         , "+lookdown"
+	Control    "$CNTRLMNU_CENTERVIEW"       , "centerview"
+
+	StaticText ""
+	Control    "$CNTRLMNU_RUN"              , "+speed"
+	Control    "$CNTRLMNU_TOGGLERUN"        , "toggle cl_run"
+	Control    "$CNTRLMNU_STRAFE"           , "+strafe"
+
+	StaticText ""
+	Control    "$CNTRLMNU_SCOREBOARD"       , "+showscores"
+	Control    "$CNTRLMNU_TOGGLESCOREBOARD" , "togglescoreboard"
+
+	StaticText ""
+	Control    "$CNTRLMNU_USER1"            , "+user1"
+	Control    "$CNTRLMNU_USER2"            , "+user2"
+	Control    "$CNTRLMNU_USER3"            , "+user3"
+	Control    "$CNTRLMNU_USER4"            , "+user4"
+}
+
+OptionMenu "ChatControlsMenu" protected
+{
+	Title "$CNTRLMNU_CHAT_TITLE"
+	ScrollTop 2
+	StaticTextSwitchable "$CNTRLMNU_SWITCHTEXT1", "$CNTRLMNU_SWITCHTEXT2", "ControlMessage"
+
+	StaticText ""
+	Control    "$CNTRLMNU_SAY"     , "messagemode"
+	Control    "$CNTRLMNU_TEAMSAY" , "messagemode2"
+}
+
+OptionMenu "WeaponsControlMenu" protected
+{
+	Title "$CNTRLMNU_WEAPONS_TITLE"
+	ScrollTop 2
+	StaticTextSwitchable "$CNTRLMNU_SWITCHTEXT1", "$CNTRLMNU_SWITCHTEXT2", "ControlMessage"
+
+	StaticText ""
+	Control    "$CNTRLMNU_NEXTWEAPON"     , "weapnext"
+	Control    "$CNTRLMNU_PREVIOUSWEAPON" , "weapprev"
+
+	StaticText ""
+	Control    "$CNTRLMNU_SLOT1"          , "slot 1"
+	Control    "$CNTRLMNU_SLOT2"          , "slot 2"
+	Control    "$CNTRLMNU_SLOT3"          , "slot 3"
+	Control    "$CNTRLMNU_SLOT4"          , "slot 4"
+	Control    "$CNTRLMNU_SLOT5"          , "slot 5"
+	Control    "$CNTRLMNU_SLOT6"          , "slot 6"
+	Control    "$CNTRLMNU_SLOT7"          , "slot 7"
+	Control    "$CNTRLMNU_SLOT8"          , "slot 8"
+	Control    "$CNTRLMNU_SLOT9"          , "slot 9"
+	Control    "$CNTRLMNU_SLOT0"          , "slot 0"
+}
+
+OptionMenu "InventoryControlsMenu" protected
+{
+	Title "$CNTRLMNU_INVENTORY_TITLE"
+	ScrollTop 2
+	StaticTextSwitchable "$CNTRLMNU_SWITCHTEXT1", "$CNTRLMNU_SWITCHTEXT2", "ControlMessage"
+
+	StaticText ""
+	Control    "$CNTRLMNU_USEITEM"      , "invuse"
+	Control    "$CNTRLMNU_USEALLITEMS"  , "invuseall"
+
+	StaticText ""
+	Control    "$CNTRLMNU_NEXTITEM"     , "invnext"
+	Control    "$CNTRLMNU_PREVIOUSITEM" , "invprev"
+
+	StaticText ""
+	Control    "$CNTRLMNU_DROPITEM"     , "invdrop"
+	Control    "$CNTRLMNU_QUERYITEM"    , "invquery"
+
+	StaticText ""
+	Control    "$CNTRLMNU_DROPWEAPON"   , "weapdrop"
+}
+
+OptionMenu "OtherControlsMenu" protected
+{
+	Title "$CNTRLMNU_OTHER_TITLE"
+	ScrollTop 2
+	StaticTextSwitchable "$CNTRLMNU_SWITCHTEXT1", "$CNTRLMNU_SWITCHTEXT2", "ControlMessage"
+
+	StaticText ""
+	Control    "$CNTRLMNU_AUTOMAP"         , "togglemap"
+
+	StaticText ""
+	Control    "$CNTRLMNU_CHASECAM"        , "chase"
+	Control    "$CNTRLMNU_COOPSPY"         , "spynext"
+
+	StaticText ""
+	Control    "$CNTRLMNU_SCREENSHOT"      , "screenshot"
+	Control    "$CNTRLMNU_CONSOLE"         , "toggleconsole"
+	Control    "$CNTRLMNU_PAUSE"           , "pause"
+
+	StaticText ""
+	Control    "$CNTRLMNU_DISPLAY_INC"     , "sizeup"
+	Control    "$CNTRLMNU_DISPLAY_DEC"     , "sizedown"
+	Control    "$CNTRLMNU_TOGGLE_MESSAGES" , "togglemessages"
+	Control    "$CNTRLMNU_ADJUST_GAMMA"    , "bumpgamma"
+
+	StaticText ""
+	Control    "$CNTRLMNU_OPEN_HELP"       , "menu_help"
+	Control    "$CNTRLMNU_OPEN_SAVE"       , "menu_save"
+	Control    "$CNTRLMNU_OPEN_LOAD"       , "menu_load"
+	Control    "$CNTRLMNU_OPEN_OPTIONS"    , "menu_options"
+	Control    "$CNTRLMNU_OPEN_DISPLAY"    , "menu_display"
+	Control    "$CNTRLMNU_EXIT_TO_MAIN"    , "menu_endgame"
+	Control    "$CNTRLMNU_MENU_QUIT"       , "menu_quit"
+
+	StaticText ""
+	Control    "$CNTRLMNU_QUICKSAVE"       , "quicksave"
+	Control    "$CNTRLMNU_QUICKLOAD"       , "quickload"
+}
+
+OptionMenu "StrifeControlsMenu" protected
+{
+	Title "$CNTRLMNU_POPUPS_TITLE"
+	ScrollTop 2
+	StaticTextSwitchable "$CNTRLMNU_SWITCHTEXT1", "$CNTRLMNU_SWITCHTEXT2", "ControlMessage"
+
+	StaticText ""
+	Control    "$CNTRLMNU_MISSION" , "showpop 1"
+	Control    "$CNTRLMNU_KEYS"    , "showpop 2"
+	Control    "$CNTRLMNU_STATS"   , "showpop 3"
 }
 
 //-------------------------------------------------------------------------------------------

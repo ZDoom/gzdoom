@@ -990,9 +990,9 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 				return new FSingleLumpFont (name, lump);
 			}
 		}
-		FTextureID picnum = TexMan.CheckForTexture (name, ETextureType::Any);
-		if (picnum.isValid())
-		{
+			FTextureID picnum = TexMan.CheckForTexture (name, ETextureType::Any);
+			if (picnum.isValid())
+			{
 			FTexture *tex = TexMan.GetTexture(picnum);
 			if (tex && tex->GetSourceLump() >= folderfile)
 			{
@@ -1002,7 +1002,7 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 		if (folderdata.Size() > 0)
 		{
 			return new FFont(name, nullptr, name, HU_FONTSTART, HU_FONTSIZE, 1, -1);
-		}
+	}
 	}
 	return font;
 }
@@ -1111,22 +1111,22 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 			int position = '!' + i;
 			mysnprintf(buffer, countof(buffer), nametemplate, i + start);
 			
-			lump = TexMan.CheckForTexture(buffer, ETextureType::MiscPatch);
-			if (doomtemplate && lump.isValid() && i + start == 121)
-			{ // HACKHACK: Don't load STCFN121 in doom(2), because
-				// it's not really a lower-case 'y' but a '|'.
-				// Because a lot of wads with their own font seem to foolishly
-				// copy STCFN121 and make it a '|' themselves, wads must
-				// provide STCFN120 (x) and STCFN122 (z) for STCFN121 to load as a 'y'.
-				if (!TexMan.CheckForTexture("STCFN120", ETextureType::MiscPatch).isValid() ||
-					!TexMan.CheckForTexture("STCFN122", ETextureType::MiscPatch).isValid())
-				{
-					// insert the incorrectly named '|' graphic in its correct position.
-					position = 124;
-				}
-			}
-			if (lump.isValid())
+		lump = TexMan.CheckForTexture(buffer, ETextureType::MiscPatch);
+		if (doomtemplate && lump.isValid() && i + start == 121)
+		{ // HACKHACK: Don't load STCFN121 in doom(2), because
+		  // it's not really a lower-case 'y' but a '|'.
+		  // Because a lot of wads with their own font seem to foolishly
+		  // copy STCFN121 and make it a '|' themselves, wads must
+		  // provide STCFN120 (x) and STCFN122 (z) for STCFN121 to load as a 'y'.
+			if (!TexMan.CheckForTexture("STCFN120", ETextureType::MiscPatch).isValid() ||
+				!TexMan.CheckForTexture("STCFN122", ETextureType::MiscPatch).isValid())
 			{
+				// insert the incorrectly named '|' graphic in its correct position.
+					position = 124;
+			}
+		}
+		if (lump.isValid())
+		{
 				if (position < minchar) minchar = position;
 				if (position > maxchar) maxchar = position;
 				charMap.Insert(position, TexMan.GetTexture(lump));
@@ -1189,7 +1189,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 			{
 				Chars[i].OriginalPic = pic;
 				Chars[i].TranslatedPic = new FImageTexture(new FFontChar1 (pic->GetImage()), "");
-				Chars[i].TranslatedPic->Scale = pic->Scale;
+				Chars[i].TranslatedPic->CopySize(pic);
 				Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
 				TexMan.AddTexture(Chars[i].TranslatedPic);
 			}
@@ -1209,18 +1209,18 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 	
 	if (SpaceWidth == 0) // An explicit override from the .inf file must always take precedence
 	{
-		if (spacewidth != -1)
-		{
-			SpaceWidth = spacewidth;
-		}
+	if (spacewidth != -1)
+	{
+		SpaceWidth = spacewidth;
+	}
 		else if ('N'-FirstChar >= 0 && 'N'-FirstChar < count && Chars['N' - FirstChar].TranslatedPic != nullptr)
-		{
+	{
 			SpaceWidth = (Chars['N' - FirstChar].XMove + 1) / 2;
-		}
-		else
-		{
-			SpaceWidth = 4;
-		}
+	}
+	else
+	{
+		SpaceWidth = 4;
+	}
 	}
 	if (FontHeight == 0) FontHeight = fontheight;
 
@@ -2381,7 +2381,7 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 			if (!noTranslate)
 			{
 				Chars[i].TranslatedPic = new FImageTexture(new FFontChar1 (charlumps[i]->GetImage()), "");
-				Chars[i].TranslatedPic->Scale = charlumps[i]->Scale;
+				Chars[i].TranslatedPic->CopySize(charlumps[i]);
 				Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
 				TexMan.AddTexture(Chars[i].TranslatedPic);
 			}
@@ -3059,29 +3059,29 @@ void V_InitFonts()
 		{
 			SmallFont2 = new FFont ("SmallFont2", "STBFN%.3d", "defsmallfont2", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
 		}
-	}
+		}
 	if (!(BigFont = V_GetFont("BigFont")))
 	{
 		if (gameinfo.gametype & GAME_Raven)
 		{
 			BigFont = new FFont ("BigFont", "FONTB%02u", "defbigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
 		}
-	}
+		}
 	if (!(ConFont = V_GetFont("ConsoleFont", "CONFONT")))
-	{
+		{
 		ConFont = SmallFont;
-	}
+		}
 	if (!(IntermissionFont = FFont::FindFont("IntermissionFont")))
-	{
+		{
 		if (gameinfo.gametype & GAME_DoomChex)
-		{
+			{
 			IntermissionFont = FFont::FindFont("IntermissionFont_Doom");
-		}
+			}
 		if (IntermissionFont == nullptr)
-		{
+			{
 			IntermissionFont = BigFont;
+			}
 		}
-	}
 	// This can only happen if gzdoom.pk3 is corrupted. ConFont should always be present.
 	if (ConFont == nullptr)
 	{
@@ -3095,11 +3095,11 @@ void V_InitFonts()
 	if (SmallFont2 == nullptr)
 	{
 		SmallFont2 = SmallFont;
-	}
+		}
 	if (BigFont == nullptr)
-	{
+		{
 		BigFont = SmallFont;
-	}
+		}
 	
 }
 

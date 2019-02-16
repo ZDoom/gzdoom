@@ -24,6 +24,8 @@ struct FStrifeDialogueNode
 	TArray<FStrifeDialogueItemCheck> ItemCheck;
 	int ThisNodeNum = 0;	// location of this node in StrifeDialogues
 	int ItemCheckNode = 0;	// index into StrifeDialogues
+	FString ThisNodeName = nullptr;
+	FString ItemCheckNodeName = nullptr;
 
 	PClassActor *SpeakerType = nullptr;
 	FString SpeakerName;
@@ -54,7 +56,9 @@ struct FStrifeDialogueReply
 	FString LogString;
 	int NextNode = 0;	// index into StrifeDialogues
 	int LogNumber = 0;
+	FString NextNodeName = nullptr;
 	bool NeedsGold = false;
+	bool CloseDialog = true;
 };
 
 struct MapData;

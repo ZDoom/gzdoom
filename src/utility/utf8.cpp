@@ -94,7 +94,7 @@ int utf8_decode(const uint8_t *src, int *size)
 		return c;
 	}
 
-	int c1 = src[1];
+	int c1 = src[1] & 0x3f;
 
 	if ((c & 0xE0) == 0xC0) 
 	{
@@ -107,7 +107,7 @@ int utf8_decode(const uint8_t *src, int *size)
 		return -1;
 	}
 
-	int c2 = src[2];
+	int c2 = src[2] & 0x3f;
 
 	if ((c & 0xF0) == 0xE0) 
 	{
@@ -120,7 +120,7 @@ int utf8_decode(const uint8_t *src, int *size)
 		return -1;
 	}
 	
-	int c3 = src[3];
+	int c3 = src[3] & 0x3f;
 
 	if ((c & 0xF8) == 0xF0) 
 	{

@@ -460,8 +460,7 @@ class SaveMenu : LoadSaveMenu
 	//
 	//
 	//=============================================================================
-	const SAVESTRINGSIZE = 32;
-
+	
 	override bool MenuEvent (int mkey, bool fromcontroller)
 	{
 		if (Super.MenuEvent(mkey, fromcontroller)) 
@@ -476,7 +475,7 @@ class SaveMenu : LoadSaveMenu
 		if (mkey == MKEY_Enter)
 		{
 			String SavegameString = (Selected != 0)? manager.GetSavegame(Selected).SaveTitle : "";
-			mInput = TextEnterMenu.Open(self, SavegameString, SAVESTRINGSIZE, 1, fromcontroller);
+			mInput = TextEnterMenu.Open(self, SavegameString, -1, 1, fromcontroller);
 			mInput.ActivateMenu();
 			mEntering = true;
 		}

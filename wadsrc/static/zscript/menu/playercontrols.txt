@@ -92,7 +92,7 @@ class ListMenuItemPlayerNameBox : ListMenuItemSelectable
 	{
 		if (i == 0)
 		{
-			mPlayerName = s.Mid(0, MAXPLAYERNAME);
+			mPlayerName = s;
 			return true;
 		}
 		return false;
@@ -164,7 +164,7 @@ class ListMenuItemPlayerNameBox : ListMenuItemSelectable
 
 		// Draw player name box
 		double x = mXpos + mFont.StringWidth(text) + 16 + mFrameSize;
-		DrawBorder (x, mYpos - mFrameSize, MAXPLAYERNAME+1);
+		DrawBorder (x, mYpos - mFrameSize, 16);	// This creates a 128 pixel wide text box.
 		if (!mEnter)
 		{
 			screen.DrawText (SmallFont, Font.CR_UNTRANSLATED, x + mFrameSize, mYpos, mPlayerName, DTA_Clean, true);
@@ -187,7 +187,7 @@ class ListMenuItemPlayerNameBox : ListMenuItemSelectable
 		if (mkey == Menu.MKEY_Enter)
 		{
 			Menu.MenuSound ("menu/choose");
-			mEnter = TextEnterMenu.Open(Menu.GetCurrentMenu(), mPlayerName, MAXPLAYERNAME, 2, fromcontroller);
+			mEnter = TextEnterMenu.Open(Menu.GetCurrentMenu(), mPlayerName, -1, 2, fromcontroller);
 			mEnter.ActivateMenu();
 			return true;
 		}

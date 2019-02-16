@@ -860,13 +860,14 @@ void I_PutInClipboard (const char *str)
 		return;
 	EmptyClipboard ();
 
-	HGLOBAL cliphandle = GlobalAlloc (GMEM_DDESHARE, strlen (str) + 1);
+	auto wstr = WideString(str);
+	HGLOBAL cliphandle = GlobalAlloc (GMEM_DDESHARE, wstr.length() * 2 + 2);
 	if (cliphandle != NULL)
 	{
-		char *ptr = (char *)GlobalLock (cliphandle);
-		strcpy (ptr, str);
+		wchar_t *ptr = (wchar_t *)GlobalLock (cliphandle);
+		wcscpy (ptr, wstr.c_str());
 		GlobalUnlock (cliphandle);
-		SetClipboardData (CF_TEXT, cliphandle);
+		SetClipboardData (CF_UNICODETEXT, cliphandle);
 	}
 	CloseClipboard ();
 }
@@ -875,28 +876,21 @@ FString I_GetFromClipboard (bool return_nothing)
 {
 	FString retstr;
 	HGLOBAL cliphandle;
-	char *clipstr;
-	char *nlstr;
+	wchar_t *clipstr;
 
-	if (return_nothing || !IsClipboardFormatAvailable (CF_TEXT) || !OpenClipboard (Window))
+	if (return_nothing || !IsClipboardFormatAvailable (CF_UNICODETEXT) || !OpenClipboard (Window))
 		return retstr;
 
-	cliphandle = GetClipboardData (CF_TEXT);
-	if (cliphandle != NULL)
+	cliphandle = GetClipboardData (CF_UNICODETEXT);
+	if (cliphandle != nullptr)
 	{
-		clipstr = (char *)GlobalLock (cliphandle);
-		if (clipstr != NULL)
+		clipstr = (wchar_t *)GlobalLock (cliphandle);
+		if (clipstr != nullptr)
 		{
-			// Convert CR-LF pairs to just LF while copying to the FString
-			for (nlstr = clipstr; *nlstr != '\0'; ++nlstr)
-			{
-				if (nlstr[0] == '\r' && nlstr[1] == '\n')
-				{
-					nlstr++;
-				}
-				retstr += *nlstr;
-			}
-			GlobalUnlock (clipstr);
+			// Convert CR-LF pairs to just LF.
+			retstr = clipstr;
+			GlobalUnlock(clipstr);
+			retstr.Substitute("\r\n", "\n");
 		}
 	}
 

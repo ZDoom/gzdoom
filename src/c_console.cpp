@@ -412,14 +412,13 @@ public:
 
 	void AddChar(int character)
 	{
-		uint8_t encoded[5];
 		int size;
-		if (utf8_encode(character, encoded, &size) == 0)
+		auto encoded = MakeUTF8(character, &size);
+		if (*encoded != 0)
 		{
-			encoded[size] = 0;
 			if (Text.IsEmpty())
 			{
-				Text = (char*)encoded;
+				Text = encoded;
 			}
 			else
 			{

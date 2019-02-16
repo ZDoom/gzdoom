@@ -49,6 +49,7 @@ class TextEnterMenu : Menu
 	int InputGridX;
 	int InputGridY;
 	bool AllowColors;
+	Font displayFont;
 	
 	//=============================================================================
 	//
@@ -76,6 +77,7 @@ class TextEnterMenu : Menu
 			InputGridY = 0;
 		}
 		AllowColors = allowcolors; // [TP]
+		displayFont = SmallFont;
 	}
 
 	static TextEnterMenu Open(Menu parent, String textbuffer, int maxlen, int sizemode, bool showgrid = false, bool allowcolors = false)
@@ -115,9 +117,9 @@ class TextEnterMenu : Menu
 		{
 			mInputGridOkay = false;
 			if (mEnterString.Length() < mEnterSize &&
-				(mSizeMode == 2/*entering player name*/ || SmallFont.StringWidth(mEnterString) < (mEnterSize-1)*8))
+				(mSizeMode == 2/*entering player name*/ || displayFont.StringWidth(mEnterString) < (mEnterSize-1)*8))
 			{
-				mEnterString.AppendFormat("%c", ev.KeyChar);
+				mEnterString.AppendCharacter(ev.KeyChar);
 			}
 			return true;
 		}
@@ -126,7 +128,7 @@ class TextEnterMenu : Menu
 		{
 			if (mEnterString.Length() > 0)
 			{
-				mEnterString.Truncate(mEnterString.Length() - 1);
+				mEnterString.DeleteLastCharacter();
 			}
 		}
 		else if (ev.Type == UIEvent.Type_KeyDown)
@@ -269,7 +271,7 @@ class TextEnterMenu : Menu
 						}
 					}
 					else if (mEnterString.Length() < mEnterSize &&
-						(mSizeMode == 2/*entering player name*/ || SmallFont.StringWidth(mEnterString) < (mEnterSize-1)*8))
+						(mSizeMode == 2/*entering player name*/ || displayFont.StringWidth(mEnterString) < (mEnterSize-1)*8))
 					{
 						mEnterString = mEnterString .. c;
 					}
@@ -298,7 +300,7 @@ class TextEnterMenu : Menu
 			String InputGridChars = Chars;
 			int cell_width = 18 * CleanXfac;
 			int cell_height = 12 * CleanYfac;
-			int top_padding = cell_height / 2 - SmallFont.GetHeight() * CleanYfac / 2;
+			int top_padding = cell_height / 2 - displayFont.GetHeight() * CleanYfac / 2;
 
 			// Darken the background behind the character grid.
 			screen.Dim(0, 0.8, 0, screen.GetHeight() - INPUTGRID_HEIGHT * cell_height, screen.GetWidth(), INPUTGRID_HEIGHT * cell_height);
@@ -319,7 +321,7 @@ class TextEnterMenu : Menu
 				{
 					int xx = x * cell_width - INPUTGRID_WIDTH * cell_width / 2 + screen.GetWidth() / 2;
 					int ch = InputGridChars.CharCodeAt(y * INPUTGRID_WIDTH + x);
-					int width = SmallFont.GetCharWidth(ch);
+					int width = displayFont.GetCharWidth(ch);
 
 					// The highlighted character is yellow; the rest are dark gray.
 					int colr = (x == InputGridX && y == InputGridY) ? Font.CR_YELLOW : Font.CR_DARKGRAY;
@@ -328,7 +330,7 @@ class TextEnterMenu : Menu
 					if (ch > 32)
 					{
 						// Draw a normal character.
-						screen.DrawChar(SmallFont, colr, xx + cell_width/2 - width*CleanXfac/2, yy + top_padding, ch, DTA_CleanNoMove, true);
+						screen.DrawChar(displayFont, colr, xx + cell_width/2 - width*CleanXfac/2, yy + top_padding, ch, DTA_CleanNoMove, true);
 					}
 					else if (ch == 32)
 					{
@@ -336,7 +338,7 @@ class TextEnterMenu : Menu
 						int x1 = xx + cell_width/2 - width * CleanXfac * 3 / 4;
 						int x2 = x1 + width * 3 * CleanXfac / 2;
 						int y1 = yy + top_padding;
-						int y2 = y1 + SmallFont.GetHeight() * CleanYfac;
+						int y2 = y1 + displayFont.GetHeight() * CleanYfac;
 						screen.Clear(x1, y1, x2, y1+CleanYfac, palcolor);	// top
 						screen.Clear(x1, y2, x2, y2+CleanYfac, palcolor);	// bottom
 						screen.Clear(x1, y1+CleanYfac, x1+CleanXfac, y2, palcolor);	// left
@@ -346,8 +348,8 @@ class TextEnterMenu : Menu
 					{
 						// Draw the backspace and end "characters".
 						String str = ch == 8 ? "BS" : "ED";
-						screen.DrawText(SmallFont, colr,
-							xx + cell_width/2 - SmallFont.StringWidth(str)*CleanXfac/2,
+						screen.DrawText(displayFont, colr,
+							xx + cell_width/2 - displayFont.StringWidth(str)*CleanXfac/2,
 							yy + top_padding, str, DTA_CleanNoMove, true);
 					}
 				}

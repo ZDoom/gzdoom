@@ -39,6 +39,7 @@
 
 #include "zstring.h"
 #include "v_text.h"
+#include "utf8.h"
 
 FNullStringData FString::NullString =
 {
@@ -474,6 +475,28 @@ FString FString::Mid (size_t pos, size_t numChars) const
 	}
 	return FString (Chars + pos, numChars);
 }
+
+void FString::AppendCharacter(int codepoint)
+{
+	(*this) << MakeUTF8(codepoint);
+}
+
+void FString::DeleteLastCharacter()
+{
+	if (Len() == 0) return;
+	auto pos = Len() - 1;
+	while (pos > 0 && Chars[pos] >= 0x80 && Chars[pos] < 0xc0) pos--;
+	if (pos <= 0)
+	{
+		Data()->Release();
+		ResetToNull();
+	}
+	else
+	{
+		Truncate(pos);
+	}
+}
+
 
 long FString::IndexOf (const FString &substr, long startIndex) const
 {

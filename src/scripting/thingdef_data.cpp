@@ -1158,3 +1158,17 @@ DEFINE_ACTION_FUNCTION(FStringStruct, AppendFormat)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(FStringStruct, AppendCharacter)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT(c);
+	self->AppendCharacter(c);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FStringStruct, DeleteLastCharacter)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	self->DeleteLastCharacter();
+	return 0;
+}

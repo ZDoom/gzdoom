@@ -221,6 +221,13 @@ struct FWriter
 		else if (mWriter2) mWriter2->Null();
 	}
 
+	void StringU(const char *k, bool encode)
+	{
+		if (encode) k = StringToUnicode(k);
+		if (mWriter1) mWriter1->String(k);
+		else if (mWriter2) mWriter2->String(k);
+	}
+
 	void String(const char *k)
 	{
 		k = StringToUnicode(k);
@@ -813,7 +820,7 @@ FSerializer &FSerializer::StringPtr(const char *key, const char *&charptr)
 
 //==========================================================================
 //
-//
+// Adds a string literal. This won't get double encoded, like a serialized string.
 //
 //==========================================================================
 
@@ -822,9 +829,31 @@ FSerializer &FSerializer::AddString(const char *key, const char *charptr)
 	if (isWriting())
 	{
 		WriteKey(key);
-		w->String(charptr);
+		w->StringU(MakeUTF8(charptr), false);
 	}
 	return *this;
+}
+
+//==========================================================================
+//
+// Reads back a string without any processing.
+//
+//==========================================================================
+
+const char *FSerializer::GetString(const char *key)
+{
+	auto val = r->FindKey(key);
+	if (val != nullptr)
+	{
+		if (val->IsString())
+		{
+			return val->GetString();
+		}
+		else
+		{
+		}
+	}
+	return nullptr;
 }
 
 //==========================================================================

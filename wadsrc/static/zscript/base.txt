@@ -894,6 +894,8 @@ struct StringStruct native
 	native int ToInt(int base = 0) const;
 	native double ToDouble() const;
 	native void Split(out Array<String> tokens, String delimiter, EmptyTokenType keepEmpty = TOK_KEEPEMPTY) const;
+	native void AppendCharacter(int c);
+	native void DeleteLastCharacter();
 }
 
 class SectorEffect : Thinker native

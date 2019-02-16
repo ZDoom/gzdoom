@@ -247,3 +247,13 @@ const char *MakeUTF8(const char *outline, int *numchars = nullptr)
 	UTF8String.Push(0);
 	return UTF8String.Data();
 }
+
+const char *MakeUTF8(int codepoint, int *psize)
+{
+	int size = 0;
+	UTF8String.Resize(5);
+	utf8_encode(codepoint, (uint8_t*)UTF8String.Data(), &size);
+	UTF8String[size] = 0;
+	if (psize) *psize = size;
+	return UTF8String.Data();
+}

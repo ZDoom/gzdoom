@@ -292,9 +292,8 @@ static void CT_AddChar (int c)
 	if (CharLen < QUEUESIZE-2)
 	{
 		int size;
-		uint8_t encode[4];
-		ChatQueue.Pop();
-		if (utf8_encode(c, encode, &size) == 0)
+		auto encode = MakeUTF8(c, &size);
+		if (*encode)
 		{
 			for (int i = 0; i < size; i++)
 			{

@@ -1127,6 +1127,7 @@ set (PCH_SOURCES
 	gamedata/textures/hires/hirestex.cpp
 	gamedata/fonts/singlelumpfont.cpp
 	gamedata/fonts/singlepicfont.cpp
+	gamedata/fonts/specialfont.cpp
 	gamedata/fonts/v_font.cpp
 	gamedata/fonts/v_text.cpp	
 	gamedata/p_xlat.cpp

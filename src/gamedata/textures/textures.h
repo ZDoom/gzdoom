@@ -300,7 +300,6 @@ class FTexture
 	friend class FBrightmapTexture;
 	friend class FFont;
 	friend class FSpecialFont;
-	friend void RecordTextureColors (FTexture *pic, uint8_t *usedcolors);
 
 
 public:

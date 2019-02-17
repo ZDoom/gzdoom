@@ -65,24 +65,6 @@
 // TYPES -------------------------------------------------------------------
 void RecordTextureColors (FImageSource *pic, uint8_t *colorsused);
 
-struct TranslationMap
-{
-	FName Name;
-	int Number;
-};
-
-// Essentially a normal multilump font but with an explicit list of character patches
-class FSpecialFont : public FFont
-{
-public:
-	FSpecialFont (const char *name, int first, int count, FTexture **lumplist, const bool *notranslate, int lump, bool donttranslate);
-
-	void LoadTranslations();
-
-protected:
-	bool notranslate[256];
-};
-
 struct TempParmInfo
 {
 	unsigned int StartParm[2];
@@ -94,6 +76,12 @@ struct TempColorInfo
 	FName Name;
 	unsigned int ParmInfo;
 	PalEntry LogColor;
+};
+
+struct TranslationMap
+{
+	FName Name;
+	int Number;
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -1654,168 +1642,6 @@ FFont::FFont (int lump)
 
 //==========================================================================
 //
-// FSpecialFont :: FSpecialFont
-//
-//==========================================================================
-
-FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **lumplist, const bool *notranslate, int lump, bool donttranslate) 
-	: FFont(lump)
-{
-	int i;
-	TArray<FTexture *> charlumps(count, true);
-	int maxyoffs;
-	FTexture *pic;
-
-	memcpy(this->notranslate, notranslate, 256*sizeof(bool));
-
-	noTranslate = donttranslate;
-	FontName = name;
-	Chars.Resize(count);
-	FirstChar = first;
-	LastChar = first + count - 1;
-	FontHeight = 0;
-	GlobalKerning = false;
-	Next = FirstFont;
-	FirstFont = this;
-
-	maxyoffs = 0;
-
-	for (i = 0; i < count; i++)
-	{
-		pic = charlumps[i] = lumplist[i];
-		if (pic != nullptr)
-		{
-			int height = pic->GetDisplayHeight();
-			int yoffs = pic->GetDisplayTopOffset();
-
-			if (yoffs > maxyoffs)
-			{
-				maxyoffs = yoffs;
-			}
-			height += abs (yoffs);
-			if (height > FontHeight)
-			{
-				FontHeight = height;
-			}
-		}
-
-		if (charlumps[i] != nullptr)
-		{
-			charlumps[i]->SetUseType(ETextureType::FontChar);
-
-			Chars[i].OriginalPic = charlumps[i];
-			if (!noTranslate)
-			{
-				Chars[i].TranslatedPic = new FImageTexture(new FFontChar1 (charlumps[i]->GetImage()), "");
-				Chars[i].TranslatedPic->CopySize(charlumps[i]);
-				Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
-				TexMan.AddTexture(Chars[i].TranslatedPic);
-			}
-			else Chars[i].TranslatedPic = charlumps[i];
-			Chars[i].XMove = Chars[i].TranslatedPic->GetDisplayWidth();
-		}
-		else
-		{
-			Chars[i].TranslatedPic = nullptr;
-			Chars[i].XMove = INT_MIN;
-		}
-	}
-
-	// Special fonts normally don't have all characters so be careful here!
-	if ('N'-first >= 0 && 'N'-first < count && Chars['N' - first].TranslatedPic != nullptr)
-	{
-		SpaceWidth = (Chars['N' - first].XMove + 1) / 2;
-	}
-	else
-	{
-		SpaceWidth = 4;
-	}
-
-	FixXMoves();
-
-	if (noTranslate)
-	{
-		ActiveColors = 0;
-	}
-	else
-	{
-		LoadTranslations();
-	}
-}
-
-//==========================================================================
-//
-// FSpecialFont :: LoadTranslations
-//
-//==========================================================================
-
-void FSpecialFont::LoadTranslations()
-{
-	int count = LastChar - FirstChar + 1;
-	uint8_t usedcolors[256], identity[256];
-	TArray<double> Luminosity;
-	int TotalColors;
-	int i, j;
-
-	memset (usedcolors, 0, 256);
-	for (i = 0; i < count; i++)
-	{
-		if (Chars[i].TranslatedPic)
-		{
-			FFontChar1 *pic = static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetImage());
-			if (pic)
-			{
-				pic->SetSourceRemap(nullptr); // Force the FFontChar1 to return the same pixels as the base texture
-				RecordTextureColors(pic, usedcolors);
-			}
-		}
-	}
-
-	// exclude the non-translated colors from the translation calculation
-	for (i = 0; i < 256; i++)
-		if (notranslate[i])
-			usedcolors[i] = false;
-
-	TotalColors = ActiveColors = SimpleTranslation (usedcolors, PatchRemap, identity, Luminosity);
-
-	// Map all untranslated colors into the table of used colors
-	for (i = 0; i < 256; i++) 
-	{
-		if (notranslate[i])
-		{
-			PatchRemap[i] = TotalColors;
-			identity[TotalColors] = i;
-			TotalColors++;
-		}
-	}
-
-	for (i = 0; i < count; i++)
-	{
-		if(Chars[i].TranslatedPic)
-			static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetImage())->SetSourceRemap(PatchRemap);
-	}
-
-	BuildTranslations (Luminosity.Data(), identity, &TranslationParms[0][0], TotalColors, nullptr);
-
-	// add the untranslated colors to the Ranges tables
-	if (ActiveColors < TotalColors)
-	{
-		for (i = 0; i < NumTextColors; i++)
-		{
-			FRemapTable *remap = &Ranges[i];
-			for (j = ActiveColors; j < TotalColors; ++j)
-			{
-				remap->Remap[j] = identity[j];
-				remap->Palette[j] = GPalette.BaseColors[identity[j]];
-				remap->Palette[j].a = 0xff;
-			}
-		}
-	}
-	ActiveColors = TotalColors;
-}
-
-//==========================================================================
-//
 // FFont :: FixXMoves
 //
 // If a font has gaps in its characters, set the missing characters'
@@ -1997,7 +1823,8 @@ void V_InitCustomFonts()
 				}
 				if (count > 0)
 				{
-					FFont *fnt = new FSpecialFont (namebuffer, first, count, &lumplist[first], notranslate, llump, donttranslate);
+					FFont *CreateSpecialFont (const char *name, int first, int count, FTexture **lumplist, const bool *notranslate, int lump, bool donttranslate);
+					FFont *fnt = CreateSpecialFont (namebuffer, first, count, &lumplist[first], notranslate, llump, donttranslate);
 					fnt->SetCursor(cursor);
 				}
 			}

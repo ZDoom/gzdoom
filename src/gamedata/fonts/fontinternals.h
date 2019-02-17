@@ -14,3 +14,5 @@ struct TranslationParm
 
 
 extern TArray<TranslationParm> TranslationParms[2];
+
+void RecordTextureColors (FImageSource *pic, uint8_t *usedcolors);

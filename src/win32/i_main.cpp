@@ -151,7 +151,7 @@ DYN_WIN32_SYM(SHGetKnownFolderPath);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static const char WinClassName[] = GAMENAME "MainWindow";
+static const WCHAR WinClassName[] = WGAMENAME "MainWindow";
 static HMODULE hwtsapi32;		// handle to wtsapi32.dll
 static void (*TermFuncs[MAX_TERMS])(void);
 static int NumTerms;
@@ -766,7 +766,7 @@ void ShowErrorPane(const char *text)
 		paraformat.dwMask = PFM_STARTINDENT | PFM_OFFSETINDENT | PFM_RIGHTINDENT;
 		paraformat.dxStartIndent = paraformat.dxOffset = paraformat.dxRightIndent = 120;
 		SendMessage (ConWindow, EM_SETPARAFORMAT, 0, (LPARAM)&paraformat);
-		SendMessageW (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)"\n");
+		SendMessageW (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)L"\n");
 
 		// Find out where the error lines start for the error icon display control.
 		SendMessage (ConWindow, EM_EXGETSEL, 0, (LPARAM)&end);
@@ -834,7 +834,15 @@ void DoMain (HINSTANCE hInstance)
 		_set_new_handler (NewFailure);
 #endif
 
-		Args = new FArgs(__argc, __argv);
+		// Do not use the multibyte __argv here because we want UTF-8 arguments
+		// and those can only be done by converting the Unicode variants.
+		Args = new FArgs();
+		auto argc = __argc;
+		auto wargv = __wargv;
+		for (int i = 0; i < argc; i++)
+		{
+			Args->AppendArg(FString(wargv[i]));
+		}
 
 		// Load Win32 modules
 		Kernel32Module.Load({"kernel32.dll"});
@@ -957,7 +965,7 @@ void DoMain (HINSTANCE hInstance)
 		WndClass.hCursor		= LoadCursor (NULL, IDC_ARROW);
 		WndClass.hbrBackground	= NULL;
 		WndClass.lpszMenuName	= NULL;
-		WndClass.lpszClassName	= (LPCTSTR)WinClassName;
+		WndClass.lpszClassName	= WinClassName;
 		
 		/* register this new class with Windows */
 		if (!RegisterClass((LPWNDCLASS)&WndClass))
@@ -966,9 +974,9 @@ void DoMain (HINSTANCE hInstance)
 		/* create window */
 		FStringf caption("" GAMESIG " %s " X64 " (%s)", GetVersionString(), GetGitTime());
 		std::wstring wcaption = caption.WideString();
-		Window = CreateWindowEx(
+		Window = CreateWindowExW(
 				WS_EX_APPWINDOW,
-				(LPCTSTR)WinClassName,
+				WinClassName,
 				wcaption.c_str(),
 				WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN,
 				x, y, width, height,
@@ -1253,13 +1261,20 @@ static void infiniterecursion(int foo)
 }
 #endif
 
+// Setting this to 'true' allows getting the standard notification for a crash
+// which offers the very important feature to open a debugger and see the crash in context right away.
+CUSTOM_CVAR(Bool, disablecrashlog, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	SetUnhandledExceptionFilter(!*self ? CatchAllExceptions : nullptr);
+}
+
 //==========================================================================
 //
 // WinMain
 //
 //==========================================================================
 
-int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int nCmdShow)
+int WINAPI wWinMain (HINSTANCE hInstance, HINSTANCE nothing, LPWSTR cmdline, int nCmdShow)
 {
 	g_hInst = hInstance;
 
@@ -1276,27 +1291,27 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	}
 
 #if !defined(__GNUC__) && defined(_DEBUG)
-	if (__argc == 2 && strcmp (__argv[1], "TestCrash") == 0)
+	if (__argc == 2 && __wargv != nullptr && wcscmp (__wargv[1], L"TestCrash") == 0)
 	{
 		__try
 		{
 			*(int *)0 = 0;
 		}
 		__except(CrashPointers = *GetExceptionInformation(),
-			CreateCrashLog (__argv[1], 9, NULL), EXCEPTION_EXECUTE_HANDLER)
+			CreateCrashLog ("TestCrash", 9, NULL), EXCEPTION_EXECUTE_HANDLER)
 		{
 		}
 		DisplayCrashLog ();
 		exit (0);
 	}
-	if (__argc == 2 && strcmp (__argv[1], "TestStackCrash") == 0)
+	if (__argc == 2 && __wargv != nullptr && wcscmp (__wargv[1], L"TestStackCrash") == 0)
 	{
 		__try
 		{
 			infiniterecursion(1);
 		}
 		__except(CrashPointers = *GetExceptionInformation(),
-			CreateCrashLog (__argv[1], 14, NULL), EXCEPTION_EXECUTE_HANDLER)
+			CreateCrashLog ("TestStackCrash", 14, NULL), EXCEPTION_EXECUTE_HANDLER)
 		{
 		}
 		DisplayCrashLog ();

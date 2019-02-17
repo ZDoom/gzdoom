@@ -1415,50 +1415,50 @@ EColorRange V_ParseFontColor (const uint8_t *&color_value, int normalcolor, int 
 void V_InitFonts()
 {
 	InitLowerUpper();
-	V_InitCustomFonts ();
+	V_InitCustomFonts();
 
 	// load the heads-up font
 	if (!(SmallFont = V_GetFont("SmallFont", "SMALLFNT")))
 	{
-		if (Wads.CheckNumForName ("FONTA_S") >= 0)
+		if (Wads.CheckNumForName("FONTA_S") >= 0)
 		{
-			SmallFont = new FFont ("SmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
+			SmallFont = new FFont("SmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
 			SmallFont->SetCursor('[');
 		}
-		else if (Wads.CheckNumForName ("STCFN033", ns_graphics) >= 0)
+		else if (Wads.CheckNumForName("STCFN033", ns_graphics) >= 0)
 		{
-			SmallFont = new FFont ("SmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
+			SmallFont = new FFont("SmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
 		}
 	}
 	if (!(SmallFont2 = V_GetFont("SmallFont2")))	// Only used by Strife
 	{
-		if (Wads.CheckNumForName ("STBFN033", ns_graphics) >= 0)
+		if (Wads.CheckNumForName("STBFN033", ns_graphics) >= 0)
 		{
-			SmallFont2 = new FFont ("SmallFont2", "STBFN%.3d", "defsmallfont2", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
+			SmallFont2 = new FFont("SmallFont2", "STBFN%.3d", "defsmallfont2", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
 		}
-		}
+	}
 	if (!(BigFont = V_GetFont("BigFont")))
 	{
 		if (gameinfo.gametype & GAME_Raven)
 		{
-			BigFont = new FFont ("BigFont", "FONTB%02u", "defbigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
+			BigFont = new FFont("BigFont", "FONTB%02u", "defbigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
 		}
-		}
+	}
 	if (!(ConFont = V_GetFont("ConsoleFont", "CONFONT")))
-		{
+	{
 		ConFont = SmallFont;
-		}
+	}
 	if (!(IntermissionFont = FFont::FindFont("IntermissionFont")))
-		{
+	{
 		if (gameinfo.gametype & GAME_DoomChex)
-			{
+		{
 			IntermissionFont = FFont::FindFont("IntermissionFont_Doom");
-			}
-		if (IntermissionFont == nullptr)
-			{
-			IntermissionFont = BigFont;
-			}
 		}
+		if (IntermissionFont == nullptr)
+		{
+			IntermissionFont = BigFont;
+		}
+	}
 	// This can only happen if gzdoom.pk3 is corrupted. ConFont should always be present.
 	if (ConFont == nullptr)
 	{
@@ -1472,12 +1472,11 @@ void V_InitFonts()
 	if (SmallFont2 == nullptr)
 	{
 		SmallFont2 = SmallFont;
-		}
+	}
 	if (BigFont == nullptr)
-		{
+	{
 		BigFont = SmallFont;
-		}
-	
+	}
 }
 
 void V_ClearFonts()

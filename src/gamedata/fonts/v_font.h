@@ -35,6 +35,8 @@
 #define __V_FONT_H__
 
 #include "doomtype.h"
+#include "w_wad.h"
+#include "vectors.h"
 
 class DCanvas;
 struct FRemapTable;
@@ -113,6 +115,8 @@ protected:
 
 	static int SimpleTranslation (uint8_t *colorsused, uint8_t *translation,
 		uint8_t *identity, TArray<double> &Luminosity);
+
+	void ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height, const DVector2 &Scale);
 
 	int FirstChar, LastChar;
 	int SpaceWidth;

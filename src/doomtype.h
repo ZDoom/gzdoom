@@ -267,7 +267,17 @@ inline VersionInfo MakeVersion(unsigned int ma, unsigned int mi, unsigned int re
 	return{ (uint16_t)ma, (uint16_t)mi, (uint32_t)re };
 }
 
-
+enum class ELightMode : int8_t
+{
+	NotSet = -1,
+	LinearStandard = 0,
+	DoomBright = 1,
+	Doom = 2,
+	DoomDark = 3,
+	DoomLegacy = 4,
+	ZDoomSoftware = 8,
+	DoomSoftware = 16
+};
 
 // Screenshot buffer image data types
 enum ESSType

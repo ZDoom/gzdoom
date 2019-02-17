@@ -36,6 +36,7 @@
 
 #include "SDL.h"
 #include "i_system.h"
+#include "doomerrors.h"
 
 class FInternalCriticalSection
 {

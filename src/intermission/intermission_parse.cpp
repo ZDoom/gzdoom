@@ -37,7 +37,7 @@
 #include "intermission/intermission.h"
 #include "g_level.h"
 #include "w_wad.h"
-
+	
 
 static void ReplaceIntermission(FName intname,FIntermissionDescriptor *desc)
 {

@@ -33,7 +33,7 @@
 **
 */
 
-#include "i_system.h"
+
 #include "p_local.h"
 #include "p_spec.h"
 
@@ -57,6 +57,8 @@
 #include "g_levellocals.h"
 #include "events.h"
 #include "p_destructible.h"
+#include "r_sky.h"
+#include "fragglescript/t_script.h"
 
 //==========================================================================
 //
@@ -247,11 +249,6 @@ FSerializer &Serialize(FSerializer &arc, const char *key, secplane_t &p, secplan
 
 FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t *def)
 {
-	// save the Scroll data here because it's a lot easier to handle a default.
-	// Just writing out the full array can massively inflate the archive for no gain.
-	DVector2 scroll = { 0,0 }, nul = { 0,0 };
-	if (arc.isWriting() && level.Scrolls.Size() > 0) scroll = level.Scrolls[p.sectornum];
-
 	if (arc.BeginObject(key))
 	{
 		arc("floorplane", p.floorplane, def->floorplane)
@@ -299,23 +296,12 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t 
 			("gravity", p.gravity, def->gravity)
 			.Terrain("floorterrain", p.terrainnum[0], &def->terrainnum[0])
 			.Terrain("ceilingterrain", p.terrainnum[1], &def->terrainnum[1])
-			("scrolls", scroll, nul)
 			("healthfloor", p.healthfloor, def->healthfloor)
 			("healthceiling", p.healthceiling, def->healthceiling)
 			("health3d", p.health3d, def->health3d)
 			// GZDoom exclusive:
 			.Array("reflect", p.reflect, def->reflect, 2, true)
 			.EndObject();
-
-		if (arc.isReading() && !scroll.isZero())
-		{
-			if (level.Scrolls.Size() == 0)
-			{
-				level.Scrolls.Resize(level.sectors.Size());
-				memset(&level.Scrolls[0], 0, sizeof(level.Scrolls[0])*level.Scrolls.Size());
-				level.Scrolls[p.sectornum] = scroll;
-			}
-		}
 	}
 	return arc;
 }
@@ -329,9 +315,9 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t 
 //
 //==========================================================================
 
-void RecalculateDrawnSubsectors()
+void FLevelLocals::RecalculateDrawnSubsectors()
 {
-	for (auto &sub : level.subsectors)
+	for (auto &sub : subsectors)
 	{
 		for (unsigned int j = 0; j<sub.numlines; j++)
 		{
@@ -350,12 +336,12 @@ void RecalculateDrawnSubsectors()
 //
 //==========================================================================
 
-FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
+FSerializer &FLevelLocals::SerializeSubsectors(FSerializer &arc, const char *key)
 {
 	uint8_t by;
 	const char *str;
 
-	auto numsubsectors = level.subsectors.Size();
+	auto numsubsectors = subsectors.Size();
 	if (arc.isWriting())
 	{
 		TArray<char> encoded(1 + (numsubsectors + 5) / 6);
@@ -365,7 +351,7 @@ FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
 			by = 0;
 			for (unsigned j = 0; j < 6; j++)
 			{
-				if (i + j < numsubsectors && (level.subsectors[i + j].flags & SSECMF_DRAWN))
+				if (i + j < numsubsectors && (subsectors[i + j].flags & SSECMF_DRAWN))
 				{
 					by |= (1 << j);
 				}
@@ -381,7 +367,7 @@ FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
 		str = &encoded[0];
 		if (arc.BeginArray(key))
 		{
-			auto numvertexes = level.vertexes.Size();
+			auto numvertexes = vertexes.Size();
 			arc(nullptr, numvertexes)
 				(nullptr, numsubsectors)
 				.StringPtr(nullptr, str)
@@ -399,7 +385,7 @@ FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
 				.StringPtr(nullptr, str)
 				.EndArray();
 
-			if (num_verts == (int)level.vertexes.Size() && num_subs == (int)numsubsectors)
+			if (num_verts == (int)vertexes.Size() && num_subs == (int)numsubsectors)
 			{
 				success = true;
 				int sub = 0;
@@ -420,7 +406,7 @@ FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
 					{
 						if (sub + s < (int)numsubsectors && (by & (1 << s)))
 						{
-							level.subsectors[sub + s].flags |= SSECMF_DRAWN;
+							subsectors[sub + s].flags |= SSECMF_DRAWN;
 						}
 					}
 					sub += 6;
@@ -540,13 +526,12 @@ FSerializer &Serialize(FSerializer &arc, const char *key, zone_t &z, zone_t *def
 //
 //==========================================================================
 
-void P_SerializeSounds(FSerializer &arc)
+void P_SerializeSounds(FLevelLocals *Level, FSerializer &arc)
 {
 	S_SerializeSounds(arc);
-	DSeqNode::SerializeSequences (arc);
 	const char *name = NULL;
 	uint8_t order;
-	float musvol = level.MusicVolume;
+	float musvol = Level->MusicVolume;
 
 	if (arc.isWriting())
 	{
@@ -559,9 +544,8 @@ void P_SerializeSounds(FSerializer &arc)
 	if (arc.isReading())
 	{
 		if (!S_ChangeMusic(name, order))
-			if (level.cdtrack == 0 || !S_ChangeCDMusic(level.cdtrack, level.cdid))
-				S_ChangeMusic(level.Music, level.musicorder);
-		level.SetMusicVolume(musvol);
+			Level->SetMusic();
+		Level->SetMusicVolume(musvol);
 	}
 }
 
@@ -574,7 +558,6 @@ void P_SerializeSounds(FSerializer &arc)
 void CopyPlayer(player_t *dst, player_t *src, const char *name);
 static void ReadOnePlayer(FSerializer &arc, bool skipload);
 static void ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayersNow, bool skipload);
-static void SpawnExtraPlayers();
 
 //==========================================================================
 //
@@ -582,7 +565,7 @@ static void SpawnExtraPlayers();
 //
 //==========================================================================
 
-void P_SerializePlayers(FSerializer &arc, bool skipload)
+void P_SerializePlayers(FLevelLocals *Level, FSerializer &arc, bool skipload)
 {
 	int numPlayers, numPlayersNow;
 	int i;
@@ -590,7 +573,7 @@ void P_SerializePlayers(FSerializer &arc, bool skipload)
 	// Count the number of players present right now.
 	for (numPlayersNow = 0, i = 0; i < MAXPLAYERS; ++i)
 	{
-		if (playeringame[i])
+		if (Level->PlayerInGame(i))
 		{
 			++numPlayersNow;
 		}
@@ -605,13 +588,13 @@ void P_SerializePlayers(FSerializer &arc, bool skipload)
 			// Record each player's name, followed by their data.
 			for (i = 0; i < MAXPLAYERS; ++i)
 			{
-				if (playeringame[i])
+				if (Level->PlayerInGame(i))
 				{
 					if (arc.BeginObject(nullptr))
 					{
-						const char *n = players[i].userinfo.GetName();
+						const char *n = Level->Players[i]->userinfo.GetName();
 						arc.StringPtr("playername", n);
-						players[i].Serialize(arc);
+						Level->Players[i]->Serialize(arc);
 						arc.EndObject();
 					}
 				}
@@ -639,10 +622,11 @@ void P_SerializePlayers(FSerializer &arc, bool skipload)
 		}
 		if (!skipload && numPlayersNow > numPlayers)
 		{
-			SpawnExtraPlayers();
+			Level->SpawnExtraPlayers();
 		}
 		// Redo pitch limits, since the spawned player has them at 0.
-		players[consoleplayer].SendPitchLimits();
+		auto p = Level->GetConsolePlayer();
+		if (p) p->SendPitchLimits();
 	}
 }
 
@@ -839,7 +823,7 @@ void CopyPlayer(player_t *dst, player_t *src, const char *name)
 
 	if (dst->Bot != nullptr)
 	{
-		botinfo_t *thebot = bglobal.botinfo;
+		botinfo_t *thebot = src->mo->Level->BotInfo.botinfo;
 		while (thebot && stricmp(name, thebot->name))
 		{
 			thebot = thebot->next;
@@ -848,7 +832,7 @@ void CopyPlayer(player_t *dst, player_t *src, const char *name)
 		{
 			thebot->inuse = BOTINUSE_Yes;
 		}
-		bglobal.botnum++;
+		src->mo->Level->BotInfo.botnum++;
 		dst->userinfo.TransferFrom(uibackup2);
 	}
 	else
@@ -890,23 +874,23 @@ void CopyPlayer(player_t *dst, player_t *src, const char *name)
 //
 //==========================================================================
 
-static void SpawnExtraPlayers()
+void FLevelLocals::SpawnExtraPlayers()
 {
 	// If there are more players now than there were in the savegame,
 	// be sure to spawn the extra players.
 	int i;
 
-	if (deathmatch)
+	if (deathmatch || !isPrimaryLevel())
 	{
 		return;
 	}
 
 	for (i = 0; i < MAXPLAYERS; ++i)
 	{
-		if (playeringame[i] && players[i].mo == NULL)
+		if (PlayerInGame(i) && Players[i]->mo == NULL)
 		{
-			players[i].playerstate = PST_ENTER;
-			P_SpawnPlayer(&level.playerstarts[i], i, (level.flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
+			Players[i]->playerstate = PST_ENTER;
+			SpawnPlayer(&playerstarts[i], i, (flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
 		}
 	}
 }
@@ -917,13 +901,13 @@ static void SpawnExtraPlayers()
 //
 //============================================================================
 
-void G_SerializeLevel(FSerializer &arc, bool hubload)
+void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 {
-	int i = level.totaltime;
+	int i = totaltime;
 
 	if (arc.isWriting())
 	{
-		arc.Array("checksum", level.md5, 16);
+		arc.Array("checksum", md5, 16);
 	}
 	else
 	{
@@ -932,11 +916,11 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		// deep down in the deserializer or just a crash if the few insufficient safeguards were not triggered.
 		uint8_t chk[16] = { 0 };
 		arc.Array("checksum", chk, 16);
-		if (arc.GetSize("linedefs") != level.lines.Size() ||
-			arc.GetSize("sidedefs") != level.sides.Size() ||
-			arc.GetSize("sectors") != level.sectors.Size() ||
-			arc.GetSize("polyobjs") != level.Polyobjects.Size() ||
-			memcmp(chk, level.md5, 16))
+		if (arc.GetSize("linedefs") != lines.Size() ||
+			arc.GetSize("sidedefs") != sides.Size() ||
+			arc.GetSize("sectors") != sectors.Size() ||
+			arc.GetSize("polyobjs") != Polyobjects.Size() ||
+			memcmp(chk, md5, 16))
 		{
 			I_Error("Savegame is from a different level");
 		}
@@ -945,91 +929,110 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 
 	if (arc.isReading())
 	{
-		DThinker::DestroyAllThinkers();
+		Thinkers.DestroyAllThinkers();
 		interpolator.ClearInterpolations();
 		arc.ReadObjects(hubload);
 	}
 
 	arc("multiplayer", multiplayer);
 
-	arc("level.flags", level.flags)
-		("level.flags2", level.flags2)
-		("level.fadeto", level.fadeto)
-		("level.found_secrets", level.found_secrets)
-		("level.found_items", level.found_items)
-		("level.killed_monsters", level.killed_monsters)
-		("level.total_secrets", level.total_secrets)
-		("level.total_items", level.total_items)
-		("level.total_monsters", level.total_monsters)
-		("level.gravity", level.gravity)
-		("level.aircontrol", level.aircontrol)
-		("level.teamdamage", level.teamdamage)
-		("level.maptime", level.maptime)
-		("level.totaltime", i)
-		("level.skytexture1", level.skytexture1)
-		("level.skytexture2", level.skytexture2)
-		("level.fogdensity", level.fogdensity)
-		("level.outsidefogdensity", level.outsidefogdensity)
-		("level.skyfog", level.skyfog)
-		("level.deathsequence", level.deathsequence)
-		("level.bodyqueslot", level.bodyqueslot)
-		("level.spawnindex", level.spawnindex)
-		.Array("level.bodyque", level.bodyque, level.BODYQUESIZE);
+	arc("flags", flags)
+		("flags2", flags2)
+		("fadeto", fadeto)
+		("found_secrets", found_secrets)
+		("found_items", found_items)
+		("killed_monsters", killed_monsters)
+		("total_secrets", total_secrets)
+		("total_items", total_items)
+		("total_monsters", total_monsters)
+		("gravity", gravity)
+		("aircontrol", aircontrol)
+		("teamdamage", teamdamage)
+		("maptime", maptime)
+		("totaltime", i)
+		("skytexture1", skytexture1)
+		("skytexture2", skytexture2)
+		("fogdensity", fogdensity)
+		("outsidefogdensity", outsidefogdensity)
+		("skyfog", skyfog)
+		("deathsequence", deathsequence)
+		("bodyqueslot", bodyqueslot)
+		("spawnindex", spawnindex)
+		.Array("bodyque", bodyque, BODYQUESIZE)
+		("corpsequeue", CorpseQueue)
+		("spotstate", SpotState)
+		("fragglethinker", FraggleScriptThinker)
+		("acsthinker", ACSThinker)
+		("scrolls", Scrolls)
+		("automap", automap)
+		("interpolator", interpolator)
+		("frozenstate", frozenstate)
+		("sndseqlisthead", SequenceListHead);
+
 
 	// Hub transitions must keep the current total time
 	if (!hubload)
-		level.totaltime = i;
+		totaltime = i;
 
 	if (arc.isReading())
 	{
-		sky1texture = level.skytexture1;
-		sky2texture = level.skytexture2;
-		R_InitSkyMap();
-		G_AirControlChanged();
+		InitSkyMap(this);
+		AirControlChanged();
 	}
 
-
-
-	// fixme: This needs to ensure it reads from the correct place. Should be one once there's enough of this code converted to JSON
-
-	FBehavior::StaticSerializeModuleStates(arc);
+	Behaviors.SerializeModuleStates(arc);
 	// The order here is important: First world state, then portal state, then thinkers, and last polyobjects.
-	arc("linedefs", level.lines, level.loadlines);
-	arc("sidedefs", level.sides, level.loadsides);
-	arc("sectors", level.sectors, level.loadsectors);
-	arc("zones", level.Zones);
-	arc("lineportals", level.linePortals);
-	arc("sectorportals", level.sectorPortals);
-	if (arc.isReading()) P_FinalizePortals();
-
-	// [ZZ] serialize health groups
-	P_SerializeHealthGroups(arc);
-	// [ZZ] serialize events
-	E_SerializeEvents(arc);
-	DThinker::SerializeThinkers(arc, hubload);
-	arc("polyobjs", level.Polyobjects);
-	SerializeSubsectors(arc, "subsectors");
-	StatusBar->SerializeMessages(arc);
-	AM_SerializeMarkers(arc);
-	FRemapTable::StaticSerializeTranslations(arc);
-	level.canvasTextureInfo.Serialize(arc);
-	P_SerializePlayers(arc, hubload);
-	P_SerializeSounds(arc);
-
+	SetCompatLineOnSide(false);	// This flag should not be saved. It solely depends on current compatibility state.
+	arc("linedefs", lines, loadlines);
+	SetCompatLineOnSide(true);
+	arc("sidedefs", sides, loadsides);
+	arc("sectors", sectors, loadsectors);
+	arc("zones", Zones);
+	arc("lineportals", linePortals);
+	arc("sectorportals", sectorPortals);
 	if (arc.isReading())
 	{
-		for (auto &sec : level.sectors)
+		FinalizePortals();
+	}
+
+	// [ZZ] serialize health groups
+	P_SerializeHealthGroups(this, arc);
+	// [ZZ] serialize events
+	arc("firstevent", localEventManager->FirstEventHandler)
+		("lastevent", localEventManager->LastEventHandler);
+	Thinkers.SerializeThinkers(arc, hubload);
+	arc("polyobjs", Polyobjects);
+	SerializeSubsectors(arc, "subsectors");
+	StatusBar->SerializeMessages(arc);
+	FRemapTable::StaticSerializeTranslations(arc);
+	canvasTextureInfo.Serialize(arc);
+	P_SerializePlayers(this, arc, hubload);
+	P_SerializeSounds(this, arc);
+
+	// Regenerate some data that wasn't saved
+	if (arc.isReading())
+	{
+		for (auto &sec : sectors)
 		{
 			P_Recalculate3DFloors(&sec);
 		}
 		for (int i = 0; i < MAXPLAYERS; ++i)
 		{
-			if (playeringame[i] && players[i].mo != NULL)
+			if (PlayerInGame(i) && Players[i]->mo != nullptr)
 			{
-				FWeaponSlots::SetupWeaponSlots(players[i].mo);
+				FWeaponSlots::SetupWeaponSlots(Players[i]->mo);
 			}
 		}
+		localEventManager->SetOwnerForHandlers();	// This cannot be automated.
+		RecreateAllAttachedLights();
+		InitPortalGroups(this);
+
+		auto it = GetThinkerIterator<DImpactDecal>(NAME_None, STAT_AUTODECAL);
+		ImpactDecalCount = 0;
+		while (it.Next()) ImpactDecalCount++;
+
+		automap->UpdateShowAllLines();
+
 	}
-	AActor::RecreateAllAttachedLights();
-	InitPortalGroups(&level);
+
 }

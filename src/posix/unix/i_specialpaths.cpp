@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include "i_system.h"
 #include "cmdlib.h"
+#include "doomerrors.h"
 
 #include "version.h"	// for GAMENAME
 

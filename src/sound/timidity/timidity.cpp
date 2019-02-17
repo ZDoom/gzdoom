@@ -28,6 +28,7 @@
 #include "cmdlib.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
+#include "doomerrors.h"
 #include "i_system.h"
 #include "files.h"
 #include "w_wad.h"

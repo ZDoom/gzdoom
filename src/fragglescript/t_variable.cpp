@@ -42,6 +42,7 @@
 #include "t_script.h"
 #include "a_pickups.h"
 #include "serializer.h"
+#include "g_levellocals.h"
 
 
 //==========================================================================
@@ -122,7 +123,7 @@ const char *stringvalue(const svalue_t & v)
 //
 //==========================================================================
 
-AActor* actorvalue(const svalue_t &svalue)
+AActor* actorvalue(FLevelLocals *Level, const svalue_t &svalue)
 {
 	int intval;
 
@@ -138,9 +139,9 @@ AActor* actorvalue(const svalue_t &svalue)
 	}
 	else
 	{
-		auto &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
+		auto &SpawnedThings = Level->FraggleScriptThinker->SpawnedThings;
 		// this requires some creativity. We use the intvalue
-		// as the thing number of a thing in the level.
+		// as the thing number of a thing in the level
 		intval = intvalue(svalue);
 		
 		if(intval < 0 || intval >= (int)SpawnedThings.Size())
@@ -178,9 +179,9 @@ DFsVariable::DFsVariable(const char * _name)
 {
 	Name=_name;
 	type=svt_int;
-	actor = NULL;
+	actor = nullptr;
 	value.i=0;
-	next=NULL;
+	next = nullptr;
 }
 
 //==========================================================================
@@ -234,7 +235,7 @@ void DFsVariable::GetValue(svalue_t &returnvar)
 //
 //==========================================================================
 
-void DFsVariable::SetValue(const svalue_t &newvalue)
+void DFsVariable::SetValue(FLevelLocals *Level, const svalue_t &newvalue)
 {
 	if(type == svt_const)
     {
@@ -264,7 +265,7 @@ void DFsVariable::SetValue(const svalue_t &newvalue)
 		break;
 	
 	case svt_mobj:
-		actor = actorvalue(newvalue);
+		actor = actorvalue(Level, newvalue);
 		break;
 	
 	case svt_pInt:
@@ -272,7 +273,7 @@ void DFsVariable::SetValue(const svalue_t &newvalue)
 		break;
 	
 	case svt_pMobj:
-		*value.pMobj = actorvalue(newvalue);
+		*value.pMobj = actorvalue(Level, newvalue);
 		break;
 	
 	case svt_function:
@@ -363,7 +364,7 @@ DFsVariable *DFsScript::VariableForName(const char *name)
 //
 //==========================================================================
 
-DFsVariable *DFsScript::FindVariable(const char *name)
+DFsVariable *DFsScript::FindVariable(const char *name, DFsScript *GlobalScript)
 {
 	DFsVariable *var;
 	DFsScript *current = this;
@@ -373,7 +374,13 @@ DFsVariable *DFsScript::FindVariable(const char *name)
 		// check this script
 		if ((var = current->VariableForName(name)))
 			return var;
-		current = current->parent;    // try the parent of this one
+
+		// Since the global script cannot be serialized, we cannot store a pointer to it, because this cannot be safely restored during deserialization.
+		// To compensate we need to check the relationship explicitly here.
+		if (current->parent == nullptr && current != GlobalScript)
+			current = GlobalScript;
+		else
+			current = current->parent;    // try the parent of this one
     }
 	
 	return NULL;    // no variable

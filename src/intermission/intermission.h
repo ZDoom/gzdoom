@@ -7,6 +7,7 @@
 #include "textures/textures.h"
 #include "s_sound.h"
 #include "v_font.h"
+#include "g_game.h"
 
 struct event_t;
 

@@ -461,7 +461,7 @@ class HolySpirit : Actor
 		}
 		VelFromAngle();
 
-		if (!(level.time&15) 
+		if (!(Level.maptime&15) 
 			|| pos.z > target.pos.z + target.height
 			|| pos.z + height < target.pos.z)
 		{
@@ -503,7 +503,7 @@ class HolySpirit : Actor
 		if (tracer)
 		{
 			CHolySeekerMissile (args[0], args[0]*2.);
-			if (!((level.time+7)&15))
+			if (!((Level.maptime+7)&15))
 			{
 				args[0] = 5+(random[HolySeeker]()/20);
 			}

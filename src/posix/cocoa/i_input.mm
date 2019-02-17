@@ -45,6 +45,8 @@
 #include "doomstat.h"
 #include "v_video.h"
 #include "events.h"
+#include "g_game.h"
+#include "g_levellocals.h"
 
 
 EXTERN_CVAR(Int, m_use_mouse)
@@ -91,7 +93,7 @@ void CheckGUICapture()
 		: (MENU_On == menuactive || MENU_OnNoPause == menuactive);
 
 	// [ZZ] check active event handlers that want the UI processing
-	if (!wantCapture && E_CheckUiProcessors())
+	if (!wantCapture && primaryLevel->localEventManager->CheckUiProcessors())
 	{
 		wantCapture = true;
 	}
@@ -196,7 +198,7 @@ void CheckNativeMouse()
 			&& (MENU_On == menuactive || MENU_OnNoPause == menuactive);
 	}
 
-	if (!wantNative && E_CheckRequireMouse())
+	if (!wantNative && primaryLevel->localEventManager->CheckRequireMouse())
 		wantNative = true;
 
 	I_SetNativeMouse(wantNative);

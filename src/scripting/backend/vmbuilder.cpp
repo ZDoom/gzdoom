@@ -922,6 +922,7 @@ void FFunctionBuildList::Build()
 
 void FFunctionBuildList::DumpJit()
 {
+#ifdef HAVE_VM_JIT
 	FILE *dump = fopen("dumpjit.txt", "w");
 	if (dump == nullptr)
 		return;
@@ -932,6 +933,7 @@ void FFunctionBuildList::DumpJit()
 	}
 
 	fclose(dump);
+#endif // HAVE_VM_JIT
 }
 
 
@@ -974,7 +976,7 @@ void FunctionCallEmitter::AddParameter(ExpEmit &emit, bool reference)
 	}
 	emitters.push_back([=](VMFunctionBuilder *build) ->int
 	{
-		build->Emit(OP_PARAM, emit.RegType + (reference * REGT_ADDROF), emit.RegNum);
+		build->Emit(OP_PARAM, emit.RegType + (reference * REGT_ADDROF) + (emit.Konst * REGT_KONST), emit.RegNum);
 		auto op = emit;
 		op.Free(build);
 		return emit.RegCount;

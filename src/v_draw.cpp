@@ -1339,19 +1339,8 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawFrame)
 //
 //==========================================================================
 
-void DFrameBuffer::DrawBorder (int x1, int y1, int x2, int y2)
+void DFrameBuffer::DrawBorder (FTextureID picnum, int x1, int y1, int x2, int y2)
 {
-	FTextureID picnum;
-
-	if (level.info != NULL && level.info->BorderTexture.Len() != 0)
-	{
-		picnum = TexMan.CheckForTexture (level.info->BorderTexture, ETextureType::Flat);
-	}
-	else
-	{
-		picnum = TexMan.CheckForTexture (gameinfo.BorderFlat, ETextureType::Flat);
-	}
-
 	if (picnum.isValid())
 	{
 		FlatFill (x1, y1, x2, y2, TexMan.GetTexture(picnum, false));
@@ -1362,46 +1351,7 @@ void DFrameBuffer::DrawBorder (int x1, int y1, int x2, int y2)
 	}
 }
 
-//==========================================================================
-//
-// R_DrawViewBorder
-//
-// Draws the border around the view for different size windows
-//
-//==========================================================================
-
-void DFrameBuffer::DrawViewBorder (void)
-{
-	if (viewwidth == Width)
-	{
-		return;
-	}
-
-	DrawBorder (0, 0, Width, viewwindowy);
-	DrawBorder (0, viewwindowy, viewwindowx, viewheight + viewwindowy);
-	DrawBorder (viewwindowx + viewwidth, viewwindowy, Width, viewheight + viewwindowy);
-	DrawBorder (0, viewwindowy + viewheight, Width, StatusBar->GetTopOfStatusbar());
-
-	DrawFrame (viewwindowx, viewwindowy, viewwidth, viewheight);
-}
-
-//==========================================================================
-//
-// R_RefreshViewBorder
-//
-// Draws the border around the player view, if needed.
-//
-//==========================================================================
-
-void DFrameBuffer::RefreshViewBorder ()
-{
-	if (setblocks < 10)
-	{
-		DrawViewBorder();
-	}
-}
-
-//==========================================================================
+///==========================================================================
 //
 // Draws a blend over the entire view
 //

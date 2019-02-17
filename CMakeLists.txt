@@ -163,14 +163,29 @@ option( NO_OPENAL "Disable OpenAL sound support" OFF )
 find_package( BZip2 )
 find_package( JPEG )
 find_package( ZLIB )
-find_package( asmjit )
+
+include( TargetArch )
+
+target_architecture(ZDOOM_TARGET_ARCH)
+
+if( ${ZDOOM_TARGET_ARCH} MATCHES "x86_64" )
+	set( HAVE_VM_JIT ON )
+endif()
+
+# no, we're not using external asmjit for now, we made too many modifications to our's.
+# if the asmjit author uses our changes then we'll update this.
+
+#if( ${HAVE_VM_JIT} )
+#	find_package( asmjit )
+#endif()
+
 # GME
-find_path( GME_INCLUDE_DIR gme/gme.h )
-find_library( GME_LIBRARIES gme )
-mark_as_advanced( GME_INCLUDE_DIR GME_LIBRARIES )
-FIND_PACKAGE_HANDLE_STANDARD_ARGS( GME
-	REQUIRED_VARS GME_LIBRARIES GME_INCLUDE_DIR
-)
+#find_path( GME_INCLUDE_DIR gme/gme.h )
+#find_library( GME_LIBRARIES gme )
+#mark_as_advanced( GME_INCLUDE_DIR GME_LIBRARIES )
+#FIND_PACKAGE_HANDLE_STANDARD_ARGS( GME
+#	REQUIRED_VARS GME_LIBRARIES GME_INCLUDE_DIR
+#)
 
 if( MSVC )
 	# Eliminate unreferenced functions and data
@@ -222,6 +237,7 @@ if( MSVC )
 	string(REPLACE "/MD " " " CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE} )
 	string(REPLACE "/MD " " " CMAKE_CXX_FLAGS_MINSIZEREL ${CMAKE_CXX_FLAGS_MINSIZEREL} )
 	string(REPLACE "/MD " " " CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO} )
+	string(REPLACE "/Ob1 " "/Ob2 " CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO} )
 	string(REPLACE "/MDd " " " CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG} )
 	string(REPLACE "/MD " " " CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE} )
 	string(REPLACE "/MD " " " CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_MINSIZEREL} )
@@ -271,8 +287,10 @@ set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${DEB_C_FLAGS} -D_DEBUG" )
 option(FORCE_INTERNAL_ZLIB "Use internal zlib")
 option(FORCE_INTERNAL_JPEG "Use internal jpeg")
 option(FORCE_INTERNAL_BZIP2 "Use internal bzip2")
-option(FORCE_INTERNAL_GME "Use internal gme")
-option(FORCE_INTERNAL_ASMJIT "Use internal asmjit")
+option(FORCE_INTERNAL_GME "Use internal gme" ON)
+mark_as_advanced( FORCE_INTERNAL_GME )
+option(FORCE_INTERNAL_ASMJIT "Use internal asmjit" ON)
+mark_as_advanced( FORCE_INTERNAL_ASMJIT )
 
 # Fast math flags, required by some subprojects
 set( ZD_FASTMATH_FLAG "" )
@@ -293,15 +311,17 @@ else()
 	set( ZLIB_LIBRARY z )
 endif()
 
-if( ASMJIT_FOUND AND NOT FORCE_INTERNAL_ASMJIT )
-	message( STATUS "Using system asmjit, includes found at ${ASMJIT_INCLUDE_DIR}" )
-else()
-	message( STATUS "Using internal asmjit" )
-	set( SKIP_INSTALL_ALL TRUE ) # Avoid installing asmjit alongside zdoom
-	add_subdirectory( asmjit )
-	set( ASMJIT_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/asmjit )
-	set( ASMJIT_LIBRARIES asmjit )
-	set( ASMJIT_LIBRARY asmjit )
+if( ${HAVE_VM_JIT} )
+	if( ASMJIT_FOUND AND NOT FORCE_INTERNAL_ASMJIT )
+		message( STATUS "Using system asmjit, includes found at ${ASMJIT_INCLUDE_DIR}" )
+	else()
+		message( STATUS "Using internal asmjit" )
+		set( SKIP_INSTALL_ALL TRUE ) # Avoid installing asmjit alongside zdoom
+		add_subdirectory( asmjit )
+		set( ASMJIT_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/asmjit )
+		set( ASMJIT_LIBRARIES asmjit )
+		set( ASMJIT_LIBRARY asmjit )
+	endif()
 endif()
 
 if( JPEG_FOUND AND NOT FORCE_INTERNAL_JPEG )

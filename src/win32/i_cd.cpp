@@ -42,6 +42,7 @@
 #include "c_cvars.h"
 #include "m_argv.h"
 #include "version.h"
+#include "i_system.h"
 
 #include "i_cd.h"
 #include "helperthread.h"

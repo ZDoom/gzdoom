@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <exception>
 #include <stdexcept>
+#include "doomtype.h"
 
 #define MAX_ERRORTEXT	1024
 
@@ -102,5 +103,8 @@ public:
 	CFatalError() : CDoomError() {}
 	CFatalError(const char *message) : CDoomError(message) {}
 };
+
+void I_Error (const char *error, ...) GCCPRINTF(1,2);
+void I_FatalError (const char *error, ...) GCCPRINTF(1,2);
 
 #endif //__ERRORS_H__

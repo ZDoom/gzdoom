@@ -64,6 +64,7 @@ class Inventory : Actor
 	flagdef IsArmor: ItemFlags, 21;
 	flagdef IsHealth: ItemFlags, 22;
 	flagdef AlwaysPickup: ItemFlags, 23;
+	flagdef Unclearable: ItemFlags, 24;
 
 	flagdef ForceRespawnInSurvival: none, 0;
 	flagdef PickupFlash: none, 6;
@@ -265,7 +266,7 @@ class Inventory : Actor
 		if (SpawnPointClass != NULL)
 		{
 			Actor spot = NULL;
-			let state = SpotState.GetSpotState();
+			let state = Level.GetSpotState();
 
 			if (state != NULL) spot = state.GetRandomSpot(SpawnPointClass, false);
 			if (spot != NULL) 
@@ -509,6 +510,13 @@ class Inventory : Actor
 			// The item is placed in the inventory just long enough to be used.
 			toucher.AddInventory(self);
 			bool usegood = Use(true);
+
+			// Handle potential change of toucher/owner because of morph
+			if (usegood && self.owner)
+			{
+				toucher = self.owner;
+			}
+
 			toucher.RemoveInventory(self);
 
 			if (usegood)
@@ -758,7 +766,7 @@ class Inventory : Actor
 			toucher = player.mo;
 		}
 
-		bool localview = toucher.CheckLocalView(consoleplayer);
+		bool localview = toucher.CheckLocalView();
 
 		bool res;
 		[res, toucher] = CallTryPickup(toucher);
@@ -994,7 +1002,7 @@ class Inventory : Actor
 	//
 	//===========================================================================
 
-	virtual void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive) {}
+	virtual void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor = null, Actor source = null, int flags = 0) {}
 	
 
 	virtual bool Use (bool pickup) { return false; }
@@ -1042,7 +1050,7 @@ class Inventory : Actor
 		}
 		/*
 		else if ((ItemFlags & IF_FANCYPICKUPSOUND) &&
-			(toucher == NULL || toucher->CheckLocalView(consoleplayer)))
+			(toucher == NULL || toucher->CheckLocalView()))
 		{
 			atten = ATTN_NONE;
 		}
@@ -1052,7 +1060,7 @@ class Inventory : Actor
 			atten = ATTN_NORM;
 		}
 
-		if (toucher != NULL && toucher.CheckLocalView(consoleplayer))
+		if (toucher != NULL && toucher.CheckLocalView())
 		{
 			chan = CHAN_PICKUP|CHAN_NOPAUSE;
 		}

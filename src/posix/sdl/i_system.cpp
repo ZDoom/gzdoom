@@ -19,7 +19,9 @@
 //-----------------------------------------------------------------------------
 //
 
+#include "i_system.h"
 
+#include <dirent.h>
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <stdio.h>

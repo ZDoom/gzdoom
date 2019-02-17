@@ -10,50 +10,52 @@ struct UserCmd native
 	native int16	upmove;
 }
 
-class PlayerPawn : Actor native
+class PlayerPawn : Actor
 {
 	const CROUCHSPEED = (1./12);
 	// [RH] # of ticks to complete a turn180
 	const TURN180_TICKS = ((TICRATE / 4) + 1);
+	// 16 pixels of bob
+	const MAXBOB = 16.;
 	
-	native int			crouchsprite;
-	native int			MaxHealth;
-	native int			BonusHealth;
-	native int			MugShotMaxHealth;
-	native int			RunHealth;
-	native int			PlayerFlags;
-	native clearscope Inventory	InvFirst;		// first inventory item displayed on inventory bar
-	native clearscope Inventory	InvSel;			// selected inventory item
-	native Name 		SoundClass;		// Sound class
-	native Name 		Face;			// Doom status bar face (when used)
-	native Name 		Portrait;
-	native Name 		Slot[10];
-	native double 		HexenArmor[5];
-	native uint8		ColorRangeStart;	// Skin color range
-	native uint8		ColorRangeEnd;
+	int			crouchsprite;
+	int			MaxHealth;
+	int			BonusHealth;
+	int			MugShotMaxHealth;
+	int			RunHealth;
+	private int	PlayerFlags;
+	clearscope Inventory	InvFirst;		// first inventory item displayed on inventory bar
+	clearscope Inventory	InvSel;			// selected inventory item
+	Name 		SoundClass;		// Sound class
+	Name 		Portrait;
+	Name 		Slot[10];
+	double 		HexenArmor[5];
 
 	// [GRB] Player class properties
-	native double		JumpZ;
-	native double		GruntSpeed;
-	native double		FallingScreamMinSpeed, FallingScreamMaxSpeed;
-	native double		ViewHeight;
-	native double		ForwardMove1, ForwardMove2;
-	native double		SideMove1, SideMove2;
-	native TextureID	ScoreIcon;
-	native int			SpawnMask;
-	native Name			MorphWeapon;
-	native double		AttackZOffset;			// attack height, relative to player center
-	native double		UseRange;				// [NS] Distance at which player can +use
-	native double		AirCapacity;			// Multiplier for air supply underwater.
-	native Class<Actor> FlechetteType;
-	native color 		DamageFade;				// [CW] Fades for when you are being damaged.
-	native double		ViewBob;				// [SP] ViewBob Multiplier
-	native double		FullHeight;
-	native double		curBob;
+	double		JumpZ;
+	double		GruntSpeed;
+	double		FallingScreamMinSpeed, FallingScreamMaxSpeed;
+	double		ViewHeight;
+	double		ForwardMove1, ForwardMove2;
+	double		SideMove1, SideMove2;
+	TextureID	ScoreIcon;
+	int			SpawnMask;
+	Name			MorphWeapon;
+	double		AttackZOffset;			// attack height, relative to player center
+	double		UseRange;				// [NS] Distance at which player can +use
+	double		AirCapacity;			// Multiplier for air supply underwater.
+	Class<Inventory> FlechetteType;
+	color 		DamageFade;				// [CW] Fades for when you are being damaged.
+	double		ViewBob;				// [SP] ViewBob Multiplier
+	double		FullHeight;
+	double		curBob;
 
 	meta Name HealingRadiusType;
 	meta Name InvulMode;
+	meta Name Face;
 	meta int TeleportFreezeTime;
+	meta int ColorRangeStart;	// Skin color range
+	meta int ColorRangeEnd;
 	
 	property prefix: Player;
 	property HealRadiusType: HealingradiusType;
@@ -72,6 +74,11 @@ class PlayerPawn : Actor native
 	property FlechetteType: FlechetteType;
 	property Portrait: Portrait;
 	property TeleportFreezeTime: TeleportFreezeTime;
+	property ViewBob: ViewBob;
+	
+	flagdef NoThrustWhenInvul: PlayerFlags, 0;
+	flagdef CanSuperMorph: PlayerFlags, 1;
+	flagdef CrouchableMorph: PlayerFlags, 2;
 	
 	Default
 	{
@@ -113,9 +120,68 @@ class PlayerPawn : Actor native
 		Obituary "$OB_MPDEFAULT";
 	}
 	
+	
 	//===========================================================================
 	//
-	// APlayerPawn :: MarkPrecacheSounds
+	// PlayerPawn :: Tick
+	//
+	//===========================================================================
+
+	override void Tick()
+	{
+		if (player != NULL && player.mo == self && CanCrouch() && player.playerstate != PST_DEAD)
+		{
+			Height = FullHeight * player.crouchfactor;
+		}
+		else
+		{
+			if (health > 0) Height = FullHeight;
+		}
+		Super.Tick();
+	}
+
+	//===========================================================================
+	//
+	// 
+	//
+	//===========================================================================
+
+	override void BeginPlay()
+	{
+		Super.BeginPlay ();
+		ChangeStatNum (STAT_PLAYER);
+		FullHeight = Height;
+		if (!SetupCrouchSprite(crouchsprite)) crouchsprite = 0;
+	}
+	
+	//===========================================================================
+	//
+	// PlayerPawn :: PostBeginPlay
+	//
+	//===========================================================================
+
+	override void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+		WeaponSlots.SetupWeaponSlots(self);
+
+		// Voodoo dolls: restore original floorz/ceilingz logic
+		if (player == NULL || player.mo != self)
+		{
+			FindFloorCeiling(FFCF_ONLYSPAWNPOS|FFCF_NOPORTALS);
+			SetZ(floorz);
+			FindFloorCeiling(FFCF_ONLYSPAWNPOS);
+		}
+		else
+		{
+			player.SendPitchLimits();
+		}
+	}
+
+	
+	//===========================================================================
+	//
+	// PlayerPawn :: MarkPrecacheSounds
 	//
 	//===========================================================================
 
@@ -237,7 +303,7 @@ class PlayerPawn : Actor native
 
 	//===========================================================================
 	//
-	// APlayerPawn :: CheckWeaponSwitch
+	// PlayerPawn :: CheckWeaponSwitch
 	//
 	// Checks if weapons should be changed after picking up ammo
 	//
@@ -268,13 +334,6 @@ class PlayerPawn : Actor native
 	{
 		let player = self.player;
 		
-		// [SO] 9/2/02: People were able to do an awful lot of damage
-		// when they were observers...
-		if (player.Bot == null && bot_observer)
-		{
-			return;
-		}
-
 		let weapn = player.ReadyWeapon;
 		if (weapn == null || !weapn.CheckAmmo (Weapon.PrimaryFire, true))
 		{
@@ -303,13 +362,6 @@ class PlayerPawn : Actor native
 
 	virtual void FireWeaponAlt (State stat)
 	{
-		// [SO] 9/2/02: People were able to do an awful lot of damage
-		// when they were observers...
-		if (player.Bot == null && bot_observer)
-		{
-			return;
-		}
-
 		let weapn = player.ReadyWeapon;
 		if (weapn == null || weapn.FindState('AltFire') == null || !weapn.CheckAmmo (Weapon.AltFire, true))
 		{
@@ -451,6 +503,133 @@ class PlayerPawn : Actor native
 			}
 		}
 	}
+	
+	/*
+	==================
+	=
+	= P_CalcHeight
+	=
+	=
+	Calculate the walking / running height adjustment
+	=
+	==================
+	*/
+
+	virtual void CalcHeight()
+	{
+		let player = self.player;
+		double angle;
+		double bob;
+		bool still = false;
+
+		// Regular movement bobbing
+		// (needs to be calculated for gun swing even if not on ground)
+
+		// killough 10/98: Make bobbing depend only on player-applied motion.
+		//
+		// Note: don't reduce bobbing here if on ice: if you reduce bobbing here,
+		// it causes bobbing jerkiness when the player moves from ice to non-ice,
+		// and vice-versa.
+
+		if (player.cheats & CF_NOCLIP2)
+		{
+			player.bob = 0;
+		}
+		else if (bNoGravity && !player.onground)
+		{
+			player.bob = 0.5;
+		}
+		else
+		{
+			player.bob = player.Vel dot player.Vel;
+			if (player.bob == 0)
+			{
+				still = true;
+			}
+			else
+			{
+				player.bob *= player.GetMoveBob();
+
+				if (player.bob > MAXBOB)
+					player.bob = MAXBOB;
+			}
+		}
+
+		double defaultviewheight = ViewHeight + player.crouchviewdelta;
+
+		if (player.cheats & CF_NOVELOCITY)
+		{
+			player.viewz = pos.Z + defaultviewheight;
+
+			if (player.viewz > ceilingz-4)
+				player.viewz = ceilingz-4;
+
+			return;
+		}
+
+		if (still)
+		{
+			if (player.health > 0)
+			{
+				angle = Level.maptime / (120 * TICRATE / 35.) * 360.;
+				bob = player.GetStillBob() * sin(angle);
+			}
+			else
+			{
+				bob = 0;
+			}
+		}
+		else
+		{
+			angle = Level.maptime / (20 * TICRATE / 35.) * 360.;
+			bob = player.bob * sin(angle) * (waterlevel > 1 ? 0.25f : 0.5f);
+		}
+
+		// move viewheight
+		if (player.playerstate == PST_LIVE)
+		{
+			player.viewheight += player.deltaviewheight;
+
+			if (player.viewheight > defaultviewheight)
+			{
+				player.viewheight = defaultviewheight;
+				player.deltaviewheight = 0;
+			}
+			else if (player.viewheight < (defaultviewheight/2))
+			{
+				player.viewheight = defaultviewheight/2;
+				if (player.deltaviewheight <= 0)
+					player.deltaviewheight = 1 / 65536.;
+			}
+			
+			if (player.deltaviewheight)	
+			{
+				player.deltaviewheight += 0.25;
+				if (!player.deltaviewheight)
+					player.deltaviewheight = 1/65536.;
+			}
+		}
+
+		if (player.morphTics)
+		{
+			bob = 0;
+		}
+		player.viewz = pos.Z + player.viewheight + (bob * clamp(ViewBob, 0. , 1.5)); // [SP] Allow DECORATE changes to view bobbing speed.
+		if (Floorclip && player.playerstate != PST_DEAD
+			&& pos.Z <= floorz)
+		{
+			player.viewz -= Floorclip;
+		}
+		if (player.viewz > ceilingz - 4)
+		{
+			player.viewz = ceilingz - 4;
+		}
+		if (player.viewz < floorz + 4)
+		{
+			player.viewz = floorz + 4;
+		}
+	}
+
 
 	//==========================================================================
 	//
@@ -541,7 +720,7 @@ class PlayerPawn : Actor native
 		if ((player.cmd.buttons & BT_USE ||
 			((multiplayer || alwaysapplydmflags) && sv_forcerespawn)) && !sv_norespawn)
 		{
-			if (level.time >= player.respawn_time || ((player.cmd.buttons & BT_USE) && player.Bot == NULL))
+			if (Level.maptime >= player.respawn_time || ((player.cmd.buttons & BT_USE) && player.Bot == NULL))
 			{
 				player.cls = NULL;		// Force a new class if the player is using a random class
 				player.playerstate = (multiplayer || level.AllowRespawn || sv_singleplayerrespawn || G_SkillPropertyInt(SKILLP_PlayerRespawn)) ? PST_REBORN : PST_ENTER;
@@ -555,7 +734,7 @@ class PlayerPawn : Actor native
 
 	//===========================================================================
 	//
-	// APlayerPawn :: Die
+	// PlayerPawn :: Die
 	//
 	//===========================================================================
 
@@ -634,7 +813,7 @@ class PlayerPawn : Actor native
 	
 	//===========================================================================
 	//
-	// APlayerPawn :: FilterCoopRespawnInventory
+	// PlayerPawn :: FilterCoopRespawnInventory
 	//
 	// When respawning in coop, this function is called to walk through the dead
 	// player's inventory and modify it according to the current game flags so
@@ -981,7 +1160,7 @@ class PlayerPawn : Actor native
 	
 	//===========================================================================
 	//
-	// APlayerPawn :: TweakSpeeds
+	// PlayerPawn :: TweakSpeeds
 	//
 	//===========================================================================
 
@@ -990,8 +1169,8 @@ class PlayerPawn : Actor native
 		// Strife's player can't run when its health is below 10
 		if (health <= RunHealth)
 		{
-			forward = clamp(forward, -0x1900, 0x1900);
-			side = clamp(side, -0x1800, 0x1800);
+			forward = clamp(forward, -gameinfo.normforwardmove[0]*256, gameinfo.normforwardmove[0]*256);
+			side = clamp(side, -gameinfo.normsidemove[0]*256, gameinfo.normsidemove[0]*256);
 		}
 
 		// [GRB]
@@ -1325,7 +1504,7 @@ class PlayerPawn : Actor native
 	virtual void CheckPoison()
 	{
 		let player = self.player;
-		if (player.poisoncount && !(level.time & 15))
+		if (player.poisoncount && !(Level.maptime & 15))
 		{
 			player.poisoncount -= 5;
 			if (player.poisoncount < 0)
@@ -1349,7 +1528,7 @@ class PlayerPawn : Actor native
 		{
 			let player = self.player;
 			int maxhealth = GetMaxHealth(true);
-			if ((level.time % TICRATE) == 0 && player.health > maxhealth)
+			if ((Level.maptime % TICRATE) == 0 && player.health > maxhealth)
 			{
 				if (player.health - 5 < maxhealth)
 					player.health = maxhealth;
@@ -1377,9 +1556,9 @@ class PlayerPawn : Actor native
 			{
 				ResetAirSupply();
 			}
-			else if (player.air_finished <= level.time && !(level.time & 31))
+			else if (player.air_finished <= Level.maptime && !(Level.maptime & 31))
 			{
-				DamageMobj(NULL, NULL, 2 + ((level.time - player.air_finished) / TICRATE), 'Drowning');
+				DamageMobj(NULL, NULL, 2 + ((Level.maptime - player.air_finished) / TICRATE), 'Drowning');
 			}
 		}
 	}
@@ -1442,10 +1621,11 @@ class PlayerPawn : Actor native
 		if (!(player.cheats & CF_PREDICTING))
 		{
 			CheckEnvironment();
-			CheckUse();
-			CheckUndoMorph();
+			// Note that after this point the PlayerPawn may have changed due to getting unmorphed or getting its skull popped so 'self' is no longer safe to use.
+			// This also must not read mo into a local variable because several functions in this block can change the attached PlayerPawn.
+			player.mo.CheckUse();
+			player.mo.CheckUndoMorph();
 			// Cycle psprites.
-			// Note that after self point the PlayerPawn may have changed due to getting unmorphed so 'self' is no longer safe to use.
 			player.mo.TickPSprites();
 			// Other Counters
 			if (player.damagecount)	player.damagecount--;
@@ -1454,7 +1634,7 @@ class PlayerPawn : Actor native
 			if (player.hazardcount)
 			{
 				player.hazardcount--;
-				if (!(level.time % player.hazardinterval) && player.hazardcount > 16*TICRATE)
+				if (!(Level.maptime % player.hazardinterval) && player.hazardcount > 16*TICRATE)
 					player.mo.DamageMobj (NULL, NULL, 5, player.hazardtype);
 			}
 			player.mo.CheckPoison();
@@ -1474,6 +1654,7 @@ class PlayerPawn : Actor native
 
 	void BringUpWeapon ()
 	{
+		let player = self.player;
 		if (player.PendingWeapon == WP_NOCHANGE)
 		{
 			if (player.ReadyWeapon != null)
@@ -1515,7 +1696,7 @@ class PlayerPawn : Actor native
 	
 	//===========================================================================
 	//
-	// APlayerPawn :: BestWeapon
+	// PlayerPawn :: BestWeapon
 	//
 	// Returns the best weapon a player has, possibly restricted to a single
 	// type of ammo.
@@ -1599,7 +1780,7 @@ class PlayerPawn : Actor native
 	
 	//===========================================================================
 	//
-	// APlayerPawn :: PickNewWeapon
+	// PlayerPawn :: PickNewWeapon
 	//
 	// Picks a new weapon for this player. Used mostly for running out of ammo,
 	// but it also works when an ACS script explicitly takes the ready weapon
@@ -1628,7 +1809,7 @@ class PlayerPawn : Actor native
 
 	//===========================================================================
 	//
-	// APlayerPawn :: GiveDefaultInventory
+	// PlayerPawn :: GiveDefaultInventory
 	//
 	//===========================================================================
 
@@ -1693,18 +1874,18 @@ class PlayerPawn : Actor native
 						bool res;
 						Actor check;
 						[res, check] = item.CallTryPickup(self);
-						if (check != self)
+						if (!res)
+						{
+							item.Destroy();
+							item = NULL;
+						}
+						else if (check != self)
 						{
 							// Player was morphed. This is illegal at game start.
 							// This problem is only detectable when it's too late to do something about it...
 							ThrowAbortException("Cannot give morph item '%s' when starting a game!", di.Name);
 						}
-						else if (!res)
-						{
-							item.Destroy();
-							item = NULL;
 						}
-					}
 					let weap = Weapon(item);
 					if (weap != NULL && weap.CheckAmmo(Weapon.EitherFire, false))
 					{
@@ -1716,6 +1897,44 @@ class PlayerPawn : Actor native
 		}
 	}
 
+	//===========================================================================
+	//
+	// PlayerPawn :: GiveDeathmatchInventory
+	//
+	// Gives players items they should have in addition to their default
+	// inventory when playing deathmatch. (i.e. all keys)
+	//
+	//===========================================================================
+
+	virtual void GiveDeathmatchInventory()
+	{
+		for ( int i = 0; i < AllActorClasses.Size(); ++i)
+		{
+			let cls = (class<Key>)(AllActorClasses[i]);
+			if (cls)
+			{
+				let keyobj = GetDefaultByType(cls);
+				if (keyobj.special1 != 0)
+				{
+					GiveInventoryType(cls);
+				}
+			}
+		}
+	}
+
+	//===========================================================================
+	//
+	// 
+	//
+	//===========================================================================
+
+	override int GetMaxHealth(bool withupgrades) const
+	{
+		int ret = MaxHealth > 0? MaxHealth : ((Level.compatflags & COMPATF_DEHHEALTH)? 100 : deh.MaxHealth);
+		if (withupgrades) ret += stamina + BonusHealth;
+		return ret;
+	}
+	
 	//===========================================================================
 	//
 	// 
@@ -1810,7 +2029,7 @@ class PlayerPawn : Actor native
 				if (item.bINVBAR && item.Amount > item.InterHubAmount)
 				{
 					item.Amount = item.InterHubAmount;
-					if (level.REMOVEITEMS && !item.bUNDROPPABLE)
+					if (level.REMOVEITEMS && !item.bUNDROPPABLE && !item.bUNCLEARABLE)
 					{
 						todelete.Push(item);
 					}
@@ -1943,7 +2162,8 @@ class PlayerPawn : Actor native
 				// look for its non-powered up version.
 				if (ReadyWeapon.bPOWERED_UP && ReadyWeapon.SisterWeaponType != null)
 				{
-					return player.weapons.LocateWeapon(ReadyWeapon.SisterWeaponType);
+					[found, slot, index] = player.weapons.LocateWeapon(ReadyWeapon.SisterWeaponType);
+					return found, slot, index;
 				}
 				return false, 0, 0;
 			}
@@ -2101,7 +2321,7 @@ class PlayerPawn : Actor native
 		for (int i = 0; i < 2; i++)
 		{
 			// Bob the weapon based on movement speed. ([SP] And user's bob speed setting)
-			double angle = (BobSpeed * player.GetWBobSpeed() * 35 /	TICRATE*(level.time - 1 + i)) * (360. / 8192.);
+			double angle = (BobSpeed * player.GetWBobSpeed() * 35 /	TICRATE*(Level.maptime - 1 + i)) * (360. / 8192.);
 
 			// [RH] Smooth transitions between bobbing and not-bobbing frames.
 			// This also fixes the bug where you can "stick" a weapon off-center by
@@ -2172,7 +2392,6 @@ class PlayerPawn : Actor native
 		}
 		return p1 * (1. - ticfrac) + p2 * ticfrac;
 	}
-
 	
 	//----------------------------------------------------------------------------
 	//
@@ -2180,15 +2399,98 @@ class PlayerPawn : Actor native
 	//
 	//----------------------------------------------------------------------------
 
-	native clearscope int GetMaxHealth(bool withupgrades = false) const;
-	native bool ResetAirSupply (bool playgasp = true);
+	virtual clearscope color GetPainFlash() const
+	{
+		Color painFlash = GetPainFlashForType(DamageTypeReceived);
+		if (painFlash == 0) painFlash = DamageFade;
+		return painFlash;
+	}
+		
+	//===========================================================================
+	//
+	// PlayerPawn :: ResetAirSupply
+	//
+	// Gives the player a full "tank" of air. If they had previously completely
+	// run out of air, also plays the *gasp sound. Returns true if the player
+	// was drowning.
+	//
+	//===========================================================================
+
+	virtual bool ResetAirSupply (bool playgasp = true)
+	{
+		let player = self.player;
+		bool wasdrowning = (player.air_finished < Level.maptime);
+
+		if (playgasp && wasdrowning)
+		{
+			A_PlaySound("*gasp", CHAN_VOICE);
+		}
+		if (Level.airsupply > 0 && AirCapacity > 0) player.air_finished = Level.maptime + int(Level.airsupply * AirCapacity);
+		else player.air_finished = int.max;
+		return wasdrowning;
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// 
+	//
+	//----------------------------------------------------------------------------
+
 	native clearscope static String GetPrintableDisplayName(Class<Actor> cls);
 	native void CheckMusicChange();
-	native void CalcHeight ();
 	native void CheckEnvironment();
 	native void CheckUse();
 	native void CheckWeaponButtons();
 	native void MarkPlayerSounds();
+	private native int SetupCrouchSprite(int c);
+	private native clearscope Color GetPainFlashForType(Name type);
+}
+
+extend class Actor
+{
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_SkullPop
+	// This should really be in PlayerPawn but cannot be.
+	//
+	//----------------------------------------------------------------------------
+
+	void A_SkullPop(class<PlayerChunk> skulltype = "BloodySkull")
+	{
+		// [GRB] Parameterized version
+		if (skulltype == NULL || !(skulltype is "PlayerChunk"))
+		{
+			skulltype = "BloodySkull";
+			if (skulltype == NULL)
+				return;
+		}
+
+		bSolid = false;
+		let mo = PlayerPawn(Spawn (skulltype,  Pos + (0, 0, 48), NO_REPLACE));
+		//mo.target = self;
+		mo.Vel.X = Random2[SkullPop]() / 128.;
+		mo.Vel.Y = Random2[SkullPop]() / 128.;
+		mo.Vel.Z = 2. + (Random[SkullPop]() / 1024.);
+		// Attach player mobj to bloody skull
+		let player = self.player;
+		self.player = NULL;
+		mo.ObtainInventory (self);
+		mo.player = player;
+		mo.health = health;
+		mo.Angle = Angle;
+		if (player != NULL)
+		{
+			player.mo = mo;
+			player.damagecount = 32;
+		}
+		for (int i = 0; i < MAXPLAYERS; ++i)
+		{
+			if (playeringame[i] && players[i].camera == self)
+			{
+				players[i].camera = mo;
+			}
+		}
+	}
 }
 
 class PlayerChunk : PlayerPawn
@@ -2405,8 +2707,11 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native float GetAutoaim() const;
 	native bool GetNoAutostartMap() const;
 	native double GetWBobSpeed() const;
+	native double GetMoveBob() const;
+	native double GetStillBob() const;
 	native void SetFOV(float fov);
 	native bool GetClassicFlight() const;
+	native void SendPitchLimits();
 	native clearscope bool HasWeaponsInSlot(int slot) const;
 
 	// The actual implementation is on PlayerPawn where it can be overridden. Use that directly in the future.
@@ -2424,7 +2729,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	{
 		if (player.mo != null)
 		{
-			return player.mo.UndoPlayerMorph(self, unmorphflag, force);
+ 			return player.mo.UndoPlayerMorph(self, unmorphflag, force);
 		}
 		return false;
 	}
@@ -2447,7 +2752,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 		return
 			gamestate == GS_TITLELEVEL ||
 			(cheats & CF_TOTALLYFROZEN) ||
-			(level.frozen && timefreezer == 0);
+			mo.isFrozen();
 	}
 
 	void Uncrouch()

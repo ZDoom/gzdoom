@@ -34,10 +34,6 @@
 #ifndef __VERSION_H__
 #define __VERSION_H__
 
-#ifdef _WIN32
-#include "gitinfo.h"
-#endif // _WIN32
-
 const char *GetGitDescription();
 const char *GetGitHash();
 const char *GetGitTime();
@@ -45,11 +41,7 @@ const char *GetVersionString();
 
 /** Lots of different version numbers **/
 
-#ifdef GIT_DESCRIPTION
-#define VERSIONSTR GIT_DESCRIPTION
-#else
 #define VERSIONSTR "3.8pre"
-#endif
 
 // The version as seen in the Windows resource
 #define RC_FILEVERSION 3,7,9999,0
@@ -87,11 +79,11 @@ const char *GetVersionString();
 #define SAVEGAME_EXT "zds"
 
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
-#define MINSAVEVER	4554
+#define MINSAVEVER	4556
 
 // Use 4500 as the base git save version, since it's higher than the
 // SVN revision ever got.
-#define SAVEVER 4554
+#define SAVEVER 4556
 
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
 #define GAMESIG "GZDOOM"

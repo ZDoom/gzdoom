@@ -293,7 +293,7 @@ class Sorcerer2 : Actor
 
 	void DSparilTeleport ()
 	{
-		SpotState state = SpotState.GetSpotState();
+		SpotState state = Level.GetSpotState();
 		if (state == null) return;
 
 		Actor spot = state.GetSpotWithMinMaxDistance("BossSpot", pos.x, pos.y, 128, 0);

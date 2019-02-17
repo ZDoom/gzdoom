@@ -25,9 +25,7 @@ struct SectorPortal native play
 	native Sector mDestination;
 	native Vector2 mDisplacement;
 	native double mPlaneZ;
-	native Actor mSkybox;
-	
-	native static uint GetSkyboxPortal(Actor actor);
+	native Actor mSkybox;	
 };
 
 
@@ -370,7 +368,10 @@ struct Sector native play
 	native double, Sector, F3DFloor NextLowestFloorAt(double x, double y, double z, int flags = 0, double steph = 0);
 
 	native void RemoveForceField();
-	native static clearscope Sector PointInSector(Vector2 pt);
+	deprecated("3.8") static clearscope Sector PointInSector(Vector2 pt)
+	{
+		return level.PointInSector(pt);
+	}
 
 	native bool PlaneMoving(int pos);
 	native int GetFloorLight();
@@ -531,13 +532,19 @@ struct Sector native play
 
 class SectorTagIterator : Object native
 {
-	native static SectorTagIterator Create(int tag, line defline = null);
+	deprecated("3.8") static SectorTagIterator Create(int tag, line defline = null)
+	{
+		return level.CreateSectorTagIterator(tag, defline);
+	}
 	native int Next();
 	native int NextCompat(bool compat, int secnum);
 }
 
 class LineIdIterator : Object native
 {
-	native static LineIdIterator Create(int tag);
+	deprecated("3.8") static LineIdIterator Create(int tag)
+	{
+		return level.CreateLineIdIterator(tag);
+	}
 	native int Next();
 }

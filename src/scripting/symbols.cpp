@@ -589,7 +589,9 @@ void RemoveUnusedSymbols()
 				PSymbolTable::MapType::Pair *pair;
 				while (it.NextPair(pair))
 				{
-					if (!pair->Value->IsKindOf(RUNTIME_CLASS(PField)) && !pair->Value->IsKindOf(RUNTIME_CLASS(PFunction)))
+					if (   !pair->Value->IsKindOf(RUNTIME_CLASS(PField))
+						&& !pair->Value->IsKindOf(RUNTIME_CLASS(PFunction))
+						&& !pair->Value->IsKindOf(RUNTIME_CLASS(PPropFlag)) )
 					{
 						ty->Symbols.RemoveSymbol(pair->Value);
 						count++;

@@ -329,7 +329,6 @@ protected:
 	template<class T>
 	bool ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext) const;
 	void DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms);
-	void BuildGammaTable(uint16_t *gt);
 
 	F2DDrawer m2DDrawer;
 private:
@@ -400,9 +399,6 @@ public:
 	// Mark the palette as changed. It will be updated on the next Update().
 	virtual void UpdatePalette() {}
 
-	// Sets the gamma level. Returns false if the hardware does not support
-	// gamma changing. (Always true for now, since palettes can always be
-	// gamma adjusted.)
 	virtual void SetGamma() {}
 
 	// Sets a color flash. RGB is the color, and amount is 0-256, with 256
@@ -538,9 +534,7 @@ public:
 	void DrawChar(FFont *font, int normalcolor, double x, double y, int character, VMVa_List &args);
 
 	void DrawFrame(int left, int top, int width, int height);
-	void DrawBorder(int x1, int y1, int x2, int y2);
-	void DrawViewBorder();
-	void RefreshViewBorder();
+	void DrawBorder(FTextureID, int x1, int y1, int x2, int y2);
 
 	// Calculate gamma table
 	void CalcGamma(float gamma, uint8_t gammalookup[256]);

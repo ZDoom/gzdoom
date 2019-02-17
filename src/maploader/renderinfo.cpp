@@ -35,6 +35,7 @@
 #include "p_setup.h"
 #include "g_levellocals.h"
 #include "maploader.h"
+#include "r_utility.h"
 
 //==========================================================================
 //
@@ -380,10 +381,8 @@ void MapLoader::PrepareTransparentDoors(sector_t * sector)
 //
 //==========================================================================
 
-static void AddToVertex(const sector_t * sec, TArray<int> & list)
+static void AddToVertex(int secno, TArray<int> & list)
 {
-	int secno = sec->Index();
-
 	for(unsigned i=0;i<list.Size();i++)
 	{
 		if (list[i]==secno) return;
@@ -415,8 +414,8 @@ void MapLoader::InitVertexData()
 				{
 					extsector_t::xfloor &x = sec->e->XFloor;
 
-					AddToVertex(sec, vt_sectorlists[v->Index()]);
-					if (sec->heightsec) AddToVertex(sec->heightsec, vt_sectorlists[v->Index()]);
+					AddToVertex(Index(sec), vt_sectorlists[Index(v)]);
+					if (sec->heightsec) AddToVertex(Index(sec->heightsec), vt_sectorlists[Index(v)]);
 				}
 			}
 		}
@@ -492,7 +491,7 @@ void MapLoader::PrepareSegs()
 	for(auto &seg : Level->segs)
 	{
 		if (seg.sidedef == nullptr) continue;	// miniseg
-		int sidenum = seg.sidedef->Index();
+		int sidenum = Index(seg.sidedef);
 
 		realsegs++;
 		segcount[sidenum]++;
@@ -529,6 +528,175 @@ void MapLoader::PrepareSegs()
 	}
 }
 
+
+//==========================================================================
+//
+// account for a bug in the original software renderer
+// which did not properly check visplanes for sectors inside a portal sector
+//
+//==========================================================================
+
+bool CollectSectorStacksCeiling(FSection * section, sector_t * anchor, TArray<FSection *> &HandledSections)
+{
+	// mark it checked
+	section->validcount = validcount;
+
+	auto me = section->sector;	// this is always the render sector.
+
+	if (me != anchor)
+	{
+		// If the plane doesn't match, this one isn't a candidate.
+		if (me->GetHeightSec() ||
+			(me->GetTexture(sector_t::ceiling) != anchor->GetTexture(sector_t::ceiling)) ||
+			me->ceilingplane != anchor->ceilingplane ||
+			me->GetCeilingLight() != anchor->GetCeilingLight() ||
+			me->Colormap != anchor->Colormap ||
+			(me->planes[sector_t::ceiling].alpha != 1. && me->planes[sector_t::ceiling].alpha != 0.) ||
+			me->SpecialColors[sector_t::ceiling] != anchor->SpecialColors[sector_t::ceiling] ||
+			me->planes[sector_t::ceiling].xform != anchor->planes[sector_t::ceiling].xform)
+		{
+			// different visplane so it can't belong to this stack
+			return false;
+		}
+
+		// Any non-stacked-sector portal will be rejected, any stacked sector portal will skip processing this subsector.
+		auto po = me->GetPortal(sector_t::ceiling);
+		if (po->mType != PORTS_SKYVIEWPOINT)	// sky is the default for all sectors
+		{
+			return po->mType == PORTS_STACKEDSECTORTHING;
+		}
+	}
+
+	for (auto &segment : section->segments)
+	{
+		if (segment.partner == nullptr) return false;
+
+		auto partner = segment.partner->section;
+		if (partner->validcount != validcount)
+		{
+			// Abort if we found something that doesn't match
+			if (!CollectSectorStacksCeiling(partner, anchor, HandledSections))
+			{
+				if (section->sector != anchor)
+					return false;
+			}
+		}
+	}
+	HandledSections.Push(section);
+	return true;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+bool CollectSectorStacksFloor(FSection * section, sector_t * anchor, TArray<FSection *> &HandledSections)
+{
+	// mark it checked
+	section->validcount = validcount;
+
+	auto me = section->sector;	// this is always the render sector.
+
+	if (me != anchor)
+	{
+		// If the plane doesn't match, this one isn't a candidate.
+		if (me->GetHeightSec() ||
+			me->GetTexture(sector_t::floor) != anchor->GetTexture(sector_t::floor) ||
+			me->floorplane != anchor->floorplane ||
+			me->GetFloorLight() != anchor->GetFloorLight() ||
+			me->Colormap != anchor->Colormap ||
+			(me->planes[sector_t::floor].alpha != 1. && me->planes[sector_t::floor].alpha != 0.) ||
+			me->SpecialColors[sector_t::floor] != anchor->SpecialColors[sector_t::floor] ||
+			me->planes[sector_t::floor].xform != anchor->planes[sector_t::floor].xform)
+		{
+			// different visplane so it can't belong to this stack
+			return false;
+		}
+
+		// Any non-stacked-sector portal will be rejected, any stacked sector portal will skip processing this subsector.
+		auto po = me->GetPortal(sector_t::floor);
+		if (po->mType != PORTS_SKYVIEWPOINT)	// sky is the default for all sectors
+		{
+			return po->mType == PORTS_STACKEDSECTORTHING;
+		}
+	}
+
+	for (auto &segment : section->segments)
+	{
+		if (segment.partner == nullptr) return false;
+
+		auto partner = segment.partner->section;
+		if (partner->validcount != validcount)
+		{
+			// Abort if we found something that doesn't match
+			if (!CollectSectorStacksFloor(partner, anchor, HandledSections))
+			{
+				if (section->sector != anchor)
+					return false;
+			}
+		}
+	}
+	HandledSections.Push(section);
+	return true;
+}
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void MapLoader::FloodSectorStacks()
+{
+	for (auto &sector : Level->sectors)
+	{
+		auto po = sector.GetPortal(sector_t::ceiling);
+		if (po->mType == PORTS_STACKEDSECTORTHING && sector.planes[sector_t::ceiling].alpha == 0.)
+		{
+			TArray<FSection *> HandledSections;
+			for (auto &section : Level->sections.SectionsForSector(&sector))
+			{
+				auto size = HandledSections.Size();
+				if (!CollectSectorStacksCeiling(&section, &sector, HandledSections))
+				{
+					// Delete everything that got already collected in this iteration.
+					HandledSections.Resize(size);
+				}
+			}
+			for (auto section : HandledSections)
+			{
+				if (section->sector != &sector)
+					Printf("Marked section of sector %d for ceiling portal\n", section->sector->Index());
+				section->flags |= FSection::DONTRENDERCEILING;
+			}
+		}
+
+		po = sector.GetPortal(sector_t::floor);
+		if (po->mType == PORTS_STACKEDSECTORTHING && sector.planes[sector_t::floor].alpha == 0.)
+		{
+			TArray<FSection *> HandledSections;
+			for (auto &section : Level->sections.SectionsForSector(&sector))
+			{
+				auto size = HandledSections.Size();
+				if (!CollectSectorStacksFloor(&section, &sector, HandledSections))
+				{
+					// Delete everything that got already collected in this iteration.
+					HandledSections.Resize(size);
+				}
+			}
+			for (auto section : HandledSections)
+			{
+				if (section->sector != &sector)
+					Printf("Marked section of sector %d for floor portal\n", section->sector->Index());
+				section->flags |= FSection::DONTRENDERFLOOR;
+			}
+		}
+
+	}
+}
+
+
 //==========================================================================
 //
 // Initialize the level data for the GL renderer
@@ -540,11 +708,12 @@ void MapLoader::InitRenderInfo()
 	PrepareSegs();
 	PrepareSectorData();
 	InitVertexData();
+	FloodSectorStacks();
 	TArray<int> checkmap(Level->vertexes.Size());
 	memset(checkmap.Data(), -1, sizeof(int)*Level->vertexes.Size());
 	for(auto &sec : Level->sectors) 
 	{
-		int i = sec.sectornum;
+		int i = Index(&sec);
 		PrepareTransparentDoors(&sec);
 
 		// This ignores vertices only used for seg splitting because those aren't needed here
@@ -552,8 +721,8 @@ void MapLoader::InitRenderInfo()
 		{
 			if (l->sidedef[0]->Flags & WALLF_POLYOBJ) continue;	// don't bother with polyobjects
 
-			int vtnum1 = l->v1->Index();
-			int vtnum2 = l->v2->Index();
+			int vtnum1 = Index(l->v1);
+			int vtnum2 = Index(l->v2);
 
 			if (checkmap[vtnum1] < i)
 			{
@@ -613,7 +782,7 @@ void MapLoader::FixMinisegReferences()
 		}
 		if (pick)
 		{
-			DPrintf(DMSG_NOTIFY, "Linking miniseg pair from (%2.3f, %2.3f) -> (%2.3f, %2.3f) in sector %d\n", pick->v2->fX(), pick->v2->fY(), pick->v1->fX(), pick->v1->fY(), pick->frontsector->Index());
+			DPrintf(DMSG_NOTIFY, "Linking miniseg pair from (%2.3f, %2.3f) -> (%2.3f, %2.3f) in sector %d\n", pick->v2->fX(), pick->v2->fY(), pick->v1->fX(), pick->v1->fY(), Index(pick->frontsector));
 			pick->PartnerSeg = seg1;
 			seg1->PartnerSeg = pick;
 			assert(seg1->v1 == pick->v2 && pick->v1 == seg1->v2);
@@ -720,7 +889,7 @@ void MapLoader::FixHoles()
 			subsector_t *newssstartptr = &Level->subsectors[0];
 
 			// Now fix all references to these in the level data.
-			// Note that the Index() method does not work here due to the reallocation.
+			// Note that the Index method does not work here due to the reallocation.
 			for (auto &seg : Level->segs)
 			{
 				if (seg.PartnerSeg) seg.PartnerSeg = newsegstartptr + (seg.PartnerSeg - oldsegstartptr);
@@ -758,7 +927,7 @@ void MapLoader::FixHoles()
 			// Add the new data. This doesn't care about convexity. It is never directly used to generate a primitive.
 			for (auto &segloop : segloops)
 			{
-				DPrintf(DMSG_NOTIFY, "Adding dummy subsector for sector %d\n", segloop[0]->Subsector->render_sector->Index());
+				DPrintf(DMSG_NOTIFY, "Adding dummy subsector for sector %d\n", Index(segloop[0]->Subsector->render_sector));
 
 				subsector_t &sub = Level->subsectors[newssstart++];
 				memset(&sub, 0, sizeof(sub));
@@ -784,4 +953,3 @@ void MapLoader::FixHoles()
 		}
 	}
 }
-

@@ -50,7 +50,7 @@
 #include "maploader.h"
 
 
-static void parseLinedef(FScanner &sc, TMap<int, EDLinedef> &EDLines)
+void MapLoader::parseEDLinedef(FScanner &sc, TMap<int, EDLinedef> &EDLines)
 {
 	EDLinedef ld;
 	bool argsset = false;
@@ -159,7 +159,7 @@ static void parseLinedef(FScanner &sc, TMap<int, EDLinedef> &EDLines)
 		maplinedef_t mld;
 		mld.special = -ld.special;
 		mld.tag = ld.tag;
-		P_TranslateLineDef(&line, &mld);
+		Level->TranslateLineDef(&line, &mld);
 		ld.special = line.special;
 		ld.activation = line.activation;
 		ld.flags = (ld.flags & ~(ML_REPEAT_SPECIAL | ML_FIRSTSIDEONLY)) | (line.flags & (ML_REPEAT_SPECIAL | ML_FIRSTSIDEONLY));
@@ -529,7 +529,7 @@ void MapLoader::InitED()
 	{
 		if (sc.Compare("linedef"))
 		{
-			parseLinedef(sc, EDLines);
+			parseEDLinedef(sc, EDLines);
 		}
 		else if (sc.Compare("mapthing"))
 		{
@@ -583,7 +583,7 @@ void MapLoader::ProcessEDLinedef(line_t *ld, int recordnum)
 	ld->flags = (ld->flags&~fmask) | eld->flags;
 	ld->setAlpha(eld->alpha);
 	memcpy(ld->args, eld->args, sizeof(ld->args));
-	tagManager.AddLineID(ld->Index(), eld->tag);
+	Level->tagManager.AddLineID(Index(ld), eld->tag);
 }
 
 void MapLoader::ProcessEDSector(sector_t *sec, int recordnum)
@@ -642,7 +642,7 @@ void MapLoader::ProcessEDSectors()
 	{
 		if (line.special == Static_Init && line.args[1] == Init_EDSector)
 		{
-			sectorrecord[line.frontsector->Index()] = line.args[0];
+			sectorrecord[Index(line.frontsector)] = line.args[0];
 			line.special = 0;
 		}
 	}
@@ -660,6 +660,6 @@ void MapLoader::LoadMapinfoACSLump()
 	if (Level->info->acsName.IsNotEmpty())
 	{
 		int lump = Wads.CheckNumForName(Level->info->acsName);
-		if (lump >= 0) FBehavior::StaticLoadModule(lump);
+		if (lump >= 0) Level->Behaviors.LoadModule(lump);
 	}
 }

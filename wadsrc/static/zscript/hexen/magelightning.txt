@@ -121,7 +121,7 @@ class Lightning : Actor
 				thing.Vel.X += Vel.X / 16;
 				thing.Vel.Y += Vel.Y / 16;
 			}
-			if ((!thing.player && !thing.bBoss) || !(level.time&1))
+			if ((!thing.player && !thing.bBoss) || !(Level.maptime & 1))
 			{
 				thing.DamageMobj(self, target, 3, 'Electric');
 				A_PlaySound(AttackSound, CHAN_WEAPON|CHAN_NOSTOP, 1, false);
@@ -411,7 +411,7 @@ class LightningZap : Actor
 				{
 					lmo.tracer = thing;
 				}
-				if (!(level.time&3))
+				if (!(Level.maptime&3))
 				{
 					lmo.health--;
 				}

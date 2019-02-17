@@ -79,8 +79,7 @@ CUSTOM_CVAR (Float, Gamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CCMD (bumpgamma)
 {
-	// [RH] Gamma correction tables are now generated
-	// on the fly for *any* gamma level.
+	// [RH] Gamma correction tables are now generated on the fly for *any* gamma level
 	// Q: What are reasonable limits to use here?
 
 	float newgamma = Gamma + 0.1f;

@@ -809,52 +809,67 @@ static bool myislower(int code)
 	return false;
 }
 
-// Returns a character without an accent mark.
-// FIXME: Only valid for CP-1252; we should go Unicode at some point.
+// Returns a character without an accent mark (or one with a similar looking accent in some cases where direct support is unlikely.
 
 static int stripaccent(int code)
 {
 	if (code < 0x8a)
 		return code;
-	if (code == 0x8a)	// Latin capital letter S with caron
-		return 'S';
-	if (code == 0x8e)	// Latin capital letter Z with caron
-		return 'Z';
-	if (code == 0x9a)	// Latin small letter S with caron
-		return 's';
-	if (code == 0x9e)	// Latin small letter Z with caron
-		return 'z';
-	if (code == 0x9f)	// Latin capital letter Y with diaeresis
-		return 'Y';
-	if (code == 0xff)	// Latin small letter Y with diaeresis
-		return 'y';
-	// Every other accented character has the high two bits set.
-	if ((code & 0xC0) == 0)
-		return code;
-	// Make lowercase characters uppercase so there are half as many tests.
-	int acode = code & 0xDF;
-	if (acode >= 0xC0 && acode <= 0xC5)		// A with accents
-		return 'A' + (code & 0x20);
-	if (acode == 0xC7)						// Cedilla
-		return 'C' + (acode & 0x20);
-	if (acode >= 0xC8 && acode <= 0xCB)		// E with accents
-		return 'E' + (code & 0x20);
-	if (acode >= 0xCC && acode <= 0xCF)		// I with accents
-		return 'I' + (code & 0x20);
-	if (acode == 0xD0)						// Eth
-		return 'D' + (code & 0x20);
-	if (acode == 0xD1)						// N with tilde
-		return 'N' + (code & 0x20);
-	if ((acode >= 0xD2 && acode <= 0xD6) ||	// O with accents
-		acode == 0xD8)						// O with stroke
-		return 'O' + (code & 0x20);
-	if (acode >= 0xD9 && acode <= 0xDC)		// U with accents
-		return 'U' + (code & 0x20);
-	if (acode == 0xDD)						// Y with accute
-		return 'Y' + (code & 0x20);
-	if (acode == 0xDE)						// Thorn
-		return 'P' + (code & 0x20);			// well, it sort of looks like a 'P'
-	// fixme: codes above 0x100 not supported yet!
+	if (code < 0x100)
+	{
+		if (code == 0x8a)	// Latin capital letter S with caron
+			return 'S';
+		if (code == 0x8e)	// Latin capital letter Z with caron
+			return 'Z';
+		if (code == 0x9a)	// Latin small letter S with caron
+			return 's';
+		if (code == 0x9e)	// Latin small letter Z with caron
+			return 'z';
+		if (code == 0x9f)	// Latin capital letter Y with diaeresis
+			return 'Y';
+		if (code == 0xff)	// Latin small letter Y with diaeresis
+			return 'y';
+		// Every other accented character has the high two bits set.
+		if ((code & 0xC0) == 0)
+			return code;
+		// Make lowercase characters uppercase so there are half as many tests.
+		int acode = code & 0xDF;
+		if (acode >= 0xC0 && acode <= 0xC5)		// A with accents
+			return 'A' + (code & 0x20);
+		if (acode == 0xC7)						// Cedilla
+			return 'C' + (acode & 0x20);
+		if (acode >= 0xC8 && acode <= 0xCB)		// E with accents
+			return 'E' + (code & 0x20);
+		if (acode >= 0xCC && acode <= 0xCF)		// I with accents
+			return 'I' + (code & 0x20);
+		if (acode == 0xD0)						// Eth
+			return 'D' + (code & 0x20);
+		if (acode == 0xD1)						// N with tilde
+			return 'N' + (code & 0x20);
+		if ((acode >= 0xD2 && acode <= 0xD6) ||	// O with accents
+			acode == 0xD8)						// O with stroke
+			return 'O' + (code & 0x20);
+		if (acode >= 0xD9 && acode <= 0xDC)		// U with accents
+			return 'U' + (code & 0x20);
+		if (acode == 0xDD)						// Y with accute
+			return 'Y' + (code & 0x20);
+		if (acode == 0xDE)						// Thorn
+			return 'P' + (code & 0x20);			// well, it sort of looks like a 'P'
+	}
+	else if (code >= 0x100 && code < 0x180)
+	{
+		static const char accentless[] = "AaAaAaCcCcCcCcDdDdEeEeEeEeEeGgGgGgGgHhHhIiIiIiIiIiIiJjKkkLlLlLlLlLlNnNnNnnNnOoOoOoOoRrRrRrSsSsSsSsTtTtTtUuUuUuUuUuUuWwYyYZzZzZz ";
+		return accentless[code -0x100];
+	}
+	else if (code >= 0x200 && code < 0x21c)
+	{
+		// 0x200-0x217 are probably irrelevant but easy to map to other characters more likely to exist. 0x218-0x21b are relevant for Romanian but also have a fallback within ranges that are more likely to be supported.
+		static const uint16_t u200map[] = {0xc4, 0xe4, 0xc2, 0xe2, 0xcb, 0xeb, 0xca, 0xea, 0xcf, 0xef, 0xce, 0xee, 0xd6, 0xf6, 0xd4, 0xe4, 'R', 'r', 'R', 'r', 0xdc, 0xfc, 0xdb, 0xfb, 0x15e, 0x15f, 0x162, 0x163};
+		return u200map[code - 0x200];
+	}
+	
+	// skip the rest of Latin characters because none of them are relevant for modern languages.
+	
 	return code;
 }
 
@@ -1442,18 +1457,12 @@ int FFont::GetCharCode(int code, bool needpic) const
 	{
 		return code;
 	}
-	// Try converting lowercase characters to uppercase.
-	if (myislower(code))
-	{
-		code = upperforlower[code];
-		if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].TranslatedPic != nullptr))
-		{
-			return code;
-		}
-	}
-	// Try stripping accents from accented characters.
-	int newcode = stripaccent(code);
-	if (newcode != code)
+
+	int originalcode = code;
+	int newcode;
+	
+	// Try stripping accents from accented characters. This may repeat to allow multi-step fallbacks.
+	while ((newcode = stripaccent(code)) != code)
 	{
 		code = newcode;
 		if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].TranslatedPic != nullptr))
@@ -1461,6 +1470,14 @@ int FFont::GetCharCode(int code, bool needpic) const
 			return code;
 		}
 	}
+	
+	if (myislower(code))
+	{
+		int upper = upperforlower[code];
+		// Stripping accents did not help - now try uppercase for lowercase
+		if (upper != code) return GetCharCode(upper, needpic);
+	}
+
 	return -1;
 }
 

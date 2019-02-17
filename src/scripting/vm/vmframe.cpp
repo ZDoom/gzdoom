@@ -44,11 +44,7 @@
 #include "c_cvars.h"
 #include "version.h"
 
-#if (defined(_M_X64  ) || defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(__amd64 ) || defined(__amd64__ ))
-#define ARCH_X64
-#endif
-
-#ifdef ARCH_X64
+#ifdef HAVE_VM_JIT
 CUSTOM_CVAR(Bool, vm_jit, true, CVAR_NOINITCALL)
 {
 	Printf("You must restart " GAMENAME " for this change to take effect.\n");
@@ -56,6 +52,8 @@ CUSTOM_CVAR(Bool, vm_jit, true, CVAR_NOINITCALL)
 }
 #else
 CVAR(Bool, vm_jit, false, CVAR_NOINITCALL|CVAR_NOSET)
+FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames) { return FString(); }
+void JitRelease() {}
 #endif
 
 cycle_t VMCycles[10];
@@ -282,7 +280,7 @@ static bool CanJit(VMScriptFunction *func)
 
 int VMScriptFunction::FirstScriptCall(VMFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret)
 {
-#ifdef ARCH_X64
+#ifdef HAVE_VM_JIT
 	if (vm_jit && CanJit(static_cast<VMScriptFunction*>(func)))
 	{
 		func->ScriptCall = JitCompile(static_cast<VMScriptFunction*>(func));
@@ -290,12 +288,10 @@ int VMScriptFunction::FirstScriptCall(VMFunction *func, VMValue *params, int num
 			func->ScriptCall = VMExec;
 	}
 	else
+#endif // HAVE_VM_JIT
 	{
 		func->ScriptCall = VMExec;
 	}
-#else
-	func->ScriptCall = VMExec;
-#endif
 
 	return func->ScriptCall(func, params, numparams, ret, numret);
 }

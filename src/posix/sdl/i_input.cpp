@@ -44,6 +44,9 @@
 #include "c_dispatch.h"
 #include "dikeys.h"
 #include "events.h"
+#include "g_game.h"
+#include "g_levellocals.h"
+
 
 static void I_CheckGUICapture ();
 static void I_CheckNativeMouse ();
@@ -179,7 +182,7 @@ static void I_CheckGUICapture ()
 	}
 
 	// [ZZ] check active event handlers that want the UI processing
-	if (!wantCapt && E_CheckUiProcessors())
+	if (!wantCapt && primaryLevel->localEventManager->CheckUiProcessors())
 		wantCapt = true;
 
 	if (wantCapt != GUICapture)
@@ -375,7 +378,12 @@ void MessagePump (const SDL_Event &sev)
 		else
 		{
 			event.type = EV_KeyDown;
-			event.data1 = sev.wheel.y > 0 ? KEY_MWHEELUP : KEY_MWHEELDOWN;
+
+			if (sev.wheel.y != 0)
+				event.data1 = sev.wheel.y > 0 ? KEY_MWHEELUP : KEY_MWHEELDOWN;
+			else
+				event.data1 = sev.wheel.x > 0 ? KEY_MWHEELRIGHT : KEY_MWHEELLEFT;
+
 			D_PostEvent (&event);
 			event.type = EV_KeyUp;
 			D_PostEvent (&event);

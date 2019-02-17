@@ -425,7 +425,7 @@ static void DoParse(int lumpnum)
 			if (fileno == 0 && fileno2 != 0)
 			{
 				I_FatalError("File %s is overriding core lump %s.",
-					Wads.GetWadFullName(Wads.GetLumpFile(baselump)), Includes[i].GetChars());
+					Wads.GetWadFullName(Wads.GetLumpFile(lumpnum)), Includes[i].GetChars());
 			}
 
 			ParseSingleFile(nullptr, nullptr, lumpnum, parser, state);

@@ -14,6 +14,7 @@ struct sector_t;
 class FCanvasTexture;
 class FileWriter;
 class DCanvas;
+struct FLevelLocals;
 
 struct FRenderer
 {
@@ -32,7 +33,7 @@ struct FRenderer
 	virtual void DrawRemainingPlayerSprites() = 0;
 
 	// set up the colormap for a newly loaded level.
-	virtual void SetColormap() = 0;
+	virtual void SetColormap(FLevelLocals *) = 0;
 
 	virtual void SetClearColor(int color) = 0;
 

@@ -54,6 +54,8 @@
 #include "g_levellocals.h"
 #include "vm.h"
 
+uint8_t globalfreeze, globalchangefreeze;	// user's freeze state.
+
 // [RH] Actually handle the cheat. The cheat code in st_stuff.c now just
 // writes some bytes to the network data stream, and the network code
 // later calls us.
@@ -287,7 +289,10 @@ void cht_DoCheat (player_t *player, int cheat)
 
 		if (i == 4)
 		{
-			level.flags2 ^= LEVEL2_ALLMAP;
+			for (auto Level : AllLevels())
+			{
+				Level->flags2 ^= LEVEL2_ALLMAP;
+			}
 		}
 		else if (player->mo != NULL && player->health >= 0)
 		{
@@ -319,7 +324,7 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_MASSACRE:
 	case CHT_MASSACRE2:
 		{
-			int killcount = P_Massacre (cheat == CHT_MASSACRE2);
+			int killcount = primaryLevel->Massacre (cheat == CHT_MASSACRE2);
 			// killough 3/22/98: make more intelligent about plural
 			// Ty 03/27/98 - string(s) *not* externalized
 			mysnprintf (msgbuild, countof(msgbuild), "%d %s%s Killed", killcount,
@@ -511,8 +516,8 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_FREEZE:
-		bglobal.changefreeze ^= 1;
-		if (bglobal.freeze ^ bglobal.changefreeze)
+		globalchangefreeze ^= 1;
+		if (globalfreeze ^ globalchangefreeze)
 		{
 			msg = GStrings("TXT_FREEZEON");
 		}
@@ -536,7 +541,7 @@ FString cht_Morph(player_t *player, PClassActor *morphclass, bool quickundo)
 {
 	if (player->mo == nullptr)	return "";
 
-	IFVIRTUALPTR(player->mo, APlayerPawn, CheatMorph)
+	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, CheatMorph)
 	{
 		FString message;
 		VMReturn msgret(&message);
@@ -550,7 +555,7 @@ FString cht_Morph(player_t *player, PClassActor *morphclass, bool quickundo)
 void cht_SetInv(player_t *player, const char *string, int amount, bool beyond)
 {
 	if (!player->mo) return;
-	IFVIRTUALPTR(player->mo, APlayerPawn, CheatTakeInv)
+	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, CheatTakeInv)
 	{
 		FString message = string;
 		VMValue params[] = { player->mo, &message, amount, beyond };
@@ -561,7 +566,7 @@ void cht_SetInv(player_t *player, const char *string, int amount, bool beyond)
 void cht_Give (player_t *player, const char *name, int amount)
 {
 	if (!player->mo) return;
-	IFVIRTUALPTR(player->mo, APlayerPawn, CheatGive)
+	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, CheatGive)
 	{
 		FString namestr = name;
 		VMValue params[3] = { player->mo, &namestr, amount };
@@ -572,7 +577,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 void cht_Take (player_t *player, const char *name, int amount)
 {
 	if (!player->mo) return;
-	IFVIRTUALPTR(player->mo, APlayerPawn, CheatTake)
+	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, CheatTake)
 	{
 		FString namestr = name;
 		VMValue params[3] = { player->mo, &namestr, amount };
@@ -583,7 +588,7 @@ void cht_Take (player_t *player, const char *name, int amount)
 void cht_Takeweaps(player_t *player)
 {
 	if (!player->mo) return;
-	IFVIRTUALPTR(player->mo, APlayerPawn, CheatTakeWeaps)
+	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, CheatTakeWeaps)
 	{
 		VMValue params[3] = { player->mo };
 		VMCall(func, params, 1, nullptr, 0);
@@ -595,8 +600,9 @@ class DSuicider : public DThinker
 	DECLARE_CLASS(DSuicider, DThinker)
 	HAS_OBJECT_POINTERS;
 public:
-	TObjPtr<APlayerPawn*> Pawn;
+	TObjPtr<AActor*> Pawn;
 
+	void Construct() {}
 	void Tick()
 	{
 		Pawn->flags |= MF_SHOOTABLE;
@@ -636,7 +642,7 @@ void cht_Suicide (player_t *plyr)
 	// the initial tick.
 	if (plyr->mo != NULL)
 	{
-		DSuicider *suicide = Create<DSuicider>();
+		DSuicider *suicide = plyr->mo->Level->CreateThinker<DSuicider>();
 		suicide->Pawn = plyr->mo;
 		GC::WriteBarrier(suicide, suicide->Pawn);
 	}
@@ -644,7 +650,7 @@ void cht_Suicide (player_t *plyr)
 
 DEFINE_ACTION_FUNCTION(APlayerPawn, CheatSuicide)
 {
-	PARAM_SELF_PROLOGUE(APlayerPawn);
+	PARAM_SELF_PROLOGUE(AActor);
 	cht_Suicide(self->player);
 	return 0;
 }

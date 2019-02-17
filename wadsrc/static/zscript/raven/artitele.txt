@@ -30,11 +30,11 @@ class ArtiTeleport : Inventory
 
 		if (deathmatch)
 		{
-			[dest, destAngle] = G_PickDeathmatchStart();
+			[dest, destAngle] = level.PickDeathmatchStart();
 		}
 		else
 		{
-			[dest, destAngle] = G_PickPlayerStart(Owner.PlayerNumber());
+			[dest, destAngle] = level.PickPlayerStart(Owner.PlayerNumber());
 		}
 		dest.Z = ONFLOORZ;
 		Owner.Teleport (dest, destAngle, TELF_SOURCEFOG | TELF_DESTFOG);

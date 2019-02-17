@@ -63,7 +63,7 @@ void DBot::Think ()
 	memset (cmd, 0, sizeof(*cmd));
 
 	if (enemy && enemy->health <= 0)
-		enemy = NULL;
+		enemy = nullptr;
 
 	if (player->mo->health > 0) //Still alive
 	{
@@ -121,7 +121,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 		(!missile->Vel.X || !missile->Vel.Y || !Check_LOS(missile, SHOOTFOV*3/2)))
 	{
 		sleft = !sleft;
-		missile = NULL; //Probably ended its travel.
+		missile = nullptr; //Probably ended its travel.
 	}
 
 #if 0	// this has always been broken and without any reference it cannot be fixed.
@@ -183,7 +183,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 			}
 		}
 
-		dest = NULL; //To let bot turn right
+		dest = nullptr; //To let bot turn right
 
 		if (GetBotInfo(player->ReadyWeapon).MoveCombatDist == 0)
 			player->mo->flags &= ~MF_DROPOFF; //Don't jump off any ledges when fighting.
@@ -237,7 +237,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 		{
 			if (mate == dest && pr_botmove.Random() < 32)
 			{ // [RH] If the mate is the dest, pick a new dest sometimes
-				dest = NULL;
+				dest = nullptr;
 			}
 			goto roam;
 		}
@@ -264,7 +264,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 
 		if (dest && !(dest->flags&MF_SPECIAL) && dest->health < 0)
 		{ //Roaming after something dead.
-			dest = NULL;
+			dest = nullptr;
 		}
 
 		if (dest == NULL)
@@ -289,7 +289,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 				r = pr_botmove();
 				if (r < 128)
 				{
-					TThinkerIterator<AActor> it (NAME_Inventory, MAX_STATNUM+1, bglobal.firstthing);
+					auto it = player->mo->Level->GetThinkerIterator<AActor>(NAME_Inventory, MAX_STATNUM+1, Level->BotInfo.firstthing);
 					auto item = it.Next();
 
 					if (item != NULL || (item = it.Next()) != NULL)
@@ -304,7 +304,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 						{
 							item = it.Next();
 						}
-						bglobal.firstthing = item;
+						Level->BotInfo.firstthing = item;
 						dest = item;
 					}
 				}
@@ -333,7 +333,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 	if (!t_roam && dest)
 	{
 		prev = dest;
-		dest = NULL;
+		dest = nullptr;
 	}
 
 	if (t_fight<(AFTERTICS/2))
@@ -342,7 +342,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 	old = player->mo->Pos();
 }
 
-int P_GetRealMaxHealth(APlayerPawn *actor, int max);
+int P_GetRealMaxHealth(AActor *actor, int max);
 
 //BOT_WhatToGet
 //
@@ -356,9 +356,6 @@ void DBot::WhatToGet (AActor *item)
 	}
 	int weapgiveammo = (alwaysapplydmflags || deathmatch) && !(dmflags & DF_WEAPONS_STAY);
 
-	//if(pos && !bglobal.thingvis[pos->id][item->id]) continue;
-//	if (item->IsKindOf (RUNTIME_CLASS(AArtifact)))
-//		return;	// don't know how to use artifacts
 	if (item->IsKindOf(NAME_Weapon))
 	{
 		// FIXME
@@ -438,5 +435,5 @@ void DBot::Set_enemy ()
 	}
 	//Verify that that enemy is really something alive that bot can kill.
 	if (enemy && ((enemy->health < 0 || !(enemy->flags&MF_SHOOTABLE)) || player->mo->IsFriend(enemy)))
-		enemy = NULL;
+		enemy = nullptr;
 }

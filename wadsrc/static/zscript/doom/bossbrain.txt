@@ -219,7 +219,7 @@ extend class Actor
 
 	void A_BrainSpit(class<Actor> spawntype = null)
 	{
-		SpotState spstate = SpotState.GetSpotState();
+		SpotState spstate = Level.GetSpotState();
 		Actor targ;
 		Actor spit;
 		bool isdefault = false;

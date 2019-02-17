@@ -21,13 +21,14 @@ enum
 	SECPART_3D = 2
 };
 
-void P_InitHealthGroups();
+struct FLevelLocals;
+void P_InitHealthGroups(FLevelLocals *Level);
 
 void P_SetHealthGroupHealth(FHealthGroup* group, int health);
-void P_SetHealthGroupHealth(int group, int health);
+void P_SetHealthGroupHealth(FLevelLocals *Level, int group, int health);
 
-FHealthGroup* P_GetHealthGroup(int id);
-FHealthGroup* P_GetHealthGroupOrNew(int id, int startinghealth);
+FHealthGroup* P_GetHealthGroup(FLevelLocals *Level, int id);
+FHealthGroup* P_GetHealthGroupOrNew(FLevelLocals *Level, int id, int startinghealth);
 
 void P_DamageSector(sector_t* sector, AActor* source, int damage, FName damagetype, int part, DVector3 position, bool isradius, bool dogroups);
 void P_DamageLinedef(line_t* line, AActor* source, int damage, FName damagetype, int side, DVector3 position, bool isradius, bool dogroups);
@@ -40,4 +41,4 @@ bool P_ProjectileHitPlane(AActor* projectile, int part);
 bool P_CheckLinedefVulnerable(line_t* line, int side, int part = -1);
 bool P_CheckSectorVulnerable(sector_t* sector, int part);
 
-void P_SerializeHealthGroups(FSerializer& arc);
+void P_SerializeHealthGroups(FLevelLocals *Level, FSerializer& arc);

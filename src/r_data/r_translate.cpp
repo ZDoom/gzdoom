@@ -919,7 +919,7 @@ void R_InitTranslationTables ()
 
 	// Each player corpse has its own translation so they won't change
 	// color if the player who created them changes theirs.
-	for (i = 0; i < level.BODYQUESIZE; ++i)
+	for (i = 0; i < FLevelLocals::BODYQUESIZE; ++i)
 	{
 		PushIdentityTable(TRANSLATION_PlayerCorpses);
 	}
@@ -1191,7 +1191,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 		table->Palette[i].a = 255;
 	}
 
-	// [GRB] Don't translate skins with color range 0-0 (APlayerPawn default)
+	// [GRB] Don't translate skins with color range 0-0 (PlayerPawn default)
 	if (start == 0 && end == 0)
 	{
 		table->Inactive = true;

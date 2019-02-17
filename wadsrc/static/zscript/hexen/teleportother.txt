@@ -157,12 +157,12 @@ class TelOtherFX1 : Actor
 	//
 	//===========================================================================
 
-	private static void P_TeleportToPlayerStarts (Actor victim)
+	private void P_TeleportToPlayerStarts (Actor victim)
 	{
 		Vector3 dest;
 		double destAngle;
 
-		[dest, destAngle] = G_PickPlayerStart(0, PPS_FORCERANDOM | PPS_NOBLOCKINGCHECK);
+		[dest, destAngle] = level.PickPlayerStart(0, PPS_FORCERANDOM | PPS_NOBLOCKINGCHECK);
 		dest.Z = ONFLOORZ;
 		victim.Teleport ((dest.xy, ONFLOORZ), destangle, TELF_SOURCEFOG | TELF_DESTFOG);
 	}
@@ -178,7 +178,7 @@ class TelOtherFX1 : Actor
 		Vector3 dest;
 		double destAngle;
 
-		[dest, destAngle] = G_PickDeathmatchStart();
+		[dest, destAngle] = level.PickDeathmatchStart();
 		if (destAngle < 65536) victim.Teleport((dest.xy, ONFLOORZ), destangle, TELF_SOURCEFOG | TELF_DESTFOG);
 		else P_TeleportToPlayerStarts(victim);
 	}

@@ -36,7 +36,7 @@
 
 #include "i_musicinterns.h"
 #include "w_wad.h"
-#include "i_system.h"
+#include "doomerrors.h"
 #include "opnmidi/opnmidi.h"
 #include "i_soundfont.h"
 

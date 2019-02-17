@@ -47,9 +47,6 @@ protected:
 
 	void UpdateColors ();
 
-	Uint16 m_origGamma[3][256];
-	bool m_supportsGamma;
-
 	static const int MIN_WIDTH = 320;
 	static const int MIN_HEIGHT = 200;
 };

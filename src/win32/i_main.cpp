@@ -67,11 +67,12 @@
 #include "i_input.h"
 #include "w_wad.h"
 #include "cmdlib.h"
-#include "doomstat.h"
+#include "g_game.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
 #include "s_sound.h"
 #include "vm.h"
+#include "i_system.h"
 
 #include "stats.h"
 #include "st_start.h"
@@ -1104,7 +1105,7 @@ void DoomSpecificInfo (char *buffer, size_t bufflen)
 	}
 	else
 	{
-		buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nCurrent map: %s", level.MapName.GetChars());
+		buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nCurrent map: %s", primaryLevel->MapName.GetChars());
 
 		if (!viewactive)
 		{

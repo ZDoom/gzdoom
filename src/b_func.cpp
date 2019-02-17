@@ -73,7 +73,7 @@ bool DBot::Reachable (AActor *rtarget)
 	double estimated_dist = player->mo->Distance2D(rtarget);
 	bool reachable = true;
 
-	FPathTraverse it(player->mo->X()+player->mo->Vel.X, player->mo->Y()+player->mo->Vel.Y, rtarget->X(), rtarget->Y(), PT_ADDLINES|PT_ADDTHINGS);
+	FPathTraverse it(Level, player->mo->X()+player->mo->Vel.X, player->mo->Y()+player->mo->Vel.Y, rtarget->X(), rtarget->Y(), PT_ADDLINES|PT_ADDTHINGS);
 	intercept_t *in;
 	while ((in = it.Next()))
 	{
@@ -105,7 +105,7 @@ bool DBot::Reachable (AActor *rtarget)
 				double ceilingheight = s->ceilingplane.ZatPoint (hitx, hity);
 				double floorheight = s->floorplane.ZatPoint (hitx, hity);
 
-				if (!bglobal.IsDangerous (s) &&		//Any nukage/lava?
+				if (!Level->BotInfo.IsDangerous (s) &&		//Any nukage/lava?
 					(floorheight <= (last_z+MAXMOVEHEIGHT)
 					&& ((ceilingheight == floorheight && line->special)
 						|| (ceilingheight - floorheight) >= player->mo->Height))) //Does it fit?
@@ -235,8 +235,8 @@ void DBot::Dofire (ticcmd_t *cmd)
 		// prediction aiming
 		Dist = player->mo->Distance2D(enemy);
 		fm = Dist / GetDefaultByType (GetBotInfo(player->ReadyWeapon).projectileType)->Speed;
-		bglobal.SetBodyAt(enemy->Pos() + enemy->Vel.XY() * fm * 2, 1);
-		Angle = player->mo->AngleTo(bglobal.body1);
+		Level->BotInfo.SetBodyAt(Level, enemy->Pos() + enemy->Vel.XY() * fm * 2, 1);
+		Angle = player->mo->AngleTo(Level->BotInfo.body1);
 		if (Check_LOS (enemy, SHOOTFOV))
 			no_fire = false;
 	}
@@ -300,7 +300,7 @@ extern int BotWTG;
 void FCajunMaster::BotTick(AActor *mo)
 {
 	BotSupportCycles.Clock();
-	bglobal.m_Thinking = true;
+	m_Thinking = true;
 	for (int i = 0; i < MAXPLAYERS; i++)
 	{
 		if (!playeringame[i] || players[i].Bot == NULL)
@@ -333,7 +333,7 @@ void FCajunMaster::BotTick(AActor *mo)
 			}
 		}
 	}
-	bglobal.m_Thinking = false;
+	m_Thinking = false;
 	BotSupportCycles.Unclock();
 }
 
@@ -345,13 +345,12 @@ AActor *DBot::Choose_Mate ()
 	int count;
 	double closest_dist, test;
 	AActor *target;
-	AActor *observer;
 
 	//is mate alive?
 	if (mate)
 	{
 		if (mate->health <= 0)
-			mate = NULL;
+			mate = nullptr;
 		else
 			last_mate = mate;
 	}
@@ -361,14 +360,10 @@ AActor *DBot::Choose_Mate ()
 	//Check old_mates status.
 	if (last_mate)
 		if (last_mate->health <= 0)
-			last_mate = NULL;
+			last_mate = nullptr;
 
 	target = NULL;
 	closest_dist = FLT_MAX;
-	if (bot_observer)
-		observer = players[consoleplayer].mo;
-	else
-		observer = NULL;
 
 	//Check for player friends
 	for (count = 0; count < MAXPLAYERS; count++)
@@ -380,9 +375,8 @@ AActor *DBot::Choose_Mate ()
 			&& player->mo != client->mo
 			&& (player->mo->IsTeammate (client->mo) || !deathmatch)
 			&& client->mo->health > 0
-			&& client->mo != observer
 			&& ((player->mo->health/2) <= client->mo->health || !deathmatch)
-			&& !bglobal.IsLeader(client)) //taken?
+			&& !Level->BotInfo.IsLeader(client)) //taken?
 		{
 			if (P_CheckSight (player->mo, client->mo, SF_IGNOREVISIBILITY))
 			{
@@ -401,7 +395,7 @@ AActor *DBot::Choose_Mate ()
 	//Make a introducing to mate.
 	if(target && target!=last_mate)
 	{
-		if((P_Random()%(200*bglobal.botnum))<3)
+		if((P_Random()%(200*Level->BotInfo.botnum))<3)
 		{
 			chat = c_teamup;
 			if(target->bot)
@@ -423,7 +417,6 @@ AActor *DBot::Find_enemy ()
 	double closest_dist, temp; //To target.
 	AActor *target;
 	DAngle vangle;
-	AActor *observer;
 
 	if (!deathmatch)
 	{ // [RH] Take advantage of the Heretic/Hexen code to be a little smarter
@@ -439,17 +432,12 @@ AActor *DBot::Find_enemy ()
 
 	target = NULL;
 	closest_dist = FLT_MAX;
-	if (bot_observer)
-		observer = players[consoleplayer].mo;
-	else
-		observer = NULL;
 
 	for (count = 0; count < MAXPLAYERS; count++)
 	{
 		player_t *client = &players[count];
 		if (playeringame[count]
 			&& !player->mo->IsTeammate (client->mo)
-			&& client->mo != observer
 			&& client->mo->health > 0
 			&& player->mo != client->mo)
 		{
@@ -479,7 +467,7 @@ AActor *DBot::Find_enemy ()
 
 
 //Creates a temporary mobj (invisible) at the given location.
-void FCajunMaster::SetBodyAt (const DVector3 &pos, int hostnum)
+void FCajunMaster::SetBodyAt (FLevelLocals *Level, const DVector3 &pos, int hostnum)
 {
 	if (hostnum == 1)
 	{
@@ -489,7 +477,7 @@ void FCajunMaster::SetBodyAt (const DVector3 &pos, int hostnum)
 		}
 		else
 		{
-			body1 = Spawn ("CajunBodyNode", pos, NO_REPLACE);
+			body1 = Spawn (Level, "CajunBodyNode", pos, NO_REPLACE);
 		}
 	}
 	else if (hostnum == 2)
@@ -500,7 +488,7 @@ void FCajunMaster::SetBodyAt (const DVector3 &pos, int hostnum)
 		}
 		else
 		{
-			body2 = Spawn ("CajunBodyNode", pos, NO_REPLACE);
+			body2 = Spawn (Level, "CajunBodyNode", pos, NO_REPLACE);
 		}
 	}
 }
@@ -517,7 +505,7 @@ void FCajunMaster::SetBodyAt (const DVector3 &pos, int hostnum)
 //Emulates missile travel. Returns distance travelled.
 double FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 {
-	AActor *th = Spawn ("CajunTrace", source->PosPlusZ(4*8.), NO_REPLACE);
+	AActor *th = Spawn (source->Level, "CajunTrace", source->PosPlusZ(4*8.), NO_REPLACE);
 	
 	th->target = source;		// where it came from
 
@@ -543,9 +531,9 @@ DAngle DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	AActor *actor;
 	double m;
 
-	bglobal.SetBodyAt(player->mo->PosPlusZ(player->mo->Height / 2) + player->mo->Vel.XY() * 5, 2);
+	Level->BotInfo.SetBodyAt(Level, player->mo->PosPlusZ(player->mo->Height / 2) + player->mo->Vel.XY() * 5, 2);
 
-	actor = bglobal.body2;
+	actor = Level->BotInfo.body2;
 
 	dist = actor->Distance2D (enemy);
 	if (dist < SAFE_SELF_MISDIST)
@@ -553,24 +541,24 @@ DAngle DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	//Predict.
 	m = ((dist+1) / GetDefaultByName("Rocket")->Speed);
 
-	bglobal.SetBodyAt(DVector3((enemy->Pos() + enemy->Vel * (m + 2)), ONFLOORZ), 1);
+	Level->BotInfo.SetBodyAt(Level, DVector3((enemy->Pos() + enemy->Vel * (m + 2)), ONFLOORZ), 1);
 	
 	//try the predicted location
-	if (P_CheckSight (actor, bglobal.body1, SF_IGNOREVISIBILITY)) //See the predicted location, so give a test missile
+	if (P_CheckSight (actor, Level->BotInfo.body1, SF_IGNOREVISIBILITY)) //See the predicted location, so give a test missile
 	{
 		FCheckPosition tm;
-		if (bglobal.SafeCheckPosition (player->mo, actor->X(), actor->Y(), tm))
+		if (Level->BotInfo.SafeCheckPosition (player->mo, actor->X(), actor->Y(), tm))
 		{
-			if (bglobal.FakeFire (actor, bglobal.body1, cmd) >= SAFE_SELF_MISDIST)
+			if (Level->BotInfo.FakeFire (actor, Level->BotInfo.body1, cmd) >= SAFE_SELF_MISDIST)
 			{
-				return actor->AngleTo(bglobal.body1);
+				return actor->AngleTo(Level->BotInfo.body1);
 			}
 		}
 	}
 	//Try fire straight.
 	if (P_CheckSight (actor, enemy, 0))
 	{
-		if (bglobal.FakeFire (player->mo, enemy, cmd) >= SAFE_SELF_MISDIST)
+		if (Level->BotInfo.FakeFire (player->mo, enemy, cmd) >= SAFE_SELF_MISDIST)
 		{
 			return player->mo->AngleTo(enemy);
 		}

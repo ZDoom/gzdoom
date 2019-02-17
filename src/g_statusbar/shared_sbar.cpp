@@ -55,7 +55,9 @@
 #include "vm.h"
 #include "p_acs.h"
 #include "sbarinfo.h"
+#include "gstrings.h"
 #include "events.h"
+#include "g_game.h"
 
 #include "../version.h"
 
@@ -132,25 +134,6 @@ CUSTOM_CVAR(Int, am_showmaplabel, 2, CVAR_ARCHIVE)
 }
 
 CVAR (Bool, idmypos, false, 0);
-
-//---------------------------------------------------------------------------
-//
-// Format the map name, include the map label if wanted
-//
-//---------------------------------------------------------------------------
-
-void ST_FormatMapName(FString &mapname, const char *mapnamecolor)
-{
-	cluster_info_t *cluster = FindClusterInfo (level.cluster);
-	bool ishub = (cluster != NULL && (cluster->flags & CLUSTER_HUB));
-
-	mapname = "";
-	if (am_showmaplabel == 1 || (am_showmaplabel == 2 && !ishub))
-	{
-		mapname << level.MapName << ": ";
-	}
-	mapname << mapnamecolor << level.LevelName;
-}
 
 //---------------------------------------------------------------------------
 //
@@ -436,7 +419,7 @@ void DBaseStatusBar::OnDestroy ()
 			msg->Destroy();
 			msg = next;
 		}
-		Messages[i] = NULL;
+		Messages[i] = nullptr;
 	}
 	if (AltHud) AltHud->Destroy();
 	Super::OnDestroy();
@@ -594,7 +577,7 @@ void DBaseStatusBar::Tick ()
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{
 		DHUDMessageBase *msg = Messages[i];
-		DHUDMessageBase **prev = &Messages[i];
+		TObjPtr<DHUDMessageBase *>*prev = &Messages[i];
 
 		while (msg)
 		{
@@ -657,7 +640,7 @@ void DBaseStatusBar::CallTick()
 void DBaseStatusBar::AttachMessage (DHUDMessageBase *msg, uint32_t id, int layer)
 {
 	DHUDMessageBase *old = NULL;
-	DHUDMessageBase **prev;
+	TObjPtr<DHUDMessageBase *>*prev;
 
 	old = (id == 0 || id == 0xFFFFFFFF) ? NULL : DetachMessage (id);
 	if (old != NULL)
@@ -698,7 +681,7 @@ DHUDMessageBase *DBaseStatusBar::DetachMessage (DHUDMessageBase *msg)
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{
 		DHUDMessageBase *probe = Messages[i];
-		DHUDMessageBase **prev = &Messages[i];
+		TObjPtr<DHUDMessageBase *>*prev = &Messages[i];
 
 		while (probe && probe != msg)
 		{
@@ -708,7 +691,7 @@ DHUDMessageBase *DBaseStatusBar::DetachMessage (DHUDMessageBase *msg)
 		if (probe != NULL)
 		{
 			*prev = probe->Next;
-			probe->Next = NULL;
+			probe->Next = nullptr;
 			return probe;
 		}
 	}
@@ -720,7 +703,7 @@ DHUDMessageBase *DBaseStatusBar::DetachMessage (uint32_t id)
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{
 		DHUDMessageBase *probe = Messages[i];
-		DHUDMessageBase **prev = &Messages[i];
+		TObjPtr<DHUDMessageBase *>*prev = &Messages[i];
 
 		while (probe && probe->SBarID != id)
 		{
@@ -730,7 +713,7 @@ DHUDMessageBase *DBaseStatusBar::DetachMessage (uint32_t id)
 		if (probe != NULL)
 		{
 			*prev = probe->Next;
-			probe->Next = NULL;
+			probe->Next = nullptr;
 			return probe;
 		}
 	}
@@ -749,7 +732,7 @@ void DBaseStatusBar::DetachAllMessages ()
 	{
 		DHUDMessageBase *probe = Messages[i];
 
-		Messages[i] = NULL;
+		Messages[i] = nullptr;
 		while (probe != NULL)
 		{
 			DHUDMessageBase *next = probe->Next;
@@ -776,6 +759,49 @@ void DBaseStatusBar::ShowPlayerName ()
 
 //---------------------------------------------------------------------------
 //
+//
+//
+//---------------------------------------------------------------------------
+
+static FTextureID GetBorderTexture(FLevelLocals *Level)
+{
+	if (Level != nullptr && Level->info != nullptr && Level->info->BorderTexture.Len() != 0)
+	{
+		auto picnum = TexMan.CheckForTexture (Level->info->BorderTexture, ETextureType::Flat);
+		if (picnum.isValid()) return picnum;
+	}
+	return TexMan.CheckForTexture (gameinfo.BorderFlat, ETextureType::Flat);
+}
+
+//==========================================================================
+//
+// R_RefreshViewBorder
+//
+// Draws the border around the player view, if needed.
+//
+//==========================================================================
+
+void DBaseStatusBar::RefreshViewBorder ()
+{
+	if (setblocks < 10)
+	{
+		int Width = screen->GetWidth();
+		if (viewwidth == Width)
+		{
+			return;
+		}
+		auto tex = GetBorderTexture(primaryLevel);
+		screen->DrawBorder (tex, 0, 0, Width, viewwindowy);
+		screen->DrawBorder (tex, 0, viewwindowy, viewwindowx, viewheight + viewwindowy);
+		screen->DrawBorder (tex, viewwindowx + viewwidth, viewwindowy, Width, viewheight + viewwindowy);
+		screen->DrawBorder (tex, 0, viewwindowy + viewheight, Width, StatusBar->GetTopOfStatusbar());
+		
+		screen->DrawFrame (viewwindowx, viewwindowy, viewwidth, viewheight);
+	}
+}
+
+//---------------------------------------------------------------------------
+//
 // RefreshBackground
 //
 //---------------------------------------------------------------------------
@@ -787,13 +813,17 @@ void DBaseStatusBar::RefreshBackground () const
 	float ratio = ActiveRatio (SCREENWIDTH, SCREENHEIGHT);
 	x = ST_X;
 	y = SBarTop;
+	
+	if (x == 0 && y == SCREENHEIGHT) return;
+
+	auto tex = GetBorderTexture(primaryLevel);
 
 	if(!CompleteBorder)
 	{
 		if(y < SCREENHEIGHT)
 		{
-			screen->DrawBorder (x+1, y, SCREENWIDTH, y+1);
-			screen->DrawBorder (x+1, SCREENHEIGHT-1, SCREENWIDTH, SCREENHEIGHT);
+			screen->DrawBorder (tex, x+1, y, SCREENWIDTH, y+1);
+			screen->DrawBorder (tex, x+1, SCREENHEIGHT-1, SCREENWIDTH, SCREENHEIGHT);
 		}
 	}
 	else
@@ -812,8 +842,8 @@ void DBaseStatusBar::RefreshBackground () const
 			x2 = SCREENWIDTH;
 		}
 
-		screen->DrawBorder (0, y, x+1, SCREENHEIGHT);
-		screen->DrawBorder (x2-1, y, SCREENWIDTH, SCREENHEIGHT);
+		screen->DrawBorder (tex, 0, y, x+1, SCREENHEIGHT);
+		screen->DrawBorder (tex, x2-1, y, SCREENWIDTH, SCREENHEIGHT);
 
 		if (setblocks >= 10)
 		{
@@ -1017,7 +1047,7 @@ void DBaseStatusBar::DrawLog ()
 		hudheight = SCREENHEIGHT / scale;
 
 		int linelen = hudwidth<640? Scale(hudwidth,9,10)-40 : 560;
-		auto lines = V_BreakLines (SmallFont, linelen, CPlayer->LogText);
+		auto lines = V_BreakLines (SmallFont, linelen, GStrings(CPlayer->LogText));
 		int height = 20;
 
 		for (unsigned i = 0; i < lines.Size(); i++) height += SmallFont->GetHeight () + 1;
@@ -1118,7 +1148,7 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 		DrawMessages (HUDMSGLayer_OverMap, (state == HUD_StatusBar) ? GetTopOfStatusbar() : SCREENHEIGHT);
 	}
 	DrawMessages (HUDMSGLayer_OverHUD, (state == HUD_StatusBar) ? GetTopOfStatusbar() : SCREENHEIGHT);
-	E_RenderOverlay(state);
+	primaryLevel->localEventManager->RenderOverlay(state);
 
 	DrawConsistancy ();
 	DrawWaiting ();

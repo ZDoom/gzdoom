@@ -33,7 +33,7 @@
 */
 
 #include "doomtype.h"
-#include "doomstat.h"
+#include "g_game.h"
 #include "d_event.h"
 #include "w_wad.h"
 #include "gi.h"
@@ -376,7 +376,7 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 		mCastSounds[i].mSound = static_cast<FIntermissionActionCast*>(desc)->mCastSounds[i].mSound;
 	}
 	caststate = mDefaults->SeeState;
-	if (mClass->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)))
+	if (mClass->IsDescendantOf(NAME_PlayerPawn))
 	{
 		advplayerstate = mDefaults->MissileState;
 		casttranslation = TRANSLATION(TRANSLATION_Players, consoleplayer);
@@ -419,7 +419,7 @@ int DIntermissionScreenCast::Responder (event_t *ev)
 		castframes = 0;
 		castattacking = false;
 
-		if (mClass->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)))
+		if (mClass->IsDescendantOf(NAME_PlayerPawn))
 		{
 			int snd = S_FindSkinnedSound(players[consoleplayer].mo, "*death");
 			if (snd != 0) S_Sound (CHAN_VOICE | CHAN_UI, snd, 1, ATTN_NONE);
@@ -479,7 +479,7 @@ int DIntermissionScreenCast::Ticker ()
 	{
 		// go into attack frame
 		castattacking = true;
-		if (!mClass->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)))
+		if (!mClass->IsDescendantOf(NAME_PlayerPawn))
 		{
 			if (castonmelee)
 				basestate = caststate = mDefaults->MeleeState;
@@ -546,7 +546,7 @@ void DIntermissionScreenCast::Drawer ()
 
 		if (!(mDefaults->flags4 & MF4_NOSKIN) &&
 			mDefaults->SpawnState != NULL && caststate->sprite == mDefaults->SpawnState->sprite &&
-			mClass->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)) &&
+			mClass->IsDescendantOf(NAME_PlayerPawn) &&
 			Skins.Size() > 0)
 		{
 			// Only use the skin sprite if this class has not been removed from the
@@ -681,7 +681,7 @@ DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, 
 	mIndex = 0;
 	mAdvance = false;
 	mSentAdvance = false;
-	mScreen = NULL;
+	mScreen = nullptr;
 	mFirst = true;
 	mGameState = state;
 }
@@ -787,8 +787,7 @@ void DIntermissionController::Ticker ()
 			switch (mGameState)
 			{
 			case FSTATE_InLevel:
-				if (level.cdtrack == 0 || !S_ChangeCDMusic (level.cdtrack, level.cdid))
-					S_ChangeMusic (level.Music, level.musicorder);
+				primaryLevel->SetMusic();
 				gamestate = GS_LEVEL;
 				wipegamestate = GS_LEVEL;
 				P_ResumeConversation ();

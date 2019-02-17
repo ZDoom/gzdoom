@@ -35,7 +35,6 @@
 #ifndef _WIN32
 #include <sys/types.h>
 #include <sys/wait.h>
-#include "mus2midi.h"
 #endif
 
 #include <zlib.h>

@@ -33,7 +33,7 @@
 **
 */
 #include <ctype.h>
-#include "i_system.h"
+
 #include "sc_man.h"
 #include "templates.h"
 #include "w_wad.h"
@@ -43,6 +43,7 @@
 #include "v_text.h"
 #include "g_levellocals.h"
 #include "a_dynlight.h"
+#include "v_video.h"
 #include "textures/skyboxtexture.h"
 #include "hwrenderer/postprocessing/hw_postprocessshader.h"
 #include "hwrenderer/textures/hw_material.h"
@@ -53,6 +54,7 @@ void InitializeActorLights(TArray<FLightAssociation> &LightAssociations);
 
 TArray<UserShaderDesc> usershaders;
 extern TDeletingArray<FLightDefaults *> LightDefaults;
+extern int AttenuationIsSet;
 
 
 //-----------------------------------------------------------------------------
@@ -138,6 +140,7 @@ static const char *LightTags[]=
    "attenuate",
    "dontlightactors",
    "spot",
+   "noshadowmap",
    nullptr
 };
 
@@ -160,7 +163,8 @@ enum {
    LIGHTTAG_DONTLIGHTSELF,
    LIGHTTAG_ATTENUATE,
    LIGHTTAG_DONTLIGHTACTORS,
-   LIGHTTAG_SPOT
+   LIGHTTAG_SPOT,
+   LIGHTTAG_NOSHADOWMAP,
 };
 
 //==========================================================================
@@ -444,8 +448,11 @@ class GLDefsParser
 				case LIGHTTAG_ADDITIVE:
 					defaults->SetAdditive(ParseInt(sc) != 0);
 					break;
-				case LIGHTTAG_HALO:
-					defaults->SetHalo(ParseInt(sc) != 0);
+				case LIGHTTAG_HALO:	// old development garbage
+					ParseInt(sc);
+					break;
+				case LIGHTTAG_NOSHADOWMAP:
+					defaults->SetNoShadowmap(ParseInt(sc) != 0);
 					break;
 				case LIGHTTAG_DONTLIGHTSELF:
 					defaults->SetDontLightSelf(ParseInt(sc) != 0);
@@ -537,8 +544,11 @@ class GLDefsParser
 				case LIGHTTAG_SUBTRACTIVE:
 					defaults->SetSubtractive(ParseInt(sc) != 0);
 					break;
-				case LIGHTTAG_HALO:
-					defaults->SetHalo(ParseInt(sc) != 0);
+				case LIGHTTAG_HALO:	// old development garbage
+					ParseInt(sc);
+					break;
+				case LIGHTTAG_NOSHADOWMAP:
+					defaults->SetNoShadowmap(ParseInt(sc) != 0);
 					break;
 				case LIGHTTAG_DONTLIGHTSELF:
 					defaults->SetDontLightSelf(ParseInt(sc) != 0);
@@ -633,8 +643,11 @@ class GLDefsParser
 				case LIGHTTAG_SUBTRACTIVE:
 					defaults->SetSubtractive(ParseInt(sc) != 0);
 					break;
-				case LIGHTTAG_HALO:
-					defaults->SetHalo(ParseInt(sc) != 0);
+				case LIGHTTAG_HALO:	// old development garbage
+					ParseInt(sc);
+					break;
+				case LIGHTTAG_NOSHADOWMAP:
+					defaults->SetNoShadowmap(ParseInt(sc) != 0);
 					break;
 				case LIGHTTAG_DONTLIGHTSELF:
 					defaults->SetDontLightSelf(ParseInt(sc) != 0);
@@ -728,8 +741,11 @@ class GLDefsParser
 				case LIGHTTAG_SUBTRACTIVE:
 					defaults->SetSubtractive(ParseInt(sc) != 0);
 					break;
-				case LIGHTTAG_HALO:
-					defaults->SetHalo(ParseInt(sc) != 0);
+				case LIGHTTAG_HALO:	// old development garbage
+					ParseInt(sc);
+					break;
+				case LIGHTTAG_NOSHADOWMAP:
+					defaults->SetNoShadowmap(ParseInt(sc) != 0);
 					break;
 				case LIGHTTAG_DONTLIGHTSELF:
 					defaults->SetDontLightSelf(ParseInt(sc) != 0);
@@ -820,8 +836,11 @@ class GLDefsParser
 				case LIGHTTAG_SUBTRACTIVE:
 					defaults->SetSubtractive(ParseInt(sc) != 0);
 					break;
-				case LIGHTTAG_HALO:
-					defaults->SetHalo(ParseInt(sc) != 0);
+				case LIGHTTAG_HALO:	// old development garbage
+					ParseInt(sc);
+					break;
+				case LIGHTTAG_NOSHADOWMAP:
+					defaults->SetNoShadowmap(ParseInt(sc) != 0);
 					break;
 				case LIGHTTAG_DONTLIGHTSELF:
 					defaults->SetDontLightSelf(ParseInt(sc) != 0);
@@ -1760,6 +1779,7 @@ void ParseGLDefs()
 	const char *defsLump = NULL;
 
 	LightDefaults.DeleteAndClear();
+	AttenuationIsSet = -1;
 	//gl_DestroyUserShaders(); function says 'todo'
 	switch (gameinfo.gametype)
 	{

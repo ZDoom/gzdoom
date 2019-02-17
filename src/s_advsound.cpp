@@ -45,7 +45,9 @@
 #include "serializer.h"
 #include "v_text.h"
 #include "g_levellocals.h"
+#include "r_data/sprites.h"
 #include "vm.h"
+#include "i_system.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1756,9 +1758,10 @@ static int S_LookupPlayerSound (int classidx, int gender, FSoundID refid)
 	{
 		int g;
 
-		for (g = 0; g < GENDER_MAX && listidx == 0xffff; ++g)
+		for (g = 0; g < GENDER_MAX; ++g)
 		{
 			listidx = PlayerClassLookups[classidx].ListIndex[g];
+			if (listidx != 0xffff) break;
 		}
 		if (g == GENDER_MAX)
 		{ // No sounds defined at all for this class (can this happen?)
@@ -1888,6 +1891,27 @@ bool S_AreSoundsEquivalent (AActor *actor, int id1, int id2)
 	return id1 == id2;
 }
 
+//===========================================================================
+//
+//PlayerPawn :: GetSoundClass
+//
+//===========================================================================
+
+static const char *GetSoundClass(AActor *pp)
+{
+	auto player = pp->player;
+	if (player != nullptr &&
+		(player->mo == nullptr || !(player->mo->flags4 &MF4_NOSKIN)) &&
+		(unsigned int)player->userinfo.GetSkin() >= PlayerClasses.Size() &&
+		(unsigned)player->userinfo.GetSkin() < Skins.Size())
+	{
+		return Skins[player->userinfo.GetSkin()].Name.GetChars();
+	}
+	auto sclass = player? pp->NameVar(NAME_SoundClass) : NAME_None;
+
+	return sclass != NAME_None ? sclass.GetChars() : "player";
+}
+
 //==========================================================================
 //
 // S_FindSkinnedSound
@@ -1900,10 +1924,10 @@ int S_FindSkinnedSound (AActor *actor, FSoundID refid)
 	const char *pclass;
 	int gender = 0;
 
-	if (actor != NULL && actor->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
+	if (actor != nullptr)
 	{
-		pclass = static_cast<APlayerPawn*>(actor)->GetSoundClass ();
-		if (actor->player != NULL) gender = actor->player->userinfo.GetGender();
+		pclass = GetSoundClass (actor);
+		if (actor->player != nullptr) gender = actor->player->userinfo.GetGender();
 	}
 	else
 	{
@@ -2053,8 +2077,9 @@ void sfxinfo_t::MarkUsed()
 //
 //==========================================================================
 
-void S_MarkPlayerSounds (const char *playerclass)
+void S_MarkPlayerSounds (AActor *player)
 {
+	const char *playerclass = GetSoundClass(player);
 	int classidx = S_FindPlayerClass(playerclass);
 	if (classidx < 0)
 	{
@@ -2231,8 +2256,13 @@ DEFINE_ACTION_FUNCTION(AAmbientSound, Tick)
 	PARAM_SELF_PROLOGUE(AActor);
 
 	self->Tick();
+	
+	if (self->special1 > 0)
+	{
+		if (--self->special1 > 0) return 0;
+	}
 
-	if (!self->special2 || level.maptime < self->special1)
+	if (!self->special2)
 		return 0;
 
 	FAmbientSound *ambient;
@@ -2327,7 +2357,7 @@ DEFINE_ACTION_FUNCTION(AAmbientSound, Activate)
 			amb->periodmin = ::Scale(S_GetMSLength(sndnum), TICRATE, 1000);
 		}
 
-		self->special1 = level.maptime;
+		self->special1 = 0;
 		if (amb->type & (RANDOM|PERIODIC))
 			self->special1 += GetTicker (amb);
 

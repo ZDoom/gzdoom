@@ -28,46 +28,43 @@ public:
 	void AddChoice (int seqnum, seqtype_t type);
 	int GetModeNum() const { return m_ModeNum; }
 	FName GetSequenceName() const;
-	static void StaticMarkHead() { GC::Mark(SequenceListHead); }
 
 	virtual void MakeSound (int loop, FSoundID id) {}
 	virtual void *Source () { return NULL; }
 	virtual bool IsPlaying () { return false; }
 	virtual DSeqNode *SpawnChild (int seqnum) { return NULL; }
 
-	inline static DSeqNode *FirstSequence() { return SequenceListHead; }
 	inline DSeqNode *NextSequence() const { return m_Next; }
 
-	static void SerializeSequences (FSerializer &arc);
 
 protected:
 	DSeqNode ();
-	DSeqNode (int sequence, int modenum);
+	DSeqNode (FLevelLocals *l, int sequence, int modenum);
 
 	int32_t *m_SequencePtr;
 	int m_Sequence;
 
 	FSoundID m_CurrentSoundID;
 	int m_StopSound;
-	int m_DelayUntilTic;
+	int m_DelayTics;
 	float m_Volume;
 	float m_Atten;
 	int m_ModeNum;
 
+	FLevelLocals *Level;
 	TArray<int> m_SequenceChoices;
 	TObjPtr<DSeqNode*> m_ChildSeqNode;
 	TObjPtr<DSeqNode*> m_ParentSeqNode;
 
 private:
-	static DSeqNode *SequenceListHead;
 	DSeqNode *m_Next, *m_Prev;
 
 	void ActivateSequence (int sequence);
 
-	friend void SN_StopAllSequences (void);
+	friend void SN_StopAllSequences (FLevelLocals *Level);
 };
 
-void SN_StopAllSequences (void);
+void SN_StopAllSequences (FLevelLocals *Level);
 
 struct FSoundSequence
 {
@@ -92,11 +89,10 @@ void SN_StopSequence (sector_t *sector, int chan);
 void SN_StopSequence (FPolyObj *poly);
 bool SN_AreModesSame(int sequence, seqtype_t type, int mode1, int mode2);
 bool SN_AreModesSame(FName name, int mode1, int mode2);
-void SN_UpdateActiveSequences (void);
+void SN_UpdateActiveSequences (FLevelLocals *Level);
 ptrdiff_t SN_GetSequenceOffset (int sequence, int32_t *sequencePtr);
-void SN_DoStop (void *);
-void SN_ChangeNodeData (int nodeNum, int seqOffset, int delayTics,
-	float volume, int currentSoundID);
+void SN_DoStop (FLevelLocals *Level, void *);
+void SN_ChangeNodeData (FLevelLocals *Level, int nodeNum, int seqOffset, int delayTics, float volume, int currentSoundID);
 FName SN_GetSequenceSlot (int sequence, seqtype_t type);
 void SN_MarkPrecacheSounds (int sequence, seqtype_t type);
 bool SN_IsMakingLoopingSound (sector_t *sector);

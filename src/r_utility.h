@@ -13,6 +13,8 @@ struct FViewWindow;
 // There a 0-31, i.e. 32 LUT in the COLORMAP lump.
 #define NUMCOLORMAPS			32
 
+struct FLevelLocals;
+
 struct FRenderViewpoint
 {
 	FRenderViewpoint();
@@ -24,6 +26,7 @@ struct FRenderViewpoint
 	FRotator		HWAngles;		// Actual rotation angles for the hardware renderer
 	DVector2		ViewVector;		// HWR only: direction the camera is facing.
 	AActor			*ViewActor;		// either the same as camera or nullptr
+	FLevelLocals	*ViewLevel;		// The level this viewpoint is on.
 
 	DVector3		Path[2];		// View path for portal calculations
 	double			Cos;			// cos(Angles.Yaw)
@@ -108,12 +111,6 @@ struct DVector3a
 	DAngle angle;
 };
 
-
-subsector_t *R_PointInSubsector (fixed_t x, fixed_t y);
-inline subsector_t *R_PointInSubsector(const DVector2 &pos)
-{
-	return R_PointInSubsector(FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y));
-}
 void R_ResetViewInterpolation ();
 void R_RebuildViewInterpolation(player_t *player);
 bool R_GetViewInterpolationStatus();

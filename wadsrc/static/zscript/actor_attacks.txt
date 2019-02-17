@@ -727,7 +727,7 @@ extend class Actor
 			{
 				SpawnBlood(bleedpos, SrcAngleFromTarget, actualdamage > 0 ? actualdamage : originaldamage);
 			}
-			else if (damage)
+			else if (originaldamage)
 			{
 				if (axeBlood)
 				{

@@ -109,7 +109,7 @@ float rayTest(vec2 ray_start, vec2 ray_end)
 	// Walk the AABB binary tree searching for nodes touching the ray line segment's AABB box.
 	// When it reaches a leaf node, use a line segment intersection test to see if we got a hit.
 
-	int stack[16];
+	int stack[32];
 	int stack_pos = 1;
 	stack[0] = nodes.length() - 1;
 	while (stack_pos > 0)
@@ -125,7 +125,7 @@ float rayTest(vec2 ray_start, vec2 ray_end)
 			t = min(intersectRayLine(ray_start, ray_end, nodes[node_index].line_index, raydelta, rayd, raydist2), t);
 			stack_pos--;
 		}
-		else if (stack_pos == 16)
+		else if (stack_pos == 32)
 		{
 			stack_pos--; // stack overflow
 		}

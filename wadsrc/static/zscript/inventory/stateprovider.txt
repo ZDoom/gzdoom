@@ -217,7 +217,7 @@ class StateProvider : Inventory
 			// Temporarily adjusts the pitch
 			double saved_player_pitch = self.Pitch;
 			self.Pitch += pitch;
-			let misl = SpawnPlayerMissile (missiletype, shootangle, ofs.X, ofs.Y, spawnheight, t, NULL, false, (flags & FPF_NOAUTOAIM) != 0);
+			let misl = SpawnPlayerMissile (missiletype, shootangle, ofs.X, ofs.Y, spawnheight, t, false, (flags & FPF_NOAUTOAIM) != 0);
 			self.Pitch = saved_player_pitch;
 
 			// automatic handling of seeker missiles
@@ -248,7 +248,7 @@ class StateProvider : Inventory
 //
 //==========================================================================
 
-	action void A_CustomPunch(int damage, bool norandom = false, int flags = CPF_USEAMMO, class<Actor> pufftype = "BulletPuff", double range = 0, double lifesteal = 0, int lifestealmax = 0, class<BasicArmorBonus> armorbonustype = "ArmorBonus", sound MeleeSound = 0, sound MissSound = "")
+	action void  A_CustomPunch(int damage, bool norandom = false, int flags = CPF_USEAMMO, class<Actor> pufftype = "BulletPuff", double range = 0, double lifesteal = 0, int lifestealmax = 0, class<BasicArmorBonus> armorbonustype = "ArmorBonus", sound MeleeSound = 0, sound MissSound = "")
 	{
 		let player = self.player;
 		if (!player) return;
@@ -297,15 +297,18 @@ class StateProvider : Inventory
 					}
 					if (armorbonustype != NULL)
 					{
-						let armorbonus = ArmorBonus(Spawn(armorbonustype));
-						armorbonus.SaveAmount *= int(actualdamage * lifesteal);
-						if (lifestealmax > 0) armorbonus.MaxSaveAmount = lifestealmax;
-						armorbonus.bDropped = true;
-						armorbonus.ClearCounters();
-
-						if (!armorbonus.CallTryPickup(self))
+						let armorbonus = BasicArmorBonus(Spawn(armorbonustype));
+						if (armorbonus)
 						{
-							armorbonus.Destroy ();
+							armorbonus.SaveAmount *= int(actualdamage * lifesteal);
+							if (lifestealmax > 0) armorbonus.MaxSaveAmount = lifestealmax;
+							armorbonus.bDropped = true;
+							armorbonus.ClearCounters();
+
+							if (!armorbonus.CallTryPickup(self))
+							{
+								armorbonus.Destroy ();
+							}
 						}
 					}
 				}

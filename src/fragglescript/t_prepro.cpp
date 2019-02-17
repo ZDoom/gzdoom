@@ -43,6 +43,7 @@
 #include "t_script.h"
 #include "w_wad.h"
 #include "serializer.h"
+#include "g_levellocals.h"
 
 
 //==========================================================================
@@ -129,7 +130,7 @@ void DFsScript::ClearSections()
 			var->Destroy();
 			var = next;
 		}
-		sections[i] = NULL;
+		sections[i] = nullptr;
 	}
 }
 
@@ -332,13 +333,13 @@ char *DFsScript::ProcessFindChar(char *datap, char find)
 //
 //==========================================================================
 
-void DFsScript::DryRunScript()
+void DFsScript::DryRunScript(FLevelLocals *Level)
 {
 	char *end = data + len;
 	char *rover = data;
 	
 	// allocate space for the tokens
-	FParser parse(this);
+	FParser parse(Level, this);
 	try
 	{
 		while(rover < end && *rover)
@@ -386,11 +387,11 @@ void DFsScript::DryRunScript()
 //
 //==========================================================================
 
-void DFsScript::Preprocess()
+void DFsScript::Preprocess(FLevelLocals *Level)
 {
 	len = (int)strlen(data);
 	ProcessFindChar(data, 0);  // fill in everything
-	DryRunScript();
+	DryRunScript(Level);
 }
 
 //==========================================================================
@@ -405,7 +406,7 @@ void DFsScript::Preprocess()
 //
 //==========================================================================
 
-void DFsScript::ParseInclude(char *lumpname)
+void DFsScript::ParseInclude(FLevelLocals *Level, char *lumpname)
 {
 	int lumpnum;
 	char *lump;
@@ -428,7 +429,7 @@ void DFsScript::ParseInclude(char *lumpname)
 	ProcessFindChar(lump, 0);
 	
 	// now parse the lump
-	FParser parse(this);
+	FParser parse(Level, this);
 	parse.Run(lump, lump, lump+lumplen);
 	
 	// free the lump

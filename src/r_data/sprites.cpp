@@ -23,7 +23,7 @@
 
 #include "doomtype.h"
 #include "w_wad.h"
-#include "i_system.h"
+
 #include "s_sound.h"
 #include "d_player.h"
 #include "d_netinf.h"
@@ -778,22 +778,22 @@ void R_InitSkins (void)
 
 		if (!remove)
 		{
-			auto transdef = ((APlayerPawn*)GetDefaultByType(transtype));
-			auto basedef = ((APlayerPawn*)GetDefaultByType(basetype));
+			auto transdef = GetDefaultByType(transtype);
+			auto basedef = GetDefaultByType(basetype);
 
-			Skins[i].range0start = transdef->ColorRangeStart;
-			Skins[i].range0end = transdef->ColorRangeEnd;
+			Skins[i].range0start = transdef->IntVar(NAME_ColorRangeStart);
+			Skins[i].range0end = transdef->IntVar(NAME_ColorRangeEnd);
 
 			remove = true;
 			for (j = 0; j < (int)PlayerClasses.Size (); j++)
 			{
 				auto type = PlayerClasses[j].Type;
-				auto type_def = ((APlayerPawn*)GetDefaultByType(type));
+				auto type_def = GetDefaultByType(type);
 
 				if (type->IsDescendantOf (basetype) &&
 					GetDefaultByType(type)->SpawnState->sprite == GetDefaultByType(basetype)->SpawnState->sprite &&
-					type_def->ColorRangeStart == basedef->ColorRangeStart &&
-					type_def->ColorRangeEnd == basedef->ColorRangeEnd)
+					type_def->IntVar(NAME_ColorRangeStart) == basedef->IntVar(NAME_ColorRangeStart) &&
+					type_def->IntVar(NAME_ColorRangeEnd) == basedef->IntVar(NAME_ColorRangeEnd))
 				{
 					PlayerClasses[j].Skins.Push ((int)i);
 					remove = false;
@@ -995,9 +995,9 @@ void R_InitSprites ()
 
 	for (i = 0; i < numskins; i++)
 	{ // Assume Doom skin by default
-		auto type = ((APlayerPawn*)GetDefaultByType(PlayerClasses[0].Type));
-		Skins[i].range0start = type->ColorRangeStart;
-		Skins[i].range0end = type->ColorRangeEnd;
+		auto type = GetDefaultByType(PlayerClasses[0].Type);
+		Skins[i].range0start = type->IntVar(NAME_ColorRangeStart);
+		Skins[i].range0end = type->IntVar(NAME_ColorRangeEnd);
 		Skins[i].Scale = type->Scale;
 	}
 
@@ -1010,19 +1010,13 @@ void R_InitSprites ()
 	// [GRB] Each player class has its own base skin
 	for (i = 0; i < PlayerClasses.Size (); i++)
 	{
-		auto basetype = ((APlayerPawn*)GetDefaultByType(PlayerClasses[i].Type));
+		auto basetype = GetDefaultByType(PlayerClasses[i].Type);
 
 		Skins[i].Name = "Base";
-		if (basetype->Face == NAME_None)
-		{
-			Skins[i].Face = "STF";
-		}
-		else
-		{
-			Skins[i].Face = basetype->Face;
-		}
-		Skins[i].range0start = basetype->ColorRangeStart;
-		Skins[i].range0end = basetype->ColorRangeEnd;
+		auto face = basetype->NameVar(NAME_Face);
+		Skins[i].Face = face == NAME_None? FName("STF") : face;
+		Skins[i].range0start = basetype->IntVar(NAME_ColorRangeStart);
+		Skins[i].range0end = basetype->IntVar(NAME_ColorRangeEnd);
 		Skins[i].Scale = basetype->Scale;
 		Skins[i].sprite = basetype->SpawnState->sprite;
 		Skins[i].namespc = ns_global;

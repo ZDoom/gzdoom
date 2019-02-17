@@ -453,6 +453,7 @@ public:
 
 	
 	void RefreshBackground () const;
+	void RefreshViewBorder ();
 
 private:
 	DObject *AltHud = nullptr;
@@ -515,7 +516,6 @@ DBaseStatusBar *CreateCustomStatusBar(int script=0);
 
 // Crosshair stuff ----------------------------------------------------------
 
-void ST_FormatMapName(FString &mapname, const char *mapnamecolor = "");
 void ST_LoadCrosshair(bool alwaysload=false);
 void ST_Clear();
 void ST_CreateStatusBar(bool bTitleLevel);

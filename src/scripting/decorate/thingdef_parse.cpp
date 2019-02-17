@@ -47,6 +47,10 @@
 #include "w_wad.h"
 #include "v_text.h"
 #include "m_argv.h"
+#include "v_video.h"
+#ifndef _MSC_VER
+#include "i_system.h"  // for strlwr()
+#endif // !_MSC_VER
 
 void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns);
 EXTERN_CVAR(Bool, strictdecorate);
@@ -77,7 +81,7 @@ PClassActor *DecoDerivedClass(const FScriptPosition &sc, PClassActor *parent, FN
 	if (type == nullptr)
 	{
 		FString newname = typeName.GetChars();
-		FString sourcefile = sc.FileName;
+		FString sourcefile = sc.FileName.GetChars();
 
 		sourcefile.Substitute(":", "@");
 		newname << '@' << sourcefile;

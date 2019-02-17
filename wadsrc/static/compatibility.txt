@@ -261,8 +261,6 @@ FA23E72FA955E66EC68609F72C0BA71E // unloved.pk3:unlovedmaps.wad map02
 41BEC1F643CFEEC997AF98276A05EC88 // unloved.pk3:unlovedmaps.wad map03
 AF9A6370BE562584BC11165ECF364713 // unloved.pk3:unlovedmaps.wad map04
 DC96228097DD004C40CCB1DB14A91EAA // unloved.pk3:unlovedmaps.wad map05
-261E64897A572C8DB8DC041E64BE27AD // unloved2beta1.pk3:u2_new2maps2.wad map06
-04800B1F35E8C036EBABC8C616402927 // unloved2beta1.pk3:u2_new2maps2.wad map07
 9E54F70648A77BBD090FF78A3AA05367 // unloved2beta1.pk3:u2_new2maps2.wad map08
 72E9E0F41F691B7F956E62F35B4A617F // unloved2beta1.pk3:u2_new2maps2.wad map09
 3D3FE412E87AD8B2316DAEC9E25F2E5D // unloved2beta1.pk3:u2_new2maps2.wad map10
@@ -274,4 +272,16 @@ DC96228097DD004C40CCB1DB14A91EAA // unloved.pk3:unlovedmaps.wad map05
 {
 	setslopeoverflow
 	polyobj
+}
+
+1624AD80349566AA7F29D2CA0D51754B // The Gateway Experiments Episode 5: Prime Directive, ge5map02
+{
+	checkswitchrange
+}
+
+261E64897A572C8DB8DC041E64BE27AD // unloved2beta1.pk3:u2_new2maps2.wad map06
+04800B1F35E8C036EBABC8C616402927 // unloved2beta1.pk3:u2_new2maps2.wad map07
+{
+	clipmidtex
+	checkswitchrange
 }

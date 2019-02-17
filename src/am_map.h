@@ -22,31 +22,44 @@
 #ifndef __AMMAP_H__
 #define __AMMAP_H__
 
+#include "dobject.h"
+
 struct event_t;
 class FSerializer;
+struct FLevelLocals;
 
+class DAutomapBase : public DObject
+{
+	DECLARE_ABSTRACT_CLASS(DAutomapBase, DObject);
+public:
+	FLevelLocals *Level;	// temporary location so that it can be set from the outside.
+
+	// Called by main loop.
+	virtual bool Responder(event_t* ev, bool last) = 0;
+
+	// Called by main loop.
+	virtual void Ticker(void) = 0;
+
+	// Called by main loop,
+	// called instead of view drawer if automap active.
+	virtual void Drawer(int bottom) = 0;
+
+	virtual void NewResolution() = 0;
+	virtual void LevelInit() = 0;
+	virtual void UpdateShowAllLines() = 0;
+	virtual void GoBig() = 0;
+	virtual void ResetFollowLocation() = 0;
+	virtual int addMark() = 0;
+	virtual bool clearMarks() = 0;
+	virtual DVector2 GetPosition() = 0;
+	virtual void startDisplay() = 0;
+
+};
 
 void AM_StaticInit();
 void AM_ClearColorsets();	// reset data for a restart.
-
-// Called by main loop.
-bool AM_Responder (event_t* ev, bool last);
-
-// Called by main loop.
-void AM_Ticker (void);
-
-// Called by main loop,
-// called instead of view drawer if automap active.
-void AM_Drawer (int bottom);
-
-// Called to force the automap to quit
-// if the level is completed while it is up.
-void AM_Stop (void);
-
-void AM_NewResolution ();
-void AM_ToggleMap ();
-void AM_LevelInit ();
-void AM_SerializeMarkers(FSerializer &arc);
-
+DAutomapBase *AM_Create(FLevelLocals *Level);
+void AM_Stop();
+void AM_ToggleMap();
 
 #endif

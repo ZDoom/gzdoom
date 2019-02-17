@@ -42,6 +42,7 @@
 #include "gstrings.h"
 #include "serializer.h"
 #include "vm.h"
+#include "i_system.h"
 
 // Save name length limit for old binary formats.
 #define OLDSAVESTRINGSIZE		24
@@ -180,7 +181,7 @@ void FSavegameManager::ReadSaveStrings()
 						continue;
 					}
 					void *data = info->CacheLump();
-					FSerializer arc;
+					FSerializer arc(nullptr);
 					if (arc.OpenReader((const char *)data, info->LumpSize))
 					{
 						int savever = 0;
@@ -469,7 +470,7 @@ unsigned FSavegameManager::ExtractSaveData(int index)
 			return index;
 		}
 		void *data = info->CacheLump();
-		FSerializer arc;
+		FSerializer arc(nullptr);
 		if (arc.OpenReader((const char *)data, info->LumpSize))
 		{
 			FString time, pcomment, comment;

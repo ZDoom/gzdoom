@@ -151,7 +151,9 @@ enum ELineFlags : unsigned
 	ML_MAPPED					= 0x00000100,	// set if already drawn in automap
 	ML_REPEAT_SPECIAL			= 0x00000200,	// special is repeatable
 
+	// 0x400, 0x800 and 0x1000 are ML_SPAC_MASK, they can be used for internal things but not for real map flags.
 	ML_ADDTRANS					= 0x00000400,	// additive translucency (can only be set internally)
+	ML_COMPATSIDE				= 0x00000800,	// for compatible PointOnLineSide checks. Using the global compatibility check would be a bit expensive for this check.
 
 	// Extended flags
 	ML_MONSTERSCANACTIVATE		= 0x00002000,	// [RH] Monsters (as well as players) can activate the line

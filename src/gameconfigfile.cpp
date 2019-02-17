@@ -47,6 +47,9 @@
 #include "doomstat.h"
 #include "gi.h"
 #include "d_main.h"
+#if !defined _MSC_VER && !defined __APPLE__
+#include "i_system.h"  // for SHARE_DIR
+#endif // !_MSC_VER && !__APPLE__
 
 EXTERN_CVAR (Bool, con_centernotify)
 EXTERN_CVAR (Int, msg0color)

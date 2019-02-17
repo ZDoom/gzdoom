@@ -102,7 +102,7 @@ void SetCameraToTexture(AActor *viewpoint, const FString &texturename, double fo
 		FTexture *tex = TexMan.GetTexture(textureid);
 		if (tex && tex->isCanvas())
 		{
-			level.canvasTextureInfo.Add(viewpoint, textureid, fov);
+			viewpoint->Level->canvasTextureInfo.Add(viewpoint, textureid, fov);
 		}
 	}
 }

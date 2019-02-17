@@ -46,7 +46,7 @@
 
 inline PClassActor * GetRealType(PClassActor * ti)
 {
-	PClassActor *rep = ti->GetReplacement(false);
+	PClassActor *rep = ti->GetReplacement(nullptr, false);
 	if (rep != ti && rep != NULL && rep->IsDescendantOf(NAME_DehackedPickup))
 	{
 		return rep;
@@ -55,6 +55,7 @@ inline PClassActor * GetRealType(PClassActor * ti)
 }
 
 TDeletingArray<FLightDefaults *> LightDefaults;
+int AttenuationIsSet = -1;
 
 //-----------------------------------------------------------------------------
 //
@@ -76,14 +77,9 @@ void FLightDefaults::ApplyProperties(FDynamicLight * light) const
 	light->lighttype = m_type;
 	light->specialf1 = m_Param;
 	light->pArgs = m_Args;
-	light->lightflags &= ~(LF_ADDITIVE | LF_SUBTRACTIVE | LF_DONTLIGHTSELF | LF_SPOT);
-	if (m_subtractive) light->lightflags |= LF_SUBTRACTIVE;
-	if (m_additive) light->lightflags |= LF_ADDITIVE;
-	if (m_dontlightself) light->lightflags |= LF_DONTLIGHTSELF;
-	if (m_dontlightactors) light->lightflags |= LF_DONTLIGHTACTORS;
-	if (m_spot)
+	light->pLightFlags = &m_lightFlags;
+	if (m_lightFlags & LF_SPOT)
 	{
-		light->lightflags |= LF_SPOT;
 		light->pSpotInnerAngle = &m_spotInnerAngle;
 		light->pSpotOuterAngle = &m_spotOuterAngle;
 		if (m_explicitPitch) light->pPitch = &m_pitch;
@@ -94,7 +90,7 @@ void FLightDefaults::ApplyProperties(FDynamicLight * light) const
 	{
 		float pulseTime = float(m_Param / TICRATE);
 
-		light->m_lastUpdate = level.maptime;
+		light->m_lastUpdate = light->Level->maptime;
 		if (m_swapped) light->m_cycler.SetParams(float(m_Args[LIGHT_SECONDARY_INTENSITY]), float(m_Args[LIGHT_INTENSITY]), pulseTime, oldtype == PulseLight);
 		else light->m_cycler.SetParams(float(m_Args[LIGHT_INTENSITY]), float(m_Args[LIGHT_SECONDARY_INTENSITY]), pulseTime, oldtype == PulseLight);
 		light->m_cycler.ShouldCycle(true);
@@ -103,16 +99,23 @@ void FLightDefaults::ApplyProperties(FDynamicLight * light) const
 		if (light->m_currentRadius <= 0) light->m_currentRadius = 1;
 		light->swapped = m_swapped;
 	}
-
-	switch (m_attenuate)
-	{
-		case 0: light->lightflags &= ~LF_ATTENUATE; break;
-		case 1: light->lightflags |= LF_ATTENUATE; break;
-		default: if (level.flags3 & LEVEL3_ATTENUATE)  light->lightflags |= LF_ATTENUATE; else light->lightflags &= ~LF_ATTENUATE; break;
-	}
 	light->SetOffset(m_Pos);	// this must be the last thing to do.
 }
 
+void FLightDefaults::SetAttenuationForLevel(bool yes)
+{
+	if (AttenuationIsSet != int(yes))
+	{
+		for (auto ldef : LightDefaults)
+		{
+			if (ldef->m_attenuate == -1)
+			{
+				if (yes)  ldef->m_lightFlags |= LF_ATTENUATE; else ldef->m_lightFlags &= ~LF_ATTENUATE;
+			}
+		}
+		AttenuationIsSet = yes;
+	}
+}
 
 //==========================================================================
 //

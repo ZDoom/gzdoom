@@ -37,13 +37,13 @@
 struct SaveGameNode native
 {
 	native String SaveTitle;
-	native String Filename;
+	native readonly String Filename;
 	native bool bOldVersion;
 	native bool bMissingWads;
 	native bool bNoDelete;
 }
 
-struct SavegameManager native 
+struct SavegameManager native ui
 {
 	native int WindowSize;
 	native SaveGameNode quickSaveSlot;

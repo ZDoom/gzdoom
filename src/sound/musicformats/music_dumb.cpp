@@ -37,7 +37,7 @@
 
 #include <math.h>
 #include "i_musicinterns.h"
-#include "i_system.h"
+
 
 #undef CDECL	// w32api's windef.h defines this
 #include "../dumb/include/dumb.h"

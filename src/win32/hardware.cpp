@@ -44,6 +44,8 @@
 #include "m_argv.h"
 #include "version.h"
 #include "win32glvideo.h"
+#include "doomerrors.h"
+#include "i_system.h"
 #include "swrenderer/r_swrenderer.h"
 
 EXTERN_CVAR(Int, vid_maxfps)

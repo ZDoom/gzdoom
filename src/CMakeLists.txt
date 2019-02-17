@@ -655,6 +655,7 @@ file( GLOB HEADER_FILES
 	g_statusbar/*.h
 	gamedata/*.h
 	gamedata/resourcefiles/*.h
+	gamedata/fonts/*.h
 	gamedata/textures/*.h
 	gamedata/textures/hires/hqnx/*.h
 	gamedata/textures/hires/hqnx_asm/*.h
@@ -966,13 +967,12 @@ set (PCH_SOURCES
 	statistics.cpp
 	stats.cpp
 	v_2ddrawer.cpp
+	v_drawtext.cpp
 	v_blend.cpp
 	v_draw.cpp
-	v_font.cpp
 	v_framebuffer.cpp
 	v_palette.cpp
 	v_pfx.cpp
-	v_text.cpp
 	v_video.cpp
 	wi_stuff.cpp
 	gamedata/a_keys.cpp
@@ -1125,6 +1125,8 @@ set (PCH_SOURCES
 	gamedata/textures/formats/tgatexture.cpp
 	gamedata/textures/hires/hqresize.cpp
 	gamedata/textures/hires/hirestex.cpp
+	gamedata/fonts/v_font.cpp
+	gamedata/fonts/v_text.cpp	
 	gamedata/p_xlat.cpp
 	gamedata/xlat/parse_xlat.cpp
 	gamedata/xlat/parsecontext.cpp
@@ -1339,6 +1341,7 @@ include_directories( .
 	g_shared
 	gamedata
 	gamedata/textures
+	gamedata/fonts
 	rendering
 	sound
 	sound/oplsynth
@@ -1457,6 +1460,7 @@ source_group("External\\SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/s
 source_group("FraggleScript" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/fragglescript/.+")
 source_group("Game Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/.+")
 source_group("Game Data\\Resource Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/resourcefiles/.+")
+source_group("Game Data\\Fonts" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/fonts/.+")
 source_group("Game Data\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/textures/.+")
 source_group("Game Data\\Textures\\Hires" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/textures/hires/.+")
 source_group("Game Data\\Textures\\Hires\\HQ Resize" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/textures/hires/hqnx/.+")

@@ -118,6 +118,7 @@ protected:
 	int SpaceWidth;
 	int FontHeight;
 	int GlobalKerning;
+	int TranslationType = 0;
 	char Cursor;
 	bool noTranslate;
 	bool translateUntranslated;

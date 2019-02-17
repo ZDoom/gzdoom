@@ -1098,6 +1098,22 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 						sc.MustGetValue(false);
 						FontHeight = sc.Number;
 					}
+					else if (sc.Compare("Translationtype"))
+					{
+						sc.MustGetToken(TK_Identifier);
+						if (sc.Compare("console"))
+						{
+							TranslationType = 1;
+						}
+						else if (sc.Compare("standard"))
+						{
+							TranslationType = 0;
+						}
+						else
+						{
+							sc.ScriptError("Unknown translation type %s", sc.String);
+						}
+					}
 				}
 			}
 		}
@@ -1701,7 +1717,7 @@ void FFont::LoadTranslations()
 			static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetImage())->SetSourceRemap(PatchRemap);
 	}
 
-	BuildTranslations (Luminosity.Data(), identity, &TranslationParms[0][0], ActiveColors, nullptr);
+	BuildTranslations (Luminosity.Data(), identity, &TranslationParms[TranslationType][0], ActiveColors, nullptr);
 }
 
 //==========================================================================

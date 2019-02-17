@@ -754,6 +754,7 @@ void FLevelLocals::SecretExitLevel (int position)
 //
 //
 //==========================================================================
+static wbstartstruct_t staticWmInfo;
 
 void G_DoCompleted (void)
 {
@@ -780,9 +781,7 @@ void G_DoCompleted (void)
 	// Close the conversation menu if open.
 	P_FreeStrifeConversations ();
 
-	wbstartstruct_t wminfo; 				// parms for world map / intermission
-
-	if (primaryLevel->DoCompleted(nextlevel, wminfo))
+	if (primaryLevel->DoCompleted(nextlevel, staticWmInfo))
 	{
 		gamestate = GS_INTERMISSION;
 		viewactive = false;
@@ -792,10 +791,16 @@ void G_DoCompleted (void)
 		//	if (statcopy)
 		//		memcpy (statcopy, &wminfo, sizeof(wminfo));
 		
-		WI_Start (&wminfo);
+		WI_Start (&staticWmInfo);
 	}
 }
 
+//==========================================================================
+//
+// Prepare the level to be exited and
+// set up the wminfo struct for the coming intermission screen
+//
+//==========================================================================
 
 bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 {
@@ -817,6 +822,7 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 	{
 		wminfo.next = MapName;
 		wminfo.LName1 = wminfo.LName0;
+		wminfo.nextname = wminfo.thisname;
 	}
 	else
 	{
@@ -831,7 +837,7 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 		{
 			wminfo.next = nextinfo->MapName;
 			wminfo.LName1 = TexMan.CheckForTexture(nextinfo->PName, ETextureType::MiscPatch);
-			wminfo.nextname = info->LookupLevelName(&langtable[1]);
+			wminfo.nextname = nextinfo->LookupLevelName(&langtable[1]);
 		}
 	}
 

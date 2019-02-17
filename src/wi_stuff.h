@@ -76,6 +76,7 @@ struct wbstartstruct_t
 	int			pnum;
 
 	wbplayerstruct_t	plyr[MAXPLAYERS];
+	
 };
 
 // Intermission stats.

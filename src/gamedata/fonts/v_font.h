@@ -126,6 +126,7 @@ protected:
 	char Cursor;
 	bool noTranslate;
 	bool translateUntranslated;
+	bool MixedCase = false;
 	struct CharData
 	{
 		FTexture *TranslatedPic = nullptr;	// Texture for use with font translations.

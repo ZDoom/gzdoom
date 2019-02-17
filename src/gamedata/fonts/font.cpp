@@ -708,24 +708,52 @@ int FFont::GetCharCode(int code, bool needpic) const
 		return code;
 	}
 
-	int originalcode = code;
-	int newcode;
-	
-	// Try stripping accents from accented characters. This may repeat to allow multi-step fallbacks.
-	while ((newcode = stripaccent(code)) != code)
+	// Use different substitution logic based on the fonts content:
+	// In a font which has both upper and lower case, prefer unaccented small characters over capital ones.
+	// In a pure upper-case font, do not check for lower case replacements.
+	if (!MixedCase)
 	{
-		code = newcode;
-		if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].TranslatedPic != nullptr))
+		// Try converting lowercase characters to uppercase.
+		if (myislower(code))
 		{
-			return code;
+			code = upperforlower[code];
+			if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].TranslatedPic != nullptr))
+			{
+				return code;
+			}
+		}
+		// Try stripping accents from accented characters.
+		int newcode = stripaccent(code);
+		if (newcode != code)
+		{
+			code = newcode;
+			if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].TranslatedPic != nullptr))
+			{
+				return code;
+			}
 		}
 	}
-	
-	if (myislower(code))
+	else
 	{
-		int upper = upperforlower[code];
-		// Stripping accents did not help - now try uppercase for lowercase
-		if (upper != code) return GetCharCode(upper, needpic);
+		int originalcode = code;
+		int newcode;
+
+		// Try stripping accents from accented characters. This may repeat to allow multi-step fallbacks.
+		while ((newcode = stripaccent(code)) != code)
+		{
+			code = newcode;
+			if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].TranslatedPic != nullptr))
+			{
+				return code;
+			}
+		}
+
+		if (myislower(code))
+		{
+			int upper = upperforlower[code];
+			// Stripping accents did not help - now try uppercase for lowercase
+			if (upper != code) return GetCharCode(upper, needpic);
+		}
 	}
 
 	return -1;

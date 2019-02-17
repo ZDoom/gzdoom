@@ -1774,6 +1774,7 @@ OPTMNU_DEFAULTS				= "Réinitialiser les paramètres";
 OPTMNU_RESETTOSAVED			= "Recharger dernière config.";
 OPTMNU_CONSOLE				= "Ouvrir la console";
 OPTMNU_REVERB				= "Editeur environement de révérb.";
+OPTMNU_LANGUAGE				= "Langage";
 // Controls Menu
 
 CNTRLMNU_TITLE					= "MODIFIER CONTROLES";

@@ -71,19 +71,6 @@ struct TranslationMap
 	int Number;
 };
 
-class FSinglePicFont : public FFont
-{
-public:
-	FSinglePicFont(const char *picname);
-
-	// FFont interface
-	FTexture *GetChar(int code, int translation, int *const width, bool *redirected = nullptr) const override;
-	int GetCharWidth (int code) const;
-
-protected:
-	FTextureID PicNum;
-};
-
 // Essentially a normal multilump font but with an explicit list of character patches
 class FSpecialFont : public FFont
 {
@@ -924,7 +911,8 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 			FTexture *tex = TexMan.GetTexture(picnum);
 			if (tex && tex->GetSourceLump() >= folderfile)
 			{
-				return new FSinglePicFont (name);
+				FFont *CreateSinglePicFont(const char *name);
+				return CreateSinglePicFont (name);
 			}
 		}
 		if (folderdata.Size() > 0)
@@ -1662,76 +1650,6 @@ FFont::FFont (int lump)
 	noTranslate = false;
 	uint8_t pp = 0;
 	for (auto &p : PatchRemap) p = pp++;
-}
-
-//==========================================================================
-//
-// FSinglePicFont :: FSinglePicFont
-//
-// Creates a font to wrap a texture so that you can use hudmessage as if it
-// were a hudpic command. It does not support translation, but animation
-// is supported, unlike all the real fonts.
-//
-//==========================================================================
-
-FSinglePicFont::FSinglePicFont(const char *picname) :
-	FFont(-1) // Since lump is only needed for priority information we don't need to worry about this here.
-{
-	FTextureID picnum = TexMan.CheckForTexture (picname, ETextureType::Any);
-
-	if (!picnum.isValid())
-	{
-		I_FatalError ("%s is not a font or texture", picname);
-	}
-
-	FTexture *pic = TexMan.GetTexture(picnum);
-
-	FontName = picname;
-	FontHeight = pic->GetDisplayHeight();
-	SpaceWidth = pic->GetDisplayWidth();
-	GlobalKerning = 0;
-	FirstChar = LastChar = 'A';
-	ActiveColors = 0;
-	PicNum = picnum;
-
-	Next = FirstFont;
-	FirstFont = this;
-}
-
-//==========================================================================
-//
-// FSinglePicFont :: GetChar
-//
-// Returns the texture if code is 'a' or 'A', otherwise nullptr.
-//
-//==========================================================================
-
-FTexture *FSinglePicFont::GetChar (int code, int translation, int *const width, bool *redirected) const
-{
-	*width = SpaceWidth;
-	if (redirected) *redirected = false;
-	if (code == 'a' || code == 'A')
-	{
-		return TexMan.GetPalettedTexture(PicNum, true);
-	}
-	else
-	{
-		return nullptr;
-	}
-}
-
-//==========================================================================
-//
-// FSinglePicFont :: GetCharWidth
-//
-// Don't expect the text functions to work properly if I actually allowed
-// the character width to vary depending on the animation frame.
-//
-//==========================================================================
-
-int FSinglePicFont::GetCharWidth (int code) const
-{
-	return SpaceWidth;
 }
 
 //==========================================================================

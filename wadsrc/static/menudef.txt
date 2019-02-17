@@ -2545,3 +2545,27 @@ OptionMenu "ReverbSave" protected
 	StaticText "Environments to save"
 	// Rest is filled in by code.
 }
+
+/*=======================================
+ *
+ * Language menu
+ *
+ *=======================================*/
+
+OptionMenu "LanguageOptions"
+{
+	Title "$OPTMNU_LANGUAGE"
+	StaticText " "
+	Command "English (UK)", "language eng"
+	Command "English (US)", "language enu"
+	Command "Français (FR)", "language fr"
+	Command "Italiano (ITA)", "language ita"
+	Command "Português do Brasil (PTB)", "language ptb"
+	Command "Русский (RU)", "language rus"
+}
+
+AddOptionMenu "OptionsMenu"
+{
+	StaticText " "
+	Submenu "$OPTMNU_LANGUAGE", "LanguageOptions"
+}

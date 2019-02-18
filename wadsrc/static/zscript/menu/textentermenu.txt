@@ -209,9 +209,7 @@ class TextEnterMenu : Menu
 
 	private void AppendChar(int ch)
 	{
-		String newstring = mEnterString;
-		newstring.AppendCharacter(ch);
-		newstring = newstring .. displayFont.GetCursor();
+		String newstring = String.Format("%s%c%s", mEnterString, ch, displayFont.GetCursor());
 		if (mEnterSize < 0 || displayFont.StringWidth(newstring) < mEnterSize)
 		{
 			mEnterString.AppendCharacter(ch);

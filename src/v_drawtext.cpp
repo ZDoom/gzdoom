@@ -42,12 +42,124 @@
 
 #include "v_video.h"
 #include "w_wad.h"
+#include "image.h"
+#include "textures/formats/multipatchtexture.h"
 
 #include "gstrings.h"
 #include "vm.h"
 #include "serializer.h"
 
+
 int ListGetInt(VMVa_List &tags);
+
+
+//==========================================================================
+//
+// Create a texture from a text in a given font.
+//
+//==========================================================================
+
+FTexture * BuildTextTexture(FFont *font, const char *string, int textcolor)
+{
+	int 		w;
+	const uint8_t *ch;
+	int 		c;
+	double 		cx;
+	double 		cy;
+	FRemapTable *range;
+	int			kerning;
+	FTexture *pic;
+
+	kerning = font->GetDefaultKerning();
+
+	ch = (const uint8_t *)string;
+	cx = 0;
+	cy = 0;
+
+
+	IntRect box;
+
+	while (auto c = GetCharFromString(ch))
+	{
+		if (c == TEXTCOLOR_ESCAPE)
+		{
+			// Here we only want to measure the texture so just parse over the color.
+			V_ParseFontColor(ch, 0, 0);
+			continue;
+		}
+
+		if (c == '\n')
+		{
+			cx = 0;
+			cy += font->GetHeight();
+			continue;
+		}
+
+		if (nullptr != (pic = font->GetChar(c, CR_UNTRANSLATED, &w, nullptr)))
+		{
+			auto img = pic->GetImage();
+			auto offsets = img->GetOffsets();
+			double x = cx - offsets.first;
+			double y = cy - offsets.second;
+			double ww = img->GetWidth();
+			double h = img->GetHeight();
+
+			box.AddToRect(x, y);
+			box.AddToRect(x + ww, y + h);
+		}
+		cx += (w + kerning);
+	}
+
+	cx = -box.left;
+	cy = -box.top;
+
+	TArray<TexPart> part(strlen(string));
+
+	while (auto c = GetCharFromString(ch))
+	{
+		if (c == TEXTCOLOR_ESCAPE)
+		{
+			EColorRange newcolor = V_ParseFontColor(ch, textcolor, textcolor);
+			if (newcolor != CR_UNDEFINED)
+			{
+				range = font->GetColorTranslation(newcolor);
+				textcolor = newcolor;
+			}
+			continue;
+		}
+
+		if (c == '\n')
+		{
+			cx = 0;
+			cy += font->GetHeight();
+			continue;
+		}
+
+		if (nullptr != (pic = font->GetChar(c, textcolor, &w, nullptr)))
+		{
+			auto img = pic->GetImage();
+			auto offsets = img->GetOffsets();
+			double x = cx - offsets.first;
+			double y = cy - offsets.second;
+
+			auto &tp = part[part.Reserve(1)];
+
+			tp.OriginX = x;
+			tp.OriginY = y;
+			tp.Image = img;
+			tp.Translation = range;
+		}
+		cx += (w + kerning);
+	}
+	FMultiPatchTexture *image = new FMultiPatchTexture(box.width, box.height, part, false, false);
+	image->SetOffsets(-box.left, -box.top);
+	FImageTexture *tex = new FImageTexture(image, "");
+	tex->SetUseType(ETextureType::MiscPatch);
+	TexMan.AddTexture(tex);
+	return tex;
+}
+
+
 
 //==========================================================================
 //

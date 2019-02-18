@@ -361,7 +361,7 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 						tex->bNoDecals = false;
 						tex->SourceLump = -1;	// We do not really care.
 						TexMan.AddTexture(tex);
-						charMap.Insert(position + x + y * numtex_x, tex);
+						charMap.Insert(int(position) + x + y * numtex_x, tex);
 					}
 				}
 			}

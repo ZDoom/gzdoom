@@ -63,9 +63,8 @@ FTexture * BuildTextTexture(FFont *font, const char *string, int textcolor)
 {
 	int 		w;
 	const uint8_t *ch;
-	int 		c;
-	double 		cx;
-	double 		cy;
+	int 		cx;
+	int 		cy;
 	FRemapTable *range;
 	int			kerning;
 	FTexture *pic;
@@ -99,10 +98,10 @@ FTexture * BuildTextTexture(FFont *font, const char *string, int textcolor)
 		{
 			auto img = pic->GetImage();
 			auto offsets = img->GetOffsets();
-			double x = cx - offsets.first;
-			double y = cy - offsets.second;
-			double ww = img->GetWidth();
-			double h = img->GetHeight();
+			int x = cx - offsets.first;
+			int y = cy - offsets.second;
+			int ww = img->GetWidth();
+			int h = img->GetHeight();
 
 			box.AddToRect(x, y);
 			box.AddToRect(x + ww, y + h);
@@ -139,8 +138,8 @@ FTexture * BuildTextTexture(FFont *font, const char *string, int textcolor)
 		{
 			auto img = pic->GetImage();
 			auto offsets = img->GetOffsets();
-			double x = cx - offsets.first;
-			double y = cy - offsets.second;
+			int x = cx - offsets.first;
+			int y = cy - offsets.second;
 
 			auto &tp = part[part.Reserve(1)];
 

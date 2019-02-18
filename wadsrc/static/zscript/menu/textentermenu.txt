@@ -44,10 +44,10 @@ class TextEnterMenu : Menu
 	String mEnterString;
 	int mEnterSize;
 	int mEnterPos;
-	int mSizeMode; // 1: size is length in chars. 2: also check string width
 	bool mInputGridOkay;
 	int InputGridX;
 	int InputGridY;
+	int CursorSize;
 	bool AllowColors;
 	Font displayFont;
 	
@@ -58,12 +58,11 @@ class TextEnterMenu : Menu
 	//=============================================================================
 
 	// [TP] Added allowcolors
-	private void Init(Menu parent, String textbuffer, int maxlen, int sizemode, bool showgrid, bool allowcolors)
+	private void Init(Menu parent, Font dpf, String textbuffer, int maxlen, bool showgrid, bool allowcolors)
 	{
 		Super.init(parent);
 		mEnterString = textbuffer;
-		mEnterSize = maxlen < 0 ? 0x7fffffff : maxlen;
-		mSizeMode = sizemode;
+		mEnterSize = maxlen;
 		mInputGridOkay = (showgrid && (m_showinputgrid == 0)) || (m_showinputgrid >= 1);
 		if (mEnterString.Length() > 0)
 		{
@@ -77,15 +76,25 @@ class TextEnterMenu : Menu
 			InputGridY = 0;
 		}
 		AllowColors = allowcolors; // [TP]
-		displayFont = SmallFont;
+		displayFont = dpf;
+		CursorSize = displayFont.StringWidth(displayFont.GetCursor());
 	}
 
-	static TextEnterMenu Open(Menu parent, String textbuffer, int maxlen, int sizemode, bool showgrid = false, bool allowcolors = false)
+	// This had to be deprecated because the unit for maxlen is 8 pixels.
+	deprecated("3.8") static TextEnterMenu Open(Menu parent, String textbuffer, int maxlen, int sizemode, bool showgrid = false, bool allowcolors = false)
 	{
 		let me = new("TextEnterMenu");
-		me.Init(parent, textbuffer, maxlen, sizemode, showgrid, allowcolors);
+		me.Init(parent, SmallFont, textbuffer, maxlen*8, showgrid, allowcolors);
 		return me;
 	}
+
+	static TextEnterMenu OpenTextEnter(Menu parent, Font displayfnt, String textbuffer, int maxlen, bool showgrid = false, bool allowcolors = false)
+	{
+		let me = new("TextEnterMenu");
+		me.Init(parent, displayfnt, textbuffer, maxlen, showgrid, allowcolors);
+		return me;
+	}
+
 
 	//=============================================================================
 	//
@@ -116,11 +125,7 @@ class TextEnterMenu : Menu
 		if (ev.Type == UIEvent.Type_Char)
 		{
 			mInputGridOkay = false;
-			if (mEnterString.Length() < mEnterSize &&
-				(mSizeMode == 2/*entering player name*/ || displayFont.StringWidth(mEnterString) < (mEnterSize-1)*8))
-			{
-				mEnterString.AppendCharacter(ev.KeyChar);
-			}
+			AppendChar(ev.KeyChar);
 			return true;
 		}
 		int ch = ev.KeyChar;
@@ -202,6 +207,23 @@ class TextEnterMenu : Menu
 	//
 	//=============================================================================
 
+	private void AppendChar(int ch)
+	{
+		String newstring = mEnterString;
+		newstring.AppendCharacter(ch);
+		newstring = newstring .. displayFont.GetCursor();
+		if (mEnterSize < 0 || displayFont.StringWidth(newstring) < mEnterSize)
+		{
+			mEnterString.AppendCharacter(ch);
+		}
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
 	override bool MenuEvent (int key, bool fromcontroller)
 	{
 		String InputGridChars = Chars;
@@ -251,8 +273,7 @@ class TextEnterMenu : Menu
 			case MKEY_Enter:
 				if (mInputGridOkay)
 				{
-					String c = InputGridChars.CharAt(InputGridX + InputGridY * INPUTGRID_WIDTH);
-					int ch = c.CharCodeAt(0);
+					int ch = InputGridChars.CharCodeAt(InputGridX + InputGridY * INPUTGRID_WIDTH);
 					if (ch == 0)			// end
 					{
 						if (mEnterString.Length() > 0)
@@ -267,13 +288,12 @@ class TextEnterMenu : Menu
 					{
 						if (mEnterString.Length() > 0)
 						{
-							mEnterString.Truncate(mEnterString.Length() - 1);
+							mEnterString.DeleteLastCharacter();
 						}
 					}
-					else if (mEnterString.Length() < mEnterSize &&
-						(mSizeMode == 2/*entering player name*/ || displayFont.StringWidth(mEnterString) < (mEnterSize-1)*8))
+					else
 					{
-						mEnterString = mEnterString .. c;
+						AppendChar(ch);
 					}
 				}
 				return true;

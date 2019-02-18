@@ -119,7 +119,7 @@ class LoadSaveMenu : ListMenu
 		savepicHeight = 135*screen.GetHeight()/400;
 		manager.WindowSize = savepicWidth / CleanXfac;
 
-		rowHeight = (SmallFont.GetHeight() + 1) * CleanYfac;
+		rowHeight = (ConFont.GetHeight() + 1) * CleanYfac;
 		listboxLeft = savepicLeft + savepicWidth + 14;
 		listboxTop = savepicTop;
 		listboxWidth = screen.GetWidth() - listboxLeft - 10;
@@ -227,24 +227,29 @@ class LoadSaveMenu : ListMenu
 				colr = Font.CR_TAN;
 			}
 
+			screen.SetClipRect(listboxLeft, listboxTop+rowHeight*i, listboxRight, listboxTop+rowHeight*(i+1));
+			
 			if (j == Selected)
 			{
 				screen.Clear (listboxLeft, listboxTop+rowHeight*i, listboxRight, listboxTop+rowHeight*(i+1), mEntering ? Color(255,255,0,0) : Color(255,0,0,255));
 				didSeeSelected = true;
 				if (!mEntering)
 				{
-					screen.DrawText (SmallFont, colr, listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, node.SaveTitle, DTA_CleanNoMove, true);
+					screen.DrawText (ConFont, colr, listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, node.SaveTitle, DTA_CleanNoMove, true);
 				}
 				else
 				{
-					String s = mInput.GetText() .. SmallFont.GetCursor();
-					screen.DrawText (SmallFont, Font.CR_WHITE, listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, s, DTA_CleanNoMove, true);
+					String s = mInput.GetText() .. ConFont.GetCursor();
+					int length = ConFont.StringWidth(s) * CleanXFac;
+					int displacement = min(0, listboxWidth - 2 - length);
+					screen.DrawText (ConFont, Font.CR_WHITE, listboxLeft + 1 + displacement, listboxTop+rowHeight*i+CleanYfac, s, DTA_CleanNoMove, true);
 				}
 			}
 			else
 			{
-				screen.DrawText (SmallFont, colr, listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, node.SaveTitle, DTA_CleanNoMove, true);
+				screen.DrawText (ConFont, colr, listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, node.SaveTitle, DTA_CleanNoMove, true);
 			}
+			screen.ClearClipRect();
 			j++;
 		}
 	} 
@@ -475,7 +480,7 @@ class SaveMenu : LoadSaveMenu
 		if (mkey == MKEY_Enter)
 		{
 			String SavegameString = (Selected != 0)? manager.GetSavegame(Selected).SaveTitle : "";
-			mInput = TextEnterMenu.Open(self, SavegameString, -1, 1, fromcontroller);
+			mInput = TextEnterMenu.OpenTextEnter(self, ConFont, SavegameString, -1, fromcontroller);
 			mInput.ActivateMenu();
 			mEntering = true;
 		}

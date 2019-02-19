@@ -18,9 +18,13 @@ struct PatchInfo play version("2.5")
 	{
 		if (gipatch != null)
 		{
-			mPatch = TexMan.CheckForTexture(gipatch.fontname, TexMan.Type_MiscPatch, TexMan.TryAny|TexMan.Localize);
-			mColor = mPatch.isValid() ? Font.CR_UNTRANSLATED : Font.CR_UNDEFINED;
-			mFont = NULL;
+			mPatch = TexMan.CheckForTexture(gipatch.fontname, TexMan.Type_MiscPatch);
+			if (TexMan.OkForLocalization(mPatch))
+			{
+				mColor = mPatch.isValid() ? Font.CR_UNTRANSLATED : Font.CR_UNDEFINED;
+				mFont = NULL;
+			}
+			else mPatch.setInvalid();
 		}
 		if (!mPatch.isValid())
 		{
@@ -190,8 +194,7 @@ class StatusScreen abstract play version("2.5")
 
 		if (pinfo.mPatch.isValid())
 		{
-			let size = TexMan.GetScaledSize(pinfo.mPatch);
-			screen.DrawTexture(pinfo.mPatch, true, midx - size.X * CleanXfac/2, y, DTA_CleanNoMove, true);
+			screen.DrawTexture(pinfo.mPatch, true, midx, y, DTA_CleanNoMove, true, DTA_CenterXOffset, true);
 			return y + int(size.Y * CleanYfac);
 		}
 		else 
@@ -350,27 +353,12 @@ class StatusScreen abstract play version("2.5")
 	//
 	//====================================================================
 
-	void drawTime (int x, int y, int t, bool no_sucks=false)
+	void drawTimeFont (Font printFont, int x, int y, int t)
 	{
 		bool sucky;
 
 		if (t < 0)
 			return;
-
-		sucky = !no_sucks && t >= wbs.sucktime * 60 * 60 && wbs.sucktime > 0;
-
-		if (sucky)
-		{ // "sucks"
-			if (Sucks.isValid())
-			{
-				let size = TexMan.GetScaledSize(Sucks);
-				screen.DrawTexture (Sucks, true, x - size.X, y - size.Y - 2, DTA_Clean, true); 
-			}
-			else
-			{
-				screen.DrawText (BigFont, Font.CR_UNTRANSLATED, x  - BigFont.StringWidth("$TXT_IMSUCKS"), y - IntermissionFont.GetHeight() - 2,	"$TXT_IMSUCKS", DTA_Clean, true);
-			}
-		}
 
 		int hours = t / 3600;
 		t -= hours * 3600;
@@ -380,19 +368,24 @@ class StatusScreen abstract play version("2.5")
 
 		// Why were these offsets hard coded? Half the WADs with custom patches
 		// I tested screwed up miserably in this function!
-		int num_spacing = IntermissionFont.GetCharWidth("3");
-		int colon_spacing = IntermissionFont.GetCharWidth(":");
+		int num_spacing = printFont.GetCharWidth("3");
+		int colon_spacing = printFont.GetCharWidth(":");
 
-		x = drawNum (IntermissionFont, x, y, seconds, 2) - 1;
-		DrawCharPatch (IntermissionFont, ":", x -= colon_spacing, y);
-		x = drawNum (IntermissionFont, x, y, minutes, 2, hours!=0);
+		x = drawNum (printFont, x, y, seconds, 2) - 1;
+		DrawCharPatch (printFont, ":", x -= colon_spacing, y);
+		x = drawNum (printFont, x, y, minutes, 2, hours!=0);
 		if (hours)
 		{
-			DrawCharPatch (IntermissionFont, ":", x -= colon_spacing, y);
-			drawNum (IntermissionFont, x, y, hours, 2);
+			DrawCharPatch (printFont, ":", x -= colon_spacing, y);
+			drawNum (printFont, x, y, hours, 2);
 		}
 	}
 
+	void drawTime (int x, int y, int t, bool no_sucks=false)
+	{
+		drawTimeFont(IntermissionFont, x, y, t);
+	}
+		
 
 	//====================================================================
 	//
@@ -697,13 +690,13 @@ class StatusScreen abstract play version("2.5")
 		finished.Init(gameinfo.mStatscreenFinishedFont, gameinfo.mStatscreenFinishedPatch);
 		mapname.Init(gameinfo.mStatscreenMapNameFont);
 
-		Kills = TexMan.CheckForTexture("WIOSTK", TexMan.Type_MiscPatch, TexMan.TryAny|TexMan.Localize);			// "kills"
-		Secret = TexMan.CheckForTexture("WIOSTS", TexMan.Type_MiscPatch, TexMan.TryAny|TexMan.Localize);		// "scrt", not used
-		P_secret = TexMan.CheckForTexture("WISCRT2", TexMan.Type_MiscPatch, TexMan.TryAny|TexMan.Localize);		// "secret"
-		Items = TexMan.CheckForTexture("WIOSTI", TexMan.Type_MiscPatch, TexMan.TryAny|TexMan.Localize);			// "items"
-		Timepic = TexMan.CheckForTexture("WITIME", TexMan.Type_MiscPatch, TexMan.TryAny|TexMan.Localize);		// "time"
-		Sucks = TexMan.CheckForTexture("WISUCKS", TexMan.Type_MiscPatch, TexMan.TryAny|TexMan.Localize);		// "sucks"
-		Par = TexMan.CheckForTexture("WIPAR", TexMan.Type_MiscPatch, TexMan.TryAny|TexMan.Localize);			// "par"
+		Kills = TexMan.CheckForTexture("WIOSTK", TexMan.Type_MiscPatch);			// "kills"
+		Secret = TexMan.CheckForTexture("WIOSTS", TexMan.Type_MiscPatch);		// "scrt", not used
+		P_secret = TexMan.CheckForTexture("WISCRT2", TexMan.Type_MiscPatch);		// "secret"
+		Items = TexMan.CheckForTexture("WIOSTI", TexMan.Type_MiscPatch);			// "items"
+		Timepic = TexMan.CheckForTexture("WITIME", TexMan.Type_MiscPatch);		// "time"
+		Sucks = TexMan.CheckForTexture("WISUCKS", TexMan.Type_MiscPatch);		// "sucks"
+		Par = TexMan.CheckForTexture("WIPAR", TexMan.Type_MiscPatch);			// "par"
 
 		lnametexts[0] = wbstartstruct.thisname;		
 		lnametexts[1] = wbstartstruct.nextname;

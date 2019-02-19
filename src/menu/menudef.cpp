@@ -1121,7 +1121,7 @@ static void BuildEpisodeMenu()
 					if (AllEpisodes[i].mPicName.IsNotEmpty())
 					{
 						FTextureID tex = GetMenuTexture(AllEpisodes[i].mPicName);
-						it = CreateListMenuItemPatch(ld->mXpos, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, tex, NAME_Skillmenu, i);
+						it = CreateListMenuItemPatch(ld->mXpos, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, tex, NAME_Skillmenu, i, AllEpisodes[i].mEpisodeName, ld->mFont, ld->mFontColor);
 					}
 					else
 					{
@@ -1627,16 +1627,16 @@ void M_StartupSkillMenu(FGameStartup *gs)
 					pItemText = skill.MenuNamesForPlayerClass.CheckKey(gs->PlayerClass);
 				}
 
+				EColorRange color = (EColorRange)skill.GetTextColor();
+				if (color == CR_UNTRANSLATED) color = ld->mFontColor;
 				if (skill.PicName.Len() != 0 && pItemText == nullptr)
 				{
 					FTextureID tex = GetMenuTexture(skill.PicName);
-					li = CreateListMenuItemPatch(ld->mXpos, y, ld->mLinespacing, skill.Shortcut, tex, action, SkillIndices[i]);
+					li = CreateListMenuItemPatch(ld->mXpos, y, ld->mLinespacing, skill.Shortcut, tex, action, SkillIndices[i], skill.MenuName, ld->mFont, color);
 				}
 				else
 				{
-					EColorRange color = (EColorRange)skill.GetTextColor();
-					if (color == CR_UNTRANSLATED) color = ld->mFontColor;
-					li = CreateListMenuItemText(x, y, ld->mLinespacing, skill.Shortcut, 
+					li = CreateListMenuItemText(x, y, ld->mLinespacing, skill.Shortcut,
 									pItemText? *pItemText : skill.MenuName, ld->mFont, color,ld->mFontColor2, action, SkillIndices[i]);
 				}
 				ld->mItems.Push(li);

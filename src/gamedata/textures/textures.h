@@ -572,7 +572,8 @@ public:
 		TEXMAN_ReturnFirst = 4,
 		TEXMAN_AllowSkins = 8,
 		TEXMAN_ShortNameOnly = 16,
-		TEXMAN_DontCreate = 32
+		TEXMAN_DontCreate = 32,
+		TEXMAN_Localize = 64
 	};
 
 	enum

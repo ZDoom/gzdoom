@@ -8858,10 +8858,17 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 	CallingFunction = ctx.Function;
 	if (ArgList.Size() > 0)
 	{
+		if (argtypes.Size() == 0)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Too many arguments in call to %s", Function->SymbolName.GetChars());
+			delete this;
+			return nullptr;
+		}
+		
 		bool foundvarargs = false;
 		PType * type = nullptr;
 		int flag = 0;
-		if (argtypes.Last() != nullptr && ArgList.Size() + implicit > argtypes.Size())
+		if (argtypes.Size() > 0 && argtypes.Last() != nullptr && ArgList.Size() + implicit > argtypes.Size())
 		{
 			ScriptPosition.Message(MSG_ERROR, "Too many arguments in call to %s", Function->SymbolName.GetChars());
 			delete this;

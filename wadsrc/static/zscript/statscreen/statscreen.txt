@@ -14,15 +14,15 @@ struct PatchInfo play version("2.5")
 	TextureID mPatch;
 	int mColor;
 
-	void Init(GIFont gifont)
+	void Init(GIFont gifont, GIFont gipatch = null)
 	{
-		if (gifont.color == 'Null')
+		if (gipatch != null)
 		{
-			mPatch = TexMan.CheckForTexture(gifont.fontname, TexMan.Type_MiscPatch);
+			mPatch = TexMan.CheckForTexture(gipatch.fontname, TexMan.Type_MiscPatch, TexMan.TryAny|TexMan.Localize);
 			mColor = mPatch.isValid() ? Font.CR_UNTRANSLATED : Font.CR_UNDEFINED;
 			mFont = NULL;
 		}
-		else
+		if (!mPatch.isValid())
 		{
 			mFont = Font.GetFont(gifont.fontname);
 			mColor = Font.FindFontColor(gifont.color);
@@ -368,7 +368,7 @@ class StatusScreen abstract play version("2.5")
 			}
 			else
 			{
-				screen.DrawText (BigFont, Font.CR_UNTRANSLATED, x  - BigFont.StringWidth("SUCKS"), y - IntermissionFont.GetHeight() - 2,	"SUCKS", DTA_Clean, true);
+				screen.DrawText (BigFont, Font.CR_UNTRANSLATED, x  - BigFont.StringWidth("$TXT_IMSUCKS"), y - IntermissionFont.GetHeight() - 2,	"$TXT_IMSUCKS", DTA_Clean, true);
 			}
 		}
 
@@ -693,17 +693,17 @@ class StatusScreen abstract play version("2.5")
 		me = wbs.pnum;
 		for (int i = 0; i < MAXPLAYERS; i++) Plrs[i] = wbs.plyr[i];
 		
-		entering.Init(gameinfo.mStatscreenEnteringFont);
-		finished.Init(gameinfo.mStatscreenFinishedFont);
+		entering.Init(gameinfo.mStatscreenEnteringFont, gameinfo.mStatscreenEnteringPatch);
+		finished.Init(gameinfo.mStatscreenFinishedFont, gameinfo.mStatscreenFinishedPatch);
 		mapname.Init(gameinfo.mStatscreenMapNameFont);
 
-		Kills = TexMan.CheckForTexture("WIOSTK", TexMan.Type_MiscPatch);		// "kills"
-		Secret = TexMan.CheckForTexture("WIOSTS", TexMan.Type_MiscPatch);		// "scrt"
-		P_secret = TexMan.CheckForTexture("WISCRT2", TexMan.Type_MiscPatch);	// "secret"
-		Items = TexMan.CheckForTexture("WIOSTI", TexMan.Type_MiscPatch);		// "items"
-		Timepic = TexMan.CheckForTexture("WITIME", TexMan.Type_MiscPatch);		// "time"
-		Sucks = TexMan.CheckForTexture("WISUCKS", TexMan.Type_MiscPatch);		// "sucks"
-		Par = TexMan.CheckForTexture("WIPAR", TexMan.Type_MiscPatch);			// "par"
+		Kills = TexMan.CheckForTexture("WIOSTK", TexMan.Type_MiscPatch, TexMan.TryAny|TexMan.Localize);			// "kills"
+		Secret = TexMan.CheckForTexture("WIOSTS", TexMan.Type_MiscPatch, TexMan.TryAny|TexMan.Localize);		// "scrt", not used
+		P_secret = TexMan.CheckForTexture("WISCRT2", TexMan.Type_MiscPatch, TexMan.TryAny|TexMan.Localize);		// "secret"
+		Items = TexMan.CheckForTexture("WIOSTI", TexMan.Type_MiscPatch, TexMan.TryAny|TexMan.Localize);			// "items"
+		Timepic = TexMan.CheckForTexture("WITIME", TexMan.Type_MiscPatch, TexMan.TryAny|TexMan.Localize);		// "time"
+		Sucks = TexMan.CheckForTexture("WISUCKS", TexMan.Type_MiscPatch, TexMan.TryAny|TexMan.Localize);		// "sucks"
+		Par = TexMan.CheckForTexture("WIPAR", TexMan.Type_MiscPatch, TexMan.TryAny|TexMan.Localize);			// "par"
 
 		lnametexts[0] = wbstartstruct.thisname;		
 		lnametexts[1] = wbstartstruct.nextname;

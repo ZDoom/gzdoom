@@ -11,11 +11,17 @@
 DEFAULTLISTMENU
 {
 	Font "BigFont", "Untranslated"
+	IfGame(Doom)
+	{
+		Selector "M_SKULL1", -32, -5
+		Linespacing 16
+		Font "BigUpper", "Red"
+	}
 	IfGame(Doom, Chex)
 	{
 		Selector "M_SKULL1", -32, -5
 		Linespacing 16
-		Font "BigFont", "Red"
+		Font "BigFont", "Green"
 	}
 	IfGame(Strife)
 	{
@@ -68,24 +74,24 @@ LISTMENU "MainMenu"
 
 	IfGame(Doom, Strife, Chex)
 	{
-		PatchItem "M_NGAME", "n", "PlayerclassMenu"
+		PatchItem "M_NGAME", "n", "PlayerclassMenu", 0, "$MNU_NEWGAME"
 		ifOption(SwapMenu)
 		{
-			PatchItem "M_LOADG", "l", "LoadGameMenu"
-			PatchItem "M_SAVEG", "s", "SaveGameMenu"
-			PatchItem "M_OPTION","o", "OptionsMenu"
+			PatchItem "M_LOADG", "l", "LoadGameMenu", 0, "$MNU_LOADGAME"
+			PatchItem "M_SAVEG", "s", "SaveGameMenu",0, "$MNU_SAVEGAME"
+			PatchItem "M_OPTION","o", "OptionsMenu", 0, "$MNU_OPTIONS"
 		}
 		else
 		{
-			PatchItem "M_OPTION","o", "OptionsMenu"
-			PatchItem "M_LOADG", "l", "LoadGameMenu"
-			PatchItem "M_SAVEG", "s", "SaveGameMenu"
+			PatchItem "M_OPTION","o", "OptionsMenu", 0, "$MNU_OPTIONS"
+			PatchItem "M_LOADG", "l", "LoadGameMenu", 0, "$MNU_LOADGAME"
+			PatchItem "M_SAVEG", "s", "SaveGameMenu", 0, "$MNU_SAVEGAME"
 		}
 		ifOption(ReadThis)
 		{
-			PatchItem "M_RDTHIS","r", "ReadThisMenu"
+			PatchItem "M_RDTHIS","r", "ReadThisMenu", 0, "$MNU_INFO"
 		}
-		PatchItem "M_QUITG", "q", "QuitMenu"
+		PatchItem "M_QUITG", "q", "QuitMenu", 0, "$MNU_QUITGAME"
 	}
 
 	IfGame(Heretic, Hexen)

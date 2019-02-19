@@ -841,8 +841,9 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 		}
 	}
 
-	// Ignore the (C)WILVxx lumps from the original Doom IWADs so that the name can be localized properly, if the retrieved text does not come from the default table.
-	// This is only active for those IWADS where the style of these graphics matches the provided BIGFONT for the respective game.
+	// This cannot use any common localization logic because it may not replace user content at all.
+	// Unlike the menus, replacements here do not merely change the style but also the content.
+	// On the other hand, the IWAD lumps may always be replaced with text, because they are the same style as the BigFont.
 	if (gameinfo.flags & GI_IGNORETITLEPATCHES)
 	{
 		FTextureID *texids[] = { &wminfo.LName0, &wminfo.LName1 };

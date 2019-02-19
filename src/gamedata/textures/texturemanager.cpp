@@ -303,6 +303,13 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, CheckForTexture, CheckForTexture)
 	ACTION_RETURN_INT(CheckForTexture(name, type, flags));
 }
 
+DEFINE_ACTION_FUNCTION(_TexMan, OkForLocalization)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(name);
+	ACTION_RETURN_INT(true);		// work for later. We need the definition to implement the language support
+}
+
 //==========================================================================
 //
 // FTextureManager :: ListTextures

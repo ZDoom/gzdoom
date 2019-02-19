@@ -1265,12 +1265,13 @@ DMenuItemBase * CreateOptionMenuItemCommand(const char *label, FName cmd, bool c
 	return (DMenuItemBase*)p;
 }
 
-DMenuItemBase * CreateListMenuItemPatch(double x, double y, int height, int hotkey, FTextureID tex, FName command, int param)
+DMenuItemBase * CreateListMenuItemPatch(double x, double y, int height, int hotkey, FTextureID tex, FName command, int param, const char *label, FFont *font, int color)
 {
 	auto c = PClass::FindClass("ListMenuItemPatchItem");
 	auto p = c->CreateNew();
 	FString keystr = FString(char(hotkey));
-	VMValue params[] = { p, x, y, height, tex.GetIndex(), &keystr, command.GetIndex(), param };
+	FString labelstr = label;
+	VMValue params[] = { p, x, y, height, tex.GetIndex(), &keystr, command.GetIndex(), param, &labelstr, font, color };
 	auto f = dyn_cast<PFunction>(c->FindSymbol("InitDirect", false));
 	VMCall(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenuItemBase*)p;

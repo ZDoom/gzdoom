@@ -137,17 +137,48 @@ class DoomStatusScreen : StatusScreen
 		int lh = IntermissionFont.GetHeight() * 3 / 2;
 
 		drawLF();
-	
-		screen.DrawTexture (Kills, true, SP_STATSX, SP_STATSY, DTA_Clean, true);
+		
+		// Fixme: This should try to retrieve the color from the intermission font and use the best approximation here
+		let tcolor = Font.CR_RED;
+
+		if (Kills.isValid())
+		{
+			screen.DrawTexture (Kills, true, SP_STATSX, SP_STATSY, DTA_Clean, true);
+		}
+		else
+		{
+			screen.DrawText (BigFont, tcolor, SP_STATSX, SP_STATSY, "$TXT_IMKILLS", DTA_Clean, true);
+		}
 		drawPercent (IntermissionFont, 320 - SP_STATSX, SP_STATSY, cnt_kills[0], wbs.maxkills);
 
-		screen.DrawTexture (Items, true, SP_STATSX, SP_STATSY+lh, DTA_Clean, true);
+		if (Items.isValid())
+		{
+			screen.DrawTexture (Items, true, SP_STATSX, SP_STATSY+lh, DTA_Clean, true);
+		}
+		else
+		{
+			screen.DrawText (BigFont, tcolor, SP_STATSX, SP_STATSY+lh, "$TXT_IMITEMS", DTA_Clean, true);
+		}
 		drawPercent (IntermissionFont, 320 - SP_STATSX, SP_STATSY+lh, cnt_items[0], wbs.maxitems);
 
-		screen.DrawTexture (P_secret, true, SP_STATSX, SP_STATSY+2*lh, DTA_Clean, true);
+		if (P_secret.IsValid())
+		{
+			screen.DrawTexture (P_secret, true, SP_STATSX, SP_STATSY+2*lh, DTA_Clean, true);
+		}
+		else
+		{
+			screen.DrawText (BigFont, tcolor, SP_STATSX, SP_STATSY+2*lh, "$TXT_IMSECRETS", DTA_Clean, true);
+		}
 		drawPercent (IntermissionFont, 320 - SP_STATSX, SP_STATSY+2*lh, cnt_secret[0], wbs.maxsecret);
 
-		screen.DrawTexture (Timepic, true, SP_TIMEX, SP_TIMEY, DTA_Clean, true);
+		if (Timepic.IsValid())
+		{
+			screen.DrawTexture (Timepic, true, SP_TIMEX, SP_TIMEY, DTA_Clean, true);
+		}
+		else
+		{
+			screen.DrawText (BigFont, tcolor, SP_TIMEX, SP_TIMEY, "$TXT_IMTIME", DTA_Clean, true);
+		}
 		drawTime (160 - SP_TIMEX, SP_TIMEY, cnt_time);
 		if (wi_showtotaltime)
 		{
@@ -156,7 +187,14 @@ class DoomStatusScreen : StatusScreen
 
 		if (wbs.partime)
 		{
-			screen.DrawTexture (Par, true, 160 + SP_TIMEX, SP_TIMEY, DTA_Clean, true);
+			if (Par.IsValid())
+			{
+				screen.DrawTexture (Par, true, 160 + SP_TIMEX, SP_TIMEY, DTA_Clean, true);
+			}
+			else
+			{
+				screen.DrawText (BigFont, tcolor, SP_TIMEX, SP_TIMEY, "$TXT_IMPAR", DTA_Clean, true);
+			}
 			drawTime (320 - SP_TIMEX, SP_TIMEY, cnt_par);
 		}
 	}
@@ -171,9 +209,9 @@ class RavenStatusScreen : DoomStatusScreen
 
 		drawLF();
 	
-		screen.DrawText (BigFont, Font.CR_UNTRANSLATED, 50, 65, Stringtable.Localize("$TXT_IMKILLS"), DTA_Clean, true, DTA_Shadow, true);
-		screen.DrawText (BigFont, Font.CR_UNTRANSLATED, 50, 90, Stringtable.Localize("$TXT_IMITEMS"), DTA_Clean, true, DTA_Shadow, true);
-		screen.DrawText (BigFont, Font.CR_UNTRANSLATED, 50, 115, Stringtable.Localize("$TXT_IMSECRETS"), DTA_Clean, true, DTA_Shadow, true);
+		screen.DrawText (BigFont, Font.CR_UNTRANSLATED, 50, 65, "$TXT_IMKILLS", DTA_Clean, true, DTA_Shadow, true);
+		screen.DrawText (BigFont, Font.CR_UNTRANSLATED, 50, 90, "$TXT_IMITEMS", DTA_Clean, true, DTA_Shadow, true);
+		screen.DrawText (BigFont, Font.CR_UNTRANSLATED, 50, 115, "$TXT_IMSECRETS", DTA_Clean, true, DTA_Shadow, true);
 
 		int countpos = gameinfo.gametype==GAME_Strife? 285:270;
 		if (sp_state >= 2)
@@ -190,7 +228,7 @@ class RavenStatusScreen : DoomStatusScreen
 		}
 		if (sp_state >= 8)
 		{
-			screen.DrawText (BigFont, Font.CR_UNTRANSLATED, 85, 160, Stringtable.Localize("$TXT_IMTIME"), DTA_Clean, true, DTA_Shadow, true);
+			screen.DrawText (BigFont, Font.CR_UNTRANSLATED, 85, 160, "$TXT_IMTIME", DTA_Clean, true, DTA_Shadow, true);
 			drawTime (249, 160, cnt_time);
 			if (wi_showtotaltime)
 			{

@@ -38,6 +38,7 @@
 #include "doomstat.h"
 #include "w_wad.h"
 #include "templates.h"
+#include "i_system.h"
 
 #include "r_data/r_translate.h"
 #include "r_data/sprites.h"
@@ -396,7 +397,7 @@ FTextureID FTextureManager::GetTextureID (const char *name, ETextureType usetype
 FTexture *FTextureManager::FindTexture(const char *texname, ETextureType usetype, BITFIELD flags)
 {
 	FTextureID texnum = CheckForTexture (texname, usetype, flags);
-	return !texnum.isValid()? NULL : Textures[texnum.GetIndex()].Texture;
+	return GetTexture(texnum.GetIndex());
 }
 
 //==========================================================================
@@ -1060,8 +1061,8 @@ void FTextureManager::AddLocalizedVariants()
 							if (lang.Len() == 2 || lang.Len() == 3)
 							{
 								uint32_t langid = MAKE_ID(lang[0], lang[1], lang[2], 0);
-								uint64_t comboid = (uint64_t(langid) << 32) | tex.GetIndex();
-								LocalizedTextures.Insert(comboid, GetTexture(origTex));
+								uint64_t comboid = (uint64_t(langid) << 32) | origTex.GetIndex();
+								LocalizedTextures.Insert(comboid, tex.GetIndex());
 								Textures[origTex.GetIndex()].HasLocalization = true;
 							}
 							else
@@ -1226,12 +1227,31 @@ void FTextureManager::InitPalettedVersions()
 //
 //==========================================================================
 
-FTextureID FTextureManager::PalCheck(FTextureID tex)
+int FTextureManager::PalCheck(int tex)
 {
 	// In any true color mode this shouldn't do anything.
 	if (vid_nopalsubstitutions || V_IsTrueColor()) return tex;
-	auto ftex = GetTexture(tex);
-	if (ftex != nullptr && ftex->PalVersion != nullptr) return ftex->PalVersion->id;
+	auto ftex = Textures[tex].Texture;
+	if (ftex != nullptr && ftex->PalVersion != nullptr) return ftex->PalVersion->id.GetIndex();
+	return tex;
+}
+
+//==========================================================================
+//
+// FTextureManager :: PalCheck
+//
+//==========================================================================
+
+int FTextureManager::ResolveLocalizedTexture(int tex)
+{
+	for(int i = 0; i < 4; i++)
+	{
+		uint32_t lang = LanguageIDs[i];
+		uint64_t index = (uint64_t(lang) << 32) + tex;
+		if (auto pTex = LocalizedTextures.CheckKey(index)) return *pTex;
+		index = (uint64_t(lang & MAKE_ID(255, 255, 0, 0)) << 32) + tex;
+		if (auto pTex = LocalizedTextures.CheckKey(index)) return *pTex;
+	}
 	return tex;
 }
 

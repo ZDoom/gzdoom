@@ -1044,21 +1044,30 @@ void FTextureManager::AddLocalizedVariants()
 				FTextureID tex = CheckForTexture(entry.name, ETextureType::MiscPatch);
 				if (tex.isValid())
 				{
-					tokens[1].ToLower();
-					auto langids = tokens[1].Split("-", FString::TOK_SKIPEMPTY);
-					auto lang = langids.Last();
-					for (auto &lang : langids)
+					FTexture *otex = GetTexture(origTex);
+					FTexture *ntex = GetTexture(tex);
+					if (otex->GetDisplayWidth() != ntex->GetDisplayWidth() || otex->GetDisplayHeight() != ntex->GetDisplayHeight())
 					{
-						if (lang.Len() == 2 || lang.Len() == 3)
+						Printf("Localized texture %s must be the same size as the one it replaces\n", entry.name);
+					}
+					else
+					{
+						tokens[1].ToLower();
+						auto langids = tokens[1].Split("-", FString::TOK_SKIPEMPTY);
+						auto lang = langids.Last();
+						for (auto &lang : langids)
 						{
-							uint32_t langid = MAKE_ID(lang[0], lang[1], lang[2], 0);
-							uint64_t comboid = (uint64_t(langid) << 32) | tex.GetIndex();
-							LocalizedTextures.Insert(comboid, GetTexture(origTex));
-							Textures[origTex.GetIndex()].HasLocalization = true;
-						}
-						else
-						{
-							Printf("Invalid language ID in texture %s\n", entry.name);
+							if (lang.Len() == 2 || lang.Len() == 3)
+							{
+								uint32_t langid = MAKE_ID(lang[0], lang[1], lang[2], 0);
+								uint64_t comboid = (uint64_t(langid) << 32) | tex.GetIndex();
+								LocalizedTextures.Insert(comboid, GetTexture(origTex));
+								Textures[origTex.GetIndex()].HasLocalization = true;
+							}
+							else
+							{
+								Printf("Invalid language ID in texture %s\n", entry.name);
+							}
 						}
 					}
 				}

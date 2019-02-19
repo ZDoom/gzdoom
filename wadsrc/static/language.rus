@@ -1059,9 +1059,6 @@ TAG_10GOLD = "10 золотых";
 TAG_25GOLD = "25 золотых";
 TAG_50GOLD = "50 золотых";
 TAG_300GOLD = "300 золотых";
-TAG_QUEST4 = "задание4";
-TAG_QUEST5 = "задание5";
-TAG_QUEST6 = "задание4";
 
 // Item tags: Strife NPCs
 TAG_ACOLYTE = "Служитель";
@@ -1871,8 +1868,6 @@ DSPLYMNU_SHOWENDOOM				= "Показать экран ENDOOM";
 DSPLYMNU_BLOODFADE				= "Интенсивность вспышки при ранении";
 DSPLYMNU_PICKUPFADE				= "Интенсивность вспышки при подборе";
 DSPLYMNU_WATERFADE				= "Интенсивность эффекта под водой";
-DSPLYMNU_PALLETEHACK			= "DirectDraw хак палитры"; // Не используется
-DSPLYMNU_ATTACHEDSURFACES		= "Использовать прикрепленные поверхности"; // Не используется
 DSPLYMNU_SKYMODE				= "Режим отрисовки неба";
 DSPLYMNU_LINEARSKY				= "Линейной небо";
 DSPLYMNU_GZDFULLBRIGHT			= "Полная яркость замещает цвет сектора";

@@ -1039,9 +1039,6 @@ TAG_10GOLD = "10 gold";
 TAG_25GOLD = "25 gold";
 TAG_50GOLD = "50 gold";
 TAG_300GOLD = "300 gold";
-TAG_QUEST4 = "quest4";
-TAG_QUEST5 = "quest5";
-TAG_QUEST6 = "quest4";
 
 // Item tags: Strife NPCs
 TAG_ACOLYTE = "ACOLYTE";
@@ -1882,8 +1879,6 @@ DSPLYMNU_SHOWENDOOM				= "Show ENDOOM screen";
 DSPLYMNU_BLOODFADE				= "Blood Flash Intensity";
 DSPLYMNU_PICKUPFADE				= "Pickup Flash Intensity";
 DSPLYMNU_WATERFADE				= "Underwater Blend Intensity";
-DSPLYMNU_PALLETEHACK			= "DirectDraw palette hack"; // Not used
-DSPLYMNU_ATTACHEDSURFACES		= "Use attached surfaces"; // Not used
 DSPLYMNU_SKYMODE				= "Sky render mode";
 DSPLYMNU_LINEARSKY				= "Linear skies";
 DSPLYMNU_GZDFULLBRIGHT			= "Fullbright overrides sector color";

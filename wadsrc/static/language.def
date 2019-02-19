@@ -89,3 +89,7 @@ bgflat30 = "RROCK17";
 bgflat15 = "RROCK13";
 bgflat31 = "RROCK19";
 bgcastcall = "BOSSBACK";
+
+TAG_QUEST4 = "quest4";
+TAG_QUEST5 = "quest5";
+TAG_QUEST6 = "quest4";

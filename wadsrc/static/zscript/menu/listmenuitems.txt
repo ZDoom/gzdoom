@@ -67,12 +67,19 @@ class ListMenuItemStaticPatch : ListMenuItem
 {
 	TextureID mTexture;
 	bool mCentered;
+	String mSubstitute;
+	Font mFont;
+	int mColor;
 
-	void Init(double x, double y, TextureID patch, bool centered = false)
+	void Init(ListMenuDescriptor desc, double x, double y, TextureID patch, bool centered = false, const char *substitute = "")
 	{
 		Super.Init(x, y);
 		mTexture = patch;
 		mCentered = centered;
+		mSubstitute = substitute;
+		mFont = desc.mFont;
+		mColor = desc.mFontColor;
+
 	}
 	
 	override void Drawer(bool selected)
@@ -86,14 +93,30 @@ class ListMenuItemStaticPatch : ListMenuItem
 		Vector2 vec = TexMan.GetScaledSize(mTexture);
 		if (mYpos >= 0)
 		{
-			if (mCentered) x -= vec.X / 2;
-			screen.DrawTexture (mTexture, true, x, mYpos, DTA_Clean, true);
+			if (mSubstitute == "" || TexMan.OkForLocalization(mTexture))
+			{
+				if (mCentered) x -= vec.X / 2;
+				screen.DrawTexture (mTexture, true, x, mYpos, DTA_Clean, true);
+			}
+			else
+			{
+				if (mCentered) x -= mFont.StringWidth(mSubstitute)/2;
+				screen.DrawText(mFont, mColor, x, mYpos, mSubstitute, DTA_Clean, true);
+			}
 		}
 		else
 		{
 			x = (mXpos - 160) * CleanXfac + (Screen.GetWidth()>>1);
-			if (mCentered) x -= (vec.X * CleanXfac)/2;
-			screen.DrawTexture (mTexture, true, x, -mYpos*CleanYfac, DTA_CleanNoMove, true);
+			if (mSubstitute == "" || TexMan.OkForLocalization(mTexture))
+			{
+				if (mCentered) x -= (vec.X * CleanXfac)/2;
+				screen.DrawTexture (mTexture, true, x, -mYpos*CleanYfac, DTA_CleanNoMove, true);
+			}
+			else
+			{
+				if (mCentered) x -= (mFont.StringWidth(mSubstitute) * CleanXfac)/2;
+				screen.DrawText(mFont, mColor, x, mYpos, mSubstitute, DTA_CleanNoMove, true);
+			}
 		}
 	}
 }

@@ -175,7 +175,7 @@ ListMenu "EpisodeMenu"
 	IfGame(Doom, Chex)
 	{
 		Position 48, 63
-		StaticPatch 54, 38, "M_EPISOD"
+		StaticPatch 54, 38, "M_EPISOD", 0 , "$MNU_EPISODE"
 	}
 	IfGame(Strife)
 	{
@@ -201,15 +201,15 @@ ListMenu "SkillMenu"
 
 	IfGame(Doom, Chex)
 	{
-		StaticPatch 96, 14, "M_NEWG"
+		StaticPatch 96, 14, "M_NEWG", 0, "$MNU_NEWGANE"
 	}
 	IfGame(Strife)
 	{
-		StaticPatch 96, 14, "M_NGAME"
+		StaticPatch 96, 14, "M_NGAME", 0, "$MNU_NEWGANE"
 	}
 	IfGame(Doom, Strife, Chex)
 	{
-		StaticPatch 54, 38, "M_SKILL"
+		StaticPatch 54, 38, "M_SKILL", 0, "$MNU_CHOOSESKILL"
 		Position 48, 63
 	}
 	IfGame (Heretic)
@@ -253,14 +253,7 @@ ListMenu "LoadGameMenu"
 	{
 		NetgameMessage "$CLOADNET"
 	}
-	IfGame(Doom, Strife, Chex)
-	{
-		StaticPatchCentered 160, -20, "M_LOADG"
-	}
-	IfGame(Heretic, Hexen)
-	{
-		StaticTextCentered 160, -10, "$MNU_LOADGAME"
-	}
+	StaticTextCentered 160, -10, "$MNU_LOADGAME"
 	Position 80,54
 	Class "LoadMenu"	// uses its own implementation
 }
@@ -273,14 +266,7 @@ ListMenu "LoadGameMenu"
 
 ListMenu "SaveGameMenu"
 {
-	IfGame(Doom, Strife, Chex)
-	{
-		StaticPatchCentered 160, -20, "M_SAVEG"
-	}
-	IfGame(Heretic, Hexen)
-	{
-		StaticTextCentered 160, -10, "$MNU_SAVEGAME"
-	}
+	StaticTextCentered 160, -10, "$MNU_SAVEGAME"
 	Position 80,54
 	Class "SaveMenu"	// uses its own implementation
 }

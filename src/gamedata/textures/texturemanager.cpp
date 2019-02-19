@@ -1014,10 +1014,77 @@ void FTextureManager::SortTexturesByType(int start, int end)
 
 //==========================================================================
 //
+// FTextureManager :: AddLocalizedVariants
+//
+//==========================================================================
+
+void FTextureManager::AddLocalizedVariants()
+{
+	TArray<FolderEntry> content;
+	Wads.GetLumpsInFolder("localized/textures/", content, false);
+	for (auto &entry : content)
+	{
+		FString name = entry.name;
+		auto tokens = name.Split(".", FString::TOK_SKIPEMPTY);
+		if (tokens.Size() == 2)
+		{
+			auto ext = tokens[1];
+			// Do not interpret common extensions for images as language IDs.
+			if (ext.CompareNoCase("png") == 0 || ext.CompareNoCase("jpg") == 0 || ext.CompareNoCase("gfx") == 0 || ext.CompareNoCase("tga") == 0 || ext.CompareNoCase("lmp") == 0)
+			{
+				Printf("%s contains no language IDs and will be ignored\n", entry.name);
+				
+			}
+		}
+		else if (tokens.Size() >= 2)
+		{
+			FTextureID origTex = CheckForTexture(tokens[0], ETextureType::MiscPatch);
+			if (origTex.isValid())
+			{
+				FTextureID tex = CheckForTexture(entry.name, ETextureType::MiscPatch);
+				if (tex.isValid())
+				{
+					tokens[1].ToLower();
+					auto langids = tokens[1].Split("-", FString::TOK_SKIPEMPTY);
+					auto lang = langids.Last();
+					for (auto &lang : langids)
+					{
+						if (lang.Len() == 2 || lang.Len() == 3)
+						{
+							uint32_t langid = MAKE_ID(lang[0], lang[1], lang[2], 0);
+							uint64_t comboid = (uint64_t(langid) << 32) | tex.GetIndex();
+							LocalizedTextures.Insert(comboid, GetTexture(origTex));
+							Textures[origTex.GetIndex()].HasLocalization = true;
+						}
+						else
+						{
+							Printf("Invalid language ID in texture %s\n", entry.name);
+						}
+					}
+				}
+				else
+				{
+					Printf("%s is not a texture\n", entry.name);
+				}
+			}
+			else
+			{
+				Printf("Unknown texture %s for localized variant %s\n", tokens[0].GetChars(), entry.name);
+			}
+		}
+		else
+		{
+			Printf("%s contains no language IDs and will be ignored\n", entry.name);
+		}
+
+	}
+}
+
+//==========================================================================
+//
 // FTextureManager :: Init
 //
 //==========================================================================
-FTexture *GetBackdropTexture();
 FTexture *CreateShaderTexture(bool, bool);
 
 void FTextureManager::Init()

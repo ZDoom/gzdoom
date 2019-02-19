@@ -597,6 +597,7 @@ public:
 	void ParseTextureDef(int remapLump, FMultipatchTextureBuilder &build);
 	void SortTexturesByType(int start, int end);
 	bool AreTexturesCompatible (FTextureID picnum1, FTextureID picnum2);
+	void AddLocalizedVariants();
 
 	FTextureID CreateTexture (int lumpnum, ETextureType usetype=ETextureType::Any);	// Also calls AddTexture
 	FTextureID AddTexture (FTexture *texture);
@@ -662,9 +663,11 @@ private:
 	{
 		FTexture *Texture;
 		int HashNext;
+		bool HasLocalization;
 	};
 	enum { HASH_END = -1, HASH_SIZE = 1027 };
 	TArray<TextureHash> Textures;
+	TMap<uint64_t, FTexture*> LocalizedTextures;
 	TArray<int> Translation;
 	int HashFirst[HASH_SIZE];
 	FTextureID DefaultTexture;

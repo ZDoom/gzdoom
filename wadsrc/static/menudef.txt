@@ -17,7 +17,7 @@ DEFAULTLISTMENU
 		Linespacing 16
 		Font "BigUpper", "Red"
 	}
-	IfGame(Doom, Chex)
+	IfGame(Chex)
 	{
 		Selector "M_SKULL1", -32, -5
 		Linespacing 16

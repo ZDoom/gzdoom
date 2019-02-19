@@ -370,7 +370,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 			if (cls != nullptr && cls->IsDescendantOf("ListMenuItem"))
 			{
 				auto func = dyn_cast<PFunction>(cls->FindSymbol("Init", true));
-				if (func != nullptr && !(func->Variants[0].Flags & (VARF_Protected | VARF_Private)))	// skip internal classes which have a protexted init method.
+				if (func != nullptr && !(func->Variants[0].Flags & (VARF_Protected | VARF_Private)))	// skip internal classes which have a protected init method.
 				{
 					auto &args = func->Variants[0].Proto->ArgumentTypes;
 					TArray<VMValue> params;

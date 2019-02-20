@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vk_objects.h"
+#include "zstring.h"
 #include <cassert>
 
 template<typename T, int maxsize>
@@ -93,6 +94,21 @@ public:
 private:
 	VkBufferCreateInfo bufferInfo = {};
 	VmaAllocationCreateInfo allocInfo = {};
+};
+
+class ShaderBuilder
+{
+public:
+	ShaderBuilder();
+
+	void setVertexShader(const FString &code);
+	void setFragmentShader(const FString &code);
+
+	std::unique_ptr<VulkanShader> create(VulkanDevice *device);
+
+private:
+	FString code;
+	int stage;
 };
 
 class ComputePipelineBuilder

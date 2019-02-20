@@ -895,6 +895,7 @@ set( FASTMATH_SOURCES
 	#Vulkan stuff must go into a separate list later because it needs to be disabled for some platforms
 	rendering/vulkan/system/vk_device.cpp
 	rendering/vulkan/system/vk_swapchain.cpp
+	rendering/vulkan/system/vk_builders.cpp
 	rendering/vulkan/system/vk_framebuffer.cpp
 	rendering/vulkan/textures/vk_samplers.cpp
 	rendering/vulkan/textures/vk_hwtexture.cpp

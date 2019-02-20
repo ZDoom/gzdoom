@@ -46,6 +46,7 @@
 #include "vm.h"
 #include "i_time.h"
 #include "menu/menu.h"
+#include "gstrings.h"
 
 const char *KeyNames[NUM_KEYS] =
 {
@@ -286,28 +287,33 @@ DEFINE_ACTION_FUNCTION(FKeyBindings, SetBind)
 //
 //=============================================================================
 
-void C_NameKeys (char *str, int first, int second)
+FString C_NameKeys (const int first, const int second)
 {
-	int c = 0;
+	FString keyNames;
 
-	*str = 0;
-	if (second == first) second = 0;
 	if (first)
 	{
-		c++;
-		strcpy (str, KeyName (first));
+		keyNames = KeyName (first);
+
+		if (second == first)
+		{
+			return keyNames;
+		}
+
 		if (second)
-			strcat (str, " or ");
+		{
+			keyNames += " ";
+			keyNames += GStrings ("CNTRLMNU_OR");
+			keyNames += " ";
+		}
 	}
 
 	if (second)
 	{
-		c++;
-		strcat (str, KeyName (second));
+		keyNames += KeyName (second);
 	}
 
-	if (!c)
-		*str = '\0';
+	return keyNames;
 }
 
 DEFINE_ACTION_FUNCTION(FKeyBindings, NameKeys)
@@ -315,9 +321,8 @@ DEFINE_ACTION_FUNCTION(FKeyBindings, NameKeys)
 	PARAM_PROLOGUE;
 	PARAM_INT(k1);
 	PARAM_INT(k2);
-	char buffer[120];
-	C_NameKeys(buffer, k1, k2);
-	ACTION_RETURN_STRING(buffer);
+	FString nameKeys = C_NameKeys (k1, k2);
+	ACTION_RETURN_STRING(nameKeys);
 }
 
 //=============================================================================

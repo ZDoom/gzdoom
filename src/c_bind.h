@@ -40,7 +40,7 @@ struct event_t;
 class FConfigFile;
 class FCommandLine;
 
-void C_NameKeys (char *str, int first, int second);
+FString C_NameKeys (int first, int second);
 
 class FKeyBindings
 {

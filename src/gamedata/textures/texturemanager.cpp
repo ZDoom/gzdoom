@@ -304,13 +304,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, CheckForTexture, CheckForTexture)
 	ACTION_RETURN_INT(CheckForTexture(name, type, flags));
 }
 
-DEFINE_ACTION_FUNCTION(_TexMan, OkForLocalization)
-{
-	PARAM_PROLOGUE;
-	PARAM_INT(name);
-	ACTION_RETURN_INT(true);		// work for later. We need the definition to implement the language support
-}
-
 //==========================================================================
 //
 // FTextureManager :: ListTextures
@@ -399,6 +392,35 @@ FTexture *FTextureManager::FindTexture(const char *texname, ETextureType usetype
 	FTextureID texnum = CheckForTexture (texname, usetype, flags);
 	return GetTexture(texnum.GetIndex());
 }
+
+//==========================================================================
+//
+// FTextureManager :: OkForLocalization
+//
+//==========================================================================
+CVAR(Int, cl_localizationmode,0, CVAR_ARCHIVE)
+
+bool FTextureManager::OkForLocalization(FTextureID texnum, const char *substitute)
+{
+	if (!texnum.isValid()) return false;
+	
+	// Todo: Some decisions must be made here whether this texture is ok to use with the current locale settings.
+	return !cl_localizationmode;
+}
+
+static int OkForLocalization(int index, const FString &substitute)
+{
+	return TexMan.OkForLocalization(FSetTextureID(index), substitute);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, OkForLocalization, OkForLocalization)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(name);
+	PARAM_STRING(subst)
+	ACTION_RETURN_INT(OkForLocalization(name, subst));
+}
+
 
 //==========================================================================
 //

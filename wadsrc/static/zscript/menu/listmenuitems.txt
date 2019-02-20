@@ -93,7 +93,7 @@ class ListMenuItemStaticPatch : ListMenuItem
 		Vector2 vec = TexMan.GetScaledSize(mTexture);
 		if (mYpos >= 0)
 		{
-			if (mSubstitute == "" || TexMan.OkForLocalization(mTexture))
+			if (mSubstitute == "" || TexMan.OkForLocalization(mTexture, mSubstitute))
 			{
 				if (mCentered) x -= vec.X / 2;
 				screen.DrawTexture (mTexture, true, x, mYpos, DTA_Clean, true);
@@ -107,7 +107,7 @@ class ListMenuItemStaticPatch : ListMenuItem
 		else
 		{
 			x = (mXpos - 160) * CleanXfac + (Screen.GetWidth()>>1);
-			if (mSubstitute == "" || TexMan.OkForLocalization(mTexture))
+			if (mSubstitute == "" || TexMan.OkForLocalization(mTexture, mSubstitute))
 			{
 				if (mCentered) x -= (vec.X * CleanXfac)/2;
 				screen.DrawTexture (mTexture, true, x, -mYpos*CleanYfac, DTA_CleanNoMove, true);
@@ -303,53 +303,29 @@ class ListMenuItemTextItem : ListMenuItemSelectable
 class ListMenuItemPatchItem : ListMenuItemSelectable
 {
 	TextureID mTexture;
-	String mSubstitute;
-	Font mFont;
-	int mColor;
-
-	void Init(ListMenuDescriptor desc, TextureID patch, String hotkey, Name child, int param = 0, String subst = "")
+	
+	void Init(ListMenuDescriptor desc, TextureID patch, String hotkey, Name child, int param = 0)
 	{
 		Super.Init(desc.mXpos, desc.mYpos, desc.mLinespacing, child, param);
 		mHotkey = hotkey.CharCodeAt(0);
 		mTexture = patch;
-		mSubstitute = subst;
-		mFont = desc.mFont;
-		mColor = desc.mFontColor;
 	}
 	
-	void InitDirect(double x, double y, int height, TextureID patch, String hotkey, Name child, int param = 0, String subst = "", Font fnt = null, int col = Font.CR_UNTRANSLATED)
+	void InitDirect(double x, double y, int height, TextureID patch, String hotkey, Name child, int param = 0)
 	{
 		Super.Init(x, y, height, child, param);
 		mHotkey = hotkey.CharCodeAt(0);
 		mTexture = patch;
-		mSubstitute = subst;
-		mFont = fnt;
-		mColor = col;
 	}
 	
 	override void Drawer(bool selected)
 	{
-		if (mSubstitute == "" || TexMan.OkForLocalization(mTexture))
-		{
-			screen.DrawTexture (mTexture, true, mXpos, mYpos, DTA_Clean, true);
-		}
-		else
-		{
-			screen.DrawText(mFont, mColor, mXpos, mYpos, mSubstitute, DTA_Clean, true);
-		}
-
+		screen.DrawTexture (mTexture, true, mXpos, mYpos, DTA_Clean, true);
 	}
 	
 	override int GetWidth()
 	{
-		if (mSubstitute == "" || TexMan.OkForLocalization(mTexture))
-		{
-			return TexMan.GetSize(mTexture);
-		}
-		else
-		{
-			return max(1, mFont.StringWidth(StringTable.Localize(mSubstitute)));
-		}
+		return TexMan.GetSize(mTexture);
 	}
 	
 }

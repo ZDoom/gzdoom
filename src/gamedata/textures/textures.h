@@ -562,6 +562,7 @@ public:
 	}
 	
 	FTexture *FindTexture(const char *texname, ETextureType usetype = ETextureType::MiscPatch, BITFIELD flags = TEXMAN_TryAny);
+	bool OkForLocalization(FTextureID texnum, const char *substitute);
 
 	void FlushAll();
 

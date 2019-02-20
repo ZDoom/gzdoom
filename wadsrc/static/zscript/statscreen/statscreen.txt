@@ -8,30 +8,17 @@ class InterBackground native play version("2.5")
 	native virtual void drawBackground(int CurState, bool drawsplat, bool snl_pointeron);
 }
 
+// This is obsolete. Hopefully this was never used...
 struct PatchInfo play version("2.5")
 {
 	Font mFont;
-	TextureID mPatch;
+	deprecated("3.8") TextureID mPatch;
 	int mColor;
 
-	void Init(GIFont gifont, GIFont gipatch = null)
+	void Init(GIFont gifont)
 	{
-		if (gipatch != null)
-		{
-			mPatch = TexMan.CheckForTexture(gipatch.fontname, TexMan.Type_MiscPatch);
-			if (TexMan.OkForLocalization(mPatch))
-			{
-				mColor = mPatch.isValid() ? Font.CR_UNTRANSLATED : Font.CR_UNDEFINED;
-				mFont = NULL;
-			}
-			else mPatch.setInvalid();
-		}
-		if (!mPatch.isValid())
-		{
-			mFont = Font.GetFont(gifont.fontname);
-			mColor = Font.FindFontColor(gifont.color);
-			mPatch.SetInvalid();
-		}
+		mFont = Font.GetFont(gifont.fontname);
+		mColor = Font.FindFontColor(gifont.color);
 		if (mFont == NULL)
 		{
 			mFont = BigFont;
@@ -115,6 +102,8 @@ class StatusScreen abstract play version("2.5")
 	TextureID 		timepic;
 	TextureID 		par;
 	TextureID 		sucks;
+	TextureID		finishedPatch;
+	TextureID		enteringPatch;
 
 	// [RH] Info to dynamically generate the level name graphics
 	String			lnametexts[2];
@@ -183,28 +172,43 @@ class StatusScreen abstract play version("2.5")
 
 	//====================================================================
 	//
-	// Draws a text, either as patch or as string from the string table
+	// Only kept so that mods that were accessing it continue to compile
 	//
 	//====================================================================
 
-	int DrawPatchText(int y, PatchInfo pinfo, String stringname)
+	deprecated("3.8") int DrawPatchText(int y, PatchInfo pinfo, String stringname)
 	{
 		String string = Stringtable.Localize(stringname);
 		int midx = screen.GetWidth() / 2;
 
-		if (pinfo.mPatch.isValid())
+		screen.DrawText(pinfo.mFont, pinfo.mColor, midx - pinfo.mFont.StringWidth(string) * CleanXfac/2, y, string, DTA_CleanNoMove, true);
+		return y + pinfo.mFont.GetHeight() * CleanYfac;
+	}
+
+	//====================================================================
+	//
+	// Draws a text, either as patch or as string from the string table
+	//
+	//====================================================================
+	
+	int DrawPatchOrText(int y, PatchInfo pinfo, TextureID patch, String stringname)
+	{
+		String string = Stringtable.Localize(stringname);
+		int midx = screen.GetWidth() / 2;
+		
+		if (TexMan.OkForLocalization(patch, stringname))
 		{
-			let size = TexMan.GetScaledSize(pinfo.mPatch);
-			screen.DrawTexture(pinfo.mPatch, true, midx - size.X * CleanXfac/2, y, DTA_CleanNoMove, true);
+			let size = TexMan.GetScaledSize(patch);
+			screen.DrawTexture(patch, true, midx - size.X * CleanXfac/2, y, DTA_CleanNoMove, true);
 			return y + int(size.Y * CleanYfac);
 		}
-		else 
+		else
 		{
 			screen.DrawText(pinfo.mFont, pinfo.mColor, midx - pinfo.mFont.StringWidth(string) * CleanXfac/2, y, string, DTA_CleanNoMove, true);
 			return y + pinfo.mFont.GetHeight() * CleanYfac;
 		}
 	}
-
+	
 
 	//====================================================================
 	//
@@ -215,7 +219,7 @@ class StatusScreen abstract play version("2.5")
 	//
 	//====================================================================
 
-	int drawLF ()
+	virtual int drawLF ()
 	{
 		int y = TITLEY * CleanYfac;
 
@@ -230,7 +234,7 @@ class StatusScreen abstract play version("2.5")
 		if (y < (statsy - finished.mFont.GetHeight()*3/4) * CleanYfac)
 		{
 			// don't draw 'finished' if the level name is too tall
-			y = DrawPatchText(y, finished, "$WI_FINISHED");
+			y = DrawPatchOrText(y, finished, finishedPatch, "$WI_FINISHED");
 		}
 		return y;
 	}
@@ -245,11 +249,11 @@ class StatusScreen abstract play version("2.5")
 	//
 	//====================================================================
 
-	void drawEL ()
+	virtual void drawEL ()
 	{
 		int y = TITLEY * CleanYfac;
 
-		y = DrawPatchText(y, entering, "$WI_ENTERING");
+		y = DrawPatchOrText(y, entering, enteringPatch, "$WI_ENTERING");
 		y += entering.mFont.GetHeight() * CleanYfac / 4;
 		DrawName(y, wbs.LName1, lnametexts[1]);
 	}
@@ -688,8 +692,8 @@ class StatusScreen abstract play version("2.5")
 		me = wbs.pnum;
 		for (int i = 0; i < MAXPLAYERS; i++) Plrs[i] = wbs.plyr[i];
 		
-		entering.Init(gameinfo.mStatscreenEnteringFont, gameinfo.mStatscreenEnteringPatch);
-		finished.Init(gameinfo.mStatscreenFinishedFont, gameinfo.mStatscreenFinishedPatch);
+		entering.Init(gameinfo.mStatscreenEnteringFont);
+		finished.Init(gameinfo.mStatscreenFinishedFont);
 		mapname.Init(gameinfo.mStatscreenMapNameFont);
 
 		Kills = TexMan.CheckForTexture("WIOSTK", TexMan.Type_MiscPatch);			// "kills"
@@ -699,6 +703,8 @@ class StatusScreen abstract play version("2.5")
 		Timepic = TexMan.CheckForTexture("WITIME", TexMan.Type_MiscPatch);		// "time"
 		Sucks = TexMan.CheckForTexture("WISUCKS", TexMan.Type_MiscPatch);		// "sucks"
 		Par = TexMan.CheckForTexture("WIPAR", TexMan.Type_MiscPatch);			// "par"
+		enteringPatch = TexMan.CheckForTexture("WIENTER", TexMan.Type_MiscPatch);	// "entering"
+		finishedPatch = TexMan.CheckForTexture("WIF", TexMan.Type_MiscPatch);			// "finished"
 
 		lnametexts[0] = wbstartstruct.thisname;		
 		lnametexts[1] = wbstartstruct.nextname;

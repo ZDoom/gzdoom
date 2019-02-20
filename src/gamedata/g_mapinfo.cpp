@@ -838,7 +838,7 @@ void FMapInfoParser::ParseCluster()
 			auto fn = Wads.GetWadName(fileno);
 			if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
 			{
-				FStringf key("TXT_%.5s_%s", fn, clusterinfo->ExitText);
+				FStringf key("TXT_%.5s_%s", fn, clusterinfo->ExitText.GetChars());
 				if (GStrings.exists(key))
 				{
 					clusterinfo->ExitText = key;

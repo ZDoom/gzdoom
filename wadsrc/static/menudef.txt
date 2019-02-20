@@ -11,27 +11,25 @@
 DEFAULTLISTMENU
 {
 	Font "BigFont", "Untranslated"
+	LineSpacing 20
 	IfGame(Doom)
 	{
 		Selector "M_SKULL1", -32, -5
-		Linespacing 16
 		Font "BigUpper", "Red"
+		LineSpacing 18
 	}
 	IfGame(Chex)
 	{
 		Selector "M_SKULL1", -32, -5
-		Linespacing 16
 		Font "BigFont", "Green"
 	}
 	IfGame(Strife)
 	{
 		Selector "M_CURS1", -28, -5
-		Linespacing 19
 	}
 	IfGame(Heretic, Hexen)
 	{
 		Selector "M_SLCTR1", -28, -1
-		Linespacing 20
 	}
 }
 
@@ -45,6 +43,7 @@ LISTMENU "MainMenu"
 {
 	IfGame(Doom, Chex)
 	{
+		LineSpacing 16	// This must account for some single-graphic replacements, so it cannot be widened
 		StaticPatch 94, 2, "M_DOOM"
 		Position 97, 72
 		IfOption(ReadThis)
@@ -74,24 +73,24 @@ LISTMENU "MainMenu"
 
 	IfGame(Doom, Strife, Chex)
 	{
-		PatchItem "M_NGAME", "n", "PlayerclassMenu", 0, "$MNU_NEWGAME"
+		PatchItem "M_NGAME", "n", "PlayerclassMenu"
 		ifOption(SwapMenu)
 		{
-			PatchItem "M_LOADG", "l", "LoadGameMenu", 0, "$MNU_LOADGAME"
-			PatchItem "M_SAVEG", "s", "SaveGameMenu",0, "$MNU_SAVEGAME"
-			PatchItem "M_OPTION","o", "OptionsMenu", 0, "$MNU_OPTIONS"
+			PatchItem "M_LOADG", "l", "LoadGameMenu", 0
+			PatchItem "M_SAVEG", "s", "SaveGameMenu",0
+			PatchItem "M_OPTION","o", "OptionsMenu", 0
 		}
 		else
 		{
-			PatchItem "M_OPTION","o", "OptionsMenu", 0, "$MNU_OPTIONS"
-			PatchItem "M_LOADG", "l", "LoadGameMenu", 0, "$MNU_LOADGAME"
-			PatchItem "M_SAVEG", "s", "SaveGameMenu", 0, "$MNU_SAVEGAME"
+			PatchItem "M_OPTION","o", "OptionsMenu", 0
+			PatchItem "M_LOADG", "l", "LoadGameMenu", 0
+			PatchItem "M_SAVEG", "s", "SaveGameMenu", 0
 		}
 		ifOption(ReadThis)
 		{
-			PatchItem "M_RDTHIS","r", "ReadThisMenu", 0, "$MNU_INFO"
+			PatchItem "M_RDTHIS","r", "ReadThisMenu", 0
 		}
-		PatchItem "M_QUITG", "q", "QuitMenu", 0, "$MNU_QUITGAME"
+		PatchItem "M_QUITG", "q", "QuitMenu", 0
 	}
 
 	IfGame(Heretic, Hexen)
@@ -102,6 +101,39 @@ LISTMENU "MainMenu"
 		TextItem "$MNU_INFO", "i", "ReadThisMenu"
 		TextItem "$MNU_QUITGAME", "q", "QuitMenu"
 	}
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Text only variant of the main menu for Doom, Strife and Chex Quest to be used with localized content.
+//
+//-------------------------------------------------------------------------------------------
+
+LISTMENU "MainMenuTextOnly"
+{
+	IfGame(Doom, Chex)
+	{
+		StaticPatch 94, 2, "M_DOOM"
+		Position 97, 72
+		IfOption(ReadThis)
+		{
+			Position 97, 64
+		}
+	}
+	IfGame(Strife)
+	{
+		StaticPatch 84, 2, "M_STRIFE"
+		Position 97, 45
+	}
+	
+	TextItem "$MNU_NEWGAME", "n", "PlayerclassMenu"
+	TextItem "$MNU_OPTIONS", "o", "OptionsMenu"
+	TextItem "$MNU_GAMEFILES", "g", "GameFilesMenu"
+	IfOption(ReadThis)
+	{
+		TextItem "$MNU_INFO", "i", "ReadThisMenu"
+	}
+	TextItem "$MNU_QUITGAME", "q", "QuitMenu"
 }
 
 //-------------------------------------------------------------------------------------------

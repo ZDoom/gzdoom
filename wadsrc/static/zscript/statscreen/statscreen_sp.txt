@@ -142,8 +142,11 @@ class DoomStatusScreen : StatusScreen
 		let tcolor = Font.CR_RED;
 		
 		// For visual consistency, only use the patches here if all are present.
-		bool useGfx = TexMan.OkForLocalization(Kills) && TexMan.OkForLocalization(Items) && TexMan.OkForLocalization(P_secret) && TexMan.OkForLocalization(Timepic) &&
-			(!wbs.partime || TexMan.OkForLocalization(Par));
+		bool useGfx = TexMan.OkForLocalization(Kills, "$TXT_IMKILLS")
+			&& TexMan.OkForLocalization(Items, "$TXT_IMITEMS")
+			&& TexMan.OkForLocalization(P_secret, "$TXT_IMSECRETS")
+			&& TexMan.OkForLocalization(Timepic, "$TXT_IMTIME")
+			&& (!wbs.partime || TexMan.OkForLocalization(Par, "$TXT_IMPAR"));
 			 
 		Font printFont;
 
@@ -178,7 +181,7 @@ class DoomStatusScreen : StatusScreen
 		{ // "sucks"
 			int x = 160 - SP_TIMEX;
 			int y = SP_TIMEY;
-			if (useGfx && TexMan.OkForLocalization(Sucks))
+			if (useGfx && TexMan.OkForLocalization(Sucks, "$TXT_IMSUCKS"))
 			{
 				let size = TexMan.GetScaledSize(Sucks);
 				screen.DrawTexture (Sucks, true, x - size.X, y - size.Y - 2, DTA_Clean, true);

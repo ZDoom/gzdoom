@@ -149,6 +149,7 @@ public:
 	EColorRange mFontColor;
 	EColorRange mFontColor2;
 	bool mCenter;
+	bool mFromEngine;
 
 	void Reset()
 	{
@@ -164,6 +165,7 @@ public:
 		mFont = NULL;
 		mFontColor = CR_UNTRANSLATED;
 		mFontColor2 = CR_UNTRANSLATED;
+		mFromEngine = false;
 	}
 	
 	size_t PropagateMark() override;
@@ -339,6 +341,7 @@ void M_ActivateMenu(DMenu *menu);
 void M_ClearMenus ();
 void M_PreviousMenu ();
 void M_ParseMenuDefs();
+void M_StartupEpisodeMenu(FGameStartup *gs);
 void M_StartupSkillMenu(FGameStartup *gs);
 void M_StartControlPanel (bool makeSound);
 void M_SetMenu(FName menu, int param = -1);
@@ -352,7 +355,7 @@ DMenuItemBase * CreateOptionMenuItemStaticText(const char *name, int v = -1);
 DMenuItemBase * CreateOptionMenuItemSubmenu(const char *label, FName cmd, int center);
 DMenuItemBase * CreateOptionMenuItemControl(const char *label, FName cmd, FKeyBindings *bindings);
 DMenuItemBase * CreateOptionMenuItemJoyConfigMenu(const char *label, IJoystickConfig *joy);
-DMenuItemBase * CreateListMenuItemPatch(double x, double y, int height, int hotkey, FTextureID tex, FName command, int param, const char *label, FFont *font, int color);
+DMenuItemBase * CreateListMenuItemPatch(double x, double y, int height, int hotkey, FTextureID tex, FName command, int param);
 DMenuItemBase * CreateListMenuItemText(double x, double y, int height, int hotkey, const char *text, FFont *font, PalEntry color1, PalEntry color2, FName command, int param);
 DMenuItemBase * CreateOptionMenuItemCommand(const char *label, FName cmd, bool centered = false);
 

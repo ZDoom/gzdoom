@@ -190,8 +190,6 @@ struct gameinfo_t
 	FGIFont mStatscreenMapNameFont;
 	FGIFont mStatscreenFinishedFont;
 	FGIFont mStatscreenEnteringFont;
-	FGIFont mStatscreenFinishedPatch;
-	FGIFont mStatscreenEnteringPatch;
 	bool norandomplayerclass;
 	bool forcekillscripts;
 	FName statusscreen_single;

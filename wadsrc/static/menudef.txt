@@ -201,11 +201,11 @@ ListMenu "SkillMenu"
 
 	IfGame(Doom, Chex)
 	{
-		StaticPatch 96, 14, "M_NEWG", 0, "$MNU_NEWGANE"
+		StaticPatch 96, 14, "M_NEWG", 0, "$MNU_NEWGAME"
 	}
 	IfGame(Strife)
 	{
-		StaticPatch 96, 14, "M_NGAME", 0, "$MNU_NEWGANE"
+		StaticPatch 96, 14, "M_NGAME", 0, "$MNU_NEWGAME"
 	}
 	IfGame(Doom, Strife, Chex)
 	{

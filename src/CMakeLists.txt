@@ -460,7 +460,7 @@ add_custom_target( revision_check ALL
 # Libraries ZDoom needs
 
 message( STATUS "Fluid synth libs: ${FLUIDSYNTH_LIBRARIES}" )
-set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${GME_LIBRARIES}" "${CMAKE_DL_LIBS}" )
+set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${GME_LIBRARIES}" "${CMAKE_DL_LIBS}" "glslang" "SPIRV" "OGLCompiler" )
 include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${GME_INCLUDE_DIR}" )
 
 if( ${HAVE_VM_JIT} )
@@ -710,6 +710,9 @@ file( GLOB HEADER_FILES
 	rendering/hwrenderer/scene/*.h
 	rendering/hwrenderer/textures/*.h
 	rendering/hwrenderer/utility/*.h
+	rendering/vulkan/*.h
+	rendering/vulkan/system/*.h
+	rendering/vulkan/textures/*.h
 	rendering/gl/*.h
 	rendering/gl/models/*.h
 	rendering/gl/renderer/*.h
@@ -889,6 +892,14 @@ set( FASTMATH_SOURCES
 	sound/opnmidi/opnmidi_private.cpp
 	sound/opnmidi/wopn/wopn_file.c
 
+	#Vulkan stuff must go into a separate list later because it needs to be disabled for some platforms
+	rendering/vulkan/system/vk_device.cpp
+	rendering/vulkan/system/vk_swapchain.cpp
+	rendering/vulkan/system/vk_framebuffer.cpp
+	rendering/vulkan/textures/vk_samplers.cpp
+	rendering/vulkan/textures/vk_hwtexture.cpp
+	rendering/vulkan/thirdparty/volk/volk.c
+	rendering/vulkan/thirdparty/vk_mem_alloc/vk_mem_alloc.cpp
 )
 
 set (PCH_SOURCES
@@ -1348,8 +1359,11 @@ include_directories( .
 	utility/nodebuilder
 	scripting
 	scripting/vm
+	rendering/vulkan/thirdparty
 	../gdtoa
 	../dumb/include
+	../glslang/glslang/Public
+	../glslang/spirv
 	${CMAKE_BINARY_DIR}/gdtoa
 	${SYSTEM_SOURCES_DIR} )
 
@@ -1477,6 +1491,11 @@ source_group("Rendering\\Hardware Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAK
 source_group("Rendering\\Hardware Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/system/.+")
 source_group("Rendering\\Hardware Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/textures/.+")
 source_group("Rendering\\Hardware Renderer\\Utilities" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/utility/.+")
+source_group("Rendering\\Vulkan Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/system/.+")
+source_group("Rendering\\Vulkan Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/textures/.+")
+source_group("Rendering\\Vulkan Renderer\\Third Party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/thirdparty/.+")
+source_group("Rendering\\Vulkan Renderer\\Third Party\\Volk" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/thirdparty/volk/.+")
+source_group("Rendering\\Vulkan Renderer\\Third Party\\Vk_Mem_Alloc" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/thirdparty/vk_mem_alloc.+")
 source_group("Rendering\\OpenGL Loader" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl_load/.+")
 source_group("Rendering\\OpenGL Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl/.+")
 source_group("Rendering\\OpenGL Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl/data/.+")

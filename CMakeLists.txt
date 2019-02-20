@@ -292,6 +292,10 @@ mark_as_advanced( FORCE_INTERNAL_GME )
 option(FORCE_INTERNAL_ASMJIT "Use internal asmjit" ON)
 mark_as_advanced( FORCE_INTERNAL_ASMJIT )
 
+add_subdirectory( glslang/glslang)
+add_subdirectory( glslang/spirv )
+add_subdirectory( glslang/OGLCompilersDLL )
+
 # Fast math flags, required by some subprojects
 set( ZD_FASTMATH_FLAG "" )
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )

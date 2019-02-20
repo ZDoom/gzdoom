@@ -137,8 +137,12 @@ class ConversationMenu : Menu
 			mShowGold |= reply.NeedsGold;
 
 			let ReplyText = Stringtable.Localize(reply.Reply);
-			if (reply.NeedsGold) ReplyText.AppendFormat(Stringtable.Localize("$TXT_TRADE"), reply.PrintAmount);
-
+			if (reply.NeedsGold)
+			{
+				let trade = Stringtable.Localize("$TXT_TRADE");
+				let amount = String.Format("%u", reply.PrintAmount);
+				trade.Replace("%u", amount);
+			}
 			let ReplyLines = SmallFont.BreakLines (ReplyText, ReplyWidth);
 
 			mResponses.Push(mResponseLines.Size());

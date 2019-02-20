@@ -583,11 +583,12 @@ class GLTextureGLOptions : OptionMenu
 			{
 				int multiplier = gl_texture_hqresizemult * gl_texture_hqresizemult;
 
-				string localized = StringTable.Localize("$GLTEXMNU_HQRESIZEWARN");
-				message = String.Format(localized, multiplier);
+				message = StringTable.Localize("$GLTEXMNU_HQRESIZEWARN");
+				string mult = String.Format("%d", multiplier);
+				message.Replace("%d", mult);
 			}
 
-			mDesc.mItems[mWarningIndex].mLabel = message;
+			mDesc.mItems[mWarningIndex].mLabel = Font.TEXTCOLOR_CYAN .. message;
 		}
 	}
 }

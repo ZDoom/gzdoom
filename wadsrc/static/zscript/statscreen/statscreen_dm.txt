@@ -209,10 +209,10 @@ class DeathmatchStatusScreen : StatusScreen
 				screen.DrawTexture(player.mo.ScoreIcon, true, icon_x, y, DTA_CleanNoMove, true);
 			}
 			screen.DrawText(SmallFont, thiscolor, name_x, y + ypadding, player.GetUserName(), DTA_CleanNoMove, true);
-			drawNum(SmallFont, frags_x, y + ypadding, cnt_frags[pnum], 0, false, thiscolor);
+			drawNum(SmallFont, frags_x, y + ypadding, cnt_frags[pnum], 0, false, thiscolor, true);
 			if (ng_state >= 2)
 			{
-				drawNum(SmallFont, deaths_x, y + ypadding, cnt_deaths[pnum], 0, false, thiscolor);
+				drawNum(SmallFont, deaths_x, y + ypadding, cnt_deaths[pnum], 0, false, thiscolor, true);
 			}
 			y += lineheight + CleanYfac;
 		}
@@ -220,10 +220,10 @@ class DeathmatchStatusScreen : StatusScreen
 		// Draw "TOTAL" line
 		y += height + 3 * CleanYfac;
 		screen.DrawText(SmallFont, textcolor, name_x, y, Stringtable.Localize("$SCORE_TOTAL"), DTA_CleanNoMove, true);
-		drawNum(SmallFont, frags_x, y, total_frags, 0, false, textcolor);
+		drawNum(SmallFont, frags_x, y, total_frags, 0, false, textcolor, true);
 		if (ng_state >= 4)
 		{
-			drawNum(SmallFont, deaths_x, y, total_deaths, 0, false, textcolor);
+			drawNum(SmallFont, deaths_x, y, total_deaths, 0, false, textcolor, true);
 		}
 
 		// Draw game time

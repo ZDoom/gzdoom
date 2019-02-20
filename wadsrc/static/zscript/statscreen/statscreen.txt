@@ -194,8 +194,8 @@ class StatusScreen abstract play version("2.5")
 
 		if (pinfo.mPatch.isValid())
 		{
-			Vector2 size = TexMan.GetScaledSize(pinfo.mPatch);
-			screen.DrawTexture(pinfo.mPatch, true, midx - size.X, y, DTA_CleanNoMove, true);
+			let size = TexMan.GetScaledSize(pinfo.mPatch);
+			screen.DrawTexture(pinfo.mPatch, true, midx - size.X * CleanXfac/2, y, DTA_CleanNoMove, true);
 			return y + int(size.Y * CleanYfac);
 		}
 		else 
@@ -262,12 +262,11 @@ class StatusScreen abstract play version("2.5")
 	// Returns new x position, that is, the left edge of the number.
 	//
 	//====================================================================
-	int drawNum (Font fnt, int x, int y, int n, int digits, bool leadingzeros = true, int translation = Font.CR_UNTRANSLATED)
+	int drawNum (Font fnt, int x, int y, int n, int digits, bool leadingzeros = true, int translation = Font.CR_UNTRANSLATED, bool nomove = false)
 	{
 		int fntwidth = fnt.StringWidth("3");
 		String text;
 		int len;
-		bool nomove = fnt != IntermissionFont;
 
 		if (nomove)
 		{
@@ -314,14 +313,14 @@ class StatusScreen abstract play version("2.5")
 	//
 	//====================================================================
 
-	void drawPercent (Font fnt, int x, int y, int p, int b, bool show_total = true, int color = Font.CR_UNTRANSLATED)
+	void drawPercent (Font fnt, int x, int y, int p, int b, bool show_total = true, int color = Font.CR_UNTRANSLATED, bool nomove = false)
 	{
 		if (p < 0)
 			return;
 
 		if (wi_percents)
 		{
-			if (fnt != IntermissionFont)
+			if (nomove)
 			{
 				x -= fnt.StringWidth("%") * CleanXfac;
 			}
@@ -329,8 +328,8 @@ class StatusScreen abstract play version("2.5")
 			{
 				x -= fnt.StringWidth("%");
 			}
-			screen.DrawText(fnt, color, x, y, "%", fnt != IntermissionFont ? DTA_CleanNoMove : DTA_Clean, true);
-			if (fnt != IntermissionFont)
+			screen.DrawText(fnt, color, x, y, "%", nomove? DTA_CleanNoMove : DTA_Clean, true);
+			if (nomove)
 			{
 				x -= 2*CleanXfac;
 			}
@@ -340,9 +339,9 @@ class StatusScreen abstract play version("2.5")
 		{
 			if (show_total)
 			{
-				x = drawNum(fnt, x, y, b, 2, false);
+				x = drawNum(fnt, x, y, b, 2, false, color);
 				x -= fnt.StringWidth("/");
-				screen.DrawText (IntermissionFont, color, x, y, "/", DTA_Clean, true);
+				screen.DrawText (IntermissionFont, color, x, y, "/", nomove? DTA_CleanNoMove : DTA_Clean, true);
 			}
 			drawNum (fnt, x, y, p, -1, false, color);
 		}
@@ -354,7 +353,7 @@ class StatusScreen abstract play version("2.5")
 	//
 	//====================================================================
 
-	void drawTimeFont (Font printFont, int x, int y, int t)
+	void drawTimeFont (Font printFont, int x, int y, int t, int color)
 	{
 		bool sucky;
 
@@ -372,19 +371,19 @@ class StatusScreen abstract play version("2.5")
 		int num_spacing = printFont.GetCharWidth("3");
 		int colon_spacing = printFont.GetCharWidth(":");
 
-		x = drawNum (printFont, x, y, seconds, 2) - 1;
-		DrawCharPatch (printFont, ":", x -= colon_spacing, y);
-		x = drawNum (printFont, x, y, minutes, 2, hours!=0);
+		x = drawNum (printFont, x, y, seconds, 2, true, color) - 1;
+		DrawCharPatch (printFont, ":", x -= colon_spacing, y, color);
+		x = drawNum (printFont, x, y, minutes, 2, hours!=0, color);
 		if (hours)
 		{
-			DrawCharPatch (printFont, ":", x -= colon_spacing, y);
-			drawNum (printFont, x, y, hours, 2);
+			DrawCharPatch (printFont, ":", x -= colon_spacing, y, color);
+			drawNum (printFont, x, y, hours, 2, false, color);
 		}
 	}
 
 	void drawTime (int x, int y, int t, bool no_sucks=false)
 	{
-		drawTimeFont(IntermissionFont, x, y, t);
+		drawTimeFont(printFont, x, y, t, Font.CR_UNTRANSLATED);
 	}
 		
 

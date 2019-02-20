@@ -275,15 +275,15 @@ class CoopStatusScreen : StatusScreen
 				screen.DrawTexture(player.mo.ScoreIcon, true, icon_x, y, DTA_CleanNoMove, true);
 			}
 			screen.DrawText(SmallFont, thiscolor, name_x, y + ypadding, player.GetUserName(), DTA_CleanNoMove, true);
-			drawPercent(SmallFont, kills_x, y + ypadding, cnt_kills[i], wbs.maxkills, false, thiscolor);
+			drawPercent(SmallFont, kills_x, y + ypadding, cnt_kills[i], wbs.maxkills, false, thiscolor, true);
 			missed_kills -= cnt_kills[i];
 			if (ng_state >= 4)
 			{
-				drawPercent(SmallFont, bonus_x, y + ypadding, cnt_items[i], wbs.maxitems, false, thiscolor);
+				drawPercent(SmallFont, bonus_x, y + ypadding, cnt_items[i], wbs.maxitems, false, thiscolor, true);
 				missed_items -= cnt_items[i];
 				if (ng_state >= 6)
 				{
-					drawPercent(SmallFont, secret_x, y + ypadding, cnt_secret[i], wbs.maxsecret, false, thiscolor);
+					drawPercent(SmallFont, secret_x, y + ypadding, cnt_secret[i], wbs.maxsecret, false, thiscolor, true);
 					missed_secrets -= cnt_secret[i];
 				}
 			}
@@ -293,26 +293,26 @@ class CoopStatusScreen : StatusScreen
 		// Draw "MISSED" line
 		y += 3 * CleanYfac;
 		screen.DrawText(SmallFont, Font.CR_DARKGRAY, name_x, y, Stringtable.Localize("$SCORE_MISSED"), DTA_CleanNoMove, true);
-		drawPercent(SmallFont, kills_x, y, missed_kills, wbs.maxkills, false, Font.CR_DARKGRAY);
+		drawPercent(SmallFont, kills_x, y, missed_kills, wbs.maxkills, false, Font.CR_DARKGRAY, true);
 		if (ng_state >= 4)
 		{
-			drawPercent(SmallFont, bonus_x, y, missed_items, wbs.maxitems, false, Font.CR_DARKGRAY);
+			drawPercent(SmallFont, bonus_x, y, missed_items, wbs.maxitems, false, Font.CR_DARKGRAY, true);
 			if (ng_state >= 6)
 			{
-				drawPercent(SmallFont, secret_x, y, missed_secrets, wbs.maxsecret, false, Font.CR_DARKGRAY);
+				drawPercent(SmallFont, secret_x, y, missed_secrets, wbs.maxsecret, false, Font.CR_DARKGRAY, true);
 			}
 		}
 
 		// Draw "TOTAL" line
 		y += height + 3 * CleanYfac;
 		screen.DrawText(SmallFont, textcolor, name_x, y, Stringtable.Localize("$SCORE_TOTAL"), DTA_CleanNoMove, true);
-		drawNum(SmallFont, kills_x, y, wbs.maxkills, 0, false, textcolor);
+		drawNum(SmallFont, kills_x, y, wbs.maxkills, 0, false, textcolor, true);
 		if (ng_state >= 4)
 		{
-			drawNum(SmallFont, bonus_x, y, wbs.maxitems, 0, false, textcolor);
+			drawNum(SmallFont, bonus_x, y, wbs.maxitems, 0, false, textcolor, true);
 			if (ng_state >= 6)
 			{
-				drawNum(SmallFont, secret_x, y, wbs.maxsecret, 0, false, textcolor);
+				drawNum(SmallFont, secret_x, y, wbs.maxsecret, 0, false, textcolor, true);
 			}
 		}
 	}

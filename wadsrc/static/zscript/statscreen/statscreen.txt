@@ -341,7 +341,7 @@ class StatusScreen abstract play version("2.5")
 			{
 				x = drawNum(fnt, x, y, b, 2, false, color);
 				x -= fnt.StringWidth("/");
-				screen.DrawText (IntermissionFont, color, x, y, "/", nomove? DTA_CleanNoMove : DTA_Clean, true);
+				screen.DrawText (fnt, color, x, y, "/", nomove? DTA_CleanNoMove : DTA_Clean, true);
 			}
 			drawNum (fnt, x, y, p, -1, false, color);
 		}
@@ -383,7 +383,7 @@ class StatusScreen abstract play version("2.5")
 
 	void drawTime (int x, int y, int t, bool no_sucks=false)
 	{
-		drawTimeFont(printFont, x, y, t, Font.CR_UNTRANSLATED);
+		drawTimeFont(IntermissionFont, x, y, t, Font.CR_UNTRANSLATED);
 	}
 		
 

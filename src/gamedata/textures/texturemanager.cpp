@@ -39,6 +39,7 @@
 #include "w_wad.h"
 #include "templates.h"
 #include "i_system.h"
+#include "gstrings.h"
 
 #include "r_data/r_translate.h"
 #include "r_data/sprites.h"
@@ -395,17 +396,54 @@ FTexture *FTextureManager::FindTexture(const char *texname, ETextureType usetype
 
 //==========================================================================
 //
+// Defines how graphics substitution is handled.
+// 0: Never replace a text-containing graphic with a font-based text.
+// 1: Always replace, regardless of any missing information. Useful for testing the substitution without providing full data.
+// 2: Only replace for non-default texts, i.e. if some language redefines the string's content, use it instead of the graphic. Never replace a localized graphic.
+// 3: Only replace if the string is not the default and the graphic comes from the IWAD. Never replace a localized graphic.
+// 4: Like 1, but lets localized graphics pass.
+//
+//==========================================================================
+
+CUSTOM_CVAR(Int, cl_localizationmode,0, CVAR_ARCHIVE)
+{
+	if (self < 0 || self > 4) self = 0;
+}
+
+//==========================================================================
+//
 // FTextureManager :: OkForLocalization
 //
 //==========================================================================
-CVAR(Int, cl_localizationmode,0, CVAR_ARCHIVE)
 
 bool FTextureManager::OkForLocalization(FTextureID texnum, const char *substitute)
 {
 	if (!texnum.isValid()) return false;
 	
-	// Todo: Some decisions must be made here whether this texture is ok to use with the current locale settings.
-	return !cl_localizationmode;
+	// First the unconditional settings, 0='never' and 1='always'.
+	if (cl_localizationmode == 0) return true;
+	if (cl_localizationmode == 1) return false;
+	
+	uint32_t langtable = 0;
+	if (*substitute == '$') substitute = GStrings.GetString(substitute+1, &langtable);
+	if (substitute == nullptr) return true;	// The text does not exist.
+	
+	// Modes 2, 3 and 4 must not replace localized textures.
+	int localizedTex = ResolveLocalizedTexture(texnum.GetIndex());
+	if (localizedTex != texnum.GetIndex()) return true;	// Do not substitute a localized variant of the graphics patch.
+	
+	// For mode 4 we are done now.
+	if (cl_localizationmode == 4) return false;
+	
+	// Mode 2 and 3 must reject any text replacement from the default language tables.
+	if ((langtable & MAKE_ID(255,0,0,0)) == MAKE_ID('*', 0, 0, 0)) return true;	// Do not substitute if the string comes from the default table.
+	if (cl_localizationmode == 2) return false;
+	
+	// Mode 3 must also reject substitutions for non-IWAD content.
+	int file = Wads.GetLumpFile(Textures[texnum.GetIndex()].Texture->SourceLump);
+	if (file > Wads.GetIwadNum()) return true;
+
+	return false;
 }
 
 static int OkForLocalization(int index, const FString &substitute)
@@ -420,7 +458,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, OkForLocalization, OkForLocalization)
 	PARAM_STRING(subst)
 	ACTION_RETURN_INT(OkForLocalization(name, subst));
 }
-
 
 //==========================================================================
 //

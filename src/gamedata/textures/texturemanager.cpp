@@ -1034,12 +1034,13 @@ void FTextureManager::AddLocalizedVariants()
 			if (ext.CompareNoCase("png") == 0 || ext.CompareNoCase("jpg") == 0 || ext.CompareNoCase("gfx") == 0 || ext.CompareNoCase("tga") == 0 || ext.CompareNoCase("lmp") == 0)
 			{
 				Printf("%s contains no language IDs and will be ignored\n", entry.name);
-				
+				continue;
 			}
 		}
-		else if (tokens.Size() >= 2)
+		if (tokens.Size() >= 2)
 		{
-			FTextureID origTex = CheckForTexture(tokens[0], ETextureType::MiscPatch);
+			FString base = ExtractFileBase(tokens[0]);
+			FTextureID origTex = CheckForTexture(base, ETextureType::MiscPatch);
 			if (origTex.isValid())
 			{
 				FTextureID tex = CheckForTexture(entry.name, ETextureType::MiscPatch);
@@ -1055,7 +1056,6 @@ void FTextureManager::AddLocalizedVariants()
 					{
 						tokens[1].ToLower();
 						auto langids = tokens[1].Split("-", FString::TOK_SKIPEMPTY);
-						auto lang = langids.Last();
 						for (auto &lang : langids)
 						{
 							if (lang.Len() == 2 || lang.Len() == 3)
@@ -1180,7 +1180,7 @@ void FTextureManager::Init()
 	glPart2 = TexMan.CheckForTexture("glstuff/glpart2.png", ETextureType::MiscPatch);
 	glPart = TexMan.CheckForTexture("glstuff/glpart.png", ETextureType::MiscPatch);
 	mirrorTexture = TexMan.CheckForTexture("glstuff/mirror.png", ETextureType::MiscPatch);
-
+	AddLocalizedVariants();
 }
 
 //==========================================================================

@@ -1309,6 +1309,10 @@ TXT_IMSUCKS = "Sucks";
 TXT_IMSCRT = "Scrt";
 TXT_IMPAR = "Par";
 
+// For testing the extended characters' positioning.
+//TXT_IMKILLS			= "AÀÁÂÃÄÅÆÇÈÉÊËÌÍÎ";
+//TXT_IMITEMS			= "OÐÏÑÒÓÔÕÖØÙÚÛÜÝÞß";
+
 RAVENQUITMSG = "ARE YOU SURE YOU WANT TO QUIT?";
 
 // Friendly names

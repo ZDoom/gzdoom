@@ -364,7 +364,7 @@ void VulkanDevice::createDevice()
 void VulkanDevice::createAllocator()
 {
 	VmaAllocatorCreateInfo allocinfo = {};
-	allocinfo.flags = VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
+	// allocinfo.flags = VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT; // To do: enable this for better performance
 	allocinfo.physicalDevice = physicalDevice;
 	allocinfo.device = device;
 	allocinfo.preferredLargeHeapBlockSize = 64 * 1024 * 1024;

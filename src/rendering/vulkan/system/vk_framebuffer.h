@@ -13,10 +13,9 @@ class VulkanFrameBuffer : public SystemBaseFrameBuffer
 
 public:
 	VulkanDevice *device;
-	std::unique_ptr<VkSamplerManager> mSamplerManager;
-	std::unique_ptr<VulkanCommandPool> mGraphicsCommandPool;
-	std::unique_ptr<VulkanCommandBuffer> mUploadCommands;
-	std::unique_ptr<VulkanCommandBuffer> mPresentCommands;
+
+	VulkanCommandBuffer *GetUploadCommands();
+	VulkanCommandBuffer *GetDrawCommands();
 
 	VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevice *dev);
 	~VulkanFrameBuffer();
@@ -30,13 +29,16 @@ public:
 	uint32_t GetCaps() override;
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height) override;
 	sector_t *RenderView(player_t *player) override;
-	FModelRenderer *CreateModelRenderer(int mli) override;
 	void UnbindTexUnit(int no) override;
 	void TextureFilterChanged() override;
 	void BeginFrame() override;
 	void BlurScene(float amount) override;
-	IDataBuffer *CreateDataBuffer(int bindingpoint, bool ssbo) override;
+
+	FModelRenderer *CreateModelRenderer(int mli) override;
 	IShaderProgram *CreateShaderProgram() override;
+	IVertexBuffer *CreateVertexBuffer() override;
+	IIndexBuffer *CreateIndexBuffer() override;
+	IDataBuffer *CreateDataBuffer(int bindingpoint, bool ssbo) override;
 
 	/*
 	bool WipeStartScreen(int type);
@@ -50,8 +52,15 @@ public:
 	void Draw2D() override;
 
 private:
+	std::unique_ptr<VkSamplerManager> mSamplerManager;
+	std::unique_ptr<VulkanCommandPool> mGraphicsCommandPool;
+	std::unique_ptr<VulkanCommandBuffer> mUploadCommands;
+	std::unique_ptr<VulkanCommandBuffer> mPresentCommands;
+
 	int camtexcount = 0;
 
 	int lastSwapWidth = 0;
 	int lastSwapHeight = 0;
 };
+
+inline VulkanFrameBuffer *GetVulkanFrameBuffer() { return static_cast<VulkanFrameBuffer*>(screen); }

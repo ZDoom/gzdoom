@@ -30,8 +30,14 @@
 
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_vrmodes.h"
+#include "hwrenderer/models/hw_models.h"
+#include "hwrenderer/scene/hw_skydome.h"
+#include "hwrenderer/data/hw_viewpointbuffer.h"
+#include "hwrenderer/data/flatvertices.h"
+#include "hwrenderer/dynlights/hw_lightbuffer.h"
 
 #include "vk_framebuffer.h"
+#include "vk_buffers.h"
 #include "vulkan/textures/vk_samplers.h"
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_swapchain.h"
@@ -57,9 +63,15 @@ VulkanFrameBuffer::~VulkanFrameBuffer()
 
 void VulkanFrameBuffer::InitializeState()
 {
+	mGraphicsCommandPool.reset(new VulkanCommandPool(device, device->graphicsFamily));
+
+	mVertexData = new FFlatVertexBuffer(GetWidth(), GetHeight());
+	mSkyData = new FSkyVertexBuffer;
+	mViewpoints = new GLViewpointBuffer;
+	mLights = new FLightBuffer();
+
 	ShInitialize();
 	mSamplerManager.reset(new VkSamplerManager(device));
-	mGraphicsCommandPool.reset(new VulkanCommandPool(device, device->graphicsFamily));
 
 #if 0
 	{
@@ -176,17 +188,29 @@ void VulkanFrameBuffer::CleanForRestart()
 
 FModelRenderer *VulkanFrameBuffer::CreateModelRenderer(int mli) 
 {
+	I_FatalError("VulkanFrameBuffer::CreateModelRenderer not implemented\n");
 	return nullptr;
+}
+
+IShaderProgram *VulkanFrameBuffer::CreateShaderProgram()
+{
+	I_FatalError("VulkanFrameBuffer::CreateShaderProgram not implemented\n");
+	return nullptr;
+}
+
+IVertexBuffer *VulkanFrameBuffer::CreateVertexBuffer()
+{
+	return new VKVertexBuffer();
+}
+
+IIndexBuffer *VulkanFrameBuffer::CreateIndexBuffer()
+{
+	return new VKIndexBuffer();
 }
 
 IDataBuffer *VulkanFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo)
 {
-	return nullptr;
-}
-
-IShaderProgram *VulkanFrameBuffer::CreateShaderProgram() 
-{ 
-	return nullptr;
+	return new VKDataBuffer(bindingpoint, ssbo);
 }
 
 void VulkanFrameBuffer::UnbindTexUnit(int no)
@@ -211,4 +235,19 @@ void VulkanFrameBuffer::BeginFrame()
 
 void VulkanFrameBuffer::Draw2D()
 {
+}
+
+VulkanCommandBuffer *VulkanFrameBuffer::GetUploadCommands()
+{
+	if (!mUploadCommands)
+	{
+		mUploadCommands = mGraphicsCommandPool->createBuffer();
+		mUploadCommands->begin();
+	}
+	return mUploadCommands.get();
+}
+
+VulkanCommandBuffer *VulkanFrameBuffer::GetDrawCommands()
+{
+	return mPresentCommands.get();
 }

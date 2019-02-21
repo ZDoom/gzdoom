@@ -897,6 +897,7 @@ set( FASTMATH_SOURCES
 	rendering/vulkan/system/vk_swapchain.cpp
 	rendering/vulkan/system/vk_builders.cpp
 	rendering/vulkan/system/vk_framebuffer.cpp
+	rendering/vulkan/system/vk_buffers.cpp
 	rendering/vulkan/textures/vk_samplers.cpp
 	rendering/vulkan/textures/vk_hwtexture.cpp
 	rendering/vulkan/thirdparty/volk/volk.c

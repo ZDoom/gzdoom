@@ -34,6 +34,7 @@
 #include "vk_framebuffer.h"
 #include "vulkan/textures/vk_samplers.h"
 #include "vulkan/system/vk_builders.h"
+#include "vulkan/system/vk_swapchain.h"
 #include "doomerrors.h"
 
 #include <ShaderLang.h>
@@ -45,9 +46,20 @@ EXTERN_CVAR(Int, gl_tonemap)
 VulkanFrameBuffer::VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevice *dev) : 
 	Super(hMonitor, fullscreen) 
 {
-	ShInitialize();
+	device = dev;
+	SetViewportRects(nullptr);
+}
 
-	//screen = this;	// temporary hack to make the tutorial code work.
+VulkanFrameBuffer::~VulkanFrameBuffer()
+{
+	ShFinalize();
+}
+
+void VulkanFrameBuffer::InitializeState()
+{
+	ShInitialize();
+	mSamplerManager.reset(new VkSamplerManager(device));
+	mGraphicsCommandPool.reset(new VulkanCommandPool(device, device->graphicsFamily));
 
 #if 0
 	{
@@ -66,20 +78,6 @@ VulkanFrameBuffer::VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevi
 		auto shader = builder.create(dev);
 	}
 #endif
-
-	device = dev;
-	mSamplerManager = new VkSamplerManager(device);
-	SetViewportRects(nullptr);
-}
-
-VulkanFrameBuffer::~VulkanFrameBuffer()
-{
-	delete mSamplerManager;
-	ShFinalize();
-}
-
-void VulkanFrameBuffer::InitializeState()
-{
 }
 
 void VulkanFrameBuffer::Update()
@@ -87,24 +85,57 @@ void VulkanFrameBuffer::Update()
 	twoD.Reset();
 	Flush3D.Reset();
 
-	DrawRateStuff();
 	Flush3D.Clock();
-	//vulkantest_tick();
+
+	int newWidth = GetClientWidth();
+	int newHeight = GetClientHeight();
+	if (lastSwapWidth != newWidth || lastSwapHeight != newHeight)
+	{
+		device->windowResized();
+		lastSwapWidth = newWidth;
+		lastSwapHeight = newHeight;
+	}
+
+	device->beginFrame();
+
+	mPresentCommands = mGraphicsCommandPool->createBuffer();
+	mPresentCommands->begin();
+
+	Draw2D();
+	Clear2D();
+	//DrawPresentTexture(mOutputLetterbox, true);
+
+	mPresentCommands->end();
+
+	VkSemaphore waitSemaphores[] = { device->imageAvailableSemaphore };
+	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = waitSemaphores;
+	submitInfo.pWaitDstStageMask = waitStages;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &mPresentCommands->buffer;
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores = &device->renderFinishedSemaphore;
+	VkResult result = vkQueueSubmit(device->graphicsQueue, 1, &submitInfo, device->renderFinishedFence);
+	if (result != VK_SUCCESS)
+		I_FatalError("Failed to submit command buffer!\n");
+
 	Flush3D.Unclock();
 
-	Swap();
-	CheckBench();
+	Finish.Reset();
+	Finish.Clock();
+	device->presentFrame();
+	device->waitPresent();
 
-	int initialWidth = GetClientWidth();
-	int initialHeight = GetClientHeight();
-	int clientWidth = ViewportScaledWidth(initialWidth, initialHeight);
-	int clientHeight = ViewportScaledHeight(initialWidth, initialHeight);
-	if (clientWidth > 0 && clientHeight > 0 && (GetWidth() != clientWidth || GetHeight() != clientHeight))
-	{
-		SetVirtualSize(clientWidth, clientHeight);
-		V_OutputResized(clientWidth, clientHeight);
-		//GLRenderer->mVBO->OutputResized(clientWidth, clientHeight);
-	}
+	mPresentCommands.reset();
+	mUploadCommands.reset();
+
+	Finish.Unclock();
+
+	Super::Update();
 }
 
 void VulkanFrameBuffer::WriteSavePic(player_t *player, FileWriter *file, int width, int height)
@@ -133,11 +164,6 @@ uint32_t VulkanFrameBuffer::GetCaps()
 		FlagSet |= RFF_TRUECOLOR;
 
 	return (uint32_t)FlagSet;
-}
-
-void VulkanFrameBuffer::Swap()
-{
-	//vulkantest_present();
 }
 
 void VulkanFrameBuffer::SetVSync(bool vsync)

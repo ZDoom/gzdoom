@@ -13,9 +13,11 @@ class VulkanFrameBuffer : public SystemBaseFrameBuffer
 
 public:
 	VulkanDevice *device;
-	VkSamplerManager *mSamplerManager;
+	std::unique_ptr<VkSamplerManager> mSamplerManager;
+	std::unique_ptr<VulkanCommandPool> mGraphicsCommandPool;
+	std::unique_ptr<VulkanCommandBuffer> mUploadCommands;
+	std::unique_ptr<VulkanCommandBuffer> mPresentCommands;
 
-	explicit VulkanFrameBuffer() {}
 	VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevice *dev);
 	~VulkanFrameBuffer();
 
@@ -43,11 +45,13 @@ public:
 	void WipeCleanup();
 	*/
 
-	void Swap();
 	void SetVSync(bool vsync);
 
 	void Draw2D() override;
 
 private:
 	int camtexcount = 0;
+
+	int lastSwapWidth = 0;
+	int lastSwapHeight = 0;
 };

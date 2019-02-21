@@ -38,12 +38,14 @@
 
 #include "vk_framebuffer.h"
 #include "vk_buffers.h"
+#include "vulkan/renderer/vk_renderstate.h"
+#include "vulkan/shaders/vk_shader.h"
 #include "vulkan/textures/vk_samplers.h"
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_swapchain.h"
 #include "doomerrors.h"
 
-#include <ShaderLang.h>
+void Draw2D(F2DDrawer *drawer, FRenderState &state);
 
 EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Bool, r_drawvoxels)
@@ -58,7 +60,6 @@ VulkanFrameBuffer::VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevi
 
 VulkanFrameBuffer::~VulkanFrameBuffer()
 {
-	ShFinalize();
 }
 
 void VulkanFrameBuffer::InitializeState()
@@ -70,26 +71,9 @@ void VulkanFrameBuffer::InitializeState()
 	mViewpoints = new GLViewpointBuffer;
 	mLights = new FLightBuffer();
 
-	ShInitialize();
+	mShaderManager.reset(new VkShaderManager());
 	mSamplerManager.reset(new VkSamplerManager(device));
-
-#if 0
-	{
-		const char *lumpName = "shaders/glsl/screenquad.vp";
-		int lump = Wads.CheckNumForFullName(lumpName, 0);
-		if (lump == -1) I_FatalError("Unable to load '%s'", lumpName);
-		FString code = Wads.ReadLump(lump).GetString().GetChars();
-
-		FString patchedCode;
-		patchedCode.AppendFormat("#version %d\n", 450);
-		patchedCode << "#line 1\n";
-		patchedCode << code;
-
-		ShaderBuilder builder;
-		builder.setVertexShader(patchedCode);
-		auto shader = builder.create(dev);
-	}
-#endif
+	mRenderState.reset(new VkRenderState());
 }
 
 void VulkanFrameBuffer::Update()
@@ -235,6 +219,7 @@ void VulkanFrameBuffer::BeginFrame()
 
 void VulkanFrameBuffer::Draw2D()
 {
+	::Draw2D(&m2DDrawer, *mRenderState);
 }
 
 VulkanCommandBuffer *VulkanFrameBuffer::GetUploadCommands()

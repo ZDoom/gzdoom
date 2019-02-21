@@ -5,6 +5,8 @@
 #include "vk_objects.h"
 
 class VkSamplerManager;
+class VkShaderManager;
+class VkRenderState;
 
 class VulkanFrameBuffer : public SystemBaseFrameBuffer
 {
@@ -52,10 +54,12 @@ public:
 	void Draw2D() override;
 
 private:
+	std::unique_ptr<VkShaderManager> mShaderManager;
 	std::unique_ptr<VkSamplerManager> mSamplerManager;
 	std::unique_ptr<VulkanCommandPool> mGraphicsCommandPool;
 	std::unique_ptr<VulkanCommandBuffer> mUploadCommands;
 	std::unique_ptr<VulkanCommandBuffer> mPresentCommands;
+	std::unique_ptr<VkRenderState> mRenderState;
 
 	int camtexcount = 0;
 

@@ -712,6 +712,8 @@ file( GLOB HEADER_FILES
 	rendering/hwrenderer/utility/*.h
 	rendering/vulkan/*.h
 	rendering/vulkan/system/*.h
+	rendering/vulkan/renderer/*.h
+	rendering/vulkan/shaders/*.h
 	rendering/vulkan/textures/*.h
 	rendering/gl/*.h
 	rendering/gl/models/*.h
@@ -898,6 +900,8 @@ set( FASTMATH_SOURCES
 	rendering/vulkan/system/vk_builders.cpp
 	rendering/vulkan/system/vk_framebuffer.cpp
 	rendering/vulkan/system/vk_buffers.cpp
+	rendering/vulkan/renderer/vk_renderstate.cpp
+	rendering/vulkan/shaders/vk_shader.cpp
 	rendering/vulkan/textures/vk_samplers.cpp
 	rendering/vulkan/textures/vk_hwtexture.cpp
 	rendering/vulkan/thirdparty/volk/volk.c
@@ -1494,6 +1498,8 @@ source_group("Rendering\\Hardware Renderer\\System" REGULAR_EXPRESSION "^${CMAKE
 source_group("Rendering\\Hardware Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/textures/.+")
 source_group("Rendering\\Hardware Renderer\\Utilities" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/utility/.+")
 source_group("Rendering\\Vulkan Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/system/.+")
+source_group("Rendering\\Vulkan Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/renderer/.+")
+source_group("Rendering\\Vulkan Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/shaders/.+")
 source_group("Rendering\\Vulkan Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/textures/.+")
 source_group("Rendering\\Vulkan Renderer\\Third Party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/thirdparty/.+")
 source_group("Rendering\\Vulkan Renderer\\Third Party\\Volk" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/thirdparty/volk/.+")

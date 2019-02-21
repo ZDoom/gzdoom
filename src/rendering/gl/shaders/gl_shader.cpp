@@ -539,7 +539,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muTimer.Init(hShader, "timer");
 
 	lights_index = glGetUniformLocation(hShader, "lights");
-	fakevb_index = glGetUniformLocation(hShader, "fakeVB");
 	modelmatrix_index = glGetUniformLocation(hShader, "ModelMatrix");
 	texturematrix_index = glGetUniformLocation(hShader, "TextureMatrix");
 	normalmodelmatrix_index = glGetUniformLocation(hShader, "NormalModelMatrix");

@@ -264,10 +264,6 @@ class FShader
 	int normalmodelmatrix_index;
 	int texturematrix_index;
 
-
-public:
-	int fakevb_index;
-private:
 	int currentglowstate = 0;
 	int currentgradientstate = 0;
 	int currentsplitstate = 0;
@@ -287,10 +283,6 @@ public:
 
 	bool Load(const char * name, const char * vert_prog_lump, const char * fragprog, const char * fragprog2, const char * light_fragprog, const char *defines);
 
-	void SetColormapColor(float r, float g, float b, float r1, float g1, float b1);
-	void SetGlowParams(float *topcolors, float topheight, float *bottomcolors, float bottomheight);
-	void SetLightRange(int start, int end, int forceadd);
-
 	bool Bind();
 	unsigned int GetHandle() const { return hShader; }
 };
@@ -306,15 +298,16 @@ public:
 	FShaderManager();
 	~FShaderManager();
 
-	void SetActiveShader(FShader *sh);
-	FShader *GetActiveShader() const { return mActiveShader; }
-
 	FShader *BindEffect(int effect, EPassType passType);
 	FShader *Get(unsigned int eff, bool alphateston, EPassType passType);
 
 private:
+	void SetActiveShader(FShader *sh);
+
 	FShader *mActiveShader = nullptr;
 	TArray<FShaderCollection*> mPassShaders;
+
+	friend class FShader;
 };
 
 class FShaderCollection

@@ -1199,30 +1199,41 @@ OptionString MapMarkFont
 OptionMenu AutomapOptions protected
 {
 	Title "$AUTOMAPMNU_TITLE"
+
 	Option "$AUTOMAPMNU_COLORSET",				"am_colorset", "MapColorTypes"
 	Option "$AUTOMAPMNU_CUSTOMCOLORS",			"am_customcolors", "YesNo"
 	Submenu "$AUTOMAPMNU_SETCUSTOMCOLORS",		"MapColorMenu"
+
+	StaticText ""
 	Submenu "$AUTOMAPMNU_CONTROLS",				"MapControlsMenu"
-	StaticText " "
+
+	StaticText ""
 	Option "$AUTOMAPMNU_ROTATE",				"am_rotate", "RotateTypes"
 	Option "$AUTOMAPMNU_OVERLAY",				"am_overlay", "OverlayTypes"
 	Option "$AUTOMAPMNU_TEXTURED",				"am_textured", "OnOff"
 	Option "$AUTOMAPMNU_FOLLOW",				"am_followplayer", "OnOff"
-	Option "$AUTOMAPMNU_PTOVERLAY",				"am_portaloverlay", "OnOff"
-	Slider "$AUTOMAPMNU_EMPTYSPACEMARGIN",		"am_emptyspacemargin", 0, 90, 5, 0
-	StaticText " "
+
+	StaticText ""
 	Option "$AUTOMAPMNU_SHOWITEMS",				"am_showitems", "OnOff"
 	Option "$AUTOMAPMNU_SHOWMONSTERS",			"am_showmonsters", "OnOff"
 	Option "$AUTOMAPMNU_SHOWSECRETS",			"am_showsecrets", "OnOff"
 	Option "$AUTOMAPMNU_SHOWTIME",				"am_showtime", "OnOff"
 	Option "$AUTOMAPMNU_SHOWTOTALTIME",			"am_showtotaltime", "OnOff"
-	Option "$AUTOMAPMNU_MAPSECRETS",			"am_map_secrets", "SecretTypes"
 	Option "$AUTOMAPMNU_SHOWMAPLABEL",			"am_showmaplabel", "MaplabelTypes"
-	Option "$AUTOMAPMNU_DRAWMAPBACK",			"am_drawmapback", "MapBackTypes"
+
+	StaticText ""
 	Option "$AUTOMAPMNU_SHOWKEYS",				"am_showkeys", "OnOff"
+	Option "$AUTOMAPMNU_SHOWKEYS_ALWAYS",		"am_showkeys_always", "OnOff"
+
+	StaticText ""
+	Option "$AUTOMAPMNU_MAPSECRETS",			"am_map_secrets", "SecretTypes"
+	Option "$AUTOMAPMNU_DRAWMAPBACK",			"am_drawmapback", "MapBackTypes"
 	Option "$AUTOMAPMNU_SHOWTRIGGERLINES",		"am_showtriggerlines", "MapTriggers"
 	Option "$AUTOMAPMNU_SHOWTHINGSPRITES",		"am_showthingsprites", "STSTypes"
-	StaticText " "
+	Option "$AUTOMAPMNU_PTOVERLAY",				"am_portaloverlay", "OnOff"
+	Slider "$AUTOMAPMNU_EMPTYSPACEMARGIN",		"am_emptyspacemargin", 0, 90, 5, 0
+
+	StaticText ""
 	Option "$AUTOMAPMNU_MARKFONT",				"am_markfont", "MapMarkFont"
 	Option "$AUTOMAPMNU_MARKCOLOR",				"am_markcolor", "TextColors"
 }
@@ -1238,18 +1249,24 @@ OptionMenu MapControlsMenu protected
 	Title "$MAPCNTRLMNU_TITLE"
 	ScrollTop 2
 	StaticTextSwitchable 	"$CNTRLMNU_SWITCHTEXT1", "$CNTRLMNU_SWITCHTEXT2", "ControlMessage"
-	StaticText 	""
-	StaticText "$MAPCNTRLMNU_CONTROLS", 1
+
+	StaticText ""
 	MapControl "$MAPCNTRLMNU_PANLEFT",			"+am_panleft"
 	MapControl "$MAPCNTRLMNU_PANRIGHT",			"+am_panright"
 	MapControl "$MAPCNTRLMNU_PANUP",			"+am_panup"
 	MapControl "$MAPCNTRLMNU_PANDOWN",			"+am_pandown"
+
+	StaticText ""
 	MapControl "$MAPCNTRLMNU_ZOOMIN",			"+am_zoomin"
 	MapControl "$MAPCNTRLMNU_ZOOMOUT",			"+am_zoomout"
+
+	StaticText ""
 	MapControl "$MAPCNTRLMNU_TOGGLEZOOM",		"am_gobig"
 	MapControl "$MAPCNTRLMNU_TOGGLEFOLLOW",		"am_togglefollow"
 	MapControl "$MAPCNTRLMNU_TOGGLEGRID",		"am_togglegrid"
 	MapControl "$MAPCNTRLMNU_TOGGLETEXTURE",	"am_toggletexture"
+
+	StaticText ""
 	MapControl "$MAPCNTRLMNU_SETMARK",			"am_setmark"
 	MapControl "$MAPCNTRLMNU_CLEARMARK",		"am_clearmarks"
 }

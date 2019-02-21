@@ -2020,6 +2020,7 @@ AUTOMAPMNU_MAPSECRETS			= "Show secrets on map";
 AUTOMAPMNU_SHOWMAPLABEL			= "Show map label";
 AUTOMAPMNU_DRAWMAPBACK			= "Draw map background";
 AUTOMAPMNU_SHOWKEYS				= "Show keys (cheat)";
+AUTOMAPMNU_SHOWKEYS_ALWAYS		= "Always show keys";
 AUTOMAPMNU_SHOWTRIGGERLINES		= "Show trigger lines";
 AUTOMAPMNU_SHOWTHINGSPRITES		= "Show things as sprites";
 AUTOMAPMNU_PTOVERLAY			= "Overlay portals";

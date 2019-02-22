@@ -153,12 +153,12 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 void FSpecialFont::LoadTranslations()
 {
 	int count = LastChar - FirstChar + 1;
-	uint8_t usedcolors[256], identity[256];
+	uint32_t usedcolors[256] = {};
+	uint8_t identity[256];
 	TArray<double> Luminosity;
 	int TotalColors;
 	int i, j;
 
-	memset (usedcolors, 0, 256);
 	for (i = 0; i < count; i++)
 	{
 		if (Chars[i].TranslatedPic)

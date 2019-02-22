@@ -39,6 +39,6 @@ extern uint16_t upperforlower[65536];
 
 class FImageSource;
 
-void RecordTextureColors (FImageSource *pic, uint8_t *usedcolors);
+void RecordTextureColors (FImageSource *pic, uint32_t *usedcolors);
 bool myislower(int code);
 int stripaccent(int code);

@@ -63,7 +63,6 @@
 #define DEFAULT_LOG_COLOR	PalEntry(223,223,223)
 
 // TYPES -------------------------------------------------------------------
-void RecordTextureColors (FImageSource *pic, uint8_t *colorsused);
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 

@@ -471,7 +471,7 @@ FFont *FFont::FindFont (FName name)
 //
 //==========================================================================
 
-void RecordTextureColors (FImageSource *pic, uint8_t *usedcolors)
+void RecordTextureColors (FImageSource *pic, uint32_t *usedcolors)
 {
 	int x;
 	
@@ -524,7 +524,7 @@ static int compare (const void *arg1, const void *arg2)
 //
 //==========================================================================
 
-int FFont::SimpleTranslation (uint8_t *colorsused, uint8_t *translation, uint8_t *reverse, TArray<double> &Luminosity)
+int FFont::SimpleTranslation (uint32_t *colorsused, uint8_t *translation, uint8_t *reverse, TArray<double> &Luminosity)
 {
 	double min, max, diver;
 	int i, j;
@@ -889,10 +889,10 @@ int FFont::StringWidth(const uint8_t *string) const
 void FFont::LoadTranslations()
 {
 	unsigned int count = LastChar - FirstChar + 1;
-	uint8_t usedcolors[256], identity[256];
+	uint32_t usedcolors[256] = {};
+	uint8_t identity[256];
 	TArray<double> Luminosity;
 
-	memset (usedcolors, 0, 256);
 	for (unsigned int i = 0; i < count; i++)
 	{
 		if (Chars[i].TranslatedPic)

@@ -713,7 +713,7 @@ DHUDMessageTypeOnFadeOut::DHUDMessageTypeOnFadeOut (FFont *font, const char *tex
 	if (TypeOnTime == 0.f)
 		TypeOnTime = 0.1f;
 	CurrLine = 0;
-	LineLen = (int)Lines[0].Text.Len();
+	LineLen = Lines.Size() > 0? (int)Lines[0].Text.Len() : 0;
 	LineVisible = 0;
 	State = 3;
 }
@@ -741,7 +741,7 @@ void DHUDMessageTypeOnFadeOut::Serialize(FSerializer &arc)
 
 bool DHUDMessageTypeOnFadeOut::Tick ()
 {
-	if (!Super::Tick ())
+	if (LineLen > 0 && !Super::Tick ())
 	{
 		if (State == 3)
 		{

@@ -1122,6 +1122,11 @@ OptionMenu "MiscOptions" protected
 	Option "$MISCMNU_CACHENODES",				"gl_cachenodes", "OnOff"
 	Slider "$MISCMNU_CACHETIME",				"gl_cachetime", 0.0, 2.0, 0.1
 	SafeCommand "$MISCMNU_CLEARNODECACHE",		"clearnodecache"
+
+	StaticText " "
+	StaticText "$MISCMNU_DELEGATEMODDERCONTROL", 1
+	Option "$MISCMNU_DELEGATESAVEGAMES",		"amc_saves", "OnOff"
+	Option "$MISCMNU_DELEGATEAUTOMAP",			"amc_automap", "OnOff"
 }
 
 //-------------------------------------------------------------------------------------------

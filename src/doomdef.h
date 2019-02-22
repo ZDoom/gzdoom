@@ -285,6 +285,14 @@ enum
 	DF2_RESPAWN_SUPER		= 1 << 27,	// Respawn invulnerability and invisibility
 };
 
+// allow modder control flags (the "D" means "Delegate")
+enum
+{
+	AMC_D_AUTOMAP			= 1 << 0,	// Allow automap
+	AMC_D_USERSAVE			= 1 << 1,	// Always allow user saves
+};
+
+
 // [RH] Compatibility flags.
 enum : unsigned int
 {

@@ -526,6 +526,11 @@ CVAR (Flag, sv_killbossmonst,		dmflags2, DF2_KILLBOSSMONST);
 CVAR (Flag, sv_nocountendmonst,		dmflags2, DF2_NOCOUNTENDMONST);
 CVAR (Flag, sv_respawnsuper,		dmflags2, DF2_RESPAWN_SUPER);
 
+// allow mod control flags
+CVAR (Int, amcflags, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR (Flag, amc_automap,			amcflags, AMC_D_AUTOMAP);
+CVAR (Flag, amc_saves,				amcflags, AMC_D_USERSAVE);
+
 //==========================================================================
 //
 // CVAR compatflags

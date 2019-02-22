@@ -42,6 +42,7 @@
 #include "c_dispatch.h"
 #include "g_game.h"
 #include "vm.h"
+#include "g_levellocals.h"
 
 EXTERN_CVAR (Bool, saveloadconfirmation) // [mxd]
 
@@ -170,6 +171,9 @@ CCMD (quicksave)
 		S_Sound (CHAN_VOICE | CHAN_UI, "menu/invalid", snd_menuvolume, ATTN_NONE);
 		return;
 	}
+
+	if ((amcflags & AMC_D_USERSAVE) && (primaryLevel->flags3 & LEVEL3_NOSAVEGAME))
+		return;
 
 	if (gamestate != GS_LEVEL)
 		return;

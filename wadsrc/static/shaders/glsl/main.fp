@@ -1,11 +1,14 @@
-in vec4 pixelpos;
-in vec3 glowdist;
-in vec3 gradientdist;
 
-in vec4 vWorldNormal;
-in vec4 vEyeNormal;
-in vec4 vTexCoord;
-in vec4 vColor;
+layout(location = 0) in vec4 vTexCoord;
+layout(location = 1) in vec4 vColor;
+
+#ifndef SIMPLE	// we do not need these for simple shaders
+layout(location = 2) in vec4 pixelpos;
+layout(location = 3) in vec3 glowdist;
+layout(location = 4) in vec3 gradientdist;
+layout(location = 5) in vec4 vWorldNormal;
+layout(location = 6) in vec4 vEyeNormal;
+#endif
 
 layout(location=0) out vec4 FragColor;
 #ifdef GBUFFER_PASS

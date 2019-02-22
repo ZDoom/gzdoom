@@ -71,7 +71,7 @@ void VulkanFrameBuffer::InitializeState()
 	mViewpoints = new GLViewpointBuffer;
 	mLights = new FLightBuffer();
 
-	mShaderManager.reset(new VkShaderManager());
+	mShaderManager.reset(new VkShaderManager(device));
 	mSamplerManager.reset(new VkSamplerManager(device));
 	mRenderState.reset(new VkRenderState());
 }

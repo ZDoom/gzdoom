@@ -5,6 +5,9 @@
 #include "r_data/matrix.h"
 #include "name.h"
 
+class VulkanDevice;
+class VulkanShader;
+
 struct PushConstants
 {
 	int uTextureMode;
@@ -54,6 +57,18 @@ struct PushConstants
 class VkShaderManager
 {
 public:
-	VkShaderManager();
+	VkShaderManager(VulkanDevice *device);
 	~VkShaderManager();
+
+	std::unique_ptr<VulkanShader> vert;
+	std::unique_ptr<VulkanShader> frag;
+
+private:
+	std::unique_ptr<VulkanShader> LoadVertShader(const char *vert_lump, const char *defines);
+	std::unique_ptr<VulkanShader> LoadFragShader(const char *frag_lump, const char *material_lump, const char *light_lump, const char *defines);
+
+	FString GetTargetGlslVersion();
+	FString LoadShaderLump(const char *lumpname);
+
+	VulkanDevice *device;
 };

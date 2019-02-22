@@ -964,14 +964,12 @@ set (PCH_SOURCES
 	scriptutil.cpp
 	st_stuff.cpp
 	statistics.cpp
-	stats.cpp
 	v_2ddrawer.cpp
 	v_drawtext.cpp
 	v_blend.cpp
 	v_draw.cpp
 	v_framebuffer.cpp
 	v_palette.cpp
-	v_pfx.cpp
 	v_video.cpp
 	wi_stuff.cpp
 	gamedata/a_keys.cpp
@@ -1267,6 +1265,7 @@ set (PCH_SOURCES
 	utility/nodebuilder/nodebuild_gl.cpp
 	utility/nodebuilder/nodebuild_utility.cpp
 	utility/sc_man.cpp
+	utility/stats.cpp
 	utility/cmdlib.cpp
 	utility/colormatcher.cpp
 	utility/configfile.cpp

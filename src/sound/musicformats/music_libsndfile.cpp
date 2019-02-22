@@ -34,6 +34,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <mutex>
 #include "i_musicinterns.h"
 #include "v_text.h"
 #include "templates.h"
@@ -53,7 +54,7 @@ public:
 	FString GetStats();
 	
 protected:
-	FCriticalSection CritSec;
+	std::mutex CritSec;
 	FileReader Reader;
 	SoundDecoder *Decoder;
 	int Channels;
@@ -387,7 +388,7 @@ bool SndFileSong::Read(SoundStream *stream, void *vbuff, int ilen, void *userdat
 {
 	char *buff = (char*)vbuff;
 	SndFileSong *song = (SndFileSong *)userdata;
-	song->CritSec.Enter();
+	std::lock_guard<std::mutex> lock(song->CritSec);
 	
 	size_t len = size_t(ilen);
 	size_t currentpos = song->Decoder->getSampleOffset();
@@ -399,7 +400,6 @@ bool SndFileSong::Read(SoundStream *stream, void *vbuff, int ilen, void *userdat
 		if (currentpos == maxpos)
 		{
 			memset(buff, 0, len);
-			song->CritSec.Leave();
 			return false;
 		}
 		if (currentpos + framestoread > maxpos)
@@ -436,7 +436,6 @@ bool SndFileSong::Read(SoundStream *stream, void *vbuff, int ilen, void *userdat
 			size_t readlen = song->Decoder->read(buff, len);
 			if (readlen == 0)
 			{
-				song->CritSec.Leave();
 				return false;
 			}
 			buff += readlen;
@@ -447,6 +446,5 @@ bool SndFileSong::Read(SoundStream *stream, void *vbuff, int ilen, void *userdat
 			}
 		}
 	}
-	song->CritSec.Leave();
 	return true;
 }

@@ -36,6 +36,7 @@
 #endif
 #include <stdlib.h>
 #include <memory>
+#include <mutex>
 
 #include "common.h"
 #include "wm_error.h"
@@ -43,7 +44,6 @@
 #include "reverb.h"
 #include "gus_pat.h"
 #include "wildmidi_lib.h"
-#include "critsec.h"
 #include "files.h"
 #include "i_soundfont.h"
 
@@ -84,7 +84,7 @@ static int fix_release = 0;
 static int auto_amp = 0;
 static int auto_amp_with_amp = 0;
 
-static FCriticalSection patch_lock;
+static std::mutex patch_lock;
 extern std::unique_ptr<FSoundFontReader> wm_sfreader;
 
 struct _channel {
@@ -151,7 +151,7 @@ struct _mdi {
 		reverb = NULL;
 	}
 
-	FCriticalSection lock;
+	std::mutex lock;
 	unsigned long int samples_to_mix;
 
 	unsigned short midi_master_vol;
@@ -179,7 +179,7 @@ static double newt_coeffs[58][58];	/* for start/end of samples */
 #define MAX_GAUSS_ORDER 34		/* 34 is as high as we can go before errors crop up */
 static double *gauss_table = NULL;	/* *gauss_table[1<<FPBITS] */
 static int gauss_n = MAX_GAUSS_ORDER;
-static FCriticalSection gauss_lock;
+static std::mutex gauss_lock;
 
 static void init_gauss(void) {
 	/* init gauss table */
@@ -192,9 +192,8 @@ static void init_gauss(void) {
 	double z[35];
 	double *gptr, *t;
 
-	gauss_lock.Enter();
+	std::lock_guard<std::mutex> lock(gauss_lock);
 	if (gauss_table) {
-		gauss_lock.Leave();
 		return;
 	}
 
@@ -241,14 +240,13 @@ static void init_gauss(void) {
 	}
 
 	gauss_table = t;
-	gauss_lock.Leave();
 }
 
-static void free_gauss(void) {
-	gauss_lock.Enter();
+static void free_gauss(void) 
+{
+	std::lock_guard<std::mutex> lock(gauss_lock);
 	free(gauss_table);
 	gauss_table = NULL;
-	gauss_lock.Leave();
 }
 
 struct _hndl {
@@ -562,7 +560,7 @@ static void WM_FreePatches(void) {
 	struct _patch * tmp_patch;
 	struct _sample * tmp_sample;
 
-	patch_lock.Enter();
+	std::lock_guard<std::mutex> lock(patch_lock);
 	for (i = 0; i < 128; i++) {
 		while (patch[i]) {
 			while (patch[i]->first_sample) {
@@ -577,7 +575,6 @@ static void WM_FreePatches(void) {
 			patch[i] = tmp_patch;
 		}
 	}
-	patch_lock.Leave();
 }
 
 /* wm_strdup -- adds extra space for appending up to 4 chars */
@@ -1324,27 +1321,23 @@ static struct _patch *
 get_patch_data(unsigned short patchid) {
 	struct _patch *search_patch;
 
-	patch_lock.Enter();
+	std::lock_guard<std::mutex> lock(patch_lock);
 
 	search_patch = patch[patchid & 0x007F];
 
 	if (search_patch == NULL) {
-		patch_lock.Leave();
 		return NULL;
 	}
 
 	while (search_patch) {
 		if (search_patch->patchid == patchid) {
-			patch_lock.Leave();
 			return search_patch;
 		}
 		search_patch = search_patch->next;
 	}
 	if ((patchid >> 8) != 0) {
-		patch_lock.Leave();
 		return (get_patch_data(patchid & 0x00FF));
 	}
-	patch_lock.Leave();
 	return NULL;
 }
 
@@ -1363,16 +1356,14 @@ static void load_patch(struct _mdi *mdi, unsigned short patchid) {
 		return;
 	}
 
-	patch_lock.Enter();
+	std::lock_guard<std::mutex> lock(patch_lock);
 	if (!tmp_patch->loaded) {
 		if (load_sample(tmp_patch) == -1) {
-			patch_lock.Leave();
 			return;
 		}
 	}
 
 	if (tmp_patch->first_sample == NULL) {
-		patch_lock.Leave();
 		return;
 	}
 
@@ -1381,7 +1372,6 @@ static void load_patch(struct _mdi *mdi, unsigned short patchid) {
 			(sizeof(struct _patch*) * mdi->patch_count));
 	mdi->patches[mdi->patch_count - 1] = tmp_patch;
 	tmp_patch->inuse_count++;
-	patch_lock.Leave();
 }
 
 static struct _sample *
@@ -1389,17 +1379,14 @@ get_sample_data(struct _patch *sample_patch, unsigned long int freq) {
 	struct _sample *last_sample = NULL;
 	struct _sample *return_sample = NULL;
 
-	patch_lock.Enter();
+	std::lock_guard<std::mutex> lock(patch_lock);
 	if (sample_patch == NULL) {
-		patch_lock.Leave();
 		return NULL;
 	}
 	if (sample_patch->first_sample == NULL) {
-		patch_lock.Leave();
 		return NULL;
 	}
 	if (freq == 0) {
-		patch_lock.Leave();
 		return sample_patch->first_sample;
 	}
 
@@ -1408,7 +1395,6 @@ get_sample_data(struct _patch *sample_patch, unsigned long int freq) {
 	while (last_sample) {
 		if (freq > last_sample->freq_low) {
 			if (freq < last_sample->freq_high) {
-				patch_lock.Leave();
 				return last_sample;
 			} else {
 				return_sample = last_sample;
@@ -1416,7 +1402,6 @@ get_sample_data(struct _patch *sample_patch, unsigned long int freq) {
 		}
 		last_sample = last_sample->next;
 	}
-	patch_lock.Leave();
 	return return_sample;
 }
 
@@ -2100,7 +2085,7 @@ static void freeMDI(struct _mdi *mdi) {
 	unsigned long int i;
 
 	if (mdi->patch_count != 0) {
-		patch_lock.Enter();
+		std::lock_guard<std::mutex> lock(patch_lock);
 		for (i = 0; i < mdi->patch_count; i++) {
 			mdi->patches[i]->inuse_count--;
 			if (mdi->patches[i]->inuse_count == 0) {
@@ -2114,7 +2099,6 @@ static void freeMDI(struct _mdi *mdi) {
 				mdi->patches[i]->loaded = 0;
 			}
 		}
-		patch_lock.Leave();
 		free(mdi->patches);
 	}
 
@@ -2632,7 +2616,7 @@ WM_SYMBOL int WildMidi_Close(midi * handle) {
 				0);
 		return -1;
 	}
-	mdi->lock.Enter();
+	std::lock_guard<std::mutex> lock(mdi->lock);
 	if (first_handle->handle == handle) {
 		tmp_handle = first_handle->next;
 		free(first_handle);
@@ -2703,17 +2687,15 @@ WM_SYMBOL int WildMidi_SetOption(midi * handle, unsigned short int options,
 	}
 
 	mdi = (struct _mdi *) handle;
-	mdi->lock.Enter();
+	std::lock_guard<std::mutex> lock(mdi->lock);
 	if ((!(options & 0x0007)) || (options & 0xFFF8)) {
 		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG, "(invalid option)",
 				0);
-		mdi->lock.Leave();
 		return -1;
 	}
 	if (setting & 0xFFF8) {
 		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG,
 				"(invalid setting)", 0);
-		mdi->lock.Leave();
 		return -1;
 	}
 
@@ -2727,7 +2709,6 @@ WM_SYMBOL int WildMidi_SetOption(midi * handle, unsigned short int options,
 		_WM_reset_reverb(mdi->reverb);
 	}
 
-	mdi->lock.Leave();
 	return 0;
 }
 
@@ -2743,12 +2724,11 @@ WildMidi_GetInfo(midi * handle) {
 				0);
 		return NULL;
 	}
-	mdi->lock.Enter();
+	std::lock_guard<std::mutex> lock(mdi->lock);
 	if (mdi->tmp_info == NULL) {
 		mdi->tmp_info = (struct _WM_Info*)malloc(sizeof(struct _WM_Info));
 		if (mdi->tmp_info == NULL) {
 			_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, "to set info", 0);
-			mdi->lock.Leave();
 			return NULL;
 		}
 		mdi->tmp_info->copyright = NULL;
@@ -2763,7 +2743,6 @@ WildMidi_GetInfo(midi * handle) {
 	} else {
 		mdi->tmp_info->copyright = NULL;
 	}
-	mdi->lock.Leave();
 	return mdi->tmp_info;
 }
 

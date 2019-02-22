@@ -35,12 +35,13 @@
 #include "p_setup.h"
 #include "p_lnspec.h"
 #include "p_conversation.h"
-#include "p_udmf.h"
+#include "udmf.h"
 #include "doomerrors.h"
 #include "actor.h"
 #include "a_pickups.h"
 #include "w_wad.h"
 #include "g_levellocals.h"
+#include "maploader.h"
 
 #define Zd 1
 #define St 2
@@ -496,9 +497,9 @@ class USDFParser : public UDMFParserBase
 	//===========================================================================
 
 public:
-	bool Parse(FLevelLocals *l, int lumpnum, FileReader &lump, int lumplen)
+	bool Parse(MapLoader *loader,int lumpnum, FileReader &lump, int lumplen)
 	{
-		Level = l;
+		Level = loader->Level;
 		sc.OpenMem(Wads.GetLumpFullName(lumpnum), lump.Read(lumplen));
 		sc.SetCMode(true);
 		// Namespace must be the first field because everything else depends on it.
@@ -541,7 +542,7 @@ public:
 			{
 				sc.MustGetToken('=');
 				sc.MustGetToken(TK_StringConst);
-				LoadScriptFile(Level, sc.String, true);
+				loader->LoadScriptFile(sc.String, true, 0);
 				sc.MustGetToken(';');
 			}
 			else
@@ -607,13 +608,13 @@ public:
 
 
 
-bool P_ParseUSDF(FLevelLocals *l, int lumpnum, FileReader &lump, int lumplen)
+bool MapLoader::ParseUSDF(int lumpnum, FileReader &lump, int lumplen)
 {
 	USDFParser parse;
 
 	try
 	{
-		if (!parse.Parse(l, lumpnum, lump, lumplen))
+		if (!parse.Parse(this, lumpnum, lump, lumplen))
 		{
 			// clean up the incomplete dialogue structures here
 			return false;

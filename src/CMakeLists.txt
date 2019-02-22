@@ -952,7 +952,6 @@ set (PCH_SOURCES
 	p_states.cpp
 	p_things.cpp
 	p_tick.cpp
-	p_usdf.cpp
 	p_user.cpp
 	r_utility.cpp
 	r_sky.cpp
@@ -1075,6 +1074,8 @@ set (PCH_SOURCES
 	maploader/slopes.cpp
 	maploader/glnodes.cpp
 	maploader/udmf.cpp
+	maploader/usdf.cpp
+	maploader/strifedialogue.cpp
 	maploader/polyobjects.cpp
 	maploader/renderinfo.cpp
 	maploader/compatibility.cpp

@@ -40,7 +40,7 @@
 #include "gi.h"
 #include "r_sky.h"
 #include "g_level.h"
-#include "p_udmf.h"
+#include "udmf.h"
 #include "r_state.h"
 #include "w_wad.h"
 #include "p_tags.h"

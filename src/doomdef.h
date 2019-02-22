@@ -283,6 +283,8 @@ enum
 	DF2_KILLBOSSMONST		= 1 << 25,	// Kills all monsters spawned by a boss cube when the boss dies
 	DF2_NOCOUNTENDMONST		= 1 << 26,	// Do not count monsters in 'end level when dying' sectors towards kill count
 	DF2_RESPAWN_SUPER		= 1 << 27,	// Respawn invulnerability and invisibility
+	DF2_YES_AUTOMAP			= 1 << 28,	// Allow automap
+	DF2_YES_USERSAVE		= 1 << 29,	// Always allow user saves
 };
 
 // [RH] Compatibility flags.

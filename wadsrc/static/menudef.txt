@@ -1435,6 +1435,13 @@ OptionValue  JumpCrouchFreeLook
 	2, "$OPTVAL_ON"
 }
 
+OptionValue  AllowAutoMap
+{
+	0, "$OPTVAL_DEFAULT"
+	1, "$OPTVAL_OFF"
+	1024, "$OPTVAL_ON"
+}
+
 
 OptionMenu GameplayOptions protected
 {
@@ -1465,13 +1472,14 @@ OptionMenu GameplayOptions protected
 	Option "$GMPLYMNU_ALLOWFREELOOK",			"sv_freelook", "JumpCrouchFreeLook"
 	Option "$GMPLYMNU_ALLOWFOV",				"sv_nofov", "NoYes"
 	Option "$GMPLYMNU_BFGFREEAIM",				"sv_nobfgaim", "NoYes"
-	Option "$GMPLYMNU_ALLOWAUTOMAP",			"sv_noautomap", "NoYes"
+	Option "$GMPLYMNU_ALLOWAUTOMAP",			"sv_automap", "AllowAutoMap"
 	Option "$GMPLYMNU_AUTOMAPALLIES",			"sv_noautomapallies", "NoYes"
 	Option "$GMPLYMNU_ALLOWSPYING",				"sv_disallowspying", "NoYes"
 	Option "$GMPLYMNU_CHASECAM",				"sv_chasecam", "YesNo"
 	Option "$GMPLYMNU_DONTCHECKAMMO",			"sv_dontcheckammo", "NoYes"
 	Option "$GMPLYMNU_KILLBOSSSPAWNS",			"sv_killbossmonst", "YesNo"
 	Option "$GMPLYMNU_NOCOUNTENDMONSTER",		"sv_nocountendmonst", "NoYes"
+	Option "$GMPLYMNU_ALWAYSALLOWSAVES",		"sv_allowsaves", "YesNo"
 
 	StaticText " "
 	StaticText "$GMPLYMNU_DEATHMATCH",1

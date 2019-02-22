@@ -53,6 +53,7 @@
 #include "events.h"
 #include "v_video.h"
 #include "scripting/types.h"
+#include "g_levellocals.h"
 
 int DMenu::InMenu;
 //
@@ -465,6 +466,12 @@ void M_SetMenu(FName menu, int param)
 			M_StartMessage (GStrings("SAVEDEAD"), 1);
 			return;
 		}
+		if (!(dmflags2 & DF2_YES_USERSAVE) && (primaryLevel->flags3 & LEVEL3_NOSAVEGAME))
+		{
+			M_StartMessage (GStrings("SAVEBLOCKED"), 1);
+			return;
+		}
+
 
 	case NAME_VideoModeMenu:
 		break;

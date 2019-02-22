@@ -525,6 +525,9 @@ CVAR (Flag, sv_dontcheckammo,		dmflags2, DF2_DONTCHECKAMMO);
 CVAR (Flag, sv_killbossmonst,		dmflags2, DF2_KILLBOSSMONST);
 CVAR (Flag, sv_nocountendmonst,		dmflags2, DF2_NOCOUNTENDMONST);
 CVAR (Flag, sv_respawnsuper,		dmflags2, DF2_RESPAWN_SUPER);
+CVAR (Flag, sv_allowautomap,		dmflags2, DF2_YES_AUTOMAP);
+CVAR (Flag, sv_allowsaves,		dmflags2, DF2_YES_USERSAVE);
+CVAR (Mask, sv_automap,                        dmflags2, DF2_NO_AUTOMAP|DF2_YES_AUTOMAP);
 
 //==========================================================================
 //

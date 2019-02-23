@@ -49,6 +49,8 @@
 #include "i_music.h"
 #include "am_map.h"
 #include "v_video.h"
+#include "gi.h"
+#include "intermission/intermission.h"
 
 DVector2 AM_GetPosition();
 int Net_GetLatency(int *ld, int *ad);
@@ -1626,6 +1628,76 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 // TexMan exports
 //
 //=====================================================================================
+
+ static int IsJumpingAllowed(FLevelLocals *self)
+ {
+	 return self->IsJumpingAllowed();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, IsJumpingAllowed, IsJumpingAllowed)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	 ACTION_RETURN_BOOL(self->IsJumpingAllowed());
+ }
+
+ //==========================================================================
+ //
+ //
+ //==========================================================================
+
+ static int IsCrouchingAllowed(FLevelLocals *self)
+ {
+	 return self->IsCrouchingAllowed();
+ }
+
+
+ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, IsCrouchingAllowed, IsCrouchingAllowed)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	 ACTION_RETURN_BOOL(self->IsCrouchingAllowed());
+ }
+
+ //==========================================================================
+ //
+ //
+ //==========================================================================
+
+ static int IsFreelookAllowed(FLevelLocals *self)
+ {
+	 return self->IsFreelookAllowed();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, IsFreelookAllowed, IsFreelookAllowed)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	 ACTION_RETURN_BOOL(self->IsFreelookAllowed());
+ }
+ 
+ //==========================================================================
+//
+// ZScript counterpart to ACS ChangeSky, uses TextureIDs
+//
+//==========================================================================
+ DEFINE_ACTION_FUNCTION(FLevelLocals, ChangeSky)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	 PARAM_INT(sky1);
+	 PARAM_INT(sky2);
+	 self->skytexture1 = FSetTextureID(sky1);
+	 self->skytexture2 = FSetTextureID(sky2);
+	 InitSkyMap(self);
+	 return 0;
+ }
+
+ DEFINE_ACTION_FUNCTION(FLevelLocals, StartIntermission)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	 PARAM_NAME(seq);
+	 PARAM_INT(state);
+	 F_StartIntermission(seq, (uint8_t)state);
+	 return 0;
+ }
+
 
  // This is needed to convert the strings to char pointers.
  static void ReplaceTextures(FLevelLocals *self, const FString &from, const FString &to, int flags)

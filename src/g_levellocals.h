@@ -143,6 +143,13 @@ private:
 	void AddDisplacementForPortal(FSectorPortal *portal);
 	void AddDisplacementForPortal(FLinePortal *portal);
 	bool ConnectPortalGroups();
+
+	void SerializePlayers(FSerializer &arc, bool skipload);
+	void CopyPlayer(player_t *dst, player_t *src, const char *name);
+	void ReadOnePlayer(FSerializer &arc, bool skipload);
+	void ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayersNow, bool skipload);
+	void SerializeSounds(FSerializer &arc);
+
 public:
 	void SnapshotLevel();
 	void UnSnapshotLevel(bool hubLoad);
@@ -646,9 +653,47 @@ public:
 
 	TObjPtr<DSpotState *> SpotState = nullptr;
 
-	bool		IsJumpingAllowed() const;
-	bool		IsCrouchingAllowed() const;
-	bool		IsFreelookAllowed() const;
+	//==========================================================================
+	//
+	//
+	//==========================================================================
+
+	bool IsJumpingAllowed() const
+	{
+		if (dmflags & DF_NO_JUMP)
+			return false;
+		if (dmflags & DF_YES_JUMP)
+			return true;
+		return !(flags & LEVEL_JUMP_NO);
+	}
+
+	//==========================================================================
+	//
+	//
+	//==========================================================================
+
+	bool IsCrouchingAllowed() const
+	{
+		if (dmflags & DF_NO_CROUCH)
+			return false;
+		if (dmflags & DF_YES_CROUCH)
+			return true;
+		return !(flags & LEVEL_CROUCH_NO);
+	}
+
+	//==========================================================================
+	//
+	//
+	//==========================================================================
+
+	bool IsFreelookAllowed() const
+	{
+		if (dmflags & DF_NO_FREELOOK)
+			return false;
+		if (dmflags & DF_YES_FREELOOK)
+			return true;
+		return !(flags & LEVEL_FREELOOK_NO);
+	}
 
 	node_t		*HeadNode() const
 	{

@@ -688,6 +688,7 @@ file( GLOB HEADER_FILES
 	sound/timidity/*.h
 	sound/timiditypp/*.h
 	sound/wildmidi/*.h
+	rendering/2d/*.h
 	rendering/swrenderer/*.h
 	rendering/swrenderer/textures/*.h
 	rendering/swrenderer/drawers/*.h
@@ -917,7 +918,6 @@ set (PCH_SOURCES
 	dobjgc.cpp
 	dobjtype.cpp
 	doomstat.cpp
-	f_wipe.cpp
 	g_cvars.cpp
 	g_dumpinfo.cpp
 	g_game.cpp
@@ -961,10 +961,6 @@ set (PCH_SOURCES
 	scriptutil.cpp
 	st_stuff.cpp
 	statistics.cpp
-	v_2ddrawer.cpp
-	v_drawtext.cpp
-	v_blend.cpp
-	v_draw.cpp
 	v_framebuffer.cpp
 	v_palette.cpp
 	v_video.cpp
@@ -1023,6 +1019,11 @@ set (PCH_SOURCES
 	g_statusbar/sbarinfo.cpp
 	g_statusbar/sbar_mugshot.cpp
 	g_statusbar/shared_sbar.cpp
+	rendering/2d/f_wipe.cpp
+	rendering/2d/v_2ddrawer.cpp
+	rendering/2d/v_drawtext.cpp
+	rendering/2d/v_blend.cpp
+	rendering/2d/v_draw.cpp
 	rendering/gl/renderer/gl_renderer.cpp
 	rendering/gl/renderer/gl_renderstate.cpp
 	rendering/gl/renderer/gl_renderbuffers.cpp
@@ -1344,6 +1345,7 @@ include_directories( .
 	gamedata/textures
 	gamedata/fonts
 	rendering
+	rendering/2d
 	sound
 	sound/oplsynth
 	sound/timidity
@@ -1472,6 +1474,7 @@ source_group("Intermission" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/int
 source_group("Map Loader" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/maploader/.+")
 source_group("Menu" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/menu/.+")
 source_group("Rendering" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/.+")
+source_group("Rendering\\2D" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/2d/.+")
 source_group("Rendering\\Hardware Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/.+")
 source_group("Rendering\\Hardware Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/data/.+")
 source_group("Rendering\\Hardware Renderer\\Dynamic Lights" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/dynlights/.+")

@@ -907,7 +907,6 @@ set (PCH_SOURCES
 	c_expr.cpp
 	c_functions.cpp
 	ct_chat.cpp
-	cycler.cpp
 	d_iwad.cpp
 	d_main.cpp
 	d_anonstats.cpp
@@ -960,7 +959,6 @@ set (PCH_SOURCES
 	serializer.cpp
 	scriptutil.cpp
 	st_stuff.cpp
-	statistics.cpp
 	v_framebuffer.cpp
 	v_palette.cpp
 	v_video.cpp
@@ -979,6 +977,7 @@ set (PCH_SOURCES
 	gamedata/info.cpp
 	gamedata/keysections.cpp
 	gamedata/p_terrain.cpp
+	gamedata/statistics.cpp
 	gamedata/teaminfo.cpp
 	g_shared/a_pickups.cpp
 	g_shared/a_action.cpp
@@ -1143,6 +1142,7 @@ set (PCH_SOURCES
 	intermission/intermission.cpp
 	intermission/intermission_parse.cpp
 	r_data/colormaps.cpp
+	r_data/cycler.cpp
 	r_data/gldefs.cpp
 	r_data/a_dynlightdata.cpp
 	r_data/r_translate.cpp

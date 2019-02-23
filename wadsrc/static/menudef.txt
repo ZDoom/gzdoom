@@ -128,7 +128,8 @@ LISTMENU "MainMenuTextOnly"
 	
 	TextItem "$MNU_NEWGAME", "n", "PlayerclassMenu"
 	TextItem "$MNU_OPTIONS", "o", "OptionsMenu"
-	TextItem "$MNU_GAMEFILES", "g", "GameFilesMenu"
+	TextItem "$MNU_LOADGAME", "l", "LoadGameMenu"
+	TextItem "$MNU_SAVEGAME", "s", "SaveGameMenu"
 	IfOption(ReadThis)
 	{
 		TextItem "$MNU_INFO", "i", "ReadThisMenu"

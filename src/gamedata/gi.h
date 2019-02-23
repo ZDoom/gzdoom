@@ -119,6 +119,7 @@ struct gameinfo_t
 	bool swapmenu;
 	bool dontcrunchcorpses;
 	bool correctprintbold;
+	bool forcetextinmenus;
 	TArray<FName> creditPages;
 	TArray<FName> finalePages;
 	TArray<FName> infoPages;

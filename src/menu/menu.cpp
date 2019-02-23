@@ -414,23 +414,30 @@ void M_SetMenu(FName menu, int param)
 	switch (menu)
 	{
 	case NAME_Mainmenu:
-		if (gameinfo.gametype & GAME_DoomStrifeChex)
+		if (gameinfo.gametype & GAME_DoomStrifeChex)	// Raven's games always used text based menus
 		{
-			// For these games we must check up-front if they get localized because in that case another template must be used.
-			DMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_Playerclassmenu);
-			if (desc != nullptr)
+			if (gameinfo.forcetextinmenus)	// If text is forced, this overrides any check.
 			{
-				if ((*desc)->IsKindOf(RUNTIME_CLASS(DListMenuDescriptor)))
+				menu = NAME_MainmenuTextOnly;
+			}
+			else
+			{
+				// For these games we must check up-front if they get localized because in that case another template must be used.
+				DMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_Mainmenu);
+				if (desc != nullptr)
 				{
-					DListMenuDescriptor *ld = static_cast<DListMenuDescriptor*>(*desc);
-					if (ld->mFromEngine && cl_localizationmode != 0)
+					if ((*desc)->IsKindOf(RUNTIME_CLASS(DListMenuDescriptor)))
 					{
-						// This assumes that replacing one graphic will replace all of them.
-						// So this only checks the "New game" entry for localization capability.
-						FTextureID texid = TexMan.CheckForTexture("M_NGAME", ETextureType::MiscPatch);
-						if (!TexMan.OkForLocalization(texid, "$MNU_NEWGAME"))
+						DListMenuDescriptor *ld = static_cast<DListMenuDescriptor*>(*desc);
+						if (ld->mFromEngine && cl_localizationmode != 0)
 						{
-							menu = NAME_MainmenuTextOnly;
+							// This assumes that replacing one graphic will replace all of them.
+							// So this only checks the "New game" entry for localization capability.
+							FTextureID texid = TexMan.CheckForTexture("M_NGAME", ETextureType::MiscPatch);
+							if (!TexMan.OkForLocalization(texid, "$MNU_NEWGAME"))
+							{
+								menu = NAME_MainmenuTextOnly;
+							}
 						}
 					}
 				}

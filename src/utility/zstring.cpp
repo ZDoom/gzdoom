@@ -1039,6 +1039,7 @@ void FString::Substitute (const char *oldstr, const char *newstr)
 
 void FString::Substitute (const char *oldstr, const char *newstr, size_t oldstrlen, size_t newstrlen)
 {
+	if (oldstr == nullptr || newstr == nullptr || *oldstr == 0) return;
 	LockBuffer();
 	for (size_t checkpt = 0; checkpt < Len(); )
 	{

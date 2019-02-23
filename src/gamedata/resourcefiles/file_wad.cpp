@@ -187,7 +187,7 @@ bool FWadFile::Open(bool quiet)
 		Lumps[i].LumpSize = isBigEndian ? BigLong(fileinfo[i].Size) : LittleLong(fileinfo[i].Size);
 		Lumps[i].Namespace = ns_global;
 		Lumps[i].Flags = Lumps[i].Compressed? LUMPF_COMPRESSED : 0;
-		Lumps[i].FullName = NULL;
+		Lumps[i].FullName = "";
 		
 		// Check if the lump is within the WAD file and print a warning if not.
 		if (Lumps[i].Position + Lumps[i].LumpSize > wadSize || Lumps[i].Position < 0 || Lumps[i].LumpSize < 0)

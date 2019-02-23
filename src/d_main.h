@@ -160,7 +160,7 @@ public:
 	int GetIWadFlags(unsigned int num) const
 	{
 		if (num < mIWadInfos.Size()) return mIWadInfos[num].flags;
-		else return false;
+		else return 0;
 	}
 
 };

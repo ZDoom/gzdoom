@@ -163,6 +163,13 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 					sc.MustGetString();
 					iwad->BkColor = V_GetColor(NULL, sc);
 				}
+				else if (sc.Compare("IgnoreTitlePatches"))
+				{
+					sc.MustGetStringName("=");
+					sc.MustGetNumber();
+					if (sc.Number) iwad->flags |= GI_IGNORETITLEPATCHES;
+					else iwad->flags &= ~GI_IGNORETITLEPATCHES;
+				}
 				else if (sc.Compare("Load"))
 				{
 					sc.MustGetStringName("=");

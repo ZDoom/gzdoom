@@ -3016,7 +3016,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	LoadMapinfoACSLump();
 
 
-	P_LoadStrifeConversations(Level, map, lumpname);
+	LoadStrifeConversations(map, lumpname);
 
 	FMissingTextureTracker missingtex;
 

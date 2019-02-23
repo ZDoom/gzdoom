@@ -667,7 +667,7 @@ void MapLoader::FloodSectorStacks()
 			for (auto section : HandledSections)
 			{
 				if (section->sector != &sector)
-					Printf("Marked section of sector %d for ceiling portal\n", section->sector->Index());
+					DPrintf(DMSG_NOTIFY, "Marked section of sector %d for ceiling portal\n", section->sector->Index());
 				section->flags |= FSection::DONTRENDERCEILING;
 			}
 		}
@@ -688,7 +688,7 @@ void MapLoader::FloodSectorStacks()
 			for (auto section : HandledSections)
 			{
 				if (section->sector != &sector)
-					Printf("Marked section of sector %d for floor portal\n", section->sector->Index());
+					DPrintf(DMSG_NOTIFY, "Marked section of sector %d for floor portal\n", section->sector->Index());
 				section->flags |= FSection::DONTRENDERFLOOR;
 			}
 		}

@@ -987,10 +987,11 @@ FString FStringFormat(VM_ARGS, int offset)
 					ThrowAbortException(X_FORMAT_ERROR, "Cannot mix explicit and implicit arguments.");
 				FString argnumstr = fmt_current.Mid(1);
 				if (!argnumstr.IsInt()) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for argument number, got '%s'.", argnumstr.GetChars());
-				argnum = argnumstr.ToLong();
-				if (argnum < 1 || argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format (tried to access argument %d, %d total).", argnum, numparam);
+				auto argnum64 = argnumstr.ToLong();
+				if (argnum64 < 1 || argnum64 >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format (tried to access argument %d, %d total).", argnum64, numparam);
 				fmt_current = "%";
 				haveargnums = true;
+				argnum = int(argnum64);
 			}
 			else
 			{
@@ -1157,3 +1158,17 @@ DEFINE_ACTION_FUNCTION(FStringStruct, AppendFormat)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(FStringStruct, AppendCharacter)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT(c);
+	self->AppendCharacter(c);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FStringStruct, DeleteLastCharacter)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	self->DeleteLastCharacter();
+	return 0;
+}

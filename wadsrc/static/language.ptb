@@ -582,19 +582,6 @@ PD_ALL6 = "Precisa das 6 chaves para abrir a porta";
 PD_ALL6O = "Precisa das 6 chaves para ativar este objeto";
 PD_ALLKEYS = "Precisa de todas as chaves";
 
-// MBF (BOOM?) narration backgrounds
-bgflatE1 = "FLOOR4_8";
-bgflatE2 = "SFLR6_1";
-bgflatE3 = "MFLR8_4";
-bgflatE4 = "MFLR8_3";
-bgflat06 = "SLIME16";
-bgflat11 = "RROCK14";
-bgflat20 = "RROCK07";
-bgflat30 = "RROCK17";
-bgflat15 = "RROCK13";
-bgflat31 = "RROCK19";
-bgcastcall = "BOSSBACK";
-
 // Mensagens de fim de partida online
 TXT_FRAGLIMIT = "Pontuação atingida.";
 TXT_TIMELIMIT = "Tempo atingido.";
@@ -981,9 +968,6 @@ TAG_10GOLD = "10 moedas";
 TAG_25GOLD = "25 moedas";
 TAG_50GOLD = "50 moedas";
 TAG_300GOLD = "sortudo! 300 moedas";
-TAG_QUEST4 = "quest4";
-TAG_QUEST5 = "quest5";
-TAG_QUEST6 = "quest6";
 
 // Item tags: Strife NPCs
 TAG_ACOLYTE = "ACOLYTE";

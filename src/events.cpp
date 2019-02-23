@@ -41,6 +41,7 @@
 #include "d_net.h"
 #include "g_game.h"
 #include "info.h"
+#include "utf8.h"
 
 EventManager staticEventManager;
 EventManager eventManager;
@@ -1026,7 +1027,7 @@ FUiEvent::FUiEvent(const event_t *ev)
 		break;
 	case EV_GUI_Char:
 		KeyChar = ev->data1;
-		KeyString = FString(char(ev->data1));
+		KeyString = MakeUTF8(ev->data1);
 		IsAlt = !!ev->data2; // only true for Win32, not sure about SDL
 		break;
 	default: // mouse event

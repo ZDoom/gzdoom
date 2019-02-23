@@ -664,9 +664,9 @@ void CALLBACK WinMIDIDevice::CallbackFunc(HMIDIOUT hOut, UINT uMsg, DWORD_PTR dw
 
 static bool IgnoreMIDIVolume(UINT id)
 {
-	MIDIOUTCAPS caps;
+	MIDIOUTCAPSA caps;
 
-	if (MMSYSERR_NOERROR == midiOutGetDevCaps(id, &caps, sizeof(caps)))
+	if (MMSYSERR_NOERROR == midiOutGetDevCapsA(id, &caps, sizeof(caps)))
 	{
 		if (caps.wTechnology == MIDIDEV_MAPPER)
 		{

@@ -300,7 +300,6 @@ class FTexture
 	friend class FBrightmapTexture;
 	friend class FFont;
 	friend class FSpecialFont;
-	friend void RecordTextureColors (FTexture *pic, uint8_t *usedcolors);
 
 
 public:
@@ -482,6 +481,10 @@ protected:
 	}
 
 	void SetScaledSize(int fitwidth, int fitheight);
+	void SetScale(const DVector2 &scale)
+	{
+		Scale = scale;
+	}
 
 protected:
 	uint16_t Width, Height;
@@ -521,46 +524,48 @@ class FTextureManager
 public:
 	FTextureManager ();
 	~FTextureManager ();
+	
+private:
+	int ResolveLocalizedTexture(int texnum);
+	int PalCheck(int tex);
 
+	FTexture *InternalGetTexture(int texnum, bool animate, bool localize, bool palettesubst)
+	{
+		if ((unsigned)texnum >= Textures.Size()) return nullptr;
+		if (animate) texnum = Translation[texnum];
+		if (localize && Textures[texnum].HasLocalization) texnum = ResolveLocalizedTexture(texnum);
+		if (palettesubst) texnum = PalCheck(texnum);
+		return Textures[texnum].Texture;
+	}
+public:
 	// This only gets used in UI code so we do not need PALVERS handling.
 	FTexture *GetTextureByName(const char *name, bool animate = false)
 	{
 		FTextureID texnum = GetTextureID (name, ETextureType::MiscPatch);
-		if (!texnum.Exists()) return nullptr;
-		if (!animate) return Textures[texnum.GetIndex()].Texture;
-	 	else return Textures[Translation[texnum.GetIndex()]].Texture;
+		return InternalGetTexture(texnum.GetIndex(), animate, true, false);
 	}
 	
 	FTexture *GetTexture(FTextureID texnum, bool animate = false)
 	{
-		if ((size_t)texnum.GetIndex() >= Textures.Size()) return nullptr;
-		if (animate) texnum = Translation[texnum.GetIndex()];
-		return Textures[texnum.GetIndex()].Texture;
+		return InternalGetTexture(texnum.GetIndex(), animate, true, false);
 	}
 	
 	// This is the only access function that should be used inside the software renderer.
 	FTexture *GetPalettedTexture(FTextureID texnum, bool animate)
 	{
-		if ((size_t)texnum.texnum >= Textures.Size()) return nullptr;
-		if (animate) texnum = Translation[texnum.GetIndex()];
-		texnum = PalCheck(texnum).GetIndex();
-		return Textures[texnum.GetIndex()].Texture;
+		return InternalGetTexture(texnum.GetIndex(), animate, true, true);
 	}
 	
 	FTexture *ByIndex(int i, bool animate = false)
 	{
-		if (unsigned(i) >= Textures.Size()) return NULL;
-		if (animate) i = Translation[i];
-		return Textures[i].Texture;
+		return InternalGetTexture(i, animate, true, false);
 	}
+	
 	FTexture *FindTexture(const char *texname, ETextureType usetype = ETextureType::MiscPatch, BITFIELD flags = TEXMAN_TryAny);
+	bool OkForLocalization(FTextureID texnum, const char *substitute);
 
 	void FlushAll();
 
-
-//public:
-
-	FTextureID PalCheck(FTextureID tex);
 
 	enum
 	{
@@ -569,7 +574,8 @@ public:
 		TEXMAN_ReturnFirst = 4,
 		TEXMAN_AllowSkins = 8,
 		TEXMAN_ShortNameOnly = 16,
-		TEXMAN_DontCreate = 32
+		TEXMAN_DontCreate = 32,
+		TEXMAN_Localize = 64
 	};
 
 	enum
@@ -593,6 +599,7 @@ public:
 	void ParseTextureDef(int remapLump, FMultipatchTextureBuilder &build);
 	void SortTexturesByType(int start, int end);
 	bool AreTexturesCompatible (FTextureID picnum1, FTextureID picnum2);
+	void AddLocalizedVariants();
 
 	FTextureID CreateTexture (int lumpnum, ETextureType usetype=ETextureType::Any);	// Also calls AddTexture
 	FTextureID AddTexture (FTexture *texture);
@@ -658,9 +665,11 @@ private:
 	{
 		FTexture *Texture;
 		int HashNext;
+		bool HasLocalization;
 	};
 	enum { HASH_END = -1, HASH_SIZE = 1027 };
 	TArray<TextureHash> Textures;
+	TMap<uint64_t, int> LocalizedTextures;
 	TArray<int> Translation;
 	int HashFirst[HASH_SIZE];
 	FTextureID DefaultTexture;

@@ -167,7 +167,7 @@ FString TimidityMIDIDevice::GetStats()
 	FString out;
 	int i, used;
 
-	CritSec.Enter();
+	std::lock_guard<std::mutex> lock(CritSec);
 	for (i = used = 0; i < Renderer->voices; ++i)
 	{
 		int status = Renderer->voice[i].status;
@@ -205,7 +205,7 @@ FString TimidityMIDIDevice::GetStats()
 			}
 		}
 	}
-	CritSec.Leave();
+	CritSec.unlock();
 	out.Format(TEXTCOLOR_YELLOW"%3d/%3d ", used, Renderer->voices);
 	out += dots;
 	if (Renderer->cut_notes | Renderer->lost_notes)

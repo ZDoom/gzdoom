@@ -56,10 +56,10 @@ CUSTOM_CVAR (Float, teamdamage, 0.f, CVAR_SERVERINFO)
 	}
 }
 
-CUSTOM_CVAR (String, language, "auto", CVAR_ARCHIVE)
+CUSTOM_CVAR (String, language, "auto", CVAR_ARCHIVE|CVAR_NOINITCALL)
 {
 	SetLanguageIDs ();
-	GStrings.LoadStrings (false);
+	GStrings.UpdateLanguage();
 	for (auto Level : AllLevels())
 	{
 		// does this even make sense on secondary levels...?

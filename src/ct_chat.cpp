@@ -39,14 +39,13 @@
 #include "d_event.h"
 #include "sbar.h"
 #include "v_video.h"
+#include "utf8.h"
 
-#define QUEUESIZE		128
-#define MESSAGESIZE		128
-#define MESSAGELEN		265
-#define HU_INPUTX		0
-#define HU_INPUTY		(0 + (screen->Font->GetHeight () + 1))
+enum
+{
+	QUEUESIZE = 128
+};
 
-void CT_PasteChat(const char *clip);
 
 EXTERN_CVAR (Int, con_scaletext)
 
@@ -61,19 +60,20 @@ int active_con_scaletext();
 void CT_Init ();
 void CT_Drawer ();
 bool CT_Responder (event_t *ev);
+void CT_PasteChat(const char *clip);
 
 int chatmodeon;
 
 // Private data
 
 static void CT_ClearChatMessage ();
-static void CT_AddChar (char c);
+static void CT_AddChar (int c);
 static void CT_BackSpace ();
 static void ShoveChatStr (const char *str, uint8_t who);
 static bool DoSubstitution (FString &out, const char *in);
 
-static int len;
-static uint8_t ChatQueue[QUEUESIZE];
+static int CharLen;
+static TArray<uint8_t> ChatQueue;
 
 CVAR (String, chatmacro1, "I'm ready to kick butt!", CVAR_ARCHIVE)
 CVAR (String, chatmacro2, "I'm OK.", CVAR_ARCHIVE)
@@ -111,9 +111,9 @@ CVAR (Bool, chat_substitution, false, CVAR_ARCHIVE)
 
 void CT_Init ()
 {
-	len = 0; // initialize the queue index
+	ChatQueue.Clear();
+	CharLen = 0;
 	chatmodeon = 0;
-	ChatQueue[0] = 0;
 }
 
 //===========================================================================
@@ -141,7 +141,9 @@ bool CT_Responder (event_t *ev)
 		{
 			if (ev->data1 == '\r')
 			{
-				ShoveChatStr ((char *)ChatQueue, chatmodeon - 1);
+				ChatQueue.Push(0);
+				ShoveChatStr ((char *)ChatQueue.Data(), chatmodeon - 1);
+				ChatQueue.Pop();
 				CT_Stop ();
 				return true;
 			}
@@ -161,7 +163,9 @@ bool CT_Responder (event_t *ev)
 			else if (ev->data1 == 'C' && (ev->data3 & GKM_CTRL))
 #endif // __APPLE__
 			{
-				I_PutInClipboard ((char *)ChatQueue);
+				ChatQueue.Push(0);
+				I_PutInClipboard ((char *)ChatQueue.Data());
+				ChatQueue.Pop();
 				return true;
 			}
 #ifdef __APPLE__
@@ -183,7 +187,7 @@ bool CT_Responder (event_t *ev)
 			}
 			else
 			{
-				CT_AddChar (char(ev->data1));
+				CT_AddChar (ev->data1);
 			}
 			return true;
 		}
@@ -206,16 +210,17 @@ bool CT_Responder (event_t *ev)
 
 void CT_PasteChat(const char *clip)
 {
-	if (clip != NULL && *clip != '\0')
+	if (clip != nullptr && *clip != '\0')
 	{
+		auto p = (const uint8_t *)clip;
 		// Only paste the first line.
-		while (*clip != '\0')
+		while (auto chr = GetCharFromString(p))
 		{
-			if (*clip == '\n' || *clip == '\r' || *clip == '\b')
+			if (chr == '\n' || chr == '\r' || chr == '\b')
 			{
 				break;
 			}
-			CT_AddChar (*clip++);
+			CT_AddChar (chr);
 		}
 	}
 }
@@ -228,10 +233,11 @@ void CT_PasteChat(const char *clip)
 
 void CT_Drawer (void)
 {
+	FFont *displayfont = ConFont;
 	if (chatmodeon)
 	{
 		static const char *prompt = "Say: ";
-		int i, x, scalex, y, promptwidth;
+		int x, scalex, y, promptwidth;
 
 		y = (viewactive || gamestate != GS_LEVEL) ? -10 : -30;
 
@@ -243,33 +249,25 @@ void CT_Drawer (void)
 
 		y += ((SCREENHEIGHT == viewheight && viewactive) || gamestate != GS_LEVEL) ? screen_height : st_y;
 
-		promptwidth = SmallFont->StringWidth (prompt) * scalex;
-		x = SmallFont->GetCharWidth ('_') * scalex * 2 + promptwidth;
+		promptwidth = displayfont->StringWidth (prompt) * scalex;
+		x = displayfont->GetCharWidth (displayfont->GetCursor()) * scalex * 2 + promptwidth;
 
-		// figure out if the text is wider than the screen->
+		FString printstr = ChatQueue;
+		// figure out if the text is wider than the screen
 		// if so, only draw the right-most portion of it.
-		for (i = len - 1; i >= 0 && x < screen_width; i--)
+		const uint8_t *textp = (const uint8_t*)printstr.GetChars();
+		while(*textp)
 		{
-			x += SmallFont->GetCharWidth (ChatQueue[i] & 0x7f) * scalex;
+			auto textw = displayfont->StringWidth(textp);
+			if (x + textw * scalex < screen_width) break;
+			GetCharFromString(textp);
 		}
+		printstr += displayfont->GetCursor();
 
-		if (i >= 0)
-		{
-			i++;
-		}
-		else
-		{
-			i = 0;
-		}
-
-		// draw the prompt, text, and cursor
-		ChatQueue[len] = SmallFont->GetCursor();
-		ChatQueue[len+1] = '\0';
-		screen->DrawText (SmallFont, CR_GREEN, 0, y, prompt, 
+		screen->DrawText (displayfont, CR_GREEN, 0, y, prompt, 
 			DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
-		screen->DrawText (SmallFont, CR_GREY, promptwidth, y, (char *)(ChatQueue + i), 
+		screen->DrawText (displayfont, CR_GREY, promptwidth, y, printstr, 
 			DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
-		ChatQueue[len] = '\0';
 	}
 
 	if (players[consoleplayer].camera != NULL &&
@@ -289,12 +287,20 @@ void CT_Drawer (void)
 //
 //===========================================================================
 
-static void CT_AddChar (char c)
+static void CT_AddChar (int c)
 {
-	if (len < QUEUESIZE-2)
+	if (CharLen < QUEUESIZE-2)
 	{
-		ChatQueue[len++] = c;
-		ChatQueue[len] = 0;
+		int size;
+		auto encode = MakeUTF8(c, &size);
+		if (*encode)
+		{
+			for (int i = 0; i < size; i++)
+			{
+				ChatQueue.Push(encode[i]);
+			}
+			CharLen++;
+		}
 	}
 }
 
@@ -307,9 +313,12 @@ static void CT_AddChar (char c)
 
 static void CT_BackSpace ()
 {
-	if (len)
+	if (CharLen)
 	{
-		ChatQueue[--len] = 0;
+		int endpos = ChatQueue.Size() - 1;
+		while (endpos > 0 && ChatQueue[endpos] >= 0x80 && ChatQueue[endpos] < 0xc0) endpos--;
+		ChatQueue.Clamp(endpos);
+		CharLen--;
 	}
 }
 
@@ -322,8 +331,7 @@ static void CT_BackSpace ()
 
 static void CT_ClearChatMessage ()
 {
-	ChatQueue[0] = 0;
-	len = 0;
+	ChatQueue.Clear();
 }
 
 //===========================================================================
@@ -355,11 +363,11 @@ static void ShoveChatStr (const char *str, uint8_t who)
 
 	if (!chat_substitution || !DoSubstitution (substBuff, str))
 	{
-		Net_WriteString (str);
+		Net_WriteString(MakeUTF8(str));
 	}
 	else
 	{
-		Net_WriteString (substBuff);
+		Net_WriteString(MakeUTF8(substBuff));
 	}
 }
 
@@ -392,9 +400,9 @@ static bool DoSubstitution (FString &out, const char *in)
 			++b;
 		}
 
-		ptrdiff_t len = b - a;
+		ptrdiff_t ByteLen = b - a;
 
-		if (len == 6)
+		if (ByteLen == 6)
 		{
 			if (strnicmp(a, "health", 6) == 0)
 			{
@@ -412,7 +420,7 @@ static bool DoSubstitution (FString &out, const char *in)
 				}
 			}
 		}
-		else if (len == 5)
+		else if (ByteLen == 5)
 		{
 			if (strnicmp(a, "armor", 5) == 0)
 			{
@@ -420,7 +428,7 @@ static bool DoSubstitution (FString &out, const char *in)
 				out.AppendFormat("%d", armor != NULL ? armor->IntVar(NAME_Amount) : 0);
 			}
 		}
-		else if (len == 9)
+		else if (ByteLen == 9)
 		{
 			if (strnicmp(a, "ammocount", 9) == 0)
 			{
@@ -438,7 +446,7 @@ static bool DoSubstitution (FString &out, const char *in)
 				}
 			}
 		}
-		else if (len == 4)
+		else if (ByteLen == 4)
 		{
 			if (strnicmp(a, "ammo", 4) == 0)
 			{
@@ -456,7 +464,7 @@ static bool DoSubstitution (FString &out, const char *in)
 				}
 			}
 		}
-		else if (len == 0)
+		else if (ByteLen == 0)
 		{
 			out += '$';
 			if (*b == '$')
@@ -467,7 +475,7 @@ static bool DoSubstitution (FString &out, const char *in)
 		else
 		{
 			out += '$';
-			out.AppendCStrPart(a, len);
+			out.AppendCStrPart(a, ByteLen);
 		}
 		a = b;
 	}

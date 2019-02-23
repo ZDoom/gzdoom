@@ -65,9 +65,6 @@ struct MapData;
 
 PClassActor *GetStrifeType (int typenum);
 
-bool LoadScriptFile (FLevelLocals *Level, const char *name, bool include, int type = 0);
-
-void P_LoadStrifeConversations (FLevelLocals *Level, MapData *map, const char *mapname);
 void P_FreeStrifeConversations ();
 
 void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveangle);
@@ -76,7 +73,6 @@ void P_ResumeConversation ();
 void P_ConversationCommand (int netcode, int player, uint8_t **stream);
 
 class FileReader;
-bool P_ParseUSDF(FLevelLocals *Level, int lumpnum, FileReader &lump, int lumplen);
 
 
 #endif

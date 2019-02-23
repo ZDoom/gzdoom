@@ -933,7 +933,7 @@ void ReadUserInfo(FSerializer &arc, userinfo_t &info, FString &skin)
 	const char *str;
 
 	info.Reset();
-	skin = NULL;
+	skin = "";
 	if (arc.BeginObject("userinfo"))
 	{
 		while ((key = arc.GetKey()))

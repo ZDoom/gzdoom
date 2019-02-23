@@ -89,6 +89,7 @@
 
 #include "zstring.h"
 #include "gdtoa.h"
+#include "utf8.h"
 
 
 /*
@@ -557,8 +558,11 @@ namespace StringFormat
 		else if (type == 'c')
 		{
 			intarg = va_arg (arglist, int);
-			buffer[0] = char(intarg);
-			bufflen = 1;
+			if (utf8_encode(intarg, (uint8_t*)buffer, &bufflen) != 0)
+			{
+				buffer[0] = '?';
+				bufflen = 1;
+			}
 			obuff = buffer;
 		}
 		else if (type == 's')

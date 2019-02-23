@@ -369,7 +369,7 @@ struct VMValue
 		}
 		if (Type == REGT_STRING)
 		{
-			return s().ToLong();
+			return (int)s().ToLong();
 		}
 		// FIXME
 		return 0;

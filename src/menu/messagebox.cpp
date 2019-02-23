@@ -191,8 +191,8 @@ CCMD (quicksave)
 
 	S_Sound(CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 
-	FString tempstring;
-	tempstring.Format(GStrings("QSPROMPT"), savegameManager.quickSaveSlot->SaveTitle.GetChars());
+	FString tempstring = GStrings("QSPROMPT");
+	tempstring.Substitute("%s", savegameManager.quickSaveSlot->SaveTitle.GetChars());
 
 	DMenu *newmenu = CreateMessageBoxMenu(CurrentMenu, tempstring, 0, false, NAME_None, []()
 	{
@@ -234,8 +234,8 @@ CCMD (quickload)
 		G_LoadGame(savegameManager.quickSaveSlot->Filename.GetChars());
 		return;
 	}
-	FString tempstring;
-	tempstring.Format(GStrings("QLPROMPT"), savegameManager.quickSaveSlot->SaveTitle.GetChars());
+	FString tempstring = GStrings("QLPROMPT");
+	tempstring.Substitute("%s", savegameManager.quickSaveSlot->SaveTitle.GetChars());
 
 	M_StartControlPanel(true);
 

@@ -37,6 +37,7 @@
 #include "intermission/intermission.h"
 #include "g_level.h"
 #include "w_wad.h"
+#include "gstrings.h"
 	
 
 static void ReplaceIntermission(FName intname,FIntermissionDescriptor *desc)
@@ -291,9 +292,23 @@ bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
 		sc.MustGetToken('=');
 		sc.MustGetToken(TK_StringConst);
 		int lump = Wads.CheckNumForFullName(sc.String, true);
+		bool done = false;
 		if (lump > 0)
 		{
-			mText = Wads.ReadLump(lump).GetString();
+			// Check if this comes from either Hexen.wad or Hexdd.wad and if so, map to the string table.
+			int fileno = Wads.GetLumpFile(lump);
+			auto fn = Wads.GetWadName(fileno);
+			if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
+			{
+				FStringf key("TXT_%.5s_%s", fn, sc.String);
+				if (GStrings.exists(key))
+				{
+					mText = "$" + key;
+					done = true;
+				}
+			}
+			if (!done)
+				mText = Wads.ReadLump(lump).GetString();
 		}
 		else
 		{

@@ -1,4 +1,4 @@
-#include "critsec.h"
+#include <mutex>
 #include "musicblock.h"
 
 class FileReader;
@@ -28,7 +28,7 @@ protected:
 	double LastOffset;
 	bool FullPan;
 
-	FCriticalSection ChipAccess;
+	std::mutex ChipAccess;
 };
 
 class OPLmusicFile : public OPLmusicBlock

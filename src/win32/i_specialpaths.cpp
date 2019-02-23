@@ -68,15 +68,14 @@ bool UseKnownFolders()
 	// of the program. (e.g. Somebody could add write access while the
 	// program is running.)
 	static INTBOOL iswritable = -1;
-	FString testpath;
 	HANDLE file;
 
 	if (iswritable >= 0)
 	{
 		return !iswritable;
 	}
-	testpath << progdir << "writest";
-	file = CreateFile(testpath, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+	std::wstring testpath = progdir.WideString() + L"writest";
+	file = CreateFile(testpath.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL,
 		CREATE_ALWAYS,
 		FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, NULL);
 	if (file != INVALID_HANDLE_VALUE)
@@ -102,19 +101,14 @@ bool UseKnownFolders()
 
 bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create, FString &path)
 {
-	using OptWin32::SHGetFolderPathA;
 	using OptWin32::SHGetKnownFolderPath;
 
-	char pathstr[MAX_PATH];
+	WCHAR pathstr[MAX_PATH];
 
 	// SHGetKnownFolderPath knows about more folders than SHGetFolderPath, but is
 	// new to Vista, hence the reason we support both.
 	if (!SHGetKnownFolderPath)
 	{
-		// NT4 doesn't even have this function.
-		if (!SHGetFolderPathA)
-			return false;
-
 		if (shell_folder < 0)
 		{ // Not supported by SHGetFolderPath
 			return false;
@@ -123,7 +117,7 @@ bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create
 		{
 			shell_folder |= CSIDL_FLAG_CREATE;
 		}
-		if (FAILED(SHGetFolderPathA(NULL, shell_folder, NULL, 0, pathstr)))
+		if (FAILED(SHGetFolderPathW(NULL, shell_folder, NULL, 0, pathstr)))
 		{
 			return false;
 		}
@@ -137,18 +131,9 @@ bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create
 		{
 			return false;
 		}
-		// FIXME: Support Unicode, at least for filenames. This function
-		// has no MBCS equivalent, so we have to convert it since we don't
-		// support Unicode. :(
-		bool converted = false;
-		if (WideCharToMultiByte(GetACP(), WC_NO_BEST_FIT_CHARS, wpath, -1,
-			pathstr, countof(pathstr), NULL, NULL) > 0)
-		{
-			path = pathstr;
-			converted = true;
-		}
+		path = wpath;
 		CoTaskMemFree(wpath);
-		return converted;
+		return true;
 	}
 }
 
@@ -279,14 +264,14 @@ FString M_GetConfigPath(bool for_reading)
 		{
 			// Is it valid for a user name to have slashes?
 			// Check for them and substitute just in case.
-			char *probe = uname;
+			auto probe = uname;
 			while (*probe != 0)
 			{
 				if (*probe == '\\' || *probe == '/')
 					*probe = '_';
 				++probe;
 			}
-			path << GAMENAMELOWERCASE "-" << uname << ".ini";
+			path << GAMENAMELOWERCASE "-" << FString(uname) << ".ini";
 		}
 		else
 		{ // Couldn't get user name, so just use zdoom.ini

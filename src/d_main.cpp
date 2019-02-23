@@ -2027,8 +2027,6 @@ static void D_DoomInit()
 
 	gamestate = GS_STARTUP;
 
-	SetLanguageIDs ();
-
 	const char *v = Args->CheckValue("-rngseed");
 	if (v)
 	{
@@ -2428,7 +2426,7 @@ void D_DoomMain (void)
 		}
 
 		// [RH] Initialize localizable strings.
-		GStrings.LoadStrings (false);
+		GStrings.LoadStrings ();
 
 		V_InitFontColors ();
 
@@ -2679,7 +2677,7 @@ void D_DoomMain (void)
 							if (StoredWarp.IsNotEmpty())
 							{
 								AddCommandString(StoredWarp);
-								StoredWarp = NULL;
+								StoredWarp = "";
 							}
 						}
 						else

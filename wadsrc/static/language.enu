@@ -1,6 +1,6 @@
 /* U.S. English. (Sorry, it's not English English.) */
 
-[enu default]
+[default]
 
 SECRETMESSAGE = "A secret is revealed!";
 
@@ -634,19 +634,6 @@ PD_ALL6 = "You need all six keys to open this door";
 PD_ALL6O = "You need all six keys to activate this object";
 PD_ALLKEYS = "You need all the keys";
 
-// MBF (BOOM?) narration backgrounds
-bgflatE1 = "FLOOR4_8";
-bgflatE2 = "SFLR6_1";
-bgflatE3 = "MFLR8_4";
-bgflatE4 = "MFLR8_3";
-bgflat06 = "SLIME16";
-bgflat11 = "RROCK14";
-bgflat20 = "RROCK07";
-bgflat30 = "RROCK17";
-bgflat15 = "RROCK13";
-bgflat31 = "RROCK19";
-bgcastcall = "BOSSBACK";
-
 // Gameflow messages
 TXT_FRAGLIMIT = "Fraglimit hit.";
 TXT_TIMELIMIT = "Timelimit hit.";
@@ -1052,9 +1039,6 @@ TAG_10GOLD = "10 gold";
 TAG_25GOLD = "25 gold";
 TAG_50GOLD = "50 gold";
 TAG_300GOLD = "300 gold";
-TAG_QUEST4 = "quest4";
-TAG_QUEST5 = "quest5";
-TAG_QUEST6 = "quest4";
 
 // Item tags: Strife NPCs
 TAG_ACOLYTE = "ACOLYTE";
@@ -1310,17 +1294,24 @@ TXT_FREEZEOFF = "Freeze mode off";
 TXT_STRANGE = "You feel strange...";
 TXT_STRANGER = "You feel even stranger.";
 TXT_NOTSTRANGE = "You feel like yourself again.";
-TXT_LEADBOOTSON = "LEAD BOOTS ON";
-TXT_LEADBOOTSOFF = "LEAD BOOTS OFF";
+TXT_LEADBOOTSON = "Lead Boots On";
+TXT_LEADBOOTSOFF = "Lead Boots Off";
 TXT_LIGHTER = "You feel lighter";
 TXT_GRAVITY = "Gravity weighs you down";
 
 // Raven intermission
 
-TXT_IMKILLS = "KILLS";
-TXT_IMITEMS = "ITEMS";
-TXT_IMSECRETS = "SECRETS";
-TXT_IMTIME = "TIME";
+TXT_IMKILLS = "Kills";
+TXT_IMITEMS = "Items";
+TXT_IMSECRETS = "Secrets";
+TXT_IMTIME = "Time";
+TXT_IMSUCKS = "Sucks";
+TXT_IMSCRT = "Scrt";
+TXT_IMPAR = "Par";
+
+// For testing the extended characters' positioning.
+//TXT_IMKILLS			= "AÀÁÂÃÄÅÆÇÈÉÊËÌÍÎ";
+//TXT_IMITEMS			= "OÐÏÑÒÓÔÕÖØÙÚÛÜÝÞß";
 
 RAVENQUITMSG = "ARE YOU SURE YOU WANT TO QUIT?";
 
@@ -1720,7 +1711,7 @@ MNU_DEMESNE			= "THE STAGNANT DEMESNE";
 $ifgame(heretic) SWSTRING = "ONLY AVAILABLE IN THE REGISTERED VERSION";
 
 // Options Menu
-OPTMNU_TITLE				= "OPTIONS";
+OPTMNU_TITLE				= "Options";
 OPTMNU_CONTROLS				= "Customize Controls";
 OPTMNU_MOUSE				= "Mouse options";
 OPTMNU_JOYSTICK				= "Joystick options";
@@ -1739,10 +1730,11 @@ OPTMNU_DEFAULTS				= "Reset to defaults";
 OPTMNU_RESETTOSAVED			= "Reset to last saved";
 OPTMNU_CONSOLE				= "Go to console";
 OPTMNU_REVERB				= "Reverb environment editor";
+OPTMNU_LANGUAGE				= "Language";
 
 // Controls Menu
 
-CNTRLMNU_TITLE					= "CUSTOMIZE CONTROLS";
+CNTRLMNU_TITLE					= "Customize Controls";
 CNTRLMNU_SWITCHTEXT1			= "ENTER to change, BACKSPACE to clear";
 CNTRLMNU_SWITCHTEXT2			= "Press new key for control, ESC to cancel";
 CNTRLMNU_CONTROLS				= "Controls";
@@ -1836,7 +1828,7 @@ CNTRLMNU_STATS					= "Weapons/ammo/stats";
 
 // Mouse Menu
 
-MOUSEMNU_TITLE				= "MOUSE OPTIONS";
+MOUSEMNU_TITLE				= "Mouse Options";
 MOUSEMNU_ENABLEMOUSE		= "Enable mouse";
 MOUSEMNU_MOUSEINMENU		= "Enable mouse in menus";
 MOUSEMNU_SHOWBACKBUTTON		= "Show back button";
@@ -1855,12 +1847,12 @@ MOUSEMNU_LOOKSTRAFE			= "Lookstrafe";
 
 // Joystick Menu
 
-JOYMNU_TITLE				= "CONFIGURE CONTROLLER";
-JOYMNU_OPTIONS				= "CONTROLLER OPTIONS";
+JOYMNU_TITLE				= "Configure Controller";
+JOYMNU_OPTIONS				= "Controller Options";
 JOYMNU_NOMENU				= "Block controller input in menu";
 
 // Player Setup Menu
-MNU_PLAYERSETUP		= "PLAYER SETUP";
+MNU_PLAYERSETUP		= "Player Setup";
 PLYRMNU_NAME			= "Name";
 PLYRMNU_TEAM			= "Team";
 PLYRMNU_PLAYERCOLOR		= "Color";
@@ -1878,7 +1870,7 @@ PLYRMNU_SEEFRONT		= "TO SEE FRONT";
 PLYRMNU_SEEBACK			= "TO SEE BACK";
 
 // Display Options
-DSPLYMNU_TITLE					= "DISPLAY OPTIONS";
+DSPLYMNU_TITLE					= "Display Options";
 DSPLYMNU_SCOREBOARD				= "Scoreboard Options";
 DSPLYMNU_SCREENSIZE				= "Screen size";
 DSPLYMNU_BRIGHTNESS				= "Brightness";
@@ -1892,8 +1884,6 @@ DSPLYMNU_SHOWENDOOM				= "Show ENDOOM screen";
 DSPLYMNU_BLOODFADE				= "Blood Flash Intensity";
 DSPLYMNU_PICKUPFADE				= "Pickup Flash Intensity";
 DSPLYMNU_WATERFADE				= "Underwater Blend Intensity";
-DSPLYMNU_PALLETEHACK			= "DirectDraw palette hack"; // Not used
-DSPLYMNU_ATTACHEDSURFACES		= "Use attached surfaces"; // Not used
 DSPLYMNU_SKYMODE				= "Sky render mode";
 DSPLYMNU_LINEARSKY				= "Linear skies";
 DSPLYMNU_GZDFULLBRIGHT			= "Fullbright overrides sector color";
@@ -2002,7 +1992,7 @@ MISCMNU_CACHETIME				= "Time threshold for node caching";
 MISCMNU_CLEARNODECACHE			= "Clear node cache";
 MISCMNU_INTERSCROLL				= "Allow skipping of intermission scrollers";
 // Automap Options
-AUTOMAPMNU_TITLE				= "AUTOMAP OPTIONS";
+AUTOMAPMNU_TITLE				= "Automap Options";
 AUTOMAPMNU_COLORSET				= "Map color set";
 AUTOMAPMNU_CUSTOMCOLORS			= "Allow map defined colors";
 AUTOMAPMNU_SETCUSTOMCOLORS		= "Set custom colors";
@@ -2028,7 +2018,7 @@ AUTOMAPMNU_MARKFONT				= "Mark font";
 AUTOMAPMNU_MARKCOLOR			= "Mark color";
 
 // Automap Controls
-MAPCNTRLMNU_TITLE 			= "CUSTOMIZE MAP CONTROLS";
+MAPCNTRLMNU_TITLE 			= "Customize Map Controls";
 MAPCNTRLMNU_CONTROLS		= "Map Controls";
 MAPCNTRLMNU_PANLEFT			= "Pan left";
 MAPCNTRLMNU_PANRIGHT		= "Pan right";
@@ -2044,7 +2034,7 @@ MAPCNTRLMNU_SETMARK			= "Set mark";
 MAPCNTRLMNU_CLEARMARK		= "Clear mark";
 
 // Automap Colors
-MAPCOLORMNU_TITLE 						= "CUSTOMIZE MAP COLORS";
+MAPCOLORMNU_TITLE 						= "Customize Map Colors";
 MAPCOLORMNU_DEFAULTMAPCOLORS			= "Restore default custom colors";
 MAPCOLORMNU_BACKCOLOR 					= "Background";
 MAPCOLORMNU_YOURCOLOR 					= "You";
@@ -2075,7 +2065,7 @@ MAPCOLORMNU_OVCHEATMODE 				= "Overlay Cheat Mode";
 MAPCOLORMNU_PORTAL						= "Portal Overlays";
 
 // Message Options
-MSGMNU_TITLE				= "MESSAGES";
+MSGMNU_TITLE				= "Messages";
 MSGMNU_SHOWMESSAGES			= "Show messages";
 MSGMNU_SHOWOBITUARIES		= "Show obituaries";
 MSGMNU_SHOWSECRETS			= "Show secret notifications";
@@ -2093,7 +2083,7 @@ MSGMNU_LONGSAVEMESSAGES		= "Detailed save messages";
 MSGMNU_DEVELOPER			= "Developer message mode";
 
 // Scoreboard Options
-SCRBRDMNU_TITLE				= "SCOREBOARD OPTIONS";
+SCRBRDMNU_TITLE				= "Scoreboard Options";
 SCRBRDMNU_COOPERATIVE		= "Cooperative Options";
 SCRBRDMNU_ENABLE			= "Enable Scoreboard";
 SCRBRDMNU_HEADERCOLOR		= "Header Color";
@@ -2103,7 +2093,7 @@ SCRBRDMNU_DEATHMATCH		= "Deathmatch Options";
 SCRBRDMNU_TEAMDEATHMATCH	= "Team Deathmatch Options";
 
 // Gameplay Menu
-GMPLYMNU_TITLE				= "GAMEPLAY OPTIONS";
+GMPLYMNU_TITLE				= "Gameplay Options";
 GMPLYMNU_TEAMPLAY			= "Teamplay";
 GMPLYMNU_TEAMDAMAGE			= "Team damage scalar";
 GMPLYMNU_SMARTAUTOAIM		= "Smart Autoaim";
@@ -2160,7 +2150,7 @@ GMPLYMNU_LOSEHALFAMMO		= "Lose half ammo";
 GMPLYMNU_SPAWNWHEREDIED		= "Spawn where died";
 
 // Compatibility Options
-CMPTMNU_TITLE				= "COMPATIBILITY OPTIONS";
+CMPTMNU_TITLE				= "Compatibility Options";
 CMPTMNU_MODE				= "Compatibility mode";
 CMPTMNU_ACTORBEHAVIOR		= "Actor Behavior";
 CMPTMNU_CORPSEGIBS			= "Crushed monsters can be resurrected";
@@ -2210,7 +2200,7 @@ CMPTMNU_PUSHWINDOW			= "Non-blocking lines can be pushed";
 CMPTMNU_CHECKSWITCHRANGE	= "Enable buggy CheckSwitchRange behavior";
 
 // Sound Options
-SNDMNU_TITLE			= "SOUND OPTIONS";
+SNDMNU_TITLE			= "Sound Options";
 SNDMNU_SFXVOLUME		= "Sounds volume";
 SNDMNU_MENUVOLUME		= "Menu volume";
 SNDMNU_MUSICVOLUME		= "Music volume";
@@ -2227,13 +2217,13 @@ SNDMNU_MODREPLAYER		= "Module replayer options";
 SNDMNU_MIDIPLAYER		= "Midi player options";
 
 // OpenAL Options
-OPENALMNU_TITLE				= "OPENAL OPTIONS";
+OPENALMNU_TITLE				= "OpenAL Options";
 OPENALMNU_PLAYBACKDEVICE	= "Playback device";
 OPENALMNU_ENABLEEFX			= "Enable EFX";
 OPENALMNU_RESAMPLER			= "Resampler";
 
 // Advanced Sound Options
-ADVSNDMNU_TITLE				= "ADVANCED SOUND OPTIONS";
+ADVSNDMNU_TITLE				= "Advanced Sound Options";
 ADVSNDMNU_SAMPLERATE		= "Sample rate";
 ADVSNDMNU_HRTF				= "HRTF";
 ADVSNDMNU_OPLSYNTHESIS		= "OPL Synthesis";
@@ -2287,7 +2277,7 @@ ADLVLMODEL_APOGEE			= "Apogee";
 ADLVLMODEL_WIN9X			= "Win9X-like";
 
 // Module Replayer Options
-MODMNU_TITLE			= "MODULE REPLAYER OPTIONS";
+MODMNU_TITLE			= "Module Replayer Options";
 MODMNU_REPLAYERENGINE	= "Replayer engine";
 MODMNU_MASTERVOLUME		= "Master Volume";
 MODMNU_QUALITY			= "Quality";
@@ -2295,14 +2285,14 @@ MODMNU_VOLUMERAMPING	= "Volume ramping";
 MODMNU_CHIPOMATIC		= "Chip-o-matic";
 
 // Renderer Options
-RNDMNU_TITLE			= "CHANGE RENDERER";
+RNDMNU_TITLE			= "Change Renderer";
 RNDMNU_RENDERER			= "Hardware Acceleration";
 RNDMNU_TRUECOLOR		= "Software Truecolor Mode";
 RNDMNU_POLY			 	= "Poly Renderer (experimental)";
 RNDMNU_CANVAS			= "Software Canvas";
 
 // Video Options
-VIDMNU_TITLE			= "VIDEO MODE";
+VIDMNU_TITLE			= "Video Mode";
 VIDMNU_RENDERMODE		= "Render Mode";
 VIDMNU_FULLSCREEN		= "Fullscreen";
 VIDMNU_HIDPI			= "Retina/HiDPI support";
@@ -2331,7 +2321,7 @@ VIDMNU_ASPECT169		= "16:9 Aspect";
 VIDMNU_ASPECT1610		= "16:10 Aspect";
 
 // Network Options
-NETMNU_TITLE					= "NETWORK OPTIONS";
+NETMNU_TITLE					= "Network Options";
 NETMNU_LOCALOPTIONS				= "Local options";
 NETMNU_MOVEPREDICTION			= "Movement prediction";
 NETMNU_LINESPECIALPREDICTION	= "Predict line actions";
@@ -2719,79 +2709,6 @@ OB_MPPHASEZORCH = "%o was phase zorched by %k.";
 OB_MPLAZ_BOOM = "%o fell prey to %k's LAZ device.";
 OB_MPLAZ_SPLASH = "%o was lazzed by %k.";
 
-// Music names for Doom. These are needed in the string table only so that they can
-// be replaced by Dehacked.
-// Note that these names are not prefixed with 'd_' because that's how Dehacked patches
-// expect them.
-
-MUSIC_E1M1 = "e1m1";
-MUSIC_E1M2 = "e1m2";
-MUSIC_E1M3 = "e1m3";
-MUSIC_E1M4 = "e1m4";
-MUSIC_E1M5 = "e1m5";
-MUSIC_E1M6 = "e1m6";
-MUSIC_E1M7 = "e1m7";
-MUSIC_E1M8 = "e1m8";
-MUSIC_E1M9 = "e1m9";
-MUSIC_E2M1 = "e2m1";
-MUSIC_E2M2 = "e2m2";
-MUSIC_E2M3 = "e2m3";
-MUSIC_E2M4 = "e2m4";
-MUSIC_E2M5 = "e2m5";
-MUSIC_E2M6 = "e2m6";
-MUSIC_E2M7 = "e2m7";
-MUSIC_E2M8 = "e2m8";
-MUSIC_E2M9 = "e2m9";
-MUSIC_E3M1 = "e3m1";
-MUSIC_E3M2 = "e3m2";
-MUSIC_E3M3 = "e3m3";
-MUSIC_E3M4 = "e3m4";
-MUSIC_E3M5 = "e3m5";
-MUSIC_E3M6 = "e3m6";
-MUSIC_E3M7 = "e3m7";
-MUSIC_E3M8 = "e3m8";
-MUSIC_E3M9 = "e3m9";
-MUSIC_INTER = "inter";
-MUSIC_INTRO = "intro";
-MUSIC_BUNNY = "bunny";
-MUSIC_VICTOR = "victor";
-MUSIC_INTROA = "introa";
-MUSIC_RUNNIN = "runnin";
-MUSIC_STALKS = "stalks";
-MUSIC_COUNTD = "countd";
-MUSIC_BETWEE = "betwee";
-MUSIC_DOOM = "doom";
-MUSIC_THE_DA = "the_da";
-MUSIC_SHAWN = "shawn";
-MUSIC_DDTBLU = "ddtblu";
-MUSIC_IN_CIT = "in_cit";
-MUSIC_DEAD = "dead";
-MUSIC_STLKS2 = "stlks2";
-MUSIC_THEDA2 = "theda2";
-MUSIC_DOOM2 = "doom2";
-MUSIC_DDTBL2 = "ddtbl2";
-MUSIC_RUNNI2 = "runni2";
-MUSIC_DEAD2 = "dead2";
-MUSIC_STLKS3 = "stlks3";
-MUSIC_ROMERO = "romero";
-MUSIC_SHAWN2 = "shawn2";
-MUSIC_MESSAG = "messag";
-MUSIC_COUNT2 = "count2";
-MUSIC_DDTBL3 = "ddtbl3";
-MUSIC_AMPIE = "ampie";
-MUSIC_THEDA3 = "theda3";
-MUSIC_ADRIAN = "adrian";
-MUSIC_MESSG2 = "messg2";
-MUSIC_ROMER2 = "romer2";
-MUSIC_TENSE = "tense";
-MUSIC_SHAWN3 = "shawn3";
-MUSIC_OPENIN = "openin";
-MUSIC_EVIL = "evil";
-MUSIC_ULTIMA = "ultima";
-MUSIC_READ_M = "read_m";
-MUSIC_DM2TTL = "dm2ttl";
-MUSIC_DM2INT = "dm2int";
-
 // GZDoom exclusive:
 
 DSPLYMNU_GLOPT		= "OpenGL Renderer";
@@ -2802,13 +2719,13 @@ DSPLYMNU_SATURATION = "Saturation";
 DSPLYMNU_HWGAMMA	= "Hardware Gamma";
 
 // OpenGL Options
-GLMNU_TITLE		= "OPENGL OPTIONS";
+GLMNU_TITLE		= "OpenGL Options";
 GLMNU_DYNLIGHT	= "Dynamic Light Options";
 GLMNU_TEXOPT	= "Texture Options";
 GLMNU_PREFS		= "Preferences";
 
 // Texture Options
-GLTEXMNU_TITLE			= "TEXTURE OPTIONS";
+GLTEXMNU_TITLE			= "Texture Options";
 GLTEXMNU_TEXENABLED 	= "Textures enabled";
 GLTEXMNU_TEXFILTER 		= "Texture Filter mode";
 GLTEXMNU_ANISOTROPIC	= "Anisotropic filter";
@@ -2825,7 +2742,7 @@ GLTEXMNU_TRIMSPREDGE	= "Trim sprite edges";
 GLTEXMNU_SORTDRAWLIST 	= "Sort draw lists by texture";
 
 // Dynamic Light Options
-GLLIGHTMNU_TITLE					= "DYNAMIC LIGHTS";
+GLLIGHTMNU_TITLE					= "Dynamic Lights";
 GLLIGHTMNU_LIGHTSENABLED			= "Dynamic Lights (OpenGL)";
 GLLIGHTMNU_LIGHTDEFS				= "Enable light definitions";
 GLLIGHTMNU_CLIPLIGHTS				= "Clip lights";
@@ -2836,7 +2753,7 @@ GLLIGHTMNU_LIGHTSHADOWMAPQUALITY	= "Shadowmap quality";
 GLLIGHTMNU_LIGHTSHADOWMAPFILTER		= "Shadowmap filter";
 
 // OpenGL Preferences
-GLPREFMNU_TITLE 				= "OPENGL PREFERENCES";
+GLPREFMNU_TITLE 				= "OpenGL Preferences";
 GLPREFMNU_SECLIGHTMODE 			= "Sector light mode";
 GLPREFMNU_FOGMODE 				= "Fog mode";
 GLPREFMNU_FOGFORCEFULLBRIGHT 	= "Fog forces fullbright";
@@ -2953,7 +2870,7 @@ OPTVAL_REVERSEFIRST			= "Reverse";
 
 DSPLYMNU_TCOPT		= "TrueColor Options";
 
-TCMNU_TITLE		= "TRUECOLOR OPTIONS";
+TCMNU_TITLE		= "TrueColor Options";
 
 TCMNU_TRUECOLOR				= "True color output";
 TCMNU_MINFILTER				= "Linear filter when downscaling";
@@ -2970,3 +2887,51 @@ MSG_TALISMANRED = "You have a feeling that it wasn't to be touched...";
 MSG_TALISMANGREEN = "Whatever it is, it doesn't belong in this world...";
 MSG_TALISMANBLUE = "It must do something...";
 MSG_TALISMANPOWER = "You have super strength!";
+
+TXT_STRIFE_MAP01 = "AREA 1: Sanctuary";
+TXT_STRIFE_MAP02 = "AREA 2: Town";
+TXT_STRIFE_MAP03 = "AREA 3: Front Base";
+TXT_STRIFE_MAP04 = "AREA 4: Power Station";
+TXT_STRIFE_MAP05 = "AREA 5: Prison";
+TXT_STRIFE_MAP06 = "AREA 6: Sewers";
+TXT_STRIFE_MAP07 = "AREA 7: Castle";
+TXT_STRIFE_MAP08 = "AREA 8: Audience Chamber";
+TXT_STRIFE_MAP09 = "AREA 9: Castle: Programmer's Keep";
+TXT_STRIFE_MAP10 = "AREA 10: New Front Base";
+TXT_STRIFE_MAP11 = "AREA 11: Borderlands";
+TXT_STRIFE_MAP12 = "AREA 12: The Temple of the Oracle";
+TXT_STRIFE_MAP13 = "AREA 13: Catacombs";
+TXT_STRIFE_MAP14 = "AREA 14: Mines";
+TXT_STRIFE_MAP15 = "AREA 15: Fortress: Administration";
+TXT_STRIFE_MAP16 = "AREA 16: Fortress: Bishop's Tower";
+TXT_STRIFE_MAP17 = "AREA 17: Fortress: The Bailey";
+TXT_STRIFE_MAP18 = "AREA 18: Fortress: Stores";
+TXT_STRIFE_MAP19 = "AREA 19: Fortress: Security Complex";
+TXT_STRIFE_MAP20 = "AREA 20: Factory: Receiving";
+TXT_STRIFE_MAP21 = "AREA 21: Factory: Manufacturing";
+TXT_STRIFE_MAP22 = "AREA 22: Factory: Forge";
+TXT_STRIFE_MAP23 = "AREA 23: Order Commons";
+TXT_STRIFE_MAP24 = "AREA 24: Factory: Conversion Chapel";
+TXT_STRIFE_MAP25 = "AREA 25: Catacombs: Ruined Temple";
+TXT_STRIFE_MAP26 = "AREA 26: Proving Grounds";
+TXT_STRIFE_MAP27 = "AREA 27: The Lab";
+TXT_STRIFE_MAP28 = "AREA 28: Alien Ship";
+TXT_STRIFE_MAP29 = "AREA 29: Entity's Lair";
+TXT_STRIFE_MAP30 = "AREA 30: Abandoned Front Base";
+TXT_STRIFE_MAP31 = "AREA 31: Training Facility";
+TXT_STRIFE_MAP32 = "AREA 1: Sanctuary";
+TXT_STRIFE_MAP33 = "AREA 2: Town";
+TXT_STRIFE_MAP34 = "AREA 3: Movement Base";
+TXT_STRIFE_MAP35 = "AREA 35: Factory: Production";
+TXT_STRIFE_MAP36 = "AREA 36: Castle Clash";
+TXT_STRIFE_MAP37 = "AREA 37: Killing Grounds";
+TXT_STRIFE_MAP38 = "AREA 38: Ordered Chaos";
+TXT_STRIFE_EPI = "Quest for the Sigil";
+
+TXT_NEED_CHALICE = "You need the chalice!";
+TXT_NEED_OPASS = "You need the Oracle Pass!";
+TXT_FREED_PRISONERS = "You've freed the prisoners!";
+TXT_DESTROYED_CONVERTER = "You've destroyed the Converter!";
+TXT_COMPLETED_TRAINING = "Congratulations! You have completed the training area";
+
+TXT_QUITENDOOM = "Press any key or click anywhere in the window to quit.";

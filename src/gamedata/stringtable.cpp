@@ -275,7 +275,7 @@ const char *StringMap::MatchString (const char *string) const
 
 	while (it.NextPair(pair))
 	{
-		if (pair->Value.Compare(string) == 0)
+		if (pair->Value.CompareNoCase(string) == 0)
 		{
 			return pair->Key.GetChars();
 		}

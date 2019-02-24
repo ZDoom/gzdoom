@@ -60,7 +60,7 @@
 
 FTextureManager TexMan;
 
-CUSTOM_CVAR(Bool, vid_nopalsubstitutions, false, CVAR_ARCHIVE)
+CUSTOM_CVAR(Bool, vid_nopalsubstitutions, false, CVAR_ARCHIVE|CVAR_NOINITCALL)
 {
 	// This is in case the sky texture has been substituted.
 	R_InitSkyMap ();

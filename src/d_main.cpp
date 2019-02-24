@@ -388,7 +388,7 @@ void D_Render(std::function<void()> action, bool interpolate)
 //
 //==========================================================================
 
-CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO)
+CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO | CVAR_NOINITCALL)
 {
 	// In case DF_NO_FREELOOK was changed, reinitialize the sky
 	// map. (If no freelook, then no need to stretch the sky.)
@@ -463,7 +463,7 @@ CVAR (Mask, sv_freelook,		dmflags, DF_NO_FREELOOK|DF_YES_FREELOOK);
 //
 //==========================================================================
 
-CUSTOM_CVAR (Int, dmflags2, 0, CVAR_SERVERINFO)
+CUSTOM_CVAR (Int, dmflags2, 0, CVAR_SERVERINFO | CVAR_NOINITCALL)
 {
 	// Stop the automap if we aren't allowed to use it.
 	if ((self & DF2_NO_AUTOMAP) && automapactive)
@@ -546,7 +546,7 @@ static int GetCompatibility2(FLevelLocals *Level, int mask)
 		: (mask & ~Level->info->compatmask2) | (Level->info->compatflags2 & Level->info->compatmask2);
 }
 
-CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
+CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO | CVAR_NOINITCALL)
 {
 	for (auto Level : AllLevels())
 	{
@@ -559,7 +559,7 @@ CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
 	}
 }
 
-CUSTOM_CVAR (Int, compatflags2, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
+CUSTOM_CVAR (Int, compatflags2, 0, CVAR_ARCHIVE|CVAR_SERVERINFO | CVAR_NOINITCALL)
 {
 	for (auto Level : AllLevels())
 	{

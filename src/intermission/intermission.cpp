@@ -256,7 +256,7 @@ void DIntermissionScreenText::Init(FIntermissionAction *desc, bool first)
 	if (mTextX < 0) mTextX =gameinfo.TextScreenX;
 	mTextY = static_cast<FIntermissionActionTextscreen*>(desc)->mTextY;
 	if (mTextY < 0) mTextY =gameinfo.TextScreenY;
-	mTextLen = mText.CharacterCount();
+	mTextLen = (int)mText.CharacterCount();
 	mTextDelay = static_cast<FIntermissionActionTextscreen*>(desc)->mTextDelay;
 	mTextColor = static_cast<FIntermissionActionTextscreen*>(desc)->mTextColor;
 	// For text screens, the duration only counts when the text is complete.

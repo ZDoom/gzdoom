@@ -143,7 +143,7 @@ static FRandom pr_uniquetid("UniqueTID");
 
 FRandom pr_spawnmobj ("SpawnActor");
 
-CUSTOM_CVAR (Float, sv_gravity, 800.f, CVAR_SERVERINFO|CVAR_NOSAVE)
+CUSTOM_CVAR (Float, sv_gravity, 800.f, CVAR_SERVERINFO|CVAR_NOSAVE|CVAR_NOINITCALL)
 {
 	for (auto Level : AllLevels())
 	{

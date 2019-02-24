@@ -102,9 +102,9 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 	state.EnableMultisampling(false);
 	state.EnableLineSmooth(gl_aalines);
 
-	auto &vertices = drawer->mVertices;
-	auto &indices = drawer->mIndices;
-	auto &commands = drawer->mData;
+	auto const &verticesBgra = drawer->mVertices;
+	auto const &indices = drawer->mIndices;
+	auto const &commands = drawer->mData;
 
 	if (commands.Size() == 0)
 	{
@@ -112,13 +112,15 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 		return;
 	}
 
-	for (auto &v : vertices)
+	// copy vertices before modifying them, to avoid stereo 3d eye mismatch
+	auto verticesRgba = verticesBgra;
+	for (auto &v : verticesRgba)
 	{
 		// Change from BGRA to RGBA
 		std::swap(v.color0.r, v.color0.b);
 	}
 	F2DVertexBuffer vb;
-	vb.UploadData(&vertices[0], vertices.Size(), &indices[0], indices.Size());
+	vb.UploadData(&verticesRgba[0], verticesRgba.Size(), &indices[0], indices.Size());
 	state.SetVertexBuffer(&vb);
 	state.EnableFog(false);
 

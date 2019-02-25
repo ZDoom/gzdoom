@@ -547,36 +547,16 @@ void V_UpdateModeSize (int width, int height)
 	CleanHeight = height / CleanYfac;
 	assert(CleanWidth >= 320 && CleanHeight >= 200);
 
-	if (width < 800 || width >= 960)
-	{
-		if (cx1 < cx2)
-		{
-			// Special case in which we don't need to scale down.
-			CleanXfac_1 = 
-			CleanYfac_1 = cx1;
-		}
-		else
-		{
-			CleanXfac_1 = MAX(CleanXfac - 1, 1);
-			CleanYfac_1 = MAX(CleanYfac - 1, 1);
-			// On larger screens this is not enough so make sure it's at most 3/4 of the screen's width
-			while (CleanXfac_1 * 320 > screen->GetWidth()*3/4 && CleanXfac_1 > 2)
-			{
-				CleanXfac_1--;
-				CleanYfac_1--;
-			}
-		}
-		CleanWidth_1 = width / CleanXfac_1;
-		CleanHeight_1 = height / CleanYfac_1;
-	}
-	else // if the width is between 800 and 960 the ratio between the screensize and CleanXFac-1 becomes too large.
-	{
-		CleanXfac_1 = CleanXfac;
-		CleanYfac_1 = CleanYfac;
-		CleanWidth_1 = CleanWidth;
-		CleanHeight_1 = CleanHeight;
-	}
+	int w = screen->GetWidth();
+	int factor;
+	if (w < 640) factor = 1;
+	else if (w >= 1024 && w < 1280) factor = 2;
+	else if (w >= 1600 && w < 1920) factor = 3; 
+	else  factor = w / 640;
 
+	CleanXfac_1 = CleanYfac_1 = factor;
+	CleanWidth_1 = width / CleanXfac_1;
+	CleanHeight_1 = height / CleanYfac_1;
 
 	DisplayWidth = width;
 	DisplayHeight = height;

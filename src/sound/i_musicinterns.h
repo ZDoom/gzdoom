@@ -543,4 +543,5 @@ MusInfo *SndFile_OpenSong(FileReader &fr);
 extern MusInfo *currSong;
 void MIDIDeviceChanged(int newdev, bool force = false);
 
+EXTERN_CVAR (Float, snd_mastervolume)
 EXTERN_CVAR (Float, snd_musicvolume)

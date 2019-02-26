@@ -13,6 +13,8 @@
 class VkRenderState : public FRenderState
 {
 public:
+	VkRenderState();
+
 	// Draw commands
 	void ClearScreen() override;
 	void Draw(int dt, int index, int count, bool apply = true) override;
@@ -36,10 +38,18 @@ public:
 	void EnableMultisampling(bool on) override;
 	void EnableLineSmooth(bool on) override;
 
+	void Bind(int bindingpoint, uint32_t offset);
+	void EndRenderPass();
+
 private:
 	void Apply(int dt);
+	void BindDescriptorSets();
 
 	bool mLastDepthClamp = true;
 	VulkanCommandBuffer *mCommandBuffer = nullptr;
 	PushConstants mPushConstants;
+	bool mDescriptorsChanged = true;
+
+	uint32_t mViewpointOffset = 0, mLastViewpointOffset = 0;
+	uint32_t mLightBufferOffset = 0, mLastLightBufferOffset = 0;
 };

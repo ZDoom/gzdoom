@@ -54,7 +54,7 @@ private:
 	void createSemaphores();
 	void releaseResources();
 
-	VkDebugUtilsMessengerEXT debugMessenger;
+	VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
 
 	std::vector<const char *> requiredExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };

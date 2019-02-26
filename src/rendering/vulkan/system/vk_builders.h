@@ -285,10 +285,8 @@ private:
 class WriteDescriptors
 {
 public:
-	void addUniformBuffer(VulkanDescriptorSet *descriptorSet, int binding, VulkanBuffer *buffer);
-	void addUniformBuffer(VulkanDescriptorSet *descriptorSet, int binding, VulkanBuffer *buffer, size_t offset, size_t range);
-	void addStorageBuffer(VulkanDescriptorSet *descriptorSet, int binding, VulkanBuffer *buffer);
-	void addStorageBuffer(VulkanDescriptorSet *descriptorSet, int binding, VulkanBuffer *buffer, size_t offset, size_t range);
+	void addBuffer(VulkanDescriptorSet *descriptorSet, int binding, VkDescriptorType type, VulkanBuffer *buffer);
+	void addBuffer(VulkanDescriptorSet *descriptorSet, int binding, VkDescriptorType type, VulkanBuffer *buffer, size_t offset, size_t range);
 	void addStorageImage(VulkanDescriptorSet *descriptorSet, int binding, VulkanImageView *view, VkImageLayout imageLayout);
 	void addCombinedImageSampler(VulkanDescriptorSet *descriptorSet, int binding, VulkanImageView *view, VulkanSampler *sampler, VkImageLayout imageLayout);
 
@@ -1041,12 +1039,12 @@ inline void PipelineBarrier::execute(VulkanCommandBuffer *commandBuffer, VkPipel
 
 /////////////////////////////////////////////////////////////////////////////
 
-inline void WriteDescriptors::addUniformBuffer(VulkanDescriptorSet *descriptorSet, int binding, VulkanBuffer *buffer)
+inline void WriteDescriptors::addBuffer(VulkanDescriptorSet *descriptorSet, int binding, VkDescriptorType type, VulkanBuffer *buffer)
 {
-	addUniformBuffer(descriptorSet, binding, buffer, 0, buffer->size);
+	addBuffer(descriptorSet, binding, type, buffer, 0, buffer->size);
 }
 
-inline void WriteDescriptors::addUniformBuffer(VulkanDescriptorSet *descriptorSet, int binding, VulkanBuffer *buffer, size_t offset, size_t range)
+inline void WriteDescriptors::addBuffer(VulkanDescriptorSet *descriptorSet, int binding, VkDescriptorType type, VulkanBuffer *buffer, size_t offset, size_t range)
 {
 	VkDescriptorBufferInfo bufferInfo = {};
 	bufferInfo.buffer = buffer->buffer;
@@ -1061,34 +1059,7 @@ inline void WriteDescriptors::addUniformBuffer(VulkanDescriptorSet *descriptorSe
 	descriptorWrite.dstSet = descriptorSet->set;
 	descriptorWrite.dstBinding = binding;
 	descriptorWrite.dstArrayElement = 0;
-	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descriptorWrite.descriptorCount = 1;
-	descriptorWrite.pBufferInfo = &extra->bufferInfo;
-	writes.push_back(descriptorWrite);
-	writeExtras.push_back(std::move(extra));
-}
-
-inline void WriteDescriptors::addStorageBuffer(VulkanDescriptorSet *descriptorSet, int binding, VulkanBuffer *buffer)
-{
-	addStorageBuffer(descriptorSet, binding, buffer, 0, buffer->size);
-}
-
-inline void WriteDescriptors::addStorageBuffer(VulkanDescriptorSet *descriptorSet, int binding, VulkanBuffer *buffer, size_t offset, size_t range)
-{
-	VkDescriptorBufferInfo bufferInfo = {};
-	bufferInfo.buffer = buffer->buffer;
-	bufferInfo.offset = offset;
-	bufferInfo.range = range;
-
-	auto extra = std::make_unique<WriteExtra>();
-	extra->bufferInfo = bufferInfo;
-
-	VkWriteDescriptorSet descriptorWrite = {};
-	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite.dstSet = descriptorSet->set;
-	descriptorWrite.dstBinding = binding;
-	descriptorWrite.dstArrayElement = 0;
-	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	descriptorWrite.descriptorType = type;
 	descriptorWrite.descriptorCount = 1;
 	descriptorWrite.pBufferInfo = &extra->bufferInfo;
 	writes.push_back(descriptorWrite);

@@ -127,6 +127,8 @@ void VulkanDevice::presentFrame()
 	vkQueuePresentKHR(presentQueue, &presentInfo);
 }
 
+//FString allVulkanOutput;
+
 VkBool32 VulkanDevice::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void* userData)
 {
 	VulkanDevice *device = (VulkanDevice*)userData;
@@ -142,6 +144,8 @@ VkBool32 VulkanDevice::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT mess
 	}
 
 	Printf("Vulkan validation layer %s: %s\n", prefix, callbackData->pMessage);
+
+	//allVulkanOutput.AppendFormat("Vulkan validation layer %s: %s\n", prefix, callbackData->pMessage);
 
 	return VK_FALSE;
 }
@@ -178,7 +182,6 @@ void VulkanDevice::createInstance()
 		if (layer.layerName == debugLayer)
 		{
 			validationLayers.push_back(debugLayer.c_str());
-			//enabledExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 			enabledExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 			debugLayerFound = true;
 		}
@@ -203,23 +206,20 @@ void VulkanDevice::createInstance()
 	{
 		VkDebugUtilsMessengerCreateInfoEXT createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-		createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-		createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+		createInfo.messageSeverity =
+			//VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+			//VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
+			VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+			VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+		createInfo.messageType =
+			VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+			VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+			VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 		createInfo.pfnUserCallback = debugCallback;
 		createInfo.pUserData = this;
 		result = vkCreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger);
 		if (result != VK_SUCCESS)
 			throw std::runtime_error("vkCreateDebugUtilsMessengerEXT failed");
-
-		/*
-		VkDebugReportCallbackCreateInfoEXT createInfo = {};
-		createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-		createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
-		createInfo.pfnCallback = debugCallback;
-		result = vkCreateDebugReportCallbackEXT(instance, &createInfo, nullptr, &vkCallback);
-		if (result != VK_SUCCESS)
-			throw std::runtime_error("vkCreateDebugReportCallbackEXT failed");
-		*/
 	}
 }
 
@@ -397,15 +397,15 @@ void VulkanDevice::releaseResources()
 	if (device)
 		vkDeviceWaitIdle(device);
 
-	if (!imageAvailableSemaphore)
+	if (imageAvailableSemaphore)
 		vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
 	imageAvailableSemaphore = 0;
 
-	if (!renderFinishedSemaphore)
+	if (renderFinishedSemaphore)
 		vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
 	renderFinishedSemaphore = 0;
 
-	if (!renderFinishedFence)
+	if (renderFinishedFence)
 		vkDestroyFence(device, renderFinishedFence, nullptr);
 	renderFinishedFence = 0;
 
@@ -418,6 +418,9 @@ void VulkanDevice::releaseResources()
 	if (surface)
 		vkDestroySurfaceKHR(instance, surface, nullptr);
 	surface = 0;
+
+	if (debugMessenger)
+		vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
 
 	if (instance)
 		vkDestroyInstance(instance, nullptr);

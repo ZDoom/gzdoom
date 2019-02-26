@@ -900,6 +900,7 @@ set( FASTMATH_SOURCES
 	rendering/vulkan/system/vk_framebuffer.cpp
 	rendering/vulkan/system/vk_buffers.cpp
 	rendering/vulkan/renderer/vk_renderstate.cpp
+	rendering/vulkan/renderer/vk_renderpass.cpp
 	rendering/vulkan/shaders/vk_shader.cpp
 	rendering/vulkan/textures/vk_samplers.cpp
 	rendering/vulkan/textures/vk_hwtexture.cpp

@@ -10,9 +10,14 @@ class VulkanShader;
 
 struct PushConstants
 {
+	// matrices
+	VSMatrix ModelMatrix;
+	VSMatrix NormalModelMatrix;
+	VSMatrix TextureMatrix;
+
 	int uTextureMode;
-	FVector2 uClipSplit;
 	float uAlphaThreshold;
+	FVector2 uClipSplit;
 
 	// colors
 	FVector4 uObjectColor;
@@ -22,6 +27,7 @@ struct PushConstants
 	FVector4 uFogColor;
 	float uDesaturationFactor;
 	float uInterpolationFactor;
+	float padding0, padding1;
 
 	// Glowing walls stuff
 	FVector4 uGlowTopPlane;
@@ -47,11 +53,6 @@ struct PushConstants
 
 	// Blinn glossiness and specular level
 	FVector2 uSpecularMaterial;
-
-	// matrices
-	VSMatrix ModelMatrix;
-	VSMatrix NormalModelMatrix;
-	VSMatrix TextureMatrix;
 };
 
 class VkShaderManager

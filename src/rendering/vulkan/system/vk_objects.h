@@ -229,7 +229,7 @@ public:
 	void setStencilCompareMask(VkStencilFaceFlags faceMask, uint32_t compareMask);
 	void setStencilWriteMask(VkStencilFaceFlags faceMask, uint32_t writeMask);
 	void setStencilReference(VkStencilFaceFlags faceMask, uint32_t reference);
-	void bindDescriptorSet(VkPipelineBindPoint pipelineBindPoint, VulkanPipelineLayout *layout, VulkanDescriptorSet *descriptorSet, uint32_t dynamicOffsetCount = 0, const uint32_t* pDynamicOffsets = nullptr);
+	void bindDescriptorSet(VkPipelineBindPoint pipelineBindPoint, VulkanPipelineLayout *layout, uint32_t setIndex, VulkanDescriptorSet *descriptorSet, uint32_t dynamicOffsetCount = 0, const uint32_t* pDynamicOffsets = nullptr);
 	void bindDescriptorSets(VkPipelineBindPoint pipelineBindPoint, VkPipelineLayout layout, uint32_t firstSet, uint32_t descriptorSetCount, const VkDescriptorSet* pDescriptorSets, uint32_t dynamicOffsetCount, const uint32_t* pDynamicOffsets);
 	void bindIndexBuffer(VkBuffer buffer, VkDeviceSize offset, VkIndexType indexType);
 	void bindVertexBuffers(uint32_t firstBinding, uint32_t bindingCount, const VkBuffer* pBuffers, const VkDeviceSize* pOffsets);
@@ -545,9 +545,9 @@ inline void VulkanCommandBuffer::setStencilReference(VkStencilFaceFlags faceMask
 	vkCmdSetStencilReference(buffer, faceMask, reference);
 }
 
-inline void VulkanCommandBuffer::bindDescriptorSet(VkPipelineBindPoint pipelineBindPoint, VulkanPipelineLayout *layout, VulkanDescriptorSet *descriptorSet, uint32_t dynamicOffsetCount, const uint32_t* pDynamicOffsets)
+inline void VulkanCommandBuffer::bindDescriptorSet(VkPipelineBindPoint pipelineBindPoint, VulkanPipelineLayout *layout, uint32_t setIndex, VulkanDescriptorSet *descriptorSet, uint32_t dynamicOffsetCount, const uint32_t* pDynamicOffsets)
 {
-	bindDescriptorSets(pipelineBindPoint, layout->layout, 0, 1, &descriptorSet->set, dynamicOffsetCount, pDynamicOffsets);
+	bindDescriptorSets(pipelineBindPoint, layout->layout, setIndex, 1, &descriptorSet->set, dynamicOffsetCount, pDynamicOffsets);
 }
 
 inline void VulkanCommandBuffer::bindDescriptorSets(VkPipelineBindPoint pipelineBindPoint, VkPipelineLayout layout, uint32_t firstSet, uint32_t descriptorSetCount, const VkDescriptorSet* pDescriptorSets, uint32_t dynamicOffsetCount, const uint32_t* pDynamicOffsets)

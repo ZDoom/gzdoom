@@ -34,11 +34,13 @@
 #include "hwrenderer/scene/hw_skydome.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "hwrenderer/data/flatvertices.h"
+#include "hwrenderer/data/shaderuniforms.h"
 #include "hwrenderer/dynlights/hw_lightbuffer.h"
 
 #include "vk_framebuffer.h"
 #include "vk_buffers.h"
 #include "vulkan/renderer/vk_renderstate.h"
+#include "vulkan/renderer/vk_renderpass.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vulkan/textures/vk_samplers.h"
 #include "vulkan/system/vk_builders.h"
@@ -73,6 +75,7 @@ void VulkanFrameBuffer::InitializeState()
 
 	mShaderManager.reset(new VkShaderManager(device));
 	mSamplerManager.reset(new VkSamplerManager(device));
+	mRenderPassManager.reset(new VkRenderPassManager());
 	mRenderState.reset(new VkRenderState());
 }
 
@@ -99,6 +102,9 @@ void VulkanFrameBuffer::Update()
 
 	Draw2D();
 	Clear2D();
+
+	mRenderState->EndRenderPass();
+
 	//DrawPresentTexture(mOutputLetterbox, true);
 
 	mPresentCommands->end();
@@ -194,7 +200,16 @@ IIndexBuffer *VulkanFrameBuffer::CreateIndexBuffer()
 
 IDataBuffer *VulkanFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo)
 {
-	return new VKDataBuffer(bindingpoint, ssbo);
+	auto buffer = new VKDataBuffer(bindingpoint, ssbo);
+	if (bindingpoint == VIEWPOINT_BINDINGPOINT)
+	{
+		ViewpointUBO = buffer;
+	}
+	else if (bindingpoint == LIGHTBUF_BINDINGPOINT)
+	{
+		LightBufferSSO = buffer;
+	}
+	return buffer;
 }
 
 void VulkanFrameBuffer::UnbindTexUnit(int no)
@@ -215,6 +230,7 @@ void VulkanFrameBuffer::UpdatePalette()
 
 void VulkanFrameBuffer::BeginFrame()
 {
+	mRenderPassManager->BeginFrame();
 }
 
 void VulkanFrameBuffer::Draw2D()

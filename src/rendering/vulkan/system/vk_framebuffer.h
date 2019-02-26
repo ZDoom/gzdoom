@@ -6,7 +6,9 @@
 
 class VkSamplerManager;
 class VkShaderManager;
+class VkRenderPassManager;
 class VkRenderState;
+class VKDataBuffer;
 
 class VulkanFrameBuffer : public SystemBaseFrameBuffer
 {
@@ -18,6 +20,12 @@ public:
 
 	VulkanCommandBuffer *GetUploadCommands();
 	VulkanCommandBuffer *GetDrawCommands();
+	VkShaderManager *GetShaderManager() { return mShaderManager.get(); }
+	VkRenderPassManager *GetRenderPassManager() { return mRenderPassManager.get(); }
+	VkRenderState *GetRenderState() { return mRenderState.get(); }
+
+	VKDataBuffer *ViewpointUBO = nullptr;
+	VKDataBuffer *LightBufferSSO = nullptr;
 
 	VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevice *dev);
 	~VulkanFrameBuffer();
@@ -56,6 +64,7 @@ public:
 private:
 	std::unique_ptr<VkShaderManager> mShaderManager;
 	std::unique_ptr<VkSamplerManager> mSamplerManager;
+	std::unique_ptr<VkRenderPassManager> mRenderPassManager;
 	std::unique_ptr<VulkanCommandPool> mGraphicsCommandPool;
 	std::unique_ptr<VulkanCommandBuffer> mUploadCommands;
 	std::unique_ptr<VulkanCommandBuffer> mPresentCommands;

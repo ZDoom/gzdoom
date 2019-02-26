@@ -1,15 +1,23 @@
 
 #include "vk_renderstate.h"
 #include "vulkan/system/vk_framebuffer.h"
+#include "vulkan/system/vk_builders.h"
+#include "vulkan/renderer/vk_renderpass.h"
 #include "templates.h"
 #include "doomstat.h"
 #include "r_data/colormaps.h"
 #include "hwrenderer/scene/hw_skydome.h"
+#include "hwrenderer/scene/hw_viewpointuniforms.h"
 #include "hwrenderer/dynlights/hw_lightbuffer.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
+#include "hwrenderer/data/shaderuniforms.h"
+
+VkRenderState::VkRenderState()
+{
+}
 
 void VkRenderState::ClearScreen()
 {
@@ -28,9 +36,10 @@ void VkRenderState::ClearScreen()
 void VkRenderState::Draw(int dt, int index, int count, bool apply)
 {
 	if (apply)
-	{
 		Apply(dt);
-	}
+	else if (mDescriptorsChanged)
+		BindDescriptorSets();
+
 	drawcalls.Clock();
 	//mCommandBuffer->draw(count, 1, index, 0);
 	drawcalls.Unclock();
@@ -39,9 +48,10 @@ void VkRenderState::Draw(int dt, int index, int count, bool apply)
 void VkRenderState::DrawIndexed(int dt, int index, int count, bool apply)
 {
 	if (apply)
-	{
 		Apply(dt);
-	}
+	else if (mDescriptorsChanged)
+		BindDescriptorSets();
+
 	drawcalls.Clock();
 	//mCommandBuffer->drawIndexed(count, 1, 0, index * (int)sizeof(uint32_t), 0);
 	drawcalls.Unclock();
@@ -116,8 +126,9 @@ void VkRenderState::EnableLineSmooth(bool on)
 
 void VkRenderState::Apply(int dt)
 {
-#if 0
 	auto fb = GetVulkanFrameBuffer();
+	auto passManager = fb->GetRenderPassManager();
+	auto passSetup = passManager->RenderPassSetup.get();
 
 	bool changingRenderPass = false; // To do: decide if the state matches current bound renderpass
 
@@ -134,16 +145,57 @@ void VkRenderState::Apply(int dt)
 	if (changingRenderPass)
 	{
 		RenderPassBegin beginInfo;
-		beginInfo.setRenderPass(renderPass);
+		beginInfo.setRenderPass(passSetup->RenderPass.get());
 		beginInfo.setRenderArea(0, 0, SCREENWIDTH, SCREENHEIGHT);
-		beginInfo.setFramebuffer(framebuffer);
+		beginInfo.setFramebuffer(passSetup->Framebuffer.get());
 		beginInfo.addClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		beginInfo.addClearDepthStencil(0.0f, 0);
 		mCommandBuffer->beginRenderPass(beginInfo);
-		mCommandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+		mCommandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->Pipeline.get());
 	}
 
 	// To do: maybe only push the subset that changed?
-	mCommandBuffer->pushConstants(pipelineLayout, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, (uint32_t)sizeof(PushConstants), &mPushConstants);
-#endif
+	static_assert(sizeof(PushConstants) % 16 == 0, "std140 layouts must be 16 byte aligned");
+	//mCommandBuffer->pushConstants(passManager->PipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, (uint32_t)sizeof(PushConstants), &mPushConstants);
+
+	VkBuffer vertexBuffers[] = { static_cast<VKVertexBuffer*>(mVertexBuffer)->mBuffer->buffer };
+	VkDeviceSize offsets[] = { 0 };
+	mCommandBuffer->bindVertexBuffers(0, 1, vertexBuffers, offsets);
+
+	mCommandBuffer->bindIndexBuffer(static_cast<VKIndexBuffer*>(mIndexBuffer)->mBuffer->buffer, 0, VK_INDEX_TYPE_UINT32);
+
+	BindDescriptorSets();
+}
+
+void VkRenderState::Bind(int bindingpoint, uint32_t offset)
+{
+	if (bindingpoint == VIEWPOINT_BINDINGPOINT)
+	{
+		mViewpointOffset = offset;
+	}
+	else if (bindingpoint == LIGHTBUF_BINDINGPOINT)
+	{
+		mLightBufferOffset = offset;
+	}
+
+	mDescriptorsChanged = true;
+}
+
+void VkRenderState::BindDescriptorSets()
+{
+	auto fb = GetVulkanFrameBuffer();
+	auto passManager = fb->GetRenderPassManager();
+
+	uint32_t offsets[2] = { mViewpointOffset, mLightBufferOffset };
+	mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->PipelineLayout.get(), 0, passManager->DynamicSet.get(), 2, offsets);
+	mDescriptorsChanged = false;
+}
+
+void VkRenderState::EndRenderPass()
+{
+	if (mCommandBuffer)
+	{
+		mCommandBuffer->endRenderPass();
+		mCommandBuffer = nullptr;
+	}
 }

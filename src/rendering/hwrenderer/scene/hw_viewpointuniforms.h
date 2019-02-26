@@ -18,6 +18,8 @@ struct HWViewpointUniforms
 	float mClipHeightDirection = 0.f;
 	int mShadowmapFilter = 1;
 
+	float timer = 0.0f;
+
 	void CalcDependencies()
 	{
 		mNormalViewMatrix.computeNormalMatrix(mViewMatrix);

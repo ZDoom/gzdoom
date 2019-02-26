@@ -381,6 +381,8 @@ OptionMenu "OptionsMenu" protected
 	SafeCommand "$OPTMNU_DEFAULTS",	"reset2defaults"
 	SafeCommand	"$OPTMNU_RESETTOSAVED",	"reset2saved"
 	Command "$OPTMNU_CONSOLE",			"menuconsole"
+	StaticText " "
+	Submenu "$OPTMNU_LANGUAGE", "LanguageOptions"
 }
 
 //-------------------------------------------------------------------------------------------
@@ -2562,10 +2564,4 @@ OptionMenu "LanguageOptions"
 	Command "Italiano (ITA)", "language ita"
 	Command "Português do Brasil (PTB)", "language ptb"
 	Command "Русский (RU)", "language rus"
-}
-
-AddOptionMenu "OptionsMenu"
-{
-	StaticText " "
-	Submenu "$OPTMNU_LANGUAGE", "LanguageOptions"
 }

@@ -7,6 +7,8 @@
 #include <algorithm>
 
 class VulkanSwapChain;
+class VulkanSemaphore;
+class VulkanFence;
 
 class VulkanDevice
 {
@@ -33,9 +35,9 @@ public:
 
 	VkQueue graphicsQueue = nullptr;
 
-	VkSemaphore imageAvailableSemaphore = VK_NULL_HANDLE;
-	VkSemaphore renderFinishedSemaphore = VK_NULL_HANDLE;
-	VkFence renderFinishedFence = VK_NULL_HANDLE;
+	std::unique_ptr<VulkanSemaphore> imageAvailableSemaphore;
+	std::unique_ptr<VulkanSemaphore> renderFinishedSemaphore;
+	std::unique_ptr<VulkanFence> renderFinishedFence;
 
 	VmaAllocator allocator = VK_NULL_HANDLE;
 

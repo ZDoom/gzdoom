@@ -109,7 +109,7 @@ void VulkanFrameBuffer::Update()
 
 	mPresentCommands->end();
 
-	VkSemaphore waitSemaphores[] = { device->imageAvailableSemaphore };
+	VkSemaphore waitSemaphores[] = { device->imageAvailableSemaphore->semaphore };
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
 	VkSubmitInfo submitInfo = {};
@@ -120,8 +120,8 @@ void VulkanFrameBuffer::Update()
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &mPresentCommands->buffer;
 	submitInfo.signalSemaphoreCount = 1;
-	submitInfo.pSignalSemaphores = &device->renderFinishedSemaphore;
-	VkResult result = vkQueueSubmit(device->graphicsQueue, 1, &submitInfo, device->renderFinishedFence);
+	submitInfo.pSignalSemaphores = &device->renderFinishedSemaphore->semaphore;
+	VkResult result = vkQueueSubmit(device->graphicsQueue, 1, &submitInfo, device->renderFinishedFence->fence);
 	if (result != VK_SUCCESS)
 		I_FatalError("Failed to submit command buffer!\n");
 

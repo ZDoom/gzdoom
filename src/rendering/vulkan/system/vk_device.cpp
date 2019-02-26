@@ -40,6 +40,7 @@ extern HWND Window;
 
 #include "vk_device.h"
 #include "vk_swapchain.h"
+#include "vk_objects.h"
 #include "c_cvars.h"
 #include "i_system.h"
 #include "version.h"
@@ -100,20 +101,20 @@ void VulkanDevice::windowResized()
 
 void VulkanDevice::waitPresent()
 {
-	vkWaitForFences(device, 1, &renderFinishedFence, VK_TRUE, std::numeric_limits<uint64_t>::max());
-	vkResetFences(device, 1, &renderFinishedFence);
+	vkWaitForFences(device, 1, &renderFinishedFence->fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+	vkResetFences(device, 1, &renderFinishedFence->fence);
 }
 
 void VulkanDevice::beginFrame()
 {
-	VkResult result = vkAcquireNextImageKHR(device, swapChain->swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphore, VK_NULL_HANDLE, &presentImageIndex);
+	VkResult result = vkAcquireNextImageKHR(device, swapChain->swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphore->semaphore, VK_NULL_HANDLE, &presentImageIndex);
 	if (result != VK_SUCCESS)
 		throw std::runtime_error("Failed to acquire next image!");
 }
 
 void VulkanDevice::presentFrame()
 {
-	VkSemaphore waitSemaphores[] = { renderFinishedSemaphore };
+	VkSemaphore waitSemaphores[] = { renderFinishedSemaphore->semaphore };
 	VkSwapchainKHR swapChains[] = { swapChain->swapChain };
 
 	VkPresentInfoKHR presentInfo = {};
@@ -374,22 +375,9 @@ void VulkanDevice::createAllocator()
 
 void VulkanDevice::createSemaphores()
 {
-	VkSemaphoreCreateInfo semaphoreInfo = {};
-	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-	VkResult result = vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphore);
-	if (result != VK_SUCCESS)
-		throw std::runtime_error("Failed to create semaphore!");
-
-	result = vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphore);
-	if (result != VK_SUCCESS)
-		throw std::runtime_error("Failed to create semaphore!");
-
-	VkFenceCreateInfo fenceInfo = {};
-	fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-	result = vkCreateFence(device, &fenceInfo, nullptr, &renderFinishedFence);
-	if (result != VK_SUCCESS)
-		throw std::runtime_error("Failed to create fence!");
+	imageAvailableSemaphore.reset(new VulkanSemaphore(this));
+	renderFinishedSemaphore.reset(new VulkanSemaphore(this));
+	renderFinishedFence.reset(new VulkanFence(this));
 }
 
 void VulkanDevice::releaseResources()
@@ -397,18 +385,9 @@ void VulkanDevice::releaseResources()
 	if (device)
 		vkDeviceWaitIdle(device);
 
-	if (imageAvailableSemaphore)
-		vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
-	imageAvailableSemaphore = 0;
-
-	if (renderFinishedSemaphore)
-		vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
-	renderFinishedSemaphore = 0;
-
-	if (renderFinishedFence)
-		vkDestroyFence(device, renderFinishedFence, nullptr);
-	renderFinishedFence = 0;
-
+	imageAvailableSemaphore.reset();
+	renderFinishedSemaphore.reset();
+	renderFinishedFence.reset();
 	swapChain.reset();
 
 	if (device)

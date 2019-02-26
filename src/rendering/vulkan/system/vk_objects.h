@@ -5,6 +5,34 @@
 class VulkanCommandPool;
 class VulkanDescriptorPool;
 
+class VulkanSemaphore
+{
+public:
+	VulkanSemaphore(VulkanDevice *device);
+	~VulkanSemaphore();
+
+	VulkanDevice *device = nullptr;
+	VkSemaphore semaphore = VK_NULL_HANDLE;
+
+private:
+	VulkanSemaphore(const VulkanSemaphore &) = delete;
+	VulkanSemaphore &operator=(const VulkanSemaphore &) = delete;
+};
+
+class VulkanFence
+{
+public:
+	VulkanFence(VulkanDevice *device);
+	~VulkanFence();
+
+	VulkanDevice *device = nullptr;
+	VkFence fence = VK_NULL_HANDLE;
+
+private:
+	VulkanFence(const VulkanFence &) = delete;
+	VulkanFence &operator=(const VulkanFence &) = delete;
+};
+
 class VulkanBuffer
 {
 public:
@@ -297,6 +325,38 @@ private:
 
 	friend class VulkanCommandBuffer;
 };
+
+/////////////////////////////////////////////////////////////////////////////
+
+inline VulkanSemaphore::VulkanSemaphore(VulkanDevice *device) : device(device)
+{
+	VkSemaphoreCreateInfo semaphoreInfo = {};
+	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	VkResult result = vkCreateSemaphore(device->device, &semaphoreInfo, nullptr, &semaphore);
+	if (result != VK_SUCCESS)
+		throw std::runtime_error("Failed to create semaphore!");
+}
+
+inline VulkanSemaphore::~VulkanSemaphore()
+{
+	vkDestroySemaphore(device->device, semaphore, nullptr);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+inline VulkanFence::VulkanFence(VulkanDevice *device) : device(device)
+{
+	VkFenceCreateInfo fenceInfo = {};
+	fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	VkResult result = vkCreateFence(device->device, &fenceInfo, nullptr, &fence);
+	if (result != VK_SUCCESS)
+		throw std::runtime_error("Failed to create fence!");
+}
+
+inline VulkanFence::~VulkanFence()
+{
+	vkDestroyFence(device->device, fence, nullptr);
+}
 
 /////////////////////////////////////////////////////////////////////////////
 

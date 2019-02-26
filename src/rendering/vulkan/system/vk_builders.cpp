@@ -162,7 +162,7 @@ std::unique_ptr<VulkanShader> ShaderBuilder::create(VulkanDevice *device)
 	glslang::SpvOptions spvOptions;
 	spvOptions.generateDebugInfo = false;
 	spvOptions.disableOptimizer = false;
-	spvOptions.optimizeSize = false;
+	spvOptions.optimizeSize = true;
 
 	std::vector<unsigned int> spirv;
 	spv::SpvBuildLogger logger;

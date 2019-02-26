@@ -63,12 +63,22 @@ VulkanFrameBuffer::VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevi
 
 VulkanFrameBuffer::~VulkanFrameBuffer()
 {
+	delete MatricesUBO;
+	delete ColorsUBO;
+	delete GlowingWallsUBO;
+	delete mVertexData;
+	delete mSkyData;
+	delete mViewpoints;
+	delete mLights;
 	for (auto tex : AllTextures)
 		tex->Reset();
 }
 
 void VulkanFrameBuffer::InitializeState()
 {
+	gl_vendorstring = "Vulkan";
+	hwcaps = RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE;
+
 	mUploadSemaphore.reset(new VulkanSemaphore(device));
 	mGraphicsCommandPool.reset(new VulkanCommandPool(device, device->graphicsFamily));
 
@@ -81,9 +91,9 @@ void VulkanFrameBuffer::InitializeState()
 	MatricesUBO = (VKDataBuffer*)CreateDataBuffer(1234, false);
 	ColorsUBO = (VKDataBuffer*)CreateDataBuffer(1234, false);
 	GlowingWallsUBO = (VKDataBuffer*)CreateDataBuffer(1234, false);
-	MatricesUBO->SetData(sizeof(MatricesUBO) * 128, 0, false);
-	ColorsUBO->SetData(sizeof(ColorsUBO) * 128, 0, false);
-	GlowingWallsUBO->SetData(sizeof(GlowingWallsUBO) * 128, 0, false);
+	MatricesUBO->SetData(sizeof(MatricesUBO) * 128, nullptr, false);
+	ColorsUBO->SetData(sizeof(ColorsUBO) * 128, nullptr, false);
+	GlowingWallsUBO->SetData(sizeof(GlowingWallsUBO) * 128, nullptr, false);
 
 	mShaderManager.reset(new VkShaderManager(device));
 	mSamplerManager.reset(new VkSamplerManager(device));
@@ -148,6 +158,8 @@ void VulkanFrameBuffer::Update()
 
 	if (mUploadCommands)
 	{
+		mUploadCommands->end();
+
 		// Submit upload commands immediately
 		VkSubmitInfo submitInfo = {};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -201,6 +213,7 @@ void VulkanFrameBuffer::Update()
 
 	mPresentCommands.reset();
 	mUploadCommands.reset();
+	mFrameDeleteList.clear();
 
 	Finish.Unclock();
 

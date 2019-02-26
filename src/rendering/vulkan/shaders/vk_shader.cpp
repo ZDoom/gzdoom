@@ -122,6 +122,7 @@ static const char *shaderBindings = R"(
 	#endif
 
 	// #define SUPPORTS_SHADOWMAPS
+	#define VULKAN_COORDINATE_SYSTEM
 )";
 
 std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(const char *vert_lump, const char *defines)

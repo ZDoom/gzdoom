@@ -5,6 +5,16 @@
 #include "vulkan/renderer/vk_renderstate.h"
 #include "doomerrors.h"
 
+VKBuffer::~VKBuffer()
+{
+	if (map)
+		mBuffer->Unmap();
+
+	auto fb = GetVulkanFrameBuffer();
+	if (fb && mBuffer)
+		fb->mFrameDeleteList.push_back(std::move(mBuffer));
+}
+
 void VKBuffer::SetData(size_t size, const void *data, bool staticdata)
 {
 	auto fb = GetVulkanFrameBuffer();
@@ -37,6 +47,8 @@ void VKBuffer::SetData(size_t size, const void *data, bool staticdata)
 		if (mPersistent)
 		{
 			map = mBuffer->Map(0, size);
+			if (data)
+				memcpy(map, data, size);
 		}
 		else if (data)
 		{

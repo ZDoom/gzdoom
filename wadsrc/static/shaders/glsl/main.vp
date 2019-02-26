@@ -80,7 +80,12 @@ void main()
 	#endif
 	
 	gl_Position = ProjectionMatrix * eyeCoordPos;
-		
+
+	#ifdef VULKAN_COORDINATE_SYSTEM
+	gl_Position.z = (gl_Position.z + gl_Position.w) / 2.0;
+	gl_Position.y = -gl_Position.y;
+	#endif
+
 	if (uClipHeightDirection != 0.0) // clip planes used for reflective flats
 	{
 		gl_ClipDistance[0] = (worldcoord.y - uClipHeight) * uClipHeightDirection;
@@ -98,4 +103,7 @@ void main()
 	gl_ClipDistance[1] = worldcoord.y - uClipSplit.x;
 	gl_ClipDistance[2] = uClipSplit.y - worldcoord.y;
 	
+	gl_ClipDistance[0] = 1;
+	gl_ClipDistance[1] = 1;
+	gl_ClipDistance[2] = 1;
 }

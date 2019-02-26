@@ -390,6 +390,9 @@ void VulkanDevice::releaseResources()
 	renderFinishedFence.reset();
 	swapChain.reset();
 
+	if (allocator)
+		vmaDestroyAllocator(allocator);
+
 	if (device)
 		vkDestroyDevice(device, nullptr);
 	device = nullptr;

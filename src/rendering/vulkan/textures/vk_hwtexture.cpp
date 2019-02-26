@@ -60,8 +60,8 @@ VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &s
 		{
 			0xff0000ff, 0xff0000ff, 0xffff00ff, 0xffff00ff,
 			0xff0000ff, 0xff0000ff, 0xffff00ff, 0xffff00ff,
-			0xff0000ff, 0x00ffffff, 0x0000ffff, 0x0000ffff,
-			0xff0000ff, 0x00ffffff, 0x0000ffff, 0x0000ffff,
+			0xff00ff00, 0xff00ff00, 0x0000ffff, 0xff00ffff,
+			0xff00ff00, 0xff00ff00, 0x0000ffff, 0xff00ffff,
 		};
 		CreateTexture(4, 4, 4, VK_FORMAT_R8G8B8A8_UNORM, testpixels);
 	}

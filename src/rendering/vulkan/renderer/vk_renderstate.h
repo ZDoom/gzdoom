@@ -47,8 +47,12 @@ private:
 
 	bool mLastDepthClamp = true;
 	VulkanCommandBuffer *mCommandBuffer = nullptr;
-	PushConstants mPushConstants;
 	bool mDescriptorsChanged = true;
+
+	MatricesUBO mMatrices = {};
+	ColorsUBO mColors = {};
+	GlowingWallsUBO mGlowingWalls = {};
+	PushConstants mPushConstants = {};
 
 	uint32_t mViewpointOffset = 0;
 	uint32_t mLightBufferOffset = 0;

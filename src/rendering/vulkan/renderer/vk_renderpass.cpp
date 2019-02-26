@@ -6,6 +6,7 @@
 #include "vulkan/system/vk_buffers.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/scene/hw_viewpointuniforms.h"
+#include "rendering/2d/v_2ddrawer.h"
 
 VkRenderPassManager::VkRenderPassManager()
 {
@@ -123,7 +124,7 @@ VkRenderPassSetup::VkRenderPassSetup()
 void VkRenderPassSetup::CreateRenderPass()
 {
 	RenderPassBuilder builder;
-	builder.addRgba16fAttachment(false, VK_IMAGE_LAYOUT_GENERAL);
+	builder.addRgba16fAttachment(true, VK_IMAGE_LAYOUT_GENERAL);
 	builder.addSubpass();
 	builder.addSubpassColorAttachmentRef(0, VK_IMAGE_LAYOUT_GENERAL);
 	builder.addExternalSubpassDependency();
@@ -136,14 +137,26 @@ void VkRenderPassSetup::CreatePipeline()
 	GraphicsPipelineBuilder builder;
 	builder.addVertexShader(fb->GetShaderManager()->vert.get());
 	builder.addFragmentShader(fb->GetShaderManager()->frag.get());
-	builder.addVertexBufferBinding(0, sizeof(FFlatVertex));
+
+	builder.addVertexBufferBinding(0, sizeof(F2DDrawer::TwoDVertex));
+	builder.addVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(F2DDrawer::TwoDVertex, x));
+	builder.addVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(F2DDrawer::TwoDVertex, u));
+	builder.addVertexAttribute(2, 0, VK_FORMAT_R8G8B8A8_UNORM, offsetof(F2DDrawer::TwoDVertex, color0));
+	builder.addVertexAttribute(3, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(F2DDrawer::TwoDVertex, x));
+	builder.addVertexAttribute(4, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(F2DDrawer::TwoDVertex, x));
+	builder.addVertexAttribute(5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(F2DDrawer::TwoDVertex, x));
+
+#if 0
+		builder.addVertexBufferBinding(0, sizeof(FFlatVertex));
 	builder.addVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(FFlatVertex, x));
 	builder.addVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(FFlatVertex, u));
 	// To do: not all vertex formats has all the data..
-	//builder.addVertexAttribute(2, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(FFlatVertex, x));
-	//builder.addVertexAttribute(3, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(FFlatVertex, x));
-	//builder.addVertexAttribute(4, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(FFlatVertex, x));
-	//builder.addVertexAttribute(5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(FFlatVertex, x));
+	builder.addVertexAttribute(2, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(FFlatVertex, x));
+	builder.addVertexAttribute(3, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(FFlatVertex, x));
+	builder.addVertexAttribute(4, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(FFlatVertex, x));
+	builder.addVertexAttribute(5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(FFlatVertex, x));
+#endif
+
 	builder.setViewport(0.0f, 0.0f, (float)SCREENWIDTH, (float)SCREENHEIGHT);
 	builder.setScissor(0, 0, SCREENWIDTH, SCREENHEIGHT);
 	builder.setAlphaBlendMode();

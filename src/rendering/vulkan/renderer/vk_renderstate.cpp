@@ -18,6 +18,7 @@
 
 VkRenderState::VkRenderState()
 {
+	Reset();
 }
 
 void VkRenderState::ClearScreen()
@@ -54,7 +55,8 @@ void VkRenderState::DrawIndexed(int dt, int index, int count, bool apply)
 		BindDescriptorSets();
 
 	drawcalls.Clock();
-	mCommandBuffer->drawIndexed(count, 1, 0, index * (int)sizeof(uint32_t), 0);
+	if (mMaterial.mMaterial)
+	mCommandBuffer->drawIndexed(count, 1, index, 0, 0);
 	drawcalls.Unclock();
 }
 
@@ -149,11 +151,23 @@ void VkRenderState::Apply(int dt)
 		beginInfo.setRenderPass(passSetup->RenderPass.get());
 		beginInfo.setRenderArea(0, 0, SCREENWIDTH, SCREENHEIGHT);
 		beginInfo.setFramebuffer(passSetup->Framebuffer.get());
-		beginInfo.addClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		beginInfo.addClearDepthStencil(0.0f, 0);
+		beginInfo.addClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+		beginInfo.addClearDepthStencil(1.0f, 0);
 		mCommandBuffer->beginRenderPass(beginInfo);
 		mCommandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->Pipeline.get());
 	}
+
+	mMatrices.ModelMatrix = mModelMatrix;
+	mMatrices.NormalModelMatrix.computeNormalMatrix(mModelMatrix);
+	mMatrices.TextureMatrix = mTextureMatrix;
+
+	memcpy(static_cast<uint8_t*>(fb->MatricesUBO->Memory()) + mMatricesOffset, &mMatrices, sizeof(MatricesUBO));
+	memcpy(static_cast<uint8_t*>(fb->ColorsUBO->Memory()) + mColorsOffset, &mColors, sizeof(ColorsUBO));
+	memcpy(static_cast<uint8_t*>(fb->GlowingWallsUBO->Memory()) + mGlowingWallsOffset, &mGlowingWalls, sizeof(GlowingWallsUBO));
+
+	mPushConstants.uTextureMode = 0;
+	mPushConstants.uLightLevel = 1.0f;
+	mPushConstants.uLightIndex = -1;
 
 	mCommandBuffer->pushConstants(passManager->PipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, (uint32_t)sizeof(PushConstants), &mPushConstants);
 
@@ -165,7 +179,8 @@ void VkRenderState::Apply(int dt)
 
 	BindDescriptorSets();
 
-	if (mMaterial.mChanged)
+	//if (mMaterial.mChanged)
+	if (mMaterial.mMaterial)
 	{
 		auto base = static_cast<VkHardwareTexture*>(mMaterial.mMaterial->GetLayer(0, mMaterial.mTranslation));
 		if (base)

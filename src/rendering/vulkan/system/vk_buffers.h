@@ -12,7 +12,7 @@
 class VKBuffer : virtual public IBuffer
 {
 public:
-	~VKBuffer() { if (map) Unmap(); }
+	~VKBuffer();
 
 	void SetData(size_t size, const void *data, bool staticdata) override;
 	void SetSubData(size_t offset, size_t size, const void *data) override;

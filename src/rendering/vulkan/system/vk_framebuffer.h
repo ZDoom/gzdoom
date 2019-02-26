@@ -32,6 +32,8 @@ public:
 	VKDataBuffer *ColorsUBO = nullptr;
 	VKDataBuffer *GlowingWallsUBO = nullptr;
 
+	std::vector<std::unique_ptr<VulkanBuffer>> mFrameDeleteList;
+
 	VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevice *dev);
 	~VulkanFrameBuffer();
 

@@ -9,6 +9,7 @@ class VkShaderManager;
 class VkRenderPassManager;
 class VkRenderState;
 class VKDataBuffer;
+class VkHardwareTexture;
 
 class VulkanFrameBuffer : public SystemBaseFrameBuffer
 {
@@ -21,6 +22,7 @@ public:
 	VulkanCommandBuffer *GetUploadCommands();
 	VulkanCommandBuffer *GetDrawCommands();
 	VkShaderManager *GetShaderManager() { return mShaderManager.get(); }
+	VkSamplerManager *GetSamplerManager() { return mSamplerManager.get(); }
 	VkRenderPassManager *GetRenderPassManager() { return mRenderPassManager.get(); }
 	VkRenderState *GetRenderState() { return mRenderState.get(); }
 
@@ -44,6 +46,7 @@ public:
 	void BeginFrame() override;
 	void BlurScene(float amount) override;
 
+	IHardwareTexture *CreateHardwareTexture() override;
 	FModelRenderer *CreateModelRenderer(int mli) override;
 	IShaderProgram *CreateShaderProgram() override;
 	IVertexBuffer *CreateVertexBuffer() override;
@@ -75,6 +78,8 @@ private:
 
 	int lastSwapWidth = 0;
 	int lastSwapHeight = 0;
+
+	TArray<VkHardwareTexture*> AllTextures;
 };
 
 inline VulkanFrameBuffer *GetVulkanFrameBuffer() { return static_cast<VulkanFrameBuffer*>(screen); }

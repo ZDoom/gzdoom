@@ -43,6 +43,7 @@
 #include "vulkan/renderer/vk_renderpass.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vulkan/textures/vk_samplers.h"
+#include "vulkan/textures/vk_hwtexture.h"
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_swapchain.h"
 #include "doomerrors.h"
@@ -62,6 +63,8 @@ VulkanFrameBuffer::VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevi
 
 VulkanFrameBuffer::~VulkanFrameBuffer()
 {
+	for (auto tex : AllTextures)
+		tex->Reset();
 }
 
 void VulkanFrameBuffer::InitializeState()
@@ -230,6 +233,13 @@ void VulkanFrameBuffer::SetVSync(bool vsync)
 
 void VulkanFrameBuffer::CleanForRestart()
 {
+}
+
+IHardwareTexture *VulkanFrameBuffer::CreateHardwareTexture()
+{
+	auto texture = new VkHardwareTexture();
+	AllTextures.Push(texture);
+	return texture;
 }
 
 FModelRenderer *VulkanFrameBuffer::CreateModelRenderer(int mli) 

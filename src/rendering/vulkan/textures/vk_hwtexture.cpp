@@ -28,9 +28,154 @@
 #include "c_cvars.h"
 #include "r_data/colormaps.h"
 #include "hwrenderer/textures/hw_material.h"
-
 #include "hwrenderer/utility/hw_cvars.h"
+#include "vulkan/system/vk_objects.h"
+#include "vulkan/system/vk_builders.h"
+#include "vulkan/system/vk_framebuffer.h"
+#include "vulkan/textures/vk_samplers.h"
+#include "vulkan/renderer/vk_renderpass.h"
 #include "vk_hwtexture.h"
+
+VkHardwareTexture::VkHardwareTexture()
+{
+}
+
+VkHardwareTexture::~VkHardwareTexture()
+{
+}
+
+void VkHardwareTexture::Reset()
+{
+	mDescriptorSet.reset();
+	mImage.reset();
+	mImageView.reset();
+	mStagingBuffer.reset();
+}
+
+VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &state)
+{
+	if (!mImage)
+	{
+		static const uint32_t testpixels[4 * 4] =
+		{
+			0xff0000ff, 0xff0000ff, 0xffff00ff, 0xffff00ff,
+			0xff0000ff, 0xff0000ff, 0xffff00ff, 0xffff00ff,
+			0xff0000ff, 0x00ffffff, 0x0000ffff, 0x0000ffff,
+			0xff0000ff, 0x00ffffff, 0x0000ffff, 0x0000ffff,
+		};
+		CreateTexture(4, 4, 4, VK_FORMAT_R8G8B8A8_UNORM, testpixels);
+	}
+
+	if (!mDescriptorSet)
+	{
+		auto fb = GetVulkanFrameBuffer();
+		mDescriptorSet = fb->GetRenderPassManager()->DescriptorPool->allocate(fb->GetRenderPassManager()->TextureSetLayout.get());
+
+		WriteDescriptors update;
+		update.addCombinedImageSampler(mDescriptorSet.get(), 0, mImageView.get(), fb->GetSamplerManager()->Get(0), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		update.updateSets(fb->device);
+	}
+
+	return mDescriptorSet.get();
+}
+
+void VkHardwareTexture::CreateTexture(int w, int h, int pixelsize, VkFormat format, const void *pixels)
+{
+	auto fb = GetVulkanFrameBuffer();
+
+	int totalSize = w * h * pixelsize;
+
+	BufferBuilder bufbuilder;
+	bufbuilder.setSize(totalSize);
+	bufbuilder.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+	mStagingBuffer = bufbuilder.create(fb->device);
+
+	uint8_t *data = (uint8_t*)mStagingBuffer->Map(0, totalSize);
+	memcpy(data, pixels, totalSize);
+	mStagingBuffer->Unmap();
+
+	ImageBuilder imgbuilder;
+	imgbuilder.setFormat(format);
+	imgbuilder.setSize(w, h, GetMipLevels(w, h));
+	imgbuilder.setUsage(VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	mImage = imgbuilder.create(fb->device);
+
+	ImageViewBuilder viewbuilder;
+	viewbuilder.setImage(mImage.get(), format);
+	mImageView = viewbuilder.create(fb->device);
+
+	auto cmdbuffer = fb->GetUploadCommands();
+
+	PipelineBarrier imageTransition0;
+	imageTransition0.addImage(mImage.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, VK_ACCESS_TRANSFER_WRITE_BIT);
+	imageTransition0.execute(cmdbuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+
+	VkBufferImageCopy region = {};
+	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	region.imageSubresource.layerCount = 1;
+	region.imageExtent.depth = 1;
+	region.imageExtent.width = w;
+	region.imageExtent.height = h;
+	cmdbuffer->copyBufferToImage(mStagingBuffer->buffer, mImage->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+	GenerateMipmaps(mImage.get(), cmdbuffer);
+}
+
+void VkHardwareTexture::GenerateMipmaps(VulkanImage *image, VulkanCommandBuffer *cmdbuffer)
+{
+	int mipWidth = image->width;
+	int mipHeight = image->height;
+	int i;
+	for (i = 1; mipWidth > 1 || mipHeight > 1; i++)
+	{
+		PipelineBarrier barrier0;
+		barrier0.addImage(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT, i - 1);
+		barrier0.execute(cmdbuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+
+		int nextWidth = std::max(mipWidth >> 1, 1);
+		int nextHeight = std::max(mipHeight >> 1, 1);
+
+		VkImageBlit blit = {};
+		blit.srcOffsets[0] = { 0, 0, 0 };
+		blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
+		blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blit.srcSubresource.mipLevel = i - 1;
+		blit.srcSubresource.baseArrayLayer = 0;
+		blit.srcSubresource.layerCount = 1;
+		blit.dstOffsets[0] = { 0, 0, 0 };
+		blit.dstOffsets[1] = { nextWidth, nextHeight, 1 };
+		blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blit.dstSubresource.mipLevel = i;
+		blit.dstSubresource.baseArrayLayer = 0;
+		blit.dstSubresource.layerCount = 1;
+		cmdbuffer->blitImage(image->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
+
+		PipelineBarrier barrier1;
+		barrier1.addImage(image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT, i - 1);
+		barrier1.execute(cmdbuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
+		mipWidth = nextWidth;
+		mipHeight = nextHeight;
+	}
+
+	PipelineBarrier barrier2;
+	barrier2.addImage(image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT, i - 1);
+	barrier2.execute(cmdbuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+}
+
+int VkHardwareTexture::GetMipLevels(int w, int h)
+{
+	int levels = 1;
+	while (w > 1 || h > 1)
+	{
+		w = std::max(w >> 1, 1);
+		h = std::max(h >> 1, 1);
+		levels++;
+	}
+	return levels;
+}
+
+#if 0
 
 //===========================================================================
 // 
@@ -40,7 +185,6 @@
 
 VkResult VkHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, bool mipmap, int translation)
 {
-#if 0
 	int rh,rw;
 	bool deletebuffer=false;
 	auto tTex = GetTexID(translation);
@@ -72,9 +216,6 @@ VkResult VkHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, 
 		tTex->vkTexture = nullptr;
 	}
 	return res;
-#else
-	return VK_ERROR_INITIALIZATION_FAILED; 
-#endif
 }
 
 //===========================================================================
@@ -204,7 +345,6 @@ VkHardwareTexture::TranslatedTexture *VkHardwareTexture::GetTexID(int translatio
 
 VkTexture *VkHardwareTexture::GetVkTexture(FTexture *tex, int translation, bool needmipmap, int flags)
 {
-#if 0
 	int usebright = false;
 
 	if (translation <= 0)
@@ -227,6 +367,6 @@ VkTexture *VkHardwareTexture::GetVkTexture(FTexture *tex, int translation, bool 
 		delete[] buffer;
 	}
 	return pTex->vkTexture;
-#endif
-	return nullptr;
 }
+
+#endif

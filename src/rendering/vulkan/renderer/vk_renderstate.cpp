@@ -3,6 +3,7 @@
 #include "vulkan/system/vk_framebuffer.h"
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/renderer/vk_renderpass.h"
+#include "vulkan/textures/vk_hwtexture.h"
 #include "templates.h"
 #include "doomstat.h"
 #include "r_data/colormaps.h"
@@ -165,6 +166,15 @@ void VkRenderState::Apply(int dt)
 	mCommandBuffer->bindIndexBuffer(static_cast<VKIndexBuffer*>(mIndexBuffer)->mBuffer->buffer, 0, VK_INDEX_TYPE_UINT32);
 
 	BindDescriptorSets();
+
+	if (mMaterial.mChanged)
+	{
+		auto base = static_cast<VkHardwareTexture*>(mMaterial.mMaterial->GetLayer(0, mMaterial.mTranslation));
+		if (base)
+			mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->PipelineLayout.get(), 1, base->GetDescriptorSet(mMaterial));
+
+		mMaterial.mChanged = false;
+	}
 }
 
 void VkRenderState::Bind(int bindingpoint, uint32_t offset)

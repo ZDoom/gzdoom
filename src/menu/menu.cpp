@@ -52,6 +52,7 @@
 #include "vm.h"
 #include "events.h"
 #include "v_video.h"
+#include "i_system.h"
 #include "scripting/types.h"
 
 int DMenu::InMenu;
@@ -404,11 +405,45 @@ DEFINE_ACTION_FUNCTION(DMenu, ActivateMenu)
 //
 //=============================================================================
 
+EXTERN_CVAR(Int, cl_localizationmode)
+
+
 void M_SetMenu(FName menu, int param)
 {
 	// some menus need some special treatment
 	switch (menu)
 	{
+	case NAME_Mainmenu:
+		if (gameinfo.gametype & GAME_DoomStrifeChex)	// Raven's games always used text based menus
+		{
+			if (gameinfo.forcetextinmenus)	// If text is forced, this overrides any check.
+			{
+				menu = NAME_MainmenuTextOnly;
+			}
+			else
+			{
+				// For these games we must check up-front if they get localized because in that case another template must be used.
+				DMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_Mainmenu);
+				if (desc != nullptr)
+				{
+					if ((*desc)->IsKindOf(RUNTIME_CLASS(DListMenuDescriptor)))
+					{
+						DListMenuDescriptor *ld = static_cast<DListMenuDescriptor*>(*desc);
+						if (ld->mFromEngine && cl_localizationmode != 0)
+						{
+							// This assumes that replacing one graphic will replace all of them.
+							// So this only checks the "New game" entry for localization capability.
+							FTextureID texid = TexMan.CheckForTexture("M_NGAME", ETextureType::MiscPatch);
+							if (!TexMan.OkForLocalization(texid, "$MNU_NEWGAME"))
+							{
+								menu = NAME_MainmenuTextOnly;
+							}
+						}
+					}
+				}
+			}
+		}
+		break;
 	case NAME_Episodemenu:
 		// sent from the player class menu
 		GameStartupInfo.Skill = -1;
@@ -416,6 +451,7 @@ void M_SetMenu(FName menu, int param)
 		GameStartupInfo.PlayerClass = 
 			param == -1000? nullptr :
 			param == -1? "Random" : GetPrintableDisplayName(PlayerClasses[param].Type).GetChars();
+		M_StartupEpisodeMenu(&GameStartupInfo);	// needs player class name from class menu (later)
 		break;
 
 	case NAME_Skillmenu:

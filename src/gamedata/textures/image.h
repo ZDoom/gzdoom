@@ -113,6 +113,12 @@ public:
 	{
 		return std::make_pair(LeftOffset, TopOffset);
 	}
+
+	void SetOffsets(int x, int y)
+	{
+		LeftOffset = x;
+		TopOffset = y;
+	}
 	
 	int LumpNum() const
 	{

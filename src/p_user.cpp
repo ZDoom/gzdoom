@@ -371,18 +371,37 @@ size_t player_t::PropagateMark()
 
 void player_t::SetLogNumber (int num)
 {
-	char lumpname[16];
+	char lumpname[26];
 	int lumpnum;
+
+	// First look up TXT_LOGTEXT%d in the string table
+	mysnprintf(lumpname, countof(lumpname), "$TXT_LOGTEXT%d", num);
+	auto text = GStrings[lumpname+1];
+	if (text)
+	{
+		SetLogText(lumpname);	// set the label, not the content, so that a language change can be picked up.
+		return;
+	}
 
 	mysnprintf (lumpname, countof(lumpname), "LOG%d", num);
 	lumpnum = Wads.CheckNumForName (lumpname);
-	if (lumpnum == -1)
+	if (lumpnum != -1)
 	{
-		// Leave the log message alone if this one doesn't exist.
-		//SetLogText (lumpname);
-	}
-	else
-	{
+		auto fn = Wads.GetLumpFile(lumpnum);
+		auto wadname = Wads.GetWadName(fn);
+		if (!stricmp(wadname, "STRIFE0.WAD") || !stricmp(wadname, "STRIFE1.WAD") || !stricmp(wadname, "SVE.WAD"))
+		{
+			// If this is an original IWAD text, try looking up its lower priority string version first.
+
+			mysnprintf(lumpname, countof(lumpname), "$TXT_ILOG%d", num);
+			auto text = GStrings[lumpname + 1];
+			if (text)
+			{
+				SetLogText(lumpname);	// set the label, not the content, so that a language change can be picked up.
+				return;
+			}
+		}
+
 		auto lump = Wads.ReadLump(lumpnum);
 		SetLogText (lump.GetString());
 	}

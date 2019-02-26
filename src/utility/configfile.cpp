@@ -623,15 +623,15 @@ void FConfigFile::LoadConfigFile ()
 
 bool FConfigFile::ReadConfig (void *file)
 {
-	char readbuf[READBUFFERSIZE];
+	uint8_t readbuf[READBUFFERSIZE];
 	FConfigSection *section = NULL;
 	ClearConfig ();
 
-	while (ReadLine (readbuf, READBUFFERSIZE, file) != NULL)
+	while (ReadLine ((char*)readbuf, READBUFFERSIZE, file) != NULL)
 	{
-		char *start = readbuf;
-		char *equalpt;
-		char *endpt;
+		uint8_t *start = readbuf;
+		uint8_t *equalpt;
+		uint8_t *endpt;
 
 		// Remove white space at start of line
 		while (*start && *start <= ' ')
@@ -644,7 +644,7 @@ bool FConfigFile::ReadConfig (void *file)
 			continue;
 		}
 		// Do not process tail of long line
-		const bool longline = (READBUFFERSIZE - 1) == strlen(readbuf) && '\n' != readbuf[READBUFFERSIZE - 2];
+		const bool longline = (READBUFFERSIZE - 1) == strlen((char*)readbuf) && '\n' != readbuf[READBUFFERSIZE - 2];
 		if (longline)
 		{
 			endpt = start + READBUFFERSIZE - 2;
@@ -652,7 +652,7 @@ bool FConfigFile::ReadConfig (void *file)
 		else
 		{
 			// Remove white space at end of line
-			endpt = start + strlen (start) - 1;
+			endpt = start + strlen ((char*)start) - 1;
 			while (endpt > start && *endpt <= ' ')
 			{
 				endpt--;
@@ -667,7 +667,7 @@ bool FConfigFile::ReadConfig (void *file)
 		{ // Section header
 			if (*endpt == ']')
 				*endpt = 0;
-			section = NewConfigSection (start+1);
+			section = NewConfigSection ((char*)start+1);
 		}
 		else if (section == NULL)
 		{
@@ -675,11 +675,11 @@ bool FConfigFile::ReadConfig (void *file)
 		}
 		else
 		{ // Should be key=value
-			equalpt = strchr (start, '=');
+			equalpt = (uint8_t*)strchr ((char*)start, '=');
 			if (equalpt != NULL && equalpt > start)
 			{
 				// Remove white space in front of =
-				char *whiteprobe = equalpt - 1;
+				uint8_t *whiteprobe = equalpt - 1;
 				while (whiteprobe > start && isspace(*whiteprobe))
 				{
 					whiteprobe--;
@@ -695,16 +695,16 @@ bool FConfigFile::ReadConfig (void *file)
 				// Check for multi-line value
 				if (whiteprobe[0] == '<' && whiteprobe[1] == '<' && whiteprobe[2] == '<' && whiteprobe[3] != '\0')
 				{
-					ReadMultiLineValue (file, section, start, whiteprobe + 3);
+					ReadMultiLineValue (file, section, (char*)start, (char*)whiteprobe + 3);
 				}
 				else if (longline)
 				{
-					const FString key = start;
-					FString value = whiteprobe;
+					const FString key = (char*)start;
+					FString value = (char*)whiteprobe;
 					
-					while (ReadLine (readbuf, READBUFFERSIZE, file) != NULL)
+					while (ReadLine ((char*)readbuf, READBUFFERSIZE, file) != NULL)
 					{
-						const size_t endpos = (0 == readbuf[0]) ? 0 : (strlen(readbuf) - 1);
+						const size_t endpos = (0 == readbuf[0]) ? 0 : (strlen((char*)readbuf) - 1);
 						const bool endofline = '\n' == readbuf[endpos];
 						
 						if (endofline)
@@ -712,7 +712,7 @@ bool FConfigFile::ReadConfig (void *file)
 							readbuf[endpos] = 0;
 						}
 						
-						value += readbuf;
+						value += (char*)readbuf;
 						
 						if (endofline)
 						{
@@ -724,7 +724,7 @@ bool FConfigFile::ReadConfig (void *file)
 				}
 				else
 				{
-					NewConfigEntry (section, start, whiteprobe);
+					NewConfigEntry (section, (char*)start, (char*)whiteprobe);
 				}
 			}
 		}

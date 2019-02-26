@@ -190,8 +190,15 @@ bool DirEntryExists(const char *pathname, bool *isdir)
 	if (pathname == NULL || *pathname == 0)
 		return false;
 
+#ifndef _WIN32
 	struct stat info;
 	bool res = stat(pathname, &info) == 0;
+#else
+	// Windows must use the wide version of stat to preserve non-standard paths.
+	auto wstr = WideString(pathname);
+	struct _stat64i32 info;
+	bool res = _wstat64i32(wstr.c_str(), &info) == 0;
+#endif
 	if (isdir) *isdir = !!(info.st_mode & S_IFDIR);
 	return res;
 }

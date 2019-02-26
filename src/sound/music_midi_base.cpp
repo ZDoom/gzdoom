@@ -207,15 +207,18 @@ CCMD (snd_listmididevices)
 	{
 		for (id = 0; id < nummididevices; ++id)
 		{
+			FString text;
 			res = midiOutGetDevCaps (id, &caps, sizeof(caps));
 			if (res == MMSYSERR_NODRIVER)
-				strcpy (caps.szPname, "<Driver not installed>");
+				text = "<Driver not installed>";
 			else if (res == MMSYSERR_NOMEM)
-				strcpy (caps.szPname, "<No memory for description>");
-			else if (res != MMSYSERR_NOERROR)
+				text = "<No memory for description>";
+			else if (res == MMSYSERR_NOERROR)
+				text = caps.szPname;
+			else
 				continue;
 
-			PrintMidiDevice (id, caps.szPname, caps.wTechnology, caps.dwSupport);
+			PrintMidiDevice (id, text, caps.wTechnology, caps.dwSupport);
 		}
 	}
 }

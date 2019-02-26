@@ -49,6 +49,7 @@
 #include "menu/menu.h"
 #include "d_net.h"
 #include "g_levellocals.h"
+#include "utf8.h"
 
 FIntermissionDescriptorList IntermissionDescriptors;
 
@@ -255,7 +256,7 @@ void DIntermissionScreenText::Init(FIntermissionAction *desc, bool first)
 	if (mTextX < 0) mTextX =gameinfo.TextScreenX;
 	mTextY = static_cast<FIntermissionActionTextscreen*>(desc)->mTextY;
 	if (mTextY < 0) mTextY =gameinfo.TextScreenY;
-	mTextLen = (int)strlen(mText);
+	mTextLen = mText.CharacterCount();
 	mTextDelay = static_cast<FIntermissionActionTextscreen*>(desc)->mTextDelay;
 	mTextColor = static_cast<FIntermissionActionTextscreen*>(desc)->mTextColor;
 	// For text screens, the duration only counts when the text is complete.
@@ -285,7 +286,7 @@ void DIntermissionScreenText::Drawer ()
 		size_t count;
 		int c;
 		const FRemapTable *range;
-		const char *ch = mText;
+		const uint8_t *ch = (const uint8_t*)mText.GetChars();
 		const int kerning = SmallFont->GetDefaultKerning();
 
 		// Count number of rows in this text. Since it does not word-wrap, we just count
@@ -327,7 +328,7 @@ void DIntermissionScreenText::Drawer ()
 
 		for ( ; count > 0 ; count-- )
 		{
-			c = *ch++;
+			c = GetCharFromString(ch);
 			if (!c)
 				break;
 			if (c == '\n')
@@ -696,6 +697,7 @@ bool DIntermissionController::NextPage ()
 		// last page
 		return false;
 	}
+	bg.SetInvalid();
 
 	if (mScreen != NULL)
 	{

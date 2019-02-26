@@ -58,7 +58,10 @@
 #include "events.h"
 #include "p_destructible.h"
 #include "r_sky.h"
+#include "version.h"
 #include "fragglescript/t_script.h"
+
+EXTERN_CVAR(Bool, save_formatted)
 
 //==========================================================================
 //
@@ -486,6 +489,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FPolyObj &poly, FPolyO
 			("blocked", poly.bBlocked)
 			("hasportals", poly.bHasPortals)
 			("specialdata", poly.specialdata)
+			("level", poly.Level)
 			.EndObject();
 
 		if (arc.isReading())
@@ -526,38 +530,31 @@ FSerializer &Serialize(FSerializer &arc, const char *key, zone_t &z, zone_t *def
 //
 //==========================================================================
 
-void P_SerializeSounds(FLevelLocals *Level, FSerializer &arc)
+void FLevelLocals::SerializeSounds(FSerializer &arc)
 {
-	S_SerializeSounds(arc);
-	const char *name = NULL;
-	uint8_t order;
-	float musvol = Level->MusicVolume;
-
-	if (arc.isWriting())
+	if (isPrimaryLevel())
 	{
-		order = S_GetMusic(&name);
-	}
-	arc.StringPtr("musicname", name)
-		("musicorder", order)
-		("musicvolume", musvol);
+		S_SerializeSounds(arc);
+		const char *name = NULL;
+		uint8_t order;
+		float musvol = MusicVolume;
 
-	if (arc.isReading())
-	{
-		if (!S_ChangeMusic(name, order))
-			Level->SetMusic();
-		Level->SetMusicVolume(musvol);
+		if (arc.isWriting())
+		{
+			order = S_GetMusic(&name);
+		}
+		arc.StringPtr("musicname", name)
+			("musicorder", order)
+			("musicvolume", musvol);
+
+		if (arc.isReading())
+		{
+			if (!S_ChangeMusic(name, order))
+				SetMusic();
+			SetMusicVolume(musvol);
+		}
 	}
 }
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void CopyPlayer(player_t *dst, player_t *src, const char *name);
-static void ReadOnePlayer(FSerializer &arc, bool skipload);
-static void ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayersNow, bool skipload);
 
 //==========================================================================
 //
@@ -565,7 +562,7 @@ static void ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayers
 //
 //==========================================================================
 
-void P_SerializePlayers(FLevelLocals *Level, FSerializer &arc, bool skipload)
+void FLevelLocals::SerializePlayers(FSerializer &arc, bool skipload)
 {
 	int numPlayers, numPlayersNow;
 	int i;
@@ -573,7 +570,7 @@ void P_SerializePlayers(FLevelLocals *Level, FSerializer &arc, bool skipload)
 	// Count the number of players present right now.
 	for (numPlayersNow = 0, i = 0; i < MAXPLAYERS; ++i)
 	{
-		if (Level->PlayerInGame(i))
+		if (PlayerInGame(i))
 		{
 			++numPlayersNow;
 		}
@@ -588,13 +585,13 @@ void P_SerializePlayers(FLevelLocals *Level, FSerializer &arc, bool skipload)
 			// Record each player's name, followed by their data.
 			for (i = 0; i < MAXPLAYERS; ++i)
 			{
-				if (Level->PlayerInGame(i))
+				if (PlayerInGame(i))
 				{
 					if (arc.BeginObject(nullptr))
 					{
-						const char *n = Level->Players[i]->userinfo.GetName();
+						const char *n = Players[i]->userinfo.GetName();
 						arc.StringPtr("playername", n);
-						Level->Players[i]->Serialize(arc);
+						Players[i]->Serialize(arc);
 						arc.EndObject();
 					}
 				}
@@ -622,10 +619,10 @@ void P_SerializePlayers(FLevelLocals *Level, FSerializer &arc, bool skipload)
 		}
 		if (!skipload && numPlayersNow > numPlayers)
 		{
-			Level->SpawnExtraPlayers();
+			SpawnExtraPlayers();
 		}
 		// Redo pitch limits, since the spawned player has them at 0.
-		auto p = Level->GetConsolePlayer();
+		auto p = GetConsolePlayer();
 		if (p) p->SendPitchLimits();
 	}
 }
@@ -636,7 +633,7 @@ void P_SerializePlayers(FLevelLocals *Level, FSerializer &arc, bool skipload)
 //
 //==========================================================================
 
-static void ReadOnePlayer(FSerializer &arc, bool skipload)
+void FLevelLocals::ReadOnePlayer(FSerializer &arc, bool skipload)
 {
 	int i;
 	const char *name = NULL;
@@ -663,20 +660,20 @@ static void ReadOnePlayer(FSerializer &arc, bool skipload)
 						// via a net command, but that won't be processed in time for a screen
 						// wipe, so we need something here.
 						playerTemp.MaxPitch = playerTemp.MinPitch = playerTemp.mo->Angles.Pitch;
-						CopyPlayer(&players[i], &playerTemp, name);
+						CopyPlayer(Players[i], &playerTemp, name);
 					}
 					else
 					{
 						// we need the player actor, so that G_FinishTravel can destroy it later.
-						players[i].mo = playerTemp.mo;
+						Players[i]->mo = playerTemp.mo;
 					}
 				}
 				else
 				{
-					if (players[i].mo != NULL)
+					if (Players[i]->mo != NULL)
 					{
-						players[i].mo->Destroy();
-						players[i].mo = NULL;
+						Players[i]->mo->Destroy();
+						Players[i]->mo = NULL;
 					}
 				}
 			}
@@ -691,7 +688,7 @@ static void ReadOnePlayer(FSerializer &arc, bool skipload)
 //
 //==========================================================================
 
-static void ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayersNow, bool skipload)
+void FLevelLocals::ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayersNow, bool skipload)
 {
 	// For two or more players, read each player into a temporary array.
 	int i, j;
@@ -729,7 +726,7 @@ static void ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayers
 				if (playerUsed[j] == 0 && stricmp(players[j].userinfo.GetName(), nametemp[i]) == 0)
 				{ // Found a match, so copy our temp player to the real player
 					Printf("Found player %d (%s) at %d\n", i, nametemp[i], j);
-					CopyPlayer(&players[j], &playertemp[i], nametemp[i]);
+					CopyPlayer(Players[j], &playertemp[i], nametemp[i]);
 					playerUsed[j] = 1;
 					tempPlayerUsed[i] = 1;
 					break;
@@ -802,7 +799,7 @@ static void ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayers
 //
 //==========================================================================
 
-void CopyPlayer(player_t *dst, player_t *src, const char *name)
+void FLevelLocals::CopyPlayer(player_t *dst, player_t *src, const char *name)
 {
 	// The userinfo needs to be saved for real players, but it
 	// needs to come from the save for bots.
@@ -823,7 +820,7 @@ void CopyPlayer(player_t *dst, player_t *src, const char *name)
 
 	if (dst->Bot != nullptr)
 	{
-		botinfo_t *thebot = src->mo->Level->BotInfo.botinfo;
+		botinfo_t *thebot = BotInfo.botinfo;
 		while (thebot && stricmp(name, thebot->name))
 		{
 			thebot = thebot->next;
@@ -832,14 +829,14 @@ void CopyPlayer(player_t *dst, player_t *src, const char *name)
 		{
 			thebot->inuse = BOTINUSE_Yes;
 		}
-		src->mo->Level->BotInfo.botnum++;
+		BotInfo.botnum++;
 		dst->userinfo.TransferFrom(uibackup2);
 	}
 	else
 	{
 		dst->userinfo.TransferFrom(uibackup);
 		// The player class must come from the save, so that the menu reflects the currently playing one.
-		dst->userinfo.PlayerClassChanged(src->mo->GetInfo()->DisplayName); 
+		dst->userinfo.PlayerClassChanged(src->mo->GetInfo()->DisplayName);
 	}
 
 	// Validate the skin
@@ -867,6 +864,7 @@ void CopyPlayer(player_t *dst, player_t *src, const char *name)
 	dst->attackdown = attackdown;
 	dst->usedown = usedown;
 }
+
 
 //==========================================================================
 //
@@ -1006,8 +1004,8 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 	StatusBar->SerializeMessages(arc);
 	FRemapTable::StaticSerializeTranslations(arc);
 	canvasTextureInfo.Serialize(arc);
-	P_SerializePlayers(this, arc, hubload);
-	P_SerializeSounds(this, arc);
+	SerializePlayers(arc, hubload);
+	SerializeSounds(arc);
 
 	// Regenerate some data that wasn't saved
 	if (arc.isReading())
@@ -1036,3 +1034,87 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 	}
 
 }
+
+//==========================================================================
+//
+// Archives the current level
+//
+//==========================================================================
+
+void FLevelLocals::SnapshotLevel()
+{
+	info->Snapshot.Clean();
+
+	if (info->isValid())
+	{
+		FSerializer arc(this);
+
+		if (arc.OpenWriter(save_formatted))
+		{
+			SaveVersion = SAVEVER;
+			Serialize(arc, false);
+			info->Snapshot = arc.GetCompressedOutput();
+		}
+	}
+}
+
+//==========================================================================
+//
+// Unarchives the current level based on its snapshot
+// The level should have already been loaded and setup.
+//
+//==========================================================================
+
+void FLevelLocals::UnSnapshotLevel(bool hubLoad)
+{
+	if (info->Snapshot.mBuffer == nullptr)
+		return;
+
+	if (info->isValid())
+	{
+		FSerializer arc(this);
+		if (!arc.OpenReader(&info->Snapshot))
+		{
+			I_Error("Failed to load savegame");
+			return;
+		}
+
+		Serialize(arc, hubLoad);
+		FromSnapshot = true;
+
+		auto it = GetThinkerIterator<AActor>(NAME_PlayerPawn);
+		AActor *pawn, *next;
+
+		next = it.Next();
+		while ((pawn = next) != 0)
+		{
+			next = it.Next();
+			if (pawn->player == nullptr || pawn->player->mo == nullptr || !PlayerInGame(pawn->player))
+			{
+				int i;
+
+				// If this isn't the unmorphed original copy of a player, destroy it, because it's extra.
+				for (i = 0; i < MAXPLAYERS; ++i)
+				{
+					if (PlayerInGame(i) && Players[i]->morphTics && Players[i]->mo->alternative == pawn)
+					{
+						break;
+					}
+				}
+				if (i == MAXPLAYERS)
+				{
+					pawn->Destroy();
+				}
+			}
+		}
+		arc.Close();
+	}
+	// No reason to keep the snapshot around once the level's been entered.
+	info->Snapshot.Clean();
+	if (hubLoad)
+	{
+		// Unlock ACS global strings that were locked when the snapshot was made.
+		Behaviors.UnlockLevelVarStrings(levelnum);
+	}
+}
+

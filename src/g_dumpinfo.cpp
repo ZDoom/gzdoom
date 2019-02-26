@@ -349,3 +349,58 @@ CCMD(targetinv)
 		"the NOBLOCKMAP flag or have height/radius of 0.\n");
 }
 
+
+//==========================================================================
+//
+// Lists all currently defined maps
+//
+//==========================================================================
+
+CCMD(listmaps)
+{
+	for (unsigned i = 0; i < wadlevelinfos.Size(); i++)
+	{
+		level_info_t *info = &wadlevelinfos[i];
+		MapData *map = P_OpenMapData(info->MapName, true);
+
+		if (map != NULL)
+		{
+			Printf("%s: '%s' (%s)\n", info->MapName.GetChars(), info->LookupLevelName().GetChars(),
+				Wads.GetWadName(Wads.GetLumpFile(map->lumpnum)));
+			delete map;
+		}
+	}
+}
+
+//==========================================================================
+//
+// For testing sky fog sheets
+//
+//==========================================================================
+CCMD(skyfog)
+{
+	if (argv.argc() > 1)
+	{
+		// Do this only on the primary level.
+		primaryLevel->skyfog = MAX(0, (int)strtoull(argv[1], NULL, 0));
+	}
+}
+
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+CCMD(listsnapshots)
+{
+	for (unsigned i = 0; i < wadlevelinfos.Size(); ++i)
+	{
+		FCompressedBuffer *snapshot = &wadlevelinfos[i].Snapshot;
+		if (snapshot->mBuffer != nullptr)
+		{
+			Printf("%s (%u -> %u bytes)\n", wadlevelinfos[i].MapName.GetChars(), snapshot->mCompressedSize, snapshot->mSize);
+		}
+	}
+}
+

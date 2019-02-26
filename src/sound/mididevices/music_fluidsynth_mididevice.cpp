@@ -644,7 +644,7 @@ FString FluidSynthMIDIDevice::GetStats()
 	}
 	FString out;
 
-	CritSec.Enter();
+	std::lock_guard<std::mutex> lock(CritSec);
 	int polyphony = fluid_synth_get_polyphony(FluidSynth);
 	int voices = fluid_synth_get_active_voice_count(FluidSynth);
 	double load = fluid_synth_get_cpu_load(FluidSynth);
@@ -652,7 +652,6 @@ FString FluidSynthMIDIDevice::GetStats()
 	fluid_settings_getint(FluidSettings, "synth.chorus.active", &chorus);
 	fluid_settings_getint(FluidSettings, "synth.reverb.active", &reverb);
 	fluid_settings_getint(FluidSettings, "synth.polyphony", &maxpoly);
-	CritSec.Leave();
 
 	out.Format("Voices: " TEXTCOLOR_YELLOW "%3d" TEXTCOLOR_NORMAL "/" TEXTCOLOR_ORANGE "%3d" TEXTCOLOR_NORMAL "(" TEXTCOLOR_RED "%3d" TEXTCOLOR_NORMAL ")"
 			   TEXTCOLOR_YELLOW "%6.2f" TEXTCOLOR_NORMAL "%% CPU   "

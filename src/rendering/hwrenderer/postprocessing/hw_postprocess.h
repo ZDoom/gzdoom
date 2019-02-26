@@ -117,7 +117,7 @@ public:
 		tex.Filter = filter;
 		tex.Wrap = wrap;
 		tex.Type = type;
-		tex.Texture = {};
+		tex.Texture = "";
 	}
 
 	void SetOutputTexture(PPTextureName texture)
@@ -129,19 +129,19 @@ public:
 	void SetOutputCurrent()
 	{
 		Output.Type = PPTextureType::CurrentPipelineTexture;
-		Output.Texture = {};
+		Output.Texture = "";
 	}
 
 	void SetOutputNext()
 	{
 		Output.Type = PPTextureType::NextPipelineTexture;
-		Output.Texture = {};
+		Output.Texture = "";
 	}
 
 	void SetOutputSceneColor()
 	{
 		Output.Type = PPTextureType::SceneColor;
-		Output.Texture = {};
+		Output.Texture = "";
 	}
 
 	void SetNoBlend()

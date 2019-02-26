@@ -151,8 +151,6 @@ enum
 extern AActor *WP_NOCHANGE;
 
 
-#define MAXPLAYERNAME	15
-
 // [GRB] Custom player classes
 enum
 {

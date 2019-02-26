@@ -855,6 +855,7 @@ int stripaccent(int code)
 
 FFont *V_GetFont(const char *name, const char *fontlumpname)
 {
+	if (!stricmp(name, "CONFONT")) name = "ConsoleFont";	// several mods have used the name CONFONT directly and effectively duplicated the font.
 	FFont *font = FFont::FindFont (name);
 	if (font == nullptr)
 	{

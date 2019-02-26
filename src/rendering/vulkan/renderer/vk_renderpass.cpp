@@ -117,9 +117,9 @@ VkRenderPassSetup::VkRenderPassSetup()
 void VkRenderPassSetup::CreateRenderPass()
 {
 	RenderPassBuilder builder;
-	builder.addRgba16fAttachment(false, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+	builder.addRgba16fAttachment(false, VK_IMAGE_LAYOUT_GENERAL);
 	builder.addSubpass();
-	builder.addSubpassColorAttachmentRef(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+	builder.addSubpassColorAttachmentRef(0, VK_IMAGE_LAYOUT_GENERAL);
 	builder.addExternalSubpassDependency();
 	RenderPass = builder.create(GetVulkanFrameBuffer()->device);
 }

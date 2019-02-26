@@ -107,6 +107,31 @@ void VulkanFrameBuffer::Update()
 	mRenderState->EndRenderPass();
 
 	//DrawPresentTexture(mOutputLetterbox, true);
+	{
+		auto sceneColor = mRenderPassManager->SceneColor.get();
+
+		PipelineBarrier barrier0;
+		barrier0.addImage(sceneColor, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT);
+		barrier0.execute(mPresentCommands.get(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+
+		VkImageBlit blit = {};
+		blit.srcOffsets[0] = { 0, 0, 0 };
+		blit.srcOffsets[1] = { sceneColor->width, sceneColor->height, 1 };
+		blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blit.srcSubresource.mipLevel = 0;
+		blit.srcSubresource.baseArrayLayer = 0;
+		blit.srcSubresource.layerCount = 1;
+		blit.dstOffsets[0] = { 0, 0, 0 };
+		blit.dstOffsets[1] = { (int32_t)device->swapChain->actualExtent.width, (int32_t)device->swapChain->actualExtent.height, 1 };
+		blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blit.dstSubresource.mipLevel = 0;
+		blit.dstSubresource.baseArrayLayer = 0;
+		blit.dstSubresource.layerCount = 1;
+		mPresentCommands->blitImage(
+			sceneColor->image, VK_IMAGE_LAYOUT_GENERAL,
+			device->swapChain->swapChainImages[device->presentImageIndex], VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR,
+			1, &blit, VK_FILTER_NEAREST);
+	}
 
 	mPresentCommands->end();
 

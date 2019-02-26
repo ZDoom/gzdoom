@@ -50,6 +50,7 @@
 #include "stats.h"
 
 EXTERN_CVAR (Float, snd_sfxvolume)
+EXTERN_CVAR (Float, snd_musicvolume)
 CVAR (Int, snd_samplerate, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Int, snd_buffersize, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Int, snd_hrtf, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -78,6 +79,23 @@ void I_CloseSound ();
 
 //==========================================================================
 //
+// CVAR snd_mastervolume
+//
+// Maximum volume of all audio
+//==========================================================================
+
+CUSTOM_CVAR(Float, snd_mastervolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (self < 0.f)
+		self = 0.f;
+	else if (self > 1.f)
+		self = 1.f;
+	snd_sfxvolume.Callback();
+	snd_musicvolume.Callback();
+}
+
+//==========================================================================
+//
 // CVAR snd_sfxvolume
 //
 // Maximum volume of a sound effect.
@@ -91,7 +109,7 @@ CUSTOM_CVAR (Float, snd_sfxvolume, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOIN
 		self = 1.f;
 	else if (GSnd != NULL)
 	{
-		GSnd->SetSfxVolume (self);
+		GSnd->SetSfxVolume (self * snd_mastervolume);
 	}
 }
 

@@ -98,6 +98,7 @@ extern int SinglePlayerClass[/*MAXPLAYERS*/];
 // -------------------------
 // Internal parameters for sound rendering.
 
+EXTERN_CVAR (Float, snd_mastervolume)	// maximum master volume
 EXTERN_CVAR (Float, snd_sfxvolume)		// maximum volume for sound
 EXTERN_CVAR (Float, snd_musicvolume)	// maximum volume for music
 

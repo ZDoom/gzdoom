@@ -42,7 +42,7 @@ void VkRenderState::Draw(int dt, int index, int count, bool apply)
 		BindDescriptorSets();
 
 	drawcalls.Clock();
-	//mCommandBuffer->draw(count, 1, index, 0);
+	mCommandBuffer->draw(count, 1, index, 0);
 	drawcalls.Unclock();
 }
 
@@ -54,7 +54,7 @@ void VkRenderState::DrawIndexed(int dt, int index, int count, bool apply)
 		BindDescriptorSets();
 
 	drawcalls.Clock();
-	//mCommandBuffer->drawIndexed(count, 1, 0, index * (int)sizeof(uint32_t), 0);
+	mCommandBuffer->drawIndexed(count, 1, 0, index * (int)sizeof(uint32_t), 0);
 	drawcalls.Unclock();
 }
 
@@ -155,9 +155,7 @@ void VkRenderState::Apply(int dt)
 		mCommandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->Pipeline.get());
 	}
 
-	// To do: maybe only push the subset that changed?
-	static_assert(sizeof(PushConstants) % 16 == 0, "std140 layouts must be 16 byte aligned");
-	//mCommandBuffer->pushConstants(passManager->PipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, (uint32_t)sizeof(PushConstants), &mPushConstants);
+	mCommandBuffer->pushConstants(passManager->PipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, (uint32_t)sizeof(PushConstants), &mPushConstants);
 
 	VkBuffer vertexBuffers[] = { static_cast<VKVertexBuffer*>(mVertexBuffer)->mBuffer->buffer };
 	VkDeviceSize offsets[] = { 0 };
@@ -196,8 +194,8 @@ void VkRenderState::BindDescriptorSets()
 	auto fb = GetVulkanFrameBuffer();
 	auto passManager = fb->GetRenderPassManager();
 
-	uint32_t offsets[2] = { mViewpointOffset, mLightBufferOffset };
-	mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->PipelineLayout.get(), 0, passManager->DynamicSet.get(), 2, offsets);
+	uint32_t offsets[5] = { mViewpointOffset, mLightBufferOffset, mMatricesOffset, mColorsOffset, mGlowingWallsOffset };
+	mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->PipelineLayout.get(), 0, passManager->DynamicSet.get(), 5, offsets);
 	mDescriptorsChanged = false;
 }
 

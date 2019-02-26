@@ -28,6 +28,9 @@ public:
 
 	VKDataBuffer *ViewpointUBO = nullptr;
 	VKDataBuffer *LightBufferSSO = nullptr;
+	VKDataBuffer *MatricesUBO = nullptr;
+	VKDataBuffer *ColorsUBO = nullptr;
+	VKDataBuffer *GlowingWallsUBO = nullptr;
 
 	VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevice *dev);
 	~VulkanFrameBuffer();

@@ -50,6 +50,9 @@ private:
 	PushConstants mPushConstants;
 	bool mDescriptorsChanged = true;
 
-	uint32_t mViewpointOffset = 0, mLastViewpointOffset = 0;
-	uint32_t mLightBufferOffset = 0, mLastLightBufferOffset = 0;
+	uint32_t mViewpointOffset = 0;
+	uint32_t mLightBufferOffset = 0;
+	uint32_t mMatricesOffset = 0;
+	uint32_t mColorsOffset = 0;
+	uint32_t mGlowingWallsOffset = 0;
 };

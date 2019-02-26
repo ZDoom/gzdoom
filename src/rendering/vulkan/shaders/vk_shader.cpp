@@ -46,28 +46,13 @@ static const char *shaderBindings = R"(
 	    vec4 lights[];
 	};
 
-	// textures
-	layout(set = 1, binding = 0) uniform sampler2D tex;
-	// layout(set = 1, binding = 1) uniform sampler2D texture2;
-	// layout(set = 1, binding = 2) uniform sampler2D texture3;
-	// layout(set = 1, binding = 3) uniform sampler2D texture4;
-	// layout(set = 1, binding = 4) uniform sampler2D texture5;
-	// layout(set = 1, binding = 5) uniform sampler2D texture6;
-	// layout(set = 1, binding = 16) uniform sampler2D ShadowMap;
-
-	// This must match the PushConstants struct
-	layout(push_constant, std140) uniform PushConstants
-	{
-		// matrices
+	layout(set = 0, binding = 2, std140) uniform MatricesUBO {
 		mat4 ModelMatrix;
 		mat4 NormalModelMatrix;
 		mat4 TextureMatrix;
+	};
 
-		int uTextureMode;
-		float uAlphaThreshold;
-		vec2 uClipSplit;
-
-		// colors
+	layout(set = 0, binding = 3, std140) uniform ColorsUBO {
 		vec4 uObjectColor;
 		vec4 uObjectColor2;
 		vec4 uDynLightColor;
@@ -76,8 +61,9 @@ static const char *shaderBindings = R"(
 		float uDesaturationFactor;
 		float uInterpolationFactor;
 		float padding0, padding1;
+	};
 
-		// Glowing walls stuff
+	layout(set = 0, binding = 4, std140) uniform GlowingWallsUBO {
 		vec4 uGlowTopPlane;
 		vec4 uGlowTopColor;
 		vec4 uGlowBottomPlane;
@@ -88,6 +74,23 @@ static const char *shaderBindings = R"(
 
 		vec4 uSplitTopPlane;
 		vec4 uSplitBottomPlane;
+	};
+
+	// textures
+	layout(set = 1, binding = 0) uniform sampler2D tex;
+	// layout(set = 1, binding = 1) uniform sampler2D texture2;
+	// layout(set = 1, binding = 2) uniform sampler2D texture3;
+	// layout(set = 1, binding = 3) uniform sampler2D texture4;
+	// layout(set = 1, binding = 4) uniform sampler2D texture5;
+	// layout(set = 1, binding = 5) uniform sampler2D texture6;
+	// layout(set = 1, binding = 16) uniform sampler2D ShadowMap;
+
+	// This must match the PushConstants struct
+	layout(push_constant) uniform PushConstants
+	{
+		int uTextureMode;
+		float uAlphaThreshold;
+		vec2 uClipSplit;
 
 		// Lighting + Fog
 		float uLightLevel;

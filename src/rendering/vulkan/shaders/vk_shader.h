@@ -8,18 +8,15 @@
 class VulkanDevice;
 class VulkanShader;
 
-struct PushConstants
+struct MatricesUBO
 {
-	// matrices
 	VSMatrix ModelMatrix;
 	VSMatrix NormalModelMatrix;
 	VSMatrix TextureMatrix;
+};
 
-	int uTextureMode;
-	float uAlphaThreshold;
-	FVector2 uClipSplit;
-
-	// colors
+struct ColorsUBO
+{
 	FVector4 uObjectColor;
 	FVector4 uObjectColor2;
 	FVector4 uDynLightColor;
@@ -28,8 +25,10 @@ struct PushConstants
 	float uDesaturationFactor;
 	float uInterpolationFactor;
 	float padding0, padding1;
+};
 
-	// Glowing walls stuff
+struct GlowingWallsUBO
+{
 	FVector4 uGlowTopPlane;
 	FVector4 uGlowTopColor;
 	FVector4 uGlowBottomPlane;
@@ -40,6 +39,13 @@ struct PushConstants
 
 	FVector4 uSplitTopPlane;
 	FVector4 uSplitBottomPlane;
+};
+
+struct PushConstants
+{
+	int uTextureMode;
+	float uAlphaThreshold;
+	FVector2 uClipSplit;
 
 	// Lighting + Fog
 	float uLightLevel;

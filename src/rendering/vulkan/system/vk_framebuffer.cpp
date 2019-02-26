@@ -77,6 +77,14 @@ void VulkanFrameBuffer::InitializeState()
 	mViewpoints = new GLViewpointBuffer;
 	mLights = new FLightBuffer();
 
+	// To do: move this to HW renderer interface maybe?
+	MatricesUBO = (VKDataBuffer*)CreateDataBuffer(1234, false);
+	ColorsUBO = (VKDataBuffer*)CreateDataBuffer(1234, false);
+	GlowingWallsUBO = (VKDataBuffer*)CreateDataBuffer(1234, false);
+	MatricesUBO->SetData(sizeof(MatricesUBO) * 128, 0, false);
+	ColorsUBO->SetData(sizeof(ColorsUBO) * 128, 0, false);
+	GlowingWallsUBO->SetData(sizeof(GlowingWallsUBO) * 128, 0, false);
+
 	mShaderManager.reset(new VkShaderManager(device));
 	mSamplerManager.reset(new VkSamplerManager(device));
 	mRenderPassManager.reset(new VkRenderPassManager());

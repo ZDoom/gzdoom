@@ -29,6 +29,7 @@
 #include "r_data/colormaps.h"
 #include "hwrenderer/textures/hw_material.h"
 #include "hwrenderer/utility/hw_cvars.h"
+#include "hwrenderer/scene/hw_renderstate.h"
 #include "vulkan/system/vk_objects.h"
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_framebuffer.h"
@@ -56,14 +57,45 @@ VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &s
 {
 	if (!mImage)
 	{
-		static const uint32_t testpixels[4 * 4] =
+		FTexture *tex = state.mMaterial->tex;
+
+		if (!tex->isHardwareCanvas())
 		{
-			0xff0000ff, 0xff0000ff, 0xffff00ff, 0xffff00ff,
-			0xff0000ff, 0xff0000ff, 0xffff00ff, 0xffff00ff,
-			0xff00ff00, 0xff00ff00, 0x0000ffff, 0xff00ffff,
-			0xff00ff00, 0xff00ff00, 0x0000ffff, 0xff00ffff,
-		};
-		CreateTexture(4, 4, 4, VK_FORMAT_R8G8B8A8_UNORM, testpixels);
+			int clampmode = state.mClampMode;
+			//if (tex->UseType == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;
+			//if (tex->isHardwareCanvas()) clampmode = CLAMP_CAMTEX;
+			//else if ((tex->isWarped() || tex->shaderindex >= FIRST_USER_SHADER) && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
+
+			int translation = state.mTranslation;
+			if (translation <= 0)
+			{
+				translation = -translation;
+			}
+			else
+			{
+				auto remap = TranslationToTable(translation);
+				translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
+			}
+
+			bool needmipmap = (clampmode <= CLAMP_XY);
+
+			// Textures that are already scaled in the texture lump will not get replaced by hires textures.
+			int flags = state.mMaterial->isExpanded() ? CTF_Expand : (gl_texture_usehires && !tex->isScaled() && clampmode <= CLAMP_XY) ? CTF_CheckHires : 0;
+
+			FTextureBuffer texbuffer = tex->CreateTexBuffer(translation, flags | CTF_ProcessData);
+			CreateTexture(texbuffer.mWidth, texbuffer.mHeight, 4, VK_FORMAT_B8G8R8A8_UNORM, texbuffer.mBuffer);
+		}
+		else
+		{
+			static const uint32_t testpixels[4 * 4] =
+			{
+				0xff0000ff, 0xff0000ff, 0xffff00ff, 0xffff00ff,
+				0xff0000ff, 0xff0000ff, 0xffff00ff, 0xffff00ff,
+				0xff00ff00, 0xff00ff00, 0x0000ffff, 0xff00ffff,
+				0xff00ff00, 0xff00ff00, 0x0000ffff, 0xff00ffff,
+			};
+			CreateTexture(4, 4, 4, VK_FORMAT_R8G8B8A8_UNORM, testpixels);
+		}
 	}
 
 	if (!mDescriptorSet)

@@ -41,6 +41,7 @@ public:
 	void setSize(int width, int height, int miplevels = 1);
 	void setFormat(VkFormat format);
 	void setUsage(VkImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY);
+	void setLinearTiling();
 
 	std::unique_ptr<VulkanImage> create(VulkanDevice *device);
 
@@ -329,6 +330,11 @@ inline void ImageBuilder::setSize(int width, int height, int mipLevels)
 inline void ImageBuilder::setFormat(VkFormat format)
 {
 	imageInfo.format = format;
+}
+
+inline void ImageBuilder::setLinearTiling()
+{
+	imageInfo.tiling = VK_IMAGE_TILING_LINEAR;
 }
 
 inline void ImageBuilder::setUsage(VkImageUsageFlags usage, VmaMemoryUsage memoryUsage)

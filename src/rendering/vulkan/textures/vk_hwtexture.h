@@ -28,9 +28,9 @@ public:
 	VulkanDescriptorSet *GetDescriptorSet(const FMaterialState &state);
 
 	// Software renderer stuff
-	void AllocateBuffer(int w, int h, int texelsize) override { }
-	uint8_t *MapBuffer() override { return nullptr; }
-	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name) override { return 0; }
+	void AllocateBuffer(int w, int h, int texelsize) override;
+	uint8_t *MapBuffer() override;
+	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name) override;
 
 private:
 	void CreateTexture(int w, int h, int pixelsize, VkFormat format, const void *pixels);
@@ -41,6 +41,8 @@ private:
 	std::unique_ptr<VulkanImage> mImage;
 	std::unique_ptr<VulkanImageView> mImageView;
 	std::unique_ptr<VulkanBuffer> mStagingBuffer;
+	VkImageLayout mImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	int mTexelsize = 4;
 };
 
 #if 0

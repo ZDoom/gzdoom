@@ -10,6 +10,7 @@ class VkRenderPassManager;
 class VkRenderState;
 class VKDataBuffer;
 class VkHardwareTexture;
+class SWSceneDrawer;
 
 class VulkanFrameBuffer : public SystemBaseFrameBuffer
 {
@@ -33,6 +34,8 @@ public:
 	VKDataBuffer *GlowingWallsUBO = nullptr;
 
 	std::vector<std::unique_ptr<VulkanBuffer>> mFrameDeleteList;
+
+	std::unique_ptr<SWSceneDrawer> swdrawer;
 
 	VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevice *dev);
 	~VulkanFrameBuffer();
@@ -75,7 +78,7 @@ private:
 	std::unique_ptr<VkRenderPassManager> mRenderPassManager;
 	std::unique_ptr<VulkanCommandPool> mGraphicsCommandPool;
 	std::unique_ptr<VulkanCommandBuffer> mUploadCommands;
-	std::unique_ptr<VulkanCommandBuffer> mPresentCommands;
+	std::unique_ptr<VulkanCommandBuffer> mDrawCommands;
 	std::unique_ptr<VulkanSemaphore> mUploadSemaphore;
 	std::unique_ptr<VkRenderState> mRenderState;
 

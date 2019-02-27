@@ -104,7 +104,7 @@ VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &s
 		mDescriptorSet = fb->GetRenderPassManager()->DescriptorPool->allocate(fb->GetRenderPassManager()->TextureSetLayout.get());
 
 		WriteDescriptors update;
-		update.addCombinedImageSampler(mDescriptorSet.get(), 0, mImageView.get(), fb->GetSamplerManager()->Get(0), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		update.addCombinedImageSampler(mDescriptorSet.get(), 0, mImageView.get(), fb->GetSamplerManager()->Get(0), mImageLayout);
 		update.updateSets(fb->device);
 	}
 
@@ -205,6 +205,44 @@ int VkHardwareTexture::GetMipLevels(int w, int h)
 		levels++;
 	}
 	return levels;
+}
+
+void VkHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
+{
+	if (!mImage)
+	{
+		auto fb = GetVulkanFrameBuffer();
+
+		ImageBuilder imgbuilder;
+		imgbuilder.setFormat(VK_FORMAT_B8G8R8A8_UNORM);
+		imgbuilder.setSize(w, h);
+		imgbuilder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+		imgbuilder.setLinearTiling();
+		mImage = imgbuilder.create(fb->device);
+		mImageLayout = VK_IMAGE_LAYOUT_GENERAL;
+		mTexelsize = texelsize;
+
+		ImageViewBuilder viewbuilder;
+		viewbuilder.setImage(mImage.get(), texelsize == 4 ? VK_FORMAT_B8G8R8A8_UNORM : VK_FORMAT_R8_UNORM);
+		mImageView = viewbuilder.create(fb->device);
+
+		auto cmdbuffer = fb->GetUploadCommands();
+
+		PipelineBarrier imageTransition;
+		imageTransition.addImage(mImage.get(), VK_IMAGE_LAYOUT_UNDEFINED, mImageLayout, 0, VK_ACCESS_SHADER_READ_BIT);
+		imageTransition.execute(cmdbuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+	}
+}
+
+uint8_t *VkHardwareTexture::MapBuffer()
+{
+	return (uint8_t*)mImage->Map(0, mImage->width * mImage->height * mTexelsize);
+}
+
+unsigned int VkHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name)
+{
+	mImage->Unmap();
+	return 0;
 }
 
 #if 0

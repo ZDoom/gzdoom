@@ -78,6 +78,9 @@ public:
 	int height = 0;
 	int mipLevels = 1;
 
+	void *Map(size_t offset, size_t size);
+	void Unmap();
+
 private:
 	VulkanDevice *device = nullptr;
 	VmaAllocation allocation;
@@ -879,6 +882,18 @@ inline VulkanImage::VulkanImage(VulkanDevice *device, VkImage image, VmaAllocati
 inline VulkanImage::~VulkanImage()
 {
 	vmaDestroyImage(device->allocator, image, allocation);
+}
+
+inline void *VulkanImage::Map(size_t offset, size_t size)
+{
+	void *data;
+	VkResult result = vmaMapMemory(device->allocator, allocation, &data);
+	return (result == VK_SUCCESS) ? data : nullptr;
+}
+
+inline void VulkanImage::Unmap()
+{
+	vmaUnmapMemory(device->allocator, allocation);
 }
 
 /////////////////////////////////////////////////////////////////////////////

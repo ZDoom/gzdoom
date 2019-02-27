@@ -61,6 +61,7 @@ VulkanFrameBuffer::VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevi
 {
 	device = dev;
 	SetViewportRects(nullptr);
+	InitPalette();
 }
 
 VulkanFrameBuffer::~VulkanFrameBuffer()
@@ -264,6 +265,8 @@ void VulkanFrameBuffer::SetVSync(bool vsync)
 
 void VulkanFrameBuffer::CleanForRestart()
 {
+	// force recreation of the SW scene drawer to ensure it gets a new set of resources.
+	swdrawer.reset();
 }
 
 IHardwareTexture *VulkanFrameBuffer::CreateHardwareTexture()

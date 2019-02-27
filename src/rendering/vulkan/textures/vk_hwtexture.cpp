@@ -213,8 +213,10 @@ void VkHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 	{
 		auto fb = GetVulkanFrameBuffer();
 
+		VkFormat format = texelsize == 4 ? VK_FORMAT_B8G8R8A8_UNORM : VK_FORMAT_R8_UNORM;
+
 		ImageBuilder imgbuilder;
-		imgbuilder.setFormat(VK_FORMAT_B8G8R8A8_UNORM);
+		imgbuilder.setFormat(format);
 		imgbuilder.setSize(w, h);
 		imgbuilder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 		imgbuilder.setLinearTiling();
@@ -223,7 +225,7 @@ void VkHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 		mTexelsize = texelsize;
 
 		ImageViewBuilder viewbuilder;
-		viewbuilder.setImage(mImage.get(), texelsize == 4 ? VK_FORMAT_B8G8R8A8_UNORM : VK_FORMAT_R8_UNORM);
+		viewbuilder.setImage(mImage.get(), format);
 		mImageView = viewbuilder.create(fb->device);
 
 		auto cmdbuffer = fb->GetUploadCommands();

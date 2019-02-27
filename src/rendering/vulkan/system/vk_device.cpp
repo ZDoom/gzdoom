@@ -46,6 +46,8 @@ extern HWND Window;
 #include "version.h"
 #include "doomerrors.h"
 
+EXTERN_CVAR(Bool, vid_vsync);
+
 #ifdef NDEBUG
 CVAR(Bool, vk_debug, true, 0);	// this should be false, once the oversized model can be removed.
 #else
@@ -74,7 +76,7 @@ VulkanDevice::VulkanDevice()
 
 		RECT clientRect = { 0 };
 		GetClientRect(Window, &clientRect);
-		swapChain = std::make_unique<VulkanSwapChain>(this, clientRect.right, clientRect.bottom, true);
+		swapChain = std::make_unique<VulkanSwapChain>(this, clientRect.right, clientRect.bottom, vid_vsync);
 
 		createSemaphores();
 	}
@@ -96,7 +98,7 @@ void VulkanDevice::windowResized()
 	GetClientRect(Window, &clientRect);
 
 	swapChain.reset();
-	swapChain = std::make_unique<VulkanSwapChain>(this, clientRect.right, clientRect.bottom, true);
+	swapChain = std::make_unique<VulkanSwapChain>(this, clientRect.right, clientRect.bottom, vid_vsync);
 }
 
 void VulkanDevice::waitPresent()
@@ -177,10 +179,11 @@ void VulkanDevice::createInstance()
 
 	std::vector<const char*> validationLayers;
 	std::string debugLayer = "VK_LAYER_LUNARG_standard_validation";
+	bool wantDebugLayer = vk_debug;
 	bool debugLayerFound = false;
 	for (const VkLayerProperties &layer : availableLayers)
 	{
-		if (layer.layerName == debugLayer)
+		if (layer.layerName == debugLayer && wantDebugLayer)
 		{
 			validationLayers.push_back(debugLayer.c_str());
 			enabledExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);

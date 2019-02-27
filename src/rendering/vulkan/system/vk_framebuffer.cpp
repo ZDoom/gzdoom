@@ -261,6 +261,10 @@ uint32_t VulkanFrameBuffer::GetCaps()
 
 void VulkanFrameBuffer::SetVSync(bool vsync)
 {
+	if (device->swapChain->vsync != vsync)
+	{
+		device->windowResized();
+	}
 }
 
 void VulkanFrameBuffer::CleanForRestart()

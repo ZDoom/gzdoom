@@ -8,6 +8,7 @@ public:
 	VulkanSwapChain(VulkanDevice *device, int width, int height, bool vsync);
 	~VulkanSwapChain();
 
+	bool vsync;
 	VkSwapchainKHR swapChain;
 	VkSurfaceFormatKHR swapChainFormat;
 

@@ -1,7 +1,7 @@
 
 #include "vk_swapchain.h"
 
-VulkanSwapChain::VulkanSwapChain(VulkanDevice *device, int width, int height, bool vsync) : device(device)
+VulkanSwapChain::VulkanSwapChain(VulkanDevice *device, int width, int height, bool vsync) : vsync(vsync), device(device)
 {
 	VkSurfaceCapabilitiesKHR surfaceCapabilities;
 	VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->physicalDevice, device->surface, &surfaceCapabilities);

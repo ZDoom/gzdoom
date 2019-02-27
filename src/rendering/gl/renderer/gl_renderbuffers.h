@@ -88,8 +88,8 @@ public:
 	void BindOutputFB();
 
 	void BlitToEyeTexture(int eye);
+	void BlitFromEyeTexture(int eye);
 	void BindEyeTexture(int eye, int texunit);
-	void BindEyeFB(int eye, bool readBuffer = false);
 
 	void BindDitherTexture(int texunit);
 

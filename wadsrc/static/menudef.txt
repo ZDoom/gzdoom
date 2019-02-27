@@ -378,11 +378,11 @@ OptionMenu "OptionsMenu" protected
 	Submenu "$OPTMNU_DISPLAY",			"VideoOptions"
 	Submenu "$OPTMNU_VIDEO",			"VideoModeMenu"
 	StaticText " "
+	Option "$OPTMNU_LANGUAGE", "language", "LanguageOptions"
+	StaticText " "
 	SafeCommand "$OPTMNU_DEFAULTS",	"reset2defaults"
 	SafeCommand	"$OPTMNU_RESETTOSAVED",	"reset2saved"
 	Command "$OPTMNU_CONSOLE",			"menuconsole"
-	StaticText " "
-	Submenu "$OPTMNU_LANGUAGE", "LanguageOptions"
 }
 
 //-------------------------------------------------------------------------------------------
@@ -2554,14 +2554,13 @@ OptionMenu "ReverbSave" protected
  *
  *=======================================*/
 
-OptionMenu "LanguageOptions"
+OptionString "LanguageOptions"
 {
-	Title "$OPTMNU_LANGUAGE"
-	StaticText " "
-	Command "English (UK)", "language eng"
-	Command "English (US)", "language enu"
-	Command "Français (FR)", "language fr"
-	Command "Italiano (ITA)", "language ita"
-	Command "Português do Brasil (PTB)", "language ptb"
-	Command "Русский (RU)", "language rus"
+	"auto", "Auto"
+	"eng", "English (UK)"
+	"enu", "English (US)"
+	"fr", "Français (FR)"
+	"ita", "Italiano (ITA)"
+	"ptb", "Português do Brasil (PTB)"
+	"rus", "Русский (RU)"
 }

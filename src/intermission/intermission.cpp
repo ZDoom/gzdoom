@@ -248,6 +248,7 @@ void DIntermissionScreenFader::Drawer ()
 
 void DIntermissionScreenText::Init(FIntermissionAction *desc, bool first)
 {
+	bool usesDefault = mTextX < 0;
 	Super::Init(desc, first);
 	mText = static_cast<FIntermissionActionTextscreen*>(desc)->mText;
 	if (mText[0] == '$') mText = GStrings(&mText[1]);
@@ -256,6 +257,16 @@ void DIntermissionScreenText::Init(FIntermissionAction *desc, bool first)
 	if (mTextX < 0) mTextX =gameinfo.TextScreenX;
 	mTextY = static_cast<FIntermissionActionTextscreen*>(desc)->mTextY;
 	if (mTextY < 0) mTextY =gameinfo.TextScreenY;
+
+	// If the text is too wide, center it so that it works better on widescreen displays.
+	// On 4:3 it'd still be cut off, though.
+	int width = SmallFont->StringWidth(mText);
+	if (usesDefault && mTextX + width > 320 - mTextX)
+	{
+		mTextX = (320 - width) / 2;
+	}
+
+
 	mTextLen = (int)mText.CharacterCount();
 	mTextDelay = static_cast<FIntermissionActionTextscreen*>(desc)->mTextDelay;
 	mTextColor = static_cast<FIntermissionActionTextscreen*>(desc)->mTextColor;

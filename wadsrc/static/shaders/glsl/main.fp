@@ -542,9 +542,6 @@ vec3 AmbientOcclusionColor()
 
 void main()
 {
-FragColor = texture(tex, vTexCoord.st);
-return;
-
 	Material material = ProcessMaterial();
 	vec4 frag = material.Base;
 	

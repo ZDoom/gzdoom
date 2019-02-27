@@ -8,6 +8,8 @@
 class VulkanDevice;
 class VulkanShader;
 
+template<typename T> int UniformBufferAlignment() { return (sizeof(T) + 127) / 128 * 128; }
+
 struct MatricesUBO
 {
 	VSMatrix ModelMatrix;

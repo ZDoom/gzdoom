@@ -157,17 +157,120 @@ void VkRenderState::Apply(int dt)
 		mCommandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->Pipeline.get());
 	}
 
-	mMatrices.ModelMatrix = mModelMatrix;
-	mMatrices.NormalModelMatrix.computeNormalMatrix(mModelMatrix);
-	mMatrices.TextureMatrix = mTextureMatrix;
+	const float normScale = 1.0f / 255.0f;
+
+	//glVertexAttrib4fv(VATTR_COLOR, mColor.vec);
+	//glVertexAttrib4fv(VATTR_NORMAL, mNormal.vec);
+
+	int fogset = 0;
+
+	if (mFogEnabled)
+	{
+		if (mFogEnabled == 2)
+		{
+			fogset = -3;	// 2D rendering with 'foggy' overlay.
+		}
+		else if ((mFogColor & 0xffffff) == 0)
+		{
+			fogset = gl_fogmode;
+		}
+		else
+		{
+			fogset = -gl_fogmode;
+		}
+	}
+
+	mColors.uDesaturationFactor = mDesaturation * normScale;
+	mColors.uFogColor = { mFogColor.r * normScale, mFogColor.g * normScale, mFogColor.b * normScale, mFogColor.a * normScale };
+	mColors.uAddColor = { mAddColor.r * normScale, mAddColor.g * normScale, mAddColor.b * normScale, mAddColor.a * normScale };
+	mColors.uObjectColor = { mObjectColor.r * normScale, mObjectColor.g * normScale, mObjectColor.b * normScale, mObjectColor.a * normScale };
+	mColors.uDynLightColor = mDynColor.vec;
+	mColors.uInterpolationFactor = mInterpolationFactor;
+
+	//activeShader->muTimer.Set((double)(screen->FrameTime - firstFrame) * (double)mShaderTimer / 1000.);
+
+	int tempTM = TM_NORMAL;
+	if (mMaterial.mMaterial && mMaterial.mMaterial->tex->isHardwareCanvas())
+		tempTM = TM_OPAQUE;
+
+	mPushConstants.uFogEnabled = fogset;
+	mPushConstants.uTextureMode = mTextureMode == TM_NORMAL && tempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode;
+	mPushConstants.uLightDist = mLightParms[0];
+	mPushConstants.uLightFactor = mLightParms[1];
+	mPushConstants.uFogDensity = mLightParms[2];
+	mPushConstants.uLightLevel = mLightParms[3];
+	mPushConstants.uAlphaThreshold = mAlphaThreshold;
+	mPushConstants.uClipSplit = { mClipSplit[0], mClipSplit[1] };
+
+	/*if (mMaterial.mMaterial)
+	{
+		mPushConstants.uSpecularMaterial = { mMaterial.mMaterial->tex->Glossiness, mMaterial.mMaterial->tex->SpecularLevel };
+	}*/
+
+	if (mGlowEnabled)
+	{
+		mGlowingWalls.uGlowTopPlane = mGlowTopPlane.vec;
+		mGlowingWalls.uGlowTopColor = mGlowTop.vec;
+		mGlowingWalls.uGlowBottomPlane = mGlowBottomPlane.vec;
+		mGlowingWalls.uGlowBottomColor = mGlowBottom.vec;
+	}
+	else
+	{
+		mGlowingWalls.uGlowTopColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+		mGlowingWalls.uGlowBottomColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+	}
+
+	if (mGradientEnabled)
+	{
+		mColors.uObjectColor2 = { mObjectColor2.r * normScale, mObjectColor2.g * normScale, mObjectColor2.b * normScale, mObjectColor2.a * normScale };
+		mGlowingWalls.uGradientTopPlane = mGradientTopPlane.vec;
+		mGlowingWalls.uGradientBottomPlane = mGradientBottomPlane.vec;
+	}
+	else
+	{
+		mColors.uObjectColor2 = { 0.0f, 0.0f, 0.0f, 0.0f };
+	}
+
+	if (mSplitEnabled)
+	{
+		mGlowingWalls.uSplitTopPlane = mSplitTopPlane.vec;
+		mGlowingWalls.uSplitBottomPlane = mSplitBottomPlane.vec;
+	}
+	else
+	{
+		mGlowingWalls.uSplitTopPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
+		mGlowingWalls.uSplitBottomPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
+	}
+
+	if (mTextureMatrixEnabled)
+	{
+		mMatrices.TextureMatrix = mTextureMatrix;
+	}
+	else
+	{
+		mMatrices.TextureMatrix.loadIdentity();
+	}
+
+	if (mModelMatrixEnabled)
+	{
+		mMatrices.ModelMatrix = mModelMatrix;
+		mMatrices.NormalModelMatrix.computeNormalMatrix(mModelMatrix);
+	}
+	else
+	{
+		mMatrices.ModelMatrix.loadIdentity();
+		mMatrices.NormalModelMatrix.loadIdentity();
+	}
+
+	mPushConstants.uLightIndex = screen->mLights->BindUBO(mLightIndex);
+
+	mMatricesOffset += UniformBufferAlignment<MatricesUBO>();
+	mColorsOffset += UniformBufferAlignment<ColorsUBO>();
+	mGlowingWallsOffset += UniformBufferAlignment<GlowingWallsUBO>();
 
 	memcpy(static_cast<uint8_t*>(fb->MatricesUBO->Memory()) + mMatricesOffset, &mMatrices, sizeof(MatricesUBO));
 	memcpy(static_cast<uint8_t*>(fb->ColorsUBO->Memory()) + mColorsOffset, &mColors, sizeof(ColorsUBO));
 	memcpy(static_cast<uint8_t*>(fb->GlowingWallsUBO->Memory()) + mGlowingWallsOffset, &mGlowingWalls, sizeof(GlowingWallsUBO));
-
-	mPushConstants.uTextureMode = 0;
-	mPushConstants.uLightLevel = 1.0f;
-	mPushConstants.uLightIndex = -1;
 
 	mCommandBuffer->pushConstants(passManager->PipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, (uint32_t)sizeof(PushConstants), &mPushConstants);
 
@@ -220,5 +323,10 @@ void VkRenderState::EndRenderPass()
 	{
 		mCommandBuffer->endRenderPass();
 		mCommandBuffer = nullptr;
+
+		// To do: move this elsewhere or rename this function to make it clear this can only happen at the end of a frame
+		mMatricesOffset = 0;
+		mColorsOffset = 0;
+		mGlowingWallsOffset = 0;
 	}
 }

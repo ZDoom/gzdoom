@@ -42,6 +42,7 @@
 #include "c_dispatch.h"
 #include "v_text.h"
 #include "gi.h"
+#include "xlsxread/xlsxio_read.h"
 
 
 void FStringTable::LoadStrings ()
@@ -52,10 +53,117 @@ void FStringTable::LoadStrings ()
 
 	while ((lump = Wads.FindLump ("LANGUAGE", &lastlump)) != -1)
 	{
-		LoadLanguage (lump);
+		if (!LoadLanguageFromSpreadsheet(lump))
+			LoadLanguage (lump);
 	}
 	SetLanguageIDs();
 	UpdateLanguage();
+}
+
+
+bool FStringTable::LoadLanguageFromSpreadsheet(int lumpnum)
+{
+	xlsxioreader xlsxio;
+	//open .xlsx file for reading
+	if ((xlsxio = xlsxioread_open(lumpnum)) == nullptr)
+	{
+		return false;
+	}
+
+	if (!readSheetIntoTable(xlsxio, "Sheet1")) return false;
+	// readMacros(xlsxio, "macros");
+
+	xlsxioread_close(xlsxio);
+	return true;
+}
+
+bool FStringTable::readSheetIntoTable(xlsxioreader reader, const char *sheetname)
+{
+
+	xlsxioreadersheet sheet = xlsxioread_sheet_open(reader, sheetname, XLSXIOREAD_SKIP_NONE);
+	if (sheet == nullptr) return false;
+
+	int row = 0;
+	TArray<TArray<FString>> table;
+
+	while (xlsxioread_sheet_next_row(sheet))
+	{
+		int column = 0;
+		char *value;
+		table.Reserve(1);
+		while ((value = xlsxioread_sheet_next_cell(sheet)) != nullptr)
+		{
+			auto vcopy = value;
+			if (table.Size() <= row) table.Reserve(1);
+			while (*vcopy && iswspace((unsigned char)*vcopy)) vcopy++;	// skip over leaading whitespace;
+			auto vend = vcopy + strlen(vcopy);
+			while (vend > vcopy && iswspace((unsigned char)vend[-1])) *--vend = 0;	// skip over trailing whitespace
+			ProcessEscapes(vcopy);
+			table[row].Push(vcopy);
+			column++;
+			free(value);
+		}
+		row++;
+	}
+	xlsxioread_sheet_close(sheet);
+
+	int labelcol = -1;
+	int filtercol = -1;
+	TArray<std::pair<int, unsigned>> langrows;
+
+	for (unsigned column = 0; column < table[0].Size(); column++)
+	{
+		auto &entry = table[0][column];
+		if (entry.CompareNoCase("filter") == 0)
+		{
+			filtercol = column;
+		}
+		else if (entry.CompareNoCase("identifier") == 0)
+		{
+			labelcol = column;;
+		}
+		else
+		{
+			auto languages = entry.Split(" ", FString::TOK_SKIPEMPTY);
+			for (auto &lang : languages)
+			{
+				if (lang.CompareNoCase("default") == 0)
+				{
+					langrows.Push(std::make_pair(column, default_table));
+				}
+				else if (lang.Len() < 4)
+				{
+					lang.ToLower();
+					langrows.Push(std::make_pair(column, MAKE_ID(lang[0], lang[1], lang[2], 0)));
+				}
+			}
+		}
+	}
+
+	for (unsigned i = 1; i < table.Size(); i++)
+	{
+		auto &row = table[i];
+		if (filtercol > -1)
+		{
+			auto filterstr = row[filtercol];
+			auto filter = filterstr.Split(" ", FString::TOK_SKIPEMPTY);
+			if (filter.Size() > 0 && filter.FindEx([](const auto &str) { return str.CompareNoCase(GameNames[gameinfo.gametype]) == 0; }) == filter.Size())
+				continue;
+		}
+
+		FName strName = row[labelcol];
+		for (auto &langentry : langrows)
+		{
+			auto str = row[langentry.first];
+			if (str.Len() > 0)
+			{
+				allStrings[langentry.second].Insert(strName, str);
+				str.Substitute("\n", "|");
+				Printf(PRINT_LOG, "Setting %s for %s to %.40s\n\n", strName.GetChars(), &langentry.second, str.GetChars());
+			}
+		}
+	}
+	return true;
 }
 
 void FStringTable::LoadLanguage (int lumpnum)

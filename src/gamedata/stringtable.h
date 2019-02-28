@@ -90,6 +90,9 @@ private:
 	TArray<std::pair<uint32_t, StringMap*>> currentLanguageSet;
 
 	void LoadLanguage (int lumpnum);
+	bool LoadLanguageFromSpreadsheet(int lumpnum);
+	bool readSheetIntoTable(struct xlsxio_read_struct *reader, const char *sheet);
+
 	static size_t ProcessEscapes (char *str);
 };
 

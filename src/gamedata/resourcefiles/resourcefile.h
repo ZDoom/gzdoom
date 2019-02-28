@@ -104,6 +104,7 @@ private:
 public:
 	static FResourceFile *OpenResourceFile(const char *filename, FileReader &file, bool quiet = false, bool containeronly = false);
 	static FResourceFile *OpenResourceFile(const char *filename, bool quiet = false, bool containeronly = false);
+	static FResourceFile *OpenResourceFileFromLump(int lumpnum, bool quiet = false, bool containeronly = false);
 	static FResourceFile *OpenDirectory(const char *filename, bool quiet = false);
 	virtual ~FResourceFile();
     // If this FResourceFile represents a directory, the Reader object is not usable so don't return it.

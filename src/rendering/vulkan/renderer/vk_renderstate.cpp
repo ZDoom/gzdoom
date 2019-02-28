@@ -144,9 +144,14 @@ void VkRenderState::Apply(int dt)
 {
 	auto fb = GetVulkanFrameBuffer();
 	auto passManager = fb->GetRenderPassManager();
-	auto passSetup = passManager->RenderPassSetup.get();
 
-	bool changingRenderPass = false; // To do: decide if the state matches current bound renderpass
+	// Find a render pass that matches our state
+	VkRenderPassKey passKey;
+	passKey.RenderStyle = mRenderStyle;
+	VkRenderPassSetup *passSetup = passManager->GetRenderPass(passKey);
+
+	// Is this the one we already have or do we need to change render pass?
+	bool changingRenderPass = (passSetup != mRenderPassSetup);
 
 	if (!mCommandBuffer)
 	{
@@ -166,10 +171,9 @@ void VkRenderState::Apply(int dt)
 		beginInfo.setRenderPass(passSetup->RenderPass.get());
 		beginInfo.setRenderArea(0, 0, SCREENWIDTH, SCREENHEIGHT);
 		beginInfo.setFramebuffer(passSetup->Framebuffer.get());
-		beginInfo.addClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		beginInfo.addClearDepthStencil(1.0f, 0);
 		mCommandBuffer->beginRenderPass(beginInfo);
 		mCommandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->Pipeline.get());
+		mRenderPassSetup = passSetup;
 	}
 
 	if (mScissorChanged)
@@ -382,6 +386,7 @@ void VkRenderState::EndRenderPass()
 	{
 		mCommandBuffer->endRenderPass();
 		mCommandBuffer = nullptr;
+		mRenderPassSetup = nullptr;
 
 		// To do: move this elsewhere or rename this function to make it clear this can only happen at the end of a frame
 		mMatricesOffset = 0;

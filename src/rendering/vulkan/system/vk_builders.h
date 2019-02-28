@@ -189,6 +189,7 @@ public:
 
 	void setAdditiveBlendMode();
 	void setAlphaBlendMode();
+	void setBlendMode(VkBlendOp op, VkBlendFactor src, VkBlendFactor dst);
 	void setSubpassColorAttachmentCount(int count);
 
 	void addVertexShader(VulkanShader *shader);
@@ -784,6 +785,17 @@ inline void GraphicsPipelineBuilder::setAlphaBlendMode()
 	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+}
+
+inline void GraphicsPipelineBuilder::setBlendMode(VkBlendOp op, VkBlendFactor src, VkBlendFactor dst)
+{
+	colorBlendAttachment.blendEnable = VK_TRUE;
+	colorBlendAttachment.srcColorBlendFactor = src;
+	colorBlendAttachment.dstColorBlendFactor = dst;
+	colorBlendAttachment.colorBlendOp = op;
+	colorBlendAttachment.srcAlphaBlendFactor = src;
+	colorBlendAttachment.dstAlphaBlendFactor = dst;
+	colorBlendAttachment.alphaBlendOp = op;
 }
 
 inline void GraphicsPipelineBuilder::setSubpassColorAttachmentCount(int count)

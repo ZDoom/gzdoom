@@ -10,6 +10,8 @@
 #include "hwrenderer/scene/hw_renderstate.h"
 #include "hwrenderer/textures/hw_material.h"
 
+class VkRenderPassSetup;
+
 class VkRenderState : public FRenderState
 {
 public:
@@ -47,6 +49,7 @@ private:
 
 	bool mLastDepthClamp = true;
 	VulkanCommandBuffer *mCommandBuffer = nullptr;
+	VkRenderPassSetup *mRenderPassSetup = nullptr;
 	bool mDescriptorsChanged = true;
 
 	int mScissorX = 0, mScissorY = 0, mScissorWidth = -1, mScissorHeight = -1;

@@ -23,7 +23,7 @@ void VkRenderPassManager::BeginFrame()
 	{
 		auto fb = GetVulkanFrameBuffer();
 
-		RenderPassSetup.reset();
+		RenderPassSetup.clear();
 		SceneColorView.reset();
 		SceneDepthStencilView.reset();
 		SceneDepthView.reset();
@@ -49,9 +49,15 @@ void VkRenderPassManager::BeginFrame()
 
 		viewbuilder.setImage(SceneDepthStencil.get(), VK_FORMAT_D24_UNORM_S8_UINT, VK_IMAGE_ASPECT_DEPTH_BIT);
 		SceneDepthView = viewbuilder.create(fb->device);
-
-		RenderPassSetup.reset(new VkRenderPassSetup());
 	}
+}
+
+VkRenderPassSetup *VkRenderPassManager::GetRenderPass(const VkRenderPassKey &key)
+{
+	auto &item = RenderPassSetup[key];
+	if (!item)
+		item.reset(new VkRenderPassSetup(key));
+	return item.get();
 }
 
 void VkRenderPassManager::CreateDynamicSetLayout()
@@ -114,24 +120,24 @@ void VkRenderPassManager::CreateDynamicSet()
 
 /////////////////////////////////////////////////////////////////////////////
 
-VkRenderPassSetup::VkRenderPassSetup()
+VkRenderPassSetup::VkRenderPassSetup(const VkRenderPassKey &key)
 {
 	CreateRenderPass();
-	CreatePipeline();
+	CreatePipeline(key);
 	CreateFramebuffer();
 }
 
 void VkRenderPassSetup::CreateRenderPass()
 {
 	RenderPassBuilder builder;
-	builder.addRgba16fAttachment(true, VK_IMAGE_LAYOUT_GENERAL);
+	builder.addRgba16fAttachment(false, VK_IMAGE_LAYOUT_GENERAL);
 	builder.addSubpass();
 	builder.addSubpassColorAttachmentRef(0, VK_IMAGE_LAYOUT_GENERAL);
 	builder.addExternalSubpassDependency();
 	RenderPass = builder.create(GetVulkanFrameBuffer()->device);
 }
 
-void VkRenderPassSetup::CreatePipeline()
+void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 {
 	auto fb = GetVulkanFrameBuffer();
 	GraphicsPipelineBuilder builder;
@@ -169,7 +175,35 @@ void VkRenderPassSetup::CreatePipeline()
 
 	builder.setViewport(0.0f, 0.0f, (float)SCREENWIDTH, (float)SCREENHEIGHT);
 	builder.setScissor(0, 0, SCREENWIDTH, SCREENHEIGHT);
-	builder.setAlphaBlendMode();
+
+	static const int blendstyles[] = {
+		VK_BLEND_FACTOR_ZERO,
+		VK_BLEND_FACTOR_ONE,
+		VK_BLEND_FACTOR_SRC_ALPHA,
+		VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+		VK_BLEND_FACTOR_SRC_COLOR,
+		VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR,
+		VK_BLEND_FACTOR_DST_COLOR,
+		VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR,
+	};
+
+	static const int renderops[] = {
+		0, VK_BLEND_OP_ADD, VK_BLEND_OP_SUBTRACT, VK_BLEND_OP_REVERSE_SUBTRACT, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+	};
+
+	int srcblend = blendstyles[key.RenderStyle.SrcAlpha%STYLEALPHA_MAX];
+	int dstblend = blendstyles[key.RenderStyle.DestAlpha%STYLEALPHA_MAX];
+	int blendequation = renderops[key.RenderStyle.BlendOp & 15];
+
+	if (blendequation == -1)	// This was a fuzz style.
+	{
+		srcblend = VK_BLEND_FACTOR_DST_COLOR;
+		dstblend = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+		blendequation = VK_BLEND_OP_ADD;
+	}
+
+	builder.setBlendMode((VkBlendOp)blendequation, (VkBlendFactor)srcblend, (VkBlendFactor)dstblend);
+
 	builder.setLayout(fb->GetRenderPassManager()->PipelineLayout.get());
 	builder.setRenderPass(RenderPass.get());
 	Pipeline = builder.create(fb->device);

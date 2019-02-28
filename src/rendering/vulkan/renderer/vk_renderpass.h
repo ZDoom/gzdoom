@@ -2,20 +2,33 @@
 #pragma once
 
 #include "vulkan/system/vk_objects.h"
+#include "r_data/renderstyle.h"
+#include <map>
 
 class VKDataBuffer;
+
+class VkRenderPassKey
+{
+public:
+	FRenderStyle RenderStyle;
+
+	bool operator<(const VkRenderPassKey &other) const
+	{
+		return RenderStyle.AsDWORD < other.RenderStyle.AsDWORD;
+	}
+};
 
 class VkRenderPassSetup
 {
 public:
-	VkRenderPassSetup();
+	VkRenderPassSetup(const VkRenderPassKey &key);
 
 	std::unique_ptr<VulkanRenderPass> RenderPass;
 	std::unique_ptr<VulkanPipeline> Pipeline;
 	std::unique_ptr<VulkanFramebuffer> Framebuffer;
 
 private:
-	void CreatePipeline();
+	void CreatePipeline(const VkRenderPassKey &key);
 	void CreateRenderPass();
 	void CreateFramebuffer();
 };
@@ -26,12 +39,13 @@ public:
 	VkRenderPassManager();
 
 	void BeginFrame();
+	VkRenderPassSetup *GetRenderPass(const VkRenderPassKey &key);
 
 	std::unique_ptr<VulkanDescriptorSetLayout> DynamicSetLayout;
 	std::unique_ptr<VulkanDescriptorSetLayout> TextureSetLayout;
 	std::unique_ptr<VulkanPipelineLayout> PipelineLayout;
 	std::unique_ptr<VulkanDescriptorPool> DescriptorPool;
-	std::unique_ptr<VkRenderPassSetup> RenderPassSetup;
+	std::map<VkRenderPassKey, std::unique_ptr<VkRenderPassSetup>> RenderPassSetup;
 
 	std::unique_ptr<VulkanImage> SceneColor;
 	std::unique_ptr<VulkanImage> SceneDepthStencil;

@@ -366,6 +366,27 @@ const char *FStringTable::GetString(const char *name, uint32_t *langtable) const
 	return nullptr;
 }
 
+// Finds a string by name in a given language
+const char *FStringTable::GetLanguageString(const char *name, uint32_t langtable) const
+{
+	if (name == nullptr || *name == 0)
+	{
+		return nullptr;
+	}
+	FName nm(name, true);
+	if (nm != NAME_None)
+	{
+		auto map = allStrings.CheckKey(langtable);
+		if (map == nullptr) return nullptr;
+		auto item = map->CheckKey(nm);
+		if (item)
+		{
+			return item->GetChars();
+		}
+	}
+	return nullptr;
+}
+
 // Finds a string by name and returns its value. If the string does
 // not exist, returns the passed name instead.
 const char *FStringTable::operator() (const char *name) const

@@ -50,6 +50,7 @@
 #include "d_net.h"
 #include "g_levellocals.h"
 #include "utf8.h"
+#include "templates.h"
 
 FIntermissionDescriptorList IntermissionDescriptors;
 
@@ -314,6 +315,7 @@ void DIntermissionScreenText::Drawer ()
 
 		int cx = (mTextX - 160)*CleanXfac + screen->GetWidth() / 2;
 		int cy = (mTextY - 100)*CleanYfac + screen->GetHeight() / 2;
+		cx = MAX<int>(0, cx);
 		int startx = cx;
 
 		// Does this text fall off the end of the screen? If so, try to eliminate some margins first.

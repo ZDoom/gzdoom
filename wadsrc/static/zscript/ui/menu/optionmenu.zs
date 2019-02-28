@@ -55,6 +55,7 @@ class OptionMenuDescriptor : MenuDescriptor native
 	native int mIndent;
 	native int mPosition;
 	native bool mDontDim;
+	native Font mFont;
 
 	void Reset()
 	{
@@ -224,9 +225,9 @@ class OptionMenu : Menu
 
 					if (y <= 0)
 					{
-						if (BigFont && mDesc.mTitle.Length() > 0)
+						if (mDesc.mFont && mDesc.mTitle.Length() > 0)
 						{
-							y = -y + BigFont.GetHeight();
+							y = -y + mDesc.mFont.GetHeight();
 						}
 						else
 						{
@@ -415,13 +416,13 @@ class OptionMenu : Menu
 
 		if (y <= 0)
 		{
-			if (BigFont && mDesc.mTitle.Length() > 0)
+			if (mDesc.mFont && mDesc.mTitle.Length() > 0)
 			{
 				let tt = Stringtable.Localize(mDesc.mTitle);
-				screen.DrawText (BigFont, OptionMenuSettings.mTitleColor,
-					(screen.GetWidth() - BigFont.StringWidth(tt) * CleanXfac_1) / 2, 10*CleanYfac_1,
+				screen.DrawText (mDesc.mFont, OptionMenuSettings.mTitleColor,
+					(screen.GetWidth() - mDesc.mFont.StringWidth(tt) * CleanXfac_1) / 2, 10*CleanYfac_1,
 					tt, DTA_CleanNoMove_1, true);
-				y = -y + BigFont.GetHeight();
+				y = -y + mDesc.mFont.GetHeight();
 			}
 			else
 			{

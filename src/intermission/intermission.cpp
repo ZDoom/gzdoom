@@ -248,12 +248,12 @@ void DIntermissionScreenFader::Drawer ()
 
 void DIntermissionScreenText::Init(FIntermissionAction *desc, bool first)
 {
-	bool usesDefault = mTextX < 0;
 	Super::Init(desc, first);
 	mText = static_cast<FIntermissionActionTextscreen*>(desc)->mText;
 	if (mText[0] == '$') mText = GStrings(&mText[1]);
 	mTextSpeed = static_cast<FIntermissionActionTextscreen*>(desc)->mTextSpeed;
 	mTextX = static_cast<FIntermissionActionTextscreen*>(desc)->mTextX;
+	bool usesDefault = mTextX < 0;
 	if (mTextX < 0) mTextX =gameinfo.TextScreenX;
 	mTextY = static_cast<FIntermissionActionTextscreen*>(desc)->mTextY;
 	if (mTextY < 0) mTextY =gameinfo.TextScreenY;

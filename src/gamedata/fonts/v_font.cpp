@@ -1453,6 +1453,10 @@ void V_InitFonts()
 			BigFont = new FFont("BigFont", "FONTB%02u", "defbigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
 		}
 	}
+	if (!(BigUpper = V_GetFont("BigUpper")))
+	{
+		BigUpper = BigFont;
+	}
 	if (!(ConFont = V_GetFont("ConsoleFont", "CONFONT")))
 	{
 		ConFont = SmallFont;

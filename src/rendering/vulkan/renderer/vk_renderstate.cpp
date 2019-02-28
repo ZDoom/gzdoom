@@ -77,6 +77,9 @@ void VkRenderState::SetDepthFunc(int func)
 
 void VkRenderState::SetDepthRange(float min, float max)
 {
+	mViewportDepthMin = min;
+	mViewportDepthMax = max;
+	mViewportChanged = true;
 }
 
 void VkRenderState::SetColorMask(bool r, bool g, bool b, bool a)
@@ -109,10 +112,20 @@ void VkRenderState::EnableStencil(bool on)
 
 void VkRenderState::SetScissor(int x, int y, int w, int h)
 {
+	mScissorX = x;
+	mScissorY = y;
+	mScissorWidth = w;
+	mScissorHeight = h;
+	mScissorChanged = true;
 }
 
 void VkRenderState::SetViewport(int x, int y, int w, int h)
 {
+	mViewportX = x;
+	mViewportY = y;
+	mViewportWidth = w;
+	mViewportHeight = h;
+	mViewportChanged = true;
 }
 
 void VkRenderState::EnableDepthTest(bool on)
@@ -139,6 +152,8 @@ void VkRenderState::Apply(int dt)
 	{
 		mCommandBuffer = fb->GetDrawCommands();
 		changingRenderPass = true;
+		mScissorChanged = true;
+		mViewportChanged = true;
 	}
 	else if (changingRenderPass)
 	{
@@ -155,6 +170,50 @@ void VkRenderState::Apply(int dt)
 		beginInfo.addClearDepthStencil(1.0f, 0);
 		mCommandBuffer->beginRenderPass(beginInfo);
 		mCommandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->Pipeline.get());
+	}
+
+	if (mScissorChanged)
+	{
+		VkRect2D scissor;
+		if (mScissorWidth >= 0)
+		{
+			scissor.offset.x = mScissorX;
+			scissor.offset.y = mScissorY;
+			scissor.extent.width = mScissorWidth;
+			scissor.extent.height = mScissorHeight;
+		}
+		else
+		{
+			scissor.offset.x = 0;
+			scissor.offset.y = 0;
+			scissor.extent.width = SCREENWIDTH;
+			scissor.extent.height = SCREENHEIGHT;
+		}
+		mCommandBuffer->setScissor(0, 1, &scissor);
+		mScissorChanged = false;
+	}
+
+	if (mViewportChanged)
+	{
+		VkViewport viewport;
+		if (mViewportWidth >= 0)
+		{
+			viewport.x = (float)mViewportX;
+			viewport.y = (float)mViewportY;
+			viewport.width = (float)mViewportWidth;
+			viewport.height = (float)mViewportHeight;
+		}
+		else
+		{
+			viewport.x = 0.0f;
+			viewport.y = 0.0f;
+			viewport.width = (float)SCREENWIDTH;
+			viewport.height = (float)SCREENHEIGHT;
+		}
+		viewport.minDepth = mViewportDepthMin;
+		viewport.maxDepth = mViewportDepthMax;
+		mCommandBuffer->setViewport(0, 1, &viewport);
+		mViewportChanged = false;
 	}
 
 	const float normScale = 1.0f / 255.0f;

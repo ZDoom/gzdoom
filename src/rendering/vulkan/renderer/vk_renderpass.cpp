@@ -157,6 +157,16 @@ void VkRenderPassSetup::CreatePipeline()
 	builder.addVertexAttribute(5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(FFlatVertex, x));
 #endif
 
+	builder.addDynamicState(VK_DYNAMIC_STATE_VIEWPORT);
+	builder.addDynamicState(VK_DYNAMIC_STATE_SCISSOR);
+	// builder.addDynamicState(VK_DYNAMIC_STATE_LINE_WIDTH);
+	// builder.addDynamicState(VK_DYNAMIC_STATE_DEPTH_BIAS);
+	// builder.addDynamicState(VK_DYNAMIC_STATE_BLEND_CONSTANTS);
+	// builder.addDynamicState(VK_DYNAMIC_STATE_DEPTH_BOUNDS);
+	// builder.addDynamicState(VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK);
+	// builder.addDynamicState(VK_DYNAMIC_STATE_STENCIL_WRITE_MASK);
+	// builder.addDynamicState(VK_DYNAMIC_STATE_STENCIL_REFERENCE);
+
 	builder.setViewport(0.0f, 0.0f, (float)SCREENWIDTH, (float)SCREENHEIGHT);
 	builder.setScissor(0, 0, SCREENWIDTH, SCREENHEIGHT);
 	builder.setAlphaBlendMode();

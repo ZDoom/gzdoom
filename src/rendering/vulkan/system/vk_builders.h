@@ -197,6 +197,8 @@ public:
 	void addVertexBufferBinding(int index, size_t stride);
 	void addVertexAttribute(int location, int binding, VkFormat format, size_t offset);
 
+	void addDynamicState(VkDynamicState state);
+
 	std::unique_ptr<VulkanPipeline> create(VulkanDevice *device);
 
 private:
@@ -211,11 +213,13 @@ private:
 	VkPipelineColorBlendAttachmentState colorBlendAttachment = { };
 	VkPipelineColorBlendStateCreateInfo colorBlending = { };
 	VkPipelineDepthStencilStateCreateInfo depthStencil = { };
+	VkPipelineDynamicStateCreateInfo dynamicState = {};
 
 	std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
 	std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments;
 	std::vector<VkVertexInputBindingDescription> vertexInputBindings;
 	std::vector<VkVertexInputAttributeDescription> vertexInputAttributes;
+	std::vector<VkDynamicState> dynamicStates;
 };
 
 class PipelineLayoutBuilder
@@ -638,7 +642,7 @@ inline GraphicsPipelineBuilder::GraphicsPipelineBuilder()
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pDepthStencilState = nullptr;
 	pipelineInfo.pColorBlendState = &colorBlending;
-	pipelineInfo.pDynamicState = nullptr;
+	pipelineInfo.pDynamicState = &dynamicState;
 	pipelineInfo.subpass = 0;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 	pipelineInfo.basePipelineIndex = -1;
@@ -703,13 +707,8 @@ inline GraphicsPipelineBuilder::GraphicsPipelineBuilder()
 	colorBlending.blendConstants[2] = 0.0f;
 	colorBlending.blendConstants[3] = 0.0f;
 
-	/*
-	VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_LINE_WIDTH };
 	VkPipelineDynamicStateCreateInfo dynamicState = {};
 	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-	dynamicState.dynamicStateCount = 2;
-	dynamicState.pDynamicStates = dynamicStates;
-	*/
 }
 
 inline void GraphicsPipelineBuilder::setSubpass(int subpass)
@@ -843,6 +842,13 @@ inline void GraphicsPipelineBuilder::addVertexAttribute(int location, int bindin
 
 	vertexInputInfo.vertexAttributeDescriptionCount = (uint32_t)vertexInputAttributes.size();
 	vertexInputInfo.pVertexAttributeDescriptions = vertexInputAttributes.data();
+}
+
+inline void GraphicsPipelineBuilder::addDynamicState(VkDynamicState state)
+{
+	dynamicStates.push_back(state);
+	dynamicState.dynamicStateCount = (uint32_t)dynamicStates.size();
+	dynamicState.pDynamicStates = dynamicStates.data();
 }
 
 inline std::unique_ptr<VulkanPipeline> GraphicsPipelineBuilder::create(VulkanDevice *device)

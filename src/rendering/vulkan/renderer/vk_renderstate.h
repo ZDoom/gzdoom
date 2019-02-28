@@ -49,6 +49,12 @@ private:
 	VulkanCommandBuffer *mCommandBuffer = nullptr;
 	bool mDescriptorsChanged = true;
 
+	int mScissorX = 0, mScissorY = 0, mScissorWidth = -1, mScissorHeight = -1;
+	int mViewportX = 0, mViewportY = 0, mViewportWidth = -1, mViewportHeight = -1;
+	float mViewportDepthMin = 0.0f, mViewportDepthMax = 1.0f;
+	bool mScissorChanged = true;
+	bool mViewportChanged = true;
+
 	MatricesUBO mMatrices = {};
 	ColorsUBO mColors = {};
 	GlowingWallsUBO mGlowingWalls = {};

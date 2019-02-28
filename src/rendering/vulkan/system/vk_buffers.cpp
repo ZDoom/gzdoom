@@ -40,7 +40,7 @@ void VKBuffer::SetData(size_t size, const void *data, bool staticdata)
 	else
 	{
 		BufferBuilder builder;
-		builder.setUsage(mBufferType, VMA_MEMORY_USAGE_CPU_TO_GPU);
+		builder.setUsage(mBufferType, VMA_MEMORY_USAGE_CPU_TO_GPU, mPersistent ? VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT : 0);
 		builder.setSize(size);
 		mBuffer = builder.create(fb->device);
 

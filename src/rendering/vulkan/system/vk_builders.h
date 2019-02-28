@@ -40,7 +40,7 @@ public:
 
 	void setSize(int width, int height, int miplevels = 1);
 	void setFormat(VkFormat format);
-	void setUsage(VkImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY);
+	void setUsage(VkImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY, VmaAllocationCreateFlags allocFlags = 0);
 	void setLinearTiling();
 
 	std::unique_ptr<VulkanImage> create(VulkanDevice *device);
@@ -88,7 +88,7 @@ public:
 	BufferBuilder();
 
 	void setSize(size_t size);
-	void setUsage(VkBufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY);
+	void setUsage(VkBufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY, VmaAllocationCreateFlags allocFlags = 0);
 
 	std::unique_ptr<VulkanBuffer> create(VulkanDevice *device);
 
@@ -337,10 +337,11 @@ inline void ImageBuilder::setLinearTiling()
 	imageInfo.tiling = VK_IMAGE_TILING_LINEAR;
 }
 
-inline void ImageBuilder::setUsage(VkImageUsageFlags usage, VmaMemoryUsage memoryUsage)
+inline void ImageBuilder::setUsage(VkImageUsageFlags usage, VmaMemoryUsage memoryUsage, VmaAllocationCreateFlags allocFlags)
 {
 	imageInfo.usage = usage;
 	allocInfo.usage = memoryUsage;
+	allocInfo.flags = allocFlags;
 }
 
 inline std::unique_ptr<VulkanImage> ImageBuilder::create(VulkanDevice *device)
@@ -469,10 +470,11 @@ inline void BufferBuilder::setSize(size_t size)
 	bufferInfo.size = size;
 }
 
-inline void BufferBuilder::setUsage(VkBufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage)
+inline void BufferBuilder::setUsage(VkBufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage, VmaAllocationCreateFlags allocFlags)
 {
 	bufferInfo.usage = bufferUsage;
 	allocInfo.usage = memoryUsage;
+	allocInfo.flags = allocFlags;
 }
 
 inline std::unique_ptr<VulkanBuffer> BufferBuilder::create(VulkanDevice *device)
@@ -480,7 +482,6 @@ inline std::unique_ptr<VulkanBuffer> BufferBuilder::create(VulkanDevice *device)
 	VkBuffer buffer;
 	VmaAllocation allocation;
 
-	allocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;	// we want this to be mappable.
 	VkResult result = vmaCreateBuffer(device->allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr);
 	if (result != VK_SUCCESS)
 		throw std::runtime_error("could not allocate memory for vulkan buffer");

@@ -151,7 +151,7 @@ void VkRenderState::Apply(int dt)
 		beginInfo.setRenderPass(passSetup->RenderPass.get());
 		beginInfo.setRenderArea(0, 0, SCREENWIDTH, SCREENHEIGHT);
 		beginInfo.setFramebuffer(passSetup->Framebuffer.get());
-		beginInfo.addClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+		beginInfo.addClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		beginInfo.addClearDepthStencil(1.0f, 0);
 		mCommandBuffer->beginRenderPass(beginInfo);
 		mCommandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->Pipeline.get());

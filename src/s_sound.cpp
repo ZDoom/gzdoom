@@ -143,7 +143,7 @@ static FString	 LastSong;			// last music that was played
 static FPlayList *PlayList;
 static int		RestartEvictionsAt;	// do not restart evicted channels before this time
 
-DEFINE_GLOBAL(mus_playing);
+DEFINE_GLOBAL_NAMED(mus_playing, musplaying);
 DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, name);
 DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, baseorder);
 DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, loop);

@@ -42,7 +42,7 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native readonly Weapon WP_NOCHANGE;
 	deprecated("3.8") native readonly bool globalfreeze;
 	native int LocalViewPitch;
-	native readonly @MusPlayingInfo mus_playing;
+	native readonly @MusPlayingInfo musplaying;
 
 // sandbox state in multi-level setups:
 

@@ -148,6 +148,19 @@ void VkRenderState::Apply(int dt)
 	// Find a render pass that matches our state
 	VkRenderPassKey passKey;
 	passKey.RenderStyle = mRenderStyle;
+	if (mSpecialEffect > EFF_NONE)
+	{
+		passKey.SpecialEffect = mSpecialEffect;
+		passKey.EffectState = 0;
+		passKey.AlphaTest = false;
+	}
+	else
+	{
+		int effectState = mMaterial.mOverrideShader >= 0 ? mMaterial.mOverrideShader : (mMaterial.mMaterial ? mMaterial.mMaterial->GetShaderIndex() : 0);
+		passKey.SpecialEffect = EFF_NONE;
+		passKey.EffectState = mTextureEnabled ? effectState : SHADER_NoTexture;
+		passKey.AlphaTest = mAlphaThreshold >= 0.f;
+	}
 	VkRenderPassSetup *passSetup = passManager->GetRenderPass(passKey);
 
 	// Is this the one we already have or do we need to change render pass?

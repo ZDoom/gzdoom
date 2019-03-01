@@ -11,10 +11,15 @@ class VkRenderPassKey
 {
 public:
 	FRenderStyle RenderStyle;
+	int SpecialEffect;
+	int EffectState;
+	bool AlphaTest;
 
 	bool operator<(const VkRenderPassKey &other) const
 	{
-		return RenderStyle.AsDWORD < other.RenderStyle.AsDWORD;
+		uint64_t a = RenderStyle.AsDWORD | (static_cast<uint64_t>(SpecialEffect) << 32) | (static_cast<uint64_t>(EffectState) << 40) | (static_cast<uint64_t>(AlphaTest) << 48);
+		uint64_t b = other.RenderStyle.AsDWORD | (static_cast<uint64_t>(other.SpecialEffect) << 32) | (static_cast<uint64_t>(other.EffectState) << 40) | (static_cast<uint64_t>(other.AlphaTest) << 48);
+		return a < b;
 	}
 };
 

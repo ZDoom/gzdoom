@@ -138,8 +138,18 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 {
 	auto fb = GetVulkanFrameBuffer();
 	GraphicsPipelineBuilder builder;
-	builder.addVertexShader(fb->GetShaderManager()->vert.get());
-	builder.addFragmentShader(fb->GetShaderManager()->frag.get());
+
+	VkShaderProgram *program;
+	if (key.SpecialEffect != EFF_NONE)
+	{
+		program = fb->GetShaderManager()->GetEffect(key.SpecialEffect);
+	}
+	else
+	{
+		program = fb->GetShaderManager()->Get(key.EffectState, key.AlphaTest);
+	}
+	builder.addVertexShader(program->vert.get());
+	builder.addFragmentShader(program->frag.get());
 
 	builder.addVertexBufferBinding(0, sizeof(F2DDrawer::TwoDVertex));
 	builder.addVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(F2DDrawer::TwoDVertex, x));

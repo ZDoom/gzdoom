@@ -10,13 +10,74 @@ VkShaderManager::VkShaderManager(VulkanDevice *device) : device(device)
 {
 	ShInitialize();
 
-	vert = LoadVertShader("shaders/glsl/main.vp", "");
-	frag = LoadFragShader("shaders/glsl/main.fp", "shaders/glsl/func_normal.fp", "shaders/glsl/material_normal.fp", "");
+	const char *mainvp = "shaders/glsl/main.vp";
+	const char *mainfp = "shaders/glsl/main.fp";
+	bool gbufferpass = false;
+
+	for (int i = 0; defaultshaders[i].ShaderName != NULL; i++)
+	{
+		// To do: use defaultshaders[i].ShaderName for better debugging
+
+		VkShaderProgram prog;
+		prog.vert = LoadVertShader(defaultshaders[i].ShaderName, mainvp, defaultshaders[i].Defines);
+		prog.frag = LoadFragShader(defaultshaders[i].ShaderName, mainfp, defaultshaders[i].gettexelfunc, defaultshaders[i].lightfunc, defaultshaders[i].Defines, true, gbufferpass);
+		mMaterialShaders.push_back(std::move(prog));
+
+		if (i < SHADER_NoTexture)
+		{
+			VkShaderProgram natprog;
+			natprog.vert = LoadVertShader(defaultshaders[i].ShaderName, mainvp, defaultshaders[i].Defines);
+			natprog.frag = LoadFragShader(defaultshaders[i].ShaderName, mainfp, defaultshaders[i].gettexelfunc, defaultshaders[i].lightfunc, defaultshaders[i].Defines, false, gbufferpass);
+			mMaterialShadersNAT.push_back(std::move(natprog));
+		}
+	}
+
+	for (unsigned i = 0; i < usershaders.Size(); i++)
+	{
+		FString name = ExtractFileBase(usershaders[i].shader);
+		FString defines = defaultshaders[usershaders[i].shaderType].Defines + usershaders[i].defines;
+
+		VkShaderProgram prog;
+		prog.vert = LoadVertShader(name, mainvp, defaultshaders[i].Defines);
+		prog.frag = LoadFragShader(name, mainfp, usershaders[i].shader, defaultshaders[usershaders[i].shaderType].lightfunc, defines, true, gbufferpass);
+		mMaterialShaders.push_back(std::move(prog));
+	}
+
+	for (int i = 0; i < MAX_EFFECTS; i++)
+	{
+		VkShaderProgram prog;
+		prog.vert = LoadVertShader(effectshaders[i].ShaderName, effectshaders[i].vp, defaultshaders[i].Defines);
+		prog.frag = LoadFragShader(effectshaders[i].ShaderName, effectshaders[i].fp1, effectshaders[i].fp2, effectshaders[i].fp3, effectshaders[i].defines, true, false);
+		mEffectShaders[i] = std::move(prog);
+	}
 }
 
 VkShaderManager::~VkShaderManager()
 {
 	ShFinalize();
+}
+
+VkShaderProgram *VkShaderManager::GetEffect(int effect)
+{
+	if (effect >= 0 && effect < MAX_EFFECTS && mEffectShaders[effect].frag)
+	{
+		return &mEffectShaders[effect];
+	}
+	return nullptr;
+}
+
+VkShaderProgram *VkShaderManager::Get(unsigned int eff, bool alphateston)
+{
+	// indices 0-2 match the warping modes, 3 is brightmap, 4 no texture, the following are custom
+	if (!alphateston && eff <= 3)
+	{
+		return &mMaterialShadersNAT[eff];	// Non-alphatest shaders are only created for default, warp1+2 and brightmap. The rest won't get used anyway
+	}
+	else if (eff < (unsigned int)mMaterialShaders.size())
+	{
+		return &mMaterialShaders[eff];
+	}
+	return nullptr;
 }
 
 static const char *shaderBindings = R"(
@@ -125,7 +186,7 @@ static const char *shaderBindings = R"(
 	#define VULKAN_COORDINATE_SYSTEM
 )";
 
-std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(const char *vert_lump, const char *defines)
+std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername, const char *vert_lump, const char *defines)
 {
 	FString code = GetTargetGlslVersion();
 	code << defines << shaderBindings;
@@ -137,10 +198,14 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(const char *vert_l
 	return builder.create(device);
 }
 
-std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(const char *frag_lump, const char *material_lump, const char *light_lump, const char *defines)
+std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char *light_lump, const char *defines, bool alphatest, bool gbufferpass)
 {
 	FString code = GetTargetGlslVersion();
 	code << defines << shaderBindings;
+
+	if (!alphatest) code << "#define NO_ALPHATEST\n";
+	if (gbufferpass) code << "#define GBUFFER_PASS\n";
+
 	code << "\n#line 1\n";
 	code << LoadShaderLump(frag_lump).GetChars() << "\n";
 

@@ -1744,7 +1744,7 @@ void UpdateVRModes(bool considerQuadBuffered)
 #ifdef _WIN32
 			if (!vr_enable_quadbuffered) continue;
 #else
-			continue
+			continue;  // Remove quad-buffered option on Mac and Linux
 #endif
 			if (!considerQuadBuffered) continue;  // Probably no compatible screen mode was found
 		}

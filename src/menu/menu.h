@@ -196,6 +196,7 @@ public:
 	int mIndent;
 	int mPosition;
 	bool mDontDim;
+	FFont *mFont;
 
 	void CalcIndent();
 	DMenuItemBase *GetItem(FName name);

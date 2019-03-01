@@ -810,7 +810,9 @@ void FWadCollection::RenameSprites ()
 	case GAME_Doom:
 	default:
 		// Doom's sprites don't get renamed.
-		return;
+		renames = nullptr;
+		numrenames = 0;
+		break;
 
 	case GAME_Heretic:
 		renames = HereticRenames;
@@ -893,7 +895,8 @@ void FWadCollection::RenameSprites ()
 		else if (LumpInfo[i].lump->Namespace == ns_global)
 		{
 			// Rename the game specific big font lumps so that the font manager does not have to do problematic special checks for them.
-			if (!strcmp(LumpInfo[i].lump->Name, altbigfont)) strcpy(LumpInfo[i].lump->Name, "BIGFONT");
+			if (!strcmp(LumpInfo[i].lump->Name, altbigfont)) 
+				strcpy(LumpInfo[i].lump->Name, "BIGFONT");
 		}
 	}
 }

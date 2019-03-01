@@ -1231,6 +1231,7 @@ DEFINE_FIELD(DOptionMenuDescriptor, mScrollPos)
 DEFINE_FIELD(DOptionMenuDescriptor, mIndent)
 DEFINE_FIELD(DOptionMenuDescriptor, mPosition)
 DEFINE_FIELD(DOptionMenuDescriptor, mDontDim)
+DEFINE_FIELD(DOptionMenuDescriptor, mFont)
 
 DEFINE_FIELD(FOptionMenuSettings, mTitleColor)
 DEFINE_FIELD(FOptionMenuSettings, mFontColor)

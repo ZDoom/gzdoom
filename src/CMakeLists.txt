@@ -1333,6 +1333,13 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	utility/math/tan.c
 	utility/math/tanh.c
 	utility/math/fastsin.cpp
+	utility/xlsxread/xlsxio_read.cpp
+	utility/xlsxread/expat/xmlparse.c
+	utility/xlsxread/expat/xmlrole.c
+	utility/xlsxread/expat/xmltok.c
+	utility/xlsxread/expat/xmltok_impl.c
+	utility/xlsxread/expat/xmltok_ns.c
+
 	zzautozend.cpp
 )
 

@@ -5363,7 +5363,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 		case ACSF_SetActivator:
 			if (argCount > 1 && args[1] != AAPTR_DEFAULT) // condition (x != AAPTR_DEFAULT) is essentially condition (x).
 			{
-				activator = COPY_AAPTR(Level->SingleActorFromTID(args[0], activator), args[1]);
+				activator = COPY_AAPTREX(Level, Level->SingleActorFromTID(args[0], activator), args[1]);
 			}
 			else
 			{
@@ -6378,7 +6378,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			const int flags = args[5];
 			
 			AActor* const reference = ((flags & WARPF_USEPTR) && (AAPTR_DEFAULT != dest))
-				? COPY_AAPTR(activator, dest)
+				? COPY_AAPTREX(Level, activator, dest)
 				: Level->SingleActorFromTID(dest, activator);
 
 			if (nullptr == reference)

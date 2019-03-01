@@ -546,7 +546,7 @@ void MIDIStreamer::MusicVolumeChanged()
 {
 	if (MIDI != NULL && MIDI->FakeVolume())
 	{
-		float realvolume = clamp<float>(snd_musicvolume * relative_volume, 0.f, 1.f);
+		float realvolume = clamp<float>(snd_musicvolume * relative_volume * snd_mastervolume, 0.f, 1.f);
 		Volume = clamp<uint32_t>((uint32_t)(realvolume * 65535.f), 0, 65535);
 	}
 	else

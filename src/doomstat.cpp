@@ -40,33 +40,6 @@ FStringTable	GStrings;
 // Game speed
 EGameSpeed		GameSpeed = SPEED_Normal;
 
-// Show developer messages if true.
-CVAR (Int, developer, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-
-// [RH] Feature control cvars
-CVAR (Bool, var_friction, true, CVAR_SERVERINFO);
-
-CVAR (Bool, alwaysapplydmflags, false, CVAR_SERVERINFO);
-
-CUSTOM_CVAR (Float, teamdamage, 0.f, CVAR_SERVERINFO)
-{
-	for (auto Level : AllLevels())
-	{
-		Level->teamdamage = self;
-	}
-}
-
-CUSTOM_CVAR (String, language, "auto", CVAR_ARCHIVE|CVAR_NOINITCALL)
-{
-	SetLanguageIDs ();
-	GStrings.UpdateLanguage();
-	for (auto Level : AllLevels())
-	{
-		// does this even make sense on secondary levels...?
-		if (Level->info != nullptr) Level->LevelName = Level->info->LookupLevelName();
-	}
-}
-
 // [RH] Network arbitrator
 int Net_Arbitrator = 0;
 

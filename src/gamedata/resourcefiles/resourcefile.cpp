@@ -311,6 +311,13 @@ FResourceFile *FResourceFile::OpenResourceFile(const char *filename, bool quiet,
 	return DoOpenResourceFile(filename, file, quiet, containeronly);
 }
 
+FResourceFile *FResourceFile::OpenResourceFileFromLump(int lumpnum, bool quiet, bool containeronly)
+{
+	FileReader file = Wads.ReopenLumpReader(lumpnum);
+	return DoOpenResourceFile("internal", file, quiet, containeronly);
+}
+
+
 FResourceFile *FResourceFile::OpenDirectory(const char *filename, bool quiet)
 {
 	return CheckDir(filename, quiet);

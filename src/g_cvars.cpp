@@ -36,11 +36,22 @@
 #include "c_cvars.h"
 #include "g_levellocals.h"
 #include "g_game.h"
+#include "gstrings.h"
+#include "i_system.h"
 
 CVAR (Bool, cl_spreaddecals, true, CVAR_ARCHIVE)
 CVAR(Bool, var_pushers, true, CVAR_SERVERINFO);
 CVAR(Bool, gl_cachenodes, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_cachetime, 0.6f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR(Bool, alwaysapplydmflags, false, CVAR_SERVERINFO);
+
+// Show developer messages if true.
+CVAR(Int, developer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+// [RH] Feature control cvars
+CVAR(Bool, var_friction, true, CVAR_SERVERINFO);
+
+
 
 
 CUSTOM_CVAR (Bool, gl_lights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
@@ -52,7 +63,7 @@ CUSTOM_CVAR (Bool, gl_lights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 	}
 }
 
-CUSTOM_CVAR(Int, sv_corpsequeuesize, 64, CVAR_ARCHIVE|CVAR_SERVERINFO)
+CUSTOM_CVAR(Int, sv_corpsequeuesize, 64, CVAR_ARCHIVE|CVAR_SERVERINFO|CVAR_NOINITCALL)
 {
 	if (self > 0)
 	{
@@ -69,7 +80,7 @@ CUSTOM_CVAR(Int, sv_corpsequeuesize, 64, CVAR_ARCHIVE|CVAR_SERVERINFO)
 	}
 }
 
-CUSTOM_CVAR (Int, cl_maxdecals, 1024, CVAR_ARCHIVE)
+CUSTOM_CVAR (Int, cl_maxdecals, 1024, CVAR_ARCHIVE|CVAR_NOINITCALL)
 {
 	if (self < 0)
 	{
@@ -91,7 +102,7 @@ CUSTOM_CVAR (Int, cl_maxdecals, 1024, CVAR_ARCHIVE)
 
 // [BC] Allow the maximum number of particles to be specified by a cvar (so people
 // with lots of nice hardware can have lots of particles!).
-CUSTOM_CVAR(Int, r_maxparticles, 4000, CVAR_ARCHIVE)
+CUSTOM_CVAR(Int, r_maxparticles, 4000, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
 	if (self == 0)
 		self = 4000;
@@ -106,6 +117,25 @@ CUSTOM_CVAR(Int, r_maxparticles, 4000, CVAR_ARCHIVE)
 		{
 			P_InitParticles(Level);
 		}
+	}
+}
+
+CUSTOM_CVAR(Float, teamdamage, 0.f, CVAR_SERVERINFO | CVAR_NOINITCALL)
+{
+	for (auto Level : AllLevels())
+	{
+		Level->teamdamage = self;
+	}
+}
+
+CUSTOM_CVAR(String, language, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	SetLanguageIDs();
+	GStrings.UpdateLanguage();
+	for (auto Level : AllLevels())
+	{
+		// does this even make sense on secondary levels...?
+		if (Level->info != nullptr) Level->LevelName = Level->info->LookupLevelName();
 	}
 }
 

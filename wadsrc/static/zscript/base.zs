@@ -42,6 +42,7 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native readonly Weapon WP_NOCHANGE;
 	deprecated("3.8") native readonly bool globalfreeze;
 	native int LocalViewPitch;
+	native readonly @MusPlayingInfo musplaying;
 
 // sandbox state in multi-level setups:
 
@@ -51,6 +52,13 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native play LevelLocals Level;
 
 }
+
+struct MusPlayingInfo native
+{
+	native String name;
+	native int baseorder;
+	native bool loop;
+};
 
 struct TexMan
 {

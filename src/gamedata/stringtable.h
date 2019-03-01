@@ -76,6 +76,7 @@ public:
 		UpdateLanguage();
 	}
 	
+	const char *GetLanguageString(const char *name, uint32_t langtable) const;
 	const char *GetString(const char *name, uint32_t *langtable) const;
 	const char *operator() (const char *name) const;	// Never returns NULL
 	const char *operator[] (const char *name) const
@@ -90,6 +91,9 @@ private:
 	TArray<std::pair<uint32_t, StringMap*>> currentLanguageSet;
 
 	void LoadLanguage (int lumpnum);
+	bool LoadLanguageFromSpreadsheet(int lumpnum);
+	bool readSheetIntoTable(struct xlsxio_read_struct *reader, const char *sheet);
+
 	static size_t ProcessEscapes (char *str);
 };
 

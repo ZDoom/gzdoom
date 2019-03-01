@@ -109,6 +109,16 @@ struct FLevelLocals
 	FLevelLocals();
 	~FLevelLocals();
 
+	void *operator new(size_t blocksize)
+	{
+		// Null the allocated memory before running the constructor.
+		// If we later allocate secondary levels they need to behave exactly like a global variable, i.e. start nulled.
+		auto block = ::operator new(blocksize);
+		memset(block, 0, blocksize);
+		return block;
+	}
+
+
 	friend class MapLoader;
 
 	void Tick();

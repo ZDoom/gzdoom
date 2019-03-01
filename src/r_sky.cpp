@@ -46,7 +46,7 @@ FTextureID	skyflatnum;
 
 // [RH] Stretch sky texture if not taller than 128 pixels?
 // Also now controls capped skies. 0 = normal, 1 = stretched, 2 = capped
-CUSTOM_CVAR (Int, r_skymode, 2, CVAR_ARCHIVE)
+CUSTOM_CVAR (Int, r_skymode, 2, CVAR_ARCHIVE|CVAR_NOINITCALL)
 {
 	R_InitSkyMap ();
 }

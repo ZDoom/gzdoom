@@ -37,7 +37,9 @@
 #include "intermission/intermission.h"
 #include "g_level.h"
 #include "w_wad.h"
+#include "c_dispatch.h"
 #include "gstrings.h"
+#include "gi.h"
 	
 
 static void ReplaceIntermission(FName intname,FIntermissionDescriptor *desc)
@@ -903,4 +905,38 @@ void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int
 			F_StartIntermission(*pdesc, false, ending? FSTATE_EndingGame : FSTATE_ChangingLevel);
 		}
 	}
+}
+
+
+CCMD(testfinale)
+{
+	if (argv.argc() < 2)
+	{
+		Printf("Usage: testfinale stringlabel [langId]\n");
+		return;
+	}
+	const char *text;
+
+	if (argv.argc() == 2)
+	{
+		text = GStrings.GetString(argv[1], nullptr);
+	}
+	else
+	{
+		auto len = strlen(argv[2]);
+		if (len < 2 || len > 3)
+		{
+			Printf("Language ID must be 2 or 3 characters\n");
+			return;
+		}
+		auto id = MAKE_ID(tolower(argv[2][0]), tolower(argv[2][1]), tolower(argv[2][2]), 0);
+		text = GStrings.GetLanguageString(argv[1], id);
+	}
+	if (text == nullptr)
+	{
+		Printf("Text does not exist\n");
+		return;
+	}
+
+	F_StartFinale(gameinfo.finaleMusic, gameinfo.finaleOrder, -1, 0, gameinfo.FinaleFlat, text, false, false, true, true);
 }

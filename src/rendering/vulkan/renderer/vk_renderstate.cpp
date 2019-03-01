@@ -133,6 +133,16 @@ void VkRenderState::EnableLineSmooth(bool on)
 {
 }
 
+template<typename T>
+static void CopyToBuffer(uint32_t &offset, const T &data, VKDataBuffer *buffer)
+{
+	if (offset + (UniformBufferAlignment<T>() << 1) < buffer->Size())
+	{
+		offset += UniformBufferAlignment<T>();
+		memcpy(static_cast<uint8_t*>(buffer->Memory()) + offset, &data, sizeof(T));
+	}
+}
+
 void VkRenderState::Apply(int dt)
 {
 	auto fb = GetVulkanFrameBuffer();
@@ -335,23 +345,9 @@ void VkRenderState::Apply(int dt)
 
 	mPushConstants.uLightIndex = screen->mLights->BindUBO(mLightIndex);
 
-	if (mMatricesOffset + UniformBufferAlignment<MatricesUBO>() < fb->MatricesUBO->Size())
-	{
-		mMatricesOffset += UniformBufferAlignment<MatricesUBO>();
-		memcpy(static_cast<uint8_t*>(fb->MatricesUBO->Memory()) + mMatricesOffset, &mMatrices, sizeof(MatricesUBO));
-	}
-
-	if (mColorsOffset + UniformBufferAlignment<ColorsUBO>() < fb->ColorsUBO->Size())
-	{
-		mColorsOffset += UniformBufferAlignment<ColorsUBO>();
-		memcpy(static_cast<uint8_t*>(fb->ColorsUBO->Memory()) + mColorsOffset, &mColors, sizeof(ColorsUBO));
-	}
-
-	if (mColorsOffset + UniformBufferAlignment<GlowingWallsUBO>() < fb->GlowingWallsUBO->Size())
-	{
-		mGlowingWallsOffset += UniformBufferAlignment<GlowingWallsUBO>();
-		memcpy(static_cast<uint8_t*>(fb->GlowingWallsUBO->Memory()) + mGlowingWallsOffset, &mGlowingWalls, sizeof(GlowingWallsUBO));
-	}
+	CopyToBuffer(mMatricesOffset, mMatrices, fb->MatricesUBO);
+	CopyToBuffer(mColorsOffset, mColors, fb->ColorsUBO);
+	CopyToBuffer(mGlowingWallsOffset, mGlowingWalls, fb->GlowingWallsUBO);
 
 	mCommandBuffer->pushConstants(passManager->PipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, (uint32_t)sizeof(PushConstants), &mPushConstants);
 

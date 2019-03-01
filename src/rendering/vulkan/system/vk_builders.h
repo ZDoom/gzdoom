@@ -181,6 +181,7 @@ public:
 	void setSubpass(int subpass);
 	void setLayout(VulkanPipelineLayout *layout);
 	void setRenderPass(VulkanRenderPass *renderPass);
+	void setTopology(VkPrimitiveTopology topology);
 	void setViewport(float x, float y, float width, float height, float minDepth = 0.0f, float maxDepth = 1.0f);
 	void setScissor(int x, int y, int width, int height);
 
@@ -725,6 +726,11 @@ inline void GraphicsPipelineBuilder::setLayout(VulkanPipelineLayout *layout)
 inline void GraphicsPipelineBuilder::setRenderPass(VulkanRenderPass *renderPass)
 {
 	pipelineInfo.renderPass = renderPass->renderPass;
+}
+
+inline void GraphicsPipelineBuilder::setTopology(VkPrimitiveTopology topology)
+{
+	inputAssembly.topology = topology;
 }
 
 inline void GraphicsPipelineBuilder::setViewport(float x, float y, float width, float height, float minDepth, float maxDepth)

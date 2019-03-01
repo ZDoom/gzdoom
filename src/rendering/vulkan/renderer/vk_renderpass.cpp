@@ -200,10 +200,20 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 		VK_FORMAT_A2R10G10B10_SNORM_PACK32
 	};
 
+	bool inputLocations[6] = { false, false, false, false, false, false };
+
 	for (size_t i = 0; i < vfmt.Attrs.size(); i++)
 	{
 		const auto &attr = vfmt.Attrs[i];
 		builder.addVertexAttribute(attr.location, attr.binding, vkfmts[attr.format], attr.offset);
+		inputLocations[attr.location] = true;
+	}
+
+	// To do: does vulkan absolutely needs a binding for each location or not? What happens if it isn't specified? Better be safe than sorry..
+	for (int i = 0; i < 6; i++)
+	{
+		if (!inputLocations[i])
+			builder.addVertexAttribute(i, 0, VK_FORMAT_R32G32B32_SFLOAT, 0);
 	}
 
 	builder.addDynamicState(VK_DYNAMIC_STATE_VIEWPORT);
@@ -218,6 +228,16 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 
 	builder.setViewport(0.0f, 0.0f, (float)SCREENWIDTH, (float)SCREENHEIGHT);
 	builder.setScissor(0, 0, SCREENWIDTH, SCREENHEIGHT);
+
+	static const VkPrimitiveTopology vktopology[] = {
+		VK_PRIMITIVE_TOPOLOGY_POINT_LIST,
+		VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
+		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN,
+		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP
+	};
+
+	builder.setTopology(vktopology[key.DrawType]);
 
 	static const int blendstyles[] = {
 		VK_BLEND_FACTOR_ZERO,

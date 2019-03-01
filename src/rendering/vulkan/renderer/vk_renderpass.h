@@ -14,14 +14,13 @@ public:
 	FRenderStyle RenderStyle;
 	int SpecialEffect;
 	int EffectState;
-	bool AlphaTest;
+	int AlphaTest;
 	int VertexFormat;
+	int DrawType;
 
 	bool operator<(const VkRenderPassKey &other) const
 	{
-		uint64_t a = RenderStyle.AsDWORD | (static_cast<uint64_t>(SpecialEffect) << 32) | (static_cast<uint64_t>(EffectState) << 40) | (static_cast<uint64_t>(AlphaTest) << 48) | (static_cast<uint64_t>(VertexFormat) << 56);
-		uint64_t b = other.RenderStyle.AsDWORD | (static_cast<uint64_t>(other.SpecialEffect) << 32) | (static_cast<uint64_t>(other.EffectState) << 40) | (static_cast<uint64_t>(other.AlphaTest) << 48) | (static_cast<uint64_t>(other.VertexFormat) << 56);
-		return a < b;
+		return memcmp(this, &other, sizeof(VkRenderPassKey));
 	}
 };
 

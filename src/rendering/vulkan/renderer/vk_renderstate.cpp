@@ -140,6 +140,7 @@ void VkRenderState::Apply(int dt)
 
 	// Find a render pass that matches our state
 	VkRenderPassKey passKey;
+	passKey.DrawType = dt;
 	passKey.VertexFormat = static_cast<VKVertexBuffer*>(mVertexBuffer)->VertexFormat;
 	passKey.RenderStyle = mRenderStyle;
 	if (mSpecialEffect > EFF_NONE)

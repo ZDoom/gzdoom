@@ -70,7 +70,7 @@ bool FStringTable::LoadLanguageFromSpreadsheet(int lumpnum)
 		return false;
 	}
 
-	if (!readSheetIntoTable(xlsxio, "Sheet1")) return false;
+	if (!readSheetIntoTable(xlsxio, "strings")) return false;
 	// readMacros(xlsxio, "macros");
 
 	xlsxioread_close(xlsxio);

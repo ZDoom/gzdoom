@@ -4,6 +4,7 @@
 #include "vk_device.h"
 #include "vk_objects.h"
 
+struct FRenderViewpoint;
 class VkSamplerManager;
 class VkShaderManager;
 class VkRenderPassManager;
@@ -73,6 +74,9 @@ public:
 	void Draw2D() override;
 
 private:
+	sector_t *RenderViewpoint(FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
+	void DrawScene(HWDrawInfo *di, int drawmode);
+
 	std::unique_ptr<VkShaderManager> mShaderManager;
 	std::unique_ptr<VkSamplerManager> mSamplerManager;
 	std::unique_ptr<VkRenderPassManager> mRenderPassManager;

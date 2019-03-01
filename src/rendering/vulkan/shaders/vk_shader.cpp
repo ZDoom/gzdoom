@@ -16,8 +16,6 @@ VkShaderManager::VkShaderManager(VulkanDevice *device) : device(device)
 
 	for (int i = 0; defaultshaders[i].ShaderName != NULL; i++)
 	{
-		// To do: use defaultshaders[i].ShaderName for better debugging
-
 		VkShaderProgram prog;
 		prog.vert = LoadVertShader(defaultshaders[i].ShaderName, mainvp, defaultshaders[i].Defines);
 		prog.frag = LoadFragShader(defaultshaders[i].ShaderName, mainfp, defaultshaders[i].gettexelfunc, defaultshaders[i].lightfunc, defaultshaders[i].Defines, true, gbufferpass);

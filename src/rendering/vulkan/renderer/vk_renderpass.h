@@ -3,6 +3,7 @@
 
 #include "vulkan/system/vk_objects.h"
 #include "r_data/renderstyle.h"
+#include "hwrenderer/data/buffers.h"
 #include <map>
 
 class VKDataBuffer;
@@ -14,11 +15,12 @@ public:
 	int SpecialEffect;
 	int EffectState;
 	bool AlphaTest;
+	int VertexFormat;
 
 	bool operator<(const VkRenderPassKey &other) const
 	{
-		uint64_t a = RenderStyle.AsDWORD | (static_cast<uint64_t>(SpecialEffect) << 32) | (static_cast<uint64_t>(EffectState) << 40) | (static_cast<uint64_t>(AlphaTest) << 48);
-		uint64_t b = other.RenderStyle.AsDWORD | (static_cast<uint64_t>(other.SpecialEffect) << 32) | (static_cast<uint64_t>(other.EffectState) << 40) | (static_cast<uint64_t>(other.AlphaTest) << 48);
+		uint64_t a = RenderStyle.AsDWORD | (static_cast<uint64_t>(SpecialEffect) << 32) | (static_cast<uint64_t>(EffectState) << 40) | (static_cast<uint64_t>(AlphaTest) << 48) | (static_cast<uint64_t>(VertexFormat) << 56);
+		uint64_t b = other.RenderStyle.AsDWORD | (static_cast<uint64_t>(other.SpecialEffect) << 32) | (static_cast<uint64_t>(other.EffectState) << 40) | (static_cast<uint64_t>(other.AlphaTest) << 48) | (static_cast<uint64_t>(other.VertexFormat) << 56);
 		return a < b;
 	}
 };
@@ -38,13 +40,24 @@ private:
 	void CreateFramebuffer();
 };
 
+class VkVertexFormat
+{
+public:
+	int NumBindingPoints;
+	size_t Stride;
+	std::vector<FVertexBufferAttribute> Attrs;
+};
+
 class VkRenderPassManager
 {
 public:
 	VkRenderPassManager();
 
+	void Init();
 	void BeginFrame();
 	VkRenderPassSetup *GetRenderPass(const VkRenderPassKey &key);
+
+	int GetVertexFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs);
 
 	std::unique_ptr<VulkanDescriptorSetLayout> DynamicSetLayout;
 	std::unique_ptr<VulkanDescriptorSetLayout> TextureSetLayout;
@@ -59,6 +72,8 @@ public:
 	std::unique_ptr<VulkanImageView> SceneDepthView;
 
 	std::unique_ptr<VulkanDescriptorSet> DynamicSet;
+
+	std::vector<VkVertexFormat> VertexFormats;
 
 private:
 	void CreateDynamicSetLayout();

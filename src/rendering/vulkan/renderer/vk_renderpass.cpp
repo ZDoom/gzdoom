@@ -10,6 +10,10 @@
 
 VkRenderPassManager::VkRenderPassManager()
 {
+}
+
+void VkRenderPassManager::Init()
+{
 	CreateDynamicSetLayout();
 	CreateTextureSetLayout();
 	CreatePipelineLayout();
@@ -58,6 +62,37 @@ VkRenderPassSetup *VkRenderPassManager::GetRenderPass(const VkRenderPassKey &key
 	if (!item)
 		item.reset(new VkRenderPassSetup(key));
 	return item.get();
+}
+
+int VkRenderPassManager::GetVertexFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs)
+{
+	for (size_t i = 0; i < VertexFormats.size(); i++)
+	{
+		const auto &f = VertexFormats[i];
+		if (f.Attrs.size() == numAttributes && f.NumBindingPoints == numBindingPoints && f.Stride == stride)
+		{
+			bool matches = true;
+			for (int j = 0; j < numAttributes; j++)
+			{
+				if (memcmp(&f.Attrs[j], &attrs[j], sizeof(FVertexBufferAttribute)) != 0)
+				{
+					matches = false;
+					break;
+				}
+			}
+
+			if (matches)
+				return (int)i;
+		}
+	}
+
+	VkVertexFormat fmt;
+	fmt.NumBindingPoints = numBindingPoints;
+	fmt.Stride = stride;
+	for (int j = 0; j < numAttributes; j++)
+		fmt.Attrs.push_back(attrs[j]);
+	VertexFormats.push_back(fmt);
+	return (int)VertexFormats.size() - 1;
 }
 
 void VkRenderPassManager::CreateDynamicSetLayout()
@@ -151,24 +186,25 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 	builder.addVertexShader(program->vert.get());
 	builder.addFragmentShader(program->frag.get());
 
-	builder.addVertexBufferBinding(0, sizeof(F2DDrawer::TwoDVertex));
-	builder.addVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(F2DDrawer::TwoDVertex, x));
-	builder.addVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(F2DDrawer::TwoDVertex, u));
-	builder.addVertexAttribute(2, 0, VK_FORMAT_R8G8B8A8_UNORM, offsetof(F2DDrawer::TwoDVertex, color0));
-	builder.addVertexAttribute(3, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(F2DDrawer::TwoDVertex, x));
-	builder.addVertexAttribute(4, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(F2DDrawer::TwoDVertex, x));
-	builder.addVertexAttribute(5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(F2DDrawer::TwoDVertex, x));
+	const VkVertexFormat &vfmt = fb->GetRenderPassManager()->VertexFormats[key.VertexFormat];
 
-#if 0
-		builder.addVertexBufferBinding(0, sizeof(FFlatVertex));
-	builder.addVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(FFlatVertex, x));
-	builder.addVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(FFlatVertex, u));
-	// To do: not all vertex formats has all the data..
-	builder.addVertexAttribute(2, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(FFlatVertex, x));
-	builder.addVertexAttribute(3, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(FFlatVertex, x));
-	builder.addVertexAttribute(4, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(FFlatVertex, x));
-	builder.addVertexAttribute(5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(FFlatVertex, x));
-#endif
+	for (int i = 0; i < vfmt.NumBindingPoints; i++)
+		builder.addVertexBufferBinding(i, vfmt.Stride);
+
+	const static VkFormat vkfmts[] = {
+		VK_FORMAT_R32G32B32A32_SFLOAT,
+		VK_FORMAT_R32G32B32_SFLOAT,
+		VK_FORMAT_R32G32_SFLOAT,
+		VK_FORMAT_R32_SFLOAT,
+		VK_FORMAT_R8G8B8A8_UNORM,
+		VK_FORMAT_A2R10G10B10_SNORM_PACK32
+	};
+
+	for (size_t i = 0; i < vfmt.Attrs.size(); i++)
+	{
+		const auto &attr = vfmt.Attrs[i];
+		builder.addVertexAttribute(attr.location, attr.binding, vkfmts[attr.format], attr.offset);
+	}
 
 	builder.addDynamicState(VK_DYNAMIC_STATE_VIEWPORT);
 	builder.addDynamicState(VK_DYNAMIC_STATE_SCISSOR);

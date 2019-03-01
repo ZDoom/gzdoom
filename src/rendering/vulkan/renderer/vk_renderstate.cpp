@@ -26,13 +26,7 @@ void VkRenderState::ClearScreen()
 	screen->mViewpoints->Set2D(*this, SCREENWIDTH, SCREENHEIGHT);
 	SetColor(0, 0, 0);
 	Apply(DT_TriangleStrip);
-
-	/*
-	glDisable(GL_MULTISAMPLE);
-	glDisable(GL_DEPTH_TEST);
 	mCommandBuffer->draw(4, 1, FFlatVertexBuffer::FULLSCREEN_INDEX, 0);
-	glEnable(GL_DEPTH_TEST);
-	*/
 }
 
 void VkRenderState::Draw(int dt, int index, int count, bool apply)
@@ -55,7 +49,6 @@ void VkRenderState::DrawIndexed(int dt, int index, int count, bool apply)
 		BindDescriptorSets();
 
 	drawcalls.Clock();
-	if (mMaterial.mMaterial)
 	mCommandBuffer->drawIndexed(count, 1, index, 0, 0);
 	drawcalls.Unclock();
 }
@@ -147,6 +140,7 @@ void VkRenderState::Apply(int dt)
 
 	// Find a render pass that matches our state
 	VkRenderPassKey passKey;
+	passKey.VertexFormat = static_cast<VKVertexBuffer*>(mVertexBuffer)->VertexFormat;
 	passKey.RenderStyle = mRenderStyle;
 	if (mSpecialEffect > EFF_NONE)
 	{

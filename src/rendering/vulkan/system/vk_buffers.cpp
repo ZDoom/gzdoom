@@ -3,6 +3,7 @@
 #include "vk_builders.h"
 #include "vk_framebuffer.h"
 #include "vulkan/renderer/vk_renderstate.h"
+#include "vulkan/renderer/vk_renderpass.h"
 #include "doomerrors.h"
 
 VKBuffer::~VKBuffer()
@@ -119,6 +120,7 @@ void VKBuffer::Unlock()
 
 void VKVertexBuffer::SetFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs)
 {
+	VertexFormat = GetVulkanFrameBuffer()->GetRenderPassManager()->GetVertexFormat(numBindingPoints, numAttributes, stride, attrs);
 }
 
 /////////////////////////////////////////////////////////////////////////////

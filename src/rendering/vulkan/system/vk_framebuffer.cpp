@@ -85,6 +85,8 @@ void VulkanFrameBuffer::InitializeState()
 	mUploadSemaphore.reset(new VulkanSemaphore(device));
 	mGraphicsCommandPool.reset(new VulkanCommandPool(device, device->graphicsFamily));
 
+	mRenderPassManager.reset(new VkRenderPassManager());
+
 	mVertexData = new FFlatVertexBuffer(GetWidth(), GetHeight());
 	mSkyData = new FSkyVertexBuffer;
 	mViewpoints = new GLViewpointBuffer;
@@ -100,7 +102,7 @@ void VulkanFrameBuffer::InitializeState()
 
 	mShaderManager.reset(new VkShaderManager(device));
 	mSamplerManager.reset(new VkSamplerManager(device));
-	mRenderPassManager.reset(new VkRenderPassManager());
+	mRenderPassManager->Init();
 	mRenderState.reset(new VkRenderState());
 }
 

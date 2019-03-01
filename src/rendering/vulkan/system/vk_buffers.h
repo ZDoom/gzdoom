@@ -35,6 +35,8 @@ class VKVertexBuffer : public IVertexBuffer, public VKBuffer
 public:
 	VKVertexBuffer() { mBufferType = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT; }
 	void SetFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs) override;
+
+	int VertexFormat = -1;
 };
 
 class VKIndexBuffer : public IIndexBuffer, public VKBuffer

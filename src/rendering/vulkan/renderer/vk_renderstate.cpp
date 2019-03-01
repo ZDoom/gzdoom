@@ -97,6 +97,63 @@ void VkRenderState::EnableClipDistance(int num, bool state)
 
 void VkRenderState::Clear(int targets)
 {
+	// We need an active render pass, and it must have a depth attachment..
+	bool lastDepthTest = mDepthTest;
+	bool lastDepthWrite = mDepthWrite;
+	if (targets & (CT_Depth | CT_Stencil))
+	{
+		mDepthTest = true;
+		mDepthWrite = true;
+	}
+	Apply(DT_TriangleFan);
+	mDepthTest = lastDepthTest;
+	mDepthWrite = lastDepthWrite;
+
+	VkClearAttachment attachments[2] = { };
+	VkClearRect rects[2] = { };
+
+	for (int i = 0; i < 2; i++)
+	{
+		rects[i].layerCount = 1;
+		if (mScissorWidth >= 0)
+		{
+			rects[0].rect.offset.x = mScissorX;
+			rects[0].rect.offset.y = mScissorY;
+			rects[0].rect.extent.width = mScissorWidth;
+			rects[0].rect.extent.height = mScissorHeight;
+		}
+		else
+		{
+			rects[0].rect.offset.x = 0;
+			rects[0].rect.offset.y = 0;
+			rects[0].rect.extent.width = SCREENWIDTH;
+			rects[0].rect.extent.height = SCREENHEIGHT;
+		}
+	}
+
+	if (targets & CT_Depth)
+	{
+		attachments[1].aspectMask |= VK_IMAGE_ASPECT_DEPTH_BIT;
+		attachments[1].clearValue.depthStencil.depth = 1.0f;
+	}
+	if (targets & CT_Stencil)
+	{
+		attachments[1].aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+		attachments[1].clearValue.depthStencil.stencil = 0;
+	}
+	if (targets & CT_Color)
+	{
+		attachments[0].aspectMask |= VK_IMAGE_ASPECT_COLOR_BIT;
+		for (int i = 0; i < 4; i++)
+			attachments[0].clearValue.color.float32[i] = screen->mSceneClearColor[i];
+	}
+
+	if ((targets & CT_Color) && (targets & CT_Stencil) && (targets & CT_Depth))
+		mCommandBuffer->clearAttachments(2, attachments, 2, rects);
+	else if (targets & (CT_Stencil | CT_Depth))
+		mCommandBuffer->clearAttachments(1, attachments + 1, 1, rects + 1);
+	else if (targets & CT_Color)
+		mCommandBuffer->clearAttachments(1, attachments, 1, rects);
 }
 
 void VkRenderState::EnableStencil(bool on)
@@ -123,6 +180,8 @@ void VkRenderState::SetViewport(int x, int y, int w, int h)
 
 void VkRenderState::EnableDepthTest(bool on)
 {
+	mDepthTest = on;
+	mDepthWrite = on;
 }
 
 void VkRenderState::EnableMultisampling(bool on)
@@ -153,6 +212,8 @@ void VkRenderState::Apply(int dt)
 	passKey.DrawType = dt;
 	passKey.VertexFormat = static_cast<VKVertexBuffer*>(mVertexBuffer)->VertexFormat;
 	passKey.RenderStyle = mRenderStyle;
+	passKey.DepthTest = mDepthTest;
+	passKey.DepthWrite = mDepthWrite;
 	if (mSpecialEffect > EFF_NONE)
 	{
 		passKey.SpecialEffect = mSpecialEffect;

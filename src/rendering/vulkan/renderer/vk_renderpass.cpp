@@ -154,18 +154,36 @@ void VkRenderPassManager::CreateDynamicSet()
 
 VkRenderPassSetup::VkRenderPassSetup(const VkRenderPassKey &key)
 {
-	CreateRenderPass();
+	CreateRenderPass(key);
 	CreatePipeline(key);
-	CreateFramebuffer();
+	CreateFramebuffer(key);
 }
 
-void VkRenderPassSetup::CreateRenderPass()
+void VkRenderPassSetup::CreateRenderPass(const VkRenderPassKey &key)
 {
 	RenderPassBuilder builder;
 	builder.addRgba16fAttachment(false, VK_IMAGE_LAYOUT_GENERAL);
+	if (key.DepthTest || key.DepthWrite)
+		builder.addDepthStencilAttachment(false, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 	builder.addSubpass();
 	builder.addSubpassColorAttachmentRef(0, VK_IMAGE_LAYOUT_GENERAL);
-	builder.addExternalSubpassDependency();
+	if (key.DepthTest || key.DepthWrite)
+	{
+		builder.addSubpassDepthStencilAttachmentRef(1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+		builder.addExternalSubpassDependency(
+			VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT);
+	}
+	else
+	{
+		builder.addExternalSubpassDependency(
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_COLOR_ATTACHMENT_READ_BIT);
+	}
 	RenderPass = builder.create(GetVulkanFrameBuffer()->device);
 }
 
@@ -265,6 +283,8 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 		blendequation = VK_BLEND_OP_ADD;
 	}
 
+	builder.setDepthEnable(key.DepthTest, key.DepthWrite);
+
 	builder.setBlendMode((VkBlendOp)blendequation, (VkBlendFactor)srcblend, (VkBlendFactor)dstblend);
 
 	builder.setLayout(fb->GetRenderPassManager()->PipelineLayout.get());
@@ -272,12 +292,14 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 	Pipeline = builder.create(fb->device);
 }
 
-void VkRenderPassSetup::CreateFramebuffer()
+void VkRenderPassSetup::CreateFramebuffer(const VkRenderPassKey &key)
 {
 	auto fb = GetVulkanFrameBuffer();
 	FramebufferBuilder builder;
 	builder.setRenderPass(RenderPass.get());
 	builder.setSize(SCREENWIDTH, SCREENHEIGHT);
 	builder.addAttachment(fb->GetRenderPassManager()->SceneColorView.get());
+	if (key.DepthTest || key.DepthWrite)
+		builder.addAttachment(fb->GetRenderPassManager()->SceneDepthStencilView.get());
 	Framebuffer = builder.create(GetVulkanFrameBuffer()->device);
 }

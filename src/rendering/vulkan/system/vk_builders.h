@@ -247,13 +247,13 @@ public:
 
 	void addRgba16fAttachment(bool clear, VkImageLayout layout) { addColorAttachment(clear, VK_FORMAT_R16G16B16A16_SFLOAT, layout); }
 	void addColorAttachment(bool clear, VkFormat format, VkImageLayout layout);
-	void addDepthAttachment(bool clear, VkImageLayout layout);
+	void addDepthStencilAttachment(bool clear, VkImageLayout layout);
 
-	void addExternalSubpassDependency();
+	void addExternalSubpassDependency(VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask);
 
 	void addSubpass();
 	void addSubpassColorAttachmentRef(uint32_t index, VkImageLayout layout);
-	void addSubpassDepthAttachmentRef(uint32_t index, VkImageLayout layout);
+	void addSubpassDepthStencilAttachmentRef(uint32_t index, VkImageLayout layout);
 
 	std::unique_ptr<VulkanRenderPass> create(VulkanDevice *device);
 
@@ -936,10 +936,10 @@ inline void RenderPassBuilder::addColorAttachment(bool clear, VkFormat format, V
 	renderPassInfo.attachmentCount = (uint32_t)attachments.size();
 }
 
-inline void RenderPassBuilder::addDepthAttachment(bool clear, VkImageLayout layout)
+inline void RenderPassBuilder::addDepthStencilAttachment(bool clear, VkImageLayout layout)
 {
 	VkAttachmentDescription depthAttachment = {};
-	depthAttachment.format = VK_FORMAT_D32_SFLOAT;
+	depthAttachment.format = VK_FORMAT_D32_SFLOAT_S8_UINT;
 	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	depthAttachment.loadOp = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
 	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE/*VK_ATTACHMENT_STORE_OP_DONT_CARE*/;
@@ -953,15 +953,15 @@ inline void RenderPassBuilder::addDepthAttachment(bool clear, VkImageLayout layo
 	renderPassInfo.attachmentCount = (uint32_t)attachments.size();
 }
 
-inline void RenderPassBuilder::addExternalSubpassDependency()
+inline void RenderPassBuilder::addExternalSubpassDependency(VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask)
 {
 	VkSubpassDependency dependency = {};
 	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
 	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.srcAccessMask = 0;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependency.srcStageMask = srcStageMask;
+	dependency.srcAccessMask = srcAccessMask;
+	dependency.dstStageMask = dstStageMask;
+	dependency.dstAccessMask = dstAccessMask;
 
 	dependencies.push_back(dependency);
 	renderPassInfo.pDependencies = dependencies.data();
@@ -991,7 +991,7 @@ inline void RenderPassBuilder::addSubpassColorAttachmentRef(uint32_t index, VkIm
 	subpasses.back().colorAttachmentCount = (uint32_t)subpassData.back()->colorRefs.size();
 }
 
-inline void RenderPassBuilder::addSubpassDepthAttachmentRef(uint32_t index, VkImageLayout layout)
+inline void RenderPassBuilder::addSubpassDepthStencilAttachmentRef(uint32_t index, VkImageLayout layout)
 {
 	VkAttachmentReference &depthAttachmentRef = subpassData.back()->depthRef;
 	depthAttachmentRef.attachment = index;

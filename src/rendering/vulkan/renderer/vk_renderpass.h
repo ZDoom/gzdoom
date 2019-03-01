@@ -15,6 +15,8 @@ public:
 	int SpecialEffect;
 	int EffectState;
 	int AlphaTest;
+	int DepthWrite;
+	int DepthTest;
 	int VertexFormat;
 	int DrawType;
 
@@ -35,8 +37,8 @@ public:
 
 private:
 	void CreatePipeline(const VkRenderPassKey &key);
-	void CreateRenderPass();
-	void CreateFramebuffer();
+	void CreateRenderPass(const VkRenderPassKey &key);
+	void CreateFramebuffer(const VkRenderPassKey &key);
 };
 
 class VkVertexFormat

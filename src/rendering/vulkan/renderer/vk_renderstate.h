@@ -58,6 +58,9 @@ private:
 	bool mScissorChanged = true;
 	bool mViewportChanged = true;
 
+	bool mDepthTest = false;
+	bool mDepthWrite = false;
+
 	MatricesUBO mMatrices = {};
 	ColorsUBO mColors = {};
 	GlowingWallsUBO mGlowingWalls = {};

@@ -32,6 +32,10 @@ public:
 	uint8_t *MapBuffer() override;
 	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name) override;
 
+	static VkHardwareTexture *First;
+	VkHardwareTexture *Prev = nullptr;
+	VkHardwareTexture *Next = nullptr;
+
 private:
 	VulkanImageView *GetImageView(FTexture *tex, int clampmode, int translation, int flags);
 

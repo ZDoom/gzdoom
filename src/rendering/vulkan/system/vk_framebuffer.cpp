@@ -66,6 +66,10 @@ VulkanFrameBuffer::VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevi
 
 VulkanFrameBuffer::~VulkanFrameBuffer()
 {
+	// All descriptors must be destroyed before the descriptor pool in renderpass manager is destroyed
+	for (VkHardwareTexture *cur = VkHardwareTexture::First; cur; cur = cur->Next)
+		cur->Reset();
+
 	delete MatricesUBO;
 	delete ColorsUBO;
 	delete GlowingWallsUBO;
@@ -73,8 +77,6 @@ VulkanFrameBuffer::~VulkanFrameBuffer()
 	delete mSkyData;
 	delete mViewpoints;
 	delete mLights;
-	for (auto tex : AllTextures)
-		tex->Reset();
 }
 
 void VulkanFrameBuffer::InitializeState()
@@ -277,9 +279,7 @@ void VulkanFrameBuffer::CleanForRestart()
 
 IHardwareTexture *VulkanFrameBuffer::CreateHardwareTexture()
 {
-	auto texture = new VkHardwareTexture();
-	AllTextures.Push(texture);
-	return texture;
+	return new VkHardwareTexture();
 }
 
 FModelRenderer *VulkanFrameBuffer::CreateModelRenderer(int mli) 

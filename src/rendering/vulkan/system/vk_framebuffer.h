@@ -86,8 +86,6 @@ private:
 
 	int lastSwapWidth = 0;
 	int lastSwapHeight = 0;
-
-	TArray<VkHardwareTexture*> AllTextures;
 };
 
 inline VulkanFrameBuffer *GetVulkanFrameBuffer() { return static_cast<VulkanFrameBuffer*>(screen); }

@@ -37,12 +37,19 @@
 #include "vulkan/renderer/vk_renderpass.h"
 #include "vk_hwtexture.h"
 
+VkHardwareTexture *VkHardwareTexture::First = nullptr;
+
 VkHardwareTexture::VkHardwareTexture()
 {
+	Next = First;
+	First = this;
+	if (Next) Next->Prev = this;
 }
 
 VkHardwareTexture::~VkHardwareTexture()
 {
+	if (Next) Next->Prev = Prev;
+	if (!Prev) First = Next;
 }
 
 void VkHardwareTexture::Reset()

@@ -33,6 +33,8 @@ public:
 	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name) override;
 
 private:
+	VulkanImageView *GetImageView(FTexture *tex, int clampmode, int translation, int flags);
+
 	void CreateTexture(int w, int h, int pixelsize, VkFormat format, const void *pixels);
 	void GenerateMipmaps(VulkanImage *image, VulkanCommandBuffer *cmdbuffer);
 	static int GetMipLevels(int w, int h);

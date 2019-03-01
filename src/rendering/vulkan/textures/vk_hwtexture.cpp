@@ -55,18 +55,47 @@ void VkHardwareTexture::Reset()
 
 VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &state)
 {
+	if (!mDescriptorSet)
+	{
+		auto fb = GetVulkanFrameBuffer();
+
+		FMaterial *mat = state.mMaterial;
+		FTexture *tex = state.mMaterial->tex;
+		int clampmode = state.mClampMode;
+		int translation = state.mTranslation;
+
+		//if (tex->UseType == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;
+		//if (tex->isHardwareCanvas()) clampmode = CLAMP_CAMTEX;
+		//else if ((tex->isWarped() || tex->shaderindex >= FIRST_USER_SHADER) && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
+
+		// Textures that are already scaled in the texture lump will not get replaced by hires textures.
+		int flags = state.mMaterial->isExpanded() ? CTF_Expand : (gl_texture_usehires && !tex->isScaled() && clampmode <= CLAMP_XY) ? CTF_CheckHires : 0;
+
+		mDescriptorSet = fb->GetRenderPassManager()->DescriptorPool->allocate(fb->GetRenderPassManager()->TextureSetLayout.get());
+
+		VulkanSampler *sampler = fb->GetSamplerManager()->Get(clampmode);
+		int numLayers = mat->GetLayers();
+
+		WriteDescriptors update;
+		update.addCombinedImageSampler(mDescriptorSet.get(), 0, GetImageView(tex, clampmode, translation, flags), sampler, mImageLayout);
+		for (int i = 1; i < numLayers; i++)
+		{
+			FTexture *layer;
+			auto systex = static_cast<VkHardwareTexture*>(mat->GetLayer(i, 0, &layer));
+			update.addCombinedImageSampler(mDescriptorSet.get(), i, systex->GetImageView(layer, clampmode, 0, mat->isExpanded() ? CTF_Expand : 0), sampler, mImageLayout);
+		}
+		update.updateSets(fb->device);
+	}
+
+	return mDescriptorSet.get();
+}
+
+VulkanImageView *VkHardwareTexture::GetImageView(FTexture *tex, int clampmode, int translation, int flags)
+{
 	if (!mImage)
 	{
-		FTexture *tex = state.mMaterial->tex;
-
 		if (!tex->isHardwareCanvas())
 		{
-			int clampmode = state.mClampMode;
-			//if (tex->UseType == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;
-			//if (tex->isHardwareCanvas()) clampmode = CLAMP_CAMTEX;
-			//else if ((tex->isWarped() || tex->shaderindex >= FIRST_USER_SHADER) && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
-
-			int translation = state.mTranslation;
 			if (translation <= 0)
 			{
 				translation = -translation;
@@ -78,9 +107,6 @@ VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &s
 			}
 
 			bool needmipmap = (clampmode <= CLAMP_XY);
-
-			// Textures that are already scaled in the texture lump will not get replaced by hires textures.
-			int flags = state.mMaterial->isExpanded() ? CTF_Expand : (gl_texture_usehires && !tex->isScaled() && clampmode <= CLAMP_XY) ? CTF_CheckHires : 0;
 
 			FTextureBuffer texbuffer = tex->CreateTexBuffer(translation, flags | CTF_ProcessData);
 			CreateTexture(texbuffer.mWidth, texbuffer.mHeight, 4, VK_FORMAT_B8G8R8A8_UNORM, texbuffer.mBuffer);
@@ -97,18 +123,7 @@ VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &s
 			CreateTexture(4, 4, 4, VK_FORMAT_R8G8B8A8_UNORM, testpixels);
 		}
 	}
-
-	if (!mDescriptorSet)
-	{
-		auto fb = GetVulkanFrameBuffer();
-		mDescriptorSet = fb->GetRenderPassManager()->DescriptorPool->allocate(fb->GetRenderPassManager()->TextureSetLayout.get());
-
-		WriteDescriptors update;
-		update.addCombinedImageSampler(mDescriptorSet.get(), 0, mImageView.get(), fb->GetSamplerManager()->Get(0), mImageLayout);
-		update.updateSets(fb->device);
-	}
-
-	return mDescriptorSet.get();
+	return mImageView.get();
 }
 
 void VkHardwareTexture::CreateTexture(int w, int h, int pixelsize, VkFormat format, const void *pixels)

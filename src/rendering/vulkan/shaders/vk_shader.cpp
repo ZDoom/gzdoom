@@ -78,12 +78,12 @@ static const char *shaderBindings = R"(
 
 	// textures
 	layout(set = 1, binding = 0) uniform sampler2D tex;
-	// layout(set = 1, binding = 1) uniform sampler2D texture2;
-	// layout(set = 1, binding = 2) uniform sampler2D texture3;
-	// layout(set = 1, binding = 3) uniform sampler2D texture4;
-	// layout(set = 1, binding = 4) uniform sampler2D texture5;
-	// layout(set = 1, binding = 5) uniform sampler2D texture6;
-	// layout(set = 1, binding = 16) uniform sampler2D ShadowMap;
+	layout(set = 1, binding = 1) uniform sampler2D texture2;
+	layout(set = 1, binding = 2) uniform sampler2D texture3;
+	layout(set = 1, binding = 3) uniform sampler2D texture4;
+	layout(set = 1, binding = 4) uniform sampler2D texture5;
+	layout(set = 1, binding = 5) uniform sampler2D texture6;
+	layout(set = 1, binding = 16) uniform sampler2D ShadowMap;
 
 	// This must match the PushConstants struct
 	layout(push_constant) uniform PushConstants

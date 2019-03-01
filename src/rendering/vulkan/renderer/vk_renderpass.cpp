@@ -74,14 +74,11 @@ void VkRenderPassManager::CreateDynamicSetLayout()
 void VkRenderPassManager::CreateTextureSetLayout()
 {
 	DescriptorSetLayoutBuilder builder;
-	builder.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-	/*
 	for (int i = 0; i < 6; i++)
 	{
 		builder.addBinding(i, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	}
 	builder.addBinding(16, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-	*/
 	TextureSetLayout = builder.create(GetVulkanFrameBuffer()->device);
 }
 

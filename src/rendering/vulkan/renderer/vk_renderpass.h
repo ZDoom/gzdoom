@@ -22,7 +22,7 @@ public:
 
 	bool operator<(const VkRenderPassKey &other) const
 	{
-		return memcmp(this, &other, sizeof(VkRenderPassKey));
+		return memcmp(this, &other, sizeof(VkRenderPassKey)) < 0;
 	}
 };
 

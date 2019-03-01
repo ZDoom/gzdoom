@@ -49,7 +49,8 @@ VkHardwareTexture::VkHardwareTexture()
 VkHardwareTexture::~VkHardwareTexture()
 {
 	if (Next) Next->Prev = Prev;
-	if (!Prev) First = Next;
+	if (Prev) Prev->Next = Next;
+	else First = Next;
 }
 
 void VkHardwareTexture::Reset()

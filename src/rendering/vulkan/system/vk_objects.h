@@ -376,7 +376,7 @@ inline void *VulkanBuffer::Map(size_t offset, size_t size)
 {
 	void *data;
 	VkResult result = vmaMapMemory(device->allocator, allocation, &data);
-	return (result == VK_SUCCESS) ? data : nullptr;
+	return (result == VK_SUCCESS) ? ((uint8_t*)data) + offset : nullptr;
 }
 
 inline void VulkanBuffer::Unmap()
@@ -888,7 +888,7 @@ inline void *VulkanImage::Map(size_t offset, size_t size)
 {
 	void *data;
 	VkResult result = vmaMapMemory(device->allocator, allocation, &data);
-	return (result == VK_SUCCESS) ? data : nullptr;
+	return (result == VK_SUCCESS) ? ((uint8_t*)data) + offset : nullptr;
 }
 
 inline void VulkanImage::Unmap()

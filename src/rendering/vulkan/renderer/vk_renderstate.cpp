@@ -334,13 +334,23 @@ void VkRenderState::Apply(int dt)
 
 	mPushConstants.uLightIndex = screen->mLights->BindUBO(mLightIndex);
 
-	mMatricesOffset += UniformBufferAlignment<MatricesUBO>();
-	mColorsOffset += UniformBufferAlignment<ColorsUBO>();
-	mGlowingWallsOffset += UniformBufferAlignment<GlowingWallsUBO>();
+	if (mMatricesOffset + UniformBufferAlignment<MatricesUBO>() < fb->MatricesUBO->Size())
+	{
+		mMatricesOffset += UniformBufferAlignment<MatricesUBO>();
+		memcpy(static_cast<uint8_t*>(fb->MatricesUBO->Memory()) + mMatricesOffset, &mMatrices, sizeof(MatricesUBO));
+	}
 
-	memcpy(static_cast<uint8_t*>(fb->MatricesUBO->Memory()) + mMatricesOffset, &mMatrices, sizeof(MatricesUBO));
-	memcpy(static_cast<uint8_t*>(fb->ColorsUBO->Memory()) + mColorsOffset, &mColors, sizeof(ColorsUBO));
-	memcpy(static_cast<uint8_t*>(fb->GlowingWallsUBO->Memory()) + mGlowingWallsOffset, &mGlowingWalls, sizeof(GlowingWallsUBO));
+	if (mColorsOffset + UniformBufferAlignment<ColorsUBO>() < fb->ColorsUBO->Size())
+	{
+		mColorsOffset += UniformBufferAlignment<ColorsUBO>();
+		memcpy(static_cast<uint8_t*>(fb->ColorsUBO->Memory()) + mColorsOffset, &mColors, sizeof(ColorsUBO));
+	}
+
+	if (mColorsOffset + UniformBufferAlignment<GlowingWallsUBO>() < fb->GlowingWallsUBO->Size())
+	{
+		mGlowingWallsOffset += UniformBufferAlignment<GlowingWallsUBO>();
+		memcpy(static_cast<uint8_t*>(fb->GlowingWallsUBO->Memory()) + mGlowingWallsOffset, &mGlowingWalls, sizeof(GlowingWallsUBO));
+	}
 
 	mCommandBuffer->pushConstants(passManager->PipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, (uint32_t)sizeof(PushConstants), &mPushConstants);
 
@@ -348,7 +358,8 @@ void VkRenderState::Apply(int dt)
 	VkDeviceSize offsets[] = { 0 };
 	mCommandBuffer->bindVertexBuffers(0, 1, vertexBuffers, offsets);
 
-	mCommandBuffer->bindIndexBuffer(static_cast<VKIndexBuffer*>(mIndexBuffer)->mBuffer->buffer, 0, VK_INDEX_TYPE_UINT32);
+	if (mIndexBuffer)
+		mCommandBuffer->bindIndexBuffer(static_cast<VKIndexBuffer*>(mIndexBuffer)->mBuffer->buffer, 0, VK_INDEX_TYPE_UINT32);
 
 	BindDescriptorSets();
 

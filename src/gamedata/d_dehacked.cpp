@@ -2164,13 +2164,14 @@ static int PatchMusic (int dummy)
 
 	while ((result = GetLine()) == 1)
 	{
-		const char *newname = skipwhite (Line2);
+		FString newname = skipwhite (Line2);
 		FString keystring;
 		
 		keystring << "MUSIC_" << Line1;
 
-		DehStrings.Insert(keystring, newname);
-		DPrintf (DMSG_SPAMMY, "Music %s set to:\n%s\n", keystring.GetChars(), newname);
+		TableElement te = { newname, newname, newname, newname };
+		DehStrings.Insert(keystring, te);
+		DPrintf (DMSG_SPAMMY, "Music %s set to:\n%s\n", keystring.GetChars(), newname.GetChars());
 	}
 
 	return result;
@@ -2283,7 +2284,9 @@ static int PatchText (int oldSize)
 		str = EnglishStrings.MatchString(oldStr);
 		if (str != NULL)
 		{
-			DehStrings.Insert(str, newStr);
+			FString newname = newStr;
+			TableElement te = { newname, newname, newname, newname };
+			DehStrings.Insert(str, te);
 			EnglishStrings.Remove(str);	// remove entry so that it won't get found again by the next iteration or  by another replacement later
 			good = true;
 		}
@@ -2337,7 +2340,8 @@ static int PatchStrings (int dummy)
 		// Account for a discrepancy between Boom's and ZDoom's name for the red skull key pickup message
 		const char *ll = Line1;
 		if (!stricmp(ll, "GOTREDSKULL")) ll = "GOTREDSKUL";
-		DehStrings.Insert(ll, holdstring);
+		TableElement te = { holdstring, holdstring, holdstring, holdstring };
+		DehStrings.Insert(ll, te);
 		DPrintf (DMSG_SPAMMY, "%s set to:\n%s\n", Line1, holdstring.GetChars());
 	}
 

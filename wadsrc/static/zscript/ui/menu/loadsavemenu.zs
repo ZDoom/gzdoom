@@ -228,6 +228,7 @@ class LoadSaveMenu : ListMenu
 			}
 
 			screen.SetClipRect(listboxLeft, listboxTop+rowHeight*i, listboxRight, listboxTop+rowHeight*(i+1));
+			int fontoffset = -CleanYFac;
 			
 			if (j == Selected)
 			{
@@ -235,19 +236,19 @@ class LoadSaveMenu : ListMenu
 				didSeeSelected = true;
 				if (!mEntering)
 				{
-					screen.DrawText (ConFont, colr, listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, node.SaveTitle, DTA_CleanNoMove, true);
+					screen.DrawText (ConFont, colr, listboxLeft+1, listboxTop+rowHeight*i+CleanYfac + fontoffset, node.SaveTitle, DTA_CleanNoMove, true);
 				}
 				else
 				{
 					String s = mInput.GetText() .. ConFont.GetCursor();
 					int length = ConFont.StringWidth(s) * CleanXFac;
 					int displacement = min(0, listboxWidth - 2 - length);
-					screen.DrawText (ConFont, Font.CR_WHITE, listboxLeft + 1 + displacement, listboxTop+rowHeight*i+CleanYfac, s, DTA_CleanNoMove, true);
+					screen.DrawText (ConFont, Font.CR_WHITE, listboxLeft + 1 + displacement, listboxTop+rowHeight*i+CleanYfac + fontoffset, s, DTA_CleanNoMove, true);
 				}
 			}
 			else
 			{
-				screen.DrawText (ConFont, colr, listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, node.SaveTitle, DTA_CleanNoMove, true);
+				screen.DrawText (ConFont, colr, listboxLeft+1, listboxTop+rowHeight*i+CleanYfac + fontoffset, node.SaveTitle, DTA_CleanNoMove, true);
 			}
 			screen.ClearClipRect();
 			j++;

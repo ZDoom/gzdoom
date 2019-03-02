@@ -9,6 +9,7 @@
 #include "r_data/r_translate.h"
 #include "c_cvars.h"
 #include "v_font.h"
+#include "gi.h"
 #include "textures/textures.h"
 
 EXTERN_CVAR(Float, snd_menuvolume)
@@ -207,6 +208,8 @@ public:
 		mScrollTop = 0;
 		mIndent = 0;
 		mDontDim = 0;
+		mFont = gameinfo.gametype == GAME_Doom ? BigUpper : BigFont;
+
 	}
 	size_t PropagateMark() override;
 	~DOptionMenuDescriptor()

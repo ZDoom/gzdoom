@@ -185,6 +185,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 	if (FixedWidth > 0)
 	{
 		ReadSheetFont(folderdata, FixedWidth, FontHeight, Scale);
+		Type = Folder;
 	}
 	else
 	{
@@ -211,6 +212,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 				}
 				if (lump.isValid())
 				{
+					Type = Multilump;
 					if (position < minchar) minchar = position;
 					if (position > maxchar) maxchar = position;
 					charMap.Insert(position, TexMan.GetTexture(lump));
@@ -235,6 +237,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 						auto tex = TexMan.GetTexture(lump);
 						tex->SetScale(Scale);
 						charMap.Insert((int)position, tex);
+						Type = Folder;
 					}
 				}
 			}

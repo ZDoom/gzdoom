@@ -557,6 +557,9 @@ void P_PlayerStartStomp(AActor *actor, bool mononly)
 		if (th->player == NULL && !(th->flags3 & MF3_ISMONSTER))
 			continue;
 
+		if ((th->flags6 & MF6_NOTELEFRAG) && !(th->flags7 & MF7_ALWAYSTELEFRAG))
+			continue;
+
 		if (th->player != NULL && mononly)
 			continue;
 

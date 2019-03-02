@@ -1530,7 +1530,7 @@ FLevelLocals::FLevelLocals() : Behaviors(this), tagManager(this)
 	{
 		Players[i] = &players[i];
 	}
-	localEventManager = new EventManager;
+	localEventManager = new EventManager(this);
 }
 
 FLevelLocals::~FLevelLocals()

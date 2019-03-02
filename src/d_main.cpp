@@ -2581,7 +2581,8 @@ void D_DoomMain (void)
 			};
 			for (p = 0; p < 5; ++p)
 			{
-				const char *str = GStrings[startupString[p]];
+				// At this point we cannot use the player's gender info yet so force 'male' here.
+				const char *str = GStrings.GetString(startupString[p], nullptr, 0);
 				if (str != NULL && str[0] != '\0')
 				{
 					Printf("%s\n", str);

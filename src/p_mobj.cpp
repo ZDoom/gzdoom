@@ -7396,5 +7396,7 @@ void PrintMiscActorInfo(AActor *query)
 		Printf("FriendlySeeBlocks: %d\n", query->friendlyseeblocks);
 		Printf("Target: %s\n", query->target ? query->target->GetClass()->TypeName.GetChars() : "-");
 		Printf("Last enemy: %s\n", query->lastenemy ? query->lastenemy->GetClass()->TypeName.GetChars() : "-");
+		auto sn = FState::StaticGetStateName(query->state);
+		Printf("State:%s, Tics: %d", sn.GetChars(), query->tics);
 	}
 }

@@ -94,6 +94,7 @@ CUSTOM_CVAR (Int, cl_maxdecals, 1024, CVAR_ARCHIVE|CVAR_NOINITCALL)
 			if (thinker != NULL)
 			{
 				thinker->Destroy();
+				Level->ImpactDecalCount--;
 			}
 		}
 	}

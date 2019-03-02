@@ -231,10 +231,9 @@ void VkRenderState::ApplyRenderPass(int dt)
 		passKey.EffectState = mTextureEnabled ? effectState : SHADER_NoTexture;
 		passKey.AlphaTest = mAlphaThreshold >= 0.f;
 	}
-	VkRenderPassSetup *passSetup = passManager->GetRenderPass(passKey);
 
 	// Is this the one we already have or do we need to change render pass?
-	bool changingRenderPass = (passSetup != mRenderPassSetup);
+	bool changingRenderPass = (passKey != mRenderPassKey);
 
 	if (!mCommandBuffer)
 	{
@@ -250,13 +249,16 @@ void VkRenderState::ApplyRenderPass(int dt)
 
 	if (changingRenderPass)
 	{
+		VkRenderPassSetup *passSetup = passManager->GetRenderPass(passKey);
+
 		RenderPassBegin beginInfo;
 		beginInfo.setRenderPass(passSetup->RenderPass.get());
 		beginInfo.setRenderArea(0, 0, SCREENWIDTH, SCREENHEIGHT);
 		beginInfo.setFramebuffer(passSetup->Framebuffer.get());
 		mCommandBuffer->beginRenderPass(beginInfo);
 		mCommandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->Pipeline.get());
-		mRenderPassSetup = passSetup;
+
+		mRenderPassKey = passKey;
 	}
 }
 
@@ -551,7 +553,7 @@ void VkRenderState::EndRenderPass()
 	{
 		mCommandBuffer->endRenderPass();
 		mCommandBuffer = nullptr;
-		mRenderPassSetup = nullptr;
+		mRenderPassKey = {};
 
 		// To do: move this elsewhere or rename this function to make it clear this can only happen at the end of a frame
 		mMatricesOffset = 0;

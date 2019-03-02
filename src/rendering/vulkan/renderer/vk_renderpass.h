@@ -20,10 +20,9 @@ public:
 	int VertexFormat;
 	int DrawType;
 
-	bool operator<(const VkRenderPassKey &other) const
-	{
-		return memcmp(this, &other, sizeof(VkRenderPassKey)) < 0;
-	}
+	bool operator<(const VkRenderPassKey &other) const { return memcmp(this, &other, sizeof(VkRenderPassKey)) < 0; }
+	bool operator==(const VkRenderPassKey &other) const { return memcmp(this, &other, sizeof(VkRenderPassKey)) == 0; }
+	bool operator!=(const VkRenderPassKey &other) const { return memcmp(this, &other, sizeof(VkRenderPassKey)) != 0; }
 };
 
 class VkRenderPassSetup

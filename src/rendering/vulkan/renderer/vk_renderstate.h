@@ -3,6 +3,7 @@
 
 #include "vulkan/system/vk_buffers.h"
 #include "vulkan/shaders/vk_shader.h"
+#include "vulkan/renderer/vk_renderpass.h"
 
 #include "name.h"
 
@@ -57,7 +58,7 @@ private:
 
 	bool mLastDepthClamp = true;
 	VulkanCommandBuffer *mCommandBuffer = nullptr;
-	VkRenderPassSetup *mRenderPassSetup = nullptr;
+	VkRenderPassKey mRenderPassKey = {};
 	bool mDynamicSetChanged = true;
 
 	int mScissorX = 0, mScissorY = 0, mScissorWidth = -1, mScissorHeight = -1;

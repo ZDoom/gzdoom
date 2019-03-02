@@ -85,7 +85,7 @@ VulkanSwapChain::VulkanSwapChain(VulkanDevice *device, int width, int height, bo
 	swapChainCreateInfo.imageColorSpace = swapChainFormat.colorSpace;
 	swapChainCreateInfo.imageExtent = actualExtent;
 	swapChainCreateInfo.imageArrayLayers = 1;
-	swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
 	uint32_t queueFamilyIndices[] = { (uint32_t)device->graphicsFamily, (uint32_t)device->presentFamily };
 	if (device->graphicsFamily != device->presentFamily)

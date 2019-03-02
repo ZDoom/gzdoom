@@ -213,7 +213,7 @@ void VkRenderState::Apply(int dt)
 	passKey.VertexFormat = static_cast<VKVertexBuffer*>(mVertexBuffer)->VertexFormat;
 	passKey.RenderStyle = mRenderStyle;
 	passKey.DepthTest = mDepthTest;
-	passKey.DepthWrite = mDepthWrite;
+	passKey.DepthWrite = mDepthTest && mDepthWrite;
 	if (mSpecialEffect > EFF_NONE)
 	{
 		passKey.SpecialEffect = mSpecialEffect;

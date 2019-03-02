@@ -34,7 +34,14 @@ void main()
 
 	vec4 eyeCoordPos = ViewMatrix * worldcoord;
 
-	vColor = aColor;
+	#ifdef HAS_UNIFORM_VERTEX_DATA
+		if (useVertexData == 0)
+			vColor = uVertexColor;
+		else
+			vColor = aColor;
+	#else
+		vColor = aColor;
+	#endif
 
 	#ifndef SIMPLE
 		pixelpos.xyz = worldcoord.xyz;
@@ -64,7 +71,14 @@ void main()
 			gl_ClipDistance[4] = worldcoord.y - ((uSplitBottomPlane.w + uSplitBottomPlane.x * worldcoord.x + uSplitBottomPlane.y * worldcoord.z) * uSplitBottomPlane.z);
 		}
 
-		vWorldNormal = NormalModelMatrix * vec4(normalize(mix(aNormal.xyz, aNormal2.xyz, uInterpolationFactor)), 1.0);
+		#ifdef HAS_UNIFORM_VERTEX_DATA
+			if (useVertexData == 0)
+				vWorldNormal = NormalModelMatrix * vec4(uVertexNormal.xyz, 1.0);
+			else
+				vWorldNormal = NormalModelMatrix * vec4(normalize(mix(aNormal.xyz, aNormal2.xyz, uInterpolationFactor)), 1.0);
+		#else
+			vWorldNormal = NormalModelMatrix * vec4(normalize(mix(aNormal.xyz, aNormal2.xyz, uInterpolationFactor)), 1.0);
+		#endif
 		vEyeNormal = NormalViewMatrix * vWorldNormal;
 	#endif
 	

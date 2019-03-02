@@ -95,8 +95,6 @@ static const char *shaderBindings = R"(
 		float uClipHeight;
 		float uClipHeightDirection;
 		int uShadowmapFilter;
-
-		float timer; // timer data for material shaders
 	};
 
 	// light buffers
@@ -119,7 +117,10 @@ static const char *shaderBindings = R"(
 		vec4 uFogColor;
 		float uDesaturationFactor;
 		float uInterpolationFactor;
-		float padding0, padding1;
+		float timer; // timer data for material shaders
+		int useVertexData;
+		vec4 uVertexColor;
+		vec4 uVertexNormal;
 	};
 
 	layout(set = 0, binding = 4, std140) uniform GlowingWallsUBO {
@@ -182,6 +183,7 @@ static const char *shaderBindings = R"(
 
 	// #define SUPPORTS_SHADOWMAPS
 	#define VULKAN_COORDINATE_SYSTEM
+	#define HAS_UNIFORM_VERTEX_DATA
 )";
 
 std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername, const char *vert_lump, const char *defines)

@@ -89,8 +89,13 @@ int VkRenderPassManager::GetVertexFormat(int numBindingPoints, int numAttributes
 	VkVertexFormat fmt;
 	fmt.NumBindingPoints = numBindingPoints;
 	fmt.Stride = stride;
+	fmt.UseVertexData = false;
 	for (int j = 0; j < numAttributes; j++)
+	{
+		if (attrs[j].location == VATTR_COLOR)
+			fmt.UseVertexData = true;
 		fmt.Attrs.push_back(attrs[j]);
+	}
 	VertexFormats.push_back(fmt);
 	return (int)VertexFormats.size() - 1;
 }

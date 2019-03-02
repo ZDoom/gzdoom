@@ -27,7 +27,10 @@ struct ColorsUBO
 	FVector4 uFogColor;
 	float uDesaturationFactor;
 	float uInterpolationFactor;
-	float padding0, padding1;
+	float timer;
+	int useVertexData;
+	FVector4 uVertexColor;
+	FVector4 uVertexNormal;
 };
 
 struct GlowingWallsUBO

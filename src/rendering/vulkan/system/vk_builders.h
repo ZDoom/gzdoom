@@ -940,7 +940,7 @@ inline void RenderPassBuilder::addColorAttachment(bool clear, VkFormat format, V
 inline void RenderPassBuilder::addDepthStencilAttachment(bool clear, VkImageLayout layout)
 {
 	VkAttachmentDescription depthAttachment = {};
-	depthAttachment.format = VK_FORMAT_D32_SFLOAT_S8_UINT;
+	depthAttachment.format = VK_FORMAT_D24_UNORM_S8_UINT;
 	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	depthAttachment.loadOp = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
 	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE/*VK_ATTACHMENT_STORE_OP_DONT_CARE*/;

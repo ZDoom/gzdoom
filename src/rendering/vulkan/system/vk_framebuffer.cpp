@@ -186,8 +186,8 @@ void VulkanFrameBuffer::Update()
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = &mUploadSemaphore->semaphore;
 		VkResult result = vkQueueSubmit(device->graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-		if (result != VK_SUCCESS)
-			I_FatalError("Failed to submit command buffer!\n");
+		if (result < VK_SUCCESS)
+			I_FatalError("Failed to submit command buffer! Error %d\n", result);
 
 		// Wait for upload commands to finish, then submit render commands
 		VkSemaphore waitSemaphores[] = { mUploadSemaphore->semaphore, device->imageAvailableSemaphore->semaphore };
@@ -200,8 +200,8 @@ void VulkanFrameBuffer::Update()
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = &device->renderFinishedSemaphore->semaphore;
 		result = vkQueueSubmit(device->graphicsQueue, 1, &submitInfo, device->renderFinishedFence->fence);
-		if (result != VK_SUCCESS)
-			I_FatalError("Failed to submit command buffer!\n");
+		if (result < VK_SUCCESS)
+			I_FatalError("Failed to submit command buffer! Error %d\n", result);
 	}
 	else
 	{
@@ -218,8 +218,8 @@ void VulkanFrameBuffer::Update()
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = &device->renderFinishedSemaphore->semaphore;
 		VkResult result = vkQueueSubmit(device->graphicsQueue, 1, &submitInfo, device->renderFinishedFence->fence);
-		if (result != VK_SUCCESS)
-			I_FatalError("Failed to submit command buffer!\n");
+		if (result < VK_SUCCESS)
+			I_FatalError("Failed to submit command buffer! Error %d\n", result);
 	}
 
 	Flush3D.Unclock();

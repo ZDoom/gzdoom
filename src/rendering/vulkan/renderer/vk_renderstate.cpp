@@ -336,11 +336,13 @@ void VkRenderState::ApplyStreamData()
 		mStreamData.uGlowTopColor = mGlowTop.vec;
 		mStreamData.uGlowBottomPlane = mGlowBottomPlane.vec;
 		mStreamData.uGlowBottomColor = mGlowBottom.vec;
+		mLastGlowEnabled = true;
 	}
-	else
+	else if (mLastGlowEnabled)
 	{
 		mStreamData.uGlowTopColor = { 0.0f, 0.0f, 0.0f, 0.0f };
 		mStreamData.uGlowBottomColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+		mLastGlowEnabled = false;
 	}
 
 	if (mGradientEnabled)
@@ -348,21 +350,25 @@ void VkRenderState::ApplyStreamData()
 		mStreamData.uObjectColor2 = { mObjectColor2.r * normScale, mObjectColor2.g * normScale, mObjectColor2.b * normScale, mObjectColor2.a * normScale };
 		mStreamData.uGradientTopPlane = mGradientTopPlane.vec;
 		mStreamData.uGradientBottomPlane = mGradientBottomPlane.vec;
+		mLastGradientEnabled = true;
 	}
-	else
+	else if (mLastGradientEnabled)
 	{
 		mStreamData.uObjectColor2 = { 0.0f, 0.0f, 0.0f, 0.0f };
+		mLastGradientEnabled = false;
 	}
 
 	if (mSplitEnabled)
 	{
 		mStreamData.uSplitTopPlane = mSplitTopPlane.vec;
 		mStreamData.uSplitBottomPlane = mSplitBottomPlane.vec;
+		mLastSplitEnabled = true;
 	}
-	else
+	else if (mLastSplitEnabled)
 	{
 		mStreamData.uSplitTopPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
 		mStreamData.uSplitBottomPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
+		mLastSplitEnabled = false;
 	}
 
 	mDataIndex++;
@@ -555,5 +561,10 @@ void VkRenderState::EndRenderPass()
 		mLastLightBufferOffset = 0xffffffff;
 		mLastVertexBuffer = nullptr;
 		mLastIndexBuffer = nullptr;
+		mLastGlowEnabled = true;
+		mLastGradientEnabled = true;
+		mLastSplitEnabled = true;
+		mLastModelMatrixEnabled = true;
+		mLastTextureMatrixEnabled = true;
 	}
 }

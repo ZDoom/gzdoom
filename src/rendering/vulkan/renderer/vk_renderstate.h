@@ -85,4 +85,10 @@ private:
 
 	IVertexBuffer *mLastVertexBuffer = nullptr;
 	IIndexBuffer *mLastIndexBuffer = nullptr;
+
+	bool mLastGlowEnabled = true;
+	bool mLastGradientEnabled = true;
+	bool mLastSplitEnabled = true;
+	bool mLastModelMatrixEnabled = true;
+	bool mLastTextureMatrixEnabled = true;
 };

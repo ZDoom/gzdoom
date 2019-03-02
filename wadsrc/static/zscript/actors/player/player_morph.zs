@@ -562,6 +562,7 @@ class MorphedMonster : Actor
 		unmorphed.args[3] = args[3];
 		unmorphed.args[4] = args[4];
 		unmorphed.CopyFriendliness (self, true);
+		unmorphed.bUnmorphed = false;
 		UnmorphedMe = NULL;
 		Substitute(unmorphed);
 		Destroy ();

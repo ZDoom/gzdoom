@@ -37,7 +37,7 @@ void VkRenderPassManager::BeginFrame()
 		ImageBuilder builder;
 		builder.setSize(SCREENWIDTH, SCREENHEIGHT);
 		builder.setFormat(VK_FORMAT_R16G16B16A16_SFLOAT);
-		builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 		SceneColor = builder.create(fb->device);
 
 		builder.setFormat(VK_FORMAT_D24_UNORM_S8_UINT);

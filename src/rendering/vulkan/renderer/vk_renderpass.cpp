@@ -141,8 +141,8 @@ void VkRenderPassManager::CreateDescriptorPool()
 	DescriptorPoolBuilder builder;
 	builder.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 4);
 	builder.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1);
-	builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 512 * 6);
-	builder.setMaxSets(512);
+	builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 5000 * 6);
+	builder.setMaxSets(5000);
 	DescriptorPool = builder.create(GetVulkanFrameBuffer()->device);
 }
 

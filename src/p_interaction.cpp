@@ -261,12 +261,12 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 
 	if (message != NULL && message[0] == '$') 
 	{
-		message = GStrings[message+1];
+		message = GStrings.GetString(message+1, nullptr, self->player->userinfo.GetGender());
 	}
 
 	if (message == NULL)
 	{
-		message = GStrings("OB_DEFAULT");
+		message = GStrings.GetString("OB_DEFAULT", nullptr, self->player->userinfo.GetGender());
 	}
 
 	// [CK] Don't display empty strings

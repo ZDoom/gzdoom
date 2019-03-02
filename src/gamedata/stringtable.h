@@ -47,11 +47,22 @@
 #include "doomdef.h"
 #include "doomtype.h"
 
+struct TableElement
+{
+	FString strings[4];
+};
+
 // This public interface is for Dehacked
-class StringMap : public TMap<FName, FString>
+class StringMap : public TMap<FName, TableElement>
 {
 public:
 	const char *MatchString(const char *string) const;
+};
+
+
+struct StringMacro
+{
+	FString Replacements[4];
 };
 
 
@@ -66,6 +77,7 @@ public:
 	};
 
 	using LangMap = TMap<uint32_t, StringMap>;
+	using StringMacroMap = TMap<FName, StringMacro>;
 
 	void LoadStrings ();
 	void UpdateLanguage();
@@ -76,8 +88,8 @@ public:
 		UpdateLanguage();
 	}
 	
-	const char *GetLanguageString(const char *name, uint32_t langtable) const;
-	const char *GetString(const char *name, uint32_t *langtable) const;
+	const char *GetLanguageString(const char *name, uint32_t langtable, int gender = -1) const;
+	const char *GetString(const char *name, uint32_t *langtable, int gender = -1) const;
 	const char *operator() (const char *name) const;	// Never returns NULL
 	const char *operator[] (const char *name) const
 	{
@@ -87,12 +99,15 @@ public:
 
 private:
 
+	StringMacroMap allMacros;
 	LangMap allStrings;
 	TArray<std::pair<uint32_t, StringMap*>> currentLanguageSet;
 
 	void LoadLanguage (int lumpnum);
 	bool LoadLanguageFromSpreadsheet(int lumpnum);
+	bool readMacros(struct xlsxio_read_struct *reader, const char *sheet);
 	bool readSheetIntoTable(struct xlsxio_read_struct *reader, const char *sheet);
+	void InsertString(int langid, FName label, const FString &string);
 
 	static size_t ProcessEscapes (char *str);
 };

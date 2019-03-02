@@ -63,7 +63,7 @@ void zip_close(zip_t *zipfile)
 
 zip_file_t *zip_fopen(zip_t *zipfile, const char *filename)
 {
-    if (!zipfile) return NULL;
+    if (!zipfile || !filename) return NULL;
     auto lump = zipfile->FindLump(filename);
     if (!lump) return NULL;
     return new FileReader(std::move(lump->NewReader()));

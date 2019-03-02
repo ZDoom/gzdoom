@@ -109,7 +109,8 @@ static const char *shaderBindings = R"(
 		mat4 TextureMatrix;
 	};
 
-	layout(set = 0, binding = 3, std140) uniform ColorsUBO {
+	struct StreamData
+	{
 		vec4 uObjectColor;
 		vec4 uObjectColor2;
 		vec4 uDynLightColor;
@@ -121,9 +122,7 @@ static const char *shaderBindings = R"(
 		int useVertexData;
 		vec4 uVertexColor;
 		vec4 uVertexNormal;
-	};
-
-	layout(set = 0, binding = 4, std140) uniform GlowingWallsUBO {
+		
 		vec4 uGlowTopPlane;
 		vec4 uGlowTopColor;
 		vec4 uGlowBottomPlane;
@@ -134,6 +133,10 @@ static const char *shaderBindings = R"(
 
 		vec4 uSplitTopPlane;
 		vec4 uSplitBottomPlane;
+	};
+
+	layout(set = 0, binding = 3, std140) uniform StreamUBO {
+		StreamData data[256];
 	};
 
 	// textures
@@ -164,6 +167,9 @@ static const char *shaderBindings = R"(
 
 		// Blinn glossiness and specular level
 		vec2 uSpecularMaterial;
+
+		int uDataIndex;
+		int padding1, padding2, padding3;
 	};
 
 	// material types
@@ -180,6 +186,26 @@ static const char *shaderBindings = R"(
 	#else
 	#define brighttexture texture2
 	#endif
+
+	#define uObjectColor data[uDataIndex].uObjectColor
+	#define uObjectColor2 data[uDataIndex].uObjectColor2
+	#define uDynLightColor data[uDataIndex].uDynLightColor
+	#define uAddColor data[uDataIndex].uAddColor
+	#define uFogColor data[uDataIndex].uFogColor
+	#define uDesaturationFactor data[uDataIndex].uDesaturationFactor
+	#define uInterpolationFactor data[uDataIndex].uInterpolationFactor
+	#define timer data[uDataIndex].timer
+	#define useVertexData data[uDataIndex].useVertexData
+	#define uVertexColor data[uDataIndex].uVertexColor
+	#define uVertexNormal data[uDataIndex].uVertexNormal
+	#define uGlowTopPlane data[uDataIndex].uGlowTopPlane
+	#define uGlowTopColor data[uDataIndex].uGlowTopColor
+	#define uGlowBottomPlane data[uDataIndex].uGlowBottomPlane
+	#define uGlowBottomColor data[uDataIndex].uGlowBottomColor
+	#define uGradientTopPlane data[uDataIndex].uGradientTopPlane
+	#define uGradientBottomPlane data[uDataIndex].uGradientBottomPlane
+	#define uSplitTopPlane data[uDataIndex].uSplitTopPlane
+	#define uSplitBottomPlane data[uDataIndex].uSplitBottomPlane
 
 	// #define SUPPORTS_SHADOWMAPS
 	#define VULKAN_COORDINATE_SYSTEM

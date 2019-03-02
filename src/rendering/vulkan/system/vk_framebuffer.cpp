@@ -79,8 +79,7 @@ VulkanFrameBuffer::~VulkanFrameBuffer()
 		cur->Reset();
 
 	delete MatricesUBO;
-	delete ColorsUBO;
-	delete GlowingWallsUBO;
+	delete StreamUBO;
 	delete mVertexData;
 	delete mSkyData;
 	delete mViewpoints;
@@ -103,12 +102,10 @@ void VulkanFrameBuffer::InitializeState()
 	mLights = new FLightBuffer();
 
 	// To do: move this to HW renderer interface maybe?
-	MatricesUBO = (VKDataBuffer*)CreateDataBuffer(1234, false);
-	ColorsUBO = (VKDataBuffer*)CreateDataBuffer(1234, false);
-	GlowingWallsUBO = (VKDataBuffer*)CreateDataBuffer(1234, false);
+	MatricesUBO = (VKDataBuffer*)CreateDataBuffer(-1, false);
+	StreamUBO = (VKDataBuffer*)CreateDataBuffer(-1, false);
 	MatricesUBO->SetData(UniformBufferAlignment<::MatricesUBO>() * 50000, nullptr, false);
-	ColorsUBO->SetData(UniformBufferAlignment<::ColorsUBO>() * 50000, nullptr, false);
-	GlowingWallsUBO->SetData(UniformBufferAlignment<::GlowingWallsUBO>() * 50000, nullptr, false);
+	StreamUBO->SetData(UniformBufferAlignment<::StreamUBO>() * 200, nullptr, false);
 
 	mShaderManager.reset(new VkShaderManager(device));
 	mSamplerManager.reset(new VkSamplerManager(device));

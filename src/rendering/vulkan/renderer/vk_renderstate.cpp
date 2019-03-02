@@ -319,18 +319,18 @@ void VkRenderState::Apply(int dt)
 		}
 	}
 
-	mColors.uDesaturationFactor = mDesaturation * normScale;
-	mColors.uFogColor = { mFogColor.r * normScale, mFogColor.g * normScale, mFogColor.b * normScale, mFogColor.a * normScale };
-	mColors.uAddColor = { mAddColor.r * normScale, mAddColor.g * normScale, mAddColor.b * normScale, mAddColor.a * normScale };
-	mColors.uObjectColor = { mObjectColor.r * normScale, mObjectColor.g * normScale, mObjectColor.b * normScale, mObjectColor.a * normScale };
-	mColors.uDynLightColor = mDynColor.vec;
-	mColors.uInterpolationFactor = mInterpolationFactor;
+	mStreamData.uDesaturationFactor = mDesaturation * normScale;
+	mStreamData.uFogColor = { mFogColor.r * normScale, mFogColor.g * normScale, mFogColor.b * normScale, mFogColor.a * normScale };
+	mStreamData.uAddColor = { mAddColor.r * normScale, mAddColor.g * normScale, mAddColor.b * normScale, mAddColor.a * normScale };
+	mStreamData.uObjectColor = { mObjectColor.r * normScale, mObjectColor.g * normScale, mObjectColor.b * normScale, mObjectColor.a * normScale };
+	mStreamData.uDynLightColor = mDynColor.vec;
+	mStreamData.uInterpolationFactor = mInterpolationFactor;
 
-	mColors.useVertexData = passManager->VertexFormats[static_cast<VKVertexBuffer*>(mVertexBuffer)->VertexFormat].UseVertexData;
-	mColors.uVertexColor = mColor.vec;
-	mColors.uVertexNormal = mNormal.vec;
+	mStreamData.useVertexData = passManager->VertexFormats[static_cast<VKVertexBuffer*>(mVertexBuffer)->VertexFormat].UseVertexData;
+	mStreamData.uVertexColor = mColor.vec;
+	mStreamData.uVertexNormal = mNormal.vec;
 
-	mColors.timer = 0.0f; // static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mShaderTimer / 1000.);
+	mStreamData.timer = 0.0f; // static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mShaderTimer / 1000.);
 
 	int tempTM = TM_NORMAL;
 	if (mMaterial.mMaterial && mMaterial.mMaterial->tex->isHardwareCanvas())
@@ -352,37 +352,37 @@ void VkRenderState::Apply(int dt)
 
 	if (mGlowEnabled)
 	{
-		mGlowingWalls.uGlowTopPlane = mGlowTopPlane.vec;
-		mGlowingWalls.uGlowTopColor = mGlowTop.vec;
-		mGlowingWalls.uGlowBottomPlane = mGlowBottomPlane.vec;
-		mGlowingWalls.uGlowBottomColor = mGlowBottom.vec;
+		mStreamData.uGlowTopPlane = mGlowTopPlane.vec;
+		mStreamData.uGlowTopColor = mGlowTop.vec;
+		mStreamData.uGlowBottomPlane = mGlowBottomPlane.vec;
+		mStreamData.uGlowBottomColor = mGlowBottom.vec;
 	}
 	else
 	{
-		mGlowingWalls.uGlowTopColor = { 0.0f, 0.0f, 0.0f, 0.0f };
-		mGlowingWalls.uGlowBottomColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+		mStreamData.uGlowTopColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+		mStreamData.uGlowBottomColor = { 0.0f, 0.0f, 0.0f, 0.0f };
 	}
 
 	if (mGradientEnabled)
 	{
-		mColors.uObjectColor2 = { mObjectColor2.r * normScale, mObjectColor2.g * normScale, mObjectColor2.b * normScale, mObjectColor2.a * normScale };
-		mGlowingWalls.uGradientTopPlane = mGradientTopPlane.vec;
-		mGlowingWalls.uGradientBottomPlane = mGradientBottomPlane.vec;
+		mStreamData.uObjectColor2 = { mObjectColor2.r * normScale, mObjectColor2.g * normScale, mObjectColor2.b * normScale, mObjectColor2.a * normScale };
+		mStreamData.uGradientTopPlane = mGradientTopPlane.vec;
+		mStreamData.uGradientBottomPlane = mGradientBottomPlane.vec;
 	}
 	else
 	{
-		mColors.uObjectColor2 = { 0.0f, 0.0f, 0.0f, 0.0f };
+		mStreamData.uObjectColor2 = { 0.0f, 0.0f, 0.0f, 0.0f };
 	}
 
 	if (mSplitEnabled)
 	{
-		mGlowingWalls.uSplitTopPlane = mSplitTopPlane.vec;
-		mGlowingWalls.uSplitBottomPlane = mSplitBottomPlane.vec;
+		mStreamData.uSplitTopPlane = mSplitTopPlane.vec;
+		mStreamData.uSplitBottomPlane = mSplitBottomPlane.vec;
 	}
 	else
 	{
-		mGlowingWalls.uSplitTopPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
-		mGlowingWalls.uSplitBottomPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
+		mStreamData.uSplitTopPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
+		mStreamData.uSplitBottomPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
 	}
 
 	if (mTextureMatrixEnabled)
@@ -408,8 +408,17 @@ void VkRenderState::Apply(int dt)
 	mPushConstants.uLightIndex = screen->mLights->BindUBO(mLightIndex);
 
 	CopyToBuffer(mMatricesOffset, mMatrices, fb->MatricesUBO);
-	CopyToBuffer(mColorsOffset, mColors, fb->ColorsUBO);
-	CopyToBuffer(mGlowingWallsOffset, mGlowingWalls, fb->GlowingWallsUBO);
+
+	mDataIndex++;
+	if (mDataIndex == MAX_STREAM_DATA)
+	{
+		mDataIndex = 0;
+		mStreamDataOffset += sizeof(StreamUBO);
+	}
+	uint8_t *ptr = (uint8_t*)fb->StreamUBO->Memory();
+	memcpy(ptr + mStreamDataOffset + sizeof(StreamData) * mDataIndex, &mStreamData, sizeof(StreamData));
+
+	mPushConstants.uDataIndex = mDataIndex;
 
 	mCommandBuffer->pushConstants(passManager->PipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, (uint32_t)sizeof(PushConstants), &mPushConstants);
 
@@ -452,8 +461,8 @@ void VkRenderState::BindDescriptorSets()
 	auto fb = GetVulkanFrameBuffer();
 	auto passManager = fb->GetRenderPassManager();
 
-	uint32_t offsets[5] = { mViewpointOffset, mLightBufferOffset, mMatricesOffset, mColorsOffset, mGlowingWallsOffset };
-	mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->PipelineLayout.get(), 0, passManager->DynamicSet.get(), 5, offsets);
+	uint32_t offsets[4] = { mViewpointOffset, mLightBufferOffset, mMatricesOffset, mStreamDataOffset };
+	mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->PipelineLayout.get(), 0, passManager->DynamicSet.get(), 4, offsets);
 	mDescriptorsChanged = false;
 }
 
@@ -467,7 +476,7 @@ void VkRenderState::EndRenderPass()
 
 		// To do: move this elsewhere or rename this function to make it clear this can only happen at the end of a frame
 		mMatricesOffset = 0;
-		mColorsOffset = 0;
-		mGlowingWallsOffset = 0;
+		mStreamDataOffset = 0;
+		mDataIndex = -1;
 	}
 }

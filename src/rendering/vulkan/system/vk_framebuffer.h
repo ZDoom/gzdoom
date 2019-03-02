@@ -31,8 +31,7 @@ public:
 	VKDataBuffer *ViewpointUBO = nullptr;
 	VKDataBuffer *LightBufferSSO = nullptr;
 	VKDataBuffer *MatricesUBO = nullptr;
-	VKDataBuffer *ColorsUBO = nullptr;
-	VKDataBuffer *GlowingWallsUBO = nullptr;
+	VKDataBuffer *StreamUBO = nullptr;
 
 	std::vector<std::unique_ptr<VulkanBuffer>> mFrameDeleteList;
 

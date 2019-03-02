@@ -19,7 +19,7 @@ struct MatricesUBO
 	VSMatrix TextureMatrix;
 };
 
-struct ColorsUBO
+struct StreamData
 {
 	FVector4 uObjectColor;
 	FVector4 uObjectColor2;
@@ -32,10 +32,7 @@ struct ColorsUBO
 	int useVertexData;
 	FVector4 uVertexColor;
 	FVector4 uVertexNormal;
-};
 
-struct GlowingWallsUBO
-{
 	FVector4 uGlowTopPlane;
 	FVector4 uGlowTopColor;
 	FVector4 uGlowBottomPlane;
@@ -46,6 +43,13 @@ struct GlowingWallsUBO
 
 	FVector4 uSplitTopPlane;
 	FVector4 uSplitBottomPlane;
+};
+
+#define MAX_STREAM_DATA 256
+
+struct StreamUBO
+{
+	StreamData data[MAX_STREAM_DATA];
 };
 
 struct PushConstants
@@ -66,6 +70,9 @@ struct PushConstants
 
 	// Blinn glossiness and specular level
 	FVector2 uSpecularMaterial;
+
+	int uDataIndex;
+	int padding1, padding2, padding3;
 };
 
 class VkShaderProgram

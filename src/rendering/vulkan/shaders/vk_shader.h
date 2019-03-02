@@ -9,7 +9,8 @@
 class VulkanDevice;
 class VulkanShader;
 
-template<typename T> int UniformBufferAlignment() { return (sizeof(T) + 127) / 128 * 128; }
+// To do: we need to read this from the card - or maybe merge ColorsUBO with GlowingWallsUBO since we have to use 256 bytes anyway
+template<typename T> int UniformBufferAlignment() { return (sizeof(T) + 255) / 256 * 256; }
 
 struct MatricesUBO
 {

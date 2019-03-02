@@ -33,8 +33,8 @@ void VkRenderState::Draw(int dt, int index, int count, bool apply)
 {
 	if (apply)
 		Apply(dt);
-	else if (mDescriptorsChanged)
-		BindDescriptorSets();
+	else if (mDynamicSetChanged)
+		ApplyDynamicSet();
 
 	drawcalls.Clock();
 	mCommandBuffer->draw(count, 1, index, 0);
@@ -45,8 +45,8 @@ void VkRenderState::DrawIndexed(int dt, int index, int count, bool apply)
 {
 	if (apply)
 		Apply(dt);
-	else if (mDescriptorsChanged)
-		BindDescriptorSets();
+	else if (mDynamicSetChanged)
+		ApplyDynamicSet();
 
 	drawcalls.Clock();
 	mCommandBuffer->drawIndexed(count, 1, index, 0, 0);
@@ -192,17 +192,20 @@ void VkRenderState::EnableLineSmooth(bool on)
 {
 }
 
-template<typename T>
-static void CopyToBuffer(uint32_t &offset, const T &data, VKDataBuffer *buffer)
+void VkRenderState::Apply(int dt)
 {
-	if (offset + (UniformBufferAlignment<T>() << 1) < buffer->Size())
-	{
-		offset += UniformBufferAlignment<T>();
-		memcpy(static_cast<uint8_t*>(buffer->Memory()) + offset, &data, sizeof(T));
-	}
+	ApplyRenderPass(dt);
+	ApplyScissor();
+	ApplyViewport();
+	ApplyStreamData();
+	ApplyMatrices();
+	ApplyPushConstants();
+	ApplyVertexBuffers();
+	ApplyDynamicSet();
+	ApplyMaterial();
 }
 
-void VkRenderState::Apply(int dt)
+void VkRenderState::ApplyRenderPass(int dt)
 {
 	auto fb = GetVulkanFrameBuffer();
 	auto passManager = fb->GetRenderPassManager();
@@ -254,7 +257,10 @@ void VkRenderState::Apply(int dt)
 		mCommandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->Pipeline.get());
 		mRenderPassSetup = passSetup;
 	}
+}
 
+void VkRenderState::ApplyScissor()
+{
 	if (mScissorChanged)
 	{
 		VkRect2D scissor;
@@ -275,7 +281,10 @@ void VkRenderState::Apply(int dt)
 		mCommandBuffer->setScissor(0, 1, &scissor);
 		mScissorChanged = false;
 	}
+}
 
+void VkRenderState::ApplyViewport()
+{
 	if (mViewportChanged)
 	{
 		VkViewport viewport;
@@ -298,26 +307,14 @@ void VkRenderState::Apply(int dt)
 		mCommandBuffer->setViewport(0, 1, &viewport);
 		mViewportChanged = false;
 	}
+}
+
+void VkRenderState::ApplyStreamData()
+{
+	auto fb = GetVulkanFrameBuffer();
+	auto passManager = fb->GetRenderPassManager();
 
 	const float normScale = 1.0f / 255.0f;
-
-	int fogset = 0;
-
-	if (mFogEnabled)
-	{
-		if (mFogEnabled == 2)
-		{
-			fogset = -3;	// 2D rendering with 'foggy' overlay.
-		}
-		else if ((mFogColor & 0xffffff) == 0)
-		{
-			fogset = gl_fogmode;
-		}
-		else
-		{
-			fogset = -gl_fogmode;
-		}
-	}
 
 	mStreamData.uDesaturationFactor = mDesaturation * normScale;
 	mStreamData.uFogColor = { mFogColor.r * normScale, mFogColor.g * normScale, mFogColor.b * normScale, mFogColor.a * normScale };
@@ -331,24 +328,6 @@ void VkRenderState::Apply(int dt)
 	mStreamData.uVertexNormal = mNormal.vec;
 
 	mStreamData.timer = 0.0f; // static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mShaderTimer / 1000.);
-
-	int tempTM = TM_NORMAL;
-	if (mMaterial.mMaterial && mMaterial.mMaterial->tex->isHardwareCanvas())
-		tempTM = TM_OPAQUE;
-
-	mPushConstants.uFogEnabled = fogset;
-	mPushConstants.uTextureMode = mTextureMode == TM_NORMAL && tempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode;
-	mPushConstants.uLightDist = mLightParms[0];
-	mPushConstants.uLightFactor = mLightParms[1];
-	mPushConstants.uFogDensity = mLightParms[2];
-	mPushConstants.uLightLevel = mLightParms[3];
-	mPushConstants.uAlphaThreshold = mAlphaThreshold;
-	mPushConstants.uClipSplit = { mClipSplit[0], mClipSplit[1] };
-
-	/*if (mMaterial.mMaterial)
-	{
-		mPushConstants.uSpecularMaterial = { mMaterial.mMaterial->tex->Glossiness, mMaterial.mMaterial->tex->SpecularLevel };
-	}*/
 
 	if (mGlowEnabled)
 	{
@@ -385,6 +364,71 @@ void VkRenderState::Apply(int dt)
 		mStreamData.uSplitBottomPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
 	}
 
+	mDataIndex++;
+	if (mDataIndex == MAX_STREAM_DATA)
+	{
+		mDataIndex = 0;
+		mStreamDataOffset += sizeof(StreamUBO);
+	}
+	uint8_t *ptr = (uint8_t*)fb->StreamUBO->Memory();
+	memcpy(ptr + mStreamDataOffset + sizeof(StreamData) * mDataIndex, &mStreamData, sizeof(StreamData));
+}
+
+void VkRenderState::ApplyPushConstants()
+{
+	int fogset = 0;
+	if (mFogEnabled)
+	{
+		if (mFogEnabled == 2)
+		{
+			fogset = -3;	// 2D rendering with 'foggy' overlay.
+		}
+		else if ((mFogColor & 0xffffff) == 0)
+		{
+			fogset = gl_fogmode;
+		}
+		else
+		{
+			fogset = -gl_fogmode;
+		}
+	}
+
+	int tempTM = TM_NORMAL;
+	if (mMaterial.mMaterial && mMaterial.mMaterial->tex->isHardwareCanvas())
+		tempTM = TM_OPAQUE;
+
+	mPushConstants.uFogEnabled = fogset;
+	mPushConstants.uTextureMode = mTextureMode == TM_NORMAL && tempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode;
+	mPushConstants.uLightDist = mLightParms[0];
+	mPushConstants.uLightFactor = mLightParms[1];
+	mPushConstants.uFogDensity = mLightParms[2];
+	mPushConstants.uLightLevel = mLightParms[3];
+	mPushConstants.uAlphaThreshold = mAlphaThreshold;
+	mPushConstants.uClipSplit = { mClipSplit[0], mClipSplit[1] };
+
+	//if (mMaterial.mMaterial)
+	//	mPushConstants.uSpecularMaterial = { mMaterial.mMaterial->tex->Glossiness, mMaterial.mMaterial->tex->SpecularLevel };
+
+	mPushConstants.uLightIndex = screen->mLights->BindUBO(mLightIndex);
+	mPushConstants.uDataIndex = mDataIndex;
+
+	auto fb = GetVulkanFrameBuffer();
+	auto passManager = fb->GetRenderPassManager();
+	mCommandBuffer->pushConstants(passManager->PipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, (uint32_t)sizeof(PushConstants), &mPushConstants);
+}
+
+template<typename T>
+static void CopyToBuffer(uint32_t &offset, const T &data, VKDataBuffer *buffer)
+{
+	if (offset + (UniformBufferAlignment<T>() << 1) < buffer->Size())
+	{
+		offset += UniformBufferAlignment<T>();
+		memcpy(static_cast<uint8_t*>(buffer->Memory()) + offset, &data, sizeof(T));
+	}
+}
+
+void VkRenderState::ApplyMatrices()
+{
 	if (mTextureMatrixEnabled)
 	{
 		mMatrices.TextureMatrix = mTextureMatrix;
@@ -405,38 +449,31 @@ void VkRenderState::Apply(int dt)
 		mMatrices.NormalModelMatrix.loadIdentity();
 	}
 
-	mPushConstants.uLightIndex = screen->mLights->BindUBO(mLightIndex);
-
+	auto fb = GetVulkanFrameBuffer();
 	CopyToBuffer(mMatricesOffset, mMatrices, fb->MatricesUBO);
+}
 
-	mDataIndex++;
-	if (mDataIndex == MAX_STREAM_DATA)
-	{
-		mDataIndex = 0;
-		mStreamDataOffset += sizeof(StreamUBO);
-	}
-	uint8_t *ptr = (uint8_t*)fb->StreamUBO->Memory();
-	memcpy(ptr + mStreamDataOffset + sizeof(StreamData) * mDataIndex, &mStreamData, sizeof(StreamData));
-
-	mPushConstants.uDataIndex = mDataIndex;
-
-	mCommandBuffer->pushConstants(passManager->PipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, (uint32_t)sizeof(PushConstants), &mPushConstants);
-
+void VkRenderState::ApplyVertexBuffers()
+{
 	VkBuffer vertexBuffers[] = { static_cast<VKVertexBuffer*>(mVertexBuffer)->mBuffer->buffer };
 	VkDeviceSize offsets[] = { 0 };
 	mCommandBuffer->bindVertexBuffers(0, 1, vertexBuffers, offsets);
 
 	if (mIndexBuffer)
 		mCommandBuffer->bindIndexBuffer(static_cast<VKIndexBuffer*>(mIndexBuffer)->mBuffer->buffer, 0, VK_INDEX_TYPE_UINT32);
+}
 
-	BindDescriptorSets();
-
-	//if (mMaterial.mChanged)
-	if (mMaterial.mMaterial)
+void VkRenderState::ApplyMaterial()
+{
+	if (mMaterial.mChanged && mMaterial.mMaterial)
 	{
 		auto base = static_cast<VkHardwareTexture*>(mMaterial.mMaterial->GetLayer(0, mMaterial.mTranslation));
 		if (base)
+		{
+			auto fb = GetVulkanFrameBuffer();
+			auto passManager = fb->GetRenderPassManager();
 			mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->PipelineLayout.get(), 1, base->GetDescriptorSet(mMaterial));
+		}
 
 		mMaterial.mChanged = false;
 	}
@@ -453,17 +490,23 @@ void VkRenderState::Bind(int bindingpoint, uint32_t offset)
 		mLightBufferOffset = offset;
 	}
 
-	mDescriptorsChanged = true;
+	mDynamicSetChanged = true;
 }
 
-void VkRenderState::BindDescriptorSets()
+void VkRenderState::ApplyDynamicSet()
 {
-	auto fb = GetVulkanFrameBuffer();
-	auto passManager = fb->GetRenderPassManager();
+	if (mViewpointOffset != mLastViewpointOffset || mLightBufferOffset != mLastLightBufferOffset)
+	{
+		auto fb = GetVulkanFrameBuffer();
+		auto passManager = fb->GetRenderPassManager();
 
-	uint32_t offsets[4] = { mViewpointOffset, mLightBufferOffset, mMatricesOffset, mStreamDataOffset };
-	mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->PipelineLayout.get(), 0, passManager->DynamicSet.get(), 4, offsets);
-	mDescriptorsChanged = false;
+		uint32_t offsets[4] = { mViewpointOffset, mLightBufferOffset, mMatricesOffset, mStreamDataOffset };
+		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->PipelineLayout.get(), 0, passManager->DynamicSet.get(), 4, offsets);
+
+		mLastViewpointOffset = mViewpointOffset;
+		mLastLightBufferOffset = mLightBufferOffset;
+	}
+	mDynamicSetChanged = false;
 }
 
 void VkRenderState::EndRenderPass()
@@ -478,5 +521,7 @@ void VkRenderState::EndRenderPass()
 		mMatricesOffset = 0;
 		mStreamDataOffset = 0;
 		mDataIndex = -1;
+		mLastViewpointOffset = 0xffffffff;
+		mLastLightBufferOffset = 0xffffffff;
 	}
 }

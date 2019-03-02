@@ -198,7 +198,6 @@ void VulkanDevice::createInstance()
 	createInfo.enabledLayerCount = (uint32_t)validationLayers.size();
 	createInfo.ppEnabledLayerNames = validationLayers.data();
 	createInfo.ppEnabledExtensionNames = enabledExtensions.data();
-	createInfo.enabledLayerCount = 0;
 
 	result = vkCreateInstance(&createInfo, nullptr, &instance);
 	if (result != VK_SUCCESS)

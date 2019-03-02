@@ -18,6 +18,7 @@
 
 VkRenderState::VkRenderState()
 {
+	mIdentityMatrix.loadIdentity();
 	Reset();
 }
 
@@ -427,30 +428,52 @@ static void CopyToBuffer(uint32_t &offset, const T &data, VKDataBuffer *buffer)
 	}
 }
 
+template<typename T>
+static void BufferedSet(bool &modified, T &dst, const T &src)
+{
+	if (dst == src)
+		return;
+	dst = src;
+	modified = true;
+}
+
+static void BufferedSet(bool &modified, VSMatrix &dst, const VSMatrix &src)
+{
+	if (memcmp(dst.get(), src.get(), sizeof(FLOATTYPE) * 16) == 0)
+		return;
+	dst = src;
+	modified = true;
+}
+
 void VkRenderState::ApplyMatrices()
 {
+	bool modified = (mMatricesOffset == 0); // always modified first call
 	if (mTextureMatrixEnabled)
 	{
-		mMatrices.TextureMatrix = mTextureMatrix;
+		BufferedSet(modified, mMatrices.TextureMatrix, mTextureMatrix);
 	}
 	else
 	{
-		mMatrices.TextureMatrix.loadIdentity();
+		BufferedSet(modified, mMatrices.TextureMatrix, mIdentityMatrix);
 	}
 
 	if (mModelMatrixEnabled)
 	{
-		mMatrices.ModelMatrix = mModelMatrix;
-		mMatrices.NormalModelMatrix.computeNormalMatrix(mModelMatrix);
+		BufferedSet(modified, mMatrices.ModelMatrix, mModelMatrix);
+		if (modified)
+			mMatrices.NormalModelMatrix.computeNormalMatrix(mModelMatrix);
 	}
 	else
 	{
-		mMatrices.ModelMatrix.loadIdentity();
-		mMatrices.NormalModelMatrix.loadIdentity();
+		BufferedSet(modified, mMatrices.ModelMatrix, mIdentityMatrix);
+		BufferedSet(modified, mMatrices.NormalModelMatrix, mIdentityMatrix);
 	}
 
-	auto fb = GetVulkanFrameBuffer();
-	CopyToBuffer(mMatricesOffset, mMatrices, fb->MatricesUBO);
+	if (modified)
+	{
+		auto fb = GetVulkanFrameBuffer();
+		CopyToBuffer(mMatricesOffset, mMatrices, fb->MatricesUBO);
+	}
 }
 
 void VkRenderState::ApplyVertexBuffers()

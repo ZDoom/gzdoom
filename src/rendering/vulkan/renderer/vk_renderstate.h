@@ -80,4 +80,6 @@ private:
 	uint32_t mMatricesOffset = 0;
 	uint32_t mDataIndex = -1;
 	uint32_t mStreamDataOffset = 0;
+
+	VSMatrix mIdentityMatrix;
 };

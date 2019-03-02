@@ -378,8 +378,6 @@ OptionMenu "OptionsMenu" protected
 	Submenu "$OPTMNU_DISPLAY",			"VideoOptions"
 	Submenu "$OPTMNU_VIDEO",			"VideoModeMenu"
 	StaticText " "
-	Option "$OPTMNU_LANGUAGE", "language", "LanguageOptions"
-	StaticText " "
 	SafeCommand "$OPTMNU_DEFAULTS",	"reset2defaults"
 	SafeCommand	"$OPTMNU_RESETTOSAVED",	"reset2saved"
 	Command "$OPTMNU_CONSOLE",			"menuconsole"
@@ -453,25 +451,12 @@ OptionMenu "CustomizeControls" protected
 {
 	Title "$CNTRLMNU_TITLE"
 
-	StaticText ""
 	Submenu    "$CNTRLMNU_ACTION"      , "ActionControlsMenu"
-
-	StaticText ""
 	Submenu    "$CNTRLMNU_CHAT"        , "ChatControlsMenu"
-
-	StaticText ""
 	Submenu    "$CNTRLMNU_WEAPONS"     , "WeaponsControlMenu"
-
-	StaticText ""
 	Submenu    "$CNTRLMNU_INVENTORY"   , "InventoryControlsMenu"
-
-	StaticText ""
 	Submenu    "$CNTRLMNU_OTHER"       , "OtherControlsMenu"
-
-	StaticText ""
 	Submenu    "$CNTRLMNU_POPUPS"      , "StrifeControlsMenu"
-
-	StaticText ""
 	Submenu    "$MAPCNTRLMNU_CONTROLS" , "MapControlsMenu"
 }
 
@@ -1149,6 +1134,8 @@ OptionMenu "MiscOptions" protected
 	Option "$MISCMNU_CACHENODES",				"gl_cachenodes", "OnOff"
 	Slider "$MISCMNU_CACHETIME",				"gl_cachetime", 0.0, 2.0, 0.1
 	SafeCommand "$MISCMNU_CLEARNODECACHE",		"clearnodecache"
+	StaticText " "
+	Option "$OPTMNU_LANGUAGE", "language", "LanguageOptions"
 }
 
 //-------------------------------------------------------------------------------------------

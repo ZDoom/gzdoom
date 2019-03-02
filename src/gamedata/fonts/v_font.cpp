@@ -859,6 +859,12 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 	FFont *font = FFont::FindFont (name);
 	if (font == nullptr)
 	{
+		if (!stricmp(name, "BIGUPPER"))
+		{
+			font = FFont::FindFont("BIGFONT");
+			if (font) return font;
+		}
+
 		int lump = -1;
 		int folderfile = -1;
 		
@@ -1446,6 +1452,10 @@ void V_InitFonts()
 			SmallFont2 = new FFont("SmallFont2", "STBFN%.3d", "defsmallfont2", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
 		}
 	}
+
+	//This must be read before BigFont so that it can be properly substituted.
+	BigUpper = V_GetFont("BigUpper");
+
 	if (!(BigFont = V_GetFont("BigFont")))
 	{
 		if (gameinfo.gametype & GAME_Raven)
@@ -1453,7 +1463,15 @@ void V_InitFonts()
 			BigFont = new FFont("BigFont", "FONTB%02u", "defbigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
 		}
 	}
-	if (!(BigUpper = V_GetFont("BigUpper")))
+
+	// let PWAD BIGFONTs override the stock BIGUPPER font. (This check needs to be made smarter.)
+	if (BigUpper && BigFont->Type != FFont::Folder && BigUpper->Type == FFont::Folder)
+	{
+		delete BigUpper;
+		BigUpper = BigFont;
+	}
+
+	if (BigUpper == nullptr)
 	{
 		BigUpper = BigFont;
 	}

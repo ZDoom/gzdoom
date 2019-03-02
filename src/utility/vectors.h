@@ -681,7 +681,7 @@ struct TVector4
 	// Test for equality
 	bool operator== (const TVector4 &other) const
 	{
-		return X == other.X && Y == other.Y && Z == other.Z && W = other.W;
+		return X == other.X && Y == other.Y && Z == other.Z && W == other.W;
 	}
 
 	// Test for inequality

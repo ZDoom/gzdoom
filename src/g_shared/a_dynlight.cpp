@@ -539,7 +539,7 @@ void FDynamicLight::CollectWithinRadius(const DVector3 &opos, FSection *section,
 	bool hitonesidedback = false;
 	for (unsigned i = 0; i < collected_ss.Size(); i++)
 	{
-		auto &pos = collected_ss[i].pos;
+		auto pos = collected_ss[i].pos;
 		section = collected_ss[i].sect;
 
 		touching_sector = AddLightNode(&section->lighthead, section, this, touching_sector);

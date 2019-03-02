@@ -278,7 +278,7 @@ void EventManager::WorldLoaded()
 {
 	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
 	{
-		if (savegamerestore) continue; // don't execute WorldLoaded for handlers loaded from the savegame.
+		if (!handler->IsStatic() && savegamerestore) continue; // don't execute WorldLoaded for handlers loaded from the savegame.
 		handler->WorldLoaded();
 	}
 }

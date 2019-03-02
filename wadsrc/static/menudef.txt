@@ -378,8 +378,6 @@ OptionMenu "OptionsMenu" protected
 	Submenu "$OPTMNU_DISPLAY",			"VideoOptions"
 	Submenu "$OPTMNU_VIDEO",			"VideoModeMenu"
 	StaticText " "
-	Option "$OPTMNU_LANGUAGE", "language", "LanguageOptions"
-	StaticText " "
 	SafeCommand "$OPTMNU_DEFAULTS",	"reset2defaults"
 	SafeCommand	"$OPTMNU_RESETTOSAVED",	"reset2saved"
 	Command "$OPTMNU_CONSOLE",			"menuconsole"
@@ -419,12 +417,12 @@ ListMenu "PlayerMenu"
 	IfGame(Doom, Heretic, Strife, Chex)
 	{
 		MouseWindow 0, 220
-		PlayerDisplay 220, 80, "20 00 00", "80 00 40", 1, "PlayerDisplay"
+		PlayerDisplay 220, 48, "20 00 00", "80 00 40", 1, "PlayerDisplay"
 	}
 	IfGame(Hexen)
 	{
 		MouseWindow 0, 220
-		PlayerDisplay 220, 80, "00 07 00", "40 53 40", 1, "PlayerDisplay"
+		PlayerDisplay 220, 48, "00 07 00", "40 53 40", 1, "PlayerDisplay"
 	}
 
 	ValueText "$PLYRMNU_TEAM", "Team"
@@ -453,25 +451,12 @@ OptionMenu "CustomizeControls" protected
 {
 	Title "$CNTRLMNU_TITLE"
 
-	StaticText ""
 	Submenu    "$CNTRLMNU_ACTION"      , "ActionControlsMenu"
-
-	StaticText ""
 	Submenu    "$CNTRLMNU_CHAT"        , "ChatControlsMenu"
-
-	StaticText ""
 	Submenu    "$CNTRLMNU_WEAPONS"     , "WeaponsControlMenu"
-
-	StaticText ""
 	Submenu    "$CNTRLMNU_INVENTORY"   , "InventoryControlsMenu"
-
-	StaticText ""
 	Submenu    "$CNTRLMNU_OTHER"       , "OtherControlsMenu"
-
-	StaticText ""
 	Submenu    "$CNTRLMNU_POPUPS"      , "StrifeControlsMenu"
-
-	StaticText ""
 	Submenu    "$MAPCNTRLMNU_CONTROLS" , "MapControlsMenu"
 }
 
@@ -912,9 +897,6 @@ OptionMenu "VideoOptions" protected
 	Option "$DSPLYMNU_NOMONSTERINTERPOLATION",	"nomonsterinterpolation", "NoYes"
 	Slider "$DSPLYMNU_MENUDIM",					"dimamount", 0, 1.0, 0.05, 2
 	ColorPicker "$DSPLYMNU_DIMCOLOR",			"dimcolor"
-	Slider "$DSPLYMNU_MOVEBOB",			"movebob", 0, 1.0, 0.05, 2
-	Slider "$DSPLYMNU_STILLBOB",		"stillbob", 0, 1.0, 0.05, 2
-	Slider "$DSPLYMNU_BOBSPEED",				"wbobspeed", 0, 2.0, 0.1
 	IfOption(Windows)
 	{
 		StaticText " "
@@ -1005,6 +987,11 @@ OptionMenu "HUDOptions" protected
 	Option "$HUDMNU_POISONFLASHES",			"pf_poison", "ZDoomHexen"
 	Option "$HUDMNU_ICEFLASHES",			"pf_ice", "ZDoomHexen"
 	Option "$HUDMNU_HAZARDFLASHES",			"pf_hazard", "ZDoomStrife"
+	StaticText " "
+	Slider "$DSPLYMNU_MOVEBOB",				"movebob", 0, 1.0, 0.05, 2
+	Slider "$DSPLYMNU_STILLBOB",			"stillbob", 0, 1.0, 0.05, 2
+	Slider "$DSPLYMNU_BOBSPEED",			"wbobspeed", 0, 2.0, 0.1
+	
 }
 
 OptionMenu "ScalingOptions" protected
@@ -1149,6 +1136,8 @@ OptionMenu "MiscOptions" protected
 	Option "$MISCMNU_CACHENODES",				"gl_cachenodes", "OnOff"
 	Slider "$MISCMNU_CACHETIME",				"gl_cachetime", 0.0, 2.0, 0.1
 	SafeCommand "$MISCMNU_CLEARNODECACHE",		"clearnodecache"
+	StaticText " "
+	Option "$OPTMNU_LANGUAGE", "language", "LanguageOptions"
 }
 
 //-------------------------------------------------------------------------------------------

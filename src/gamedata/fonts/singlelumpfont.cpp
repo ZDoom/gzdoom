@@ -131,6 +131,7 @@ FSingleLumpFont::FSingleLumpFont (const char *name, int lump) : FFont(lump)
 	if (data[0] == 0xE1 && data[1] == 0xE6 && data[2] == 0xD5 && data[3] == 0x1A)
 	{
 		LoadBMF(lump, data);
+		Type = BMF;
 	}
 	else if (data[0] != 'F' || data[1] != 'O' || data[2] != 'N' ||
 		(data[3] != '1' && data[3] != '2'))
@@ -143,10 +144,12 @@ FSingleLumpFont::FSingleLumpFont (const char *name, int lump) : FFont(lump)
 		{
 		case '1':
 			LoadFON1 (lump, data);
+			Type = Fon1;
 			break;
 
 		case '2':
 			LoadFON2 (lump, data);
+			Type = Fon2;
 			break;
 		}
 	}

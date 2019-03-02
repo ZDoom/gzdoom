@@ -8869,7 +8869,7 @@ scriptwait:
 
 		case PCD_LOCALAMBIENTSOUND:
 			lookup = Level->Behaviors.LookupString (STACK(2));
-			if (lookup != NULL && activator->CheckLocalView())
+			if (lookup != NULL && activator && activator->CheckLocalView())
 			{
 				S_Sound (CHAN_AUTO,
 						 lookup,

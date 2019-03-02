@@ -82,4 +82,7 @@ private:
 	uint32_t mStreamDataOffset = 0;
 
 	VSMatrix mIdentityMatrix;
+
+	IVertexBuffer *mLastVertexBuffer = nullptr;
+	IIndexBuffer *mLastIndexBuffer = nullptr;
 };

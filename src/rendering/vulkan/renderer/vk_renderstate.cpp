@@ -478,12 +478,19 @@ void VkRenderState::ApplyMatrices()
 
 void VkRenderState::ApplyVertexBuffers()
 {
-	VkBuffer vertexBuffers[] = { static_cast<VKVertexBuffer*>(mVertexBuffer)->mBuffer->buffer };
-	VkDeviceSize offsets[] = { 0 };
-	mCommandBuffer->bindVertexBuffers(0, 1, vertexBuffers, offsets);
+	if (mVertexBuffer != mLastVertexBuffer && mVertexBuffer)
+	{
+		VkBuffer vertexBuffers[] = { static_cast<VKVertexBuffer*>(mVertexBuffer)->mBuffer->buffer };
+		VkDeviceSize offsets[] = { 0 };
+		mCommandBuffer->bindVertexBuffers(0, 1, vertexBuffers, offsets);
+		mLastVertexBuffer = mVertexBuffer;
+	}
 
-	if (mIndexBuffer)
+	if (mIndexBuffer != mLastIndexBuffer && mIndexBuffer)
+	{
 		mCommandBuffer->bindIndexBuffer(static_cast<VKIndexBuffer*>(mIndexBuffer)->mBuffer->buffer, 0, VK_INDEX_TYPE_UINT32);
+		mLastIndexBuffer = mIndexBuffer;
+	}
 }
 
 void VkRenderState::ApplyMaterial()
@@ -502,20 +509,6 @@ void VkRenderState::ApplyMaterial()
 	}
 }
 
-void VkRenderState::Bind(int bindingpoint, uint32_t offset)
-{
-	if (bindingpoint == VIEWPOINT_BINDINGPOINT)
-	{
-		mViewpointOffset = offset;
-	}
-	else if (bindingpoint == LIGHTBUF_BINDINGPOINT)
-	{
-		mLightBufferOffset = offset;
-	}
-
-	mDynamicSetChanged = true;
-}
-
 void VkRenderState::ApplyDynamicSet()
 {
 	if (mViewpointOffset != mLastViewpointOffset || mLightBufferOffset != mLastLightBufferOffset)
@@ -532,6 +525,20 @@ void VkRenderState::ApplyDynamicSet()
 	mDynamicSetChanged = false;
 }
 
+void VkRenderState::Bind(int bindingpoint, uint32_t offset)
+{
+	if (bindingpoint == VIEWPOINT_BINDINGPOINT)
+	{
+		mViewpointOffset = offset;
+	}
+	else if (bindingpoint == LIGHTBUF_BINDINGPOINT)
+	{
+		mLightBufferOffset = offset;
+	}
+
+	mDynamicSetChanged = true;
+}
+
 void VkRenderState::EndRenderPass()
 {
 	if (mCommandBuffer)
@@ -546,5 +553,7 @@ void VkRenderState::EndRenderPass()
 		mDataIndex = -1;
 		mLastViewpointOffset = 0xffffffff;
 		mLastLightBufferOffset = 0xffffffff;
+		mLastVertexBuffer = nullptr;
+		mLastIndexBuffer = nullptr;
 	}
 }

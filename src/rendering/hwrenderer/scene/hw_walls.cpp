@@ -489,7 +489,6 @@ void GLWall::PutPortal(HWDrawInfo *di, int ptype, int plane)
 {
 	auto pstate = screen->mPortalState;
 	HWPortal * portal = nullptr;
-	return;
 
 	MakeVertices(di, false);
 	switch (ptype)

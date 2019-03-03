@@ -44,6 +44,8 @@ public:
 	std::vector<VkLayerProperties> availableLayers;
 	std::vector<VkExtensionProperties> extensions;
 	std::vector<VkExtensionProperties> availableDeviceExtensions;
+	VkPhysicalDeviceProperties deviceProperties;
+	VkPhysicalDeviceFeatures deviceFeatures;
 
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 

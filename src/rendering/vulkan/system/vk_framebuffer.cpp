@@ -28,6 +28,7 @@
 #include "r_videoscale.h"
 #include "actor.h"
 #include "i_time.h"
+#include "gamedata/fonts/v_text.h"
 
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_vrmodes.h"
@@ -596,9 +597,9 @@ void VulkanFrameBuffer::PrintStartupLog()
 
 	FString apiVersion, driverVersion;
 	apiVersion.Format("%d.%d.%d", VK_VERSION_MAJOR(device->deviceProperties.apiVersion), VK_VERSION_MINOR(device->deviceProperties.apiVersion), VK_VERSION_PATCH(device->deviceProperties.apiVersion));
-	driverVersion.Format("%d.%d.%d", VK_VERSION_MAJOR(device->deviceProperties.apiVersion), VK_VERSION_MINOR(device->deviceProperties.apiVersion), VK_VERSION_PATCH(device->deviceProperties.apiVersion));
+	driverVersion.Format("%d.%d.%d", VK_VERSION_MAJOR(device->deviceProperties.driverVersion), VK_VERSION_MINOR(device->deviceProperties.driverVersion), VK_VERSION_PATCH(device->deviceProperties.driverVersion));
 
-	Printf("Vulkan device: %s\n", device->deviceProperties.deviceName);
+	Printf("Vulkan device: " TEXTCOLOR_ORANGE "%s\n", device->deviceProperties.deviceName);
 	Printf("Vulkan device type: %s\n", deviceType.GetChars());
 	Printf("Vulkan version: %s (api) %s (driver)\n", apiVersion.GetChars(), driverVersion.GetChars());
 

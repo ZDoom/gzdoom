@@ -1456,6 +1456,9 @@ OptionMenu GameplayOptions protected
 {
 	Title 	"$GMPLYMNU_TITLE"
 	//Indent 222
+	Submenu "$GMPLYMNU_DEATHMATCH",				"DeathmatchOptions"
+	Submenu "$GMPLYMNU_COOPERATIVE",			"CoopOptions"
+	StaticText " "
 	Option "$GMPLYMNU_TEAMPLAY",				"teamplay",	"OnOff"
 	Slider	"$GMPLYMNU_TEAMDAMAGE",	"teamdamage", 0, 1, 0.05,2
 	StaticText " "
@@ -1488,9 +1491,13 @@ OptionMenu GameplayOptions protected
 	Option "$GMPLYMNU_DONTCHECKAMMO",			"sv_dontcheckammo", "NoYes"
 	Option "$GMPLYMNU_KILLBOSSSPAWNS",			"sv_killbossmonst", "YesNo"
 	Option "$GMPLYMNU_NOCOUNTENDMONSTER",		"sv_nocountendmonst", "NoYes"
+	Class "GameplayMenu"
+}
 
-	StaticText " "
-	StaticText "$GMPLYMNU_DEATHMATCH",1
+OptionMenu DeathmatchOptions protected
+{
+	Title 	"$GMPLYMNU_DEATHMATCH"
+
 	Option "$GMPLYMNU_WEAPONSSTAY",				"sv_weaponstay", "YesNo"
 	Option "$GMPLYMNU_ALLOWPOWERUPS",			"sv_noitems", "NoYes"
 	Option "$GMPLYMNU_ALLOWHEALTH",				"sv_nohealth", "NoYes"
@@ -1504,9 +1511,13 @@ OptionMenu GameplayOptions protected
 	Option "$GMPLYMNU_LOSEFRAG",				"sv_losefrag", "YesNo"
 	Option "$GMPLYMNU_KEEPFRAGS",				"sv_keepfrags", "YesNo"
 	Option "$GMPLYMNU_NOTEAMSWITCH",			"sv_noteamswitch", "YesNo"
+	Class "GameplayMenu"
+}
 
-	StaticText " "
-	StaticText "$GMPLYMNU_COOPERATIVE",1
+OptionMenu CoopOptions protected
+{
+	Title 	"$GMPLYMNU_COOPERATIVE"
+
 	Option "$GMPLYMNU_MULTIPLAYERWEAPONS",	 	"sv_noweaponspawn", "NoYes"
 	Option "$GMPLYMNU_LOSEINVENTORY",			"sv_cooploseinventory", "YesNo"
 	Option "$GMPLYMNU_KEEPKEYS",				"sv_cooplosekeys", "NoYes"

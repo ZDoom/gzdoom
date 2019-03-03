@@ -312,7 +312,7 @@ void VkRenderPassSetup::CreateFramebuffer(const VkRenderPassKey &key)
 	builder.setRenderPass(RenderPass.get());
 	builder.setSize(SCREENWIDTH, SCREENHEIGHT);
 	builder.addAttachment(fb->GetRenderPassManager()->SceneColorView.get());
-	if (key.DepthTest || key.DepthWrite)
+	if (key.DepthTest || key.DepthWrite || key.StencilTest)
 		builder.addAttachment(fb->GetRenderPassManager()->SceneDepthStencilView.get());
 	Framebuffer = builder.create(GetVulkanFrameBuffer()->device);
 }

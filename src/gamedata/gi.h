@@ -50,6 +50,7 @@ enum
 	GI_COMPATPOLY2			= 0x00000080,	// so does HEXDD's MAP47
 	GI_NOTEXTCOLOR			= 0x00000100,	// Chex Quest 3 would have everything green
 	GI_IGNORETITLEPATCHES	= 0x00000200,	// Ignore the map name graphics when not runnning in English language
+	GI_IGNOREBIGFONTLUMP	= 0x00000400,	// Needed for Chex Quest 3, so that the extended internal font can be used instead.
 };
 
 #include "gametype.h"

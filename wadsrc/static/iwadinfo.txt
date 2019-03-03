@@ -104,7 +104,7 @@ IWad
 	Config = "Chex"
 	IWADName = "chex3.wad"
 	Mapinfo = "mapinfo/chex.txt"
-	Compatibility = "NoTextcolor"
+	Compatibility = "NoTextcolor", "NoBigFont"
 	MustContain = "E1M1", "CYCLA1", "FLMBA1", "MAPINFO"
 	BannerColors = "ff ff 00", "00 c0 00"
 }

@@ -36,8 +36,8 @@ gameinfo
 	weaponslot = 5, "SkullRod"
 	weaponslot = 6, "PhoenixRod"
 	weaponslot = 7, "Mace"
-	dimcolor = "00 00 ff"
-	dimamount = 0.2
+	dimcolor = "00 00 40"
+	dimamount = 0.5
 	bluramount = 0
 	menuslidercolor = "Orange"
 	definventorymaxamount = 16

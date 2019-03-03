@@ -391,7 +391,7 @@ class ConversationMenu : Menu
 		}
 		else
 		{
-			speakerName = players[consoleplayer].ConversationNPC.GetTag("Person");
+			speakerName = players[consoleplayer].ConversationNPC.GetTag("$TXT_PERSON");
 		}
 
 		

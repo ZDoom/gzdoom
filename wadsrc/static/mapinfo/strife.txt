@@ -36,8 +36,8 @@ gameinfo
 	weaponslot = 6, "FlameThrower"
 	weaponslot = 7, "Mauler2", "Mauler"
 	weaponslot = 8, "Sigil"
-	dimcolor = "ff d7 00"
-	dimamount = 0.2
+	dimcolor = "30 26 00"
+	dimamount = 0.5
 	bluramount = 0
 	menuslidercolor = "Orange"
 	definventorymaxamount = 25

@@ -222,6 +222,7 @@ void VkRenderState::Apply(int dt)
 	ApplyScissor();
 	ApplyViewport();
 	ApplyStencilRef();
+	ApplyDepthBias();
 	ApplyStreamData();
 	ApplyMatrices();
 	ApplyPushConstants();
@@ -229,6 +230,15 @@ void VkRenderState::Apply(int dt)
 	ApplyDynamicSet();
 	ApplyMaterial();
 	mNeedApply = false;
+}
+
+void VkRenderState::ApplyDepthBias()
+{
+	if (mBias.mChanged)
+	{
+		mCommandBuffer->setDepthBias(mBias.mUnits, 0.0f, mBias.mFactor);
+		mBias.mChanged = false;
+	}
 }
 
 void VkRenderState::ApplyRenderPass(int dt)
@@ -245,6 +255,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 	passKey.DepthWrite = mDepthTest && mDepthWrite;
 	passKey.DepthFunc = mDepthFunc;
 	passKey.DepthClamp = mDepthClamp;
+	passKey.DepthBias = !(mBias.mFactor == 0 && mBias.mUnits == 0);
 	passKey.StencilTest = mStencilTest;
 	passKey.StencilPassOp = mStencilOp;
 	passKey.ColorMask = mColorMask;
@@ -273,6 +284,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 		mScissorChanged = true;
 		mViewportChanged = true;
 		mStencilRefChanged = true;
+		mBias.mChanged = true;
 	}
 	else if (changingRenderPass)
 	{

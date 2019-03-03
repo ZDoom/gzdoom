@@ -48,6 +48,7 @@ private:
 	void Apply(int dt);
 	void ApplyRenderPass(int dt);
 	void ApplyStencilRef();
+	void ApplyDepthBias();
 	void ApplyScissor();
 	void ApplyViewport();
 	void ApplyStreamData();

@@ -245,7 +245,7 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 	builder.addDynamicState(VK_DYNAMIC_STATE_VIEWPORT);
 	builder.addDynamicState(VK_DYNAMIC_STATE_SCISSOR);
 	// builder.addDynamicState(VK_DYNAMIC_STATE_LINE_WIDTH);
-	// builder.addDynamicState(VK_DYNAMIC_STATE_DEPTH_BIAS);
+	builder.addDynamicState(VK_DYNAMIC_STATE_DEPTH_BIAS);
 	// builder.addDynamicState(VK_DYNAMIC_STATE_BLEND_CONSTANTS);
 	// builder.addDynamicState(VK_DYNAMIC_STATE_DEPTH_BOUNDS);
 	// builder.addDynamicState(VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK);
@@ -296,6 +296,7 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 	builder.setDepthStencilEnable(key.DepthTest, key.DepthWrite, key.StencilTest);
 	builder.setDepthFunc(depthfunc2vk[key.DepthFunc]);
 	builder.setDepthClampEnable(key.DepthClamp);
+	builder.setDepthBias(key.DepthBias, 0.0f, 0.0f, 0.0f);
 	builder.setCull(key.CullMode == Cull_None ? VK_CULL_MODE_NONE : VK_CULL_MODE_FRONT_AND_BACK, key.CullMode == Cull_CW ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE);
 	builder.setColorWriteMask((VkColorComponentFlagBits)key.ColorMask);
 	builder.setStencil(VK_STENCIL_OP_KEEP, op2vk[key.StencilPassOp], VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL, 0xffffffff, 0xffffffff, 0);

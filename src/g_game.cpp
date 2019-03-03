@@ -2876,6 +2876,23 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, StartSlideshow)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(FLevelLocals, MakeScreenShot)
+{
+	G_ScreenShot("");
+	return 0;
+}
+
+void G_MakeAutoSave()
+{
+	gameaction = ga_autosave;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, MakeAutoSave)
+{
+	G_MakeAutoSave();
+	return 0;
+}
+
 DEFINE_GLOBAL(players)
 DEFINE_GLOBAL(playeringame)
 DEFINE_GLOBAL(PlayerClasses)

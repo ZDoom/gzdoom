@@ -188,6 +188,7 @@ public:
 	void setCull(VkCullModeFlags cullMode, VkFrontFace frontFace);
 	void setDepthStencilEnable(bool test, bool write, bool stencil);
 	void setDepthFunc(VkCompareOp func);
+	void setDepthClampEnable(bool value);
 	void setColorWriteMask(VkColorComponentFlags mask);
 	void setStencil(VkStencilOp failOp, VkStencilOp passOp, VkStencilOp depthFailOp, VkCompareOp compareOp, uint32_t compareMask, uint32_t writeMask, uint32_t reference);
 
@@ -798,6 +799,11 @@ inline void GraphicsPipelineBuilder::setStencil(VkStencilOp failOp, VkStencilOp 
 inline void GraphicsPipelineBuilder::setDepthFunc(VkCompareOp func)
 {
 	depthStencil.depthCompareOp = func;
+}
+
+inline void GraphicsPipelineBuilder::setDepthClampEnable(bool value)
+{
+	rasterizer.depthClampEnable = value ? VK_TRUE : VK_FALSE;
 }
 
 inline void GraphicsPipelineBuilder::setColorWriteMask(VkColorComponentFlags mask)

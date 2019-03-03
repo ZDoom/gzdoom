@@ -57,7 +57,7 @@ private:
 	void ApplyVertexBuffers();
 	void ApplyMaterial();
 
-	bool mLastDepthClamp = true;
+	bool mDepthClamp = true;
 	VulkanCommandBuffer *mCommandBuffer = nullptr;
 	VkRenderPassKey mRenderPassKey = {};
 	bool mNeedApply = true;

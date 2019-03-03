@@ -52,8 +52,8 @@ void VkRenderState::DrawIndexed(int dt, int index, int count, bool apply)
 
 bool VkRenderState::SetDepthClamp(bool on)
 {
-	bool lastValue = mLastDepthClamp;
-	mLastDepthClamp = on;
+	bool lastValue = mDepthClamp;
+	mDepthClamp = on;
 	mNeedApply = true;
 	return lastValue;
 }
@@ -244,6 +244,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 	passKey.DepthTest = mDepthTest;
 	passKey.DepthWrite = mDepthTest && mDepthWrite;
 	passKey.DepthFunc = mDepthFunc;
+	passKey.DepthClamp = mDepthClamp;
 	passKey.StencilTest = mStencilTest;
 	passKey.StencilPassOp = mStencilOp;
 	passKey.ColorMask = mColorMask;

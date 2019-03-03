@@ -295,6 +295,7 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 	builder.setTopology(vktopology[key.DrawType]);
 	builder.setDepthStencilEnable(key.DepthTest, key.DepthWrite, key.StencilTest);
 	builder.setDepthFunc(depthfunc2vk[key.DepthFunc]);
+	builder.setDepthClampEnable(key.DepthClamp);
 	builder.setCull(key.CullMode == Cull_None ? VK_CULL_MODE_NONE : VK_CULL_MODE_FRONT_AND_BACK, key.CullMode == Cull_CW ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE);
 	builder.setColorWriteMask((VkColorComponentFlagBits)key.ColorMask);
 	builder.setStencil(VK_STENCIL_OP_KEEP, op2vk[key.StencilPassOp], VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL, 0xffffffff, 0xffffffff, 0);

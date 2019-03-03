@@ -18,6 +18,7 @@ public:
 	int DepthWrite;
 	int DepthTest;
 	int DepthFunc;
+	int DepthClamp;
 	int StencilTest;
 	int StencilPassOp;
 	int ColorMask;

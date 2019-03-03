@@ -460,6 +460,15 @@ class Actor : Thinker native
 	native void Substitute(Actor replacement);
 	native ui void DisplayNameTag();
 
+	// Called by inventory items to see if this actor is capable of touching them.
+	// If true, the item will attempt to be picked up. Useful for things like
+	// allowing morphs to pick up limited items such as keys while preventing
+	// them from picking other items up.
+	virtual bool CanTouchItem(Inventory item)
+	{
+		return true;
+	}
+
 	// Called by PIT_CheckThing to check if two actors actually can collide.
 	virtual bool CanCollideWith(Actor other, bool passive)
 	{

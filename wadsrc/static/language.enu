@@ -1986,6 +1986,7 @@ MISCMNU_ALLCHEATS				= "Enable cheats from all games";
 MISCMNU_ENABLEAUTOSAVES			= "Enable autosaves";
 MISCMNU_AUTOSAVECOUNT			= "Number of autosaves";
 MISCMNU_SAVELOADCONFIRMATION  = "Save/Load confirmation";
+MISCMNU_ENABLESCRIPTSCREENSHOTS	= "Enable making screenshots by scripts";
 MISCMNU_DEHLOAD					= "Load *.deh/*.bex lumps";
 MISCMNU_CACHENODES				= "Cache nodes";
 MISCMNU_CACHETIME				= "Time threshold for node caching";

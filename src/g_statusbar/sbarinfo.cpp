@@ -1016,6 +1016,29 @@ public:
 		CPlayer = player;
 	}
 
+	void SetReferences()
+	{
+		if (CPlayer->ReadyWeapon != nullptr)
+		{
+			ammo1 = CPlayer->ReadyWeapon->PointerVar<AActor>(NAME_Ammo1);
+			ammo2 = CPlayer->ReadyWeapon->PointerVar<AActor>(NAME_Ammo2);
+			if (ammo1 == nullptr)
+			{
+				ammo1 = ammo2;
+				ammo2 = nullptr;
+			}
+		}
+		else
+		{
+			ammo1 = ammo2 = nullptr;
+		}
+		ammocount1 = ammo1 != nullptr ? ammo1->IntVar(NAME_Amount) : 0;
+		ammocount2 = ammo2 != nullptr ? ammo2->IntVar(NAME_Amount) : 0;
+
+		//prepare ammo counts
+		armor = CPlayer->mo->FindInventory(NAME_BasicArmor);
+	}
+
 	void _Draw (EHudState state)
 	{
 		int hud = STBAR_NORMAL;
@@ -1040,25 +1063,7 @@ public:
 		}
 		wrapper->ForceHUDScale(script->huds[hud]->ForceScaled());
 
-		if (CPlayer->ReadyWeapon != nullptr)
-		{
-			ammo1 = CPlayer->ReadyWeapon->PointerVar<AActor>(NAME_Ammo1);
-			ammo2 = CPlayer->ReadyWeapon->PointerVar<AActor>(NAME_Ammo2);
-			if (ammo1 == nullptr)
-			{
-				ammo1 = ammo2;
-				ammo2 = nullptr;
-			}
-		}
-		else
-		{
-			ammo1 = ammo2 = nullptr;
-		}
-		ammocount1 = ammo1 != nullptr ? ammo1->IntVar(NAME_Amount) : 0;
-		ammocount2 = ammo2 != nullptr ? ammo2->IntVar(NAME_Amount) : 0;
-
-		//prepare ammo counts
-		armor = CPlayer->mo->FindInventory(NAME_BasicArmor);
+		SetReferences();
 
 		if(state != HUD_AltHud)
 		{
@@ -1113,6 +1118,9 @@ public:
 		else
 			lastPopup = NULL;
 
+		// These may not live any longer than beyond here!
+		ammo1 = ammo2 = nullptr;
+		armor = nullptr;
 	}
 
 	void _NewGame ()
@@ -1129,6 +1137,7 @@ public:
 
 	void _Tick ()
 	{
+		SetReferences();
 		if(currentPopup != DBaseStatusBar::POP_None)
 		{
 			script->popups[currentPopup-1].tick();
@@ -1146,6 +1155,10 @@ public:
 			script->huds[lastHud]->Tick(NULL, this, false);
 		if(lastInventoryBar != NULL && CPlayer->inventorytics > 0)
 			lastInventoryBar->Tick(NULL, this, false);
+
+		// These may not live any longer than beyond here!
+		ammo1 = ammo2 = nullptr;
+		armor = nullptr;
 	}
 
 	void _ShowPop(int popnum)

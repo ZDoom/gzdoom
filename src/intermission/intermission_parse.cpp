@@ -34,6 +34,7 @@
 */
 
 
+#include <ctype.h>
 #include "intermission/intermission.h"
 #include "g_level.h"
 #include "w_wad.h"

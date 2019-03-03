@@ -58,6 +58,7 @@ void GLViewpointBuffer::CheckSize()
 		mBufferSize *= 2;
 		mByteSize *= 2;
 		mBuffer->Resize(mByteSize);
+		m2DHeight = m2DWidth = -1;
 	}
 }
 

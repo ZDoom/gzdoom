@@ -1281,6 +1281,10 @@ OptionMenu MapColorMenu protected
 	Title "$MAPCOLORMNU_TITLE"
 	SafeCommand "$MAPCOLORMNU_DEFAULTMAPCOLORS", 		"am_restorecolors"
 	StaticText " "
+	Submenu "$MAPCOLORMNU_CHEATMODE",					"MapColorMenuCheats"
+	Submenu "$MAPCOLORMNU_OVERLAY",						"MapColorMenuOverlay"
+	Submenu "$MAPCOLORMNU_OVCHEATMODE",					"MapColorMenuCheatsOverlay"
+	StaticText " "
 	ColorPicker "$MAPCOLORMNU_BACKCOLOR",				"am_backcolor"
 	ColorPicker "$MAPCOLORMNU_YOURCOLOR",				"am_yourcolor"
 	ColorPicker "$MAPCOLORMNU_WALLCOLOR",				"am_wallcolor"
@@ -1297,8 +1301,11 @@ OptionMenu MapColorMenu protected
 	ColorPicker "$MAPCOLORMNU_UNEXPLOREDSECRETCOLOR",	"am_unexploredsecretcolor"
 	ColorPicker "$MAPCOLORMNU_SPECIALWALLCOLOR",		"am_specialwallcolor"
 	ColorPicker "$MAPCOLORMNU_PORTAL",					"am_portalcolor"
-	StaticText " "
-	StaticText "$MAPCOLORMNU_CHEATMODE", 1
+}
+
+OptionMenu MapColorMenuCheats protected
+{
+	Title "$MAPCOLORMNU_CHEATMODE"
 	ColorPicker "$MAPCOLORMNU_TSWALLCOLOR",				"am_tswallcolor"
 	ColorPicker "$MAPCOLORMNU_SECRETWALLCOLOR",			"am_secretwallcolor"
 	ColorPicker "$MAPCOLORMNU_THINGCOLOR",				"am_thingcolor"
@@ -1307,8 +1314,11 @@ OptionMenu MapColorMenu protected
 	ColorPicker "$MAPCOLORMNU_FRIENDCOLOR",				"am_thingcolor_friend"
 	ColorPicker "$MAPCOLORMNU_ITEMCOLOR",				"am_thingcolor_item"
 	ColorPicker "$MAPCOLORMNU_COUNTITEMCOLOR",			"am_thingcolor_citem"
-	StaticText " "
-	StaticText "$MAPCOLORMNU_OVERLAY", 1
+}
+
+OptionMenu MapColorMenuOverlay protected
+{
+	Title "$MAPCOLORMNU_OVERLAY"
 	ColorPicker "$MAPCOLORMNU_YOURCOLOR",				"am_ovyourcolor"
 	ColorPicker "$MAPCOLORMNU_WALLCOLOR",				"am_ovwallcolor"
 	ColorPicker "$MAPCOLORMNU_FDWALLCOLOR",				"am_ovfdwallcolor"
@@ -1321,8 +1331,11 @@ OptionMenu MapColorMenu protected
 	ColorPicker "$MAPCOLORMNU_SECRETSECTORCOLOR",		"am_ovsecretsectorcolor"
 	ColorPicker "$MAPCOLORMNU_SPECIALWALLCOLOR",		"am_ovspecialwallcolor"
 	ColorPicker "$MAPCOLORMNU_PORTAL",					"am_ovportalcolor"
-	StaticText " "
-	StaticText "$MAPCOLORMNU_OVCHEATMODE", 1
+}
+
+OptionMenu MapColorMenuCheatsOverlay protected
+{
+	Title "$MAPCOLORMNU_OVCHEATMODE"
 	ColorPicker "$MAPCOLORMNU_TSWALLCOLOR",				"am_ovotherwallscolor"
 	ColorPicker "$MAPCOLORMNU_SECRETWALLCOLOR",			"am_ovsecretwallcolor"
 	ColorPicker "$MAPCOLORMNU_THINGCOLOR",				"am_ovthingcolor"

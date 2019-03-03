@@ -87,9 +87,11 @@ public:
 
 	void BindOutputFB();
 
-	void BlitToEyeTexture(int eye);
+	void BlitToEyeTexture(int eye, bool allowInvalidate=true);
 	void BlitFromEyeTexture(int eye);
 	void BindEyeTexture(int eye, int texunit);
+	int NextEye(int eyeCount);
+	int & CurrentEye() { return mCurrentEye; }
 
 	void BindDitherTexture(int texunit);
 
@@ -156,6 +158,7 @@ private:
 	// Eye buffers
 	TArray<PPGLTexture> mEyeTextures;
 	TArray<PPGLFrameBuffer> mEyeFBs;
+	int mCurrentEye = 0;
 
 	// Shadow map texture
 	PPGLTexture mShadowMapTexture;

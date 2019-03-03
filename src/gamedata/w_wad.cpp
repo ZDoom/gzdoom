@@ -897,6 +897,15 @@ void FWadCollection::RenameSprites ()
 			// Rename the game specific big font lumps so that the font manager does not have to do problematic special checks for them.
 			if (!strcmp(LumpInfo[i].lump->Name, altbigfont)) 
 				strcpy(LumpInfo[i].lump->Name, "BIGFONT");
+
+			if (LumpInfo[i].wadnum == GetIwadNum() && gameinfo.flags & GI_IGNOREBIGFONTLUMP)
+			{
+				if (!strcmp(LumpInfo[i].lump->Name, "BIGFONT"))
+				{
+					LumpInfo[i].lump->Name[0] = 0;
+				}
+			}
+
 		}
 	}
 }

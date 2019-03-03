@@ -17,6 +17,11 @@ public:
 	int AlphaTest;
 	int DepthWrite;
 	int DepthTest;
+	int DepthFunc;
+	int StencilTest;
+	int StencilPassOp;
+	int ColorMask;
+	int CullMode;
 	int VertexFormat;
 	int DrawType;
 

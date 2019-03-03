@@ -49,11 +49,10 @@ extern HWND Window;
 
 EXTERN_CVAR(Bool, vid_vsync);
 
-#ifdef NDEBUG
-CVAR(Bool, vk_debug, false, 0);	// this should be false, once the oversized model can be removed.
-#else
-CVAR(Bool, vk_debug, true, 0);
-#endif
+CUSTOM_CVAR(Bool, vk_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	Printf("This won't take effect until " GAMENAME " is restarted.\n");
+}
 
 VulkanDevice::VulkanDevice()
 {

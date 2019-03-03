@@ -32,10 +32,8 @@ void VkRenderState::ClearScreen()
 
 void VkRenderState::Draw(int dt, int index, int count, bool apply)
 {
-	if (apply)
+	if (apply || mNeedApply)
 		Apply(dt);
-	else if (mDynamicSetChanged)
-		ApplyDynamicSet();
 
 	drawcalls.Clock();
 	mCommandBuffer->draw(count, 1, index, 0);
@@ -44,10 +42,8 @@ void VkRenderState::Draw(int dt, int index, int count, bool apply)
 
 void VkRenderState::DrawIndexed(int dt, int index, int count, bool apply)
 {
-	if (apply)
+	if (apply || mNeedApply)
 		Apply(dt);
-	else if (mDynamicSetChanged)
-		ApplyDynamicSet();
 
 	drawcalls.Clock();
 	mCommandBuffer->drawIndexed(count, 1, index, 0, 0);
@@ -58,16 +54,20 @@ bool VkRenderState::SetDepthClamp(bool on)
 {
 	bool lastValue = mLastDepthClamp;
 	mLastDepthClamp = on;
+	mNeedApply = true;
 	return lastValue;
 }
 
 void VkRenderState::SetDepthMask(bool on)
 {
 	mDepthWrite = on;
+	mNeedApply = true;
 }
 
 void VkRenderState::SetDepthFunc(int func)
 {
+	mDepthFunc = func;
+	mNeedApply = true;
 }
 
 void VkRenderState::SetDepthRange(float min, float max)
@@ -75,10 +75,14 @@ void VkRenderState::SetDepthRange(float min, float max)
 	mViewportDepthMin = min;
 	mViewportDepthMax = max;
 	mViewportChanged = true;
+	mNeedApply = true;
 }
 
 void VkRenderState::SetColorMask(bool r, bool g, bool b, bool a)
 {
+	int rr = r, gg = g, bb = b, aa = a;
+	mColorMask = (aa < 3) | (bb << 2) | (gg << 1) | rr;
+	mNeedApply = true;
 }
 
 void VkRenderState::EnableDrawBufferAttachments(bool on)
@@ -87,10 +91,24 @@ void VkRenderState::EnableDrawBufferAttachments(bool on)
 
 void VkRenderState::SetStencil(int offs, int op, int flags)
 {
+	mStencilRef = screen->stencilValue + offs;
+	mStencilRefChanged = true;
+	mStencilOp = op;
+
+	if (flags != -1)
+	{
+		bool cmon = !(flags & SF_ColorMaskOff);
+		SetColorMask(cmon, cmon, cmon, cmon); // don't write to the graphics buffer
+		mDepthWrite = cmon;
+	}
+
+	mNeedApply = true;
 }
 
 void VkRenderState::SetCulling(int mode)
 {
+	mCullMode = mode;
+	mNeedApply = true;
 }
 
 void VkRenderState::EnableClipDistance(int num, bool state)
@@ -160,6 +178,8 @@ void VkRenderState::Clear(int targets)
 
 void VkRenderState::EnableStencil(bool on)
 {
+	mStencilTest = on;
+	mNeedApply = true;
 }
 
 void VkRenderState::SetScissor(int x, int y, int w, int h)
@@ -169,6 +189,7 @@ void VkRenderState::SetScissor(int x, int y, int w, int h)
 	mScissorWidth = w;
 	mScissorHeight = h;
 	mScissorChanged = true;
+	mNeedApply = true;
 }
 
 void VkRenderState::SetViewport(int x, int y, int w, int h)
@@ -178,11 +199,13 @@ void VkRenderState::SetViewport(int x, int y, int w, int h)
 	mViewportWidth = w;
 	mViewportHeight = h;
 	mViewportChanged = true;
+	mNeedApply = true;
 }
 
 void VkRenderState::EnableDepthTest(bool on)
 {
 	mDepthTest = on;
+	mNeedApply = true;
 }
 
 void VkRenderState::EnableMultisampling(bool on)
@@ -198,12 +221,14 @@ void VkRenderState::Apply(int dt)
 	ApplyRenderPass(dt);
 	ApplyScissor();
 	ApplyViewport();
+	ApplyStencilRef();
 	ApplyStreamData();
 	ApplyMatrices();
 	ApplyPushConstants();
 	ApplyVertexBuffers();
 	ApplyDynamicSet();
 	ApplyMaterial();
+	mNeedApply = false;
 }
 
 void VkRenderState::ApplyRenderPass(int dt)
@@ -218,6 +243,11 @@ void VkRenderState::ApplyRenderPass(int dt)
 	passKey.RenderStyle = mRenderStyle;
 	passKey.DepthTest = mDepthTest;
 	passKey.DepthWrite = mDepthTest && mDepthWrite;
+	passKey.DepthFunc = mDepthFunc;
+	passKey.StencilTest = mStencilTest;
+	passKey.StencilPassOp = mStencilOp;
+	passKey.ColorMask = mColorMask;
+	passKey.CullMode = mCullMode;
 	if (mSpecialEffect > EFF_NONE)
 	{
 		passKey.SpecialEffect = mSpecialEffect;
@@ -241,6 +271,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 		changingRenderPass = true;
 		mScissorChanged = true;
 		mViewportChanged = true;
+		mStencilRefChanged = true;
 	}
 	else if (changingRenderPass)
 	{
@@ -259,6 +290,15 @@ void VkRenderState::ApplyRenderPass(int dt)
 		mCommandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->Pipeline.get());
 
 		mRenderPassKey = passKey;
+	}
+}
+
+void VkRenderState::ApplyStencilRef()
+{
+	if (mStencilRefChanged)
+	{
+		mCommandBuffer->setStencilReference(VK_STENCIL_FRONT_AND_BACK, mStencilRef);
+		mStencilRefChanged = false;
 	}
 }
 
@@ -530,7 +570,6 @@ void VkRenderState::ApplyDynamicSet()
 		mLastViewpointOffset = mViewpointOffset;
 		mLastLightBufferOffset = mLightBufferOffset;
 	}
-	mDynamicSetChanged = false;
 }
 
 void VkRenderState::Bind(int bindingpoint, uint32_t offset)
@@ -538,13 +577,13 @@ void VkRenderState::Bind(int bindingpoint, uint32_t offset)
 	if (bindingpoint == VIEWPOINT_BINDINGPOINT)
 	{
 		mViewpointOffset = offset;
+		mNeedApply = true;
 	}
 	else if (bindingpoint == LIGHTBUF_BINDINGPOINT)
 	{
 		mLightBufferOffset = offset;
+		mNeedApply = true;
 	}
-
-	mDynamicSetChanged = true;
 }
 
 void VkRenderState::EndRenderPass()
@@ -555,7 +594,6 @@ void VkRenderState::EndRenderPass()
 		mCommandBuffer = nullptr;
 		mRenderPassKey = {};
 
-		// To do: move this elsewhere or rename this function to make it clear this can only happen at the end of a frame
 		mMatricesOffset = 0;
 		mStreamDataOffset = 0;
 		mDataIndex = -1;

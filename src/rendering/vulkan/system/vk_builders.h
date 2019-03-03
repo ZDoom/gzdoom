@@ -186,7 +186,10 @@ public:
 	void setScissor(int x, int y, int width, int height);
 
 	void setCull(VkCullModeFlags cullMode, VkFrontFace frontFace);
-	void setDepthEnable(bool test, bool write);
+	void setDepthStencilEnable(bool test, bool write, bool stencil);
+	void setDepthFunc(VkCompareOp func);
+	void setColorWriteMask(VkColorComponentFlags mask);
+	void setStencil(VkStencilOp failOp, VkStencilOp passOp, VkStencilOp depthFailOp, VkCompareOp compareOp, uint32_t compareMask, uint32_t writeMask, uint32_t reference);
 
 	void setAdditiveBlendMode();
 	void setAlphaBlendMode();
@@ -764,12 +767,42 @@ inline void GraphicsPipelineBuilder::setCull(VkCullModeFlags cullMode, VkFrontFa
 	rasterizer.frontFace = frontFace;
 }
 
-inline void GraphicsPipelineBuilder::setDepthEnable(bool test, bool write)
+inline void GraphicsPipelineBuilder::setDepthStencilEnable(bool test, bool write, bool stencil)
 {
 	depthStencil.depthTestEnable = test ? VK_TRUE : VK_FALSE;
 	depthStencil.depthWriteEnable = write ? VK_TRUE : VK_FALSE;
+	depthStencil.stencilTestEnable = stencil ? VK_TRUE : VK_FALSE;
 
-	pipelineInfo.pDepthStencilState = (test || write) ? &depthStencil : nullptr;
+	pipelineInfo.pDepthStencilState = (test || write || stencil) ? &depthStencil : nullptr;
+}
+
+inline void GraphicsPipelineBuilder::setStencil(VkStencilOp failOp, VkStencilOp passOp, VkStencilOp depthFailOp, VkCompareOp compareOp, uint32_t compareMask, uint32_t writeMask, uint32_t reference)
+{
+	depthStencil.front.failOp = failOp;
+	depthStencil.front.passOp = passOp;
+	depthStencil.front.depthFailOp = depthFailOp;
+	depthStencil.front.compareOp = compareOp;
+	depthStencil.front.compareMask = compareMask;
+	depthStencil.front.writeMask = writeMask;
+	depthStencil.front.reference = reference;
+
+	depthStencil.back.failOp = failOp;
+	depthStencil.back.passOp = passOp;
+	depthStencil.back.depthFailOp = depthFailOp;
+	depthStencil.back.compareOp = compareOp;
+	depthStencil.back.compareMask = compareMask;
+	depthStencil.back.writeMask = writeMask;
+	depthStencil.back.reference = reference;
+}
+
+inline void GraphicsPipelineBuilder::setDepthFunc(VkCompareOp func)
+{
+	depthStencil.depthCompareOp = func;
+}
+
+inline void GraphicsPipelineBuilder::setColorWriteMask(VkColorComponentFlags mask)
+{
+	colorBlendAttachment.colorWriteMask = mask;
 }
 
 inline void GraphicsPipelineBuilder::setAdditiveBlendMode()

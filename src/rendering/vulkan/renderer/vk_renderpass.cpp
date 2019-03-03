@@ -250,7 +250,7 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 	// builder.addDynamicState(VK_DYNAMIC_STATE_DEPTH_BOUNDS);
 	// builder.addDynamicState(VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK);
 	// builder.addDynamicState(VK_DYNAMIC_STATE_STENCIL_WRITE_MASK);
-	// builder.addDynamicState(VK_DYNAMIC_STATE_STENCIL_REFERENCE);
+	builder.addDynamicState(VK_DYNAMIC_STATE_STENCIL_REFERENCE);
 
 	builder.setViewport(0.0f, 0.0f, (float)SCREENWIDTH, (float)SCREENHEIGHT);
 	builder.setScissor(0, 0, SCREENWIDTH, SCREENHEIGHT);
@@ -262,8 +262,6 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN,
 		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP
 	};
-
-	builder.setTopology(vktopology[key.DrawType]);
 
 	static const int blendstyles[] = {
 		VK_BLEND_FACTOR_ZERO,
@@ -291,8 +289,15 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 		blendequation = VK_BLEND_OP_ADD;
 	}
 
-	builder.setDepthEnable(key.DepthTest, key.DepthWrite);
+	static const VkStencilOp op2vk[] = { VK_STENCIL_OP_KEEP, VK_STENCIL_OP_INCREMENT_AND_CLAMP, VK_STENCIL_OP_DECREMENT_AND_CLAMP };
+	static const VkCompareOp depthfunc2vk[] = { VK_COMPARE_OP_LESS, VK_COMPARE_OP_LESS_OR_EQUAL, VK_COMPARE_OP_ALWAYS };
 
+	builder.setTopology(vktopology[key.DrawType]);
+	builder.setDepthStencilEnable(key.DepthTest, key.DepthWrite, key.StencilTest);
+	builder.setDepthFunc(depthfunc2vk[key.DepthFunc]);
+	builder.setCull(key.CullMode == Cull_None ? VK_CULL_MODE_NONE : VK_CULL_MODE_FRONT_AND_BACK, key.CullMode == Cull_CW ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE);
+	builder.setColorWriteMask((VkColorComponentFlagBits)key.ColorMask);
+	builder.setStencil(VK_STENCIL_OP_KEEP, op2vk[key.StencilPassOp], VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL, 0xffffffff, 0xffffffff, 0);
 	builder.setBlendMode((VkBlendOp)blendequation, (VkBlendFactor)srcblend, (VkBlendFactor)dstblend);
 
 	builder.setLayout(fb->GetRenderPassManager()->PipelineLayout.get());

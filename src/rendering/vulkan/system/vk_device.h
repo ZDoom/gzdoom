@@ -5,6 +5,7 @@
 #include <mutex>
 #include <vector>
 #include <algorithm>
+#include <memory>
 
 class VulkanSwapChain;
 class VulkanSemaphore;

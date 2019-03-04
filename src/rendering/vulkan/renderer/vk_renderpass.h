@@ -4,6 +4,7 @@
 #include "vulkan/system/vk_objects.h"
 #include "r_data/renderstyle.h"
 #include "hwrenderer/data/buffers.h"
+#include <string.h>
 #include <map>
 
 class VKDataBuffer;

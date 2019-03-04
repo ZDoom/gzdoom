@@ -116,7 +116,7 @@ SDLGLVideo::~SDLGLVideo ()
 
 DFrameBuffer *SDLGLVideo::CreateFrameBuffer ()
 {
-	SystemGLFrameBuffer *fb = new OpenGLRenderer::OpenGLFrameBuffer(0, fullscreen);
+	SystemBaseFrameBuffer *fb = new OpenGLRenderer::OpenGLFrameBuffer(0, fullscreen);
 
 	return fb;
 }
@@ -177,7 +177,7 @@ FModule sdl_lib("SDL2");
 typedef int (*SDL_GetWindowBordersSizePtr)(SDL_Window *, int *, int *, int *, int *);
 static TOptProc<sdl_lib, SDL_GetWindowBordersSizePtr> SDL_GetWindowBordersSize_("SDL_GetWindowBordersSize");
 
-SystemGLFrameBuffer::SystemGLFrameBuffer (void *, bool fullscreen)
+SystemBaseFrameBuffer::SystemBaseFrameBuffer (void *, bool fullscreen)
 	: DFrameBuffer (vid_defwidth, vid_defheight)
 {
 	m_fsswitch = false;
@@ -257,7 +257,7 @@ SystemGLFrameBuffer::SystemGLFrameBuffer (void *, bool fullscreen)
 	}
 }
 
-SystemGLFrameBuffer::~SystemGLFrameBuffer ()
+SystemBaseFrameBuffer::~SystemBaseFrameBuffer ()
 {
 	if (Screen)
 	{
@@ -271,12 +271,12 @@ SystemGLFrameBuffer::~SystemGLFrameBuffer ()
 }
 
 
-bool SystemGLFrameBuffer::IsFullscreen ()
+bool SystemBaseFrameBuffer::IsFullscreen ()
 {
 	return (SDL_GetWindowFlags (Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
 }
 
-void SystemGLFrameBuffer::SetVSync( bool vsync )
+void SystemBaseFrameBuffer::SetVSync( bool vsync )
 {
 #if defined (__APPLE__)
 	const GLint value = vsync ? 1 : 0;
@@ -294,7 +294,7 @@ void SystemGLFrameBuffer::SetVSync( bool vsync )
 #endif
 }
 
-void SystemGLFrameBuffer::SwapBuffers()
+void SystemBaseFrameBuffer::SwapBuffers()
 {
 #if !defined(__APPLE__) && !defined(__OpenBSD__)
 	if (vid_maxfps && !cl_capfps)
@@ -306,7 +306,7 @@ void SystemGLFrameBuffer::SwapBuffers()
 	SDL_GL_SwapWindow (Screen);
 }
 
-void SystemGLFrameBuffer::ToggleFullscreen(bool yes)
+void SystemBaseFrameBuffer::ToggleFullscreen(bool yes)
 {
 	SDL_SetWindowFullscreen(Screen, yes ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 	if ( !yes )
@@ -324,21 +324,21 @@ void SystemGLFrameBuffer::ToggleFullscreen(bool yes)
 	}
 }
 
-int SystemGLFrameBuffer::GetClientWidth()
+int SystemBaseFrameBuffer::GetClientWidth()
 {
 	int width = 0;
 	SDL_GL_GetDrawableSize(Screen, &width, nullptr);
 	return width;
 }
 
-int SystemGLFrameBuffer::GetClientHeight()
+int SystemBaseFrameBuffer::GetClientHeight()
 {
 	int height = 0;
 	SDL_GL_GetDrawableSize(Screen, nullptr, &height);
 	return height;
 }
 
-void SystemGLFrameBuffer::SetWindowSize(int w, int h)
+void SystemBaseFrameBuffer::SetWindowSize(int w, int h)
 {
 	if (w < MIN_WIDTH || h < MIN_HEIGHT)
 	{
@@ -364,7 +364,7 @@ void SystemGLFrameBuffer::SetWindowSize(int w, int h)
 	}
 }
 
-void SystemGLFrameBuffer::GetWindowBordersSize(int &top, int &left)
+void SystemBaseFrameBuffer::GetWindowBordersSize(int &top, int &left)
 {
 	if (SDL_GetWindowBordersSize_)
 	{
@@ -392,14 +392,14 @@ void ProcessSDLWindowEvent(const SDL_WindowEvent &event)
 		if (!fullscreen)
 		{
 			int top = 0, left = 0;
-			static_cast<SystemGLFrameBuffer *>(screen)->GetWindowBordersSize(top,left);
+			static_cast<SystemBaseFrameBuffer *>(screen)->GetWindowBordersSize(top,left);
 			win_x = event.data1-left;
 			win_y = event.data2-top;
 		}
 		break;
 
 	case SDL_WINDOWEVENT_RESIZED:
-		if (!fullscreen && !(static_cast<SystemGLFrameBuffer *>(screen)->m_fsswitch))
+		if (!fullscreen && !(static_cast<SystemBaseFrameBuffer *>(screen)->m_fsswitch))
 		{
 			win_w = event.data1;
 			win_h = event.data2;
@@ -420,7 +420,7 @@ void ProcessSDLWindowEvent(const SDL_WindowEvent &event)
 // each platform has its own specific version of this function.
 void I_SetWindowTitle(const char* caption)
 {
-	auto window = static_cast<SystemGLFrameBuffer *>(screen)->GetSDLWindow();
+	auto window = static_cast<SystemBaseFrameBuffer *>(screen)->GetSDLWindow();
 	if (caption)
 		SDL_SetWindowTitle(window, caption);
 	else

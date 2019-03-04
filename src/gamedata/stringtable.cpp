@@ -354,7 +354,7 @@ void FStringTable::InsertString(int langid, FName label, const FString &string)
 			Printf("Bad macro in %s : %s\n", strlangid, label.GetChars());
 			break;
 		}
-		FString macroname(string.GetChars() + index + 2, endindex - index - 2);
+		FString macroname(te.strings[0].GetChars() + index + 2, endindex - index - 2);
  		FStringf lookupstr("%s/%s", strlangid, macroname.GetChars());
 		FStringf replacee("@[%s]", macroname.GetChars());
 		FName lookupname(lookupstr, true);

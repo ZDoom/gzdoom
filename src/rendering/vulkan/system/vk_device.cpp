@@ -258,6 +258,8 @@ void VulkanDevice::createSurface()
 #ifdef _WIN32
 	VkWin32SurfaceCreateInfoKHR windowCreateInfo;
 	windowCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+    windowCreateInfo.pNext = nullptr;
+    windowCreateInfo.flags = 0;
 	windowCreateInfo.hwnd = Window;
 	windowCreateInfo.hinstance = GetModuleHandle(nullptr);
 

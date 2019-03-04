@@ -24,6 +24,7 @@
 #include "r_defs.h"
 #include "p_setup.h"
 #include "gi.h"
+#include "cmdlib.h"
 
 FName MakeEndPic(const char *string);
 
@@ -231,7 +232,7 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 			// add the given episode
 			FEpisode epi;
 
-			epi.mEpisodeName = split[1];
+			epi.mEpisodeName = strbin1(split[1]);
 			epi.mEpisodeMap = mape->MapName;
 			epi.mPicName = split[0];
 			epi.mShortcut = split[2][0];

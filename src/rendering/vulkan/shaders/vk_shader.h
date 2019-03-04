@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include "utility/vectors.h"
 #include "r_data/matrix.h"
 #include "name.h"

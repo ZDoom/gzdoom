@@ -433,7 +433,7 @@ void Writef (HANDLE file, const char *format, ...)
 	DWORD len;
 
 	va_start (args, format);
-	len = vsprintf (buffer, format, args);
+	len = myvsnprintf (buffer, sizeof buffer, format, args);
 	va_end (args);
 	WriteFile (file, buffer, len, &len, NULL);
 }

@@ -386,6 +386,8 @@ void VulkanDevice::createDevice()
 	usedDeviceFeatures.samplerAnisotropy = VK_TRUE;
 	usedDeviceFeatures.shaderClipDistance = VK_TRUE;
 	usedDeviceFeatures.fragmentStoresAndAtomics = VK_TRUE;
+	usedDeviceFeatures.depthClamp = VK_TRUE;
+	usedDeviceFeatures.shaderClipDistance = VK_TRUE;
 
 	VkDeviceCreateInfo deviceCreateInfo = {};
 	deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

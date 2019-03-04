@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 2.8.12)
+
 if(WIN32)
     add_subdirectory(OSDependent/Windows)
 elseif(UNIX)
@@ -5,6 +7,27 @@ elseif(UNIX)
 else(WIN32)
     message("unknown platform")
 endif(WIN32)
+
+if(${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
+    add_compile_options(-Wall -Wmaybe-uninitialized -Wuninitialized -Wunused -Wunused-local-typedefs
+                        -Wunused-parameter -Wunused-value  -Wunused-variable -Wunused-but-set-parameter -Wunused-but-set-variable -fno-exceptions)
+    add_compile_options(-Wno-reorder)  # disable this from -Wall, since it happens all over.
+elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+    add_compile_options(-Wall -Wuninitialized -Wunused -Wunused-local-typedefs
+                        -Wunused-parameter -Wunused-value  -Wunused-variable)
+    add_compile_options(-Wno-reorder)  # disable this from -Wall, since it happens all over.
+endif()
+
+# Request C++11
+if(${CMAKE_VERSION} VERSION_LESS 3.1)
+    # CMake versions before 3.1 do not understand CMAKE_CXX_STANDARD
+    # remove this block once CMake >=3.1 has fixated in the ecosystem
+    add_compile_options(-std=c++11)
+else()
+    set(CMAKE_CXX_STANDARD 11)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    set(CMAKE_CXX_EXTENSIONS OFF)
+endif()
 
 set(SOURCES
     MachineIndependent/glslang.y

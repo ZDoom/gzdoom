@@ -80,6 +80,8 @@ public:
 	std::unique_ptr<VulkanImageView> SceneDepthStencilView;
 	std::unique_ptr<VulkanImageView> SceneDepthView;
 
+	VkFormat SceneDepthStencilFormat = VK_FORMAT_D24_UNORM_S8_UINT;
+
 	std::unique_ptr<VulkanDescriptorSet> DynamicSet;
 
 	std::vector<VkVertexFormat> VertexFormats;

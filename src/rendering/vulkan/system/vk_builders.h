@@ -254,7 +254,7 @@ public:
 
 	void addRgba16fAttachment(bool clear, VkImageLayout layout) { addColorAttachment(clear, VK_FORMAT_R16G16B16A16_SFLOAT, layout); }
 	void addColorAttachment(bool clear, VkFormat format, VkImageLayout layout);
-	void addDepthStencilAttachment(bool clear, VkImageLayout layout);
+	void addDepthStencilAttachment(bool clear, VkFormat format, VkImageLayout layout);
 
 	void addExternalSubpassDependency(VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask);
 
@@ -1000,10 +1000,10 @@ inline void RenderPassBuilder::addColorAttachment(bool clear, VkFormat format, V
 	renderPassInfo.attachmentCount = (uint32_t)attachments.size();
 }
 
-inline void RenderPassBuilder::addDepthStencilAttachment(bool clear, VkImageLayout layout)
+inline void RenderPassBuilder::addDepthStencilAttachment(bool clear, VkFormat format, VkImageLayout layout)
 {
 	VkAttachmentDescription depthAttachment = {};
-	depthAttachment.format = VK_FORMAT_D24_UNORM_S8_UINT;
+	depthAttachment.format = format;
 	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	depthAttachment.loadOp = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
 	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE/*VK_ATTACHMENT_STORE_OP_DONT_CARE*/;

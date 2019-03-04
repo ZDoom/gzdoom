@@ -40,14 +40,15 @@ void VkRenderPassManager::BeginFrame()
 		builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 		SceneColor = builder.create(fb->device);
 
-		builder.setFormat(VK_FORMAT_D24_UNORM_S8_UINT);
+		builder.setFormat(SceneDepthStencilFormat);
 		builder.setUsage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		if (!builder.isFormatSupported(fb->device))
 		{
-			builder.setLinearTiling();
+			SceneDepthStencilFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
+			builder.setFormat(SceneDepthStencilFormat);
 			if (!builder.isFormatSupported(fb->device))
 			{
-				I_FatalError("This device does not support VK_FORMAT_D24_UNORM_S8_UINT.");
+				I_FatalError("This device does not support any of the required depth stencil image formats.");
 			}
 		}
 		SceneDepthStencil = builder.create(fb->device);
@@ -180,7 +181,7 @@ void VkRenderPassSetup::CreateRenderPass(const VkRenderPassKey &key)
 	RenderPassBuilder builder;
 	builder.addRgba16fAttachment(false, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 	if (key.DepthTest || key.DepthWrite || key.StencilTest)
-		builder.addDepthStencilAttachment(false, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+		builder.addDepthStencilAttachment(false, GetVulkanFrameBuffer()->GetRenderPassManager()->SceneDepthStencilFormat, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 	builder.addSubpass();
 	builder.addSubpassColorAttachmentRef(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 	if (key.DepthTest || key.DepthWrite || key.StencilTest)

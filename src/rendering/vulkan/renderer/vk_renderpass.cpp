@@ -57,10 +57,10 @@ void VkRenderPassManager::BeginFrame()
 		viewbuilder.setImage(SceneColor.get(), VK_FORMAT_R16G16B16A16_SFLOAT);
 		SceneColorView = viewbuilder.create(fb->device);
 
-		viewbuilder.setImage(SceneDepthStencil.get(), VK_FORMAT_D24_UNORM_S8_UINT, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
+		viewbuilder.setImage(SceneDepthStencil.get(), SceneDepthStencilFormat, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
 		SceneDepthStencilView = viewbuilder.create(fb->device);
 
-		viewbuilder.setImage(SceneDepthStencil.get(), VK_FORMAT_D24_UNORM_S8_UINT, VK_IMAGE_ASPECT_DEPTH_BIT);
+		viewbuilder.setImage(SceneDepthStencil.get(), SceneDepthStencilFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 		SceneDepthView = viewbuilder.create(fb->device);
 
 		PipelineBarrier barrier;

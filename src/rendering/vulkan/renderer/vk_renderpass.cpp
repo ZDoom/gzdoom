@@ -171,11 +171,11 @@ void VkRenderPassSetup::CreateRenderPass(const VkRenderPassKey &key)
 {
 	RenderPassBuilder builder;
 	builder.addRgba16fAttachment(false, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-	if (key.DepthTest || key.DepthWrite)
+	if (key.DepthTest || key.DepthWrite || key.StencilTest)
 		builder.addDepthStencilAttachment(false, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 	builder.addSubpass();
 	builder.addSubpassColorAttachmentRef(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-	if (key.DepthTest || key.DepthWrite)
+	if (key.DepthTest || key.DepthWrite || key.StencilTest)
 	{
 		builder.addSubpassDepthStencilAttachmentRef(1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 		builder.addExternalSubpassDependency(

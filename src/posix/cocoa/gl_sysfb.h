@@ -44,12 +44,12 @@ typedef struct objc_object NSCursor;
 typedef struct objc_object CocoaWindow;
 #endif
 
-class SystemGLFrameBuffer : public DFrameBuffer
+class SystemBaseFrameBuffer : public DFrameBuffer
 {
 public:
 	// This must have the same parameters as the Windows version, even if they are not used!
-	SystemGLFrameBuffer(void *hMonitor, bool fullscreen);
-	~SystemGLFrameBuffer();
+	SystemBaseFrameBuffer(void *hMonitor, bool fullscreen);
+	~SystemBaseFrameBuffer();
 
 	virtual bool IsFullscreen();
 	virtual void SetVSync(bool vsync);
@@ -67,7 +67,7 @@ public:
 	static void SetWindowTitle(const char* title);
 
 protected:
-	SystemGLFrameBuffer() {}
+	SystemBaseFrameBuffer() {}
 
 	void SwapBuffers();
 
@@ -93,6 +93,19 @@ private:
 
 	static const int MINIMUM_WIDTH  = 320;
 	static const int MINIMUM_HEIGHT = 200;
+};
+
+class SystemGLFrameBuffer : public SystemBaseFrameBuffer
+{
+	typedef SystemBaseFrameBuffer Super;
+
+public:
+	SystemGLFrameBuffer(void *hMonitor, bool fullscreen)
+	: SystemBaseFrameBuffer(hMonitor, fullscreen)
+	{}
+
+protected:
+	SystemGLFrameBuffer() {}
 };
 
 #endif // COCOA_GL_SYSFB_H_INCLUDED

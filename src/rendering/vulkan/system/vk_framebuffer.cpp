@@ -62,6 +62,7 @@ EXTERN_CVAR(Bool, r_drawvoxels)
 EXTERN_CVAR(Int, gl_tonemap)
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Bool, cl_capfps)
+EXTERN_CVAR(Bool, gl_no_skyclear)
 
 extern bool NoInterpolateView;
 
@@ -439,10 +440,8 @@ void VulkanFrameBuffer::DrawScene(HWDrawInfo *di, int drawmode)
 		di->CreateScene();
 	}
 
-#if 0
-	glDepthMask(true);
+	GetRenderState()->SetDepthMask(true);
 	if (!gl_no_skyclear) screen->mPortalState->RenderFirstSkyPortal(recursion, di, *GetRenderState());
-#endif
 
 	di->RenderScene(*GetRenderState());
 

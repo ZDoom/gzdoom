@@ -385,6 +385,8 @@ sector_t *VulkanFrameBuffer::RenderViewpoint(FRenderViewpoint &mainvp, AActor * 
 			mBuffers->BlitSceneToTexture(); // Copy the resulting scene to the current post process texture
 
 			PostProcessScene(cm, [&]() { di->DrawEndScene2D(mainvp.sector, *GetRenderState()); });
+#else
+			di->DrawEndScene2D(mainvp.sector, *GetRenderState());
 #endif
 
 			PostProcess.Unclock();

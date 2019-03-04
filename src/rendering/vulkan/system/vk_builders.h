@@ -43,6 +43,8 @@ public:
 	void setUsage(VkImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY, VmaAllocationCreateFlags allocFlags = 0);
 	void setLinearTiling();
 
+	bool isFormatSupported(VulkanDevice *device);
+
 	std::unique_ptr<VulkanImage> create(VulkanDevice *device);
 
 private:
@@ -354,6 +356,20 @@ inline void ImageBuilder::setUsage(VkImageUsageFlags usage, VmaMemoryUsage memor
 	imageInfo.usage = usage;
 	allocInfo.usage = memoryUsage;
 	allocInfo.flags = allocFlags;
+}
+
+inline bool ImageBuilder::isFormatSupported(VulkanDevice *device)
+{
+	VkImageFormatProperties properties = { };
+	VkResult result = vkGetPhysicalDeviceImageFormatProperties(device->physicalDevice, imageInfo.format, imageInfo.imageType, imageInfo.tiling, imageInfo.usage, imageInfo.flags, &properties);
+	if (result != VK_SUCCESS) return false;
+	if (imageInfo.extent.width > properties.maxExtent.width) return false;
+	if (imageInfo.extent.height > properties.maxExtent.height) return false;
+	if (imageInfo.extent.depth > properties.maxExtent.depth) return false;
+	if (imageInfo.mipLevels > properties.maxMipLevels) return false;
+	if (imageInfo.arrayLayers > properties.maxArrayLayers) return false;
+	if ((imageInfo.samples & properties.sampleCounts) != imageInfo.samples) return false;
+	return true;
 }
 
 inline std::unique_ptr<VulkanImage> ImageBuilder::create(VulkanDevice *device)
@@ -715,7 +731,6 @@ inline GraphicsPipelineBuilder::GraphicsPipelineBuilder()
 	colorBlending.blendConstants[2] = 0.0f;
 	colorBlending.blendConstants[3] = 0.0f;
 
-	VkPipelineDynamicStateCreateInfo dynamicState = {};
 	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 }
 

@@ -48,6 +48,8 @@ public:
 	VkPhysicalDeviceProperties deviceProperties;
 	VkPhysicalDeviceFeatures deviceFeatures;
 
+	VkPhysicalDevice physicalDevice = {};
+
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 private:
@@ -66,8 +68,6 @@ private:
 
 	VkInstance instance = nullptr;
 	VkSurfaceKHR surface = 0;
-
-	VkPhysicalDevice physicalDevice = {};
 
 	VkQueue presentQueue = nullptr;
 

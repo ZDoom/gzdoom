@@ -42,6 +42,14 @@ void VkRenderPassManager::BeginFrame()
 
 		builder.setFormat(VK_FORMAT_D24_UNORM_S8_UINT);
 		builder.setUsage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		if (!builder.isFormatSupported(fb->device))
+		{
+			builder.setLinearTiling();
+			if (!builder.isFormatSupported(fb->device))
+			{
+				I_FatalError("This device does not support VK_FORMAT_D24_UNORM_S8_UINT.");
+			}
+		}
 		SceneDepthStencil = builder.create(fb->device);
 
 		ImageViewBuilder viewbuilder;

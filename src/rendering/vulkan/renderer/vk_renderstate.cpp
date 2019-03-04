@@ -99,7 +99,7 @@ void VkRenderState::SetStencil(int offs, int op, int flags)
 	{
 		bool cmon = !(flags & SF_ColorMaskOff);
 		SetColorMask(cmon, cmon, cmon, cmon); // don't write to the graphics buffer
-		mDepthWrite = cmon;
+		mDepthWrite = !(flags & SF_DepthMaskOff);
 	}
 
 	mNeedApply = true;

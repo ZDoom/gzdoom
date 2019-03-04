@@ -81,7 +81,7 @@ void VkRenderState::SetDepthRange(float min, float max)
 void VkRenderState::SetColorMask(bool r, bool g, bool b, bool a)
 {
 	int rr = r, gg = g, bb = b, aa = a;
-	mColorMask = (aa < 3) | (bb << 2) | (gg << 1) | rr;
+	mColorMask = (aa << 3) | (bb << 2) | (gg << 1) | rr;
 	mNeedApply = true;
 }
 

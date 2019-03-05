@@ -12,6 +12,7 @@
 #include "hwrenderer/utility/hw_vrmodes.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "r_videoscale.h"
+#include "w_wad.h"
 
 VkPostprocess::VkPostprocess()
 {
@@ -101,6 +102,44 @@ void VkPostprocess::UpdateEffectTextures()
 
 void VkPostprocess::CompileEffectShaders()
 {
+	auto fb = GetVulkanFrameBuffer();
+
+	TMap<FString, PPShader>::Iterator it(hw_postprocess.Shaders);
+	TMap<FString, PPShader>::Pair *pair;
+	while (it.NextPair(pair))
+	{
+		const auto &desc = pair->Value;
+		auto &vkshader = mShaders[pair->Key];
+		if (!vkshader)
+		{
+			FString prolog;
+			if (!desc.Uniforms.empty())
+				prolog = UniformBlockDecl::Create("Uniforms", desc.Uniforms, uniformbindingpoint);
+			prolog += desc.Defines;
+
+			ShaderBuilder vertbuilder;
+			vertbuilder.setVertexShader(LoadShaderCode(desc.VertexShader, "", desc.Version));
+			vkshader->VertexShader = vertbuilder.create(fb->device);
+
+			ShaderBuilder fragbuilder;
+			fragbuilder.setFragmentShader(LoadShaderCode(desc.FragmentShader, prolog, desc.Version));
+			vkshader->FragmentShader = fragbuilder.create(fb->device);
+		}
+	}
+}
+
+FString VkPostprocess::LoadShaderCode(const FString &lumpName, const FString &defines, int version)
+{
+	int lump = Wads.CheckNumForFullName(lumpName, 0);
+	if (lump == -1) I_FatalError("Unable to load '%s'", lumpName);
+	FString code = Wads.ReadLump(lump).GetString().GetChars();
+
+	FString patchedCode;
+	patchedCode.AppendFormat("#version %d\n", 450);
+	patchedCode << defines;
+	patchedCode << "#line 1\n";
+	patchedCode << code;
+	return patchedCode;
 }
 
 void VkPostprocess::RenderEffect(const FString &name)

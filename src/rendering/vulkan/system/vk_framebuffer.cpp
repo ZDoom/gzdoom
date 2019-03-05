@@ -102,6 +102,7 @@ void VulkanFrameBuffer::InitializeState()
 
 	gl_vendorstring = "Vulkan";
 	hwcaps = RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE;
+	glslversion = 4.50f;
 	uniformblockalignment = (unsigned int)device->deviceProperties.limits.minUniformBufferOffsetAlignment;
 	maxuniformblock = device->deviceProperties.limits.maxUniformBufferRange;
 

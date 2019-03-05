@@ -175,6 +175,8 @@ private:
 	FixedSizeVector<VkImageView, 8> attachments;
 };
 
+union FRenderStyle;
+
 class GraphicsPipelineBuilder
 {
 public:
@@ -197,6 +199,7 @@ public:
 
 	void setAdditiveBlendMode();
 	void setAlphaBlendMode();
+	void setBlendMode(const FRenderStyle &style);
 	void setBlendMode(VkBlendOp op, VkBlendFactor src, VkBlendFactor dst);
 	void setSubpassColorAttachmentCount(int count);
 

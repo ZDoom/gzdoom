@@ -1,6 +1,7 @@
 
 #include "vk_builders.h"
 #include "doomerrors.h"
+#include "r_data/renderstyle.h"
 #include <ShaderLang.h>
 #include <GlslangToSpv.h>
 
@@ -179,4 +180,44 @@ std::unique_ptr<VulkanShader> ShaderBuilder::create(VulkanDevice *device)
 		throw std::runtime_error("Could not create vulkan shader module");
 
 	return std::make_unique<VulkanShader>(device, shaderModule);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+void GraphicsPipelineBuilder::setBlendMode(const FRenderStyle &style)
+{
+	// Just in case Vulkan doesn't do this optimization itself
+	if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_One && style.DestAlpha == STYLEALPHA_Zero && style.Flags == 0)
+	{
+		colorBlendAttachment.blendEnable = VK_FALSE;
+		return;
+	}
+
+	static const int blendstyles[] = {
+		VK_BLEND_FACTOR_ZERO,
+		VK_BLEND_FACTOR_ONE,
+		VK_BLEND_FACTOR_SRC_ALPHA,
+		VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+		VK_BLEND_FACTOR_SRC_COLOR,
+		VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR,
+		VK_BLEND_FACTOR_DST_COLOR,
+		VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR,
+	};
+
+	static const int renderops[] = {
+		0, VK_BLEND_OP_ADD, VK_BLEND_OP_SUBTRACT, VK_BLEND_OP_REVERSE_SUBTRACT, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+	};
+
+	int srcblend = blendstyles[style.SrcAlpha%STYLEALPHA_MAX];
+	int dstblend = blendstyles[style.DestAlpha%STYLEALPHA_MAX];
+	int blendequation = renderops[style.BlendOp & 15];
+
+	if (blendequation == -1)	// This was a fuzz style.
+	{
+		srcblend = VK_BLEND_FACTOR_DST_COLOR;
+		dstblend = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+		blendequation = VK_BLEND_OP_ADD;
+	}
+
+	setBlendMode((VkBlendOp)blendequation, (VkBlendFactor)srcblend, (VkBlendFactor)dstblend);
 }

@@ -94,6 +94,7 @@ void VkPostprocess::ClearTonemapPalette()
 
 void VkPostprocess::RenderBuffersReset()
 {
+	mRenderPassSetup.clear();
 }
 
 void VkPostprocess::UpdateEffectTextures()
@@ -136,6 +137,7 @@ void VkPostprocess::UpdateEffectTextures()
 			if (!imgbuilder.isFormatSupported(fb->device))
 				I_FatalError("Vulkan device does not support the image format required by %s\n", pair->Key.GetChars());
 			vktex->Image = imgbuilder.create(fb->device);
+			vktex->Format = format;
 
 			ImageViewBuilder viewbuilder;
 			viewbuilder.setImage(vktex->Image.get(), format);
@@ -197,7 +199,7 @@ void VkPostprocess::CompileEffectShaders()
 
 			FString prolog;
 			if (!desc.Uniforms.empty())
-				prolog = UniformBlockDecl::Create("Uniforms", desc.Uniforms, uniformbindingpoint);
+				prolog = UniformBlockDecl::Create("Uniforms", desc.Uniforms, -1);
 			prolog += desc.Defines;
 
 			ShaderBuilder vertbuilder;
@@ -227,15 +229,215 @@ FString VkPostprocess::LoadShaderCode(const FString &lumpName, const FString &de
 
 void VkPostprocess::RenderEffect(const FString &name)
 {
+	if (hw_postprocess.Effects[name].Size() == 0)
+		return;
+
+	for (const PPStep &step : hw_postprocess.Effects[name])
+	{
+		VkPPRenderPassKey key;
+		key.BlendMode = step.BlendMode;
+		key.InputTextures = step.Textures.Size();
+		key.Uniforms = step.Uniforms.Data.Size() != 0;
+		key.Shader = mShaders[step.ShaderName].get();
+		key.OutputFormat = (step.Output.Type == PPTextureType::PPTexture) ? mTextures[step.Output.Texture]->Format : VK_FORMAT_R16G16B16A16_SFLOAT;
+
+		auto &passSetup = mRenderPassSetup[key];
+		if (!passSetup)
+			passSetup.reset(new VkPPRenderPassSetup(key));
+
+		VulkanDescriptorSet *input = GetInput(passSetup.get(), step.Textures);
+		VulkanFramebuffer *output = GetOutput(passSetup.get(), step.Output);
+
+		RenderScreenQuad(passSetup.get(), input, output, step.Viewport.left, step.Viewport.top, step.Viewport.width, step.Viewport.height, step.Uniforms.Data.Data(), step.Uniforms.Data.Size());
+
+		// Advance to next PP texture if our output was sent there
+		if (step.Output.Type == PPTextureType::NextPipelineTexture)
+			NextTexture();
+	}
 }
 
-void VkPostprocess::RenderScreenQuad()
+void VkPostprocess::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDescriptorSet *descriptorSet, VulkanFramebuffer *framebuffer, int x, int y, int width, int height, const void *pushConstants, uint32_t pushConstantsSize)
 {
-	//auto buffer = static_cast<VKVertexBuffer *>(screen->mVertexData->GetBufferObjects().first);
-	//buffer->Bind(nullptr);
-	//glDrawArrays(GL_TRIANGLE_STRIP, FFlatVertexBuffer::PRESENT_INDEX, 4);
+	auto fb = GetVulkanFrameBuffer();
+	auto cmdbuffer = fb->GetDrawCommands();
+
+	RenderPassBegin beginInfo;
+	beginInfo.setRenderPass(passSetup->RenderPass.get());
+	beginInfo.setRenderArea(x, y, width, height);
+	beginInfo.setFramebuffer(framebuffer);
+
+	VkViewport viewport = { };
+	viewport.x = x;
+	viewport.y = y;
+	viewport.width = width;
+	viewport.height = height;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+
+	VkBuffer vertexBuffers[] = { static_cast<VKVertexBuffer*>(screen->mVertexData->GetBufferObjects().first)->mBuffer->buffer };
+	VkDeviceSize offsets[] = { 0 };
+
+	cmdbuffer->beginRenderPass(beginInfo);
+	cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->Pipeline.get());
+	cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->PipelineLayout.get(), 0, descriptorSet);
+	cmdbuffer->setViewport(0, 1, &viewport);
+	cmdbuffer->bindVertexBuffers(0, 1, vertexBuffers, offsets);
+	if (pushConstantsSize > 0)
+		cmdbuffer->pushConstants(passSetup->PipelineLayout.get(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, pushConstantsSize, pushConstants);
+	cmdbuffer->draw(4, 1, FFlatVertexBuffer::PRESENT_INDEX, 0);
+	cmdbuffer->endRenderPass();
+}
+
+VulkanDescriptorSet *VkPostprocess::GetInput(VkPPRenderPassSetup *passSetup, const TArray<PPTextureInput> &textures)
+{
+#if 0
+	// Bind input textures
+	for (unsigned int index = 0; index < step.Textures.Size(); index++)
+	{
+		const PPTextureInput &input = step.Textures[index];
+		VulkanSampler *sampler = GetSampler(input.Filter, input.Wrap);
+
+		switch (input.Type)
+		{
+		default:
+		case PPTextureType::CurrentPipelineTexture:
+			BindCurrentTexture(index, filter, wrap);
+			break;
+
+		case PPTextureType::NextPipelineTexture:
+			I_FatalError("PPTextureType::NextPipelineTexture not allowed as input\n");
+			break;
+
+		case PPTextureType::PPTexture:
+			GLTextures[input.Texture].Bind(index, filter, wrap);
+			break;
+
+		case PPTextureType::SceneColor:
+			BindSceneColorTexture(index);
+			break;
+
+		case PPTextureType::SceneFog:
+			BindSceneFogTexture(index);
+			break;
+
+		case PPTextureType::SceneNormal:
+			BindSceneNormalTexture(index);
+			break;
+
+		case PPTextureType::SceneDepth:
+			BindSceneDepthTexture(index);
+			break;
+		}
+	}
+#endif
+	return nullptr;
+}
+
+VulkanFramebuffer *VkPostprocess::GetOutput(VkPPRenderPassSetup *passSetup, const PPOutput &output)
+{
+#if 0
+	switch (output.Type)
+	{
+	default:
+		I_FatalError("Unsupported postprocess output type\n");
+		break;
+
+	case PPTextureType::CurrentPipelineTexture:
+		BindCurrentFB();
+		break;
+
+	case PPTextureType::NextPipelineTexture:
+		BindNextFB();
+		break;
+
+	case PPTextureType::PPTexture:
+		mTextures[step.Output.Texture]->View
+		break;
+
+	case PPTextureType::SceneColor:
+		BindSceneFB(false);
+		break;
+	}
+#endif
+	return nullptr;
+}
+
+VulkanSampler *VkPostprocess::GetSampler(PPFilterMode filter, PPWrapMode wrap)
+{
+	int index = (((int)filter) << 2) | (int)wrap;
+	auto &sampler = mSamplers[index];
+	if (sampler)
+		return sampler.get();
+
+	SamplerBuilder builder;
+	builder.setMipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
+	builder.setMinFilter(filter == PPFilterMode::Nearest ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
+	builder.setMagFilter(filter == PPFilterMode::Nearest ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
+	builder.setAddressMode(wrap == PPWrapMode::Clamp ? VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE : VK_SAMPLER_ADDRESS_MODE_REPEAT);
+	sampler = builder.create(GetVulkanFrameBuffer()->device);
+	return sampler.get();
 }
 
 void VkPostprocess::NextEye(int eyeCount)
 {
+}
+
+void VkPostprocess::NextTexture()
+{
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+VkPPRenderPassSetup::VkPPRenderPassSetup(const VkPPRenderPassKey &key)
+{
+	CreateDescriptorLayout(key);
+}
+
+void VkPPRenderPassSetup::CreateDescriptorLayout(const VkPPRenderPassKey &key)
+{
+	DescriptorSetLayoutBuilder builder;
+	for (int i = 0; i < key.InputTextures; i++)
+		builder.addBinding(i, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+	DescriptorLayout = builder.create(GetVulkanFrameBuffer()->device);
+}
+
+void VkPPRenderPassSetup::CreatePipelineLayout(const VkPPRenderPassKey &key)
+{
+	PipelineLayoutBuilder builder;
+	builder.addSetLayout(DescriptorLayout.get());
+	if (key.Uniforms > 0)
+		builder.addPushConstantRange(VK_SHADER_STAGE_FRAGMENT_BIT, 0, key.Uniforms);
+	PipelineLayout = builder.create(GetVulkanFrameBuffer()->device);
+}
+
+void VkPPRenderPassSetup::CreatePipeline(const VkPPRenderPassKey &key)
+{
+	GraphicsPipelineBuilder builder;
+	builder.addVertexShader(key.Shader->VertexShader.get());
+	builder.addFragmentShader(key.Shader->FragmentShader.get());
+
+	builder.addVertexBufferBinding(0, sizeof(FFlatVertex));
+	builder.addVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(FFlatVertex, x));
+	builder.addVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(FFlatVertex, u));
+	builder.addDynamicState(VK_DYNAMIC_STATE_VIEWPORT);
+	builder.setViewport(0.0f, 0.0f, (float)SCREENWIDTH, (float)SCREENHEIGHT);
+	builder.setTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP);
+	builder.setBlendMode(key.BlendMode);
+	builder.setLayout(PipelineLayout.get());
+	builder.setRenderPass(RenderPass.get());
+	Pipeline = builder.create(GetVulkanFrameBuffer()->device);
+}
+
+void VkPPRenderPassSetup::CreateRenderPass(const VkPPRenderPassKey &key)
+{
+	RenderPassBuilder builder;
+	builder.addColorAttachment(false, key.OutputFormat, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+	builder.addSubpass();
+	builder.addSubpassColorAttachmentRef(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+	builder.addExternalSubpassDependency(
+		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		VK_ACCESS_COLOR_ATTACHMENT_READ_BIT);
+	RenderPass = builder.create(GetVulkanFrameBuffer()->device);
 }

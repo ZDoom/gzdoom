@@ -46,7 +46,11 @@ public:
 	{
 		FString decl;
 		FString layout;
-		if (screen->glslversion < 4.20)
+		if (bindingpoint == -1)
+		{
+			layout = "push_constant";
+		}
+		else if (screen->glslversion < 4.20)
 		{
 			layout = "std140";
 		}

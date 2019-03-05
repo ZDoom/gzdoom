@@ -243,32 +243,6 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP
 	};
 
-	static const int blendstyles[] = {
-		VK_BLEND_FACTOR_ZERO,
-		VK_BLEND_FACTOR_ONE,
-		VK_BLEND_FACTOR_SRC_ALPHA,
-		VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-		VK_BLEND_FACTOR_SRC_COLOR,
-		VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR,
-		VK_BLEND_FACTOR_DST_COLOR,
-		VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR,
-	};
-
-	static const int renderops[] = {
-		0, VK_BLEND_OP_ADD, VK_BLEND_OP_SUBTRACT, VK_BLEND_OP_REVERSE_SUBTRACT, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
-	};
-
-	int srcblend = blendstyles[key.RenderStyle.SrcAlpha%STYLEALPHA_MAX];
-	int dstblend = blendstyles[key.RenderStyle.DestAlpha%STYLEALPHA_MAX];
-	int blendequation = renderops[key.RenderStyle.BlendOp & 15];
-
-	if (blendequation == -1)	// This was a fuzz style.
-	{
-		srcblend = VK_BLEND_FACTOR_DST_COLOR;
-		dstblend = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-		blendequation = VK_BLEND_OP_ADD;
-	}
-
 	static const VkStencilOp op2vk[] = { VK_STENCIL_OP_KEEP, VK_STENCIL_OP_INCREMENT_AND_CLAMP, VK_STENCIL_OP_DECREMENT_AND_CLAMP };
 	static const VkCompareOp depthfunc2vk[] = { VK_COMPARE_OP_LESS, VK_COMPARE_OP_LESS_OR_EQUAL, VK_COMPARE_OP_ALWAYS };
 
@@ -280,7 +254,7 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 	builder.setCull(key.CullMode == Cull_None ? VK_CULL_MODE_NONE : VK_CULL_MODE_FRONT_AND_BACK, key.CullMode == Cull_CW ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE);
 	builder.setColorWriteMask((VkColorComponentFlags)key.ColorMask);
 	builder.setStencil(VK_STENCIL_OP_KEEP, op2vk[key.StencilPassOp], VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL, 0xffffffff, 0xffffffff, 0);
-	builder.setBlendMode((VkBlendOp)blendequation, (VkBlendFactor)srcblend, (VkBlendFactor)dstblend);
+	builder.setBlendMode(key.RenderStyle);
 
 	builder.setLayout(fb->GetRenderPassManager()->PipelineLayout.get());
 	builder.setRenderPass(RenderPass.get());

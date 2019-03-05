@@ -2128,6 +2128,71 @@ class PlayerPawn : Actor
 
 	//===========================================================================
 	//
+	// FWeaponSlot :: PickFirstWeapon
+	//
+	// Picks the first weapon from this slot. If no weapon is selected in this
+	// slot then it returns the first weapon. If the first weapon is selected
+	// then it returns the last weapon. Otherwise, returns the previous weapon in
+	// this slot. Useful for acessing typically weaker weapons with a single
+	// action. Does not return weapons you have no ammo for or which you do not
+	// possess.
+	//===========================================================================
+
+	virtual Weapon PickFirstWeapon(int slot, bool checkammo)
+	{
+		int i, j;
+
+		let player = self.player;
+		int Size = player.weapons.SlotSize(slot);
+		// Does this slot even have any weapons?
+		if (Size == 0)
+		{
+			return player.ReadyWeapon;
+		}
+		let ReadyWeapon = player.ReadyWeapon;
+		if (ReadyWeapon != null)
+		{
+			for (i = 0; i < Size; i++)
+			{
+				let weapontype = player.weapons.GetWeapon(slot, i);
+				if (weapontype == ReadyWeapon.GetClass() ||
+					(ReadyWeapon.bPOWERED_UP && ReadyWeapon.SisterWeapon != null && ReadyWeapon.SisterWeapon.GetClass() == weapontype))
+				{
+					for (j = (i == 0 ? Size - 1 : i - 1);
+						j != i;
+						j = (j == 0 ? Size - 1 : j - 1))
+					{
+						let weapontype2 = player.weapons.GetWeapon(slot, j);
+						let weap = Weapon(player.mo.FindInventory(weapontype2));
+
+						if (weap != null)
+						{
+							if (!checkammo || weap.CheckAmmo(Weapon.EitherFire, false))
+							{
+								return weap;
+							}
+						}
+					}
+				}
+			}
+		}		
+		{
+			let weapontype = player.weapons.GetWeapon(slot, 0);
+			let weap = Weapon(player.mo.FindInventory(weapontype));
+
+			if (weap != null)
+			{
+				if (!checkammo || weap.CheckAmmo(Weapon.EitherFire, false))
+				{
+					return weap;
+				}
+			}
+		}
+		return ReadyWeapon;
+	}
+
+	//===========================================================================
+	//
 	// FindMostRecentWeapon
 	//
 	// Locates the slot and index for the most recently selected weapon. If the

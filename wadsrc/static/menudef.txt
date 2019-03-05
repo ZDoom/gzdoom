@@ -551,6 +551,19 @@ OptionMenu "WeaponsControlMenu" protected
 	Control    "$CNTRLMNU_SLOT8"          , "slot 8"
 	Control    "$CNTRLMNU_SLOT9"          , "slot 9"
 	Control    "$CNTRLMNU_SLOT0"          , "slot 0"
+
+	StaticText ""
+	Control    "$CNTRLMNU_FIRSTSLOT1"     , "firstslot 1"
+	Control    "$CNTRLMNU_FIRSTSLOT2"     , "firstslot 2"
+	Control    "$CNTRLMNU_FIRSTSLOT3"     , "firstslot 3"
+	Control    "$CNTRLMNU_FIRSTSLOT4"     , "firstslot 4"
+	Control    "$CNTRLMNU_FIRSTSLOT5"     , "firstslot 5"
+	Control    "$CNTRLMNU_FIRSTSLOT6"     , "firstslot 6"
+	Control    "$CNTRLMNU_FIRSTSLOT7"     , "firstslot 7"
+	Control    "$CNTRLMNU_FIRSTSLOT8"     , "firstslot 8"
+	Control    "$CNTRLMNU_FIRSTSLOT9"     , "firstslot 9"
+	Control    "$CNTRLMNU_FIRSTSLOT0"     , "firstslot 0"
+
 }
 
 OptionMenu "InventoryControlsMenu" protected

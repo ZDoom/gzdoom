@@ -307,6 +307,26 @@ CCMD (slot)
 	}
 }
 
+CCMD (firstslot)
+{
+	if (argv.argc() > 1)
+	{
+		int slot = atoi (argv[1]);
+
+		auto mo = players[consoleplayer].mo;
+		if (slot < NUM_WEAPON_SLOTS && mo)
+		{
+			// Needs to be redone
+			IFVIRTUALPTRNAME(mo, NAME_PlayerPawn, PickFirstWeapon)
+			{
+				VMValue param[] = { mo, slot, !(dmflags2 & DF2_DONTCHECKAMMO) };
+				VMReturn ret((void**)&SendItemUse);
+				VMCall(func, param, 3, &ret, 1);
+			}
+		}
+	}
+}
+
 CCMD (centerview)
 {
 	Net_WriteByte (DEM_CENTERVIEW);

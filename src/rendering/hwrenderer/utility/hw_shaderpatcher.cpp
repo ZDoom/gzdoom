@@ -185,6 +185,54 @@ FString RemoveSamplerBindings(FString code, TArray<std::pair<FString, int>> &sam
 	return code;
 }
 
+FString RemoveLayoutLocationDecl(FString code, const char *inoutkeyword)
+{
+	long len = (long)code.Len();
+	char *chars = code.LockBuffer();
+
+	long startIndex = 0;
+	while (true)
+	{
+		long matchIndex = code.IndexOf("layout(location", startIndex);
+		if (matchIndex == -1)
+			break;
+
+		long endIndex = startIndex;
+
+		// Find end of layout declaration
+		while (chars[endIndex] != ')' && chars[endIndex] != 0)
+			endIndex++;
+
+		// Skip whitespace
+		while (IsGlslWhitespace(chars[endIndex]))
+			endIndex++;
+
+		// keyword following the declaration?
+		bool keywordFound = true;
+		long i;
+		for (i = 0; inoutkeyword[i] != 0; i++)
+		{
+			if (chars[endIndex + i] != inoutkeyword[i])
+			{
+				keywordFound = false;
+				break;
+			}
+		}
+		if (keywordFound && IsGlslWhitespace(chars[endIndex + i]))
+		{
+			// yes - replace declaration with spaces
+			for (long i = startIndex; i < endIndex; i++)
+				chars[i] = ' ';
+		}
+
+		startIndex = endIndex;
+	}
+
+	code.UnlockBuffer();
+
+	return code;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 
 // Note: the MaterialShaderIndex enum in gl_shader.h needs to be updated whenever this array is modified.

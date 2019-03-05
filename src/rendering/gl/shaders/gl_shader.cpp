@@ -360,8 +360,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	vp_comb << "#line 1\n";
 	fp_comb << "#line 1\n";
 
-	vp_comb << vp_data.GetString().GetChars() << "\n";
-	fp_comb << fp_data.GetString().GetChars() << "\n";
+	vp_comb << RemoveLayoutLocationDecl(vp_data.GetString(), "out").GetChars() << "\n";
+	fp_comb << RemoveLayoutLocationDecl(fp_data.GetString(), "in").GetChars() << "\n";
 
 	if (proc_prog_lump != NULL)
 	{

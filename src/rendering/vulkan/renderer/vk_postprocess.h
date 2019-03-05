@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <functional>
+
 #include "vulkan/system/vk_objects.h"
 
 class FString;

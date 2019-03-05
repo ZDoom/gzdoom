@@ -52,4 +52,6 @@ class VkPPTexture
 public:
 	std::unique_ptr<VulkanImage> Image;
 	std::unique_ptr<VulkanImageView> View;
+	std::unique_ptr<VulkanBuffer> Staging;
+	VkImageLayout Layout = VK_IMAGE_LAYOUT_UNDEFINED;
 };

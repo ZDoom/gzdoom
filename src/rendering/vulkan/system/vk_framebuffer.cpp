@@ -583,6 +583,11 @@ VulkanCommandBuffer *VulkanFrameBuffer::GetDrawCommands()
 	return mDrawCommands.get();
 }
 
+unsigned int VulkanFrameBuffer::GetLightBufferBlockSize() const
+{
+	return mLights->GetBlockSize();
+}
+
 void VulkanFrameBuffer::PrintStartupLog()
 {
 	FString deviceType;

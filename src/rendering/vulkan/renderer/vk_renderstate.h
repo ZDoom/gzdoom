@@ -86,6 +86,8 @@ private:
 
 	uint32_t mLastViewpointOffset = 0xffffffff;
 	uint32_t mLastLightBufferOffset = 0xffffffff;
+	uint32_t mLastMatricesOffset = 0xffffffff;
+	uint32_t mLastStreamDataOffset = 0xffffffff;
 	uint32_t mViewpointOffset = 0;
 	uint32_t mLightBufferOffset = 0;
 	uint32_t mMatricesOffset = 0;

@@ -28,6 +28,8 @@ public:
 	VkRenderPassManager *GetRenderPassManager() { return mRenderPassManager.get(); }
 	VkRenderState *GetRenderState() { return mRenderState.get(); }
 
+	unsigned int GetLightBufferBlockSize() const;
+
 	VKDataBuffer *ViewpointUBO = nullptr;
 	VKDataBuffer *LightBufferSSO = nullptr;
 	VKDataBuffer *MatricesUBO = nullptr;

@@ -572,7 +572,7 @@ void VkRenderState::ApplyMaterial()
 
 void VkRenderState::ApplyDynamicSet()
 {
-	if (mViewpointOffset != mLastViewpointOffset || mLightBufferOffset != mLastLightBufferOffset)
+	if (mViewpointOffset != mLastViewpointOffset || mLightBufferOffset != mLastLightBufferOffset || mMatricesOffset != mLastMatricesOffset || mStreamDataOffset != mLastStreamDataOffset)
 	{
 		auto fb = GetVulkanFrameBuffer();
 		auto passManager = fb->GetRenderPassManager();
@@ -582,6 +582,8 @@ void VkRenderState::ApplyDynamicSet()
 
 		mLastViewpointOffset = mViewpointOffset;
 		mLastLightBufferOffset = mLightBufferOffset;
+		mLastMatricesOffset = mMatricesOffset;
+		mLastStreamDataOffset = mStreamDataOffset;
 	}
 }
 

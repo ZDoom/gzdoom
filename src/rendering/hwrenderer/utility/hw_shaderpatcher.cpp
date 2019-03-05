@@ -197,11 +197,16 @@ FString RemoveLayoutLocationDecl(FString code, const char *inoutkeyword)
 		if (matchIndex == -1)
 			break;
 
-		long endIndex = startIndex;
+		long endIndex = matchIndex;
 
 		// Find end of layout declaration
 		while (chars[endIndex] != ')' && chars[endIndex] != 0)
 			endIndex++;
+
+		if (chars[endIndex] == ')')
+			endIndex++;
+		else if (chars[endIndex] == 0)
+			break;
 
 		// Skip whitespace
 		while (IsGlslWhitespace(chars[endIndex]))
@@ -221,7 +226,7 @@ FString RemoveLayoutLocationDecl(FString code, const char *inoutkeyword)
 		if (keywordFound && IsGlslWhitespace(chars[endIndex + i]))
 		{
 			// yes - replace declaration with spaces
-			for (long i = startIndex; i < endIndex; i++)
+			for (long i = matchIndex; i < endIndex; i++)
 				chars[i] = ' ';
 		}
 

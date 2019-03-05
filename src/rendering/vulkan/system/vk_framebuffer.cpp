@@ -99,6 +99,8 @@ void VulkanFrameBuffer::InitializeState()
 
 	gl_vendorstring = "Vulkan";
 	hwcaps = RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE;
+	uniformblockalignment = (unsigned int)device->deviceProperties.limits.minUniformBufferOffsetAlignment;
+	maxuniformblock = device->deviceProperties.limits.maxUniformBufferRange;
 
 	mUploadSemaphore.reset(new VulkanSemaphore(device));
 	mGraphicsCommandPool.reset(new VulkanCommandPool(device, device->graphicsFamily));
@@ -113,8 +115,8 @@ void VulkanFrameBuffer::InitializeState()
 	// To do: move this to HW renderer interface maybe?
 	MatricesUBO = (VKDataBuffer*)CreateDataBuffer(-1, false);
 	StreamUBO = (VKDataBuffer*)CreateDataBuffer(-1, false);
-	MatricesUBO->SetData(UniformBufferAlignment<::MatricesUBO>() * 50000, nullptr, false);
-	StreamUBO->SetData(UniformBufferAlignment<::StreamUBO>() * 200, nullptr, false);
+	MatricesUBO->SetData(UniformBufferAlignedSize<::MatricesUBO>() * 50000, nullptr, false);
+	StreamUBO->SetData(UniformBufferAlignedSize<::StreamUBO>() * 200, nullptr, false);
 
 	mShaderManager.reset(new VkShaderManager(device));
 	mSamplerManager.reset(new VkSamplerManager(device));

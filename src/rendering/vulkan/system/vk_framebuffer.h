@@ -30,6 +30,9 @@ public:
 
 	unsigned int GetLightBufferBlockSize() const;
 
+	template<typename T>
+	int UniformBufferAlignedSize() const { return (sizeof(T) + uniformblockalignment - 1) / uniformblockalignment * uniformblockalignment; }
+
 	VKDataBuffer *ViewpointUBO = nullptr;
 	VKDataBuffer *LightBufferSSO = nullptr;
 	VKDataBuffer *MatricesUBO = nullptr;

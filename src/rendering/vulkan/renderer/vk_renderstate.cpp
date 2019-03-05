@@ -480,16 +480,6 @@ void VkRenderState::ApplyPushConstants()
 }
 
 template<typename T>
-static void CopyToBuffer(uint32_t &offset, const T &data, VKDataBuffer *buffer)
-{
-	if (offset + (UniformBufferAlignment<T>() << 1) < buffer->Size())
-	{
-		offset += UniformBufferAlignment<T>();
-		memcpy(static_cast<uint8_t*>(buffer->Memory()) + offset, &data, sizeof(T));
-	}
-}
-
-template<typename T>
 static void BufferedSet(bool &modified, T &dst, const T &src)
 {
 	if (dst == src)
@@ -533,7 +523,12 @@ void VkRenderState::ApplyMatrices()
 	if (modified)
 	{
 		auto fb = GetVulkanFrameBuffer();
-		CopyToBuffer(mMatricesOffset, mMatrices, fb->MatricesUBO);
+
+		if (mMatricesOffset + (fb->UniformBufferAlignedSize<MatricesUBO>() << 1) < fb->MatricesUBO->Size())
+		{
+			mMatricesOffset += fb->UniformBufferAlignedSize<MatricesUBO>();
+			memcpy(static_cast<uint8_t*>(fb->MatricesUBO->Memory()) + mMatricesOffset, &mMatrices, sizeof(MatricesUBO));
+		}
 	}
 }
 

@@ -108,6 +108,7 @@ CVAR (Bool, storesavepic, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, longsavemessages, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, save_dir, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (Bool, cl_waitforsave, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR (Bool, enablescriptscreenshot, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 EXTERN_CVAR (Float, con_midtime);
 
 //==========================================================================
@@ -1715,7 +1716,7 @@ void G_DoPlayerPop(int playernum)
 	players[playernum].DestroyPSprites();
 }
 
-void G_ScreenShot (char *filename)
+void G_ScreenShot (const char *filename)
 {
 	shotfile = filename;
 	gameaction = ga_screenshot;
@@ -2873,6 +2874,26 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, StartSlideshow)
 	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_NAME(whichone);
 	G_StartSlideshow(self, whichone);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, MakeScreenShot)
+{
+	if (enablescriptscreenshot)
+	{
+		G_ScreenShot("");
+	}
+	return 0;
+}
+
+void G_MakeAutoSave()
+{
+	gameaction = ga_autosave;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, MakeAutoSave)
+{
+	G_MakeAutoSave();
 	return 0;
 }
 

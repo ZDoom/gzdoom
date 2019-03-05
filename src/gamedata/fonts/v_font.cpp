@@ -838,8 +838,17 @@ int stripaccent(int code)
 	}
 	else if (code >= 0x100 && code < 0x180)
 	{
-		static const char accentless[] = "AaAaAaCcCcCcCcDdDdEeEeEeEeEeGgGgGgGgHhHhIiIiIiIiIiIiJjKkkLlLlLlLlLlNnNnNnnNnOoOoOoOoRrRrRrSsSsSsSsTtTtTtUuUuUuUuUuUuWwYyYZzZzZz ";
-		return accentless[code -0x100];
+		// For the double-accented Hungarian letters it makes more sense to first map them to the very similar looking Umlauts.
+		// (And screw the crappy specs here that do not allow UTF-8 multibyte characters here.)
+		if (code == 0x150) code = 0xd6;
+		else if (code == 0x151) code = 0xf6;
+		else if (code == 0x170) code = 0xdc;
+		else if (code == 0x171) code = 0xfc;
+		else
+		{
+			static const char accentless[] = "AaAaAaCcCcCcCcDdDdEeEeEeEeEeGgGgGgGgHhHhIiIiIiIiIiIiJjKkkLlLlLlLlLlNnNnNnnNnOoOoOoOoRrRrRrSsSsSsSsTtTtTtUuUuUuUuUuUuWwYyYZzZzZz ";
+			return accentless[code - 0x100];
+		}
 	}
 	else if (code >= 0x200 && code < 0x21c)
 	{

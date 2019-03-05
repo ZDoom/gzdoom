@@ -180,7 +180,7 @@ void I_Error (const char *error, ...)
 
 	va_start(argptr, error);
 
-	vsprintf (errortext, error, argptr);
+	myvsnprintf (errortext, MAX_ERRORTEXT, error, argptr);
 	va_end (argptr);
 	throw CRecoverableError(errortext);
 }

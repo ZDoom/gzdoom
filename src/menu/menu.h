@@ -363,4 +363,6 @@ DMenuItemBase * CreateListMenuItemPatch(double x, double y, int height, int hotk
 DMenuItemBase * CreateListMenuItemText(double x, double y, int height, int hotkey, const char *text, FFont *font, PalEntry color1, PalEntry color2, FName command, int param);
 DMenuItemBase * CreateOptionMenuItemCommand(const char *label, FName cmd, bool centered = false);
 
+void UpdateVRModes(bool considerQuadBuffered=true);
+
 #endif

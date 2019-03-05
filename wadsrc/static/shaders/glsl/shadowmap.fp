@@ -1,5 +1,5 @@
 
-in vec2 TexCoord;
+layout(location=0) in vec2 TexCoord;
 layout(location=0) out vec4 FragColor;
 
 // A node in an AABB binary tree with lines stored in the leaf nodes

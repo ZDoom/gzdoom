@@ -284,7 +284,7 @@ FString FShaderProgram::PatchShader(ShaderType type, const FString &code, const 
 	patchedCode << "precision highp float;\n";
 
 	patchedCode << "#line 1\n";
-	patchedCode << code;
+	patchedCode << RemoveLayoutLocationDecl(code, type == Vertex ? "out" : "in");
 
 	if (maxGlslVersion < 420)
 	{

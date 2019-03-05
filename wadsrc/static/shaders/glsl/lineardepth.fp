@@ -1,5 +1,5 @@
 
-in vec2 TexCoord;
+layout(location=0) in vec2 TexCoord;
 layout(location=0) out vec4 FragColor;
 
 #if defined(MULTISAMPLE)

@@ -28,6 +28,7 @@
 #include "r_videoscale.h"
 #include "actor.h"
 #include "i_time.h"
+#include "g_game.h"
 #include "gamedata/fonts/v_text.h"
 
 #include "hwrenderer/utility/hw_clock.h"
@@ -48,6 +49,8 @@
 #include "vk_buffers.h"
 #include "vulkan/renderer/vk_renderstate.h"
 #include "vulkan/renderer/vk_renderpass.h"
+#include "vulkan/renderer/vk_postprocess.h"
+#include "vulkan/renderer/vk_renderbuffers.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vulkan/textures/vk_samplers.h"
 #include "vulkan/textures/vk_hwtexture.h"
@@ -105,6 +108,11 @@ void VulkanFrameBuffer::InitializeState()
 	mUploadSemaphore.reset(new VulkanSemaphore(device));
 	mGraphicsCommandPool.reset(new VulkanCommandPool(device, device->graphicsFamily));
 
+	mScreenBuffers.reset(new VkRenderBuffers());
+	mSaveBuffers.reset(new VkRenderBuffers());
+	mActiveRenderBuffers = mScreenBuffers.get();
+
+	mPostprocess.reset(new VkPostprocess());
 	mRenderPassManager.reset(new VkRenderPassManager());
 
 	mVertexData = new FFlatVertexBuffer(GetWidth(), GetHeight());
@@ -149,7 +157,7 @@ void VulkanFrameBuffer::Update()
 
 	//DrawPresentTexture(mOutputLetterbox, true);
 	{
-		auto sceneColor = mRenderPassManager->SceneColor.get();
+		auto sceneColor = mScreenBuffers->SceneColor.get();
 
 		PipelineBarrier barrier0;
 		barrier0.addImage(sceneColor, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT);
@@ -557,7 +565,8 @@ void VulkanFrameBuffer::UpdatePalette()
 
 void VulkanFrameBuffer::BeginFrame()
 {
-	mRenderPassManager->BeginFrame();
+	mScreenBuffers->BeginFrame(screen->mScreenViewport.width, screen->mScreenViewport.height, screen->mSceneViewport.width, screen->mSceneViewport.height);
+	mSaveBuffers->BeginFrame(SAVEPICWIDTH, SAVEPICHEIGHT, SAVEPICWIDTH, SAVEPICHEIGHT);
 }
 
 void VulkanFrameBuffer::Draw2D()

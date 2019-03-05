@@ -1,5 +1,6 @@
 
 #include "vk_renderpass.h"
+#include "vk_renderbuffers.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_framebuffer.h"
@@ -21,53 +22,23 @@ void VkRenderPassManager::Init()
 	CreateDynamicSet();
 }
 
-void VkRenderPassManager::BeginFrame()
+void VkRenderPassManager::RenderBuffersReset()
 {
-	if (!SceneColor || SceneColor->width != SCREENWIDTH || SceneColor->height != SCREENHEIGHT)
-	{
-		auto fb = GetVulkanFrameBuffer();
+	RenderPassSetup.clear();
+}
 
-		RenderPassSetup.clear();
-		SceneColorView.reset();
-		SceneDepthStencilView.reset();
-		SceneDepthView.reset();
-		SceneColor.reset();
-		SceneDepthStencil.reset();
+void VkRenderPassManager::BeginRenderPass(const VkRenderPassKey &key, VulkanCommandBuffer *cmdbuffer)
+{
+	auto buffers = GetVulkanFrameBuffer()->GetBuffers();
 
-		ImageBuilder builder;
-		builder.setSize(SCREENWIDTH, SCREENHEIGHT);
-		builder.setFormat(VK_FORMAT_R16G16B16A16_SFLOAT);
-		builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-		SceneColor = builder.create(fb->device);
+	VkRenderPassSetup *passSetup = GetRenderPass(key);
 
-		builder.setFormat(SceneDepthStencilFormat);
-		builder.setUsage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		if (!builder.isFormatSupported(fb->device))
-		{
-			SceneDepthStencilFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
-			builder.setFormat(SceneDepthStencilFormat);
-			if (!builder.isFormatSupported(fb->device))
-			{
-				I_FatalError("This device does not support any of the required depth stencil image formats.");
-			}
-		}
-		SceneDepthStencil = builder.create(fb->device);
-
-		ImageViewBuilder viewbuilder;
-		viewbuilder.setImage(SceneColor.get(), VK_FORMAT_R16G16B16A16_SFLOAT);
-		SceneColorView = viewbuilder.create(fb->device);
-
-		viewbuilder.setImage(SceneDepthStencil.get(), SceneDepthStencilFormat, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
-		SceneDepthStencilView = viewbuilder.create(fb->device);
-
-		viewbuilder.setImage(SceneDepthStencil.get(), SceneDepthStencilFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
-		SceneDepthView = viewbuilder.create(fb->device);
-
-		PipelineBarrier barrier;
-		barrier.addImage(SceneColor.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
-		barrier.addImage(SceneDepthStencil.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
-		barrier.execute(fb->GetDrawCommands(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
-	}
+	RenderPassBegin beginInfo;
+	beginInfo.setRenderPass(passSetup->RenderPass.get());
+	beginInfo.setRenderArea(0, 0, buffers->GetWidth(), buffers->GetHeight());
+	beginInfo.setFramebuffer(passSetup->Framebuffer.get());
+	cmdbuffer->beginRenderPass(beginInfo);
+	cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->Pipeline.get());
 }
 
 VkRenderPassSetup *VkRenderPassManager::GetRenderPass(const VkRenderPassKey &key)
@@ -181,7 +152,7 @@ void VkRenderPassSetup::CreateRenderPass(const VkRenderPassKey &key)
 	RenderPassBuilder builder;
 	builder.addRgba16fAttachment(false, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 	if (key.DepthTest || key.DepthWrite || key.StencilTest)
-		builder.addDepthStencilAttachment(false, GetVulkanFrameBuffer()->GetRenderPassManager()->SceneDepthStencilFormat, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+		builder.addDepthStencilAttachment(false, GetVulkanFrameBuffer()->GetBuffers()->SceneDepthStencilFormat, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 	builder.addSubpass();
 	builder.addSubpassColorAttachmentRef(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 	if (key.DepthTest || key.DepthWrite || key.StencilTest)
@@ -319,11 +290,12 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 void VkRenderPassSetup::CreateFramebuffer(const VkRenderPassKey &key)
 {
 	auto fb = GetVulkanFrameBuffer();
+	auto buffers = fb->GetBuffers();
 	FramebufferBuilder builder;
 	builder.setRenderPass(RenderPass.get());
-	builder.setSize(SCREENWIDTH, SCREENHEIGHT);
-	builder.addAttachment(fb->GetRenderPassManager()->SceneColorView.get());
+	builder.setSize(buffers->GetWidth(), buffers->GetHeight());
+	builder.addAttachment(buffers->SceneColorView.get());
 	if (key.DepthTest || key.DepthWrite || key.StencilTest)
-		builder.addAttachment(fb->GetRenderPassManager()->SceneDepthStencilView.get());
+		builder.addAttachment(buffers->SceneDepthStencilView.get());
 	Framebuffer = builder.create(GetVulkanFrameBuffer()->device);
 }

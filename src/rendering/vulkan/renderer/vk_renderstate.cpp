@@ -3,6 +3,7 @@
 #include "vulkan/system/vk_framebuffer.h"
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/renderer/vk_renderpass.h"
+#include "vulkan/renderer/vk_renderbuffers.h"
 #include "vulkan/textures/vk_hwtexture.h"
 #include "templates.h"
 #include "doomstat.h"
@@ -243,9 +244,6 @@ void VkRenderState::ApplyDepthBias()
 
 void VkRenderState::ApplyRenderPass(int dt)
 {
-	auto fb = GetVulkanFrameBuffer();
-	auto passManager = fb->GetRenderPassManager();
-
 	// Find a render pass that matches our state
 	VkRenderPassKey passKey;
 	passKey.DrawType = dt;
@@ -279,7 +277,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 
 	if (!mCommandBuffer)
 	{
-		mCommandBuffer = fb->GetDrawCommands();
+		mCommandBuffer = GetVulkanFrameBuffer()->GetDrawCommands();
 		changingRenderPass = true;
 		mScissorChanged = true;
 		mViewportChanged = true;
@@ -293,15 +291,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 
 	if (changingRenderPass)
 	{
-		VkRenderPassSetup *passSetup = passManager->GetRenderPass(passKey);
-
-		RenderPassBegin beginInfo;
-		beginInfo.setRenderPass(passSetup->RenderPass.get());
-		beginInfo.setRenderArea(0, 0, SCREENWIDTH, SCREENHEIGHT);
-		beginInfo.setFramebuffer(passSetup->Framebuffer.get());
-		mCommandBuffer->beginRenderPass(beginInfo);
-		mCommandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->Pipeline.get());
-
+		GetVulkanFrameBuffer()->GetRenderPassManager()->BeginRenderPass(passKey, mCommandBuffer);
 		mRenderPassKey = passKey;
 	}
 }
@@ -329,10 +319,11 @@ void VkRenderState::ApplyScissor()
 		}
 		else
 		{
+			auto buffers = GetVulkanFrameBuffer()->GetBuffers();
 			scissor.offset.x = 0;
 			scissor.offset.y = 0;
-			scissor.extent.width = SCREENWIDTH;
-			scissor.extent.height = SCREENHEIGHT;
+			scissor.extent.width = buffers->GetWidth();
+			scissor.extent.height = buffers->GetHeight();
 		}
 		mCommandBuffer->setScissor(0, 1, &scissor);
 		mScissorChanged = false;
@@ -353,10 +344,11 @@ void VkRenderState::ApplyViewport()
 		}
 		else
 		{
+			auto buffers = GetVulkanFrameBuffer()->GetBuffers();
 			viewport.x = 0.0f;
 			viewport.y = 0.0f;
-			viewport.width = (float)SCREENWIDTH;
-			viewport.height = (float)SCREENHEIGHT;
+			viewport.width = (float)buffers->GetWidth();
+			viewport.height = (float)buffers->GetHeight();
 		}
 		viewport.minDepth = mViewportDepthMin;
 		viewport.maxDepth = mViewportDepthMax;

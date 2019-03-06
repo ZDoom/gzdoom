@@ -318,19 +318,19 @@ VulkanDescriptorSet *VkPostprocess::GetInput(VkPPRenderPassSetup *passSetup, con
 		VulkanSampler *sampler = GetSampler(input.Filter, input.Wrap);
 		TextureImage tex = GetTexture(input.Type, input.Texture);
 
-		write.addCombinedImageSampler(descriptors.get(), index, tex.view, sampler, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		write.addCombinedImageSampler(descriptors.get(), index, tex.view, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-		if (*tex.layout != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+		if (*tex.layout != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 		{
-			barrier.addImage(tex.image, *tex.layout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
-			*tex.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			barrier.addImage(tex.image, *tex.layout, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+			*tex.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			needbarrier = true;
 		}
 	}
 
 	write.updateSets(fb->device);
 	if (needbarrier)
-		barrier.execute(fb->GetDrawCommands(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+		barrier.execute(fb->GetDrawCommands(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
 	mFrameDescriptorSets.push_back(std::move(descriptors));
 	return mFrameDescriptorSets.back().get();

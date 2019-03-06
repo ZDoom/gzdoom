@@ -568,6 +568,7 @@ void VulkanFrameBuffer::BeginFrame()
 {
 	mScreenBuffers->BeginFrame(screen->mScreenViewport.width, screen->mScreenViewport.height, screen->mSceneViewport.width, screen->mSceneViewport.height);
 	mSaveBuffers->BeginFrame(SAVEPICWIDTH, SAVEPICHEIGHT, SAVEPICWIDTH, SAVEPICHEIGHT);
+	mPostprocess->BeginFrame();
 }
 
 void VulkanFrameBuffer::Draw2D()

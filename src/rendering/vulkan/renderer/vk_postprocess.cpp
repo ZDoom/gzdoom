@@ -92,6 +92,19 @@ void VkPostprocess::ClearTonemapPalette()
 	hw_postprocess.Textures.Remove("Tonemap.Palette");
 }
 
+void VkPostprocess::BeginFrame()
+{
+	mFrameDescriptorSets.clear();
+
+	if (!mDescriptorPool)
+	{
+		DescriptorPoolBuilder builder;
+		builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 50);
+		builder.setMaxSets(50);
+		mDescriptorPool = builder.create(GetVulkanFrameBuffer()->device);
+	}
+}
+
 void VkPostprocess::RenderBuffersReset()
 {
 	mRenderPassSetup.clear();
@@ -252,7 +265,9 @@ void VkPostprocess::RenderEffect(const FString &name)
 
 		// Advance to next PP texture if our output was sent there
 		if (step.Output.Type == PPTextureType::NextPipelineTexture)
-			NextTexture();
+		{
+			mCurrentPipelineImage = (mCurrentPipelineImage + 1) % VkRenderBuffers::NumPipelineImages;
+		}
 	}
 }
 
@@ -280,8 +295,8 @@ void VkPostprocess::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDescr
 	cmdbuffer->beginRenderPass(beginInfo);
 	cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->Pipeline.get());
 	cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->PipelineLayout.get(), 0, descriptorSet);
-	cmdbuffer->setViewport(0, 1, &viewport);
 	cmdbuffer->bindVertexBuffers(0, 1, vertexBuffers, offsets);
+	cmdbuffer->setViewport(0, 1, &viewport);
 	if (pushConstantsSize > 0)
 		cmdbuffer->pushConstants(passSetup->PipelineLayout.get(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, pushConstantsSize, pushConstants);
 	cmdbuffer->draw(4, 1, FFlatVertexBuffer::PRESENT_INDEX, 0);
@@ -290,104 +305,117 @@ void VkPostprocess::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDescr
 
 VulkanDescriptorSet *VkPostprocess::GetInput(VkPPRenderPassSetup *passSetup, const TArray<PPTextureInput> &textures)
 {
-#if 0
-	// Bind input textures
-	for (unsigned int index = 0; index < step.Textures.Size(); index++)
+	auto fb = GetVulkanFrameBuffer();
+	auto descriptors = mDescriptorPool->allocate(passSetup->DescriptorLayout.get());
+
+	WriteDescriptors write;
+	PipelineBarrier barrier;
+	bool needbarrier = false;
+
+	for (unsigned int index = 0; index < textures.Size(); index++)
 	{
-		const PPTextureInput &input = step.Textures[index];
+		const PPTextureInput &input = textures[index];
 		VulkanSampler *sampler = GetSampler(input.Filter, input.Wrap);
+		TextureImage tex = GetTexture(input.Type, input.Texture);
 
-		switch (input.Type)
+		write.addCombinedImageSampler(descriptors.get(), index, tex.view, sampler, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+		if (*tex.layout != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
 		{
-		default:
-		case PPTextureType::CurrentPipelineTexture:
-			BindCurrentTexture(index, filter, wrap);
-			break;
-
-		case PPTextureType::NextPipelineTexture:
-			I_FatalError("PPTextureType::NextPipelineTexture not allowed as input\n");
-			break;
-
-		case PPTextureType::PPTexture:
-			GLTextures[input.Texture].Bind(index, filter, wrap);
-			break;
-
-		case PPTextureType::SceneColor:
-			BindSceneColorTexture(index);
-			break;
-
-		case PPTextureType::SceneFog:
-			BindSceneFogTexture(index);
-			break;
-
-		case PPTextureType::SceneNormal:
-			BindSceneNormalTexture(index);
-			break;
-
-		case PPTextureType::SceneDepth:
-			BindSceneDepthTexture(index);
-			break;
+			barrier.addImage(tex.image, *tex.layout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+			*tex.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			needbarrier = true;
 		}
 	}
-#endif
-	return nullptr;
+
+	write.updateSets(fb->device);
+	if (needbarrier)
+		barrier.execute(fb->GetDrawCommands(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
+	mFrameDescriptorSets.push_back(std::move(descriptors));
+	return mFrameDescriptorSets.back().get();
 }
 
 VulkanFramebuffer *VkPostprocess::GetOutput(VkPPRenderPassSetup *passSetup, const PPOutput &output)
 {
 	auto fb = GetVulkanFrameBuffer();
 
-	VulkanImage *image;
-	VulkanImageView *view;
-	VkImageLayout *layout;
+	TextureImage tex = GetTexture(output.Type, output.Texture);
 
-	if (output.Type == PPTextureType::CurrentPipelineTexture || output.Type == PPTextureType::NextPipelineTexture)
-	{
-		int idx = mCurrentPipelineImage;
-		if (output.Type == PPTextureType::NextPipelineTexture)
-			idx = (idx + 1) % VkRenderBuffers::NumPipelineImages;
-
-		image = fb->GetBuffers()->PipelineImage[idx].get();
-		view = fb->GetBuffers()->PipelineView[idx].get();
-		layout = &fb->GetBuffers()->PipelineLayout[idx];
-	}
-	else if (output.Type == PPTextureType::PPTexture)
-	{
-		image = mTextures[output.Texture]->Image.get();
-		view = mTextures[output.Texture]->View.get();
-		layout = &mTextures[output.Texture]->Layout;
-	}
-	else if (output.Type == PPTextureType::SceneColor)
-	{
-		image = fb->GetBuffers()->SceneColor.get();
-		view = fb->GetBuffers()->SceneColorView.get();
-		layout = &fb->GetBuffers()->SceneColorLayout;
-	}
-	else
-	{
-		I_FatalError("Unsupported postprocess output type\n");
-		return nullptr;
-	}
-
-	if (*layout != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+	if (*tex.layout != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
 	{
 		PipelineBarrier barrier;
-		barrier.addImage(image, *layout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+		barrier.addImage(tex.image, *tex.layout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
 		barrier.execute(fb->GetDrawCommands(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-		*layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		*tex.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	}
 
-	auto &framebuffer = passSetup->Framebuffers[view];
+	auto &framebuffer = passSetup->Framebuffers[tex.view];
 	if (!framebuffer)
 	{
 		FramebufferBuilder builder;
 		builder.setRenderPass(passSetup->RenderPass.get());
-		builder.setSize(image->width, image->height);
-		builder.addAttachment(view);
+		builder.setSize(tex.image->width, tex.image->height);
+		builder.addAttachment(tex.view);
 		framebuffer = builder.create(GetVulkanFrameBuffer()->device);
 	}
 
 	return framebuffer.get();
+}
+
+VkPostprocess::TextureImage VkPostprocess::GetTexture(const PPTextureType &type, const PPTextureName &name)
+{
+	auto fb = GetVulkanFrameBuffer();
+	TextureImage tex = {};
+
+	if (type == PPTextureType::CurrentPipelineTexture || type == PPTextureType::NextPipelineTexture)
+	{
+		int idx = mCurrentPipelineImage;
+		if (type == PPTextureType::NextPipelineTexture)
+			idx = (idx + 1) % VkRenderBuffers::NumPipelineImages;
+
+		tex.image = fb->GetBuffers()->PipelineImage[idx].get();
+		tex.view = fb->GetBuffers()->PipelineView[idx].get();
+		tex.layout = &fb->GetBuffers()->PipelineLayout[idx];
+	}
+	else if (type == PPTextureType::PPTexture)
+	{
+		tex.image = mTextures[name]->Image.get();
+		tex.view = mTextures[name]->View.get();
+		tex.layout = &mTextures[name]->Layout;
+	}
+	else if (type == PPTextureType::SceneColor)
+	{
+		tex.image = fb->GetBuffers()->SceneColor.get();
+		tex.view = fb->GetBuffers()->SceneColorView.get();
+		tex.layout = &fb->GetBuffers()->SceneColorLayout;
+	}
+#if 0
+	else if (type == PPTextureType::SceneNormal)
+	{
+		tex.image = fb->GetBuffers()->SceneNormal.get();
+		tex.view = fb->GetBuffers()->SceneNormalView.get();
+		tex.layout = &fb->GetBuffers()->SceneNormalLayout;
+	}
+	else if (type == PPTextureType::SceneFog)
+	{
+		tex.image = fb->GetBuffers()->SceneFog.get();
+		tex.view = fb->GetBuffers()->SceneFogView.get();
+		tex.layout = &fb->GetBuffers()->SceneFogLayout;
+	}
+	else if (type == PPTextureType::SceneDepth)
+	{
+		tex.image = fb->GetBuffers()->SceneDepthStencil.get();
+		tex.view = fb->GetBuffers()->SceneDepthView.get();
+		tex.layout = &fb->GetBuffers()->SceneDepthStencilLayout;
+	}
+#endif
+	else
+	{
+		I_FatalError("VkPostprocess::GetTexture not implemented yet for this texture type");
+	}
+
+	return tex;
 }
 
 VulkanSampler *VkPostprocess::GetSampler(PPFilterMode filter, PPWrapMode wrap)
@@ -407,10 +435,6 @@ VulkanSampler *VkPostprocess::GetSampler(PPFilterMode filter, PPWrapMode wrap)
 }
 
 void VkPostprocess::NextEye(int eyeCount)
-{
-}
-
-void VkPostprocess::NextTexture()
 {
 }
 

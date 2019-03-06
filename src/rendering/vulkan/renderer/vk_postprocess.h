@@ -34,6 +34,7 @@ public:
 	VkPostprocess();
 	~VkPostprocess();
 
+	void BeginFrame();
 	void RenderBuffersReset();
 
 	void PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D);
@@ -48,17 +49,26 @@ private:
 	FString LoadShaderCode(const FString &lumpname, const FString &defines, int version);
 	void RenderEffect(const FString &name);
 	void NextEye(int eyeCount);
-	void NextTexture();
 	void RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDescriptorSet *descriptorSet, VulkanFramebuffer *framebuffer, int x, int y, int width, int height, const void *pushConstants, uint32_t pushConstantsSize);
 
 	VulkanDescriptorSet *GetInput(VkPPRenderPassSetup *passSetup, const TArray<PPTextureInput> &textures);
 	VulkanFramebuffer *GetOutput(VkPPRenderPassSetup *passSetup, const PPOutput &output);
 	VulkanSampler *GetSampler(PPFilterMode filter, PPWrapMode wrap);
 
+	struct TextureImage
+	{
+		VulkanImage *image;
+		VulkanImageView *view;
+		VkImageLayout *layout;
+	};
+	TextureImage GetTexture(const PPTextureType &type, const PPTextureName &name);
+
 	std::map<PPTextureName, std::unique_ptr<VkPPTexture>> mTextures;
 	std::map<PPShaderName, std::unique_ptr<VkPPShader>> mShaders;
 	std::array<std::unique_ptr<VulkanSampler>, 16> mSamplers;
 	std::map<VkPPRenderPassKey, std::unique_ptr<VkPPRenderPassSetup>> mRenderPassSetup;
+	std::unique_ptr<VulkanDescriptorPool> mDescriptorPool;
+	std::vector<std::unique_ptr<VulkanDescriptorSet>> mFrameDescriptorSets;
 	int mCurrentPipelineImage = 0;
 };
 
@@ -88,11 +98,7 @@ public:
 	std::unique_ptr<VulkanPipelineLayout> PipelineLayout;
 	std::unique_ptr<VulkanRenderPass> RenderPass;
 	std::unique_ptr<VulkanPipeline> Pipeline;
-
-	//std::unique_ptr<VulkanDescriptorPool> DescriptorPool;
-
 	std::map<VulkanImageView *, std::unique_ptr<VulkanFramebuffer>> Framebuffers;
-	//std::unique_ptr<VulkanDescriptorSet> DescriptorSet;
 
 private:
 	void CreateDescriptorLayout(const VkPPRenderPassKey &key);

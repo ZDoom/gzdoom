@@ -335,31 +335,59 @@ VulkanDescriptorSet *VkPostprocess::GetInput(VkPPRenderPassSetup *passSetup, con
 
 VulkanFramebuffer *VkPostprocess::GetOutput(VkPPRenderPassSetup *passSetup, const PPOutput &output)
 {
-#if 0
-	switch (output.Type)
+	auto fb = GetVulkanFrameBuffer();
+
+	VulkanImage *image;
+	VulkanImageView *view;
+	VkImageLayout *layout;
+
+	if (output.Type == PPTextureType::CurrentPipelineTexture || output.Type == PPTextureType::NextPipelineTexture)
 	{
-	default:
-		I_FatalError("Unsupported postprocess output type\n");
-		break;
+		int idx = mCurrentPipelineImage;
+		if (output.Type == PPTextureType::NextPipelineTexture)
+			idx = (idx + 1) % VkRenderBuffers::NumPipelineImages;
 
-	case PPTextureType::CurrentPipelineTexture:
-		BindCurrentFB();
-		break;
-
-	case PPTextureType::NextPipelineTexture:
-		BindNextFB();
-		break;
-
-	case PPTextureType::PPTexture:
-		mTextures[step.Output.Texture]->View
-		break;
-
-	case PPTextureType::SceneColor:
-		BindSceneFB(false);
-		break;
+		image = fb->GetBuffers()->PipelineImage[idx].get();
+		view = fb->GetBuffers()->PipelineView[idx].get();
+		layout = &fb->GetBuffers()->PipelineLayout[idx];
 	}
-#endif
-	return nullptr;
+	else if (output.Type == PPTextureType::PPTexture)
+	{
+		image = mTextures[output.Texture]->Image.get();
+		view = mTextures[output.Texture]->View.get();
+		layout = &mTextures[output.Texture]->Layout;
+	}
+	else if (output.Type == PPTextureType::SceneColor)
+	{
+		image = fb->GetBuffers()->SceneColor.get();
+		view = fb->GetBuffers()->SceneColorView.get();
+		layout = &fb->GetBuffers()->SceneColorLayout;
+	}
+	else
+	{
+		I_FatalError("Unsupported postprocess output type\n");
+		return nullptr;
+	}
+
+	if (*layout != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+	{
+		PipelineBarrier barrier;
+		barrier.addImage(image, *layout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+		barrier.execute(fb->GetDrawCommands(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+		*layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	}
+
+	auto &framebuffer = passSetup->Framebuffers[view];
+	if (!framebuffer)
+	{
+		FramebufferBuilder builder;
+		builder.setRenderPass(passSetup->RenderPass.get());
+		builder.setSize(image->width, image->height);
+		builder.addAttachment(view);
+		framebuffer = builder.create(GetVulkanFrameBuffer()->device);
+	}
+
+	return framebuffer.get();
 }
 
 VulkanSampler *VkPostprocess::GetSampler(PPFilterMode filter, PPWrapMode wrap)

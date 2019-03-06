@@ -91,7 +91,7 @@ public:
 
 	//std::unique_ptr<VulkanDescriptorPool> DescriptorPool;
 
-	//std::unique_ptr<VulkanFramebuffer> Framebuffer;
+	std::map<VulkanImageView *, std::unique_ptr<VulkanFramebuffer>> Framebuffers;
 	//std::unique_ptr<VulkanDescriptorSet> DescriptorSet;
 
 private:

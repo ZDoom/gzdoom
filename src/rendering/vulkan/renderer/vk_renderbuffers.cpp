@@ -41,6 +41,31 @@ void VkRenderBuffers::BeginFrame(int width, int height, int sceneWidth, int scen
 
 void VkRenderBuffers::CreatePipeline(int width, int height)
 {
+	auto fb = GetVulkanFrameBuffer();
+
+	for (int i = 0; i < NumPipelineImages; i++)
+	{
+		PipelineImage[i].reset();
+		PipelineView[i].reset();
+	}
+
+	PipelineBarrier barrier;
+	for (int i = 0; i < NumPipelineImages; i++)
+	{
+		ImageBuilder builder;
+		builder.setSize(width, height);
+		builder.setFormat(VK_FORMAT_R16G16B16A16_SFLOAT);
+		builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+		PipelineImage[i] = builder.create(fb->device);
+
+		ImageViewBuilder viewbuilder;
+		viewbuilder.setImage(PipelineImage[i].get(), VK_FORMAT_R16G16B16A16_SFLOAT);
+		PipelineView[i] = viewbuilder.create(fb->device);
+
+		barrier.addImage(PipelineImage[i].get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+		PipelineLayout[i] = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	}
+	barrier.execute(fb->GetDrawCommands(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
 }
 
 void VkRenderBuffers::CreateScene(int width, int height, int samples)
@@ -54,7 +79,7 @@ void VkRenderBuffers::CreateScene(int width, int height, int samples)
 	SceneDepthStencil.reset();
 
 	ImageBuilder builder;
-	builder.setSize(SCREENWIDTH, SCREENHEIGHT);
+	builder.setSize(width, height);
 	builder.setFormat(VK_FORMAT_R16G16B16A16_SFLOAT);
 	builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 	SceneColor = builder.create(fb->device);

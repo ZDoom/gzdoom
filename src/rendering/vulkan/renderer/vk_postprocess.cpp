@@ -237,7 +237,7 @@ void VkPostprocess::RenderEffect(const FString &name)
 		VkPPRenderPassKey key;
 		key.BlendMode = step.BlendMode;
 		key.InputTextures = step.Textures.Size();
-		key.Uniforms = step.Uniforms.Data.Size() != 0;
+		key.Uniforms = step.Uniforms.Data.Size();
 		key.Shader = mShaders[step.ShaderName].get();
 		key.OutputFormat = (step.Output.Type == PPTextureType::PPTexture) ? mTextures[step.Output.Texture]->Format : VK_FORMAT_R16G16B16A16_SFLOAT;
 

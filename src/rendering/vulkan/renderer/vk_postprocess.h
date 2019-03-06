@@ -59,6 +59,7 @@ private:
 	std::map<PPShaderName, std::unique_ptr<VkPPShader>> mShaders;
 	std::array<std::unique_ptr<VulkanSampler>, 16> mSamplers;
 	std::map<VkPPRenderPassKey, std::unique_ptr<VkPPRenderPassSetup>> mRenderPassSetup;
+	int mCurrentPipelineImage = 0;
 };
 
 class VkPPShader

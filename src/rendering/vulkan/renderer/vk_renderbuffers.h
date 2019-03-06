@@ -21,8 +21,12 @@ public:
 	std::unique_ptr<VulkanImageView> SceneColorView;
 	std::unique_ptr<VulkanImageView> SceneDepthStencilView;
 	std::unique_ptr<VulkanImageView> SceneDepthView;
-
 	VkFormat SceneDepthStencilFormat = VK_FORMAT_D24_UNORM_S8_UINT;
+
+	static const int NumPipelineImages = 2;
+	std::unique_ptr<VulkanImage> PipelineImage[NumPipelineImages];
+	std::unique_ptr<VulkanImageView> PipelineView[NumPipelineImages];
+	VkImageLayout PipelineLayout[NumPipelineImages];
 
 private:
 	void CreatePipeline(int width, int height);

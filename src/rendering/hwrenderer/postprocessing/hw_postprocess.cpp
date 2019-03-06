@@ -16,6 +16,7 @@ Postprocess::Postprocess()
 	Managers.Push(new PPColormap());
 	Managers.Push(new PPTonemap());
 	Managers.Push(new PPAmbientOcclusion());
+	Managers.Push(new PPPresent());
 }
 
 Postprocess::~Postprocess()
@@ -853,4 +854,41 @@ void PPAmbientOcclusion::UpdateSteps()
 	}
 
 	hw_postprocess.Effects["AmbientOccludeScene"] = steps;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+void PPPresent::DeclareShaders()
+{
+	hw_postprocess.Shaders["Present"] = { "shaders/glsl/present.fp", "", PresentUniforms::Desc() };
+	hw_postprocess.Shaders["Present.Checker3D"] = { "shaders/glsl/present_checker3d.fp", "", PresentUniforms::Desc() };
+	hw_postprocess.Shaders["Present.Column3D"] = { "shaders/glsl/present_column3d.fp", "", PresentUniforms::Desc() };
+	hw_postprocess.Shaders["Present.Row3D"] = { "shaders/glsl/present_row3d.fp", "", PresentUniforms::Desc() };
+}
+
+void PPPresent::UpdateTextures()
+{
+	auto &tex = hw_postprocess.Textures["PresentDither"];
+	if (!tex.Data)
+	{
+		static const float data[64] =
+		{
+			 .0078125, .2578125, .1328125, .3828125, .0234375, .2734375, .1484375, .3984375,
+			 .7578125, .5078125, .8828125, .6328125, .7734375, .5234375, .8984375, .6484375,
+			 .0703125, .3203125, .1953125, .4453125, .0859375, .3359375, .2109375, .4609375,
+			 .8203125, .5703125, .9453125, .6953125, .8359375, .5859375, .9609375, .7109375,
+			 .0390625, .2890625, .1640625, .4140625, .0546875, .3046875, .1796875, .4296875,
+			 .7890625, .5390625, .9140625, .6640625, .8046875, .5546875, .9296875, .6796875,
+			 .1015625, .3515625, .2265625, .4765625, .1171875, .3671875, .2421875, .4921875,
+			 .8515625, .6015625, .9765625, .7265625, .8671875, .6171875, .9921875, .7421875,
+		};
+
+		std::shared_ptr<void> pixels(new float[64], [](void *p) { delete[](float*)p; });
+		memcpy(pixels.get(), data, 64 * sizeof(float));
+		tex = { 8, 8, PixelFormat::R32f, pixels };
+	}
+}
+
+void PPPresent::UpdateSteps()
+{
 }

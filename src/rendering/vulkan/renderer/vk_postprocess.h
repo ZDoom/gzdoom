@@ -43,6 +43,8 @@ public:
 	void BlurScene(float gameinfobluramount);
 	void ClearTonemapPalette();
 
+	void DrawPresentTexture(const IntRect &box, bool applyGamma, bool clearBorders);
+
 private:
 	void UpdateEffectTextures();
 	void CompileEffectShaders();
@@ -98,7 +100,7 @@ public:
 	std::unique_ptr<VulkanPipelineLayout> PipelineLayout;
 	std::unique_ptr<VulkanRenderPass> RenderPass;
 	std::unique_ptr<VulkanPipeline> Pipeline;
-	std::map<VulkanImageView *, std::unique_ptr<VulkanFramebuffer>> Framebuffers;
+	std::map<VkImageView, std::unique_ptr<VulkanFramebuffer>> Framebuffers;
 
 private:
 	void CreateDescriptorLayout(const VkPPRenderPassKey &key);

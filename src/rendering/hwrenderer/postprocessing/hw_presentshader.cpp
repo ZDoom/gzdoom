@@ -30,7 +30,7 @@
 
 void FPresentShaderBase::Init(const char * vtx_shader_name, const char * program_name)
 {
-	FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
+	FString prolog = Uniforms.CreateDeclaration("Uniforms", PresentUniforms::Desc());
 
 	mShader.reset(screen->CreateShaderProgram());
 	mShader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquadscale.vp", prolog, 330);

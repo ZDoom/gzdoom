@@ -5,6 +5,7 @@
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_framebuffer.h"
 #include "vulkan/system/vk_buffers.h"
+#include "vulkan/system/vk_swapchain.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/postprocessing/hw_presentshader.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
@@ -13,6 +14,8 @@
 #include "hwrenderer/data/flatvertices.h"
 #include "r_videoscale.h"
 #include "w_wad.h"
+
+EXTERN_CVAR(Int, gl_dither_bpc)
 
 VkPostprocess::VkPostprocess()
 {
@@ -47,6 +50,53 @@ void VkPostprocess::PostProcessScene(int fixedcm, const std::function<void()> &a
 	RenderEffect("LensDistortScene");
 	RenderEffect("ApplyFXAA");
 	//mCustomPostProcessShaders->Run("scene");
+}
+
+void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool clearBorders)
+{
+	auto fb = GetVulkanFrameBuffer();
+
+	hw_postprocess.DeclareShaders();
+	hw_postprocess.UpdateTextures();
+	hw_postprocess.UpdateSteps();
+	CompileEffectShaders();
+	UpdateEffectTextures();
+
+	PresentUniforms uniforms;
+	if (!applyGamma /*|| framebuffer->IsHWGammaActive()*/)
+	{
+		uniforms.InvGamma = 1.0f;
+		uniforms.Contrast = 1.0f;
+		uniforms.Brightness = 0.0f;
+		uniforms.Saturation = 1.0f;
+	}
+	else
+	{
+		uniforms.InvGamma = 1.0f / clamp<float>(Gamma, 0.1f, 4.f);
+		uniforms.Contrast = clamp<float>(vid_contrast, 0.1f, 3.f);
+		uniforms.Brightness = clamp<float>(vid_brightness, -0.8f, 0.8f);
+		uniforms.Saturation = clamp<float>(vid_saturation, -15.0f, 15.f);
+		uniforms.GrayFormula = static_cast<int>(gl_satformula);
+	}
+	uniforms.ColorScale = (gl_dither_bpc == -1) ? 255.0f : (float)((1 << gl_dither_bpc) - 1);
+	uniforms.Scale = { screen->mScreenViewport.width / (float)fb->GetBuffers()->GetWidth(), screen->mScreenViewport.height / (float)fb->GetBuffers()->GetHeight() };
+
+	PPStep step;
+	step.ShaderName = "Present";
+	step.Uniforms.Set(uniforms);
+	step.Viewport = box;
+	//step.SetInputCurrent(0, ViewportLinearScale() ? PPFilterMode::Linear : PPFilterMode::Nearest);
+	step.SetInputSceneColor(0, ViewportLinearScale() ? PPFilterMode::Linear : PPFilterMode::Nearest);
+	step.SetInputTexture(1, "PresentDither", PPFilterMode::Nearest, PPWrapMode::Repeat);
+	step.SetOutputSwapChain();
+	step.SetNoBlend();
+	//if (clearBorders) step.SetClearBorders();
+
+	TArray<PPStep> steps;
+	steps.Push(step);
+	hw_postprocess.Effects["Present"] = steps;
+
+	RenderEffect("Present");
 }
 
 void VkPostprocess::AmbientOccludeScene(float m5)
@@ -342,7 +392,7 @@ VulkanFramebuffer *VkPostprocess::GetOutput(VkPPRenderPassSetup *passSetup, cons
 
 	TextureImage tex = GetTexture(output.Type, output.Texture);
 
-	if (*tex.layout != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+	if (tex.layout && *tex.layout != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
 	{
 		PipelineBarrier barrier;
 		barrier.addImage(tex.image, *tex.layout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
@@ -350,13 +400,28 @@ VulkanFramebuffer *VkPostprocess::GetOutput(VkPPRenderPassSetup *passSetup, cons
 		*tex.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	}
 
-	auto &framebuffer = passSetup->Framebuffers[tex.view];
+	VkImageView view;
+	int w, h;
+	if (tex.view)
+	{
+		view = tex.view->view;
+		w = tex.image->width;
+		h = tex.image->height;
+	}
+	else
+	{
+		view = fb->device->swapChain->swapChainImageViews[fb->device->presentImageIndex];
+		w = fb->device->swapChain->actualExtent.width;
+		h = fb->device->swapChain->actualExtent.height;
+	}
+
+	auto &framebuffer = passSetup->Framebuffers[view];
 	if (!framebuffer)
 	{
 		FramebufferBuilder builder;
 		builder.setRenderPass(passSetup->RenderPass.get());
-		builder.setSize(tex.image->width, tex.image->height);
-		builder.addAttachment(tex.view);
+		builder.setSize(w, h);
+		builder.addAttachment(view);
 		framebuffer = builder.create(GetVulkanFrameBuffer()->device);
 	}
 
@@ -410,6 +475,12 @@ VkPostprocess::TextureImage VkPostprocess::GetTexture(const PPTextureType &type,
 		tex.layout = &fb->GetBuffers()->SceneDepthStencilLayout;
 	}
 #endif
+	else if (type == PPTextureType::SwapChain)
+	{
+		tex.image = nullptr;
+		tex.view = nullptr;
+		tex.layout = nullptr;
+	}
 	else
 	{
 		I_FatalError("VkPostprocess::GetTexture not implemented yet for this texture type");
@@ -443,6 +514,9 @@ void VkPostprocess::NextEye(int eyeCount)
 VkPPRenderPassSetup::VkPPRenderPassSetup(const VkPPRenderPassKey &key)
 {
 	CreateDescriptorLayout(key);
+	CreatePipelineLayout(key);
+	CreateRenderPass(key);
+	CreatePipeline(key);
 }
 
 void VkPPRenderPassSetup::CreateDescriptorLayout(const VkPPRenderPassKey &key)

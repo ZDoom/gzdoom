@@ -156,7 +156,8 @@ void VulkanFrameBuffer::Update()
 
 	mRenderState->EndRenderPass();
 
-	//DrawPresentTexture(mOutputLetterbox, true);
+	mPostprocess->DrawPresentTexture(mOutputLetterbox, true, true);
+#if 0
 	{
 		auto sceneColor = mScreenBuffers->SceneColor.get();
 
@@ -188,6 +189,7 @@ void VulkanFrameBuffer::Update()
 		barrier1.addImage(device->swapChain->swapChainImages[device->presentImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_ACCESS_TRANSFER_WRITE_BIT, 0);
 		barrier1.execute(GetDrawCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
 	}
+#endif
 
 	mDrawCommands->end();
 
@@ -554,14 +556,26 @@ void VulkanFrameBuffer::UnbindTexUnit(int no)
 
 void VulkanFrameBuffer::TextureFilterChanged()
 {
+	if (mSamplerManager)
+	{
+		// Destroy the texture descriptors as they used the old samplers
+		for (VkHardwareTexture *cur = VkHardwareTexture::First; cur; cur = cur->Next)
+			cur->Reset();
+
+		mSamplerManager->SetTextureFilterMode();
+	}
 }
 
 void VulkanFrameBuffer::BlurScene(float amount)
 {
+	if (mPostprocess)
+		mPostprocess->BlurScene(amount);
 }
 
 void VulkanFrameBuffer::UpdatePalette()
 {
+	if (mPostprocess)
+		mPostprocess->ClearTonemapPalette();
 }
 
 void VulkanFrameBuffer::BeginFrame()

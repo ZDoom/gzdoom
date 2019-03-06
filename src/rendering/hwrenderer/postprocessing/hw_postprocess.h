@@ -11,7 +11,7 @@ typedef IntRect PPViewport;
 
 enum class PPFilterMode { Nearest, Linear };
 enum class PPWrapMode { Clamp, Repeat };
-enum class PPTextureType { CurrentPipelineTexture, NextPipelineTexture, PPTexture, SceneColor, SceneFog, SceneNormal, SceneDepth };
+enum class PPTextureType { CurrentPipelineTexture, NextPipelineTexture, PPTexture, SceneColor, SceneFog, SceneNormal, SceneDepth, SwapChain };
 
 class PPTextureInput
 {
@@ -141,6 +141,12 @@ public:
 	void SetOutputSceneColor()
 	{
 		Output.Type = PPTextureType::SceneColor;
+		Output.Texture = "";
+	}
+
+	void SetOutputSwapChain()
+	{
+		Output.Type = PPTextureType::SwapChain;
 		Output.Texture = "";
 	}
 
@@ -596,4 +602,40 @@ private:
 
 	enum { NumAmbientRandomTextures = 3 };
 	PPTextureName AmbientRandomTexture[NumAmbientRandomTextures];
+};
+
+struct PresentUniforms
+{
+	float InvGamma;
+	float Contrast;
+	float Brightness;
+	float Saturation;
+	int GrayFormula;
+	int WindowPositionParity; // top-of-window might not be top-of-screen
+	FVector2 Scale;
+	float ColorScale;
+	float Padding1, Padding2, Padding3;
+
+	static std::vector<UniformFieldDesc> Desc()
+	{
+		return
+		{
+			{ "InvGamma", UniformType::Float, offsetof(PresentUniforms, InvGamma) },
+			{ "Contrast", UniformType::Float, offsetof(PresentUniforms, Contrast) },
+			{ "Brightness", UniformType::Float, offsetof(PresentUniforms, Brightness) },
+			{ "Saturation", UniformType::Float, offsetof(PresentUniforms, Saturation) },
+			{ "GrayFormula", UniformType::Int, offsetof(PresentUniforms, GrayFormula) },
+			{ "WindowPositionParity", UniformType::Int, offsetof(PresentUniforms, WindowPositionParity) },
+			{ "UVScale", UniformType::Vec2, offsetof(PresentUniforms, Scale) },
+			{ "ColorScale", UniformType::Float, offsetof(PresentUniforms, ColorScale) },
+		};
+	}
+};
+
+class PPPresent : public PPEffectManager
+{
+public:
+	void DeclareShaders() override;
+	void UpdateTextures() override;
+	void UpdateSteps() override;
 };

@@ -32,6 +32,7 @@
  */
 
 #include "gl_load/gl_load.h"
+#include "volk/volk.h"
 
 #include "i_common.h"
 
@@ -659,4 +660,20 @@ void I_SetMainWindowVisible(bool visible)
 void I_SetWindowTitle(const char* title)
 {
 	SystemBaseFrameBuffer::SetWindowTitle(title);
+}
+
+
+void I_GetVulkanDrawableSize(int *width, int *height)
+{
+	assert(!"Not implemented");
+}
+
+bool I_GetVulkanPlatformExtensions(unsigned int *count, const char **names)
+{
+	assert(!"Not implemented");
+}
+
+bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface)
+{
+	assert(!"Not implemented");
 }

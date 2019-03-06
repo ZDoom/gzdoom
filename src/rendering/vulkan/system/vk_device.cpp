@@ -21,17 +21,11 @@
 //--------------------------------------------------------------------------
 //
 
-#ifdef _WIN32
-#define VK_USE_PLATFORM_WIN32_KHR
-#endif
-
 #include "volk/volk.h"
 
 #ifdef _WIN32
 #undef max
 #undef min
-
-extern HWND Window;
 #endif
 
 #include <vector>
@@ -47,6 +41,10 @@ extern HWND Window;
 #include "version.h"
 #include "doomerrors.h"
 #include "gamedata/fonts/v_text.h"
+
+void I_GetVulkanDrawableSize(int *width, int *height);
+bool I_GetVulkanPlatformExtensions(unsigned int *count, const char **names);
+bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface);
 
 EXTERN_CVAR(Bool, vid_vsync);
 
@@ -75,13 +73,9 @@ VulkanDevice::VulkanDevice()
 		createDevice();
 		createAllocator();
 
-#ifdef _WIN32
-		RECT clientRect = { 0 };
-		GetClientRect(Window, &clientRect);
-		swapChain = std::make_unique<VulkanSwapChain>(this, clientRect.right, clientRect.bottom, vid_vsync);
-#else
-		assert(!"Implement platform-specific swapchain size getter");
-#endif
+		int width, height;
+		I_GetVulkanDrawableSize(&width, &height);
+		swapChain = std::make_unique<VulkanSwapChain>(this, width, height, vid_vsync);
 
 		createSemaphores();
 	}
@@ -99,15 +93,11 @@ VulkanDevice::~VulkanDevice()
 
 void VulkanDevice::windowResized()
 {
-#ifdef _WIN32
-	RECT clientRect = { 0 };
-	GetClientRect(Window, &clientRect);
+	int width, height;
+	I_GetVulkanDrawableSize(&width, &height);
 
 	swapChain.reset();
-	swapChain = std::make_unique<VulkanSwapChain>(this, clientRect.right, clientRect.bottom, vid_vsync);
-#else
-	assert(!"Implement platform-specific swapchain resize");
-#endif
+	swapChain = std::make_unique<VulkanSwapChain>(this, width, height, vid_vsync);
 }
 
 void VulkanDevice::waitPresent()
@@ -211,12 +201,19 @@ void VulkanDevice::createInstance()
 	appInfo.engineVersion = VK_MAKE_VERSION(ENG_MAJOR, ENG_MINOR, ENG_REVISION);
 	appInfo.apiVersion = VK_API_VERSION_1_0;
 
-	std::vector<const char *> enabledExtensions = { VK_KHR_SURFACE_EXTENSION_NAME };
-#ifdef _WIN32
-	enabledExtensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
-#else
-	assert(!"Add platform-specific surface extension");
-#endif
+	std::vector<const char *> enabledExtensions;
+
+	if (!I_GetVulkanPlatformExtensions(&extensionCount, nullptr))
+	{
+		throw std::runtime_error("Cannot obtain number of Vulkan extensions"); 
+	}
+
+	enabledExtensions.resize(extensionCount);
+
+	if (!I_GetVulkanPlatformExtensions(&extensionCount, &enabledExtensions[0]))
+	{
+		throw std::runtime_error("Cannot obtain list of Vulkan extensions"); 
+	}
 
 	std::vector<const char*> validationLayers;
 	std::string debugLayer = "VK_LAYER_LUNARG_standard_validation";
@@ -269,22 +266,10 @@ void VulkanDevice::createInstance()
 
 void VulkanDevice::createSurface()
 {
-#ifdef _WIN32
-	VkWin32SurfaceCreateInfoKHR windowCreateInfo;
-	windowCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-    windowCreateInfo.pNext = nullptr;
-    windowCreateInfo.flags = 0;
-	windowCreateInfo.hwnd = Window;
-	windowCreateInfo.hinstance = GetModuleHandle(nullptr);
-
-	VkResult result = vkCreateWin32SurfaceKHR(instance, &windowCreateInfo, nullptr, &surface);
-	if (result != VK_SUCCESS)
+	if (!I_CreateVulkanSurface(instance, &surface))
+	{
 		throw std::runtime_error("Could not create vulkan surface");
-#elif defined __APPLE__
-	// todo
-#else
-	// todo
-#endif
+	}
 }
 
 void VulkanDevice::selectPhysicalDevice()

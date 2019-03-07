@@ -313,7 +313,7 @@ void VulkanDevice::selectPhysicalDevice()
 		for (const auto& queueFamily : queueFamilies)
 		{
 			// Only accept a decent GPU for now..
-			VkQueueFlags gpuFlags = (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT | VK_QUEUE_SPARSE_BINDING_BIT);
+			VkQueueFlags gpuFlags = (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_TRANSFER_BIT);
 			if (queueFamily.queueCount > 0 && (queueFamily.queueFlags & gpuFlags) == gpuFlags)
 			{
 				graphicsFamily = i;

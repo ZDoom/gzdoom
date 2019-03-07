@@ -28,6 +28,7 @@ class Weapon : StateProvider
 	Ammo Ammo1, Ammo2;						// In-inventory instance variables
 	Weapon SisterWeapon;
 	double FOVScale;
+	double LookScale;						// Multiplier for look sensitivity (like FOV scaling but without the zooming)
 	int Crosshair;							// 0 to use player's crosshair
 	bool GivenAsMorphWeapon;
 	bool bAltFire;							// Set when this weapon's alternate fire is used.

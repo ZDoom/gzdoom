@@ -757,6 +757,7 @@ static int LookAdjust(int look)
 		players[consoleplayer].ReadyWeapon != NULL)			// No adjustment if no weapon.
 	{
 		auto scale = players[consoleplayer].ReadyWeapon->FloatVar(NAME_FOVScale);
+		scale *= players[consoleplayer].ReadyWeapon->FloatVar(NAME_LookScale);
 		if (scale > 0)		// No adjustment if it is non-positive.
 		{
 			look = int(look * scale);

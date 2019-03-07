@@ -73,7 +73,6 @@ VulkanFrameBuffer::VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevi
 	Super(hMonitor, fullscreen) 
 {
 	device = dev;
-	SetViewportRects(nullptr);
 	InitPalette();
 }
 
@@ -580,6 +579,7 @@ void VulkanFrameBuffer::UpdatePalette()
 
 void VulkanFrameBuffer::BeginFrame()
 {
+	SetViewportRects(nullptr);
 	mScreenBuffers->BeginFrame(screen->mScreenViewport.width, screen->mScreenViewport.height, screen->mSceneViewport.width, screen->mSceneViewport.height);
 	mSaveBuffers->BeginFrame(SAVEPICWIDTH, SAVEPICHEIGHT, SAVEPICWIDTH, SAVEPICHEIGHT);
 	mPostprocess->BeginFrame();

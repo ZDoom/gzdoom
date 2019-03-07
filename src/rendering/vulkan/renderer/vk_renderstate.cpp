@@ -596,9 +596,6 @@ void VkRenderState::EndRenderPass()
 		mCommandBuffer = nullptr;
 		mRenderPassKey = {};
 
-		mMatricesOffset = 0;
-		mStreamDataOffset = 0;
-		mDataIndex = -1;
 		mLastViewpointOffset = 0xffffffff;
 		mLastLightBufferOffset = 0xffffffff;
 		mLastVertexBuffer = nullptr;
@@ -609,4 +606,11 @@ void VkRenderState::EndRenderPass()
 		mLastModelMatrixEnabled = true;
 		mLastTextureMatrixEnabled = true;
 	}
+}
+
+void VkRenderState::EndFrame()
+{
+	mMatricesOffset = 0;
+	mStreamDataOffset = 0;
+	mDataIndex = -1;
 }

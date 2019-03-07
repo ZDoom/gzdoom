@@ -62,6 +62,7 @@ public:
 	void TextureFilterChanged() override;
 	void BeginFrame() override;
 	void BlurScene(float amount) override;
+	void PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D) override;
 
 	IHardwareTexture *CreateHardwareTexture() override;
 	FModelRenderer *CreateModelRenderer(int mli) override;

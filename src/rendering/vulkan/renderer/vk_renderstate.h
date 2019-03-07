@@ -43,6 +43,7 @@ public:
 
 	void Bind(int bindingpoint, uint32_t offset);
 	void EndRenderPass();
+	void EndFrame();
 
 private:
 	void Apply(int dt);

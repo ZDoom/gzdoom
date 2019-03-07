@@ -150,45 +150,15 @@ void VulkanFrameBuffer::Update()
 
 	device->beginFrame();
 
+	GetPostprocess()->SetActiveRenderTarget();
+
 	Draw2D();
 	Clear2D();
 
 	mRenderState->EndRenderPass();
+	mRenderState->EndFrame();
 
 	mPostprocess->DrawPresentTexture(mOutputLetterbox, true, true);
-#if 0
-	{
-		auto sceneColor = mScreenBuffers->SceneColor.get();
-
-		PipelineBarrier barrier0;
-		barrier0.addImage(sceneColor, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT);
-		barrier0.addImage(device->swapChain->swapChainImages[device->presentImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT);
-		barrier0.execute(GetDrawCommands(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
-
-		VkImageBlit blit = {};
-		blit.srcOffsets[0] = { 0, 0, 0 };
-		blit.srcOffsets[1] = { sceneColor->width, sceneColor->height, 1 };
-		blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		blit.srcSubresource.mipLevel = 0;
-		blit.srcSubresource.baseArrayLayer = 0;
-		blit.srcSubresource.layerCount = 1;
-		blit.dstOffsets[0] = { 0, 0, 0 };
-		blit.dstOffsets[1] = { (int32_t)device->swapChain->actualExtent.width, (int32_t)device->swapChain->actualExtent.height, 1 };
-		blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		blit.dstSubresource.mipLevel = 0;
-		blit.dstSubresource.baseArrayLayer = 0;
-		blit.dstSubresource.layerCount = 1;
-		GetDrawCommands()->blitImage(
-			sceneColor->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-			device->swapChain->swapChainImages[device->presentImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			1, &blit, VK_FILTER_NEAREST);
-
-		PipelineBarrier barrier1;
-		barrier1.addImage(sceneColor, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT, 0);
-		barrier1.addImage(device->swapChain->swapChainImages[device->presentImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_ACCESS_TRANSFER_WRITE_BIT, 0);
-		barrier1.execute(GetDrawCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
-	}
-#endif
 
 	mDrawCommands->end();
 
@@ -353,16 +323,16 @@ sector_t *VulkanFrameBuffer::RenderViewpoint(FRenderViewpoint &mainvp, AActor * 
 		const auto &eye = vrmode->mEyes[eye_ix];
 		screen->SetViewportRects(bounds);
 
-#if 0
 		if (mainview) // Bind the scene frame buffer and turn on draw buffers used by ssao
 		{
+			mRenderPassManager->SetRenderTarget(GetBuffers()->SceneColorView.get(), GetBuffers()->GetWidth(), GetBuffers()->GetHeight());
+#if 0
 			bool useSSAO = (gl_ssao != 0);
-			mBuffers->BindSceneFB(useSSAO);
 			GetRenderState()->SetPassType(useSSAO ? GBUFFER_PASS : NORMAL_PASS);
 			GetRenderState()->EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
 			GetRenderState()->Apply();
-		}
 #endif
+		}
 
 		auto di = HWDrawInfo::StartDrawInfo(mainvp.ViewLevel, nullptr, mainvp, nullptr);
 		auto &vp = di->Viewpoint;
@@ -394,13 +364,11 @@ sector_t *VulkanFrameBuffer::RenderViewpoint(FRenderViewpoint &mainvp, AActor * 
 				GetRenderState()->SetPassType(NORMAL_PASS);
 				GetRenderState()->EnableDrawBuffers(1);
 			}
+#endif
 
-			mBuffers->BlitSceneToTexture(); // Copy the resulting scene to the current post process texture
+			mPostprocess->BlitSceneToTexture(); // Copy the resulting scene to the current post process texture
 
 			PostProcessScene(cm, [&]() { di->DrawEndScene2D(mainvp.sector, *GetRenderState()); });
-#else
-			di->DrawEndScene2D(mainvp.sector, *GetRenderState());
-#endif
 
 			PostProcess.Unclock();
 		}
@@ -476,6 +444,11 @@ void VulkanFrameBuffer::DrawScene(HWDrawInfo *di, int drawmode)
 	screen->mPortalState->EndFrame(di, *GetRenderState());
 	recursion--;
 	di->RenderTranslucent(*GetRenderState());
+}
+
+void VulkanFrameBuffer::PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)
+{
+	mPostprocess->PostProcessScene(fixedcm, afterBloomDrawEndScene2D);
 }
 
 uint32_t VulkanFrameBuffer::GetCaps()

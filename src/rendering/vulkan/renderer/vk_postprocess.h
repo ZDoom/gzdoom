@@ -37,12 +37,14 @@ public:
 	void BeginFrame();
 	void RenderBuffersReset();
 
+	void SetActiveRenderTarget();
 	void PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D);
 
 	void AmbientOccludeScene(float m5);
 	void BlurScene(float gameinfobluramount);
 	void ClearTonemapPalette();
 
+	void BlitSceneToTexture();
 	void DrawPresentTexture(const IntRect &box, bool applyGamma, bool clearBorders);
 
 private:

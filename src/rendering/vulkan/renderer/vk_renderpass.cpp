@@ -1,6 +1,7 @@
 
 #include "vk_renderpass.h"
 #include "vk_renderbuffers.h"
+#include "vk_renderstate.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_framebuffer.h"
@@ -27,16 +28,38 @@ void VkRenderPassManager::RenderBuffersReset()
 	RenderPassSetup.clear();
 }
 
+void VkRenderPassManager::SetRenderTarget(VulkanImageView *view, int width, int height)
+{
+	GetVulkanFrameBuffer()->GetRenderState()->EndRenderPass();
+	mRenderTargetView = view;
+	mRenderTargetWidth = width;
+	mRenderTargetHeight = height;
+}
+
 void VkRenderPassManager::BeginRenderPass(const VkRenderPassKey &key, VulkanCommandBuffer *cmdbuffer)
 {
-	auto buffers = GetVulkanFrameBuffer()->GetBuffers();
+	auto fb = GetVulkanFrameBuffer();
+	auto buffers = fb->GetBuffers();
 
 	VkRenderPassSetup *passSetup = GetRenderPass(key);
+
+	auto &framebuffer = passSetup->Framebuffer[mRenderTargetView->view];
+	if (!framebuffer)
+	{
+		auto buffers = fb->GetBuffers();
+		FramebufferBuilder builder;
+		builder.setRenderPass(passSetup->RenderPass.get());
+		builder.setSize(mRenderTargetWidth, mRenderTargetHeight);
+		builder.addAttachment(mRenderTargetView->view);
+		if (key.DepthTest || key.DepthWrite || key.StencilTest)
+			builder.addAttachment(buffers->SceneDepthStencilView.get());
+		framebuffer = builder.create(GetVulkanFrameBuffer()->device);
+	}
 
 	RenderPassBegin beginInfo;
 	beginInfo.setRenderPass(passSetup->RenderPass.get());
 	beginInfo.setRenderArea(0, 0, buffers->GetWidth(), buffers->GetHeight());
-	beginInfo.setFramebuffer(passSetup->Framebuffer.get());
+	beginInfo.setFramebuffer(framebuffer.get());
 	cmdbuffer->beginRenderPass(beginInfo);
 	cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->Pipeline.get());
 }
@@ -144,7 +167,6 @@ VkRenderPassSetup::VkRenderPassSetup(const VkRenderPassKey &key)
 {
 	CreateRenderPass(key);
 	CreatePipeline(key);
-	CreateFramebuffer(key);
 }
 
 void VkRenderPassSetup::CreateRenderPass(const VkRenderPassKey &key)
@@ -259,17 +281,4 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 	builder.setLayout(fb->GetRenderPassManager()->PipelineLayout.get());
 	builder.setRenderPass(RenderPass.get());
 	Pipeline = builder.create(fb->device);
-}
-
-void VkRenderPassSetup::CreateFramebuffer(const VkRenderPassKey &key)
-{
-	auto fb = GetVulkanFrameBuffer();
-	auto buffers = fb->GetBuffers();
-	FramebufferBuilder builder;
-	builder.setRenderPass(RenderPass.get());
-	builder.setSize(buffers->GetWidth(), buffers->GetHeight());
-	builder.addAttachment(buffers->SceneColorView.get());
-	if (key.DepthTest || key.DepthWrite || key.StencilTest)
-		builder.addAttachment(buffers->SceneDepthStencilView.get());
-	Framebuffer = builder.create(GetVulkanFrameBuffer()->device);
 }

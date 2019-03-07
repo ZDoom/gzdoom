@@ -59,6 +59,7 @@ class Weapon : StateProvider
 	property BobRangeY: BobRangeY;
 	property SlotNumber: SlotNumber;
 	property SlotPriority: SlotPriority;
+	property LookScale: LookScale;
 
 	flagdef NoAutoFire: WeaponFlags, 0;			// weapon does not autofire
 	flagdef ReadySndHalf: WeaponFlags, 1;		// ready sound is played ~1/2 the time

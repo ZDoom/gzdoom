@@ -126,8 +126,8 @@ void GLFlat::CreateSkyboxVertices(FFlatVertex *vert)
 
 	vert[0].Set(minx, z, miny, uvals[rot & 3], vvals[rot & 3]);
 	vert[1].Set(minx, z, maxy, uvals[(rot + 1) & 3], vvals[(rot + 1) & 3]);
-	vert[2].Set(maxx, z, maxy, uvals[(rot + 2) & 3], vvals[(rot + 2) & 3]);
-	vert[3].Set(maxx, z, miny, uvals[(rot + 3) & 3], vvals[(rot + 3) & 3]);
+	vert[2].Set(maxx, z, miny, uvals[(rot + 3) & 3], vvals[(rot + 3) & 3]);
+	vert[3].Set(maxx, z, maxy, uvals[(rot + 2) & 3], vvals[(rot + 2) & 3]);
 }
 
 //==========================================================================
@@ -258,20 +258,20 @@ void GLFlat::DrawFloodPlanes(HWDrawInfo *di, FRenderState &state)
 		state.SetEffect(EFF_STENCIL);
 		state.EnableTexture(false);
 		state.SetStencil(0, SOP_Increment, SF_ColorMaskOff);
-		state.Draw(DT_TriangleFan, fnode->vertexindex, 4);
+		state.Draw(DT_TriangleStrip, fnode->vertexindex, 4);
 
 		// Draw projected plane into stencil
 		state.EnableTexture(true);
 		state.SetEffect(EFF_NONE);
 		state.SetStencil(1, SOP_Keep, SF_DepthMaskOff);
 		state.EnableDepthTest(false);
-		state.Draw(DT_TriangleFan, fnode->vertexindex + 4, 4);
+		state.Draw(DT_TriangleStrip, fnode->vertexindex + 4, 4);
 
 		// clear stencil
 		state.SetEffect(EFF_STENCIL);
 		state.EnableTexture(false);
 		state.SetStencil(1, SOP_Decrement, SF_ColorMaskOff | SF_DepthMaskOff);
-		state.Draw(DT_TriangleFan, fnode->vertexindex, 4);
+		state.Draw(DT_TriangleStrip, fnode->vertexindex, 4);
 
 		// restore old stencil op.
 		state.EnableTexture(true);
@@ -330,7 +330,7 @@ void GLFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 		{
 			state.SetMaterial(gltexture, CLAMP_XY, 0, -1);
 			state.SetLightIndex(dynlightindex);
-			state.Draw(DT_TriangleFan,iboindex, 4);
+			state.Draw(DT_TriangleStrip,iboindex, 4);
 			flatvertices += 4;
 			flatprimitives++;
 		}

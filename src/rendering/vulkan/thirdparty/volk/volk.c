@@ -2,6 +2,11 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #endif
 
+#ifdef __APPLE__
+#define VK_USE_PLATFORM_MACOS_MVK
+#endif
+
+
 /* This file is part of volk library; see volk.h for version/license details */
 #include "volk.h"
 

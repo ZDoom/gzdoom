@@ -32,6 +32,8 @@
  */
 
 #include "gl_load/gl_load.h"
+
+#define VK_USE_PLATFORM_MACOS_MVK
 #include "volk/volk.h"
 
 #include "i_common.h"
@@ -53,6 +55,8 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/textures/gl_samplers.h"
+
+#include "vulkan/system/vk_framebuffer.h"
 
 
 @implementation NSWindow(ExitAppOnClose)
@@ -200,19 +204,51 @@ namespace
 // ---------------------------------------------------------------------------
 
 
-class CocoaVideo : public IVideo
+@interface VulkanCocoaView : NSView
 {
-public:
-	virtual DFrameBuffer* CreateFrameBuffer() override
-	{
-		auto fb = new OpenGLRenderer::OpenGLFrameBuffer(nullptr, fullscreen);
+	NSCursor* m_cursor;
+}
 
-		fb->SetMode(fullscreen, vid_hidpi);
-		fb->SetSize(fb->GetClientWidth(), fb->GetClientHeight());
+- (void)setCursor:(NSCursor*)cursor;
 
-		return fb;
-	}
-};
+@end
+
+
+@implementation VulkanCocoaView
+
+- (void)resetCursorRects
+{
+	[super resetCursorRects];
+
+	NSCursor* const cursor = nil == m_cursor
+		? [NSCursor arrowCursor]
+		: m_cursor;
+
+	[self addCursorRect:[self bounds]
+				 cursor:cursor];
+}
+
+- (void)setCursor:(NSCursor*)cursor
+{
+	m_cursor = cursor;
+}
+
+-(BOOL) wantsUpdateLayer
+{
+	return YES;
+}
+
++(Class) layerClass
+{
+	return NSClassFromString(@"CAMetalLayer");
+}
+
+-(CALayer*) makeBackingLayer
+{
+	return [self.class.layerClass layer];
+}
+
+@end
 
 
 // ---------------------------------------------------------------------------
@@ -273,7 +309,117 @@ NSOpenGLPixelFormat* CreatePixelFormat()
 	return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
 }
 
+void SetupOpenGLView(CocoaWindow* window)
+{
+	NSOpenGLPixelFormat* pixelFormat = CreatePixelFormat();
+
+	if (nil == pixelFormat)
+	{
+		I_FatalError("Cannot create OpenGL pixel format, graphics hardware is not supported");
+	}
+
+	// Create OpenGL context and view
+
+	const NSRect contentRect = [window contentRectForFrameRect:[window frame]];
+	OpenGLCocoaView* glView = [[OpenGLCocoaView alloc] initWithFrame:contentRect
+														 pixelFormat:pixelFormat];
+	[[glView openGLContext] makeCurrentContext];
+
+	[window setContentView:glView];
+
+	// To be able to use OpenGL functions in SetMode()
+	ogl_LoadFunctions();
+}
+
 } // unnamed namespace
+
+
+// ---------------------------------------------------------------------------
+
+
+class CocoaVideo : public IVideo
+{
+public:
+	CocoaVideo()
+	{
+		ms_isVulkanSupported = true; // todo
+	}
+
+	~CocoaVideo()
+	{
+		delete m_vulkanDevice;
+
+		[ms_window dealloc];
+		ms_window = nil;
+	}
+
+	virtual DFrameBuffer* CreateFrameBuffer() override
+	{
+		assert(ms_window == nil);
+		ms_window = CreateWindow(STYLE_MASK_WINDOWED);
+
+		SystemBaseFrameBuffer *fb = nullptr;
+
+		if (ms_isVulkanSupported)
+		{
+			const NSRect contentRect = [ms_window contentRectForFrameRect:[ms_window frame]];
+
+			NSView* vulkanView = [[VulkanCocoaView alloc] initWithFrame:contentRect];
+			[vulkanView setWantsLayer:YES];
+
+			[ms_window setContentView:vulkanView];
+		}
+		else
+		{
+			SetupOpenGLView(ms_window);
+		}
+
+		try
+		{
+			m_vulkanDevice = new VulkanDevice();
+			fb = new VulkanFrameBuffer(nullptr, fullscreen, m_vulkanDevice);
+		}
+		catch (std::exception const&)
+		{
+			ms_isVulkanSupported = false;
+
+			SetupOpenGLView(ms_window);
+		}
+
+		if (fb == nullptr)
+		{
+			fb = new OpenGLRenderer::OpenGLFrameBuffer(0, fullscreen);
+		}
+
+		fb->SetWindow(ms_window);
+		fb->SetMode(fullscreen, vid_hidpi);
+		fb->SetSize(fb->GetClientWidth(), fb->GetClientHeight());
+
+		return fb;
+	}
+
+	static CocoaWindow* GetWindow()
+	{
+		return ms_window;
+	}
+
+	static bool IsVulkanSupported()
+	{
+		return ms_isVulkanSupported;
+	}
+
+private:
+	VulkanDevice *m_vulkanDevice = nullptr;
+
+	static CocoaWindow* ms_window;
+
+	static bool ms_isVulkanSupported;
+};
+
+
+CocoaWindow* CocoaVideo::ms_window;
+
+bool CocoaVideo::ms_isVulkanSupported;
 
 
 // ---------------------------------------------------------------------------
@@ -286,7 +432,7 @@ SystemBaseFrameBuffer::SystemBaseFrameBuffer(void*, const bool fullscreen)
 : DFrameBuffer(vid_defwidth, vid_defheight)
 , m_fullscreen(false)
 , m_hiDPI(false)
-, m_window(CreateWindow(STYLE_MASK_WINDOWED))
+, m_window(nullptr)
 {
 	SetFlash(0, 0);
 
@@ -308,8 +454,6 @@ SystemBaseFrameBuffer::~SystemBaseFrameBuffer()
 	[nc removeObserver:m_window
 				  name:NSWindowDidEndLiveResizeNotification
 				object:nil];
-
-	[m_window dealloc];
 }
 
 bool SystemBaseFrameBuffer::IsFullscreen()
@@ -491,24 +635,6 @@ void SystemBaseFrameBuffer::SetWindowTitle(const char* title)
 SystemGLFrameBuffer::SystemGLFrameBuffer(void *hMonitor, bool fullscreen)
 : SystemBaseFrameBuffer(hMonitor, fullscreen)
 {
-	NSOpenGLPixelFormat* pixelFormat = CreatePixelFormat();
-
-	if (nil == pixelFormat)
-	{
-		I_FatalError("Cannot create OpenGL pixel format, graphics hardware is not supported");
-	}
-
-	// Create OpenGL context and view
-
-	const NSRect contentRect = [m_window contentRectForFrameRect:[m_window frame]];
-	OpenGLCocoaView* glView = [[OpenGLCocoaView alloc] initWithFrame:contentRect
-														 pixelFormat:pixelFormat];
-	[[glView openGLContext] makeCurrentContext];
-
-	[m_window setContentView:glView];
-
-	// To be able to use OpenGL functions in SetMode()
-	ogl_LoadFunctions();
 }
 
 
@@ -692,15 +818,62 @@ void I_SetWindowTitle(const char* title)
 
 void I_GetVulkanDrawableSize(int *width, int *height)
 {
-	assert(!"Not implemented");
+	NSWindow* const window = CocoaVideo::GetWindow();
+	assert(window != nil);
+
+	const NSSize size = I_GetContentViewSize(window);
+
+	if (width != nullptr)
+	{
+		*width = int(size.width);
+	}
+
+	if (height != nullptr)
+	{
+		*height = int(size.height);
+	}
 }
 
 bool I_GetVulkanPlatformExtensions(unsigned int *count, const char **names)
 {
-	assert(!"Not implemented");
+	static const char* extensions[] =
+	{
+		VK_KHR_SURFACE_EXTENSION_NAME,
+		VK_MVK_MACOS_SURFACE_EXTENSION_NAME
+	};
+	static const unsigned int extensionCount = static_cast<unsigned int>(sizeof extensions / sizeof extensions[0]);
+
+	if (count == nullptr && names == nullptr)
+	{
+		return false;
+	}
+	else if (names == nullptr)
+	{
+		*count = extensionCount;
+		return true;
+	}
+	else
+	{
+		const bool result = *count >= extensionCount;
+		*count = std::min(*count, extensionCount);
+
+		for (unsigned int i = 0; i < *count; ++i)
+		{
+			names[i] = extensions[i];
+		}
+
+		return result;
+	}
 }
 
 bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface)
 {
-	assert(!"Not implemented");
+	VkMacOSSurfaceCreateInfoMVK windowCreateInfo;
+	windowCreateInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
+	windowCreateInfo.pNext = nullptr;
+	windowCreateInfo.flags = 0;
+	windowCreateInfo.pView = [[CocoaVideo::GetWindow() contentView] layer];
+
+	const VkResult result = vkCreateMacOSSurfaceMVK(instance, &windowCreateInfo, nullptr, surface);
+	return result == VK_SUCCESS;
 }

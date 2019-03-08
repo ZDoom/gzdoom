@@ -65,6 +65,8 @@ public:
 	static void SetWindowVisible(bool visible);
 	static void SetWindowTitle(const char* title);
 
+	void SetWindow(CocoaWindow* window) { m_window = window; }
+
 protected:
 	SystemBaseFrameBuffer() {}
 

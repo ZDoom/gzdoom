@@ -51,15 +51,14 @@ public:
 	SystemBaseFrameBuffer(void *hMonitor, bool fullscreen);
 	~SystemBaseFrameBuffer();
 
-	virtual bool IsFullscreen();
-	virtual void SetVSync(bool vsync);
+	bool IsFullscreen() override;
 
 	int GetClientWidth() override;
 	int GetClientHeight() override;
 	void ToggleFullscreen(bool yes) override;
 	void SetWindowSize(int width, int height) override;
 
-	void SetMode(bool fullscreen, bool hiDPI);
+	virtual void SetMode(bool fullscreen, bool hiDPI);
 
 	static void UseHiDPI(bool hiDPI);
 	static void SetCursor(NSCursor* cursor);
@@ -69,12 +68,6 @@ public:
 protected:
 	SystemBaseFrameBuffer() {}
 
-	void SwapBuffers();
-
-	void SetGammaTable(uint16_t* table);
-	void ResetGammaTable();
-
-private:
 	void SetFullscreenMode();
 	void SetWindowedMode();
 
@@ -82,12 +75,6 @@ private:
 	bool m_hiDPI;
 
 	CocoaWindow* m_window;
-
-	static const uint32_t GAMMA_CHANNEL_SIZE = 256;
-	static const uint32_t GAMMA_CHANNEL_COUNT = 3;
-	static const uint32_t GAMMA_TABLE_SIZE = GAMMA_CHANNEL_SIZE * GAMMA_CHANNEL_COUNT;
-
-	uint16_t m_originalGamma[GAMMA_TABLE_SIZE];
 
 	int GetTitleBarHeight() const;
 
@@ -100,11 +87,15 @@ class SystemGLFrameBuffer : public SystemBaseFrameBuffer
 	typedef SystemBaseFrameBuffer Super;
 
 public:
-	SystemGLFrameBuffer(void *hMonitor, bool fullscreen)
-	: SystemBaseFrameBuffer(hMonitor, fullscreen)
-	{}
+	SystemGLFrameBuffer(void *hMonitor, bool fullscreen);
+
+	void SetVSync(bool vsync) override;
+
+	void SetMode(bool fullscreen, bool hiDPI) override;
 
 protected:
+	void SwapBuffers();
+
 	SystemGLFrameBuffer() {}
 };
 

@@ -165,19 +165,17 @@ namespace
 // ---------------------------------------------------------------------------
 
 
-@interface CocoaView : NSOpenGLView
+@interface OpenGLCocoaView : NSOpenGLView
 {
 	NSCursor* m_cursor;
 }
-
-- (void)resetCursorRects;
 
 - (void)setCursor:(NSCursor*)cursor;
 
 @end
 
 
-@implementation CocoaView
+@implementation OpenGLCocoaView
 
 - (void)resetCursorRects
 {
@@ -216,11 +214,6 @@ public:
 	}
 };
 
-
-// ---------------------------------------------------------------------------
-
-
-EXTERN_CVAR(Float, Gamma)
 
 // ---------------------------------------------------------------------------
 
@@ -297,27 +290,8 @@ SystemBaseFrameBuffer::SystemBaseFrameBuffer(void*, const bool fullscreen)
 {
 	SetFlash(0, 0);
 
-	NSOpenGLPixelFormat* pixelFormat = CreatePixelFormat();
-
-	if (nil == pixelFormat)
-	{
-		I_FatalError("Cannot create OpenGL pixel format, graphics hardware is not supported");
-	}
-
-	// Create OpenGL context and view
-
-	const NSRect contentRect = [m_window contentRectForFrameRect:[m_window frame]];
-	NSOpenGLView* glView = [[CocoaView alloc] initWithFrame:contentRect
-												pixelFormat:pixelFormat];
-	[[glView openGLContext] makeCurrentContext];
-
-	[m_window setContentView:glView];
-
 	assert(frameBuffer == nullptr);
 	frameBuffer = this;
-
-	// To be able to use OpenGL functions in SetMode()
-	ogl_LoadFunctions();
 
 	FConsoleWindow::GetInstance().Show(false);
 }
@@ -334,6 +308,8 @@ SystemBaseFrameBuffer::~SystemBaseFrameBuffer()
 	[nc removeObserver:m_window
 				  name:NSWindowDidEndLiveResizeNotification
 				object:nil];
+
+	[m_window dealloc];
 }
 
 bool SystemBaseFrameBuffer::IsFullscreen()
@@ -377,20 +353,6 @@ int SystemBaseFrameBuffer::GetTitleBarHeight() const
 	return titleBarHeight;
 }
 
-
-void SystemBaseFrameBuffer::SetVSync(bool vsync)
-{
-	const GLint value = vsync ? 1 : 0;
-
-	[[NSOpenGLContext currentContext] setValues:&value
-								   forParameter:NSOpenGLCPSwapInterval];
-}
-
-
-void SystemBaseFrameBuffer::SwapBuffers()
-{
-	[[NSOpenGLContext currentContext] flushBuffer];
-}
 
 int SystemBaseFrameBuffer::GetClientWidth()
 {
@@ -454,6 +416,113 @@ void SystemBaseFrameBuffer::SetWindowedMode()
 
 void SystemBaseFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 {
+	if (fullscreen)
+	{
+		SetFullscreenMode();
+	}
+	else
+	{
+		SetWindowedMode();
+	}
+
+	[m_window updateTitle];
+
+	if (![m_window isKeyWindow])
+	{
+		[m_window makeKeyAndOrderFront:nil];
+	}
+
+	m_fullscreen = fullscreen;
+	m_hiDPI      = hiDPI;
+}
+
+
+void SystemBaseFrameBuffer::UseHiDPI(const bool hiDPI)
+{
+	if (frameBuffer != nullptr)
+	{
+		frameBuffer->SetMode(frameBuffer->m_fullscreen, hiDPI);
+	}
+}
+
+void SystemBaseFrameBuffer::SetCursor(NSCursor* cursor)
+{
+	if (frameBuffer != nullptr)
+	{
+		NSWindow* const window = frameBuffer->m_window;
+		id view = [window contentView];
+
+		[view setCursor:cursor];
+		[window invalidateCursorRectsForView:view];
+	}
+}
+
+void SystemBaseFrameBuffer::SetWindowVisible(bool visible)
+{
+	if (frameBuffer != nullptr)
+	{
+		if (visible)
+		{
+			[frameBuffer->m_window orderFront:nil];
+		}
+		else
+		{
+			[frameBuffer->m_window orderOut:nil];
+		}
+
+		I_SetNativeMouse(!visible);
+	}
+}
+
+void SystemBaseFrameBuffer::SetWindowTitle(const char* title)
+{
+	if (frameBuffer != nullptr)
+	{
+		NSString* const nsTitle = nullptr == title ? nil :
+			[NSString stringWithCString:title encoding:NSISOLatin1StringEncoding];
+		[frameBuffer->m_window setTitle:nsTitle];
+	}
+}
+
+
+// ---------------------------------------------------------------------------
+
+
+SystemGLFrameBuffer::SystemGLFrameBuffer(void *hMonitor, bool fullscreen)
+: SystemBaseFrameBuffer(hMonitor, fullscreen)
+{
+	NSOpenGLPixelFormat* pixelFormat = CreatePixelFormat();
+
+	if (nil == pixelFormat)
+	{
+		I_FatalError("Cannot create OpenGL pixel format, graphics hardware is not supported");
+	}
+
+	// Create OpenGL context and view
+
+	const NSRect contentRect = [m_window contentRectForFrameRect:[m_window frame]];
+	OpenGLCocoaView* glView = [[OpenGLCocoaView alloc] initWithFrame:contentRect
+														 pixelFormat:pixelFormat];
+	[[glView openGLContext] makeCurrentContext];
+
+	[m_window setContentView:glView];
+
+	// To be able to use OpenGL functions in SetMode()
+	ogl_LoadFunctions();
+}
+
+
+void SystemGLFrameBuffer::SetVSync(bool vsync)
+{
+	const GLint value = vsync ? 1 : 0;
+
+	[[NSOpenGLContext currentContext] setValues:&value
+								   forParameter:NSOpenGLCPSwapInterval];
+}
+
+
+void SystemGLFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
+{
 	NSOpenGLView* const glView = [m_window contentView];
 	[glView setWantsBestResolutionOpenGLSurface:hiDPI];
 
@@ -486,51 +555,9 @@ void SystemBaseFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 }
 
 
-void SystemBaseFrameBuffer::UseHiDPI(const bool hiDPI)
+void SystemGLFrameBuffer::SwapBuffers()
 {
-	if (frameBuffer != nullptr)
-	{
-		frameBuffer->SetMode(frameBuffer->m_fullscreen, hiDPI);
-	}
-}
-
-void SystemBaseFrameBuffer::SetCursor(NSCursor* cursor)
-{
-	if (frameBuffer != nullptr)
-	{
-		NSWindow*  const window = frameBuffer->m_window;
-		CocoaView* const view   = [window contentView];
-
-		[view setCursor:cursor];
-		[window invalidateCursorRectsForView:view];
-	}
-}
-
-void SystemBaseFrameBuffer::SetWindowVisible(bool visible)
-{
-	if (frameBuffer != nullptr)
-	{
-		if (visible)
-		{
-			[frameBuffer->m_window orderFront:nil];
-		}
-		else
-		{
-			[frameBuffer->m_window orderOut:nil];
-		}
-
-		I_SetNativeMouse(!visible);
-	}
-}
-
-void SystemBaseFrameBuffer::SetWindowTitle(const char* title)
-{
-	if (frameBuffer != nullptr)
-	{
-		NSString* const nsTitle = nullptr == title ? nil :
-			[NSString stringWithCString:title encoding:NSISOLatin1StringEncoding];
-		[frameBuffer->m_window setTitle:nsTitle];
-	}
+	[[NSOpenGLContext currentContext] flushBuffer];
 }
 
 

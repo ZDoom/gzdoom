@@ -272,6 +272,16 @@ void VulkanDevice::createSurface()
 	}
 }
 
+bool VulkanDevice::checkFeatures(const VkPhysicalDeviceFeatures &f)
+{
+	return
+		f.samplerAnisotropy == VK_TRUE &&
+		f.shaderClipDistance == VK_TRUE &&
+		f.fragmentStoresAndAtomics == VK_TRUE &&
+		f.depthClamp == VK_TRUE &&
+		f.shaderClipDistance == VK_TRUE;
+}
+
 void VulkanDevice::selectPhysicalDevice()
 {
 	VkResult result;
@@ -293,7 +303,7 @@ void VulkanDevice::selectPhysicalDevice()
 		vkGetPhysicalDeviceProperties(device, &deviceProperties);
 		vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
-		bool isUsableDevice = deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader && deviceFeatures.samplerAnisotropy;
+		bool isUsableDevice = /*deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&*/ checkFeatures(deviceFeatures);
 		if (!isUsableDevice)
 			continue;
 

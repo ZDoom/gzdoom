@@ -61,6 +61,8 @@ private:
 	void createSemaphores();
 	void releaseResources();
 
+	static bool checkFeatures(const VkPhysicalDeviceFeatures &f);
+
 	VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
 

@@ -28,6 +28,9 @@ public:
 	std::unique_ptr<VulkanImageView> SceneFogView;
 	VkFormat SceneDepthStencilFormat = VK_FORMAT_D24_UNORM_S8_UINT;
 	VkImageLayout SceneColorLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	VkImageLayout SceneDepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	VkImageLayout SceneNormalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	VkImageLayout SceneFogLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 	static const int NumPipelineImages = 2;
 	std::unique_ptr<VulkanImage> PipelineImage[NumPipelineImages];

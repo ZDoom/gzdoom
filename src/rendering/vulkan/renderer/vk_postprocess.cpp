@@ -553,7 +553,6 @@ VkPostprocess::TextureImage VkPostprocess::GetTexture(const PPTextureType &type,
 		tex.view = fb->GetBuffers()->SceneColorView.get();
 		tex.layout = &fb->GetBuffers()->SceneColorLayout;
 	}
-#if 0
 	else if (type == PPTextureType::SceneNormal)
 	{
 		tex.image = fb->GetBuffers()->SceneNormal.get();
@@ -572,7 +571,6 @@ VkPostprocess::TextureImage VkPostprocess::GetTexture(const PPTextureType &type,
 		tex.view = fb->GetBuffers()->SceneDepthView.get();
 		tex.layout = &fb->GetBuffers()->SceneDepthStencilLayout;
 	}
-#endif
 	else if (type == PPTextureType::SwapChain)
 	{
 		tex.image = nullptr;

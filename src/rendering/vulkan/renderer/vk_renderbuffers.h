@@ -15,15 +15,19 @@ public:
 	int GetHeight() const { return mHeight; }
 	int GetSceneWidth() const { return mSceneWidth; }
 	int GetSceneHeight() const { return mSceneHeight; }
+	VkSampleCountFlagBits GetSceneSamples() const { return mSamples; }
 
 	std::unique_ptr<VulkanImage> SceneColor;
 	std::unique_ptr<VulkanImage> SceneDepthStencil;
+	std::unique_ptr<VulkanImage> SceneNormal;
+	std::unique_ptr<VulkanImage> SceneFog;
 	std::unique_ptr<VulkanImageView> SceneColorView;
 	std::unique_ptr<VulkanImageView> SceneDepthStencilView;
 	std::unique_ptr<VulkanImageView> SceneDepthView;
+	std::unique_ptr<VulkanImageView> SceneNormalView;
+	std::unique_ptr<VulkanImageView> SceneFogView;
 	VkFormat SceneDepthStencilFormat = VK_FORMAT_D24_UNORM_S8_UINT;
 	VkImageLayout SceneColorLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	int SceneSamples = 1;
 
 	static const int NumPipelineImages = 2;
 	std::unique_ptr<VulkanImage> PipelineImage[NumPipelineImages];
@@ -32,12 +36,16 @@ public:
 
 private:
 	void CreatePipeline(int width, int height);
-	void CreateScene(int width, int height, int samples);
+	void CreateScene(int width, int height, VkSampleCountFlagBits samples);
+	void CreateSceneColor(int width, int height, VkSampleCountFlagBits samples);
+	void CreateSceneDepthStencil(int width, int height, VkSampleCountFlagBits samples);
+	void CreateSceneFog(int width, int height, VkSampleCountFlagBits samples);
+	void CreateSceneNormal(int width, int height, VkSampleCountFlagBits samples);
+	VkSampleCountFlagBits GetBestSampleCount();
 
 	int mWidth = 0;
 	int mHeight = 0;
 	int mSceneWidth = 0;
 	int mSceneHeight = 0;
-	int mSamples = 0;
-	int mMaxSamples = 16;
+	VkSampleCountFlagBits mSamples = VK_SAMPLE_COUNT_1_BIT;
 };

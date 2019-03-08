@@ -39,6 +39,7 @@ public:
 	ImageBuilder();
 
 	void setSize(int width, int height, int miplevels = 1);
+	void setSamples(VkSampleCountFlagBits samples);
 	void setFormat(VkFormat format);
 	void setUsage(VkImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY, VmaAllocationCreateFlags allocFlags = 0);
 	void setLinearTiling();
@@ -342,6 +343,11 @@ inline void ImageBuilder::setSize(int width, int height, int mipLevels)
 	imageInfo.extent.width = width;
 	imageInfo.extent.height = height;
 	imageInfo.mipLevels = mipLevels;
+}
+
+inline void ImageBuilder::setSamples(VkSampleCountFlagBits samples)
+{
+	imageInfo.samples = samples;
 }
 
 inline void ImageBuilder::setFormat(VkFormat format)

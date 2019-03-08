@@ -78,7 +78,7 @@ void VkPostprocess::BlitSceneToTexture()
 	barrier0.addImage(buffers->PipelineImage[mCurrentPipelineImage].get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT);
 	barrier0.execute(cmdbuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
-	if (buffers->SceneSamples > 1)
+	if (buffers->GetSceneSamples() != VK_SAMPLE_COUNT_1_BIT)
 	{
 		VkImageResolve resolve = {};
 		resolve.srcOffset = { 0, 0, 0 };
@@ -193,6 +193,9 @@ void VkPostprocess::AmbientOccludeScene(float m5)
 
 void VkPostprocess::BlurScene(float gameinfobluramount)
 {
+	auto fb = GetVulkanFrameBuffer();
+	hw_postprocess.SceneWidth = fb->GetBuffers()->GetSceneWidth();
+	hw_postprocess.SceneHeight = fb->GetBuffers()->GetSceneHeight();
 	hw_postprocess.gameinfobluramount = gameinfobluramount;
 
 	hw_postprocess.DeclareShaders();
@@ -223,8 +226,8 @@ void VkPostprocess::BeginFrame()
 	if (!mDescriptorPool)
 	{
 		DescriptorPoolBuilder builder;
-		builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 50);
-		builder.setMaxSets(50);
+		builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 100);
+		builder.setMaxSets(100);
 		mDescriptorPool = builder.create(GetVulkanFrameBuffer()->device);
 	}
 }
@@ -378,7 +381,10 @@ void VkPostprocess::RenderEffect(const FString &name)
 		key.InputTextures = step.Textures.Size();
 		key.Uniforms = step.Uniforms.Data.Size();
 		key.Shader = mShaders[step.ShaderName].get();
-		key.OutputFormat = (step.Output.Type == PPTextureType::PPTexture) ? mTextures[step.Output.Texture]->Format : VK_FORMAT_R16G16B16A16_SFLOAT;
+		if (step.Output.Type == PPTextureType::PPTexture)
+			key.OutputFormat = mTextures[step.Output.Texture]->Format;
+		else
+			key.OutputFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
 
 		auto &passSetup = mRenderPassSetup[key];
 		if (!passSetup)

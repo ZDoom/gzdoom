@@ -15,9 +15,32 @@ VkRenderBuffers::~VkRenderBuffers()
 {
 }
 
+VkSampleCountFlagBits VkRenderBuffers::GetBestSampleCount()
+{
+	auto fb = GetVulkanFrameBuffer();
+	const auto &limits = fb->device->deviceProperties.limits;
+	VkSampleCountFlags deviceSampleCounts = limits.sampledImageColorSampleCounts & limits.sampledImageDepthSampleCounts & limits.sampledImageStencilSampleCounts;
+
+	int requestedSamples = clamp((int)gl_multisample, 0, 64);
+
+	int samples = 1;
+	VkSampleCountFlags bit = VK_SAMPLE_COUNT_1_BIT;
+	VkSampleCountFlags best = bit;
+	while (samples < requestedSamples)
+	{
+		if (deviceSampleCounts & bit)
+		{
+			best = bit;
+		}
+		samples <<= 1;
+		bit <<= 1;
+	}
+	return (VkSampleCountFlagBits)best;
+}
+
 void VkRenderBuffers::BeginFrame(int width, int height, int sceneWidth, int sceneHeight)
 {
-	int samples = clamp((int)gl_multisample, 0, mMaxSamples);
+	VkSampleCountFlagBits samples = GetBestSampleCount();
 
 	if (width != mWidth || height != mHeight || mSamples != samples)
 	{
@@ -68,15 +91,38 @@ void VkRenderBuffers::CreatePipeline(int width, int height)
 	barrier.execute(fb->GetDrawCommands(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
 }
 
-void VkRenderBuffers::CreateScene(int width, int height, int samples)
+void VkRenderBuffers::CreateScene(int width, int height, VkSampleCountFlagBits samples)
 {
 	auto fb = GetVulkanFrameBuffer();
 
 	SceneColorView.reset();
 	SceneDepthStencilView.reset();
 	SceneDepthView.reset();
+	SceneNormalView.reset();
+	SceneFogView.reset();
 	SceneColor.reset();
 	SceneDepthStencil.reset();
+	SceneNormal.reset();
+	SceneFog.reset();
+
+	CreateSceneColor(width, height, samples);
+	CreateSceneDepthStencil(width, height, samples);
+	CreateSceneNormal(width, height, samples);
+	CreateSceneFog(width, height, samples);
+
+	PipelineBarrier barrier;
+	barrier.addImage(SceneColor.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+	barrier.addImage(SceneDepthStencil.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
+	barrier.addImage(SceneNormal.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+	barrier.addImage(SceneFog.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+	barrier.execute(fb->GetDrawCommands(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
+
+	SceneColorLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+}
+
+void VkRenderBuffers::CreateSceneColor(int width, int height, VkSampleCountFlagBits samples)
+{
+	auto fb = GetVulkanFrameBuffer();
 
 	ImageBuilder builder;
 	builder.setSize(width, height);
@@ -84,6 +130,18 @@ void VkRenderBuffers::CreateScene(int width, int height, int samples)
 	builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 	SceneColor = builder.create(fb->device);
 
+	ImageViewBuilder viewbuilder;
+	viewbuilder.setImage(SceneColor.get(), VK_FORMAT_R16G16B16A16_SFLOAT);
+	SceneColorView = viewbuilder.create(fb->device);
+}
+
+void VkRenderBuffers::CreateSceneDepthStencil(int width, int height, VkSampleCountFlagBits samples)
+{
+	auto fb = GetVulkanFrameBuffer();
+
+	ImageBuilder builder;
+	builder.setSize(width, height);
+	builder.setSamples(samples);
 	builder.setFormat(SceneDepthStencilFormat);
 	builder.setUsage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	if (!builder.isFormatSupported(fb->device))
@@ -98,19 +156,41 @@ void VkRenderBuffers::CreateScene(int width, int height, int samples)
 	SceneDepthStencil = builder.create(fb->device);
 
 	ImageViewBuilder viewbuilder;
-	viewbuilder.setImage(SceneColor.get(), VK_FORMAT_R16G16B16A16_SFLOAT);
-	SceneColorView = viewbuilder.create(fb->device);
-
 	viewbuilder.setImage(SceneDepthStencil.get(), SceneDepthStencilFormat, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
 	SceneDepthStencilView = viewbuilder.create(fb->device);
 
 	viewbuilder.setImage(SceneDepthStencil.get(), SceneDepthStencilFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 	SceneDepthView = viewbuilder.create(fb->device);
+}
 
-	PipelineBarrier barrier;
-	barrier.addImage(SceneColor.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
-	barrier.addImage(SceneDepthStencil.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
-	barrier.execute(fb->GetDrawCommands(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
+void VkRenderBuffers::CreateSceneFog(int width, int height, VkSampleCountFlagBits samples)
+{
+	auto fb = GetVulkanFrameBuffer();
 
-	SceneColorLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	ImageBuilder builder;
+	builder.setSize(width, height);
+	builder.setSamples(samples);
+	builder.setFormat(VK_FORMAT_R8G8B8A8_UNORM);
+	builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	SceneFog = builder.create(fb->device);
+
+	ImageViewBuilder viewbuilder;
+	viewbuilder.setImage(SceneFog.get(), VK_FORMAT_R8G8B8A8_UNORM);
+	SceneFogView = viewbuilder.create(fb->device);
+}
+
+void VkRenderBuffers::CreateSceneNormal(int width, int height, VkSampleCountFlagBits samples)
+{
+	auto fb = GetVulkanFrameBuffer();
+
+	ImageBuilder builder;
+	builder.setSize(width, height);
+	builder.setSamples(samples);
+	builder.setFormat(VK_FORMAT_A2R10G10B10_UNORM_PACK32);
+	builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	SceneNormal = builder.create(fb->device);
+
+	ImageViewBuilder viewbuilder;
+	viewbuilder.setImage(SceneNormal.get(), VK_FORMAT_A2R10G10B10_UNORM_PACK32);
+	SceneNormalView = viewbuilder.create(fb->device);
 }

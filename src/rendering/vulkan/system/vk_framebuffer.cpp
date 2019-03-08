@@ -120,6 +120,8 @@ void VulkanFrameBuffer::InitializeState()
 	mViewpoints = new GLViewpointBuffer;
 	mLights = new FLightBuffer();
 
+	CreateFanToTrisIndexBuffer();
+
 	// To do: move this to HW renderer interface maybe?
 	MatricesUBO = (VKDataBuffer*)CreateDataBuffer(-1, false);
 	StreamUBO = (VKDataBuffer*)CreateDataBuffer(-1, false);
@@ -129,7 +131,11 @@ void VulkanFrameBuffer::InitializeState()
 	mShaderManager.reset(new VkShaderManager(device));
 	mSamplerManager.reset(new VkSamplerManager(device));
 	mRenderPassManager->Init();
+#ifdef __APPLE__
+	mRenderState.reset(new VkRenderStateMolten());
+#else
 	mRenderState.reset(new VkRenderState());
+#endif
 }
 
 void VulkanFrameBuffer::Update()
@@ -620,4 +626,18 @@ void VulkanFrameBuffer::PrintStartupLog()
 	Printf("Max. texture size: %d\n", limits.maxImageDimension2D);
 	Printf("Max. uniform buffer range: %d\n", limits.maxUniformBufferRange);
 	Printf("Min. uniform buffer offset alignment: %d\n", limits.minUniformBufferOffsetAlignment);
+}
+
+void VulkanFrameBuffer::CreateFanToTrisIndexBuffer()
+{
+	TArray<uint32_t> data;
+	for (int i = 2; i < 1000; i++)
+	{
+		data.Push(0);
+		data.Push(i - 1);
+		data.Push(i);
+	}
+
+	FanToTrisIndexBuffer.reset(CreateIndexBuffer());
+	FanToTrisIndexBuffer->SetData(sizeof(uint32_t) * data.Size(), data.Data());
 }

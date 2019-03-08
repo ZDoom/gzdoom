@@ -42,6 +42,8 @@ public:
 	VKDataBuffer *MatricesUBO = nullptr;
 	VKDataBuffer *StreamUBO = nullptr;
 
+	std::unique_ptr<IIndexBuffer> FanToTrisIndexBuffer;
+
 	std::vector<std::unique_ptr<VulkanBuffer>> mFrameDeleteList;
 
 	std::unique_ptr<SWSceneDrawer> swdrawer;
@@ -86,6 +88,7 @@ private:
 	sector_t *RenderViewpoint(FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 	void DrawScene(HWDrawInfo *di, int drawmode);
 	void PrintStartupLog();
+	void CreateFanToTrisIndexBuffer();
 
 	std::unique_ptr<VkShaderManager> mShaderManager;
 	std::unique_ptr<VkSamplerManager> mSamplerManager;

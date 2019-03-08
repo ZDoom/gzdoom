@@ -614,3 +614,34 @@ void VkRenderState::EndFrame()
 	mStreamDataOffset = 0;
 	mDataIndex = -1;
 }
+
+/////////////////////////////////////////////////////////////////////////////
+
+void VkRenderStateMolten::Draw(int dt, int index, int count, bool apply)
+{
+	if (dt == DT_TriangleFan)
+	{
+		IIndexBuffer *oldIndexBuffer = mIndexBuffer;
+		mIndexBuffer = GetVulkanFrameBuffer()->FanToTrisIndexBuffer.get();
+
+		if (apply || mNeedApply)
+			Apply(DT_Triangles);
+		else
+			ApplyVertexBuffers();
+
+		drawcalls.Clock();
+		mCommandBuffer->drawIndexed((count - 2) * 3, 1, 0, index, 0);
+		drawcalls.Unclock();
+
+		mIndexBuffer = oldIndexBuffer;
+	}
+	else
+	{
+		if (apply || mNeedApply)
+			Apply(dt);
+
+		drawcalls.Clock();
+		mCommandBuffer->draw(count, 1, index, 0);
+		drawcalls.Unclock();
+	}
+}

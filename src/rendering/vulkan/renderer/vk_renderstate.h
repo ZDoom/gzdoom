@@ -17,6 +17,7 @@ class VkRenderState : public FRenderState
 {
 public:
 	VkRenderState();
+	virtual ~VkRenderState() = default;
 
 	// Draw commands
 	void ClearScreen() override;
@@ -45,7 +46,7 @@ public:
 	void EndRenderPass();
 	void EndFrame();
 
-private:
+protected:
 	void Apply(int dt);
 	void ApplyRenderPass(int dt);
 	void ApplyStencilRef();
@@ -105,4 +106,12 @@ private:
 	bool mLastSplitEnabled = true;
 	bool mLastModelMatrixEnabled = true;
 	bool mLastTextureMatrixEnabled = true;
+};
+
+class VkRenderStateMolten : public VkRenderState
+{
+public:
+	using VkRenderState::VkRenderState;
+
+	void Draw(int dt, int index, int count, bool apply = true) override;
 };

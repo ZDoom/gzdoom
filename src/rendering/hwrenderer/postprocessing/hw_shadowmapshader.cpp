@@ -27,7 +27,7 @@ void FShadowMapShader::Bind(IRenderQueue *q)
 {
 	if (!mShader)
 	{
-		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
+		FString prolog = Uniforms.CreateDeclaration("Uniforms", ShadowMapUniforms::Desc());
 
 		mShader.reset(screen->CreateShaderProgram());
 		mShader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 430);

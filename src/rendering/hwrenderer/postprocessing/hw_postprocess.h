@@ -639,3 +639,20 @@ public:
 	void UpdateTextures() override;
 	void UpdateSteps() override;
 };
+
+struct ShadowMapUniforms
+{
+	float ShadowmapQuality;
+	float Padding0, Padding1, Padding2;
+
+	static std::vector<UniformFieldDesc> Desc()
+	{
+		return
+		{
+			{ "ShadowmapQuality", UniformType::Float, offsetof(ShadowMapUniforms, ShadowmapQuality) },
+			{ "Padding0", UniformType::Float, offsetof(ShadowMapUniforms, Padding0) },
+			{ "Padding1", UniformType::Float, offsetof(ShadowMapUniforms, Padding1) },
+			{ "Padding2", UniformType::Float, offsetof(ShadowMapUniforms, Padding2) },
+		};
+	}
+};

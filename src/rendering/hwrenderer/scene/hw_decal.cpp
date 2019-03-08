@@ -87,7 +87,7 @@ void GLDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 
 	if (lightlist == nullptr)
 	{
-		state.Draw(DT_TriangleFan, vertindex, 4);
+		state.Draw(DT_TriangleStrip, vertindex, 4);
 	}
 	else
 	{
@@ -111,7 +111,7 @@ void GLDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 				di->SetFog(state, thisll, rellight, di->isFullbrightScene(), &thiscm, false);
 				state.SetSplitPlanes(lightlist[k].plane, lowplane);
 
-				state.Draw(DT_TriangleFan, vertindex, 4);
+				state.Draw(DT_TriangleStrip, vertindex, 4);
 			}
 			if (low1 <= dv[0].z && low2 <= dv[3].z) break;
 		}
@@ -314,58 +314,62 @@ void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 	float vy = (glseg.y2 - glseg.y1) / linelength;
 	
 	DecalVertex dv[4];
-	dv[1].x = dv[0].x = glseg.x1 + vx * left;
-	dv[1].y = dv[0].y = glseg.y1 + vy * left;
+	enum
+	{
+		LL, UL, LR,	UR
+	};
+	dv[UL].x = dv[LL].x = glseg.x1 + vx * left;
+	dv[UL].y = dv[LL].y = glseg.y1 + vy * left;
 	
-	dv[3].x = dv[2].x = glseg.x1 + vx * right;
-	dv[3].y = dv[2].y = glseg.y1 + vy * right;
+	dv[LR].x = dv[UR].x = glseg.x1 + vx * right;
+	dv[LR].y = dv[UR].y = glseg.y1 + vy * right;
 	
 	zpos += (flipy ? decalheight - decaltopo : decaltopo);
 	
-	dv[1].z = dv[2].z = zpos;
-	dv[0].z = dv[3].z = dv[1].z - decalheight;
-	dv[1].v = dv[2].v = tex->GetVT();
+	dv[UL].z = dv[UR].z = zpos;
+	dv[LL].z = dv[LR].z = dv[UL].z - decalheight;
+	dv[UL].v = dv[UR].v = tex->GetVT();
 	
-	dv[1].u = dv[0].u = tex->GetU(lefttex / decal->ScaleX);
-	dv[3].u = dv[2].u = tex->GetU(righttex / decal->ScaleX);
-	dv[0].v = dv[3].v = tex->GetVB();
+	dv[UL].u = dv[LL].u = tex->GetU(lefttex / decal->ScaleX);
+	dv[LR].u = dv[UR].u = tex->GetU(righttex / decal->ScaleX);
+	dv[LL].v = dv[LR].v = tex->GetVB();
 	
 	// now clip to the top plane
-	float vzt = (ztop[1] - ztop[0]) / linelength;
-	float topleft = ztop[0] + vzt * left;
-	float topright = ztop[0] + vzt * right;
+	float vzt = (ztop[UL] - ztop[LL]) / linelength;
+	float topleft = ztop[LL] + vzt * left;
+	float topright = ztop[LL] + vzt * right;
 	
 	// completely below the wall
-	if (topleft < dv[0].z && topright < dv[3].z)
+	if (topleft < dv[LL].z && topright < dv[LR].z)
 		return;
 	
-	if (topleft < dv[1].z || topright < dv[2].z)
+	if (topleft < dv[UL].z || topright < dv[UR].z)
 	{
 		// decal has to be clipped at the top
 		// let texture clamping handle all extreme cases
-		dv[1].v = (dv[1].z - topleft) / (dv[1].z - dv[0].z)*dv[0].v;
-		dv[2].v = (dv[2].z - topright) / (dv[2].z - dv[3].z)*dv[3].v;
-		dv[1].z = topleft;
-		dv[2].z = topright;
+		dv[UL].v = (dv[UL].z - topleft) / (dv[UL].z - dv[LL].z)*dv[LL].v;
+		dv[UR].v = (dv[UR].z - topright) / (dv[UR].z - dv[LR].z)*dv[LR].v;
+		dv[UL].z = topleft;
+		dv[UR].z = topright;
 	}
 	
 	// now clip to the bottom plane
-	float vzb = (zbottom[1] - zbottom[0]) / linelength;
-	float bottomleft = zbottom[0] + vzb * left;
-	float bottomright = zbottom[0] + vzb * right;
+	float vzb = (zbottom[UL] - zbottom[LL]) / linelength;
+	float bottomleft = zbottom[LL] + vzb * left;
+	float bottomright = zbottom[LL] + vzb * right;
 	
 	// completely above the wall
-	if (bottomleft > dv[1].z && bottomright > dv[2].z)
+	if (bottomleft > dv[UL].z && bottomright > dv[UR].z)
 		return;
 	
-	if (bottomleft > dv[0].z || bottomright > dv[3].z)
+	if (bottomleft > dv[LL].z || bottomright > dv[LR].z)
 	{
 		// decal has to be clipped at the bottom
 		// let texture clamping handle all extreme cases
-		dv[0].v = (dv[1].z - bottomleft) / (dv[1].z - dv[0].z)*(dv[0].v - dv[1].v) + dv[1].v;
-		dv[3].v = (dv[2].z - bottomright) / (dv[2].z - dv[3].z)*(dv[3].v - dv[2].v) + dv[2].v;
-		dv[0].z = bottomleft;
-		dv[3].z = bottomright;
+		dv[LL].v = (dv[UL].z - bottomleft) / (dv[UL].z - dv[LL].z)*(dv[LL].v - dv[UL].v) + dv[UL].v;
+		dv[LR].v = (dv[UR].z - bottomright) / (dv[UR].z - dv[LR].z)*(dv[LR].v - dv[UR].v) + dv[UR].v;
+		dv[LL].z = bottomleft;
+		dv[LR].z = bottomright;
 	}
 	
 	

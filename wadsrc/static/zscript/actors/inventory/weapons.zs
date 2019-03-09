@@ -28,6 +28,7 @@ class Weapon : StateProvider
 	Ammo Ammo1, Ammo2;						// In-inventory instance variables
 	Weapon SisterWeapon;
 	double FOVScale;
+	double LookScale;						// Multiplier for look sensitivity (like FOV scaling but without the zooming)
 	int Crosshair;							// 0 to use player's crosshair
 	bool GivenAsMorphWeapon;
 	bool bAltFire;							// Set when this weapon's alternate fire is used.
@@ -58,6 +59,7 @@ class Weapon : StateProvider
 	property BobRangeY: BobRangeY;
 	property SlotNumber: SlotNumber;
 	property SlotPriority: SlotPriority;
+	property LookScale: LookScale;
 
 	flagdef NoAutoFire: WeaponFlags, 0;			// weapon does not autofire
 	flagdef ReadySndHalf: WeaponFlags, 1;		// ready sound is played ~1/2 the time

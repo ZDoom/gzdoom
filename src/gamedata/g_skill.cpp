@@ -214,7 +214,7 @@ void FMapInfoParser::ParseSkill ()
 		{
 			ParseAssign();
 			sc.MustGetString ();
-			skill.MenuName = sc.String;
+			skill.MenuName = strbin1(sc.String);
 		}
 		else if (sc.Compare("PlayerClassName"))
 		{

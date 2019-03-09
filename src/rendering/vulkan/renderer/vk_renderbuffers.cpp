@@ -80,10 +80,12 @@ void VkRenderBuffers::CreatePipeline(int width, int height)
 		builder.setFormat(VK_FORMAT_R16G16B16A16_SFLOAT);
 		builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 		PipelineImage[i] = builder.create(fb->device);
+		PipelineImage[i]->SetDebugName("VkRenderBuffers.PipelineImage");
 
 		ImageViewBuilder viewbuilder;
 		viewbuilder.setImage(PipelineImage[i].get(), VK_FORMAT_R16G16B16A16_SFLOAT);
 		PipelineView[i] = viewbuilder.create(fb->device);
+		PipelineView[i]->SetDebugName("VkRenderBuffers.PipelineView");
 
 		barrier.addImage(PipelineImage[i].get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
 		PipelineLayout[i] = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -129,10 +131,12 @@ void VkRenderBuffers::CreateSceneColor(int width, int height, VkSampleCountFlagB
 	builder.setFormat(VK_FORMAT_R16G16B16A16_SFLOAT);
 	builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 	SceneColor = builder.create(fb->device);
+	SceneColor->SetDebugName("VkRenderBuffers.SceneColor");
 
 	ImageViewBuilder viewbuilder;
 	viewbuilder.setImage(SceneColor.get(), VK_FORMAT_R16G16B16A16_SFLOAT);
 	SceneColorView = viewbuilder.create(fb->device);
+	SceneColorView->SetDebugName("VkRenderBuffers.SceneColorView");
 }
 
 void VkRenderBuffers::CreateSceneDepthStencil(int width, int height, VkSampleCountFlagBits samples)
@@ -154,13 +158,16 @@ void VkRenderBuffers::CreateSceneDepthStencil(int width, int height, VkSampleCou
 		}
 	}
 	SceneDepthStencil = builder.create(fb->device);
+	SceneDepthStencil->SetDebugName("VkRenderBuffers.SceneDepthStencil");
 
 	ImageViewBuilder viewbuilder;
 	viewbuilder.setImage(SceneDepthStencil.get(), SceneDepthStencilFormat, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
 	SceneDepthStencilView = viewbuilder.create(fb->device);
+	SceneDepthStencilView->SetDebugName("VkRenderBuffers.SceneDepthStencilView");
 
 	viewbuilder.setImage(SceneDepthStencil.get(), SceneDepthStencilFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 	SceneDepthView = viewbuilder.create(fb->device);
+	SceneDepthView->SetDebugName("VkRenderBuffers.SceneDepthView");
 }
 
 void VkRenderBuffers::CreateSceneFog(int width, int height, VkSampleCountFlagBits samples)
@@ -173,10 +180,12 @@ void VkRenderBuffers::CreateSceneFog(int width, int height, VkSampleCountFlagBit
 	builder.setFormat(VK_FORMAT_R8G8B8A8_UNORM);
 	builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	SceneFog = builder.create(fb->device);
+	SceneFog->SetDebugName("VkRenderBuffers.SceneFog");
 
 	ImageViewBuilder viewbuilder;
 	viewbuilder.setImage(SceneFog.get(), VK_FORMAT_R8G8B8A8_UNORM);
 	SceneFogView = viewbuilder.create(fb->device);
+	SceneFogView->SetDebugName("VkRenderBuffers.SceneFogView");
 }
 
 void VkRenderBuffers::CreateSceneNormal(int width, int height, VkSampleCountFlagBits samples)
@@ -189,8 +198,10 @@ void VkRenderBuffers::CreateSceneNormal(int width, int height, VkSampleCountFlag
 	builder.setFormat(VK_FORMAT_A2R10G10B10_UNORM_PACK32);
 	builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	SceneNormal = builder.create(fb->device);
+	SceneNormal->SetDebugName("VkRenderBuffers.SceneNormal");
 
 	ImageViewBuilder viewbuilder;
 	viewbuilder.setImage(SceneNormal.get(), VK_FORMAT_A2R10G10B10_UNORM_PACK32);
 	SceneNormalView = viewbuilder.create(fb->device);
+	SceneNormalView->SetDebugName("VkRenderBuffers.SceneNormalView");
 }

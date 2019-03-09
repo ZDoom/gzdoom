@@ -44,6 +44,18 @@ public:
 	void BeginFrame();
 	void PresentFrame();
 
+	void SetDebugObjectName(const char *name, uint64_t handle, VkObjectType type)
+	{
+		if (!DebugLayerActive) return;
+
+		VkDebugUtilsObjectNameInfoEXT info = {};
+		info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+		info.objectHandle = handle;
+		info.objectType = type;
+		info.pObjectName = name;
+		vkSetDebugUtilsObjectNameEXT(device, &info);
+	}
+
 	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 	// Instance setup
@@ -56,6 +68,7 @@ public:
 	VkPhysicalDeviceFeatures UsedDeviceFeatures = {};
 	std::vector<const char *> EnabledDeviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 	VulkanPhysicalDevice PhysicalDevice;
+	bool DebugLayerActive = false;
 
 	VkInstance instance = VK_NULL_HANDLE;
 	VkSurfaceKHR surface = VK_NULL_HANDLE;

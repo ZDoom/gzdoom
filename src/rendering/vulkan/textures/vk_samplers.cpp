@@ -102,6 +102,7 @@ void VkSamplerManager::Create()
 			builder.setMaxLod(0.25f);
 		}
 		mSamplers[i] = builder.create(vDevice);
+		mSamplers[i]->SetDebugName("VkSamplerManager.mSamplers");
     }
 }
 

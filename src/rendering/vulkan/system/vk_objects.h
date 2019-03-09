@@ -11,6 +11,8 @@ public:
 	VulkanSemaphore(VulkanDevice *device);
 	~VulkanSemaphore();
 
+	void SetDebugName(const char *name) { device->SetDebugObjectName(name, (uint64_t)semaphore, VK_OBJECT_TYPE_SEMAPHORE); }
+
 	VulkanDevice *device = nullptr;
 	VkSemaphore semaphore = VK_NULL_HANDLE;
 
@@ -25,6 +27,8 @@ public:
 	VulkanFence(VulkanDevice *device);
 	~VulkanFence();
 
+	void SetDebugName(const char *name) { device->SetDebugObjectName(name, (uint64_t)fence, VK_OBJECT_TYPE_FENCE); }
+
 	VulkanDevice *device = nullptr;
 	VkFence fence = VK_NULL_HANDLE;
 
@@ -38,6 +42,8 @@ class VulkanBuffer
 public:
 	VulkanBuffer(VulkanDevice *device, VkBuffer buffer, VmaAllocation allocation, size_t size);
 	~VulkanBuffer();
+
+	void SetDebugName(const char *name) { device->SetDebugObjectName(name, (uint64_t)buffer, VK_OBJECT_TYPE_BUFFER); }
 
 	VulkanDevice *device = nullptr;
 
@@ -59,6 +65,8 @@ public:
 	VulkanFramebuffer(VulkanDevice *device, VkFramebuffer framebuffer);
 	~VulkanFramebuffer();
 
+	void SetDebugName(const char *name) { device->SetDebugObjectName(name, (uint64_t)framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER); }
+
 	VulkanDevice *device;
 	VkFramebuffer framebuffer;
 
@@ -72,6 +80,8 @@ class VulkanImage
 public:
 	VulkanImage(VulkanDevice *device, VkImage image, VmaAllocation allocation, int width, int height, int mipLevels);
 	~VulkanImage();
+
+	void SetDebugName(const char *name) { device->SetDebugObjectName(name, (uint64_t)image, VK_OBJECT_TYPE_IMAGE); }
 
 	VkImage image = VK_NULL_HANDLE;
 	int width = 0;
@@ -95,6 +105,8 @@ public:
 	VulkanImageView(VulkanDevice *device, VkImageView view);
 	~VulkanImageView();
 
+	void SetDebugName(const char *name) { device->SetDebugObjectName(name, (uint64_t)view, VK_OBJECT_TYPE_IMAGE_VIEW); }
+
 	VkImageView view = VK_NULL_HANDLE;
 
 private:
@@ -109,6 +121,8 @@ class VulkanSampler
 public:
 	VulkanSampler(VulkanDevice *device, VkSampler sampler);
 	~VulkanSampler();
+
+	void SetDebugName(const char *name) { device->SetDebugObjectName(name, (uint64_t)sampler, VK_OBJECT_TYPE_SAMPLER); }
 
 	VkSampler sampler = VK_NULL_HANDLE;
 
@@ -125,6 +139,8 @@ public:
 	VulkanShader(VulkanDevice *device, VkShaderModule module);
 	~VulkanShader();
 
+	void SetDebugName(const char *name) { device->SetDebugObjectName(name, (uint64_t)module, VK_OBJECT_TYPE_SHADER_MODULE); }
+
 	VkShaderModule module = VK_NULL_HANDLE;
 
 private:
@@ -140,6 +156,8 @@ public:
 	VulkanDescriptorSetLayout(VulkanDevice *device, VkDescriptorSetLayout layout);
 	~VulkanDescriptorSetLayout();
 
+	void SetDebugName(const char *name) { device->SetDebugObjectName(name, (uint64_t)layout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT); }
+
 	VulkanDevice *device;
 	VkDescriptorSetLayout layout;
 
@@ -153,6 +171,8 @@ class VulkanDescriptorSet
 public:
 	VulkanDescriptorSet(VulkanDevice *device, VulkanDescriptorPool *pool, VkDescriptorSet set);
 	~VulkanDescriptorSet();
+
+	void SetDebugName(const char *name) { device->SetDebugObjectName(name, (uint64_t)set, VK_OBJECT_TYPE_DESCRIPTOR_SET); }
 
 	VulkanDevice *device;
 	VulkanDescriptorPool *pool;
@@ -168,6 +188,8 @@ class VulkanDescriptorPool
 public:
 	VulkanDescriptorPool(VulkanDevice *device, VkDescriptorPool pool);
 	~VulkanDescriptorPool();
+
+	void SetDebugName(const char *name) { device->SetDebugObjectName(name, (uint64_t)pool, VK_OBJECT_TYPE_DESCRIPTOR_POOL); }
 
 	std::unique_ptr<VulkanDescriptorSet> allocate(VulkanDescriptorSetLayout *layout);
 
@@ -185,6 +207,8 @@ public:
 	VulkanPipeline(VulkanDevice *device, VkPipeline pipeline);
 	~VulkanPipeline();
 
+	void SetDebugName(const char *name) { device->SetDebugObjectName(name, (uint64_t)pipeline, VK_OBJECT_TYPE_PIPELINE); }
+
 	VulkanDevice *device;
 	VkPipeline pipeline;
 
@@ -199,6 +223,8 @@ public:
 	VulkanPipelineLayout(VulkanDevice *device, VkPipelineLayout layout);
 	~VulkanPipelineLayout();
 
+	void SetDebugName(const char *name) { device->SetDebugObjectName(name, (uint64_t)layout, VK_OBJECT_TYPE_PIPELINE_LAYOUT); }
+
 	VulkanDevice *device;
 	VkPipelineLayout layout;
 
@@ -212,6 +238,8 @@ class VulkanRenderPass
 public:
 	VulkanRenderPass(VulkanDevice *device, VkRenderPass renderPass);
 	~VulkanRenderPass();
+
+	void SetDebugName(const char *name) { device->SetDebugObjectName(name, (uint64_t)renderPass, VK_OBJECT_TYPE_RENDER_PASS); }
 
 	VulkanDevice *device;
 	VkRenderPass renderPass;
@@ -245,6 +273,8 @@ class VulkanCommandBuffer
 public:
 	VulkanCommandBuffer(VulkanCommandPool *pool);
 	~VulkanCommandBuffer();
+
+	void SetDebugName(const char *name);
 
 	void begin();
 	void end();
@@ -315,6 +345,8 @@ class VulkanCommandPool
 public:
 	VulkanCommandPool(VulkanDevice *device, int queueFamilyIndex);
 	~VulkanCommandPool();
+
+	void SetDebugName(const char *name) { device->SetDebugObjectName(name, (uint64_t)pool, VK_OBJECT_TYPE_COMMAND_POOL); }
 
 	std::unique_ptr<VulkanCommandBuffer> createBuffer();
 
@@ -800,6 +832,11 @@ inline void VulkanCommandBuffer::endRenderPass()
 inline void VulkanCommandBuffer::executeCommands(uint32_t commandBufferCount, const VkCommandBuffer* pCommandBuffers)
 {
 	vkCmdExecuteCommands(buffer, commandBufferCount, pCommandBuffers);
+}
+
+inline void VulkanCommandBuffer::SetDebugName(const char *name)
+{
+	pool->device->SetDebugObjectName(name, (uint64_t)buffer, VK_OBJECT_TYPE_COMMAND_BUFFER);
 }
 
 /////////////////////////////////////////////////////////////////////////////

@@ -574,6 +574,7 @@ VulkanCommandBuffer *VulkanFrameBuffer::GetUploadCommands()
 	if (!mUploadCommands)
 	{
 		mUploadCommands = mGraphicsCommandPool->createBuffer();
+		mUploadCommands->SetDebugName("VulkanFrameBuffer.mUploadCommands");
 		mUploadCommands->begin();
 	}
 	return mUploadCommands.get();
@@ -584,6 +585,7 @@ VulkanCommandBuffer *VulkanFrameBuffer::GetDrawCommands()
 	if (!mDrawCommands)
 	{
 		mDrawCommands = mGraphicsCommandPool->createBuffer();
+		mDrawCommands->SetDebugName("VulkanFrameBuffer.mDrawCommands");
 		mDrawCommands->begin();
 	}
 	return mDrawCommands.get();

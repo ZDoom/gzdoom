@@ -64,6 +64,7 @@ private:
 		VulkanImage *image;
 		VulkanImageView *view;
 		VkImageLayout *layout;
+		const char *debugname;
 	};
 	TextureImage GetTexture(const PPTextureType &type, const PPTextureName &name);
 

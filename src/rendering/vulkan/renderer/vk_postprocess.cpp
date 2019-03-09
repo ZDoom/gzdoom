@@ -229,6 +229,7 @@ void VkPostprocess::BeginFrame()
 		builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 100);
 		builder.setMaxSets(100);
 		mDescriptorPool = builder.create(GetVulkanFrameBuffer()->device);
+		mDescriptorPool->SetDebugName("VkPostprocess.mDescriptorPool");
 	}
 }
 
@@ -277,11 +278,13 @@ void VkPostprocess::UpdateEffectTextures()
 			if (!imgbuilder.isFormatSupported(fb->device))
 				I_FatalError("Vulkan device does not support the image format required by %s\n", pair->Key.GetChars());
 			vktex->Image = imgbuilder.create(fb->device);
+			vktex->Image->SetDebugName(pair->Key.GetChars());
 			vktex->Format = format;
 
 			ImageViewBuilder viewbuilder;
 			viewbuilder.setImage(vktex->Image.get(), format);
 			vktex->View = viewbuilder.create(fb->device);
+			vktex->View->SetDebugName(pair->Key.GetChars());
 
 			if (desc.Data)
 			{
@@ -290,6 +293,7 @@ void VkPostprocess::UpdateEffectTextures()
 				stagingbuilder.setSize(totalsize);
 				stagingbuilder.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 				vktex->Staging = stagingbuilder.create(fb->device);
+				vktex->Staging->SetDebugName(pair->Key.GetChars());
 
 				PipelineBarrier barrier0;
 				barrier0.addImage(vktex->Image.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, VK_ACCESS_TRANSFER_WRITE_BIT);
@@ -345,10 +349,12 @@ void VkPostprocess::CompileEffectShaders()
 			ShaderBuilder vertbuilder;
 			vertbuilder.setVertexShader(LoadShaderCode(desc.VertexShader, "", desc.Version));
 			vkshader->VertexShader = vertbuilder.create(fb->device);
+			vkshader->VertexShader->SetDebugName(desc.VertexShader.GetChars());
 
 			ShaderBuilder fragbuilder;
 			fragbuilder.setFragmentShader(LoadShaderCode(desc.FragmentShader, prolog, desc.Version));
 			vkshader->FragmentShader = fragbuilder.create(fb->device);
+			vkshader->FragmentShader->SetDebugName(desc.FragmentShader.GetChars());
 		}
 	}
 }
@@ -439,6 +445,7 @@ VulkanDescriptorSet *VkPostprocess::GetInput(VkPPRenderPassSetup *passSetup, con
 {
 	auto fb = GetVulkanFrameBuffer();
 	auto descriptors = mDescriptorPool->allocate(passSetup->DescriptorLayout.get());
+	descriptors->SetDebugName("VkPostprocess.descriptors");
 
 	WriteDescriptors write;
 	PipelineBarrier barrier;
@@ -521,6 +528,7 @@ VulkanFramebuffer *VkPostprocess::GetOutput(VkPPRenderPassSetup *passSetup, cons
 		builder.setSize(w, h);
 		builder.addAttachment(view);
 		framebuffer = builder.create(GetVulkanFrameBuffer()->device);
+		framebuffer->SetDebugName(tex.debugname);
 	}
 
 	return framebuffer.get();
@@ -540,42 +548,49 @@ VkPostprocess::TextureImage VkPostprocess::GetTexture(const PPTextureType &type,
 		tex.image = fb->GetBuffers()->PipelineImage[idx].get();
 		tex.view = fb->GetBuffers()->PipelineView[idx].get();
 		tex.layout = &fb->GetBuffers()->PipelineLayout[idx];
+		tex.debugname = "PipelineTexture";
 	}
 	else if (type == PPTextureType::PPTexture)
 	{
 		tex.image = mTextures[name]->Image.get();
 		tex.view = mTextures[name]->View.get();
 		tex.layout = &mTextures[name]->Layout;
+		tex.debugname = name.GetChars();
 	}
 	else if (type == PPTextureType::SceneColor)
 	{
 		tex.image = fb->GetBuffers()->SceneColor.get();
 		tex.view = fb->GetBuffers()->SceneColorView.get();
 		tex.layout = &fb->GetBuffers()->SceneColorLayout;
+		tex.debugname = "SceneColor";
 	}
 	else if (type == PPTextureType::SceneNormal)
 	{
 		tex.image = fb->GetBuffers()->SceneNormal.get();
 		tex.view = fb->GetBuffers()->SceneNormalView.get();
 		tex.layout = &fb->GetBuffers()->SceneNormalLayout;
+		tex.debugname = "SceneNormal";
 	}
 	else if (type == PPTextureType::SceneFog)
 	{
 		tex.image = fb->GetBuffers()->SceneFog.get();
 		tex.view = fb->GetBuffers()->SceneFogView.get();
 		tex.layout = &fb->GetBuffers()->SceneFogLayout;
+		tex.debugname = "SceneFog";
 	}
 	else if (type == PPTextureType::SceneDepth)
 	{
 		tex.image = fb->GetBuffers()->SceneDepthStencil.get();
 		tex.view = fb->GetBuffers()->SceneDepthView.get();
 		tex.layout = &fb->GetBuffers()->SceneDepthStencilLayout;
+		tex.debugname = "SceneDepth";
 	}
 	else if (type == PPTextureType::SwapChain)
 	{
 		tex.image = nullptr;
 		tex.view = nullptr;
 		tex.layout = nullptr;
+		tex.debugname = "SwapChain";
 	}
 	else
 	{
@@ -598,6 +613,7 @@ VulkanSampler *VkPostprocess::GetSampler(PPFilterMode filter, PPWrapMode wrap)
 	builder.setMagFilter(filter == PPFilterMode::Nearest ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
 	builder.setAddressMode(wrap == PPWrapMode::Clamp ? VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE : VK_SAMPLER_ADDRESS_MODE_REPEAT);
 	sampler = builder.create(GetVulkanFrameBuffer()->device);
+	sampler->SetDebugName("VkPostprocess.mSamplers");
 	return sampler.get();
 }
 
@@ -621,6 +637,7 @@ void VkPPRenderPassSetup::CreateDescriptorLayout(const VkPPRenderPassKey &key)
 	for (int i = 0; i < key.InputTextures; i++)
 		builder.addBinding(i, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	DescriptorLayout = builder.create(GetVulkanFrameBuffer()->device);
+	DescriptorLayout->SetDebugName("VkPPRenderPassSetup.DescriptorLayout");
 }
 
 void VkPPRenderPassSetup::CreatePipelineLayout(const VkPPRenderPassKey &key)
@@ -630,6 +647,7 @@ void VkPPRenderPassSetup::CreatePipelineLayout(const VkPPRenderPassKey &key)
 	if (key.Uniforms > 0)
 		builder.addPushConstantRange(VK_SHADER_STAGE_FRAGMENT_BIT, 0, key.Uniforms);
 	PipelineLayout = builder.create(GetVulkanFrameBuffer()->device);
+	PipelineLayout->SetDebugName("VkPPRenderPassSetup.PipelineLayout");
 }
 
 void VkPPRenderPassSetup::CreatePipeline(const VkPPRenderPassKey &key)
@@ -648,6 +666,7 @@ void VkPPRenderPassSetup::CreatePipeline(const VkPPRenderPassKey &key)
 	builder.setLayout(PipelineLayout.get());
 	builder.setRenderPass(RenderPass.get());
 	Pipeline = builder.create(GetVulkanFrameBuffer()->device);
+	Pipeline->SetDebugName("VkPPRenderPassSetup.Pipeline");
 }
 
 void VkPPRenderPassSetup::CreateRenderPass(const VkPPRenderPassKey &key)
@@ -662,4 +681,5 @@ void VkPPRenderPassSetup::CreateRenderPass(const VkPPRenderPassKey &key)
 		VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 		VK_ACCESS_COLOR_ATTACHMENT_READ_BIT);
 	RenderPass = builder.create(GetVulkanFrameBuffer()->device);
+	RenderPass->SetDebugName("VkPPRenderPassSetup.RenderPass");
 }

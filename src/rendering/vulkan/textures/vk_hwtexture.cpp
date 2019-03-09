@@ -85,6 +85,7 @@ VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &s
 		auto fb = GetVulkanFrameBuffer();
 
 		descriptorSet = fb->GetRenderPassManager()->DescriptorPool->allocate(fb->GetRenderPassManager()->TextureSetLayout.get());
+		descriptorSet->SetDebugName("VkHardwareTexture.mDescriptorSets");
 
 		VulkanSampler *sampler = fb->GetSamplerManager()->Get(clampmode);
 		int numLayers = mat->GetLayers();
@@ -149,6 +150,7 @@ void VkHardwareTexture::CreateTexture(int w, int h, int pixelsize, VkFormat form
 	bufbuilder.setSize(totalSize);
 	bufbuilder.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 	mStagingBuffer = bufbuilder.create(fb->device);
+	mStagingBuffer->SetDebugName("VkHardwareTexture.mStagingBuffer");
 
 	uint8_t *data = (uint8_t*)mStagingBuffer->Map(0, totalSize);
 	memcpy(data, pixels, totalSize);
@@ -159,10 +161,12 @@ void VkHardwareTexture::CreateTexture(int w, int h, int pixelsize, VkFormat form
 	imgbuilder.setSize(w, h, GetMipLevels(w, h));
 	imgbuilder.setUsage(VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	mImage = imgbuilder.create(fb->device);
+	mImage->SetDebugName("VkHardwareTexture.mImage");
 
 	ImageViewBuilder viewbuilder;
 	viewbuilder.setImage(mImage.get(), format);
 	mImageView = viewbuilder.create(fb->device);
+	mImageView->SetDebugName("VkHardwareTexture.mImageView");
 
 	auto cmdbuffer = fb->GetUploadCommands();
 
@@ -250,12 +254,14 @@ void VkHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 		imgbuilder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
 		imgbuilder.setLinearTiling();
 		mImage = imgbuilder.create(fb->device);
+		mImage->SetDebugName("VkHardwareTexture.mImage");
 		mImageLayout = VK_IMAGE_LAYOUT_GENERAL;
 		mTexelsize = texelsize;
 
 		ImageViewBuilder viewbuilder;
 		viewbuilder.setImage(mImage.get(), format);
 		mImageView = viewbuilder.create(fb->device);
+		mImageView->SetDebugName("VkHardwareTexture.mImageView");
 
 		auto cmdbuffer = fb->GetUploadCommands();
 

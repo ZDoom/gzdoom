@@ -54,6 +54,7 @@ void VkRenderPassManager::BeginRenderPass(const VkRenderPassKey &key, VulkanComm
 		if (key.DepthTest || key.DepthWrite || key.StencilTest)
 			builder.addAttachment(buffers->SceneDepthStencilView.get());
 		framebuffer = builder.create(GetVulkanFrameBuffer()->device);
+		framebuffer->SetDebugName("VkRenderPassSetup.Framebuffer");
 	}
 
 	RenderPassBegin beginInfo;
@@ -116,6 +117,7 @@ void VkRenderPassManager::CreateDynamicSetLayout()
 	builder.addBinding(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 	builder.addBinding(3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 	DynamicSetLayout = builder.create(GetVulkanFrameBuffer()->device);
+	DynamicSetLayout->SetDebugName("VkRenderPassManager.DynamicSetLayout");
 }
 
 void VkRenderPassManager::CreateTextureSetLayout()
@@ -127,6 +129,7 @@ void VkRenderPassManager::CreateTextureSetLayout()
 	}
 	builder.addBinding(16, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	TextureSetLayout = builder.create(GetVulkanFrameBuffer()->device);
+	TextureSetLayout->SetDebugName("VkRenderPassManager.TextureSetLayout");
 }
 
 void VkRenderPassManager::CreatePipelineLayout()
@@ -136,6 +139,7 @@ void VkRenderPassManager::CreatePipelineLayout()
 	builder.addSetLayout(TextureSetLayout.get());
 	builder.addPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants));
 	PipelineLayout = builder.create(GetVulkanFrameBuffer()->device);
+	PipelineLayout->SetDebugName("VkRenderPassManager.PipelineLayout");
 }
 
 void VkRenderPassManager::CreateDescriptorPool()
@@ -146,6 +150,7 @@ void VkRenderPassManager::CreateDescriptorPool()
 	builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 5000 * 6);
 	builder.setMaxSets(5000);
 	DescriptorPool = builder.create(GetVulkanFrameBuffer()->device);
+	DescriptorPool->SetDebugName("VkRenderPassManager.DescriptorPool");
 }
 
 void VkRenderPassManager::CreateDynamicSet()
@@ -195,6 +200,7 @@ void VkRenderPassSetup::CreateRenderPass(const VkRenderPassKey &key)
 			VK_ACCESS_COLOR_ATTACHMENT_READ_BIT);
 	}
 	RenderPass = builder.create(GetVulkanFrameBuffer()->device);
+	RenderPass->SetDebugName("VkRenderPassSetup.RenderPass");
 }
 
 void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
@@ -281,4 +287,5 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 	builder.setLayout(fb->GetRenderPassManager()->PipelineLayout.get());
 	builder.setRenderPass(RenderPass.get());
 	Pipeline = builder.create(fb->device);
+	Pipeline->SetDebugName("VkRenderPassSetup.Pipeline");
 }

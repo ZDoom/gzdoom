@@ -353,6 +353,8 @@ void VulkanDevice::CreateInstance()
 		result = vkCreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger);
 		if (result != VK_SUCCESS)
 			throw std::runtime_error("vkCreateDebugUtilsMessengerEXT failed");
+
+		DebugLayerActive = true;
 	}
 }
 
@@ -367,10 +369,22 @@ VkBool32 VulkanDevice::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT mess
 	std::unique_lock<std::mutex> lock(mtx);
 
 	FString msg = callbackData->pMessage;
+
+	// For patent-pending reasons the validation layer apparently can't do this itself..
+	for (uint32_t i = 0; i < callbackData->objectCount; i++)
+	{
+		if (callbackData->pObjects[i].pObjectName)
+		{
+			FString hexname;
+			hexname.Format("0x%x", callbackData->pObjects[i].objectHandle);
+			msg.Substitute(hexname.GetChars(), callbackData->pObjects[i].pObjectName);
+		}
+	}
+
 	bool found = seenMessages.find(msg) != seenMessages.end();
 	if (!found)
 	{
-		if (totalMessages < 100)
+		if (totalMessages < 20)
 		{
 			totalMessages++;
 			seenMessages.insert(msg);
@@ -399,7 +413,7 @@ VkBool32 VulkanDevice::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT mess
 
 			Printf("\n");
 			Printf(TEXTCOLOR_RED "[%s] ", typestr);
-			Printf(TEXTCOLOR_WHITE "%s\n", callbackData->pMessage);
+			Printf(TEXTCOLOR_WHITE "%s\n", msg.GetChars());
 		}
 	}
 

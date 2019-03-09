@@ -125,6 +125,8 @@ VulkanSwapChain::VulkanSwapChain(VulkanDevice *device, int width, int height, bo
 		swapChainImageViews.resize(swapChainImages.size());
 		for (size_t i = 0; i < swapChainImages.size(); i++)
 		{
+			device->SetDebugObjectName("SwapChainImage", (uint64_t)swapChainImages[i], VK_OBJECT_TYPE_IMAGE);
+
 			VkImageViewCreateInfo createInfo = {};
 			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 			createInfo.image = swapChainImages[i];
@@ -138,6 +140,8 @@ VulkanSwapChain::VulkanSwapChain(VulkanDevice *device, int width, int height, bo
 			result = vkCreateImageView(device->device, &createInfo, nullptr, &swapChainImageViews[i]);
 			if (result != VK_SUCCESS)
 				throw std::runtime_error("Could not create image view for swapchain image");
+
+			device->SetDebugObjectName("SwapChainImageView", (uint64_t)swapChainImageViews[i], VK_OBJECT_TYPE_IMAGE_VIEW);
 		}
 	}
 	catch (...)

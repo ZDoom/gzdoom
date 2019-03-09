@@ -31,11 +31,18 @@ void VkPostprocess::SetActiveRenderTarget()
 	auto fb = GetVulkanFrameBuffer();
 	auto buffers = fb->GetBuffers();
 
-	if (buffers->PipelineLayout[mCurrentPipelineImage] != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+	if (buffers->PipelineLayout[mCurrentPipelineImage] == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 	{
 		PipelineBarrier barrier;
 		barrier.addImage(buffers->PipelineImage[mCurrentPipelineImage].get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
 		barrier.execute(fb->GetDrawCommands(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+		buffers->PipelineLayout[mCurrentPipelineImage] = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	}
+	else if (buffers->PipelineLayout[mCurrentPipelineImage] == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+	{
+		PipelineBarrier barrier;
+		barrier.addImage(buffers->PipelineImage[mCurrentPipelineImage].get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+		barrier.execute(fb->GetDrawCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 		buffers->PipelineLayout[mCurrentPipelineImage] = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	}
 

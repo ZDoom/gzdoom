@@ -268,7 +268,7 @@ script << 0 >> (int type, int tag)
 	case 213:
 		if (!CheckInventory ("OfferingChalice"))
 		{
-			print (s:"You need the chalice !");
+			print (l:"TXT_NEED_CHALICE");
 			activatorsound ("*usefail", 127);
 			SetResultValue (0);
 		}
@@ -281,7 +281,7 @@ script << 0 >> (int type, int tag)
 	case 232:
 		if (!CheckInventory ("QuestItem18") && gametype() != GAME_NET_DEATHMATCH)
 		{
-			print (s:"You need the Oracle Pass!");
+			print (l:"TXT_NEED_OPASS");
 			activatorsound ("*usefail", 127);
 			SetResultValue (0);
 		}
@@ -299,7 +299,7 @@ script << 0 >> (int type, int tag)
 	case 194:
 		if (Door_Open (tag, VDOORSPEED))
 		{
-			print (s:"You've freed the prisoners!");
+			print (l:"TXT_FREED_PRISONERS");
 			GiveInventory ("QuestItem13", 1);
 		}
 		else
@@ -311,7 +311,7 @@ script << 0 >> (int type, int tag)
 	case 199:
 		if (Ceiling_LowerAndCrush (tag, 8, 10))
 		{
-			print (s:"You've destroyed the Converter!");
+			print (l:"TXT_DESTROYED_CONVERTER");
 			GiveInventory ("QuestItem25", 1);
 			GiveInventory ("UpgradeStamina", 10);
 			GiveInventory ("UpgradeAccuracy", 1);
@@ -329,7 +329,7 @@ script << 0 >> (int type, int tag)
 		}
 		else
 		{
-			print (s:"You need the chalice!");
+			print (l:"TXT_NEED_CHALICE");
 			activatorsound ("*usefail", 127);
 			SetResultValue (0);
 		}
@@ -345,7 +345,7 @@ script << 0 >> (int type, int tag)
 		{
 			GiveInventory ("UpgradeStamina", 10);
 			GiveInventory ("UpgradeAccuracy", 1);
-			print (s:"Congratulations! You have completed the training area");
+			print (l:"TXT_COMPLETED_TRAINING");
 		}
 		else
 		{

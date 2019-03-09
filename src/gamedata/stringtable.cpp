@@ -42,120 +42,207 @@
 #include "c_dispatch.h"
 #include "v_text.h"
 #include "gi.h"
+#include "d_player.h"
+#include "xlsxread/xlsxio_read.h"
 
-// PassNum identifies which language pass this string is from.
-// PassNum 0 is for DeHacked.
-// PassNum 1 is for * strings.
-// PassNum 2+ are for specific locales.
 
-struct FStringTable::StringEntry
-{
-	StringEntry *Next;
-	char *Name;
-	uint8_t PassNum;
-	char String[];
-};
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
-FStringTable::FStringTable ()
-{
-	for (int i = 0; i < HASH_SIZE; ++i)
-	{
-		Buckets[i] = NULL;
-	}
-}
-
-FStringTable::~FStringTable ()
-{
-	FreeData ();
-}
-
-void FStringTable::FreeData ()
-{
-	for (int i = 0; i < HASH_SIZE; ++i)
-	{
-		StringEntry *entry = Buckets[i], *next;
-		Buckets[i] = NULL;
-		while (entry != NULL)
-		{
-			next = entry->Next;
-			M_Free (entry);
-			entry = next;
-		}
-	}
-}
-
-void FStringTable::FreeNonDehackedStrings ()
-{
-	for (int i = 0; i < HASH_SIZE; ++i)
-	{
-		StringEntry *entry, *next, **pentry;
-
-		for (pentry = &Buckets[i], entry = *pentry; entry != NULL; )
-		{
-			next = entry->Next;
-			if (entry->PassNum != 0)
-			{
-				*pentry = next;
-				M_Free (entry);
-			}
-			else
-			{
-				pentry = &entry->Next;
-			}
-			entry = next;
-		}
-	}
-}
-
-void FStringTable::LoadStrings (bool enuOnly)
+void FStringTable::LoadStrings ()
 {
 	int lastlump, lump;
-	int i, j;
-
-	FreeNonDehackedStrings ();
 
 	lastlump = 0;
 
 	while ((lump = Wads.FindLump ("LANGUAGE", &lastlump)) != -1)
 	{
-		j = 0;
-		if (!enuOnly)
+		if (!LoadLanguageFromSpreadsheet(lump))
+			LoadLanguage (lump);
+	}
+	SetLanguageIDs();
+	UpdateLanguage();
+	allMacros.Clear();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+bool FStringTable::LoadLanguageFromSpreadsheet(int lumpnum)
+{
+	xlsxioreader xlsxio;
+	//open .xlsx file for reading
+	if ((xlsxio = xlsxioread_open(lumpnum)) == nullptr)
+	{
+		return false;
+	}
+	readMacros(xlsxio, "macros");
+	readSheetIntoTable(xlsxio, "strings");
+
+	xlsxioread_close(xlsxio);
+	return true;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+bool FStringTable::readMacros(xlsxioreader reader, const char *sheetname)
+{
+	xlsxioreadersheet sheet = xlsxioread_sheet_open(reader, sheetname, XLSXIOREAD_SKIP_NONE);
+	if (sheet == nullptr) return false;
+
+	while (xlsxioread_sheet_next_row(sheet))
+	{
+		auto macroname = xlsxioread_sheet_next_cell(sheet);
+		auto language = xlsxioread_sheet_next_cell(sheet);
+		if (!macroname || !language) continue;
+		FStringf combined_name("%s/%s", language, macroname);
+		free(language);
+		free(macroname);
+		FName name = combined_name;
+
+		StringMacro macro;
+
+		char *value;
+		for (int i = 0; i < 4; i++)
 		{
-			LoadLanguage (lump, MAKE_ID('*',0,0,0), true, ++j);
-			for (i = 0; i < 4; ++i)
+			value = xlsxioread_sheet_next_cell(sheet);
+			macro.Replacements[i] = value;
+			free(value);
+		}
+		// This is needed because the reader code would choke on incompletely read rows.
+		while ((value = xlsxioread_sheet_next_cell(sheet)) != nullptr)
+		{
+			free(value);
+		}
+		allMacros.Insert(name, macro);
+	}
+	xlsxioread_sheet_close(sheet);
+	return true;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+bool FStringTable::readSheetIntoTable(xlsxioreader reader, const char *sheetname)
+{
+
+	xlsxioreadersheet sheet = xlsxioread_sheet_open(reader, sheetname, XLSXIOREAD_SKIP_NONE);
+	if (sheet == nullptr) return false;
+
+	int row = 0;
+	TArray<TArray<FString>> table;
+
+	while (xlsxioread_sheet_next_row(sheet))
+	{
+		int column = 0;
+		char *value;
+		table.Reserve(1);
+		while ((value = xlsxioread_sheet_next_cell(sheet)) != nullptr)
+		{
+			auto vcopy = value;
+			if (table.Size() <= (unsigned)row) table.Reserve(1);
+			while (*vcopy && iswspace((unsigned char)*vcopy)) vcopy++;	// skip over leaading whitespace;
+			auto vend = vcopy + strlen(vcopy);
+			while (vend > vcopy && iswspace((unsigned char)vend[-1])) *--vend = 0;	// skip over trailing whitespace
+			ProcessEscapes(vcopy);
+			table[row].Push(vcopy);
+			column++;
+			free(value);
+		}
+		row++;
+	}
+
+	int labelcol = -1;
+	int filtercol = -1;
+	TArray<std::pair<int, unsigned>> langrows;
+
+	if (table.Size() > 0)
+	{
+		for (unsigned column = 0; column < table[0].Size(); column++)
+		{
+			auto &entry = table[0][column];
+			if (entry.CompareNoCase("filter") == 0)
 			{
-				LoadLanguage (lump, LanguageIDs[i], true, ++j);
-				LoadLanguage (lump, LanguageIDs[i] & MAKE_ID(0xff,0xff,0,0), true, ++j);
-				LoadLanguage (lump, LanguageIDs[i], false, ++j);
+				filtercol = column;
+			}
+			else if (entry.CompareNoCase("identifier") == 0)
+			{
+				labelcol = column;;
+			}
+			else
+			{
+				auto languages = entry.Split(" ", FString::TOK_SKIPEMPTY);
+				for (auto &lang : languages)
+				{
+					if (lang.CompareNoCase("default") == 0)
+					{
+						langrows.Push(std::make_pair(column, default_table));
+					}
+					else if (lang.Len() < 4)
+					{
+						lang.ToLower();
+						langrows.Push(std::make_pair(column, MAKE_ID(lang[0], lang[1], lang[2], 0)));
+					}
+				}
 			}
 		}
 
-		// Fill in any missing strings with the default language
-		LoadLanguage (lump, MAKE_ID('*','*',0,0), true, ++j);
+		for (unsigned i = 1; i < table.Size(); i++)
+		{
+			auto &row = table[i];
+			if (filtercol > -1)
+			{
+				auto filterstr = row[filtercol];
+				auto filter = filterstr.Split(" ", FString::TOK_SKIPEMPTY);
+				if (filter.Size() > 0 && filter.FindEx([](const auto &str) { return str.CompareNoCase(GameNames[gameinfo.gametype]) == 0; }) == filter.Size())
+					continue;
+			}
+
+			FName strName = row[labelcol];
+			for (auto &langentry : langrows)
+			{
+				auto str = row[langentry.first];
+				if (str.Len() > 0)
+				{
+					InsertString(langentry.second, strName, str);
+				}
+			}
+		}
 	}
+	xlsxioread_sheet_close(sheet);
+	return true;
 }
 
-void FStringTable::LoadLanguage (int lumpnum, uint32_t code, bool exactMatch, int passnum)
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FStringTable::LoadLanguage (int lumpnum)
 {
-	static bool errordone = false;
-	const uint32_t orMask = exactMatch ? 0 : MAKE_ID(0,0,0xff,0);
-	uint32_t inCode = 0;
-	StringEntry *entry, **pentry;
-	uint32_t bucket;
-	int cmpval;
-	bool skip = true;
-
-	code |= orMask;
-
+	bool errordone = false;
+	TArray<uint32_t> activeMaps;
 	FScanner sc(lumpnum);
 	sc.SetCMode (true);
 	while (sc.GetString ())
 	{
 		if (sc.Compare ("["))
 		{ // Process language identifiers
-			bool donot = false;
-			bool forceskip = false;
-			skip = true;
+			activeMaps.Clear();
 			sc.MustGetString ();
 			do
 			{
@@ -164,17 +251,18 @@ void FStringTable::LoadLanguage (int lumpnum, uint32_t code, bool exactMatch, in
 				{
 					if (len == 1 && sc.String[0] == '~')
 					{
-						donot = true;
+						// deprecated and ignored
+						sc.ScriptMessage("Deprecated option '~' found in language list");
 						sc.MustGetString ();
 						continue;
 					}
 					if (len == 1 && sc.String[0] == '*')
 					{
-						inCode = MAKE_ID('*',0,0,0);
+						activeMaps.Push(global_table);
 					}
 					else if (len == 7 && stricmp (sc.String, "default") == 0)
 					{
-						inCode = MAKE_ID('*','*',0,0);
+						activeMaps.Push(default_table);
 					}
 					else
 					{
@@ -184,31 +272,14 @@ void FStringTable::LoadLanguage (int lumpnum, uint32_t code, bool exactMatch, in
 				}
 				else
 				{
-					inCode = MAKE_ID(tolower(sc.String[0]), tolower(sc.String[1]), tolower(sc.String[2]), 0);
-				}
-				if ((inCode | orMask) == code)
-				{
-					if (donot)
-					{
-						forceskip = true;
-						donot = false;
-					}
-					else
-					{
-						skip = false;
-					}
+					activeMaps.Push(MAKE_ID(tolower(sc.String[0]), tolower(sc.String[1]), tolower(sc.String[2]), 0));
 				}
 				sc.MustGetString ();
 			} while (!sc.Compare ("]"));
-			if (donot)
-			{
-				sc.ScriptError ("You must specify a language after ~");
-			}
-			skip |= forceskip;
 		}
 		else
 		{ // Process string definitions.
-			if (inCode == 0)
+			if (activeMaps.Size() == 0)
 			{
 				// LANGUAGE lump is bad. We need to check if this is an old binary
 				// lump and if so just skip it to allow old WADs to run which contain
@@ -222,32 +293,26 @@ void FStringTable::LoadLanguage (int lumpnum, uint32_t code, bool exactMatch, in
 				sc.ScriptError ("Found a string without a language specified.");
 			}
 
-			bool savedskip = skip;
+			bool skip = false;
 			if (sc.Compare("$"))
 			{
 				sc.MustGetStringName("ifgame");
 				sc.MustGetStringName("(");
 				sc.MustGetString();
-				skip |= !sc.Compare(GameTypeName());
+				if (sc.Compare("strifeteaser"))
+				{
+					skip |= (gameinfo.gametype != GAME_Strife) || !(gameinfo.flags & GI_SHAREWARE);
+				}
+				else
+				{
+					skip |= !sc.Compare(GameTypeName());
+				}
 				sc.MustGetStringName(")");
 				sc.MustGetString();
 
 			}
 
-			if (skip)
-			{ // We're not interested in this language, so skip the string.
-				sc.MustGetStringName ("=");
-				sc.MustGetString ();
-				do
-				{
-					sc.MustGetString ();
-				} 
-				while (!sc.Compare (";"));
-				skip = savedskip;
-				continue;
-			}
-
-			FString strName (sc.String);
+			FName strName (sc.String);
 			sc.MustGetStringName ("=");
 			sc.MustGetString ();
 			FString strText (sc.String, ProcessEscapes (sc.String));
@@ -258,40 +323,84 @@ void FStringTable::LoadLanguage (int lumpnum, uint32_t code, bool exactMatch, in
 				strText += sc.String;
 				sc.MustGetString ();
 			}
-
-			// Does this string exist? If so, should we overwrite it?
-			bucket = MakeKey (strName.GetChars()) & (HASH_SIZE-1);
-			pentry = &Buckets[bucket];
-			entry = *pentry;
-			cmpval = 1;
-			while (entry != NULL)
+			if (!skip)
 			{
-				cmpval = stricmp (entry->Name, strName.GetChars());
-				if (cmpval >= 0)
-					break;
-				pentry = &entry->Next;
-				entry = *pentry;
-			}
-			if (cmpval == 0 && entry->PassNum >= passnum)
-			{
-				*pentry = entry->Next;
-				M_Free (entry);
-				entry = NULL;
-			}
-			if (entry == NULL || cmpval > 0)
-			{
-				entry = (StringEntry *)M_Malloc (sizeof(*entry) + strText.Len() + strName.Len() + 2);
-				entry->Next = *pentry;
-				*pentry = entry;
-				strcpy (entry->String, strText.GetChars());
-				strcpy (entry->Name = entry->String + strText.Len() + 1, strName.GetChars());
-				entry->PassNum = passnum;
+				// Insert the string into all relevant tables.
+				for (auto map : activeMaps)
+				{
+					InsertString(map, strName, strText);
+				}
 			}
 		}
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FStringTable::InsertString(int langid, FName label, const FString &string)
+{
+	const char *strlangid = (const char *)&langid;
+	TableElement te = { string, string, string, string };
+	long index;
+	while ((index = te.strings[0].IndexOf("@[")) >= 0)
+	{
+		auto endindex = te.strings[0].IndexOf(']', index);
+		if (endindex == -1)
+		{
+			Printf("Bad macro in %s : %s\n", strlangid, label.GetChars());
+			break;
+		}
+		FString macroname(te.strings[0].GetChars() + index + 2, endindex - index - 2);
+ 		FStringf lookupstr("%s/%s", strlangid, macroname.GetChars());
+		FStringf replacee("@[%s]", macroname.GetChars());
+		FName lookupname(lookupstr, true);
+		auto replace = allMacros.CheckKey(lookupname);
+		for (int i = 0; i < 4; i++)
+		{
+			const char *replacement = replace && replace->Replacements[i] ? replace->Replacements[i] : "";
+			te.strings[i].Substitute(replacee, replacement);
+		}
+	}
+	allStrings[langid].Insert(label, te);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FStringTable::UpdateLanguage()
+{
+	currentLanguageSet.Clear();
+
+	auto checkone = [&](uint32_t lang_id)
+	{
+		auto list = allStrings.CheckKey(lang_id);
+		if (list && currentLanguageSet.FindEx([&](const auto &element) { return element.first == lang_id; }) == currentLanguageSet.Size())
+			currentLanguageSet.Push(std::make_pair(lang_id, list));
+	};
+
+	checkone(dehacked_table);
+	checkone(global_table);
+	for (int i = 0; i < 4; ++i)
+	{
+		checkone(LanguageIDs[i]);
+		checkone(LanguageIDs[i] & MAKE_ID(0xff, 0xff, 0, 0));
+	}
+	checkone(default_table);
+}
+
+//==========================================================================
+//
 // Replace \ escape sequences in a string with the escaped characters.
+//
+//==========================================================================
+
 size_t FStringTable::ProcessEscapes (char *iptr)
 {
 	char *sptr = iptr, *optr = iptr, c;
@@ -318,109 +427,128 @@ size_t FStringTable::ProcessEscapes (char *iptr)
 	return optr - sptr;
 }
 
-// Finds a string by name and returns its value
-const char *FStringTable::operator[] (const char *name) const
-{
-	if (name == NULL)
-	{
-		return NULL;
-	}
-	uint32_t bucket = MakeKey (name) & (HASH_SIZE - 1);
-	StringEntry *entry = Buckets[bucket];
+//==========================================================================
+//
+// Checks if the given key exists in any one of the default string tables that are valid for all languages.
+// To replace IWAD content this condition must be true.
+//
+//==========================================================================
 
-	while (entry != NULL)
+bool FStringTable::exists(const char *name)
+{
+	if (name == nullptr || *name == 0)
 	{
-		int cmpval = stricmp (entry->Name, name);
-		if (cmpval == 0)
-		{
-			return entry->String;
-		}
-		if (cmpval == 1)
-		{
-			return NULL;
-		}
-		entry = entry->Next;
+		return false;
 	}
-	return NULL;
+	FName nm(name, true);
+	if (nm != NAME_None)
+	{
+		uint32_t defaultStrings[] = { default_table, global_table, dehacked_table };
+
+		for (auto mapid : defaultStrings)
+		{
+			auto map = allStrings.CheckKey(mapid);
+			if (map)
+			{
+				auto item = map->CheckKey(nm);
+				if (item) return true;
+			}
+		}
+	}
+	return false;
 }
 
+//==========================================================================
+//
+// Finds a string by name and returns its value
+//
+//==========================================================================
+
+const char *FStringTable::GetString(const char *name, uint32_t *langtable, int gender) const
+{
+	if (name == nullptr || *name == 0)
+	{
+		return nullptr;
+	}
+	if (gender == -1) gender = players[consoleplayer].userinfo.GetGender();
+	if (gender < 0 || gender > 3) gender = 0;
+	FName nm(name, true);
+	if (nm != NAME_None)
+	{
+		for (auto map : currentLanguageSet)
+		{
+			auto item = map.second->CheckKey(nm);
+			if (item)
+			{
+				if (langtable) *langtable = map.first;
+				return item->strings[gender].GetChars();
+			}
+		}
+	}
+	return nullptr;
+}
+
+//==========================================================================
+//
+// Finds a string by name in a given language
+//
+//==========================================================================
+
+const char *FStringTable::GetLanguageString(const char *name, uint32_t langtable, int gender) const
+{
+	if (name == nullptr || *name == 0)
+	{
+		return nullptr;
+	}
+	if (gender == -1) gender = players[consoleplayer].userinfo.GetGender();
+	if (gender < 0 || gender > 3) gender = 0;
+	FName nm(name, true);
+	if (nm != NAME_None)
+	{
+		auto map = allStrings.CheckKey(langtable);
+		if (map == nullptr) return nullptr;
+		auto item = map->CheckKey(nm);
+		if (item)
+		{
+			return item->strings[gender].GetChars();
+		}
+	}
+	return nullptr;
+}
+
+//==========================================================================
+//
 // Finds a string by name and returns its value. If the string does
 // not exist, returns the passed name instead.
+//
+//==========================================================================
+
 const char *FStringTable::operator() (const char *name) const
 {
 	const char *str = operator[] (name);
 	return str ? str : name;
 }
 
-// Find a string by name. pentry1 is a pointer to a pointer to it, and entry1 is a
-// pointer to it. Return NULL for entry1 if it wasn't found.
-void FStringTable::FindString (const char *name, StringEntry **&pentry1, StringEntry *&entry1)
-{
-	uint32_t bucket = MakeKey (name) & (HASH_SIZE - 1);
-	StringEntry **pentry = &Buckets[bucket], *entry = *pentry;
 
-	while (entry != NULL)
-	{
-		int cmpval = stricmp (entry->Name, name);
-		if (cmpval == 0)
-		{
-			pentry1 = pentry;
-			entry1 = entry;
-			return;
-		}
-		if (cmpval == 1)
-		{
-			pentry1 = pentry;
-			entry1 = NULL;
-			return;
-		}
-		pentry = &entry->Next;
-		entry = *pentry;
-	}
-	pentry1 = pentry;
-	entry1 = entry;
-}
-
+//==========================================================================
+//
 // Find a string with the same exact text. Returns its name.
-const char *FStringTable::MatchString (const char *string) const
+// This does not need to check genders, it is only used by
+// Dehacked on the English table for finding stock strings.
+//
+//==========================================================================
+
+const char *StringMap::MatchString (const char *string) const
 {
-	for (int i = 0; i < HASH_SIZE; ++i)
+	StringMap::ConstIterator it(*this);
+	StringMap::ConstPair *pair;
+
+	while (it.NextPair(pair))
 	{
-		for (StringEntry *entry = Buckets[i]; entry != NULL; entry = entry->Next)
+		if (pair->Value.strings[0].CompareNoCase(string) == 0)
 		{
-			if (strcmp (entry->String, string) == 0)
-			{
-				return entry->Name;
-			}
+			return pair->Key.GetChars();
 		}
 	}
-	return NULL;
-}
-
-void FStringTable::SetString (const char *name, const char *newString)
-{
-	StringEntry **pentry, *oentry;
-	FindString (name, pentry, oentry);
-
-	size_t newlen = strlen (newString);
-	size_t namelen = strlen (name);
-
-	// Create a new string entry
-	StringEntry *entry = (StringEntry *)M_Malloc (sizeof(*entry) + newlen + namelen + 2);
-	strcpy (entry->String, newString);
-	strcpy (entry->Name = entry->String + newlen + 1, name);
-	entry->PassNum = 0;
-
-	// If this is a new string, insert it. Otherwise, replace the old one.
-	if (oentry == NULL)
-	{
-		entry->Next = *pentry;
-		*pentry = entry;
-	}
-	else
-	{
-		*pentry = entry;
-		entry->Next = oentry->Next;
-		M_Free (oentry);
-	}
+	return nullptr;
 }

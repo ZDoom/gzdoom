@@ -111,12 +111,12 @@ void FGLRenderer::DrawScene(HWDrawInfo *di, int drawmode)
 	if (vp.camera != nullptr)
 	{
 		ActorRenderFlags savedflags = vp.camera->renderflags;
-		di->CreateScene();
+		di->CreateScene(drawmode == DM_MAINVIEW);
 		vp.camera->renderflags = savedflags;
 	}
 	else
 	{
-		di->CreateScene();
+		di->CreateScene(false);
 	}
 
 	glDepthMask(true);
@@ -163,9 +163,11 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
     // Render (potentially) multiple views for stereo 3d
 	// Fixme. The view offsetting should be done with a static table and not require setup of the entire render state for the mode.
 	auto vrmode = VRMode::GetVRMode(mainview && toscreen);
-	for (int eye_ix = 0; eye_ix < vrmode->mEyeCount; ++eye_ix)
+	const int eyeCount = vrmode->mEyeCount;
+	mBuffers->CurrentEye() = 0;  // always begin at zero, in case eye count changed
+	for (int eye_ix = 0; eye_ix < eyeCount; ++eye_ix)
 	{
-		const auto &eye = vrmode->mEyes[eye_ix];
+		const auto &eye = vrmode->mEyes[mBuffers->CurrentEye()];
 		screen->SetViewportRects(bounds);
 
 		if (mainview) // Bind the scene frame buffer and turn on draw buffers used by ssao
@@ -218,8 +220,8 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 			PostProcess.Unclock();
 		}
 		di->EndDrawInfo();
-		if (vrmode->mEyeCount > 1)
-			mBuffers->BlitToEyeTexture(eye_ix);
+		if (eyeCount - eye_ix > 1)
+			mBuffers->NextEye(eyeCount);
 	}
 
 	return mainvp.sector;

@@ -54,12 +54,19 @@
 #include "gl/system/gl_framebuffer.h"
 
 EXTERN_CVAR(Int, vid_adapter)
-EXTERN_CVAR(Bool, vr_enable_quadbuffered)
 EXTERN_CVAR(Bool, vid_hdr)
 
 CUSTOM_CVAR(Bool, gl_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
+}
+
+// For broadest GL compatibility, require user to explicitly enable quad-buffered stereo mode.
+// Setting vr_enable_quadbuffered_stereo does not automatically invoke quad-buffered stereo,
+// but makes it possible for subsequent "vr_mode 7" to invoke quad-buffered stereo
+CUSTOM_CVAR(Bool, vr_enable_quadbuffered, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	Printf("You must restart " GAMENAME " to switch quad stereo mode\n");
 }
 
 extern bool vid_hdr_active;
@@ -124,7 +131,7 @@ HWND Win32GLVideo::InitDummy()
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = NULL;
 	wc.lpszMenuName = NULL;
-	wc.lpszClassName = "GZDoomOpenGLDummyWindow";
+	wc.lpszClassName = L"GZDoomOpenGLDummyWindow";
 
 	//Register window class
 	if (!RegisterClass(&wc))
@@ -141,9 +148,9 @@ HWND Win32GLVideo::InitDummy()
 	AdjustWindowRectEx(&windowRect, style, false, exStyle);
 
 	//Create Window
-	if (!(dummy = CreateWindowEx(exStyle,
-		"GZDoomOpenGLDummyWindow",
-		"GZDOOM",
+	if (!(dummy = CreateWindowExW(exStyle,
+		L"GZDoomOpenGLDummyWindow",
+		WGAMENAME,
 		WS_CLIPSIBLINGS | WS_CLIPCHILDREN | style,
 		0, 0,
 		windowRect.right - windowRect.left,
@@ -152,7 +159,7 @@ HWND Win32GLVideo::InitDummy()
 		g_hInst,
 		NULL)))
 	{
-		UnregisterClass("GZDoomOpenGLDummyWindow", g_hInst);
+		UnregisterClassW(L"GZDoomOpenGLDummyWindow", g_hInst);
 		return 0;
 	}
 	ShowWindow(dummy, SW_HIDE);
@@ -169,7 +176,7 @@ HWND Win32GLVideo::InitDummy()
 void Win32GLVideo::ShutdownDummy(HWND dummy)
 {
 	DestroyWindow(dummy);
-	UnregisterClass("GZDoomOpenGLDummyWindow", GetModuleHandle(NULL));
+	UnregisterClassW(L"GZDoomOpenGLDummyWindow", GetModuleHandle(NULL));
 }
 
 

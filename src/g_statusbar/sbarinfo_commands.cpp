@@ -1025,7 +1025,7 @@ class CommandDrawNumber : public CommandDrawString
 			usePrefix(false), interpolationSpeed(0), drawValue(0), length(3),
 			lowValue(-1), lowTranslation(CR_UNTRANSLATED), highValue(-1),
 			highTranslation(CR_UNTRANSLATED), value(CONSTANT),
-			inventoryItem(NULL), cvarName(nullptr)
+			inventoryItem(NULL)
 		{
 		}
 

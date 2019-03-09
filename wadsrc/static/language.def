@@ -1,0 +1,95 @@
+[default]
+
+// The contents of this file are not supposed to be translated!!!
+// These strings are needed in the string table only so that they can be replaced by Dehacked.
+
+
+// Music names for Doom. 
+// Note that these names are not prefixed with 'd_' because that's how Dehacked patches expect them.
+
+MUSIC_E1M1 = "e1m1";
+MUSIC_E1M2 = "e1m2";
+MUSIC_E1M3 = "e1m3";
+MUSIC_E1M4 = "e1m4";
+MUSIC_E1M5 = "e1m5";
+MUSIC_E1M6 = "e1m6";
+MUSIC_E1M7 = "e1m7";
+MUSIC_E1M8 = "e1m8";
+MUSIC_E1M9 = "e1m9";
+MUSIC_E2M1 = "e2m1";
+MUSIC_E2M2 = "e2m2";
+MUSIC_E2M3 = "e2m3";
+MUSIC_E2M4 = "e2m4";
+MUSIC_E2M5 = "e2m5";
+MUSIC_E2M6 = "e2m6";
+MUSIC_E2M7 = "e2m7";
+MUSIC_E2M8 = "e2m8";
+MUSIC_E2M9 = "e2m9";
+MUSIC_E3M1 = "e3m1";
+MUSIC_E3M2 = "e3m2";
+MUSIC_E3M3 = "e3m3";
+MUSIC_E3M4 = "e3m4";
+MUSIC_E3M5 = "e3m5";
+MUSIC_E3M6 = "e3m6";
+MUSIC_E3M7 = "e3m7";
+MUSIC_E3M8 = "e3m8";
+MUSIC_E3M9 = "e3m9";
+MUSIC_INTER = "inter";
+MUSIC_INTRO = "intro";
+MUSIC_BUNNY = "bunny";
+MUSIC_VICTOR = "victor";
+MUSIC_INTROA = "introa";
+MUSIC_RUNNIN = "runnin";
+MUSIC_STALKS = "stalks";
+MUSIC_COUNTD = "countd";
+MUSIC_BETWEE = "betwee";
+MUSIC_DOOM = "doom";
+MUSIC_THE_DA = "the_da";
+MUSIC_SHAWN = "shawn";
+MUSIC_DDTBLU = "ddtblu";
+MUSIC_IN_CIT = "in_cit";
+MUSIC_DEAD = "dead";
+MUSIC_STLKS2 = "stlks2";
+MUSIC_THEDA2 = "theda2";
+MUSIC_DOOM2 = "doom2";
+MUSIC_DDTBL2 = "ddtbl2";
+MUSIC_RUNNI2 = "runni2";
+MUSIC_DEAD2 = "dead2";
+MUSIC_STLKS3 = "stlks3";
+MUSIC_ROMERO = "romero";
+MUSIC_SHAWN2 = "shawn2";
+MUSIC_MESSAG = "messag";
+MUSIC_COUNT2 = "count2";
+MUSIC_DDTBL3 = "ddtbl3";
+MUSIC_AMPIE = "ampie";
+MUSIC_THEDA3 = "theda3";
+MUSIC_ADRIAN = "adrian";
+MUSIC_MESSG2 = "messg2";
+MUSIC_ROMER2 = "romer2";
+MUSIC_TENSE = "tense";
+MUSIC_SHAWN3 = "shawn3";
+MUSIC_OPENIN = "openin";
+MUSIC_EVIL = "evil";
+MUSIC_ULTIMA = "ultima";
+MUSIC_READ_M = "read_m";
+MUSIC_DM2TTL = "dm2ttl";
+MUSIC_DM2INT = "dm2int";
+
+
+// MBF (BOOM?) narration backgrounds
+
+bgflatE1 = "FLOOR4_8";
+bgflatE2 = "SFLR6_1";
+bgflatE3 = "MFLR8_4";
+bgflatE4 = "MFLR8_3";
+bgflat06 = "SLIME16";
+bgflat11 = "RROCK14";
+bgflat20 = "RROCK07";
+bgflat30 = "RROCK17";
+bgflat15 = "RROCK13";
+bgflat31 = "RROCK19";
+bgcastcall = "BOSSBACK";
+
+TAG_QUEST4 = "quest4";
+TAG_QUEST5 = "quest5";
+TAG_QUEST6 = "quest4";

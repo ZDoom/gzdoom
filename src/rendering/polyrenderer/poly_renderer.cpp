@@ -68,7 +68,7 @@ void PolyRenderer::RenderView(player_t *player, DCanvas *target, void *videobuff
 	RenderTarget = target;
 	RenderToCanvas = false;
 
-	RenderActorView(player->mo, false);
+	RenderActorView(player->mo, true, false);
 
 	Threads.MainThread()->FlushDrawQueue();
 
@@ -102,7 +102,7 @@ void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int
 	viewactive = true;
 	
 	// Render:
-	RenderActorView(actor, dontmaplines);
+	RenderActorView(actor, false, dontmaplines);
 	Threads.MainThread()->FlushDrawQueue();
 	DrawerThreads::WaitForWorkers();
 
@@ -119,7 +119,7 @@ void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int
 	RenderTarget = savedRenderTarget;
 }
 
-void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
+void PolyRenderer::RenderActorView(AActor *actor, bool drawpsprites, bool dontmaplines)
 {
 	PolyTotalBatches = 0;
 	PolyTotalTriangles = 0;
@@ -181,7 +181,9 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	mainViewpoint.StencilValue = GetNextStencilValue();
 	Scene.CurrentViewpoint = &mainViewpoint;
 	Scene.Render(&mainViewpoint);
-	PlayerSprites.Render(Threads.MainThread());
+	if (drawpsprites)
+		PlayerSprites.Render(Threads.MainThread());
+
 	Scene.CurrentViewpoint = nullptr;
 
 	if (Viewpoint.camera)

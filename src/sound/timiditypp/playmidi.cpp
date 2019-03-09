@@ -25,6 +25,7 @@
 
 #include <string.h>
 #include <math.h>
+#include <mutex>
 #include "timidity.h"
 #include "common.h"
 #include "instrum.h"
@@ -37,13 +38,12 @@
 #include "c_cvars.h"
 #include "tables.h"
 #include "effect.h"
-#include "critsec.h"
 #include "i_musicinterns.h"
 
 
 namespace TimidityPlus
 {
-	FCriticalSection CvarCritSec;
+	std::mutex CvarCritSec;
 	bool timidity_modulation_wheel = true;
 	bool timidity_portamento = false;
 	int timidity_reverb = 0;
@@ -73,9 +73,8 @@ namespace TimidityPlus
 
 template<class T> void ChangeVarSync(T&var, T value)
 {
-	TimidityPlus::CvarCritSec.Enter();
+	std::lock_guard<std::mutex> lock(TimidityPlus::CvarCritSec);
 	var = value;
-	TimidityPlus::CvarCritSec.Leave();
 }
 
 CUSTOM_CVAR(Bool, timidity_modulation_wheel, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -5128,7 +5127,7 @@ int Player::compute_data(float *buffer, int32_t count)
 {
 	if (count == 0) return RC_OK;
 
-	CvarCritSec.Enter();
+	std::lock_guard<std::mutex> lock(CvarCritSec);
 
 	if (last_reverb_setting != timidity_reverb)
 	{
@@ -5154,7 +5153,6 @@ int Player::compute_data(float *buffer, int32_t count)
 			*buffer++ = (common_buffer[i])*(5.f / 0x80000000u);
 		}
 	}
-	CvarCritSec.Leave();
 	return RC_OK;
 }
 

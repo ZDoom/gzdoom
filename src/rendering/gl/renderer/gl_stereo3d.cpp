@@ -34,6 +34,7 @@
 #include "gl/system/gl_framebuffer.h"
 #include "hwrenderer/postprocessing/hw_presentshader.h"
 #include "hwrenderer/postprocessing/hw_present3dRowshader.h"
+#include "menu/menu.h"
 
 EXTERN_CVAR(Int, vr_mode)
 EXTERN_CVAR(Float, vid_saturation)
@@ -283,6 +284,8 @@ bool FGLRenderer::QuadStereoCheckInitialRenderContextState()
 										   // Now check whether this context supports hardware stereo
 			glGetBooleanv(GL_STEREO, &supportsStereo);
 			bQuadStereoSupported = supportsStereo && supportsBuffered;
+			if (! bQuadStereoSupported)
+				UpdateVRModes(false);
 		}
 	}
 	return bQuadStereoSupported;
@@ -324,6 +327,12 @@ void FGLRenderer::PresentQuadStereo()
 
 void FGLRenderer::PresentStereo()
 {
+	auto vrmode = VRMode::GetVRMode(true);
+	const int eyeCount = vrmode->mEyeCount;
+	// Don't invalidate the bound framebuffer (..., false)
+	if (eyeCount > 1)
+		mBuffers->BlitToEyeTexture(mBuffers->CurrentEye(), false);
+
 	switch (vr_mode)
 	{
 	default:

@@ -259,7 +259,7 @@ player_t::~player_t()
 	DestroyPSprites();
 }
 
-player_t &player_t::operator=(const player_t &p)
+void player_t::CopyFrom(player_t &p, bool copyPSP)
 {
 	mo = p.mo;
 	playerstate = p.playerstate;
@@ -312,7 +312,6 @@ player_t &player_t::operator=(const player_t &p)
 	extralight = p.extralight;
 	fixedcolormap = p.fixedcolormap;
 	fixedlightlevel = p.fixedlightlevel;
-	psprites = p.psprites;
 	morphTics = p.morphTics;
 	MorphedPlayerClass = p.MorphedPlayerClass;
 	MorphStyle = p.MorphStyle;
@@ -346,7 +345,12 @@ player_t &player_t::operator=(const player_t &p)
 	ConversationFaceTalker = p.ConversationFaceTalker;
 	MUSINFOactor = p.MUSINFOactor;
 	MUSINFOtics = p.MUSINFOtics;
-	return *this;
+	if (copyPSP)
+	{
+		// This needs to transfer ownership completely.
+		psprites = p.psprites;
+		p.psprites = nullptr;
+	}
 }
 
 size_t player_t::PropagateMark()
@@ -371,18 +375,37 @@ size_t player_t::PropagateMark()
 
 void player_t::SetLogNumber (int num)
 {
-	char lumpname[16];
+	char lumpname[26];
 	int lumpnum;
+
+	// First look up TXT_LOGTEXT%d in the string table
+	mysnprintf(lumpname, countof(lumpname), "$TXT_LOGTEXT%d", num);
+	auto text = GStrings[lumpname+1];
+	if (text)
+	{
+		SetLogText(lumpname);	// set the label, not the content, so that a language change can be picked up.
+		return;
+	}
 
 	mysnprintf (lumpname, countof(lumpname), "LOG%d", num);
 	lumpnum = Wads.CheckNumForName (lumpname);
-	if (lumpnum == -1)
+	if (lumpnum != -1)
 	{
-		// Leave the log message alone if this one doesn't exist.
-		//SetLogText (lumpname);
-	}
-	else
-	{
+		auto fn = Wads.GetLumpFile(lumpnum);
+		auto wadname = Wads.GetWadName(fn);
+		if (!stricmp(wadname, "STRIFE0.WAD") || !stricmp(wadname, "STRIFE1.WAD") || !stricmp(wadname, "SVE.WAD"))
+		{
+			// If this is an original IWAD text, try looking up its lower priority string version first.
+
+			mysnprintf(lumpname, countof(lumpname), "$TXT_ILOG%d", num);
+			auto text = GStrings[lumpname + 1];
+			if (text)
+			{
+				SetLogText(lumpname);	// set the label, not the content, so that a language change can be picked up.
+				return;
+			}
+		}
+
 		auto lump = Wads.ReadLump(lumpnum);
 		SetLogText (lump.GetString());
 	}
@@ -954,7 +977,7 @@ void P_CheckPlayerSprite(AActor *actor, int &spritenum, DVector2 &scale)
 	}
 }
 
-CUSTOM_CVAR (Float, sv_aircontrol, 0.00390625f, CVAR_SERVERINFO|CVAR_NOSAVE)
+CUSTOM_CVAR (Float, sv_aircontrol, 0.00390625f, CVAR_SERVERINFO|CVAR_NOSAVE|CVAR_NOINITCALL)
 {
 	primaryLevel->aircontrol = self;
 	primaryLevel->AirControlChanged ();
@@ -1350,7 +1373,7 @@ void P_PredictPlayer (player_t *player)
 	}
 
 	// Save original values for restoration later
-	PredictionPlayerBackup = *player;
+	PredictionPlayerBackup.CopyFrom(*player, false);
 
 	auto act = player->mo;
 	PredictionActor = player->mo;
@@ -1475,7 +1498,7 @@ void P_UnPredictPlayer ()
 		int inventorytics = player->inventorytics;
 		const bool settings_controller = player->settings_controller;
 
-		*player = PredictionPlayerBackup;
+		player->CopyFrom(PredictionPlayerBackup, false);
 
 		player->settings_controller = settings_controller;
 		// Restore the camera instead of using the backup's copy, because spynext/prev

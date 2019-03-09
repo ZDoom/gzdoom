@@ -443,29 +443,6 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 	}
 }
 
-void V_SetBlend (int blendr, int blendg, int blendb, int blenda)
-{
-	// Don't do anything if the new blend is the same as the old
-	if (((blenda|BlendA) == 0) ||
-		(blendr == BlendR &&
-		 blendg == BlendG &&
-		 blendb == BlendB &&
-		 blenda == BlendA))
-		return;
-
-	V_ForceBlend (blendr, blendg, blendb, blenda);
-}
-
-void V_ForceBlend (int blendr, int blendg, int blendb, int blenda)
-{
-	BlendR = blendr;
-	BlendG = blendg;
-	BlendB = blendb;
-	BlendA = blenda;
-
-	screen->SetFlash (PalEntry (BlendR, BlendG, BlendB), BlendA);
-}
-
 CCMD (testblend)
 {
 	FString colorstring;

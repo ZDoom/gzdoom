@@ -13,21 +13,6 @@ endif()
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake )
 include( FindPackageHandleStandardArgs )
 
-# Produce a warning if XP support will be missing when building a 32 bit target for MSVC.
-if( MSVC )
-	if(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
-
-		list( APPEND WINXP_TOOLSETS v140_xp v141_xp)
-		list( FIND WINXP_TOOLSETS "${CMAKE_GENERATOR_TOOLSET}" HAVE_WINXP_SUPPORT)
-
-		if( HAVE_WINXP_SUPPORT EQUAL -1 )
-			string( REPLACE ";" " or " WINXP_TOOLSETS_STR "${WINXP_TOOLSETS}" )
-			message( WARNING "This project supports Windows XP but you must set the optional toolset to ${WINXP_TOOLSETS_STR} manually to have it in your build!\n"
-				"Assign toolset's name to CMAKE_GENERATOR_TOOLSET variable or use -T <toolset> from the command prompt." )
-		endif()
-	endif()
-endif()
-
 # Support cross compiling
 option( FORCE_CROSSCOMPILE "Turn on cross compiling." NO )
 if( FORCE_CROSSCOMPILE )
@@ -229,9 +214,7 @@ if( MSVC )
 	set( DEB_C_FLAGS "/D _CRTDBG_MAP_ALLOC /MTd" )
 
 	# Disable warnings for unsecure CRT functions from VC8+
-	if( MSVC_VERSION GREATER 1399 )
-		set( ALL_C_FLAGS "${ALL_C_FLAGS} /wd4996" )
-	endif()
+	set( ALL_C_FLAGS "${ALL_C_FLAGS} /wd4996 /DUNICODE /D_UNICODE" )
 
 	# The CMake configurations set /GR and /MD by default, which conflict with our settings.
 	string(REPLACE "/MD " " " CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE} )

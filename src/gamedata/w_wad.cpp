@@ -759,6 +759,7 @@ void FWadCollection::RenameSprites ()
 {
 	bool renameAll;
 	bool MNTRZfound = false;
+	const char *altbigfont = gameinfo.gametype == GAME_Strife? "SBIGFONT" : (gameinfo.gametype & GAME_Raven)? "HBIGFONT" : "DBIGFONT";
 
 	static const uint32_t HereticRenames[] =
 	{ MAKE_ID('H','E','A','D'), MAKE_ID('L','I','C','H'),		// Ironlich
@@ -809,7 +810,9 @@ void FWadCollection::RenameSprites ()
 	case GAME_Doom:
 	default:
 		// Doom's sprites don't get renamed.
-		return;
+		renames = nullptr;
+		numrenames = 0;
+		break;
 
 	case GAME_Heretic:
 		renames = HereticRenames;
@@ -888,6 +891,21 @@ void FWadCollection::RenameSprites ()
 					LumpInfo[i].lump->dwName = MAKE_ID('B', 'L', 'U', 'D');
 				}
 			}
+		}
+		else if (LumpInfo[i].lump->Namespace == ns_global)
+		{
+			// Rename the game specific big font lumps so that the font manager does not have to do problematic special checks for them.
+			if (!strcmp(LumpInfo[i].lump->Name, altbigfont)) 
+				strcpy(LumpInfo[i].lump->Name, "BIGFONT");
+
+			if (LumpInfo[i].wadnum == GetIwadNum() && gameinfo.flags & GI_IGNOREBIGFONTLUMP)
+			{
+				if (!strcmp(LumpInfo[i].lump->Name, "BIGFONT"))
+				{
+					LumpInfo[i].lump->Name[0] = 0;
+				}
+			}
+
 		}
 	}
 }
@@ -1258,6 +1276,63 @@ FResourceLump *FWadCollection::GetLumpRecord(int lump) const
 	if ((size_t)lump >= LumpInfo.Size())
 		return nullptr;
 	return LumpInfo[lump].lump;
+}
+
+//==========================================================================
+//
+// GetLumpsInFolder
+// 
+// Gets all lumps within a single folder in the hierarchy.
+// If 'atomic' is set, it treats folders as atomic, i.e. only the
+// content of the last found resource file having the given folder name gets used.
+//
+//==========================================================================
+
+static int folderentrycmp(const void *a, const void *b)
+{
+	auto A = (FolderEntry*)a;
+	auto B = (FolderEntry*)b;
+	return strcmp(A->name, B->name);
+}
+
+unsigned FWadCollection::GetLumpsInFolder(const char *inpath, TArray<FolderEntry> &result, bool atomic) const
+{
+	FString path = inpath;
+	FixPathSeperator(path);
+	path.ToLower();
+	if (path[path.Len() - 1] != '/') path += '/';
+	result.Clear();
+	for (unsigned i = 0; i < LumpInfo.Size(); i++)
+	{
+		if (LumpInfo[i].lump->FullName.IndexOf(path) == 0)
+		{
+			// Only if it hasn't been replaced.
+			if ((unsigned)Wads.CheckNumForFullName(LumpInfo[i].lump->FullName) == i)
+			{
+				result.Push({ LumpInfo[i].lump->FullName.GetChars(), i });
+			}
+		}
+	}
+	if (result.Size())
+	{
+		int maxfile = -1;
+		if (atomic)
+		{
+			// Find the highest resource file having content in the given folder.
+			for (auto & entry : result)
+			{
+				int thisfile = Wads.GetLumpFile(entry.lumpnum);
+				if (thisfile > maxfile) maxfile = thisfile;
+			}
+			// Delete everything from older files.
+			for (int i = result.Size() - 1; i >= 0; i--)
+			{
+				if (Wads.GetLumpFile(result[i].lumpnum) != maxfile) result.Delete(i);
+			}
+		}
+		qsort(result.Data(), result.Size(), sizeof(FolderEntry), folderentrycmp);
+	}
+	return result.Size();
 }
 
 //==========================================================================

@@ -20,15 +20,6 @@
 #define IDB_BITMAP1                     131
 #define IDB_DEADGUY                     131
 #define IDD_CRASHDETAILS                133
-#define IDI_BOING1                      137
-#define IDI_BOING2                      138
-#define IDI_BOING3                      139
-#define IDI_BOING4                      140
-#define IDI_BOING5                      141
-#define IDI_BOING6                      142
-#define IDI_BOING7                      143
-#define IDI_BOING8                      144
-#define IDD_BOING                       145
 #define IDD_CRASHOVERVIEW               147
 #define IDD_ERRORPANE                   148
 #define IDD_NETSTARTPANE                149
@@ -83,7 +74,6 @@
 #define IDC_BUTTON2                     1062
 #define IDC_CRASHDETAILS                1062
 #define IDC_DEADGUYVIEWER               1063
-#define IDC_BOING                       1065
 #define IDC_CRASHFILESIZE               1066
 #define IDC_BUTTON1                     1071
 #define IDC_BOINGSTATUS                 1072

@@ -1,4 +1,5 @@
 
+#include <mutex>
 #include "oplsynth/opl_mus_player.h"
 #include "c_cvars.h"
 #include "mus2midi.h"
@@ -113,7 +114,7 @@ public:
 	bool Pause(bool paused);
 
 protected:
-	FCriticalSection CritSec;
+	std::mutex CritSec;
 	SoundStream *Stream;
 	double Tempo;
 	double Division;
@@ -542,4 +543,5 @@ MusInfo *SndFile_OpenSong(FileReader &fr);
 extern MusInfo *currSong;
 void MIDIDeviceChanged(int newdev, bool force = false);
 
+EXTERN_CVAR (Float, snd_mastervolume)
 EXTERN_CVAR (Float, snd_musicvolume)

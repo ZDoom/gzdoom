@@ -260,8 +260,7 @@ void FLevelLocals::ClearLevelData()
 	ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
 
 	total_monsters = total_items = total_secrets =
-		killed_monsters = found_items = found_secrets =
-		wminfo.maxfrags = 0;
+	killed_monsters = found_items = found_secrets = 0;
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -375,7 +374,6 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 	// This is motivated as follows:
 
 	Level->maptype = MAPTYPE_UNKNOWN;
-	wminfo.partime = 180;
 
 	if (!savegamerestore)
 	{

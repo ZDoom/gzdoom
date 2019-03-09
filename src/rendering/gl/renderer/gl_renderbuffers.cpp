@@ -532,12 +532,30 @@ void FGLRenderBuffers::BlitSceneToTexture()
 //
 //==========================================================================
 
-void FGLRenderBuffers::BlitToEyeTexture(int eye)
+void FGLRenderBuffers::BlitToEyeTexture(int eye, bool allowInvalidate)
 {
 	CreateEyeBuffers(eye);
 
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, mPipelineFB[mCurrentPipelineTexture].handle);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mEyeFBs[eye].handle);
+	glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, mWidth, mHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+	if ((gl.flags & RFL_INVALIDATE_BUFFER) != 0 && allowInvalidate)
+	{
+		GLenum attachments[2] = { GL_COLOR_ATTACHMENT0, GL_DEPTH_STENCIL_ATTACHMENT };
+		glInvalidateFramebuffer(GL_READ_FRAMEBUFFER, 2, attachments);
+	}
+
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+}
+
+void FGLRenderBuffers::BlitFromEyeTexture(int eye)
+{
+	if (mEyeFBs.Size() <= unsigned(eye)) return;
+
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mPipelineFB[mCurrentPipelineTexture].handle);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, mEyeFBs[eye].handle);
 	glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, mWidth, mHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
 	if ((gl.flags & RFL_INVALIDATE_BUFFER) != 0)
@@ -555,12 +573,6 @@ void FGLRenderBuffers::BindEyeTexture(int eye, int texunit)
 	CreateEyeBuffers(eye);
 	glActiveTexture(GL_TEXTURE0 + texunit);
 	glBindTexture(GL_TEXTURE_2D, mEyeTextures[eye].handle);
-}
-
-void FGLRenderBuffers::BindEyeFB(int eye, bool readBuffer)
-{
-	CreateEyeBuffers(eye);
-	glBindFramebuffer(readBuffer ? GL_READ_FRAMEBUFFER : GL_FRAMEBUFFER, mEyeFBs[eye].handle);
 }
 
 void FGLRenderBuffers::BindDitherTexture(int texunit)
@@ -990,4 +1002,17 @@ void FGLRenderBuffers::RenderEffect(const FString &name)
 	FGLDebug::PopGroup();
 }
 
+
+// Store the current stereo 3D eye buffer, and Load the next one
+
+int FGLRenderBuffers::NextEye(int eyeCount)
+{
+	int nextEye = (mCurrentEye + 1) % eyeCount;
+	if (nextEye == mCurrentEye) return mCurrentEye;
+	BlitToEyeTexture(mCurrentEye);
+	mCurrentEye = nextEye;
+	BlitFromEyeTexture(mCurrentEye);
+	return mCurrentEye;
 }
+
+}  // namespace OpenGLRenderer

@@ -101,6 +101,12 @@ private:
 	friend class FWadCollection;
 };
 
+struct FolderEntry
+{
+	const char *name;
+	unsigned lumpnum;
+};
+
 class FWadCollection
 {
 public:
@@ -173,6 +179,7 @@ public:
 	int GetLumpIndexNum (int lump) const;			// Returns the RFF index number for this lump
 	FResourceLump *GetLumpRecord(int lump) const;	// Returns the FResourceLump, in case the caller wants to have direct access to the lump cache.
 	bool CheckLumpName (int lump, const char *name) const;	// [RH] Returns true if the names match
+	unsigned GetLumpsInFolder(const char *path, TArray<FolderEntry> &result, bool atomic) const;
 
 	bool IsEncryptedFile(int lump) const;
 

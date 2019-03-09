@@ -287,10 +287,10 @@ void SystemBaseFrameBuffer::PositionWindow(bool fullscreen, bool initialcall)
 	if (!m_Fullscreen && fullscreen && !initialcall) SaveWindowedPos();
 	if (m_Monitor)
 	{
-		MONITORINFOEX mi;
+		MONITORINFOEXA mi;
 		mi.cbSize = sizeof mi;
 
-		if (GetMonitorInfo(HMONITOR(m_Monitor), &mi))
+		if (GetMonitorInfoA(HMONITOR(m_Monitor), &mi))
 		{
 			strcpy(m_displayDeviceNameBuffer, mi.szDevice);
 			m_displayDeviceName = m_displayDeviceNameBuffer;

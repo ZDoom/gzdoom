@@ -55,7 +55,6 @@ EXTERN_CVAR(Bool, gl_debug_breakpoint)
 
 
 EXTERN_CVAR(Bool, gl_usecolorblending)
-EXTERN_CVAR(Bool, gl_spritebrightfog)
 EXTERN_CVAR(Bool, gl_sprite_blend)
 EXTERN_CVAR(Int, gl_spriteclip)
 EXTERN_CVAR(Float, gl_sclipthreshold)
@@ -68,3 +67,7 @@ EXTERN_CVAR(Int, gl_enhanced_nv_stealth)
 EXTERN_CVAR(Int, gl_fuzztype)
 
 EXTERN_CVAR(Int, gl_shadowmap_filter)
+
+EXTERN_CVAR(Bool, gl_brightfog)
+EXTERN_CVAR(Bool, gl_lightadditivesurfaces)
+EXTERN_CVAR(Bool, gl_notexturefill)

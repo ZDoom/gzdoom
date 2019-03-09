@@ -49,6 +49,8 @@
 #include "menu/menu.h"
 #include "d_net.h"
 #include "g_levellocals.h"
+#include "utf8.h"
+#include "templates.h"
 
 FIntermissionDescriptorList IntermissionDescriptors;
 
@@ -209,7 +211,6 @@ int DIntermissionScreenFader::Responder (event_t *ev)
 {
 	if (ev->type == EV_KeyDown)
 	{
-		V_SetBlend(0,0,0,0);
 		return -1;
 	}
 	return Super::Responder(ev);
@@ -252,10 +253,21 @@ void DIntermissionScreenText::Init(FIntermissionAction *desc, bool first)
 	if (mText[0] == '$') mText = GStrings(&mText[1]);
 	mTextSpeed = static_cast<FIntermissionActionTextscreen*>(desc)->mTextSpeed;
 	mTextX = static_cast<FIntermissionActionTextscreen*>(desc)->mTextX;
+	bool usesDefault = mTextX < 0;
 	if (mTextX < 0) mTextX =gameinfo.TextScreenX;
 	mTextY = static_cast<FIntermissionActionTextscreen*>(desc)->mTextY;
 	if (mTextY < 0) mTextY =gameinfo.TextScreenY;
-	mTextLen = (int)strlen(mText);
+
+	// If the text is too wide, center it so that it works better on widescreen displays.
+	// On 4:3 it'd still be cut off, though.
+	int width = SmallFont->StringWidth(mText);
+	if (usesDefault && mTextX + width > 320 - mTextX)
+	{
+		mTextX = (320 - width) / 2;
+	}
+
+
+	mTextLen = (int)mText.CharacterCount();
 	mTextDelay = static_cast<FIntermissionActionTextscreen*>(desc)->mTextDelay;
 	mTextColor = static_cast<FIntermissionActionTextscreen*>(desc)->mTextColor;
 	// For text screens, the duration only counts when the text is complete.
@@ -285,7 +297,7 @@ void DIntermissionScreenText::Drawer ()
 		size_t count;
 		int c;
 		const FRemapTable *range;
-		const char *ch = mText;
+		const uint8_t *ch = (const uint8_t*)mText.GetChars();
 		const int kerning = SmallFont->GetDefaultKerning();
 
 		// Count number of rows in this text. Since it does not word-wrap, we just count
@@ -302,6 +314,7 @@ void DIntermissionScreenText::Drawer ()
 
 		int cx = (mTextX - 160)*CleanXfac + screen->GetWidth() / 2;
 		int cy = (mTextY - 100)*CleanYfac + screen->GetHeight() / 2;
+		cx = MAX<int>(0, cx);
 		int startx = cx;
 
 		// Does this text fall off the end of the screen? If so, try to eliminate some margins first.
@@ -327,7 +340,7 @@ void DIntermissionScreenText::Drawer ()
 
 		for ( ; count > 0 ; count-- )
 		{
-			c = *ch++;
+			c = GetCharFromString(ch);
 			if (!c)
 				break;
 			if (c == '\n')
@@ -696,6 +709,7 @@ bool DIntermissionController::NextPage ()
 		// last page
 		return false;
 	}
+	bg.SetInvalid();
 
 	if (mScreen != NULL)
 	{
@@ -837,7 +851,6 @@ void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, uint8_t s
 	{
 		DIntermissionController::CurrentIntermission->Destroy();
 	}
-	V_SetBlend (0,0,0,0);
 	S_StopAllChannels ();
 	gameaction = ga_nothing;
 	gamestate = GS_FINALE;

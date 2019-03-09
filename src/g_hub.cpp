@@ -129,12 +129,13 @@ void G_LeavingHub(FLevelLocals *Level, int mode, cluster_info_t * cluster, wbsta
 			{
 				if (cluster->flags & CLUSTER_LOOKUPNAME)
 				{
-					Level->LevelName = GStrings(cluster->ClusterName);
+					wbs->thisname = GStrings(cluster->ClusterName);
 				}
 				else
 				{
-					Level->LevelName = cluster->ClusterName;
+					wbs->thisname = cluster->ClusterName;
 				}
+				wbs->LName0.SetInvalid();	// The level's own name was just invalidated, and so was its name patch.
 			}
 		}
 	}

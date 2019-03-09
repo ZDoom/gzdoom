@@ -108,6 +108,7 @@ CVAR (Bool, storesavepic, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, longsavemessages, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, save_dir, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (Bool, cl_waitforsave, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR (Bool, enablescriptscreenshot, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 EXTERN_CVAR (Float, con_midtime);
 
 //==========================================================================
@@ -174,9 +175,7 @@ uint8_t*			zdembodyend;			// end of ZDEM BODY chunk
 bool 			singledemo; 			// quit after playing a demo from cmdline 
  
 bool 			precache = true;		// if true, load all graphics at start 
- 
-wbstartstruct_t wminfo; 				// parms for world map / intermission 
- 
+  
 short			consistancy[MAXPLAYERS][BACKUPTICS];
  
  
@@ -757,10 +756,15 @@ static int LookAdjust(int look)
 	if (players[consoleplayer].playerstate != PST_DEAD &&		// No adjustment while dead.
 		players[consoleplayer].ReadyWeapon != NULL)			// No adjustment if no weapon.
 	{
-		auto scale = players[consoleplayer].ReadyWeapon->FloatVar(NAME_FOVScale);
-		if (scale > 0)		// No adjustment if it is non-positive.
+		auto FOVScale = players[consoleplayer].ReadyWeapon->FloatVar(NAME_FOVScale);
+		auto LookScale = players[consoleplayer].ReadyWeapon->FloatVar(NAME_LookScale);
+		if (FOVScale > 0)		// No adjustment if it is non-positive.
 		{
-			look = int(look * scale);
+			look = int(look * FOVScale);
+		}
+		if (LookScale > 0)		// No adjustment if it is non-positive.
+		{
+			look = int(look * LookScale);
 		}
 	}
 	return look;
@@ -1717,7 +1721,7 @@ void G_DoPlayerPop(int playernum)
 	players[playernum].DestroyPSprites();
 }
 
-void G_ScreenShot (char *filename)
+void G_ScreenShot (const char *filename)
 {
 	shotfile = filename;
 	gameaction = ga_screenshot;
@@ -2094,6 +2098,56 @@ static void PutSaveComment (FSerializer &arc)
 
 	// Write out the comment
 	arc.AddString("Comment", comment);
+}
+
+void DoWriteSavePic(FileWriter *file, ESSType ssformat, uint8_t *scr, int width, int height, sector_t *viewsector, bool upsidedown)
+{
+	PalEntry palette[256];
+	PalEntry modulateColor;
+	auto blend = screen->CalcBlend(viewsector, &modulateColor);
+	int pixelsize = 1;
+	// Apply the screen blend, because the renderer does not provide this.
+	if (ssformat == SS_RGB)
+	{
+		int numbytes = width * height * 3;
+		pixelsize = 3;
+		if (modulateColor != 0xffffffff)
+		{
+			float r = modulateColor.r / 255.f;
+			float g = modulateColor.g / 255.f;
+			float b = modulateColor.b / 255.f;
+			for (int i = 0; i < numbytes; i += 3)
+			{
+				scr[i] = uint8_t(scr[i] * r);
+				scr[i + 1] = uint8_t(scr[i + 1] * g);
+				scr[i + 2] = uint8_t(scr[i + 2] * b);
+			}
+		}
+		float iblendfac = 1.f - blend.W;
+		blend.X *= blend.W;
+		blend.Y *= blend.W;
+		blend.Z *= blend.W;
+		for (int i = 0; i < numbytes; i += 3)
+		{
+			scr[i] = uint8_t(scr[i] * iblendfac + blend.X);
+			scr[i + 1] = uint8_t(scr[i + 1] * iblendfac + blend.Y);
+			scr[i + 2] = uint8_t(scr[i + 2] * iblendfac + blend.Z);
+		}
+	}
+	else
+	{
+		// Apply the screen blend to the palette. The colormap related parts get skipped here because these are already part of the image.
+		DoBlending(GPalette.BaseColors, palette, 256, uint8_t(blend.X), uint8_t(blend.Y), uint8_t(blend.Z), uint8_t(blend.W*255));
+	}
+
+	int pitch = width * pixelsize;
+	if (upsidedown)
+	{
+		scr += ((height - 1) * width * pixelsize);
+		pitch *= -1;
+	}
+
+	M_CreatePNG(file, scr, ssformat == SS_PAL? palette : nullptr, ssformat, width, height, pitch, Gamma);
 }
 
 static void PutSavePic (FileWriter *file, int width, int height)
@@ -2875,6 +2929,26 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, StartSlideshow)
 	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_NAME(whichone);
 	G_StartSlideshow(self, whichone);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, MakeScreenShot)
+{
+	if (enablescriptscreenshot)
+	{
+		G_ScreenShot("");
+	}
+	return 0;
+}
+
+void G_MakeAutoSave()
+{
+	gameaction = ga_autosave;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, MakeAutoSave)
+{
+	G_MakeAutoSave();
 	return 0;
 }
 

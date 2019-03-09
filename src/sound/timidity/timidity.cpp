@@ -828,7 +828,7 @@ void cmsg(int type, int verbosity_level, const char *fmt, ...)
 	char buf[1024];
 	va_list args;
 	va_start(args, fmt);
-	vsprintf(buf, fmt, args);
+	myvsnprintf(buf, sizeof buf, fmt, args);
 	va_end(args);
 	I_DebugPrint(buf);
 #endif

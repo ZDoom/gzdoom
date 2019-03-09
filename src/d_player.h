@@ -151,8 +151,6 @@ enum
 extern AActor *WP_NOCHANGE;
 
 
-#define MAXPLAYERNAME	15
-
 // [GRB] Custom player classes
 enum
 {
@@ -282,7 +280,8 @@ class player_t
 public:
 	player_t() = default;
 	~player_t();
-	player_t &operator= (const player_t &p);
+	player_t &operator= (const player_t &p) = delete;
+	void CopyFrom(player_t &src, bool copyPSP);
 
 	void Serialize(FSerializer &arc);
 	size_t PropagateMark();

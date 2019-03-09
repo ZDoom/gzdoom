@@ -185,14 +185,11 @@ void FSavegameManager::ReadSaveStrings()
 					if (arc.OpenReader((const char *)data, info->LumpSize))
 					{
 						int savever = 0;
-						FString engine;
-						FString iwad;
-						FString title;
-
 						arc("Save Version", savever);
-						arc("Engine", engine);
-						arc("Game WAD", iwad);
-						arc("Title", title);
+						FString engine = arc.GetString("Engine");
+						FString iwad = arc.GetString("Game WAD");
+						FString title = arc.GetString("Title");
+
 
 						if (engine.Compare(GAMESIG) != 0 || savever > SAVEVER)
 						{
@@ -473,10 +470,10 @@ unsigned FSavegameManager::ExtractSaveData(int index)
 		FSerializer arc(nullptr);
 		if (arc.OpenReader((const char *)data, info->LumpSize))
 		{
-			FString time, pcomment, comment;
+			FString comment;
 
-			arc("Creation Time", time);
-			arc("Comment", pcomment);
+			FString time = arc.GetString("Creation Time");
+			FString pcomment = arc.GetString("Comment");
 
 			comment = time;
 			if (time.Len() > 0) comment += "\n";

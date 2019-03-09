@@ -133,6 +133,7 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 					{
 						sc.MustGetString();
 						if(sc.Compare("NoTextcolor")) iwad->flags |= GI_NOTEXTCOLOR;
+						else if (sc.Compare("NoBigFont")) iwad->flags |= GI_IGNOREBIGFONTLUMP;
 						else if(sc.Compare("Poly1")) iwad->flags |= GI_COMPATPOLY1;
 						else if(sc.Compare("Poly2")) iwad->flags |= GI_COMPATPOLY2;
 						else if(sc.Compare("Shareware")) iwad->flags |= GI_SHAREWARE;
@@ -162,6 +163,13 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 					sc.MustGetStringName(",");
 					sc.MustGetString();
 					iwad->BkColor = V_GetColor(NULL, sc);
+				}
+				else if (sc.Compare("IgnoreTitlePatches"))
+				{
+					sc.MustGetStringName("=");
+					sc.MustGetNumber();
+					if (sc.Number) iwad->flags |= GI_IGNORETITLEPATCHES;
+					else iwad->flags &= ~GI_IGNORETITLEPATCHES;
 				}
 				else if (sc.Compare("Load"))
 				{

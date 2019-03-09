@@ -55,8 +55,6 @@
 
 CVAR(Int, vid_adapter, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
-EXTERN_CVAR(Bool, vr_enable_quadbuffered)
-
 //==========================================================================
 //
 // 
@@ -128,11 +126,11 @@ void Win32BaseVideo::GetDisplayDeviceName()
 	{
 		if (mes.hFoundMonitor)
 		{
-			MONITORINFOEX mi;
+			MONITORINFOEXA mi;
 
 			mi.cbSize = sizeof mi;
 
-			if (GetMonitorInfo(mes.hFoundMonitor, &mi))
+			if (GetMonitorInfoA(mes.hFoundMonitor, &mi))
 			{
 				strcpy(m_DisplayDeviceBuffer, mi.szDevice);
 				m_DisplayDeviceName = m_DisplayDeviceBuffer;
@@ -159,14 +157,14 @@ static BOOL CALLBACK DumpAdaptersMonitorEnumProc(HMONITOR hMonitor, HDC, LPRECT,
 {
 	DumpAdaptersState *state = reinterpret_cast<DumpAdaptersState *>(dwData);
 
-	MONITORINFOEX mi;
+	MONITORINFOEXA mi;
 	mi.cbSize = sizeof mi;
 
 	char moreinfo[64] = "";
 
 	bool active = true;
 
-	if (GetMonitorInfo(hMonitor, &mi))
+	if (GetMonitorInfoA(hMonitor, &mi))
 	{
 		bool primary = !!(mi.dwFlags & MONITORINFOF_PRIMARY);
 

@@ -100,6 +100,7 @@ public:
 	FSerializer &Sprite(const char *key, int32_t &spritenum, int32_t *def);
 	FSerializer &StringPtr(const char *key, const char *&charptr);	// This only retrieves the address but creates no permanent copy of the string unlike the regular char* serializer.
 	FSerializer &AddString(const char *key, const char *charptr);
+	const char *GetString(const char *key);
 	FSerializer &ScriptNum(const char *key, int &num);
 	bool isReading() const
 	{

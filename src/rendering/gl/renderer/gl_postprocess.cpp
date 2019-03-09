@@ -120,7 +120,13 @@ void FGLRenderer::BlurScene(float gameinfobluramount)
 	mBuffers->CompileEffectShaders();
 	mBuffers->UpdateEffectTextures();
 
-	mBuffers->RenderEffect("BlurScene");
+	auto vrmode = VRMode::GetVRMode(true);
+	int eyeCount = vrmode->mEyeCount;
+	for (int i = 0; i < eyeCount; ++i)
+	{
+		mBuffers->RenderEffect("BlurScene");
+		if (eyeCount - i > 1) mBuffers->NextEye(eyeCount);
+	}
 }
 
 void FGLRenderer::ClearTonemapPalette()
@@ -137,9 +143,6 @@ void FGLRenderer::ClearTonemapPalette()
 void FGLRenderer::Flush()
 {
 	auto vrmode = VRMode::GetVRMode(true);
-	const auto &mSceneViewport = screen->mSceneViewport;
-	const auto &mScreenViewport = screen->mScreenViewport;
-
 	if (vrmode->mEyeCount == 1)
 	{
 		CopyToBackbuffer(nullptr, true);
@@ -147,14 +150,12 @@ void FGLRenderer::Flush()
 	else
 	{
 		// Render 2D to eye textures
-		for (int eye_ix = 0; eye_ix < vrmode->mEyeCount; ++eye_ix)
+		int eyeCount = vrmode->mEyeCount;
+		for (int eye_ix = 0; eye_ix < eyeCount; ++eye_ix)
 		{
-			FGLDebug::PushGroup("Eye2D");
-			mBuffers->BindEyeFB(eye_ix);
-			glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
-			glScissor(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 			screen->Draw2D();
-			FGLDebug::PopGroup();
+			if (eyeCount - eye_ix > 1)
+				mBuffers->NextEye(eyeCount);
 		}
 		screen->Clear2D();
 

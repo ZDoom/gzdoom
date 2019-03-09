@@ -1016,6 +1016,29 @@ public:
 		CPlayer = player;
 	}
 
+	void SetReferences()
+	{
+		if (CPlayer->ReadyWeapon != nullptr)
+		{
+			ammo1 = CPlayer->ReadyWeapon->PointerVar<AActor>(NAME_Ammo1);
+			ammo2 = CPlayer->ReadyWeapon->PointerVar<AActor>(NAME_Ammo2);
+			if (ammo1 == nullptr)
+			{
+				ammo1 = ammo2;
+				ammo2 = nullptr;
+			}
+		}
+		else
+		{
+			ammo1 = ammo2 = nullptr;
+		}
+		ammocount1 = ammo1 != nullptr ? ammo1->IntVar(NAME_Amount) : 0;
+		ammocount2 = ammo2 != nullptr ? ammo2->IntVar(NAME_Amount) : 0;
+
+		//prepare ammo counts
+		armor = CPlayer->mo->FindInventory(NAME_BasicArmor);
+	}
+
 	void _Draw (EHudState state)
 	{
 		int hud = STBAR_NORMAL;
@@ -1040,25 +1063,7 @@ public:
 		}
 		wrapper->ForceHUDScale(script->huds[hud]->ForceScaled());
 
-		if (CPlayer->ReadyWeapon != nullptr)
-		{
-			ammo1 = CPlayer->ReadyWeapon->PointerVar<AActor>(NAME_Ammo1);
-			ammo2 = CPlayer->ReadyWeapon->PointerVar<AActor>(NAME_Ammo2);
-			if (ammo1 == nullptr)
-			{
-				ammo1 = ammo2;
-				ammo2 = nullptr;
-			}
-		}
-		else
-		{
-			ammo1 = ammo2 = nullptr;
-		}
-		ammocount1 = ammo1 != nullptr ? ammo1->IntVar(NAME_Amount) : 0;
-		ammocount2 = ammo2 != nullptr ? ammo2->IntVar(NAME_Amount) : 0;
-
-		//prepare ammo counts
-		armor = CPlayer->mo->FindInventory(NAME_BasicArmor);
+		SetReferences();
 
 		if(state != HUD_AltHud)
 		{
@@ -1113,6 +1118,9 @@ public:
 		else
 			lastPopup = NULL;
 
+		// These may not live any longer than beyond here!
+		ammo1 = ammo2 = nullptr;
+		armor = nullptr;
 	}
 
 	void _NewGame ()
@@ -1129,6 +1137,7 @@ public:
 
 	void _Tick ()
 	{
+		SetReferences();
 		if(currentPopup != DBaseStatusBar::POP_None)
 		{
 			script->popups[currentPopup-1].tick();
@@ -1146,6 +1155,10 @@ public:
 			script->huds[lastHud]->Tick(NULL, this, false);
 		if(lastInventoryBar != NULL && CPlayer->inventorytics > 0)
 			lastInventoryBar->Tick(NULL, this, false);
+
+		// These may not live any longer than beyond here!
+		ammo1 = ammo2 = nullptr;
+		armor = nullptr;
 	}
 
 	void _ShowPop(int popnum)
@@ -1356,20 +1369,20 @@ public:
 		{
 			Scale = { 1.,1. };
 		}
-		while(*str != '\0')
+		int ch;
+		while (ch = GetCharFromString(str), ch != '\0')
 		{
-			if(*str == ' ')
+			if(ch == ' ')
 			{
 				if(script->spacingCharacter == '\0')
 					ax += font->GetSpaceWidth();
 				else
 					ax += font->GetCharWidth((unsigned char) script->spacingCharacter);
-				str++;
 				continue;
 			}
-			else if(*str == TEXTCOLOR_ESCAPE)
+			else if(ch == TEXTCOLOR_ESCAPE)
 			{
-				EColorRange newColor = V_ParseFontColor(++str, translation, boldTranslation);
+				EColorRange newColor = V_ParseFontColor(str, translation, boldTranslation);
 				if(newColor != CR_UNDEFINED)
 					fontcolor = newColor;
 				continue;
@@ -1377,17 +1390,15 @@ public:
 
 			int width;
 			if(script->spacingCharacter == '\0') //No monospace?
-				width = font->GetCharWidth((unsigned char) *str);
+				width = font->GetCharWidth(ch);
 			else
 				width = font->GetCharWidth((unsigned char) script->spacingCharacter);
 			bool redirected = false;
-			FTexture* c = font->GetChar((unsigned char) *str, fontcolor, &width);
+			FTexture* c = font->GetChar(ch, fontcolor, &width);
 			if(c == NULL) //missing character.
 			{
-				str++;
 				continue;
 			}
-			int character = (unsigned char)*str;
 
 			if (script->spacingCharacter == '\0') //If we are monospaced lets use the offset
 				ax += (c->GetDisplayLeftOffset() + 1); //ignore x offsets since we adapt to character size
@@ -1441,14 +1452,14 @@ public:
 				double salpha = (Alpha *HR_SHADOW);
 				double srx = rx + (shadowX*Scale.X);
 				double sry = ry + (shadowY*Scale.Y);
-				screen->DrawChar(font, CR_UNTRANSLATED, srx, sry, character,
+				screen->DrawChar(font, CR_UNTRANSLATED, srx, sry, ch,
 					DTA_DestWidthF, rw,
 					DTA_DestHeightF, rh,
 					DTA_Alpha, salpha,
 					DTA_FillColor, 0,
 					TAG_DONE);
 			}
-			screen->DrawChar(font, fontcolor, rx, ry, character,
+			screen->DrawChar(font, fontcolor, rx, ry, ch,
 				DTA_DestWidthF, rw,
 				DTA_DestHeightF, rh,
 				DTA_Alpha, Alpha,
@@ -1457,7 +1468,6 @@ public:
 				ax += width + spacing - (c->GetDisplayLeftOffsetDouble() + 1);
 			else //width gets changed at the call to GetChar()
 				ax += font->GetCharWidth((unsigned char) script->spacingCharacter) + spacing;
-			str++;
 		}
 	}
 

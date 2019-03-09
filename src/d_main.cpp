@@ -388,7 +388,7 @@ void D_Render(std::function<void()> action, bool interpolate)
 //
 //==========================================================================
 
-CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO)
+CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO | CVAR_NOINITCALL)
 {
 	// In case DF_NO_FREELOOK was changed, reinitialize the sky
 	// map. (If no freelook, then no need to stretch the sky.)
@@ -463,7 +463,7 @@ CVAR (Mask, sv_freelook,		dmflags, DF_NO_FREELOOK|DF_YES_FREELOOK);
 //
 //==========================================================================
 
-CUSTOM_CVAR (Int, dmflags2, 0, CVAR_SERVERINFO)
+CUSTOM_CVAR (Int, dmflags2, 0, CVAR_SERVERINFO | CVAR_NOINITCALL)
 {
 	// Stop the automap if we aren't allowed to use it.
 	if ((self & DF2_NO_AUTOMAP) && automapactive)
@@ -546,7 +546,7 @@ static int GetCompatibility2(FLevelLocals *Level, int mask)
 		: (mask & ~Level->info->compatmask2) | (Level->info->compatflags2 & Level->info->compatmask2);
 }
 
-CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
+CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO | CVAR_NOINITCALL)
 {
 	for (auto Level : AllLevels())
 	{
@@ -559,7 +559,7 @@ CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
 	}
 }
 
-CUSTOM_CVAR (Int, compatflags2, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
+CUSTOM_CVAR (Int, compatflags2, 0, CVAR_ARCHIVE|CVAR_SERVERINFO | CVAR_NOINITCALL)
 {
 	for (auto Level : AllLevels())
 	{
@@ -1247,7 +1247,6 @@ void D_DoAdvanceDemo (void)
 		return;
 	}
 
-	V_SetBlend (0,0,0,0);
 	players[consoleplayer].playerstate = PST_LIVE;	// not reborn
 	usergame = false;				// no save / end game here
 	paused = 0;
@@ -2027,8 +2026,6 @@ static void D_DoomInit()
 
 	gamestate = GS_STARTUP;
 
-	SetLanguageIDs ();
-
 	const char *v = Args->CheckValue("-rngseed");
 	if (v)
 	{
@@ -2428,7 +2425,7 @@ void D_DoomMain (void)
 		}
 
 		// [RH] Initialize localizable strings.
-		GStrings.LoadStrings (false);
+		GStrings.LoadStrings ();
 
 		V_InitFontColors ();
 
@@ -2583,7 +2580,8 @@ void D_DoomMain (void)
 			};
 			for (p = 0; p < 5; ++p)
 			{
-				const char *str = GStrings[startupString[p]];
+				// At this point we cannot use the player's gender info yet so force 'male' here.
+				const char *str = GStrings.GetString(startupString[p], nullptr, 0);
 				if (str != NULL && str[0] != '\0')
 				{
 					Printf("%s\n", str);
@@ -2636,6 +2634,7 @@ void D_DoomMain (void)
 
 			V_Init2();
 			UpdateJoystickMenu(NULL);
+			UpdateVRModes();
 
 			v = Args->CheckValue ("-loadgame");
 			if (v)
@@ -2679,7 +2678,7 @@ void D_DoomMain (void)
 							if (StoredWarp.IsNotEmpty())
 							{
 								AddCommandString(StoredWarp);
-								StoredWarp = NULL;
+								StoredWarp = "";
 							}
 						}
 						else
@@ -2698,8 +2697,6 @@ void D_DoomMain (void)
 		}
 		else
 		{
-			// let the renderer reinitialize some stuff if needed
-			screen->InitPalette();
 			// These calls from inside V_Init2 are still necessary
 			C_NewModeAdjust();
 			D_StartTitle ();				// start up intro loop

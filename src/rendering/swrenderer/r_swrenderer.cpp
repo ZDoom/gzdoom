@@ -208,10 +208,11 @@ void FSoftwareRenderer::RenderView(player_t *player, DCanvas *target, void *vide
 	});
 }
 
+void DoWriteSavePic(FileWriter *file, ESSType ssformat, uint8_t *scr, int width, int height, sector_t *viewsector, bool upsidedown);
+
 void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, int height)
 {
 	DCanvas pic(width, height, false);
-	PalEntry palette[256];
 
 	// Take a snapshot of the player's view
 	if (V_IsPolyRenderer())
@@ -230,8 +231,7 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 		r_viewpoint = mScene.MainThread()->Viewport->viewpoint;
 		r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
 	}
-	screen->GetFlashedPalette (palette);
-	M_CreatePNG (file, pic.GetPixels(), palette, SS_PAL, width, height, pic.GetPitch(), Gamma);
+	DoWriteSavePic(file, SS_PAL, pic.GetPixels(), width, height, r_viewpoint.sector, false);
 }
 
 void FSoftwareRenderer::DrawRemainingPlayerSprites()

@@ -112,10 +112,13 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 		return;
 	}
 
-	for (auto &v : vertices)
+	if (drawer->mIsFirstPass)
 	{
-		// Change from BGRA to RGBA
-		std::swap(v.color0.r, v.color0.b);
+		for (auto &v : vertices)
+		{
+			// Change from BGRA to RGBA
+			std::swap(v.color0.r, v.color0.b);
+		}
 	}
 	F2DVertexBuffer vb;
 	vb.UploadData(&vertices[0], vertices.Size(), &indices[0], indices.Size());
@@ -152,7 +155,7 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 		{
 			state.SetTextureMode(TM_FIXEDCOLORMAP);
 			state.SetObjectColor(cmd.mSpecialColormap[0]);
-			state.SetObjectColor2(cmd.mSpecialColormap[1]);
+			state.SetAddColor(cmd.mSpecialColormap[1]);
 		}
 		state.SetFog(cmd.mColor1, 0);
 		state.SetColor(1, 1, 1, 1, cmd.mDesaturate); 
@@ -217,5 +220,6 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 	state.SetTextureMode(TM_NORMAL);
 	state.EnableFog(false);
 	state.ResetColor();
+	drawer->mIsFirstPass = false;
 	twoD.Unclock();
 }

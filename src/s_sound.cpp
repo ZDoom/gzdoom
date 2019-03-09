@@ -143,6 +143,11 @@ static FString	 LastSong;			// last music that was played
 static FPlayList *PlayList;
 static int		RestartEvictionsAt;	// do not restart evicted channels before this time
 
+DEFINE_GLOBAL_NAMED(mus_playing, musplaying);
+DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, name);
+DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, baseorder);
+DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, loop);
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int sfx_empty;
@@ -1485,7 +1490,7 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer)
 		DPrintf(DMSG_NOTIFY, "Loading sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
 
 		int size = Wads.LumpLength(sfx->lumpnum);
-		if (size > 0)
+		if (size > 8)
 		{
 			auto wlump = Wads.OpenLumpReader(sfx->lumpnum);
 			auto sfxdata = wlump.Read(size);
@@ -1551,7 +1556,7 @@ static void S_LoadSound3D(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer)
 	else
 	{
 		int size = Wads.LumpLength(sfx->lumpnum);
-		if (size <= 0) return;
+		if (size <= 8) return;
 
 		auto wlump = Wads.OpenLumpReader(sfx->lumpnum);
 		auto sfxdata = wlump.Read(size);

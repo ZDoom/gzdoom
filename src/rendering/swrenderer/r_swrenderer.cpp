@@ -230,6 +230,9 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 		r_viewpoint = mScene.MainThread()->Viewport->viewpoint;
 		r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
 	}
+	auto blend = screen->CalcBlend(r_viewpoint.sector);
+	const PalEntry bcolor(255, uint8_t(blend.X), uint8_t(blend.Y), uint8_t(blend.Z));
+	screen->SetFlash(bcolor, int(blend.W * 256));
 	screen->GetFlashedPalette (palette);
 	M_CreatePNG (file, pic.GetPixels(), palette, SS_PAL, width, height, pic.GetPitch(), Gamma);
 }

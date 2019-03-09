@@ -352,7 +352,7 @@ private:
 protected:
 	int clipleft = 0, cliptop = 0, clipwidth = -1, clipheight = -1;
 
-	PalEntry Flash;						// Only needed to support some cruft in the interface that only makes sense for the software renderer
+	PalEntry Flash = 0;						// Only needed to support some cruft in the interface that only makes sense for the software renderer
 	PalEntry SourcePalette[256];		// This is where unpaletted textures get their palette from
 
 public:
@@ -502,6 +502,7 @@ public:
 	// Dim part of the canvas
 	void Dim(PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle *style = nullptr);
 	void DoDim(PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle *style = nullptr);
+	FVector4 CalcBlend(sector_t * viewsector);
 	void DrawBlend(sector_t * viewsector);
 
 	// Fill an area with a texture

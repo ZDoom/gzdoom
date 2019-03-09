@@ -237,7 +237,7 @@ public:
 
 	HWPortal * FindPortal(const void * src);
 	void RenderBSPNode(void *node);
-	void RenderBSP(void *node);
+	void RenderBSP(void *node, bool drawpsprites);
 
 	static HWDrawInfo *StartDrawInfo(FLevelLocals *lev, HWDrawInfo *parent, FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
 	void StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
@@ -246,7 +246,7 @@ public:
 	void SetViewArea();
 	int SetFullbrightFlags(player_t *player);
 
-	void CreateScene();
+	void CreateScene(bool drawpsprites);
 	void RenderScene(FRenderState &state);
 	void RenderTranslucent(FRenderState &state);
 	void RenderPortal(HWPortal *p, FRenderState &state, bool usestencil);

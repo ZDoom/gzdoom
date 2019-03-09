@@ -796,7 +796,7 @@ void HWDrawInfo::RenderBSPNode (void *node)
 	DoSubsector ((subsector_t *)((uint8_t *)node - 1));
 }
 
-void HWDrawInfo::RenderBSP(void *node)
+void HWDrawInfo::RenderBSP(void *node, bool drawpsprites)
 {
 	Bsp.Clock();
 
@@ -829,6 +829,6 @@ void HWDrawInfo::RenderBSP(void *node)
 	// Process all the sprites on the current portal's back side which touch the portal.
 	if (mCurrentPortal != nullptr) mCurrentPortal->RenderAttached(this);
 
-
-	PreparePlayerSprites(Viewpoint.sector, in_area);
+	if (drawpsprites)
+		PreparePlayerSprites(Viewpoint.sector, in_area);
 }

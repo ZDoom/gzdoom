@@ -421,7 +421,7 @@ GLDecal *HWDrawInfo::AddDecal(bool onmirror)
 //
 //-----------------------------------------------------------------------------
 
-void HWDrawInfo::CreateScene()
+void HWDrawInfo::CreateScene(bool drawpsprites)
 {
 	const auto &vp = Viewpoint;
 	angle_t a1 = FrustumAngle();
@@ -436,7 +436,7 @@ void HWDrawInfo::CreateScene()
 	screen->mVertexData->Map();
 	screen->mLights->Map();
 
-	RenderBSP(Level->HeadNode());
+	RenderBSP(Level->HeadNode(), drawpsprites);
 
 	// And now the crappy hacks that have to be done to avoid rendering anomalies.
 	// These cannot be multithreaded when the time comes because all these depend

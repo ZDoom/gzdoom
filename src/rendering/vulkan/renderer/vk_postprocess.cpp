@@ -387,8 +387,11 @@ void VkPostprocess::RenderEffect(const FString &name)
 		key.InputTextures = step.Textures.Size();
 		key.Uniforms = step.Uniforms.Data.Size();
 		key.Shader = mShaders[step.ShaderName].get();
+		key.SwapChain = (step.Output.Type == PPTextureType::SwapChain);
 		if (step.Output.Type == PPTextureType::PPTexture)
 			key.OutputFormat = mTextures[step.Output.Texture]->Format;
+		else if (step.Output.Type == PPTextureType::SwapChain)
+			key.OutputFormat = GetVulkanFrameBuffer()->device->swapChain->swapChainFormat.format;
 		else
 			key.OutputFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
 
@@ -418,6 +421,7 @@ void VkPostprocess::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDescr
 	beginInfo.setRenderPass(passSetup->RenderPass.get());
 	beginInfo.setRenderArea(x, y, width, height);
 	beginInfo.setFramebuffer(framebuffer);
+	beginInfo.addClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	VkViewport viewport = { };
 	viewport.x = x;
@@ -672,7 +676,10 @@ void VkPPRenderPassSetup::CreatePipeline(const VkPPRenderPassKey &key)
 void VkPPRenderPassSetup::CreateRenderPass(const VkPPRenderPassKey &key)
 {
 	RenderPassBuilder builder;
-	builder.addColorAttachment(false, key.OutputFormat, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+	if (key.SwapChain)
+		builder.addColorAttachment(true, key.OutputFormat, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+	else
+		builder.addColorAttachment(false, key.OutputFormat, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 	builder.addSubpass();
 	builder.addSubpassColorAttachmentRef(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 	builder.addExternalSubpassDependency(

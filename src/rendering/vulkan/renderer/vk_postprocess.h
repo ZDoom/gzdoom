@@ -22,6 +22,7 @@ public:
 	int InputTextures;
 	PPBlendMode BlendMode;
 	VkFormat OutputFormat;
+	int SwapChain;
 
 	bool operator<(const VkPPRenderPassKey &other) const { return memcmp(this, &other, sizeof(VkPPRenderPassKey)) < 0; }
 	bool operator==(const VkPPRenderPassKey &other) const { return memcmp(this, &other, sizeof(VkPPRenderPassKey)) == 0; }

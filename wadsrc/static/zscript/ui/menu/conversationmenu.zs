@@ -142,6 +142,7 @@ class ConversationMenu : Menu
 				let trade = Stringtable.Localize("$TXT_TRADE");
 				let amount = String.Format("%u", reply.PrintAmount);
 				trade.Replace("%u", amount);
+				ReplyText = ReplyText .. trade;
 			}
 			let ReplyLines = SmallFont.BreakLines (ReplyText, ReplyWidth);
 

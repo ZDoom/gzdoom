@@ -56,7 +56,7 @@ namespace swrenderer
 		RenderThread *MainThread() { return Threads.front().get(); }
 
 	private:
-		void RenderActorView(AActor *actor, bool dontmaplines = false);
+		void RenderActorView(AActor *actor,bool renderplayersprite, bool dontmaplines);
 		void RenderThreadSlices();
 		void RenderThreadSlice(RenderThread *thread);
 		void RenderPSprites();

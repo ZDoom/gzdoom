@@ -418,12 +418,12 @@ void VulkanFrameBuffer::DrawScene(HWDrawInfo *di, int drawmode)
 	if (vp.camera != nullptr)
 	{
 		ActorRenderFlags savedflags = vp.camera->renderflags;
-		di->CreateScene();
+		di->CreateScene(drawmode == DM_MAINVIEW);
 		vp.camera->renderflags = savedflags;
 	}
 	else
 	{
-		di->CreateScene();
+		di->CreateScene(false);
 	}
 
 	GetRenderState()->SetDepthMask(true);

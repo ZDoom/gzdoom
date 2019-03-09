@@ -612,12 +612,6 @@ void M_ScreenShot (const char *filename)
 	auto buffer = screen->GetScreenshotBuffer(pitch, color_type, gamma);
 	if (buffer.Size() > 0)
 	{
-		PalEntry palette[256];
-
-		if (color_type == SS_PAL)
-		{
-			screen->GetFlashedPalette(palette);
-		}
 		file = FileWriter::Open(autoname);
 		if (file == NULL)
 		{
@@ -626,12 +620,12 @@ void M_ScreenShot (const char *filename)
 		}
 		if (writepcx)
 		{
-			WritePCXfile(file, buffer.Data(), palette, color_type,
+			WritePCXfile(file, buffer.Data(), nullptr, color_type,
 				screen->GetWidth(), screen->GetHeight(), pitch);
 		}
 		else
 		{
-			WritePNGfile(file, buffer.Data(), palette, color_type,
+			WritePNGfile(file, buffer.Data(), nullptr, color_type,
 				screen->GetWidth(), screen->GetHeight(), pitch, gamma);
 		}
 		delete file;

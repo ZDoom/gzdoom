@@ -434,8 +434,6 @@ SystemBaseFrameBuffer::SystemBaseFrameBuffer(void*, const bool fullscreen)
 , m_hiDPI(false)
 , m_window(nullptr)
 {
-	SetFlash(0, 0);
-
 	assert(frameBuffer == nullptr);
 	frameBuffer = this;
 

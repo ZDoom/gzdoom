@@ -202,11 +202,6 @@ void DFrameBuffer::DrawRateStuff ()
 //
 //==========================================================================
 
-void DFrameBuffer::GetFlashedPalette(PalEntry pal[256])
-{
-	DoBlending(SourcePalette, pal, 256, Flash.r, Flash.g, Flash.b, Flash.a);
-}
-
 void DFrameBuffer::Update()
 {
 	CheckBench();
@@ -223,24 +218,6 @@ void DFrameBuffer::Update()
 		V_OutputResized(clientWidth, clientHeight);
 		mVertexData->OutputResized(clientWidth, clientHeight);
 	}
-}
-
-PalEntry *DFrameBuffer::GetPalette()
-{
-	return SourcePalette;
-}
-
-bool DFrameBuffer::SetFlash(PalEntry rgb, int amount)
-{
-	Flash = PalEntry(amount, rgb.r, rgb.g, rgb.b);
-	return true;
-}
-
-void DFrameBuffer::GetFlash(PalEntry &rgb, int &amount)
-{
-	rgb = Flash;
-	rgb.a = 0;
-	amount = Flash.a;
 }
 
 void DFrameBuffer::SetClearColor(int color)
@@ -291,18 +268,6 @@ FTexture *DFrameBuffer::WipeStartScreen()
 FTexture *DFrameBuffer::WipeEndScreen()
 {
     return nullptr;
-}
-
-//==========================================================================
-//
-// DFrameBuffer :: InitPalette
-//
-//==========================================================================
-
-void DFrameBuffer::InitPalette()
-{
-	memcpy(SourcePalette, GPalette.BaseColors, sizeof(PalEntry) * 256);
-	UpdatePalette();
 }
 
 //==========================================================================

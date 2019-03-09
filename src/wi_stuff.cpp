@@ -761,7 +761,6 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
 		}
 	}
 	
-	V_SetBlend(0, 0, 0, 0);
 	S_StopAllChannels();
 	for (auto Level : AllLevels())
 	{

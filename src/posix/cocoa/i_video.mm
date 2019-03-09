@@ -294,8 +294,6 @@ SystemGLFrameBuffer::SystemGLFrameBuffer(void*, const bool fullscreen)
 , m_hiDPI(false)
 , m_window(CreateWindow(STYLE_MASK_WINDOWED))
 {
-	SetFlash(0, 0);
-
 	NSOpenGLPixelFormat* pixelFormat = CreatePixelFormat();
 
 	if (nil == pixelFormat)

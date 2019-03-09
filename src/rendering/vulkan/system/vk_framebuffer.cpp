@@ -102,8 +102,8 @@ void VulkanFrameBuffer::InitializeState()
 	gl_vendorstring = "Vulkan";
 	hwcaps = RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE;
 	glslversion = 4.50f;
-	uniformblockalignment = (unsigned int)device->deviceProperties.limits.minUniformBufferOffsetAlignment;
-	maxuniformblock = device->deviceProperties.limits.maxUniformBufferRange;
+	uniformblockalignment = (unsigned int)device->PhysicalDevice.Properties.limits.minUniformBufferOffsetAlignment;
+	maxuniformblock = device->PhysicalDevice.Properties.limits.maxUniformBufferRange;
 
 	mUploadSemaphore.reset(new VulkanSemaphore(device));
 	mGraphicsCommandPool.reset(new VulkanCommandPool(device, device->graphicsFamily));
@@ -149,12 +149,12 @@ void VulkanFrameBuffer::Update()
 	int newHeight = GetClientHeight();
 	if (lastSwapWidth != newWidth || lastSwapHeight != newHeight)
 	{
-		device->windowResized();
+		device->WindowResized();
 		lastSwapWidth = newWidth;
 		lastSwapHeight = newHeight;
 	}
 
-	device->beginFrame();
+	device->BeginFrame();
 
 	GetPostprocess()->SetActiveRenderTarget();
 
@@ -220,8 +220,8 @@ void VulkanFrameBuffer::Update()
 
 	Finish.Reset();
 	Finish.Clock();
-	device->presentFrame();
-	device->waitPresent();
+	device->PresentFrame();
+	device->WaitPresent();
 
 	mDrawCommands.reset();
 	mUploadCommands.reset();
@@ -478,7 +478,7 @@ void VulkanFrameBuffer::SetVSync(bool vsync)
 {
 	if (device->swapChain->vsync != vsync)
 	{
-		device->windowResized();
+		device->WindowResized();
 	}
 }
 
@@ -596,33 +596,35 @@ unsigned int VulkanFrameBuffer::GetLightBufferBlockSize() const
 
 void VulkanFrameBuffer::PrintStartupLog()
 {
+	const auto props = device->PhysicalDevice.Properties;
+
 	FString deviceType;
-	switch (device->deviceProperties.deviceType)
+	switch (props.deviceType)
 	{
 	case VK_PHYSICAL_DEVICE_TYPE_OTHER: deviceType = "other"; break;
 	case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU: deviceType = "integrated gpu"; break;
 	case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU: deviceType = "discrete gpu"; break;
 	case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU: deviceType = "virtual gpu"; break;
 	case VK_PHYSICAL_DEVICE_TYPE_CPU: deviceType = "cpu"; break;
-	default: deviceType.Format("%d", (int)device->deviceProperties.deviceType); break;
+	default: deviceType.Format("%d", (int)props.deviceType); break;
 	}
 
 	FString apiVersion, driverVersion;
-	apiVersion.Format("%d.%d.%d", VK_VERSION_MAJOR(device->deviceProperties.apiVersion), VK_VERSION_MINOR(device->deviceProperties.apiVersion), VK_VERSION_PATCH(device->deviceProperties.apiVersion));
-	driverVersion.Format("%d.%d.%d", VK_VERSION_MAJOR(device->deviceProperties.driverVersion), VK_VERSION_MINOR(device->deviceProperties.driverVersion), VK_VERSION_PATCH(device->deviceProperties.driverVersion));
+	apiVersion.Format("%d.%d.%d", VK_VERSION_MAJOR(props.apiVersion), VK_VERSION_MINOR(props.apiVersion), VK_VERSION_PATCH(props.apiVersion));
+	driverVersion.Format("%d.%d.%d", VK_VERSION_MAJOR(props.driverVersion), VK_VERSION_MINOR(props.driverVersion), VK_VERSION_PATCH(props.driverVersion));
 
-	Printf("Vulkan device: " TEXTCOLOR_ORANGE "%s\n", device->deviceProperties.deviceName);
+	Printf("Vulkan device: " TEXTCOLOR_ORANGE "%s\n", props.deviceName);
 	Printf("Vulkan device type: %s\n", deviceType.GetChars());
 	Printf("Vulkan version: %s (api) %s (driver)\n", apiVersion.GetChars(), driverVersion.GetChars());
 
 	Printf(PRINT_LOG, "Vulkan extensions:");
-	for (const VkExtensionProperties &p : device->availableDeviceExtensions)
+	for (const VkExtensionProperties &p : device->PhysicalDevice.Extensions)
 	{
 		Printf(PRINT_LOG, " %s", p.extensionName);
 	}
 	Printf(PRINT_LOG, "\n");
 
-	const auto &limits = device->deviceProperties.limits;
+	const auto &limits = props.limits;
 	Printf("Max. texture size: %d\n", limits.maxImageDimension2D);
 	Printf("Max. uniform buffer range: %d\n", limits.maxUniformBufferRange);
 	Printf("Min. uniform buffer offset alignment: %d\n", limits.minUniformBufferOffsetAlignment);

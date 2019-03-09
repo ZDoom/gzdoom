@@ -4,31 +4,31 @@
 VulkanSwapChain::VulkanSwapChain(VulkanDevice *device, int width, int height, bool vsync) : vsync(vsync), device(device)
 {
 	VkSurfaceCapabilitiesKHR surfaceCapabilities;
-	VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->physicalDevice, device->surface, &surfaceCapabilities);
+	VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->PhysicalDevice.Device, device->surface, &surfaceCapabilities);
 	if (result != VK_SUCCESS)
 		throw std::runtime_error("vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed");
 
 	uint32_t surfaceFormatCount = 0;
-	result = vkGetPhysicalDeviceSurfaceFormatsKHR(device->physicalDevice, device->surface, &surfaceFormatCount, nullptr);
+	result = vkGetPhysicalDeviceSurfaceFormatsKHR(device->PhysicalDevice.Device, device->surface, &surfaceFormatCount, nullptr);
 	if (result != VK_SUCCESS)
 		throw std::runtime_error("vkGetPhysicalDeviceSurfaceFormatsKHR failed");
 	else if (surfaceFormatCount == 0)
 		throw std::runtime_error("No surface formats supported");
 
 	std::vector<VkSurfaceFormatKHR> surfaceFormats(surfaceFormatCount);
-	result = vkGetPhysicalDeviceSurfaceFormatsKHR(device->physicalDevice, device->surface, &surfaceFormatCount, surfaceFormats.data());
+	result = vkGetPhysicalDeviceSurfaceFormatsKHR(device->PhysicalDevice.Device, device->surface, &surfaceFormatCount, surfaceFormats.data());
 	if (result != VK_SUCCESS)
 		throw std::runtime_error("vkGetPhysicalDeviceSurfaceFormatsKHR failed");
 
 	uint32_t presentModeCount = 0;
-	vkGetPhysicalDeviceSurfacePresentModesKHR(device->physicalDevice, device->surface, &presentModeCount, nullptr);
+	vkGetPhysicalDeviceSurfacePresentModesKHR(device->PhysicalDevice.Device, device->surface, &presentModeCount, nullptr);
 	if (result != VK_SUCCESS)
 		throw std::runtime_error("vkGetPhysicalDeviceSurfacePresentModesKHR failed");
 	else if (presentModeCount == 0)
 		throw std::runtime_error("No surface present modes supported");
 
 	std::vector<VkPresentModeKHR> presentModes(presentModeCount);
-	vkGetPhysicalDeviceSurfacePresentModesKHR(device->physicalDevice, device->surface, &presentModeCount, presentModes.data());
+	vkGetPhysicalDeviceSurfacePresentModesKHR(device->PhysicalDevice.Device, device->surface, &presentModeCount, presentModes.data());
 	if (result != VK_SUCCESS)
 		throw std::runtime_error("vkGetPhysicalDeviceSurfacePresentModesKHR failed");
 

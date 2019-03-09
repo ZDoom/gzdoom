@@ -370,7 +370,7 @@ inline void ImageBuilder::setUsage(VkImageUsageFlags usage, VmaMemoryUsage memor
 inline bool ImageBuilder::isFormatSupported(VulkanDevice *device)
 {
 	VkImageFormatProperties properties = { };
-	VkResult result = vkGetPhysicalDeviceImageFormatProperties(device->physicalDevice, imageInfo.format, imageInfo.imageType, imageInfo.tiling, imageInfo.usage, imageInfo.flags, &properties);
+	VkResult result = vkGetPhysicalDeviceImageFormatProperties(device->PhysicalDevice.Device, imageInfo.format, imageInfo.imageType, imageInfo.tiling, imageInfo.usage, imageInfo.flags, &properties);
 	if (result != VK_SUCCESS) return false;
 	if (imageInfo.extent.width > properties.maxExtent.width) return false;
 	if (imageInfo.extent.height > properties.maxExtent.height) return false;

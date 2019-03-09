@@ -138,9 +138,7 @@ class DoomStatusScreen : StatusScreen
 
 		drawLF();
 		
-		// Fixme: This should try to retrieve the color from the intermission font and use the best approximation here
-		let tcolor = Font.CR_RED;
-		
+	
 		// For visual consistency, only use the patches here if all are present.
 		bool useGfx = TexMan.OkForLocalization(Kills, "$TXT_IMKILLS")
 			&& TexMan.OkForLocalization(Items, "$TXT_IMITEMS")
@@ -148,6 +146,9 @@ class DoomStatusScreen : StatusScreen
 			&& TexMan.OkForLocalization(Timepic, "$TXT_IMTIME")
 			&& (!wbs.partime || TexMan.OkForLocalization(Par, "$TXT_IMPAR"));
 			 
+		// Fixme: This should try to retrieve the color from the intermission font and use the best approximation here
+		let tcolor = useGfx? Font.CR_UNTRANSLATED : Font.CR_RED;
+
 		Font printFont;
 
 		if (useGfx)

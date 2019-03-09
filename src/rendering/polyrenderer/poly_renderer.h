@@ -71,7 +71,7 @@ public:
 	FLevelLocals *Level;
 
 private:
-	void RenderActorView(AActor *actor, bool dontmaplines);
+	void RenderActorView(AActor *actor, bool drawpsprites, bool dontmaplines);
 	void SetSceneViewport();
 
 	RenderPolyPlayerSprites PlayerSprites;

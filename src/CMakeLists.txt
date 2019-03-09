@@ -1465,6 +1465,9 @@ if( APPLE )
 		LINK_FLAGS "-framework Cocoa -framework IOKit -framework OpenGL"
 		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/zdoom-info.plist" )
 
+	# Dymanic libraries like libvulkan.dylib or libMoltenVK.dylib will be loaded by dlopen()
+	# if placed in the directory with the main executable
+	set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -rpath @executable_path" )
 endif()
 
 if( WIN32 )

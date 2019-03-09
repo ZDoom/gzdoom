@@ -1357,7 +1357,7 @@ void DFrameBuffer::DrawBorder (FTextureID picnum, int x1, int y1, int x2, int y2
 //
 //==========================================================================
 
-FVector4 DFrameBuffer::CalcBlend(sector_t * viewsector)
+FVector4 DFrameBuffer::CalcBlend(sector_t * viewsector, PalEntry *modulateColor)
 {
 	float blend[4] = { 0,0,0,0 };
 	PalEntry blendv = 0;
@@ -1366,6 +1366,8 @@ FVector4 DFrameBuffer::CalcBlend(sector_t * viewsector)
 	float extra_blue;
 	player_t *player = nullptr;
 	bool fullbright = false;
+
+	if (modulateColor) *modulateColor = 0xffffffff;
 
 	if (players[consoleplayer].camera != nullptr)
 	{
@@ -1428,7 +1430,7 @@ FVector4 DFrameBuffer::CalcBlend(sector_t * viewsector)
 			// black multiplicative blends are ignored
 			if (extra_red || extra_green || extra_blue)
 			{
-				screen->Dim(blendv, 1, 0, 0, screen->GetWidth(), screen->GetHeight(), &LegacyRenderStyles[STYLE_Multiply]);
+				if (modulateColor) *modulateColor = blendv;
 			}
 			blendv = 0;
 		}
@@ -1468,9 +1470,9 @@ FVector4 DFrameBuffer::CalcBlend(sector_t * viewsector)
 				}
 			}
 		}
-		if (color != 0xffffffff)
-		{
-			screen->Dim(color, 1, 0, 0, screen->GetWidth(), screen->GetHeight(), &LegacyRenderStyles[STYLE_Multiply]);
+		if (modulateColor)
+		{ 
+			*modulateColor = color;
 		}
 	}
 
@@ -1500,9 +1502,15 @@ FVector4 DFrameBuffer::CalcBlend(sector_t * viewsector)
 
 void DFrameBuffer::DrawBlend(sector_t * viewsector)
 {
-	auto blend = CalcBlend(viewsector);
+	PalEntry modulateColor;
+	auto blend = CalcBlend(viewsector, &modulateColor);
+	if (modulateColor != 0xffffffff)
+	{
+		Dim(modulateColor, 1, 0, 0, GetWidth(), GetHeight(), &LegacyRenderStyles[STYLE_Multiply]);
+	}
+
 	const PalEntry bcolor(255, uint8_t(blend.X), uint8_t(blend.Y), uint8_t(blend.Z));
-	screen->Dim(bcolor, blend.W, 0, 0, screen->GetWidth(), screen->GetHeight());
+	Dim(bcolor, blend.W, 0, 0, GetWidth(), GetHeight());
 }
 
 

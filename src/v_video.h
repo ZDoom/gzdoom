@@ -502,7 +502,7 @@ public:
 	// Dim part of the canvas
 	void Dim(PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle *style = nullptr);
 	void DoDim(PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle *style = nullptr);
-	FVector4 CalcBlend(sector_t * viewsector);
+	FVector4 CalcBlend(sector_t * viewsector, PalEntry *modulateColor);
 	void DrawBlend(sector_t * viewsector);
 
 	// Fill an area with a texture

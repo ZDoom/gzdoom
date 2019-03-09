@@ -756,10 +756,15 @@ static int LookAdjust(int look)
 	if (players[consoleplayer].playerstate != PST_DEAD &&		// No adjustment while dead.
 		players[consoleplayer].ReadyWeapon != NULL)			// No adjustment if no weapon.
 	{
-		auto scale = players[consoleplayer].ReadyWeapon->FloatVar(NAME_FOVScale);
-		if (scale > 0)		// No adjustment if it is non-positive.
+		auto FOVScale = players[consoleplayer].ReadyWeapon->FloatVar(NAME_FOVScale);
+		auto LookScale = players[consoleplayer].ReadyWeapon->FloatVar(NAME_LookScale);
+		if (FOVScale > 0)		// No adjustment if it is non-positive.
 		{
-			look = int(look * scale);
+			look = int(look * FOVScale);
+		}
+		if (LookScale > 0)		// No adjustment if it is non-positive.
+		{
+			look = int(look * LookScale);
 		}
 	}
 	return look;

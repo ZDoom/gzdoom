@@ -1294,7 +1294,6 @@ void C_FullConsole ()
 		primaryLevel->Music = "";
 		S_Start ();
 		P_FreeLevelData ();
-		V_SetBlend (0,0,0,0);
 	}
 	else
 	{

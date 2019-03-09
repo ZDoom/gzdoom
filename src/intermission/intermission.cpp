@@ -211,7 +211,6 @@ int DIntermissionScreenFader::Responder (event_t *ev)
 {
 	if (ev->type == EV_KeyDown)
 	{
-		V_SetBlend(0,0,0,0);
 		return -1;
 	}
 	return Super::Responder(ev);
@@ -852,7 +851,6 @@ void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, uint8_t s
 	{
 		DIntermissionController::CurrentIntermission->Destroy();
 	}
-	V_SetBlend (0,0,0,0);
 	S_StopAllChannels ();
 	gameaction = ga_nothing;
 	gamestate = GS_FINALE;

@@ -67,6 +67,8 @@ EXTERN_CVAR(Bool, cl_capfps)
 
 extern bool NoInterpolateView;
 
+void DoWriteSavePic(FileWriter *file, ESSType ssformat, uint8_t *scr, int width, int height, sector_t *viewsector, bool upsidedown);
+
 namespace OpenGLRenderer
 {
 
@@ -370,9 +372,11 @@ void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, i
     // strictly speaking not needed as the glReadPixels should block until the scene is rendered, but this is to safeguard against shitty drivers
     glFinish();
     
-    uint8_t * scr = (uint8_t *)M_Malloc(width * height * 3);
+	int numpixels = width * height;
+    uint8_t * scr = (uint8_t *)M_Malloc(numpixels * 3);
     glReadPixels(0,0,width, height,GL_RGB,GL_UNSIGNED_BYTE,scr);
-    M_CreatePNG (file, scr + ((height-1) * width * 3), NULL, SS_RGB, width, height, -width * 3, Gamma);
+
+	DoWriteSavePic(file, SS_RGB, scr, width, height, viewsector, true);
     M_Free(scr);
     
     // Switch back the screen render buffers

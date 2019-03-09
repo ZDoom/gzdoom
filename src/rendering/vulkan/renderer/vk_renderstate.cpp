@@ -126,7 +126,7 @@ void VkRenderState::Clear(int targets)
 		mDepthTest = true;
 		mDepthWrite = true;
 	}
-	Apply(DT_TriangleFan);
+	Apply(DT_TriangleStrip);
 	mDepthTest = lastDepthTest;
 	mDepthWrite = lastDepthWrite;
 

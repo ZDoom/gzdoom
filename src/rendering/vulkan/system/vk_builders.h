@@ -189,6 +189,7 @@ public:
 	void setTopology(VkPrimitiveTopology topology);
 	void setViewport(float x, float y, float width, float height, float minDepth = 0.0f, float maxDepth = 1.0f);
 	void setScissor(int x, int y, int width, int height);
+	void setRasterizationSamples(VkSampleCountFlagBits samples);
 
 	void setCull(VkCullModeFlags cullMode, VkFrontFace frontFace);
 	void setDepthStencilEnable(bool test, bool write, bool stencil);
@@ -256,9 +257,8 @@ class RenderPassBuilder
 public:
 	RenderPassBuilder();
 
-	void addRgba16fAttachment(bool clear, VkImageLayout layout) { addColorAttachment(clear, VK_FORMAT_R16G16B16A16_SFLOAT, layout); }
-	void addColorAttachment(bool clear, VkFormat format, VkImageLayout layout);
-	void addDepthStencilAttachment(bool clear, VkFormat format, VkImageLayout layout);
+	void addAttachment(VkFormat format, VkSampleCountFlagBits samples, VkAttachmentLoadOp load, VkAttachmentStoreOp store, VkImageLayout initialLayout, VkImageLayout finalLayout);
+	void addDepthStencilAttachment(VkFormat format, VkSampleCountFlagBits samples, VkAttachmentLoadOp load, VkAttachmentStoreOp store, VkAttachmentLoadOp stencilLoad, VkAttachmentStoreOp stencilStore, VkImageLayout initialLayout, VkImageLayout finalLayout);
 
 	void addExternalSubpassDependency(VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask);
 
@@ -743,6 +743,11 @@ inline GraphicsPipelineBuilder::GraphicsPipelineBuilder()
 	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 }
 
+inline void GraphicsPipelineBuilder::setRasterizationSamples(VkSampleCountFlagBits samples)
+{
+	multisampling.rasterizationSamples = samples;
+}
+
 inline void GraphicsPipelineBuilder::setSubpass(int subpass)
 {
 	pipelineInfo.subpass = subpass;
@@ -992,36 +997,34 @@ inline RenderPassBuilder::RenderPassBuilder()
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 }
 
-inline void RenderPassBuilder::addColorAttachment(bool clear, VkFormat format, VkImageLayout layout)
+inline void RenderPassBuilder::addAttachment(VkFormat format, VkSampleCountFlagBits samples, VkAttachmentLoadOp load, VkAttachmentStoreOp store, VkImageLayout initialLayout, VkImageLayout finalLayout)
 {
-	VkAttachmentDescription rgba16fAttachment = {};
-	rgba16fAttachment.format = format;
-	rgba16fAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	rgba16fAttachment.loadOp = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
-	rgba16fAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	rgba16fAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	rgba16fAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	rgba16fAttachment.initialLayout = clear ? VK_IMAGE_LAYOUT_UNDEFINED : layout;
-	rgba16fAttachment.finalLayout = layout;
-
-	attachments.push_back(rgba16fAttachment);
+	VkAttachmentDescription attachment = {};
+	attachment.format = format;
+	attachment.samples = samples;
+	attachment.loadOp = load;
+	attachment.storeOp = store;
+	attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachment.initialLayout = initialLayout;
+	attachment.finalLayout = finalLayout;
+	attachments.push_back(attachment);
 	renderPassInfo.pAttachments = attachments.data();
 	renderPassInfo.attachmentCount = (uint32_t)attachments.size();
 }
 
-inline void RenderPassBuilder::addDepthStencilAttachment(bool clear, VkFormat format, VkImageLayout layout)
+inline void RenderPassBuilder::addDepthStencilAttachment(VkFormat format, VkSampleCountFlagBits samples, VkAttachmentLoadOp load, VkAttachmentStoreOp store, VkAttachmentLoadOp stencilLoad, VkAttachmentStoreOp stencilStore, VkImageLayout initialLayout, VkImageLayout finalLayout)
 {
-	VkAttachmentDescription depthAttachment = {};
-	depthAttachment.format = format;
-	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	depthAttachment.loadOp = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
-	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE/*VK_ATTACHMENT_STORE_OP_DONT_CARE*/;
-	depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	depthAttachment.initialLayout = clear ? VK_IMAGE_LAYOUT_UNDEFINED : layout;
-	depthAttachment.finalLayout = layout;
-
-	attachments.push_back(depthAttachment);
+	VkAttachmentDescription attachment = {};
+	attachment.format = format;
+	attachment.samples = samples;
+	attachment.loadOp = load;
+	attachment.storeOp = store;
+	attachment.stencilLoadOp = stencilLoad;
+	attachment.stencilStoreOp = stencilStore;
+	attachment.initialLayout = initialLayout;
+	attachment.finalLayout = finalLayout;
+	attachments.push_back(attachment);
 	renderPassInfo.pAttachments = attachments.data();
 	renderPassInfo.attachmentCount = (uint32_t)attachments.size();
 }

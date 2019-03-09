@@ -244,6 +244,8 @@ void VkRenderState::ApplyDepthBias()
 
 void VkRenderState::ApplyRenderPass(int dt)
 {
+	auto passManager = GetVulkanFrameBuffer()->GetRenderPassManager();
+
 	// Find a render pass that matches our state
 	VkRenderPassKey passKey;
 	passKey.DrawType = dt;
@@ -258,6 +260,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 	passKey.StencilPassOp = mStencilOp;
 	passKey.ColorMask = mColorMask;
 	passKey.CullMode = mCullMode;
+	passKey.Samples = passManager->GetSamples();
 	if (mSpecialEffect > EFF_NONE)
 	{
 		passKey.SpecialEffect = mSpecialEffect;
@@ -291,7 +294,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 
 	if (changingRenderPass)
 	{
-		GetVulkanFrameBuffer()->GetRenderPassManager()->BeginRenderPass(passKey, mCommandBuffer);
+		passManager->BeginRenderPass(passKey, mCommandBuffer);
 		mRenderPassKey = passKey;
 	}
 }

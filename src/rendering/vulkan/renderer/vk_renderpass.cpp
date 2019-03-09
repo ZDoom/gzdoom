@@ -28,12 +28,13 @@ void VkRenderPassManager::RenderBuffersReset()
 	RenderPassSetup.clear();
 }
 
-void VkRenderPassManager::SetRenderTarget(VulkanImageView *view, int width, int height)
+void VkRenderPassManager::SetRenderTarget(VulkanImageView *view, int width, int height, VkSampleCountFlagBits samples)
 {
 	GetVulkanFrameBuffer()->GetRenderState()->EndRenderPass();
 	mRenderTargetView = view;
 	mRenderTargetWidth = width;
 	mRenderTargetHeight = height;
+	mSamples = samples;
 }
 
 void VkRenderPassManager::BeginRenderPass(const VkRenderPassKey &key, VulkanCommandBuffer *cmdbuffer)
@@ -176,10 +177,21 @@ VkRenderPassSetup::VkRenderPassSetup(const VkRenderPassKey &key)
 
 void VkRenderPassSetup::CreateRenderPass(const VkRenderPassKey &key)
 {
+	auto buffers = GetVulkanFrameBuffer()->GetBuffers();
+
 	RenderPassBuilder builder;
-	builder.addRgba16fAttachment(false, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+	builder.addAttachment(
+		VK_FORMAT_R16G16B16A16_SFLOAT, (VkSampleCountFlagBits)key.Samples,
+		VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
+		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 	if (key.DepthTest || key.DepthWrite || key.StencilTest)
-		builder.addDepthStencilAttachment(false, GetVulkanFrameBuffer()->GetBuffers()->SceneDepthStencilFormat, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+	{
+		builder.addDepthStencilAttachment(
+			buffers->SceneDepthStencilFormat, buffers->GetSceneSamples(),
+			VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
+			VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
+			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+	}
 	builder.addSubpass();
 	builder.addSubpassColorAttachmentRef(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 	if (key.DepthTest || key.DepthWrite || key.StencilTest)
@@ -283,6 +295,7 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 	builder.setColorWriteMask((VkColorComponentFlags)key.ColorMask);
 	builder.setStencil(VK_STENCIL_OP_KEEP, op2vk[key.StencilPassOp], VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL, 0xffffffff, 0xffffffff, 0);
 	builder.setBlendMode(key.RenderStyle);
+	builder.setRasterizationSamples((VkSampleCountFlagBits)key.Samples);
 
 	builder.setLayout(fb->GetRenderPassManager()->PipelineLayout.get());
 	builder.setRenderPass(RenderPass.get());

@@ -23,6 +23,8 @@ enum
 
 struct VREyeInfo
 {
+	friend struct VRMode;
+
 	float mShiftFactor;
 	float mScaleFactor;
 
@@ -30,7 +32,6 @@ struct VREyeInfo
 	DVector3 GetViewShift(float yaw) const;
 private:
 	float getShift() const;
-
 };
 
 struct VRMode
@@ -41,7 +42,10 @@ struct VRMode
 	float mWeaponProjectionScale;
 	VREyeInfo mEyes[2];
 
-	static const VRMode *GetVRMode(bool toscreen = true);
+	int mCurrentEye = 0;
+
+	static VRMode *GetVRMode(bool toscreen = true);
+
 	void AdjustViewport(DFrameBuffer *fb) const;
 	VSMatrix GetHUDSpriteProjection() const;
 };

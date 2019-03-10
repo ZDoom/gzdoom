@@ -34,6 +34,7 @@
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/shaders/gl_shaderprogram.h"
+#include "hwrenderer/utility/hw_vrmodes.h"
 #include <random>
 
 CVAR(Int, gl_multisample, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
@@ -1005,14 +1006,14 @@ void FGLRenderBuffers::RenderEffect(const FString &name)
 
 // Store the current stereo 3D eye buffer, and Load the next one
 
-int FGLRenderBuffers::NextEye(int eyeCount)
+void FGLRenderBuffers::NextEye()
 {
-	int nextEye = (mCurrentEye + 1) % eyeCount;
-	if (nextEye == mCurrentEye) return mCurrentEye;
-	BlitToEyeTexture(mCurrentEye);
-	mCurrentEye = nextEye;
-	BlitFromEyeTexture(mCurrentEye);
-	return mCurrentEye;
+	auto * vrmode = VRMode::GetVRMode();
+	int nextEye = (vrmode->mCurrentEye + 1) % vrmode->mEyeCount;
+	if (nextEye == vrmode->mCurrentEye) return;
+	BlitToEyeTexture(vrmode->mCurrentEye);
+	vrmode->mCurrentEye = nextEye;
+	BlitFromEyeTexture(nextEye);
 }
 
 }  // namespace OpenGLRenderer

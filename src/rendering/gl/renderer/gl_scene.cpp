@@ -162,12 +162,12 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 
     // Render (potentially) multiple views for stereo 3d
 	// Fixme. The view offsetting should be done with a static table and not require setup of the entire render state for the mode.
-	auto vrmode = VRMode::GetVRMode(mainview && toscreen);
+	auto * vrmode = VRMode::GetVRMode(mainview && toscreen);
 	const int eyeCount = vrmode->mEyeCount;
-	mBuffers->CurrentEye() = 0;  // always begin at zero, in case eye count changed
+	vrmode->mCurrentEye = 0;  // always begin at zero, in case eye count changed
 	for (int eye_ix = 0; eye_ix < eyeCount; ++eye_ix)
 	{
-		const auto &eye = vrmode->mEyes[mBuffers->CurrentEye()];
+		const auto &eye = vrmode->mEyes[vrmode->mCurrentEye];
 		screen->SetViewportRects(bounds);
 
 		if (mainview) // Bind the scene frame buffer and turn on draw buffers used by ssao
@@ -221,7 +221,7 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 		}
 		di->EndDrawInfo();
 		if (eyeCount - eye_ix > 1)
-			mBuffers->NextEye(eyeCount);
+			mBuffers->NextEye();
 	}
 
 	return mainvp.sector;

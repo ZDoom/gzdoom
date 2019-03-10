@@ -125,7 +125,7 @@ void FGLRenderer::BlurScene(float gameinfobluramount)
 	for (int i = 0; i < eyeCount; ++i)
 	{
 		mBuffers->RenderEffect("BlurScene");
-		if (eyeCount - i > 1) mBuffers->NextEye(eyeCount);
+		if (eyeCount - i > 1) mBuffers->NextEye();
 	}
 }
 
@@ -155,7 +155,7 @@ void FGLRenderer::Flush()
 		{
 			screen->Draw2D();
 			if (eyeCount - eye_ix > 1)
-				mBuffers->NextEye(eyeCount);
+				mBuffers->NextEye();
 		}
 		screen->Clear2D();
 

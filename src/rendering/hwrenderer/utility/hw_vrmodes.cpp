@@ -30,6 +30,7 @@
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hw_vrmodes.h"
 #include "v_video.h"
+#include "r_utility.h"
 
 // Set up 3D-specific console variables:
 CVAR(Int, vr_mode, 0, CVAR_GLOBALCONFIG)
@@ -46,18 +47,21 @@ CVAR(Float, vr_screendist, 0.80f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // METERS
 // default conversion between (vertical) DOOM units and meters
 CVAR(Float, vr_hunits_per_meter, 41.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // METERS
 
+// push weapon very slightly into the scene, just beyond the other 2D items
+CVAR(Float, vr_weapon_depth_offset, 0.03f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)  // METERS
+
 
 #define isqrt2 0.7071067812f
-static VRMode vrmi_mono = { 1, 1.f, 1.f, 1.f,{ { 0.f, 1.f },{ 0.f, 0.f } } };
-static VRMode vrmi_stereo = { 2, 1.f, 1.f, 1.f,{ { -.5f, 1.f },{ .5f, 1.f } } };
-static VRMode vrmi_sbsfull = { 2, .5f, 1.f, 2.f,{ { -.5f, .5f },{ .5f, .5f } } };
-static VRMode vrmi_sbssquished = { 2, .5f, 1.f, 1.f,{ { -.5f, 1.f },{ .5f, 1.f } } };
-static VRMode vrmi_lefteye = { 1, 1.f, 1.f, 1.f, { { -.5f, 1.f },{ 0.f, 0.f } } };
-static VRMode vrmi_righteye = { 1, 1.f, 1.f, 1.f,{ { .5f, 1.f },{ 0.f, 0.f } } };
-static VRMode vrmi_topbottom = { 2, 1.f, .5f, 1.f,{ { -.5f, 1.f },{ .5f, 1.f } } };
-static VRMode vrmi_checker = { 2, isqrt2, isqrt2, 1.f,{ { -.5f, 1.f },{ .5f, 1.f } } };
+static VRMode vrmi_mono = { 1, 1.f, 1.f, 1.f,{ { 0.f, 1.f },{ 0.f, 0.f } }, 0 };
+static VRMode vrmi_stereo = { 2, 1.f, 1.f, 1.f,{ { -.5f, 1.f },{ .5f, 1.f }, }, 0 };
+static VRMode vrmi_sbsfull = { 2, .5f, 1.f, 2.f,{ { -.5f, .5f },{ .5f, .5f } }, 0 };
+static VRMode vrmi_sbssquished = { 2, .5f, 1.f, 1.f,{ { -.5f, 1.f },{ .5f, 1.f } }, 0 };
+static VRMode vrmi_lefteye = { 1, 1.f, 1.f, 1.f, { { -.5f, 1.f },{ 0.f, 0.f } }, 0 };
+static VRMode vrmi_righteye = { 1, 1.f, 1.f, 1.f,{ { .5f, 1.f },{ 0.f, 0.f } }, 0 };
+static VRMode vrmi_topbottom = { 2, 1.f, .5f, 1.f,{ { -.5f, 1.f },{ .5f, 1.f } }, 0 };
+static VRMode vrmi_checker = { 2, isqrt2, isqrt2, 1.f,{ { -.5f, 1.f },{ .5f, 1.f } }, 0 };
 
-const VRMode *VRMode::GetVRMode(bool toscreen)
+VRMode *VRMode::GetVRMode(bool toscreen)
 {
 	switch (toscreen && vid_rendermode == 4 ? vr_mode : 0)
 	{
@@ -114,6 +118,18 @@ VSMatrix VRMode::GetHUDSpriteProjection() const
 	float scaled_w = w / mWeaponProjectionScale;
 	float left_ofs = (w - scaled_w) / 2.f;
 	mat.ortho(left_ofs, left_ofs + scaled_w, (float)h, 0, -1.0f, 1.0f);
+	if (vr_weapon_depth_offset != 0)
+	{
+		const float eye_shift_meters = mEyes[mCurrentEye].getShift();
+		if (eye_shift_meters != 0)
+		{
+			const float weapon_dist_meters = vr_weapon_depth_offset + vr_screendist;
+			const float screen_shift_meters = vr_weapon_depth_offset * eye_shift_meters / weapon_dist_meters;
+			const float screen_width_meters = 2.0f * vr_screendist * tanf(0.5f * r_viewpoint.FieldOfView.Radians());
+			const float screen_shift_pixels = screen_shift_meters * w / screen_width_meters;
+			mat.translate(screen_shift_pixels, 0, 0);
+		}
+	}
 	return mat;
 }
 

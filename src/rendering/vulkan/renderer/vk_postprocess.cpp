@@ -31,20 +31,9 @@ void VkPostprocess::SetActiveRenderTarget()
 	auto fb = GetVulkanFrameBuffer();
 	auto buffers = fb->GetBuffers();
 
-	if (buffers->PipelineLayout[mCurrentPipelineImage] == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-	{
-		PipelineBarrier barrier;
-		barrier.addImage(buffers->PipelineImage[mCurrentPipelineImage].get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
-		barrier.execute(fb->GetDrawCommands(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-		buffers->PipelineLayout[mCurrentPipelineImage] = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	}
-	else if (buffers->PipelineLayout[mCurrentPipelineImage] == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-	{
-		PipelineBarrier barrier;
-		barrier.addImage(buffers->PipelineImage[mCurrentPipelineImage].get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
-		barrier.execute(fb->GetDrawCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-		buffers->PipelineLayout[mCurrentPipelineImage] = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	}
+	VkPPImageTransition imageTransition;
+	imageTransition.addImage(buffers->PipelineImage[mCurrentPipelineImage].get(), &buffers->PipelineLayout[mCurrentPipelineImage], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, false);
+	imageTransition.execute(fb->GetDrawCommands());
 
 	fb->GetRenderPassManager()->SetRenderTarget(buffers->PipelineView[mCurrentPipelineImage].get(), buffers->GetWidth(), buffers->GetHeight(), VK_SAMPLE_COUNT_1_BIT);
 }
@@ -85,17 +74,16 @@ void VkPostprocess::BlitSceneToTexture()
 	auto buffers = fb->GetBuffers();
 	auto cmdbuffer = fb->GetDrawCommands();
 
-	auto sceneColor = buffers->SceneColor.get();
-
 	mCurrentPipelineImage = 0;
 
-	PipelineBarrier barrier0;
-	barrier0.addImage(sceneColor, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT);
-	barrier0.addImage(buffers->PipelineImage[mCurrentPipelineImage].get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT);
-	barrier0.execute(cmdbuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+	VkPPImageTransition imageTransition0;
+	imageTransition0.addImage(buffers->SceneColor.get(), &buffers->SceneColorLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, false);
+	imageTransition0.addImage(buffers->PipelineImage[mCurrentPipelineImage].get(), &buffers->PipelineLayout[mCurrentPipelineImage], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
+	imageTransition0.execute(fb->GetDrawCommands());
 
 	if (buffers->GetSceneSamples() != VK_SAMPLE_COUNT_1_BIT)
 	{
+		auto sceneColor = buffers->SceneColor.get();
 		VkImageResolve resolve = {};
 		resolve.srcOffset = { 0, 0, 0 };
 		resolve.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -115,6 +103,7 @@ void VkPostprocess::BlitSceneToTexture()
 	}
 	else
 	{
+		auto sceneColor = buffers->SceneColor.get();
 		VkImageBlit blit = {};
 		blit.srcOffsets[0] = { 0, 0, 0 };
 		blit.srcOffsets[1] = { sceneColor->width, sceneColor->height, 1 };
@@ -134,13 +123,10 @@ void VkPostprocess::BlitSceneToTexture()
 			1, &blit, VK_FILTER_NEAREST);
 	}
 
-	// Note: this destroys the sceneColor contents
-	PipelineBarrier barrier1;
-	barrier1.addImage(sceneColor, VK_IMAGE_LAYOUT_UNDEFINED/*VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL*/, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT, 0);
-	barrier1.execute(cmdbuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
-
-	buffers->SceneColorLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	buffers->PipelineLayout[mCurrentPipelineImage] = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	// Note: this destroys the SceneColor contents
+	VkPPImageTransition imageTransition1;
+	imageTransition1.addImage(buffers->SceneColor.get(), &buffers->SceneColorLayout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true);
+	imageTransition1.execute(fb->GetDrawCommands());
 }
 
 void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool clearBorders)
@@ -475,10 +461,7 @@ VulkanDescriptorSet *VkPostprocess::GetInput(VkPPRenderPassSetup *passSetup, con
 	descriptors->SetDebugName("VkPostprocess.descriptors");
 
 	WriteDescriptors write;
-	PipelineBarrier barrier;
-	bool needbarrier = false;
-
-	VkPipelineStageFlags srcPipelineBits = 0;
+	VkPPImageTransition imageTransition;
 
 	for (unsigned int index = 0; index < textures.Size(); index++)
 	{
@@ -487,26 +470,11 @@ VulkanDescriptorSet *VkPostprocess::GetInput(VkPPRenderPassSetup *passSetup, con
 		TextureImage tex = GetTexture(input.Type, input.Texture);
 
 		write.addCombinedImageSampler(descriptors.get(), index, tex.view, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-		if (*tex.layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-		{
-			srcPipelineBits |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			barrier.addImage(tex.image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
-			needbarrier = true;
-			*tex.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		}
-		else if (*tex.layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-		{
-			srcPipelineBits |= VK_PIPELINE_STAGE_TRANSFER_BIT;
-			barrier.addImage(tex.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
-			needbarrier = true;
-			*tex.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		}
+		imageTransition.addImage(tex.image, tex.layout, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
 	}
 
 	write.updateSets(fb->device);
-	if (needbarrier)
-		barrier.execute(fb->GetDrawCommands(), srcPipelineBits, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+	imageTransition.execute(fb->GetDrawCommands());
 
 	mFrameDescriptorSets.push_back(std::move(descriptors));
 	return mFrameDescriptorSets.back().get();
@@ -518,25 +486,14 @@ VulkanFramebuffer *VkPostprocess::GetOutput(VkPPRenderPassSetup *passSetup, cons
 
 	TextureImage tex = GetTexture(output.Type, output.Texture);
 
-	if (tex.layout && *tex.layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-	{
-		PipelineBarrier barrier;
-		barrier.addImage(tex.image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
-		barrier.execute(fb->GetDrawCommands(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-		*tex.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	}
-	else if (tex.layout && *tex.layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-	{
-		PipelineBarrier barrier;
-		barrier.addImage(tex.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
-		barrier.execute(fb->GetDrawCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-		*tex.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	}
-
 	VkImageView view;
 	int w, h;
 	if (tex.view)
 	{
+		VkPPImageTransition imageTransition;
+		imageTransition.addImage(tex.image, tex.layout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, output.Type == PPTextureType::NextPipelineTexture);
+		imageTransition.execute(fb->GetDrawCommands());
+
 		view = tex.view->view;
 		w = tex.image->width;
 		h = tex.image->height;
@@ -715,4 +672,69 @@ void VkPPRenderPassSetup::CreateRenderPass(const VkPPRenderPassKey &key)
 		VK_ACCESS_COLOR_ATTACHMENT_READ_BIT);
 	RenderPass = builder.create(GetVulkanFrameBuffer()->device);
 	RenderPass->SetDebugName("VkPPRenderPassSetup.RenderPass");
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+void VkPPImageTransition::addImage(VulkanImage *image, VkImageLayout *layout, VkImageLayout targetLayout, bool undefinedSrcLayout)
+{
+	if (*layout == targetLayout)
+		return;
+
+	VkAccessFlags srcAccess = 0;
+	VkAccessFlags dstAccess = 0;
+
+	switch (*layout)
+	{
+	case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+		srcAccess = VK_ACCESS_TRANSFER_READ_BIT;
+		srcStageMask |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+		break;
+	case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+		srcAccess = VK_ACCESS_SHADER_READ_BIT;
+		srcStageMask |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		break;
+	case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+		srcAccess = VK_ACCESS_TRANSFER_WRITE_BIT;
+		srcStageMask |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+		break;
+	case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+		srcAccess = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		srcStageMask |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		break;
+	default:
+		I_FatalError("Unimplemented src image layout transition\n");
+	}
+
+	switch (targetLayout)
+	{
+	case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+		dstAccess = VK_ACCESS_TRANSFER_READ_BIT;
+		dstStageMask |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+		break;
+	case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+		dstAccess = VK_ACCESS_SHADER_READ_BIT;
+		dstStageMask |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		break;
+	case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+		dstAccess = VK_ACCESS_TRANSFER_WRITE_BIT;
+		dstStageMask |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+		break;
+	case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+		dstAccess = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dstStageMask |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		break;
+	default:
+		I_FatalError("Unimplemented dst image layout transition\n");
+	}
+
+	barrier.addImage(image, undefinedSrcLayout ? VK_IMAGE_LAYOUT_UNDEFINED : *layout, targetLayout, srcAccess, dstAccess);
+	needbarrier = true;
+	*layout = targetLayout;
+}
+
+void VkPPImageTransition::execute(VulkanCommandBuffer *cmdbuffer)
+{
+	if (needbarrier)
+		barrier.execute(cmdbuffer, srcStageMask, dstStageMask);
 }

@@ -7,12 +7,14 @@
 
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 #include "vulkan/system/vk_objects.h"
+#include "vulkan/system/vk_builders.h"
 
 class FString;
 
 class VkPPShader;
 class VkPPTexture;
 class VkPPRenderPassSetup;
+class PipelineBarrier;
 
 class VkPPRenderPassKey
 {
@@ -27,6 +29,19 @@ public:
 	bool operator<(const VkPPRenderPassKey &other) const { return memcmp(this, &other, sizeof(VkPPRenderPassKey)) < 0; }
 	bool operator==(const VkPPRenderPassKey &other) const { return memcmp(this, &other, sizeof(VkPPRenderPassKey)) == 0; }
 	bool operator!=(const VkPPRenderPassKey &other) const { return memcmp(this, &other, sizeof(VkPPRenderPassKey)) != 0; }
+};
+
+class VkPPImageTransition
+{
+public:
+	void addImage(VulkanImage *image, VkImageLayout *layout, VkImageLayout targetLayout, bool undefinedSrcLayout);
+	void execute(VulkanCommandBuffer *cmdbuffer);
+
+private:
+	PipelineBarrier barrier;
+	VkPipelineStageFlags srcStageMask = 0;
+	VkPipelineStageFlags dstStageMask = 0;
+	bool needbarrier = false;
 };
 
 class VkPostprocess

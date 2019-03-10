@@ -393,8 +393,8 @@ size_t FString::CharacterCount() const
 
 int FString::GetNextCharacter(int &position) const
 {
-	const uint8_t *cp = (const uint8_t*)Chars;
-	const uint8_t *cpread = cp + position;
+	const uint8_t *cp = (const uint8_t*)Chars + position;
+	const uint8_t *cpread = cp;
 	int chr = GetCharFromString(cpread);
 	position += int(cpread - cp);
 	return chr;

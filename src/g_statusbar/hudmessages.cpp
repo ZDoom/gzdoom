@@ -741,7 +741,7 @@ void DHUDMessageTypeOnFadeOut::Serialize(FSerializer &arc)
 
 bool DHUDMessageTypeOnFadeOut::Tick ()
 {
-	if (LineLen > 0 && !Super::Tick ())
+	if (!Super::Tick ())
 	{
 		if (State == 3)
 		{

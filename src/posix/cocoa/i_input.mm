@@ -480,11 +480,29 @@ void NSEventToGameMousePosition(NSEvent* inEvent, event_t* outEvent)
 	const NSPoint screenPos = [NSEvent mouseLocation];
 	const NSRect screenRect = NSMakeRect(screenPos.x, screenPos.y, 0, 0);
 	const NSRect windowRect = [window convertRectFromScreen:screenRect];
-	const NSPoint   viewPos = [view convertPointToBacking:windowRect.origin];
-	const CGFloat frameHeight = I_GetContentViewSize(window).height;
 
-	outEvent->data1 = static_cast<int16_t>(              viewPos.x);
-	outEvent->data2 = static_cast<int16_t>(frameHeight - viewPos.y);
+	NSPoint viewPos;
+	NSSize  viewSize;
+	CGFloat scale;
+
+	if (view.layer == nil)
+	{
+		viewPos  = [view convertPointToBacking:windowRect.origin];
+		viewSize = [view convertSizeToBacking:view.frame.size];
+		scale    = 1.0;
+	}
+	else
+	{
+		viewPos  = windowRect.origin;
+		viewSize = view.frame.size;
+		scale    = view.layer.contentsScale;
+	}
+
+	const CGFloat posX =                    viewPos.x  * scale;
+	const CGFloat posY = (viewSize.height - viewPos.y) * scale;
+
+	outEvent->data1 = static_cast<int16_t>(posX);
+	outEvent->data2 = static_cast<int16_t>(posY);
 
 	screen->ScaleCoordsFromWindow(outEvent->data1, outEvent->data2);
 }

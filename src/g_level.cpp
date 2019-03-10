@@ -2142,9 +2142,9 @@ int IsPointInMap(FLevelLocals *Level, double x, double y, double z)
 
 	for (uint32_t i = 0; i < subsector->numlines; i++)
 	{
-		// Skip single sided lines.
+		// Skip double sided lines.
 		seg_t *seg = subsector->firstline + i;
-		if (seg->backsector != nullptr)	continue;
+		if (seg->backsector != nullptr || seg->linedef == nullptr) continue;
 
 		divline_t dline;
 		P_MakeDivline(seg->linedef, &dline);

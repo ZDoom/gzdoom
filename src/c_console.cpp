@@ -249,28 +249,30 @@ public:
 
 	}
 
-	unsigned CharsForCells(unsigned cells)
+	unsigned CharsForCells(unsigned cellin, bool *overflow)
 	{
 		unsigned chars = 0;
+		int cells = cellin;
 		while (cells > 0)
 		{
 			int w;
 			NewConsoleFont->GetChar(Text[chars++], CR_UNTRANSLATED, &w);
 			cells -= w / 9;
 		}
-		return cells == 0? chars : -chars;
+		*overflow = (cells < 0);
+		return cells;
 	}
 
 
 	void MakeStartPosGood()
 	{
 		// Make sure both values point to something valid.
-		if (CursorPos > Text.length()) CursorPos = Text.length();
-		if (StartPos > Text.length()) StartPos = Text.length();
+		if (CursorPos > Text.length()) CursorPos = (unsigned)Text.length();
+		if (StartPos > Text.length()) StartPos = (unsigned)Text.length();
 
 		CursorPosCells = CalcCellSize(CursorPos);
 		StartPosCells = CalcCellSize(StartPos);
-		unsigned LengthCells = CalcCellSize(Text.length());
+		unsigned LengthCells = CalcCellSize((unsigned)Text.length());
 
 		int n = StartPosCells;
 		unsigned cols = ConCols / active_con_scale();
@@ -288,11 +290,12 @@ public:
 			n = CursorPosCells;
 		}
 		StartPosCells = MAX(0, n);
-		StartPos = CharsForCells(StartPosCells);
-		if (StartPos < 0)
+		bool overflow;
+		StartPos = CharsForCells(StartPosCells, &overflow);
+		if (overflow)
 		{
 			// We ended up in the middle of a double cell character, so set the start to the following character.
-			StartPos = -StartPos + 1;
+			StartPos++;
 			StartPosCells++;
 		}
 	}

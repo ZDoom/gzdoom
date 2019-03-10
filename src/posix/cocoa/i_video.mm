@@ -349,7 +349,6 @@ public:
 	{
 		delete m_vulkanDevice;
 
-		[ms_window dealloc];
 		ms_window = nil;
 	}
 

@@ -42,7 +42,7 @@ struct VRMode
 	float mWeaponProjectionScale;
 	VREyeInfo mEyes[2];
 
-	int mCurrentEye = 0;
+	int mCurrentEye;
 
 	static VRMode *GetVRMode(bool toscreen = true);
 

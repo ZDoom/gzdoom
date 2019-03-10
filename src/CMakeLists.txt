@@ -1125,6 +1125,7 @@ set (PCH_SOURCES
 	gamedata/fonts/singlepicfont.cpp
 	gamedata/fonts/specialfont.cpp
 	gamedata/fonts/font.cpp
+	gamedata/fonts/hexfont.cpp
 	gamedata/fonts/v_font.cpp
 	gamedata/fonts/v_text.cpp	
 	gamedata/p_xlat.cpp

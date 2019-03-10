@@ -1199,12 +1199,16 @@ static void PrintSecretString(const char *string, bool thislevel)
 				else colstr = TEXTCOLOR_GREEN;
 			}
 		}
-		auto brok = V_BreakLines(ConFont, screen->GetWidth()*95/100, string);
+#if 0
+		auto brok = V_BreakLines(CurrentConsoleFont, screen->GetWidth()*95/100, string);
 
 		for (auto &line : brok)
 		{
 			Printf("%s%s\n", colstr, line.Text.GetChars());
 		}
+#else
+		Printf("%s%s\n", string);
+#endif
 	}
 }
 

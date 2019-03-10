@@ -126,11 +126,6 @@ static GameAtExit *ExitCmdList;
 
 EXTERN_CVAR (Bool, show_messages)
 
-static unsigned int TickerAt, TickerMax;
-static bool TickerPercent;
-static const char *TickerLabel;
-
-static bool TickerVisible;
 static bool ConsoleDrawing;
 
 // Buffer for AddToConsole()
@@ -203,25 +198,25 @@ public:
 	{
 		if (scale == 1)
 		{
-			screen->DrawChar(ConFont, CR_ORANGE, x, y, '\x1c', TAG_DONE);
-			screen->DrawText(ConFont, CR_ORANGE, x + ConFont->GetCharWidth(0x1c), y,
+			screen->DrawChar(CurrentConsoleFont, CR_ORANGE, x, y, '\x1c', TAG_DONE);
+			screen->DrawText(CurrentConsoleFont, CR_ORANGE, x + CurrentConsoleFont->GetCharWidth(0x1c), y,
 				&Text[StartPos], TAG_DONE);
 
 			if (cursor)
 			{
-				screen->DrawChar(ConFont, CR_YELLOW,
-					x + ConFont->GetCharWidth(0x1c) + (CursorPosChars - StartPosChars) * ConFont->GetCharWidth(0xb),
+				screen->DrawChar(CurrentConsoleFont, CR_YELLOW,
+					x + CurrentConsoleFont->GetCharWidth(0x1c) + (CursorPosChars - StartPosChars) * CurrentConsoleFont->GetCharWidth(0xb),
 					y, '\xb', TAG_DONE);
 			}
 		}
 		else
 		{
-			screen->DrawChar(ConFont, CR_ORANGE, x, y, '\x1c',
+			screen->DrawChar(CurrentConsoleFont, CR_ORANGE, x, y, '\x1c',
 				DTA_VirtualWidth, screen->GetWidth() / scale,
 				DTA_VirtualHeight, screen->GetHeight() / scale,
 				DTA_KeepRatio, true, TAG_DONE);
 
-			screen->DrawText(ConFont, CR_ORANGE, x + ConFont->GetCharWidth(0x1c), y,
+			screen->DrawText(CurrentConsoleFont, CR_ORANGE, x + CurrentConsoleFont->GetCharWidth(0x1c), y,
 				&Text[StartPos],
 				DTA_VirtualWidth, screen->GetWidth() / scale,
 				DTA_VirtualHeight, screen->GetHeight() / scale,
@@ -229,8 +224,8 @@ public:
 
 			if (cursor)
 			{
-				screen->DrawChar(ConFont, CR_YELLOW,
-					x + ConFont->GetCharWidth(0x1c) + (CursorPosChars - StartPosChars) * ConFont->GetCharWidth(0xb),
+				screen->DrawChar(CurrentConsoleFont, CR_YELLOW,
+					x + CurrentConsoleFont->GetCharWidth(0x1c) + (CursorPosChars - StartPosChars) * CurrentConsoleFont->GetCharWidth(0xb),
 					y, '\xb',
 					DTA_VirtualWidth, screen->GetWidth() / scale,
 					DTA_VirtualHeight, screen->GetHeight() / scale,
@@ -616,10 +611,10 @@ void C_InitConsole (int width, int height, bool ingame)
 	int cwidth, cheight;
 
 	vidactive = ingame;
-	if (ConFont != NULL)
+	if (CurrentConsoleFont != NULL)
 	{
-		cwidth = ConFont->GetCharWidth ('M');
-		cheight = ConFont->GetHeight();
+		cwidth = CurrentConsoleFont->GetCharWidth ('M');
+		cheight = CurrentConsoleFont->GetHeight();
 	}
 	else
 	{
@@ -1092,19 +1087,6 @@ void FNotifyBuffer::Draw()
 	}
 }
 
-void C_InitTicker (const char *label, unsigned int max, bool showpercent)
-{
-	TickerPercent = showpercent;
-	TickerMax = max;
-	TickerLabel = label;
-	TickerAt = 0;
-}
-
-void C_SetTicker (unsigned int at, bool forceUpdate)
-{
-	TickerAt = at > TickerMax ? TickerMax : at;
-}
-
 void C_DrawConsole ()
 {
 	static int oldbottom = 0;
@@ -1113,15 +1095,15 @@ void C_DrawConsole ()
 	int textScale = active_con_scale();
 
 	left = LEFTMARGIN;
-	lines = (ConBottom/textScale-ConFont->GetHeight()*2)/ConFont->GetHeight();
-	if (-ConFont->GetHeight() + lines*ConFont->GetHeight() > ConBottom/textScale - ConFont->GetHeight()*7/2)
+	lines = (ConBottom/textScale-CurrentConsoleFont->GetHeight()*2)/CurrentConsoleFont->GetHeight();
+	if (-CurrentConsoleFont->GetHeight() + lines*CurrentConsoleFont->GetHeight() > ConBottom/textScale - CurrentConsoleFont->GetHeight()*7/2)
 	{
-		offset = -ConFont->GetHeight()/2;
+		offset = -CurrentConsoleFont->GetHeight()/2;
 		lines--;
 	}
 	else
 	{
-		offset = -ConFont->GetHeight();
+		offset = -CurrentConsoleFont->GetHeight();
 	}
 
 	oldbottom = ConBottom;
@@ -1153,71 +1135,19 @@ void C_DrawConsole ()
 		if (ConBottom >= 12)
 		{
 			if (textScale == 1)
-				screen->DrawText (ConFont, CR_ORANGE, SCREENWIDTH - 8 -
-					ConFont->StringWidth (GetVersionString()),
-					ConBottom / textScale - ConFont->GetHeight() - 4,
+				screen->DrawText (CurrentConsoleFont, CR_ORANGE, SCREENWIDTH - 8 -
+					CurrentConsoleFont->StringWidth (GetVersionString()),
+					ConBottom / textScale - CurrentConsoleFont->GetHeight() - 4,
 					GetVersionString(), TAG_DONE);
 			else
-				screen->DrawText(ConFont, CR_ORANGE, SCREENWIDTH / textScale - 8 -
-					ConFont->StringWidth(GetVersionString()),
-					ConBottom / textScale - ConFont->GetHeight() - 4,
+				screen->DrawText(CurrentConsoleFont, CR_ORANGE, SCREENWIDTH / textScale - 8 -
+					CurrentConsoleFont->StringWidth(GetVersionString()),
+					ConBottom / textScale - CurrentConsoleFont->GetHeight() - 4,
 					GetVersionString(),
 					DTA_VirtualWidth, screen->GetWidth() / textScale,
 					DTA_VirtualHeight, screen->GetHeight() / textScale,
 					DTA_KeepRatio, true, TAG_DONE);
 
-			if (TickerMax)
-			{
-				char tickstr[256];
-				const int tickerY = ConBottom / textScale - ConFont->GetHeight() - 4;
-				size_t i;
-				int tickend = ConCols / textScale - SCREENWIDTH / textScale / 90 - 6;
-				int tickbegin = 0;
-
-				if (TickerLabel)
-				{
-					tickbegin = (int)strlen (TickerLabel) + 2;
-					mysnprintf (tickstr, countof(tickstr), "%s: ", TickerLabel);
-				}
-				if (tickend > 256 - ConFont->GetCharWidth(0x12))
-					tickend = 256 - ConFont->GetCharWidth(0x12);
-				tickstr[tickbegin] = 0x10;
-				memset (tickstr + tickbegin + 1, 0x11, tickend - tickbegin);
-				tickstr[tickend + 1] = 0x12;
-				tickstr[tickend + 2] = ' ';
-				if (TickerPercent)
-				{
-					mysnprintf (tickstr + tickend + 3, countof(tickstr) - tickend - 3,
-						"%d%%", Scale (TickerAt, 100, TickerMax));
-				}
-				else
-				{
-					tickstr[tickend+3] = 0;
-				}
-				if (textScale == 1)
-					screen->DrawText (ConFont, CR_BROWN, LEFTMARGIN, tickerY, tickstr, TAG_DONE);
-				else
-					screen->DrawText (ConFont, CR_BROWN, LEFTMARGIN, tickerY, tickstr,
-						DTA_VirtualWidth, screen->GetWidth() / textScale,
-						DTA_VirtualHeight, screen->GetHeight() / textScale,
-						DTA_KeepRatio, true, TAG_DONE);
-
-				// Draw the marker
-				i = LEFTMARGIN+5+tickbegin*8 + Scale (TickerAt, (int32_t)(tickend - tickbegin)*8, TickerMax);
-				if (textScale == 1)
-					screen->DrawChar (ConFont, CR_ORANGE, (int)i, tickerY, 0x13, TAG_DONE);
-				else
-					screen->DrawChar(ConFont, CR_ORANGE, (int)i, tickerY, 0x13,
-						DTA_VirtualWidth, screen->GetWidth() / textScale,
-						DTA_VirtualHeight, screen->GetHeight() / textScale,
-						DTA_KeepRatio, true, TAG_DONE);
-
-				TickerVisible = true;
-			}
-			else
-			{
-				TickerVisible = false;
-			}
 		}
 
 	}
@@ -1230,12 +1160,12 @@ void C_DrawConsole ()
 	if (lines > 0)
 	{
 		// No more enqueuing because adding new text to the console won't touch the actual print data.
-		conbuffer->FormatText(ConFont, ConWidth / textScale);
+		conbuffer->FormatText(CurrentConsoleFont, ConWidth / textScale);
 		unsigned int consolelines = conbuffer->GetFormattedLineCount();
 		FBrokenLines *blines = conbuffer->GetLines();
 		FBrokenLines *printline = blines + consolelines - 1 - RowAdjust;
 
-		int bottomline = ConBottom / textScale - ConFont->GetHeight()*2 - 4;
+		int bottomline = ConBottom / textScale - CurrentConsoleFont->GetHeight()*2 - 4;
 
 		ConsoleDrawing = true;
 
@@ -1243,11 +1173,11 @@ void C_DrawConsole ()
 		{
 			if (textScale == 1)
 			{
-				screen->DrawText(ConFont, CR_TAN, LEFTMARGIN, offset + lines * ConFont->GetHeight(), p->Text, TAG_DONE);
+				screen->DrawText(CurrentConsoleFont, CR_TAN, LEFTMARGIN, offset + lines * CurrentConsoleFont->GetHeight(), p->Text, TAG_DONE);
 			}
 			else
 			{
-				screen->DrawText(ConFont, CR_TAN, LEFTMARGIN, offset + lines * ConFont->GetHeight(), p->Text,
+				screen->DrawText(CurrentConsoleFont, CR_TAN, LEFTMARGIN, offset + lines * CurrentConsoleFont->GetHeight(), p->Text,
 					DTA_VirtualWidth, screen->GetWidth() / textScale,
 					DTA_VirtualHeight, screen->GetHeight() / textScale,
 					DTA_KeepRatio, true, TAG_DONE);
@@ -1262,14 +1192,14 @@ void C_DrawConsole ()
 			{
 				CmdLine.Draw(left, bottomline, textScale, cursoron);
 			}
-			if (RowAdjust && ConBottom >= ConFont->GetHeight()*7/2)
+			if (RowAdjust && ConBottom >= CurrentConsoleFont->GetHeight()*7/2)
 			{
 				// Indicate that the view has been scrolled up (10)
 				// and if we can scroll no further (12)
 				if (textScale == 1)
-					screen->DrawChar (ConFont, CR_GREEN, 0, bottomline, RowAdjust == conbuffer->GetFormattedLineCount() ? 12 : 10, TAG_DONE);
+					screen->DrawChar (CurrentConsoleFont, CR_GREEN, 0, bottomline, RowAdjust == conbuffer->GetFormattedLineCount() ? 12 : 10, TAG_DONE);
 				else
-					screen->DrawChar(ConFont, CR_GREEN, 0, bottomline, RowAdjust == conbuffer->GetFormattedLineCount() ? 12 : 10,
+					screen->DrawChar(CurrentConsoleFont, CR_GREEN, 0, bottomline, RowAdjust == conbuffer->GetFormattedLineCount() ? 12 : 10,
 						DTA_VirtualWidth, screen->GetWidth() / textScale,
 						DTA_VirtualHeight, screen->GetHeight() / textScale,
 						DTA_KeepRatio, true, TAG_DONE);
@@ -1404,7 +1334,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			if (ev->data3 & (GKM_SHIFT|GKM_CTRL))
 			{ // Scroll console buffer up one page
 				RowAdjust += (SCREENHEIGHT-4)/active_con_scale() /
-					((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? ConFont->GetHeight() : ConFont->GetHeight()*2) - 3;
+					((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? CurrentConsoleFont->GetHeight() : CurrentConsoleFont->GetHeight()*2) - 3;
 			}
 			else if (RowAdjust < conbuffer->GetFormattedLineCount())
 			{ // Scroll console buffer up
@@ -1427,7 +1357,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			if (ev->data3 & (GKM_SHIFT|GKM_CTRL))
 			{ // Scroll console buffer down one page
 				const int scrollamt = (SCREENHEIGHT-4)/active_con_scale() /
-					((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? ConFont->GetHeight() : ConFont->GetHeight()*2) - 3;
+					((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? CurrentConsoleFont->GetHeight() : CurrentConsoleFont->GetHeight()*2) - 3;
 				if (RowAdjust < scrollamt)
 				{
 					RowAdjust = 0;

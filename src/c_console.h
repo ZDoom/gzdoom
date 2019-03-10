@@ -74,9 +74,6 @@ void C_HideConsole (void);
 void C_AdjustBottom (void);
 void C_FlushDisplay (void);
 
-void C_InitTicker (const char *label, unsigned int max, bool showpercent=true);
-void C_SetTicker (unsigned int at, bool forceUpdate=false);
-
 class FFont;
 void C_MidPrint (FFont *font, const char *message);
 void C_MidPrintBold (FFont *font, const char *message);

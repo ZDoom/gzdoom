@@ -609,6 +609,7 @@ bool AspectTallerThanWide(float aspect);
 void ScaleWithAspect(int &w, int &h, int Width, int Height);
 
 int GetUIScale(int altval);
+int GetConScale(int altval);
 
 EXTERN_CVAR(Int, uiscale);
 EXTERN_CVAR(Int, con_scaletext);
@@ -621,7 +622,7 @@ inline int active_con_scaletext()
 
 inline int active_con_scale()
 {
-	return GetUIScale(con_scale);
+	return GetConScale(con_scale);
 }
 
 

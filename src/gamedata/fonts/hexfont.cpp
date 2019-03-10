@@ -220,9 +220,7 @@ public:
 			else Chars[i - FirstChar].XMove = spacing;
 
 		}
-		Printf("----------------------------\n");
 		BuildTranslations (luminosity, nullptr, &TranslationParms[1][0], ActiveColors, nullptr);
-		Printf("----------------------------\n");
 	}
 	
 };

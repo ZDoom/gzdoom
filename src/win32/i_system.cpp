@@ -70,6 +70,7 @@
 #include "x86.h"
 #include "stats.h"
 #include "v_text.h"
+#include "utf8.h"
 
 #include "d_main.h"
 #include "d_net.h"

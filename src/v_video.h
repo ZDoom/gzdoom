@@ -343,7 +343,8 @@ protected:
 
 	template<class T>
 	bool ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext) const;
-	void DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms);
+	template<class T>
+	void DrawTextCommon(FFont *font, int normalcolor, double x, double y, const T *string, DrawParms &parms);
 
 	F2DDrawer m2DDrawer;
 private:
@@ -529,6 +530,7 @@ public:
 	void DrawText(FFont *font, int normalcolor, double x, double y, const char *string, VMVa_List &args);
 	void DrawChar(FFont *font, int normalcolor, double x, double y, int character, int tag_first, ...);
 	void DrawChar(FFont *font, int normalcolor, double x, double y, int character, VMVa_List &args);
+	void DrawText(FFont *font, int normalcolor, double x, double y, const char32_t *string, int tag_first, ...);
 
 	void DrawFrame(int left, int top, int width, int height);
 	void DrawBorder(FTextureID, int x1, int y1, int x2, int y2);

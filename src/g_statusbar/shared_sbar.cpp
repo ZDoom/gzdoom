@@ -58,6 +58,7 @@
 #include "gstrings.h"
 #include "events.h"
 #include "g_game.h"
+#include "utf8.h"
 
 #include "../version.h"
 

@@ -164,13 +164,13 @@ struct History
 struct FCommandBuffer
 {
 private:
-	FString Text;	// The actual command line text
+	std::u32string Text;
 	unsigned CursorPos = 0;
 	unsigned StartPos = 0;	// First character to display
-	unsigned CursorPosChars = 0;
-	unsigned StartPosChars = 0;
+	unsigned CursorPosCells = 0;
+	unsigned StartPosCells = 0;
 
-	FString YankBuffer;	// Deleted text buffer
+	std::u32string YankBuffer;	// Deleted text buffer
 
 public:
 	bool AppendToYankBuffer = false;	// Append consecutive deletes to buffer
@@ -186,12 +186,14 @@ public:
 
 	FString GetText() const
 	{
-		return Text;
+		FString build;
+		for (auto chr : Text) build.AppendCharacter(chr);
+		return build;
 	}
 
 	size_t TextLength() const
 	{
-		return Text.Len();
+		return Text.length();
 	}
 
 	void Draw(int x, int y, int scale, bool cursor)
@@ -205,7 +207,7 @@ public:
 			if (cursor)
 			{
 				screen->DrawChar(CurrentConsoleFont, CR_YELLOW,
-					x + CurrentConsoleFont->GetCharWidth(0x1c) + (CursorPosChars - StartPosChars) * CurrentConsoleFont->GetCharWidth(0xb),
+					x + CurrentConsoleFont->GetCharWidth(0x1c) + (CursorPosCells - StartPosCells) * CurrentConsoleFont->GetCharWidth(0xb),
 					y, '\xb', TAG_DONE);
 			}
 		}
@@ -225,7 +227,7 @@ public:
 			if (cursor)
 			{
 				screen->DrawChar(CurrentConsoleFont, CR_YELLOW,
-					x + CurrentConsoleFont->GetCharWidth(0x1c) + (CursorPosChars - StartPosChars) * CurrentConsoleFont->GetCharWidth(0xb),
+					x + CurrentConsoleFont->GetCharWidth(0x1c) + (CursorPosCells - StartPosCells) * CurrentConsoleFont->GetCharWidth(0xb),
 					y, '\xb',
 					DTA_VirtualWidth, screen->GetWidth() / scale,
 					DTA_VirtualHeight, screen->GetHeight() / scale,
@@ -234,72 +236,57 @@ public:
 		}
 	}
 
-	unsigned BytesForChars(unsigned chars)
-	{
-		unsigned bytes = 0;
-		while (chars > 0)
-		{ 
-			if ((Text[bytes++] & 0xc0) != 0x80) chars--;
-		}
-		return bytes;
-	}
-
 	void MakeStartPosGood()
 	{
-		int n = StartPosChars;
+		int n = StartPos;
 		unsigned cols = ConCols / active_con_scale();
 
-		if (StartPosChars >= Text.CharacterCount())
+		if (StartPos >= Text.length())
 		{ // Start of visible line is beyond end of line
-			n = CursorPosChars - cols + 2;
+			n = CursorPos - cols + 2;
 		}
-		if ((CursorPosChars - StartPosChars) >= cols - 2)
+		if ((CursorPos - StartPos) >= cols - 2)
 		{ // The cursor is beyond the visible part of the line
-			n = CursorPosChars - cols + 2;
+			n = CursorPos - cols + 2;
 		}
-		if (StartPosChars > CursorPosChars)
+		if (StartPos > CursorPos)
 		{ // The cursor is in front of the visible part of the line
-			n = CursorPosChars;
+			n = CursorPos;
 		}
-		StartPosChars = MAX(0, n);
-		StartPos = BytesForChars(StartPosChars);
+		StartPos = MAX(0, n);
+		CursorPosCells = CursorPos;
+		StartPosCells = StartPos;
 	}
 
 	void CursorStart()
 	{
 		CursorPos = 0;
 		StartPos = 0;
-		CursorPosChars = 0;
-		StartPosChars = 0;
+		CursorPosCells = 0;
+		StartPosCells = 0;
 	}
 
 	void CursorEnd()
 	{
-		CursorPos = (unsigned)Text.Len();
-		CursorPosChars = (unsigned)Text.CharacterCount();
-		StartPosChars = 0;
+		CursorPos = (unsigned)Text.length();
 		MakeStartPosGood();
 	}
 
 private:
 	void MoveCursorLeft()
 	{
-		CursorPosChars--;
-		do CursorPos--;
-		while ((Text[CursorPos] & 0xc0) == 0x80);	// Step back to the last non-continuation byte.
+		CursorPos--;
 	}
 
 	void MoveCursorRight()
 	{
-		CursorPosChars++;
-		do CursorPos++;
-		while ((Text[CursorPos] & 0xc0) == 0x80);	// Step back to the last non-continuation byte.
+		CursorPos++;
 	}
 
 public:
 	void CursorLeft()
 	{
-		if (CursorPosChars > 0)
+		if (CursorPos > 0)
 		{
 			MoveCursorLeft();
 			MakeStartPosGood();
@@ -308,7 +295,7 @@ public:
 
 	void CursorRight()
 	{
-		if (CursorPosChars < Text.CharacterCount())
+		if (CursorPos < Text.length())
 		{
 			MoveCursorRight();
 			MakeStartPosGood();
@@ -317,20 +304,20 @@ public:
 
 	void CursorWordLeft()
 	{
-		if (CursorPosChars > 0)
+		if (CursorPos > 0)
 		{
 			do MoveCursorLeft();
-			while (CursorPosChars > 0 && Text[CursorPos - 1] != ' ');
+			while (CursorPos > 0 && Text[CursorPos - 1] != ' ');
 			MakeStartPosGood();
 		}
 	}
 
 	void CursorWordRight()
 	{
-		if (CursorPosChars < Text.CharacterCount())
+		if (CursorPos < Text.length())
 		{
 			do MoveCursorRight();
-			while (CursorPosChars < Text.CharacterCount() && Text[CursorPos] != ' ');
+			while (CursorPos < Text.length() && Text[CursorPos] != ' ');
 			MakeStartPosGood();
 		}
 	}
@@ -339,22 +326,17 @@ public:
 	{
 		if (CursorPos > 0)
 		{
-			auto now = CursorPos;
 			MoveCursorLeft();
-			Text.Remove(CursorPos, now - CursorPos);
+			Text.erase(CursorPos, 1);
 			MakeStartPosGood();
 		}
 	}
 
 	void DeleteRight()
 	{
-		if (CursorPosChars < Text.CharacterCount())
+		if (CursorPos < Text.length())
 		{
-			auto now = CursorPos;
-			MoveCursorRight();
-			Text.Remove(now, CursorPos - now);
-			CursorPos = now;
-			CursorPosChars--;
+			Text.erase(CursorPos, 1);
 			MakeStartPosGood();
 		}
 	}
@@ -368,11 +350,11 @@ public:
 			CursorWordLeft();
 
 			if (AppendToYankBuffer) {
-				YankBuffer = FString(&Text[CursorPos], now - CursorPos) + YankBuffer;
+				YankBuffer = Text.substr(CursorPos, now - CursorPos) + YankBuffer;
 			} else {
-				YankBuffer = FString(&Text[CursorPos], now - CursorPos);
+				YankBuffer = Text.substr(CursorPos, now - CursorPos);
 			}
-			Text.Remove(CursorPos, now - CursorPos);
+			Text.erase(CursorPos, now - CursorPos);
 			MakeStartPosGood();
 		}
 	}
@@ -382,47 +364,41 @@ public:
 		if (CursorPos > 0)
 		{
 			if (AppendToYankBuffer) {
-				YankBuffer = FString(&Text[0], CursorPos) + YankBuffer;
+				YankBuffer = Text.substr(0, CursorPos) + YankBuffer;
 			} else {
-				YankBuffer = FString(&Text[0], CursorPos);
+				YankBuffer = Text.substr(0, CursorPos);
 			}
-			Text.Remove(0, CursorPos);
+			Text.erase(0, CursorPos);
 			CursorStart();
 		}
 	}
 
 	void DeleteLineRight()
 	{
-		if (CursorPos < Text.Len())
+		if (CursorPos < Text.length())
 		{
 			if (AppendToYankBuffer) {
-				YankBuffer += FString(&Text[CursorPos], Text.Len() - CursorPos);
+				YankBuffer += Text.substr(CursorPos, Text.length() - CursorPos);
 			} else {
-				YankBuffer = FString(&Text[CursorPos], Text.Len() - CursorPos);
+				YankBuffer = Text.substr(CursorPos, Text.length() - CursorPos);
 			}
-			Text.Truncate(CursorPos);
+			Text.resize(CursorPos);
 			CursorEnd();
 		}
 	}
 
 	void AddChar(int character)
 	{
-		int size;
-		auto encoded = MakeUTF8(character, &size);
-		if (*encoded != 0)
+		if (Text.length() == 0)
 		{
-			if (Text.IsEmpty())
-			{
-				Text = encoded;
-			}
-			else
-			{
-				Text.Insert(CursorPos, (char*)encoded);
-			}
-			CursorPos += size;
-			CursorPosChars++;
-			MakeStartPosGood();
+			Text += character;
 		}
+		else
+		{
+			Text.insert(CursorPos, 1, character);
+		}
+		CursorPos++;
+		MakeStartPosGood();
 	}
 
 	void AddString(FString clip)
@@ -431,35 +407,52 @@ public:
 		{
 			// Only paste the first line.
 			long brk = clip.IndexOfAny("\r\n\b");
+			std::u32string build;
 			if (brk >= 0)
 			{
 				clip.Truncate(brk);
-				clip = MakeUTF8(clip.GetChars());	// Make sure that we actually have UTF-8 text.
 			}
-			if (Text.IsEmpty())
+			auto strp = (const uint8_t*)clip.GetChars();
+			while (auto chr = GetCharFromString(strp)) build += chr;
+			
+			if (Text.length() == 0)
 			{
-				Text = clip;
+				Text = build;
 			}
 			else
 			{
-				Text.Insert(CursorPos, clip);
+				Text.insert(CursorPos, build);
 			}
-			CursorPos += (unsigned)clip.Len();
-			CursorPosChars += (unsigned)clip.CharacterCount();
+			CursorPos += (unsigned)build.length();
 			MakeStartPosGood();
 		}
 	}
 
 	void SetString(const FString &str)
 	{
-		Text = MakeUTF8(str);
+		Text.clear();
+		auto strp = (const uint8_t*)str.GetChars();
+		while (auto chr = GetCharFromString(strp)) Text += chr;
+
 		CursorEnd();
 		MakeStartPosGood();
 	}
 
 	void AddYankBuffer()
 	{
-		AddString(YankBuffer);
+		if (YankBuffer.length() > 0)
+		{
+			if (Text.length() == 0)
+			{
+				Text = YankBuffer;
+			}
+			else
+			{
+				Text.insert(CursorPos, YankBuffer);
+			}
+			CursorPos += (unsigned)YankBuffer.length();
+			MakeStartPosGood();
+		}
 	}
 };
 static FCommandBuffer CmdLine;

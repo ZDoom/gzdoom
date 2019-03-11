@@ -259,8 +259,8 @@ class LoadSaveMenu : ListMenu
 				}
 				else
 				{
-					String s = mInput.GetText() .. ConFont.GetCursor();
-					int length = ConFont.StringWidth(s) * CleanXFac;
+					String s = mInput.GetText() .. NewConsoleFont.GetCursor();
+					int length = NewConsoleFont.StringWidth(s) * FontScale;
 					int displacement = min(0, listboxWidth - 2 - length);
 					screen.DrawText (NewConsoleFont, Font.CR_WHITE, (listboxLeft + 1 + displacement) / FontScale, (listboxTop+rowHeight*i + FontScale) / FontScale, s, 
 						DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale);

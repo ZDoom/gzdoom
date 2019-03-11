@@ -2054,7 +2054,7 @@ void G_DoAutoSave ()
 	}
 
 	readableTime = myasctime ();
-	description.Format("Autosave %.12s", readableTime + 4);
+	description.Format("Autosave %s", readableTime);
 	G_DoSaveGame (false, file, description);
 }
 
@@ -2077,14 +2077,9 @@ static void PutSaveWads (FSerializer &arc)
 
 static void PutSaveComment (FSerializer &arc)
 {
-	const char *readableTime;
 	int levelTime;
 
-	// Get the current date and time
-	readableTime = myasctime ();
-
-	FString comment;
-	comment.Format("%.10s%.5s%.9s", readableTime, &readableTime[19], &readableTime[10]);
+	FString comment = myasctime();
 
 	arc.AddString("Creation Time", comment);
 

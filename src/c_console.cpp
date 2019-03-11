@@ -80,6 +80,7 @@ CUSTOM_CVAR(Int, con_buffersize, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 }
 
 CVAR(Bool, con_consolefont, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, con_midconsolefont, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 FConsoleBuffer *conbuffer;
 
@@ -628,6 +629,12 @@ void DequeueConsoleText ()
 	EnqueuedTextTail = &EnqueuedText;
 }
 
+EColorRange C_GetDefaultFontColor()
+{
+	// Ideally this should analyze the SmallFont and pick a matching color.
+	return gameinfo.gametype == GAME_Doom ? CR_RED : gameinfo.gametype == GAME_Chex ? CR_GREEN : gameinfo.gametype == GAME_Strife ? CR_GOLD : CR_GRAY;
+}
+
 void C_InitConback()
 {
 	conback = TexMan.CheckForTexture ("CONBACK", ETextureType::MiscPatch);
@@ -1097,8 +1104,7 @@ void FNotifyBuffer::Draw()
 
 			if (color == CR_UNTRANSLATED && *con_consolefont)
 			{
-				// Ideally this should analyze the SmallFont and pick a matching color.
-				color = gameinfo.gametype == GAME_Doom ? CR_RED : gameinfo.gametype == GAME_Chex ? CR_GREEN : gameinfo.gametype == GAME_Strife ? CR_GOLD : CR_GRAY;
+				color = C_GetDefaultFontColor();
 			}
 			int scale = active_con_scaletext(con_consolefont);
 			if (!center)
@@ -1772,8 +1778,18 @@ void C_MidPrint (FFont *font, const char *msg)
 		AddToConsole (-1, msg);
 		AddToConsole (-1, bar3);
 
+		auto color = (EColorRange)PrintColors[PRINTLEVELS];
+
+		bool altscale = false;
+		if (font == nullptr)
+		{
+			altscale = con_midconsolefont;
+			font = altscale ? NewConsoleFont : SmallFont;
+			if (altscale && color == CR_UNTRANSLATED) color = C_GetDefaultFontColor();
+		}
+
 		StatusBar->AttachMessage (Create<DHUDMessage>(font, msg, 1.5f, 0.375f, 0, 0,
-			(EColorRange)PrintColors[PRINTLEVELS], con_midtime), MAKE_ID('C','N','T','R'));
+			color, con_midtime, altscale), MAKE_ID('C','N','T','R'));
 	}
 	else
 	{
@@ -1789,8 +1805,17 @@ void C_MidPrintBold (FFont *font, const char *msg)
 		AddToConsole (-1, msg);
 		AddToConsole (-1, bar3);
 
+		auto color = (EColorRange)PrintColors[PRINTLEVELS+1];
+		bool altscale = false;
+		if (font == nullptr)
+		{
+			altscale = con_midconsolefont;
+			font = altscale ? NewConsoleFont : SmallFont;
+			if (altscale && color == CR_UNTRANSLATED) color = C_GetDefaultFontColor();
+		}
+
 		StatusBar->AttachMessage (Create<DHUDMessage> (font, msg, 1.5f, 0.375f, 0, 0,
-			(EColorRange)PrintColors[PRINTLEVELS+1], con_midtime), MAKE_ID('C','N','T','R'));
+			color, con_midtime, altscale), MAKE_ID('C','N','T','R'));
 	}
 	else
 	{
@@ -1801,7 +1826,7 @@ void C_MidPrintBold (FFont *font, const char *msg)
 DEFINE_ACTION_FUNCTION(_Console, MidPrint)
 {
 	PARAM_PROLOGUE;
-	PARAM_POINTER_NOT_NULL(fnt, FFont);
+	PARAM_POINTER(fnt, FFont);
 	PARAM_STRING(text);
 	PARAM_BOOL(bold);
 

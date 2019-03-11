@@ -108,13 +108,13 @@ class AlienSpectre1 : SpectralMonster
 		}
 		else if (cls == "AlienSpectre2")
 		{
-			Console.MidPrint("SmallFont", "$TXT_KILLED_BISHOP");
+			Console.MidPrint(null, "$TXT_KILLED_BISHOP");
 			log = 74;
 			player.GiveInventoryType ("QuestItem21");
 		}
 		else if (cls == "AlienSpectre3")
 		{
-			Console.MidPrint("SmallFont", "$TXT_KILLED_ORACLE");
+			Console.MidPrint(null, "$TXT_KILLED_ORACLE");
 			// If there are any Oracles still alive, kill them.
 			ThinkerIterator it = ThinkerIterator.Create("Oracle");
 			Actor oracle;
@@ -144,7 +144,7 @@ class AlienSpectre1 : SpectralMonster
 		}
 		else if (cls == "AlienSpectre4")
 		{
-			Console.MidPrint("SmallFont", "$TXT_KILLED_MACIL");
+			Console.MidPrint(null, "$TXT_KILLED_MACIL");
 			player.GiveInventoryType ("QuestItem24");
 			if (player.FindInventory ("QuestItem25") == null)
 			{	// Richter has taken over. Macil is a snake.
@@ -157,7 +157,7 @@ class AlienSpectre1 : SpectralMonster
 		}
 		else if (cls == "AlienSpectre5")
 		{
-			Console.MidPrint("SmallFont", "$TXT_KILLED_LOREMASTER");
+			Console.MidPrint(null, "$TXT_KILLED_LOREMASTER");
 
 			player.GiveInventoryType ("QuestItem26");
 			if (!multiplayer)

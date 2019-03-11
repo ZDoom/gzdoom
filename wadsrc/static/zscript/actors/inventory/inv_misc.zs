@@ -127,7 +127,7 @@ class PuzzleItem : Inventory
 		Owner.A_PlaySound ("*puzzfail", CHAN_VOICE);
 		if (Owner.CheckLocalView())
 		{
-			Console.MidPrint ("SmallFont", PuzzFailMessage, true);
+			Console.MidPrint (null, PuzzFailMessage, true);
 		}
 		return false;
 	}

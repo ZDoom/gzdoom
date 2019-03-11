@@ -74,10 +74,10 @@ private:
 	int LastAccessed = -1;
 	TArray<char> SavePicData;
 	FTexture *SavePic = nullptr;
-	TArray<FBrokenLines> SaveComment;
 
 public:
 	int WindowSize = 0;
+	FString SaveCommentString;
 	FSaveGameNode *quickSaveSlot = nullptr;
 	~FSavegameManager();
 

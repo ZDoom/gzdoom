@@ -382,7 +382,7 @@ void DFrameBuffer::DrawText(FFont *font, int normalcolor, double x, double y, co
 DEFINE_ACTION_FUNCTION(_Screen, DrawText)
 {
 	PARAM_PROLOGUE;
-	PARAM_POINTER(font, FFont);
+	PARAM_POINTER_NOT_NULL(font, FFont);
 	PARAM_INT(cr);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);

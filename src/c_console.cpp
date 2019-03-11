@@ -32,6 +32,8 @@
 **
 */
 
+#include <string>
+
 #include "templates.h"
 #include "p_setup.h"
 #include "i_system.h"

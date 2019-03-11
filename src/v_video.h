@@ -617,9 +617,9 @@ EXTERN_CVAR(Int, uiscale);
 EXTERN_CVAR(Int, con_scaletext);
 EXTERN_CVAR(Int, con_scale);
 
-inline int active_con_scaletext()
+inline int active_con_scaletext(bool newconfont = false)
 {
-	return GetUIScale(con_scaletext);
+	return newconfont? GetConScale(con_scaletext) : GetUIScale(con_scaletext);
 }
 
 inline int active_con_scale()

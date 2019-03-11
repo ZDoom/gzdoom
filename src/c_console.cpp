@@ -79,6 +79,8 @@ CUSTOM_CVAR(Int, con_buffersize, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	if (self >= 0 && self < 128) self = 128;
 }
 
+CVAR(Bool, con_consolefont, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
 FConsoleBuffer *conbuffer;
 
 static void C_TabComplete (bool goForward);
@@ -824,16 +826,18 @@ void FNotifyBuffer::AddString(int printlevel, FString source)
 		return;
 	}
 
-	width = DisplayWidth / active_con_scaletext();
+	width = DisplayWidth / active_con_scaletext(con_consolefont);
+
+	FFont *font = *con_consolefont ? NewConsoleFont : SmallFont;
 
 	if (AddType == APPENDLINE && Text.Size() > 0 && Text[Text.Size() - 1].PrintLevel == printlevel)
 	{
 		FString str = Text[Text.Size() - 1].Text + source;
-		lines = V_BreakLines (SmallFont, width, str);
+		lines = V_BreakLines (font, width, str);
 	}
 	else
 	{
-		lines = V_BreakLines (SmallFont, width, source);
+		lines = V_BreakLines (font, width, source);
 		if (AddType == APPENDLINE)
 		{
 			AddType = NEWLINE;
@@ -1068,7 +1072,8 @@ void FNotifyBuffer::Draw()
 	line = Top;
 	canskip = true;
 
-	lineadv = SmallFont->GetHeight ();
+	FFont *font = *con_consolefont ? NewConsoleFont : SmallFont;
+	lineadv = font->GetHeight ();
 
 	for (unsigned i = 0; i < Text.Size(); ++ i)
 	{
@@ -1090,15 +1095,20 @@ void FNotifyBuffer::Draw()
 			else
 				color = PrintColors[notify.PrintLevel];
 
-			int scale = active_con_scaletext();
+			if (color == CR_UNTRANSLATED && *con_consolefont)
+			{
+				// Ideally this should analyze the SmallFont and pick a matching color.
+				color = gameinfo.gametype == GAME_Doom ? CR_RED : gameinfo.gametype == GAME_Chex ? CR_GREEN : gameinfo.gametype == GAME_Strife ? CR_GOLD : CR_GRAY;
+			}
+			int scale = active_con_scaletext(con_consolefont);
 			if (!center)
-				screen->DrawText (SmallFont, color, 0, line, notify.Text,
+				screen->DrawText (font, color, 0, line, notify.Text,
 					DTA_VirtualWidth, screen->GetWidth() / scale,
 					DTA_VirtualHeight, screen->GetHeight() / scale,
 					DTA_KeepRatio, true,
 					DTA_Alpha, alpha, TAG_DONE);
 			else
-				screen->DrawText (SmallFont, color, (screen->GetWidth() -
+				screen->DrawText (font, color, (screen->GetWidth() -
 					SmallFont->StringWidth (notify.Text) * scale) / 2 / scale,
 					line, notify.Text,
 					DTA_VirtualWidth, screen->GetWidth() / scale,

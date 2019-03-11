@@ -243,7 +243,7 @@ void CT_Drawer (void)
 		y = (viewactive || gamestate != GS_LEVEL) ? -displayfont->GetHeight()-2 : -displayfont->GetHeight() - 22;
 
 		scalex = 1;
-		int scale = active_con_scale();
+		int scale = active_con_scaletext(true);
 		int screen_width = SCREENWIDTH / scale;
 		int screen_height= SCREENHEIGHT / scale;
 		int st_y = StatusBar->GetTopOfStatusbar() / scale;

@@ -262,7 +262,7 @@ public:
 			cells -= w / 9;
 		}
 		*overflow = (cells < 0);
-		return cells;
+		return chars;
 	}
 
 
@@ -297,8 +297,8 @@ public:
 		if (overflow)
 		{
 			// We ended up in the middle of a double cell character, so set the start to the following character.
-			StartPos++;
 			StartPosCells++;
+			StartPos = CharsForCells(StartPosCells, &overflow);
 		}
 	}
 

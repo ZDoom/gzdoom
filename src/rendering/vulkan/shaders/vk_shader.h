@@ -95,7 +95,8 @@ private:
 	std::unique_ptr<VulkanShader> LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char *light_lump, const char *defines, bool alphatest, bool gbufferpass);
 
 	FString GetTargetGlslVersion();
-	FString LoadShaderLump(const char *lumpname);
+	FString LoadPublicShaderLump(const char *lumpname);
+	FString LoadPrivateShaderLump(const char *lumpname);
 
 	VulkanDevice *device;
 

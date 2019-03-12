@@ -217,7 +217,7 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername
 	FString code = GetTargetGlslVersion();
 	code << defines << shaderBindings;
 	code << "#line 1\n";
-	code << LoadShaderLump(vert_lump).GetChars() << "\n";
+	code << LoadPrivateShaderLump(vert_lump).GetChars() << "\n";
 
 	ShaderBuilder builder;
 	builder.setVertexShader(code);
@@ -233,19 +233,19 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 	if (gbufferpass) code << "#define GBUFFER_PASS\n";
 
 	code << "\n#line 1\n";
-	code << LoadShaderLump(frag_lump).GetChars() << "\n";
+	code << LoadPrivateShaderLump(frag_lump).GetChars() << "\n";
 
 	if (material_lump)
 	{
 		if (material_lump[0] != '#')
 		{
-			FString pp_code = LoadShaderLump(material_lump);
+			FString pp_code = LoadPublicShaderLump(material_lump);
 
 			if (pp_code.IndexOf("ProcessMaterial") < 0)
 			{
 				// this looks like an old custom hardware shader.
 				// add ProcessMaterial function that calls the older ProcessTexel function
-				code << "\n" << LoadShaderLump("shaders/glsl/func_defaultmat.fp").GetChars() << "\n";
+				code << "\n" << LoadPrivateShaderLump("shaders/glsl/func_defaultmat.fp").GetChars() << "\n";
 
 				if (pp_code.IndexOf("ProcessTexel") < 0)
 				{
@@ -269,7 +269,7 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 
 			if (pp_code.IndexOf("ProcessLight") < 0)
 			{
-				code << "\n" << LoadShaderLump("shaders/glsl/func_defaultlight.fp").GetChars() << "\n";
+				code << "\n" << LoadPrivateShaderLump("shaders/glsl/func_defaultlight.fp").GetChars() << "\n";
 			}
 		}
 		else
@@ -282,7 +282,7 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 	if (light_lump)
 	{
 		code << "\n#line 1\n";
-		code << LoadShaderLump(light_lump).GetChars();
+		code << LoadPrivateShaderLump(light_lump).GetChars();
 	}
 
 	ShaderBuilder builder;
@@ -295,7 +295,15 @@ FString VkShaderManager::GetTargetGlslVersion()
 	return "#version 450 core\n";
 }
 
-FString VkShaderManager::LoadShaderLump(const char *lumpname)
+FString VkShaderManager::LoadPublicShaderLump(const char *lumpname)
+{
+	int lump = Wads.CheckNumForFullName(lumpname);
+	if (lump == -1) I_Error("Unable to load '%s'", lumpname);
+	FMemLump data = Wads.ReadLump(lump);
+	return data.GetString();
+}
+
+FString VkShaderManager::LoadPrivateShaderLump(const char *lumpname)
 {
 	int lump = Wads.CheckNumForFullName(lumpname, 0);
 	if (lump == -1) I_Error("Unable to load '%s'", lumpname);

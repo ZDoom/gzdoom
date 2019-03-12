@@ -363,7 +363,7 @@ void VkPostprocess::CompileEffectShaders()
 
 FString VkPostprocess::LoadShaderCode(const FString &lumpName, const FString &defines, int version)
 {
-	int lump = Wads.CheckNumForFullName(lumpName, 0);
+	int lump = Wads.CheckNumForFullName(lumpName);
 	if (lump == -1) I_FatalError("Unable to load '%s'", lumpName.GetChars());
 	FString code = Wads.ReadLump(lump).GetString().GetChars();
 

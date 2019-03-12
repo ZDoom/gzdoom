@@ -95,6 +95,7 @@ EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Bool, vid_hidpi)
 EXTERN_CVAR(Int,  vid_defwidth)
 EXTERN_CVAR(Int,  vid_defheight)
+EXTERN_CVAR(Int,  vid_backend)
 
 CUSTOM_CVAR(Bool, vid_autoswitch, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -342,7 +343,7 @@ class CocoaVideo : public IVideo
 public:
 	CocoaVideo()
 	{
-		ms_isVulkanSupported = true; // todo
+		ms_isVulkanEnabled = vid_backend == 0 && NSAppKitVersionNumber >= 1404; // NSAppKitVersionNumber10_11
 	}
 
 	~CocoaVideo()
@@ -359,7 +360,7 @@ public:
 
 		SystemBaseFrameBuffer *fb = nullptr;
 
-		if (ms_isVulkanSupported)
+		if (ms_isVulkanEnabled)
 		{
 			const NSRect contentRect = [ms_window contentRectForFrameRect:[ms_window frame]];
 
@@ -380,7 +381,7 @@ public:
 		}
 		catch (std::exception const&)
 		{
-			ms_isVulkanSupported = false;
+			ms_isVulkanEnabled = false;
 
 			SetupOpenGLView(ms_window);
 		}
@@ -402,23 +403,18 @@ public:
 		return ms_window;
 	}
 
-	static bool IsVulkanSupported()
-	{
-		return ms_isVulkanSupported;
-	}
-
 private:
 	VulkanDevice *m_vulkanDevice = nullptr;
 
 	static CocoaWindow* ms_window;
 
-	static bool ms_isVulkanSupported;
+	static bool ms_isVulkanEnabled;
 };
 
 
 CocoaWindow* CocoaVideo::ms_window;
 
-bool CocoaVideo::ms_isVulkanSupported;
+bool CocoaVideo::ms_isVulkanEnabled;
 
 
 // ---------------------------------------------------------------------------

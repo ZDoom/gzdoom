@@ -113,6 +113,15 @@ CUSTOM_CVAR(Int, vid_rendermode, 4, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 	// No further checks needed. All this changes now is which scene drawer the render backend calls.
 }
 
+CUSTOM_CVAR(Int, vid_backend, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	// [SP] This may seem pointless - but I don't want to implement live switching just
+	// yet - I'm pretty sure it's going to require a lot of reinits and destructions to
+	// do it right without memory leaks
+
+	Printf("Changing the video backend requires a restart for " GAMENAME ".\n");
+}
+
 CVAR(Int, vid_renderer, 1, 0)	// for some stupid mods which threw caution out of the window...
 
 

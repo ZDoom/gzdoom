@@ -72,6 +72,7 @@ EXTERN_CVAR (Int, vid_displaybits)
 EXTERN_CVAR (Int, vid_maxfps)
 EXTERN_CVAR (Int, vid_defwidth)
 EXTERN_CVAR (Int, vid_defheight)
+EXTERN_CVAR (Int, vid_backend)
 EXTERN_CVAR (Bool, cl_capfps)
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -111,7 +112,7 @@ namespace Priv
 	static const int MIN_HEIGHT = 200;
 
 	SDL_Window *window;
-	bool vulkanSupported;
+	bool vulkanEnabled;
 	bool fullscreenSwitch;
 
 	void CreateWindow(uint32_t extraFlags)
@@ -197,7 +198,7 @@ private:
 
 void I_GetVulkanDrawableSize(int *width, int *height)
 {
-	assert(Priv::vulkanSupported);
+	assert(Priv::vulkanEnabled);
 	assert(Priv::window != nullptr);
 	assert(Priv::Vulkan_GetDrawableSize);
 	Priv::Vulkan_GetDrawableSize(Priv::window, width, height);
@@ -205,17 +206,15 @@ void I_GetVulkanDrawableSize(int *width, int *height)
 
 bool I_GetVulkanPlatformExtensions(unsigned int *count, const char **names)
 {
-	assert(Priv::vulkanSupported);
+	assert(Priv::vulkanEnabled);
 	assert(Priv::window != nullptr);
-	assert(Priv::Vulkan_GetInstanceExtensions);
 	return Priv::Vulkan_GetInstanceExtensions(Priv::window, count, names) == SDL_TRUE;
 }
 
 bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface)
 {
-	assert(Priv::vulkanSupported);
+	assert(Priv::vulkanEnabled);
 	assert(Priv::window != nullptr);
-	assert(Priv::Vulkan_CreateSurface);
 	return Priv::Vulkan_CreateSurface(Priv::window, instance, surface) == SDL_TRUE;
 }
 
@@ -234,15 +233,16 @@ SDLVideo::SDLVideo ()
 		Priv::library.Load({ "libSDL2.so", "libSDL2-2.0.so" });
 	}
 
-	Priv::vulkanSupported = Priv::Vulkan_GetDrawableSize && Priv::Vulkan_GetInstanceExtensions && Priv::Vulkan_CreateSurface;
+	Priv::vulkanEnabled = vid_backend == 0
+		&& Priv::Vulkan_GetDrawableSize && Priv::Vulkan_GetInstanceExtensions && Priv::Vulkan_CreateSurface;
 
-	if (Priv::vulkanSupported)
+	if (Priv::vulkanEnabled)
 	{
 		Priv::CreateWindow(Priv::VulkanWindowFlag | SDL_WINDOW_HIDDEN);
 
 		if (Priv::window == nullptr)
 		{
-			Priv::vulkanSupported = false;
+			Priv::vulkanEnabled = false;
 		}
 	}
 }
@@ -257,7 +257,7 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer ()
 	SystemBaseFrameBuffer *fb = nullptr;
 
 	// first try Vulkan, if that fails OpenGL
-	if (Priv::vulkanSupported)
+	if (Priv::vulkanEnabled)
 	{
 		try
 		{
@@ -267,7 +267,7 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer ()
 		}
 		catch (CRecoverableError const&)
 		{
-			Priv::vulkanSupported = false;
+			Priv::vulkanEnabled = false;
 		}
 	}
 
@@ -302,7 +302,7 @@ int SystemBaseFrameBuffer::GetClientWidth()
 {
 	int width = 0;
 
-	assert(Priv::vulkanSupported);
+	assert(Priv::vulkanEnabled);
 	Priv::Vulkan_GetDrawableSize(Priv::window, &width, nullptr);
 
 	return width;
@@ -312,7 +312,7 @@ int SystemBaseFrameBuffer::GetClientHeight()
 {
 	int height = 0;
 
-	assert(Priv::vulkanSupported);
+	assert(Priv::vulkanEnabled);
 	Priv::Vulkan_GetDrawableSize(Priv::window, nullptr, &height);
 
 	return height;

@@ -51,6 +51,15 @@
 
 EXTERN_CVAR(Int, vid_maxfps)
 
+CUSTOM_CVAR(Int, vid_backend, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
+{
+	// [SP] This may seem pointless - but I don't want to implement live switching just
+	// yet - I'm pretty sure it's going to require a lot of reinits and destructions to
+	// do it right without memory leaks
+
+	Printf("Changing the video backend requires a restart for " GAMENAME ".\n");
+}
+
 extern HWND Window;
 
 IVideo *Video;
@@ -127,7 +136,7 @@ void I_InitGraphics ()
 		// are the active app. Huh?
 	}
 
-	// if (vid_backend == 0)
+	if (vid_backend == 0)
 	{
 		// first try Vulkan, if that fails OpenGL
 		try
@@ -139,10 +148,10 @@ void I_InitGraphics ()
 			Video = new Win32GLVideo();
 		}
 	}
-	/*else
+	else
 	{
 		Video = new Win32GLVideo();
-	}*/
+	}
 
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");

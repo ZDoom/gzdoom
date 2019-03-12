@@ -126,8 +126,8 @@ class LoadSaveMenu : ListMenu
 		savepicWidth = 216*screen.GetWidth() / 640;
 		savepicHeight = 135*screen.GetHeight() / 400;
 
-		FontScale = screen.GetHeight() / 480;
-		rowHeight = (NewConsoleFont.GetHeight() + 1) * FontScale;
+		FontScale = max(screen.GetHeight() / 480, 1);
+		rowHeight = max((NewConsoleFont.GetHeight() + 1) * FontScale, 1);
 		
 		listboxLeft = savepicLeft + savepicWidth + 14;
 		listboxTop = savepicTop;

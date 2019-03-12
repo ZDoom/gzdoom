@@ -613,8 +613,9 @@ struct PresentUniforms
 	int GrayFormula;
 	int WindowPositionParity; // top-of-window might not be top-of-screen
 	FVector2 Scale;
+	FVector2 Offset;
 	float ColorScale;
-	float Padding1, Padding2, Padding3;
+	float Padding;
 
 	static std::vector<UniformFieldDesc> Desc()
 	{
@@ -627,6 +628,7 @@ struct PresentUniforms
 			{ "GrayFormula", UniformType::Int, offsetof(PresentUniforms, GrayFormula) },
 			{ "WindowPositionParity", UniformType::Int, offsetof(PresentUniforms, WindowPositionParity) },
 			{ "UVScale", UniformType::Vec2, offsetof(PresentUniforms, Scale) },
+			{ "UVOffset", UniformType::Vec2, offsetof(PresentUniforms, Offset) },
 			{ "ColorScale", UniformType::Float, offsetof(PresentUniforms, ColorScale) },
 		};
 	}

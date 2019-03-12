@@ -173,6 +173,7 @@ void FGLRenderer::prepareInterleavedPresent(FPresentShaderBase& shader)
 		screen->mScreenViewport.width / (float)mBuffers->GetWidth(),
 		screen->mScreenViewport.height / (float)mBuffers->GetHeight()
 	};
+	shader.Uniforms->Offset = { 0.0f, 0.0f };
 	shader.Uniforms.Set();
 }
 

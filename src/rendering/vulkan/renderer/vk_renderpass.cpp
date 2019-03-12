@@ -52,7 +52,7 @@ void VkRenderPassManager::BeginRenderPass(const VkRenderPassKey &key, VulkanComm
 		builder.setRenderPass(passSetup->RenderPass.get());
 		builder.setSize(mRenderTargetWidth, mRenderTargetHeight);
 		builder.addAttachment(mRenderTargetView->view);
-		if (key.DepthTest || key.DepthWrite || key.StencilTest)
+		if (key.UsesDepthStencil())
 			builder.addAttachment(buffers->SceneDepthStencilView.get());
 		framebuffer = builder.create(GetVulkanFrameBuffer()->device);
 		framebuffer->SetDebugName("VkRenderPassSetup.Framebuffer");
@@ -62,6 +62,8 @@ void VkRenderPassManager::BeginRenderPass(const VkRenderPassKey &key, VulkanComm
 	beginInfo.setRenderPass(passSetup->RenderPass.get());
 	beginInfo.setRenderArea(0, 0, buffers->GetWidth(), buffers->GetHeight());
 	beginInfo.setFramebuffer(framebuffer.get());
+	beginInfo.addClearColor(screen->mSceneClearColor[0], screen->mSceneClearColor[1], screen->mSceneClearColor[2], screen->mSceneClearColor[3]);
+	beginInfo.addClearDepthStencil(1.0f, 0);
 	cmdbuffer->beginRenderPass(beginInfo);
 	cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->Pipeline.get());
 }
@@ -182,19 +184,19 @@ void VkRenderPassSetup::CreateRenderPass(const VkRenderPassKey &key)
 	RenderPassBuilder builder;
 	builder.addAttachment(
 		VK_FORMAT_R16G16B16A16_SFLOAT, (VkSampleCountFlagBits)key.Samples,
-		VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
+		(key.ClearTargets & CT_Color) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
 		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-	if (key.DepthTest || key.DepthWrite || key.StencilTest)
+	if (key.UsesDepthStencil())
 	{
 		builder.addDepthStencilAttachment(
 			buffers->SceneDepthStencilFormat, buffers->GetSceneSamples(),
-			VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
-			VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
+			(key.ClearTargets & CT_Depth) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
+			(key.ClearTargets & CT_Stencil) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
 			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 	}
 	builder.addSubpass();
 	builder.addSubpassColorAttachmentRef(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-	if (key.DepthTest || key.DepthWrite || key.StencilTest)
+	if (key.UsesDepthStencil())
 	{
 		builder.addSubpassDepthStencilAttachmentRef(1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 		builder.addExternalSubpassDependency(

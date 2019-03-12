@@ -118,74 +118,8 @@ void VkRenderState::EnableClipDistance(int num, bool state)
 
 void VkRenderState::Clear(int targets)
 {
-	// We need an active render pass, and it must have a depth attachment..
-	bool lastDepthTest = mDepthTest;
-	bool lastDepthWrite = mDepthWrite;
-	if (targets & (CT_Depth | CT_Stencil))
-	{
-		mDepthTest = true;
-		mDepthWrite = true;
-	}
-	Apply(DT_TriangleStrip);
-	mDepthTest = lastDepthTest;
-	mDepthWrite = lastDepthWrite;
-
-	VkClearAttachment attachments[2] = { };
-	VkClearRect rects[2] = { };
-
-	for (int i = 0; i < 2; i++)
-	{
-		rects[i].layerCount = 1;
-		if (mScissorWidth >= 0)
-		{
-			rects[0].rect.offset.x = mScissorX;
-			rects[0].rect.offset.y = GetVulkanFrameBuffer()->GetBuffers()->GetHeight() - mScissorY - mViewportHeight;
-			rects[0].rect.extent.width = mScissorWidth;
-			rects[0].rect.extent.height = mScissorHeight;
-
-			if (rects[0].rect.offset.x < 0)
-			{
-				rects[0].rect.extent.height += rects[0].rect.offset.x;
-				rects[0].rect.offset.x = 0;
-			}
-			if (rects[0].rect.offset.y < 0)
-			{
-				rects[0].rect.extent.height += rects[0].rect.offset.y;
-				rects[0].rect.offset.y = 0;
-			}
-		}
-		else
-		{
-			rects[0].rect.offset.x = 0;
-			rects[0].rect.offset.y = 0;
-			rects[0].rect.extent.width = SCREENWIDTH;
-			rects[0].rect.extent.height = SCREENHEIGHT;
-		}
-	}
-
-	if (targets & CT_Depth)
-	{
-		attachments[1].aspectMask |= VK_IMAGE_ASPECT_DEPTH_BIT;
-		attachments[1].clearValue.depthStencil.depth = 1.0f;
-	}
-	if (targets & CT_Stencil)
-	{
-		attachments[1].aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-		attachments[1].clearValue.depthStencil.stencil = 0;
-	}
-	if (targets & CT_Color)
-	{
-		attachments[0].aspectMask |= VK_IMAGE_ASPECT_COLOR_BIT;
-		for (int i = 0; i < 4; i++)
-			attachments[0].clearValue.color.float32[i] = screen->mSceneClearColor[i];
-	}
-
-	if ((targets & CT_Color) && (targets & CT_Stencil) && (targets & CT_Depth))
-		mCommandBuffer->clearAttachments(2, attachments, 2, rects);
-	else if (targets & (CT_Stencil | CT_Depth))
-		mCommandBuffer->clearAttachments(1, attachments + 1, 1, rects + 1);
-	else if (targets & CT_Color)
-		mCommandBuffer->clearAttachments(1, attachments, 1, rects);
+	mClearTargets = targets;
+	EndRenderPass();
 }
 
 void VkRenderState::EnableStencil(bool on)
@@ -259,6 +193,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 
 	// Find a render pass that matches our state
 	VkRenderPassKey passKey;
+	passKey.ClearTargets = mRenderPassKey.ClearTargets | mClearTargets;
 	passKey.DrawType = dt;
 	passKey.VertexFormat = static_cast<VKVertexBuffer*>(mVertexBuffer)->VertexFormat;
 	passKey.RenderStyle = mRenderStyle;
@@ -305,8 +240,10 @@ void VkRenderState::ApplyRenderPass(int dt)
 
 	if (changingRenderPass)
 	{
+		passKey.ClearTargets = mClearTargets;
 		passManager->BeginRenderPass(passKey, mCommandBuffer);
 		mRenderPassKey = passKey;
+		mClearTargets = 0;
 	}
 }
 
@@ -325,30 +262,26 @@ void VkRenderState::ApplyScissor()
 	{
 		VkRect2D scissor;
 		auto buffers = GetVulkanFrameBuffer()->GetBuffers();
+		int targetWidth = buffers->GetWidth();
+		int targetHeight = buffers->GetHeight();
 		if (mScissorWidth >= 0)
 		{
-			scissor.offset.x = mScissorX;
-			scissor.offset.y = buffers->GetHeight() - mScissorY - mViewportHeight;
-			scissor.extent.width = mScissorWidth;
-			scissor.extent.height = mScissorHeight;
+			int x0 = clamp(mScissorX, 0, targetWidth);
+			int y0 = clamp(mScissorY, 0, targetHeight);
+			int x1 = clamp(mScissorX + mScissorWidth, 0, targetWidth);
+			int y1 = clamp(mScissorY + mScissorHeight, 0, targetHeight);
 
-			if (scissor.offset.x < 0)
-			{
-				scissor.extent.height += scissor.offset.x;
-				scissor.offset.x = 0;
-			}
-			if (scissor.offset.y < 0)
-			{
-				scissor.extent.height += scissor.offset.y;
-				scissor.offset.y = 0;
-			}
+			scissor.offset.x = x0;
+			scissor.offset.y = y0;
+			scissor.extent.width = x1 - x0;
+			scissor.extent.height = y1 - y0;
 		}
 		else
 		{
 			scissor.offset.x = 0;
 			scissor.offset.y = 0;
-			scissor.extent.width = buffers->GetWidth();
-			scissor.extent.height = buffers->GetHeight();
+			scissor.extent.width = targetWidth;
+			scissor.extent.height = targetHeight;
 		}
 		mCommandBuffer->setScissor(0, 1, &scissor);
 		mScissorChanged = false;
@@ -364,7 +297,7 @@ void VkRenderState::ApplyViewport()
 		if (mViewportWidth >= 0)
 		{
 			viewport.x = (float)mViewportX;
-			viewport.y = (float)buffers->GetHeight() - mViewportY - mViewportHeight;
+			viewport.y = (float)mViewportY;
 			viewport.width = (float)mViewportWidth;
 			viewport.height = (float)mViewportHeight;
 		}

@@ -29,5 +29,5 @@ vec4 Dither(vec4 c)
 
 void main()
 {
-	FragColor = Dither(ApplyGamma(texture(InputTexture, TexCoord * UVScale)));
+	FragColor = Dither(ApplyGamma(texture(InputTexture, UVOffset + TexCoord * UVScale)));
 }

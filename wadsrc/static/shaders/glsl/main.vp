@@ -97,7 +97,6 @@ void main()
 
 	#ifdef VULKAN_COORDINATE_SYSTEM
 	gl_Position.z = (gl_Position.z + gl_Position.w) / 2.0;
-	gl_Position.y = -gl_Position.y;
 	#endif
 
 	if (uClipHeightDirection != 0.0) // clip planes used for reflective flats

@@ -4,6 +4,7 @@
 #include "vulkan/system/vk_objects.h"
 #include "r_data/renderstyle.h"
 #include "hwrenderer/data/buffers.h"
+#include "hwrenderer/scene/hw_renderstate.h"
 #include <string.h>
 #include <map>
 
@@ -28,6 +29,9 @@ public:
 	int VertexFormat;
 	int DrawType;
 	int Samples;
+	int ClearTargets;
+
+	bool UsesDepthStencil() const { return DepthTest || DepthWrite || StencilTest || (ClearTargets & (CT_Depth | CT_Stencil)); }
 
 	bool operator<(const VkRenderPassKey &other) const { return memcmp(this, &other, sizeof(VkRenderPassKey)) < 0; }
 	bool operator==(const VkRenderPassKey &other) const { return memcmp(this, &other, sizeof(VkRenderPassKey)) == 0; }

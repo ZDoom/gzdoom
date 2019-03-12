@@ -248,6 +248,7 @@ void FGLRenderer::DrawPresentTexture(const IntRect &box, bool applyGamma)
 		mPresentShader->Uniforms->ColorScale = (gl_dither_bpc == -1) ? 255.0f : (float)((1 << gl_dither_bpc) - 1);
 	}
 	mPresentShader->Uniforms->Scale = { screen->mScreenViewport.width / (float)mBuffers->GetWidth(), screen->mScreenViewport.height / (float)mBuffers->GetHeight() };
+	mPresentShader->Uniforms->Offset = { 0.0f, 0.0f };
 	mPresentShader->Uniforms.Set();
 	RenderScreenQuad();
 }

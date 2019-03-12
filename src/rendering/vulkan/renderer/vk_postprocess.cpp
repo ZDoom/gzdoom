@@ -43,15 +43,6 @@ void VkPostprocess::PostProcessScene(int fixedcm, const std::function<void()> &a
 	auto fb = GetVulkanFrameBuffer();
 
 	hw_postprocess.fixedcm = fixedcm;
-	hw_postprocess.SceneWidth = fb->GetBuffers()->GetSceneWidth();
-	hw_postprocess.SceneHeight = fb->GetBuffers()->GetSceneHeight();
-
-	hw_postprocess.DeclareShaders();
-	hw_postprocess.UpdateTextures();
-	hw_postprocess.UpdateSteps();
-
-	CompileEffectShaders();
-	UpdateEffectTextures();
 
 	RenderEffect("UpdateCameraExposure");
 	//mCustomPostProcessShaders->Run("beforebloom");
@@ -133,12 +124,6 @@ void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool
 {
 	auto fb = GetVulkanFrameBuffer();
 
-	hw_postprocess.DeclareShaders();
-	hw_postprocess.UpdateTextures();
-	hw_postprocess.UpdateSteps();
-	CompileEffectShaders();
-	UpdateEffectTextures();
-
 	PresentUniforms uniforms;
 	if (!applyGamma /*|| framebuffer->IsHWGammaActive()*/)
 	{
@@ -156,7 +141,8 @@ void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool
 		uniforms.GrayFormula = static_cast<int>(gl_satformula);
 	}
 	uniforms.ColorScale = (gl_dither_bpc == -1) ? 255.0f : (float)((1 << gl_dither_bpc) - 1);
-	uniforms.Scale = { screen->mScreenViewport.width / (float)fb->GetBuffers()->GetWidth(), screen->mScreenViewport.height / (float)fb->GetBuffers()->GetHeight() };
+	uniforms.Scale = { screen->mScreenViewport.width / (float)fb->GetBuffers()->GetWidth(), -screen->mScreenViewport.height / (float)fb->GetBuffers()->GetHeight() };
+	uniforms.Offset = { 0.0f, 1.0f };
 
 	PPStep step;
 	step.ShaderName = "Present";
@@ -177,35 +163,14 @@ void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool
 
 void VkPostprocess::AmbientOccludeScene(float m5)
 {
-	auto fb = GetVulkanFrameBuffer();
-
-	hw_postprocess.SceneWidth = fb->GetBuffers()->GetSceneWidth();
-	hw_postprocess.SceneHeight = fb->GetBuffers()->GetSceneHeight();
 	hw_postprocess.m5 = m5;
-
-	hw_postprocess.DeclareShaders();
-	hw_postprocess.UpdateTextures();
-	hw_postprocess.UpdateSteps();
-
-	CompileEffectShaders();
-	UpdateEffectTextures();
 
 	RenderEffect("AmbientOccludeScene");
 }
 
 void VkPostprocess::BlurScene(float gameinfobluramount)
 {
-	auto fb = GetVulkanFrameBuffer();
-	hw_postprocess.SceneWidth = fb->GetBuffers()->GetSceneWidth();
-	hw_postprocess.SceneHeight = fb->GetBuffers()->GetSceneHeight();
 	hw_postprocess.gameinfobluramount = gameinfobluramount;
-
-	hw_postprocess.DeclareShaders();
-	hw_postprocess.UpdateTextures();
-	hw_postprocess.UpdateSteps();
-
-	CompileEffectShaders();
-	UpdateEffectTextures();
 
 	auto vrmode = VRMode::GetVRMode(true);
 	int eyeCount = vrmode->mEyeCount;
@@ -233,6 +198,17 @@ void VkPostprocess::BeginFrame()
 		mDescriptorPool = builder.create(GetVulkanFrameBuffer()->device);
 		mDescriptorPool->SetDebugName("VkPostprocess.mDescriptorPool");
 	}
+
+	auto fb = GetVulkanFrameBuffer();
+	hw_postprocess.SceneWidth = fb->GetBuffers()->GetSceneWidth();
+	hw_postprocess.SceneHeight = fb->GetBuffers()->GetSceneHeight();
+
+	hw_postprocess.DeclareShaders();
+	hw_postprocess.UpdateTextures();
+	hw_postprocess.UpdateSteps();
+
+	CompileEffectShaders();
+	UpdateEffectTextures();
 }
 
 void VkPostprocess::RenderBuffersReset()
@@ -401,11 +377,11 @@ void VkPostprocess::RenderEffect(const FString &name)
 		if (!passSetup)
 			passSetup.reset(new VkPPRenderPassSetup(key));
 
-		int framebufferHeight = 0;
+		int framebufferWidth = 0, framebufferHeight = 0;
 		VulkanDescriptorSet *input = GetInput(passSetup.get(), step.Textures);
-		VulkanFramebuffer *output = GetOutput(passSetup.get(), step.Output, framebufferHeight);
+		VulkanFramebuffer *output = GetOutput(passSetup.get(), step.Output, framebufferWidth, framebufferHeight);
 
-		RenderScreenQuad(passSetup.get(), input, output, framebufferHeight, step.Viewport.left, step.Viewport.top, step.Viewport.width, step.Viewport.height, step.Uniforms.Data.Data(), step.Uniforms.Data.Size());
+		RenderScreenQuad(passSetup.get(), input, output, framebufferWidth, framebufferHeight, step.Viewport.left, step.Viewport.top, step.Viewport.width, step.Viewport.height, step.Uniforms.Data.Data(), step.Uniforms.Data.Size());
 
 		// Advance to next PP texture if our output was sent there
 		if (step.Output.Type == PPTextureType::NextPipelineTexture)
@@ -415,41 +391,30 @@ void VkPostprocess::RenderEffect(const FString &name)
 	}
 }
 
-void VkPostprocess::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDescriptorSet *descriptorSet, VulkanFramebuffer *framebuffer, int framebufferHeight, int x, int y, int width, int height, const void *pushConstants, uint32_t pushConstantsSize)
+void VkPostprocess::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDescriptorSet *descriptorSet, VulkanFramebuffer *framebuffer, int framebufferWidth, int framebufferHeight, int x, int y, int width, int height, const void *pushConstants, uint32_t pushConstantsSize)
 {
 	auto fb = GetVulkanFrameBuffer();
 	auto cmdbuffer = fb->GetDrawCommands();
 
-	RenderPassBegin beginInfo;
-	beginInfo.setRenderPass(passSetup->RenderPass.get());
-	beginInfo.setRenderArea(x, y, width, height);
-	beginInfo.setFramebuffer(framebuffer);
-	beginInfo.addClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-
 	VkViewport viewport = { };
 	viewport.x = x;
-	viewport.y = framebufferHeight - y - height;
+	viewport.y = y;
 	viewport.width = width;
 	viewport.height = height;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
 	VkRect2D scissor = { };
-	scissor.offset.x = x;
-	scissor.offset.y = framebufferHeight - y - height;
-	scissor.extent.width = width;
-	scissor.extent.height = height;
+	scissor.offset.x = 0;
+	scissor.offset.y = 0;
+	scissor.extent.width = framebufferWidth;
+	scissor.extent.height = framebufferHeight;
 
-	if (scissor.offset.x < 0)
-	{
-		scissor.extent.height += scissor.offset.x;
-		scissor.offset.x = 0;
-	}
-	if (scissor.offset.y < 0)
-	{
-		scissor.extent.height += scissor.offset.y;
-		scissor.offset.y = 0;
-	}
+	RenderPassBegin beginInfo;
+	beginInfo.setRenderPass(passSetup->RenderPass.get());
+	beginInfo.setRenderArea(0, 0, framebufferWidth, framebufferHeight);
+	beginInfo.setFramebuffer(framebuffer);
+	beginInfo.addClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	VkBuffer vertexBuffers[] = { static_cast<VKVertexBuffer*>(screen->mVertexData->GetBufferObjects().first)->mBuffer->buffer };
 	VkDeviceSize offsets[] = { 0 };
@@ -492,7 +457,7 @@ VulkanDescriptorSet *VkPostprocess::GetInput(VkPPRenderPassSetup *passSetup, con
 	return mFrameDescriptorSets.back().get();
 }
 
-VulkanFramebuffer *VkPostprocess::GetOutput(VkPPRenderPassSetup *passSetup, const PPOutput &output, int &framebufferHeight)
+VulkanFramebuffer *VkPostprocess::GetOutput(VkPPRenderPassSetup *passSetup, const PPOutput &output, int &framebufferWidth, int &framebufferHeight)
 {
 	auto fb = GetVulkanFrameBuffer();
 
@@ -528,6 +493,7 @@ VulkanFramebuffer *VkPostprocess::GetOutput(VkPPRenderPassSetup *passSetup, cons
 		framebuffer->SetDebugName(tex.debugname);
 	}
 
+	framebufferWidth = w;
 	framebufferHeight = h;
 	return framebuffer.get();
 }

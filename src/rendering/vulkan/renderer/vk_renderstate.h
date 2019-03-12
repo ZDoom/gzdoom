@@ -63,6 +63,7 @@ protected:
 	bool mDepthClamp = true;
 	VulkanCommandBuffer *mCommandBuffer = nullptr;
 	VkRenderPassKey mRenderPassKey = {};
+	int mClearTargets = 0;
 	bool mNeedApply = true;
 
 	int mScissorX = 0, mScissorY = 0, mScissorWidth = -1, mScissorHeight = -1;

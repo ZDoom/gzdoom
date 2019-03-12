@@ -189,8 +189,6 @@ void VkRenderState::ApplyDepthBias()
 
 void VkRenderState::ApplyRenderPass(int dt)
 {
-	auto passManager = GetVulkanFrameBuffer()->GetRenderPassManager();
-
 	// Find a render pass that matches our state
 	VkRenderPassKey passKey;
 	passKey.ClearTargets = mRenderPassKey.ClearTargets | mClearTargets;
@@ -206,7 +204,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 	passKey.StencilPassOp = mStencilOp;
 	passKey.ColorMask = mColorMask;
 	passKey.CullMode = mCullMode;
-	passKey.Samples = passManager->GetSamples();
+	passKey.Samples = mRenderTarget.Samples;
 	if (mSpecialEffect > EFF_NONE)
 	{
 		passKey.SpecialEffect = mSpecialEffect;
@@ -241,7 +239,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 	if (changingRenderPass)
 	{
 		passKey.ClearTargets = mClearTargets;
-		passManager->BeginRenderPass(passKey, mCommandBuffer);
+		BeginRenderPass(passKey, mCommandBuffer);
 		mRenderPassKey = passKey;
 		mClearTargets = 0;
 	}
@@ -261,15 +259,12 @@ void VkRenderState::ApplyScissor()
 	if (mScissorChanged)
 	{
 		VkRect2D scissor;
-		auto buffers = GetVulkanFrameBuffer()->GetBuffers();
-		int targetWidth = buffers->GetWidth();
-		int targetHeight = buffers->GetHeight();
 		if (mScissorWidth >= 0)
 		{
-			int x0 = clamp(mScissorX, 0, targetWidth);
-			int y0 = clamp(mScissorY, 0, targetHeight);
-			int x1 = clamp(mScissorX + mScissorWidth, 0, targetWidth);
-			int y1 = clamp(mScissorY + mScissorHeight, 0, targetHeight);
+			int x0 = clamp(mScissorX, 0, mRenderTarget.Width);
+			int y0 = clamp(mScissorY, 0, mRenderTarget.Height);
+			int x1 = clamp(mScissorX + mScissorWidth, 0, mRenderTarget.Width);
+			int y1 = clamp(mScissorY + mScissorHeight, 0, mRenderTarget.Height);
 
 			scissor.offset.x = x0;
 			scissor.offset.y = y0;
@@ -280,8 +275,8 @@ void VkRenderState::ApplyScissor()
 		{
 			scissor.offset.x = 0;
 			scissor.offset.y = 0;
-			scissor.extent.width = targetWidth;
-			scissor.extent.height = targetHeight;
+			scissor.extent.width = mRenderTarget.Width;
+			scissor.extent.height = mRenderTarget.Height;
 		}
 		mCommandBuffer->setScissor(0, 1, &scissor);
 		mScissorChanged = false;
@@ -293,7 +288,6 @@ void VkRenderState::ApplyViewport()
 	if (mViewportChanged)
 	{
 		VkViewport viewport;
-		auto buffers = GetVulkanFrameBuffer()->GetBuffers();
 		if (mViewportWidth >= 0)
 		{
 			viewport.x = (float)mViewportX;
@@ -305,8 +299,8 @@ void VkRenderState::ApplyViewport()
 		{
 			viewport.x = 0.0f;
 			viewport.y = 0.0f;
-			viewport.width = (float)buffers->GetWidth();
-			viewport.height = (float)buffers->GetHeight();
+			viewport.width = (float)mRenderTarget.Width;
+			viewport.height = (float)mRenderTarget.Height;
 		}
 		viewport.minDepth = mViewportDepthMin;
 		viewport.maxDepth = mViewportDepthMax;
@@ -571,6 +565,45 @@ void VkRenderState::EndFrame()
 	mMatricesOffset = 0;
 	mStreamDataOffset = 0;
 	mDataIndex = -1;
+}
+
+void VkRenderState::SetRenderTarget(VulkanImageView *view, int width, int height, VkSampleCountFlagBits samples)
+{
+	EndRenderPass();
+
+	mRenderTarget.View = view;
+	mRenderTarget.Width = width;
+	mRenderTarget.Height = height;
+	mRenderTarget.Samples = samples;
+}
+
+void VkRenderState::BeginRenderPass(const VkRenderPassKey &key, VulkanCommandBuffer *cmdbuffer)
+{
+	auto fb = GetVulkanFrameBuffer();
+
+	VkRenderPassSetup *passSetup = fb->GetRenderPassManager()->GetRenderPass(key);
+
+	auto &framebuffer = passSetup->Framebuffer[mRenderTarget.View->view];
+	if (!framebuffer)
+	{
+		FramebufferBuilder builder;
+		builder.setRenderPass(passSetup->RenderPass.get());
+		builder.setSize(mRenderTarget.Width, mRenderTarget.Height);
+		builder.addAttachment(mRenderTarget.View->view);
+		if (key.UsesDepthStencil())
+			builder.addAttachment(fb->GetBuffers()->SceneDepthStencilView.get());
+		framebuffer = builder.create(GetVulkanFrameBuffer()->device);
+		framebuffer->SetDebugName("VkRenderPassSetup.Framebuffer");
+	}
+
+	RenderPassBegin beginInfo;
+	beginInfo.setRenderPass(passSetup->RenderPass.get());
+	beginInfo.setRenderArea(0, 0, mRenderTarget.Width, mRenderTarget.Height);
+	beginInfo.setFramebuffer(framebuffer.get());
+	beginInfo.addClearColor(screen->mSceneClearColor[0], screen->mSceneClearColor[1], screen->mSceneClearColor[2], screen->mSceneClearColor[3]);
+	beginInfo.addClearDepthStencil(1.0f, 0);
+	cmdbuffer->beginRenderPass(beginInfo);
+	cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->Pipeline.get());
 }
 
 /////////////////////////////////////////////////////////////////////////////

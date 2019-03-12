@@ -28,46 +28,6 @@ void VkRenderPassManager::RenderBuffersReset()
 	RenderPassSetup.clear();
 }
 
-void VkRenderPassManager::SetRenderTarget(VulkanImageView *view, int width, int height, VkSampleCountFlagBits samples)
-{
-	GetVulkanFrameBuffer()->GetRenderState()->EndRenderPass();
-	mRenderTargetView = view;
-	mRenderTargetWidth = width;
-	mRenderTargetHeight = height;
-	mSamples = samples;
-}
-
-void VkRenderPassManager::BeginRenderPass(const VkRenderPassKey &key, VulkanCommandBuffer *cmdbuffer)
-{
-	auto fb = GetVulkanFrameBuffer();
-	auto buffers = fb->GetBuffers();
-
-	VkRenderPassSetup *passSetup = GetRenderPass(key);
-
-	auto &framebuffer = passSetup->Framebuffer[mRenderTargetView->view];
-	if (!framebuffer)
-	{
-		auto buffers = fb->GetBuffers();
-		FramebufferBuilder builder;
-		builder.setRenderPass(passSetup->RenderPass.get());
-		builder.setSize(mRenderTargetWidth, mRenderTargetHeight);
-		builder.addAttachment(mRenderTargetView->view);
-		if (key.UsesDepthStencil())
-			builder.addAttachment(buffers->SceneDepthStencilView.get());
-		framebuffer = builder.create(GetVulkanFrameBuffer()->device);
-		framebuffer->SetDebugName("VkRenderPassSetup.Framebuffer");
-	}
-
-	RenderPassBegin beginInfo;
-	beginInfo.setRenderPass(passSetup->RenderPass.get());
-	beginInfo.setRenderArea(0, 0, buffers->GetWidth(), buffers->GetHeight());
-	beginInfo.setFramebuffer(framebuffer.get());
-	beginInfo.addClearColor(screen->mSceneClearColor[0], screen->mSceneClearColor[1], screen->mSceneClearColor[2], screen->mSceneClearColor[3]);
-	beginInfo.addClearDepthStencil(1.0f, 0);
-	cmdbuffer->beginRenderPass(beginInfo);
-	cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->Pipeline.get());
-}
-
 VkRenderPassSetup *VkRenderPassManager::GetRenderPass(const VkRenderPassKey &key)
 {
 	auto &item = RenderPassSetup[key];
@@ -274,8 +234,9 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 	// builder.addDynamicState(VK_DYNAMIC_STATE_STENCIL_WRITE_MASK);
 	builder.addDynamicState(VK_DYNAMIC_STATE_STENCIL_REFERENCE);
 
-	builder.setViewport(0.0f, 0.0f, (float)SCREENWIDTH, (float)SCREENHEIGHT);
-	builder.setScissor(0, 0, SCREENWIDTH, SCREENHEIGHT);
+	// Note: the actual values are ignored since we use dynamic viewport+scissor states
+	builder.setViewport(0.0f, 0.0f, 320.0f, 200.0f);
+	builder.setScissor(0, 0, 320.0f, 200.0f);
 
 	static const VkPrimitiveTopology vktopology[] = {
 		VK_PRIMITIVE_TOPOLOGY_POINT_LIST,

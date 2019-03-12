@@ -42,6 +42,7 @@ public:
 	void EnableMultisampling(bool on) override;
 	void EnableLineSmooth(bool on) override;
 
+	void SetRenderTarget(VulkanImageView *view, int width, int height, VkSampleCountFlagBits samples);
 	void Bind(int bindingpoint, uint32_t offset);
 	void EndRenderPass();
 	void EndFrame();
@@ -59,6 +60,8 @@ protected:
 	void ApplyDynamicSet();
 	void ApplyVertexBuffers();
 	void ApplyMaterial();
+
+	void BeginRenderPass(const VkRenderPassKey &key, VulkanCommandBuffer *cmdbuffer);
 
 	bool mDepthClamp = true;
 	VulkanCommandBuffer *mCommandBuffer = nullptr;
@@ -107,6 +110,14 @@ protected:
 	bool mLastSplitEnabled = true;
 	bool mLastModelMatrixEnabled = true;
 	bool mLastTextureMatrixEnabled = true;
+
+	struct RenderTarget
+	{
+		VulkanImageView *View = nullptr;
+		int Width = 0;
+		int Height = 0;
+		VkSampleCountFlagBits Samples = VK_SAMPLE_COUNT_1_BIT;
+	} mRenderTarget;
 };
 
 class VkRenderStateMolten : public VkRenderState

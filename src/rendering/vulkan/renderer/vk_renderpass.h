@@ -69,12 +69,8 @@ public:
 	void Init();
 	void RenderBuffersReset();
 
-	void SetRenderTarget(VulkanImageView *view, int width, int height, VkSampleCountFlagBits samples);
-	void BeginRenderPass(const VkRenderPassKey &key, VulkanCommandBuffer *cmdbuffer);
-
+	VkRenderPassSetup *GetRenderPass(const VkRenderPassKey &key);
 	int GetVertexFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs);
-
-	VkSampleCountFlagBits GetSamples() const { return mSamples; }
 
 	std::unique_ptr<VulkanDescriptorSetLayout> DynamicSetLayout;
 	std::unique_ptr<VulkanDescriptorSetLayout> TextureSetLayout;
@@ -93,10 +89,4 @@ private:
 	void CreateDescriptorPool();
 	void CreateDynamicSet();
 
-	VkRenderPassSetup *GetRenderPass(const VkRenderPassKey &key);
-
-	VulkanImageView *mRenderTargetView = nullptr;
-	int mRenderTargetWidth = 0;
-	int mRenderTargetHeight = 0;
-	VkSampleCountFlagBits mSamples = VK_SAMPLE_COUNT_1_BIT;
 };

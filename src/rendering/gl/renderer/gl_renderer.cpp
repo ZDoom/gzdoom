@@ -47,10 +47,8 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
+#include "gl/shaders/gl_shaderprogram.h"
 #include "hwrenderer/utility/hw_vrmodes.h"
-#include "hwrenderer/postprocessing/hw_presentshader.h"
-#include "hwrenderer/postprocessing/hw_present3dRowshader.h"
-#include "hwrenderer/postprocessing/hw_shadowmapshader.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/scene/hw_skydome.h"
 #include "hwrenderer/scene/hw_fakeflat.h"
@@ -198,7 +196,7 @@ void FGLRenderer::UpdateShadowMap()
 
 		mBuffers->BindShadowMapFB();
 
-		mShadowMapShader->Bind(NOQUEUE);
+		mShadowMapShader->Bind();
 		mShadowMapShader->Uniforms->ShadowmapQuality = gl_shadowmap_quality;
 		mShadowMapShader->Uniforms.Set();
 

@@ -498,12 +498,6 @@ FModelRenderer *VulkanFrameBuffer::CreateModelRenderer(int mli)
 	return new FGLModelRenderer(nullptr, *GetRenderState(), mli);
 }
 
-IShaderProgram *VulkanFrameBuffer::CreateShaderProgram()
-{
-	I_FatalError("VulkanFrameBuffer::CreateShaderProgram not implemented\n");
-	return nullptr;
-}
-
 IVertexBuffer *VulkanFrameBuffer::CreateVertexBuffer()
 {
 	return new VKVertexBuffer();

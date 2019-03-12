@@ -1073,9 +1073,6 @@ set (PCH_SOURCES
 	rendering/hwrenderer/postprocessing/hw_postprocess.cpp
 	rendering/hwrenderer/postprocessing/hw_postprocess_cvars.cpp
 	rendering/hwrenderer/postprocessing/hw_postprocessshader.cpp
-	rendering/hwrenderer/postprocessing/hw_shadowmapshader.cpp
-	rendering/hwrenderer/postprocessing/hw_presentshader.cpp
-	rendering/hwrenderer/postprocessing/hw_present3dRowshader.cpp
 	rendering/hwrenderer/textures/hw_material.cpp
 	rendering/hwrenderer/textures/hw_precache.cpp
 	rendering/hwrenderer/utility/hw_clock.cpp

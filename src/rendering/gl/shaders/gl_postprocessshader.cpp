@@ -59,7 +59,7 @@ void FCustomPostProcessShaders::Run(FString target)
 	{
 		if (shader->Desc->Target == target)
 		{
-			shader->Run(NOQUEUE);
+			shader->Run();
 		}
 	}
 }
@@ -72,7 +72,7 @@ PostProcessShaderInstance::~PostProcessShaderInstance()
 		glDeleteTextures(1, (GLuint*)&it.second);
 }
 
-void PostProcessShaderInstance::Run(IRenderQueue *q)
+void PostProcessShaderInstance::Run()
 {
 	if (!IsShaderSupported())
 		return;
@@ -92,7 +92,7 @@ void PostProcessShaderInstance::Run(IRenderQueue *q)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	mProgram.Bind(q);
+	mProgram.Bind();
 
 	UpdateUniforms();
 	BindTextures();
@@ -168,8 +168,8 @@ void PostProcessShaderInstance::CompileShader()
 	prolog += uniformTextures;
 	prolog += pipelineInOut;
 
-	mProgram.Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", Desc->ShaderVersion);
-	mProgram.Compile(IShaderProgram::Fragment, lumpName, code, prolog.GetChars(), Desc->ShaderVersion);
+	mProgram.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", Desc->ShaderVersion);
+	mProgram.Compile(FShaderProgram::Fragment, lumpName, code, prolog.GetChars(), Desc->ShaderVersion);
 	mProgram.Link(Desc->ShaderLumpName.GetChars());
 	mInputTexture.Init(mProgram.Handle(), "InputTexture");
 }

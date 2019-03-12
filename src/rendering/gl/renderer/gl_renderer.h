@@ -24,25 +24,23 @@ class HWPortal;
 class FLightBuffer;
 class DPSprite;
 class FGLRenderBuffers;
-class FPresentShader;
-class FPresent3DCheckerShader;
-class FPresent3DColumnShader; 
-class FPresent3DRowShader;
 class FGL2DDrawer;
 class FHardwareTexture;
-class FShadowMapShader;
 class SWSceneDrawer;
 class GLViewpointBuffer;
 struct FRenderViewpoint;
-class FPresentShaderBase;
 
 namespace OpenGLRenderer
 {
 	class FSamplerManager;
 	class FCustomPostProcessShaders;
 	class OpenGLFrameBuffer;
-
-#define NOQUEUE nullptr	// just some token to be used as a placeholder
+	class FPresentShaderBase;
+	class FPresentShader;
+	class FPresent3DCheckerShader;
+	class FPresent3DColumnShader;
+	class FPresent3DRowShader;
+	class FShadowMapShader;
 
 class FGLRenderer
 {

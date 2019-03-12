@@ -38,7 +38,7 @@
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_postprocessstate.h"
-#include "hwrenderer/postprocessing/hw_presentshader.h"
+#include "gl/shaders/gl_shaderprogram.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 #include "hwrenderer/postprocessing/hw_postprocess_cvars.h"
 #include "hwrenderer/utility/hw_vrmodes.h"
@@ -220,7 +220,7 @@ void FGLRenderer::DrawPresentTexture(const IntRect &box, bool applyGamma)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	}
 
-	mPresentShader->Bind(NOQUEUE);
+	mPresentShader->Bind();
 	if (!applyGamma || framebuffer->IsHWGammaActive())
 	{
 		mPresentShader->Uniforms->InvGamma = 1.0f;

@@ -325,11 +325,6 @@ FModelRenderer *OpenGLFrameBuffer::CreateModelRenderer(int mli)
 	return new FGLModelRenderer(nullptr, gl_RenderState, mli);
 }
 
-IShaderProgram *OpenGLFrameBuffer::CreateShaderProgram() 
-{ 
-	return new FShaderProgram; 
-}
-
 IVertexBuffer *OpenGLFrameBuffer::CreateVertexBuffer()
 { 
 	return new GLVertexBuffer; 

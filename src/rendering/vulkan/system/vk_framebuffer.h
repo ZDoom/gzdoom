@@ -68,7 +68,6 @@ public:
 
 	IHardwareTexture *CreateHardwareTexture() override;
 	FModelRenderer *CreateModelRenderer(int mli) override;
-	IShaderProgram *CreateShaderProgram() override;
 	IVertexBuffer *CreateVertexBuffer() override;
 	IIndexBuffer *CreateIndexBuffer() override;
 	IDataBuffer *CreateDataBuffer(int bindingpoint, bool ssbo) override;

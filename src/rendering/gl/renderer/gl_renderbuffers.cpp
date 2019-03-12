@@ -861,8 +861,8 @@ void FGLRenderBuffers::CompileEffectShaders()
 				prolog = UniformBlockDecl::Create("Uniforms", desc.Uniforms, POSTPROCESS_BINDINGPOINT);
 			prolog += desc.Defines;
 
-			glshader->Compile(IShaderProgram::Vertex, desc.VertexShader, "", desc.Version);
-			glshader->Compile(IShaderProgram::Fragment, desc.FragmentShader, prolog, desc.Version);
+			glshader->Compile(FShaderProgram::Vertex, desc.VertexShader, "", desc.Version);
+			glshader->Compile(FShaderProgram::Fragment, desc.FragmentShader, prolog, desc.Version);
 			glshader->Link(pair->Key.GetChars());
 			if (!desc.Uniforms.empty())
 				glshader->SetUniformBufferLocation(POSTPROCESS_BINDINGPOINT, "Uniforms");
@@ -987,7 +987,7 @@ void FGLRenderBuffers::RenderEffect(const FString &name)
 		}
 
 		// Set shader
-		shader->Bind(NOQUEUE);
+		shader->Bind();
 
 		// Draw the screen quad
 		GLRenderer->RenderScreenQuad();

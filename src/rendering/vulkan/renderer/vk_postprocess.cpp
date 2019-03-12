@@ -8,7 +8,6 @@
 #include "vulkan/system/vk_swapchain.h"
 #include "vulkan/renderer/vk_renderstate.h"
 #include "hwrenderer/utility/hw_cvars.h"
-#include "hwrenderer/postprocessing/hw_presentshader.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 #include "hwrenderer/postprocessing/hw_postprocess_cvars.h"
 #include "hwrenderer/utility/hw_vrmodes.h"

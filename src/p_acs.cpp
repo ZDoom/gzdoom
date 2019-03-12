@@ -705,7 +705,7 @@ protected:
 	TObjPtr<AActor*>	activator;
 	line_t			*activationline;
 	bool			backSide;
-	FFont			*activefont;
+	FFont			*activefont = nullptr;
 	int				hudwidth, hudheight;
 	int				ClipRectLeft, ClipRectTop, ClipRectWidth, ClipRectHeight;
 	int				WrapWidth;
@@ -774,7 +774,7 @@ protected:
 
 
 private:
-	DLevelScript();
+	DLevelScript() = default;
 
 	friend class DACSThinker;
 };
@@ -3506,11 +3506,6 @@ void DLevelScript::Serialize(FSerializer &arc)
 	}
 }
 
-DLevelScript::DLevelScript ()
-{
-	activefont = SmallFont;
-}
-
 void DLevelScript::Unlink ()
 {
 	DACSThinker *controller = Level->ACSThinker;
@@ -3924,10 +3919,6 @@ void DLevelScript::DoSetFont (int fontnum)
 {
 	const char *fontname = Level->Behaviors.LookupString (fontnum);
 	activefont = V_GetFont (fontname);
-	if (activefont == NULL)
-	{
-		activefont = SmallFont;
-	}
 }
 
 int DLevelScript::DoSetMaster (AActor *self, AActor *master)
@@ -8676,17 +8667,18 @@ scriptwait:
 						color = CLAMPCOLOR(Stack[optstart-4]);
 					}
 
+					FFont *font = activefont ? activefont : SmallFont;
 					switch (type & 0xFF)
 					{
 					default:	// normal
 						alpha = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 1.f;
-						msg = Create<DHUDMessage> (activefont, work, x, y, hudwidth, hudheight, color, holdTime);
+						msg = Create<DHUDMessage> (font, work, x, y, hudwidth, hudheight, color, holdTime);
 						break;
 					case 1:		// fade out
 						{
 							float fadeTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.5f;
 							alpha = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 1.f;
-							msg = Create<DHUDMessageFadeOut> (activefont, work, x, y, hudwidth, hudheight, color, holdTime, fadeTime);
+							msg = Create<DHUDMessageFadeOut> (font, work, x, y, hudwidth, hudheight, color, holdTime, fadeTime);
 						}
 						break;
 					case 2:		// type on, then fade out
@@ -8694,7 +8686,7 @@ scriptwait:
 							float typeTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.05f;
 							float fadeTime = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 0.5f;
 							alpha = (optstart < sp-2) ? ACSToFloat(Stack[optstart+2]) : 1.f;
-							msg = Create<DHUDMessageTypeOnFadeOut> (activefont, work, x, y, hudwidth, hudheight, color, typeTime, holdTime, fadeTime);
+							msg = Create<DHUDMessageTypeOnFadeOut> (font, work, x, y, hudwidth, hudheight, color, typeTime, holdTime, fadeTime);
 						}
 						break;
 					case 3:		// fade in, then fade out
@@ -8702,7 +8694,7 @@ scriptwait:
 							float inTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.5f;
 							float outTime = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 0.5f;
 							alpha = (optstart < sp-2) ? ACSToFloat(Stack[optstart + 2]) : 1.f;
-							msg = Create<DHUDMessageFadeInOut> (activefont, work, x, y, hudwidth, hudheight, color, holdTime, inTime, outTime);
+							msg = Create<DHUDMessageFadeInOut> (font, work, x, y, hudwidth, hudheight, color, holdTime, inTime, outTime);
 						}
 						break;
 					}
@@ -10286,7 +10278,6 @@ DLevelScript::DLevelScript (FLevelLocals *l, AActor *who, line_t *where, int num
 	activator = who;
 	activationline = where;
 	backSide = flags & ACS_BACKSIDE;
-	activefont = SmallFont;
 	hudwidth = hudheight = 0;
 	ClipRectLeft = ClipRectTop = ClipRectWidth = ClipRectHeight = WrapWidth = 0;
 	HandleAspect = true;

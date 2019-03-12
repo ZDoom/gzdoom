@@ -47,6 +47,7 @@ struct SavegameManager native ui
 {
 	native int WindowSize;
 	native SaveGameNode quickSaveSlot;
+	native readonly String SaveCommentString;
 
 	native static SavegameManager GetManager();
 	native void ReadSaveStrings();
@@ -58,7 +59,10 @@ struct SavegameManager native ui
 	native int ExtractSaveData(int index);
 	native void ClearSaveStuff();
 	native bool DrawSavePic(int x, int y, int w, int h);
-	native void DrawSaveComment(Font font, int cr, int x, int y, int scalefactor);
+	deprecated("4.0") void DrawSaveComment(Font font, int cr, int x, int y, int scalefactor) 
+	{
+		// Unfortunately, this was broken beyond repair so it now prints nothing.
+	}
 	native void SetFileInfo(int Selected);
 	native int SavegameCount();
 	native SaveGameNode GetSavegame(int i);
@@ -95,9 +99,13 @@ class LoadSaveMenu : ListMenu
 	int commentHeight;
 	int commentRight;
 	int commentBottom;
+	int commentRows;
 
 	bool mEntering;
 	TextEnterMenu mInput;
+	double FontScale;
+	
+	BrokenLines BrokenSaveComment;
 
 	
 
@@ -115,11 +123,12 @@ class LoadSaveMenu : ListMenu
 
 		savepicLeft = 10;
 		savepicTop = 54*CleanYfac;
-		savepicWidth = 216*screen.GetWidth()/640;
-		savepicHeight = 135*screen.GetHeight()/400;
-		manager.WindowSize = savepicWidth / CleanXfac;
+		savepicWidth = 216*screen.GetWidth() / 640;
+		savepicHeight = 135*screen.GetHeight() / 400;
 
-		rowHeight = (ConFont.GetHeight() + 1) * CleanYfac;
+		FontScale = max(screen.GetHeight() / 480, 1);
+		rowHeight = max((NewConsoleFont.GetHeight() + 1) * FontScale, 1);
+		
 		listboxLeft = savepicLeft + savepicWidth + 14;
 		listboxTop = savepicTop;
 		listboxWidth = screen.GetWidth() - listboxLeft - 10;
@@ -136,7 +145,10 @@ class LoadSaveMenu : ListMenu
 		commentHeight = listboxHeight - savepicHeight - 16;
 		commentRight = commentLeft + commentWidth;
 		commentBottom = commentTop + commentHeight;
+		commentRows = commentHeight / rowHeight;
+		
 	}
+
 	
 	//=============================================================================
 	//
@@ -146,7 +158,7 @@ class LoadSaveMenu : ListMenu
 
 	override void OnDestroy()
 	{
-		manager.ClearSaveStuff ();
+		//manager.ClearSaveStuff ();
 		Super.OnDestroy();
 	}
 
@@ -190,7 +202,13 @@ class LoadSaveMenu : ListMenu
 		Screen.DrawFrame (commentLeft, commentTop, commentWidth, commentHeight);
 		screen.Clear (commentLeft, commentTop, commentRight, commentBottom, 0, 0);
 
-		manager.DrawSaveComment(SmallFont, Font.CR_GOLD, commentLeft, commentTop, CleanYfac);
+		int numlinestoprint = min(commentRows, BrokenSaveComment? BrokenSaveComment.Count() : 0);
+		for(int i = 0; i < numlinestoprint; i++)
+		{
+			screen.DrawText(NewConsoleFont, Font.CR_ORANGE, commentLeft / FontScale, (commentTop + rowHeight * i) / FontScale, BrokenSaveComment.StringAt(i),
+				DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale);
+		}
+		
 
 		// Draw file area
 		Screen.DrawFrame (listboxLeft, listboxTop, listboxWidth, listboxHeight);
@@ -201,7 +219,8 @@ class LoadSaveMenu : ListMenu
 			String text = Stringtable.Localize("$MNU_NOFILES");
 			int textlen = SmallFont.StringWidth(text) * CleanXfac;
 
-			screen.DrawText (SmallFont, Font.CR_GOLD, listboxLeft+(listboxWidth-textlen)/2, listboxTop+(listboxHeight-rowHeight)/2, text, DTA_CleanNoMove, true);
+			screen.DrawText (NewConsoleFont, Font.CR_GOLD, (listboxLeft+(listboxWidth-textlen)/2) / FontScale, (listboxTop+(listboxHeight-rowHeight)/2) / FontScale, text, 
+				DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale);
 			return;
 		}
 
@@ -212,11 +231,11 @@ class LoadSaveMenu : ListMenu
 			node = manager.GetSavegame(j);
 			if (node.bOldVersion)
 			{
-				colr = Font.CR_BLUE;
+				colr = Font.CR_RED;
 			}
 			else if (node.bMissingWads)
 			{
-				colr = Font.CR_ORANGE;
+				colr = Font.CR_YELLOW;
 			}
 			else if (j == Selected)
 			{
@@ -228,7 +247,6 @@ class LoadSaveMenu : ListMenu
 			}
 
 			screen.SetClipRect(listboxLeft, listboxTop+rowHeight*i, listboxRight, listboxTop+rowHeight*(i+1));
-			int fontoffset = -CleanYFac;
 			
 			if (j == Selected)
 			{
@@ -236,26 +254,32 @@ class LoadSaveMenu : ListMenu
 				didSeeSelected = true;
 				if (!mEntering)
 				{
-					screen.DrawText (ConFont, colr, listboxLeft+1, listboxTop+rowHeight*i+CleanYfac + fontoffset, node.SaveTitle, DTA_CleanNoMove, true);
+					screen.DrawText (NewConsoleFont, colr, (listboxLeft+1) / FontScale, (listboxTop+rowHeight*i + FontScale) / FontScale, node.SaveTitle, 
+						DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale);
 				}
 				else
 				{
-					String s = mInput.GetText() .. ConFont.GetCursor();
-					int length = ConFont.StringWidth(s) * CleanXFac;
+					String s = mInput.GetText() .. NewConsoleFont.GetCursor();
+					int length = NewConsoleFont.StringWidth(s) * FontScale;
 					int displacement = min(0, listboxWidth - 2 - length);
-					screen.DrawText (ConFont, Font.CR_WHITE, listboxLeft + 1 + displacement, listboxTop+rowHeight*i+CleanYfac + fontoffset, s, DTA_CleanNoMove, true);
+					screen.DrawText (NewConsoleFont, Font.CR_WHITE, (listboxLeft + 1 + displacement) / FontScale, (listboxTop+rowHeight*i + FontScale) / FontScale, s, 
+						DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale);
 				}
 			}
 			else
 			{
-				screen.DrawText (ConFont, colr, listboxLeft+1, listboxTop+rowHeight*i+CleanYfac + fontoffset, node.SaveTitle, DTA_CleanNoMove, true);
+				screen.DrawText (NewConsoleFont, colr, (listboxLeft+1) / FontScale, (listboxTop+rowHeight*i + FontScale) / FontScale, node.SaveTitle, 
+					DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale);
 			}
 			screen.ClearClipRect();
 			j++;
 		}
 	} 
 
-	
+	void UpdateSaveComment()
+	{
+		BrokenSaveComment = NewConsoleFont.BreakLines(manager.SaveCommentString, commentWidth / FontScale);
+	}
 
 	//=============================================================================
 	//
@@ -279,6 +303,7 @@ class LoadSaveMenu : ListMenu
 				}
 				manager.UnloadSaveData ();
 				manager.ExtractSaveData (Selected);
+				UpdateSaveComment();
 			}
 			return true;
 
@@ -294,6 +319,7 @@ class LoadSaveMenu : ListMenu
 				}
 				manager.UnloadSaveData ();
 				manager.ExtractSaveData (Selected);
+				UpdateSaveComment();
 			}
 			return true;
 
@@ -312,6 +338,7 @@ class LoadSaveMenu : ListMenu
 				}
 				manager.UnloadSaveData ();
 				manager.ExtractSaveData (Selected);
+				UpdateSaveComment();
 			}
 			return true;
 
@@ -330,6 +357,7 @@ class LoadSaveMenu : ListMenu
 				}
 				manager.UnloadSaveData ();
 				manager.ExtractSaveData (Selected);
+				UpdateSaveComment();
 			}
 			return true;
 
@@ -341,6 +369,7 @@ class LoadSaveMenu : ListMenu
 			if (Selected < manager.SavegameCount())
 			{
 				Selected = manager.RemoveSaveSlot (Selected);
+				UpdateSaveComment();
 			}
 			return true;
 		}
@@ -368,6 +397,7 @@ class LoadSaveMenu : ListMenu
 				Selected = TopItem + lineno;
 				manager.UnloadSaveData ();
 				manager.ExtractSaveData (Selected);
+				UpdateSaveComment();
 				if (type == MOUSE_Release)
 				{
 					if (MenuEvent(MKEY_Enter, true))
@@ -400,6 +430,7 @@ class LoadSaveMenu : ListMenu
 				{
 				case UIEvent.Key_F1:
 					manager.SetFileInfo(Selected);
+					UpdateSaveComment();
 					return true;
 
 				case UIEvent.Key_DEL:

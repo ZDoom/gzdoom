@@ -32,7 +32,7 @@ extend class Actor
 
 		if (msg != msgid)	// if both are identical there was no message of this name in the stringtable.
 		{
-			Console.MidPrint ("SmallFont", msg);
+			Console.MidPrint (null, msg);
 		}
 	}
 	

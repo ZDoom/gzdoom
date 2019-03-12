@@ -164,7 +164,7 @@ protected:
 };
 
 
-extern FFont *SmallFont, *SmallFont2, *BigFont, *BigUpper, *ConFont, *IntermissionFont;
+extern FFont *SmallFont, *SmallFont2, *BigFont, *BigUpper, *ConFont, *IntermissionFont, *NewConsoleFont, *CurrentConsoleFont;
 
 void V_InitFonts();
 void V_ClearFonts();

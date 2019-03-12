@@ -122,6 +122,7 @@ static const uint16_t loweruppercase[] = {
 0x0078,0x0058,
 0x0079,0x0059,
 0x007A,0x005A,
+0x00DF,0x1E9E,
 0x00E0,0x00C0,
 0x00E1,0x00C1,
 0x00E2,0x00C2,
@@ -864,7 +865,8 @@ int stripaccent(int code)
 
 FFont *V_GetFont(const char *name, const char *fontlumpname)
 {
-	if (!stricmp(name, "CONFONT")) name = "ConsoleFont";	// several mods have used the name CONFONT directly and effectively duplicated the font.
+	if (!stricmp(name, "DBIGFONT")) name = "BigFont";	// several mods have used the name CONFONT directly and effectively duplicated the font.
+	else if (!stricmp(name, "CONFONT")) name = "ConsoleFont";	// several mods have used the name CONFONT directly and effectively duplicated the font.
 	FFont *font = FFont::FindFont (name);
 	if (font == nullptr)
 	{
@@ -1441,6 +1443,13 @@ void V_InitFonts()
 	InitLowerUpper();
 	V_InitCustomFonts();
 
+	FFont *CreateHexLumpFont(const char *fontname, int lump);
+
+	auto lump = Wads.CheckNumForFullName("newconsolefont.hex", 0);	// This is always loaded from gzdoom.pk3 to prevent overriding it with incomplete replacements.
+	if (lump == -1) I_FatalError("newconsolefont.hex not found");	// This font is needed - do not start up without it.
+	NewConsoleFont = CreateHexLumpFont("NewConsoleFont", lump);
+	CurrentConsoleFont = NewConsoleFont;
+
 	// load the heads-up font
 	if (!(SmallFont = V_GetFont("SmallFont", "SMALLFNT")))
 	{
@@ -1526,6 +1535,6 @@ void V_ClearFonts()
 		delete FFont::FirstFont;
 	}
 	FFont::FirstFont = nullptr;
-	SmallFont = SmallFont2 = BigFont = ConFont = IntermissionFont = nullptr;
+	CurrentConsoleFont = NewConsoleFont = SmallFont = SmallFont2 = BigFont = ConFont = IntermissionFont = nullptr;
 }
 

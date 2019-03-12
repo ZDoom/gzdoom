@@ -38,6 +38,7 @@
 #include <wctype.h>
 
 #include "v_text.h"
+#include "utf8.h"
 
 
 #include "v_video.h"

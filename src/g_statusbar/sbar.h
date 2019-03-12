@@ -84,7 +84,7 @@ class DHUDMessage : public DHUDMessageBase
 	DECLARE_CLASS (DHUDMessage, DHUDMessageBase)
 public:
 	DHUDMessage (FFont *font, const char *text, float x, float y, int hudwidth, int hudheight,
-		EColorRange textColor, float holdTime);
+		EColorRange textColor, float holdTime, bool altscale = false);
 	virtual void OnDestroy () override;
 
 	virtual void Serialize(FSerializer &arc);
@@ -140,6 +140,7 @@ protected:
 	int ClipX, ClipY, ClipWidth, ClipHeight, WrapWidth;	// in HUD coords
 	int ClipLeft, ClipTop, ClipRight, ClipBot;			// in screen coords
 	bool HandleAspect;
+	bool AltScale;
 	EColorRange TextColor;
 	FFont *Font;
 	FRenderStyle Style;

@@ -48,6 +48,7 @@
 #include "g_levellocals.h"
 #include "vm.h"
 #include "i_system.h"
+#include "utf8.h"
 
 #define ARTIFLASH_OFFSET (statusBar->invBarOffset+6)
 enum

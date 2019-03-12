@@ -40,6 +40,7 @@
 #include "sbar.h"
 #include "v_video.h"
 #include "utf8.h"
+#include "gstrings.h"
 
 enum
 {
@@ -233,16 +234,16 @@ void CT_PasteChat(const char *clip)
 
 void CT_Drawer (void)
 {
-	FFont *displayfont = ConFont;
+	FFont *displayfont = NewConsoleFont;
 	if (chatmodeon)
 	{
-		static const char *prompt = "Say: ";
+		FStringf prompt("%s ", GStrings("TXT_SAY"));
 		int x, scalex, y, promptwidth;
 
-		y = (viewactive || gamestate != GS_LEVEL) ? -10 : -30;
+		y = (viewactive || gamestate != GS_LEVEL) ? -displayfont->GetHeight()-2 : -displayfont->GetHeight() - 22;
 
 		scalex = 1;
-		int scale = active_con_scaletext();
+		int scale = active_con_scaletext(true);
 		int screen_width = SCREENWIDTH / scale;
 		int screen_height= SCREENHEIGHT / scale;
 		int st_y = StatusBar->GetTopOfStatusbar() / scale;
@@ -264,7 +265,7 @@ void CT_Drawer (void)
 		}
 		printstr += displayfont->GetCursor();
 
-		screen->DrawText (displayfont, CR_GREEN, 0, y, prompt, 
+		screen->DrawText (displayfont, CR_GREEN, 0, y, prompt.GetChars(), 
 			DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
 		screen->DrawText (displayfont, CR_GREY, promptwidth, y, printstr, 
 			DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);

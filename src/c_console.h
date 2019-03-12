@@ -47,7 +47,10 @@ typedef enum cstate_t
 } 
 constate_e;
 
-#define PRINTLEVELS 5
+enum
+{
+	PRINTLEVELS = 5
+};
 extern int PrintColors[PRINTLEVELS + 2];
 
 extern constate_e ConsoleState;
@@ -73,9 +76,6 @@ void C_FullConsole (void);
 void C_HideConsole (void);
 void C_AdjustBottom (void);
 void C_FlushDisplay (void);
-
-void C_InitTicker (const char *label, unsigned int max, bool showpercent=true);
-void C_SetTicker (unsigned int at, bool forceUpdate=false);
 
 class FFont;
 void C_MidPrint (FFont *font, const char *message);

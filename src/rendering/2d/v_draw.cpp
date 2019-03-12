@@ -87,6 +87,28 @@ int GetUIScale(int altval)
 	return MAX(1,MIN(scaleval, max));
 }
 
+// The new console font is twice as high, so the scaling calculation must factor that in.
+int GetConScale(int altval)
+{
+	int scaleval;
+	if (altval > 0) scaleval = altval;
+	else if (uiscale == 0)
+	{
+		// Default should try to scale to 640x400
+		int vscale = screen->GetHeight() / 800;
+		int hscale = screen->GetWidth() / 1280;
+		scaleval = clamp(vscale, 1, hscale);
+	}
+	else scaleval = uiscale / 2;
+
+	// block scales that result in something larger than the current screen.
+	int vmax = screen->GetHeight() / 400;
+	int hmax = screen->GetWidth() / 640;
+	int max = MAX(vmax, hmax);
+	return MAX(1, MIN(scaleval, max));
+}
+
+
 // [RH] Stretch values to make a 320x200 image best fit the screen
 // without using fractional steppings
 int CleanXfac, CleanYfac;

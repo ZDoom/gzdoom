@@ -313,16 +313,16 @@ void VkRenderState::ApplyScissor()
 	if (mScissorChanged)
 	{
 		VkRect2D scissor;
+		auto buffers = GetVulkanFrameBuffer()->GetBuffers();
 		if (mScissorWidth >= 0)
 		{
 			scissor.offset.x = mScissorX;
-			scissor.offset.y = mScissorY;
+			scissor.offset.y = buffers->GetHeight() - mScissorY - mViewportHeight;
 			scissor.extent.width = mScissorWidth;
 			scissor.extent.height = mScissorHeight;
 		}
 		else
 		{
-			auto buffers = GetVulkanFrameBuffer()->GetBuffers();
 			scissor.offset.x = 0;
 			scissor.offset.y = 0;
 			scissor.extent.width = buffers->GetWidth();
@@ -338,16 +338,16 @@ void VkRenderState::ApplyViewport()
 	if (mViewportChanged)
 	{
 		VkViewport viewport;
+		auto buffers = GetVulkanFrameBuffer()->GetBuffers();
 		if (mViewportWidth >= 0)
 		{
 			viewport.x = (float)mViewportX;
-			viewport.y = (float)mViewportY;
+			viewport.y = (float)buffers->GetHeight() - mViewportY - mViewportHeight;
 			viewport.width = (float)mViewportWidth;
 			viewport.height = (float)mViewportHeight;
 		}
 		else
 		{
-			auto buffers = GetVulkanFrameBuffer()->GetBuffers();
 			viewport.x = 0.0f;
 			viewport.y = 0.0f;
 			viewport.width = (float)buffers->GetWidth();

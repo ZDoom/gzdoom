@@ -139,9 +139,20 @@ void VkRenderState::Clear(int targets)
 		if (mScissorWidth >= 0)
 		{
 			rects[0].rect.offset.x = mScissorX;
-			rects[0].rect.offset.y = mScissorY;
+			rects[0].rect.offset.y = GetVulkanFrameBuffer()->GetBuffers()->GetHeight() - mScissorY - mViewportHeight;
 			rects[0].rect.extent.width = mScissorWidth;
 			rects[0].rect.extent.height = mScissorHeight;
+
+			if (rects[0].rect.offset.x < 0)
+			{
+				rects[0].rect.extent.height += rects[0].rect.offset.x;
+				rects[0].rect.offset.x = 0;
+			}
+			if (rects[0].rect.offset.y < 0)
+			{
+				rects[0].rect.extent.height += rects[0].rect.offset.y;
+				rects[0].rect.offset.y = 0;
+			}
 		}
 		else
 		{
@@ -320,6 +331,17 @@ void VkRenderState::ApplyScissor()
 			scissor.offset.y = buffers->GetHeight() - mScissorY - mViewportHeight;
 			scissor.extent.width = mScissorWidth;
 			scissor.extent.height = mScissorHeight;
+
+			if (scissor.offset.x < 0)
+			{
+				scissor.extent.height += scissor.offset.x;
+				scissor.offset.x = 0;
+			}
+			if (scissor.offset.y < 0)
+			{
+				scissor.extent.height += scissor.offset.y;
+				scissor.offset.y = 0;
+			}
 		}
 		else
 		{

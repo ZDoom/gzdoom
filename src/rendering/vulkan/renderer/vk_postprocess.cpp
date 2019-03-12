@@ -401,10 +401,11 @@ void VkPostprocess::RenderEffect(const FString &name)
 		if (!passSetup)
 			passSetup.reset(new VkPPRenderPassSetup(key));
 
+		int framebufferHeight = 0;
 		VulkanDescriptorSet *input = GetInput(passSetup.get(), step.Textures);
-		VulkanFramebuffer *output = GetOutput(passSetup.get(), step.Output);
+		VulkanFramebuffer *output = GetOutput(passSetup.get(), step.Output, framebufferHeight);
 
-		RenderScreenQuad(passSetup.get(), input, output, step.Viewport.left, step.Viewport.top, step.Viewport.width, step.Viewport.height, step.Uniforms.Data.Data(), step.Uniforms.Data.Size());
+		RenderScreenQuad(passSetup.get(), input, output, framebufferHeight, step.Viewport.left, step.Viewport.top, step.Viewport.width, step.Viewport.height, step.Uniforms.Data.Data(), step.Uniforms.Data.Size());
 
 		// Advance to next PP texture if our output was sent there
 		if (step.Output.Type == PPTextureType::NextPipelineTexture)
@@ -414,7 +415,7 @@ void VkPostprocess::RenderEffect(const FString &name)
 	}
 }
 
-void VkPostprocess::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDescriptorSet *descriptorSet, VulkanFramebuffer *framebuffer, int x, int y, int width, int height, const void *pushConstants, uint32_t pushConstantsSize)
+void VkPostprocess::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDescriptorSet *descriptorSet, VulkanFramebuffer *framebuffer, int framebufferHeight, int x, int y, int width, int height, const void *pushConstants, uint32_t pushConstantsSize)
 {
 	auto fb = GetVulkanFrameBuffer();
 	auto cmdbuffer = fb->GetDrawCommands();
@@ -427,7 +428,7 @@ void VkPostprocess::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDescr
 
 	VkViewport viewport = { };
 	viewport.x = x;
-	viewport.y = y;
+	viewport.y = framebufferHeight - y - height;
 	viewport.width = width;
 	viewport.height = height;
 	viewport.minDepth = 0.0f;
@@ -435,9 +436,20 @@ void VkPostprocess::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDescr
 
 	VkRect2D scissor = { };
 	scissor.offset.x = x;
-	scissor.offset.y = y;
+	scissor.offset.y = framebufferHeight - y - height;
 	scissor.extent.width = width;
 	scissor.extent.height = height;
+
+	if (scissor.offset.x < 0)
+	{
+		scissor.extent.height += scissor.offset.x;
+		scissor.offset.x = 0;
+	}
+	if (scissor.offset.y < 0)
+	{
+		scissor.extent.height += scissor.offset.y;
+		scissor.offset.y = 0;
+	}
 
 	VkBuffer vertexBuffers[] = { static_cast<VKVertexBuffer*>(screen->mVertexData->GetBufferObjects().first)->mBuffer->buffer };
 	VkDeviceSize offsets[] = { 0 };
@@ -480,7 +492,7 @@ VulkanDescriptorSet *VkPostprocess::GetInput(VkPPRenderPassSetup *passSetup, con
 	return mFrameDescriptorSets.back().get();
 }
 
-VulkanFramebuffer *VkPostprocess::GetOutput(VkPPRenderPassSetup *passSetup, const PPOutput &output)
+VulkanFramebuffer *VkPostprocess::GetOutput(VkPPRenderPassSetup *passSetup, const PPOutput &output, int &framebufferHeight)
 {
 	auto fb = GetVulkanFrameBuffer();
 
@@ -516,6 +528,7 @@ VulkanFramebuffer *VkPostprocess::GetOutput(VkPPRenderPassSetup *passSetup, cons
 		framebuffer->SetDebugName(tex.debugname);
 	}
 
+	framebufferHeight = h;
 	return framebuffer.get();
 }
 

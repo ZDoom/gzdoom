@@ -50,15 +50,7 @@
 #include "swrenderer/r_swrenderer.h"
 
 EXTERN_CVAR(Int, vid_maxfps)
-
-CUSTOM_CVAR(Int, vid_backend, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
-{
-	// [SP] This may seem pointless - but I don't want to implement live switching just
-	// yet - I'm pretty sure it's going to require a lot of reinits and destructions to
-	// do it right without memory leaks
-
-	Printf("Changing the video backend requires a restart for " GAMENAME ".\n");
-}
+EXTERN_CVAR(Int, vid_backend)
 
 extern HWND Window;
 

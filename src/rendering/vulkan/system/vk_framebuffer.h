@@ -60,7 +60,6 @@ public:
 	uint32_t GetCaps() override;
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height) override;
 	sector_t *RenderView(player_t *player) override;
-	void UnbindTexUnit(int no) override;
 	void TextureFilterChanged() override;
 	void BeginFrame() override;
 	void BlurScene(float amount) override;

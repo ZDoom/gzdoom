@@ -522,10 +522,6 @@ IDataBuffer *VulkanFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo)
 	return buffer;
 }
 
-void VulkanFrameBuffer::UnbindTexUnit(int no)
-{
-}
-
 void VulkanFrameBuffer::TextureFilterChanged()
 {
 	if (mSamplerManager)

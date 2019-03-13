@@ -32,6 +32,9 @@ public:
 	uint8_t *MapBuffer() override;
 	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name) override;
 
+	// Wipe screen
+	void CreateWipeTexture(int w, int h, const char *name);
+
 	static VkHardwareTexture *First;
 	VkHardwareTexture *Prev = nullptr;
 	VkHardwareTexture *Next = nullptr;

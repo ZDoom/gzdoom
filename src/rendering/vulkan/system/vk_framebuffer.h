@@ -71,12 +71,8 @@ public:
 	IIndexBuffer *CreateIndexBuffer() override;
 	IDataBuffer *CreateDataBuffer(int bindingpoint, bool ssbo) override;
 
-	/*
-	bool WipeStartScreen(int type);
-	void WipeEndScreen();
-	bool WipeDo(int ticks);
-	void WipeCleanup();
-	*/
+	FTexture *WipeStartScreen() override;
+	FTexture *WipeEndScreen() override;
 
 	void SetVSync(bool vsync);
 

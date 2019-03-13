@@ -546,6 +546,32 @@ void VulkanFrameBuffer::UpdatePalette()
 		mPostprocess->ClearTonemapPalette();
 }
 
+FTexture *VulkanFrameBuffer::WipeStartScreen()
+{
+	const auto &viewport = screen->mScreenViewport;
+	auto tex = new FWrapperTexture(viewport.width, viewport.height, 1);
+	auto systex = static_cast<VkHardwareTexture*>(tex->GetSystemTexture());
+
+	systex->CreateWipeTexture(viewport.width, viewport.height, "WipeStartScreen");
+
+	return tex;
+}
+
+FTexture *VulkanFrameBuffer::WipeEndScreen()
+{
+	GetPostprocess()->SetActiveRenderTarget();
+	Draw2D();
+	Clear2D();
+
+	const auto &viewport = screen->mScreenViewport;
+	auto tex = new FWrapperTexture(viewport.width, viewport.height, 1);
+	auto systex = static_cast<VkHardwareTexture*>(tex->GetSystemTexture());
+
+	systex->CreateWipeTexture(viewport.width, viewport.height, "WipeEndScreen");
+
+	return tex;
+}
+
 void VulkanFrameBuffer::BeginFrame()
 {
 	SetViewportRects(nullptr);

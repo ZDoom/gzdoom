@@ -35,6 +35,7 @@
 #include "vulkan/system/vk_framebuffer.h"
 #include "vulkan/textures/vk_samplers.h"
 #include "vulkan/renderer/vk_renderpass.h"
+#include "vulkan/renderer/vk_postprocess.h"
 #include "vk_hwtexture.h"
 
 VkHardwareTexture *VkHardwareTexture::First = nullptr;
@@ -281,6 +282,30 @@ unsigned int VkHardwareTexture::CreateTexture(unsigned char * buffer, int w, int
 	mImage->Unmap();
 	return 0;
 }
+
+void VkHardwareTexture::CreateWipeTexture(int w, int h, const char *name)
+{
+	auto fb = GetVulkanFrameBuffer();
+
+	VkFormat format = VK_FORMAT_B8G8R8A8_UNORM;
+
+	ImageBuilder imgbuilder;
+	imgbuilder.setFormat(format);
+	imgbuilder.setSize(w, h);
+	imgbuilder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+	mImage = imgbuilder.create(fb->device);
+	mImage->SetDebugName(name);
+	mImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	mTexelsize = 4;
+
+	ImageViewBuilder viewbuilder;
+	viewbuilder.setImage(mImage.get(), format);
+	mImageView = viewbuilder.create(fb->device);
+	mImageView->SetDebugName(name);
+
+	fb->GetPostprocess()->BlitCurrentToImage(mImage.get(), &mImageLayout);
+}
+
 
 #if 0
 

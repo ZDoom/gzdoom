@@ -119,6 +119,46 @@ void VkPostprocess::BlitSceneToTexture()
 	imageTransition1.execute(fb->GetDrawCommands());
 }
 
+void VkPostprocess::BlitCurrentToImage(VulkanImage *dstimage, VkImageLayout *dstlayout)
+{
+	auto fb = GetVulkanFrameBuffer();
+
+	fb->GetRenderState()->EndRenderPass();
+
+	auto srcimage = fb->GetBuffers()->PipelineImage[mCurrentPipelineImage].get();
+	auto srclayout = &fb->GetBuffers()->PipelineLayout[mCurrentPipelineImage];
+	auto cmdbuffer = fb->GetDrawCommands();
+
+	*dstlayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL; // needed by VkPPImageTransition.addImage. Actual layout is undefined.
+
+	VkPPImageTransition imageTransition0;
+	imageTransition0.addImage(srcimage, srclayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, false);
+	imageTransition0.addImage(dstimage, dstlayout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
+	imageTransition0.execute(fb->GetDrawCommands());
+
+	VkImageBlit blit = {};
+	blit.srcOffsets[0] = { 0, 0, 0 };
+	blit.srcOffsets[1] = { srcimage->width, srcimage->height, 1 };
+	blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	blit.srcSubresource.mipLevel = 0;
+	blit.srcSubresource.baseArrayLayer = 0;
+	blit.srcSubresource.layerCount = 1;
+	blit.dstOffsets[0] = { 0, 0, 0 };
+	blit.dstOffsets[1] = { dstimage->width, dstimage->height, 1 };
+	blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	blit.dstSubresource.mipLevel = 0;
+	blit.dstSubresource.baseArrayLayer = 0;
+	blit.dstSubresource.layerCount = 1;
+	cmdbuffer->blitImage(
+		srcimage->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		dstimage->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		1, &blit, VK_FILTER_NEAREST);
+
+	VkPPImageTransition imageTransition1;
+	imageTransition1.addImage(dstimage, dstlayout, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
+	imageTransition1.execute(fb->GetDrawCommands());
+}
+
 void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool clearBorders)
 {
 	auto fb = GetVulkanFrameBuffer();

@@ -78,7 +78,7 @@ void VkRenderBuffers::CreatePipeline(int width, int height)
 		ImageBuilder builder;
 		builder.setSize(width, height);
 		builder.setFormat(VK_FORMAT_R16G16B16A16_SFLOAT);
-		builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+		builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 		PipelineImage[i] = builder.create(fb->device);
 		PipelineImage[i]->SetDebugName("VkRenderBuffers.PipelineImage");
 

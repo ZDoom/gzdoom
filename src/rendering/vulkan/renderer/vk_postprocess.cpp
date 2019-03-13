@@ -119,7 +119,7 @@ void VkPostprocess::BlitSceneToTexture()
 	imageTransition1.execute(fb->GetDrawCommands());
 }
 
-void VkPostprocess::BlitCurrentToImage(VulkanImage *dstimage, VkImageLayout *dstlayout)
+void VkPostprocess::BlitCurrentToImage(VulkanImage *dstimage, VkImageLayout *dstlayout, VkImageLayout finallayout)
 {
 	auto fb = GetVulkanFrameBuffer();
 
@@ -134,7 +134,7 @@ void VkPostprocess::BlitCurrentToImage(VulkanImage *dstimage, VkImageLayout *dst
 	VkPPImageTransition imageTransition0;
 	imageTransition0.addImage(srcimage, srclayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, false);
 	imageTransition0.addImage(dstimage, dstlayout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
-	imageTransition0.execute(fb->GetDrawCommands());
+	imageTransition0.execute(cmdbuffer);
 
 	VkImageBlit blit = {};
 	blit.srcOffsets[0] = { 0, 0, 0 };
@@ -155,8 +155,8 @@ void VkPostprocess::BlitCurrentToImage(VulkanImage *dstimage, VkImageLayout *dst
 		1, &blit, VK_FILTER_NEAREST);
 
 	VkPPImageTransition imageTransition1;
-	imageTransition1.addImage(dstimage, dstlayout, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
-	imageTransition1.execute(fb->GetDrawCommands());
+	imageTransition1.addImage(dstimage, dstlayout, finallayout, false);
+	imageTransition1.execute(cmdbuffer);
 }
 
 void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool clearBorders)

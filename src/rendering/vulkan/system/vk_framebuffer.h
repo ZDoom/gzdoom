@@ -74,6 +74,8 @@ public:
 	FTexture *WipeStartScreen() override;
 	FTexture *WipeEndScreen() override;
 
+	TArray<uint8_t> GetScreenshotBuffer(int &pitch, ESSType &color_type, float &gamma) override;
+
 	void SetVSync(bool vsync);
 
 	void Draw2D() override;
@@ -84,6 +86,7 @@ private:
 	void DrawScene(HWDrawInfo *di, int drawmode);
 	void PrintStartupLog();
 	void CreateFanToTrisIndexBuffer();
+	void SubmitCommands(bool finish);
 
 	std::unique_ptr<VkShaderManager> mShaderManager;
 	std::unique_ptr<VkSamplerManager> mSamplerManager;

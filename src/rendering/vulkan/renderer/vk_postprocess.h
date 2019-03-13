@@ -61,7 +61,7 @@ public:
 	void ClearTonemapPalette();
 
 	void BlitSceneToTexture();
-	void BlitCurrentToImage(VulkanImage *image, VkImageLayout *layout);
+	void BlitCurrentToImage(VulkanImage *image, VkImageLayout *layout, VkImageLayout finallayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	void DrawPresentTexture(const IntRect &box, bool applyGamma, bool clearBorders);
 
 private:

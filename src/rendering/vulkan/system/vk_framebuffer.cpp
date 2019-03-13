@@ -166,6 +166,26 @@ void VulkanFrameBuffer::Update()
 
 	mPostprocess->DrawPresentTexture(mOutputLetterbox, true, true);
 
+	SubmitCommands(true);
+
+	Flush3D.Unclock();
+
+	Finish.Reset();
+	Finish.Clock();
+	device->PresentFrame();
+	device->WaitPresent();
+
+	mDrawCommands.reset();
+	mUploadCommands.reset();
+	mFrameDeleteList.clear();
+
+	Finish.Unclock();
+
+	Super::Update();
+}
+
+void VulkanFrameBuffer::SubmitCommands(bool finish)
+{
 	mDrawCommands->end();
 
 	if (mUploadCommands)
@@ -186,7 +206,7 @@ void VulkanFrameBuffer::Update()
 		// Wait for upload commands to finish, then submit render commands
 		VkSemaphore waitSemaphores[] = { mUploadSemaphore->semaphore, device->imageAvailableSemaphore->semaphore };
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-		submitInfo.waitSemaphoreCount = 2;
+		submitInfo.waitSemaphoreCount = finish ? 2 : 1;
 		submitInfo.pWaitSemaphores = waitSemaphores;
 		submitInfo.pWaitDstStageMask = waitStages;
 		submitInfo.commandBufferCount = 1;
@@ -204,7 +224,7 @@ void VulkanFrameBuffer::Update()
 
 		VkSubmitInfo submitInfo = {};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.waitSemaphoreCount = finish ? 1 : 0;
 		submitInfo.pWaitSemaphores = waitSemaphores;
 		submitInfo.pWaitDstStageMask = waitStages;
 		submitInfo.commandBufferCount = 1;
@@ -215,21 +235,6 @@ void VulkanFrameBuffer::Update()
 		if (result < VK_SUCCESS)
 			I_FatalError("Failed to submit command buffer! Error %d\n", result);
 	}
-
-	Flush3D.Unclock();
-
-	Finish.Reset();
-	Finish.Clock();
-	device->PresentFrame();
-	device->WaitPresent();
-
-	mDrawCommands.reset();
-	mUploadCommands.reset();
-	mFrameDeleteList.clear();
-
-	Finish.Unclock();
-
-	Super::Update();
 }
 
 void VulkanFrameBuffer::WriteSavePic(player_t *player, FileWriter *file, int width, int height)
@@ -609,6 +614,67 @@ FTexture *VulkanFrameBuffer::WipeEndScreen()
 	systex->CreateWipeTexture(viewport.width, viewport.height, "WipeEndScreen");
 
 	return tex;
+}
+
+TArray<uint8_t> VulkanFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &color_type, float &gamma)
+{
+	int w = SCREENWIDTH;
+	int h = SCREENHEIGHT;
+
+	// Convert from rgba16f to rgba8 using the GPU:
+	ImageBuilder imgbuilder;
+	imgbuilder.setFormat(VK_FORMAT_R8G8B8A8_UNORM);
+	imgbuilder.setUsage(VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+	imgbuilder.setSize(w, h);
+	auto image = imgbuilder.create(device);
+	VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
+	GetPostprocess()->BlitCurrentToImage(image.get(), &layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+
+	// Staging buffer for download
+	BufferBuilder bufbuilder;
+	bufbuilder.setSize(w * h * 4);
+	bufbuilder.setUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU);
+	auto staging = bufbuilder.create(device);
+
+	// Copy from image to buffer
+	VkBufferImageCopy region = {};
+	region.imageExtent.width = w;
+	region.imageExtent.height = h;
+	region.imageExtent.depth = 1;
+	region.imageSubresource.layerCount = 1;
+	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	GetDrawCommands()->copyImageToBuffer(image->image, layout, staging->buffer, 1, &region);
+
+	// Submit command buffers and wait for device to finish the work
+	SubmitCommands(false);
+	vkWaitForFences(device->device, 1, &device->renderFinishedFence->fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+	vkResetFences(device->device, 1, &device->renderFinishedFence->fence);
+	mDrawCommands.reset();
+	mUploadCommands.reset();
+	mFrameDeleteList.clear();
+
+	// Map and convert from rgba8 to rgb8
+	TArray<uint8_t> ScreenshotBuffer(w * h * 3, true);
+	uint8_t *pixels = (uint8_t*)staging->Map(0, w * h * 4);
+	int dindex = 0;
+	for (int y = 0; y < h; y++)
+	{
+		int sindex = (h - y - 1) * w * 4;
+		for (int x = 0; x < w; x++)
+		{
+			ScreenshotBuffer[dindex] = pixels[sindex];
+			ScreenshotBuffer[dindex + 1] = pixels[sindex + 1];
+			ScreenshotBuffer[dindex + 2] = pixels[sindex + 2];
+			dindex += 3;
+			sindex += 4;
+		}
+	}
+	staging->Unmap();
+
+	pitch = w * 3;
+	color_type = SS_RGB;
+	gamma = 2.2f;
+	return ScreenshotBuffer;
 }
 
 void VulkanFrameBuffer::BeginFrame()

@@ -1,5 +1,12 @@
 
 #include "vk_swapchain.h"
+#include "c_cvars.h"
+#include "version.h"
+
+CUSTOM_CVAR(Bool, vk_hdr, false, /*CVAR_ARCHIVE | CVAR_GLOBALCONFIG |*/ CVAR_NOINITCALL)
+{
+	Printf("This won't take effect until " GAMENAME " is restarted.\n");
+}
 
 VulkanSwapChain::VulkanSwapChain(VulkanDevice *device, int width, int height, bool vsync) : vsync(vsync), device(device)
 {
@@ -40,12 +47,30 @@ VulkanSwapChain::VulkanSwapChain(VulkanDevice *device, int width, int height, bo
 	else
 	{
 		swapChainFormat = surfaceFormats.front();
-		for (const auto &format : surfaceFormats)
+
+		bool found = false;
+		if (vk_hdr)
 		{
-			if (format.format == VK_FORMAT_B8G8R8A8_UNORM && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+			for (const auto &format : surfaceFormats)
 			{
-				swapChainFormat = format;
-				break;
+				if (format.format == VK_FORMAT_R16G16B16A16_SFLOAT && format.colorSpace == VK_COLOR_SPACE_HDR10_ST2084_EXT)
+				{
+					swapChainFormat = format;
+					found = true;
+					break;
+				}
+			}
+		}
+
+		if (!found)
+		{
+			for (const auto &format : surfaceFormats)
+			{
+				if (format.format == VK_FORMAT_B8G8R8A8_UNORM && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+				{
+					swapChainFormat = format;
+					break;
+				}
 			}
 		}
 	}
@@ -85,7 +110,7 @@ VulkanSwapChain::VulkanSwapChain(VulkanDevice *device, int width, int height, bo
 	swapChainCreateInfo.imageColorSpace = swapChainFormat.colorSpace;
 	swapChainCreateInfo.imageExtent = actualExtent;
 	swapChainCreateInfo.imageArrayLayers = 1;
-	swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+	swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
 	uint32_t queueFamilyIndices[] = { (uint32_t)device->graphicsFamily, (uint32_t)device->presentFamily };
 	if (device->graphicsFamily != device->presentFamily)
@@ -142,6 +167,30 @@ VulkanSwapChain::VulkanSwapChain(VulkanDevice *device, int width, int height, bo
 				throw std::runtime_error("Could not create image view for swapchain image");
 
 			device->SetDebugObjectName("SwapChainImageView", (uint64_t)swapChainImageViews[i], VK_OBJECT_TYPE_IMAGE_VIEW);
+		}
+
+		if (swapChainFormat.colorSpace == VK_COLOR_SPACE_HDR10_ST2084_EXT)
+		{
+			// Mastering display with DCI-P3 color primaries and D65 white point,
+			// maximum luminance of 1000 nits and minimum luminance of 0.001 nits;
+			// content has maximum luminance of 2000 nits and maximum frame average light level (MaxFALL) of 500 nits.
+
+			VkHdrMetadataEXT metadata = {};
+			metadata.sType = VK_STRUCTURE_TYPE_HDR_METADATA_EXT;
+			metadata.displayPrimaryRed.x = 0.680f;
+			metadata.displayPrimaryRed.y = 0.320f;
+			metadata.displayPrimaryGreen.x = 0.265f;
+			metadata.displayPrimaryGreen.y = 0.690f;
+			metadata.displayPrimaryBlue.x = 0.150f;
+			metadata.displayPrimaryBlue.y = 0.060f;
+			metadata.whitePoint.x = 0.3127f;
+			metadata.whitePoint.y = 0.3290f;
+			metadata.maxLuminance = 1000.0f;
+			metadata.minLuminance = 0.001f;
+			metadata.maxContentLightLevel = 2000.0f;
+			metadata.maxFrameAverageLightLevel = 500.0f;
+
+			vkSetHdrMetadataEXT(device->device, 1, &swapChain, &metadata);
 		}
 	}
 	catch (...)

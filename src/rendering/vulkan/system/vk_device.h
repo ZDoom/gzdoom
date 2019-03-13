@@ -62,11 +62,13 @@ public:
 	std::vector<VkLayerProperties> AvailableLayers;
 	std::vector<VkExtensionProperties> Extensions;
 	std::vector<const char *> EnabledExtensions;
+	std::vector<const char *> OptionalExtensions = { VK_EXT_SWAPCHAIN_COLOR_SPACE_EXTENSION_NAME };
 	std::vector<const char*> EnabledValidationLayers;
 
 	// Device setup
 	VkPhysicalDeviceFeatures UsedDeviceFeatures = {};
 	std::vector<const char *> EnabledDeviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+	std::vector<const char *> OptionalDeviceExtensions = { VK_EXT_HDR_METADATA_EXTENSION_NAME };
 	VulkanPhysicalDevice PhysicalDevice;
 	bool DebugLayerActive = false;
 

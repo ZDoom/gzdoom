@@ -184,6 +184,18 @@ void VulkanDevice::SelectPhysicalDevice()
 	if (selected >= SupportedDevices.size())
 		selected = 0;
 
+	// Enable optional extensions we are interested in, if they are available on this device
+	for (const auto &ext : SupportedDevices[selected].device->Extensions)
+	{
+		for (const auto &opt : OptionalDeviceExtensions)
+		{
+			if (strcmp(ext.extensionName, opt) == 0)
+			{
+				EnabledDeviceExtensions.push_back(opt);
+			}
+		}
+	}
+
 	PhysicalDevice = *SupportedDevices[selected].device;
 	graphicsFamily = SupportedDevices[selected].graphicsFamily;
 	presentFamily = SupportedDevices[selected].presentFamily;
@@ -310,6 +322,18 @@ void VulkanDevice::CreateInstance()
 			EnabledValidationLayers.push_back(debugLayer.c_str());
 			EnabledExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 			debugLayerFound = true;
+		}
+	}
+
+	// Enable optional instance extensions we are interested in
+	for (const auto &ext : Extensions)
+	{
+		for (const auto &opt : OptionalExtensions)
+		{
+			if (strcmp(ext.extensionName, opt) == 0)
+			{
+				EnabledExtensions.push_back(opt);
+			}
 		}
 	}
 

@@ -39,8 +39,11 @@ public:
 	VkHardwareTexture *Prev = nullptr;
 	VkHardwareTexture *Next = nullptr;
 
+	VulkanImage *GetImage(FTexture *tex, int translation, int flags);
+	VulkanImageView *GetImageView(FTexture *tex, int translation, int flags);
+
 private:
-	VulkanImageView *GetImageView(FTexture *tex, int clampmode, int translation, int flags);
+	void CreateImage(FTexture *tex, int translation, int flags);
 
 	void CreateTexture(int w, int h, int pixelsize, VkFormat format, const void *pixels);
 	void GenerateMipmaps(VulkanImage *image, VulkanCommandBuffer *cmdbuffer);

@@ -269,13 +269,14 @@ sector_t *VulkanFrameBuffer::RenderView(player_t *player)
 		screen->mLights->Clear();
 		screen->mViewpoints->Clear();
 
-#if 0
 		// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
 		bool saved_niv = NoInterpolateView;
 		NoInterpolateView = false;
 
 		// Shader start time does not need to be handled per level. Just use the one from the camera to render from.
+#if 0
 		GetRenderState()->CheckTimer(player->camera->Level->ShaderStartTime);
+#endif
 		// prepare all camera textures that have been used in the last frame.
 		// This must be done for all levels, not just the primary one!
 		for (auto Level : AllLevels())
@@ -286,7 +287,6 @@ sector_t *VulkanFrameBuffer::RenderView(player_t *player)
 			});
 		}
 		NoInterpolateView = saved_niv;
-#endif
 
 		// now render the main view
 		float fovratio;
@@ -387,6 +387,45 @@ sector_t *VulkanFrameBuffer::RenderViewpoint(FRenderViewpoint &mainvp, AActor * 
 	}
 
 	return mainvp.sector;
+}
+
+void VulkanFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV)
+{
+	// This doesn't need to clear the fake flat cache. It can be shared between camera textures and the main view of a scene.
+	FMaterial *mat = FMaterial::ValidateTexture(tex, false);
+	auto BaseLayer = static_cast<VkHardwareTexture*>(mat->GetLayer(0, 0));
+
+	int width = mat->TextureWidth();
+	int height = mat->TextureHeight();
+	VulkanImage *image = BaseLayer->GetImage(tex, 0, 0);
+	VulkanImageView *view = BaseLayer->GetImageView(tex, 0, 0);
+
+	mRenderState->EndRenderPass();
+	auto cmdbuffer = GetDrawCommands();
+
+	PipelineBarrier barrier0;
+	barrier0.addImage(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+	barrier0.execute(cmdbuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
+	mRenderState->SetRenderTarget(view, image->width, image->height, VK_SAMPLE_COUNT_1_BIT);
+
+	IntRect bounds;
+	bounds.left = bounds.top = 0;
+	bounds.width = MIN(mat->GetWidth(), image->width);
+	bounds.height = MIN(mat->GetHeight(), image->height);
+
+	FRenderViewpoint texvp;
+	RenderViewpoint(texvp, Viewpoint, &bounds, FOV, (float)width / height, (float)width / height, false, false);
+
+	mRenderState->EndRenderPass();
+
+	PipelineBarrier barrier1;
+	barrier1.addImage(image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+	barrier1.execute(cmdbuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
+	mRenderState->SetRenderTarget(GetBuffers()->SceneColorView.get(), GetBuffers()->GetWidth(), GetBuffers()->GetHeight(), GetBuffers()->GetSceneSamples());
+
+	tex->SetUpdated(true);
 }
 
 void VulkanFrameBuffer::DrawScene(HWDrawInfo *di, int drawmode)

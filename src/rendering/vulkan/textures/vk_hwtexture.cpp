@@ -76,6 +76,8 @@ VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &s
 	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
 	int flags = state.mMaterial->isExpanded() ? CTF_Expand : (gl_texture_usehires && !tex->isScaled() && clampmode <= CLAMP_XY) ? CTF_CheckHires : 0;
 
+	if (tex->isHardwareCanvas()) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
+
 	DescriptorKey key;
 	key.clampmode = clampmode;
 	key.translation = translation;
@@ -92,12 +94,12 @@ VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &s
 		int numLayers = mat->GetLayers();
 
 		WriteDescriptors update;
-		update.addCombinedImageSampler(descriptorSet.get(), 0, GetImageView(tex, clampmode, translation, flags), sampler, mImageLayout);
+		update.addCombinedImageSampler(descriptorSet.get(), 0, GetImageView(tex, translation, flags), sampler, mImageLayout);
 		for (int i = 1; i < numLayers; i++)
 		{
 			FTexture *layer;
 			auto systex = static_cast<VkHardwareTexture*>(mat->GetLayer(i, 0, &layer));
-			update.addCombinedImageSampler(descriptorSet.get(), i, systex->GetImageView(layer, clampmode, 0, mat->isExpanded() ? CTF_Expand : 0), sampler, systex->mImageLayout);
+			update.addCombinedImageSampler(descriptorSet.get(), i, systex->GetImageView(layer, 0, mat->isExpanded() ? CTF_Expand : 0), sampler, systex->mImageLayout);
 		}
 		update.updateSets(fb->device);
 	}
@@ -105,40 +107,67 @@ VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &s
 	return descriptorSet.get();
 }
 
-VulkanImageView *VkHardwareTexture::GetImageView(FTexture *tex, int clampmode, int translation, int flags)
+VulkanImage *VkHardwareTexture::GetImage(FTexture *tex, int translation, int flags)
 {
 	if (!mImage)
 	{
-		if (!tex->isHardwareCanvas())
+		CreateImage(tex, translation, flags);
+	}
+	return mImage.get();
+}
+
+VulkanImageView *VkHardwareTexture::GetImageView(FTexture *tex, int translation, int flags)
+{
+	if (!mImageView)
+	{
+		CreateImage(tex, translation, flags);
+	}
+	return mImageView.get();
+}
+
+void VkHardwareTexture::CreateImage(FTexture *tex, int translation, int flags)
+{
+	if (!tex->isHardwareCanvas())
+	{
+		if (translation <= 0)
 		{
-			if (translation <= 0)
-			{
-				translation = -translation;
-			}
-			else
-			{
-				auto remap = TranslationToTable(translation);
-				translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
-			}
-
-			bool needmipmap = (clampmode <= CLAMP_XY);
-
-			FTextureBuffer texbuffer = tex->CreateTexBuffer(translation, flags | CTF_ProcessData);
-			CreateTexture(texbuffer.mWidth, texbuffer.mHeight, 4, VK_FORMAT_B8G8R8A8_UNORM, texbuffer.mBuffer);
+			translation = -translation;
 		}
 		else
 		{
-			static const uint32_t testpixels[4 * 4] =
-			{
-				0xff0000ff, 0xff0000ff, 0xffff00ff, 0xffff00ff,
-				0xff0000ff, 0xff0000ff, 0xffff00ff, 0xffff00ff,
-				0xff00ff00, 0xff00ff00, 0x0000ffff, 0xff00ffff,
-				0xff00ff00, 0xff00ff00, 0x0000ffff, 0xff00ffff,
-			};
-			CreateTexture(4, 4, 4, VK_FORMAT_R8G8B8A8_UNORM, testpixels);
+			auto remap = TranslationToTable(translation);
+			translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
 		}
+
+		FTextureBuffer texbuffer = tex->CreateTexBuffer(translation, flags | CTF_ProcessData);
+		CreateTexture(texbuffer.mWidth, texbuffer.mHeight, 4, VK_FORMAT_B8G8R8A8_UNORM, texbuffer.mBuffer);
 	}
-	return mImageView.get();
+	else
+	{
+		auto fb = GetVulkanFrameBuffer();
+
+		VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
+		int w = tex->GetWidth();
+		int h = tex->GetHeight();
+
+		ImageBuilder imgbuilder;
+		imgbuilder.setFormat(format);
+		imgbuilder.setSize(w, h);
+		imgbuilder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		mImage = imgbuilder.create(fb->device);
+		mImage->SetDebugName("VkHardwareTexture.mImage");
+
+		ImageViewBuilder viewbuilder;
+		viewbuilder.setImage(mImage.get(), format);
+		mImageView = viewbuilder.create(fb->device);
+		mImageView->SetDebugName("VkHardwareTexture.mImageView");
+
+		auto cmdbuffer = fb->GetUploadCommands();
+
+		PipelineBarrier imageTransition;
+		imageTransition.addImage(mImage.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, VK_ACCESS_SHADER_READ_BIT);
+		imageTransition.execute(cmdbuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+	}
 }
 
 void VkHardwareTexture::CreateTexture(int w, int h, int pixelsize, VkFormat format, const void *pixels)

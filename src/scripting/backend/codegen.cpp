@@ -7425,10 +7425,21 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 		build->Emit(OP_LP, start.RegNum, arrayvar.RegNum, build->GetConstantInt(0));
 
 		auto f = Create<PField>(NAME_None, TypeUInt32, ismeta? VARF_Meta : 0, SizeAddr);
-		static_cast<FxMemberBase *>(Array)->membervar = f;
-		static_cast<FxMemberBase *>(Array)->AddressRequested = false;
+		auto arraymemberbase = static_cast<FxMemberBase *>(Array);
+
+		auto origmembervar = arraymemberbase->membervar;
+		auto origaddrreq = arraymemberbase->AddressRequested;
+		auto origvaluetype = Array->ValueType;
+
+		arraymemberbase->membervar = f;
+		arraymemberbase->AddressRequested = false;
 		Array->ValueType = TypeUInt32;
+
 		bound = Array->Emit(build);
+
+		arraymemberbase->membervar = origmembervar;
+		arraymemberbase->AddressRequested = origaddrreq;
+		Array->ValueType = origvaluetype;
 	}
 	else start = arrayvar;
 

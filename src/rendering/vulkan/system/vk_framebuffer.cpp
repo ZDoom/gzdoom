@@ -59,6 +59,7 @@
 #include "doomerrors.h"
 
 void Draw2D(F2DDrawer *drawer, FRenderState &state);
+void DoWriteSavePic(FileWriter *file, ESSType ssformat, uint8_t *scr, int width, int height, sector_t *viewsector, bool upsidedown);
 
 EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Bool, r_drawvoxels)
@@ -235,12 +236,61 @@ void VulkanFrameBuffer::SubmitCommands(bool finish)
 		if (result < VK_SUCCESS)
 			I_FatalError("Failed to submit command buffer! Error %d\n", result);
 	}
+
+	if (!finish)
+	{
+		vkWaitForFences(device->device, 1, &device->renderFinishedFence->fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+		vkResetFences(device->device, 1, &device->renderFinishedFence->fence);
+		mDrawCommands.reset();
+		mUploadCommands.reset();
+		mFrameDeleteList.clear();
+	}
 }
 
 void VulkanFrameBuffer::WriteSavePic(player_t *player, FileWriter *file, int width, int height)
 {
 	if (!V_IsHardwareRenderer())
+	{
 		Super::WriteSavePic(player, file, width, height);
+	}
+	else
+	{
+		IntRect bounds;
+		bounds.left = 0;
+		bounds.top = 0;
+		bounds.width = width;
+		bounds.height = height;
+
+		// we must be sure the GPU finished reading from the buffer before we fill it with new data.
+		if (mDrawCommands)
+			SubmitCommands(false);
+
+		// Switch to render buffers dimensioned for the savepic
+		mActiveRenderBuffers = mSaveBuffers.get();
+
+		hw_ClearFakeFlat();
+		GetRenderState()->SetVertexBuffer(screen->mVertexData);
+		screen->mVertexData->Reset();
+		screen->mLights->Clear();
+		screen->mViewpoints->Clear();
+
+		// This shouldn't overwrite the global viewpoint even for a short time.
+		FRenderViewpoint savevp;
+		sector_t *viewsector = RenderViewpoint(savevp, players[consoleplayer].camera, &bounds, r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
+		GetRenderState()->EnableStencil(false);
+		GetRenderState()->SetNoSoftLightLevel();
+
+		int numpixels = width * height;
+		uint8_t * scr = (uint8_t *)M_Malloc(numpixels * 3);
+		CopyScreenToBuffer(width, height, scr);
+
+		DoWriteSavePic(file, SS_RGB, scr, width, height, viewsector, false);
+		M_Free(scr);
+
+		// Switch back the screen render buffers
+		screen->SetViewportRects(nullptr);
+		mActiveRenderBuffers = mScreenBuffers.get();
+	}
 }
 
 sector_t *VulkanFrameBuffer::RenderView(player_t *player)
@@ -616,11 +666,8 @@ FTexture *VulkanFrameBuffer::WipeEndScreen()
 	return tex;
 }
 
-TArray<uint8_t> VulkanFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &color_type, float &gamma)
+void VulkanFrameBuffer::CopyScreenToBuffer(int w, int h, void *data)
 {
-	int w = SCREENWIDTH;
-	int h = SCREENHEIGHT;
-
 	// Convert from rgba16f to rgba8 using the GPU:
 	ImageBuilder imgbuilder;
 	imgbuilder.setFormat(VK_FORMAT_R8G8B8A8_UNORM);
@@ -647,14 +694,9 @@ TArray<uint8_t> VulkanFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &colo
 
 	// Submit command buffers and wait for device to finish the work
 	SubmitCommands(false);
-	vkWaitForFences(device->device, 1, &device->renderFinishedFence->fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
-	vkResetFences(device->device, 1, &device->renderFinishedFence->fence);
-	mDrawCommands.reset();
-	mUploadCommands.reset();
-	mFrameDeleteList.clear();
 
 	// Map and convert from rgba8 to rgb8
-	TArray<uint8_t> ScreenshotBuffer(w * h * 3, true);
+	uint8_t *dest = (uint8_t*)data;
 	uint8_t *pixels = (uint8_t*)staging->Map(0, w * h * 4);
 	int dindex = 0;
 	for (int y = 0; y < h; y++)
@@ -662,14 +704,23 @@ TArray<uint8_t> VulkanFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &colo
 		int sindex = (h - y - 1) * w * 4;
 		for (int x = 0; x < w; x++)
 		{
-			ScreenshotBuffer[dindex] = pixels[sindex];
-			ScreenshotBuffer[dindex + 1] = pixels[sindex + 1];
-			ScreenshotBuffer[dindex + 2] = pixels[sindex + 2];
+			dest[dindex] = pixels[sindex];
+			dest[dindex + 1] = pixels[sindex + 1];
+			dest[dindex + 2] = pixels[sindex + 2];
 			dindex += 3;
 			sindex += 4;
 		}
 	}
 	staging->Unmap();
+}
+
+TArray<uint8_t> VulkanFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &color_type, float &gamma)
+{
+	int w = SCREENWIDTH;
+	int h = SCREENHEIGHT;
+
+	TArray<uint8_t> ScreenshotBuffer(w * h * 3, true);
+	CopyScreenToBuffer(w, h, ScreenshotBuffer.Data());
 
 	pitch = w * 3;
 	color_type = SS_RGB;

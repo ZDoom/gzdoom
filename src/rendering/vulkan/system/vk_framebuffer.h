@@ -87,6 +87,7 @@ private:
 	void PrintStartupLog();
 	void CreateFanToTrisIndexBuffer();
 	void SubmitCommands(bool finish);
+	void CopyScreenToBuffer(int w, int h, void *data);
 
 	std::unique_ptr<VkShaderManager> mShaderManager;
 	std::unique_ptr<VkSamplerManager> mSamplerManager;

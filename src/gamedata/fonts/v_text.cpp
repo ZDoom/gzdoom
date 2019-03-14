@@ -75,6 +75,9 @@ TArray<FBrokenLines> V_BreakLines (FFont *font, int maxwidth, const uint8_t *str
 	bool lastWasSpace = false;
 	int kerning = font->GetDefaultKerning ();
 
+	// The real isspace is a bit too badly defined, so use our own one
+	auto myisspace = [](int ch) { return ch == '\t' || ch == '\r' || ch == '\n' || ch == ' '; };
+
 	w = 0;
 
 	while ( (c = GetCharFromString(string)) )
@@ -104,7 +107,7 @@ TArray<FBrokenLines> V_BreakLines (FFont *font, int maxwidth, const uint8_t *str
 			continue;
 		}
 
-		if (iswspace(c)) 
+		if (myisspace(c)) 
 		{
 			if (!lastWasSpace)
 			{
@@ -137,12 +140,12 @@ TArray<FBrokenLines> V_BreakLines (FFont *font, int maxwidth, const uint8_t *str
 			start = space;
 			space = NULL;
 
-			while (*start && iswspace (*start) && *start != '\n')
+			while (*start && myisspace (*start) && *start != '\n')
 				start++;
 			if (*start == '\n')
 				start++;
 			else
-				while (*start && iswspace (*start))
+				while (*start && myisspace (*start))
 					start++;
 			string = start;
 		}
@@ -160,7 +163,7 @@ TArray<FBrokenLines> V_BreakLines (FFont *font, int maxwidth, const uint8_t *str
 		while (s < string)
 		{
 			// If there is any non-white space in the remainder of the string, add it.
-			if (!iswspace (*s++))
+			if (!myisspace (*s++))
 			{
 				auto i = Lines.Reserve(1);
 				breakit (&Lines[i], font, start, string, linecolor);

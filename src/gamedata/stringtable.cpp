@@ -150,13 +150,15 @@ bool FStringTable::readSheetIntoTable(xlsxioreader reader, const char *sheetname
 		int column = 0;
 		char *value;
 		table.Reserve(1);
+		auto myisspace = [](int ch) { return ch == '\t' || ch == '\r' || ch == '\n' || ch == ' '; };
+
 		while ((value = xlsxioread_sheet_next_cell(sheet)) != nullptr)
 		{
 			auto vcopy = value;
 			if (table.Size() <= (unsigned)row) table.Reserve(1);
-			while (*vcopy && iswspace((unsigned char)*vcopy)) vcopy++;	// skip over leaading whitespace;
+			while (*vcopy && myisspace((unsigned char)*vcopy)) vcopy++;	// skip over leaading whitespace;
 			auto vend = vcopy + strlen(vcopy);
-			while (vend > vcopy && iswspace((unsigned char)vend[-1])) *--vend = 0;	// skip over trailing whitespace
+			while (vend > vcopy && myisspace((unsigned char)vend[-1])) *--vend = 0;	// skip over trailing whitespace
 			ProcessEscapes(vcopy);
 			table[row].Push(vcopy);
 			column++;

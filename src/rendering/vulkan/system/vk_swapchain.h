@@ -5,7 +5,7 @@
 class VulkanSwapChain
 {
 public:
-	VulkanSwapChain(VulkanDevice *device, int width, int height, bool vsync);
+	VulkanSwapChain(VulkanDevice *device);
 	~VulkanSwapChain();
 
 	bool vsync;

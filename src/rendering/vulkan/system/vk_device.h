@@ -38,12 +38,6 @@ public:
 	VulkanDevice();
 	~VulkanDevice();
 
-	void WindowResized();
-	void WaitPresent();
-
-	void BeginFrame();
-	void PresentFrame();
-
 	void SetDebugObjectName(const char *name, uint64_t handle, VkObjectType type)
 	{
 		if (!DebugLayerActive) return;
@@ -85,20 +79,12 @@ public:
 	int transferFamily = -1;
 	int presentFamily = -1;
 
-	std::unique_ptr<VulkanSwapChain> swapChain;
-	uint32_t presentImageIndex = 0;
-
-	std::unique_ptr<VulkanSemaphore> imageAvailableSemaphore;
-	std::unique_ptr<VulkanSemaphore> renderFinishedSemaphore;
-	std::unique_ptr<VulkanFence> renderFinishedFence;
-
 private:
 	void CreateInstance();
 	void CreateSurface();
 	void SelectPhysicalDevice();
 	void CreateDevice();
 	void CreateAllocator();
-	void CreateSemaphores();
 	void ReleaseResources();
 
 	static bool CheckFeatures(const VkPhysicalDeviceFeatures &f);

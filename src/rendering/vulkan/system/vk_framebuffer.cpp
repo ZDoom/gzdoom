@@ -74,6 +74,12 @@ VulkanFrameBuffer::VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevi
 	Super(hMonitor, fullscreen) 
 {
 	device = dev;
+
+	swapChain = std::make_unique<VulkanSwapChain>(device);
+	mSwapChainImageAvailableSemaphore.reset(new VulkanSemaphore(device));
+	mRenderFinishedSemaphore.reset(new VulkanSemaphore(device));
+	mRenderFinishedFence.reset(new VulkanFence(device));
+
 	InitPalette();
 }
 
@@ -150,12 +156,16 @@ void VulkanFrameBuffer::Update()
 	int newHeight = GetClientHeight();
 	if (lastSwapWidth != newWidth || lastSwapHeight != newHeight)
 	{
-		device->WindowResized();
+		swapChain.reset();
+		swapChain = std::make_unique<VulkanSwapChain>(device);
+
 		lastSwapWidth = newWidth;
 		lastSwapHeight = newHeight;
 	}
 
-	device->BeginFrame();
+	VkResult result = vkAcquireNextImageKHR(device->device, swapChain->swapChain, std::numeric_limits<uint64_t>::max(), mSwapChainImageAvailableSemaphore->semaphore, VK_NULL_HANDLE, &presentImageIndex);
+	if (result != VK_SUCCESS)
+		throw std::runtime_error("Failed to acquire next image!");
 
 	GetPostprocess()->SetActiveRenderTarget();
 
@@ -173,8 +183,21 @@ void VulkanFrameBuffer::Update()
 
 	Finish.Reset();
 	Finish.Clock();
-	device->PresentFrame();
-	device->WaitPresent();
+
+	VkSemaphore waitSemaphores[] = { mRenderFinishedSemaphore->semaphore };
+	VkSwapchainKHR swapChains[] = { swapChain->swapChain };
+	VkPresentInfoKHR presentInfo = {};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = waitSemaphores;
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = swapChains;
+	presentInfo.pImageIndices = &presentImageIndex;
+	presentInfo.pResults = nullptr;
+	vkQueuePresentKHR(device->presentQueue, &presentInfo);
+
+	vkWaitForFences(device->device, 1, &mRenderFinishedFence->fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+	vkResetFences(device->device, 1, &mRenderFinishedFence->fence);
 
 	mDrawCommands.reset();
 	mUploadCommands.reset();
@@ -205,7 +228,7 @@ void VulkanFrameBuffer::SubmitCommands(bool finish)
 			I_FatalError("Failed to submit command buffer! Error %d\n", result);
 
 		// Wait for upload commands to finish, then submit render commands
-		VkSemaphore waitSemaphores[] = { mUploadSemaphore->semaphore, device->imageAvailableSemaphore->semaphore };
+		VkSemaphore waitSemaphores[] = { mUploadSemaphore->semaphore, mSwapChainImageAvailableSemaphore->semaphore };
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 		submitInfo.waitSemaphoreCount = finish ? 2 : 1;
 		submitInfo.pWaitSemaphores = waitSemaphores;
@@ -213,14 +236,14 @@ void VulkanFrameBuffer::SubmitCommands(bool finish)
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &mDrawCommands->buffer;
 		submitInfo.signalSemaphoreCount = 1;
-		submitInfo.pSignalSemaphores = &device->renderFinishedSemaphore->semaphore;
-		result = vkQueueSubmit(device->graphicsQueue, 1, &submitInfo, device->renderFinishedFence->fence);
+		submitInfo.pSignalSemaphores = &mRenderFinishedSemaphore->semaphore;
+		result = vkQueueSubmit(device->graphicsQueue, 1, &submitInfo, mRenderFinishedFence->fence);
 		if (result < VK_SUCCESS)
 			I_FatalError("Failed to submit command buffer! Error %d\n", result);
 	}
 	else
 	{
-		VkSemaphore waitSemaphores[] = { device->imageAvailableSemaphore->semaphore };
+		VkSemaphore waitSemaphores[] = { mSwapChainImageAvailableSemaphore->semaphore };
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
 		VkSubmitInfo submitInfo = {};
@@ -231,16 +254,16 @@ void VulkanFrameBuffer::SubmitCommands(bool finish)
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &mDrawCommands->buffer;
 		submitInfo.signalSemaphoreCount = 1;
-		submitInfo.pSignalSemaphores = &device->renderFinishedSemaphore->semaphore;
-		VkResult result = vkQueueSubmit(device->graphicsQueue, 1, &submitInfo, device->renderFinishedFence->fence);
+		submitInfo.pSignalSemaphores = &mRenderFinishedSemaphore->semaphore;
+		VkResult result = vkQueueSubmit(device->graphicsQueue, 1, &submitInfo, mRenderFinishedFence->fence);
 		if (result < VK_SUCCESS)
 			I_FatalError("Failed to submit command buffer! Error %d\n", result);
 	}
 
 	if (!finish)
 	{
-		vkWaitForFences(device->device, 1, &device->renderFinishedFence->fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
-		vkResetFences(device->device, 1, &device->renderFinishedFence->fence);
+		vkWaitForFences(device->device, 1, &mRenderFinishedFence->fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+		vkResetFences(device->device, 1, &mRenderFinishedFence->fence);
 		mDrawCommands.reset();
 		mUploadCommands.reset();
 		mFrameDeleteList.clear();
@@ -570,9 +593,10 @@ uint32_t VulkanFrameBuffer::GetCaps()
 
 void VulkanFrameBuffer::SetVSync(bool vsync)
 {
-	if (device->swapChain->vsync != vsync)
+	if (swapChain->vsync != vsync)
 	{
-		device->WindowResized();
+		swapChain.reset();
+		swapChain = std::make_unique<VulkanSwapChain>(device);
 	}
 }
 

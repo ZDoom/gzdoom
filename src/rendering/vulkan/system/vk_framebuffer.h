@@ -22,6 +22,8 @@ class VulkanFrameBuffer : public SystemBaseFrameBuffer
 
 public:
 	VulkanDevice *device;
+	std::unique_ptr<VulkanSwapChain> swapChain;
+	uint32_t presentImageIndex = 0;
 
 	VulkanCommandBuffer *GetUploadCommands();
 	VulkanCommandBuffer *GetDrawCommands();
@@ -100,6 +102,10 @@ private:
 	std::unique_ptr<VulkanCommandBuffer> mDrawCommands;
 	std::unique_ptr<VulkanSemaphore> mUploadSemaphore;
 	std::unique_ptr<VkRenderState> mRenderState;
+
+	std::unique_ptr<VulkanSemaphore> mSwapChainImageAvailableSemaphore;
+	std::unique_ptr<VulkanSemaphore> mRenderFinishedSemaphore;
+	std::unique_ptr<VulkanFence> mRenderFinishedFence;
 
 	VkRenderBuffers *mActiveRenderBuffers = nullptr;
 

@@ -408,7 +408,7 @@ void VkPostprocess::RenderEffect(const FString &name)
 		if (step.Output.Type == PPTextureType::PPTexture)
 			key.OutputFormat = mTextures[step.Output.Texture]->Format;
 		else if (step.Output.Type == PPTextureType::SwapChain)
-			key.OutputFormat = GetVulkanFrameBuffer()->device->swapChain->swapChainFormat.format;
+			key.OutputFormat = GetVulkanFrameBuffer()->swapChain->swapChainFormat.format;
 		else
 			key.OutputFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
 
@@ -516,9 +516,9 @@ VulkanFramebuffer *VkPostprocess::GetOutput(VkPPRenderPassSetup *passSetup, cons
 	}
 	else
 	{
-		view = fb->device->swapChain->swapChainImageViews[fb->device->presentImageIndex];
-		w = fb->device->swapChain->actualExtent.width;
-		h = fb->device->swapChain->actualExtent.height;
+		view = fb->swapChain->swapChainImageViews[fb->presentImageIndex];
+		w = fb->swapChain->actualExtent.width;
+		h = fb->swapChain->actualExtent.height;
 	}
 
 	auto &framebuffer = passSetup->Framebuffers[view];

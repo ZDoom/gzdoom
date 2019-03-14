@@ -43,15 +43,12 @@
 #include "doomerrors.h"
 #include "gamedata/fonts/v_text.h"
 
-void I_GetVulkanDrawableSize(int *width, int *height);
 bool I_GetVulkanPlatformExtensions(unsigned int *count, const char **names);
 bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface);
 
 // Physical device info
 static std::vector<VulkanPhysicalDevice> AvailableDevices;
 static std::vector<VulkanCompatibleDevice> SupportedDevices;
-
-EXTERN_CVAR(Bool, vid_vsync);
 
 CUSTOM_CVAR(Bool, vk_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -88,12 +85,6 @@ VulkanDevice::VulkanDevice()
 		SelectPhysicalDevice();
 		CreateDevice();
 		CreateAllocator();
-
-		int width, height;
-		I_GetVulkanDrawableSize(&width, &height);
-		swapChain = std::make_unique<VulkanSwapChain>(this, width, height, vid_vsync);
-
-		CreateSemaphores();
 	}
 	catch (...)
 	{
@@ -202,44 +193,6 @@ void VulkanDevice::SelectPhysicalDevice()
 	transferFamily = SupportedDevices[selected].transferFamily;
 }
 
-void VulkanDevice::WindowResized()
-{
-	int width, height;
-	I_GetVulkanDrawableSize(&width, &height);
-
-	swapChain.reset();
-	swapChain = std::make_unique<VulkanSwapChain>(this, width, height, vid_vsync);
-}
-
-void VulkanDevice::WaitPresent()
-{
-	vkWaitForFences(device, 1, &renderFinishedFence->fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
-	vkResetFences(device, 1, &renderFinishedFence->fence);
-}
-
-void VulkanDevice::BeginFrame()
-{
-	VkResult result = vkAcquireNextImageKHR(device, swapChain->swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphore->semaphore, VK_NULL_HANDLE, &presentImageIndex);
-	if (result != VK_SUCCESS)
-		throw std::runtime_error("Failed to acquire next image!");
-}
-
-void VulkanDevice::PresentFrame()
-{
-	VkSemaphore waitSemaphores[] = { renderFinishedSemaphore->semaphore };
-	VkSwapchainKHR swapChains[] = { swapChain->swapChain };
-
-	VkPresentInfoKHR presentInfo = {};
-	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = waitSemaphores;
-	presentInfo.swapchainCount = 1;
-	presentInfo.pSwapchains = swapChains;
-	presentInfo.pImageIndices = &presentImageIndex;
-	presentInfo.pResults = nullptr;
-	vkQueuePresentKHR(presentQueue, &presentInfo);
-}
-
 void VulkanDevice::CreateAllocator()
 {
 	VmaAllocatorCreateInfo allocinfo = {};
@@ -249,13 +202,6 @@ void VulkanDevice::CreateAllocator()
 	allocinfo.preferredLargeHeapBlockSize = 64 * 1024 * 1024;
 	if (vmaCreateAllocator(&allocinfo, &allocator) != VK_SUCCESS)
 		throw std::runtime_error("Unable to create allocator");
-}
-
-void VulkanDevice::CreateSemaphores()
-{
-	imageAvailableSemaphore.reset(new VulkanSemaphore(this));
-	renderFinishedSemaphore.reset(new VulkanSemaphore(this));
-	renderFinishedFence.reset(new VulkanFence(this));
 }
 
 void VulkanDevice::CreateDevice()
@@ -530,11 +476,6 @@ void VulkanDevice::ReleaseResources()
 {
 	if (device)
 		vkDeviceWaitIdle(device);
-
-	imageAvailableSemaphore.reset();
-	renderFinishedSemaphore.reset();
-	renderFinishedFence.reset();
-	swapChain.reset();
 
 	if (allocator)
 		vmaDestroyAllocator(allocator);

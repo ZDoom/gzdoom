@@ -3,13 +3,20 @@
 #include "c_cvars.h"
 #include "version.h"
 
+EXTERN_CVAR(Bool, vid_vsync);
+
 CUSTOM_CVAR(Bool, vk_hdr, false, /*CVAR_ARCHIVE | CVAR_GLOBALCONFIG |*/ CVAR_NOINITCALL)
 {
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
 
-VulkanSwapChain::VulkanSwapChain(VulkanDevice *device, int width, int height, bool vsync) : vsync(vsync), device(device)
+void I_GetVulkanDrawableSize(int *width, int *height);
+
+VulkanSwapChain::VulkanSwapChain(VulkanDevice *device) : vsync(vid_vsync), device(device)
 {
+	int width, height;
+	I_GetVulkanDrawableSize(&width, &height);
+
 	VkSurfaceCapabilitiesKHR surfaceCapabilities;
 	VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->PhysicalDevice.Device, device->surface, &surfaceCapabilities);
 	if (result != VK_SUCCESS)

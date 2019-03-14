@@ -2727,7 +2727,7 @@ void G_DoPlayDemo (void)
 	}
 	demo_p = demobuffer;
 
-	Printf ("Playing demo %s\n", defdemoname.GetChars());
+	if (singledemo) Printf ("Playing demo %s\n", defdemoname.GetChars());
 
 	C_BackupCVars ();		// [RH] Save cvars that might be affected by demo
 
@@ -2744,7 +2744,7 @@ void G_DoPlayDemo (void)
 		}
 		else
 		{
-			Printf (PRINT_BOLD, "%s", eek);
+			//Printf (PRINT_BOLD, "%s", eek);
 			gameaction = ga_nothing;
 		}
 	}

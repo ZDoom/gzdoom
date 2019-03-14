@@ -7343,6 +7343,10 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 			auto parentfield = static_cast<FxMemberBase *>(Array)->membervar;
 			SizeAddr = parentfield->Offset + sizeof(void*);
 		}
+		else if (Array->ExprType == EFX_ArrayElement)
+		{
+			SizeAddr = ~0u;
+		}
 		else
 		{
 			ScriptPosition.Message(MSG_ERROR, "Invalid resizable array");
@@ -7415,7 +7419,8 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	ExpEmit arrayvar = Array->Emit(build);
 	ExpEmit start;
 	ExpEmit bound;
-
+	bool nestedarray = false;
+	
 	if (SizeAddr != ~0u)
 	{
 		bool ismeta = Array->ExprType == EFX_ClassMember && static_cast<FxClassMember*>(Array)->membervar->Flags & VARF_Meta;
@@ -7425,20 +7430,44 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 		build->Emit(OP_LP, start.RegNum, arrayvar.RegNum, build->GetConstantInt(0));
 
 		auto f = Create<PField>(NAME_None, TypeUInt32, ismeta? VARF_Meta : 0, SizeAddr);
-		static_cast<FxMemberBase *>(Array)->membervar = f;
-		static_cast<FxMemberBase *>(Array)->AddressRequested = false;
+		auto arraymemberbase = static_cast<FxMemberBase *>(Array);
+
+		auto origmembervar = arraymemberbase->membervar;
+		auto origaddrreq = arraymemberbase->AddressRequested;
+		auto origvaluetype = Array->ValueType;
+
+		arraymemberbase->membervar = f;
+		arraymemberbase->AddressRequested = false;
 		Array->ValueType = TypeUInt32;
+
 		bound = Array->Emit(build);
+
+		arraymemberbase->membervar = origmembervar;
+		arraymemberbase->AddressRequested = origaddrreq;
+		Array->ValueType = origvaluetype;
+	}
+	else if (Array->ExprType == EFX_ArrayElement && Array->isStaticArray())
+	{
+		bool ismeta = Array->ExprType == EFX_ClassMember && static_cast<FxClassMember*>(Array)->membervar->Flags & VARF_Meta;
+
+		arrayvar.Free(build);
+		start = ExpEmit(build, REGT_POINTER);
+		build->Emit(OP_LP, start.RegNum, arrayvar.RegNum, build->GetConstantInt(0));
+
+		bound = ExpEmit(build, REGT_INT);
+		build->Emit(OP_LW, bound.RegNum, arrayvar.RegNum, build->GetConstantInt(sizeof(void*)));
+
+		nestedarray = true;
 	}
 	else start = arrayvar;
 
 	if (index->isConstant())
 	{
 		unsigned indexval = static_cast<FxConstant *>(index)->GetValue().GetInt();
-		assert(SizeAddr != ~0u || (indexval < arraytype->ElementCount && "Array index out of bounds"));
+		assert(SizeAddr != ~0u || nestedarray || (indexval < arraytype->ElementCount && "Array index out of bounds"));
 
 		// For resizable arrays we even need to check the bounds if if the index is constant because they are not known at compile time.
-		if (SizeAddr != ~0u)
+		if (SizeAddr != ~0u || nestedarray)
 		{
 			ExpEmit indexreg(build, REGT_INT);
 			build->EmitLoadInt(indexreg.RegNum, indexval);

@@ -45,6 +45,7 @@
 #include "d_player.h"
 #include "xlsxread/xlsxio_read.h"
 
+EXTERN_CVAR(String, language)
 
 //==========================================================================
 //
@@ -63,7 +64,6 @@ void FStringTable::LoadStrings ()
 		if (!LoadLanguageFromSpreadsheet(lump))
 			LoadLanguage (lump);
 	}
-	SetLanguageIDs();
 	UpdateLanguage();
 	allMacros.Clear();
 }
@@ -378,6 +378,12 @@ void FStringTable::InsertString(int langid, FName label, const FString &string)
 
 void FStringTable::UpdateLanguage()
 {
+	size_t langlen = strlen(language);
+
+	int LanguageID = (langlen < 2 || langlen > 3) ?
+		MAKE_ID('e', 'n', 'u', '\0') :
+		MAKE_ID(language[0], language[1], language[2], '\0');
+
 	currentLanguageSet.Clear();
 
 	auto checkone = [&](uint32_t lang_id)
@@ -389,11 +395,8 @@ void FStringTable::UpdateLanguage()
 
 	checkone(dehacked_table);
 	checkone(global_table);
-	for (int i = 0; i < 4; ++i)
-	{
-		checkone(LanguageIDs[i]);
-		checkone(LanguageIDs[i] & MAKE_ID(0xff, 0xff, 0, 0));
-	}
+	checkone(LanguageID);
+	checkone(LanguageID & MAKE_ID(0xff, 0xff, 0, 0));
 	checkone(default_table);
 }
 

@@ -275,65 +275,6 @@ void I_DetectOS(void)
 
 //==========================================================================
 //
-// SubsetLanguageIDs
-//
-// Helper function for SetLanguageIDs.
-//
-//==========================================================================
-
-static void SubsetLanguageIDs(LCID id, LCTYPE type, int idx)
-{
-	char buf[8];
-	LCID langid;
-	char *idp;
-
-	if (!GetLocaleInfoA(id, type, buf, 8))
-		return;
-	langid = MAKELCID(strtoul(buf, NULL, 16), SORT_DEFAULT);
-	if (!GetLocaleInfoA(langid, LOCALE_SABBREVLANGNAME, buf, 8))
-		return;
-	idp = (char *)(&LanguageIDs[idx]);
-	memset (idp, 0, 4);
-	idp[0] = tolower(buf[0]);
-	idp[1] = tolower(buf[1]);
-	idp[2] = tolower(buf[2]);
-	idp[3] = 0;
-}
-
-//==========================================================================
-//
-// SetLanguageIDs
-//
-//==========================================================================
-
-void SetLanguageIDs()
-{
-	size_t langlen = strlen(language);
-
-	if (langlen < 2 || langlen > 3)
-	{
-		memset(LanguageIDs, 0, sizeof(LanguageIDs));
-		SubsetLanguageIDs(LOCALE_USER_DEFAULT, LOCALE_ILANGUAGE, 0);
-		SubsetLanguageIDs(LOCALE_USER_DEFAULT, LOCALE_IDEFAULTLANGUAGE, 1);
-		SubsetLanguageIDs(LOCALE_SYSTEM_DEFAULT, LOCALE_ILANGUAGE, 2);
-		SubsetLanguageIDs(LOCALE_SYSTEM_DEFAULT, LOCALE_IDEFAULTLANGUAGE, 3);
-	}
-	else
-	{
-		uint32_t lang = 0;
-
-		((uint8_t *)&lang)[0] = (language)[0];
-		((uint8_t *)&lang)[1] = (language)[1];
-		((uint8_t *)&lang)[2] = (language)[2];
-		LanguageIDs[0] = lang;
-		LanguageIDs[1] = lang;
-		LanguageIDs[2] = lang;
-		LanguageIDs[3] = lang;
-	}
-}
-
-//==========================================================================
-//
 // CalculateCPUSpeed
 //
 // Make a decent guess at how much time elapses between TSC steps. This can

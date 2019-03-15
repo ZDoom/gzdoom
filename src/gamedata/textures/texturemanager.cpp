@@ -1300,17 +1300,20 @@ int FTextureManager::PalCheck(int tex)
 // FTextureManager :: PalCheck
 //
 //==========================================================================
+EXTERN_CVAR(String, language)
 
 int FTextureManager::ResolveLocalizedTexture(int tex)
 {
-	for(int i = 0; i < 4; i++)
-	{
-		uint32_t lang = LanguageIDs[i];
-		uint64_t index = (uint64_t(lang) << 32) + tex;
-		if (auto pTex = LocalizedTextures.CheckKey(index)) return *pTex;
-		index = (uint64_t(lang & MAKE_ID(255, 255, 0, 0)) << 32) + tex;
-		if (auto pTex = LocalizedTextures.CheckKey(index)) return *pTex;
-	}
+	size_t langlen = strlen(language);
+	int lang = (langlen < 2 || langlen > 3) ?
+		MAKE_ID('e', 'n', 'u', '\0') :
+		MAKE_ID(language[0], language[1], language[2], '\0');
+
+	uint64_t index = (uint64_t(lang) << 32) + tex;
+	if (auto pTex = LocalizedTextures.CheckKey(index)) return *pTex;
+	index = (uint64_t(lang & MAKE_ID(255, 255, 0, 0)) << 32) + tex;
+	if (auto pTex = LocalizedTextures.CheckKey(index)) return *pTex;
+
 	return tex;
 }
 
